@@ -1,5 +1,5 @@
 // The environs of the process devices (manual §25.6 "Process types, read in time"), each drawn in the kit's well (sdk/panel Display) from
-// its reading (environReadings.ts): the Gateway's river, the NOWs' seasons, the Seat page's succession, and the erosion of the Checkouts
+// its reading (environReadings.ts): the Gateway's river, the NOWs' seasons, the Seats page's succession, and the erosion of the Seats
 // page and of Docs. The approvals queue's lake (software-factory__approvals.tsx QueueWell) is the first of them, and these draw as it does:
 // the kit's inks and the shell's tokens, lines and not blobs, the ground keeping its record. A picture is the state now and nothing else:
 // it does not move (§25.6 Rules: "a face or a ground moves only for something the run did"), no part of it stands for a reading the owner

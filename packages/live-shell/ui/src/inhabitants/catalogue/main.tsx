@@ -20,6 +20,7 @@ import {DESIGNED, DESIGNED_IDS, loadDesign, type DesignedDevice} from './panels'
 import type {Value} from './panels/design'
 import {flippedOf, popoutOf} from './panels/popout'
 import {PlaceContext} from '../sdk/panel'
+import {ChainOverview} from '../../frame/detail/ChainOverview'
 import {ClipGallery} from './clips/gallery'
 import './catalogue.css'
 import './panels/panels.css'
@@ -131,6 +132,16 @@ function GalleryMember({id}: {id: string}) {
 }
 const galleryMember = (id: string) => <GalleryMember key={id} id={id} />
 
+/** A chain as Device view draws it: one row that scrolls sideways when the devices run longer than the room, and at its foot, where
+ * the status bar carries it, the chain in miniature with the box over what the row shows (frame/detail/ChainOverview.tsx). */
+function ChainRow({width, children}: {width?: number; children: ReactNode}) {
+  const [row, setRow] = useState<HTMLDivElement | null>(null)
+  return <div className="cat-chain" style={width ? {width} : undefined}>
+    <div className="cat-chain-row" ref={setRow}>{children}</div>
+    <div className="cat-chain-foot"><span>Device</span><ChainOverview row={row} width={240} /></div>
+  </div>
+}
+
 /** A designed device in its views, all on one set of values: move a macro on the chain and the expanded band, the pane, the
  * window and the rail move with it. */
 function DesignedViews({design, views, fixture: first}: {design: DesignedDevice; views: readonly View[]; fixture?: string | null}) {
@@ -159,12 +170,12 @@ function DesignedViews({design, views, fixture: first}: {design: DesignedDevice;
   const one = (view: View): ReactNode => {
     switch (view) {
       case 'folded': return design.folded({...props, nav: {}})
-      case 'compact': return folded ? design.folded(props) : design.compact(props)
+      case 'compact': return <ChainRow width={wide}>{folded ? design.folded(props) : design.compact(props)}</ChainRow>
       // Live's expanded view: a band as wide as the detail area, above the chain; the panes above shrink to make room.
       case 'flip': return <div className="cat-flip" ref={flip}>
         <div className="cat-flip-panes" aria-hidden="true">Panes</div>
         {flippedOf(design, {...props, room: undefined}, {w: wide, h: 192})}
-        <div className="cat-flip-chain"><PlaceContext.Provider value={{...place, expanded: true}}>{design.compact(props)}</PlaceContext.Provider></div>
+        <ChainRow><PlaceContext.Provider value={{...place, expanded: true}}>{design.compact(props)}</PlaceContext.Provider></ChainRow>
       </div>
       // A rack's Full is its devices (manual §16.3): it takes a pane as wide as the page, and its members draw on their own designs.
       case 'full': return design.kind === 'rack'

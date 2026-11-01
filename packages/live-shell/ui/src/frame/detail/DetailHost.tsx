@@ -22,6 +22,7 @@ import {MODE_DETAILS, type ChainDrop} from '../../shell/modeDetails'
 import {loadWhenDrawn} from '../../shell/loadWhenDrawn'
 import {useStandingInstrument} from '../../inhabitants/ql/devices/standingInstrument'
 import type {SurfMode} from '../../shell/modeGrammar'
+import {publishShownChain} from './ChainOverview'
 import './detail.css'
 
 // A focused instrument's devices (shell/ModeDetail.tsx) load when an instrument first takes the Device side (O-I #740).
@@ -78,6 +79,11 @@ export function DetailHost({sides = {front: 'clip', hidden: {clip: false, device
   const waiting = !selected.ref && !registration.clipUngated
   const deviceKey = instrument ? 'instrument' : reading.mode
   if (shown.device) visited.current.add(deviceKey)
+  // The chain row Device view shows, for the overview beside the Device switch (ChainOverview.tsx); none while it is hidden.
+  useIsoLayoutEffect(() => {
+    publishShownChain(shown.device ? host?.querySelector<HTMLElement>(':scope > .detail-side--device > .detail-body:not([hidden]) > .detail-chain') ?? null : null)
+  })
+  useEffect(() => () => publishShownChain(null), [])
   // The head names the instrument the rack stands open over the focused pane's (World / Places or the Palace over the Earth's Project; lane BT), not the pane's.
   const standing = useStandingInstrument(instrument)
   const head = registration.head.device({detail: reading, selected, instrument: standing === undefined ? instrument : (standing as typeof instrument)})

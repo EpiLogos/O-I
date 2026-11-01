@@ -1,0 +1,23 @@
+/* Decision helper: the counts, the engine's reason, the tile, and the pane's questions of the run. Shell and panel tokens only. */
+.dh-counts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px; width: 100%; }
+.dh-reason { margin: 0; width: 100%; font: 10px/1.35 var(--font-ui, sans-serif); color: var(--text-dim, #a2a7ad); }
+
+/* The tile: the last pick, and the counts beside it. */
+.dh-tile { flex: 1 1 auto; min-width: 0; display: grid; grid-template-columns: 72px minmax(0, 1fr); align-items: center; gap: 4px; }
+.dh-tile .dh-counts { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 4px; }
+
+/* The pane: every question asked in the run, each with its spread, its pick and the verdict. */
+.dh-full { padding: 14px 16px; gap: 10px; color: var(--text, #d4d7da); font: 12px/1.5 var(--font-ui, sans-serif); overflow: hidden; }
+.dh-full h4 { flex: none; margin: 0; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--text-dim, #a2a7ad); }
+.dh-asked { flex: 1 1 auto; min-height: 0; margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(222px, 1fr)); align-content: start; gap: 10px; overflow: hidden; }
+.dh-asked li { display: flex; flex-direction: column; gap: 4px; padding: 6px 8px 7px; background: var(--bg-0, #26292d); border: 1px solid var(--line, #24262a); }
+.dh-asked li[data-dim="true"] { color: var(--text-dim, #a2a7ad); }
+.dh-asked-head, .dh-asked-foot { display: flex; align-items: baseline; gap: 8px; min-width: 0; font-size: 10.5px; white-space: nowrap; overflow: hidden; }
+.dh-asked-head span:first-child { color: var(--text-faint, #71767c); font-variant-numeric: tabular-nums; }
+.dh-asked-head b { font-weight: 600; }
+.dh-asked-head span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--text-dim, #a2a7ad); }
+.dh-asked-foot { justify-content: space-between; color: var(--text-dim, #a2a7ad); }
+.dh-asked-foot b { font-weight: 600; color: var(--text, #d4d7da); }
+.dh-asked-foot [data-tone="green"] { color: var(--green, #7fc97f); }
+.dh-asked-foot [data-tone="stall"] { color: var(--stall, #ff9b4a); }
+.dh-none { margin: 0; color: var(--text-faint, #71767c); font-style: italic; }

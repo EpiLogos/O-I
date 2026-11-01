@@ -1,5 +1,6 @@
-// AIKit's readings for the Agent's Context page, the Skillset rack's upkeep pages and its member's Why and History (lane W8; D5), through
-// the kernel's aikit_read (lane W3 round 3, desktop/cradle/kernel/src/owner_routes.rs AikitRead), each answering AIKit's envelope `data`.
+// AIKit's readings for AIKit's instrument's Context, Sources, Adopt and Procedures pages (ai-kit__ai-kit.tsx, §19.26) and the member's
+// Why and History (lane W8; D5), through the kernel's aikit_read (lane W3 round 3, desktop/cradle/kernel/src/owner_routes.rs AikitRead),
+// each answering AIKit's envelope `data`.
 // Real shapes in desktop/cradle/kernel/tests/fixtures/owner-routes/aikit-continuity-history-2026-10-21.json and
 // tests/fixtures/aikit-explain-history-2026-10-21.json (read-only captures):
 //   continuity-pressure  {brackets {fresh_max, moderate_max, depleted_max, critical_above, prompt_budget}, reading: null | {source,
@@ -28,7 +29,7 @@ export interface AikitAnswer {
   readonly error: string | null
 }
 
-/** `aikit work continuity pressure` as the Context page's pressure (actuation__harness-model.tsx PressureReading): the prompt budget and
+/** `aikit work continuity pressure` as the Context page's pressure (ai-kit__ai-kit.tsx pressureOf): the prompt budget and
  * the brackets in effect, and — when AIKit reads a session's prompts — what it has consumed and the pressure it names. Null when the
  * answer carries no brackets. Pure. */
 export function contextPressureOf(pressure: unknown): Record<string, unknown> | null {
@@ -43,7 +44,7 @@ export function contextPressureOf(pressure: unknown): Record<string, unknown> | 
 export const armedOf = (commands: unknown): string[] | null => (isObj(commands) && Array.isArray(commands.armed) ? words(commands.armed) : null)
 
 /** `aikit work continuity turn [--session S]` (ai-kit#543; the kernel's aikit_read continuity-turn) as the Context page's last turn
- * (actuation__harness-model.tsx ctx.turn {blocks [{event, title, standing, kept, withheld, suppressed}], withheldLines, withheldBlocks,
+ * (ai-kit__ai-kit.tsx ctx.turn {blocks [{event, title, standing, kept, withheld, suppressed}], withheldLines, withheldBlocks,
  * notice}): each block as AIKit kept it, the withheld counts, its notices in its words. `{kept: false}` when AIKit kept no turn for the
  * scope (`turn: null`); null when the answer is not the turn reading. Pure. */
 export function contextTurnOf(turn: unknown): {kept: true; turn: Record<string, unknown>} | {kept: false; scope?: string} | null {
@@ -61,7 +62,7 @@ export function contextTurnOf(turn: unknown): {kept: true; turn: Record<string, 
 export const unusedOf = (unused: unknown): string[] | null => (isObj(unused) && Array.isArray(unused.unused)
   ? unused.unused.flatMap(row => (isObj(row) && str(row.capability) ? [String(row.capability)] : [])) : null)
 
-/** `aikit collate`'s clusters as the rack's roots (skills.tsx `roots`): each root AIKit does not own, the folder its copies stand in, how
+/** `aikit collate`'s clusters as the Adopt page's roots (ai-kit__ai-kit.tsx `roots`): each root AIKit does not own, the folder its copies stand in, how
  * many skills stand there, and how many of those are copies that differ (`conflict`). Null when the answer has no clusters. Pure. */
 export function rootsOf(collate: unknown): Record<string, unknown>[] | null {
   if (!isObj(collate) || !Array.isArray(collate.clusters)) return null
@@ -78,7 +79,7 @@ export function rootsOf(collate: unknown): Record<string, unknown>[] | null {
   return [...roots].map(([root, seen]) => ({root, ...(seen.path ? {path: seen.path} : {}), skills: seen.skills, decide: seen.decide}))
 }
 
-/** `aikit bypass list`'s bypasses (skills.tsx `bypasses` {id, scope, reason, capability?, at, state}), each field where AIKit names it.
+/** `aikit bypass list`'s bypasses (ai-kit__ai-kit.tsx `bypasses` {id, scope, reason, capability?, at, state}), each field where AIKit names it.
  * Null when the answer is not the list. Pure. */
 export function bypassesOf(list: unknown): Record<string, unknown>[] | null {
   if (!isObj(list) || !Array.isArray(list.bypasses)) return null
@@ -93,7 +94,7 @@ export function bypassesOf(list: unknown): Record<string, unknown>[] | null {
 export const proceduresOf = (list: unknown): Record<string, unknown>[] | null => (isObj(list) && Array.isArray(list.procedures)
   ? words(list.procedures).map(id => ({id})) : null)
 
-/** `aikit source list`'s sources (each as `aikit source show` reads it) as the rack's sources (skills.tsx `sources` {id, kind, skills, retired,
+/** `aikit source list`'s sources (each as `aikit source show` reads it) as the Sources page's sources (ai-kit__ai-kit.tsx `sources` {id, kind, skills, retired,
  * active, candidate, rollback, ground, rejected}): active_skills, active_retired_skills, active_snapshot, candidate_snapshot,
  * rollback_points[0], control_ground and the count of candidate_rejected, each where AIKit names it. Null when the answer is not the list. Pure. */
 export function sourcesOf(list: unknown): Record<string, unknown>[] | null {

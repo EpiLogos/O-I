@@ -1,11 +1,11 @@
-// Retired as a device of its own (22 Oct manual rewrite): not a `<family>__<face>.tsx` panel any more, so the catalogue does not load
-// it; the Agentset rack (software-factory:agentset-rack) carries its pages through this module.
 // Decision helper (manual §19.20, ai-kit:decision-helper): the small model a team's members put typed questions to, when the rules
-// leave a choice open among labels the owner allows. Live's nearest: a MIDI effect such as Scale, which can only ever answer with a
-// note the scale allows. The owners:
-//   Provider, model, place, state, price: AIKit's decision provider (`aikit decide status`, aikit.decision-status/v1: selected_model,
-//     placement, mode, install.state, limits.timeout_ms ≤ 120 s, tariff "none", independent_of_acting_models). Provider is the
-//     election: none, a managed local model, a self-hosted endpoint, or the hosted API (`aikit decide`). Probe is `status --probe`.
+// leave a choice open among labels the owner allows. An instrument: it stands as a chain of the team's Agentset rack, with the Decision
+// helper where an agent's chain has its Agent, and one helper answers every member (software-factory__agentset-rack.tsx). Live's
+// nearest: an instrument on a chain of an Instrument Rack, held by Scale to the notes the scale allows. The owners:
+//   Provider, model, place, state: AIKit's decision provider (`aikit decide status`, aikit.decision-status/v1: selected_model,
+//     placement, mode, install.state, limits.timeout_ms ≤ 120 s). Provider is the election: none, a managed local model, a
+//     self-hosted endpoint, or the hosted API (`aikit decide`). Probe is `status --probe`. A model on your machine has no price, and
+//     the device shows none (§19.20 rules).
 //   Hosting: `hosted` {ref, endpoint, health, availability, lifetime} is the service that serves the model, as Workcell keeps it:
 //     its declared services (`workcell doctor --json` declared_services; `workcell system --json` services.declared: logical_ref,
 //     endpoint, health healthy | degraded | unavailable, availability, lifetime target-owned | managed), the one whose endpoint is
@@ -17,6 +17,8 @@
 //     What the rules settle stands in the frame's `determined` and is never asked; a frame with no unresolved head makes no call.
 //   The answer: a ql.agent-determination/v1 — status (determined, partial, unresolved, unavailable, refused, stale), the learned
 //     labels with their confidence, what the engine validated and the candidates it refused, each with its reason.
+//   The run's questions (`log`): each question asked in the run, with its labels, the answer's confidence in each, the pick and the
+//     engine's verdict.
 //   Instruments and admission: the team space (QL-MEF crates/ql-mef/src/team_space.rs; ANIMA-ALETHEIA-TEAMS.md §10.4) — the typed
 //     frames over each cell's closed label sets, and the seven rules. Admission is per instrument and measured (rule 2); gate 6 is the
 //     person's and refuses a model answer, abstention included (rule 7).
@@ -25,7 +27,7 @@
 import {useState} from 'react'
 import {Action, Band, Chooser, Dial, Display, Folded, Panel, Radio, Readout, Rows, Section, Tile, type LightState, type RowItem, type Scale, type Tone} from '../../sdk/panel'
 import {NONE, has, json, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
-import './decision-helper.css'
+import './ai-kit__decision-helper.css'
 
 type V = ViewProps['v']
 
@@ -50,27 +52,26 @@ const POLICY: Record<string, string> = {'preserve-candidates': 'Keep candidates'
 
 // ---------------------------------------------------------------- what the owners report
 
-interface Label {readonly id: string; readonly description: string}
-interface Ask {readonly instrument: string; readonly member: string; readonly cf: string; readonly field: string; readonly labels: readonly Label[]; readonly min: number; readonly max: number; readonly policy: string}
-interface Answer {readonly status: string; readonly scores: Readonly<Record<string, number>>; readonly picked: readonly string[]; readonly ms?: number; readonly engine?: string; readonly reason?: string}
+interface Ask {readonly instrument: string; readonly member: string; readonly cf: string; readonly field: string; readonly labels: readonly string[]; readonly min: number; readonly max: number; readonly policy: string}
+interface Answer {readonly status: string; readonly scores: Readonly<Record<string, number>>; readonly picked: readonly string[]; readonly engine?: string; readonly reason?: string}
 interface Instrument {readonly id: string; readonly organ: string; readonly name: string; readonly cf?: string; readonly labels: readonly string[]; readonly person?: boolean; readonly built?: boolean; readonly admitted?: boolean}
-interface Entry {readonly at: string; readonly member: string; readonly instrument: string; readonly picked: readonly string[]; readonly status: string; readonly engine: string}
+interface Entry extends Answer {readonly at: string; readonly member: string; readonly instrument: string; readonly labels: readonly string[]}
 
 const isObj = (x: unknown): x is Record<string, unknown> => !!x && typeof x === 'object' && !Array.isArray(x)
 const strs = (x: unknown): string[] => (Array.isArray(x) ? x.filter((s): s is string => typeof s === 'string') : [])
+const scoresOf = (x: unknown): Record<string, number> => (isObj(x) ? Object.fromEntries(Object.entries(x).filter(([, y]) => typeof y === 'number')) as Record<string, number> : {})
 
 function askOf(v: V): Ask | undefined {
   const a = json<unknown>(v, 'ask', null)
   if (!isObj(a) || typeof a.instrument !== 'string' || !Array.isArray(a.labels)) return undefined
-  const labels = a.labels.flatMap(l => (isObj(l) && typeof l.id === 'string' ? [{id: l.id, description: typeof l.description === 'string' ? l.description : l.id}] : []))
+  const labels = a.labels.flatMap(l => (isObj(l) && typeof l.id === 'string' ? [l.id] : typeof l === 'string' ? [l] : []))
   return {instrument: a.instrument, member: typeof a.member === 'string' ? a.member : NONE, cf: typeof a.cf === 'string' ? a.cf : NONE, field: typeof a.field === 'string' ? a.field : NONE,
     labels, min: typeof a.min === 'number' ? a.min : 0, max: typeof a.max === 'number' ? a.max : 1, policy: typeof a.policy === 'string' ? a.policy : NONE}
 }
 function answerOf(v: V): Answer | undefined {
   const a = json<unknown>(v, 'answer', null)
   if (!isObj(a) || typeof a.status !== 'string') return undefined
-  const scores = isObj(a.scores) ? Object.fromEntries(Object.entries(a.scores).filter(([, x]) => typeof x === 'number')) as Record<string, number> : {}
-  return {status: a.status, scores, picked: strs(a.picked), ms: typeof a.ms === 'number' ? a.ms : undefined, engine: typeof a.engine === 'string' ? a.engine : undefined, reason: typeof a.reason === 'string' ? a.reason : undefined}
+  return {status: a.status, scores: scoresOf(a.scores), picked: strs(a.picked), engine: typeof a.engine === 'string' ? a.engine : undefined, reason: typeof a.reason === 'string' ? a.reason : undefined}
 }
 const instrumentsOf = (v: V): Instrument[] | undefined => {
   if (!has(v, 'instruments')) return undefined
@@ -79,11 +80,13 @@ const instrumentsOf = (v: V): Instrument[] | undefined => {
     ? [{id: x.id, organ: typeof x.organ === 'string' ? x.organ : NONE, name: x.name, cf: typeof x.cf === 'string' ? x.cf : undefined, labels: strs(x.labels),
       person: x.person === true, built: x.built !== false, admitted: x.admitted === true}] : [])) : []
 }
+/** The questions asked in the run, the latest first; undefined while no owner reports them. */
 const logOf = (v: V): Entry[] | undefined => {
   if (!has(v, 'log')) return undefined
   const raw = json<unknown>(v, 'log', [])
   return Array.isArray(raw) ? raw.flatMap(x => (isObj(x) && typeof x.at === 'string' && typeof x.instrument === 'string'
-    ? [{at: x.at, member: typeof x.member === 'string' ? x.member : NONE, instrument: x.instrument, picked: strs(x.picked), status: typeof x.status === 'string' ? x.status : NONE, engine: typeof x.engine === 'string' ? x.engine : NONE}] : [])) : []
+    ? [{at: x.at, member: typeof x.member === 'string' ? x.member : NONE, instrument: x.instrument, labels: strs(x.labels), scores: scoresOf(x.scores), picked: strs(x.picked),
+      status: typeof x.status === 'string' ? x.status : NONE, engine: typeof x.engine === 'string' ? x.engine : undefined, reason: typeof x.reason === 'string' ? x.reason : undefined}] : [])) : []
 }
 
 const light = (p: ViewProps) => (strOf(p.owner ?? p.v, 'light') ?? 'unknown') as LightState
@@ -94,44 +97,40 @@ const hostedOf = (v: V): Hosted | undefined => {
   return isObj(h) ? Object.fromEntries(['ref', 'endpoint', 'health', 'availability', 'lifetime'].flatMap(k => (typeof h[k] === 'string' ? [[k, h[k]]] : []))) as Hosted : undefined
 }
 const LIFETIME: Record<string, string> = {'target-owned': 'its owner', managed: 'Workcell'}
-const serviceName = (ref: string | undefined) => ref?.replace(/^service:/, '').replace(/\/.*$/, '')
 const wanted = (v: V, i: Instrument) => v[`allow:${i.id}`] !== false && !i.person && i.built !== false
 const pickText = (a: Answer | undefined) => (a === undefined ? undefined : a.picked.length ? a.picked.join(', ') : 'none')
 const statusOf = (a: Answer | undefined) => (a ? STATUS[a.status] : undefined)
 const engineOf = (a: Answer | undefined) => (a?.engine ? ENGINE[a.engine] : undefined)
-/** The gap between the strongest label and the next: how clearly the helper told them apart. */
-function clarity(a: Answer | undefined): number | undefined {
-  const s = a ? Object.values(a.scores).sort((x, y) => y - x) : []
-  return s.length >= 2 ? s[0]! - s[1]! : s.length === 1 ? s[0] : undefined
-}
-const pc = (x: number | undefined) => (x === undefined ? undefined : `${Math.round(x * 100)} %`)
-const msText = (x: number | undefined) => (x === undefined ? undefined : x < 1000 ? `${Math.round(x)} ms` : `${(x / 1000).toFixed(1)} s`)
 
 // ---------------------------------------------------------------- the spread
 
-/** One bar for each label the head allows, as tall as the helper's confidence; the picked are lit. Without a question it says why. */
-function Spread({v, w, h, names = true}: {v: V; w: number; h: number; names?: boolean}) {
-  const ask = askOf(v), a = answerOf(v)
-  if (!has(v, 'ask')) return <Say w={w} h={h} lines={['No reading', 'of the question']} />
-  if (!ask) return <Say w={w} h={h} lines={['Nothing open', 'The rules settled it. No call.']} />
-  const top = 16, base = h - (names ? 20 : 8), left = 8, right = w - 8, n = Math.max(1, ask.labels.length)
+/** One bar for each label, as tall as the helper's confidence; the picked are lit. */
+function Bars({labels, a, w, h, names = true}: {labels: readonly string[]; a: Answer | undefined; w: number; h: number; names?: boolean}) {
+  const top = 16, base = h - (names ? 20 : 8), left = 8, right = w - 8, n = Math.max(1, labels.length)
   const step = (right - left) / n, bar = Math.max(2, step - (n > 8 ? 2 : 5))
   const most = Math.max(.5, ...Object.values(a?.scores ?? {}))
   const Y = (x: number) => base - (x / most) * (base - top)
   return <>
     {[.25, .5].filter(g => g <= most).map(g => <g key={g}><line x1={left} x2={right} y1={Y(g)} y2={Y(g)} className="dp-grid" /><text x={right} y={Y(g) - 2} textAnchor="end" className="dp-axis">{g * 100}</text></g>)}
     <line x1={left} x2={right} y1={base} y2={base} className="dp-faint" />
-    {ask.labels.map((l, i) => {
-      const x = left + i * step + (step - bar) / 2, s = a?.scores[l.id], picked = a?.picked.includes(l.id) ?? false
-      return <g key={l.id}>
+    {labels.map((l, i) => {
+      const x = left + i * step + (step - bar) / 2, s = a?.scores[l], picked = a?.picked.includes(l) ?? false
+      return <g key={l}>
         {s !== undefined && <rect x={x} y={Y(s)} width={bar} height={Math.max(1, base - Y(s))} className={picked ? 'dp-fill-on' : 'dp-fill'} />}
         {s !== undefined && <line x1={x} x2={x + bar} y1={Y(s)} y2={Y(s)} className={picked ? 'dp-curve-on' : 'dp-curve'} />}
-        {names && <text x={x + bar / 2} y={base + 10} textAnchor="middle" className={picked ? 'dp-ink' : 'dp-axis'}>{short(l.id, step)}</text>}
+        {names && <text x={x + bar / 2} y={base + 10} textAnchor="middle" className={picked ? 'dp-ink' : 'dp-axis'}>{short(l, step)}</text>}
       </g>
     })}
     {!a && <text x={w / 2} y={(top + base) / 2} textAnchor="middle" className="dp-ink-dim">Asked. No answer yet.</text>}
     {a && !a.picked.length && a.status === 'unresolved' && <text x={w / 2} y={top + 8} textAnchor="middle" className="dp-ink-dim">Abstained: nothing stood out</text>}
   </>
+}
+/** The last question's spread. Without a question it says why. */
+function Spread({v, w, h, names = true}: {v: V; w: number; h: number; names?: boolean}) {
+  const ask = askOf(v)
+  if (!has(v, 'ask')) return <Say w={w} h={h} lines={['No reading', 'of the question']} />
+  if (!ask) return <Say w={w} h={h} lines={['Nothing open', 'The rules settled it. No call.']} />
+  return <Bars labels={ask.labels} a={answerOf(v)} w={w} h={h} names={names} />
 }
 /** A label's name cut to the room its bar has (about 5 px a letter). */
 const short = (id: string, room: number) => { const n = Math.max(2, Math.floor(room / 5)); return id.length > n ? `${id.slice(0, n - 1)}…` : id }
@@ -148,9 +147,7 @@ function SpreadDisplay({p, w, h, names}: {p: ViewProps; w: number; h: number; na
 
 // ---------------------------------------------------------------- controls
 
-const provider = (p: ViewProps) => <Radio {...st(p, 'provider')} label="Provider" does="Who answers the open questions: no one, a model on this machine, your endpoint, or a hosted service."
-  value={strOf(p.v, 'provider') ?? ''} options={PROVIDERS} stack onChange={x => p.set('provider', x)} />
-const providerChooser = (p: ViewProps) => <Chooser {...st(p, 'provider')} label="Provider" does="Who answers the open questions."
+const providerChooser = (p: ViewProps) => <Chooser {...st(p, 'provider')} label="Provider" wide does="Who answers the open questions: no one, a model on this machine, your endpoint, or a hosted service. On this machine nothing the helper reads leaves it."
   value={strOf(p.v, 'provider') ?? ''} options={PROVIDERS} onChange={x => p.set('provider', x)} />
 const whenChooser = (p: ViewProps) => <Chooser {...st(p, 'when')} label="When" does="Background: the act goes on and the answer joins it if it comes in time. Before the act: the act waits for it."
   value={strOf(p.v, 'when') ?? ''} options={WHEN} onChange={x => p.set('when', x)} />
@@ -162,25 +159,44 @@ const probe = (p: ViewProps) => <Action {...st(p, 'probe')} label="Probe" does="
   disabled={st(p, 'probe').disabled ?? (strOf(p.v, 'provider') === 'none' ? 'Choose a provider first.' : undefined)} onPress={() => p.set('probe', true)} />
 
 const count = (v: V, key: string) => numOf(v, key)
-function Counts({v}: {v: V}) {
+/** The counts, read from the team: acts settled by rule, questions asked, abstentions, and picks the engine refused. */
+function Counts({v, big}: {v: V; big?: boolean}) {
   return <div className="dh-counts">
-    <Readout big label="by rule" does="Acts the rules settled whole. They asked the helper nothing." value={count(v, 'settled')} tone="green" />
-    <Readout big label="asked" does="Questions put to the helper today." value={count(v, 'asked')} tone="accent" />
-    <Readout big label="abstained" does="Answers that picked nothing. They are kept as given." value={count(v, 'abstained')} />
-    <Readout big label="refused" does="Picks the engine refused." value={count(v, 'refused')} tone="stall" />
+    <Readout big={big} label="by rule" does="Acts the rules settled whole. They asked the helper nothing." value={count(v, 'settled')} tone="green" />
+    <Readout big={big} label="asked" does="Questions put to the helper." value={count(v, 'asked')} tone="accent" />
+    <Readout big={big} label="abstained" does="Answers that picked nothing. They are kept as given." value={count(v, 'abstained')} />
+    <Readout big={big} label="refused" does="Picks the engine refused." value={count(v, 'refused')} tone="stall" />
   </div>
 }
 
-function Instruments({p, size, onSelect, selected}: {p: ViewProps; size: number; onSelect?: (id: string) => void; selected?: string}) {
+/** The team's questions: the square is your request, the light the team's measured admission. */
+function Instruments({p, size}: {p: ViewProps; size: number}) {
   const [page, setPage] = useState(0)
   const all = instrumentsOf(p.v)
   const items: RowItem[] = (all ?? []).map(i => ({id: i.id, name: i.name, note: i.organ, request: i.person || i.built === false ? undefined : wanted(p.v, i),
     light: i.person || i.built === false ? 'dark' : !wanted(p.v, i) ? 'dark' : i.admitted ? 'lit' : 'unknown', tone: i.admitted ? 'accent' : undefined,
     why: i.person ? 'Gate 6 is yours. No helper answers it, not even to abstain.' : i.built === false ? 'Not built yet.' : wanted(p.v, i) && !i.admitted ? 'Asked for. The team has not measured it yet.' : undefined,
-    does: `${i.labels.length} labels${i.cf ? ` · ${i.cf}` : ''}`}))
+    does: `${i.labels.length} labels${i.cf ? ` · ${i.cf}` : ''}: ${i.labels.join(', ')}`}))
   const request = st(p, 'instruments').disabled ? undefined : (id: string, on: boolean) => p.set(`allow:${id}`, on)
-  return <Rows label="Instruments" items={all ? items : undefined} why="No reading of the instruments." onRequest={request} onSelect={onSelect} selected={selected}
+  return <Rows label="Instruments" items={all ? items : undefined} why="No reading of the instruments." onRequest={request}
     does="The questions this team may put to the helper. The square is your request; the light is the team's measured admission." size={size} page={page} onPage={setPage} />
+}
+
+/** The run's questions, each with its spread, its pick and the engine's verdict. */
+function Asked({v}: {v: V}) {
+  const log = logOf(v)
+  if (!log) return <p className="dh-none">No reading of the questions.</p>
+  if (!log.length) return <p className="dh-none">Nothing asked in the run.</p>
+  return <ol className="dh-asked">{log.map((r, i) => {
+    const e = engineOf(r)
+    return <li key={i} data-dim={r.status === 'unresolved' ? 'true' : undefined}>
+      <div className="dh-asked-head"><span>{r.at}</span><b>{r.member}</b><span>{r.instrument}</span></div>
+      <Display w={204} h={74} label="The spread" corner={e?.label ?? NONE} does="One bar for each label the owner allowed, as tall as the helper's confidence. Lit bars are its pick.">
+        {r.labels.length ? <Bars labels={r.labels} a={r} w={204} h={74} /> : <Say w={204} h={74} lines={['No reading of the labels']} />}
+      </Display>
+      <div className="dh-asked-foot"><span>pick <b>{pickText(r)}</b></span><span data-tone={e?.tone}>{e?.label ?? NONE}</span></div>
+    </li>
+  })}</ol>
 }
 
 // ---------------------------------------------------------------- sample material
@@ -201,29 +217,30 @@ const INSTRUMENTS = [
 ]
 const GATE_ASK = {instrument: 'Gate reading', member: 'Mercurius', cf: 'CF4 (0/1/2/3)', field: 'gate 5 · Rupa', min: 0, max: 1, policy: 'abstain',
   labels: GATE.map(id => ({id, description: id}))}
+const GATE_SCORES = {aligned: .41, annotated: .27, hold: .19, redirect: .13}
+const FLAT = Object.fromEntries(THOUGHT.map((id, i) => [id, [.11, .09, .1, .08, .07, .09, .08, .06, .07, .09, .08, .08][i]!]))
 const LOG = [
-  {at: '14:02', member: 'Mercurius', instrument: 'Gate reading · 5', picked: ['aligned'], status: 'determined', engine: 'validated'},
-  {at: '14:01', member: 'Anansi', instrument: 'Gnosis retrieval', picked: ['partial'], status: 'determined', engine: 'validated'},
-  {at: '13:58', member: 'Moirai as Klotho', instrument: 'Thought reading', picked: [], status: 'unresolved', engine: 'kept'},
-  {at: '13:51', member: 'Anima', instrument: 'Vāk block · CF', picked: ['(0/1/2/3)'], status: 'determined', engine: 'validated'},
-  {at: '13:47', member: 'Zeithoven', instrument: 'Improvement proposal', picked: ['addendum'], status: 'determined', engine: 'validated'},
-  {at: '13:40', member: 'Janus', instrument: 'Stack traverse · layer 2', picked: ['drift'], status: 'determined', engine: 'validated'},
+  {at: '14:02', member: 'Mercurius', instrument: 'Gate reading · 5', labels: GATE, scores: GATE_SCORES, picked: ['aligned'], status: 'determined', engine: 'validated'},
+  {at: '14:01', member: 'Anansi', instrument: 'Gnosis retrieval', labels: ['grounded', 'partial', 'empty'], scores: {grounded: .29, partial: .52, empty: .19}, picked: ['partial'], status: 'determined', engine: 'validated'},
+  {at: '13:58', member: 'Moirai as Klotho', instrument: 'Thought reading', labels: THOUGHT, scores: FLAT, picked: [], status: 'unresolved', engine: 'kept'},
+  {at: '13:51', member: 'Anima', instrument: 'Vāk block · CF', labels: ['(0/1)', '(0/1/2)', '(0/1/2/3)', '(4.0-4.4/5)'], scores: {'(0/1)': .08, '(0/1/2)': .21, '(0/1/2/3)': .58, '(4.0-4.4/5)': .13}, picked: ['(0/1/2/3)'], status: 'determined', engine: 'validated'},
+  {at: '13:47', member: 'Zeithoven', instrument: 'Improvement proposal', labels: ['implementation', 'addendum', 'owner-issue', 'no-change'], scores: {implementation: .22, addendum: .47, 'owner-issue': .18, 'no-change': .13}, picked: ['addendum'], status: 'determined', engine: 'validated'},
+  {at: '13:40', member: 'Janus', instrument: 'Stack traverse · layer 2', labels: ['healthy', 'drift', 'gap', 'unverified'], scores: {healthy: .2, drift: .49, gap: .17, unverified: .14}, picked: ['drift'], status: 'determined', engine: 'validated'},
 ]
 
 export const design: DesignedDevice = {
   id: 'ai-kit:decision-helper',
   title: 'Decision helper',
-  kind: 'effect',
-  firstPage: 'ask',
+  kind: 'instrument',
   defaults: {
     light: 'lit', provider: 'local', when: 'background', deadline: 10,
     // Readings: the provider as AIKit reports it.
-    model: 'kev-latest', base: 'Qwen3.5 0.8B', where: '127.0.0.1:8019', state: 'loaded', independent: true, price: 'none',
+    model: 'kev-latest', where: '127.0.0.1:8019', state: 'loaded',
     // Readings: the service that serves it, as Workcell reports it (`workcell system --json` services.declared, 21 Oct).
     hosted: JSON.stringify({ref: 'service:kev-decision/personal-workcell', endpoint: 'http://127.0.0.1:8019', health: 'healthy', availability: 'available', lifetime: 'target-owned'}),
-    // The question and the answer, as the team and the engine report them.
+    // The question and the answer, as the team and the engine report them; the run's questions; the counts.
     ask: JSON.stringify(GATE_ASK),
-    answer: JSON.stringify({status: 'determined', scores: {aligned: .41, annotated: .27, hold: .19, redirect: .13}, picked: ['aligned'], ms: 412, engine: 'validated', reason: 'The gate rules passed.'}),
+    answer: JSON.stringify({status: 'determined', scores: GATE_SCORES, picked: ['aligned'], engine: 'validated', reason: 'The gate rules passed.'}),
     instruments: JSON.stringify(INSTRUMENTS), log: JSON.stringify(LOG),
     settled: 37, asked: 6, abstained: 1, refused: 0,
   },
@@ -231,114 +248,74 @@ export const design: DesignedDevice = {
     'A gate reading': {},
     Abstained: {ask: JSON.stringify({instrument: 'Thought reading', member: 'Moirai as Klotho', cf: 'CF3 (0/1/2)', field: 'thought', min: 0, max: 2, policy: 'preserve-candidates',
       labels: THOUGHT.map(id => ({id, description: id}))}),
-    answer: JSON.stringify({status: 'unresolved', scores: Object.fromEntries(THOUGHT.map((id, i) => [id, [.11, .09, .1, .08, .07, .09, .08, .06, .07, .09, .08, .08][i]!])), picked: [], ms: 538, engine: 'kept', reason: 'An empty selection is kept as given.'})},
+    answer: JSON.stringify({status: 'unresolved', scores: FLAT, picked: [], engine: 'kept', reason: 'An empty selection is kept as given.'})},
     'Nothing open': {ask: 'null', answer: undefined, settled: 38},
     'Its service is down': {state: 'loaded', hosted: JSON.stringify({ref: 'service:kev-decision/personal-workcell', endpoint: 'http://127.0.0.1:8019', health: 'unavailable', availability: 'degraded', lifetime: 'target-owned'})},
-    'No readings': {light: undefined, provider: undefined, when: undefined, deadline: undefined, model: undefined, base: undefined, where: undefined, state: undefined,
-      independent: undefined, price: undefined, hosted: undefined, ask: undefined, answer: undefined, instruments: undefined, log: undefined, settled: undefined, asked: undefined, abstained: undefined, refused: undefined},
+    'No readings': {light: undefined, provider: undefined, when: undefined, deadline: undefined, model: undefined, where: undefined, state: undefined,
+      hosted: undefined, ask: undefined, answer: undefined, instruments: undefined, log: undefined, settled: undefined, asked: undefined, abstained: undefined, refused: undefined},
   },
 
-  folded: p => <Folded title="Decision helper" light={light(p)} readings={[count(p.v, 'asked') === undefined ? NONE : `${count(p.v, 'asked')} asked`, pickText(answerOf(p.v)) ?? NONE]} onUnfold={p.nav.unfold} />,
+  folded: p => <Folded title="Decision helper" light={light(p)} onUnfold={p.nav.unfold} />,
 
-  compact: p => <Panel title="Decision helper" view="compact" light={light(p)} onFold={p.nav.fold} onFull={p.nav.full} onSelect={p.nav.select}>
-    <Section width={152}><SpreadDisplay p={p} w={140} h={146} /></Section>
-    <Section label="Macros" cols={2}>{whenChooser(p)}{deadline(p)}{providerChooser(p)}{probe(p)}</Section>
-  </Panel>,
+  compact: p => {
+    const ask = askOf(p.v)
+    return <Panel title="Decision helper" view="compact" light={light(p)} onFold={p.nav.fold} onFull={p.nav.full} onSelect={p.nav.select}>
+      <Section width={152}><SpreadDisplay p={p} w={140} h={146} /></Section>
+      <Section label="Question" width={92}>
+        <Readout label="field" does="What the question decides." value={ask?.field} />
+        <Readout label="asked by" does="The member who asked." value={ask?.member} />
+      </Section>
+      <Section label="Macros" width={104}>{providerChooser(p)}{whenChooser(p)}{deadline(p)}</Section>
+    </Panel>
+  },
 
   whole: p => {
-    const ask = askOf(p.v), a = answerOf(p.v), s = statusOf(a), e = engineOf(a)
-    const [chosen, choose] = [strOf(p.v, 'chosen'), (id: string) => p.set('chosen', id)]
-    const sel = instrumentsOf(p.v)?.find(i => i.id === (chosen ?? 'gate'))
-    return <Panel title="Decision helper" view="whole" light={light(p)} onFold={p.nav.fold} onFull={p.nav.full}
-      pages={[{id: 'ask', label: 'Ask'}, {id: 'instruments', label: 'Instruments'}, {id: 'provider', label: 'Provider'}]} page={p.page} onPage={p.setPage}>
-      {p.page === 'instruments' ? <Band>
-        <Section width={232}><Instruments p={p} size={8} onSelect={choose} selected={sel?.id} /></Section>
-        <Section label={sel ? sel.name : 'Instrument'} grow>
-          <div className="ref-pair"><Readout label="organ" does="The team that puts this question." value={sel?.organ} /><Readout label="row" does="The context frame it is asked at." value={sel?.cf ?? (sel ? 'any' : undefined)} /></div>
-          <div className="dh-labels" data-i="Labels|The only answers the owner allows. The helper can pick among them, or none.">
-            {sel ? sel.labels.map(l => <span key={l}>{l}</span>) : <i>{NONE}</i>}
-          </div>
-          <Readout label="admission" does="Whether the team has measured this instrument and lets the helper answer it."
-            value={sel ? (sel.person ? 'Yours alone' : sel.built === false ? 'Not built' : sel.admitted ? 'Admitted' : 'Not measured') : undefined} tone={sel?.admitted ? 'green' : undefined} />
+    const ask = askOf(p.v), a = answerOf(p.v), s = statusOf(a), e = engineOf(a), hosted = hostedOf(p.v)
+    return <Panel title="Decision helper" view="whole" light={light(p)} onFold={p.nav.fold} onFull={p.nav.full}>
+      <Band>
+        <Section width={218}><SpreadDisplay p={p} w={206} h={146} /></Section>
+        <Section label="Question" cols={2} grow>
+          <Readout label="instrument" does="The typed question the member put." value={ask?.instrument} />
+          <Readout label="asked by" does="The member who asked." value={ask?.member} />
+          <Readout label="row" does="The context frame it was asked at." value={ask?.cf} />
+          <Readout label="field" does="What the question decides." value={ask?.field} />
+          <Readout label="may hold" does="How many labels the answer may hold." value={ask ? `${ask.min}–${ask.max} of ${ask.labels.length}` : undefined} />
+          <Readout label="if none" does="What to do when no label stands out: keep the candidates, abstain, or give one only if it is supported." value={ask ? POLICY[ask.policy] ?? ask.policy : undefined} />
         </Section>
-      </Band> : p.page === 'provider' ? <Band>
-        <Section label="Provider" width={150}>{provider(p)}</Section>
-        <Section label="Model" cols={2} grow>
-          <Readout label="model" does="The model that answers." value={strOf(p.v, 'model')} />
-          <Readout label="base" does="The model it was trained from." value={strOf(p.v, 'base')} />
-          <Readout label="where" does="Where it runs." value={strOf(p.v, 'where')} />
-          <Readout label="state" does="Whether it is loaded and answering." value={strOf(p.v, 'state')} tone={strOf(p.v, 'state') === 'loaded' ? 'green' : 'stall'} />
-          <Readout label="apart" does="The helper is never one of the agents acting, nor a member of the team." value={has(p.v, 'independent') ? (p.v.independent === true ? 'yes' : 'no') : undefined} />
-          <Readout label="price" does="A model on your machine has no price. None is invented." value={strOf(p.v, 'price')} />
-          <Readout label="hosting" does="Whether the service that serves the model answers, as Workcell reads it: healthy, degraded or unavailable."
-            value={hostedOf(p.v)?.health} tone={hostedOf(p.v)?.health === 'healthy' ? 'green' : hostedOf(p.v) ? 'stall' : undefined} />
-          <Readout label="kept by" does="Who keeps the service running: its own owner (target-owned) or Workcell (managed)." value={hostedOf(p.v) ? LIFETIME[hostedOf(p.v)!.lifetime ?? ''] ?? hostedOf(p.v)!.lifetime : undefined} />
+        <Section label="Answer" width={156}>
+          <Readout label="pick" does="The labels the helper picked. None is an answer too, and it is kept." value={pickText(a)} tone={a?.picked.length ? 'accent' : undefined} />
+          <Readout label="status" does="Picked, part picked, abstained, unavailable, refused or stale." value={s?.label} tone={s?.tone} />
+          <Readout label="verdict" does="What the engine did with the pick: validated it, kept an abstention as given, or refused it." value={e?.label} tone={e?.tone} />
+          <p className="dh-reason" data-i="Reason|The engine's own words.">{a?.reason ?? NONE}</p>
         </Section>
-        <Section label="Timing" width={128}>{when(p)}{deadline(p)}{probe(p)}</Section>
-      </Band> : <>
-        <Band>
-          <Section width={260}><SpreadDisplay p={p} w={248} h={146} /></Section>
-          <Section label="Question" cols={2} grow>
-            <Readout label="instrument" does="The typed question the member put." value={ask?.instrument} />
-            <Readout label="asked by" does="The member who asked." value={ask?.member} />
-            <Readout label="row" does="The context frame it was asked at." value={ask?.cf} />
-            <Readout label="field" does="What the question decides." value={ask?.field} />
-            <Readout label="pick" does="How many labels the answer may hold." value={ask ? `${ask.min}–${ask.max} of ${ask.labels.length}` : undefined} />
-            <Readout label="if unclear" does="What the owner wants when no label stands out: keep the candidates, abstain, or one if it is supported." value={ask ? POLICY[ask.policy] ?? ask.policy : undefined} />
-          </Section>
-        </Band>
-        <Band>
-          <Section label="Answer" cols={2} width={260}>
-            <Readout label="picked" does="The labels the helper picked. None is an answer too." value={pickText(a)} tone={a?.picked.length ? 'accent' : undefined} />
-            <Readout label="status" does="Picked, part picked, abstained, unavailable, refused or stale." value={s?.label} tone={s?.tone} />
-            <Readout label="clarity" does="How far the strongest label stood above the next." value={pc(clarity(a))} />
-            <Readout label="took" does="How long the answer took." value={msText(a?.ms)} />
-          </Section>
-          <Section label="Engine" grow>
-            <Readout label="engine" does="What the rules did with the answer: validated it, kept an abstention as given, or refused it." value={e?.label} tone={e?.tone} />
-            <p className="dh-reason" data-i="Reason|The engine's own words.">{a?.reason ?? NONE}</p>
-            <Counts v={p.v} />
-          </Section>
-        </Band>
-      </>}
+      </Band>
+      <Band>
+        <Section grow><Instruments p={p} size={7} /></Section>
+        <Section label="Provider" width={150}>
+          {providerChooser(p)}
+          <Readout label="model" does="The model that answers, and whether it is loaded: AIKit's reading." value={strOf(p.v, 'model') && `${strOf(p.v, 'model')} · ${strOf(p.v, 'state') ?? NONE}`}
+            tone={strOf(p.v, 'state') === 'loaded' ? 'green' : has(p.v, 'state') ? 'stall' : undefined} />
+          <Readout label="where" does="Where the model runs: AIKit's reading." value={strOf(p.v, 'where')} />
+          <Readout label="hosting" does={`Whether the service that serves the model answers, where it listens, and who keeps it running: Workcell's reading. It can disagree with the model's.${hosted ? ` ${hosted.endpoint ?? NONE}, kept by ${LIFETIME[hosted.lifetime ?? ''] ?? hosted.lifetime ?? NONE}.` : ''}`}
+            value={hosted?.health} tone={hosted?.health === 'healthy' ? 'green' : hosted ? 'stall' : undefined} />
+        </Section>
+        <Section width={112}>{when(p)}{deadline(p)}{probe(p)}</Section>
+      </Band>
     </Panel>
   },
 
   full: p => {
-    const log = logOf(p.v), ask = askOf(p.v)
+    const log = logOf(p.v)
     return <div className="ref-pane-body dh-full">
-      <section className="dh-now">
-        <h4>{ask ? `${ask.member} asks · ${ask.instrument}` : 'Nothing open'}</h4>
-        <Display w={300} h={150} label="The spread" corner={engineOf(answerOf(p.v))?.label ?? NONE}
-          does="One bar for each label the owner allows, as tall as the helper's confidence. Lit bars are its pick.">
-          <Spread v={p.v} w={300} h={150} />
-        </Display>
-        <Counts v={p.v} />
-        <p className="dh-hosted" data-i="Hosting|The service that serves the model, as Workcell reads it: whether it answers, where, and who keeps it running.">
-          <b>hosting</b>{hostedOf(p.v) ? <><span>{serviceName(hostedOf(p.v)!.ref) ?? NONE}</span><span data-tone={hostedOf(p.v)!.health === 'healthy' ? 'green' : 'stall'}>{hostedOf(p.v)!.health ?? NONE}</span>
-            <span>{hostedOf(p.v)!.endpoint ?? NONE}</span><span>kept by {LIFETIME[hostedOf(p.v)!.lifetime ?? ''] ?? hostedOf(p.v)!.lifetime ?? NONE}</span></> : <span>{NONE}</span>}</p>
-      </section>
-      <section className="dh-log">
-        <h4>Today</h4>
-        {log ? log.length ? <table>
-          <thead><tr><th>At</th><th>Asked by</th><th>Instrument</th><th>Picked</th><th>Engine</th></tr></thead>
-          <tbody>{log.map((r, i) => <tr key={i} data-dim={r.status === 'unresolved' ? 'true' : undefined}>
-            <td>{r.at}</td><td>{r.member}</td><td>{r.instrument}</td><td>{r.picked.length ? r.picked.join(', ') : 'none'}</td>
-            <td data-tone={ENGINE[r.engine]?.tone}>{ENGINE[r.engine]?.label ?? r.engine}</td>
-          </tr>)}</tbody>
-        </table> : <p className="dh-none">Nothing asked today.</p> : <p className="dh-none">No reading of the questions.</p>}
-      </section>
+      <h4>Asked in the run{log ? ` · ${log.length}` : ''}</h4>
+      <Asked v={p.v} />
     </div>
   },
 
   widget: p => <Tile title="Decision helper" light={light(p)} span={2} onFull={p.nav.full}>
-    <Display w={112} h={104} label="The spread" does="The last question's labels, as tall as the helper's confidence. Lit bars are its pick.">
-      <Spread v={p.v} w={112} h={104} names={false} />
-    </Display>
-    <div className="ref-tile-counts">
-      <Readout big label="by rule" does="Acts the rules settled whole." value={count(p.v, 'settled')} tone="green" />
-      <Readout big label="asked" does="Questions put to the helper today." value={count(p.v, 'asked')} tone="accent" />
-      <Readout big label="picked" does="The last answer." value={pickText(answerOf(p.v))} />
+    <div className="dh-tile">
+      <Readout big label="pick" does="The last pick. None is an answer too." value={pickText(answerOf(p.v))} tone={answerOf(p.v)?.picked.length ? 'accent' : undefined} />
+      <Counts v={p.v} />
     </div>
   </Tile>,
 }

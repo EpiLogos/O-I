@@ -80,12 +80,12 @@ test('a session\'s chain is Agent, skills rack, scope; a group\'s leads with the
   assert.deepEqual(session, {kind: 'session', group: false})
   assert.deepEqual(places.chainSlots(session), ['agent', 'skillset', 'world'])
   const group = places.factoryPlace({sessionRef: 'grp-1', group: true, workcell: null})
-  // REPLACED (#725): the Agentset rack, then the Decision helper where its device stands — the Decision helper was retired into the Agentset
-  // rack's Helper page (§19.20 "A decision helper is an agent of type Settle in a team's Agentset rack, on the rack's Helper page"), so a
-  // group's chain is led by the rack alone, and no helper slot stands.
+  // REPLACED (#725): the Agentset rack, then the Decision helper where its device stands. The Decision helper is a chain inside the Agentset
+  // rack, in place of an Agent (§19.20 "Chain: a chain of an Agentset rack, in place of an Agent"; decision-helper-binding.test.mjs), so a
+  // group's chain is led by the rack alone, and no helper slot stands on it.
   assert.deepEqual(places.chainSlots(group), ['agentset', 'agent', 'skillset', 'world'])
   assert.deepEqual(places.GROUP_LEAD, ['agentset'])
-  assert.ok(!('decision-helper' in places.SLOT_DEVICE), 'no Decision helper device')
+  assert.ok(!('decision-helper' in places.SLOT_DEVICE), 'no Decision helper slot: it is a chain of the rack')
   // REPLACED (#725): the Knowledge route inside Scope and Capture skill after it — retired into Scope's Knowledge page (§19.9) and the
   // Skillset rack's Capture page (§19.11): neither stands on any chain.
   for (const slot of ['knowledge', 'capture']) assert.ok(!(slot in places.SLOT_DEVICE), `no ${slot} device`)
@@ -106,21 +106,23 @@ test('the Main track\'s chain is the Run map, Approvals and the prompt pads — 
   assert.ok(!('experiment' in places.SLOT_DEVICE), 'no Experiment device')
 })
 
-test('a workcell\'s chain is its rack, the Gateway, the Remote carrier and Git / landing with its Seat page (§16.2, §19.23)', () => {
+test('a workcell\'s chain is the Gateway, the Remote carrier and Git / landing with its Seat page (§16.2, §19.23)', () => {
   const place = places.factoryPlace({sessionRef: 'ses-1', group: false, workcell: 'env-2'})
   assert.deepEqual(place, {kind: 'workcell', name: 'env-2'}, 'a selected workcell\'s return track wins')
-  assert.deepEqual(places.chainSlots(place), ['workcell', 'gateway', 'remote-carrier', 'git'])
+  // REPLACED (§19.23 "It stands on no chain"; §16.2 "Connections keep the same order"): the rack first — Workcell's instrument stands on no
+  // chain, so the road is the three connections.
+  assert.deepEqual(places.chainSlots(place), ['gateway', 'remote-carrier', 'git'])
   // REPLACED (#725): the Seat inside Git / landing as a device of its own — the Seat is Git / landing's Seat page (§19.17), its keys under
   // `seat.` on Git / landing's own device, so nothing stands inside the git slot.
   assert.equal(places.INSIDE.git, undefined)
   assert.equal(SEAT_PAGE.prefix, 'seat.')
-  assert.ok(Object.keys(gitDesign.defaults).some(key => key.startsWith(SEAT_PAGE.prefix)), 'Git / landing\'s design draws the Seat page')
-  assert.deepEqual([places.SLOT_DEVICE.workcell.id, places.SLOT_DEVICE['remote-carrier'].id, places.SLOT_DEVICE.git.id],
-    [rack.WORKCELL_RACK_ID, cell.CARRIER_ID, cell.GIT_ID])
+  assert.ok(Object.keys(gitDesign.defaults).some(key => key.startsWith(SEAT_PAGE.prefix)), 'Git / landing\'s design draws the Seat group')
+  assert.deepEqual([places.SLOT_DEVICE['remote-carrier'].id, places.SLOT_DEVICE.git.id], [cell.CARRIER_ID, cell.GIT_ID])
+  assert.ok(!('workcell' in places.SLOT_DEVICE), 'Workcell\'s instrument has no slot: it stands on no chain')
   assert.ok(!('seat' in places.SLOT_DEVICE), 'no Seat device')
 })
 
-test('no monitor and no connection stands on a session\'s or the Main track\'s chain; a workcell\'s chain is its rack and its connections (§16.1)', async () => {
+test('no monitor and no connection stands on a session\'s or the Main track\'s chain; a workcell\'s chain is its connections (§16.1)', async () => {
   for (const place of [{kind: 'session', group: true}, {kind: 'main'}]) {
     for (const slot of places.chainSlots(place, {runMap: true, pads: true})) {
       const kind = await kindOf(slot)
@@ -129,7 +131,9 @@ test('no monitor and no connection stands on a session\'s or the Main track\'s c
   }
   assert.equal(await kindOf('member'), 'effect')
   const kinds = await Promise.all(places.chainSlots({kind: 'workcell', name: 'env-1'}).map(kindOf))
-  assert.deepEqual(kinds, ['rack', 'connection', 'connection', 'connection'], 'the workcell rack, then the Gateway, the Remote carrier, Git / landing')
+  // REPLACED (§19.23, 22 Oct manual): "Kind: rack" — Workcell's is an instrument ("Kind: instrument"); its slot is still factoryPlaces.ts's.
+  // REPLACED (§19.23 "It stands on no chain"): the instrument first — the chain is the three connections.
+  assert.deepEqual(kinds, ['connection', 'connection', 'connection'], 'the Gateway, the Remote carrier, Git / landing')
   // REPLACED (#725): the Seat, a connection — it is Git / landing's Seat page now (§19.17), and Git / landing is the connection that carries it.
   assert.equal(await kindOf('git'), 'connection')
 })
@@ -168,13 +172,14 @@ test('the chain draws the plan and no other plate: no Gateways rack, Agency gate
   assert.doesNotMatch(view, /<DeviceView device=\{main\.(rack|agency|frames)\}/, 'no monitor and no Agency gateway drawn as a plate')
   assert.doesNotMatch(view, /placed\(LEDGER_ID|placed\(FRAMES_ID|placed\(GATEWAYS_RACK_ID|placed\(AGENCY_GATEWAY_ID|placed\(MESSAGES_ID/, 'no monitor placed on a chain')
   assert.doesNotMatch(view, /LINK_ID|linkBinding|LINK_DESIGN/, 'the Link is the transport\'s: neither placed nor published here')
-  // REPLACED (#725): the Seat placed inside Git / landing — Git / landing carries it as its Seat page (§19.17), and its Checkouts page on a
-  // workcell's chain (§19.16).
-  assert.match(view, /carryPages\(gitDesignBinding, \[\{page: SEAT_PAGE, binding: seatDesignBinding\}, \.\.\.\(cellName != null \? \[\{page: CHECKOUTS_PAGE, binding: checkouts\}\] : \[\]\)\]\)/,
-    'the Seat and Checkouts pages of Git / landing (§19.16, §19.17)')
+  // REPLACED (#725): the Seat placed inside Git / landing — Git / landing carries it (§19.17). REPLACED (§19.16, 22 Oct manual): its Seat
+  // and Checkouts pages left: the seat is its Seat group, the checkouts the Seats page of Workcell's instrument (the rail's, below).
+  assert.match(view, /carryPages\(gitDesignBinding, \[\{page: SEAT_PAGE, binding: seatDesignBinding\}\]\)/, 'the Seat group of Git / landing (§19.16, §19.17)')
   assert.doesNotMatch(view, /placed\(SEAT_ID|placed\(KNOWLEDGE_ROUTE_ID|placed\(CAPTURE_SKILL_ID|placed\(DECISION_HELPER_ID|placed\(EXPERIMENT_ID|main\.experiment/, 'no retired device placed')
-  assert.match(view, /case 'workcell': return rackEntry\?\.binding \? placed\(WORKCELL_RACK_ID, rackEntry\.device, rackEntry\.binding/, 'the rack as the rail\'s publisher holds it')
-  assert.match(view, /case 'remote-carrier': return placed\(CARRIER_ID, cells\.carrier, carrierCarrying/)
+  // REPLACED (§19.23 "It stands on no chain"; §16.3 "Its window holds its Full"): the rack placed as the rail's publisher holds it — the
+  // instrument is drawn in a pane and on the rail, never as a plate.
+  assert.doesNotMatch(view, /case 'workcell'|placed\(WORKCELL_RACK_ID/, 'Workcell\'s instrument is placed on no chain')
+  assert.match(view, /case 'remote-carrier': return placed\(CARRIER_ID, cells\.carrier, carrierDesignBinding/)
   assert.match(view, /seatBinding\(\{status: seats\.status === 'answered' \? seats\.value : null[^\n]*\n[^\n]*workcell: cellName/, 'the Seat starts at the workcell\'s seat')
   // REPLACED (O-I #740 lane B): the seat of RACK_PROJECT ('O-I'); the chain's register now — the session's own, else the root (worldScope.ts).
   assert.match(view, /cellName \? workcellGitReading\(seats, cellName, rackProject\) : reading/, 'Git / landing reads the workcell\'s seat of the chain\'s project')
@@ -186,10 +191,13 @@ test('the chain draws the plan and no other plate: no Gateways rack, Agency gate
   for (const id of ['MESSAGES_ID', 'FRAMES_ID', 'LEDGER_ID', 'WORKCELL_RACK_ID']) assert.match(rail, new RegExp(`publish\\(${id}, `), `${id} is published`)
   for (const id of ['GATEWAYS_RACK_ID', 'AGENCY_GATEWAY_ID']) assert.doesNotMatch(rail, new RegExp(`publish\\(${id}, `), `${id} is not published`)
   // REPLACED (#772): the tile carries the gateways first, then the Left behind page (left., DLW §19.23 "What a run leaves behind").
-  assert.match(rail, /carryPages\(ownWorkcell, \[\{page: GATEWAYS_PAGE, binding: gateways\}, \{page: LEFT_BEHIND_PAGE, binding: leftBehind\}\]\)/, 'the Workcells tile carries the gateways')
+  // REPLACED (§19.23, 22 Oct manual): then the Seats page (seat., co.) and the Machine page (carrier., mc.).
+  assert.match(rail, /carryPages\(ownWorkcell, \[\{page: GATEWAYS_PAGE, binding: gateways\}, \{page: LEFT_BEHIND_PAGE, binding: leftBehind\},\s*\{page: SEAT_PAGE, binding: seat\}, \{page: CHECKOUTS_PAGE, binding: leftBehind\}, \{page: CARRIER_PAGE, binding: carrierPlan\}, \{page: MACHINE_PAGE, binding: machine\}\]\)/,
+    'the Workcells tile carries the gateways')
   // REPLACED (#804): "SEAT_ID, CARRIER_ID, RUN_MAP_ID, PROMPT_PADS_ID withdrawn" — the chain withdraws only what it publishes: the Seat is
   // Git / landing's Seat page (§19.17), and nothing publishes its id (t804-retired-carries-answer-face.test.mjs).
-  assert.match(view, /AGENTSET_ID, APPROVALS_ID, CARRIER_ID, RUN_MAP_ID, PROMPT_PADS_ID\]\) publishDevice\(id, null\)/, 'withdrawn with the chain — never the Link, never the rail\'s')
+  // The Decision helper is published beside a group's rack (§19.20, a chain of the rack), so it is withdrawn with the chain.
+  assert.match(view, /AGENTSET_ID, DECISION_HELPER_ID, APPROVALS_ID, CARRIER_ID, RUN_MAP_ID, PROMPT_PADS_ID\]\) publishDevice\(id, null\)/, 'withdrawn with the chain — never the Link, never the rail\'s')
   assert.doesNotMatch(view, /SEAT_ID[^\n]*publishDevice\(id, null\)/, 'no retired Seat cleared')
   const detail = read('agent/AgentShellDeviceDetail.tsx')
   assert.match(detail, /import \{workcellOfTrack\} from '\.\.\/frame\/tracks\/returnTracks'/)
@@ -214,7 +222,7 @@ test('the rail: Messages first, then the monitors and the chain devices\' widget
   bind.resetHolds()
   const holds = bind.chainHolds()
   // The Workcells tile on the rack's binding carrying the gateways' under `gw.` (AgentRailDevices.tsx), as the rail publishes it.
-  const workcellsBinding = carryPages(rack.workcellRackBinding({name: null, project: 'O-I', seats: null, chain: {gateway: null, carrier: {}, git: null}, holds}, {gateway: null}),
+  const workcellsBinding = carryPages(rack.workcellRackBinding({name: null, project: 'O-I', seats: null, chain: {gateway: null, carrier: {}, git: null}, holds}, {}),
     [{page: GATEWAYS_PAGE, binding: main.rackBinding({reading: ANSWERED, holds}, {show() {}})}])
   const devices = {
     messages: [msg.messagesDevice(), msg.messagesBinding({population: {status: 'reading', value: null, error: null}, gateway: model.INITIAL_READING, holds})],
@@ -282,8 +290,10 @@ test('the Device side\'s head says what the chain now holds (shell/modeDetails.t
 
 test('the workcell rack and Messages are their families\' own faces: designKey(family, face.id) is the catalogue id by the family\'s declaration', () => {
   const workcell = inhabitantManifest('workcell')?.faces.find(face => face.id === 'workcell')
-  assert.equal(workcell?.liveSemantic, 'rack')
-  assert.deepEqual(workcell?.invariant?.chains, ['gateway', 'remote-carrier', 'git-seat'])
+  // REPLACED (§19.23 "Kind: instrument · Pane: born in a pane"; §16.3 "an instrument born there | Widget and Full"): 'rack' — the face is a
+  // device instrument; and its chains (the Gateway, the Remote carrier, Git / landing) — "It stands on no chain".
+  assert.equal(workcell?.liveSemantic, 'device-instrument')
+  assert.equal(workcell?.invariant?.chains, undefined, 'Workcell\'s instrument stands on no chain')
   const messages = inhabitantManifest('ai-kit')?.faces.find(face => face.id === 'messages')
   assert.equal(messages?.liveSemantic, 'device-instrument')
   assert.match(messages?.invariant?.generatesAbsent ?? '', /aikit gateway send/)

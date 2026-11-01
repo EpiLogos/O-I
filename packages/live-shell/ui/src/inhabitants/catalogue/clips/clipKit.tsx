@@ -9,7 +9,7 @@
 //   and under them a lane of its own (velocity, cap 01) or the envelope's choosers (cap 13–18).
 // Nothing in a panel scrolls; only the editor's content does, as in Live. Every control names what it does for the status bar
 // (data-i "Name|What it does"), through the device kit's controls.
-import {useRef, type CSSProperties, type MouseEvent, type ReactNode} from 'react'
+import {useRef, type CSSProperties, type MouseEvent, type PointerEvent, type ReactNode} from 'react'
 import {Action, Chooser, Handle, Radio, Toggle, ValueBox, type Option, type Standing, type Tone} from '../../sdk/panel'
 import {has, strOf, type Value} from '../panels/design'
 import {GROOVE, MADE_OF, TAB_KEY, type ClipProps, type ClipTab, type DesignedClip, type Place} from './design'
@@ -182,12 +182,24 @@ export interface Block {
   readonly dashed?: boolean
   /** Drawn striped: it stopped where its output stopped. */
   readonly striped?: boolean
+  /** Drawn dim, behind the rest: material of the same ruler that this editor shows but does not edit (Live draws a clip's notes
+   * behind its envelope, cap 13). */
+  readonly faint?: boolean
+  /** A block that holds blocks of its own, drawn small inside it: each [at, len, row], as fractions of the block (0–1). */
+  readonly inner?: readonly (readonly [number, number, number])[]
   /** What it is, for the status bar. */
   readonly does?: string
 }
 
-/** A line across the lanes at a moment: a steer you sent, a marker, the present. */
-export interface Mark {readonly at: number; readonly label: string; readonly tone?: Tone; readonly does?: string}
+/** A line across the lanes at a moment: a steer you sent, a marker, the present. A pin is a warp marker: where a moment of a
+ * recording is anchored to the ruler (Live's warp markers, cap 24–25), drawn as a solid flag on the line's head. */
+export interface Mark {readonly at: number; readonly label: string; readonly tone?: Tone; readonly does?: string; readonly pin?: boolean}
+
+/** A tie from the end of one block to the start of another: the second waits on the first. */
+export interface Tie {readonly from: string; readonly to: string; readonly tone?: Tone; readonly dashed?: boolean; readonly does?: string}
+
+/** A bar standing across some lanes at a moment: where what those lanes hold meets before what comes after it starts. */
+export interface Meet {readonly at: number; readonly lanes: readonly string[]; readonly label?: string; readonly tone?: Tone; readonly does?: string}
 
 export interface LaneGridProps {
   readonly lanes: readonly Lane[]
@@ -213,10 +225,22 @@ export interface LaneGridProps {
   /** A lane under the lanes, at full width (Live's velocity lane, cap 01). */
   readonly under?: ReactNode
   readonly underH?: number
+  /** Ties between blocks, drawn from the end of one to the start of the other. */
+  readonly ties?: readonly Tie[]
+  /** Bars across lanes, where what they hold meets. */
+  readonly meets?: readonly Meet[]
+  /** Moments marked under the ruler as small triangles: where something starts in a recording (Live's transients, cap 23). */
+  readonly onsets?: readonly number[]
+  /** Drag a block: along the ruler to move it, up or down to move it to another lane. Snaps to `minor`. Absent: blocks only select. */
+  readonly onMove?: (id: string, at: number, lane: string) => void
+  /** Drag a block's right edge to change its length. Snaps to `minor`. */
+  readonly onLength?: (id: string, len: number) => void
+  /** Double-click a block to open what it holds. */
+  readonly onOpen?: (id: string) => void
 }
 
 /** The ruler with the loop brace, as Live draws it over its editor (cap 01: bar numbers, the blue brace). */
-export function Ruler({from, to, major, minor, label, loop, keyW, w}: {from: number; to: number; major: number; minor: number; label: (t: number) => string; loop?: {from: number; to: number}; keyW: number; w: number}) {
+export function Ruler({from, to, major, minor, label, loop, keyW, w, onsets}: {from: number; to: number; major: number; minor: number; label: (t: number) => string; loop?: {from: number; to: number}; keyW: number; w: number; onsets?: readonly number[]}) {
   const inner = w - keyW, x = (t: number) => keyW + (t - from) / (to - from) * inner
   const ticks: ReactNode[] = []
   for (let t = Math.ceil(from / minor) * minor; t <= to + 1e-9; t += minor) {
@@ -229,6 +253,7 @@ export function Ruler({from, to, major, minor, label, loop, keyW, w}: {from: num
   return <svg className="clv-ruler" width={w} height={RULER_H} viewBox={`0 0 ${w} ${RULER_H}`} aria-hidden="true">
     {ticks}
     {loop && <rect x={x(loop.from)} y={12} width={Math.max(1, x(loop.to) - x(loop.from))} height={4} className="clv-brace" />}
+    {(onsets ?? []).filter(t => t >= from && t <= to).map((t, i) => <path key={`o${i}`} d={`M${x(t) - 2.5} ${RULER_H} L${x(t)} ${RULER_H - 4} L${x(t) + 2.5} ${RULER_H} Z`} className="clv-onset" />)}
   </svg>
 }
 
@@ -244,10 +269,59 @@ export function LaneGrid(g: LaneGridProps) {
     const isMajor = Math.abs(t / g.major - Math.round(t / g.major)) < 1e-6
     lines.push(<line key={t.toFixed(4)} x1={x(t)} x2={x(t)} y1={0} y2={height} className={isMajor ? 'clv-bar' : 'clv-beat'} />)
   }
+  const span = (block: Block) => {
+    const row = index.get(block.lane)
+    if (row === undefined) return undefined
+    const x0 = x(block.at), open = block.len === undefined, x1 = open ? x(g.to) : x(block.at + block.len!)
+    return {row, x0, x1, y0: row * laneH + 1, hh: laneH - 2, open}
+  }
+  // A drag on a block (where the editor lets one move): along the ruler it moves the block by whole steps of `minor`, up or down
+  // it moves the block to another lane; on the block's right edge it changes its length. The block moves only when the hand lets go.
+  const svg = useRef<SVGSVGElement>(null)
+  const drag = useRef<{id: string; edge: boolean; x: number; y: number; at: number; len: number; row: number} | null>(null)
+  const step = (px: number) => Math.round(px / inner * (g.to - g.from) / g.minor) * g.minor
+  const scale = () => { const box = svg.current?.getBoundingClientRect(); return box && box.width ? g.w / box.width : 1 }
+  const grab = (event: PointerEvent<SVGGElement>, block: Block, edge: boolean) => {
+    if (!(edge ? g.onLength : g.onMove) || block.faint) return
+    event.stopPropagation()
+    ;(event.currentTarget as Element).setPointerCapture?.(event.pointerId)
+    drag.current = {id: block.id, edge, x: event.clientX, y: event.clientY, at: block.at, len: block.len ?? 0, row: index.get(block.lane) ?? 0}
+  }
+  const letGo = (event: PointerEvent<SVGGElement>) => {
+    const d = drag.current
+    drag.current = null
+    if (!d) return
+    const k = scale(), dx = (event.clientX - d.x) * k, dy = (event.clientY - d.y) * k
+    if (d.edge) { const len = Math.max(g.minor, d.len + step(dx)); if (len !== d.len) g.onLength?.(d.id, len); return }
+    const at = Math.max(g.from, Math.min(g.to - g.minor, d.at + step(dx))), row = Math.max(0, Math.min(g.lanes.length - 1, d.row + Math.round(dy / laneH)))
+    if (at !== d.at || row !== d.row) g.onMove?.(d.id, at, g.lanes[row]!.id)
+  }
+  const drawn = (block: Block) => {
+    const s = span(block)
+    if (!s) return null
+    const {x0, x1, y0, hh, open} = s
+    const wide = Math.max(2, x1 - x0)
+    const glide = block.glide ? Math.max(0, x(block.at + (block.len ?? 0) + block.glide) - x1) : 0
+    const moves = !block.faint && (g.onMove || g.onLength)
+    return <g key={block.id} className="clv-block" data-tone={block.tone ?? 'value'} data-selected={block.id === g.selected ? 'true' : undefined} data-faint={block.faint ? 'true' : undefined}
+      data-i={said(block.label ?? 'Step', block.does)} onClick={g.onSelect ? () => g.onSelect!(block.id) : undefined} onDoubleClick={g.onOpen ? () => g.onOpen!(block.id) : undefined}
+      onPointerDown={moves ? event => grab(event, block, false) : undefined} onPointerUp={moves ? letGo : undefined}
+      style={{cursor: moves ? 'grab' : g.onSelect ? 'pointer' : undefined}}>
+      <rect x={x0} y={y0} width={wide} height={hh} className="clv-block-body" data-open={open ? 'true' : undefined}
+        style={open ? {fill: 'url(#clv-open)'} : undefined} strokeDasharray={block.dashed ? '3 2' : undefined} />
+      {block.striped && <rect x={x0} y={y0} width={wide} height={hh} fill="url(#clv-stripes)" />}
+      {(block.inner ?? []).map(([a, l, r], i) => <rect key={i} x={x0 + 2 + a * (wide - 4)} y={y0 + 2 + r * Math.max(2, hh * 0.5 - 4)} width={Math.max(1.5, l * (wide - 4))} height={1.5} className="clv-block-inner" />)}
+      {glide > 0 && <path d={`M${x1} ${y0} L${x1 + glide} ${y0 + hh / 2} L${x1} ${y0 + hh} Z`} className="clv-glide" />}
+      {block.label && laneH >= 12 && wide > 26 && <text x={x0 + 3} y={y0 + hh - 3} className="clv-block-label">{fit(block.label, wide - 6)}</text>}
+      {g.onLength && !block.faint && !open && <rect x={x1 - 3} y={y0} width={4} height={hh} className="clv-block-edge"
+        onPointerDown={event => grab(event as unknown as PointerEvent<SVGGElement>, block, true)} style={{cursor: 'ew-resize'}} />}
+    </g>
+  }
+  const byId = new Map(g.blocks.map(block => [block.id, block]))
   return <div className="clv-grid" style={{width: g.w}} data-i={said(g.name, g.does)}>
-    <Ruler from={g.from} to={g.to} major={g.major} minor={g.minor} label={g.label} loop={g.loop} keyW={keyW} w={g.w} />
+    <Ruler from={g.from} to={g.to} major={g.major} minor={g.minor} label={g.label} loop={g.loop} keyW={keyW} w={g.w} onsets={g.onsets} />
     <div className="clv-lanes" style={{height: g.h - RULER_H - underH}}>
-      <svg width={g.w} height={Math.max(height, 1)} viewBox={`0 0 ${g.w} ${Math.max(height, 1)}`} role="group" aria-label={g.name}>
+      <svg ref={svg} width={g.w} height={Math.max(height, 1)} viewBox={`0 0 ${g.w} ${Math.max(height, 1)}`} role="group" aria-label={g.name}>
         <defs>
           <linearGradient id="clv-open" x1="0" x2="1"><stop offset="0" stopColor="currentColor" stopOpacity="1" /><stop offset="1" stopColor="currentColor" stopOpacity="0" /></linearGradient>
           <pattern id="clv-stripes" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="3" height="6" className="clv-stripe" /></pattern>
@@ -257,26 +331,27 @@ export function LaneGrid(g: LaneGridProps) {
           <Key lane={lane} y={i * laneH} w={keyW} h={laneH} highlight={g.highlight} />
         </g>)}
         {lines}
-        {g.blocks.map(block => {
-          const row = index.get(block.lane)
-          if (row === undefined) return null
-          const x0 = x(block.at), y0 = row * laneH + 1, hh = laneH - 2
-          const open = block.len === undefined
-          const x1 = open ? x(g.to) : x(block.at + block.len!)
-          const wide = Math.max(2, x1 - x0)
-          const glide = block.glide ? Math.max(0, x(block.at + (block.len ?? 0) + block.glide) - x1) : 0
-          return <g key={block.id} className="clv-block" data-tone={block.tone ?? 'value'} data-selected={block.id === g.selected ? 'true' : undefined}
-            data-i={said(block.label ?? 'Step', block.does)} onClick={g.onSelect ? () => g.onSelect!(block.id) : undefined} style={{cursor: g.onSelect ? 'pointer' : undefined}}>
-            <rect x={x0} y={y0} width={wide} height={hh} className="clv-block-body" data-open={open ? 'true' : undefined}
-              style={open ? {fill: 'url(#clv-open)'} : undefined} strokeDasharray={block.dashed ? '3 2' : undefined} />
-            {block.striped && <rect x={x0} y={y0} width={wide} height={hh} fill="url(#clv-stripes)" />}
-            {glide > 0 && <path d={`M${x1} ${y0} L${x1 + glide} ${y0 + hh / 2} L${x1} ${y0 + hh} Z`} className="clv-glide" />}
-            {block.label && laneH >= 12 && wide > 26 && <text x={x0 + 3} y={y0 + hh - 3} className="clv-block-label">{fit(block.label, wide - 6)}</text>}
+        {g.blocks.filter(block => block.faint).map(drawn)}
+        {(g.ties ?? []).map(tie => {
+          const a = byId.get(tie.from), b = byId.get(tie.to), sa = a && span(a), sb = b && span(b)
+          if (!sa || !sb) return null
+          const ax = sa.x1, ay = sa.y0 + sa.hh / 2, bx = sb.x0, by = sb.y0 + sb.hh / 2, mid = Math.max(6, (bx - ax) / 2)
+          return <path key={`${tie.from}>${tie.to}`} d={`M${ax} ${ay} C${ax + mid} ${ay} ${bx - mid} ${by} ${bx} ${by}`} className="clv-tie" data-tone={tie.tone}
+            strokeDasharray={tie.dashed ? '3 2' : undefined} data-i={said(`${a!.label ?? tie.from} → ${b!.label ?? tie.to}`, tie.does)} />
+        })}
+        {(g.meets ?? []).map(meet => {
+          const rows = meet.lanes.map(id => index.get(id)).filter((r): r is number => r !== undefined)
+          if (!rows.length) return null
+          const top = Math.min(...rows) * laneH + 1, bottom = (Math.max(...rows) + 1) * laneH - 1, mx = x(meet.at)
+          return <g key={`m${meet.at}-${meet.label ?? ''}`} className="clv-meet" data-tone={meet.tone} data-i={said(meet.label ?? 'Join', meet.does)}>
+            <rect x={mx - 1.5} y={top} width={3} height={bottom - top} />
+            {meet.label && <text x={mx + 4} y={top + 8} className="clv-meet-label">{meet.label}</text>}
           </g>
         })}
-        {(g.marks ?? []).map(mark => <g key={`${mark.at}-${mark.label}`} className="clv-mark" data-tone={mark.tone ?? 'accent'} data-i={said(mark.label, mark.does)}>
+        {g.blocks.filter(block => !block.faint).map(drawn)}
+        {(g.marks ?? []).map(mark => <g key={`${mark.at}-${mark.label}`} className="clv-mark" data-tone={mark.tone ?? 'accent'} data-pin={mark.pin ? 'true' : undefined} data-i={said(mark.label, mark.does)}>
           <line x1={x(mark.at)} x2={x(mark.at)} y1={0} y2={height} />
-          <rect x={x(mark.at) - 3} y={0} width={6} height={6} />
+          {mark.pin ? <path d={`M${x(mark.at) - 4} 0 H${x(mark.at) + 4} V4 L${x(mark.at)} 8 L${x(mark.at) - 4} 4 Z`} /> : <rect x={x(mark.at) - 3} y={0} width={6} height={6} />}
         </g>)}
       </svg>
     </div>

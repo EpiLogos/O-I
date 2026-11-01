@@ -328,7 +328,9 @@ button.chip:hover{color:var(--text)}
 .dt{grid-area:dt;min-width:0;min-height:0;display:flex;flex-direction:column;padding:0 4px 4px 0}
 .dth{height:22px;flex:none;display:flex;align-items:center;gap:8px;padding:0 8px;background:var(--bg-1);border:1px solid var(--line);border-bottom:none;font-size:10.5px;color:var(--text-dim);white-space:nowrap}
 .dth b{color:var(--text);font-weight:500} .dth .r{margin-left:auto;color:var(--text-faint)}
-.chain{flex:1;min-height:0;display:flex;gap:6px;padding:8px;overflow:hidden;align-items:stretch;background:var(--bg-1);border:1px solid var(--line)}
+/* the chain runs left to right and scrolls sideways, as Live's Device View; the picture in the status bar is its scroller */
+.chain{flex:1;min-height:0;display:flex;gap:6px;padding:8px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;align-items:stretch;background:var(--bg-1);border:1px solid var(--line)}
+.chain::-webkit-scrollbar{display:none}
 .dev{background:var(--bg-2);border:1px solid var(--line);display:flex;flex-direction:column;flex:none}
 .dev.sel{outline:1px solid var(--accent);outline-offset:-1px}
 .dh{height:21px;display:flex;align-items:center;gap:5px;padding:0 5px;border-bottom:1px solid var(--line);font-size:11px;white-space:nowrap;cursor:default}
@@ -346,6 +348,42 @@ button.chip:hover{color:var(--text)}
 .dli{display:flex;align-items:center;gap:6px;height:20px;flex:none;padding:0 5px;background:var(--bg-1);border:1px solid var(--line);font-size:10px;cursor:pointer;white-space:nowrap;overflow:hidden}
 .dli .n{overflow:hidden;text-overflow:ellipsis;flex:1} .dli.on{border-color:var(--accent);color:var(--text)} .dli .d{font-family:var(--mono);color:var(--text-faint);font-size:9px}
 .dropz{width:140px;flex:none;border:1px dashed var(--line-strong);display:flex;align-items:center;justify-content:center;text-align:center;color:var(--text-faint);font-size:10.5px;padding:10px}
+/* a folded device: double-click its title bar and it stands as a strip, its name read upward; press the strip to open it */
+.dev.folded{width:24px!important}
+.dev.folded .dh,.rk-strip{flex:1;height:auto;flex-direction:column;align-items:center;gap:6px;padding:6px 0;border-bottom:none}
+.dev.folded .vn,.rk-strip .vn{writing-mode:vertical-rl;transform:rotate(180deg);margin-top:auto;white-space:nowrap;font-size:11px}
+/* a rack, as Live's: its view buttons in a column under its title bar, the macros and the chain list, then the selected chain's
+   devices at full height, then the end bracket. Hide the macros and the chain list and the head stands as a strip. */
+.rack{display:flex;flex:none;align-items:stretch;gap:6px}
+.rk-left{display:flex;flex-direction:column;flex:none;background:var(--bg-2);border:1px solid var(--line)}
+.rk-body{flex:1;display:flex;min-height:0}
+.rk-col{width:18px;flex:none;display:flex;flex-direction:column;align-items:center;gap:5px;padding:6px 0;border-right:1px solid var(--line);background:var(--bg-1)}
+.rk-col i{width:12px;height:12px;border-radius:50%;display:grid;place-items:center;background:var(--bg-0);color:var(--text-faint);cursor:pointer;font-style:normal}
+.rk-col i.on{background:var(--accent);color:#1d1f22}
+.rk-macros{display:grid;grid-template-columns:repeat(4,54px);grid-auto-rows:min-content;gap:3px;padding:6px;border-right:1px solid var(--line);align-content:start}
+.rk-macros .none{grid-column:span 4;width:150px;font-size:10px;color:var(--text-faint);line-height:1.4}
+.mac{background:var(--bg-3);display:flex;flex-direction:column;align-items:center;gap:1px;padding:3px 0 4px;cursor:ns-resize;user-select:none}
+.mac .kl{font-size:9px;color:var(--text);white-space:nowrap} .mac .kv{font-size:9px;font-family:var(--mono);color:var(--text-dim);white-space:nowrap}
+.rk-chains{width:256px;display:flex;flex-direction:column;gap:2px;padding:4px 6px;min-height:0}
+.rk-chh{font-size:9.5px;color:var(--text-faint);padding:0 2px 2px}
+.rk-row{display:flex;align-items:center;gap:4px;height:20px;flex:none;padding:0 3px 0 0;background:var(--bg-1);border:1px solid var(--line);font-size:10.5px;cursor:pointer;white-space:nowrap}
+.rk-row.on{background:var(--bg-3);border-color:var(--accent)} .rk-row.off .n{color:var(--text-faint)} .rk-row.stall{outline:1px solid var(--stall);outline-offset:-1px}
+.rk-row .m{width:3px;align-self:stretch;background:var(--bg-0)} .rk-row .m.working{background:var(--accent)} .rk-row .m.done{background:var(--green)}
+.rk-row .n{flex:1;overflow:hidden;text-overflow:ellipsis;padding-left:2px}
+.rk-row .chip{font-size:9px;font-family:var(--mono);color:var(--text-dim);background:var(--bg-0);border:1px solid var(--line);padding:0 3px}
+.rk-row .b{width:14px;height:14px;flex:none;display:grid;place-items:center;font-size:8.5px;background:var(--bg-0);border:1px solid var(--line);color:var(--text-faint)} .rk-row .b.on{background:var(--accent);color:#1d1f22}
+.rk-drop{flex:1;min-height:26px;display:grid;place-items:center;text-align:center;font-size:10px;color:var(--text-faint)}
+.rk-devs{display:flex;gap:6px;flex:none;align-items:stretch}
+.rk-end{width:7px;flex:none;background:var(--bg-2);border:1px solid var(--line);border-left:none}
+.rk-strip{width:24px;flex:none;display:flex;background:var(--bg-2);border:1px solid var(--line);cursor:default}
+.rk-strip .rk-col{border-right:none;background:none;padding:0}
+/* the status bar's picture of the chain: the selected track's name, then its chain in miniature with a box over what Device view
+   shows. Drag in it to scroll the chain; press outside the box to bring that part into view. */
+.sb .sbtrk{color:var(--text);white-space:nowrap}
+.cmini{position:relative;height:20px;flex:none;overflow:hidden;background:var(--bg-0);cursor:grab;user-select:none}
+.cmini:active{cursor:grabbing}
+.cmini .pic{position:absolute;left:0;top:0;box-sizing:border-box;transform-origin:0 0;pointer-events:none;border:none;overflow:visible}
+.cmini .box{position:absolute;top:0;bottom:0;border:1.5px solid var(--text-dim);border-radius:4px;pointer-events:none}
 .sw{display:flex;gap:3px} .sw i{width:16px;height:16px;border:1px solid #0006;cursor:pointer} .sw i.on{outline:1px solid var(--text);outline-offset:1px}
 .tin{height:19px;background:var(--bg-0);border:1px solid var(--line);color:var(--text);font-size:10.5px;padding:0 6px;outline:none;width:100%}
 /* instrument (Technē) and Studio (Expressions): one instrument frame, its own sections */
@@ -465,7 +503,7 @@ button.chip:hover{color:var(--text)}
 
 <section class="dt" id="dt"><div class="dth" id="dth"></div><div class="chain" id="chain"></div></section>
 
-<footer class="sb"><span class="i">i</span><div class="info" id="info"><b>Info</b>Hover anything to read what it does.</div><span id="counts"></span><div class="tg" id="dvtg"></div></footer>
+<footer class="sb"><span class="i">i</span><div class="info" id="info"><b>Info</b>Hover anything to read what it does.</div><span id="counts"></span><div class="tg" id="dvtg"></div><span class="sbtrk" id="sbtrk"></span><div class="cmini" id="cmini" data-i="Chain|The selected track’s chain in miniature; the box is what Device view shows. Drag to scroll the chain; press outside the box to bring that part into view; the wheel scrolls it too."></div></footer>
 <div class="scrim" id="scrim"><div class="dlg" id="dlg"></div></div>
 <div class="toast" id="toast"></div>
 </div></div>
@@ -750,7 +788,8 @@ const S={
     techne:{tree:0,focus:0,panes:[paneOf(tab('lens',{lens:'M4',scale:'system',body:'central'}))]}},
   selText:{doc:'flow',on:true}, admitted:new Set(), projected:{}, watch:new Set(['ariadne']), contact:null,
   dv:{base:'device',factory:'clip',expressions:'device',techne:'device'},tiles:{base:['convo','packet','trail'],factory:['results','agents','terminal'],expressions:['anima','sky','trail'],techne:['epii','field','trail']},
-  expand:new Set(), canvasPos:{}, promoted:new Set(), room:'stone', selLoc:'loc:stone', placing:null, lib:false, sel:'lead', devSel:null
+  expand:new Set(), canvasPos:{}, promoted:new Set(), room:'stone', selLoc:'loc:stone', placing:null, lib:false, sel:'lead', devSel:null,
+  fold:new Set(), rv:{track:{m:1,c:1,d:1},crew:{m:1,c:1,d:1},skills:{m:0,c:1,d:0}}, arSel:{}, arOff:new Set(['skills.expressions.produce']), arSolo:{}
 };
 const M=()=>S.modes[S.mode];
 /* panes form a split tree {d:'row'|'col', c:[…]} with pane indices as leaves — no fixed count */
@@ -850,7 +889,7 @@ function kg(kind,col,sz=12){const k=KIND[kind]||KIND.occurrence;
   if(kind==='world'||kind==='body')return `<span class="kg"><svg width="${sz}" height="${sz}" viewBox="0 0 12 12"><circle cx="6" cy="6" r="4.6" fill="${col}" fill-opacity=".35" stroke="${col}"/></svg></span>`;
   return `<span class="kg" style="color:${col};font-size:${kind==='occurrence'?9:11}px">${k.g}</span>`}
 function wbadge(w){const W=WORLDS[w];if(!W||W.own)return '';return `<span class="wb" style="color:${W.hex}">${W.federated?'federated':W.n}</span>`}
-function bee(k,size=34){const a=A[k];const st=a.state;
+function bee(k,size=34){const a=typeof k==='string'?A[k]:k;const st=a.state;
   const eyes=st!=='working'?'<path d="M17.5 16.5h2.4M22.3 16.5h2.4" stroke="#1d1f22" stroke-width="1.2"/>':'<circle cx="18.7" cy="16.3" r="1.25" fill="#1d1f22"/><circle cx="23.5" cy="16.3" r="1.25" fill="#1d1f22"/>';
   return `<svg class="bee-s ${st==='working'?'working':'idle'}" width="${size}" height="${size}" viewBox="0 0 40 40"><g class="bodyg"><ellipse class="wing" cx="15" cy="11" rx="4.5" ry="6.5" fill="#e9f3f5" fill-opacity=".55" stroke="#ffffff55"/><ellipse class="wing" cx="23" cy="10" rx="4" ry="6" fill="#e9f3f5" fill-opacity=".45" stroke="#ffffff55" style="animation-delay:.06s"/><ellipse cx="18" cy="24" rx="11" ry="9" fill="${a.hex}"/><path d="M13 16.5q-1 7.5 0 15M18 15.2q-1.2 8.8 0 17.6" stroke="#1d1f22" stroke-width="2.6" fill="none" stroke-opacity=".8"/><circle cx="23" cy="18" r="6" fill="${a.hex}"/>${eyes}<path d="M21 12.5q-1-4-3.5-5M25 12.5q1.5-4 4-4.5" stroke="#1d1f22" stroke-width="1" fill="none"/></g></svg>`}
 function mercGlyph(cx,cy,s,col,sw=2){return `<g fill="none" stroke="${col}" stroke-width="${sw}" stroke-linecap="round"><path d="M${cx-s*.42} ${cy-s*1.02}a${s*.42} ${s*.34} 0 0 0 ${s*.84} 0"/><circle cx="${cx}" cy="${cy-s*.25}" r="${s*.42}"/><path d="M${cx} ${cy+s*.17}v${s*.75}M${cx-s*.32} ${cy+s*.56}h${s*.64}"/></g>`}
@@ -1372,9 +1411,40 @@ sg('pg.cat','Office',['C1','C2','C3','C4'],'C2','The subject office the page bin
 ro('day.close','Closes',()=>'21:00 · '+(21-CLOCK.nowH).toFixed(1)+' h','Central owns the day: civil-time policy.');
 /* Factory · agent chain */
 sg('gw.tr','Transport',['stdio','ws','remote'],'ws','Hermes gateway transport.');sg('gw.ap','Approvals',['ask','session','always'],'ask','');
-sg('ag.aut','Autonomy',['Suggest','Review','Auto'],'Review','');kn('ag.eff','Effort',0,4,1,2,v=>['low','med','high','xhigh','max'][v],'');
-kn('ws.reach','Reach',0,1,.1,.4,v=>v<.5?'scene':'world','');sg('ws.writes','Writes',['prop','draft','dir'],'draft','');
+sg('rc.where','Where',['here','connected'],'here','The place where the run works: this machine, or a machine you connected.');
+ro('rc.std','Standing',()=>'Ready · mac · env-1','Whether the machine can carry the run now.');ro('rc.plan','Plan',()=>'Satisfiable','The run’s needs laid on what the machine offers.');
+sg('ws.reach','Reach',['Object','Scene','Expression','Central'],'Scene','How wide the agents may reach.');sg('ws.mode','Write mode',['Propose','Draft','Direct'],'Propose','How a write arrives: as a proposal that waits, as a draft, or directly.');
+sg('sc.bumble.mode','Write mode',['Propose','Draft','Direct'],'Propose','Bumble’s own Scope. It only narrows the track’s.');
 sg('git.commit','Commit',['turn','task','man'],'task','');sg('git.push','Push',['off','land'],'off','');
+/* Factory · the Agent rack: one device for the agency a track may use. Each chain of it is an agent, or an agent set: a chain that
+   holds an Agent rack of the set's agents, as a Live rack holds a rack in a chain. What stands outside the rack serves every chain;
+   what stands inside a chain serves that chain alone. A macro turns the same setting on every agent it is mapped to. */
+const MODELS=['haiku-5.5','sonnet-5.5','opus-5.5','fable-5.1','grok-4'],EFFORT=['Low','Medium','High','Max'];
+const AGT={fizz:{n:'Fizz',model:2},honey:{n:'Honey',model:4},bumble:{n:'Bumble',model:1},
+  explore:{n:'explore',model:1,face:{hex:'#8fbfb6',state:'idle'},state:'done'},cite:{n:'cite-check',model:1,face:{hex:'#8fbfb6',state:'working'},state:'working'}};
+const agState=k=>AGT[k].state||A[k]?.state||'idle';
+for(const k in AGT){kn(`ag.${k}.model`,'Model',0,MODELS.length-1,1,AGT[k].model,v=>MODELS[v],'The model this agent runs on. A rack’s Model macro turns it, unless it is unmapped.');
+  kn(`ag.${k}.eff`,'Effort',0,3,1,1,v=>EFFORT[v],'How hard the agent thinks in each turn.');kn(`ag.${k}.bud`,'Budget',1,40,1,12,v=>v+' turns','The turns allowed for one task.')}
+const RACKS={
+  track:{n:'Agent rack',own:'the agents this track may use',chains:[{k:'crew',set:'crew'},{k:'honey',agent:'honey'},{k:'bumble',agent:'bumble'}],
+    map:{model:['ar.crew.model','ag.bumble.model'],eff:['ar.crew.eff','ag.honey.eff','ag.bumble.eff'],bud:['ar.crew.bud','ag.honey.bud','ag.bumble.bud']},
+    drop:'Drop an agent or an agent set here'},
+  crew:{n:'Mercurius correlation',own:'agent set',chains:[{k:'fizz',agent:'fizz'},{k:'explore',agent:'explore'},{k:'cite',agent:'cite'}],
+    map:{model:['ag.explore.model','ag.cite.model'],eff:['ag.fizz.eff','ag.explore.eff','ag.cite.eff'],bud:['ag.fizz.bud','ag.explore.bud','ag.cite.bud']},
+    drop:'Drop an agent here to add it to the set'},
+  skills:{n:'Correlation',own:'Skillset rack',chains:['vault-read','gazetteer','correlate','expressions.produce'].map(n=>({k:n,skill:n})),map:null,
+    drop:'Drop a skill, Method or Methodology here'}};
+const mapTo=keys=>v=>keys.forEach(t=>{P[t]=v;PD[t].on&&PD[t].on(v)});
+const nameOfKey=t=>t.startsWith('ar.')?'the '+RACKS[t.split('.')[1]].n+' set':AGT[t.split('.')[1]].n;
+for(const r in RACKS){const M=RACKS[r].map;if(!M)continue;
+  const says=m=>`Turns it on ${M[m].map(nameOfKey).join(', ')} at once.`+(r==='crew'&&m==='model'?' Fizz is unmapped and keeps its own.':'');
+  kn(`ar.${r}.model`,'Model',0,MODELS.length-1,1,1,v=>MODELS[v],'Macro. '+says('model'),mapTo(M.model));
+  kn(`ar.${r}.eff`,'Effort',0,3,1,1,v=>EFFORT[v],'Macro. '+says('eff'),mapTo(M.eff));
+  kn(`ar.${r}.bud`,'Budget',1,40,1,12,v=>v+' t','Macro. '+says('bud'),mapTo(M.bud));
+  kn(`ar.${r}.fan`,'Fan-out',1,12,1,2,v=>v,'The rack’s own: the most helpers that run at once. A start value, not a limit.');
+  kn(`ar.${r}.depth`,'Depth',1,6,1,2,v=>v,'The rack’s own: how deep helpers may spawn their own.');
+  kn(`ar.${r}.hand`,'Hand-back',0,2,1,2,v=>['Raw','Digest','Summary'][v],'The rack’s own: what a helper returns to its parent.');
+  kn(`ar.${r}.join`,'Join',0,2,1,1,v=>['None','All','First'][v],'The rack’s own: how the chains’ returns combine as they leave the rack.')}
 /* Expressions · Studio */
 kn('x.density','Density',60,220,10,160,v=>v+' pts','');kn('x.sym','Symmetry',3,9,1,5,v=>v+'-fold','');sg('x.shape','Shape',['ring','spiral','lattice'],'ring','');
 kn('x.glow','Glow',0,1,.1,.5,v=>Math.round(v*100)+'%','');kn('x.grain','Grain',0,1,.1,.3,v=>Math.round(v*100)+'%','');
@@ -1407,7 +1477,46 @@ sg('m2.strata','Strata',['occurrence','receipt','Day','NOW','Run'],'occurrence',
 kn('m3.pace','Pace',2,12,1,()=>S.pace,v=>v+' s','',v=>{S.pace=v});sg('m3.x','Transition',['fly','cut','fade'],'fly','');sg('m3.loop','Loop',['off','on'],'off','');
 sg('m5.path','Path',['guided','free'],'guided','');sg('m5.guide','Guide',['Epii','off'],'Epii','');
 
-function dev(name,own,w,vis,body,o={}){return `<div class="dev ${o.sel?'sel':''}" style="width:${w}px" data-i="${name} · ${own}|${o.i||''}"><div class="dh"><span class="pw"></span><span>${name}</span><span class="own">${own}</span><span class="x"><span>▾</span><span>⤢</span></span></div><div class="db">${vis?`<div class="vis" style="width:${o.vw||104}px;height:${o.vw||104}px">${vis}</div>`:''}<div class="ctrls" style="${o.cols?'grid-template-columns:'+o.cols:''}">${body}</div></div></div>`}
+const foldKey=k=>S.mode+':'+k;
+function dev(name,own,w,vis,body,o={}){const fk=foldKey(o.k||name);
+  if(S.fold.has(fk))return `<div class="dev folded" data-fk="${fk}" data-i="${name} · ${own}|Folded. Press it to open it."><div class="dh"><span class="pw"></span><span class="vn">${name}</span></div></div>`;
+  return `<div class="dev ${o.sel?'sel':''}" style="width:${w}px" data-i="${name} · ${own}|${o.i||''}"><div class="dh" data-fk="${fk}"><span class="pw"></span><span>${name}</span><span class="own">${own}</span><span class="x"><span>▾</span><span>⤢</span></span></div><div class="db">${vis?`<div class="vis" style="width:${o.vw||104}px;height:${o.vw||104}px">${vis}</div>`:''}<div class="ctrls" style="${o.cols?'grid-template-columns:'+o.cols:''}">${body}</div></div></div>`}
+/* A rack in Live's shape. Its chains are drawn in its chain list; the selected chain's devices stand beside, at full height, as they
+   stand on any chain. */
+const RV_G={m:'<svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3" fill="none" stroke="currentColor"/><path d="M4 4V1.2" stroke="currentColor"/></svg>',
+  c:'<svg width="8" height="8" viewBox="0 0 8 8"><path d="M1 2h6M1 4h6M1 6h6" stroke="currentColor"/></svg>',
+  d:'<svg width="8" height="8" viewBox="0 0 8 8"><rect x="1" y="1.5" width="2.5" height="5" fill="none" stroke="currentColor"/><rect x="4.5" y="1.5" width="2.5" height="5" fill="none" stroke="currentColor"/></svg>'};
+const chainName=c=>c.set?RACKS[c.set].n:c.agent?AGT[c.agent].n+(c.agent==='fizz'?' · lead':''):c.skill;
+const chainSel=r=>RACKS[r].chains.find(c=>c.k===S.arSel[r])||RACKS[r].chains[0];
+function chainState(c){if(c.set)return RACKS[c.set].chains.some(x=>chainState(x)==='working')?'working':'idle';return c.agent?agState(c.agent):S.arOff.has('skills.'+c.k)?'idle':'working'}
+function mac(k){const d=PD[k],v=pv(k);return `<div class="mac" data-knob="${k}" data-i="${d.l}|${d.i||''}"><span class="kl">${d.l}</span>${knobSVG((v-d.min)/(d.max-d.min))}<span class="kv">${d.fmt?d.fmt(v):v}</span></div>`}
+function rackRow(r,c){const id=r+'.'+c.k,on=chainSel(r)===c,off=S.arOff.has(id),solo=S.arSolo[r]===c.k,st=chainState(c);
+  const chip=c.set?`set · ${RACKS[c.set].chains.length}`:c.agent?MODELS[pv(`ag.${c.agent}.model`)]:'';
+  const what=c.set?`An agent set: this chain holds an Agent rack of the set’s ${RACKS[c.set].chains.length} agents. Select it and the Devices view shows that rack.`:c.agent?`An agent: this chain is its definition — what it reads and carries, the Agent, and any bounds of its own. Select it to see its devices.`:'A skill this rack carries. Its activator loads or unloads it.';
+  return `<div class="rk-row ${on?'on':''} ${off?'off':''}" data-rsel="${id}" data-i="${chainName(c)}|${what}"><span class="m ${off?'':st}"></span><span class="n">${chainName(c)}</span>${chip?`<span class="chip">${chip}</span>`:''}`+
+    `<span class="b ${off?'':'on'}" data-rben="${id}" data-i="Activator|${c.skill?'Loads or unloads the skill.':'Benches the chain: it stays in the rack and is given no work.'}">●</span>`+
+    `<span class="b ${solo?'on':''}" data-rsolo="${id}" data-i="Solo|Attend to this chain alone: the views, tiles and instruments show only it. The others keep running.">S</span>`+
+    `<span class="b" data-i="Hot-swap|${c.skill?'Swap the skill for another from the browser.':'Swap the agent for another from the browser; the rest of its chain stays.'}">⇄</span></div>`}
+function rack(r,devsOf){const R=RACKS[r],v=S.rv[r],fk=foldKey('rack:'+r);
+  const tools=`<span class="x"><span data-i="Hot-swap|Swap the rack for a saved one; its chains come with it.">⇄</span><span data-i="Save|Save the rack as a preset: every chain goes with it, ready for another track.">⤓</span></span>`;
+  const col=`<div class="rk-col">${[['m','Macros'],['c','Chain list'],['d','Devices']].map(([x,l])=>`<i class="${v[x]?'on':''}" data-rv="${r}.${x}" data-i="${l}|Shows or hides the rack’s ${l.toLowerCase()}. Hide all three and the rack folds to its head.">${RV_G[x]}</i>`).join('')}</div>`;
+  const strip=`<div class="rk-strip" data-fk="${fk}" data-i="${R.n} · ${R.own}|Its macros and chain list are hidden. Double-click to show them again."><span class="pw"></span>${col}<span class="vn">${R.n}</span></div>`;
+  if(S.fold.has(fk)||!v.m&&!v.c&&!v.d)return `<div class="rack">${strip}</div>`;
+  const macros=R.map?['model','eff','bud','fan','depth','hand','join'].map(m=>mac(`ar.${r}.${m}`)).join(''):`<div class="none">Map a control of any member here, as Live maps a macro.</div>`;
+  const head=v.m||v.c?`<div class="rk-left"><div class="dh" data-fk="${fk}"><span class="pw"></span><span>${R.n}</span><span class="own">${R.own}</span><span class="x" style="margin-left:6px"><span data-i="Map|Map a control of any device inside to a macro.">Map</span></span>${tools}</div>`+
+    `<div class="rk-body">${col}${v.m?`<div class="rk-macros">${macros}</div>`:''}${v.c?`<div class="rk-chains"><div class="rk-chh">Chain</div>${R.chains.map(c=>rackRow(r,c)).join('')}<div class="rk-drop">${R.drop}</div></div>`:''}</div></div>`:strip;
+  return `<div class="rack">${head}${v.d?`<div class="rk-devs">${devsOf(chainSel(r))}</div>`:''}<div class="rk-end"></div></div>`}
+function agentDev(k){const a=AGT[k];
+  return dev(a.n,'Agent · '+MODELS[pv(`ag.${k}.model`)],236,`<div style="display:grid;place-items:center;height:100%">${bee(A[k]?k:a.face,56)}</div>`,C(`ag.${k}.model`,`ag.${k}.eff`,`ag.${k}.bud`),
+    {cols:'1fr',vw:64,k:'agent:'+k,sel:k==='fizz',i:'Who the agent is and how it runs. What it may do comes from Scope.'})}
+function sourcesDev(own,ids,k,i){return dev('Sources',own,214,null,`<div class="dlist" style="grid-column:span 2;width:184px">${ids.map(x=>`<div class="dli"><span class="d">▤</span><span class="n">${E[x]?.n||x}</span></div>`).join('')}</div>`,{cols:'1fr',k:'sources:'+k,i})}
+const scopeVis=a1=>`<svg width="100%" height="100%" viewBox="0 0 104 104"><circle cx="52" cy="52" r="34" fill="none" stroke="#3f4348" stroke-width="7"/><path d="${arcP(52,52,34,0,a1)}" stroke="#5cc6b4" stroke-width="7" fill="none"/></svg>`;
+/* What a chain of a rack holds: an agent's own chain, an agent set's rack, or a skill. */
+function factoryChain(c){
+  if(c.set)return rack('skills',s=>dev(s.skill,'skill',190,null,`<div class="tog"><span class="kl">Loaded</span><span class="mono" style="font-size:10px">${S.arOff.has('skills.'+s.k)?'no':'yes'}</span></div>`,{cols:'1fr',k:'skill:'+s.k}))+rack(c.set,factoryChain);
+  if(c.skill)return '';
+  const k=c.agent;return (k==='fizz'?sourcesDev('Fizz’s own reading',['stone1950'],'fizz','Inside Fizz’s chain: only Fizz reads it, beside what the whole track reads.'):'')+agentDev(k)+
+    (k==='bumble'?dev('Scope','Bumble’s own',200,scopeVis(60),C('sc.bumble.mode'),{cols:'1fr',k:'scope:bumble',vw:70,i:'Inside Bumble’s chain: it narrows what Bumble may do, never widens the track’s.'}):'')}
 function instFrame(k,name,own,right,secs){return `<div class="inst"><div class="insth"><span class="pw" style="width:10px;height:10px;border-radius:50%;border:2px solid var(--accent)"></span>${k?`<span class="k">${k}</span>`:''}<b style="font-weight:500">${name}</b><span class="own">${own}</span><span class="r">${right||''}</span></div><div class="isecs">${secs.map(s=>`<div class="isec" style="${s.w?'width:'+s.w+'px':''}"><h5>${s.h}${s.r?`<span>${s.r}</span>`:''}</h5>${s.html}</div>`).join('')}</div></div>`}
 const C=(...ks)=>`<div class="ctrls">${ks.map(k=>Array.isArray(k)?ctl(k[0],k[1]):ctl(k)).join('')}</div>`;
 
@@ -1422,13 +1531,17 @@ function deviceDetail(){const t=cur(fp());let head='',html='';
       dev('Answer','agent',206,`<div style="display:grid;place-items:center;height:100%">${bee('fizz',58)}</div>`,`${ctl('ans.agent')}${ctl('ans.mode')}<div class="tog"><button class="bt pri" data-answer="1" data-i="Answer this|Fizz answers the selection with the packet as its whole context; the answer arrives as a new entry.">Answer this</button></div>`,{vw:74,cols:'1fr',i:'Ask an agent about the selection — with the packet, nothing more.'})+
       formDevice(t);
     $('#dth').innerHTML=head;$('#chain').innerHTML=html+`<div class="dropz" data-i="Drop zone|Document devices are admitted by families — e.g. a citation device from the vault, a translation device.">Add a document device</div>`;return}
-  if(S.mode==='factory'){head=`<b>Fizz · lead</b> — the session’s chain: gateway → agent → skills → world → git`;
-    html=dev('Gateway','hermes · ws',250,`<svg width="104" height="104"><circle cx="24" cy="52" r="10" fill="#3f4348" stroke="#71767c"/><circle cx="78" cy="52" r="20" fill="none" stroke="#7ec3e6"/><path d="M34 52H58" stroke="#ffbe00" stroke-dasharray="3 3"/><text x="78" y="56" text-anchor="middle" font-size="9" fill="#d4d7da">hermes</text><text x="52" y="92" text-anchor="middle" font-size="8.5" fill="#71767c">epoch 3f2a · seq 1284</text></svg>`,C('gw.tr','gw.ap'),{cols:'1fr'})+
-      dev('Fizz','opus-5.5',236,`<div style="display:grid;place-items:center;height:100%">${bee('fizz',62)}</div>`,C('ag.aut','ag.eff'),{cols:'1fr',sel:1})+
-      dev('Correlation','skillset rack',240,null,`<div class="dlist" style="grid-column:span 2;width:210px">${['vault-read','gazetteer','correlate','expressions.produce'].map((x,k)=>`<div class="dli ${k===2?'on':''}"><span class="n">${x}</span><span style="width:8px;height:8px;border-radius:50%;background:${k<3?'var(--accent)':'var(--bg-0)'};border:1px solid #0006"></span></div>`).join('')}</div>`,{cols:'1fr'})+
-      dev('World','scope',236,`<svg width="104" height="104"><circle cx="52" cy="52" r="34" fill="none" stroke="#3f4348" stroke-width="7"/><path d="${arcP(52,52,34,0,150)}" stroke="#5cc6b4" stroke-width="7" fill="none"/></svg>`,C('ws.reach','ws.writes'),{cols:'1fr'})+
-      dev('Git','o-i · lane mercurius',236,`<svg width="104" height="104"><path d="M14 72H90M30 72q10-26 26-26h20" stroke="#71767c" fill="none"/><circle cx="30" cy="72" r="4" fill="#a2a7ad"/><circle cx="56" cy="46" r="4" fill="#5cc6b4"/><circle cx="76" cy="46" r="4" fill="#5cc6b4"/></svg>`,C('git.commit','git.push'),{cols:'1fr'});
-    $('#dth').innerHTML=head;$('#chain').innerHTML=html+`<div class="dropz">Drop agents, skillsets, worlds or git here</div>`;return}
+  if(S.mode==='factory'){const s=SESS.find(x=>x.id===S.sel)||SESS[1],alone=s.agent==='honey'||s.agent==='bumble';
+    head=`<b>${s.n}</b> — the session’s chain: its connections, what every agent reads, the Agent rack of the agents it may use, their Scope, and where the work lands`;
+    // A session of one agent holds a rack of that agent alone; the crew's sessions hold the whole rack.
+    RACKS.track.chains=alone?[{k:s.agent,agent:s.agent}]:[{k:'crew',set:'crew'},{k:'honey',agent:'honey'},{k:'bumble',agent:'bumble'}];
+    html=dev('Gateway','hermes · ws',250,`<svg width="104" height="104"><circle cx="24" cy="52" r="10" fill="#3f4348" stroke="#71767c"/><circle cx="78" cy="52" r="20" fill="none" stroke="#7ec3e6"/><path d="M34 52H58" stroke="#ffbe00" stroke-dasharray="3 3"/><text x="78" y="56" text-anchor="middle" font-size="9" fill="#d4d7da">hermes</text><text x="52" y="92" text-anchor="middle" font-size="8.5" fill="#71767c">epoch 3f2a · seq 1284</text></svg>`,C('gw.tr','gw.ap'),{cols:'1fr',i:'The road in, for every agent of the rack after it, unless an agent’s own chain holds one.'})+
+      dev('Remote carrier','workcell',214,null,C('rc.where','rc.std','rc.plan'),{cols:'1fr',i:'Where the agents after it run. It shows whether that machine can carry the run now.'})+
+      (alone?'':sourcesDev('what every agent reads',['src:cw13','src:mdr'],'track','Ahead of the rack: every chain of the rack reads it.'))+
+      rack('track',factoryChain)+
+      dev('Scope','every agent',290,scopeVis(150),C('ws.reach','ws.mode'),{cols:'1fr',vw:64,i:'After the rack: it bounds what every agent may do. An agent’s own Scope only narrows it.'})+
+      dev('Git / landing','o-i · lane mercurius',236,`<svg width="104" height="104"><path d="M14 72H90M30 72q10-26 26-26h20" stroke="#71767c" fill="none"/><circle cx="30" cy="72" r="4" fill="#a2a7ad"/><circle cx="56" cy="46" r="4" fill="#5cc6b4"/><circle cx="76" cy="46" r="4" fill="#5cc6b4"/></svg>`,C('git.commit','git.push'),{cols:'1fr',i:'Where every agent’s work lands.'});
+    $('#dth').innerHTML=head;$('#chain').innerHTML=html+`<div class="dropz">Drop a device, an agent or an agent set here</div>`;return}
   if(S.mode==='expressions'){head=`<b>Studio</b> — the Expressions engine’s own controls · ${subj().n}`;
     html=instFrame('','Studio','Expressions engine',`<span style="color:var(--stall)">edited since save</span><button class="bt" data-i="Save|Draft · Saved · Edited since save stay distinct.">Save</button>`,[
       {h:'Tools',w:150,html:`<div class="ctrls" style="grid-template-columns:1fr">${ctl('x.tool')}</div><button class="bt" data-i="Library|Browse glyphs, cymatics, particles, images, formations — browsing keeps the subject and camera.">▤ Library…</button>`},
@@ -1642,7 +1755,7 @@ function renderLauncher(){const q=($('#lsearch').value||'').toLowerCase();const 
 /* ---- the detail row: Clip | Device, each specific to its arrangement ---- */
 const DVN={base:['Document','Devices'],factory:['Task log','Agent chain'],expressions:['Scene','Studio'],techne:['Clip','Instruments']};
 function renderStatus(){$('#counts').textContent=`aperture ${APERTURE[S.ap].k.toLowerCase()} · ${leaves(M().tree).length} pane${leaves(M().tree).length>1?'s':''}`;
-  const [c,d]=DVN[S.mode];$('#dvtg').innerHTML=`<button class="${S.dv[S.mode]==='clip'?'on':''}" data-dv="clip" data-i="Clip|${{base:'The focused document as data: bindings, highlights, notes, packet.',factory:'The selected task: its tool-run log.',expressions:'The scene: its sequence and bindings.',techne:'What the focused thing or constellation is: identity, relations, constellation, source.'}[S.mode]}">▢ ${c}</button><button class="${S.dv[S.mode]==='device'?'on':''}" data-dv="device" data-i="Device|${{base:'Devices that modify the document.',factory:'The session’s chain: gateway → agent → skills → world → git.',expressions:'The Expressions engine’s own controls.',techne:'The six instruments — open one on the focused pane; its controls are its own.'}[S.mode]}">◷ ${d}</button>`}
+  const [c,d]=DVN[S.mode];$('#dvtg').innerHTML=`<button class="${S.dv[S.mode]==='clip'?'on':''}" data-dv="clip" data-i="Clip|${{base:'The focused document as data: bindings, highlights, notes, packet.',factory:'The selected task: its tool-run log.',expressions:'The scene: its sequence and bindings.',techne:'What the focused thing or constellation is: identity, relations, constellation, source.'}[S.mode]}">▢ ${c}</button><button class="${S.dv[S.mode]==='device'?'on':''}" data-dv="device" data-i="Device|${{base:'Devices that modify the document.',factory:'The session’s chain: its connections, the Agent rack of the agents it may use, their Scope, and where the work lands.',expressions:'The Expressions engine’s own controls.',techne:'The six instruments — open one on the focused pane; its controls are its own.'}[S.mode]}">◷ ${d}</button>`}
 function renderDetail(){if(S.dv[S.mode]==='clip')return clipDetail();deviceDetail();
   if(S.mode==='techne'){const t=cur(fp()),k=t.ap==='lens'?t.lens:null;const keys=Object.keys(INST);const fold=x=>`<div class="ifold" data-instr="${x}" data-i="${INST[x].k} ${INST[x].n}|${INST[x].office}. Click to open it on the focused pane.">`+`<b>${INST[x].k}</b>${INST[x].n}</div>`;
     const ai=k?keys.indexOf(k):-1,before=keys.filter((x,j)=>j<ai||ai<0).map(fold).join(''),after=keys.filter((x,j)=>j>ai&&ai>=0).map(fold).join('');
@@ -1784,7 +1897,47 @@ const _rb5=renderBrowser;renderBrowser=function(){if(S.mode!=='live'||S.q||S.cat
   $('#blist').innerHTML=L.map(x=>`<div class="bitem"><span class="kg" style="color:var(--text-faint)">♪</span><span class="nm">${x}</span></div>`).join('')};
 </script>
 <script>
-function render(){renderPmenu();renderTransport();renderBrowser();renderSlot();renderPanes();renderDetail();renderCompanion();renderLauncher();renderStatus();
+/* ============================== the chain, as Live's Device View ==============================
+   Every mode's chain scrolls sideways. A device folds by a double-click on its title bar. A rack's view buttons show or hide its
+   macros, its chain list and its devices. The status bar draws the selected track's name and its chain in miniature, with a box
+   over what Device view shows, as Live draws them at the bottom right of its window. */
+const trackName=()=>({base:()=>tabName(cur(fp())),factory:()=>(SESS.find(x=>x.id===S.sel)||SESS[1]).n,expressions:()=>subj().n,techne:()=>tabName(cur(fp())),live:()=>'Drums'}[S.mode]||(()=>''))();
+let mini={s:1};
+function renderMini(){const ch=$('#chain'),m=$('#cmini');
+  if(S.dv[S.mode]!=='device'||!ch.firstElementChild){m.style.display='none';$('#sbtrk').textContent='';return}
+  m.style.display='';$('#sbtrk').textContent=trackName();
+  const W=ch.scrollWidth,H=ch.clientHeight,s=Math.min(20/H,280/W);mini={s};
+  m.style.width=Math.round(W*s)+'px';
+  m.innerHTML=`<div class="chain pic" style="width:${W}px;height:${H}px;transform:scale(${s})">${ch.innerHTML}</div><div class="box"></div>`;
+  miniBox()}
+function miniBox(){const ch=$('#chain'),b=$('#cmini .box');if(!b)return;const fits=ch.scrollWidth<=ch.clientWidth+1;
+  b.style.left=ch.scrollLeft*mini.s+'px';b.style.width=Math.max(4,ch.clientWidth*mini.s)+'px';b.style.opacity=fits?.45:1}
+const chainTo=x=>{const ch=$('#chain');ch.scrollLeft=clamp(x,0,ch.scrollWidth-ch.clientWidth)};
+$('#chain').addEventListener('scroll',miniBox,{passive:true});
+// The wheel moves the chain sideways, as in Live, unless it is over a list that scrolls by itself.
+$('#chain').addEventListener('wheel',e=>{const ch=e.currentTarget;if(S.dv[S.mode]!=='device'||ch.scrollWidth<=ch.clientWidth||Math.abs(e.deltaX)>Math.abs(e.deltaY))return;
+  const own=e.target.closest('.dlist,.ccol,.cprops');if(own&&own.scrollHeight>own.clientHeight)return;chainTo(ch.scrollLeft+e.deltaY);e.preventDefault()},{passive:false});
+$('#cmini').addEventListener('wheel',e=>{const ch=$('#chain');chainTo(ch.scrollLeft+(Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:e.deltaY));e.preventDefault()},{passive:false});
+// Press in the box and drag it; press outside it and that part comes to the middle, then the drag carries on from there.
+$('#cmini').addEventListener('mousedown',e=>{if(e.button!==0)return;const ch=$('#chain'),m=e.currentTarget,fs=scaleOf(m),r=m.getBoundingClientRect();
+  const x=(e.clientX-r.left)/fs/mini.s,inBox=x>=ch.scrollLeft&&x<=ch.scrollLeft+ch.clientWidth;
+  if(!inBox)chainTo(x-ch.clientWidth/2);const x0=e.clientX,l0=ch.scrollLeft;
+  const mv=ev=>chainTo(l0+(ev.clientX-x0)/fs/mini.s);const up=()=>{removeEventListener('mousemove',mv);removeEventListener('mouseup',up)};
+  addEventListener('mousemove',mv);addEventListener('mouseup',up);e.preventDefault();e.stopPropagation()});
+// Fold: a double-click on a device's or a rack's title bar. A press on a folded strip opens it again, as does a double-click on a
+// rack's strip; the second click of that press's double-click does not fold it back.
+let unfoldedAt=0;
+document.addEventListener('dblclick',e=>{const el=e.target.closest('#chain [data-fk]');if(!el||performance.now()-unfoldedAt<500)return;const fk=el.dataset.fk;
+  if(S.fold.has(fk))S.fold.delete(fk);else if(el.classList.contains('rk-strip')){const r=fk.split(':rack:')[1];if(r)Object.assign(S.rv[r],{m:1,c:1,d:1})}else S.fold.add(fk);
+  getSelection()?.removeAllRanges();render()});
+document.addEventListener('click',e=>{const q=s=>e.target.closest(s);let el;
+  if((el=q('#chain .dev.folded'))){S.fold.delete(el.dataset.fk);unfoldedAt=performance.now();e.stopPropagation();render();return}
+  if((el=q('[data-rv]'))){const [r,x]=el.dataset.rv.split('.');S.rv[r][x]=!S.rv[r][x];e.stopPropagation();render();return}
+  if((el=q('[data-rben]'))){const id=el.dataset.rben;S.arOff.has(id)?S.arOff.delete(id):S.arOff.add(id);e.stopPropagation();render();return}
+  if((el=q('[data-rsolo]'))){const [r,k]=el.dataset.rsolo.split(/\.(.+)/);S.arSolo[r]=S.arSolo[r]===k?null:k;e.stopPropagation();render();return}
+  if((el=q('[data-rsel]'))){const [r,k]=el.dataset.rsel.split(/\.(.+)/);S.arSel[r]=k;e.stopPropagation();render();return}
+},true);
+function render(){renderPmenu();renderTransport();renderBrowser();renderSlot();renderPanes();renderDetail();renderCompanion();renderLauncher();renderStatus();renderMini();
   $('#frame').classList.toggle('no-browser',!$('#tBrowser').classList.contains('on'));$('#frame').classList.toggle('no-dock',!$('#tDock').classList.contains('on'));$('#frame').classList.toggle('no-detail',!$('#tDetail').classList.contains('on'))}
 let toastT;function toast(h){const t=$('#toast');t.innerHTML=h;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2600)}
 function dialog(title,body,ok,fn){$('#dlg').innerHTML=`<div class="dh2">${title}</div><div class="dbody">${body}</div><div class="df"><button class="bt" data-dlg="no">Cancel</button><button class="bt pri" data-dlg="ok">${ok}</button></div>`;$('#scrim').classList.add('on');dialog.ok=fn}
@@ -1883,7 +2036,7 @@ addEventListener('resize',fit);
 (function boot(){const Q=new URLSearchParams(location.search);
   buildTex('central',1);buildTex('earth',1);snapLocs();
   S.trail=[{id:'mercurius',med:'search',t:'14:21',w:'central'},{id:'stone1950',med:'traversal',t:'14:24',w:'central'}];S.ti=1;S.hideTrack=new Set();S.recWalk=[];
-  if(Q.get('mode'))S.mode=Q.get('mode');if(Q.get('ap'))S.ap=+Q.get('ap');if(Q.get('as'))S.viewAs=Q.get('as');
+  if(Q.get('mode'))S.mode=Q.get('mode');if(Q.get('ap'))S.ap=+Q.get('ap');if(Q.get('as'))S.viewAs=Q.get('as');if(Q.get('dv'))S.dv[S.mode]=Q.get('dv');
   const t0=cur(M().panes[0]);
   if(Q.get('lens')&&t0.ap==='lens')t0.lens=Q.get('lens');if(Q.get('scale'))t0.scale=Q.get('scale');if(Q.get('body'))t0.body=Q.get('body');
   if(Q.get('doc')){M().panes[0].tabs=[tab('doc',{doc:Q.get('doc')})]}

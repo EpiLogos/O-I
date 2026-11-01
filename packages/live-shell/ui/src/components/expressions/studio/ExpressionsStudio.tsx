@@ -82,12 +82,12 @@ const BODY_QL = SECTIONS.flatMap(section => section.ql)
 /** A Body face's name in the chain: the manual's for the torus (§20.3 "Physics, Resonance, Torus"), the face's own title else. */
 const qlTitle = (faceId: string, title: string) => (faceId === 'torus' ? 'Torus' : title)
 
-/** The Studio as a device of the runtime: the Expression's rack (lock §1 Rack: parallel chains under one device, a chain selector), drawn by
+/** The Studio as a device of the runtime: the Expression's rack (lock §1 Rack: parallel chains under one device), drawn by
  * its design. Its values are the binding's. */
 export const STUDIO_DEVICE: DeviceInstance = {
   id: STUDIO_DEVICE_ID, family: 'expressions', rows: [], values: {},
   face: {id: 'studio', title: 'Studio', icon: 'expr', liveSemantic: 'rack',
-    invariant: {chains: ['Material', 'Motion', 'Body', 'Nara'], chainSelector: 'chain (Chains page: the four chains with their lights)'},
+    invariant: {chains: ['Material', 'Motion', 'Body', 'Nara']},
     note: 'The rack of an Expression (DLW §20.3): your chosen controls as its macros, the field devices in four chains.'},
 }
 

@@ -15,11 +15,11 @@ export function workcellFamilyManifest(): FamilyManifest {
       {id: 'git-seat', presentations: statePresentations('workcell:git-seat'), liveSemantic: 'return', invariant: {routesTo: 'workcell-cli:git commit'}, note: 'Branch vs main, uncommitted, commit policy, push, Land/draft PR; subagents share lead seat.'},
       {id: 'remote-carrier', presentations: statePresentations('workcell:remote-carrier'), liveSemantic: 'link', note: 'Reach/where; composed or refused — never live in mockup.'},
       {id: 'link', presentations: statePresentations('workcell:link'), liveSemantic: 'link', note: 'Transport Link: shared field across Mac and Omarchy sessions.'},
-      // A workcell (DLW §19.23): a rack whose chain is the road in and out — a return track in Factory and the Works in of every track an
-      // agent works on, in every mode; its tile the Workcells widget (agent/devices/workcellRackBinding.ts).
-      {id: 'workcell', presentations: statePresentations('workcell:workcell'), liveSemantic: 'rack',
-        invariant: {chains: ['gateway', 'remote-carrier', 'git-seat'], chainSelector: 'the road in and out: the gateway, the machine, the seat and its landing'},
-        note: 'A workcell of the machine\'s register: its chain is the Gateway, the Remote carrier and Git / landing with the Seat; its macros reach the Gateway and the landing.'},
+      // Workcell's instrument (DLW §19.23): born in a pane and standing only there and on the rail, on the run you select, in every
+      // mode — its tile the Workcells widget, its Full eight pages (agent/devices/workcellRackBinding.ts). It stands on no chain.
+      {id: 'workcell', presentations: statePresentations('workcell:workcell'), liveSemantic: 'device-instrument',
+        invariant: {generatesAbsent: 'Born in a pane: it reads the run\'s road, its world, its seats and its machine from Workcell and Central, and changes none of its connections\' settings — each is set on its device.'},
+        note: 'Workcell\'s instrument: Chain, World, Services, Exposure, Release, Left behind, Seats and Machine, on the selected run (DLW §19.23).'},
     ],
     params: {grammar: 'workcell/parameter-address/v1'},
     projections: ['workcell-seat-track-adapter'],

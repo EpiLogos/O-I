@@ -19,7 +19,13 @@ html, body { height: auto; overflow: auto; background: var(--bg-0, #26292d); }
 .cat-semantic { margin-left: 6px; color: var(--text-faint, #71767c); font-family: var(--mono, monospace); font-size: 10px; }
 .cat-missing { color: var(--text-dim, #a2a7ad); font-size: 13px; padding: 20px; line-height: 1.6; }
 /* A folded plate stands at chain height; give it one. */
-.cat-view--folded .cat-view-body, .cat-view--compact .cat-view-body { height: 200px; }
+.cat-view--folded .cat-view-body { height: 200px; }
+/* A chain as Device view draws it (main.tsx ChainRow, the shell's frame/detail/detail.css .detail-chain): one row that scrolls
+   sideways with no scrollbar of its own, and at its foot the Device switch's chain in miniature, the box over what the row shows. */
+.cat-chain { display: flex; flex-direction: column; min-width: 0; border: 1px solid var(--line-strong, #3d4147); background: var(--bg-1, #33363b); }
+.cat-chain-row { display: flex; gap: 6px; padding: 8px; overflow-x: auto; overflow-y: hidden; align-items: flex-start; scrollbar-width: none; }
+.cat-chain-row::-webkit-scrollbar { display: none; }
+.cat-chain-foot { display: flex; align-items: center; justify-content: flex-end; gap: 6px; height: 22px; padding: 0 6px; border-top: 1px solid var(--line, #24262a); font-size: 10px; color: var(--text-dim, #a2a7ad); }
 .cat-rail { height: 230px; display: flex; flex-direction: column; }
 /* The reference devices' frames: the pool is the browser's width, the pane a pane, the rail the rail with its tiles. */
 .cat-views--ref { align-items: flex-start; }
@@ -38,7 +44,7 @@ html, body { height: auto; overflow: auto; background: var(--bg-0, #26292d); }
 .cat-flip { width: min(1180px, calc(100vw - 24px)); display: flex; flex-direction: column; border: 1px solid var(--line-strong, #3d4147); background: var(--bg-0, #26292d); }
 .cat-flip-panes { height: 64px; display: grid; place-items: center; color: var(--text-faint, #71767c); font-size: 11px; background: var(--bg-1, #33363b); border-bottom: 1px solid var(--line, #24262a); }
 .cat-flip > .dp-flip { padding: 4px; border-bottom: 2px solid var(--line-strong, #3d4147); box-shadow: 0 -6px 14px rgba(0, 0, 0, .35); }
-.cat-flip-chain { padding: 4px; display: flex; background: var(--bg-0, #26292d); }
+.cat-flip > .cat-chain { border-width: 0; }
 /* Pop-out: the device's own window. */
 .cat-window { width: min(1180px, calc(100vw - 24px)); border: 1px solid var(--line-strong, #3d4147); border-radius: 8px; overflow: hidden; box-shadow: 0 10px 30px rgba(0, 0, 0, .45); }
 .cat-window-bar { height: 26px; display: flex; align-items: center; gap: 7px; padding: 0 10px; background: var(--bg-2, #3f4348); font-size: 11px; color: var(--text-dim, #a2a7ad); }

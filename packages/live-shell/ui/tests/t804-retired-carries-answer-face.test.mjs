@@ -137,7 +137,7 @@ test('DELETED (#804) — the agent dock, the old Factory bar, their fixture and 
 
 // ── the Answer's face on the Agent ────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('the Agent\'s Voice page reports what the voice does now and writes Hears and Speaks to it (ported from answerBinding.ts)', async () => {
+test('the voice the Agent carries under speech. reports what the voice does now and writes Hears and Speaks to it (ported from answerBinding.ts)', async () => {
   const written = []
   const state = {...VOICE_OFF, hears: 'on', voice: 'listening', heard: SAID}
   const binding = vb.voiceBinding({state, why: null}, async (key, value) => { written.push([key, value]) })
@@ -166,7 +166,7 @@ test('where its voice is read, the one Agent holds its face\'s own keys for the 
   const again = centralAgent({light: 'lit'})
   assert.deepEqual([again.values['face.emotion'], again.values['face.feeling.v'], again.values['face.do'], again.values['face.chat']], ['curious', 0.4, 3, 'off'],
     'another view reads the same face')
-  assert.equal(again.values['speech.now'], 'quiet', 'and the voice, under the Voice page\'s prefix')
+  assert.equal(again.values['speech.now'], 'quiet', 'and the voice, under its carried prefix')
   const factory = carry.composeAgentBinding({id: 'factory:agent', values: {light: 'lit'}}, {})
   assert.ok(!Object.keys(factory.values).some(key => key.startsWith('face.') || key.startsWith('speech.')), 'no voice read: no speaking face, no face keys')
   bind.resetHolds()
@@ -185,7 +185,9 @@ test('on Central\'s chain the Agent answers with its face: Full is mostly the fa
   assert.doesNotMatch(full, /hm-full|EnvironStage|No run event/, 'not the thread and the stage')
   const whole = draw(agent, 'whole')
   assert.match(whole, /role="tab" aria-selected="true"[^>]*>Answer</, 'Whole opens on the Answer page')
-  for (const page of ['Answer', 'Face', 'Run', 'Custody', 'Grants', 'Identity', 'Type', 'Context', 'Voice']) assert.match(whole, new RegExp(`role="tab"[^>]*>${page}<`), `the ${page} page`)
+  // REPLACED (§19.4 "Pages Run, Identity and Type, with Answer and Face before them… The Voice, Custody, Grants and Context pages leave the
+  // Agent"): was Answer, Face, Run, Custody, Grants, Identity, Type, Context, Voice.
+  assert.deepEqual([...whole.matchAll(/role="tab"[^>]*>([^<]+)</g)].map(m => m[1]), ['Answer', 'Face', 'Run', 'Identity', 'Type'], 'the pages')
   assert.match(whole, /class="face-stage an-well-face"/, 'the whole face at the left of the picture')
   assert.match(draw(agent, 'whole', 'face'), /Feeling[\s\S]*Eyes[\s\S]*Emotion[\s\S]*Gesture/, 'the Face page: the Feeling and Eyes pads, Emotion and Gesture')
   assert.match(draw(agent, 'compact'), /data-face="neutral"/, 'Compact: the small face beside the agent\'s name')
@@ -296,7 +298,7 @@ test('Central\'s Agent shows the packet it reads — the Packet\'s items, when t
 
 test('REPLACED (#806) — the retired Answer\'s own binding is gone from answerBinding.ts; what the one Agent reads stays', () => {
   // answerBinding, answerValues, ANSWER_WIRING, ANSWER_DESIGN and ANSWER_VIEW_DEFAULTS served the Answer design retired in #804. Their
-  // behaviours stand on the Agent: the voice's keys on its Voice page (voiceBinding.ts; the Voice page test above), the face's own keys
+  // behaviours stand on the Agent: the voice's keys under `speech.` (voiceBinding.ts; the carried-voice test above), the face's own keys
   // held for the session (oneAgentBinding.ts; the face-keys test above), the packet and the run on centralAgentValues (the two above).
   for (const name of ['answerBinding', 'answerValues', 'ANSWER_WIRING', 'ANSWER_DESIGN', 'ANSWER_VIEW_DEFAULTS']) assert.equal(name in answerMod, false, `${name} is retired`)
   for (const name of ['centralAgentValues', 'centralAgentBinding', 'centralAgentRef', 'CENTRAL_AGENT_ID', 'CENTRAL_AGENT_REFUSED']) assert.ok(name in answerMod, `${name} stays`)

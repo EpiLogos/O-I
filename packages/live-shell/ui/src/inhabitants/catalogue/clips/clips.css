@@ -111,12 +111,31 @@
 .clv-glide { fill: currentColor; opacity: .45; }
 .clv-stripe { fill: var(--bg-0, #26292d); opacity: .55; }
 .clv-block-label { font: 8.5px var(--font-ui, sans-serif); fill: var(--bg-0, #26292d); pointer-events: none; }
+/* A score's furniture (Factory's Notes): a tie from one note to the note that waits on it, the bar where stacked notes meet, the
+   small notes inside a note that is a song of its own, a note this editor shows but does not edit, a note's draggable edge. */
+.clv-tie { fill: none; stroke: var(--text, #d4d7da); stroke-width: 1.4; stroke-opacity: .8; pointer-events: stroke; }
+.clv-tie[data-tone="green"] { stroke: var(--green, #8fd0a8); }
+.clv-tie[data-tone="accent"] { stroke: var(--accent, #ffbe00); }
+.clv-meet rect { fill: var(--text, #d4d7da); opacity: .75; }
+.clv-meet[data-tone="green"] rect { fill: var(--green, #8fd0a8); }
+.clv-meet[data-tone="stall"] rect { fill: var(--stall, #ff9b4a); }
+.clv-meet-label { font: 8.5px var(--font-ui, sans-serif); fill: var(--text-dim, #a2a7ad); pointer-events: none; }
+.clv-block[data-faint="true"] { opacity: .32; }
+.clv-block-inner { fill: var(--bg-0, #26292d); opacity: .55; pointer-events: none; }
+.clv-block-edge { fill: transparent; }
+.clv-block:hover .clv-block-edge { fill: color-mix(in srgb, var(--text, #d4d7da) 45%, transparent); }
+/* A recording's onsets under the ruler (Live's transients, cap 23), and a warp marker's flag (cap 24). */
+.clv-onset { fill: var(--text-faint, #71767c); }
+.clv-mark[data-pin="true"] line { stroke-dasharray: none; stroke-opacity: .8; }
 .clv-mark line { stroke: var(--accent, #ffbe00); stroke-width: 1; stroke-dasharray: 3 2; }
 .clv-mark rect { fill: var(--accent, #ffbe00); }
 .clv-mark[data-tone="stall"] line { stroke: var(--stall, #ff9b4a); }
 .clv-mark[data-tone="stall"] rect { fill: var(--stall, #ff9b4a); }
 .clv-mark[data-tone="value"] line { stroke: var(--fizz, #5cc6b4); }
 .clv-mark[data-tone="value"] rect { fill: var(--fizz, #5cc6b4); }
+.clv-mark[data-tone="green"] line { stroke: var(--green, #8fd0a8); }
+.clv-mark[data-tone="green"] rect, .clv-mark[data-tone="green"] path { fill: var(--green, #8fd0a8); }
+.clv-mark[data-tone="accent"] path { fill: var(--accent, #ffbe00); }
 
 /* The lane under the lanes (velocity, a sound), and the editor's foot (Live's Velocity · Randomize · Ramp row, cap 01). */
 .clv-under { flex: none; border-top: 1px solid var(--line, #24262a); background: var(--bg-1, #33363b); display: flex; flex-direction: column; }

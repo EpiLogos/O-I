@@ -1,10 +1,10 @@
 // W4, three designs that were unbound (T-COVERAGE §1.4), each on its owner, standard (a)–(g):
 //   ai-kit:knowledge-route (§19.9)  inside Scope on a session's chain; AIKit's `knowledge status` through the kernel's knowledge op.
-//                                   REPLACED (#725): retired as a device of its own in the 22 Oct manual rewrite — it is Scope's Knowledge
-//                                   page (§19.9, §19.12), checked on Scope's binding. DELETED (#788): the route's own binding, which no
-//                                   device stood on.
-//   actuation:voice (§19.21)        the Answer's voice (the kernel op nara_voice, central/devices/answerVoice.ts). REPLACED (#725): Voice is
-//                                   the Agent's Voice page (§19.21), carried under `speech.` (oneAgentBinding.ts VOICE_PAGE) on Central's chain
+//                                   REPLACED (#725): retired as a device of its own in the 22 Oct manual rewrite — it was Scope's Knowledge
+//                                   page, and is Sources' now (§19.9); Scope's pages are Reach, Asks and Grants (§19.12), checked on
+//                                   Scope's binding. DELETED (#788): the route's own binding, which no device stood on.
+//   actuation:voice (§19.21)        the Answer's voice (the kernel op nara_voice, central/devices/answerVoice.ts). REPLACED: Voice is a
+//                                   device of its own again (§19.21); the Agent carries it under `speech.` for the answer's face alone
 //   widgets:terminal (§17.9)        the Workbench's Terminal surface over the PTY host (desktop/cradle/src/terminal/terminalReadings.ts);
 //                                   on the rail and in a pane, never on a chain
 // Channels:
@@ -51,6 +51,7 @@ const host = await import('../src/frame/devices/deviceHost.tsx')
 const door = await import('../src/frame/devices/deviceDoor.ts')
 const places = await import('../src/agent/devices/factoryPlaces.ts')
 const bind = await import('../src/agent/devices/designBindings.ts')
+const chain = await import('../src/agent/devices/sessionChainBindings.ts')
 const vb = await import('../src/agent/devices/voiceBinding.ts')
 const {VOICE_OFF} = await import('../src/central/devices/answerVoice.ts')
 const tb = await import('../src/widgets/terminalBinding.ts')
@@ -58,7 +59,7 @@ const terminals = await import('../../../../desktop/cradle/src/terminal/terminal
 const rail = await import('../src/widgets/TerminalRailWidget.tsx')
 const registry = await import('../src/shell/widgets.tsx')
 const {scope: scopeDesign} = await import('../src/inhabitants/catalogue/panels/scope.tsx')
-const {design: voiceDesign} = await import('../src/inhabitants/catalogue/panels/voice.tsx')
+const {design: voiceDesign} = await import('../src/inhabitants/catalogue/panels/actuation__voice.tsx')
 const {design: agentDesign} = await import('../src/inhabitants/catalogue/panels/actuation__harness-model.tsx')
 const carry = await import('../src/agent/devices/oneAgentBinding.ts')
 const {chainDeviceId} = await import('../src/agent/devices/agentChainDevices.ts')
@@ -89,59 +90,63 @@ function drawsOn(design, binding, fixture, reasons = []) {
 
 // DELETED (#788): "REAL — the Knowledge route reads each lens's answer from AIKit's knowledge status" and "the Knowledge route's binding:
 // each lens a reading, absent with its reason, or refused by the operation it lacks". The route's own binding (knowledgeRouteBinding.ts)
-// stood for no device and nothing the candidate loads named it (candidate-reachable.mjs). Its replacement is Scope's Knowledge page (§19.9
-// "Which knowledge an agent may look up, and how far it may follow links, is the Knowledge page of Scope (§19.12)"), held by the tests
-// below on Scope's binding: its settings and acts refused by the operations they lack, its readings (`route`, `routeWhy`, `readings`,
-// `reading`) absent with the reading each waits for (designBindings.ts SCOPE_KNOWLEDGE_ABSENT). The route's per-lens Ready and Why have no
-// key on that page: the page's `route` is ready · composed · refused, which no AIKit reading reports for an agent yet.
-test('DELETED (#788) — the Knowledge route keeps no binding of its own: Scope\'s Knowledge page carries it (§19.9, §19.12)', async () => {
+// stood for no device and nothing the candidate loads named it (candidate-reachable.mjs). It became Scope's Knowledge page (#725), and
+// what an agent reads from is Sources' now, before the Agent on the chain (§19.9; §19.12 "What the agent reads from is Sources'"): Scope's
+// pages are Reach, Asks and Grants, held by the tests below on Scope's binding.
+test('REPLACED — the Knowledge route keeps no binding of its own, and Scope no Knowledge page: its pages are Reach, Asks and Grants (§19.9, §19.12)', async () => {
   const {existsSync} = await import('node:fs')
   assert.equal(existsSync(new URL('../src/agent/devices/knowledgeRouteBinding.ts', import.meta.url)), false, 'the route\'s own binding is gone')
   assert.equal(existsSync(new URL('./fixtures/knowledge-route-2026-10-21.json', import.meta.url)), false, 'and the capture only it read')
-  for (const key of ['route', 'routeWhy', 'readings', 'reading']) assert.match(bind.SCOPE_KNOWLEDGE_ABSENT[key], /missing op: /, `${key}: absent on Scope with what it waits for`)
-})
-
-/** Scope's Knowledge page (§19.12 Knowledge; scope.tsx): its settings, its readings and its two acts. */
-const KNOWLEDGE_SETTINGS = ['src.wiki', 'src.project', 'src.code', 'searchFirst', 'linkDepth', 'readBudget']
-const KNOWLEDGE_READINGS = ['route', 'routeWhy', 'readings', 'reading']
-const KNOWLEDGE_ACTS = ['readAgain', 'forget']
-const factoryScope = () => bind.scopeBinding(chainDeviceId('world'), bind.chainHolds(), undefined, async () => assert.fail('nothing is written'))
-
-test('REPLACED (#725) — Scope\'s Knowledge page on Factory\'s Scope: every key of it classified, each setting and act refused in the Knowledge route\'s words, each reading absent with its reason', async () => {
-  // Was "the Knowledge route: every key its design reads is … classified" on the route's own design (§19.9, retired into this page).
+  assert.equal(bind.SCOPE_KNOWLEDGE_ABSENT, undefined, 'Scope stands no Knowledge readings')
   const keys = designKeys(scopeDesign)
-  for (const key of [...KNOWLEDGE_SETTINGS, ...KNOWLEDGE_READINGS]) assert.ok(keys.includes(key), `${key} is a key of Scope's design`)
-  const binding = factoryScope()
-  for (const key of [...KNOWLEDGE_SETTINGS, ...KNOWLEDGE_READINGS, ...KNOWLEDGE_ACTS]) assert.equal(classify(binding, key), 'absent', `${key} stands disabled with why`)
-  for (const key of [...KNOWLEDGE_SETTINGS, ...KNOWLEDGE_READINGS]) assert.match(binding.standing[key].disabled, /missing op: /, key)
-  // REPLACED (#788): "the route's own words, as the Knowledge route's binding gives them" — that binding is gone; the operations each
-  // setting lacks stand in Scope's own refusals (designBindings.ts REFUSED_WRITES), in the same words.
-  assert.match(binding.standing.linkDepth.disabled, /^Link depth: no owner operation carries it yet — missing op: a per-agent depth on `aikit knowledge relations`/)
-  assert.match(binding.standing.readBudget.disabled, /^Read budget: no owner operation carries it yet — missing op: a per-agent ceiling on the pages a task opens/)
-  assert.match(binding.standing.searchFirst.disabled, /^Search first: no owner operation carries it yet — missing op: a per-agent order of search and links on the route/)
-  for (const key of ['src.wiki', 'src.project', 'src.code']) assert.match(binding.standing[key].disabled, /missing op: a lens-level request on the AgentProfile/, key)
-  assert.match(binding.standing.forget.disabled, /no reading of the pages the agent read stands here, so none stands to forget/)
-  for (const key of [...KNOWLEDGE_SETTINGS, ...KNOWLEDGE_ACTS]) await assert.rejects(binding.write([{key, value: true}]), new RegExp(binding.standing[key].disabled.slice(0, 24).replace(/[()[\]?.*+]/g, '\\$&')), key)
-  for (const key of KNOWLEDGE_READINGS) assert.equal(binding.values[key], undefined, `${key}: no reading, never a default`)
+  for (const key of ['src.wiki', 'src.project', 'src.code', 'searchFirst', 'linkDepth', 'readBudget', 'route', 'readings']) assert.ok(!keys.includes(key), `${key}: no key of Scope's`)
+  const pages = renderToStaticMarkup(createElement(host.HostedDevice, {designed: scopeDesign, binding: factoryScope(), view: 'whole', nav: {}}))
+  for (const page of ['Reach', 'Asks', 'Grants']) assert.match(pages, new RegExp(`>${page}<`), `the page ${page} stands in the head`)
+  assert.doesNotMatch(pages, />Knowledge</, 'no Knowledge page')
 })
 
-test('REPLACED (#725) — Scope draws its Knowledge page on its binding in all five views: no NaN, no undefined, never its fixture\'s pages, each refusal drawn as why', () => {
-  // Was "the Knowledge route draws on its binding in all five views" on the route's own design (§19.9, retired into this page).
+/** Scope's Asks page (§19.12 Asks; scope.tsx): Tool calls, Before it lands and Calls to other agents; Escalate to, Wait and On no answer. Scope's
+ * own (Tool calls, Calls to other agents, Wait, On no answer) and Custody's (Before it lands, Escalate to: sessionChainBindings.ts
+ * withCustodyAsks). */
+const ASKS_OWN = ['toolCalls', 'calls', 'wait', 'noAnswer']
+const ASKS_CUSTODY = ['gate', 'escalate']
+const factoryScope = () => bind.scopeBinding(chainDeviceId('world'), bind.chainHolds(), undefined, async () => assert.fail('nothing is written'))
+const carriedScope = () => chain.withCustodyAsks(factoryScope(), chain.custodyBinding({sessionRef: null, autonomy: null, agent: {}}, null))
+
+test('Scope\'s Asks on Factory\'s Scope: every key of it classified, each setting refused by the operation it lacks, Before it lands and Escalate to Custody\'s', async () => {
+  const keys = designKeys(scopeDesign)
+  for (const key of [...ASKS_OWN, ...ASKS_CUSTODY]) assert.ok(keys.includes(key), `${key} is a key of Scope's design`)
+  const binding = carriedScope()
+  for (const key of [...ASKS_OWN, ...ASKS_CUSTODY]) assert.equal(classify(binding, key), 'absent', `${key} stands disabled with why`)
+  assert.match(binding.standing.calls.disabled, /^Calls to other agents: no owner operation carries it yet — missing op: an ingress rule for the sender kind agent/)
+  assert.match(binding.standing.wait.disabled, /^Wait: no owner operation carries it yet — missing op: the agent's approvals timeout/)
+  assert.match(binding.standing.noAnswer.disabled, /^On no answer: no owner operation carries it yet/)
+  assert.match(binding.standing.toolCalls.disabled, /^Tool calls: the Gateway's approvals row is not adopted on this chain/)
+  // Before it lands and Escalate to are Factory's custody record's (CustodyAssign --review-gate, --escalate-to), in Custody's own words.
+  assert.equal(binding.standing.gate.disabled, chain.CUSTODY_REFUSE.gate)
+  assert.equal(binding.standing.escalate.disabled, chain.CUSTODY_REFUSE.escalate)
+  for (const key of ASKS_OWN) await assert.rejects(binding.write([{key, value: 'x'}]), new RegExp(binding.standing[key].disabled.slice(0, 24).replace(/[()[\]?.*+]/g, '\\$&')), key)
+  await assert.rejects(binding.write([{key: 'gate', value: 'diffs'}]), /Review gate: set when Factory assigns custody/)
+  for (const key of [...ASKS_OWN, ...ASKS_CUSTODY]) assert.equal(binding.values[key], undefined, `${key}: no reading, never a default`)
+})
+
+test('Scope draws its Asks and Grants pages on its binding in all five views: no NaN, no undefined, never its fixture\'s grants or people, each refusal drawn as why', () => {
   host.resetHost()
-  const binding = factoryScope()
-  host.setHostPage(binding.id, 'knowledge')
+  const binding = carriedScope()
   try {
-    drawsOn(scopeDesign, binding, /Lantern|Tidal: the scene registers|Light that answers sound|The scene grammar|knowledge capability is not active/,
-      [bind.REFUSED_WRITES[bind.SCOPE_DESIGN].linkDepth, bind.REFUSED_WRITES[bind.SCOPE_DESIGN].readBudget])
+    host.setHostPage(binding.id, 'asks')
+    drawsOn(scopeDesign, binding, /flint-o-i|Archetypal-Earth|owner withdrawal/, [bind.REFUSED_WRITES[bind.SCOPE_DESIGN].calls, bind.REFUSED_WRITES[bind.SCOPE_DESIGN].wait])
+    host.setHostPage(binding.id, 'grants')
+    drawsOn(scopeDesign, binding, /flint-o-i|Archetypal-Earth|quaternal-logic/, [chain.CUSTODY_GRANTS_REFUSE.issue])
   } finally { host.resetHost() }
 })
 
-test('the Knowledge route is Scope\'s Knowledge page: no device of its own stands inside Scope or anywhere (§16.1, §19.9, §19.12)', () => {
-  // REPLACED (#725): "the Knowledge route stands inside Scope on a session's chain, and nowhere else" — it is no device now: Scope, the world
-  // slot of a session's chain, carries the page (§16.2 "Agent, skills rack, scope"), and AIKit admits no knowledge-route face.
+test('the Knowledge route is no device of its own: nothing stands inside Scope or anywhere (§16.1, §19.9, §19.12)', () => {
+  // REPLACED (#725): "the Knowledge route stands inside Scope on a session's chain, and nowhere else" — it is no device now: Scope stands in
+  // the world slot of a session's chain (§16.2 "Agent, skills rack, scope"), and AIKit admits no knowledge-route face.
   assert.equal(places.INSIDE.world, undefined, 'nothing stands inside Scope')
   assert.equal(places.SLOT_DEVICE.knowledge, undefined, 'no Knowledge route plate')
-  assert.equal(places.SLOT_DEVICE.world.design, scopeDesign.id, 'the world slot is Scope, which draws the page')
+  assert.equal(places.SLOT_DEVICE.world.design, scopeDesign.id, 'the world slot is Scope')
   assert.ok(!family.familyManifest('ai-kit')?.faces.some(face => face.id === 'knowledge-route'), 'AIKit admits no knowledge-route face')
   for (const place of [{kind: 'main'}, {kind: 'workcell', name: 'env-1'}, {kind: 'session', group: true}, {kind: 'session', group: false}]) assert.ok(!places.chainSlots(place).includes('knowledge'), 'never a slot of its own')
   const view = read('agent/devices/FactoryDeviceChain.tsx')
@@ -200,29 +205,25 @@ test('Voice draws on its binding in all five views — no NaN, no undefined, nev
   host.resetHost()
 })
 
-test('REPLACED (#725) — Voice is the Agent\'s Voice page: Actuation admits no Voice face, no chain carries one, and the Agent draws the voice\'s binding under speech.', () => {
-  // Was "Voice is Actuation's admitted face, an effect; it stands on no Factory chain (Central's chain places it after its Agent)". The 22 Oct
-  // manual rewrite retired Voice as a device of its own (§19.21: "How an agent speaks, the body, the voice and what moves the face's mouth, is
-  // the Agent's Voice page (§19.4)"): Central's Agent carries it under `speech.` (oneAgentBinding.ts VOICE_PAGE; CentralDevices.tsx).
-  // REPLACED (#772): the retired constructor is gone: the module exports none.
-  assert.equal('voiceDevice' in vb, false, 'no Voice device: no constructor stands')
-  for (const place of [{kind: 'main'}, {kind: 'workcell', name: 'env-1'}, {kind: 'session', group: false}, {kind: 'session', group: true}]) {
-    assert.ok(!places.chainSlots(place).some(slot => places.SLOT_DEVICE[slot].design === 'actuation:voice'), 'no Factory chain carries it')
-  }
-  assert.doesNotMatch(read('central/devices/CentralDevices.tsx'), /VOICE_ID|voiceDevice\(/, 'no Voice beside Central\'s Agent')
+// REPLACED (§19.4 "The Voice, Custody, Grants and Context pages leave the Agent"; §19.21 "Kind: effect · Chain: after the Agent"): Voice is a
+// device of its own again, and the Agent keeps no Voice page. Was "REPLACED (#725) — Voice is the Agent's Voice page: Actuation admits no
+// Voice face, no chain carries one, and the Agent draws the voice's binding under speech.".
+test('Voice is a device of its own: the Agent keeps no Voice page, and carries the voice\'s binding under speech. for the answer\'s face alone', () => {
+  assert.equal(voiceDesign.id, 'actuation:voice')
+  assert.equal(voiceDesign.kind, 'effect')
   assert.match(read('central/devices/CentralDevices.tsx'), /composeAgentBinding\(own, \{custody, identity, thread, voice: voiceDesign\}\)/, 'the Agent carries it')
-  // The Agent's design carries every key of the voice's own under `speech.`; the voice's binding drawn there, on the Voice page.
-  for (const key of Object.keys(voiceDesign.defaults).filter(key => !carry.VOICE_PAGE.shared.includes(key))) assert.ok(`speech.${key}` in agentDesign.defaults, `the Agent carries speech.${key}`)
+  // The answer's face reads the voice's Hears, Speaks, what it does now and what it heard, under `speech.` (agent-answer.tsx).
   const voice = vb.voiceBinding({state: VOICE_OFF, why: null}, async () => {})
-  const agent = carry.composeAgentBinding({id: 'central:agent', values: {}}, {voice})
-  for (const [key, value] of Object.entries(voice.values)) assert.deepEqual(agent.values[`speech.${key}`], value, `speech.${key} is the voice's reading`)
+  const agent = carry.composeAgentBinding({id: 'central:agent', values: {light: 'lit', agent: 'Nara'}}, {voice})
+  for (const key of ['hears', 'speaks', 'now', 'heard']) assert.deepEqual(agent.values[`speech.${key}`], voice.values[key], `speech.${key} is the voice's reading`)
   host.resetHost()
   host.setHostPage('central:agent', 'voice')
   try {
     const page = renderToStaticMarkup(createElement(host.HostedDevice, {designed: agentDesign, binding: agent, view: 'whole', nav: {}}))
     assert.doesNotMatch(page, /\bNaN\b|undefined/, 'no absent key drawn as text')
     assert.doesNotMatch(page, VOICE_FIXTURE, 'the voice\'s fixture never stands in')
-    assert.ok(page.includes(escaped(vb.NO_TURN)), 'the voice\'s absence drawn as why, on the Agent\'s Voice page')
+    assert.doesNotMatch(page, /data-page="voice"/, 'no Voice tab: a held Voice page opens on the face\'s Answer')
+    assert.match(page, /data-page="answer"[^>]*aria-selected="true"/)
   } finally { host.resetHost() }
   assert.doesNotMatch(read('agent/devices/voiceBinding.ts'), /\.defaults\[|\.fixtures|catalogue\/panels\//, 'the binding reads no design default or fixture')
 })
@@ -315,7 +316,7 @@ test('the Terminal stands on the rail (its own bare tile) and in a pane, never o
 
 test('§16.14 — none of the three bindings defaults a reading: unread owners leave every key absent', () => {
   bind.resetHolds()
-  // DELETED (#788): the Knowledge route's own values — its binding is gone; Scope's Knowledge readings stand absent (scopeValues, above).
+  // DELETED (#788): the Knowledge route's own values — its binding is gone; Scope reports nothing it is not handed (scopeValues, above).
   assert.deepEqual(bind.scopeValues(bind.chainHolds()), {})
   // REPLACED (O-I #749): `terminalValues(null)` was {}; with no room and no terminal the Terminal has no binding at all (above), and a room's
   // screen, provider and answer stand only once read (tests/w749-terminal-rooms.test.mjs).

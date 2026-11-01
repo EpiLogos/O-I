@@ -13,15 +13,15 @@ export function softwareFactoryFamilyManifest(): FamilyManifest {
     browserEntries: [],
     faces: [
       // Software Factory's half of the one Agent (DLW §19.4 "One agent, three owners": Software Factory owns how much it decides alone —
-      // autonomy, the review gate and what it holds). Not a device of its own: the Agent (actuation:harness-model) joins it on its one face,
-      // and draws it as the Agent's custody page (catalogue/panels/agent-custody.tsx); it stands on no chain.
-      {id: 'agent-custody', presentations: ['compact', 'expanded'], liveSemantic: 'macro', invariant: {maps: [{key: 'autonomy', range: ['suggest', 'review', 'auto']}]}, note: 'Autonomy, review gate and hand-back: Software Factory\'s settings on the one Agent (DLW §19.4), joined on the Agent\'s face; no device of its own.'},
+      // autonomy, the review gate and what it holds). Not a device of its own: the Agent (actuation:harness-model) draws what it holds and
+      // Hand back on its Run page, and the Scope draws what waits before a change lands on its Asks page (§19.12); it stands on no chain.
+      {id: 'agent-custody', presentations: ['compact', 'expanded'], liveSemantic: 'macro', invariant: {maps: [{key: 'autonomy', range: ['suggest', 'review', 'auto']}]}, note: 'What the one Agent holds and Hand back (DLW §19.4, the Agent\'s Run page); what waits before a change lands is the Scope\'s Before it lands (§19.12). No device of its own.'},
       {id: 'context-write-mode', presentations: statePresentations('software-factory:context-write-mode'), liveSemantic: 'return', invariant: {routesTo: 'shell.setWriteArm'}, note: 'Write receipts and Return on context-world device.'},
       {id: 'ledger', presentations: statePresentations('software-factory:ledger'), liveSemantic: 'track', invariant: {stream: 'the Factory ledger (main-track receipts)'}, note: 'Main-track ledger device and dock tile.'},
       {id: 'approvals', presentations: statePresentations('software-factory:approvals'), liveSemantic: 'return', invariant: {routesTo: 'kernel:harness_agent_control'}, note: 'Default approvals and approval queue tile.'},
       // The session's crew (DLW §19.15), drawn on its owner by the Factory chain. The Thread, Tasks and Run faces are retired as faces of
       // their own (22 Oct manual rewrite); their bindings stay for the devices that carry them.
-      {id: 'agentset-rack', presentations: statePresentations('software-factory:agentset-rack'), liveSemantic: 'rack', invariant: {chains: ['agent-session'], chainSelector: 'member (state light)'}, note: 'A group\'s sessions as one unit, one chain for each member (DLW §19.15).'},
+      {id: 'agentset-rack', presentations: statePresentations('software-factory:agentset-rack'), liveSemantic: 'rack', invariant: {chains: ['agent-session']}, note: 'A group\'s sessions as one unit, one chain for each member (DLW §19.15).'},
       // The Main track's two design-package devices (DLW §16.2 "On the Main track: the Run map, the experiments, Approvals and the
       // prompt pads"), drawn on their bindings (agent/devices/runMapBinding.ts, promptPadsBinding.ts).
       {id: 'run-map', presentations: statePresentations('software-factory:run-map'), liveSemantic: 'device-instrument', invariant: {generatesAbsent: 'The Run map writes through Factory: Recognise and Close need a Run named on the Main track, and the attempt retry and development mutate for ContinueCommission have no kernel route yet (T-COVERAGE §1.2).'}, note: 'Run map (DLW §19.25).'},

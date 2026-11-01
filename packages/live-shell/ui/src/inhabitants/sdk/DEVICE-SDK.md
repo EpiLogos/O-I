@@ -132,7 +132,7 @@ does not take (`FORMAT_RULES`: `die` and `instrument-face` are instruments;
 what the semantic keeps: an instrument names the owner write it `generates`
 (or `generatesAbsent`, the owner it waits for); an effect names what it
 `transforms`; a return names the `routesTo` it proposes to; a rack its
-`chains` and `chainSelector`; a macro the `maps` it moves; a clip its
+`chains`, all working at once; a macro the `maps` it moves; a clip its
 `material`, `revision` and `states`; a track its `stream`; a stop the
 `launches` it stands. A new device starts as `info` (readings only). The
 registry is generated: `node scripts/validate-devices.mjs --write-registry`

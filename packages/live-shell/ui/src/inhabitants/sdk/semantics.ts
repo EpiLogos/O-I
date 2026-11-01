@@ -60,10 +60,9 @@ export interface SemanticInvariant {
   readonly transforms?: string
   /** fx: the write path of a replacing write, when one exists. */
   readonly replaceReceipt?: string
-  /** rack: the parallel chains. */
+  /** rack: the parallel chains. Every chain works at once, so a rack names no selector among them (manual §16.1 Group: "A switch between
+   * its chains" is what a rack is never). */
   readonly chains?: readonly string[]
-  /** rack: how a chain is selected. */
-  readonly chainSelector?: string
   /** macro: the declared rows it maps, each with its range. */
   readonly maps?: readonly SemanticMap[]
   /** clip: the native material it binds. */
@@ -81,7 +80,7 @@ export interface SemanticInvariant {
 }
 
 export const INVARIANT_FIELDS = [
-  'generates', 'generatesAbsent', 'transforms', 'replaceReceipt', 'chains', 'chainSelector',
+  'generates', 'generatesAbsent', 'transforms', 'replaceReceipt', 'chains',
   'maps', 'material', 'revision', 'states', 'stream', 'launches', 'routesTo',
 ] as const
 export type InvariantField = (typeof INVARIANT_FIELDS)[number]
@@ -94,7 +93,7 @@ const ALLOWED_INVARIANT_FIELDS: Readonly<Record<LiveSemantic, readonly Invariant
   'device-instrument': ['generates', 'generatesAbsent'],
   'device-audio-fx': ['transforms', 'replaceReceipt'],
   'device-midi-fx': ['transforms', 'replaceReceipt'],
-  'rack': ['chains', 'chainSelector'], 'macro': ['maps'], 'device-chain': [],
+  'rack': ['chains'], 'macro': ['maps'], 'device-chain': [],
   'browser': [], 'groove-slot': [], 'detail-clip': [], 'detail-device': [], 'transport-slot': [],
   'return': ['routesTo'], 'automation': [], 'modulation': [], 'capture': [], 'link': [], 'key-map': [],
   'info': [], 'view-selector': [], 'pack': [], 'status': [],
@@ -440,7 +439,6 @@ export function validateFaceSemantic(face: SemanticFace, context: SemanticContex
     }
     case 'rack': {
       if (!nonEmptyList(invariant.chains)) claim('a rack declares its parallel chains (chains, at least one non-empty name) — lock §5.3')
-      if (!nonEmptyString(invariant.chainSelector)) claim('a rack declares its chain selector (chainSelector) — lock §5.3')
       break
     }
     case 'macro': {

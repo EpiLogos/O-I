@@ -1,0 +1,10 @@
+/* AIKit's instrument (manual §19.26): a page's body under the monitors' head (monitor.tsx) — its picture across the top, its lists under
+   it — and the lamps on the pane's tabs. Shell and panel tokens only. */
+
+.aik-tabs button { display: inline-flex; align-items: center; gap: 5px; }
+.aik-body { position: absolute; inset: 0; display: flex; flex-direction: column; }
+.aik-picture { flex: none; padding: 10px 12px 0; }
+.aik-doc { flex: 1 1 0; min-height: 0; padding-top: 10px; }
+.aik-doc li[role="button"] { cursor: pointer; }
+.aik-doc li[data-chosen="true"] { background: var(--bg-2, #3f4348); }
+.aik-doc li[role="button"]:focus-visible { outline: 1px solid var(--accent, #ffbe00); outline-offset: 1px; }

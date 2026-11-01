@@ -4,13 +4,14 @@
 //
 // The well draws the queue as a lake: its level is the backlog (face-rig CREATURE-SPEC.md 24, the lake), a dry bed an empty queue, a lake at
 // its brim eight items or more. Each item floats on the surface at how long it has waited (a log scale, 1 min to 24 h): a square for a
-// proposal, a ring for a request, a diamond for a review or a recognition. An amber line marks the wait the Agent sets (§19.4 Wait): a
-// request that floats past it turns orange, because it counts as unanswered; an urgent request is red. Agents and owners ask into the lake
-// at the left bank, and your answers drain it at the right. How long a request waits and what happens then are the Agent's Wait and On no
-// answer, and the default answer is the Gateway's Approvals (§19.2): Approvals shows them and never sets them.
+// proposal, a ring for a request, a diamond for a review or a recognition. An amber line marks the Wait set on the asking agent's Scope: a request that
+// floats past it turns orange, because it counts as unanswered; an urgent request is red. Agents and owners ask into the lake at the left
+// bank, and your answers drain it at the right. Which acts wait for you, how long a request waits and what happens then are set on the Scope
+// of the agent that asks (§19.12): its Asks, Wait and On no answer. Approvals shows them and never sets them.
 //
 // Keys. The shell holds: `show` (all · proposals · requests · reviews · recognitions · urgent), `order` (oldest · agent · risk), `follow`
-// (the newest item at the top), `pick` (the item chosen). Readings: `light`; `wait` (seconds) and `noAnswer` (hold · deny), the Agent's;
+// (the newest item at the top), `pick` (the item chosen). Readings: `light`; `wait` (seconds) and `noAnswer` (hold · deny), the asking
+// agent's Scope's;
 // `desktop` (shown · refused: whether your computer shows a notice when an item arrives); `messages` (the agents that wait for you in
 // Messages); and `queue`, a JSON list of rows {id, kind proposal | request | review | recognition, who, text, where (a file or a tool),
 // session, age (seconds), flag (the owner's reason, for By risk), urgent, diff (lines, for a proposal), state ("denied" once declined), by,
@@ -161,7 +162,7 @@ const pickedOf = (v: V, list: Item[] | undefined) => list?.find(i => i.id === st
 /** The review or recognition the Review page shows: the chosen item when it is one, else the first that waits. */
 const reviewedOf = (v: V) => { const all = queueOf(v), chosen = all?.find(i => i.id === strOf(v, 'pick'))
   return chosen && (chosen.kind === 'review' || chosen.kind === 'recognition') ? chosen : all?.find(i => !i.denied && (i.kind === 'review' || i.kind === 'recognition')) }
-/** A request that has waited as long as the Agent's Wait counts as unanswered. A proposal, a review and a recognition have no deadline. */
+/** A request that has waited as long as the Wait set on its agent's Scope counts as unanswered. A proposal, a review and a recognition have no deadline. */
 const isPast = (i: Item, wait: number | undefined) => !i.denied && i.kind === 'request' && wait !== undefined && i.age !== undefined && i.age >= wait
 const ink = (i: Item, wait: number | undefined) => (i.denied ? 'var(--text-faint)' : i.urgent ? 'var(--rec)' : isPast(i, wait) ? 'var(--stall)' : 'var(--dp-value)')
 const ageText = (i: Item) => (i.age === undefined ? NONE : spanText(i.age))
@@ -191,8 +192,8 @@ function Mark({kind, color}: {kind?: Kind; color: string}) {
 const BRIM = 8
 
 /** The well: the queue as a lake. The water rises with the number of items that wait; each item floats on the surface at the time it has
- * waited. The amber line is the Agent's Wait: a request that floats past it has crossed into unanswered and turns orange. A reading the owner
- * has not reported is left off the picture and named in words. */
+ * waited. The amber line is the Wait on the asking agent's Scope: a request that floats past it has crossed into unanswered and turns orange.
+ * A reading the owner has not reported is left off the picture and named in words. */
 function QueueWell({v, set, w, h, size}: {v: V; set?: ViewProps['set']; w: number; h: number; size: 'mini' | 'compact' | 'whole'}) {
   const mini = size === 'mini'
   const list = listOf(v), all = queueOf(v), wait = numOf(v, 'wait'), picked = pickedOf(v, list)
@@ -209,7 +210,7 @@ function QueueWell({v, set, w, h, size}: {v: V; set?: ViewProps['set']; w: numbe
   const floats = (list ?? []).slice(0, 14).map(it => ({it, x: it.age === undefined ? x0 + 6 : Math.max(x0 + 8, xOf(it.age))}))
   const placed: {it: Item; x: number; y: number}[] = []
   for (const f of floats) { let n = 0; for (const q of placed) if (Math.abs(q.x - f.x) < 9) n++; placed.push({it: f.it, x: f.x, y: surface - 5 - n * 7}) }
-  return <Display w={w} h={h} label="Waits" does={mini ? 'The items that wait for you, on a lake whose level is how many.' : 'The queue as a lake: it rises with the number of items that wait. Each item floats at the time it has waited, from 1 minute to 24 hours: a square for a proposal, a ring for a request, a diamond for a review or a recognition. The amber line is the Agent\'s Wait. An orange request has floated past it; a red one is urgent.'}
+  return <Display w={w} h={h} label="Waits" does={mini ? 'The items that wait for you, on a lake whose level is how many.' : 'The queue as a lake: it rises with the number of items that wait. Each item floats at the time it has waited, from 1 minute to 24 hours: a square for a proposal, a ring for a request, a diamond for a review or a recognition. The amber line is the Wait set on the asking agent\'s Scope. An orange request has floated past it; a red one is urgent.'}
     corner={countText(v)}>
     {!mini && <text x={7} y={11} className="dp-axis">{wait === undefined ? `wait ${NONE}` : `wait ${spanText(wait)}${noAnswer ? ` → ${noAnswer}` : ''}`}</text>}
     <path d={bank(x0, 1)} className="dp-faint" fill="none" />
@@ -241,7 +242,7 @@ function QueueWell({v, set, w, h, size}: {v: V; set?: ViewProps['set']; w: numbe
       <path d={`M${xOf(sec)} ${axisY - 3}V${axisY + 3}`} className="dp-faint" />
       {!mini && <text x={xOf(sec)} y={h - 5} className="dp-axis" textAnchor={i === 0 ? 'start' : i === TICKS.length - 1 ? 'end' : 'middle'}>{label}</text>}
     </g>)}
-    {/* The Agent's Wait, read: Approvals sets no time of its own. */}
+    {/* The Wait, read from the asking agent's Scope: Approvals sets no time of its own. */}
     {wait !== undefined && <path d={`M${xOf(wait)} ${top - (mini ? 4 : 6)}V${axisY}`} stroke="var(--dp-on)" strokeWidth={1.4} strokeDasharray="3 2" fill="none" />}
     {wait !== undefined && <circle cx={xOf(wait)} cy={axisY} r={3} fill="var(--dp-on)" />}
   </Display>
@@ -283,7 +284,7 @@ function QueueBands({p}: {p: ViewProps}) {
   const [page, setPage] = useState(0)
   const list = listOf(p.v), wait = numOf(p.v, 'wait'), picked = pickedOf(p.v, list), known = list !== undefined
   const rows: RowItem[] = (list ?? []).map(it => ({id: it.id, name: itemName(it), light: it.denied ? 'dark' : 'lit', note: ageText(it), does: `${kindWord(it.kind)}: ${it.text || itemName(it)}${it.opened ? ' Opened here.' : ''}`,
-    why: it.denied ? 'Its owner declined it.' : it.urgent ? 'Urgent.' : isPast(it, wait) ? 'The Agent\'s Wait passed with no answer.' : it.flag, mark: <Mark kind={it.kind} color={ink(it, wait)} />}))
+    why: it.denied ? 'Its owner declined it.' : it.urgent ? 'Urgent.' : isPast(it, wait) ? 'The Wait set on its agent\'s Scope passed with no answer.' : it.flag, mark: <Mark kind={it.kind} color={ink(it, wait)} />}))
   return <>
     <Band>
       <Section width={206}><QueueWell v={p.v} set={p.set} w={194} h={146} size="whole" /></Section>
@@ -412,7 +413,7 @@ function ApprovalsPane({p}: {p: ViewProps}) {
         {item !== undefined && <>
           <div className="ap-detail-head"><Mark kind={item.kind} color={ink(item, wait)} /><b>{item.who ?? NONE}</b><span>{kindWord(item.kind)}</span>{item.session && <span>{item.session}</span>}</div>
           <div className="ap-detail-sub">
-            {item.denied ? `declined${item.by ? ` · ${item.by}` : ''}` : left === undefined ? `waited ${ageText(item)}` : left >= 0 ? `waited ${ageText(item)} · the Agent's Wait ends in ${spanText(left)}` : `waited ${ageText(item)} · the Agent's Wait passed ${spanText(-left)} ago`}
+            {item.denied ? `declined${item.by ? ` · ${item.by}` : ''}` : left === undefined ? `waited ${ageText(item)}` : left >= 0 ? `waited ${ageText(item)} · the Wait on its Scope ends in ${spanText(left)}` : `waited ${ageText(item)} · the Wait on its Scope passed ${spanText(-left)} ago`}
           </div>
           <p className="ap-what">{item.text || NONE}</p>
           {item.kind === 'request' && item.where && (item.options ? <p className="ap-note" aria-label="What it is about">About {item.where}.</p>

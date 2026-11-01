@@ -25,9 +25,9 @@ claimRailWidget('frames', FRAMES_ID)
 // tiles' raw task-record receipts (MOVED, lane BF3).
 claimRailWidget('ledger', LEDGER_ID)
 claimRailWidget('approvals', APPROVALS_ID)
-// The Workcells tile is the workcell rack's widget (§19.23 Widget; workcellRackBinding.ts), and lists every gateway your machines reach, with
-// its state (§19.3: "Every gateway your machines reach, with its state, is listed on the Workcells tile"): the Gateways monitor and its own
-// tile were retired in the 22 Oct manual rewrite, and the rack carries their reading under `gw.` (AgentRailDevices.tsx).
+// The Workcells tile is Workcell's instrument's widget (§19.23 Widget; workcellRackBinding.ts), and lists every gateway your machines reach,
+// with its state (§19.3: "Every gateway your machines reach, with its state, is listed on the Workcells tile"): the Gateways monitor and its
+// own tile were retired in the 22 Oct manual rewrite, and the instrument carries their reading under `gw.` (AgentRailDevices.tsx).
 claimRailWidget('workcells', WORKCELL_RACK_ID)
 
 /** The rail tiles these claims draw that no old tile registered, in the rail's order — Messages first (§19.24) — each with its name, its

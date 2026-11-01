@@ -65,6 +65,5 @@
 @keyframes gs-pulse { 50% { opacity: .3; } }
 @media (prefers-reduced-motion: reduce) { .gs-pulse { animation: none; } }
 
-/* The Seat page: Join seat and Release, one under the other. */
-.gs-acts { display: flex; flex-direction: column; gap: 5px; align-self: stretch; align-items: stretch; }
-.gs-acts .dp-cell { align-items: stretch; }
+/* The Seat group: the seat and its claim across both columns. */
+.gs-span { grid-column: 1 / -1; }
