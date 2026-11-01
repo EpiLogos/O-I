@@ -41,6 +41,8 @@ gh issue view 706 -R EpiLogos/O-I --json body --jq .body
 
 Open tickets are not listed in the body; they are the map's open sub-issues. Every line under Decisions so far names a closed ticket by its title and links it, with a one-line gist.
 
+GitHub holds at most 100 sub-issues under one parent. The sub-issues are therefore the open frontier, and Decisions so far is the record: once a closed ticket's line is under Decisions so far, the ticket leaves the map's sub-issues.
+
 ### Tickets are sub-issues
 
 A ticket is a GitHub sub-issue of the map. Its body has `## Question`, `## Context`, `## Done when` and `## Writes`, and it carries one `wayfinder:<type>` label.
@@ -61,7 +63,7 @@ gh api "repos/EpiLogos/O-I/issues/706/sub_issues?per_page=100" --paginate \
   --jq '.[] | "#\(.number) [\(.state)] \(.title)"'
 ```
 
-`gh api repos/EpiLogos/O-I/issues/706 --jq .sub_issues_summary` gives the count and the share closed.
+`gh api repos/EpiLogos/O-I/issues/706 --jq .sub_issues_summary` gives the count of tickets on the map, at most 100. What is done is read from Decisions so far.
 
 ### Blocking is GitHub's "blocked by"
 
@@ -121,6 +123,7 @@ gh issue list -R EpiLogos/O-I --state open --label hold:landing --json number,ti
    # add the line
    gh issue edit 706 -R EpiLogos/O-I --body-file map.md
    ```
+   Then take the closed ticket off the map with the DELETE above, so its slot is free for the next ticket.
 4. Chart what the answer made sharp: create each new ticket, add it as a sub-issue, wire its blockers, and remove its patch from Not yet specified. A ticket that turns out to lie past the destination is closed and gets one line under Out of scope, not under Decisions so far.
 
 A task ticket closes only when its stories reach their grades; landing is not done.
