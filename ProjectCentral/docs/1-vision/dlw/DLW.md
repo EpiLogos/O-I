@@ -654,14 +654,32 @@ keyboard, with every part of it yours to shape and keep.
 
 At the heart of the DLW is one instrument, and Live mode is where you play it.
 
-It is a torus, turning in the centre of the pane, and what you see is the sound
-itself: a field of vibration wound around a ring, its surface patterned by what
-it is doing. Two pulses drive it, beating against each other, and everything
-you hear comes from them. Touch the surface and it rings. Play a note and a
-point on the ring lights and answers; play a chord and several points light
-together, and the figure they draw on the surface is the chord's shape — the
-same shape the DLW uses for the symbol that chord belongs to. Play a symbol and
-you hear its harmony. Play its harmony and the symbol appears.
+It is a torus, turning in the centre of the pane, and what you see on its
+surface is the sound. A single pulse steps round its ring. Set it stepping a few
+hundred times a second and you hear a note; slow it to two or three a second and
+it is a beat you could tap; slower again it breathes, and at its slowest it
+keeps time with the planets. Nothing about the pulse changes but its speed, and
+the torus changes shape to show you which of these you are hearing.
+
+The pulse reads the six places of the logic in two ways at once: three going
+out and three coming back, and four that sound against two that hold still. Set
+the two readings against each other and they give the fourth, the fifth and the
+whole tone, and every interval the instrument plays is built from these. The
+torus has two helices, and on each of them four places sound and two stand
+still, so eight voices move the surface while four places hold it. The figure
+you see is where the motion meets the stillness: the pattern sand finds on a
+struck plate, drawn round a ring. Play a note and a point on the ring lights and
+answers; play a chord and several points light together, and the figure they
+draw is the chord's shape, the same shape the DLW uses for the symbol that chord
+belongs to. Play a symbol and you hear its harmony. Play its harmony and the
+symbol appears.
+
+The ring never quite closes. Twelve fifths overshoot seven octaves by a sliver,
+the Pythagorean comma. The instrument plays in tune from note to note but counts
+that sliver at every return, so a long piece draws a spiral rather than a
+circle. Cross a tritone, the step that turns a key into its mirror, and the
+torus passes through itself into a Klein bottle, where the point you strike can
+be heard as either of two notes, depending on the side you come to it from.
 
 You play it from a keyboard laid out in six rows, two families of whole tones
 interleaved so that every semitone is a short step across and every chord has
@@ -672,13 +690,17 @@ keyboard or a MIDI controller; or switch to an ordinary piano layout if you
 would rather.
 
 Choose the mode you are playing in and the keyboard and the piano roll follow
-it, marking the notes that belong and folding away the ones that don't. The
-modes reach from the plain diatonic scale to the full set the logic generates,
-and beside them sit older scales that keep their own intervals and their own
+it, marking the notes that belong and folding away the ones that don't. Each of
+the twelve roots is a lens, and twelve lenses in seven modes make the 84 modes
+the logic generates, from the plain diatonic scale outwards. Six lenses lean on
+one helix and six on the other, so a mode and its partner share their notes and
+turn them opposite ways: what sounds bright under one sounds dark under the
+other. Beside them sit older scales that keep their own intervals and their own
 history: the planetary scales Marsilio Ficino composed in, meant to draw each
 planet's quality into whoever heard them; the Shem scales; the maqām. Over the
-instrument turns the sky of your world, and each planet can move a part of the
-sound — its own interval, its own colour — shown on the control it is moving.
+instrument turns the sky of your world. Its planets can tune the voices to their
+own ratios, or each move a part of the sound — its own interval, its own colour
+— shown on the control it is moving.
 
 The mode lives where Live keeps its scales. Set it in the transport and the
 whole set plays in it: root, mode and tuning, with the keyboard recoloured to
@@ -689,26 +711,43 @@ reach the torus — one bends whatever you play onto the mode, one sets the
 tuning in exact ratios, one hands parts of the sound to the planets overhead —
 and you can stack, reorder and save them like any other.
 
-Shape the sound as far as you like. Every part of the instrument is a setting
-you can turn, record and save, and a saved state is a sound you can return to,
-share or start from. Put devices on its chain to filter it, echo it, give it a
-room to sound in, or ring it through the Resonator bank, which sounds the M3
-clock's cut of the octave after the torus (§22.7). Record what you play, edit it note by note in the roll,
-layer it, loop it, arrange it into a piece.
+Shape the sound as far as you like. How fast the pulse runs and the note it
+stands on, the mode, what the voices are tuned to, and the body that rings and
+what it is made of are settings you can turn, record and save. A saved state is
+a sound: it waits in the browser under the Torus, and you can return to it,
+share it or start from it. A form can ring as well as the torus. Make a fold or
+a codon of M3′, or a glyph you have drawn, into a body and the pulse sounds it
+by its own shape; keep that body with the sounds you made on it and it is an
+instrument of your own. Put devices on its chain to filter it, echo it, give it
+a room to sound in, or ring it through the Resonator bank, which sounds the M3
+clock's cut of the octave after the torus (§22.7).
+
+Record what you play, edit it note by note in the roll, layer it, loop it,
+arrange it into a piece. Every part plays through one mixer, as in Live, with
+its own chain, its level and place and its sends, and the Main track gathers
+them. Two parts can play two sounds of the torus at once, each ringing on its
+own, and what you export is what you heard.
 
 The same torus turns at the centre of every Expression, so what you play here
 can be heard and seen there, inside a scene, and the two share one timeline,
-picture and sound together.
+picture and sound together. In Live's Pane view the torus is drawn by the
+Expressions medium. Its eight voices are points on the helices that draw the
+light of the surface towards them as they sound and let it go as they fade; its
+four still places are lines where the light settles; and when the pulse crosses
+from beat to note, the torus folds into its next shape in time with the pulse.
 
 In Live you:
 
 - sound the constellation in focus;
 - play the torus from its keyboard, a controller, or its surface;
+- set the pulse's speed, and hear it as a beat or as a note;
 - choose the mode you play in, for the whole set or for one clip;
+- tune the voices to the logic's own reading, to a maqām or to the sky;
 - let the sky over your world move parts of the sound;
-- shape the sound with devices, and keep it as a state to return to;
+- shape the sound with devices, and keep it as a sound in the browser;
+- make a form into a body, and keep it as an instrument;
 - ring the M3 clock's cut through the Resonator bank;
-- record, edit, layer and arrange what you play.
+- record, edit, layer, mix and arrange what you play.
 
 **Stories:** LT01, LT02, LT05, LB07, LM01, LM03, LE08, LR03, XT11, XA10
 
@@ -939,7 +978,7 @@ It holds four kinds of thing:
 |---|---|---|
 | Material | What the work is made of: the constellations of your wiki, worlds and their pages, earlier Days, sessions and their chats, songs made into clips, Expressions and their scenes, sources, sets and their templates, and the recordings, renders and imports the sets use. | Double-click it, or drag it into a pane, to open it. Drag it onto an empty track to bring it into the set: a world joins today, a chat's session reopens where it stopped. Drag a constellation onto a track and the mode makes its own clip of it. Drag a chat onto the rail to talk in it. |
 | Instruments | What makes a track's material: the Agent, the Document, the World, the Journey, the Field, the Torus and the others, each with its presets under it, as Live keeps a device's presets. Your agents and the agent types stand under the Agent; saved sounds under the Torus. | Drag it into a pane to open it. Drag it onto an empty track to start a track with it: an agent dropped there takes the seat. |
-| Devices | What works on a chain or stands on the rail: effects, racks such as skillsets and agentsets, modulators, connections such as gateways, and monitors with their widgets. | Drag it onto a chain to add it there, or onto the rail to keep it at hand. A widget is installed from here. |
+| Devices | What works on a chain or stands on the rail: effects, racks such as the Skillset rack and the Agent rack, modulators, connections such as gateways, and monitors with their widgets. | Drag it onto a chain to add it there, or onto the rail to keep it at hand. A widget is installed from here. |
 | Running things | What is running now: agents at work, open sessions, workcells and the machines that hold them. | Work with it where it is. Select it to follow it; drag it onto the rail to keep it at hand. |
 
 Preview, open and add are separate acts. Select a row once and its preview
@@ -8974,12 +9013,12 @@ The glyph editor opens from Source, above the pages, or with a double-click on a
 | Radius | 20 to 2000 pixels | 200 | The reach of the force. |
 | Centre | X, Y, Z in stage units | The place of the symbol | Where the force acts. Drag the disc handle to pin the force away from the symbol. |
 
-**Sound** gives the symbol a voice. The voice carries part of the torus's sound, and it sounds from where the symbol stands (§20.2).
+**Sound** gives the symbol its voice: the symbol translated into sound. The pulse sounds it, from where the symbol stands (§20.2).
 
 | Control | Values | Default | What it does |
 |---|---|---|---|
-| Voice | On · Off | Off | Lets the symbol carry part of the torus's sound. Add sound gives it a voice; Remove sound takes it away. |
-| Name or mode | A mode or a name from M2′'s store of sound (§22.1), or None | None | What the voice carries. A mode carries the torus's sound at the mode's degrees over the torus's root, in every octave you can hear. |
+| Voice | On · Off | Off | Lets the symbol sound. Add sound gives it its voice; Remove sound takes it away. |
+| Source | The symbol · a name or a mode from M2′'s store of sound (§22.1) | The symbol | What the voice sounds. The symbol sounds its own translation: its harmony, the chord whose figure on the torus is the symbol's shape. A name or a mode sounds its degrees over the torus's root, in every octave you can hear. |
 | Gain | 0 to 1 | 0.2 | The loudness of the voice. 0 is silent. |
 | Attack | 0 to 10 s | 0.08 | How long the voice takes to rise. |
 | Release | 0 to 30 s | 0.8 | How long the voice takes to fade. |
@@ -9111,8 +9150,8 @@ Export, in the File menu, writes a picture, a film or the Expression itself to a
 - A bound figure has six members, in a fixed order. Bind and Release are separate acts. Release before you bind again.
 - The share of one formation is its Particle share divided by the total of all enabled formations. When the total is 0, the divisor is 1.
 - The forces of a symbol belong to its Force page. The steps of its sequence belong to the Sequence tab.
-- A voice has no pitch of its own. Its pitches are its mode's degrees over the torus's root, and its place between left and right is the symbol's place on the stage. Move the symbol and the voice moves with it.
-- While the torus is silent, every voice is silent. A voice with no name or mode is silent and says so. A voice whose name the store holds no sound for is silent too, and gives the store's reason.
+- A voice is its symbol, translated. Its pitches are the symbol's harmony, or its name's or mode's degrees, over the torus's root, and its place between left and right is the symbol's place on the stage. Move the symbol and the voice moves with it.
+- The pulse sounds every voice. A voice is never a second source. A symbol the DLW holds no translation for is silent and says why. A voice whose name the store holds no sound for is silent too, and gives the store's reason.
 - Every change to a symbol's sound or meaning writes its whole sound or binding in one step.
 - A symbol with no sound has no voice. Remove sound returns it to this state.
 - Centre identity is not a plate station. A starter diagram of seven centres is not a live reading of a person.
@@ -9166,12 +9205,14 @@ The field holds the one body of Live (§16.16), set in your occasion. Sound and 
 
 | Part | What it is |
 |---|---|
-| Body | The torus, the same one Live plays (§21.2). It makes every sound in the field, and the particles stand on its surface. |
-| Modes | M2′ on the body. Each planet bends the surface where it stands, and the material sets how it rings. This is the cymatic field. The flat plate and the chamber are studies of the same modes (§20.14). |
+| Body | The torus, the same one Live plays (§21.2). It makes every sound in the field, and the particles stand on its surface. A form of the scene can be made a body too, and then it rings by its own shape. |
+| Modes | M2′ on the body: the cymatic field. The eight voices the torus plays move the surface and its four boundaries hold it still, so the figure is where the motion meets the stillness. The lens in force gives the surface its material, and the tattva of the M2 condition its medium. Under Sky, the planets are the voices. The flat plate and the chamber are studies of the same modes (§20.14). |
 | Particles | The matter of the field. They gather into the forms of the symbols and the modes of the body, and move by the forces you set. |
 | Symbols | Objects in the scene that hold a place, drift, pull on each other or push apart. A symbol's form is a glyph: a letter, a shape, an image, or a form of M3′: a fold, a codon, a hexagram or a card (§22.3). Particles take its form. |
 
-A symbol can carry a voice: a name or a mode from M2′'s store of sound (§22.1). The voice carries part of the torus's sound to where the symbol stands. It does not sound on its own. A step that changes a symbol's M3′ form moves it to a neighbour, a line away, or turns it about a matrix axis, as Morph does (§20.9).
+A symbol has a voice: the symbol translated into sound. It is the symbol's harmony, the chord whose figure on the torus is the symbol's shape, and you hear it from where the symbol stands. The pulse sounds it, as it sounds everything. A name or a mode from M2′'s store of sound (§22.1) can stand in for the translation. A step that changes a symbol's M3′ form moves it to a neighbour, a line away, or turns it about a matrix axis, as Morph does (§20.9).
+
+The torus is an object of the scene, built as a symbol is: its shapes are its states, its eight voices are points on its helices that pull the particles while they sound, and its morph keeps the pulse's time (§21.2). Select it, set forces on it, or give its shapes a sequence, as you do any symbol's.
 
 #### Parameters
 
@@ -9184,7 +9225,7 @@ A symbol can carry a voice: a name or a mode from M2′'s store of sound (§22.1
 | Hold to change | A ratio, such as 5:3 | 5:3 | Sets how long a scene holds a figure compared with how long it changes. |
 | Key source | Torus · Sky · Manual | Torus | Torus tunes the field to what the torus plays. Sky takes the key from the sky over your world. Manual uses the resonance you set, to study the modes. The key chooses the pitches only while the Resonance device's Frequency driver is Torus (§20.14). The other drivers keep their own drive. |
 | Resonance | 20 to 4000 Hz | 396 Hz | The frequency that the field is tuned to under Manual. |
-| Symbol voices | On · Off | On | Lets symbols carry the torus's sound to where they stand. Off silences every voice and leaves each symbol's voice as it is. |
+| Symbol voices | On · Off | On | Lets symbols sound their voices from where they stand. Off silences every voice and leaves each symbol's voice as it is. |
 | Collisions strike | On · Off | Off | Under On, a collision in the field strikes the torus at the point where it happens (§21.2). |
 | Pulse | On · Off | Off | Pulses the field on the beat. |
 | Lights | Dim · Full | Full | Turns the lights down so that one symbol stands alone. |
@@ -9253,7 +9294,7 @@ The widget shows a small copy of the field and a level meter. The meter shows th
 2. Press Play. The particles gather and the torus sounds.
 3. Select a symbol in the scene's editor in Clip view (§20.1), or draw one with the Form tool.
 4. Play a note on the torus. Watch its modes form in the particles.
-5. Give a symbol a voice on the Sound page of the scene's Expression tab (§20.1): a name or a mode. Listen for the part of the sound it carries.
+5. Turn on a symbol's voice on the Sound page of the scene's Expression tab (§20.1). Listen to the symbol translated into sound, from where it stands.
 6. Press Capture to keep the figure as a scene. Save the Expression.
 
 #### Rules
@@ -10373,7 +10414,9 @@ The widget shows the cross-section, the four macros and the light. Click the lig
 
 The Resonance device tunes the plate that the field sounds on. Use it to set the pitch, to sweep the plate through its modes and to watch the pattern form where the plate stands still.
 
-The plate is a study of M2′'s modes: the same modes that bend the torus, laid flat or closed in a chamber so that you can watch them form. Under Torus the torus drives it, through the eight audible roles and four nodes that M2′ reads from it. The other drivers let you study a mode by itself.
+The plate is a study of M2′'s modes: the same modes that ring on the torus, laid flat or closed in a chamber so that you can watch them form. Under Torus, the torus drives it through what M2′ reads from it. The eight voices give the figure its motion: how its two families of standing wave are weighted, how strongly each voice drives it, and in what phase. The four boundaries give it its stillness: the mode numbers across and along the plate, its edge, and which families of standing wave may form at all. The other drivers let you study a mode by itself.
+
+The plate sounds. It is a body, as the torus is: it rings with what drives it and makes no tone of its own. Under Manual, Focus and Automation the pulse is tuned to the drive and rings the plate.
 
 #### Parameters
 
@@ -10466,6 +10509,8 @@ The widget shows the plate picture, the four macros and the light. Click the lig
 #### Rules
 
 - The pitch rides the lines where the plate stands still.
+- Under Torus, the four boundaries choose the figure and the eight voices move it. Neither does the other's work.
+- The plate sounds as a body rings. Under every driver the pulse rings it; the plate is never a second source.
 - Drive frequency is the live drive only while the driver is Manual, or Automation without a sweep.
 - The sweep runs only while the driver is Automation and Auto sweep is on.
 - Mode count ranks the modes by how well the drive couples to them. The seven station modes stay active whatever it is.
@@ -10706,6 +10751,8 @@ Live's Main track carries the scenes. Each row has a launch button with the scen
 
 - Pointer, touch, computer keys and MIDI all use one path.
 - Playing takes the shortest path in the instrument. Nothing slow, such as the sky, an agent or the map, is asked while a note plays, and a picture that stutters never stalls the sound.
+- Every part sounds in one engine, from the first device of its chain to the Main track. What Export Audio renders is what you heard, sample for sample.
+- Two parts can each play the Torus. Each plays its own sound and rings on its own.
 - Keys do not play notes while you type in a document.
 - Release a key and the note is released. Lose focus or lose a device, and all held notes are released. Panic releases all notes at once.
 - A direct strike, a route preview and a generated walk look different on the playing surface.
@@ -10732,19 +10779,52 @@ The Torus is the one instrument of Live. Use it to play a sound that you can see
 
 #### How the Torus sounds
 
-The Torus is a ring with a tube. Two pulses drive it and beat against each other. The first pulse divides six into three and three. The second divides six into four and two. Everything you hear comes from these two pulses.
+One pulse makes every sound of the Torus. It steps round a ring of twelve places, and its rate decides how you hear it.
 
-The visible torus is the whole state of the vibration. Its surface shows the pattern that the sound makes. Sound and picture are two views of one state.
+| Rate, in steps a second | Band | You hear the pulse as |
+|---|---|---|
+| Below 0.001 | Cosmic | The turning of days, years and planets. |
+| 0.001 to 0.5 | Breath | A breath, or a swell that takes minutes. |
+| 0.5 to 20 | Rhythm | A beat you could tap. |
+| 20 to 20,000 | Pitch | A note. |
+| Above 20,000 | Beyond hearing | Nothing you hear. You see what it moves. |
 
-The torus has two helices, which wind round it. A full return takes two turns. A pattern comes back only after both.
+The pulse runs through the bands without a break. Only the way you hear it changes.
+
+The pulse reads the six places of the logic in two ways. The first reading divides them three and three: three going out and three coming back. The second divides them four and two: four that sound and two that hold still. Set against each other, the two readings give the fourth, the fifth and the whole tone, and the Torus builds every interval it plays from these.
+
+The torus has two helices, which wind round it, each carrying one family of whole tones. A full return takes two turns, so a pattern comes back only after both. On each helix four places sound and two hold still, so the Torus always plays eight voices against four boundaries.
 
 | Part | What it does |
 |---|---|
-| First pulse | Divides each cycle three and three. |
-| Second pulse | Divides each cycle four and two. |
-| First helix | Carries the notes of the first whole-tone family. |
-| Second helix | Carries the notes of the second whole-tone family. |
-| Surface | Shows the pattern of the vibration. Touch it to excite the body at that point. |
+| Eight voices | The four sounding places of each helix. They make the motion you hear and see, each at its own ratio over the Fundamental. |
+| Four boundaries | The two still places of each helix. They make no sound. They decide where the surface stands still, and so which figures can form on it. |
+| Surface | Shows where the eight move the body and the four hold it. Touch it to strike the body at that point. |
+
+Two waves run round the ring in opposite directions, and where they meet they stand: the surface swells in some places and keeps still in others. Turn the torus through its half-turn and the waves change sides, and the still places and the swelling places trade.
+
+Each voice's pitch comes from Ananda's six source matrices, whose 864 cells are each a ratio over the Fundamental. A struck point reads its cell, and the cell gives the ratio. Tuning chooses what the voices sound.
+
+| Tuning | What the voices sound |
+|---|---|
+| Logic | The eight places that M2′ reads from the torus at each strike. |
+| Maqām | The maqām of the M2 condition, with its tonic and its role. |
+| Sky | The planets of the dated sky, each at its just ratio over the Fundamental. |
+
+Each note you play strikes its own cell, so it sounds its own eight voices over its own four boundaries, as each note of a chord takes its own voice on a Live instrument. A chord's figure is its notes' figures laid together.
+
+#### The shapes of the Torus
+
+The Torus changes shape to show how you are hearing it. Under Auto it changes by itself as the pulse crosses a band, and at each tritone and each return. Sequence follows the shapes you set in the scene, and any other value of Shape holds one shape.
+
+| Shape | When it comes | What it shows |
+|---|---|---|
+| Torus | The pulse is a note. | The ring and its two helices, with the figure of what sounds on the surface. |
+| Figure-eight | The pulse is slow enough to hear each degree of the scale. | The scale as two four-note halves, one loop on each helix, joined by a whole tone where the loops cross. The octave closes the figure. |
+| Spiral | The pulse is slow enough to watch whole cycles. | The comma gathering: each return lands a little past where the last one began. |
+| Klein bottle | The mode crosses a tritone, and for one step at each return of the ring to its start. | The surface passing through itself, so that one point is two notes, read from its two sides. At a return, the two poles meet for one step and part again. |
+
+The Comma readout counts the comma gathered since the Torus opened, in cents. It only grows while you play, and starts from nothing each time you open the Torus.
 
 #### The Torus as M1′
 
@@ -10756,10 +10836,10 @@ under it.
 |---|---|---|
 | 0, Bimba | The implicate loop the torus rises from. It is why a pattern returns only after two turns. | It frames the instrument and has no setting. |
 | 1, Pratibimba | The reflection that answers Bimba: the second face of every value the Torus reads. | Its place in the rack. |
-| 2, Ananda | The six matrices of source values that drive the pulses, each with its digital root. | The Oscillator layer of the M′ matrices (§22.6). |
-| 3, Spanda | The two pulses, three and three and four and two, and the two helices they drive. Its fourth stage holds the context frames. | Pulse mix, Helix balance, Drive, and the context frame. |
-| 4, Quaternal Logic's frames | Inversion, which is the semitone across the rows; the twelve-fold loop; the 84 modes, each a lens in a context frame; the harmonic frames that lay out the keyboard. | Lens and context frame, Scale mapping (§21.3), Exact-ratio tuning (§21.4) and the keyboard. |
-| 5, the torus | Its measure (R 16/9, r 1), its return in 720°, the half-turn between its sides, and the bridge where its shape becomes vibration. | The surface, the View, and the Body group: Strike, Damping, Modes, Agitation and Body source. The material comes from M2′'s tattvas. |
+| 2, Ananda | The six matrices of source values, 864 cells in all, each a ratio a struck note can sound over the Fundamental, and each matrix with its digital root. | The Oscillator layer of the M′ matrices (§22.6). |
+| 3, Spanda | The pulse and its two readings, three and three and four and two, and the two helices they drive. Its fourth stage holds the context frames. | Rate, Carrier, and the context frame. |
+| 4, Quaternal Logic's frames | Inversion, which is the semitone across the rows; the twelve-fold loop; the 84 modes, each a lens in a context frame; the harmonic frames that lay out the keyboard. | Lens and mode, Tuning, Scale mapping (§21.3), Exact-ratio tuning (§21.4) and the keyboard. |
+| 5, the torus | Its measure (R 16/9, r 1), its return in 720°, the half-turn between its sides, and the bridge where its shape becomes vibration. | The surface, the View, Shape and Comma, and the Body group: Body, Strike, Damping, Modes and Body source. The material comes from the lens in force and M2′'s tattvas. |
 
 #### What strikes the Torus
 
@@ -10767,16 +10847,65 @@ The torus is the only source of sound, so everything that sounds strikes it.
 
 | Strike | Where it lands |
 |---|---|
-| A key | Its point on its helix. |
+| A key | Its place on its helix, wherever the turning torus has carried that place as you play. |
 | A touch | The point of the surface you touch. |
 | A note in a clip | Its key's point, as the clip plays. |
 | The constellation in focus | Through Live's clip of it: drop the constellation on a part and Live transcribes it into a clip, whose notes strike their keys' points as it plays. The constellation stays as it is. |
 | A collision in the field | The point where it happens, while the Field's Collisions strike is On (§20.2). |
 | A singlet | When a generation cell is non-dual, its one codon strikes the torus at the codon's place on the ring (§22.3). The form comes back to the body as a new act. |
 
-The surface carries the other two instruments as well. The planets of M2′ bend
-it where they stand, and the form of M3′ sits on it. What you see on the
-torus is the whole body (§16.16).
+The surface carries the other two instruments as well. M2′ tunes the voices,
+gives the surface its material and, under Sky, sets the planets sounding on it,
+and the form of M3′ sits on it. What you see on the torus is the whole body
+(§16.16).
+
+#### The Torus in the pane
+
+You need to see the instrument as it sounds, close enough to feel it. In Live's
+Pane view the Torus fills the pane, drawn by the medium that draws every
+Expression (§20.2). It is an object of the scene, built as a symbol is built.
+
+| A symbol has | The Torus has |
+|---|---|
+| A form | The torus, with each of its shapes a state it can move to. |
+| Layers | Its two helices. |
+| Points that pull and push | Its eight voices. Each is a point on its helix that draws the particles of the surface towards it while it sounds and lets them go as it fades. |
+| A sequence | Its shapes in turn: by the pulse under Auto, or in the order and timing you set under Sequence. |
+| A morph | The passage from one shape to the next, timed by the pulse's two turnings, one round the ring and one round the tube, so that the figure changes on the instrument's own beat (§20.9). |
+
+The four boundaries are the lines where the particles settle. The particles are
+the body's own points: the body rings where they stand, and they move as it
+rings, so the picture and the sound are one state. In an Expression the same
+object stands in the scene beside the symbols. Select it, set forces on it, or
+give its shapes a sequence, as you do any symbol's.
+
+#### The body
+
+The body is what rings. It is the torus unless you choose a form. A fold, a
+codon or a hexagram of M3′, or a glyph you draw in an Expression, can be made a
+body: its shape, its size, what it is made of, where it is held still, where it
+is struck and where it is heard are all read from the form, and it rings by its
+own shape. The form keeps its meaning as a symbol. Becoming a body adds a sound
+to it and takes nothing away.
+
+Two things decide what the body is made of. The lens in force sets how the
+surface takes and shows the sound: its colour, its grain, how far it gives. A
+lens and its partner show the same notes on opposite surfaces. The tattva of
+the M2 condition sets the medium the body rings in, under Body source.
+
+#### Sounds and instruments
+
+You need to keep what you make: a sound to come back to, and a body you built,
+to play again as an instrument of its own.
+
+| What you keep | What it holds | Where it stands |
+|---|---|---|
+| A sound | Every parameter of the Torus, its body, and its tuning with the sources the tuning was read from, as they stood. | Under the Torus in the browser's Instruments, as Live keeps a device's presets (§10.3). Drag it onto a part to play it. |
+| An instrument | A body made from a form, with the sounds made on it. | Under the Torus, with its sounds under it, as an agent type stands under the Agent. The same pulse plays it. |
+| A rack | The Torus with its note devices and effects, its macros and their variations. | In the browser, as a rack, as in Live. |
+
+A sound opens as it was saved. If a source its tuning was read from has changed
+since, the sound still opens as saved, and says what has moved.
 
 #### The stage
 
@@ -10820,11 +10949,17 @@ from one row to the next, and moving along a row transposes without changing
 the shape under your fingers. A note appears at more than one place, so you can
 reach it from where your hand is.
 
+A key is a place on its helix, not a fixed spot on the surface. As the pulse
+turns the torus, the place travels with it: the same key lands on a different
+part of the surface from moment to moment, and always on the same place of its
+helix.
+
 - Pointer, touch, the computer keys and MIDI play the same keys through one
   path. A chord is several points struck at once.
 - Velocity and pressure set how hard each point is struck. Sustain holds the
-  notes, and each note rings on after you release it as long as Release says.
-- When more notes sound than Voices allows, the oldest makes way. Panic stops
+  notes. A released note rings on for as long as the body rings, which Damping
+  sets.
+- When more notes sound than Polyphony allows, the oldest makes way. Panic stops
   every note at once.
 - When the keyboard loses focus, the notes it holds are released. A key you
   hold while you type in a field does not play.
@@ -10835,17 +10970,19 @@ reach it from where your hand is.
 
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
-| Pulse mix | 0 to 100% | 50% | The balance of the two pulses. 0% is the first pulse only. 100% is the second pulse only. |
-| Helix balance | 0 to 100% | 50% | The balance of the two helices. |
+| Rate | Free: one step a year to 40,000 steps a second · Sync: a note length from 1/64 to 8 bars | Free, 2.5 a second | How fast the pulse steps round the ring. Under Sync it steps once per note length at the set's tempo, as Live's synced rates do. Its band shows beside it. |
+| Fundamental | 20 to 2,000 Hz · Map | Map | The note that place 0 stands on. Every voice is a ratio over it. Map takes the frequency the map gives the Sun, its 1:1. |
+| Carrier | 0 to 100% | 0% | How strongly the pulse drives the body between strikes. At 0% the body sounds only when something strikes it. At rhythm rates the carrier beats; at pitch rates it sounds. |
+| Lens and mode | Follow · a lens and a mode | Follow | The lens and mode the Torus reads. Follow takes the clip's mode, or the set's when the clip has none. |
+| Tuning | Logic · Maqām · Sky | Logic | What the voices sound. |
+| Shape | Auto · Sequence · Torus · Figure-eight · Spiral · Klein bottle | Auto | Auto changes shape by the pulse. Sequence follows the shapes you set in the scene. Any other value holds that shape. |
+| Comma | A reading, in cents | — | The comma gathered since the Torus opened. You read it; you do not set it. |
+| Body | The torus · a form of the Expression | The torus | What rings. |
 | Strike | 0 to 100% | 70% | How strongly velocity excites the body. |
 | Damping | Q factor 0.1 to 40 | 4.5 | How sharply the body rings. A high value rings longer. |
-| Drive | 0 to 6 | 1 | How hard the pulses shake the body. |
-| Modes | 1 to 64 | 64 | How many modes of the body take part. |
-| Agitation | 0 to 5 | 0.3 | How much the surface is kicked about. |
-| Body source | Declared · Tattva | Declared | Where Strike, Damping and Agitation come from. Declared keeps the values you set. Tattva takes them from the tattva of the M2 condition, through its element. |
-| Attack | 0 to 10 s | 0.01 | How long a note takes to rise. |
-| Release | 0 to 30 s | 1.2 | How long a note takes to fade. |
-| Voices | 1 to 32 | 16 | How many notes sound at once. The oldest note makes way for a new one. |
+| Modes | 1 to 4096 | 64 | How many modes of the body take part. |
+| Body source | Declared · Tattva | Declared | Where Strike and Damping come from. Declared keeps the values you set. Tattva takes them from the tattva of the M2 condition, through its element. |
+| Polyphony | 1 to 32 | 16 | How many notes sound at once, each with its own eight voices. The oldest note makes way for a new one. |
 | Level and pan | Level −60 to 6 dB · Pan −1 to 1 | −6 dB · 0 | The loudness and the place of the sound. |
 | View | Surface · Wire · Both, and Receiver On · Off | Surface · Off | What the pane draws. Receiver On makes your camera the place where the torus is heard. |
 | Procedure | One of the procedures you keep | — | The procedure the stage acts on. |
@@ -10853,7 +10990,7 @@ reach it from where your hand is.
 
 #### The body source
 
-Under Tattva, the tattva of the M2 condition sets the body. Four tattvas carry an element, and each element gives the body its constants. Space, Ākāśa, carries none: under it the body keeps the values you set. While a tattva sets them, Strike, Damping and Agitation show its values and hold them.
+Under Tattva, the tattva of the M2 condition sets the body. Four tattvas carry an element, and each element gives the body its constants. Space, Ākāśa, carries none: under it the body keeps the values you set. While a tattva sets them, Strike and Damping show its values and hold them.
 
 | Fibre | Tattva | Strike | Damping and Q factor | Agitation | Boundary strength |
 |---|---|---|---|---|---|
@@ -10862,7 +10999,7 @@ Under Tattva, the tattva of the M2 condition sets the body. Four tattvas carry a
 | Fire | Tejas | 85% | 3 | 2 | 4 |
 | Air | Vāyu | 65% | 1.5 | 3.5 | 2 |
 
-The values are a starting point. Tune them to what you hear. The Resonance device takes the same values for its plate (§20.14).
+Agitation and Boundary strength are the plate's. The values are a starting point. Tune them to what you hear. The Resonance device takes the same values for its plate (§20.14).
 
 #### Views
 
@@ -10875,7 +11012,7 @@ In Clip view, the Torus plays the notes of the clip that you select. The piano r
 
 ##### Folded
 
-The folded Torus shows its name, the level and the number of notes that sound.
+The folded Torus shows its name, the level, the band of its pulse and the number of notes that sound.
 
 ##### Compact
 
@@ -10883,27 +11020,28 @@ The compact Torus shows a small live torus, and four macros.
 
 | Macro | What it does |
 |---|---|
-| Pulse mix | Sets the balance of the two pulses. |
+| Rate | Sets how fast the pulse steps round the ring. |
+| Fundamental | Sets the note that place 0 stands on. |
+| Carrier | Sets how strongly the pulse drives the body between strikes. |
 | Damping | Sets how sharply the body rings. |
-| Drive | Sets how hard the pulses shake the body. |
-| Release | Sets how long a note takes to fade. |
 
 ##### Whole
 
-The whole Torus shows every parameter, in four groups.
+The whole Torus shows every parameter, in seven groups.
 
 | Group | Parameters |
 |---|---|
-| Pulses | Pulse mix, Helix balance, Drive |
-| Body | Strike, Damping, Modes, Agitation, Body source |
-| Envelope | Attack, Release |
-| Voices and output | Voices, Level and pan, View |
+| Pulse | Rate, Fundamental, Carrier |
+| Mode and tuning | Lens and mode, Tuning |
+| Shape | Shape, Comma |
+| Body | Body, Strike, Damping, Modes, Body source |
+| Notes and output | Polyphony, Level and pan, View |
 | Stage | Procedure, Budget, Evaluate, Bind, Unbind, Retire |
 | Rack | M1′'s parts, 0 to 5 (§16.16) |
 
 ##### Full
 
-The full Torus is the playable torus simulation. It fills the pane and turns at the centre. The surface shows the pattern of the vibration. The Jankó keyboard is beneath it. Touch the surface and it rings. Press a key on the keyboard and a point on the torus lights.
+The full Torus is the playable torus, filling the pane. It turns at the centre. Its eight voices light on the helices, the particles settle on its four boundaries, and it changes shape as the pulse crosses a band. The Comma readout sits at its edge, and the Jankó keyboard beneath it. Touch the surface and it rings. Press a key on the keyboard and a point on the torus lights.
 
 ##### Widget
 
@@ -10929,22 +11067,30 @@ The widget shows the small live torus with a level meter. Click the torus to ope
 
 1. Open Live mode. The torus fills the pane.
 2. Touch the surface. It rings where you touch.
-3. Play a note on the keyboard. A point lights on the ring.
+3. Play a note on the keyboard. Its point lights on the ring, and the surface draws the figure of its eight voices and four boundaries.
 4. Play a chord. Several points light, and the surface draws the shape of the chord.
-5. Raise Damping. The body rings longer.
-6. Save the state as a preset. It appears in the browser.
+5. Raise Carrier, then lower Rate until the pulse is a beat. Raise Rate past 20 and the beat becomes a note. Watch the torus change shape as it crosses each band.
+6. Set Tuning to Sky. The voices take the planets of your sky.
+7. Raise Damping. The body rings longer.
+8. Save the state. It appears in the browser, under the Torus, as a sound.
 
 #### Rules
 
 - The torus is the only generator. The sky, the tuning and the mode tune and move it. They do not make sound.
+- The four boundaries make no sound. They shape the figure and are never a voice.
+- The pulse runs without a break through every band. Crossing a band changes how it is heard and drawn, never where it is.
+- The comma only grows while the Torus is open.
 - The torus in Live and the torus in an Expression are one simulation. They are not two copies.
 - Picture and sound come from one prepared state. The sample rate and the frame rate are two views of it.
 - Everything that takes part in the sound has one role, and the roles stay apart: a body that rings, a voice that moves with its symbol, a collision that strikes, a meter that listens, and a form that is only seen. A meter makes no sound, and neither does a form that is only seen.
 - Samples, seconds, bars, the torus's turns, the clock's steps, the sky's date and the day are kept apart. One becomes another only by a rule stated for that crossing, and where the sound meets the day the crossing is measured, not worked out. Where no rule is stated, the Torus refuses rather than guess.
 - A recorded performance keeps what it needs to be played on: the notes with their expression, the tuning and the sources as they stood, the moves of modulation and automation, the course of the body, the form and the forces, changes of context, the seeds, and how the ruler met the sound. Where the field's motion cannot be replayed exactly, the recording says from which state it resumes. A picture of the field is never taken for a rewind.
 - A camera move does not change the sound, unless Receiver is On.
-- Each key is a point on a helix. The place of each key is calculated from the geometry of the torus. It is not set by eye.
-- A saved state keeps every parameter. A preset in the browser opens with the same sound.
+- Each key is a place on its helix, and the place moves as the torus turns. Where a key strikes is worked out from its helix and the pulse at that moment. It is never set by eye.
+- Under Sync, the pulse steps once per note length at the set's tempo. That is the rule for the crossing between bars and the pulse's steps.
+- Each note strikes its own eight voices. Polyphony counts notes.
+- A form made a body keeps its meaning as a symbol.
+- A saved sound keeps every parameter, its body, and its tuning with the sources it was read from. It opens with the same sound.
 - A held note keeps its own tail. A key release does not cut the ringing of the body.
 - Under Tattva, the body's constants are the tattva's. To set them by hand, set Body source to Declared.
 - A procedure owns a slot until it retires. Another procedure's write to that slot is refused.
@@ -10952,14 +11098,17 @@ The widget shows the small live torus with a level meter. Click the torus to ope
 
 #### Tips
 
-- To hear a long, bell-like tone, raise Damping and Release.
-- To make a dry, short sound, lower Damping and Release.
+- To hear a long, bell-like tone, raise Damping.
+- To make a dry, short sound, lower Damping.
 - To play the surface by hand, touch it while a chord sounds.
-- To make the pulses beat, move Pulse mix away from the middle.
-- To share a sound, save the state as a preset and give the preset to a friend.
+- To hear the pulse as a beat, raise Carrier and set Rate to two or three steps a second.
+- To lock the pulse to the beat of the set, set Rate to Sync and choose a note length.
+- To watch the comma gather, slow the pulse, leave Shape on Auto and let a piece run.
+- To share a sound, save it and give it to a friend.
+- To build an instrument of your own, make a form the body, make sounds on it, and keep it.
 - To let the form fold itself as the ring turns, bind a fold procedure and give it a budget.
 
-**Source:** Ableton Live 12.0.25 (object model, device decodes)
+**Source:** QL's own system (M1′), in the instrument grammar of Ableton Live 12.0.25 (object model, device decodes)
 
 **Stories:** FC08, LV13, LT01, LT02, LT04, LT09, LT10, LT12, LB01–LB07, LB09–LB13, LM01, LR02, LR03, LK10, XA10
 
