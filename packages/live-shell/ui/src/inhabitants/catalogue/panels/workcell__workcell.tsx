@@ -108,6 +108,7 @@ import {ErosionEnviron, SuccessionEnviron} from '../faces/EnvironFaces'
 import {checkoutErosionOf, successionOf} from '../faces/environReadings'
 import {NO_SEATS, NO_SEAT_READING, SEAT_DEFAULTS, STATE_WORD, filesOf, seats, short, tail} from './workcell__git-seat'
 import {OFFERS, OFFERS_OMARCHY, PLAN, PLAN_UNMET, PLAN_WORD, planOf} from './workcell__remote-carrier'
+import {plainReason} from '../../../../../../../desktop/cradle/src/shared/Refusal.tsx'
 import './workcell__workcell.css'
 
 type V = ViewProps['v']
@@ -1494,6 +1495,13 @@ function HereSide({v, frames}: {v: V; frames?: boolean}) {
   </div>
 }
 
+/** A fault a connection's owner reports, said plainly (manual §16.14; desktop/cradle/src/shared/Refusal.tsx): the owner's plain words,
+ * or that it reports one; its words as they came stand behind Why when they are not plain. */
+function Fault({fault}: {fault: string}) {
+  const plain = plainReason(fault)
+  return <>{plain ?? 'Its owner reports a fault.'}{plain === fault ? null : <details className="oi-refusal-detail"><summary>Why</summary>{fault}</details>}</>
+}
+
 /** The Chain page: the run's road, each connection with its reading and, in orange, the fault its owner reports; under it who works here,
  * the harness processes and the gateway's latest frames. Its head holds no setting: each connection is set on its device. */
 function ChainPage({p, pane}: {p: ViewProps; pane: Pane}) {
@@ -1502,7 +1510,7 @@ function ChainPage({p, pane}: {p: ViewProps; pane: Pane}) {
     {chain === undefined ? <p className="ref-doc-lead">No reading of the chain.</p> : <table className="wc-seats">
       <thead><tr><th>Connection</th><th>Reading</th><th>Fault</th></tr></thead>
       <tbody>{chain.map(d => <tr key={d.id} data-free={d.fault || lightIn(d.light) === 'lit' ? undefined : 'true'}>
-        <td><b>{d.name}</b></td><td>{d.reading ?? NONE}</td><td data-fault={d.fault ? 'true' : undefined}>{d.fault ?? NONE}</td></tr>)}</tbody>
+        <td><b>{d.name}</b></td><td>{d.reading ?? NONE}</td><td data-fault={d.fault ? 'true' : undefined}>{d.fault ? <Fault fault={d.fault} /> : NONE}</td></tr>)}</tbody>
     </table>}
     <HereSide v={p.v} frames />
   </FullPage>
