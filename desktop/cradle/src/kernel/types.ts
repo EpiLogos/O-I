@@ -447,6 +447,9 @@ export type AikitWriteRequest =
   /** `aikit source sync|rollback ID`; `aikit source promote ID [--trust] [--trust-skill C]…`. */
   | {kind:"source-sync"|"source-rollback";id:string}
   | {kind:"source-promote";id:string;trust?:boolean;trust_skills?:string[]}
+  /** `aikit decide invoke --instrument I --request-file - [--agent-session S]` (O-I #843, Factory's Fill heads): the cell's own words and
+   * the heads it has chosen (`aikit.instrument-fill-request/v1`) on stdin; answers `aikit.instrument-fill/v1`, the picks as evidence. */
+  | {kind:"decide-fill";instrument:string;request:unknown;agent_session?:string|null}
   /** `aikit knowledge forget destination|route|project RESOURCE` or `forget all`: answers `{forgot, preserved}`. `here` (O-I #741) forgets
    * RESOURCE in one world only — `project`'s, or your world's without one — asked in that world's ground. */
   | {kind:"knowledge-forget";scope:"destination"|"route"|"project"|"here"|"all";resource?:string|null;project?:string|null};

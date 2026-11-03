@@ -1034,6 +1034,7 @@ fn factory_action(request: &factory::OwnerRequest) -> &'static str {
         factory::OwnerRequest::PadsRun { .. } => "development pads-run",
         factory::OwnerRequest::PadsRecord { .. } => "development pads-record",
         factory::OwnerRequest::WaveAct { .. } => "development wave act",
+        factory::OwnerRequest::WorkflowEdit { .. } => "workflow edit",
         _ => "factory",
     }
 }

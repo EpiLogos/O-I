@@ -218,6 +218,28 @@ pub enum OwnerRequest {
         #[serde(default)]
         cursor: Option<Value>,
     },
+    /// A song's score (O-I #843; `factory workflow score <state> <run-ref>`
+    /// → `factory.workflow-score/v1`): the song the Run performs, read from
+    /// its file under the project root while it is the same song — its units
+    /// with their compositions, each unit's row (who does it), the agents and
+    /// agent sets the units name, its joins, its waves and each unit's leg. A
+    /// read: its kind (`workflow-score-read`) ends in `read`, as the desk's
+    /// bridge hears a read, and it is named in `is_read`.
+    WorkflowScoreRead {
+        state_path: PathBuf,
+        run_ref: String,
+    },
+    /// The person's edit of the song's file (`factory workflow edit <state>
+    /// <run-ref> -`, `factory.workflow-edit/v1` on stdin →
+    /// `factory.workflow-edit-receipt/v1`): Allocate, Connect and a unit's
+    /// heads, compare-and-swap on the file's byte revision. Factory compiles
+    /// the edit before the file changes and refuses what it cannot write in
+    /// its words; the Run keeps the edition it was commissioned with.
+    WorkflowEdit {
+        state_path: PathBuf,
+        run_ref: String,
+        request: Value,
+    },
     /// `factory telemetry status <state>`.
     TelemetryStatus { state_path: PathBuf },
     /// `factory telemetry inspect <state> <telemetry-ref>`.
@@ -620,6 +642,7 @@ impl OwnerRequest {
             self,
             OwnerRequest::Locate { .. }
                 | OwnerRequest::WorkflowInspect { .. }
+                | OwnerRequest::WorkflowScoreRead { .. }
                 | OwnerRequest::TelemetryStatus { .. }
                 | OwnerRequest::TelemetryInspect { .. }
                 | OwnerRequest::TelemetryWatch { .. }
@@ -753,7 +776,10 @@ fn owner_call_env(
                     Some(consequence) => format!("{fact} {consequence}"),
                     None => fact.to_owned(),
                 })
-            });
+            })
+            // Factory's workflow diagnostic, which its workflow verbs write on
+            // stderr (O-I #843: the song's edit refused), in its words.
+            .or_else(|| workflow_diagnostic_words(&output.stderr));
         let stderr = String::from_utf8_lossy(&output.stderr).trim().to_owned();
         return Err(Error {
             kind: "owner-refused-or-failed".into(),
@@ -1989,6 +2015,24 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
                 &[TASK_ACTIVITY_READING],
             )
         }
+        OwnerRequest::WorkflowScoreRead {
+            state_path,
+            run_ref,
+        } => expect_contract(
+            owner_call(&workflow_score_args(&state_path, &run_ref), None)?,
+            &[WORKFLOW_SCORE],
+        ),
+        OwnerRequest::WorkflowEdit {
+            state_path,
+            run_ref,
+            request,
+        } => {
+            let body = workflow_edit_body(&request)?;
+            expect_contract(
+                owner_call(&workflow_edit_args(&state_path, &run_ref), Some(&body))?,
+                &[WORKFLOW_EDIT_RECEIPT],
+            )
+        }
         OwnerRequest::WaveRead {
             state_path,
             run_ref,
@@ -2188,6 +2232,56 @@ pub fn task_activity_args(state_path: Option<&Path>) -> Vec<std::ffi::OsString> 
 }
 /// Factory's custody listing.
 pub const CUSTODY_LISTING: &str = "factory.work-custody-listing/v1";
+
+/// Factory's score of a song, and the receipt of an edit of its file (O-I #843).
+pub const WORKFLOW_SCORE: &str = "factory.workflow-score/v1";
+pub const WORKFLOW_EDIT_RECEIPT: &str = "factory.workflow-edit-receipt/v1";
+const WORKFLOW_EDIT: &str = "factory.workflow-edit/v1";
+
+/// `factory workflow score <state> <run-ref> --json`.
+pub fn workflow_score_args(state_path: &Path, run_ref: &str) -> Vec<std::ffi::OsString> {
+    vec![
+        "workflow".into(),
+        "score".into(),
+        path_arg(state_path),
+        run_ref.into(),
+        "--json".into(),
+    ]
+}
+
+/// `factory workflow edit <state> <run-ref> - --json`, the edit on stdin.
+pub fn workflow_edit_args(state_path: &Path, run_ref: &str) -> Vec<std::ffi::OsString> {
+    vec![
+        "workflow".into(),
+        "edit".into(),
+        path_arg(state_path),
+        run_ref.into(),
+        "-".into(),
+        "--json".into(),
+    ]
+}
+
+/// The edit as Factory reads it: only an edit document travels. Factory
+/// itself decides the edit; the kernel names no field of it.
+pub fn workflow_edit_body(request: &Value) -> Result<Vec<u8>, Error> {
+    if request.get("contract").and_then(Value::as_str) != Some(WORKFLOW_EDIT) {
+        return Err(incompatible(format!(
+            "An edit of the song is a {WORKFLOW_EDIT} document; this one names another"
+        )));
+    }
+    serde_json::to_vec(request).map_err(|e| incompatible(e.to_string()))
+}
+
+/// The words of Factory's workflow diagnostic (`factory.workflow-diagnostic/v1`
+/// `{error: {code, message, unit, location}}`), which `factory workflow …`
+/// writes on stderr when it refuses: its message, else none.
+fn workflow_diagnostic_words(stderr: &[u8]) -> Option<String> {
+    let value: Value = serde_json::from_slice(stderr).ok()?;
+    if value.get("contract").and_then(Value::as_str) != Some("factory.workflow-diagnostic/v1") {
+        return None;
+    }
+    Some(value.get("error")?.get("message")?.as_str()?.to_owned())
+}
 
 /// Factory's plan of record for a Run (Factory `wave_sdlc.rs`).
 pub const WAVE_READING: &str = "factory.wave-reading/v1";
@@ -4480,6 +4574,55 @@ mod run_close_tests {
                     "A Run's plan is set by the person: the host holds no native action token"
                 )
         );
+    }
+
+    #[test]
+    fn a_song_s_score_is_read_and_its_file_edited_through_factory_s_workflow_verbs() {
+        let read: OwnerRequest = serde_json::from_value(serde_json::json!({
+            "kind": "workflow-score-read", "state_path": "/s.json", "run_ref": "run:A"}))
+        .unwrap();
+        assert!(
+            read.is_read() && !read.needs_world(),
+            "a reading, outside the lock"
+        );
+        let strings = |args: Vec<std::ffi::OsString>| {
+            args.iter()
+                .map(|arg| arg.to_string_lossy().into_owned())
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(
+            strings(workflow_score_args(Path::new("/s.json"), "run:A")),
+            ["workflow", "score", "/s.json", "run:A", "--json"]
+        );
+        let edit: OwnerRequest = serde_json::from_value(serde_json::json!({
+            "kind": "workflow-edit", "state_path": "/s.json", "run_ref": "run:A",
+            "request": {"contract": "factory.workflow-edit/v1", "expectedRevision": "blake3:1",
+                "edits": [{"op": "allocate", "units": ["verify"], "to": {"kind": "agent", "ref": "agent/eros"}}]}}))
+        .unwrap();
+        assert!(!edit.is_read(), "an edit of the song is a prepared write");
+        assert_eq!(
+            strings(workflow_edit_args(Path::new("/s.json"), "run:A")),
+            ["workflow", "edit", "/s.json", "run:A", "-", "--json"]
+        );
+        let OwnerRequest::WorkflowEdit { request, .. } = edit else {
+            unreachable!()
+        };
+        let body: Value = serde_json::from_slice(&workflow_edit_body(&request).unwrap()).unwrap();
+        assert_eq!(body["contract"], "factory.workflow-edit/v1");
+        assert_eq!(body["edits"][0]["to"]["ref"], "agent/eros");
+        // Only an edit document travels; anything else is refused before Factory is asked.
+        assert!(workflow_edit_body(&serde_json::json!(["allocate"]))
+            .unwrap_err()
+            .message
+            .contains("factory.workflow-edit/v1"));
+        // Factory refuses an edit on stderr, in its workflow diagnostic: the
+        // refusal is its message, never the document's raw text.
+        let stale = br#"{"contract":"factory.workflow-diagnostic/v1","error":{"code":"workflow.edit_stale","field":null,"location":null,"message":"The song's file changed since it was read; read the score again and repeat the edit.","unit":null}}"#;
+        assert_eq!(
+            workflow_diagnostic_words(stale).as_deref(),
+            Some("The song's file changed since it was read; read the score again and repeat the edit.")
+        );
+        assert_eq!(workflow_diagnostic_words(b"error: unknown command"), None);
     }
 
     #[test]
