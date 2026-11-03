@@ -35,6 +35,8 @@ import {liveColour, liveColourIndex} from '../live/livePalette'
 import type {SetSummary} from '../shell/useSet'
 import type {WorldActionReceipt, WorldAutomationLane, WorldCompStretch, WorldMixer, WorldTakeLane, WorldTrackActions, WorldTrackAdapter, WorldTrackClip, WorldTrackMix, WorldTrackSet} from './worldTrackAdapter'
 import type {LiveClipAt, LiveEnvelope, LiveSend, LiveSetAct, LiveSetActed, LiveTakeLane, LiveTrackMixer} from '../../../../../desktop/cradle/src/kernel/types'
+import {enginePartOf, type LiveEngineReading} from '../live/liveEngine'
+import type {LiveMixerControl, LiveMixerValue} from '../live/liveWrites'
 
 const missing = (what: string, op: string) => `${what}: no owner operation carries it yet — missing op: ${op} (kernel · live-set).`
 const MIXER_READ = 'live_set_read reporting each track\'s mixer {activator, solo, arm, monitor: "in" | "auto" | "off", input, output} from the .als (TrackActivator, Solo, Arm, MonitoringEnum, AudioInputRouting / MidiInputRouting, AudioOutputRouting)'
@@ -48,6 +50,10 @@ export const LIVE_MIXER: WorldMixer = {
   monitor: {meaning: 'In always passes what you play through the chain; Auto passes it when the part is armed; Off passes only the clips', disabled: missing('Monitor', mixerWrite('monitor', '"in" | "auto" | "off"'))},
   input: {meaning: 'Where the part\'s notes or sound come from: the playing surface, the computer keys or MIDI; an audio part, your audio interface', disabled: missing('Input', mixerWrite('input', 'routing'))},
   output: {meaning: 'Where the part goes: the Main track, a group, or another part', disabled: missing('Output', mixerWrite('output', 'routing'))},
+  // Live keeps Volume as linear gain, −70 dB (0.0003162277571) to +6 dB (1.99526238), and Pan −1…1 (racks-session-model.md: <Volume>,
+  // <Pan>); the row shows them in dB and as a place (manual DLW.md:10611 "The level and the place of the part").
+  volume: {meaning: 'The level of the part', range: {min: -70, max: 6, unit: 'dB'}, disabled: missing('Volume', mixerWrite('volume', 'gain'))},
+  pan: {meaning: 'The place of the part, left to right', range: {min: -1, max: 1, unit: 'pan'}, disabled: missing('Pan', mixerWrite('pan', '-1..1'))},
 }
 
 /** Why the set's lanes are absent, in its owner's terms. */
@@ -63,7 +69,9 @@ export interface LiveSetReading {
   /** Each track's display colour, by index (the shell's palette and the person's overrides). */
   colors?: readonly string[]
   /** The set owner's mixer write (live/liveWrites.ts writeLiveMixer); absent, the row is read only and says why. */
-  mixerWrite?: (track: number, control: 'activator' | 'solo' | 'arm' | 'monitor', value: boolean | 'in' | 'auto' | 'off') => Promise<unknown>
+  mixerWrite?: (track: number, control: LiveMixerControl, value: LiveMixerValue) => Promise<unknown>
+  /** The engine's reading (live/liveEngine.ts useLiveEngine): while it plays this set, Volume and Pan read as the engine applied them. */
+  engine?: LiveEngineReading | null
   /** The set owner's send write (live/liveWrites.ts writeLiveSend): a send by its index, its level as linear gain. */
   sendWrite?: (track: number, index: number, value: number) => Promise<unknown>
   /** The set owner's comp (live/liveWrites.ts writeLiveComp): a take lane by its index, a stretch in beats. */
@@ -108,6 +116,8 @@ const gainToDb = (gain: number, floor: number): number => 20 * Math.log10(Math.m
 const dbToGain = (db: number, floor: number, top: number): number => Math.max(floor, Math.min(top, 10 ** (db / 20)))
 /** Live 12's send floor, as every set keeps it (each Send's MidiControllerRange Min). */
 const SEND_FLOOR = 0.0003162277571
+/** Live's volume range as every set keeps it (Mixer/Volume's MidiControllerRange): −70 dB to +6 dB, as linear gain. */
+const VOLUME_FLOOR = 0.0003162277571, VOLUME_TOP = 1.99526238
 
 /** A part's sends on its row, in the set's order. */
 export function liveMixSends(sends: readonly LiveSend[]): LiveMixSend[] {
@@ -149,7 +159,7 @@ const barBeat = (beats: number): string => `${Math.floor(beats / 4) + 1}.${Math.
 
 export const liveSetTrackAdapter: WorldTrackAdapter<LiveSetReading> = {
   id: LIVE_SET_TRACK_ADAPTER_ID,
-  project({set, document, colors, mixerWrite, sendWrite, compWrite, act, insertClip, clipInfo, play}): WorldTrackSet {
+  project({set, document, colors, mixerWrite, sendWrite, compWrite, act, insertClip, clipInfo, play, engine}): WorldTrackSet {
     if (!set) return {columns: [], tracks: [], clips: []}
     const trackRef = (index: number) => `als:${set.path}#track/${index}`
     // The set's master track is Live's Main track: its material stands at the end, and its chain is the devices the set lists on it.
@@ -165,10 +175,21 @@ export const liveSetTrackAdapter: WorldTrackAdapter<LiveSetReading> = {
       for (let at = parentOf(index); at !== undefined && depth < set.tracks.length; at = parentOf(at)) depth += 1
       return depth
     }
+    // While the engine plays this set, a part's Volume and Pan are the engine's: the mixer as it applied it, never the move asked.
+    const heard = engine?.playing && engine.path === set.path ? engine : null
+    const kinds = set.tracks.map(track => track.kind)
+    const applied = (index: number) => {
+      const part = heard && enginePartOf(kinds, index)
+      if (!heard || !part) return undefined
+      return part === 'main' ? heard.mixer.main : 'track' in part ? heard.mixer.tracks[part.track] : heard.mixer.returns[part.return]
+    }
     const tracks = set.tracks.map((track, index) => {
       const mixer = document?.tracks[index]?.mixer
-      const {sends, ...row}: LiveTrackMixer = mixer ?? {}
-      const mix: LiveTrackMix = {...row, ...(sends?.length ? {sends: liveMixSends(sends)} : {})}
+      const {sends, volume, pan, ...row}: LiveTrackMixer = mixer ?? {}
+      const playing = applied(index)
+      const level = playing ? {volume: gainToDb(playing.gain, VOLUME_FLOOR), pan: playing.pan, levelSource: 'as the engine applied it'}
+        : {...(volume !== undefined ? {volume: gainToDb(volume, VOLUME_FLOOR)} : {}), ...(pan !== undefined ? {pan} : {})}
+      const mix: LiveTrackMix = {...row, ...level, ...(sends?.length ? {sends: liveMixSends(sends)} : {})}
       const stopless = document?.tracks[index]?.stoplessSlots ?? []
       // The set's own colour where it keeps one (the track's Color, Live's palette index), else the shell's.
       const color = liveColour(document?.tracks[index]?.colourIndex) ?? colors?.[index]
@@ -237,8 +258,18 @@ export const liveSetTrackAdapter: WorldTrackAdapter<LiveSetReading> = {
           () => ({ok: true, note: `${control} written to the set.`}),
           (cause: unknown) => ({ok: false, error: cause instanceof Error ? cause.message : String(cause)}))
       }
+      const level = (control: 'volume' | 'pan', trackId: string, value: number) => {
+        const index = indexOf(trackId)
+        if (index < 0) return Promise.resolve({ok: false as const, error: `"${trackId}" is not a track of this set.`})
+        return receipt(mixerWrite(index, control, value), `${control} written to the set.`)
+      }
       const mixer: LiveMixerActions = {activator: {op: LIVE_MIXER_WRITE_OP('activator'), run: run('activator')}, solo: {op: LIVE_MIXER_WRITE_OP('solo'), run: run('solo')},
-        arm: {op: LIVE_MIXER_WRITE_OP('arm'), run: run('arm')}, monitor: {op: LIVE_MIXER_WRITE_OP('monitor'), run: run('monitor')}}
+        arm: {op: LIVE_MIXER_WRITE_OP('arm'), run: run('arm')}, monitor: {op: LIVE_MIXER_WRITE_OP('monitor'), run: run('monitor')},
+        // Volume in dB on the row, written as the linear gain the set keeps; Pan as it stands. The owner refuses out of its range.
+        volume: {op: LIVE_MIXER_WRITE_OP('volume'), run: (trackId, db) => Number.isFinite(db) ? level('volume', trackId, dbToGain(db, VOLUME_FLOOR, VOLUME_TOP))
+          : Promise.resolve({ok: false as const, error: 'The volume takes a level in dB.'})},
+        pan: {op: LIVE_MIXER_WRITE_OP('pan'), run: (trackId, place) => Number.isFinite(place) ? level('pan', trackId, Math.max(-1, Math.min(1, place)))
+          : Promise.resolve({ok: false as const, error: 'The pan takes a place from −1 (left) to 1 (right).'})}}
       if (sendWrite) mixer.send = {op: LIVE_SEND_WRITE_OP, run: (trackId, sendId, db) => {
         const index = indexOf(trackId)
         const sends = index < 0 ? [] : document?.tracks[index]?.mixer?.sends ?? []

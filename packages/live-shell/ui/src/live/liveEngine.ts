@@ -4,8 +4,9 @@
 //   live_engine_play / _stop   start / stop the engine on the default output
 //   live_engine_send {event}   a note, Panic, or a mixer move — applied at the next audio block
 //   live_engine_mixer          the reading: the mixer as the engine APPLIED it (a move asked is not in it until a block applied it)
-//   live_engine_export {path}  Export Audio: the samples the engine played, rendered offline, as a 32-bit float WAV
-// The set's own mixer writes (live/liveWrites.ts liveSetWrites: Activator, Solo, a send) land in the .als through the set's owner and,
+//   live_engine_export         Export Audio: the samples the engine played, rendered offline, as a 32-bit float WAV, to the file
+//                              the person chooses in the host's own save dialog (the webview never names the path)
+// The set's own mixer writes (live/liveWrites.ts liveSetWrites: Activator, Solo, Volume, Pan, a send) land in the .als through the set's owner and,
 // while the engine plays that set, follow into it as the same move, so what you hear moves without the set being bridged again; Play
 // bridges the file as it then stands. The engine runs in the native candidate only; elsewhere each act refuses, naming its op.
 import {useSyncExternalStore} from 'react'
@@ -63,10 +64,16 @@ export function enginePartOf(kinds: readonly string[], index: number): LiveEngin
 const PART_KINDS: ReadonlySet<string> = new Set(['audio', 'midi'])
 
 /** The engine's move for one of the set's mixer writes; null where the write changes nothing the engine plays (Arm, Monitor) or the
- * engine has no such move (a return's solo or sends, a group). */
+ * engine has no such move (a return's solo or sends, a group). Volume is linear gain and Pan −1…1, as the set keeps them. */
 export function engineEventOfMixerWrite(kinds: readonly string[], track: number, control: string, value: unknown): LiveEngineEvent | null {
   const part = enginePartOf(kinds, track)
-  if (!part || typeof value !== 'boolean') return null
+  if (!part) return null
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    if (control === 'volume') return {kind: 'volume', part, gain: value}
+    if (control === 'pan') return {kind: 'pan', part, pan: value}
+    return null
+  }
+  if (typeof value !== 'boolean') return null
   if (control === 'activator') return {kind: 'active', part, on: value}
   if (control === 'solo' && typeof part === 'object' && 'track' in part) return {kind: 'solo', track: part.track, on: value}
   return null
@@ -115,8 +122,9 @@ export const liveEngine = {
   stop: (): Promise<LiveEngineReading> => adopt(op<LiveEngineReading>('live_engine_stop')),
   send: (event: LiveEngineEvent): Promise<LiveEngineReading> => adopt(op<LiveEngineReading>('live_engine_send', {event})),
   read: (): Promise<LiveEngineReading> => adopt(op<LiveEngineReading>('live_engine_mixer')),
-  /** Export Audio to an absolute `.wav` path: the samples the engine played since Play. */
-  exportAudio: (out: string): Promise<LiveEngineExport> => op<LiveEngineExport>('live_engine_export', {path: out}),
+  /** Export Audio: the samples the engine played since Play, to the `.wav` the person chooses in the host's save dialog (the same act
+   * as File › Export Audio…); a cancelled dialog is a refusal in the host's words. No path is named from here. */
+  exportAudio: (): Promise<LiveEngineExport> => op<LiveEngineExport>('live_engine_export'),
 }
 
 /** One of the set's mixer writes, followed into the engine while it plays that set (nothing otherwise: Play bridges the file). */

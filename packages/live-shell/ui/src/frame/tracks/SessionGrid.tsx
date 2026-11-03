@@ -14,15 +14,19 @@
 // · Off, input and output — with what each means in the mode (trackLanes.ts mixerCells); a track flagged `main` is the Main
 // track's own material and stands in the Main column at the end, which carries each row's launcher, Stop All and Back to
 // Arrangement (lit when what plays differs from the ruler); an armed track's empty slots are record buttons (Live cap 35).
-import {useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type ReactNode} from 'react'
+import {lazy, Suspense, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type ReactNode} from 'react'
 import type {WorldTrack, WorldTrackActions, WorldTrackClip, WorldTrackColumn, WorldTrackSection, WorldTrackSet} from '../../timeline/worldTrackAdapter'
 import {clipStandingAttributes, clipStandingEdge, clipStandingMark, clipStandingTag, clipStandingTitle} from './trackMarks'
 import {sectionFoldKey, sessionRowLayout, shownRowLayout} from './trackSections'
-import {mixerCells, type MixerCell} from './trackLanes'
+import {levelWord, mixerCells, type MixerCell} from './trackLanes'
 import {CutIcon} from '../../agent/agentIcons'
 import {useTracksMenu} from '../menu/TracksMenu'
 import {trackHeadDevice, useTrackHeadDevices, type TrackHeadDevice} from './trackHeads'
 import './tracks.css'
+
+// The level box is the device plates' own (plateControls.tsx): it loads with the first row that draws a level, not with the frame
+// (tests/first-load-budget.test.mjs counts what the frame fetches before it draws).
+const OwnerValueBox = lazy(() => import('../devices/plateControls').then(module => ({default: module.OwnerValueBox})))
 
 export interface TracksSelection {
   /** The selected ref (a clip's or a track's id), if it is in this set. */
@@ -157,8 +161,11 @@ export function MixerRow({cells, shown, routes: withRoutes = true, trackId, rece
   // A column with no row of its own (the Main column, a track read from another reading) keeps the row's height, so the slots align.
   if (!cells.length) return <div className="trk-mix" aria-hidden="true" />
   const io = (cell: MixerCell) => cell.id === 'input' || cell.id === 'output' || cell.id === 'works'
-  const switches = cells.filter(cell => cell.state !== 'route' && !io(cell))
+  const switches = cells.filter(cell => cell.state !== 'route' && !io(cell) && !cell.level)
   const routes = withRoutes ? cells.filter(io) : []
+  // Volume and Pan (§21.1 "The mixer row"): a value box each over its owner, the value sent on release (plateControls.tsx). They stand
+  // on the Session row; the Arrangement head keeps its switches on one line.
+  const levels = withRoutes ? cells.filter(cell => cell.level) : []
   return <div className={withRoutes ? 'trk-mix' : 'tl-mix'} role="group" aria-label="Mixer" data-mixer={trackId}>
     {switches.length > 0 && <div className="mx-row">{switches.map(cell => {
       const key = `mix:${cell.id}:${trackId}`
@@ -170,6 +177,15 @@ export function MixerRow({cells, shown, routes: withRoutes = true, trackId, rece
     })}</div>}
     {routes.length > 0 && <div className="mx-io">{routes.map(cell => <span key={cell.id} className={`mx-route mx-${cell.id}`} data-mix={cell.id} data-state={cell.state} title={cell.title}>
       <small>{cell.id === 'input' ? 'in' : cell.id === 'works' ? 'works in' : 'out'}</small>{cell.text}</span>)}</div>}
+    {levels.length > 0 && <div className="mx-lv">{levels.map(cell => {
+      const level = cell.level!, set = level.set, key = `mix:${cell.id}:${trackId}`
+      return <span key={cell.id} className={`mx-level mx-${cell.id}`} data-mix={cell.id} data-state={cell.state} data-receipt={receiptMark(receipt, key)} title={cell.title}>
+        <Suspense fallback={<span className="mx-level-wait">{cell.text}</span>}><OwnerValueBox label={cell.label} does={cell.title} value={level.value} def={0} format={v => levelWord(v, level.unit)}
+          scale={{min: level.min, max: level.max, step: level.unit === 'dB' ? 0.1 : 0.02}}
+          onCommit={set ? v => onPress(key, set.what(v), () => set.run(v)) : undefined}
+          why={set ? undefined : cell.title} /></Suspense>
+      </span>
+    })}</div>}
   </div>
 }
 

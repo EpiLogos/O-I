@@ -49,8 +49,13 @@ export async function readLiveClip(path: string, track: number, clip: LiveClipAt
   return answer.outcome.reading.clip
 }
 
+/** A control of a track's mixer row the set's owner writes (live-set edit.rs apply_mixer), and what it takes: the switches on or off,
+ * Monitor by its word, Volume as linear gain (Live's −70 dB to +6 dB) and Pan from −1 (left) to 1 (right), as the set keeps them. */
+export type LiveMixerControl = 'activator' | 'solo' | 'arm' | 'monitor' | 'volume' | 'pan'
+export type LiveMixerValue = boolean | 'in' | 'auto' | 'off' | number
+
 /** Change one control of a track's mixer row; answers the row as it now stands. */
-export function writeLiveMixer(path: string, track: number, control: 'activator' | 'solo' | 'arm' | 'monitor', value: boolean | 'in' | 'auto' | 'off'): Promise<LiveTrackMixer> {
+export function writeLiveMixer(path: string, track: number, control: LiveMixerControl, value: LiveMixerValue): Promise<LiveTrackMixer> {
   return onRevision(path, async (expected_revision, transport) => {
     const answer = await kernelOp(transport, {op: 'live_track_mixer_write', path, expected_revision, track, control, value})
     if (answer.error || answer.outcome?.result !== 'live_track_mixer_reading') throw new Error(answer.error ?? 'The set\'s owner did not answer the mixer row')
@@ -101,7 +106,7 @@ export function writeLiveInsertClip(path: string, track: number, scene: number):
  * write or a send lands in the set first; while the engine plays the set it then moves the engine too (live/liveEngine.ts). */
 export function liveSetWrites(path: string) {
   return {
-    mixerWrite: async (track: number, control: 'activator' | 'solo' | 'arm' | 'monitor', value: boolean | 'in' | 'auto' | 'off') => {
+    mixerWrite: async (track: number, control: LiveMixerControl, value: LiveMixerValue) => {
       const row = await writeLiveMixer(path, track, control, value)
       await followInEngine(path, kinds => engineEventOfMixerWrite(kinds, track, control, value))
       return row

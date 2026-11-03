@@ -75,6 +75,11 @@ pub const MODES: &[(&str, &str)] = &[
 ];
 /// Monitoring, in Live's `MonitoringEnum` order.
 pub const MONITOR: &[&str] = &["in", "auto", "off"];
+/// Live's own volume range, as linear gain: −70 dB to +6 dB (every set's
+/// Mixer/Volume MidiControllerRange), for a Volume with no range beside it.
+pub const VOLUME_RANGE: (f64, f64) = (0.0003162277571, 1.99526238);
+/// Live's pan range: −1 (left) to 1 (right).
+pub const PAN_RANGE: (f64, f64) = (-1.0, 1.0);
 /// A groove's Base, in Live's `Grid` order: read off Live 12's own Quantize
 /// grooves (Core Library `Grooves/Utility`: "Quantize 4" stores 0, "Quantize
 /// 8" 1, "Quantize 8T" 2, "Quantize 16" 3, "Quantize 16T" 4, "Quantize 32" 5).
@@ -1067,10 +1072,11 @@ fn sends_json(mixer: &Element, returns: &[String]) -> Vec<Value> {
         .collect()
 }
 
-/// A track's mixer row: Activator, Solo, Arm, Monitor, its sends, and where
-/// its input comes from and its output goes, in the routing's own words. A
-/// control the track has no element for (Arm on a return, Solo or sends on the
-/// Main track) is absent.
+/// A track's mixer row: Activator, Solo, Arm, Monitor, Volume (linear gain)
+/// and Pan (−1…1) as the document keeps them, its sends, and where its input
+/// comes from and its output goes, in the routing's own words. A control the
+/// track has no element for (Arm on a return, Solo or sends on the Main track)
+/// is absent.
 pub fn mixer_json(track: &Element, returns: &[String]) -> Value {
     let chain = track.child("DeviceChain");
     let mixer = chain.and_then(|c| c.child("Mixer"));
@@ -1109,6 +1115,14 @@ pub fn mixer_json(track: &Element, returns: &[String]) -> Value {
     }
     if let Some(v) = mixer.and_then(|m| flag(m, "SoloSink")) {
         out.insert("solo".into(), json!(v));
+    }
+    for (key, element) in [("volume", "Volume"), ("pan", "Pan")] {
+        if let Some(v) = mixer
+            .and_then(|m| m.child(element))
+            .and_then(|p| num(p, "Manual"))
+        {
+            out.insert(key.into(), json!(v));
+        }
     }
     if let Some(v) = sequencer
         .and_then(|s| s.child("Recorder"))
@@ -1209,6 +1223,38 @@ fn apply_mixer(
             let index = index_of("Monitor", value, MONITOR)?;
             let sequencer = chain.child_mut("MainSequencer").ok_or_else(|| missing("monitor"))?;
             set_value(sequencer, "MonitoringEnum", &index.to_string())
+        }
+        "volume" | "pan" => {
+            let (element, what, live) = if control == "volume" {
+                ("Volume", "a gain", VOLUME_RANGE)
+            } else {
+                ("Pan", "a position", PAN_RANGE)
+            };
+            let param = chain
+                .child_mut("Mixer")
+                .and_then(|m| m.child_mut(element))
+                .ok_or_else(|| missing(control))?;
+            // The range the document keeps beside the parameter, else Live's own.
+            let (low, high) = param
+                .child("MidiControllerRange")
+                .and_then(|r| Some((num(r, "Min")?, num(r, "Max")?)))
+                .unwrap_or(live);
+            let level = value
+                .as_f64()
+                .filter(|v| v.is_finite() && (low..=high).contains(v))
+                .ok_or_else(|| {
+                    format!(
+                        "The {control} is {what} from {} to {} ({})",
+                        number_text(low),
+                        number_text(high),
+                        if control == "volume" {
+                            "the linear gain Live keeps: −70 dB to +6 dB"
+                        } else {
+                            "−1 is left, 1 is right"
+                        }
+                    )
+                })?;
+            set_value(param, "Manual", &number_text(level))
         }
         "input" | "output" => Err(format!(
             "The {control} is read from the set; choosing another routing needs the routings Live offers on this machine, which the document does not list"
@@ -2021,8 +2067,9 @@ pub fn clip_create(
     Ok(json!({"clip": reading, "at": {"slot": slot}, "revision": new_revision}))
 }
 
-/// Change one control of a track's mixer row (a send by its index); answer
-/// the row and the new revision.
+/// Change one control of a track's mixer row (a send by its index; Volume as
+/// linear gain, Pan −1…1, each within the range the document keeps beside it,
+/// else Live's); answer the row and the new revision.
 pub fn mixer_write(
     path: &str,
     expected_revision: &str,
@@ -2627,6 +2674,97 @@ mod tests {
     }
     fn rev_stale() -> String {
         "sha256:0".into()
+    }
+
+    /// A part's volume and pan (O-I #849): Live keeps the volume as linear
+    /// gain from −70 dB to +6 dB and the pan from −1 to 1, each with its
+    /// range beside it (racks-session-model.md: `<Pan>…-1..1…</Pan>`,
+    /// `<Volume>…Manual=1, MidiControllerRange Min=0.0003162277571
+    /// Max=1.99526238…</Volume>`). Written on the revision, read back from
+    /// the file as a replay bridges it.
+    #[test]
+    fn volume_and_pan_write_lives_own_elements_and_read_back_from_the_file() {
+        let ranged = COMPED.replacen(
+            r#"<Volume><Manual Value="1"/>"#,
+            r#"<Pan><Manual Value="0"/><MidiControllerRange><Min Value="-1"/><Max Value="1"/></MidiControllerRange></Pan><Volume><Manual Value="1"/><MidiControllerRange><Min Value="0.0003162277571"/><Max Value="1.99526238"/></MidiControllerRange>"#,
+            1,
+        );
+        let (_dir, path) = set_file_of(&ranged);
+        let (_, root) = open(&path).unwrap();
+        let extra = tracks_extra_json(&root);
+        assert_eq!(extra[0]["mixer"]["volume"].as_f64(), Some(1.0));
+        assert_eq!(extra[0]["mixer"]["pan"].as_f64(), Some(0.0));
+        assert!(
+            extra[1]["mixer"].get("volume").is_none() && extra[1]["mixer"].get("pan").is_none(),
+            "a part with no Volume or Pan element reads none"
+        );
+        let rev = revision_of(&path);
+        let wrote = mixer_write(&path, &rev, 0, "volume", &json!(0.5), None).unwrap();
+        assert_eq!(wrote["mixer"]["volume"].as_f64(), Some(0.5));
+        let rev = wrote["revision"].as_str().unwrap().to_string();
+        let wrote = mixer_write(&path, &rev, 0, "pan", &json!(-0.25), None).unwrap();
+        assert_eq!(wrote["mixer"]["pan"].as_f64(), Some(-0.25));
+        assert_eq!(
+            wrote["mixer"]["volume"].as_f64(),
+            Some(0.5),
+            "the volume stands"
+        );
+        let (_, root) = open(&path).unwrap();
+        let back = &tracks_extra_json(&root)[0]["mixer"];
+        assert_eq!(
+            (back["volume"].as_f64(), back["pan"].as_f64()),
+            (Some(0.5), Some(-0.25)),
+            "the file holds both"
+        );
+        let rev = wrote["revision"].as_str().unwrap();
+        for (track, control, value, index, said) in [
+            (
+                0,
+                "volume",
+                json!(2.5),
+                None,
+                "The volume is a gain from 0.0003162277571 to 1.99526238",
+            ),
+            (0, "volume", json!(0.0), None, "The volume is a gain from"),
+            (
+                0,
+                "pan",
+                json!(1.5),
+                None,
+                "The pan is a position from -1 to 1",
+            ),
+            (0, "pan", json!("left"), None, "The pan is a position from"),
+            (0, "volume", json!(0.5), Some(0), "takes no index"),
+            (
+                1,
+                "volume",
+                json!(0.5),
+                None,
+                "This track has no volume in the document",
+            ),
+            (
+                1,
+                "pan",
+                json!(0.0),
+                None,
+                "This track has no pan in the document",
+            ),
+        ] {
+            let refused = mixer_write(&path, rev, track, control, &value, index).unwrap_err();
+            assert!(refused.contains(said), "{refused} lacks {said}");
+        }
+        // A Volume with no range beside it is bounded by Live's own.
+        let (_plain_dir, plain) = set_file_of(COMPED);
+        let rev = revision_of(&plain);
+        assert!(mixer_write(&plain, &rev, 0, "volume", &json!(2.5), None)
+            .unwrap_err()
+            .contains("from 0.0003162277571 to 1.99526238"));
+        let wrote = mixer_write(&plain, &rev, 0, "volume", &json!(1.99526238), None).unwrap();
+        assert_eq!(
+            wrote["mixer"]["volume"].as_f64(),
+            Some(1.99526238),
+            "+6 dB is Live's top"
+        );
     }
 
     #[test]

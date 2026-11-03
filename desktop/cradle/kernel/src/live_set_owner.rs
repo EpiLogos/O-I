@@ -32,6 +32,13 @@
 //! track, insert, rename, duplicate and delete a row) are one op typed by its
 //! act (`live_set_act`, `live_set::acts`), admitted, gated and refused as
 //! every other write.
+//!
+//! Export Audio (O-I #849, manual §21.1: "What Export Audio renders is what
+//! you heard, sample for sample") is this owner's one write outside a set:
+//! the engine's render, as a WAV, into the file the person chose in the
+//! native host's own save dialog (`Kernel::live_audio_export`). It is no
+//! `KernelOp`, so the renderer cannot name where a file goes; the host calls
+//! it with the dialog's answer, and its receipt (`FileChanged`) is recorded.
 
 use crate::{KernelOp, KernelOpResult};
 use std::collections::HashSet;
@@ -597,6 +604,78 @@ pub fn set_from_template(
     )
 }
 
+/// The words a refused Export Audio says, before anything is written.
+fn export_refused(why: &str) -> String {
+    format!("Export Audio did not write: {why}")
+}
+
+impl crate::Kernel {
+    /// Export Audio: write `wav` — the engine's render of the set at `set`,
+    /// a RIFF/WAVE file — into `chosen`, the file the person chose in the
+    /// native host's save dialog, replacing it atomically (a sibling written
+    /// whole, then renamed over it), and record its receipt. Only the native
+    /// host calls this, with the dialog's answer: no op of the renderer's
+    /// reaches it. Refused, it writes nothing and records nothing.
+    pub fn live_audio_export(
+        &mut self,
+        set: &str,
+        chosen: &std::path::Path,
+        wav: &[u8],
+    ) -> Result<(crate::events::KernelEventReceipt, serde_json::Value), String> {
+        native_document(set).map_err(|e| export_refused(&e))?;
+        let is_wav = chosen
+            .extension()
+            .and_then(|e| e.to_str())
+            .is_some_and(|e| e.eq_ignore_ascii_case("wav"));
+        if !chosen.is_absolute() || !is_wav {
+            return Err(export_refused(
+                "the file it writes is an absolute .wav path",
+            ));
+        }
+        let (Some(folder), Some(name)) = (chosen.parent(), chosen.file_name()) else {
+            return Err(export_refused("the chosen file names no folder"));
+        };
+        if !folder.is_dir() {
+            return Err(export_refused(&format!(
+                "{} is not a folder on this machine",
+                folder.display()
+            )));
+        }
+        if wav.len() < 44 || &wav[..4] != b"RIFF" || &wav[8..12] != b"WAVE" {
+            return Err(export_refused("what the engine rendered is not a WAV file"));
+        }
+        let staged = folder.join(format!(
+            ".{}.oi-export-{}",
+            name.to_string_lossy(),
+            std::process::id()
+        ));
+        {
+            let _gate = WRITE_GATE
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+            std::fs::write(&staged, wav)
+                .and_then(|()| std::fs::rename(&staged, chosen))
+                .map_err(|e| {
+                    let _ = std::fs::remove_file(&staged);
+                    export_refused(&format!("{}: {e}", chosen.display()))
+                })?;
+        }
+        let path = chosen.to_string_lossy().into_owned();
+        let set_name = std::path::Path::new(set)
+            .file_name()
+            .map(|n| n.to_string_lossy().into_owned())
+            .unwrap_or_default();
+        let receipt = self.log.record(crate::events::KernelEvent::FileChanged {
+            path: path.clone(),
+            summary: format!("Export Audio wrote what {set_name} played."),
+        });
+        Ok((
+            receipt,
+            serde_json::json!({"schema": "oi.live-audio-export/v1", "path": path, "set": set, "bytes": wav.len()}),
+        ))
+    }
+}
+
 /// Admit one native `.als` document path, as the host's live_shell_read does.
 fn native_document(path: &str) -> Result<(), String> {
     let native = std::path::Path::new(path);
@@ -1062,6 +1141,160 @@ mod tests {
             matches!(grooved, Some(Ok(KernelOpResult::LiveGroovePoolReading { ref reading })) if reading["amount"] == json!(80.0))
         );
         let _ = std::fs::remove_file(&path);
+    }
+
+    /// O-I #849: a part's Volume (linear gain) and Pan (−1…1) are written through the kernel against the set's revision and stand
+    /// in the file: the set read again — as Play bridges it into the engine — holds both; a move out of Live's range is refused.
+    #[test]
+    fn a_parts_volume_and_pan_are_written_against_the_revision_and_read_back_from_the_file() {
+        let xml = COMP_FIXTURE.replacen(
+            r#"<Speaker><Manual Value="true" /></Speaker></Mixer><MainSequencer>"#,
+            r#"<Speaker><Manual Value="true" /></Speaker><Volume><Manual Value="1" /><MidiControllerRange><Min Value="0.0003162277571" /><Max Value="1.99526238" /></MidiControllerRange></Volume><Pan><Manual Value="0" /><MidiControllerRange><Min Value="-1" /><Max Value="1" /></MidiControllerRange></Pan></Mixer><MainSequencer>"#,
+            1,
+        );
+        assert_ne!(
+            xml, COMP_FIXTURE,
+            "the fixture's part carries a Volume and a Pan"
+        );
+        let file =
+            std::env::temp_dir().join(format!("live-set-owner-{}-levels.als", std::process::id()));
+        std::fs::write(
+            &file,
+            live_set::write_gz(&live_set::xml::parse(&xml).unwrap()).unwrap(),
+        )
+        .unwrap();
+        let path = file.to_string_lossy().into_owned();
+        let read = || match execute(&KernelOp::LiveSetRead { path: path.clone() }) {
+            Some(Ok(KernelOpResult::LiveSetReading { reading })) => reading,
+            other => panic!("set reading expected, got {other:?}"),
+        };
+        let write = |revision: &str, control: &str, value: serde_json::Value| {
+            execute(&KernelOp::LiveTrackMixerWrite {
+                path: path.clone(),
+                expected_revision: revision.into(),
+                track: 0,
+                control: control.into(),
+                value,
+                index: None,
+            })
+            .expect("the mixer write is served here")
+        };
+        let before = read();
+        let mixer = &before["document"]["tracks"][0]["mixer"];
+        assert_eq!(
+            (mixer["volume"].as_f64(), mixer["pan"].as_f64()),
+            (Some(1.0), Some(0.0))
+        );
+        let revision = before["revision"].as_str().unwrap().to_string();
+        let volume = match write(&revision, "volume", json!(0.5)) {
+            Ok(KernelOpResult::LiveTrackMixerReading { reading }) => reading,
+            other => panic!("mixer reading expected, got {other:?}"),
+        };
+        assert_eq!(volume["mixer"]["volume"].as_f64(), Some(0.5));
+        assert!(write(&revision, "pan", json!(0.3))
+            .unwrap_err()
+            .contains("changed since it was read"));
+        let pan = match write(volume["revision"].as_str().unwrap(), "pan", json!(-0.25)) {
+            Ok(KernelOpResult::LiveTrackMixerReading { reading }) => reading,
+            other => panic!("mixer reading expected, got {other:?}"),
+        };
+        assert_eq!(
+            (
+                pan["mixer"]["volume"].as_f64(),
+                pan["mixer"]["pan"].as_f64()
+            ),
+            (Some(0.5), Some(-0.25))
+        );
+        let refused = write(pan["revision"].as_str().unwrap(), "volume", json!(4.0)).unwrap_err();
+        assert!(
+            refused.contains("The volume is a gain from 0.0003162277571 to 1.99526238"),
+            "{refused}"
+        );
+        let after = read();
+        let mixer = &after["document"]["tracks"][0]["mixer"];
+        assert_eq!(
+            (mixer["volume"].as_f64(), mixer["pan"].as_f64()),
+            (Some(0.5), Some(-0.25)),
+            "the file holds both"
+        );
+        let _ = std::fs::remove_file(&file);
+    }
+
+    /// Export Audio (O-I #849): the kernel's Live owner writes the engine's render into the file the person chose, whole, and
+    /// records its receipt; refused — a path that is not an absolute .wav, a folder that is not there, bytes that are not a WAV, a
+    /// set that is not a native document — it writes nothing and records nothing.
+    #[test]
+    fn export_audio_writes_the_chosen_file_whole_and_records_its_receipt() {
+        let dir =
+            std::env::temp_dir().join(format!("live-set-owner-{}-export", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let mut wav = b"RIFF\x24\0\0\0WAVEfmt ".to_vec();
+        wav.resize(48, 0);
+        let mut kernel = crate::Kernel::new(crate::CentralClient::discover());
+        let set = "/sets/Song.als";
+        let chosen = dir.join("Song.wav");
+        std::fs::write(&chosen, b"an older export").unwrap();
+        let (receipt, reading) = kernel.live_audio_export(set, &chosen, &wav).unwrap();
+        assert_eq!(
+            std::fs::read(&chosen).unwrap(),
+            wav,
+            "the chosen file holds the render, whole"
+        );
+        assert_eq!(reading["bytes"], 48);
+        assert_eq!(reading["path"], chosen.to_string_lossy().as_ref());
+        assert!(
+            matches!(&receipt.envelope.event, crate::events::KernelEvent::FileChanged { path, summary }
+            if *path == chosen.to_string_lossy() && summary == "Export Audio wrote what Song.als played.")
+        );
+        let left: Vec<_> = std::fs::read_dir(&dir)
+            .unwrap()
+            .map(|e| e.unwrap().file_name())
+            .collect();
+        assert_eq!(
+            left,
+            vec![std::ffi::OsString::from("Song.wav")],
+            "no staged file is left beside it"
+        );
+        for (set, chosen, bytes, said) in [
+            (
+                set,
+                std::path::PathBuf::from("Song.wav"),
+                &wav[..],
+                "an absolute .wav path",
+            ),
+            (set, dir.join("Song.mp3"), &wav[..], "an absolute .wav path"),
+            (
+                set,
+                dir.join("gone").join("Song.wav"),
+                &wav[..],
+                "is not a folder on this machine",
+            ),
+            (
+                set,
+                dir.join("Other.wav"),
+                &b"not a wave file at all, though long enough to be one"[..],
+                "is not a WAV file",
+            ),
+            (
+                "Song.als",
+                dir.join("Other.wav"),
+                &wav[..],
+                "absolute native .als",
+            ),
+        ] {
+            let refused = kernel.live_audio_export(set, &chosen, bytes).unwrap_err();
+            assert!(
+                refused.starts_with("Export Audio did not write: ") && refused.contains(said),
+                "{refused}"
+            );
+        }
+        assert!(!dir.join("Other.wav").exists(), "a refusal writes nothing");
+        assert_eq!(
+            kernel.event_log().since(receipt.seq + 1).len(),
+            0,
+            "and records nothing"
+        );
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     /// The kernel's own dispatch serves the comp and the Groove Pool (lib.rs `apply`), as the native host runs them.

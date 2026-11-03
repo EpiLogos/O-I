@@ -77,7 +77,13 @@ pub fn install(app: &AppHandle, arrangements: &[Arrangement], active: &str) -> t
         .item(&item("file.export.html", "Living HTML", None)?)
         .item(&item("file.export.native", "Native Configuration", None)?)
         .build()?;
-    let file = SubmenuBuilder::new(app, "File").item(&export).build()?;
+    // Export Audio, in the File menu as in Live (manual §21.1: "choose Export Audio/Video… in the File menu, as in Live"; Live's ⇧⌘R): what the engine
+    // played, into the file the person chooses in the host's save dialog (live_engine_host.rs). There is no video to export.
+    let export_audio = item(EXPORT_AUDIO, "Export Audio…", Some("CmdOrCtrl+Shift+R"))?;
+    let file = SubmenuBuilder::new(app, "File").item(&export_audio).item(&export).build()?;
+    // One item to a line, as the menu reads: the shell's keys line reads each item's key from it
+    // (packages/live-shell/ui/tests/e820-search-line.test.mjs), so rustfmt leaves the View menu as written.
+    #[rustfmt::skip]
     let view = SubmenuBuilder::new(app, "View")
         .item(&item("view.session", "Session View", None)?)
         .item(&item("view.arrangement", "Arrangement View", None)?)
@@ -139,6 +145,14 @@ pub fn install(app: &AppHandle, arrangements: &[Arrangement], active: &str) -> t
     Ok(())
 }
 
+/// File › Export Audio…: served by the native host itself (its save dialog and the kernel's Live owner), never routed to the page.
+pub const EXPORT_AUDIO: &str = "file.export.audio";
+
+/// The menu items the native host serves itself, before any reaches the page.
+pub fn is_native(id: &str) -> bool {
+    id.starts_with("world.") || id == EXPORT_AUDIO
+}
+
 /// Whether a menu item is one of the shell's commands (File, Edit, Create, View, Settings), routed as `oi:command`.
 pub fn is_command(id: &str) -> bool {
     ["edit.", "create.", "view.", "file.", "app."]
@@ -146,10 +160,20 @@ pub fn is_command(id: &str) -> bool {
         .any(|prefix| id.starts_with(prefix))
 }
 
-pub fn dispatch(app: &AppHandle, id: &str) {
+/// The host's own items: Export Audio's save dialog, and the world chooser (the candidate's).
+fn serve_natively(app: &AppHandle, id: &str) {
+    if id == EXPORT_AUDIO {
+        crate::live_engine_host::export_from_menu(app);
+    }
     #[cfg(feature = "native_shell")]
     if id.starts_with("world.") {
         crate::native_shell::world_menu(app, id);
+    }
+}
+
+pub fn dispatch(app: &AppHandle, id: &str) {
+    if is_native(id) {
+        serve_natively(app, id);
         return;
     }
     if is_command(id) {
@@ -191,5 +215,23 @@ mod tests {
         }
         assert!(!is_command("workspace.browser"));
         assert!(!is_command("world.choose"));
+    }
+
+    /// File › Export Audio… is the host's own: its save dialog and the kernel's Live owner, never a page command that could
+    /// name a path.
+    #[test]
+    fn export_audio_is_served_by_the_host_not_routed_to_the_page() {
+        assert!(is_native(EXPORT_AUDIO) && is_native("world.choose"));
+        assert!(!is_native("file.export.picture"));
+        let source = include_str!("menus.rs");
+        let dispatch = source.split("pub fn dispatch(").nth(1).unwrap();
+        let (native, routed) = (
+            dispatch.find("if is_native(id)").unwrap(),
+            dispatch.find("if is_command(id)").unwrap(),
+        );
+        assert!(native < routed, "Export Audio is served before any file.* id goes to the page");
+        let served = source.split("fn serve_natively(").nth(1).unwrap();
+        assert!(served.contains("if id == EXPORT_AUDIO {\n        crate::live_engine_host::export_from_menu(app);"));
+        assert!(source.contains(r#"item(EXPORT_AUDIO, "Export Audio…", Some("CmdOrCtrl+Shift+R"))"#));
     }
 }

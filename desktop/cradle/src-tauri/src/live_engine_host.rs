@@ -15,7 +15,16 @@
 //! | `live_engine_stop` | the output stops; the engine and what it played are kept |
 //! | `live_engine_send {event}` | one note, Panic or mixer move, applied at the next block; answers the mixer reading |
 //! | `live_engine_mixer` | the mixer as the engine applied it |
-//! | `live_engine_export {path}` | Export Audio: what the engine played, rendered offline, as a 32-bit float WAV |
+//! | `live_engine_export` | Export Audio: what the engine played, rendered offline, as a 32-bit float WAV, into the file the person chooses in the host's own save dialog |
+//!
+//! The renderer never names where Export Audio's file goes: the host asks the
+//! person (a native save dialog; File › Export Audio… opens the same one),
+//! a cancelled dialog is refused in words, and the file is written by the
+//! kernel's Live owner (`live_set_owner.rs` `Kernel::live_audio_export`),
+//! which records its receipt — this host writes no file. The render is of
+//! the set as the engine bridged it at Play, so a mixer write made while it
+//! played (the set's own, followed into the engine) is heard where it was
+//! applied and nowhere earlier.
 //!
 //! Events are refused in the engine's words when the set has nothing they
 //! name. A mixer reading is what the engine APPLIED, never what was asked.
@@ -30,6 +39,7 @@ pub(crate) mod host {
     use live_engine::{
         engine, EngineCore, EngineEvent, EngineHandle, EnginePlayer, Graph, MixerState, Part,
     };
+    use live_set::xml::Element;
     use serde::Deserialize;
     use serde_json::{json, Value};
     use std::path::{Path, PathBuf};
@@ -149,14 +159,18 @@ pub(crate) mod host {
         }
     }
 
-    /// The set bridged into the engine's graph at [`ENGINE_RATE`], with the
-    /// bridge's warnings and the audio parts that play no clip audio.
-    pub fn bridged(path: &Path) -> Result<(Graph, Vec<String>), String> {
+    /// The set document at `path`, as the set's owner reads it.
+    pub fn set_document(path: &Path) -> Result<Element, String> {
         if !path.is_absolute() || path.extension().is_none_or(|e| e != "als") {
             return Err("Choose an absolute native .als document path".into());
         }
-        let root = live_set::open_als(path).map_err(|e| format!("{}: {e:?}", path.display()))?;
-        let bridged = bridge_set(&root, ENGINE_RATE).ok_or("No LiveSet in native document")?;
+        live_set::open_als(path).map_err(|e| format!("{}: {e:?}", path.display()))
+    }
+
+    /// The set bridged into the engine's graph at [`ENGINE_RATE`], with the
+    /// bridge's warnings and the audio parts that play no clip audio.
+    pub fn bridged(root: &Element) -> Result<(Graph, Vec<String>), String> {
+        let bridged = bridge_set(root, ENGINE_RATE).ok_or("No LiveSet in native document")?;
         let mut warnings: Vec<String> = bridged
             .warnings
             .iter()
@@ -192,6 +206,8 @@ pub(crate) mod host {
     /// One open set's engine.
     pub struct Opened {
         pub path: PathBuf,
+        /// The set as the engine bridged it: what Export Audio renders again.
+        pub document: Element,
         pub warnings: Vec<String>,
         pub handle: EngineHandle,
         /// The audio half while it is not playing (taken by `play`).
@@ -201,10 +217,12 @@ pub(crate) mod host {
 
     impl Opened {
         pub fn open(path: &Path) -> Result<Opened, String> {
-            let (graph, warnings) = bridged(path)?;
+            let document = set_document(path)?;
+            let (graph, warnings) = bridged(&document)?;
             let (core, handle) = engine(graph).map_err(|e| e.to_string())?;
             Ok(Opened {
                 path: path.to_path_buf(),
+                document,
                 warnings,
                 handle,
                 core: Some(core),
@@ -231,23 +249,25 @@ pub(crate) mod host {
             Ok(self.reading())
         }
 
-        /// Export Audio: the set bridged again and rendered offline with
-        /// every event the engine applied, at the frame it applied it —
-        /// the samples the engine played (live-engine
-        /// `Graph::render_performance`).
-        pub fn export(&mut self, out: &Path) -> Result<Value, String> {
+        /// Export Audio's render: the set as the engine bridged it, rendered
+        /// offline with every event the engine applied, at the frame it
+        /// applied it — the samples the engine played (live-engine
+        /// `Graph::render_performance`) — as a WAV file's bytes, with what
+        /// it holds. The set as the file now stands is not read: a write
+        /// made while it played reached the engine as an event.
+        pub fn render_wav(&mut self) -> Result<(Vec<u8>, Value), String> {
             let performance = self.handle.performance();
-            let (graph, _) = bridged(&self.path)?;
+            let (graph, _) = bridged(&self.document)?;
             let samples = graph.render_performance(ENGINE_RATE, &performance);
-            write_wav_f32(out, &samples, ENGINE_RATE)?;
-            Ok(
-                json!({"path": out, "frames": performance.frames, "events": performance.events.len(), "complete": performance.complete}),
-            )
+            Ok((
+                wav_f32(&samples, ENGINE_RATE),
+                json!({"frames": performance.frames, "events": performance.events.len(), "complete": performance.complete}),
+            ))
         }
     }
 
-    /// A 32-bit IEEE float stereo WAV (format tag 3).
-    pub fn write_wav_f32(path: &Path, interleaved: &[f32], sample_rate: u32) -> Result<(), String> {
+    /// A 32-bit IEEE float stereo WAV (format tag 3), as bytes.
+    pub fn wav_f32(interleaved: &[f32], sample_rate: u32) -> Vec<u8> {
         let data = (interleaved.len() * 4) as u32;
         let mut bytes = Vec::with_capacity(44 + data as usize);
         bytes.extend_from_slice(b"RIFF");
@@ -265,8 +285,13 @@ pub(crate) mod host {
         for s in interleaved {
             bytes.extend_from_slice(&s.to_le_bytes());
         }
-        std::fs::write(path, bytes).map_err(|e| format!("{}: {e}", path.display()))
+        bytes
     }
+
+    /// The words Export Audio refuses in when the person closes the save
+    /// dialog without choosing a file.
+    pub const EXPORT_CANCELLED: &str =
+        "Export Audio was cancelled: no file was chosen, so nothing was written.";
 
     /// The host's state: at most one open set.
     #[derive(Default)]
@@ -303,9 +328,15 @@ pub(crate) mod host {
                         // stopped: the engine went with its output; play the
                         // set again from its start
                         None => {
-                            let fresh = Opened::open(&o.path)?;
-                            o.handle = fresh.handle;
-                            fresh.core.ok_or("the engine was not made")?
+                            let Opened {
+                                document,
+                                warnings,
+                                handle,
+                                core,
+                                ..
+                            } = Opened::open(&o.path)?;
+                            (o.document, o.warnings, o.handle) = (document, warnings, handle);
+                            core.ok_or("the engine was not made")?
                         }
                     };
                     o.player = Some(EnginePlayer::start(core).map_err(|e| e.to_string())?);
@@ -329,11 +360,43 @@ pub(crate) mod host {
             self.with(|o| Ok(o.reading()))
         }
 
-        pub fn export(&self, out: &Path) -> Result<Value, String> {
-            if !out.is_absolute() || out.extension().is_none_or(|e| e != "wav") {
-                return Err("Export Audio writes to an absolute .wav path".into());
+        /// Export Audio: `choose` asks the person where the file goes (the
+        /// host's save dialog, given the file name it suggests: the set's,
+        /// as a .wav) and `write` is the owner that writes it (the kernel's
+        /// Live owner: the set's path, the chosen file, the WAV's bytes).
+        /// Refused before the dialog when no set is open; a cancelled
+        /// dialog is refused in [`EXPORT_CANCELLED`]'s words; neither
+        /// renders or writes anything. The dialog is never asked while the
+        /// engine's state is held.
+        pub fn export_chosen(
+            &self,
+            choose: impl FnOnce(&str) -> Option<PathBuf>,
+            write: impl FnOnce(&Path, &Path, &[u8]) -> Result<Value, String>,
+        ) -> Result<Value, String> {
+            let set = self.with(|o| Ok(o.path.clone()))?;
+            let suggested = format!(
+                "{}.wav",
+                set.file_stem().map(|s| s.to_string_lossy()).unwrap_or_default()
+            );
+            let chosen = choose(&suggested).ok_or(EXPORT_CANCELLED)?;
+            if !chosen.is_absolute()
+                || chosen
+                    .extension()
+                    .is_none_or(|e| !e.eq_ignore_ascii_case("wav"))
+            {
+                return Err("Export Audio writes a .wav file: choose a name ending in .wav".into());
             }
-            self.with(|o| o.export(out))
+            let (wav, rendered) = self.with(|o| {
+                if o.path != set {
+                    return Err("Another set opened in the engine while the file was chosen: export again".into());
+                }
+                o.render_wav()
+            })?;
+            let mut written = write(&set, &chosen, &wav)?;
+            if let (Value::Object(fields), Value::Object(more)) = (&mut written, rendered) {
+                fields.extend(more);
+            }
+            Ok(written)
         }
     }
 
@@ -422,7 +485,7 @@ pub(crate) mod host {
             let mut core = opened.core.take().unwrap();
             let played = pull(&mut core, &BLOCKS);
             // what the host plays is the engine's render of the document
-            let (graph, _) = bridged(&path).unwrap();
+            let (graph, _) = bridged(&set_document(&path).unwrap()).unwrap();
             let frames = played.len() as u64 / 2;
             let rendered = graph.render_performance(ENGINE_RATE, &Performance::silent(frames));
             assert!(
@@ -432,7 +495,7 @@ pub(crate) mod host {
             // two parts at once: each alone, summed, is the whole (no part
             // reaches the other)
             let alone = |keep: usize| {
-                let (mut g, _) = bridged(&path).unwrap();
+                let (mut g, _) = bridged(&set_document(&path).unwrap()).unwrap();
                 g.tracks[1 - keep].active = false;
                 g.render_performance(ENGINE_RATE, &Performance::silent(frames))
             };
@@ -476,14 +539,14 @@ pub(crate) mod host {
             // applied to its dry chain, sample for sample
             let frames = w.len() as u64 / 2;
             let keys_alone = |path: &Path| {
-                let (mut g, _) = bridged(path).unwrap();
+                let (mut g, _) = bridged(&set_document(path).unwrap()).unwrap();
                 g.tracks[1].active = false;
                 g.returns[0].active = false;
                 g.master.gain = 1.0;
                 g.render_performance(ENGINE_RATE, &Performance::silent(frames))
             };
             let (kw, kd) = (keys_alone(&wet_path), keys_alone(&dry_path));
-            let (mut g, _) = bridged(&wet_path).unwrap();
+            let (mut g, _) = bridged(&set_document(&wet_path).unwrap()).unwrap();
             let mut echo = g.tracks[0].devices.remove(0);
             assert_eq!(echo.name(), "Echo");
             echo.prepare(ENGINE_RATE, 2);
@@ -552,11 +615,10 @@ pub(crate) mod host {
                 .send(event(r#"{"kind":"send","track":0,"send":4,"gain":0.5}"#))
                 .unwrap_err();
             assert!(refused.contains("no send 4"), "{refused}");
-            let out = path.with_extension("wav");
-            let exported = opened.export(&out).unwrap();
+            let (bytes, exported) = opened.render_wav().unwrap();
             assert_eq!(exported["events"], 8);
             assert_eq!(exported["complete"], true);
-            let wav = live_engine::wav::read_wav_f32(&std::fs::read(&out).unwrap()).unwrap();
+            let wav = live_engine::wav::read_wav_f32(&bytes).unwrap();
             assert_eq!((wav.sample_rate, wav.channels), (ENGINE_RATE, 2));
             assert_eq!(wav.samples.len(), played.len());
             for (n, (e, p)) in wav.samples.iter().zip(&played).enumerate() {
@@ -566,6 +628,108 @@ pub(crate) mod host {
                     "sample {n}: Export Audio is what the host played"
                 );
             }
+        }
+
+        /// Export Audio renders the set as the engine bridged it at Play: a
+        /// write the set's owner made while it played (here, Keys' volume in
+        /// the file) reached the engine as an event, and the file as it now
+        /// stands is not what was heard.
+        #[test]
+        fn export_renders_the_set_as_the_engine_bridged_it_not_the_file_as_it_now_stands() {
+            let path = write_set("bridged", SET);
+            let mut opened = Opened::open(&path).unwrap();
+            let mut core = opened.core.take().unwrap();
+            let played = pull(&mut core, &[4096, 4096]);
+            let quieter = SET.replacen(
+                r#"<Volume><Manual Value="1" /></Volume>"#,
+                r#"<Volume><Manual Value="0.1" /></Volume>"#,
+                1,
+            );
+            assert_ne!(quieter, SET);
+            let root = live_set::xml::parse(&quieter).unwrap();
+            std::fs::write(&path, live_set::write_gz(&root).unwrap()).unwrap();
+            let (bytes, _) = opened.render_wav().unwrap();
+            let wav = live_engine::wav::read_wav_f32(&bytes).unwrap();
+            assert_eq!(wav.samples.len(), played.len());
+            assert!(
+                wav.samples == played,
+                "Export Audio is what the engine played, not the file as it now stands"
+            );
+        }
+
+        /// The page names no path for Export Audio: the command takes the
+        /// app and its webview, nothing else.
+        #[test]
+        fn the_page_names_no_path_for_export_audio() {
+            let source = include_str!("live_engine_host.rs");
+            // the needle is built, so this test's own text is not found
+            let declared = concat!("pub async fn live_engine", "_export(\n");
+            let signature = source
+                .split(declared)
+                .nth(1)
+                .and_then(|rest| rest.split(')').next())
+                .expect("the command is declared");
+            assert!(signature.contains("webview: tauri::WebviewWindow"), "{signature}");
+            assert!(
+                !signature.contains("path") && !signature.contains("String"),
+                "live_engine_export takes no path from the page: ({signature})"
+            );
+        }
+
+        /// Export Audio asks the person where the file goes (the set's name,
+        /// as a .wav, suggested) and hands the owner the set, the chosen file
+        /// and the render; refused before the dialog with no set open, in
+        /// words when the dialog is cancelled, and for a file that is not a
+        /// .wav — none of which renders or writes anything.
+        #[test]
+        fn export_asks_the_person_then_the_owner_writes_what_was_played() {
+            let host = LiveEngineHost::default();
+            let never = |_: &str| -> Option<PathBuf> { panic!("no dialog without a set") };
+            let unwritten = |_: &Path, _: &Path, _: &[u8]| -> Result<Value, String> {
+                panic!("nothing is written")
+            };
+            let refused = host.export_chosen(never, unwritten).unwrap_err();
+            assert!(refused.contains("No set is open"), "{refused}");
+            let path = write_set("export", SET);
+            host.open(&path).unwrap();
+            let mut suggested = String::new();
+            let cancelled = host
+                .export_chosen(
+                    |name| {
+                        suggested = name.to_owned();
+                        None
+                    },
+                    unwritten,
+                )
+                .unwrap_err();
+            assert_eq!(suggested, "export.wav");
+            assert_eq!(cancelled, EXPORT_CANCELLED);
+            assert_eq!(
+                cancelled,
+                "Export Audio was cancelled: no file was chosen, so nothing was written."
+            );
+            let not_wav = host
+                .export_chosen(|_| Some(PathBuf::from("/Users/me/Song.aiff")), unwritten)
+                .unwrap_err();
+            assert!(not_wav.contains("ending in .wav"), "{not_wav}");
+            let chosen = path.with_file_name("Chosen.wav");
+            let mut handed = None;
+            let written = host
+                .export_chosen(
+                    |_| Some(chosen.clone()),
+                    |set, to, wav| {
+                        handed = Some((set.to_path_buf(), to.to_path_buf(), wav.to_vec()));
+                        Ok(json!({"path": to, "bytes": wav.len()}))
+                    },
+                )
+                .unwrap();
+            let (set, to, wav) = handed.expect("the owner was handed the render");
+            assert_eq!((set, to), (path.clone(), chosen.clone()));
+            assert_eq!(written["frames"], 0, "nothing has played yet: an empty render");
+            assert_eq!(written["bytes"], wav.len());
+            let audio = live_engine::wav::read_wav_f32(&wav).unwrap();
+            assert_eq!((audio.sample_rate, audio.channels), (ENGINE_RATE, 2));
+            assert!(!chosen.exists(), "the host writes no file: its owner does");
         }
 
         #[test]
@@ -578,10 +742,6 @@ pub(crate) mod host {
                 .contains("absolute"));
             let path = write_set("refusals", SET);
             host.open(&path).unwrap();
-            assert!(host
-                .export(Path::new("/tmp/x.mp3"))
-                .unwrap_err()
-                .contains(".wav"));
             assert!(serde_json::from_str::<EventIn>(
                 r#"{"kind":"volume","part":{"bus":0},"gain":1}"#
             )
@@ -714,22 +874,83 @@ pub fn live_engine_mixer(
     }
 }
 
+/// Export Audio: the host asks the person where the file goes in its own
+/// save dialog and the kernel's Live owner writes it, its receipt sent on the
+/// kernel's event topic. The page names no path.
 #[tauri::command]
 pub async fn live_engine_export(
     app: tauri::AppHandle,
     webview: tauri::WebviewWindow,
-    path: String,
 ) -> Result<serde_json::Value, String> {
     #[cfg(feature = "native_shell")]
     {
         admit_candidate_webview(&webview)?;
-        tauri::async_runtime::spawn_blocking(move || host(&app).export(std::path::Path::new(&path)))
+        tauri::async_runtime::spawn_blocking(move || export_through_dialog(&app))
             .await
             .map_err(|e| e.to_string())?
     }
     #[cfg(not(feature = "native_shell"))]
     {
-        let _ = (app, webview, path);
+        let _ = (app, webview);
         Err(EVERYDAY.into())
+    }
+}
+
+/// The save dialog, titled for Export Audio with the set's name as a .wav,
+/// and the kernel's Live owner writing what the engine rendered.
+#[cfg(feature = "native_shell")]
+fn export_through_dialog(app: &tauri::AppHandle) -> Result<serde_json::Value, String> {
+    use tauri::{Emitter, Manager};
+    use tauri_plugin_dialog::DialogExt;
+    host(app).export_chosen(
+        |suggested| {
+            app.dialog()
+                .file()
+                .set_title("Export Audio")
+                .add_filter("WAV audio", &["wav"])
+                .set_file_name(suggested)
+                .blocking_save_file()
+                .and_then(|file| file.into_path().ok())
+        },
+        |set, chosen, wav| {
+            let kernel = app.state::<crate::KernelHost>();
+            let (receipt, reading) = kernel
+                .0
+                .lock()
+                .map_err(|_| "kernel lock unavailable".to_owned())?
+                .live_audio_export(&set.to_string_lossy(), chosen, wav)?;
+            let _ = app.emit(oi_cradle_kernel::events::KERNEL_EVENT_TOPIC, &receipt);
+            Ok(reading)
+        },
+    )
+}
+
+/// File › Export Audio… (menus.rs): the same dialog and owner as the
+/// command. A refusal other than a cancelled dialog stands in a native
+/// message in its own words; a cancelled one is the person's own choice.
+pub(crate) fn export_from_menu(app: &tauri::AppHandle) {
+    #[cfg(feature = "native_shell")]
+    {
+        use tauri_plugin_dialog::DialogExt;
+        let app = app.clone();
+        // The save dialog blocks; menu events arrive on the main thread.
+        std::thread::spawn(move || {
+            if let Err(error) = export_through_dialog(&app) {
+                if error != host::EXPORT_CANCELLED {
+                    app.dialog()
+                        .message(error)
+                        .title("Export Audio did not write")
+                        .blocking_show();
+                }
+            }
+        });
+    }
+    #[cfg(not(feature = "native_shell"))]
+    {
+        use tauri_plugin_dialog::DialogExt;
+        app.dialog()
+            .message(EVERYDAY)
+            .title("Export Audio did not write")
+            .show(|_| {});
     }
 }

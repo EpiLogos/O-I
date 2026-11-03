@@ -1251,8 +1251,9 @@ pub enum KernelOp {
         source: Option<String>,
     },
     /// Change one control of a track's mixer row (activator, solo, arm,
-    /// monitor, or a send by its `index`: 0 is Send A) against the set's
-    /// revision; the routings are read, not chosen.
+    /// monitor, volume as linear gain, pan from −1 to 1, or a send by its
+    /// `index`: 0 is Send A) against the set's revision; the routings are
+    /// read, not chosen.
     LiveTrackMixerWrite {
         path: String,
         expected_revision: String,

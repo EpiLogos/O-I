@@ -16,9 +16,10 @@ import type {
   WorldTrackSet,
 } from '../../timeline/worldTrackAdapter'
 
-/** The row's order, as Live draws its mixer: activator, solo, arm, then the I/O column's monitor and routes. */
-export const MIXER_ORDER: readonly MixerControlId[] = ['activator', 'solo', 'arm', 'monitor', 'input', 'output', 'works']
-export const MIXER_LABEL: Readonly<Record<MixerControlId, string>> = {activator: 'Activator', solo: 'Solo', arm: 'Arm', monitor: 'Monitor', input: 'Input', output: 'Output', works: 'Works in'}
+/** The row's order, as Live draws its mixer: activator, solo, arm, then the I/O column's monitor and routes, then the levels. */
+export const MIXER_ORDER: readonly MixerControlId[] = ['activator', 'solo', 'arm', 'monitor', 'input', 'output', 'works', 'volume', 'pan']
+export const MIXER_LABEL: Readonly<Record<MixerControlId, string>> = {activator: 'Activator', solo: 'Solo', arm: 'Arm', monitor: 'Monitor', input: 'Input', output: 'Output', works: 'Works in',
+  volume: 'Volume', pan: 'Pan'}
 /** The glyph each control shows, as Live's mixer does (the activator carries the track's number; solo "S"; arm the record dot). */
 const MIXER_GLYPH: Readonly<Record<'activator' | 'solo' | 'arm', string>> = {activator: '', solo: 'S', arm: '●'}
 const MONITOR_WORD: Readonly<Record<MonitorSetting, string>> = {in: 'In', auto: 'Auto', off: 'Off'}
@@ -35,6 +36,8 @@ export interface MixerCell {
   state: 'on' | 'off' | 'unread' | 'route'
   /** The press, when an owner op writes it: what it says and what it runs. */
   press?: {what: string; run: () => unknown}
+  /** A level (Volume, Pan): the owner's reading (null: unread), its range, and its write when an owner op takes one. */
+  level?: {value: number | null; min: number; max: number; unit: 'dB' | 'pan'; set?: {what: (value: number) => string; run: (value: number) => unknown}}
   title: string
 }
 
@@ -57,6 +60,16 @@ export function mixerCells(set: WorldTrackSet, track: WorldTrack, position: numb
         title: `${label} · ${control.meaning}${route === undefined ? ' · unread: the owner reports none' : control.route !== undefined ? ' · the mode\'s own route, not a setting' : ''}${control.disabled ? ` · ${control.disabled}` : ''}`})
       continue
     }
+    if (id === 'volume' || id === 'pan') {
+      const value = mix[id]
+      const write = writes?.[id]
+      const range = control.range ?? (id === 'volume' ? {min: -70, max: 6, unit: 'dB' as const} : {min: -1, max: 1, unit: 'pan' as const})
+      const said = value === undefined ? 'unread: the owner reports none' : `${levelWord(value, range.unit)}${mix.levelSource ? ` · ${mix.levelSource}` : ''}`
+      cells.push({id, label, text: value === undefined ? '—' : levelWord(value, range.unit), state: value === undefined ? 'unread' : 'on',
+        level: {value: value ?? null, ...range, ...(write ? {set: {what: (v: number) => `${label} ${levelWord(v, range.unit)} on ${track.name}`, run: (v: number) => write.run(track.id, v)}} : {})},
+        title: `${label} · ${control.meaning} · ${said}${write ? ` (${write.op})` : control.disabled ? ` · ${control.disabled}` : ''}${grain}`})
+      continue
+    }
     if (id === 'monitor') {
       const value = mix.monitor
       const write = writes?.monitor
@@ -77,6 +90,13 @@ export function mixerCells(set: WorldTrackSet, track: WorldTrack, position: numb
       title: `${label} · ${control.meaning} · ${value === undefined ? 'unread: the owner reports none' : value ? 'on' : 'off'}${write ? ` · press to turn it ${next ? 'on' : 'off'} (${write.op})` : control.disabled ? ` · ${control.disabled}` : ''}${grain}`})
   }
   return cells
+}
+
+/** A level in its unit's words: a volume in dB (Live's −inf below its floor), a pan as Live writes it (C, 25L, 50R). */
+export function levelWord(value: number, unit: 'dB' | 'pan'): string {
+  if (unit === 'dB') return value <= -70 ? '-inf dB' : `${value.toFixed(1)} dB`
+  const at = Math.round(Math.abs(value) * 50)
+  return at === 0 ? 'C' : `${at}${value < 0 ? 'L' : 'R'}`
 }
 
 /** The tracks in the views' order: the set's own, then its return tracks, with the Main track's material at the end, where Live keeps
