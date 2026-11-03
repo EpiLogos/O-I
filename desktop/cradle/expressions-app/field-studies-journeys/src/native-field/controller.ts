@@ -38,6 +38,8 @@ export const PRESENTATION_LEVEL=Object.freeze({min:0,max:4,initial:1,
  standing:'presentation gain after the native PCM (× the audio receiver\'s 0.1); not a source value'});
 /** Owner busy, held mid-beat, or presentation capacity full: a skipped beat. */
 const TRANSIENT=/owner busy|held before the event|presentation capacity|requires idle admitted owner/;
+/** How often the Torus's session is read while the field follows (O-I #850): a human cadence, never a beat. */
+const TORUS_READ_MS=1000;
 type Cadence={rate:number;period:number;source:string;timer:ReturnType<typeof setInterval>;started:number;
  beats:number;issued:number;applied:number;skipped:number;suspended:number;inFlight:boolean;lastEventMs?:number;maxEventMs?:number;stopped?:string;stopped_at?:number};
 /** The QL driver schedules PCM/targets; the app remains the sole GPU stage.
@@ -60,6 +62,9 @@ export class NativeFieldController {
  private stageReading:any=null;private stageStale=false;
  /** The last stage act's standing: the owner's own receipt (applied) or its refusal in its words; null before any act. */
  private stageLast:{standing:'applied'|'refused';procedure_ref?:string;why?:string}|null=null;
+ /** The Torus's M1′ session as the owner last gave it (QL's `torus-state` or a Torus act's reply, ql.m1-prime-session/v1; O-I #850), when
+  * it was read, and the owner's refusal of the read (an owner that holds no session), which stops the human-cadence re-read. */
+ private torus:any=null;private torusAt=0;private torusRefused:string|null=null;
  private event:any=null;private opening:any=null;private sourcesStale=false;private influenceStale=false;private timing:any=null;private timingStart=0;private lastInspect=0;
  private operating=0;private cadence:Cadence|null=null;private lastCadence:Cadence|null=null;
  private refusal:{operation:string;reason:string;at:number}|null=null;
@@ -149,6 +154,8 @@ export class NativeFieldController {
   instrument:this.scene?{schema:'oi.scene-instrument-reading/v1',acting:this.acting,influence:this.influenceReading,influence_stale:this.influenceStale,
    opening_event_available:!!this.opening,sources_stale:this.sourcesStale,cadence:this.cadenceReading(),refusal:this.refusal,played:this.played,struck:this.struck,
    stage:this.stageReading,stage_stale:this.stageStale,stage_last:this.stageLast,
+   // The Torus's M1′ session, verbatim from the owner's last reply (null until it is read).
+   torus:this.torus,
    // The live scene's M2 condition, verbatim from the sources last inspected (instrumentCondition.ts): announced, never derived here.
    condition:conditionReadingOf(this.sources)??null,
    presentation:INSTRUMENT_PRESENTATION}:null,
@@ -344,8 +351,15 @@ export class NativeFieldController {
  private noteEventStrike(command:any){
   const strikes=command?.operation==='replace-event'?command.strike===true
    :command?.operation==='m1-advance'?this.influenceReading?.material?.strike_on_event!==false:false;
-  const refs=(Array.isArray(this.influenceReading?.voices)?this.influenceReading.voices:[]).map((v:any)=>v?.planet_ref).filter((r:unknown):r is string=>typeof r==='string').map(voiceModeRef);
+  const refs=this.voiceRefs();
   if(strikes&&refs.length)this.struck={at:Date.now(),source:'event',refs};
+ }
+ /** The voices the owner tunes, by the owner's own mode refs (QL's influence `mode_ref`: `scene:planet/…` under Sky, `scene:logic/k`
+  * under Logic, O-I #850); a voice that names only its planet is that planet's voice. */
+ private voiceRefs():string[]{
+  return (Array.isArray(this.influenceReading?.voices)?this.influenceReading.voices:[])
+   .map((v:any)=>typeof v?.mode_ref==='string'&&v.mode_ref?v.mode_ref:typeof v?.planet_ref==='string'&&v.planet_ref?voiceModeRef(v.planet_ref):null)
+   .filter((r:string|null):r is string=>r!==null);
  }
  /** A refused determinant leaves the owner and its standing unchanged. */
  private refused(operation:string,error:unknown,session:InstrumentSession){
@@ -355,7 +369,7 @@ export class NativeFieldController {
  /** A scene determinant event through the one serial owner. While following, the
   * re-read targets queue behind already scheduled sound (no hold, no rebase);
   * while held, the event commits and the owner stays held. */
- private determinant(operation:string,build:()=>any,needsEvent:boolean,cadence=false):Promise<void>{
+ private determinant(operation:string,build:()=>any,needsEvent:boolean,cadence=false,still=false):Promise<void>{
   const session=this.session;
   if(!session||!this.scene)return Promise.reject(new Error('Open the live instrument first: determinant events belong to a scene owner'));
   if(this.status==='following'&&!this.suspension){
@@ -382,7 +396,9 @@ export class NativeFieldController {
      if(!this.current(session))return;
      // The owner acknowledged: the event happened. A busy follow-up read only
      // leaves the influence stale for the next refresh; it never un-counts it.
-     this.checkpoint=null;this.sourcesStale=true;this.influenceStale=true;this.stageStale=true;this.refusal=null;
+     // A still act (a Torus setting that moves no native state, O-I #850) leaves the sources, the stage and the checkpoint as they stood.
+     if(!still){this.checkpoint=null;this.sourcesStale=true;this.influenceStale=true;this.stageStale=true;}
+     this.refusal=null;
      // The acknowledgement carried the new influence; take it without a
      // second exchange (the audio pump must not wait on another read).
      const carried=session.lastInfluence;
@@ -486,7 +502,7 @@ export class NativeFieldController {
    const sent=performance.now();
    try{await session.strikeAt(acts,at===undefined?{}:{at_samples_elapsed:at});}
    catch(error){this.refused('strike at a point',error,session);throw error;}
-   const refs=(Array.isArray(this.influenceReading?.voices)?this.influenceReading.voices:[]).map((v:any)=>v?.planet_ref).filter((r:unknown):r is string=>typeof r==='string').map(voiceModeRef);
+   const refs=this.voiceRefs();
    this.refusal=null;this.played={at:Date.now(),strikes:(this.played?.strikes??0)+1,last_ms:performance.now()-sent};this.struck={at:Date.now(),source:'point',refs,points:struck};this.changed();
   });
  }
@@ -523,6 +539,32 @@ export class NativeFieldController {
   try{await held.recover('stage disclosure reading');return await this.readStage(held);}
   finally{if(this.current(held))this.hold('stage disclosure complete; resume explicitly');}
  });}
+ /** The Torus's M1′ session (QL-MEF m1_prime.rs; the host's `torus-state`, O-I #850): every setting, the band beside the rate, the
+  * figure the torus shows, the comma gathered since the Torus opened and the notes the owner counts. A read: the field does not advance. */
+ torusState(){return this.serial(async()=>{
+  const session=this.session;if(!session||!this.scene)throw new Error('the Torus belongs to a scene owner');
+  if(this.status==='following'){if(!(await this.waitIdle(session,5000)))throw new Error('native owner busy');return this.readTorus(session);}
+  this.hold('Torus session reading');const held=await this.idle();
+  try{await held.recover('Torus session reading');return await this.readTorus(held);}
+  finally{if(this.current(held))this.hold('Torus session reading complete; resume explicitly');}
+ });}
+ private async readTorus(session:InstrumentSession){
+  const torus=await session.torusState();
+  if(this.session!==session||this.dead)throw new Error('Torus session reply belongs to a released lifetime');
+  this.torus=torus;this.torusAt=performance.now();this.torusRefused=null;this.changed();return torus;
+ }
+ /** One edit of the Torus's M1′ session through the one serial owner, as every determinant goes (QL's own `torus-set`: any of rate,
+  * tempo_bpm, fundamental, carrier, shape, tuning and polyphony; O-I #850). The owner validates and refuses in its own words; the
+  * session reading is taken from its reply, never set here. Only a Fundamental moves the owner (one modes continuation of the same
+  * voices); every other setting is a still act: no hold, no source re-read. The reply's influence is admitted as a determinant's is. */
+ torusSet(edit:unknown){
+  if(!edit||typeof edit!=='object'||Array.isArray(edit)||!Object.keys(edit).length)return Promise.reject(new Error('a Torus edit names at least one setting'));
+  const still=(edit as {fundamental?:unknown}).fundamental===undefined;
+  return this.determinant('Torus',()=>({operation:'torus-set',edit:structuredClone(edit)}),false,false,still).then(()=>{
+   const torus=this.session?.lastTorus;
+   if(torus){this.torus=torus;this.torusAt=performance.now();this.torusRefused=null;this.changed();}
+  });
+ }
  /** The facts the Tarot score stands on, read from this scene: the field's
   * own subject and event, the M3 clock position of the last complete source
   * read, and the admitted `ql.sky-snapshot/v1` the event carries (null when it
@@ -593,6 +635,14 @@ export class NativeFieldController {
   * is in flight, never while held. */
  async refreshSources(){
   const session=this.session;
+  // The Torus's session rides the same human cadence, at most once a second: a cheap read, so the comma the owner gathers as the field
+  // runs reaches the frame. An owner that refuses the read holds no session; it is not asked again in this lifetime.
+  if(session&&this.scene&&this.torusRefused===null&&this.status==='following'&&!this.suspension&&!this.operating&&!this.serialDepth&&(this.torus===null||performance.now()-this.torusAt>=TORUS_READ_MS)){
+   this.operating++;
+   try{if(await this.waitIdle(session,100)&&this.status==='following')await this.readTorus(session);}
+   catch(error){const why=String(error instanceof Error?error.message:error);if(!TRANSIENT.test(why)&&this.current(session))this.torusRefused=why;}
+   finally{this.operating--;}
+  }
   // A complete source read is large (the whole coupled basis); while a cadence
   // plays it yields to the ticks and runs at most every 5 s.
   if(session&&this.scene&&this.influenceStale&&this.status==='following'&&!this.suspension&&!this.operating&&!this.serialDepth){
@@ -703,6 +753,7 @@ export class NativeFieldController {
   this.sources=null;this.domain=null;this.openingHold=null;
   this.scene=false;this.influenceReading=null;this.acting=null;this.event=null;this.opening=null;this.sourcesStale=false;this.level=null;this.tap=null;this.effectsGraph?.dispose();this.effectsGraph=null;
   this.stageReading=null;this.stageStale=false;this.stageLast=null;
+  this.torus=null;this.torusAt=0;this.torusRefused=null;
   this.admitting=null;this.suspension=null;this.restoring=null;
   if(manual){this.status='manual';this.lastNative=null;this.reason=null;this.refusal=null;this.lastCadence=null;this.changed();}
   const close=async()=>{

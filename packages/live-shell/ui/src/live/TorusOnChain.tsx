@@ -7,12 +7,13 @@
 //
 // The plate is the catalogue's design of the Torus (inhabitants/catalogue/panels/torus.tsx, `quaternal-logic:torus`), drawn on the
 // owner's readings and writes (torusDevice.ts torusDesignBinding), published with the device so the pool, a pane and the rail draw it
-// too. The design draws the owner's four determinants (lens, context frame, harmonic basis, M3 transcription) on the compact and its
-// See and hear (sound, cadence, scale, level, standing) on the whole; what the owner does not announce stands absent with its reason.
-// Every control the chain framed for the MIDI map stays framed, by the same id (lead, 16 Oct: an established behaviour is never
-// removed for an adjacent one): the chain's wrap reaches a design's kit controls by their value keys (DeviceView.tsx useHosting →
-// deviceHost.tsx → sdk/panel.tsx ControlWrapContext) as it reaches the generic plate's rows (torusMapWrap); a place that wraps the
-// whole frames its See and hear by the ids the instrument section uses (midiMap/midiMapTargets.ts).
+// too. The design draws the manual's four macros on the compact (Rate, Fundamental, Carrier, Damping: DLW §21.2, O-I 850) and every
+// parameter on the whole, in the manual's groups: the owner's four determinants in Mode and tuning, its See and hear (sound, cadence,
+// scale, level) in Notes and output; what the owner does not announce stands absent with its reason. The chain frames for the MIDI map
+// what its compact draws, by each control's id (lead, 16 Oct: an established behaviour is never removed for an adjacent one): the
+// chain's wrap reaches a design's kit controls by their value keys (DeviceView.tsx useHosting → deviceHost.tsx → sdk/panel.tsx
+// ControlWrapContext) as it reaches the generic plate's rows (torusMapWrap); a place that wraps the whole frames the determinants and
+// its See and hear by the ids the instrument section uses (midiMap/midiMapTargets.ts), so a mapping made by id still holds.
 import {useEffect, useMemo, useRef, type ReactNode} from 'react'
 import type {SdkParamRow} from '../inhabitants/sdk/define'
 import {DeviceView} from '../frame/devices/DeviceView'

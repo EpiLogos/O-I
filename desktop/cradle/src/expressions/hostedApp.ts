@@ -508,6 +508,38 @@ export interface HostedInstrumentParameters {
    * parameters as the owner keeps them (expressions-app native-field/effectsLaw.ts); absent from a frame that announces none. */
   readonly effects?: Readonly<Record<"filter" | "dynamics" | "delay" | "reverb" | "resonator", Readonly<Record<string, number | boolean | string>>>>
     & {readonly chain: readonly ("filter" | "dynamics" | "delay" | "reverb" | "resonator")[]};
+  /** The Torus's M1′ session (DLW manual §21.2; QL's `torus-state`, O-I #850), as the owner last gave it; absent from a frame that
+   * announces none. */
+  readonly torus?: HostedTorusSession;
+}
+
+export type HostedTorusTuning = "logic" | "maqam" | "sky";
+export type HostedTorusShape = "auto" | "sequence" | "torus" | "figure-eight" | "spiral" | "klein-bottle";
+export type HostedTorusFigure = "torus" | "figure-eight" | "spiral" | "klein-bottle";
+export type HostedTorusBand = "cosmic" | "breath" | "rhythm" | "pitch" | "beyond";
+/** The owner's M1′ session (QL-MEF m1_prime.rs Session::reading, `ql.m1-prime-session/v1`) as the frame announces it: the settings,
+ * the rate in steps a second and its band, the Fundamental in force and the map's 1:1, the figure the torus shows (null under
+ * Sequence), the comma gathered since the Torus opened, the notes the owner counts, the tunings the scene holds resident, and the
+ * owner's word for the Carrier's drive. */
+export interface HostedTorusSession {
+  readonly settings: {
+    readonly rate: {readonly mode: "free"; readonly steps_per_second: number} | {readonly mode: "sync"; readonly note: {readonly numerator: number; readonly denominator: number}};
+    readonly fundamental: {readonly source: "map"} | {readonly source: "hz"; readonly hz: number};
+    readonly carrier: number;
+    readonly shape: HostedTorusShape;
+    readonly tuning: HostedTorusTuning;
+    readonly polyphony: number;
+    readonly tempo_bpm: number;
+  };
+  readonly steps_per_second: number;
+  readonly band: HostedTorusBand;
+  readonly fundamental_hz: number;
+  readonly map_hz: number;
+  readonly figure: HostedTorusFigure | null;
+  readonly comma_cents: number;
+  readonly notes: number;
+  readonly resident_tunings: readonly HostedTorusTuning[];
+  readonly carrier_drive: string;
 }
 
 /** The owner's instrument reading as the boundary validated it: the QL reading parser's value, or the fault it named. */

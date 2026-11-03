@@ -563,7 +563,9 @@ test('the instrument section, the torus device on the chain and the Scale tie fr
     assert.match(expanded, new RegExp(`data-midi-target="${id}"[^>]*data-midi-open="yes"`), `expanded: ${id} is framed`)
   }
   const rack = renderToStaticMarkup(createElement(onChain.TorusOnChain, {state}))
-  assert.match(rack, /data-midi-target="lens"[^>]*data-midi-open="yes"/, 'chain: a macro of the torus device is framed')
+  // O-I #850: the chain's compact draws the manual's four macros (Rate, Fundamental, Carrier, Damping, DLW §21.2), so the chain frames
+  // those; the determinants keep their frames, by the same ids, in the instrument section above and the design's whole.
+  assert.match(rack, /data-midi-target="rate"[^>]*data-midi-open="yes"/, 'chain: a macro of the torus device is framed')
   const devices = chain.noteDeviceChain()
   const tieChain = renderToStaticMarkup(createElement(noteChain.NoteDeviceChainView, {devices, mode: {state: 'waiting', selection: null, line: 'waiting'}}))
   assert.match(tieChain, new RegExp(`data-midi-target="note-device:${devices[0].id}:tie"`), 'the Scale tie is framed')

@@ -1,11 +1,19 @@
-// The Torus (manual §21.2): Live's one instrument, a ring with a tube driven by two pulses (3·3 and 4·2) and wound by two helices
-// (the two whole-tone families). Live's nearest: Wavetable — a large display of the oscillator with handles, an envelope display,
-// a global column of volume and voices. Every line drawn below is computed from the device's values.
+// The Torus (manual §21.2): Live's one instrument, a ring with a tube whose pulse steps round its twelve arcs and wound by two helices
+// (the two whole-tone families). Live's nearest: Wavetable — a large display of the oscillator with handles and a global column of
+// volume and voices. Every line drawn below is computed from the device's values.
 //
-// Body source (M2's physical constants, manual §21.2): 'declared' keeps the body's own Strike, Damping and Agitation; 'tattva' takes
-// them from the tattva of the M2 condition through its element fibre (m2-correspondences `material_fibre`), by M2's table of body
-// constants, every value of which stands proposed and tunable. The owner reports the tattva (`tattva.name`), its fibre
-// (`tattva.fibre`, absent where the map gives the tattva none) and the values in force; under Tattva the three dials are held.
+// O-I #850, the Torus as QL designs it: the pulse, its rate and band, the Fundamental, Carrier, Shape and its figure, the Comma, Tuning
+// and Polyphony are QL's M1′ session (QL-MEF m1_prime.rs; the frame's parameters.torus, written as the stage channel's `torus` edit). Keys:
+// rate.mode ('free' | 'sync'), rate (steps a second, the owner's in either mode), rate.note ('n/d' under Sync), tempo (BPM), band (a
+// reading), fundamental.source ('map' | 'hz'), fundamental (Hz), carrier (0..100 %), carrier.drive (the owner's word: 'unbuilt' until the
+// native carrier, QL-MEF #287), shape ('auto' | 'sequence' | 'torus' | 'figure-eight' | 'spiral' | 'klein-bottle'), figure (a reading),
+// comma (cents, a reading), tuning ('logic' | 'maqam' | 'sky'), tuning.resident (the tunings the scene holds, JSON), polyphony (1..32),
+// notes (a reading). The retired Pulse mix, Helix balance, Drive, Agitation, Attack and Release are gone: QL holds none of them.
+//
+// Body source (M2's physical constants, manual §21.2): 'declared' keeps the body's own Strike and Damping; 'tattva' takes them from the
+// tattva of the M2 condition through its element fibre (m2-correspondences `material_fibre`), by M2's table of body constants, every value
+// of which stands proposed and tunable. The owner reports the tattva (`tattva.name`), its fibre (`tattva.fibre`, absent where the map gives
+// the tattva none) and the values in force; under Tattva the dials are held.
 //
 // The Stage page drives the live scene's procedural stage (`ql stage state|evaluate|bind|unbind|retire`, crates/ql-cli/src/stage_command.rs
 // over ql-mef continuous/stage.rs; one exchange with the native field host each). The stage has four slots — form, material.damping,
@@ -14,42 +22,53 @@
 // standing: 'active' | 'exhausted'}], from `ql stage state`; stage.procedures [{ref, revision, trigger: 'invocation' | 'm1-advance' |
 // 'replace-event', selector, scenes?}], the `ql.stage-procedure/v1` files you keep; stage.last and stage.why, the last receipt's standing and
 // the owner's refusal. Writes: stage.procedure (the one you chose; the shell holds it), stage.budget (1..1024, 16: `--max-evaluations`), and
-// four acts, each on its own key with the procedure's ref: stage.evaluate, stage.bind, stage.unbind, stage.retire. No kernel op reaches
-// `ql stage` yet: the binding owes the route, and the host stands the acts disabled with that reason until it lands.
+// four acts, each on its own key with the procedure's ref: stage.evaluate, stage.bind, stage.unbind, stage.retire.
 // The Rack page carries the rack of M1′ (the rack kit, map-rack.tsx), on the keys rack and rack.part.
 import type {CSSProperties} from 'react'
 import {Action, Band, Chooser, Dial, Display, Folded, Handle, Meter, Panel, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, type LightState, type RowItem} from '../../sdk/panel'
 import {RACK_M1, RackBands} from './map-rack'
 import {LIVE_CADENCE_OPTIONS, LIVE_CONTEXT_FRAME_OPTIONS, LIVE_HARMONIC_OPTIONS, LIVE_LENS_OPTIONS} from '../../../live/torusInstrument'
-import {NONE, boolOf, clampTo, db, fixed, has, json, num, numOf, on, pct, secs, shown, signed, st, strOf, type DesignedDevice, type ViewProps} from './design'
+import {NONE, boolOf, clampTo, db, fixed, has, json, num, numOf, on, pct, shown, signed, st, strOf, type DesignedDevice, type ViewProps} from './design'
 
 type V = ViewProps['v']
-const DAMP = {min: .1, max: 40, log: true}, ATTACK = {min: .001, max: 10, log: true}, RELEASE = {min: .01, max: 30, log: true}
+const DAMP = {min: .1, max: 40, log: true}
+/** Rate: one step a year to 40,000 steps a second (manual §21.2), on a log scale; the band edges where the pulse becomes a breath, a
+ * rhythm, a pitch and beyond. */
+const RATE = {min: 1 / (365.25 * 86_400), max: 40_000, log: true}
+const BAND_EDGES = [{at: .001, word: 'Breath'}, {at: .5, word: 'Rhythm'}, {at: 20, word: 'Pitch'}, {at: 20_000, word: 'Beyond'}] as const
+const FUNDAMENTAL = {min: 20, max: 2000, log: true}
+/** Three figures of a number, without trailing noise. */
+const sig = (x: number) => (Math.abs(x) >= 100 ? String(Math.round(x)) : String(Number(x.toPrecision(3))))
+/** A rate in words a person reads: steps a second, a minute, an hour, a day or a year. */
+export const rateWords = (x: number) => (x >= 1 ? `${sig(x)}/s` : x * 60 >= 1 ? `${sig(x * 60)}/min` : x * 3600 >= 1 ? `${sig(x * 3600)}/h`
+  : x * 86_400 >= 1 ? `${sig(x * 86_400)}/day` : `${sig(x * 365.25 * 86_400)}/yr`)
+const hz = (x: number) => `${sig(x)} Hz`
+const cents = (x: number) => `${x.toFixed(2)} ¢`
 
-/** The surface: a standing wave round the ring. Pulse mix blends the 3·3 division (three lobes, twice) with the 4·2 division. */
-const wave = (m: number, th: number, agitation: number) =>
-  (1 - m) * Math.cos(3 * th) + m * .62 * (Math.cos(4 * th) + .8 * Math.cos(2 * th)) + agitation * .06 * Math.sin(17 * th)
+/** The figure's outline at a three-quarter view (QL m1_prime.rs Figure): the ring with its tube, a figure-eight, a spiral, or the ring
+ * turned through itself at a return (the Klein bottle). Sampled as points (x, y) with a depth for near and far. */
+function figurePoints(figure: string, cx: number, cy: number, R: number, r: number, k: number, t: number): readonly [number, number, number] {
+  if (figure === 'figure-eight') { const d = 1 + Math.sin(t) ** 2; return [cx + (R + r) * Math.cos(t) / d, cy + (R + r) * 1.6 * k * Math.sin(t) * Math.cos(t) / d, Math.sin(t)] }
+  if (figure === 'spiral') { const a = t * 2, rr = (R + r) * (.12 + .88 * a / (Math.PI * 4)); return [cx + rr * Math.cos(a), cy + rr * Math.sin(a) * k, Math.sin(a)] }
+  return [cx + (R + r) * Math.cos(t), cy + (R + r) * Math.sin(t) * k, Math.sin(t)]
+}
 
-/** The torus at a three-quarter view: the ring, its tube, the surface wave on the outer equator, the two helices. */
+/** The torus at a three-quarter view, in the figure the owner says it shows: the ring, its tube and its two helices (equal: a helix is
+ * one half of the ring, never a balance), a figure-eight, a spiral, or the Klein bottle at a return. The notes light on the ring.
+ * Without the owner's figure the ring stands bare and says why. */
 function TorusPicture({v, w, h, cx, cy, R, notes = []}: {v: V; w: number; h: number; cx: number; cy: number; R: number; notes?: readonly number[]}) {
-  // The picture is the law the torus plays: without the pulses' readings there is no wave to draw, only the ring, and it says so.
-  if (!['pulseMix', 'helixBalance', 'drive', 'damping', 'agitation'].every(key => has(v, key))) {
-    const r = R * .4, k = .42
-    return <g>
-      <ellipse cx={cx} cy={cy} rx={R + r} ry={(R + r) * k + r * .25} className="dp-faint" />
-      <ellipse cx={cx} cy={cy - r * .2} rx={R - r} ry={(R - r) * k} className="dp-faint" />
-      {w > 90 && <text x={cx} y={cy + (R + r) * k + r * .25 + 14} className="dp-ink-dim" textAnchor="middle">No reading of the pulses</text>}
-    </g>
+  const r = R * .4, k = .42, figure = strOf(v, 'figure')
+  const ring = <>
+    <ellipse cx={cx} cy={cy} rx={R + r} ry={(R + r) * k + r * .25} className="dp-faint" />
+    <ellipse cx={cx} cy={cy - r * .2} rx={R - r} ry={(R - r) * k} className="dp-faint" />
+  </>
+  if (!figure) return <g>{ring}{w > 90 && <text x={cx} y={cy + (R + r) * k + r * .25 + 14} className="dp-ink-dim" textAnchor="middle">
+    {strOf(v, 'shape') === 'sequence' ? 'The scene sets the shapes' : 'No reading of the figure'}</text>}</g>
+  const P = (th: number, ph: number) => {
+    const rr = R + r * Math.cos(ph)
+    return [cx + rr * Math.cos(th), cy + rr * Math.sin(th) * k - r * Math.sin(ph) * .9] as const
   }
-  const m = num(v, 'pulseMix') / 100, b = num(v, 'helixBalance') / 100, d = num(v, 'drive'), q = num(v, 'damping'), ag = num(v, 'agitation')
-  const r = R * .4, k = .42, amp = r * .55 * Math.sqrt(d / 6)
-  const P = (th: number, ph: number, lift = 0) => {
-    const rr = R + (r + lift) * Math.cos(ph)
-    return [cx + rr * Math.cos(th), cy + rr * Math.sin(th) * k - (r + lift) * Math.sin(ph) * .9] as const
-  }
-  // Toward the viewer: the camera looks down at the ring, so depth is the turned Y with the lifted Z.
-  const depth = (th: number, ph: number, lift = 0) => (R + (r + lift) * Math.cos(ph)) * Math.sin(th) * .9 + (r + lift) * Math.sin(ph) * .42
-  const near = (th: number) => Math.sin(th) >= 0
+  const depth = (th: number, ph: number) => (R + r * Math.cos(ph)) * Math.sin(th) * .9 + r * Math.sin(ph) * .42
   /** A sampled curve split into its far (faint) and near (full) runs. */
   const runs = (f: (t: number) => readonly [number, number], t0: number, t1: number, n: number, front: (t: number) => boolean) => {
     const out: {d: string; near: boolean}[] = []
@@ -61,71 +80,43 @@ function TorusPicture({v, w, h, cx, cy, R, notes = []}: {v: V; w: number; h: num
     if (cur) out.push({d: cur, near: side!})
     return out
   }
-  // How long the body rings: more echoes of the surface wave, each fainter, the sharper the resonance (damping Q).
-  const echoes = Math.round(clampTo(1, 4, Math.log2(q + 1)))
+  // How long the body rings: more echoes of the outline, each fainter, the sharper the resonance (damping Q), when the owner holds one.
+  const echoes = has(v, 'damping') ? Math.round(clampTo(1, 4, Math.log2(num(v, 'damping') + 1))) : 1
   const lit = (n: number) => P(n / 12 * Math.PI * 2 * 2, n % 2 ? Math.PI : 0)
-  return <g>
-    {/* the tube's outline: outer and inner silhouettes */}
-    <ellipse cx={cx} cy={cy} rx={R + r} ry={(R + r) * k + r * .25} className="dp-faint" />
-    <ellipse cx={cx} cy={cy - r * .2} rx={R - r} ry={(R - r) * k} className="dp-faint" />
-    {[0.5, 1, 1.5].map(ph => runs(t => P(t, ph * Math.PI / 2), 0, Math.PI * 2, 72, near).map((seg, i) =>
+  const torus = figure === 'torus' || figure === 'klein-bottle'
+  return <g data-torus-figure={figure}>
+    {torus && ring}
+    {torus && [0.5, 1, 1.5].map(ph => runs(t => P(t, ph * Math.PI / 2), 0, Math.PI * 2, 72, t => Math.sin(t) >= 0).map((seg, i) =>
       <path key={`${ph}-${i}`} d={seg.d} className="dp-faint" opacity={seg.near ? .7 : .25} />))}
-    {/* the helices: two turns for one return; the balance sets their weight */}
-    {[0, 1].map(hx => runs(t => P(t, 2.5 * t + hx * Math.PI), 0, Math.PI * 4, 360, t => depth(t, 2.5 * t + hx * Math.PI) > -R * .15).map((seg, i) =>
-      <path key={`h${hx}-${i}`} d={seg.d} fill="none" stroke={hx ? 'var(--dp-on)' : 'var(--dp-value)'}
-        strokeWidth={.5 + 1.8 * (hx ? b : 1 - b)} opacity={seg.near ? .85 : .2} />))}
-    {/* the surface wave and its echoes */}
-    {Array.from({length: echoes}, (_, e) => runs(t => P(t, 0, amp * wave(m, t, ag) * Math.pow(.6, e) + e * 2), 0, Math.PI * 2, 180, () => true).map((seg, i) =>
-      <path key={`w${e}-${i}`} d={seg.d} className="dp-curve" opacity={1 - e * .24} strokeWidth={e ? 1 : 1.6} />))}
+    {/* the helices: two turns for one return, the two whole-tone families */}
+    {torus && [0, 1].map(hx => runs(t => P(t, 2.5 * t + hx * Math.PI), 0, Math.PI * 4, 360, t => depth(t, 2.5 * t + hx * Math.PI) > -R * .15).map((seg, i) =>
+      <path key={`h${hx}-${i}`} d={seg.d} fill="none" stroke={hx ? 'var(--dp-on)' : 'var(--dp-value)'} strokeWidth={1.4} opacity={seg.near ? .85 : .2} />))}
+    {/* at a return the tube turns through itself: the Klein bottle's neck crosses the ring from the near side to the inside */}
+    {figure === 'klein-bottle' && <path d={`M${cx + R + r} ${cy}C${cx + R} ${cy + (R + r) * k * 1.4} ${cx - R * .2} ${cy + r} ${cx} ${cy - r * .2}`} className="dp-curve" strokeDasharray="3 2" />}
+    {!torus && Array.from({length: echoes}, (_, e) => runs(t => { const [x, y] = figurePoints(figure, cx, cy, R * (1 - e * .08), r, k, t); return [x, y] as const },
+      0, Math.PI * 2, 180, t => figurePoints(figure, cx, cy, R, r, k, t)[2] >= 0).map((seg, i) =>
+      <path key={`f${e}-${i}`} d={seg.d} className="dp-curve" opacity={(seg.near ? 1 : .35) * (1 - e * .24)} strokeWidth={e ? 1 : 1.6} />))}
     {notes.map(n => { const [x, y] = lit(n); return <circle key={n} cx={x} cy={y} r={3} fill="var(--dp-on)" /> })}
     <rect x={0} y={0} width={w} height={h} fill="none" />
   </g>
 }
 
-/** Where the drive handle sits: the surface wave's crest on the near right of the ring. */
-const crest = (v: V, cx: number, cy: number, R: number) => {
-  const r = R * .4, amp = r * .55 * Math.sqrt(num(v, 'drive') / 6)
-  return {x: cx + R + r + amp, y: cy, base: cx + R + r, reach: r * .55}
-}
-
+/** The torus and its pulse: the picture, and under it the Rate on its log line from one step a year to 40,000 a second, the band edges
+ * marked. Under Free the handle drags the rate; under Sync the note length sets it, so the handle only reads. */
 function TorusDisplay({v, set, w, h, notes}: {v: V; set?: ViewProps['set']; w: number; h: number; notes?: readonly number[]}) {
-  const cx = w / 2, cy = h * .44, R = w * .27, line = {x0: 14, x1: w - 14, y: h - 13}
-  const c = crest(v, cx, cy, R), m = num(v, 'pulseMix') / 100, mixRead = has(v, 'pulseMix'), driveRead = has(v, 'drive')
-  return <Display w={w} h={h} label="The torus" does="The ring, its surface wave and its two helices, drawn from the device's values."
-    corner={`${shown(v, 'notes')} notes`}>
+  const cx = w / 2, cy = h * .42, R = w * .27, line = {x0: 14, x1: w - 14, y: h - 13}
+  const lo = Math.log10(RATE.min), hi = Math.log10(RATE.max)
+  const at = (rate: number) => line.x0 + (Math.log10(clampTo(RATE.min, RATE.max, rate)) - lo) / (hi - lo) * (line.x1 - line.x0)
+  const free = strOf(v, 'rate.mode') !== 'sync'
+  return <Display w={w} h={h} label="The torus" does="The torus in the figure it shows, its two helices, and its pulse's rate on the band line."
+    corner={has(v, 'band') ? `${strOf(v, 'band')}` : NONE}>
     <TorusPicture v={v} w={w} h={h} cx={cx} cy={cy} R={R} notes={notes} />
     <path d={`M${line.x0} ${line.y}H${line.x1}`} className="dp-faint" />
-    <text x={line.x0} y={line.y - 4} className="dp-axis">3·3</text>
-    <text x={line.x1} y={line.y - 4} className="dp-axis" textAnchor="end">4·2</text>
-    {mixRead && <Handle n={1} x={line.x0 + m * (line.x1 - line.x0)} y={line.y} label="Pulse mix" does="Drag along the line: the balance of the two pulses."
-      onDrag={set && (x => set('pulseMix', Math.round(clampTo(0, 100, (x - line.x0) / (line.x1 - line.x0) * 100))))} onReset={set && (() => set('pulseMix', 50))} />}
-    {driveRead && <Handle n={2} x={c.x} y={c.y} label="Drive" does="Drag out from the ring: how hard the pulses shake the body."
-      onDrag={set && (x => set('drive', Math.round(clampTo(0, 6, Math.pow(clampTo(0, 1, (x - c.base) / c.reach), 2) * 6) * 10) / 10))} onReset={set && (() => set('drive', 1))} />}
-  </Display>
-}
-
-/** The note envelope: rise to the strike's height over Attack, ring and fade over Release. Time runs on a log scale. */
-function EnvelopeDisplay({v, set, w, h}: {v: V; set?: ViewProps['set']; w: number; h: number}) {
-  const x0 = 8, x1 = w - 8, top = 14, base = h - 14
-  const tx = (s: number) => x0 + (Math.log10(s / .001) / Math.log10(60 / .001)) * (x1 - x0)
-  if (!['attack', 'release', 'strike', 'damping'].every(key => has(v, key))) return <Display w={w} h={h} label="Envelope" does="How a note rises and fades.">
-    <text x={w / 2} y={h / 2} className="dp-ink-dim" textAnchor="middle">No reading of the envelope</text>
-  </Display>
-  const a = num(v, 'attack'), rel = num(v, 'release'), peak = base - (base - top) * num(v, 'strike') / 100, q = num(v, 'damping')
-  const ax = tx(a), rx = tx(a + rel)
-  let d = `M${x0} ${base}L${ax.toFixed(1)} ${peak.toFixed(1)}`
-  for (let i = 1; i <= 40; i++) {
-    const t = i / 40, x = ax + (rx - ax) * t, ring = Math.cos(t * Math.min(q, 20) * 2) * Math.exp(-t * 3) * .12
-    d += `L${x.toFixed(1)} ${(base - (base - peak) * Math.exp(-t * 4) * (1 + ring)).toFixed(1)}`
-  }
-  return <Display w={w} h={h} label="Envelope" does="How a note rises and fades. Drag the squares." corner="time">
-    {[.01, .1, 1, 10].map(s => <g key={s}><path d={`M${tx(s)} ${top - 4}V${base}`} className="dp-grid" />{(s === .01 || s === 1) && <text x={tx(s) + 2} y={h - 4} className="dp-axis">{s < 1 ? '10 ms' : '1 s'}</text>}</g>)}
-    <path d={`${d}L${rx.toFixed(1)} ${base}Z`} className="dp-fill" />
-    <path d={d} className="dp-curve" />
-    <Handle shape="square" x={ax} y={peak} label="Attack" does="Drag left or right: how long a note takes to rise."
-      onDrag={set && (x => set('attack', Math.round(clampTo(.001, 10, .001 * Math.pow(60 / .001, (x - x0) / (x1 - x0))) * 1000) / 1000))} onReset={set && (() => set('attack', .01))} />
-    <Handle shape="square" x={rx} y={base} label="Release" does="Drag left or right: how long a note takes to fade."
-      onDrag={set && (x => set('release', Math.round(clampTo(.01, 30, .001 * Math.pow(60 / .001, (x - x0) / (x1 - x0)) - a) * 100) / 100))} onReset={set && (() => set('release', 1.2))} />
+    {BAND_EDGES.map(edge => <path key={edge.word} d={`M${at(edge.at).toFixed(1)} ${line.y - 3}V${line.y + 3}`} className="dp-grid" />)}
+    {w > 150 && BAND_EDGES.slice(1, 3).map(edge => <text key={edge.word} x={at(edge.at) + 2} y={line.y - 4} className="dp-axis">{edge.word}</text>)}
+    {has(v, 'rate') && <Handle n={1} x={at(num(v, 'rate'))} y={line.y} label="Rate" does={free ? 'Drag along the line: how fast the pulse steps round the ring.' : 'Under Sync the note length sets the rate.'}
+      onDrag={set && free ? (x => set('rate', Number(Math.pow(10, lo + clampTo(0, 1, (x - line.x0) / (line.x1 - line.x0)) * (hi - lo)).toPrecision(3)))) : undefined}
+      onReset={set && free ? (() => set('rate', 2.5)) : undefined} />}
   </Display>
 }
 
@@ -147,8 +138,17 @@ function Janko({w, y, sounding}: {w: number; y: number; sounding: readonly numbe
 // The light reads the owner alone; hollow while it has not said.
 const light = (v: V, owner?: V) => (strOf(owner ?? v, 'light') ?? 'unknown') as LightState
 const VIEWS = [{value: 'surface', label: 'Surface'}, {value: 'wire', label: 'Wire'}, {value: 'both', label: 'Both'}] as const
-const BODY_SOURCES = [{value: 'declared', label: 'Declared', does: 'The body keeps its own constants.'},
-  {value: 'tattva', label: 'Tattva', does: "The tattva of the M2 condition sets Strike, Damping and Agitation through its element fibre."}] as const
+const BODY_SOURCES = [{value: 'declared', label: 'Declared', does: 'The body keeps the values you set.'},
+  {value: 'tattva', label: 'Tattva', does: "The tattva of the M2 condition sets Strike and Damping through its element fibre."}] as const
+const BODIES = [{value: 'torus', label: 'The torus', does: 'The torus rings.'}, {value: 'form', label: 'A form', does: 'A form of the Expression rings.'}] as const
+const RATE_MODES = [{value: 'free', label: 'Free', does: 'Steps a second, one a year to 40,000.'}, {value: 'sync', label: 'Sync', does: 'One step per note length at the set\'s tempo.'}] as const
+const NOTE_LENGTHS = ['1/64', '1/32', '1/16', '1/8', '3/16', '1/4', '3/8', '1/2', '3/4', '1/1', '2/1', '4/1', '8/1'].map(x => ({value: x, label: x.endsWith('/1') ? `${x.slice(0, -2)} bar${x === '1/1' ? '' : 's'}` : x}))
+const SOURCES = [{value: 'map', label: 'Map', does: 'The frequency the map gives the Sun, its 1:1.'}, {value: 'hz', label: 'Hz', does: 'A frequency you set, 20 to 2,000 Hz.'}] as const
+const SHAPES = [{value: 'auto', label: 'Auto', does: 'The shape changes by the pulse.'}, {value: 'sequence', label: 'Sequence', does: 'The shapes you set in the scene.'},
+  {value: 'torus', label: 'Torus'}, {value: 'figure-eight', label: 'Figure-eight'}, {value: 'spiral', label: 'Spiral'}, {value: 'klein-bottle', label: 'Klein bottle'}] as const
+const FIGURE_WORD: Record<string, string> = {torus: 'Torus', 'figure-eight': 'Figure-eight', spiral: 'Spiral', 'klein-bottle': 'Klein bottle'}
+const TUNINGS = [{value: 'logic', label: 'Logic', does: 'The voices sound Vimarśā\'s octet.'}, {value: 'maqam', label: 'Maqām', does: 'The voices sound the M2 condition\'s maqām.'},
+  {value: 'sky', label: 'Sky', does: 'The voices take the planets of your sky.'}] as const
 /** Why a body constant is held: under Tattva, the tattva with a fibre sets it. */
 export const tattvaHold = (v: V): string | undefined => {
   if (strOf(v, 'body.source') !== 'tattva') return undefined
@@ -165,8 +165,7 @@ export const tattvaDoes = (v: V): string => `The tattva of the M2 condition and 
   strOf(v, 'tattva.standing') ? `, which stand ${strOf(v, 'tattva.standing')}` : ''}; a tattva with no fibre leaves them declared.`
 
 /** The owner's own choices for the field's four determinants and its cadence (live/torusInstrument.ts), by the labels the binding
- * reads and writes. The pulses, body and envelope below are the instrument as the manual specifies it; the field announces none
- * of them yet, so they draw their gaps. */
+ * reads and writes. */
 const asOptions = (list: readonly {label: string}[]) => list.map(option => ({value: option.label, label: option.label}))
 const LENSES = asOptions(LIVE_LENS_OPTIONS), FRAMES = asOptions(LIVE_CONTEXT_FRAME_OPTIONS), BASES = asOptions(LIVE_HARMONIC_OPTIONS)
 const CADENCES = asOptions(LIVE_CADENCE_OPTIONS)
@@ -178,6 +177,50 @@ const determinants = (p: ViewProps) => <>
   <Chooser {...st(p, 'context-frame')} label="Frame" does="The context frame, CF1 to CF7." value={strOf(p.v, 'context-frame') ?? ''} options={FRAMES} onChange={x => p.set('context-frame', x)} />
   <Chooser {...st(p, 'harmonic-basis')} label="Basis" does="The harmonic basis: one of B1 to B8, or the selected row." value={strOf(p.v, 'harmonic-basis') ?? ''} options={BASES} onChange={x => p.set('harmonic-basis', x)} />
   <Radio {...st(p, 'm3-transcription')} label="M3" does="How the M3 clock is transcribed." value={strOf(p.v, 'm3-transcription') ?? ''} options={M3} stack onChange={x => p.set('m3-transcription', x)} />
+</>
+
+/** The compact four (manual §21.2 Compact): Rate, Fundamental, Carrier and Damping. */
+const macros = (p: ViewProps) => <>
+  <ValueBox {...st(p, 'rate')} label="Rate" does="How fast the pulse steps round the ring. Setting it runs the pulse Free." value={numOf(p.v, 'rate') ?? NaN} def={2.5} scale={RATE} format={rateWords} onChange={x => p.set('rate', Number(x.toPrecision(3)))} />
+  <ValueBox {...st(p, 'fundamental')} label="Fundamental" does="The note that place 0 stands on. Every voice is a ratio over it." value={numOf(p.v, 'fundamental') ?? NaN} scale={FUNDAMENTAL} format={hz} onChange={x => p.set('fundamental', Number(x.toPrecision(4)))} />
+  <Dial {...st(p, 'carrier')} label="Carrier" does={`How strongly the pulse drives the body between strikes.${strOf(p.v, 'carrier.drive') === 'unbuilt' ? ' The owner holds it; its drive is not built yet, so the body sounds only when struck.' : ''}`}
+    value={numOf(p.v, 'carrier') ?? NaN} def={0} scale={{min: 0, max: 100}} format={pct} onChange={x => p.set('carrier', Math.round(x))} />
+  <Dial {...st(p, 'damping')} disabled={st(p, 'damping').disabled ?? tattvaHold(p.v)} label="Damping" does="How sharply the body rings. A high value rings longer." value={numOf(p.v, 'damping') ?? NaN} def={4.5} scale={DAMP} format={fixed(1)} onChange={x => p.set('damping', x)} />
+</>
+
+/** Pulse (manual §21.2): Rate, Free or Sync, with its band beside it; the Fundamental; the Carrier. */
+const pulse = (p: ViewProps) => <>
+  <Radio {...st(p, 'rate.mode')} label="Rate" does="Free steps so many times a second; Sync once per note length at the set's tempo." value={strOf(p.v, 'rate.mode') ?? ''} options={RATE_MODES} stack onChange={x => p.set('rate.mode', x)} />
+  {strOf(p.v, 'rate.mode') === 'sync'
+    ? <Chooser {...st(p, 'rate.note')} label="Note" does="The note length the pulse steps once per, 1/64 to 8 bars." value={strOf(p.v, 'rate.note') ?? ''} options={NOTE_LENGTHS} onChange={x => p.set('rate.note', x)} />
+    : <ValueBox {...st(p, 'rate')} label="Steps" does="How fast the pulse steps round the ring: one step a year to 40,000 a second." value={numOf(p.v, 'rate') ?? NaN} def={2.5} scale={RATE} format={rateWords} onChange={x => p.set('rate', Number(x.toPrecision(3)))} />}
+  <Readout big label="band" does="The band the pulse stands in: Cosmic, Breath, Rhythm, Pitch or Beyond." value={strOf(p.v, 'band')} tone="accent" />
+  <ValueBox {...st(p, 'tempo')} label="Tempo" does="The set's tempo, which Sync steps to." value={numOf(p.v, 'tempo') ?? NaN} def={120} scale={{min: 20, max: 999, log: true}} format={x => `${Math.round(x)} BPM`} onChange={x => p.set('tempo', Math.round(x))} />
+  <Radio {...st(p, 'fundamental.source')} label="Fundamental" does="Map takes the frequency the map gives the Sun, its 1:1; Hz, the one you set." value={strOf(p.v, 'fundamental.source') ?? ''} options={SOURCES} stack onChange={x => p.set('fundamental.source', x)} />
+  <ValueBox {...st(p, 'fundamental')} label="Hz" does="The note that place 0 stands on, 20 to 2,000 Hz. Every voice is a ratio over it." value={numOf(p.v, 'fundamental') ?? NaN} scale={FUNDAMENTAL} format={hz} onChange={x => p.set('fundamental', Number(x.toPrecision(4)))} />
+  <Dial {...st(p, 'carrier')} label="Carrier" does="How strongly the pulse drives the body between strikes. At 0 % the body sounds only when something strikes it." value={numOf(p.v, 'carrier') ?? NaN} def={0} scale={{min: 0, max: 100}} format={pct} onChange={x => p.set('carrier', Math.round(x))} />
+  <Readout label="drive" does={st(p, 'carrier.drive').disabled ?? 'The owner\'s word for the Carrier\'s drive.'} value={strOf(p.v, 'carrier.drive')} tone={strOf(p.v, 'carrier.drive') === 'unbuilt' ? 'stall' : undefined} />
+</>
+
+/** The tunings the scene holds voices for; a tuning it holds none of is dimmed and says so. */
+const residentOf = (v: V): readonly string[] | undefined => { const raw = json<unknown>(v, 'tuning.resident', undefined); return Array.isArray(raw) ? raw.filter((x): x is string => typeof x === 'string') : undefined }
+
+/** Mode and tuning (manual §21.2): the lens and mode the Torus reads (the field's four determinants) and the Tuning. */
+const modeAndTuning = (p: ViewProps) => {
+  const resident = residentOf(p.v)
+  const absent = resident ? TUNINGS.filter(x => !resident.includes(x.value)).map(x => x.label) : []
+  return <>
+    {determinants(p)}
+    <Radio {...st(p, 'tuning')} label="Tuning" does={`What the voices sound.${absent.length ? ` This scene holds no ${absent.join(' or ')} voices.` : ''}`} value={strOf(p.v, 'tuning') ?? ''}
+      options={TUNINGS.filter(x => !resident || resident.includes(x.value))} stack onChange={x => p.set('tuning', x)} />
+  </>
+}
+
+/** Shape (manual §21.2): the Shape, the figure it shows now, and the Comma gathered since the Torus opened. */
+const shape = (p: ViewProps) => <>
+  <Chooser {...st(p, 'shape')} label="Shape" does="Auto changes shape by the pulse; Sequence follows the shapes you set in the scene; any other holds that shape." value={strOf(p.v, 'shape') ?? ''} options={SHAPES} onChange={x => p.set('shape', x)} />
+  <Readout label="figure" does={st(p, 'figure').disabled ?? 'The figure the torus shows now.'} value={has(p.v, 'figure') ? FIGURE_WORD[strOf(p.v, 'figure')!] ?? strOf(p.v, 'figure') : undefined} />
+  <Readout big label="comma" does="The comma gathered since the Torus opened, one Pythagorean comma for each full return of the pulse. You read it; you do not set it." value={has(p.v, 'comma') ? cents(num(p.v, 'comma')) : undefined} />
 </>
 
 /** What you see and hear of the field: its sound, its cadence, its scale, its level, and the owner's standing. */
@@ -284,12 +327,14 @@ export const torus: DesignedDevice = {
   title: 'Torus',
   kind: 'instrument',
   defaults: {
-    light: 'lit', pulseMix: 50, helixBalance: 50, strike: 70, damping: 4.5, drive: 1, modes: 64, agitation: .3,
-    attack: .01, release: 1.2, voices: 16, level: -6, pan: 0, view: 'surface', receiver: false,
-    notes: 3, meter: -14,
+    light: 'lit',
+    // The Torus's M1′ session (QL's torus-state), as a scene opens it: Free at 2.5 steps a second, a rhythm; the map's 1:1; no carrier.
+    'rate.mode': 'free', rate: 2.5, tempo: 120, band: 'Rhythm', 'fundamental.source': 'map', fundamental: 130.81, carrier: 0, 'carrier.drive': 'unbuilt',
+    shape: 'auto', figure: 'figure-eight', comma: 0, tuning: 'logic', 'tuning.resident': JSON.stringify(['logic', 'sky']), polyphony: 16, notes: 3,
+    body: 'torus', strike: 70, damping: 4.5, modes: 64, level: -6, pan: 0, view: 'surface', receiver: false, meter: -14,
     // The field's own controls, as the binding reads them (labels of the owner's choices).
     lens: 'L0', 'context-frame': 'CF1', 'harmonic-basis': 'B1', 'm3-transcription': 'DNA', sound: true, cadence: 'Hold', scale: 100, standing: 'following',
-    sounding: JSON.stringify([0, 4, 8]), driveMod: JSON.stringify([.6, 2.2]),
+    sounding: JSON.stringify([0, 4, 8]),
     // The tattva of the M2 condition (the M2 request's tattva selection) and its fibre; Declared keeps the body's own constants.
     'body.source': 'declared', 'tattva.name': 'Prithvi', 'tattva.fibre': 'earth', 'tattva.standing': 'proposed',
     // The stage, as `ql stage state` discloses it before any procedure: every slot authored, nothing bound. The procedures kept are QL's
@@ -304,70 +349,63 @@ export const torus: DesignedDevice = {
   firstPage: 'field',
   fixtures: {
     'Ringing': {},
-    // M2's proposed body constants for the earth fibre: Damping 12, Strike 45 %, Agitation 0.1.
-    'Tattva: Prithvi, earth': {'body.source': 'tattva', damping: 12, strike: 45, agitation: .1},
+    // M2's proposed body constants for the earth fibre: Damping 12, Strike 45 %.
+    'Tattva: Prithvi, earth': {'body.source': 'tattva', damping: 12, strike: 45},
+    // The pulse at pitch: 440 steps a second, the torus shape; twelve returns gathered.
+    'Pulse at pitch': {rate: 440, band: 'Pitch', figure: 'torus', comma: 281.52},
+    // Sync, a quarter note at 120 BPM: two steps a second; the sky's voices.
+    'Sync, a quarter note': {'rate.mode': 'sync', 'rate.note': '1/4', rate: 2, tuning: 'sky', carrier: 25},
+    'Sequence: the scene sets the shapes': {shape: 'sequence', figure: undefined},
     'Tattva without a fibre': {'body.source': 'tattva', 'tattva.name': 'Akasha', 'tattva.fibre': undefined},
     'Stage, the fold evaluated': {'stage.slots': JSON.stringify([{slot: 'form', owner: 'ta-onta:stage:cli-fold', revision: 1}, {slot: 'material.damping'}, {slot: 'clock.inscription'}, {slot: 'clock.lensing'}]), 'stage.last': 'applied'},
     'Stage, a strike bound to the ring': {'stage.procedure': 'ta-onta:stage:cli-bound', 'stage.last': 'applied',
       'stage.bindings': JSON.stringify([{procedure: 'ta-onta:stage:cli-bound', trigger: 'm1-advance', evaluations: 5, max: 16, standing: 'active'}])},
     'Stage, the budget spent': {'stage.procedure': 'ta-onta:stage:cli-bound', 'stage.last': 'applied',
       'stage.bindings': JSON.stringify([{procedure: 'ta-onta:stage:cli-bound', trigger: 'm1-advance', evaluations: 16, max: 16, standing: 'exhausted'}])},
-    'No readings': Object.fromEntries(['stage.slots', 'stage.bindings', 'stage.procedures', 'stage.procedure', 'stage.budget', 'stage.last', 'stage.why', 'rack', 'rack.part', 'light', 'pulseMix', 'helixBalance', 'strike', 'damping', 'drive', 'modes', 'agitation', 'attack', 'release', 'voices', 'level', 'pan', 'view', 'receiver', 'notes', 'meter', 'lens', 'context-frame', 'harmonic-basis', 'm3-transcription', 'sound', 'cadence', 'scale', 'standing', 'sounding', 'driveMod', 'body.source', 'tattva.name', 'tattva.fibre', 'tattva.standing'].map(k => [k, undefined])),
-    'As the field reports it': {pulseMix: undefined, helixBalance: undefined, strike: undefined, damping: undefined, drive: undefined, modes: undefined, agitation: undefined, attack: undefined, release: undefined, voices: undefined, pan: undefined, view: undefined, receiver: undefined, notes: undefined, meter: undefined, driveMod: undefined},
+    'No readings': Object.fromEntries(['stage.slots', 'stage.bindings', 'stage.procedures', 'stage.procedure', 'stage.budget', 'stage.last', 'stage.why', 'rack', 'rack.part', 'light',
+      'rate.mode', 'rate', 'rate.note', 'tempo', 'band', 'fundamental.source', 'fundamental', 'carrier', 'carrier.drive', 'shape', 'figure', 'comma', 'tuning', 'tuning.resident', 'polyphony', 'notes',
+      'body', 'strike', 'damping', 'modes', 'level', 'pan', 'view', 'receiver', 'meter', 'lens', 'context-frame', 'harmonic-basis', 'm3-transcription', 'sound', 'cadence', 'scale', 'standing', 'sounding', 'body.source', 'tattva.name', 'tattva.fibre', 'tattva.standing'].map(k => [k, undefined])),
+    'As the field reports it': {strike: undefined, damping: undefined, modes: undefined, pan: undefined, view: undefined, receiver: undefined, meter: undefined},
   },
 
-  folded: p => <Folded title="Torus" light={light(p.v, p.owner)} readings={[has(p.v, 'level') ? db(num(p.v, 'level')) : NONE, `${shown(p.v, 'notes')} notes`]} onUnfold={p.nav.unfold} />,
+  folded: p => <Folded title="Torus" light={light(p.v, p.owner)} readings={[has(p.v, 'level') ? db(num(p.v, 'level')) : NONE, shown(p.v, 'band'), `${shown(p.v, 'notes')} notes`]} onUnfold={p.nav.unfold} />,
 
   compact: p => <Panel title="Torus" view="compact" light={light(p.v, p.owner)} onFold={p.nav.fold} onFull={p.nav.full} onSelect={p.nav.select}>
     <Section width={152}><TorusDisplay v={p.v} set={p.set} w={140} h={146} /></Section>
-    <Section label="Field" cols={2}>{determinants(p)}</Section>
+    <Section label="Macros" cols={2}>{macros(p)}</Section>
   </Panel>,
 
   whole: p => <Panel title="Torus" view="whole" light={light(p.v, p.owner)} onFold={p.nav.fold} onFull={p.nav.full}
-    pages={[{id: 'field', label: 'Field'}, {id: 'body', label: 'Body'}, {id: 'stage', label: 'Stage'}, {id: 'rack', label: 'Rack'}]} page={p.page} onPage={p.setPage}>
+    pages={[{id: 'field', label: 'Pulse'}, {id: 'body', label: 'Body'}, {id: 'stage', label: 'Stage'}, {id: 'rack', label: 'Rack'}]} page={p.page} onPage={p.setPage}>
     {p.page === 'stage' ? <StagePage p={p} /> : p.page === 'rack' ? <RackBands p={p} /> : p.page !== 'body' ? <>
     <Band>
       <Section width={198}><TorusDisplay v={p.v} set={p.set} w={186} h={146} /></Section>
-      <Section label="Determinants" cols={2} grow>{determinants(p)}</Section>
+      <Section label="Pulse" cols={4} grow>{pulse(p)}</Section>
     </Band>
     <Band>
-      <Section label="See and hear" cols={3} grow>{seeAndHear(p)}</Section>
+      <Section label="Mode and tuning" cols={3} grow>{modeAndTuning(p)}</Section>
+      <Section label="Shape" width={168}>{shape(p)}</Section>
     </Band>
     </> : <>
     <Band>
-      <Section width={198}><TorusDisplay v={p.v} set={p.set} w={186} h={146} /></Section>
-      <Section label="Pulses" cols={2}>
-        <Dial {...st(p, 'pulseMix')} label="Pulse mix" does="The balance of the two pulses. 0 % is the first only, 100 % the second only." value={num(p.v, 'pulseMix')} def={50} scale={{min: 0, max: 100}} format={pct} onChange={x => p.set('pulseMix', x)} />
-        <Dial {...st(p, 'helixBalance')} label="Helices" does="The balance of the two helices." value={num(p.v, 'helixBalance')} def={50} scale={{min: 0, max: 100}} format={pct} onChange={x => p.set('helixBalance', x)} />
-        <Dial {...st(p, 'drive')} label="Drive" does="How hard the pulses shake the body. The outer ring shows what the sky moves it through." value={num(p.v, 'drive')} def={1} scale={{min: 0, max: 6}} format={fixed(1)} onChange={x => p.set('drive', x)} mod={json<[number, number] | null>(p.v, 'driveMod', null) ?? undefined} />
-        <Readout label="notes" does="Notes that sound now." value={num(p.v, 'notes')} tone="accent" />
-      </Section>
-      <Section label="Output" grow>
-        <ValueBox {...st(p, 'level')} label="Level" does="The loudness of the sound." value={num(p.v, 'level')} def={-6} scale={{min: -60, max: 12}} format={db} onChange={x => p.set('level', x)} />
-        <Dial {...st(p, 'pan')} label="Pan" does="The place of the sound, left to right." value={num(p.v, 'pan')} def={0} scale={{min: -1, max: 1}} format={x => (Math.abs(x) < .005 ? 'C' : `${Math.round(Math.abs(x) * 50)}${x < 0 ? 'L' : 'R'}`)} bipolar onChange={x => p.set('pan', x)} />
-      </Section>
-    </Band>
-    <Band>
-      <Section label="Body" cols={3}>
+      <Section label="Body" cols={3} grow>
+        <Radio {...st(p, 'body')} label="Body" does="What rings: the torus, or a form of the Expression." value={strOf(p.v, 'body') ?? ''} options={BODIES} stack onChange={x => p.set('body', x)} />
         <Dial {...st(p, 'strike')} disabled={st(p, 'strike').disabled ?? tattvaHold(p.v)} label="Strike" does="How strongly velocity excites the body." value={num(p.v, 'strike')} def={70} scale={{min: 0, max: 100}} format={pct} onChange={x => p.set('strike', x)} />
         <Dial {...st(p, 'damping')} disabled={st(p, 'damping').disabled ?? tattvaHold(p.v)} label="Damping" does="How sharply the body rings. A high value rings longer." value={num(p.v, 'damping')} def={4.5} scale={DAMP} format={fixed(1)} onChange={x => p.set('damping', x)} />
-        <Radio {...st(p, 'body.source')} label="Source" does="Where the body's constants come from: its own, or the tattva of the M2 condition." value={strOf(p.v, 'body.source') ?? ''} options={BODY_SOURCES} stack onChange={x => p.set('body.source', x)} />
-        <Dial {...st(p, 'modes')} label="Modes" does="How many modes of the body take part." value={num(p.v, 'modes')} def={64} scale={{min: 1, max: 64, step: 1}} format={x => `${x}`} onChange={x => p.set('modes', x)} />
-        <Dial {...st(p, 'agitation')} disabled={st(p, 'agitation').disabled ?? tattvaHold(p.v)} label="Agitation" does="How much the surface is kicked about." value={num(p.v, 'agitation')} def={.3} scale={{min: 0, max: 5}} format={fixed(2)} onChange={x => p.set('agitation', x)} />
+        <Dial {...st(p, 'modes')} label="Modes" does="How many modes of the body take part." value={num(p.v, 'modes')} def={64} scale={{min: 1, max: 4096, log: true, step: 1}} format={x => `${Math.round(x)}`} onChange={x => p.set('modes', Math.round(x))} />
+        <Radio {...st(p, 'body.source')} label="Source" does="Where Strike and Damping come from: the values you set, or the tattva of the M2 condition." value={strOf(p.v, 'body.source') ?? ''} options={BODY_SOURCES} stack onChange={x => p.set('body.source', x)} />
         <Readout label={tattvaLabel(p.v)} does={tattvaDoes(p.v)}
           value={strOf(p.v, 'tattva.name')} tone={tattvaHold(p.v) ? 'accent' : undefined} />
       </Section>
-      <Section label="Envelope" width={150}>
-        <EnvelopeDisplay v={p.v} set={p.set} w={136} h={96} />
-        <div className="ref-pair">
-          <ValueBox {...st(p, 'attack')} does="How long a note takes to rise." value={num(p.v, 'attack')} def={.01} scale={ATTACK} format={secs} onChange={x => p.set('attack', x)} />
-          <ValueBox {...st(p, 'release')} does="How long a note takes to fade." value={num(p.v, 'release')} def={1.2} scale={RELEASE} format={secs} onChange={x => p.set('release', x)} />
-        </div>
-      </Section>
-      <Section label="Voices · view" grow>
-        <ValueBox {...st(p, 'voices')} label="Voices" does="How many notes sound at once. The oldest makes way." value={num(p.v, 'voices')} def={16} scale={{min: 1, max: 32, step: 1}} format={x => `${x}`} onChange={x => p.set('voices', x)} />
-        <Radio {...st(p, 'view')} does="What the pane draws." value={strOf(p.v, 'view') ?? ''} options={VIEWS} stack onChange={x => p.set('view', x)} />
+    </Band>
+    <Band>
+      <Section label="Notes and output" cols={4} grow>
+        <ValueBox {...st(p, 'polyphony')} label="Polyphony" does="How many notes sound at once, each with its own eight voices. The oldest note makes way for a new one." value={numOf(p.v, 'polyphony') ?? NaN} def={16} scale={{min: 1, max: 32, step: 1}} format={x => `${Math.round(x)}`} onChange={x => p.set('polyphony', Math.round(x))} />
+        <Readout label="notes" does="Notes that sound now, as the owner counts them." value={numOf(p.v, 'notes')} tone="accent" />
+        <Dial {...st(p, 'pan')} label="Pan" does="The place of the sound, left to right." value={num(p.v, 'pan')} def={0} scale={{min: -1, max: 1}} format={x => (Math.abs(x) < .005 ? 'C' : `${Math.round(Math.abs(x) * 50)}${x < 0 ? 'L' : 'R'}`)} bipolar onChange={x => p.set('pan', x)} />
+        <Radio {...st(p, 'view')} label="View" does="What the pane draws." value={strOf(p.v, 'view') ?? ''} options={VIEWS} stack onChange={x => p.set('view', x)} />
         <Toggle {...st(p, 'receiver')} label="Receiver" does="Your camera becomes the place where the torus is heard." on={on(p.v, 'receiver')} unknown={boolOf(p.v, 'receiver') === undefined} onChange={x => p.set('receiver', x)} />
+        {seeAndHear(p)}
       </Section>
     </Band>
     </>}
@@ -377,6 +415,9 @@ export const torus: DesignedDevice = {
     <svg viewBox="0 0 760 420" width="100%" height="100%" preserveAspectRatio="xMidYMid meet" className="ref-pane-svg" aria-label="The playable torus and the Jankó keyboard">
       <g className="dp-display" style={{background: 'none'}}>
         <TorusPicture v={p.v} w={760} h={300} cx={380} cy={140} R={190} notes={json<number[]>(p.v, 'sounding', [])} />
+        {/* the Comma at the torus's edge (manual §21.2 Full): a reading, never set here */}
+        <text x={748} y={22} textAnchor="end" className="dp-axis" aria-label="Comma">{has(p.v, 'comma') ? `Comma ${cents(num(p.v, 'comma'))}` : `Comma ${NONE}`}</text>
+        {has(p.v, 'band') && <text x={12} y={22} className="dp-axis">{`${strOf(p.v, 'band')}${has(p.v, 'rate') ? ` · ${rateWords(num(p.v, 'rate'))}` : ''}`}</text>}
         <Janko w={760} y={300} sounding={json<number[]>(p.v, 'sounding', []).map(n => n * 2)} />
       </g>
     </svg>

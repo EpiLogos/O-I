@@ -6,11 +6,14 @@
 // (ported from live/LiveInstrumentSection.tsx:74-105 through inhabitants/ql/devices/qlDevices.ts qlPresentation, the rows the QL
 // field/PCM face carries) — so the pool holds every parameter the owner exposes (DLW §21.2 Whole).
 // Its light reads the owner's standing: on while the instrument follows or is held, off otherwise, dark with no reading.
+// O-I 850: the Torus plays as QL designs it. Its Pulse, Shape, Tuning and Polyphony are QL's M1′ session (QL-MEF m1_prime.rs; the
+// host's torus-state and torus-set), which the frame announces as parameters.torus and takes as the stage channel's `torus` edit; the
+// compact four are Rate, Fundamental, Carrier and Damping (manual §21.2 Compact), and the determinants stand in Mode and tuning.
 import type {DeviceDeclaration, SdkParamRow} from '../inhabitants/sdk/define'
 import type {DeviceInstance, ParamValue} from '../frame/devices/deviceRuntime'
 import type {DesignBinding, Standing, Value, ValueChange} from '../frame/devices/designed'
 import {qlInstrumentEdit, qlPresentation, QL_PRESENTATION_KEYS, QL_WRITE_PATH} from '../inhabitants/ql/devices/qlDevices'
-import {commitLiveInstrumentEdit, liveInstrumentWritable, liveTorusMacroRows, LIVE_TORUS_TOPOLOGY, type LiveTorusState} from './torusInstrument'
+import {commitLiveInstrumentEdit, liveInstrumentWritable, liveTorusMacroRows, LIVE_TORUS_TOPOLOGY, type LiveTorusParameters, type LiveTorusState} from './torusInstrument'
 import type {FrameInstrumentCondition, FrameStageReading, InstrumentEdit} from '@epilogos/expressions-boundary'
 import {hostedChrome} from '../projections/expressionsPaneHost'
 import {qlRackState, rackPage, type QlRackState} from '../inhabitants/ql/devices/qlRack'
@@ -32,15 +35,32 @@ export const TORUS_DEVICE: DeviceDeclaration = {
 
 const WRITE_PATH = QL_WRITE_PATH
 
-/** The torus as the runtime draws it, over the owner's current reading. */
+/** The torus as the runtime draws it, over the owner's current reading. The compact four are the manual's macros (§21.2 Compact): Rate,
+ * Fundamental and Carrier, QL's M1′ session, and Damping, the body's Q. The determinants follow in Mode and tuning, then Shape, Tuning and
+ * Polyphony, then the owner's presentation parameters. */
 export function torusDevice(state: LiveTorusState | null): DeviceInstance {
   const macros = liveTorusMacroRows(state)
-  const rows: SdkParamRow[] = macros.map(row => ({
-    family: 'live', deviceInstance: TORUS_DEVICE_ID, key: row.macro.id, type: 'enumerated', title: row.macro.label,
-    values: row.options.map(option => option.label), compact: true, group: 'Determinants',
-    ...(liveInstrumentWritable(state) ? {writePath: WRITE_PATH} : {disclosure: 'The owner takes edits only while the instrument follows or is held.'}),
-  }) as SdkParamRow)
-  // The owner's other parameters, after the determinants: never compact (the four determinants are the macros).
+  const session = torusSessionOf(state)
+  const writable = liveInstrumentWritable(state)
+  const at = (key: string, title: string, type: string, group: string, rest: Partial<SdkParamRow>, why: string | null = null): SdkParamRow => ({
+    family: 'live', deviceInstance: TORUS_DEVICE_ID, key, title, type, group, ...rest,
+    // An instrument that takes no edits says so first; a following one names the owner op a row still waits on.
+    ...(writable && why === null ? {writePath: WRITE_PATH} : {disclosure: writable ? why : NOT_WRITABLE}),
+  }) as SdkParamRow
+  const noSession = state?.ok && !session ? `${NO_SESSION}.` : null
+  const rows: SdkParamRow[] = [
+    at('rate', 'Rate', 'number', 'Pulse', {compact: true, range: {min: TORUS_RATE.min, max: TORUS_RATE.max, unit: 'steps/s'}}, noSession),
+    at('fundamental', 'Fundamental', 'number', 'Pulse', {compact: true, range: {min: TORUS_FUNDAMENTAL.min, max: TORUS_FUNDAMENTAL.max, unit: 'Hz'}}, noSession),
+    at('carrier', 'Carrier', 'number', 'Pulse', {compact: true, range: {min: 0, max: 100, unit: '%'}}, noSession),
+    at('damping', 'Damping', 'number', 'Body', {compact: true, range: {min: TORUS_Q.min, max: TORUS_Q.max, unit: 'Q'}}),
+  ]
+  rows.push(...macros.map(row => at(row.macro.id, row.macro.label, 'enumerated', 'Mode and tuning', {values: row.options.map(option => option.label)})))
+  rows.push(
+    at('tuning', 'Tuning', 'enumerated', 'Mode and tuning', {values: TORUS_TUNINGS.map(tuning => TORUS_TUNING_WORD[tuning])}, noSession),
+    at('shape', 'Shape', 'enumerated', 'Shape', {values: TORUS_SHAPES.map(shape => TORUS_SHAPE_WORD[shape])}, noSession),
+    at('polyphony', 'Polyphony', 'number', 'Notes and output', {range: {min: TORUS_POLYPHONY.min, max: TORUS_POLYPHONY.max, unit: 'notes'}}, noSession),
+  )
+  // The owner's other parameters, after the session's: never compact.
   const presentation = qlPresentation('live', TORUS_DEVICE_ID, state, false)
   rows.push(...presentation.rows)
   const values: Record<string, ParamValue> = {...presentation.values}
@@ -48,12 +68,25 @@ export function torusDevice(state: LiveTorusState | null): DeviceInstance {
     const option = row.options.find(choice => choice.value === row.selected)
     if (option) values[row.macro.id] = option.label
   }
+  if (session) {
+    const read = torusSessionValues(session)
+    for (const key of ['rate', 'fundamental', 'carrier', 'polyphony'] as const) if (typeof read[key] === 'number') values[key] = read[key] as number
+    values.tuning = TORUS_TUNING_WORD[session.settings.tuning]
+    values.shape = TORUS_SHAPE_WORD[session.settings.shape]
+  }
   if (state?.ok) values.enabled = state.value.standing === 'following' || state.value.standing === 'held'
+  const word = <T extends string>(words: Readonly<Record<T, string>>, label: ParamValue): T | undefined => (Object.keys(words) as T[]).find(key => words[key] === label)
   return {
     id: TORUS_DEVICE_ID, family: TORUS_FAMILY, face: TORUS_DEVICE, rows, values, enabledKey: state?.ok ? 'enabled' : undefined,
     submit: async changes => {
       for (const change of changes) {
-        const edit = QL_PRESENTATION_KEYS.includes(change.key) ? qlInstrumentEdit(change.key, change.value) : (() => {
+        const edit = QL_PRESENTATION_KEYS.includes(change.key) ? qlInstrumentEdit(change.key, change.value)
+          : change.key === 'damping' ? {kind: 'damping' as const, q_factor: dampingQ(change.value)}
+          : TORUS_SESSION_KEYS.has(change.key) ? (() => {
+            if (!session) throw new Error(`${NO_SESSION}.`)
+            const value = change.key === 'tuning' ? word(TORUS_TUNING_WORD, change.value) : change.key === 'shape' ? word(TORUS_SHAPE_WORD, change.value) : change.value
+            return {kind: 'torus' as const, edit: torusSessionEdit(session, {key: change.key, value: value as Value})}
+          })() : (() => {
           const row = macros.find(item => item.macro.id === change.key)
           const option = row?.options.find(choice => choice.label === change.value)
           if (!row || !option) throw Error(`${change.key}: not one of the owner's choices`)
@@ -85,12 +118,11 @@ export const TORUS_DETERMINANT_KEYS: Readonly<Record<string, string>> = {'lens':
 
 /** The Torus's Damping range: a Q factor (manual §21.2, "Damping | Q factor 0.1 to 40"; stageCommands.ts STAGE_INSTRUMENT_Q). */
 export const TORUS_Q = {min: 0.1, max: 40} as const
-/** QL's scene terms the Body group has none of: its material is a decay rate, a strike depth in metres and a gain (scene_field.rs
- * SceneMaterial), so a share of velocity and an agitation reach nothing. */
+/** QL's scene term the Body group has none of: its material is a decay rate, a strike depth in metres and a gain (scene_field.rs
+ * SceneMaterial), so a share of velocity reaches nothing. */
 const NO_STRIKE_TERM = 'QL\'s scene has no strike share: its strike is a depth in metres, a declared policy (scene_field.rs SceneMaterial.strike_metres), so nothing takes a share of velocity'
-const NO_AGITATION_TERM = 'QL\'s scene has no agitation term (scene_field.rs SceneMaterial: a decay rate, a strike depth and a gain), so nothing takes it'
 
-const NO_FIELD_PARAMETER = 'the native field announces only its lens, context frame, harmonic basis, M3 transcription, sound, level, cadence and scale, and takes only those through the stage channel (stageCommands.ts InstrumentEdit)'
+const NO_FIELD_PARAMETER = 'the native field announces only its lens, context frame, harmonic basis, M3 transcription, the Torus\'s M1′ session, sound, level, cadence and scale, and takes only those and the body\'s Damping through the stage channel (stageCommands.ts InstrumentEdit)'
 
 /** The Stage page (manual §21.2): the hosted frame's native field holds the procedural stage and announces the disclosure it last read
  * (stageReading.ts, HostedAppState.instrumentStage): each owned slot's owner and revision, each procedure bound to the flow, the
@@ -142,24 +174,17 @@ export function torusStageCommand(change: ValueChange, held: Readonly<Record<str
 
 /** Why each design key the binding leaves absent has no reading (manual §16.12: "When a reading is missing, say which one"). */
 export const TORUS_ABSENT: Readonly<Record<string, string>> = {
-  pulseMix: `No pulse mix: no QL owner holds a balance of the two pulses (none in its scene field, M1 engine or spanda field); ${NO_FIELD_PARAMETER}.`,
-  helixBalance: 'No helix balance: in QL a helix is one half of the ring in the 72-space address (spanda_field.rs resonance_index: lens·12 + helix·6 + position), never a balance between the two.',
   strike: `No strike: ${NO_STRIKE_TERM}.`,
   // damping: the body's Q, written through the stage channel's damping edit while the instrument follows or is held (torusBody).
   damping: 'No damping here: the body\'s Q is written through the stage channel while the instrument follows or is held, and no owner reading stands.',
-  drive: `No drive: ${NO_FIELD_PARAMETER}. No sky route moves it either: a planet takes only what the owner reports (designBindings/skyModulation.ts).`,
-  modes: `No mode count: the scene's modes are its planet voices (scene_field.rs VOICES), and no owner takes a count of them; ${NO_FIELD_PARAMETER}.`,
-  agitation: `No agitation: ${NO_AGITATION_TERM}.`,
-  attack: `No attack: ${NO_FIELD_PARAMETER}.`,
-  release: `No release: ${NO_FIELD_PARAMETER}.`,
-  voices: 'No voice count: the scene sounds all its planet voices together (scene_field.rs VOICES); no owner holds a polyphony that makes the oldest note give way.',
+  modes: `No mode count: the scene's modes are the voices of its tunings (scene_field.rs ShapeBasis), and no owner takes a count of them; ${NO_FIELD_PARAMETER}.`,
+  // body: what rings. The scene's body is the torus (scene_field.rs SceneGeometry); a form of the Expression as the body has no owner op.
+  body: 'Only the torus rings: no owner op takes a form of the Expression as the body yet (QL\'s scene field composes the torus alone).',
   pan: `No pan: ${NO_FIELD_PARAMETER}.`,
   view: 'Surface, wire or both is a way of drawing the pane: no owner keeps it.',
   receiver: 'No owner takes the camera as the place where the torus is heard.',
-  notes: 'The owner counts no sounding notes: a struck chord is one act through the stage channel, answered yes or no, never counted back.',
   meter: 'The owner reports no level meter: its audio receipt carries the presentation gain and its block counts, not a level.',
-  sounding: 'The owner reports no sounding keys: a struck key is one act through the stage channel, answered yes or no, never reported back as sounding.',
-  driveMod: 'Nothing moves the drive: the owner announces no drive, so no planet can take it and no range is drawn round it.',
+  sounding: 'The owner reports no sounding keys: the keyboard strikes the owner\'s played voices (nativeField.ts playJanko), answered yes or no; QL\'s torus-play, which counts each key as a note at its moving point, is not yet the keyboard\'s path.',
   // body.source: the hand's choice over M2's body constants (QL's table, `ql kernel body-constants`; qlCoordinateName.ts BodyTable), written
   // as the body's Damping through the stage channel (torusBody); absent with its reason until the table is read and the owner takes edits.
   'body.source': 'Reading M2\'s body constants…',
@@ -185,6 +210,8 @@ export function torusDesignValues(state: LiveTorusState | null): Record<string, 
   const standing = state.value.standing
   values.light = standing === 'following' || standing === 'held' ? 'lit' : 'dark'
   values.standing = standing
+  // What rings: the scene's body is the torus (scene_field.rs SceneGeometry); the other choice stands dimmed (TORUS_ABSENT body).
+  values.body = 'torus'
   if (typeof state.parameters?.level === 'number') values.level = gainToDb(state.parameters.level)
   const presentation = qlPresentation(TORUS_FAMILY, TORUS_DEVICE_ID, state, false).values
   for (const key of ['sound', 'cadence', 'scale']) if (presentation[key] !== undefined) values[key] = presentation[key]!
@@ -196,12 +223,132 @@ export function torusDesignValues(state: LiveTorusState | null): Record<string, 
   return values
 }
 
+// ── the Pulse, Mode and tuning, Shape and Notes groups (manual §21.2; O-I 850) ──────────────────────────────────────────
+// QL's M1′ session (QL-MEF crates/ql-mef/src/m1_prime.rs; the field host's torus-state and torus-set) owns the Torus's pulse and its
+// voices: Rate (Free in steps a second, one step a year to 40,000; or Sync, a note length from 1/64 to 8 bars at the set's tempo) with
+// its band beside it, the Fundamental (the map's 1:1, the Sun, or 20 to 2,000 Hz; every voice is a ratio over it), Carrier (0 to
+// 100 %), Shape (Auto by the band; Sequence, the scene's shapes; or one held) with the figure the torus shows, the Comma gathered since
+// the Torus opened, Tuning (Logic, Maqām or Sky, only what the scene holds resident) and Polyphony with the notes the owner counts. The
+// frame announces the session as parameters.torus (instrumentAnnouncement.mjs) and takes the stage channel's `torus` edit
+// (stageCommands.ts TorusSettingsEdit), which the frame sends to QL as torus-set; what the binding shows is the owner's reply, read back.
+
+/** The owner's session as the boundary validated it, or null while the frame announces none. */
+export type TorusSession = NonNullable<NonNullable<LiveTorusParameters>['torus']>
+export type TorusSettingsEdit = Extract<InstrumentEdit, {kind: 'torus'}>['edit']
+export const torusSessionOf = (state: LiveTorusState | null): TorusSession | null => (state !== null && state.ok ? state.parameters?.torus ?? null : null)
+
+/** The manual's ranges (§21.2 Parameters), which the controls draw; QL refuses outside them in its own words. */
+export const TORUS_RATE = {min: 1 / (365.25 * 86_400), max: 40_000, default: 2.5} as const
+export const TORUS_FUNDAMENTAL = {min: 20, max: 2000} as const
+export const TORUS_POLYPHONY = {min: 1, max: 32, default: 16} as const
+export const TORUS_TEMPO = {min: 20, max: 999} as const
+export const TORUS_TUNINGS = ['logic', 'maqam', 'sky'] as const
+export const TORUS_SHAPES = ['auto', 'sequence', 'torus', 'figure-eight', 'spiral', 'klein-bottle'] as const
+export const TORUS_TUNING_WORD: Readonly<Record<(typeof TORUS_TUNINGS)[number], string>> = {logic: 'Logic', maqam: 'Maqām', sky: 'Sky'}
+export const TORUS_SHAPE_WORD: Readonly<Record<(typeof TORUS_SHAPES)[number], string>> = {auto: 'Auto', sequence: 'Sequence', torus: 'Torus', 'figure-eight': 'Figure-eight', spiral: 'Spiral', 'klein-bottle': 'Klein bottle'}
+export const TORUS_BAND_WORD: Readonly<Record<TorusSession['band'], string>> = {cosmic: 'Cosmic', breath: 'Breath', rhythm: 'Rhythm', pitch: 'Pitch', beyond: 'Beyond'}
+/** The Sync note lengths Rate offers, 1/64 to 8 bars. */
+export const TORUS_NOTE_LENGTHS = ['1/64', '1/32', '1/16', '1/8', '3/16', '1/4', '3/8', '1/2', '3/4', '1/1', '2/1', '4/1', '8/1'] as const
+
+const NO_SESSION = 'The native field announces no Torus session yet: QL\'s torus-state has not answered (the frame reads it while the instrument follows)'
+/** The session's keys the binding writes as the owner's `torus` edit. */
+export const TORUS_SESSION_KEYS: ReadonlySet<string> = new Set(['rate', 'rate.mode', 'rate.note', 'tempo', 'fundamental', 'fundamental.source', 'carrier', 'shape', 'tuning', 'polyphony'])
+/** The session's readings, and what each is. */
+const TORUS_SESSION_READINGS: Readonly<Record<string, string>> = {
+  band: 'A reading: the band the pulse stands in, by its rate (Cosmic below one step in a thousand seconds, Breath below one every two seconds, Rhythm below 20 a second, Pitch to 20,000, then Beyond).',
+  figure: 'A reading: the figure the torus shows, as the owner gives it. Shape sets it.',
+  comma: 'A reading: the comma gathered since the Torus opened, one Pythagorean comma (23.46 cents) for each full return of the pulse. You read it; you do not set it.',
+  notes: 'A reading: the notes the owner counts. Polyphony sets how many may sound.',
+  'carrier.drive': 'The owner\'s word for the Carrier\'s drive: the pulse driving the body between strikes needs the native carrier (QL-MEF issue 287), so the body sounds only when struck.',
+  'tuning.resident': 'A reading: the tunings this scene holds voices for.',
+}
+
+/** The design's values from the owner's session. Only what the owner reports. Pure. */
+export function torusSessionValues(session: TorusSession): Record<string, Value> {
+  const t = session.settings
+  const values: Record<string, Value> = {
+    'rate.mode': t.rate.mode, rate: session.steps_per_second, tempo: t.tempo_bpm, band: TORUS_BAND_WORD[session.band],
+    'fundamental.source': t.fundamental.source, fundamental: session.fundamental_hz,
+    carrier: Math.round(t.carrier * 1000) / 10, 'carrier.drive': session.carrier_drive,
+    shape: t.shape, comma: session.comma_cents, tuning: t.tuning, 'tuning.resident': JSON.stringify(session.resident_tunings),
+    polyphony: t.polyphony, notes: session.notes,
+  }
+  if (t.rate.mode === 'sync') values['rate.note'] = `${t.rate.note.numerator}/${t.rate.note.denominator}`
+  if (session.figure !== null) values.figure = session.figure
+  return values
+}
+
+const inRange = (value: Value | undefined, range: {min: number; max: number}): value is number => typeof value === 'number' && Number.isFinite(value) && value >= range.min && value <= range.max
+/** The owner's `torus` edit a change of a session key names, in QL's own form, or the words for why not. Pure. */
+export function torusSessionEdit(session: TorusSession, {key, value}: ValueChange): TorusSettingsEdit {
+  const t = session.settings
+  const note = (text: Value | undefined) => {
+    const match = typeof text === 'string' ? /^(\d+)\/(\d+)$/.exec(text) : null
+    if (!match || !TORUS_NOTE_LENGTHS.includes(text as (typeof TORUS_NOTE_LENGTHS)[number])) throw new Error('A Sync rate is a note length from 1/64 to 8 bars.')
+    return {numerator: Number(match[1]), denominator: Number(match[2])}
+  }
+  switch (key) {
+    case 'rate':
+      if (!inRange(value, TORUS_RATE)) throw new Error('Rate runs from one step a year to 40,000 steps a second.')
+      return {rate: {mode: 'free', steps_per_second: value}}
+    case 'rate.mode':
+      if (value === 'free') return {rate: {mode: 'free', steps_per_second: Math.min(TORUS_RATE.max, Math.max(TORUS_RATE.min, session.steps_per_second))}}
+      if (value === 'sync') return {rate: {mode: 'sync', note: t.rate.mode === 'sync' ? {...t.rate.note} : {numerator: 1, denominator: 4}}}
+      throw new Error('Rate is Free or Sync.')
+    case 'rate.note': return {rate: {mode: 'sync', note: note(value)}}
+    case 'tempo':
+      if (!inRange(value, TORUS_TEMPO)) throw new Error('Tempo takes 20 to 999 BPM.')
+      return {tempo_bpm: value}
+    case 'fundamental':
+      if (!inRange(value, TORUS_FUNDAMENTAL)) throw new Error('Fundamental takes 20 to 2,000 Hz, or Map.')
+      return {fundamental: {source: 'hz', hz: value}}
+    case 'fundamental.source':
+      if (value === 'map') return {fundamental: {source: 'map'}}
+      if (value === 'hz') return {fundamental: {source: 'hz', hz: Math.min(TORUS_FUNDAMENTAL.max, Math.max(TORUS_FUNDAMENTAL.min, session.fundamental_hz))}}
+      throw new Error('Fundamental is Map or a frequency.')
+    case 'carrier':
+      if (!inRange(value, {min: 0, max: 100})) throw new Error('Carrier takes 0 to 100 %.')
+      return {carrier: Math.round(value * 10) / 1000}
+    case 'shape':
+      if (!TORUS_SHAPES.includes(value as (typeof TORUS_SHAPES)[number])) throw new Error('Shape is Auto, Sequence, Torus, Figure-eight, Spiral or Klein bottle.')
+      return {shape: value as (typeof TORUS_SHAPES)[number]}
+    case 'tuning': {
+      const tuning = value as (typeof TORUS_TUNINGS)[number]
+      if (!TORUS_TUNINGS.includes(tuning)) throw new Error('Tuning is Logic, Maqām or Sky.')
+      if (!session.resident_tunings.includes(tuning)) throw new Error(`This scene holds no ${TORUS_TUNING_WORD[tuning]} voices: its event admits none (QL scene_field.rs resident tunings).`)
+      return {tuning}
+    }
+    case 'polyphony':
+      if (!inRange(value, TORUS_POLYPHONY) || !Number.isInteger(value)) throw new Error('Polyphony takes 1 to 32 notes.')
+      return {polyphony: value}
+  }
+  throw new Error(`${key}: no setting of the Torus's session.`)
+}
+
+/** The session groups on the binding: the owner's values and standing, the keys it takes now, and its one write (the `torus` edit). */
+export function torusSession(state: LiveTorusState | null, commit: (edit: InstrumentEdit) => Promise<{ok: boolean; error?: string}>):
+  {values: Record<string, Value>; standing: Record<string, Standing>; writes: ReadonlySet<string>; write: (change: ValueChange) => Promise<void>} {
+  const session = torusSessionOf(state)
+  const values: Record<string, Value> = session ? torusSessionValues(session) : {}
+  const standing: Record<string, Standing> = {}, writes = new Set<string>()
+  const why = state === null ? 'No owner reading stands in this host.' : state.ok && !liveInstrumentWritable(state) ? NOT_WRITABLE : !session ? `${NO_SESSION}.` : null
+  for (const key of TORUS_SESSION_KEYS) if (why) standing[key] = {disabled: why}; else writes.add(key)
+  for (const [key, reading] of Object.entries(TORUS_SESSION_READINGS)) standing[key] = {disabled: session ? reading : why ?? reading}
+  if (session && session.figure === null) standing.figure = {disabled: 'Shape is Sequence: the scene\'s own shapes set the figure (O-I issue 851), and QL names none here.'}
+  const write = async (change: ValueChange) => {
+    if (!writes.has(change.key)) throw new Error(standing[change.key]?.disabled ?? `${change.key} cannot be set now.`)
+    const result = await commit({kind: 'torus', edit: torusSessionEdit(session!, change)})
+    if (!result.ok) throw new Error(result.error ?? 'The native field refused the Torus\'s setting.')
+  }
+  return {values, standing, writes, write}
+}
+
 // ── the Body group (manual §21.2 "The body source") ────────────────────────
 // Body source is the view's own choice (the hand's hold, as Resonance's is, fieldDesignBinding.ts): Declared keeps the Damping you set;
 // Tattva takes it from the tattva of the M2 condition through its element fibre, by M2's body constants (QL's table), and holds it while
 // the tattva sets it. Damping is a Q factor, written through the stage channel's damping edit (stageCommands.ts InstrumentEdit), which the
 // frame lowers to the scene's decay rate (nativeField.ts lowerQDamping). The owner keeps that rate, not the Q, so the Q you set is the
-// hand's. Strike and Agitation have no QL scene term: they stay dimmed and say so, with what the fibre would set.
+// hand's. Strike has no QL scene term: it stays dimmed and says so, with what the fibre would set. (Agitation is the plate's, §20.14.)
 
 export const TORUS_BODY_SOURCE = 'body.source'
 /** The body source the hand holds: Declared until Tattva is chosen (manual §21.2 default). */
@@ -227,7 +374,7 @@ export function torusBody(state: LiveTorusState | null, condition: FrameInstrume
   const values: Record<string, Value> = {}, standing: Record<string, Standing> = {}, writes = new Set<string>()
   const source = torusBodySourceOf(held), set = tattvaBody(condition, table), row = set.row
   const owner = !liveInstrumentWritable(state) ? (state === null ? 'No owner reading stands in this host.' : NOT_WRITABLE) : null
-  const would = row ? ` M2's table gives the ${row.fibre} fibre Strike ${Math.round(row.strike_share * 100)}%, Damping ${row.q_factor} and Agitation ${row.agitation} (${table?.ok ? table.standing : 'unread'}).` : ''
+  const would = row ? ` M2's table gives the ${row.fibre} fibre Strike ${Math.round(row.strike_share * 100)}% and Damping ${row.q_factor} (${table?.ok ? table.standing : 'unread'}).` : ''
   // The table's standing, a reading; Body source, the hand's choice once the table is read and the owner takes edits.
   if (table?.ok) {
     values['tattva.standing'] = table.standing
@@ -249,9 +396,8 @@ export function torusBody(state: LiveTorusState | null, condition: FrameInstrume
     if (owner) standing.damping = {disabled: owner}
     else writes.add('damping')
   }
-  // Strike and Agitation: no QL scene term, under either source; named with what the fibre would set.
+  // Strike: no QL scene term, under either source; named with what the fibre would set.
   standing.strike = {disabled: `No strike:${row && source === 'tattva' ? ` the ${row.fibre} fibre Strike ${Math.round(row.strike_share * 100)}% is not written:` : ''} ${NO_STRIKE_TERM}.`}
-  standing.agitation = {disabled: `No agitation:${row && source === 'tattva' ? ` the ${row.fibre} fibre Agitation ${row.agitation} is not written:` : ''} ${NO_AGITATION_TERM}.`}
   const send = async (edit: InstrumentEdit) => { const result = await commit(edit); if (!result.ok) throw new Error(result.error ?? 'The native field refused the body\'s damping.') }
   const write = async ({key, value}: ValueChange) => {
     if (key === TORUS_BODY_SOURCE) {
@@ -341,6 +487,9 @@ export function torusDesignBinding(state: LiveTorusState | null, device: DeviceI
   Object.assign(tattva.values, body.values)
   for (const key of body.writes) delete standing[key]
   Object.assign(standing, body.standing)
+  // The Pulse, Mode and tuning, Shape and Notes groups: QL's M1′ session, read back from the owner, written as its `torus` edit.
+  const session = torusSession(state, commit)
+  Object.assign(standing, session.standing)
   const local: Record<string, (value: Value | undefined) => void> = {...page.local, ...handsFor(TORUS_DESIGN_ID, TORUS_STAGE_LOCAL)}
   const submit = device.submit
   const stageAct = async (change: ValueChange) => {
@@ -350,15 +499,17 @@ export function torusDesignBinding(state: LiveTorusState | null, device: DeviceI
   }
   return {
     id: device.id,
-    values: {...torusDesignValues(state), ...torusStageValues(stage, held), ...page.values, ...tattva.values},
-    writes: key => (key in TORUS_STAGE_ACTS ? acting : body.writes.has(key) || (key !== 'rack' && !BODY_KEYS.has(key) && writeStanding(state, key) === null)),
+    values: {...torusDesignValues(state), ...session.values, ...torusStageValues(stage, held), ...page.values, ...tattva.values},
+    writes: key => (key in TORUS_STAGE_ACTS ? acting : body.writes.has(key) || session.writes.has(key)
+      || (key !== 'rack' && !BODY_KEYS.has(key) && !TORUS_SESSION_KEYS.has(key) && writeStanding(state, key) === null)),
     standing,
     local,
     ...(page.waiting ? {waiting: ['rack']} : {}),
-    ...(submit || acting || body.writes.size ? {write: async (changes: readonly ValueChange[]) => {
+    ...(submit || acting || body.writes.size || session.writes.size ? {write: async (changes: readonly ValueChange[]) => {
       for (const change of changes.filter(c => c.key in TORUS_STAGE_ACTS)) await stageAct(change)
       for (const change of changes.filter(c => BODY_KEYS.has(c.key))) await body.write(change)
-      const rows = changes.filter(c => !(c.key in TORUS_STAGE_ACTS) && !BODY_KEYS.has(c.key))
+      for (const change of changes.filter(c => TORUS_SESSION_KEYS.has(c.key))) await session.write(change)
+      const rows = changes.filter(c => !(c.key in TORUS_STAGE_ACTS) && !BODY_KEYS.has(c.key) && !TORUS_SESSION_KEYS.has(c.key))
       if (rows.length) { if (!submit) throw new Error(NOT_WRITABLE); await submit(torusRowChanges(rows)) }
     }} : {}),
     // The level or scale a planet moves (designBindings/skyModulation.ts): the status bar names the planet.

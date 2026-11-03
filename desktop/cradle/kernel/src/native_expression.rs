@@ -1194,8 +1194,11 @@ impl Manager {
 /// {basis}, QL-MEF #312). The K² determinant operations are the host's own;
 /// a supplied (non-K²) owner refuses them natively. The stage and score
 /// operations are scene-scoped on the QL side; admission here is by exact
-/// name only — each payload is validated again by the owner host.
-const EXCHANGE_OPERATIONS: [&str; 17] = [
+/// name only — each payload is validated again by the owner host. A strike
+/// at points of the torus (strike-at, QL-MEF #342) and the Torus's M1′
+/// session (torus-state, torus-set, torus-play, torus-release; O-I #850) are
+/// performance acts on the scene owner, relayed the same way.
+const EXCHANGE_OPERATIONS: [&str; 22] = [
     "read",
     "inspect",
     "advance",
@@ -1213,6 +1216,11 @@ const EXCHANGE_OPERATIONS: [&str; 17] = [
     "stage-unbind",
     "score-state",
     "score-resolve",
+    "strike-at",
+    "torus-state",
+    "torus-set",
+    "torus-play",
+    "torus-release",
 ];
 
 fn exchange_admits(request: &Value) -> bool {
@@ -2981,7 +2989,25 @@ for line in sys.stdin: time.sleep(60)
                 "{op}"
             );
         }
+        // A strike at points of the torus (QL-MEF #342) and the Torus's M1′
+        // session (O-I #850): the controller sends each (playAt, torusSet,
+        // torusState), so the exchange relays each by its exact name.
         for op in [
+            "strike-at",
+            "torus-state",
+            "torus-set",
+            "torus-play",
+            "torus-release",
+        ] {
+            assert!(
+                exchange_admits(&json!({"command":{"operation":op}})),
+                "{op}"
+            );
+        }
+        for op in [
+            "Torus-set",
+            "torus",
+            "strike_at",
             "shutdown",
             "restart",
             "compose",

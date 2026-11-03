@@ -130,7 +130,9 @@ test('the handle is one store: readers see the same state object, a change notif
 test('a refused reading renders the refusal on the chain; an absent state is a dark device that writes nothing', () => {
   const absent = torusDeviceModule.torusDevice(null)
   assert.equal(absent.rows.filter(row => row.compact).length, 4, 'the four macros stand even with no reading')
-  assert.equal(absent.rows.length, 8, 'and the owner\'s sound, level, cadence and scale after them')
+  // O-I #850: the four macros are Rate, Fundamental, Carrier and Damping; the determinants, Tuning, Shape and Polyphony follow, then the
+  // owner's sound, level, cadence and scale.
+  assert.equal(absent.rows.length, 15, 'and the determinants, Tuning, Shape, Polyphony and the owner\'s sound, level, cadence and scale after them')
   assert.ok(absent.rows.every(row => !row.writePath), 'no reading, no writes')
   assert.deepEqual(absent.values, {}, 'and no value is invented')
   const refused = renderToStaticMarkup(createElement(onChain.TorusOnChain, {state: {ok: false, fault: 'reading.schema: expected ql.instrument-reading/v1'}}))
@@ -152,12 +154,11 @@ test('with the owner reading the chain shows its standing; each macro reads not 
   assert.match(markup, /data-torus-tone="lit"/, 'the standing tints it')
   assert.doesNotMatch(markup, /<div class="torus-picture"[^>]*><b>/, 'no text-only card')
   assert.equal((markup.match(/data-param="/g) || []).length, 4)
-  // The long lists (lens, context frame, harmonic basis) are the kit's choosers; the two-choice transcription is a radio (DEVICE-UI
-  // §5) — and with no determinant published, no chooser shows a value and no choice is lit.
-  assert.equal((markup.match(/data-control="chooser"/g) || []).length, 3, 'the long lists are choosers')
-  assert.equal((markup.match(/<option value="" disabled=""[^>]*>—<\/option>/g) || []).length, 3, 'the owner reading publishes no determinant yet, so no chooser carries a value')
-  assert.equal((markup.match(/data-control="radio"/g) || []).length, 1, 'the two-choice macro is a radio')
-  assert.doesNotMatch(markup, /aria-checked="true"/, 'and none of its choices is lit')
+  // O-I #850: the four macros are Rate, Fundamental, Carrier and Damping (manual §21.2 Compact). With no Torus session announced, the
+  // session's three stand as readings with nothing in them, and Damping, the body's Q, is the one dial; no choice is lit.
+  assert.deepEqual([...markup.matchAll(/data-param="([^"]+)"/g)].map(m => m[1]), ['rate', 'fundamental', 'carrier', 'damping'])
+  assert.deepEqual([...markup.matchAll(/data-control="([a-z-]+)"/g)].map(m => m[1]), ['readout', 'readout', 'readout', 'dial'], 'no session: the pulse\'s three read, the body\'s Q turns')
+  assert.doesNotMatch(markup, /aria-checked="true"/, 'and no choice is lit')
   assert.deepEqual(torusDeviceModule.torusDevice(validState()).values, {enabled: true}, 'the device holds no macro value either')
   assert.doesNotMatch(markup, /<ellipse|<circle/, 'the outline is paths: no point or phase is drawn on it — the oscillation is the simulation render only')
 })

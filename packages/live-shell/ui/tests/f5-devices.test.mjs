@@ -78,9 +78,12 @@ test('the torus is a device of the runtime: its four macros are the owner\'s det
     value: {schema: 'ql.instrument-reading/v1', standing: 'following', identity: {event_ref: 'event:t'}}, parameters: null}
   const live = torusDevice(state)
   assert.equal(lightOf(live), 'on')
-  assert.ok(live.rows.filter(r => r.compact).every(r => r.writePath === 'stage:instrument'), 'a following instrument takes edits through the stage channel')
-  // A reading that carries no parameters reports none: no cadence and no scale to set, each says why.
-  assert.deepEqual(live.rows.filter(r => !r.writePath).map(r => [r.key, r.disclosure]), [['cadence', 'No scene is open, so there is no cadence to set.'], ['scale', 'The owner states no scale.']])
+  assert.ok(live.rows.filter(r => r.compact && r.key === 'damping').every(r => r.writePath === 'stage:instrument'), 'a following instrument takes the body\'s Damping through the stage channel')
+  // A reading that carries no parameters reports none: no Torus session (Rate, Fundamental, Carrier, Tuning, Shape, Polyphony: O-I #850),
+  // no cadence and no scale to set, each says why.
+  assert.deepEqual(live.rows.filter(r => !r.writePath).map(r => r.key), ['rate', 'fundamental', 'carrier', 'tuning', 'shape', 'polyphony', 'cadence', 'scale'])
+  assert.ok(live.rows.filter(r => ['rate', 'fundamental', 'carrier', 'tuning', 'shape', 'polyphony'].includes(r.key)).every(r => /torus-state/.test(r.disclosure)), 'each names the owner op it waits on')
+  assert.deepEqual(live.rows.filter(r => ['cadence', 'scale'].includes(r.key)).map(r => [r.key, r.disclosure]), [['cadence', 'No scene is open, so there is no cadence to set.'], ['scale', 'The owner states no scale.']])
   assert.equal(live.values.lens, 'L1′', 'the owner\'s label, not its code')
 })
 
