@@ -1,0 +1,2905 @@
+{
+ "_source": "REAL: Software Factory's CLI built from dlw/844-songs (env-1/factory, on 0d47f0d), walked headless on two placed scratch projects (song-maker, song-taker) with HOME isolated, 2026-11-03; the scratch root written /walk. export/songs/remake/score/edit as Factory answered them on stdout; the *_refused entries are Factory's factory.workflow-diagnostic/v1 on stderr. aikit_capture/aikit_inbox/aikit_promote: AIKit's CLI built from dlw/844-capture (env-1/ai-kit, on e0fd64bc), asked `aikit capture release-check --from-song --scope project --by human` with the export's clip on stdin, then `aikit inbox` and `aikit promote <candidate> --id skill/project/method-release-check`, against a scratch AIKit home with HOME and HISTFILE isolated, 2026-11-03; its scratch root written /walk/capture.",
+ "aikit_capture": {
+  "context": {
+   "context_id": "ctx_01M6HPX8KAQB617W39DKR8KSPM",
+   "project_root": "/private/walk/capture/project",
+   "session_id": null
+  },
+  "data": {
+   "by": "human",
+   "candidate": "cnd_01M6HPX8M1F9SRRZJGP2R0TJVW",
+   "confidence": "declared",
+   "duplicate_of": null,
+   "exports": [],
+   "findings": [],
+   "inbox_item": "inb_01M6HPX8M6JV3ER2TABC9SVK38",
+   "kind": "skill",
+   "kind_reason": "declared by the capturer",
+   "proposal": "prc_01M6HPX8M384YDBCTT7DTZVWHE",
+   "proposed_id": "skill/project/method-release-check",
+   "quarantined": false,
+   "scope": "project",
+   "session": null,
+   "similar": [],
+   "song": {
+    "clip": "factory-song:song-maker/release-check",
+    "steps": [
+     "1. **logos-scope-plan** \u2014 Scope the change and write the plan it will be built from. Taken by the agent agent/anima-logos. Returns: Return the plan with its scope boundary and the exact verification it will need. Done when: the plan cites the repository's own gates. Stop when the request needs an owner decision before it can be scoped.",
+     "2. **techne-implement** \u2014 Implement the plan test-first in the repository. Taken by the agent agent/anima-techne-helper; after logos-scope-plan. Returns: Return the branch, the changed files and the test evidence. Done when: run the tests named in the plan and quote their results. Stop when the plan cannot be implemented without widening scope.",
+     "3. **eros-verify** \u2014 Verify the implementation against the plan with the repository's real gates. Taken by the agent agent/anima-eros; after techne-implement. Returns: Return the commands run, their results and every failure found. Done when: quote executed results; never infer a pass from a name or a fixture. Stop when the branch cannot be built.",
+     "4. **mythos-debug** \u2014 Find the organising cause of any verification failure and repair it at its owner. Taken by the agent agent/anima-mythos; after eros-verify. Returns: Return the causes, the repairs and the re-run evidence, or state that verification found no defect. Done when: never weaken an assertion to turn a failure green. Stop at once when verification returned no failure; return that finding with its evidence.",
+     "5. **sophia-finish** \u2014 Finish the branch: final checks, commit and a pull request ready for review. Taken by the agent agent/anima-sophia; after mythos-debug. Returns: Return the pull request ref, the final check results and any open item with its reason. Done when: the final check results are from the pushed head. Stop before merging; merge is the owner's review decision.",
+     "6. **aletheia-knowledge-return** \u2014 Return what the development taught through the NOW field and the wiki return door. Taken by the agent agent/aletheia; after sophia-finish. Returns: Return the NOW Return ref and any wiki promotion it proposes, each with its lineage. Done when: the Return points at the pull request and its evidence, not a paraphrase. Stop when nothing durable was learned; a routine record is enough."
+    ]
+   },
+   "source_ref": "factory-song:song-maker/release-check",
+   "state": "ready"
+  },
+  "ok": true,
+  "schema": 1,
+  "warnings": []
+ },
+ "aikit_inbox": {
+  "context": {
+   "context_id": "ctx_01M6HPX8N66HHTW3PD6NBS4KEF",
+   "project_root": "/private/walk/capture/project",
+   "session_id": null
+  },
+  "data": {
+   "count": 1,
+   "items": [
+    {
+     "body": "Captured as a **skill** (as declared).\n\nObserved by human.\nSource: factory-song:song-maker/release-check.\n\nSaving it writes `skill/project/method-release-check`. `aikit inbox accept cnd_01M6HPX8M1F9SRRZJGP2R0TJVW` saves it; `aikit inbox reject cnd_01M6HPX8M1F9SRRZJGP2R0TJVW` turns it down.",
+     "created": "2026-11-03T22:01:39.206031Z",
+     "evidence": [
+      {
+       "evidence": "hash",
+       "label": "candidate",
+       "value": "cnd_01M6HPX8M1F9SRRZJGP2R0TJVW"
+      },
+      {
+       "evidence": "hash",
+       "label": "proposed-id",
+       "value": "skill/project/method-release-check"
+      },
+      {
+       "evidence": "file",
+       "path": "/private/walk/capture/aikit/inbox/ready/cnd_01M6HPX8M1F9SRRZJGP2R0TJVW/body"
+      },
+      {
+       "evidence": "summary",
+       "text": "---\nname: release-check\ndescription: \"METHOD: release-check. The song development-and-knowledge, captured from its clip factory-song:song-maker/release-check: 6 steps on 6 rows, from claim to return.\"\n---\n\n# release-check\n\nA Method captured"
+      }
+     ],
+     "id": "inb_01M6HPX8M6JV3ER2TABC9SVK38",
+     "kind": "capture-candidate",
+     "project": null,
+     "proposal": "prc_01M6HPX8M384YDBCTT7DTZVWHE",
+     "state": {
+      "state": "open"
+     },
+     "title": "Save \u201cMETHOD: release-check\u201d as a skill?"
+    }
+   ]
+  },
+  "ok": true,
+  "schema": 1,
+  "warnings": []
+ },
+ "aikit_promote": {
+  "context": {
+   "context_id": "ctx_01M6HPXJXXKJG16KT407DZZD8P",
+   "project_root": "/private/walk/capture/project",
+   "session_id": null
+  },
+  "data": {
+   "exports": [],
+   "id": "skill/project/method-release-check",
+   "kind": "skill",
+   "manifest": "/private/walk/capture/project/.aikit/capsules/skill/project/method-release-check/manifest.toml",
+   "root": "/private/walk/capture/project/.aikit/capsules/skill/project/method-release-check",
+   "scope": "project"
+  },
+  "ok": true,
+  "schema": 1,
+  "warnings": []
+ },
+ "canon_receipt": {
+  "added": [
+   {
+    "form": "canon",
+    "key": "release-check",
+    "subjectRef": "factory-song:song-taker/release-check"
+   }
+  ],
+  "changed": [
+   "/units/6"
+  ],
+  "check": {
+   "by": "factory workflow check",
+   "state": "admitted"
+  },
+  "contract": "factory.workflow-edit-receipt/v1",
+  "edits": 1,
+  "execution": "not-requested",
+  "imports": [
+   "/walk/taker/.factory/songs/release-check.song.json"
+  ],
+  "performed": false,
+  "performs": "The Run performs the edition it was commissioned with; the song's next Run performs this one.",
+  "previousRevision": "blake3:c1948266221eb61631b61cccac47f4c0380bd06139afbfe7f0f896c43c11210a",
+  "revision": "blake3:ca42fa6a313e24f7b4c092cec438dc687983275e906948365e59746e9d1ab242",
+  "runRef": "run:01M6FB9800PTZ3VM7B3GRY9RX7",
+  "semanticDigest": "ade3d0256d405185141763258128c3ff5307206fa0ce64337858f285203f20a0",
+  "song": {
+   "entry": "development-and-knowledge.workflow.ts",
+   "path": "/walk/taker/development-and-knowledge.workflow.ts",
+   "sourceRef": "workflow-source:01M399B6B0R8CJY3Y2RTG5EPWS"
+  }
+ },
+ "canon_stale_refused": {
+  "contract": "factory.workflow-diagnostic/v1",
+  "error": {
+   "code": "workflow.edit_stale",
+   "field": null,
+   "location": null,
+   "message": "The song's file changed since it was read (it is blake3:ca42fa6a313e24f7b4c092cec438dc687983275e906948365e59746e9d1ab242 now, the edit expected blake3:c1948266221eb61631b61cccac47f4c0380bd06139afbfe7f0f896c43c11210a); read the score again and repeat the edit.",
+   "unit": null
+  }
+ },
+ "export": {
+  "clip": {
+   "clipRef": "factory-song:song-maker/release-check",
+   "contract": "factory.song-clip/v1",
+   "execution": "not-requested",
+   "importedFrom": null,
+   "name": "release-check",
+   "project": {
+    "projectKey": "song-maker",
+    "projectRef": "project:0000000000T50A0ZS7DGMMMJ57"
+   },
+   "render": {
+    "by": "factory workflow export",
+    "previousByteRevision": null,
+    "renders": 1
+   },
+   "score": {
+    "cut": [],
+    "joins": [],
+    "rows": [
+     {
+      "kind": "agent",
+      "ref": "agent/anima-logos"
+     },
+     {
+      "kind": "agent",
+      "ref": "agent/anima-techne-helper"
+     },
+     {
+      "kind": "agent",
+      "ref": "agent/anima-eros"
+     },
+     {
+      "kind": "agent",
+      "ref": "agent/anima-mythos"
+     },
+     {
+      "kind": "agent",
+      "ref": "agent/anima-sophia"
+     },
+     {
+      "kind": "agent",
+      "ref": "agent/aletheia"
+     }
+    ],
+    "units": [
+     {
+      "capabilityRefs": [
+       "capability/source-read"
+      ],
+      "concern": "Scope the change and write the plan it will be built from",
+      "dependencies": [],
+      "escalate": "Escalate scope that crosses another repository's ownership",
+      "heads": {
+       "CF": "CF2",
+       "CFP": "CFP2",
+       "CP": "4.1",
+       "CPF": "dialogical",
+       "CS": "CS2",
+       "CT": "CT1",
+       "direction": "forward"
+      },
+      "key": "logos-scope-plan",
+      "may": [
+       "read the repository and its governing documents"
+      ],
+      "praxisRefs": [
+       "skill/personal/brainstorming",
+       "skill/personal/writing-plans"
+      ],
+      "requiredDifference": "A bounded plan: files, behaviour, tests and the checks the repository already runs",
+      "returnAddress": "central:source:project:quaternal-logic:ProjectCentral/now",
+      "returns": "Return the plan with its scope boundary and the exact verification it will need",
+      "row": "agent/anima-logos",
+      "rowKind": "agent",
+      "stop": "Stop when the request needs an owner decision before it can be scoped",
+      "subjectRef": "project:quaternal-logic",
+      "success": [
+       "the plan cites the repository's own gates"
+      ]
+     },
+     {
+      "capabilityRefs": [
+       "capability/source-read",
+       "capability/source-write",
+       "capability/test-execution"
+      ],
+      "concern": "Implement the plan test-first in the repository",
+      "dependencies": [
+       "logos-scope-plan"
+      ],
+      "escalate": "Escalate any change to protected or authored ground",
+      "heads": {
+       "CF": "CF5",
+       "CFP": "CFP2",
+       "CP": "4.2",
+       "CPF": "authorised-undertaking",
+       "CS": "CS2",
+       "CT": "CT2",
+       "direction": "forward"
+      },
+      "key": "techne-implement",
+      "may": [
+       "write source and tests on a feature branch",
+       "run the repository's local checks"
+      ],
+      "praxisRefs": [
+       "skill/personal/test-driven-development",
+       "skill/personal/executing-plans",
+       "skill/personal/subagent-driven-development"
+      ],
+      "requiredDifference": "The planned behaviour exists with tests that fail without it",
+      "returnAddress": "central:source:project:quaternal-logic:ProjectCentral/now",
+      "returns": "Return the branch, the changed files and the test evidence",
+      "row": "agent/anima-techne-helper",
+      "rowKind": "agent",
+      "stop": "Stop when the plan cannot be implemented without widening scope",
+      "subjectRef": "project:quaternal-logic",
+      "success": [
+       "run the tests named in the plan and quote their results"
+      ]
+     },
+     {
+      "capabilityRefs": [
+       "capability/source-read",
+       "capability/test-execution"
+      ],
+      "concern": "Verify the implementation against the plan with the repository's real gates",
+      "dependencies": [
+       "techne-implement"
+      ],
+      "escalate": "Escalate a gate that cannot be run in the available environment",
+      "heads": {
+       "CF": "CF3",
+       "CFP": "CFP2",
+       "CP": "4.2",
+       "CPF": "dialogical",
+       "CS": "CS2",
+       "CT": "CT2",
+       "direction": "returning"
+      },
+      "key": "eros-verify",
+      "may": [
+       "run tests, format and lint checks",
+       "read the branch"
+      ],
+      "praxisRefs": [
+       "skill/personal/verification-before-completion",
+       "skill/ql/vak-evaluate"
+      ],
+      "requiredDifference": "Executed evidence says whether the change does what the plan required",
+      "returnAddress": "central:source:project:quaternal-logic:ProjectCentral/now",
+      "returns": "Return the commands run, their results and every failure found",
+      "row": "agent/anima-eros",
+      "rowKind": "agent",
+      "stop": "Stop when the branch cannot be built",
+      "subjectRef": "project:quaternal-logic",
+      "success": [
+       "quote executed results; never infer a pass from a name or a fixture"
+      ]
+     },
+     {
+      "capabilityRefs": [
+       "capability/source-read",
+       "capability/source-write",
+       "capability/test-execution"
+      ],
+      "concern": "Find the organising cause of any verification failure and repair it at its owner",
+      "dependencies": [
+       "eros-verify"
+      ],
+      "escalate": "Escalate a defect whose repair belongs to another owner",
+      "heads": {
+       "CF": "CF4",
+       "CFP": "CFP2",
+       "CP": "4.3",
+       "CPF": "authorised-undertaking",
+       "CS": "CS3",
+       "CT": "CT3",
+       "direction": "returning"
+      },
+      "key": "mythos-debug",
+      "may": [
+       "write repairs and regression tests on the feature branch"
+      ],
+      "praxisRefs": [
+       "skill/personal/systematic-debugging",
+       "skill/personal/test-driven-development"
+      ],
+      "requiredDifference": "Each failure has a located cause and a repair proven at the level it failed",
+      "returnAddress": "central:source:project:quaternal-logic:ProjectCentral/now",
+      "returns": "Return the causes, the repairs and the re-run evidence, or state that verification found no defect",
+      "row": "agent/anima-mythos",
+      "rowKind": "agent",
+      "stop": "Stop at once when verification returned no failure; return that finding with its evidence",
+      "subjectRef": "project:quaternal-logic",
+      "success": [
+       "never weaken an assertion to turn a failure green"
+      ]
+     },
+     {
+      "capabilityRefs": [
+       "capability/source-read",
+       "capability/git-branch",
+       "capability/pull-request"
+      ],
+      "concern": "Finish the branch: final checks, commit and a pull request ready for review",
+      "dependencies": [
+       "mythos-debug"
+      ],
+      "escalate": "Escalate a protected-branch or permission refusal",
+      "heads": {
+       "CF": "CF7",
+       "CFP": "CFP2",
+       "CP": "4.5",
+       "CPF": "authorised-undertaking",
+       "CS": "CS5",
+       "CT": "CT5",
+       "direction": "returning"
+      },
+      "key": "sophia-finish",
+      "may": [
+       "commit on the feature branch",
+       "open a pull request; never merge"
+      ],
+      "praxisRefs": [
+       "skill/personal/finishing-a-development-branch",
+       "skill/personal/verification-before-completion"
+      ],
+      "requiredDifference": "A reviewable pull request with its checks and an honest description",
+      "returnAddress": "central:source:project:quaternal-logic:ProjectCentral/now",
+      "returns": "Return the pull request ref, the final check results and any open item with its reason",
+      "row": "agent/anima-sophia",
+      "rowKind": "agent",
+      "stop": "Stop before merging; merge is the owner's review decision",
+      "subjectRef": "project:quaternal-logic",
+      "success": [
+       "the final check results are from the pushed head"
+      ]
+     },
+     {
+      "capabilityRefs": [
+       "capability/now-return",
+       "capability/wiki-return"
+      ],
+      "concern": "Return what the development taught through the NOW field and the wiki return door",
+      "dependencies": [
+       "sophia-finish"
+      ],
+      "escalate": "Never edit wiki.json directly; escalate promotion decisions to the wiki owner",
+      "heads": {
+       "CF": "CF7",
+       "CFP": "CFP0",
+       "CP": "4.5",
+       "CPF": "authorised-undertaking",
+       "CS": "CS5",
+       "CT": "CT4b'",
+       "direction": "returning"
+      },
+      "key": "aletheia-knowledge-return",
+      "may": [
+       "write one attributed Return to the project NOW field",
+       "propose a wiki promotion through NOW"
+      ],
+      "praxisRefs": [
+       "skill/ql/aletheia-stack-traverse",
+       "skill/ql/thought-distil"
+      ],
+      "requiredDifference": "Durable learning leaves the session as an attributed Return pointing at its evidence",
+      "returnAddress": "central:source:project:quaternal-logic:ProjectCentral/now",
+      "returns": "Return the NOW Return ref and any wiki promotion it proposes, each with its lineage",
+      "row": "agent/aletheia",
+      "rowKind": "agent",
+      "stop": "Stop when nothing durable was learned; a routine record is enough",
+      "subjectRef": "project:quaternal-logic",
+      "success": [
+       "the Return points at the pull request and its evidence, not a paraphrase"
+      ]
+     }
+    ],
+    "workflowKey": "development-and-knowledge"
+   },
+   "selection": {
+    "rows": null,
+    "units": null
+   },
+   "set": {
+    "byteRevision": "blake3:c1948266221eb61631b61cccac47f4c0380bd06139afbfe7f0f896c43c11210a",
+    "entry": "development-and-knowledge.workflow.ts",
+    "semanticDigest": "ae25c1dd8537209beba0de69fba6b47914b2f1103ff2c3c0337e21e03612cc8a",
+    "sourceRef": "workflow-source:01M399B6B0R8CJY3Y2RTG5EPWS",
+    "sourceRevision": "development-and-knowledge-v1",
+    "workflowKey": "development-and-knowledge"
+   }
+  },
+  "contract": "factory.song-clip/v1",
+  "execution": "not-requested",
+  "path": "/walk/maker/.factory/songs/release-check.song.json"
+ },
+ "export_refused": {
+  "contract": "factory.workflow-diagnostic/v1",
+  "error": {
+   "code": "workflow.song_rendered",
+   "field": null,
+   "location": null,
+   "message": "A clip named release-check already stands in this project's songs. A render is never edited in place: Remake makes it again from the set it names, and to change the song you change it there.",
+   "unit": null
+  }
+ },
+ "remake": {
+  "clip": {
+   "clipRef": "factory-song:song-maker/release-check",
+   "contract": "factory.song-clip/v1",
+   "execution": "not-requested",
+   "importedFrom": null,
+   "name": "release-check",
+   "project": {
+    "projectKey": "song-maker",
+    "projectRef": "project:0000000000T50A0ZS7DGMMMJ57"
+   },
+   "render": {
+    "by": "factory workflow remake",
+    "previousByteRevision": "blake3:c1948266221eb61631b61cccac47f4c0380bd06139afbfe7f0f896c43c11210a",
+    "renders": 2
+   },
+   "score": {
+    "cut": [],
+    "joins": [],
+    "rows": [
+     {
+      "kind": "agent",
+      "ref": "agent/anima-logos"
+     },
+     {
+      "kind": "agent",
+      "ref": "agent/anima-techne-helper"
+     },
+     {
+      "kind": "agent",
+      "ref": "agent/anima-eros"
+     },
+     {
+      "kind": "agent",
+      "ref": "agent/anima-mythos"
+     },
+     {
+      "kind": "agent",
+      "ref": "agent/anima-sophia"
+     },
+     {
+      "kind": "agent",
+      "ref": "agent/aletheia"
+     }
+    ],
+    "units": [
+     {
+      "capabilityRefs": [
+       "capability/source-read"
+      ],
+      "concern": "Scope the change and plan it",
+      "dependencies": [],
+      "escalate": "Escalate scope that crosses another repository's ownership",
+      "heads": {
+       "CF": "CF2",
+       "CFP": "CFP2",
+       "CP": "4.1",
+       "CPF": "dialogical",
+       "CS": "CS2",
+       "CT": "CT1",
+       "direction": "forward"
+      },
+      "key": "logos-scope-plan",
+      "may": [
+       "read the repository and its governing documents"
+      ],
+      "praxisRefs": [
+       "skill/personal/brainstorming",
+       "skill/personal/writing-plans"
+      ],
+      "requiredDifference": "A bounded plan: files, behaviour, tests and the checks the repository already runs",
+      "returnAddress": "central:source:project:quaternal-logic:ProjectCentral/now",
+      "returns": "Return the plan with its scope boundary and the exact verification it will need",
+      "row": "agent/anima-logos",
+      "rowKind": "agent",
+      "stop": "Stop when the request needs an owner decision before it can be scoped",
+      "subjectRef": "project:quaternal-logic",
+      "success": [
+       "the plan cites the repository's own gates"
+      ]
+     },
+     {
+      "capabilityRefs": [
+       "capability/source-read",
+       "capability/source-write",
+       "capability/test-execution"
+      ],
+      "concern": "Implement the plan test-first in the repository",
+      "dependencies": [
+       "logos-scope-plan"
+      ],
+      "escalate": "Escalate any change to protected or authored ground",
+      "heads": {
+       "CF": "CF5",
+       "CFP": "CFP2",
+       "CP": "4.2",
+       "CPF": "authorised-undertaking",
+       "CS": "CS2",
+       "CT": "CT2",
+       "direction": "forward"
+      },
+      "key": "techne-implement",
+      "may": [
+       "write source and tests on a feature branch",
+       "run the repository's local checks"
+      ],
+      "praxisRefs": [
+       "skill/personal/test-driven-development",
+       "skill/personal/executing-plans",
+       "skill/personal/subagent-driven-development"
+      ],
+      "requiredDifference": "The planned behaviour exists with tests that fail without it",
+      "returnAddress": "central:source:project:quaternal-logic:ProjectCentral/now",
+      "returns": "Return the branch, the changed files and the test evidence",
+      "row": "agent/anima-techne-helper",
+      "rowKind": "agent",
+      "stop": "Stop when the plan cannot be implemented without widening scope",
+      "subjectRef": "project:quaternal-logic",
+      "success": [
+       "run the tests named in the plan and quote their results"
+      ]
+     },
+     {
+      "capabilityRefs": [
+       "capability/source-read",
+       "capability/test-execution"
+      ],
+      "concern": "Verify the implementation against the plan with the repository's real gates",
+      "dependencies": [
+       "techne-implement"
+      ],
+      "escalate": "Escalate a gate that cannot be run in the available environment",
+      "heads": {
+       "CF": "CF3",
+       "CFP": "CFP2",
+       "CP": "4.2",
+       "CPF": "dialogical",
+       "CS": "CS2",
+       "CT": "CT2",
+       "direction": "returning"
+      },
+      "key": "eros-verify",
+      "may": [
+       "run tests, format and lint checks",
+       "read the branch"
+      ],
+      "praxisRefs": [
+       "skill/personal/verification-before-completion",
+       "skill/ql/vak-evaluate"
+      ],
+      "requiredDifference": "Executed evidence says whether the change does what the plan required",
+      "returnAddress": "central:source:project:quaternal-logic:ProjectCentral/now",
+      "returns": "Return the commands run, their results and every failure found",
+      "row": "agent/anima-eros",
+      "rowKind": "agent",
+      "stop": "Stop when the branch cannot be built",
+      "subjectRef": "project:quaternal-logic",
+      "success": [
+       "quote executed results; never infer a pass from a name or a fixture"
+      ]
+     },
+     {
+      "capabilityRefs": [
+       "capability/source-read",
+       "capability/source-write",
+       "capability/test-execution"
+      ],
+      "concern": "Find the organising cause of any verification failure and repair it at its owner",
+      "dependencies": [
+       "eros-verify"
+      ],
+      "escalate": "Escalate a defect whose repair belongs to another owner",
+      "heads": {
+       "CF": "CF4",
+       "CFP": "CFP2",
+       "CP": "4.3",
+       "CPF": "authorised-undertaking",
+       "CS": "CS3",
+       "CT": "CT3",
+       "direction": "returning"
+      },
+      "key": "mythos-debug",
+      "may": [
+       "write repairs and regression tests on the feature branch"
+      ],
+      "praxisRefs": [
+       "skill/personal/systematic-debugging",
+       "skill/personal/test-driven-development"
+      ],
+      "requiredDifference": "Each failure has a located cause and a repair proven at the level it failed",
+      "returnAddress": "central:source:project:quaternal-logic:ProjectCentral/now",
+      "returns": "Return the causes, the repairs and the re-run evidence, or state that verification found no defect",
+      "row": "agent/anima-mythos",
+      "rowKind": "agent",
+      "stop": "Stop at once when verification returned no failure; return that finding with its evidence",
+      "subjectRef": "project:quaternal-logic",
+      "success": [
+       "never weaken an assertion to turn a failure green"
+      ]
+     },
+     {
+      "capabilityRefs": [
+       "capability/source-read",
+       "capability/git-branch",
+       "capability/pull-request"
+      ],
+      "concern": "Finish the branch: final checks, commit and a pull request ready for review",
+      "dependencies": [
+       "mythos-debug"
+      ],
+      "escalate": "Escalate a protected-branch or permission refusal",
+      "heads": {
+       "CF": "CF7",
+       "CFP": "CFP2",
+       "CP": "4.5",
+       "CPF": "authorised-undertaking",
+       "CS": "CS5",
+       "CT": "CT5",
+       "direction": "returning"
+      },
+      "key": "sophia-finish",
+      "may": [
+       "commit on the feature branch",
+       "open a pull request; never merge"
+      ],
+      "praxisRefs": [
+       "skill/personal/finishing-a-development-branch",
+       "skill/personal/verification-before-completion"
+      ],
+      "requiredDifference": "A reviewable pull request with its checks and an honest description",
+      "returnAddress": "central:source:project:quaternal-logic:ProjectCentral/now",
+      "returns": "Return the pull request ref, the final check results and any open item with its reason",
+      "row": "agent/anima-sophia",
+      "rowKind": "agent",
+      "stop": "Stop before merging; merge is the owner's review decision",
+      "subjectRef": "project:quaternal-logic",
+      "success": [
+       "the final check results are from the pushed head"
+      ]
+     },
+     {
+      "capabilityRefs": [
+       "capability/now-return",
+       "capability/wiki-return"
+      ],
+      "concern": "Return what the development taught through the NOW field and the wiki return door",
+      "dependencies": [
+       "sophia-finish"
+      ],
+      "escalate": "Never edit wiki.json directly; escalate promotion decisions to the wiki owner",
+      "heads": {
+       "CF": "CF7",
+       "CFP": "CFP0",
+       "CP": "4.5",
+       "CPF": "authorised-undertaking",
+       "CS": "CS5",
+       "CT": "CT4b'",
+       "direction": "returning"
+      },
+      "key": "aletheia-knowledge-return",
+      "may": [
+       "write one attributed Return to the project NOW field",
+       "propose a wiki promotion through NOW"
+      ],
+      "praxisRefs": [
+       "skill/ql/aletheia-stack-traverse",
+       "skill/ql/thought-distil"
+      ],
+      "requiredDifference": "Durable learning leaves the session as an attributed Return pointing at its evidence",
+      "returnAddress": "central:source:project:quaternal-logic:ProjectCentral/now",
+      "returns": "Return the NOW Return ref and any wiki promotion it proposes, each with its lineage",
+      "row": "agent/aletheia",
+      "rowKind": "agent",
+      "stop": "Stop when nothing durable was learned; a routine record is enough",
+      "subjectRef": "project:quaternal-logic",
+      "success": [
+       "the Return points at the pull request and its evidence, not a paraphrase"
+      ]
+     }
+    ],
+    "workflowKey": "development-and-knowledge"
+   },
+   "selection": {
+    "rows": null,
+    "units": null
+   },
+   "set": {
+    "byteRevision": "blake3:64ea27daf640c662fe120a5ddb6f1d511f60df956bba232a2384f5f4f798a318",
+    "entry": "development-and-knowledge.workflow.ts",
+    "semanticDigest": "502503cb3e1bd21959ff4577b9ed8b940932f5dd13b09e12e0525974749c5ba2",
+    "sourceRef": "workflow-source:01M399B6B0R8CJY3Y2RTG5EPWS",
+    "sourceRevision": "development-and-knowledge-v1",
+    "workflowKey": "development-and-knowledge"
+   }
+  },
+  "contract": "factory.song-clip/v1",
+  "execution": "not-requested",
+  "moved": true,
+  "path": "/walk/maker/.factory/songs/release-check.song.json"
+ },
+ "remake_import_refused": {
+  "contract": "factory.workflow-diagnostic/v1",
+  "error": {
+   "code": "workflow.song_import",
+   "field": null,
+   "location": null,
+   "message": "release-check is an import of factory-song:song-maker/release-check, and an import keeps where it came from: Remake it in the project that made it, then drop it here again.",
+   "unit": null
+  }
+ },
+ "score_after": {
+  "check": {
+   "by": "factory workflow check",
+   "edition": "file",
+   "state": "admitted"
+  },
+  "contract": "factory.workflow-score/v1",
+  "execution": "not-requested",
+  "joins": [],
+  "rows": [
+   {
+    "kind": "agent",
+    "ref": "agent/anima-logos"
+   },
+   {
+    "kind": "agent-set",
+    "ref": "agent-set/anima"
+   },
+   {
+    "kind": "agent",
+    "ref": "agent/anima-techne-helper"
+   },
+   {
+    "kind": "agent",
+    "ref": "agent/anima-eros"
+   },
+   {
+    "kind": "agent",
+    "ref": "agent/anima-mythos"
+   },
+   {
+    "kind": "agent",
+    "ref": "agent/anima-sophia"
+   },
+   {
+    "kind": "agent",
+    "ref": "agent/aletheia"
+   },
+   {
+    "kind": "agent-set",
+    "ref": "agent-set/aletheia"
+   }
+  ],
+  "runRef": "run:01M6FB9800PTZ3VM7B3GRY9RX7",
+  "song": {
+   "edition": "file",
+   "file": {
+    "byteRevision": "blake3:ca42fa6a313e24f7b4c092cec438dc687983275e906948365e59746e9d1ab242",
+    "entry": "development-and-knowledge.workflow.ts",
+    "path": "/walk/taker/development-and-knowledge.workflow.ts",
+    "semanticDigest": "ade3d0256d405185141763258128c3ff5307206fa0ce64337858f285203f20a0"
+   },
+   "performed": false,
+   "run": {
+    "byteRevision": "blake3:c1948266221eb61631b61cccac47f4c0380bd06139afbfe7f0f896c43c11210a",
+    "semanticDigest": "ae25c1dd8537209beba0de69fba6b47914b2f1103ff2c3c0337e21e03612cc8a",
+    "sourceRevision": "development-and-knowledge-v1"
+   },
+   "sourceRef": "workflow-source:01M399B6B0R8CJY3Y2RTG5EPWS",
+   "sourceRevision": "development-and-knowledge-v1",
+   "why": null,
+   "workflowKey": "development-and-knowledge"
+  },
+  "units": [
+   {
+    "agentRequirements": {
+     "agencyRefs": [],
+     "agentRefs": [
+      "agent/anima-logos"
+     ],
+     "agentSetRefs": [
+      "agent-set/anima"
+     ]
+    },
+    "children": [],
+    "composition": {
+     "actor": "agent/anima-logos",
+     "authority": null,
+     "interpretation": {
+      "ref": "ql/interpretation/c-prime",
+      "revision": "09f7d29ad6262f85bc2858f7c468f22d0bd398f3"
+     },
+     "whole": "central:source:project:quaternal-logic:ProjectCentral/now"
+    },
+    "concern": "Scope the change and write the plan it will be built from",
+    "dependencies": [],
+    "edited": false,
+    "escalate": "Escalate scope that crosses another repository's ownership",
+    "heads": {
+     "CF": "CF2",
+     "CFP": "CFP2",
+     "CP": "4.1",
+     "CPF": "dialogical",
+     "CS": "CS2",
+     "CT": "CT1",
+     "direction": "forward"
+    },
+    "independenceFrom": [],
+    "inputs": [],
+    "key": "logos-scope-plan",
+    "leg": {
+     "standing": "not-started",
+     "status": null
+    },
+    "may": [
+     "read the repository and its governing documents"
+    ],
+    "parent": null,
+    "requiredDifference": "A bounded plan: files, behaviour, tests and the checks the repository already runs",
+    "returns": "Return the plan with its scope boundary and the exact verification it will need",
+    "row": "agent/anima-logos",
+    "rowKind": "agent",
+    "sourceLocation": {
+     "byteOffset": 1636,
+     "column": 12,
+     "file": "development-and-knowledge.workflow.ts",
+     "line": 31
+    },
+    "sources": [
+     "central:source:control:root:Control/agents/governance/engineering/verification.md",
+     "central:source:project:quaternal-logic:AGENTS.md"
+    ],
+    "stop": "Stop when the request needs an owner decision before it can be scoped",
+    "success": [
+     "the plan cites the repository's own gates"
+    ],
+    "unitRef": "workflow-unit:6TA77YZSE782H1DF6HXQNM0CGA",
+    "wave": null
+   },
+   {
+    "agentRequirements": {
+     "agencyRefs": [],
+     "agentRefs": [
+      "agent/anima-techne-helper"
+     ],
+     "agentSetRefs": [
+      "agent-set/anima"
+     ]
+    },
+    "children": [],
+    "composition": {
+     "actor": "agent/anima-techne-helper",
+     "authority": "central:source:control:root:Control/user/placement.json",
+     "interpretation": {
+      "ref": "ql/interpretation/c-prime",
+      "revision": "09f7d29ad6262f85bc2858f7c468f22d0bd398f3"
+     },
+     "whole": "central:source:project:quaternal-logic:ProjectCentral/now"
+    },
+    "concern": "Implement the plan test-first in the repository",
+    "dependencies": [
+     "logos-scope-plan"
+    ],
+    "edited": false,
+    "escalate": "Escalate any change to protected or authored ground",
+    "heads": {
+     "CF": "CF5",
+     "CFP": "CFP2",
+     "CP": "4.2",
+     "CPF": "authorised-undertaking",
+     "CS": "CS2",
+     "CT": "CT2",
+     "direction": "forward"
+    },
+    "independenceFrom": [],
+    "inputs": [
+     "logos-scope-plan"
+    ],
+    "key": "techne-implement",
+    "leg": {
+     "standing": "not-started",
+     "status": null
+    },
+    "may": [
+     "write source and tests on a feature branch",
+     "run the repository's local checks"
+    ],
+    "parent": null,
+    "requiredDifference": "The planned behaviour exists with tests that fail without it",
+    "returns": "Return the branch, the changed files and the test evidence",
+    "row": "agent/anima-techne-helper",
+    "rowKind": "agent",
+    "sourceLocation": {
+     "byteOffset": 3060,
+     "column": 12,
+     "file": "development-and-knowledge.workflow.ts",
+     "line": 54
+    },
+    "sources": [
+     "central:source:control:root:Control/agents/governance/engineering/verification.md",
+     "central:source:project:quaternal-logic:AGENTS.md"
+    ],
+    "stop": "Stop when the plan cannot be implemented without widening scope",
+    "success": [
+     "run the tests named in the plan and quote their results"
+    ],
+    "unitRef": "workflow-unit:7ZSNFRNHADM0HZHTEVG7BBQKGP",
+    "wave": null
+   },
+   {
+    "agentRequirements": {
+     "agencyRefs": [],
+     "agentRefs": [
+      "agent/anima-eros"
+     ],
+     "agentSetRefs": [
+      "agent-set/anima"
+     ]
+    },
+    "children": [],
+    "composition": {
+     "actor": "agent/anima-eros",
+     "authority": null,
+     "interpretation": {
+      "ref": "ql/interpretation/c-prime",
+      "revision": "09f7d29ad6262f85bc2858f7c468f22d0bd398f3"
+     },
+     "whole": "central:source:project:quaternal-logic:ProjectCentral/now"
+    },
+    "concern": "Verify the implementation against the plan with the repository's real gates",
+    "dependencies": [
+     "techne-implement"
+    ],
+    "edited": false,
+    "escalate": "Escalate a gate that cannot be run in the available environment",
+    "heads": {
+     "CF": "CF3",
+     "CFP": "CFP2",
+     "CP": "4.2",
+     "CPF": "dialogical",
+     "CS": "CS2",
+     "CT": "CT2",
+     "direction": "returning"
+    },
+    "independenceFrom": [],
+    "inputs": [
+     "techne-implement"
+    ],
+    "key": "eros-verify",
+    "leg": {
+     "standing": "not-started",
+     "status": null
+    },
+    "may": [
+     "run tests, format and lint checks",
+     "read the branch"
+    ],
+    "parent": null,
+    "requiredDifference": "Executed evidence says whether the change does what the plan required",
+    "returns": "Return the commands run, their results and every failure found",
+    "row": "agent/anima-eros",
+    "rowKind": "agent",
+    "sourceLocation": {
+     "byteOffset": 4811,
+     "column": 12,
+     "file": "development-and-knowledge.workflow.ts",
+     "line": 80
+    },
+    "sources": [
+     "central:source:control:root:Control/agents/governance/engineering/verification.md"
+    ],
+    "stop": "Stop when the branch cannot be built",
+    "success": [
+     "quote executed results; never infer a pass from a name or a fixture"
+    ],
+    "unitRef": "workflow-unit:2C98ZRRR9FCP4Y6073HT5THHT7",
+    "wave": null
+   },
+   {
+    "agentRequirements": {
+     "agencyRefs": [],
+     "agentRefs": [
+      "agent/anima-mythos"
+     ],
+     "agentSetRefs": [
+      "agent-set/anima"
+     ]
+    },
+    "children": [],
+    "composition": {
+     "actor": "agent/anima-mythos",
+     "authority": "central:source:control:root:Control/user/placement.json",
+     "interpretation": {
+      "ref": "ql/interpretation/c-prime",
+      "revision": "09f7d29ad6262f85bc2858f7c468f22d0bd398f3"
+     },
+     "whole": "central:source:project:quaternal-logic:ProjectCentral/now"
+    },
+    "concern": "Find the organising cause of any verification failure and repair it at its owner",
+    "dependencies": [
+     "eros-verify"
+    ],
+    "edited": false,
+    "escalate": "Escalate a defect whose repair belongs to another owner",
+    "heads": {
+     "CF": "CF4",
+     "CFP": "CFP2",
+     "CP": "4.3",
+     "CPF": "authorised-undertaking",
+     "CS": "CS3",
+     "CT": "CT3",
+     "direction": "returning"
+    },
+    "independenceFrom": [],
+    "inputs": [
+     "eros-verify"
+    ],
+    "key": "mythos-debug",
+    "leg": {
+     "standing": "not-started",
+     "status": null
+    },
+    "may": [
+     "write repairs and regression tests on the feature branch"
+    ],
+    "parent": null,
+    "requiredDifference": "Each failure has a located cause and a repair proven at the level it failed",
+    "returns": "Return the causes, the repairs and the re-run evidence, or state that verification found no defect",
+    "row": "agent/anima-mythos",
+    "rowKind": "agent",
+    "sourceLocation": {
+     "byteOffset": 6425,
+     "column": 12,
+     "file": "development-and-knowledge.workflow.ts",
+     "line": 105
+    },
+    "sources": [
+     "central:source:control:root:Control/agents/governance/engineering/verification.md"
+    ],
+    "stop": "Stop at once when verification returned no failure; return that finding with its evidence",
+    "success": [
+     "never weaken an assertion to turn a failure green"
+    ],
+    "unitRef": "workflow-unit:7NKJ4G95WD6SZNAK4QQNKJD1XX",
+    "wave": null
+   },
+   {
+    "agentRequirements": {
+     "agencyRefs": [],
+     "agentRefs": [
+      "agent/anima-sophia"
+     ],
+     "agentSetRefs": [
+      "agent-set/anima"
+     ]
+    },
+    "children": [],
+    "composition": {
+     "actor": "agent/anima-sophia",
+     "authority": "central:source:control:root:Control/user/placement.json",
+     "interpretation": {
+      "ref": "ql/interpretation/c-prime",
+      "revision": "09f7d29ad6262f85bc2858f7c468f22d0bd398f3"
+     },
+     "whole": "central:source:project:quaternal-logic:ProjectCentral/now"
+    },
+    "concern": "Finish the branch: final checks, commit and a pull request ready for review",
+    "dependencies": [
+     "mythos-debug"
+    ],
+    "edited": false,
+    "escalate": "Escalate a protected-branch or permission refusal",
+    "heads": {
+     "CF": "CF7",
+     "CFP": "CFP2",
+     "CP": "4.5",
+     "CPF": "authorised-undertaking",
+     "CS": "CS5",
+     "CT": "CT5",
+     "direction": "returning"
+    },
+    "independenceFrom": [],
+    "inputs": [
+     "mythos-debug"
+    ],
+    "key": "sophia-finish",
+    "leg": {
+     "standing": "not-started",
+     "status": null
+    },
+    "may": [
+     "commit on the feature branch",
+     "open a pull request; never merge"
+    ],
+    "parent": null,
+    "requiredDifference": "A reviewable pull request with its checks and an honest description",
+    "returns": "Return the pull request ref, the final check results and any open item with its reason",
+    "row": "agent/anima-sophia",
+    "rowKind": "agent",
+    "sourceLocation": {
+     "byteOffset": 8188,
+     "column": 12,
+     "file": "development-and-knowledge.workflow.ts",
+     "line": 131
+    },
+    "sources": [
+     "central:source:control:root:Control/agents/governance/engineering/verification.md",
+     "central:source:project:quaternal-logic:AGENTS.md"
+    ],
+    "stop": "Stop before merging; merge is the owner's review decision",
+    "success": [
+     "the final check results are from the pushed head"
+    ],
+    "unitRef": "workflow-unit:2VK6AW211T64984SRXG0XPVDY1",
+    "wave": null
+   },
+   {
+    "agentRequirements": {
+     "agencyRefs": [],
+     "agentRefs": [
+      "agent/aletheia"
+     ],
+     "agentSetRefs": [
+      "agent-set/aletheia"
+     ]
+    },
+    "children": [],
+    "composition": {
+     "actor": "agent/aletheia",
+     "authority": "central:source:control:root:Control/agents/governance/field-and-now/session-work-placement.md",
+     "interpretation": {
+      "ref": "ql/interpretation/c-prime",
+      "revision": "09f7d29ad6262f85bc2858f7c468f22d0bd398f3"
+     },
+     "whole": "central:source:project:quaternal-logic:ProjectCentral/now"
+    },
+    "concern": "Return what the development taught through the NOW field and the wiki return door",
+    "dependencies": [
+     "sophia-finish"
+    ],
+    "edited": false,
+    "escalate": "Never edit wiki.json directly; escalate promotion decisions to the wiki owner",
+    "heads": {
+     "CF": "CF7",
+     "CFP": "CFP0",
+     "CP": "4.5",
+     "CPF": "authorised-undertaking",
+     "CS": "CS5",
+     "CT": "CT4b'",
+     "direction": "returning"
+    },
+    "independenceFrom": [],
+    "inputs": [
+     "sophia-finish"
+    ],
+    "key": "aletheia-knowledge-return",
+    "leg": {
+     "standing": "not-started",
+     "status": null
+    },
+    "may": [
+     "write one attributed Return to the project NOW field",
+     "propose a wiki promotion through NOW"
+    ],
+    "parent": null,
+    "requiredDifference": "Durable learning leaves the session as an attributed Return pointing at its evidence",
+    "returns": "Return the NOW Return ref and any wiki promotion it proposes, each with its lineage",
+    "row": "agent/aletheia",
+    "rowKind": "agent",
+    "sourceLocation": {
+     "byteOffset": 9919,
+     "column": 12,
+     "file": "development-and-knowledge.workflow.ts",
+     "line": 157
+    },
+    "sources": [
+     "central:source:control:root:Control/agents/governance/field-and-now/session-work-placement.md",
+     "central:source:control:root:Control/agents/governance/field-and-now/wiki-field-law.md"
+    ],
+    "stop": "Stop when nothing durable was learned; a routine record is enough",
+    "success": [
+     "the Return points at the pull request and its evidence, not a paraphrase"
+    ],
+    "unitRef": "workflow-unit:4HDPT4KC6CBTJX5RV5Y3HH981M",
+    "wave": null
+   },
+   {
+    "agentRequirements": {
+     "agencyRefs": [],
+     "agentRefs": [
+      "agent/anima-eros"
+     ],
+     "agentSetRefs": []
+    },
+    "children": [],
+    "composition": null,
+    "concern": "Perform the song development-and-knowledge, made into the clip release-check",
+    "dependencies": [
+     "eros-verify"
+    ],
+    "edited": true,
+    "escalate": "Escalate scope that crosses another repository's ownership; Escalate any change to protected or authored ground; Escalate a gate that cannot be run in the available environment; Escalate a defect whose repair belongs to another owner; Escalate a protected-branch or permission refusal; Never edit wiki.json directly; escalate promotion decisions to the wiki owner",
+    "form": "canon",
+    "heads": null,
+    "independenceFrom": [],
+    "inputs": [],
+    "key": "release-check",
+    "leg": {
+     "standing": "not-in-run",
+     "status": null
+    },
+    "may": [
+     "commit on the feature branch",
+     "open a pull request; never merge",
+     "propose a wiki promotion through NOW",
+     "read the branch",
+     "read the repository and its governing documents",
+     "run tests, format and lint checks",
+     "run the repository's local checks",
+     "write one attributed Return to the project NOW field",
+     "write repairs and regression tests on the feature branch",
+     "write source and tests on a feature branch"
+    ],
+    "parent": null,
+    "requiredDifference": "Durable learning leaves the session as an attributed Return pointing at its evidence",
+    "returns": "Return the NOW Return ref and any wiki promotion it proposes, each with its lineage",
+    "row": "agent/anima-eros",
+    "rowKind": "agent",
+    "song": {
+     "cut": [],
+     "joins": [],
+     "rows": [
+      {
+       "kind": "agent",
+       "ref": "agent/anima-logos"
+      },
+      {
+       "kind": "agent",
+       "ref": "agent/anima-techne-helper"
+      },
+      {
+       "kind": "agent",
+       "ref": "agent/anima-eros"
+      },
+      {
+       "kind": "agent",
+       "ref": "agent/anima-mythos"
+      },
+      {
+       "kind": "agent",
+       "ref": "agent/anima-sophia"
+      },
+      {
+       "kind": "agent",
+       "ref": "agent/aletheia"
+      }
+     ],
+     "units": [
+      {
+       "capabilityRefs": [
+        "capability/source-read"
+       ],
+       "concern": "Scope the change and write the plan it will be built from",
+       "dependencies": [],
+       "escalate": "Escalate scope that crosses another repository's ownership",
+       "heads": {
+        "CF": "CF2",
+        "CFP": "CFP2",
+        "CP": "4.1",
+        "CPF": "dialogical",
+        "CS": "CS2",
+        "CT": "CT1",
+        "direction": "forward"
+       },
+       "key": "logos-scope-plan",
+       "may": [
+        "read the repository and its governing documents"
+       ],
+       "praxisRefs": [
+        "skill/personal/brainstorming",
+        "skill/personal/writing-plans"
+       ],
+       "requiredDifference": "A bounded plan: files, behaviour, tests and the checks the repository already runs",
+       "returnAddress": "central:source:project:quaternal-logic:ProjectCentral/now",
+       "returns": "Return the plan with its scope boundary and the exact verification it will need",
+       "row": "agent/anima-logos",
+       "rowKind": "agent",
+       "stop": "Stop when the request needs an owner decision before it can be scoped",
+       "subjectRef": "project:quaternal-logic",
+       "success": [
+        "the plan cites the repository's own gates"
+       ]
+      },
+      {
+       "capabilityRefs": [
+        "capability/source-read",
+        "capability/source-write",
+        "capability/test-execution"
+       ],
+       "concern": "Implement the plan test-first in the repository",
+       "dependencies": [
+        "logos-scope-plan"
+       ],
+       "escalate": "Escalate any change to protected or authored ground",
+       "heads": {
+        "CF": "CF5",
+        "CFP": "CFP2",
+        "CP": "4.2",
+        "CPF": "authorised-undertaking",
+        "CS": "CS2",
+        "CT": "CT2",
+        "direction": "forward"
+       },
+       "key": "techne-implement",
+       "may": [
+        "write source and tests on a feature branch",
+        "run the repository's local checks"
+       ],
+       "praxisRefs": [
+        "skill/personal/test-driven-development",
+        "skill/personal/executing-plans",
+        "skill/personal/subagent-driven-development"
+       ],
+       "requiredDifference": "The planned behaviour exists with tests that fail without it",
+       "returnAddress": "central:source:project:quaternal-logic:ProjectCentral/now",
+       "returns": "Return the branch, the changed files and the test evidence",
+       "row": "agent/anima-techne-helper",
+       "rowKind": "agent",
+       "stop": "Stop when the plan cannot be implemented without widening scope",
+       "subjectRef": "project:quaternal-logic",
+       "success": [
+        "run the tests named in the plan and quote their results"
+       ]
+      },
+      {
+       "capabilityRefs": [
+        "capability/source-read",
+        "capability/test-execution"
+       ],
+       "concern": "Verify the implementation against the plan with the repository's real gates",
+       "dependencies": [
+        "techne-implement"
+       ],
+       "escalate": "Escalate a gate that cannot be run in the available environment",
+       "heads": {
+        "CF": "CF3",
+        "CFP": "CFP2",
+        "CP": "4.2",
+        "CPF": "dialogical",
+        "CS": "CS2",
+        "CT": "CT2",
+        "direction": "returning"
+       },
+       "key": "eros-verify",
+       "may": [
+        "run tests, format and lint checks",
+        "read the branch"
+       ],
+       "praxisRefs": [
+        "skill/personal/verification-before-completion",
+        "skill/ql/vak-evaluate"
+       ],
+       "requiredDifference": "Executed evidence says whether the change does what the plan required",
+       "returnAddress": "central:source:project:quaternal-logic:ProjectCentral/now",
+       "returns": "Return the commands run, their results and every failure found",
+       "row": "agent/anima-eros",
+       "rowKind": "agent",
+       "stop": "Stop when the branch cannot be built",
+       "subjectRef": "project:quaternal-logic",
+       "success": [
+        "quote executed results; never infer a pass from a name or a fixture"
+       ]
+      },
+      {
+       "capabilityRefs": [
+        "capability/source-read",
+        "capability/source-write",
+        "capability/test-execution"
+       ],
+       "concern": "Find the organising cause of any verification failure and repair it at its owner",
+       "dependencies": [
+        "eros-verify"
+       ],
+       "escalate": "Escalate a defect whose repair belongs to another owner",
+       "heads": {
+        "CF": "CF4",
+        "CFP": "CFP2",
+        "CP": "4.3",
+        "CPF": "authorised-undertaking",
+        "CS": "CS3",
+        "CT": "CT3",
+        "direction": "returning"
+       },
+       "key": "mythos-debug",
+       "may": [
+        "write repairs and regression tests on the feature branch"
+       ],
+       "praxisRefs": [
+        "skill/personal/systematic-debugging",
+        "skill/personal/test-driven-development"
+       ],
+       "requiredDifference": "Each failure has a located cause and a repair proven at the level it failed",
+       "returnAddress": "central:source:project:quaternal-logic:ProjectCentral/now",
+       "returns": "Return the causes, the repairs and the re-run evidence, or state that verification found no defect",
+       "row": "agent/anima-mythos",
+       "rowKind": "agent",
+       "stop": "Stop at once when verification returned no failure; return that finding with its evidence",
+       "subjectRef": "project:quaternal-logic",
+       "success": [
+        "never weaken an assertion to turn a failure green"
+       ]
+      },
+      {
+       "capabilityRefs": [
+        "capability/source-read",
+        "capability/git-branch",
+        "capability/pull-request"
+       ],
+       "concern": "Finish the branch: final checks, commit and a pull request ready for review",
+       "dependencies": [
+        "mythos-debug"
+       ],
+       "escalate": "Escalate a protected-branch or permission refusal",
+       "heads": {
+        "CF": "CF7",
+        "CFP": "CFP2",
+        "CP": "4.5",
+        "CPF": "authorised-undertaking",
+        "CS": "CS5",
+        "CT": "CT5",
+        "direction": "returning"
+       },
+       "key": "sophia-finish",
+       "may": [
+        "commit on the feature branch",
+        "open a pull request; never merge"
+       ],
+       "praxisRefs": [
+        "skill/personal/finishing-a-development-branch",
+        "skill/personal/verification-before-completion"
+       ],
+       "requiredDifference": "A reviewable pull request with its checks and an honest description",
+       "returnAddress": "central:source:project:quaternal-logic:ProjectCentral/now",
+       "returns": "Return the pull request ref, the final check results and any open item with its reason",
+       "row": "agent/anima-sophia",
+       "rowKind": "agent",
+       "stop": "Stop before merging; merge is the owner's review decision",
+       "subjectRef": "project:quaternal-logic",
+       "success": [
+        "the final check results are from the pushed head"
+       ]
+      },
+      {
+       "capabilityRefs": [
+        "capability/now-return",
+        "capability/wiki-return"
+       ],
+       "concern": "Return what the development taught through the NOW field and the wiki return door",
+       "dependencies": [
+        "sophia-finish"
+       ],
+       "escalate": "Never edit wiki.json directly; escalate promotion decisions to the wiki owner",
+       "heads": {
+        "CF": "CF7",
+        "CFP": "CFP0",
+        "CP": "4.5",
+        "CPF": "authorised-undertaking",
+        "CS": "CS5",
+        "CT": "CT4b'",
+        "direction": "returning"
+       },
+       "key": "aletheia-knowledge-return",
+       "may": [
+        "write one attributed Return to the project NOW field",
+        "propose a wiki promotion through NOW"
+       ],
+       "praxisRefs": [
+        "skill/ql/aletheia-stack-traverse",
+        "skill/ql/thought-distil"
+       ],
+       "requiredDifference": "Durable learning leaves the session as an attributed Return pointing at its evidence",
+       "returnAddress": "central:source:project:quaternal-logic:ProjectCentral/now",
+       "returns": "Return the NOW Return ref and any wiki promotion it proposes, each with its lineage",
+       "row": "agent/aletheia",
+       "rowKind": "agent",
+       "stop": "Stop when nothing durable was learned; a routine record is enough",
+       "subjectRef": "project:quaternal-logic",
+       "success": [
+        "the Return points at the pull request and its evidence, not a paraphrase"
+       ]
+      }
+     ],
+     "workflowKey": "development-and-knowledge"
+    },
+    "songClip": "factory-song:song-taker/release-check",
+    "sourceLocation": {
+     "byteOffset": 12817,
+     "column": 14,
+     "file": "development-and-knowledge.workflow.ts",
+     "line": 205
+    },
+    "sources": null,
+    "stop": "Stop when the song development-and-knowledge returns",
+    "success": [
+     "never weaken an assertion to turn a failure green",
+     "quote executed results; never infer a pass from a name or a fixture",
+     "run the tests named in the plan and quote their results",
+     "the Return points at the pull request and its evidence, not a paraphrase",
+     "the final check results are from the pushed head",
+     "the plan cites the repository's own gates"
+    ],
+    "unitRef": null,
+    "wave": null
+   }
+  ],
+  "waves": [],
+  "wavesWhy": null
+ },
+ "songs_maker": {
+  "contract": "factory.song-clips/v1",
+  "execution": "not-requested",
+  "projectKey": "song-maker",
+  "projectRef": "project:0000000000T50A0ZS7DGMMMJ57",
+  "projectRoot": "/walk/maker",
+  "songs": [
+   {
+    "clip": {
+     "clipRef": "factory-song:song-maker/eros-part",
+     "contract": "factory.song-clip/v1",
+     "execution": "not-requested",
+     "importedFrom": null,
+     "name": "eros-part",
+     "project": {
+      "projectKey": "song-maker",
+      "projectRef": "project:0000000000T50A0ZS7DGMMMJ57"
+     },
+     "render": {
+      "by": "factory workflow export",
+      "previousByteRevision": null,
+      "renders": 1
+     },
+     "score": {
+      "cut": [
+       {
+        "unit": "eros-verify",
+        "waitsOn": "techne-implement"
+       }
+      ],
+      "joins": [],
+      "rows": [
+       {
+        "kind": "agent",
+        "ref": "agent/anima-eros"
+       },
+       {
+        "kind": "agent",
+        "ref": "agent/anima-mythos"
+       }
+      ],
+      "units": [
+       {
+        "capabilityRefs": [
+         "capability/source-read",
+         "capability/test-execution"
+        ],
+        "concern": "Verify the implementation against the plan with the repository's real gates",
+        "dependencies": [],
+        "escalate": "Escalate a gate that cannot be run in the available environment",
+        "heads": {
+         "CF": "CF3",
+         "CFP": "CFP2",
+         "CP": "4.2",
+         "CPF": "dialogical",
+         "CS": "CS2",
+         "CT": "CT2",
+         "direction": "returning"
+        },
+        "key": "eros-verify",
+        "may": [
+         "run tests, format and lint checks",
+         "read the branch"
+        ],
+        "praxisRefs": [
+         "skill/personal/verification-before-completion",
+         "skill/ql/vak-evaluate"
+        ],
+        "requiredDifference": "Executed evidence says whether the change does what the plan required",
+        "returnAddress": "central:source:project:quaternal-logic:ProjectCentral/now",
+        "returns": "Return the commands run, their results and every failure found",
+        "row": "agent/anima-eros",
+        "rowKind": "agent",
+        "stop": "Stop when the branch cannot be built",
+        "subjectRef": "project:quaternal-logic",
+        "success": [
+         "quote executed results; never infer a pass from a name or a fixture"
+        ]
+       },
+       {
+        "capabilityRefs": [
+         "capability/source-read",
+         "capability/source-write",
+         "capability/test-execution"
+        ],
+        "concern": "Find the organising cause of any verification failure and repair it at its owner",
+        "dependencies": [
+         "eros-verify"
+        ],
+        "escalate": "Escalate a defect whose repair belongs to another owner",
+        "heads": {
+         "CF": "CF4",
+         "CFP": "CFP2",
+         "CP": "4.3",
+         "CPF": "authorised-undertaking",
+         "CS": "CS3",
+         "CT": "CT3",
+         "direction": "returning"
+        },
+        "key": "mythos-debug",
+        "may": [
+         "write repairs and regression tests on the feature branch"
+        ],
+        "praxisRefs": [
+         "skill/personal/systematic-debugging",
+         "skill/personal/test-driven-development"
+        ],
+        "requiredDifference": "Each failure has a located cause and a repair proven at the level it failed",
+        "returnAddress": "central:source:project:quaternal-logic:ProjectCentral/now",
+        "returns": "Return the causes, the repairs and the re-run evidence, or state that verification found no defect",
+        "row": "agent/anima-mythos",
+        "rowKind": "agent",
+        "stop": "Stop at once when verification returned no failure; return that finding with its evidence",
+        "subjectRef": "project:quaternal-logic",
+        "success": [
+         "never weaken an assertion to turn a failure green"
+        ]
+       }
+      ],
+      "workflowKey": "development-and-knowledge"
+     },
+     "selection": {
+      "rows": [
+       "agent/anima-eros",
+       "agent/anima-mythos"
+      ],
+      "units": null
+     },
+     "set": {
+      "byteRevision": "blake3:c1948266221eb61631b61cccac47f4c0380bd06139afbfe7f0f896c43c11210a",
+      "entry": "development-and-knowledge.workflow.ts",
+      "semanticDigest": "ae25c1dd8537209beba0de69fba6b47914b2f1103ff2c3c0337e21e03612cc8a",
+      "sourceRef": "workflow-source:01M399B6B0R8CJY3Y2RTG5EPWS",
+      "sourceRevision": "development-and-knowledge-v1",
+      "workflowKey": "development-and-knowledge"
+     }
+    },
+    "clipRef": "factory-song:song-maker/eros-part",
+    "importedFrom": null,
+    "moved": false,
+    "name": "eros-part",
+    "path": "/walk/maker/.factory/songs/eros-part.song.json",
+    "render": {
+     "by": "factory workflow export",
+     "previousByteRevision": null,
+     "renders": 1
+    },
+    "rows": 2,
+    "selection": {
+     "rows": [
+      "agent/anima-eros",
+      "agent/anima-mythos"
+     ],
+     "units": null
+    },
+    "set": {
+     "byteRevision": "blake3:c1948266221eb61631b61cccac47f4c0380bd06139afbfe7f0f896c43c11210a",
+     "entry": "development-and-knowledge.workflow.ts",
+     "semanticDigest": "ae25c1dd8537209beba0de69fba6b47914b2f1103ff2c3c0337e21e03612cc8a",
+     "sourceRef": "workflow-source:01M399B6B0R8CJY3Y2RTG5EPWS",
+     "sourceRevision": "development-and-knowledge-v1",
+     "workflowKey": "development-and-knowledge"
+    },
+    "standing": "current",
+    "units": 2,
+    "why": "The set stands as it was when the clip was rendered."
+   },
+   {
+    "clip": {
+     "clipRef": "factory-song:song-maker/release-check",
+     "contract": "factory.song-clip/v1",
+     "execution": "not-requested",
+     "importedFrom": null,
+     "name": "release-check",
+     "project": {
+      "projectKey": "song-maker",
+      "projectRef": "project:0000000000T50A0ZS7DGMMMJ57"
+     },
+     "render": {
+      "by": "factory workflow export",
+      "previousByteRevision": null,
+      "renders": 1
+     },
+     "score": {
+      "cut": [],
+      "joins": [],
+      "rows": [
+       {
+        "kind": "agent",
+        "ref": "agent/anima-logos"
+       },
+       {
+        "kind": "agent",
+        "ref": "agent/anima-techne-helper"
+       },
+       {
+        "kind": "agent",
+        "ref": "agent/anima-eros"
+       },
+       {
+        "kind": "agent",
+        "ref": "agent/anima-mythos"
+       },
+       {
+        "kind": "agent",
+        "ref": "agent/anima-sophia"
+       },
+       {
+        "kind": "agent",
+        "ref": "agent/aletheia"
+       }
+      ],
+      "units": [
+       {
+        "capabilityRefs": [
+         "capability/source-read"
+        ],
+        "concern": "Scope the change and write the plan it will be built from",
+        "dependencies": [],
+        "escalate": "Escalate scope that crosses another repository's ownership",
+        "heads": {
+         "CF": "CF2",
+         "CFP": "CFP2",
+         "CP": "4.1",
+         "CPF": "dialogical",
+         "CS": "CS2",
+         "CT": "CT1",
+         "direction": "forward"
+        },
+        "key": "logos-scope-plan",
+        "may": [
+         "read the repository and its governing documents"
+        ],
+        "praxisRefs": [
+         "skill/personal/brainstorming",
+         "skill/personal/writing-plans"
+        ],
+        "requiredDifference": "A bounded plan: files, behaviour, tests and the checks the repository already runs",
+        "returnAddress": "central:source:project:quaternal-logic:ProjectCentral/now",
+        "returns": "Return the plan with its scope boundary and the exact verification it will need",
+        "row": "agent/anima-logos",
+        "rowKind": "agent",
+        "stop": "Stop when the request needs an owner decision before it can be scoped",
+        "subjectRef": "project:quaternal-logic",
+        "success": [
+         "the plan cites the repository's own gates"
+        ]
+       },
+       {
+        "capabilityRefs": [
+         "capability/source-read",
+         "capability/source-write",
+         "capability/test-execution"
+        ],
+        "concern": "Implement the plan test-first in the repository",
+        "dependencies": [
+         "logos-scope-plan"
+        ],
+        "escalate": "Escalate any change to protected or authored ground",
+        "heads": {
+         "CF": "CF5",
+         "CFP": "CFP2",
+         "CP": "4.2",
+         "CPF": "authorised-undertaking",
+         "CS": "CS2",
+         "CT": "CT2",
+         "direction": "forward"
+        },
+        "key": "techne-implement",
+        "may": [
+         "write source and tests on a feature branch",
+         "run the repository's local checks"
+        ],
+        "praxisRefs": [
+         "skill/personal/test-driven-development",
+         "skill/personal/executing-plans",
+         "skill/personal/subagent-driven-development"
+        ],
+        "requiredDifference": "The planned behaviour exists with tests that fail without it",
+        "returnAddress": "central:source:project:quaternal-logic:ProjectCentral/now",
+        "returns": "Return the branch, the changed files and the test evidence",
+        "row": "agent/anima-techne-helper",
+        "rowKind": "agent",
+        "stop": "Stop when the plan cannot be implemented without widening scope",
+        "subjectRef": "project:quaternal-logic",
+        "success": [
+         "run the tests named in the plan and quote their results"
+        ]
+       },
+       {
+        "capabilityRefs": [
+         "capability/source-read",
+         "capability/test-execution"
+        ],
+        "concern": "Verify the implementation against the plan with the repository's real gates",
+        "dependencies": [
+         "techne-implement"
+        ],
+        "escalate": "Escalate a gate that cannot be run in the available environment",
+        "heads": {
+         "CF": "CF3",
+         "CFP": "CFP2",
+         "CP": "4.2",
+         "CPF": "dialogical",
+         "CS": "CS2",
+         "CT": "CT2",
+         "direction": "returning"
+        },
+        "key": "eros-verify",
+        "may": [
+         "run tests, format and lint checks",
+         "read the branch"
+        ],
+        "praxisRefs": [
+         "skill/personal/verification-before-completion",
+         "skill/ql/vak-evaluate"
+        ],
+        "requiredDifference": "Executed evidence says whether the change does what the plan required",
+        "returnAddress": "central:source:project:quaternal-logic:ProjectCentral/now",
+        "returns": "Return the commands run, their results and every failure found",
+        "row": "agent/anima-eros",
+        "rowKind": "agent",
+        "stop": "Stop when the branch cannot be built",
+        "subjectRef": "project:quaternal-logic",
+        "success": [
+         "quote executed results; never infer a pass from a name or a fixture"
+        ]
+       },
+       {
+        "capabilityRefs": [
+         "capability/source-read",
+         "capability/source-write",
+         "capability/test-execution"
+        ],
+        "concern": "Find the organising cause of any verification failure and repair it at its owner",
+        "dependencies": [
+         "eros-verify"
+        ],
+        "escalate": "Escalate a defect whose repair belongs to another owner",
+        "heads": {
+         "CF": "CF4",
+         "CFP": "CFP2",
+         "CP": "4.3",
+         "CPF": "authorised-undertaking",
+         "CS": "CS3",
+         "CT": "CT3",
+         "direction": "returning"
+        },
+        "key": "mythos-debug",
+        "may": [
+         "write repairs and regression tests on the feature branch"
+        ],
+        "praxisRefs": [
+         "skill/personal/systematic-debugging",
+         "skill/personal/test-driven-development"
+        ],
+        "requiredDifference": "Each failure has a located cause and a repair proven at the level it failed",
+        "returnAddress": "central:source:project:quaternal-logic:ProjectCentral/now",
+        "returns": "Return the causes, the repairs and the re-run evidence, or state that verification found no defect",
+        "row": "agent/anima-mythos",
+        "rowKind": "agent",
+        "stop": "Stop at once when verification returned no failure; return that finding with its evidence",
+        "subjectRef": "project:quaternal-logic",
+        "success": [
+         "never weaken an assertion to turn a failure green"
+        ]
+       },
+       {
+        "capabilityRefs": [
+         "capability/source-read",
+         "capability/git-branch",
+         "capability/pull-request"
+        ],
+        "concern": "Finish the branch: final checks, commit and a pull request ready for review",
+        "dependencies": [
+         "mythos-debug"
+        ],
+        "escalate": "Escalate a protected-branch or permission refusal",
+        "heads": {
+         "CF": "CF7",
+         "CFP": "CFP2",
+         "CP": "4.5",
+         "CPF": "authorised-undertaking",
+         "CS": "CS5",
+         "CT": "CT5",
+         "direction": "returning"
+        },
+        "key": "sophia-finish",
+        "may": [
+         "commit on the feature branch",
+         "open a pull request; never merge"
+        ],
+        "praxisRefs": [
+         "skill/personal/finishing-a-development-branch",
+         "skill/personal/verification-before-completion"
+        ],
+        "requiredDifference": "A reviewable pull request with its checks and an honest description",
+        "returnAddress": "central:source:project:quaternal-logic:ProjectCentral/now",
+        "returns": "Return the pull request ref, the final check results and any open item with its reason",
+        "row": "agent/anima-sophia",
+        "rowKind": "agent",
+        "stop": "Stop before merging; merge is the owner's review decision",
+        "subjectRef": "project:quaternal-logic",
+        "success": [
+         "the final check results are from the pushed head"
+        ]
+       },
+       {
+        "capabilityRefs": [
+         "capability/now-return",
+         "capability/wiki-return"
+        ],
+        "concern": "Return what the development taught through the NOW field and the wiki return door",
+        "dependencies": [
+         "sophia-finish"
+        ],
+        "escalate": "Never edit wiki.json directly; escalate promotion decisions to the wiki owner",
+        "heads": {
+         "CF": "CF7",
+         "CFP": "CFP0",
+         "CP": "4.5",
+         "CPF": "authorised-undertaking",
+         "CS": "CS5",
+         "CT": "CT4b'",
+         "direction": "returning"
+        },
+        "key": "aletheia-knowledge-return",
+        "may": [
+         "write one attributed Return to the project NOW field",
+         "propose a wiki promotion through NOW"
+        ],
+        "praxisRefs": [
+         "skill/ql/aletheia-stack-traverse",
+         "skill/ql/thought-distil"
+        ],
+        "requiredDifference": "Durable learning leaves the session as an attributed Return pointing at its evidence",
+        "returnAddress": "central:source:project:quaternal-logic:ProjectCentral/now",
+        "returns": "Return the NOW Return ref and any wiki promotion it proposes, each with its lineage",
+        "row": "agent/aletheia",
+        "rowKind": "agent",
+        "stop": "Stop when nothing durable was learned; a routine record is enough",
+        "subjectRef": "project:quaternal-logic",
+        "success": [
+         "the Return points at the pull request and its evidence, not a paraphrase"
+        ]
+       }
+      ],
+      "workflowKey": "development-and-knowledge"
+     },
+     "selection": {
+      "rows": null,
+      "units": null
+     },
+     "set": {
+      "byteRevision": "blake3:c1948266221eb61631b61cccac47f4c0380bd06139afbfe7f0f896c43c11210a",
+      "entry": "development-and-knowledge.workflow.ts",
+      "semanticDigest": "ae25c1dd8537209beba0de69fba6b47914b2f1103ff2c3c0337e21e03612cc8a",
+      "sourceRef": "workflow-source:01M399B6B0R8CJY3Y2RTG5EPWS",
+      "sourceRevision": "development-and-knowledge-v1",
+      "workflowKey": "development-and-knowledge"
+     }
+    },
+    "clipRef": "factory-song:song-maker/release-check",
+    "importedFrom": null,
+    "moved": false,
+    "name": "release-check",
+    "path": "/walk/maker/.factory/songs/release-check.song.json",
+    "render": {
+     "by": "factory workflow export",
+     "previousByteRevision": null,
+     "renders": 1
+    },
+    "rows": 6,
+    "selection": {
+     "rows": null,
+     "units": null
+    },
+    "set": {
+     "byteRevision": "blake3:c1948266221eb61631b61cccac47f4c0380bd06139afbfe7f0f896c43c11210a",
+     "entry": "development-and-knowledge.workflow.ts",
+     "semanticDigest": "ae25c1dd8537209beba0de69fba6b47914b2f1103ff2c3c0337e21e03612cc8a",
+     "sourceRef": "workflow-source:01M399B6B0R8CJY3Y2RTG5EPWS",
+     "sourceRevision": "development-and-knowledge-v1",
+     "workflowKey": "development-and-knowledge"
+    },
+    "standing": "current",
+    "units": 6,
+    "why": "The set stands as it was when the clip was rendered."
+   }
+  ]
+ },
+ "songs_moved": {
+  "contract": "factory.song-clips/v1",
+  "execution": "not-requested",
+  "projectKey": "song-maker",
+  "projectRef": "project:0000000000T50A0ZS7DGMMMJ57",
+  "projectRoot": "/walk/maker",
+  "songs": [
+   {
+    "clip": {
+     "clipRef": "factory-song:song-maker/eros-part",
+     "contract": "factory.song-clip/v1",
+     "execution": "not-requested",
+     "importedFrom": null,
+     "name": "eros-part",
+     "project": {
+      "projectKey": "song-maker",
+      "projectRef": "project:0000000000T50A0ZS7DGMMMJ57"
+     },
+     "render": {
+      "by": "factory workflow export",
+      "previousByteRevision": null,
+      "renders": 1
+     },
+     "score": {
+      "cut": [
+       {
+        "unit": "eros-verify",
+        "waitsOn": "techne-implement"
+       }
+      ],
+      "joins": [],
+      "rows": [
+       {
+        "kind": "agent",
+        "ref": "agent/anima-eros"
+       },
+       {
+        "kind": "agent",
+        "ref": "agent/anima-mythos"
+       }
+      ],
+      "units": [
+       {
+        "capabilityRefs": [
+         "capability/source-read",
+         "capability/test-execution"
+        ],
+        "concern": "Verify the implementation against the plan with the repository's real gates",
+        "dependencies": [],
+        "escalate": "Escalate a gate that cannot be run in the available environment",
+        "heads": {
+         "CF": "CF3",
+         "CFP": "CFP2",
+         "CP": "4.2",
+         "CPF": "dialogical",
+         "CS": "CS2",
+         "CT": "CT2",
+         "direction": "returning"
+        },
+        "key": "eros-verify",
+        "may": [
+         "run tests, format and lint checks",
+         "read the branch"
+        ],
+        "praxisRefs": [
+         "skill/personal/verification-before-completion",
+         "skill/ql/vak-evaluate"
+        ],
+        "requiredDifference": "Executed evidence says whether the change does what the plan required",
+        "returnAddress": "central:source:project:quaternal-logic:ProjectCentral/now",
+        "returns": "Return the commands run, their results and every failure found",
+        "row": "agent/anima-eros",
+        "rowKind": "agent",
+        "stop": "Stop when the branch cannot be built",
+        "subjectRef": "project:quaternal-logic",
+        "success": [
+         "quote executed results; never infer a pass from a name or a fixture"
+        ]
+       },
+       {
+        "capabilityRefs": [
+         "capability/source-read",
+         "capability/source-write",
+         "capability/test-execution"
+        ],
+        "concern": "Find the organising cause of any verification failure and repair it at its owner",
+        "dependencies": [
+         "eros-verify"
+        ],
+        "escalate": "Escalate a defect whose repair belongs to another owner",
+        "heads": {
+         "CF": "CF4",
+         "CFP": "CFP2",
+         "CP": "4.3",
+         "CPF": "authorised-undertaking",
+         "CS": "CS3",
+         "CT": "CT3",
+         "direction": "returning"
+        },
+        "key": "mythos-debug",
+        "may": [
+         "write repairs and regression tests on the feature branch"
+        ],
+        "praxisRefs": [
+         "skill/personal/systematic-debugging",
+         "skill/personal/test-driven-development"
+        ],
+        "requiredDifference": "Each failure has a located cause and a repair proven at the level it failed",
+        "returnAddress": "central:source:project:quaternal-logic:ProjectCentral/now",
+        "returns": "Return the causes, the repairs and the re-run evidence, or state that verification found no defect",
+        "row": "agent/anima-mythos",
+        "rowKind": "agent",
+        "stop": "Stop at once when verification returned no failure; return that finding with its evidence",
+        "subjectRef": "project:quaternal-logic",
+        "success": [
+         "never weaken an assertion to turn a failure green"
+        ]
+       }
+      ],
+      "workflowKey": "development-and-knowledge"
+     },
+     "selection": {
+      "rows": [
+       "agent/anima-eros",
+       "agent/anima-mythos"
+      ],
+      "units": null
+     },
+     "set": {
+      "byteRevision": "blake3:c1948266221eb61631b61cccac47f4c0380bd06139afbfe7f0f896c43c11210a",
+      "entry": "development-and-knowledge.workflow.ts",
+      "semanticDigest": "ae25c1dd8537209beba0de69fba6b47914b2f1103ff2c3c0337e21e03612cc8a",
+      "sourceRef": "workflow-source:01M399B6B0R8CJY3Y2RTG5EPWS",
+      "sourceRevision": "development-and-knowledge-v1",
+      "workflowKey": "development-and-knowledge"
+     }
+    },
+    "clipRef": "factory-song:song-maker/eros-part",
+    "importedFrom": null,
+    "moved": true,
+    "name": "eros-part",
+    "path": "/walk/maker/.factory/songs/eros-part.song.json",
+    "render": {
+     "by": "factory workflow export",
+     "previousByteRevision": null,
+     "renders": 1
+    },
+    "rows": 2,
+    "selection": {
+     "rows": [
+      "agent/anima-eros",
+      "agent/anima-mythos"
+     ],
+     "units": null
+    },
+    "set": {
+     "byteRevision": "blake3:c1948266221eb61631b61cccac47f4c0380bd06139afbfe7f0f896c43c11210a",
+     "entry": "development-and-knowledge.workflow.ts",
+     "semanticDigest": "ae25c1dd8537209beba0de69fba6b47914b2f1103ff2c3c0337e21e03612cc8a",
+     "sourceRef": "workflow-source:01M399B6B0R8CJY3Y2RTG5EPWS",
+     "sourceRevision": "development-and-knowledge-v1",
+     "workflowKey": "development-and-knowledge"
+    },
+    "standing": "moved",
+    "units": 2,
+    "why": "The set has moved since the clip was rendered (it is blake3:64ea27daf640c662fe120a5ddb6f1d511f60df956bba232a2384f5f4f798a318 now, the clip was made at blake3:c1948266221eb61631b61cccac47f4c0380bd06139afbfe7f0f896c43c11210a): Remake makes it again from the set as it now stands."
+   },
+   {
+    "clip": {
+     "clipRef": "factory-song:song-maker/release-check",
+     "contract": "factory.song-clip/v1",
+     "execution": "not-requested",
+     "importedFrom": null,
+     "name": "release-check",
+     "project": {
+      "projectKey": "song-maker",
+      "projectRef": "project:0000000000T50A0ZS7DGMMMJ57"
+     },
+     "render": {
+      "by": "factory workflow export",
+      "previousByteRevision": null,
+      "renders": 1
+     },
+     "score": {
+      "cut": [],
+      "joins": [],
+      "rows": [
+       {
+        "kind": "agent",
+        "ref": "agent/anima-logos"
+       },
+       {
+        "kind": "agent",
+        "ref": "agent/anima-techne-helper"
+       },
+       {
+        "kind": "agent",
+        "ref": "agent/anima-eros"
+       },
+       {
+        "kind": "agent",
+        "ref": "agent/anima-mythos"
+       },
+       {
+        "kind": "agent",
+        "ref": "agent/anima-sophia"
+       },
+       {
+        "kind": "agent",
+        "ref": "agent/aletheia"
+       }
+      ],
+      "units": [
+       {
+        "capabilityRefs": [
+         "capability/source-read"
+        ],
+        "concern": "Scope the change and write the plan it will be built from",
+        "dependencies": [],
+        "escalate": "Escalate scope that crosses another repository's ownership",
+        "heads": {
+         "CF": "CF2",
+         "CFP": "CFP2",
+         "CP": "4.1",
+         "CPF": "dialogical",
+         "CS": "CS2",
+         "CT": "CT1",
+         "direction": "forward"
+        },
+        "key": "logos-scope-plan",
+        "may": [
+         "read the repository and its governing documents"
+        ],
+        "praxisRefs": [
+         "skill/personal/brainstorming",
+         "skill/personal/writing-plans"
+        ],
+        "requiredDifference": "A bounded plan: files, behaviour, tests and the checks the repository already runs",
+        "returnAddress": "central:source:project:quaternal-logic:ProjectCentral/now",
+        "returns": "Return the plan with its scope boundary and the exact verification it will need",
+        "row": "agent/anima-logos",
+        "rowKind": "agent",
+        "stop": "Stop when the request needs an owner decision before it can be scoped",
+        "subjectRef": "project:quaternal-logic",
+        "success": [
+         "the plan cites the repository's own gates"
+        ]
+       },
+       {
+        "capabilityRefs": [
+         "capability/source-read",
+         "capability/source-write",
+         "capability/test-execution"
+        ],
+        "concern": "Implement the plan test-first in the repository",
+        "dependencies": [
+         "logos-scope-plan"
+        ],
+        "escalate": "Escalate any change to protected or authored ground",
+        "heads": {
+         "CF": "CF5",
+         "CFP": "CFP2",
+         "CP": "4.2",
+         "CPF": "authorised-undertaking",
+         "CS": "CS2",
+         "CT": "CT2",
+         "direction": "forward"
+        },
+        "key": "techne-implement",
+        "may": [
+         "write source and tests on a feature branch",
+         "run the repository's local checks"
+        ],
+        "praxisRefs": [
+         "skill/personal/test-driven-development",
+         "skill/personal/executing-plans",
+         "skill/personal/subagent-driven-development"
+        ],
+        "requiredDifference": "The planned behaviour exists with tests that fail without it",
+        "returnAddress": "central:source:project:quaternal-logic:ProjectCentral/now",
+        "returns": "Return the branch, the changed files and the test evidence",
+        "row": "agent/anima-techne-helper",
+        "rowKind": "agent",
+        "stop": "Stop when the plan cannot be implemented without widening scope",
+        "subjectRef": "project:quaternal-logic",
+        "success": [
+         "run the tests named in the plan and quote their results"
+        ]
+       },
+       {
+        "capabilityRefs": [
+         "capability/source-read",
+         "capability/test-execution"
+        ],
+        "concern": "Verify the implementation against the plan with the repository's real gates",
+        "dependencies": [
+         "techne-implement"
+        ],
+        "escalate": "Escalate a gate that cannot be run in the available environment",
+        "heads": {
+         "CF": "CF3",
+         "CFP": "CFP2",
+         "CP": "4.2",
+         "CPF": "dialogical",
+         "CS": "CS2",
+         "CT": "CT2",
+         "direction": "returning"
+        },
+        "key": "eros-verify",
+        "may": [
+         "run tests, format and lint checks",
+         "read the branch"
+        ],
+        "praxisRefs": [
+         "skill/personal/verification-before-completion",
+         "skill/ql/vak-evaluate"
+        ],
+        "requiredDifference": "Executed evidence says whether the change does what the plan required",
+        "returnAddress": "central:source:project:quaternal-logic:ProjectCentral/now",
+        "returns": "Return the commands run, their results and every failure found",
+        "row": "agent/anima-eros",
+        "rowKind": "agent",
+        "stop": "Stop when the branch cannot be built",
+        "subjectRef": "project:quaternal-logic",
+        "success": [
+         "quote executed results; never infer a pass from a name or a fixture"
+        ]
+       },
+       {
+        "capabilityRefs": [
+         "capability/source-read",
+         "capability/source-write",
+         "capability/test-execution"
+        ],
+        "concern": "Find the organising cause of any verification failure and repair it at its owner",
+        "dependencies": [
+         "eros-verify"
+        ],
+        "escalate": "Escalate a defect whose repair belongs to another owner",
+        "heads": {
+         "CF": "CF4",
+         "CFP": "CFP2",
+         "CP": "4.3",
+         "CPF": "authorised-undertaking",
+         "CS": "CS3",
+         "CT": "CT3",
+         "direction": "returning"
+        },
+        "key": "mythos-debug",
+        "may": [
+         "write repairs and regression tests on the feature branch"
+        ],
+        "praxisRefs": [
+         "skill/personal/systematic-debugging",
+         "skill/personal/test-driven-development"
+        ],
+        "requiredDifference": "Each failure has a located cause and a repair proven at the level it failed",
+        "returnAddress": "central:source:project:quaternal-logic:ProjectCentral/now",
+        "returns": "Return the causes, the repairs and the re-run evidence, or state that verification found no defect",
+        "row": "agent/anima-mythos",
+        "rowKind": "agent",
+        "stop": "Stop at once when verification returned no failure; return that finding with its evidence",
+        "subjectRef": "project:quaternal-logic",
+        "success": [
+         "never weaken an assertion to turn a failure green"
+        ]
+       },
+       {
+        "capabilityRefs": [
+         "capability/source-read",
+         "capability/git-branch",
+         "capability/pull-request"
+        ],
+        "concern": "Finish the branch: final checks, commit and a pull request ready for review",
+        "dependencies": [
+         "mythos-debug"
+        ],
+        "escalate": "Escalate a protected-branch or permission refusal",
+        "heads": {
+         "CF": "CF7",
+         "CFP": "CFP2",
+         "CP": "4.5",
+         "CPF": "authorised-undertaking",
+         "CS": "CS5",
+         "CT": "CT5",
+         "direction": "returning"
+        },
+        "key": "sophia-finish",
+        "may": [
+         "commit on the feature branch",
+         "open a pull request; never merge"
+        ],
+        "praxisRefs": [
+         "skill/personal/finishing-a-development-branch",
+         "skill/personal/verification-before-completion"
+        ],
+        "requiredDifference": "A reviewable pull request with its checks and an honest description",
+        "returnAddress": "central:source:project:quaternal-logic:ProjectCentral/now",
+        "returns": "Return the pull request ref, the final check results and any open item with its reason",
+        "row": "agent/anima-sophia",
+        "rowKind": "agent",
+        "stop": "Stop before merging; merge is the owner's review decision",
+        "subjectRef": "project:quaternal-logic",
+        "success": [
+         "the final check results are from the pushed head"
+        ]
+       },
+       {
+        "capabilityRefs": [
+         "capability/now-return",
+         "capability/wiki-return"
+        ],
+        "concern": "Return what the development taught through the NOW field and the wiki return door",
+        "dependencies": [
+         "sophia-finish"
+        ],
+        "escalate": "Never edit wiki.json directly; escalate promotion decisions to the wiki owner",
+        "heads": {
+         "CF": "CF7",
+         "CFP": "CFP0",
+         "CP": "4.5",
+         "CPF": "authorised-undertaking",
+         "CS": "CS5",
+         "CT": "CT4b'",
+         "direction": "returning"
+        },
+        "key": "aletheia-knowledge-return",
+        "may": [
+         "write one attributed Return to the project NOW field",
+         "propose a wiki promotion through NOW"
+        ],
+        "praxisRefs": [
+         "skill/ql/aletheia-stack-traverse",
+         "skill/ql/thought-distil"
+        ],
+        "requiredDifference": "Durable learning leaves the session as an attributed Return pointing at its evidence",
+        "returnAddress": "central:source:project:quaternal-logic:ProjectCentral/now",
+        "returns": "Return the NOW Return ref and any wiki promotion it proposes, each with its lineage",
+        "row": "agent/aletheia",
+        "rowKind": "agent",
+        "stop": "Stop when nothing durable was learned; a routine record is enough",
+        "subjectRef": "project:quaternal-logic",
+        "success": [
+         "the Return points at the pull request and its evidence, not a paraphrase"
+        ]
+       }
+      ],
+      "workflowKey": "development-and-knowledge"
+     },
+     "selection": {
+      "rows": null,
+      "units": null
+     },
+     "set": {
+      "byteRevision": "blake3:c1948266221eb61631b61cccac47f4c0380bd06139afbfe7f0f896c43c11210a",
+      "entry": "development-and-knowledge.workflow.ts",
+      "semanticDigest": "ae25c1dd8537209beba0de69fba6b47914b2f1103ff2c3c0337e21e03612cc8a",
+      "sourceRef": "workflow-source:01M399B6B0R8CJY3Y2RTG5EPWS",
+      "sourceRevision": "development-and-knowledge-v1",
+      "workflowKey": "development-and-knowledge"
+     }
+    },
+    "clipRef": "factory-song:song-maker/release-check",
+    "importedFrom": null,
+    "moved": true,
+    "name": "release-check",
+    "path": "/walk/maker/.factory/songs/release-check.song.json",
+    "render": {
+     "by": "factory workflow export",
+     "previousByteRevision": null,
+     "renders": 1
+    },
+    "rows": 6,
+    "selection": {
+     "rows": null,
+     "units": null
+    },
+    "set": {
+     "byteRevision": "blake3:c1948266221eb61631b61cccac47f4c0380bd06139afbfe7f0f896c43c11210a",
+     "entry": "development-and-knowledge.workflow.ts",
+     "semanticDigest": "ae25c1dd8537209beba0de69fba6b47914b2f1103ff2c3c0337e21e03612cc8a",
+     "sourceRef": "workflow-source:01M399B6B0R8CJY3Y2RTG5EPWS",
+     "sourceRevision": "development-and-knowledge-v1",
+     "workflowKey": "development-and-knowledge"
+    },
+    "standing": "moved",
+    "units": 6,
+    "why": "The set has moved since the clip was rendered (it is blake3:64ea27daf640c662fe120a5ddb6f1d511f60df956bba232a2384f5f4f798a318 now, the clip was made at blake3:c1948266221eb61631b61cccac47f4c0380bd06139afbfe7f0f896c43c11210a): Remake makes it again from the set as it now stands."
+   }
+  ]
+ },
+ "songs_taker": {
+  "contract": "factory.song-clips/v1",
+  "execution": "not-requested",
+  "projectKey": "song-taker",
+  "projectRef": "project:0000000000DSB43SP3PYECADPW",
+  "projectRoot": "/walk/taker",
+  "songs": [
+   {
+    "clip": {
+     "clipRef": "factory-song:song-taker/release-check",
+     "contract": "factory.song-clip/v1",
+     "execution": "not-requested",
+     "importedFrom": {
+      "clipRef": "factory-song:song-maker/release-check",
+      "path": "/walk/maker/.factory/songs/release-check.song.json",
+      "project": {
+       "projectKey": "song-maker",
+       "projectRef": "project:0000000000T50A0ZS7DGMMMJ57"
+      }
+     },
+     "name": "release-check",
+     "project": {
+      "projectKey": "song-maker",
+      "projectRef": "project:0000000000T50A0ZS7DGMMMJ57"
+     },
+     "render": {
+      "by": "factory workflow export",
+      "previousByteRevision": null,
+      "renders": 1
+     },
+     "score": {
+      "cut": [],
+      "joins": [],
+      "rows": [
+       {
+        "kind": "agent",
+        "ref": "agent/anima-logos"
+       },
+       {
+        "kind": "agent",
+        "ref": "agent/anima-techne-helper"
+       },
+       {
+        "kind": "agent",
+        "ref": "agent/anima-eros"
+       },
+       {
+        "kind": "agent",
+        "ref": "agent/anima-mythos"
+       },
+       {
+        "kind": "agent",
+        "ref": "agent/anima-sophia"
+       },
+       {
+        "kind": "agent",
+        "ref": "agent/aletheia"
+       }
+      ],
+      "units": [
+       {
+        "capabilityRefs": [
+         "capability/source-read"
+        ],
+        "concern": "Scope the change and write the plan it will be built from",
+        "dependencies": [],
+        "escalate": "Escalate scope that crosses another repository's ownership",
+        "heads": {
+         "CF": "CF2",
+         "CFP": "CFP2",
+         "CP": "4.1",
+         "CPF": "dialogical",
+         "CS": "CS2",
+         "CT": "CT1",
+         "direction": "forward"
+        },
+        "key": "logos-scope-plan",
+        "may": [
+         "read the repository and its governing documents"
+        ],
+        "praxisRefs": [
+         "skill/personal/brainstorming",
+         "skill/personal/writing-plans"
+        ],
+        "requiredDifference": "A bounded plan: files, behaviour, tests and the checks the repository already runs",
+        "returnAddress": "central:source:project:quaternal-logic:ProjectCentral/now",
+        "returns": "Return the plan with its scope boundary and the exact verification it will need",
+        "row": "agent/anima-logos",
+        "rowKind": "agent",
+        "stop": "Stop when the request needs an owner decision before it can be scoped",
+        "subjectRef": "project:quaternal-logic",
+        "success": [
+         "the plan cites the repository's own gates"
+        ]
+       },
+       {
+        "capabilityRefs": [
+         "capability/source-read",
+         "capability/source-write",
+         "capability/test-execution"
+        ],
+        "concern": "Implement the plan test-first in the repository",
+        "dependencies": [
+         "logos-scope-plan"
+        ],
+        "escalate": "Escalate any change to protected or authored ground",
+        "heads": {
+         "CF": "CF5",
+         "CFP": "CFP2",
+         "CP": "4.2",
+         "CPF": "authorised-undertaking",
+         "CS": "CS2",
+         "CT": "CT2",
+         "direction": "forward"
+        },
+        "key": "techne-implement",
+        "may": [
+         "write source and tests on a feature branch",
+         "run the repository's local checks"
+        ],
+        "praxisRefs": [
+         "skill/personal/test-driven-development",
+         "skill/personal/executing-plans",
+         "skill/personal/subagent-driven-development"
+        ],
+        "requiredDifference": "The planned behaviour exists with tests that fail without it",
+        "returnAddress": "central:source:project:quaternal-logic:ProjectCentral/now",
+        "returns": "Return the branch, the changed files and the test evidence",
+        "row": "agent/anima-techne-helper",
+        "rowKind": "agent",
+        "stop": "Stop when the plan cannot be implemented without widening scope",
+        "subjectRef": "project:quaternal-logic",
+        "success": [
+         "run the tests named in the plan and quote their results"
+        ]
+       },
+       {
+        "capabilityRefs": [
+         "capability/source-read",
+         "capability/test-execution"
+        ],
+        "concern": "Verify the implementation against the plan with the repository's real gates",
+        "dependencies": [
+         "techne-implement"
+        ],
+        "escalate": "Escalate a gate that cannot be run in the available environment",
+        "heads": {
+         "CF": "CF3",
+         "CFP": "CFP2",
+         "CP": "4.2",
+         "CPF": "dialogical",
+         "CS": "CS2",
+         "CT": "CT2",
+         "direction": "returning"
+        },
+        "key": "eros-verify",
+        "may": [
+         "run tests, format and lint checks",
+         "read the branch"
+        ],
+        "praxisRefs": [
+         "skill/personal/verification-before-completion",
+         "skill/ql/vak-evaluate"
+        ],
+        "requiredDifference": "Executed evidence says whether the change does what the plan required",
+        "returnAddress": "central:source:project:quaternal-logic:ProjectCentral/now",
+        "returns": "Return the commands run, their results and every failure found",
+        "row": "agent/anima-eros",
+        "rowKind": "agent",
+        "stop": "Stop when the branch cannot be built",
+        "subjectRef": "project:quaternal-logic",
+        "success": [
+         "quote executed results; never infer a pass from a name or a fixture"
+        ]
+       },
+       {
+        "capabilityRefs": [
+         "capability/source-read",
+         "capability/source-write",
+         "capability/test-execution"
+        ],
+        "concern": "Find the organising cause of any verification failure and repair it at its owner",
+        "dependencies": [
+         "eros-verify"
+        ],
+        "escalate": "Escalate a defect whose repair belongs to another owner",
+        "heads": {
+         "CF": "CF4",
+         "CFP": "CFP2",
+         "CP": "4.3",
+         "CPF": "authorised-undertaking",
+         "CS": "CS3",
+         "CT": "CT3",
+         "direction": "returning"
+        },
+        "key": "mythos-debug",
+        "may": [
+         "write repairs and regression tests on the feature branch"
+        ],
+        "praxisRefs": [
+         "skill/personal/systematic-debugging",
+         "skill/personal/test-driven-development"
+        ],
+        "requiredDifference": "Each failure has a located cause and a repair proven at the level it failed",
+        "returnAddress": "central:source:project:quaternal-logic:ProjectCentral/now",
+        "returns": "Return the causes, the repairs and the re-run evidence, or state that verification found no defect",
+        "row": "agent/anima-mythos",
+        "rowKind": "agent",
+        "stop": "Stop at once when verification returned no failure; return that finding with its evidence",
+        "subjectRef": "project:quaternal-logic",
+        "success": [
+         "never weaken an assertion to turn a failure green"
+        ]
+       },
+       {
+        "capabilityRefs": [
+         "capability/source-read",
+         "capability/git-branch",
+         "capability/pull-request"
+        ],
+        "concern": "Finish the branch: final checks, commit and a pull request ready for review",
+        "dependencies": [
+         "mythos-debug"
+        ],
+        "escalate": "Escalate a protected-branch or permission refusal",
+        "heads": {
+         "CF": "CF7",
+         "CFP": "CFP2",
+         "CP": "4.5",
+         "CPF": "authorised-undertaking",
+         "CS": "CS5",
+         "CT": "CT5",
+         "direction": "returning"
+        },
+        "key": "sophia-finish",
+        "may": [
+         "commit on the feature branch",
+         "open a pull request; never merge"
+        ],
+        "praxisRefs": [
+         "skill/personal/finishing-a-development-branch",
+         "skill/personal/verification-before-completion"
+        ],
+        "requiredDifference": "A reviewable pull request with its checks and an honest description",
+        "returnAddress": "central:source:project:quaternal-logic:ProjectCentral/now",
+        "returns": "Return the pull request ref, the final check results and any open item with its reason",
+        "row": "agent/anima-sophia",
+        "rowKind": "agent",
+        "stop": "Stop before merging; merge is the owner's review decision",
+        "subjectRef": "project:quaternal-logic",
+        "success": [
+         "the final check results are from the pushed head"
+        ]
+       },
+       {
+        "capabilityRefs": [
+         "capability/now-return",
+         "capability/wiki-return"
+        ],
+        "concern": "Return what the development taught through the NOW field and the wiki return door",
+        "dependencies": [
+         "sophia-finish"
+        ],
+        "escalate": "Never edit wiki.json directly; escalate promotion decisions to the wiki owner",
+        "heads": {
+         "CF": "CF7",
+         "CFP": "CFP0",
+         "CP": "4.5",
+         "CPF": "authorised-undertaking",
+         "CS": "CS5",
+         "CT": "CT4b'",
+         "direction": "returning"
+        },
+        "key": "aletheia-knowledge-return",
+        "may": [
+         "write one attributed Return to the project NOW field",
+         "propose a wiki promotion through NOW"
+        ],
+        "praxisRefs": [
+         "skill/ql/aletheia-stack-traverse",
+         "skill/ql/thought-distil"
+        ],
+        "requiredDifference": "Durable learning leaves the session as an attributed Return pointing at its evidence",
+        "returnAddress": "central:source:project:quaternal-logic:ProjectCentral/now",
+        "returns": "Return the NOW Return ref and any wiki promotion it proposes, each with its lineage",
+        "row": "agent/aletheia",
+        "rowKind": "agent",
+        "stop": "Stop when nothing durable was learned; a routine record is enough",
+        "subjectRef": "project:quaternal-logic",
+        "success": [
+         "the Return points at the pull request and its evidence, not a paraphrase"
+        ]
+       }
+      ],
+      "workflowKey": "development-and-knowledge"
+     },
+     "selection": {
+      "rows": null,
+      "units": null
+     },
+     "set": {
+      "byteRevision": "blake3:c1948266221eb61631b61cccac47f4c0380bd06139afbfe7f0f896c43c11210a",
+      "entry": "development-and-knowledge.workflow.ts",
+      "semanticDigest": "ae25c1dd8537209beba0de69fba6b47914b2f1103ff2c3c0337e21e03612cc8a",
+      "sourceRef": "workflow-source:01M399B6B0R8CJY3Y2RTG5EPWS",
+      "sourceRevision": "development-and-knowledge-v1",
+      "workflowKey": "development-and-knowledge"
+     }
+    },
+    "clipRef": "factory-song:song-taker/release-check",
+    "importedFrom": {
+     "clipRef": "factory-song:song-maker/release-check",
+     "path": "/walk/maker/.factory/songs/release-check.song.json",
+     "project": {
+      "projectKey": "song-maker",
+      "projectRef": "project:0000000000T50A0ZS7DGMMMJ57"
+     }
+    },
+    "moved": false,
+    "name": "release-check",
+    "path": "/walk/taker/.factory/songs/release-check.song.json",
+    "render": {
+     "by": "factory workflow export",
+     "previousByteRevision": null,
+     "renders": 1
+    },
+    "rows": 6,
+    "selection": {
+     "rows": null,
+     "units": null
+    },
+    "set": {
+     "byteRevision": "blake3:c1948266221eb61631b61cccac47f4c0380bd06139afbfe7f0f896c43c11210a",
+     "entry": "development-and-knowledge.workflow.ts",
+     "semanticDigest": "ae25c1dd8537209beba0de69fba6b47914b2f1103ff2c3c0337e21e03612cc8a",
+     "sourceRef": "workflow-source:01M399B6B0R8CJY3Y2RTG5EPWS",
+     "sourceRevision": "development-and-knowledge-v1",
+     "workflowKey": "development-and-knowledge"
+    },
+    "standing": "imported",
+    "units": 6,
+    "why": "An import of factory-song:song-maker/release-check: it keeps where it came from."
+   }
+  ]
+ }
+}

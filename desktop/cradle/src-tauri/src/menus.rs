@@ -111,9 +111,13 @@ pub fn install(app: &AppHandle, arrangements: &[Arrangement], active: &str) -> t
     // Export Audio, in the File menu as in Live (manual §21.1: "choose Export Audio/Video… in the File menu, as in Live"; Live's ⇧⌘R): what the engine
     // played, into the file the person chooses in the host's save dialog (live_engine_host.rs). There is no video to export.
     let export_audio = item(EXPORT_AUDIO, "Export Audio…", Some("CmdOrCtrl+Shift+R"))?;
+    // Export Song…, in the File menu (manual §10.9: "File has … each mode's export, such as Export Song… in Factory (§19.1)"): the
+    // selected task's song made one clip by Software Factory (`factory workflow export`); Factory's Clip view answers it in the page
+    // (packages/live-shell/ui/src/agent/clipBinding.ts), and in another mode the status bar says nothing here answers it.
     let file = SubmenuBuilder::new(app, "File")
         .item(&export_audio)
         .item(&export)
+        .item(&item("file.export.song", "Export Song…", None)?)
         .build()?;
     // One item to a line, as the menu reads: the shell's keys line reads each item's key from it
     // (packages/live-shell/ui/tests/e820-search-line.test.mjs), so rustfmt leaves the View menu as written.
@@ -281,6 +285,7 @@ mod tests {
             "file.export.json",
             "file.export.html",
             "file.export.native",
+            "file.export.song",
         ] {
             assert!(is_command(id), "{id} is routed as oi:command");
         }

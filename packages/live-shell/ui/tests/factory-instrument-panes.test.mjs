@@ -232,7 +232,8 @@ test('Factory opens with the agent tab focused, and every agent-shell chrome pie
   }
   // The agent browser's rows are Factory's in the one browser (F6): registered, never a residence of their own.
   const modeBrowsers = await readFile(new URL('../src/shell/modeBrowsers.tsx', import.meta.url), 'utf8')
-  assert.match(modeBrowsers, /factory: \(\) => \[AGENTS\]/); assert.match(modeBrowsers, /<AgentShellBrowser rows=/)
+  // REPLACED (O-I 844): `factory: () => [AGENTS]` — Factory's Material now also holds its songs made into clips (manual §10.3; tests/factory-songs-844.test.mjs).
+  assert.match(modeBrowsers, /factory: \(\) => \[AGENTS, SONGS\]/); assert.match(modeBrowsers, /<AgentShellBrowser rows=/)
   assert.ok(app.includes('<Browser key={frameMode} sources={browserSources}'), 'App mounts the one browser')
   // Factory's detail bodies are their own module, registered by the table and loaded with Factory (shell/details/factory.tsx; O-I #740).
   assert.match(modeDetails, /import\('\.\/details\/factory'\)\.then\(module => module\.FactoryClip\)/)

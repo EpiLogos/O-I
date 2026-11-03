@@ -65,11 +65,14 @@ test('down the left side: Collections first, the four kinds, then Places', () =>
   assert.match(markup, /data-browser-kind="collection".*data-browser-kind="material".*data-browser-kind="place"/s, 'Collections lead, Places close the column')
 })
 
-test('every mode stands on your Collections and on the four Places, each reading its owner', () => {
+// REPLACED (O-I #844): the four places — the manual's Places table now ends on Packs ("What you installed together: racks with their
+// agents on their chains, songs, and the practice they carry"), which no owner lists yet (tests/factory-songs-844.test.mjs).
+test('every mode stands on your Collections and on the five Places, each reading its owner', () => {
   for (const mode of SURF_MODES) {
     const categories = browserSourcesOf(mode).flatMap(source => source.categories.map(category => ({...category, source: source.id})))
     assert.deepEqual(categories.filter(c => c.kind === 'place').map(c => [c.source, c.id, c.label]),
-      [['places', 'you', 'You'], ['places', 'agents', 'Agents'], ['places', 'machines', 'Machines'], ['places', 'work', 'Work']], `${mode}: the four places`)
+      [['places', 'you', 'You'], ['places', 'agents', 'Agents'], ['places', 'machines', 'Machines'], ['places', 'work', 'Work'], ['places', 'packs', 'Packs']],
+      `${mode}: the five places`)
     assert.ok(categories.some(c => c.kind === 'collection' && c.id === 'favourites' && c.source === 'collections'), `${mode}: Favourites`)
   }
   assert.match(places.PLACES.find(place => place.id === 'work').hint, /Add folder…/)

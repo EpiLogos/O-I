@@ -13,6 +13,9 @@
 //     — from the session's settings on their owner (AIKit `encounter-session-settings`, agent/sessionSettings.ts), every default stated by
 //     the owner, in the manual's words, which are the owner's: read and written as they are, with no table between them.
 // A constellation dropped on a session's track makes the session's task of it (makeTaskOf, the maker the Factory set carries: taskMaker).
+// A song's clip dropped there (Material › Songs, O-I #844) is one unit of the song the session's Run performs, with the thread form canon
+// (songClips.ts dropSong); File › Export Song… makes the selected task's song one clip (songClips.ts exportSong, answered here while
+// Factory's Clip view stands).
 // Every per-task setting writes through its seam in agent/devices/taskBindings.ts TASK_SEAMS, against the settings' standing
 // revision. The Intent panel (§19.1, the design's D3 panel) has no reading a kernel route reaches: its keys stand absent and its writes
 // refused, each with the operation it waits for (INTENT_ABSENT, INTENT_REFUSED). Of the Launch panel, Compare and the takes a Repeat made
@@ -52,6 +55,9 @@ import {useAgentSessionsOptional} from './AgentSessionsProvider'
 import {projectOfSession, ROOT_REGISTER} from './worldScope'
 import {eventsForSession, trackKey, type AgentSessionTrack, type TaskClip, type TemporalEventLike} from './agentRunModel'
 import {TASK_SEAMS, type TaskAddress, type TaskSeamContext, type TaskSetting} from './devices/taskBindings'
+import {MENU_ACT} from '../native/openStudio'
+import {sayOnInfoLine} from '../frame/devices/deviceHost'
+import {dropSong, exportSong, SONG_CLIP_DRAG, songOfPayload} from './songClips'
 import {clipValuesOfSettings, settingsRefusal, SETTINGS_RESULT} from './sessionSettings'
 
 /** The register a session's settings are read in: the one its world-wide agency read listed it in (AgentSessionsProvider.tsx rows,
@@ -528,6 +534,19 @@ export function useFactoryClip(): ClipBinding | null {
   const chosen = factoryTaskOf(selected.ref, factory.tracks)
   const rack = useMemo(() => rackRowsOf(chosen?.track ?? null, factory.tracks), [chosen?.track, factory.tracks])
   const scored = useScore(transport, target, rack, sessionRef)
+  // File › Export Song… (menus.rs `file.export.song`; App.tsx hands it to the mode that stands as MENU_ACT): the song the selected task's
+  // Run performs, made one clip by Factory; its answer, or its refusal, on the Info line.
+  const exported = useRef<() => Promise<WorldActionReceipt>>(async () => ({ok: false, error: ''}))
+  exported.current = () => exportSong(transport, sessions && sessionRef ? scored.reading : null)
+  useEffect(() => {
+    const act = (event: Event) => {
+      if ((event as CustomEvent<{id?: unknown}>).detail?.id !== 'file.export.song') return
+      event.preventDefault()
+      void exported.current().then(answer => sayOnInfoLine(document.body, 'Export Song…', answer.ok ? answer.note ?? 'The song is one clip.' : answer.error))
+    }
+    window.addEventListener(MENU_ACT, act)
+    return () => window.removeEventListener(MENU_ACT, act)
+  }, [])
   const held = useRef<PaneHold>({workspace: null, book: null})
   held.current = {workspace: useContext(Workspace), book: useOptionalContinuity()}
   const returned = useMemo<ReturnedPort | null>(() => sessions && sessionRef ? {reading: files, open: file => openReturnedFile(file, {
@@ -616,19 +635,28 @@ type Maker = NonNullable<WorldTrackActions['makeClip']>
 
 /** The maker the Factory set carries (frame/tracks/useFactoryTracks.ts; frame/tracks/clipMakers.ts withClipMaker): a constellation dropped
  * on a session's track makes that session's task of it (makeTaskOf), or, on a session that holds none, a new task of it that AIKit completes
- * from the session's standing (makeNewTaskOf). A drop on another track, or of a ref the wiki's reading does not hold, is refused in words. */
+ * from the session's standing (makeNewTaskOf). A song's clip dropped there (its row's drag, SONG_CLIP_DRAG, taken as the maker's
+ * `alsoAccepts` where the tracks take more than one drag: tracks-844.patch) is one unit of the song the session's Run performs, with the
+ * thread form canon, given to the track's agent (songClips.ts dropSong). A drop on another track, or of a ref the wiki's reading does not
+ * hold, is refused in words. */
 export function taskMaker(transport: KernelTransportStatus, tracks: readonly AgentSessionTrack[],
-  named: (ref: string) => Constellation | null = ref => constellationNamed(constellationsNow().rows, ref)): Maker {
-  return {accepts: CONSTELLATION_DRAG,
+  named: (ref: string) => Constellation | null = ref => constellationNamed(constellationsNow().rows, ref),
+  songs: typeof dropSong = dropSong): Maker {
+  const maker = {accepts: CONSTELLATION_DRAG, alsoAccepts: [SONG_CLIP_DRAG] as readonly string[],
     op: 'AIKit encounter-session-settings: the session\'s task takes the constellation as its source (task.source); on a session that holds '
       + 'none, AIKit encounter-task-configure makes a new task of its purpose and source, the rest from the session\'s standing; its source read '
-      + 'back from AIKit',
+      + 'back from AIKit. A song\'s clip: Factory workflow edit canon on the song the session\'s Run performs',
     run: async (trackId: string, payload: string): Promise<WorldActionReceipt> => {
       const track = tracks.find(item => trackKey(item) === trackId && !item.group)
-      if (!track) return {ok: false, error: 'Only a session\'s track makes a task of a constellation: drop it on a session.'}
+      const song = songOfPayload(payload)
+      if (!track) return {ok: false, error: song ? 'Only a session\'s track takes a song\'s clip: drop it on a session, whose Run\'s song it joins.'
+        : 'Only a session\'s track makes a task of a constellation: drop it on a session.'}
+      const label = track.agentName ?? track.purpose ?? track.sessionRef
+      if (song) return songs(transport, {sessionRef: track.sessionRef, label, agentRef: track.agentRef ?? null, project: track.project ?? ROOT_REGISTER}, song)
       const ref = payload.trim()
       const found = named(ref)
       if (!found) return {ok: false, error: `${ref} is no constellation the wiki's reading holds now.`}
-      return makeTaskOf(transport, {sessionRef: track.sessionRef, label: track.agentName ?? track.purpose ?? track.sessionRef}, found, track.project ?? ROOT_REGISTER)
+      return makeTaskOf(transport, {sessionRef: track.sessionRef, label}, found, track.project ?? ROOT_REGISTER)
     }}
+  return maker
 }

@@ -424,8 +424,9 @@ export type AikitReadRequest =
    * `{declared_in, laws:[{path, law}], unreadable:[{path, error}]}`, asked in the named world's ground (else the root's). */
   | {kind:"reflection-laws";project?:string|null};
 export type AikitWriteRequest =
-  /** `aikit capture TITLE` with the body on stdin; `capture_kind` is the owner's `--kind`. */
-  | {kind:"capture";project?:string|null;title:string;body:string;capture_kind?:string|null;export?:string[];scope?:string|null;source_ref?:string|null;by?:string|null}
+  /** `aikit capture TITLE` with the body on stdin; `capture_kind` is the owner's `--kind`. With `from_song` (O-I #844) the body is a
+   * Software Factory song's clip and AIKit writes a Method from it (`--from-song`). */
+  | {kind:"capture";project?:string|null;title:string;body:string;capture_kind?:string|null;export?:string[];scope?:string|null;source_ref?:string|null;by?:string|null;from_song?:boolean}
   | {kind:"promote";project?:string|null;candidate:string;id?:string|null}
   | {kind:"trust-record";project?:string|null;capability:string;source?:string|null;note?:string|null}
   | {kind:"method-run";project?:string|null;method:string;input?:unknown;confirm?:boolean}

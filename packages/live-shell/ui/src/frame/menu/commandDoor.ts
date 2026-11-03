@@ -15,6 +15,8 @@ export const MENU_COMMANDS = {
   'view.present': 'Present', 'view.grid': 'Grid', 'view.snap': 'Snap', 'view.guides': 'Guides', 'view.flat': '2D', 'view.depth': '3D', 'view.face-plane': 'Face Plane',
   'file.export.picture': 'Export Picture…', 'file.export.film': 'Export Film', 'file.export.json': 'Export Expression JSON',
   'file.export.html': 'Export Living HTML', 'file.export.native': 'Export Native Configuration',
+  // Factory's (manual §19.1 Songs, O-I #844): the selected task's song made one clip; Factory's Clip view answers it (agent/clipBinding.ts).
+  'file.export.song': 'Export Song…',
 } as const
 export type MenuCommand = keyof typeof MENU_COMMANDS
 

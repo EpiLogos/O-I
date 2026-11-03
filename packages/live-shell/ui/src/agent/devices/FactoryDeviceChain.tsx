@@ -117,6 +117,7 @@ import type {AikitWriteRequest, KernelOp} from '../../../../../../desktop/cradle
 import {kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import {DECISION_HELPER_ID, decisionHelperBinding, decisionHelperDevice} from './decisionHelperBinding'
 import {captureSkillBinding, type CaptureSkillPorts} from './captureSkillBinding'
+import {useSongClipFocus} from '../songClips'
 import {RUN_MAP_DESIGN, RUN_MAP_ID, runMapBinding, runMapDevice} from './runMapBinding'
 import {PROMPT_PADS_DESIGN, PROMPT_PADS_ID, padsLocation, promptPadsBinding, promptPadsDevice, type PromptPadsPorts} from './promptPadsBinding'
 import {useDecisionHelperReadings} from './decisionHelperReads'
@@ -388,14 +389,20 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const sessionChain = sessionRef != null && cellName == null
   // The Skillset rack's Capture page (§19.11, lane W7; Capture skill was retired into it in the 22 Oct manual rewrite): on the armed
   // track's chain — the selected session's, never a group's. It reads the proposal that waits in AIKit's inbox and writes Accept through
-  // aikit_write promote.
+  // aikit_write promote; Source › A clip captures the song's clip selected under Material › Songs through aikit_write capture with
+  // from_song (`aikit capture --from-song`, the Songs issue of O-I), filed in this register's inbox for the person to accept.
   const captureOn = sessionChain && !groupTrack
   const captureInboxRead = useMemo(() => captureInboxOp(register), [register])
   const captureInbox = useOwnerOp(transport, captureOn ? captureInboxRead : null, 'owner_route_reading').reading
+  const captureSong = useSongClipFocus()
   const capturePorts = useMemo((): CaptureSkillPorts => (transport.kind !== 'unavailable'
-    ? {promote: (candidate, id) => ownerRouteWrite(transport, aikitWriteOp({kind: 'promote', project: register, candidate, ...(id ? {id} : {})}), '`aikit promote`')} : {}), [transport, register])
+    ? {promote: (candidate, id) => ownerRouteWrite(transport, aikitWriteOp({kind: 'promote', project: register, candidate, ...(id ? {id} : {})}), '`aikit promote`'),
+      capture: ({title, body, scope, sourceRef}) => {
+        return ownerRouteWrite(transport, aikitWriteOp({kind: 'capture', project: register, title, body, scope, source_ref: sourceRef, by: 'human', from_song: true}),
+          '`aikit capture --from-song`')
+      }} : {}), [transport, register])
   const captureDesignBinding = useMemo(() => captureSkillBinding({inbox: {status: captureInbox.status, value: captureInbox.value?.data ?? null, error: captureInbox.error},
-    holds}, capturePorts), [captureInbox, holds, capturePorts])
+    holds, song: captureSong}, capturePorts), [captureInbox, holds, captureSong, capturePorts])
   // The seat instrument (lane K1's seat_status_read: slow, read once while a session's or a workcell's chain stands, and on demand): the
   // workcell's seats, the Seat, Git / landing on a workcell's chain, and the Workcells tile.
   const seats = useSeatStatusAnswer(transport, sessionRef != null || cellName != null).reading

@@ -7,6 +7,7 @@
 //   - Machines: Workcell's status for this machine (workcell_status_read, owners/readers.ts useWorkcellAnswer) and the machines Workcell
 //     declares (workcell_read machine-list);
 //   - Work: Central's Work projects (world_browse), and Add folder… (Setup's Projects step for a folder, §10.11).
+//   - Packs: no owner lists what was installed together (places.ts PACKS_WAIT): the place stands refused, naming the read it waits for.
 // A press selects a row and its preview stands at the foot of the list, with Live's seven colours to put it in a collection
 // (CollectionRows.tsx CollectStrip). A double-click brings a world into today (the Worlds rows' own seat) or opens a Day (placeActs.ts
 // openPlaceRow). A row drags onto the target the manual names for it (placeActs.ts placeRowDrag): a world onto the empty track, an agent
@@ -32,7 +33,7 @@ import type {ControlledBrowser} from './browserKinds'
 import {CollectStrip} from './CollectionRows'
 import {endPlaceDrag, openPlaceRow, placeRowDrag, startPlaceDrag} from './placeActs'
 import {
-  agentRows, dayRows, declaredMachineRows, harnessRows, identityRows, matching, thisMachineRows, workRows, yourWorldRow, type PlaceId, type PlaceRow,
+  agentRows, dayRows, declaredMachineRows, harnessRows, identityRows, matching, PACKS_WAIT, thisMachineRows, workRows, yourWorldRow, type PlaceId, type PlaceRow,
 } from './places'
 
 /** Central's root disclosure (your world and your Work), held once for the window. */
@@ -90,7 +91,13 @@ function useWorkParts(transport: KernelTransportStatus): Part[] {
   return [partOf(useRoot(transport), 'Central did not disclose your Work.', workRows, 'Reading your Work…')]
 }
 
-const PARTS: Readonly<Record<PlaceId, (transport: KernelTransportStatus) => Part[]>> = {you: useYouParts, agents: useAgentParts, machines: useMachineParts, work: useWorkParts}
+/** Packs: no owner lists what was installed together, so the place stands refused, naming the read it waits for. */
+function usePackParts(): Part[] {
+  return [{rows: [], refused: {said: PACKS_WAIT.said, error: PACKS_WAIT.waitsFor}}]
+}
+
+const PARTS: Readonly<Record<PlaceId, (transport: KernelTransportStatus) => Part[]>> = {you: useYouParts, agents: useAgentParts, machines: useMachineParts, work: useWorkParts,
+  packs: usePackParts}
 
 const MARKS: Readonly<Record<PlaceRow['kind'], ReactNode>> = {
   world: <KindMark kind="world" size={12} />, day: <KindMark kind="day" size={12} />, identity: <Icon name="bind" size={12} />,
@@ -102,6 +109,7 @@ const MARKS: Readonly<Record<PlaceRow['kind'], ReactNode>> = {
 const EMPTY: Readonly<Record<PlaceId, string>> = {
   you: 'Nothing of yours is disclosed yet.', agents: 'Your roster holds no agent yet, and AIKit reads no harness.',
   machines: 'Workcell names no machine yet.', work: 'Your Work holds no project yet: Add folder… brings one in.',
+  packs: PACKS_WAIT.said,
 }
 
 /** A place's rows under the browser's control: grouped, searchable; a press previews, a double-click seats a world or opens a Day. */
@@ -154,7 +162,7 @@ function PlaceRowsOf({place, controlled, transport}: {place: PlaceId; controlled
 /** The Places' body: the place the browser shows. */
 export function PlaceRows({controlled}: {controlled: ControlledBrowser}) {
   const {transport} = useWorkspace()
-  const place = (['you', 'agents', 'machines', 'work'] as const).find(id => id === controlled.category)
+  const place = (['you', 'agents', 'machines', 'work', 'packs'] as const).find(id => id === controlled.category)
   if (!place) return <p className="browser-empty">This place is not among yours.</p>
   // Each place reads its own owners: keyed by the place, so a change of place starts its reads afresh.
   return <PlaceRowsOf key={place} place={place} controlled={controlled} transport={transport} />
