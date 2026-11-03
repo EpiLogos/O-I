@@ -135,6 +135,8 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, re
   useEffect(() => {
     if (!request) return
     if(request.page==='setup'){setHostPage(SETTINGS_WINDOW_ID,'setup');if(request.folder){hold('setupStep','projects');hold('folder',request.folder);hold('make',undefined);hold('wiki',undefined);hold('where',undefined)}setPageTick(n=>n+1);setSelected(null);setQuery('');return}
+    // A routine opened where it lives (frame/openWhereItLives.ts): Automations lists the routines of its work context, the routine chosen.
+    if(request.page==='automations'&&request.routine){hold('context',request.scope.scope_kind==='project'?request.scope.scope_ref??'':'');hold('show','routines');hold('routine',request.routine)}
     if(request.page){setCategory(request.page==='machines'?'execution':'automations');setOperationScope(request.scope);setSelected(null);setQuery('');return}
     if(!entries.length)return
     const entry = entries.find(e => e.spec.setting_ref === request.setting_ref)

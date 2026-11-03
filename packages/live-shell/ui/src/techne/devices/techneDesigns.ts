@@ -38,6 +38,7 @@ import {graphBinding, readGraphReach, surfaceRead, GRAPH_READ_NODES, type GraphR
 import {useGraphRead} from './graphRead'
 import {lensBinding} from './effectBindings'
 import {canvasCarryingForm, formState, readForm, subscribeForm, FORM_LOCAL, type FormFocus, type FormOwners} from './formBinding'
+import {canvasCarryingFlow, flowSaidState, subscribeFlowSaid, useFlow, FLOW_LOCAL} from './flowBinding'
 import {useConstellationFocus} from '../../frame/browser/constellationFocus'
 import {constellationNamed, useConstellations} from '../../owners/constellations'
 import {getWikiProjectionState, refreshWikiProjectionReading, subscribeWikiProjection, wikiReadingOf}
@@ -197,6 +198,9 @@ export function useTechneDesignBindings({graph, surface}: {graph: boolean; surfa
   const formFocus = useFormFocus()
   const form = useSyncExternalStore(subscribeForm, formState, formState)
   const promotion = useSyncExternalStore(subscribePromotion, promotionState, promotionState)
+  // The Canvas's Flow page: Factory's workflow, read while the page is open (flowBinding.ts), and Factory's word on the last Promote.
+  const flow = useFlow(holds[CANVAS_DESIGN] ?? {})
+  const flowSaid = useSyncExternalStore(subscribeFlowSaid, flowSaidState, flowSaidState)
   // On focus, what the owner declares round the whole: the Form's roles are then the frame's (the browser lists a frame round a space's
   // whole as that whole, on the frame's roles: owners/constellations.ts withFrame).
   const focusedWhole = formFocus?.focus.constellation.ref
@@ -205,7 +209,8 @@ export function useTechneDesignBindings({graph, surface}: {graph: boolean; surfa
     const frame: FrameReadings = {state: hosted?.state ?? null, run: hosted?.run ?? null,
       window: session ? session.time_window ? {from: session.time_window.from, to: session.time_window.to} : null : undefined}
     const formOwners = formFocus ? kernelFormOwners(detectTransport(), formFocus.register) : null
-    const canvas = canvasBinding(frame, heldFor(CANVAS_DESIGN), PROMOTER, promotion)
+    const canvas = canvasCarryingFlow(canvasBinding(frame, heldFor(CANVAS_DESIGN), PROMOTER, promotion), flow, heldFor(CANVAS_DESIGN),
+      handsFor(CANVAS_DESIGN, FLOW_LOCAL), flowSaid)
     return {
       [PALACE_DESIGN]: palaceBinding(palace, heldFor(PALACE_DESIGN), SESSION_ACTS, palaceWorld),
       [CANVAS_DESIGN]: formOwners ? canvasCarryingForm(canvas, formFocus!.focus, heldFor(CANVAS_DESIGN), handsFor(CANVAS_DESIGN, FORM_LOCAL), formOwners, form)
@@ -214,7 +219,7 @@ export function useTechneDesignBindings({graph, surface}: {graph: boolean; surfa
       [LENS_DESIGN]: lensBinding(lensLists, heldFor(LENS_DESIGN), lensPane),
       [GRAPH_DESIGN]: graphBinding(surface, read, GRAPH_WRITES, heldFor(GRAPH_DESIGN), plan, reach),
     }
-  }, [palace, palaceWorld, holds, hosted, session, read, surface, plan, lensLists, lensPane, reach, formFocus, form, promotion])
+  }, [palace, palaceWorld, holds, hosted, session, read, surface, plan, lensLists, lensPane, reach, formFocus, form, promotion, flow, flowSaid])
 }
 
 /** Promote's owner: the constellation's relate act over the line's two occurrences, through the kernel (frameBindings.ts CanvasPromoter). */

@@ -59,6 +59,7 @@ const palaceB = await import('../src/techne/devices/palaceBinding.ts')
 const graphB = await import('../src/techne/devices/graphBinding.ts')
 const graphRead = await import('../src/techne/devices/graphRead.ts')
 const frameB = await import('../src/techne/devices/frameBindings.ts')
+const flowB = await import('../src/techne/devices/flowBinding.ts')
 const effects = await import('../src/techne/devices/effectBindings.ts')
 const chain = await import('../src/inhabitants/ql/devices/TechneDevices.tsx')
 const {InstrumentDeviceDetail} = await import('../src/shell/ModeDetail.tsx')
@@ -742,7 +743,10 @@ test('(b) every key each design reads is an owner reading, absent with a reason,
     ['journey', 'techne__journey.tsx', frameB.journeyBinding(frame('journey')), key => frameB.journeyAbsent(frame('journey'), key)],
     // REPLACED (#725): the Timeline's design was retired (§17.5).
     // REMOVED (owner ruling #716): the Canvas was classified on a binding that carried its Light page; it is classified on its own.
-    ['canvas', 'techne__canvas.tsx', frameB.canvasBinding(frame('canvas')), key => frameB.canvasAbsent(frame('canvas'), key)],
+    // REPLACED (#846): the Canvas is classified as the rack hosts it, its Flow page on Factory (flowBinding.ts canvasCarryingFlow) — here with
+    // the page shut, so its readings and acts stand closed with that reason and its workflow and To are the hand's own.
+    ['canvas', 'techne__canvas.tsx', flowB.canvasCarryingFlow(frameB.canvasBinding(frame('canvas')), null, {}, devices.handsFor(devices.CANVAS_DESIGN, flowB.FLOW_LOCAL)),
+      key => frameB.canvasAbsent(frame('canvas'), key)],
     ['lens', 'techne__lens.tsx', effects.lensBinding(), effects.lensAbsent],
   ]
   const summary = {}

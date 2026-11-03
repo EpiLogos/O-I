@@ -89,6 +89,7 @@ import {worldSubjectOf} from './techne/subject/worldRows'
 import {clampBrowserWidth, clampDetailHeight, clampRailWidth, collapseDetail, drawnSizes, draggedSize, enteredDetailHeight, expandDetail,
   expandedDetailHeight, focusKeyOf, frameToggleOf, keptDetailHeight, RESIZE_STEP, switchesDetailSide, type AreaDrag, type DetailExpansions, type FocusTarget, type FrameToggle} from './shell/workspaceAreas'
 import {DeviceFlipHost} from './frame/devices/DeviceFlip'
+import {useClipHomeDoor} from './frame/openWhereItLives'
 import {liveColour, liveColourIndex} from './live/livePalette'
 registerAtlasHost()
 // The world-shell families (Quaternal Logic, the atlas, the knowledge graph, Central's extensions) are admitted with the frame, as
@@ -661,6 +662,8 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     if (event) centralWorld.selectOccasion(event)
     continuity.select(next)
   }
+  // A thing opened where it lives (frame/openWhereItLives.ts): its mode first, then THE selection and Clip view.
+  useClipHomeDoor(frameMode, chooseMode, selectTrackItem)
   // The widget rail's book: the world's one open set, pins, presets and width (desktop/cradle/src/workspace/store.ts).
   // What the window draws now, read where a resize starts or a part's bound depends on another (the parts' own boxes).
   const shownBox = (selector: string) => document.querySelector(selector)?.getBoundingClientRect()

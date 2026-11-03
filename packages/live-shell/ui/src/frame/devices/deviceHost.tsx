@@ -193,6 +193,10 @@ export function setDraft(id: string, key: string, value: Value | undefined): voi
   })
 }
 
+/** The page a device stands on in every place it is drawn (null before one is turned to), redrawn when it turns: a binding that reads only
+ * for one page asks it (techne/devices/flowBinding.ts reads Factory only while the Canvas stands on its Flow page). */
+export const useHostPage = (id: string): string | null => useHostState(id).page
+
 export function setHostPage(id: string, page: string): void {
   update(id, was => (was.page === page ? was : {...was, page}))
 }
