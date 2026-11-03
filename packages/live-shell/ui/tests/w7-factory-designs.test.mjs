@@ -166,8 +166,12 @@ test('2 · Capture skill is the Skillset rack\'s Capture page on the armed track
   // REPLACED (#772): the retired constructor is gone: the module exports none.
   assert.equal('captureSkillDevice' in capture, false, 'no Capture skill device of its own: no constructor stands')
   for (const key of Object.keys(captureDesign.defaults)) assert.ok(`capture.${key}` in rackDesign.defaults, `the rack carries capture.${key}`)
-  assert.deepEqual(places.chainSlots({kind: 'session', group: false}), ['agent', 'skillset', 'world'])
-  assert.deepEqual(places.chainSlots({kind: 'session', group: true}), ['agentset', 'agent', 'skillset', 'world'])
+  // REPLACED (O-I #842): a session's chain ['agent', 'skillset', 'world'] and a group's ['agentset', 'agent', 'skillset', 'world'] — every
+  // session's chain is §16.2's Factory row around one Agent rack, and the session's own Skillset rack stands inside the rack (RACK_CHAIN),
+  // where its Capture page still rides on the armed (lone) session's chain alone.
+  assert.deepEqual(places.chainSlots({kind: 'session', group: false}), ['gateway', 'remote-carrier', 'agentset', 'world', 'git'])
+  assert.deepEqual(places.chainSlots({kind: 'session', group: true}), ['gateway', 'remote-carrier', 'agentset', 'world', 'git'])
+  assert.ok(places.RACK_CHAIN.includes('skillset'), 'the Skillset rack, inside the lone session\'s rack')
   assert.deepEqual(places.chainSlots({kind: 'main'}), ['approvals'])
   assert.equal(places.SLOT_DEVICE.capture, undefined, 'no Capture plate')
   const view = read('agent/devices/FactoryDeviceChain.tsx')

@@ -176,14 +176,76 @@ export function outputLines(output: unknown): string[] {
 }
 const clock = (ms: number | undefined) => { if (ms === undefined) return undefined; const d = new Date(ms); return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}` }
 
+/** One page cited by an agent's reply, as AIKit's encounter owner records it at the turn's end (ai-kit crates/aikit-cli/src/
+ * encounter_used.rs, a `source-passage-used` journal event, `aikit.encounter-source-used/v1`): the fetch call it ties to, who cited it
+ * (`harness`: an ACP reply chunk naming the page as a resource or a link; `reply`: the reply's text carrying the url whole), and — where
+ * the harness gave the text it took — the quote, whether it stands verbatim on the page, and its spans by line, counted in characters. */
+export interface UsedRecord {
+  readonly toolCallId: string | null; readonly fetchCursor: number | null; readonly url: string | null
+  readonly citedBy: string; readonly citation: string; readonly quote?: string; readonly located?: boolean
+  readonly spans: readonly {readonly line: number; readonly from: number; readonly to: number}[]
+}
+const USED_KIND = 'source-passage-used'
+/** The used records among a session's journal events (the owner's events, read by the one journal reader), in cursor order. Pure. */
+export function usedRecordsOf(events: readonly {readonly cursor: number; readonly event: unknown}[]): UsedRecord[] {
+  return events.flatMap(({event}): UsedRecord[] => {
+    const e = event as Record<string, unknown> | null
+    if (!e || typeof e !== 'object' || e.kind !== USED_KIND) return []
+    const spans = Array.isArray(e.spans) ? e.spans.filter((x): x is {line: number; from: number; to: number} => !!x && typeof x === 'object'
+      && [x.line, x.from, x.to].every(n => Number.isInteger(n))) : []
+    return [{toolCallId: typeof e.tool_call_id === 'string' ? e.tool_call_id : null, fetchCursor: Number.isInteger(e.fetch_cursor) ? e.fetch_cursor as number : null,
+      url: typeof e.url === 'string' ? e.url : null, citedBy: String(e.cited_by ?? ''), citation: String(e.citation ?? ''),
+      ...(typeof e.quote === 'string' ? {quote: e.quote} : {}), ...(typeof e.located === 'boolean' ? {located: e.located} : {}), spans}]
+  })
+}
+/** A count of characters along a line as a string index (the owner counts characters; a string counts UTF-16 units). */
+const unitsOf = (line: string, chars: number) => Array.from(line).slice(0, chars).join('').length
+
 /** The Web binding's pages (widgets__web.tsx `pages`), newest first: each fetched page's address, its title (the tape's object), when,
- * and the text the agent got. `used` — the passages it used — no owner reports, so it stays absent. */
-export interface WebPage {readonly url: string; readonly title: string; readonly at?: string; readonly lines?: readonly string[]}
-export function pagesOf(rows: readonly TapeRow[]): WebPage[] {
+ * and the text the agent got; and, where AIKit recorded that the reply cites it (`used`, usedRecordsOf), `cited` — each citation, by whom,
+ * with its quote — and `used`, the quoted passages as [line, from, to] on the page's lines. A page no record cites carries neither: no
+ * owner ties a passage of the reply to it, and nothing here guesses one from the words. */
+export interface WebCitation {readonly by: string; readonly form: string; readonly quote?: string; readonly located?: boolean}
+export interface WebPage {readonly url: string; readonly title: string; readonly at?: string; readonly lines?: readonly string[]
+  readonly used?: readonly (readonly [number, number, number])[]; readonly cited?: readonly WebCitation[]}
+export function pagesOf(rows: readonly TapeRow[], records: readonly UsedRecord[] = []): WebPage[] {
   return rows.filter(isFetch).map((row): WebPage => {
     const call = row.calls[row.calls.length - 1], at = clock(row.startedAt), lines = outputLines(call?.output)
-    return {url: row.detail ?? row.object, title: row.object, ...(at ? {at} : {}), ...(lines.length ? {lines} : {})}
+    const mine = call ? records.filter(r => (r.toolCallId !== null ? r.toolCallId === call.id : r.fetchCursor === call.firstCursor)) : []
+    const used = mine.flatMap(r => r.spans.filter(s => s.line < lines.length).map((s): [number, number, number] => [s.line, unitsOf(lines[s.line]!, s.from), unitsOf(lines[s.line]!, s.to)]))
+    const cited = mine.map((r): WebCitation => ({by: r.citedBy, form: r.citation, ...(r.quote !== undefined ? {quote: r.quote} : {}), ...(r.located !== undefined ? {located: r.located} : {})}))
+    return {url: row.detail ?? row.object, title: row.object, ...(at ? {at} : {}), ...(lines.length ? {lines} : {}), ...(mine.length ? {used, cited} : {})}
   }).reverse()
+}
+
+/** Files' Blocked (§23.2 "A blocked place stays visible, with its reason"): Central's answer to what the agent may not reach
+ * (`central.files.reach`, central.files-reach/v1: ctrl/src/files_reach.rs) laid on the tree. A file the tape touched that Central withholds
+ * carries Central's words as `blocked`; each withheld place under the seat (`under.withheld`, its `at` relative to Central's ground) joins
+ * the tree as a place the agent did not touch, with its words. Only Central's treatments block (a .no-agent-retrieval marker, a link on
+ * the way): a place outside Central's ground, or one Central could not look at, is no statement that the agent may not reach it. The
+ * paths asked are the tree's as whole paths (reachPathsOf). Pure. */
+export function reachPathsOf(files: readonly Record<string, Value>[], root: string | null): string[] {
+  return files.flatMap(file => { const whole = openFileOf(file.path, root); return whole ? [whole] : [] }).slice(0, 256)
+}
+const BLOCKS = new Set(['deny-marker', 'redirected'])
+export function withReach(files: readonly Record<string, Value>[], reach: unknown, root: string | null): Record<string, Value>[] {
+  const answer = reach as {root?: unknown; places?: unknown; under?: {withheld?: unknown} | null} | null
+  if (!answer || typeof answer !== 'object' || typeof answer.root !== 'string') return [...files]
+  const ground = answer.root.replace(/\/$/, '')
+  const words = new Map<string, string>()
+  for (const place of Array.isArray(answer.places) ? answer.places : []) {
+    const p = place as {path?: unknown; withheld?: {code?: unknown; words?: unknown}}
+    if (typeof p.path === 'string' && BLOCKS.has(String(p.withheld?.code)) && typeof p.withheld?.words === 'string') words.set(p.path, p.withheld.words)
+  }
+  const tree = files.map((file): Record<string, Value> => { const whole = openFileOf(file.path, root), why = whole ? words.get(whole) : undefined; return why ? {...file, blocked: why} : {...file} })
+  const held = new Set(tree.map(file => String(file.path)))
+  for (const place of Array.isArray(answer.under?.withheld) ? answer.under.withheld : []) {
+    const w = place as {at?: unknown; code?: unknown; words?: unknown}
+    if (typeof w.at !== 'string' || typeof w.words !== 'string' || !BLOCKS.has(String(w.code))) continue
+    const path = relative(w.at ? `${ground}/${w.at}` : ground, root)
+    if (!held.has(path)) { held.add(path); tree.push({path, verb: 'none', blocked: w.words}) }
+  }
+  return tree
 }
 
 /** The pages as the design reads them (widgets__wiki.tsx `pages`): each node's ref, title and type, in the wiki's own order. */

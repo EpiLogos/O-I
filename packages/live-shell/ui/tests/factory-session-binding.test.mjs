@@ -200,23 +200,26 @@ test('the two designs draw on their bindings in all five views — no NaN, no un
   host.resetHost()
 })
 
-test('the chain places them where the manual does: Custody on the one Agent, the Run on no chain, the Agentset rack leading a group\'s chain', () => {
+test('the chain places them where the manual does: Custody on the one Agent, the Run on no chain, the Agent rack on every session\'s chain', () => {
   const view = read('agent/devices/FactoryDeviceChain.tsx')
   // REPLACED (R4): Custody stood in the Agent's slot as its own device; it is the one Agent's Custody page (custody.*) now.
   assert.doesNotMatch(view, /placed\(CUSTODY_ID/, 'no Custody device beside the Agent')
   assert.match(view, /composeAgentBinding\(agentDesignBinding, \{custody: custodyDesignBinding/, 'Custody composed onto the Agent')
-  // REPLACED (R4): the Run stood after the landing; the chain is §16.2's (Agent, skills rack, scope — lane W1-Factory) — the Run is
-  // published for the browser's Runs only.
+  // REPLACED (R4): the Run stood after the landing; the chain is §16.2's (the connections, the Agent rack, Scope, Git / landing — O-I #842)
+  // — the Run is published for the browser's Runs only.
   assert.doesNotMatch(view, /placed\(RUN_ID/, 'the Run stands on no chain')
   // REPLACED (ticket 772): "the Run stays published" — its constructor answered null since ticket 725 (Software Factory admits no run-device
   // face), so the door held nothing; constructor and publication are gone. A session's course is its track in Arrangement view (§16.1).
   assert.doesNotMatch(view, /ownDevices\.run|runDesignBinding/, 'no Run is published')
   assert.equal('run' in own.sessionDevices(), false, 'no Run device: no constructor stands')
-  // REPLACED (lane W1-Factory): the chain draws its place's plan (factoryPlaces.ts chainSlots — a group's leads with the Agentset rack).
+  // REPLACED (lane W1-Factory): the chain draws its place's plan (factoryPlaces.ts chainSlots).
   // REPLACED (DLW agency designs): "the rack carries the Helper page on its own binding" (#725, `helper.`) — the manual makes the Decision
   // helper a device of its own, a chain of the rack in place of an Agent (§19.15, §19.20), so the rack stands on its own binding again and
-  // lists the helper among its members while it stands on a group.
-  assert.match(view, /case 'agentset': return placed\(AGENTSET_ID, ownDevices\.agentset, agentsetDesignBinding/, 'the Agentset rack on a group\'s chain (§19.15)')
+  // lists the helper among its chains while it stands on a group.
+  // REPLACED (O-I #842): `case 'agentset': return placed(AGENTSET_ID, …)` on a group's chain alone — the rack plate (rackPlate) stands on
+  // every session's chain, its head the same placed plate, the lone session's own chain inside it (agent-rack-842.test.mjs).
+  assert.match(view, /case 'agentset': return rackPlate\(\)/, 'the Agent rack on every session\'s chain (§19.15)')
+  assert.match(view, /const head = placed\(AGENTSET_ID, ownDevices\.agentset, agentsetDesignBinding/, 'its head on the rack\'s own binding')
   assert.match(view, /\.\.\.\(helperStands && helperDevice \? \{helper: helperDesignBinding\.values\} : \{\}\)/, 'the rack lists the Decision helper among its chains')
   assert.match(view, /const place = factoryPlace\(\{sessionRef, group: !!groupTrack, workcell\}\)/)
   // REPLACED (lane W8): Custody takes the hand's holds, Actuation's authority list and the current person (the Grants page), and its

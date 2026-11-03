@@ -54,3 +54,7 @@
 .factory-main { display: flex; flex: none; gap: 6px; padding-right: 6px; border-right: 1px solid var(--line-strong) }
 .factory-main:empty { display: none }
 
+/* The Agent rack (§19.15, §16.4; O-I ticket 842): its head, then the devices of the chain it holds at full height, then its end bracket. */
+.factory-rack { display: flex; flex: none; min-width: 0; align-items: stretch }
+.factory-rack__chain { display: flex; flex: none; gap: 6px; min-width: 0; padding: 0 6px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--bg-1) }
+.factory-rack__end { width: 7px; flex: none; background: var(--bg-2); border: 1px solid var(--line); border-left: none }

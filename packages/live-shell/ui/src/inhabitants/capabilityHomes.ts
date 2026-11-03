@@ -56,7 +56,7 @@ export const CAPABILITY_HOMES: readonly CapabilityHome[] = [
   {ref: 'cap.suite.participant-addressing', family: CENTRAL, semantic: 'the Flow Participants device'},
   {ref: 'cap.suite.recursive-worlds', family: QUATERNAL_LOGIC_FAMILY_ID, semantic: "Technē's World / Places bodies + the Graph"},
   {ref: 'cap.suite.world-relative-agent-knowledge', family: QUATERNAL_LOGIC_FAMILY_ID, semantic: "Technē's World / Places bodies + the Graph"},
-  {ref: 'cap.suite.agentset-primitive', family: AI_KIT, semantic: 'the Factory Agentset rack'},
+  {ref: 'cap.suite.agentset-primitive', family: AI_KIT, semantic: 'the Factory Agent rack'},
   {ref: 'cap.suite.activity-and-attention', family: SOFTWARE_FACTORY, semantic: 'the Factory Activity tile'},
   {ref: 'cap.software-factory.agent-agency-contract', family: SOFTWARE_FACTORY, semantic: "the Agent device's custody (agent-custody)"},
   {ref: 'cap.suite.workcell-placement-intent', family: WORKCELL, semantic: "the Factory World device's placement (seat)"},

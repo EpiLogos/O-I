@@ -19,9 +19,10 @@ export function softwareFactoryFamilyManifest(): FamilyManifest {
       {id: 'context-write-mode', presentations: statePresentations('software-factory:context-write-mode'), liveSemantic: 'return', invariant: {routesTo: 'shell.setWriteArm'}, note: 'Write receipts and Return on context-world device.'},
       {id: 'ledger', presentations: statePresentations('software-factory:ledger'), liveSemantic: 'track', invariant: {stream: 'the Factory ledger (main-track receipts)'}, note: 'Main-track ledger device and dock tile.'},
       {id: 'approvals', presentations: statePresentations('software-factory:approvals'), liveSemantic: 'return', invariant: {routesTo: 'kernel:harness_agent_control'}, note: 'Default approvals and approval queue tile.'},
-      // The session's crew (DLW §19.15), drawn on its owner by the Factory chain. The Thread, Tasks and Run faces are retired as faces of
-      // their own (22 Oct manual rewrite); their bindings stay for the devices that carry them.
-      {id: 'agentset-rack', presentations: statePresentations('software-factory:agentset-rack'), liveSemantic: 'rack', invariant: {chains: ['agent-session']}, note: 'A group\'s sessions as one unit, one chain for each member (DLW §19.15).'},
+      // The Agent rack (DLW §19.15; O-I #842): on every session's chain, drawn on its owner by the Factory chain; its id stays
+      // `agentset-rack`, which presets and manifests are keyed by. The Thread, Tasks and Run faces are retired as faces of their own (22 Oct
+      // manual rewrite); their bindings stay for the devices that carry them.
+      {id: 'agentset-rack', presentations: statePresentations('software-factory:agentset-rack'), liveSemantic: 'rack', invariant: {chains: ['agent-session']}, note: 'Agent rack: the agency a track may use, one chain for each agent or agent set; a session of one agent has a rack of that one chain (DLW §19.15).'},
       // The Main track's two design-package devices (DLW §16.2 "On the Main track: the Run map, the experiments, Approvals and the
       // prompt pads"), drawn on their bindings (agent/devices/runMapBinding.ts, promptPadsBinding.ts).
       {id: 'run-map', presentations: statePresentations('software-factory:run-map'), liveSemantic: 'device-instrument', invariant: {generatesAbsent: 'The Run map writes through Factory: Recognise and Close need a Run named on the Main track, and the attempt retry and development mutate for ContinueCommission have no kernel route yet (T-COVERAGE §1.2).'}, note: 'Run map (DLW §19.25).'},

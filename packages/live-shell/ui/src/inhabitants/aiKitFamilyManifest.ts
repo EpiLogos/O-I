@@ -20,10 +20,10 @@ export function aiKitFamilyManifest(): FamilyManifest {
       // Sources (DLW §19.9): an effect before the Agent — what the agent reads enters its context before it acts.
       {id: 'sources', presentations: statePresentations('ai-kit:sources'), liveSemantic: 'device-audio-fx', invariant: {transforms: 'what the agent receives: the pinned sources it reads from and the routes it may search, before it acts'},
         note: 'Sources: the pinned sources at their revisions and the routes (wiki, project knowledge, code), with Search first, Link depth and Read budget (DLW §19.9).'},
-      // The Decision helper (DLW §19.20): an instrument, a chain of an Agentset rack in place of an Agent (agent/devices/decisionHelperBinding.ts).
+      // The Decision helper (DLW §19.20): an instrument, a chain of an Agent rack in place of an Agent (agent/devices/decisionHelperBinding.ts).
       {id: 'decision-helper', presentations: statePresentations('ai-kit:decision-helper'), liveSemantic: 'device-instrument',
         invariant: {generatesAbsent: 'A pick among the labels the owner allows, or none, for a member\'s open question: AIKit\'s decision provider (kernel decision_status) and QL\'s team space (kernel team_space) are read; no owner operation records the helper\'s answers or holds its settings yet.'},
-        note: 'Decision helper: an agent of type Settle, a chain of the team\'s Agentset rack in place of an Agent; one helper answers every member.'},
+        note: 'Decision helper: an agent of type Settle, a chain of the Agent rack in place of an Agent; one helper answers every agent of the rack.'},
       // AIKit's instrument (DLW §19.26): born in a pane and standing only there, on the run you select, as Workcell's is (§19.23).
       {id: 'ai-kit', presentations: statePresentations('ai-kit:ai-kit'), liveSemantic: 'device-instrument',
         invariant: {generatesAbsent: 'Born in a pane: it reads what the run\'s agents carried and what entered their context, and keeps AIKit\'s practice — its sources and snapshots, adopted trees, packages and procedures; it changes no device on a chain.'},

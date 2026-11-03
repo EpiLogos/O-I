@@ -1,5 +1,5 @@
-// Factory's Device side: the chain of the place selected — a session's (Agent → skills → scope), the Main track's, or a workcell's (the
-// Gateway, the Remote carrier, Git / landing with its Seat) — as devices of the runtime (manual §6, §10.4; ticket
+// Factory's Device side: the chain of the place selected — a session's (the connections, the Agent rack, Scope, Git / landing), the Main
+// track's, or a workcell's (the Gateway, the Remote carrier, Git / landing with its Seat) — as devices of the runtime (manual §6, §10.4; ticket
 // T-DEVICES-FACTORY). Each is a DeviceView at its compact size (a picture and at most four controls); each is published to the door, so
 // the pool shows the chosen one whole and a pane shows it full — the same live settings in all three, a change in any one the same
 // change through the owner's write path. The skills rack is a rack: its chains with their admit lamps and its selector; its four settings
@@ -24,8 +24,12 @@
 // observer: EncounterObservers.tsx). The Gateway's Full is its Frames page at pane size (§19.2 Frames; the rail's Frames tile is its widget,
 // mainTrackBindings.ts FRAMES_ID).
 //
-// Where each stands (lane W1-Factory; factoryPlaces.ts holds the chains, and this file draws exactly those): a session's chain is "Agent,
-// skills rack, scope" (§16.2), a group's led by the Agentset rack (§19.15); "A track has no gateway and no landing of its own" (§19.23).
+// Where each stands (lane W1-Factory; factoryPlaces.ts holds the chains, and this file draws exactly those): a session's chain is §16.2's
+// Factory row — the Gateway and the Remote carrier, the Agent rack, Scope, Git / landing — a group's and a lone session's alike (O-I ticket 842).
+// The rack is drawn as Live draws one (§16.4): its head (title bar, macros, chain list) and, under its Devices mark, the devices of the
+// chosen chain at full height, then its end bracket. A lone session's one chain is its own agent, so its devices — the Skillset rack with
+// its member, then the Agent — stand inside the rack themselves, every setting live; a group's chains are its sessions, each in the rack's
+// own list. Each plate says how far it reaches (factoryPlaces.ts reachOf): outside the rack, every chain; inside a chain, that agent alone.
 // With no session selected, or the Main head, the Device side is the Main track's chain: the Run map, Approvals and the prompt pads (§16.2,
 // §19.1). With a workcell's return track selected it is that workcell's chain: the Gateway, the Remote carrier, Git / landing with the
 // Seat inside it (§16.2, §19.23). The Ledger (§19.13), a monitor, stands on the rail and full in a pane, never on a chain (§16.1); so does
@@ -37,8 +41,8 @@
 // census) and the machine (`mc.`, §18.7) are pages of Workcell's instrument (§19.23), which the rail's publisher carries; Capture skill is
 // the Skillset rack's Capture page (`capture.`, §19.11); the Knowledge route is Scope's Knowledge page (§19.9), whose settings and readings Scope stands refused and absent by
 // what each lacks (designBindings.ts scopeBinding); the Experiment is a task launched with Repeat and its takes compared (§19.5), so no
-// device of it stands. The Decision helper is a device of its own (§19.20): a chain of a group's Agentset rack, in place of an Agent, that the
-// rack lists among its members and this chain publishes beside the rack while the rack stands on a group. Link is the transport's (§19.19): the
+// device of it stands. The Decision helper is a device of its own (§19.20): a chain of a group's Agent rack, in place of an Agent, that the
+// rack lists among its chains and this chain publishes beside the rack while the rack stands on a group. Link is the transport's (§19.19): the
 // frame publishes it. Every device of this chain is published whichever chain is drawn, so the pool, a pane and the rail keep them. The
 // bindings: sessionChainBindings.ts, receiptBindings.ts, workcellBindings.ts. The Run, Tasks and Runs are no devices (a task's panels, the
 // session's mixer row and lanes, its takes — Clip view's and the views'), and nothing publishes them: the browser lists none (ticket 788).
@@ -99,7 +103,7 @@ import {useAttemptTakes} from '../../owners/attemptTakes'
 import {useTaskAnswer, useWorkcellAnswer} from '../../owners/readers'
 import {usePopulationAnswer} from './usePopulationAnswer'
 import {
-  AGENTSET_DESIGN, AGENTSET_ID, agentsetBinding, custodyBinding, sessionDevices, withCustodyAsks, type CustodyPorts,
+  AGENTSET_DESIGN, AGENTSET_ID, agentsetBinding, custodyBinding, sessionDevices, withCustodyAsks, type AgentRackPorts, type CustodyPorts,
 } from './sessionChainBindings'
 import {APPROVALS_DESIGN, APPROVALS_ID, approvalsBinding, receiptDevices} from './receiptBindings'
 import {CARRIER_DESIGN, CARRIER_ID, carrierBinding, connectionLabels, gitBinding, planRunOf, runDemandOf, seatBinding, workcellDevices, type SeatPorts} from './workcellBindings'
@@ -107,7 +111,7 @@ import {ROUTE_WORDS, aikitWriteOp, deskActorOf, factoryOwnerWrite, ownerRouteWri
 import {worldsOf} from './workcellMaterial'
 import {currentIdentity} from '../../../../../../desktop/cradle/src/nara/identity/current'
 import {WORKCELL_RACK_ID, chosenWorld, workcellGitReading} from './workcellRackBinding'
-import {AGENT_SLOTS, chainSlots, factoryPlace, type FactorySlot} from './factoryPlaces'
+import {AGENT_SLOTS, ON_ITS_TRACK, RACK_CHAIN, chainSlots, factoryPlace, reachOf, type FactorySlot, type RackChainName, type Reach} from './factoryPlaces'
 import {useOwnerOp} from '../../owners/ownerCall'
 import type {AikitWriteRequest, KernelOp} from '../../../../../../desktop/cradle/src/kernel/types'
 import {kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
@@ -132,6 +136,23 @@ const SLOT_DATA_I: Readonly<Record<string, string>> = {
   git: agentDataI('Git', 'The workcell’s seat of the project, and how its work lands. The diagram is the branch against main; the pulsing hollow dot is uncommitted work.'),
 }
 const DROP_ZONE_DATA_I = agentDataI('Drop zone', 'Gateways, agents, skillsets, worlds, git. Left to right: through → who → how → where → lands.')
+/** A plate's info line with how far it reaches (factoryPlaces.ts reachOf), read by the status bar as Live's Info View reads a device. */
+const withReach = (dataI: string, reach: Reach): string => (reach.reaches === 'track' ? dataI : `${dataI} ${reach.says}`)
+/** The rack's chains by their names (the rack's own `members`), for what a plate reaches. */
+function rackChainsOf(members: unknown): RackChainName[] {
+  try {
+    const rows = typeof members === 'string' ? JSON.parse(members) as unknown : null
+    return Array.isArray(rows) ? rows.flatMap(row => (row && typeof row.id === 'string' ? [{id: row.id, name: typeof row.name === 'string' ? row.name : row.id}] : [])) : []
+  } catch { return [] }
+}
+/** One of the person's own acts on Central's agent sets through the kernel's invoke_action: Central's data, or its own words as the refusal. */
+async function setAct(transport: Parameters<typeof kernelOp>[0], action: string, input: Readonly<Record<string, unknown>>): Promise<unknown> {
+  const call = await kernelOp(transport, centralActionOp(action, input))
+  const answer = actionAnswerOf({status: call.error ? 'refused' : 'answered', value: call.outcome?.result === 'action_dispatched' ? call.outcome : null, error: call.error ?? null}, action)
+  if (answer.status === 'refused') throw Error(answer.error)
+  if (answer.status !== 'answered') throw Error(`${action} did not answer.`)
+  return answer.value
+}
 
 /** The outcome of one drop attempt or one write: the owner's receipt, or the refusal that names the missing operation. */
 interface ChainNote {
@@ -359,6 +380,8 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     [waits.world, holds, writeModeRow, write, toolCalls, toolCallsRow])
   // Where the Device side stands (factoryPlaces.ts): a workcell's return track, a session (or a group), or the Main track.
   const groupTrack = track && track.group ? track : null
+  // A lone session: its rack's one chain is its own agent (§19.15 "A session of one agent has a rack of that one chain").
+  const loneTrack = track && !track.group ? track : null
   const place = factoryPlace({sessionRef, group: !!groupTrack, workcell})
   const cellName = place.kind === 'workcell' ? place.name : null
   // A session's own chain stands (not a workcell's).
@@ -440,31 +463,35 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     gateway: gatewayDesignBinding, agent: oneAgent, skillset: rackCarrying, world: scopeCarrying, git: gitCarrying,
   }), [gatewayDesignBinding, oneAgent, rackCarrying, scopeCarrying, gitCarrying])
 
-  // The session's own device (lane BF3): for a group, the Agentset rack. (The Run was retired, ticket 725, and its constructor with it, ticket 772:
-  // a session's course is its track in Arrangement view, §16.1.)
+  // The session's own device (lane BF3): the Agent rack, on every session's track (O-I ticket 842). (The Run was retired, ticket 725, and its
+  // constructor with it, ticket 772: a session's course is its track in Arrangement view, §16.1.)
   const ownDevices = useMemo(() => sessionDevices(), [])
   const designsOwn = {agentset: useDesign(AGENTSET_DESIGN, true)}
   // The rack's Join (O-I ticket 684): Central's agent set the group's space names, read, and saved through the person's own central.agent-set.save.
   const setRef = groupTrack?.agentSet?.ref ?? null
   const setInput = useMemo(() => (setRef ? {scope: 'root', ref: setRef} : null), [setRef])
   const groupSet = useCentralAction(transport, 'central.agent-set.read', setInput)
-  const agentsetPorts = useMemo(() => ({saveSet: async (input: Record<string, unknown>) => {
-    const call = await kernelOp(transport, centralActionOp('central.agent-set.save', input))
-    const answer = actionAnswerOf({status: call.error ? 'refused' : 'answered', value: call.outcome?.result === 'action_dispatched' ? call.outcome : null, error: call.error ?? null}, 'central.agent-set.save')
-    if (answer.status === 'refused') throw Error(answer.error)
-    if (answer.status !== 'answered') throw Error('central.agent-set.save did not answer.')
-    return answer.value
-  }}), [transport])
-  // The Decision helper (§19.20, T-AGENCY K5): a device of its own, a chain of the group's Agentset rack in place of an Agent, on AIKit's
-  // decision provider and QL's team space — read only while the rack stands on a group. The rack lists it among its members.
+  // Group (§19.15 "Making a rack and a set"): Central proposes the chosen chains as a set and Accept saves its record, each the person's
+  // own act (as Messages' group does: AgentRailDevices.tsx centralAct). On a lone session the macros turn the one agent through the Agent itself.
+  const agentsetPorts = useMemo((): AgentRackPorts => ({
+    saveSet: input => setAct(transport, 'central.agent-set.save', input),
+    propose: input => setAct(transport, 'central.agent-set.propose', input),
+    suffix: () => globalThis.crypto.randomUUID().slice(0, 8),
+    agent: oneAgent,
+  }), [transport, oneAgent])
+  // The Decision helper (§19.20, T-AGENCY K5): a device of its own, a chain of the group's Agent rack in place of an Agent, on AIKit's
+  // decision provider and QL's team space — read only while the rack stands on a group. The rack lists it among its chains.
   const helperStands = sessionRef != null && !!groupTrack
   const helperReadings = useDecisionHelperReadings(transport, helperStands)
   const helperDevice = useMemo(() => decisionHelperDevice(), [])
   const helperDesignBinding = useMemo(() => decisionHelperBinding({status: helperReadings.status, teamSpace: helperReadings.teamSpace}),
     [helperReadings.status, helperReadings.teamSpace])
-  const agentsetDesignBinding = useMemo(() => agentsetBinding({group: groupTrack, tracks, models, holds, nowUnixMs: sessions?.nowUnixMs ?? 0, ...(setRef ? {set: groupSet} : {}),
-    ...(helperStands && helperDevice ? {helper: helperDesignBinding.values} : {})}, agentsetPorts),
-  [groupTrack, tracks, models, holds, sessions?.nowUnixMs, setRef, groupSet, helperStands, helperDevice, helperDesignBinding, agentsetPorts])
+  const agentsetDesignBinding = useMemo(() => agentsetBinding({group: groupTrack, session: loneTrack, agent: oneAgent?.values ?? null, tracks, models, holds,
+    nowUnixMs: sessions?.nowUnixMs ?? 0, ...(setRef ? {set: groupSet} : {}), ...(helperStands && helperDevice ? {helper: helperDesignBinding.values} : {})}, agentsetPorts),
+  [groupTrack, loneTrack, oneAgent, tracks, models, holds, sessions?.nowUnixMs, setRef, groupSet, helperStands, helperDevice, helperDesignBinding, agentsetPorts])
+  // How far each plate of a session's chain reaches (factoryPlaces.ts reachOf): the rack's chains, and the lone session's own inside it.
+  const rackChains = useMemo(() => rackChainsOf(agentsetDesignBinding.values.members), [agentsetDesignBinding.values.members])
+  const reachHere = (slot: FactorySlot): Reach => (place.kind === 'session' ? reachOf(slot, rackChains, loneTrack?.sessionRef) : ON_ITS_TRACK)
 
   // The Main track's reader: Approvals on the shown session's consent requests and the world's source returns (lane K1's
   // source_returns_read); the default answer is the Gateway's, never Approvals' (ticket 788). The Ledger is a monitor on the rail
@@ -580,8 +607,10 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   // The chain's one law (inhabitants/sdk/chains.ts): a session's chain, or a workcell's road. A slide asks it.
   const law = chainLaw(place.kind === 'workcell' ? 'workcell' : 'factory-session')
   const slideWords = (id: string): string => { const standing = slotStanding(law, id); return standing.moves ? law.means : standing.why }
-  // A rack's head hides the devices of its chosen chain (manual §16.4; Live's rack head): the Skillset rack's member inside its slot.
+  // A rack's head hides the devices of its chosen chain (manual §16.4; Live's rack head): the Skillset rack's member inside its slot, and the
+  // Agent rack's chain on a lone session (its own agent's devices).
   const memberShown = useRackShown(chainDeviceId('skillset'), 'devices')
+  const rackDevicesShown = useRackShown(AGENTSET_ID, 'devices')
   const openDevice = (id: string, title: string) => {
     try { openInstrument(DEVICE_PANE_KIND, undefined, {ref: id, title}) }
     catch (cause) { setNote({kind: 'refused', title: 'Open full', line: cause instanceof Error ? cause.message : String(cause), receipt: null}) }
@@ -716,9 +745,10 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     const entry = chain.find(item => item.slot.id === slotId)
     if (!entry) return null
     const {slot, device} = entry
+    const reach = reachHere(slotId)
     return (
-      <div className="factory-slot" data-slot={slot.id} data-family={slot.family} data-device={slot.id}
-        data-selected={shell.expandedDevice === slot.id} data-i={SLOT_DATA_I[slot.id]} onClick={() => choose(slot.id)}
+      <div className="factory-slot" data-slot={slot.id} data-family={slot.family} data-device={slot.id} data-reaches={reach.reaches}
+        data-selected={shell.expandedDevice === slot.id} data-i={SLOT_DATA_I[slot.id] ? withReach(SLOT_DATA_I[slot.id]!, reach) : undefined} onClick={() => choose(slot.id)}
         data-design={SLOT_DESIGNS[slot.id] && bindings[slot.id] ? SLOT_DESIGNS[slot.id] : undefined}
         data-design-waits={SLOT_DESIGNS[slot.id] ? waits[slot.id] ?? undefined : undefined}>
         <div className="factory-slot__rail">{grip(slot.id, slot.title)}</div>
@@ -743,35 +773,58 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     )
   }
 
+  // The visible drop slot for a slide (it opens under the pointer among the agent chain's slots, in the order they are drawn, the rack's
+  // own chain among them, and closes on release). It never lies: a slot is not a landing, the owner operation (here: the refusal naming the
+  // missing order op) is.
+  let slotIndex = 0
+  const gapBefore = () => { const at = held?.kind === 'reorder' && gap === slotIndex; slotIndex += 1; return at && <span className="agent-chain-gap" aria-hidden="true" /> }
+
+  /** The Agent rack (§19.15, §16.4): its head — title bar, macros, chain list — then, under its Devices mark, the devices of the chain it
+   * holds on a lone session, the session's own agent (RACK_CHAIN: the Skillset rack with its member, the Agent), then its end bracket. A
+   * group's chains are its sessions, each drawn in the rack's own list. */
+  const rackPlate = () => {
+    const reach = reachHere('agentset')
+    const head = placed(AGENTSET_ID, ownDevices.agentset, agentsetDesignBinding, designsOwn.agentset ? AGENTSET_DESIGN : undefined, 'the Agent rack',
+      {attrs: {'data-session-slot': 'agentset', 'data-reaches': reach.reaches, 'data-i': agentDataI('Agent rack', reach.says)}})
+    if (!head) return null
+    const own = loneTrack && rackDevicesShown ? RACK_CHAIN.map(slot => slotPlate(slot)) : []
+    const inside = loneTrack ? reachHere(RACK_CHAIN[RACK_CHAIN.length - 1]!) : null
+    return (
+      <div className="factory-rack" data-rack={AGENTSET_ID} data-chains={rackChains.length}>
+        {head}
+        {inside && own.some(Boolean) && (
+          <div className="factory-rack__chain" data-chain={loneTrack!.sessionRef} data-reaches={inside.reaches} aria-label={`${rackChains[0]?.name ?? 'The agent'}'s chain`}>
+            {own.map((node, at) => <Fragment key={RACK_CHAIN[at]}>{node && gapBefore()}{node}</Fragment>)}
+          </div>
+        )}
+        <span className="factory-rack__end" aria-hidden="true" />
+      </div>
+    )
+  }
+
   /** One plate of the place's chain (factoryPlaces.ts chainSlots), by what stands there. */
   const plate = (slot: FactorySlot) => {
     if (AGENT_SLOTS.has(slot)) return slotPlate(slot)
     switch (slot) {
-      // A group's chain (§19.15): the Agentset rack leads it, one chain for each of the group's sessions, and one for the Decision helper
-      // that answers them all (§19.20).
-      case 'agentset': return placed(AGENTSET_ID, ownDevices.agentset, agentsetDesignBinding, designsOwn.agentset ? AGENTSET_DESIGN : undefined, 'the Agentset rack',
-        {attrs: {'data-session-slot': 'agentset'}})
+      // Every session's chain (§16.2, §19.15): the Agent rack, whose chains are the agents and agent sets the session may use — a group's
+      // sessions and the Decision helper that answers them (§19.20), or a lone session's own agent.
+      case 'agentset': return rackPlate()
       // The Main track (§16.2, §19.1): the Run map, then Approvals, where every proposal waits (§19.14), then the Prompt pads.
       case 'approvals': return placed(APPROVALS_ID, receipts.approvals, approvalsDesignBinding, designsReceipts.approvals ? APPROVALS_DESIGN : undefined, 'Approvals', {attrs: {'data-main-slot': 'approvals'}})
       case 'run-map': return placed(RUN_MAP_ID, runMapDev, mainBindings.runMap, designsMain.runMap ? RUN_MAP_DESIGN : undefined, 'the Run map', {attrs: {'data-main-slot': 'run-map'}})
       case 'prompt-pads': return placed(PROMPT_PADS_ID, padsDev, mainBindings.pads, designsMain.pads ? PROMPT_PADS_DESIGN : undefined, 'the Prompt pads', {attrs: {'data-main-slot': 'prompt-pads'}})
-      // A workcell's chain (§19.23): the road — the Remote carrier names the machine it runs on (§19.18).
+      // The road in (§16.2 "Connections keep the same order"; §19.18): the Remote carrier names the machine the work runs on — on a
+      // workcell's chain, and on a session's before the rack, where it reaches every chain.
       case 'remote-carrier': return placed(CARRIER_ID, cells.carrier, carrierDesignBinding, designsCells.carrier ? CARRIER_DESIGN : undefined, 'the Remote carrier',
-        {attrs: {'data-workcell-slot': 'remote-carrier'}})
+        {attrs: place.kind !== 'session' ? {'data-workcell-slot': 'remote-carrier'} : {'data-session-slot': 'remote-carrier',
+          'data-reaches': reachHere('remote-carrier').reaches, 'data-i': agentDataI('Remote carrier', reachHere('remote-carrier').says)}})
       default: return null
     }
   }
 
-  // The place's chain, left to right, with the visible drop slot while a card slides (it opens under the pointer among the agent chain's
-  // slots and closes on release). It never lies: a slot is not a landing, the owner operation (here: the refusal naming the missing order
-  // op) is.
+  // The place's chain, left to right, with the visible drop slot while a card slides.
   const slots = chainSlots(place, {runMap: !!runMapDev, pads: !!padsDev})
-  let slotIndex = 0
-  const plates = slots.map(slot => {
-    const atGap = AGENT_SLOTS.has(slot) && held?.kind === 'reorder' && gap === slotIndex
-    if (AGENT_SLOTS.has(slot)) slotIndex += 1
-    return <Fragment key={slot}>{atGap && <span className="agent-chain-gap" aria-hidden="true" />}{plate(slot)}</Fragment>
-  })
+  const plates = slots.map(slot => <Fragment key={slot}>{AGENT_SLOTS.has(slot) && gapBefore()}{plate(slot)}</Fragment>)
   const trailingGap = held?.kind === 'reorder' && gap === slotIndex && <span className="agent-chain-gap" aria-hidden="true" />
 
   return (
@@ -803,7 +856,7 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
           data-i={`Workcell ${place.name}|Its chain: the Gateway, the Remote carrier, and Git / landing with its seat. Every track that works in ${place.name} shares it.`}>
           {plates}{trailingGap}
         </div>}
-        {/* A selected session shows its own chain: Agent, skills rack, scope (§16.2); a group's led by its Agentset rack. */}
+        {/* A selected session shows its own chain (§16.2): the connections, the Agent rack, Scope, Git / landing. */}
         {place.kind === 'session' && <>{plates}{trailingGap}</>}
         <div className={'agent-dropz dropz' + (held ? ' armed' : '')} data-slot="zone" data-i={DROP_ZONE_DATA_I} title={DROP_ZONE_DATA_I.split('|')[1]}>
           {held ? dropZoneLine(held) : 'Drop gateways, agents, skillsets, worlds or git here'}

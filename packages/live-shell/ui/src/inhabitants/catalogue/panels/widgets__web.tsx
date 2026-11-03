@@ -4,10 +4,13 @@
 // edge, newest at the top; the handle sits on the page shown.
 //
 // Owners, keyed on their paths:
-//   pages     [{url, title, at, lines, used?}]: the pages the agent fetched, from its encounter tape (desktop/cradle/src/agent/tape/model.ts:
-//             a `fetch` call, or a tool named fetch or web_fetch, is a `read`; the address is its title or first location, the text its
-//             output). `used` would be the passages the agent used, as [line, from, to]; no owner reports them yet, so a page that
-//             carries none says so.
+//   pages     [{url, title, at, lines, used?, cited?}]: the pages the agent fetched, from its encounter tape (desktop/cradle/src/agent/tape/
+//             model.ts: a `fetch` call, or a tool named fetch or web_fetch, is a `read`; the address is its title or first location, the
+//             text its output). `cited` is each time the agent's reply cites the page, as AIKit's encounter owner records it at the turn's
+//             end (ai-kit encounter_used.rs, a `source-passage-used` journal event): `by` the harness (a reply chunk naming the page as a
+//             resource, with the text it took, or a link) or the reply (its text carrying the url whole), with the `quote` and whether it
+//             stands verbatim on the page (`located`). `used` is the quoted passages as [line, from, to] on `lines`. A page no record cites
+//             carries neither, and says so: nothing ties a passage to it, and nothing here guesses one from the words.
 //   page      the address shown; agent the agent followed.
 // Mark used text and Follow are the monitor's own.
 //
@@ -20,17 +23,29 @@ import {MonitorHead, MonitorPane, MonitorPicture} from './monitor'
 
 type V = ViewProps['v']
 
-interface Page {readonly url: string; readonly title: string; readonly at?: string; readonly lines: readonly string[]; readonly used?: readonly (readonly [number, number, number])[]}
+interface Cited {readonly by: string; readonly form: string; readonly quote?: string; readonly located?: boolean}
+interface Page {readonly url: string; readonly title: string; readonly at?: string; readonly lines: readonly string[]; readonly used?: readonly (readonly [number, number, number])[]
+  readonly cited?: readonly Cited[]}
 const rec = (x: unknown): x is Record<string, unknown> => typeof x === 'object' && x !== null
 function pagesOf(v: V): Page[] | undefined {
   const raw = json<unknown>(v, 'pages', undefined)
   if (!Array.isArray(raw)) return undefined
   return raw.flatMap((e): Page[] => rec(e) && typeof e.url === 'string' ? [{url: e.url, title: String(e.title ?? e.url), at: typeof e.at === 'string' ? e.at : undefined,
     lines: Array.isArray(e.lines) ? e.lines.filter((l): l is string => typeof l === 'string') : [],
-    used: Array.isArray(e.used) ? e.used.filter((u): u is [number, number, number] => Array.isArray(u) && u.length === 3 && u.every(n => Number.isInteger(n))) : undefined}] : [])
+    used: Array.isArray(e.used) ? e.used.filter((u): u is [number, number, number] => Array.isArray(u) && u.length === 3 && u.every(n => Number.isInteger(n))) : undefined,
+    cited: Array.isArray(e.cited) ? e.cited.flatMap((c): Cited[] => rec(c) && typeof c.by === 'string' ? [{by: c.by, form: String(c.form ?? ''),
+      ...(typeof c.quote === 'string' ? {quote: c.quote} : {}), ...(typeof c.located === 'boolean' ? {located: c.located} : {})}] : []) : undefined}] : [])
 }
 const pageOf = (v: V) => { const ps = pagesOf(v), u = strOf(v, 'page'); return ps?.find(x => x.url === u) ?? ps?.[0] }
 const host = (url: string) => url.replace(/^https?:\/\//, '').replace(/\/$/, '')
+/** What the page's foot says of the used text, when no passage is marked: no record cites the page; the reply cites it with no passage
+ * named; or the quote the harness gave does not stand verbatim on the page. */
+function usedNote(pg: Page): string | undefined {
+  if (pg.used?.length) return undefined
+  if (!pg.cited?.length) return pg.used ? undefined : 'no reading of the used text'
+  if (pg.cited.some(c => c.quote !== undefined && c.located === false)) return 'quoted, not verbatim on the page'
+  return pg.cited.some(c => c.by === 'reply') ? 'cited by the reply · no passage named' : 'cited · no passage named'
+}
 
 /** The page: its address, then its lines, the used passages marked when Mark is on. `pager`: the pages as dots down the right edge,
  * handle 1 on the page shown. */
@@ -48,7 +63,7 @@ function PageView({p, w, h, pager, size = 9, press}: {p: ViewProps; w: number; h
         {marks.map((m, j) => { const a = Math.min(m[1], room), b = Math.min(m[2], room); return b > a ? <rect key={j} x={6 + a * cw} y={y - size + 1} width={(b - a) * cw} height={size + 2} className="dp-fill" stroke="var(--dp-value)" strokeWidth={.6} /> : null })}
         <text x={6} y={y} className="dp-ink-dim dp-mono" style={{fontSize: size, whiteSpace: 'pre'}}>{line.slice(0, room)}</text>
       </g> })}
-    {mark && !pg.used && <text x={w - right - 2} y={h - 4} textAnchor="end" className="dp-axis">no reading of the used text</text>}
+    {mark && usedNote(pg) && <text x={w - right - 2} y={h - 4} textAnchor="end" className="dp-axis">{usedNote(pg)}</text>}
     {pager && pages!.map((x, i) => <circle key={x.url} cx={w - 8} cy={dotY(i)} r={2.2} fill={i === idx ? 'var(--dp-value)' : 'none'} className={i === idx ? undefined : 'dp-faint'} />)}
     {pager && <Handle n={1} x={w - 8} y={dotY(idx)} label="Page" does={`Drag up or down: the page shown, the newest at the top.${ps.disabled ? ` ${ps.disabled}` : ''}`}
       onDrag={ps.disabled ? undefined : (_, y) => { const i = clampTo(0, pages!.length - 1, Math.round((y - 14) / Math.min(12, (h - 24) / Math.max(1, pages!.length - 1)))); if (i !== idx) p.set('page', pages![i]!.url) }} />}
@@ -66,6 +81,7 @@ function Head({p}: {p: ViewProps}) {
     {label: 'read at', value: pg?.at, does: 'When the agent read the page.', tone: 'value'},
     {label: 'pages', value: pages?.length, does: 'The pages the agent read.'},
     {label: 'used', value: pg?.used?.length, does: 'Passages of the page the agent used.', tone: 'value'},
+    {label: 'cited', value: pg?.cited?.length, does: 'Times the agent\'s reply cites the page: a link, or the text it took.'},
   ]} controls={<>
     <Chooser {...st(p, 'page')} label="Page" does="The page to show." value={pg?.url ?? ''} options={(pages ?? []).map(x => ({value: x.url, label: x.title}))} onChange={x => p.set('page', x)}
       disabled={st(p, 'page').disabled ?? (pages?.length ? undefined : 'No page read.')} />
@@ -97,13 +113,15 @@ export const design = railAndPane({
     mark: true, follow: true, agent: 'Fizz · lead', page: 'https://www.ableton.com/en/manual/max-for-live-devices/',
     pages: JSON.stringify([
       {url: 'https://www.ableton.com/en/manual/max-for-live-devices/', title: 'Max for Live devices', at: '14:22', lines: ['Max for Live devices', '', 'LFO and Shaper are modulators: each maps one', 'parameter at a time. Click Map, then click any', 'parameter in the set. The depth sets how far', 'the modulator moves it, from its own value.', '', 'A mapped parameter shows its modulation range', 'as a ring round its knob.'],
-        used: [[2, 0, 46], [5, 0, 38], [7, 0, 45]]},
+        used: [[2, 0, 46], [5, 0, 38], [7, 0, 45]], cited: [{by: 'harness', form: 'resource', located: true}, {by: 'harness', form: 'resource', located: true}]},
       {url: 'https://developer.mozilla.org/en-US/docs/Web/API/BiquadFilterNode', title: 'BiquadFilterNode', at: '14:09', lines: ['BiquadFilterNode', '', 'The BiquadFilterNode interface represents a', 'simple low-order filter. It is an AudioNode', 'that can represent tone control devices.'], used: [[2, 4, 44]]},
       {url: 'https://www.w3.org/TR/webaudio/', title: 'Web Audio API', at: '13:51', lines: ['Web Audio API', '', 'This specification describes a high-level', 'Web API for processing and synthesizing audio.'], used: []}]),
   },
   fixtures: {
     'Pages an agent read': {},
     'As the tape has it': {pages: JSON.stringify([{url: 'https://www.w3.org/TR/webaudio/', title: 'Web Audio API', at: '13:51', lines: ['Web Audio API', '', 'This specification describes a high-level', 'Web API for processing and synthesizing audio.']}])},
+    'Cited, no passage named': {pages: JSON.stringify([{url: 'https://www.w3.org/TR/webaudio/', title: 'Web Audio API', at: '13:51', lines: ['Web Audio API', '', 'This specification describes a high-level', 'Web API for processing and synthesizing audio.'],
+      used: [], cited: [{by: 'reply', form: 'link'}]}])},
     'No reading': {pages: undefined, page: undefined, reason: 'No page read by the selected agent'},
   },
 

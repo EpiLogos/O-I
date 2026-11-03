@@ -6,7 +6,8 @@
 // refused in those words; where the order is the person's but no owner operation writes it, the move is refused naming the operation it
 // waits for. Each chain renderer asks this table (central/devices/CentralDevices.tsx, agent/devices/FactoryDeviceChain.tsx through
 // frame/devices/ChainOrder.tsx; Live's chain keeps its own grips, live/noteDevices/NoteDeviceChain.tsx and live/designBindings/
-// TorusEffectsOnChain.tsx, which write through the owners named here). Pure; nothing here imports.
+// TorusEffectsOnChain.tsx, which write through the owners named here). And how a rack's macros reach into its chains and into the racks
+// inside them (§19.15 Macros): the Agent rack's binding and its design ask the same law. Pure; nothing here imports.
 
 /** The chains of the five modes and the workcell (§16.2). */
 export type ChainKind = 'central-world' | 'central-main' | 'factory-session' | 'factory-main' | 'workcell' | 'expressions-studio' | 'techne-reading' | 'live-part'
@@ -48,11 +49,16 @@ export const CHAIN_LAWS: Readonly<Record<ChainKind, ChainLaw>> = {
     slots: ['day', 'approvals'], fixed: ['day', 'approvals'],
     means: 'The Main track\'s chain holds what works on the whole: the Day, then Approvals, where every proposal waits.',
   },
+  // A session's chain as it is drawn, left to right (§16.2 Factory; §16.4 "a rack's devices stand inside it on the chain"): the connections
+  // in, the Agent rack with the devices of its chosen chain inside it (the session's own agent: its Skillset rack, then the Agent, §19.4),
+  // the Scope that bounds every chain, and the landing out. Where each stands is what it reaches (§16.2 Placement and order), so every
+  // place is fixed but the order of what an agent carries before its Agent, which is the agent's own (§19.4 "The chain is the profile
+  // Central keeps for the agent").
   'factory-session': {
     chain: 'factory-session', title: 'A session\'s chain', manual: '§16.2, §19.4, §19.7, §19.12, §19.15',
-    slots: ['agentset', 'agent', 'skillset', 'world'], fixed: ['agentset', 'agent'],
-    means: 'The Agent heads a session\'s chain (a group\'s Agentset rack before it); the skills rack and Scope work on what it does after it.',
-    op: AGENT_CHAIN_ORDER('Software Factory'),
+    slots: ['gateway', 'remote-carrier', 'agentset', 'skillset', 'agent', 'world', 'git'], fixed: ['gateway', 'remote-carrier', 'agentset', 'agent', 'world', 'git'],
+    means: 'The connections bring every agent in, the Agent rack holds the agents the session may use, each in its own chain, the Scope after the rack bounds them all, and Git / landing takes their work out. Inside an agent\'s chain what it carries stands before the Agent.',
+    op: AGENT_CHAIN_ORDER('Central'),
   },
   'factory-main': {
     chain: 'factory-main', title: 'Factory\'s Main track', manual: '§16.2, §19.1',
@@ -112,4 +118,50 @@ export function chainMove(law: ChainLaw, order: readonly string[], id: string, b
   next.splice(from, 1)
   next.splice(to, 0, id)
   return {order: next, op: law.op!}
+}
+
+// ---------------------------------------------------------------- a rack's macros (§16.1, §19.15 Macros)
+
+/** The Agent's settings a rack's macros turn (§19.15: "Three of them turn one setting on every agent"). */
+export type RackMacro = 'model' | 'effort' | 'budget'
+export const RACK_MACROS: readonly RackMacro[] = ['model', 'effort', 'budget']
+
+/** A chain of a rack as its macros see it: an agent, a set (a chain that holds a rack of its own, with its own macros and what they leave
+ * alone), or a Decision helper (no Agent: §19.20, so no macro reaches it). */
+export interface RackNode {
+  readonly id: string
+  readonly kind: 'agent' | 'set' | 'helper'
+  readonly chains?: readonly RackNode[]
+  readonly unmapped?: RackUnmapped
+}
+/** The chains each macro leaves alone, by macro: each keeps its own. */
+export type RackUnmapped = Readonly<Partial<Record<RackMacro, readonly string[]>>>
+
+/** One setting a macro's turn reaches: an agent's setting, or a nested set's own macro. `within` is the set whose rack holds the chain,
+ * null at the rack the hand turned. */
+export interface MacroTurn {
+  readonly chain: string
+  readonly kind: 'agent' | 'set'
+  readonly macro: RackMacro
+  readonly value: unknown
+  readonly within: string | null
+}
+
+/** Where a turn of one macro reaches, in the chains' order (§19.15 "turn the track's Model macro and it turns the set's Model macro, and
+ * through it every agent of the set that is mapped"): every mapped agent, and every mapped set's own macro followed by what that macro
+ * maps. A chain the macro leaves alone, and everything inside it, keeps its own. Pure. */
+export function macroTurns(chains: readonly RackNode[], macro: RackMacro, value: unknown, unmapped: RackUnmapped = {}, within: string | null = null): MacroTurn[] {
+  const apart = new Set(unmapped[macro] ?? [])
+  return chains.flatMap((chain): MacroTurn[] => {
+    if (chain.kind === 'helper' || apart.has(chain.id)) return []
+    if (chain.kind === 'agent') return [{chain: chain.id, kind: 'agent', macro, value, within}]
+    return [{chain: chain.id, kind: 'set', macro, value, within}, ...macroTurns(chain.chains ?? [], macro, value, chain.unmapped, chain.id)]
+  })
+}
+
+/** A chain's setting turned by hand comes off the macro that turned it (the hand takes it, as a modulator lets go of what the hand takes,
+ * §16.1): the macro leaves it alone from then on. Pure. */
+export function offByHand(unmapped: RackUnmapped, macro: RackMacro, chain: string): RackUnmapped {
+  const apart = unmapped[macro] ?? []
+  return apart.includes(chain) ? unmapped : {...unmapped, [macro]: [...apart, chain]}
 }

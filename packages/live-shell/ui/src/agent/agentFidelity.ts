@@ -164,7 +164,7 @@ export const AGENT_DATA_I_FACTORIES = {
   worldBridgeN: (n: number | string) => agentDataI(`World · bridge-${n}`, 'What the session may read (teal) and write (amber).'),
   gatewayN: (n: number | string) => agentDataI(`Gateway · ${n}`, 'Where the session runs: the harness connection (Hermes tui_gateway, JSON-RPC over stdio or WebSocket). Frames flow along the link; the ring is the replay buffer; the outer pulse is the heartbeat.'),
   gatewayFoldedN: (n: number | string) => agentDataI(`${n} (folded)`, 'A device folded to its title, as in Live.'),
-  agentset: (name: string) => agentDataI(`Agentset · ${name}`, 'One chain per member, nested as spawned, each with its model. Click a member to open its thread.'),
+  agentset: (name: string) => agentDataI(`Agent rack · ${name}`, 'One chain for each agent or agent set, nested as spawned, each with its model. Click a chain to open its thread.'),
   agentFace: (name: string) => agentDataI(`${name} · agent`, 'Compact. Click: select it; its expanded view stands above the chain. ↗: open its thread full.'),
 } as const
 

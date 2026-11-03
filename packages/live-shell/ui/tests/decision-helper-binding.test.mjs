@@ -156,15 +156,20 @@ test('REPLACED (DLW agency designs) — the helper is its own device, AIKit\'s, 
 test('code-reading: the helper is published as its own device beside a group\'s rack, listed among its chains, and read only while that rack stands there', () => {
   const view = readFileSync(new URL('../src/agent/devices/FactoryDeviceChain.tsx', import.meta.url), 'utf8')
   // REPLACED (DLW agency designs): "the helper is the Agentset rack's Helper page" (#725) — the rack carried the helper under `helper.`; it is
-  // a device of its own now, a chain inside the rack, so a group's chain still leads with the rack alone and no helper slot stands on it.
+  // a device of its own now, a chain inside the rack, so no helper slot stands on the track's chain.
+  // REPLACED (O-I #842): "a group's chain leads with its members' rack" (GROUP_LEAD ['agentset']) — every session's chain holds the rack,
+  // and the helper still stands only where the rack's chains are a group's sessions.
   const places = readFileSync(new URL('../src/agent/devices/factoryPlaces.ts', import.meta.url), 'utf8')
-  assert.match(places, /export const GROUP_LEAD: readonly FactorySlot\[\] = \['agentset'\]/, 'a group\'s chain leads with its members\' rack')
+  assert.match(places, /export const SESSION_CHAIN: readonly FactorySlot\[\] = \['gateway', 'remote-carrier', 'agentset', 'world', 'git'\]/, 'every session\'s chain holds the rack')
+  assert.doesNotMatch(places, /'decision-helper'/, 'no helper slot')
   assert.doesNotMatch(view, /placed\(DECISION_HELPER_ID/, 'no helper slot on the track\'s chain: it is a chain of the rack')
   assert.doesNotMatch(view, /HELPER_PAGE/, 'the rack carries no Helper page')
   assert.match(view, /const helperStands = sessionRef != null && !!groupTrack\n/, 'it stands where a group\'s rack does')
   assert.match(view, /\.\.\.\(helperStands && helperDevice \? \{helper: helperDesignBinding\.values\} : \{\}\)/, 'the rack lists the helper among its members')
   assert.match(view, /\[DECISION_HELPER_ID, helperStands \? helperDevice : null, helperDesignBinding\]/, 'the helper is published on its own binding')
-  assert.match(view, /case 'agentset': return placed\(AGENTSET_ID, ownDevices\.agentset, agentsetDesignBinding/)
+  // REPLACED (O-I #842): `case 'agentset': return placed(AGENTSET_ID, …)` — the rack plate, its head the same placed plate.
+  assert.match(view, /case 'agentset': return rackPlate\(\)/)
+  assert.match(view, /const head = placed\(AGENTSET_ID, ownDevices\.agentset, agentsetDesignBinding/)
   assert.match(view, /const slots = chainSlots\(place, \{runMap: !!runMapDev, pads: !!padsDev\}\)/)
   assert.match(view, /useDecisionHelperReadings\(transport, helperStands\)/, 'nothing is read unless the helper stands on a chain')
 })

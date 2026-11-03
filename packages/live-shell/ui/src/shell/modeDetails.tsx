@@ -156,11 +156,11 @@ export const MODE_DETAILS: Readonly<Record<SurfMode, ModeDetail>> = {
         const cell = workcellOfTrack(trackId)
         if (cell) return {name: cell, line: 'the workcell\'s chain: Gateway → Remote carrier → Git / landing, with its Seat'}
         // With no session selected the Device side is Factory's Main track (§16.2; agent/devices/FactoryDeviceChain.tsx), as Live
-        // shows the Main track's chain when no other track is chosen. The gateways, the frames and the ledger are monitors on the rail, and
-        // the road in and out is the workcell's (§19.1, §19.23): a session's chain is the agent, its skills and its scope.
+        // shows the Main track's chain when no other track is chosen; the frames and the ledger are monitors on the rail (§19.1). A session's
+        // chain is §16.2's Factory row, a group's and a lone session's alike: its connections, the Agent rack, Scope, Git / landing (O-I #842).
         if (!track) return {name: 'Main', line: 'Factory\'s Main track: the Run map, Approvals and the prompt pads'}
         return {name: shown ?? factorySessionName(track, null, undefined),
-          line: track.group ? 'a group: the Agentset rack and the Decision helper, then the chain: agent → skills → scope' : 'the agent\'s chain: agent → skills → scope'}
+          line: 'the session\'s chain: Gateway → Remote carrier → the Agent rack → Scope → Git / landing'}
       },
     }},
   // The Studio receives a dragged field device itself (ExpressionsStudio.tsx, DEVICE_MIME), and the mockup's Expressions row
