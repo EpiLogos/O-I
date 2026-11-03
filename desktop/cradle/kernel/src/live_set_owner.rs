@@ -626,7 +626,7 @@ impl crate::Kernel {
             Ok(())
         } else {
             Err(refused(&format!(
-                "the kernel has not read {set} (live_set_read): the engine plays only a set the kernel has read"
+                "Live has not read {set} in this window, and the engine plays only a set Live has read"
             )))
         }
     }
@@ -1327,7 +1327,7 @@ mod tests {
         let unread = kernel.live_engine_admits(&path).unwrap_err();
         assert!(
             unread.starts_with("The engine did not open the set: ")
-                && unread.contains("live_set_read"),
+                && unread.contains("has not read"),
             "{unread}"
         );
         let Some(Ok(_)) = execute(&KernelOp::LiveSetRead { path: path.clone() }) else {
@@ -1337,7 +1337,7 @@ mod tests {
         for (set, said) in [
             ("Song.als", "absolute native .als"),
             ("/sets/Song.txt", "absolute native .als"),
-            ("/sets/never-there.als", "live_set_read"),
+            ("/sets/never-there.als", "has not read"),
         ] {
             let refused = kernel.live_engine_admits(set).unwrap_err();
             assert!(refused.contains(said), "{set}: {refused}");
