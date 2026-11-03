@@ -12,9 +12,10 @@
 // (what it would make of the folder), `projectcentral.docs.inspect {project}` (central.development-field-reading/v1: the documentation aperture,
 // tier bindings, UX and EX relations) — readings through invoke_action — and the preview of a treatment: `projectcentral.adopt.preview`
 // or `projectcentral.migrate.preview {project, source}` (projectcentral-mutation-plan); Central has no preview of `projectcentral.init`.
-// Accept (`projectcentral.init {project, project_id}`, `adopt` or `migrate {project, project_id, source}`), Ensure (`projectcentral.docs.ensure
-// {project}`) and a tier's Relate (`projectcentral.docs.tier.relate {project, source_ref, tier, acceptance}`) write the world's ground as the
-// person's own presses, which the kernel carries with the person's authority (action.rs PERSON_ACTS). Binding a source as an intended
+// Ensure (`projectcentral.docs.ensure {project}`) and a tier's Relate (`projectcentral.docs.tier.relate {project, source_ref, tier, acceptance}`)
+// write the world's ground as the person's own presses, which the kernel carries with the person's authority (action.rs PERSON_ACTS). The
+// Workspace makes no world's ground: only Setup's preview does (manual §18.1), whose Accept presses `projectcentral.init`, `adopt` or
+// `migrate` (PC_ACCEPT_ACTION, acceptInput) and extends the person's grant to the project made (settings/windowPages.ts). Binding a source as an intended
 // experience or a return (`projectcentral.docs.ux.relate`, `ex.relate`) is not among those presses, so it stands disabled naming that.
 // Central's first ids for these (`projectcentral.self.*`) still answer as deprecated aliases; the shell asks by the docs ids (O-I #727).
 //
@@ -153,16 +154,15 @@ export interface WorkspaceGround {
   readonly plan?: {readonly treatment: 'create' | 'adopt' | 'migrate'; readonly answer: ActionAnswer}
   /** Ask Central's preview of a treatment (adopt or migrate) for a source. */
   readonly preview?: (treatment: 'adopt' | 'migrate', source: string) => Promise<void>
-  /** The person's Accept: make the world's ground by the treatment previewed (a source for adopt and migrate). */
-  readonly accept?: (treatment: 'create' | 'adopt' | 'migrate', source: string | null) => Promise<void>
   /** The person's Ensure: give the world its ProjectCentral/docs. */
   readonly ensure?: () => Promise<void>
   /** The person's Relate: bind a source of the world to a tier of its account. */
   readonly relate?: (tier: number, sourceRef: string) => Promise<void>
 }
 
-/** The person's presses that write the world's ground (action.rs PERSON_ACTS). A ProjectCentral's id is its project's name, as every
- * project.json keeps it (Work/<Name>/ProjectCentral/project.json `project_id`). */
+/** The person's presses that write the world's ground (action.rs PERSON_ACTS): making it (Setup's Projects step alone presses these,
+ * settings/windowPages.ts), its docs' Ensure and a tier's Relate. A ProjectCentral's id is its project's name, as every project.json keeps it
+ * (Work/<Name>/ProjectCentral/project.json `project_id`). */
 export const PC_ACCEPT_ACTION: Readonly<Record<'create' | 'adopt' | 'migrate', string>> = {create: 'projectcentral.init', adopt: 'projectcentral.adopt', migrate: 'projectcentral.migrate'}
 export const PC_DOCS_ENSURE_ACTION = 'projectcentral.docs.ensure'
 export const PC_TIER_RELATE_ACTION = 'projectcentral.docs.tier.relate'

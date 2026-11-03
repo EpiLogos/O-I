@@ -419,6 +419,9 @@ function scriptedSetup() {
     // `extended`: the projects the person's grant and the ground's bounds reach (central.ground.project.adopt); `byHand`: a ground
     // whose key and bounds the person keeps by hand (their recognition is not Setup's), which Central never extends.
     extended: new Set(), byHand: false, adoptRefusal: null,
+    // `lacks`: the root Actions Setup grants now that the person's grant lacks (a grant an older Setup founded); `agreeRefusal`: a
+    // Central that refuses the agreement once.
+    lacks: [], agreeRefusal: null,
     // `placed`: the projects Factory keeps (their .factory placement); `factoryRefusal`: a Factory that refuses project setup.
     placed: new Set(), factoryRefusal: null}
   const HOME = '/w/Bare'
@@ -497,6 +500,26 @@ function scriptedSetup() {
       if (world.adoptRefusal) { const refusal = world.adoptRefusal; world.adoptRefusal = null; throw new Error(refusal) }
       world.extended.add(input.project_id); world.extendAcceptance = input.acceptance_ref
       return {adopted: true, project: input.project, scope_ref: `project:${input.project_id}`, member: `Work/${input.project}`, writable: [`Work/${input.project}`]}
+    }
+    // Central's agreement of an older grant with what Setup grants now (ctrl ground_agreement.rs; shapes as the built ctrl answered on a
+    // scratch world, 30 Oct).
+    if (action === 'central.ground.agreement.preview') {
+      const state = !world.bound ? 'no-ground' : world.byHand ? 'hand-authored' : !world.key ? 'unfounded' : world.lacks.length ? 'absent' : 'present'
+      return {schema: 'central.ground-agreement-preview/v1', state, source_path: 'Control/user/native-action-authority.json', scope_ref: 'control:root', actions: ['central.day.ensure', 'central.world.place'],
+        adds: state === 'absent' ? [...world.lacks] : [], automatic_agent_or_model_invocation: false, ...(world.key ? {principal_ref: 'human:Bare'} : {}),
+        digest: state === 'absent' ? `agree:${world.lacks.join(',')}` : null,
+        reason: state === 'hand-authored' ? 'this ground\'s native-action-authority source (Control/user/native-action-authority.json) is recognised by owner-commissioned, not by Setup\'s acceptance: it is changed only by its owner, and Central extends nothing in it. Nothing was written.'
+          : state === 'present' ? 'your grant holds every Action Setup grants at the root now: nothing is added twice'
+          : state === 'unfounded' ? 'this ground keeps no native-action-authority source: Setup\'s Ground Accept keeps one first, and Central extends nothing. Nothing was written.'
+          : state === 'no-ground' ? 'there is no ground here yet: make the ground first' : null}
+    }
+    if (action === 'central.ground.agreement.adopt') {
+      if (input.actor_kind !== 'human' || input.acceptance !== 'human-accepted' || !input.acceptance_ref) throw new Error('a human-adopted civil-time policy requires a declared human caller, no agent_session_ref, and acceptance human-accepted')
+      if (world.byHand) throw new Error('this ground\'s native-action-authority source is recognised by owner-commissioned, not by Setup\'s acceptance: it is changed only by its owner, and Central extends nothing in it. Nothing was written.')
+      if (input.expected_digest !== `agree:${world.lacks.join(',')}`) throw new Error('what Central would bring into agreement changed since its preview (or no preview was named): preview it again. Nothing was written.')
+      if (world.agreeRefusal) { const refusal = world.agreeRefusal; world.agreeRefusal = null; throw new Error(refusal) }
+      const added = world.lacks; world.lacks = []; world.agreeAcceptance = input.acceptance_ref
+      return {adopted: true, added, actions: ['central.day.ensure', 'central.world.place'], authority_revision: 'a-2', source_ref: 'central:source:control:root:Control/user/native-action-authority.json'}
     }
     if (!world.bound) throw new Error(`Central root does not exist as a directory: ${GROUND}`)
     const project = name => { const row = world.work.get(name); if (!row) throw new Error(`Project root does not exist as a directory: ${GROUND}/Work/${name}`); return row }
@@ -1448,6 +1471,87 @@ test('SCRIPTED — one held Accept makes the ground, its days, its bounds and th
   assert.match(answer, /OI_WORLD_FOLDER/)
   assert.equal(outside.world.key, false)
   assert.equal(stepOf(win.setupValues(third.snapshot(), held({})), 'ground').state, 'found')
+})
+
+// ── an older setup brought into agreement (O-I #740; manual §10.11: "Run it over an older setup and it brings the setup into agreement")
+
+test('CODE-DERIVED — the Ground step shows your grant as Setup\'s own row: the root acts Setup grants today that it lacks, which Accept adds; one kept by hand is named and left as it is', () => {
+  const bound = {bound_ground: '/w/Bare/Central', suggested_ground: '/w/Bare/Central', selected_ground: '/w/Bare/Central', ground: {outcome: 'recognized', canonical_path: '/w/Bare/Central', access: {readable: true, searchable: true}}}
+  const kept = {state: 'read', preview: {state: 'present', digest: null, reason: null}}
+  const key = {state: 'read', reading: {keeps: true, central: {state: 'present', digest: null}}}
+  const agreement = (state, more = {}) => ({state: 'read', preview: {state, adds: [], digest: null, reason: null, ...more}})
+  const of = a => win.setupValues({adoption: {discovery: bound}, civilTime: civilRead('recognised'), placement: kept, key, agreement: a, folders: {state: 'read', folders: []}, plan: null}, held({}))
+  const row = values => stepOf(values, 'ground').items.find(item => item.name === 'Your grant')
+  const absent = of(agreement('absent', {adds: ['central.world.place', 'control.apply-proposal'], digest: 'agree'}))
+  assert.equal(stepOf(absent, 'ground').state, 'found', 'an older grant is not in agreement until Accept brings it')
+  assert.equal(row(absent).adopts, true)
+  assert.equal(row(absent).where, 'Control/user/native-action-authority.json')
+  assert.match(row(absent).change, /Setup grants 2 acts today that your grant lacks: central\.world\.place, control\.apply-proposal · Accept adds them; nothing you hold is taken away/)
+  const present = of(agreement('present'))
+  assert.equal(stepOf(present, 'ground').state, 'accepted')
+  assert.match(row(present).change, /^Your grant holds every act Setup grants today/)
+  // Hand-authored (the owner's own): named in Central's words, left as it is, and it never holds the step back.
+  const byHand = of(agreement('hand-authored', {reason: 'this ground\'s native-action-authority source (Control/user/native-action-authority.json) is recognised by owner-commissioned, not by Setup\'s acceptance: it is changed only by its owner'}))
+  assert.equal(stepOf(byHand, 'ground').state, 'accepted')
+  assert.match(row(byHand).why, /^You keep your grant by hand, so Setup leaves it as it is: .*owner-commissioned.*changed only by its owner/)
+  assert.equal(row(byHand).adopts, undefined)
+  // A Central that does not answer is named, and the step waits; before a ground, or with no key yet, the key's row speaks alone.
+  const refused = of({state: 'refused', error: 'Unknown Action: central.ground.agreement.preview'})
+  assert.match(row(refused).why, /Central did not say whether your grant agrees with what Setup grants today: Unknown Action/)
+  assert.equal(stepOf(refused, 'ground').state, 'found')
+  for (const state of ['unfounded', 'no-ground']) assert.equal(row(of(agreement(state))), undefined, state)
+  assert.equal(row(of(undefined)), undefined, 'not asked yet: no row')
+  // Drawn as a row of the Ground step, and the held Accept stands open for it.
+  const page = drawn({...absent, setupStep: 'ground'}, 'setup')
+  assert.ok(page.includes('Your grant') && page.includes('control.apply-proposal'), 'the row is drawn with what Accept adds')
+  assert.ok(!drawn({...present, setupStep: 'ground'}, 'setup').includes(escaped('Accept adds them')))
+})
+
+test('SCRIPTED — run over an older setup, Setup\'s held Ground Accept brings the grant into agreement on its preview\'s digest, recognised by that acceptance; a grant kept by hand is never touched', async () => {
+  const {source, calls, world} = scriptedSetup()
+  Object.assign(world, {bound: '/w/Bare/Central', outcome: 'recognized', civil: {timezone: 'Europe/London', day_boundary_minutes: 0}, placement: {writable: []}, key: true, form: true,
+    lacks: ['central.world.place', 'control.apply-proposal']})
+  const walk = new settingsPages.SetupWalk(source)
+  await walk.read()
+  const before = stepOf(win.setupValues(walk.snapshot(), held({})), 'ground')
+  assert.equal(before.state, 'found')
+  assert.equal(before.items.find(item => item.name === 'Your grant').adopts, true)
+  const said = await walk.accept('ground', held({}))
+  assert.match(said, /Your grant now holds every act Setup grants today: central\.world\.place and control\.apply-proposal were added; nothing you held was taken away\./)
+  const [, , input] = calls.find(([, action]) => action === 'central.ground.agreement.adopt')
+  assert.deepEqual({...input, acceptance_ref: input.acceptance_ref.replace(/\d+$/, 'N')},
+    {actor_kind: 'human', acceptance: 'human-accepted', acceptance_ref: 'dlw-setup-ground-accept:N', expected_digest: 'agree:central.world.place,control.apply-proposal'})
+  assert.deepEqual(world.lacks, [])
+  assert.ok(!calls.some(call => (call[0] === 'key' && call[1] === 'adopt') || call[1] === 'central.ground.placement.adopt' || call[1] === 'central.time.policy.adopt'), 'only what the older setup lacks')
+  assert.equal(stepOf(win.setupValues(walk.snapshot(), held({})), 'ground').state, 'accepted')
+  await assert.rejects(walk.accept('ground', held({})), /Nothing is made twice/)
+  // A Central that refuses the agreement: said, and the row stays for Accept to bring again.
+  const refusing = scriptedSetup()
+  Object.assign(refusing.world, {bound: '/w/Bare/Central', outcome: 'recognized', civil: {timezone: 'Europe/London', day_boundary_minutes: 0}, placement: {writable: []}, key: true, form: true,
+    lacks: ['central.world.place'], agreeRefusal: 'the founded source\'s relation moved'})
+  const again = new settingsPages.SetupWalk(refusing.source)
+  await again.read()
+  assert.match(await again.accept('ground', held({})), /Your grant is not in agreement yet: the founded source's relation moved Accept again to bring it\./)
+  assert.equal(stepOf(win.setupValues(again.snapshot(), held({})), 'ground').state, 'found')
+  // A grant kept by hand (the owner's own): read hand-authored, never pressed, and the step stands accepted.
+  const owner = scriptedSetup()
+  Object.assign(owner.world, {bound: '/w/Bare/Central', outcome: 'recognized', civil: {timezone: 'Europe/London', day_boundary_minutes: 0}, placement: {writable: []}, key: true, form: true,
+    byHand: true, lacks: ['central.world.place']})
+  const theirs = new settingsPages.SetupWalk(owner.source)
+  await theirs.read()
+  const ground = stepOf(win.setupValues(theirs.snapshot(), held({})), 'ground')
+  assert.match(ground.items.find(item => item.name === 'Your grant').why, /changed only by its owner/)
+  assert.equal(ground.state, 'accepted')
+  await assert.rejects(theirs.accept('ground', held({})), /Nothing is made twice/)
+  assert.ok(!owner.calls.some(([, action]) => action === 'central.ground.agreement.adopt'), 'Central is never asked to change what the person keeps by hand')
+  assert.deepEqual(owner.world.lacks, ['central.world.place'])
+  // A new ground: the grant Setup founds today is in agreement, so the agreement is never pressed.
+  const fresh = scriptedSetup()
+  const first = new settingsPages.SetupWalk(fresh.source)
+  await first.read()
+  await first.accept('ground', held({}))
+  assert.ok(!fresh.calls.some(([, action]) => action === 'central.ground.agreement.adopt'))
+  assert.equal(stepOf(win.setupValues(first.snapshot(), held({})), 'ground').items.find(item => item.name === 'Your grant')?.change ?? null, 'Your grant holds every act Setup grants today')
 })
 
 test('CODE-DERIVED — the Ground step keeps the Day\'s form in a ground no O-I project carries it for; a ground whose project carries it changes nothing', () => {

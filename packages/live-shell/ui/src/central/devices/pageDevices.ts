@@ -30,7 +30,7 @@ import {readDayPage, readFlowPage, wordsOfHtml, type FlowPage} from './pageReadi
 import {dateOfDayPath} from '../daySurface'
 import {actionAnswerOf, centralActionOp, useCentralAction, useCentralActionAsked, useDayDieReading, type ActionAnswer} from './useCentralReadings'
 import {kernelOp, kernelRead} from '../../../../../../desktop/cradle/src/kernel/bridge'
-import {CONTEMPLATE_FLOW_ACTION, PC_ACCEPT_ACTION, PC_INSPECT_ACTION, PC_PREVIEW_ACTION, PC_DOCS_ENSURE_ACTION, PC_DOCS_INSPECT_ACTION, PC_TIER_RELATE_ACTION, acceptInput, relateInput,
+import {CONTEMPLATE_FLOW_ACTION, PC_INSPECT_ACTION, PC_PREVIEW_ACTION, PC_DOCS_ENSURE_ACTION, PC_DOCS_INSPECT_ACTION, PC_TIER_RELATE_ACTION, relateInput,
   lastKeptThought, type FlowThought, type ThoughtHand, type WorkspaceGround} from './pageGround'
 import {useHeldRead, useOwnerOp} from '../../owners/ownerCall'
 import {useAutosaveSetting} from '../documents/useAutosave'
@@ -231,9 +231,9 @@ export function useDocsDevice(transport: KernelTransportStatus, id: string, worl
 const NO_INPUT: Readonly<Record<string, unknown>> = {}
 
 /** The Workspace's Ground and Self pages (pageGround.ts): Central's inspection and self reading of the workspace's project world, held for
- * the window; the preview asked by a press; and the person's Accept, Ensure and Relate, written through invoke_action as the person's own
- * presses (action.rs PERSON_ACTS) — each write retires the held readings, so the inspection and the self are read again behind it. No
- * project (a workspace of your root): nothing is asked, and nothing written. */
+ * the window; the preview asked by a press; and the person's Ensure and Relate, written through invoke_action as the person's own presses
+ * (action.rs PERSON_ACTS) — each write retires the held readings, so the inspection and the self are read again behind it. It makes no
+ * world's ground: only Setup's preview does (manual §18.1). No project (a workspace of your root): nothing is asked, and nothing written. */
 export function useWorkspaceGround(transport: KernelTransportStatus, project: string | null): WorkspaceGround {
   const input = useMemo(() => (project ? {project} : null), [project])
   const pc = useCentralAction(transport, PC_INSPECT_ACTION, input)
@@ -245,10 +245,6 @@ export function useWorkspaceGround(transport: KernelTransportStatus, project: st
     setPlan({project, treatment, answer: answerOfCall(call, PC_PREVIEW_ACTION[treatment])})
   }, [transport, project])
   const writes = useMemo(() => (project && transport.kind !== 'unavailable' ? {
-    accept: async (treatment: 'create' | 'adopt' | 'migrate', source: string | null) => {
-      await centralWrite(transport, PC_ACCEPT_ACTION[treatment], acceptInput(project, treatment, source))
-      setPlan(null)
-    },
     ensure: async () => { await centralWrite(transport, PC_DOCS_ENSURE_ACTION, {project}) },
     relate: async (tier: number, sourceRef: string) => { await centralWrite(transport, PC_TIER_RELATE_ACTION, relateInput(project, tier, sourceRef)) },
   } : {}), [project, transport])

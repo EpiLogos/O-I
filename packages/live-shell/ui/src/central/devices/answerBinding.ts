@@ -12,7 +12,7 @@
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {RosterAgent} from '../../../../../../desktop/cradle/src/agency/roster'
 import type {EncounterReading, EncounterStatus} from '../../../../../../desktop/cradle/src/encounter/client'
-import {threadJson} from '../../agent/devices/threadBinding'
+import {askRowsOf, threadJson, type AsksAnswer} from '../../agent/devices/threadBinding'
 import type {NaraState} from './centralDeviceModel'
 import {heldOf, setHeld} from './pageBindings'
 
@@ -23,6 +23,9 @@ export interface AnswerInput {
   readonly roster: readonly Pick<RosterAgent, 'ref' | 'name' | 'accepted' | 'purpose' | 'role'>[] | null
   /** The Packet's items (packetBinding.ts packetValues `packet`) and the session its prepared context is for. */
   readonly packet?: {readonly items: string; readonly session: string | null} | null
+  /** AIKit's asks of the bound session to the decision helper (aikit_read decision-asks), absent while not asked for: the thread's Ask
+   * rows (§19.4; threadBinding.ts askRowsOf), as on Factory's chain. */
+  readonly asks?: AsksAnswer | null
 }
 
 /** The role the Nara dialogue binds: the agent of that role answers on Central. */
@@ -78,7 +81,7 @@ export function centralAgentValues(id: string, input: AnswerInput): Values {
   if (state === 'bound') {
     const status = input.observed?.status?.state
     if (status === 'TurnInFlight' || status === 'InterruptRequested') values.run = 'producing'
-    const thread = threadJson(input.observed, answering?.name ?? null)
+    const thread = threadJson(input.observed, answering?.name ?? null, askRowsOf(input.asks, input.nara?.session ?? null, answering?.name ?? null))
     if (thread !== undefined) values.thread = thread
   }
   // The packet the Send carries: the Packet's, when it is prepared for this very session (ported from the retired answerValues).

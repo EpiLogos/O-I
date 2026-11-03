@@ -33,7 +33,9 @@ test('a research act that has no acknowledged owner is refused, not silently ret
  // REPLACED (#741, lane AJ): /async function commitResearch\(\)\{if\(!await commitNativeRecorded\(\)\)throw new Error\(/ — the Canvas's
  // Autosave Off (DLW §17.4) holds the edit in the working draft first, unsent and said held (aj741-canvas-autosave.test.mjs); a sent edit
  // the owner does not acknowledge is still refused.
- assert.match(appSource,/async function commitResearch\(\)\{if\(!researchAutosave\)\{researchHeld=true;return;\}if\(!await commitNativeRecorded\(\)\)throw new Error\(/,'commitResearch throws on refusal');
+ // REPLACED (#741, lane AX): /…\{researchHeld=true;return;\}if\(!await commitNativeRecorded…/ — the held state is set through
+ // holdResearch, which tells the Canvas's glyph at once (ax741-canvas-glyph-follows-held.test.mjs).
+ assert.match(appSource,/async function commitResearch\(\)\{if\(!researchAutosave\)\{holdResearch\(true\);return;\}if\(!await commitNativeRecorded\(\)\)throw new Error\(/,'commitResearch throws on refusal');
 });
 
 test('one save-state glyph reports saving, saved and held in the status line', ()=>{

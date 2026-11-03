@@ -1,0 +1,74 @@
+{
+ "schema": "oi.working-surface-reading/v1",
+ "agent_session": "agent-session/av-walk-tmux",
+ "cwd": "/private/tmp/claude-501/avw",
+ "bindings": [
+  {
+   "space": "session-space/av-walk",
+   "binding": "working-surface/av-walk-tmux",
+   "surface": "surface/terminal/main/shell",
+   "provider": "provider/tmux/current",
+   "label": "av-walk-tmux"
+  }
+ ],
+ "capture": {
+  "schema": "aikit.session-space-working-surface-capture/v1",
+  "space": "session-space/av-walk",
+  "binding": "working-surface/av-walk-tmux",
+  "surface": "surface/terminal/main/shell",
+  "agent_session": "agent-session/av-walk-tmux",
+  "provider": "provider/tmux/current",
+  "plan_name": "av-walk-tmux",
+  "observed_at_unix_ms": 1793358376720,
+  "capture": {
+   "state": "captured",
+   "native_id": "%0",
+   "format": "ansi",
+   "text": "$ export AIKIT_HOME=/private/tmp/claude-501/avw/aikit AIKIT_ACTOR=agent-session/\nav-walk-tmux AIKIT_BIN_DIR=/Users/admin/.cache/oi-lane-av-aikit-target/debug\n$ clear\n$ sh /private/tmp/claude-501/avw/harness.sh 'git --version'\n⏺ Bash(git --version)\n  ⎿  git version 2.51.1\n$ sh /private/tmp/claude-501/avw/harness.sh 'ls /private/tmp/claude-501/avw/room\n'\n⏺ Bash(ls /private/tmp/claude-501/avw/room)\n  ⎿\n$ echo typed-by-the-person\ntyped-by-the-person\n$ pwd\n/private/tmp/claude-501/avw/room\n$\n\n\n\n\n\n\n\n\n\n\n\n\n",
+   "truncated": false,
+   "pane": "tmux:%0@/private/tmp/tmux-501/av-walk,53546"
+  },
+  "input": {
+   "state": "accepts"
+  },
+  "inputs": [
+   {
+    "binding": "working-surface/av-walk-tmux",
+    "by": "human",
+    "bytes": 25,
+    "native_id": "%0",
+    "at_unix_ms": 1793358366156
+   },
+   {
+    "binding": "working-surface/av-walk-tmux",
+    "by": "agent-session/av-walk-tmux",
+    "text": "pwd\r",
+    "bytes": 4,
+    "native_id": "%0",
+    "at_unix_ms": 1793358366880
+   }
+  ],
+  "observed": [
+   {
+    "command": "git --version",
+    "by": "agent-session/av-walk-tmux",
+    "at_unix_ms": 1793358360138,
+    "exit_code": 0
+   },
+   {
+    "command": "ls /private/tmp/claude-501/avw/room",
+    "by": "agent-session/av-walk-tmux",
+    "at_unix_ms": 1793358363130,
+    "exit_code": 0
+   }
+  ]
+ },
+ "attachment": null,
+ "selected": {
+  "space": "session-space/av-walk",
+  "binding": "working-surface/av-walk-tmux",
+  "surface": "surface/terminal/main/shell",
+  "provider": "provider/tmux/current",
+  "label": "av-walk-tmux"
+ }
+}

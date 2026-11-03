@@ -515,6 +515,12 @@ export type SetupFounding = {readonly state: 'read'; readonly preview: {readonly
  * It never carries the key, nor its digest. */
 export type SetupKey = {readonly state: 'read'; readonly reading: {readonly keeps?: unknown; readonly why?: unknown; readonly central?: {readonly state?: unknown; readonly digest?: unknown; readonly reason?: unknown}}}
   | {readonly state: 'refused'; readonly error: string}
+/** Central's agreement of the person's grant with what Setup grants now (`central.ground.agreement.preview`, ctrl ground_agreement.rs,
+ * O-I #740): `absent` (the root acts Setup grants today that the grant lacks, `adds`, which Accept adds on `digest`), `present` (it holds
+ * them all), `hand-authored` (kept by hand: Central changes nothing, `reason`), `unfounded` or `no-ground` (no grant yet: the key's row
+ * speaks); or Central's refusal. It never carries the key, nor its digest. */
+export type SetupAgreement = {readonly state: 'read'; readonly preview: {readonly state: string; readonly adds?: readonly string[]; readonly digest?: string | null; readonly reason?: string | null}}
+  | {readonly state: 'refused'; readonly error: string}
 /** The Day's form (SetupSource.groundForm, the kernel's ground_form preview): carried by the ground's O-I project (`state: project`),
  * or Central's preview of keeping the application's own form in the ground (`central`: present, absent or no-ground, its digest). */
 export type SetupForm = {readonly state: 'read'; readonly reading: {readonly state?: unknown; readonly carried_by?: unknown; readonly central?: {readonly state?: unknown; readonly digest?: unknown; readonly reason?: unknown}}}
@@ -533,6 +539,8 @@ export interface SetupSnapshot {
   readonly placement?: SetupFounding
   /** The person's key, once the host is asked. */
   readonly key?: SetupKey
+  /** Whether the person's grant agrees with what Setup grants now, once Central is asked. */
+  readonly agreement?: SetupAgreement
   /** The Day's form, once the host is asked. */
   readonly form?: SetupForm
   readonly folders: {readonly state: 'unread'} | {readonly state: 'read'; readonly folders: readonly SetupWorkFolder[]; readonly elsewhere?: string} | {readonly state: 'refused'; readonly error: string}
@@ -552,18 +560,21 @@ export function groundBound(discovery: AdoptionDiscovery | undefined): boolean {
 /** The Ground step from native oi's discovery (oi.setup/v1): the ground bound and recognised (accepted), a new one Central would make in
  * the folder chosen, an existing one adopted where it is, or one Central cannot read, named with its reason. A refused read or a blocked
  * plan stands on the row in native oi's words. Undefined before any reading. Pure. */
-export function setupGroundStep(adoption: SetupSnapshot['adoption'], civil?: SetupCivilTime, placement?: SetupFounding, key?: SetupKey, form?: SetupForm): Record<string, unknown> | undefined {
+export function setupGroundStep(adoption: SetupSnapshot['adoption'], civil?: SetupCivilTime, placement?: SetupFounding, key?: SetupKey, form?: SetupForm,
+  agreement?: SetupAgreement): Record<string, unknown> | undefined {
   const discovery = adoption.discovery
   if (!discovery) return adoption.error ? {step: 'ground', state: 'found', items: [{name: 'Your ground', why: adoption.error}]} : undefined
   const where = discovery.selected_ground ?? discovery.suggested_ground
-  // What the ground keeps beside itself: its days, its bounds, and the person's key (each absent until its owner is asked).
-  const founding = [setupDaysItem(civil), setupBoundsItem(placement), setupFormItem(form), setupKeyItem(key)].flatMap(item => (item ? [item] : []))
+  // What the ground keeps beside itself: its days, its bounds, the person's key and their grant (each absent until its owner is asked).
+  const founding = [setupDaysItem(civil), setupBoundsItem(placement), setupFormItem(form), setupKeyItem(key), setupGrantItem(agreement)].flatMap(item => (item ? [item] : []))
   if (groundBound(discovery)) {
-    // The ground stands; it is accepted once Central keeps its days, its bounds and the key (a reading not taken leaves its standing).
+    // The ground stands; it is accepted once Central keeps its days, its bounds and the key, and the grant agrees with what Setup grants
+    // today or is kept by hand (a reading not taken leaves its standing).
     const kept = (!civil || (civil.state === 'read' && civil.preview.state === 'recognised'))
       && (!placement || (placement.state === 'read' && placement.preview.state === 'present'))
       && (!key || (key.state === 'read' && key.reading.central?.state === 'present'))
       && (!form || (form.state === 'read' && (form.reading.state === 'project' || form.reading.central?.state === 'present')))
+      && (!agreement || (agreement.state === 'read' && agreement.preview.state !== 'absent'))
     return {step: 'ground', state: kept ? 'accepted' : 'found', items: [{name: 'Your ground', where, change: 'Central keeps it here · nothing in it moved'}, ...founding]}
   }
   const outcome = discovery.ground.outcome
@@ -612,6 +623,23 @@ export function setupKeyItem(key: SetupKey | undefined): Record<string, unknown>
   if ((state === 'absent' || state === 'no-ground') && txt(central?.digest))
     return {name: 'Your key', where, adopts: true, change: 'Central keeps a key in this world so that only you act as you here'}
   return {name: 'Your key', where, why: txt(central?.reason) ?? `Central keeps no key it recognises here (${state ?? 'not said'}).`}
+}
+
+/** The person's grant as Setup's own row of the Ground step (manual §10.11: "Run it over an older setup and it brings the setup into
+ * agreement"): the root acts Setup grants today that a grant an older Setup founded lacks, which Accept adds (`adopts`) and nothing it
+ * holds taken away; that it holds them all; or, kept by hand, that Setup leaves it as it is, in Central's words. No row before there is a
+ * grant (the key's row speaks). Pure. */
+export function setupGrantItem(agreement: SetupAgreement | undefined): Record<string, unknown> | undefined {
+  if (!agreement) return undefined
+  const where = 'Control/user/native-action-authority.json'
+  if (agreement.state === 'refused') return {name: 'Your grant', where, why: `Central did not say whether your grant agrees with what Setup grants today: ${agreement.error}`}
+  const preview = agreement.preview, adds = (preview.adds ?? []).filter(action => typeof action === 'string')
+  if (preview.state === 'present') return {name: 'Your grant', where, change: 'Your grant holds every act Setup grants today'}
+  if (preview.state === 'absent' && adds.length && preview.digest)
+    return {name: 'Your grant', where, adopts: true, change: `Setup grants ${adds.length} act${adds.length === 1 ? '' : 's'} today that your grant lacks: ${adds.join(', ')} · Accept adds them; nothing you hold is taken away`}
+  if (preview.state === 'hand-authored') return {name: 'Your grant', where, why: `You keep your grant by hand, so Setup leaves it as it is: ${preview.reason ?? 'Central did not say by whom it is recognised.'}`}
+  if (preview.state === 'unfounded' || preview.state === 'no-ground') return undefined
+  return {name: 'Your grant', where, why: preview.reason ?? `Central brings no grant it recognises here into agreement (${preview.state}).`}
 }
 
 /** When the day turns, from a policy's boundary in minutes after local midnight. Pure. */
@@ -823,7 +851,7 @@ export function setupCredentialStep(reading: SetupCredentials | undefined, held:
 export function setupValues(snapshot: SetupSnapshot, held: (key: string) => Value | undefined): Record<string, Value> {
   const values: Record<string, Value> = {}
   const steps: Record<string, unknown>[] = []
-  const ground = setupGroundStep(snapshot.adoption, snapshot.civilTime, snapshot.placement, snapshot.key, snapshot.form)
+  const ground = setupGroundStep(snapshot.adoption, snapshot.civilTime, snapshot.placement, snapshot.key, snapshot.form, snapshot.agreement)
   const discovery = snapshot.adoption.discovery
   if (ground && discovery && !groundBound(discovery)) {
     // The folder and name of a ground to make (§10.11: "makes a new one in the folder you choose, under the name you give it"): the ones
@@ -920,7 +948,7 @@ export const SETTINGS_WINDOW_WIRING = {
     visualLayer: 'the renderer\'s visual layer (SettingsAdapter.visualPreferences)', welcome: 'the renderer\'s welcome scene (SettingsAdapter.visualPreferences)',
     products: 'each product\'s mount and operations (system_composition_read)', ran: 'the last operation\'s answer (product_action_run)',
     system: 'each owner\'s System disclosure on its four axes (system_composition_read)',
-    setup: 'Setup\'s steps (manual §10.11): Ground from native oi\'s adoption (the kernel op `setup`: status and discover) and Central\'s civil-time preview (central.time.policy.preview: how your days are kept), its bounds (central.ground.placement.preview), its Day\'s form (SetupSource.groundForm: the kernel\'s ground_form preview, carried by the ground\'s O-I project or kept in Control/forms) and the person\'s key (SetupSource.groundAuthority: the kernel\'s ground_authority preview, never the key), accepted once the ground is bound and recognised and Central keeps its days, bounds, Day form and key; Harnesses and skills also show what AIKit discloses of each tool (SetupSource.harnessDisclosure: aikit harness disclose), and a step with nothing to adopt or bind is accepted and says so; Machines from Workcell\'s status (op workcell_status_read) and Central\'s machine.declaration of role current, accepted once that binds the Workcell this computer answers as; Projects from Central\'s Work, accepted once a project stands with its ground. Harnesses and skills from AIKit: the tools its client status detects (op harness_status), the skill roots aikit init discovers (aikit_read init) with who owns each (its ownership: foreign, adopted, generated), and the skills aikit collate --all names in each, accepted once AIKit holds every root that keeps skills. Credentials from AIKit: where aikit credential discover finds each key (presence only), the providers aikit harness auth names for each detected tool (op harness_auth_describe) and the bindings aikit credential list keeps (metadata only), accepted once a key is bound and none found waits; items carry the credential a row binds, and bound',
+    setup: 'Setup\'s steps (manual §10.11): Ground from native oi\'s adoption (the kernel op `setup`: status and discover) and Central\'s civil-time preview (central.time.policy.preview: how your days are kept), its bounds (central.ground.placement.preview), its Day\'s form (SetupSource.groundForm: the kernel\'s ground_form preview, carried by the ground\'s O-I project or kept in Control/forms) and the person\'s key (SetupSource.groundAuthority: the kernel\'s ground_authority preview, never the key), and whether the person\'s grant holds the root acts Setup grants today (central.ground.agreement.preview: the acts an older grant lacks, or a grant kept by hand named and left as it is), accepted once the ground is bound and recognised, Central keeps its days, bounds, Day form and key, and the grant agrees or is kept by hand; Harnesses and skills also show what AIKit discloses of each tool (SetupSource.harnessDisclosure: aikit harness disclose), and a step with nothing to adopt or bind is accepted and says so; Machines from Workcell\'s status (op workcell_status_read) and Central\'s machine.declaration of role current, accepted once that binds the Workcell this computer answers as; Projects from Central\'s Work, accepted once a project stands with its ground. Harnesses and skills from AIKit: the tools its client status detects (op harness_status), the skill roots aikit init discovers (aikit_read init) with who owns each (its ownership: foreign, adopted, generated), and the skills aikit collate --all names in each, accepted once AIKit holds every root that keeps skills. Credentials from AIKit: where aikit credential discover finds each key (presence only), the providers aikit harness auth names for each detected tool (op harness_auth_describe) and the bindings aikit credential list keeps (metadata only), accepted once a key is bound and none found waits; items carry the credential a row binds, and bound',
     folders: 'the folders of the ground\'s Work (Central work.list), each with Central\'s projectcentral.inspect, its material and its ProjectCentral parts (central.files.list); then the folders of work that stand elsewhere under the world\'s folder (Central work.candidates)',
     groundFolder: 'the folder the Ground step would make your ground in: the one chosen (the system\'s chooser, then native oi\'s discover with it), else the folder native oi reads the world\'s ground in',
     birth: 'your name and date of birth as the identity owner keeps them (SetupSource.identity: the kernel\'s nara_identity list and open), once the ground is made; absent until you give them, never shown as missing',
@@ -942,7 +970,7 @@ export const SETTINGS_WINDOW_WIRING = {
     checkCreation: 'RoutineAuthoringSource.readResult: a waiting creation read back, never sent again',
     addMachine: 'RemoteMachinesSource.add', connect: 'RemoteMachinesSource.connect', disconnect: 'RemoteMachinesSource.disconnect', removeMachine: 'RemoteMachinesSource.remove',
     openElsewhere: 'the setting\'s own editor beside its instrument (SettingsAdapter.navigate)', 'pick:<ref>': 'the system picker (SettingsAdapter.pickResource)',
-    acceptStep: 'Ground: native oi\'s reviewed plan (the kernel op `setup`: plan, then apply with its review token; Central only — custom, products [central]) for the folder and name shown, read back by discover; then Central\'s central.time.policy.adopt and central.ground.placement.adopt on their previews\' digests, the kernel\'s ground_form keep (the application\'s own Day form through central.ground.form.adopt, where no O-I project carries it) and its ground_authority adopt (the key made in the world\'s own folder, only its digest sent to central.ground.authority.adopt), each recognised by that acceptance and read back by its preview (an older ground gets only what it lacks). Machines: Central\'s machine.adopt-current (role current, the Workcell this computer answers as), read back by machine.declaration; the host then reads its world again. Projects: a folder elsewhere comes into Work by Central\'s work.bring on its preview\'s digest, read back by work.list; a folder of Work becomes a project by Central\'s projectcentral.init, adopt or migrate as previewed, read back by projectcentral.inspect; once it stands as a project, Central\'s central.ground.project.adopt on its preview\'s digest (central.ground.project.preview, asked with Preview) extends the person\'s grant to it and makes its Work member writable, read back by its preview. Harnesses and skills: for each skill root AIKit reads as foreign, AIKit\'s plan (aikit_read adopt-plan: aikit adopt ROOT --namespace LABEL, nothing moves) and, when it adopts the skills read, aikit adopt ROOT --namespace LABEL --yes --expect-digest on its review digest (aikit_write adopt), read back by aikit init as adopted and still keeping its skills; the tool keeps reading them where they were. Credentials: aikit credential setup CREDENTIAL --ref REFERENCE (op credential_setup with the reference you give, never material) for the key chosen, read back by aikit credential list; a reference that names no store (op://, keychain://, pass://, varlock://) is refused before anything is sent',
+    acceptStep: 'Ground: native oi\'s reviewed plan (the kernel op `setup`: plan, then apply with its review token; Central only — custom, products [central]) for the folder and name shown, read back by discover; then Central\'s central.time.policy.adopt and central.ground.placement.adopt on their previews\' digests, the kernel\'s ground_form keep (the application\'s own Day form through central.ground.form.adopt, where no O-I project carries it) and its ground_authority adopt (the key made in the world\'s own folder, only its digest sent to central.ground.authority.adopt), each recognised by that acceptance and read back by its preview (an older ground gets only what it lacks), and for a grant an older Setup founded, Central\'s central.ground.agreement.adopt on its preview\'s digest, adding the root acts Setup grants today that it lacks (a grant kept by hand is never pressed). Machines: Central\'s machine.adopt-current (role current, the Workcell this computer answers as), read back by machine.declaration; the host then reads its world again. Projects: a folder elsewhere comes into Work by Central\'s work.bring on its preview\'s digest, read back by work.list; a folder of Work becomes a project by Central\'s projectcentral.init, adopt or migrate as previewed, read back by projectcentral.inspect; once it stands as a project, Central\'s central.ground.project.adopt on its preview\'s digest (central.ground.project.preview, asked with Preview) extends the person\'s grant to it and makes its Work member writable, read back by its preview. Harnesses and skills: for each skill root AIKit reads as foreign, AIKit\'s plan (aikit_read adopt-plan: aikit adopt ROOT --namespace LABEL, nothing moves) and, when it adopts the skills read, aikit adopt ROOT --namespace LABEL --yes --expect-digest on its review digest (aikit_write adopt), read back by aikit init as adopted and still keeping its skills; the tool keeps reading them where they were. Credentials: aikit credential setup CREDENTIAL --ref REFERENCE (op credential_setup with the reference you give, never material) for the key chosen, read back by aikit credential list; a reference that names no store (op://, keychain://, pass://, varlock://) is refused before anything is sent',
     previewStep: 'Central\'s projectcentral.adopt.preview or migrate.preview for the folder and wiki chosen; Create previews from Central\'s inspection (it has no preview of projectcentral.init); a folder elsewhere previews Central\'s work.bring.preview',
     chooseGroundFolder: 'the system\'s folder chooser (the native host\'s choose_folder, purpose ground), then native oi\'s discover of the ground there under the name shown',
     keepBirth: 'the identity owner\'s save (SetupSource.identity: the kernel\'s nara_identity save — QL checks it, Central keeps it in the ground) of your name and date of birth, read back by its list and open; a correction is a new revision of the same identity',

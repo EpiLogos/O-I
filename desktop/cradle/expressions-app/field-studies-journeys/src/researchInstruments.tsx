@@ -1512,6 +1512,9 @@ host.tools.append(saveGlyph);
    mutations=done.catch(()=>{});
    await done;
   },
+  /** lane AX: the frame's held state was set outside an act of the Canvas (app.ts holdResearch: a commit by any path, the app's Save, an
+   * edit held while Autosave is off): the glyph says saved or held at once. An act in flight sets it when it ends, from the same state. */
+  followHeld(){if(materialInFlight)return;saveState(host.held?.()?'held':'saved');},
   /** lane W4-Technē: the Canvas camera, set through the canvas's own fly (the overview's own path, CanvasNavigationOverview onCamera). */
   setCamera(camera:{cx:number;cy:number;zoom:number}){
    if(lens!=='m1'||!currentKey)throw new Error('Open the Canvas to move its camera.');

@@ -1,0 +1,66 @@
+{
+ "schema": "oi.working-surface-reading/v1",
+ "agent_session": "agent-session/av-walk-herdr",
+ "cwd": "/private/tmp/claude-501/avw",
+ "bindings": [
+  {
+   "space": "session-space/av-walk",
+   "binding": "working-surface/av-walk-herdr",
+   "surface": "surface/terminal/main/shell",
+   "provider": "provider/herdr/current",
+   "label": "av-walk-herdr"
+  }
+ ],
+ "capture": {
+  "schema": "aikit.session-space-working-surface-capture/v1",
+  "space": "session-space/av-walk",
+  "binding": "working-surface/av-walk-herdr",
+  "surface": "surface/terminal/main/shell",
+  "agent_session": "agent-session/av-walk-herdr",
+  "provider": "provider/herdr/current",
+  "plan_name": "av-walk-herdr",
+  "observed_at_unix_ms": 1793358376775,
+  "capture": {
+   "state": "captured",
+   "native_id": "w1:p1",
+   "format": "ansi",
+   "text": "$sh /private/tmp/claude-501/avw/harness.sh 'git --version'\r\n⏺ Bash(git --version)\r\n  ⎿  git version 2.50.1 (Apple Git-155)\r\n$sh /private/tmp/claude-501/avw/harness.sh 'make --version'\r\n⏺ Bash(make --version)\r\n  ⎿  GNU Make 3.81\r\n  ⎿  Copyright (C) 2006  Free Software Foundation, Inc.\r\n  ⎿  This is free software; see the source for copying conditions.\r\n  ⎿  There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A\r\n  ⎿  PARTICULAR PURPOSE.\r\n  ⎿  \r\n  ⎿  This program built for i386-apple-darwin11.3.0\r\n$echo typed-by-the-person\r\ntyped-by-the-person\r\n$",
+   "truncated": false,
+   "pane": "herdr:w1:p1@/private/tmp/claude-501/avh/.config/herdr/sessions/avwalk/herdr.sock"
+  },
+  "input": {
+   "state": "accepts"
+  },
+  "inputs": [
+   {
+    "binding": "working-surface/av-walk-herdr",
+    "by": "human",
+    "bytes": 25,
+    "native_id": "w1:p1",
+    "at_unix_ms": 1793358375617
+   }
+  ],
+  "observed": [
+   {
+    "command": "git --version",
+    "by": "agent-session/av-walk-herdr",
+    "at_unix_ms": 1793358369639,
+    "exit_code": 0
+   },
+   {
+    "command": "make --version",
+    "by": "agent-session/av-walk-herdr",
+    "at_unix_ms": 1793358372625,
+    "exit_code": 0
+   }
+  ]
+ },
+ "attachment": null,
+ "selected": {
+  "space": "session-space/av-walk",
+  "binding": "working-surface/av-walk-herdr",
+  "surface": "surface/terminal/main/shell",
+  "provider": "provider/herdr/current",
+  "label": "av-walk-herdr"
+ }
+}
