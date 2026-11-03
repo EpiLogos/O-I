@@ -31,7 +31,10 @@ const SCHEME: &str = "oi-material";
 pub fn register<R: Runtime>(builder: tauri::Builder<R>) -> tauri::Builder<R> {
     builder.register_asynchronous_uri_scheme_protocol(SCHEME, |context, request, responder| {
         if context.webview_label().starts_with("browser-") {
-            responder.respond(refuse(StatusCode::FORBIDDEN, "Browser pages cannot read Central material"));
+            responder.respond(refuse(
+                StatusCode::FORBIDDEN,
+                "Browser pages cannot read Central material",
+            ));
             return;
         }
         let app_handle = context.app_handle().clone();
@@ -55,29 +58,49 @@ fn handle<R: Runtime>(app_handle: &AppHandle<R>, request: &Request<Vec<u8>>) -> 
     // Candidate-owned application code shares the historical material origin
     // so hosted drafts retain their browser storage. Personal file requests
     // still use the Central-owner location grammar below.
-    if path.starts_with("/__application/") { return crate::app_assets::handle(app_handle, request); }
+    if path.starts_with("/__application/") {
+        return crate::app_assets::handle(app_handle, request);
+    }
     // The installed World (Essay #78): a derived artifact outside any Central ground, so it is not
     // read through `central.files.read`. Its own, smaller law lives in the kernel
     // (`world_resolve::serve`): only files the revision's `world.files.json` lists, only with
     // matching bytes, nothing outside the revision directory.
-    if let Some(rest) = path.strip_prefix("/__world/") { return world_file(rest); }
+    if let Some(rest) = path.strip_prefix("/__world/") {
+        return world_file(rest);
+    }
     let mut segments = path.split('/').filter(|segment| !segment.is_empty());
 
     let Some(encoded_location) = segments.next() else {
         return refuse(StatusCode::NOT_FOUND, "No material location in the request");
     };
     let Some(location) = decode_location(encoded_location) else {
-        return refuse(StatusCode::NOT_FOUND, "Material location is not a valid Central path reference");
+        return refuse(
+            StatusCode::NOT_FOUND,
+            "Material location is not a valid Central path reference",
+        );
     };
 
     let mut relative = Vec::new();
     for raw in segments {
         match percent_decode(raw) {
-            Some(segment) if segment == ".." || segment == "." || segment.is_empty() || segment.contains('/') => {
-                return refuse(StatusCode::FORBIDDEN, "Traversal outside the material directory is refused");
+            Some(segment)
+                if segment == ".."
+                    || segment == "."
+                    || segment.is_empty()
+                    || segment.contains('/') =>
+            {
+                return refuse(
+                    StatusCode::FORBIDDEN,
+                    "Traversal outside the material directory is refused",
+                );
             }
             Some(segment) => relative.push(segment),
-            None => return refuse(StatusCode::FORBIDDEN, "Material path segment is not validly encoded"),
+            None => {
+                return refuse(
+                    StatusCode::FORBIDDEN,
+                    "Material path segment is not validly encoded",
+                )
+            }
         }
     }
 
@@ -85,18 +108,30 @@ fn handle<R: Runtime>(app_handle: &AppHandle<R>, request: &Request<Vec<u8>>) -> 
     // the bytes are prepared owner reads, so a document's material never holds the kernel lock while Central answers.
     let host = app_handle.state::<KernelHost>();
     // Each op the route dispatches writes its timing line (kernel dispatch.rs `trace_op`).
-    let mut trace = |name: &str, ok: bool, total: std::time::Duration, timing: &oi_cradle_kernel::dispatch::Timing| {
+    let mut trace = |name: &str,
+                     ok: bool,
+                     total: std::time::Duration,
+                     timing: &oi_cradle_kernel::dispatch::Timing| {
         oi_cradle_kernel::dispatch::trace_op("native", name, ok, total, timing)
     };
-    let (target, bytes) = match oi_cradle_kernel::files::read_material_observed(&host.0, &location, &relative, &mut trace) {
+    let (target, bytes) = match oi_cradle_kernel::files::read_material_observed(
+        &host.0, &location, &relative, &mut trace,
+    ) {
         Ok(read) => read,
-        Err(MaterialRouteError::Forbidden(message)) => return refuse(StatusCode::FORBIDDEN, &message),
+        Err(MaterialRouteError::Forbidden(message)) => {
+            return refuse(StatusCode::FORBIDDEN, &message)
+        }
         Err(MaterialRouteError::NotFound(message)) => return owner_error(&message),
     };
 
     match bytes {
         Ok(outcome) => match outcome.result {
-            KernelOpResult::FileBytes { byte_len: _, mime_hint, content_base64, .. } => {
+            KernelOpResult::FileBytes {
+                byte_len: _,
+                mime_hint,
+                content_base64,
+                ..
+            } => {
                 match base64_decode(&content_base64) {
                     Some(bytes) => {
                         let content_type = content_type_for(mime_hint.as_deref(), &target.path);
@@ -106,15 +141,21 @@ fn handle<R: Runtime>(app_handle: &AppHandle<R>, request: &Request<Vec<u8>>) -> 
                             match String::from_utf8(bytes.clone()) {
                                 Ok(mut html) => {
                                     html.push_str("<script>");
-                                    html.push_str(include_str!("../../src/context/page-context.js"));
+                                    html.push_str(include_str!(
+                                        "../../src/context/page-context.js"
+                                    ));
                                     html.push_str("</script><script>");
-                                    html.push_str(include_str!("../../src/context/document-host.js"));
+                                    html.push_str(include_str!(
+                                        "../../src/context/document-host.js"
+                                    ));
                                     html.push_str("</script>");
                                     html.into_bytes()
-                                },
+                                }
                                 Err(_) => bytes,
                             }
-                        } else { bytes };
+                        } else {
+                            bytes
+                        };
                         Response::builder()
                             .status(StatusCode::OK)
                             .header("Content-Type", content_type)
@@ -124,12 +165,23 @@ fn handle<R: Runtime>(app_handle: &AppHandle<R>, request: &Request<Vec<u8>>) -> 
                             .header("Access-Control-Allow-Origin", "null")
                             .header("X-Content-Type-Options", "nosniff")
                             .body(bytes)
-                            .unwrap_or_else(|_| refuse(StatusCode::NOT_FOUND, "Material response could not be built"))
+                            .unwrap_or_else(|_| {
+                                refuse(
+                                    StatusCode::NOT_FOUND,
+                                    "Material response could not be built",
+                                )
+                            })
                     }
-                    None => refuse(StatusCode::NOT_FOUND, "Central returned an unreadable material encoding"),
+                    None => refuse(
+                        StatusCode::NOT_FOUND,
+                        "Central returned an unreadable material encoding",
+                    ),
                 }
             }
-            _ => refuse(StatusCode::NOT_FOUND, "Central returned an unsupported material reading"),
+            _ => refuse(
+                StatusCode::NOT_FOUND,
+                "Central returned an unsupported material reading",
+            ),
         },
         Err(message) => owner_error(&message),
     }

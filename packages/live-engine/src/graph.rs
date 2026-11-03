@@ -39,7 +39,11 @@ pub struct Clock {
 
 impl Clock {
     pub fn start(sample_rate: u32, tempo_bpm: f64) -> Clock {
-        Clock { sample_rate, sample: 0, tempo_bpm }
+        Clock {
+            sample_rate,
+            sample: 0,
+            tempo_bpm,
+        }
     }
 
     /// Position of the current frame in song beats (1.1.1 = 0).
@@ -213,7 +217,10 @@ pub struct Track {
 
 impl Track {
     pub fn new(name: &str, channels: usize) -> Track {
-        assert!(channels == 1 || channels == 2, "M1 tracks are mono or stereo");
+        assert!(
+            channels == 1 || channels == 2,
+            "M1 tracks are mono or stereo"
+        );
         Track {
             name: name.to_string(),
             channels,
@@ -251,7 +258,13 @@ impl Track {
     pub fn set_notes(&mut self, notes: &[Note]) {
         let mut edges: Vec<(u64, Edge)> = Vec::with_capacity(notes.len() * 2);
         for n in notes.iter().filter(|n| n.length > 0) {
-            edges.push((n.start, Edge::On { key: n.key, velocity: n.velocity }));
+            edges.push((
+                n.start,
+                Edge::On {
+                    key: n.key,
+                    velocity: n.velocity,
+                },
+            ));
             edges.push((n.start + n.length, Edge::Off { key: n.key }));
         }
         edges.sort_by(|a, b| {
@@ -309,7 +322,14 @@ pub struct ReturnTrack {
 
 impl ReturnTrack {
     pub fn new(name: &str) -> ReturnTrack {
-        ReturnTrack { name: name.to_string(), gain: 1.0, pan: 0.0, active: true, pre_fader: false, devices: Vec::new() }
+        ReturnTrack {
+            name: name.to_string(),
+            gain: 1.0,
+            pan: 0.0,
+            active: true,
+            pre_fader: false,
+            devices: Vec::new(),
+        }
     }
 }
 
@@ -328,7 +348,11 @@ pub struct MasterTrack {
 
 impl Default for MasterTrack {
     fn default() -> Self {
-        MasterTrack { gain: 1.0, pan: 0.0, devices: Vec::new() }
+        MasterTrack {
+            gain: 1.0,
+            pan: 0.0,
+            devices: Vec::new(),
+        }
     }
 }
 
@@ -337,7 +361,11 @@ impl Default for MasterTrack {
 pub enum GraphError {
     /// Live's loader rule (session-model.md §4), in the loader's own
     /// words: "(Track has more send knobs than set has return tracks.)"
-    SendCount { track: String, sends: usize, returns: usize },
+    SendCount {
+        track: String,
+        sends: usize,
+        returns: usize,
+    },
     /// More return tracks than [`MAX_RETURNS`].
     TooManyReturns(usize),
 }
@@ -437,7 +465,8 @@ impl Graph {
     /// The arrangement length in frames ([`Graph::length_frames`], else
     /// the longest source or last note edge).
     pub fn frames(&self) -> u64 {
-        self.length_frames.unwrap_or_else(|| self.tracks.iter().map(|t| t.frames()).max().unwrap_or(0))
+        self.length_frames
+            .unwrap_or_else(|| self.tracks.iter().map(|t| t.frames()).max().unwrap_or(0))
     }
 
     /// Render the whole mix offline to an interleaved stereo f32 buffer.
@@ -488,8 +517,16 @@ impl Graph {
     /// audio thread). Allocation-free.
     pub fn apply(&mut self, event: &EngineEvent, clock: &Clock) -> bool {
         match *event {
-            EngineEvent::NoteOn { track, key, velocity } => {
-                match self.tracks.get_mut(track).and_then(|t| t.instrument.as_mut()) {
+            EngineEvent::NoteOn {
+                track,
+                key,
+                velocity,
+            } => {
+                match self
+                    .tracks
+                    .get_mut(track)
+                    .and_then(|t| t.instrument.as_mut())
+                {
                     Some(i) if key <= 127 => {
                         i.note_on(key, velocity, clock);
                         true
@@ -498,7 +535,11 @@ impl Graph {
                 }
             }
             EngineEvent::NoteOff { track, key } => {
-                match self.tracks.get_mut(track).and_then(|t| t.instrument.as_mut()) {
+                match self
+                    .tracks
+                    .get_mut(track)
+                    .and_then(|t| t.instrument.as_mut())
+                {
                     Some(i) if key <= 127 => {
                         i.note_off(key, clock);
                         true
@@ -533,15 +574,20 @@ impl Graph {
                     }
                 }
             }
-            EngineEvent::Send { track, send, gain } => {
-                self.tracks.get_mut(track).and_then(|t| t.sends.get_mut(send)).map(|s| *s = gain).is_some()
-            }
+            EngineEvent::Send { track, send, gain } => self
+                .tracks
+                .get_mut(track)
+                .and_then(|t| t.sends.get_mut(send))
+                .map(|s| *s = gain)
+                .is_some(),
             EngineEvent::Active { part, on } => match part {
                 Part::Track(i) => self.tracks.get_mut(i).map(|t| t.active = on).is_some(),
                 Part::Return(i) => self.returns.get_mut(i).map(|r| r.active = on).is_some(),
                 Part::Main => false,
             },
-            EngineEvent::Solo { track, on } => self.tracks.get_mut(track).map(|t| t.solo = on).is_some(),
+            EngineEvent::Solo { track, on } => {
+                self.tracks.get_mut(track).map(|t| t.solo = on).is_some()
+            }
         }
     }
 
@@ -579,7 +625,11 @@ impl Graph {
                 instrument.process(&mut frame[..channels], clock);
             } else {
                 for (c, slot) in frame.iter_mut().enumerate().take(channels) {
-                    *slot = track.source.get(clock.sample as usize * channels + c).copied().unwrap_or(0.0);
+                    *slot = track
+                        .source
+                        .get(clock.sample as usize * channels + c)
+                        .copied()
+                        .unwrap_or(0.0);
                 }
             }
             for d in track.devices.iter_mut() {
@@ -607,7 +657,12 @@ impl Graph {
             // tests/mixer_gate.rs holds them to the SEND_* probe renders):
             // a post-fader send taps the part after its volume and pan; a
             // pre-fader one (the return's SendPreBool) before both
-            for ((bus, send), pre) in buses.iter_mut().zip(track.sends.iter()).zip(pre_fader.iter()).take(returns) {
+            for ((bus, send), pre) in buses
+                .iter_mut()
+                .zip(track.sends.iter())
+                .zip(pre_fader.iter())
+                .take(returns)
+            {
                 let (sl, sr) = if *pre { (dry_l, dry_r) } else { (l, r) };
                 bus[0] += sl * send;
                 bus[1] += sr * send;
@@ -626,7 +681,10 @@ impl Graph {
             mix[1] += frame[1] as f64 * ret.gain * rw;
         }
         let (lw, rw) = pan_weights(self.master.pan);
-        let mut frame = [(mix[0] * self.master.gain * lw) as f32, (mix[1] * self.master.gain * rw) as f32];
+        let mut frame = [
+            (mix[0] * self.master.gain * lw) as f32,
+            (mix[1] * self.master.gain * rw) as f32,
+        ];
         for d in self.master.devices.iter_mut() {
             d.process(&mut frame, clock);
         }
@@ -677,7 +735,10 @@ mod tests {
         let mut g = Graph::new(48_000, 120.0);
         let mut t = Track::new("A", 2);
         t.source = vec![0.5; 192]; // 96 stereo frames
-        t.devices.push(Box::new(CountingDevice { seen: 0, last_beat: -1.0 }));
+        t.devices.push(Box::new(CountingDevice {
+            seen: 0,
+            last_beat: -1.0,
+        }));
         g.tracks.push(t);
         let out = g.render(48_000);
         assert_eq!(out.len(), 192);

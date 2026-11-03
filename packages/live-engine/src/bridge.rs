@@ -64,7 +64,9 @@ fn known_device(element_name: &str) -> Option<Box<dyn crate::graph::Device>> {
         // folded into the model's fitted constants — so the engine mix is
         // the model response, 1.0).
         "Reverb" => Some(Box::new(ReverbDevice::new(
-            ReverbParams { decay_ms: 1200.00012 },
+            ReverbParams {
+                decay_ms: 1200.00012,
+            },
             1.0,
         ))),
         _ => None,
@@ -135,7 +137,9 @@ pub fn bridge(summary: &SetSummary, sample_rate: u32) -> BridgeResult {
 // ---------------------------------------------------------------- the set
 
 fn manual(param: Option<&Element>) -> Option<&str> {
-    param.and_then(|p| p.child("Manual")).and_then(|m| m.attr("Value"))
+    param
+        .and_then(|p| p.child("Manual"))
+        .and_then(|m| m.attr("Value"))
 }
 
 fn num(param: Option<&Element>) -> Option<f64> {
@@ -173,11 +177,17 @@ fn mixer_row(track: &Element) -> (f64, f64, bool, bool, Vec<f64>) {
     };
     let gain = num(m.child("Volume")).unwrap_or(1.0);
     let pan = num(m.child("Pan")).unwrap_or(0.0);
-    let active = manual(m.child("Speaker")).map(|v| v != "false").unwrap_or(true);
+    let active = manual(m.child("Speaker"))
+        .map(|v| v != "false")
+        .unwrap_or(true);
     let solo = value_attr(m.child("SoloSink")) == Some("true");
     let sends = m
         .child("Sends")
-        .map(|s| s.children_named("TrackSendHolder").map(|h| num(h.child("Send")).unwrap_or(0.0)).collect())
+        .map(|s| {
+            s.children_named("TrackSendHolder")
+                .map(|h| num(h.child("Send")).unwrap_or(0.0))
+                .collect()
+        })
         .unwrap_or_default();
     (gain, pan, active, solo, sends)
 }
@@ -207,17 +217,23 @@ pub fn arrangement_notes(track: &Element, clock: &Clock) -> Vec<Note> {
         if value_attr(clip.child("Disabled")) == Some("true") {
             continue;
         }
-        let anchor = clip.attr("Time").and_then(|v| v.parse::<f64>().ok()).unwrap_or(0.0);
-        let span = beats(clip, "CurrentEnd").unwrap_or(0.0) - beats(clip, "CurrentStart").unwrap_or(0.0);
+        let anchor = clip
+            .attr("Time")
+            .and_then(|v| v.parse::<f64>().ok())
+            .unwrap_or(0.0);
+        let span =
+            beats(clip, "CurrentEnd").unwrap_or(0.0) - beats(clip, "CurrentStart").unwrap_or(0.0);
         let lp = clip.child("Loop");
         let at = |name: &str| lp.and_then(|l| beats(l, name)).unwrap_or(0.0);
-        let (loop_start, loop_end, start_rel) = (at("LoopStart"), at("LoopEnd"), at("StartRelative"));
+        let (loop_start, loop_end, start_rel) =
+            (at("LoopStart"), at("LoopEnd"), at("StartRelative"));
         let looped = lp.and_then(|l| value_attr(l.child("LoopOn"))) == Some("true");
         let Some(key_tracks) = clip.child("Notes").and_then(|n| n.child("KeyTracks")) else {
             continue;
         };
         for kt in &key_tracks.children {
-            let Some(key) = value_attr(kt.child("MidiKey")).and_then(|v| v.parse::<u8>().ok()) else {
+            let Some(key) = value_attr(kt.child("MidiKey")).and_then(|v| v.parse::<u8>().ok())
+            else {
                 continue;
             };
             let Some(list) = kt.child("Notes") else {
@@ -239,7 +255,12 @@ pub fn arrangement_notes(track: &Element, clock: &Clock) -> Vec<Note> {
                     let len = len.min(span - rel);
                     let start = clock.frame_of_beat(anchor + rel);
                     let end = clock.frame_of_beat(anchor + rel + len);
-                    notes.push(Note { key, start, length: end.saturating_sub(start), velocity });
+                    notes.push(Note {
+                        key,
+                        start,
+                        length: end.saturating_sub(start),
+                        velocity,
+                    });
                 };
                 if looped {
                     let l = loop_end - loop_start;
@@ -264,7 +285,11 @@ pub fn arrangement_notes(track: &Element, clock: &Clock) -> Vec<Note> {
 
 /// A device element on a chain: a known model at its factory values, else
 /// a bypass and a warning.
-fn chain_device(el: &Element, track: &str, warnings: &mut Vec<BridgeWarning>) -> Box<dyn crate::graph::Device> {
+fn chain_device(
+    el: &Element,
+    track: &str,
+    warnings: &mut Vec<BridgeWarning>,
+) -> Box<dyn crate::graph::Device> {
     known_device(&el.name).unwrap_or_else(|| {
         warnings.push(BridgeWarning {
             track: track.to_string(),
@@ -294,7 +319,11 @@ pub fn bridge_set(root: &Element, sample_rate: u32) -> Option<BridgeResult> {
     let mut warnings = Vec::new();
     if let Some(tracks) = ls.child("Tracks") {
         for tr in &tracks.children {
-            let name = tr.find("EffectiveName").and_then(|n| n.attr("Value")).unwrap_or("").to_string();
+            let name = tr
+                .find("EffectiveName")
+                .and_then(|n| n.attr("Value"))
+                .unwrap_or("")
+                .to_string();
             let (gain, pan, active, solo, sends) = mixer_row(tr);
             match tr.name.as_str() {
                 "AudioTrack" | "MidiTrack" => {
@@ -303,7 +332,8 @@ pub fn bridge_set(root: &Element, sample_rate: u32) -> Option<BridgeResult> {
                     let mut instrument_seen = false;
                     for d in devices_of(tr) {
                         if midi && !instrument_seen && d.name == "Operator" {
-                            track.instrument = Some(Box::new(OperatorInstrument::default_patch(sample_rate)));
+                            track.instrument =
+                                Some(Box::new(OperatorInstrument::default_patch(sample_rate)));
                             instrument_seen = true;
                         } else {
                             track.devices.push(chain_device(d, &name, &mut warnings));
@@ -340,7 +370,8 @@ pub fn bridge_set(root: &Element, sample_rate: u32) -> Option<BridgeResult> {
                 "GroupTrack" => warnings.push(BridgeWarning {
                     track: name,
                     device: String::new(),
-                    message: "group track: its members route to the Main track (no group bus yet)".into(),
+                    message: "group track: its members route to the Main track (no group bus yet)"
+                        .into(),
                 }),
                 _ => {}
             }
@@ -349,7 +380,11 @@ pub fn bridge_set(root: &Element, sample_rate: u32) -> Option<BridgeResult> {
     // the per-return pre/post flags, in return order (devices/
     // racks-session-model.md §2.1: `SendsPre/SendPreBool Id=N Value=bool`)
     if let Some(pre) = ls.child("SendsPre") {
-        for (ret, flag) in graph.returns.iter_mut().zip(pre.children_named("SendPreBool")) {
+        for (ret, flag) in graph
+            .returns
+            .iter_mut()
+            .zip(pre.children_named("SendPreBool"))
+        {
             ret.pre_fader = flag.attr("Value") == Some("true");
         }
     }

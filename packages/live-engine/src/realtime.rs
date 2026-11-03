@@ -101,7 +101,10 @@ struct Handoff {
 
 impl Handoff {
     fn new(graph: Graph) -> Handoff {
-        Handoff { inbox: Mutex::new(Some(graph)), retire: Mutex::new(None) }
+        Handoff {
+            inbox: Mutex::new(Some(graph)),
+            retire: Mutex::new(None),
+        }
     }
 
     /// UI thread: install a rebuilt graph (the latest swap wins if the
@@ -221,7 +224,9 @@ impl Player {
     /// as a swap.
     pub fn start(mut graph: Graph, sample_rate: u32) -> Result<Player, RealtimeError> {
         let host = cpal::default_host();
-        let device = host.default_output_device().ok_or(RealtimeError::NoOutputDevice)?;
+        let device = host
+            .default_output_device()
+            .ok_or(RealtimeError::NoOutputDevice)?;
         // device state is built here, off the audio thread (Device::prepare)
         graph.sample_rate = sample_rate;
         graph.prepare();
@@ -261,8 +266,13 @@ impl Player {
             )
             .map_err(|e| RealtimeError::StreamBuild(e.to_string()))?;
 
-        stream.play().map_err(|e| RealtimeError::StreamBuild(e.to_string()))?;
-        Ok(Player { stream: Some(stream), state })
+        stream
+            .play()
+            .map_err(|e| RealtimeError::StreamBuild(e.to_string()))?;
+        Ok(Player {
+            stream: Some(stream),
+            state,
+        })
     }
 
     /// UI thread: install a rebuilt graph (parameter changes rebuild and
@@ -348,16 +358,24 @@ impl EnginePlayer {
                     let _ = ready_tx.send(Err(e));
                 }
             })
-            .map_err(|e| RealtimeError::StreamBuild(format!("the output thread did not start: {e}")))?;
+            .map_err(|e| {
+                RealtimeError::StreamBuild(format!("the output thread did not start: {e}"))
+            })?;
         match ready_rx.recv() {
-            Ok(Ok(())) => Ok(EnginePlayer { stop: Some(stop_tx), keeper: Some(keeper), sample_rate }),
+            Ok(Ok(())) => Ok(EnginePlayer {
+                stop: Some(stop_tx),
+                keeper: Some(keeper),
+                sample_rate,
+            }),
             Ok(Err(e)) => {
                 let _ = keeper.join();
                 Err(e)
             }
             Err(_) => {
                 let _ = keeper.join();
-                Err(RealtimeError::StreamBuild("the output thread ended before the stream opened".into()))
+                Err(RealtimeError::StreamBuild(
+                    "the output thread ended before the stream opened".into(),
+                ))
             }
         }
     }
@@ -370,7 +388,9 @@ impl EnginePlayer {
 
 fn open_engine_output(mut core: EngineCore) -> Result<cpal::Stream, RealtimeError> {
     let host = cpal::default_host();
-    let device = host.default_output_device().ok_or(RealtimeError::NoOutputDevice)?;
+    let device = host
+        .default_output_device()
+        .ok_or(RealtimeError::NoOutputDevice)?;
     let sample_rate = core.sample_rate();
     let err_fn = |err| eprintln!("live-engine realtime: stream error: {err}");
     let stream = device
@@ -391,7 +411,9 @@ fn open_engine_output(mut core: EngineCore) -> Result<cpal::Stream, RealtimeErro
             None,
         )
         .map_err(|e| RealtimeError::StreamBuild(e.to_string()))?;
-    stream.play().map_err(|e| RealtimeError::StreamBuild(e.to_string()))?;
+    stream
+        .play()
+        .map_err(|e| RealtimeError::StreamBuild(e.to_string()))?;
     Ok(stream)
 }
 
@@ -491,14 +513,13 @@ mod tests {
             a.devices.push(Box::new(BypassDevice));
             let mut b = Track::new("B", 1);
             b.source = vec![0.25f32; 40]; // ends before A — silence tail
-            b.devices.push(Box::new(GlueDevice::new(
-                live_dynamics::glue::GlueParams {
+            b.devices
+                .push(Box::new(GlueDevice::new(live_dynamics::glue::GlueParams {
                     threshold_db: -12.0,
                     range: 30.0,
                     ratio: 1.0,
                     makeup_db: 0.0,
-                },
-            )));
+                })));
             g.tracks.push(a);
             g.tracks.push(b);
             g.master.devices.push(Box::new(GainDevice::new_db(-1.5)));

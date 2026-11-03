@@ -45,11 +45,14 @@ static NEXT_ATTACHMENT: AtomicU64 = AtomicU64::new(1);
 
 fn trace(action: &str, id: &str, host: &str, attachment: u64) {
     if cfg!(debug_assertions) && std::env::var("OI_CRADLE_NATIVE_WALK").as_deref() == Ok("1") {
-        eprintln!("{}", serde_json::json!({
-            "schema": "oi.native-browser-lifecycle/v1", "action": action,
-            "id": id, "host": host, "attachment": attachment,
-            "unix_ms": std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|v|v.as_millis()).unwrap_or(0),
-        }));
+        eprintln!(
+            "{}",
+            serde_json::json!({
+                "schema": "oi.native-browser-lifecycle/v1", "action": action,
+                "id": id, "host": host, "attachment": attachment,
+                "unix_ms": std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|v|v.as_millis()).unwrap_or(0),
+            })
+        );
     }
 }
 
@@ -61,9 +64,14 @@ async fn on_main<T: Send + 'static>(
     work: impl FnOnce() -> Result<T, String> + Send + 'static,
 ) -> Result<T, String> {
     let (send, mut receive) = tauri::async_runtime::channel(1);
-    app.run_on_main_thread(move || { let _ = send.try_send(work()); })
-        .map_err(|error| error.to_string())?;
-    receive.recv().await.ok_or_else(|| "Browser operation was interrupted".to_string())?
+    app.run_on_main_thread(move || {
+        let _ = send.try_send(work());
+    })
+    .map_err(|error| error.to_string())?;
+    receive
+        .recv()
+        .await
+        .ok_or_else(|| "Browser operation was interrupted".to_string())?
 }
 #[derive(Deserialize)]
 pub struct Bounds {
@@ -133,7 +141,10 @@ pub async fn browser_attach(
     profile: Option<String>,
     bounds: Bounds,
 ) -> Result<Reading, String> {
-    on_main(app.clone(), move || attach_on_main(app, webview, id, address, profile, bounds)).await
+    on_main(app.clone(), move || {
+        attach_on_main(app, webview, id, address, profile, bounds)
+    })
+    .await
 }
 
 fn attach_on_main(
@@ -402,7 +413,14 @@ pub async fn browser_control(
     bounds: Option<Bounds>,
     zoom: Option<f64>,
 ) -> Result<bool, String> {
-    let control = Control { id, attachment, action, address, bounds, zoom };
+    let control = Control {
+        id,
+        attachment,
+        action,
+        address,
+        bounds,
+        zoom,
+    };
     on_main(app.clone(), move || control_on_main(app, webview, control)).await
 }
 
@@ -417,7 +435,14 @@ struct Control {
 }
 
 fn control_on_main(app: AppHandle, webview: Webview, control: Control) -> Result<bool, String> {
-    let Control { id, attachment, action, address, bounds, zoom } = control;
+    let Control {
+        id,
+        attachment,
+        action,
+        address,
+        bounds,
+        zoom,
+    } = control;
     trusted(&webview)?;
     let label = {
         let state = app.state::<Browsers>();

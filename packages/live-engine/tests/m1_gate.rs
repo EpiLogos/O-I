@@ -28,7 +28,12 @@ const SR: u32 = 48_000;
 /// The G1 canonical pins (devices/glue-compressor.md, point
 /// G1_T-12_R30_MU0_v2): Threshold −12, Range 30, Ratio 1, Makeup 0.
 fn gate_params() -> GlueParams {
-    GlueParams { threshold_db: -12.0, range: 30.0, ratio: 1.0, makeup_db: 0.0 }
+    GlueParams {
+        threshold_db: -12.0,
+        range: 30.0,
+        ratio: 1.0,
+        makeup_db: 0.0,
+    }
 }
 
 /// The same step table `verify::static_gate` measures: (input peak dB,
@@ -110,7 +115,10 @@ fn m1_gate_engine_matches_the_static_predictions() {
             "  in_peak {db:>6} dB  engine {measured:>8.2} dB  predicted {predicted:>8.2} dB  err {err:+.3} dB"
         );
     }
-    println!("  max error {max_err:.3} dB (tolerance {} dB)", verify::STATIC_TOLERANCE_DB);
+    println!(
+        "  max error {max_err:.3} dB (tolerance {} dB)",
+        verify::STATIC_TOLERANCE_DB
+    );
     assert!(
         max_err <= verify::STATIC_TOLERANCE_DB,
         "M1 gate FAILED: {max_err:.3} dB > {} dB",
@@ -143,5 +151,8 @@ fn m1_gate_render_is_deterministic() {
     let a = render_set(Box::new(GlueDevice::new(gate_params())));
     let b = render_set(Box::new(GlueDevice::new(gate_params())));
     assert_eq!(a.len(), b.len());
-    assert!(a.iter().zip(b.iter()).all(|(x, y)| x.to_bits() == y.to_bits()));
+    assert!(a
+        .iter()
+        .zip(b.iter())
+        .all(|(x, y)| x.to_bits() == y.to_bits()));
 }

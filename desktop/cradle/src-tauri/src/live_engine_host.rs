@@ -376,7 +376,9 @@ pub(crate) mod host {
             let set = self.with(|o| Ok(o.path.clone()))?;
             let suggested = format!(
                 "{}.wav",
-                set.file_stem().map(|s| s.to_string_lossy()).unwrap_or_default()
+                set.file_stem()
+                    .map(|s| s.to_string_lossy())
+                    .unwrap_or_default()
             );
             let chosen = choose(&suggested).ok_or(EXPORT_CANCELLED)?;
             if !chosen.is_absolute()
@@ -388,7 +390,10 @@ pub(crate) mod host {
             }
             let (wav, rendered) = self.with(|o| {
                 if o.path != set {
-                    return Err("Another set opened in the engine while the file was chosen: export again".into());
+                    return Err(
+                        "Another set opened in the engine while the file was chosen: export again"
+                            .into(),
+                    );
                 }
                 o.render_wav()
             })?;
@@ -669,7 +674,10 @@ pub(crate) mod host {
                 .nth(1)
                 .and_then(|rest| rest.split(')').next())
                 .expect("the command is declared");
-            assert!(signature.contains("webview: tauri::WebviewWindow"), "{signature}");
+            assert!(
+                signature.contains("webview: tauri::WebviewWindow"),
+                "{signature}"
+            );
             assert!(
                 !signature.contains("path") && !signature.contains("String"),
                 "live_engine_export takes no path from the page: ({signature})"
@@ -725,7 +733,10 @@ pub(crate) mod host {
                 .unwrap();
             let (set, to, wav) = handed.expect("the owner was handed the render");
             assert_eq!((set, to), (path.clone(), chosen.clone()));
-            assert_eq!(written["frames"], 0, "nothing has played yet: an empty render");
+            assert_eq!(
+                written["frames"], 0,
+                "nothing has played yet: an empty render"
+            );
             assert_eq!(written["bytes"], wav.len());
             let audio = live_engine::wav::read_wav_f32(&wav).unwrap();
             assert_eq!((audio.sample_rate, audio.channels), (ENGINE_RATE, 2));

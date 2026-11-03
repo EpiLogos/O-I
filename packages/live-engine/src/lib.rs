@@ -38,8 +38,13 @@ pub mod realtime;
 
 pub use bridge::{bridge, BridgeResult, BridgeWarning};
 pub use devices::{BypassDevice, EchoDevice, EchoParams, GainDevice, GlueDevice, ReverbDevice};
-pub use engine::{engine, EngineCore, EngineEvent, EngineHandle, MixerState, Part, Performance, Refusal, Stamped};
-pub use graph::{Clock, Device, Graph, GraphError, Instrument, MasterTrack, Note, ReturnTrack, Track, MAX_RETURNS};
+pub use engine::{
+    engine, EngineCore, EngineEvent, EngineHandle, MixerState, Part, Performance, Refusal, Stamped,
+};
+pub use graph::{
+    Clock, Device, Graph, GraphError, Instrument, MasterTrack, Note, ReturnTrack, Track,
+    MAX_RETURNS,
+};
 pub use instruments::{OperatorInstrument, SilentInstrument};
 
 #[cfg(feature = "k8")]

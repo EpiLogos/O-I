@@ -31,7 +31,9 @@ impl GainDevice {
         GainDevice { gain_db }
     }
     pub fn new_linear(gain: f64) -> GainDevice {
-        GainDevice { gain_db: amplitude_to_db(gain) }
+        GainDevice {
+            gain_db: amplitude_to_db(gain),
+        }
     }
     fn linear(&self) -> f32 {
         db_to_amplitude(self.gain_db) as f32
@@ -150,9 +152,17 @@ impl Device for GlueDevice {
             let level_db = amplitude_to_db(self.block_peak as f64);
             let target = glue::static_gain_change_db(level_db, &self.params);
             let block_s = self.block_frames as f64 / clock.sample_rate as f64;
-            let tc = if target < self.gain_db { self.attack_tc_s } else { self.release_tc_s };
+            let tc = if target < self.gain_db {
+                self.attack_tc_s
+            } else {
+                self.release_tc_s
+            };
             // one-pole step toward the target, per block; a zero tc snaps
-            let coeff = if tc <= 0.0 { 1.0 } else { 1.0 - (-block_s / tc).exp() };
+            let coeff = if tc <= 0.0 {
+                1.0
+            } else {
+                1.0 - (-block_s / tc).exp()
+            };
             self.gain_db += coeff * (target - self.gain_db);
             self.block_peak = 0.0;
         }
@@ -235,7 +245,8 @@ impl EchoDevice {
         if self.init_sr == Some(sample_rate) {
             return;
         }
-        let hop = ((self.params.delay_time_s.max(0.0) * sample_rate as f64).round() as usize).max(1);
+        let hop =
+            ((self.params.delay_time_s.max(0.0) * sample_rate as f64).round() as usize).max(1);
         let fb = self.params.feedback;
         let floor_amp = db_to_amplitude(-144.0);
         let mut taps = Vec::new();
@@ -341,7 +352,14 @@ pub struct ReverbDevice {
 
 impl ReverbDevice {
     pub fn new(params: ReverbParams, mix: f64) -> ReverbDevice {
-        ReverbDevice { params, mix, ir: Vec::new(), tails: Vec::new(), pos: 0, init_sr: None }
+        ReverbDevice {
+            params,
+            mix,
+            ir: Vec::new(),
+            tails: Vec::new(),
+            pos: 0,
+            init_sr: None,
+        }
     }
 
     fn ensure_init(&mut self, sample_rate: u32, channels: usize) {
@@ -382,7 +400,9 @@ impl Device for ReverbDevice {
                 let n = len - 1;
                 let start = pos + 1;
                 let head = (len - start).min(n);
-                for (t, k) in tail[start..start + head].iter_mut().zip(self.ir[1..1 + head].iter())
+                for (t, k) in tail[start..start + head]
+                    .iter_mut()
+                    .zip(self.ir[1..1 + head].iter())
                 {
                     *t += x * k;
                 }
@@ -519,7 +539,12 @@ mod tests {
     /// Mono mixdown of an interleaved stereo render (the analysis side of
     /// the gates, same as `live_dynamics::audio`).
     fn mixdown(render: &[f32]) -> Vec<f32> {
-        render.as_chunks::<2>().0.iter().map(|f| (f[0] + f[1]) * 0.5).collect()
+        render
+            .as_chunks::<2>()
+            .0
+            .iter()
+            .map(|f| (f[0] + f[1]) * 0.5)
+            .collect()
     }
 
     const HOP_S: f64 = 0.1875; // E8 bare-line hop (dotted 1/16 @ 120 BPM)
@@ -589,8 +614,16 @@ mod tests {
         let sr = 48_000f64;
         let tap = |mono: &[f32], k: usize| mono[(100.0 + k as f64 * HOP_S * sr) as usize];
         for k in [1usize, 2] {
-            assert_eq!(tap(&a, k).to_bits(), tap(&b, k).to_bits(), "tap {k} differs at FB 0.25/0.5");
-            assert_eq!(tap(&b, k).to_bits(), tap(&c, k).to_bits(), "tap {k} differs at FB 0.5/0.75");
+            assert_eq!(
+                tap(&a, k).to_bits(),
+                tap(&b, k).to_bits(),
+                "tap {k} differs at FB 0.25/0.5"
+            );
+            assert_eq!(
+                tap(&b, k).to_bits(),
+                tap(&c, k).to_bits(),
+                "tap {k} differs at FB 0.5/0.75"
+            );
         }
         // …while the recirculated taps move with FB
         assert!(tap(&a, 3) != tap(&b, 3) && tap(&b, 3) != tap(&c, 3));
@@ -656,7 +689,11 @@ mod tests {
         for k in 1..4 {
             let v = out[2 * (100 + k * hop)]; // render is interleaved stereo
             assert!(v != 0.0, "missing mono tap {k}");
-            let expected = if k <= 2 { 1.0 } else { 0.5f32.powi(k as i32 - 2) };
+            let expected = if k <= 2 {
+                1.0
+            } else {
+                0.5f32.powi(k as i32 - 2)
+            };
             assert!((v - expected).abs() < 1e-6, "tap {k}: {v} vs {expected}");
         }
     }
@@ -664,11 +701,18 @@ mod tests {
     #[test]
     fn echo_render_is_deterministic() {
         let dev = || {
-            EchoDevice::new(EchoParams { delay_time_s: HOP_S, feedback: 0.5, dry_wet: 0.6 })
+            EchoDevice::new(EchoParams {
+                delay_time_s: HOP_S,
+                feedback: 0.5,
+                dry_wet: 0.6,
+            })
         };
         let a = render_impulse_stereo(48_000, Box::new(dev()));
         let b = render_impulse_stereo(48_000, Box::new(dev()));
-        assert!(a.iter().zip(b.iter()).all(|(x, y)| x.to_bits() == y.to_bits()));
+        assert!(a
+            .iter()
+            .zip(b.iter())
+            .all(|(x, y)| x.to_bits() == y.to_bits()));
     }
 
     // -----------------------------------------------------------------
@@ -692,7 +736,11 @@ mod tests {
         let out = g.render(sr);
         // direct: the model IR's first sample, at the impulse position
         let direct_expected = 10f64.powf(DIRECT_DBFS / 20.0) as f32;
-        assert!((out[2 * 200] - direct_expected).abs() < 1e-7, "{}", out[2 * 200]);
+        assert!(
+            (out[2 * 200] - direct_expected).abs() < 1e-7,
+            "{}",
+            out[2 * 200]
+        );
         // silence between the direct and the reverb onset (pre-delay)
         let onset = 200 + (PREDELAY_S * sr as f64).floor() as usize;
         assert!(
@@ -718,9 +766,8 @@ mod tests {
 
     #[test]
     fn reverb_render_is_deterministic() {
-        let dev = || {
-            ReverbDevice::new(live_dynamics::reverb::ReverbParams { decay_ms: 300.0 }, 1.0)
-        };
+        let dev =
+            || ReverbDevice::new(live_dynamics::reverb::ReverbParams { decay_ms: 300.0 }, 1.0);
         let render = |d: ReverbDevice| {
             let mut g = crate::graph::Graph::new(44_100, 120.0);
             let mut t = Track::new("T", 2);
@@ -733,6 +780,9 @@ mod tests {
         };
         let a = render(dev());
         let b = render(dev());
-        assert!(a.iter().zip(b.iter()).all(|(x, y)| x.to_bits() == y.to_bits()));
+        assert!(a
+            .iter()
+            .zip(b.iter())
+            .all(|(x, y)| x.to_bits() == y.to_bits()));
     }
 }

@@ -1,39 +1,120 @@
 //! Thin native adapter: the kernel resolves identity; the existing PTY owner
 //! hosts only that provider's attachment client. A renderer never supplies argv.
-use crate::{KernelHost,terminal::{BoundClient,Size,Batch}};
+use crate::{
+    terminal::{Batch, BoundClient, Size},
+    KernelHost,
+};
 use oi_cradle_kernel::events::KERNEL_EVENT_TOPIC;
-use serde_json::{json,Value};
-use std::{collections::BTreeMap,sync::{Arc,Mutex,OnceLock,atomic::{AtomicU64,AtomicBool,Ordering}},time::{SystemTime,UNIX_EPOCH}};
-use tauri::{AppHandle,Manager,Emitter,WebviewWindow};
-use tauri_plugin_dialog::{DialogExt,MessageDialogButtons};
-struct Lease {client:BoundClient,host:String,session:String,binding:String,last_seen:AtomicU64,closed:AtomicBool}
-static NEXT:AtomicU64=AtomicU64::new(1);
-static LEASES:OnceLock<Mutex<BTreeMap<String,Arc<Lease>>>>=OnceLock::new();
-fn leases()->&'static Mutex<BTreeMap<String,Arc<Lease>>> {LEASES.get_or_init(||Mutex::new(BTreeMap::new()))}
-fn now()->u64 {SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_millis() as u64}
-fn lookup(id:&str,host:&str)->Result<Arc<Lease>,String> {
-    let lease=leases().lock().map_err(|_|"Attachment leases unavailable")?.get(id).cloned().ok_or("Attachment lease ended")?;
-    if lease.host!=host||lease.closed.load(Ordering::SeqCst) {return Err("Attachment belongs to another view or has ended".into());}
-    lease.last_seen.store(now(),Ordering::Relaxed);Ok(lease)
+use serde_json::{json, Value};
+use std::{
+    collections::BTreeMap,
+    sync::{
+        atomic::{AtomicBool, AtomicU64, Ordering},
+        Arc, Mutex, OnceLock,
+    },
+    time::{SystemTime, UNIX_EPOCH},
+};
+use tauri::{AppHandle, Emitter, Manager, WebviewWindow};
+use tauri_plugin_dialog::{DialogExt, MessageDialogButtons};
+struct Lease {
+    client: BoundClient,
+    host: String,
+    session: String,
+    binding: String,
+    last_seen: AtomicU64,
+    closed: AtomicBool,
 }
-fn event(app:&AppHandle,id:&str,lease:&Lease,driving:bool)->Result<(),String> {
-    let receipt=app.state::<KernelHost>().0.lock().map_err(|_|"Kernel unavailable")?.record_working_surface_driving(lease.session.clone(),lease.binding.clone(),id.to_owned(),driving);
-    app.emit(KERNEL_EVENT_TOPIC,&receipt).map_err(|e|e.to_string())
+static NEXT: AtomicU64 = AtomicU64::new(1);
+static LEASES: OnceLock<Mutex<BTreeMap<String, Arc<Lease>>>> = OnceLock::new();
+fn leases() -> &'static Mutex<BTreeMap<String, Arc<Lease>>> {
+    LEASES.get_or_init(|| Mutex::new(BTreeMap::new()))
 }
-fn release(app:&AppHandle,id:&str,host:&str)->Result<(),String> {
-    let lease={let guard=leases().lock().map_err(|_|"Attachment leases unavailable")?;let Some(lease)=guard.get(id).cloned() else{return Ok(());};if lease.host!=host{return Err("Attachment belongs to another view".into());}lease};
-    if lease.closed.swap(true,Ordering::SeqCst) {return Ok(());}
-    if let Err(reason)=lease.client.release() {lease.closed.store(false,Ordering::SeqCst);return Err(reason);}
-    leases().lock().map_err(|_|"Attachment leases unavailable")?.remove(id);
-    event(app,id,&lease,false)
+fn now() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis() as u64
 }
-fn reading(app:&AppHandle,project:String,agent_session:String,binding:String)->Result<Value,String> {
-    let prepared=app.state::<KernelHost>().0.lock().map_err(|_|"Kernel unavailable")?.prepare_working_surface_read(&project,agent_session,Some(binding),true)?;
+fn lookup(id: &str, host: &str) -> Result<Arc<Lease>, String> {
+    let lease = leases()
+        .lock()
+        .map_err(|_| "Attachment leases unavailable")?
+        .get(id)
+        .cloned()
+        .ok_or("Attachment lease ended")?;
+    if lease.host != host || lease.closed.load(Ordering::SeqCst) {
+        return Err("Attachment belongs to another view or has ended".into());
+    }
+    lease.last_seen.store(now(), Ordering::Relaxed);
+    Ok(lease)
+}
+fn event(app: &AppHandle, id: &str, lease: &Lease, driving: bool) -> Result<(), String> {
+    let receipt = app
+        .state::<KernelHost>()
+        .0
+        .lock()
+        .map_err(|_| "Kernel unavailable")?
+        .record_working_surface_driving(
+            lease.session.clone(),
+            lease.binding.clone(),
+            id.to_owned(),
+            driving,
+        );
+    app.emit(KERNEL_EVENT_TOPIC, &receipt)
+        .map_err(|e| e.to_string())
+}
+fn release(app: &AppHandle, id: &str, host: &str) -> Result<(), String> {
+    let lease = {
+        let guard = leases()
+            .lock()
+            .map_err(|_| "Attachment leases unavailable")?;
+        let Some(lease) = guard.get(id).cloned() else {
+            return Ok(());
+        };
+        if lease.host != host {
+            return Err("Attachment belongs to another view".into());
+        }
+        lease
+    };
+    if lease.closed.swap(true, Ordering::SeqCst) {
+        return Ok(());
+    }
+    if let Err(reason) = lease.client.release() {
+        lease.closed.store(false, Ordering::SeqCst);
+        return Err(reason);
+    }
+    leases()
+        .lock()
+        .map_err(|_| "Attachment leases unavailable")?
+        .remove(id);
+    event(app, id, &lease, false)
+}
+fn reading(
+    app: &AppHandle,
+    project: String,
+    agent_session: String,
+    binding: String,
+) -> Result<Value, String> {
+    let prepared = app
+        .state::<KernelHost>()
+        .0
+        .lock()
+        .map_err(|_| "Kernel unavailable")?
+        .prepare_working_surface_read(&project, agent_session, Some(binding), true)?;
     prepared.execute()
 }
 #[tauri::command]
-pub async fn working_surface_takeover(app:AppHandle,window:WebviewWindow,project:String,agent_session:String,binding:String,dimensions:Size)->Result<Value,String> {
-    if window.label()!="main" {return Err("Take over a run from the main desktop window".into());}
+pub async fn working_surface_takeover(
+    app: AppHandle,
+    window: WebviewWindow,
+    project: String,
+    agent_session: String,
+    binding: String,
+    dimensions: Size,
+) -> Result<Value, String> {
+    if window.label() != "main" {
+        return Err("Take over a run from the main desktop window".into());
+    }
     tauri::async_runtime::spawn_blocking(move||{
         let initial=reading(&app,project.clone(),agent_session.clone(),binding.clone())?;
         if initial["attachment"]["outcome"]!="attach" {return Err(initial["attachment"]["reason"].as_str().unwrap_or("This provider has no terminal attachment").into());}
@@ -61,18 +142,38 @@ pub async fn working_surface_takeover(app:AppHandle,window:WebviewWindow,project
     }).await.map_err(|e|e.to_string())?
 }
 #[tauri::command]
-pub async fn working_surface_client_poll(window:WebviewWindow,client_id:String,seq:u64)->Result<Batch,String> {
-    lookup(&client_id,window.label())?.client.poll(seq)
+pub async fn working_surface_client_poll(
+    window: WebviewWindow,
+    client_id: String,
+    seq: u64,
+) -> Result<Batch, String> {
+    lookup(&client_id, window.label())?.client.poll(seq)
 }
 #[tauri::command]
-pub async fn working_surface_client_input(window:WebviewWindow,client_id:String,data:String)->Result<(),String> {
-    lookup(&client_id,window.label())?.client.input(&data)
+pub async fn working_surface_client_input(
+    window: WebviewWindow,
+    client_id: String,
+    data: String,
+) -> Result<(), String> {
+    lookup(&client_id, window.label())?.client.input(&data)
 }
 #[tauri::command]
-pub async fn working_surface_client_resize(window:WebviewWindow,client_id:String,dimensions:Size)->Result<(),String> {
-    lookup(&client_id,window.label())?.client.resize(dimensions)
+pub async fn working_surface_client_resize(
+    window: WebviewWindow,
+    client_id: String,
+    dimensions: Size,
+) -> Result<(), String> {
+    lookup(&client_id, window.label())?
+        .client
+        .resize(dimensions)
 }
 #[tauri::command]
-pub async fn working_surface_release(app:AppHandle,window:WebviewWindow,client_id:String)->Result<(),String> {
-    tauri::async_runtime::spawn_blocking(move||release(&app,&client_id,window.label())).await.map_err(|e|e.to_string())?
+pub async fn working_surface_release(
+    app: AppHandle,
+    window: WebviewWindow,
+    client_id: String,
+) -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(move || release(&app, &client_id, window.label()))
+        .await
+        .map_err(|e| e.to_string())?
 }

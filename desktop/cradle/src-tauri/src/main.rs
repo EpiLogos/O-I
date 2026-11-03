@@ -5,21 +5,21 @@
 // is a receipt the kernel recorded.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-mod windows;
-mod browser;
-mod terminal;
-mod working_surface_lease;
-mod menus;
-mod ground_dialog;
-mod material_protocol;
 mod app_assets;
-mod native_shell;
+mod browser;
+mod downloads;
+mod ground_dialog;
 mod live_engine_host;
+mod material_protocol;
+mod menus;
+mod midi;
+mod native_shell;
+mod terminal;
+mod walk_diagnostics;
+mod windows;
+mod working_surface_lease;
 #[cfg(feature = "native_shell")]
 mod world_folder;
-mod walk_diagnostics;
-mod midi;
-mod downloads;
 use std::sync::Mutex;
 
 use oi_cradle_kernel::events::{KernelEventReplay, KERNEL_EVENT_TOPIC};
@@ -56,62 +56,115 @@ async fn kernel_op(app: AppHandle, op: KernelOp) -> Result<KernelOpOutcome, Stri
         let name = oi_cradle_kernel::dispatch::op_name(&op);
         let started = std::time::Instant::now();
         let (result, timing) = oi_cradle_kernel::dispatch::dispatch_with(&host.0, &host.1, op);
-        oi_cradle_kernel::dispatch::trace_op("native", &name, result.is_ok(), started.elapsed(), &timing);
+        oi_cradle_kernel::dispatch::trace_op(
+            "native",
+            &name,
+            result.is_ok(),
+            started.elapsed(),
+            &timing,
+        );
         let outcome = result?;
         for receipt in &outcome.receipts {
-            if let oi_cradle_kernel::events::KernelEvent::PresentationChanged { theme, .. } = &receipt.envelope.event {
+            if let oi_cradle_kernel::events::KernelEvent::PresentationChanged { theme, .. } =
+                &receipt.envelope.event
+            {
                 apply_native_appearance(&app, &theme.appearance);
             }
             let _ = app.emit(KERNEL_EVENT_TOPIC, receipt);
         }
         Ok(outcome)
-    }).await.map_err(|e| e.to_string())?
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 /// Native human confirmation is the only issuance door. The caller supplies
 /// an opaque preflight reference, never a grant, approval flag or dialog text.
 #[tauri::command]
-async fn decision_episode_authorise(app: AppHandle, window: tauri::WebviewWindow, preflight_ref: String) -> Result<KernelOpOutcome, String> {
-    if window.label() != "main" { return Err("Authorise a decision episode from the main desktop window".into()); }
+async fn decision_episode_authorise(
+    app: AppHandle,
+    window: tauri::WebviewWindow,
+    preflight_ref: String,
+) -> Result<KernelOpOutcome, String> {
+    if window.label() != "main" {
+        return Err("Authorise a decision episode from the main desktop window".into());
+    }
     tauri::async_runtime::spawn_blocking(move || {
-        let host=app.state::<KernelHost>();
-        let preview=host.0.lock().map_err(|_| "kernel lock unavailable")?.decision_authorisation_preview(&preflight_ref)?;
-        let approved=app.dialog().message(preview.message).title("Allow this decision episode?")
-            .buttons(MessageDialogButtons::OkCancelCustom("Allow this episode".into(), "Cancel".into())).blocking_show();
-        if !approved {return Err("Decision episode was not authorised".into());}
-        let outcome=host.0.lock().map_err(|_| "kernel lock unavailable")?.authorise_decision(&preflight_ref)?;
-        for receipt in &outcome.receipts {let _=app.emit(KERNEL_EVENT_TOPIC,receipt);}
+        let host = app.state::<KernelHost>();
+        let preview = host
+            .0
+            .lock()
+            .map_err(|_| "kernel lock unavailable")?
+            .decision_authorisation_preview(&preflight_ref)?;
+        let approved = app
+            .dialog()
+            .message(preview.message)
+            .title("Allow this decision episode?")
+            .buttons(MessageDialogButtons::OkCancelCustom(
+                "Allow this episode".into(),
+                "Cancel".into(),
+            ))
+            .blocking_show();
+        if !approved {
+            return Err("Decision episode was not authorised".into());
+        }
+        let outcome = host
+            .0
+            .lock()
+            .map_err(|_| "kernel lock unavailable")?
+            .authorise_decision(&preflight_ref)?;
+        for receipt in &outcome.receipts {
+            let _ = app.emit(KERNEL_EVENT_TOPIC, receipt);
+        }
         Ok(outcome)
-    }).await.map_err(|error|error.to_string())?
+    })
+    .await
+    .map_err(|error| error.to_string())?
 }
 
 /// The ordered, observable event log, read by cursor. This is the typed
 /// command the renderer bootstraps from and re-syncs through; the topic
 /// event is the push that says "look again".
 #[tauri::command]
-async fn kernel_event_log(app: AppHandle, cursor: u64, generation: Option<String>, limit: usize) -> Result<KernelEventReplay, String> {
+async fn kernel_event_log(
+    app: AppHandle,
+    cursor: u64,
+    generation: Option<String>,
+    limit: usize,
+) -> Result<KernelEventReplay, String> {
     // An owner read can hold this mutex for seconds. Waiting on the main
     // thread freezes WebKit and native window interaction, even though
     // kernel_op itself correctly runs on the blocking pool.
     tauri::async_runtime::spawn_blocking(move || {
         let host = app.state::<KernelHost>();
         let asked = std::time::Instant::now();
-        let kernel = host.0.lock().map_err(|_| "kernel lock unavailable".to_owned())?;
+        let kernel = host
+            .0
+            .lock()
+            .map_err(|_| "kernel lock unavailable".to_owned())?;
         let waited = asked.elapsed();
-        let replay = kernel.event_log().replay(generation.as_deref(), cursor, limit);
+        let replay = kernel
+            .event_log()
+            .replay(generation.as_deref(), cursor, limit);
         drop(kernel);
         oi_cradle_kernel::dispatch::trace_replay("native", waited);
         Ok(replay)
-    }).await.map_err(|error| error.to_string())?
+    })
+    .await
+    .map_err(|error| error.to_string())?
 }
 
 fn apply_native_appearance(app: &AppHandle, appearance: &str) {
-    app.set_theme(match appearance { "light" => Some(tauri::Theme::Light), "dark" => Some(tauri::Theme::Dark), _ => None });
+    app.set_theme(match appearance {
+        "light" => Some(tauri::Theme::Light),
+        "dark" => Some(tauri::Theme::Dark),
+        _ => None,
+    });
 }
 
 fn main() {
     #[cfg(feature = "native_shell")]
-    if let Err(error)=native_shell::prepare() {
+    if let Err(error) = native_shell::prepare() {
         eprintln!("Native shell candidate bootstrap refused: {error}");
         std::process::exit(2);
     }
@@ -124,13 +177,15 @@ fn main() {
             std::env::set_var("OI_BIN", oi);
         }
     }
-    let mut context=tauri::generate_context!();
+    let mut context = tauri::generate_context!();
     // The pinned config token generator emits Vec for this array field.
     // Use the same native runtime hook as isolated WebKit acceptance, with
     // the candidate's stable identity inherited by its detached windows.
     #[cfg(feature = "native_shell")]
     for window in &mut context.config_mut().app.windows {
-        window.data_store_identifier=Some([79,73,83,72,69,76,76,67,65,78,68,73,68,65,84,69]);
+        window.data_store_identifier = Some([
+            79, 73, 83, 72, 69, 76, 76, 67, 65, 78, 68, 73, 68, 65, 84, 69,
+        ]);
     }
     // Every window the config would create is built in setup instead, from
     // the same config through the same `from_config` Tauri's own auto-create
@@ -155,10 +210,19 @@ fn main() {
     // A development/native acceptance run can use an isolated persistent
     // WebKit store while exercising the real owner ground and kernel.
     #[cfg(debug_assertions)]
-    if let Ok(raw)=std::env::var("OI_CRADLE_DATA_STORE_ID") {
-        assert!(raw.len()==32 && raw.bytes().all(|b|b.is_ascii_hexdigit()),"OI_CRADLE_DATA_STORE_ID must be 32 hex digits");
-        let mut id=[0u8;16];for (i,byte) in id.iter_mut().enumerate(){*byte=u8::from_str_radix(&raw[i*2..i*2+2],16).expect("validated hex");}
-        for window in &mut context.config_mut().app.windows {window.data_store_identifier=Some(id);window.create=false;}
+    if let Ok(raw) = std::env::var("OI_CRADLE_DATA_STORE_ID") {
+        assert!(
+            raw.len() == 32 && raw.bytes().all(|b| b.is_ascii_hexdigit()),
+            "OI_CRADLE_DATA_STORE_ID must be 32 hex digits"
+        );
+        let mut id = [0u8; 16];
+        for (i, byte) in id.iter_mut().enumerate() {
+            *byte = u8::from_str_radix(&raw[i * 2..i * 2 + 2], 16).expect("validated hex");
+        }
+        for window in &mut context.config_mut().app.windows {
+            window.data_store_identifier = Some(id);
+            window.create = false;
+        }
         seated = context
             .config()
             .app

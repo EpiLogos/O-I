@@ -24,12 +24,12 @@ mod inhabitants;
 // reads the subset it binds, so what only the live-shell crate reads is dead
 // here and alive there.
 #[cfg(feature = "native_shell")]
+#[path = "continuity_admission.rs"]
+pub mod continuity_admission;
+#[cfg(feature = "native_shell")]
 #[path = "../../../../packages/live-shell/src/runtime.rs"]
 #[allow(dead_code)]
 pub mod runtime;
-#[cfg(feature = "native_shell")]
-#[path = "continuity_admission.rs"]
-pub mod continuity_admission;
 #[cfg(feature = "native_shell")]
 #[path = "workspace_book.rs"]
 pub mod workspace_book;
@@ -316,7 +316,9 @@ mod candidate {
             );
             if !identities.insert(reference)
                 || relative.as_os_str().is_empty()
-                || !relative.components().all(|c| matches!(c, std::path::Component::Normal(_)))
+                || !relative
+                    .components()
+                    .all(|c| matches!(c, std::path::Component::Normal(_)))
             {
                 return Err("Candidate contribution identity/path is invalid".into());
             }
@@ -348,7 +350,9 @@ mod candidate {
                     || receipt["document"]["owner"] != owner
                     || receipt["document"]["revision"] != contribution["revision"]
                 {
-                    return Err("Native contribution registration returned a different identity".into());
+                    return Err(
+                        "Native contribution registration returned a different identity".into(),
+                    );
                 }
                 Ok(receipt)
             })();
@@ -644,8 +648,7 @@ mod candidate {
         } else {
             None
         };
-        let mut result =
-            json!({"default_set":std::env::var("LIVE_SHELL_DEFAULT_SET").unwrap_or_default(),"saved_works":super::inhabitants::configured_works()?,"kernel_transport":{"kind":"tauri","invoke":"kernel_op"},"kernel_epoch":runtime["runtime_epoch"],"runtime_epoch":runtime["runtime_epoch"],"runtime_scope":{"kind":"host-runtime","epoch":runtime["runtime_epoch"]},"profile_scope":{"backing_id":payload.backing_id,"configuration_home":runtime["configuration_home"],"active_profile":composition["active_profile"]},"personal_ground":ground,"onboarding":ground.is_none(),"world_scope":world_scope,"saved_work_config":runtime["saved_work_config"],"expressions_entry":"/__application/expressions/index.html","backing_id":payload.backing_id,"product_ids":payload.product_ids,"source_revision":payload.source_revision,"source_tree_sha256":payload.source_tree_sha256,"acceptance":"qualified-bytes; native-functional-acceptance-separate"});
+        let mut result = json!({"default_set":std::env::var("LIVE_SHELL_DEFAULT_SET").unwrap_or_default(),"saved_works":super::inhabitants::configured_works()?,"kernel_transport":{"kind":"tauri","invoke":"kernel_op"},"kernel_epoch":runtime["runtime_epoch"],"runtime_epoch":runtime["runtime_epoch"],"runtime_scope":{"kind":"host-runtime","epoch":runtime["runtime_epoch"]},"profile_scope":{"backing_id":payload.backing_id,"configuration_home":runtime["configuration_home"],"active_profile":composition["active_profile"]},"personal_ground":ground,"onboarding":ground.is_none(),"world_scope":world_scope,"saved_work_config":runtime["saved_work_config"],"expressions_entry":"/__application/expressions/index.html","backing_id":payload.backing_id,"product_ids":payload.product_ids,"source_revision":payload.source_revision,"source_tree_sha256":payload.source_tree_sha256,"acceptance":"qualified-bytes; native-functional-acceptance-separate"});
         result["contributions"] = runtime["contributions"].clone();
         // The footprint's suite universe beside the admitted `product_ids`:
         // offered-but-not-selected reads as excluded by the backing.
@@ -1094,7 +1097,10 @@ pub(crate) fn admit_candidate_webview(webview: &tauri::WebviewWindow) -> Result<
     if candidate_asset_view_allowed(label, registered, url.scheme(), url.host_str(), url.path()) {
         Ok(())
     } else {
-        Err("Candidate reads require the bundled shell in its main or registered detached webview".into())
+        Err(
+            "Candidate reads require the bundled shell in its main or registered detached webview"
+                .into(),
+        )
     }
 }
 
@@ -1106,22 +1112,70 @@ mod candidate_view_admission_tests {
 
     #[test]
     fn bundled_main_and_registered_detached_views_are_admitted() {
-        assert!(candidate_asset_view_allowed("main", false, "tauri", Some("localhost"), "/app/index.html"));
-        assert!(candidate_asset_view_allowed("surface-1", true, "tauri", Some("localhost"), "/app/index.html"));
-        assert!(candidate_asset_view_allowed("surface-1", true, "http", Some("tauri.localhost"), "/app/"));
+        assert!(candidate_asset_view_allowed(
+            "main",
+            false,
+            "tauri",
+            Some("localhost"),
+            "/app/index.html"
+        ));
+        assert!(candidate_asset_view_allowed(
+            "surface-1",
+            true,
+            "tauri",
+            Some("localhost"),
+            "/app/index.html"
+        ));
+        assert!(candidate_asset_view_allowed(
+            "surface-1",
+            true,
+            "http",
+            Some("tauri.localhost"),
+            "/app/"
+        ));
     }
 
     #[test]
     fn label_alone_does_not_grant_detached_admission() {
-        assert!(!candidate_asset_view_allowed("surface-1", false, "tauri", Some("localhost"), "/app/index.html"));
-        assert!(!candidate_asset_view_allowed("browser-1", true, "tauri", Some("localhost"), "/app/index.html"));
+        assert!(!candidate_asset_view_allowed(
+            "surface-1",
+            false,
+            "tauri",
+            Some("localhost"),
+            "/app/index.html"
+        ));
+        assert!(!candidate_asset_view_allowed(
+            "browser-1",
+            true,
+            "tauri",
+            Some("localhost"),
+            "/app/index.html"
+        ));
     }
 
     #[test]
     fn external_or_other_bundled_bodies_are_refused() {
-        assert!(!candidate_asset_view_allowed("main", false, "https", Some("example.com"), "/app/index.html"));
-        assert!(!candidate_asset_view_allowed("surface-1", true, "tauri", Some("localhost"), "/index.html"));
-        assert!(!candidate_asset_view_allowed("surface-1", true, "tauri", Some("localhost"), "/__application/expressions/index.html"));
+        assert!(!candidate_asset_view_allowed(
+            "main",
+            false,
+            "https",
+            Some("example.com"),
+            "/app/index.html"
+        ));
+        assert!(!candidate_asset_view_allowed(
+            "surface-1",
+            true,
+            "tauri",
+            Some("localhost"),
+            "/index.html"
+        ));
+        assert!(!candidate_asset_view_allowed(
+            "surface-1",
+            true,
+            "tauri",
+            Some("localhost"),
+            "/__application/expressions/index.html"
+        ));
     }
 }
 
@@ -1135,7 +1189,9 @@ pub async fn live_shell_config(webview: tauri::WebviewWindow) -> Result<serde_js
     }
     #[cfg(feature = "native_shell")]
     {
-        tauri::async_runtime::spawn_blocking(candidate::config).await.map_err(|error| error.to_string())?
+        tauri::async_runtime::spawn_blocking(candidate::config)
+            .await
+            .map_err(|error| error.to_string())?
     }
     #[cfg(not(feature = "native_shell"))]
     {
@@ -1196,7 +1252,9 @@ pub async fn live_shell_continuity_confirm(
 
 /// The workspace book as its native owner keeps it, with its revision (workspace_book.rs). Main webview only.
 #[tauri::command]
-pub async fn live_shell_book_read(webview: tauri::WebviewWindow) -> Result<serde_json::Value, String> {
+pub async fn live_shell_book_read(
+    webview: tauri::WebviewWindow,
+) -> Result<serde_json::Value, String> {
     if webview.label() != "main" {
         return Err("The workspace book is read by the main shell webview only".into());
     }
@@ -1228,9 +1286,11 @@ pub async fn live_shell_book_write(
     admit_candidate_webview(&webview)?;
     #[cfg(feature = "native_shell")]
     {
-        tauri::async_runtime::spawn_blocking(move || candidate::book_write(expected_revision.as_deref(), &book))
-            .await
-            .map_err(|error| error.to_string())?
+        tauri::async_runtime::spawn_blocking(move || {
+            candidate::book_write(expected_revision.as_deref(), &book)
+        })
+        .await
+        .map_err(|error| error.to_string())?
     }
     #[cfg(not(feature = "native_shell"))]
     {
@@ -1301,22 +1361,53 @@ pub async fn live_shell_read(
 #[cfg(feature = "native_shell")]
 #[allow(clippy::items_after_test_module)]
 mod application_close {
-    use std::{collections::{BTreeMap,BTreeSet},sync::{atomic::{AtomicU64,Ordering},Mutex},time::{Duration,Instant}};
-    use tauri::{AppHandle,Emitter,Manager};
+    use std::{
+        collections::{BTreeMap, BTreeSet},
+        sync::{
+            atomic::{AtomicU64, Ordering},
+            Mutex,
+        },
+        time::{Duration, Instant},
+    };
+    use tauri::{AppHandle, Emitter, Manager};
     // BEGIN native close reply state (standalone source-bound regression).
-    #[derive(Clone,PartialEq,Eq)]
-    struct Target { url:String, record:Option<String> }
-    struct Pending { id:String, targets:BTreeMap<String,Target>, waiting:BTreeSet<String>, code:i32, restart:bool, deadline:Instant }
+    #[derive(Clone, PartialEq, Eq)]
+    struct Target {
+        url: String,
+        record: Option<String>,
+    }
+    struct Pending {
+        id: String,
+        targets: BTreeMap<String, Target>,
+        waiting: BTreeSet<String>,
+        code: i32,
+        restart: bool,
+        deadline: Instant,
+    }
     impl Pending {
-        fn validate_reply(&self,id:&str,label:&str,current:&BTreeMap<String,Target>)->Result<(),&'static str>{
-            if self.id!=id{return Err("This application close request has retired");}
-            if &self.targets!=current{return Err("Application view identity changed");}
-            if !self.targets.contains_key(label){return Err("This view does not participate in the application checkpoint");}
+        fn validate_reply(
+            &self,
+            id: &str,
+            label: &str,
+            current: &BTreeMap<String, Target>,
+        ) -> Result<(), &'static str> {
+            if self.id != id {
+                return Err("This application close request has retired");
+            }
+            if &self.targets != current {
+                return Err("Application view identity changed");
+            }
+            if !self.targets.contains_key(label) {
+                return Err("This view does not participate in the application checkpoint");
+            }
             Ok(())
         }
-        fn acknowledge(&mut self,label:&str)->Result<bool,&'static str>{
-            if self.waiting.first().map(String::as_str)!=Some(label){return Err("This view is not the current application checkpoint participant");}
-            self.waiting.remove(label);Ok(self.waiting.is_empty())
+        fn acknowledge(&mut self, label: &str) -> Result<bool, &'static str> {
+            if self.waiting.first().map(String::as_str) != Some(label) {
+                return Err("This view is not the current application checkpoint participant");
+            }
+            self.waiting.remove(label);
+            Ok(self.waiting.is_empty())
         }
     }
     // END native close reply state.
@@ -1324,149 +1415,406 @@ mod application_close {
     #[derive(Default)]
     pub(crate) struct Coordinator(Mutex<State>);
     #[derive(Default)]
-    struct State { pending:Option<Pending>, approved_exit:Option<i32>, watchdog_running:bool }
+    struct State {
+        pending: Option<Pending>,
+        approved_exit: Option<i32>,
+        watchdog_running: bool,
+    }
 
     #[cfg(test)]
     mod close_reply_state_tests {
         use super::*;
-        fn pending()->Pending{
+        fn pending() -> Pending {
             let targets=BTreeMap::from([("main".into(),Target{url:"tauri://localhost/app/index.html".into(),record:None}),("surface-1".into(),Target{url:"tauri://localhost/app/index.html".into(),record:Some(r#"{"workspace_id":"w","binding":{"id":"b","kind":"source","ref":"central:source:control:root:Test.html"}}"#.into())})]);
-            Pending{id:"close-1".into(),waiting:targets.keys().cloned().collect(),targets,code:0,restart:false,deadline:Instant::now()+Duration::from_secs(30)}
+            Pending {
+                id: "close-1".into(),
+                waiting: targets.keys().cloned().collect(),
+                targets,
+                code: 0,
+                restart: false,
+                deadline: Instant::now() + Duration::from_secs(30),
+            }
         }
-        #[test]fn every_actual_target_must_acknowledge_once_in_order(){let mut p=pending();assert!(p.acknowledge("surface-1").is_err());assert!(!p.acknowledge("main").unwrap());assert!(p.acknowledge("main").is_err());assert!(p.acknowledge("surface-1").unwrap());assert!(p.acknowledge("surface-1").is_err());}
-        #[test]fn request_and_sender_are_exact(){let p=pending();assert!(p.validate_reply("close-1","main",&p.targets).is_ok());assert!(p.validate_reply("close-0","main",&p.targets).is_err());assert!(p.validate_reply("close-1","surface-2",&p.targets).is_err());}
-        #[test]fn changed_native_subject_or_url_refuses_the_held_batch(){let p=pending();let mut changed=p.targets.clone();changed.get_mut("surface-1").unwrap().record=Some("changed binding".into());assert!(p.validate_reply("close-1","main",&changed).is_err());let mut changed=p.targets.clone();changed.get_mut("main").unwrap().url="https://example.com".into();assert!(p.validate_reply("close-1","main",&changed).is_err());}
-        #[test]fn new_or_disappeared_registered_view_requires_another_attempt(){let p=pending();let mut changed=p.targets.clone();changed.remove("surface-1");assert!(p.validate_reply("close-1","main",&changed).is_err());let mut changed=p.targets.clone();changed.insert("surface-2".into(),p.targets["surface-1"].clone());assert!(p.validate_reply("close-1","main",&changed).is_err());}
+        #[test]
+        fn every_actual_target_must_acknowledge_once_in_order() {
+            let mut p = pending();
+            assert!(p.acknowledge("surface-1").is_err());
+            assert!(!p.acknowledge("main").unwrap());
+            assert!(p.acknowledge("main").is_err());
+            assert!(p.acknowledge("surface-1").unwrap());
+            assert!(p.acknowledge("surface-1").is_err());
+        }
+        #[test]
+        fn request_and_sender_are_exact() {
+            let p = pending();
+            assert!(p.validate_reply("close-1", "main", &p.targets).is_ok());
+            assert!(p.validate_reply("close-0", "main", &p.targets).is_err());
+            assert!(p
+                .validate_reply("close-1", "surface-2", &p.targets)
+                .is_err());
+        }
+        #[test]
+        fn changed_native_subject_or_url_refuses_the_held_batch() {
+            let p = pending();
+            let mut changed = p.targets.clone();
+            changed.get_mut("surface-1").unwrap().record = Some("changed binding".into());
+            assert!(p.validate_reply("close-1", "main", &changed).is_err());
+            let mut changed = p.targets.clone();
+            changed.get_mut("main").unwrap().url = "https://example.com".into();
+            assert!(p.validate_reply("close-1", "main", &changed).is_err());
+        }
+        #[test]
+        fn new_or_disappeared_registered_view_requires_another_attempt() {
+            let p = pending();
+            let mut changed = p.targets.clone();
+            changed.remove("surface-1");
+            assert!(p.validate_reply("close-1", "main", &changed).is_err());
+            let mut changed = p.targets.clone();
+            changed.insert("surface-2".into(), p.targets["surface-1"].clone());
+            assert!(p.validate_reply("close-1", "main", &changed).is_err());
+        }
     }
-    static NEXT:AtomicU64=AtomicU64::new(1);
-    fn targets(app:&AppHandle)->Result<BTreeMap<String,Target>,String> {
-        let records=app.state::<crate::windows::Windows>().0.lock().map_err(|_|"Registered window state unavailable")?.clone();
-        if records.len()>63{return Err("Too many registered views for one bounded application checkpoint".into());}
-        let mut labels=vec![("main".to_owned(),None)];
-        for (label,record) in records {labels.push((label,Some(serde_json::to_string(&record).map_err(|e|e.to_string())?)));}
-        let mut targets=BTreeMap::new();
-        for (label,record) in labels {
-            let view=app.get_webview_window(&label).ok_or_else(||format!("Registered view {label} is unavailable; keep the application open"))?;
+    static NEXT: AtomicU64 = AtomicU64::new(1);
+    fn targets(app: &AppHandle) -> Result<BTreeMap<String, Target>, String> {
+        let records = app
+            .state::<crate::windows::Windows>()
+            .0
+            .lock()
+            .map_err(|_| "Registered window state unavailable")?
+            .clone();
+        if records.len() > 63 {
+            return Err("Too many registered views for one bounded application checkpoint".into());
+        }
+        let mut labels = vec![("main".to_owned(), None)];
+        for (label, record) in records {
+            labels.push((
+                label,
+                Some(serde_json::to_string(&record).map_err(|e| e.to_string())?),
+            ));
+        }
+        let mut targets = BTreeMap::new();
+        for (label, record) in labels {
+            let view = app.get_webview_window(&label).ok_or_else(|| {
+                format!("Registered view {label} is unavailable; keep the application open")
+            })?;
             super::admit_candidate_webview(&view)?;
-            targets.insert(label,Target{url:view.url().map_err(|e|e.to_string())?.to_string(),record});
+            targets.insert(
+                label,
+                Target {
+                    url: view.url().map_err(|e| e.to_string())?.to_string(),
+                    record,
+                },
+            );
         }
         Ok(targets)
     }
-    fn report_request(app:&AppHandle,id:Option<&str>,error:String){
+    fn report_request(app: &AppHandle, id: Option<&str>, error: String) {
         // A close that failed opens no other world later.
         super::candidate::cancel_relaunch();
-        let _=app.emit("oi:application-close-failed",serde_json::json!({"request_id":id,"error":error}));
-        if let Some(main)=app.get_webview_window("main"){let _=main.set_focus();}
+        let _ = app.emit(
+            "oi:application-close-failed",
+            serde_json::json!({"request_id":id,"error":error}),
+        );
+        if let Some(main) = app.get_webview_window("main") {
+            let _ = main.set_focus();
+        }
     }
-    pub(crate) fn report(app:&AppHandle,error:String){report_request(app,None,error);}
-    fn fail(app:&AppHandle,id:&str,error:String){
-        let cleared=app.state::<Coordinator>().0.lock().map(|mut state|{
-            if state.pending.as_ref().is_some_and(|pending|pending.id==id){state.pending=None;true}else{false}
-        }).unwrap_or(false);
-        if cleared{report_request(app,Some(id),error);}
+    pub(crate) fn report(app: &AppHandle, error: String) {
+        report_request(app, None, error);
     }
-    pub(crate) fn approved(app:&AppHandle,code:Option<i32>)->bool {
-        app.state::<Coordinator>().0.lock().map(|mut state|{
-            if state.approved_exit==Some(code.unwrap_or(0)){state.approved_exit=None;true}else{false}
-        }).unwrap_or(false)
+    fn fail(app: &AppHandle, id: &str, error: String) {
+        let cleared = app
+            .state::<Coordinator>()
+            .0
+            .lock()
+            .map(|mut state| {
+                if state
+                    .pending
+                    .as_ref()
+                    .is_some_and(|pending| pending.id == id)
+                {
+                    state.pending = None;
+                    true
+                } else {
+                    false
+                }
+            })
+            .unwrap_or(false);
+        if cleared {
+            report_request(app, Some(id), error);
+        }
     }
-    fn dispatch(app:&AppHandle,id:&str,label:&str,target:&Target)->Result<(),String>{
-        let record=target.record.as_ref().map(|value|serde_json::from_str::<serde_json::Value>(value)).transpose().map_err(|error|error.to_string())?;
+    pub(crate) fn approved(app: &AppHandle, code: Option<i32>) -> bool {
+        app.state::<Coordinator>()
+            .0
+            .lock()
+            .map(|mut state| {
+                if state.approved_exit == Some(code.unwrap_or(0)) {
+                    state.approved_exit = None;
+                    true
+                } else {
+                    false
+                }
+            })
+            .unwrap_or(false)
+    }
+    fn dispatch(app: &AppHandle, id: &str, label: &str, target: &Target) -> Result<(), String> {
+        let record = target
+            .record
+            .as_ref()
+            .map(|value| serde_json::from_str::<serde_json::Value>(value))
+            .transpose()
+            .map_err(|error| error.to_string())?;
         app.emit_to(label,"oi:application-close-checkpoint",serde_json::json!({"request_id":id,"label":label,"workspace_id":record.as_ref().and_then(|r|r["workspace_id"].as_str()),"binding_id":record.as_ref().and_then(|r|r["binding"]["id"].as_str())})).map_err(|error|error.to_string())
     }
-    pub(crate) fn request(app:&AppHandle,code:i32,restart:bool)->Result<(),String>{
-        {let owner=app.state::<Coordinator>();if owner.0.lock().map_err(|_|"Application close state unavailable")?.pending.is_some(){return Ok(());}}
-        let targets=targets(app)?;
-        let id=format!("close-{}",NEXT.fetch_add(1,Ordering::Relaxed));
-        let start_watchdog={
-            let owner=app.state::<Coordinator>();let mut state=owner.0.lock().map_err(|_|"Application close state unavailable")?;
-            if state.pending.is_some(){return Ok(());}
-            state.pending=Some(Pending{id:id.clone(),waiting:targets.keys().cloned().collect(),targets:targets.clone(),code,restart,deadline:Instant::now()+Duration::from_secs(30)});
-            let start=!state.watchdog_running;state.watchdog_running=true;start
+    pub(crate) fn request(app: &AppHandle, code: i32, restart: bool) -> Result<(), String> {
+        {
+            let owner = app.state::<Coordinator>();
+            if owner
+                .0
+                .lock()
+                .map_err(|_| "Application close state unavailable")?
+                .pending
+                .is_some()
+            {
+                return Ok(());
+            }
+        }
+        let targets = targets(app)?;
+        let id = format!("close-{}", NEXT.fetch_add(1, Ordering::Relaxed));
+        let start_watchdog = {
+            let owner = app.state::<Coordinator>();
+            let mut state = owner
+                .0
+                .lock()
+                .map_err(|_| "Application close state unavailable")?;
+            if state.pending.is_some() {
+                return Ok(());
+            }
+            state.pending = Some(Pending {
+                id: id.clone(),
+                waiting: targets.keys().cloned().collect(),
+                targets: targets.clone(),
+                code,
+                restart,
+                deadline: Instant::now() + Duration::from_secs(30),
+            });
+            let start = !state.watchdog_running;
+            state.watchdog_running = true;
+            start
         };
         if start_watchdog {
-            let handle=app.clone();std::thread::spawn(move||loop{
+            let handle = app.clone();
+            std::thread::spawn(move || loop {
                 std::thread::sleep(Duration::from_millis(250));
-                let expired={
-                    let owner=handle.state::<Coordinator>();let Ok(mut state)=owner.0.lock() else{return;};
+                let expired = {
+                    let owner = handle.state::<Coordinator>();
+                    let Ok(mut state) = owner.0.lock() else {
+                        return;
+                    };
                     match &state.pending {
-                        Some(pending) if Instant::now()>=pending.deadline=>{let id=pending.id.clone();state.pending=None;state.watchdog_running=false;Some(id)}
-                        Some(_)=>continue,
-                        None=>{state.watchdog_running=false;return;}
+                        Some(pending) if Instant::now() >= pending.deadline => {
+                            let id = pending.id.clone();
+                            state.pending = None;
+                            state.watchdog_running = false;
+                            Some(id)
+                        }
+                        Some(_) => continue,
+                        None => {
+                            state.watchdog_running = false;
+                            return;
+                        }
                     }
                 };
-                if let Some(id)=expired{report_request(&handle,Some(&id),"Application close timed out while securing a document view. Keep the application open, resolve the local recovery error, then retry Quit or Restart.".into());return;}
+                if let Some(id) = expired {
+                    report_request(&handle,Some(&id),"Application close timed out while securing a document view. Keep the application open, resolve the local recovery error, then retry Quit or Restart.".into());
+                    return;
+                }
             });
         }
         // Freeze all participating views before reading them serially. Each
         // view's original registry admits at most four physical frame reads.
-        for label in targets.keys(){if let Err(error)=app.emit_to(label,"oi:application-close-freeze",serde_json::json!({"request_id":id,"label":label})){fail(app,&id,format!("Could not retain {label} during close: {error}"));return Ok(());}}
-        if let Some((label,target))=targets.iter().next(){if let Err(error)=dispatch(app,&id,label,target){fail(app,&id,error);}}
+        for label in targets.keys() {
+            if let Err(error) = app.emit_to(
+                label,
+                "oi:application-close-freeze",
+                serde_json::json!({"request_id":id,"label":label}),
+            ) {
+                fail(
+                    app,
+                    &id,
+                    format!("Could not retain {label} during close: {error}"),
+                );
+                return Ok(());
+            }
+        }
+        if let Some((label, target)) = targets.iter().next() {
+            if let Err(error) = dispatch(app, &id, label, target) {
+                fail(app, &id, error);
+            }
+        }
         Ok(())
     }
-    pub(crate) fn reply(app:&AppHandle,window:&tauri::WebviewWindow,id:&str,error:Option<String>)->Result<(),String>{
+    pub(crate) fn reply(
+        app: &AppHandle,
+        window: &tauri::WebviewWindow,
+        id: &str,
+        error: Option<String>,
+    ) -> Result<(), String> {
         super::admit_candidate_webview(window)?;
-        let current=targets(app)?;
-        let completed={
-            let owner=app.state::<Coordinator>();let mut state=owner.0.lock().map_err(|_|"Application close state unavailable")?;
-            let pending=state.pending.as_mut().ok_or("No application close checkpoint is pending")?;
-            if let Err(error)=pending.validate_reply(id,window.label(),&current){
-                if error=="Application view identity changed"{drop(state);fail(app,id,"Registered application views changed during close. Retry after the current view settles.".into());}
+        let current = targets(app)?;
+        let completed = {
+            let owner = app.state::<Coordinator>();
+            let mut state = owner
+                .0
+                .lock()
+                .map_err(|_| "Application close state unavailable")?;
+            let pending = state
+                .pending
+                .as_mut()
+                .ok_or("No application close checkpoint is pending")?;
+            if let Err(error) = pending.validate_reply(id, window.label(), &current) {
+                if error == "Application view identity changed" {
+                    drop(state);
+                    fail(app,id,"Registered application views changed during close. Retry after the current view settles.".into());
+                }
                 return Err(error.into());
             }
-            if let Some(error)=error {drop(state);fail(app,id,format!("{} could not secure its local work: {}. Keep the view open and retry after resolving the failure.",window.label(),error.chars().take(2048).collect::<String>()));return Ok(());}
-            if pending.acknowledge(window.label())?{Some((pending.code,pending.restart))}else{
-                let label=pending.waiting.first().expect("waiting view").clone();let target=pending.targets.get(&label).expect("registered waiting view").clone();
-                drop(state);if let Err(error)=dispatch(app,id,&label,&target){fail(app,id,error);}
+            if let Some(error) = error {
+                drop(state);
+                fail(app,id,format!("{} could not secure its local work: {}. Keep the view open and retry after resolving the failure.",window.label(),error.chars().take(2048).collect::<String>()));
+                return Ok(());
+            }
+            if pending.acknowledge(window.label())? {
+                Some((pending.code, pending.restart))
+            } else {
+                let label = pending.waiting.first().expect("waiting view").clone();
+                let target = pending
+                    .targets
+                    .get(&label)
+                    .expect("registered waiting view")
+                    .clone();
+                drop(state);
+                if let Err(error) = dispatch(app, id, &label, &target) {
+                    fail(app, id, error);
+                }
                 None
             }
         };
-        if let Some((code,restart))=completed{
+        if let Some((code, restart)) = completed {
             // The view acknowledgements secure xterm's serialized screen.
             // The actual owner also secures unread output from retained PTYs
             // whose disposable view was already released. No PTY is closed.
-            let handle=app.clone();let request=id.to_owned();
-            tauri::async_runtime::spawn(async move{
-                let owner=handle.clone();
-                let secured=tauri::async_runtime::spawn_blocking(move||crate::terminal::checkpoint_all(&owner)).await.map_err(|error|error.to_string()).and_then(|result|result);
-                if let Err(error)=secured{fail(&handle,&request,error);return;}
-                let current=match targets(&handle){Ok(current)=>current,Err(error)=>{fail(&handle,&request,error);return;}};
-                let approved={
-                    let owner=handle.state::<Coordinator>();let Ok(mut state)=owner.0.lock() else{return;};
-                    let Some(pending)=state.pending.as_ref() else{return;};
-                    if pending.id!=request{return;}
-                    if pending.targets!=current||Instant::now()>=pending.deadline{drop(state);fail(&handle,&request,"Application identity changed or the terminal checkpoint timed out. Keep the application open and retry after it settles.".into());return;}
-                    if !pending.waiting.is_empty(){return;}
-                    state.pending=None;state.approved_exit=Some(if restart{tauri::RESTART_EXIT_CODE}else{code});true
+            let handle = app.clone();
+            let request = id.to_owned();
+            tauri::async_runtime::spawn(async move {
+                let owner = handle.clone();
+                let secured = tauri::async_runtime::spawn_blocking(move || {
+                    crate::terminal::checkpoint_all(&owner)
+                })
+                .await
+                .map_err(|error| error.to_string())
+                .and_then(|result| result);
+                if let Err(error) = secured {
+                    fail(&handle, &request, error);
+                    return;
+                }
+                let current = match targets(&handle) {
+                    Ok(current) => current,
+                    Err(error) => {
+                        fail(&handle, &request, error);
+                        return;
+                    }
                 };
-                if approved{if restart{handle.request_restart();}else{handle.exit(code);}}
+                let approved = {
+                    let owner = handle.state::<Coordinator>();
+                    let Ok(mut state) = owner.0.lock() else {
+                        return;
+                    };
+                    let Some(pending) = state.pending.as_ref() else {
+                        return;
+                    };
+                    if pending.id != request {
+                        return;
+                    }
+                    if pending.targets != current || Instant::now() >= pending.deadline {
+                        drop(state);
+                        fail(&handle,&request,"Application identity changed or the terminal checkpoint timed out. Keep the application open and retry after it settles.".into());
+                        return;
+                    }
+                    if !pending.waiting.is_empty() {
+                        return;
+                    }
+                    state.pending = None;
+                    state.approved_exit = Some(if restart {
+                        tauri::RESTART_EXIT_CODE
+                    } else {
+                        code
+                    });
+                    true
+                };
+                if approved {
+                    if restart {
+                        handle.request_restart();
+                    } else {
+                        handle.exit(code);
+                    }
+                }
             });
         }
         Ok(())
     }
 }
 #[cfg(feature = "native_shell")]
-pub(crate) use application_close::{Coordinator as ApplicationClose,approved as close_approved,request as request_close,report as report_close_failure};
+pub(crate) use application_close::{
+    approved as close_approved, report as report_close_failure, request as request_close,
+    Coordinator as ApplicationClose,
+};
 
 #[tauri::command]
-pub fn live_shell_checkpoint_reply(app:tauri::AppHandle,webview:tauri::WebviewWindow,request_id:String,error:Option<String>)->Result<(),String>{
+pub fn live_shell_checkpoint_reply(
+    app: tauri::AppHandle,
+    webview: tauri::WebviewWindow,
+    request_id: String,
+    error: Option<String>,
+) -> Result<(), String> {
     #[cfg(feature = "native_shell")]
-    {application_close::reply(&app,&webview,&request_id,error)}
+    {
+        application_close::reply(&app, &webview, &request_id, error)
+    }
     #[cfg(not(feature = "native_shell"))]
-    {let _=(app,webview,request_id,error);Err("This host has no candidate application close coordinator".into())}
+    {
+        let _ = (app, webview, request_id, error);
+        Err("This host has no candidate application close coordinator".into())
+    }
 }
 #[tauri::command]
-pub fn live_shell_request_close(app:tauri::AppHandle,webview:tauri::WebviewWindow,restart:bool)->Result<(),String>{
+pub fn live_shell_request_close(
+    app: tauri::AppHandle,
+    webview: tauri::WebviewWindow,
+    restart: bool,
+) -> Result<(), String> {
     #[cfg(feature = "native_shell")]
-    {admit_candidate_webview(&webview)?;if webview.label()!="main"{return Err("Application Quit and Restart belong to the main candidate window".into());}application_close::request(&app,0,restart)}
+    {
+        admit_candidate_webview(&webview)?;
+        if webview.label() != "main" {
+            return Err("Application Quit and Restart belong to the main candidate window".into());
+        }
+        application_close::request(&app, 0, restart)
+    }
     #[cfg(not(feature = "native_shell"))]
-    {let _=(app,webview,restart);Err("This host has no candidate application close coordinator".into())}
+    {
+        let _ = (app, webview, restart);
+        Err("This host has no candidate application close coordinator".into())
+    }
 }
 
 // Stable actual profile qualification; runtime epochs do not address archives.
-#[cfg(feature="native_shell")]
-pub(crate) fn terminal_profile_scope()->Result<serde_json::Value,String>{
-    let config=candidate::config()?;
-    let profile=config.get("profile_scope").ok_or("Candidate terminal profile scope unavailable")?;
+#[cfg(feature = "native_shell")]
+pub(crate) fn terminal_profile_scope() -> Result<serde_json::Value, String> {
+    let config = candidate::config()?;
+    let profile = config
+        .get("profile_scope")
+        .ok_or("Candidate terminal profile scope unavailable")?;
     Ok(profile.clone())
 }

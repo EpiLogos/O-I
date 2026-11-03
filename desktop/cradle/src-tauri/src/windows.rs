@@ -9,9 +9,7 @@ use std::{
         Mutex,
     },
 };
-use tauri::{
-    AppHandle, Emitter, Manager, WebviewUrl, Window, WebviewWindowBuilder, WindowEvent,
-};
+use tauri::{AppHandle, Emitter, Manager, WebviewUrl, WebviewWindowBuilder, Window, WindowEvent};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Bounds {
@@ -126,8 +124,10 @@ pub fn window_detach(
         }
         if binding.kind == "file" {
             let location = binding.location.clone().ok_or("File location is missing")?;
-            if binding.reference.as_deref() != Some(&location.ref_id) {return Err("File location differs from the bound subject".into());}
-            kernel.apply(oi_cradle_kernel::KernelOp::FileBytes {location})?;
+            if binding.reference.as_deref() != Some(&location.ref_id) {
+                return Err("File location differs from the bound subject".into());
+            }
+            kernel.apply(oi_cradle_kernel::KernelOp::FileBytes { location })?;
         }
         if binding.kind == "source"
             && !binding
@@ -144,7 +144,10 @@ pub fn window_detach(
         .lock()
         .map_err(|_| "Window state unavailable")?
         .iter()
-        .find(|(_, r)| r.binding.id == binding.id || (binding.reference.is_some() && r.binding.reference == binding.reference))
+        .find(|(_, r)| {
+            r.binding.id == binding.id
+                || (binding.reference.is_some() && r.binding.reference == binding.reference)
+        })
         .map(|(label, _)| label.clone());
     if let Some(label) = existing {
         if let Some(existing) = app.get_window(&label) {
@@ -152,7 +155,11 @@ pub fn window_detach(
         }
         // An externally destroyed webview must not permanently prevent this
         // subject from being detached again.
-        windows.0.lock().map_err(|_| "Window state unavailable")?.remove(&label);
+        windows
+            .0
+            .lock()
+            .map_err(|_| "Window state unavailable")?
+            .remove(&label);
     }
     let label = format!("surface-{}", NEXT.fetch_add(1, Ordering::Relaxed));
     let record = Detached {
@@ -217,7 +224,10 @@ pub fn window_detach(
     };
     // Publish only after fallible preparation (including monitor discovery)
     // succeeds, otherwise a failed attempt leaves a phantom detached record.
-    windows.0.lock().map_err(|_| "Window state unavailable")?
+    windows
+        .0
+        .lock()
+        .map_err(|_| "Window state unavailable")?
         .insert(label.clone(), record.clone());
     let built = builder.build();
     let detached = match built {
@@ -281,7 +291,11 @@ pub fn window_detach(
             }
         }
         if let WindowEvent::CloseRequested { api, .. } = event {
-            if record.binding.kind == "browser" && crate::browser::return_to_main(&handle, &record.binding.id).is_err() { api.prevent_close(); }
+            if record.binding.kind == "browser"
+                && crate::browser::return_to_main(&handle, &record.binding.id).is_err()
+            {
+                api.prevent_close();
+            }
         }
         if matches!(event, WindowEvent::Destroyed) {
             if let Ok(mut rows) = handle.state::<Windows>().0.lock() {
@@ -295,7 +309,11 @@ pub fn window_detach(
     Ok(())
 }
 #[tauri::command]
-pub fn window_binding(app: AppHandle, window: tauri::WebviewWindow, label: Option<String>) -> Result<Detached, String> {
+pub fn window_binding(
+    app: AppHandle,
+    window: tauri::WebviewWindow,
+    label: Option<String>,
+) -> Result<Detached, String> {
     #[cfg(feature = "native_shell")]
     crate::native_shell::admit_candidate_webview(&window)?;
     let label = detached_binding_label(window.label(), label.as_deref())?;
@@ -308,7 +326,10 @@ pub fn window_binding(app: AppHandle, window: tauri::WebviewWindow, label: Optio
         .ok_or_else(|| "This window has no detached binding".into())
 }
 
-fn detached_binding_label<'a>(caller: &'a str, target: Option<&'a str>) -> Result<&'a str, &'static str> {
+fn detached_binding_label<'a>(
+    caller: &'a str,
+    target: Option<&'a str>,
+) -> Result<&'a str, &'static str> {
     match target {
         Some(label) if caller == "main" => Ok(label),
         Some(_) => Err("Only the main workspace can inspect another detached window binding"),
@@ -322,7 +343,10 @@ mod detached_binding_lookup_tests {
     #[test]
     fn original_self_lookup_and_main_owner_lookup_are_preserved() {
         assert_eq!(detached_binding_label("surface-1", None), Ok("surface-1"));
-        assert_eq!(detached_binding_label("main", Some("surface-1")), Ok("surface-1"));
+        assert_eq!(
+            detached_binding_label("main", Some("surface-1")),
+            Ok("surface-1")
+        );
     }
     #[test]
     fn detached_callers_cannot_override_their_registered_label() {
@@ -372,8 +396,14 @@ pub fn window_redock(app: AppHandle, window: tauri::WebviewWindow) -> Result<(),
     #[cfg(feature = "native_shell")]
     {
         crate::native_shell::admit_candidate_webview(&window)?;
-        let detached = app.state::<Windows>().0.lock().map_err(|_| "Window state unavailable")?
-            .get(window.label()).cloned().ok_or("This window has no detached binding")?;
+        let detached = app
+            .state::<Windows>()
+            .0
+            .lock()
+            .map_err(|_| "Window state unavailable")?
+            .get(window.label())
+            .cloned()
+            .ok_or("This window has no detached binding")?;
         if detached.binding.kind == "browser" {
             crate::browser::return_to_main(&app, &detached.binding.id)?;
         }
@@ -390,12 +420,29 @@ pub fn window_redock(app: AppHandle, window: tauri::WebviewWindow) -> Result<(),
 /// A Scene portal may return only its exact admitted detached Surface.
 /// Closing follows the existing Destroyed -> window-redock lifecycle.
 #[tauri::command]
-pub fn window_redock_surface(app: AppHandle, window: Window, workspace_id: String, surface_id: String) -> Result<(), String> {
-    if window.label() != "main" { return Err("Portal re-dock belongs to the workspace window".into()); }
-    let label = app.state::<Windows>().0.lock().map_err(|_| "Window state unavailable")?
-        .iter().find(|(_, detached)| detached.workspace_id == workspace_id && detached.binding.id == surface_id)
-        .map(|(label, _)| label.clone()).ok_or("This workspace has no matching detached Surface")?;
-    let target = app.get_webview_window(&label).ok_or("The detached Surface window is no longer available")?;
+pub fn window_redock_surface(
+    app: AppHandle,
+    window: Window,
+    workspace_id: String,
+    surface_id: String,
+) -> Result<(), String> {
+    if window.label() != "main" {
+        return Err("Portal re-dock belongs to the workspace window".into());
+    }
+    let label = app
+        .state::<Windows>()
+        .0
+        .lock()
+        .map_err(|_| "Window state unavailable")?
+        .iter()
+        .find(|(_, detached)| {
+            detached.workspace_id == workspace_id && detached.binding.id == surface_id
+        })
+        .map(|(label, _)| label.clone())
+        .ok_or("This workspace has no matching detached Surface")?;
+    let target = app
+        .get_webview_window(&label)
+        .ok_or("The detached Surface window is no longer available")?;
     target.close().map_err(|error| error.to_string())
 }
 
@@ -419,7 +466,11 @@ pub fn window_focus_subject(app: AppHandle, reference: String) -> Result<bool, S
 
 #[tauri::command]
 pub fn window_focus_main(app: AppHandle, window: Window) -> Result<(), String> {
-    if window.label() != "main" { return Err("Workspace navigation focus belongs to the main window".into()); }
-    app.get_window("main").ok_or("Workspace window is unavailable")?
-        .set_focus().map_err(|error|error.to_string())
+    if window.label() != "main" {
+        return Err("Workspace navigation focus belongs to the main window".into());
+    }
+    app.get_window("main")
+        .ok_or("Workspace window is unavailable")?
+        .set_focus()
+        .map_err(|error| error.to_string())
 }
