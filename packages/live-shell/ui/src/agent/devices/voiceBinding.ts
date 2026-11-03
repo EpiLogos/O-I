@@ -20,17 +20,18 @@
 // What nothing reports, each absent with the reading it waits for: the declared voice and the voices (the open's constitution names the
 // TTS stage's declared voice — nara_voice_constitution.rs stage configuration `declared_voice` — and AnswerVoice keeps only the lease), the
 // body's duplex, barge-in and stop (the constitution's `interaction` and `interruption`, not kept either), the latency and the receipt of a
-// turn (the speak result's receipt, not kept), the turn itself (Kokoro measures no word or phone timing: agent/faceVoice.ts).
-// Speed, Mouth, Affect, Interrupt, Egress, Console and Voice stand disabled with the operation each lacks. Pure.
+// turn (the speak result's receipt, not kept), the turn itself (Kokoro measures no word or phone timing: agent/faceVoice.ts), and egress:
+// whether what you say may leave this machine is Settings, Permissions' (§10.10), which Voice reads to close the cloud bodies and never sets.
+// Speed, Mouth, Affect, Interrupt, Console and Voice stand disabled with the operation each lacks. Pure.
 import type {DesignBinding, Standing, Value, Values} from '../../frame/devices/designed'
 import type {AnswerVoiceState, VoiceKey} from '../../central/devices/answerVoice'
 
 export const VOICE_DESIGN = 'actuation:voice'
-/** Voice on the door: after the Agent on the track the Answer speaks on (Central's chain places it: CentralDevices.tsx). */
+/** Voice on the door: after the Agent on the track the Answer speaks on. No chain places it yet: Central's Agent carries its readings. */
 export const VOICE_ID = 'central:voice'
 
-// Voice has no device of its own (tickets 725 and 772): it is the Agent's Voice page (§19.21, §19.4; oneAgentBinding.ts VOICE_PAGE, `speech.`).
-// This module is the page's binding.
+// Voice is a device of its own again (§19.21: "Chain: after the Agent, on the chain of an agent that speaks"), and this module is its
+// binding. The Agent keeps no Voice page: it carries this binding under `speech.` (oneAgentBinding.ts VOICE_PAGE) for the answer's face alone.
 
 const missing = (what: string, op: string, owner: string) => `${what}: no owner operation carries it yet — missing op: ${op} (${owner}).`
 const unread = (what: string, op: string, owner: string) => `${what}: no reading reaches it yet — missing op: ${op} (${owner}).`
@@ -51,6 +52,7 @@ export const VOICE_ABSENT = {
   'body.latencyMs': unread('Latency', 'a measured interval from a sentence\'s text to its first sound in nara_voice speak\'s receipt', 'Central (the kernel op nara_voice)'),
   'body.receipt': unread('The receipt', 'the last speak\'s receipt, kept by the Answer\'s voice', 'Central (the Answer\'s voice)'),
   turn: unread('The last turn', 'word and phone timing for a spoken turn (Kokoro measures none: agent/faceVoice.ts) and a record of the turn spoken', 'Central (the kernel op nara_voice)'),
+  'voice.egress': unread('Egress', 'Settings, Permissions\' egress for what you say (§10.10; the Local body admits loopback endpoints only: nara_voice_constitution.rs local_endpoint)', 'Central (Settings)'),
 } as const
 
 /** The controls no owner operation carries, each with the operation it lacks. */
@@ -60,7 +62,6 @@ export const VOICE_REFUSE = {
   'voice.mouth': missing('Mouth', 'a mouth source for the face (the Answer\'s playback moves it with the loudness: agent/faceVoice.ts playVoice)', 'Central (the Answer\'s voice)'),
   'voice.affect': missing('Affect', 'K-E-V\'s affect per sentence on the spoken turn', 'Central (K-E-V)'),
   'voice.interrupt': missing('Interrupt', 'an interruption contract on the body (the constitution declares it unsupported)', 'Central (the kernel op nara_voice)'),
-  'voice.egress': missing('Egress', 'an egress policy for spoken Nara material (the Local body admits loopback endpoints only: nara_voice_constitution.rs local_endpoint)', 'Central'),
   'voice.console': missing('Console', 'the Epii console beside the face', 'Central'),
 } as const
 

@@ -70,7 +70,11 @@ test('the manual\'s states stand where the manifests and the designs disagreed; 
   assert.ok(views.deviceStates('workcell:link').includes('full'), 'Link: Full')
   for (const id of ['software-factory:ledger', 'ai-kit:messages']) assert.deepEqual([...views.deviceStates(id)], ['widget', 'full'], `${id}: a monitor's Widget and Full`)
   const before = JSON.parse(readFileSync(new URL('./fixtures/device-states-before-744.json', import.meta.url), 'utf8'))
-  for (const [id, had] of Object.entries(before)) for (const view of had) assert.ok(views.deviceStates(id).includes(view), `${id} keeps ${view}`)
+  // REPLACED (§16.3 "On the rail and in a pane only: a monitor, or an instrument born there | Widget and Full. Its window holds its Full";
+  // §19.23 Full "it has two views, Full and Widget"): Workcell's instrument had Folded, Compact and Whole; it keeps its Widget and its Full.
+  const paneBorn = {'workcell:workcell': ['widget', 'full']}
+  for (const [id, had] of Object.entries(before)) for (const view of had) if (!(id in paneBorn)) assert.ok(views.deviceStates(id).includes(view), `${id} keeps ${view}`)
+  for (const [id, states] of Object.entries(paneBorn)) assert.deepEqual([...views.deviceStates(id)], states, `${id}: an instrument born in a pane, its Widget and its Full`)
 })
 
 test('the manifests\' presentations derive from the kit, and the device gate refuses a face that drifts', () => {

@@ -57,8 +57,8 @@ export const SEAT_ID = 'factory:git:seat'
 export const CARRIER_ID = 'factory:main:remote-carrier'
 export const LINK_ID = 'factory:main:link'
 
-/** The workcell's devices of the runtime. The Seat was retired into Git / landing's Seat page (tickets 725 and 772: §19.17; oneAgentBinding.ts
- * SEAT_PAGE, `seat.`); SEAT_ID stays as the key the Seat page's view holds are kept under, and nothing publishes it (ticket 804). */
+/** The workcell's devices of the runtime. The Seat was retired into Git / landing's Seat group (tickets 725 and 772: §19.16, §19.17;
+ * oneAgentBinding.ts SEAT_PAGE, `seat.`); SEAT_ID stays as the key the seat's view holds are kept under, and nothing publishes it (ticket 804). */
 export const workcellDevices = (): {carrier: DeviceInstance | null; link: DeviceInstance | null} => ({
   carrier: familyFaceDevice(CARRIER_ID, 'workcell', 'remote-carrier', 'Remote carrier', 'link'),
   link: familyFaceDevice(LINK_ID, 'workcell', 'link', 'Link', 'linkChain'),
@@ -131,7 +131,7 @@ export const SEAT_ABSENT = {
 export const SEAT_UNREAD = 'The seat instrument has not answered yet (kernel seat_status_read, `seat status --json`: it takes 20–30 s).'
 const SEAT_LOCAL = ['product', 'seat', 'lane', 'joinAs', 'zone', 'keepDirt', 'floor', 'sel', 'page:zones'] as const
 
-/** The seat instrument's reading as the Seat's rows and disk (Git / landing's Seat page, workcell__git-seat.tsx:27-30 `seat.seats`; the Seat was retired into it, §19.17): the hygiene model's seat rows
+/** The seat instrument's reading as the Seat's rows and disk (Git / landing's Seat group and the Seats page of Workcell's instrument, `seat.seats`; the Seat was retired into them, §19.17): the hygiene model's seat rows
  * (centralHygieneModel.ts parseSeatStatusJson — the live pose, the counts, the drift, the admission), each with its zones from the same
  * reading — none on a free seat, where a zone is a lane's leftover and no claim — and each workcell's disk with the register's floor.
  * Null when the reading is not the instrument's JSON. */
@@ -262,7 +262,7 @@ export function seatBinding(input: SeatInput, ports: SeatPorts = {}): DesignBind
 
 // ---------------------------------------------------------------------------------------------------------------- the Remote carrier
 
-// The Standing page (lane W10, D1): the offers are `workcell discover`'s (workcell_read {discover}, workcellMaterial.ts offersOf). The
+// The carrier's page (lane W10, D1): the offers are `workcell discover`'s (workcell_read {discover}, workcellMaterial.ts offersOf). The
 // plan lays the run's needs on them (`workcell plan` with the run's demand), and no reading names a run's demand — the plan of no demand
 // plans nothing — so the plan and Plan again stand disabled saying so. Each connected machine's standing and round trip come from
 // `workcell connections probe` (workcell_read {connections-probe}, a read that never writes the record; workcellMaterial.ts probeFields):
@@ -281,7 +281,7 @@ export const CARRIER_REFUSE = {
   where: missing('Where', 'a session carried to another machine over workcell.control/v1 through the kernel', 'Workcell'),
   replan: missing('Plan again', NO_DEMAND, 'Workcell'),
 } as const
-/** The Standing page's readings while they do not stand. */
+/** The carrier's offers and plan while they do not stand. */
 export const CARRIER_ABSENT = {
   offers: 'What the place can provide: Workcell\'s `workcell discover` is not read here.',
   plan: `The run's plan on those offers: no reading reaches it yet — missing op: ${NO_DEMAND} (Workcell).`,
@@ -329,13 +329,13 @@ export function connectionLabels(answer: WorkcellAnswer): string[] {
     ? answer.value.connections.flatMap(row => (isObj(row) && str(row.label) ? [String(row.label)] : [])) : []
 }
 
-/** Workcell's material readings for the Standing page: `workcell discover` and `workcell connections probe`; absent: not read here. */
+/** Workcell's material readings for the carrier: `workcell discover` and `workcell connections probe`; absent: not read here. */
 export interface CarrierMaterial {
   readonly discover?: WorkcellAnswer
   readonly probe?: WorkcellAnswer
   /** The chosen world's run (planRunOf), its `workcell run show`, and the plan of its kept demand; absent: not read here. `why` says why
    * there is no run, in words. `runs` are the runs `workcell worlds` names for that world (Workcell PR 122): where it names several, the
-   * Standing page chooses among them (`planRun`, the hand's choice) and none is assumed. */
+   * Machine page of Workcell's instrument chooses among them (`planRun`, the hand's choice) and none is assumed. */
   readonly run?: {readonly ref: string | null; readonly why?: string; readonly runs?: readonly string[] | null; readonly show?: WorkcellAnswer; readonly plan?: WorkcellAnswer}
 }
 

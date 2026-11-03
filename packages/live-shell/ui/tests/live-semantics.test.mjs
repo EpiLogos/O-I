@@ -91,7 +91,9 @@ test('the standing world passes the gate, and every admitted face occupies a Liv
   // Context & world, Machine, Ground hygiene, Impact, Flow, Nara conversation, Workspace, Beings, Things, Text, Highlight and Notes; Quaternal
   // Logic's Sitting and Binding; Software Factory's Run, Thread, Tasks and attempt review; Workcell's Seat). Software Factory's Custody and
   // Central's Agent identity stay, the halves the one Agent joins (§19.4 "One agent, three owners"): 65 − 27 = 38.
-  assert.equal(sdkValidate.semanticRegistry().length, 38, 'the world carries its 38 faces')
+  // REPLACED: the manual's devices draw again — Voice (§19.21), the Decision helper (§19.20), Sources (§19.9) and AIKit's instrument
+  // (§19.26) are faces of their own: 38 + 4 = 42.
+  assert.equal(sdkValidate.semanticRegistry().length, 42, 'the world carries its 42 faces')
 })
 
 test('the semantic registry is locked to its reviewed snapshot (lock §5.6)', async () => {
@@ -174,7 +176,8 @@ test('door 1 — admitFamilyManifest refuses each broken invariant with its name
   refuses({liveSemantic: 'device-instrument'}, /an instrument generates/)
   refuses({liveSemantic: 'device-instrument', invariant: {generates: 'not a path'}}, /not an owner write path/)
   refuses({liveSemantic: 'device-audio-fx'}, /names the material it transforms/)
-  refuses({liveSemantic: 'rack', invariant: {chains: ['a']}}, /chainSelector/)
+  refuses({liveSemantic: 'rack', invariant: {}}, /declares its parallel chains/)
+  refuses({liveSemantic: 'rack', invariant: {chains: ['a'], chainSelector: 'a'}}, /not in the invariant grammar/)
   refuses({liveSemantic: 'macro', invariant: {maps: []}}, /maps at least one/)
   refuses({liveSemantic: 'macro', invariant: {maps: [{key: 'autonomy'}]}}, /carries no range/)
   refuses({liveSemantic: 'clip', invariant: {material: 'm', revision: 'r'}}, /names its states/)
@@ -182,7 +185,7 @@ test('door 1 — admitFamilyManifest refuses each broken invariant with its name
   refuses({liveSemantic: 'stop'}, /names the clips it launches together/)
   refuses({liveSemantic: 'return'}, /routes to an owner write path/)
   refuses({liveSemantic: 'return', invariant: {routesTo: 'just words'}}, /routes to an owner write path/)
-  refuses({liveSemantic: 'rack', invariant: {chains: ['a'], chainSelector: 'a', routesTo: 'kernel:receiving'}}, /does not belong to liveSemantic "rack"/)
+  refuses({liveSemantic: 'rack', invariant: {chains: ['a'], routesTo: 'kernel:receiving'}}, /does not belong to liveSemantic "rack"/)
   refuses({liveSemantic: 'info', invariant: {stream: 'x'}}, /does not belong to liveSemantic "info"/)
   door.resetFamilyManifestsForTest()
 })
@@ -229,8 +232,8 @@ test('door 4 — admitFamily refuses a device without a semantic, an illegal mod
     /"run-viewer" belongs to factory only/,
   )
   assert.throws(
-    () => sdkDefine.admitFamily(probeFamily([honestDevice({liveSemantic: 'rack', invariant: {chains: ['a']}})])),
-    /chainSelector/,
+    () => sdkDefine.admitFamily(probeFamily([honestDevice({liveSemantic: 'rack', invariant: {chains: []}})])),
+    /declares its parallel chains/,
   )
   assert.equal(door.familyManifest('acme'), undefined, 'refused declarations never reach the door')
   door.resetFamilyManifestsForTest()

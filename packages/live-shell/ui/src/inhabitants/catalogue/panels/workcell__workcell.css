@@ -1,4 +1,4 @@
-/* A workcell (manual §19.23): its seats in a pane, the Workcells tile's chips. */
+/* Workcell's instrument (manual §19.23): its Full's pages in a pane, the Workcells tile's chips. */
 .wc-seats { width: 100%; border-collapse: collapse; font-size: 11px; margin: 4px 0 14px; }
 .wc-seats th { text-align: left; font-weight: 600; color: var(--text-dim, #a3a8ad); padding: 4px 8px; border-bottom: 1px solid var(--line, #3a3d41); }
 .wc-seats td { padding: 5px 8px; border-bottom: 1px solid var(--line, #3a3d41); color: var(--text, #d4d7da); }
@@ -23,20 +23,20 @@
 .wc-tile-who span { color: var(--text-dim, #a3a8ad); }
 .wc-tile { display: flex; flex-direction: column; width: 100%; min-width: 0; }
 
-/* The pane's pages under its tabs: the run's world, its services, its exposure and its release; the harness processes beside the seats. */
-.wc-doc { flex: 1 1 auto; min-height: 0; }
+/* The Full: the tabs over the head (a tab's lamp dark while its page needs you), and under the head each page's pictures in a row, then
+   its lists, reading down where they run past the pane. Release chooses a binding and its Fate beside its picture. */
+.wc-tabs button { display: inline-flex; align-items: center; gap: 4px; }
+.wc-doc { position: absolute; inset: 0; padding: 12px 16px; }
+.wc-pics { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px; margin: 0 0 12px; }
+.wc-fate { display: flex; flex-direction: column; gap: 6px; width: 132px; }
+.wc-stages { margin-top: 12px; }
+.wc-stages .dp-display { margin-bottom: 6px; }
 .wc-pane-side--3 { grid-template-columns: 1fr 1.2fr 1.3fr; }
 .wc-seats td[data-fault="true"] { color: var(--stall, #ff9b4a); }
 .wc-procs li { display: grid; grid-template-columns: minmax(0, 1fr) auto 44px 40px 52px; align-items: center; gap: 8px; }
 .wc-procs li[data-stale="true"] b, .wc-procs li[data-stale="true"] em { color: var(--text-faint, #71767c); }
 .wc-procs em { font-style: normal; text-align: right; font-variant-numeric: tabular-nums; color: var(--text, #d4d7da); }
 .wc-procs .dp-meter { width: 44px; }
-.wc-h4 { margin: 16px 0 6px; font-size: 11px; font-weight: 600; color: var(--text-dim, #a3a8ad); }
-.wc-surfaces { list-style: none; margin: 0; padding: 0; font-size: 11px; }
-.wc-surfaces li { display: grid; grid-template-columns: 120px minmax(0, 1fr) minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 4px 0; border-bottom: 1px solid var(--line, #3a3d41); }
-.wc-surfaces code { font: 11px var(--mono, ui-monospace, monospace); color: var(--dp-value, #5cc6b4); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.wc-surfaces span { color: var(--text-dim, #a3a8ad); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.wc-surfaces .dp-cell { width: auto; }
 
 /* The tile's agents: a face mark and a name each, pressed to select the agent's track. */
 .wc-face { font: inherit; padding: 0 6px 0 0; border: 0; background: none; color: var(--text, #d4d7da); cursor: pointer; }
@@ -56,3 +56,26 @@
 .wc-gws-list button[data-state="refused"] b, .wc-gws-list button[data-state="refused"] span { color: var(--text-faint, #71767c); }
 .wc-gws-list button:focus-visible { outline: 1px solid var(--accent, #ffbe00); }
 .wc-gws-more, .wc-gws-none { margin: 0; color: var(--text-faint, #71767c); }
+
+/* The Machine page: the ask in the head where an act waits for Confirm, and the four kinds side by side (declared beside observed, kind by kind, and the last reports). */
+.wc-ask { display: flex; gap: 4px; }
+.wc-ask > * { flex: 1 1 0; }
+.mc-pane { color: var(--text); font: 11px var(--font-ui, sans-serif); border: 1px solid var(--line); }
+.mc-cols { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.mc-col { min-width: 0; min-height: 0; overflow: hidden; border-right: 1px solid var(--line); padding: 0 0 8px; }
+.mc-col:last-child { border-right: 0; }
+.mc-col h4 { display: flex; align-items: center; gap: 7px; margin: 0; padding: 10px 14px 6px; font-size: 10px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--text-dim); }
+.mc-col h4 b { margin-left: auto; font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--text-faint); }
+.mc-list { list-style: none; margin: 0; padding: 0 10px; }
+.mc-list li { display: grid; grid-template-columns: 8px minmax(0, 1fr); gap: 1px 8px; align-items: center; padding: 4px 4px; border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent); }
+.mc-list li i { width: 7px; height: 7px; border-radius: 50%; border: 1px solid var(--text-faint); }
+.mc-list li[data-status="satisfied"] i { background: var(--dp-value); border-color: var(--dp-value); }
+.mc-list li[data-status="changeable"] i { background: var(--dp-on); border-color: var(--dp-on); }
+.mc-list li[data-status="missing"] i { background: var(--stall); border-color: var(--stall); }
+.mc-list li b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mc-list li span, .mc-list li em { grid-column: 2; color: var(--text-dim); font-size: 10.5px; font-style: normal; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mc-list li em { color: var(--text-faint); }
+.mc-none { margin: 0; padding: 4px 14px; color: var(--text-faint); }
+.mc-extra { margin: 8px 14px 0; color: var(--text-faint); font-size: 10.5px; line-height: 1.45; max-height: 6em; overflow: hidden; }
+.mc-foot { flex: none; display: flex; gap: 28px; padding: 8px 16px; border-top: 1px solid var(--line); background: var(--bg-0); color: var(--text-dim); }
+.mc-foot b { font-weight: 500; color: var(--text); }

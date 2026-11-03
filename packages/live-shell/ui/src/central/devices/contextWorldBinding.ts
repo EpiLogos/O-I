@@ -188,8 +188,10 @@ export function contextWorldBinding(id: string, input: ContextWorldInput): Desig
 // a Central workspace's chain"; lock §0.3.5 "Context & world is Scope"): Context & world's owners draw Scope's design on Central
 // (software-factory:context-write-mode, inhabitants/catalogue/panels/scope.tsx) — the light, the places the agent may read (the packet
 // its turn carries, your world's retrievable sources: each a place on its ring, the shape Scope reads), and the receipts of the
-// session's writes. The Reach, the Writes list, the write mode and the Knowledge page have no owner a kernel op reaches, as before: each absent,
-// and a change of it refused with the operation it lacks. The raised reach is the view's, held until Confirm (Scope's own ask).
+// session's writes. The Reach, the Writes list, the write mode and the Asks page's Tool calls, Calls to other agents, Wait and On no answer
+// have no owner a kernel op reaches, as before: each absent, and a change of it refused with the operation it lacks. Before it lands, Escalate
+// to and the Grants page are Custody's (sessionChainBindings.ts withCustodyAsks). The raised reach is the view's, held until Confirm (Scope's
+// own ask).
 
 /** Scope on Central's workspace chain (its design is Software Factory's: software-factory:context-write-mode). */
 export const CENTRAL_SCOPE_ID = 'central:scope'
@@ -199,16 +201,11 @@ const SCOPE_MISSING = (what: string, op: string, owner: string) => `${what}: no 
 export const CENTRAL_SCOPE_REFUSED: Readonly<Record<string, string>> = {
   reach: SCOPE_MISSING('Reach', 'the scope reach write on the session\'s context, enforced on its reads (WO-SF2)', 'Software Factory'),
   writeMode: SCOPE_MISSING('Write mode', 'write-arm enforcement on the session\'s writes (WO-SF2): propose · draft · direct', 'Software Factory'),
-  // The Knowledge page (manual §19.12 Knowledge; it took in the Knowledge route of §19.9 in the 22 Oct manual rewrite): its settings by the
-  // design's own keys (scope.tsx), none of which an owner takes for the dialogue's session.
-  'src.wiki': SCOPE_MISSING('Sources: Wiki', 'the Knowledge route\'s source bounds for the session (protocol_read is available but unwired)', 'AIKit'),
-  'src.project': SCOPE_MISSING('Sources: Project knowledge', 'the Knowledge route\'s source bounds for the session (protocol_read is available but unwired)', 'AIKit'),
-  'src.code': SCOPE_MISSING('Sources: Code', 'the Knowledge route\'s source bounds for the session (protocol_read is available but unwired)', 'AIKit'),
-  searchFirst: SCOPE_MISSING('Search first', 'a per-agent order of search and links on the Knowledge route', 'AIKit'),
-  linkDepth: SCOPE_MISSING('Link depth', 'the Knowledge route\'s link bound for the session', 'AIKit'),
-  readBudget: SCOPE_MISSING('Read budget', 'the Knowledge route\'s page budget for the session', 'AIKit'),
-  readAgain: SCOPE_MISSING('Read again', 'a reading of the session\'s used pages (no kernel op lists what the route read for a session)', 'AIKit'),
-  forget: SCOPE_MISSING('Forget', 'a forgetting of a used reading (no kernel request forgets a use yet)', 'AIKit'),
+  // The Asks page (manual §19.12 Asks): the dialogue's session stands behind no harness gateway the kernel controls.
+  toolCalls: SCOPE_MISSING('Tool calls', 'the harness\'s approvals mode for the dialogue\'s session (harness_agent_control configure {approvals} reaches a gateway\'s harness, and this session has none)', 'Actuation'),
+  calls: SCOPE_MISSING('Calls to other agents', 'an ingress rule for the sender kind agent (GatewayIngressDecision has no write for it)', 'AIKit'),
+  wait: SCOPE_MISSING('Wait', 'the agent\'s approvals timeout (harness_agent_control carries approvals, transport, connect and stall-after only)', 'Actuation'),
+  noAnswer: SCOPE_MISSING('On no answer', 'a timed-out request\'s outcome on the agent\'s harness', 'Actuation'),
 }
 const NO_PLACE_REQUEST = 'A place in Writes: Central\'s world relations keep the sources a world reads (sources, excluded_sources), not where an agent writes — missing op: the session\'s writable places (write-arm enforcement, WO-SF2, Software Factory).'
 

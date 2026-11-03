@@ -4,7 +4,7 @@
 // harness on the right, the line between them drawn by the transport, the frames in flight as dots, the replay ring as an arc
 // round the harness, the heartbeat as the outer ring, and the time since the last check-in on a scale that ends at 30 min.
 //
-// Two pages in the head of Whole: Link (Link, Approval, Liveness, Readiness) and Frames (the Frames monitor, Live's MIDI monitor:
+// Two pages in the head of Whole: Link (Link, Liveness, Readiness) and Frames (the Frames monitor, Live's MIDI monitor:
 // five kind lanes, one tick for each frame, the Keep scale with handle 1, the frames themselves and every setting of the list). The
 // Full is the Frames page at pane size; the tile is the small link, the readiness and the last eleven frames, newest at the bottom.
 //
@@ -13,8 +13,8 @@
 // the messages that passed and the refusals with their reasons.
 //
 // Value keys of the harness builds. The owner writes (kernel harness_agent_control, `configure`, harnessAgentControl.ts:14-25):
-//   connect (bool), transport (stdio · ws · remote: Local · Network · Remote), approvals (ask · session · always), stallAfter (seconds:
-//   30, 90, 300, 1800), autoContinue (bool), fanOut (0 to 8 observers).
+//   connect (bool), transport (stdio · ws · remote: Local · Network · Remote), stallAfter (seconds: 30, 90, 300, 1800), autoContinue
+//   (bool), fanOut (0 to 8 observers). The harness's answer to a request to use a tool is Scope's Tool calls (§19.12), not the Gateway's.
 // The shell holds the Frames page's own settings (nothing here is written to the harness):
 //   session (all · lead · a session's name), direction (both · out · in), kinds (a comma list of messages · tools · heartbeat ·
 //   approvals · errors, or none), follow (bool), pause (bool), keep (100 to 5000 frames), frame (the frame opened, by its place in the
@@ -30,8 +30,8 @@
 // Value keys of the agency build. The owner writes (AIKit `aikit gateway`, crates/aikit-cli/src/cli.rs GatewaySub):
 //   service (bool: serve · install-service · uninstall-service, shutdown), entry (local-ipc · loopback-service · private-tailnet ·
 //   tailscale-serve · ssh-tunnel: `gateway setup --mode`, gateway_modes.rs:63 ENTRY_MODES, plan-first), coexist (bool: `gateway
-//   coexistence --policy coexist|exclusive`), on:<surface id> (bool: `gateway connector add` with or without --disable), agentPolicy
-//   (allow · pair · deny: GatewayIngressDecision, gateway_runtime.rs:106; the owner's word for Ask is pair).
+//   coexistence --policy coexist|exclusive`), on:<surface id> (bool: `gateway connector add` with or without --disable). Whether one agent
+//   may call another is the calling agent's Scope's Calls to other agents (§19.12); the gateway carries the call or its refusal.
 // The shell holds: entryPending (an entry that waits for Confirm).
 // The owner reports: state (ready · composed · refused, gateway_modes.rs:38), refused, reach, signIn, secrecy (the entry's terms),
 //   keptBy (foreground · supervised-launchd · supervised-systemd · application), inbox (messages that wait), surfaces (JSON list of
@@ -65,16 +65,10 @@ const TRANSPORTS: readonly Option<string>[] = [
   {value: 'remote', label: 'Remote', does: 'A short-lived ticket, through a connected machine.'},
 ]
 const TRANSPORT_WORD: Record<string, string> = {stdio: 'local', ws: 'network', remote: 'remote'}
-const APPROVALS: readonly Option<string>[] = [
-  {value: 'ask', label: 'Ask', does: 'You answer each approval request.'},
-  {value: 'session', label: 'Session', does: 'Requests are allowed for this session.'},
-  {value: 'always', label: 'Always', does: 'Requests are allowed every time.'},
-]
 
 const SAYS = {
   connect: 'Attach the workcell\'s sessions, or detach them. A detached session keeps running and attaches again later.',
   transport: 'How the shell reaches the harness: Local is a trusted child process, Network uses a token, Remote a short-lived ticket through a connected machine.',
-  approvals: 'The default answer to an approval request. You always give Deny yourself.',
   stall: 'The time without progress, with work pending, after which the session counts as stalled and Retry lights. Drag handle 1 along the scale.',
   autoContinue: 'Lets the gateway continue a turn that stopped on its own, for up to 15 minutes.',
   fanOut: 'How many observers may watch each session beside the shell. A slow observer loses only its own feed.',
@@ -422,8 +416,6 @@ function TapeMarks({p, w, h}: {p: ViewProps; w: number; h: number}) {
 
 const transportRadio = (p: ViewProps) => <Radio label="Transport" does={SAYS.transport} value={strOf(p.v, 'transport') ?? ''} options={TRANSPORTS} stack
   onChange={x => p.set('transport', x)} {...st(p, 'transport')} />
-const approvalsRadio = (p: ViewProps) => <Radio label="Approvals" does={SAYS.approvals} value={strOf(p.v, 'approvals') ?? ''} options={APPROVALS} stack
-  onChange={x => p.set('approvals', x)} {...st(p, 'approvals')} />
 const stallDial = (p: ViewProps) => <Dial label="Stall after" does={SAYS.stall} value={stopIndex(p.v) ?? NaN} def={1} scale={{min: 0, max: 3, step: 1}}
   format={i => STOP_LABEL[Math.round(i)]!} onChange={i => p.set('stallAfter', STOPS[Math.round(i)]!)} {...st(p, 'stallAfter')} />
 const connectToggle = (p: ViewProps) => <Toggle label="Connect" does={SAYS.connect} on={boolOf(p.v, 'connect') === true} unknown={boolOf(p.v, 'connect') === undefined}
@@ -613,14 +605,6 @@ const ENTRIES: readonly Option<string>[] = [
 ]
 const ENTRY_TICK = ['here', 'local', 'private', 'served', 'ssh'] as const
 const ENTRY_DEFAULT = 'local-ipc'
-/** Agent to agent: the owner's three ingress decisions (GatewayIngressDecision). The owner's word for Ask is pair. */
-const POLICY: readonly Option<string>[] = [
-  {value: 'allow', label: 'Allow', does: 'A call from one agent to another goes through at once.'},
-  {value: 'pair', label: 'Ask', does: 'A call waits in Approvals until you approve it.'},
-  {value: 'deny', label: 'Deny', does: 'A call from one agent to another is refused, with a reason.'},
-]
-const POLICY_TICK = ['allow', 'ask', 'deny'] as const
-const POLICY_DEFAULT = 'pair'
 const STATE_WORD: Record<AState, string> = {ready: 'Ready', composed: 'Composed', refused: 'Refused'}
 const STATE_SAYS: Record<AState, string> = {
   ready: 'The gateway carries messages now.',
@@ -647,7 +631,6 @@ const ASAYS = {
   service: 'Start or stop the gateway. A stopped gateway carries no message; the agents keep their work.',
   coexist: 'On: run beside the other harness gateways on this machine. Off: run alone, and hold the connectors they own.',
   entry: 'How the gateway can be reached. A change is planned first and lands when you confirm it.',
-  policy: 'Whether one agent may call another. Ask puts the call in Approvals.',
   surfaces: 'The places that may send a message to an agent. The square is your request; the light is the surface\'s health.',
 }
 
@@ -687,7 +670,6 @@ const stateTone = (s: AState | undefined): Tone | undefined => (s === 'ready' ? 
 const entryOf = (v: V): string | undefined => oneOf(strOf(v, 'entry'), ENTRIES.map(e => e.value))
 const entryNext = (v: V): string | undefined => oneOf(strOf(v, 'entryPending'), ENTRIES.map(e => e.value))
 const entryLabel = (id: string | undefined) => ENTRIES.find(e => e.value === id)?.label
-const policyOf = (v: V): string | undefined => oneOf(strOf(v, 'agentPolicy'), POLICY.map(x => x.value))
 /** The square on a surface's row: your request when you made one, else the owner's own reading. */
 const requestOf = (v: V, s: Surface): boolean | undefined => (has(v, `on:${s.id}`) ? v[`on:${s.id}`] === true : s.enabled)
 const surfaceLine = (v: V): string | undefined => (has(v, 'surfaces') ? `${surfacesOf(v).filter(s => s.health === 'connected').length}/${surfacesOf(v).length}` : undefined)
@@ -711,9 +693,9 @@ const priority = (a: Agent) => (a.presence === 'embodied-here' ? 0 : (a.waiting 
 const drawnAgents = (v: V, n: number): Agent[] => agentsOf(v).map((a, i) => ({a, i})).sort((x, y) => priority(x.a) - priority(y.a) || x.i - y.i).slice(0, n).map(x => x.a)
 
 const AGEO = {
-  mini: {w: 104, h: 100, y0: 15, pitch: 12, sx: 5, sw: 16, gx: 44, gw: 8, ax: 86, scaleY: 90, a0: 22, a1: 84},
-  compact: {w: 140, h: 146, y0: 21, pitch: 15, sx: 6, sw: 40, gx: 64, gw: 10, ax: 104, scaleY: 127, a0: 22, a1: 118},
-  whole: {w: 194, h: 146, y0: 24, pitch: 14, sx: 8, sw: 46, gx: 84, gw: 12, ax: 136, scaleY: 128, a0: 40, a1: 180},
+  mini: {w: 104, h: 100, y0: 15, pitch: 12, sx: 5, sw: 16, gx: 44, gw: 8, ax: 86},
+  compact: {w: 140, h: 146, y0: 21, pitch: 15, sx: 6, sw: 40, gx: 64, gw: 10, ax: 104},
+  whole: {w: 194, h: 146, y0: 24, pitch: 14, sx: 8, sw: 46, gx: 84, gw: 12, ax: 136},
 } as const
 const AROWS = 4
 const E0 = 40, E1 = 180
@@ -721,28 +703,24 @@ const stopX = (i: number, n: number, a0: number, a1: number) => a0 + (a1 - a0) *
 const nearStop = (x: number, n: number, a0: number, a1: number) => Math.round(clampTo(0, n - 1, ((x - a0) / (a1 - a0)) * (n - 1)))
 
 /** The agency build's picture: surfaces → gateway → agents. A surface's line is its health; a dot beside an agent is a message that
- * waits; the rung that joins the agents is the rule for a call between them, and the scale under it sets that rule (handle 1); on the
- * whole well a second scale sets the entry (handle 2). With no reading of a part, the part is not drawn and the well names it. */
+ * waits; on the whole well a scale sets the entry (handle 1). With no reading of a part, the part is not drawn and the well names it. */
 function AgencyPicture({p, size}: {p: ViewProps; size: Size}) {
   const v = p.v, g = AGEO[size], mini = size === 'mini', whole = size === 'whole'
   const set = mini ? undefined : p.set
   const running = lightOf(p) === 'lit'
   const surfaces = surfacesOf(v).slice(0, AROWS), agents = drawnAgents(v, AROWS)
-  const policy = policyOf(v), entry = entryOf(v), next = entryNext(v), state = stateOf(v)
+  const entry = entryOf(v), next = entryNext(v), state = stateOf(v)
   const cy = (i: number) => g.y0 + i * g.pitch
   const top = g.y0 - 9, tall = (AROWS - 1) * g.pitch + 18
-  const lineA = g.sx + g.sw, lineB = g.gx, lineC = g.gx + g.gw, lineD = g.ax - 2, rung = g.ax - 5
-  const first = cy(0), last = cy(Math.max(0, agents.length - 1))
-  const missing = [!has(v, 'surfaces') ? 'surfaces' : '', !has(v, 'agents') ? 'agents' : '', entry === undefined ? 'entry' : '', policy === undefined ? 'agent rule' : '', state === undefined ? 'state' : ''].filter(Boolean)
-  const sayMissing = missing.length === 5 ? ['No readings'] : missing.length ? wrap(`No reading: ${missing.join(', ')}`, mini ? 20 : size === 'compact' ? 28 : 46) : []
+  const lineA = g.sx + g.sw, lineB = g.gx, lineC = g.gx + g.gw, lineD = g.ax - 2
+  const missing = [!has(v, 'surfaces') ? 'surfaces' : '', !has(v, 'agents') ? 'agents' : '', entry === undefined ? 'entry' : '', state === undefined ? 'state' : ''].filter(Boolean)
+  const sayMissing = missing.length === 4 ? ['No readings'] : missing.length ? wrap(`No reading: ${missing.join(', ')}`, mini ? 20 : size === 'compact' ? 28 : 46) : []
   const captionY = whole ? 84 : mini ? 69 : 86
   const stroke = state === 'ready' ? 'var(--green)' : state === 'composed' ? 'var(--dp-on)' : state === 'refused' ? 'var(--stall)' : 'var(--text-dim)'
-  const mid = (first + last) / 2
-  const canPolicy = !!set && policy !== undefined && !st(p, 'agentPolicy').disabled
   const canEntry = whole && !!set && entry !== undefined && !st(p, 'entry').disabled
   const sel = next ?? entry
   return <Display w={g.w} h={g.h} label="The gateway"
-    does={mini ? 'The surfaces, the gateway and the agents. A dot beside an agent is a message that waits.' : 'The surfaces on the left, the gateway in the middle, the agents on the right. A dot is a message that waits for an agent. Drag handle 1 to set Agent to agent.'}
+    does={mini ? 'The surfaces, the gateway and the agents. A dot beside an agent is a message that waits.' : 'The surfaces on the left, the gateway in the middle, the agents on the right. A dot is a message that waits for an agent. Drag handle 1 to set the entry.'}
     corner={mini ? undefined : stateWord(v) ?? NONE}>
     {surfaces.map((s, i) => {
       const y = cy(i), up = running && s.health === 'connected' && requestOf(v, s) !== false
@@ -766,15 +744,6 @@ function AgencyPicture({p, size}: {p: ViewProps; size: Size}) {
         {!mini && <text x={g.ax + 7} y={y + 3} className="dp-ink-dim" style={{fontSize: 8}}>{trunc(a.name.replace(/^@/, ''), whole ? 11 : 6)}</text>}
       </g>
     })}
-    {agents.length > 1 && (policy === 'deny'
-      ? <g>
-        <path d={`M${rung} ${first}V${mid - 5}M${rung} ${mid + 5}V${last}`} className="dp-faint" />
-        <path d={`M${rung - 3} ${mid - 3}l6 6M${rung + 3} ${mid - 3}l-6 6`} className="dp-faint" style={{stroke: 'var(--stall)'}} />
-      </g>
-      : <g>
-        <path d={`M${rung} ${first}V${last}`} className={policy === 'allow' ? 'dp-curve' : policy === 'pair' ? 'dp-curve-on' : 'dp-faint'} strokeDasharray={policy === 'pair' ? '3 3' : undefined} />
-        {policy === 'pair' && <path d={`M${rung} ${mid - 4}L${rung + 4} ${mid}L${rung} ${mid + 4}L${rung - 4} ${mid}Z`} className="dp-curve-on" style={{fill: 'var(--dp-well)'}} />}
-      </g>)}
     {sayMissing.map((line, i) => <text key={i} x={g.sx} y={captionY + i * 9} className="dp-axis">{line}</text>)}
     {whole && missing.length === 0 && <>
       <text x={g.sx} y={captionY} className="dp-axis">surfaces {surfaceLine(v)}</text>
@@ -790,20 +759,10 @@ function AgencyPicture({p, size}: {p: ViewProps; size: Size}) {
         <text x={stopX(i, ENTRIES.length, E0, E1)} y={112} className="dp-axis" textAnchor="middle" style={{fontSize: 7.5}}>{t}</text>
       </g>)}
       {entry !== undefined && <circle cx={stopX(ENTRIES.findIndex(e => e.value === entry), ENTRIES.length, E0, E1)} cy={100} r={3} fill="var(--dp-value)" />}
-      {canEntry && sel !== undefined && <Handle n={2} shape="square" x={stopX(ENTRIES.findIndex(e => e.value === sel), ENTRIES.length, E0, E1)} y={100} label="Entry"
+      {canEntry && sel !== undefined && <Handle n={1} shape="square" x={stopX(ENTRIES.findIndex(e => e.value === sel), ENTRIES.length, E0, E1)} y={100} label="Entry"
         does="Drag along the scale: how the gateway can be reached. A change waits for Confirm."
         onDrag={x => askEntry(v, p.set)(ENTRIES[nearStop(x, ENTRIES.length, E0, E1)]!.value)} onReset={() => askEntry(v, p.set)(ENTRY_DEFAULT)} />}
     </g>}
-    {whole && <text x={g.sx} y={g.scaleY + 3} className="dp-axis">calls</text>}
-    <path d={`M${g.a0} ${g.scaleY}H${g.a1}`} className="dp-grid" />
-    {POLICY_TICK.map((t, i) => <g key={t}>
-      <path d={`M${stopX(i, 3, g.a0, g.a1)} ${g.scaleY - 3}V${g.scaleY + 3}`} className="dp-faint" />
-      {!mini && <text x={stopX(i, 3, g.a0, g.a1)} y={g.scaleY + 12} className="dp-axis" textAnchor="middle" style={{fontSize: 7.5}}>{t}</text>}
-    </g>)}
-    {policy !== undefined && <circle cx={stopX(POLICY.findIndex(x => x.value === policy), 3, g.a0, g.a1)} cy={g.scaleY} r={mini ? 2.4 : 3} fill="var(--dp-value)" />}
-    {canPolicy && <Handle n={1} shape="ring" x={stopX(POLICY.findIndex(x => x.value === policy), 3, g.a0, g.a1)} y={g.scaleY} label="Agent to agent"
-      does="Drag along the scale: whether one agent may call another. Ask puts the call in Approvals."
-      onDrag={x => p.set('agentPolicy', POLICY[nearStop(x, 3, g.a0, g.a1)]!.value)} onReset={() => p.set('agentPolicy', POLICY_DEFAULT)} />}
   </Display>
 }
 
@@ -811,8 +770,6 @@ const serviceToggle = (p: ViewProps) => <Toggle label="Service" does={ASAYS.serv
   onChange={x => p.set('service', x)} {...st(p, 'service')} />
 const coexistToggle = (p: ViewProps) => <Toggle label="Coexist" does={ASAYS.coexist} on={boolOf(p.v, 'coexist') === true} unknown={boolOf(p.v, 'coexist') === undefined}
   onChange={x => p.set('coexist', x)} {...st(p, 'coexist')} />
-const policyRadio = (p: ViewProps) => <Radio label="Agent to agent" does={ASAYS.policy} value={policyOf(p.v) ?? ''} options={POLICY} stack
-  onChange={x => p.set('agentPolicy', x)} {...st(p, 'agentPolicy')} />
 const entryChooser = (p: ViewProps) => <div className="gw-wide"><Chooser wide label="Entry" does={ASAYS.entry} value={entryNext(p.v) ?? entryOf(p.v) ?? ''} options={ENTRIES}
   onChange={askEntry(p.v, p.set)} {...st(p, 'entry')} pending={entryNext(p.v) !== undefined || st(p, 'entry').pending} /></div>
 
@@ -901,7 +858,7 @@ const agency = {
       <AgencyPicture p={p} size="compact" />
     </Section>
     <Section label="Macros" cols={2}>
-      {policyRadio(p)}
+      {stateReadout(p)}
       {serviceToggle(p)}
       {surfacesReadout(p)}
       <Readout label="inbox" does="Messages that wait for an agent." value={inboxOf(p.v)} tone="accent" />
@@ -912,14 +869,11 @@ const agency = {
       <Section width={206}>
         <AgencyPicture p={p} size="whole" />
       </Section>
-      <Section label="Service" cols={2}>
+      <Section label="Service" cols={2} grow>
         {serviceToggle(p)}
         {coexistToggle(p)}
         {entryChooser(p)}
         <Consent p={p} />
-      </Section>
-      <Section label="Agents" grow>
-        {policyRadio(p)}
       </Section>
     </Band>
     <Band>
@@ -991,17 +945,17 @@ const PASSED = [
   {at: '14:02:31', from: 'telegram:owner', to: '@nara', via: 'Telegram', standing: 'delivered'},
   {at: '14:03:10', from: '@aletheia', to: '@anima', via: 'this machine', standing: 'held', why: 'Nobody sits in the place yet.'},
   {at: '14:04:02', from: 'telegram:unknown', to: '@nara', via: 'Telegram', standing: 'pairing', why: 'The call waits in Approvals.'},
-  {at: '14:04:15', from: '@anima', to: '@aletheia', via: 'this machine', standing: 'denied', why: 'Agent to agent is Deny for this pair.'},
+  {at: '14:04:15', from: '@anima', to: '@aletheia', via: 'this machine', standing: 'denied', why: 'Calls to other agents is Deny on its Scope.'},
   {at: '14:05:20', from: '@nara', to: '@central-guardian', via: 'this machine', standing: 'escalated', why: 'Crossed into Factory custody.'},
 ]
 const AGENCY = {
-  build: 'agency', light: 'lit', service: true, entry: ENTRY_DEFAULT, coexist: true, agentPolicy: POLICY_DEFAULT,
+  build: 'agency', light: 'lit', service: true, entry: ENTRY_DEFAULT, coexist: true,
   state: 'ready', reach: 'local processes the file mode admits', signIn: 'file mode: owner scope', secrecy: 'none needed; stays in the kernel', keptBy: 'supervised-launchd',
   inbox: 3, surfaces: JSON.stringify(SURFACES), agents: JSON.stringify(AGENTS), harnesses: JSON.stringify(HARNESSES), passed: JSON.stringify(PASSED),
 }
 
 /** Every key the harness build reports or holds: the "Refused" fixture leaves all of them out but the light and the reason. */
-const KEYS = ['build', 'harness', 'connect', 'transport', 'approvals', 'stallAfter', 'autoContinue', 'fanOut', 'readiness', 'epoch', 'seq', 'peers', 'beatAge', 'inflight', 'running',
+const KEYS = ['build', 'harness', 'connect', 'transport', 'stallAfter', 'autoContinue', 'fanOut', 'readiness', 'epoch', 'seq', 'peers', 'beatAge', 'inflight', 'running',
   'ring', 'ringCap', 'frames', 'viaLead', 'lead', 'session', 'direction', 'kinds', 'follow', 'pause', 'keep']
 const NOTHING = Object.fromEntries(KEYS.map(k => [k, undefined])) as unknown as Values
 
@@ -1015,7 +969,7 @@ export const design: DesignedDevice = {
   defaults: {
     light: 'lit', build: 'hermes', harness: 'hermes',
     // What the owner writes, at the owner's defaults.
-    connect: true, transport: 'stdio', approvals: 'ask', stallAfter: STALL_DEFAULT, autoContinue: true, fanOut: FAN_DEFAULT,
+    connect: true, transport: 'stdio', stallAfter: STALL_DEFAULT, autoContinue: true, fanOut: FAN_DEFAULT,
     // The Frames page's own settings, at their defaults.
     session: 'all', direction: 'both', kinds: ALL_KINDS, follow: true, pause: false, keep: KEEP_DEFAULT,
     // Readings: what the owner reports, never set from here.
@@ -1043,8 +997,8 @@ export const design: DesignedDevice = {
     </Section>
     <Section label="Macros" cols={2} width={124}>
       {transportRadio(p)}
-      {approvalsRadio(p)}
       {stallDial(p)}
+      {autoToggle(p)}
       {connectToggle(p)}
     </Section>
   </Panel>,
@@ -1055,13 +1009,10 @@ export const design: DesignedDevice = {
         <Section width={206}>
           <LinkWell v={p.v} set={p.set} size="whole" />
         </Section>
-        <Section label="Link" cols={2}>
+        <Section label="Link" cols={2} grow>
+          {connectToggle(p)}
           {transportRadio(p)}
           {fanDial(p)}
-          {connectToggle(p)}
-        </Section>
-        <Section label="Approval" grow>
-          {approvalsRadio(p)}
         </Section>
       </Band>
       <Band>

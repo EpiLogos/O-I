@@ -1,15 +1,27 @@
-/* The Agentset rack's own layout: the nested member chains, the model chip, the stalled outline, the chosen member, and the pane. Shell and panel tokens only. */
+/* The Agentset rack's own layout: the nested member chains, Solo, the model chip, the stalled outline, the drop area, the Devices view, the chosen member, and the pane. Shell and panel tokens only. */
 
 /* A member's chain: the state light, stepped in by its level. */
 .as-mark { flex: none; display: inline-flex; align-items: center; padding-left: calc(var(--d, 0) * 9px); }
 .as-mark[data-nested="true"]::before { content: ''; width: 4px; height: 6px; margin: -5px 3px 0 0; border-left: 1px solid var(--text-faint, #71767c); border-bottom: 1px solid var(--text-faint, #71767c); }
 .dp-row:has(> .as-mark[data-state="stalled"]) { outline: 1px solid color-mix(in srgb, var(--stall, #ff9b4a) 75%, transparent); outline-offset: -1px; }
 
+/* A member's Solo after its name, as Live's chain list draws it: S, lit blue while it is soloed. */
+.as-solo { flex: none; width: 12px; height: 12px; padding: 0; border: 1px solid var(--text-faint, #71767c); background: transparent; color: var(--text-dim, #a2a7ad); font: 600 8px/10px var(--font-ui, sans-serif); cursor: pointer; }
+.as-solo[aria-pressed="true"] { background: var(--sel, #7ec3e6); border-color: var(--sel, #7ec3e6); color: var(--dp-on-text, #26292d); }
+
 /* The member's model, as a chip after its name. */
-.as-chip { flex: none; max-width: 68px; padding: 0 3px; height: 12px; line-height: 11px; font-size: 9px; color: var(--text-dim, #a2a7ad); border: 1px solid var(--line, #24262a); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.as-chip { flex: none; max-width: 60px; padding: 0 3px; height: 12px; line-height: 11px; font-size: 9px; color: var(--text-dim, #a2a7ad); border: 1px solid var(--line, #24262a); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .as-none { margin: 0; justify-self: stretch; font-size: 10px; color: var(--text-faint, #71767c); }
 .as-span { grid-column: 1 / -1; align-self: stretch; justify-self: stretch; display: flex; flex-direction: column; align-items: stretch; min-width: 0; }
+.as-span2 { grid-column: span 2; align-self: stretch; justify-self: stretch; display: flex; flex-direction: column; align-items: stretch; min-width: 0; }
+
+/* The drop area under the chain list, as Live's: a dashed field that takes an agent or a Decision helper. */
+.as-drop { flex: none; align-self: stretch; height: 17px; margin-top: 2px; display: grid; place-items: center; border: 1px dashed var(--text-faint, #71767c); font-size: 9.5px; color: var(--text-faint, #71767c); white-space: nowrap; overflow: hidden; }
+
+/* Drag out: a grip the size of an action, dragged rather than pressed. */
+.as-out { height: 16px; padding: 0 6px; display: inline-flex; align-items: center; border: 1px dashed var(--text-faint, #71767c); color: var(--text, #d4d7da); font-size: 10px; white-space: nowrap; cursor: grab; }
+.as-out[aria-disabled="true"] { opacity: .4; cursor: default; }
 
 /* The chosen member, in Whole. */
 .as-who { grid-column: 1 / -1; justify-self: stretch; display: flex; align-items: center; gap: 7px; min-width: 0; }
@@ -80,3 +92,9 @@
 .as-zone-agent { flex: none; display: block; line-height: 0; }
 .as-zone-agent .fx-face { width: 32px; }
 .as-zone-agent .fx-bar { display: none; }
+
+/* The Devices view (Compact): the chosen member's chain, its devices side by side as they stand on any chain, left to right. The section
+   gives them its whole room, and the rack keeps the chain's height: each device's head and body share the rack's body. */
+.dp-sec:has(> .dp-sec-body > .as-devices) { padding: 0; --as-room: var(--dp-body); }
+.as-devices { --dp-body: calc(var(--as-room) - var(--dp-head-h) - 2px); justify-self: start; display: flex; align-items: flex-start; }
+.as-devices > * + * { border-left-width: 0; }

@@ -967,13 +967,15 @@ function useRackParts(rack: boolean | undefined, place: Place): [RackShown, (par
   return [rack ? shown : RACK_ALL, show]
 }
 
-/** The rack's three marks, after the expanded view's toggle, as Live's rack head carries them. */
-function RackMarks({title, shown, onShow}: {title: string; shown: RackShown; onShow: (part: RackPart, shown: boolean) => void}) {
+/** The rack's three marks, after the expanded view's toggle, as Live's rack head carries them. Hiding the last view standing folds
+ * the rack, as Live's does ("When all of a Rack's views are hidden, its title bar will fold"); that view comes back when it unfolds. */
+function RackMarks({title, shown, onShow, onFold}: {title: string; shown: RackShown; onShow: (part: RackPart, shown: boolean) => void; onFold?: () => void}) {
+  const last = (part: RackPart) => shown[part] && RACK_PARTS.every(other => other === part || !shown[other])
   return <span className="dp-rack-marks" role="group" aria-label={`${title}: what the rack shows`}>
     {RACK_PARTS.map(part => <button key={part} type="button" className="dp-fold dp-rack-mark" data-rack-mark={part} aria-pressed={shown[part] ? 'true' : 'false'}
       aria-label={`${shown[part] ? 'Hide' : 'Show'} ${RACK_WORDS[part][1]}`}
-      data-i={said(RACK_WORDS[part][0], `${shown[part] ? 'Hides' : 'Shows'} ${RACK_WORDS[part][1]}, as Live's rack head does. The others take the room.`)}
-      onClick={() => onShow(part, !shown[part])}><Icon name={RACK_MARK[part]} size={10} /></button>)}
+      data-i={said(RACK_WORDS[part][0], `${shown[part] ? 'Hides' : 'Shows'} ${RACK_WORDS[part][1]}, as Live's rack head does. The others take the room.${onFold ? ' Hide the last one and the rack folds.' : ''}`)}
+      onClick={() => (last(part) && onFold ? onFold() : onShow(part, !shown[part]))}><Icon name={RACK_MARK[part]} size={10} /></button>)}
   </span>
 }
 
@@ -1038,7 +1040,7 @@ export function Panel({title, view, light: reported, onLight, pages, page, onPag
     <header className="dp-head" data-i={hint ? said(title, hint) : undefined} onDoubleClick={foldOnDoubleClick(onFold)}>
       <Activator title={title} light={light} onLight={onLight} why={lightWhy} busy={busy} />
       <ExpandToggle title={title} place={place} />
-      {rack && <RackMarks title={title} shown={shown} onShow={show} />}
+      {rack && <RackMarks title={title} shown={shown} onShow={show} onFold={onFold} />}
       {mark}
       <span className="dp-title">{title}</span>
       {heldBy && <span className="dp-head-held" data-i={said('Held', `${heldBy} holds values on this device.`)}>{heldBy}</span>}
@@ -1096,7 +1098,7 @@ export function PanelHead({title, light: reported, onLight, onFold, mark, onName
   return <header className="dp-head dp-head--plate" data-selected={selected ? 'true' : undefined} data-i={hint ? said(title, hint) : undefined} onDoubleClick={foldOnDoubleClick(onFold)}>
     <Activator title={title} light={light} onLight={onLight} why={lightWhy} busy={busy} />
     <ExpandToggle title={title} place={place} />
-    {rack && <RackMarks title={title} shown={rack.shown} onShow={rack.onShow} />}
+    {rack && <RackMarks title={title} shown={rack.shown} onShow={rack.onShow} onFold={onFold} />}
     {mark}
     {onName
       ? <button type="button" className="dp-title dp-title--press" onClick={onName} data-i={said(title, nameDoes ?? hint)}>{title}</button>

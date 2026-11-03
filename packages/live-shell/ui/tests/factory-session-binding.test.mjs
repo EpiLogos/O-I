@@ -150,15 +150,27 @@ test('the Agentset rack: a group\'s sessions as its chains, each named by its ag
     {id: IDLE.sessionRef, name: 'Sketch', goal: 'Sketch', state: 'done'},
   ], 'only this group\'s sessions; no parent below the space is disclosed, so none is given')
   assert.deepEqual([values.crew, values.light, values.models], ['Port crew', 'lit', JSON.stringify([{id: 'glm-5.3-flash'}])])
-  for (const key of ['fanOut', 'depth', 'handBack', 'returnCap', 'model']) assert.equal(values[key], undefined, `${key}: Hermes' delegation block, not read`)
+  for (const key of ['fanOut', 'depth', 'handBack', 'returnCap']) assert.equal(values[key], undefined, `${key}: Hermes' delegation block, not read`)
+  // REPLACED (DLW agency designs): `model` was the Subagent model, Hermes' delegation.model — §19.15 names no Subagent model; Model,
+  // Effort and Budget are the rack's macros, each turning that setting of every member's Agent, and the rack holds no member's Agent.
+  for (const key of ['model', 'effort', 'budget', 'unmapped', 'variations']) assert.equal(values[key], undefined, `${key}: the macros, not read`)
   assert.deepEqual(own.agentsetValues({group: LEAD, tracks: TRACKS, holds: bind.chainHolds()}), {}, 'a session is no group')
   const binding = own.agentsetBinding({group: GROUP, tracks: TRACKS, holds: bind.chainHolds()})
   binding.local.member(HELPER.sessionRef)
-  assert.equal(own.agentsetValues({group: GROUP, tracks: TRACKS, holds: bind.chainHolds()}).member, HELPER.sessionRef, 'the chosen member is the view\'s')
-  for (const key of ['fanOut', 'depth', 'handBack', 'returnCap', 'model']) {
+  // REPLACED (§19.15 revised): `device` was the plate of the chosen member's chain pressed to show it. The plates are gone: "Select a member
+  // in the chain list and the rack's Devices view, beside the list, shows that member's chain", every device at once, so only the member is held.
+  const held = own.agentsetValues({group: GROUP, tracks: TRACKS, holds: bind.chainHolds()})
+  assert.equal(held.member, HELPER.sessionRef, 'the chosen member is the view\'s')
+  assert.equal('device' in binding.local, false, 'no device of the chain is chosen: the Devices view shows them all')
+  for (const key of ['fanOut', 'depth', 'handBack', 'returnCap', 'model', 'effort', 'budget', 'unmapped', 'store', 'variation', 'bench', 'solo', 'swap', 'extract', 'add', 'dev']) {
     assert.match(binding.standing[key].disabled, /missing op/, key)
     await assert.rejects(() => binding.write([{key, value: 1}]), /missing op/)
   }
+  // The chain list's own keys, one for each member, answer with their control's refusal (§19.15 The members).
+  await assert.rejects(() => binding.write([{key: `bench:${HELPER.sessionRef}`, value: true}]), {message: own.AGENTSET_REFUSE.bench})
+  await assert.rejects(() => binding.write([{key: `solo:${HELPER.sessionRef}`, value: true}]), {message: own.AGENTSET_REFUSE.solo})
+  // A device of a member's chain in the Devices view ("Change a setting there and you change the member") answers on its own key, refused.
+  await assert.rejects(() => binding.write([{key: own.memberDeviceKey(HELPER.sessionRef, 'actuation:harness-model'), value: '{"effort":"max"}'}]), {message: own.AGENTSET_REFUSE.dev})
   // REPLACED (lane K0): Factory's retry is routed (factory_owner attempt-retry), and the rack holds no Run or unit for a member.
   assert.match(binding.standing.retry.disabled, /factory_owner attempt-retry.*no reading here names the Run or the workflow unit/)
   await assert.rejects(() => binding.write([{key: 'retry', value: 1}]), {message: own.AGENTSET_REFUSE.retry})
@@ -201,12 +213,11 @@ test('the chain places them where the manual does: Custody on the one Agent, the
   assert.doesNotMatch(view, /ownDevices\.run|runDesignBinding/, 'no Run is published')
   assert.equal('run' in own.sessionDevices(), false, 'no Run device: no constructor stands')
   // REPLACED (lane W1-Factory): the chain draws its place's plan (factoryPlaces.ts chainSlots — a group's leads with the Agentset rack).
-  // REPLACED (#725): the rack stood on its own binding — it carries its Helper page now (§19.20 "A decision helper is an agent of type
-  // Settle in a team's Agentset rack, on the rack's Helper page"; the Decision helper was retired into it in the 22 Oct manual rewrite), so
-  // the group's chain draws it on its binding with the helper's laid in under `helper.` while it stands on a group.
-  assert.match(view, /case 'agentset': return placed\(AGENTSET_ID, ownDevices\.agentset, agentsetCarrying/, 'the Agentset rack on a group\'s chain (§19.15)')
-  assert.match(view, /const agentsetCarrying = useMemo\(\(\) => carryPages\(agentsetDesignBinding, helperStands \? \[\{page: HELPER_PAGE, binding: helperDesignBinding\}\] : \[\]\)/,
-    'the rack carries the Helper page on its own binding')
+  // REPLACED (DLW agency designs): "the rack carries the Helper page on its own binding" (#725, `helper.`) — the manual makes the Decision
+  // helper a device of its own, a chain of the rack in place of an Agent (§19.15, §19.20), so the rack stands on its own binding again and
+  // lists the helper among its members while it stands on a group.
+  assert.match(view, /case 'agentset': return placed\(AGENTSET_ID, ownDevices\.agentset, agentsetDesignBinding/, 'the Agentset rack on a group\'s chain (§19.15)')
+  assert.match(view, /\.\.\.\(helperStands && helperDevice \? \{helper: helperDesignBinding\.values\} : \{\}\)/, 'the rack lists the Decision helper among its chains')
   assert.match(view, /const place = factoryPlace\(\{sessionRef, group: !!groupTrack, workcell\}\)/)
   // REPLACED (lane W8): Custody takes the hand's holds, Actuation's authority list and the current person (the Grants page), and its
   // Revoke port; Scope still stands in its row.

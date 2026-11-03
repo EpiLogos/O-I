@@ -1,7 +1,8 @@
 /* The Agent device's own layout: the thread in the pane, and the widget's last line and composer. Shell and panel tokens only. */
 
 
-/* The widget: the agent's tile in Messages (§19.24) — its face and state, the last lines of its conversation, and the composer. */
+/* The widget: the agent's tile in Messages (§19.24) — its face and state, the last lines of its conversation, and the composer. The
+   composer stands under the face in Compact too (§19.4 Compact). */
 .hm-tile-face { flex: none; display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .hm-last p { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hm-tile-side { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; }
@@ -17,4 +18,3 @@
 .hm-full-stage { flex: none; width: 270px; display: flex; align-items: flex-start; border-left: 1px solid var(--line, #24262a); background: var(--bg-0, #26292d); }
 /* No run event names the session: the stage says so in its place, and draws no run (manual §19.4 The stage). */
 .hm-full-stage-none { margin: 14px 12px; color: var(--text-dim, #9aa0a6); font-size: 11px; }
-.hm-git-row { display: flex; flex-direction: column; gap: 6px; }

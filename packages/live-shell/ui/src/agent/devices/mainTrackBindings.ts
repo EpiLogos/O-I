@@ -186,7 +186,7 @@ export const AGENCY_REFUSE = {
   service: missing('Service', 'aikit gateway serve · shutdown through the kernel', 'AIKit'),
   entry: missing('Entry', 'aikit gateway setup --mode <entry> --apply through the kernel', 'AIKit'),
   coexist: missing('Coexist', 'aikit gateway coexistence --policy through the kernel', 'AIKit'),
-  agentPolicy: missing('Calls', 'an ingress rule for the sender kind agent (GatewayIngressDecision has no write for it)', 'AIKit'),
+  // Whether one agent may call another is the calling agent's Scope's (§19.12 Calls to other agents; designBindings.ts REFUSE.calls).
   surfaces: missing('Surfaces', 'aikit gateway connector add · remove through the kernel', 'AIKit'),
 } as const
 

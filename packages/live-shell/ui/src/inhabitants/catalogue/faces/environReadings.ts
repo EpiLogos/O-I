@@ -1,7 +1,7 @@
 // The environs of the process devices, each read from the value keys its device already carries (manual §25.6 "Process types, read in
 // time": an environ shows a process's course; environs are process faces, creatures agent faces). The Gateway is a river, a stream with no
-// done (§19.2); the NOWs are the seasons, a field's cycle (§23.6); the Seat page of Git / landing is a succession, one lane after another
-// on the same ground (§19.16); its Checkouts page and Docs are erosion, the effect of many runs on the ground (§19.16, §18.5). Each reader
+// done (§19.2); the NOWs are the seasons, a field's cycle (§23.6); the Seats page of Workcell's instrument is a succession, one lane after
+// another on the same ground, and erosion, the effect of many runs on the ground, as Docs is (§19.23, §18.5). Each reader
 // takes the device's own values and answers the environ's reading, or the reading it waits on, in words: a key the owner did not report
 // stays absent, never a sample, and nothing here moves by itself. Pure.
 
@@ -97,7 +97,7 @@ export function seasonsOf(v: V): SeasonsReading | EnvironAbsent {
   return {standing, counts}
 }
 
-// ---------------------------------------------------------------- the succession: the Seat page of Git / landing (§19.16)
+// ---------------------------------------------------------------- the succession: the Seats page of Workcell's instrument (§19.23)
 
 /** One seat's ground: cleared for the next lane, held by a lane, held by another lane's unmerged work, or unread. */
 export interface SeatPlot {
@@ -167,7 +167,7 @@ const stretch = (id: string, label: string, wear: Map<string, Wear>, why: string
   return {id, label, wear: all, why, state: all.length ? 'worn' : bare ? 'bare' : why !== null ? 'unsurveyed' : 'sound'}
 }
 
-/** The Checkouts page's rings, outside in, and which of a finding's kinds wears each (workcell__git-seat.tsx RING_OF). */
+/** The Seats page's rings, outside in, and which of a finding's kinds wears each (workcell__workcell.tsx RING_OF). */
 const RINGS = [{id: 'branches', label: 'branches', op: /for-each-ref|branch/}, {id: 'seats', label: 'seats', op: /seat status/}, {id: 'worktrees', label: 'worktrees', op: /worktree/}] as const
 const RING_OF: Readonly<Record<string, (typeof RINGS)[number]['id']>> = {
   'seat-claimed': 'seats', 'seat-drift': 'seats', 'seat-floor-breach': 'seats', 'checkout-missing': 'seats', 'foreign-lane': 'seats', 'occupied-by-landed': 'seats',
@@ -184,7 +184,7 @@ const KIND_WORD: Readonly<Record<string, string>> = {
   'occupied-by-landed': 'landed', 'root-mixed': 'mixed', 'seat-floor-breach': 'disk', 'checkout-missing': 'missing',
 }
 
-/** The machine's checkouts as erosion: the Checkouts page's values (`co.` keys, scoped): its findings on each ring, a ring whose read
+/** The machine's checkouts as erosion: the Seats page's checkout values (`co.` keys, scoped): its findings on each ring, a ring whose read
  * was refused or is missing left unsurveyed. */
 export function checkoutErosionOf(v: V): ErosionReading | EnvironAbsent {
   const findings = rows(v, 'findings')

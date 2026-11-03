@@ -22,12 +22,13 @@
 // horizon's own number (`n`, its cursor); a return carries none, so its row has no `n` — the instant Central minted it (its ref names it)
 // is when it was made, drawn as its day and time, never as a number. Who accepted it is not in the list, so `by` is left out.
 //
-// Approvals neither reads nor sets the default answer (§19.14: "the default answer is the Gateway's Approvals (§19.2). Approvals shows them
-// and never sets them"; the redrawn design draws no `approvals`): it is the Gateway's own `approvals` row, read and set on the Gateway
-// (agentChainDevices.ts gatewayDisclosed, kernel harness_agent_control configure {approvals}), and Approvals is handed no Gateway (ticket
-// 788). Its queue is the shown session's pending consent requests (AIKit's encounter view `permissions`, the Thread's own reading,
-// threadBinding.ts pendingPermissions), each answered with the harness's own choice (allow once, allow always, reject) through the
-// encounter's `permission` verb. Wait and On no answer are the Agent's (§19.4), and Approvals "shows them and never sets them" (§19.14): two
+// Approvals neither reads nor sets the answer to a tool call (§19.14: which acts wait for you "are set on the Scope of the agent that asks
+// (§19.12): its Asks, Wait and On no answer. Approvals shows them and never sets them"; the design draws no `approvals`): it is Scope's
+// Tool calls, the Gateway slot's own `approvals` row read and set on Scope (agentChainDevices.ts gatewayDisclosed, kernel
+// harness_agent_control configure {approvals}; designBindings.ts ScopeAsks), and Approvals is handed no Gateway (ticket 788). Its queue
+// is the shown session's pending consent requests (AIKit's encounter view `permissions`, the Thread's own reading, threadBinding.ts
+// pendingPermissions), each answered with the harness's own choice (allow once, allow always, reject) through the encounter's `permission`
+// verb. Wait and On no answer are the asking agent's Scope's (§19.12), and Approvals "shows them and never sets them" (§19.14): two
 // readings, which no owner reports yet (Hermes' approvals.timeout is not a harness_agent_control field, harnessAgentControl.ts:15-26), so
 // they stand absent with the reading they wait for and no write of them is taken (ticket 804); the proposals are
 // Central's source returns, which the kernel reads since lane K1 (`source_returns_read`, central.source-returns/v1: workcellReads.ts) —
@@ -326,12 +327,12 @@ export function ledgerBinding(input: LedgerInput, ports: LedgerPorts): DesignBin
 
 // ---------------------------------------------------------------------------------------------------------------- Approvals
 
-/** The Agent's Wait and On no answer, which Approvals reads and never sets (§19.14): absent until an owner reports them, each with the reading it
- * waits for. They replaced the configure writes Approvals once refused for them (ticket 804). */
+/** Wait and On no answer, set on the asking agent's Scope (§19.12), which Approvals reads and never sets (§19.14): absent until an owner reports
+ * them, each with the reading it waits for. They replaced the configure writes Approvals once refused for them (ticket 804). */
 const notRead = (what: string, op: string, owner: string) => `${what}: no reading reaches it yet — missing op: ${op} (${owner}).`
 export const APPROVALS_ABSENT = {
-  wait: notRead('The Agent\'s Wait', 'the agent\'s approvals timeout read back (Hermes\' approvals.timeout: harness_agent_control carries approvals, transport, connect and stall-after only)', 'Actuation'),
-  noAnswer: notRead('The Agent\'s On no answer', 'a timed-out request\'s outcome read back from the agent\'s harness', 'Actuation'),
+  wait: notRead('The Wait on the asking agent\'s Scope', 'the agent\'s approvals timeout read back (Hermes\' approvals.timeout: harness_agent_control carries approvals, transport, connect and stall-after only)', 'Actuation'),
+  noAnswer: notRead('On no answer on the asking agent\'s Scope', 'a timed-out request\'s outcome read back from the agent\'s harness', 'Actuation'),
 } as const
 
 export const APPROVALS_REFUSE = {
@@ -475,8 +476,8 @@ function choiceFor(request: NativePermission, answer: 'allowOnce' | 'allowAlways
 
 /** Approvals' binding: each answer to a request through the shown session's encounter, with the harness's own choice; Approve through
  * Central's acceptance (the `approve` port); the view's settings held by the shell; Changes stands disabled with what it lacks; Wait and On
- * no answer are the Agent's readings, absent with what they wait for and never written. The default answer is the Gateway's, never set
- * here (§19.14). */
+ * no answer are readings of the asking agent's Scope, absent with what they wait for and never written. The answer to a tool call is that
+ * Scope's Tool calls, never set here (§19.14). */
 export function approvalsBinding(input: ApprovalsInput, ports: ApprovalsPorts, id: string = APPROVALS_ID): DesignBinding {
   const requests = input.encounter ? pendingPermissions(input.encounter) : []
   const standing: Record<string, Standing> = {...disabled(APPROVALS_ABSENT), ...disabled(APPROVALS_REFUSE)}

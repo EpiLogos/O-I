@@ -103,14 +103,12 @@ const REFUSE = {
   run: missing('Run', 'the exact JSON input `aikit praxis method run <ref> --input` takes (the kernel\'s aikit_write method-run carries it; the member has no field for it)', 'AIKit'),
   prove: missing('Prove', 'the run\'s proof `aikit praxis method prove --method <ref> --proof-json` takes (its Activity, Return, Evidence and verification refs; the member holds no run receipt)', 'AIKit'),
   reach: missing('Reach', 'the scope reach write on the world device\'s apply path (WO-SF2)', 'Software Factory'),
-  // Scope's Knowledge page (§19.12 Knowledge, which took in the Knowledge route of §19.9 in the 22 Oct manual rewrite): its settings by the
-  // design's own keys (scope.tsx), each refused by the owner operation it lacks; the route has no binding of its own (ticket 788).
-  knowledgeSources: missing('The sources the agent may search', 'a lens-level request on the AgentProfile — Central\'s knowledge_source_refs carries source refs, not lenses, and agent-profile.save writes that list', 'Central'),
-  searchFirst: missing('Search first', 'a per-agent order of search and links on the route', 'AIKit'),
-  linkDepth: missing('Link depth', 'a per-agent depth on `aikit knowledge relations` (the kernel asks depth 2 for every caller: knowledge.rs RELATIONS_DEPTH)', 'AIKit'),
-  readBudget: missing('Read budget', 'a per-agent ceiling on the pages a task opens', 'AIKit'),
-  readAgain: 'Read again: no reading of the pages the agent read stands here (`aikit knowledge history` records each route with an empty context), so none stands to read again.',
-  forget: 'Forget: no reading of the pages the agent read stands here, so none stands to forget (`aikit knowledge forget destination <resource>` reaches AIKit through the kernel\'s aikit_write since lane W3 round 3).',
+  // Scope's Asks page (§19.12 Asks): Calls to other agents is AIKit's ingress rule for a call from one agent to another, which no write
+  // reaches; Wait and On no answer are the harness's approvals timeout and what a timed-out request comes to, which harness_agent_control
+  // does not carry (it carries approvals, transport, connect and stall-after only: harnessAgentControl.ts).
+  calls: missing('Calls to other agents', 'an ingress rule for the sender kind agent (GatewayIngressDecision has no write for it)', 'AIKit'),
+  wait: missing('Wait', 'the agent\'s approvals timeout (Hermes\' approvals.timeout: harness_agent_control carries approvals, transport, connect and stall-after only)', 'Actuation'),
+  noAnswer: missing('On no answer', 'a timed-out request\'s outcome on the agent\'s harness', 'Actuation'),
   place: missing('A place in reach', 'the scope places write (WO-SF2)', 'Software Factory'),
   scope: 'Choose where the composition applies — Home, Project or Session — then Preview.',
   noPlan: 'Nothing is previewed: press Preview, read the change, then Apply.',
@@ -124,7 +122,8 @@ const REFUSE = {
 const disabled = (reasons: Readonly<Record<string, string>>): Record<string, Standing> =>
   Object.fromEntries(Object.entries(reasons).map(([key, why]) => [key, {disabled: why}]))
 
-/** The Agent's Context page (lanes W7, W8; D5, actuation__harness-model.tsx `ctx.pressure`, `ctx.armed`, `ctx.turn`): AIKit's continuity,
+/** The Context page (lanes W7, W8; D5; AIKit's instrument's since §19.26, ai-kit__ai-kit.tsx `ctx.pressure`, `ctx.armed`, `ctx.turn`; the
+ * Agent's binding still carries them, and no design of the Agent's reads them now): AIKit's continuity,
  * read through the kernel's aikit_read {continuity-pressure, continuity-commands} (aikitPages.ts) where the chain hands them in; the last
  * turn's bounded blocks no command reports (T-COVERAGE §1.5, AIKit: "a read of the last turn's bounded blocks (Context)"). Why each is
  * absent when it is. */
@@ -132,7 +131,8 @@ export const AGENT_CONTEXT_ABSENT: Readonly<Record<string, string>> = {
   'ctx.pressure': 'The context pressure: AIKit\'s continuity is not read here (`aikit work continuity pressure` through the kernel\'s aikit_read).',
   'ctx.armed': 'The star commands armed: AIKit\'s continuity is not read here (`aikit work continuity commands` through the kernel\'s aikit_read).',
   'ctx.turn': 'The last turn\'s bounded blocks: AIKit\'s continuity is not read here (`aikit work continuity turn` through the kernel\'s aikit_read).',
-  // The Git row (O-I ticket 748): the chain lays the session's repository in over this (oneAgentBinding.ts withAgentGit).
+  // The Git row (O-I ticket 748): the chain lays the session's repository in over this (oneAgentBinding.ts withAgentGit). No design draws
+  // it: the manual names no Git row (§19.4, §19.26).
   'ctx.git': 'The session\'s repository: the chain that holds the Agent reads it (git_repository_read) and lays it in; it is not read here.',
 }
 /** The Git row's Diff, a press with no value of its own: it waits on the repository the chain lays in. */
@@ -146,9 +146,7 @@ export const REFUSED_WRITES: Readonly<Record<string, Readonly<Record<string, str
   [AGENT_DESIGN]: {light: REFUSE.power, cap: REFUSE.budget, heartbeat: REFUSE.heartbeat},
   [RACK_DESIGN]: {set: REFUSE.set},
   [MEMBER_DESIGN]: {reviewed: REFUSE.trust, run: REFUSE.run, proved: REFUSE.prove},
-  [SCOPE_DESIGN]: {reach: REFUSE.reach, writeMode: REFUSE.writeMode, 'src.wiki': REFUSE.knowledgeSources, 'src.project': REFUSE.knowledgeSources,
-    'src.code': REFUSE.knowledgeSources, searchFirst: REFUSE.searchFirst, linkDepth: REFUSE.linkDepth, readBudget: REFUSE.readBudget, readAgain: REFUSE.readAgain,
-    forget: REFUSE.forget},
+  [SCOPE_DESIGN]: {reach: REFUSE.reach, writeMode: REFUSE.writeMode, calls: REFUSE.calls, wait: REFUSE.wait, noAnswer: REFUSE.noAnswer},
 }
 
 // ---------------------------------------------------------------------------------------------------------------- the hold store
@@ -222,9 +220,9 @@ export interface GatewayInput {
   readonly harness: {readonly binding: string; readonly resolved: boolean}
 }
 
-/** The Gateway's values (§19.1; catalogue/panels/actuation__gateway.tsx:6-13 names its keys): what the harness_agent_read answer
- * discloses under the carrier's own field names (agentChainDevices.ts gatewayDisclosed — readiness, transport, approvals, connect;
- * stall_after_seconds), the light from whether the gateway answered, its refusal in the owner's words, and the binding's link as AIKit's
+/** The Gateway's values (§19.2; catalogue/panels/actuation__gateway.tsx:6-13 names its keys): what the harness_agent_read answer
+ * discloses under the carrier's own field names (agentChainDevices.ts gatewayDisclosed — readiness, transport, connect; stall_after_seconds;
+ * its approvals is Scope's Tool calls, §19.12, scopeValues), the light from whether the gateway answered, its refusal in the owner's words, and the binding's link as AIKit's
  * gateway knows it (gatewayLinkValues: beatAge, running, inflight, frames, seq). The other session counters (epoch, peers, ring, ringCap,
  * viaLead, lead) and autoContinue and fanOut are in no document the shell reads, so they stay absent. */
 export function gatewayValues(input: GatewayInput): Values {
@@ -233,7 +231,7 @@ export function gatewayValues(input: GatewayInput): Values {
   put(values, 'light', reading.gatewayAdmitted === true ? 'lit' : reading.gatewayAdmitted === false ? 'dark' : undefined)
   if (harness.resolved) put(values, 'harness', harness.binding)
   if (reading.gateway.kind === 'refused') put(values, 'refused', reading.gateway.line)
-  for (const [key, value] of Object.entries(gatewayDisclosed(reading.gatewayDoc))) put(values, key, value)
+  for (const [key, value] of Object.entries(gatewayDisclosed(reading.gatewayDoc))) if (key !== 'approvals') put(values, key, value)
   const doc = isObj(reading.gatewayDoc) && !('refused' in reading.gatewayDoc) ? reading.gatewayDoc : null
   if (doc && typeof doc.stall_after_seconds === 'number') put(values, 'stallAfter', doc.stall_after_seconds)
   Object.assign(values, gatewayLinkValues(reading.gatewayDoc))
@@ -322,15 +320,15 @@ export function gatewayLinkStanding(reading: GatewayInput['reading'], values: Va
   return Object.fromEntries(Object.keys(LINK_WORDS).filter(key => !(key in values)).map(key => [key, {disabled: why(key)}]))
 }
 
-/** The Gateway's rows with a write: the address table's (agentParamAddresses.ts:70-73), each to kernel:harness_agent_control. */
+/** The Gateway's rows with a write: the address table's (agentParamAddresses.ts:70-73), each to kernel:harness_agent_control. Its approvals
+ * row is Scope's Tool calls (§19.12; ScopeAsks). */
 export interface GatewayRows {
   readonly transport?: SdkParamRow
-  readonly approvals?: SdkParamRow
   readonly connect?: SdkParamRow
   readonly stallAfter?: SdkParamRow
 }
 
-const GATEWAY_KEYS: Readonly<Record<string, keyof GatewayRows>> = {transport: 'transport', approvals: 'approvals', connect: 'connect', stallAfter: 'stallAfter'}
+const GATEWAY_KEYS: Readonly<Record<string, keyof GatewayRows>> = {transport: 'transport', connect: 'connect', stallAfter: 'stallAfter'}
 
 /** The Gateway's binding: each setting through its row's own write path (the harness control's value carrier); the two the carrier
  * does not carry are refused by name; a link reading the gateway's answer does not carry stands absent with why. */
@@ -765,7 +763,8 @@ async function compose(change: ValueChange, ports: ComposePorts | null, place: {
 
 // `members` stands for the chain list's request squares (skills.tsx ChainList reads st(p, 'members')): each request is its own
 // `req:<id>` key, so `members` is no reading the host should draw disabled; a write of the list itself is refused as a reading.
-// The rack's upkeep pages (lanes W7, W8; D5, skills.tsx: Set's Unused filter, Sources, Adopt, Procedures): AIKit's `unused`, `collate`,
+// The upkeep pages (lanes W7, W8; D5): AIKit's instrument's Run (its Unused filter), Sources, Adopt, Package and Procedures (§19.26,
+// ai-kit__ai-kit.tsx), which the rack drew before and the rack's binding still carries: AIKit's `unused`, `collate`,
 // `adopt` (its plan, without --yes), `procedure list` and `bypass list`, read through the kernel's aikit_read (lane W3 round 3) where the
 // chain stands (aikitPages.ts maps each answer; FactoryDeviceChain.tsx reads them), with `aikit source list` and the chosen procedure's
 // `aikit procedure diff` (lane W9, the kernel's round of cdbde6fe7); Sync, Promote, Rollback, Undo and Revoke write through aikit_write on
@@ -815,8 +814,8 @@ export function adoptionOf(plan: AikitAdoptionPlan, root: string): Record<string
     items: plan.capsules.map(capsule => ({name: capsule.startsWith(prefix) ? capsule.slice(prefix.length) : capsule, act: 'adopt'}))}
 }
 
-/** The upkeep pages' settings: the hand's own holds (skills.tsx: unusedOnly, source, adoptRoot, namespace, procedure, bypassScope, bypassReason),
- * and Export's directory (outDir, the absolute --out of `aikit set package export`). */
+/** The upkeep pages' settings: the hand's own holds (ai-kit__ai-kit.tsx: unusedOnly, source, adoptRoot, namespace, procedure, bypassScope,
+ * bypassReason), and Export's directory (outDir, the absolute --out of `aikit set package export`). */
 export const RACK_UPKEEP_SETTINGS: readonly string[] = ['unusedOnly', 'source', 'adoptRoot', 'namespace', 'procedure', 'bypassScope', 'bypassReason', 'outDir']
 
 const RACK_WRITES = (key: string) => key.startsWith('req:') || ['scope', 'profile', 'compose', 'target', 'exported', 'set', 'members', 'adoptPreview'].includes(key)
@@ -1041,26 +1040,28 @@ export function memberBinding(id: string, rack: Values, chosen: string | null, h
 
 // ---------------------------------------------------------------------------------------------------------------- Scope
 
-/** Scope's values (§19.14). No owner reports the reach, the write mode, the knowledge bounds, the basis, the places or the receipts
- * (the address table's world rows are readings with no source: agentParamAddresses.ts:93-97), so every one is absent; the only
- * value is a raised reach waiting for your Confirm. */
-export function scopeValues(held: ChainHolds): Values {
+/** Scope's Tool calls on the chain (§19.12 Asks): the harness's approvals mode — ask · session · always — as the gateway's reading discloses
+ * it (agentChainDevices.ts gatewayDisclosed `approvals`), and the Gateway slot's `approvals` row, whose write path is the kernel's
+ * harness_agent_control configure {approvals}. Absent: the chain hands in neither. */
+export interface ScopeAsks {
+  readonly toolCalls?: Value
+  readonly toolCallsRow?: SdkParamRow
+}
+
+/** Scope's values (§19.12). No owner reports the reach, the write mode, the basis, the places or the receipts (the address table's world
+ * rows are readings with no source: agentParamAddresses.ts:93-97), nor Calls to other agents, Wait or On no answer, so every one is absent;
+ * Tool calls is the harness's own reading where the chain hands it in, and the only other value is a raised reach waiting for your Confirm. */
+export function scopeValues(held: ChainHolds, asks: ScopeAsks = {}): Values {
   const values: Record<string, Value> = {}
   if (held.reachPending !== undefined) values.reachPending = held.reachPending
+  if (asks.toolCalls !== undefined) values.toolCalls = asks.toolCalls
   return values
 }
 
-/** Scope's Knowledge page's readings (§19.12 Knowledge; scope.tsx `route`, `routeWhy`, `readings`, `reading`), absent in the Knowledge
- * route's own words (§19.9; the route has no binding of its own since ticket 788): no reading of the route's standing for the agent reaches
- * the chain, nor of the pages it read. */
-export const SCOPE_KNOWLEDGE_ABSENT: Readonly<Record<string, string>> = {
-  route: 'Route: no reading reaches it yet — missing op: a reading of the route\'s standing for the agent (AIKit).',
-  routeWhy: 'Route: no reading reaches it yet — missing op: a reading of the route\'s standing for the agent (AIKit).',
-  readings: 'The pages the agent read: no reading reaches them yet — missing op: a knowledge history by session or task — `aikit knowledge history` (aikit.knowledge-application-history/v1) records each route with an empty context (AIKit).',
-  reading: 'The pages the agent read: no reading reaches them yet — missing op: a knowledge history by session or task — `aikit knowledge history` (aikit.knowledge-application-history/v1) records each route with an empty context (AIKit).',
-}
+/** Tool calls with no row to carry it. */
+const TOOL_CALLS_UNCARRIED = 'Tool calls: the Gateway\'s approvals row is not adopted on this chain, so nothing carries it (the kernel\'s harness_agent_control configure {approvals}).'
 
-const SCOPE_WRITES = (key: string) => ['reach', 'writeMode'].includes(key) || key in REFUSED_WRITES[SCOPE_DESIGN]! || key.startsWith('w:')
+const SCOPE_WRITES = (key: string) => ['reach', 'writeMode', 'toolCalls'].includes(key) || key in REFUSED_WRITES[SCOPE_DESIGN]! || key.startsWith('w:')
 
 /** A raised reach the view holds: a ring, or none (Cancel's drop). */
 const reachOf = (value: Value | undefined): number | undefined => {
@@ -1070,13 +1071,14 @@ const reachOf = (value: Value | undefined): number | undefined => {
 
 /** Scope's binding: a raised reach is the view's own key, held until Confirm — nothing is sent before, and Cancel drops it — and
  * Confirm goes to the owner; the write mode goes through the world row's own write path (the shell write arm, which its dispatcher
- * refuses until WO-SF2 reads it). */
-export function scopeBinding(id: string, held: ChainHolds, writeModeRow: SdkParamRow | undefined, write: RowWrite): DesignBinding {
+ * refuses until WO-SF2 reads it); Tool calls through the Gateway slot's approvals row (the harness's own control). Before it lands, Escalate
+ * to and the Grants page are Custody's binding's, laid in by the chain (sessionChainBindings.ts withCustodyAsks). */
+export function scopeBinding(id: string, held: ChainHolds, writeModeRow: SdkParamRow | undefined, write: RowWrite, asks: ScopeAsks = {}): DesignBinding {
   return {
     id,
-    values: scopeValues(held),
+    values: scopeValues(held, asks),
     local: {reachPending: value => updateHolds(was => (was.reachPending === reachOf(value) ? was : {...was, reachPending: reachOf(value)}))},
-    standing: {...disabled(REFUSED_WRITES[SCOPE_DESIGN]!), ...disabled(SCOPE_KNOWLEDGE_ABSENT)},
+    standing: {...disabled(REFUSED_WRITES[SCOPE_DESIGN]!), ...(asks.toolCallsRow?.writePath ? {} : {toolCalls: {disabled: TOOL_CALLS_UNCARRIED}})},
     writes: SCOPE_WRITES,
     write: async changes => {
       for (const {key, value} of changes) {
@@ -1090,6 +1092,12 @@ export function scopeBinding(id: string, held: ChainHolds, writeModeRow: SdkPara
           // The shell's write arm carries propose and direct as a boolean; draft has no writer (agentChainDevices.ts carryValue).
           if (value !== 'propose' && value !== 'direct') throw Error(writeModeRow.disclosure ?? `"${String(value)}" has no writer.`)
           const receipt = await write(writeModeRow, value === 'direct')
+          if (receipt.kind === 'refused') throw Error(receipt.reason)
+          continue
+        }
+        if (key === 'toolCalls') {
+          if (!asks.toolCallsRow?.writePath) throw Error(TOOL_CALLS_UNCARRIED)
+          const receipt = await write(asks.toolCallsRow, value)
           if (receipt.kind === 'refused') throw Error(receipt.reason)
           continue
         }

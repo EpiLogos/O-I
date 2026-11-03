@@ -11,6 +11,7 @@ import {parseDataI, type DataIStatusInfo} from '../agent/statusInfo'
 import {useFoundationPending} from '../native/foundationDoor'
 import {apertureWords, useWorkbenchAperture} from '../native/workbenchDoor'
 import {useShownSides, type DetailSide} from '../frame/detail/detailSides'
+import {ChainOverview, useShownChain} from '../frame/detail/ChainOverview'
 import {useShownTracks} from '../frame/tracks/tracksDoor'
 
 /** The Info line's words with nothing read yet (Live's Info view; the mockup's `#info`). */
@@ -79,6 +80,8 @@ export function StatusBar({ state, documentError, viewport, selectedTrack, audio
   const deviceTrackRef = trackRef ?? (clipRef ? shownTracks?.clips.find(clip => clip.id === clipRef)?.trackId : undefined)
   // Where the shown tracks hold no such track (Live's set, Factory's sessions), the mode's own name for the selected track stands.
   const deviceName = shownTracks?.tracks.find(track => track.id === deviceTrackRef)?.name ?? trackName ?? selectedTrack
+  // The small picture of the selected track's chain the Device switch carries (manual §10.1): the row Device view shows now.
+  const chainRow = useShownChain()
   const other = (side: DetailSide): DetailSide => side === 'clip' ? 'device' : 'clip'
   const shown = (side: DetailSide) => detailShown && shownSides[side]
   // A switch brings its view forward (⌥-click shows both); ▲ beside it shows or hides that view, and hiding the last one standing
@@ -129,6 +132,7 @@ export function StatusBar({ state, documentError, viewport, selectedTrack, audio
       <button type="button" className="status-switch" aria-label="Device view" data-detail-side="device" aria-pressed={shown('device')}
         data-i={`Device view|${pair.device.label}: ${pair.device.meaning}. Brings Device view forward; ⌥-click shows Clip view and Device view together; ⇧Tab switches when only one shows.`}
         onClick={event => bring('device', event.altKey)}><Icon name="device" size={12} /><span>{deviceName ?? 'Device'}</span></button>
+      {shown('device') && <ChainOverview row={chainRow} name={deviceName} />}
       {toggleMixer && <button type="button" className="status-switch status-mixer" aria-label="Mixer" aria-pressed={!!mixer}
         data-i="Mixer|Shows or hides every track's mixer row (⌥⌘M); ⌥⌘I its In/Out section." onClick={toggleMixer}><span aria-hidden="true">⫼</span><span>Mixer</span></button>}
     </nav>

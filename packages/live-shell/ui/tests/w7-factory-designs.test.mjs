@@ -69,6 +69,7 @@ const {memberDevice: memberDesign} = await import('../src/inhabitants/catalogue/
 const carry = await import('../src/agent/devices/oneAgentBinding.ts')
 const {design: threadDesign} = await import('../src/inhabitants/catalogue/panels/thread.tsx')
 const {design: agentDesign} = await import('../src/inhabitants/catalogue/panels/actuation__harness-model.tsx')
+const {design: aikitDesign} = await import('../src/inhabitants/catalogue/panels/ai-kit__ai-kit.tsx')
 
 family.resetFamilyManifestsForTest()
 loadAgentShellFamilies()
@@ -289,6 +290,9 @@ test('(b) every key the newly bound designs read is an owner reading, absent wit
       assert.equal(classify(binding, key), 'absent', `${design.id} ${key}`)
     }
   }
-  for (const key of Object.keys(bind.AGENT_CONTEXT_ABSENT)) assert.ok(key in agentDesign.defaults, `${key} is a key of the Agent's design`)
+  // REPLACED (§19.4 "The Voice, Custody, Grants and Context pages leave the Agent"; §19.26 "Context"): the context readings are AIKit's
+  // instrument's Context page's; no design draws the Git row (`ctx.git`), which the manual names nowhere. Was: each a key of the Agent's design.
+  for (const key of Object.keys(bind.AGENT_CONTEXT_ABSENT).filter(key => key !== 'ctx.git')) assert.ok(key in aikitDesign.defaults, `${key} is a key of AIKit's instrument`)
+  assert.ok(!Object.keys(bind.AGENT_CONTEXT_ABSENT).some(key => key in agentDesign.defaults), 'the Agent reads no context key')
   bind.resetHolds()
 })

@@ -1,5 +1,3 @@
-// Retired as a device of its own (22 Oct manual rewrite): not a `<family>__<face>.tsx` panel any more, so the catalogue does not load
-// it; the Agent (actuation:harness-model) carries its pages through this module.
 // Voice (manual §19.21, actuation:voice): how an agent speaks, after the Agent on its chain. Listening is the track's own input row
 // (Input, Listen, Pause, Recogniser: manual §24.1), as Live keeps input on the track and sound on the devices. Live's nearest: a vocal
 // chain's last device, with its pitch-and-timing display. The display is the last spoken turn on one audio clock: each sentence with the
@@ -16,14 +14,18 @@
 //   voice.mouth      'aligned' | 'loudness' | 'off': what moves the face's mouth; Aligned needs measured phone timing
 //   voice.affect     K-E-V chooses the face's affect for each sentence before it is spoken
 //   voice.interrupt  'off' | 'stop' (stop when you talk) | 'barge-in'
-//   voice.egress     'local' | 'ask' | 'allowed': whether spoken Nara material may leave the machine
+//   voice.egress     'local' | 'ask' | 'allowed': whether what you say may leave this machine. Settings, Permissions sets it (§10.10); Voice
+//                    only reads it, and under Local only the cloud bodies stand closed
 //   voice.console    the Epii console beside the face
 //   body.duplex, body.bargeIn, body.interrupt  the body's support for each: 'supported' | 'degraded' | 'unsupported' | 'unknown'
 //   body.latencyMs   from the end of a sentence's text to its first sound
 //   body.receipt     the last turn's receipt
 //   turn             the last spoken turn: {sentences: [{text, start, end, affect: {emotion, intensity}, words: [{w, start, end}],
 //                    phones: [{p, start, end}]}]}, times in ms from the turn's start
-// The face itself stays on the Agent device: Voice drives its mouth through the face's speech parameters.
+// The face itself stays on the Agent device: Voice drives its mouth through the face's speech parameters, and draws no second face.
+// Compact is the body with its light, the voice and the last sentence's feeling; Whole is Body, Voice, Speed; Mouth, Affect; Interrupt;
+// Console, with what the body reports it can do; Full is the last spoken turn on one clock; the widget, the body's light and the last
+// sentence spoken.
 import {Band, Chooser, Dial, Display, Folded, Panel, Radio, Readout, Section, Tile, Toggle, type LightState, type Option} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, json, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
 
@@ -31,17 +33,15 @@ type V = ViewProps['v']
 type Body = 'local' | 'face' | 'realtime-aligned' | 'realtime-native' | 'off'
 const BODY_LABEL: Record<Body, string> = {local: 'Local', face: 'Face', 'realtime-aligned': 'Realtime, aligned', 'realtime-native': 'Realtime, own voice', off: 'Off'}
 const BODY_DOES: Record<Body, string> = {
-  local: 'Kokoro on this machine. It measures no timing, so the mouth follows the loudness.',
-  face: "Piper on this machine, every phone measured to the sample: the mouth moves with each sound.",
-  'realtime-aligned': 'A cloud voice, its words aligned on this machine so the mouth still moves with each sound.',
-  'realtime-native': "A cloud voice in the service's own voice; the mouth follows the loudness.",
-  off: 'The agent does not speak.'}
+  local: 'A voice on this machine. Nothing leaves it. It measures no timing, so the mouth follows the loudness.',
+  face: 'A voice on this machine that measures every sound to the sample: the mouth moves with each sound.',
+  'realtime-aligned': 'A cloud voice, its words aligned on this machine, so the mouth still moves with each sound.',
+  'realtime-native': 'A cloud voice in the service\'s own voice: the mouth follows the loudness.',
+  off: 'Nothing: the agent writes and does not speak.'}
 const TIMED: readonly Body[] = ['face', 'realtime-aligned']
 const MOUTHS = ['aligned', 'loudness', 'off'] as const
-const INTERRUPTS = [{value: 'off', label: 'Off', does: 'The agent finishes what it is saying.'}, {value: 'stop', label: 'Stop', does: 'The agent stops when you start to talk.'},
-  {value: 'barge-in', label: 'Barge-in', does: 'The agent stops and hears what you say over it.'}] as const
-const EGRESS = [{value: 'local', label: 'Local only', does: 'Spoken Nara material never leaves this machine.'}, {value: 'ask', label: 'Ask', does: 'Each time a cloud body would hear it, you are asked.'},
-  {value: 'allowed', label: 'Allowed', does: 'A cloud body may hear it.'}] as const
+const INTERRUPTS = [{value: 'off', label: 'Off', does: 'The agent finishes what it is saying.'}, {value: 'stop', label: 'Stop', does: 'Ends its sentence when you talk.'},
+  {value: 'barge-in', label: 'Barge-in', does: 'Ends its sentence and hears what you say.'}] as const
 const SUPPORT: Record<string, string> = {supported: 'yes', degraded: 'degraded', unsupported: 'no', unknown: NONE}
 
 interface Sentence {readonly text: string; readonly start: number; readonly end: number; readonly emotion?: string; readonly intensity?: number
@@ -91,38 +91,57 @@ function TurnDisplay({v, w, h, phones = true}: {v: V; w: number; h: number; phon
   </g>
 }
 
-const lightOf = (p: ViewProps): LightState => { const b = bodyOf(p.owner ?? p.v); return b === undefined ? 'unknown' : b === 'off' ? 'dark' : 'lit' }
-const DISPLAY_DOES = 'The last spoken turn: each sentence with the affect chosen for it, its words, and the phones that moved the mouth.'
+/** The body's light: lit while the chosen body speaks or can, dark when it is Off or stands closed; hollow while the owner has not said. */
+const lightOf = (p: ViewProps): LightState => {
+  const v = p.owner ?? p.v, b = bodyOf(v)
+  return b === undefined ? 'unknown' : b === 'off' || bodiesOf(v)?.find(x => x.id === b)?.available === false ? 'dark' : 'lit'
+}
+const DISPLAY_DOES = 'The last spoken turn on one clock: each sentence with the feeling chosen for it, its words across the time they took, and the sounds that moved the mouth.'
 const wide = (p: ViewProps) => (p.frame === 'flip' || p.frame === 'window') && p.room !== undefined
 
 function controls(p: ViewProps) {
   const v = p.v, body = bodyOf(v), bodies = bodiesOf(v), egress = strOf(v, 'voice.egress')
+  // Egress is Settings, Permissions' (§10.10): read here only, to close the cloud bodies under Local only.
   const closed = (id: Body): string | undefined => {
+    if (id.startsWith('realtime') && egress === 'local') return 'What you say stays on this machine: Settings, Permissions is Local only.'
     const b = bodies?.find(x => x.id === id)
-    if (id.startsWith('realtime') && egress === 'local') return 'Spoken Nara material stays local: Egress is Local only.'
-    return b && !b.available ? b.why ?? 'This body is not available now.' : undefined
+    return b && !b.available ? b.why ?? 'This body cannot run now.' : undefined
   }
   const bodyOptions: Option<Body>[] = (Object.keys(BODY_LABEL) as Body[]).map(id => ({value: id, label: BODY_LABEL[id], does: BODY_DOES[id], why: id === 'off' ? undefined : closed(id)}))
   const voices = json<unknown[]>(v, 'voice.voices', []).filter((x): x is string => typeof x === 'string')
   const support = (k: string) => strOf(v, k)
   const interruptOptions = INTERRUPTS.map(o => ({...o, why: o.value === 'barge-in' && support('body.bargeIn') === 'unsupported' ? 'This body cannot be talked over.'
-    : o.value === 'stop' && support('body.interrupt') === 'unsupported' ? 'This body cannot stop mid-sentence.' : undefined}))
+    : o.value === 'stop' && support('body.interrupt') === 'unsupported' ? 'This body cannot stop in the middle of a sentence.' : undefined}))
   const mouthOptions = MOUTHS.map(m => ({value: m, label: m === 'aligned' ? 'Aligned' : m === 'loudness' ? 'Loudness' : 'Off',
     does: m === 'aligned' ? 'The mouth moves with each measured sound.' : m === 'loudness' ? 'The mouth opens with the loudness.' : 'The mouth stays still.',
     why: m === 'aligned' && body !== undefined && !TIMED.includes(body) ? 'This body measures no timing.' : undefined}))
   return {
-    body: (stack: boolean) => <Radio {...st(p, 'voice.body')} label={stack ? undefined : 'Body'} does="What speaks." value={body ?? ''} options={bodyOptions} stack={stack} onChange={x => p.set('voice.body', x)} />,
+    body: <Radio {...st(p, 'voice.body')} does="What speaks." value={body ?? ''} options={bodyOptions} stack onChange={x => p.set('voice.body', x)} />,
     bodyChooser: <Chooser {...st(p, 'voice.body')} label="Body" does="What speaks." value={body ?? ''} options={bodyOptions} onChange={x => p.set('voice.body', x)} />,
-    voice: <Chooser {...st(p, 'voice.voice')} label="Voice" does="The body's voice." value={strOf(v, 'voice.voice') ?? ''} options={voices.map(x => ({value: x, label: x}))} onChange={x => p.set('voice.voice', x)}
-      disabled={st(p, 'voice.voice').disabled ?? (voices.length ? undefined : 'The body reports no voices.')} />,
+    voice: <Chooser {...st(p, 'voice.voice')} label="Voice" does="The voice that the agent speaks in." value={strOf(v, 'voice.voice') ?? ''} options={voices.map(x => ({value: x, label: x}))} onChange={x => p.set('voice.voice', x)}
+      disabled={st(p, 'voice.voice').disabled ?? (voices.length ? undefined : 'The body offers no voice.')} />,
     speed: <Dial {...st(p, 'voice.speed')} label="Speed" does="How fast the agent speaks." value={numOf(v, 'voice.speed') ?? NaN} def={1} scale={{min: .5, max: 2}} format={x => `${x.toFixed(2)}×`} onChange={x => p.set('voice.speed', Math.round(x * 100) / 100)} />,
-    mouth: (stack: boolean) => <Radio {...st(p, 'voice.mouth')} label="Mouth" does="What moves the face's mouth." value={strOf(v, 'voice.mouth') ?? ''} options={mouthOptions} stack={stack} onChange={x => p.set('voice.mouth', x)} />,
+    mouth: <Radio {...st(p, 'voice.mouth')} does="What moves the face's mouth." value={strOf(v, 'voice.mouth') ?? ''} options={mouthOptions} stack onChange={x => p.set('voice.mouth', x)} />,
     mouthChooser: <Chooser {...st(p, 'voice.mouth')} label="Mouth" does="What moves the face's mouth." value={strOf(v, 'voice.mouth') ?? ''} options={mouthOptions} onChange={x => p.set('voice.mouth', x)} />,
-    affect: <Toggle {...st(p, 'voice.affect')} label="Affect" does="K-E-V chooses the face's feeling for each sentence before it is spoken." on={boolOf(v, 'voice.affect') === true} unknown={boolOf(v, 'voice.affect') === undefined} onChange={x => p.set('voice.affect', x)} />,
-    interrupt: (stack: boolean) => <Radio {...st(p, 'voice.interrupt')} label="Interrupt" does="What happens when you talk while the agent speaks." value={strOf(v, 'voice.interrupt') ?? ''} options={interruptOptions} stack={stack} onChange={x => p.set('voice.interrupt', x)} />,
-    egress: <Radio {...st(p, 'voice.egress')} label="Egress" does="Whether spoken Nara material may leave this machine." value={egress ?? ''} options={EGRESS} stack onChange={x => p.set('voice.egress', x)} />,
-    console: <Toggle {...st(p, 'voice.console')} label="Console" does="Show Epii's console beside the face." on={boolOf(v, 'voice.console') === true} unknown={boolOf(v, 'voice.console') === undefined} onChange={x => p.set('voice.console', x)} />,
+    affect: <Toggle {...st(p, 'voice.affect')} label="Affect" does="Before each sentence is spoken, K-E-V chooses the face's feeling for it. The words stay as they are." on={boolOf(v, 'voice.affect') === true} unknown={boolOf(v, 'voice.affect') === undefined} onChange={x => p.set('voice.affect', x)} />,
+    interrupt: (label?: string) => <Radio {...st(p, 'voice.interrupt')} label={label} does="What happens when you talk while the agent speaks. Stop ends its sentence; Barge-in ends it and hears what you say." value={strOf(v, 'voice.interrupt') ?? ''} options={interruptOptions} stack onChange={x => p.set('voice.interrupt', x)} />,
+    console: <Toggle {...st(p, 'voice.console')} label="Console" does="Shows Epii's console beside the face." on={boolOf(v, 'voice.console') === true} unknown={boolOf(v, 'voice.console') === undefined} onChange={x => p.set('voice.console', x)} />,
   }
+}
+
+/** The body with its light, the voice, and the feeling chosen for the last sentence. */
+function BodyWell({p, w, h}: {p: ViewProps; w: number; h: number}) {
+  const b = bodyOf(p.v), s = lastSentence(p.v), lamp = lightOf(p)
+  return <Display w={w} h={h} label="The body" does="The body that speaks, with its light; the voice it speaks in; and the feeling K-E-V chose for the last sentence.">
+    <circle cx={12} cy={20} r={4} fill={lamp === 'lit' ? 'var(--dp-value)' : 'none'} stroke={lamp === 'unknown' ? 'var(--text-faint)' : 'var(--dp-value)'} strokeWidth={1.2} />
+    <text x={22} y={24} className="dp-ink" style={{fontSize: 11.5, fontWeight: 600}}>{b === undefined ? NONE : BODY_LABEL[b]}</text>
+    <text x={8} y={44} className="dp-axis">voice</text>
+    <text x={8} y={58} className="dp-ink-dim">{strOf(p.v, 'voice.voice') ?? NONE}</text>
+    <text x={8} y={82} className="dp-axis">the last sentence</text>
+    <rect x={8} y={88} width={w - 16} height={16} className="dp-fill" opacity={s ? .25 + .6 * clampTo(0, 1, s.intensity ?? .5) : .08} />
+    <text x={12} y={100} className="dp-ink">{s ? s.emotion ?? 'no affect' : NONE}{s?.intensity !== undefined ? ` ${Math.round(s.intensity * 100)}%` : ''}</text>
+    {!s && <text x={8} y={h - 10} className="dp-ink-dim" style={{fontSize: 8}}>Nothing spoken yet</text>}
+  </Display>
 }
 
 /** A sentence of the turn for the widget: the last one, with its affect. */
@@ -166,31 +185,34 @@ export const design: DesignedDevice = {
   },
 
   folded: p => { const b = bodyOf(p.v)
-    return <Folded title="Voice" light={lightOf(p)} readings={[b === undefined ? NONE : BODY_LABEL[b], strOf(p.v, 'voice.voice') ?? NONE]} onUnfold={p.nav.unfold} /> },
+    return <Folded title="Voice" light={lightOf(p)} readings={[strOf(p.v, 'voice.voice') ?? NONE, b === undefined ? NONE : BODY_LABEL[b]]} onUnfold={p.nav.unfold} /> },
 
   compact: p => { const c = controls(p)
     return <Panel title="Voice" view="compact" light={lightOf(p)} onFold={p.nav.fold} onFull={p.nav.full} onSelect={p.nav.select}>
-      <Section width={152}><Display w={140} h={146} label="The last turn" does={DISPLAY_DOES}><TurnDisplay v={p.v} w={140} h={146} /></Display></Section>
-      <Section label="Macros" cols={2}>{c.bodyChooser}{c.speed}{c.mouthChooser}{c.interrupt(true)}</Section>
+      <Section width={152}><BodyWell p={p} w={140} h={146} /></Section>
+      <Section label="Macros" cols={2}>{c.bodyChooser}{c.speed}{c.mouthChooser}{c.interrupt('Interrupt')}</Section>
     </Panel> },
 
-  whole: p => { const c = controls(p), w = wide(p) ? Math.round(clampTo(186, p.room!.w - 640, 460)) : 186
+  whole: p => { const c = controls(p), w = wide(p) ? Math.round(clampTo(194, p.room!.w - 560, 460)) : 194, support = (k: string) => SUPPORT[strOf(p.v, k) ?? 'unknown']
     return <Panel title="Voice" view="whole" light={lightOf(p)} onFold={p.nav.fold} onFull={p.nav.full}>
       <Band>
-        <Section width={w + 12}><Display w={w} h={146} label="The last turn" does={DISPLAY_DOES} corner={strOf(p.v, 'voice.voice')}><TurnDisplay v={p.v} w={w} h={146} /></Display></Section>
-        <Section label="Body" width={124}>{c.body(true)}</Section>
-        <Section label="Voice" width={124}>{c.voice}{c.speed}</Section>
-        <Section label="Mouth" grow>{c.mouth(true)}{c.affect}</Section>
+        <Section width={w + 12}><Display w={w} h={146} label="The last spoken turn" does={DISPLAY_DOES} corner={strOf(p.v, 'voice.voice')}><TurnDisplay v={p.v} w={w} h={146} /></Display></Section>
+        <Section label="Body" cols={2} grow>
+          <div style={{gridRow: 'span 2', width: '100%'}}>{c.body}</div>
+          {c.voice}
+          {c.speed}
+        </Section>
       </Band>
       <Band>
-        <Section label="Turn-taking" width={96}>{c.interrupt(true)}</Section>
-        <Section label="Privacy" width={104}>{c.egress}{c.console}</Section>
-        <Section label="The body" cols={3} grow>
-          <Readout label="duplex" does="Whether the body hears while it speaks." value={SUPPORT[strOf(p.v, 'body.duplex') ?? 'unknown']} />
-          <Readout label="barge-in" does="Whether you can talk over it." value={SUPPORT[strOf(p.v, 'body.bargeIn') ?? 'unknown']} />
-          <Readout label="stop" does="Whether it can stop mid-sentence." value={SUPPORT[strOf(p.v, 'body.interrupt') ?? 'unknown']} />
-          <Readout label="latency" does="From the end of a sentence's text to its first sound." value={numOf(p.v, 'body.latencyMs') === undefined ? undefined : `${numOf(p.v, 'body.latencyMs')} ms`} tone="value" />
-          <Readout label="receipt" does="The last turn's receipt." value={strOf(p.v, 'body.receipt')} />
+        <Section label="Mouth" width={104}>{c.mouth}{c.affect}</Section>
+        <Section label="Interrupt" width={96}>{c.interrupt()}</Section>
+        <Section label="The body" cols={2} grow>
+          {c.console}
+          <Readout label="latency" does="How long a sentence takes to start sounding." value={numOf(p.v, 'body.latencyMs') === undefined ? undefined : `${numOf(p.v, 'body.latencyMs')} ms`} tone="value" />
+          <Readout label="hears" does="Whether the body hears while it speaks." value={support('body.duplex')} />
+          <Readout label="talk over" does="Whether you can talk over it." value={support('body.bargeIn')} />
+          <Readout label="stops" does="Whether it can stop in the middle of a sentence." value={support('body.interrupt')} />
+          <Readout label="receipt" does="The last spoken turn's receipt." value={strOf(p.v, 'body.receipt')} />
         </Section>
       </Band>
     </Panel> },
@@ -206,12 +228,11 @@ export const design: DesignedDevice = {
       </svg>
     </div> },
 
-  widget: p => { const s = lastSentence(p.v), b = bodyOf(p.v)
+  widget: p => { const s = lastSentence(p.v), lines = s ? s.text.match(/.{1,26}(\s|$)/g)?.slice(0, 4) ?? [] : []
     return <Tile title="Voice" light={lightOf(p)} span={2} onFull={p.nav.full}>
-      <Display w={150} h={100} label="The last turn" does={DISPLAY_DOES}><TurnDisplay v={p.v} w={150} h={100} phones={false} /></Display>
-      <div className="ref-tile-side">
-        <Readout label="body" value={b === undefined ? undefined : BODY_LABEL[b]} tone="value" />
-        <Readout label="feeling" value={s?.emotion} />
-      </div>
+      <Display w={150} h={64} label="The last sentence" does="The last sentence the agent spoke.">
+        {s ? lines.map((line, i) => <text key={i} x={6} y={16 + i * 12} className="dp-ink">{line.trim()}</text>)
+          : <text x={75} y={36} textAnchor="middle" className="dp-ink-dim">{NONE}</text>}
+      </Display>
     </Tile> },
 }

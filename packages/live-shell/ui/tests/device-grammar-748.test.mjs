@@ -5,7 +5,7 @@
 // chain" — Live 12.0.25 AreMacroControlsVisible, IsBranchesListVisible, AreDevicesVisible, devices/racks-session-model.md §1.2); chain
 // order and drag (§16.1, §16.2, §19.23, §21.5: where the order is the person's, the owner's chain operation writes it; elsewhere a move is
 // refused in the chain's own words, or names the operation it waits for); the pads where §16 gives them a job (§16.8, §18.2 Moves, §19.22);
-// and the Agent's face (§19.4: Hears and Speaks at the face's lower corners; the Context page's Git row to Files' Diff page).
+// and the Agent's face (§19.4: Hears and Speaks at the face's lower corners; Context is AIKit's instrument's page, §19.26).
 // Channel: SCRIPTED — the catalogue's designs rendered to static markup on their own defaults and fixtures, and the bindings' pure parts.
 // Loader as factory-design-binding.test.mjs.
 import test from 'node:test'
@@ -226,20 +226,25 @@ test('the Agent\'s face: Whole draws Hears and Speaks at the face\'s lower corne
   assert.equal(all(pane, n => has(n, 'an-mark')).length, 3)
 })
 
-test('the Agent\'s Context page has a Git row: the session\'s repository, and a press that opens Files\' Diff page', async () => {
+// REPLACED (§19.4 "Pages Run, Identity and Type… The Voice, Custody, Grants and Context pages leave the Agent"; §19.26 AIKit's
+// instrument "Context"): the Context page is AIKit's instrument's, and neither draws a Git row — the manual names none.
+test('the Agent keeps no Context page: Context stands on AIKit\'s instrument, its pressure and the last turn, and no Git row on either', () => {
   const d = agentDesign()
   const v = {...d.defaults, 'ctx.git': JSON.stringify({branch: 'dlw/build-lane', uncommitted: 3, repo: 'o-i'})}
-  const tree = draw(d.whole(props(d, {v, owner: v, page: 'context', frame: 'flip'})))
-  const git = find(tree, n => n.attrs?.['data-git-row'] !== undefined)
-  assert.ok(git, 'a Git row')
-  assert.match(text(git), /dlw\/build-lane/)
-  assert.match(text(git), /3/)
-  assert.ok(find(git, n => n.tag === 'button' && /Diff/.test(n.attrs['aria-label'] ?? text(n))), 'the row leads to the Diff page')
-  // Absent, the row says why in the owner's words (the standing's reason on the Info line).
-  const why = 'This session works in your world\'s root register, which keeps no repository.'
-  const none = {...d.defaults, 'ctx.git': undefined}
-  const absent = draw(d.whole(props(d, {v: none, owner: none, page: 'context', frame: 'flip', standing: {'ctx.git': {disabled: why}}})))
-  assert.ok((find(absent, n => n.attrs?.['data-git-row'] !== undefined)?.attrs['data-i'] ?? '').includes('root register'))
+  const run = draw(d.whole(props(d, {v, owner: v, page: 'context', frame: 'flip'})))
+  assert.deepEqual(all(run, n => n.attrs?.role === 'tab').map(n => n.attrs['data-page']), ['agent', 'identity', 'type'])
+  assert.equal(find(run, n => n.attrs?.['data-git-row'] !== undefined), null, 'the Agent draws no Git row')
+  const aikit = designs['ai-kit:ai-kit']
+  // REPLACED (§19.26 "AIKit's instrument stands only in a pane and on the rail, so it has two views, Full and Widget"; its Context page
+  // holds, "for the agent you choose: the pressure and the last turn's blocks, what entered and what was withheld"): Context is a page of
+  // its Full, the readings in the pane's head and the last turn's blocks under the picture.
+  const context = draw(aikit.full(props(aikit, {page: 'context', frame: 'pane'})))
+  assert.ok(find(context, n => has(n, 'mon-head')), 'AIKit\'s Context stands under a monitor\'s head')
+  assert.match(text(context), /prompts/)
+  assert.match(text(context), /moderate/)
+  assert.match(text(context), /Receipts of the last edits/)
+  assert.match(text(context), /withheld/)
+  assert.equal(find(context, n => n.attrs?.['data-git-row'] !== undefined), null, 'AIKit\'s Context draws no Git row')
 })
 
 test('the Agent\'s Git reading, on both chains: the session\'s repository laid in as ctx.git, and why it is absent from the world scope', async () => {
