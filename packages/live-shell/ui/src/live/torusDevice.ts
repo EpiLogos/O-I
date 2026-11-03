@@ -13,13 +13,17 @@ import type {DeviceDeclaration, SdkParamRow} from '../inhabitants/sdk/define'
 import type {DeviceInstance, ParamValue} from '../frame/devices/deviceRuntime'
 import type {DesignBinding, Standing, Value, ValueChange} from '../frame/devices/designed'
 import {qlInstrumentEdit, qlPresentation, QL_PRESENTATION_KEYS, QL_WRITE_PATH} from '../inhabitants/ql/devices/qlDevices'
-import {commitLiveInstrumentEdit, liveInstrumentWritable, liveTorusMacroRows, LIVE_TORUS_TOPOLOGY, type LiveTorusParameters, type LiveTorusState} from './torusInstrument'
+import {commitLiveInstrumentEdit, liveInstrumentWritable, liveTorusMacroRows, LIVE_TORUS_TOPOLOGY, type LiveTorusState,
+  torusSessionOf, TORUS_RATE, TORUS_FUNDAMENTAL, TORUS_POLYPHONY, TORUS_TEMPO, TORUS_TUNINGS, TORUS_SHAPES, TORUS_TUNING_WORD, TORUS_SHAPE_WORD, TORUS_BAND_WORD, TORUS_NOTE_LENGTHS, torusSessionEdit, type TorusSession, type TorusSettingsEdit} from './torusInstrument'
 import type {FrameInstrumentCondition, FrameStageReading, InstrumentEdit} from '@epilogos/expressions-boundary'
 import {hostedChrome} from '../projections/expressionsPaneHost'
 import {qlRackState, rackPage, type QlRackState} from '../inhabitants/ql/devices/qlRack'
 import {handsFor, heldFor, hold as holdDesign} from '../techne/devices/designDevices'
 import type {StageRun} from '../components/expressions/studio/StudioStage'
 import {bodyTable, coordinateNames, NO_CONDITION, tattvaBody, tattvaKeys, type BodySource, type BodyTable, type CoordinateName} from '../inhabitants/ql/devices/qlCoordinateName'
+
+// The session's law (its ranges and its `torus` edit) is torusInstrument.ts's, so the MIDI map reaches it without this device's faces.
+export {torusSessionOf, TORUS_RATE, TORUS_FUNDAMENTAL, TORUS_POLYPHONY, TORUS_TEMPO, TORUS_TUNINGS, TORUS_SHAPES, TORUS_TUNING_WORD, TORUS_SHAPE_WORD, TORUS_BAND_WORD, TORUS_NOTE_LENGTHS, torusSessionEdit, type TorusSession, type TorusSettingsEdit}
 
 export const TORUS_DEVICE_ID = 'live:m1-torus'
 
@@ -231,35 +235,21 @@ export function torusDesignValues(state: LiveTorusState | null): Record<string, 
 // the Torus opened, Tuning (Logic, Maqām or Sky, only what the scene holds resident) and Polyphony with the notes the owner counts. The
 // frame announces the session as parameters.torus (instrumentAnnouncement.mjs) and takes the stage channel's `torus` edit
 // (stageCommands.ts TorusSettingsEdit), which the frame sends to QL as torus-set; what the binding shows is the owner's reply, read back.
+// The tempo Sync steps to is the set's (the transport's Tempo): the chain keeps the owner's on it (followSetTempoOnTorus), as it keeps
+// the Delay's, so here it is a reading.
 
-/** The owner's session as the boundary validated it, or null while the frame announces none. */
-export type TorusSession = NonNullable<NonNullable<LiveTorusParameters>['torus']>
-export type TorusSettingsEdit = Extract<InstrumentEdit, {kind: 'torus'}>['edit']
-export const torusSessionOf = (state: LiveTorusState | null): TorusSession | null => (state !== null && state.ok ? state.parameters?.torus ?? null : null)
-
-/** The manual's ranges (§21.2 Parameters), which the controls draw; QL refuses outside them in its own words. */
-export const TORUS_RATE = {min: 1 / (365.25 * 86_400), max: 40_000, default: 2.5} as const
-export const TORUS_FUNDAMENTAL = {min: 20, max: 2000} as const
-export const TORUS_POLYPHONY = {min: 1, max: 32, default: 16} as const
-export const TORUS_TEMPO = {min: 20, max: 999} as const
-export const TORUS_TUNINGS = ['logic', 'maqam', 'sky'] as const
-export const TORUS_SHAPES = ['auto', 'sequence', 'torus', 'figure-eight', 'spiral', 'klein-bottle'] as const
-export const TORUS_TUNING_WORD: Readonly<Record<(typeof TORUS_TUNINGS)[number], string>> = {logic: 'Logic', maqam: 'Maqām', sky: 'Sky'}
-export const TORUS_SHAPE_WORD: Readonly<Record<(typeof TORUS_SHAPES)[number], string>> = {auto: 'Auto', sequence: 'Sequence', torus: 'Torus', 'figure-eight': 'Figure-eight', spiral: 'Spiral', 'klein-bottle': 'Klein bottle'}
-export const TORUS_BAND_WORD: Readonly<Record<TorusSession['band'], string>> = {cosmic: 'Cosmic', breath: 'Breath', rhythm: 'Rhythm', pitch: 'Pitch', beyond: 'Beyond'}
-/** The Sync note lengths Rate offers, 1/64 to 8 bars. */
-export const TORUS_NOTE_LENGTHS = ['1/64', '1/32', '1/16', '1/8', '3/16', '1/4', '3/8', '1/2', '3/4', '1/1', '2/1', '4/1', '8/1'] as const
 
 const NO_SESSION = 'The native field announces no Torus session yet: QL\'s torus-state has not answered (the frame reads it while the instrument follows)'
 /** The session's keys the binding writes as the owner's `torus` edit. */
-export const TORUS_SESSION_KEYS: ReadonlySet<string> = new Set(['rate', 'rate.mode', 'rate.note', 'tempo', 'fundamental', 'fundamental.source', 'carrier', 'shape', 'tuning', 'polyphony'])
+export const TORUS_SESSION_KEYS: ReadonlySet<string> = new Set(['rate', 'rate.mode', 'rate.note', 'fundamental', 'fundamental.source', 'carrier', 'shape', 'tuning', 'polyphony'])
 /** The session's readings, and what each is. */
 const TORUS_SESSION_READINGS: Readonly<Record<string, string>> = {
   band: 'A reading: the band the pulse stands in, by its rate (Cosmic below one step in a thousand seconds, Breath below one every two seconds, Rhythm below 20 a second, Pitch to 20,000, then Beyond).',
   figure: 'A reading: the figure the torus shows, as the owner gives it. Shape sets it.',
   comma: 'A reading: the comma gathered since the Torus opened, one Pythagorean comma (23.46 cents) for each full return of the pulse. You read it; you do not set it.',
   notes: 'A reading: the notes the owner counts. Polyphony sets how many may sound.',
-  'carrier.drive': 'The owner\'s word for the Carrier\'s drive: the pulse driving the body between strikes needs the native carrier (QL-MEF issue 287), so the body sounds only when struck.',
+  'carrier.drive': 'The owner\'s word for the Carrier\'s drive. Under the pulse, each step of the pulse drives the body between strikes by the Carrier\'s share of an event\'s excitation (QL\'s native carrier).',
+  tempo: 'A reading: the set\'s tempo, from the transport, which Sync steps one note length at. The transport is where it changes.',
   'tuning.resident': 'A reading: the tunings this scene holds voices for.',
 }
 
@@ -278,51 +268,25 @@ export function torusSessionValues(session: TorusSession): Record<string, Value>
   return values
 }
 
-const inRange = (value: Value | undefined, range: {min: number; max: number}): value is number => typeof value === 'number' && Number.isFinite(value) && value >= range.min && value <= range.max
-/** The owner's `torus` edit a change of a session key names, in QL's own form, or the words for why not. Pure. */
-export function torusSessionEdit(session: TorusSession, {key, value}: ValueChange): TorusSettingsEdit {
-  const t = session.settings
-  const note = (text: Value | undefined) => {
-    const match = typeof text === 'string' ? /^(\d+)\/(\d+)$/.exec(text) : null
-    if (!match || !TORUS_NOTE_LENGTHS.includes(text as (typeof TORUS_NOTE_LENGTHS)[number])) throw new Error('A Sync rate is a note length from 1/64 to 8 bars.')
-    return {numerator: Number(match[1]), denominator: Number(match[2])}
-  }
-  switch (key) {
-    case 'rate':
-      if (!inRange(value, TORUS_RATE)) throw new Error('Rate runs from one step a year to 40,000 steps a second.')
-      return {rate: {mode: 'free', steps_per_second: value}}
-    case 'rate.mode':
-      if (value === 'free') return {rate: {mode: 'free', steps_per_second: Math.min(TORUS_RATE.max, Math.max(TORUS_RATE.min, session.steps_per_second))}}
-      if (value === 'sync') return {rate: {mode: 'sync', note: t.rate.mode === 'sync' ? {...t.rate.note} : {numerator: 1, denominator: 4}}}
-      throw new Error('Rate is Free or Sync.')
-    case 'rate.note': return {rate: {mode: 'sync', note: note(value)}}
-    case 'tempo':
-      if (!inRange(value, TORUS_TEMPO)) throw new Error('Tempo takes 20 to 999 BPM.')
-      return {tempo_bpm: value}
-    case 'fundamental':
-      if (!inRange(value, TORUS_FUNDAMENTAL)) throw new Error('Fundamental takes 20 to 2,000 Hz, or Map.')
-      return {fundamental: {source: 'hz', hz: value}}
-    case 'fundamental.source':
-      if (value === 'map') return {fundamental: {source: 'map'}}
-      if (value === 'hz') return {fundamental: {source: 'hz', hz: Math.min(TORUS_FUNDAMENTAL.max, Math.max(TORUS_FUNDAMENTAL.min, session.fundamental_hz))}}
-      throw new Error('Fundamental is Map or a frequency.')
-    case 'carrier':
-      if (!inRange(value, {min: 0, max: 100})) throw new Error('Carrier takes 0 to 100 %.')
-      return {carrier: Math.round(value * 10) / 1000}
-    case 'shape':
-      if (!TORUS_SHAPES.includes(value as (typeof TORUS_SHAPES)[number])) throw new Error('Shape is Auto, Sequence, Torus, Figure-eight, Spiral or Klein bottle.')
-      return {shape: value as (typeof TORUS_SHAPES)[number]}
-    case 'tuning': {
-      const tuning = value as (typeof TORUS_TUNINGS)[number]
-      if (!TORUS_TUNINGS.includes(tuning)) throw new Error('Tuning is Logic, Maqām or Sky.')
-      if (!session.resident_tunings.includes(tuning)) throw new Error(`This scene holds no ${TORUS_TUNING_WORD[tuning]} voices: its event admits none (QL scene_field.rs resident tunings).`)
-      return {tuning}
-    }
-    case 'polyphony':
-      if (!inRange(value, TORUS_POLYPHONY) || !Number.isInteger(value)) throw new Error('Polyphony takes 1 to 32 notes.')
-      return {polyphony: value}
-  }
-  throw new Error(`${key}: no setting of the Torus's session.`)
+
+/** The owner's session kept on the set's tempo: the `torus` edit that brings the owner's tempo to the set's (the transport's reading, to
+ * the hundredth), or null when it already is, when the set states no tempo or one outside the owner's 20 to 999 BPM, or when there is no
+ * session or the owner takes no edit now. Pure. */
+export function torusTempoEdit(state: LiveTorusState | null, tempoBpm: number | null): Extract<InstrumentEdit, {kind: 'torus'}> | null {
+  const session = torusSessionOf(state)
+  if (!session || !liveInstrumentWritable(state) || tempoBpm === null || !Number.isFinite(tempoBpm)) return null
+  const value = Math.round(tempoBpm * 100) / 100
+  if (session.settings.tempo_bpm === value) return null
+  try { return {kind: 'torus', edit: torusSessionEdit(session, {key: 'tempo', value})} } catch { return null }
+}
+
+/** Bring the owner's session to the set's tempo when it is not already there, so a tempo change moves the pulse under Sync. */
+export async function followSetTempoOnTorus(state: LiveTorusState | null, tempoBpm: number | null,
+  commit: (edit: InstrumentEdit) => Promise<{ok: boolean; error?: string}> = commitLiveInstrumentEdit): Promise<void> {
+  const edit = torusTempoEdit(state, tempoBpm)
+  if (!edit) return
+  const result = await commit(edit)
+  if (!result.ok) throw new Error(result.error ?? 'The native field refused the set\'s tempo.')
 }
 
 /** The session groups on the binding: the owner's values and standing, the keys it takes now, and its one write (the `torus` edit). */

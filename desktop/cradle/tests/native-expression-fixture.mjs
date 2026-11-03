@@ -69,13 +69,14 @@ export class ControlledAudio {
 export class ControlledSceneOwner {
  state={tick12:7,cycle:1,revision:0,lens12:11,context_frame:7,harmonic:{selection:'canonical-basis',index:3},rna:false,generation:1n,m2:1};
  frame=null; sequence=0n; calls=[]; closed=false; active=false; inFlight=0; maxInFlight=0; delay=null; refuse=null;
- /** The Torus's M1′ session as a controlled owner keeps it (O-I #850): protocol numbers only, never QL's pulse law. */
- torusSettings={rate:{mode:'free',steps_per_second:2.5},fundamental:{source:'map'},carrier:0,shape:'auto',tuning:'sky',polyphony:16,tempo_bpm:120};
+ /** The Torus's M1′ session as a controlled owner keeps it (O-I #850): protocol numbers only, never QL's pulse law. A new
+  * Torus opens under Logic, as QL's does (scene_field.rs); a test that reads the sky's voices sets Sky, as a saved sound would. */
+ torusSettings={rate:{mode:'free',steps_per_second:2.5},fundamental:{source:'map'},carrier:0,shape:'auto',tuning:'logic',polyphony:16,tempo_bpm:120};
  torus(){const t=this.torusSettings,sps=t.rate.mode==='free'?t.rate.steps_per_second:t.tempo_bpm/(240*t.rate.note.numerator/t.rate.note.denominator);
   const band=sps<.001?'cosmic':sps<.5?'breath':sps<20?'rhythm':sps<=20000?'pitch':'beyond';
   return{schema:'ql.m1-prime-session/v1',settings:structuredClone(t),steps_per_second:sps,band,fundamental_hz:t.fundamental.source==='hz'?t.fundamental.hz:130.81,map_hz:130.81,
    figure:t.shape==='sequence'?null:t.shape!=='auto'?t.shape:band==='pitch'||band==='beyond'?'torus':band==='rhythm'?'figure-eight':'spiral',
-   comma_cents:this.comma??0,notes:[],polyphony:t.polyphony,carrier:{value:t.carrier,drive:'unbuilt',standing:'controlled'},resident_tunings:['logic','sky']};}
+   comma_cents:this.comma??0,notes:[],polyphony:t.polyphony,carrier:{value:t.carrier,drive:'pulse',step:t.carrier*Math.min(1,2.5/sps),standing:'controlled'},resident_tunings:['logic','sky']};}
  voices(){const s=this.state;
   // Under Logic the controlled owner sounds an octet named by its own mode refs, with no planet (QL's scene:logic/k).
   if(this.torusSettings.tuning==='logic')return Array.from({length:8},(_,k)=>({mode_ref:`scene:logic/${k}`,tuning:'logic',longitude_radians:k*0.7,frequency_hz:130.81*(1+k/7),m:1+k%4,n:2+k%3,helix:k<4?'bimba':'pratibimba',ql_position:k%4+1,weight:1,phase_radians:k}));
@@ -84,7 +85,7 @@ export class ControlledSceneOwner {
   return{schema:'ql.coupled-event-request/v1',m1:{event_ref:'controlled:scene',revision:String(s.revision),cycle:String(s.cycle),tick12:s.tick12,lens12:s.lens12,context_frame:s.context_frame,basis:'fifths',selected_coordinate:'#1-2-5',row12:3},
    m2:{stamp:{contract_ref:'ql.m2-engine-request/v1',identity,source_ref:'controlled'},resonator:null,world_observations:[{observed_at_unix_ms:1789479981163}]},
    m3:{stamp:{contract_ref:'ql.m3-state-request/v1',identity,source_ref:'controlled'},subject_ref:'controlled:subject',rna:s.rna},m3_commands:[],harmonic_source:structuredClone(s.harmonic),frequency_bindings:[],sky_frequency_bindings:[],source_receipts:[]};}
- sources(){const s=this.state,input=this.event();input.m2.resonator={provider_ref:'ql.scene-torus-provider/v1',modes:this.voices().map((v,i)=>({mode_ref:`scene:planet/${v.planet_ref}`,frequency_hz:v.frequency_hz,damping_per_second:.35}))};
+ sources(){const s=this.state,input=this.event();input.m2.resonator={provider_ref:'ql.scene-torus-provider/v1',modes:this.voices().map((v,i)=>({mode_ref:v.mode_ref??`scene:planet/${v.planet_ref}`,frequency_hz:v.frequency_hz,damping_per_second:.35}))};
   const identity={event_ref:'controlled:scene',profile_generation:s.m2};
   return{original:{input:this.original??(this.original=structuredClone(input))},current:{input,derivation:{harmonic_ratio:{ratio:[3,2]},mef_table_index:(s.lens12*6+s.tick12%6)%72,material_standing:'controlled'},
    m1:{schema:'ql.m1.engine/v1',config:structuredClone(input.m1),music:{lens:'L5′',context_frame:`CF${s.context_frame}`,mode:'Controlled'},ratio_basis:[[1,1],[4,3],[3,4],[3,2],[2,3],[2,1],[8,9],[16,9]].map(ratio=>({ratio})),carrier:{quadrature:[1,0],opposite_quadrature:[-1,0]},standing:{}},

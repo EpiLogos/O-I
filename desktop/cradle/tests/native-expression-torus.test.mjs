@@ -39,7 +39,7 @@ test('the Torus session is read from the owner, and each setting reaches QL\'s t
   await c.torusState();
   assert.equal(ops(owner,'torus-state').length,1);
   assert.equal(c.reading.instrument.torus.band,'rhythm');
-  assert.equal(c.reading.instrument.torus.settings.tuning,'sky','the scene opens under its sky');
+  assert.equal(c.reading.instrument.torus.settings.tuning,'logic','a new Torus opens under Logic, the manual\'s default');
   const before=generation(c);
   await c.torusSet({rate:{mode:'free',steps_per_second:440}});
   assert.deepEqual(ops(owner,'torus-set')[0].request.command,{operation:'torus-set',edit:{rate:{mode:'free',steps_per_second:440}}},'the owner\'s own op, the edit as given');
@@ -95,21 +95,32 @@ test('the frame announces the owner\'s Torus session as parameters.torus, and no
   assert.equal(announceInstrument(c.reading).parameters.torus,undefined,'nothing announced before the owner is read');
   await c.torusSet({fundamental:{source:'hz',hz:220},carrier:.5});
   assert.deepEqual(announceInstrument(c.reading).parameters.torus,{
-   settings:{rate:{mode:'free',steps_per_second:2.5},fundamental:{source:'hz',hz:220},carrier:.5,shape:'auto',tuning:'sky',polyphony:16,tempo_bpm:120},
+   settings:{rate:{mode:'free',steps_per_second:2.5},fundamental:{source:'hz',hz:220},carrier:.5,shape:'auto',tuning:'logic',polyphony:16,tempo_bpm:120},
    steps_per_second:2.5,band:'rhythm',fundamental_hz:220,map_hz:130.81,figure:'figure-eight',comma_cents:0,notes:0,
-   resident_tunings:['logic','sky'],carrier_drive:'unbuilt'});
+   resident_tunings:['logic','sky'],carrier_drive:'pulse'});
  }finally{await c.dispose();}
 });
 
 test('a strike at a point names the voices it struck by the owner\'s mode refs, under Logic as under Sky',async()=>{
  const {c}=await open();
  try{
-  await c.playAt([{theta:.5,phi:1}]);
-  assert.equal(c.reading.instrument.struck.refs[0],'scene:planet/#2-5-0/1','the sky\'s planets');
-  await c.torusSet({tuning:'logic'});
-  assert.equal(c.reading.instrument.acting.voices.length,8,'the scene reads the octet in force, eight voices and no planet');
+  assert.equal(c.reading.instrument.acting.voices.length,8,'a new Torus reads the octet in force, eight voices and no planet');
   assert.equal(c.reading.instrument.acting.voices[0].mode_ref,'scene:logic/0');
   await c.playAt([{theta:.5,phi:1}]);
   assert.deepEqual(c.reading.instrument.struck.refs,Array.from({length:8},(_,k)=>`scene:logic/${k}`),'the octet by its own refs, never a planet');
+  await c.torusSet({tuning:'sky'});
+  await c.playAt([{theta:.5,phi:1}]);
+  assert.equal(c.reading.instrument.struck.refs[0],'scene:planet/#2-5-0/1','the sky\'s planets');
+ }finally{await c.dispose();}
+});
+
+test('the set\'s tempo moves the pulse under Sync: the frame\'s tempo edit reaches torus-set and the rate reads back from the owner',async()=>{
+ const {owner,c}=await open();
+ try{
+  await c.torusSet({rate:{mode:'sync',note:{numerator:1,denominator:4}}});
+  assert.equal(c.reading.instrument.torus.steps_per_second,2,'a quarter note at 120 BPM: two steps a second');
+  await c.torusSet({tempo_bpm:96});
+  assert.deepEqual(ops(owner,'torus-set').at(-1).request.command,{operation:'torus-set',edit:{tempo_bpm:96}},'the set\'s tempo, as the owner\'s own edit');
+  assert.deepEqual([c.reading.instrument.torus.settings.tempo_bpm,c.reading.instrument.torus.steps_per_second],[96,1.6],'read back from the owner\'s reply');
  }finally{await c.dispose();}
 });

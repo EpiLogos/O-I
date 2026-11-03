@@ -18,6 +18,7 @@
 import {useSyncExternalStore} from 'react'
 import type {QlInstrumentReading} from '../inhabitants/ql/qlInstrumentReading'
 import type {HostedInstrument, InstrumentEdit, StageCommand, StageResult} from '@epilogos/expressions-boundary'
+import type {Value, ValueChange} from '../frame/devices/designed'
 
 /** The instrument's id on the quaternal-logic family (quaternalLogicFamilyManifest.ts `torus`). */
 export const LIVE_TORUS_ID = 'ql-m1-torus'
@@ -245,4 +246,72 @@ export function liveTorusMacroRows(state: LiveTorusState | null): LiveTorusMacro
     },
   }
   return LIVE_TORUS_MACROS.slice(0, LIVE_TORUS_MAX_MACROS).map(macro => ({macro, ...byId[macro.id]}))
+}
+
+// ── the owner's M1′ session: its ranges and the `torus` edit a change names (O-I #850; manual §21.2 Parameters). Pure: torusDevice.ts
+// draws it and the MIDI map (midiMap/midiMapTargets.ts) writes through it, both in the session's own words.
+
+/** The owner's session as the boundary validated it, or null while the frame announces none. */
+export type TorusSession = NonNullable<NonNullable<LiveTorusParameters>['torus']>
+export type TorusSettingsEdit = Extract<InstrumentEdit, {kind: 'torus'}>['edit']
+export const torusSessionOf = (state: LiveTorusState | null): TorusSession | null => (state !== null && state.ok ? state.parameters?.torus ?? null : null)
+
+/** The manual's ranges (§21.2 Parameters), which the controls draw; QL refuses outside them in its own words. */
+export const TORUS_RATE = {min: 1 / (365.25 * 86_400), max: 40_000, default: 2.5} as const
+export const TORUS_FUNDAMENTAL = {min: 20, max: 2000} as const
+export const TORUS_POLYPHONY = {min: 1, max: 32, default: 16} as const
+export const TORUS_TEMPO = {min: 20, max: 999} as const
+export const TORUS_TUNINGS = ['logic', 'maqam', 'sky'] as const
+export const TORUS_SHAPES = ['auto', 'sequence', 'torus', 'figure-eight', 'spiral', 'klein-bottle'] as const
+export const TORUS_TUNING_WORD: Readonly<Record<(typeof TORUS_TUNINGS)[number], string>> = {logic: 'Logic', maqam: 'Maqām', sky: 'Sky'}
+export const TORUS_SHAPE_WORD: Readonly<Record<(typeof TORUS_SHAPES)[number], string>> = {auto: 'Auto', sequence: 'Sequence', torus: 'Torus', 'figure-eight': 'Figure-eight', spiral: 'Spiral', 'klein-bottle': 'Klein bottle'}
+export const TORUS_BAND_WORD: Readonly<Record<TorusSession['band'], string>> = {cosmic: 'Cosmic', breath: 'Breath', rhythm: 'Rhythm', pitch: 'Pitch', beyond: 'Beyond'}
+/** The Sync note lengths Rate offers, 1/64 to 8 bars. */
+export const TORUS_NOTE_LENGTHS = ['1/64', '1/32', '1/16', '1/8', '3/16', '1/4', '3/8', '1/2', '3/4', '1/1', '2/1', '4/1', '8/1'] as const
+
+const inRange = (value: Value | undefined, range: {min: number; max: number}): value is number => typeof value === 'number' && Number.isFinite(value) && value >= range.min && value <= range.max
+/** The owner's `torus` edit a change of a session key names, in QL's own form, or the words for why not. Pure. */
+export function torusSessionEdit(session: TorusSession, {key, value}: ValueChange): TorusSettingsEdit {
+  const t = session.settings
+  const note = (text: Value | undefined) => {
+    const match = typeof text === 'string' ? /^(\d+)\/(\d+)$/.exec(text) : null
+    if (!match || !TORUS_NOTE_LENGTHS.includes(text as (typeof TORUS_NOTE_LENGTHS)[number])) throw new Error('A Sync rate is a note length from 1/64 to 8 bars.')
+    return {numerator: Number(match[1]), denominator: Number(match[2])}
+  }
+  switch (key) {
+    case 'rate':
+      if (!inRange(value, TORUS_RATE)) throw new Error('Rate runs from one step a year to 40,000 steps a second.')
+      return {rate: {mode: 'free', steps_per_second: value}}
+    case 'rate.mode':
+      if (value === 'free') return {rate: {mode: 'free', steps_per_second: Math.min(TORUS_RATE.max, Math.max(TORUS_RATE.min, session.steps_per_second))}}
+      if (value === 'sync') return {rate: {mode: 'sync', note: t.rate.mode === 'sync' ? {...t.rate.note} : {numerator: 1, denominator: 4}}}
+      throw new Error('Rate is Free or Sync.')
+    case 'rate.note': return {rate: {mode: 'sync', note: note(value)}}
+    case 'tempo':
+      if (!inRange(value, TORUS_TEMPO)) throw new Error('Tempo takes 20 to 999 BPM.')
+      return {tempo_bpm: value}
+    case 'fundamental':
+      if (!inRange(value, TORUS_FUNDAMENTAL)) throw new Error('Fundamental takes 20 to 2,000 Hz, or Map.')
+      return {fundamental: {source: 'hz', hz: value}}
+    case 'fundamental.source':
+      if (value === 'map') return {fundamental: {source: 'map'}}
+      if (value === 'hz') return {fundamental: {source: 'hz', hz: Math.min(TORUS_FUNDAMENTAL.max, Math.max(TORUS_FUNDAMENTAL.min, session.fundamental_hz))}}
+      throw new Error('Fundamental is Map or a frequency.')
+    case 'carrier':
+      if (!inRange(value, {min: 0, max: 100})) throw new Error('Carrier takes 0 to 100 %.')
+      return {carrier: Math.round(value * 10) / 1000}
+    case 'shape':
+      if (!TORUS_SHAPES.includes(value as (typeof TORUS_SHAPES)[number])) throw new Error('Shape is Auto, Sequence, Torus, Figure-eight, Spiral or Klein bottle.')
+      return {shape: value as (typeof TORUS_SHAPES)[number]}
+    case 'tuning': {
+      const tuning = value as (typeof TORUS_TUNINGS)[number]
+      if (!TORUS_TUNINGS.includes(tuning)) throw new Error('Tuning is Logic, Maqām or Sky.')
+      if (!session.resident_tunings.includes(tuning)) throw new Error(`This scene holds no ${TORUS_TUNING_WORD[tuning]} voices: its event admits none (QL scene_field.rs resident tunings).`)
+      return {tuning}
+    }
+    case 'polyphony':
+      if (!inRange(value, TORUS_POLYPHONY) || !Number.isInteger(value)) throw new Error('Polyphony takes 1 to 32 notes.')
+      return {polyphony: value}
+  }
+  throw new Error(`${key}: no setting of the Torus's session.`)
 }

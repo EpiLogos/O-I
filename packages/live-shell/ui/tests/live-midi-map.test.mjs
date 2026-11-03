@@ -141,6 +141,22 @@ test('a range runs linearly across 0–127, snapped to its own step and never pa
   assert.equal(model.rangeValue(200, units), 400, 'a value past the range clamps to its end')
 })
 
+test('a log range takes equal ratios for equal turns across 0–127, from its least to its most, four figures each', () => {
+  // The Torus's Rate spans one step a year to 40,000 a second (manual §21.2): twelve decades, which a linear knob could not reach.
+  const rate = {min: 1 / (365.25 * 86_400), max: 40_000, step: 0, curve: 'log'}
+  assert.equal(model.rangeValue(0, rate), rate.min)
+  assert.equal(model.rangeValue(127, rate), 40_000)
+  assert.equal(model.rangeValue(200, rate), 40_000, 'past the end clamps')
+  const values = Array.from({length: 128}, (_, cc) => model.rangeValue(cc, rate))
+  for (let cc = 1; cc < 128; cc += 1) assert.ok(values[cc] > values[cc - 1], `rising at ${cc}`)
+  const turn = (rate.max / rate.min) ** (1 / 127)
+  for (const cc of [1, 30, 64, 100, 126]) assert.ok(Math.abs(values[cc] / values[cc - 1] / turn - 1) < 2e-3, `one ratio a turn at ${cc}`)
+  assert.equal(String(values[64]).replace(/^0\.0*|\.|e.*$/g, '').length <= 4, true, 'four significant figures')
+  // Linear stays linear: a range that names no curve is the one it was.
+  assert.equal(model.rangeValue(64, {min: 0, max: 4, step: 0.05}), 2)
+  assert.equal(model.rangeValue(64, {min: 0, max: 4, step: 0.05, curve: 'linear'}), 2)
+})
+
 test('a toggle is on from 64, and a key flips it', () => {
   assert.equal(model.toggleValue(63), false)
   assert.equal(model.toggleValue(64), true)
@@ -203,6 +219,61 @@ test('the map offers the owner\'s parameters: the determinants, cadence, sound, 
   assert.deepEqual(offered, ['lens', 'context-frame', 'harmonic-basis', 'm3-transcription', 'cadence', 'sound', 'level', 'scale-units', tie])
   const withoutOwner = targets.mapTargets(null, chain.noteDeviceChain())
   assert.deepEqual(withoutOwner.map(t => t.id), [tie], 'with no owner reading only the note devices are offered')
+  teardown()
+})
+
+/** The owner's M1′ session as the frame announces it (instrumentAnnouncement.mjs `parameters.torus`). */
+const torusSession = (settings = {}) => ({
+  settings: {rate: {mode: 'free', steps_per_second: 2.5}, fundamental: {source: 'map'}, carrier: 0.25, shape: 'auto', tuning: 'logic', polyphony: 16, tempo_bpm: 120, ...settings},
+  steps_per_second: 2.5, band: 'rhythm', fundamental_hz: 130.81, map_hz: 130.81, figure: 'figure-eight', comma_cents: 0, notes: 0,
+  resident_tunings: ['logic', 'sky'], carrier_drive: 'pulse',
+})
+
+test('the Torus\'s Carrier and Fundamental are linear map targets and its Rate a log one, each the owner\'s value and its own torus edit', async () => {
+  // O-I 850: the compact's macros (manual §21.2) take a control; Damping does not (the owner reads no Q).
+  const sent = session({state: okState(determinants(), parameters({torus: torusSession()}))})
+  const offered = targets.mapTargets(torus.liveTorusState(), [])
+  const byId = id => offered.find(t => t.id === id)
+  assert.deepEqual(offered.filter(t => ['rate', 'fundamental', 'carrier', 'damping'].includes(t.id)).map(t => t.id), ['rate', 'fundamental', 'carrier'])
+  const rate = byId('rate'), fundamental = byId('fundamental'), carrier = byId('carrier')
+  assert.deepEqual([rate.kind, rate.range.curve, rate.range.min, rate.range.max, rate.current], ['range', 'log', 1 / (365.25 * 86_400), 40_000, 2.5])
+  assert.deepEqual([fundamental.range.curve ?? 'linear', fundamental.range.min, fundamental.range.max, fundamental.current], ['linear', 20, 2000, 130.81])
+  assert.deepEqual([carrier.range.curve ?? 'linear', carrier.range.min, carrier.range.max, carrier.current], ['linear', 0, 100, 25], 'Carrier in percent, as its face reads it')
+  assert.ok([rate, fundamental, carrier].every(t => t.writer === 'owner'))
+  await model.applyMapValue(rate, model.controlValue(rate, 127))
+  await model.applyMapValue(fundamental, model.controlValue(fundamental, 127))
+  await model.applyMapValue(carrier, model.controlValue(carrier, 64))
+  assert.deepEqual(sent, [
+    {command: 'instrument', edit: {kind: 'torus', edit: {rate: {mode: 'free', steps_per_second: 40_000}}}},
+    {command: 'instrument', edit: {kind: 'torus', edit: {fundamental: {source: 'hz', hz: 2000}}}},
+    {command: 'instrument', edit: {kind: 'torus', edit: {carrier: 0.504}}},
+  ])
+  // A value the owner refuses by its own law comes back named, never thrown.
+  assert.deepEqual(await rate.apply(0), {ok: false, error: 'Rate runs from one step a year to 40,000 steps a second.'})
+  // An accepted torus edit clears the refusals of the targets it moved.
+  assert.deepEqual(targets.mapTargetIdsOfEdit({kind: 'torus', edit: {rate: {mode: 'free', steps_per_second: 4}, carrier: 0.5}}), ['rate', 'carrier'])
+  assert.deepEqual(targets.mapTargetIdsOfEdit({kind: 'torus', edit: {fundamental: {source: 'map'}, tuning: 'sky'}}), ['fundamental'])
+  assert.deepEqual(targets.mapTargetIdsOfEdit({kind: 'damping', q_factor: 40}), [])
+  // No session, or an owner that takes no edit now: nothing of the Torus is offered.
+  session({state: okState()})
+  assert.equal(targets.mapTargets(torus.liveTorusState(), []).some(t => ['rate', 'fundamental', 'carrier'].includes(t.id)), false)
+  session({state: {...okState(determinants(), parameters({torus: torusSession()})), value: reading('manual')}})
+  assert.equal(targets.mapTargets(torus.liveTorusState(), []).some(t => ['rate', 'fundamental', 'carrier'].includes(t.id)), false)
+  teardown()
+})
+
+test('on the chain in map mode the Torus\'s Rate, Fundamental and Carrier open for a mapping; Damping stands dimmed, naming why it is not one', () => {
+  session({state: okState(determinants(), parameters({torus: torusSession()}))})
+  hold.setMapMode('midi')
+  const rack = renderToStaticMarkup(createElement(onChain.TorusOnChain, {state: torus.liveTorusState()}))
+  for (const id of ['rate', 'fundamental', 'carrier']) {
+    assert.match(rack, new RegExp(`data-midi-target="${id}"[^>]*data-midi-open="yes"[^>]*data-midi-unmapped="no"`), `${id}: open for a mapping`)
+  }
+  assert.match(rack, /data-midi-target="damping"[^>]*data-midi-open="yes"[^>]*data-midi-unmapped="yes"/, 'Damping: dimmed')
+  assert.match(rack, /data-midi-unmapped-why="damping"[^>]*>Damping is not mappable yet: the owner keeps the decay rate, not the Q you set/)
+  hold.setMapMode('off')
+  const off = renderToStaticMarkup(createElement(onChain.TorusOnChain, {state: torus.liveTorusState()}))
+  assert.doesNotMatch(off, /data-midi-unmapped-why/, 'with the map off it says nothing')
   teardown()
 })
 

@@ -20,7 +20,7 @@ import {DeviceView} from '../frame/devices/DeviceView'
 import {publishDevice, selectDevice} from '../frame/devices/deviceDoor'
 import {DEVICE_PANE_KIND} from '../frame/devices/devicePane'
 import {openInstrument} from '../frame/instrumentDoor'
-import {TORUS_DESIGN_ID, TORUS_DEVICE, TORUS_DEVICE_ID, torusBodyEdit, torusBodySourceOf, torusDesignBinding, torusDevice, torusFigure, torusTone, type TorusFigureSize} from './torusDevice'
+import {followSetTempoOnTorus, torusTempoEdit, TORUS_DESIGN_ID, TORUS_DEVICE, TORUS_DEVICE_ID, torusBodyEdit, torusBodySourceOf, torusDesignBinding, torusDevice, torusFigure, torusTone, type TorusFigureSize} from './torusDevice'
 import {commitLiveInstrumentEdit, LIVE_TORUS_ABSENT_REASON, liveInstrumentWritable, useLiveTorusReading, type LiveTorusState} from './torusInstrument'
 import {JankoDevice} from './janko/JankoDevice'
 import {useKeyboardLayout} from './keyboardLayout'
@@ -107,9 +107,21 @@ export function useTorusChainBinding(state: LiveTorusState | null, device: Devic
     [state, device, plan, stage, rack, run, held, condition, tattvaName, table])
 }
 
-export function TorusOnChain({state}: {state: LiveTorusState}) {
+/** The torus on the chain. `tempoBpm` is the set's tempo (the transport's reading): the owner's session is kept on it, so a tempo
+ * change moves the pulse under Sync (DLW §21.2 Rate), as the Delay's is kept on it (designBindings/TorusEffectsOnChain.tsx). */
+export function TorusOnChain({state, tempoBpm = null}: {state: LiveTorusState; tempoBpm?: number | null}) {
   const device = useMemo(() => torusDevice(state), [state])
   const binding = useTorusChainBinding(state, device)
+  // Once per tempo: a refused one is not sent again until the set's tempo or the owner's moves (the owner's refusal stands on its
+  // reading), and an accepted one reads back equal, so nothing more is sent.
+  const followedTempo = useRef<number | null>(null)
+  useEffect(() => {
+    const edit = torusTempoEdit(state, tempoBpm)
+    if (!edit) { followedTempo.current = null; return }
+    if (edit.edit.tempo_bpm === followedTempo.current) return
+    followedTempo.current = edit.edit.tempo_bpm ?? null
+    followSetTempoOnTorus(state, tempoBpm).catch(() => { /* named on the owner's reading */ })
+  }, [state, tempoBpm])
   useEffect(() => {
     publishDevice(TORUS_DEVICE_ID, {device, binding, picture: size => <TorusPicture state={state} size={size} />, full: {draw: () => <TorusFull />}})
   }, [device, binding, state])

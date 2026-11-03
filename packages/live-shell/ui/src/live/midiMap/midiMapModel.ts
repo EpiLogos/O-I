@@ -3,7 +3,8 @@
 // parameter's own write (midiMapTargets.ts), which is the one write path (commitLiveInstrumentEdit, or the note-device setter).
 //
 // Choices (lens 0–11, context frame 1–7, and the other owner options) take the 0–127 range evenly: each option owns an equal slice of
-// it. Toggles are on from 64. Ranges (level, scale units) run linearly across 0–127, snapped to the control's own step.
+// it. Toggles are on from 64. Ranges (level, scale units) run linearly across 0–127, snapped to the control's own step; a range that
+// spans decades (the Torus's Rate, one step a year to 40,000 a second) runs on a log curve, equal ratios for equal turns.
 
 import type {StageResult} from '@epilogos/expressions-boundary'
 import {COMPUTER_KEY_PITCH} from '../janko/jankoInput'
@@ -45,13 +46,22 @@ export interface ToggleTarget {
   readonly apply: (value: boolean) => Promise<StageResult>
 }
 
+/** A range's span. Linear (the default) snaps to `step`; a log curve (min above zero) takes equal ratios for equal turns and keeps four
+ * significant figures, so `step` is not read. */
+export interface MapRange {
+  readonly min: number
+  readonly max: number
+  readonly step: number
+  readonly curve?: 'linear' | 'log'
+}
+
 export interface RangeTarget {
   readonly kind: 'range'
   readonly id: string
   readonly label: string
   readonly group: string
   readonly writer: MapWriter
-  readonly range: {readonly min: number; readonly max: number; readonly step: number}
+  readonly range: MapRange
   readonly current: number | null
   readonly apply: (value: number) => Promise<StageResult>
 }
@@ -70,8 +80,15 @@ export function choiceIndex(value: number, count: number): number {
   return Math.min(count - 1, Math.floor((clamp(value, 0, 127) * count) / 128))
 }
 
-/** A range's value for a control value: linear across the range, snapped to its step, never past its ends. */
-export function rangeValue(value: number, range: {readonly min: number; readonly max: number; readonly step: number}): number {
+/** A range's value for a control value: linear across the range, snapped to its step, or on a log curve, equal ratios for equal turns
+ * to four significant figures; never past its ends, and 0 and 127 its very ends. */
+export function rangeValue(value: number, range: MapRange): number {
+  if (range.curve === 'log') {
+    const turn = clamp(value, 0, 127) / 127
+    if (turn === 0) return range.min
+    if (turn === 1) return range.max
+    return clamp(Number((range.min * (range.max / range.min) ** turn).toPrecision(4)), range.min, range.max)
+  }
   const raw = range.min + ((range.max - range.min) * clamp(value, 0, 127)) / 127
   const snapped = Math.min(range.max, range.min + Math.round((raw - range.min) / range.step) * range.step)
   return Number(snapped.toFixed(6))

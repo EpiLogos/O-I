@@ -25,7 +25,8 @@ function renderer(){
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const ops=(owner,name)=>owner.calls.filter(c=>c.request?.command?.operation===name);
 async function open(options={}){
- const owner=new ControlledSceneOwner(),audio=new ControlledAudio(),r=renderer(),c=new NativeFieldController(owner,r,()=>audio);
+ // These tests read the sky's own voices, so the scene opens as a saved sound under Sky would; a new Torus opens under Logic.
+ const owner=new ControlledSceneOwner(),audio=new ControlledAudio(),r=renderer(),c=new NativeFieldController(owner,r,()=>audio);owner.torusSettings.tuning='sky';
  await c.compose({sky:'none',...options});return{owner,audio,r,c};
 }
 /** Let presented time follow scheduled time, as a running device would. */

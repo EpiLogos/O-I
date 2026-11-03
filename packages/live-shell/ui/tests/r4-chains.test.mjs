@@ -148,7 +148,7 @@ test('Live: the chain mounts the part\'s input, the note devices, the torus; no 
   assert.equal(live.KEYBOARD_DEVICE_ID, undefined)
   const text = await source('live/LiveDeviceChain.tsx')
   assert.ok(!text.includes('KeyboardOnChain />'), 'no keyboard plate')
-  const input = text.indexOf('<PartInput />'), notes = text.indexOf('<NoteDeviceChain />'), torus = text.indexOf('<TorusOnChain state={torus} />')
+  const input = text.indexOf('<PartInput />'), notes = text.indexOf('<NoteDeviceChain />'), torus = text.indexOf('<TorusOnChain state={torus}')
   assert.ok(input > 0 && notes > input && torus > notes)
   const part = await source('live/KeyboardOnChain.tsx')
   assert.doesNotMatch(part, /<DeviceView |usePublishedDevice/, 'the input is no device')

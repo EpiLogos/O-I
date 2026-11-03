@@ -4,9 +4,9 @@
 //
 // O-I #850, the Torus as QL designs it: the pulse, its rate and band, the Fundamental, Carrier, Shape and its figure, the Comma, Tuning
 // and Polyphony are QL's M1′ session (QL-MEF m1_prime.rs; the frame's parameters.torus, written as the stage channel's `torus` edit). Keys:
-// rate.mode ('free' | 'sync'), rate (steps a second, the owner's in either mode), rate.note ('n/d' under Sync), tempo (BPM), band (a
-// reading), fundamental.source ('map' | 'hz'), fundamental (Hz), carrier (0..100 %), carrier.drive (the owner's word: 'unbuilt' until the
-// native carrier, QL-MEF #287), shape ('auto' | 'sequence' | 'torus' | 'figure-eight' | 'spiral' | 'klein-bottle'), figure (a reading),
+// rate.mode ('free' | 'sync'), rate (steps a second, the owner's in either mode), rate.note ('n/d' under Sync), tempo (BPM, a reading: the
+// set's, from the transport), band (a reading), fundamental.source ('map' | 'hz'), fundamental (Hz), carrier (0..100 %), carrier.drive
+// (the owner's word: 'pulse', each step of the pulse driving the body), shape ('auto' | 'sequence' | 'torus' | 'figure-eight' | 'spiral' | 'klein-bottle'), figure (a reading),
 // comma (cents, a reading), tuning ('logic' | 'maqam' | 'sky'), tuning.resident (the tunings the scene holds, JSON), polyphony (1..32),
 // notes (a reading). The retired Pulse mix, Helix balance, Drive, Agitation, Attack and Release are gone: QL holds none of them.
 //
@@ -180,10 +180,17 @@ const determinants = (p: ViewProps) => <>
 </>
 
 /** The compact four (manual §21.2 Compact): Rate, Fundamental, Carrier and Damping. */
+/** The Carrier's words, by the owner's word for its drive (DLW §21.2 Carrier): the pulse's, or one an owner holds without driving. */
+const carrierDoes = (p: ViewProps) => `How strongly the pulse drives the body between strikes.${strOf(p.v, 'carrier.drive') === 'unbuilt'
+  ? ' The owner holds it; its drive is not built yet, so the body sounds only when struck.'
+  : ' At 0 % the body sounds only when something strikes it; at rhythm rates the carrier beats; at pitch rates it sounds.'}`
+/** The set's tempo as the transport shows it, to the hundredth. */
+const bpm = (value: number | undefined) => (value === undefined ? undefined : `${Number(value.toFixed(2))} BPM`)
+
 const macros = (p: ViewProps) => <>
   <ValueBox {...st(p, 'rate')} label="Rate" does="How fast the pulse steps round the ring. Setting it runs the pulse Free." value={numOf(p.v, 'rate') ?? NaN} def={2.5} scale={RATE} format={rateWords} onChange={x => p.set('rate', Number(x.toPrecision(3)))} />
   <ValueBox {...st(p, 'fundamental')} label="Fundamental" does="The note that place 0 stands on. Every voice is a ratio over it." value={numOf(p.v, 'fundamental') ?? NaN} scale={FUNDAMENTAL} format={hz} onChange={x => p.set('fundamental', Number(x.toPrecision(4)))} />
-  <Dial {...st(p, 'carrier')} label="Carrier" does={`How strongly the pulse drives the body between strikes.${strOf(p.v, 'carrier.drive') === 'unbuilt' ? ' The owner holds it; its drive is not built yet, so the body sounds only when struck.' : ''}`}
+  <Dial {...st(p, 'carrier')} label="Carrier" does={carrierDoes(p)}
     value={numOf(p.v, 'carrier') ?? NaN} def={0} scale={{min: 0, max: 100}} format={pct} onChange={x => p.set('carrier', Math.round(x))} />
   <Dial {...st(p, 'damping')} disabled={st(p, 'damping').disabled ?? tattvaHold(p.v)} label="Damping" does="How sharply the body rings. A high value rings longer." value={numOf(p.v, 'damping') ?? NaN} def={4.5} scale={DAMP} format={fixed(1)} onChange={x => p.set('damping', x)} />
 </>
@@ -195,10 +202,10 @@ const pulse = (p: ViewProps) => <>
     ? <Chooser {...st(p, 'rate.note')} label="Note" does="The note length the pulse steps once per, 1/64 to 8 bars." value={strOf(p.v, 'rate.note') ?? ''} options={NOTE_LENGTHS} onChange={x => p.set('rate.note', x)} />
     : <ValueBox {...st(p, 'rate')} label="Steps" does="How fast the pulse steps round the ring: one step a year to 40,000 a second." value={numOf(p.v, 'rate') ?? NaN} def={2.5} scale={RATE} format={rateWords} onChange={x => p.set('rate', Number(x.toPrecision(3)))} />}
   <Readout big label="band" does="The band the pulse stands in: Cosmic, Breath, Rhythm, Pitch or Beyond." value={strOf(p.v, 'band')} tone="accent" />
-  <ValueBox {...st(p, 'tempo')} label="Tempo" does="The set's tempo, which Sync steps to." value={numOf(p.v, 'tempo') ?? NaN} def={120} scale={{min: 20, max: 999, log: true}} format={x => `${Math.round(x)} BPM`} onChange={x => p.set('tempo', Math.round(x))} />
+  <Readout label="Tempo" does={st(p, 'tempo').disabled ?? 'The set\'s tempo, from the transport, which Sync steps to.'} value={bpm(numOf(p.v, 'tempo'))} />
   <Radio {...st(p, 'fundamental.source')} label="Fundamental" does="Map takes the frequency the map gives the Sun, its 1:1; Hz, the one you set." value={strOf(p.v, 'fundamental.source') ?? ''} options={SOURCES} stack onChange={x => p.set('fundamental.source', x)} />
   <ValueBox {...st(p, 'fundamental')} label="Hz" does="The note that place 0 stands on, 20 to 2,000 Hz. Every voice is a ratio over it." value={numOf(p.v, 'fundamental') ?? NaN} scale={FUNDAMENTAL} format={hz} onChange={x => p.set('fundamental', Number(x.toPrecision(4)))} />
-  <Dial {...st(p, 'carrier')} label="Carrier" does="How strongly the pulse drives the body between strikes. At 0 % the body sounds only when something strikes it." value={numOf(p.v, 'carrier') ?? NaN} def={0} scale={{min: 0, max: 100}} format={pct} onChange={x => p.set('carrier', Math.round(x))} />
+  <Dial {...st(p, 'carrier')} label="Carrier" does={carrierDoes(p)} value={numOf(p.v, 'carrier') ?? NaN} def={0} scale={{min: 0, max: 100}} format={pct} onChange={x => p.set('carrier', Math.round(x))} />
   <Readout label="drive" does={st(p, 'carrier.drive').disabled ?? 'The owner\'s word for the Carrier\'s drive.'} value={strOf(p.v, 'carrier.drive')} tone={strOf(p.v, 'carrier.drive') === 'unbuilt' ? 'stall' : undefined} />
 </>
 
@@ -329,7 +336,7 @@ export const torus: DesignedDevice = {
   defaults: {
     light: 'lit',
     // The Torus's M1′ session (QL's torus-state), as a scene opens it: Free at 2.5 steps a second, a rhythm; the map's 1:1; no carrier.
-    'rate.mode': 'free', rate: 2.5, tempo: 120, band: 'Rhythm', 'fundamental.source': 'map', fundamental: 130.81, carrier: 0, 'carrier.drive': 'unbuilt',
+    'rate.mode': 'free', rate: 2.5, tempo: 120, band: 'Rhythm', 'fundamental.source': 'map', fundamental: 130.81, carrier: 0, 'carrier.drive': 'pulse',
     shape: 'auto', figure: 'figure-eight', comma: 0, tuning: 'logic', 'tuning.resident': JSON.stringify(['logic', 'sky']), polyphony: 16, notes: 3,
     body: 'torus', strike: 70, damping: 4.5, modes: 64, level: -6, pan: 0, view: 'surface', receiver: false, meter: -14,
     // The field's own controls, as the binding reads them (labels of the owner's choices).

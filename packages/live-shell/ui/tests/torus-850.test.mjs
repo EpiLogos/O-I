@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {register} from 'node:module'
+import {readFile} from 'node:fs/promises'
 
 // O-I #850: the Torus plays as QL designs it. Manual §21.2's parameters stand on the owner's M1′ session (QL `torus-state`, announced as
 // `parameters.torus`): Rate (Free or Sync) with its band beside it, Fundamental, Carrier, Shape with the figure it shows, the Comma the
@@ -77,7 +78,7 @@ test('every §21.2 setting stands on the owner\'s session: the rate with its ban
   assert.deepEqual([sync.values['rate.mode'], sync.values['rate.note'], sync.values.rate], ['sync', '1/4', 2])
   assert.equal(sync.values.figure, undefined, 'Sequence: QL names no figure')
   assert.match(sync.standing.figure.disabled, /Sequence/)
-  for (const key of ['band', 'comma', 'figure', 'notes', 'carrier.drive', 'tuning.resident']) assert.equal(binding.writes(key), false, `${key}: a reading`)
+  for (const key of ['band', 'comma', 'figure', 'notes', 'carrier.drive', 'tuning.resident', 'tempo']) assert.equal(binding.writes(key), false, `${key}: a reading`)
 })
 
 test('each change reaches the owner\'s torus edit through the one stage channel, in QL\'s own form', async () => {
@@ -87,7 +88,6 @@ test('each change reaches the owner\'s torus edit through the one stage channel,
     [{key: 'rate.mode', value: 'sync'}, {rate: {mode: 'sync', note: {numerator: 1, denominator: 4}}}],
     [{key: 'rate.note', value: '3/8'}, {rate: {mode: 'sync', note: {numerator: 3, denominator: 8}}}],
     [{key: 'rate.mode', value: 'free'}, {rate: {mode: 'free', steps_per_second: 2.5}}],
-    [{key: 'tempo', value: 90}, {tempo_bpm: 90}],
     [{key: 'fundamental', value: 261.6}, {fundamental: {source: 'hz', hz: 261.6}}],
     [{key: 'fundamental.source', value: 'map'}, {fundamental: {source: 'map'}}],
     [{key: 'fundamental.source', value: 'hz'}, {fundamental: {source: 'hz', hz: 130.81}}],
@@ -161,5 +161,48 @@ test('the whole Torus carries the seven groups; the folded one its level, band a
   for (const view of ['folded', 'compact', 'whole', 'full', 'widget']) {
     for (const b of [binding, model.torusDesignBinding(null)]) assert.doesNotMatch(renderToStaticMarkup(h(HostedDevice, {designed: b === binding ? torus : torus, binding: b, view, nav: {}})), /\bNaN\b|undefined|data-device-fault/, view)
   }
+  resetHost(binding.id)
+})
+
+test('the Torus steps to the set\'s tempo: the transport\'s Tempo reaches the owner\'s torus edit, so Sync follows it, and the Tempo here is a reading', async () => {
+  // DLW §21.2 Rate: Sync is one step per note length "at the set's tempo". The set's tempo is the transport's reading (TransportBar's
+  // Tempo), handed to the chain as the Delay's is (designBindings/torusEffects.ts followSetTempo).
+  const synced = state(session({steps_per_second: 2}, {rate: {mode: 'sync', note: {numerator: 1, denominator: 4}}}))
+  assert.deepEqual(model.torusTempoEdit(synced, 96), {kind: 'torus', edit: {tempo_bpm: 96}}, 'the set\'s tempo, as the owner\'s own edit')
+  assert.deepEqual(model.torusTempoEdit(synced, 96.256), {kind: 'torus', edit: {tempo_bpm: 96.26}}, 'to the hundredth, as the transport shows it')
+  assert.equal(model.torusTempoEdit(synced, 120), null, 'the owner already steps to it: nothing is sent')
+  assert.equal(model.torusTempoEdit(synced, null), null, 'a set that states no tempo moves nothing')
+  assert.equal(model.torusTempoEdit(state(null), 96), null, 'no session, nothing to follow')
+  assert.equal(model.torusTempoEdit(state(session(), 'manual'), 96), null, 'the owner takes no edit now')
+  assert.equal(model.torusTempoEdit(synced, 1200), null, 'outside the owner\'s 20 to 999 BPM nothing is sent')
+  const sent = []
+  const commit = async edit => { sent.push(edit); return {ok: true} }
+  await model.followSetTempoOnTorus(synced, 96, commit)
+  await model.followSetTempoOnTorus(synced, 120, commit)
+  assert.deepEqual(sent, [{kind: 'torus', edit: {tempo_bpm: 96}}], 'one edit, and none for a tempo the owner already has')
+  await assert.rejects(model.followSetTempoOnTorus(synced, 90, async () => ({ok: false, error: 'controlled refusal'})), /controlled refusal/)
+  // Here the Tempo reads the owner's, which follows the set's; the transport is where the tempo changes.
+  const {binding} = bound(synced)
+  assert.equal(binding.writes('tempo'), false)
+  assert.match(binding.standing.tempo.disabled, /set's tempo, from the transport/)
+  setHostPage(binding.id, 'field')
+  const whole = renderToStaticMarkup(h(HostedDevice, {designed: torus, binding, view: 'whole', nav: {}}))
+  assert.match(whole, /<output class="dp-readout-value"[^>]*>120 BPM<\/output><span class="dp-label">Tempo<\/span>/, 'a reading, not a box to type in')
+  resetHost(binding.id)
+  // The chain hands the Torus the set's tempo, as it hands the Delay its own.
+  const chain = await readFile(new URL('../src/live/LiveDeviceChain.tsx', import.meta.url), 'utf8')
+  assert.match(chain, /<TorusOnChain state=\{torus\} tempoBpm=\{ctx\.set\?\.tempo_bpm \?\? null\} \/>/)
+})
+
+test('the Carrier\'s words follow the owner\'s drive: under the pulse, 0 % is silence until struck, a beat at rhythm rates, a note at pitch rates', () => {
+  // QL's carrier (m1_prime.rs carrier_step; continuous_field.hpp set_carrier): the owner's word for its drive is "pulse".
+  const {binding} = bound(state(session({carrier_drive: 'pulse'}, {carrier: 0.5})))
+  assert.equal(binding.values['carrier.drive'], 'pulse')
+  assert.doesNotMatch(binding.standing['carrier.drive'].disabled, /287|only when struck/, 'no word of a drive that is not built')
+  assert.match(binding.standing['carrier.drive'].disabled, /each step of the pulse drives the body/)
+  setHostPage(binding.id, 'field')
+  const whole = renderToStaticMarkup(h(HostedDevice, {designed: torus, binding, view: 'whole', nav: {}}))
+  assert.match(whole, /At 0 % the body sounds only when something strikes it; at rhythm rates the carrier beats; at pitch rates it sounds\./)
+  assert.doesNotMatch(whole, /its drive is not built yet/)
   resetHost(binding.id)
 })
