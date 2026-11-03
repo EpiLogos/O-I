@@ -1,21 +1,27 @@
 // Live's transport bindings (moved from shell/modeTransports.tsx, which registers them; O-I #740: loaded when Live's transport first
-// draws). The mode in force (root, scale) and its key and MIDI maps; Play and Stop over the clip THE selection names.
+// draws). The mode in force (root, scale) and its key and MIDI maps; Play and Stop over the clip THE selection names, else the open set in
+// the one engine (live/liveEngine.ts).
 import type {UseModeTransport} from '../modeTransports'
 import {PITCH_CLASS_NAMES} from '../../live/modes'
 import {setLiveModeHold, useLiveModeInForce} from '../../native/liveModeCatalogue'
 import {MidiMapHost, MidiMapToggles} from '../../live/midiMap/midiMapControls'
-import {useLiveClipPlay} from '../../live/clipPlayer'
+import {clipAddressOf, useLiveClipPlay} from '../../live/clipPlayer'
+import {useLiveEngineTransport} from '../../live/liveEngine'
 import {useOptionalContinuity} from '../../continuity/workspace'
 
-export const useLiveTransport: UseModeTransport = ({tempoBpm}) => {
+export const useLiveTransport: UseModeTransport = ({tempoBpm, setPath = null}) => {
   const {reading, hold, refresh, groups, mode, line} = useLiveModeInForce()
   const ready = reading.state === 'ready'
   const choice = mode.state === 'in-force' ? mode.selection : null
   // Play and Stop (manual §21.2 Transport, "Play | Plays the clips of the part on the torus"; Views, "In Clip view, the Torus plays the
-  // notes of the clip that you select"): the clip THE selection names, at the set's tempo.
-  const clip = useLiveClipPlay(useOptionalContinuity()?.current.context?.selection, tempoBpm)
+  // notes of the clip that you select"): the clip THE selection names, at the set's tempo; with no clip selected, the open set in the
+  // one engine (§21.1 Rules: every part sounds in one engine, to the Main track).
+  const selection = useOptionalContinuity()?.current.context?.selection
+  const clip = useLiveClipPlay(selection, tempoBpm)
+  const engine = useLiveEngineTransport(setPath)
+  const playStop = clipAddressOf(selection) ? clip : engine
   return {
-    ...clip,
+    ...playStop,
     tempo: {readout: {value: tempoBpm?.toFixed(2) ?? '—', title: 'Tempo — the set\'s tempo · document read-only until the editing owner lands'}},
     root: {control: <select aria-label="Root note" title={`Root — the mode in force's root. ${line}`} disabled={!ready}
       value={ready ? String(hold.root) : ''} onChange={event => setLiveModeHold({root: Number(event.target.value)})}>

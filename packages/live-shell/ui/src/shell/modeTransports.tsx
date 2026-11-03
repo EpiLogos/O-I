@@ -25,6 +25,8 @@ export interface TransportReading {
   timeSpine?: TimeSpine | null
   focusedInstrument?: PaneInstrumentId | null
   tempoBpm: number | null
+  /** The open Live set's path: what Live's Play plays in the engine when no clip is selected. */
+  setPath?: string | null
   /** Expressions' native scene transport, when its reading stands. */
   nativeTransport?: NativeCompositionViewSource | null
 }

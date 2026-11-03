@@ -265,6 +265,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-apple-darwin
+          components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2.9.2
         with:
           workspaces: desktop/cradle/src-tauri
@@ -277,6 +278,8 @@ jobs:
         run: |
           npm ci --prefix desktop/cradle --no-audit --no-fund
           cargo check --manifest-path desktop/cradle/src-tauri/Cargo.toml --locked --target aarch64-apple-darwin
+      - name: Native host format
+        run: cargo fmt --manifest-path desktop/cradle/src-tauri/Cargo.toml -- --check
       - name: Native host clippy (everyday and candidate)
         run: |
           cargo clippy --manifest-path desktop/cradle/src-tauri/Cargo.toml --locked --target aarch64-apple-darwin --all-targets -- -D warnings

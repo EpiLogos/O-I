@@ -154,7 +154,8 @@ const receiptMark = (receipt: PressedReceipt | null, key: string): 'ok' | 'refus
   receipt?.key === key ? (receipt.ok ? 'ok' : 'refused') : undefined
 
 /** A track's mixer row (manual §16.6), as Live draws it under the slots' head: the switches and the monitor on one line, the routes
- * on the next. A control with no owner write stands disabled, its title naming the op it lacks; an unread value is drawn unread. */
+ * on the next, then Volume and Pan. A control with no owner write stands disabled, its title naming the op it lacks; an unread value
+ * is drawn unread. The Arrangement head draws the switches alone (`routes={false}`) and its levels on a line of their own (MixerLevels). */
 export function MixerRow({cells, shown, routes: withRoutes = true, trackId, receipt, onPress}: {cells: readonly MixerCell[]; shown: boolean; routes?: boolean
   trackId: string; receipt: PressedReceipt | null; onPress(key: string, what: string, run: () => unknown): void}) {
   if (!shown) return null
@@ -163,9 +164,6 @@ export function MixerRow({cells, shown, routes: withRoutes = true, trackId, rece
   const io = (cell: MixerCell) => cell.id === 'input' || cell.id === 'output' || cell.id === 'works'
   const switches = cells.filter(cell => cell.state !== 'route' && !io(cell) && !cell.level)
   const routes = withRoutes ? cells.filter(io) : []
-  // Volume and Pan (§21.1 "The mixer row"): a value box each over its owner, the value sent on release (plateControls.tsx). They stand
-  // on the Session row; the Arrangement head keeps its switches on one line.
-  const levels = withRoutes ? cells.filter(cell => cell.level) : []
   return <div className={withRoutes ? 'trk-mix' : 'tl-mix'} role="group" aria-label="Mixer" data-mixer={trackId}>
     {switches.length > 0 && <div className="mx-row">{switches.map(cell => {
       const key = `mix:${cell.id}:${trackId}`
@@ -177,16 +175,25 @@ export function MixerRow({cells, shown, routes: withRoutes = true, trackId, rece
     })}</div>}
     {routes.length > 0 && <div className="mx-io">{routes.map(cell => <span key={cell.id} className={`mx-route mx-${cell.id}`} data-mix={cell.id} data-state={cell.state} title={cell.title}>
       <small>{cell.id === 'input' ? 'in' : cell.id === 'works' ? 'works in' : 'out'}</small>{cell.text}</span>)}</div>}
-    {levels.length > 0 && <div className="mx-lv">{levels.map(cell => {
-      const level = cell.level!, set = level.set, key = `mix:${cell.id}:${trackId}`
-      return <span key={cell.id} className={`mx-level mx-${cell.id}`} data-mix={cell.id} data-state={cell.state} data-receipt={receiptMark(receipt, key)} title={cell.title}>
-        <Suspense fallback={<span className="mx-level-wait">{cell.text}</span>}><OwnerValueBox label={cell.label} does={cell.title} value={level.value} def={0} format={v => levelWord(v, level.unit)}
-          scale={{min: level.min, max: level.max, step: level.unit === 'dB' ? 0.1 : 0.02}}
-          onCommit={set ? v => onPress(key, set.what(v), () => set.run(v)) : undefined}
-          why={set ? undefined : cell.title} /></Suspense>
-      </span>
-    })}</div>}
+    {withRoutes && <MixerLevels cells={cells} trackId={trackId} receipt={receipt} onPress={onPress} />}
   </div>
+}
+
+/** Volume and Pan (§21.1 "The mixer row"): a value box each over its owner, the value sent on release (plateControls.tsx). On the
+ * Session row under the routes, in the Main column alone, and in the Arrangement head on a line under the name and switches. */
+export function MixerLevels({cells, trackId, receipt, onPress}: {cells: readonly MixerCell[]; trackId: string; receipt: PressedReceipt | null
+  onPress(key: string, what: string, run: () => unknown): void}) {
+  const levels = cells.filter(cell => cell.level)
+  if (!levels.length) return null
+  return <div className="mx-lv">{levels.map(cell => {
+    const level = cell.level!, set = level.set, key = `mix:${cell.id}:${trackId}`
+    return <span key={cell.id} className={`mx-level mx-${cell.id}`} data-mix={cell.id} data-state={cell.state} data-receipt={receiptMark(receipt, key)} title={cell.title}>
+      <Suspense fallback={<span className="mx-level-wait">{cell.text}</span>}><OwnerValueBox label={cell.label} does={cell.title} value={level.value} def={0} format={v => levelWord(v, level.unit)}
+        scale={{min: level.min, max: level.max, step: level.unit === 'dB' ? 0.1 : 0.02}}
+        onCommit={set ? v => onPress(key, set.what(v), () => set.run(v)) : undefined}
+        why={set ? undefined : cell.title} /></Suspense>
+    </span>
+  })}</div>
 }
 
 /** The Main column's status row (Live cap 35, 41): Stop All, and Back to Arrangement — lit when what plays differs from the ruler.
@@ -442,7 +449,8 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
       {tracks.filter(track => track.returns).map((track, at) => renderTrack(track, tracks.length + at))}
       <div className="trk trk-main" role="row" aria-label="Stops">
         <MainHead selection={selection} title={[mainTitle, grain ? `every control here acts on the${grain.replace(/[()]/g, '')}: the owner takes nothing finer` : undefined].filter(Boolean).join(' · ') || undefined}>{mainName ?? 'Main'}{grain && <span className="sg-grain">{set.actions?.grain}</span>}</MainHead>
-        <MixerRow cells={[]} shown={!!set.mixer} trackId="main" receipt={receipt} onPress={onPress} />
+        {/* The Main track's own levels: Live's Main has Volume and Pan, and no Activator, Solo or Arm. */}
+        <MixerRow cells={mainTrack ? mixerCells(set, mainTrack, set.tracks.indexOf(mainTrack)).filter(cell => cell.level) : []} shown={!!set.mixer} trackId="main" receipt={receipt} onPress={onPress} />
         {layout.map((item, at) => {
           // A section's head: its rails, its fold, its name — the rows under it carry its rail (worldTimelinePresentation.tsx:418-430).
           if (item.kind === 'head') {

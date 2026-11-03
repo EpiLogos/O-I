@@ -28,7 +28,7 @@
 // Re-enable for a value held by hand; Factory's event lanes, an event clicked opening beside the ruler (trackLanes.ts).
 import {useEffect, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type RefObject} from 'react'
 import type {TrackLaneKind, WorldEventLane, WorldTakeLane, WorldTrackClip, WorldTrackSet} from '../../timeline/worldTrackAdapter'
-import {answerOf, MixerRow, STATUS_WORD, stalledLanes, TrackDeviceButton, trackColour, trackTree, type PressedReceipt, type TracksSelection} from './SessionGrid'
+import {answerOf, MixerLevels, MixerRow, STATUS_WORD, stalledLanes, TrackDeviceButton, trackColour, trackTree, type PressedReceipt, type TracksSelection} from './SessionGrid'
 import {trackHeadDevice, useTrackHeadDevices} from './trackHeads'
 import {automationPoints, compRange, DEFAULT_LANES, LANE_WORD, laneCount, lanesUnder, mainLast, mixerCells, type LanesShown} from './trackLanes'
 import {CutIcon} from '../../agent/agentIcons'
@@ -422,7 +422,8 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
       const stoppedNeedle = track.needle !== undefined && stalled.has(track.id)
       const age = stoppedNeedle && now !== undefined ? (set.ruler?.duration ?? plainDuration(set.ruler?.unit ?? ''))(Math.max(0, now - track.needle!)) : undefined
       const readout = stoppedNeedle ? `${track.name} · stalled${age ? ` ${age}` : ''}` : undefined
-      // The head carries the track's mixer switches, as Live's Arrangement header does (cap 43); a head with none is the name alone.
+      // The head carries the track's mixer switches and, on a line under them, its Volume and Pan, as Live's Arrangement header does
+      // (cap 43); a head with none is the name alone.
       const cells = mixerCells(set, track, position).filter(cell => cell.id !== 'input' && cell.id !== 'output')
       const headName = <>
         {rails.length > 0 && <span className="rails" aria-hidden="true">{rails.map((colour, i) => <i key={i} style={{background: colour}} />)}</span>}
@@ -439,6 +440,7 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
             <button type="button" className="tl-name" title={`${track.name} · ${track.kind}${track.info ? ` — ${track.info}` : ''}`} onClick={selectTrack}>{headName}</button>
             <TrackDeviceButton device={device} track={track} selection={selection} />
             {cells.length > 0 && <MixerRow cells={cells} shown routes={false} trackId={track.id} receipt={receipt} onPress={onPress} />}
+            <MixerLevels cells={cells} trackId={track.id} receipt={receipt} onPress={onPress} />
           </div>
           : <button type="button" className={`tl-head${selection.ref === track.id ? ' sel' : ''}`} title={`${track.name} · ${track.kind}${track.info ? ` — ${track.info}` : ''}`} onClick={selectTrack}>{headName}</button>}
         <div className="tl-body">

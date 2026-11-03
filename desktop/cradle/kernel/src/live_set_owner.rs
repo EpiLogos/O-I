@@ -63,16 +63,21 @@ fn remember_read(path: &str) {
     }
 }
 
-/// A write names a set this process has read, or it is refused.
-fn admitted_for_write(path: &str) -> Result<(), String> {
-    let known = canonical(path).is_some_and(|path| {
+/// Whether this process has read the set at `path`, by its canonical path
+/// (a set read once and gone since is not one).
+fn read_before(path: &str) -> bool {
+    canonical(path).is_some_and(|path| {
         READ_SETS
             .lock()
             .unwrap_or_else(|poisoned| poisoned.into_inner())
             .as_ref()
             .is_some_and(|sets| sets.contains(&path))
-    });
-    if known {
+    })
+}
+
+/// A write names a set this process has read, or it is refused.
+fn admitted_for_write(path: &str) -> Result<(), String> {
+    if read_before(path) {
         Ok(())
     } else {
         Err("Read this Live set before writing to it: the kernel writes only a set the shell has read".into())
@@ -610,6 +615,22 @@ fn export_refused(why: &str) -> String {
 }
 
 impl crate::Kernel {
+    /// Live's engine (the native host's `live_engine_open`) plays only a set
+    /// this kernel can read and has read: an absolute native `.als` the shell
+    /// read through `live_set_read`, by its canonical path. The renderer
+    /// names the set; the kernel decides whether it is one.
+    pub fn live_engine_admits(&self, set: &str) -> Result<(), String> {
+        let refused = |why: &str| format!("The engine did not open the set: {why}");
+        native_document(set).map_err(|e| refused(&e))?;
+        if read_before(set) {
+            Ok(())
+        } else {
+            Err(refused(&format!(
+                "the kernel has not read {set} (live_set_read): the engine plays only a set the kernel has read"
+            )))
+        }
+    }
+
     /// Export Audio: write `wav` — the engine's render of the set at `set`,
     /// a RIFF/WAVE file — into `chosen`, the file the person chose in the
     /// native host's save dialog, replacing it atomically (a sibling written
@@ -1295,6 +1316,37 @@ mod tests {
             "and records nothing"
         );
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// The engine plays only a set the kernel can read and has read (O-I #849): the native host asks before it bridges one, and a set
+    /// named by the page alone — never read, not a native document, or gone — is refused in words.
+    #[test]
+    fn the_engine_admits_only_a_set_the_kernel_has_read() {
+        let kernel = crate::Kernel::new(crate::CentralClient::discover());
+        let path = fixture("engine-admits");
+        let unread = kernel.live_engine_admits(&path).unwrap_err();
+        assert!(
+            unread.starts_with("The engine did not open the set: ")
+                && unread.contains("live_set_read"),
+            "{unread}"
+        );
+        let Some(Ok(_)) = execute(&KernelOp::LiveSetRead { path: path.clone() }) else {
+            panic!("the set reads");
+        };
+        kernel.live_engine_admits(&path).unwrap();
+        for (set, said) in [
+            ("Song.als", "absolute native .als"),
+            ("/sets/Song.txt", "absolute native .als"),
+            ("/sets/never-there.als", "live_set_read"),
+        ] {
+            let refused = kernel.live_engine_admits(set).unwrap_err();
+            assert!(refused.contains(said), "{set}: {refused}");
+        }
+        std::fs::remove_file(&path).unwrap();
+        assert!(
+            kernel.live_engine_admits(&path).is_err(),
+            "a set read once and gone since is not admitted"
+        );
     }
 
     /// The kernel's own dispatch serves the comp and the Groove Pool (lib.rs `apply`), as the native host runs them.

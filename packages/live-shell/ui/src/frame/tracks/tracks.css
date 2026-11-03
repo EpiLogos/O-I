@@ -215,6 +215,8 @@ button.tl-stop:hover { border-color: var(--accent); color: var(--accent) }
    slots still align. */
 .sg:has(.mx-lv) .trk-mix { height: 47px }
 .trk-mix .mx-lv { display: flex; gap: 4px; height: 14px }
+/* The Main column's levels stand on the levels' line of the row, beside every track's. */
+.trk-main .trk-mix .mx-lv { margin-top: auto }
 .mx-level { flex: 1 1 0; min-width: 0; display: flex; position: relative }
 .mx-level .dp-cell { gap: 0; width: 100% }
 .mx-level .dp-label { display: none }
@@ -251,6 +253,10 @@ button.tl-stop:hover { border-color: var(--accent); color: var(--accent) }
 .tl-mix { flex: none; display: flex; gap: 1px }
 .tl-mix .mx { min-width: 12px; height: 12px; font-size: 8px; line-height: 10px }
 .tl-mix .mx-monitor { min-width: 22px }
+/* The head's Volume and Pan: a line of their own under the name and switches (SessionGrid.tsx MixerLevels), in the lane's 30px. */
+.tl-track-head:has(> .mx-lv) { flex-wrap: wrap; align-content: center; row-gap: 2px }
+.tl-track-head > .mx-lv { flex: 1 0 100%; display: flex; gap: 4px; height: 12px }
+.tl-track-head > .mx-lv .dp-box, .tl-track-head > .mx-lv .mx-level-wait { height: 12px; line-height: 12px }
 .tl-lane[data-main] { border-top: 1px solid var(--line-strong) }
 .tl-lane.tl-setbar { height: 18px; position: sticky; top: 22px; z-index: 4; background: var(--bg-1); border-bottom: 1px solid var(--line-strong) }
 .tl-setbar-head { color: var(--text-faint); font-size: 9px; text-transform: uppercase; letter-spacing: .05em; border-left-color: var(--line-strong) }

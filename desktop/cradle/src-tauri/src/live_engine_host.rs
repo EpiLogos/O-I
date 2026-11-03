@@ -309,6 +309,19 @@ pub(crate) mod host {
             act(opened)
         }
 
+        /// `live_engine_open`: the kernel admits the set (`admit`: the
+        /// Live owner's `live_engine_admits`, a set it can read and has read)
+        /// before the host reads a byte of it; refused, the engine keeps
+        /// what it had open.
+        pub fn open_admitted(
+            &self,
+            path: &Path,
+            admit: impl FnOnce(&str) -> Result<(), String>,
+        ) -> Result<Value, String> {
+            admit(&path.to_string_lossy())?;
+            self.open(path)
+        }
+
         pub fn open(&self, path: &Path) -> Result<Value, String> {
             let mut opened = Opened::open(path)?;
             let reading = opened.reading();
@@ -662,6 +675,50 @@ pub(crate) mod host {
             );
         }
 
+        /// The engine opens only a set the kernel admits (O-I #849): asked
+        /// first, a refusal is the kernel's words, nothing is read, and the
+        /// set the engine had open stays open.
+        #[test]
+        fn the_engine_opens_only_a_set_the_kernel_admits() {
+            let host = LiveEngineHost::default();
+            let path = write_set("admitted", SET);
+            let mut asked = Vec::new();
+            host.open_admitted(&path, |set| {
+                asked.push(set.to_owned());
+                Ok(())
+            })
+            .unwrap();
+            assert_eq!(asked, vec![path.to_string_lossy().into_owned()]);
+            let other = write_set("not-admitted", SET);
+            let refused = host
+                .open_admitted(&other, |_| {
+                    Err("The engine did not open the set: not read".into())
+                })
+                .unwrap_err();
+            assert_eq!(refused, "The engine did not open the set: not read");
+            let reading = host.with(|o| Ok(o.reading())).unwrap();
+            assert_eq!(
+                reading["path"],
+                path.to_string_lossy().as_ref(),
+                "the set it had open stays open"
+            );
+            let gone = Path::new("/no/such/folder/never.als");
+            let refused = host
+                .open_admitted(gone, |_| Err("The engine did not open the set: no".into()))
+                .unwrap_err();
+            assert!(
+                refused.ends_with(": no"),
+                "the kernel answers before the host reads the file: {refused}"
+            );
+            let source = include_str!("live_engine_host.rs");
+            let command = source.split("pub fn live_engine_open(").nth(1).unwrap();
+            let command = &command[..command.find("\n}\n").unwrap()];
+            assert!(
+                command.contains(".live_engine_admits(set)") && command.contains("open_admitted("),
+                "the command asks the kernel's Live owner"
+            );
+        }
+
         /// The page names no path for Export Audio: the command takes the
         /// app and its webview, nothing else.
         #[test]
@@ -804,8 +861,16 @@ pub fn live_engine_open(
 ) -> Result<serde_json::Value, String> {
     #[cfg(feature = "native_shell")]
     {
+        use tauri::Manager;
         admit_candidate_webview(&webview)?;
-        host(&app).open(std::path::Path::new(&path))
+        // the kernel's Live owner admits the set first: one it can read and has read (live_set_owner.rs live_engine_admits)
+        host(&app).open_admitted(std::path::Path::new(&path), |set| {
+            app.state::<crate::KernelHost>()
+                .0
+                .lock()
+                .map_err(|_| "kernel lock unavailable".to_owned())?
+                .live_engine_admits(set)
+        })
     }
     #[cfg(not(feature = "native_shell"))]
     {

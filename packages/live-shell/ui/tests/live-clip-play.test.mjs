@@ -510,6 +510,7 @@ test('Live\'s transport binds Play and Stop through the clip player, over THE se
   // Live's bindings are their own module, loaded with Live's transport (shell/transports/useLiveTransport.tsx; O-I #740).
   const source = readFileSync(new URL('../src/shell/transports/useLiveTransport.tsx', import.meta.url), 'utf8')
   const live = source.slice(source.indexOf('export const useLiveTransport'))
-  assert.match(live, /const clip = useLiveClipPlay\(useOptionalContinuity\(\)\?\.current\.context\?\.selection, tempoBpm\)/)
-  assert.match(live, /return \{\n\s+\.\.\.clip,/, 'Play and Stop are the clip player\'s')
+  assert.match(live, /const selection = useOptionalContinuity\(\)\?\.current\.context\?\.selection\n\s+const clip = useLiveClipPlay\(selection, tempoBpm\)/)
+  // with a clip selected Play and Stop are the clip player's; with none, the open set's in the engine (O-I #849, tests/live-engine-binding)
+  assert.match(live, /const playStop = clipAddressOf\(selection\) \? clip : engine\n\s+return \{\n\s+\.\.\.playStop,/, 'a selected clip: Play and Stop are the clip player\'s')
 })
