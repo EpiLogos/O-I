@@ -210,6 +210,21 @@ button.tl-stop:hover { border-color: var(--accent); color: var(--accent) }
 .mx-route { min-width: 0; overflow: hidden; text-overflow: ellipsis }
 .mx-route small { margin-right: 2px; color: var(--text-faint); font-size: 7.5px; text-transform: uppercase; letter-spacing: .04em }
 .mx-route[data-state="unread"] { color: var(--text-faint) }
+/* Volume and Pan (manual §21.1 "The mixer row"): a value box each on the row's third line, dragged or typed, sent to the set's
+   owner on release; the box reads the owner's value (the engine's, while it plays the set). Every column's row grows with it, so the
+   slots still align. */
+.sg:has(.mx-lv) .trk-mix { height: 47px }
+.trk-mix .mx-lv { display: flex; gap: 4px; height: 14px }
+.mx-level { flex: 1 1 0; min-width: 0; display: flex; position: relative }
+.mx-level .dp-cell { gap: 0; width: 100% }
+.mx-level .dp-label { display: none }
+.mx-level .dp-box { min-width: 0; width: 100%; height: 14px; padding: 0 2px; box-sizing: border-box; background: var(--bg-0) }
+.mx-level .dp-box > span { font: 8.5px/12px var(--mono, ui-monospace, monospace) }
+/* The level as words while its box loads (SessionGrid.tsx: the box is not in the frame's first load). */
+.mx-level-wait { width: 100%; height: 14px; padding: 0 2px; box-sizing: border-box; background: var(--bg-0); color: var(--text-dim); font: 8.5px/14px var(--mono, ui-monospace, monospace); overflow: hidden; white-space: nowrap }
+.mx-level[data-state="unread"] .dp-box { background: repeating-linear-gradient(135deg, var(--bg-0) 0 3px, var(--bg-1) 3px 5px) }
+.mx-level[data-receipt]::after { content: ''; position: absolute; right: -1px; top: -1px; width: 4px; height: 4px; background: var(--accent) }
+.mx-level[data-receipt="refused"]::after { background: var(--rec) }
 /* A track that launches itself (Central's workspace): a small launcher at the head's right. */
 .trk .trk-launch { position: absolute; top: 0; right: 0; width: 16px; height: 24px; z-index: 3; padding: 0; background: none; border: 0; color: var(--text-dim); font-size: 9px }
 /* A selected track's way out of the set, on its head beside the launcher (Live's Delete on a selected track). */

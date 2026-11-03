@@ -447,6 +447,9 @@ export type AikitWriteRequest =
   /** `aikit source sync|rollback ID`; `aikit source promote ID [--trust] [--trust-skill C]…`. */
   | {kind:"source-sync"|"source-rollback";id:string}
   | {kind:"source-promote";id:string;trust?:boolean;trust_skills?:string[]}
+  /** `aikit decide invoke --instrument I --request-file - [--agent-session S]` (O-I #843, Factory's Fill heads): the cell's own words and
+   * the heads it has chosen (`aikit.instrument-fill-request/v1`) on stdin; answers `aikit.instrument-fill/v1`, the picks as evidence. */
+  | {kind:"decide-fill";instrument:string;request:unknown;agent_session?:string|null}
   /** `aikit knowledge forget destination|route|project RESOURCE` or `forget all`: answers `{forgot, preserved}`. `here` (O-I #741) forgets
    * RESOURCE in one world only — `project`'s, or your world's without one — asked in that world's ground. */
   | {kind:"knowledge-forget";scope:"destination"|"route"|"project"|"here"|"all";resource?:string|null;project?:string|null};
@@ -669,8 +672,9 @@ export type KernelOp =
   | {op:"live_clip_write";path:string;expected_revision:string;track:number;clip:LiveClipAt;set?:Record<string,unknown>;notes?:LiveNote[];envelopes?:{device:string;parameter:string;points:[number,number][]}[]}
   // Make a MIDI clip in an empty session slot of a MIDI part against the set's revision (O-I #768: Live's clip of a constellation); its source kept beside the set.
   | {op:"live_clip_create";path:string;expected_revision:string;track:number;scene?:number;length:number;set?:Record<string,unknown>;notes:LiveNote[];source?:string}
-  // Change one control of a track's mixer row (activator, solo, arm, monitor, or a send by its index, 0 = Send A) against the set's revision.
-  | {op:"live_track_mixer_write";path:string;expected_revision:string;track:number;control:"activator"|"solo"|"arm"|"monitor"|"send";value:boolean|"in"|"auto"|"off"|number;index?:number}
+  // Change one control of a track's mixer row (activator, solo, arm, monitor, volume as linear gain, pan −1…1, or a send by its index,
+  // 0 = Send A) against the set's revision.
+  | {op:"live_track_mixer_write";path:string;expected_revision:string;track:number;control:"activator"|"solo"|"arm"|"monitor"|"volume"|"pan"|"send";value:boolean|"in"|"auto"|"off"|number;index?:number}
   // Comp: copy a stretch (beats) of a track's take lane into its main lane against the set's revision; the copy carries its take's TakeId.
   | {op:"live_take_comp";path:string;expected_revision:string;track:number;take:number;range:{start:number;end:number}}
   // The set's Groove Pool (each groove's Base, Quantize, Timing, Random, Velocity; the set's Global Amount) with its revision.
@@ -1307,7 +1311,11 @@ export interface LiveClipReading {
 /** An envelope: what it moves (the device and parameter its target sits under) and its points [[beat, value]…]. */
 export interface LiveEnvelope {target: string; device: string; parameter: string; points: [number, number][]}
 /** A track's mixer row; a control the track has no element for is absent. */
-export interface LiveTrackMixer {activator?: boolean; solo?: boolean; arm?: boolean; monitor?: 'in' | 'auto' | 'off'; input?: string; output?: string; sends?: LiveSend[]}
+export interface LiveTrackMixer {activator?: boolean; solo?: boolean; arm?: boolean; monitor?: 'in' | 'auto' | 'off'; input?: string; output?: string; sends?: LiveSend[]
+  /** Mixer/Volume as the document keeps it: linear gain, Live's −70 dB (0.0003162277571) to +6 dB (1.99526238). */
+  volume?: number
+  /** Mixer/Pan: −1 (left) to 1 (right). */
+  pan?: number}
 /** One send of a track (Mixer/Sends/TrackSendHolder): the return track it feeds and Live's name for it ("Send A"), its level as the
  * document keeps it (linear gain) and the range beside it, and whether it is on for this track (a return's own sends are off). */
 export interface LiveSend {name: string; send: string; value: number | null; min: number | null; max: number | null; on: boolean}

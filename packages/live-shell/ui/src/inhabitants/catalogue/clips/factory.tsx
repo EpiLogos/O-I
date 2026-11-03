@@ -9,8 +9,8 @@
 // reading). Envelopes set the Agent's Effort and Autonomy for this task only.
 //
 // The editor holds a task's two materials, as Live's Clip View holds a MIDI clip's notes or an audio clip's sample (caps 01, 23):
-// - Notes: the score of the workflow the task is a unit of (manual §19.1 "The score"). Its rows are the agents and teams that take
-//   parts, from the track's rack; a note
+// - Notes: the score of the workflow the task is a unit of (manual §19.1 "The score"). Its rows are the agents and agent sets that
+//   take parts, from the track's rack (◆ marks an agent set); a note
 //   is a unit, its row is who does it, it starts the step after what it waits on, ties run from a note to the notes that wait on it,
 //   a bar stands where stacked notes join, and a lane of waves runs over the rows. A note that is a song of its own draws its notes
 //   small inside it; a double-click opens it (`score.open`), and Back returns. Fold keeps the rows that hold notes, Rack every row of
@@ -20,28 +20,30 @@
 //   readings are lines across the lanes, and the unit's start and return are warp markers (cap 24). Warp lays the recording onto the
 //   score's ruler, start on the note's start and return on its end; it stands off while the unit has not returned.
 // - Vāk: what each unit carries on its own, lane by lane, as Live's MPE tab carries each note's expression (cap 19): the seven heads of
-//   its composition across the rows, and under them the chosen unit's words.
+//   its composition across the rows, and under them the chosen unit's words. An open head is dashed; a head the decision model picked
+//   (`picks`) stands dashed with its label until you accept it.
 // Tools (panel two) reshape the score, and only while the score shows (Live greys Transform under Envelopes, cap 13): Transform
 // (a thread form, an allocation, a tie) and Generate (a score composed from the Intent, or the open heads filled by the decision model).
 //
 // The owner's material: `log` (JSON rows {at, kind, tool?, text, dur?, state?, heard?, reading?}; at and dur in seconds from the task's
 // start; kind is tool | spawn | steer | say | stall | reading), `elapsed` (seconds to the last output), and each envelope's steps on
-// `env.agent.<control>` (JSON [[second, step]…]). `score` (JSON {name, rows: [{id, name, kind: agent | team, rack?}], units: [{key,
-// row, deps?, len?, wave?, proposed?, heads?: {CPF, CT, CP, CF, CFP, CS, direction}, concern?, returns?, sources?, success?, may?, stop?,
-// escalate?, song?: <a score>}], joins: [{key, waits, releases, join}], waves: [{id, name, state}]}): Factory's reading of the workflow
-// the task belongs to, its units with their lowered compositions (`factory workflow inspect <state> <run> --unit`, the source read with
-// `factory workflow source`), the rows from the units' agentRequirements and the track's rack (`central.agent-set.resolve`), the waves
-// from `factory development wave read`. `unit.own` is this clip's own unit; `score.check` is the engine's word on the score
-// (`ql vak compose` admits or refuses each unit's composition; `factory workflow check` admits or refuses the source). Positions are
-// derived from the order, never kept: a unit starts the step after what it waits on; a unit whose thread form is CFP4 (drone) holds to
-// the end of the song.
-// Writes: a note dragged to another row (`score` rewritten) gives the unit to that agent or team; Transform's and Generate's presses
-// (`tr.press`, `gen.press`, `gen.accept`, `gen.discard`). No Factory operation writes a workflow source (it is the project's file, which
-// `factory workflow check` reads and refuses or admits), so the binding stands every score write disabled with that reason. Filling
-// the open heads asks the decision model (`aikit decide invoke` with the team space's Vāk-block instrument, `ql context-frame
-// team-space`), which is not served yet; composing a score from an Intent is an agent's act (Anima), with no operation of its own:
-// both stand disabled with their reasons. The view holds `unit` (the chosen note; a note of another unit selects that unit's clip in
-// the shell), `score.fold`, `score.highlight`, `score.open`, `warp`, `tr.*` and `gen.*` settings.
+// `env.agent.<control>` (JSON [[second, step]…]). `score` (JSON {name, rows: [{id, name, kind: agent | set | agency, rack?}], units:
+// [{key, row, deps?, len?, wave?, proposed?, heads?: {CPF, CT, CP, CF, CFP, CS, direction}, picks?: <heads the decision model picked>,
+// concern?, returns?, sources?, success?, may?, stop?, escalate?, song?: <a score>}], joins: [{key, waits, releases, join}], waves: [{id,
+// name, state}]}): Factory's score of the song the task's Run performs (`factory workflow score <state> <run>`), its units with their
+// compositions, on the rows of the track's Agent rack and then the agents and agent sets the song names that the rack does not hold
+// (`rack: false`), the waves from Factory's plan of record. `unit.own` is this clip's own unit; `score.check` is the engine's word on the
+// score (`factory workflow check` admits or refuses the song's file; QL's word on each unit's composition waits for an operation that
+// takes one). Positions are derived from the order, never kept: a unit starts the step after what it waits on; a unit whose thread form
+// is CFP4 (drone) holds to the end of the song. A song branches only by allocation, never by a condition.
+// Writes: a note dragged to another row (`score` rewritten) gives the unit to that agent or agent set; Transform's and Generate's presses
+// (`tr.press`, `gen.press`, `gen.accept`, `gen.discard`). Allocate, Connect and Thread form are edits of the song's file that Factory
+// writes (`factory workflow edit`), or refuses in its words; the join is the agent set's, set on the Agent rack, so `tr.join` stands
+// refused. Fill heads asks the decision model for the selected unit's open heads (`aikit decide invoke --instrument vak-block`, among
+// the labels QL's team space holds); its picks stand dashed until Accept writes them through Factory, or Discard drops them. A unit
+// with no open head asks nothing. Composing a score from an Intent is an agent's act (Anima), with no operation of its own: it stands
+// disabled with its reason. The view holds `unit` (the chosen note; a note of another unit selects that unit's clip in the shell),
+// `score.fold`, `score.highlight`, `score.open`, `warp`, `tr.*` and `gen.*` settings.
 //
 // The Intent panel: what the task is for, bounded, and how you will know it was met. Factory keeps it for the task's Run and never
 // copies its source. The required difference is the Development Field's (factory/src/development_field.rs:250 DevelopmentField
@@ -78,10 +80,10 @@ const logOf = (v: ClipProps['v']) => read<Entry[]>(v, 'log', []).filter(e => Num
 
 type Form = 'CFP0' | 'CFP1' | 'CFP2' | 'CFP3' | 'CFP4' | 'CFP5'
 interface Heads {readonly CPF?: string; readonly CT?: string; readonly CP?: string; readonly CF?: string; readonly CFP?: Form; readonly CS?: string; readonly direction?: string}
-interface ScoreRow {readonly id: string; readonly name: string; readonly kind?: 'agent' | 'team'; readonly rack?: boolean}
+interface ScoreRow {readonly id: string; readonly name: string; readonly kind?: 'agent' | 'set' | 'agency'; readonly rack?: boolean}
 interface Unit {
   readonly key: string; readonly row: string; readonly deps?: readonly string[]; readonly len?: number; readonly wave?: string; readonly proposed?: boolean
-  readonly heads?: Heads; readonly concern?: string; readonly returns?: string; readonly sources?: readonly string[]; readonly success?: readonly string[]
+  readonly heads?: Heads; readonly picks?: Heads; readonly concern?: string; readonly returns?: string; readonly sources?: readonly string[]; readonly success?: readonly string[]
   readonly may?: readonly string[]; readonly stop?: string; readonly escalate?: string; readonly song?: Score
 }
 interface Join {readonly key: string; readonly waits: readonly string[]; readonly releases: readonly string[]; readonly join?: 'all' | 'first'}
@@ -157,7 +159,7 @@ const stepLabel = (t: number) => (Math.abs(t - Math.round(t)) < 1e-6 ? String(Ma
 const WAVES = 'waves'
 const WAVE_STATE_TONE = (s?: string) => (s === 'Sealed' ? 'green' : s === 'Fix round' ? 'stall' : 'value') as Tone
 
-/** The rows the roll shows: Fold keeps the rows that hold notes; Rack shows every agent and team on the track's rack, used or not. */
+/** The rows the roll shows: Fold keeps the rows that hold notes; Rack shows every agent and agent set on the track's rack, used or not. */
 function rowsShown(score: Score, fold: string): ScoreRow[] {
   const used = new Set(score.units.map(u => u.row))
   return score.rows.filter(r => (fold === 'rack' ? r.rack !== false || used.has(r.id) : used.has(r.id)))
@@ -170,7 +172,7 @@ function Notes(p: ClipProps) {
   const fold = choice(p.v, 'score.fold', 'fold'), hl = choice(p.v, 'score.highlight', 'none')
   const {at, end, joins} = laid(score)
   const rows = rowsShown(score, fold)
-  const lanes: Lane[] = [{id: WAVES, label: 'Waves', key: 'name'}, ...rows.map(r => ({id: r.id, label: `${r.kind === 'team' ? '◆ ' : ''}${r.name}`, key: 'name' as const,
+  const lanes: Lane[] = [{id: WAVES, label: 'Waves', key: 'name'}, ...rows.map(r => ({id: r.id, label: `${r.kind === 'set' ? '◆ ' : ''}${r.name}`, key: 'name' as const,
     marked: r.rack === false}))]
   const own = strOf(p.v, 'unit.own')
   const unitBlocks: Block[] = score.units.map(u => {
@@ -203,7 +205,7 @@ function Notes(p: ClipProps) {
     keyW={92} laneH={laneH} highlight selected={strOf(p.v, 'unit') ?? own} onSelect={id => { if (!id.startsWith('wave:')) p.set('unit', id) }}
     onMove={p.standing?.score?.disabled ? undefined : move} onOpen={id => { if (score.units.find(u => u.key === id)?.song) p.set('score.open', id) }}
     w={p.room.w} h={p.room.h} name="Notes"
-    does="The score: each unit a note on the row of the agent or team that does it, ties to the units that wait on it, a bar where stacked notes join, the waves over the rows. Drag a note to another row to give it to that agent or team. Double-click a song to open it."
+    does="The score: each unit a note on the row of the agent or agent set that does it, ties to the units that wait on it, a bar where stacked notes join, the waves over the rows. Drag a note to another row to give it to that agent or agent set. Double-click a song to open it."
     under={<div className="clv-foot">
       {inside && <Action label={`Back to ${scoreOf(p.v)?.name ?? 'the song'}`} does="Returns to the song this one stands in." onPress={() => p.set('score.open', undefined)} />}
       <span className="clv-own" data-i={`Song|${inside ? `${inside.key}: a song standing as one note of ${scoreOf(p.v)?.name ?? 'its song'}.` : 'The workflow this task is a unit of.'}`}>
@@ -215,7 +217,7 @@ function Notes(p: ClipProps) {
 
 const notesBar = (p: ClipProps) => <>
   <Toggle label="Fold" does="Keeps only the rows that hold notes." on={choice(p.v, 'score.fold', 'fold') === 'fold'} onChange={x => p.set('score.fold', x ? 'fold' : 'rack')} />
-  <Toggle label="Rack" does="Shows every agent and team on the track's rack, as rows, whether the song gives them a part or not." tone="value"
+  <Toggle label="Rack" does="Shows every agent and agent set on the track's rack, as rows, whether the song gives them a part or not." tone="value"
     on={choice(p.v, 'score.fold', 'fold') === 'rack'} onChange={x => p.set('score.fold', x ? 'rack' : 'fold')} />
   <Chooser label="Highlight" does="Tints the notes of one thread form." value={choice(p.v, 'score.highlight', 'none')}
     options={[{value: 'none', label: 'Highlight: none'}, ...FORMS.map(f => ({value: f.value, label: f.label, does: f.does}))]} onChange={x => p.set('score.highlight', x)} />
@@ -237,9 +239,12 @@ function Vak(p: ClipProps) {
     return [{id: u.key, lane: u.row, at: pos.at, len: pos.len, label: u.key, tone: 'value' as Tone, dashed: u.proposed, does: u.concern},
       // The chosen unit's heads stand lit with their labels; the others stand faint behind, unlabelled, so stacked units never write over
       // each other. A unit held across the song stands behind only while it is chosen, or it would cover every other.
-      ...(u.key !== chosen?.key && u.heads?.CFP === 'CFP4' ? [] : HEADS.map(h => { const x = u.heads?.[h.id], mine = u.key === chosen?.key
-        return {id: `${u.key}:${h.id}`, lane: `h:${h.id}`, at: pos.at, len: pos.len, label: mine ? (x ? (h.word ? h.word(x) : x) : 'open') : undefined, tone: (x ? 'value' : 'stall') as Tone, dashed: !x,
-          faint: !mine, does: `${u.key} · ${h.label}: ${x ?? 'open: no label chosen yet.'} ${h.does}`} }))]
+      // A head the decision model picked stands dashed with its label, the model's pick, until you accept it.
+      ...(u.key !== chosen?.key && u.heads?.CFP === 'CFP4' ? [] : HEADS.map(h => { const x = u.heads?.[h.id], pick = x ? undefined : u.picks?.[h.id], mine = u.key === chosen?.key
+        const shown = x ?? pick
+        return {id: `${u.key}:${h.id}`, lane: `h:${h.id}`, at: pos.at, len: pos.len, label: mine ? (shown ? (h.word ? h.word(shown) : shown) : 'open') : undefined,
+          tone: (x ? 'value' : pick ? 'accent' : 'stall') as Tone, dashed: !x, faint: !mine,
+          does: `${u.key} · ${h.label}: ${x ?? (pick ? `${pick}, the decision model's pick, dashed until you accept it.` : 'open: no label chosen yet.')} ${h.does}`} }))]
   })
   const words: [string, string | undefined][] = chosen ? [
     ['Concern', chosen.concern], ['Returns', chosen.returns], ['Sources', chosen.sources?.join(' · ')], ['Success', chosen.success?.join(' · ')],
@@ -248,7 +253,7 @@ function Vak(p: ClipProps) {
   const laneH = Math.max(12, Math.min(20, Math.floor((p.room.h - RULER_H - listH) / Math.max(1, lanes.length))))
   return <LaneGrid lanes={lanes} blocks={blocks} from={0} to={Math.ceil(end) + 1} major={1} minor={0.5} label={stepLabel} keyW={92} laneH={laneH} highlight
     selected={chosen?.key} onSelect={id => p.set('unit', id.split(':')[0]!)} w={p.room.w} h={p.room.h} name="Vāk"
-    does="What each unit carries on its own: the seven heads of its composition, lane by lane, the selected unit's labels lit at its note and the others faint behind. An open head is dashed: no label is chosen yet. Under the lanes, the selected unit's own words."
+    does="What each unit carries on its own: the seven heads of its composition, lane by lane, the selected unit's labels lit at its note and the others faint behind. An open head is dashed: no label is chosen yet; a head the decision model picked is dashed with its label until you accept it. Under the lanes, the selected unit's own words."
     under={<ul className="clv-list" aria-label={`What ${chosen?.key ?? 'the unit'} carries`}>
       {words.map(([name, text]) => <li key={name} data-i={`${name}|${text ?? 'No reading.'}`}>
         <span className="clv-at">{chosen?.key}</span><span className="clv-chip">{name}</span><span className="clv-text">{text ?? '—'}</span><span className="clv-tag" />
@@ -260,7 +265,7 @@ function Vak(p: ClipProps) {
 
 const TR_TOOLS: readonly Option<string>[] = [
   {value: 'form', label: 'Thread form', does: 'Gives the selected units a thread form: how they stand with each other.'},
-  {value: 'allocate', label: 'Allocate', does: 'Gives the selected units to another agent or team: their row in the score.'},
+  {value: 'allocate', label: 'Allocate', does: 'Gives the selected units to another agent or agent set: their row in the score.'},
   {value: 'connect', label: 'Connect', does: 'Makes the selected unit wait on another: a tie from that unit\'s note to this one.'},
 ]
 const JOINS: readonly Option<string>[] = [
@@ -281,9 +286,9 @@ function Transform(p: ClipProps) {
     {tool === 'form' && <Fields>
       <Wide><Chooser label="Form" does="The thread form the selected units take." value={form} options={FORMS} onChange={x => p.set('tr.form', x)} disabled={off} /></Wide>
       <Wide><Chooser label="Join" does="Where stacked units meet: whether what comes after waits for all of them, or takes the first." value={choice(p.v, 'tr.join', 'all')} options={JOINS}
-        onChange={x => p.set('tr.join', x)} disabled={off ?? (form === 'CFP1' || form === 'CFP3' ? undefined : 'Only stacked units meet at a join: choose Chord or Fusion.')} /></Wide>
+        onChange={x => p.set('tr.join', x)} disabled={off ?? p.standing?.['tr.join']?.disabled ?? (form === 'CFP1' || form === 'CFP3' ? undefined : 'Only stacked units meet at a join: choose Chord or Fusion.')} /></Wide>
     </Fields>}
-    {tool === 'allocate' && <Wide><Chooser label="To" does="The agent or team on the track's rack that takes the selected units." value={choice(p.v, 'tr.to')}
+    {tool === 'allocate' && <Wide><Chooser label="To" does="The agent or agent set on the track's rack that takes the selected units." value={choice(p.v, 'tr.to')}
       options={(score?.rows ?? []).map(r => ({value: r.id, label: r.name, why: r.rack === false ? 'Not on the track\'s rack: add it to the rack first.' : undefined}))} onChange={x => p.set('tr.to', x)} disabled={off} /></Wide>}
     {tool === 'connect' && <Wide><Chooser label="Waits on" does="The unit the selected one waits on. Its return becomes this unit's material." value={choice(p.v, 'tr.on')}
       options={(score?.units ?? []).filter(u => u.key !== unit).map(u => ({value: u.key, label: u.key}))} onChange={x => p.set('tr.on', x)} disabled={off} /></Wide>}
@@ -300,20 +305,20 @@ const GEN_TOOLS: readonly Option<string>[] = [
   {value: 'heads', label: 'Fill heads', does: 'The decision model fills the open heads of the selected units, among the labels Quaternal Logic allows, or leaves them open.'},
 ]
 const NO_COMPOSE = 'Composing a score is Anima\'s act as an agent: no operation proposes a workflow from an intent yet.'
-const NO_PICK = 'The decision model is not served on this machine: AIKit\'s decision provider does not answer.'
+const NOTHING_OPEN = 'Every head of the unit has its label: nothing is open, so the decision model is not asked.'
 
 function Generate(p: ClipProps) {
   const tool = choice(p.v, 'gen.tool', 'compose'), score = scoreOf(p.v), off = onScore(p) ? undefined : NOT_ON_SCORE
   const unit = score?.units.find(u => u.key === (strOf(p.v, 'unit') ?? strOf(p.v, 'unit.own')))
   const open = unit ? HEADS.filter(h => !unit.heads?.[h.id]).length : undefined
-  const proposed = score?.units.filter(u => u.proposed).length ?? 0
+  const proposed = score?.units.filter(u => u.proposed || (u.picks && Object.keys(u.picks).length)).length ?? 0
   const status = read<{state?: string; why?: string} | undefined>(p.v, 'gen.status', undefined)
   return <>
     <Chooser label="Tool" does="The generator that writes into the score." value={tool} options={GEN_TOOLS} onChange={x => p.set('gen.tool', x)} wide />
     <Said>{GEN_TOOLS.find(t => t.value === tool)?.does}</Said>
     {tool === 'compose' ? <Rows>
       <Row label="From"><Fact label="From" does="The spec the score is composed from: the Intent panel's From." value={strOf(p.v, 'intent.source')} /></Row>
-      <Row label="Rack"><Fact label="Rack" does="The agents and teams on the track's rack: the rows the score may give parts to." value={score ? `${score.rows.filter(r => r.rack !== false).length} rows` : undefined} /></Row>
+      <Row label="Rack"><Fact label="Rack" does="The agents and agent sets on the track's rack: the rows the score may give parts to." value={score ? `${score.rows.filter(r => r.rack !== false).length} rows` : undefined} /></Row>
       <Row label="Waves"><ValueBox label="Waves" does="The most waves the score may hold." value={numOf(p.v, 'gen.waves') ?? NaN} def={2} scale={{min: 1, max: 6, step: 1}} format={x => String(x)} onChange={x => p.set('gen.waves', x)} /></Row>
     </Rows> : <Rows>
       <Row label="Open"><Fact label="Open" does="The heads of the selected unit with no label chosen yet." value={open === undefined ? undefined : `${open} of 7 · ${unit!.key}`} /></Row>
@@ -321,7 +326,7 @@ function Generate(p: ClipProps) {
     </Rows>}
     <Rule />
     <Fields>
-      <Wide><Press p={p} k="gen.press" label="Generate" does="Writes the proposal into the score, dashed, until you accept it." why={p.standing?.['gen.press']?.disabled ?? off ?? (tool === 'compose' ? NO_COMPOSE : NO_PICK)} /></Wide>
+      <Wide><Press p={p} k="gen.press" label="Generate" does="Writes the proposal into the score, dashed, until you accept it." why={p.standing?.['gen.press']?.disabled ?? off ?? (tool === 'compose' ? NO_COMPOSE : open === 0 ? NOTHING_OPEN : undefined)} /></Wide>
       <Press p={p} k="gen.accept" label="Accept" does="Keeps the dashed notes in the score." why={off ?? (proposed ? undefined : 'Nothing proposed waits.')} />
       <Press p={p} k="gen.discard" label="Discard" does="Drops the dashed notes." why={off ?? (proposed ? undefined : 'Nothing proposed waits.')} />
     </Fields>
@@ -358,7 +363,9 @@ function Log(p: ClipProps) {
   // Warped, the ruler reaches a quarter step past the note at each end, so its edges and the two flags stand clear.
   const from = warped ? note!.at - 0.25 : 0, to = warped ? note!.at + note!.len + 0.25 : Math.max(60, Math.ceil((elapsed + 8) / 30) * 30)
   const used = new Set(log.filter(e => e.kind !== 'steer' && e.kind !== 'stall' && e.kind !== 'reading').map(laneOf))
-  const lanes: Lane[] = (p.v.fold === false ? [...TOOLS] : TOOLS.filter(x => used.has(x))).map(x => ({id: x, label: x, key: 'name', marked: used.has(x)}))
+  // A kind the owner names that is no tool of the design's stands as its own lane after them, so every row of the log is drawn.
+  const kinds = [...TOOLS, ...[...used].filter(x => !(TOOLS as readonly string[]).includes(x))]
+  const lanes: Lane[] = (p.v.fold === false ? kinds : kinds.filter(x => used.has(x))).map(x => ({id: x, label: x, key: 'name', marked: used.has(x)}))
   const state = strOf(p.v, 'state'), own = strOf(p.v, 'unit.own') ?? 'the unit'
   const blocks: Block[] = log.filter(e => e.kind === 'tool' || e.kind === 'spawn' || e.kind === 'say').map(e => {
     const i = log.indexOf(e)
@@ -663,7 +670,7 @@ const RETURNED = [
 ]
 
 // The song the task is a unit of: the bridge widgets' hand-off, from its plan, as Factory would read it. Rows are the agents and
-// teams on the track's rack; Scribe is on the rack and has no part.
+// agent sets on the track's rack; Scribe is on the rack and has no part.
 const C = (CPF: string, CT: string, CP: string, CF: string, CFP: Form, CS: string, direction = 'forward') => ({CPF, CT, CP, CF, CFP, CS, direction})
 const GUARDIANS: Score = {
   name: 'release-check',
@@ -680,8 +687,8 @@ const SCORE: Score = {
   name: 'Bridge widget hand-off',
   rows: [
     {id: 'planner', name: 'Planner', kind: 'agent', rack: true}, {id: 'builder-a', name: 'Builder A', kind: 'agent', rack: true},
-    {id: 'builder-b', name: 'Builder B', kind: 'agent', rack: true}, {id: 'reviewers', name: 'Reviewers', kind: 'team', rack: true},
-    {id: 'guardians', name: 'Guardians', kind: 'team', rack: true}, {id: 'aletheia', name: 'Aletheia', kind: 'team', rack: true},
+    {id: 'builder-b', name: 'Builder B', kind: 'agent', rack: true}, {id: 'reviewers', name: 'Reviewers', kind: 'set', rack: true},
+    {id: 'guardians', name: 'Guardians', kind: 'set', rack: true}, {id: 'aletheia', name: 'Aletheia', kind: 'set', rack: true},
     {id: 'ci', name: 'CI watch', kind: 'agent', rack: true}, {id: 'scribe', name: 'Scribe', kind: 'agent', rack: true},
   ],
   units: [
@@ -791,7 +798,7 @@ export const clip: DesignedClip = {
     {id: 'generate', label: 'Generate', does: 'Writes into the score: a score composed from the Intent, or the open heads filled.', draw: Generate},
   ],
   editor: [
-    {id: 'notes', label: 'Notes', does: 'The score: the workflow the task is a unit of, each unit a note on the row of the agent or team that does it.', draw: Notes, bar: notesBar},
+    {id: 'notes', label: 'Notes', does: 'The score: the workflow the task is a unit of, each unit a note on the row of the agent or agent set that does it.', draw: Notes, bar: notesBar},
     {id: 'log', label: 'Sample', does: 'The task\'s log as a recording: each tool the agent used along its time, your steers, where the output stopped, and where the unit started and returned.', draw: Log, bar: logBar},
     {id: 'envelopes', label: 'Envelopes', does: 'The Agent\'s Effort and Autonomy for this task only.', draw: Envelopes},
     {id: 'vak', label: 'Vāk', does: 'What each unit carries on its own, lane by lane: the seven heads of its composition, and its own words.', draw: Vak},

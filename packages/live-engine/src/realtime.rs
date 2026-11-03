@@ -49,7 +49,14 @@
 //! Deliberately not here: MIDI input, external sync (the clock is a free-
 //! running frame counter), gapless parameter automation (swap is the only
 //! parameter surface), resampling, click-free crossfaded swaps.
+//!
+//! [`EnginePlayer`] (O-I #849) runs the parts engine's audio half
+//! ([`EngineCore`]) on the default output instead: notes, mixer moves and
+//! Panic arrive through the engine's lock-free queue and are applied at
+//! the next block, so no graph is rebuilt to move a fader, and what was
+//! played is recorded for Export Audio (`engine.rs`).
 
+use crate::engine::EngineCore;
 use crate::graph::{Clock, Graph};
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
@@ -94,7 +101,10 @@ struct Handoff {
 
 impl Handoff {
     fn new(graph: Graph) -> Handoff {
-        Handoff { inbox: Mutex::new(Some(graph)), retire: Mutex::new(None) }
+        Handoff {
+            inbox: Mutex::new(Some(graph)),
+            retire: Mutex::new(None),
+        }
     }
 
     /// UI thread: install a rebuilt graph (the latest swap wins if the
@@ -212,12 +222,15 @@ impl Player {
     /// The device's default buffer size is used. The first callback picks
     /// the graph up through the handoff, so startup is the same code path
     /// as a swap.
-    pub fn start(graph: Graph, sample_rate: u32) -> Result<Player, RealtimeError> {
+    pub fn start(mut graph: Graph, sample_rate: u32) -> Result<Player, RealtimeError> {
         let host = cpal::default_host();
-        let device = host.default_output_device().ok_or(RealtimeError::NoOutputDevice)?;
-        let total_frames =
-            graph.tracks.iter().map(|t| t.source.len() / t.channels.max(1)).max().unwrap_or(0)
-                as u64;
+        let device = host
+            .default_output_device()
+            .ok_or(RealtimeError::NoOutputDevice)?;
+        // device state is built here, off the audio thread (Device::prepare)
+        graph.sample_rate = sample_rate;
+        graph.prepare();
+        let total_frames = graph.frames();
         let tempo = graph.tempo_bpm;
         let state = Arc::new(PlayerState {
             handoff: Handoff::new(graph),
@@ -253,14 +266,21 @@ impl Player {
             )
             .map_err(|e| RealtimeError::StreamBuild(e.to_string()))?;
 
-        stream.play().map_err(|e| RealtimeError::StreamBuild(e.to_string()))?;
-        Ok(Player { stream: Some(stream), state })
+        stream
+            .play()
+            .map_err(|e| RealtimeError::StreamBuild(e.to_string()))?;
+        Ok(Player {
+            stream: Some(stream),
+            state,
+        })
     }
 
     /// UI thread: install a rebuilt graph (parameter changes rebuild and
     /// swap; device state resets, and the boundary may click — phase 1,
     /// see the module doc).
-    pub fn swap(&self, graph: Graph) {
+    pub fn swap(&self, mut graph: Graph) {
+        graph.sample_rate = self.sample_rate();
+        graph.prepare();
         self.state.handoff.install(graph);
     }
 
@@ -297,6 +317,113 @@ impl Drop for Player {
         drop(self.stream.take());
         // take back any graph the callback retired and was never picked up
         self.state.handoff.drain();
+    }
+}
+
+/// The parts engine's audio half playing on the default output device.
+/// Dropping it stops the audio. The control half ([`crate::EngineHandle`])
+/// stays with the host: it sends notes and mixer moves, reads the applied
+/// mixer, and takes the performance for Export Audio.
+///
+/// cpal's stream is not `Send` on every host (CoreAudio's is not), so a
+/// keeper thread opens the stream, holds it, and drops it when told: the
+/// player itself is `Send` and lives in a host's shared state. The keeper
+/// does no audio work; the device's own callback pulls the engine.
+pub struct EnginePlayer {
+    stop: Option<std::sync::mpsc::Sender<()>>,
+    keeper: Option<std::thread::JoinHandle<()>>,
+    sample_rate: u32,
+}
+
+impl EnginePlayer {
+    /// Open the default output at the engine's rate, stereo f32, and pull
+    /// the engine block by block. The callback does nothing but
+    /// [`EngineCore::pull_block`] and report the device's output latency
+    /// (callback to playback, from cpal's timestamps). Returns once the
+    /// stream plays, or with the device's refusal.
+    pub fn start(core: EngineCore) -> Result<EnginePlayer, RealtimeError> {
+        let sample_rate = core.sample_rate();
+        let (ready_tx, ready_rx) = std::sync::mpsc::sync_channel::<Result<(), RealtimeError>>(1);
+        let (stop_tx, stop_rx) = std::sync::mpsc::channel::<()>();
+        let keeper = std::thread::Builder::new()
+            .name("live-engine-output".into())
+            .spawn(move || match open_engine_output(core) {
+                Ok(stream) => {
+                    let _ = ready_tx.send(Ok(()));
+                    // blocks until the player is dropped (the sender goes)
+                    let _ = stop_rx.recv();
+                    drop(stream);
+                }
+                Err(e) => {
+                    let _ = ready_tx.send(Err(e));
+                }
+            })
+            .map_err(|e| {
+                RealtimeError::StreamBuild(format!("the output thread did not start: {e}"))
+            })?;
+        match ready_rx.recv() {
+            Ok(Ok(())) => Ok(EnginePlayer {
+                stop: Some(stop_tx),
+                keeper: Some(keeper),
+                sample_rate,
+            }),
+            Ok(Err(e)) => {
+                let _ = keeper.join();
+                Err(e)
+            }
+            Err(_) => {
+                let _ = keeper.join();
+                Err(RealtimeError::StreamBuild(
+                    "the output thread ended before the stream opened".into(),
+                ))
+            }
+        }
+    }
+
+    /// The stream's sample rate (the engine's: there is no resampling).
+    pub fn sample_rate(&self) -> u32 {
+        self.sample_rate
+    }
+}
+
+fn open_engine_output(mut core: EngineCore) -> Result<cpal::Stream, RealtimeError> {
+    let host = cpal::default_host();
+    let device = host
+        .default_output_device()
+        .ok_or(RealtimeError::NoOutputDevice)?;
+    let sample_rate = core.sample_rate();
+    let err_fn = |err| eprintln!("live-engine realtime: stream error: {err}");
+    let stream = device
+        .build_output_stream(
+            &cpal::StreamConfig {
+                channels: 2,
+                sample_rate: cpal::SampleRate(sample_rate),
+                buffer_size: cpal::BufferSize::Default,
+            },
+            move |data: &mut [f32], info: &cpal::OutputCallbackInfo| {
+                core.pull_block(data);
+                let ts = info.timestamp();
+                if let Some(d) = ts.playback.duration_since(&ts.callback) {
+                    core.report_output_latency(d.as_nanos() as u64);
+                }
+            },
+            err_fn,
+            None,
+        )
+        .map_err(|e| RealtimeError::StreamBuild(e.to_string()))?;
+    stream
+        .play()
+        .map_err(|e| RealtimeError::StreamBuild(e.to_string()))?;
+    Ok(stream)
+}
+
+impl Drop for EnginePlayer {
+    fn drop(&mut self) {
+        // dropping the sender wakes the keeper, which drops the stream
+        drop(self.stop.take());
+        if let Some(k) = self.keeper.take() {
+            let _ = k.join();
+        }
     }
 }
 
@@ -386,14 +513,13 @@ mod tests {
             a.devices.push(Box::new(BypassDevice));
             let mut b = Track::new("B", 1);
             b.source = vec![0.25f32; 40]; // ends before A — silence tail
-            b.devices.push(Box::new(GlueDevice::new(
-                live_dynamics::glue::GlueParams {
+            b.devices
+                .push(Box::new(GlueDevice::new(live_dynamics::glue::GlueParams {
                     threshold_db: -12.0,
                     range: 30.0,
                     ratio: 1.0,
                     makeup_db: 0.0,
-                },
-            )));
+                })));
             g.tracks.push(a);
             g.tracks.push(b);
             g.master.devices.push(Box::new(GainDevice::new_db(-1.5)));
@@ -445,6 +571,7 @@ mod tests {
     /// empty arrangement's worth of nothing; without one, the error is
     /// the graceful `NoOutputDevice` — never a panic (CI-like hosts).
     #[test]
+    #[ignore = "opens the default output device (the speakers): run by hand only"]
     fn player_starts_or_reports_no_device() {
         match Player::start(Graph::new(48_000, 120.0), 48_000) {
             Ok(player) => {
@@ -456,6 +583,16 @@ mod tests {
             Err(RealtimeError::NoOutputDevice) => {} // headless: graceful
             Err(e) => panic!("unexpected realtime error: {e}"),
         }
+    }
+
+    /// The engine player lives in a host's shared state (the desktop's
+    /// Tauri state is `Send + Sync`): it must be `Send` even where cpal's
+    /// stream is not. Compiles or fails; opens no device.
+    #[test]
+    fn the_engine_player_can_live_in_shared_state() {
+        fn shared<T: Send + 'static>() {}
+        shared::<EnginePlayer>();
+        shared::<std::sync::Mutex<Option<EnginePlayer>>>();
     }
 
     /// Error display carries the device text through.

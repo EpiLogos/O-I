@@ -1,7 +1,7 @@
 // Live's Device side (manual §3: "Device view shows what is working on it … left to right, in the order the material passes
 // through them"; DLW §16.2 Live: "The note devices, the torus, then its effects"; lock §0.2: one instrument): a row of plates through
 // the one device runtime — the note devices, the M1 torus, the effects its owner's chain names (manual §21.5; designBindings/
-// TorusEffectsOnChain.tsx, the Delay kept on the set's tempo), then the selected track's own devices — after the part's input, which is no
+// TorusEffectsOnChain.tsx, the Delay kept on the set's tempo, as the torus's session is), then the selected track's own devices — after the part's input, which is no
 // device (lock §0.3.6; R4 took the keyboard's plate off the chain: KeyboardOnChain.tsx PartInput keeps its MIDI path) —
 // that the detail host ends in its drop zone (shell/modeDetails.tsx dropHint). While something is not there yet the row says
 // what it waits for in one line, the host's waiting idiom; it carries no head of its own (the host draws the one head).
@@ -31,7 +31,7 @@ export function LiveDeviceChain({ctx, document, selection}: {ctx: PanelContext; 
     {!instrument && track && line}
     {instrument && <PartInput />}
     {instrument && <NoteDeviceChain />}
-    {instrument && <TorusOnChain state={torus} />}
+    {instrument && <TorusOnChain state={torus} tempoBpm={ctx.set?.tempo_bpm ?? null} />}
     {instrument && <TorusEffectsOnChain state={torus} tempoBpm={ctx.set?.tempo_bpm ?? null} />}
     {track && ctx.set && track.devices.map((name, index) =>
       <SetDeviceOnChain key={`${ctx.set!.path}#${selection.track}/${index}/${name}`} set={ctx.set!} track={track.name} trackIndex={selection.track}

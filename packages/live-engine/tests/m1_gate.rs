@@ -18,15 +18,22 @@ use live_engine::devices::{BypassDevice, GlueDevice};
 use live_engine::wav::read_wav_f32;
 use live_engine::{Graph, Track};
 
-const SIGNAL: &str =
-    "../../docs/research/ableton-live-12.0.25/harness/signals/steps-1k.wav";
+mod corpus;
+
+/// The harness signal, relative to the corpus root (`corpus::path`).
+const SIGNAL: &str = "harness/signals/steps-1k.wav";
 
 const SR: u32 = 48_000;
 
 /// The G1 canonical pins (devices/glue-compressor.md, point
 /// G1_T-12_R30_MU0_v2): Threshold −12, Range 30, Ratio 1, Makeup 0.
 fn gate_params() -> GlueParams {
-    GlueParams { threshold_db: -12.0, range: 30.0, ratio: 1.0, makeup_db: 0.0 }
+    GlueParams {
+        threshold_db: -12.0,
+        range: 30.0,
+        ratio: 1.0,
+        makeup_db: 0.0,
+    }
 }
 
 /// The same step table `verify::static_gate` measures: (input peak dB,
@@ -46,9 +53,7 @@ const STEPS: [(f64, f64); 7] = [
 /// tracked in git (docs/research/ableton-live-12.0.25 is ignored). A checkout
 /// without it skips these gates with a notice, as the golden renders do.
 fn corpus_present() -> bool {
-    let present = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join(SIGNAL)
-        .exists();
+    let present = corpus::path(SIGNAL).exists();
     if !present {
         eprintln!("skip: the harness signal is not present in this checkout ({SIGNAL})");
     }
@@ -56,7 +61,7 @@ fn corpus_present() -> bool {
 }
 
 fn load_signal() -> live_engine::wav::WavAudio {
-    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(SIGNAL);
+    let path = corpus::path(SIGNAL);
     let bytes = std::fs::read(&path)
         .unwrap_or_else(|e| panic!("harness signal missing at {}: {e}", path.display()));
     let wav = read_wav_f32(&bytes).expect("steps-1k.wav must parse");
@@ -110,7 +115,10 @@ fn m1_gate_engine_matches_the_static_predictions() {
             "  in_peak {db:>6} dB  engine {measured:>8.2} dB  predicted {predicted:>8.2} dB  err {err:+.3} dB"
         );
     }
-    println!("  max error {max_err:.3} dB (tolerance {} dB)", verify::STATIC_TOLERANCE_DB);
+    println!(
+        "  max error {max_err:.3} dB (tolerance {} dB)",
+        verify::STATIC_TOLERANCE_DB
+    );
     assert!(
         max_err <= verify::STATIC_TOLERANCE_DB,
         "M1 gate FAILED: {max_err:.3} dB > {} dB",
@@ -143,5 +151,8 @@ fn m1_gate_render_is_deterministic() {
     let a = render_set(Box::new(GlueDevice::new(gate_params())));
     let b = render_set(Box::new(GlueDevice::new(gate_params())));
     assert_eq!(a.len(), b.len());
-    assert!(a.iter().zip(b.iter()).all(|(x, y)| x.to_bits() == y.to_bits()));
+    assert!(a
+        .iter()
+        .zip(b.iter())
+        .all(|(x, y)| x.to_bits() == y.to_bits()));
 }

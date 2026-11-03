@@ -71,15 +71,15 @@ test('every key of the design is the owner\'s reading or is absent with its reas
   const values = model.torusDesignValues(state())
   // The Rack page's keys are the rack's (qlRack.ts): the rack named absent until it is read, the part in the view's own hand.
   const bound = model.torusDesignBinding(state())
-  for (const key of Object.keys(torus.defaults)) assert.ok(key in values || model.TORUS_ABSENT[key] || (key === 'rack' && bound.standing.rack.disabled) || bound.local[key],
-    `${key}: read from the owner, named absent, or the view's own`)
+  // The Torus's session keys (O-I #850) wait on the owner's torus-state while the frame announces none, and say so.
+  for (const key of Object.keys(torus.defaults)) assert.ok(key in values || model.TORUS_ABSENT[key] || (key === 'rack' && bound.standing.rack.disabled) || bound.local[key]
+    || /torus-state/.test(bound.standing[key]?.disabled ?? ''), `${key}: read from the owner, named absent, waiting on the owner's session, or the view's own`)
   assert.deepEqual(Object.keys(torus.defaults).filter(key => key in values),
-    ['light', 'level', 'lens', 'context-frame', 'harmonic-basis', 'm3-transcription', 'sound', 'cadence', 'scale', 'standing'],
-    'the owner reports the light, the level, its four determinants, its sound, cadence and scale, and its standing — nothing else of the design')
-  for (const key of ['sounding', 'driveMod']) {
-    assert.equal(key in values, false, `${key}: the owner reports none, so the binding gives none`)
-    assert.match(model.TORUS_ABSENT[key], /^(The owner reports no sounding keys|Nothing moves the drive)/, `${key}: absent with its reason`)
-  }
+    ['light', 'body', 'level', 'lens', 'context-frame', 'harmonic-basis', 'm3-transcription', 'sound', 'cadence', 'scale', 'standing'],
+    'the owner reports the light, the body it rings (the torus, O-I #850), the level, its four determinants, its sound, cadence and scale, and its standing; with no Torus session announced, nothing else of the design')
+  assert.equal('sounding' in values, false, 'sounding: the owner reports none, so the binding gives none')
+  assert.match(model.TORUS_ABSENT.sounding, /^The owner reports no sounding keys/, 'sounding: absent with its reason')
+  assert.equal('driveMod' in torus.defaults, false, 'the drive\'s modulation went with the Drive (manual §21.2 retires it, O-I #850)')
   assert.equal(values.light, 'lit', 'following: the instrument is at work')
   assert.equal(values.level, -6, 'a presentation gain of 0.5 is −6 dB')
   assert.deepEqual([values.lens, values['context-frame'], values['harmonic-basis'], values['m3-transcription']], ['L5′', 'CF7', 'B4', 'DNA'], 'the determinants as the owner labels them')
@@ -98,11 +98,15 @@ test('a key the owner does not take is disabled with its reason; while the instr
   const live = model.torusDesignBinding(state())
   // Damping is the body's Q, taken through the stage channel's damping edit (O-I #745 lane N; ql-745-torus-body.test.mjs).
   for (const key of ['level', 'sound', 'cadence', 'scale', 'lens', 'context-frame', 'harmonic-basis', 'm3-transcription', 'damping']) assert.equal(live.writes(key), true, `${key} is the owner's to change`)
-  for (const key of ['pulseMix', 'drive', 'release', 'notes', 'meter', 'view', 'receiver']) {
+  for (const key of ['strike', 'modes', 'pan', 'meter', 'view', 'receiver']) {
     assert.equal(live.writes(key), false, `${key} has no owner`)
     assert.equal(live.standing[key].disabled, model.TORUS_ABSENT[key])
   }
-  assert.match(live.standing.drive.disabled, /No sky route moves it either/, 'no modulation arc is claimed for Drive')
+  // The Torus's session (O-I #850) is the owner's once the frame announces it; here it announces none, and each says what it waits on.
+  for (const key of ['rate', 'fundamental', 'carrier', 'tuning', 'shape', 'polyphony', 'notes']) {
+    assert.equal(live.writes(key), false, key)
+    assert.match(live.standing[key].disabled, /torus-state/, `${key}: names the owner op it waits on`)
+  }
   assert.equal(live.modulatedBy, undefined, 'nothing names the sky as moving a value it does not move')
   const manual = model.torusDesignBinding(state('manual'))
   assert.equal(manual.writes('level'), false)
@@ -127,10 +131,10 @@ test('a change leaves through the one stage channel, in the owner\'s own form; a
     setDraft(binding.id, 'sound', false)
     assert.equal(await flushDrafts(binding, 1), 'the instrument is held')
     assert.deepEqual(sent.at(-1), {command: 'instrument', edit: {kind: 'muted', muted: true}})
-    setDraft(binding.id, 'drive', 3)
+    setDraft(binding.id, 'strike', 30)
     assert.equal(await flushDrafts(binding, 1), 'A reading: the owner reports it; nothing here changes it.', 'a key with no owner never reaches the channel')
     assert.equal(sent.length, 3)
-    assert.throws(() => model.torusRowChanges([{key: 'pulseMix', value: 40}]), /No pulse mix/)
+    assert.throws(() => model.torusRowChanges([{key: 'pulseMix', value: 40}]), /pulseMix: no parameter of the owner's instrument/, 'a retired control has no owner (O-I #850)')
   } finally { instrument.setLiveInstrumentCommander(null); resetHost(model.TORUS_DEVICE_ID) }
 })
 
@@ -150,20 +154,25 @@ test('the design draws its five views on the owner\'s reading: the bare ring nam
     for (const view of VIEWS) assert.doesNotMatch(renderToStaticMarkup(h(HostedDevice, {designed: torus, binding: model.torusDesignBinding(null), view, nav: {}})), /NaN|undefined/, `${view}: no reading`)
     setHostPage(binding.id, 'field')
     const compact = renderToStaticMarkup(h(HostedDevice, {designed: torus, binding, view: 'compact', nav: {}}))
-    assert.match(compact, /No reading of the pulses/, 'without the pulses the ring stands bare and says so')
-    assert.doesNotMatch(compact, /aria-label="Pulse mix"[^>]*role="slider"|data-shape="dot"/, 'no handle on a reading the owner does not report')
+    // O-I #850: the torus is drawn from the owner's figure; without a session there is none, and the ring says so.
+    assert.match(compact, /No reading of the figure/, 'without the figure the ring stands bare and says so')
+    assert.doesNotMatch(compact, /data-shape="dot"/, 'no handle on a reading the owner does not report')
     assert.match(compact, /data-light="lit"/, 'the owner\'s standing lights it')
-    for (const [label, chosen] of [['Lens', 'L5′'], ['Frame', 'CF7'], ['Basis', 'B4']]) {
-      assert.match(compact, new RegExp(`aria-label="${label}"[^>]*>(?:(?!</select>).)*<option value="${chosen}" selected=""`), `the compact's ${label} stands on the owner's ${chosen}`)
-    }
-    assert.match(compact, /role="radio" aria-checked="true"[^>]*>DNA</, 'M3 stands on the owner\'s DNA')
+    // The determinants stand in the whole's Mode and tuning (manual §21.2), on the owner's choices.
     const whole = renderToStaticMarkup(h(HostedDevice, {designed: torus, binding, view: 'whole', nav: {}}))
-    assert.match(whole, /-6\.0 dB/, 'the owner\'s level, in dB')
-    assert.match(whole, /120 u\/m/, 'the owner\'s scale')
-    assert.match(whole, /role="radio" aria-checked="true"[^>]*>12 ticks\/s</, 'the owner\'s cadence')
-    assert.match(whole, /aria-pressed="true"[^>]*>Sound</, 'the owner\'s sound is on')
+    for (const [label, chosen] of [['Lens', 'L5′'], ['Frame', 'CF7'], ['Basis', 'B4']]) {
+      assert.match(whole, new RegExp(`aria-label="${label}"[^>]*>(?:(?!</select>).)*<option value="${chosen}" selected=""`), `the whole's ${label} stands on the owner's ${chosen}`)
+    }
+    assert.match(whole, /role="radio" aria-checked="true"[^>]*>DNA</, 'M3 stands on the owner\'s DNA')
+    // Level, Sound, Cadence and Scale stand in Notes and output, on the body page (manual §21.2: "Notes and output | Polyphony, Level and pan, View").
     setHostPage(binding.id, 'body')
-    assert.match(renderToStaticMarkup(h(HostedDevice, {designed: torus, binding, view: 'whole', nav: {}})), /No reading of the envelope/)
+    const body = renderToStaticMarkup(h(HostedDevice, {designed: torus, binding, view: 'whole', nav: {}}))
+    assert.match(body, /-6\.0 dB/, 'the owner\'s level, in dB')
+    assert.match(body, /120 u\/m/, 'the owner\'s scale')
+    assert.match(body, /role="radio" aria-checked="true"[^>]*>12 ticks\/s</, 'the owner\'s cadence')
+    assert.match(body, /aria-pressed="true"[^>]*>Sound</, 'the owner\'s sound is on')
+    assert.match(body, /aria-label="Polyphony"[^>]*aria-valuetext="no reading"/, 'Polyphony waits on the owner\'s session')
+    assert.doesNotMatch(body, /aria-label="(Attack|Release)"/, 'the envelope is retired')
   } finally { resetHost(binding.id) }
 })
 
@@ -173,8 +182,10 @@ test('the design draws its five views on the owner\'s reading: the bare ring nam
 const openTargets = markup => [...markup.matchAll(/data-midi-target="([^"]+)"[^>]*data-midi-open="yes"/g)].map(match => match[1])
 /** The text of each target's frame, from its open tag to the next target. */
 const frames = markup => Object.fromEntries(markup.split('data-midi-target="').slice(1).map(part => [part.slice(0, part.indexOf('"')), part]))
-/** The four the chain framed before the design (measured on the generic plate at adbe6978e, scripted): the device's compact rows. */
-const CHAIN_TARGETS_BEFORE = ['lens', 'context-frame', 'harmonic-basis', 'm3-transcription']
+/** The four the chain frames on the generic plate (scripted): the device's compact rows. Until O-I #850 these were the four
+ * determinants (measured at adbe6978e); the manual's compact four are now Rate, Fundamental, Carrier and Damping (§21.2), and the
+ * determinants are framed by the same ids in the whole's Mode and tuning and in the instrument section. */
+const CHAIN_TARGETS_BEFORE = ['rate', 'fundamental', 'carrier', 'damping']
 
 /** A Live session with the owner following, the map in MIDI map mode, and — standing in for Vite's loader, which does not run under
  * Node (designs.ts requestDesign) — the catalogue's own Torus registered unchanged, as central-day-binding.test.mjs registers the Day. */
@@ -196,7 +207,7 @@ test('on the chain the design stands where the generic plate stood, and MIDI-map
   // Before: the chain as it stood with the binding held back — the generic plate, its rows wrapped by the chain's wrap.
   const before = renderToStaticMarkup(h(DeviceView, {device, size: 'compact', wrapRow: onChain.torusMapWrap}))
   assert.match(before, /data-device-design="generic"/)
-  assert.deepEqual(openTargets(before), CHAIN_TARGETS_BEFORE, 'the generic plate framed the four determinants')
+  assert.deepEqual(openTargets(before), CHAIN_TARGETS_BEFORE, 'the generic plate frames the four macros')
   // After: the chain's own place, the device published with its binding, the catalogue's design drawn.
   registerDesignedDevice(torus)
   door.publishDevice(model.TORUS_DEVICE_ID, {device, binding: model.torusDesignBinding(live, device)})
@@ -205,8 +216,8 @@ test('on the chain the design stands where the generic plate stood, and MIDI-map
   assert.deepEqual(openTargets(after), openTargets(before), 'MIDI-map mode lights the same targets, by the same ids, in the same order')
   assert.equal((after.match(/class="midi-map-target/g) ?? []).length, CHAIN_TARGETS_BEFORE.length, 'each control framed once, never twice')
   const framed = frames(after)
-  for (const [id, label] of [['lens', 'Lens'], ['context-frame', 'Frame'], ['harmonic-basis', 'Basis'], ['m3-transcription', 'M3']]) {
-    assert.match(framed[id], new RegExp(`^[^<]*<div class="dp-cell dp-cell--(chooser|radio)[^>]*><span class="dp-label">${label}</span>`), `${id} frames the design's ${label}`)
+  for (const [id, label] of [['rate', 'Rate'], ['fundamental', 'Fundamental'], ['carrier', 'Carrier'], ['damping', 'Damping']]) {
+    assert.match(framed[id], new RegExp(`^[^<]*<div class="dp-cell dp-cell--(box|dial)[^>]*><span class="dp-label">${label}</span>`), `${id} frames the design's ${label}`)
   }
   assert.match(after, /<div class="dp-sec-body"[^>]*><div class="midi-map-target/, 'the target stands in the section\'s grid where the control stood (midiMap.css)')
   // With the map off the frames stay, closed; the design draws nothing from a missing reading.
@@ -220,18 +231,25 @@ test('the design\'s See and hear carry the ids the instrument section maps them 
   const device = model.torusDevice(live), binding = model.torusDesignBinding(live, device)
   registerDesignedDevice(torus)
   door.publishDevice(model.TORUS_DEVICE_ID, {device, binding})
+  // O-I #850: the whole is paged as the manual groups it (§21.2): the field page carries Pulse, Mode and tuning and Shape; the body page
+  // Body and Notes and output, where Level, Sound, Cadence and Scale stand.
   const wrapped = renderToStaticMarkup(h(PlacedDevice, {device, view: 'whole', binding, wrapRow: onChain.torusMapWrap}))
   assert.match(wrapped, /data-device-design="quaternal-logic:torus"/)
-  const ids = openTargets(wrapped)
-  assert.deepEqual(ids, [...CHAIN_TARGETS_BEFORE, 'sound', 'cadence', 'scale-units', 'level'], 'the determinants, then Sound, Cadence, Scale and Level')
+  assert.deepEqual(openTargets(wrapped), ['rate', 'fundamental', 'carrier', 'lens', 'context-frame', 'harmonic-basis', 'm3-transcription', 'tuning', 'shape'],
+    'Pulse, then the determinants and Tuning, then Shape')
+  setHostPage(binding.id, 'body')
+  const body = renderToStaticMarkup(h(PlacedDevice, {device, view: 'whole', binding, wrapRow: onChain.torusMapWrap}))
+  assert.deepEqual(openTargets(body), ['damping', 'polyphony', 'sound', 'cadence', 'scale-units', 'level'], 'Damping, then Polyphony, Sound, Cadence, Scale and Level')
+  const ids = [...openTargets(wrapped), ...openTargets(body)]
   const sectionIds = openTargets(renderToStaticMarkup(h(section.LiveInstrumentSectionView, {state: live})))
-  assert.deepEqual([...ids].sort(), [...sectionIds].sort(), 'the same ids the instrument section frames them by (midiMapTargets.ts)')
-  const framed = frames(wrapped)
+  assert.ok(sectionIds.every(id => ids.includes(id)), 'every id the instrument section frames, the design frames by the same id (midiMapTargets.ts)')
+  const framed = frames(body)
   assert.match(framed['scale-units'], /<span class="dp-label">Scale<\/span>/, 'the scale is mapped as its units per metre')
   assert.match(framed.level, /<span class="dp-label">Level<\/span>/)
   assert.doesNotMatch(wrapped, /NaN|undefined/)
   // The pool draws the published device with no wrap, as it did the generic plate: no target there.
   assert.deepEqual(openTargets(renderToStaticMarkup(h(PlacedDevice, {device, view: 'whole', binding}))), [])
+  setHostPage(binding.id, 'field')
 }))
 
 test('the seam: a kit control is wrapped only where the host names its key, and the generic plate standing in is never wrapped twice', () => {
@@ -249,10 +267,10 @@ test('the seam: a kit control is wrapped only where the host names its key, and 
   const live = state()
   const device = model.torusDevice(live)
   const plain = genericDevice({id: torus.id, title: 'M1 torus', rows: device.rows, wrapRow: (row, control) => h('div', {'data-row-wrap': row.key}, control)})
-  const binding = {...model.torusDesignBinding(live, device), standing: {lens: {valueKey: 'lens'}}}
+  const binding = {...model.torusDesignBinding(live, device), standing: {damping: {valueKey: 'damping'}}}
   const standIn = renderToStaticMarkup(h(kit.ControlWrapContext.Provider, {value: (key, control) => h('div', {'data-design-wrap': key}, control)},
     h(HostedDevice, {designed: plain, binding, view: 'compact', nav: {}, keys: device.rows.map(row => row.key)})))
-  assert.match(standIn, /data-row-wrap="lens"/, 'the plate wraps its row')
+  assert.match(standIn, /data-row-wrap="damping"/, 'the plate wraps its row')
   assert.doesNotMatch(standIn, /data-design-wrap/, 'and nothing wraps it again')
 })
 
@@ -282,10 +300,11 @@ test('a value moved in the design reaches the owner\'s write: each determinant, 
       if (node.type === type && node.props.label === label) return node
       return control(node.props.children, type, label)
     }
-    const compact = torus.compact(props('field')), whole = torus.whole(props('field'))
+    // O-I #850: the determinants stand in the whole's Mode and tuning (field page); Sound, Cadence, Scale and Level in Notes and output (body page).
+    const field = torus.whole(props('field')), body = torus.whole(props('body'))
     const moves = [
-      [compact, kit.Chooser, 'Lens', 'L2'], [compact, kit.Chooser, 'Frame', 'CF3'], [compact, kit.Chooser, 'Basis', 'Row'], [compact, kit.Radio, 'M3', 'RNA'],
-      [whole, kit.Toggle, 'Sound', false], [whole, kit.Radio, 'Cadence', '1 tick/s'], [whole, kit.ValueBox, 'Scale', 200], [whole, kit.ValueBox, 'Level', -12],
+      [field, kit.Chooser, 'Lens', 'L2'], [field, kit.Chooser, 'Frame', 'CF3'], [field, kit.Chooser, 'Basis', 'Row'], [field, kit.Radio, 'M3', 'RNA'],
+      [body, kit.Toggle, 'Sound', false], [body, kit.Radio, 'Cadence', '1 tick/s'], [body, kit.ValueBox, 'Scale', 200], [body, kit.ValueBox, 'Level', -12],
     ]
     for (const [view, type, label, value] of moves) {
       const found = control(view, type, label)

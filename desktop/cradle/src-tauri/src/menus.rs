@@ -7,21 +7,37 @@
 //! §20.1 "Where everything is", O-I #747): the frame hands each to the mode
 //! that stands (App.tsx MENU_ACT), and Expressions runs the field's own act.
 //! Their ids reach the renderer as `oi:command` (live-shell App.tsx routes them).
-use tauri::{menu::{MenuBuilder, SubmenuBuilder, MenuItemBuilder}, AppHandle, Emitter, Manager};
+use tauri::{
+    menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder},
+    AppHandle, Emitter, Manager,
+};
 
 #[derive(serde::Deserialize)]
-pub struct Arrangement { id: String, name: String }
+pub struct Arrangement {
+    id: String,
+    name: String,
+}
 
 #[tauri::command]
-pub fn arrangement_menu(app: AppHandle, window: tauri::Window, arrangements: Vec<Arrangement>, active: String) -> Result<(), String> {
-    if window.label() != "main" { return Err("Only the main arrangement host can publish workspaces".into()); }
+pub fn arrangement_menu(
+    app: AppHandle,
+    window: tauri::Window,
+    arrangements: Vec<Arrangement>,
+    active: String,
+) -> Result<(), String> {
+    if window.label() != "main" {
+        return Err("Only the main arrangement host can publish workspaces".into());
+    }
     install(&app, &arrangements, &active).map_err(|e| e.to_string())
 }
 
 pub fn install(app: &AppHandle, arrangements: &[Arrangement], active: &str) -> tauri::Result<()> {
     let item = |id: &str, label: &str, keys: Option<&str>| {
         let built = MenuItemBuilder::with_id(id, label);
-        match keys { Some(keys) => built.accelerator(keys).build(app), None => built.build(app) }
+        match keys {
+            Some(keys) => built.accelerator(keys).build(app),
+            None => built.build(app),
+        }
     };
     let settings = item("app.settings", "Settings…", Some("CmdOrCtrl+,"))?;
     let application = SubmenuBuilder::new(app, "O-I").item(&settings).separator();
@@ -63,11 +79,26 @@ pub fn install(app: &AppHandle, arrangements: &[Arrangement], active: &str) -> t
     let duplicate = item("edit.duplicate", "Duplicate", Some("CmdOrCtrl+D"))?;
     let rename = item("edit.rename", "Rename", Some("CmdOrCtrl+R"))?;
     let delete = item("edit.delete", "Delete", None)?;
-    let edit = SubmenuBuilder::new(app, "Edit").item(&undo).item(&redo).separator().cut().copy().paste()
-        .item(&duplicate).item(&delete).separator().item(&rename).separator().select_all().build()?;
+    let edit = SubmenuBuilder::new(app, "Edit")
+        .item(&undo)
+        .item(&redo)
+        .separator()
+        .cut()
+        .copy()
+        .paste()
+        .item(&duplicate)
+        .item(&delete)
+        .separator()
+        .item(&rename)
+        .separator()
+        .select_all()
+        .build()?;
     let insert_clip = item("create.clip", "Insert Clip", Some("CmdOrCtrl+Shift+M"))?;
     let insert_row = item("create.row", "Insert Row", Some("CmdOrCtrl+I"))?;
-    let create = SubmenuBuilder::new(app, "Create").item(&insert_clip).item(&insert_row).build()?;
+    let create = SubmenuBuilder::new(app, "Create")
+        .item(&insert_clip)
+        .item(&insert_row)
+        .build()?;
     // Export, in the File menu (manual §20.1 Export): a picture (with its choices), a film, or the Expression itself.
     let export = SubmenuBuilder::new(app, "Export")
         .item(&item("file.export.picture", "Picture…", None)?)
@@ -77,7 +108,16 @@ pub fn install(app: &AppHandle, arrangements: &[Arrangement], active: &str) -> t
         .item(&item("file.export.html", "Living HTML", None)?)
         .item(&item("file.export.native", "Native Configuration", None)?)
         .build()?;
-    let file = SubmenuBuilder::new(app, "File").item(&export).build()?;
+    // Export Audio, in the File menu as in Live (manual §21.1: "choose Export Audio/Video… in the File menu, as in Live"; Live's ⇧⌘R): what the engine
+    // played, into the file the person chooses in the host's save dialog (live_engine_host.rs). There is no video to export.
+    let export_audio = item(EXPORT_AUDIO, "Export Audio…", Some("CmdOrCtrl+Shift+R"))?;
+    let file = SubmenuBuilder::new(app, "File")
+        .item(&export_audio)
+        .item(&export)
+        .build()?;
+    // One item to a line, as the menu reads: the shell's keys line reads each item's key from it
+    // (packages/live-shell/ui/tests/e820-search-line.test.mjs), so rustfmt leaves the View menu as written.
+    #[rustfmt::skip]
     let view = SubmenuBuilder::new(app, "View")
         .item(&item("view.session", "Session View", None)?)
         .item(&item("view.arrangement", "Arrangement View", None)?)
@@ -108,35 +148,76 @@ pub fn install(app: &AppHandle, arrangements: &[Arrangement], active: &str) -> t
         .separator()
         .fullscreen()
         .build()?;
-    let browser = MenuItemBuilder::with_id("workspace.browser", "New Browser Pane").accelerator("CmdOrCtrl+Shift+L").build(app)?;
-    let address = MenuItemBuilder::with_id("workspace.browser-address", "Go to Web Address…").accelerator("CmdOrCtrl+L").build(app)?;
-    let fresh=MenuItemBuilder::with_id("workspace.new-tab", "New Tab").accelerator("CmdOrCtrl+T").build(app)?;
-    let terminal=MenuItemBuilder::with_id("workspace.terminal", "New Terminal").accelerator("CmdOrCtrl+Shift+J").build(app)?;
+    let browser = MenuItemBuilder::with_id("workspace.browser", "New Browser Pane")
+        .accelerator("CmdOrCtrl+Shift+L")
+        .build(app)?;
+    let address = MenuItemBuilder::with_id("workspace.browser-address", "Go to Web Address…")
+        .accelerator("CmdOrCtrl+L")
+        .build(app)?;
+    let fresh = MenuItemBuilder::with_id("workspace.new-tab", "New Tab")
+        .accelerator("CmdOrCtrl+T")
+        .build(app)?;
+    let terminal = MenuItemBuilder::with_id("workspace.terminal", "New Terminal")
+        .accelerator("CmdOrCtrl+Shift+J")
+        .build(app)?;
     let mut workspace = SubmenuBuilder::new(app, "Workspace")
-        .item(&fresh).item(&terminal).item(&browser).item(&address)
+        .item(&fresh)
+        .item(&terminal)
+        .item(&browser)
+        .item(&address)
         .text("workspace.create", "New Workspace…")
         .text("workspace.rename", "Rename Workspace…")
-        .text("workspace.recover", "Recover Saved Arrangement…").separator();
+        .text("workspace.recover", "Recover Saved Arrangement…")
+        .separator();
     for arrangement in arrangements {
-        let label = if arrangement.id == active { format!("✓ {}", arrangement.name) } else { arrangement.name.clone() };
+        let label = if arrangement.id == active {
+            format!("✓ {}", arrangement.name)
+        } else {
+            arrangement.name.clone()
+        };
         workspace = workspace.text(format!("workspace.activate:{}", arrangement.id), label);
     }
     let workspace = workspace.build()?;
     let window = SubmenuBuilder::new(app, "Window")
-        .minimize().maximize().separator()
+        .minimize()
+        .maximize()
+        .separator()
         .text("surface.split-right", "Split Active Surface Right")
         .text("surface.split-down", "Split Active Surface Down")
         .text("surface.tile", "Tile All Surfaces")
         .text("surface.maximize", "Maximize / Restore Pane")
         .text("surface.detach", "Detach Active Surface")
-        .separator().text("region.left", "Show / Hide Central")
+        .separator()
+        .text("region.left", "Show / Hide Central")
         .text("region.right", "Show / Hide Agent");
-    let window=window.build()?;
-    app.set_menu(MenuBuilder::new(app).items(&[&application, &file, &edit, &create, &view, &workspace, &window]).build()?)?;
+    let window = window.build()?;
+    app.set_menu(
+        MenuBuilder::new(app)
+            .items(&[
+                &application,
+                &file,
+                &edit,
+                &create,
+                &view,
+                &workspace,
+                &window,
+            ])
+            .build()?,
+    )?;
     if let Some(current) = arrangements.iter().find(|w| w.id == active) {
-        if let Some(window) = app.get_window("main") { window.set_title(&format!("{} — O-I", current.name))?; }
+        if let Some(window) = app.get_window("main") {
+            window.set_title(&format!("{} — O-I", current.name))?;
+        }
     }
     Ok(())
+}
+
+/// File › Export Audio…: served by the native host itself (its save dialog and the kernel's Live owner), never routed to the page.
+pub const EXPORT_AUDIO: &str = "file.export.audio";
+
+/// The menu items the native host serves itself, before any reaches the page.
+pub fn is_native(id: &str) -> bool {
+    id.starts_with("world.") || id == EXPORT_AUDIO
 }
 
 /// Whether a menu item is one of the shell's commands (File, Edit, Create, View, Settings), routed as `oi:command`.
@@ -146,15 +227,27 @@ pub fn is_command(id: &str) -> bool {
         .any(|prefix| id.starts_with(prefix))
 }
 
-pub fn dispatch(app: &AppHandle, id: &str) {
+/// The host's own items: Export Audio's save dialog, and the world chooser (the candidate's).
+fn serve_natively(app: &AppHandle, id: &str) {
+    if id == EXPORT_AUDIO {
+        crate::live_engine_host::export_from_menu(app);
+    }
     #[cfg(feature = "native_shell")]
     if id.starts_with("world.") {
         crate::native_shell::world_menu(app, id);
+    }
+}
+
+pub fn dispatch(app: &AppHandle, id: &str) {
+    if is_native(id) {
+        serve_natively(app, id);
         return;
     }
     if is_command(id) {
         // The shell's commands go to the main window's frame, which routes each to the view that stands.
-        if let Some(window) = app.get_window("main") { let _ = window.emit("oi:command", id); }
+        if let Some(window) = app.get_window("main") {
+            let _ = window.emit("oi:command", id);
+        }
         return;
     }
     if id.starts_with("workspace.") || id.starts_with("surface.") || id.starts_with("region.") {
@@ -162,7 +255,9 @@ pub fn dispatch(app: &AppHandle, id: &str) {
         if let Some(window) = app.get_window("main") {
             let _ = window.emit("oi:arrangement-action", id);
             let _ = window.set_focus();
-            if let Some(shell)=app.get_webview("main") {let _=shell.set_focus();}
+            if let Some(shell) = app.get_webview("main") {
+                let _ = shell.set_focus();
+            }
         }
     }
 }
@@ -191,5 +286,30 @@ mod tests {
         }
         assert!(!is_command("workspace.browser"));
         assert!(!is_command("world.choose"));
+    }
+
+    /// File › Export Audio… is the host's own: its save dialog and the kernel's Live owner, never a page command that could
+    /// name a path.
+    #[test]
+    fn export_audio_is_served_by_the_host_not_routed_to_the_page() {
+        assert!(is_native(EXPORT_AUDIO) && is_native("world.choose"));
+        assert!(!is_native("file.export.picture"));
+        let source = include_str!("menus.rs");
+        let dispatch = source.split("pub fn dispatch(").nth(1).unwrap();
+        let (native, routed) = (
+            dispatch.find("if is_native(id)").unwrap(),
+            dispatch.find("if is_command(id)").unwrap(),
+        );
+        assert!(
+            native < routed,
+            "Export Audio is served before any file.* id goes to the page"
+        );
+        let served = source.split("fn serve_natively(").nth(1).unwrap();
+        assert!(served.contains(
+            "if id == EXPORT_AUDIO {\n        crate::live_engine_host::export_from_menu(app);"
+        ));
+        assert!(
+            source.contains(r#"item(EXPORT_AUDIO, "Export Audio…", Some("CmdOrCtrl+Shift+R"))"#)
+        );
     }
 }

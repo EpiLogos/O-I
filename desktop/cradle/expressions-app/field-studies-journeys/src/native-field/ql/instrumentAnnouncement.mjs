@@ -5,7 +5,9 @@
  *  - identity: the six refs of the native basis the audio receipt carries (native-audio.mjs `basis`), with the session's event and subject;
  *  - cursors, audio receipt, availability and queue counts: the InstrumentSession reading, unchanged;
  *  - playback policy: the controller's embedded policy, unchanged;
- *  - determinants: the scene's acting M1 state (scene.ts SceneActing: lens, context frame, harmonic source, M3 transcription).
+ *  - determinants: the scene's acting M1 state (scene.ts SceneActing: lens, context frame, harmonic source, M3 transcription);
+ *  - the Torus's M1′ session (parameters.torus): QL's own `torus-state` reading as the controller last took it (O-I #850), its notes
+ *    counted and its Carrier's drive named in the owner's word; absent until the owner has been read.
  *
  * Absent when no session is open: the frame announces nothing, and the shell withdraws the reading. A missing identity ref is
  * left missing, so the boundary refuses it by name. */
@@ -54,6 +56,16 @@ export function announceInstrument(reading) {
       refusal: instrument?.refusal ? `${instrument.refusal.operation}: ${instrument.refusal.reason}` : null,
       // The torus's four effects (native-field/effectsLaw.ts), as the controller keeps them; a reading without them announces none.
       ...(reading.presentation_effects ? {effects: reading.presentation_effects} : {}),
+      ...(instrument?.torus ? {torus: torusSession(instrument.torus)} : {}),
     },
+  };
+}
+
+/** The owner's session (ql.m1-prime-session/v1) as the frame announces it: the owner's own values, the notes as their count. */
+function torusSession(torus) {
+  return {
+    settings: torus.settings, steps_per_second: torus.steps_per_second, band: torus.band, fundamental_hz: torus.fundamental_hz, map_hz: torus.map_hz,
+    figure: torus.figure ?? null, comma_cents: torus.comma_cents, notes: Array.isArray(torus.notes) ? torus.notes.length : torus.notes,
+    resident_tunings: torus.resident_tunings, carrier_drive: torus.carrier?.drive,
   };
 }

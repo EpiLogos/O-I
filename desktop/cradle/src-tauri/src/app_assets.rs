@@ -18,48 +18,84 @@ pub fn handle<R: Runtime>(app: &AppHandle<R>, request: &Request<Vec<u8>>) -> Res
         }
         #[cfg(all(debug_assertions, not(feature = "native_shell")))]
         {
-            oi_cradle_kernel::application_asset::read_development_asset(key).map(|bytes| (bytes, "development-build"))
+            oi_cradle_kernel::application_asset::read_development_asset(key)
+                .map(|bytes| (bytes, "development-build"))
         }
         #[cfg(any(not(debug_assertions), feature = "native_shell"))]
         None
     })
 }
 
-
 /// The embedded asset that answers `key` (`expressions/…`): stored bare, or under the candidate's `__application/` prefix.
 fn embedded_name<'a>(names: impl IntoIterator<Item = &'a str>, key: &str) -> Option<String> {
     let prefixed = format!("__application/{key}");
-    names.into_iter().map(|name| name.trim_start_matches('/')).find(|name| *name == key || *name == prefixed).map(str::to_owned)
+    names
+        .into_iter()
+        .map(|name| name.trim_start_matches('/'))
+        .find(|name| *name == key || *name == prefixed)
+        .map(str::to_owned)
 }
 
 fn respond(
     request: &Request<Vec<u8>>,
     load: impl FnOnce(&str) -> Option<(Vec<u8>, &'static str)>,
 ) -> Response<Vec<u8>> {
-    let refuse = |status, reason: &str| Response::builder().status(status)
-        .header("Content-Type", "text/plain; charset=utf-8")
-        .header("Access-Control-Allow-Origin", "*")
-        .body(reason.as_bytes().to_vec()).expect("valid asset refusal");
-    if !matches!(request.uri().host(), Some("localhost" | "oi-material.localhost")) {
-        return refuse(StatusCode::FORBIDDEN, "This webview cannot load hosted application assets");
+    let refuse = |status, reason: &str| {
+        Response::builder()
+            .status(status)
+            .header("Content-Type", "text/plain; charset=utf-8")
+            .header("Access-Control-Allow-Origin", "*")
+            .body(reason.as_bytes().to_vec())
+            .expect("valid asset refusal")
+    };
+    if !matches!(
+        request.uri().host(),
+        Some("localhost" | "oi-material.localhost")
+    ) {
+        return refuse(
+            StatusCode::FORBIDDEN,
+            "This webview cannot load hosted application assets",
+        );
     }
     if request.method() != Method::GET && request.method() != Method::HEAD {
-        return refuse(StatusCode::METHOD_NOT_ALLOWED, "Application assets are read-only");
+        return refuse(
+            StatusCode::METHOD_NOT_ALLOWED,
+            "Application assets are read-only",
+        );
     }
-    let Some(key) = request.uri().path().strip_prefix("/__application").and_then(asset_key) else {
-        return refuse(StatusCode::FORBIDDEN, "Only files within the Expressions application are admitted");
+    let Some(key) = request
+        .uri()
+        .path()
+        .strip_prefix("/__application")
+        .and_then(asset_key)
+    else {
+        return refuse(
+            StatusCode::FORBIDDEN,
+            "Only files within the Expressions application are admitted",
+        );
     };
     let Some((bytes, source)) = load(&key) else {
-        return refuse(StatusCode::NOT_FOUND, "This candidate has no built Expressions asset at the requested path");
+        return refuse(
+            StatusCode::NOT_FOUND,
+            "This candidate has no built Expressions asset at the requested path",
+        );
     };
-    Response::builder().status(StatusCode::OK)
-        .header("Content-Type", oi_cradle_kernel::files::material_content_type(None, &key))
+    Response::builder()
+        .status(StatusCode::OK)
+        .header(
+            "Content-Type",
+            oi_cradle_kernel::files::material_content_type(None, &key),
+        )
         .header("Content-Length", bytes.len())
         .header("Cache-Control", "no-store")
         .header("Access-Control-Allow-Origin", "*")
         .header("X-Content-Type-Options", "nosniff")
         .header("X-OI-Asset-Source", source)
-        .body(if request.method() == Method::HEAD { Vec::new() } else { bytes })
+        .body(if request.method() == Method::HEAD {
+            Vec::new()
+        } else {
+            bytes
+        })
         .expect("valid hosted asset response")
 }
 
@@ -67,7 +103,10 @@ fn respond(
 mod tests {
     use super::*;
     fn request(path: &str) -> Request<Vec<u8>> {
-        Request::builder().uri(format!("oi-material://localhost/__application{path}")).body(Vec::new()).unwrap()
+        Request::builder()
+            .uri(format!("oi-material://localhost/__application{path}"))
+            .body(Vec::new())
+            .unwrap()
     }
     #[test]
     fn protocol_refuses_traversal_before_asset_resolution() {
@@ -79,18 +118,35 @@ mod tests {
     #[test]
     fn a_key_is_found_bare_or_under_the_candidates_application_prefix() {
         let candidate = ["/app/index.html", "/__application/expressions/library.html"];
-        assert_eq!(embedded_name(candidate, "expressions/library.html").as_deref(), Some("__application/expressions/library.html"));
-        assert_eq!(embedded_name(["/expressions/index.html"], "expressions/index.html").as_deref(), Some("expressions/index.html"));
+        assert_eq!(
+            embedded_name(candidate, "expressions/library.html").as_deref(),
+            Some("__application/expressions/library.html")
+        );
+        assert_eq!(
+            embedded_name(["/expressions/index.html"], "expressions/index.html").as_deref(),
+            Some("expressions/index.html")
+        );
         assert_eq!(embedded_name(candidate, "expressions/missing.html"), None);
-        assert_eq!(embedded_name(["/app/expressions/library.html"], "expressions/library.html"), None);
+        assert_eq!(
+            embedded_name(
+                ["/app/expressions/library.html"],
+                "expressions/library.html"
+            ),
+            None
+        );
     }
     #[test]
     fn embedded_response_keeps_exact_bytes_and_missing_asset_is_not_shell_html() {
         let bytes = include_bytes!("../../expressions-app/index.html").to_vec();
-        let response = respond(&request("/expressions/index.html?mode=techne"), |_| Some((bytes.clone(), "bundled")));
+        let response = respond(&request("/expressions/index.html?mode=techne"), |_| {
+            Some((bytes.clone(), "bundled"))
+        });
         assert_eq!(response.status(), StatusCode::OK);
         assert_eq!(response.body(), &bytes);
         assert_eq!(response.headers()["X-OI-Asset-Source"], "bundled");
-        assert_eq!(respond(&request("/expressions/missing.html"), |_| None).status(), StatusCode::NOT_FOUND);
+        assert_eq!(
+            respond(&request("/expressions/missing.html"), |_| None).status(),
+            StatusCode::NOT_FOUND
+        );
     }
 }

@@ -321,6 +321,8 @@ const openController = async (striking = true) => {
   const renderer = {retainedTopology: () => ({tex_width: 2, tex_height: 2, particle_count: 4, slot_count: 4}), retainedTargetPort: () => port, setNativeDomain() {},
     releaseRetainedField() {}, onRetainedRecoveryRequired: () => () => {}, checkpointRetainedField() { return {receipt: {}}; }, restoreRetainedField() {}};
   const owner = new Owner(), audio = new ControlledAudio(), c = new NativeFieldController(owner, renderer, () => audio);
+  // These tests read the sky's voices: the Torus opens under Sky, as a saved sound would (a new one opens under Logic, O-I #850).
+  owner.torusSettings.tuning = 'sky';
   await c.compose({sky: 'none'});
   return {owner, c};
 };

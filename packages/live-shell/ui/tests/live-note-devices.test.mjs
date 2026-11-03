@@ -309,7 +309,7 @@ test('source reading: Live\'s chain mounts the part\'s input, the note devices, 
   assert.equal(chainSource.indexOf('<KeyboardOnChain />'), -1, 'no keyboard plate')
   const jankoAt = chainSource.indexOf('<PartInput />')
   const note = chainSource.indexOf('<NoteDeviceChain />')
-  const torusAt = chainSource.indexOf('<TorusOnChain state={torus} />')
+  const torusAt = chainSource.indexOf('<TorusOnChain state={torus}')
   assert.ok(jankoAt > 0 && note > jankoAt && torusAt > note, 'the input, then the note devices, then the torus')
   assert.match(chainSource, /import \{NoteDeviceChain\} from '\.\/noteDevices\/NoteDeviceChain'/)
   assert.doesNotMatch(readFileSync(new URL('../src/live/LiveClip.tsx', import.meta.url), 'utf8'), /NoteDeviceChain/)

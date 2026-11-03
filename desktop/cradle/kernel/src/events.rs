@@ -193,7 +193,9 @@ pub enum KernelEvent {
     /// owner holds at `path` — the disclosure a retained listing (the file
     /// tree's workspace-keyed cache) invalidates on. Emitted only when the
     /// owner recorded an actual change; an unchanged write mutates nothing
-    /// and emits nothing, exactly as a source save does.
+    /// and emits nothing, exactly as a source save does. The Live owner's
+    /// Export Audio records one too, for the file the person chose
+    /// (`live_set_owner.rs` `Kernel::live_audio_export`).
     FileChanged {
         path: String,
         summary: String,

@@ -69,18 +69,29 @@ export class ControlledAudio {
 export class ControlledSceneOwner {
  state={tick12:7,cycle:1,revision:0,lens12:11,context_frame:7,harmonic:{selection:'canonical-basis',index:3},rna:false,generation:1n,m2:1};
  frame=null; sequence=0n; calls=[]; closed=false; active=false; inFlight=0; maxInFlight=0; delay=null; refuse=null;
- voices(){const s=this.state;return['#2-5-0/1','#2-5-2','#2-5-3','#2-5-4','#2-5-5','#2-5-6','#2-5-7','#2-5-8','#2-5-9'].map((planet_ref,i)=>({planet_ref,longitude_radians:i*0.6,frequency_hz:130.81*(1+i/8)+(s.harmonic.index??9),m:1+((s.tick12+i)%12),n:1+((s.lens12+i)%12),helix:i%4<2?'bimba':'pratibimba',ql_position:i%6,weight:1,phase_radians:i}));}
+ /** The Torus's M1′ session as a controlled owner keeps it (O-I #850): protocol numbers only, never QL's pulse law. A new
+  * Torus opens under Logic, as QL's does (scene_field.rs); a test that reads the sky's voices sets Sky, as a saved sound would. */
+ torusSettings={rate:{mode:'free',steps_per_second:2.5},fundamental:{source:'map'},carrier:0,shape:'auto',tuning:'logic',polyphony:16,tempo_bpm:120};
+ torus(){const t=this.torusSettings,sps=t.rate.mode==='free'?t.rate.steps_per_second:t.tempo_bpm/(240*t.rate.note.numerator/t.rate.note.denominator);
+  const band=sps<.001?'cosmic':sps<.5?'breath':sps<20?'rhythm':sps<=20000?'pitch':'beyond';
+  return{schema:'ql.m1-prime-session/v1',settings:structuredClone(t),steps_per_second:sps,band,fundamental_hz:t.fundamental.source==='hz'?t.fundamental.hz:130.81,map_hz:130.81,
+   figure:t.shape==='sequence'?null:t.shape!=='auto'?t.shape:band==='pitch'||band==='beyond'?'torus':band==='rhythm'?'figure-eight':'spiral',
+   comma_cents:this.comma??0,notes:[],polyphony:t.polyphony,carrier:{value:t.carrier,drive:'pulse',step:t.carrier*Math.min(1,2.5/sps),standing:'controlled'},resident_tunings:['logic','sky']};}
+ voices(){const s=this.state;
+  // Under Logic the controlled owner sounds an octet named by its own mode refs, with no planet (QL's scene:logic/k).
+  if(this.torusSettings.tuning==='logic')return Array.from({length:8},(_,k)=>({mode_ref:`scene:logic/${k}`,tuning:'logic',longitude_radians:k*0.7,frequency_hz:130.81*(1+k/7),m:1+k%4,n:2+k%3,helix:k<4?'bimba':'pratibimba',ql_position:k%4+1,weight:1,phase_radians:k}));
+  return['#2-5-0/1','#2-5-2','#2-5-3','#2-5-4','#2-5-5','#2-5-6','#2-5-7','#2-5-8','#2-5-9'].map((planet_ref,i)=>({planet_ref,longitude_radians:i*0.6,frequency_hz:130.81*(1+i/8)+(s.harmonic.index??9),m:1+((s.tick12+i)%12),n:1+((s.lens12+i)%12),helix:i%4<2?'bimba':'pratibimba',ql_position:i%6,weight:1,phase_radians:i}));}
  event(){const s=this.state;const identity={event_ref:'controlled:scene',profile_generation:s.m2};
   return{schema:'ql.coupled-event-request/v1',m1:{event_ref:'controlled:scene',revision:String(s.revision),cycle:String(s.cycle),tick12:s.tick12,lens12:s.lens12,context_frame:s.context_frame,basis:'fifths',selected_coordinate:'#1-2-5',row12:3},
    m2:{stamp:{contract_ref:'ql.m2-engine-request/v1',identity,source_ref:'controlled'},resonator:null,world_observations:[{observed_at_unix_ms:1789479981163}]},
    m3:{stamp:{contract_ref:'ql.m3-state-request/v1',identity,source_ref:'controlled'},subject_ref:'controlled:subject',rna:s.rna},m3_commands:[],harmonic_source:structuredClone(s.harmonic),frequency_bindings:[],sky_frequency_bindings:[],source_receipts:[]};}
- sources(){const s=this.state,input=this.event();input.m2.resonator={provider_ref:'ql.scene-torus-provider/v1',modes:this.voices().map((v,i)=>({mode_ref:`scene:planet/${v.planet_ref}`,frequency_hz:v.frequency_hz,damping_per_second:.35}))};
+ sources(){const s=this.state,input=this.event();input.m2.resonator={provider_ref:'ql.scene-torus-provider/v1',modes:this.voices().map((v,i)=>({mode_ref:v.mode_ref??`scene:planet/${v.planet_ref}`,frequency_hz:v.frequency_hz,damping_per_second:.35}))};
   const identity={event_ref:'controlled:scene',profile_generation:s.m2};
   return{original:{input:this.original??(this.original=structuredClone(input))},current:{input,derivation:{harmonic_ratio:{ratio:[3,2]},mef_table_index:(s.lens12*6+s.tick12%6)%72,material_standing:'controlled'},
    m1:{schema:'ql.m1.engine/v1',config:structuredClone(input.m1),music:{lens:'L5′',context_frame:`CF${s.context_frame}`,mode:'Controlled'},ratio_basis:[[1,1],[4,3],[3,4],[3,2],[2,3],[2,1],[8,9],[16,9]].map(ratio=>({ratio})),carrier:{quadrature:[1,0],opposite_quadrature:[-1,0]},standing:{}},
    m2:{schema:'ql.m2-engine/v1',identity,resonator:structuredClone(input.m2.resonator),vimarsha:{reading:{audio_octet_hz:this.voices().map(v=>v.frequency_hz),nodal_quartet:this.voices().slice(0,4)}}},
    m3:{schema:'ql.m3-state/v1',identity,subject_ref:'controlled:subject',transcription:{rna:s.rna,sequence:s.rna?'AUG':'ATG'},form:{codon:{ref:'#3-controlled'},angles_deg10:[0,0,0]}}}};}
- influence(){const s=this.state;return{schema:'ql.expression-influence/v1',generation:this.frame.generation,m1_revision:String(s.revision),address72:(s.lens12*6+s.tick12%6)%72,shape_ref:'controlled',voices:this.voices(),
+ influence(){const s=this.state;return{schema:'ql.expression-influence/v1',generation:this.frame.generation,m1_revision:String(s.revision),address72:(s.lens12*6+s.tick12%6)%72,shape_ref:'controlled',voices:this.voices(),tuning:this.torusSettings.tuning,fundamental_hz:this.torus().fundamental_hz,
   geometry:{metres_per_unit:1},material:{damping_per_second:.35,strike_metres:.08,audio_gain_per_metre:1,strike_on_event:true},material_standing:'declared-material-policy (controlled)',
   effects:[{determinant:'the dated sky',through:'coupled sky bus: M2-5 just octave × M1 root',effect:'pitch',units:'Hz',range:'~',timing:'event',consumer:'K8',warrant:'source-defined'},{determinant:'material policy',through:'damping',effect:'decay',units:'1/s',range:'declared',timing:'instance',consumer:'K8',warrant:'declared policy — not source'}]};}
  async request(request){
@@ -108,8 +119,12 @@ export class ControlledSceneOwner {
    else if(command.operation==='replace-event'){const e=command.event;
     if(e.m2.resonator!==null||e.frequency_bindings.length)throw new Error('controlled: provider owns the voices');
     Object.assign(s,{tick12:e.m1.tick12,cycle:Number(e.m1.cycle),revision:Number(e.m1.revision),lens12:e.m1.lens12,context_frame:e.m1.context_frame,harmonic:structuredClone(e.harmonic_source),rna:e.m3.rna});s.m2++;this.bump(command.strike?2n:1n);}
-   else if(!['read','inspect','influence'].includes(command.operation))throw new Error('controlled: unsupported '+command.operation);
-   // Like the real scene host, a determinant acknowledgement carries its influence.
+   else if(command.operation==='torus-set'){this.torusSettings={...this.torusSettings,...structuredClone(command.edit)};if(command.edit.fundamental)this.bump(1n);}
+   else if(command.operation==='strike-at')this.bump(1n);
+   else if(!['read','inspect','influence','torus-state'].includes(command.operation))throw new Error('controlled: unsupported '+command.operation);
+   // Like the real scene host, a determinant acknowledgement carries its influence; a Torus act, the session reading.
+   if(command.operation==='torus-state')return reply({torus:this.torus()});
+   if(command.operation==='torus-set')return reply({torus:this.torus(),influence:this.influence()});
    return reply(command.operation==='inspect'?{sources:this.sources(),influence:this.influence(),event:this.event()}:['influence','m1-advance','replace-event'].includes(command.operation)?{influence:this.influence()}:{});
   }finally{this.inFlight--;}
  }

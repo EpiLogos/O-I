@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-live-engine-mixer"
+description = "Enables the live_engine_mixer command without any pre-configured scope."
+commands.allow = ["live_engine_mixer"]
+
+[[permission]]
+identifier = "deny-live-engine-mixer"
+description = "Denies the live_engine_mixer command without any pre-configured scope."
+commands.deny = ["live_engine_mixer"]

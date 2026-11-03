@@ -39,7 +39,8 @@ export type ClipStatus = 'waiting' | 'running' | 'stopped' | 'recording' | 'stal
 /** Live's mixer controls, as every track's row carries them (manual §16.6 "The track": Activator, Solo, Arm, Monitor, Input and
  * output). What each means is the mode's (§17.1–§21.1). */
 /** `works`: the workcell the track's agents work in (§16.6 In/Out, §19.23 Works in), on every track an agent works on. */
-export type MixerControlId = 'activator' | 'solo' | 'arm' | 'monitor' | 'input' | 'output' | 'works';
+/** `volume` and `pan`: a part's level and place in the stereo field (§21.1 "The mixer row"), on the tracks whose mode has them. */
+export type MixerControlId = 'activator' | 'solo' | 'arm' | 'monitor' | 'input' | 'output' | 'works' | 'volume' | 'pan';
 /** Live's Monitor: In, Auto or Off. */
 export type MonitorSetting = 'in' | 'auto' | 'off';
 /** One mixer control as this mode has it: what it does here (the mode's own table), and — when no owner op writes it — why it
@@ -53,6 +54,8 @@ export interface WorldMixerControl {
   disabled?: string;
   /** The grain the owner's op takes when it is coarser than one track (the shell's one write arm): said on every track's control. */
   grain?: string;
+  /** A level control's range and unit (Volume in dB, Pan from left to right): drawn as a value, never as a switch. */
+  range?: {min: number; max: number; unit: 'dB' | 'pan'};
 }
 export type WorldMixer = Partial<Record<MixerControlId, WorldMixerControl>>;
 /** A track's mixer readings, as its owner reports them. A control the owner reports nothing for is absent: the row draws it
@@ -66,6 +69,12 @@ export interface WorldTrackMix {
   output?: string;
   /** The workcell its agents work in, by the register's name (env-1). */
   works?: string;
+  /** The part's volume in dB, as its owner reads it. */
+  volume?: number;
+  /** The part's pan, −1 (left) to 1 (right). */
+  pan?: number;
+  /** Who read the level: the set's owner, or the engine while it plays (what is heard). Absent: the owner. */
+  levelSource?: string;
 }
 
 /** The Main track (manual §16.6: "The Main track sits at the end, where Live keeps it. It carries each row's launch button, Stop
@@ -191,6 +200,8 @@ export interface WorldTrackActions {
     solo?: {op: string; run(trackId: string, on: boolean): unknown};
     arm?: {op: string; run(trackId: string, on: boolean): unknown};
     monitor?: {op: string; run(trackId: string, setting: MonitorSetting): unknown};
+    volume?: {op: string; run(trackId: string, db: number): unknown};
+    pan?: {op: string; run(trackId: string, pan: number): unknown};
   };
   /** Launch the track itself (a workspace: "Launch the workspace and that context comes back"). */
   launchTrack?: {op: string; run(trackId: string): unknown};

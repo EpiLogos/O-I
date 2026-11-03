@@ -13,7 +13,7 @@ export const lensLabel=(lens12:number)=>`L${lens12>>1}${lens12&1?'′':''}`;
 export const LENSES=Array.from({length:12},(_,i)=>({lens12:i,label:lensLabel(i)}));
 export const CONTEXT_FRAMES=Array.from({length:7},(_,i)=>({context_frame:i+1,label:`CF${i+1}`}));
 
-export interface SceneVoice{index:number;planet_ref:string;longitude_degrees:number;frequency_hz:number;m:number;n:number;helix:string;ql_position:number;weight:number;phase_radians:number}
+export interface SceneVoice{index:number;planet_ref:string;mode_ref?:string;longitude_degrees:number;frequency_hz:number;m:number;n:number;helix:string;ql_position:number;weight:number;phase_radians:number}
 export type SceneHarmonicSource={selection:'canonical-basis';index:number}|{selection:'selected-source-row'};
 export interface SceneSky{kind:'dated'|'none';label:string;mode?:string;epoch?:string;snapshot_ref?:string}
 export interface SceneActing{
@@ -40,15 +40,19 @@ export function eventFromSources(sources:any){
  return event;
 }
 
-/** The planets the owner voices, as its influence names them (planet, place on
- * the clock, pitch, skin). Before the first influence reading: none. */
+/** The voices the owner sounds, as its influence names them (planet, place on
+ * the clock, pitch, skin): the sky's nine planets under Sky, or the eight voices
+ * of the tuning in force under Logic (Vimarśā's octet) and Maqām, each named by
+ * its own mode ref and no planet (QL scene_field.rs; O-I #850). Before the first
+ * influence reading: none. */
 function voices(influence:any):SceneVoice[]{
  if(!Array.isArray(influence?.voices))return[];
- requireValue(influence.voices.length===9,'influence must name the nine tuned planets');
+ const tuning=influence.tuning??'sky',sky=tuning==='sky';
+ requireValue(sky?influence.voices.length===9:(tuning==='logic'||tuning==='maqam')&&influence.voices.length===8,sky?'influence must name the nine tuned planets':`influence must name the eight voices of its ${String(tuning)} tuning`);
  return influence.voices.map((v:any,index:number)=>{
-  requireValue(typeof v?.planet_ref==='string'&&Number.isFinite(v.longitude_radians)&&Number.isFinite(v?.frequency_hz)&&v.frequency_hz>0&&integer(v.m,1,12)&&integer(v.n,1,12),'invalid voice');
+  requireValue((sky?typeof v?.planet_ref==='string':(v?.planet_ref===undefined||v?.planet_ref==='')&&typeof v?.mode_ref==='string')&&Number.isFinite(v.longitude_radians)&&Number.isFinite(v?.frequency_hz)&&v.frequency_hz>0&&integer(v.m,1,12)&&integer(v.n,1,12),'invalid voice');
   const degrees=((v.longitude_radians*180/Math.PI)%360+360)%360;
-  return{index,planet_ref:v.planet_ref,longitude_degrees:degrees,frequency_hz:v.frequency_hz,m:v.m,n:v.n,helix:String(v.helix),ql_position:Number(v.ql_position),weight:Number(v.weight),phase_radians:Number(v.phase_radians)};
+  return{index,planet_ref:v.planet_ref??'',...(typeof v.mode_ref==='string'?{mode_ref:v.mode_ref}:{}),longitude_degrees:degrees,frequency_hz:v.frequency_hz,m:v.m,n:v.n,helix:String(v.helix),ql_position:Number(v.ql_position),weight:Number(v.weight),phase_radians:Number(v.phase_radians)};
  });
 }
 

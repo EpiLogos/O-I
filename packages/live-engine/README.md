@@ -7,6 +7,14 @@ track/device/mixer graph with a beat clock and a deterministic offline
 render; the offline render is also the acceptance path the milestone gates
 run against.
 
+Since O-I #849 it is also **the shell's one engine for Live's parts**: MIDI
+parts with an instrument, sends and return tracks, the Main track, a
+realtime pull path that takes notes and mixer moves through a lock-free
+queue, and Export Audio that renders exactly what was played. The desktop
+hosts it (`desktop/cradle/src-tauri/src/live_engine_host.rs`); the Torus
+sounds through it as an instrument node over QL's K8 typed API (feature
+`k8`).
+
 ## The clean-room rule (binding, inherited from live-dynamics)
 
 This crate is written **only** from `session-model.md`, the device dossiers
@@ -41,7 +49,9 @@ below).
   (`devices/glue-compressor.md`, `devices/echo.md` E1 pins, the
   Reverb default state — each stored value cited at its construction);
   UNKNOWN device element names instantiate `BypassDevice` and produce a
-  warning. MIDI and return tracks are warnings (not rendered in M1).
+  warning. `bridge` (the summary) leaves MIDI and return tracks as
+  warnings; `bridge_set` (the document) bridges them with their notes,
+  instrument, mixer, sends and the Main track (see the parts engine).
   Sources are not loaded by the bridge — the host fills `Track::source`.
 - `src/realtime.rs` — realtime output (feature `realtime`, cpal): the
   phase-1 audition path. The cpal callback pulls `Graph::mix_frame`
@@ -49,9 +59,67 @@ below).
   verified bit-identical OFFLINE (no device needed) by
   `pull_blocks_reproduce_the_render_exactly`. Design constraints and the
   audition recipe below.
+- `src/engine.rs` — the parts engine (O-I #849): `engine(graph)` splits a
+  prepared graph into `EngineCore` (the audio half: `pull_block`) and
+  `EngineHandle` (the control half: `send` an `EngineEvent`, `collect`
+  the applied `MixerState`, `position`, `performance` for Export Audio,
+  `latency`). Events are refused in words before they are queued
+  (`MixerState::refusal`), applied at the first frame of the next block
+  and stamped with that frame.
+- `src/ring.rs` — the bounded SPSC ring (`RING_CAPACITY` 4096) the
+  control and audio halves cross by: no lock, no allocation.
+- `src/instruments.rs` — `OperatorInstrument` (16 voices over
+  `live_dynamics::operator`'s gated default patch, oldest stolen) and
+  `SilentInstrument` (a MIDI part with no modelled instrument).
+- `src/k8.rs`, `src/k8/field_shim.cpp`, `build.rs` — feature `k8`: the
+  Torus as an instrument node (`K8Instrument` over `K8Field`, a C ABI shim
+  over `ql::ContinuousField`); `QL_MEF_PREFIX` names an installed QL
+  prefix (`include/ql/continuous_field.hpp`, `lib/libql-mef-c.a`).
+- `examples/key_to_sound.rs` — the key-to-sound measurement (headless by
+  default; `--device` plays it on the default output, by hand only).
 - `tests/m1_gate.rs` — **the M1 gate**.
 - `tests/m3_gate.rs` — **the M3 gate** (`#[ignore]`-gated, needs the
   golden renders, like `live-dynamics/tests/golden.rs`).
+- `tests/midi_gate.rs` — **the MIDI gate** (`#[ignore]`, needs the corpus).
+- `tests/mixer_gate.rs` — **the mixer gate** (pan law and send taps against
+  Live's renders; `#[ignore]`, skips with a notice while the renders are
+  absent) and its teeth test.
+- `tests/parts_engine.rs`, `tests/realtime_no_alloc.rs`,
+  `tests/k8_instrument.rs` — the parts engine, the allocation-free pull,
+  the Torus node.
+- `tests/corpus/mod.rs` — where the gates find the RE corpus:
+  `LIVE_RE_CORPUS` (else `../../docs/research/ableton-live-12.0.25`) and
+  the render archive (`LIVE_RE_RENDER_ARCHIVE`).
+
+## The parts engine (O-I #849)
+
+- **One mixing law.** `Graph::mix_frame` serves the offline `render` /
+  `render_performance` and the realtime `EngineCore::pull_block`; per
+  part: instrument (MIDI) or source (audio) → its chain → activator and
+  solo → volume and pan → Main; each send taps the part post-fader (after
+  volume and pan) or pre-fader (`SendsPre/SendPreBool`), into its return
+  → the return's chain → its volume and pan → Main → Main's chain.
+- **MIDI parts.** `bridge_set` reads a MIDI part's arrangement notes
+  (`KeyTracks/MidiNoteEvent`, the notes a part plays at their frames) and
+  hosts its first `Operator` at the gated default patch; any other
+  instrument plays its notes silently, with a warning.
+- **Returns and Main.** Return tracks are members of `Tracks`
+  (session-model.md:49); `LiveSet/SoloInPlace` decides whether returns
+  sound while a part is soloed. A set may hold fewer sends than returns
+  (the loader's words: "Track has more send knobs than set has return
+  tracks" is the only refusal).
+- **Realtime law.** `pull_block` takes no allocation, no blocking lock
+  and no UI work (`tests/realtime_no_alloc.rs` counts allocations across
+  ten event kinds with Operator, Echo and Glue sounding: zero).
+- **Export Audio** is `Graph::render_performance(perf)` of a fresh bridge
+  of the same set: every event at the frame the engine applied it, so the
+  export is bit-identical to the pulled blocks (tested in
+  `parts_engine.rs`, `k8_instrument.rs` and the desktop host's tests).
+- **The Torus** (feature `k8`) sounds at the first frame of the block that
+  takes its key — one audio block, never the worker's half second. Release
+  build, two Toruses ringing, thread CPU per block (`key_to_sound`):
+  64 frames 6.5 µs, 128 frames 12.6 µs, 1024 frames 59.4 µs (deadlines
+  1.33 / 2.67 / 21.3 ms).
 
 ## The M1 gate
 
@@ -150,6 +218,19 @@ Marked in code where they are made; listed here so they are findable:
   §3; it is not yet behavior-verified against Live (the M1 gate pins all
   staging at unity, so it does not exercise the order).
 - **No clipper**: the master bus carries raw float; no limiting.
+- **Send taps** (#849): a post-fader send taps after the part's volume and
+  pan; a pre-fader send before both. The send range's floor (−70 dB,
+  0.0003162277571) is applied as stored; whether Live treats it as
+  silence is unmeasured.
+- **Solo with returns**: Solo in Place on, returns still sound while a
+  part is soloed; off, they fall silent.
+- **Activator**: an inactive part keeps its chain running (its device
+  state moves on) but its output and sends are silent.
+- **Operator voices**: 16 per part, the oldest stolen; a voice ends at the
+  release floor. Notes shorter than one frame are dropped; at one frame,
+  note-offs fire before note-ons.
+- **The Torus's note-off and Panic** do nothing: K8 has no release or
+  silencing op yet (the body rings down by its own damping).
 
 ## Realtime output (feature `realtime`)
 
@@ -177,12 +258,24 @@ constraints, stated in the module doc and kept deliberately minimal:
   `RealtimeError::StreamBuild`, never a panic. No output device is
   `RealtimeError::NoOutputDevice` (headless/CI machines degrade
   gracefully).
+- **`EnginePlayer`** (#849) plays the parts engine's `EngineCore` on the
+  default output: the callback only `pull_block`s and reports the
+  device's output latency. cpal's stream is not `Send` on CoreAudio, so a
+  keeper thread opens, holds and drops it; the player itself is `Send`
+  and lives in the desktop host's state.
 - **Failure posture:** a runtime stream error (device unplugged) is
   logged to stderr and the stream goes silent; the callback cannot panic
   (block writes are exact 2-sample frames, missing graphs render
   silence).
 
 ### Audition recipe (the harness sets, through `live-shell --play`)
+
+Stale since the shell's server crate dropped its `live-engine`
+dependency: `packages/live-shell/src/play.rs` is no longer compiled (its
+`Cargo.toml` names no `live-engine`), so the recipe below does not run
+today. The engine is auditioned in the desktop candidate
+(`live_engine_open` / `live_engine_play`) and by
+`examples/key_to_sound.rs --device`. Kept for the record:
 
 Run from `packages/live-shell` (there is no workspace manifest above the
 packages, so the package directory is where `-p live-shell` resolves):
@@ -235,9 +328,12 @@ ends. Verified against the real device:
 - **Warp / clip playback** — arrangement clip bounds, warp modes and
   sample references are M5. A track's source is a buffer the host
   provides.
-- **MIDI tracks and instruments** — no voice models yet (RE lane open
-  item); MIDI/return tracks bridge as warnings.
-- **Sends / return buses** — not in the graph.
+- **Instruments beyond Operator and the Torus** — Wavetable and the rest
+  play their notes silently, with a warning.
+- **Group buses** — a group's members route to the Main track.
+- **Live's measured pan law** — the mixer gate is built and its teeth are
+  measured, but the PAN_/SEND_ probe sets (built from the template) have
+  no Live renders yet, so the pan law stays the M1 placeholder above.
 
 ## Status
 
@@ -249,6 +345,14 @@ tests (32 with the `realtime` feature) + the 3-part M1 gate + the 3-part
 M3 gate green, zero clippy warnings. Written from `session-model.md`, the
 device dossiers (`devices/glue-compressor.md`, `devices/echo.md`,
 `devices/reverb.md`) and the gated `live-dynamics` models only.
+
+Parts engine (2026-11-03, O-I #849): MIDI parts, sends and returns,
+pre/post taps, Solo in Place, the Main track, the realtime engine with
+its event queue, Export Audio, the Torus node; 37 unit tests with
+`realtime`, 18 parts-engine tests, the no-allocation test, the MIDI gate
+(Operator against `M1_OPERATOR.aif` and `OP5_KEY60.aif`), the mixer gate
+(skipping, renders absent) and 5 Torus tests with `k8`; clippy clean in
+all three feature sets.
 
 Realtime (2026-10-08): the cpal output path landed behind the `realtime`
 feature — `pull_block` verified bit-identical to the offline render

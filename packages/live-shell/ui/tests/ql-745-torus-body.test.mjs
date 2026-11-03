@@ -64,8 +64,8 @@ function bound(condition = earth, state = following) {
   return {binding, sent}
 }
 
-// O-I #745 lane N: the Torus's body write. Manual §21.2: "Body source | Declared · Tattva | Declared | Where Strike, Damping and Agitation
-// come from. Declared keeps the values you set. Tattva takes them from the tattva of the M2 condition, through its element"; "Damping | Q
+// O-I #745 lane N: the Torus's body write. Manual §21.2: "Body source | Declared · Tattva | Declared | Where Strike and Damping come
+// from. Declared keeps the values you set. Tattva takes them from the tattva of the M2 condition, through its element"; "Damping | Q
 // factor 0.1 to 40". The write is the stage channel's `damping` edit (stageCommands.ts InstrumentEdit), which the frame lowers to the
 // scene's decay rate. REAL: M2's table (ql kernel body-constants, recorded 29 Oct) and the scene's announced condition (21 Oct).
 
@@ -104,16 +104,17 @@ test('under Declared, Damping is the Q you set, written through the stage channe
   holds.resetHolds()
 })
 
-test('Strike and Agitation stay dimmed: QL\'s scene has no term for either, and the binding names it with what the fibre would set', () => {
+test('Strike stays dimmed: QL\'s scene has no term for it, and the binding names it with what the fibre would set; Agitation is retired (O-I #850)', () => {
   holds.resetHolds()
   holds.hold(torus.TORUS_DESIGN_ID, 'body.source', 'tattva')
   const {binding} = bound()
-  for (const key of ['strike', 'agitation']) {
-    assert.equal(binding.writes(key), false, key)
-    assert.equal(binding.values[key], undefined, key)
-  }
+  assert.equal(binding.writes('strike'), false)
+  assert.equal(binding.values.strike, undefined)
   assert.match(binding.standing.strike.disabled, /earth fibre Strike 45%.*QL's scene has no strike share/)
-  assert.match(binding.standing.agitation.disabled, /earth fibre Agitation 0\.1.*QL's scene has no agitation/)
+  // Manual §21.2 retires Agitation: the design carries no such key, so neither value, standing nor write names it.
+  assert.equal(binding.writes('agitation'), false)
+  assert.equal(binding.values.agitation, undefined)
+  assert.equal(binding.standing.agitation, undefined)
   holds.resetHolds()
 })
 
@@ -123,5 +124,5 @@ test('with no owner the body source stays closed and says why, naming what the f
   assert.equal(binding.writes('body.source'), false)
   assert.equal(binding.writes('damping'), false)
   assert.match(binding.standing['body.source'].disabled, /No owner reading stands in this host/)
-  assert.match(binding.standing['body.source'].disabled, /earth fibre Strike 45%, Damping 12 and Agitation 0\.1 \(proposed\)/)
+  assert.match(binding.standing['body.source'].disabled, /earth fibre Strike 45% and Damping 12 \(proposed\)/)
 })

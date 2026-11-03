@@ -187,8 +187,9 @@ test('a touch strikes the owner at the touched point: the point passed to strike
     assert.equal(struck.source, 'point')
     assert.deepEqual(struck.points, [{theta: strike.point.theta, phi: strike.point.phi}])
     // A strike at a point excites every standing voice by its own shape there (QL scene_field.rs ShapeBasis::strike_at), so the
-    // plate follows every voice the owner tunes, as it does for an event that strikes.
-    assert.deepEqual(struck.refs, c.reading.instrument.influence.voices.map(voice => `scene:planet/${voice.planet_ref}`))
+    // plate follows every voice the owner tunes, as it does for an event that strikes — by each voice's own mode ref (the Torus opens
+    // under Logic, `scene:logic/k`; a Sky voice is `scene:planet/…`).
+    assert.deepEqual(struck.refs, c.reading.instrument.influence.voices.map(voice => voice.mode_ref ?? `scene:planet/${voice.planet_ref}`))
     assert.equal(c.reading.instrument.played.strikes, 1)
   } finally { await c.dispose() }
 })

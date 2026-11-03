@@ -1,9 +1,9 @@
 // The mode's tracks in the one Session · Arrangement pane (frame/tracks/TracksPane.tsx, which loads this module when the tracks first
 // draw — the mode's tracks are its registration's, frame/tracks/modeTracks.ts, and come with the mode, not with the shell's first
 // frame; O-I #740). It knows no mode.
-import {useEffect} from 'react'
+import {useEffect, useSyncExternalStore} from 'react'
 import {useTimelinePanePresentation, type TimelineHostReading} from '../../projections/timelinePaneHost'
-import {MODE_OWNERS, MODE_TRACKS, MODE_WAITING} from './modeTracks'
+import {MODE_OWNERS, MODE_REDRAWS, MODE_TRACKS, MODE_WAITING, type ModeRedraw} from './modeTracks'
 import {MODE_CLIP_MAKERS, withClipMaker} from './clipMakers'
 import {publishTrackRows} from '../keys/keyDoors'
 import {publishShownTracks} from './tracksDoor'
@@ -11,9 +11,15 @@ import {SessionGrid} from './SessionGrid'
 import {ArrangementRuler} from './ArrangementRuler'
 import {NO_TRACKS} from './TracksPane'
 
+/** A mode that reads nothing beyond the published reading. */
+const STILL: ModeRedraw = {subscribe: () => () => {}, snapshot: () => null}
+
 /** A pinned pane shows its pinned clip as selected; a following one shows THE selection. */
 export function ModeTracksView({reading, pinnedRef}: {reading: TimelineHostReading; pinnedRef?: string}) {
   const presented = useTimelinePanePresentation()
+  // What else the mode's tracks read as it stands draws the pane again when it moves (modeTracks.ts MODE_REDRAWS).
+  const redraw = MODE_REDRAWS[reading.mode] ?? STILL
+  useSyncExternalStore(redraw.subscribe, redraw.snapshot, redraw.snapshot)
   const projected = MODE_TRACKS[reading.mode](reading)
   // Each set names whose ops its object acts are, for the acts its owner does not carry yet (frame/menu/objectActions.ts), and takes a
   // constellation dropped on a track: its own maker, else its mode's refusal in its owner's words (clipMakers.ts MODE_CLIP_MAKERS).

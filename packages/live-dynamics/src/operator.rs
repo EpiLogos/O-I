@@ -309,8 +309,23 @@ impl OperatorVoiceA {
     pub fn render_note(&self, hold_s: f64, total_s: f64) -> Vec<f32> {
         let n = (total_s * self.sample_rate as f64) as usize;
         let mut out = vec![0f32; n];
+        for (i, slot) in out.iter_mut().enumerate() {
+            *slot = self.sample_at(i, hold_s);
+        }
+        out
+    }
+
+    /// The voice's output at sample `i` after note-on, held for `hold_s`
+    /// (`f64::INFINITY` while the key is still down) — one sample of
+    /// [`OperatorVoiceA::render_note`], which is built on it, so a host that
+    /// plays the voice sample by sample (the engine's MIDI track) hears
+    /// exactly the gated note. Pure: no state, no allocation.
+    pub fn sample_at(&self, i: usize, hold_s: f64) -> f32 {
         let w = 2.0 * std::f64::consts::PI * self.freq_hz; // rad per second
         let g = self.peak_gain();
+        let t = i as f64 / self.sample_rate as f64;
+        let env_db = self.envelope.gain_db(t, hold_s);
+        let env = 10.0f64.powf(env_db / 20.0);
         match &self.osc_b {
             Some(b) => {
                 // Raised shell: PM on the carrier — phase = w·t +
@@ -321,25 +336,12 @@ impl OperatorVoiceA {
                 // (OP7 −32.87 vs M1 −32.77).
                 let wb = 2.0 * std::f64::consts::PI * b.freq_hz;
                 let beta_peak = b.beta_sustain() / b.envelope.sustain_amp;
-                for (i, slot) in out.iter_mut().enumerate() {
-                    let t = i as f64 / self.sample_rate as f64;
-                    let env_db = self.envelope.gain_db(t, hold_s);
-                    let env = 10.0f64.powf(env_db / 20.0);
-                    let b_db = b.envelope.gain_db(t, hold_s);
-                    let beta = beta_peak * 10.0f64.powf(b_db / 20.0);
-                    *slot = (g * env * (w * t + beta * (wb * t).sin()).sin()) as f32;
-                }
+                let b_db = b.envelope.gain_db(t, hold_s);
+                let beta = beta_peak * 10.0f64.powf(b_db / 20.0);
+                (g * env * (w * t + beta * (wb * t).sin()).sin()) as f32
             }
-            None => {
-                for (i, slot) in out.iter_mut().enumerate() {
-                    let t = i as f64 / self.sample_rate as f64;
-                    let env_db = self.envelope.gain_db(t, hold_s);
-                    let env = 10.0f64.powf(env_db / 20.0);
-                    *slot = (g * env * (w * t).sin()) as f32;
-                }
-            }
+            None => (g * env * (w * t).sin()) as f32,
         }
-        out
     }
 }
 

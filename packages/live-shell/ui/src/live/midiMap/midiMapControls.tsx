@@ -10,7 +10,7 @@ import {slotDataI, slotMeaning} from '../../shell/modeGrammar'
 import {nativeHost} from '../../native/application'
 import {LIVE_MIDI_ABSENT, subscribeLiveMidiControls} from '../../native/liveMidi'
 import {keyboardGate} from '../janko/jankoInput'
-import {readMapTargets, mapTargetIdsOfEdit} from './midiMapTargets'
+import {MAP_UNMAPPED, readMapTargets, mapTargetIdsOfEdit} from './midiMapTargets'
 import {createMapRouter} from './midiMapRouter'
 import {applyMapValue, controlsReach, type MapMode, type MapWriter} from './midiMapModel'
 import {
@@ -77,25 +77,30 @@ export function MidiMapToggles() {
 }
 
 /** A mappable parameter's frame. Outside map mode it shows its marker and the owner's refusal; in map mode it shows the overlay and takes the
- * click, so a control under it (even a disabled one) never receives the press. A session-held parameter says so on its marker. */
+ * click, so a control under it (even a disabled one) never receives the press. A session-held parameter says so on its marker. A
+ * parameter no map binds yet (MAP_UNMAPPED) stands dimmed in map mode and names why; its click says so and arms nothing. */
 export function MidiMapTarget({id, writer = 'owner', children}: {id: string; writer?: MapWriter; children: ReactNode}) {
   const map = useMidiMap()
   const open = map.mode !== 'off'
   const armed = map.armed === id
   const chip = mappingChip(id)
   const refusal = map.refusals[id] ?? null
+  const unmapped = MAP_UNMAPPED[id] ?? null
   const press = (event: MouseEvent<HTMLDivElement>) => {
     if (!open) return
     event.preventDefault()
     event.stopPropagation()
-    clickMapTarget(id, readMapTargets())
+    if (unmapped !== null) setMapNotice(unmapped)
+    else clickMapTarget(id, readMapTargets())
   }
   const held = writer === 'session' ? ' Held for this session: not an owner write.' : ''
   return (
-    <div className={`midi-map-target${open ? ' is-map-open' : ''}${armed ? ' is-armed' : ''}${chip !== null ? ' is-mapped' : ''}`}
+    <div className={`midi-map-target${open ? ' is-map-open' : ''}${armed ? ' is-armed' : ''}${chip !== null ? ' is-mapped' : ''}${unmapped !== null ? ' is-unmapped' : ''}`}
       data-midi-target={id} data-midi-writer={writer} data-midi-open={open ? 'yes' : 'no'} data-midi-armed={armed ? 'yes' : 'no'} data-midi-mapped={chip !== null ? 'yes' : 'no'}
+      data-midi-unmapped={unmapped !== null ? 'yes' : 'no'} title={open && unmapped !== null ? unmapped : undefined}
       onClickCapture={press} onMouseDownCapture={event => { if (open) event.preventDefault() }}>
       {children}
+      {open && unmapped !== null && <small className="midi-map-unmapped" data-midi-unmapped-why={id}>{unmapped}</small>}
       {chip !== null && <small className="midi-map-mark" data-midi-mark={id} title={`This parameter is mapped. In map mode, click it to remove the mapping.${held}`}>{chip}</small>}
       {refusal !== null && <small className="midi-map-refusal" role="alert" data-midi-refusal={id}>{`Refused by the owner: ${refusal}`}</small>}
     </div>

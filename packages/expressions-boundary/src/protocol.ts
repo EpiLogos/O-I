@@ -5,8 +5,8 @@
  * vendored app's kernelExpressions.ts/app.ts. */
 import {TECHNE_INSTRUMENTS, type TechneActionRoute, type TechneReading} from '../../../desktop/cradle/src/techne/contract.ts';
 import {resolveActionRoute} from '../../../desktop/cradle/src/techne/m0m5/adapter.ts';
-import type {HostedAppState as CradleHostedAppState, HostedAppMode, HostedTechneLens, HostedInstrument, HostedInstrumentDeterminants, HostedInstrumentParameters, HostedAddress} from '../../../desktop/cradle/src/expressions/hostedApp'; import type {FramePresentation, FrameChromeReading} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageCommands.ts'; import {readFrameResearch, type FrameResearchReading} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/researchReading.ts'; import {readFrameStage, type FrameStageReading} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageReading.ts';
-export type {HostedAppMode, HostedTechneLens, HostedInstrument, HostedInstrumentDeterminants, HostedInstrumentParameters, HostedAddress}; /** The cradle's reading and (T-FRAME-CHROME-ONTO-PLATES) the presentation the shell declared and the frame's chrome as data. */ export type HostedAppState = CradleHostedAppState & {presentation?: FramePresentation; chrome?: FrameChromeReading; /** lane W4-Technē: the research instruments' state as the frame holds it (researchReading.ts). */ research?: FrameResearchReading; /** lane W4-Technē: the procedural stage the native field last disclosed (stageReading.ts). */ instrumentStage?: FrameStageReading; /** W6: the live scene's M2 condition, its tattva and material fibre, as the native field last inspected it (instrumentCondition.ts). */ instrumentCondition?: FrameInstrumentCondition};
+import type {HostedAppState as CradleHostedAppState, HostedAppMode, HostedTechneLens, HostedInstrument, HostedInstrumentDeterminants, HostedInstrumentParameters, HostedTorusSession, HostedAddress} from '../../../desktop/cradle/src/expressions/hostedApp'; import type {FramePresentation, FrameChromeReading} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageCommands.ts'; import {readFrameResearch, type FrameResearchReading} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/researchReading.ts'; import {readFrameStage, type FrameStageReading} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageReading.ts';
+export type {HostedAppMode, HostedTechneLens, HostedInstrument, HostedInstrumentDeterminants, HostedInstrumentParameters, HostedTorusSession, HostedAddress}; /** The cradle's reading and (T-FRAME-CHROME-ONTO-PLATES) the presentation the shell declared and the frame's chrome as data. */ export type HostedAppState = CradleHostedAppState & {presentation?: FramePresentation; chrome?: FrameChromeReading; /** lane W4-Technē: the research instruments' state as the frame holds it (researchReading.ts). */ research?: FrameResearchReading; /** lane W4-Technē: the procedural stage the native field last disclosed (stageReading.ts). */ instrumentStage?: FrameStageReading; /** W6: the live scene's M2 condition, its tattva and material fibre, as the native field last inspected it (instrumentCondition.ts). */ instrumentCondition?: FrameInstrumentCondition};
 export type {FrameStageReading, FrameStageSlot, FrameStageBinding} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageReading.ts';
 import {readFrameCondition, type FrameInstrumentCondition} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/instrumentCondition.ts';
 export type {FrameInstrumentCondition} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/instrumentCondition.ts';
@@ -75,6 +75,40 @@ export function readHostedDeterminants(raw: unknown): HostedInstrumentDeterminan
   return {lens: {lens12: Number(lens.lens12), label: String(lens.label)}, contextFrame: Number(raw.contextFrame), harmonic: harmonicSource, rna: raw.rna};
 }
 
+const TORUS_BANDS = ['cosmic', 'breath', 'rhythm', 'pitch', 'beyond'] as const;
+const TORUS_FIGURES = ['torus', 'figure-eight', 'spiral', 'klein-bottle'] as const;
+const TORUS_SHAPES = ['auto', 'sequence', ...TORUS_FIGURES] as const;
+const TORUS_TUNINGS = ['logic', 'maqam', 'sky'] as const;
+/** The Torus's M1′ session the frame announces (instrumentAnnouncement.mjs `parameters.torus`, from QL's `torus-state`), exact or the
+ * fault named. Nothing is defaulted: a missing or mistyped value refuses the whole session. */
+export function readHostedTorus(raw: unknown): HostedTorusSession | string {
+  const finite = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
+  const positive = (v: unknown): v is number => finite(v) && v > 0;
+  const count = (v: unknown): v is number => Number.isSafeInteger(v) && (v as number) >= 0;
+  const among = <T extends string>(list: readonly T[], v: unknown): v is T => typeof v === 'string' && (list as readonly string[]).includes(v);
+  if (!object(raw) || !object(raw.settings)) return 'expected settings, the rate and its band, the Fundamental, figure, comma, notes and resident tunings';
+  const t = raw.settings;
+  const rate = object(t.rate) && t.rate.mode === 'free' && positive(t.rate.steps_per_second) ? {mode: 'free' as const, steps_per_second: t.rate.steps_per_second}
+    : object(t.rate) && t.rate.mode === 'sync' && object(t.rate.note) && Number.isSafeInteger(t.rate.note.numerator) && Number.isSafeInteger(t.rate.note.denominator)
+      && Number(t.rate.note.numerator) > 0 && Number(t.rate.note.denominator) > 0 ? {mode: 'sync' as const, note: {numerator: Number(t.rate.note.numerator), denominator: Number(t.rate.note.denominator)}} : null;
+  const fundamental = object(t.fundamental) && t.fundamental.source === 'map' ? {source: 'map' as const}
+    : object(t.fundamental) && t.fundamental.source === 'hz' && positive(t.fundamental.hz) ? {source: 'hz' as const, hz: t.fundamental.hz} : null;
+  if (!rate || !fundamental || !finite(t.carrier) || t.carrier < 0 || t.carrier > 1 || !among(TORUS_SHAPES, t.shape) || !among(TORUS_TUNINGS, t.tuning)
+    || !count(t.polyphony) || !positive(t.tempo_bpm)) return 'settings: expected the rate, Fundamental, Carrier 0..1, shape, tuning, polyphony and tempo';
+  if (!positive(raw.steps_per_second)) return 'steps_per_second: expected a positive rate';
+  if (!among(TORUS_BANDS, raw.band)) return 'band: expected cosmic, breath, rhythm, pitch or beyond';
+  if (!positive(raw.fundamental_hz)) return 'fundamental_hz: expected a frequency';
+  if (!positive(raw.map_hz)) return 'map_hz: expected the map\'s 1:1';
+  if (raw.figure !== null && !among(TORUS_FIGURES, raw.figure)) return 'figure: expected a figure or null';
+  if (!finite(raw.comma_cents) || raw.comma_cents < 0) return 'comma_cents: expected the comma gathered, in cents';
+  if (!count(raw.notes)) return 'notes: expected a count';
+  if (!Array.isArray(raw.resident_tunings) || !raw.resident_tunings.every(v => among(TORUS_TUNINGS, v))) return 'resident_tunings: expected logic, maqam or sky';
+  if (!boundedText(raw.carrier_drive, 64)) return 'carrier_drive: expected the owner\'s word';
+  return {settings: {rate, fundamental, carrier: t.carrier, shape: t.shape, tuning: t.tuning, polyphony: t.polyphony, tempo_bpm: t.tempo_bpm},
+    steps_per_second: raw.steps_per_second, band: raw.band, fundamental_hz: raw.fundamental_hz, map_hz: raw.map_hz, figure: raw.figure as HostedTorusSession['figure'],
+    comma_cents: raw.comma_cents, notes: raw.notes, resident_tunings: [...raw.resident_tunings] as HostedTorusSession['resident_tunings'], carrier_drive: raw.carrier_drive};
+}
+
 /** The owner's presentation parameters, exact or refused: a value the owner does not state is refused by name, never defaulted. */
 export function readHostedParameters(raw: unknown): HostedInstrumentParameters | string {
   if (!object(raw) || !object(raw.scale)) return 'parameters: expected muted, level, scale, cadence and refusal';
@@ -93,8 +127,11 @@ export function readHostedParameters(raw: unknown): HostedInstrumentParameters |
   // The torus's four effects: every parameter within the owner's law, or the fault named; a frame that announces none carries none.
   const effects = raw.effects === undefined ? undefined : readEffectsState(raw.effects);
   if (typeof effects === 'string') return `parameters.effects: ${effects}`;
+  // The Torus's M1′ session: exact or the fault named; a frame that announces none carries none.
+  const torus = raw.torus === undefined ? undefined : readHostedTorus(raw.torus);
+  if (typeof torus === 'string') return `parameters.torus${/^[a-z_]+:/.test(torus) ? '.' : ': '}${torus}`;
   return {muted: raw.muted, level: raw.level, scale: {unitsPerMetre: scale.unitsPerMetre as number | null, mode: scale.mode}, cadence, refusal: raw.refusal as string | null,
-    ...(effects ? {effects} : {})};
+    ...(effects ? {effects} : {}), ...(torus ? {torus} : {})};
 }
 
 /** The instrument the frame announces: the owner reading (ql.instrument-reading/v1, parsed by the shell's reader), the owner's determinants and its presentation parameters.

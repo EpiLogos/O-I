@@ -7,19 +7,20 @@
 //
 // The plate is the catalogue's design of the Torus (inhabitants/catalogue/panels/torus.tsx, `quaternal-logic:torus`), drawn on the
 // owner's readings and writes (torusDevice.ts torusDesignBinding), published with the device so the pool, a pane and the rail draw it
-// too. The design draws the owner's four determinants (lens, context frame, harmonic basis, M3 transcription) on the compact and its
-// See and hear (sound, cadence, scale, level, standing) on the whole; what the owner does not announce stands absent with its reason.
-// Every control the chain framed for the MIDI map stays framed, by the same id (lead, 16 Oct: an established behaviour is never
-// removed for an adjacent one): the chain's wrap reaches a design's kit controls by their value keys (DeviceView.tsx useHosting →
-// deviceHost.tsx → sdk/panel.tsx ControlWrapContext) as it reaches the generic plate's rows (torusMapWrap); a place that wraps the
-// whole frames its See and hear by the ids the instrument section uses (midiMap/midiMapTargets.ts).
+// too. The design draws the manual's four macros on the compact (Rate, Fundamental, Carrier, Damping: DLW §21.2, O-I 850) and every
+// parameter on the whole, in the manual's groups: the owner's four determinants in Mode and tuning, its See and hear (sound, cadence,
+// scale, level) in Notes and output; what the owner does not announce stands absent with its reason. The chain frames for the MIDI map
+// what its compact draws, by each control's id (lead, 16 Oct: an established behaviour is never removed for an adjacent one): the
+// chain's wrap reaches a design's kit controls by their value keys (DeviceView.tsx useHosting → deviceHost.tsx → sdk/panel.tsx
+// ControlWrapContext) as it reaches the generic plate's rows (torusMapWrap); a place that wraps the whole frames the determinants and
+// its See and hear by the ids the instrument section uses (midiMap/midiMapTargets.ts), so a mapping made by id still holds.
 import {useEffect, useMemo, useRef, type ReactNode} from 'react'
 import type {SdkParamRow} from '../inhabitants/sdk/define'
 import {DeviceView} from '../frame/devices/DeviceView'
 import {publishDevice, selectDevice} from '../frame/devices/deviceDoor'
 import {DEVICE_PANE_KIND} from '../frame/devices/devicePane'
 import {openInstrument} from '../frame/instrumentDoor'
-import {TORUS_DESIGN_ID, TORUS_DEVICE, TORUS_DEVICE_ID, torusBodyEdit, torusBodySourceOf, torusDesignBinding, torusDevice, torusFigure, torusTone, type TorusFigureSize} from './torusDevice'
+import {followSetTempoOnTorus, torusTempoEdit, TORUS_DESIGN_ID, TORUS_DEVICE, TORUS_DEVICE_ID, torusBodyEdit, torusBodySourceOf, torusDesignBinding, torusDevice, torusFigure, torusTone, type TorusFigureSize} from './torusDevice'
 import {commitLiveInstrumentEdit, LIVE_TORUS_ABSENT_REASON, liveInstrumentWritable, useLiveTorusReading, type LiveTorusState} from './torusInstrument'
 import {JankoDevice} from './janko/JankoDevice'
 import {useKeyboardLayout} from './keyboardLayout'
@@ -106,9 +107,21 @@ export function useTorusChainBinding(state: LiveTorusState | null, device: Devic
     [state, device, plan, stage, rack, run, held, condition, tattvaName, table])
 }
 
-export function TorusOnChain({state}: {state: LiveTorusState}) {
+/** The torus on the chain. `tempoBpm` is the set's tempo (the transport's reading): the owner's session is kept on it, so a tempo
+ * change moves the pulse under Sync (DLW §21.2 Rate), as the Delay's is kept on it (designBindings/TorusEffectsOnChain.tsx). */
+export function TorusOnChain({state, tempoBpm = null}: {state: LiveTorusState; tempoBpm?: number | null}) {
   const device = useMemo(() => torusDevice(state), [state])
   const binding = useTorusChainBinding(state, device)
+  // Once per tempo: a refused one is not sent again until the set's tempo or the owner's moves (the owner's refusal stands on its
+  // reading), and an accepted one reads back equal, so nothing more is sent.
+  const followedTempo = useRef<number | null>(null)
+  useEffect(() => {
+    const edit = torusTempoEdit(state, tempoBpm)
+    if (!edit) { followedTempo.current = null; return }
+    if (edit.edit.tempo_bpm === followedTempo.current) return
+    followedTempo.current = edit.edit.tempo_bpm ?? null
+    followSetTempoOnTorus(state, tempoBpm).catch(() => { /* named on the owner's reading */ })
+  }, [state, tempoBpm])
   useEffect(() => {
     publishDevice(TORUS_DEVICE_ID, {device, binding, picture: size => <TorusPicture state={state} size={size} />, full: {draw: () => <TorusFull />}})
   }, [device, binding, state])

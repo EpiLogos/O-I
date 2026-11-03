@@ -13,10 +13,12 @@
 //! bridged yet (the summary carries element names only) — M3 backlog.
 
 use crate::devices::{BypassDevice, EchoDevice, EchoParams, GlueDevice, ReverbDevice};
-use crate::graph::{Graph, Track};
+use crate::graph::{Clock, Graph, Note, ReturnTrack, Track};
+use crate::instruments::OperatorInstrument;
 use live_dynamics::glue::GlueParams;
 use live_dynamics::reverb::ReverbParams;
 use live_set::model::{SetSummary, TrackKind};
+use live_set::xml::Element;
 
 /// One device the bridge could not model.
 #[derive(Debug, Clone, PartialEq)]
@@ -62,7 +64,9 @@ fn known_device(element_name: &str) -> Option<Box<dyn crate::graph::Device>> {
         // folded into the model's fitted constants — so the engine mix is
         // the model response, 1.0).
         "Reverb" => Some(Box::new(ReverbDevice::new(
-            ReverbParams { decay_ms: 1200.00012 },
+            ReverbParams {
+                decay_ms: 1200.00012,
+            },
             1.0,
         ))),
         _ => None,
@@ -113,12 +117,12 @@ pub fn bridge(summary: &SetSummary, sample_rate: u32) -> BridgeResult {
             TrackKind::Midi => warnings.push(BridgeWarning {
                 track: info.name.clone(),
                 device: String::new(),
-                message: "MIDI track: not rendered in M1 (no instrument voices yet)".into(),
+                message: "MIDI track: the summary carries no notes or mixer (bridge the document with bridge_set)".into(),
             }),
             TrackKind::Return => warnings.push(BridgeWarning {
                 track: info.name.clone(),
                 device: String::new(),
-                message: "return track: not rendered in M1 (no send bus yet)".into(),
+                message: "return track: the summary carries no sends (bridge the document with bridge_set)".into(),
             }),
             TrackKind::Group => warnings.push(BridgeWarning {
                 track: info.name.clone(),
@@ -128,6 +132,273 @@ pub fn bridge(summary: &SetSummary, sample_rate: u32) -> BridgeResult {
         }
     }
     BridgeResult { graph, warnings }
+}
+
+// ---------------------------------------------------------------- the set
+
+fn manual(param: Option<&Element>) -> Option<&str> {
+    param
+        .and_then(|p| p.child("Manual"))
+        .and_then(|m| m.attr("Value"))
+}
+
+fn num(param: Option<&Element>) -> Option<f64> {
+    manual(param).and_then(|v| v.parse().ok())
+}
+
+fn value_attr(e: Option<&Element>) -> Option<&str> {
+    e.and_then(|e| e.attr("Value"))
+}
+
+fn beats(e: &Element, name: &str) -> Option<f64> {
+    value_attr(e.child(name)).and_then(|v| v.parse().ok())
+}
+
+/// A track's device list: `DeviceChain/DeviceChain/Devices` (session-model.md
+/// §3), else the first `Devices` below it (the summary's reading).
+fn devices_of(track: &Element) -> Vec<&Element> {
+    track
+        .child("DeviceChain")
+        .and_then(|d| d.child("DeviceChain"))
+        .and_then(|d| d.child("Devices"))
+        .or_else(|| track.find("Devices"))
+        .map(|ds| ds.children.iter().collect())
+        .unwrap_or_default()
+}
+
+/// The mixer row as the document keeps it (session-model.md §3:
+/// `DeviceChain/Mixer` — Volume, Pan, Speaker, SoloSink, Sends): (gain,
+/// pan, active, solo, sends). Volume and sends are linear gains as stored;
+/// absent values read as Live's defaults (unity, centre, on, unsoloed).
+fn mixer_row(track: &Element) -> (f64, f64, bool, bool, Vec<f64>) {
+    let mixer = track.child("DeviceChain").and_then(|d| d.child("Mixer"));
+    let Some(m) = mixer else {
+        return (1.0, 0.0, true, false, Vec::new());
+    };
+    let gain = num(m.child("Volume")).unwrap_or(1.0);
+    let pan = num(m.child("Pan")).unwrap_or(0.0);
+    let active = manual(m.child("Speaker"))
+        .map(|v| v != "false")
+        .unwrap_or(true);
+    let solo = value_attr(m.child("SoloSink")) == Some("true");
+    let sends = m
+        .child("Sends")
+        .map(|s| {
+            s.children_named("TrackSendHolder")
+                .map(|h| num(h.child("Send")).unwrap_or(0.0))
+                .collect()
+        })
+        .unwrap_or_default();
+    (gain, pan, active, solo, sends)
+}
+
+/// The arrangement MIDI notes of a track
+/// (`MainSequencer/ClipTimeable/ArrangerAutomation/Events/MidiClip`,
+/// session-model.md §7), on `clock`'s timeline. A clip anchors at its
+/// `Time` attribute (absent: arrangement 0 — session-model.md §7, FA
+/// probes) and covers `CurrentEnd − CurrentStart` beats; a note's clip
+/// time is its `Time`. ENGINE DECISION (the loop semantics no dossier
+/// measures yet): an unlooped clip plays the notes in `[LoopStart,
+/// LoopStart + span)`; a looped clip repeats `[LoopStart, LoopEnd)` from
+/// `StartRelative` until the span ends. Notes are cut at the clip's end;
+/// disabled notes and disabled clips are skipped.
+pub fn arrangement_notes(track: &Element, clock: &Clock) -> Vec<Note> {
+    let mut notes = Vec::new();
+    let Some(events) = track
+        .child("DeviceChain")
+        .and_then(|d| d.child("MainSequencer"))
+        .and_then(|s| s.child("ClipTimeable"))
+        .and_then(|c| c.child("ArrangerAutomation"))
+        .and_then(|a| a.child("Events"))
+    else {
+        return notes;
+    };
+    for clip in events.children_named("MidiClip") {
+        if value_attr(clip.child("Disabled")) == Some("true") {
+            continue;
+        }
+        let anchor = clip
+            .attr("Time")
+            .and_then(|v| v.parse::<f64>().ok())
+            .unwrap_or(0.0);
+        let span =
+            beats(clip, "CurrentEnd").unwrap_or(0.0) - beats(clip, "CurrentStart").unwrap_or(0.0);
+        let lp = clip.child("Loop");
+        let at = |name: &str| lp.and_then(|l| beats(l, name)).unwrap_or(0.0);
+        let (loop_start, loop_end, start_rel) =
+            (at("LoopStart"), at("LoopEnd"), at("StartRelative"));
+        let looped = lp.and_then(|l| value_attr(l.child("LoopOn"))) == Some("true");
+        let Some(key_tracks) = clip.child("Notes").and_then(|n| n.child("KeyTracks")) else {
+            continue;
+        };
+        for kt in &key_tracks.children {
+            let Some(key) = value_attr(kt.child("MidiKey")).and_then(|v| v.parse::<u8>().ok())
+            else {
+                continue;
+            };
+            let Some(list) = kt.child("Notes") else {
+                continue;
+            };
+            for ev in list.children_named("MidiNoteEvent") {
+                if ev.attr("IsEnabled") == Some("false") {
+                    continue;
+                }
+                let get = |n: &str| ev.attr(n).and_then(|v| v.parse::<f64>().ok());
+                let (Some(t), Some(dur)) = (get("Time"), get("Duration")) else {
+                    continue;
+                };
+                let velocity = get("Velocity").unwrap_or(100.0) as f32;
+                let mut push = |rel: f64, len: f64| {
+                    if rel < 0.0 || rel >= span || len <= 0.0 {
+                        return;
+                    }
+                    let len = len.min(span - rel);
+                    let start = clock.frame_of_beat(anchor + rel);
+                    let end = clock.frame_of_beat(anchor + rel + len);
+                    notes.push(Note {
+                        key,
+                        start,
+                        length: end.saturating_sub(start),
+                        velocity,
+                    });
+                };
+                if looped {
+                    let l = loop_end - loop_start;
+                    if l <= 0.0 || t < loop_start || t >= loop_end {
+                        continue;
+                    }
+                    let first = (t - loop_start - start_rel).rem_euclid(l);
+                    let mut rel = first;
+                    while rel < span {
+                        push(rel, dur.min(loop_end - t));
+                        rel += l;
+                    }
+                } else {
+                    push(t - loop_start, dur);
+                }
+            }
+        }
+    }
+    notes.sort_by_key(|n| (n.start, n.key));
+    notes
+}
+
+/// A device element on a chain: a known model at its factory values, else
+/// a bypass and a warning.
+fn chain_device(
+    el: &Element,
+    track: &str,
+    warnings: &mut Vec<BridgeWarning>,
+) -> Box<dyn crate::graph::Device> {
+    known_device(&el.name).unwrap_or_else(|| {
+        warnings.push(BridgeWarning {
+            track: track.to_string(),
+            device: el.name.clone(),
+            message: "unknown device: bypassed".into(),
+        });
+        Box::new(BypassDevice)
+    })
+}
+
+/// Bridge a parsed set document (`<Ableton>`) into a graph at
+/// `sample_rate`: every part with its mixer row (volume, pan, activator,
+/// solo, sends), MIDI parts with their instrument and arrangement notes,
+/// the return tracks, and the Main track's volume, pan and chain.
+///
+/// A MIDI part's first `Operator` is its instrument (the gated default
+/// patch — the bridge reads device element names, not stored parameter
+/// states, as for the effects); a MIDI part with no instrument the engine
+/// models stays silent, with a warning. Audio parts keep empty sources
+/// (the host fills them). Group tracks are warnings: their members route
+/// to the Main track (ENGINE DECISION — there is no group bus yet).
+pub fn bridge_set(root: &Element, sample_rate: u32) -> Option<BridgeResult> {
+    let ls = root.find("LiveSet")?;
+    let tempo_bpm = num(ls.child("MainTrack").and_then(|m| m.find("Tempo"))).unwrap_or(120.0);
+    let mut graph = Graph::new(sample_rate, tempo_bpm);
+    let clock = Clock::start(sample_rate, tempo_bpm);
+    let mut warnings = Vec::new();
+    if let Some(tracks) = ls.child("Tracks") {
+        for tr in &tracks.children {
+            let name = tr
+                .find("EffectiveName")
+                .and_then(|n| n.attr("Value"))
+                .unwrap_or("")
+                .to_string();
+            let (gain, pan, active, solo, sends) = mixer_row(tr);
+            match tr.name.as_str() {
+                "AudioTrack" | "MidiTrack" => {
+                    let midi = tr.name == "MidiTrack";
+                    let mut track = Track::new(&name, 2);
+                    let mut instrument_seen = false;
+                    for d in devices_of(tr) {
+                        if midi && !instrument_seen && d.name == "Operator" {
+                            track.instrument =
+                                Some(Box::new(OperatorInstrument::default_patch(sample_rate)));
+                            instrument_seen = true;
+                        } else {
+                            track.devices.push(chain_device(d, &name, &mut warnings));
+                        }
+                    }
+                    if midi {
+                        if track.instrument.is_none() {
+                            warnings.push(BridgeWarning {
+                                track: name.clone(),
+                                device: String::new(),
+                                message: "MIDI part with no instrument the engine models: it plays its notes silently".into(),
+                            });
+                            track.instrument = Some(Box::new(crate::instruments::SilentInstrument));
+                        }
+                        track.set_notes(&arrangement_notes(tr, &clock));
+                    }
+                    track.gain = gain;
+                    track.pan = pan;
+                    track.active = active;
+                    track.solo = solo;
+                    track.sends = sends;
+                    graph.tracks.push(track);
+                }
+                "ReturnTrack" => {
+                    let mut ret = ReturnTrack::new(&name);
+                    for d in devices_of(tr) {
+                        ret.devices.push(chain_device(d, &name, &mut warnings));
+                    }
+                    ret.gain = gain;
+                    ret.pan = pan;
+                    ret.active = active;
+                    graph.returns.push(ret);
+                }
+                "GroupTrack" => warnings.push(BridgeWarning {
+                    track: name,
+                    device: String::new(),
+                    message: "group track: its members route to the Main track (no group bus yet)"
+                        .into(),
+                }),
+                _ => {}
+            }
+        }
+    }
+    // the per-return pre/post flags, in return order (devices/
+    // racks-session-model.md §2.1: `SendsPre/SendPreBool Id=N Value=bool`)
+    if let Some(pre) = ls.child("SendsPre") {
+        for (ret, flag) in graph
+            .returns
+            .iter_mut()
+            .zip(pre.children_named("SendPreBool"))
+        {
+            ret.pre_fader = flag.attr("Value") == Some("true");
+        }
+    }
+    graph.solo_in_place = value_attr(ls.child("SoloInPlace")) != Some("false");
+    if let Some(mt) = ls.child("MainTrack") {
+        let (gain, pan, _, _, _) = mixer_row(mt);
+        graph.master.gain = gain;
+        graph.master.pan = pan;
+        for d in devices_of(mt) {
+            let dev = chain_device(d, "Main", &mut warnings);
+            graph.master.devices.push(dev);
+        }
+    }
+    Some(BridgeResult { graph, warnings })
 }
 
 #[cfg(test)]

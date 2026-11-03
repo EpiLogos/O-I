@@ -26,6 +26,7 @@ import type {WorldTrackSet} from '../../timeline/worldTrackAdapter'
 import type {KernelTransportStatus, LiveClipAt} from '../../../../../../desktop/cradle/src/kernel/types'
 import {liveSetTrackAdapter} from '../../timeline/liveSetTrackAdapter'
 import {liveSetWrites} from '../../live/liveWrites'
+import {liveEngineState, subscribeLiveEngine, type LiveEngineReading} from '../../live/liveEngine'
 import {frameSoundReading, readStudioArm, setExpressionMuted, setExpressionSolo} from '../../native/frameSound'
 import {expressionsTrackAdapter} from '../../timeline/expressionsTrackAdapter'
 import {FACTORY_WAITING} from '../../timeline/factoryTrackAdapter'
@@ -193,8 +194,10 @@ export const tracksOf = (answer: WorldTrackSet | ModeTracksWaiting | null): Worl
 
 export const MODE_TRACKS: Readonly<Record<SurfMode, UseModeTracks>> = {
   // With no set open Live is waiting — the empty Session says how to open one (the reading's waiting words), not "no tracks".
-  // A constellation dropped on a part makes Live's clip of it (live/constellationClip.ts liveClipMaker, O-I #768).
-  live: reading => reading.set ? liveTracks(reading.set, reading.document, reading.colors) : null,
+  // A constellation dropped on a part makes Live's clip of it (live/constellationClip.ts liveClipMaker, O-I #768). A plain read, no
+  // hook: the engine's reading is read as it stands when the pane draws (Volume and Pan as the engine applied them, O-I #849), and the
+  // pane draws again whenever it moves (MODE_REDRAWS).
+  live: reading => reading.set ? liveTracks(reading.set, reading.document, reading.colors, undefined, liveEngineState().reading) : null,
   base: worldCut(useCentralTracks),
   // A session's and its task's own acts on AIKit (O-I #743: Delete, Paste, Insert, a session's Rename and Delete), over the carrier.
   factory: worldCut(withTaskActs(useFactoryTracks)),
@@ -202,15 +205,24 @@ export const MODE_TRACKS: Readonly<Record<SurfMode, UseModeTracks>> = {
   expressions: expressionsTracks,
 }
 
-/** Live's tracks: the open set's parts, its writes and its acts (O-I #743), Launch and Stop on the torus, and Live's clip of a
- * constellation dropped on a part. Pure. */
-export function liveTracks(set: SetSummary, document: SetDocument | null, colors?: readonly string[], maker = liveClipMaker(set.path)): WorldTrackSet {
+/** What else a mode's tracks read as it stands when the pane draws, and the pane draws again when it moves: its subscription and its
+ * snapshot (a mode with none draws on the published reading alone). */
+export interface ModeRedraw {subscribe(listener: () => void): () => void; snapshot(): unknown}
+export const MODE_REDRAWS: Readonly<Partial<Record<SurfMode, ModeRedraw>>> = {
+  // Live's engine: while it plays the set, its reading moves with every applied block (live/liveEngine.ts).
+  live: {subscribe: subscribeLiveEngine, snapshot: liveEngineState},
+}
+
+/** Live's tracks: the open set's parts, its writes and its acts (O-I #743), Launch and Stop on the torus, Live's clip of a
+ * constellation dropped on a part, and — while the engine plays this set — Volume and Pan as the engine applied them. Pure. */
+export function liveTracks(set: SetSummary, document: SetDocument | null, colors?: readonly string[], maker = liveClipMaker(set.path),
+  engine: LiveEngineReading | null = null): WorldTrackSet {
   // The clip player loads with Live's transport (O-I #740: a mode's code is not the first load), so its acts reach it when pressed.
   const player = () => import('../../live/clipPlayer').then(module => module.liveClipActs)
   const play = {launch: (track: number, at: LiveClipAt) => player().then(acts => acts.launch({path: set.path, track, at}, set.tempo_bpm)),
     stop: (track: number) => player().then(acts => acts.stop(set.path, track, set.tracks[track]?.name ?? 'the track')),
     stopAll: () => player().then(acts => acts.stopAll())}
-  const tracks = liveSetTrackAdapter.project({set, document, colors, ...liveSetWrites(set.path), play})
+  const tracks = liveSetTrackAdapter.project({set, document, colors, ...liveSetWrites(set.path), play, engine})
   return maker ? withClipMaker(tracks, maker) : tracks
 }
 

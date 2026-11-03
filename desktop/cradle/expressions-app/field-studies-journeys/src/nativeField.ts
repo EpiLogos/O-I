@@ -281,10 +281,11 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   const janko=played?.janko;if(!janko||!Array.isArray(played.by_class))return;
   const stamp=JSON.stringify([janko.lens12,played.by_class.map((c:any)=>c.voices.map((v:any)=>v.mode_ref))]);
   if(stamp===jankoStamp)return;jankoStamp=stamp;
-  const nameOf=(ref:string)=>PLANET_NAMES[voices.findIndex(v=>v.planet_ref===ref)]??ref;
+  // A planet's voice by the planet's name; a Logic or Maqām voice names no planet, so it goes by its own mode ref (O-I #850).
+  const nameOf=(ref:string|undefined,mode:string)=>(ref?PLANET_NAMES[voices.findIndex(v=>v.planet_ref===ref)]:undefined)??ref??mode;
   jankoClasses=new Map(played.by_class.filter((c:any)=>c.voices.length).map((c:any)=>[c.pitch_class,{
    refs:c.voices.map((v:any)=>v.mode_ref),
-   label:c.voices.map((v:any)=>`${nameOf(v.planet_ref)} ${v.frequency_hz.toFixed(1)} Hz (${v.cents_from_class>=0?'+':''}${v.cents_from_class.toFixed(0)}¢)`).join(', ')}]));
+   label:c.voices.map((v:any)=>`${nameOf(v.planet_ref,v.mode_ref)} ${v.frequency_hz.toFixed(1)} Hz (${v.cents_from_class>=0?'+':''}${v.cents_from_class.toFixed(0)}¢)`).join(', ')}]));
   const surface=query('[data-ni-janko]');surface.replaceChildren();
   for(let row=0;row<janko.rows;row++){
    const line=document.createElement('div');line.className='ni-janko-row';line.dataset.family=String(row%2);
@@ -510,6 +511,11 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
    if(!reading.instrument)throw new Error('No scene is open. Open the live instrument first; the body it damps is the scene\'s.');
    const lowered=lowerQDamping(reading.instrument.acting?.voices??[],edit.q_factor);
    await controller.operate({operation:'set-damping',per_second:lowered.per_second});
+  }
+  else if(edit.kind==='torus'){
+   // The Torus's M1′ session through QL's own torus-set (O-I #850): the owner validates, refuses in its words, and its reply is read back.
+   if(!reading.instrument)throw new Error('No scene is open. Open the live instrument first; the Torus plays the scene.');
+   await controller.torusSet(edit.edit);
   }
   else if(edit.kind==='muted')controller.setMuted(edit.muted);
   else if(edit.kind==='cadence'){if(edit.rate==='hold')controller.pause('held by you');else controller.play(edit.rate);}

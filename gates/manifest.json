@@ -322,7 +322,7 @@
         "job": "live-crates",
         "step": "Format, lint and test the crates behind the candidate's server"
       },
-      "command": "set -e; for crate in live-dynamics live-set live-shell; do cargo fmt --manifest-path packages/$crate/Cargo.toml -- --check; cargo clippy --manifest-path packages/$crate/Cargo.toml --locked --all-targets -- -D warnings; cargo test --manifest-path packages/$crate/Cargo.toml --locked; done"
+      "command": "set -e; for crate in live-dynamics live-set live-engine live-shell; do cargo fmt --manifest-path packages/$crate/Cargo.toml -- --check; cargo clippy --manifest-path packages/$crate/Cargo.toml --locked --all-targets -- -D warnings; cargo test --manifest-path packages/$crate/Cargo.toml --locked; done"
     },
     {
       "name": "site-contracts",

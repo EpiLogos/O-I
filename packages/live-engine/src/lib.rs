@@ -1,5 +1,8 @@
 //! Audio graph core for the Live shell — M1+M3 of
-//! `docs/research/ableton-live-12.0.25/shell/SHELL-BLUEPRINT.md`.
+//! `docs/research/ableton-live-12.0.25/shell/SHELL-BLUEPRINT.md`, and the
+//! one engine every Live part sounds in (O-I #849): MIDI tracks and their
+//! instruments, sends and return tracks, the Main track, live events and
+//! Export Audio of what was played.
 //!
 //! Owns the audio-graph domain (blueprint binding constraint 3): a typed
 //! track/device/mixer graph, a beat clock, and the deterministic offline
@@ -12,25 +15,40 @@
 //! `evidence/` content. Constants that are engine decisions rather than
 //! Live truth are marked at their definition.
 //!
-//! Deliberately not here (see README): realtime MIDI input, warp/clip
-//! playback, the unmeasured parts of the hosted devices (Echo's
-//! synced-division mapping, filter/ducking/modulation/internal reverb;
-//! Reverb's stereo decorrelation). Realtime audio output lives behind the
-//! `realtime` feature (`realtime.rs`, phase-1 constraints documented
-//! there and in the README); the offline render stays the acceptance
-//! path and the default, dependency-light build.
+//! Realtime: [`engine`] splits a graph into the audio thread's
+//! [`EngineCore`] (allocation-free, lock-free pull) and the control
+//! side's [`EngineHandle`] (the owner operations); `realtime.rs` (feature
+//! `realtime`, cpal) runs the core on the default output device. The
+//! offline render stays the acceptance path and the default,
+//! dependency-light build. The Torus instrument node over K8's typed API
+//! is `k8.rs` (feature `k8`, built against an installed QL prefix).
 
 pub mod bridge;
 pub mod devices;
+pub mod engine;
 pub mod graph;
+pub mod instruments;
+pub mod ring;
 pub mod wav;
 
+#[cfg(feature = "k8")]
+pub mod k8;
 #[cfg(feature = "realtime")]
 pub mod realtime;
 
 pub use bridge::{bridge, BridgeResult, BridgeWarning};
 pub use devices::{BypassDevice, EchoDevice, EchoParams, GainDevice, GlueDevice, ReverbDevice};
-pub use graph::{Clock, Device, Graph, MasterTrack, Track};
+pub use engine::{
+    engine, EngineCore, EngineEvent, EngineHandle, MixerState, Part, Performance, Refusal, Stamped,
+};
+pub use graph::{
+    Clock, Device, Graph, GraphError, Instrument, MasterTrack, Note, ReturnTrack, Track,
+    MAX_RETURNS,
+};
+pub use instruments::{OperatorInstrument, SilentInstrument};
+
+#[cfg(feature = "k8")]
+pub use k8::{K8Field, K8Input, K8Instrument};
 
 #[cfg(feature = "realtime")]
-pub use realtime::{Player, RealtimeError};
+pub use realtime::{EnginePlayer, Player, RealtimeError};

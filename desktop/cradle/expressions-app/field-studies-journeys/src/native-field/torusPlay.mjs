@@ -29,7 +29,8 @@ export function torusPlayReading(reading) {
     return {torus: {tonesHz: [], silentBecause: closed}, sky: {tonesHz: [], absentBecause: closed}, root: {hz: null, absentBecause: closed}};
   }
   const voices = Array.isArray(acting.voices) ? acting.voices : [];
-  const pitchOf = new Map(voices.map(voice => [voiceModeRef(voice.planet_ref), voice.frequency_hz]));
+  // Each voice by the owner's own mode ref (a Logic or Maqām voice names no planet, O-I #850), else its planet's.
+  const pitchOf = new Map(voices.map(voice => [voice.mode_ref || voiceModeRef(voice.planet_ref), voice.frequency_hz]));
   return {torus: torusReading(reading.status, instrument.struck, pitchOf), sky: skyReading(acting.sky, voices), root: rootReading(voices)};
 }
 

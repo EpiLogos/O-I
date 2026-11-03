@@ -72,9 +72,15 @@ pub fn read_wav_f32(bytes: &[u8]) -> Result<WavAudio, WavError> {
         .map(|c| f32::from_le_bytes(*c))
         .collect();
     if !samples.len().is_multiple_of(channels as usize) {
-        return Err(WavError("data length is not a whole number of frames".into()));
+        return Err(WavError(
+            "data length is not a whole number of frames".into(),
+        ));
     }
-    Ok(WavAudio { sample_rate: rate, channels: channels as usize, samples })
+    Ok(WavAudio {
+        sample_rate: rate,
+        channels: channels as usize,
+        samples,
+    })
 }
 
 #[cfg(test)]

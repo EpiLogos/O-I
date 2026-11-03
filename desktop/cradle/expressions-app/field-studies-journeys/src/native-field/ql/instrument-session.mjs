@@ -34,8 +34,10 @@ const STRIKE_AT_MAX_METRES = 1.0;
 // (ql-mef continuous/host.rs score_operation): resolve holds the score over an
 // admitted basis, state answers the held score with its currentness. Neither
 // advances the field.
+// torus-state is the Torus's M1′ session reading (ql-mef continuous/host.rs
+// torus_operation): a read, the field unchanged.
 const READ_OPERATIONS = ['read', 'inspect', 'influence', 'personal', 'receive-personal', 'stage-state',
-  'score-resolve', 'score-state'];
+  'score-resolve', 'score-state', 'torus-state'];
 const SCORE_OPERATIONS = ['score-resolve', 'score-state'];
 // The stage's acts on the one owner (ql-mef continuous/host.rs stage_operation).
 // stage-evaluate runs an invoked procedure's plan. retire releases a procedure's
@@ -43,13 +45,19 @@ const SCORE_OPERATIONS = ['score-resolve', 'score-state'];
 // advance the field: the host answers with its ql.stage-receipt/v1 and the field
 // unchanged, so the ordinary cursor law (no generation, no samples) holds.
 const STAGE_ACTS = ['stage-evaluate', 'stage-retire', 'stage-bind', 'stage-unbind'];
+// The Torus's acts on the one owner (O-I #850). torus-play strikes the keys'
+// moving points: one strike at points, one generation. torus-release moves no
+// native state (the body rings on). torus-set moves none either, except a
+// Fundamental edit, which is one modes continuation of the same voices.
+const TORUS_ACTS = ['torus-set', 'torus-play', 'torus-release'];
+const JANKO_ROWS = 6;
 
 export class InstrumentSession {
   #context; #owner; #port; #field; #audio; #native; #instance; #sequence;
   #block; #lookahead; #maxBlocks; #maxBytes; #timeout; #queue = []; #bytes = 0;
   #views = new Set(); #maxViews; #busy = false; #held = false; #uncertain = false;
   #disposed = false; #reason = null; #presented; #timer = null; #running = false;
-  #generation = 0; #coalesced = 0; #influence = null; #stageReceipt = null;
+  #generation = 0; #coalesced = 0; #influence = null; #stageReceipt = null; #torus = null; #torusPlay = null;
   #acts = []; #advances = { blocks: 0, frames: 0, first_samples_elapsed: null, last_samples_elapsed: null };
 
   constructor({ context, owner, transport, initialReceipt, fieldBinding,
@@ -87,6 +95,10 @@ export class InstrumentSession {
   get lastInfluence() { return this.#influence === null ? null : structuredClone(this.#influence); }
   /** The last stage act's own receipt (ql.stage-receipt/v1) as the owner returned it, or null before any. */
   get lastStageReceipt() { return this.#stageReceipt === null ? null : structuredClone(this.#stageReceipt); }
+  /** The Torus's M1′ session reading the last Torus acknowledgement carried, or null before any. */
+  get lastTorus() { return this.#torus === null ? null : structuredClone(this.#torus); }
+  /** The last played Torus act's receipt (ql.torus-play/v1), or null before any. */
+  get lastTorusPlay() { return this.#torusPlay === null ? null : structuredClone(this.#torusPlay); }
 
   get reading() {
     return { schema: 'ql.instrument-reading/v1', instance_ref: this.#instance,
@@ -166,7 +178,11 @@ export class InstrumentSession {
         return { refused: true, error: reply.error ?? 'native command refused' };
       }
       const changing = command.operation === 'set-axis' || command.operation === 'replace' ||
-        command.operation === 'set-damping' || command.operation === 'strike' || command.operation === 'strike-at';
+        command.operation === 'set-damping' || command.operation === 'strike' || command.operation === 'strike-at' ||
+        command.operation === 'torus-play';
+      // A Torus edit moves the owner only when it changes the Fundamental.
+      const torusSet = command.operation === 'torus-set';
+      const fundamental = torusSet && command.edit?.fundamental !== undefined;
       // replace-event commits modes and, when required, shape. m1-advance
       // additionally commits inscription-axis alignment. replace-event's own
       // strike flag is a policy within the modes commit, not another generation.
@@ -184,6 +200,7 @@ export class InstrumentSession {
       const maximumEventDelta = command.operation === 'm1-advance' ? 3n : 2n;
       need((event ? after >= before + minimumEventDelta && after <= before + maximumEventDelta
         : stageEvaluation ? after > before
+        : torusSet ? after === before || (fundamental && after === before + 1n)
         : after === before + (changing ? 1n : 0n)) &&
         cursor(frame.samples_elapsed) === cursor(this.#native.samples_elapsed) + BigInt(frames) &&
         frame.audio.length === frames, 'host operation and native cursor disagree');
@@ -195,12 +212,16 @@ export class InstrumentSession {
       this.#journal(command, request.request_id);
       // A scene determinant acknowledgement carries its own influence reading.
       if (reply.influence !== undefined) this.#influence = structuredClone(reply.influence);
+      // A Torus acknowledgement carries the session reading, and a played act its receipt.
+      if (reply.torus !== undefined) this.#torus = structuredClone(reply.torus);
+      if (reply.torus_play !== undefined) this.#torusPlay = structuredClone(reply.torus_play);
       // A stage acknowledgement carries the stage's own scoped body: the
       // ql.stage-state/v1 disclosure or the ql.stage-receipt/v1 claim.
       // A score acknowledgement carries the score, its currentness and the
       // field event it was resolved against.
       return { frame, sources: reply.sources, influence: reply.influence, personal: reply.personal, stage: reply.stage,
-        score: reply.score, current: reply.current, resolved_event_ref: reply.resolved_event_ref };
+        score: reply.score, current: reply.current, resolved_event_ref: reply.resolved_event_ref,
+        torus: reply.torus, torus_play: reply.torus_play, strike_at: reply.strike_at };
     } catch (error) {
       this.#unknown(String(error)); throw error;
     } finally { clearTimeout(timer); }
@@ -301,7 +322,7 @@ export class InstrumentSession {
    * field unchanged. Every stage act's receipt is kept as lastStageReceipt. */
   async operate(command) {
     need(!this.#busy && !this.#held && !this.#disposed &&
-      ['set-axis', 'replace', 'set-damping', 'strike', 'strike-at', ...EVENT_OPERATIONS, ...STAGE_ACTS].includes(command?.operation), 'domain operation requires idle admitted owner');
+      ['set-axis', 'replace', 'set-damping', 'strike', 'strike-at', ...EVENT_OPERATIONS, ...STAGE_ACTS, ...TORUS_ACTS].includes(command?.operation), 'domain operation requires idle admitted owner');
     this.present();
     need(this.#queue.length < this.#maxBlocks &&
       this.#bytes + JSON.stringify(this.#native).length * 2 <= this.#maxBytes, 'wait for bounded presentation capacity');
@@ -414,6 +435,57 @@ export class InstrumentSession {
       return { theta: point.theta, phi: point.phi, amplitude: [point.amplitude[0], point.amplitude[1]] };
     });
     return this.operate({ operation: 'strike-at', points: acts, ...this.#landing(at_samples_elapsed) });
+  }
+
+  /** The Torus's M1′ session (`ql.m1-prime-session/v1`): every setting, the band
+   * beside the rate, the pulse, the shape, the comma gathered since the Torus
+   * opened and the sounding notes. A read: the field does not advance. */
+  async torusState() {
+    need(!this.#busy && !this.#held, 'inspection requires an idle admitted owner'); this.#busy = true;
+    try {
+      const reply = await this.#exchange({ operation: 'torus-state' });
+      need(!reply.refused, String(reply.error)); this.#torus = structuredClone(reply.torus); return reply.torus;
+    } finally { this.#busy = false; }
+  }
+
+  /** One edit of the Torus session: any of rate ({mode:'free', steps_per_second}
+   * or {mode:'sync', note:{numerator, denominator}}), tempo_bpm, fundamental
+   * ({source:'map'} or {source:'hz', hz}), carrier, shape, tuning and polyphony.
+   * The owner validates and refuses in words; the reply's session reading is
+   * kept as lastTorus and its influence as lastInfluence. */
+  async torusSet(edit) {
+    need(edit && typeof edit === 'object' && !Array.isArray(edit) && Object.keys(edit).length > 0,
+      'a Torus edit names at least one setting');
+    return this.operate({ operation: 'torus-set', edit: structuredClone(edit) });
+  }
+
+  #keys(keys) {
+    need(Array.isArray(keys) && keys.length > 0 && keys.length <= 32, 'a Torus act names 1..32 keys');
+    return keys.map(key => {
+      need(key && Number.isInteger(key.row) && key.row >= 0 && key.row < JANKO_ROWS &&
+        Number.isInteger(key.column) && key.column >= 0 && key.column <= 65535,
+        'a Jankó key names its row (0..5) and column');
+      return { row: key.row, column: key.column };
+    });
+  }
+
+  /** Keys of the Jankó surface strike their moving points on the voices of the
+   * tuning in force: one strike at points, one generation. Each key is a new
+   * note; past Polyphony the oldest make way. The receipt (ql.torus-play/v1:
+   * each note's place, point and own cell) is kept as lastTorusPlay.
+   * `at_samples_elapsed` names the sample the act lands at, as for `strike`. */
+  async torusPlay(keys, { amplitude = [0.05, 0], at_samples_elapsed } = {}) {
+    const acts = this.#keys(keys);
+    need(Array.isArray(amplitude) && amplitude.length === 2 &&
+      amplitude.every(v => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) <= STRIKE_AT_MAX_METRES),
+      `a Torus act's amplitude must be two finite metres within ${STRIKE_AT_MAX_METRES.toFixed(1)}`);
+    return this.operate({ operation: 'torus-play', keys: acts, amplitude: [amplitude[0], amplitude[1]],
+      ...this.#landing(at_samples_elapsed) });
+  }
+
+  /** Release keys from the count of notes; the body rings on, so no native state moves. */
+  async torusRelease(keys) {
+    return this.operate({ operation: 'torus-release', keys: this.#keys(keys) });
   }
 
   /** A Nara-constituted scene owner's reception: `input` (seven supplied centre

@@ -17,7 +17,10 @@
 // revision. The Intent panel (§19.1, the design's D3 panel) has no reading a kernel route reaches: its keys stand absent and its writes
 // refused, each with the operation it waits for (INTENT_ABSENT, INTENT_REFUSED). Of the Launch panel, Compare and the takes a Repeat made
 // stand absent and refused the same way (LAUNCH_ABSENT, LAUNCH_REFUSED). Hand off to is retired: the task is dragged onto another
-// session's track (§19.1). Pure, apart from the hook at the end.
+// session's track (§19.1). The score (Notes, Vāk and the Tools, O-I #843) is the song the task's Run performs, as Factory reads it, on
+// the rows of the track's Agent rack — its agents and agent sets — with Allocate, Connect and Thread form written into the song's file
+// by Factory and Fill heads asked of AIKit's decision model (agent/scoreBinding.ts); the log's retrospective readings stand where they
+// were found, and nothing the tools do writes the log. Pure, apart from the hook at the end.
 import {useContext, useEffect, useMemo, useRef, useState} from 'react'
 import type {Value, Values} from '../frame/devices/designed'
 import {clipBinding, type ClipBinding, type ClipWiring} from '../frame/detail/clipBinding'
@@ -37,8 +40,9 @@ import {useOptionalContinuity} from '../continuity/workspace'
 import {parseCentralPathRef} from '../central/centralVertical'
 import type {FactoryTake} from './factoryTakes'
 import {lockPlan, planTargetOf, planValuesOf, planWiring, useWavePlan, type PlanPort} from './wavePlan'
+import {rackRowsOf, scorePortOf, scoreValuesOf, scoreWiring, useScore, type ScorePort} from './scoreBinding'
 import type {WorldActionReceipt, WorldTrackActions} from '../timeline/worldTrackAdapter'
-import {useViewHoldsVersion} from '../frame/detail/clipBinding'
+import {clipHostId, useViewHoldsVersion, viewHoldsOf} from '../frame/detail/clipBinding'
 import {useSelectedClip} from '../frame/detail/ClipBox'
 import {useDetailReading} from '../frame/detail/detailReading'
 import {useTimelinePanePresentation} from '../projections/timelinePaneHost'
@@ -71,8 +75,16 @@ export function factoryTaskOf(ref: string | null, tracks: readonly AgentSessionT
   return {track, task, trackId}
 }
 
-/** One row of the design's log (factory.tsx Entry): at seconds from the task's start, the owner's own kind as the tool, its words. */
-export interface LogRow {readonly at: number; readonly kind: 'tool'; readonly tool: string; readonly text: string}
+/** One row of the design's log (factory.tsx Entry): at seconds from the task's start, the owner's own kind as the tool, its words; a
+ * retrospective reading (a thought the temporal field types T0′–T5′) stands as a reading where it was found. */
+export type LogRow = {readonly at: number; readonly kind: 'tool'; readonly tool: string; readonly text: string}
+  | {readonly at: number; readonly kind: 'reading'; readonly reading: string; readonly text: string}
+
+/** A retrospective reading's name as the design marks it: the temporal field's machine spelling (`T3-prime`) with its prime, else null. */
+const retrospectiveOf = (event: TemporalEventLike): string | null => {
+  const type = (event as TemporalEventLike & {readonly thought_type?: unknown}).thought_type
+  return typeof type === 'string' && /^T[0-5]-prime$/.test(type) ? `${type.slice(0, 2)}′` : null
+}
 
 /** The task's log: the session's temporal events inside the task's span (its start to the next task's start), each placed at its
  * seconds from the task's start, its kind the owner's own word, its text the owner's summary. An event with no instant has no place
@@ -84,8 +96,10 @@ export function taskLogOf(track: AgentSessionTrack, task: TaskClip | null, event
   const from = task?.startUnixMs ?? null
   const within = mine.filter(event => (from === null || event.instant_unix_ms! >= from) && (next === null || event.instant_unix_ms! < next))
   const origin = from ?? within[0]?.instant_unix_ms ?? 0
-  return within.slice(-LOG_ROWS).map(event => ({at: Math.max(0, (event.instant_unix_ms! - origin) / 1000), kind: 'tool',
-    tool: event.kind ?? event.stream ?? 'event', text: event.summary ?? event.subject_ref}))
+  return within.slice(-LOG_ROWS).map((event): LogRow => {
+    const at = Math.max(0, (event.instant_unix_ms! - origin) / 1000), text = event.summary ?? event.subject_ref, reading = retrospectiveOf(event)
+    return reading ? {at, kind: 'reading', reading, text} : {at, kind: 'tool', tool: event.kind ?? event.stream ?? 'event', text}
+  })
 }
 
 const put = (values: Record<string, Value>, key: string, value: Value | null | undefined) => {
@@ -111,6 +125,8 @@ export interface FactoryClipInput {
   readonly returned?: ReturnedPort | null
   /** The task's plan in its Run's plan of record, as Factory reads it, and the person's Lock; null where nothing reads it here. */
   readonly plan?: PlanPort | null
+  /** The song's score as Factory reads it, on the track's Agent rack, and the owners' writes it goes through; null where nothing reads it. */
+  readonly score?: ScorePort | null
 }
 
 // ---------------------------------------------------------------------------------------------------------------- what the run returned
@@ -217,7 +233,7 @@ function returnedWhy(task: TaskAddress | null, returned: ReturnedPort | null | u
 }
 
 /** The task's readings on the design's keys. A key no owner reports is left out (the design draws "—"). Pure. */
-export function factoryClipValues(track: AgentSessionTrack, task: TaskClip | null, input: Pick<FactoryClipInput, 'tracks' | 'events' | 'colour' | 'settings' | 'constellations' | 'returned' | 'plan'>): Values {
+export function factoryClipValues(track: AgentSessionTrack, task: TaskClip | null, input: Pick<FactoryClipInput, 'tracks' | 'events' | 'colour' | 'settings' | 'constellations' | 'returned' | 'plan' | 'score'>): Values {
   const values: Record<string, Value> = {}
   // The task's source, the constellation it was made of, named from the wiki (taskSourceOf).
   Object.assign(values, madeOfValues(taskSourceOf(task ? {sessionRef: track.sessionRef, n: task.n} : null, input.settings ?? null), input.constellations))
@@ -243,6 +259,9 @@ export function factoryClipValues(track: AgentSessionTrack, task: TaskClip | nul
   // attempts are its bound task's, the first on its track.
   const plan = planPortOf(task ? {sessionRef: track.sessionRef, n: task.n} : null, input.plan ?? null)
   if (plan) Object.assign(values, planValuesOf(plan.reading))
+  // The song's score: its Run's song as Factory reads it, on the track's Agent rack, this task's note lit (agent/scoreBinding.ts).
+  const score = scorePortOf(task, input.score ?? null)
+  if (score) Object.assign(values, scoreValuesOf(score.reading, score.rack, score.picks))
   if (input.events) {
     const log = taskLogOf(track, task, input.events)
     values.log = JSON.stringify(log)
@@ -292,33 +311,9 @@ export const LAUNCH_REFUSED: Readonly<Record<string, string>> = {
   compare: 'Compare: no owner operation carries it yet — missing op: a comparison of takes (Software Factory).',
 }
 
-/** The score (manual §19.1 "The score"; clip:factory, the Notes tab): the workflow the task is a unit of, its rows the agents and teams of
- * the track's rack. No reading assembles it yet: the units with their lowered compositions, the source's check, the rows and the waves are
- * each a separate owner read. Each key is absent with the reads it waits for; every write stands refused, since no Factory operation writes
- * a workflow source, and the decision model that fills open heads is not served. */
-const SCORE_READ = 'a score read: the units with their lowered compositions (`factory workflow inspect <state> <run> --unit`), the rows of the track\'s rack (`central.agent-set.resolve`) and the waves (`factory development wave read`)'
-export const SCORE_ABSENT: Readonly<Record<string, string>> = {
-  score: `The score: no reading reaches it yet — missing op: ${SCORE_READ} (Software Factory).`,
-  'unit.own': `This task's own unit: no reading reaches it yet — it is read with the score, missing op: ${SCORE_READ} (Software Factory).`,
-  'score.check': 'The engine\'s word on the score: no reading reaches it yet — missing op: `ql vak compose` on each unit\'s composition and `factory workflow check` on the source (Quaternal Logic, Software Factory).',
-  'gen.status': 'Generate\'s state: no reading reaches it yet — missing op: `aikit decide invoke` with the team space\'s Vāk-block instrument, which is not served (AIKit).',
-}
-export const SCORE_REFUSED: Readonly<Record<string, string>> = {
-  score: 'A note moved to another row: no owner operation carries it yet — missing op: a write of the workflow source (Factory writes none; `factory workflow check` only reads it) (Software Factory).',
-  'tr.press': 'Transform: no owner operation carries it yet — missing op: a write of the workflow source (Software Factory).',
-  'gen.press': 'Generate: no owner operation carries it yet — composing a score from the Intent is an agent\'s act, and filling the open heads waits on `aikit decide invoke` (AIKit).',
-  'gen.accept': 'Keep the generated score: no owner operation carries it yet — missing op: a write of the workflow source (Software Factory).',
-  'gen.discard': 'Discard the generated score: nothing was generated to discard — Generate waits on its owner (AIKit).',
-}
-/** The score's settings the view holds: the chosen note, how the rows fold and highlight, the song opened inside a note, Warp, and the
- * tools' choices before a press. */
-const SCORE_VIEW: Readonly<Record<string, string>> = {
-  unit: 'the note selected in the score', 'score.fold': 'Fold or Rack: which rows the score shows', 'score.highlight': 'the thread form whose notes are tinted',
-  'score.open': 'the song opened inside a note', warp: 'Warp, which lays the log onto the score\'s ruler once the unit has returned',
-  'tr.tool': 'Transform\'s tool', 'tr.form': 'the thread form Transform sets', 'tr.join': 'the join Transform sets', 'tr.to': 'the agent or team Transform allocates to',
-  'tr.on': 'the unit Transform ties from', 'tr.auto': 'whether Transform applies as you choose',
-  'gen.tool': 'Generate\'s tool', 'gen.waves': 'how many waves Generate composes', 'gen.decider': 'the decision model Generate asks',
-}
+// REPLACED (O-I #843): SCORE_ABSENT, SCORE_REFUSED and SCORE_VIEW, which stood the score absent and every score write refused ("no
+// Factory operation writes a workflow source", "`aikit decide invoke` … not served"). The score is now Factory's reading, its edits
+// Factory's writes and Fill heads AIKit's: agent/scoreBinding.ts scoreWiring.
 
 /** Repeat's fields, which do not change while its takes run (§19.1 The Launch panel: "Once the first run starts, these do not change. A
  * change starts a new set of takes"; AIKit refuses them in the same words). */
@@ -343,10 +338,23 @@ const SETTINGS_WHY_NO_TASK = 'No task is bound to this session: its owner keeps 
 /** The settings reading of an AIKit that does not keep a task's source yet (installed before ai-kit a3f43f84). */
 export const SOURCE_UNKEPT = 'The task\'s source is not read: the AIKit installed here keeps no source in a task\'s settings (its reading names none); install an AIKit that does.'
 
-/** clip:factory's wiring: every key the design draws or sets. */
+/** clip:factory's wiring: every key the design draws or sets. `choice` reads the view's holds when a tool is pressed. */
 export function factoryWiring(task: TaskAddress | null, context: TaskSeamContext | null = null, returned: ReturnedPort | null = null,
-  plan: PlanPort | null = null): ClipWiring {
-  return withPlan(withReturned(withMadeOf(taskWiring(task, context), taskSourceOf(task, context)), task, returned), planPortOf(task, plan))
+  plan: PlanPort | null = null, score: ScorePort | null = null, choice: (key: string) => Value | undefined = () => undefined): ClipWiring {
+  return withScore(withPlan(withReturned(withMadeOf(taskWiring(task, context), taskSourceOf(task, context)), task, returned), planPortOf(task, plan)),
+    scorePortOf(task, score), choice)
+}
+
+/** The score's keys on the wiring (agent/scoreBinding.ts scoreWiring): read from Factory, its edits Factory's, Fill heads AIKit's. */
+function withScore(wiring: ClipWiring, score: ScorePort | null, choice: (key: string) => Value | undefined): ClipWiring {
+  const own = scoreWiring(score, choice)
+  return {
+    reads: {...wiring.reads, ...own.reads},
+    absent: {...wiring.absent, ...own.absent},
+    acts: {...wiring.acts, ...own.acts},
+    view: {...wiring.view, ...own.view},
+    refused: {...wiring.refused, ...own.refused},
+  }
 }
 
 const PLAN_ONE_TASK = 'The session\'s owner holds one bound task: its plan is the first task\'s on the track, whose attempts name its Run and unit.'
@@ -423,15 +431,14 @@ function taskWiring(task: TaskAddress | null, context: TaskSeamContext | null): 
       elapsed: 'the task\'s start to its last activity, in seconds',
       ...(takes ? {takes: 'the session\'s settings: the Repeat\'s set of takes (task.takes) — the takes it made, read once the set ends'} : {}),
     },
-    absent: {...INTENT_ABSENT, ...SCORE_ABSENT, ...(takes ? {compare: LAUNCH_ABSENT.compare} : LAUNCH_ABSENT)},
+    absent: {...INTENT_ABSENT, ...(takes ? {compare: LAUNCH_ABSENT.compare} : LAUNCH_ABSENT)},
     acts,
     view: {
       fold: 'Fold keeps only the lanes of the tools the agent used: how the log shows, not the log',
       event: 'the log row selected in Clip view', 'env.control': 'which of the Agent\'s controls the envelope editor shows',
       'criteria.page': 'the page of success conditions Clip view shows',
-      ...SCORE_VIEW,
     },
-    refused: {...refused, ...INTENT_REFUSED, ...LAUNCH_REFUSED, ...SCORE_REFUSED},
+    refused: {...refused, ...INTENT_REFUSED, ...LAUNCH_REFUSED},
   }
 }
 
@@ -441,9 +448,13 @@ export function factoryClipBinding(input: FactoryClipInput): ClipBinding | null 
   if (!chosen) return null
   const {track, task, trackId} = chosen
   const address: TaskAddress | null = task ? {sessionRef: track.sessionRef, n: task.n} : null
-  return clipBinding({mode: 'factory', ref: task ? `${trackId}#task/${task.n}` : trackId, values: factoryClipValues(track, task, input),
-    wiring: factoryWiring(address, input.settings ?? null, input.returned ?? null, input.plan ?? null), placed: input.placed,
-    viewDefaults: {'view.panel': 'launch', 'view.editor': 'log', fold: true}})
+  const ref = task ? `${trackId}#task/${task.n}` : trackId
+  const viewDefaults = {'view.panel': 'launch', 'view.editor': 'log', fold: true} as const
+  // A tool's press reads the choices the view holds at that moment: the note selected, the tool and what it gives or ties.
+  const choice = (key: string): Value | undefined => ({...viewDefaults, ...viewHoldsOf(clipHostId('factory', ref))} as Record<string, Value>)[key]
+  return clipBinding({mode: 'factory', ref, values: factoryClipValues(track, task, input),
+    wiring: factoryWiring(address, input.settings ?? null, input.returned ?? null, input.plan ?? null, input.score ?? null, choice), placed: input.placed,
+    viewDefaults})
 }
 
 /** What a file opens through: the shell's workspace (its file route) and the book whose focused pane it opens in. */
@@ -513,6 +524,10 @@ export function useFactoryClip(): ClipBinding | null {
   }} : null,
   // eslint-disable-next-line react-hooks/exhaustive-deps
   [wave.plan, sessions, sessionRef, JSON.stringify(target), JSON.stringify(transport)])
+  // The song's score: the Run its latest attempt names, read by Factory, on the rows of the track's Agent rack (agent/scoreBinding.ts).
+  const chosen = factoryTaskOf(selected.ref, factory.tracks)
+  const rack = useMemo(() => rackRowsOf(chosen?.track ?? null, factory.tracks), [chosen?.track, factory.tracks])
+  const scored = useScore(transport, target, rack, sessionRef)
   const held = useRef<PaneHold>({workspace: null, book: null})
   held.current = {workspace: useContext(Workspace), book: useOptionalContinuity()}
   const returned = useMemo<ReturnedPort | null>(() => sessions && sessionRef ? {reading: files, open: file => openReturnedFile(file, {
@@ -520,7 +535,7 @@ export function useFactoryClip(): ClipBinding | null {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   [files, sessions, sessionRef, JSON.stringify(transport)])
   return factoryClipBinding({ref: selected.ref, tracks: factory.tracks, events: sessions ? sessions.events : null, colour, placed: presentation === 'arrangement', settings,
-    constellations, returned, plan})
+    constellations, returned, plan, score: sessions && sessionRef ? scored : null})
 }
 
 // ---------------------------------------------------------------------------------------------------------------- the drop

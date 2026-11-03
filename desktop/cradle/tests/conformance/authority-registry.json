@@ -275,6 +275,42 @@
       "classification": "window-lifecycle",
       "rationale": "Live-shell host command: the workspace book read, or written on the revision read (T-WORLDS §3 W1); the shell's per-person context in the candidate's data home, main webview only.",
       "spec_ref": "desktop/cradle/docs/world-shell/wayfinder/tickets/T-WORLDS-the-run-to-ux-testing.md §3; docs/cradle/02-ARCHITECTURE.md §5/§12"
+    },
+    {
+      "command": "live_engine_host::live_engine_open",
+      "classification": "presentation-lease",
+      "rationale": "Bridges one absolute .als set, as its owner reads it, into the engine; nothing sounds yet. The Live set's sound on the default output (live_engine_host.rs over packages/live-engine): a native audio presentation of the set its kernel owner keeps (live_set_owner.rs). It decides and writes nothing; the set's mixer moves are the owner's writes, followed into it. Candidate webviews only.",
+      "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md §21.1 (Rules: every part sounds in one engine; Export Audio renders what you heard), O-I #849; docs/cradle/02-ARCHITECTURE.md §5/§12"
+    },
+    {
+      "command": "live_engine_host::live_engine_play",
+      "classification": "presentation-lease",
+      "rationale": "Starts the engine on the default output from where it stands. The Live set's sound on the default output (live_engine_host.rs over packages/live-engine): a native audio presentation of the set its kernel owner keeps (live_set_owner.rs). It decides and writes nothing; the set's mixer moves are the owner's writes, followed into it. Candidate webviews only.",
+      "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md §21.1 (Rules: every part sounds in one engine; Export Audio renders what you heard), O-I #849; docs/cradle/02-ARCHITECTURE.md §5/§12"
+    },
+    {
+      "command": "live_engine_host::live_engine_stop",
+      "classification": "presentation-lease",
+      "rationale": "Stops the output; the engine and what it played are kept for Export Audio. The Live set's sound on the default output (live_engine_host.rs over packages/live-engine): a native audio presentation of the set its kernel owner keeps (live_set_owner.rs). It decides and writes nothing; the set's mixer moves are the owner's writes, followed into it. Candidate webviews only.",
+      "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md §21.1 (Rules: every part sounds in one engine; Export Audio renders what you heard), O-I #849; docs/cradle/02-ARCHITECTURE.md §5/§12"
+    },
+    {
+      "command": "live_engine_host::live_engine_send",
+      "classification": "presentation-lease",
+      "rationale": "One note, Panic or mixer move (a typed event, refused in the engine's words when the set has nothing it names), applied at the next audio block. The Live set's sound on the default output (live_engine_host.rs over packages/live-engine): a native audio presentation of the set its kernel owner keeps (live_set_owner.rs). It decides and writes nothing; the set's mixer moves are the owner's writes, followed into it. Candidate webviews only.",
+      "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md §21.1 (Rules: every part sounds in one engine; Export Audio renders what you heard), O-I #849; docs/cradle/02-ARCHITECTURE.md §5/§12"
+    },
+    {
+      "command": "live_engine_host::live_engine_mixer",
+      "classification": "presentation-lease",
+      "rationale": "The mixer as the engine applied it: a reading, never the move asked. The Live set's sound on the default output (live_engine_host.rs over packages/live-engine): a native audio presentation of the set its kernel owner keeps (live_set_owner.rs). It decides and writes nothing; the set's mixer moves are the owner's writes, followed into it. Candidate webviews only.",
+      "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md §21.1 (Rules: every part sounds in one engine; Export Audio renders what you heard), O-I #849; docs/cradle/02-ARCHITECTURE.md §5/§12"
+    },
+    {
+      "command": "live_engine_host::live_engine_export",
+      "classification": "dialog",
+      "rationale": "Export Audio: the person chooses the file in the host's native save dialog; the page names no path, and a cancelled dialog is refused in words. The engine's offline render is written by the kernel's Live owner (Kernel::live_audio_export), which records its file_changed receipt; the host writes no file.",
+      "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md §21.1 (Rules: every part sounds in one engine; Export Audio renders what you heard), O-I #849; docs/cradle/02-ARCHITECTURE.md §5/§12"
     }
   ],
   "filesystem": [

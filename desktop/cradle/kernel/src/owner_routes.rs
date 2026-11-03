@@ -990,6 +990,19 @@ pub enum AikitWrite {
     SourceRollback {
         id: String,
     },
+    /// Fill the open heads of one instrument of QL's team space (O-I #843,
+    /// Factory's Clip view, Generate → Fill heads: `aikit decide invoke
+    /// --instrument I --request-file - [--agent-session S]`,
+    /// `aikit.instrument-fill-request/v1` on stdin →
+    /// `aikit.instrument-fill/v1`): AIKit asks its elected decision model
+    /// one typed question per open head and answers the picks as evidence.
+    /// The ask is kept against the session it names.
+    DecideFill {
+        instrument: String,
+        request: Value,
+        #[serde(default)]
+        agent_session: Option<String>,
+    },
     /// Forget what the knowledge route learned for a destination, a route, a
     /// project or everything (`aikit knowledge forget destination|route|
     /// project <resource>` / `all`), or one destination in one world
@@ -1076,9 +1089,20 @@ impl AikitWrite {
             | Self::BypassIssue { .. }
             | Self::SourceSync { .. }
             | Self::SourcePromote { .. }
-            | Self::SourceRollback { .. } => None,
+            | Self::SourceRollback { .. }
+            | Self::DecideFill { .. } => None,
         }
     }
+}
+
+/// `aikit decide invoke --instrument I --request-file - [--agent-session S]`:
+/// the cell travels on stdin, never on the command line.
+pub fn decide_fill_args(instrument: &str, agent_session: Option<&str>) -> Vec<OsString> {
+    let mut args = words(&["decide", "invoke", "--instrument"]);
+    args.push(instrument.into());
+    args.extend(words(&["--request-file", "-"]));
+    push_flag(&mut args, "--agent-session", agent_session);
+    args
 }
 
 // ---------------------------------------------------------------------------
@@ -3499,6 +3523,19 @@ fn aikit_written(request: &AikitWrite, cwd: Option<&Path>) -> Result<Written, Er
             args.push(id.into());
             ("aikit source rollback", args)
         }
+        AikitWrite::DecideFill {
+            instrument,
+            request,
+            agent_session,
+        } => {
+            input = Some(object_bytes(request)?);
+            // The decision model's answer may take its elected timeout and more.
+            limit = LONG_WRITE_LIMIT;
+            (
+                "aikit decide invoke --instrument",
+                decide_fill_args(instrument, agent_session.as_deref()),
+            )
+        }
         AikitWrite::KnowledgeForget {
             scope, resource, ..
         } => {
@@ -3613,6 +3650,13 @@ fn aikit_written(request: &AikitWrite, cwd: Option<&Path>) -> Result<Written, Er
         | AikitWrite::SourceRollback { id } => {
             let unchanged = data.get("changed") == Some(&Value::Bool(false));
             (data, (!unchanged).then(|| id.clone()))
+        }
+        // The picks are evidence; what moved is the asking session's record of
+        // its asks, and only when a call was made for a named session.
+        AikitWrite::DecideFill { agent_session, .. } => {
+            let data = schema(route, data, "aikit.instrument-fill/v1")?;
+            let asked = data.get("calls").and_then(Value::as_u64).unwrap_or(0) > 0;
+            (data, agent_session.clone().filter(|_| asked))
         }
     };
     Ok(Written {
@@ -3780,6 +3824,40 @@ mod tests {
                 "/w/wiki.json",
                 "--json"
             ]
+        );
+    }
+
+    /// Fill heads (O-I #843): the instrument names AIKit's own flag and the cell travels on stdin, never on the command line.
+    #[test]
+    fn fill_heads_asks_aikit_with_the_instrument_and_the_cell_on_stdin() {
+        let fill: AikitWrite = serde_json::from_value(serde_json::json!({
+            "kind": "decide-fill", "instrument": "vak-block", "agent_session": "agent-session/a",
+            "request": {"schema": "aikit.instrument-fill-request/v1", "subject": {"key": "verify"}, "chosen": {}}}))
+        .unwrap();
+        assert_eq!(fill.project(), None);
+        let AikitWrite::DecideFill {
+            instrument,
+            agent_session,
+            ..
+        } = &fill
+        else {
+            unreachable!()
+        };
+        assert_eq!(
+            spelled(&decide_fill_args(instrument, agent_session.as_deref())),
+            [
+                "decide",
+                "invoke",
+                "--instrument",
+                "vak-block",
+                "--request-file",
+                "-",
+                "--agent-session",
+                "agent-session/a"
+            ]
+        );
+        assert!(
+            !spelled(&decide_fill_args("vak-block", None)).contains(&"--agent-session".to_owned())
         );
     }
 

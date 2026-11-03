@@ -20,6 +20,20 @@ export class InstrumentSession {
  /** A strike at points of the torus (QL-MEF #342 `strike-at`): each voice is excited by its own shape at each (theta, phi) in [0, 2π); 1..64 points
   * are one act, refused whole when a point is off the sheet or an impulse passes the material policy. */
  strikeAt(points: Array<{theta: number; phi: number; amplitude: [number, number]}>, when?: {at_samples_elapsed?: string}): Promise<any>;
+ /** The Torus's M1′ session (`ql.m1-prime-session/v1`, O-I #850): every setting, the band, the pulse, the shape, the comma and the
+  * notes. A read: the field never advances. */
+ torusState(): Promise<any>;
+ /** One edit of the Torus session (rate, tempo_bpm, fundamental, carrier, shape, tuning, polyphony); the owner refuses in words.
+  * Only a Fundamental change moves the owner (one modes continuation). */
+ torusSet(edit: Record<string, unknown>): Promise<any>;
+ /** Jankó keys strike their moving points on the tuning in force: one strike at points, one generation; receipt as lastTorusPlay. */
+ torusPlay(keys: Array<{row: number; column: number}>, options?: {amplitude?: [number, number]; at_samples_elapsed?: string}): Promise<any>;
+ /** Release keys from the count of notes; the body rings on, no native state moves. */
+ torusRelease(keys: Array<{row: number; column: number}>): Promise<any>;
+ /** The Torus session reading the last Torus acknowledgement carried, or null before any. */
+ readonly lastTorus: any;
+ /** The last played Torus act's receipt (ql.torus-play/v1), or null before any. */
+ readonly lastTorusPlay: any;
  /** Frozen copy of every admitted owner act and the aggregate advance data plane. */
  journal(): any;
  readonly lastInfluence: any;

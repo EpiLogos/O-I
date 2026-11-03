@@ -29,10 +29,11 @@ use live_engine::devices::{EchoDevice, EchoParams, ReverbDevice};
 use live_engine::wav::read_wav_f32;
 use live_engine::{Graph, Track};
 
-const RENDERS: &str =
-    "../../docs/research/ableton-live-12.0.25/harness/renders";
-const IMPULSE: &str =
-    "../../docs/research/ableton-live-12.0.25/harness/signals/impulse.wav";
+mod corpus;
+
+/// Relative to the corpus root (`corpus::path`).
+const RENDERS: &str = "harness/renders";
+const IMPULSE: &str = "harness/signals/impulse.wav";
 
 /// The golden export rate (devices/echo.md + reverb.md: 44.1 kHz / 16-bit).
 const SR: u32 = 44_100;
@@ -41,7 +42,7 @@ const SR: u32 = 44_100;
 /// (gen_signals.py). The engine plays the buffer at the render rate, so
 /// the impulse sits at frame 100 of an SR-rate render.
 fn load_impulse() -> Vec<f32> {
-    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(IMPULSE);
+    let path = corpus::path(IMPULSE);
     let bytes = std::fs::read(&path)
         .unwrap_or_else(|e| panic!("harness impulse missing at {}: {e}", path.display()));
     let wav = read_wav_f32(&bytes).expect("impulse.wav must parse");
@@ -79,13 +80,23 @@ fn aligned_source(golden: &audio::Audio) -> Vec<f32> {
 /// Mono mixdown — the analysis side of the gates (same as
 /// `live_dynamics::audio`).
 fn mixdown(render: &[f32]) -> Vec<f32> {
-    render.as_chunks::<2>().0.iter().map(|f| (f[0] + f[1]) * 0.5).collect()
+    render
+        .as_chunks::<2>()
+        .0
+        .iter()
+        .map(|f| (f[0] + f[1]) * 0.5)
+        .collect()
 }
 
 fn read_render(name: &str) -> audio::Audio {
-    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(RENDERS).join(name);
-    let bytes = std::fs::read(&path)
-        .unwrap_or_else(|e| panic!("golden render missing at {}: {e}", path.display()));
+    let path = corpus::render(name).unwrap_or_else(|| corpus::path(RENDERS).join(name));
+    let bytes = std::fs::read(&path).unwrap_or_else(|e| {
+        panic!(
+            "golden render missing at {} (nor in {}): {e}",
+            path.display(),
+            corpus::RENDER_ARCHIVE
+        )
+    });
     audio::read_aiff_i16(&bytes).unwrap()
 }
 
@@ -108,13 +119,7 @@ fn rt60_table(label: &str, fits: &[verify::Rt60Fit]) {
     }
 }
 
-fn check_rt60(
-    engine_mono: &[f32],
-    golden: &audio::Audio,
-    t0: f64,
-    t1: f64,
-    tol: f64,
-) {
+fn check_rt60(engine_mono: &[f32], golden: &audio::Audio, t0: f64, t1: f64, tol: f64) {
     let sr = golden.sample_rate;
     let g_fits = verify::reverb_rt60_fits(&golden.samples, sr, t0, t1);
     let e_fits = verify::reverb_rt60_fits(engine_mono, sr, t0, t1);
@@ -147,8 +152,16 @@ fn check_rt60(
 fn check_spectral(engine_mono: &[f32], golden: &audio::Audio) {
     let sr = golden.sample_rate as usize;
     let win = (4.0 * sr as f64) as usize;
-    let pg = spectrum::band_profile(&golden.samples[..win.min(golden.samples.len())], golden.sample_rate, 48);
-    let pe = spectrum::band_profile(&engine_mono[..win.min(engine_mono.len())], golden.sample_rate, 48);
+    let pg = spectrum::band_profile(
+        &golden.samples[..win.min(golden.samples.len())],
+        golden.sample_rate,
+        48,
+    );
+    let pe = spectrum::band_profile(
+        &engine_mono[..win.min(engine_mono.len())],
+        golden.sample_rate,
+        48,
+    );
     let d = spectrum::band_distance(&pg, &pe);
     println!(
         "spectral (48 bands, [0,4) s): mean {:.2} dB (tol {:.1}), max band {:.2} dB (tol {:.1})",
@@ -161,7 +174,10 @@ fn check_spectral(engine_mono: &[f32], golden: &audio::Audio) {
     let mut bands: Vec<(usize, f64)> = (0..48).map(|i| (i, (pe[i] - pg[i]).abs())).collect();
     bands.sort_by(|x, y| y.1.partial_cmp(&x.1).unwrap());
     for (i, e) in bands.iter().take(4) {
-        println!("  band {i:2}: golden {:7.2}  engine {:7.2}  |Δ| {e:.2} dB", pg[*i], pe[*i]);
+        println!(
+            "  band {i:2}: golden {:7.2}  engine {:7.2}  |Δ| {e:.2} dB",
+            pg[*i], pe[*i]
+        );
     }
     assert!(
         d.mean_db <= verify::REVERB_SPECTRAL_MEAN_TOL_DB,
@@ -207,7 +223,12 @@ fn m3_gate_echo_bare_line_matches_the_e8_render() {
     let expected_e: Vec<f64> = (1..=N_TAPS).map(|k| t0e + k as f64 * HOP_S).collect();
 
     let gate = taps::TapGate::default(); // ±1 ms
-    let g_table = taps::tap_table(&golden.samples, golden.sample_rate, &expected_g, gate.max_time_err_s);
+    let g_table = taps::tap_table(
+        &golden.samples,
+        golden.sample_rate,
+        &expected_g,
+        gate.max_time_err_s,
+    );
     let e_table = taps::tap_table(&engine_mono, SR, &expected_e, gate.max_time_err_s);
     assert_eq!(g_table.len(), N_TAPS, "golden E8 taps missing: {g_table:?}");
     assert_eq!(e_table.len(), N_TAPS, "engine taps missing: {e_table:?}");
@@ -225,7 +246,11 @@ fn m3_gate_echo_bare_line_matches_the_e8_render() {
             g.peak_dbfs,
             e.peak_dbfs
         );
-        assert!(dt.abs() <= 1.0, "tap {} time off by {dt:.2} ms (tol ±1)", k + 1);
+        assert!(
+            dt.abs() <= 1.0,
+            "tap {} time off by {dt:.2} ms (tol ±1)",
+            k + 1
+        );
         assert!(
             (e.time_s - expected_e[k]).abs() <= gate.max_time_err_s,
             "engine tap {} off the k·hop grid",
@@ -255,8 +280,12 @@ fn m3_gate_echo_bare_line_matches_the_e8_render() {
     // is one FB application per hop; the golden render carries the
     // documented D8 settling residual (first recirculation −3.5 dB), so
     // the tolerance absorbs it
-    let g_pts: Vec<(usize, f64)> = (3..=N_TAPS).map(|k| (k, g_table[k - 1].peak_dbfs)).collect();
-    let e_pts: Vec<(usize, f64)> = (3..=N_TAPS).map(|k| (k, e_table[k - 1].peak_dbfs)).collect();
+    let g_pts: Vec<(usize, f64)> = (3..=N_TAPS)
+        .map(|k| (k, g_table[k - 1].peak_dbfs))
+        .collect();
+    let e_pts: Vec<(usize, f64)> = (3..=N_TAPS)
+        .map(|k| (k, e_table[k - 1].peak_dbfs))
+        .collect();
     let g_slope = slope_per_hop(&g_pts);
     let e_slope = slope_per_hop(&e_pts);
     let law_slope = 20.0 * FB.log10();
@@ -279,7 +308,10 @@ fn m3_gate_echo_bare_line_matches_the_e8_render() {
 fn reverb_gate(file: &str, decay_ms: f64, t0: f64, t1: f64, rt60_tol: f64, check_spectrum: bool) {
     let golden = read_render(file);
     let device = ReverbDevice::new(ReverbParams { decay_ms }, 1.0);
-    let engine_mono = mixdown(&render_source_set(aligned_source(&golden), Box::new(device)));
+    let engine_mono = mixdown(&render_source_set(
+        aligned_source(&golden),
+        Box::new(device),
+    ));
     assert_eq!(golden.sample_rate, SR, "golden render rate");
     println!("M3 gate — engine Reverb(decay {decay_ms} ms) vs {file}");
     check_rt60(&engine_mono, &golden, t0, t1, rt60_tol);

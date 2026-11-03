@@ -181,7 +181,7 @@ export function stageLiveRefusal(target: unknown, value: unknown): string | null
  * body's Damping (a Q factor, manual §21.2, which the frame lowers to the scene's decay rate: nativeField.ts lowerQDamping) and its
  * presentation writes (sound, tick cadence, level, scale, the torus's effects chain and one parameter of one of its four effects, manual
  * §21.5). Each runs
- * the same controller operation the Studio's native controls run. The cadence presets and the level and scale ranges are the Studio's
+ * the same controller operation the Studio's native controls run. The Torus's M1′ session edit (`torus`) runs QL's own `torus-set`. The cadence presets and the level and scale ranges are the Studio's
  * own controls; the owner's bounds are the outer law. An effect's operands are closed and typed here; its range is the owner's to
  * refuse in its own words (native-field/effectsLaw.ts). */
 export const STAGE_INSTRUMENT_CADENCES = ['hold', 1, 12] as const;
@@ -189,6 +189,52 @@ export const STAGE_INSTRUMENT_LEVEL = {min: 0, max: 4} as const;
 export const STAGE_INSTRUMENT_SCALE_MAX = 1000000;
 /** The Torus's Damping, a Q factor (DLW manual §21.2: "Damping | Q factor 0.1 to 40"; QL's body constants, `ql.m2-body-constants/v1`). */
 export const STAGE_INSTRUMENT_Q = {min: 0.1, max: 40} as const;
+/** The Torus's M1′ session (DLW manual §21.2; QL-MEF crates/ql-mef/src/m1_prime.rs SettingsEdit, the host's `torus-set`, O-I #850): any of
+ * the rate (Free in steps a second, or Sync as a note length), the tempo Sync reads, the Fundamental (the map's 1:1 or a frequency), the
+ * Carrier (0..1), the Shape, the Tuning and the Polyphony. Each operand is closed and typed here; its range is the owner's to refuse in its
+ * own words (one step a year to 40,000 a second, 1/64 to 8 bars, 20 to 2,000 Hz, 1 to 32 notes), as an effect's is. */
+export const STAGE_TORUS_SHAPES = ['auto', 'sequence', 'torus', 'figure-eight', 'spiral', 'klein-bottle'] as const;
+export const STAGE_TORUS_TUNINGS = ['logic', 'maqam', 'sky'] as const;
+export type StageTorusShape = (typeof STAGE_TORUS_SHAPES)[number];
+export type StageTorusTuning = (typeof STAGE_TORUS_TUNINGS)[number];
+export interface TorusSettingsEdit {
+  rate?: {mode: 'free'; steps_per_second: number} | {mode: 'sync'; note: {numerator: number; denominator: number}};
+  tempo_bpm?: number;
+  fundamental?: {source: 'map'} | {source: 'hz'; hz: number};
+  carrier?: number;
+  shape?: StageTorusShape;
+  tuning?: StageTorusTuning;
+  polyphony?: number;
+}
+const TORUS_EDIT_KEYS = ['rate', 'tempo_bpm', 'fundamental', 'carrier', 'shape', 'tuning', 'polyphony'] as const;
+/** A closed, typed Torus session edit naming at least one setting, or null. */
+export function readTorusSettingsEdit(raw: unknown): TorusSettingsEdit | null {
+  if (!plain(raw) || !closed(raw, TORUS_EDIT_KEYS) || Object.keys(raw).length === 0) return null;
+  const finite = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
+  const whole = (value: unknown): value is number => Number.isSafeInteger(value) && (value as number) > 0;
+  const edit: TorusSettingsEdit = {};
+  if (raw.rate !== undefined) {
+    const rate = raw.rate;
+    if (!plain(rate)) return null;
+    if (rate.mode === 'free' && closed(rate, ['mode', 'steps_per_second']) && finite(rate.steps_per_second)) edit.rate = {mode: 'free', steps_per_second: rate.steps_per_second};
+    else if (rate.mode === 'sync' && closed(rate, ['mode', 'note']) && plain(rate.note) && closed(rate.note, ['numerator', 'denominator'])
+      && whole(rate.note.numerator) && whole(rate.note.denominator)) edit.rate = {mode: 'sync', note: {numerator: rate.note.numerator, denominator: rate.note.denominator}};
+    else return null;
+  }
+  if (raw.tempo_bpm !== undefined) { if (!finite(raw.tempo_bpm)) return null; edit.tempo_bpm = raw.tempo_bpm; }
+  if (raw.fundamental !== undefined) {
+    const fundamental = raw.fundamental;
+    if (!plain(fundamental)) return null;
+    if (fundamental.source === 'map' && closed(fundamental, ['source'])) edit.fundamental = {source: 'map'};
+    else if (fundamental.source === 'hz' && closed(fundamental, ['source', 'hz']) && finite(fundamental.hz)) edit.fundamental = {source: 'hz', hz: fundamental.hz};
+    else return null;
+  }
+  if (raw.carrier !== undefined) { if (!finite(raw.carrier)) return null; edit.carrier = raw.carrier; }
+  if (raw.shape !== undefined) { if (!(STAGE_TORUS_SHAPES as readonly unknown[]).includes(raw.shape)) return null; edit.shape = raw.shape as StageTorusShape; }
+  if (raw.tuning !== undefined) { if (!(STAGE_TORUS_TUNINGS as readonly unknown[]).includes(raw.tuning)) return null; edit.tuning = raw.tuning as StageTorusTuning; }
+  if (raw.polyphony !== undefined) { if (!whole(raw.polyphony)) return null; edit.polyphony = raw.polyphony; }
+  return edit;
+}
 export type InstrumentEdit =
   | {kind: 'lens'; lens12: number}
   | {kind: 'context-frame'; context_frame: number}
@@ -199,6 +245,7 @@ export type InstrumentEdit =
   | {kind: 'level'; value: number}
   | {kind: 'scale'; units_per_metre: number}
   | {kind: 'damping'; q_factor: number}
+  | {kind: 'torus'; edit: TorusSettingsEdit}
   | {kind: 'follow-scale'}
   | {kind: 'effect'; effect: PresentationEffect; key: string; value: EffectValue}
   | {kind: 'effect-chain'; chain: PresentationEffect[]};
@@ -222,6 +269,7 @@ export function readInstrumentEdit(raw: unknown): InstrumentEdit | null {
     case 'level': return closed(raw, ['kind', 'value']) && typeof raw.value === 'number' && Number.isFinite(raw.value) && raw.value >= STAGE_INSTRUMENT_LEVEL.min && raw.value <= STAGE_INSTRUMENT_LEVEL.max ? {kind: 'level', value: raw.value} : null;
     case 'scale': return closed(raw, ['kind', 'units_per_metre']) && typeof raw.units_per_metre === 'number' && Number.isFinite(raw.units_per_metre) && raw.units_per_metre > 0 && raw.units_per_metre <= STAGE_INSTRUMENT_SCALE_MAX ? {kind: 'scale', units_per_metre: raw.units_per_metre} : null;
     case 'damping': return closed(raw, ['kind', 'q_factor']) && typeof raw.q_factor === 'number' && Number.isFinite(raw.q_factor) && raw.q_factor >= STAGE_INSTRUMENT_Q.min && raw.q_factor <= STAGE_INSTRUMENT_Q.max ? {kind: 'damping', q_factor: raw.q_factor} : null;
+    case 'torus': { const edit = closed(raw, ['kind', 'edit']) ? readTorusSettingsEdit(raw.edit) : null; return edit ? {kind: 'torus', edit} : null; }
     case 'follow-scale': return closed(raw, ['kind']) ? {kind: 'follow-scale'} : null;
     case 'effect-chain': return closed(raw, ['kind', 'chain']) && effectChainRefusal(raw.chain) === null ? {kind: 'effect-chain', chain: [...(raw.chain as PresentationEffect[])]} : null;
     case 'effect': { const operands = closed(raw, ['kind', 'effect', 'key', 'value']) ? readEffectOperands(raw) : null; return operands ? {kind: 'effect', ...operands} : null; }

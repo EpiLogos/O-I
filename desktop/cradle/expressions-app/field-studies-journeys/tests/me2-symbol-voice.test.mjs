@@ -461,7 +461,9 @@ test('the controller owns the tap: a unity node after the presentation level and
   const port = {texWidth: 2, texHeight: 2, particleCount: 4, targetA: texture(), targetB: texture(), setTargetTextures() {}};
   const renderer = {retainedTopology: () => ({tex_width: 2, tex_height: 2, particle_count: 4, slot_count: 4}), retainedTargetPort: () => port, setNativeDomain() {},
     releaseRetainedField() {}, onRetainedRecoveryRequired: () => () => {}, checkpointRetainedField() { return {receipt: {}}; }, restoreRetainedField() {}};
-  const audio = new Recording(), c = new NativeFieldController(new ControlledSceneOwner(), renderer, () => audio);
+  // The root is read from the sky's Sun voice: the Torus opens under Sky, as a saved sound would (a new one opens under Logic, O-I #850).
+  const owner = new ControlledSceneOwner(); owner.torusSettings.tuning = 'sky';
+  const audio = new Recording(), c = new NativeFieldController(owner, renderer, () => audio);
   assert.equal(c.voiceTap(), null, 'no instrument, no tap');
   await c.compose({sky: 'none'});
   try {

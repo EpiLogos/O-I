@@ -220,7 +220,7 @@ test('the Torus reads the table\'s standing and what the fibre would set; with n
   const binding = torus.torusDesignBinding(null, undefined, {}, null, undefined, null, {}, condition, {ok: true, name: 'Prithvi Tattva'}, table)
   assert.equal(binding.values['tattva.standing'], 'proposed')
   assert.match(binding.standing['tattva.standing'].disabled, /A reading/)
-  assert.match(binding.standing['body.source'].disabled, /earth fibre Strike 45%, Damping 12 and Agitation 0\.1 \(proposed\)/)
+  assert.match(binding.standing['body.source'].disabled, /earth fibre Strike 45% and Damping 12 \(proposed\)/)
   assert.match(binding.standing['body.source'].disabled, /No owner reading stands in this host/)
   assert.equal(binding.writes('body.source'), false)
   const unread = torus.torusDesignBinding(null, undefined, {}, null, undefined, null, {}, condition, null, {ok: false, reason: 'no table', busy: false})

@@ -28,7 +28,7 @@ export interface PlanTarget {
 /** The rung's name in a person's words (Factory's `asks` says what it asks). */
 export const RUNG_WORD: Readonly<Record<string, string>> = {P0: 'Pointers', P1: 'Spec', P2: 'Research', P3: 'Adversarial', P4: 'Blind design'}
 const ROUND_WORD: Readonly<Record<string, string>> = {research: 'Research', adversarial: 'Adversarial pass', 'blind-design': 'Blind design', 'design-session': 'Design session'}
-const STATE_WORD: Readonly<Record<string, string>> = {waiting: 'Waiting', planning: 'Planning', building: 'Building', 'in-review': 'In review', 'fix-round': 'Fix round',
+export const STATE_WORD: Readonly<Record<string, string>> = {waiting: 'Waiting', planning: 'Planning', building: 'Building', 'in-review': 'In review', 'fix-round': 'Fix round',
   sealed: 'Sealed', unread: 'Unread'}
 const LADDER: readonly (readonly [string, string])[] = [['locked', 'Plan locked'], ['built', 'Built'], ['merged', 'Merged'], ['reviewed', 'Reviewed']]
 

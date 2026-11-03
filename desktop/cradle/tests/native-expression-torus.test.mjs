@@ -1,0 +1,126 @@
+/** The Torus's M1′ session through the live instrument's controller (O-I #850; DLW manual §21.2): every
+ * setting goes to the one serial owner as QL's own `torus-set`, is read back from the owner's reply, and is
+ * refused in the owner's words; the session is read (`torus-state`) at human cadence, so the comma the owner
+ * gathers reaches the frame; the frame announces the owner's session as `parameters.torus`; a strike at a
+ * point names the voices it struck by the owner's own mode refs, whatever the tuning. Against a controlled
+ * protocol owner: not numerical evidence (QL-MEF tests/torus_host.rs is). */
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtemp,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join,resolve} from 'node:path';
+import {pathToFileURL} from 'node:url';
+import {build} from 'esbuild';
+import * as THREE from 'three';
+import {ControlledAudio,ControlledSceneOwner} from './native-expression-fixture.mjs';
+const src=resolve('expressions-app/field-studies-journeys/src');
+const temp=await mkdtemp(join(tmpdir(),'native-torus-tests-'));
+await build({entryPoints:[join(src,'native-field/controller.ts')],bundle:true,platform:'node',format:'esm',outdir:temp,outExtension:{'.js':'.mjs'}});
+const {NativeFieldController}=await import(pathToFileURL(join(temp,'controller.mjs')));
+const {announceInstrument}=await import(pathToFileURL(join(src,'native-field/ql/instrumentAnnouncement.mjs')));
+test.after(()=>rm(temp,{recursive:true,force:true}));
+function renderer(){
+ const texture=()=>new THREE.DataTexture(new Float32Array(16),2,2,THREE.RGBAFormat,THREE.FloatType);
+ const port={texWidth:2,texHeight:2,particleCount:4,targetA:texture(),targetB:texture(),sets:0,setTargetTextures(a,b){this.actualA=a;this.actualB=b;this.sets++;}};
+ return{port,native:false,retainedTopology(){return{tex_width:2,tex_height:2,particle_count:4,slot_count:4};},retainedTargetPort(){return port;},setNativeDomain(v){this.native=v;},releaseRetainedField(){},onRetainedRecoveryRequired(){return()=>{};},checkpointRetainedField(){throw new Error('no GPU');}};
+}
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+const ops=(owner,name)=>owner.calls.filter(c=>c.request?.command?.operation===name);
+const generation=c=>c.reading.native.acknowledged.generation;
+async function open(){
+ const owner=new ControlledSceneOwner(),audio=new ControlledAudio(),c=new NativeFieldController(owner,renderer(),()=>audio);
+ await c.compose({sky:'none'});return{owner,audio,c};
+}
+
+test('the Torus session is read from the owner, and each setting reaches QL\'s torus-set and reads back from its reply',async()=>{
+ const {owner,c}=await open();
+ try{
+  assert.equal(c.reading.instrument.torus,null,'no session reading before the owner is asked');
+  await c.torusState();
+  assert.equal(ops(owner,'torus-state').length,1);
+  assert.equal(c.reading.instrument.torus.band,'rhythm');
+  assert.equal(c.reading.instrument.torus.settings.tuning,'logic','a new Torus opens under Logic, the manual\'s default');
+  const before=generation(c);
+  await c.torusSet({rate:{mode:'free',steps_per_second:440}});
+  assert.deepEqual(ops(owner,'torus-set')[0].request.command,{operation:'torus-set',edit:{rate:{mode:'free',steps_per_second:440}}},'the owner\'s own op, the edit as given');
+  assert.equal(c.reading.instrument.torus.band,'pitch','read back from the owner\'s reply, not set here');
+  assert.equal(c.reading.instrument.torus.steps_per_second,440);
+  assert.equal(generation(c),before,'a session setting moves no native state');
+  assert.equal(c.status,'following','a Torus edit does not hold the field');
+  await c.torusSet({rate:{mode:'sync',note:{numerator:1,denominator:4}},tempo_bpm:90,carrier:.25,shape:'spiral',polyphony:3});
+  const torus=c.reading.instrument.torus;
+  assert.deepEqual([torus.steps_per_second,torus.settings.carrier,torus.figure,torus.polyphony],[1.5,.25,'spiral',3]);
+  const influences=ops(owner,'influence').length;
+  await c.torusSet({fundamental:{source:'hz',hz:261.6}});
+  assert.equal(BigInt(generation(c)),BigInt(before)+1n,'a Fundamental is one modes continuation');
+  assert.equal(c.reading.instrument.influence.fundamental_hz,261.6,'the reply\'s influence is taken');
+  assert.equal(ops(owner,'influence').length,influences,'without a second exchange');
+ }finally{await c.dispose();}
+});
+
+test('a refused setting is the owner\'s refusal, in its words; the session reading stands as the owner last gave it',async()=>{
+ const {owner,c}=await open();
+ try{
+  await c.torusState();
+  owner.refuse=command=>command.operation==='torus-set'&&command.edit.polyphony===40;
+  await assert.rejects(c.torusSet({polyphony:40}),/controlled refusal: torus-set/);
+  assert.equal(c.reading.instrument.refusal.operation,'Torus');
+  assert.match(c.reading.instrument.refusal.reason,/controlled refusal: torus-set/);
+  assert.equal(c.reading.instrument.torus.polyphony,16,'unchanged');
+  assert.equal(c.status,'following');
+  owner.refuse=null;
+  await assert.rejects(c.torusSet({}),/names at least one setting/,'an empty edit never reaches the owner');
+  assert.equal(ops(owner,'torus-set').length,1);
+ }finally{await c.dispose();}
+});
+
+test('the session is read again at human cadence while the field follows, so the comma the owner gathers reaches the frame',async()=>{
+ const {owner,c}=await open();
+ try{
+  await c.refreshSources();
+  assert.equal(ops(owner,'torus-state').length,1,'the first refresh reads the session');
+  await c.refreshSources();
+  assert.equal(ops(owner,'torus-state').length,1,'not again within a second');
+  owner.comma=23.46;
+  await wait(1050);
+  await c.refreshSources();
+  assert.equal(ops(owner,'torus-state').length,2);
+  assert.equal(c.reading.instrument.torus.comma_cents,23.46,'the owner\'s comma, verbatim');
+ }finally{await c.dispose();}
+});
+
+test('the frame announces the owner\'s Torus session as parameters.torus, and none before the owner is read',async()=>{
+ const {c}=await open();
+ try{
+  assert.equal(announceInstrument(c.reading).parameters.torus,undefined,'nothing announced before the owner is read');
+  await c.torusSet({fundamental:{source:'hz',hz:220},carrier:.5});
+  assert.deepEqual(announceInstrument(c.reading).parameters.torus,{
+   settings:{rate:{mode:'free',steps_per_second:2.5},fundamental:{source:'hz',hz:220},carrier:.5,shape:'auto',tuning:'logic',polyphony:16,tempo_bpm:120},
+   steps_per_second:2.5,band:'rhythm',fundamental_hz:220,map_hz:130.81,figure:'figure-eight',comma_cents:0,notes:0,
+   resident_tunings:['logic','sky'],carrier_drive:'pulse'});
+ }finally{await c.dispose();}
+});
+
+test('a strike at a point names the voices it struck by the owner\'s mode refs, under Logic as under Sky',async()=>{
+ const {c}=await open();
+ try{
+  assert.equal(c.reading.instrument.acting.voices.length,8,'a new Torus reads the octet in force, eight voices and no planet');
+  assert.equal(c.reading.instrument.acting.voices[0].mode_ref,'scene:logic/0');
+  await c.playAt([{theta:.5,phi:1}]);
+  assert.deepEqual(c.reading.instrument.struck.refs,Array.from({length:8},(_,k)=>`scene:logic/${k}`),'the octet by its own refs, never a planet');
+  await c.torusSet({tuning:'sky'});
+  await c.playAt([{theta:.5,phi:1}]);
+  assert.equal(c.reading.instrument.struck.refs[0],'scene:planet/#2-5-0/1','the sky\'s planets');
+ }finally{await c.dispose();}
+});
+
+test('the set\'s tempo moves the pulse under Sync: the frame\'s tempo edit reaches torus-set and the rate reads back from the owner',async()=>{
+ const {owner,c}=await open();
+ try{
+  await c.torusSet({rate:{mode:'sync',note:{numerator:1,denominator:4}}});
+  assert.equal(c.reading.instrument.torus.steps_per_second,2,'a quarter note at 120 BPM: two steps a second');
+  await c.torusSet({tempo_bpm:96});
+  assert.deepEqual(ops(owner,'torus-set').at(-1).request.command,{operation:'torus-set',edit:{tempo_bpm:96}},'the set\'s tempo, as the owner\'s own edit');
+  assert.deepEqual([c.reading.instrument.torus.settings.tempo_bpm,c.reading.instrument.torus.steps_per_second],[96,1.6],'read back from the owner\'s reply');
+ }finally{await c.dispose();}
+});
