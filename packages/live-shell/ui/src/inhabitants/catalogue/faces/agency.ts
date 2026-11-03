@@ -28,7 +28,7 @@ export type FieldName = (typeof FIELD_NAMES)[number]
 const first = (v: string) => v.split(/[ ,]/)[0]!
 /** One, Pair, Crew or Swarm: the first word of the pattern's Count. */
 export const countOf = (p: Pattern): 'One' | 'Pair' | 'Crew' | 'Swarm' => first(p.count) as 'One' | 'Pair' | 'Crew' | 'Swarm'
-/** A crew is a pattern whose Count is Pair, Crew or Swarm (the Agentset rack's face); the rest are one agent's. */
+/** A crew is a pattern whose Count is Pair, Crew or Swarm (the Agent rack's face); the rest are one agent's. */
 export const isCrew = (p: Pattern) => countOf(p) !== 'One'
 export const hazardOf = (p: Pattern): Hazard | undefined => HAZARDS.find(h => h.of === p.id)
 
@@ -45,12 +45,12 @@ export interface PresetRow {
   readonly dark?: string
 }
 
-const AGENT = 'Agent', SCOPE = 'Scope', RACK = 'Agentset rack', LAUNCH = 'Task · Launch', GATE = 'Agency gateway', PADS = 'Prompt pads'
+const AGENT = 'Agent', SCOPE = 'Scope', RACK = 'Agent rack', LAUNCH = 'Task · Launch', GATE = 'Agency gateway', PADS = 'Prompt pads'
 export function presetRows(p: Pattern): PresetRow[] {
   const start = first(p.start), stay = first(p.stay), count = first(p.count), reach = /Write/.test(p.reach) ? 'Write' : /Draft/.test(p.reach) ? 'Draft' : 'Read', link = first(p.link), join = p.join
   const rows: PresetRow[] = []
   rows.push({field: 'Start', value: p.start, ...(start === 'Standing' ? {lands: [{device: AGENT, setting: 'Power', value: 'On', key: 'light', to: 'lit'}, {device: AGENT, setting: 'Heartbeat', value: 'On', key: 'heartbeat', to: true}]}
-    : start === 'Spawned' ? {lands: [{device: RACK, setting: 'Members', value: 'spawned by the lead'}]}
+    : start === 'Spawned' ? {lands: [{device: RACK, setting: 'Chains', value: 'spawned by the lead'}]}
     : start === 'Timed' ? {lands: [{device: PADS, setting: 'Time', value: 'a time of day'}]}
     : start === 'Called' ? {lands: [{device: LAUNCH, setting: 'Launch', value: 'Once'}]}
     : {lands: [], dark: 'Nothing starts an agent on an event: no trigger setting.'})})

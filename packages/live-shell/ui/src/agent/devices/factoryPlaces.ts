@@ -1,9 +1,14 @@
 // Where Factory's devices stand (lane W1-Factory; DLW §16.1 "Six kinds of device", §16.2 "Chains on tracks", §19.1, §19.23). Pure: the
 // chain each place draws, in order, and the devices that stand inside another's slot; FactoryDeviceChain.tsx draws exactly these.
 //
-// - A session's chain is "Agent, skills rack, scope" (§16.2), the member inside the rack (§19.7). A group's chain leads with the Agentset
-//   rack (§19.15), then the same. "A track has no gateway and no landing of its own" (§19.23 Rules). The Decision helper is a chain inside
-//   the Agentset rack, in place of an Agent (§19.20), so it takes no slot of the track's chain.
+// - A session's chain is §16.2's Factory row: "Gateway and Remote carrier; the Sources every agent reads; the Agent rack, whose chains are
+//   the agents and agent sets the session may use; the Scope that bounds them all; then Git / landing" (O-I #842; §19.15 "A session of one
+//   agent has a rack of that one chain"). Every session holds the one rack, a group's and a lone session's alike. Sources has no binding on
+//   this chain yet, so it is not placed. The session's own agent is one chain of the rack, and its devices stand inside the rack (§16.4):
+//   what it carries, the Skillset rack with its member inside it (§19.7), before the Agent (§19.4 "Sources, the Skillset rack, the Agent,
+//   Scope"). The Decision helper is a chain of the rack, in place of an Agent (§19.20), so it takes no slot of the track's chain.
+// - How far each reaches is where it stands (§16.1 "How far a setting reaches"; §19.15 "What stands outside the rack"): the connections, the
+//   Scope and the landing on the track's chain reach every chain of the rack; a device inside a chain reaches that agent alone (reachOf).
 // - Factory's Main track carries "the Run map, Approvals and the prompt pads" (§16.2; §19.1 "The Main track"), in that order. The Run map
 //   (§19.25) and the Prompt pads (§19.22) are bound (runMapBinding.ts, promptPadsBinding.ts) and stand where their devices do. "The Ledger is
 //   a monitor, on the rail and in panes; the frames are the Gateway's (§19.2); Link is the transport's" (§19.1).
@@ -33,8 +38,10 @@ export type FactoryMember = 'member'
 /** Where the Device side stands: a workcell's return track, a session (or a group of them), or the Main track. */
 export type FactoryPlace = {readonly kind: 'main'} | {readonly kind: 'session'; readonly group: boolean} | {readonly kind: 'workcell'; readonly name: string}
 
-export const SESSION_CHAIN: readonly FactorySlot[] = ['agent', 'skillset', 'world']
-export const GROUP_LEAD: readonly FactorySlot[] = ['agentset']
+export const SESSION_CHAIN: readonly FactorySlot[] = ['gateway', 'remote-carrier', 'agentset', 'world', 'git']
+/** The session's own agent's chain, inside the rack (§19.15 "An agent's chain shows its Sources, its Skillset rack, its Agent and its
+ * Scope"): the devices bound here, in the order they work. */
+export const RACK_CHAIN: readonly FactorySlot[] = ['skillset', 'agent']
 export const MAIN_CHAIN: readonly FactorySlot[] = ['approvals']
 export const WORKCELL_CHAIN: readonly FactorySlot[] = ['gateway', 'remote-carrier', 'git']
 export const INSIDE: Readonly<Partial<Record<FactorySlot, FactoryMember>>> = {skillset: 'member'}
@@ -66,9 +73,49 @@ export function factoryPlace(input: {readonly sessionRef: string | null; readonl
 }
 
 /** The chain a place draws, left to right. The Run map leads the Main track and the Prompt pads close it where their devices stand
- * (`runMap`, `pads`). */
+ * (`runMap`, `pads`). A session's chain is the same for a group and a lone session: the rack's chains differ, never the track's. */
 export function chainSlots(place: FactoryPlace, stands: {readonly runMap?: boolean; readonly pads?: boolean} = {}): readonly FactorySlot[] {
   if (place.kind === 'workcell') return WORKCELL_CHAIN
   if (place.kind === 'main') return [...(stands.runMap ? ['run-map' as const] : []), ...MAIN_CHAIN, ...(stands.pads ? ['prompt-pads' as const] : [])]
-  return place.group ? [...GROUP_LEAD, ...SESSION_CHAIN] : SESSION_CHAIN
+  return SESSION_CHAIN
+}
+
+/** A chain of the rack, as reachOf names it. */
+export interface RackChainName {
+  readonly id: string
+  readonly name: string
+}
+
+/** How far a device on a session's chain reaches (§16.1 "How far a setting reaches"; §19.15 "What stands outside the rack"): every chain of
+ * the rack, the rack's own chains each in its own chain, one chain alone, or — off a session's chain — the track it stands on. */
+export type Reach =
+  | {readonly reaches: 'every-chain'; readonly chains: readonly string[]; readonly says: string}
+  | {readonly reaches: 'rack'; readonly chains: readonly string[]; readonly says: string}
+  | {readonly reaches: 'chain'; readonly chain: string; readonly says: string}
+  | {readonly reaches: 'track'; readonly says: string}
+
+/** Off a session's chain (the Main track's, a workcell's), a device reaches the track it stands on. */
+export const ON_ITS_TRACK: Reach = {reaches: 'track', says: 'The track it stands on.'}
+
+/** What each device outside the rack does for every chain, in §19.15's words. */
+const OUTSIDE: Readonly<Partial<Record<FactorySlot, (names: string) => string>>> = {
+  gateway: names => `The road in for every chain of the Agent rack (${names}), unless a chain holds one of its own.`,
+  'remote-carrier': names => `Where every chain of the Agent rack runs (${names}), unless a chain holds one of its own.`,
+  world: names => `What every chain of the Agent rack may do (${names}). An agent's own Scope only narrows it.`,
+  git: names => `Where the work of every chain of the Agent rack lands (${names}), unless a chain holds one of its own.`,
+}
+
+/** How far the device in `slot` reaches, given the rack's chains and the chain whose devices stand inside the rack (`inside`, the session's
+ * own). Pure. */
+export function reachOf(slot: FactorySlot, chains: readonly RackChainName[], inside?: string): Reach {
+  const names = chains.length ? chains.map(chain => chain.name).join(', ') : 'no chain yet'
+  const ids = chains.map(chain => chain.id)
+  const outside = OUTSIDE[slot]
+  if (outside) return {reaches: 'every-chain', chains: ids, says: outside(names)}
+  if (slot === 'agentset') return {reaches: 'rack', chains: ids, says: `Each agent and each set in its own chain (${names}); their returns are mixed by Join as they leave the rack.`}
+  if (RACK_CHAIN.includes(slot) && inside !== undefined) {
+    const name = chains.find(chain => chain.id === inside)?.name ?? inside
+    return {reaches: 'chain', chain: inside, says: `${name} alone: it stands inside ${name}'s chain of the Agent rack.`}
+  }
+  return ON_ITS_TRACK
 }

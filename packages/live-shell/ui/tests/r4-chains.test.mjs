@@ -116,12 +116,15 @@ test('Central\'s source: no mode branch, no native pop-out of its own, the Day\'
   assert.match(text, /import \{CENTRAL_DAY_TRACK_ID\} from '\.\.\/\.\.\/timeline\/centralTrackAdapter'/)
 })
 
-test('Factory: the session\'s chain is Agent, skills rack, scope — no Thread, Custody or Run beside them; the Gateway and the landing are the workcell\'s', async () => {
-  // The agent chain's devices are still the catalogue's five slots; since lane W1-Factory the session's chain draws three of them (§16.2) and a
-  // workcell's chain the Gateway and Git / landing (§19.23 "A track has no gateway and no landing of its own"; factoryPlaces.ts).
+test('Factory: the session\'s chain is §16.2\'s Factory row around the Agent rack — no Thread, Custody or Run beside them', async () => {
+  // The agent chain's devices are still the catalogue's five slots. REPLACED (O-I #842): "the session's chain draws three of them (Agent,
+  // skills rack, scope); the Gateway and the landing are the workcell's" (§19.23 "A track has no gateway and no landing of its own", gone
+  // from the manual) — a session's chain is the Gateway, the Remote carrier, the Agent rack, Scope and Git / landing (§16.2), the session's
+  // own Skillset rack and Agent inside the rack (RACK_CHAIN), and a workcell's chain is still the road.
   assert.deepEqual(deriveAgentDeviceRows(allFamilyManifests()).map(slot => slot.id), ['gateway', 'agent', 'skillset', 'world', 'git'])
   const places = await source('agent/devices/factoryPlaces.ts')
-  assert.match(places, /export const SESSION_CHAIN: readonly FactorySlot\[\] = \['agent', 'skillset', 'world'\]/)
+  assert.match(places, /export const SESSION_CHAIN: readonly FactorySlot\[\] = \['gateway', 'remote-carrier', 'agentset', 'world', 'git'\]/)
+  assert.match(places, /export const RACK_CHAIN: readonly FactorySlot\[\] = \['skillset', 'agent'\]/)
   // REPLACED (§19.23 "It stands on no chain"; §16.2 "Connections keep the same order"): 'workcell' first — the road is the three connections.
   assert.match(places, /export const WORKCELL_CHAIN: readonly FactorySlot\[\] = \['gateway', 'remote-carrier', 'git'\]/)
   const text = await source('agent/devices/FactoryDeviceChain.tsx')
@@ -134,7 +137,8 @@ test('Factory: the session\'s chain is Agent, skills rack, scope — no Thread, 
   // "Claiming a seat … is the Seat page of Git / landing"), carried on the landing's binding under `seat.`.
   assert.doesNotMatch(text, /placed\(SEAT_ID/, 'no Seat device inside the landing')
   assert.match(text, /carryPages\(gitDesignBinding, \[\{page: SEAT_PAGE, binding: seatDesignBinding\}/, 'the Seat is the landing\'s Seat page (§19.17)')
-  assert.match(text, /case 'agentset': return placed\(AGENTSET_ID/, 'the Agentset rack leads a group\'s chain (§19.15)')
+  // REPLACED (O-I #842): "the Agentset rack leads a group's chain" (`case 'agentset': return placed(AGENTSET_ID`) — the rack plate on every session's.
+  assert.match(text, /case 'agentset': return rackPlate\(\)/, 'the Agent rack on every session\'s chain (§19.15)')
   assert.match(text, /seatBinding\(\{status: seats\.status === 'answered' \? seats\.value : null/, 'the Seat on the seat instrument (K1 seat_status_read)')
   assert.doesNotMatch(text, /linkBinding/, 'the Link is the transport\'s (§19.19)')
 })

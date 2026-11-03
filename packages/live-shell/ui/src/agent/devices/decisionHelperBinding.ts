@@ -1,4 +1,4 @@
-// The Decision helper on its owners (T-AGENCY K5; manual §19.20, ai-kit:decision-helper, "a chain of an Agentset rack, in place of an
+// The Decision helper on its owners (T-AGENCY K5; manual §19.20, ai-kit:decision-helper, "a chain of an Agent rack, in place of an
 // Agent"): the catalogue's design drawn on what AIKit and Quaternal Logic report, nothing else.
 //   Provider, model, place, state, independence, price: AIKit's decision provider (`aikit decide status`, kernel op decision_status,
 //     aikit.decision-status/v1): `mode` → Provider, `selected_model` → the model, `decision_model.base` → its base, `placement` →
@@ -17,8 +17,8 @@ export const DECISION_HELPER_DESIGN = 'ai-kit:decision-helper'
 export const DECISION_HELPER_ID = 'factory:decision-helper'
 
 // The Decision helper is a device of its own, AIKit's admitted face (aiKitFamilyManifest.ts `decision-helper`): it stands as a chain of
-// a group's Agentset rack, where an agent's chain has its Agent, and one helper answers every member (§19.15, §19.20). The rack lists it
-// among its members (sessionChainBindings.ts agentsetValues); the chain publishes it on this binding (FactoryDeviceChain.tsx).
+// a group's Agent rack, where an agent's chain has its Agent, and one helper answers every agent of the rack (§19.15, §19.20). The rack
+// lists it among its chains (sessionChainBindings.ts agentsetValues); the chain publishes it on this binding (FactoryDeviceChain.tsx).
 export const decisionHelperDevice = (): DeviceInstance | null => familyFaceDevice(DECISION_HELPER_ID, 'ai-kit', 'decision-helper', 'Decision helper', 'select')
 
 const missing = (what: string, op: string, owner: string) => `${what}: no owner operation carries it yet — missing op: ${op} (${owner}).`

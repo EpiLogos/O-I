@@ -175,7 +175,12 @@ test('chain order: every mode\'s chain has one law; where the manual fixes the o
   const world = chainLaw('central-world')
   assert.match(chainMove(world, world.slots, 'agent', 1).refused, /keeps its order/)
   assert.match(chainMove(world, world.slots, 'docs', -1).refused, /missing op: agent-chain order \(Central\)/)
-  assert.match(chainMove(chainLaw('factory-session'), ['agent', 'skillset', 'world'], 'world', -1).refused, /missing op: agent-chain order \(Software Factory\)/)
+  // REPLACED (O-I #842): moving Scope on ['agent', 'skillset', 'world'] waited on "agent-chain order (Software Factory)" — a session's chain is
+  // §16.2's Factory row around the Agent rack, its order fixed but for what an agent carries before its Agent, and that order is Central's
+  // (§19.4 "The chain is the profile Central keeps for the agent").
+  const session = chainLaw('factory-session')
+  assert.match(chainMove(session, session.slots, 'world', -1).refused, /keeps its order/)
+  assert.match(chainMove(session, session.slots, 'skillset', 1).refused, /missing op: agent-chain order \(Central\)/)
   assert.equal(slotStanding(world, 'packet').moves, false)
   // Live: an effect moves through the instrument's own effect-chain edit; nothing moves past the torus.
   const live = chainLaw('live-part')

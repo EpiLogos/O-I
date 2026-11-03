@@ -97,8 +97,10 @@ test('the Clip side with a task selected: named by the task and its session; the
 
 test('the Device side\'s head: the session\'s path in Factory, the focused instrument where one takes the side', () => {
   const none = {ref: null, clip: null, track: null, set: null}
+  // REPLACED (O-I #842): "the agent's chain: agent → skills → scope" (lane W1-Factory: no gateway, no landing of its own) — every session's
+  // chain is §16.2's Factory row, its connections outside the Agent rack, the session's agent one chain of it (factoryPlaces.ts SESSION_CHAIN).
   assert.deepEqual(MODE_DETAILS.factory.head.device({detail: reading('factory'), selected: selectedClipOf(taskRef, set), instrument: null}),
-    {name: 'correlate occurrences', line: 'the agent\'s chain: agent → skills → scope'}, 'the selected task\'s session, as the chain reads it (lane W1-Factory: no gateway, no landing of its own)')
+    {name: 'correlate occurrences', line: 'the session\'s chain: Gateway → Remote carrier → the Agent rack → Scope → Git / landing'}, 'the selected task\'s session, as the chain reads it')
   // No session: the Device side is Factory's Main track, as the chain draws it (lane BF3; FactoryDeviceChain.tsx).
   assert.deepEqual(MODE_DETAILS.factory.head.device({detail: reading('factory'), selected: none, instrument: null}),
     // REPLACED (#725): "the Experiment and Approvals" — the Experiment was retired (§19.5: a task launched with Repeat, its takes compared); the

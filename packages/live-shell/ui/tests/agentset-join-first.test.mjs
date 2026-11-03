@@ -95,9 +95,10 @@ test('a type whose Join is First lands on the rack\'s Join; Quorum and Weighted 
   const pattern = {id: 'scout', name: 'Scout', family: 'sense', does: '', start: 'Called', stay: 'Task', count: 'Crew', reach: 'Read', link: 'Parent', change: 'Same',
     animals: [], breaks: '', asks: ''}
   const join = value => agency.presetRows({...pattern, join: value}).find(row => row.field === 'Join')
-  assert.deepEqual(join('First').lands, [{device: 'Agentset rack', setting: 'Join', value: 'First'}])
+  // REPLACED (O-I #842): device 'Agentset rack' — the device is named the Agent rack (manual §19.15); its id stays.
+  assert.deepEqual(join('First').lands, [{device: 'Agent rack', setting: 'Join', value: 'First'}])
   assert.equal(join('First').dark, undefined)
   assert.match(join('Quorum').dark, /no count/)
   assert.match(join('Weighted').dark, /weight/)
-  assert.deepEqual(join('All').lands, [{device: 'Agentset rack', setting: 'Join', value: 'All'}])
+  assert.deepEqual(join('All').lands, [{device: 'Agent rack', setting: 'Join', value: 'All'}])
 })

@@ -1,6 +1,6 @@
-/* The Agentset rack's own layout: the nested member chains, Solo, the model chip, the stalled outline, the drop area, the Devices view, the chosen member, and the pane. Shell and panel tokens only. */
+/* The Agent rack's own layout: the nested chains, Solo and the pick for Group, the model chip (a set's size), the stalled outline, the drop area, the Devices view, the chosen chain, and the pane. Shell and panel tokens only. */
 
-/* A member's chain: the state light, stepped in by its level. */
+/* A chain: the state light, stepped in by its level. */
 .as-mark { flex: none; display: inline-flex; align-items: center; padding-left: calc(var(--d, 0) * 9px); }
 .as-mark[data-nested="true"]::before { content: ''; width: 4px; height: 6px; margin: -5px 3px 0 0; border-left: 1px solid var(--text-faint, #71767c); border-bottom: 1px solid var(--text-faint, #71767c); }
 .dp-row:has(> .as-mark[data-state="stalled"]) { outline: 1px solid color-mix(in srgb, var(--stall, #ff9b4a) 75%, transparent); outline-offset: -1px; }

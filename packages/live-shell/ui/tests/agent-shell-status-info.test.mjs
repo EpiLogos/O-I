@@ -94,14 +94,16 @@ test('AGENT_DATA_I_FACTORIES covers the parametric controls with oracle strings'
       'Where the session runs: the harness connection (Hermes tui_gateway, JSON-RPC over stdio or WebSocket). Frames flow along the link; the ring is the replay buffer; the outer pulse is the heartbeat.'],
     ['gatewayFoldedN', () => AGENT_DATA_I_FACTORIES.gatewayFoldedN('Gateway'), 'Gateway (folded)', '${n} (folded)',
       'A device folded to its title, as in Live.'],
-    ['agentset', () => AGENT_DATA_I_FACTORIES.agentset('Port crew'), 'Agentset · Port crew', 'Agentset · Port crew',
-      'One chain per member, nested as spawned, each with its model. Click a member to open its thread.'],
+    // REPLACED (O-I #842): the label 'Agentset · Port crew' and "One chain per member … Click a member" — the owner's ruling and manual
+    // §19.15 name the device the Agent rack, its chains agents and agent sets; the oracle's label template stands as the one it replaces.
+    ['agentset', () => AGENT_DATA_I_FACTORIES.agentset('Port crew'), 'Agent rack · Port crew', 'Agentset · Port crew',
+      'One chain for each agent or agent set, nested as spawned, each with its model. Click a chain to open its thread.'],
     // The mockup's words ("Click: expand in the pool") are superseded by manual §16.4 and §16.7 (W1): the pool holds no device; a
     // press selects it and its expanded view stands above the chain.
     ['agentFace', () => AGENT_DATA_I_FACTORIES.agentFace('Fizz'), 'Fizz · agent', '${a.name} · agent',
       'Compact. Click: select it; its expanded view stands above the chain. ↗: open its thread full.'],
   ]
-  const SUPERSEDED_BY_MANUAL = {agentFace: 'manual §16.4, §16.7 (W1): the pool holds no device'}
+  const SUPERSEDED_BY_MANUAL = {agentFace: 'manual §16.4, §16.7 (W1): the pool holds no device', agentset: 'manual §19.15 (O-I #842): the Agent rack, its chains agents and agent sets'}
   for (const [key, make, expected, oracleLabel, oracleFn] of cases) {
     assert.equal(typeof AGENT_DATA_I_FACTORIES[key], 'function', `missing factory ${key}`)
     const parsed = parseDataI(make())

@@ -75,22 +75,29 @@ const designKeys = design => [...new Set([...Object.keys(design.defaults), ...Ob
 const classify = (binding, key) => binding.local && key in binding.local ? 'local' : key in binding.values ? 'reading' : binding.standing?.[key]?.disabled ? 'absent' : null
 const ANSWERED = {...model.INITIAL_READING, gatewayAdmitted: true, gatewayDoc: {state: 'ready', transport: 'ws', connect: true, stall_after_seconds: 90}}
 
-test('a session\'s chain is Agent, skills rack, scope; a group\'s leads with the Agentset rack — no gateway, no landing (§16.2, §19.23)', () => {
+test('a session\'s chain is §16.2\'s Factory row, a group\'s and a lone session\'s alike: the connections, the Agent rack, Scope, Git / landing', () => {
   const session = places.factoryPlace({sessionRef: 'ses-1', group: false, workcell: null})
   assert.deepEqual(session, {kind: 'session', group: false})
-  assert.deepEqual(places.chainSlots(session), ['agent', 'skillset', 'world'])
+  // REPLACED (O-I #842): "a session's chain is Agent, skills rack, scope" (['agent', 'skillset', 'world']) and "a group's leads with the
+  // Agentset rack" (GROUP_LEAD, ['agentset', 'agent', 'skillset', 'world']), "no gateway, no landing" (§19.23 "A track has no gateway and no
+  // landing of its own", gone from the manual). Every session holds one Agent rack (§19.15 "A session of one agent has a rack of that one
+  // chain") between its connections and Scope, then Git / landing (§16.2 Factory row; §16.1 Connection "On a track's chain or inside an
+  // agent's"); the session's own agent's devices stand inside the rack (agent-rack-842.test.mjs), and Sources has no binding yet.
+  assert.deepEqual(places.chainSlots(session), ['gateway', 'remote-carrier', 'agentset', 'world', 'git'])
   const group = places.factoryPlace({sessionRef: 'grp-1', group: true, workcell: null})
-  // REPLACED (#725): the Agentset rack, then the Decision helper where its device stands. The Decision helper is a chain inside the Agentset
-  // rack, in place of an Agent (§19.20 "Chain: a chain of an Agentset rack, in place of an Agent"; decision-helper-binding.test.mjs), so a
-  // group's chain is led by the rack alone, and no helper slot stands on it.
-  assert.deepEqual(places.chainSlots(group), ['agentset', 'agent', 'skillset', 'world'])
-  assert.deepEqual(places.GROUP_LEAD, ['agentset'])
+  assert.deepEqual(places.chainSlots(group), places.chainSlots(session), 'the rack\'s chains differ, never the track\'s')
+  assert.deepEqual(places.RACK_CHAIN, ['skillset', 'agent'], 'what the agent carries, then the Agent (§19.4)')
+  assert.equal('GROUP_LEAD' in places, false)
+  // The Decision helper is a chain inside the rack, in place of an Agent (§19.20 "Chain: a chain of an Agent rack, in place of an Agent";
+  // decision-helper-binding.test.mjs), so no helper slot stands on the chain.
   assert.ok(!('decision-helper' in places.SLOT_DEVICE), 'no Decision helper slot: it is a chain of the rack')
   // REPLACED (#725): the Knowledge route inside Scope and Capture skill after it — retired into Scope's Knowledge page (§19.9) and the
   // Skillset rack's Capture page (§19.11): neither stands on any chain.
   for (const slot of ['knowledge', 'capture']) assert.ok(!(slot in places.SLOT_DEVICE), `no ${slot} device`)
   assert.equal(places.INSIDE.world, undefined, 'nothing stands inside Scope')
-  for (const chain of [places.chainSlots(session), places.chainSlots(group)]) for (const slot of ['gateway', 'git', 'remote-carrier', 'workcell']) assert.ok(!chain.includes(slot), `${slot} is no session's`)
+  // REPLACED (O-I #842): "gateway, git and remote-carrier are no session's" — they are, outside the rack; Workcell's instrument still
+  // stands on no chain (§19.23).
+  for (const chain of [places.chainSlots(session), places.chainSlots(group)]) assert.ok(!chain.includes('workcell'), 'workcell is no session\'s')
   assert.equal(places.INSIDE.skillset, 'member', 'the member inside the Skillset rack (§19.7)')
   assert.equal(places.SLOT_DEVICE.agent.id, model.chainDeviceId('agent'))
 })
@@ -122,12 +129,16 @@ test('a workcell\'s chain is the Gateway, the Remote carrier and Git / landing w
   assert.ok(!('seat' in places.SLOT_DEVICE), 'no Seat device')
 })
 
-test('no monitor and no connection stands on a session\'s or the Main track\'s chain; a workcell\'s chain is its connections (§16.1)', async () => {
-  for (const place of [{kind: 'session', group: true}, {kind: 'main'}]) {
-    for (const slot of places.chainSlots(place, {runMap: true, pads: true})) {
-      const kind = await kindOf(slot)
-      assert.ok(kind !== 'monitor' && kind !== 'connection', `${place.kind}: ${slot} is a ${kind}`)
-    }
+test('no monitor stands on a chain; connections stand before and after a session\'s rack, never on the Main track\'s; a workcell\'s chain is its connections (§16.1)', async () => {
+  // REPLACED (O-I #842): "no connection stands on a session's chain" — §16.1's Connection now stands "On a track's chain or inside an
+  // agent's: Gateway and Remote carrier before the agents they bring in, Git / landing after the work it lands".
+  for (const place of [{kind: 'session', group: true}, {kind: 'session', group: false}, {kind: 'main'}]) {
+    const slots = places.chainSlots(place, {runMap: true, pads: true}), kinds = await Promise.all(slots.map(kindOf))
+    for (const [at, kind] of kinds.entries()) assert.ok(kind !== 'monitor', `${place.kind}: ${slots[at]} is a monitor`)
+    if (place.kind === 'main') { assert.ok(!kinds.includes('connection'), 'the Main track carries no connection'); continue }
+    const rack = slots.indexOf('agentset')
+    assert.deepEqual(kinds.slice(0, rack), ['connection', 'connection'], 'the Gateway and the Remote carrier, before the agents they bring in')
+    assert.equal(kinds.at(-1), 'connection', 'Git / landing, after the work it lands')
   }
   assert.equal(await kindOf('member'), 'effect')
   const kinds = await Promise.all(places.chainSlots({kind: 'workcell', name: 'env-1'}).map(kindOf))
@@ -284,7 +295,9 @@ test('the Device side\'s head says what the chain now holds (shell/modeDetails.t
   const details = read('shell/modeDetails.tsx')
   // REPLACED (#725): the Experiment and Approvals — the Main track is the Run map, Approvals and the prompt pads (§16.2, §19.1; §19.5).
   assert.match(details, /if \(!track\) return \{name: 'Main', line: 'Factory\\'s Main track: the Run map, Approvals and the prompt pads'\}/)
-  assert.match(details, /'the agent\\'s chain: agent → skills → scope'/)
+  // REPLACED (O-I #842): "the agent's chain: agent → skills → scope", and a group's "the Agentset rack and the Decision helper, then the
+  // chain" — every session's head names §16.2's Factory row (agent-rack-842.test.mjs).
+  assert.match(details, /'the session\\'s chain: Gateway → Remote carrier → the Agent rack → Scope → Git \/ landing'/)
   assert.doesNotMatch(details, /gateway → agent → skills → world → git|the Ledger, Approvals and the Link/)
 })
 
