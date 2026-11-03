@@ -48,7 +48,7 @@ there is nothing like it.
 Everything in the DLW is a world, and every world is drawn as a body in space.
 
 Turn to the World and you see your own, My World, from close orbit: a planet turning slowly
-under its star, with the agents at work for you in orbit around it, and what
+under the Sun, with the agents at work for you in orbit around it, and what
 they have just made drifting out on a wider ring until it is no longer new.
 Come down to the surface and
 the places on it are the things you are making. A project is a place on the
@@ -82,28 +82,61 @@ was posted from, an idea to the house where someone first had it, a walk to
 the coastline it followed. You cannot reshape Earth. You place things on it,
 as people always have.
 
-A collaborator's planet turns nearby. A research group is a system of planets
-around a shared star, and a whole discipline is a field you can pull back far
-enough to see entire, with the relations between worlds drawn across the dark
-— one anchored to another, one taking part in another, one watching, a
-contribution crossing the gap like a particle, two fields joined at a remove.
-How far you look widens a step at a time: your world alone, your world with
-the projects and agents it holds, the shared field, the fields that field is
-joined to. Whatever lies just past the edge of your view is counted and
-offered.
+Your world never stands apart. Every person's world turns in the same solar
+system as Earth and as one another's, and the shared field is that system, not
+a second place you travel to. A collaborator's planet turns nearby and a
+stranger's further out. Pull back far enough and you see it entire, with the
+relations between worlds drawn across the dark — one anchored to another, one
+gathered with another, one watching, a contribution crossing the gap like a
+particle. How far you look only filters what you see of the one system: your
+world alone, your world with the projects and agents it holds, the worlds and
+stars you are gathered with, everything the field shows. Whatever lies just
+past the edge of your view is counted and offered.
 
-What do others see? Only what you show them. You can look at your own world
-as yourself, as the field sees it, or as the public sees it, and whatever you
-have not shown lies under cloud; raising anything into wider view asks you
-first. Visit someone else's world and you land on what they have shown,
-tinted and clouded as they left it, with the agent that keeps it there to talk
-to. Being findable is not being reachable. Being reachable is not being in
-touch, and being in touch is not being trusted — each step is separate, and
-each is the owner's to give. If the other world's agent gives you something,
-it arrives in your world under their name, and stays theirs until you have
-made it your own.
+What do others see? Only what you show them. Switch on Link and your planet
+takes its place among the others, every part of it under cloud. Each thing you
+show opens a clearing; the rest stays under the same even cloud, which tells
+nobody what lies beneath it or how much. You can look at your own world as
+yourself, as the field sees it, or as the public sees it, and find exactly
+where your clearings are; raising anything into wider view asks you first.
+Visit someone else's world and you land in their clearings, tinted and clouded
+as they left them, with the agent that keeps the world there to talk to. Being
+findable is not being reachable. Being reachable is not being in touch, and
+being in touch is not being trusted — each step is separate, and each is the
+owner's to give. If the other world's agent gives you something, it arrives in
+your world under their name, and stays theirs until you have made it your own.
+
+People make the stars. A star is a point of shared interest that someone
+lights and others gather at. Say you have been reading the Rosarium plates and
+want company: you light a star for them, say what it gathers and who may come,
+and bring your world to it. Others bring theirs. Each shows there what it
+chooses — a set of notes, a reading of the fourth plate, a question about the
+vessel — and contributions cross between the worlds gathered round it. The
+star keeps its own day: who is here now, what was brought, what was said to
+what. It stays in the hands of whoever lit it, and a circle can sit inside a
+wider commons as one star inside another. Leave, and your world turns on in its
+own orbit, taking back what you showed there. A research group is a cluster of
+worlds gathered at a star they share; a discipline is many such stars, seen
+from far enough out.
+
+Whatever reaches you from the field says who sent it and how it came:
+addressed to you, from a star you are gathered at, from someone you watch, or
+from a search you made. Nothing is put in front of you because of how many
+others looked at it. A ranking someone makes is their contribution, signed
+with what it rests on, and you weigh it as you would any other.
 
 The field reads only what you have shown, and never owns it. If its service is lost, your own world and its open work stay exactly as they are, and when it comes back the field is brought up to date from what you had shown. Withdrawing something takes it out of the field without taking it out of your world.
+
+Every kind of work takes place in the field. Your day in Central sits beside
+the days of the stars you are gathered at, and a passage you select can go to
+a person as a request they accept. A piece of work in Factory is a planet like
+any other: show it and others watch it being made, and at a star you light for
+a programme, other people's agents take up the tasks you offer, on terms you
+set. Present a scene in Expressions and those who choose follow it with you.
+The places you build in Technē are the ones others walk through once you show
+them, and playing in Live, you keep tempo with the others playing. From any
+mode, Link on the transport joins the field, and Load shows how much of your
+world you show.
 
 So one person's work and everyone's knowledge turn out to be the same kind of
 thing. A private journal, a team's codebase, an archive of letters, a school
@@ -123,7 +156,7 @@ turning inside a person.
 
 We are all, in a sense, aliens to one another.
 
-**Stories:** SH01, WO01–WO07, CB04, TY08, TO06, TO08, TO14
+**Stories:** SH01, WO01–WO07, CB04, TY08, TO06, TO08, TO10, TO14, SF01–SF14
 
 ## 3. One grammar
 
@@ -447,6 +480,14 @@ loop that studies its own results and runs better next time. And some worlds
 simply complete: what they made passes on into the places that needed it, and
 the world itself folds away.
 
+A piece of work can be shown in the field like anything else in your world.
+Show it, and the people you let in watch it being made: its agents at work,
+what they have produced and where it stands, without its prompts, keys or
+machines. Light a star for a programme and you can offer some of its tasks
+there. Another person's agent takes one up on their own machine, under a grant
+you set for what it may read and touch and for how long, and what it makes
+comes back to you under their name until you accept it.
+
 In Factory you:
 
 - bring the constellation in focus into agentic work;
@@ -456,9 +497,10 @@ In Factory you:
 - tune each agent: its model, its effort, its skills and what it may touch;
 - decide once where agents work, on which machine, and how their work lands;
 - steer, pause or stop the work, and approve what agents propose;
+- show work in the field, and offer tasks at a star for other people's agents to take up;
 - keep finished work as a workflow to run again.
 
-**Stories:** FA05, FA11, FS01, FS02, FS04, FK02–FK04, FK07, FK08, FE03, FT04, FJ01, FN06
+**Stories:** FA05, FA11, FS01, FS02, FS04, FK02–FK04, FK07, FK08, FE03, FT04, FJ01, FN06, SF12, SF13
 
 ## 7. Expressions — the living medium
 
@@ -3404,7 +3446,7 @@ The Main track holds the stops. In Session view its row launchers stand at the e
 
 **Product:** Technē · **Kind:** instrument · **Pane:** any pane, in every mode
 
-You need to see where things are and how far apart they stand. The World draws your work as a planet under its star, with Earth and other people's worlds near it. You can come down to one exact place on the ground, or turn the whole view into a graph.
+You need to see where things are and how far apart they stand. The World draws your work as a planet under the Sun, in the one system that holds Earth and everyone else's worlds. You can come down to one exact place on the ground, or turn the whole view into a graph.
 
 #### The five scales
 
@@ -3412,8 +3454,8 @@ The scale sets how much of the sky and the ground fills the pane. Each scale kee
 
 | Scale | What fills the pane | What you can do |
 |---|---|---|
-| Field | The worlds of a shared field as planets around a shared star. Joined fields stand at a remove. Contributions cross the gap as particles. | See who is near. See each relation between worlds. |
-| System | Your planet under its star. The agents at work circle it, and what they have just made rides a wider ring. Nothing else is in orbit. | Start here. Open any object in orbit. Choose a body. |
+| Field | Every world in the system, clear where its owner has shown it and under cloud elsewhere, and the stars people have made, with the worlds gathered at each. Contributions cross the gap as particles. | See who is near. See each relation between worlds. Light a star, or gather at one. |
+| System | Your planet under the Sun. The agents at work circle it, and what they have just made rides a wider ring. Nothing else is in orbit. | Start here. Open any object in orbit. Choose a body. |
 | Body | One body whole, with its locations, its anchor and its moons. | Turn the body. Place, name and select locations. Follow an anchor line to its place on Earth. |
 | Region | A close view over a coast, with locations at their names. | Move along a route. Select a place by its name. |
 | Place | One place with its exact position, its precision, and the frame in which it was measured. | Read where a thing stands and how sure that is. Open its source. Enter a palace. |
@@ -3472,18 +3514,22 @@ Aperture sets how far you look. View as sets who you look as.
 |---|---|
 | World | Your world alone. |
 | Local | Your world and the project and agent worlds it holds. |
-| Shared | The shared field. Other worlds show only what they have shown. |
-| Federated | The fields that field is joined to, at one more remove. |
+| Shared | The worlds and stars you are gathered with. Other worlds show only what they have shown. |
+| Federated | Everything the field shows, and any other system joined to it, such as one a group keeps on its own server. |
 
-What lies just past the edge of your view is counted and offered. Widen the aperture to see it.
+The aperture filters the one system; it takes you nowhere. Your world stands in the same place at every aperture. What lies just past the edge of your view is counted and offered. Widen the aperture to see it.
 
 | View as | What you see |
 |---|---|
 | Me | Your world as you know it. |
-| Field | Your world as the shared field sees it. What you have not shown lies under cloud. |
+| Field | Your world as the shared field sees it. What you have not shown lies under one even cloud. |
 | Public | Your world as the public sees it. |
 
 Visit another world and you land on what its owner has shown, tinted and clouded as they left it. The agent that keeps that world is there to talk to. If it gives you something, it arrives in your world under their name. It stays theirs until you make it your own.
+
+Light a star where a shared interest should gather: name it, say what it gathers and who may come. It stands among the worlds at Field scale, and yours is the first world gathered at it. Others bring their worlds to it and show there what they choose; a world you have not let in waits at its edge with its request. The star keeps its own day, of who is here, what was brought and what was said to what, and Central shows that day beside yours. Leave a star and your world takes back what it showed there; a contribution you made stays under your name until you withdraw it.
+
+Contribute to anything another world has shown, or to anything at a star: a place, a page, a relation, or another contribution. Say what it is — a question, a finding, a correction, a reproduction — and it stands on its target under your name. It becomes part of the other world only when its owner accepts it in that world.
 
 Relations between bodies are lines across the dark: anchor, participate, contribution, watch, projection and federate. A line for an open contact shows while the contact lasts.
 
@@ -3555,11 +3601,11 @@ The whole World shows every parameter, in seven groups.
 
 The full World shows the body, or the graph, at the chosen scale.
 
-On the Space side, a star lights the body and the body shows its phase. A body you built keeps its detail all the way down: come to a coast, a valley or a lake and the ground is still finely drawn, as Earth's is. Its weather moves with the occasion. Locations stand on the body at their names. Anchor lines run to real places on Earth. Relations show as lines across the dark.
+On the Space side, the Sun lights the body and the body shows its phase. A body you built keeps its detail all the way down: come to a coast, a valley or a lake and the ground is still finely drawn, as Earth's is. Its weather moves with the occasion. Locations stand on the body at their names. Anchor lines run to real places on Earth. Relations show as lines across the dark.
 
 The sky shows the planets at the moment of the occasion. If the owner of the sky is not available, the sky layer says why and draws nothing.
 
-At Field scale, the pane shows the worlds of the shared field as planets around a shared star. At Place scale, it shows one place with its position, its precision and its frame.
+At Field scale, the pane shows the whole system: every world, clear where its owner has shown it and under cloud elsewhere, and the stars people have made, each with the worlds gathered at it. Turned to its graph, each star is a node with its worlds, and each contribution is an edge. At Place scale, it shows one place with its position, its precision and its frame.
 
 On the Graph side, the same material lays out by connection. Each node takes the colour of what it is. Choose Space to return to the body.
 
@@ -3599,6 +3645,8 @@ The widget shows your planet, small, with its phase and today's sky. Click it to
 6. To look at another day, choose an occasion. The sky and the valid places follow it.
 7. To check what others see, set View as to Field or Public.
 8. To visit another world, widen the aperture and select its planet.
+9. To light a star, set the scale to Field and choose Light a star. Name it, and say what it gathers and who may come.
+10. To bring your world to a star, select the star and choose Gather. Leave takes it back.
 
 #### Rules
 - Earth is given. You cannot change its land. You place things on it and anchor your places to its real places.
@@ -3608,6 +3656,10 @@ The widget shows your planet, small, with its phase and today's sky. Click it to
 - A mythic place looks mythic in every view. It does not take the look of a factual place.
 - Raising a thing into wider view always asks you first.
 - Being findable is not being reachable. Being reachable is not being in touch. Being in touch is not being trusted. The owner of a world gives each step.
+- The cloud is the same over everything a world has not shown. It tells no one what lies under it, or how much.
+- A star stays in the hands of whoever lit it. A world gathered at a star stays its owner's.
+- A contribution becomes part of another world only when that world's owner accepts it.
+- Whatever reaches you from the field names who sent it and how it came. A ranking is someone's contribution, signed with what it rests on.
 - The idle body is still. It does not spin by itself.
 - A reroll changes the land, never what stands on it. A location keeps the position you gave it.
 - A body built by an older generator draws as it always did, until you next change it. Then it is rebuilt by the current one, from the same seed and settings.
@@ -3625,7 +3677,7 @@ The widget shows your planet, small, with its phase and today's sky. Click it to
 
 **Source:** MapLibre GL JS (Google Earth, Cesium and QGIS surveyed); Archetypal Earth (ported as code)
 
-**Stories:** SH01, WV15, WO01–WO07, TW01–TW12, TY01–TY11, TO01–TO18
+**Stories:** SH01, WV15, WO01–WO07, TW01–TW12, TY01–TY11, TO01–TO18, SF01–SF14
 
 ### 17.3 Knowledge graph
 
@@ -11598,7 +11650,7 @@ The list of what each body moves shows below the groups. Beside the groups, the 
 
 The full Sky fills the pane. The Earth stands at the centre. The ten bodies stand on the ring, each at its degree. A line under the date reads the day's planet and the hour's. Set Day clock to Run in Device view and watch the bodies move. Set Aspects to On to draw the angles between bodies.
 
-The sky is a solar system you play with, not a walk: click a planet to go to it, and click another to move between them.
+The sky is a solar system you play with, not a walk: click a planet to go to it, and click another to move between them. These are the real planets as they stand on the date, seen from your world; the worlds people make, and the stars they light, are the World's (§17.2).
 
 ##### Widget
 
@@ -13116,7 +13168,7 @@ grounded.
   Technē's instruments (§17).
 - **M0′ is the ground:** the graph systems and the planet. Position 0 is where
   everything comes from: the Bimba map and your knowledge graphs, and the
-  continuity between your own World and the shared field (§24).
+  continuity between your own World and the shared field (§2).
 
 The two ends meet. What Technē articulates and you accept goes back into M0′
 as ground, and the next act starts from it. This is the 5/0 of the field: a

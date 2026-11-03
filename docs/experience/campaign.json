@@ -3648,6 +3648,39 @@
       ]
     },
     {
+      "id": "SF",
+      "ids": [
+        "SF01",
+        "SF02",
+        "SF03",
+        "SF04",
+        "SF05",
+        "SF06",
+        "SF07",
+        "SF08",
+        "SF09",
+        "SF10",
+        "SF11",
+        "SF12",
+        "SF13",
+        "SF14"
+      ],
+      "title": "Live in one field with everyone else's worlds",
+      "owners": [
+        "O-I",
+        "Central",
+        "Factory",
+        "ai-kit"
+      ],
+      "proof_refs": [
+        "O-I#706",
+        "O-I#715"
+      ],
+      "source_refs": [
+        "ProjectCentral/docs/1-vision/dlw/DLW.md"
+      ]
+    },
+    {
       "id": "TG",
       "ids": [
         "TG01",
