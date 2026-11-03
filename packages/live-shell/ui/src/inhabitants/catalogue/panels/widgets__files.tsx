@@ -6,12 +6,16 @@
 // Owners, keyed on their paths:
 //   files     [{path, verb, adds?, dels?, blocked?}]: path and verb from the agent's encounter tape (desktop/cradle/src/agent/tape/model.ts
 //             TapeRow `detail` and `verb`: 'read' or 'edit'), adds and dels from the seat's diff (`central.git-diff/v1` DiffFile `adds`,
-//             `dels`, kernel op git_diff_read), and blocked the reason a place is out of reach where the file owner says it is
-//             (`central.directory-reading/v1` NativeFileEntry `retrieval_allowed`). The tape carries no counts of its own.
+//             `dels`, kernel op git_diff_read), and blocked Central's words for why a place is out of reach (`central.files.reach`,
+//             central.files-reach/v1 `withheld.words`: a .no-agent-retrieval marker on it or above it, a link on the way, a place
+//             outside the ground): each file of the tree judged, and every withheld place under the seat added with verb `none`.
+//             Central's treatment is the ground's, the same for every agent; an agent's own Reach is Scope's (WO-SF2). The tape
+//             carries no counts of its own.
 //   agent     the agent the tree follows (the shell's selected agent session); open the file shown full; content its lines
 //             (`central.file-reading/v1` `content`, kernel op file_read); openReason  why the file opened has no reading (outside
 //             Central's ground, or Central does not let it be read).
-// Show, Blocked and Follow are the monitor's own; no owner keeps them.
+// Show, Blocked and Follow are the monitor's own; no owner keeps them. Where Central refuses the reach read, Blocked stands disabled in
+// its words.
 //
 // The Diff page (manual §23.2, which took in the Diff device of §23.4): the changes not yet committed, and the changes an agent
 // proposes, read before you approve them; Live's nearest is the clip's Notes editor, the material line by line. Its values stand under

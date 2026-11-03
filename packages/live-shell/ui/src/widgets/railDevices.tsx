@@ -27,7 +27,7 @@ import {useOptionalContinuity} from '../continuity/workspace'
 import {publishDevice, publishedDevice, subscribeDeviceDoor} from '../frame/devices/deviceDoor'
 import {GIT_ID} from '../agent/devices/workcellBindings'
 import {useSeatStatusAnswer} from '../agent/devices/workcellReads'
-import {actionAnswerOf, centralActionOp} from '../central/devices/useCentralReadings'
+import {actionAnswerOf, centralActionOp, useCentralAction} from '../central/devices/useCentralReadings'
 import type {closeNowClearing} from '../central/devices/nowsClose'
 import {subscribeTerminals, terminalsNow} from '../../../../../desktop/cradle/src/terminal/terminalReadings'
 import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
@@ -37,7 +37,7 @@ import type {DesignBinding, Value} from '../frame/devices/designed'
 import type {DeviceInstance} from '../frame/devices/deviceRuntime'
 import {useWidgetReading} from './widgetReading'
 import type {OwnerReading} from '../owners/ownerReading'
-import {NOTIFY_LIST_ACTION, dayStartMs, diffFilesOf, filesOf, groundPlaceOf, keptTrackOf, nowsCloseWrites, nowsValues, openFileOf, pagesOf, proposedFilesOf, put, trailIndexOf, trailValues, wikiPagesOf, type NotifyLedgerAnswer} from './railBindings'
+import {NOTIFY_LIST_ACTION, dayStartMs, diffFilesOf, filesOf, groundPlaceOf, keptTrackOf, nowsCloseWrites, nowsValues, openFileOf, pagesOf, proposedFilesOf, put, reachPathsOf, trailIndexOf, trailValues, usedRecordsOf, wikiPagesOf, withReach, type NotifyLedgerAnswer, type UsedRecord} from './railBindings'
 import {returnToStop} from '../shell/TrailWidget'
 import {standingOn} from '../../../../../desktop/cradle/src/workspace/store'
 import {DIFF_PAGE, carryPages} from '../agent/devices/oneAgentBinding'
@@ -213,8 +213,9 @@ function useDiffBinding(reading: DiffReading, proposed: Record<string, Value>[] 
 // session, else the mode's companion's), read through the one shared journal reader (desktop/cradle/src/agent/tape/journal.ts
 // useTape: the owner's journal, never a copy). The tape names what each tool call acted on; it carries no line counts of its own.
 
-/** The tape of the agent a monitor reads: the selected one, or the one its Follow kept (`kept`, a session; railBindings.ts keptTrackOf). */
-function useFollowedTape(kept: string | null): {rows: readonly TapeRow[]; agent: string | null; words: string | null; session: string | null} {
+/** The tape of the agent a monitor reads: the selected one, or the one its Follow kept (`kept`, a session; railBindings.ts keptTrackOf);
+ * and the pages its replies cite, as AIKit recorded them in the same journal (railBindings.ts usedRecordsOf). */
+function useFollowedTape(kept: string | null): {rows: readonly TapeRow[]; used: readonly UsedRecord[]; agent: string | null; words: string | null; session: string | null} {
   const reading = useWidgetReading()
   const continuity = useOptionalContinuity()
   const agency = useAgencySessions(reading?.transport ?? {kind: 'unavailable', reason: 'No kernel carrier stands.'})
@@ -226,8 +227,10 @@ function useFollowedTape(kept: string | null): {rows: readonly TapeRow[]; agent:
   const agent = track ? `${track.agentName ?? companion}${track.purpose ? ` · ${track.purpose}` : ''}` : null
   const words = track ? journal?.error ?? null : keptWords ?? `No ${companion} session stands to follow.`
   const session = track?.sessionRef ?? null
+  const events = journal?.events
+  const used = useMemo(() => usedRecordsOf(events ?? []), [events])
   // The same object while the rows, the agent and the words stand, so the two bindings change only when the tape does.
-  return useMemo(() => ({rows: tape.rows, agent, words, session}), [tape.rows, agent, words, session])
+  return useMemo(() => ({rows: tape.rows, used, agent, words, session}), [tape.rows, used, agent, words, session])
 }
 
 /** Follow (§23.2, §23.3): on, the monitor reads the selected agent; off, it keeps the one it read when you turned it off. A hold of the
@@ -254,21 +257,39 @@ function useOpenFile(transport: KernelTransportStatus | undefined, path: string 
   })
 }
 
+/** Files' Blocked (§23.2): what the agent may not reach, and why, from Central (`central.files.reach`, ctrl/src/files_reach.rs): each file
+ * of the tree judged, and every withheld place under the seat. Central's treatment is the ground's, the same for every agent; the agent's
+ * session is named as the reader. Asked again when the ground moves, as every Central reading is. */
+function useReach(transport: KernelTransportStatus | undefined, paths: readonly string[], under: string | null, session: string | null) {
+  const key = JSON.stringify([paths, under, session])
+  const input = useMemo(() => (paths.length || under ? {paths: [...paths], ...(under ? {under} : {}), ...(session ? {agent_session_ref: session} : {})} : null),
+    // The key names the input.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [key])
+  return useCentralAction(transport ?? {kind: 'unavailable', reason: 'No kernel carrier stands.'}, 'central.files.reach', input)
+}
+
 function useFilesBinding(tape: ReturnType<typeof useFollowedTape>, diff: DiffReading, transport: KernelTransportStatus | undefined,
   hold: ReturnType<typeof useFollowHold>): DesignBinding {
   const {holds, local} = useHolds(['show', 'blocked', 'open'])
-  const path = openFileOf(holds.open, diff.status === 'read' ? diff.root : null)
+  const root = diff.status === 'read' ? diff.root : null
+  const path = openFileOf(holds.open, root)
   const opened = useOpenFile(transport, path)
+  const files = useMemo(() => (tape.agent ? filesOf(tape.rows, diff.status === 'read' ? diff.files : [], root) : null), [tape, diff, root])
+  const reach = useReach(transport, useMemo(() => (files ? reachPathsOf(files, root) : []), [files, root]), tape.agent ? root : null, tape.session)
   return useMemo(() => {
     const values: Record<string, Value> = {}
     put(values, 'agent', tape.agent)
-    if (tape.agent) put(values, 'files', JSON.stringify(filesOf(tape.rows, diff.status === 'read' ? diff.files : [], diff.status === 'read' ? diff.root : null)))
+    if (files) put(values, 'files', JSON.stringify(reach.status === 'answered' ? withReach(files, reach.value, root) : files))
     put(values, 'reason', tape.words)
     put(values, 'follow', hold.kept === null)
     if (path && opened.status === 'answered' && opened.value) put(values, 'content', JSON.stringify(opened.value))
     else if (path && opened.status === 'refused') put(values, 'openReason', opened.error ?? 'Central did not read the file.')
-    return {id: railDeviceId('files'), values: withHolds(values, holds), local: {...local, follow: (value: Value | undefined) => hold.follow(value, tape.session)}}
-  }, [tape, diff, holds, local, path, opened, hold])
+    // Central's refusal stands on Blocked in its own words: the tree then marks nothing as out of reach, and says why.
+    const standing = reach.status === 'refused' ? {blocked: {disabled: `Central did not say what the agent may not reach: ${reach.error}`}} : undefined
+    return {id: railDeviceId('files'), values: withHolds(values, holds), ...(standing ? {standing} : {}),
+      local: {...local, follow: (value: Value | undefined) => hold.follow(value, tape.session)}}
+  }, [tape, files, reach, root, holds, local, path, opened, hold])
 }
 
 function useWebBinding(tape: ReturnType<typeof useFollowedTape>, hold: ReturnType<typeof useFollowHold>): DesignBinding {
@@ -276,7 +297,7 @@ function useWebBinding(tape: ReturnType<typeof useFollowedTape>, hold: ReturnTyp
   return useMemo(() => {
     const values: Record<string, Value> = {}
     put(values, 'agent', tape.agent)
-    if (tape.agent) put(values, 'pages', JSON.stringify(pagesOf(tape.rows)))
+    if (tape.agent) put(values, 'pages', JSON.stringify(pagesOf(tape.rows, tape.used)))
     put(values, 'reason', tape.words)
     put(values, 'follow', hold.kept === null)
     return {id: railDeviceId('web'), values: withHolds(values, holds), local: {...local, follow: (value: Value | undefined) => hold.follow(value, tape.session)}}
