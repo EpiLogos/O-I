@@ -30,7 +30,8 @@ export function checkNativeLimits(s:Scene){
  // are enforced here.
  for(const b of NATIVE_BINDINGS){const value=baseValue(s,b.key);if(!Number.isFinite(value)||value<b.hardMin||value>b.hardMax)throw new Error(`${b.label} is outside its native validated bounds (${b.hardMin}–${b.hardMax}).`);}
 }
-function shapeOf(e:Pick<Entity,'shape'|'text'|'yantraId'|'templateFrequency'|'templateGeometry'|'templateDimension'>,native?:NativeShape):NativeShape{
+function shapeOf(e:Pick<Entity,'shape'|'text'|'yantraId'|'templateFrequency'|'templateGeometry'|'templateDimension'|'torusFigure'>,native?:NativeShape):NativeShape{
+ if(e.shape==='torus')return {kind:'torus',figure:e.torusFigure??(native?.kind==='torus'&&native.figure!=='plate'?native.figure:undefined)??'torus'};
  if(e.shape==='yantra')return {...native,kind:'yantra',yantraId:e.yantraId??native?.yantraId??'anahata'};
  if(e.shape==='cymatic')return {...native,kind:'cymatic',frequencyHz:e.templateFrequency??native?.frequencyHz??396,plateGeometry:e.templateGeometry,dimension:e.templateDimension};
  if(e.shape==='text')return {...native,kind:'glyph',text:e.text.trim()||'O'};
@@ -129,15 +130,17 @@ export function toRenderConfig(s:Scene):PointCloudConfig {
  return s.entryOffset?{...config,sequenceOffsetS:s.entryOffset}:config;
 }
 const shellShape=(s:NativeShape):Shape=>s.kind==='glyph'?'text':s.kind==='primitive'?s.primitive??'disc':s.kind;
+/** The shell holds the torus's own figures; the plate is a reading of the pane's object, not an authored shape. */
+const torusFigureOf=(s:NativeShape):Entity['torusFigure']=>s.figure&&s.figure!=='plate'?s.figure:'torus';
 export function fromNativeEntity(e:NativeEntity):Entity{
  const out=entity(e.name,e.shape.text??'',{x:e.x/WORLD_SCALE,y:e.y/WORLD_SCALE,z:e.z/WORLD_SCALE});
  out.id=e.id;out.kind=e.kind;out.enabled=e.enabled;out.native=clone(e);out.scale=e.scale;
- out.shape=shellShape(e.shape);out.yantraId=e.shape.yantraId;out.templateFrequency=e.shape.frequencyHz;out.templateGeometry=e.shape.plateGeometry;out.templateDimension=e.shape.dimension;
+ out.shape=shellShape(e.shape);if(e.shape.kind==='torus')out.torusFigure=torusFigureOf(e.shape);out.yantraId=e.shape.yantraId;out.templateFrequency=e.shape.frequencyHz;out.templateGeometry=e.shape.plateGeometry;out.templateDimension=e.shape.dimension;
  out.size=e.extent?{x:e.extent.width/WORLD_SCALE,y:e.extent.height/WORLD_SCALE}:{x:1,y:1};
  out.rotation=(e.extent?.rotation??0)*180/Math.PI;out.share=e.kind==='pin'?0:e.share;out.tint=e.tint;out.tintWeight=e.tintWeight;
  out.force={kind:e.forces.mode,strength:e.forces.strength,radius:e.forces.radius/WORLD_SCALE,spin:e.forces.spin};out.station=e.stationIndex??null;
  out.layers=fromNativeLayers(e.layers);
- out.sequence={...e.sequence,manual:e.sequence.advance==='off'&&e.sequence.links.length>1,enabled:e.sequence.advance!=='off',clock:e.sequence.advance==='morphCycle'?'morph':'seconds',steps:(e.sequence.links.length?e.sequence.links:[{id:e.id+'_base',source:e.authoringSource?clone(e.authoringSource):undefined,shape:e.shape}]).map(k=>({id:k.id,name:k.name,layers:k.layers===undefined?undefined:fromNativeLayers(k.layers)??[],source:k.source?clone(k.source):undefined,objectState:k.state?{normalized:k.state.extent?.normalized??true,scale:k.state.scale,size:{x:(k.state.extent?.width??400)/WORLD_SCALE,y:(k.state.extent?.height??400)/WORLD_SCALE},rotation:(k.state.extent?.rotation??0)*180/Math.PI,tint:k.state.tint,tintWeight:k.state.tintWeight,force:{kind:k.state.forces.mode,strength:k.state.forces.strength,radius:k.state.forces.radius/WORLD_SCALE,spin:k.state.forces.spin}}:undefined,native:clone(k),holdOverride:k.hold!==undefined,transitionOverride:k.transition!==undefined,text:k.shape.text??'',shape:shellShape(k.shape),yantraId:k.shape.yantraId,templateFrequency:k.shape.frequencyHz,templateGeometry:k.shape.plateGeometry,templateDimension:k.shape.dimension,hold:k.hold??e.sequence.hold,transition:k.transition??e.sequence.transition,
+ out.sequence={...e.sequence,manual:e.sequence.advance==='off'&&e.sequence.links.length>1,enabled:e.sequence.advance!=='off',clock:e.sequence.advance==='morphCycle'?'morph':'seconds',steps:(e.sequence.links.length?e.sequence.links:[{id:e.id+'_base',source:e.authoringSource?clone(e.authoringSource):undefined,shape:e.shape}]).map(k=>({id:k.id,name:k.name,layers:k.layers===undefined?undefined:fromNativeLayers(k.layers)??[],source:k.source?clone(k.source):undefined,objectState:k.state?{normalized:k.state.extent?.normalized??true,scale:k.state.scale,size:{x:(k.state.extent?.width??400)/WORLD_SCALE,y:(k.state.extent?.height??400)/WORLD_SCALE},rotation:(k.state.extent?.rotation??0)*180/Math.PI,tint:k.state.tint,tintWeight:k.state.tintWeight,force:{kind:k.state.forces.mode,strength:k.state.forces.strength,radius:k.state.forces.radius/WORLD_SCALE,spin:k.state.forces.spin}}:undefined,native:clone(k),holdOverride:k.hold!==undefined,transitionOverride:k.transition!==undefined,text:k.shape.text??'',shape:shellShape(k.shape),...(k.shape.kind==='torus'?{torusFigure:torusFigureOf(k.shape)}:{}),yantraId:k.shape.yantraId,templateFrequency:k.shape.frequencyHz,templateGeometry:k.shape.plateGeometry,templateDimension:k.shape.dimension,hold:k.hold??e.sequence.hold,transition:k.transition??e.sequence.transition,
  position:k.x!==undefined||k.y!==undefined||k.z!==undefined?{x:(k.x??0)/WORLD_SCALE,y:(k.y??0)/WORLD_SCALE,z:(k.z??0)/WORLD_SCALE}:null}))};
  if(e.authoringSource)out.source=clone(e.authoringSource);return out;
 }

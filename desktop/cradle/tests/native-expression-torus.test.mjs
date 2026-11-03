@@ -124,3 +124,53 @@ test('the set\'s tempo moves the pulse under Sync: the frame\'s tempo edit reach
   assert.deepEqual([c.reading.instrument.torus.settings.tempo_bpm,c.reading.instrument.torus.steps_per_second],[96,1.6],'read back from the owner\'s reply');
  }finally{await c.dispose();}
 });
+
+// O-I 851: the Torus as an object of the scene (DLW §21.2 "The Torus in the pane"). The object's law is proved on the pure module
+// (expressions-app field-studies-journeys/tests/torus-object-851.test.mjs); here, that the controller keeps it, feeds it the owner's
+// readings and offers what the pane needs.
+
+test('a determinant reads the Torus session again at once, so a tritone\'s Klein bottle reaches the pane on its step',async()=>{
+ const {owner,c}=await open();
+ try{
+  await c.torusState();
+  assert.equal(ops(owner,'torus-state').length,1);
+  await c.m1Advance(1);
+  await c.refreshSources();
+  assert.equal(ops(owner,'torus-state').length,2,'not a second later: the session the determinant moved is read on the next refresh');
+  await c.refreshSources();
+  assert.equal(ops(owner,'torus-state').length,2,'and then at human cadence again');
+ }finally{await c.dispose();}
+});
+
+test('while the plate studies the modes under Manual, Focus or Automation the pulse is tuned to the drive, and given back after',async()=>{
+ const {owner,c}=await open();
+ try{
+  await c.torusState();
+  const before=structuredClone(c.reading.instrument.torus.settings.rate);
+  await c.tunePulse(40);
+  assert.deepEqual(ops(owner,'torus-set').at(-1).request.command.edit,{rate:{mode:'free',steps_per_second:40}},'the drive, as the owner\'s own rate');
+  assert.equal(c.reading.instrument.torus.steps_per_second,40,'read back from the owner');
+  const asked=ops(owner,'torus-set').length;
+  await c.tunePulse(40.1);
+  assert.equal(ops(owner,'torus-set').length,asked,'a drive that has not moved is not asked again');
+  await c.tunePulse(null);
+  assert.deepEqual(ops(owner,'torus-set').at(-1).request.command.edit,{rate:before},'the torus\'s own rate, given back');
+  await c.tunePulse(null);
+  assert.equal(ops(owner,'torus-set').length,asked+1,'once');
+ }finally{await c.dispose();}
+});
+
+test('the reading names the torus object: its shape by the law, its two helices, its voices and its four boundaries',async()=>{
+ const {c}=await open();
+ try{
+  await c.torusState();
+  const object=c.reading.instrument.torus_object;
+  assert.equal(object.schema,'oi.torus-object/v1');
+  assert.equal(object.standing,'read');
+  assert.deepEqual(object.layers,['bimba','pratibimba']);
+  assert.equal(object.voices.length,8);assert.equal(object.boundaries.length,4);
+  assert.deepEqual(c.torusVoicePoints(),[],'a quiet body pulls nothing');
+  c.layFlat(true);
+  assert.equal(c.reading.instrument.torus_object.shape.flat,true,'laid flat while the scene\'s Resonance studies the modes');
+ }finally{await c.dispose();}
+});

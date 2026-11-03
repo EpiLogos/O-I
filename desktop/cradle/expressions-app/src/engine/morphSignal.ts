@@ -56,3 +56,14 @@ export function computeMorphDrive(tm: ToroidalMorphConfig, theta: number, phi: n
   const depth = tm.driveDepth ?? 1;
   return { progress: clamp01(0.5 + 0.5 * depth * signal), theta, phi, signal, cycleIndex, cycleFraction: f };
 }
+
+/**
+ * The pulse as the morph's carrier (DLW §21.2 "The Torus in the pane": the morph is "timed by the pulse's two turnings, one round the
+ * ring and one round the tube"; O-I 851). At a count of the Torus's pulse steps the torus has turned as QL's key-point law turns it
+ * (janko.rs point): one step is a sixth of a turn round the ring (θ here, the toroidal phase: the cover angle mod 360°) and a twelfth of a
+ * turn round the tube (φ, the poloidal phase: half the cover angle), so one return of twelve steps is the 720° cover. The phases run on
+ * unwrapped, as the engine's own oscillators do.
+ */
+export function pulseTurnings(steps: number): {theta: number; phi: number} {
+  return {theta: steps * Math.PI / 3, phi: steps * Math.PI / 6};
+}

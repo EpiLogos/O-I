@@ -2,6 +2,7 @@ import type { ResonanceAnchor } from './cymaticResonator';
 import type { SemanticFieldConfig } from './semantics/semanticTypes';
 import { mapChakrasToAnchors } from './semantics/chakraProfile';
 import type { KeySource } from './torusDrive';
+import type { TorusRoles } from './torusObject';
 
 export type ResonanceDriveConfig =
   | {kind:'frequency'}
@@ -21,7 +22,8 @@ export interface ResolvedResonanceDrive {
   silent?:boolean;
   reason?:string|null;
   keySource?:KeySource;
-  roles?:{standing:'absent';reason:string};
+  /** What M2′ reads from the torus for the plate (the eight and the four), or why it is not read. */
+  roles?:TorusRoles;
 }
 
 /** Resolves semantic focus without teaching the resonator what a chakra is. */

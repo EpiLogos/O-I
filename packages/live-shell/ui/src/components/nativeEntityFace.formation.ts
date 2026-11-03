@@ -10,7 +10,7 @@ export const FORMATION_PATHS = ['x', 'y', 'z', 'size.x', 'size.y', 'scale', 'rot
 
 /** Shape labels as the inspector names them (inspector.ts shapeOptions). The shape itself is edited in Glyph Sequence. */
 export const FORMATION_SHAPE_LABELS: Record<Entity['shape'], string> = {
-  text: 'Glyph or word', ring: 'Ring', disc: 'Disc', square: 'Plane', triangle: 'Triangle', yantra: 'Canonical yantra', cymatic: 'Authored cymatic template',
+  text: 'Glyph or word', ring: 'Ring', disc: 'Disc', square: 'Plane', triangle: 'Triangle', yantra: 'Canonical yantra', cymatic: 'Authored cymatic template', torus: 'Torus',
 }
 
 /** Name limit the boundary admits (nativeEntitySettings.ts ENTITY_SETTING_NAME_LIMIT). */

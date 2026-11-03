@@ -64,6 +64,7 @@ export function compositionCover(s:Scene):string {
     const mask=document.createElement('canvas');mask.width=w;mask.height=h;const m=mask.getContext('2d',{willReadFrequently:true})!;
     m.translate(p.x,p.y);m.rotate(-rotation*Math.PI/180);m.fillStyle='#fff';m.strokeStyle='#fff';m.lineWidth=Math.max(1,sx*.055);
     if(shape==='ring'){m.beginPath();m.ellipse(0,0,sx/2,sy/2,0,0,Math.PI*2);m.stroke();}
+    else if(shape==='torus'){m.beginPath();m.ellipse(0,0,sx/2,sy/2,0,0,Math.PI*2);m.ellipse(0,0,sx*.14,sy*.14,0,0,Math.PI*2,true);m.fill('evenodd');}
     else if(shape==='disc'||shape==='cymatic'){m.beginPath();m.ellipse(0,0,sx/2,sy/2,0,0,Math.PI*2);m.fill();}
     else if(shape==='square')m.fillRect(-sx/2,-sy/2,sx,sy);
     else if(shape==='triangle'||shape==='yantra'){m.beginPath();m.moveTo(0,-sy/2);m.lineTo(sx/2,sy/2);m.lineTo(-sx/2,sy/2);m.closePath();shape==='yantra'?m.stroke():m.fill();if(shape==='yantra'){m.beginPath();m.ellipse(0,0,sx*.48,sy*.48,0,0,Math.PI*2);m.stroke();}}

@@ -1699,6 +1699,14 @@ class PointCloudField {
   setTorusPlay(reading) {
     this.torusPlay = reading;
   }
+  /** The plate is the torus's body laid flat (DLW §20.14; O-I 851): while the native instrument holds the field, the Resonance device
+   * resolves its drive (and the roles Torus reads) but rings no plate of its own here. The body rings in the one native owner, the pulse
+   * tuned to the drive, and the pane lays it flat; the plate makes no tone and moves no particle of its own. */
+  plateBody = false;
+  setPlateBody(active) {
+    this.plateBody = active;
+    if (active) this.stopResonator();
+  }
   stopResonator() {
     if (!this.resonatorActive) return;
     this.resonatorActive = false;
@@ -1785,6 +1793,11 @@ class PointCloudField {
       this.lastResonanceDrive = { kind: "semanticFocus", targetHz: target, bound: true, anchorId: focus.blend < 0.5 ? a.id : b.id };
     } else {
       this.lastResonanceDrive = { kind: "frequency", targetHz: target, bound: true };
+    }
+    if (this.plateBody) {
+      this.cymaticFreqCurrent = torusTones ? torusTones[0] : target;
+      this.stopResonator();
+      return;
     }
     if (torusTones) {
       const k = 1 - Math.exp(-delta * 8);

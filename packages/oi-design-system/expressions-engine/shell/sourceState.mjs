@@ -24,7 +24,7 @@ function initialiseSources(j) {
   return j;
 }
 function captureObjectState(e) {
-  return { id: "", name: e.name, text: e.text, shape: e.shape, source: e.source ? clone(e.source) : void 0, yantraId: e.yantraId, templateFrequency: e.templateFrequency, templateGeometry: e.templateGeometry, templateDimension: e.templateDimension, hold: e.sequence.hold ?? 3, transition: e.sequence.transition ?? 1, position: null, objectState: { normalized: e.native ? e.native.extent?.normalized ?? !!e.native.extent : true, size: clone(e.size), rotation: e.rotation, scale: e.scale ?? 1, tint: e.tint, tintWeight: e.tintWeight, force: clone(e.force) } };
+  return { id: "", name: e.name, text: e.text, shape: e.shape, source: e.source ? clone(e.source) : void 0, yantraId: e.yantraId, templateFrequency: e.templateFrequency, templateGeometry: e.templateGeometry, templateDimension: e.templateDimension, ...e.torusFigure ? { torusFigure: e.torusFigure } : {}, hold: e.sequence.hold ?? 3, transition: e.sequence.transition ?? 1, position: null, objectState: { normalized: e.native ? e.native.extent?.normalized ?? !!e.native.extent : true, size: clone(e.size), rotation: e.rotation, scale: e.scale ?? 1, tint: e.tint, tintWeight: e.tintWeight, force: clone(e.force) } };
 }
 function stateThumbnail(e, index) {
   const k = e.sequence.steps[index], source = stateSource(e, index);

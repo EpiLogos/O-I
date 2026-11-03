@@ -92,6 +92,8 @@ export class ControlledSceneOwner {
    m2:{schema:'ql.m2-engine/v1',identity,resonator:structuredClone(input.m2.resonator),vimarsha:{reading:{audio_octet_hz:this.voices().map(v=>v.frequency_hz),nodal_quartet:this.voices().slice(0,4)}}},
    m3:{schema:'ql.m3-state/v1',identity,subject_ref:'controlled:subject',transcription:{rna:s.rna,sequence:s.rna?'AUG':'ATG'},form:{codon:{ref:'#3-controlled'},angles_deg10:[0,0,0]}}}};}
  influence(){const s=this.state;return{schema:'ql.expression-influence/v1',generation:this.frame.generation,m1_revision:String(s.revision),address72:(s.lens12*6+s.tick12%6)%72,shape_ref:'controlled',voices:this.voices(),tuning:this.torusSettings.tuning,fundamental_hz:this.torus().fundamental_hz,
+  // Vimarśā's four boundaries, as QL places them: entry i at position (i mod 2)·5 of helix i div 2 (O-I 851).
+  boundaries:[0,1,2,3].map(i=>({m:2+i,n:3+i%2,helix:i<2?'bimba':'pratibimba',ql_position:(i%2)*5})),
   geometry:{metres_per_unit:1},material:{damping_per_second:.35,strike_metres:.08,audio_gain_per_metre:1,strike_on_event:true},material_standing:'declared-material-policy (controlled)',
   effects:[{determinant:'the dated sky',through:'coupled sky bus: M2-5 just octave × M1 root',effect:'pitch',units:'Hz',range:'~',timing:'event',consumer:'K8',warrant:'source-defined'},{determinant:'material policy',through:'damping',effect:'decay',units:'1/s',range:'declared',timing:'instance',consumer:'K8',warrant:'declared policy — not source'}]};}
  async request(request){

@@ -46,7 +46,7 @@ export const MAX_FORCE_EMITTERS = MAX_FORMATIONS + MAX_PINS;
 // ---------------------------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------------------------
-export type ShapeKind = 'glyph' | 'yantra' | 'cymatic' | 'primitive';
+export type ShapeKind = 'glyph' | 'yantra' | 'cymatic' | 'primitive' | 'torus';
 
 export interface Shape {
   /** Optional authored-template overrides; absent values inherit field template settings. */
@@ -57,6 +57,8 @@ export interface Shape {
   text?: string;          // glyph / word (kind 'glyph')
   yantraId?: string;      // sacred geometry id from CANONICAL_CHAKRAS (kind 'yantra')
   frequencyHz?: number;   // Chladni template frequency (kind 'cymatic', authored geometry — NOT the resonator)
+  /** The torus's shape (kind 'torus'): the figure the object takes, sampled on the body's own angles (torusObject.torusCandidates). */
+  figure?: import('./torusObject').TorusShape;
 }
 
 export interface SequenceLink {

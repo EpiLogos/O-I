@@ -42,6 +42,10 @@ function computeMorphDrive(tm, theta, phi) {
   const depth = tm.driveDepth ?? 1;
   return { progress: clamp01(0.5 + 0.5 * depth * signal), theta, phi, signal, cycleIndex, cycleFraction: f };
 }
+function pulseTurnings(steps) {
+  return { theta: steps * Math.PI / 3, phi: steps * Math.PI / 6 };
+}
 export {
-  computeMorphDrive
+  computeMorphDrive,
+  pulseTurnings
 };

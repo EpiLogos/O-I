@@ -55,6 +55,7 @@ function syncHeldState(e, index) {
   e.text = step.text;
   e.yantraId = step.yantraId;
   e.templateFrequency = step.templateFrequency;
+  if (step.torusFigure) e.torusFigure = step.torusFigure;
   e.templateGeometry = step.templateGeometry;
   e.templateDimension = step.templateDimension;
 }

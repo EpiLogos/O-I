@@ -326,6 +326,11 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   engine.setTorusPlay?.(torusPlayReading(reading));
   // The torus's output, for the symbols' voices to carry part of to where their symbols stand (a node the controller owns, in its audio context).
   engine.setTorusTap?.(controller.voiceTap());
+  // The plate is the torus's body laid flat while the scene's Resonance studies the modes, and under Manual, Focus and Automation the
+  // pulse is tuned to the drive and rings it (DLW §20.14; O-I 851). A refused tuning is the owner's, named on the status line.
+  const plate=engine.plateBody?.()??null;
+  controller.layFlat(!!plate?.flat);
+  if(instrument&&reading.status==='following')controller.tunePulse(plate?.pulseHz??null).catch(error=>{controller.reason=`The pulse was not tuned to the plate's drive: ${String(error instanceof Error?error.message:error)}`;});
   panel.setAttribute('aria-busy',String(busy));
   setText('status',statusLine(reading));
   query('[data-ni-closed]').hidden=open;query('[data-ni-open]').hidden=!instrument&&!(composing&&reading.status==='opening');
@@ -472,6 +477,9 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
  query('[name="native-mode"]').addEventListener('change',modeChange);
  panel.addEventListener('click',click);panel.addEventListener('input',range);panel.addEventListener('pointerdown',pressKey);panel.addEventListener('focusin',focusKey);
  controller.onChange=update;
+ // The torus's voices pull the particles while they sound (DLW §21.2 "The Torus in the pane"; O-I 851): read each time the engine
+ // compiles its forces.
+ engine.setTorusVoices?.(()=>controller.torusVoicePoints());
  const visibility=()=>{if(document.hidden)controller.hold('document hidden');};
  document.addEventListener('visibilitychange',visibility);
  const pagehide=()=>{void controller.dispose();};window.addEventListener('pagehide',pagehide);
@@ -591,5 +599,5 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   settledOn=identity;reopenWhenStill();
  };
  update();
- return {controller,panel,command,stage,playJanko,touch,openLive,leaveLive,rebind,authoredMoved,dispose:()=>{clearInterval(timer);clearTimeout(reopening);panel.removeEventListener('click',click);panel.removeEventListener('input',range);panel.removeEventListener('pointerdown',pressKey);panel.removeEventListener('focusin',focusKey);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('pagehide',pagehide);panel.remove();domainView.dispose();style.remove();void controller.dispose();}};
+ return {controller,panel,command,stage,playJanko,touch,openLive,leaveLive,rebind,authoredMoved,dispose:()=>{clearInterval(timer);engine.setTorusVoices?.(null);clearTimeout(reopening);panel.removeEventListener('click',click);panel.removeEventListener('input',range);panel.removeEventListener('pointerdown',pressKey);panel.removeEventListener('focusin',focusKey);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('pagehide',pagehide);panel.remove();domainView.dispose();style.remove();void controller.dispose();}};
 }

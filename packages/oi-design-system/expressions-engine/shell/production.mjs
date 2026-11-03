@@ -3,6 +3,8 @@ import { withRetainedField } from "../oi/retained-capability.mjs";
 import { MAX_FORMATIONS, MAX_PINS } from "../engine/fieldModel.mjs";
 import { stateSource } from "./sourceState.mjs";
 import { PointCloudField } from "../engine/PointCloudField.mjs";
+import { pulseRateFor } from "../engine/torusDrive.mjs";
+import { MAX_FORCE_EMITTERS } from "../engine/forceRuntime.mjs";
 import { CymaticResonator } from "../engine/cymaticResonator.mjs";
 import { readPath } from "../engine/automation.mjs";
 import { Color } from "three";
@@ -78,6 +80,34 @@ class EmbeddedProductionAdapter {
     this.nativeDomain = active;
     this.applied = null;
     this.dirty = true;
+    this.engine?.setPlateBody(active);
+  }
+  /** The torus's voices that sound, as force points (native-field/controller.ts torusVoicePoints; O-I 851): read every tick the engine
+   * compiles its forces, so a voice pulls while it sounds and lets go as it fades. */
+  torusVoices = null;
+  setTorusVoices(source) {
+    this.torusVoices = source;
+    this.forceSource = void 0;
+    this.dirty = true;
+  }
+  forceSource;
+  forceComposed = null;
+  forceProjection(base) {
+    const voices = this.torusVoices;
+    if (!this.nativeDomain || !voices) return base;
+    if (this.forceSource !== base || !this.forceComposed) {
+      this.forceSource = base;
+      this.forceComposed = (emitters) => [...base ? base(emitters) : emitters, ...voices()].slice(0, MAX_FORCE_EMITTERS);
+    }
+    return this.forceComposed;
+  }
+  /** The plate as the body laid flat (DLW §20.14; O-I 851): whether the scene's Resonance studies the modes while the instrument holds
+   * the field, and, under Manual, Focus and Automation, the drive the pulse is tuned to (null under Torus: the pulse is the torus's own). */
+  plateBody() {
+    const cym = this.target?.cymatics, flat = this.nativeDomain && !!cym?.enabled && cym.engine !== "template";
+    if (!flat) return { flat: false, pulseHz: null };
+    const driver = this.engine?.getCompositionTelemetry()?.cymatic?.driver ?? null;
+    return { flat: true, pulseHz: pulseRateFor(driver) };
   }
   /** The torus's played reading (nativeField.ts): kept here so an engine built later, or rebuilt after a lost context, is handed it too. The
    * plate reads it only when the scene's drive is Torus; a repeated reading is not a change. */
@@ -102,9 +132,8 @@ class EmbeddedProductionAdapter {
     if (!result) {
       result = {
         ...config,
-        cymatics: config.cymatics ? { ...config.cymatics, enabled: false } : void 0,
         toroidalMorph: config.toroidalMorph ? { ...config.toroidalMorph, enabled: false, autoOscillate: false } : void 0,
-        automations: config.automations?.filter((l) => !l.path.startsWith("cymatics.") && !l.path.startsWith("toroidalMorph."))
+        automations: config.automations?.filter((l) => !l.path.startsWith("toroidalMorph."))
       };
       this.nativeConfigs.set(config, result);
     }
@@ -196,6 +225,7 @@ class EmbeddedProductionAdapter {
     if (!this.engine) {
       this.engine = new PointCloudField(this.canvas, config, true);
       this.engine.setTorusPlay(this.torusPlay);
+      this.engine.setPlateBody(this.nativeDomain);
       this.contextOwner = this.engine;
       this.connections = new ExpressionConnectionLayer(this.engine);
       this.connectionRows = void 0;
@@ -203,7 +233,7 @@ class EmbeddedProductionAdapter {
       this.seedRecoveredSources = true;
     } else if (config !== this.applied) this.engine.replaceConfig(config);
     this.engine.setTransitionOverlay(this.overlay);
-    this.engine.setForceEmitterProjection(frame.forceEmitterProjection ?? null);
+    this.engine.setForceEmitterProjection(this.forceProjection(frame.forceEmitterProjection ?? null));
     this.engine.setLocalizedResonanceProjection(frame.localizedResonanceProjection ?? null);
     this.engine.setFormationGeometryProjection(frame.formationGeometryProjection ?? null);
     if (config !== this.applied) {

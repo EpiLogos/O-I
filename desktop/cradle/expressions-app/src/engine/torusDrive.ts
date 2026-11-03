@@ -15,7 +15,16 @@
  *
  * The Key source selects among pitch sources only while the Frequency driver is Torus. Manual, Focus and Automation keep their own
  * drive as before; the key never reaches them.
+ *
+ * Under Torus the plate also takes what M2′ reads from the torus (§20.14; the M2′ seed §3 8+4 contract; O-I 851): the eight voices give
+ * the figure its motion (a and b, the two families' weights; the amplitude and the temporal phase of the one native body) and the four
+ * boundaries its stillness (m and n, the edge, the families admitted). `roles` carries them beside every drive, read from the owner's
+ * influence and the native amplitudes the frame hands over with the pitches (torusObject.ts readRoles).
+ *
+ * The plate sounds as a body the pulse rings, never a second source. Under Manual, Focus and Automation the pulse is tuned to the drive
+ * (`pulseRateFor`); under Torus the pulse is the torus's own.
  */
+import {bodyOf, readRoles, type TorusRoles} from './torusObject';
 
 export type KeySource = 'torus' | 'sky' | 'manual';
 /** The three values, in the manual's order (§20.2). */
@@ -30,10 +39,11 @@ export interface TorusPlayReading {
   sky: { tonesHz: readonly number[]; absentBecause: string | null };
   /** The owner's 1:1, the frequency of its voice at the map's Sun. The plate does not use it; the symbols' voices stand on it. */
   root?: { hz: number | null; absentBecause: string | null };
+  /** The body the torus is: the owner's influence (its voices and four boundaries) and the native amplitudes of its voices now. */
+  body?: { influence: unknown; amplitudes: readonly { mode_ref: string; re: number; im: number }[] | null } | null;
+  /** The Torus's pulse as the owner last read it. */
+  pulse?: { steps: number; steps_per_second: number; band: string | null } | null;
 }
-
-/** The eight audible roles and four nodes M2′ reads from the torus are not yet a drive of the plate; this is said beside every drive. */
-export const ROLES_ABSENT = 'M2′ reads eight audible roles and four nodes from the torus (the Vimarśā reading\'s audio_octet_hz and nodal_quartet), but no source says which plate mode each role or node drives, so the plate is driven by the pitches the torus plays.';
 
 export interface ResolvedTorusDrive {
   /** The key the drive was taken from. */
@@ -46,7 +56,25 @@ export interface ResolvedTorusDrive {
   held: boolean;
   /** In words, when silent. */
   reason: string | null;
-  roles: { standing: 'absent'; reason: string };
+  /** What M2′ reads from the torus for the plate: the eight and the four, or why they are not read. */
+  roles: TorusRoles;
+}
+
+/** The roles of the body a reading carries. */
+export function rolesOf(reading: TorusPlayReading | null): TorusRoles {
+  const body = reading?.body;
+  const amplitudes = Array.isArray(body?.amplitudes) ? new Map(body!.amplitudes!.map(a => [a.mode_ref, [a.re, a.im] as const])) : null;
+  return readRoles(body ? bodyOf(body.influence) : null, amplitudes, reading
+    ? 'The owner states no eight voices and four boundaries for the torus yet, so the plate reads no voices or boundaries.'
+    : undefined);
+}
+
+/** The rate the pulse is tuned to under a drive that is not the torus's own (§20.14: under Manual, Focus and Automation the pulse is
+ * tuned to the drive and rings the plate), in steps a second; null under Torus or without a finite positive drive. */
+export function pulseRateFor(drive: { kind: string; targetHz?: number } | null | undefined): number | null {
+  if (!drive || drive.kind === 'torus') return null;
+  const hz = drive.targetHz;
+  return typeof hz === 'number' && Number.isFinite(hz) && hz > 0 ? hz : null;
 }
 
 /** Only the owner's own finite positive pitches reach the plate. */
@@ -58,7 +86,7 @@ export class TorusDriveState {
   private last: number[] = [];
 
   resolve(args: { keySource: KeySource; reading: TorusPlayReading | null; manualHz: number }): ResolvedTorusDrive {
-    const roles = { standing: 'absent' as const, reason: ROLES_ABSENT };
+    const roles = rolesOf(args.reading);
     const { keySource, reading } = args;
     if (keySource === 'manual') {
       // The resonance that was set. It is not the torus's drive, so it never becomes the drive a silent torus holds.

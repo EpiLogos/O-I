@@ -9,6 +9,7 @@ import {editEffectChain,editEffects,initialEffects,type EffectValue,type Effects
 import {PresentationEffects} from './presentationEffects';
 import {voiceModeRef} from './torusPlay.mjs';
 import {conditionReadingOf} from '../instrumentCondition';
+import {TorusObject} from '../../../src/engine/torusObject';
 import type {StageAudioClock} from '../stageCommands';
 import type {FieldScoreBasis,FieldScoreReply} from '../tarotScoreClient';
 export interface NativeRenderer {
@@ -65,6 +66,12 @@ export class NativeFieldController {
  /** The Torus's M1′ session as the owner last gave it (QL's `torus-state` or a Torus act's reply, ql.m1-prime-session/v1; O-I #850), when
   * it was read, and the owner's refusal of the read (an owner that holds no session), which stops the human-cadence re-read. */
  private torus:any=null;private torusAt=0;private torusRefused:string|null=null;
+ /** The Torus as an object of the scene (src/engine/torusObject.ts; DLW §21.2 "The Torus in the pane", O-I 851): it presents each
+  * admitted frame on the shape the owner's figure law names, and offers the voices that sound as force points. One per lifetime. */
+ private torusObject=new TorusObject();
+ /** While the plate studies the modes under Manual, Focus or Automation the pulse is tuned to the drive (§20.14); the torus's own
+  * rate is kept to give back. */
+ private pulseTuning:{hz:number;before:unknown}|null=null;
  private event:any=null;private opening:any=null;private sourcesStale=false;private influenceStale=false;private timing:any=null;private timingStart=0;private lastInspect=0;
  private operating=0;private cadence:Cadence|null=null;private lastCadence:Cadence|null=null;
  private refusal:{operation:string;reason:string;at:number}|null=null;
@@ -91,6 +98,8 @@ export class NativeFieldController {
   if(this.session!==session||this.dead)throw new Error('native source reply belongs to a released lifetime');
   const domain=projectNativeSources(sources,{event_ref:reading.event_ref,subject_ref:reading.subject_ref,generation:reading.acknowledged.generation});
   this.sources=sources;this.domain=domain;this.scene=isScene(sources);
+  const modes=sources?.current?.m2?.resonator?.modes;
+  this.torusObject.setModeRefs(Array.isArray(modes)?modes.map((mode:any)=>mode?.mode_ref):null);
   if(this.scene){this.event=eventFromSources(sources);this.acting=readScene(sources,this.influenceReading,this.opened?.source);}
   this.sourcesStale=false;this.lastInspect=performance.now();
   return sources;
@@ -103,6 +112,7 @@ export class NativeFieldController {
  }
  private admitInfluence(influence:any){
   this.influenceReading=influence;this.influenceStale=false;
+  this.torusObject.setBody(influence);this.projection?.refresh();
   if(this.sources)this.acting=readScene(this.sources,influence,this.opened?.source);
  }
  status:NativeStatus='manual';reason:string|null=null;
@@ -156,6 +166,8 @@ export class NativeFieldController {
    stage:this.stageReading,stage_stale:this.stageStale,stage_last:this.stageLast,
    // The Torus's M1′ session, verbatim from the owner's last reply (null until it is read).
    torus:this.torus,
+   // The Torus as the pane shows it: its shape by the law, its passage, its voices and its four boundaries (O-I 851).
+   torus_object:this.torusObject.reading(),
    // The live scene's M2 condition, verbatim from the sources last inspected (instrumentCondition.ts): announced, never derived here.
    condition:conditionReadingOf(this.sources)??null,
    presentation:INSTRUMENT_PRESENTATION}:null,
@@ -227,6 +239,7 @@ export class NativeFieldController {
    if(opened.schema!=='oi.native-expression-open/v1'||opened.receipt?.field?.sample_rate!==sampleRate)throw new Error('native open receipt/sample rate mismatch');
    const stage=this.renderer.retainedTargetPort();
    this.projection=new NativeProjection(stage,opened.receipt.field,opened.presentation);
+   this.torusObject=new TorusObject();this.torusObject.setSampleRate(sampleRate);this.projection.setPresenter(this.torusObject);
    this.renderer.setNativeDomain(true);
    this.session=new InstrumentSession({...this.playback,context:this.stage(context),owner:this.renderer,initialReceipt:opened.receipt,
     transport:{request:(request:any)=>this.port.request({operation:'exchange',lease:opened.lease,request}),close:()=>{void this.closeOwner(opened).catch(()=>{});}},fieldBinding:this.projection,muted:true});
@@ -397,7 +410,9 @@ export class NativeFieldController {
      // The owner acknowledged: the event happened. A busy follow-up read only
      // leaves the influence stale for the next refresh; it never un-counts it.
      // A still act (a Torus setting that moves no native state, O-I #850) leaves the sources, the stage and the checkpoint as they stood.
-     if(!still){this.checkpoint=null;this.sourcesStale=true;this.influenceStale=true;this.stageStale=true;}
+     // A determinant may move the pulse's figure (a tritone crossing shows the Klein bottle for one step): the session is read again on
+     // the next refresh, not at the human cadence (O-I 851).
+     if(!still){this.checkpoint=null;this.sourcesStale=true;this.influenceStale=true;this.stageStale=true;this.torusAt=0;}
      this.refusal=null;
      // The acknowledgement carried the new influence; take it without a
      // second exchange (the audio pump must not wait on another read).
@@ -551,7 +566,10 @@ export class NativeFieldController {
  private async readTorus(session:InstrumentSession){
   const torus=await session.torusState();
   if(this.session!==session||this.dead)throw new Error('Torus session reply belongs to a released lifetime');
-  this.torus=torus;this.torusAt=performance.now();this.torusRefused=null;this.changed();return torus;
+  this.admitTorus(torus);return torus;
+ }
+ private admitTorus(torus:any){
+  this.torus=torus;this.torusAt=performance.now();this.torusRefused=null;this.torusObject.setSession(torus);this.projection?.refresh();this.changed();
  }
  /** One edit of the Torus's M1′ session through the one serial owner, as every determinant goes (QL's own `torus-set`: any of rate,
   * tempo_bpm, fundamental, carrier, shape, tuning and polyphony; O-I #850). The owner validates and refuses in its own words; the
@@ -562,9 +580,29 @@ export class NativeFieldController {
   const still=(edit as {fundamental?:unknown}).fundamental===undefined;
   return this.determinant('Torus',()=>({operation:'torus-set',edit:structuredClone(edit)}),false,false,still).then(()=>{
    const torus=this.session?.lastTorus;
-   if(torus){this.torus=torus;this.torusAt=performance.now();this.torusRefused=null;this.changed();}
+   if(torus)this.admitTorus(torus);
   });
  }
+ /** Tune the pulse to the plate's drive (DLW §20.14: under Manual, Focus and Automation "the pulse is tuned to the drive and rings the
+  * plate"), through the owner's own torus-set; null gives the torus its own rate back. A drive within half a percent of the one asked is
+  * not asked again. Nothing while no scene's Torus has been read. */
+ async tunePulse(hz:number|null){
+  if(!this.session||!this.scene||!this.torus)return;
+  const drive=typeof hz==='number'&&Number.isFinite(hz)&&hz>0?hz:null;
+  if(drive===null){
+   if(!this.pulseTuning)return;
+   const before=this.pulseTuning.before;this.pulseTuning=null;
+   if(before&&typeof before==='object')await this.torusSet({rate:before});
+   return;
+  }
+  if(this.pulseTuning&&Math.abs(drive-this.pulseTuning.hz)<=this.pulseTuning.hz*0.005)return;
+  this.pulseTuning={hz:drive,before:this.pulseTuning?.before??structuredClone(this.torus.settings?.rate??null)};
+  await this.torusSet({rate:{mode:'free',steps_per_second:drive}});
+ }
+ /** The plate laid flat (§20.14: the torus's modes laid flat) while the scene's Resonance studies them. */
+ layFlat(on:boolean){if(this.torusObject.layFlat(on)){this.projection?.refresh();this.changed();}}
+ /** The torus's voices that sound now, as the engine's force points (presentation units). */
+ torusVoicePoints(){return this.projection?this.torusObject.voicePoints(this.projection.scale):[];}
  /** The facts the Tarot score stands on, read from this scene: the field's
   * own subject and event, the M3 clock position of the last complete source
   * read, and the admitted `ql.sky-snapshot/v1` the event carries (null when it
@@ -753,7 +791,7 @@ export class NativeFieldController {
   this.sources=null;this.domain=null;this.openingHold=null;
   this.scene=false;this.influenceReading=null;this.acting=null;this.event=null;this.opening=null;this.sourcesStale=false;this.level=null;this.tap=null;this.effectsGraph?.dispose();this.effectsGraph=null;
   this.stageReading=null;this.stageStale=false;this.stageLast=null;
-  this.torus=null;this.torusAt=0;this.torusRefused=null;
+  this.torus=null;this.torusAt=0;this.torusRefused=null;this.torusObject=new TorusObject();this.pulseTuning=null;
   this.admitting=null;this.suspension=null;this.restoring=null;
   if(manual){this.status='manual';this.lastNative=null;this.reason=null;this.refusal=null;this.lastCadence=null;this.changed();}
   const close=async()=>{
