@@ -183,7 +183,7 @@ export interface WorldTrackActions {
   /** Make this mode's clip of what is dropped on a track (manual §10.3: "Drag it onto a track and this mode makes its own clip of it, with
    * the constellation as its source"): the drag type the set accepts, and the owner op that makes the clip on the track the drop landed
    * on. The payload is the dragged constellation's ref. `alsoAccepts` names the other drags the maker takes, whose payload is what that
-   * drag carries (Factory's maker takes a song's clip from Material › Songs, O-I #844, agent/songClips.ts SONG_CLIP_DRAG). */
+   * drag carries (a mode's maker may take a clip of its own kind from Material beside a constellation, O-I #844). */
   makeClip?: {op: string; accepts: string; alsoAccepts?: readonly string[]; run(trackId: string, payload: string): unknown};
   /** Take a track out of the set (Live: select the track, Delete): the inverse of `seat`. What the track holds stays where its owner
    * keeps it; only the set no longer holds the track. */
