@@ -45,3 +45,30 @@ test('the host admits a chord while the frame is concealed, and the owner\'s ans
   assert.throws(() => host.stageCommand({command: 'view', action: 'guides'}), /concealed/);
   assert.throws(() => host.stageCommand({command: 'janko', action: 'play', pitch_classes: [], amplitude: 0.3}), /Unknown Expressions stage command/);
 });
+
+// O-I #853: the keyboard plays the Torus by keys — a strike of keys and their release travel the same concealed channel, and the
+// strike's answer brings back the keys whose notes made way past Polyphony.
+test('keys of the surface travel the concealed channel as a strike and a release, and the answer names the notes that made way', async t => {
+  const wire = messageWire();
+  const frame = new EventTarget();
+  frame.src = `${origin}/__application/expressions/index.html`;
+  frame.contentWindow = {postMessage(data, targetOrigin) {assert.equal(targetOrigin, origin); wire.port1.postMessage(data);}};
+  frame.closest = () => null;
+  const host = new ExpressionsHost(frame, {bindingId: 'center:world', owners: {channels: {}}, messageTarget: new EventTarget(),
+    handshakeTimeoutMs: 1000, mode: 'live', isPresented: () => false});
+  t.after(() => {host.dispose(); wire.dispose();});
+  const deliver = data => host.handleMessage({source: frame.contentWindow, origin, data});
+  await deliver({v: CHANNEL_VERSION, kind: 'oi-app-state', state: {hostMode: 'live', sceneIndex: 0, sceneCount: 1,
+    nativeScene: {expression_ref: 'expression:kept', revision: 3, scene_ref: 'scene:one'}}});
+  const struck = host.stageCommand({command: 'janko', action: 'strike', keys: [{row: 0, column: 42}, {row: 1, column: 43}], amplitude: 0.35});
+  const strike = (await wire.observe()).filter(d => d.command === 'janko').at(-1);
+  assert.deepEqual(strike.keys, [{row: 0, column: 42}, {row: 1, column: 43}]);
+  await deliver({v: CHANNEL_VERSION, kind: 'host-command-result', command: 'janko', req: strike.req, ok: true, made_way: [{row: 4, column: 40}]});
+  assert.deepEqual(await struck, {ok: true, made_way: [{row: 4, column: 40}]});
+  const released = host.stageCommand({command: 'janko', action: 'release', keys: [{row: 0, column: 42}]});
+  const release = (await wire.observe()).filter(d => d.command === 'janko').at(-1);
+  assert.equal(release.action, 'release');
+  await deliver({v: CHANNEL_VERSION, kind: 'host-command-result', command: 'janko', req: release.req, ok: true});
+  assert.deepEqual(await released, {ok: true});
+  assert.throws(() => host.stageCommand({command: 'janko', action: 'strike', keys: [{row: 6, column: 0}], amplitude: 0.35}), /Unknown Expressions stage command/);
+});

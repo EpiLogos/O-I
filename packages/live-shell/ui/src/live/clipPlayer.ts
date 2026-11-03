@@ -41,7 +41,7 @@ import {commitLiveStage, liveTorusState, useLiveTorusReading, type LiveTorusStat
 /** A timer may wake a hair before its moment; a strike due within this many seconds is sent at that wake. */
 const DUE_EARLY_SECONDS = 0.002
 
-export type JankoCommand = Extract<StageCommand, {command: 'janko'}>
+export type JankoCommand = Extract<StageCommand, {command: 'janko'; action: 'play'}>
 
 /** One act of the clip: where it stands in the clip's own beats, and the strike it is. */
 export interface ClipStrike {

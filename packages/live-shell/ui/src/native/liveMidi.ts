@@ -3,8 +3,10 @@
 // hears on `oi://midi-ports`. This module only listens and converts: each note becomes a NoteEvent with source 'midi' for the one Jankó
 // input path (jankoInput.ts). Without the native host there is no MIDI access, and that is named here, never thrown.
 
+import {useSyncExternalStore} from 'react'
 import {nativeHost} from './application'
-import type {NoteEvent} from '../live/janko/jankoInput'
+import {tauriInvoke} from '../../../../../desktop/cradle/src/kernel/bridge'
+import type {MidiOutMessage, NoteEvent} from '../live/janko/jankoInput'
 
 export const MIDI_NOTE_EVENT = 'oi://midi-note'
 export const MIDI_PORTS_EVENT = 'oi://midi-ports'
@@ -16,6 +18,8 @@ export interface MidiNote {
   readonly note: number
   readonly velocity: number
   readonly on: boolean
+  /** When the host received it, in milliseconds since the epoch (its wall clock; O-I #853 latency): absent from an older host. */
+  readonly received_ms?: number
 }
 
 export type LiveMidiState =
@@ -49,7 +53,16 @@ export function midiNoteEvent(note: MidiNote): NoteEvent {
     source: 'midi',
     velocity: down ? note.velocity / 127 : null,
     press: `${note.port}/${note.channel}/${note.note}`,
+    note: note.note,
+    port: note.port,
+    ...(typeof note.received_ms === 'number' && Number.isFinite(note.received_ms) ? {receivedAt: note.received_ms} : {}),
   }
+}
+
+/** The ports a new state no longer hears, of those the state before it heard: a device lost (a refused state loses them all). */
+export function lostMidiPorts(before: LiveMidiState, after: LiveMidiState): string[] {
+  const heard = before.kind === 'ports' ? before.ports : []
+  return after.kind === 'ports' ? heard.filter(port => !after.ports.includes(port)) : after.kind === 'refused' ? [...heard] : []
 }
 
 export interface LiveMidiOptions {
@@ -73,6 +86,7 @@ const isNote = (value: unknown): value is MidiNote => {
   const row = value as Record<string, unknown>
   return typeof row.port === 'string' && Number.isInteger(row.channel) && Number.isInteger(row.note) && (row.note as number) >= 0 && (row.note as number) <= 127
     && Number.isInteger(row.velocity) && (row.velocity as number) >= 0 && (row.velocity as number) <= 127 && typeof row.on === 'boolean'
+    && (row.received_ms === undefined || (typeof row.received_ms === 'number' && Number.isFinite(row.received_ms)))
 }
 
 const isPorts = (value: unknown): value is {ports: string[]; refusal: string | null} => {
@@ -183,4 +197,76 @@ export function subscribeLiveMidiControls(options: LiveMidiControlOptions): () =
     stop?.()
     stop = null
   }
+}
+
+// ── MIDI out: what a part plays leaves for a MIDI output (O-I #853) ───────────────────────────────────────────────────────────────
+// The native host lists the system's MIDI outputs, connects the one the person chooses and sends the notes the playing path plays to it
+// (desktop/cradle/src-tauri/src/midi.rs `midi_out`). Nothing is sent until a port is chosen, and outside the native host there is none.
+
+export const MIDI_OUT_COMMAND = 'midi_out'
+
+export type LiveMidiOutState =
+  | {readonly kind: 'reading'}
+  | {readonly kind: 'ports'; readonly ports: readonly string[]; readonly port: string | null}
+  | {readonly kind: 'refused'; readonly reason: string; readonly ports: readonly string[]; readonly port: string | null}
+
+/** The named absence: this window is not the native host, so it has no MIDI output. */
+export const LIVE_MIDI_OUT_ABSENT = 'this window is not the native O:I host, so it has no MIDI output'
+
+export type MidiOutInvoke = (command: string, args: Record<string, unknown>) => Promise<unknown>
+const words = (cause: unknown) => typeof cause === 'string' ? cause : cause instanceof Error ? cause.message : String(cause)
+
+/** The host's answer, read exactly: the outputs it offers and the one connected. */
+function readOutState(raw: unknown): {ports: string[]; port: string | null} | null {
+  if (typeof raw !== 'object' || raw === null) return null
+  const row = raw as Record<string, unknown>
+  if (!Array.isArray(row.ports) || !row.ports.every(port => typeof port === 'string')) return null
+  if (row.port !== null && typeof row.port !== 'string') return null
+  return {ports: row.ports as string[], port: row.port as string | null}
+}
+
+let outState: LiveMidiOutState = nativeHost() ? {kind: 'reading'} : {kind: 'refused', reason: LIVE_MIDI_OUT_ABSENT, ports: [], port: null}
+const outListeners = new Set<() => void>()
+/** Readers are told only of a change: a note sent to the connected output moves nothing they draw. */
+const publishOut = (next: LiveMidiOutState) => {
+  if (JSON.stringify(next) === JSON.stringify(outState)) return
+  outState = next
+  for (const listener of [...outListeners]) listener()
+}
+export const liveMidiOut = (): LiveMidiOutState => outState
+export const subscribeLiveMidiOut = (listener: () => void) => { outListeners.add(listener); return () => { outListeners.delete(listener) } }
+export const useLiveMidiOut = (): LiveMidiOutState => useSyncExternalStore(subscribeLiveMidiOut, liveMidiOut, liveMidiOut)
+
+/** One request of the host's MIDI output: read its ports, choose one (null lets it go), or send messages. A refusal is published in
+ * the host's words, the ports kept. */
+async function outRequest(request: Record<string, unknown>, invoke: MidiOutInvoke): Promise<boolean> {
+  if (!(nativeHost() || invoke !== tauriOut)) { publishOut({kind: 'refused', reason: LIVE_MIDI_OUT_ABSENT, ports: [], port: null}); return false }
+  try {
+    const answer = readOutState(await invoke(MIDI_OUT_COMMAND, {request}))
+    if (!answer) { publishOut({kind: 'refused', reason: 'the native host answered MIDI output in a form this window does not read', ports: [], port: null}); return false }
+    publishOut({kind: 'ports', ...answer})
+    return true
+  } catch (cause) {
+    const known = outState.kind === 'reading' ? {ports: [], port: null} : {ports: outState.ports, port: outState.port}
+    publishOut({kind: 'refused', reason: words(cause), ...known})
+    return false
+  }
+}
+const tauriOut: MidiOutInvoke = (command, args) => tauriInvoke(command, args)
+
+/** Read the outputs the host offers and the one it is connected to. */
+export const readLiveMidiOut = (invoke: MidiOutInvoke = tauriOut) => outRequest({kind: 'read'}, invoke)
+/** Connect the output named `port`, or let the connected one go (null). */
+export const chooseLiveMidiOut = (port: string | null, invoke: MidiOutInvoke = tauriOut) => outRequest({kind: 'choose', port}, invoke)
+/** Send what the part plays to the connected output; nothing leaves while no output is connected. */
+export function sendLiveMidiOut(messages: readonly MidiOutMessage[], invoke: MidiOutInvoke = tauriOut): void {
+  if (messages.length === 0 || outState.kind !== 'ports' || outState.port === null) return
+  void outRequest({kind: 'send', messages}, invoke)
+}
+/** The one MIDI out line: the output connected, none chosen, or the named refusal. */
+export function liveMidiOutLine(state: LiveMidiOutState): string {
+  if (state.kind === 'reading') return 'MIDI output: reading the native host'
+  if (state.kind === 'refused') return `MIDI output refused: ${state.reason}`
+  if (state.port !== null) return `MIDI output: ${state.port}`
+  return state.ports.length ? 'MIDI output: none chosen' : 'no MIDI output connected'
 }

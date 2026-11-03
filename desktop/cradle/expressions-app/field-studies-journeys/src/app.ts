@@ -2337,8 +2337,12 @@ async function runStageCommand(command:StageCommand):Promise<StageResult>{
   case 'export':await action({json:'export-json',native:'export-native',html:'export-artifact'}[command.format],body);break;
   case 'import':await action('import',body);break;
   /* T-FRAME-CHROME-ONTO-PLATES: the shell's declaration of how it presents this frame (the chrome stands down or returns, nothing else moves), and one control of the chrome pressed from a device: the frame's own control, through its own handler (presentedChrome.ts). */case 'presentation':if(!presentedChrome)throw new Error('This application has not drawn its chrome yet.');presentedChrome.setPresentation(command.chrome);break;case 'chrome':if(!presentedChrome)throw new Error('This application has not drawn its chrome yet.');presentedChrome.press(command.id,command.value);break;case 'janko':
-   // A Jankó chord: the owner's own played voices, struck through the native owner (nativeField.ts playJanko). Never synthesised.
    if(!nativeField)throw new Error('This application has no native instrument.');
+   // Keys of the surface (O-I #853): the Torus's M1′ session strikes each key's moving point as a new note and answers the keys whose
+   // notes made way past Polyphony; a release lets keys go from its count while the body rings on (controller.ts torusPlay, torusRelease).
+   if(command.action==='strike'){const made_way=await nativeField.controller.torusPlay(command.keys,command.amplitude,command.at_samples_elapsed);announceHostState();return made_way.length?{ok:true,made_way}:{ok:true};}
+   if(command.action==='release'){await nativeField.controller.torusRelease(command.keys);return {ok:true};}
+   // A clip's chord: the owner's own played voices, struck through the native owner (nativeField.ts playJanko). Never synthesised.
    await nativeField.playJanko(command.pitch_classes,command.amplitude,command.at_samples_elapsed);
    break;
   case 'strike-at':

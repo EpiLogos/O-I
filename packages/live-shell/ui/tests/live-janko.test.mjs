@@ -87,10 +87,10 @@ test('a window the owner does not state exactly is refused by name; no key is la
   assert.match(named.fault, /touch-point 1 missing/)
 })
 
-test('the layout is never laid out by eye: the device names the excitation point as awaiting the kernel derivation (packet K)', () => {
-  assert.equal(janko.JANKO_PLACEMENT_NOTE, 'Excitation point: placement awaits the kernel derivation (packet K).')
+test('the layout is never laid out by eye: the device says the Torus places each key\'s point, never the keyboard (REPLACED: "awaits packet K" — #850 placed it, #853 strikes it)', () => {
+  assert.equal(janko.JANKO_PLACEMENT_NOTE, 'Each key strikes its place on its helix, wherever the turning torus has carried it: the Torus places it, never the keyboard.')
   const markup = renderToStaticMarkup(React.createElement(device.JankoDeviceView, {windowState: janko.readJankoWindow(windowV1())}))
-  assert.match(markup, /Excitation point: placement awaits the kernel derivation \(packet K\)\./)
+  assert.match(markup, /Each key strikes its place on its helix, wherever the turning torus has carried it/)
 })
 
 // ── 2 — fingering: the owner's own transposition, and the row step ───────
@@ -126,39 +126,48 @@ test('the piano alternative is the twelve pitch classes, one key each, with the 
 
 // ── 4 — one input path for every source; chords and polyphony; velocity ────
 
+// O-I #853: the path strikes keys of the owner's surface (the octave from middle C stands seven periods on: E is row 0, column 44), and a
+// release is its own act. The tests of this section were written for the pitch-class act; each REPLACED line names what it was.
+const surface = () => janko.readJankoWindow(windowV1())
+const E4 = {row: 0, column: 44}
+
 test('pointer, touch and computer keyboard produce the same janko command for the same pitch class', async () => {
   const sent = []
-  const path = input.createJankoInput({send: async command => { sent.push(command); return {ok: true} }})
-  path.down({kind: 'down', pitchClass: 4, source: 'pointer'}); await Promise.resolve(); await Promise.resolve()
-  path.down({kind: 'down', pitchClass: 4, source: 'touch'}); await Promise.resolve(); await Promise.resolve()
-  path.down({kind: 'down', pitchClass: 4, source: 'keyboard'}); await Promise.resolve(); await Promise.resolve()
-  assert.equal(sent.length, 3)
-  for (const command of sent) assert.deepEqual(command, {command: 'janko', action: 'play', pitch_classes: [4], amplitude: input.JANKO_DEFAULT_AMPLITUDE})
+  const path = input.createJankoInput({window: surface, send: async command => { sent.push(command); return {ok: true} }})
+  for (const source of ['pointer', 'touch', 'keyboard']) {
+    path.down({kind: 'down', pitchClass: 4, source}); await Promise.resolve(); await Promise.resolve()
+    path.up({kind: 'up', pitchClass: 4, source}); await Promise.resolve(); await Promise.resolve()
+  }
+  const strikes = sent.filter(command => command.action === 'strike')
+  assert.equal(strikes.length, 3)
+  // REPLACED (O-I #853): was {command: 'janko', action: 'play', pitch_classes: [4], amplitude}.
+  for (const command of strikes) assert.deepEqual(command, {command: 'janko', action: 'strike', keys: [E4], amplitude: input.JANKO_DEFAULT_AMPLITUDE})
 })
 
-test('notes struck in one task are one chord, one owner act; a later task is its own act; a release sends nothing', async () => {
+test('notes struck in one task are one chord, one owner act; a later task is its own act; a release is an act of its own (REPLACED: "a release sends nothing")', async () => {
   const sent = []
-  const path = input.createJankoInput({send: async command => { sent.push(command); return {ok: true} }})
+  const path = input.createJankoInput({window: surface, send: async command => { sent.push(command); return {ok: true} }})
   path.down({kind: 'down', pitchClass: 7, source: 'keyboard'})
   path.down({kind: 'down', pitchClass: 0, source: 'pointer'})
   path.down({kind: 'down', pitchClass: 4, source: 'touch'})
   await new Promise(resolve => setTimeout(resolve, 0))
-  assert.deepEqual(sent.map(c => c.pitch_classes), [[0, 4, 7]], 'one chord')
+  assert.deepEqual(sent.map(c => c.keys), [[{row: 1, column: 45}, {row: 0, column: 42}, E4]], 'one chord, its keys in the order pressed')
   path.up({kind: 'up', pitchClass: 4, source: 'touch'})
-  assert.equal(sent.length, 1, 'a release is not a second act')
+  await new Promise(resolve => setTimeout(resolve, 0))
+  assert.deepEqual(sent.at(-1), {command: 'janko', action: 'release', keys: [E4]}, 'the release lets its key go: the note lives as long as it is held')
   path.down({kind: 'down', pitchClass: 9, source: 'keyboard'})
   await new Promise(resolve => setTimeout(resolve, 0))
-  assert.deepEqual(sent.map(c => c.pitch_classes), [[0, 4, 7], [9]], 'a later task is its own act')
+  assert.deepEqual(sent.filter(c => c.action === 'strike').map(c => c.keys.length), [3, 1], 'a later task is its own act')
   assert.deepEqual(path.held(), [0, 7, 9], 'the held keys are the notes still down')
 })
 
 test('repeated-touch lifetime: two touch-points of one class release independently; the class stays held while any press holds it', async () => {
   const sent = [], heldSeen = []
-  const path = input.createJankoInput({send: async command => { sent.push(command); return {ok: true} }, onHeld: held => heldSeen.push(held)})
+  const path = input.createJankoInput({window: surface, send: async command => { sent.push(command); return {ok: true} }, onHeld: held => heldSeen.push(held)})
   path.down({kind: 'down', pitchClass: 3, source: 'touch', press: 'pointer-1'})
   path.down({kind: 'down', pitchClass: 3, source: 'touch', press: 'pointer-2'})
   await new Promise(resolve => setTimeout(resolve, 0))
-  assert.deepEqual(sent.map(c => c.pitch_classes), [[3]], 'two touch-points of one class in one task are one strike of that class')
+  assert.deepEqual(sent.map(c => c.keys), [[{row: 1, column: 43}]], 'two touch-points of one class in one task are one strike of that class (Repeat touch One note)')
   path.up({kind: 'up', pitchClass: 3, source: 'touch', press: 'pointer-1'})
   assert.deepEqual(path.held(), [3], 'the other finger still holds the class')
   path.up({kind: 'up', pitchClass: 3, source: 'touch', press: 'pointer-1'})
@@ -189,7 +198,7 @@ test('velocity: pen pressure maps to the Studio\'s pressure law inside the owner
 
 test("the owner's refusal of a chord is passed to the device by name", async () => {
   const results = []
-  const path = input.createJankoInput({send: async () => ({ok: false, error: 'No voice of this sky sounds at G'}), onResult: r => results.push(r)})
+  const path = input.createJankoInput({window: surface, send: async () => ({ok: false, error: 'No voice of this sky sounds at G'}), onResult: r => results.push(r)})
   path.down({kind: 'down', pitchClass: 7, source: 'pointer'})
   await new Promise(resolve => setTimeout(resolve, 0))
   assert.deepEqual(results, [{ok: false, error: 'No voice of this sky sounds at G'}])
@@ -301,11 +310,12 @@ test('the frame\'s chord reaches the owner through the one host-command channel 
   const sent = []
   torus.setLiveInstrumentCommander(async command => { sent.push(command); return {ok: true} })
   try {
-    const path = input.createJankoInput({send: command => torus.commitLiveStage(command)})
+    const path = input.createJankoInput({window: surface, send: command => torus.commitLiveStage(command)})
     path.down({kind: 'down', pitchClass: 2, source: 'keyboard'})
     await new Promise(resolve => setTimeout(resolve, 0))
   } finally { torus.setLiveInstrumentCommander(null) }
-  assert.deepEqual(sent, [{command: 'janko', action: 'play', pitch_classes: [2], amplitude: input.JANKO_DEFAULT_AMPLITUDE}])
+  // REPLACED (O-I #853): was {action: 'play', pitch_classes: [2]}.
+  assert.deepEqual(sent, [{command: 'janko', action: 'strike', keys: [{row: 0, column: 43}], amplitude: input.JANKO_DEFAULT_AMPLITUDE}])
 })
 
 // ── 7 — MIDI joins the one input path (T-LIVE-MIDI, first leg) ─────────────
@@ -315,26 +325,26 @@ const tick = () => new Promise(resolve => setTimeout(resolve, 0))
 test('a MIDI note on reaches the same janko stage command as a pointer press, and the owner receives the velocity as its strike', async () => {
   const pointerSent = []
   const midiSent = []
-  const pointerPath = input.createJankoInput({send: command => { pointerSent.push(command); return Promise.resolve({ok: true}) }})
-  const midiPath = input.createJankoInput({send: command => { midiSent.push(command); return Promise.resolve({ok: true}) }})
+  const pointerPath = input.createJankoInput({window: surface, send: command => { pointerSent.push(command); return Promise.resolve({ok: true}) }})
+  const midiPath = input.createJankoInput({window: surface, send: command => { midiSent.push(command); return Promise.resolve({ok: true}) }})
   pointerPath.down({kind: 'down', pitchClass: 4, source: 'pointer'})
   midiPath.down(midi.midiNoteEvent({port: 'Keys', channel: 0, note: 64, velocity: 127, on: true}))
   await tick()
   assert.equal(pointerSent.length, 1)
   assert.equal(midiSent.length, 1)
   assert.equal(midiSent[0].command, 'janko')
-  assert.equal(midiSent[0].action, 'play')
-  assert.deepEqual(midiSent[0].pitch_classes, pointerSent[0].pitch_classes, 'note 64 is pitch class 4, as the pointer key is')
+  assert.equal(midiSent[0].action, 'strike')
+  assert.deepEqual(midiSent[0].keys, pointerSent[0].keys, 'note 64 strikes the E key, as the pointer does (REPLACED: the same pitch classes)')
   assert.equal(midiSent[0].amplitude, 1, 'velocity 127 strikes at 127/127')
   // And through the owner's channel: the frame receives the same command.
   const frame = []
   torus.setLiveInstrumentCommander(async command => { frame.push(command); return {ok: true} })
   try {
-    const path = input.createJankoInput({send: command => torus.commitLiveStage(command)})
+    const path = input.createJankoInput({window: surface, send: command => torus.commitLiveStage(command)})
     path.down(midi.midiNoteEvent({port: 'Keys', channel: 0, note: 64, velocity: 64, on: true}))
     await tick()
   } finally { torus.setLiveInstrumentCommander(null) }
-  assert.deepEqual(frame, [{command: 'janko', action: 'play', pitch_classes: [4], amplitude: 64 / 127}])
+  assert.deepEqual(frame, [{command: 'janko', action: 'strike', keys: [E4], amplitude: 64 / 127}])
 })
 
 test('velocity is the strike for MIDI and replaces pressure; every other source keeps its own law', () => {
@@ -349,24 +359,24 @@ test('velocity is the strike for MIDI and replaces pressure; every other source 
   assert.equal(midi.midiNoteEvent({port: 'Keys', channel: 0, note: 60, velocity: 127, on: true}).velocity, 1)
 })
 
-test('a note-on at velocity 0 is a release, and so is a note-off: neither is a second act, and the key is let go', async () => {
+test('a note-on at velocity 0 is a release, and so is a note-off: the key is let go once, by one release act (REPLACED: "neither is a second act")', async () => {
   assert.equal(midi.midiNoteEvent({port: 'Keys', channel: 0, note: 60, velocity: 0, on: true}).kind, 'up')
   assert.equal(midi.midiNoteEvent({port: 'Keys', channel: 0, note: 60, velocity: 90, on: false}).kind, 'up')
   const sent = []
-  const path = input.createJankoInput({send: command => { sent.push(command); return Promise.resolve({ok: true}) }})
+  const path = input.createJankoInput({window: surface, send: command => { sent.push(command); return Promise.resolve({ok: true}) }})
   path.down(midi.midiNoteEvent({port: 'Keys', channel: 0, note: 60, velocity: 100, on: true}))
   await tick()
   assert.deepEqual(path.held(), [0])
   path.up(midi.midiNoteEvent({port: 'Keys', channel: 0, note: 60, velocity: 0, on: true}))
   path.up(midi.midiNoteEvent({port: 'Keys', channel: 0, note: 60, velocity: 0, on: false}))
   await tick()
-  assert.equal(sent.length, 1, 'a release sends nothing')
+  assert.deepEqual(sent.map(c => c.action), ['strike', 'release'], 'one strike, and one release however the controller lets go')
   assert.deepEqual(path.held(), [])
 })
 
 test('the notes of one host batch are one chord, one owner act; a later batch is its own act', async () => {
   const sent = []
-  const path = input.createJankoInput({send: command => { sent.push(command); return Promise.resolve({ok: true}) }})
+  const path = input.createJankoInput({window: surface, send: command => { sent.push(command); return Promise.resolve({ok: true}) }})
   const deliver = batch => {
     for (const note of batch) {
       const event = midi.midiNoteEvent(note)
@@ -380,13 +390,14 @@ test('the notes of one host batch are one chord, one owner act; a later batch is
     {port: 'Keys', channel: 0, note: 67, velocity: 80, on: true},
   ])
   await tick()
-  assert.deepEqual(sent.map(c => c.pitch_classes), [[0, 4, 7]], 'one chord')
+  assert.deepEqual(sent.map(c => c.keys), [[{row: 0, column: 42}, E4, {row: 1, column: 45}]], 'one chord')
   assert.equal(sent[0].amplitude, 100 / 127, 'the chord strikes at its loudest note')
   deliver([{port: 'Keys', channel: 0, note: 64, velocity: 0, on: true}])
-  assert.equal(sent.length, 1, 'a release in a later batch is no second act')
+  await tick()
+  assert.deepEqual(sent.at(-1), {command: 'janko', action: 'release', keys: [E4]}, 'a release in a later batch lets its key go (REPLACED: "is no second act")')
   deliver([{port: 'Keys', channel: 0, note: 69, velocity: 110, on: true}])
   await tick()
-  assert.deepEqual(sent.map(c => c.pitch_classes), [[0, 4, 7], [9]], 'a later batch is its own act')
+  assert.deepEqual(sent.filter(c => c.action === 'strike').map(c => c.keys), [[{row: 0, column: 42}, E4, {row: 1, column: 45}], [{row: 1, column: 46}]], 'a later batch is its own act')
 })
 
 test('outside the native host MIDI is a named absence: no listener is attached, no note arrives, and the device says why', () => {

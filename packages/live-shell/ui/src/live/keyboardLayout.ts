@@ -1,9 +1,13 @@
-// The keyboard's layout, held in the shell (live/liveChainDevices.ts keyboardDevice: its one row, written to `shell.keyboardLayout`).
-// One keyboard, one layout: the chain's plate, its picture in the pool, a pane or the rail, and the Jankó under the torus's Full all
-// draw the layout held here, so a change in one place shows in every other at once (manual §16.3). Moved out of the plate's own state
-// (KeyboardOnChain.tsx useState) when the keyboard was drawn in more than one place.
+// The keyboard, held in the shell: its layout, the part's input settings, and the one playing path every surface and the part's MIDI play
+// through (O-I #853). One keyboard, one layout: the chain's plate, its picture in the pool, a pane or the rail, and the Jankó under the
+// torus's Full all draw the layout held here, so a change in one place shows in every other at once (manual §16.3). Moved out of the
+// plate's own state (KeyboardOnChain.tsx useState) when the keyboard was drawn in more than one place. One path: a note pressed on any
+// surface and a note from a controller are notes of the same part, so Sustain holds them alike and Panic releases them all.
 import {useSyncExternalStore} from 'react'
 import type {KeyboardLayoutName} from './liveChainDevices'
+import {createJankoInput, KEYBOARD_SETTINGS_DEFAULT, KEYBOARD_TRANSPOSE, type JankoInput, type KeyboardSettings} from './janko/jankoInput'
+import {commitLiveStage} from './torusInstrument'
+import {sendLiveMidiOut} from '../native/liveMidi'
 
 let layout: KeyboardLayoutName = 'janko'
 const listeners = new Set<() => void>()
@@ -22,4 +26,84 @@ const subscribe = (listener: () => void) => { listeners.add(listener); return ()
 
 export function useKeyboardLayout(): KeyboardLayoutName {
   return useSyncExternalStore(subscribe, keyboardLayout, keyboardLayout)
+}
+
+// ── the part's input settings (DLW §21.1 The input) ────────────────────────────────────────────────────────────────────────────
+
+let settings: KeyboardSettings = KEYBOARD_SETTINGS_DEFAULT
+const settingsListeners = new Set<() => void>()
+
+export function keyboardSettings(): KeyboardSettings {
+  return settings
+}
+
+/** Change some settings. Transpose is held to −24…24 whole semitones. With Sustain switched off, every note no key holds is let go. */
+export function setKeyboardSettings(patch: Partial<KeyboardSettings>): void {
+  const transpose = patch.transpose === undefined ? settings.transpose
+    : Math.max(KEYBOARD_TRANSPOSE.min, Math.min(KEYBOARD_TRANSPOSE.max, Math.round(Number.isFinite(patch.transpose) ? patch.transpose : 0)))
+  const next: KeyboardSettings = {...settings, ...patch, transpose, inputs: {...settings.inputs, ...patch.inputs}}
+  if (JSON.stringify(next) === JSON.stringify(settings)) return
+  settings = next
+  live?.input.refresh()
+  for (const listener of [...settingsListeners]) listener()
+}
+
+const subscribeSettings = (listener: () => void) => { settingsListeners.add(listener); return () => { settingsListeners.delete(listener) } }
+
+export function useKeyboardSettings(): KeyboardSettings {
+  return useSyncExternalStore(subscribeSettings, keyboardSettings, keyboardSettings)
+}
+
+// ── the one playing path ───────────────────────────────────────────────────────────────────────────────────────────────────────
+
+/** What the surfaces draw of the path: the pitch classes held down, and the owner's last refusal (null after an act it took). */
+export interface LivePlaying {readonly held: readonly number[]; readonly refusal: string | null}
+
+type Transform = (pitchClasses: readonly number[]) => readonly number[]
+let live: {input: JankoInput; state: LivePlaying; transform: Transform | null} | null = null
+const playingListeners = new Set<() => void>()
+const IDLE: LivePlaying = Object.freeze({held: [], refusal: null})
+
+function publish(next: LivePlaying): void {
+  if (!live || (live.state.refusal === next.refusal && live.state.held.join() === next.held.join())) return
+  live.state = next
+  for (const listener of [...playingListeners]) listener()
+}
+
+/** The part's one playing path: every surface and the part's MIDI play through it, to the Torus through the hosted channel, and what it
+ * plays leaves through MIDI out. Made once. Its window is the owner's (jankoLayout.ts), its settings these. */
+export function livePlayingPath(): JankoInput {
+  if (live) return live.input
+  const input = createJankoInput({
+    send: command => commitLiveStage(command),
+    settings: keyboardSettings,
+    transform: pitchClasses => live?.transform ? live.transform(pitchClasses) : pitchClasses,
+    midiOut: messages => sendLiveMidiOut(messages),
+    onResult: result => { if (live) publish({held: live.state.held, refusal: result.ok ? null : result.error}) },
+    onHeld: held => { if (live) publish({held, refusal: live.state.refusal}) },
+  })
+  live = {input, state: IDLE, transform: null}
+  if (typeof window !== 'undefined' && typeof globalThis === 'object') {
+    // The measurement hook (O-I #853): the last strikes' timing, read from the inspector as `__oiKeyLatency()`.
+    (globalThis as {__oiKeyLatency?: () => unknown}).__oiKeyLatency = () => input.latency()
+  }
+  return input
+}
+
+/** The note-device chain under the mode in force, as the surface or the part's input last drew it: a note folds through it. */
+export function setLivePlayingTransform(transform: Transform | null): void {
+  livePlayingPath()
+  live!.transform = transform
+}
+
+/** Panic (DLW §21.1 Rules): every note the part holds is released at once. */
+export function panicLivePlaying(): void {
+  livePlayingPath().panic()
+}
+
+const subscribePlaying = (listener: () => void) => { playingListeners.add(listener); return () => { playingListeners.delete(listener) } }
+const playingState = (): LivePlaying => live?.state ?? IDLE
+
+export function useLivePlaying(): LivePlaying {
+  return useSyncExternalStore(subscribePlaying, playingState, playingState)
 }

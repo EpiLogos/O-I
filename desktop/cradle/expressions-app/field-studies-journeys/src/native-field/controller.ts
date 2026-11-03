@@ -43,6 +43,13 @@ const TRANSIENT=/owner busy|held before the event|presentation capacity|requires
 const TORUS_READ_MS=1000;
 type Cadence={rate:number;period:number;source:string;timer:ReturnType<typeof setInterval>;started:number;
  beats:number;issued:number;applied:number;skipped:number;suspended:number;inFlight:boolean;lastEventMs?:number;maxEventMs?:number;stopped?:string;stopped_at?:number};
+/** Keys of the Jankó surface as the Torus's session takes them (instrument-session.mjs #keys: 1..32, row 0–5, column 0–65535), copied
+ * to their two fields; null when any is not one. `min` 0 reads a receipt's made-way list, which may be empty. */
+function torusKeys(keys:unknown,min=1):{row:number;column:number}[]|null{
+ if(!Array.isArray(keys)||keys.length<min||keys.length>(min===0?64:32))return null;
+ const read=keys.map((key:any)=>Number.isInteger(key?.row)&&key.row>=0&&key.row<=5&&Number.isInteger(key?.column)&&key.column>=0&&key.column<=65535?{row:key.row as number,column:key.column as number}:null);
+ return read.every(key=>key!==null)?read as {row:number;column:number}[]:null;
+}
 /** The QL driver schedules PCM/targets; the app remains the sole GPU stage.
  * The controller owns admission/lifetime only, never native math or a second clock.
  * Determinant events (M1 advance, a changed event) go to the same serial owner;
@@ -519,6 +526,48 @@ export class NativeFieldController {
    catch(error){this.refused('strike at a point',error,session);throw error;}
    const refs=this.voiceRefs();
    this.refusal=null;this.played={at:Date.now(),strikes:(this.played?.strikes??0)+1,last_ms:performance.now()-sent};this.struck={at:Date.now(),source:'point',refs,points:struck};this.changed();
+  });
+ }
+ /** Keys of the Jankó surface struck on the Torus's M1′ session (QL-MEF `torus-play`; DLW §21.2 "What strikes the Torus": a key strikes
+  * its place on its helix wherever the turning torus has carried it; O-I #853): one act of 1..32 keys, each a new note, at the same
+  * impulse, now or at `at`, the owner's sample cursor, as playVoices lands a note. A performance act as playVoices is: through the one
+  * serial owner, so a strike and the release after it keep their order; no hold, no source or influence re-read. The owner places each
+  * key's point and counts the notes; past Polyphony the oldest make way, and so does a key struck again. The answer is the keys whose
+  * notes made way, read from the owner's receipt (ql.torus-play/v1); the points it struck are what the plate follows, as for a touch. */
+ torusPlay(keys:{row:number;column:number}[],amplitude=0.35,at?:string):Promise<{row:number;column:number}[]>{
+  const session=this.session;
+  if(!session||!this.scene)return Promise.reject(new Error('Open the live instrument first: a played key belongs to a scene owner'));
+  const acts=torusKeys(keys);
+  if(!acts)return Promise.reject(new Error('a Torus act names 1 to 32 keys of the Jankó surface, each its row 0–5 and its column'));
+  if(!Number.isFinite(amplitude)||amplitude<=0||amplitude>1)return Promise.reject(new Error('strike amplitude must be in (0, 1] modal metres'));
+  if(this.status!=='following'||this.suspension)return Promise.reject(new Error('The field is not running: resume it, then play'));
+  return this.serial(async()=>{
+   if(!(await this.waitIdle(session,2000)))throw new Error('native owner busy; the note was not sent');
+   if(this.status!=='following'||this.suspension||!this.current(session))throw new Error('instrument held before the note was sent');
+   const sent=performance.now();
+   try{await session.torusPlay(acts,{amplitude:[amplitude,0],...(at===undefined?{}:{at_samples_elapsed:at})});}
+   catch(error){this.refused('played key',error,session);throw error;}
+   const receipt=session.lastTorusPlay as any;
+   const points=(Array.isArray(receipt?.notes)?receipt.notes:[]).map((note:any)=>note?.point)
+    .filter((point:any)=>[point?.theta,point?.phi].every(angle=>typeof angle==='number'&&Number.isFinite(angle)))
+    .map((point:any)=>({theta:point.theta as number,phi:point.phi as number}));
+   this.refusal=null;this.played={at:Date.now(),strikes:(this.played?.strikes??0)+1,last_ms:performance.now()-sent};
+   this.struck={at:Date.now(),source:'point',refs:this.voiceRefs(),points};this.changed();
+   return torusKeys((Array.isArray(receipt?.made_way)?receipt.made_way:[]).map((note:any)=>note?.key),0)??[];
+  });
+ }
+ /** Keys let go (QL-MEF `torus-release`): they leave the count of notes, and the body rings on (a released note keeps its own tail,
+  * DLW §21.2 Rules), so no native state moves. Through the one serial owner, after the strikes sent before it. */
+ torusRelease(keys:{row:number;column:number}[]):Promise<void>{
+  const session=this.session;
+  if(!session||!this.scene)return Promise.reject(new Error('Open the live instrument first: a released key belongs to a scene owner'));
+  const acts=torusKeys(keys);
+  if(!acts)return Promise.reject(new Error('a Torus act names 1 to 32 keys of the Jankó surface, each its row 0–5 and its column'));
+  return this.serial(async()=>{
+   if(!(await this.waitIdle(session,2000)))throw new Error('native owner busy; the release was not sent');
+   if(!this.current(session))throw new Error('instrument closed before the release was sent');
+   try{await session.torusRelease(acts);}
+   catch(error){this.refused('released key',error,session);throw error;}
   });
  }
  /** The performance journal of the current native lifetime (acts and aggregate advances). */
