@@ -10,7 +10,13 @@
 //   Polyphony       the owner's: past it the oldest notes make way, the owner names them, and the path lets them go
 //   Panic           releases every note at once; losing focus or a device releases the notes it held
 //   Transpose       moves every note, the fingering kept: the key struck is the one that sounds the moved pitch
-// Nothing here synthesises a sound, places a point or counts voices: the owner does. What a part plays also leaves as MIDI (midiOut).
+//   a clip          (O-I #790) strikes the key a MIDI note of its number strikes, at the owner's sample it names, and holds it until its
+//                   own length ends (clipStrike, clipRelease); the clip's notes are written, not played in, so Sustain, Transpose, the
+//                   inputs and the note devices leave them as they are. A key a press and the clip both hold is one note of the owner:
+//                   struck by each, released with the last of them. Polyphony, the notes that make way and Panic count the clip's notes
+//                   with the keys'.
+// Nothing here synthesises a sound, places a point or counts voices: the owner does. What a part plays also leaves as MIDI (midiOut); a
+// clip's notes do not yet, as they are sent one owner lookahead before they sound.
 import type {StageCommand, StageKey, StageResult} from '@epilogos/expressions-boundary'
 import {liveJankoWindow, type JankoKey, type JankoWindow, type JankoWindowState} from './jankoLayout'
 
@@ -190,6 +196,9 @@ export interface JankoInputOptions {
 
 export interface PlayingPress {readonly id: string; readonly source: NoteSource; readonly port: string | null}
 
+/** One note of a clip on the path (O-I #790): its number, as MIDI numbers notes, and the hold that keeps it until the clip lets it go. */
+export interface ClipHold {readonly hold: string; readonly note: number}
+
 export interface JankoInput {
   down(event: NoteEvent): void
   up(event: NoteEvent): void
@@ -207,14 +216,27 @@ export interface JankoInput {
   releaseWhere(which: (press: PlayingPress) => boolean): void
   /** The last strikes' timing, oldest first. */
   latency(): readonly KeyLatency[]
+  /** A clip's note-ons, one act at one strength, landing at the owner's sample `at` (DLW §21.2 "A note in a clip | Its key's point, as
+   * the clip plays"). Each note strikes the key a MIDI note of its number strikes and is held by its hold until clipRelease; a key a press
+   * or the clip already sounds is struck again and held by both. Settles with the owner's answer, or the refusal when there is no surface. */
+  clipStrike(notes: readonly ClipHold[], amplitude: number, at: string): Promise<StageResult>
+  /** The clip lets these holds go (a note's length ended, or Stop): each note sounds on only while a press or another hold keeps it. A hold
+   * whose note made way, or that Panic let go, is owed nothing. */
+  clipRelease(holds: readonly string[]): void
 }
 
 interface Press extends PlayingPress {readonly pitchClass: number; readonly notes: readonly string[]}
-/** A sounding note: its key, its number, the presses holding it, the act that struck it, and the press that lifted last (Sustain then
- * holds it for that press's source, so losing that source's focus or device lets it go). */
-interface Note {readonly id: string; readonly key: StageKey; readonly note: number; presses: Set<string>; act: number; lifted: PlayingPress | null}
+/** A sounding note: one key of the owner. Its number, the presses and the clip's holds keeping it, the act that struck it, the press that
+ * lifted last (Sustain then holds it for that press's source, so losing that source's focus or device lets it go), and whether its
+ * note-on left as MIDI. */
+interface Note {
+  readonly id: string; readonly key: StageKey; readonly note: number
+  presses: Set<string>; clips: Set<string>; act: number; lifted: PlayingPress | null; out: boolean
+}
 type Act =
-  | {kind: 'strike'; seq: number; keys: Map<string, StageKey>; amplitude: number; sources: Set<NoteSource>; pressedAt: number; hostMs: number | null}
+  | {kind: 'strike'; seq: number; keys: Map<string, StageKey>; amplitude: number; sources: Set<NoteSource>; pressedAt: number; hostMs: number | null
+    /** A clip's act: the owner's sample it lands at, and its answer to the clip. Never merged with a press's act. */
+    clip: {readonly at: string; readonly settle: (result: StageResult) => void} | null}
   | {kind: 'release'; keys: Map<string, StageKey>}
 
 const keyId = (key: StageKey) => `${key.row}/${key.column}`
@@ -231,6 +253,8 @@ export function createJankoInput(options: JankoInputOptions): JankoInput {
   const wallNow = options.wallNow ?? (() => Date.now())
   const presses = new Map<string, Press>()
   const notes = new Map<string, Note>()
+  /** The clip's holds, each to the note it keeps. */
+  const holds = new Map<string, string>()
   const timings: KeyLatency[] = []
   let pedalDown = false
   let seq = 0
@@ -242,27 +266,34 @@ export function createJankoInput(options: JankoInputOptions): JankoInput {
   const out = (messages: MidiOutMessage[]) => { if (messages.length > 0) options.midiOut?.(messages) }
   const sustaining = () => settings().sustain || pedalDown
   const schedule = () => { if (!flushing) { flushing = true; queueMicrotask(flush) } }
+  /** The note sounding on `key`, whoever holds it: the owner counts one note a key. */
+  const onKey = (key: StageKey) => { for (const note of notes.values()) if (keyId(note.key) === keyId(key)) return note; return undefined }
+  const gone = (note: Note) => { notes.delete(note.id); for (const hold of note.clips) holds.delete(hold) }
+  const unheld = (note: Note) => note.presses.size === 0 && note.clips.size === 0
 
   const strike = (note: Note, amplitude: number, source: NoteSource, hostMs: number | null) => {
     const last = queue.at(-1)
-    const act = last?.kind === 'strike' && !last.keys.has(keyId(note.key)) && last.keys.size < MAX_KEYS ? last
-      : {kind: 'strike' as const, seq: ++seq, keys: new Map<string, StageKey>(), amplitude, sources: new Set<NoteSource>(), pressedAt: now(), hostMs}
+    const act = last?.kind === 'strike' && last.clip === null && !last.keys.has(keyId(note.key)) && last.keys.size < MAX_KEYS ? last
+      : {kind: 'strike' as const, seq: ++seq, keys: new Map<string, StageKey>(), amplitude, sources: new Set<NoteSource>(), pressedAt: now(), hostMs, clip: null}
     if (act !== last) queue.push(act)
     act.keys.set(keyId(note.key), note.key)
     act.amplitude = Math.max(act.amplitude, amplitude)
     act.sources.add(source)
     if (hostMs !== null) act.hostMs = Math.max(act.hostMs ?? 0, hostMs)
     note.act = act.seq
-    if (note.note >= 0 && note.note <= 127) out([{kind: 'on', channel: OUT_CHANNEL, note: note.note, velocity: Math.max(1, Math.min(127, Math.round(amplitude * 127)))}])
+    if (note.note >= 0 && note.note <= 127) {
+      out([{kind: 'on', channel: OUT_CHANNEL, note: note.note, velocity: Math.max(1, Math.min(127, Math.round(amplitude * 127)))}])
+      note.out = true
+    }
     schedule()
   }
   const release = (note: Note) => {
-    notes.delete(note.id)
+    gone(note)
     const last = queue.at(-1)
     const act = last?.kind === 'release' && last.keys.size < MAX_KEYS ? last : {kind: 'release' as const, keys: new Map<string, StageKey>()}
     if (act !== last) queue.push(act)
     act.keys.set(keyId(note.key), note.key)
-    if (note.note >= 0 && note.note <= 127) out([{kind: 'off', channel: OUT_CHANNEL, note: note.note, velocity: 0}])
+    if (note.out) out([{kind: 'off', channel: OUT_CHANNEL, note: note.note, velocity: 0}])
     schedule()
   }
   /** The owner named notes that made way: they no longer sound, so they are let go here too (no release is owed for them). A key this
@@ -271,10 +302,10 @@ export function createJankoInput(options: JankoInputOptions): JankoInput {
     let moved = false
     for (const key of keys) {
       if (act.keys.has(keyId(key))) continue
-      for (const note of notes.values()) {
+      for (const note of [...notes.values()]) {
         if (keyId(note.key) !== keyId(key) || note.act > act.seq) continue
-        notes.delete(note.id)
-        if (note.note >= 0 && note.note <= 127) out([{kind: 'off', channel: OUT_CHANNEL, note: note.note, velocity: 0}])
+        gone(note)
+        if (note.out) out([{kind: 'off', channel: OUT_CHANNEL, note: note.note, velocity: 0}])
         moved = true
       }
     }
@@ -289,6 +320,15 @@ export function createJankoInput(options: JankoInputOptions): JankoInput {
       const keys = [...act.keys.values()]
       if (act.kind === 'release') {
         void options.send({command: 'janko', action: 'release', keys}).then(result => { if (!result.ok) answered(result) }, cause => answered(failed(cause)))
+        continue
+      }
+      const clip = act.clip
+      if (clip) {
+        void options.send({command: 'janko', action: 'strike', keys, amplitude: act.amplitude, at_samples_elapsed: clip.at}).then(result => {
+          if (result.ok && result.made_way?.length) madeWay(act, result.made_way)
+          answered(result)
+          clip.settle(result)
+        }, cause => { const result = failed(cause); answered(result); clip.settle(result) })
         continue
       }
       const sentAt = now()
@@ -327,15 +367,17 @@ export function createJankoInput(options: JankoInputOptions): JankoInput {
         const key = keyForNote(keys, note, touchPoint)
         if (!key) continue
         const identity = set.repeatTouch === 'one-note' ? `note:${note}` : `key:${keyId(key)}`
-        if (held.includes(identity)) continue
-        held.push(identity)
-        const sounding = notes.get(identity)
+        // One note a key: a key the clip sounds is that note, whatever repeat touch names it.
+        const sounding = notes.get(identity) ?? onKey(key)
+        if (held.includes(sounding?.id ?? identity)) continue
+        held.push(sounding?.id ?? identity)
         if (sounding && sounding.presses.size > 0) { sounding.presses.add(id); continue }
-        // A note only Sustain holds is struck again on its own key, as a sustained piano key is; a new note strikes the key pressed.
-        const struck = sounding ?? {id: identity, key, note, presses: new Set<string>(), act: 0, lifted: null}
+        // A note only Sustain or the clip holds is struck again on its own key, as a sustained piano key is; a new note strikes the key
+        // pressed.
+        const struck = sounding ?? {id: identity, key, note, presses: new Set<string>(), clips: new Set<string>(), act: 0, lifted: null, out: false}
         struck.presses = new Set([id])
         struck.lifted = null
-        notes.set(identity, struck)
+        notes.set(struck.id, struck)
         strike(struck, amplitude, event.source, hostMs)
       }
       presses.set(id, {id, source: event.source, port: event.port ?? null, pitchClass: event.pitchClass, notes: held})
@@ -352,7 +394,7 @@ export function createJankoInput(options: JankoInputOptions): JankoInput {
         note.presses.delete(id)
         if (note.presses.size > 0) continue
         if (sustaining()) note.lifted = press
-        else release(note)
+        else if (note.clips.size === 0) release(note)
       }
       changed()
     },
@@ -365,7 +407,7 @@ export function createJankoInput(options: JankoInputOptions): JankoInput {
     refresh() {
       if (sustaining()) return
       let moved = false
-      for (const note of [...notes.values()]) if (note.presses.size === 0) { release(note); moved = true }
+      for (const note of [...notes.values()]) if (unheld(note)) { release(note); moved = true }
       if (moved) changed()
     },
     panic() {
@@ -377,7 +419,7 @@ export function createJankoInput(options: JankoInputOptions): JankoInput {
     },
     releaseWhere(which) {
       const gone = [...presses.values()].filter(which)
-      const sustained = [...notes.values()].filter(note => note.presses.size === 0 && note.lifted !== null && which(note.lifted))
+      const sustained = [...notes.values()].filter(note => unheld(note) && note.lifted !== null && which(note.lifted))
       if (gone.length === 0 && sustained.length === 0) return
       for (const press of gone) {
         presses.delete(press.id)
@@ -385,12 +427,65 @@ export function createJankoInput(options: JankoInputOptions): JankoInput {
           const note = notes.get(identity)
           if (!note) continue
           note.presses.delete(press.id)
-          if (note.presses.size === 0) release(note)
+          if (unheld(note)) release(note)
         }
       }
       for (const note of sustained) release(note)
       changed()
     },
     latency: () => [...timings],
+    clipStrike(clipNotes, amplitude, at) {
+      const state = windowOf()
+      const keys = state?.ok ? surfaceKeys(state.window) : null
+      if (!keys) {
+        const refusal: StageResult = {ok: false, error: state && !state.ok ? `${NO_SURFACE} (${state.fault})` : NO_SURFACE}
+        options.onResult?.(refusal)
+        options.onChange?.()
+        return Promise.resolve(refusal)
+      }
+      const struck: Note[] = []
+      for (const {hold, note} of clipNotes) {
+        if (!Number.isSafeInteger(note) || holds.has(hold)) continue
+        const key = keyForNote(keys, note, 0)
+        if (!key) continue
+        const sounding = onKey(key)
+        const target = sounding ?? {id: `clip:${keyId(key)}`, key, note, presses: new Set<string>(), clips: new Set<string>(), act: 0, lifted: null, out: false}
+        target.clips.add(hold)
+        target.lifted = null
+        holds.set(hold, target.id)
+        notes.set(target.id, target)
+        if (!struck.includes(target)) struck.push(target)
+      }
+      if (struck.length === 0) return Promise.resolve({ok: true})
+      let waiting = Math.ceil(struck.length / MAX_KEYS)
+      let first: StageResult | null = null
+      const answer = new Promise<StageResult>(resolve => {
+        const settle = (result: StageResult) => {
+          if (first === null || (first.ok && !result.ok)) first = result
+          else if (first.ok && result.ok && result.made_way?.length) first = {ok: true, made_way: [...(first.made_way ?? []), ...result.made_way]}
+          if (--waiting === 0) resolve(first)
+        }
+        for (let from = 0; from < struck.length; from += MAX_KEYS) {
+          const act = {kind: 'strike' as const, seq: ++seq, keys: new Map<string, StageKey>(), amplitude, sources: new Set<NoteSource>(), pressedAt: now(),
+            hostMs: null, clip: {at, settle}}
+          for (const note of struck.slice(from, from + MAX_KEYS)) { act.keys.set(keyId(note.key), note.key); note.act = act.seq }
+          queue.push(act)
+        }
+      })
+      schedule()
+      options.onChange?.()
+      return answer
+    },
+    clipRelease(gone) {
+      let moved = false
+      for (const hold of gone) {
+        const id = holds.get(hold)
+        holds.delete(hold)
+        const note = id === undefined ? undefined : notes.get(id)
+        if (!note || !note.clips.delete(hold)) continue
+        if (unheld(note) && !(note.lifted !== null && sustaining())) { release(note); moved = true }
+      }
+      if (moved) options.onChange?.()
+    },
   }
 }

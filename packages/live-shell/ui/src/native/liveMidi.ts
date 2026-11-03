@@ -238,7 +238,8 @@ export const subscribeLiveMidiOut = (listener: () => void) => { outListeners.add
 export const useLiveMidiOut = (): LiveMidiOutState => useSyncExternalStore(subscribeLiveMidiOut, liveMidiOut, liveMidiOut)
 
 /** One request of the host's MIDI output: read its ports, choose one (null lets it go), or send messages. A refusal is published in
- * the host's words, the ports kept. */
+ * the host's words. After a refused send the host is read again, so the picker shows the output it holds now: it lets go an output that
+ * went away, and keeps one that refused only a batch it could not carry. */
 async function outRequest(request: Record<string, unknown>, invoke: MidiOutInvoke): Promise<boolean> {
   if (!(nativeHost() || invoke !== tauriOut)) { publishOut({kind: 'refused', reason: LIVE_MIDI_OUT_ABSENT, ports: [], port: null}); return false }
   try {
@@ -247,7 +248,11 @@ async function outRequest(request: Record<string, unknown>, invoke: MidiOutInvok
     publishOut({kind: 'ports', ...answer})
     return true
   } catch (cause) {
-    const known = outState.kind === 'reading' ? {ports: [], port: null} : {ports: outState.ports, port: outState.port}
+    let known: {ports: readonly string[]; port: string | null} = outState.kind === 'reading' ? {ports: [], port: null} : {ports: outState.ports, port: outState.port}
+    if (request.kind === 'send') {
+      try { known = readOutState(await invoke(MIDI_OUT_COMMAND, {request: {kind: 'read'}})) ?? {ports: known.ports, port: null} }
+      catch { known = {ports: known.ports, port: null} }
+    }
     publishOut({kind: 'refused', reason: words(cause), ...known})
     return false
   }
@@ -258,9 +263,10 @@ const tauriOut: MidiOutInvoke = (command, args) => tauriInvoke(command, args)
 export const readLiveMidiOut = (invoke: MidiOutInvoke = tauriOut) => outRequest({kind: 'read'}, invoke)
 /** Connect the output named `port`, or let the connected one go (null). */
 export const chooseLiveMidiOut = (port: string | null, invoke: MidiOutInvoke = tauriOut) => outRequest({kind: 'choose', port}, invoke)
-/** Send what the part plays to the connected output; nothing leaves while no output is connected. */
+/** Send what the part plays to the connected output; nothing leaves while no output is connected. An output still connected after a
+ * refusal still takes the notes that follow. */
 export function sendLiveMidiOut(messages: readonly MidiOutMessage[], invoke: MidiOutInvoke = tauriOut): void {
-  if (messages.length === 0 || outState.kind !== 'ports' || outState.port === null) return
+  if (messages.length === 0 || outState.kind === 'reading' || outState.port === null) return
   void outRequest({kind: 'send', messages}, invoke)
 }
 /** The one MIDI out line: the output connected, none chosen, or the named refusal. */
