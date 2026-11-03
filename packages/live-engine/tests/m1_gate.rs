@@ -18,8 +18,10 @@ use live_engine::devices::{BypassDevice, GlueDevice};
 use live_engine::wav::read_wav_f32;
 use live_engine::{Graph, Track};
 
-const SIGNAL: &str =
-    "../../docs/research/ableton-live-12.0.25/harness/signals/steps-1k.wav";
+mod corpus;
+
+/// The harness signal, relative to the corpus root (`corpus::path`).
+const SIGNAL: &str = "harness/signals/steps-1k.wav";
 
 const SR: u32 = 48_000;
 
@@ -46,9 +48,7 @@ const STEPS: [(f64, f64); 7] = [
 /// tracked in git (docs/research/ableton-live-12.0.25 is ignored). A checkout
 /// without it skips these gates with a notice, as the golden renders do.
 fn corpus_present() -> bool {
-    let present = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join(SIGNAL)
-        .exists();
+    let present = corpus::path(SIGNAL).exists();
     if !present {
         eprintln!("skip: the harness signal is not present in this checkout ({SIGNAL})");
     }
@@ -56,7 +56,7 @@ fn corpus_present() -> bool {
 }
 
 fn load_signal() -> live_engine::wav::WavAudio {
-    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(SIGNAL);
+    let path = corpus::path(SIGNAL);
     let bytes = std::fs::read(&path)
         .unwrap_or_else(|e| panic!("harness signal missing at {}: {e}", path.display()));
     let wav = read_wav_f32(&bytes).expect("steps-1k.wav must parse");

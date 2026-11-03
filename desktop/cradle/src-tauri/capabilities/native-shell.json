@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "native-shell",
-  "description": "Qualified native shell candidate reads for the bundled main and registered detached webviews.",
-  "permissions": ["allow-live-shell-read", "allow-live-shell-config", "allow-live-shell-checkpoint-reply", "allow-live-shell-request-close", "allow-live-shell-continuity-pending", "allow-live-shell-continuity-confirm", "allow-live-shell-book-read", "allow-live-shell-book-write"],
+  "description": "Qualified native shell candidate reads, and the Live engine's owner operations (O-I #849), for the bundled main and registered detached webviews.",
+  "permissions": ["allow-live-shell-read", "allow-live-shell-config", "allow-live-shell-checkpoint-reply", "allow-live-shell-request-close", "allow-live-shell-continuity-pending", "allow-live-shell-continuity-confirm", "allow-live-shell-book-read", "allow-live-shell-book-write", "allow-live-engine-open", "allow-live-engine-play", "allow-live-engine-stop", "allow-live-engine-send", "allow-live-engine-mixer", "allow-live-engine-export"],
   "webviews": ["main", "surface-*"]
 }

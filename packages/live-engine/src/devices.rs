@@ -259,6 +259,10 @@ impl Device for EchoDevice {
         "Echo"
     }
 
+    fn prepare(&mut self, sample_rate: u32, _channels: usize) {
+        self.ensure_init(sample_rate);
+    }
+
     fn process(&mut self, frame_io: &mut [f32], clock: &Clock) {
         self.ensure_init(clock.sample_rate);
         let m = self.params.dry_wet.clamp(0.0, 1.0) as f32;
@@ -354,6 +358,10 @@ impl ReverbDevice {
 impl Device for ReverbDevice {
     fn name(&self) -> &str {
         "Reverb"
+    }
+
+    fn prepare(&mut self, sample_rate: u32, channels: usize) {
+        self.ensure_init(sample_rate, channels);
     }
 
     fn process(&mut self, frame_io: &mut [f32], clock: &Clock) {

@@ -9,6 +9,7 @@ import {detectTransport, kernelOp} from '../../../../../desktop/cradle/src/kerne
 import type {KernelTransportStatus, LiveClipAt, LiveClipReading, LiveCompReading, LiveNote, LiveSetAct, LiveSetActed, LiveTrackMixer} from '../../../../../desktop/cradle/src/kernel/types'
 import {invalidateSet, readSet, subscribeSet} from '../native/application'
 import type {SetSelection} from '../shell/liveSelection'
+import {engineEventOfMixerWrite, engineEventOfSendWrite, followInEngine} from './liveEngine'
 
 /** Where the selection's clip stands: its arrangement index, else its session slot; null when it names neither. */
 export function clipAtOf(selection: SetSelection): LiveClipAt | null {
@@ -96,11 +97,20 @@ export function writeLiveInsertClip(path: string, track: number, scene: number):
   })
 }
 
-/** The set's writers the tracks adapter takes (timeline/liveSetTrackAdapter.ts LiveSetReading), each on the set at `path`. */
+/** The set's writers the tracks adapter takes (timeline/liveSetTrackAdapter.ts LiveSetReading), each on the set at `path`. A mixer
+ * write or a send lands in the set first; while the engine plays the set it then moves the engine too (live/liveEngine.ts). */
 export function liveSetWrites(path: string) {
   return {
-    mixerWrite: (track: number, control: 'activator' | 'solo' | 'arm' | 'monitor', value: boolean | 'in' | 'auto' | 'off') => writeLiveMixer(path, track, control, value),
-    sendWrite: (track: number, index: number, value: number) => writeLiveSend(path, track, index, value),
+    mixerWrite: async (track: number, control: 'activator' | 'solo' | 'arm' | 'monitor', value: boolean | 'in' | 'auto' | 'off') => {
+      const row = await writeLiveMixer(path, track, control, value)
+      await followInEngine(path, kinds => engineEventOfMixerWrite(kinds, track, control, value))
+      return row
+    },
+    sendWrite: async (track: number, index: number, value: number) => {
+      const row = await writeLiveSend(path, track, index, value)
+      await followInEngine(path, kinds => engineEventOfSendWrite(kinds, track, index, value))
+      return row
+    },
     compWrite: (track: number, take: number, range: {start: number; end: number}) => writeLiveComp(path, track, take, range),
     act: (act: LiveSetAct) => writeLiveSetAct(path, act),
     insertClip: (track: number, scene: number) => writeLiveInsertClip(path, track, scene),

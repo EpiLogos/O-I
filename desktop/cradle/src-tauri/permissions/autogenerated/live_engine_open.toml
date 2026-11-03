@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-live-engine-open"
+description = "Enables the live_engine_open command without any pre-configured scope."
+commands.allow = ["live_engine_open"]
+
+[[permission]]
+identifier = "deny-live-engine-open"
+description = "Denies the live_engine_open command without any pre-configured scope."
+commands.deny = ["live_engine_open"]

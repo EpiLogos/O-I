@@ -13,3 +13,11 @@ cpal = { version = "0.15", optional = true }
 
 [features]
 realtime = ["dep:cpal"]
+# The Torus instrument node over QL's K8 typed API (src/k8.rs): build.rs
+# compiles the C ABI shim against QL_MEF_PREFIX (an installed QL prefix with
+# include/ql/continuous_field.hpp and lib/libql-mef-c.a).
+k8 = []
+
+[[example]]
+name = "key_to_sound"
+required-features = ["k8"]

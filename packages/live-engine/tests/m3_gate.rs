@@ -29,10 +29,11 @@ use live_engine::devices::{EchoDevice, EchoParams, ReverbDevice};
 use live_engine::wav::read_wav_f32;
 use live_engine::{Graph, Track};
 
-const RENDERS: &str =
-    "../../docs/research/ableton-live-12.0.25/harness/renders";
-const IMPULSE: &str =
-    "../../docs/research/ableton-live-12.0.25/harness/signals/impulse.wav";
+mod corpus;
+
+/// Relative to the corpus root (`corpus::path`).
+const RENDERS: &str = "harness/renders";
+const IMPULSE: &str = "harness/signals/impulse.wav";
 
 /// The golden export rate (devices/echo.md + reverb.md: 44.1 kHz / 16-bit).
 const SR: u32 = 44_100;
@@ -41,7 +42,7 @@ const SR: u32 = 44_100;
 /// (gen_signals.py). The engine plays the buffer at the render rate, so
 /// the impulse sits at frame 100 of an SR-rate render.
 fn load_impulse() -> Vec<f32> {
-    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(IMPULSE);
+    let path = corpus::path(IMPULSE);
     let bytes = std::fs::read(&path)
         .unwrap_or_else(|e| panic!("harness impulse missing at {}: {e}", path.display()));
     let wav = read_wav_f32(&bytes).expect("impulse.wav must parse");
@@ -83,9 +84,9 @@ fn mixdown(render: &[f32]) -> Vec<f32> {
 }
 
 fn read_render(name: &str) -> audio::Audio {
-    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(RENDERS).join(name);
+    let path = corpus::render(name).unwrap_or_else(|| corpus::path(RENDERS).join(name));
     let bytes = std::fs::read(&path)
-        .unwrap_or_else(|e| panic!("golden render missing at {}: {e}", path.display()));
+        .unwrap_or_else(|e| panic!("golden render missing at {} (nor in {}): {e}", path.display(), corpus::RENDER_ARCHIVE));
     audio::read_aiff_i16(&bytes).unwrap()
 }
 

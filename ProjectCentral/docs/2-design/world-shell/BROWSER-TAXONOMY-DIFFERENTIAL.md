@@ -193,13 +193,14 @@ Each bullet is tagged. "No honest equivalent" means the verdict is ABSENT in eve
 - **EVIDENCE:** Expressions and Technè show the same six-lens list. It sits in the Knowledge category of the one non-audio browser (`LS/WorldBrowser.tsx:182, 218`; `LS-app:268-269`). That is why this row is SHARED.
 - **EVIDENCE:** opening a lens switches the mode to Technè (`LS/NativeTechneBrowser.tsx:42`). A browser action therefore changes the mode, which is a sidebar-to-mode coupling to remove or keep on purpose (Q7).
 - **EVIDENCE:** the native live instrument (Operator and Wavetable style voice models) is not modelled: "Operator/Wavetable synthesis NOT yet modeled" (`SHELLBP:40`). It is `[gated]` (`NS/EXPRESSIONS-FEATURE-MAP.md:56`).
+- **EVIDENCE (since #849):** Operator's default patch plays on a MIDI part in `live-engine`, its notes read from the set and held to Live's renders (`packages/live-engine/tests/midi_gate.rs`); Wavetable is not hosted yet.
 - **INFERENCE:** in Factory, an agent device is the nearest instrument-like device (`NS/AGENTIC-CONVERGENCE.md:24-37, 101`). It is a design proposal, not built.
 
 ### 4.5 Audio Effects
 - **EVIDENCE:** the Expression device families are the nearest processor-like objects. They are field faces, morph, colour, force and entity and scene devices (`LS/nativeDeviceCatalogue.ts:67-74`). They are inserted by double-click, + Add or drag (`LS/NativeDeviceBrowser.tsx:26-38`).
 - **INFERENCE:** the Devices category mixes instrument-like and processor-like families in one list. Ableton separates them. A real Audio Effects folder would filter that list.
 - **EVIDENCE:** in Technè, Factory and Central there are no processor devices (`LS/NativeTechneBrowser.tsx:7-14`; `FAE:17-24`; `CR/surfaces/navigator/WorldNavigator.tsx:125-128`).
-- **EVIDENCE (Live fork, outside the four modes):** Glue, Echo and Reverb are real Audio Effects in `live-engine` (`SHELLBP:40-41`). This is where the Ableton effect row has honest content, in audio mode.
+- **EVIDENCE (the shell's engine, not a fork):** Glue, Echo and Reverb are real Audio Effects in `live-engine` (`SHELLBP:40-41`), and `live-engine` is the one engine the shell's Live parts sound in, from the first device of a part's chain to the Main track (manual §21.1 Rules, `1-vision/dlw/DLW.md:10806`). R1 has the reverse-engineered audio engine and devices land in the shell as they mature (`0-ground/PROGRAMME.md:88-89`); ticket #849 lands it. This is where the Ableton effect row has honest content: on a Live part's chain.
 
 ### 4.6 MIDI Effects
 - **No honest equivalent in any mode.** The feature inventory has no note-transform or event-processing row (`NS/EXPRESSIONS-FEATURE-MAP.md:15-73`). Pointer and click effects are interaction, not note transforms (line 37).
