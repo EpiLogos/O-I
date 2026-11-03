@@ -3137,6 +3137,26 @@
             "source_ref": "docs/experience/STORIES.md#LH07"
           },
           {
+            "id": "LH08",
+            "label": "[Lived-in] I turn on the body figure's layers to see what the traditions place on the body.",
+            "source_ref": "docs/experience/STORIES.md#LH08"
+          },
+          {
+            "id": "LH09",
+            "label": "[Lived-in] I turn on Human Design's centres beside the seven.",
+            "source_ref": "docs/experience/STORIES.md#LH09"
+          },
+          {
+            "id": "LH10",
+            "label": "[Lived-in] I watch the figure take the posture my flow is playing.",
+            "source_ref": "docs/experience/STORIES.md#LH10"
+          },
+          {
+            "id": "LH11",
+            "label": "[Lived-in] I select the heart on the figure and find the centre I rested on in my sitting.",
+            "source_ref": "docs/experience/STORIES.md#LH11"
+          },
+          {
             "id": "LQ01",
             "label": "[Lived-in] I expand the M′ matrices above the chain and play a note to find where its sound comes from.",
             "source_ref": "docs/experience/STORIES.md#LQ01"
@@ -5663,7 +5683,7 @@
           },
           {
             "id": "TO04",
-            "label": "[Lived-in] I widen how far I look, from My World alone to the fields it is joined to.",
+            "label": "[Lived-in] I widen how far I look, from My World alone to everything the field shows.",
             "source_ref": "docs/experience/STORIES.md#TO04"
           },
           {
@@ -5735,6 +5755,76 @@
             "id": "TO18",
             "label": "[Lived-in] I watch a run of work in a shared field, live, or as it was kept, or played back.",
             "source_ref": "docs/experience/STORIES.md#TO18"
+          },
+          {
+            "id": "SF01",
+            "label": "[Lived-in] I switch on Link and my world takes its place in the field among everyone else's.",
+            "source_ref": "docs/experience/STORIES.md#SF01"
+          },
+          {
+            "id": "SF02",
+            "label": "[Lived-in] I look at my world as others see it and find only my clearings open.",
+            "source_ref": "docs/experience/STORIES.md#SF02"
+          },
+          {
+            "id": "SF03",
+            "label": "[Lived-in] I light a star for a shared interest: what it gathers, and who may come.",
+            "source_ref": "docs/experience/STORIES.md#SF03"
+          },
+          {
+            "id": "SF04",
+            "label": "[Lived-in] A second world, on another machine, asks to gather at my star and I let it in.",
+            "source_ref": "docs/experience/STORIES.md#SF04"
+          },
+          {
+            "id": "SF05",
+            "label": "[Lived-in] I bring my world to someone else's star, and later leave it.",
+            "source_ref": "docs/experience/STORIES.md#SF05"
+          },
+          {
+            "id": "SF06",
+            "label": "[Lived-in] I read a star's day: who is here now, what was brought and what was said to what.",
+            "source_ref": "docs/experience/STORIES.md#SF06"
+          },
+          {
+            "id": "SF07",
+            "label": "[Lived-in] I contribute to something another world has shown: a question, a finding, a correction or a reproduction, aimed at a place, a page, a relation or another contribution.",
+            "source_ref": "docs/experience/STORIES.md#SF07"
+          },
+          {
+            "id": "SF08",
+            "label": "[Lived-in] I read what has reached me from the field, and why each thing reached me.",
+            "source_ref": "docs/experience/STORIES.md#SF08"
+          },
+          {
+            "id": "SF09",
+            "label": "[Lived-in] I find the same work held in my world and in another, and set my reading beside theirs.",
+            "source_ref": "docs/experience/STORIES.md#SF09"
+          },
+          {
+            "id": "SF10",
+            "label": "[Lived-in] My agent answers at a star for my world while I am away.",
+            "source_ref": "docs/experience/STORIES.md#SF10"
+          },
+          {
+            "id": "SF11",
+            "label": "[Lived-in] I visit a world whose owner's machine is off, and read what they had shown.",
+            "source_ref": "docs/experience/STORIES.md#SF11"
+          },
+          {
+            "id": "SF12",
+            "label": "[Lived-in] I show a piece of work in Factory, and the people I let in watch it being made.",
+            "source_ref": "docs/experience/STORIES.md#SF12"
+          },
+          {
+            "id": "SF13",
+            "label": "[Lived-in] At a star I lit for a programme, I offer a task, and another person's agent takes it up on their own machine.",
+            "source_ref": "docs/experience/STORIES.md#SF13"
+          },
+          {
+            "id": "SF14",
+            "label": "[Lived-in] I withdraw something I showed.",
+            "source_ref": "docs/experience/STORIES.md#SF14"
           },
           {
             "id": "TG01",
@@ -6635,6 +6725,71 @@
             "id": "NS09",
             "label": "[Lived-in] When the bell ends the sitting, I write a line about it, or nothing.",
             "source_ref": "docs/experience/STORIES.md#NS09"
+          },
+          {
+            "id": "NS10",
+            "label": "[Lived-in] I sit with a centre and have the bell ring its planet.",
+            "source_ref": "docs/experience/STORIES.md#NS10"
+          },
+          {
+            "id": "NS11",
+            "label": "[Lived-in] I let the torus breathe with me while I sit.",
+            "source_ref": "docs/experience/STORIES.md#NS11"
+          },
+          {
+            "id": "NS12",
+            "label": "[Lived-in] I build a flow of postures with their holds.",
+            "source_ref": "docs/experience/STORIES.md#NS12"
+          },
+          {
+            "id": "NS13",
+            "label": "[Lived-in] Before I add a posture, I read what its text teaches.",
+            "source_ref": "docs/experience/STORIES.md#NS13"
+          },
+          {
+            "id": "NS14",
+            "label": "[Yours] I launch a flow and press Play.",
+            "source_ref": "docs/experience/STORIES.md#NS14"
+          },
+          {
+            "id": "NS15",
+            "label": "[Lived-in] I pause, move on when I am ready, go back, or hold longer.",
+            "source_ref": "docs/experience/STORIES.md#NS15"
+          },
+          {
+            "id": "NS16",
+            "label": "[Lived-in] I read where a flow gives and where it gathers.",
+            "source_ref": "docs/experience/STORIES.md#NS16"
+          },
+          {
+            "id": "NS17",
+            "label": "[Lived-in] I let Nara tell me each stage aloud.",
+            "source_ref": "docs/experience/STORIES.md#NS17"
+          },
+          {
+            "id": "NS18",
+            "label": "[Lived-in] I practise a flow to music.",
+            "source_ref": "docs/experience/STORIES.md#NS18"
+          },
+          {
+            "id": "NS19",
+            "label": "[Lived-in] I ask Nara for today's practice.",
+            "source_ref": "docs/experience/STORIES.md#NS19"
+          },
+          {
+            "id": "NS20",
+            "label": "[Lived-in] When a flow ends, Nara asks me one question.",
+            "source_ref": "docs/experience/STORIES.md#NS20"
+          },
+          {
+            "id": "NS21",
+            "label": "[Lived-in] I read a past flow as I planned it and as it happened.",
+            "source_ref": "docs/experience/STORIES.md#NS21"
+          },
+          {
+            "id": "NS22",
+            "label": "[Lived-in] I practise a flow with others at a star.",
+            "source_ref": "docs/experience/STORIES.md#NS22"
           },
           {
             "id": "NK01",

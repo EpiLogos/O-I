@@ -53,7 +53,7 @@ they have just made drifting out on a wider ring until it is no longer new.
 Come down to the surface and
 the places on it are the things you are making. A project is a place on the
 ground, with paths worn between its landmarks; a book you are writing is
-another; a practice you keep to yourself is a room fogged to everyone but you.
+another; a practice you keep to yourself stays under cloud to everyone but you.
 The day's work leaves tracks across the surface. Nothing else circles: your
 files, your open pages and the works you have to hand are on the ground, not in
 the sky.
@@ -12156,6 +12156,8 @@ The Chakra shows the seven centres of the body and what the sky does to each. Us
 
 The Chakra belongs to M4′ (§16.16). Your centres are the energy body that your identity matrix develops into: birth date, chart, type and profile read together give each centre its weight. From there each centre reaches down through form to its planet and its interval in the Sky, which is how the sky of the day touches your own centres.
 
+A centre is one centre wherever you meet it. The map says what it is, the body figure says where it sits, and your identity and the sky say how it answers in you. The heart the Chakra lights is the heart on the figure, the heart you rest on in a sitting (§24.1) and the heart in your field (§24.7).
+
 #### The centres
 
 There are seven centres and the Earth under them. The Earth grounds the Root. It is not an eighth centre.
@@ -12183,10 +12185,14 @@ The centres rise from the Root to the Crown. The Crown dissolves into the source
 | Colour source | Element palette · Sky arc colour | Element palette | Where the colour of a centre comes from. |
 | Natal distribution | Off · On | Off | Shows how your birth sky spreads over the centres. Only you see it. |
 | Detail | Element · Mantra · Yantra: each On · Off | Element On | What each row shows besides the centre name. |
+| Layers | Centres · Nāḍīs · Channels and points · Organs · Muscles · Human Design: each On · Off | Centres On | With View on Body figure, what the figure shows. |
+| Pose | Standing · Follows the practice | Follows the practice | With View on Body figure, how the figure stands. Follows the practice takes each stage of the posture a flow is playing (§24.3). |
 
 A route has a source for each centre. The own planet of each centre is in the table above. The decan ruler is the planet that rules the part of the sky where a body stands. The Sun reaches all seven centres.
 
 How your birth sky meets the sky of the date is what Quaternal Logic's computational systems compute, and the Chakra shows what they give. It chooses no reading of its own.
+
+Under Body figure the centres stand on a figure of the human body, drawn from one anatomical reference: each centre at its place on the spine, with its point on the front of the body, the Root at the base and the Crown at the top of the head. Layers adds what the traditions place on the same body: the nāḍīs, the central channel and the two that wind about it; the channels and points of acupuncture; the organs; the muscles; and Human Design's nine centres, as a system of their own. Each place on the figure shows where it comes from: a classical text, a commentary, a convention of practice, or a diagram. Where two traditions place a thing differently, the figure shows both.
 
 #### Views
 
@@ -12212,11 +12218,12 @@ The compact Chakra shows seven small discs, lit by their hits, and four macros.
 
 ##### Whole
 
-The whole Chakra shows every parameter, in three groups.
+The whole Chakra shows every parameter, in four groups.
 
 | Group | Parameters |
 |---|---|
 | Sky | View, Date, Routes, Hits, Colour source, Detail |
+| Body | Layers, Pose |
 | Personal | Natal distribution |
 | Rack | M4′'s parts, 0 to 5 (§16.16) |
 
@@ -12225,6 +12232,8 @@ The Chakra is M4′'s face, so its Rack page holds M4′'s rack: your identity m
 ##### Full
 
 The full Chakra fills the pane with the seven centres at full size. Route lines run from the planets to the centres that they reach. The Earth stands under the Root. Follow a route line from a planet to its centre.
+
+With View on Body figure, the full Chakra is the figure at full size, with the layers you turned on. Drag to turn it. Select a centre or a point to read its detail and where it comes from.
 
 ##### Widget
 
@@ -12245,6 +12254,7 @@ The widget shows seven discs with the planet of each. Click a disc to open its c
 3. Turn one route off at a time. See which planets lit which centre.
 4. Set Natal distribution on. Compare your centres with the date.
 5. Select a centre to see its detail.
+6. Set View to Body figure and turn on Nāḍīs. See where each centre sits on the central channel.
 
 #### Rules
 
@@ -12254,6 +12264,9 @@ The widget shows seven discs with the planet of each. Click a disc to open its c
 - Your personal layer does not become portable because it is drawn.
 - Every effect that you see traces back to a centre and a route.
 - The routes are counted, not weighted. No centre shows a value that has no route.
+- A centre is one centre everywhere. The Chakra, the body figure, a practice and an Expression name the same centre of the map, and none keeps a copy of its own.
+- The body figure is everyone's body. It is never a likeness of you, and your personal layer lies over it only on your screen.
+- Human Design's nine centres are a system of their own. They are never mapped onto the seven.
 
 #### Tips
 
@@ -12264,7 +12277,7 @@ The widget shows seven discs with the planet of each. Click a disc to open its c
 
 **Source:** QL's own system
 
-**Stories:** LH01–LH07
+**Stories:** LH01–LH11
 
 ### 22.6 M′ matrices
 
@@ -12862,15 +12875,16 @@ You need somewhere to keep a practice for years: the pages you write in the morn
 
 ### 24.1 The practice world
 
-**Product:** Central, with Quaternal Logic · **Track:** your practice world · **Clip:** a journal, a dream journal, a sitting, a journey · **Agent:** Nara
+**Product:** Central, with Quaternal Logic · **Track:** your practice world · **Clip:** a journal, a dream journal, a sitting, a flow, a journey · **Agent:** Nara
 
-Your practice is a world of its own, kept on your planet as a room fogged to everyone but you (§2). In Central it is a track of Kind Practice. Its chain is the packet, Nara and Nara's scope: Nara is the agent of this world, and it reads only what you give it.
+Your practice is a world of its own, kept on your planet under cloud to everyone but you (§2). In Central it is a track of Kind Practice. Its chain is the packet, Nara and Nara's scope: Nara is the agent of this world, and it reads only what you give it.
 
 | Clip | What it is | Opens as |
 |---|---|---|
 | Journal | A flow you write in alone, one page a day. | Journal |
 | Dream journal | A flow whose entries are dreams. | Journal |
 | A sitting | One time you sat: its length, its focus and what you noticed. | The field, in Expressions |
+| A flow | Postures, breathing and stillness, each with its hold, played on one timer (§24.3). | The body figure, in the Chakra |
 | A concern | Something you carry over days or months, read with one deck (§24.4). | Flow, or Reading as an Expression |
 
 Nara comes to know you from the days and flows you give it. Every passage it draws on keeps its source, its revision, who wrote it, when it happened and when it arrived. A correction stands beside what it corrects; nothing earlier is rewritten. Select a passage and choose Answer this, and Nara answers into the page from what you wrote, naming each passage it used. A turn you speak aloud stands with your body: Nara hears it as embodied.
@@ -12900,7 +12914,7 @@ The sitting's Clip panel holds:
 | Field | Values | Default | What it does |
 |---|---|---|---|
 | Length | 1 to 120 minutes | 20 minutes | How long the sitting lasts. |
-| Bell | A note of the scale, or Off | The torus's root | The tone the torus rings at the start, the intervals and the end. |
+| Bell | A note of the scale · The centre's planet · Off | The torus's root | The tone the torus rings at the start, the intervals and the end. The centre's planet rings the interval of the focus centre's planet over the Fundamental (§22.2): Saturn's 3:2 for the Root. |
 | Intervals | Off · every 5 · 10 · 15 · 30 minutes | Off | Rings the bell during the sitting. |
 | Focus | Breath · A centre · An inquiry · Open | Breath | What you rest your attention on. |
 | Centre | One of the seven centres | The heart | With Focus on a centre, lights that centre in the field. |
@@ -12909,17 +12923,19 @@ The sitting's Clip panel holds:
 
 In Session view the clip shows the time left as a ring. Stop ends the sitting now and keeps the length you actually sat; the transport's Loop shows the intervals.
 
+A sitting is a flow with one hold (§24.3), so its Pace and Breath guide work as a flow's: with Breath guide on, the torus breathes with you while you sit.
+
 - A sitting keeps the time you actually sat.
 - Nothing scores a sitting, and the field does not tell you how you are. It shows your centres as their sources give them.
 - You can end a sitting at any moment.
 
 #### Rules
 
-- The practice world is fogged to everyone but you. Raising any of it into wider view asks you first, page by page.
+- The practice world stays under cloud to everyone but you. Raising any of it into wider view asks you first, page by page.
 - Nara keeps no second journal. Everything it knows of you is in your own pages, at their revisions.
 - What you write never changes your identity. A correction to your identity is its own act.
 
-**Stories:** NP01–NP09, NP11, NV01–NV06, NS01–NS09, NK01
+**Stories:** NP01–NP09, NP11, NV01–NV06, NS01–NS11, NK01
 
 ### 24.2 Journal and dreams
 
@@ -12942,9 +12958,70 @@ Select an image in a dream and choose **Amplify**. Nara lays beside it the place
 
 **Stories:** NJ01–NJ07
 
-### 24.3 Sitting
+### 24.3 Flows
 
-A sitting is a clip of the practice world's track (§24.1): its length, its bell and its intervals stand in its Clip panel, and Play rings the bell and begins.
+**Product:** Central, with Quaternal Logic · **Clip:** a flow on the practice world · **Device:** the Chakra's body figure (§22.5)
+
+You need to practise with your body as well as sit: to know which posture comes next, how to come into it, how long to stay and when to let it go, without watching a clock. A flow is that practice. It lists the postures, breathing and stillness you will move through, each with its hold, and plays them on one timer while the body figure shows each stage and the torus keeps the time in sound. A sitting is the simplest flow: one hold of stillness between two bells.
+
+Add to a flow from the browser, under Practice: postures, breathing practices, seals, locks, cleansings and meditations, each as the haṭha texts teach it, with its verses, the stages of coming into it, what the text says it is good for and what to watch. Each entry of the flow holds:
+
+| Entry | Values | Default | What it does |
+|---|---|---|---|
+| Practice | One item from the browser's Practice | — | What you do. |
+| Side | Right · Left · Both | Both, for a posture with two sides | Both does the right side, then the left. |
+| Hold | A time · A count of breaths · A range | The practice's own range | How long you stay. A count of breaths is timed at the flow's pace. Under a range the timer waits at least the shorter time, moves on by itself at the longer, and between them you move on when you are ready. |
+| Enter | Seconds | The practice's own | How long you take to come in, shared among its stages. |
+| Release | Seconds | 4 s | How long you take to come out. |
+| Rest | Seconds | None | A pause after the release. |
+| Note | Text | Empty | Your own note to the entry. |
+
+The flow's Clip panel holds:
+
+| Field | Values | Default | What it does |
+|---|---|---|---|
+| Pace | 2 to 20 breaths a minute | 6 | The pace a count of breaths is timed at, and the pace the torus breathes at. |
+| Breath guide | On · Off | Off | With On, the torus swells as you breathe in and shrinks as you breathe out, at the pace. |
+| Bell | A note of the scale · Off | The torus's root | The tone that rings as each hold begins, more softly between sides, and when the flow ends. |
+| Cues | Written · Spoken · Off | Written | How each stage is told to you: its words beside the figure, or Nara saying them (§19.21). |
+| After | Write a line · Nara asks · Nothing | Write a line | What opens when the flow ends. |
+
+In Clip view a flow lies along its time: each entry a block, and inside it the stages of coming in, the hold, the release and the rest. Coming in and holding are drawn as going out, releasing and resting as coming back, the three and three of the torus (§16.16), so you can see where a flow gives and where it gathers. The bells stand as marks on the line. Drag an edge to change a time.
+
+Launch the flow and press Play. The pane shows the body figure in the first stage of the first posture, and the figure moves to each stage as the timer reaches it. The clip shows the time left in the segment as a ring. The bell rings as each hold begins, more softly between sides, and when the flow ends. Under Breath guide the torus swells and shrinks at your pace: at six breaths a minute its pulse is in the Breath band (§21.2), and you breathe with it.
+
+| Control on the flow's clip | What it does |
+|---|---|
+| Pause | Holds the timer where it is. Play goes on from there. |
+| Next | Moves on now. Within a range it waits until the shorter time has passed. |
+| Back | Returns to the start of this posture and side. |
+| Extend | Holds this posture longer. |
+
+Stop ends the flow now and keeps what you did, as it ends a sitting. A flow keeps each segment as you planned it and as it happened, and a past practice opens in Clip view with the two side by side.
+
+To practise to music, put the flow and a Live part's clip in one scene and launch the scene. The music plays with the flow under one transport, and the bell keeps the flow's time over it.
+
+Nara can prepare a flow with you, keep quiet while you practise, and ask after it.
+
+| When | What Nara does |
+|---|---|
+| Before | Ask for today's practice and Nara proposes a flow from the hour and the sky: the decan the Sun stands in, the centres it reaches, the postures that work them, and what the texts say to watch. It arrives as a proposal. Keep it, change it or set it aside. |
+| During | Nara is quiet. Under Cues: Spoken it says each stage as you come to it, and with the practice track's Input on you can speak to it (§24.1). |
+| After | Under After: Nara asks, Nara asks one question about what you noticed. Your answer is kept as an observation, and what you take it to mean is a separate entry (§24.5). |
+
+To practise with others, bring the flow to a star you are gathered at and show it there (§2). Those gathered can take it into their own practice world, or follow it with you as you play it, each bell ringing on its own machine. What each of you noticed stays under your own cloud.
+
+#### Rules
+
+- Before a flow begins, each posture shows what its text says to watch.
+- Each posture keeps its source: the text that teaches it, and whether a detail is the text's, a commentary's, a convention of practice or a diagram.
+- Nothing scores a flow. A hold longer or shorter than planned is kept as what happened.
+- You can end a flow at any moment.
+- Nara never moves you on sooner or holds you longer than the flow says. Its guidance is practice, not therapy, and it says so.
+- A flow Nara proposes enters your practice only when you keep it.
+- The body figure is everyone's body, never a likeness of you (§22.5).
+
+**Stories:** NS12–NS22, LH10
 
 ### 24.4 Journeys
 
@@ -13063,12 +13140,21 @@ What a practice teaches you can return to the Day's face 5, and from there, once
 | Practice | Nara's branch |
 |---|---|
 | Identity and natal sky | M4.0 Mahamaya identity matrix: birthdate (M4.0-0), chart (M4.0-1), Jungian (M4.0-2), Gene Keys (M4.0-3), Human Design (M4.0-4), quintessence (M4.0-5) |
-| Sitting, centres, today's sky on you | M4.1 Sympathetic medicine: elemental ground (M4.1-0), energy body (M4.1-1), timing (M4.1-4), feedback and safety (M4.1-5) |
+| Sitting, flows, centres, today's sky on you | M4.1 Sympathetic medicine: elemental ground (M4.1-0), energy body (M4.1-1), timing (M4.1-4), feedback and safety (M4.1-5) |
 | Journeys | M4.2 Divinatory frameworks: tarot (M4.2-1), I Ching (M4.2-2), casting with consent (M4.2-3), interpretation (M4.2-4) |
-| Containers, and how a concern changes | M4.3 Mediating transformation: Bohmian dialogue (M4.3-2.0), talking circle (M4.3-2.1), Diamond Approach inquiry (M4.3-2.2), phase history (M4.3-5) |
+| Containers; a flow's going out and coming back; today's practice; how a concern changes | M4.3 Mediating transformation: the cycle (M4.3-0), Bohmian dialogue (M4.3-2.0), talking circle (M4.3-2.1), Diamond Approach inquiry (M4.3-2.2), safety and pace (M4.3-3), the season's practices (M4.3-4), phase history (M4.3-5) |
 | Lenses; journal and dreams as lived history | M4.4 Context and lenses: Gebser (M4.4.0) to Trika (M4.4.5); temporal sedimentation (M4.4.4.2), symbolic body (M4.4.4.3) |
 | You, where all of it meets | M4.4.4.4 Personal Pratibimba |
 | Returns | M4.5 Epii integration |
+
+Everything Nara knows of you is held once and met in four places. The map says what a centre, a posture or a codon is. The body figure says where it sits in the body. Your identity, today's sky and what you are doing say how it answers in you, and only you see that. The Chakra, a flow, the Torus and an Expression's seven centres each draw it. One thing keeps one name in all four, so the heart you rest on in a sitting is the heart the Chakra lights, the heart on the figure and the heart in your field.
+
+#### Rules
+
+- A reading goes from the map towards the drawing. Nothing drawn changes the map, the figure or your identity.
+- A change to what a centre or a posture is goes to the map as a proposal and waits for review.
+- Distinct systems stay distinct. Human Design's nine centres are not the seven, a station on the plate is not a centre, and the Earth that grounds the Root is not an eighth.
+- Your identity, today's sky and what you are doing make one composition, and Nara reads your centres from it. A practice never writes back into your identity.
 
 ## 25. The agent world
 
