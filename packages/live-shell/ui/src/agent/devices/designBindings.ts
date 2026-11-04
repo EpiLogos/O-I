@@ -106,7 +106,7 @@ const REFUSE = {
   // Scope's Asks page (§19.12 Asks): Calls to other agents is AIKit's ingress rule for a call from one agent to another, which no write
   // reaches; Wait and On no answer are the harness's approvals timeout and what a timed-out request comes to, which harness_agent_control
   // does not carry (it carries approvals, transport, connect and stall-after only: harnessAgentControl.ts).
-  calls: missing('Calls to other agents', 'an ingress rule for the sender kind agent (GatewayIngressDecision has no write for it)', 'AIKit'),
+  calls: missing('Calls to other agents', 'an ingress rule for the sender kind agent: AIKit\'s GatewayIngressPolicy decides by a sender\'s own id (sender_overrides) or its one default, never by kind, and no write reaches it', 'AIKit'),
   wait: missing('Wait', 'the agent\'s approvals timeout (Hermes\' approvals.timeout: harness_agent_control carries approvals, transport, connect and stall-after only)', 'Actuation'),
   noAnswer: missing('On no answer', 'a timed-out request\'s outcome on the agent\'s harness', 'Actuation'),
   place: missing('A place in reach', 'the scope places write (WO-SF2)', 'Software Factory'),

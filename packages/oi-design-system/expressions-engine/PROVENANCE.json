@@ -383,8 +383,8 @@
     },
     "engine/shaders/simulationShaders.mjs": {
       "source": "desktop/cradle/expressions-app/src/engine/shaders/simulationShaders.ts",
-      "source_sha256": "73148e76653c728f8ad7996bfd3b61d730f0ce8690b38787562b44b65cffd37b",
-      "output_sha256": "a72277c11d9471d08adc7ea95d6febcc0df874a61e1c8b916d00d6b1cb98aee3",
+      "source_sha256": "4b83fc53283d8fc6849aca1a3d5e0af6b6c3b86f4046bee599f0015a733690d7",
+      "output_sha256": "706556a7f085e11d702e3eb9236a1b644f59aedb15cb2d7366bbea0bce6ae4ee",
       "compiler": "esbuild@0.21.5",
       "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
     },

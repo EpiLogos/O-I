@@ -206,6 +206,36 @@ test('Group, on chains chosen in the list, asks Central to propose them as an ag
   bind.resetHolds()
 })
 
+// ---------------------------------------------------------------- the chain list's controls wait on their owners (O-I #772)
+
+test('each chain-list control refuses in the words of the operation it waits for, and of the nearest operation that is not it (O-I #772)', async () => {
+  const R = own.AGENTSET_REFUSE
+  // Solo is what you attend to, never what runs (§16.1 "Live's acts, kept as Live keeps them": Solo is never "A limit on what may run";
+  // §16.6 Rules). AIKit's session Solo gates launches to the soloed sessions (encounter_task_executor.rs, the Solo gate), so the rack's
+  // Solo cannot be it, though it is the setting the Session view's mixer writes.
+  assert.match(R.solo, /^Solo: no owner operation carries it yet — missing op: .*\(the live shell\)\./)
+  assert.match(R.solo, /encounter_session_settings \{track: \{solo\}\}\) gates launches to the soloed sessions/)
+  assert.match(R.solo, /a limit on what may run, which Solo never is \(§16\.1, §16\.6\)/)
+  // Drag out is a move; AIKit's one session move is a track's Delete.
+  assert.match(R.extract, /\(AIKit\)\. AIKit's detach-agent-session \(the kernel's encounter_session_detach\) is a track's Delete/)
+  // Add a chain: AIKit's attach reaches the kernel only for a new session in a new space.
+  assert.match(R.add, /\(AIKit\)\. AIKit's attach-agent-session reaches the kernel only inside encounter_provision, which seats a new session in a new space/)
+  // Bench and Hot-Swap: no session-space mutation holds either.
+  for (const key of ['bench', 'swap']) assert.match(R[key], /AIKit's session-space mutations \(create; bind and unbind a Project context; attach and detach a session/, key)
+  // Each write refuses in exactly those words, and reaches no owner.
+  const sent = []
+  const ports = {saveSet: async input => { sent.push(['save', input]) }, propose: async input => { sent.push(['propose', input]) }, agent: agentOf(sent)}
+  const rack = own.agentsetBinding({group: CREW, tracks: TRACKS, holds: bind.chainHolds(), nowUnixMs: NOW}, ports)
+  for (const [key, value, control] of [[`solo:${KITE.sessionRef}`, true, 'solo'], [`bench:${KITE.sessionRef}`, true, 'bench'], ['swap', KITE.sessionRef, 'swap'],
+    ['extract', CAIRN.sessionRef, 'extract'], ['add', 'agent/wren', 'add']]) {
+    assert.equal(rack.writes(key), true, `${key} is the rack's to refuse`)
+    assert.equal(rack.standing[control].disabled, R[control], `${control} stands dimmed with its reason`)
+    await assert.rejects(() => rack.write([{key, value}]), error => error.message === R[control], key)
+  }
+  assert.deepEqual(sent, [], 'no owner was asked')
+  bind.resetHolds()
+})
+
 // ---------------------------------------------------------------- the name (owner: "never Agentset in anything a person reads")
 
 test('the device is named Agent rack: its title, its runtime device, its manifest note, every view and refusal; its id stays', () => {

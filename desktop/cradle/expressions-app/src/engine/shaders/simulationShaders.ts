@@ -1120,10 +1120,11 @@ void main() {
     vec3 pairAccel;
     if (uPairwise3D > 0.5) {
       // 3D bodies: the force pass's second draw buffer carries the depth-axis
-      // dv, and the clamp must bound the full 3D velocity change, not its
-      // in-plane projection. Stored order is (plane axis 0, depth, plane axis 1),
-      // which is already the world order on the XZ plate.
-      vec3 pairDv3 = vec3(pw.z, texture2D(uPairwiseForceZTexture, vUv).x, pw.w);
+      // dv in y (x is the depth position correction, the position pass's), and
+      // the clamp must bound the full 3D velocity change, not its in-plane
+      // projection. Stored order is (plane axis 0, depth, plane axis 1), which
+      // is already the world order on the XZ plate.
+      vec3 pairDv3 = vec3(pw.z, texture2D(uPairwiseForceZTexture, vUv).y, pw.w);
       float pairDvLen3 = length(pairDv3);
       if (pairDvLen3 > uPairMaxDelta) pairDv3 *= uPairMaxDelta / pairDvLen3;
       pairAccel = (uCompPlane < 0.5) ? vec3(pairDv3.x, pairDv3.z, pairDv3.y) : pairDv3;

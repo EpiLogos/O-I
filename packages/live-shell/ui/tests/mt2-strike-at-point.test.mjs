@@ -35,6 +35,7 @@ const bundle = (entry, name) => {
 const touch = () => bundle(join(journeys, 'src/native-field/surfaceTouch.ts'), 'touch')
 const stage = () => bundle(join(journeys, 'src/camera.ts'), 'camera')
 const controller = () => bundle(join(journeys, 'src/native-field/controller.ts'), 'controller')
+const stageCommands = () => bundle(join(journeys, 'src/stageCommands.ts'), 'stage-commands')
 const fixture = () => import(new URL('../../../../desktop/cradle/tests/native-expression-fixture.mjs', import.meta.url))
 
 const TAU = 2 * Math.PI
@@ -212,7 +213,7 @@ test('a chord of touches is one act, and only a running field takes a touch; a p
 })
 
 test('a press is a touch only while the instrument plays; pen pressure strikes as on the keys; perspective is told, a miss is not', async () => {
-  const {touchStrike} = await touch()
+  const {touchStrike, TOUCH_STRENGTH} = await touch()
   const {project} = await stage()
   const {c} = await openController()
   try {
@@ -220,7 +221,7 @@ test('a press is a touch only while the instrument plays; pen pressure strikes a
     const flat = {projection: 'orthographic', worldScale: SCALE.worldScale}
     assert.deepEqual(touchStrike(null, rim.x, rim.y, at, flat), {point: null, why: 'The live instrument is not playing.', say: false}, 'no instrument, no touch')
     assert.ok(touchStrike(c.reading, rim.x, rim.y, at, flat).point, 'a playing field takes the press')
-    assert.equal(touchStrike(c.reading, rim.x, rim.y, at, flat).amplitude, undefined, 'a mouse or a finger strikes at the owner\'s default')
+    assert.equal(touchStrike(c.reading, rim.x, rim.y, at, flat).amplitude, TOUCH_STRENGTH, 'a mouse or a finger strikes at the played strike\'s default')
     assert.equal(touchStrike(c.reading, rim.x, rim.y, at, {...flat, pressure: 0.5}).amplitude, 0.45, 'a pen strikes at 0.9 × pressure')
     assert.equal(touchStrike(c.reading, rim.x, rim.y, at, {...flat, pressure: 0.05}).amplitude, 0.15, 'held to 0.15 at the lightest')
     assert.equal(touchStrike(c.reading, rim.x, rim.y, at, {...flat, pressure: 1}).amplitude, 0.9, 'held to 0.9 at the heaviest')
@@ -234,17 +235,62 @@ test('a press is a touch only while the instrument plays; pen pressure strikes a
   } finally { await c.dispose() }
 })
 
-test('the frame wires the touch: the stage press hands its pixel and the stage to the native field, which strikes what touchStrike names', async () => {
+test('the frame wires the touch: the stage press hands its pixel, the stage and the frame\'s one strike to the native field, which strikes what touchStrike names through it', async () => {
   const {readFile} = await import('node:fs/promises')
-  const app = await readFile(join(journeys, 'src/app.ts'), 'utf8')
-  const nativeField = await readFile(join(journeys, 'src/nativeField.ts'), 'utf8')
+  const strip = text => text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')
+  const app = strip(await readFile(join(journeys, 'src/app.ts'), 'utf8'))
+  const nativeField = strip(await readFile(join(journeys, 'src/nativeField.ts'), 'utf8'))
   const press = app.slice(app.indexOf("$('stage').addEventListener('pointerdown'"), app.indexOf("$('stage').addEventListener('pointermove'"))
-  assert.match(press, /if\(presenting\|\|!editing\)\{if\(ev\.button===0\)nativeField\?\.touch\(ev\.clientX,ev\.clientY,\{camera,width,height\}/, 'a play-state press on the stage is offered to the torus first')
+  assert.match(press, /if\(presenting\|\|!editing\)\{if\(ev\.button===0\)nativeField\?\.touch\(ev\.clientX,ev\.clientY,\{camera,width,height\},ev\.pointerType==='pen'\?ev\.pressure:undefined,stageStrike\)/, 'a play-state press on the stage is offered to the torus first, with the frame\'s one strike')
   assert.ok(press.indexOf('nativeField?.touch(') > press.indexOf("tool==='orbit'"), 'an orbit or pan drag never strikes: the camera takes it before the torus is offered the press')
   const body = nativeField.slice(nativeField.indexOf('const touch=('), nativeField.indexOf('const openLive='))
-  assert.match(body, /touchStrike\(controller\.reading as any,x,y,view,\{projection,worldScale:WORLD_SCALE,pressure\}\)/)
-  assert.match(body, /controller\.playAt\(\[strike\.point\],strike\.amplitude\)/)
+  assert.match(body, /const touched=touchStrike\(controller\.reading as any,x,y,view,\{projection,worldScale:WORLD_SCALE,pressure\}\)/)
+  assert.match(body, /strike\(\[touched\.point\],touched\.amplitude\)/, 'the touch strikes through the strike it is handed')
+  assert.doesNotMatch(body, /playAt|controller\.torus/, 'never past the channel')
+  assert.doesNotMatch(nativeField, /controller\.playAt\(/, 'nothing in the native field strikes at points past the channel')
   assert.match(nativeField, /return \{controller,panel,command,stage,touch,/, 'the frame holds the touch on the native field it installs')
+  // Every strike the frame makes itself has one path: one strike-at the frame reads, run as the shell's is run, handed to the touch and
+  // to the collisions alike.
+  assert.equal(app.match(/command:'strike-at'/g)?.length, 1, 'one strike-at the frame makes')
+  const one = app.match(/function stageStrike\([^)]*\)[^{]*\{([\s\S]*?)\n\}/)
+  assert.ok(one, 'app.ts holds the frame\'s one strike')
+  assert.match(one[1], /readStageRequest\(\{v:1,kind:'host-command',req:[^}]*command:'strike-at',points,amplitude\}\)/, 'read as the shell\'s strike-at is read')
+  assert.match(one[1], /runStageCommand\(/, 'run as it runs')
+  assert.doesNotMatch(one[1], /playAt|controller\./, 'never past the channel')
+  assert.match(app, /nativeField\?\.collide\(engine\.takeContacts\?\.\(\)\?\?null,stageStrike\)/, 'the collisions strike by the same path')
+  // Struck in the press, as before: the channel runs the owner's strike before it awaits anything.
+  const run = app.slice(app.indexOf('async function runStageCommand('))
+  assert.doesNotMatch(run.slice(0, run.indexOf('switch(command.command)')), /await/, 'nothing is awaited before the command is read')
+  const strikeCase = run.slice(run.indexOf("case 'strike-at':"), run.indexOf("case 'singlet':"))
+  assert.match(strikeCase, /^case 'strike-at':\s*if\(!nativeField\)throw new Error\([^)]*\);\s*\{const \{landed_at_samples_elapsed\}=await nativeField\.controller\.playAt\(command\.points,command\.amplitude,command\.at_samples_elapsed\)/, 'the owner\'s strike is the first thing the case does')
+})
+
+test('a touch reaches the owner through the stage channel exactly as it struck before: read as the shell\'s strike-at, struck now, at its strength', async () => {
+  const {touchStrike, TOUCH_STRENGTH} = await touch()
+  const {project} = await stage()
+  const {readStageRequest} = await stageCommands()
+  const {owner, c} = await openController()
+  try {
+    const view = camera({yaw: 0.3, pitch: -0.4}), at = {camera: view, ...SIZE}, flat = {projection: 'orthographic', worldScale: SCALE.worldScale}
+    for (const [theta, phi] of [[1.1, 4.0], [0.4, 2.2], [5.6, 0.7]]) {
+      const pixel = project(toStage(qlTorus(theta, phi)), view, SIZE.width, SIZE.height)
+      for (const pressure of [undefined, 0.05, 0.5, 1]) {
+        const touched = touchStrike(c.reading, pixel.x, pixel.y, at, {...flat, pressure})
+        if (!touched.point) continue
+        const read = readStageRequest({v: 1, kind: 'host-command', req: 1, command: 'strike-at', points: [touched.point], amplitude: touched.amplitude})
+        assert.ok(read, `a touch is in the stage vocabulary (pressure ${pressure})`)
+        assert.deepEqual(read.command, {command: 'strike-at', points: [touched.point], amplitude: touched.amplitude}, 'its point and strength, and no landing sample: struck now')
+      }
+    }
+    // A mouse or a finger strikes at what the played strike gives when it is given no strength.
+    // The plate follows the same: the struck reading the frame draws is the same point, source and voices.
+    const point = {theta: 1, phi: 2}, plate = () => { const {source, points, refs} = c.reading.instrument.struck; return structuredClone({source, points, refs}) }
+    await c.playAt([point])
+    const before = plate()
+    await c.playAt([point], TOUCH_STRENGTH)
+    assert.deepEqual(owner.strikesAt.at(-1), owner.strikesAt.at(-2), 'the touch\'s strength is the played strike\'s default')
+    assert.deepEqual(plate(), before, 'the plate reads the touch as it read it before')
+  } finally { await c.dispose() }
 })
 
 test('a touch the owner refuses changes nothing the torus plays, and the refusal is the owner\'s', async () => {

@@ -101,3 +101,43 @@ test('a named native module still compiles and samples the actual image geometry
     fs.rmSync(directory, {recursive: true, force: true});
   }
 });
+
+test('verify refuses a vendored module that imports a name the module it imports does not export (the 0c8fee533 miss)', () => {
+  // 0c8fee533 added M3_TORUS_TUBE to glyphLibrary.ts and imported it in simulationShaders.ts. A named refresh of simulationShaders.ts
+  // that retained its dependencies wrote a simulationShaders.mjs importing M3_TORUS_TUBE from a glyphLibrary.mjs vendored before the
+  // name existed; the kept upstream module carries no source hash, every specifier resolved, verify passed, and the shell's build broke.
+  const directory = testDirectory('oi-vendor-named-imports-');
+  try {
+    const scripts = path.join(directory, 'scripts');
+    fs.mkdirSync(scripts);
+    fs.copyFileSync(path.join(root, 'scripts/vendor-expressions-engine.mjs'), path.join(scripts, 'vendor-expressions-engine.mjs'));
+    const retained = path.join(directory, 'packages/oi-design-system/expressions-engine');
+    fs.cpSync(path.join(root, 'packages/oi-design-system/expressions-engine'), retained, {recursive: true});
+    // The native sources and contract the compiler receipts name, and the installed esbuild, as this tree has them.
+    const cradle = path.join(directory, 'desktop/cradle');
+    fs.mkdirSync(cradle, {recursive: true});
+    for (const shared of ['node_modules', 'expressions-app', 'kernel']) fs.symlinkSync(path.join(root, 'desktop/cradle', shared), path.join(cradle, shared), 'dir');
+    const verify = () => spawnSync(process.execPath, [path.join(scripts, 'vendor-expressions-engine.mjs'), '--verify'], {encoding: 'utf8', timeout: 60_000, maxBuffer: 4 * 1024 * 1024});
+    const clean = verify();
+    assert.equal(clean.error, undefined);
+    assert.equal(clean.status, 0, `the vendored tree as it stands verifies: ${clean.stderr}`);
+    // The miss again: glyphLibrary.mjs as it was before it exported the tube ratio, a kept upstream module with no compiler receipt (as
+    // it stood until 856 refreshed it), under the simulationShaders.mjs that imports it.
+    const provenancePath = path.join(retained, 'PROVENANCE.json'), provenance = JSON.parse(fs.readFileSync(provenancePath, 'utf8'));
+    assert.ok(provenance.files['engine/glyphLibrary.mjs'], 'the glyph library is vendored');
+    delete provenance.module_refreshes['engine/glyphLibrary.mjs'];
+    fs.writeFileSync(provenancePath, JSON.stringify(provenance, null, 2) + '\n');
+    const glyphs = path.join(retained, 'engine/glyphLibrary.mjs'), shaders = fs.readFileSync(path.join(retained, 'engine/shaders/simulationShaders.mjs'), 'utf8');
+    assert.match(shaders, /import \{ M3_TORUS_TUBE \} from "\.\.\/glyphLibrary\.mjs"/, 'the shaders import the tube ratio from the glyph library');
+    const exported = fs.readFileSync(glyphs, 'utf8'), unexported = exported.replace(/\n {2}M3_TORUS_TUBE,\n/, '\n');
+    assert.notEqual(unexported, exported, 'the glyph library\'s export list names the tube ratio');
+    fs.writeFileSync(glyphs, unexported);
+    const broken = verify();
+    assert.equal(broken.error, undefined);
+    assert.notEqual(broken.status, 0, `a broken import fails verify: ${broken.stdout}`);
+    assert.match(broken.stderr, /engine\/shaders\/simulationShaders\.mjs: imports 'M3_TORUS_TUBE' from engine\/glyphLibrary\.mjs, which does not export it/);
+    assert.match(broken.stderr, /--refresh-module src\/engine\/glyphLibrary\.ts/, 'and says which refresh mends it');
+  } finally {
+    fs.rmSync(directory, {recursive: true, force: true});
+  }
+});
