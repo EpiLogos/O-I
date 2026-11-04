@@ -190,7 +190,7 @@ export const TORUS_ABSENT: Readonly<Record<string, string>> = {
   view: 'Surface, wire or both is a way of drawing the pane: no owner keeps it.',
   receiver: 'No owner takes the camera as the place where the torus is heard.',
   meter: 'The owner reports no level meter: its audio receipt carries the presentation gain and its block counts, not a level.',
-  sounding: 'The owner reports no sounding keys: the keyboard strikes the owner\'s played voices (nativeField.ts playJanko), answered yes or no; QL\'s torus-play, which counts each key as a note at its moving point, is not yet the keyboard\'s path.',
+  sounding: 'No key is lit from the owner here: the keyboard strikes each key through QL\'s torus-play, which counts it as a note at its moving point, and the sounding notes stand in Notes (each key and the arc it struck); this picture lights pitch classes, which that reading does not name.',
   // body.source: the hand's choice over M2's body constants (QL's table, `ql kernel body-constants`; qlCoordinateName.ts BodyTable), written
   // as the body's Damping through the stage channel (torusBody); absent with its reason until the table is read and the owner takes edits.
   'body.source': 'Reading M2\'s body constants…',

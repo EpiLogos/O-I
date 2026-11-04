@@ -12,7 +12,6 @@ import {STUDIO_PROCEDURE} from './stageReading';
 
 type StageProceduralCommand=Extract<StageCommand,{command:'procedural-stage'}>;
 import {createLiveEntry} from './native-field/liveEntry.mjs';
-import {planJankoStrike} from './native-field/jankoStrike.mjs';
 import {torusPlayReading} from './native-field/torusPlay.mjs';
 import {touchStrike,type StageView} from './native-field/surfaceTouch';
 import {WORLD_SCALE} from './nativeParameters';
@@ -507,25 +506,35 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
    if(command.action!=='state')await controller.stageState();
   }finally{update();}
  };
- const command=async(edit:InstrumentEdit):Promise<void>=>{
+ /** An instrument edit (stageCommands.ts InstrumentEdit). One that acts on the owner answers the sample its act landed at (the owner's cursor
+  * when it took the act; O-I 855), and with `at` it is made once the owner's sound has reached that sample (controller.ts untilSample). */
+ const command=async(edit:InstrumentEdit,at?:string):Promise<{landed_at_samples_elapsed?:string}>=>{
   const reading=controller.reading as any;
+  // An edit that acts on the owner answers the sample it landed at; with `at` it first waits for the owner's sound to reach that sample (O-I 855).
+  const reach=async()=>{if(at!==undefined)await controller.untilSample(at);};
   if(edit.kind==='lens'||edit.kind==='context-frame'||edit.kind==='harmonic'||edit.kind==='transcription'){
    if(!reading.instrument)throw new Error('No scene is open. Open the live instrument first; its determinants act on the scene.');
-   await controller.edit(edit.kind==='lens'?{kind:'lens',lens12:edit.lens12}:edit.kind==='context-frame'?{kind:'context-frame',context_frame:edit.context_frame}
+   await reach();
+   const landed=await controller.edit(edit.kind==='lens'?{kind:'lens',lens12:edit.lens12}:edit.kind==='context-frame'?{kind:'context-frame',context_frame:edit.context_frame}
     :edit.kind==='harmonic'?{kind:'harmonic',source:edit.source}:{kind:'transcription',rna:edit.rna});
+   update();return {landed_at_samples_elapsed:landed};
   }
-  else if(edit.kind==='damping'){
+  if(edit.kind==='damping'){
    // The body's Damping (a Q factor) through the owner's own set-damping, lowered per material mode on the scene's voices (lowerQDamping).
    if(!reading.instrument)throw new Error('No scene is open. Open the live instrument first; the body it damps is the scene\'s.');
+   await reach();
    const lowered=lowerQDamping(reading.instrument.acting?.voices??[],edit.q_factor);
-   await controller.operate({operation:'set-damping',per_second:lowered.per_second});
+   const acknowledged=await controller.operate({operation:'set-damping',per_second:lowered.per_second}) as any;
+   update();return {landed_at_samples_elapsed:String(acknowledged.acknowledged.samples_elapsed)};
   }
-  else if(edit.kind==='torus'){
+  if(edit.kind==='torus'){
    // The Torus's M1′ session through QL's own torus-set (O-I #850): the owner validates, refuses in its words, and its reply is read back.
    if(!reading.instrument)throw new Error('No scene is open. Open the live instrument first; the Torus plays the scene.');
-   await controller.torusSet(edit.edit);
+   await reach();
+   const landed=await controller.torusSet(edit.edit);update();return {landed_at_samples_elapsed:landed};
   }
-  else if(edit.kind==='muted')controller.setMuted(edit.muted);
+  if(at!==undefined)throw new Error('This edit is made on the frame\'s own sound, at the device\'s time: it lands at no sample of the owner.');
+  if(edit.kind==='muted')controller.setMuted(edit.muted);
   else if(edit.kind==='cadence'){if(edit.rate==='hold')controller.pause('held by you');else controller.play(edit.rate);}
   else if(edit.kind==='level')controller.setLevel(edit.value);
   else if(edit.kind==='scale')controller.setScale(edit.units_per_metre);
@@ -533,6 +542,7 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   else if(edit.kind==='effect-chain')controller.setEffectChain(edit.chain);
   else controller.followDomain();
   update();
+  return {};
  };
  /** Enter the Live cut: open the live instrument muted, as the panel's own open does, once per entry, with one retry (liveEntry.mjs). Nothing
   * sounds: the session opens muted and sound stays the person's choice. A refusal (no scene, no owner, no retained field) is named in the
@@ -543,15 +553,6 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   isBusy:()=>busy||composing||(controller.reading as any).status==='opening',
   fieldLive:()=>!!(engine as any).retainedTopology?.(),
  });
- /** A Jankó chord from the Live keyboard: the owner's own played voices for each pitch class, struck as one act through the owner's strike,
-  * now or at `at`, the owner's sample cursor a player scheduled it at (O-I #809). Any silent class refuses the whole chord by name
-  * (planJankoStrike); nothing is synthesised here. */
- const playJanko=async(pitchClasses:number[],amplitude:number,at?:string):Promise<void>=>{
-  const reading=controller.reading as any;
-  const plan=planJankoStrike(reading.instrument?.influence?.played_addresses,pitchClasses);
-  if(plan.refusal)throw new Error(plan.refusal);
-  await controller.playVoices(plan.refs,amplitude,at);
- };
  /** A touch on the torus (DLW §21.2 "What strikes the Torus": "A touch | The point of the surface you touch"): what the press strikes
   * (surfaceTouch.ts touchStrike, from the stage as the engine is handed it and the engine's own projection), struck through the owner's
   * strike at a point. Answers whether the press was a touch on the torus; a press that is not one is left to the stage. */
@@ -599,5 +600,5 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   settledOn=identity;reopenWhenStill();
  };
  update();
- return {controller,panel,command,stage,playJanko,touch,openLive,leaveLive,rebind,authoredMoved,dispose:()=>{clearInterval(timer);engine.setTorusVoices?.(null);clearTimeout(reopening);panel.removeEventListener('click',click);panel.removeEventListener('input',range);panel.removeEventListener('pointerdown',pressKey);panel.removeEventListener('focusin',focusKey);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('pagehide',pagehide);panel.remove();domainView.dispose();style.remove();void controller.dispose();}};
+ return {controller,panel,command,stage,touch,openLive,leaveLive,rebind,authoredMoved,dispose:()=>{clearInterval(timer);engine.setTorusVoices?.(null);clearTimeout(reopening);panel.removeEventListener('click',click);panel.removeEventListener('input',range);panel.removeEventListener('pointerdown',pressKey);panel.removeEventListener('focusin',focusKey);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('pagehide',pagehide);panel.remove();domainView.dispose();style.remove();void controller.dispose();}};
 }

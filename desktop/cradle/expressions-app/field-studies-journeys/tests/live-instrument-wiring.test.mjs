@@ -19,12 +19,12 @@ function caseBlock(source, name) {
 
 test('the instrument edit is applied whether or not the stage is visible: its case reads no visibility', () => {
   const block = caseBlock(app, 'instrument');
-  assert.match(block, /nativeField\.command\(command\.edit\)/);
+  assert.match(block, /nativeField\.command\(command\.edit,command\.at_samples_elapsed\)/);
   assert.doesNotMatch(block, /presented|hidden|visib|concealed/i, 'no presentation gate in the instrument case');
 });
 
 test('the owner command never queues: it runs the controller operation now, and an owner refusal is thrown by name', () => {
-  const start = nativeField.indexOf('const command=async(edit:InstrumentEdit)');
+  const start = nativeField.indexOf('const command=async(edit:InstrumentEdit,');
   assert.ok(start >= 0);
   const body = nativeField.slice(start, nativeField.indexOf('/** Enter the Live cut', start));
   assert.doesNotMatch(body, /setTimeout|queue|push\(|pending/i, 'no silent queue');

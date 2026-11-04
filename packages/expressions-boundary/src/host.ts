@@ -12,8 +12,9 @@ import {onSharedTimeWindowChange, SHARED_TIME_NUDGE, type DisclosureSessionStore
 /** A stage control that the frame never answers settles as a refusal, never a hang. */
 const STAGE_TIMEOUT_MS = 60000;
 /** The stage commands the owner takes while the frame is concealed: the Live instrument's edits, the Jankó's keys (their strikes and
- * releases, O-I #853), a strike at points and the owner's audio clock. */
-const CONCEALED_STAGE_COMMANDS: ReadonlySet<StageCommand['command']> = new Set(['instrument', 'janko', 'strike-at', 'audio-clock']);
+ * releases, O-I #853), a strike at points, the owner's audio clock, and a Live take's reads (O-I 855): the performance journal (where
+ * each note landed), the Torus kept and set again, and a take rendered offline. */
+const CONCEALED_STAGE_COMMANDS: ReadonlySet<StageCommand['command']> = new Set(['instrument', 'janko', 'strike-at', 'audio-clock', 'performance-journal', 'torus', 'render-take']);
 /** An Expression open waiting for the frame's readiness, with the settle of its answer. */
 interface PendingExpressionOpen {ref: string; refresh: boolean; lens?: HostedTechneLens; recovery?: RecoveryBinding; settle: (result: StageResult) => void}
 const SUPERSEDED_OPEN = 'A newer open superseded this one before the Expressions application was ready';
@@ -227,7 +228,8 @@ export class ExpressionsHost {
       const stage = readStageResult(data), pending = stage ? this.pendingStage.get(stage.req) : undefined;
       if (stage && pending && pending.epoch === this.epoch) {
         clearTimeout(pending.timer); this.pendingStage.delete(stage.req);
-        pending.settle(stage.ok ? (stage.clock ? {ok: true, clock: stage.clock} : stage.made_way ? {ok: true, made_way: stage.made_way} : {ok: true}) : {ok: false, error: stage.error});
+        // The answer as read (readStageResult): each part it carries, and nothing else.
+        if (stage.ok) { const {req: _req, ...answer} = stage; pending.settle(answer); } else pending.settle({ok: false, error: stage.error});
       }
       if (kind === 'host-capture-result' || stage) return;
     }
@@ -439,7 +441,8 @@ export class ExpressionsHost {
     if (!this.ready) throw Error('The Expressions application has not reported its state yet');
     // The Live instrument's edits, the Jankó keyboard's keys, a strike at points of the torus (a touch, the M3 clock) and the owner's
     // audio clock a player schedules those strikes on (O-I #809) reach the owner while the frame is concealed (as a DAW's knobs and keys
-    // stay live under the arrangement). Every other stage command keeps the presented gate.
+    // stay live under the arrangement), as do a take's reads: the journal, the Torus kept and set again, a take rendered (O-I 855).
+    // Every other stage command keeps the presented gate.
     if (!this.presented() && !CONCEALED_STAGE_COMMANDS.has(command.command)) throw Error('The requested application is concealed');
     const req = ++this.stageRequests;
     const message = stageRequestMessage(req, command);

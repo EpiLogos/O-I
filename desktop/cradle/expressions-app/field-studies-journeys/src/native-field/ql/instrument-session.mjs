@@ -35,9 +35,13 @@ const STRIKE_AT_MAX_METRES = 1.0;
 // admitted basis, state answers the held score with its currentness. Neither
 // advances the field.
 // torus-state is the Torus's M1′ session reading (ql-mef continuous/host.rs
-// torus_operation): a read, the field unchanged.
+// torus_operation): a read, the field unchanged. torus-checkpoint is the body
+// as it rings with its form, forces, comma and seeds (ql.torus-checkpoint/v1):
+// a read too, and so is torus-render: a take rendered offline on a second
+// owner of the same scene (ql.torus-render/v1), this owner neither moving nor
+// sounding.
 const READ_OPERATIONS = ['read', 'inspect', 'influence', 'personal', 'receive-personal', 'stage-state',
-  'score-resolve', 'score-state', 'torus-state'];
+  'score-resolve', 'score-state', 'torus-state', 'torus-checkpoint', 'torus-render'];
 const SCORE_OPERATIONS = ['score-resolve', 'score-state'];
 // The stage's acts on the one owner (ql-mef continuous/host.rs stage_operation).
 // stage-evaluate runs an invoked procedure's plan. retire releases a procedure's
@@ -49,7 +53,15 @@ const STAGE_ACTS = ['stage-evaluate', 'stage-retire', 'stage-bind', 'stage-unbin
 // moving points: one strike at points, one generation. torus-release moves no
 // native state (the body rings on). torus-set moves none either, except a
 // Fundamental edit, which is one modes continuation of the same voices.
-const TORUS_ACTS = ['torus-set', 'torus-play', 'torus-release'];
+// torus-restore (O-I #855) rings the body again from a checkpoint: the event's
+// modes and shape continuations when the event moved, the damping when it
+// moved, and the body's state, so one to four generations, no samples, no PCM.
+const TORUS_ACTS = ['torus-set', 'torus-play', 'torus-release', 'torus-restore'];
+const TORUS_CHECKPOINT = 'ql.torus-checkpoint/v1';
+// The owner's own bounds on one render (ql-mef scene_field.rs TORUS_RENDER_FRAMES_MAX, TORUS_RENDER_ACTS_MAX).
+const TORUS_RENDER = 'ql.torus-render/v1';
+const TORUS_RENDER_FRAMES_MAX = 2 ** 20;
+const TORUS_RENDER_ACTS_MAX = 4096;
 // The owner acts that move no native state by their own law: a release (the body rings on), a session edit other than the
 // Fundamental, and the stage's retire, bind and unbind. Their acknowledgement is the field as it stands, so there is nothing
 // to present: they claim no presentation block and are never refused for want of one (O-I #790: a dense clip releases as
@@ -189,6 +201,7 @@ export class InstrumentSession {
       // A Torus edit moves the owner only when it changes the Fundamental.
       const torusSet = command.operation === 'torus-set';
       const fundamental = torusSet && command.edit?.fundamental !== undefined;
+      const torusRestore = command.operation === 'torus-restore';
       // replace-event commits modes and, when required, shape. m1-advance
       // additionally commits inscription-axis alignment. replace-event's own
       // strike flag is a policy within the modes commit, not another generation.
@@ -207,6 +220,7 @@ export class InstrumentSession {
       need((event ? after >= before + minimumEventDelta && after <= before + maximumEventDelta
         : stageEvaluation ? after > before
         : torusSet ? after === before || (fundamental && after === before + 1n)
+        : torusRestore ? after >= before + 1n && after <= before + 4n
         : after === before + (changing ? 1n : 0n)) &&
         cursor(frame.samples_elapsed) === cursor(this.#native.samples_elapsed) + BigInt(frames) &&
         frame.audio.length === frames, 'host operation and native cursor disagree');
@@ -227,7 +241,8 @@ export class InstrumentSession {
       // field event it was resolved against.
       return { frame, sources: reply.sources, influence: reply.influence, personal: reply.personal, stage: reply.stage,
         score: reply.score, current: reply.current, resolved_event_ref: reply.resolved_event_ref,
-        torus: reply.torus, torus_play: reply.torus_play, strike_at: reply.strike_at };
+        torus: reply.torus, torus_play: reply.torus_play, strike_at: reply.strike_at, torus_checkpoint: reply.torus_checkpoint,
+        torus_render: reply.torus_render };
     } catch (error) {
       this.#unknown(String(error)); throw error;
     } finally { clearTimeout(timer); }
@@ -454,6 +469,79 @@ export class InstrumentSession {
     try {
       const reply = await this.#exchange({ operation: 'torus-state' });
       need(!reply.refused, String(reply.error)); this.#torus = structuredClone(reply.torus); return reply.torus;
+    } finally { this.#busy = false; }
+  }
+
+  /** The Torus as it rings (`ql.torus-checkpoint/v1`): the body's state, its
+   * form, forces, comma and seeds, taken at the acknowledged sample. A read:
+   * the field does not advance. Pending timed acts are not kept; the
+   * performance journal keeps them. */
+  async torusCheckpoint() {
+    need(!this.#busy && !this.#held, 'inspection requires an idle admitted owner'); this.#busy = true;
+    try {
+      const reply = await this.#exchange({ operation: 'torus-checkpoint' });
+      need(!reply.refused, String(reply.error));
+      need(reply.torus_checkpoint?.schema === TORUS_CHECKPOINT, 'the owner answered with no Torus checkpoint');
+      this.#torus = structuredClone(reply.torus); return structuredClone(reply.torus_checkpoint);
+    } finally { this.#busy = false; }
+  }
+
+  /** Ring the Torus again from a checkpoint the owner gave: one owner act, which
+   * the owner refuses in words when the checkpoint is not of this body. */
+  async torusRestore(checkpoint) {
+    need(checkpoint && typeof checkpoint === 'object' && !Array.isArray(checkpoint) && checkpoint.schema === TORUS_CHECKPOINT,
+      `a Torus restore takes the owner's ${TORUS_CHECKPOINT}`);
+    return this.operate({ operation: 'torus-restore', checkpoint: structuredClone(checkpoint) });
+  }
+
+  /** A take rendered offline (`ql.torus-render/v1`, O-I #855): from `checkpoint` on a
+   * second owner of the same scene, or continuing the last render (`continues`, the
+   * token its answer gave), `frames` of sound with each act ({action:'strike', keys,
+   * amplitude} | {action:'release', keys} | {action:'set', edit}, each with the
+   * `at_samples_elapsed` it lands at, in the order of their samples) made at its sample.
+   * A read: this owner neither moves nor sounds. The answer keeps the render owner's
+   * sound, the notes that made way strike by strike, where it ended as a checkpoint and
+   * the token that continues it. A longer take renders in parts. */
+  async torusRender({ checkpoint, continues, acts = [], frames } = {}) {
+    need((checkpoint === undefined) !== (continues === undefined), 'a render takes either a checkpoint or the render it continues');
+    if (checkpoint !== undefined) need(checkpoint && typeof checkpoint === 'object' && !Array.isArray(checkpoint) &&
+      checkpoint.schema === TORUS_CHECKPOINT, `a render begins from the owner's ${TORUS_CHECKPOINT}`);
+    if (continues !== undefined) need(typeof continues === 'string' && continues.length > 0 && continues.length <= 256,
+      'continues names the render its answer gave');
+    need(Number.isSafeInteger(frames) && frames >= 1 && frames <= TORUS_RENDER_FRAMES_MAX,
+      `a render takes 1 to ${TORUS_RENDER_FRAMES_MAX} frames; a longer take renders in parts`);
+    need(Array.isArray(acts) && acts.length <= TORUS_RENDER_ACTS_MAX, `a render takes at most ${TORUS_RENDER_ACTS_MAX} acts`);
+    const taken = acts.map(act => {
+      need(act && typeof act === 'object' && typeof act.at_samples_elapsed === 'string' &&
+        /^(0|[1-9][0-9]{0,19})$/.test(act.at_samples_elapsed) && BigInt(act.at_samples_elapsed) <= U64,
+        'a take\'s act names the sample it lands at as an exact sample cursor');
+      const at_samples_elapsed = act.at_samples_elapsed;
+      if (act.action === 'strike') {
+        const amplitude = act.amplitude;
+        need(Array.isArray(amplitude) && amplitude.length === 2 &&
+          amplitude.every(v => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) <= STRIKE_AT_MAX_METRES),
+          `a Torus act's amplitude must be two finite metres within ${STRIKE_AT_MAX_METRES.toFixed(1)}`);
+        return { action: 'strike', at_samples_elapsed, keys: this.#keys(act.keys), amplitude: [amplitude[0], amplitude[1]] };
+      }
+      if (act.action === 'release') return { action: 'release', at_samples_elapsed, keys: this.#keys(act.keys) };
+      if (act.action === 'set') {
+        need(act.edit && typeof act.edit === 'object' && !Array.isArray(act.edit) && Object.keys(act.edit).length > 0,
+          'a Torus edit names at least one setting');
+        return { action: 'set', at_samples_elapsed, edit: structuredClone(act.edit) };
+      }
+      return need(false, 'a take\'s act is a strike, release or set');
+    });
+    need(!this.#busy && !this.#held, 'a render requires an idle admitted owner'); this.#busy = true;
+    try {
+      const command = { operation: 'torus-render', ...(checkpoint === undefined ? { continues } : { checkpoint: structuredClone(checkpoint) }),
+        acts: taken, frames };
+      const reply = await this.#exchange(command);
+      need(!reply.refused, String(reply.error));
+      const render = reply.torus_render;
+      need(render?.schema === TORUS_RENDER && Array.isArray(render.audio) && render.audio.length === frames &&
+        render.audio.every(Number.isFinite) && render.checkpoint?.schema === TORUS_CHECKPOINT && typeof render.continues === 'string',
+        'the owner answered with no render of the take');
+      return render;
     } finally { this.#busy = false; }
   }
 

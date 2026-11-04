@@ -34,7 +34,7 @@ test('a Q factor is lowered per material mode as π·f/Q; the scene, which keeps
 });
 
 test('the instrument command damps the scene\'s body through the owner\'s own set-damping, and refuses by name without a scene', () => {
-  const start = nativeField.indexOf('const command=async(edit:InstrumentEdit)');
+  const start = nativeField.indexOf('const command=async(edit:InstrumentEdit,');
   const body = nativeField.slice(start, nativeField.indexOf('/** Enter the Live cut', start));
   const damping = body.slice(body.indexOf("edit.kind==='damping'"));
   assert.ok(damping.length > 0, 'the command has a damping case');

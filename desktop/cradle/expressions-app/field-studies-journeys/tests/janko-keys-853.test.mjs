@@ -90,7 +90,7 @@ test('every note is a key of the surface: a chord of pitch classes is refused be
   }
   const app = await readFile(join(journeys, 'src/app.ts'), 'utf8');
   const janko = app.slice(app.indexOf("case 'janko':"), app.indexOf("case 'strike-at':"));
-  assert.match(janko, /torusPlay\(command\.keys/);
+  assert.match(janko, /torusPlayed\(command\.keys/);
   assert.doesNotMatch(janko, /playJanko|pitch_classes/, 'no pitch-class act in the frame');
 });
 
@@ -210,7 +210,7 @@ test('the frame runs a strike as the controller\'s torus-play and a release as i
   const start = app.indexOf("case 'janko':");
   assert.ok(start >= 0);
   const block = app.slice(start, app.indexOf("case 'strike-at':", start));
-  assert.match(block, /command\.action==='strike'[\s\S]*nativeField\.controller\.torusPlay\(command\.keys,command\.amplitude,command\.at_samples_elapsed\)/);
+  assert.match(block, /command\.action==='strike'[\s\S]*nativeField\.controller\.torusPlayed\(command\.keys,command\.amplitude,command\.at_samples_elapsed\)/);
   assert.match(block, /made_way/);
   assert.match(block, /command\.action==='release'[\s\S]*nativeField\.controller\.torusRelease\(command\.keys\)/);
 });

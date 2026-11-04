@@ -1197,8 +1197,10 @@ impl Manager {
 /// name only — each payload is validated again by the owner host. A strike
 /// at points of the torus (strike-at, QL-MEF #342) and the Torus's M1′
 /// session (torus-state, torus-set, torus-play, torus-release; O-I #850) are
-/// performance acts on the scene owner, relayed the same way.
-const EXCHANGE_OPERATIONS: [&str; 22] = [
+/// performance acts on the scene owner, relayed the same way, as are the Torus
+/// kept, set again and a take rendered offline on a second owner of the scene
+/// (torus-checkpoint, torus-restore, torus-render; O-I 855).
+const EXCHANGE_OPERATIONS: [&str; 25] = [
     "read",
     "inspect",
     "advance",
@@ -1221,6 +1223,9 @@ const EXCHANGE_OPERATIONS: [&str; 22] = [
     "torus-set",
     "torus-play",
     "torus-release",
+    "torus-checkpoint",
+    "torus-restore",
+    "torus-render",
 ];
 
 fn exchange_admits(request: &Value) -> bool {
@@ -2991,13 +2996,18 @@ for line in sys.stdin: time.sleep(60)
         }
         // A strike at points of the torus (QL-MEF #342) and the Torus's M1′
         // session (O-I #850): the controller sends each (playAt, torusSet,
-        // torusState), so the exchange relays each by its exact name.
+        // torusState), so the exchange relays each by its exact name. So are
+        // the Torus kept, set again and a take rendered offline (O-I 855:
+        // torusCheckpoint, torusRestore, renderTake).
         for op in [
             "strike-at",
             "torus-state",
             "torus-set",
             "torus-play",
             "torus-release",
+            "torus-checkpoint",
+            "torus-restore",
+            "torus-render",
         ] {
             assert!(
                 exchange_admits(&json!({"command":{"operation":op}})),
@@ -3018,6 +3028,8 @@ for line in sys.stdin: time.sleep(60)
             "stage-eval",
             "Score-state",
             "score-resolv",
+            "torus-checkpoints",
+            "torus_render",
         ] {
             assert!(
                 !exchange_admits(&json!({"command":{"operation":op}})),
