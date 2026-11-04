@@ -140,6 +140,10 @@ export function torusKeptRows(kept: TorusKeptSummary | null | undefined, query: 
 const RACK_MACROS = 16, RACK_VARIATIONS = 128, RACK_DEVICES = 64, MACRO_TARGETS = 32
 const text = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0 && value.length <= 512 && !/[\u0000-\u001f\u007f]/.test(value)
 const share = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1
+/** A kept device's settings as the boundary lists them (performanceBasis.ts `keptSettings`): a flat record of at most 32, each a finite number,
+ * a switch or a word. */
+const settings = (value: unknown): boolean => !!value && typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length <= 32
+  && Object.entries(value).every(([key, setting]) => text(key) && (typeof setting === 'number' ? Number.isFinite(setting) : typeof setting === 'string' ? text(setting) : typeof setting === 'boolean'))
 const exact = (raw: unknown, keys: readonly string[]): raw is Record<string, unknown> => !!raw && typeof raw === 'object' && !Array.isArray(raw)
   && Object.keys(raw).length === keys.length && keys.every(key => key in raw)
 /** A rack's placing, exact, or null: every row what it says, within the rack's bounds, a value for every macro in each variation. */
@@ -148,7 +152,8 @@ function readRackPlacing(raw: unknown): TorusRackPlacing | null {
   const {chain, macros, variations} = raw
   if (!Array.isArray(chain) || chain.length > RACK_DEVICES || !Array.isArray(macros) || macros.length > RACK_MACROS
     || !Array.isArray(variations) || variations.length > RACK_VARIATIONS) return null
-  if (!chain.every(row => exact(row, ['device_ref', 'role']) && text(row.device_ref) && (row.role === 'note' || row.role === 'effect'))) return null
+  if (!chain.every(row => exact(row, ['device_ref', 'role', 'state']) && text(row.device_ref) && (row.role === 'note' || row.role === 'effect')
+    && settings(row.state))) return null
   if (!macros.every(row => exact(row, ['name', 'value', 'targets']) && text(row.name) && share(row.value) && Array.isArray(row.targets)
     && row.targets.length <= MACRO_TARGETS && row.targets.every(target => exact(target, ['device_ref', 'parameter']) && text(target.device_ref) && text(target.parameter)))) return null
   if (!variations.every(row => exact(row, ['name', 'values']) && text(row.name) && Array.isArray(row.values) && row.values.length === macros.length

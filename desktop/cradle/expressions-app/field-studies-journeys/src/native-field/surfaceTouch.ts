@@ -9,7 +9,8 @@
  * its first surface. The body vibrates along its normal (QL scene_field.rs `surface`), which keeps a point's angles, so the rest torus
  * names the point the person sees. Pure: no DOM, no engine, no owner. */
 import {basis,stageCentre,stageScale,type Camera} from '../camera';
-import {clockAngle,shapeRayHit,type HostEye,type PresentState} from '../../../src/engine/torusObject';
+import {clockAngle,shapeNearest,shapeRayHit,type HostEye,type PresentState} from '../../../src/engine/torusObject';
+import {PAIRWISE_MAX_PARTICLES,type ContactStanding,type FieldContact} from '../../../src/engine/pairwiseSchedule';
 
 /** QL's M1 torus (QL-MEF crates/ql-mef/src/m1.rs `torus`, coordinate #1-5-1; the shell's live/torusInstrument.ts LIVE_TORUS_TOPOLOGY):
  * x = (R + cos θ) cos φ, y = (R + cos θ) sin φ, z = sin θ, with R = 16/9 and r = 1, in metres. */
@@ -119,19 +120,109 @@ export interface TouchInstrument {status?:string;instrument?:unknown;presentatio
  * press is no touch. `say` is whether the person pressed the playing torus and should be told why it did not ring. */
 export type TouchStrike={point:SurfacePoint;amplitude:number|undefined}|{point:null;why:string;say:boolean};
 
+/** The presentation's units per metre while the live instrument plays (a running field), or null while it does not. */
+function playingUnits(reading:TouchInstrument|null|undefined):number|null {
+ const unitsPerMetre=reading?.presentation_units_per_metre;
+ return reading?.instrument&&reading.status==='following'&&typeof unitsPerMetre==='number'&&unitsPerMetre>0?unitsPerMetre:null;
+}
+/** The shape the torus object shows (O-I 851) as the reading names it, turned by its clock; null when the reading names none. */
+function shownOf(reading:TouchInstrument):PresentState|null {
+ const object=(reading.instrument as any)?.torus_object,morph=object?.shape?.shown;
+ return morph&&typeof morph.from==='string'&&typeof morph.to==='string'
+  ?{morph,angle:clockAngle(reading.presented_clock as any,(reading.instrument as any)?.influence?.geometry?.attachment??1)}:null;
+}
+
 /** What a press at (x, y) on the stage strikes while the live instrument stands as `reading`. Only a running field takes a touch, as
  * only a running field takes a key; a press while no instrument plays, or off the torus, is no touch and the stage keeps it. Pen
  * pressure strikes as it does on the Jankó keys (nativeField.ts pressKey: 0.9 × pressure, held to 0.15–0.9). */
 export function touchStrike(reading:TouchInstrument|null|undefined,x:number,y:number,view:StageView,
  stage:{projection:StageScale['projection'];worldScale:number;pressure?:number}):TouchStrike {
- const unitsPerMetre=reading?.presentation_units_per_metre;
- if(!reading?.instrument||reading.status!=='following'||!(typeof unitsPerMetre==='number'&&unitsPerMetre>0))
-  return {point:null,why:'The live instrument is not playing.',say:false};
- const object=(reading.instrument as any)?.torus_object,morph=object?.shape?.shown;
- const shown:PresentState|null=morph&&typeof morph.from==='string'&&typeof morph.to==='string'
-  ?{morph,angle:clockAngle(reading.presented_clock as any,(reading.instrument as any)?.influence?.geometry?.attachment??1)}:null;
- const touched=touchedSurface(x,y,view,{projection:stage.projection,unitsPerMetre,worldScale:stage.worldScale},shown);
+ const unitsPerMetre=playingUnits(reading);
+ if(!reading||unitsPerMetre===null)return {point:null,why:'The live instrument is not playing.',say:false};
+ const touched=touchedSurface(x,y,view,{projection:stage.projection,unitsPerMetre,worldScale:stage.worldScale},shownOf(reading));
  if(!touched.point)return {point:null,why:touched.why,say:stage.projection==='perspective'};
  const pressure=stage.pressure;
  return {point:touched.point,amplitude:typeof pressure==='number'&&pressure>0?Math.min(0.9,Math.max(0.15,pressure*0.9)):undefined};
+}
+
+// ── a collision in the field (DLW §20.2 Field "Collisions strike"; §21.2 "A collision in the field | The point where it happens") ──
+
+/** The least closing speed that is a collision, as a share of the field's top speed: slower pairs are a pile settling, its particles
+ * resting on one another, and strike nothing. Measured on the engine's own readback (collision-strikes.test.mjs; O-I 856 receipt). */
+export const COLLISION_LEAST_SHARE=0.05;
+/** The closing speed, as a share of the top speed, that strikes at full strength. */
+export const COLLISION_FULL_SHARE=0.25;
+/** The most collisions that strike in a second, and in one frame: a storm of contacts never floods the owner. */
+export const COLLISION_STRIKES_PER_SECOND=12;
+export const COLLISION_STRIKES_AT_ONCE=4;
+/** How seldom the frame says how many collisions went past the bound: at most once in this many milliseconds. */
+const COLLISION_SAID_EVERY_MS=1000;
+
+/** A contact as it strikes: its point of the torus and its strength, or why it strikes nothing; with its share of the top speed. */
+export type CollisionReading={point:SurfacePoint;amplitude:number;share:number}|{point:null;why:string;share:number};
+
+/** The strength a collision strikes at, from how fast its pair closed: from 0.15 (the least collision) to 0.9 (COLLISION_FULL_SHARE and
+ * past it) on a log scale of the share, as a touch's pressure is held to 0.15–0.9. Harder never strikes softer. */
+export function collisionStrength(share:number):number {
+ const along=Math.log(share/COLLISION_LEAST_SHARE)/Math.log(COLLISION_FULL_SHARE/COLLISION_LEAST_SHARE);
+ return 0.15+0.75*Math.min(1,Math.max(0,Number.isFinite(along)?along:0));
+}
+
+/** Where a contact strikes the torus while the live instrument stands as `reading`: its place in metres (engine units over the presentation's
+ * units per metre), at the angles of the torus as a touch reads them, the rest torus's own angles of the point (the body vibrates along its
+ * normals, which keep a point's angles), or on another shape shown (O-I 851) the angles of the sample of that shape nearest it. Pure. */
+export function collisionStrike(reading:TouchInstrument|null|undefined,contact:FieldContact):CollisionReading {
+ const share=contact.share,unitsPerMetre=playingUnits(reading);
+ if(!reading||unitsPerMetre===null)return {point:null,why:'The live instrument is not playing.',share};
+ if(!(share>=COLLISION_LEAST_SHARE))return {point:null,why:'The pair closed slower than a collision.',share};
+ const at:Vec3=[contact.x/unitsPerMetre,contact.y/unitsPerMetre,contact.z/unitsPerMetre];
+ if(!at.every(Number.isFinite))return {point:null,why:'The contact has no place.',share};
+ const shown=shownOf(reading);
+ let point:SurfacePoint|null;
+ if(shown&&!(shown.morph.from==='torus'&&shown.morph.to==='torus')){const near=shapeNearest(at,shown,1);point={theta:onSheet(near.theta),phi:onSheet(near.phi)};}
+ else point=surfaceAngles(at);
+ if(!point)return {point:null,why:'The contact stands on the torus\'s axis or its core circle, where no point of the surface is nearest.',share};
+ return {point,amplitude:collisionStrength(share),share};
+}
+
+/** A collision struck: its point, strength and share of the top speed. */
+export interface CollisionStruck {point:SurfacePoint;amplitude:number;share:number}
+
+/** The bound on collision strikes: a frame's contacts, the strongest first, strike while the bound allows, COLLISION_STRIKES_AT_ONCE in
+ * one frame and COLLISION_STRIKES_PER_SECOND over a second (a bucket of COLLISION_STRIKES_AT_ONCE that fills at that rate). Each
+ * collision past the bound is counted refused, and how many is said in words at most once a second; while the instrument is not playing,
+ * or the field makes no collisions, that is said once. Pure apart from its counts: `now` is the caller's clock in milliseconds. */
+export class CollisionStrikes {
+ /** Collisions struck, and collisions refused past the bound, since it was made. */
+ struck=0;refused=0;
+ private room=COLLISION_STRIKES_AT_ONCE;private filledAt:number|null=null;
+ private unsaid=0;private saidAt=-Infinity;private standingSaid:string|null=null;
+ take(now:number,reading:TouchInstrument|null|undefined,contacts:readonly FieldContact[],standing:ContactStanding):{strikes:CollisionStruck[];said:string|null} {
+  if(standing==='off'){this.standingSaid=null;return {strikes:[],said:null};}
+  if(standing==='no-contacts')return this.once('Collisions strike is On, but the field\'s Particle contacts are Off, so its particles never collide. Turn Particle contacts on in the Contacts device for a collision to strike the torus.');
+  if(standing==='beyond-capacity')return this.once(`Collisions strike is On, but the field has more particles than its contacts take (${PAIRWISE_MAX_PARTICLES.toLocaleString('en')}), so its particles never collide.`);
+  if(playingUnits(reading)===null)return this.once('Collisions strike is On, but the live instrument is not playing, so a collision in the field strikes nothing.');
+  this.standingSaid=null;
+  if(this.filledAt!==null)this.room=Math.min(COLLISION_STRIKES_AT_ONCE,this.room+Math.max(0,now-this.filledAt)*COLLISION_STRIKES_PER_SECOND/1000);
+  this.filledAt=now;
+  const collisions=contacts.filter(c=>c.share>=COLLISION_LEAST_SHARE).sort((a,b)=>b.share-a.share);
+  const strikes:CollisionStruck[]=[];
+  let next=0;
+  for(;next<collisions.length&&this.room>=1;next++){
+   const struck=collisionStrike(reading,collisions[next]);
+   if(!struck.point)continue;
+   strikes.push({point:struck.point,amplitude:struck.amplitude,share:struck.share});
+   this.room-=1;
+   if(strikes.length>=COLLISION_STRIKES_AT_ONCE){next++;break;}
+  }
+  const refused=collisions.length-next;
+  this.struck+=strikes.length;this.refused+=refused;this.unsaid+=refused;
+  let said:string|null=null;
+  if(this.unsaid>0&&now-this.saidAt>=COLLISION_SAID_EVERY_MS){
+   said=`${this.unsaid} ${this.unsaid===1?'collision in the field was':'collisions in the field were'} not struck: the torus takes a collision at most ${COLLISION_STRIKES_PER_SECOND} times a second and ${COLLISION_STRIKES_AT_ONCE} at once, the strongest first.`;
+   this.unsaid=0;this.saidAt=now;
+  }
+  return {strikes,said};
+ }
+ private once(why:string){const said=this.standingSaid===why?null:why;this.standingSaid=why;return {strikes:[],said};}
 }

@@ -1386,7 +1386,10 @@ export type LiveSetAct =
   | {kind: 'torus_keep'; track: number; torus: Record<string, unknown> | null}
   /** A kept rack placed on a MIDI part with nothing on its chain (O-I #852): Live's Instrument Rack under its name, its one chain, its
    * macros by name and where each stands (0 to 1) and its variations, a value for every macro. What a macro turns is not written. */
-  | {kind: 'rack_place'; track: number; name: string; macros: {name: string; value: number}[]; variations: {name: string; values: number[]}[]}
+  | {kind: 'rack_place'; track: number; name: string; macros: {name: string; value: number}[]; variations: {name: string; values: number[]}[]
+    /** Its chain's devices as Live's own (O-I #852 round 10): each by the class a set stores it under, with the settings carried onto it by
+     * document key and stored value (a switch 0 or 1). */
+    chain: {device: string; parameters: {id: string; value: number}[]}[]}
 /** What an act did: its kind, its words, where it left what it made, the set's new revision; and why the clips' sources beside the set
  * did not follow, when they did not. */
 export interface LiveSetActed {act: LiveSetAct['kind']; done: string; at: {track?: number; slot?: number; arrangement?: number; scene?: number; take?: number; lane?: number} | null

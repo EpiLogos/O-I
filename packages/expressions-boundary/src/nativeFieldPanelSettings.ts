@@ -64,6 +64,9 @@ export const FIELD_PANEL_SETTINGS = {
   // Symbol voices (inspector.ts:131; §20.2 Field, "Symbol voices | On · Off | On"): whether symbols carry the torus's sound to where they stand. Model:
   // Scene.composition.symbolVoices, optional; absent reads as On, and Off silences every voice without changing any symbol's block.
   symbolVoices: {target: 'composition', type: 'boolean'},
+  // Collisions strike (inspector.ts, beside Particle contacts; §20.2 Field, "Collisions strike | On · Off | Off"): whether each collision of the
+  // field's particles strikes the torus at the point where it happens (§21.2). Model: Scene.composition.collisionsStrike, optional; absent reads as Off.
+  collisionsStrike: {target: 'composition', type: 'boolean'},
   // Continuous resonance (inspector.ts:130). Model: EngineSettings.autoSweep.
   autoSweep: {target: 'engine', type: 'boolean'},
   // Continuous resonance (inspector.ts:131). Model: EngineSettings.sweepDirection.
@@ -116,6 +119,7 @@ export type FieldPanelModelAgreement = [
   Assert<Equal<FieldPanelSettingValue<'frequencyDriver'>, Scene['composition']['frequencyDriver']>>,
   Assert<Equal<FieldPanelSettingValue<'keySource'>, NonNullable<Scene['composition']['keySource']>>>,
   Assert<Equal<FieldPanelSettingValue<'symbolVoices'>, NonNullable<Scene['composition']['symbolVoices']>>>,
+  Assert<Equal<FieldPanelSettingValue<'collisionsStrike'>, NonNullable<Scene['composition']['collisionsStrike']>>>,
   Assert<Equal<FieldPanelSettingValue<'autoSweep'>, EngineSettings['autoSweep']>>,
   Assert<Equal<FieldPanelSettingValue<'sweepDirection'>, EngineSettings['sweepDirection']>>,
   Assert<Equal<FieldPanelSettingValue<'templateDimension'>, NonNullable<EngineSettings['templateDimension']>>>,

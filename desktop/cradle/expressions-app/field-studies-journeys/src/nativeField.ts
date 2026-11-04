@@ -13,7 +13,8 @@ import {STUDIO_PROCEDURE} from './stageReading';
 type StageProceduralCommand=Extract<StageCommand,{command:'procedural-stage'}>;
 import {createLiveEntry} from './native-field/liveEntry.mjs';
 import {torusPlayReading} from './native-field/torusPlay.mjs';
-import {touchStrike,stageEye,type StageView} from './native-field/surfaceTouch';
+import {touchStrike,stageEye,CollisionStrikes,type StageView,type SurfacePoint} from './native-field/surfaceTouch';
+import type {ContactStanding,FieldContact} from '../../src/engine/pairwiseSchedule';
 import {onM3Applied} from './kernelExpressions';
 import {singletOfApplied} from '../../../src/nara/nativeM3';
 import {receiverPlace} from '../../src/engine/torusObject';
@@ -591,6 +592,18 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   controller.playAt([strike.point],strike.amplitude).catch(error=>{setText('key',`Not played: ${String(error instanceof Error?error.message:error)}`);});
   return true;
  };
+ /** Collisions strike (DLW §20.2 Field "Collisions strike"; §21.2 "A collision in the field | The point where it happens"): the contacts the
+  * engine read back this frame, bound in rate, the strongest first (surfaceTouch.ts CollisionStrikes), each struck at its point through
+  * `strike`, the frame's one stage channel (app.ts collisionStrike). Answers what the frame says in words: how many collisions went past
+  * the bound, at most once a second, or once why none strikes; null when it has nothing to say. */
+ const collisions=new CollisionStrikes();
+ const collide=(taken:{contacts:readonly FieldContact[];standing:ContactStanding}|null,strike:(points:SurfacePoint[],amplitude:number)=>Promise<unknown>):string|null=>{
+  if(!taken)return null;
+  const {strikes,said}=collisions.take(performance.now(),controller.reading as any,taken.contacts,taken.standing);
+  for(const struck of strikes)strike([struck.point],struck.amplitude).catch(error=>{setText('key',`A collision was not struck: ${String(error instanceof Error?error.message:error)}`);});
+  if(said)setText('key',said);
+  return said;
+ };
  /** Where the Torus is heard from, each frame (DLW manual §21.2 View: "Receiver On makes your camera the place where the torus is heard";
   * O-I 856): the engine's own eye as the stage hands it the camera (surfaceTouch.ts stageEye; engine torusObject.ts receiverPlace), in the
   * owner's metres by the presentation's scale, asked of the owner at most every RECEIVER_FRAME_MS and only when it has moved (controller.ts
@@ -638,5 +651,5 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   settledOn=identity;reopenWhenStill();
  };
  update();
- return {controller,panel,command,stage,touch,openLive,leaveLive,rebind,authoredMoved,hear,dispose:()=>{unsinglet();clearInterval(timer);engine.setTorusVoices?.(null);clearTimeout(reopening);panel.removeEventListener('click',click);panel.removeEventListener('input',range);panel.removeEventListener('pointerdown',pressKey);panel.removeEventListener('focusin',focusKey);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('pagehide',pagehide);panel.remove();domainView.dispose();style.remove();void controller.dispose();}};
+ return {controller,panel,command,stage,touch,openLive,leaveLive,rebind,authoredMoved,hear,dispose:()=>{unsinglet();clearInterval(timer);engine.setTorusVoices?.(null);clearTimeout(reopening);panel.removeEventListener('click',click);panel.removeEventListener('input',range);panel.removeEventListener('pointerdown',pressKey);panel.removeEventListener('focusin',focusKey);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('pagehide',pagehide);panel.remove();domainView.dispose();style.remove();void controller.dispose();},collide};
 }

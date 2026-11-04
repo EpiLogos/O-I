@@ -291,7 +291,100 @@ const CHAIN_PRESETS = [
     recommendedEasing: "smoothstep"
   }
 ];
+const M3_AXIS_MASK = { i: 21, j: 63, k: 42 };
+const M3_AXIS_MATRIX = {
+  i: "complementary",
+  j: "moving-resting",
+  k: "same-quality"
+};
+const NUCLEOTIDES = ["A", "T", "C", "G"];
+function assertForm(form) {
+  if (!["fold", "codon", "hexagram"].includes(form.kind)) throw new Error(`An M3\u2032 form is a fold, a codon or a hexagram, not ${String(form.kind)}`);
+  if (!Number.isInteger(form.address) || form.address < 0 || form.address > 63) throw new Error("An M3\u2032 form's address is one of the 64, 0 to 63");
+}
+function stepM3Form(form, step) {
+  assertForm(form);
+  if ("line" in step) {
+    if (!Number.isInteger(step.line) || step.line < 0 || step.line > 5) throw new Error("A moving line is one of the six, 0 (the bottom) to 5");
+    return { kind: form.kind, address: form.address ^ 1 << step.line };
+  }
+  const mask = M3_AXIS_MASK[step.axis];
+  if (mask === void 0) throw new Error("A turn is about a matrix axis: i, j or k");
+  return { kind: form.kind, address: form.address ^ mask };
+}
+function m3Sites(form) {
+  assertForm(form);
+  return [4, 2, 0].map((low) => ({ yang: (form.address >> low & 1) === 1, resting: (form.address >> low + 1 & 1) === 1 }));
+}
+function codonLetters(form) {
+  assertForm(form);
+  return [4, 2, 0].map((low) => NUCLEOTIDES[form.address >> low & 3]).join("");
+}
+const TRIGRAMS = [7, 1, 2, 4, 0, 6, 5, 3];
+const KING_WEN = [
+  [1, 34, 5, 26, 11, 9, 14, 43],
+  [25, 51, 3, 27, 24, 42, 21, 17],
+  [6, 40, 29, 4, 7, 59, 64, 47],
+  [33, 62, 39, 52, 15, 53, 56, 31],
+  [12, 16, 8, 23, 2, 20, 35, 45],
+  [44, 32, 48, 18, 46, 57, 50, 28],
+  [13, 55, 63, 22, 36, 37, 30, 49],
+  [10, 54, 60, 41, 19, 61, 38, 58]
+];
+function kingWen(address) {
+  const lower = TRIGRAMS.indexOf(address & 7);
+  const upper = TRIGRAMS.indexOf(address >> 3 & 7);
+  return KING_WEN[lower][upper];
+}
+function m3FormGlyph(form) {
+  assertForm(form);
+  if (form.kind === "codon") return codonLetters(form);
+  if (form.kind === "fold") return m3Sites(form).map((site) => site.yang ? site.resting ? "\u2227" : "\u22CF" : site.resting ? "\u2228" : "\u22CE").join("");
+  return String.fromCodePoint(19904 + kingWen(form.address) - 1);
+}
+const M3_TORUS_TUBE = 9 / 16;
+const M3_FORMS = 64;
+const M3_LENSES = 12;
+function m3TorusPlace(address, lens) {
+  const phi = 2 * Math.PI * ((address % M3_FORMS + M3_FORMS) % M3_FORMS) / M3_FORMS;
+  const theta = 2 * Math.PI * ((lens % M3_LENSES + M3_LENSES) % M3_LENSES) / M3_LENSES;
+  const ring = 1 + M3_TORUS_TUBE * Math.cos(theta);
+  return { phi, theta, point: [ring * Math.cos(phi), ring * Math.sin(phi), M3_TORUS_TUBE * Math.sin(theta)] };
+}
+function m3FormMorph(form, step, lens = 0) {
+  const to = stepM3Form(form, step);
+  return {
+    from: { form, glyph: m3FormGlyph(form), place: m3TorusPlace(form.address, lens) },
+    to: { form: to, glyph: m3FormGlyph(to), place: m3TorusPlace(to.address, lens) },
+    step,
+    tube: M3_TORUS_TUBE
+  };
+}
+const M3_FORM_CATEGORY = {
+  id: "m3-forms",
+  name: "M3\u2032 forms",
+  description: "Folds, codons and hexagrams of M3\u2032: a step moves one line or turns about a matrix axis",
+  items: Array.from({ length: M3_FORMS }, (_, address) => ({
+    char: m3FormGlyph({ kind: "hexagram", address }),
+    name: `${kingWen(address)} \xB7 ${codonLetters({ kind: "codon", address })} \xB7 ${address.toString(2).padStart(6, "0")}`,
+    category: "m3-forms"
+  }))
+};
+GLYPH_CATEGORIES.push(M3_FORM_CATEGORY);
 export {
   CHAIN_PRESETS,
-  GLYPH_CATEGORIES
+  GLYPH_CATEGORIES,
+  M3_AXIS_MASK,
+  M3_AXIS_MATRIX,
+  M3_FORMS,
+  M3_FORM_CATEGORY,
+  M3_LENSES,
+  M3_TORUS_TUBE,
+  codonLetters,
+  kingWen,
+  m3FormGlyph,
+  m3FormMorph,
+  m3Sites,
+  m3TorusPlace,
+  stepM3Form
 };

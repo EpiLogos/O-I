@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
-import { PAIRWISE_CELL_CAPACITY, PAIRWISE_KEY_SENTINEL, PAIRWISE_SEARCH_ITERATIONS } from "../pairwiseSchedule.mjs";
+import { PAIRWISE_CELL_CAPACITY, PAIRWISE_CONTACT_LOOP, PAIRWISE_KEY_SENTINEL, PAIRWISE_SEARCH_ITERATIONS } from "../pairwiseSchedule.mjs";
 const pairwiseCellIdShader = (
   /* glsl */
   `
@@ -134,7 +134,7 @@ uniform float uParticleCount;
 varying vec2 vUv;
 
 layout(location = 0) out vec4 outPlane; // xy = position correction, zw = velocity delta (plane axes)
-layout(location = 1) out vec4 outDepth; // x = position correction, y = velocity delta (depth axis)
+layout(location = 1) out vec4 outDepth; // x = position correction, y = velocity delta (depth axis), z = closing speed of the pairs it opens
 
 vec2 sortUv(float i) {
   return (vec2(mod(i, uSide), floor(i / uSide)) + 0.5) / uSide;
@@ -150,6 +150,9 @@ void main() {
   vec2 dv = vec2(0.0);
   float corrZ = 0.0;
   float dvZ = 0.0;
+  // A collision is a pair closing: each pair is opened once, by its lower index, and the strongest closing speed of the pairs
+  // this particle opens is the contact a collision strike reads (pairwiseContactShader).
+  float impact = 0.0;
   if (pIndex < uParticleCount && (pIndex < uConnectionStart || texture2D(uConnectionMetadata, vUv).z > 0.5)) {
     vec3 pos = texture2D(uPositionTexture, vUv).xyz;
     vec3 vel = texture2D(uVelocityTexture, vUv).xyz;
@@ -214,6 +217,7 @@ void main() {
             float bounce = -vn * (1.0 + uRestitution) * 0.5;
             dv += n * bounce;
             dvZ += n3.z * bounce;
+            if (other > pIndex) impact = max(impact, -vn);
           }
           dv -= (relV - n * vn) * (uPairViscosity * 0.5);
           dvZ -= (dvz - n3.z * vn) * (uPairViscosity * 0.5);
@@ -232,14 +236,54 @@ void main() {
     }
   }
   // Buffer 0 is the planar packing the consumers have always read; buffer 1
-  // holds the depth-axis components (exact zeros while uPairwise3D = 0).
+  // holds the depth-axis components (exact zeros while uPairwise3D = 0) and,
+  // in z, the contact (read only by the contact reduction).
   outPlane = vec4(corr, dv);
-  outDepth = vec4(corrZ, dvZ, 0.0, 1.0);
+  outDepth = vec4(corrZ, dvZ, impact, 1.0);
+}
+`
+);
+const pairwiseContactShader = (
+  /* glsl */
+  `
+precision highp float;
+
+uniform sampler2D uSource;          // the force pass's second buffer (speed in z), or the first reduction (position, speed)
+uniform sampler2D uPositionTexture; // the particles after the step (first reduction only)
+uniform vec2 uSourceSize;           // texels of uSource
+uniform float uBlock;               // uSource texels per output texel, per axis
+uniform float uFromForce;           // 1 = the first reduction, over particles
+uniform float uParticleCount;
+
+varying vec2 vUv;
+
+void main() {
+  vec2 cell = floor(gl_FragCoord.xy);
+  vec4 best = vec4(0.0);
+  for (int j = 0; j < ${PAIRWISE_CONTACT_LOOP}; j++) {
+    if (float(j) >= uBlock) break;
+    for (int i = 0; i < ${PAIRWISE_CONTACT_LOOP}; i++) {
+      if (float(i) >= uBlock) break;
+      vec2 t = cell * uBlock + vec2(float(i), float(j));
+      if (t.x >= uSourceSize.x || t.y >= uSourceSize.y) continue;
+      vec2 uv = (t + 0.5) / uSourceSize;
+      vec4 contact;
+      if (uFromForce > 0.5) {
+        if (t.y * uSourceSize.x + t.x >= uParticleCount) continue;
+        contact = vec4(texture2D(uPositionTexture, uv).xyz, texture2D(uSource, uv).z);
+      } else {
+        contact = texture2D(uSource, uv);
+      }
+      if (contact.w > best.w) best = contact;
+    }
+  }
+  gl_FragColor = best;
 }
 `
 );
 export {
   pairwiseCellIdShader,
+  pairwiseContactShader,
   pairwiseForceShader,
   pairwiseRangeShader,
   pairwiseSortShader

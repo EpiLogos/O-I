@@ -96,6 +96,9 @@ const SETTINGS: Readonly<Record<string, readonly SettingSpec[]>> = {
     // Symbol voices (manual §20.2: On · Off, default On): whether symbols carry the torus's sound to where they stand. The scene carries it only
     // once it is set; the manual's own meaning of a scene that carries none is On. Off silences every voice and changes no symbol's block.
     {key: 'symbolVoices', kind: 'panel-setting', title: 'Symbol voices', read: scene => composition(scene).symbolVoices !== false},
+    // Collisions strike (manual §20.2: On · Off, default Off): whether each collision of the field's particles strikes the torus at the point
+    // where it happens (§21.2). A scene that carries none is Off.
+    {key: 'collisionsStrike', kind: 'panel-setting', title: 'Collisions strike', read: scene => composition(scene).collisionsStrike === true},
   ],
   resonance: [
     // Torus · Manual · Focus · Automation, in the manual's order (§20.14). A scene that carries no driver is unknown, not a default.

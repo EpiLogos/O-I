@@ -55,7 +55,7 @@ const {renderToStaticMarkup} = await import('react-dom/server')
 const score = await import('../src/agent/scoreBinding.ts')
 const clip = await import('../src/agent/clipBinding.ts')
 const {loadClip} = await import('../src/inhabitants/catalogue/clips/index.ts')
-const {resetViewHolds, wiredKey, setViewHold, clipHostId} = await import('../src/frame/detail/clipBinding.ts')
+const {resetViewHolds, wiredKey, setViewHold, clipHostId, viewHoldsOf} = await import('../src/frame/detail/clipBinding.ts')
 const {trackKey} = await import('../src/agent/agentRunModel.ts')
 const {writesOwner} = await import('../../../../desktop/cradle/src/kernel/bridge.ts')
 
@@ -281,6 +281,71 @@ test('Sample draws the task\'s log from the session\'s events, the retrospective
   assert.ok(markup.includes('T3′: The test read the old capture list'))
 })
 
+// FIXTURE takes, owner-shaped (agent/factoryTakes.ts FactoryTake): each names the Run, the Factory state and the unit its attempt works.
+const takeOf = (sessionRef, key, over = {}) => ({sessionRef, attemptRef: `attempt/${sessionRef}/${key}`, runRef: RUN, statePath: STATE, taskRef: `task/${sessionRef}`,
+  unit: key, unitRef: unitOf(REAL.score, key).unitRef, state: 'returned', startUnixMs: 1_000, endUnixMs: 2_000, summary: null, receivingRef: null, ...over})
+const taskAt = (title, startUnixMs, taskRef) => ({n: 1, title, state: 'running', startUnixMs, lastActivityUnixMs: startUnixMs + 1_000, softStop: false, disclosure: null, taskRef})
+
+test('selecting another unit\'s note moves Clip view to that unit\'s task, the note chosen there for Routine…; a note no task works stays selected here', () => {
+  resetViewHolds()
+  const mythos = member('ses-mythos', 'agent/anima-mythos', 'Mythos', [taskAt('debug the capture', 5_000, 'task/ses-mythos')])
+  // Off the track's rack: Sophia's agent is a row of the song; Scribe's is not.
+  const sophia = {...member('ses-sophia', 'agent/anima-sophia', 'Sophia', [taskAt('finish the docs', 6_000, 'task/ses-sophia')]), parentRef: null, depth: 0}
+  const scribe = {...member('ses-scribe', 'agent/scribe', 'Scribe', [taskAt('write it up', 7_000, 'task/ses-scribe')]), parentRef: null, depth: 0}
+  const tracks = [group, eros, mythos, sophia, scribe]
+  // Whose takes are read: the sessions of the track's rack, then the sessions whose agent is a row of the song.
+  assert.deepEqual(clip.noteSessionsOf(eros, tracks, read(REAL.score)), ['ses-eros', 'ses-mythos', 'ses-sophia'])
+  assert.deepEqual(clip.noteSessionsOf(eros, tracks, {state: 'absent', why: score.SCORE_READING_NOW}), ['ses-eros', 'ses-mythos'], 'before the score is read, its rack\'s')
+  // A unit's task is the task whose latest attempt names it in this Run, as a task's own note is (wavePlan.ts planTargetOf).
+  const takes = new Map([
+    ['ses-eros', [takeOf('ses-eros', 'eros-verify')]],
+    ['ses-mythos', [takeOf('ses-mythos', 'logos-scope-plan', {startUnixMs: 500}), takeOf('ses-mythos', 'mythos-debug', {startUnixMs: 4_000})]],
+    ['ses-sophia', [takeOf('ses-sophia', 'sophia-finish', {runRef: 'run/another'})]],
+    ['ses-scribe', [takeOf('ses-scribe', 'aletheia-knowledge-return', {statePath: '/walk/other/.factory/development-state.json'})]],
+  ])
+  const tasks = clip.unitTasksOf(read(REAL.score), tracks, ref => takes.get(ref) ?? null)
+  assert.deepEqual([...tasks.keys()].sort(), ['eros-verify', 'mythos-debug'], 'an earlier attempt\'s unit, another Run\'s and another state\'s name no task here')
+  const mythosRef = `${trackKey(mythos)}#task/1`
+  assert.deepEqual(tasks.get('mythos-debug'), {kind: 'clip', ref: mythosRef, title: 'debug the capture', track: trackKey(mythos)})
+  assert.equal(clip.unitTasksOf({state: 'absent', why: score.SCORE_NO_TAKE}, tracks, ref => takes.get(ref) ?? null).size, 0, 'no score read, no note has a task')
+  // Two tasks working one unit: the one whose attempt began last.
+  const later = new Map([...takes, ['ses-sophia', [takeOf('ses-sophia', 'mythos-debug', {startUnixMs: 8_000})]]])
+  assert.equal(clip.unitTasksOf(read(REAL.score), tracks, ref => later.get(ref) ?? null).get('mythos-debug').ref, `${trackKey(sophia)}#task/1`)
+  // The note selected in the score: another task's unit moves THE selection to that task, whose Clip view holds the note.
+  const moved = []
+  const binding = bindingOf(port(read(REAL.score)).port, {tracks, unitTasks: tasks, select: to => moved.push(to)})
+  binding.local.unit('mythos-debug')
+  assert.deepEqual(moved, [{kind: 'clip', ref: mythosRef, title: 'debug the capture', track: trackKey(mythos)}])
+  assert.equal(viewHoldsOf(HOLD).unit, undefined, 'this task\'s own view is left as it was')
+  assert.equal(viewHoldsOf(clipHostId('factory', mythosRef)).unit, 'mythos-debug', 'the task moved to holds the note chosen')
+  assert.deepEqual(clip.chosenNoteOf(mythosRef, tracks, ''), {project: '', session: 'ses-mythos', key: 'mythos-debug'}, 'the note Routine… takes is the one chosen')
+  // This task's own note, and a note no task works, stay selected here: the tools act on them.
+  binding.local.unit('logos-scope-plan')
+  assert.equal(viewHoldsOf(HOLD).unit, 'logos-scope-plan')
+  binding.local.unit('eros-verify')
+  assert.equal(viewHoldsOf(HOLD).unit, 'eros-verify')
+  assert.equal(moved.length, 1)
+  binding.local['score.fold']('rack')
+  assert.equal(viewHoldsOf(HOLD)['score.fold'], 'rack', 'the view\'s other keys hold as before')
+  // A song opened inside a note shows that song's notes: one selected there is no unit of this Run, and nothing moves.
+  setViewHold(HOLD, 'score.open', 'eros-verify')
+  binding.local.unit('mythos-debug')
+  assert.equal(moved.length, 1)
+  assert.equal(viewHoldsOf(HOLD).unit, 'mythos-debug')
+  // Where no takes are read, nothing moves: the note stays selected.
+  resetViewHolds()
+  bindingOf(port(read(REAL.score)).port, {tracks}).local.unit('mythos-debug')
+  assert.equal(viewHoldsOf(HOLD).unit, 'mythos-debug')
+})
+
+test('the Clip view reads the takes of the sessions that may work its notes and moves THE selection through its one writer', async () => {
+  const source = await readFile(new URL('../src/agent/clipBinding.ts', import.meta.url), 'utf8')
+  const hook = source.slice(source.indexOf('export function useFactoryClip'), source.indexOf('// ----', source.indexOf('export function useFactoryClip')))
+  assert.match(hook, /useAttemptTakes\(transport, [^)]*noteSessions/, 'the takes of the rack\'s sessions and the song\'s rows')
+  assert.match(hook, /unitTasksOf\(/)
+  assert.match(hook, /timelineReading\(\)\?\.selectTrackItem\(/, 'THE selection\'s one writer (projections/timelinePaneHost.ts)')
+})
+
 test('the design draws the song on the track\'s rack, this task\'s note lit, every key wired, in the words "agents and agent sets"', async () => {
   resetViewHolds()
   const design = await loadClip('factory')
@@ -293,6 +358,11 @@ test('the design draws the song on the track\'s rack, this task\'s note lit, eve
   assert.ok(!markup.includes('◆ Anima'), 'Fold keeps the rows that hold notes')
   assert.ok(draw({...binding.values, 'score.fold': 'rack'}).includes('◆ Anima'), 'Rack shows the agent set the track runs, ◆')
   assert.match(markup, /data-tone="green"[^>]*data-i="eros-verify/, 'this task\'s own note is lit')
+  // §19.1: "This task's note is drawn in the clip's colour" — the colour the clip's head stands on; a highlighted form's tint wins.
+  const coloured = draw({...binding.values, colour: 'var(--parasakti)'})
+  assert.match(coloured, /data-tone="green"[^>]*data-i="eros-verify[^>]*style="[^"]*color:var\(--parasakti\)/, 'this task\'s note in the clip\'s colour')
+  assert.equal(coloured.match(/color:var\(--parasakti\)/g)?.length, 1, 'only this task\'s note')
+  assert.doesNotMatch(draw({...binding.values, colour: 'var(--parasakti)', 'score.highlight': unitOf(REAL.score, 'eros-verify').heads.CFP}), /color:var\(--parasakti\)/)
   const wiring = clip.factoryWiring({sessionRef: 'ses-eros', n: 1}, null, null, null, held)
   for (const key of ['score', 'unit.own', 'score.check', 'gen.status', 'unit', 'score.fold', 'score.highlight', 'score.open', 'warp', 'tr.tool', 'tr.form',
     'tr.join', 'tr.to', 'tr.on', 'tr.auto', 'tr.press', 'gen.tool', 'gen.waves', 'gen.decider', 'gen.press', 'gen.accept', 'gen.discard']) assert.ok(wiredKey(wiring, key), key)

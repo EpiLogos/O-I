@@ -439,6 +439,26 @@ export function shapeRayHit(origin: Vec3, direction: Vec3, state: PresentState, 
   return {phi: hit.phi, theta: hit.theta, t: hit.t};
 }
 
+/** The point of the shape shown nearest a point in space (a collision in the field, O-I 856), sampled on the body's own angles
+ * (`samples` round the ring, half as many round the tube) and refined three times, each a quarter of the last spacing about the nearest so
+ * far (a press's shapeRayHit refines once); with how far it stands from it. */
+export function shapeNearest(at: Vec3, state: PresentState, metresPerUnit: number, samples = 48): {phi: number; theta: number; distance: number} {
+  const point = [0, 0, 0];
+  let best = {phi: 0, theta: 0, distance: Infinity};
+  const consider = (phi: number, theta: number) => {
+    blendAt(state, phi, theta, 0, metresPerUnit, point, 0);
+    const distance = Math.hypot(point[0] - at[0], point[1] - at[1], point[2] - at[2]);
+    if (distance < best.distance) best = {phi: wrap(phi), theta: wrap(theta), distance};
+  };
+  for (let i = 0; i < samples; i++) for (let j = 0; j < samples / 2; j++) consider((TAU * i) / samples, (TAU * j) / (samples / 2));
+  for (let pass = 1, ring = TAU / samples, tube = (2 * TAU) / samples; pass <= 3; pass++) {
+    ring /= 4; tube /= 4;
+    const found = best;
+    for (let i = -4; i <= 4; i++) for (let j = -4; j <= 4; j++) consider(found.phi + i * ring, found.theta + j * tube);
+  }
+  return best;
+}
+
 // ----------------------------------------------------------------------------------------------------------- the Expression's object
 
 /** The torus as an object of an Expression: the shape it names sampled on the body's own angles (`lon` round the ring, `lat` round the

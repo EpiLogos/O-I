@@ -21,6 +21,7 @@ import {
 import { DEFAULT_GLYPH_VOLUME } from './glyphVolume';
 import { applyAutomations, createAutomationRuntime, AutomationRuntime, AutomationLiveValue } from './automation';
 import { GPGPUSimulator } from './GPGPUSimulator';
+import { PAIRWISE_MAX_PARTICLES, type ContactStanding, type FieldContact } from './pairwiseSchedule';
 import { GlyphSampler } from './GlyphSampler';
 import { PsgFormSampler, glyphPreparation, coveragesFromAlpha, type FoldProgressReceipt } from './psg-form-sampler';
 import { particleVertexShader, particleFragmentShader } from './shaders/particleShaders';
@@ -1355,10 +1356,16 @@ export class PointCloudField {
       const count = Math.max(1, Math.ceil(delta / (1 / 60)));
       if (count > 600) throw new Error('Time scale exceeds the safe live stepping budget');
       if (auto.live.length > 0) this.syncLiveMaterialUniforms();
+      // The last frame's contacts are taken before this frame's work is queued: the take then waits on no step of this frame.
+      this.simulator.takeContactsBack();
       for (let i = 0; i < count; i++) {
         this.simTime += delta / count;
         this.tickFrame(delta / count, this.simTime, i === count - 1);
       }
+      // Collision strikes: the contacts of the frame's last step, reduced and read back while the engine listens (a rebuilt
+      // simulator listens as the field does).
+      this.simulator.contactsListening = this.listeningContacts;
+      this.simulator.readContacts();
       this.emitTelemetry(rawDelta, auto.live);
       return this.simTime;
     } finally { this.config = base; }
@@ -1412,6 +1419,22 @@ export class PointCloudField {
     this.pointerPos.set(point.x, point.y); this.hostPointerZ = point.z;
   }
   private hostPointerZ = 0;
+
+  /** Collision strikes (DLW §20.2 Field "Collisions strike"): while listening, each frame's contacts the pairwise pass makes are reduced
+   * on the GPU and read back (GPGPUSimulator.readContacts). Not listening, no pass runs and nothing is read. */
+  public listenContacts(on: boolean) { this.listeningContacts = on; this.simulator.contactsListening = on; }
+  private listeningContacts = false;
+
+  /** The contacts read back since the last take, each once, with their closing speed as a share of the field's top speed; whether the
+   * engine listens and, listening, whether its particles can make contacts at all ('no-contacts': the pairwise pass is off;
+   * 'beyond-capacity': more particles than it sorts); and the readback's own account. */
+  public takeContacts(): {contacts: FieldContact[]; standing: ContactStanding; counts: GPGPUSimulator['contactCounts']} {
+    const top = Math.max(1, this.config.fluid.maxSpeed ?? 35000);
+    const contacts = this.simulator.takeContacts().map(c => ({...c, share: c.speed / top}));
+    const standing: ContactStanding = !this.listeningContacts ? 'off' : !this.config.pairwise?.enabled ? 'no-contacts'
+      : this.simulator.particleCount > PAIRWISE_MAX_PARTICLES ? 'beyond-capacity' : 'listening';
+    return {contacts, standing, counts: {...this.simulator.contactCounts}};
+  }
 
   /** Diagnostics read real floating-point GPU state, only on explicit request. */
   public inspectState(readParticles = false) {

@@ -34,6 +34,9 @@ export interface FieldEngineAdapter {
  setTorusTap?(tap:import('./native-field/symbolVoices').TorusTap|null):void;
  /** The torus's voices that sound, as force points read each tick (O-I 851); null while no instrument is open. */
  setTorusVoices?(source:(()=>readonly import('../../src/engine/forceRuntime').ForceEmitterState[])|null):void;
+ /** The contacts of the field's particles the engine read back since the last take, while the scene's Collisions strike is On (DLW §20.2
+  * Field; O-I 856), and whether it listens and can make any. Absent: the engine reads back no contacts. */
+ takeContacts?():{contacts:readonly import('../../src/engine/pairwiseSchedule').FieldContact[];standing:import('../../src/engine/pairwiseSchedule').ContactStanding}|null;
  /** The plate as the body laid flat while the instrument holds the field, and the drive the pulse is tuned to (O-I 851). */
  plateBody?():{flat:boolean;pulseHz:number|null};
  capture?(width:number,height:number):HTMLCanvasElement;

@@ -207,7 +207,7 @@ export const design: DesignedDevice = {
   // plate at 396 Hz with f0 40 Hz and dominance 1 (fieldModel.ts DEFAULT_CYMATIC_MEDIUM), time scale 1, no hold (fieldDefaults.ts),
   // 200 000 particles (fieldDefaults.ts:102). The level is the object-sound bank's field-wide gain, 1 as the instrument's presentation level is.
   defaults: {
-    sound: true, level: 1, plate: true, medium: 'plate', keySource: 'torus', symbolVoices: true, resonance: 396, tempo: 1, hold: 0,
+    sound: true, level: 1, plate: true, medium: 'plate', keySource: 'torus', symbolVoices: true, collisionsStrike: false, resonance: 396, tempo: 1, hold: 0,
     voices: 0, particles: 200000, dominance: 1, baseFrequency: 40,
   },
   fixtures: {
@@ -231,6 +231,8 @@ export const design: DesignedDevice = {
         <Toggle {...st(p, 'sound')} label="Sound" does="Lets the field sound. The picture stays when sound is off." on={on(p.v, 'sound')} unknown={boolOf(p.v, 'sound') === undefined} onChange={x => p.set('sound', x)} />
         <Toggle {...st(p, 'symbolVoices')} label="Symbol voices" does="Lets symbols carry the torus's sound to where they stand." on={on(p.v, 'symbolVoices')} unknown={boolOf(p.v, 'symbolVoices') === undefined}
           onChange={x => p.set('symbolVoices', x)} />
+        <Toggle {...st(p, 'collisionsStrike')} label="Collisions strike" does="Under On, a collision in the field strikes the torus at the point where it happens. The particles collide only while Particle contacts is on." on={on(p.v, 'collisionsStrike')} unknown={boolOf(p.v, 'collisionsStrike') === undefined}
+          onChange={x => p.set('collisionsStrike', x)} />
         {level(p)}
       </Section>
       <Section label="Time" cols={1}>

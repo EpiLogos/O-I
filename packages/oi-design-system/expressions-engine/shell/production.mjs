@@ -225,6 +225,10 @@ class EmbeddedProductionAdapter {
   needsRender() {
     return this.dirty;
   }
+  /** The contacts the engine read back since the last take (PointCloudField.takeContacts); null before the field stands. */
+  takeContacts() {
+    return this.engine?.takeContacts() ?? null;
+  }
   render(frame) {
     this.dirty = false;
     if (this.contextLost) throw new Error("GPU context was lost. Your expression is retained. Restore the field explicitly; its physical state must be reseeded.");
@@ -262,6 +266,7 @@ class EmbeddedProductionAdapter {
     const { a, b } = basis(frame.camera), o = stageCentre(this.width, this.height);
     this.engine.setHostView({ width: this.width, height: this.height, pixelRatio: this.dpr, originX: o.x + frame.camera.panX, originY: o.y + frame.camera.panY, pixelsPerUnit: stageScale(this.width, this.height) * frame.camera.zoom / WORLD_SCALE, right: a, up: b });
     this.engine.setHostPointer(frame.pointer.active, { x: frame.pointer.world.x * WORLD_SCALE, y: frame.pointer.world.y * WORLD_SCALE, z: frame.pointer.world.z * WORLD_SCALE }, frame.delta);
+    this.engine.listenContacts(frame.scene.composition.collisionsStrike === true);
     this.engine.advance(frame.delta);
     if (this.seedRecoveredSources && Object.values(this.sourceStatus).every((v) => v.includes("source active"))) {
       if (this.sources.size || this.restoredClock) this.engine.seedCurrentTargets();
