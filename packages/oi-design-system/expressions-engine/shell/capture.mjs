@@ -101,11 +101,11 @@ function paintCapture(out, field, s, settings, w, h, transition) {
   ctx.save();
   ctx.translate(dx, dy);
   ctx.scale(scale, scale);
-  if (transition && settings.transparent) ctx.globalAlpha = 1 - transition.alpha;
+  if (transition && settings.transparent && !transition.painted) ctx.globalAlpha = 1 - transition.alpha;
   ctx.drawImage(field, 0, 0, w, h);
   if (transition) {
     ctx.globalAlpha = transition.alpha;
-    if (!settings.transparent) {
+    if (!settings.transparent && !transition.painted) {
       ctx.fillStyle = transition.background;
       ctx.fillRect(0, 0, w, h);
     }

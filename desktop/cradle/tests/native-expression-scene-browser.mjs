@@ -12,8 +12,11 @@
  * A/B baseline and lie nearer the new targets the projection presents from the
  * admitted frame (the frame × scale, or the Torus object's showing of it: on the
  * plate laid flat, on a shape of the figure law, settled while it rings; O-I 851),
- * pixels differ, and scheduled PCM
- * carries the sky's top voice at its held pitch. K2_DISCONNECT_TARGETS=1 cuts GPU target delivery
+ * pixels differ, and scheduled PCM carries the new top voice. The Torus opens under
+ * Logic (QL-MEF 5170994; DLW §21.2): its voices are Vimarśā's octet, so one M1 advance
+ * re-pitches all eight by Vimarśā's own tick term for the tick it moved to (M2-1,
+ * m2_vimarsha.rs read_seed) and the PCM carries the moved top voice, not the old one.
+ * K2_DISCONNECT_TARGETS=1 cuts GPU target delivery
  * (test-only projection flag) before the determinant: that run must FAIL.
  * Only Central disclosure is controlled; no fake field, PCM, M1, M2 or M3. */
 import assert from 'node:assert/strict';
@@ -176,6 +179,9 @@ async function cadence(){
  }finally{await context.close();}
 }
 const top=influence=>influence.voices.reduce((a,v)=>v.frequency_hz>a.frequency_hz?v:a);
+/** Vimarśā's tick term (QL-MEF m2_vimarsha.rs read_seed, M2-1): tick12 t adds pitch(t)/12 semitones, and 12 more from t = 6 on, to
+ * every slot of the octet alike; every other term of a slot's pitch is the lens's, the mode's, the rotation's and the texture's. */
+const vimarshaTickSemitones=t=>(t<6?t*2:(t-6)*2+1)/12+(t<6?0:12);
 /** Peak frequency near `hz` (±2%) by a Hann-windowed DFT scan, parabolic refined. */
 function peakNear(pcm,rate,hz){
  const n=Math.min(pcm.length,32768),w=Array.from({length:n},(_,i)=>pcm[i]*(0.5-0.5*Math.cos(2*Math.PI*i/(n-1))));
@@ -203,7 +209,18 @@ try{
  const shape0=a.influence1.voices.map(x=>`${x.m}x${x.n}`),shape1=v.influence1.voices.map(x=>`${x.m}x${x.n}`);
  report.producer={control:{m1_revision:a.influence1.m1_revision,address72:a.influence1.address72,voices_hz:hz0,nodal:shape0},varied:{m1_revision:v.influence1.m1_revision,address72:v.influence1.address72,voices_hz:hz1,nodal:shape1}};
  assert.deepEqual(a.influence0.voices,v.influence0.voices,'every run opens the same owner state');
- check(hz0.length===9&&hz0.every((f,i)=>f===hz1[i])&&shape0.join()!==shape1.join(),'producer: one M1 advance reshapes the skin of the same nine planet voices; the sky keeps their pitch',{nodal_changed:shape0.filter((s,i)=>s!==shape1[i]).length});
+ // Under Logic the eight voices are Vimarśā's octet read at the event's address: the advance moves the tick (the readback names it),
+ // so each voice moves by the one factor Vimarśā's tick term gives (f32 octet: within 1e-6), the skin re-reads, and the Fundamental holds.
+ const tick=run=>run.influence1.native_readback?.continuation_start?.tick12,t0=tick(a),t1=tick(v);
+ const expectedRatio=2**((vimarshaTickSemitones(t1)-vimarshaTickSemitones(t0))/12),ratios=hz0.map((f,i)=>hz1[i]/f);
+ const refs=run=>run.influence1.voices.map(x=>x.mode_ref).join();
+ report.producer.vimarsha={tuning:[a.influence1.tuning,v.influence1.tuning],tick12:[t0,t1],expected_ratio:expectedRatio,ratios,
+  fundamental_hz:[a.influence1.fundamental_hz,v.influence1.fundamental_hz]};
+ check([a,v].every(run=>run.influence1.tuning==='logic')&&hz0.length===8&&refs(a)===refs(v)&&Number.isInteger(t0)&&Number.isInteger(t1)&&t0!==t1
+  &&a.influence1.address72!==v.influence1.address72&&a.influence1.fundamental_hz===v.influence1.fundamental_hz
+  &&ratios.every(r=>Math.abs(r/expectedRatio-1)<1e-6)&&expectedRatio!==1&&shape0.join()!==shape1.join(),
+  'producer: one M1 advance re-reads Vimarśā at the new address: the same eight Logic voices re-pitched by its tick term, the skin reshaped, the Fundamental held',
+  {tick12:[t0,t1],expected_ratio:expectedRatio,nodal_changed:shape0.filter((s,i)=>s!==shape1[i]).length});
  // 2. Transfer: the admitted native frame (metres, at slots) changed in the page;
  // 3. delivery: the GPU-bound target textures (presentation units) changed.
  const admittedSame=maxAbs(a.admitted0,v.admitted0,n),admittedDelta=maxAbs(a.admitted1,v.admitted1,n);
@@ -239,7 +256,13 @@ try{
   control_measured_hz:heardA.frequency_hz,varied_measured_hz:heardV.frequency_hz,varied_relative_error:error,
   control_relative_error:Math.abs(heardA.frequency_hz-topA.frequency_hz)/topA.frequency_hz,
   standing:'frequency of PCM blocks the page scheduled on its Web Audio graph (muted); not speaker output'};
- check(error<0.01&&topA.frequency_hz===topV.frequency_hz&&report.audio.control_relative_error<0.01,'audio: both runs\' scheduled PCM carries the sky\'s top voice within 1%; the determinant left its pitch held',{measured:heardV.frequency_hz,expected:topV.frequency_hz,error});
+ // Each run's PCM carries its own top voice, nearer it than the other run's: the scan around each pitch spans the other, so a PCM still
+ // carrying the old voice is heard at the old pitch and fails.
+ const nearer=(heard,own,other)=>Math.abs(heard-own)<Math.abs(heard-other);
+ check(error<0.01&&report.audio.control_relative_error<0.01&&topA.frequency_hz!==topV.frequency_hz
+  &&nearer(heardV.frequency_hz,topV.frequency_hz,topA.frequency_hz)&&nearer(heardA.frequency_hz,topA.frequency_hz,topV.frequency_hz),
+  'audio: each run\'s scheduled PCM carries its own top voice within 1%, nearer it than the other run\'s: the determinant re-pitched the top voice and the PCM carries the new one',
+  {measured:heardV.frequency_hz,expected:topV.frequency_hz,error,control_measured:heardA.frequency_hz,control_expected:topA.frequency_hz});
  report.requests={opens,closes};
  report.measurement={latency_by_operation:Object.fromEntries([...new Set(timings.map(t=>t.operation))].map(op=>{const values=timings.filter(t=>t.operation===op).map(t=>t.elapsed).sort((x,y)=>x-y);return[op,{count:values.length,mean_ms:values.reduce((s,x)=>s+x,0)/values.length,max_ms:values.at(-1)}];}))};
  if(!disconnect){report.cadence=await cadence();check(true,'cadence: 1 and 12 ticks/s on the real owner stay following; applied beats equal M1 revisions; busy beats skipped',report.cadence);}

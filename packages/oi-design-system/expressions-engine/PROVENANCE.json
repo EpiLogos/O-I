@@ -470,9 +470,9 @@
     },
     "shell/capture.mjs": {
       "source": "desktop/cradle/expressions-app/field-studies-journeys/src/capture.ts",
-      "source_sha256": "d48d62a5c3664c1632760c2a9175f02da56005673accf8a5e72722df37011679",
-      "output_sha256": "729eafc9c6ec8e357e2253589d61973edc084ddc307892813311596156076c04",
-      "compiler": "esbuild@0.25.12",
+      "source_sha256": "f0c4d0d816a55e3ea3a79ebc1a0a08e16c4fae8d00f3a7c590533dab1372191c",
+      "output_sha256": "26ddf592b854cb05794c02329d5e5f6906d76dd5ee1b7e56accf9817f7f2c5fb",
+      "compiler": "esbuild@0.21.5",
       "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
     },
     "shell/paper.mjs": {
