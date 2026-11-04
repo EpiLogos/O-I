@@ -1950,7 +1950,8 @@ fn fields_of(route: &str, manifest: Value) -> Result<Value, Error> {
 /// The takes a comparison made, as its manifest records them: what varied
 /// over which levels and what ended each take, then each take's level,
 /// condition, agent, repetition, place, turns and outcome, how its stop
-/// condition ended it, and where its receipt is kept. The whole manifest
+/// condition ended it, where its receipt is kept, and what it answered to
+/// each of the task's Success conditions. The whole manifest
 /// stays in the root (`manifest.json`), with every trial's own record. An
 /// Actuation before its own-task comparison names no variable, levels,
 /// agent or stop: those read null.
@@ -1974,6 +1975,7 @@ fn takes_of(manifest: &Value, root: &str) -> Value {
                 "total_tokens": record["total_tokens"],
                 "stop": record["stop"],
                 "receipt_path": record["receipt_path"],
+                "answers": record["answers"],
             })
         })
         .collect();

@@ -102,6 +102,9 @@ export function clipValuesOfSettings(reading: EncounterSessionSettingsReading | 
   if (task.repeat_levels?.length) values['repeat.levels'] = task.repeat_levels.join(', ')
   // The takes a Repeat's set made, once it ends (O-I 795).
   own('takes', task.takes?.ended?.takes)
+  // The Success conditions typed for the task (§19.1 The Intent panel), each without an answer until a run returns one; absent from an
+  // AIKit that keeps none.
+  if (Array.isArray(task.success)) values.criteria = JSON.stringify(task.success.map((text, i) => ({id: `c${i}`, text})))
   // What AIKit's executor did with Loop's last pass of a song (O-I #844, task.loop_pass): the take Factory started and its Run, or why
   // the loop stopped; nothing before a song's first pass, or from an AIKit before loop_pass.
   own('loop.pass', loopPassWords(task as {loop_pass?: unknown; loop_song?: unknown}))
@@ -174,6 +177,12 @@ export function taskSettingChange(setting: TaskSetting, value: Value, reading: E
     }
     case 'repeatRepeats': return set({repeat_repeats: count(value)})
     case 'repeatStop': return set({repeat_stop: text(value)})
+    // Add: one condition more, after those that stand (§19.1 The Intent panel: "A new success condition. Press Enter to add it").
+    case 'success': {
+      const written = text(value)
+      if (written === null) return {refused: 'A success condition is its own words: type one, then press Enter.'}
+      return set({success: [...(task.success ?? []), written]})
+    }
     case 'quantize': {
       const word = text(value)
       return set({quantize: word === null ? null : QUANTIZE_TO_OWNER[word] ?? word})

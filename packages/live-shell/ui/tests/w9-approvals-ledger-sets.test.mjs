@@ -59,6 +59,8 @@ const {skills: rackDesign} = await import('../src/inhabitants/catalogue/panels/s
 const carry = await import('../src/agent/devices/oneAgentBinding.ts')
 const settings = await import('../src/agent/sessionSettings.ts')
 const addresses = await import('../src/inhabitants/agentParamAddresses.ts')
+const door = await import('../src/frame/devices/deviceDoor.ts')
+const rail = await import('../src/widgets/railBindings.ts')
 
 family.resetFamilyManifestsForTest()
 loadAgentShellFamilies()
@@ -450,11 +452,27 @@ test('13 · Refining reads AIKit\'s proposals (REAL): the member beside the revi
   const untested = JSON.parse(binding.values.result)
   assert.ok(untested.length >= 1 && untested.every(row => row.proposed === 'open' && row.inUse === 'open'), binding.values.result)
   assert.equal(binding.values.resultWhy, bind.RESULT_WHY.untested)
-  // A take kept as its test, beside its family: the Test lists both levels; AIKit keeps no Success conditions, so Result stays Open.
-  const tested = refining([proposal({tests: [{trace: 'takes:own:5:trial:0', beside: ['takes:own:5:trial:1']}]})])
+  // REPLACED (O-I 795, round 13): "AIKit keeps no Success conditions, so Result stays Open". A take kept as its test, beside its family,
+  // with what each take answered to the task's Success conditions (FAKE beyond the listing: shaped as ai-kit skill_sources.rs
+  // RefinementTest serializes, `answers` by trace, each answer as Actuation held it to its evidence): Result reads each condition at each
+  // level, Return's rule across a level's takes (§19.1: not met if one is not met, open if one is open, met when all are met).
+  const GATES = 'The plan names each gate by its command', ORDER = 'The plan keeps the release order'
+  const answers = {
+    'takes:own:5:trial:0': [{condition: GATES, answer: 'met', evidence: ['file plan.md (d-plan)'], why: 'plan.md names them'},
+      {condition: ORDER, answer: 'open', evidence: [], why: 'Open: the take answered met but named no evidence it kept'}],
+    'takes:own:5:trial:1': [{condition: GATES, answer: 'not met', evidence: ['the task\'s own test: not met (exit 1)'], why: 'Held to the task\'s own test, which answered not met'},
+      {condition: ORDER, answer: 'met', evidence: ['file plan.md (d-plan)']}]}
+  const tested = refining([proposal({tests: [{trace: 'takes:own:5:trial:0', beside: ['takes:own:5:trial:1'], answers}]})])
   assert.deepEqual(JSON.parse(tested.values.test), [{trace: 'takes:own:5:trial:0', level: 'proposed'}, {trace: 'takes:own:5:trial:1', level: 'in use'}])
-  assert.equal(tested.values.resultWhy, bind.RESULT_WHY.noConditions)
-  assert.match(bind.RESULT_WHY.noConditions, /Success conditions/)
+  const rows = JSON.parse(tested.values.result)
+  assert.deepEqual(rows.map(row => [row.condition, row.proposed, row.inUse]), [[GATES, 'met', 'not met'], [ORDER, 'open', 'met']])
+  assert.match(rows[0].evidence, /proposed: file plan\.md \(d-plan\).*in use: the task's own test: not met/)
+  assert.equal(rows[1].why, 'Open: the take answered met but named no evidence it kept', 'an Open row says why, in the reading\'s words')
+  assert.equal(tested.values.resultWhy, bind.RESULT_WHY.answered(2))
+  // Takes that ran while the task had no Success conditions: Result is Open, and says where they are added.
+  const bare = refining([proposal({tests: [{trace: 'takes:own:5:trial:0', beside: ['takes:own:5:trial:1']}]})])
+  assert.equal(bare.values.resultWhy, bind.RESULT_WHY.noConditions)
+  assert.match(bind.RESULT_WHY.noConditions, /Intent panel/)
   // AIKit's refusal is drawn in its words; nothing stands chosen.
   const refused = bind.refiningBinding(RACK, {refinements: {status: 'refused', value: null, error: REFINE.refused.message}, set: 'docs', holds: bind.chainHolds()}, {})
   assert.equal(refused.standing.proposals.disabled, REFINE.refused.message)
@@ -476,9 +494,11 @@ test('13 · Accept and Discard are AIKit\'s own verbs on the member; Test runs t
   // The member chosen is the hand's own hold.
   binding.local.member(ALPHA)
   assert.equal(bind.viewHolds(bind.chainHolds(), RACK).refineMember, ALPHA)
-  // Central keeps a Control skill's source: Accept is Central's, and says so; a stale draft is not accepted.
+  // REPLACED (O-I 795 round 13): "Central keeps a Control skill's source: Accept is Central's, and says so" — Accept hands it to Central
+  // now (AIKit's own verb, ai-kit skill_sources.rs accept_revision), which keeps it for the person's Accept there (test 17).
   const central = refining([proposal({owner: 'central'})], ports)
-  assert.match(central.standing.accept.disabled, /Central keeps/)
+  assert.equal(central.standing.accept, undefined, 'Accept hands a Control skill\'s revision to Central')
+  // A stale draft is not accepted.
   const stale = refining([proposal({stale: true})], ports)
   assert.match(stale.standing.accept.disabled, /no longer in use/)
   // No carrier, no set on the chain, no session: each says what it lacks.
@@ -503,6 +523,9 @@ test('13 · the Test is the session\'s own Repeat: its Variable Skillset, its Le
   const chain = read('agent/devices/FactoryDeviceChain.tsx')
   assert.match(chain, /const rackRefinements = useAikitRead\(transport, \{kind: 'refinement-list'\}\)/)
   assert.match(chain, /testRefinement\(transport, rackProject, sessionRef, set, member\)/)
+  // O-I 795 round 13: offered on every session's chain the rack stands on, a group's (its head session's own Repeat) and a lone one's
+  // alike — never gated on the lone session's Capture page.
+  assert.match(chain, /\.\.\.\(sessionChain && sessionRef && transport\.kind !== 'unavailable' \? \{test: \(set: string, member: string\) => testRefinement/)
 })
 
 test('14 · the Skillset rack\'s Refining page stands beside Capture with §19.7\'s Member, Why, Revision, Test, Result, Accept and Discard, on its binding in every view', () => {
@@ -553,8 +576,12 @@ test('15 · Approvals: a proposed revision waits as a proposal with its Result f
   await assert.rejects(binding.write([{key: 'refineAccept', value: 'refine:skill/practice/gone'}]), /no proposed revision/)
   const unwired = approvals({refinements})
   assert.match(unwired.standing.refineAccept.disabled, /aikit_write/)
-  const central = approvals({refinements: {status: 'answered', value: {proposals: [proposal({owner: 'central'})]}, error: null}}, {refine: async () => {}})
-  await assert.rejects(central.write([{key: 'refineAccept', value: `refine:${ALPHA}`}]), /Central keeps/)
+  // REPLACED (O-I 795 round 13): "Central keeps … missing op: AIKit handing its proposed revision to Central's
+  // control.skills.revision.propose (AIKit)": AIKit's Accept hands it to Central now, and the person's Accept there writes it (test 17).
+  const handedTo = []
+  const central = approvals({refinements: {status: 'answered', value: {proposals: [proposal({owner: 'central'})]}, error: null}}, {refine: async request => { handedTo.push(request) }})
+  await central.write([{key: 'refineAccept', value: `refine:${ALPHA}`}])
+  assert.deepEqual(handedTo, [{kind: 'refinement-accept', member: ALPHA}])
   // The design answers it with Accept and Discard, and draws its Result.
   host.setHostPage(binding.id, 'review')
   const drawn = hosted(approvalsDesign, {...binding, values: {...binding.values, pick: row.id}})
@@ -584,4 +611,118 @@ test('15 · Approvals: a proposed revision waits as a proposal with its Result f
   for (const source of [chain, centralChain]) assert.match(source, /refinementWrite\(transport\)/, 'one write for both chains')
   assert.match(centralChain, /\{refine: refineWrite\}/)
   bind.resetHolds()
+})
+
+// O-I 795 round 13: a Control skill's proposed revision is the person's to accept in Central. AIKit's Accept hands it there (ai-kit
+// skill_sources.rs accept_revision → Central's control.skills.revision.propose), and its listing names where it waits (`handed`, FAKE in
+// the REAL listing's shape); the person's Accept then writes it through Central's own act, at the digest reviewed, and Discard drops it
+// from Central and from AIKit (ctrl control_skills.rs control.skills.revision.accept · discard, person's presses: action.rs PERSON_ACTS).
+const HANDED = {revision_ref: 'central:skill-revision:k1', proposed_digest: 'sha256:d1', scope: 'control-user', name: 'alpha', accept_action: 'control.skills.revision.accept'}
+const HANDED_READ = {revisionRef: HANDED.revision_ref, proposedDigest: HANDED.proposed_digest, scope: 'control-user', name: 'alpha', acceptAction: HANDED.accept_action}
+test('17 · a Control skill\'s revision: Accept hands it to Central, where the person\'s Accept writes it and Discard drops it, from the Refining page and from Approvals', async () => {
+  bind.resetHolds()
+  const calls = []
+  const ports = {write: async request => { calls.push(['aikit', request]) }, central: async (verb, handed) => { calls.push(['central', verb, handed]) }}
+  // Not yet handed: Accept is AIKit's own verb, which hands it to Central.
+  await refining([proposal({owner: 'central'})], ports).write([{key: 'accept', value: ALPHA}])
+  assert.deepEqual(calls.splice(0), [['aikit', {kind: 'refinement-accept', member: ALPHA}]])
+  // Handed: it waits in Central, and the page says so; Accept is the person's there, then AIKit's copy goes.
+  const waiting = refining([proposal({owner: 'central', handed: HANDED})], ports)
+  assert.equal(waiting.standing.accept, undefined)
+  assert.equal(waiting.values.handed, HANDED.revision_ref)
+  await waiting.write([{key: 'accept', value: ALPHA}])
+  assert.deepEqual(calls.splice(0), [['central', 'accept', HANDED_READ], ['aikit', {kind: 'refinement-discard', member: ALPHA}]])
+  // Discard drops it in Central and in AIKit; a revision Central no longer keeps is dropped from AIKit alone.
+  await waiting.write([{key: 'discard', value: ALPHA}])
+  assert.deepEqual(calls.splice(0), [['central', 'discard', HANDED_READ], ['aikit', {kind: 'refinement-discard', member: ALPHA}]])
+  const gone = refining([proposal({owner: 'central', handed: HANDED})], {...ports, central: async () => { throw Error('no proposed revision of alpha waits') }})
+  await gone.write([{key: 'discard', value: ALPHA}])
+  assert.deepEqual(calls.splice(0), [['aikit', {kind: 'refinement-discard', member: ALPHA}]])
+  // Central's refusal of the Accept comes back in its words, and AIKit's copy stays.
+  const stale = refining([proposal({owner: 'central', handed: HANDED})], {...ports, central: async () => { throw Error('alpha changed since the revision was proposed') }})
+  await assert.rejects(stale.write([{key: 'accept', value: ALPHA}]), /changed since the revision was proposed/)
+  assert.deepEqual(calls.splice(0), [])
+  // No hand to Central: Accept and Discard say where the revision waits and what carries the person's act there.
+  const unhanded = refining([proposal({owner: 'central', handed: HANDED})], {write: ports.write})
+  for (const key of ['accept', 'discard']) {
+    assert.match(unhanded.standing[key].disabled, /waits in Central \(central:skill-revision:k1\)[\s\S]*control\.skills\.revision\./)
+  }
+  // Approvals answers it the same way.
+  const app = approvals({refinements: {status: 'answered', value: {proposals: [proposal({owner: 'central', handed: HANDED})]}, error: null}},
+    {refine: ports.write, refineCentral: ports.central})
+  await app.write([{key: 'refineAccept', value: `refine:${ALPHA}`}])
+  assert.deepEqual(calls.splice(0), [['central', 'accept', HANDED_READ], ['aikit', {kind: 'refinement-discard', member: ALPHA}]])
+  // Central's own acts, through the kernel's invoke_action with the person's own authority, at the digest the person reviewed.
+  const routes = read('agent/devices/ownerRoutes.ts')
+  assert.match(routes, /accept: 'control\.skills\.revision\.accept', discard: 'control\.skills\.revision\.discard'/)
+  assert.match(routes, /centralAct\(transport, CENTRAL_REVISION_ACTS\[verb\], \{scope: handed\.scope, name: handed\.name, expected_proposed_digest: handed\.proposedDigest\}\)/)
+  const chain = read('agent/devices/FactoryDeviceChain.tsx')
+  const centralChain = read('central/devices/CentralDevices.tsx')
+  assert.match(chain, /central: centralRevision/)
+  for (const source of [chain, centralChain]) assert.match(source, /refineCentral: centralRevision/)
+  // The Refining page says where it waits.
+  host.resetHost()
+  const rack = bind.rackBinding(RACK, {profile: null, sets: {}, setList: null, skills: null, capabilities: null, profiles: null, holds: bind.chainHolds()}, null, {project: 'O-I', sessionRef: null})
+  const page = carry.carryPages(rack, [{page: carry.REFINE_PAGE, binding: waiting}])
+  host.setHostPage(page.id, 'refine')
+  const whole = hosted(rackDesign, page).find(([view]) => view === 'whole')[1]
+  host.resetHost()
+  assert.ok(whole.includes(escaped('Central · waits for your Accept')), 'the source readout says it waits in Central')
+  assert.ok(whole.includes(escaped(`It waits there as ${HANDED.revision_ref}.`)))
+  bind.resetHolds()
+})
+
+// O-I 795 round 13: a refinement opens where it belongs (§19.14 "Open, which opens it where it belongs"; §18.2 "A pattern whose items point
+// at one skill or method can open a refinement of it (§19.7)"): the Skillset rack's Refining page, the member chosen, from either chain.
+test('16 · Open on a refinement goes to the Skillset rack\'s Refining page with its member chosen; where no chain stands the rack, Factory is turned to, or the press says where it stands', async () => {
+  bind.resetHolds(); host.resetHost(); door.flipDevice(null); door.selectDevice(null)
+  const RACK = bind.SKILLSET_RACK_ID
+  assert.equal(RACK, 'factory:skillset')
+  // No chain stands the rack here and no hand turns to Factory: the press says where the rack stands, and the page and member wait for it.
+  assert.throws(() => bind.openRefinement(ALPHA), /stands on a session's chain in Factory/)
+  assert.equal(bind.viewHolds(bind.chainHolds(), RACK).refineMember, ALPHA, 'the member is held for the rack')
+  assert.equal(host.hostState(RACK).page, bind.REFINING_PAGE, 'the rack stands on its Refining page wherever it is drawn')
+  // A hand that turns to Factory: the shell turns, and the rack's band opens once its chain puts it on the door.
+  const turned = []
+  bind.openRefinement(ALPHA, {toFactory: () => { turned.push('factory') }})
+  assert.deepEqual(turned, ['factory'])
+  assert.equal(door.flippedDeviceId(), null, 'no band stands for a rack no chain draws yet')
+  door.publishDevice(RACK, {device: {id: RACK, family: 'ai-kit', face: {id: 'skillset-rack', title: 'Skillset rack'}}})
+  assert.equal(door.flippedDeviceId(), RACK, 'its band opens when its chain stands it')
+  assert.equal(door.selectedDeviceId(), RACK)
+  // On the door already (a session's chain in Factory): its band opens now, and nothing turns.
+  door.flipDevice(null)
+  bind.openRefinement('skill/practice/beta', {toFactory: () => { turned.push('again') }})
+  assert.deepEqual(turned, ['factory'], 'the shell stands where the rack is')
+  assert.equal(door.flippedDeviceId(), RACK)
+  assert.equal(bind.viewHolds(bind.chainHolds(), RACK).refineMember, 'skill/practice/beta')
+  door.publishDevice(RACK, null); door.flipDevice(null); door.selectDevice(null)
+  // Approvals' Open on a refinement row opens it there, through the chain's hand; then the queue holds it as opened.
+  const refinements = {status: 'answered', value: REFINE.list, error: null}
+  const opened = []
+  const binding = approvals({refinements}, {refine: async () => {}, openRefinement: member => { opened.push(member) }})
+  const row = JSON.parse(binding.values.queue).find(item => item.refinement)
+  const held = {}
+  const queued = rail.withOwnerRequests(binding, {ledger: {status: 'answered', value: {schema: 'central.notification-ledger/v1', requests: []}}}, async () => {},
+    {opened: [], hold: ids => { held.opened = ids }})
+  await queued.write([{key: 'open', value: row.id}])
+  assert.deepEqual(opened, [ALPHA], 'Open opens the Refining page on its member')
+  assert.deepEqual(held.opened, [row.id], 'and then it is held as opened')
+  await assert.rejects(binding.write([{key: 'open', value: 'refine:skill/practice/gone'}]), /no proposed revision/)
+  await assert.rejects(approvals({refinements}, {refine: async () => {}}).write([{key: 'open', value: row.id}]), /no hand opens the Skillset rack/)
+  // Open on any other item marks it opened alone, as before.
+  const plain = approvals({refinements, returns: {entries: [{return_ref: 'central:return:project:O-I:1', source_ref: 'central:source:project:O-I:docs/a.md', status: 'pending', agent_session_ref: 'agent-session/flint'}]}},
+    {openRefinement: member => { opened.push(member) }})
+  const other = rail.withOwnerRequests(plain, {ledger: {status: 'answered', value: {schema: 'central.notification-ledger/v1', requests: []}}}, async () => {},
+    {opened: [], hold: ids => { held.opened = ids }})
+  await other.write([{key: 'open', value: 'central:return:project:O-I:1'}])
+  assert.deepEqual(held.opened, ['central:return:project:O-I:1'])
+  assert.deepEqual(opened, [ALPHA], 'nothing else opens the Refining page')
+  // Both chains hand it: Factory's opens it in place, Central's turns to Factory; the Day's Patterns pad takes the same hand.
+  const chain = read('agent/devices/FactoryDeviceChain.tsx')
+  const centralChain = read('central/devices/CentralDevices.tsx')
+  assert.match(chain, /openRefinement: member => openRefinement\(member\)/)
+  assert.match(centralChain, /openRefinement: member => openRefinement\(member, \{toFactory\}\)/)
+  assert.match(centralChain, /refine: member => openRefinement\(member, \{toFactory\}\)/)
+  bind.resetHolds(); host.resetHost()
 })

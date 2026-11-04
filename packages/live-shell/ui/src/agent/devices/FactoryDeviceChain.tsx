@@ -79,7 +79,7 @@ import {chainPicture, type PictureContext} from './AgentDevicePictures'
 import {
   AGENT_DESIGN, AGENT_P0_ROWS, GATEWAY_DESIGN, LANDING_DESIGN, MEMBER_DESIGN, MEMBER_DEVICE_ID, RACK_DESIGN, SCOPE_DESIGN, SLOT_DESIGN_FACE, agentBinding, designWaits,
   gatewayBinding, memberBinding,
-  holdView, memberChains, rackBinding, refiningBinding, scopeBinding, seatedProfile, useChainHolds, viewHolds, type AgentRows, type MemberPorts, type RackUpkeep,
+  holdView, memberChains, openRefinement, rackBinding, refiningBinding, scopeBinding, seatedProfile, useChainHolds, viewHolds, type AgentRows, type MemberPorts, type RackUpkeep,
   type RefiningPorts, callsOf, callsOnEvery, lastUsageModels, type CallsDecision,
 } from './designBindings'
 import {useOwnerAccepted} from './ownerAccepted'
@@ -110,7 +110,7 @@ import {
 } from './sessionChainBindings'
 import {APPROVALS_DESIGN, APPROVALS_ID, approvalsBinding, receiptDevices} from './receiptBindings'
 import {CARRIER_DESIGN, CARRIER_ID, carrierBinding, connectionLabels, gitBinding, planRunOf, runDemandOf, seatBinding, workcellDevices, type SeatPorts} from './workcellBindings'
-import {ROUTE_WORDS, aikitWriteOp, deskActorOf, factoryOwnerWrite, ownerRouteWrite, refinementWrite, refusalWords, seatWriteOp} from './ownerRoutes'
+import {ROUTE_WORDS, aikitWriteOp, centralRevisionWrite, deskActorOf, factoryOwnerWrite, ownerRouteWrite, refinementWrite, refusalWords, seatWriteOp} from './ownerRoutes'
 import {worldsOf} from './workcellMaterial'
 import {currentIdentity} from '../../../../../../desktop/cradle/src/nara/identity/current'
 import {WORKCELL_RACK_ID, chosenWorld, workcellGitReading} from './workcellRackBinding'
@@ -425,12 +425,14 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   // The Skillset rack's Refining page (§19.7, lane BD round 12): AIKit's proposed revisions (`aikit source refine list`), read once for
   // the rack and for Approvals, where each also waits. Accept and Discard are AIKit's own verbs on the member (aikit_write
   // refinement-accept · refinement-discard); Test is the selected session's own Repeat over Skillset (sessionSettings.ts testRefinement),
-  // on a lone session's chain only.
+  // on every session's chain the rack stands on: a group's (its head session's own Repeat) and a lone one's alike (O-I 795 round 13).
+  // A Control skill's revision that AIKit handed to Central is answered there, by Central's own acts (ownerRoutes.ts centralRevisionWrite).
   const rackRefinements = useAikitRead(transport, {kind: 'refinement-list'})
   const refineWrite = useMemo(() => refinementWrite(transport), [transport])
-  const refinePorts = useMemo((): RefiningPorts => ({...(refineWrite ? {write: refineWrite} : {}),
-    ...(captureOn && sessionRef && transport.kind !== 'unavailable' ? {test: (set: string, member: string) => testRefinement(transport, rackProject, sessionRef, set, member)} : {})}),
-  [refineWrite, captureOn, sessionRef, transport, rackProject])
+  const centralRevision = useMemo(() => centralRevisionWrite(transport), [transport])
+  const refinePorts = useMemo((): RefiningPorts => ({...(refineWrite ? {write: refineWrite} : {}), ...(centralRevision ? {central: centralRevision} : {}),
+    ...(sessionChain && sessionRef && transport.kind !== 'unavailable' ? {test: (set: string, member: string) => testRefinement(transport, rackProject, sessionRef, set, member)} : {})}),
+  [refineWrite, centralRevision, sessionChain, sessionRef, transport, rackProject])
   const rackSet = typeof rackDesignBinding?.values.set === 'string' ? rackDesignBinding.values.set : null
   const refiningDesignBinding = useMemo(() => refiningBinding(chainDeviceId('skillset'), {refinements: rackRefinements, set: rackSet, holds}, refinePorts),
     [rackRefinements, rackSet, holds, refinePorts])
@@ -596,8 +598,10 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
       returns: returned, returnsAbsent: approvalsReturns.absent, returnsRefused: approvalsReturns.refusals, tracks, nowUnixMs: sessions?.nowUnixMs ?? Date.now(), units, person,
       refinements: rackRefinements, settings: shownSettings},
       {...(actions ? {permission: (id, decision) => actions.permission(id, decision)} : {}),
-        // A skill's proposed revision (§19.7): Accept and Discard through the Refining page's own AIKit verbs.
-        ...(refineWrite ? {refine: refineWrite} : {}),
+        // A skill's proposed revision (§19.7): Accept and Discard through the Refining page's own AIKit verbs; Open shows it on the
+        // Skillset rack's Refining page, where a session's chain stands the rack.
+        ...(refineWrite ? {refine: refineWrite} : {}), ...(centralRevision ? {refineCentral: centralRevision} : {}),
+        openRefinement: member => openRefinement(member),
         approve: row => acceptSourceReturn(transport, returnProjectOf(row, null), row, person),
         // Deny on a proposal (§19.14): Central's projectcentral.source.return_reject through invoke_action (sourceReturnAccept.ts).
         reject: row => rejectSourceReturn(transport, returnProjectOf(row, null), row),
@@ -612,7 +616,7 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     return withOwnerRequests(commented, {...ownerRequests, nowUnixMs: sessions?.nowUnixMs || Date.now()}, openNotificationTarget,
       {opened: openedOf(viewHolds(holds, APPROVALS_ID).opened), hold: ids => holdView(APPROVALS_ID, 'opened', openedHold(ids))})
   }, [shownHandle, shownTrack, holds, returned, approvalsReturns.absent, approvalsReturns.refusals, tracks, sessions?.nowUnixMs, transport, person, units, agentDraft, agentWrite, ownerRequests,
-    rackRefinements, refineWrite, shownSettings])
+    rackRefinements, refineWrite, centralRevision, shownSettings])
 
   // A workcell's devices (§19.23): Git / landing's Seat group (the seat instrument), starting at the selected workcell's seat of the project;
   // and the Remote carrier (Workcell's status). Workcell's instrument stands on no chain: the rail's publisher holds it with its Seats and

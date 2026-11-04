@@ -30,6 +30,8 @@
 //   - Close now (the Close pad) is the close routine through `central.day.close-carry` on the Day's two revisions: it carries face 5's
 //     proposal into tomorrow's face 0 when Close routine is On, and closes the Day either way;
 //   - `openTomorrow` opens tomorrow's Day beside today's through `central.day.rollover` (proposed to the catalogue: day.tsx has no control).
+//   - Refine (`refinePattern`) on the Patterns move opens a refinement of the one skill or method its pattern points at (Central's
+//     `gave.points_at`) on the Skillset rack's Refining page, through the chain's hand: it writes nothing to any owner.
 // Each is checked by Central against the revision read; a refusal comes back in Central's words, and the readings are asked again behind
 // every write (the kernel's write notice retires the held answers).
 import type {CentralGroundReading} from '../../../../../../desktop/cradle/src/central/client'
@@ -43,7 +45,7 @@ export const DAY_KEYS = ['light', 'date', 'face', 'dayStart', 'rollover', 'c0', 
 
 /** Keys the owner takes a change of (the settings', the pads' and the presses'). Every other key of the design is a reading or has no
  * owner (manual §16.13). */
-export const DAY_WRITES: ReadonlySet<string> = new Set(['face', 'openToday', 'closeNow', 'openTomorrow', 'rollover', 'agentWrites', 'closeRoutine',
+export const DAY_WRITES: ReadonlySet<string> = new Set(['face', 'openToday', 'closeNow', 'openTomorrow', 'refinePattern', 'rollover', 'agentWrites', 'closeRoutine',
   'src_central', 'src_factory', 'src_expressions', 'src_techne', 'src_live',
   ...['tasks', 'patterns', 'context', 'synthesis', 'close'].flatMap(move => [`at_${move}`, `prompt_${move}`]),
   ...['tasks', 'patterns', 'context', 'synthesis'].map(move => `run_${move}`)])
@@ -74,11 +76,17 @@ export const DAY_RUN_KEYS: readonly string[] = DAY_MOVES.flatMap(move => [`last_
 export const NO_CLOSEOUT = 'Close-out is AIKit\'s reading of what the close left behind (`aikit work continuity closeout verify --json`); Central keeps no close-out verify of its own, and no kernel route reaches AIKit\'s — missing op: an aikit_read route for `work continuity closeout verify` (kernel/src/owner_routes.rs AikitRead; T-COVERAGE §1.2).'
 
 /** The Patterns pad's refinement (manual §18.2: "A pattern whose items point at one skill or method can open a refinement of it (§19.7)"):
- * Central keeps what a move gave as {summary, proposals?, writes?, counts?} and refuses any other key (ctrl continuous_work/day_moves.rs),
- * so no pattern names what its items point at, and Refine has nothing to open on the Skillset rack's Refining page. */
-export const PATTERN_POINTS_ABSENT = 'The one skill or method a pattern\'s items point at: Central keeps what the Patterns move gave as {summary, proposals?, '
-  + 'writes?, counts?} and names none — missing field: the skill or method the pattern\'s items point at, on the Patterns move\'s gave '
-  + '(Central, central.day.move.record). Refine opens it on the Skillset rack\'s Refining page once Central names it.'
+ * Central keeps it as what the Patterns move gave, `gave.points_at`, the one skill or method's ref (ctrl continuous_work/day_moves.rs; no
+ * other move names one), and Refine opens a refinement of it on the Skillset rack's Refining page (`refine`, the chain's hand:
+ * agent/devices/designBindings.ts openRefinement). REPLACED (O-I 772, round 13): PATTERN_POINTS_ABSENT, "missing field: the skill or method
+ * the pattern's items point at, on the Patterns move's gave". */
+export const PATTERN_POINTS_UNREAD = 'The one skill or method a pattern\'s items point at is what the Patterns move gave (gave.points_at), read from '
+  + 'Central\'s Day moves (central.day.moves.read), which are not read here.'
+export const PATTERN_POINTS_NONE = 'The Patterns move\'s last run named no one skill or method its pattern\'s items point at (Central keeps it as the '
+  + 'move\'s gave.points_at), so Refine has nothing to open.'
+export const PATTERN_POINTS_NOT_YET = 'No run of the Patterns move has ended in this Day, so no pattern names a skill or method yet.'
+/** Refine where the chain hands no opener of the Skillset rack's Refining page (DayWriters.refine). */
+export const REFINE_UNWIRED = 'Refine: no hand opens the Skillset rack\'s Refining page here.'
 
 /** Why each design key no owner reports has no reading (manual §16.12: "When a reading is missing, say which one"). The settings' and
  * the runs' keys have their reasons from their readings (dayOwnAbsent). The views draw "—" where the kit draws them. */
@@ -95,13 +103,12 @@ export const DAY_ABSENT: Readonly<Record<string, string>> = {
   c4: `Face 4 gathers what the sessions of ${NO_NOWS} touched, each entry with its author; until then context is free text on face 4, and the owner counts none.`,
   c5: 'Synthesis is free text on face 5: the owner counts none.',
   closeout: NO_CLOSEOUT,
-  patternPoints: PATTERN_POINTS_ABSENT,
+  patternPoints: PATTERN_POINTS_UNREAD,
 }
 
 /** The design's controls no write reaches from here, closed with their reason: Verify (AIKit's close-out read has no kernel route). */
 export const DAY_STANDING: Readonly<Record<string, Standing>> = {
   verifyCloseout: {disabled: NO_CLOSEOUT},
-  refinePattern: {disabled: PATTERN_POINTS_ABSENT},
 }
 
 /** What each setting key is called, for its refusal. */
@@ -199,6 +206,12 @@ function gaveOf(run: unknown): number | undefined {
   return (Array.isArray(gave.proposals) ? gave.proposals.length : 0) + (Array.isArray(gave.writes) ? gave.writes.length : 0)
 }
 
+/** The one skill or method the Patterns move's last run named (Central's `gave.points_at`), or undefined. */
+function pointsAtOf(run: unknown): string | undefined {
+  const gave = isRecord(run) && isRecord(run.end) ? run.end.gave : undefined
+  return isRecord(gave) && typeof gave.points_at === 'string' && gave.points_at ? gave.points_at : undefined
+}
+
 /** The design's values from Central's Day settings and the shown Day's moves. Only what the owner reports. */
 export function dayOwnValuesOf(own: DayOwnReadings): Record<string, Value> {
   const values: Record<string, Value> = {}
@@ -233,6 +246,8 @@ export function dayOwnValuesOf(own: DayOwnReadings): Record<string, Value> {
         if (at !== undefined) values[`last_${move}`] = at
         const gave = move === 'close' ? undefined : gaveOf(row.last)
         if (gave !== undefined) values[`gave_${move}`] = gave
+        const points = move === 'patterns' ? pointsAtOf(row.last) : undefined
+        if (points) values.patternPoints = points
       }
     }
   }
@@ -250,6 +265,9 @@ export function dayOwnAbsent(own: DayOwnReadings, values: Readonly<Record<string
     const last = key.startsWith('gave_') ? values[`last_${key.slice(5)}`] : undefined
     why[key] = last === -1 ? 'No run of this move has ended in this Day, so it has given nothing yet.'
       : last !== undefined ? 'Its last run ended without saying what it gave (a run refused or stalled says why, not what it gave).' : runs
+  }
+  if (values.patternPoints === undefined) {
+    why.patternPoints = values.last_patterns === -1 ? PATTERN_POINTS_NOT_YET : values.last_patterns !== undefined ? PATTERN_POINTS_NONE : runs
   }
   return why
 }
@@ -451,12 +469,18 @@ export interface DayWriters {
   readonly begin?: (move: string, dayRef: string) => Promise<void>
   /** Open tomorrow's Day beside today's (central.day.rollover). */
   readonly openTomorrow?: () => Promise<void>
+  /** Open a refinement of the one skill or method the Patterns move's pattern points at, on the Skillset rack's Refining page (§19.7). */
+  readonly refine?: (member: string) => void | Promise<void>
 }
 
 /** The binding the runtime hosts the Day design on: the readings, and the writes its owners take. A change of any other key is refused
  * as a reading by the runtime (deviceHost.tsx flushDrafts); a write the owner cannot take now is refused in words. */
 export function dayDesignBinding(id: string, facts: DayFacts, values: Readonly<Record<string, Value>>, writers: DayWriters, own: DayOwnReadings | null = null): DesignBinding {
   const standing = dayStanding(facts, own)
+  // Refine: the one skill or method Central names for the Patterns move's pattern, opened through the chain's hand.
+  const points = typeof values.patternPoints === 'string' ? values.patternPoints : null
+  if (!points) standing.refinePattern = {disabled: (own ? dayOwnAbsent(own, values).patternPoints : undefined) ?? PATTERN_POINTS_UNREAD}
+  else if (!writers.refine) standing.refinePattern = {disabled: REFINE_UNWIRED}
   return {
     id,
     values,
@@ -487,6 +511,9 @@ export function dayDesignBinding(id: string, facts: DayFacts, values: Readonly<R
           if (change.value !== true) throw new Error('A pad is a press: it begins its move now.')
           if (!writers.begin || facts.standing?.state !== 'ready') throw new Error(NO_DAY_FOR_MOVES(change.key.slice(4)))
           await writers.begin(change.key.slice(4), facts.standing.dayRef)
+        } else if (change.key === 'refinePattern') {
+          if (change.value !== points) throw new Error(`Refine opens a refinement of the one skill or method the pattern's items point at: it points at ${points}, not ${String(change.value)}.`)
+          await writers.refine!(points!)
         } else if (DAY_SETTINGS_KEYS.includes(change.key)) {
           const revision = settingsRevisionOf(own)
           if (!revision || !writers.settings) throw new Error(SETTINGS_UNREAD(SETTING_NAME(change.key), own))

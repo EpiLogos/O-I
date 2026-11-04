@@ -11,6 +11,7 @@
 // Pure of React, apart from what the hooks module (useOwnerOp) gives.
 import {kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import {ownerRefusalText} from '../../../../../../desktop/cradle/src/contributions/factory/development'
+import {actionAnswerOf, centralActionOp} from '../../central/devices/centralActions'
 import type {
   AikitReadRequest, AikitWriteRequest, GatewayWriteRequest, KernelOp, KernelTransportStatus, SeatWriteRequest, WorkcellReadRequest, WorkcellWriteRequest,
 } from '../../../../../../desktop/cradle/src/kernel/types'
@@ -63,6 +64,27 @@ export const aikitReadOp = (request: AikitReadRequest): KernelOp => ({op: 'aikit
 export const refinementWrite = (transport: KernelTransportStatus): ((request: {kind: string; member: string}) => Promise<OwnerRouteAnswer>) | undefined =>
   transport.kind !== 'unavailable'
     ? request => ownerRouteWrite(transport, aikitWriteOp(request as AikitWriteRequest), `\`aikit source refine ${request.kind.replace('refinement-', '')}\``)
+    : undefined
+
+/** Central's own acts on a Control skill's revision that waits there (ctrl control_skills.rs): the person's Accept writes it as the skill
+ * in use, Discard drops it, each at the digest the person reviewed and on the person's own authority (the kernel's invoke_action: action.rs
+ * PERSON_ACTS). The revision is AIKit's record of its hand (designBindings.ts HandedRevision). Absent while no kernel is reached. */
+export const CENTRAL_REVISION_ACTS = {accept: 'control.skills.revision.accept', discard: 'control.skills.revision.discard'} as const
+
+/** One Central act through the kernel's invoke_action, Central's data or its refusal in its words, as centralDeviceWrites.ts centralWrite
+ * asks it (that module is not imported here: it draws the Flow documents, which this module's readers have no need of). */
+async function centralAct(transport: KernelTransportStatus, action: string, input: Readonly<Record<string, unknown>>): Promise<unknown> {
+  const call = await kernelOp(transport, centralActionOp(action, input))
+  if (call.error) throw new Error(call.error)
+  const answer = actionAnswerOf({status: 'answered', value: call.outcome?.result === 'action_dispatched' ? call.outcome : null, error: null}, action)
+  if (answer.status === 'answered') return answer.value
+  throw new Error(answer.status === 'refused' ? answer.error : `${action} did not answer.`)
+}
+
+export const centralRevisionWrite = (transport: KernelTransportStatus):
+  ((verb: 'accept' | 'discard', handed: {readonly scope: string; readonly name: string; readonly proposedDigest: string}) => Promise<unknown>) | undefined =>
+  transport.kind !== 'unavailable'
+    ? (verb, handed) => centralAct(transport, CENTRAL_REVISION_ACTS[verb], {scope: handed.scope, name: handed.name, expected_proposed_digest: handed.proposedDigest})
     : undefined
 
 /** The plain words of each write, for a refusal that names the command it could not ask. */

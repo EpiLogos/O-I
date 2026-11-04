@@ -73,10 +73,10 @@ import {openSeatDiff} from '../../agent/AgentShellBrowser'
 import {custodyBinding, withCustodyAsks} from '../../agent/devices/sessionChainBindings'
 import {shownSession, threadBinding} from '../../agent/devices/threadBinding'
 import {useAikitRead} from '../../agent/devices/workcellReads'
-import {holdView, useChainHolds, viewHolds} from '../../agent/devices/designBindings'
+import {REFINING_MODE, holdView, openRefinement, useChainHolds, viewHolds} from '../../agent/devices/designBindings'
 import {familyFaceDevice} from '../../agent/devices/mainTrackBindings'
 import {APPROVALS_ID, approvalsBinding} from '../../agent/devices/receiptBindings'
-import {refinementWrite} from '../../agent/devices/ownerRoutes'
+import {centralRevisionWrite, refinementWrite} from '../../agent/devices/ownerRoutes'
 import {observedSessionsOf, returnProjectOf, ROOT_REGISTER, useWorldReturns, worldRegisterOf} from '../../agent/worldScope'
 import {useAgentSessionsOptional} from '../../agent/AgentSessionsProvider'
 import {MAIN_TRACK_REF} from '../../frame/tracks/SessionGrid'
@@ -339,6 +339,16 @@ export interface CentralDevicesProps {
   readonly deviceWindows?: DeviceWindowHost | null
 }
 
+/** Turn the shell to Factory, whose session chains stand the Skillset rack (designBindings.ts openRefinement: a refinement opens on its
+ * Refining page), through the book's one mode switch; undefined where no book is mounted. Stable across the book's renders. */
+function useTurnToFactory(): (() => void) | undefined {
+  const book = useOptionalContinuity()
+  const setMode = useRef(book?.setMode)
+  setMode.current = book?.setMode
+  const present = !!book
+  return useMemo(() => (present ? () => { setMode.current?.(REFINING_MODE) } : undefined), [present])
+}
+
 /** The Day device's own readings and writes: the facts its owners give, the shown Day's document, and the binding the design reads
  * (null until the Day's date is known — before that the design would draw its date as missing words, so the generic plate stands). */
 export function useDayDevice(transport: KernelTransportStatus, selected: {standing: DayDocumentStanding | null; aperture: DayDieAperture | null} | null): {
@@ -361,6 +371,7 @@ export function useDayDevice(transport: KernelTransportStatus, selected: {standi
   const inPane = useDayInPane(facts.aperture?.documentId ?? null)
   const shownFace = inPane?.face ?? document.face
   const refreshGround = ground.refresh, refreshDocument = document.refresh
+  const toFactory = useTurnToFactory()
   const binding = useMemo(() => {
     if (!facts.civilDate) return null
     const values = dayValuesOf(facts, facts.aperture && shownFace !== null ? {face: shownFace, payload: document.payload} : null, own)
@@ -386,8 +397,11 @@ export function useDayDevice(transport: KernelTransportStatus, selected: {standi
       settings: async (patch, revision) => { await writeDaySettings(transport, patch, revision) },
       begin: async (move, dayRef) => { await beginDayMove(transport, move, dayRef) },
       openTomorrow: async () => { try { await openTomorrow(transport) } finally { refreshGround() } },
+      // Refine on the Patterns pad (§18.2): a refinement of the one skill or method its pattern points at, on the Skillset rack's
+      // Refining page in Factory (§19.7). It writes nothing to any owner.
+      refine: member => openRefinement(member, {toFactory}),
     }, own)
-  }, [facts, shownFace, document.payload, own, transport, refreshDocument, refreshGround, epoch])
+  }, [facts, shownFace, document.payload, own, transport, refreshDocument, refreshGround, epoch, toFactory])
   return {facts, document, binding}
 }
 
@@ -398,6 +412,7 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   const manifest = inhabitantManifest(CENTRAL_FAMILY)
   const dayDevice = useDayDevice(transport, dayStanding ? {standing: dayStanding, aperture: day} : null)
   const dayBinding = dayDevice.binding
+  const toFactory = useTurnToFactory()
   const dayAperture = dayDevice.facts.aperture
   const selection = useOptionalContinuity()?.current.context?.selection ?? null
   const selectionRef = selection?.ref ?? null
@@ -565,6 +580,7 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   // `aikit source refine list`, answered with Accept or Discard through the one write the Skillset rack's Refining page presses.
   const centralRefinements = useAikitRead(transport, {kind: 'refinement-list'})
   const refineWrite = useMemo(() => refinementWrite(transport), [transport])
+  const centralRevision = useMemo(() => centralRevisionWrite(transport), [transport])
   const approvals = useMemo(() => {
     const actions = answerHandle && 'actions' in answerHandle ? answerHandle.actions : undefined
     // Approvals is handed no Gateway and stands no default answer: that answer is the Gateway's, never Approvals' (§19.14; ticket 788).
@@ -573,7 +589,9 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
       refinements: centralRefinements, settings: naraWaits.settings},
       {...(actions ? {permission: (id, decision) => actions.permission(id, decision)} : {}), approve: row => acceptSourceReturn(transport, returnProjectOf(row, approvalsRegister), row, person),
         reject: row => rejectSourceReturn(transport, returnProjectOf(row, approvalsRegister), row),
-        ...(refineWrite ? {refine: refineWrite} : {})},
+        ...(refineWrite ? {refine: refineWrite} : {}), ...(centralRevision ? {refineCentral: centralRevision} : {}),
+        // Open shows a refinement where it belongs, the Skillset rack's Refining page: Factory's session chains stand the rack.
+        openRefinement: member => openRefinement(member, {toFactory})},
       CENTRAL_APPROVALS_ID)
     // Changes (W6): a comment on the return, in the words written in the thread — the Agent's composer here — through Central's
     // projectcentral.source.return_comment (sourceReturnComment.ts); once Central keeps it, the composer is cleared.
@@ -587,7 +605,7 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
       {opened, hold: ids => holdView(APPROVALS_ID, 'opened', openedHold(ids))})
     return requested
   }, [answerHandle, naraTrack, answerObserved, holds, returned, worldReturns.absent, worldReturns.refusals, agency.tracks, nowUnixMs, transport, person, agentDraft, agentWrite, ownerRequests, approvalsRegister, naraWaits.settings,
-    centralRefinements, refineWrite])
+    centralRefinements, refineWrite, centralRevision, toFactory])
   const others = useMemo(() => centralAgentDevices(), [])
   // Docs (§18.5) on the selected world (pageDevices.ts useDocsDevice, pageBindings.ts docsBinding): the world's account on six tiers on
   // Central's own readings, and the person's presses through Central.

@@ -244,6 +244,12 @@ export interface ActuationTakeStop {
   when: 'done' | 'turns' | 'time' | 'pass'; turns?: number; time_ms?: number; met: boolean
   reason?: string; at_turn?: number; elapsed_ms?: number
 }
+/** A take's answer to one Success condition: met or not met with the evidence Actuation found it kept (a file by its digest in the
+ * take's World, or the task's own test), or open, with why. */
+export interface ActuationTakeAnswer {
+  condition: string; answer: 'met' | 'not met' | 'open'
+  evidence: ({file: string; digest: string} | {test: {answer: string; code: number | null}})[]; why?: string
+}
 /** The takes a comparison made (the kernel's reading of the `ql-series1-run/0.3` manifest, which stays whole at `manifest_path`): what
  * varied over which levels, and each take's level, condition, agent and how its stop condition ended it. The variable, levels, stop,
  * agent and level are null from an Actuation before O-I 795's own-task comparison. */
@@ -252,7 +258,10 @@ export interface ActuationComparisonTakes {
   variable: string | null; levels: string[] | null; stop: ActuationTakeStop | {when: string} | null
   records: {condition: string; variable: string | null; level: string | null; agent: string | null; repetition: number; ordinal: number
     trace_ref: string; status: string | null; error: string | null; elapsed_ms: number | null; model_calls: number | null
-    total_tokens: number | null; stop: ActuationTakeStop | null; receipt_path: string}[]
+    total_tokens: number | null; stop: ActuationTakeStop | null; receipt_path: string
+    /** What the take answered to each of the task's Success conditions, held to its evidence (research execution.rs `answers`); null
+     * from an Actuation before O-I 795 round 13. */
+    answers?: ActuationTakeAnswer[] | null}[]
   held_constants_valid: boolean; determination: string; provider_mode: string; human_acceptance: boolean
 }
 /** `ql kernel m1` (answers ql.m1.engine/v1), `ql scene compose` (ql.scene/v1), `ql scene world` (ql.scene-world/v1). */
@@ -1300,10 +1309,12 @@ export interface EncounterSessionSettingsRequest {
 export interface EncounterTakesSet {
   trace_ref: string; started_at_unix_ms: number; running: boolean
   variable: string; levels: string[]; repeats: number; stop: string
+  /** The task's Success conditions as they stood at the set's first run: each take is read against them. Absent before O-I 795 round 13. */
+  success?: string[]
   ended: null | {at_unix_ms: number; outcome: 'made' | 'failed' | 'stopped'; takes?: number; root?: string; reason?: string}
 }
 export type EncounterTaskSettingKey = 'name' | 'colour' | 'active' | 'register' | 'form' | 'loop' | 'loop_until' | 'loop_cap' | 'launch' | 'then'
-  | 'quantize' | 'repeat_variable' | 'repeat_levels' | 'repeat_repeats' | 'repeat_stop' | 'envelope_mode' | 'envelope_linked' | 'source' | 'effort' | 'tool_calls'
+  | 'quantize' | 'repeat_variable' | 'repeat_levels' | 'repeat_repeats' | 'repeat_stop' | 'envelope_mode' | 'envelope_linked' | 'source' | 'success' | 'effort' | 'tool_calls'
 /** An envelope point: [seconds from the task's start, a level word under Automation or a step −2…+2 under Modulation]. */
 export type EncounterEnvelopePoint = [number, string | number]
 /** The owner's reading: every value as it stands (defaults stated), `set` naming what the person set. Its words are the manual's (§19.1
@@ -1340,6 +1351,9 @@ export interface EncounterSessionSettingsReading {
     /** The constellation the task was made of (§19.1 The Clip panel's Constellation): its whole's wiki ref, the one the task was made with
      * until the person sets another; null when it was made of none. Absent from an AIKit before O-I #768 (ai-kit a3f43f84). */
     source?: string | null
+    /** The Success conditions the person typed for the task (§19.1 The Intent panel's Add), in their words, kept with its settings; a
+     * set of takes is read against them as they stood at its first run. Absent from an AIKit before O-I 795 round 13. */
+    success?: string[]
     /** The Repeat's set of takes that stands; null until one starts. Absent from an AIKit before O-I 795. */
     takes?: EncounterTakesSet | null
     /** The run a Repeat's takes share, in Actuation's own words, or why AIKit has none (EncounterTakeRun). Absent from an AIKit

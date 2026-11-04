@@ -40,15 +40,16 @@
 // answered as the person — Allow once answers Resume bounded work, Deny answers Cancel bounded work — through Central's receiving Review of
 // the question Factory put to Central; Allow always is refused (a unit decision takes one answer). A skill's proposed revision (O-I 772,
 // manual §19.7 "The proposal waits in Approvals, and in the page") stands as a proposal with its Result for each condition, answered
-// Accept or Discard through the Refining page's own AIKit verbs (aikit_write refinement-accept · refinement-discard; designBindings.ts
-// refinementsOf, refinementAcceptWhy). Pure, apart from the view holds (designBindings.ts holdView).
+// Accept or Discard through the Refining page's own verbs: AIKit's (aikit_write refinement-accept · refinement-discard), and Central's for a
+// Control skill's revision that waits there (designBindings.ts refinementsOf, answerRefinement). Pure, apart from the view holds
+// (designBindings.ts holdView).
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
 import type {EncounterReading, NativePermission, PermissionDecision} from '../../../../../../desktop/cradle/src/encounter/client'
 import {describePermission} from '../../../../../../desktop/cradle/src/agent/chat/PermissionCard'
 import type {AgentSessionTrack} from '../agentRunModel'
 import type {EncounterSessionSettingsReading, SourceReturnEntry} from '../../../../../../desktop/cradle/src/kernel/types'
-import {REFINE_WRITES, holdView, refinementAcceptWhy, refinementResult, refinementsOf, viewHolds, type ChainHolds, type Refinement} from './designBindings'
+import {answerRefinement, holdView, refinementResult, refinementsOf, viewHolds, type CentralRevisionHand, type ChainHolds, type Refinement} from './designBindings'
 import type {AikitAnswer} from './aikitPages'
 import {familyFaceDevice} from './mainTrackBindings'
 import {pendingPermissions, verbStanding} from './threadBinding'
@@ -504,10 +505,18 @@ export interface ApprovalsPorts {
   /** Answer a skill's proposed revision through AIKit (aikit_write refinement-accept · refinement-discard), the Refining page's own verbs.
    * Absent: no carrier stands. */
   readonly refine?: (request: {kind: string; member: string}) => Promise<unknown>
+  /** Central's own acts on a Control skill's revision that waits there, the Refining page's own (ownerRoutes.ts centralRevisionWrite).
+   * Absent: no kernel carries them here, and Accept and Discard on such a revision say so. */
+  readonly refineCentral?: CentralRevisionHand
+  /** Open a skill's proposed revision where it belongs, the Skillset rack's Refining page with its member chosen (designBindings.ts
+   * openRefinement). Absent: Open on a refinement refuses saying so. */
+  readonly openRefinement?: (member: string) => void | Promise<void>
 }
 
 /** Accept and Discard on a refinement where no carrier stands. */
 export const REFINE_UNWIRED = 'The kernel carrier is unavailable here, so AIKit cannot be asked (aikit_write refinement-accept · refinement-discard).'
+/** Open on a refinement where the chain hands no opener of the Skillset rack's Refining page. */
+export const REFINE_OPEN_UNWIRED = 'Open: no hand opens the Skillset rack\'s Refining page here.'
 
 /** The harness's own choice for an answer: allow once, allow always, or reject (PermissionCard.tsx reads the same kinds). */
 function choiceFor(request: NativePermission, answer: 'allowOnce' | 'allowAlways' | 'deny'): PermissionDecision | null {
@@ -555,7 +564,7 @@ export function approvalsBinding(input: ApprovalsInput, ports: ApprovalsPorts, i
     standing,
     local: Object.fromEntries(APPROVALS_LOCAL.map(key => [key, (value: Value | undefined) => holdView(APPROVALS_ID, key, value)])),
     writes: key => key === 'allowOnce' || key === 'allowAlways' || key === 'deny' || key === 'approve' || key === 'reject' || key in APPROVALS_REFUSE
-      || key in APPROVALS_ANSWERS_REFUSED || key === 'refineAccept' || key === 'refineDiscard',
+      || key in APPROVALS_ANSWERS_REFUSED || key === 'refineAccept' || key === 'refineDiscard' || key === 'open',
     write: async (changes: readonly ValueChange[]) => {
       for (const {key, value} of changes) {
         if (key === 'allowOnce' || key === 'allowAlways' || key === 'deny') {
@@ -598,9 +607,17 @@ export function approvalsBinding(input: ApprovalsInput, ports: ApprovalsPorts, i
           const member = typeof value === 'string' && value.startsWith(REFINE_ROW) ? value.slice(REFINE_ROW.length) : String(value)
           const row = refinements?.find(item => item.member === member)
           if (!row) throw Error(`${member}: no proposed revision of ${member} stands in AIKit's list.`)
-          const why = key === 'refineAccept' ? refinementAcceptWhy(row) : null
-          if (why) throw Error(why)
-          await ports.refine({kind: key === 'refineAccept' ? REFINE_WRITES.accept : REFINE_WRITES.discard, member})
+          await answerRefinement(row, key === 'refineAccept' ? 'accept' : 'discard', {write: ports.refine, central: ports.refineCentral})
+          continue
+        }
+        if (key === 'open') {
+          // Open on a refinement opens it where it belongs: the Skillset rack's Refining page, its member chosen (§19.7, §19.14). Open on
+          // any other item marks it opened, which the queue's holder keeps (railBindings.ts withOwnerRequests); its owner is told nothing.
+          if (typeof value !== 'string' || !value.startsWith(REFINE_ROW)) continue
+          const member = value.slice(REFINE_ROW.length)
+          if (!refinements?.some(item => item.member === member)) throw Error(`${member}: no proposed revision of ${member} stands in AIKit's list.`)
+          if (!ports.openRefinement) throw Error(REFINE_OPEN_UNWIRED)
+          await ports.openRefinement(member)
           continue
         }
         if (key in APPROVALS_ANSWERS_REFUSED) throw Error(APPROVALS_ANSWERS_REFUSED[key])

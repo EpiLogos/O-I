@@ -21,8 +21,9 @@
 // takes (frame/tracks/useFactoryTracks.ts repeatPress); the note chosen is published for Routine… on a song (chosenNoteOf,
 // songClips.ts routineOfSong).
 // Every per-task setting writes through its seam in agent/devices/taskBindings.ts TASK_SEAMS, against the settings' standing
-// revision. The Intent panel (§19.1, the design's D3 panel) has no reading a kernel route reaches: its keys stand absent and its writes
-// refused, each with the operation it waits for (INTENT_ABSENT, INTENT_REFUSED). Of the Launch panel, Compare and the takes a Repeat made
+// revision. The Intent panel (§19.1, the design's D3 panel): its Success conditions are the words the person typed for the task, kept with
+// the task's settings on AIKit (`success`), and Add appends one; its other keys have no reading a kernel route reaches and stand absent,
+// its Intent write refused, each with the operation it waits for (INTENT_ABSENT, INTENT_REFUSED). Of the Launch panel, Compare and the takes a Repeat made
 // stand absent and refused the same way (LAUNCH_ABSENT, LAUNCH_REFUSED). Hand off to is retired: the task is dragged onto another
 // session's track (§19.1). The score (Notes, Vāk and the Tools, O-I #843) is the song the task's Run performs, as Factory reads it, on
 // the rows of the track's Agent rack — its agents and agent sets — with Allocate, Connect and Thread form written into the song's file
@@ -367,27 +368,34 @@ const SETTING_OF: Readonly<Record<string, TaskSetting>> = {
   name: 'name', colour: 'colour', active: 'active', 'style.register': 'register', 'style.form': 'form', loop: 'loop', 'loop.until': 'loopUntil',
   'loop.cap': 'loopCap', launch: 'launch', then: 'then', quantize: 'quantize', 'repeat.variable': 'repeatVariable', 'repeat.levels': 'repeatLevels',
   'repeat.repeats': 'repeatRepeats', 'repeat.stop': 'repeatStop', 'env.agent.effort': 'effort', 'env.scope.toolCalls': 'toolCalls', 'env.mode': 'envelopeMode',
-  'env.linked': 'envelopeLink',
+  'env.linked': 'envelopeLink', criterion: 'success',
 }
 
-/** The Intent panel's readings (manual §19.1 "The Intent panel"; clip:factory, D3): what the task is for, its source, its success conditions,
- * its context and constraints. Factory keeps them — the required difference in the Development Field (`factory development field read`),
- * the conditions, their evaluation, the context and the constraints in the bounded intent of its project-development ledger — and no kernel
- * route reaches either: the kernel's factory_development_read carries project, journey, run, workflow-units, workflow-unit,
- * execution-telemetry and commission-read only. Each key is absent, with the read it waits for. */
+/** The Intent panel's readings (manual §19.1 "The Intent panel"; clip:factory, D3): what the task is for, its source, its context and
+ * constraints. Factory keeps them — the required difference in the Development Field (`factory development field read`), the context and
+ * the constraints in the bounded intent of its project-development ledger — and no kernel route reaches either: the kernel's
+ * factory_development_read carries project, journey, run, workflow-units, workflow-unit, execution-telemetry and commission-read only.
+ * Each key is absent, with the read it waits for. The Success conditions are not among them (O-I 795): "the words stay in the source they
+ * come from", and a condition typed in Add comes from the person, so its words are the task's own settings on AIKit (`success`, beside the
+ * bound task, as its source and its Repeat are); Factory's bounded intent keeps only refs to conditions (success_condition_refs), never
+ * their words. */
 const LEDGER_READ = 'a read of the project-development ledger (bounded intent, success criteria, PraxisCondition) through the kernel (T-COVERAGE §1.2)'
 export const INTENT_ABSENT: Readonly<Record<string, string>> = {
   intent: 'The intent: no reading reaches it yet — missing op: `factory development field read` through the kernel (factory_development_read carries no Development Field) (Software Factory).',
   'intent.source': `Where the intent is written: no reading reaches it yet — missing op: ${LEDGER_READ} (Software Factory).`,
-  criteria: `The success conditions and their return: no reading reaches them yet — missing op: ${LEDGER_READ} (Software Factory).`,
   constraints: `The constraints the task keeps: no reading reaches them yet — missing op: ${LEDGER_READ} (Software Factory).`,
   context: `The context the task resolves in: no reading reaches it yet — missing op: ${LEDGER_READ} (Software Factory).`,
 }
+// REPLACED (O-I 795, round 13): INTENT_REFUSED.criterion, "a success-condition write on the bounded intent of the project-development
+// ledger": Add writes the task's settings on AIKit (taskBindings.ts TASK_SEAMS.success).
 /** The Intent panel's writes, each refused with the operation it lacks. */
 export const INTENT_REFUSED: Readonly<Record<string, string>> = {
   intent: 'Intent: no owner operation carries it yet — missing op: `factory development field set` through the kernel (Software Factory).',
-  criterion: 'A success condition: no owner operation carries it yet — missing op: a success-condition write on the bounded intent of the project-development ledger (Software Factory has none) (Software Factory).',
 }
+/** The Success conditions from an AIKit that keeps none for a task. */
+const CRITERIA_UNKEPT = 'The success conditions: this AIKit keeps none for a task — missing op: the task settings\' `success` (AIKit).'
+/** "The revision cannot change them" (§19.7): while a set of takes runs, its conditions hold, in AIKit's words. */
+const conditionsHeld = (trace: string) => `The takes ${trace} are read against the task's Success conditions as they stood at their first run: a change to them waits until the takes end.`
 
 /** Compare and the takes (manual §19.1 The Launch panel): Loop, the launch mode and what a Repeat varies are the session's settings (AIKit
  * `encounter-session-settings`), and so is the set of takes a Repeat runs (`task.takes`, O-I 795): the takes it made are read once the
@@ -510,11 +518,13 @@ function taskWiring(task: TaskAddress | null, context: TaskSeamContext | null): 
   const refused: Record<string, string> = {}
   const why = task ? settingsRefusal(context, task.n) : 'No task is selected: select a task on a session\'s track.'
   const takes = why ? null : context?.settings?.task?.takes ?? null
+  const criteriaWhy = why ? `The success conditions: ${why}` : context?.settings?.task?.success === undefined ? CRITERIA_UNKEPT : null
   for (const [key, setting] of Object.entries(SETTING_OF)) {
     const seam = TASK_SEAMS[setting]
     if (seam.refused) refused[key] = seam.refused
     else if (why || !task || !context) refused[key] = why ?? 'No task is selected: select a task on a session\'s track.'
     else if (takes?.running && REPEAT_KEYS.has(key)) refused[key] = takesRunning(takes.trace_ref)
+    else if (takes?.running && key === 'criterion') refused[key] = conditionsHeld(takes.trace_ref)
     else acts[key] = value => seam.send(task, value, context)
   }
   return {
@@ -538,8 +548,9 @@ function taskWiring(task: TaskAddress | null, context: TaskSeamContext | null): 
       log: 'the session\'s temporal events inside the task\'s span',
       elapsed: 'the task\'s start to its last activity, in seconds',
       ...(takes ? {takes: 'the session\'s settings: the Repeat\'s set of takes (task.takes) — the takes it made, read once the set ends'} : {}),
+      criteria: 'the session\'s settings: the Success conditions typed for the task (task.success), each without an answer until a run returns one',
     },
-    absent: {...INTENT_ABSENT, ...(takes ? {compare: LAUNCH_ABSENT.compare} : LAUNCH_ABSENT)},
+    absent: {...INTENT_ABSENT, ...(criteriaWhy ? {criteria: criteriaWhy} : {}), ...(takes ? {compare: LAUNCH_ABSENT.compare} : LAUNCH_ABSENT)},
     acts,
     view: {
       fold: 'Fold keeps only the lanes of the tools the agent used: how the log shows, not the log',

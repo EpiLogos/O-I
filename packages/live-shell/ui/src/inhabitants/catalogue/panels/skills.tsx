@@ -23,9 +23,10 @@
 //
 // Refining a skill (manual §19.7, the Refining page): a close whose reason Kev picks a member for drafts one revision of it, which waits
 // here and in Approvals. The page carries AIKit's proposed revisions under `refine.`: proposals (a JSON list {id, source, owner, stale,
-// revision} to choose from), member (the one chosen), owner (aikit · central: who keeps its source), why (JSON [{task, reason}]: the closes
+// revision} to choose from), member (the one chosen), owner (aikit · central: who keeps its source), handed (the ref Central keeps a Control
+// skill's revision under once AIKit's Accept handed it there, for the person's Accept in Central), why (JSON [{task, reason}]: the closes
 // that show the reason), revision (proposed) and inUse (the revision in use), test (JSON [{trace, level proposed | in use}]: the takes of
-// the Repeat over Skillset), result (JSON [{task, condition, proposed, inUse}], each met · not met · open), resultWhy (why it reads so),
+// the Repeat over Skillset), result (JSON [{task, condition, proposed, inUse, evidence?, why?}], each met · not met · open, per Success condition), resultWhy (why it reads so),
 // levels (the Repeat's two levels). Acts: run (Test: the session's own Repeat), accept, discard. Its tab's light is lit while one waits.
 import {useState} from 'react'
 import {WoodMark} from '../../sdk/marks'
@@ -245,15 +246,17 @@ function RefineBands({p}: {p: ViewProps}) {
   const proposals = refRows(v, 'proposals', x => (text(x.id) ? {id: x.id as string, stale: x.stale === true, owner: text(x.owner)} : null))
   const why = refRows(v, 'why', x => (text(x.reason) ? {task: text(x.task), reason: x.reason as string} : null))
   const takes = refRows(v, 'test', x => (text(x.trace) ? {trace: x.trace as string, level: x.level === 'in use' ? 'in use' : 'proposed'} : null))
-  const result = refRows(v, 'result', x => (text(x.condition) ? {condition: x.condition as string, task: text(x.task), proposed: outcomeOf(x.proposed), inUse: outcomeOf(x.inUse)} : null))
-  const member = strOf(v, 'member'), owner = strOf(v, 'owner'), resultWhy = strOf(v, 'resultWhy'), levels = strOf(v, 'levels')
+  const result = refRows(v, 'result', x => (text(x.condition) ? {condition: x.condition as string, task: text(x.task), proposed: outcomeOf(x.proposed), inUse: outcomeOf(x.inUse),
+    evidence: text(x.evidence), why: text(x.why)} : null))
+  const member = strOf(v, 'member'), owner = strOf(v, 'owner'), handed = strOf(v, 'handed'), resultWhy = strOf(v, 'resultWhy'), levels = strOf(v, 'levels')
   const none = st(p, 'member').disabled
   const whyRows: RowItem[] | undefined = why?.map((x, i) => ({id: `w${i}`, name: x.reason, light: 'lit', tone: 'stall', note: x.task ? leaf(x.task) : undefined,
     does: x.task ? `The close of ${x.task}, and its reason.` : 'A close, and its reason.'}))
   const takeRows: RowItem[] | undefined = takes?.map(x => ({id: x.trace, name: leaf(x.trace), light: 'lit', tone: x.level === 'proposed' ? 'accent' : 'value', note: x.level,
     does: x.level === 'proposed' ? 'A take that ran under the proposed revision.' : 'A take of the same Repeat that ran under the revision in use.'}))
   const resultRows: RowItem[] | undefined = result?.map((x, i) => ({id: `r${i}`, name: x.condition, light: x.proposed === 'open' ? 'unknown' : 'lit',
-    tone: OUTCOME_TONE[x.proposed], note: `${x.proposed} · ${x.inUse}`, does: `Proposed: ${x.proposed}. In use: ${x.inUse}.`, why: x.proposed === 'open' ? resultWhy : undefined}))
+    tone: OUTCOME_TONE[x.proposed], note: `${x.proposed} · ${x.inUse}`, does: `Proposed: ${x.proposed}. In use: ${x.inUse}.${x.evidence ? ` Evidence — ${x.evidence}.` : ''}`,
+    why: x.proposed === 'open' ? x.why ?? resultWhy : undefined}))
   return <>
     <Band>
       <Section label="Member" width={160}>
@@ -261,7 +264,8 @@ function RefineBands({p}: {p: ViewProps}) {
           value={member ?? ''} options={(proposals ?? []).map(x => ({value: x.id, label: leaf(x.id), why: x.stale ? 'Drafted against a revision no longer in use.' : undefined}))}
           onChange={x => p.set('member', x)} />
         <div className="ref-pair">
-          <Readout label="source" does="Who keeps the member's source: AIKit, or Central for a Control skill." value={owner === 'central' ? 'Central' : owner === 'aikit' ? 'AIKit' : undefined} />
+          <Readout label="source" does={`Who keeps the member's source: AIKit, or Central for a Control skill, whose revision Accept hands to Central for your Accept there.${handed ? ` It waits there as ${handed}.` : ''}`}
+            value={owner === 'central' ? (handed ? 'Central · waits for your Accept' : 'Central') : owner === 'aikit' ? 'AIKit' : undefined} />
           <Readout label="waiting" does="The proposed revisions that wait." value={proposals?.length} tone="accent" />
         </div>
       </Section>
@@ -392,8 +396,11 @@ export const skills: DesignedDevice = {
   fixtures: {'The blade': {marks: 'blade'}, 'The pen': {marks: 'pen'},
     'Unused only': {unusedOnly: true},
     'Capturing, held for a secret': {'capture.recording': true, ...prefixed('capture.', captureSkill.fixtures?.Held ?? {})},
+    // REPLACED (O-I 795, round 13): "Open: the takes ran, but no take answered a Success condition". Each take answers the task's own.
     'A refinement tested': prefixed('refine.', {...REFINE_SAMPLE, test: JSON.stringify([{trace: 'takes:own:1:trial:0', level: 'proposed'}, {trace: 'takes:own:1:trial:1', level: 'in use'}]),
-      resultWhy: 'Open: the takes ran, but no take answered a Success condition.'}),
+      result: JSON.stringify([{condition: 'The plan names each gate by its command', proposed: 'met', inUse: 'not met', evidence: 'proposed: file plan.md · in use: the task\'s own test: not met (exit 1)'},
+        {condition: 'The plan keeps the release order', proposed: 'open', inUse: 'met', evidence: 'in use: file plan.md', why: 'Open: the take answered met but named no evidence it kept'}]),
+      resultWhy: 'What 2 takes answered to the task\'s Success conditions, each held to its evidence by Actuation.'}),
     'No readings': {light: undefined, set: undefined, scope: undefined, profile: undefined, compose: undefined, revision: undefined,
       author: undefined, members: undefined, sets: undefined, profiles: undefined, unused: undefined, unusedOnly: undefined,
       ...prefixed('capture.', captureSkill.fixtures?.['No readings'] ?? {}),
