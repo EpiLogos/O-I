@@ -108,7 +108,7 @@ test('a strike\'s answer carries the keys whose notes made way, both ways across
 
 // ---------------------------------------------------------------------------------------------------- the controller's two acts
 const keyOf = key => `${key.row}/${key.column}`;
-const openController = async ({polyphony = 16} = {}) => {
+const openController = async ({polyphony = 16, Audio = base => base} = {}) => {
   const {ControlledAudio, ControlledSceneOwner} = await fixture();
   const THREE = await import('three');
   const {NativeFieldController} = await controller();
@@ -124,7 +124,7 @@ const openController = async ({polyphony = 16} = {}) => {
         this.handovers = (this.handovers ?? 0) + 1;
         if (this.refuseHandover) return {...reply, status: 'refused', error: 'controlled refusal: a setting waits for a later sample'};
         reply.torus_native = {schema: 'ql.torus-native/v1', sha256: 'sha256:' + this.handovers.toString(16).padStart(64, '0'),
-          generation: reply.field.generation, at_samples_elapsed: reply.field.samples_elapsed};
+          generation: reply.field.generation, at_samples_elapsed: this.handedAt ?? reply.field.samples_elapsed};
         return reply;
       }
       if (!['torus-play', 'torus-release', 'torus-singlet'].includes(command?.operation)) return super.request(request);
@@ -172,9 +172,9 @@ const openController = async ({polyphony = 16} = {}) => {
   const port = {texWidth: 2, texHeight: 2, particleCount: 4, targetA: texture(), targetB: texture(), setTargetTextures() {}};
   const renderer = {retainedTopology: () => ({tex_width: 2, tex_height: 2, particle_count: 4, slot_count: 4}), retainedTargetPort: () => port, setNativeDomain() {},
     releaseRetainedField() {}, onRetainedRecoveryRequired: () => () => {}, checkpointRetainedField() { return {receipt: {}}; }, restoreRetainedField() {}};
-  const owner = new TorusOwner(), audio = new ControlledAudio(), c = new NativeFieldController(owner, renderer, () => audio);
+  const owner = new TorusOwner(), audio = new (Audio(ControlledAudio))(), c = new NativeFieldController(owner, renderer, () => audio);
   await c.compose({sky: 'none'});
-  return {owner, c};
+  return {owner, c, audio};
 };
 
 test('a strike of keys is one torus-play act on the owner: the keys, the amplitude as its metres, the sample it lands at', async () => {
@@ -369,12 +369,18 @@ test('the torus-engine stage command says on or off, and its answer is the lease
     assert.equal(readStageRequest(request({command: 'torus-engine', ...body})), null, JSON.stringify(body));
   const handed = {lease: 'native-expression-1-2-3', sha256: 'sha256:' + 'ab'.repeat(32), generation: '4', at_samples_elapsed: '4800'};
   assert.deepEqual(readStageTorusEngine(handed), handed);
+  // round 13: when the frame plays the sample it was handed over at, in the machine's wall clock, so the engine takes it then
+  assert.deepEqual(readStageTorusEngine({...handed, heard_at_ms: 1793750400123.5}), {...handed, heard_at_ms: 1793750400123.5});
   for (const bad of [{...handed, sha256: 'sha256:' + 'AB'.repeat(32)}, {...handed, sha256: 'ab'.repeat(32)}, {...handed, at_samples_elapsed: 4800},
-    {...handed, generation: '04'}, {...handed, lease: ''}, {...handed, continuation: {}}, null, 'sha256:'])
+    {...handed, generation: '04'}, {...handed, lease: ''}, {...handed, continuation: {}}, null, 'sha256:',
+    {...handed, heard_at_ms: '1793750400123'}, {...handed, heard_at_ms: NaN}, {...handed, heard_at_ms: Infinity}, {...handed, heard_at_ms: 0}, {...handed, heard_at_ms: -40}])
     assert.equal(readStageTorusEngine(bad), null, JSON.stringify(bad));
   const reply = stageReplyMessage(7, {ok: true, torus_engine: handed}, {command: 'torus-engine', on: true});
   assert.deepEqual(reply.torus_engine, handed);
   assert.deepEqual(readStageResult(reply), {req: 7, ok: true, torus_engine: handed});
+  const timed = {...handed, heard_at_ms: 1793750400123.5};
+  assert.deepEqual(readStageResult(stageReplyMessage(7, {ok: true, torus_engine: timed}, {command: 'torus-engine', on: true})), {req: 7, ok: true, torus_engine: timed},
+    'when the frame plays the sample it was handed over at crosses the channel with it');
   assert.equal(readStageResult({...reply, torus_engine: {...handed, continuation: {}}}), null, 'the field itself never crosses the channel');
 });
 
@@ -383,8 +389,10 @@ test('the Torus handed over to the engine shuts the frame\'s own sound of it, an
   const handovers = () => owner.handovers ?? 0;
   const settled = async () => { for (let i = 0; i < 100 && c.reading.torus_engine.stale; i++) await new Promise(resolve => setTimeout(resolve, 5)); };
   try {
-    assert.deepEqual(c.reading.torus_engine, {on: false, handed: null, stale: false, refusal: null, frame_gain: 1}, 'the frame sounds the Torus until asked');
-    const handed = await c.torusEngine(true);
+    assert.deepEqual(c.reading.torus_engine, {on: false, handed: null, stale: false, refusal: null, frame_gain: 1, frame_until: null}, 'the frame sounds the Torus until asked');
+    // round 13: the answer also names when the frame plays the sample it was handed over at (heard_at_ms; the next test reads it)
+    const {heard_at_ms, ...handed} = await c.torusEngine(true);
+    assert.ok(Number.isFinite(heard_at_ms), 'when the frame plays the sample the Torus was handed over at');
     assert.deepEqual(handed, {lease: 'controlled:scene-lease', sha256: 'sha256:' + '1'.padStart(64, '0'), generation: owner.frame.generation,
       at_samples_elapsed: owner.frame.samples_elapsed}, 'the lease and the digest the kernel relayed, never the field');
     assert.equal(handovers(), 1);
@@ -411,10 +419,66 @@ test('the Torus handed over to the engine shuts the frame\'s own sound of it, an
     owner.refuseHandover = false;
     // off: the frame sounds the Torus again, and nothing is asked of the owner
     assert.equal(await c.torusEngine(false), null);
-    assert.deepEqual(c.reading.torus_engine, {on: false, handed: null, stale: false, refusal: null, frame_gain: 1});
+    assert.deepEqual(c.reading.torus_engine, {on: false, handed: null, stale: false, refusal: null, frame_gain: 1, frame_until: null});
     await c.torusSet({tuning: 'sky'});
     await settled();
     assert.equal(handovers(), 3, 'off, nothing is handed over');
+  } finally { await c.dispose(); }
+});
+
+// Round 13: the first hand-over in step with the frame. The frame keeps sounding the Torus until it plays the sample its owner handed it
+// over at — the context time its receiver schedules that sample for (native-audio.mjs: context_origin_seconds + (s − native_origin)/rate) —
+// and shuts then, not at once; the answer names when that is heard, in the machine's wall clock, through the context's output timestamp or
+// its output latency, so the engine takes the Torus at its own frame heard then (live_engine_host.rs frame_heard_in) and the part sounds on
+// from where the frame stops. Off opens the frame again at once.
+test('the frame sounds the Torus until the sample it was handed over at, and names when that is heard so the engine takes it then', async () => {
+  // a gain whose scheduled values stand from their time, as Web Audio's do; cancelling them restores the value set before them
+  const Timed = base => class extends base {
+    createGain() {
+      const context = this, node = super.createGain();
+      let value = node.gain.value, events = [];
+      node.gain = {
+        get value() { const due = events.filter(([, at]) => at <= context.currentTime).at(-1); return due ? due[0] : value; },
+        set value(v) { value = v; events = []; },
+        setValueAtTime(v, at) { events.push([v, at]); },
+        cancelScheduledValues(at) { events = events.filter(([, t]) => t < at); },
+      };
+      return node;
+    }
+  };
+  const {c, owner, audio} = await openController({Audio: Timed});
+  try {
+    audio.outputLatency = 0.012;
+    const before = Date.now();
+    const handed = await c.torusEngine(true);
+    const after = Date.now();
+    const receipt = c.reading.native.audio;
+    const until = receipt.context_origin_seconds + (Number(handed.at_samples_elapsed) - Number(receipt.native_origin)) / receipt.device_sample_rate;
+    assert.ok(until > audio.currentTime, `the frame has scheduled the sample ahead of what it plays: ${until}`);
+    assert.equal(c.reading.torus_engine.frame_until, until, 'the frame shuts at the sample it was handed over at');
+    assert.equal(c.reading.torus_engine.frame_gain, 1, 'until then the frame sounds it');
+    const heard = (until - audio.currentTime + audio.outputLatency) * 1000;
+    assert.ok(handed.heard_at_ms >= before + heard - 1 && handed.heard_at_ms <= after + heard + 1,
+      `heard ${heard} ms from now, through the output latency: ${handed.heard_at_ms - before}`);
+    audio.currentTime = until;
+    assert.equal(c.reading.torus_engine.frame_gain, 0, 'from then the part sounds once: through the engine');
+    assert.equal(await c.torusEngine(false), null);
+    assert.equal(c.reading.torus_engine.frame_gain, 1, 'off: at once');
+    assert.equal(c.reading.torus_engine.frame_until, null);
+    // the context's own output timestamp, when it gives one: the context time heard at a moment of the page's clock
+    audio.getOutputTimestamp = () => ({contextTime: audio.currentTime - 0.004, performanceTime: performance.now() - 2});
+    const again = await c.torusEngine(true);
+    const shut = c.reading.torus_engine.frame_until;
+    const stamped = (shut - (audio.currentTime - 0.004)) * 1000 - 2;
+    assert.ok(Math.abs(again.heard_at_ms - Date.now() - stamped) <= 5, `heard through the output timestamp: ${again.heard_at_ms - Date.now()} vs ${stamped}`);
+    // a hand-over while the engine already sounds it, at a later sample of the owner's, leaves the frame shut as it stood
+    audio.currentTime = shut;
+    assert.equal(c.reading.torus_engine.frame_gain, 0);
+    owner.handedAt = String(Number(again.at_samples_elapsed) + 2400);
+    const later = await c.torusEngine(true);
+    assert.equal(later.at_samples_elapsed, owner.handedAt);
+    assert.equal(c.reading.torus_engine.frame_gain, 0, 'the frame stays shut');
+    assert.equal(c.reading.torus_engine.frame_until, shut, 'and shut from where it stood');
   } finally { await c.dispose(); }
 });
 

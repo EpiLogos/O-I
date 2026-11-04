@@ -137,6 +137,8 @@ export class NativeFieldController {
   * owner's Torus (torusMoved) has it handed over again. */
  private engine:{on:boolean;stale:boolean;handed:StageTorusEngine|null;refusal:string|null;again:boolean}={on:false,stale:false,handed:null,refusal:null,again:false};
  private gate:GainNode|null=null;
+ /** The context time the frame's own sound of the Torus shuts at (round 13): when it plays the sample the owner handed the Torus over at. */
+ private frameUntil:number|null=null;
  /** A unity node the symbols' voices listen to (symbolVoices.ts): the torus's sound after the presentation level and before its effects. */
  private tap:GainNode|null=null;
  /** The torus's four effects (manual §21.5): their state outlives an instrument's lifetime, as the level's does; their sound stands
@@ -217,7 +219,7 @@ export class NativeFieldController {
   presentation_level:{value:this.levelValue,...PRESENTATION_LEVEL},
   // The Torus in the desktop's one engine (O-I #849): whether it sounds there, what it was handed over by, whether the owner's Torus moved
   // since, the refusal of the last hand-over, and the gain of this frame's own sound of it (0 while the engine sounds it).
-  torus_engine:{on:this.engine.on,handed:this.engine.handed,stale:this.engine.stale,refusal:this.engine.refusal,frame_gain:this.gate?.gain.value??null},
+  torus_engine:{on:this.engine.on,handed:this.engine.handed,stale:this.engine.stale,refusal:this.engine.refusal,frame_gain:this.gate?.gain.value??null,frame_until:this.engine.on?this.frameUntil:null},
   presentation_effects:this.effects,
   // Where the Torus is heard from: Receiver On or Off, the owner's context and gains, and its refusal; never the place (O-I 856).
   receiver:this.receiverReading(),
@@ -1166,29 +1168,52 @@ export class NativeFieldController {
  setMuted(muted:boolean){if(!this.session)throw new Error('native audio unavailable');this.session.setMuted(muted);this.muted=muted;this.changed();}
  /** The Torus heard in the desktop's one engine, or in this frame again (the `torus-engine` stage command; O-I #849). On: through the one
   * serial owner, the owner hands the Torus over (`torus-native`; the kernel keeps it under the lease and relays its digest) and this frame's
-  * own sound of it is shut, so the part sounds once, through the engine; the answer is what the engine takes it by. While on, whatever moves
-  * the owner's Torus but an act the engine follows has it handed over again. Off: the frame sounds it again; nothing is asked of the owner. */
+  * own sound of it is shut, so the part sounds once, through the engine; the answer is what the engine takes it by. The frame shuts when it
+  * plays the sample the Torus was handed over at, and the answer names when that is heard (round 13: the engine takes it then, so the part
+  * sounds on from where the frame stops). While on, whatever moves the owner's Torus but an act the engine follows has it handed over again.
+  * Off: the frame sounds it again at once; nothing is asked of the owner. */
  torusEngine(on:boolean):Promise<StageTorusEngine|null>{
   if(!on){
-   const was=this.engine.on;this.engine={on:false,stale:false,handed:null,refusal:null,again:false};this.gateFrame();
+   const was=this.engine.on;this.engine={on:false,stale:false,handed:null,refusal:null,again:false};this.frameUntil=null;this.gateFrame();
    if(was)this.changed();return Promise.resolve(null);
   }
   const session=this.session;
   if(!session||!this.scene)return Promise.reject(new Error('Open the live instrument first: its scene owner hands the Torus over'));
   if(this.status!=='following'||this.suspension)return Promise.reject(new Error('The field is not running: resume it, then play'));
-  return this.serial(async()=>{const handed=await this.handOver(session);this.engine.on=true;this.gateFrame();this.changed();return handed;});
+  return this.serial(async()=>{
+   const was=this.engine.on,{handed,until}=await this.handOver(session);this.engine.on=true;
+   // a hand-over while the engine already sounds it leaves the frame's gate as it stands
+   if(!was){this.frameUntil=until;this.gateFrame(until);}
+   this.changed();return handed;
+  });
  }
- /** The owner hands the Torus over, in the serial owner's turn: what the engine takes it by, read exactly, or the refusal in words. */
- private async handOver(session:InstrumentSession):Promise<StageTorusEngine>{
+ /** The owner hands the Torus over, in the serial owner's turn: what the engine takes it by, read exactly, with the context time this frame
+  * plays the sample it was handed over at (null while it names none); or the refusal in words. */
+ private async handOver(session:InstrumentSession):Promise<{handed:StageTorusEngine;until:number|null}>{
   if(!(await this.waitIdle(session,2000)))throw new Error('native owner busy; the Torus was not handed over');
   const lease=this.opened?.lease;
   if(!this.current(session)||typeof lease!=='string')throw new Error('the Torus belongs to a released lifetime');
   let digest:any;
   try{digest=await session.torusNative();}
   catch(error){this.engine.refusal=error instanceof Error?error.message:String(error);this.changed();throw error;}
-  const handed=readStageTorusEngine({lease,sha256:digest?.sha256,generation:digest?.generation,at_samples_elapsed:digest?.at_samples_elapsed});
-  if(!handed)throw new Error('The kernel relayed the Torus handed over without the digest the engine takes it by');
-  this.engine.handed=handed;this.engine.stale=false;this.engine.refusal=null;return handed;
+  const read=readStageTorusEngine({lease,sha256:digest?.sha256,generation:digest?.generation,at_samples_elapsed:digest?.at_samples_elapsed});
+  if(!read)throw new Error('The kernel relayed the Torus handed over without the digest the engine takes it by');
+  const plays=this.playsAt(session,BigInt(read.at_samples_elapsed)),handed=plays?{...read,heard_at_ms:plays.heard_at_ms}:read;
+  this.engine.handed=handed;this.engine.stale=false;this.engine.refusal=null;return {handed,until:plays?.context_seconds??null};
+ }
+ /** When this frame plays the owner's sample `s` (round 13): the context time its receiver schedules it for (native-audio.mjs, within its
+  * device epoch: context_origin_seconds + (s − native_origin)/rate), and when that is heard, in the machine's wall clock (ms since the Unix
+  * epoch), through the context's output timestamp when it gives one, else its output latency. Null while the receiver names no epoch. */
+ private playsAt(session:InstrumentSession,s:bigint):{context_seconds:number;heard_at_ms:number}|null{
+  const context=this.context,audio=session.reading?.audio;
+  if(!context||!audio||!Number.isFinite(audio.context_origin_seconds)||!Number.isInteger(audio.device_sample_rate)||!/^(0|[1-9][0-9]*)$/.test(audio.native_origin??''))return null;
+  const at=audio.context_origin_seconds+Number(s-BigInt(audio.native_origin))/audio.device_sample_rate;
+  const stamp=typeof context.getOutputTimestamp==='function'?context.getOutputTimestamp():null;
+  const fromNow=stamp&&Number.isFinite(stamp.contextTime)&&Number.isFinite(stamp.performanceTime)&&(stamp.performanceTime as number)>0
+   ?(at-(stamp.contextTime as number))*1000-(performance.now()-(stamp.performanceTime as number))
+   :(at-context.currentTime+(context.outputLatency||context.baseLatency||0))*1000;
+  const heard_at_ms=Date.now()+fromNow;
+  return Number.isFinite(at)&&Number.isFinite(heard_at_ms)&&heard_at_ms>0?{context_seconds:at,heard_at_ms}:null;
  }
  /** Something moved the owner's Torus while the engine sounds it: it is handed over again in the serial owner's next turn (once, however
   * many moved it before that turn). A refusal (a setting still waiting for its sample) stands in the reading, and the move that lands it
@@ -1200,7 +1225,14 @@ export class NativeFieldController {
   void this.serial(async()=>{this.engine.again=false;if(this.engine.on&&this.engine.stale)await this.handOver(session);})
    .then(()=>this.changed(),()=>{this.engine.again=false;this.changed();});
  }
- private gateFrame(){const gain=this.gate?.gain;if(gain)gain.value=this.engine.on?0:1;}
+ /** The frame's own sound of the Torus: shut while the engine sounds it — from `until`, the context time it plays the sample the Torus was
+  * handed over at (round 13), when it was sounding it; else at once — and open again at once. */
+ private gateFrame(until:number|null=null){
+  const gain=this.gate?.gain;if(!gain)return;
+  gain.cancelScheduledValues?.(0);
+  if(this.engine.on&&until!==null&&typeof gain.setValueAtTime==='function')gain.setValueAtTime(0,until);
+  else gain.value=this.engine.on?0:1;
+ }
  /** The node the symbols' voices listen to, with the audio context it stands in; null while no instrument is open. Two audio contexts cannot
   * share a node, so a voice built on this is built in this context. */
  voiceTap():{context:AudioContext;input:GainNode}|null{return this.tap&&this.context?{context:this.context,input:this.tap}:null;}

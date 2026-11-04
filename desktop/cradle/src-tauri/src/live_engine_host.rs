@@ -14,7 +14,8 @@
 //! | `live_engine_play` | the engine plays on the default output from where it stands |
 //! | `live_engine_stop` | the output stops; the engine and what it played are kept |
 //! | `live_engine_send {event}` | one note, Torus act, Panic or mixer move, applied at the next block; answers the mixer reading |
-//! | `live_engine_torus {lease, track, sha256, notes?}` | the Torus its owner handed over (kept by the kernel under the field's lease) sounds on the part, which follows that owner from then on |
+//! | `live_engine_torus {lease, track, sha256, notes?, effects?}` | the Torus its owner handed over (kept by the kernel under the field's lease) sounds on the part, which follows that owner from then on, through its effects |
+//! | `live_engine_torus_effects {effects}` | the Torus's effects as the frame now holds them, on the part following its owner |
 //! | `live_engine_mixer` | the mixer as the engine applied it |
 //! | `live_engine_export` | Export Audio: what the engine played, rendered offline, as a 32-bit float WAV, into the file the person chooses in the host's own save dialog |
 //!
@@ -43,10 +44,27 @@
 //! each act on the part's Torus at the owner's own sample with the impulse the
 //! owner's law gave each mode (no pitch or place of the host's own), and puts
 //! each later hand-over on the part in the last one's place (a setting landed,
-//! a restore, a body chosen). A MIDI note on the part strikes the key the
-//! shell's pitch→key law gives it (`notes`, O-I #853) by the owner's
-//! played-address law. A form's body is handed over with no key law, and its
-//! owner's words for why stand in the reading.
+//! a restore, a body chosen). A form's body is handed over with no key law,
+//! and its owner's words for why stand in the reading.
+//!
+//! The part's notes are its owner's (round 13): the Torus on the part strikes
+//! no note of its own. The host hands the owner each clip note of the part
+//! ahead of the engine, as the key the shell's pitch→key law gives it (`notes`,
+//! O-I #853) at the owner's sample the note's frame falls on, with its velocity
+//! over 127, and each MIDI note sent to the part at once; the shell plays them
+//! on the owner through the frame (`oi:live-engine-torus-notes`), and the
+//! owner's act strikes the part back through the tap. So the owner, the
+//! picture and the engine hold one ringing, and a hand-over again keeps it.
+//!
+//! The Torus's effects stand on its part (round 13): the frame's chain, in its
+//! order, each effect as Live's device of its kind on the chain of the rack
+//! the Torus is placed as (the shell's `rackChainInLive`, live-set
+//! `rack_place`: Filter as Auto Filter, Dynamics as Compressor, Delay as
+//! Delay, Reverb as Reverb), with the settings the corpus pins carried, each
+//! the engine's own device (live-engine `rack_device`) after the Torus and
+//! before the part's own chain. Where the engine has no model of Live's
+//! device the effect does not sound in it, and its words say so; an edit
+//! moves the chain, and every device made as before keeps its tail.
 //!
 //! Events are refused in the engine's words when the set has nothing they
 //! name. A mixer reading is what the engine APPLIED, never what was asked.
@@ -59,19 +77,67 @@ pub(crate) mod host {
     use live_engine::bridge::bridge_set;
     use live_engine::engine::PartMix;
     use live_engine::{
-        engine, EngineCore, EngineEvent, EngineHandle, EnginePlayer, Graph, MixerState, Part,
-        TorusAct,
+        engine, rack_device, ClipEdge, Due, EngineCore, EngineEvent, EngineHandle, EnginePlayer,
+        Graph, MixerState, Part, RackDevice, TorusAct,
     };
     use live_set::xml::Element;
     use oi_cradle_kernel::native_expression::TorusTap;
     use serde::Deserialize;
     use serde_json::{json, Value};
+    use std::collections::BTreeMap;
     use std::path::{Path, PathBuf};
     use std::sync::Mutex;
 
     /// The rate the engine runs and the output opens at (the harness
     /// signals' and the Torus's rate; there is no resampling).
     pub const ENGINE_RATE: u32 = 48_000;
+
+    /// How the Torus its owner handed over takes its part (O-I #849 round 13). Either way a hand still on its
+    /// way gives way to it, and is kept nowhere: it never sounded.
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    pub enum Takes {
+        /// When it is due.
+        Instead(Due),
+        /// When the part's Torus reaches the sample this one continues from: a hand-over again of the
+        /// owner the part follows. The part runs behind its
+        /// owner (the frame renders ahead of what it plays), so one taken at once would jump the part
+        /// on by the samples between.
+        Continuing,
+    }
+
+    /// The longest the frame names until it plays the sample the Torus was handed over at.
+    pub const HEARD_IN_MS_MAX: f64 = 10_000.0;
+
+    /// The engine's frame heard `ms` from now: past the frames it has rendered by `ms` at its rate,
+    /// less the device's output latency (callback to playback). Refused in words for a time that is
+    /// not one from now within [`HEARD_IN_MS_MAX`].
+    pub fn frame_heard_in(handle: &EngineHandle, ms: f64) -> Result<Due, String> {
+        if !(ms.is_finite() && (0.0..=HEARD_IN_MS_MAX).contains(&ms)) {
+            return Err(format!(
+                "The frame names when it plays the Torus it handed over as a time from now, within {HEARD_IN_MS_MAX} ms, not {ms}"
+            ));
+        }
+        let rate = f64::from(ENGINE_RATE);
+        let ahead = (ms / 1000.0 * rate).round() as u64;
+        let latency = (handle.latency().output_latency_ns as f64 / 1e9 * rate).round() as u64;
+        Ok(Due::AtFrame(
+            handle.position() + ahead.saturating_sub(latency),
+        ))
+    }
+
+    /// How long from `now_ms` until `heard_at_ms`, when the frame names its sound of the sample it handed the
+    /// Torus over at as heard (both ms since the Unix epoch: the machine's wall clock the page and the host
+    /// share, so the time its answer took to reach the host is not counted twice). At once (0) for a time
+    /// already past; refused in words for one not within [`HEARD_IN_MS_MAX`] of now.
+    pub fn heard_in_ms(heard_at_ms: f64, now_ms: f64) -> Result<f64, String> {
+        let ms = heard_at_ms - now_ms;
+        if !(ms.is_finite() && ms.abs() <= HEARD_IN_MS_MAX) {
+            return Err(format!(
+                "The frame names when it plays the Torus it handed over as a time within {HEARD_IN_MS_MAX} ms of now, not {ms} ms from it"
+            ));
+        }
+        Ok(ms.max(0.0))
+    }
 
     /// A part as an event names it: `{"track": i}`, `{"return": i}` or
     /// `"main"`.
@@ -289,10 +355,12 @@ pub(crate) mod host {
         pub sha256: String,
         pub at_samples_elapsed: u64,
         pub handover: u32,
-        pub notes: Option<Notes>,
         pub keys_refused: Option<String>,
         #[cfg(feature = "k8")]
         pub handed: crate::torus_native::Handed,
+        /// What its node could not do as asked, as the audio thread counts it.
+        #[cfg(feature = "k8")]
+        pub counts: std::sync::Arc<live_engine::K8Counts>,
     }
 
     /// The part that follows the Torus's owner: the owner's lease, the part, the hand-over it holds
@@ -314,6 +382,153 @@ pub(crate) mod host {
         pub struck: u64,
         pub missed: u64,
         pub handed_again: u64,
+        pub refusal: Option<String>,
+        pub relay: Relay,
+    }
+
+    /// How far ahead of the engine the bound part's clip notes are handed to the Torus's owner (frames):
+    /// a note must reach the owner before its cursor passes the note's sample, and the owner's cursor
+    /// leads the engine's by the time the hand-over took (the engine continues from where the owner stood).
+    pub const TORUS_LOOKAHEAD: u64 = ENGINE_RATE as u64 / 2;
+    /// One act due on the Torus's owner: the owner's sample it lands at (None: at once), its strength
+    /// (velocity over 127) and its keys (row, column).
+    type DueAct = (Option<u64>, f64, Vec<(u8, u16)>);
+    /// The most keys one owner act strikes (the frame's Jankó strike, STAGE_JANKO_KEYS_MAX).
+    pub const TORUS_RELAY_KEYS: usize = 32;
+    /// The event the bound part's due notes reach the shell by, which plays each on the Torus's owner
+    /// through the frame (its Jankó strike at the act's sample, its release).
+    pub const TORUS_NOTES_EVENT: &str = "oi:live-engine-torus-notes";
+    /// How often the host looks for the bound part's due notes when its owner tells it nothing.
+    pub const TORUS_RELAY_TICK: std::time::Duration = std::time::Duration::from_millis(10);
+
+    /// The bound part's notes handed to the Torus's owner (round 13): a note on a part the Torus sounds
+    /// on is its owner's to play, so the host hands it over as its key at the note's own sample, ahead
+    /// of it ([`TORUS_LOOKAHEAD`]), and the owner's act strikes it back through the kernel's tap, as
+    /// every act of the owner's does. A MIDI note sent to the part is handed over at once.
+    #[derive(Debug, Default)]
+    pub struct Relay {
+        /// The next clip edge of the bound part to hand out: its strikes ahead, its releases as the
+        /// engine reaches them.
+        pub next_on: usize,
+        pub next_off: usize,
+        /// Each MIDI key the owner holds by a strike handed out here, by count: only those are let go.
+        pub held: BTreeMap<u8, u16>,
+        /// MIDI notes sent to the part (a velocity strikes, none lets go), handed over at once.
+        pub now: Vec<(u8, Option<f32>)>,
+        /// Notes handed to the owner; those with no key by the pitch law (or no strength), and clip
+        /// notes before the part took the Torus.
+        pub handed: u64,
+        pub unkeyed: u64,
+        pub before: u64,
+    }
+
+    /// The Torus's effects as Live's devices (the shell's rackChainInLive TORUS_EFFECT_IN_LIVE, O-I #852
+    /// round 10): the frame's effect, the class a set stores Live's device of its kind under, Live's
+    /// title for it, and the manual's title for the effect.
+    pub const TORUS_EFFECT_IN_LIVE: [(&str, &str, &str, &str); 4] = [
+        ("filter", "AutoFilter", "Auto Filter", "Filter"),
+        ("dynamics", "Compressor2", "Compressor", "Dynamics"),
+        ("delay", "Delay", "Delay", "Delay"),
+        ("reverb", "Reverb", "Reverb", "Reverb"),
+    ];
+    /// Live's Reverb keeps DecayTime in ms within this range (live-dynamics params.rs, the corpus's
+    /// surface; the shell's rackChainInLive carries the frame's Decay onto it so).
+    pub const REVERB_DECAY_MS: (f64, f64) = (199.999985, 60000.0039);
+
+    /// What one chain on a part's rack was made from, device by device (Live's class and the settings
+    /// carried, by Live's key), so Export Audio makes it again.
+    pub type RackMade = Vec<(&'static str, Vec<(&'static str, f64)>)>;
+
+    /// The frame's effects (effectsLaw.ts `EffectsState`: the chain, and each effect's parameters) as
+    /// the chain after the Torus on its part: each effect on the frame's chain in order, on, as Live's
+    /// device of its kind with the settings the corpus pins (Reverb's Decay as its DecayTime, in ms);
+    /// an effect off passes the sound as it came, so it stands nowhere. With it, how the engine stands
+    /// each effect, in words where it does not sound as the frame's. Refused in words for what is not
+    /// the frame's effects.
+    pub fn torus_chain(effects: &Value) -> Result<(RackMade, Value), String> {
+        const NOT: &str = "The Torus's effects are its chain and each effect's settings, as the frame reports them (effectsLaw.ts)";
+        let chain = effects.get("chain").and_then(Value::as_array).ok_or(NOT)?;
+        let mut made: RackMade = Vec::new();
+        let mut reading = Vec::new();
+        let mut seen = Vec::new();
+        for effect in chain {
+            let effect = effect.as_str().ok_or(NOT)?;
+            if seen.contains(&effect) {
+                return Err(format!("{NOT}: {effect} stands on the chain twice"));
+            }
+            seen.push(effect);
+            let settings = effects
+                .get(effect)
+                .filter(|v| v.is_object())
+                .ok_or_else(|| {
+                    format!("{NOT}: the chain holds {effect}, and no settings of it are given")
+                })?;
+            let on = settings
+                .get("on")
+                .and_then(Value::as_bool)
+                .ok_or_else(|| format!("{NOT}: {effect} is on or off"))?;
+            if effect == "resonator" {
+                reading.push(json!({"effect": effect, "device": null, "on": on, "sounds": false,
+                    "words": if on { Value::from("The Resonator bank stays off the engine's chain: the corpus gives Live's Resonators no parameter surface yet, so it does not sound in the engine") } else { Value::Null }}));
+                continue;
+            }
+            let &(_, class, title, manual) = TORUS_EFFECT_IN_LIVE
+                .iter()
+                .find(|(name, ..)| *name == effect)
+                .ok_or_else(|| format!("{NOT}: the Torus has no effect {effect}"))?;
+            if !on {
+                reading
+                    .push(json!({"effect": effect, "device": class, "on": false, "sounds": false}));
+                continue;
+            }
+            let mut carried: Vec<(&'static str, f64)> = Vec::new();
+            let mut words = Vec::new();
+            if effect == "reverb" {
+                let decay = settings
+                    .get("decay")
+                    .and_then(Value::as_f64)
+                    .ok_or_else(|| format!("{NOT}: Reverb's Decay is a number of seconds"))?;
+                let ms = (decay * 1e9).round() / 1e6;
+                if (REVERB_DECAY_MS.0..=REVERB_DECAY_MS.1).contains(&ms) {
+                    carried.push(("DecayTime", ms));
+                } else {
+                    words.push(format!("its decay of {decay} s is outside the {}–{} ms Live's Reverb holds, and stands at the model's", REVERB_DECAY_MS.0, REVERB_DECAY_MS.1));
+                }
+                words.push("its size, damping, pre-delay and dry/wet stand at the model's: the engine's model of Live's Reverb takes only its DecayTime".into());
+            }
+            if effect == "dynamics" {
+                words.push("its threshold, ratio, attack, release and makeup stand at the corpus's stored values: the engine's model of Live's Compressor takes no setting yet, and awaits the golden-render check".into());
+            }
+            match rack_device(class, &carried) {
+                Ok(_) => {
+                    reading.push(json!({"effect": effect, "device": class, "on": true, "sounds": true,
+                        "carried": carried.iter().map(|(id, v)| (id.to_string(), json!(v))).collect::<serde_json::Map<_, _>>(),
+                        "words": if words.is_empty() { Value::Null } else { Value::from(format!("Live's {title} in the engine: {}.", words.join("; "))) }}));
+                    made.push((class, carried));
+                }
+                Err(why) => reading.push(
+                    json!({"effect": effect, "device": class, "on": true, "sounds": false,
+                    "words": format!("{why}, so the Torus's {manual} does not sound in it")}),
+                ),
+            }
+        }
+        Ok((made, Value::Array(reading)))
+    }
+
+    /// The engine's devices of a chain made as `made` says (live-engine `rack_device`).
+    pub fn rack_of(made: &RackMade) -> Result<Vec<RackDevice>, String> {
+        made.iter()
+            .map(|(class, carried)| rack_device(class, carried))
+            .collect()
+    }
+
+    /// The Torus's effects on the part it sounds on, as the engine stands them: the part, the chain
+    /// made of them, how it stands each, and the refusal of the last that could not be put there.
+    #[derive(Debug, Default)]
+    pub struct TorusEffects {
+        pub track: Option<usize>,
+        pub made: RackMade,
+        pub reading: Value,
         pub refusal: Option<String>,
     }
 
@@ -358,12 +573,19 @@ pub(crate) mod host {
         #[cfg_attr(not(feature = "k8"), allow(dead_code))]
         pub handovers: u32,
         pub following: Following,
+        /// Each part's clip notes as the engine plays them ([`live_engine::Track::clip_edges`]).
+        pub clips: Vec<Vec<ClipEdge>>,
+        /// The Torus's effects on its part, and every chain put on a part's rack and taken or on its
+        /// way, in the order put (the n-th is the engine's n-th: one that gave way is not kept).
+        pub effects: TorusEffects,
+        pub racked: Vec<(usize, RackMade)>,
     }
 
     impl Opened {
         pub fn open(path: &Path) -> Result<Opened, String> {
             let document = set_document(path)?;
             let (graph, warnings) = bridged(&document)?;
+            let clips = graph.tracks.iter().map(|t| t.clip_edges()).collect();
             let (core, handle) = engine(graph).map_err(|e| e.to_string())?;
             Ok(Opened {
                 path: path.to_path_buf(),
@@ -375,6 +597,9 @@ pub(crate) mod host {
                 toruses: Vec::new(),
                 handovers: 0,
                 following: Following::default(),
+                clips,
+                effects: TorusEffects::default(),
+                racked: Vec::new(),
             })
         }
 
@@ -388,8 +613,63 @@ pub(crate) mod host {
                 "warnings": self.warnings,
                 "mixer": mixer_json(self.handle.mixer()),
                 "toruses": self.torus_reading(),
+                // the owner's acts for a Torus that no part's Torus took
+                "torus_unplaced": self.handle.torus_unplaced(),
                 "torus_follow": self.follow_reading(),
+                "torus_effects": self.effects_reading(),
             })
+        }
+
+        /// The Torus's effects on its part: the part, each effect on the frame's chain as the engine
+        /// stands it, the frame the engine put the chain there from, and the last refusal.
+        fn effects_reading(&self) -> Value {
+            let e = &self.effects;
+            if e.track.is_none() && e.refusal.is_none() {
+                return Value::Null;
+            }
+            let racks = self.handle.racks();
+            json!({
+                "track": e.track,
+                "chain": e.reading,
+                "sounding_from_frame": (racks.len() == self.racked.len()).then(|| racks.last().map(|(frame, _)| *frame)).flatten(),
+                "refusal": e.refusal,
+            })
+        }
+
+        /// The Torus's effects as the frame holds them (`effects`, [`torus_chain`]) put on part `track`
+        /// after its Torus: each device made as before keeps its state, and a chain made as the one
+        /// standing there is not put again. Refused in words (and the refusal kept in the reading)
+        /// for what is not the frame's effects, and for a part other than the one they stand on.
+        pub fn put_effects(&mut self, track: usize, effects: &Value) -> Result<(), String> {
+            let put = (|| {
+                if let Some(was) = self.effects.track.filter(|was| *was != track) {
+                    return Err(format!("The Torus's effects stand on part {was}: a part takes them when the Torus sounds on it from Play"));
+                }
+                let (made, reading) = torus_chain(effects)?;
+                if self.effects.track == Some(track) && self.effects.made == made {
+                    self.effects.reading = reading;
+                    return Ok(());
+                }
+                let superseded = self
+                    .handle
+                    .install_rack(track, rack_of(&made)?)
+                    .map_err(|e| e.to_string())?;
+                if superseded {
+                    self.racked.pop();
+                }
+                self.racked.push((track, made.clone()));
+                self.effects = TorusEffects {
+                    track: Some(track),
+                    made,
+                    reading,
+                    refusal: None,
+                };
+                Ok(())
+            })();
+            if let Err(words) = &put {
+                self.effects.refusal = Some(words.clone());
+            }
+            put
         }
 
         /// The part following the Torus's owner, if one is: the lease, the part, the hand-over it holds,
@@ -408,6 +688,11 @@ pub(crate) mod host {
                     "missed": f.missed,
                     "handed_again": f.handed_again,
                     "refusal": f.refusal,
+                    "notes_to_owner": {
+                        "handed": f.relay.handed,
+                        "unkeyed": f.relay.unkeyed,
+                        "before_torus": f.relay.before,
+                    },
                 }),
             }
         }
@@ -426,6 +711,16 @@ pub(crate) mod host {
                             .any(|later| later.track == t.track)
                     })
                     .map(|(i, t)| {
+                        // what its node could not do as asked: owner's acts after their sample,
+                        // notes and acts that struck nothing, frames it could not render
+                        #[cfg(feature = "k8")]
+                        let counts = {
+                            use std::sync::atomic::Ordering::Relaxed;
+                            json!({"late": t.counts.late.load(Relaxed), "refused": t.counts.refused.load(Relaxed),
+                                "unrendered": t.counts.unrendered.load(Relaxed)})
+                        };
+                        #[cfg(not(feature = "k8"))]
+                        let counts = Value::Null;
                         json!({
                             "track": t.track,
                             "sha256": t.sha256,
@@ -433,6 +728,7 @@ pub(crate) mod host {
                             "handover": t.handover,
                             "keys_refused": t.keys_refused,
                             "sounding_from_frame": taken.get(i).map(|(frame, _)| *frame),
+                            "counts": counts,
                         })
                     })
                     .collect(),
@@ -441,6 +737,28 @@ pub(crate) mod host {
 
         pub fn send(&mut self, event: EventIn) -> Result<Value, String> {
             let event = event.event()?;
+            // A MIDI note on the part the Torus's owner is followed on is the owner's to play: it is
+            // handed over at once (torus_notes) and sounds as the owner's act.
+            let note = match event {
+                EngineEvent::NoteOn {
+                    track,
+                    key,
+                    velocity,
+                } => Some((track, key, Some(velocity))),
+                EngineEvent::NoteOff { track, key } => Some((track, key, None)),
+                _ => None,
+            };
+            if let Some((track, key, velocity)) = note {
+                if self
+                    .following
+                    .bound
+                    .as_ref()
+                    .is_some_and(|b| b.track == track)
+                {
+                    self.following.relay.now.push((key, velocity));
+                    return Ok(self.reading());
+                }
+            }
             if let EngineEvent::TorusPlay { track, .. } = event {
                 let part = self.handle.mixer().tracks.get(track);
                 if let Some(part) = part.filter(|_| !self.toruses.iter().any(|t| t.track == track))
@@ -455,38 +773,162 @@ pub(crate) mod host {
             Ok(self.reading())
         }
 
+        /// The notes due on the part following the Torus's owner, as the owner's acts to play
+        /// (`ql.torus-play` by the frame's Jankó strike and release), or None when none are due: each
+        /// clip note the engine reaches within [`TORUS_LOOKAHEAD`] as its key by the pitch→key law the
+        /// part was bound with, at the owner's sample its frame falls on (the hand-over's sample plus
+        /// the frames since the engine took it) with its velocity over 127, keys at one frame and
+        /// strength one act; each clip release the engine has reached, of a key handed out; and each
+        /// MIDI note sent to the part, at once. Each is handed out once. Nothing before the engine
+        /// took the hand-over is handed out (the part did not hold the Torus then).
+        pub fn torus_notes(&mut self) -> Option<Value> {
+            let bound = self.following.bound.clone()?;
+            self.handle.collect();
+            // the engine frame the part took the hand-over it holds at, and the owner's sample it stood
+            // at: a clip note waits for it (a MIDI note sent to the part does not)
+            let anchor = self
+                .toruses
+                .iter()
+                .rposition(|t| t.handover == bound.handover)
+                .and_then(|index| {
+                    let &(taken, _) = self.handle.installs().get(index)?;
+                    Some((taken, self.toruses[index].at_samples_elapsed))
+                });
+            let position = self.handle.position();
+            let edges: &[ClipEdge] = match anchor {
+                Some(_) => self.clips.get(bound.track).map_or(&[], Vec::as_slice),
+                None => &[],
+            };
+            let (taken, stood) = anchor.unwrap_or_default();
+            let key = |note: u8| {
+                bound
+                    .notes
+                    .and_then(|notes| notes.get(usize::from(note)).copied().flatten())
+            };
+            let strength = |velocity: f32| {
+                let amplitude = f64::from(velocity) / 127.0;
+                (amplitude > 0.0 && amplitude <= 1.0).then_some(amplitude)
+            };
+            let relay = &mut self.following.relay;
+            let mut acts: Vec<DueAct> = Vec::new();
+            let mut releases: Vec<(u8, u16)> = Vec::new();
+            let mut strike = |relay: &mut Relay, at: Option<u64>, note: u8, velocity: f32| {
+                let (Some(k), Some(amplitude)) = (key(note), strength(velocity)) else {
+                    relay.unkeyed += 1;
+                    return;
+                };
+                relay.handed += 1;
+                *relay.held.entry(note).or_default() += 1;
+                match acts.last_mut() {
+                    Some((then, a, keys))
+                        if *then == at
+                            && a.to_bits() == amplitude.to_bits()
+                            && keys.len() < TORUS_RELAY_KEYS =>
+                    {
+                        if !keys.contains(&k) {
+                            keys.push(k);
+                        }
+                    }
+                    _ => acts.push((at, amplitude, vec![k])),
+                }
+            };
+            let mut release = |relay: &mut Relay, note: u8| {
+                let Some(held) = relay.held.get_mut(&note).filter(|h| **h > 0) else {
+                    return;
+                };
+                *held -= 1;
+                if let Some(k) = key(note) {
+                    if !releases.contains(&k) {
+                        releases.push(k);
+                    }
+                }
+            };
+            for (note, velocity) in std::mem::take(&mut relay.now) {
+                match velocity {
+                    Some(velocity) => strike(relay, None, note, velocity),
+                    None => release(relay, note),
+                }
+            }
+            while let Some(edge) = edges.get(relay.next_on) {
+                if edge.frame >= position + TORUS_LOOKAHEAD {
+                    break;
+                }
+                relay.next_on += 1;
+                let Some(velocity) = edge.velocity else {
+                    continue;
+                };
+                if edge.frame < taken {
+                    relay.before += 1;
+                    continue;
+                }
+                strike(
+                    relay,
+                    Some(stood + (edge.frame - taken)),
+                    edge.key,
+                    velocity,
+                );
+            }
+            while let Some(edge) = edges.get(relay.next_off) {
+                if edge.frame > position || relay.next_off >= relay.next_on {
+                    break;
+                }
+                relay.next_off += 1;
+                if edge.velocity.is_none() && edge.frame >= taken {
+                    release(relay, edge.key);
+                }
+            }
+            if acts.is_empty() && releases.is_empty() {
+                return None;
+            }
+            let keys = |keys: &[(u8, u16)]| {
+                keys.iter()
+                    .map(|(row, column)| json!({"row": row, "column": column}))
+                    .collect::<Vec<_>>()
+            };
+            Some(json!({
+                "lease": bound.lease,
+                "track": bound.track,
+                "acts": acts.iter().map(|(at, amplitude, k)| {
+                    let mut act = json!({"keys": keys(k), "amplitude": amplitude});
+                    if let Some(at) = at {
+                        act["at_samples_elapsed"] = json!(at.to_string());
+                    }
+                    act
+                }).collect::<Vec<_>>(),
+                "releases": keys(&releases),
+            }))
+        }
+
         /// Hand the Torus its owner handed over (`ql.torus-native/v1`, as the kernel kept it under its
         /// digest `sha256`) to the set's part `track` (O-I #849) as the host's next hand-over (its count
         /// answered), with the key each MIDI note strikes: the node continues the owner's field from the
-        /// sample it stood at, takes the part at the engine's next block and sounds through the part's
-        /// chain and mixer row to Main. `latest`: a hand the engine has not taken yet gives way to it, and
-        /// is kept nowhere — it never sounded; otherwise such a hand refuses it. Refused in words for a
+        /// sample it stood at, takes the part as `takes` says ([`Takes`]) and sounds through the part's
+        /// chain and mixer row to Main; the owner's acts after it wait for it. Refused in words for a
         /// document that is not one, a part that plays no notes, or a host without QL's K8 node.
         pub fn hand_torus(
             &mut self,
             track: usize,
             sha256: &str,
             document: &Value,
-            notes: Option<Notes>,
-            latest: bool,
+            takes: Takes,
         ) -> Result<u32, String> {
             #[cfg(feature = "k8")]
             {
                 let handed = crate::torus_native::read(document)?;
                 let handover = self.handovers + 1;
-                let node = handed.node_handed(ENGINE_RATE, handover, notes.as_ref())?;
-                if latest {
-                    let superseded = self
-                        .handle
-                        .install_latest(track, node)
-                        .map_err(|e| e.to_string())?;
-                    if superseded {
-                        self.toruses.pop();
-                    }
-                } else {
-                    self.handle
-                        .install(track, node)
-                        .map_err(|e| e.to_string())?;
+                let node = handed.node_handed(ENGINE_RATE, handover)?;
+                let counts = node.counts();
+                let node = Box::new(node);
+                let due = match takes {
+                    Takes::Instead(due) => due,
+                    Takes::Continuing => Due::AtCursor(handed.at_samples_elapsed),
+                };
+                let superseded = self
+                    .handle
+                    .install_latest_due(track, node, due)
+                    .map_err(|e| e.to_string())?;
+                if superseded {
+                    self.toruses.pop();
                 }
                 self.handovers = handover;
                 self.toruses.push(TorusOnPart {
@@ -494,15 +936,15 @@ pub(crate) mod host {
                     sha256: sha256.to_owned(),
                     at_samples_elapsed: handed.at_samples_elapsed,
                     handover,
-                    notes,
                     keys_refused: handed.keys_refused.clone(),
                     handed,
+                    counts,
                 });
                 Ok(handover)
             }
             #[cfg(not(feature = "k8"))]
             {
-                let _ = (track, sha256, document, notes, latest);
+                let _ = (track, sha256, document, takes);
                 Err(WITHOUT_K8.into())
             }
         }
@@ -567,6 +1009,14 @@ pub(crate) mod host {
             let performance = self.handle.performance();
             let (graph, _) = bridged(&self.document)?;
             // Each Torus made again from what was handed over, at the frame the engine took it.
+            // Each chain put on a part's rack made again, at the frame the engine put it there.
+            let racks = self
+                .handle
+                .racks()
+                .iter()
+                .zip(&self.racked)
+                .map(|(&(frame, track), (_, made))| Ok((frame, track, rack_of(made)?)))
+                .collect::<Result<Vec<_>, String>>()?;
             #[cfg(feature = "k8")]
             let samples = {
                 let toruses = self
@@ -575,18 +1025,16 @@ pub(crate) mod host {
                     .iter()
                     .zip(&self.toruses)
                     .map(|(&(frame, track), torus)| {
-                        let node = torus.handed.node_handed(
-                            ENGINE_RATE,
-                            torus.handover,
-                            torus.notes.as_ref(),
-                        )?;
+                        let node: Box<dyn live_engine::Instrument> =
+                            Box::new(torus.handed.node_handed(ENGINE_RATE, torus.handover)?);
                         Ok((frame, track, node))
                     })
                     .collect::<Result<Vec<_>, String>>()?;
-                graph.render_performance_with(ENGINE_RATE, &performance, toruses)
+                graph.render_performance_racked(ENGINE_RATE, &performance, toruses, racks)
             };
             #[cfg(not(feature = "k8"))]
-            let samples = graph.render_performance(ENGINE_RATE, &performance);
+            let samples =
+                graph.render_performance_racked(ENGINE_RATE, &performance, Vec::new(), racks);
             Ok((
                 wav_f32(&samples, ENGINE_RATE),
                 json!({"frames": performance.frames, "events": performance.events.len(), "complete": performance.complete}),
@@ -675,12 +1123,17 @@ pub(crate) mod host {
                                 warnings,
                                 handle,
                                 core,
+                                clips,
                                 ..
                             } = Opened::open(&o.path)?;
-                            (o.document, o.warnings, o.handle) = (document, warnings, handle);
-                            // a new engine holds no Torus and follows no owner: the owner hands it over again
+                            (o.document, o.warnings, o.handle, o.clips) =
+                                (document, warnings, handle, clips);
+                            // a new engine holds no Torus, follows no owner and holds none of its
+                            // effects: the owner hands it over again, its effects with it
                             o.toruses.clear();
                             o.following = Following::default();
+                            o.effects = TorusEffects::default();
+                            o.racked.clear();
                             core.ok_or("the engine was not made")?
                         }
                     };
@@ -707,12 +1160,22 @@ pub(crate) mod host {
             self.with(|o| Ok(o.reading()))
         }
 
+        /// The notes due on the part following the Torus's owner, as its owner's acts
+        /// ([`Opened::torus_notes`]), or None.
+        pub fn torus_notes(&self) -> Option<Value> {
+            self.0.lock().ok()?.as_mut()?.torus_notes()
+        }
+
         /// `live_engine_torus`: the part `track` takes the Torus its owner under `lease` handed over by
         /// `sha256` (`document`, as the kernel kept it) and follows that owner from then on — every act it
         /// lands struck at its sample, every later hand-over taken in the last one's place. The owner may
         /// have handed it over again since the page was told the digest: then the part takes that one
         /// (`kept` answers the kernel's latest). The acts landed since the hand-over the part takes are
-        /// struck first. A hand the engine has not taken yet gives way to this one.
+        /// struck first. A hand the engine has not taken yet gives way to this one. `heard_in_ms`: how
+        /// long from now until the frame would have played the sample its owner handed the Torus over at
+        /// (round 13): the part takes it at the engine's frame heard then ([`frame_heard_in`]), so the
+        /// part sounds on from where the frame stops, in step with its picture; without it, at once.
+        #[allow(clippy::too_many_arguments)]
         pub fn bind_torus(
             &self,
             lease: &str,
@@ -720,6 +1183,8 @@ pub(crate) mod host {
             sha256: &str,
             document: &Value,
             notes: Option<Notes>,
+            effects: Option<&Value>,
+            heard_in_ms: Option<f64>,
             kept: impl Fn(&str, &str) -> Result<Value, String>,
         ) -> Result<Value, String> {
             let follow = self
@@ -735,7 +1200,11 @@ pub(crate) mod host {
                     Some((sha256, document)) => (*sha256, document),
                     None => (sha256, document),
                 };
-                let handover = o.hand_torus(track, sha256, document, notes, true)?;
+                let due = match heard_in_ms {
+                    Some(ms) => frame_heard_in(&o.handle, ms)?,
+                    None => Due::Now,
+                };
+                let handover = o.hand_torus(track, sha256, document, Takes::Instead(due))?;
                 let bound = Bound {
                     lease: lease.to_owned(),
                     track,
@@ -753,6 +1222,23 @@ pub(crate) mod host {
                         o.follow_act(&bound, *at, impulses);
                     }
                 }
+                // its effects go with it: one that cannot be put there leaves the Torus sounding,
+                // and its words stand in the reading
+                if let Some(effects) = effects {
+                    let _ = o.put_effects(track, effects);
+                }
+                Ok(o.reading())
+            })
+        }
+
+        /// `live_engine_torus_effects`: the Torus's effects as the frame now holds them, put on the part
+        /// following its owner ([`Opened::put_effects`]). Refused in words while no part follows it.
+        pub fn torus_effects(&self, effects: &Value) -> Result<Value, String> {
+            self.with(|o| {
+                let track = o.following.bound.as_ref().map(|b| b.track).ok_or(
+                    "No part sounds the Torus here: Play hands it over, and its effects go with it",
+                )?;
+                o.put_effects(track, effects)?;
                 Ok(o.reading())
             })
         }
@@ -783,7 +1269,7 @@ pub(crate) mod host {
                         return;
                     };
                     let taken = kept(&lease, &sha256).and_then(|document| {
-                        o.hand_torus(bound.track, &sha256, &document, bound.notes, true)
+                        o.hand_torus(bound.track, &sha256, &document, Takes::Continuing)
                     });
                     match taken {
                         Ok(handover) => {
@@ -942,6 +1428,133 @@ pub(crate) mod host {
         }
 
         const BLOCKS: [usize; 8] = [256, 256, 512, 128, 1024, 2048, 4096, 8192];
+
+        /// The frame's effects as effectsLaw.ts opens them (EFFECT_LAW's initial values), with `chain`.
+        fn effects(chain: &[&str]) -> Value {
+            json!({"chain": chain,
+                "filter": {"on": true, "type": "lowpass", "cutoff": 8000, "resonance": 20, "drive": 0, "mix": 100},
+                "dynamics": {"on": true, "threshold": -12, "ratio": 4, "attack": 1, "release": 100, "makeup": 2},
+                "delay": {"on": true, "sync": true, "division": "1/8", "time": 250, "feedback": 35, "tone": 6000, "mix": 25, "tempo": 120},
+                "reverb": {"on": true, "size": 50, "decay": 2.4, "damping": 40, "predelay": 20, "mix": 22},
+                "resonator": {"on": true, "division": 300, "root": 0, "decay": 1, "tilt": 0, "span": 2, "mix": 50, "gain": 0}})
+        }
+
+        /// The Torus's effects stand after it on its part (round 13): the frame's chain in its order, each
+        /// effect as Live's device of its kind, the engine's own where it has one (Reverb at the frame's
+        /// Decay, Compressor at the corpus's values) and in words where it has none; an effect off stands
+        /// nowhere; an edit of a setting the engine does not take puts nothing again; Export renders the
+        /// part through each chain from the frame the engine put it there, as it was played.
+        #[test]
+        fn the_torus_effects_stand_after_it_as_the_engines_own_devices_or_in_words() {
+            let (made, reading) = torus_chain(&effects(&[
+                "filter",
+                "dynamics",
+                "delay",
+                "reverb",
+                "resonator",
+            ]))
+            .unwrap();
+            assert_eq!(
+                made,
+                vec![
+                    ("Compressor2", vec![]),
+                    ("Reverb", vec![("DecayTime", 2400.0)])
+                ]
+            );
+            assert_eq!(
+                reading[0],
+                json!({"effect":"filter","device":"AutoFilter","on":true,"sounds":false,
+                "words":"Live's Auto Filter has no model in the engine yet, so the Torus's Filter does not sound in it"})
+            );
+            assert_eq!(
+                reading[2]["words"],
+                "Live's Delay has no model in the engine yet, so the Torus's Delay does not sound in it"
+            );
+            assert_eq!(reading[1]["sounds"], true);
+            assert_eq!(reading[3]["sounds"], true);
+            assert_eq!(reading[3]["carried"], json!({"DecayTime": 2400.0}));
+            assert!(reading[3]["words"].as_str().unwrap().contains("pre-delay"));
+            assert!(reading[4]["words"].as_str().unwrap().contains("Resonator"));
+            // in the frame's order; an effect off stands nowhere
+            let mut off = effects(&["reverb", "dynamics"]);
+            assert_eq!(
+                torus_chain(&off).unwrap().0,
+                vec![
+                    ("Reverb", vec![("DecayTime", 2400.0)]),
+                    ("Compressor2", vec![])
+                ]
+            );
+            off["reverb"]["on"] = json!(false);
+            assert_eq!(torus_chain(&off).unwrap().0, vec![("Compressor2", vec![])]);
+            for (bad, words) in [
+                (json!({}), "chain"),
+                (
+                    json!({"chain": ["chorus"], "chorus": {"on": true}}),
+                    "no effect chorus",
+                ),
+                (
+                    json!({"chain": ["reverb", "reverb"], "reverb": {"on": true, "decay": 1.0}}),
+                    "twice",
+                ),
+                (json!({"chain": ["reverb"]}), "no settings"),
+            ] {
+                let refused = torus_chain(&bad).unwrap_err();
+                assert!(refused.contains(words), "{refused}");
+            }
+            // on the part: from the block that takes it, the part sounds through it
+            let path = write_set("torus-effects", SET);
+            let mut o = Opened::open(&path).unwrap();
+            let mut core = o.core.take().unwrap();
+            let mut played = pull(&mut core, &[256, 256]);
+            o.put_effects(0, &effects(&["reverb"])).unwrap();
+            played.extend(pull(&mut core, &[256; 30]));
+            // a setting the engine does not take moves nothing
+            let mut edited = effects(&["reverb"]);
+            edited["reverb"]["size"] = json!(80);
+            o.put_effects(0, &edited).unwrap();
+            assert_eq!(
+                o.racked.len(),
+                1,
+                "a chain made as the one standing is not put again"
+            );
+            // its Decay is carried: the reverb is made again
+            edited["reverb"]["decay"] = json!(1.2);
+            o.put_effects(0, &edited).unwrap();
+            played.extend(pull(&mut core, &[256; 10]));
+            let reading = o.reading();
+            assert_eq!(reading["torus_effects"]["track"], 0);
+            assert_eq!(
+                reading["torus_effects"]["chain"][0]["carried"],
+                json!({"DecayTime": 1200.0})
+            );
+            assert_eq!(
+                reading["torus_effects"]["sounding_from_frame"],
+                512 + 256 * 30
+            );
+            assert_eq!(o.handle.racks(), &[(512, 0), (512 + 256 * 30, 0)]);
+            // another part is refused, in words the reading keeps
+            let refused = o.put_effects(1, &edited).unwrap_err();
+            assert!(refused.contains("stand on part 0"), "{refused}");
+            assert_eq!(o.reading()["torus_effects"]["refusal"], refused);
+            // Export renders the part through each chain from where the engine put it
+            let (bytes, _) = o.render_wav().unwrap();
+            let wav = live_engine::wav::read_wav_f32(&bytes).unwrap();
+            assert_eq!(wav.samples.len(), played.len());
+            for (n, (e, p)) in wav.samples.iter().zip(&played).enumerate() {
+                assert_eq!(
+                    e.to_bits(),
+                    p.to_bits(),
+                    "sample {n}: Export is what was played"
+                );
+            }
+            // and the chain is heard: the set alone renders otherwise
+            let (graph, _) = bridged(&o.document).unwrap();
+            assert_ne!(
+                graph.render_performance(ENGINE_RATE, &o.handle.performance()),
+                played,
+                "the Torus's effects are heard on its part"
+            );
+        }
 
         #[test]
         fn the_host_plays_the_sets_two_parts_with_their_chains_returns_and_main() {
@@ -1290,9 +1903,167 @@ pub(crate) mod host {
             let path = write_set("torus-unbuilt", SET);
             let mut opened = Opened::open(&path).unwrap();
             let refused = opened
-                .hand_torus(0, "sha256:none", &json!({}), None, false)
+                .hand_torus(0, "sha256:none", &json!({}), Takes::Instead(Due::Now))
                 .unwrap_err();
             assert!(refused.contains("built without QL's K8 node"), "{refused}");
+        }
+
+        /// The frame names when it will play the sample its owner handed the Torus over at, as a time
+        /// from now (round 13): the part takes the Torus at the engine's frame heard then — past the
+        /// frames it has mixed by that time at its rate, less the device's output latency — and at once
+        /// when that frame is already playing. A time that is not one from now is refused in words.
+        #[test]
+        fn the_torus_is_taken_at_the_engines_frame_heard_when_the_frame_plays_its_hand_over() {
+            let path = write_set("torus-heard", SET);
+            let mut opened = Opened::open(&path).unwrap();
+            let mut core = opened.core.take().unwrap();
+            let mut block = vec![0.0f32; 2 * 512];
+            core.pull_block(&mut block);
+            assert_eq!(opened.handle.position(), 512);
+            let heard = |ms| frame_heard_in(&opened.handle, ms);
+            assert_eq!(heard(100.0), Ok(Due::AtFrame(512 + 4800)));
+            core.report_output_latency(25_000_000);
+            assert_eq!(heard(100.0), Ok(Due::AtFrame(512 + 4800 - 1200)));
+            assert_eq!(heard(10.0), Ok(Due::AtFrame(512)));
+            assert_eq!(heard(0.0), Ok(Due::AtFrame(512)));
+            for ms in [-1.0, f64::NAN, f64::INFINITY, HEARD_IN_MS_MAX + 1.0] {
+                let refused = heard(ms).unwrap_err();
+                assert!(refused.contains("as a time from now"), "{refused}");
+            }
+            // the frame names it in the machine's wall clock; past is at once
+            let now = 1_793_750_400_000.0;
+            assert_eq!(heard_in_ms(now + 52.5, now), Ok(52.5));
+            assert_eq!(heard_in_ms(now - 3.0, now), Ok(0.0));
+            for at in [
+                now + HEARD_IN_MS_MAX + 1.0,
+                now - HEARD_IN_MS_MAX - 1.0,
+                f64::NAN,
+                0.0,
+            ] {
+                let refused = heard_in_ms(at, now).unwrap_err();
+                assert!(refused.contains("within 10000 ms of now"), "{refused}");
+            }
+        }
+
+        /// A part whose clip strikes a chord, then two notes of one frame (one with no key by the pitch law).
+        #[cfg(not(feature = "k8"))]
+        const CLIPPED: &str = r#"<?xml version="1.0" encoding="UTF-8"?>
+<Ableton MajorVersion="5"><LiveSet>
+  <Tracks>
+    <MidiTrack Id="1"><Name><EffectiveName Value="Torus" /></Name>
+      <DeviceChain>
+        <Mixer><Sends /><Speaker><Manual Value="true" /></Speaker><Pan><Manual Value="0" /></Pan><Volume><Manual Value="1" /></Volume><SoloSink Value="false" /></Mixer>
+        <MainSequencer><ClipTimeable><ArrangerAutomation><Events>
+          <MidiClip Id="2" Time="0"><CurrentStart Value="0" /><CurrentEnd Value="2" />
+            <Loop><LoopStart Value="0" /><LoopEnd Value="2" /><StartRelative Value="0" /><LoopOn Value="false" /></Loop>
+            <Notes><KeyTracks>
+              <KeyTrack Id="3"><MidiKey Value="60" /><Notes><MidiNoteEvent Time="0.25" Duration="0.125" Velocity="100" IsEnabled="true" /></Notes></KeyTrack>
+              <KeyTrack Id="4"><MidiKey Value="62" /><Notes><MidiNoteEvent Time="0.25" Duration="0.125" Velocity="100" IsEnabled="true" /></Notes></KeyTrack>
+              <KeyTrack Id="5"><MidiKey Value="64" /><Notes><MidiNoteEvent Time="0.5" Duration="0.125" Velocity="64" IsEnabled="true" /></Notes></KeyTrack>
+              <KeyTrack Id="6"><MidiKey Value="61" /><Notes><MidiNoteEvent Time="0.5" Duration="0.125" Velocity="100" IsEnabled="true" /></Notes></KeyTrack>
+            </KeyTracks></Notes>
+          </MidiClip>
+        </Events></ArrangerAutomation></ClipTimeable></MainSequencer>
+        <DeviceChain><Devices /></DeviceChain>
+      </DeviceChain>
+    </MidiTrack>
+  </Tracks>
+  <MainTrack><DeviceChain><Mixer><Tempo><Manual Value="120" /></Tempo><Volume><Manual Value="1" /></Volume><Pan><Manual Value="0" /></Pan></Mixer>
+    <DeviceChain><Devices /></DeviceChain></DeviceChain></MainTrack>
+</LiveSet></Ableton>"#;
+
+        /// The notes of the part following the Torus's owner are handed to the owner (round 13): each clip
+        /// note the engine reaches within the lookahead, as its key by the pitch→key law the part was bound
+        /// with, at the owner's sample its frame falls on (the hand-over's sample plus the frames since the
+        /// engine took it), keys of one frame and strength as one act; each release the engine reaches of a
+        /// key handed out; a MIDI note sent to the part at once, and never to the engine. Each once.
+        #[cfg(not(feature = "k8"))]
+        #[test]
+        fn the_bound_parts_notes_are_handed_to_the_owner_at_their_samples() {
+            let path = write_set("torus-notes", CLIPPED);
+            let mut o = Opened::open(&path).unwrap();
+            let mut core = o.core.take().unwrap();
+            // at 120 bpm a beat is 24000 frames: the chord at 6000, the pair at 12000, each 3000 long
+            assert_eq!(o.clips[0].len(), 8, "{:?}", o.clips[0]);
+            // the engine plays past the chord before the part takes the Torus (a stand-in for its node)
+            pull(&mut core, &[128; 50]);
+            o.handle
+                .install(0, Box::new(live_engine::SilentInstrument))
+                .unwrap();
+            o.toruses.push(TorusOnPart {
+                track: 0,
+                sha256: "sha256:t".into(),
+                at_samples_elapsed: 4800,
+                handover: 1,
+                keys_refused: None,
+            });
+            let mut notes = [None; 128];
+            notes[60] = Some((2u8, 3u16));
+            notes[62] = Some((2, 4));
+            notes[64] = Some((3, 1));
+            o.following.bound = Some(Bound {
+                lease: "lease:t".into(),
+                track: 0,
+                sha256: "sha256:t".into(),
+                handover: 1,
+                notes: Some(notes),
+            });
+            assert_eq!(
+                o.torus_notes(),
+                None,
+                "nothing until the engine takes the hand"
+            );
+            pull(&mut core, &[128]);
+            o.handle.collect();
+            assert_eq!(o.handle.installs(), &[(6400, 0)]);
+            let due = o.torus_notes().expect("the pair is within the lookahead");
+            assert_eq!(
+                due,
+                json!({"lease":"lease:t","track":0,"releases":[],"acts":[
+                    {"keys":[{"row":3,"column":1}],"amplitude":64.0 / 127.0,"at_samples_elapsed":(4800 + 12000 - 6400).to_string()}]}),
+                "the chord fell before the part took the Torus; 61 has no key"
+            );
+            assert_eq!(o.torus_notes(), None, "each note once");
+            let note = |kind: &str, velocity: &str| {
+                serde_json::from_str::<EventIn>(&format!(
+                    r#"{{"kind":"{kind}","track":0,"key":64{velocity}}}"#
+                ))
+                .unwrap()
+            };
+            o.send(note("note_on", r#","velocity":127"#)).unwrap();
+            let due = o.torus_notes().unwrap();
+            assert_eq!(
+                due["acts"],
+                json!([{"keys":[{"row":3,"column":1}],"amplitude":1.0}]),
+                "a MIDI note on the part is handed over at once"
+            );
+            assert_eq!(
+                o.handle.performance().events.len(),
+                0,
+                "and never reaches the engine"
+            );
+            // the engine reaches the chord's release (never handed out) and the pair's
+            pull(&mut core, &[128; 70]);
+            let due = o.torus_notes().unwrap();
+            assert_eq!(due["acts"], json!([]));
+            assert_eq!(due["releases"], json!([{"row":3,"column":1}]));
+            o.send(note("note_off", "")).unwrap();
+            assert_eq!(
+                o.torus_notes().unwrap()["releases"],
+                json!([{"row":3,"column":1}])
+            );
+            o.send(note("note_off", "")).unwrap();
+            assert_eq!(
+                o.torus_notes(),
+                None,
+                "a key the owner no longer holds is not let go"
+            );
+            let reading = o.reading();
+            assert_eq!(
+                reading["torus_follow"]["notes_to_owner"],
+                json!({"handed": 2, "unkeyed": 1, "before_torus": 2}),
+                "{reading}"
+            );
         }
 
         #[test]
@@ -1339,8 +2110,11 @@ fn host(app: &tauri::AppHandle) -> tauri::State<'_, LiveEngineHost> {
 
 /// The engine follows the Torus's owner (O-I #849 round 12): the kernel tells the host every act the
 /// owner lands and every hand-over (`Field::set_torus_tap`), and a thread of the host's own strikes each
-/// act on the part bound to that owner and puts each hand-over on it (`LiveEngineHost::tapped`). Called
-/// once, when the kernel's field is made; the frame is answered as it always is.
+/// act on the part bound to that owner and puts each hand-over on it (`LiveEngineHost::tapped`). The same
+/// thread hands the owner the bound part's notes (round 13): each tick it emits the notes due
+/// ([`host::TORUS_NOTES_EVENT`], `LiveEngineHost::torus_notes`) to the shell, which plays them on the
+/// owner through the frame; the owner's acts come back by the tap. Called once, when the kernel's field
+/// is made; the frame is answered as it always is.
 pub(crate) fn follow_torus(
     app: &tauri::AppHandle,
     field: &oi_cradle_kernel::native_expression::Field,
@@ -1355,9 +2129,19 @@ pub(crate) fn follow_torus(
         let (app, field) = (app.clone(), field.clone());
         let followed = std::thread::Builder::new()
             .name("torus-follow".into())
-            .spawn(move || {
-                for told in tapped {
-                    host(&app).tapped(told, |lease, sha256| field.torus_native(lease, sha256));
+            .spawn(move || loop {
+                use std::sync::mpsc::RecvTimeoutError;
+                use tauri::Emitter;
+                match tapped.recv_timeout(host::TORUS_RELAY_TICK) {
+                    Ok(told) => {
+                        host(&app).tapped(told, |lease, sha256| field.torus_native(lease, sha256))
+                    }
+                    Err(RecvTimeoutError::Timeout) => {}
+                    Err(RecvTimeoutError::Disconnected) => break,
+                }
+                // the bound part's notes due on its owner go to the shell, which plays them through the frame
+                if let Some(due) = host(&app).torus_notes() {
+                    let _ = app.emit(host::TORUS_NOTES_EVENT, due);
                 }
             });
         if let Err(error) = followed {
@@ -1462,8 +2246,13 @@ pub fn live_engine_send(
 /// The Torus its owner handed over sounds on the set's part `track` (O-I #849): the kernel kept the
 /// document under the field's lease (`Field::torus_native`), and the page names only its digest. The
 /// part follows that owner from then on (`follow_torus`); `notes` gives the key each MIDI note strikes
-/// on it, by the shell's pitch→key law (O-I #853): 128 entries, a key or null.
+/// on it, by the shell's pitch→key law (O-I #853): 128 entries, a key or null; `effects`, the frame's
+/// effects to stand after it (round 13); `heard_at_ms`, when the frame's sound of the sample it was handed
+/// over at is heard, in the machine's wall clock (round 13: the part takes it at the engine's frame heard
+/// then, [`host::heard_in_ms`], so it sounds on from where the frame stops). Its arguments are the page's
+/// fields, one each.
 #[tauri::command]
+#[allow(clippy::too_many_arguments)]
 pub fn live_engine_torus(
     app: tauri::AppHandle,
     webview: tauri::WebviewWindow,
@@ -1471,21 +2260,68 @@ pub fn live_engine_torus(
     track: usize,
     sha256: String,
     notes: Option<serde_json::Value>,
+    effects: Option<serde_json::Value>,
+    heard_at_ms: Option<f64>,
 ) -> Result<serde_json::Value, String> {
     #[cfg(feature = "native_shell")]
     {
         use tauri::Manager;
         admit_candidate_webview(&webview)?;
         let notes = notes.as_ref().map(host::notes).transpose()?;
+        let now_ms = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map_err(|e| format!("the machine's clock stands before the Unix epoch: {e}"))?
+            .as_secs_f64()
+            * 1000.0;
+        let heard_in_ms = heard_at_ms
+            .map(|at| host::heard_in_ms(at, now_ms))
+            .transpose()?;
         let field = &app.state::<crate::KernelHost>().1;
         let handed = field.torus_native(&lease, &sha256)?;
-        host(&app).bind_torus(&lease, track, &sha256, &handed, notes, |lease, sha256| {
-            field.torus_native(lease, sha256)
-        })
+        host(&app).bind_torus(
+            &lease,
+            track,
+            &sha256,
+            &handed,
+            notes,
+            effects.as_ref(),
+            heard_in_ms,
+            |lease, sha256| field.torus_native(lease, sha256),
+        )
     }
     #[cfg(not(feature = "native_shell"))]
     {
-        let _ = (app, webview, lease, track, sha256, notes);
+        let _ = (
+            app,
+            webview,
+            lease,
+            track,
+            sha256,
+            notes,
+            effects,
+            heard_at_ms,
+        );
+        Err(EVERYDAY.into())
+    }
+}
+
+/// The Torus's effects as the frame now holds them (effectsLaw.ts `EffectsState`, as the frame reports
+/// them), on the part following its owner (round 13): each effect as Live's device of its kind, the
+/// engine's own, after the Torus; refused in words while no part follows it.
+#[tauri::command]
+pub fn live_engine_torus_effects(
+    app: tauri::AppHandle,
+    webview: tauri::WebviewWindow,
+    effects: serde_json::Value,
+) -> Result<serde_json::Value, String> {
+    #[cfg(feature = "native_shell")]
+    {
+        admit_candidate_webview(&webview)?;
+        host(&app).torus_effects(&effects)
+    }
+    #[cfg(not(feature = "native_shell"))]
+    {
+        let _ = (app, webview, effects);
         Err(EVERYDAY.into())
     }
 }

@@ -938,3 +938,251 @@ fn an_instrument_is_handed_only_to_a_part_that_plays_notes() {
         .unwrap_err();
     assert!(refused.to_string().contains("no part"), "{refused}");
 }
+
+/// O-I #849 round 13: the chain an owner puts after a part's instrument while the engine plays (the
+/// Torus's effects on its rack's chain) sounds after the instrument from the block that takes it. Put
+/// there again, a device made from the same keeps its state (an echo's line rings on) and a device made
+/// from something else starts fresh; Export puts each chain there at the frame the engine did, so it
+/// renders the samples played, bit for bit.
+#[test]
+fn a_chain_after_a_parts_instrument_sounds_keeps_its_unchanged_devices_and_exports_as_played() {
+    use live_engine::RackDevice;
+    let build = || {
+        let mut g = Graph::new(SR, 120.0);
+        g.tracks.push(operator_part("Keys", &[]));
+        g
+    };
+    let echo = |made_from: &str| RackDevice {
+        made_from: made_from.into(),
+        device: Box::new(EchoDevice::new(EchoParams {
+            delay_time_s: 0.002,
+            feedback: 0.5,
+            dry_wet: 0.5,
+        })),
+    };
+    let (mut core, mut handle) = engine(build()).unwrap();
+    let mut block = vec![0f32; 256 * 2];
+    let mut played = Vec::new();
+    let mut pull = |core: &mut live_engine::EngineCore, played: &mut Vec<f32>| {
+        core.pull_block(&mut block);
+        played.extend_from_slice(&block);
+    };
+    handle
+        .send(EngineEvent::NoteOn {
+            track: 0,
+            key: 69,
+            velocity: 1.0,
+        })
+        .unwrap();
+    pull(&mut core, &mut played);
+    handle.install_rack(0, vec![echo("Echo")]).unwrap();
+    pull(&mut core, &mut played);
+    pull(&mut core, &mut played);
+    // the same echo again: it keeps its line
+    handle.install_rack(0, vec![echo("Echo")]).unwrap();
+    pull(&mut core, &mut played);
+    pull(&mut core, &mut played);
+    handle.collect();
+    assert_eq!(
+        handle.racks(),
+        &[(256, 0), (768, 0)],
+        "each chain taken at its block's first frame"
+    );
+    let perf = handle.performance();
+    let export = |racks: Vec<(u64, usize, Vec<RackDevice>)>| {
+        build().render_performance_racked(SR, &perf, Vec::new(), racks)
+    };
+    let exported = export(vec![
+        (256, 0, vec![echo("Echo")]),
+        (768, 0, vec![echo("Echo")]),
+    ]);
+    assert_eq!(exported.len(), played.len());
+    for (n, (e, p)) in exported.iter().zip(&played).enumerate() {
+        assert_eq!(
+            e.to_bits(),
+            p.to_bits(),
+            "sample {n}: Export is what was played"
+        );
+    }
+    assert_eq!(
+        export(vec![(256, 0, vec![echo("Echo")])]),
+        played,
+        "put there again unchanged, the echo rang on as if it had never been put again"
+    );
+    assert_ne!(
+        export(vec![
+            (256, 0, vec![echo("Echo")]),
+            (768, 0, vec![echo("Echo, again")])
+        ]),
+        played,
+        "an echo made from something else starts with an empty line"
+    );
+    assert_ne!(
+        build().render_performance(SR, &perf),
+        played,
+        "the chain is heard: without it Export would not render what was played"
+    );
+    assert_eq!(
+        played[..512],
+        build().render_performance(SR, &perf)[..512],
+        "before the block that takes it, the part sounds as its instrument alone"
+    );
+}
+
+#[test]
+fn a_chain_stands_only_after_an_instrument() {
+    let mut g = Graph::new(SR, 120.0);
+    g.tracks.push(constant_part("Tone", 0.25, 100));
+    let (_core, mut handle) = engine(g).unwrap();
+    let refused = handle.install_rack(0, Vec::new()).unwrap_err();
+    assert!(
+        refused.to_string().contains("holds no instrument"),
+        "{refused}"
+    );
+    let refused = handle.install_rack(2, Vec::new()).unwrap_err();
+    assert!(refused.to_string().contains("no part"), "{refused}");
+}
+
+/// A Torus as far as its part's hand-overs see one (O-I #849 round 13): it sounds the sample of its
+/// owner's continuation it stands at (a thousandth of it), and stands one further each frame.
+#[derive(Debug)]
+struct Continuing {
+    cursor: u64,
+    handover: u32,
+}
+
+impl live_engine::Instrument for Continuing {
+    fn name(&self) -> &str {
+        "Torus"
+    }
+    fn note_on(&mut self, _key: u8, _velocity: f32, _clock: &Clock) {}
+    fn note_off(&mut self, _key: u8, _clock: &Clock) {}
+    fn release_all(&mut self, _clock: &Clock) {}
+    fn process(&mut self, frame_io: &mut [f32], _clock: &Clock) {
+        frame_io.fill(self.cursor as f32 / 1000.0);
+        self.cursor += 1;
+    }
+    fn torus_handover(&self) -> Option<u32> {
+        Some(self.handover)
+    }
+    fn torus_cursor(&self) -> Option<u64> {
+        Some(self.cursor)
+    }
+}
+
+fn continuing_part(cursor: u64) -> Graph {
+    let mut g = Graph::new(SR, 120.0);
+    g.tracks.push(Track::midi(
+        "Torus",
+        Box::new(Continuing {
+            cursor,
+            handover: 1,
+        }),
+    ));
+    g
+}
+
+/// The owner hands the Torus over again at its sample 1500 while the part's Torus stands at 1256 (the
+/// part runs behind its owner, as the engine does behind the frame): the new one takes the part when the
+/// part's reaches 1500, so the part sounds its owner's continuation without a jump, and Export Audio hands
+/// it over at that frame again. Due at an engine frame, it takes the part at that frame; due at a sample
+/// the part has passed or far past the longest wait, at the next block.
+#[test]
+fn a_hand_over_again_takes_its_part_at_the_owners_sample_it_continues_from() {
+    use live_engine::Due;
+    let run = |due: Due, cursor: u64| {
+        let (mut core, mut handle) = engine(continuing_part(1000)).unwrap();
+        let mut block = vec![0f32; 256 * 2];
+        let mut played = Vec::new();
+        core.pull_block(&mut block);
+        played.extend_from_slice(&block);
+        let again = Box::new(Continuing {
+            cursor,
+            handover: 2,
+        });
+        assert!(!handle.install_latest_due(0, again, due).unwrap());
+        for _ in 0..3 {
+            core.pull_block(&mut block);
+            played.extend_from_slice(&block);
+        }
+        handle.collect();
+        (played, handle.installs().to_vec(), handle.performance())
+    };
+    let (played, installs, perf) = run(Due::AtCursor(1500), 1500);
+    assert_eq!(
+        installs,
+        vec![(500, 0)],
+        "taken when the part's Torus reached the owner's sample"
+    );
+    let through = continuing_part(1000).render_performance(SR, &perf);
+    for (n, (p, t)) in played.iter().zip(&through).enumerate() {
+        assert_eq!(
+            p.to_bits(),
+            t.to_bits(),
+            "sample {n}: the part sounds its owner's continuation without a jump"
+        );
+    }
+    let exported = continuing_part(1000).render_performance_with(
+        SR,
+        &perf,
+        vec![(
+            500,
+            0,
+            Box::new(Continuing {
+                cursor: 1500,
+                handover: 2,
+            }),
+        )],
+    );
+    assert_eq!(
+        exported, played,
+        "Export Audio hands it over at the frame the engine did"
+    );
+
+    let (played, installs, _) = run(Due::AtFrame(300), 7000);
+    assert_eq!(
+        installs,
+        vec![(300, 0)],
+        "due at an engine frame, taken at that frame"
+    );
+    assert_eq!(played[2 * 299], 1299.0 / 1000.0);
+    assert_eq!(played[2 * 300], 7000.0 / 1000.0);
+
+    for (due, why) in [
+        (Due::AtCursor(1200), "a sample the part has passed"),
+        (
+            Due::AtCursor(1256 + live_engine::HAND_HOLD_MAX + 1),
+            "a sample past the longest wait",
+        ),
+        (Due::Now, "now"),
+    ] {
+        let (_, installs, _) = run(due, 1500);
+        assert_eq!(
+            installs,
+            vec![(256, 0)],
+            "{why}: taken at the next block's first frame"
+        );
+    }
+}
+
+/// A part whose instrument is not a Torus stands at no sample of an owner's: a hand-over due at one takes
+/// it at the next block.
+#[test]
+fn a_hand_over_due_at_a_sample_takes_a_part_without_a_torus_at_once() {
+    let mut g = Graph::new(SR, 120.0);
+    g.tracks.push(operator_part("Keys", &[]));
+    let (mut core, mut handle) = engine(g).unwrap();
+    let mut block = vec![0f32; 256 * 2];
+    core.pull_block(&mut block);
+    let torus = Box::new(Continuing {
+        cursor: 9000,
+        handover: 1,
+    });
+    handle
+        .install_latest_due(0, torus, live_engine::Due::AtCursor(9000))
+        .unwrap();
+    core.pull_block(&mut block);
+    handle.collect();
+    assert_eq!(handle.installs(), &[(256, 0)]);
+    assert_eq!(block[0], 9.0);
+}

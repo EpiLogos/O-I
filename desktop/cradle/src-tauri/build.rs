@@ -15,6 +15,7 @@ fn main() {
             "live_engine_stop",
             "live_engine_send",
             "live_engine_torus",
+            "live_engine_torus_effects",
             "live_engine_mixer",
             "live_engine_export",
             "midi_out",

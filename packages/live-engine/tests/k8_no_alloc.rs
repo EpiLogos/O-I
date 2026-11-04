@@ -137,12 +137,10 @@ fn the_torus_strikes_and_is_stilled_without_allocating() {
             cap_metres: 1.0,
         })
         .unwrap();
-    let mut notes = [None; 128];
-    notes[60] = Some((2u8, 5u16));
     let mut g = Graph::new(SR, 120.0);
     g.tracks.push(Track::midi(
         "Torus",
-        Box::new(K8Instrument::new(field).handed_over(1).with_notes(notes)),
+        Box::new(K8Instrument::new(field).handed_over(1)),
     ));
     let (mut core, mut handle) = engine(g).unwrap();
     let mut block = vec![0f32; 256 * 2];
@@ -205,6 +203,30 @@ fn the_torus_strikes_and_is_stilled_without_allocating() {
     pull(&mut core, &mut block);
     handle.collect();
     assert_eq!(handle.installs().len(), 1, "the hand was taken");
+    // A hand-over again due at a sample the part's Torus reaches within the next block is held, and
+    // swapped onto the part there, mid-block.
+    // (the part's Torus, a fresh field, stands at the frames it rendered since it took the part)
+    let held = handle.position() - handle.installs()[0].0 + block.len() as u64 / 4;
+    handle
+        .install_latest_due(
+            0,
+            Box::new(K8Instrument::new(k8_fixture::field(SR)).handed_over(3)),
+            live_engine::Due::AtCursor(held),
+        )
+        .unwrap();
+    pull(&mut core, &mut block);
+    pull(&mut core, &mut block);
+    handle.collect();
+    assert_eq!(
+        handle.installs().len(),
+        2,
+        "the hand due mid-block was taken"
+    );
+    assert_eq!(
+        handle.installs()[1].0 % 256,
+        128,
+        "at the frame it was due, mid-block"
+    );
     let count = ALLOCATIONS.load(Ordering::Relaxed);
     assert!(heard, "the Torus sounded");
     assert_eq!(count, 0, "the Torus's audio thread allocated {count} times");

@@ -5,8 +5,13 @@
 //   live_engine_send {event}   a note, a Torus act, Panic, or a mixer move — applied at the next audio block
 //   live_engine_torus          the Torus its owner handed over (QL's torus-native, kept by the kernel under the field's lease; named
 //                              here only by its digest) sounds on a MIDI part, continuing the owner's field from the sample it stood at;
-//                              its MIDI notes strike the keys the one pitch→key law gives them (jankoInput.ts noteKeys, O-I #853), and
-//                              the host follows the owner from then on: each act it lands, and each time it is handed over again
+//                              the host follows the owner from then on: each act it lands, and each time it is handed over again; the
+//                              part's notes are the owner's: the host hands each over as the key the one pitch→key law gives it
+//                              (jankoInput.ts noteKeys, O-I #853) at its sample (oi:live-engine-torus-notes), and the shell plays it on
+//                              the owner through the frame's Jankó strike (playTorusNotes); the Torus's effects go with it; the part
+//                              takes it when the frame's sound of it stops (heardAtMs, the frame's heard_at_ms)
+//   live_engine_torus_effects  the Torus's effects as the frame now holds them (its reading's `parameters.effects`), on the part after it:
+//                              each as Live's device of its kind, the engine's own where it has one (followTorusEffects)
 // Play hands the Torus over (the frame's `torus-engine` stage command: its owner hands it over and the frame's own sound of it is shut) and
 // puts it on the set's first MIDI part, so it sounds once, through the engine's mixer and Main; Stop gives the frame its sound back. A Torus
 // that cannot be handed over leaves the set playing and says why (EngineState.torus).
@@ -22,7 +27,7 @@ import {readSet} from '../native/application'
 import {readSetSummary} from '../shell/useSet'
 import type {SlotBinding} from '../frame/transport/slots'
 import type {StageCommand, StageResult} from '@epilogos/expressions-boundary'
-import {commitLiveStage} from './torusInstrument'
+import {commitLiveStage, liveTorusState, subscribeLiveTorus} from './torusInstrument'
 import {liveJankoWindow} from './janko/jankoLayout'
 import {noteKeys} from './janko/jankoInput'
 
@@ -44,6 +49,13 @@ export type LiveEngineEvent =
  * the engine has taken it. */
 export interface LiveEngineTorus {track: number; sha256: string; at_samples_elapsed: string; sounding_from_frame: number | null}
 
+/** One of the Torus's effects as the engine stands it after the Torus (live_engine_host.rs torus_chain): Live's device of its kind,
+ * whether it sounds there, the settings carried onto it, and in words what does not sound as the frame's. */
+export interface LiveEngineTorusEffect {effect: string; device: string | null; on: boolean; sounds: boolean; carried?: Record<string, number>; words?: string | null}
+/** The Torus's effects on the part it sounds on: the part, each effect on the frame's chain, the frame the engine put them there from,
+ * and the last refusal. */
+export interface LiveEngineTorusEffects {track: number | null; chain: LiveEngineTorusEffect[]; sounding_from_frame: number | null; refusal: string | null}
+
 /** One part's mixer as the engine applied it (gain and sends linear, pan −1…1). */
 export interface LiveEnginePartMix {name: string; gain: number; pan: number; active: boolean; solo: boolean; sends: number[]; midi: boolean}
 export interface LiveEngineReading {
@@ -57,10 +69,12 @@ export interface LiveEngineReading {
   mixer: {tracks: LiveEnginePartMix[]; returns: LiveEnginePartMix[]; main: LiveEnginePartMix}
   /** The Torus each part holds (O-I #849); none until its owner hands it over. */
   toruses: LiveEngineTorus[]
+  /** The Torus's effects on its part (round 13); null until they go with it. */
+  torus_effects?: LiveEngineTorusEffects | null
 }
 export interface LiveEngineExport {path: string; frames: number; events: number; complete: boolean}
 
-export const LIVE_ENGINE_OPS = ['live_engine_open', 'live_engine_play', 'live_engine_stop', 'live_engine_send', 'live_engine_torus', 'live_engine_mixer', 'live_engine_export'] as const
+export const LIVE_ENGINE_OPS = ['live_engine_open', 'live_engine_play', 'live_engine_stop', 'live_engine_send', 'live_engine_torus', 'live_engine_torus_effects', 'live_engine_mixer', 'live_engine_export'] as const
 type LiveEngineOp = typeof LIVE_ENGINE_OPS[number]
 
 const words = (e: unknown) => typeof e === 'string' ? e : e instanceof Error ? e.message : String(e)
@@ -120,8 +134,15 @@ export interface EngineState {
   readonly error: string | null
   /** Why the Torus does not sound in the engine while the set plays (it could not be handed over), in its owner's or the engine's words. */
   readonly torus: string | null
+  /** The set's notes on the Torus part, played on its owner through the frame (torusNotes): at their sample, at once because the owner
+   * had passed their sample (late), or refused, with the last refusal's words. */
+  readonly notes: TorusNotesPlayed
+  /** Why the Torus's effects as the frame last changed them did not follow into the engine, in its words. */
+  readonly effects: string | null
 }
-let state: EngineState = {reading: null, kinds: [], error: null, torus: null}
+export interface TorusNotesPlayed {readonly played: number; readonly late: number; readonly refused: number; readonly refusal: string | null}
+const NO_NOTES: TorusNotesPlayed = {played: 0, late: 0, refused: 0, refusal: null}
+let state: EngineState = {reading: null, kinds: [], error: null, torus: null, notes: NO_NOTES, effects: null}
 const listeners = new Set<() => void>()
 let poll: ReturnType<typeof setInterval> | null = null
 /** While the engine plays, its reading is read again this often (ms): a move shows once a block applied it. */
@@ -140,9 +161,89 @@ async function adopt<T extends LiveEngineReading>(answer: Promise<T>): Promise<T
 
 /** The frame's stage, as the engine's Torus asks it (torusInstrument.ts commitLiveStage, the one channel to the live instrument). */
 type Stage = (command: StageCommand) => Promise<StageResult>
+/** The host's events, by the Tauri event API (the native candidate's). */
+async function listenHost(event: string, handler: (event: {readonly payload: unknown}) => unknown): Promise<() => void> {
+  const {listen} = await import('@tauri-apps/api/event')
+  return listen<unknown>(event, handler)
+}
+
+/** The event the host hands the Torus's owner the set's due notes by (live_engine_host.rs TORUS_NOTES_EVENT). */
+export const TORUS_NOTES_EVENT = 'oi:live-engine-torus-notes'
+type Key = {row: number; column: number}
+/** The notes the host hands the Torus's owner (live_engine_host.rs `torus_notes`): each act the keys of one frame at one strength, at the
+ * owner's sample the frame falls on (or at once for a MIDI note sent to the part), and the keys let go. */
+export interface TorusNotes {
+  readonly lease: string
+  readonly acts: readonly {readonly keys: readonly Key[]; readonly amplitude: number; readonly at_samples_elapsed?: string}[]
+  readonly releases: readonly Key[]
+}
+const isKey = (k: unknown): k is Key => !!k && typeof k === 'object' && Number.isInteger((k as Key).row) && Number.isInteger((k as Key).column)
+/** A TorusNotes read exactly, or null. */
+export function readTorusNotes(raw: unknown): TorusNotes | null {
+  if (!raw || typeof raw !== 'object') return null
+  const due = raw as Record<string, unknown>
+  if (typeof due.lease !== 'string' || !Array.isArray(due.acts) || !Array.isArray(due.releases) || !due.releases.every(isKey)) return null
+  const acts = due.acts.every(a => !!a && typeof a === 'object' && Array.isArray(a.keys) && a.keys.length > 0 && a.keys.every(isKey)
+    && typeof a.amplitude === 'number' && Number.isFinite(a.amplitude) && (a.at_samples_elapsed === undefined || (typeof a.at_samples_elapsed === 'string' && /^\d+$/.test(a.at_samples_elapsed))))
+  return acts ? {lease: due.lease, acts: due.acts, releases: due.releases} : null
+}
+
+/** The set's notes on the Torus part are its owner's (O-I #849 round 13): each act the host hands over is played on the owner through the
+ * frame, as its Jankó keys strike (`janko` strike at the act's sample), and the keys it lets go as their release. A sample the owner has
+ * passed is played at once and counted late; a note the owner refuses is counted with its words. The owner's acts reach the engine back
+ * through the kernel's tap, so the owner, the picture and the engine hold one ringing. */
+async function playTorusNotes(due: TorusNotes, stage: Stage): Promise<void> {
+  for (const act of due.acts) {
+    const strike: StageCommand = {command: 'janko', action: 'strike', keys: [...act.keys], amplitude: act.amplitude}
+    let answer = await stage(act.at_samples_elapsed === undefined ? strike : {...strike, at_samples_elapsed: act.at_samples_elapsed})
+    let late = false
+    if (!answer.ok && act.at_samples_elapsed !== undefined) { late = true; answer = await stage(strike) }
+    const notes = state.notes
+    settle({notes: answer.ok ? {...notes, played: notes.played + 1, late: notes.late + (late ? 1 : 0)}
+      : {...notes, refused: notes.refused + 1, refusal: answer.error}})
+  }
+  if (due.releases.length) await stage({command: 'janko', action: 'release', keys: [...due.releases]})
+}
+let unlistenNotes: (() => void) | null = null
+let notesPlayed: Promise<void> = Promise.resolve()
+/** Listen for the notes the host hands the owner under `lease`, each payload played in order after the last; the handler answers that
+ * payload's play. */
+async function listenTorusNotes(lease: string, stage: Stage): Promise<void> {
+  unlistenNotes?.()
+  unlistenNotes = await listenHost(TORUS_NOTES_EVENT, event => {
+    const due = readTorusNotes(event.payload)
+    if (!due || due.lease !== lease) return notesPlayed
+    notesPlayed = notesPlayed.then(() => playTorusNotes(due, stage)).catch(e => { settle({notes: {...state.notes, refused: state.notes.refused + 1, refusal: words(e)}}) })
+    return notesPlayed
+  })
+}
+
+/** The Torus's effects as the frame reports them (its hosted reading's `parameters.effects`, effectsLaw.ts EffectsState), or null. */
+function torusEffects(): unknown {
+  const torus = liveTorusState()
+  return torus?.ok ? torus.parameters?.effects ?? null : null
+}
+let unfollowEffects: (() => void) | null = null
+let effectsSent: Promise<void> = Promise.resolve()
+/** The Torus's effects follow into the engine while it sounds there (O-I #849 round 13): each change the frame reports after `sent` is
+ * put on the part after the Torus, in the order made; a refusal stands in `effects`, in the engine's words. */
+function followTorusEffects(sent: unknown): void {
+  unfollowEffects?.()
+  let last = JSON.stringify(sent)
+  unfollowEffects = subscribeLiveTorus(() => {
+    const effects = torusEffects()
+    const now = JSON.stringify(effects)
+    if (effects === null || now === last || !state.reading?.playing) return
+    last = now
+    effectsSent = effectsSent.then(() => op<LiveEngineReading>('live_engine_torus_effects', {effects})
+      .then(reading => settle({reading, effects: null}), e => settle({effects: words(e)})))
+  })
+}
+/** The changes to the Torus's effects sent to the engine so far, settled. */
+export const torusEffectsSettled = (): Promise<void> => effectsSent
 
 /** The Torus handed over to the engine as it plays (O-I #849): the frame's owner hands it over and shuts the frame's own sound of it, and
- * the engine takes it onto the set's first MIDI part with the key each MIDI note strikes. Refused anywhere on the way, the set plays on
+ * the engine takes it onto the set's first MIDI part with the key each MIDI note strikes, when the frame's sound of it stops (round 13). Refused anywhere on the way, the set plays on
  * without it and the refusal stands in `torus`; the frame keeps sounding it. */
 async function handTorus(stage: Stage): Promise<void> {
   const track = torusPartOf(state.kinds)
@@ -154,20 +255,31 @@ async function handTorus(stage: Stage): Promise<void> {
   }
   const window = liveJankoWindow()
   const notes = window?.ok ? noteKeys(window.window) : null
+  // its effects go with it, and follow each change the frame reports
+  const effects = torusEffects()
+  // when the frame's sound of the sample it was handed over at is heard: the engine takes it then, so the part sounds on from where the
+  // frame stops (round 13); none named, at once
+  const heardAtMs = handed.torus_engine.heard_at_ms ?? null
   try {
-    await adopt(op<LiveEngineReading>('live_engine_torus', {lease: handed.torus_engine.lease, track, sha256: handed.torus_engine.sha256, notes}))
-    settle({torus: null})
+    await adopt(op<LiveEngineReading>('live_engine_torus', {lease: handed.torus_engine.lease, track, sha256: handed.torus_engine.sha256, notes, effects, heardAtMs}))
+    settle({torus: null, notes: NO_NOTES, effects: null})
+    followTorusEffects(effects)
   } catch (e) {
     settle({torus: words(e)})
     await stage({command: 'torus-engine', on: false})
+    return
+  }
+  // the part's notes are the owner's: unheard, they are not played, which the Play title says
+  try { await listenTorusNotes(handed.torus_engine.lease, stage) } catch (e) {
+    settle({notes: {...NO_NOTES, refusal: `the host's notes for the Torus's owner cannot be heard here: ${words(e)}`}})
   }
 }
 
 /** The engine's acts, each through its owner op; each answers the engine's reading (Export, what it wrote). */
 export const liveEngine = {
   /** Play the set at `path`: bridge it as the file now stands (unless the engine already plays it), then start the output, and hand the
-   * Torus over to it (handTorus, through `stage`). The set's part kinds come from its owner's reading (`read`, the shell's own by
-   * default). */
+   * Torus over to it (handTorus, through `stage`), then play the notes the host hands its owner. The set's part kinds come from its
+   * owner's reading (`read`, the shell's own by default). */
   async play(path: string, read: (path: string) => Promise<{summary: unknown}> = readSet, stage: Stage = commitLiveStage): Promise<LiveEngineReading> {
     if (state.reading?.path === path && state.reading.playing) return state.reading
     // the set's owner reads it first: a set it cannot read is never bridged, and its refusal is the engine's to show
@@ -182,7 +294,9 @@ export const liveEngine = {
   /** Stop the engine; the frame sounds the Torus again (its `torus-engine` off), and a Play hands it over again. */
   async stop(stage: Stage = commitLiveStage): Promise<LiveEngineReading> {
     const stopped = await adopt(op<LiveEngineReading>('live_engine_stop'))
-    settle({torus: null})
+    unlistenNotes?.(); unlistenNotes = null
+    unfollowEffects?.(); unfollowEffects = null
+    settle({torus: null, effects: null})
     await stage({command: 'torus-engine', on: false})
     return stopped
   },
@@ -190,8 +304,11 @@ export const liveEngine = {
   /** The Torus its owner handed over sounds on the set's part `track`: `lease` is the field's, `sha256` the digest the kernel relayed
    * for the owner's torus-native (the document stays with the kernel); `notes`, the key each MIDI note 0–127 strikes (noteKeys), or null
    * for none. From then on the host follows the owner: each act it lands, and each hand-over again. */
-  torus: (lease: string, track: number, sha256: string, notes: readonly ({row: number; column: number} | null)[] | null = null): Promise<LiveEngineReading> =>
-    adopt(op<LiveEngineReading>('live_engine_torus', {lease, track, sha256, notes})),
+  torus: (lease: string, track: number, sha256: string, notes: readonly ({row: number; column: number} | null)[] | null = null,
+    effects: unknown = null): Promise<LiveEngineReading> =>
+    adopt(op<LiveEngineReading>('live_engine_torus', {lease, track, sha256, notes, effects})),
+  /** The Torus's effects as the frame holds them (effectsLaw.ts EffectsState), on the part following its owner, after the Torus. */
+  torusEffects: (effects: unknown): Promise<LiveEngineReading> => adopt(op<LiveEngineReading>('live_engine_torus_effects', {effects})),
   read: (): Promise<LiveEngineReading> => adopt(op<LiveEngineReading>('live_engine_mixer')),
   /** Export Audio: the samples the engine played since Play, to the `.wav` the person chooses in the host's save dialog (the same act
    * as File › Export Audio…); a cancelled dialog is a refusal in the host's words. No path is named from here. */
@@ -236,9 +353,15 @@ export function engineTransportBindings(setPath: string | null, engine: EngineSt
   const lit = !!reading?.playing && reading.path === setPath
   const unhosted = lit && reading.warnings.length ? ` Not hosted: ${reading.warnings.join('; ')}.` : ''
   const torus = lit && engine.torus ? ` The Torus sounds in the live instrument, not the engine: ${engine.torus}` : ''
+  const notes = lit && engine.notes.refusal ? ` A note of the Torus part was not played: ${engine.notes.refusal}` : ''
+  // the Torus's effects in the engine: what does not sound as the frame's, and why the last change did not follow
+  const said = lit ? (reading.torus_effects?.chain ?? []).filter(e => e.on && e.words).map(e => e.words) : []
+  const effects = said.length ? ` The Torus's effects in the engine: ${said.join(' ')}` : ''
+  const unfollowed = lit ? engine.effects ?? reading.torus_effects?.refusal ?? null : null
+  const effectsRefused = unfollowed ? ` The Torus's effects did not follow into the engine: ${unfollowed}` : ''
   return {play: {press: () => void liveEngine.play(setPath).catch(() => {}), lit,
     title: `${lit ? `Play — ${setName(setPath)} plays in the engine, every part through its chain to the Main track.`
-      : `Play — ${setName(setPath)} plays in the engine as the file stands: every part through its chain to the Main track.`}${unhosted}${torus}${refusal}`}, stop}
+      : `Play — ${setName(setPath)} plays in the engine as the file stands: every part through its chain to the Main track.`}${unhosted}${torus}${notes}${effects}${effectsRefused}${refusal}`}, stop}
 }
 
 /** Live's transport over the engine: its Play and Stop for the open set, as the engine stands. Leaving Live's transport stops the

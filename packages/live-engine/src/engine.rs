@@ -35,7 +35,8 @@
 //! realtime path recorded).
 
 use crate::graph::{
-    Clock, Graph, GraphError, Instrument, TorusAct, TorusStrike, TORUS_ACT_KEYS, TORUS_STRIKE_MODES,
+    Clock, Graph, GraphError, Instrument, RackDevice, TorusAct, TorusStrike, TORUS_ACT_KEYS,
+    TORUS_STRIKE_MODES,
 };
 use crate::ring::{ring, Consumer, Producer};
 use std::sync::atomic::{AtomicPtr, AtomicU64, Ordering};
@@ -362,8 +363,13 @@ struct Shared {
     /// The device's output latency (callback to playback), ns, as the
     /// realtime stream last reported it (0 until a device reports).
     output_latency_ns: AtomicU64,
+    /// The owner's acts for a Torus that never reached one ([`Graph::torus_unplaced`]), as of
+    /// the last block.
+    torus_unplaced: AtomicU64,
     /// An instrument on its way to a part, and the one it replaced on its way back.
-    hands: Hands,
+    hands: Hands<Hand>,
+    /// A chain on its way to a part's rack, and the one it replaced on its way back.
+    racks: Hands<RackHand>,
 }
 
 /// An instrument handed to a MIDI part while the engine plays (O-I #849: the Torus its owner hands
@@ -372,17 +378,53 @@ struct Shared {
 struct Hand {
     track: usize,
     frame: u64,
+    due: Due,
     instrument: Box<dyn Instrument>,
 }
 
-/// One hand at a time: `incoming` from the control side, `retired` back from the audio thread. Each
-/// pointer is a `Box<Hand>` given up by the side that stored it and taken whole by the other.
-struct Hands {
-    incoming: AtomicPtr<Hand>,
-    retired: AtomicPtr<Hand>,
+/// A chain put after a part's instrument while the engine plays (O-I #849 round 13: the Torus's
+/// effects), made and prepared off the audio thread. The audio thread puts it on its part at a
+/// block's first frame ([`Graph::rack`]) and sends this back holding the chain it replaced, so nothing
+/// is dropped there; `taken` says whether the part took it.
+struct RackHand {
+    track: usize,
+    frame: u64,
+    taken: bool,
+    chain: Vec<RackDevice>,
 }
 
-impl Drop for Hands {
+/// When an instrument handed to a part takes it (O-I #849 round 13).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Due {
+    /// At the next block's first frame.
+    Now,
+    /// When the part's Torus reaches this sample of its owner's continuation: the Torus its owner handed
+    /// over again continues from there.
+    AtCursor(u64),
+    /// At this frame of the engine's.
+    AtFrame(u64),
+}
+
+/// The most frames a hand waits for the frame it is due at.
+pub const HAND_HOLD_MAX: u64 = 480_000;
+
+/// One hand at a time: `incoming` from the control side, `retired` back from the audio thread. Each
+/// pointer is a `Box` given up by the side that stored it and taken whole by the other.
+struct Hands<T> {
+    incoming: AtomicPtr<T>,
+    retired: AtomicPtr<T>,
+}
+
+impl<T> Hands<T> {
+    fn new() -> Hands<T> {
+        Hands {
+            incoming: AtomicPtr::new(std::ptr::null_mut()),
+            retired: AtomicPtr::new(std::ptr::null_mut()),
+        }
+    }
+}
+
+impl<T> Drop for Hands<T> {
     fn drop(&mut self) {
         for slot in [&mut self.incoming, &mut self.retired] {
             let p = *slot.get_mut();
@@ -402,6 +444,8 @@ pub struct EngineCore {
     inbox: Consumer<Inbound>,
     heard: Producer<Stamped>,
     shared: Arc<Shared>,
+    /// A hand taken and not yet due, with the frame it is due at ([`Due`]).
+    held: Option<(Box<Hand>, u64)>,
 }
 
 /// The control side's half: the engine's owner operations (see the module
@@ -415,6 +459,8 @@ pub struct EngineHandle {
     sample_rate: u32,
     /// Every hand the engine took: (frame, part), in the order taken.
     installs: Vec<(u64, usize)>,
+    /// Every chain the engine put on a part's rack: (frame, part), in the order put.
+    racks: Vec<(u64, usize)>,
 }
 
 /// Why the engine refused an event.
@@ -473,10 +519,9 @@ pub fn engine(mut graph: Graph) -> Result<(EngineCore, EngineHandle), GraphError
         waits: Default::default(),
         longest_wait_ns: AtomicU64::new(0),
         output_latency_ns: AtomicU64::new(0),
-        hands: Hands {
-            incoming: AtomicPtr::new(std::ptr::null_mut()),
-            retired: AtomicPtr::new(std::ptr::null_mut()),
-        },
+        torus_unplaced: AtomicU64::new(0),
+        hands: Hands::new(),
+        racks: Hands::new(),
     });
     let clock = Clock::start(graph.sample_rate, graph.tempo_bpm);
     let sample_rate = graph.sample_rate;
@@ -486,6 +531,7 @@ pub fn engine(mut graph: Graph) -> Result<(EngineCore, EngineHandle), GraphError
         inbox,
         heard: heard_tx,
         shared: Arc::clone(&shared),
+        held: None,
     };
     let handle = EngineHandle {
         outbox,
@@ -495,6 +541,7 @@ pub fn engine(mut graph: Graph) -> Result<(EngineCore, EngineHandle), GraphError
         mixer,
         sample_rate,
         installs: Vec::new(),
+        racks: Vec::new(),
     };
     Ok((core, handle))
 }
@@ -509,6 +556,7 @@ impl EngineCore {
         let start = self.shared.position.load(Ordering::Relaxed);
         self.clock.sample = start;
         self.take_hand(start);
+        self.take_rack(start);
         let now_ns = self.shared.epoch.elapsed().as_nanos() as u64;
         while let Some(inbound) = self.inbox.pop() {
             self.graph.apply(&inbound.event, &self.clock);
@@ -535,6 +583,15 @@ impl EngineCore {
         let mut frame_index = start;
         for slot in out.as_chunks_mut::<2>().0 {
             self.clock.sample = frame_index;
+            if self
+                .held
+                .as_ref()
+                .is_some_and(|(_, due)| *due == frame_index)
+            {
+                if let Some((hand, _)) = self.held.take() {
+                    self.swap_hand(hand, frame_index);
+                }
+            }
             let f = self.graph.mix_frame(&self.clock);
             slot[0] = f[0];
             slot[1] = f[1];
@@ -543,16 +600,19 @@ impl EngineCore {
         self.shared
             .block_frames
             .store(frame_index - start, Ordering::Relaxed);
+        self.shared
+            .torus_unplaced
+            .store(self.graph.torus_unplaced(), Ordering::Relaxed);
         self.shared.position.store(frame_index, Ordering::Release);
     }
 
     /// Take an instrument handed to a part ([`EngineHandle::install`]) at frame `start`, before
-    /// the block's events: swap it onto its part ([`Graph::hand`]: a Torus takes the owner's acts
-    /// that waited for it) and send the hand back with the instrument it replaced. While the last
-    /// hand has not been taken back, the next waits. No allocation.
+    /// the block's events, and swap it onto its part at the frame it is due at ([`Due`]): at once, or
+    /// held until a later frame of this block or one after. While the last hand has not been taken
+    /// back, or one is held, the next waits. No allocation.
     fn take_hand(&mut self, start: u64) {
         let hands = &self.shared.hands;
-        if !hands.retired.load(Ordering::Acquire).is_null() {
+        if self.held.is_some() || !hands.retired.load(Ordering::Acquire).is_null() {
             return;
         }
         let p = hands.incoming.swap(std::ptr::null_mut(), Ordering::AcqRel);
@@ -560,12 +620,55 @@ impl EngineCore {
             return;
         }
         // SAFETY: the control side gave up `p` (a `Box::into_raw`) when it stored it, and
-        // this thread alone takes `incoming`; it holds `p` until it stores it in `retired`.
-        let hand = unsafe { &mut *p };
+        // this thread alone takes `incoming`; it holds the box until it gives it up to `retired`.
+        let hand = unsafe { Box::from_raw(p) };
+        let wait = match hand.due {
+            Due::Now => 0,
+            Due::AtFrame(frame) => frame.saturating_sub(start),
+            // the frames until the part's Torus reaches the sample, one a frame
+            Due::AtCursor(at) => self
+                .graph
+                .torus_cursor(hand.track)
+                .map_or(0, |now| at.saturating_sub(now)),
+        };
+        if wait == 0 || wait > HAND_HOLD_MAX {
+            self.swap_hand(hand, start);
+        } else {
+            self.held = Some((hand, start + wait));
+        }
+    }
+
+    /// Swap a taken hand onto its part at `frame` ([`Graph::hand`]: a Torus takes the owner's acts
+    /// that waited for it) and send it back with the instrument it replaced. No allocation.
+    fn swap_hand(&mut self, mut hand: Box<Hand>, frame: u64) {
         self.graph
             .hand(hand.track, &mut hand.instrument, &self.clock);
+        hand.frame = frame;
+        self.shared
+            .hands
+            .retired
+            .store(Box::into_raw(hand), Ordering::Release);
+    }
+
+    /// Take a chain put on a part's rack ([`EngineHandle::install_rack`]) at frame `start`, after the
+    /// block's instrument and before its events: put it on its part ([`Graph::rack`]) and send the hand
+    /// back with the chain it replaced. While the last has not been taken back, the next waits. No
+    /// allocation.
+    fn take_rack(&mut self, start: u64) {
+        let racks = &self.shared.racks;
+        if !racks.retired.load(Ordering::Acquire).is_null() {
+            return;
+        }
+        let p = racks.incoming.swap(std::ptr::null_mut(), Ordering::AcqRel);
+        if p.is_null() {
+            return;
+        }
+        // SAFETY: as for `take_hand`: the control side gave up `p` when it stored it, and this
+        // thread alone takes `incoming`; it holds `p` until it stores it in `retired`.
+        let hand = unsafe { &mut *p };
+        hand.taken = self.graph.rack(hand.track, &mut hand.chain);
         hand.frame = start;
-        hands.retired.store(p, Ordering::Release);
+        racks.retired.store(p, Ordering::Release);
     }
 
     /// The realtime stream's report of the device's output latency.
@@ -607,6 +710,18 @@ impl EngineHandle {
             // alone takes `retired`. Dropping it drops the instrument the hand replaced, here.
             let hand = unsafe { Box::from_raw(p) };
             self.installs.push((hand.frame, hand.track));
+        }
+        let p = self
+            .shared
+            .racks
+            .retired
+            .swap(std::ptr::null_mut(), Ordering::AcqRel);
+        if !p.is_null() {
+            // SAFETY: as above: dropping it drops the chain it replaced, here.
+            let hand = unsafe { Box::from_raw(p) };
+            if hand.taken {
+                self.racks.push((hand.frame, hand.track));
+            }
         }
         let mut n = 0;
         while let Some(stamped) = self.heard.pop() {
@@ -652,6 +767,7 @@ impl EngineHandle {
         let hand = Box::into_raw(Box::new(Hand {
             track,
             frame: 0,
+            due: Due::Now,
             instrument,
         }));
         hands.incoming.store(hand, Ordering::Release);
@@ -667,7 +783,23 @@ impl EngineHandle {
     pub fn install_latest(
         &mut self,
         track: usize,
+        instrument: Box<dyn Instrument>,
+    ) -> Result<bool, Refusal> {
+        self.install_latest_due(track, instrument, Due::Now)
+    }
+
+    /// Hand `instrument` to MIDI part `track` as [`EngineHandle::install_latest`] does, to take the part
+    /// when it is `due` (O-I #849 round 13): the Torus its owner handed over again continues the owner's
+    /// continuation from the sample it was handed over at, so it takes the part when the part's Torus
+    /// reaches that sample ([`Due::AtCursor`]), and the part sounds the owner's continuation without a
+    /// jump. A hand due at a sample the part has passed, at one it stands at no sample of (an instrument
+    /// that is not a Torus), or more than [`HAND_HOLD_MAX`] frames on takes the part at the next block's
+    /// first frame. Until it does, the owner's acts after its hand-over wait for it.
+    pub fn install_latest_due(
+        &mut self,
+        track: usize,
         mut instrument: Box<dyn Instrument>,
+        due: Due,
     ) -> Result<bool, Refusal> {
         let part = self.mixer.tracks.get(track).ok_or_else(|| {
             Refusal::Invalid(format!(
@@ -686,6 +818,7 @@ impl EngineHandle {
         let hand = Box::into_raw(Box::new(Hand {
             track,
             frame: 0,
+            due,
             instrument,
         }));
         let was = self.shared.hands.incoming.swap(hand, Ordering::AcqRel);
@@ -701,8 +834,61 @@ impl EngineHandle {
         Ok(superseded)
     }
 
+    /// Put `chain` after the instrument of MIDI part `track` while the engine plays (O-I #849 round
+    /// 13: the Torus's effects on its rack's chain): prepared here at the engine's rate, it takes the
+    /// part at the next block's first frame, each device made from the same as one standing there
+    /// keeping that one's state ([`Graph::rack`]), and the chain it replaced comes back to be dropped
+    /// on this side ([`EngineHandle::collect`]). A chain still on its way gives way to this one, and is
+    /// never put there; answers whether there was one. Refused, in words, for a part that is not there
+    /// or plays no notes.
+    pub fn install_rack(
+        &mut self,
+        track: usize,
+        mut chain: Vec<RackDevice>,
+    ) -> Result<bool, Refusal> {
+        let part = self.mixer.tracks.get(track).ok_or_else(|| {
+            Refusal::Invalid(format!(
+                "the set has no part {track} (it has {})",
+                self.mixer.tracks.len()
+            ))
+        })?;
+        if !part.midi {
+            return Err(Refusal::Invalid(format!(
+                "'{}' is an audio part: it holds no instrument, so no chain stands after one",
+                part.name
+            )));
+        }
+        // a part's instrument and its chain are stereo (Track::midi, bridge_set)
+        for d in chain.iter_mut() {
+            d.device.prepare(self.sample_rate, 2);
+        }
+        self.collect();
+        let hand = Box::into_raw(Box::new(RackHand {
+            track,
+            frame: 0,
+            taken: false,
+            chain,
+        }));
+        let was = self.shared.racks.incoming.swap(hand, Ordering::AcqRel);
+        let superseded = !was.is_null();
+        if superseded {
+            // SAFETY: as in `install_latest`: the audio thread never took `was`, so this side owns it
+            // again; it is freed once, here, off the audio thread.
+            drop(unsafe { Box::from_raw(was) });
+        }
+        self.collect();
+        Ok(superseded)
+    }
+
+    /// Every chain the engine put on a part's rack from [`EngineHandle::install_rack`], as (frame,
+    /// part), in the order put (call [`EngineHandle::collect`] first to read the latest): what Export
+    /// Audio puts there again ([`Graph::render_performance_racked`]).
+    pub fn racks(&self) -> &[(u64, usize)] {
+        &self.racks
+    }
+
     /// Every instrument the engine took from [`EngineHandle::install`], as (frame, part), in the
-    /// order taken (call [`EngineHandle::collect`] first to read the latest): what Export Audio
+    /// order taken, each at the frame it took its part (call [`EngineHandle::collect`] first to read the latest): what Export Audio
     /// hands again ([`Graph::render_performance_with`]).
     pub fn installs(&self) -> &[(u64, usize)] {
         &self.installs
@@ -712,6 +898,12 @@ impl EngineHandle {
     /// first to read the latest).
     pub fn mixer(&self) -> &MixerState {
         &self.mixer
+    }
+
+    /// The owner's acts for a Torus that never reached one: no Torus on their part took them,
+    /// or no room was left to wait ([`Graph::torus_unplaced`]), as of the last block.
+    pub fn torus_unplaced(&self) -> u64 {
+        self.shared.torus_unplaced.load(Ordering::Relaxed)
     }
 
     /// Frames the engine has mixed.

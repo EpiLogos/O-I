@@ -16,6 +16,7 @@
 //! mapping (that is the D6 backlog item), so none is invented here.
 
 use crate::graph::{amplitude_to_db, db_to_amplitude, Clock, Device};
+use live_dynamics::compressor::{CompressorModel, CompressorParams};
 use live_dynamics::glue::{self, GlueParams};
 use live_dynamics::reverb::{self, ReverbParams};
 
@@ -331,11 +332,14 @@ impl Device for EchoDevice {
 /// - the model is MONO (L/R decorrelation — Spin, Chorus — is folded
 ///   into fitted levels, not reproduced; dossier residual): the same IR
 ///   runs on every channel, so stereo in gives correlated stereo out.
-/// - convolution is a per-sample streaming scatter, O(IR length) per
-///   NONZERO input sample (skipping a zero input is bit-exact). Exact
-///   but dense-input-heavy; FFT-partitioned overlap-add is recorded as
-///   backlog in the crate README. The gates render impulses, where it
-///   is O(IR length) in total.
+/// - [`ReverbDevice::new`] convolves by a per-sample streaming scatter,
+///   O(IR length) per NONZERO input sample (skipping a zero input is
+///   bit-exact). Exact but dense-input-heavy: the gates render impulses,
+///   where it is O(IR length) in total. [`ReverbDevice::partitioned`]
+///   convolves the same IR by uniform partitions ([`Partitioned`]),
+///   O(block + IR/block) per sample, so a part that sounds every sample
+///   (the Torus) is convolved in real time; it equals the scatter to
+///   float rounding (`partitioned_reverb_equals_the_scatter_on_a_dense_input`).
 #[derive(Debug, Clone)]
 pub struct ReverbDevice {
     /// Document parameter as stored (DecayTime ms; only this moves in
@@ -348,6 +352,9 @@ pub struct ReverbDevice {
     tails: Vec<Vec<f32>>,
     pos: usize,
     init_sr: Option<u32>,
+    /// Convolve by partitions rather than the scatter (the realtime path).
+    by_partitions: bool,
+    conv: Option<Partitioned>,
 }
 
 impl ReverbDevice {
@@ -359,17 +366,286 @@ impl ReverbDevice {
             tails: Vec::new(),
             pos: 0,
             init_sr: None,
+            by_partitions: false,
+            conv: None,
+        }
+    }
+
+    /// The same device convolving by uniform partitions ([`Partitioned`]): the realtime path for a
+    /// part that sounds every sample.
+    pub fn partitioned(params: ReverbParams, mix: f64) -> ReverbDevice {
+        ReverbDevice {
+            by_partitions: true,
+            ..ReverbDevice::new(params, mix)
         }
     }
 
     fn ensure_init(&mut self, sample_rate: u32, channels: usize) {
-        if self.init_sr == Some(sample_rate) && self.tails.len() == channels {
+        if self.init_sr == Some(sample_rate)
+            && (self.tails.len() == channels
+                || self
+                    .conv
+                    .as_ref()
+                    .is_some_and(|c| c.channels.len() == channels))
+        {
             return;
         }
         self.ir = reverb::impulse_response(&self.params, sample_rate);
-        self.tails = vec![vec![0.0; self.ir.len()]; channels];
+        if self.by_partitions {
+            self.conv = Some(Partitioned::new(&self.ir, PARTITION, channels));
+            self.tails = Vec::new();
+        } else {
+            self.tails = vec![vec![0.0; self.ir.len()]; channels];
+        }
         self.pos = 0;
         self.init_sr = Some(sample_rate);
+    }
+}
+
+/// The block of the partitioned convolution: its first taps run directly (this many MACs a sample),
+/// the rest a block at a time (two FFTs of twice this, and one spectral multiply-add a partition).
+pub const PARTITION: usize = 512;
+
+/// A radix-2 complex FFT of one size, its twiddles and bit-reversal made once (off the audio
+/// thread); [`Fft::run`] transforms in place and allocates nothing.
+#[derive(Debug, Clone)]
+struct Fft {
+    n: usize,
+    cos: Vec<f32>,
+    sin: Vec<f32>,
+    rev: Vec<usize>,
+}
+
+impl Fft {
+    fn new(n: usize) -> Fft {
+        assert!(n.is_power_of_two() && n >= 2);
+        let bits = n.trailing_zeros();
+        let (cos, sin) = (0..n / 2)
+            .map(|k| {
+                let w = -2.0 * std::f64::consts::PI * k as f64 / n as f64;
+                (w.cos() as f32, w.sin() as f32)
+            })
+            .unzip();
+        let rev = (0..n)
+            .map(|i| i.reverse_bits() >> (usize::BITS - bits))
+            .collect();
+        Fft { n, cos, sin, rev }
+    }
+
+    /// Forward (`inverse` false) or inverse, unscaled.
+    fn run(&self, re: &mut [f32], im: &mut [f32], inverse: bool) {
+        let n = self.n;
+        for i in 0..n {
+            let j = self.rev[i];
+            if j > i {
+                re.swap(i, j);
+                im.swap(i, j);
+            }
+        }
+        let sign = if inverse { -1.0 } else { 1.0 };
+        let mut len = 2;
+        while len <= n {
+            let step = n / len;
+            for start in (0..n).step_by(len) {
+                for k in 0..len / 2 {
+                    let (c, s) = (self.cos[k * step], sign * self.sin[k * step]);
+                    let (a, b) = (start + k, start + k + len / 2);
+                    let (br, bi) = (re[b] * c - im[b] * s, re[b] * s + im[b] * c);
+                    re[b] = re[a] - br;
+                    im[b] = im[a] - bi;
+                    re[a] += br;
+                    im[a] += bi;
+                }
+            }
+            len *= 2;
+        }
+    }
+}
+
+/// Uniformly partitioned convolution of every channel with one impulse response, with no latency:
+/// the response's first `b` taps directly, each later block of `b` taps by overlap-save in the
+/// frequency domain over a delay line of the input's spectra (a 2b-point FFT of each completed input
+/// block with the one before it). When an input block completes, the part of the next block's output
+/// that the later partitions make is computed whole; a sample's output is then its direct taps plus
+/// that. O(b + IR/b) per sample; built off the audio thread, it allocates nothing in `step`.
+#[derive(Debug, Clone)]
+struct Partitioned {
+    b: usize,
+    head: Vec<f32>,
+    /// The spectra of the later partitions, bins 0..=b each, re then im.
+    parts_re: Vec<f32>,
+    parts_im: Vec<f32>,
+    parts: usize,
+    fft: Fft,
+    channels: Vec<PartChannel>,
+}
+
+#[derive(Debug, Clone)]
+struct PartChannel {
+    prev: Vec<f32>,
+    cur: Vec<f32>,
+    /// The input spectra, newest at `newest`, bins 0..=b each.
+    fdl_re: Vec<f32>,
+    fdl_im: Vec<f32>,
+    newest: usize,
+    /// What the later partitions give the current block.
+    tail: Vec<f32>,
+    n: usize,
+    re: Vec<f32>,
+    im: Vec<f32>,
+}
+
+impl Partitioned {
+    fn new(ir: &[f32], b: usize, channels: usize) -> Partitioned {
+        let fft = Fft::new(2 * b);
+        let bins = b + 1;
+        let mut head = ir[..ir.len().min(b)].to_vec();
+        head.resize(b, 0.0);
+        let parts = ir.len().saturating_sub(b).div_ceil(b);
+        let (mut parts_re, mut parts_im) = (vec![0f32; parts * bins], vec![0f32; parts * bins]);
+        let (mut re, mut im) = (vec![0f32; 2 * b], vec![0f32; 2 * b]);
+        for p in 0..parts {
+            re.fill(0.0);
+            im.fill(0.0);
+            let from = (p + 1) * b;
+            let taps = &ir[from..ir.len().min(from + b)];
+            re[..taps.len()].copy_from_slice(taps);
+            fft.run(&mut re, &mut im, false);
+            parts_re[p * bins..(p + 1) * bins].copy_from_slice(&re[..bins]);
+            parts_im[p * bins..(p + 1) * bins].copy_from_slice(&im[..bins]);
+        }
+        let channel = PartChannel {
+            prev: vec![0.0; b],
+            cur: vec![0.0; b],
+            fdl_re: vec![0.0; parts.max(1) * bins],
+            fdl_im: vec![0.0; parts.max(1) * bins],
+            newest: 0,
+            tail: vec![0.0; b],
+            n: 0,
+            re: vec![0.0; 2 * b],
+            im: vec![0.0; 2 * b],
+        };
+        Partitioned {
+            b,
+            head,
+            parts_re,
+            parts_im,
+            parts,
+            fft,
+            channels: vec![channel; channels],
+        }
+    }
+
+    /// One input sample of channel `ch` in, its convolved sample out.
+    fn step(&mut self, ch: usize, x: f32) -> f32 {
+        let b = self.b;
+        let c = &mut self.channels[ch];
+        let n = c.n;
+        c.cur[n] = x;
+        let mut y = c.tail[n];
+        for (k, h) in self.head[..=n].iter().enumerate() {
+            y += h * c.cur[n - k];
+        }
+        for (k, h) in self.head.iter().enumerate().skip(n + 1) {
+            y += h * c.prev[b + n - k];
+        }
+        c.n += 1;
+        if c.n == b {
+            c.n = 0;
+            if self.parts > 0 {
+                let bins = b + 1;
+                c.re[..b].copy_from_slice(&c.prev);
+                c.re[b..].copy_from_slice(&c.cur);
+                c.im.fill(0.0);
+                self.fft.run(&mut c.re, &mut c.im, false);
+                c.newest = (c.newest + 1) % self.parts;
+                let at = c.newest * bins;
+                c.fdl_re[at..at + bins].copy_from_slice(&c.re[..bins]);
+                c.fdl_im[at..at + bins].copy_from_slice(&c.im[..bins]);
+                // the next block's share of the later partitions: partition p+1 meets the input
+                // spectrum p blocks before the newest
+                c.re.fill(0.0);
+                c.im.fill(0.0);
+                for p in 0..self.parts {
+                    let x_at = ((c.newest + self.parts - p) % self.parts) * bins;
+                    let h_at = p * bins;
+                    for k in 0..bins {
+                        let (xr, xi) = (c.fdl_re[x_at + k], c.fdl_im[x_at + k]);
+                        let (hr, hi) = (self.parts_re[h_at + k], self.parts_im[h_at + k]);
+                        c.re[k] += xr * hr - xi * hi;
+                        c.im[k] += xr * hi + xi * hr;
+                    }
+                }
+                // the rest of the spectrum by conjugate symmetry (the response and input are real)
+                for k in 1..b {
+                    c.re[2 * b - k] = c.re[k];
+                    c.im[2 * b - k] = -c.im[k];
+                }
+                self.fft.run(&mut c.re, &mut c.im, true);
+                let scale = 1.0 / (2 * b) as f32;
+                for (t, v) in c.tail.iter_mut().zip(&c.re[b..]) {
+                    *t = v * scale;
+                }
+            }
+            std::mem::swap(&mut c.prev, &mut c.cur);
+        }
+        y
+    }
+}
+
+/// Compressor (Live's Compressor2) — host of `live_dynamics::compressor`'s per-sample model at the
+/// corpus's stored values ([`live_dynamics::compressor::DEFAULTS`], the factory preset the surface
+/// was read from, as the bridge's other devices stand at theirs). Its model awaits the golden-render
+/// check (compressor.rs: no parity with Live's is claimed). Stereo in and out; a mono part's sample is
+/// fed to both sides and the left taken back.
+pub struct CompressorDevice {
+    pub params: CompressorParams,
+    model: Option<CompressorModel>,
+}
+
+impl CompressorDevice {
+    pub fn new(params: CompressorParams) -> CompressorDevice {
+        CompressorDevice {
+            params,
+            model: None,
+        }
+    }
+}
+
+impl std::fmt::Debug for CompressorDevice {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("CompressorDevice")
+            .field("params", &self.params)
+            .field("sample_rate", &self.model.as_ref().map(|m| m.sample_rate))
+            .finish()
+    }
+}
+
+impl Device for CompressorDevice {
+    fn name(&self) -> &str {
+        "Compressor2"
+    }
+
+    fn prepare(&mut self, sample_rate: u32, _channels: usize) {
+        if self.model.as_ref().map(|m| m.sample_rate) != Some(sample_rate) {
+            self.model = Some(CompressorModel::new(self.params, sample_rate));
+        }
+    }
+
+    fn process(&mut self, frame_io: &mut [f32], clock: &Clock) {
+        self.prepare(clock.sample_rate, frame_io.len());
+        let Some(model) = self.model.as_mut() else {
+            return;
+        };
+        let (l, r) = match frame_io.len() {
+            1 => (frame_io[0], frame_io[0]),
+            _ => (frame_io[0], frame_io[1]),
+        };
+        let (l, r) = model.process(l, r);
+        frame_io[0] = l;
+        if frame_io.len() > 1 {
+            frame_io[1] = r;
+        }
     }
 }
 
@@ -386,6 +662,13 @@ impl Device for ReverbDevice {
         self.ensure_init(clock.sample_rate, frame_io.len());
         let m = self.mix.clamp(0.0, 1.0) as f32;
         let dry = 1.0 - m;
+        if let Some(conv) = self.conv.as_mut() {
+            for (ch, v) in frame_io.iter_mut().enumerate() {
+                let x = *v;
+                *v = x * dry + conv.step(ch, x) * m;
+            }
+            return;
+        }
         let len = self.ir.len();
         let pos = self.pos; // one clock position per frame — shared by all channels
         for (ch, v) in frame_io.iter_mut().enumerate() {
@@ -762,6 +1045,56 @@ mod tests {
         g.tracks.push(t);
         let out = g.render(sr);
         assert!(out.iter().all(|v| *v == 0.25f32));
+    }
+
+    /// The partitioned convolution is the scatter's to float rounding, on a part that sounds every
+    /// sample (seeded noise), in stereo, over an input that ends mid-block, and on a response shorter
+    /// than one block (no later partitions).
+    #[test]
+    fn partitioned_reverb_equals_the_scatter_on_a_dense_input() {
+        let sr = 8_000u32;
+        let mut seed = 0x9E37_79B9_7F4A_7C15u64;
+        let mut noise = || {
+            seed ^= seed << 13;
+            seed ^= seed >> 7;
+            seed ^= seed << 17;
+            (seed >> 40) as f32 / (1u64 << 23) as f32 - 1.0
+        };
+        let frames = 3 * super::PARTITION + 77;
+        let input: Vec<f32> = (0..frames * 2).map(|_| noise() * 0.5).collect();
+        let render = |d: ReverbDevice| {
+            let mut g = crate::graph::Graph::new(sr, 120.0);
+            let mut t = Track::new("T", 2);
+            t.source = input.clone();
+            t.devices.push(Box::new(d));
+            g.tracks.push(t);
+            g.length_frames = Some(frames as u64 + 4 * super::PARTITION as u64);
+            g.render(sr)
+        };
+        let params = || live_dynamics::reverb::ReverbParams { decay_ms: 100.0 };
+        let exact = render(ReverbDevice::new(params(), 0.7));
+        let parts = render(ReverbDevice::partitioned(params(), 0.7));
+        assert!(
+            reverb::impulse_response(&params(), sr).len() > 4 * super::PARTITION,
+            "the response spans later partitions"
+        );
+        let peak = exact.iter().fold(0f32, |m, v| m.max(v.abs()));
+        let worst = exact
+            .iter()
+            .zip(&parts)
+            .fold(0f32, |m, (a, b)| m.max((a - b).abs()));
+        assert!(
+            peak > 0.1 && worst < peak * 1e-5,
+            "worst {worst} of peak {peak}"
+        );
+        // a response inside one block: the head alone
+        let head = super::Partitioned::new(&[0.5, 0.25, -0.125], super::PARTITION, 1);
+        let mut head = head;
+        let out: Vec<f32> = [1.0, 0.0, 0.0, 2.0, 0.0]
+            .iter()
+            .map(|x| head.step(0, *x))
+            .collect();
+        assert_eq!(out, vec![0.5, 0.25, -0.125, 1.0, 0.5]);
     }
 
     #[test]

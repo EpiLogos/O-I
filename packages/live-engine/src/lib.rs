@@ -36,19 +36,23 @@ pub mod k8;
 #[cfg(feature = "realtime")]
 pub mod realtime;
 
-pub use bridge::{bridge, BridgeResult, BridgeWarning};
-pub use devices::{BypassDevice, EchoDevice, EchoParams, GainDevice, GlueDevice, ReverbDevice};
+pub use bridge::{bridge, rack_device, BridgeResult, BridgeWarning};
+pub use devices::{
+    BypassDevice, CompressorDevice, EchoDevice, EchoParams, GainDevice, GlueDevice, ReverbDevice,
+};
 pub use engine::{
-    engine, EngineCore, EngineEvent, EngineHandle, MixerState, Part, Performance, Refusal, Stamped,
+    engine, Due, EngineCore, EngineEvent, EngineHandle, MixerState, Part, Performance, Refusal,
+    Stamped, HAND_HOLD_MAX,
 };
 pub use graph::{
-    Clock, Device, Graph, GraphError, Instrument, MasterTrack, Note, ReturnTrack, TorusAct,
-    TorusStrike, Track, MAX_RETURNS, TORUS_ACT_KEYS, TORUS_STRIKE_MODES, TORUS_WAITING,
+    ClipEdge, Clock, Device, Graph, GraphError, Instrument, MasterTrack, Note, RackDevice,
+    ReturnTrack, TorusAct, TorusStrike, Track, MAX_RETURNS, TORUS_ACT_KEYS, TORUS_STRIKE_MODES,
+    TORUS_WAITING,
 };
 pub use instruments::{OperatorInstrument, SilentInstrument};
 
 #[cfg(feature = "k8")]
-pub use k8::{K8Continuation, K8Field, K8Input, K8Instrument, K8KeyLaw};
+pub use k8::{K8Continuation, K8Counts, K8Field, K8Input, K8Instrument, K8KeyLaw};
 
 #[cfg(feature = "realtime")]
 pub use realtime::{EnginePlayer, Player, RealtimeError};
