@@ -250,6 +250,8 @@ export type InstrumentEdit =
   | {kind: 'damping'; q_factor: number}
   | {kind: 'torus'; edit: TorusSettingsEdit}
   | {kind: 'follow-scale'}
+  /** Receiver On or Off (DLW manual §21.2 View; QL-MEF `torus-receiver`, O-I 856): the camera is the place the Torus is heard from, or the world. */
+  | {kind: 'receiver'; on: boolean}
   | {kind: 'effect'; effect: PresentationEffect; key: string; value: EffectValue}
   | {kind: 'effect-chain'; chain: PresentationEffect[]};
 /** A closed, validated instrument edit, or null. Every operand is exact: a determinant outside the owner's range is refused here. */
@@ -274,6 +276,7 @@ export function readInstrumentEdit(raw: unknown): InstrumentEdit | null {
     case 'damping': return closed(raw, ['kind', 'q_factor']) && typeof raw.q_factor === 'number' && Number.isFinite(raw.q_factor) && raw.q_factor >= STAGE_INSTRUMENT_Q.min && raw.q_factor <= STAGE_INSTRUMENT_Q.max ? {kind: 'damping', q_factor: raw.q_factor} : null;
     case 'torus': { const edit = closed(raw, ['kind', 'edit']) ? readTorusSettingsEdit(raw.edit) : null; return edit ? {kind: 'torus', edit} : null; }
     case 'follow-scale': return closed(raw, ['kind']) ? {kind: 'follow-scale'} : null;
+    case 'receiver': return closed(raw, ['kind', 'on']) && typeof raw.on === 'boolean' ? {kind: 'receiver', on: raw.on} : null;
     case 'effect-chain': return closed(raw, ['kind', 'chain']) && effectChainRefusal(raw.chain) === null ? {kind: 'effect-chain', chain: [...(raw.chain as PresentationEffect[])]} : null;
     case 'effect': { const operands = closed(raw, ['kind', 'effect', 'key', 'value']) ? readEffectOperands(raw) : null; return operands ? {kind: 'effect', ...operands} : null; }
   }

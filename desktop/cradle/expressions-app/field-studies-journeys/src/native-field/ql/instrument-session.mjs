@@ -39,9 +39,14 @@ const STRIKE_AT_MAX_METRES = 1.0;
 // as it rings with its form, forces, comma and seeds (ql.torus-checkpoint/v1):
 // a read too, and so is torus-render: a take rendered offline on a second
 // owner of the same scene (ql.torus-render/v1), this owner neither moving nor
-// sounding.
+// sounding. torus-receiver is where the Torus is heard from (O-I 856,
+// ql.torus-receiver/v1): a receiving setting, the body, its clock and its
+// generation standing, and never journaled: the listener is not the performance.
 const READ_OPERATIONS = ['read', 'inspect', 'influence', 'personal', 'receive-personal', 'stage-state',
-  'score-resolve', 'score-state', 'torus-state', 'torus-checkpoint', 'torus-render'];
+  'score-resolve', 'score-state', 'torus-state', 'torus-checkpoint', 'torus-render', 'torus-receiver'];
+const TORUS_RECEIVER = 'ql.torus-receiver/v1';
+// The owner's own bound on a receiver's place (ql-mef scene_field.rs TORUS_RECEIVER_METRES_MAX).
+const TORUS_RECEIVER_METRES_MAX = 1e6;
 const SCORE_OPERATIONS = ['score-resolve', 'score-state'];
 // The stage's acts on the one owner (ql-mef continuous/host.rs stage_operation).
 // stage-evaluate runs an invoked procedure's plan. retire releases a procedure's
@@ -252,7 +257,7 @@ export class InstrumentSession {
       return { frame, sources: reply.sources, influence: reply.influence, personal: reply.personal, stage: reply.stage,
         score: reply.score, current: reply.current, resolved_event_ref: reply.resolved_event_ref,
         torus: reply.torus, torus_play: reply.torus_play, strike_at: reply.strike_at, torus_checkpoint: reply.torus_checkpoint,
-        torus_render: reply.torus_render, torus_set_landed: reply.torus_set_landed };
+        torus_render: reply.torus_render, torus_set_landed: reply.torus_set_landed, torus_receiver: reply.torus_receiver };
     } catch (error) {
       this.#unknown(String(error)); throw error;
     } finally { clearTimeout(timer); }
@@ -596,6 +601,24 @@ export class InstrumentSession {
   /** Release keys from the count of notes; the body rings on, so no native state moves. */
   async torusRelease(keys) {
     return this.operate({ operation: 'torus-release', keys: this.#keys(keys) });
+  }
+
+  /** Where the Torus is heard from (`ql.torus-receiver/v1`, O-I 856): `place`, [x, y, z] metres in the frame the
+   * targets are drawn in, is the listener's own context; `null` is the world's, every voice by the declared gain.
+   * A receiving setting: the body, its clock and its generation stand, there is nothing to present, and it is
+   * never journaled, so a take and its render are the world's. The answer says the context and the gain each
+   * voice is heard by, never the place. */
+  async torusReceiver(place) {
+    need(place === null || Array.isArray(place) && place.length === 3 && place.every(v => typeof v === 'number' &&
+      Number.isFinite(v) && Math.abs(v) <= TORUS_RECEIVER_METRES_MAX),
+    `a receiver stands at three finite metres within ${TORUS_RECEIVER_METRES_MAX} of the scene's origin, or is null for the world's context`);
+    need(!this.#busy && !this.#held, 'the receiver requires an idle admitted owner'); this.#busy = true;
+    try {
+      const reply = await this.#exchange({ operation: 'torus-receiver', receiver: place === null ? null : { at_metres: [place[0], place[1], place[2]] } });
+      need(!reply.refused, String(reply.error));
+      need(reply.torus_receiver?.schema === TORUS_RECEIVER, 'the owner answered with no receiver reading');
+      return structuredClone(reply.torus_receiver);
+    } finally { this.#busy = false; }
   }
 
   /** A Nara-constituted scene owner's reception: `input` (seven supplied centre

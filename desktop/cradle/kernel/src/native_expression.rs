@@ -1288,7 +1288,7 @@ impl Manager {
 /// performance acts on the scene owner, relayed the same way, as are the Torus
 /// kept, set again and a take rendered offline on a second owner of the scene
 /// (torus-checkpoint, torus-restore, torus-render; O-I 855).
-const EXCHANGE_OPERATIONS: [&str; 25] = [
+const EXCHANGE_OPERATIONS: [&str; 26] = [
     "read",
     "inspect",
     "advance",
@@ -1314,6 +1314,8 @@ const EXCHANGE_OPERATIONS: [&str; 25] = [
     "torus-checkpoint",
     "torus-restore",
     "torus-render",
+    // Where the Torus is heard from (QL-MEF `torus-receiver`, O-I 856): a receiving setting of the owner.
+    "torus-receiver",
 ];
 
 fn exchange_admits(request: &Value) -> bool {
@@ -3118,6 +3120,7 @@ for line in sys.stdin: time.sleep(60)
             "score-resolv",
             "torus-checkpoints",
             "torus_render",
+            "torus_receiver",
         ] {
             assert!(
                 !exchange_admits(&json!({"command":{"operation":op}})),

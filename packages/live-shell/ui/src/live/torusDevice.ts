@@ -188,7 +188,6 @@ export const TORUS_ABSENT: Readonly<Record<string, string>> = {
   body: 'Only the torus rings: no owner op takes a form of the Expression as the body yet (QL\'s scene field composes the torus alone).',
   pan: `No pan: ${NO_FIELD_PARAMETER}.`,
   view: 'Surface, wire or both is a way of drawing the pane: no owner keeps it.',
-  receiver: 'No owner takes the camera as the place where the torus is heard.',
   meter: 'The owner reports no level meter: its audio receipt carries the presentation gain and its block counts, not a level.',
   sounding: 'No key is lit from the owner here: the keyboard strikes each key through QL\'s torus-play, which counts it as a note at its moving point, and the sounding notes stand in Notes (each key and the arc it struck); this picture lights pitch classes, which that reading does not name.',
   // body.source: the hand's choice over M2's body constants (QL's table, `ql kernel body-constants`; qlCoordinateName.ts BodyTable), written
@@ -203,6 +202,30 @@ export const TORUS_ABSENT: Readonly<Record<string, string>> = {
 }
 
 const NOT_WRITABLE = 'The owner takes edits only while the instrument follows or is held.'
+
+// ── Receiver (manual §21.2 View: "Receiver On makes your camera the place where the torus is heard"; Rules: "A camera move does not
+// change the sound, unless Receiver is On") ─────────────────────────────────────────────────────────────────────────────────────────
+// The frame announces Receiver On or Off, the context the owner hears in and its refusal (parameters.receiver; never the place), and takes
+// the stage channel's `receiver` edit: On asks the owner to hear the torus from where the camera stands, Off gives it back to the world.
+
+const NO_RECEIVER = 'The native field announces no receiver: this frame does not say where the torus is heard from.'
+/** Receiver on the binding: the owner's On or Off, the key's standing (the owner's refusal in its words), and its one write. Pure but for
+ * the write. */
+export function torusReceiver(state: LiveTorusState | null, commit: (edit: InstrumentEdit) => Promise<{ok: boolean; error?: string}>):
+  {values: Record<string, Value>; standing: Record<string, Standing>; writes: ReadonlySet<string>; write: (change: ValueChange) => Promise<void>} {
+  const receiver = state !== null && state.ok ? state.parameters?.receiver ?? null : null
+  const values: Record<string, Value> = receiver ? {receiver: receiver.on} : {}
+  const why = !liveInstrumentWritable(state) ? (state === null ? 'No owner reading stands in this host.' : NOT_WRITABLE) : receiver ? null : NO_RECEIVER
+  const standing: Record<string, Standing> = why ? {receiver: {disabled: why}} : receiver?.refusal ? {receiver: {refused: receiver.refusal}} : {}
+  const writes: ReadonlySet<string> = new Set(why ? [] : ['receiver'])
+  const write = async (change: ValueChange) => {
+    if (why) throw new Error(why)
+    if (typeof change.value !== 'boolean') throw new Error('Receiver is On or Off.')
+    const result = await commit({kind: 'receiver', on: change.value})
+    if (!result.ok) throw new Error(result.error ?? 'The native field refused the receiver.')
+  }
+  return {values, standing, writes, write}
+}
 
 /** The owner's presentation gain (0–4, an amplitude) as the design's level in dB; silence is the design's floor. */
 export const gainToDb = (gain: number): number => (gain <= 0.001 ? -60 : Math.round(20 * Math.log10(gain) * 10) / 10)
@@ -450,7 +473,7 @@ export function torusRowChanges(changes: readonly ValueChange[]): {key: string; 
 /** The Body group's keys the binding writes itself (torusBody), not as the device's rows. */
 const BODY_KEYS: ReadonlySet<string> = new Set([TORUS_BODY_SOURCE, 'damping', 'strike'])
 
-/** Every key the binding speaks for: the design's keys and the owner's own. */
+/** Every key the binding speaks for: the design's keys and the owner's own. Receiver's standing is its own (torusReceiver). */
 const TORUS_KEYS = ['light', 'standing', 'level', ...QL_PRESENTATION_KEYS.filter(key => key !== 'level'), ...Object.keys(TORUS_DETERMINANT_KEYS), ...Object.keys(TORUS_ABSENT)]
 
 /** The binding the runtime hosts the Torus design on: the owner's readings, the device's one submit (the stage channel), and every
@@ -489,6 +512,9 @@ export function torusDesignBinding(state: LiveTorusState | null, device: DeviceI
   // The Pulse, Mode and tuning, Shape and Notes groups: QL's M1′ session, read back from the owner, written as its `torus` edit.
   const session = torusSession(state, commit)
   Object.assign(standing, session.standing)
+  // Receiver: where the torus is heard from, the owner's own context, written as the stage channel's receiver edit.
+  const receiver = torusReceiver(state, commit)
+  Object.assign(standing, receiver.standing)
   const local: Record<string, (value: Value | undefined) => void> = {...page.local, ...handsFor(TORUS_DESIGN_ID, TORUS_STAGE_LOCAL)}
   const submit = device.submit
   const stageAct = async (change: ValueChange) => {
@@ -498,17 +524,18 @@ export function torusDesignBinding(state: LiveTorusState | null, device: DeviceI
   }
   return {
     id: device.id,
-    values: {...torusDesignValues(state), ...session.values, ...torusStageValues(stage, held), ...page.values, ...tattva.values},
-    writes: key => (key in TORUS_STAGE_ACTS ? acting : body.writes.has(key) || session.writes.has(key)
-      || (key !== 'rack' && !BODY_KEYS.has(key) && !TORUS_SESSION_KEYS.has(key) && writeStanding(state, key) === null)),
+    values: {...torusDesignValues(state), ...session.values, ...receiver.values, ...torusStageValues(stage, held), ...page.values, ...tattva.values},
+    writes: key => (key in TORUS_STAGE_ACTS ? acting : body.writes.has(key) || session.writes.has(key) || receiver.writes.has(key)
+      || (key !== 'rack' && key !== 'receiver' && !BODY_KEYS.has(key) && !TORUS_SESSION_KEYS.has(key) && writeStanding(state, key) === null)),
     standing,
     local,
     ...(page.waiting ? {waiting: ['rack']} : {}),
-    ...(submit || acting || body.writes.size || session.writes.size ? {write: async (changes: readonly ValueChange[]) => {
+    ...(submit || acting || body.writes.size || session.writes.size || receiver.writes.size ? {write: async (changes: readonly ValueChange[]) => {
       for (const change of changes.filter(c => c.key in TORUS_STAGE_ACTS)) await stageAct(change)
       for (const change of changes.filter(c => BODY_KEYS.has(c.key))) await body.write(change)
       for (const change of changes.filter(c => TORUS_SESSION_KEYS.has(c.key))) await session.write(change)
-      const rows = changes.filter(c => !(c.key in TORUS_STAGE_ACTS) && !BODY_KEYS.has(c.key) && !TORUS_SESSION_KEYS.has(c.key))
+      for (const change of changes.filter(c => c.key === 'receiver')) await receiver.write(change)
+      const rows = changes.filter(c => !(c.key in TORUS_STAGE_ACTS) && !BODY_KEYS.has(c.key) && !TORUS_SESSION_KEYS.has(c.key) && c.key !== 'receiver')
       if (rows.length) { if (!submit) throw new Error(NOT_WRITABLE); await submit(torusRowChanges(rows)) }
     }} : {}),
     // The level, scale, Carrier or Rate a planet moves (designBindings/skyModulation.ts): the status bar names the planet, the base and the

@@ -13,11 +13,15 @@ import {STUDIO_PROCEDURE} from './stageReading';
 type StageProceduralCommand=Extract<StageCommand,{command:'procedural-stage'}>;
 import {createLiveEntry} from './native-field/liveEntry.mjs';
 import {torusPlayReading} from './native-field/torusPlay.mjs';
-import {touchStrike,type StageView} from './native-field/surfaceTouch';
+import {touchStrike,stageEye,type StageView} from './native-field/surfaceTouch';
+import {receiverPlace} from '../../src/engine/torusObject';
+import {DEFAULT_DEPTH_CONFIG} from '../../src/engine/fieldDefaults';
 import {WORLD_SCALE} from './nativeParameters';
 /** scene_field.rs `PLANETS`, in scalar-degree order: the map's own names. */
 /** O-I #747: how long the authored scene stays still before the live field opens again on it after a rebind. */
 export const REBIND_SETTLE_MS=700;
+/** O-I 856: how often, at most, the frame asks the owner where the Torus is heard from while Receiver is On and the camera moves. */
+export const RECEIVER_FRAME_MS=100;
 const PLANET_NAMES=['Sun','Venus','Mercury','Moon','Saturn','Jupiter','Mars','Neptune','Pluto'];
 /** The body's Damping as the Torus gives it, a Q factor (DLW manual §21.2), lowered per material mode to the decay rate the native field
  * takes: a mode of quality Q at f hertz decays at ω/2Q = π·f/Q per second. The scene's material keeps one rate for all its voices (QL
@@ -535,6 +539,11 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
    if(!reading.instrument)throw new Error('No scene is open. Open the live instrument first; the Torus plays the scene.');
    const landed=await controller.torusSet(edit.edit,at);update();return {landed_at_samples_elapsed:landed};
   }
+  if(edit.kind==='receiver'){
+   // Receiver On or Off (O-I 856): the owner is asked now, from where the camera stands, and answers in its words (controller.ts setReceiver).
+   if(at!==undefined)throw new Error('Where the Torus is heard from is set now, for the owner\'s next block: it lands at no sample.');
+   await controller.setReceiver(edit.on,heardPlace());update();return {};
+  }
   if(at!==undefined)throw new Error('This edit is made on the frame\'s own sound, at the device\'s time: it lands at no sample of the owner.');
   if(edit.kind==='muted')controller.setMuted(edit.muted);
   else if(edit.kind==='cadence'){if(edit.rate==='hold')controller.pause('held by you');else controller.play(edit.rate);}
@@ -566,6 +575,18 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   setText('key',`Touched the torus at θ ${degrees(theta)}°, φ ${degrees(phi)}°: it rings there.`);
   controller.playAt([strike.point],strike.amplitude).catch(error=>{setText('key',`Not played: ${String(error instanceof Error?error.message:error)}`);});
   return true;
+ };
+ /** Where the Torus is heard from, each frame (DLW manual §21.2 View: "Receiver On makes your camera the place where the torus is heard";
+  * O-I 856): the engine's own eye as the stage hands it the camera (surfaceTouch.ts stageEye; engine torusObject.ts receiverPlace), in the
+  * owner's metres by the presentation's scale, asked of the owner at most every RECEIVER_FRAME_MS and only when it has moved (controller.ts
+  * hear). Off, a camera move asks nothing of the owner. The frame keeps only the last view it was handed, to answer Receiver On from it. */
+ let heardView:{view:StageView;fov:number}|null=null,heardWhen=0;
+ const heardPlace=()=>{const scale=controller.unitsPerMetre;return heardView&&scale!==null?receiverPlace(stageEye(heardView.view,heardView.fov,WORLD_SCALE),scale):null;};
+ const hear=(view:StageView,fov?:number|null)=>{
+  heardView={view,fov:typeof fov==='number'&&Number.isFinite(fov)?fov:DEFAULT_DEPTH_CONFIG.fov};
+  if(!controller.receiving)return;
+  const now=performance.now();if(now-heardWhen<RECEIVER_FRAME_MS)return;heardWhen=now;
+  void controller.hear(heardPlace());
  };
  const openLive=()=>{liveEntry.enter();requestAnimationFrame(()=>liveEntry.check());};
  const leaveLive=()=>liveEntry.leave();
@@ -602,5 +623,5 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   settledOn=identity;reopenWhenStill();
  };
  update();
- return {controller,panel,command,stage,touch,openLive,leaveLive,rebind,authoredMoved,dispose:()=>{clearInterval(timer);engine.setTorusVoices?.(null);clearTimeout(reopening);panel.removeEventListener('click',click);panel.removeEventListener('input',range);panel.removeEventListener('pointerdown',pressKey);panel.removeEventListener('focusin',focusKey);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('pagehide',pagehide);panel.remove();domainView.dispose();style.remove();void controller.dispose();}};
+ return {controller,panel,command,stage,touch,openLive,leaveLive,rebind,authoredMoved,hear,dispose:()=>{clearInterval(timer);engine.setTorusVoices?.(null);clearTimeout(reopening);panel.removeEventListener('click',click);panel.removeEventListener('input',range);panel.removeEventListener('pointerdown',pressKey);panel.removeEventListener('focusin',focusKey);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('pagehide',pagehide);panel.remove();domainView.dispose();style.remove();void controller.dispose();}};
 }

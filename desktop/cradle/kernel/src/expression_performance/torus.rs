@@ -431,7 +431,9 @@ impl TorusTakeRecord {
 // ── the kernel's witness: what it relayed under its lease ────────────────────────────────────────────────
 
 /// Reads of the scene owner, which move nothing (QL instrument-session.mjs READ_OPERATIONS), and the owner
-/// acts that move no native state by their own law (its `still`, but for the Torus's own acts).
+/// acts that move no native state by their own law (its `still`, but for the Torus's own acts). Where the
+/// Torus is heard from (`torus-receiver`, O-I 856) is a receiving setting: the body, its clock and its
+/// generation stand, and a take is the world's sound, rendered in the world's context.
 const READS: [&str; 7] = [
     "read",
     "inspect",
@@ -441,7 +443,7 @@ const READS: [&str; 7] = [
     "score-state",
     "torus-state",
 ];
-const STILL: [&str; 3] = ["stage-retire", "stage-bind", "stage-unbind"];
+const STILL: [&str; 4] = ["stage-retire", "stage-bind", "stage-unbind", "torus-receiver"];
 
 #[derive(Debug)]
 enum Witnessed {

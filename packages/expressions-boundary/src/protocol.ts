@@ -180,6 +180,18 @@ function readTorusClasses(raw: unknown): NonNullable<HostedTorusSession['classes
   return {tuning: raw.tuning as HostedTorusSession['resident_tunings'][number], steps: raw.steps, by_class: rows, law: raw.law as string};
 }
 
+/** Where the Torus is heard from (O-I 856), exactly: Receiver On or Off, the owner's context and its refusal. The place is the listener's
+ * own and is never announced, so any other field is refused by name. */
+function readHostedReceiver(raw: unknown): NonNullable<HostedInstrumentParameters['receiver']> | string {
+  if (!object(raw)) return 'expected on, context and refusal';
+  const other = Object.keys(raw).find(key => key !== 'on' && key !== 'context' && key !== 'refusal');
+  if (other !== undefined) return `${other}: not announced; where the Torus is heard from is the listener's own`;
+  if (typeof raw.on !== 'boolean') return 'on: expected a boolean';
+  if (raw.context !== 'world' && raw.context !== 'personal') return "context: expected 'world' or 'personal'";
+  if (raw.refusal !== null && !boundedText(raw.refusal, 512)) return 'refusal: expected bounded text or null';
+  return {on: raw.on, context: raw.context, refusal: raw.refusal as string | null};
+}
+
 /** The owner's presentation parameters, exact or refused: a value the owner does not state is refused by name, never defaulted. */
 export function readHostedParameters(raw: unknown): HostedInstrumentParameters | string {
   if (!object(raw) || !object(raw.scale)) return 'parameters: expected muted, level, scale, cadence and refusal';
@@ -201,8 +213,11 @@ export function readHostedParameters(raw: unknown): HostedInstrumentParameters |
   // The Torus's M1′ session: exact or the fault named; a frame that announces none carries none.
   const torus = raw.torus === undefined ? undefined : readHostedTorus(raw.torus);
   if (typeof torus === 'string') return `parameters.torus${/^[a-z_]+:/.test(torus) ? '.' : ': '}${torus}`;
+  // Where the Torus is heard from: exact or the fault named; a frame that announces none carries none (O-I 856).
+  const receiver = raw.receiver === undefined ? undefined : readHostedReceiver(raw.receiver);
+  if (typeof receiver === 'string') return `parameters.receiver${/^[a-z_]+:/.test(receiver) ? '.' : ': '}${receiver}`;
   return {muted: raw.muted, level: raw.level, scale: {unitsPerMetre: scale.unitsPerMetre as number | null, mode: scale.mode}, cadence, refusal: raw.refusal as string | null,
-    ...(effects ? {effects} : {}), ...(torus ? {torus} : {})};
+    ...(effects ? {effects} : {}), ...(torus ? {torus} : {}), ...(receiver ? {receiver} : {})};
 }
 
 /** The instrument the frame announces: the owner reading (ql.instrument-reading/v1, parsed by the shell's reader), the owner's determinants and its presentation parameters.

@@ -87,3 +87,14 @@ test('the Torus session carries the owner\'s maqām, material and classes as tor
   const none = announceInstrument(controllerReading({instrument: {...controllerReading().instrument, torus: before}})).parameters.torus;
   for (const key of ['maqam', 'material', 'classes']) assert.equal(key in none, false, `${key}: not named, not announced`);
 });
+
+// O-I 856: where the Torus is heard from is announced as the controller reads it — Receiver On or Off, the owner's context and its refusal —
+// and never the place, nor the gains the owner hears each voice by.
+test('Receiver is announced as On or Off, the owner\'s context and its refusal: never a place', () => {
+  const heard = controllerReading({receiver: {on: true, context: 'personal', gains: [{mode_ref: 'scene:logic/0', gain: 0.25}], law: 'the law', refusal: null}});
+  assert.deepEqual(announceInstrument(heard).parameters.receiver, {on: true, context: 'personal', refusal: null});
+  const refused = controllerReading({receiver: {on: false, context: 'world', gains: null, law: null, refusal: 'no torus here'}});
+  assert.deepEqual(announceInstrument(refused).parameters.receiver, {on: false, context: 'world', refusal: 'no torus here'});
+  assert.equal('receiver' in announceInstrument(controllerReading()).parameters, false, 'a reading without one announces none');
+  assert.doesNotMatch(JSON.stringify(announceInstrument(heard)), /at_metres|gains/);
+});

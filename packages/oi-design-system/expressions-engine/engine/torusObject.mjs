@@ -71,6 +71,16 @@ function clockAngle(clock, attachment) {
   if (attachment === 2) return (clock?.lensing?.half_degrees ?? 0) * Math.PI / 360;
   return 0;
 }
+function receiverPlace(view, unitsPerMetre) {
+  const { height, pixelsPerUnit: s, right: a, up: b, fovDegrees } = view;
+  if (!(Number.isFinite(unitsPerMetre) && unitsPerMetre > 0 && Number.isFinite(height) && height > 0 && Number.isFinite(s) && s > 0 && Number.isFinite(fovDegrees))) return null;
+  const n = [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+  const length = Math.hypot(n[0], n[1], n[2]);
+  if (!(Number.isFinite(length) && length > 0)) return null;
+  const fov = Math.max(4, Math.min(120, fovDegrees)) * Math.PI / 180;
+  const metres = height / Math.max(1e-4, s) * 0.5 / Math.max(1e-4, Math.tan(fov / 2)) / unitsPerMetre;
+  return [n[0] / length * metres, n[1] / length * metres, n[2] / length * metres];
+}
 const helixIndex = (helix) => helix === "pratibimba" || helix === 1 ? 1 : 0;
 function helixPlace(helix, phi) {
   return { phi: wrap(phi), theta: wrap(phi / 2 + helixIndex(helix) * Math.PI) };
@@ -441,6 +451,7 @@ export {
   presentSamples,
   presentsAsIs,
   readRoles,
+  receiverPlace,
   ringingLevel,
   shapeNormal,
   shapePoint,

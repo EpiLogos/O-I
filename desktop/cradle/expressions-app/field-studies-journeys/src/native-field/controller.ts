@@ -42,6 +42,12 @@ export const PRESENTATION_LEVEL=Object.freeze({min:0,max:4,initial:1,
 const TRANSIENT=/owner busy|held before the event|presentation capacity|requires idle admitted owner/;
 /** How often the Torus's session is read while the field follows (O-I #850): a human cadence, never a beat. */
 const TORUS_READ_MS=1000;
+/** Where the Torus is heard from (O-I 856): metres in the scene the owner draws its targets in, and how long a place the owner refused is
+ * not asked again. */
+type ReceiverPlace=readonly [number,number,number];
+type ReceiverReading={schema:string;context:'world'|'personal';gains:{mode_ref:string;gain:number}[];law:string};
+const RECEIVER_RETRY_MS=1000;
+const samePlace=(a:ReceiverPlace|null,b:ReceiverPlace|null)=>a===null||b===null?a===b:a[0]===b[0]&&a[1]===b[1]&&a[2]===b[2];
 type Cadence={rate:number;period:number;source:string;timer:ReturnType<typeof setInterval>;started:number;
  beats:number;issued:number;applied:number;skipped:number;suspended:number;inFlight:boolean;lastEventMs?:number;maxEventMs?:number;stopped?:string;stopped_at?:number};
 /** Keys of the Jankó surface as the Torus's session takes them (instrument-session.mjs #keys: 1..32, row 0–5, column 0–65535), copied
@@ -94,6 +100,13 @@ export class NativeFieldController {
   * determinant event that strikes names every voice the owner tunes, and a strike at points of the surface names every voice the owner
   * tunes too, with the points it was struck at. The owner reports no per-voice amplitude, so the latest strike stands. */
  private struck:{at:number;source:'note'|'event'|'point';refs:string[];points?:{theta:number;phi:number}[]}|null=null;
+ /** Where the Torus is heard from (DLW manual §21.2 View: "Receiver On makes your camera the place where the torus is heard"; Rules: "A
+  * camera move does not change the sound, unless Receiver is On"; QL-MEF `torus-receiver`, O-I 856). On is the person's choice and outlives
+  * a lifetime, as the level does. The place last asked for (the camera's eye) and the place the owner hears from (null: the world's
+  * context) are this lifetime's and are never read out: the owner's answer names the context and the gain each voice is heard by, and a
+  * refusal its words with the place it refused, which is not asked again within RECEIVER_RETRY_MS. One ask is in flight at a time. */
+ private receiverOn=false;private wantedAt:ReceiverPlace|null=null;private heardAt:ReceiverPlace|null=null;private hearing:Promise<void>|null=null;
+ private heardReply:ReceiverReading|null=null;private receiverRefusal:{why:string;place:ReceiverPlace|null;at:number}|null=null;
  private level:GainNode|null=null;private levelValue:number=PRESENTATION_LEVEL.initial;
  /** A unity node the symbols' voices listen to (symbolVoices.ts): the torus's sound after the presentation level and before its effects. */
  private tap:GainNode|null=null;
@@ -174,6 +187,8 @@ export class NativeFieldController {
   presentation_units_per_metre:this.projection?.scale??null,
   presentation_level:{value:this.levelValue,...PRESENTATION_LEVEL},
   presentation_effects:this.effects,
+  // Where the Torus is heard from: Receiver On or Off, the owner's context and gains, and its refusal; never the place (O-I 856).
+  receiver:this.receiverReading(),
   native:this.session?.reading??this.lastNative,muted:this.muted,
   domain:this.domain,source_currentness:this.domain?(this.sourcesStale?'inspected before the latest determinant event; influence is current':following?'inspected-native-basis; continuous cursor reported separately':'held-last-inspected-basis'):'unavailable',
   presented_clock:clock,
@@ -874,6 +889,64 @@ export class NativeFieldController {
   this.stageLast={standing:receipt?.applied===false?'refused':'applied',...(typeof receipt?.procedure_ref==='string'?{procedure_ref:receipt.procedure_ref}:{})};
   this.changed();
  }
+ /** Receiver On or Off (O-I 856; DLW manual §21.2 View and Rules), an explicit act of the owner's receiving context. While the instrument
+  * follows, the owner is asked now (QL-MEF `torus-receiver`): from `place`, where the camera stands, when On, and the world's context when
+  * Off. It resolves with the owner's answer (the context and the gain each voice is heard by), or rejects with its refusal in its words and
+  * the choice stands as it was: a personal context the owner does not take is never shown. While no owner follows, the choice is kept,
+  * nothing is asked, and it resolves null; the owner is asked once it follows (hear). */
+ async setReceiver(on:boolean,place:ReceiverPlace|null=null):Promise<ReceiverReading|null>{
+  const before=this.receiverOn;
+  this.receiverOn=on;this.receiverRefusal=null;
+  if(!on)this.wantedAt=null;else if(place)this.wantedAt=[place[0],place[1],place[2]];
+  this.changed();
+  if(!this.asks())return null;
+  await this.hear(this.wantedAt);
+  if(!samePlace(this.heardAt,this.receiverOn?this.wantedAt:null)){
+   // The ask above set the refusal, if the owner refused (the narrowing from clearing it does not see that).
+   const why=(this.receiverRefusal as {why:string}|null)?.why??'native owner busy: where the Torus is heard from was not set';
+   this.receiverOn=before;this.changed();throw new Error(why);
+  }
+  return this.heardReply?structuredClone(this.heardReply):null;
+ }
+ /** Where the camera stands now (O-I 856; null: not known this frame, and the last place stands): asked of the owner when Receiver is On
+  * and it has moved. When Receiver is Off and the owner still hears from a place, the world's context is asked once; otherwise Off asks
+  * nothing, wherever the camera moves. One ask at a time: moves made while one is in flight are asked once it lands, for the latest.
+  * Resolves once the owner hears from where it was last asked, or at once when nothing is asked. */
+ hear(place:ReceiverPlace|null):Promise<void>{
+  if(place&&this.receiverOn)this.wantedAt=[place[0],place[1],place[2]];
+  return this.hearing??this.sendHearing();
+ }
+ /** Whether the frame has anything to ask the owner about where it is heard from: Receiver is On, or the owner still hears from a place. */
+ get receiving(){return this.receiverOn||this.heardAt!==null;}
+ /** The presentation's units per metre the targets are drawn at, which carries the engine's eye into the owner's metres; null with no owner. */
+ get unitsPerMetre(){return this.projection?.scale??null;}
+ private asks(){return !!this.session&&this.scene&&this.torusRefused===null&&this.status==='following'&&!this.suspension;}
+ private sendHearing():Promise<void>{
+  const session=this.session,wanted=this.receiverOn?this.wantedAt:null,refused=this.receiverRefusal;
+  if(!session||!this.asks()||samePlace(wanted,this.heardAt)||(refused&&samePlace(wanted,refused.place)&&performance.now()-refused.at<RECEIVER_RETRY_MS))return Promise.resolve();
+  const asked=this.serial(async()=>{
+   if(!(await this.waitIdle(session,1000))||!this.asks())return false;
+   const place:ReceiverPlace|null=this.receiverOn&&this.wantedAt?[this.wantedAt[0],this.wantedAt[1],this.wantedAt[2]]:null;
+   if(samePlace(place,this.heardAt))return false;
+   const context=this.heardReply?.context??'world',standing=this.receiverRefusal?.why??null;
+   try{
+    const reply=await session.torusReceiver(place?[place[0],place[1],place[2]]:null);
+    if(!this.current(session))return false;
+    this.heardAt=place;this.heardReply=reply;this.receiverRefusal=null;
+   }catch(error){
+    if(!this.current(session))return false;
+    this.receiverRefusal={why:String(error instanceof Error?error.message:error),place,at:performance.now()};
+   }
+   if((this.heardReply?.context??'world')!==context||(this.receiverRefusal?.why??null)!==standing)this.changed();
+   return true;
+  }).catch(()=>false);
+  const hearing:Promise<void>=asked.then(landed=>{if(this.hearing===hearing)this.hearing=null;if(landed)return this.hearing??this.sendHearing();});
+  this.hearing=hearing;return hearing;
+ }
+ private receiverReading(){
+  return {on:this.receiverOn,context:this.heardReply?.context??'world',gains:this.heardReply?structuredClone(this.heardReply.gains):null,
+   law:this.heardReply?.law??null,refusal:this.receiverRefusal?.why??null};
+ }
  /** Human-cadence source refresh after determinant events; never while an event
   * is in flight, never while held. */
  async refreshSources(){
@@ -997,6 +1070,8 @@ export class NativeFieldController {
   this.scene=false;this.influenceReading=null;this.acting=null;this.event=null;this.opening=null;this.sourcesStale=false;this.fundamentalAt=null;this.level=null;this.tap=null;this.effectsGraph?.dispose();this.effectsGraph=null;
   this.stageReading=null;this.stageStale=false;this.stageLast=null;
   this.torus=null;this.torusAt=0;this.torusRefused=null;this.torusObject=new TorusObject();this.pulseTuning=null;
+  // A new owner hears in the world's context until it is asked; Receiver itself is the person's and stays (O-I 856).
+  this.wantedAt=null;this.heardAt=null;this.heardReply=null;this.receiverRefusal=null;this.hearing=null;
   this.admitting=null;this.suspension=null;this.restoring=null;
   if(manual){this.status='manual';this.lastNative=null;this.reason=null;this.refusal=null;this.lastCadence=null;this.changed();}
   const close=async()=>{

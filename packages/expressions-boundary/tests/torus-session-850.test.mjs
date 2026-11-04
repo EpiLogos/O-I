@@ -109,3 +109,20 @@ test('the maqām, the lens\'s material and the twelve classes cross with the ses
     [{classes: {...classes, tuning: 'equal'}}, /parameters\.torus\.classes/], [{classes: {absent: ''}}, /parameters\.torus\.classes/],
   ]) assert.match(read(over), fault, JSON.stringify(over).slice(0, 80));
 });
+
+// O-I 856: where the Torus is heard from crosses exactly: Receiver On or Off, the owner's context and its refusal. The place is the listener's
+// own, so a frame that announced one would be refused by name.
+test('Receiver crosses exact: On or Off, the owner\'s context and its refusal, never a place; a frame from before it announces none', () => {
+  const receiver = {on: true, context: 'personal', refusal: null};
+  assert.deepEqual(readHostedParameters(parameters({receiver})).receiver, receiver);
+  assert.deepEqual(readHostedParameters(parameters({receiver: {on: false, context: 'world', refusal: 'no torus here'}})).receiver,
+    {on: false, context: 'world', refusal: 'no torus here'});
+  assert.equal('receiver' in readHostedParameters(parameters()), false, 'a frame that announces none carries none');
+  for (const [bad, words] of [[{...receiver, at_metres: [0, 0, 3]}, /^parameters\.receiver\.at_metres: not announced/], [{...receiver, on: 'yes'}, /^parameters\.receiver\.on:/],
+    [{...receiver, context: 'mine'}, /^parameters\.receiver\.context:/], [{...receiver, refusal: 7}, /^parameters\.receiver\.refusal:/], ['on', /^parameters\.receiver: expected/]])
+    assert.match(readHostedParameters(parameters({receiver: bad})), words, JSON.stringify(bad));
+  assert.deepEqual(readInstrumentEdit({kind: 'receiver', on: false}), {kind: 'receiver', on: false});
+  assert.equal(readInstrumentEdit({kind: 'receiver', on: true, at_metres: [0, 0, 3]}), null, 'the shell sends On or Off, never a place');
+  const message = stageRequestMessage(3, {command: 'instrument', edit: {kind: 'receiver', on: true}});
+  assert.deepEqual(readStageRequest(structuredClone(message)), {req: 3, command: {command: 'instrument', edit: {kind: 'receiver', on: true}}});
+});

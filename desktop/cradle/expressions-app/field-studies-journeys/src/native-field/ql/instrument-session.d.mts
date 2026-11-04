@@ -43,6 +43,11 @@ export class InstrumentSession {
   acts?: Array<{action: 'strike'; at_samples_elapsed: string; keys: Array<{row: number; column: number}>; amplitude: [number, number]}
    | {action: 'release'; at_samples_elapsed: string; keys: Array<{row: number; column: number}>}
    | {action: 'set'; at_samples_elapsed: string; edit: object}>}): Promise<any>;
+ /** Where the Torus is heard from (`ql.torus-receiver/v1`, O-I 856): a place, [x, y, z] metres in the frame the targets are drawn in,
+  * is the listener's own context; null is the world's. A receiving setting: the body, its clock and its generation stand, nothing is
+  * presented, and it is never journaled. Answers the context and each voice's gain, never the place. */
+ torusReceiver(place: readonly [number, number, number] | null): Promise<{schema: 'ql.torus-receiver/v1'; context: 'world' | 'personal';
+  gains: Array<{mode_ref: string; gain: number}>; law: string}>;
  /** The Torus session reading the last Torus acknowledgement carried, or null before any. */
  readonly lastTorus: any;
  /** The last played Torus act's receipt (ql.torus-play/v1), or null before any. */
