@@ -511,6 +511,10 @@ export interface HostedInstrumentParameters {
   /** The Torus's M1′ session (DLW manual §21.2; QL's `torus-state`, O-I #850), as the owner last gave it; absent from a frame that
    * announces none. */
   readonly torus?: HostedTorusSession;
+  /** Where the Torus is heard from (DLW manual §21.2 View: "Receiver On makes your camera the place where the torus is heard"; O-I 856):
+   * Receiver On or Off, the context the owner hears in (the world's, or the listener's own) and its refusal in its words. The place is the
+   * listener's own and is never announced. Absent from a frame that announces none. */
+  readonly receiver?: {readonly on: boolean; readonly context: "world" | "personal"; readonly refusal: string | null};
 }
 
 export type HostedTorusTuning = "logic" | "maqam" | "sky";
@@ -542,7 +546,46 @@ export interface HostedTorusSession {
   readonly notes: number;
   readonly resident_tunings: readonly HostedTorusTuning[];
   readonly carrier_drive: string;
+  /** The M2 condition's maqām, when the owner names it (QL-MEF scene_field.rs maqam_reading; O-I #855). */
+  readonly maqam?: HostedTorusMaqam;
+  /** The lens's material, or the owner's words for none (QL-MEF m2_material.rs LensMaterial). */
+  readonly material?: HostedTorusMaterial;
+  /** The twelve classes, or the owner's words for none (QL-MEF scene_field.rs class_sounds). */
+  readonly classes?: HostedTorusClasses;
 }
+
+/** The M2 condition's maqām as the Torus reads it: its name, coordinate, role, tonic and tuning, with its eight pitches while the scene
+ * holds its voices (`pitches_hz`), or `absent` in the owner's words naming the source it lacks. Exactly one of the two stands. */
+export interface HostedTorusMaqam {
+  readonly name: string | null;
+  readonly coordinate: string | null;
+  readonly role: string | null;
+  readonly tonic_hz: number | null;
+  readonly tuning: string | null;
+  readonly standing: string | null;
+  readonly pitches_hz: readonly number[] | null;
+  readonly absent: string | null;
+}
+/** The surface the lens in force gives the torus: its colour and four magnitudes, each 0..1, with its partner, face, position and
+ * valence; or why the owner gives none. */
+export type HostedTorusMaterial =
+  | {readonly lens: string; readonly partner: string; readonly face: "day" | "night"; readonly position: number; readonly valence: 1 | -1;
+    readonly colour_rgb: readonly [number, number, number]; readonly roughness: number; readonly elasticity: number;
+    readonly particle_affinity: number; readonly tension: number; readonly standing: string; readonly law: string}
+  | {readonly absent: string};
+/** One of the twelve classes: where it stands on the torus (its point's two angles and the ring arc it stands on now), the key that
+ * names it, and what it sounds of each voice of the tuning in force (the voice's frequency and its coupling at that point). */
+export interface HostedTorusClass {
+  readonly pitch_class: number;
+  readonly pitch_name: string;
+  readonly key: {readonly row: number; readonly column: number};
+  readonly point: {readonly theta: number; readonly phi: number; readonly arc: number};
+  readonly sounds: readonly {readonly mode_ref: string; readonly frequency_hz: number; readonly coupling: number}[];
+}
+/** The twelve classes at the reading's steps under the tuning in force, in class order, by the owner's law; or why it gives none. */
+export type HostedTorusClasses =
+  | {readonly tuning: HostedTorusTuning; readonly steps: number; readonly by_class: readonly HostedTorusClass[]; readonly law: string}
+  | {readonly absent: string};
 
 /** The owner's instrument reading as the boundary validated it: the QL reading parser's value, or the fault it named. */
 export type HostedInstrument =

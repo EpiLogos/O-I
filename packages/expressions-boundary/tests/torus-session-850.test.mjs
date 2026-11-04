@@ -74,3 +74,55 @@ test('Strike crosses as a share of velocity: the edit as given, the announced se
   assert.equal('strike' in readHostedParameters(parameters({torus: session()})).torus.settings, false, 'an owner stating no Strike carries none');
   for (const strike of [1.5, -0.1, '70%']) assert.match(readHostedParameters(parameters({torus: session({settings: {...session().settings, strike}})})), /parameters\.torus\.settings: expected Strike as a share 0\.\.1/, String(strike));
 });
+
+// O-I #855 round 6d (PROPOSE of 854): QL's torus-state names the M2 condition's maqām (its name, coordinate and role, with its eight pitches
+// while the scene holds its voices, or `absent` in the owner's words naming the source it lacks: scene_field.rs maqam_reading), the lens's
+// material (m2_material.rs LensMaterial, or why none) and the twelve classes (class_sounds, CLASS_SOUNDS_LAW, or why none). They cross with
+// the session, exact, so the Tuning control can say the maqām is absent before it is chosen; an owner from before them states none.
+const maqamAbsent = {name: 'Kirdan', coordinate: '#2-4.3-0-4', role: 'tonic', tonic_hz: 196, tuning: 'bimba-spelled24-tet', standing: 'source-held', pitches_hz: null,
+  absent: 'maqām Kirdan (#2-4.3-0-4), the condition\'s tonic, has no Bimba spelling in the map, so its eight pitches have no source, and no other tuning stands in'};
+const maqamSounding = {...maqamAbsent, pitches_hz: [196, 220, 233.08, 261.63, 293.66, 311.13, 349.23, 392], absent: null};
+const material = {lens: 'L5\'', partner: 'L5', face: 'night', position: 5, valence: -1, colour_rgb: [0.2, 0.3, 0.4], roughness: 0.5, elasticity: 0.25,
+  particle_affinity: 0.75, tension: 0.6, standing: 'proposed', law: 'a lens gives its surface'};
+const classes = {tuning: 'logic', steps: 12.5, law: 'each of the twelve classes stands at the one place of its helix',
+  by_class: Array.from({length: 12}, (_, c) => ({pitch_class: c, pitch_name: `n${c}`, key: {row: c % 6, column: 40 + c},
+    point: {theta: 0.1 * c, phi: 0.5 * c, arc: c}, sounds: [{mode_ref: `scene:logic/${c % 8}`, frequency_hz: 200 + c, coupling: -0.25}]}))};
+
+test('the maqām, the lens\'s material and the twelve classes cross with the session exact; an owner from before them states none', () => {
+  const read = over => readHostedParameters(parameters({torus: session(over)}));
+  const whole = read({maqam: maqamAbsent, material, classes});
+  assert.equal(typeof whole, 'object', String(whole));
+  assert.deepEqual(whole.torus.maqam, maqamAbsent, 'the maqām with the owner\'s words for its absence');
+  assert.deepEqual(read({maqam: maqamSounding}).torus.maqam, maqamSounding, 'a maqām the scene holds names its eight pitches');
+  assert.deepEqual(whole.torus.material, material);
+  assert.deepEqual(whole.torus.classes, classes);
+  const absent = read({material: {absent: 'no lens names a surface here'}, classes: {absent: 'this scene holds no maqam voices: its event admits none'}}).torus;
+  assert.deepEqual([absent.material, absent.classes], [{absent: 'no lens names a surface here'}, {absent: 'this scene holds no maqam voices: its event admits none'}], 'the owner\'s words for none');
+  const before = read({}).torus;
+  for (const key of ['maqam', 'material', 'classes']) assert.equal(key in before, false, `${key}: an owner from before states none`);
+  for (const [over, fault] of [
+    [{maqam: {...maqamAbsent, absent: null}}, /parameters\.torus\.maqam/], [{maqam: {...maqamSounding, absent: 'both'}}, /parameters\.torus\.maqam/],
+    [{maqam: {...maqamSounding, pitches_hz: [196, -1]}}, /parameters\.torus\.maqam/], [{maqam: 'Kirdan'}, /parameters\.torus\.maqam/],
+    [{material: {...material, roughness: 2}}, /parameters\.torus\.material/], [{material: {...material, valence: 0}}, /parameters\.torus\.material/],
+    [{classes: {...classes, by_class: classes.by_class.slice(1)}}, /parameters\.torus\.classes/],
+    [{classes: {...classes, by_class: classes.by_class.map((row, c) => c === 3 ? {...row, pitch_class: 4} : row)}}, /parameters\.torus\.classes/],
+    [{classes: {...classes, tuning: 'equal'}}, /parameters\.torus\.classes/], [{classes: {absent: ''}}, /parameters\.torus\.classes/],
+  ]) assert.match(read(over), fault, JSON.stringify(over).slice(0, 80));
+});
+
+// O-I 856: where the Torus is heard from crosses exactly: Receiver On or Off, the owner's context and its refusal. The place is the listener's
+// own, so a frame that announced one would be refused by name.
+test('Receiver crosses exact: On or Off, the owner\'s context and its refusal, never a place; a frame from before it announces none', () => {
+  const receiver = {on: true, context: 'personal', refusal: null};
+  assert.deepEqual(readHostedParameters(parameters({receiver})).receiver, receiver);
+  assert.deepEqual(readHostedParameters(parameters({receiver: {on: false, context: 'world', refusal: 'no torus here'}})).receiver,
+    {on: false, context: 'world', refusal: 'no torus here'});
+  assert.equal('receiver' in readHostedParameters(parameters()), false, 'a frame that announces none carries none');
+  for (const [bad, words] of [[{...receiver, at_metres: [0, 0, 3]}, /^parameters\.receiver\.at_metres: not announced/], [{...receiver, on: 'yes'}, /^parameters\.receiver\.on:/],
+    [{...receiver, context: 'mine'}, /^parameters\.receiver\.context:/], [{...receiver, refusal: 7}, /^parameters\.receiver\.refusal:/], ['on', /^parameters\.receiver: expected/]])
+    assert.match(readHostedParameters(parameters({receiver: bad})), words, JSON.stringify(bad));
+  assert.deepEqual(readInstrumentEdit({kind: 'receiver', on: false}), {kind: 'receiver', on: false});
+  assert.equal(readInstrumentEdit({kind: 'receiver', on: true, at_metres: [0, 0, 3]}), null, 'the shell sends On or Off, never a place');
+  const message = stageRequestMessage(3, {command: 'instrument', edit: {kind: 'receiver', on: true}});
+  assert.deepEqual(readStageRequest(structuredClone(message)), {req: 3, command: {command: 'instrument', edit: {kind: 'receiver', on: true}}});
+});

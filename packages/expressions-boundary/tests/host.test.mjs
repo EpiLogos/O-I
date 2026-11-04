@@ -169,6 +169,27 @@ test('native driver lease is frame-epoch owned, exclusive and released on dispos
   assert.deepEqual(operations.at(-1), {operation: 'close', lease: 'lease:one'});
 });
 
+test('a kept Torus sound is saved and opened under the frame\'s own lease, and under no other (O-I #852)', async t => {
+  const operations = [];
+  const a = aperture(t, {channels: {}, native: async request => {
+    operations.push(request);
+    if (request.operation === 'open') return {schema: 'oi.native-expression-open/v1', lease: 'lease:one'};
+    if (request.operation === 'torus_sound') return {schema: 'oi.torus-sound/v1', name: request.name};
+    return {schema: 'oi.torus-sound-opening/v1', moved: []};
+  }});
+  const epoch = (await a.messages()).find(d => d.schema === NATIVE_CHANNEL && d.kind === 'available').epoch;
+  const native = (req, request) => a.deliver({schema: NATIVE_CHANNEL, epoch, kind: 'request', req, request});
+  await native(1, {operation: 'open', path: 'Control/work.json'});
+  await native(2, {operation: 'torus_sound', lease: 'lease:one', checkpoint_sha256: 'sha256:kept', name: 'Low bell'});
+  await native(3, {operation: 'torus_sound_open', lease: 'lease:one', sound: {schema: 'oi.torus-sound/v1'}, now_sha256: 'sha256:now'});
+  await native(4, {operation: 'torus_sound', lease: 'lease:foreign', checkpoint_sha256: 'sha256:kept', name: 'Low bell'});
+  assert.deepEqual(operations.map(r => r.operation), ['open', 'torus_sound', 'torus_sound_open']);
+  const results = (await a.messages()).filter(d => d.schema === NATIVE_CHANNEL && d.kind === 'result');
+  assert.deepEqual(results.find(d => d.req === 2), {schema: NATIVE_CHANNEL, epoch, kind: 'result', req: 2, ok: true, data: {schema: 'oi.torus-sound/v1', name: 'Low bell'}});
+  assert.equal(results.find(d => d.req === 3).data.schema, 'oi.torus-sound-opening/v1');
+  assert.match(results.find(d => d.req === 4).error, /lease does not belong/);
+});
+
 test('a native lease that opens after reload is closed and never adopted by the new frame', async t => {
   let finish;
   const closed = [];

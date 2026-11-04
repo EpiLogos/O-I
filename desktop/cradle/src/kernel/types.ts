@@ -95,6 +95,16 @@ export interface ReadingsChangedReceipt extends KernelReceipt {
   epoch: number;
 }
 
+/** The held SharedField client took a transaction that changed what this window's identity can see (`KernelEvent::SharedFieldChanged`,
+ * O-I #858): the field's `cursor` after it, the rows it names (refs only, never content) and how many more it only counts. No rows and
+ * `more` 0 is the field come back from a lost service: read it again, whole. */
+export interface SharedFieldChangedReceipt extends KernelReceipt {
+  event: "shared_field_changed";
+  cursor: string;
+  changes: {table: string; op: "insert" | "update" | "delete"; ref: string}[];
+  more: number;
+}
+
 /** Ephemeral disclosure only. A gap or changed process generation requires
  * current owner readings; it cannot be accepted as an empty event history. */
 export interface KernelEventReplay {
@@ -117,7 +127,12 @@ export type NativeComposeRequest = { texture: [number, number]; units_per_metre:
     | {sky?: never; sky_snapshot: {schema: "ql.sky-snapshot/v1"; snapshot_ref: string; [key: string]: unknown}; snapshot_purpose?:import('../nara/identity/types').SnapshotPurpose})
   & ({event?: Record<string, unknown>; world?: never; snapshot_purpose?:'requested'}
     | {event?: never; world: {instance_ref: string; subject_ref: string; start?: Readonly<Record<string, unknown>>}});
-export type NativeExpressionRequest = {operation: "open"; path: string; expected_revision: string} | {operation: "compose"; request: NativeComposeRequest} | {operation: "prepare_world"; request: NativeComposeRequest} | {operation: "exchange"; lease: string; request: unknown} | {operation: "observe"; lease: string; instance_ref: string; event_ref: string; subject_ref: string; expected_generation: string; expected_samples_elapsed: string; expected_request_id?: string} | {operation: "close"; lease: string};
+export type NativeExpressionRequest = {operation: "open"; path: string; expected_revision: string} | {operation: "compose"; request: NativeComposeRequest} | {operation: "prepare_world"; request: NativeComposeRequest} | {operation: "exchange"; lease: string; request: unknown} | {operation: "observe"; lease: string; instance_ref: string; event_ref: string; subject_ref: string; expected_generation: string; expected_samples_elapsed: string; expected_request_id?: string} | {operation: "close"; lease: string}
+  /** O-I #852 (kernel native_expression.rs): save the Torus at a checkpoint its owner gave under the lease as a sealed sound
+   * (`oi.torus-sound/v1`), on the torus or on a form's prepared body; and open a kept sound against the Torus as it stands now
+   * (`oi.torus-sound-opening/v1`: the owner's `torus-restore`, and what has moved). */
+  | {operation: "torus_sound"; lease: string; checkpoint_sha256: string; name: string; body?: unknown}
+  | {operation: "torus_sound_open"; lease: string; sound: unknown; now_sha256: string};
 /** Provenance of a composed open (`source` in `oi.native-expression-open/v1`). */
 export interface NativeComposedSource { schema: "oi.native-expression-composed-source/v1"; ql_executable: string; ql_selection: "installed" | "operator-override"; ql_revision: string | null; ql_executable_sha256: string; sky: {mode: "current" | "historical"; epoch: string; snapshot_ref: string; receipt_unix_ms: number} | null; request_sha256: string; composed_at_unix_ms: number }
 /** The page owner's fields (kernel/src/page.rs `apply_field`): a Being's or Thing's ties, a Flow's World, View and Container, and
@@ -1355,6 +1370,8 @@ export type LiveSetAct =
   | {kind: 'track_rename'; track: number; name: string}
   | {kind: 'track_move'; track: number; by: -1 | 1}
   | {kind: 'track_duplicate'; track: number}
+  /** Insert MIDI Track (⌘⇧T): an empty MIDI part right after the track (after the last part, before the returns, with none). */
+  | {kind: 'track_insert'; after?: number | null}
   | {kind: 'scene_insert'; after?: number | null}
   | {kind: 'scene_rename'; scene: number; name: string}
   | {kind: 'scene_duplicate'; scene: number}

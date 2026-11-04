@@ -5,7 +5,7 @@
  * vendored app's kernelExpressions.ts/app.ts. */
 import {TECHNE_INSTRUMENTS, type TechneActionRoute, type TechneReading} from '../../../desktop/cradle/src/techne/contract.ts';
 import {resolveActionRoute} from '../../../desktop/cradle/src/techne/m0m5/adapter.ts';
-import type {HostedAppState as CradleHostedAppState, HostedAppMode, HostedTechneLens, HostedInstrument, HostedInstrumentDeterminants, HostedInstrumentParameters, HostedTorusSession, HostedAddress} from '../../../desktop/cradle/src/expressions/hostedApp'; import type {FramePresentation, FrameChromeReading} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageCommands.ts'; import {readFrameResearch, type FrameResearchReading} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/researchReading.ts'; import {readFrameStage, type FrameStageReading} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageReading.ts';
+import type {HostedAppState as CradleHostedAppState, HostedAppMode, HostedTechneLens, HostedInstrument, HostedInstrumentDeterminants, HostedInstrumentParameters, HostedTorusSession, HostedTorusClass, HostedAddress} from '../../../desktop/cradle/src/expressions/hostedApp'; import type {FramePresentation, FrameChromeReading} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageCommands.ts'; import {readFrameResearch, type FrameResearchReading} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/researchReading.ts'; import {readFrameStage, type FrameStageReading} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageReading.ts';
 export type {HostedAppMode, HostedTechneLens, HostedInstrument, HostedInstrumentDeterminants, HostedInstrumentParameters, HostedTorusSession, HostedAddress}; /** The cradle's reading and (T-FRAME-CHROME-ONTO-PLATES) the presentation the shell declared and the frame's chrome as data. */ export type HostedAppState = CradleHostedAppState & {presentation?: FramePresentation; chrome?: FrameChromeReading; /** lane W4-Technē: the research instruments' state as the frame holds it (researchReading.ts). */ research?: FrameResearchReading; /** lane W4-Technē: the procedural stage the native field last disclosed (stageReading.ts). */ instrumentStage?: FrameStageReading; /** W6: the live scene's M2 condition, its tattva and material fibre, as the native field last inspected it (instrumentCondition.ts). */ instrumentCondition?: FrameInstrumentCondition};
 export type {FrameStageReading, FrameStageSlot, FrameStageBinding} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageReading.ts';
 import {readFrameCondition, type FrameInstrumentCondition} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/instrumentCondition.ts';
@@ -29,7 +29,7 @@ export const DEEP_INSTRUMENT_IDS = TECHNE_INSTRUMENTS.filter((id): id is HostedT
 export const FRAME_EXPRESSION_OPERATIONS = new Set(['profile_define', 'profile_inspect', 'list', 'inspect', 'create', 'edit', 'open', 'open_file', 'save_as', 'save', 'export', 'fork', 'index', 'close', 'invoke_action', 'performance']);
 // The presets' owner path: an exact performance request, read by readFramePerformanceRequest (performanceBasis.ts).
 export {readFramePerformanceRequest, summarizePerformanceBases, refusePerformanceSave, recallPerformanceBasis, readPresetName, missingNativeReadings, REQUIRED_NATIVE_READINGS, PERFORMANCE_BASIS_SCHEMA} from './performanceBasis.ts';
-export type {FramePerformanceRequest, PerformanceAction, PerformanceReply, PerformanceBasisSummary} from './performanceBasis.ts';
+export type {FramePerformanceRequest, PerformanceAction, PerformanceReply, PerformanceBasisSummary, TorusKeptSummary} from './performanceBasis.ts';
 export const isHostedAppMode = (v: unknown): v is HostedAppMode => v === 'expressions' || v === 'techne' || v === 'live';
 export const isDeepInstrument = (v: unknown): v is HostedTechneLens => DEEP_INSTRUMENT_IDS.includes(v as HostedTechneLens);
 export const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
@@ -42,7 +42,7 @@ import {isStudioSection, type StudioSection} from '../../../desktop/cradle/expre
 /** The stage-control vocabulary (view, capture, present, export, import, tool, engine): one closed list for host, frame and shell. */
 export {STAGE_COMMANDS, STAGE_VIEW_ACTIONS, STAGE_CAPTURE_WIDTHS, STAGE_CAPTURE_ASPECTS, STAGE_EXPORT_FORMATS, STAGE_TOOLS, STAGE_TOOL_READINGS, STAGE_ENGINE_ACTIONS, STAGE_TAKE_MODES, STAGE_TRACK_ACTIONS, stageOneOf, stageRefusal,
   readStageRequest, stageRequestMessage, stageReplyMessage, readStageResult, readStageAudioClock, isStageSampleCursor, readStageJournal, stageJournalLanding, STAGE_JOURNAL_ACTS_MAX, STAGE_JOURNAL_BYTES_MAX, readStageTorusCheckpoint, STAGE_TORUS_CHECKPOINT_BYTES_MAX, STAGE_RENDER_FRAMES_MAX, STAGE_RENDER_ACTS_MAX, STAGE_INSTRUMENT_TIMED_KINDS, STAGE_EDIT_AHEAD_SECONDS, STAGE_JANKO_KEYS_MAX, readInstrumentEdit, STAGE_INSTRUMENT_CADENCES, STAGE_INSTRUMENT_LEVEL, STAGE_INSTRUMENT_SCALE_MAX, FRAME_PRESENTATIONS, FRAME_CHROME_HOMES, FRAME_CHROME_KINDS, FRAME_CHROME_LIMITS, readFrameChrome, type FramePresentation, type FrameChromeHome, type FrameChromeKind, type FrameChromeControl, type FrameChromeOption, type FrameChromeReading,
-  type StageCommand, type StageCommandName, type StageResult, type StageAudioClock, type StageJournalAct, type StagePerformanceJournal, type StageTorusCheckpoint, type StageTakeAct, type StageTakeRender, type StageKey, type StageViewAction, type StageCaptureSettings, type StageCaptureWidth, type StageCaptureAspect, type StageExportFormat, type StageTakeMode, type StageTrackAction,
+  type StageCommand, type StageCommandName, type StageResult, type StageAudioClock, type StageJournalAct, type StagePerformanceJournal, type StageTorusCheckpoint, type StageTorusSound, type StageSoundMove, type StageTakeAct, type StageTakeRender, type StageKey, type StageViewAction, type StageCaptureSettings, type StageCaptureWidth, type StageCaptureAspect, type StageExportFormat, type StageTakeMode, type StageTrackAction,
   type StageTool, type StageToolReading, type StageEngineAction, type InstrumentEdit,
 } from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageCommands.ts';
 import {stageOneOf, STAGE_TAKE_MODES, STAGE_TOOL_READINGS, FRAME_PRESENTATIONS, readFrameChrome} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageCommands.ts';
@@ -106,10 +106,90 @@ export function readHostedTorus(raw: unknown): HostedTorusSession | string {
   if (!boundedText(raw.carrier_drive, 64)) return 'carrier_drive: expected the owner\'s word';
   // Strike (O-I #854): an owner from before it states none, and then the session has none; a stated Strike outside 0..1 refuses it.
   if (t.strike !== undefined && (!finite(t.strike) || t.strike < 0 || t.strike > 1)) return 'settings: expected Strike as a share 0..1';
+  // The maqām, the lens's material and the twelve classes (O-I #855): an owner from before them states none, and then the session
+  // carries none; one stated is read exact or refuses the session by name.
+  const maqam = raw.maqam === undefined ? undefined : readTorusMaqam(raw.maqam);
+  if (typeof maqam === 'string') return `maqam: ${maqam}`;
+  const material = raw.material === undefined ? undefined : readTorusMaterial(raw.material);
+  if (typeof material === 'string') return `material: ${material}`;
+  const classes = raw.classes === undefined ? undefined : readTorusClasses(raw.classes);
+  if (typeof classes === 'string') return `classes: ${classes}`;
   return {settings: {rate, fundamental, carrier: t.carrier, shape: t.shape, tuning: t.tuning, polyphony: t.polyphony, tempo_bpm: t.tempo_bpm,
     ...(t.strike !== undefined ? {strike: t.strike as number} : {})},
     steps_per_second: raw.steps_per_second, band: raw.band, fundamental_hz: raw.fundamental_hz, map_hz: raw.map_hz, figure: raw.figure as HostedTorusSession['figure'],
-    comma_cents: raw.comma_cents, notes: raw.notes, resident_tunings: [...raw.resident_tunings] as HostedTorusSession['resident_tunings'], carrier_drive: raw.carrier_drive};
+    comma_cents: raw.comma_cents, notes: raw.notes, resident_tunings: [...raw.resident_tunings] as HostedTorusSession['resident_tunings'], carrier_drive: raw.carrier_drive,
+    ...(maqam ? {maqam} : {}), ...(material ? {material} : {}), ...(classes ? {classes} : {})};
+}
+
+const textOrNull = (v: unknown): v is string | null => v === null || boundedText(v, 512);
+const share = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= 1;
+const absentOf = (raw: Record<string, unknown>): {absent: string} | null =>
+  Object.keys(raw).length === 1 && boundedText(raw.absent, 1024) ? {absent: raw.absent as string} : null;
+/** The M2 condition's maqām (QL scene_field.rs maqam_reading): its eight pitches while the scene holds its voices, or the owner's
+ * words for their absence, exactly one of the two. */
+function readTorusMaqam(raw: unknown): NonNullable<HostedTorusSession['maqam']> | string {
+  if (!object(raw)) return 'expected the M2 condition\'s maqām';
+  if (!textOrNull(raw.name) || !textOrNull(raw.coordinate) || !textOrNull(raw.role) || !textOrNull(raw.tuning) || !textOrNull(raw.standing)
+    || !(raw.tonic_hz === null || (typeof raw.tonic_hz === 'number' && Number.isFinite(raw.tonic_hz) && raw.tonic_hz > 0)))
+    return 'expected its name, coordinate, role, tonic, tuning and standing, each or null';
+  const pitches = raw.pitches_hz === null ? null : Array.isArray(raw.pitches_hz) && raw.pitches_hz.length > 0
+    && raw.pitches_hz.every(v => typeof v === 'number' && Number.isFinite(v) && v > 0) ? [...raw.pitches_hz as number[]] : undefined;
+  if (pitches === undefined) return 'pitches_hz: expected its pitches, each a frequency, or null';
+  if (!(raw.absent === null || boundedText(raw.absent, 1024))) return 'absent: expected the owner\'s words or null';
+  if ((pitches === null) === (raw.absent === null)) return 'expected its pitches or the words for their absence, exactly one';
+  return {name: raw.name, coordinate: raw.coordinate, role: raw.role, tonic_hz: raw.tonic_hz as number | null, tuning: raw.tuning,
+    standing: raw.standing, pitches_hz: pitches, absent: raw.absent as string | null};
+}
+/** The lens's material (QL m2_material.rs LensMaterial), or the owner's words for none. */
+function readTorusMaterial(raw: unknown): NonNullable<HostedTorusSession['material']> | string {
+  if (!object(raw)) return 'expected the lens\'s material or the words for none';
+  const none = absentOf(raw);
+  if (none) return none;
+  if (!boundedText(raw.lens, 16) || !boundedText(raw.partner, 16) || (raw.face !== 'day' && raw.face !== 'night')
+    || !Number.isSafeInteger(raw.position) || (raw.position as number) < 0 || (raw.position as number) > 5 || (raw.valence !== 1 && raw.valence !== -1))
+    return 'expected the lens, its partner, face, position 0..5 and valence ±1';
+  if (!Array.isArray(raw.colour_rgb) || raw.colour_rgb.length !== 3 || !raw.colour_rgb.every(share)) return 'colour_rgb: expected three channels 0..1';
+  if (![raw.roughness, raw.elasticity, raw.particle_affinity, raw.tension].every(share)) return 'expected roughness, elasticity, particle affinity and tension, each 0..1';
+  if (!boundedText(raw.standing, 64) || !boundedText(raw.law, 1024)) return 'expected its standing and law';
+  return {lens: raw.lens as string, partner: raw.partner as string, face: raw.face, position: raw.position as number, valence: raw.valence,
+    colour_rgb: [...raw.colour_rgb] as [number, number, number], roughness: raw.roughness as number, elasticity: raw.elasticity as number,
+    particle_affinity: raw.particle_affinity as number, tension: raw.tension as number, standing: raw.standing as string, law: raw.law as string};
+}
+/** The twelve classes (QL scene_field.rs class_sounds), in class order, or the owner's words for none. */
+function readTorusClasses(raw: unknown): NonNullable<HostedTorusSession['classes']> | string {
+  if (!object(raw)) return 'expected the twelve classes or the words for none';
+  const none = absentOf(raw);
+  if (none) return none;
+  if (!TORUS_TUNINGS.includes(raw.tuning as never)) return 'tuning: expected logic, maqam or sky';
+  if (typeof raw.steps !== 'number' || !Number.isFinite(raw.steps) || !boundedText(raw.law, 1024)) return 'expected the steps read and the law';
+  if (!Array.isArray(raw.by_class) || raw.by_class.length !== 12) return 'by_class: expected the twelve classes';
+  const rows: HostedTorusClass[] = [];
+  for (const [c, row] of raw.by_class.entries()) {
+    const angle = (v: unknown) => typeof v === 'number' && Number.isFinite(v);
+    if (!object(row) || row.pitch_class !== c || !boundedText(row.pitch_name, 16) || !object(row.key) || !Number.isSafeInteger(row.key.row)
+      || !Number.isSafeInteger(row.key.column) || !object(row.point) || !angle(row.point.theta) || !angle(row.point.phi) || !angle(row.point.arc)
+      || !Array.isArray(row.sounds)) return `by_class[${c}]: expected class ${c} with its name, key, point and sounds`;
+    const sounds = row.sounds.map(v => object(v) && boundedText(v.mode_ref, 128) && typeof v.frequency_hz === 'number' && Number.isFinite(v.frequency_hz)
+      && v.frequency_hz > 0 && typeof v.coupling === 'number' && Number.isFinite(v.coupling)
+      ? {mode_ref: v.mode_ref as string, frequency_hz: v.frequency_hz, coupling: v.coupling} : null);
+    if (sounds.some(v => v === null)) return `by_class[${c}].sounds: expected each voice's mode, frequency and coupling`;
+    rows.push({pitch_class: c, pitch_name: row.pitch_name as string, key: {row: row.key.row as number, column: row.key.column as number},
+      point: {theta: row.point.theta as number, phi: row.point.phi as number, arc: row.point.arc as number},
+      sounds: sounds as HostedTorusClass['sounds'][number][]});
+  }
+  return {tuning: raw.tuning as HostedTorusSession['resident_tunings'][number], steps: raw.steps, by_class: rows, law: raw.law as string};
+}
+
+/** Where the Torus is heard from (O-I 856), exactly: Receiver On or Off, the owner's context and its refusal. The place is the listener's
+ * own and is never announced, so any other field is refused by name. */
+function readHostedReceiver(raw: unknown): NonNullable<HostedInstrumentParameters['receiver']> | string {
+  if (!object(raw)) return 'expected on, context and refusal';
+  const other = Object.keys(raw).find(key => key !== 'on' && key !== 'context' && key !== 'refusal');
+  if (other !== undefined) return `${other}: not announced; where the Torus is heard from is the listener's own`;
+  if (typeof raw.on !== 'boolean') return 'on: expected a boolean';
+  if (raw.context !== 'world' && raw.context !== 'personal') return "context: expected 'world' or 'personal'";
+  if (raw.refusal !== null && !boundedText(raw.refusal, 512)) return 'refusal: expected bounded text or null';
+  return {on: raw.on, context: raw.context, refusal: raw.refusal as string | null};
 }
 
 /** The owner's presentation parameters, exact or refused: a value the owner does not state is refused by name, never defaulted. */
@@ -133,8 +213,11 @@ export function readHostedParameters(raw: unknown): HostedInstrumentParameters |
   // The Torus's M1′ session: exact or the fault named; a frame that announces none carries none.
   const torus = raw.torus === undefined ? undefined : readHostedTorus(raw.torus);
   if (typeof torus === 'string') return `parameters.torus${/^[a-z_]+:/.test(torus) ? '.' : ': '}${torus}`;
+  // Where the Torus is heard from: exact or the fault named; a frame that announces none carries none (O-I 856).
+  const receiver = raw.receiver === undefined ? undefined : readHostedReceiver(raw.receiver);
+  if (typeof receiver === 'string') return `parameters.receiver${/^[a-z_]+:/.test(receiver) ? '.' : ': '}${receiver}`;
   return {muted: raw.muted, level: raw.level, scale: {unitsPerMetre: scale.unitsPerMetre as number | null, mode: scale.mode}, cadence, refusal: raw.refusal as string | null,
-    ...(effects ? {effects} : {}), ...(torus ? {torus} : {})};
+    ...(effects ? {effects} : {}), ...(torus ? {torus} : {}), ...(receiver ? {receiver} : {})};
 }
 
 /** The instrument the frame announces: the owner reading (ql.instrument-reading/v1, parsed by the shell's reader), the owner's determinants and its presentation parameters.

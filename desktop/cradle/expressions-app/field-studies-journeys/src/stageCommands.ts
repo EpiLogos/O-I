@@ -7,7 +7,7 @@ import {NATIVE_BINDINGS} from './nativeParameters.js';
 import {effectChainRefusal, readEffectOperands, type EffectValue, type PresentationEffect} from './native-field/effectsLaw.js';
 import {CURVE_TYPES, SWITCH_MODES, TRANSITION_KINDS, WIPE_DIRECTIONS, type CurveType, type SwitchMode, type TransitionKind, type WipeDirection} from '../../src/engine/transitionMath.js';
 import {TIMELINE_CATEGORY_IDS} from './timelineCategoryIds.js';
-export const STAGE_COMMANDS = ['view', 'capture', 'present', 'export', 'import', 'tool', 'engine', 'take', 'tracks', 'automation', 'live', 'instrument', 'janko', 'strike-at', 'audio-clock', 'performance-journal', 'torus', 'render-take', 'presentation', 'chrome', 'sound', 'journey', 'canvas', 'timeline', 'procedural-stage'] as const;
+export const STAGE_COMMANDS = ['view', 'capture', 'present', 'export', 'import', 'tool', 'engine', 'take', 'tracks', 'automation', 'live', 'instrument', 'janko', 'strike-at', 'audio-clock', 'performance-journal', 'torus', 'torus-sound', 'render-take', 'presentation', 'chrome', 'sound', 'journey', 'canvas', 'timeline', 'procedural-stage'] as const;
 /** The Ta-Onta procedural stage's own operations on the native field (DLW §21.2, the Torus's Stage page; QL-MEF continuous/host.rs
  * stage_operation): read its state, evaluate a procedure, bind one to the live flow within a budget, unbind it, retire its slots. Each
  * runs the native field's own controller operation (nativeField.ts stage), through the kernel's native_expression exchange. */
@@ -250,6 +250,8 @@ export type InstrumentEdit =
   | {kind: 'damping'; q_factor: number}
   | {kind: 'torus'; edit: TorusSettingsEdit}
   | {kind: 'follow-scale'}
+  /** Receiver On or Off (DLW manual §21.2 View; QL-MEF `torus-receiver`, O-I 856): the camera is the place the Torus is heard from, or the world. */
+  | {kind: 'receiver'; on: boolean}
   | {kind: 'effect'; effect: PresentationEffect; key: string; value: EffectValue}
   | {kind: 'effect-chain'; chain: PresentationEffect[]};
 /** A closed, validated instrument edit, or null. Every operand is exact: a determinant outside the owner's range is refused here. */
@@ -274,6 +276,7 @@ export function readInstrumentEdit(raw: unknown): InstrumentEdit | null {
     case 'damping': return closed(raw, ['kind', 'q_factor']) && typeof raw.q_factor === 'number' && Number.isFinite(raw.q_factor) && raw.q_factor >= STAGE_INSTRUMENT_Q.min && raw.q_factor <= STAGE_INSTRUMENT_Q.max ? {kind: 'damping', q_factor: raw.q_factor} : null;
     case 'torus': { const edit = closed(raw, ['kind', 'edit']) ? readTorusSettingsEdit(raw.edit) : null; return edit ? {kind: 'torus', edit} : null; }
     case 'follow-scale': return closed(raw, ['kind']) ? {kind: 'follow-scale'} : null;
+    case 'receiver': return closed(raw, ['kind', 'on']) && typeof raw.on === 'boolean' ? {kind: 'receiver', on: raw.on} : null;
     case 'effect-chain': return closed(raw, ['kind', 'chain']) && effectChainRefusal(raw.chain) === null ? {kind: 'effect-chain', chain: [...(raw.chain as PresentationEffect[])]} : null;
     case 'effect': { const operands = closed(raw, ['kind', 'effect', 'key', 'value']) ? readEffectOperands(raw) : null; return operands ? {kind: 'effect', ...operands} : null; }
   }
@@ -328,6 +331,13 @@ export type StageCommand =
   /** The Torus set again from a checkpoint its owner gave (QL-MEF `torus-restore`): the owner judges the checkpoint and refuses in words one
    * that is not of this body; the answer names the sample it rings again from. */
   | {command: 'torus'; action: 'restore'; checkpoint: StageTorusCheckpoint}
+  /** A sound saved from the Torus as it rings (O-I #852, DLW §21.2 "Save the instrument as you tuned it"; kernel `torus_sound`,
+   * `oi.torus-sound/v1`): the owner keeps a checkpoint, and the kernel seals the sound from the checkpoint it relayed, by `name`. The torus
+   * is its body. A read; the answer carries the sealed sound. */
+  | {command: 'torus-sound'; action: 'save'; name: string}
+  /** A kept sound opened (kernel `torus_sound_open`, `oi.torus-sound-opening/v1`): against a fresh checkpoint of the Torus as it stands now,
+   * the owner restores the sound as saved; the answer names the sample it rings again from and what has moved since it was saved. */
+  | {command: 'torus-sound'; action: 'open'; sound: StageTorusSound}
   /** A take rendered offline through the M1′ session for Export Audio (QL-MEF `torus-render`, `ql.torus-render/v1`): a second owner of the same
    * scene set to the checkpoint, each act made at its sample (each in [the checkpoint's sample, + frames), in the order of their samples),
    * `frames` of its PCM. The live owner neither moves nor sounds. The answer carries a StageTakeRender. */
@@ -440,6 +450,35 @@ export function readStageJournal(raw: unknown): StagePerformanceJournal | null {
 export interface StageTorusCheckpoint {schema: 'ql.torus-checkpoint/v1'; taken_at_samples: string; sample_rate: number; [owner: string]: unknown}
 /** The most bytes one checkpoint takes on the channel: the scene's event (with its sky) is most of it, some 14 kB for a scene today. */
 export const STAGE_TORUS_CHECKPOINT_BYTES_MAX = 1024 * 1024;
+/** A sound the kernel sealed (kernel expression_performance/kept.rs TorusSound, `oi.torus-sound/v1`): its own digest, its name, the
+ * checkpoint it was saved from and the kernel's seal. The frame carries it whole; the kernel judges it. */
+export interface StageTorusSound {schema: 'oi.torus-sound/v1'; sound_ref: string; name: string; [kernel: string]: unknown}
+/** A source the sound's tuning was read from that has moved since it was saved (kernel kept.rs SoundMove): which, its reading then and now,
+ * and the kernel's words. */
+export interface StageSoundMove {source: string; saved: string; now: string; words: string}
+/** The kernel's own bound on a sound's name (kept.rs MAX_NAME), and on a sound the frame carries: its checkpoint and a body beside it. */
+export const STAGE_TORUS_SOUND_NAME_MAX = 120;
+export const STAGE_TORUS_SOUND_BYTES_MAX = 2 * STAGE_TORUS_CHECKPOINT_BYTES_MAX;
+/** A sound's name as the kernel takes one: 1 to 120 characters, not blank, no control character. */
+export const isStageSoundName = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0 &&
+  [...value].length <= STAGE_TORUS_SOUND_NAME_MAX && !/[\u0000-\u001f\u007f-\u009f]/.test(value);
+/** A StageTorusSound read within its bounds, or null. */
+export function readStageTorusSound(raw: unknown): StageTorusSound | null {
+  if (!plain(raw) || raw.schema !== 'oi.torus-sound/v1' || !bounded(raw.sound_ref) || !isStageSoundName(raw.name)) return null;
+  let bytes: number;
+  try { bytes = new TextEncoder().encode(JSON.stringify(raw)).length; } catch { return null; }
+  return bytes <= STAGE_TORUS_SOUND_BYTES_MAX ? raw as StageTorusSound : null;
+}
+const STAGE_SOUND_MOVES_MAX = 16;
+export function readStageSoundMoves(raw: unknown): StageSoundMove[] | null {
+  if (!Array.isArray(raw) || raw.length > STAGE_SOUND_MOVES_MAX) return null;
+  const moved: StageSoundMove[] = [];
+  for (const move of raw) {
+    if (!plain(move) || !closed(move, ['source', 'saved', 'now', 'words']) || ![move.source, move.saved, move.now, move.words].every(bounded)) return null;
+    moved.push({source: move.source as string, saved: move.saved as string, now: move.now as string, words: move.words as string});
+  }
+  return moved;
+}
 /** A StageTorusCheckpoint read within its bounds, or null. */
 export function readStageTorusCheckpoint(raw: unknown): StageTorusCheckpoint | null {
   if (!plain(raw) || raw.schema !== 'ql.torus-checkpoint/v1' || !isStageSampleCursor(raw.taken_at_samples)) return null;
@@ -512,9 +551,10 @@ export const STAGE_EDIT_AHEAD_SECONDS = 30;
 
 /** A stage answer. The audio clock's answer carries the clock; a strike of keys, the keys whose notes made way; a strike of keys or at
  * points, an edit that acts on the owner and a restore, the sample its act landed at (O-I 855); the journal's read, the owner's journal; a
- * kept Torus, its checkpoint; a rendered take, its render. */
+ * kept Torus, its checkpoint; a rendered take, its render; a saved sound, the sound; an opened one, where it rang again from and what has
+ * moved since it was saved (O-I #852). */
 export type StageResult = {ok: true; clock?: StageAudioClock; made_way?: StageKey[]; landed_at_samples_elapsed?: string; journal?: StagePerformanceJournal;
-  checkpoint?: StageTorusCheckpoint; render?: StageTakeRender} | {ok: false; error: string};
+  checkpoint?: StageTorusCheckpoint; render?: StageTakeRender; sound?: StageTorusSound; moved?: StageSoundMove[]} | {ok: false; error: string};
 
 const BASE_KEYS = ['v', 'kind', 'command', 'req'] as const;
 const SETTING_KEYS = ['width', 'aspect', 'includeText', 'transparent'] as const;
@@ -728,6 +768,13 @@ export function readStageRequest(raw: unknown): {req: number; command: StageComm
       const checkpoint = readStageTorusCheckpoint(raw.checkpoint);
       return checkpoint ? {req, command: {command: 'torus', action: 'restore', checkpoint}} : null;
     }
+    case 'torus-sound': {
+      // A sound saved by its name, or a kept one opened whole (O-I #852).
+      if (raw.action === 'save') return closed(raw, [...BASE_KEYS, 'action', 'name']) && isStageSoundName(raw.name) ? {req, command: {command: 'torus-sound', action: 'save', name: raw.name}} : null;
+      if (raw.action !== 'open') return null;
+      const sound = closed(raw, [...BASE_KEYS, 'action', 'sound']) ? readStageTorusSound(raw.sound) : null;
+      return sound ? {req, command: {command: 'torus-sound', action: 'open', sound}} : null;
+    }
     case 'render-take': {
       // A take rendered offline (O-I 855): every act within the take and in the order of its samples, or the whole take is refused.
       if (!closed(raw, [...BASE_KEYS, 'checkpoint', 'acts', 'frames'])) return null;
@@ -779,7 +826,8 @@ export function stageReplyMessage(req: number, result: StageResult, command?: St
   const outcome = result.ok ? {ok: true, ...(result.clock ? {clock: result.clock} : {}), ...(result.made_way?.length ? {made_way: result.made_way} : {}),
     ...(result.landed_at_samples_elapsed !== undefined ? {landed_at_samples_elapsed: result.landed_at_samples_elapsed} : {}),
     ...(result.journal ? {journal: result.journal} : {}), ...(result.checkpoint ? {checkpoint: result.checkpoint} : {}),
-    ...(result.render ? {render: result.render} : {})} : {ok: false, error: String(result.error).replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, 512) || 'The application refused the stage command.'};
+    ...(result.render ? {render: result.render} : {}), ...(result.sound ? {sound: result.sound} : {}),
+    ...(result.moved ? {moved: result.moved} : {})} : {ok: false, error: String(result.error).replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, 512) || 'The application refused the stage command.'};
   if (command?.command === 'capture') return {v: 1, kind: 'host-capture-result', req, ...outcome};
   return {v: 1, kind: 'host-command-result', ...(command ? {command: command.command} : {}), req, ...outcome};
 }
@@ -819,6 +867,16 @@ export function readStageResult(raw: unknown): ({req: number} & StageResult) | n
     const render = readStageTakeRender(raw.render);
     if (!render) return null;
     result.render = render;
+  }
+  if (raw.sound !== undefined) {
+    const sound = readStageTorusSound(raw.sound);
+    if (!sound) return null;
+    result.sound = sound;
+  }
+  if (raw.moved !== undefined) {
+    const moved = readStageSoundMoves(raw.moved);
+    if (!moved) return null;
+    result.moved = moved;
   }
   return result;
 }

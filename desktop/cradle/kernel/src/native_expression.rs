@@ -55,6 +55,25 @@ pub enum Request {
         lease: String,
         checkpoint_sha256: String,
     },
+    /// Save the Torus as it stood at the checkpoint `checkpoint_sha256` its owner gave under the lease, as a
+    /// sound named `name` on its body (O-I #852; kept.rs): the torus, or a form made a body (its owner's
+    /// `ql.physical-body-preparation/v1`). No worker request: the answer is the sealed `oi.torus-sound/v1` a
+    /// performance keeps (`KeepTorusSound`), or a refusal in words.
+    TorusSound {
+        lease: String,
+        checkpoint_sha256: String,
+        name: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        body: Option<Value>,
+    },
+    /// Open a kept sound against the Torus as its owner gave it now (the checkpoint `now_sha256`, under the
+    /// lease): the answer is the restore its owner is sent, the sound as saved, and what has moved since
+    /// (`oi.torus-sound-opening/v1`). No worker request.
+    TorusSoundOpen {
+        lease: String,
+        sound: Box<crate::expression_performance::kept::TorusSound>,
+        now_sha256: String,
+    },
     /// Ask QL to compose a K² binding from a bounded consumer request, then
     /// open it exactly as `Open` does. The request never names a program.
     Compose {
@@ -935,7 +954,7 @@ impl Manager {
                     .map_err(|_| "native pipe closed".to_string())
                     .and_then(|_| owner.receive());
                 match reply {
-                    Ok(reply)
+                    Ok(mut reply)
                         if reply["schema"] == "ql.field-host-receipt/v1"
                             && reply["instance_ref"] == owner.identity["instance_ref"]
                             && cursor(&reply["request_id"]).ok() == Some(id)
@@ -948,6 +967,7 @@ impl Manager {
                         owner.retain_acknowledgement(&reply, Some(request_observation));
                         if reply["status"] == "ok" {
                             owner.take.observe(&command, &reply);
+                            labelled(&owner.take, &command, &mut reply);
                         }
                         Ok(reply)
                     }
@@ -1055,6 +1075,42 @@ impl Manager {
                     .take
                     .seal(&checkpoint_sha256, &owner.lease, &owner.identity)?;
                 serde_json::to_value(take).map_err(|e| e.to_string())
+            }
+            Request::TorusSound {
+                lease,
+                checkpoint_sha256,
+                name,
+                body,
+            } => {
+                let owner = self
+                    .active
+                    .as_ref()
+                    .ok_or("native-expression.unavailable: no active owner")?;
+                if lease != owner.lease {
+                    return Err("native-expression.foreign_lease".into());
+                }
+                use crate::expression_performance::kept::SoundBody;
+                let body = match body {
+                    None => SoundBody::Torus,
+                    Some(prepared) => SoundBody::Form { prepared },
+                };
+                let sound = owner.take.sound(&checkpoint_sha256, &name, body)?;
+                serde_json::to_value(sound).map_err(|e| e.to_string())
+            }
+            Request::TorusSoundOpen {
+                lease,
+                sound,
+                now_sha256,
+            } => {
+                let owner = self
+                    .active
+                    .as_ref()
+                    .ok_or("native-expression.unavailable: no active owner")?;
+                if lease != owner.lease {
+                    return Err("native-expression.foreign_lease".into());
+                }
+                let opening = sound.open(owner.take.given(&now_sha256)?)?;
+                serde_json::to_value(opening).map_err(|e| e.to_string())
             }
             Request::Close { lease } => {
                 if let Some(owner) = &self.active {
@@ -1233,7 +1289,7 @@ impl Manager {
 /// performance acts on the scene owner, relayed the same way, as are the Torus
 /// kept, set again and a take rendered offline on a second owner of the scene
 /// (torus-checkpoint, torus-restore, torus-render; O-I 855).
-const EXCHANGE_OPERATIONS: [&str; 25] = [
+const EXCHANGE_OPERATIONS: [&str; 26] = [
     "read",
     "inspect",
     "advance",
@@ -1259,10 +1315,32 @@ const EXCHANGE_OPERATIONS: [&str; 25] = [
     "torus-checkpoint",
     "torus-restore",
     "torus-render",
+    // Where the Torus is heard from (QL-MEF `torus-receiver`, O-I 856): a receiving setting of the owner.
+    "torus-receiver",
 ];
 
 fn exchange_admits(request: &Value) -> bool {
     EXCHANGE_OPERATIONS.contains(&request["command"]["operation"].as_str().unwrap_or(""))
+}
+
+/// A Torus checkpoint the owner gave is relayed under the name a sound and a take are saved from
+/// (`torus_checkpoint_sha256`, its `value_sha256` as the take witness keeps it): the frame cannot
+/// reproduce that digest, and a checkpoint the witness did not keep is relayed unnamed.
+fn labelled(
+    take: &crate::expression_performance::torus::TakeWitness,
+    command: &Value,
+    reply: &mut Value,
+) {
+    if command["operation"] != "torus-checkpoint" {
+        return;
+    }
+    let Ok(sha256) = crate::expression_performance::torus::value_sha256(&reply["torus_checkpoint"])
+    else {
+        return;
+    };
+    if take.given(&sha256).is_ok() {
+        reply["torus_checkpoint_sha256"] = json!(sha256);
+    }
 }
 
 const MAX_PARTICLES: u64 = 1_048_576;
@@ -3063,6 +3141,7 @@ for line in sys.stdin: time.sleep(60)
             "score-resolv",
             "torus-checkpoints",
             "torus_render",
+            "torus_receiver",
         ] {
             assert!(
                 !exchange_admits(&json!({"command":{"operation":op}})),
@@ -4071,6 +4150,200 @@ print(json.dumps({"ok": True, "action": action, "data": data}))
 
     /// O-I #855: the kernel seals a Torus take from what it relayed under its lease to a live owner: the
     /// checkpoint the owner gave, each act at the sample it landed at, the render's parts and their PCM.
+    #[cfg(unix)]
+    #[test]
+    fn a_torus_sound_is_saved_from_a_checkpoint_the_owner_gave_and_reopens_as_saved() {
+        use crate::expression_performance::kept::TorusSound;
+        use crate::expression_performance::torus::value_sha256;
+        use crate::expression_performance::{Performance, PerformanceOperation};
+        use std::os::unix::fs::PermissionsExt;
+        let dir =
+            std::env::temp_dir().join(format!("native-torus-sound-test-{}", std::process::id()));
+        fs::create_dir_all(&dir).unwrap();
+        let script = dir.join("host.py");
+        fs::write(&script, r#"#!/usr/bin/env python3
+import json,sys
+base={'schema':'ql.field-host-receipt/v1','available':True,'instance_ref':'test:instance'}
+state={'samples':0,'end':0,'tick':7}
+def field(): return {'event_ref':'test:event','subject_ref':'test:subject','generation':'0','samples_elapsed':str(state['samples']),'sample_rate':48000,'audio':[]}
+def kept(at): return {'schema':'ql.torus-checkpoint/v1','taken_at_samples':str(at),'sample_rate':48000,'event':{'m2':{},'m3':{},'m3_commands':[]},'seeds':{'tick12':state['tick']},'shape_ref':'shape:torus/1','damping_per_second':0.5,'voices':['scene:logic/0'],'amplitudes':[[0.001,0.0]],'session':{'settings':{'tuning':'logic','tempo_bpm':120.0}},'law':'kept'}
+print(json.dumps(dict(base,status='ready',last_request_id='0',field=field())),flush=True)
+for line in sys.stdin:
+  r=json.loads(line); c=r['command']; op=c['operation']; extra={}
+  if op=='advance': state['samples']+=c['frames']
+  elif op=='torus-set': state['tick']+=1
+  elif op=='torus-checkpoint': extra['torus_checkpoint']=kept(state['samples'])
+  elif op=='torus-render':
+    start=int(c['checkpoint']['taken_at_samples']) if 'checkpoint' in c else state['end']
+    end=start+c['frames']; state['end']=end
+    extra['torus_render']={'schema':'ql.torus-render/v1','from_samples':str(start),'frames':c['frames'],'sample_rate':48000,'audio':[(i%7)/7 for i in range(start,end)],'made_way':[],'checkpoint':kept(end),'continues':'render:%d'%end}
+  print(json.dumps(dict(base,status='ok',request_id=r['request_id'],last_request_id=r['request_id'],field=field(),**extra)),flush=True)
+"#).unwrap();
+        fs::set_permissions(&script, fs::Permissions::from_mode(0o700)).unwrap();
+        crate::test_stub::settle_stub(&script);
+        let _env = EnvGuard::set(&[
+            ("OI_QL_FIELD_HOST_BIN", Some(script.as_os_str())),
+            ("OI_QL_FIELD_WORKER_BIN", Some(script.as_os_str())),
+        ]);
+        let mut manager = Manager::default();
+        let opened = manager.open(&json!({"schema":"oi.native-expression-binding/v1","host":{"instance_ref":"test:instance"},"presentation":{"units_per_metre":1,"slots_a":[0],"slots_b":[0]}}).to_string(), Value::Null).unwrap();
+        let lease = opened["lease"].as_str().unwrap().to_owned();
+        let client = CentralClient::with("/nonexistent".into(), None, String::new());
+        let mut id = 0u64;
+        let mut exchange = |manager: &mut Manager, command: Value| {
+            id += 1;
+            manager
+                .apply(
+                    &client,
+                    Request::Exchange {
+                        lease: lease.clone(),
+                        request: json!({"schema":"ql.field-host-request/v1","instance_ref":"test:instance",
+                            "event_ref":"test:event","subject_ref":"test:subject","request_id":id.to_string(),"command":command}),
+                    },
+                )
+                .unwrap()
+        };
+        exchange(&mut manager, json!({"operation":"advance","frames":9600}));
+        let answered = exchange(&mut manager, json!({"operation":"torus-checkpoint"}));
+        let kept = answered["torus_checkpoint"].clone();
+        let sha = value_sha256(&kept).unwrap();
+        // The kernel names each checkpoint it relays by the digest a sound and a take are saved from.
+        assert_eq!(
+            answered["torus_checkpoint_sha256"],
+            json!(sha),
+            "{answered}"
+        );
+        assert!(
+            exchange(&mut manager, json!({"operation":"advance","frames":0}))
+                .get("torus_checkpoint_sha256")
+                .is_none()
+        );
+        let save = |manager: &mut Manager, lease: &str, sha: &str| {
+            manager.apply(
+                &CentralClient::with("/nonexistent".into(), None, String::new()),
+                serde_json::from_value(json!({"operation":"torus_sound","lease":lease,
+                    "checkpoint_sha256":sha,"name":"Warm Logic"}))
+                .unwrap(),
+            )
+        };
+        assert!(save(&mut manager, "lease:foreign", &sha)
+            .unwrap_err()
+            .contains("foreign_lease"));
+        assert!(save(&mut manager, &lease, "sha256:none")
+            .unwrap_err()
+            .contains("No Torus checkpoint"));
+        let sound: TorusSound =
+            serde_json::from_value(save(&mut manager, &lease, &sha).unwrap()).unwrap();
+        sound.verify_seal().unwrap();
+        assert_eq!(
+            sound.opening(),
+            &kept,
+            "a sound is the Torus as its owner kept it"
+        );
+        // Kept in the Scene's performance; saved, closed and reopened, it opens as saved.
+        let performance = Performance::opened_by(vec![PerformanceOperation::KeepTorusSound {
+            sound: Box::new(sound.clone()),
+        }])
+        .unwrap();
+        let bytes = serde_json::to_vec(&performance).unwrap();
+        let reopened: Performance = serde_json::from_slice(&bytes).unwrap();
+        reopened.validate().unwrap();
+        assert_eq!(reopened.torus_kept.sounds, vec![sound.clone()]);
+        assert_eq!(reopened.torus_kept.sounds[0].opening(), &kept);
+        // And through the Scene's Edition: the edition restores it whole.
+        let edition = crate::expression_performance_assets::PerformancePartCatalog::default()
+            .appended(&reopened)
+            .unwrap();
+        assert_eq!(
+            edition.restore(0).unwrap(),
+            reopened,
+            "an Edition keeps the sound as kept"
+        );
+        // A frame's own record of a sound is never one.
+        let mut forged = sound.clone();
+        forged.seal = "hmac-sha256:00".into();
+        assert!(
+            Performance::opened_by(vec![PerformanceOperation::KeepTorusSound {
+                sound: Box::new(forged),
+            }])
+            .is_err()
+        );
+        // The owner as it stands now: nothing the sound's tuning was read from has moved.
+        let now = exchange(&mut manager, json!({"operation":"torus-checkpoint"}));
+        assert_eq!(
+            now["torus_checkpoint_sha256"],
+            json!(value_sha256(&now["torus_checkpoint"]).unwrap())
+        );
+        let now = now["torus_checkpoint"].clone();
+        assert!(sound.moved(&now).unwrap().is_empty());
+        // Opening it: the owner restores the checkpoint as saved, and the kernel says what has moved
+        // against the Torus as its owner gave it now.
+        let open = |manager: &mut Manager, sound: &TorusSound, now: &Value| {
+            manager.apply(
+                &CentralClient::with("/nonexistent".into(), None, String::new()),
+                serde_json::from_value(json!({"operation":"torus_sound_open","lease":lease,
+                    "sound":sound,"now_sha256":value_sha256(now).unwrap()}))
+                .unwrap(),
+            )
+        };
+        let opened = open(&mut manager, &reopened.torus_kept.sounds[0], &now).unwrap();
+        assert_eq!(opened["schema"], "oi.torus-sound-opening/v1");
+        assert_eq!(opened["sound_ref"], json!(sound.sound_ref));
+        assert_eq!(
+            opened["restore"],
+            json!({"operation":"torus-restore","checkpoint":kept}),
+            "it opens as saved"
+        );
+        assert_eq!(opened["moved"], json!([]));
+        // Vimarśā's seed moves; the sound still opens as saved, and says what moved.
+        exchange(
+            &mut manager,
+            json!({"operation":"torus-set","edit":{"polyphony":3}}),
+        );
+        let moved_now = exchange(&mut manager, json!({"operation":"torus-checkpoint"}))
+            ["torus_checkpoint"]
+            .clone();
+        let opened = open(&mut manager, &reopened.torus_kept.sounds[0], &moved_now).unwrap();
+        assert_eq!(
+            opened["restore"]["checkpoint"], kept,
+            "a moved source never changes what opens"
+        );
+        assert_eq!(opened["moved"].as_array().unwrap().len(), 1, "{opened}");
+        assert_eq!(opened["moved"][0]["source"], "seeds");
+        assert!(
+            opened["moved"][0]["words"]
+                .as_str()
+                .unwrap()
+                .contains("seed"),
+            "{opened}"
+        );
+        // Against a Torus its owner never gave, or a sound altered since it was kept, nothing opens.
+        assert!(open(
+            &mut manager,
+            &sound,
+            &json!({"schema":"ql.torus-checkpoint/v1"})
+        )
+        .unwrap_err()
+        .contains("No Torus checkpoint"));
+        let mut altered = sound.clone();
+        altered.name = "Cold Logic".into();
+        assert!(open(&mut manager, &altered, &now)
+            .unwrap_err()
+            .contains("altered"));
+        manager
+            .apply(
+                &client,
+                Request::Close {
+                    lease: lease.clone(),
+                },
+            )
+            .unwrap();
+        assert!(save(&mut manager, &lease, &sha)
+            .unwrap_err()
+            .contains("no active owner"));
+        fs::remove_dir_all(dir).unwrap();
+    }
+
     #[cfg(unix)]
     #[test]
     fn a_torus_take_is_sealed_from_what_the_owner_was_sent_under_the_lease() {

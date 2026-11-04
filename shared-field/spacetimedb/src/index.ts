@@ -565,6 +565,79 @@ const exchangeUse = table(
   }
 );
 
+/*
+ * Worlds first (O-I #858). A world stands in the one field on its own, not
+ * inside a SharedField: it carries its owner (worldOwner, first creator, never
+ * served), its body record (`aikit.world-body/v1`, so every viewer draws the
+ * same planet) and whether its owner has linked it into the field. What its
+ * owner shows opens a clearing: to the field, to the public, or at one star.
+ * Everything else lies under one even cloud — nothing of it is stored here,
+ * and nothing a viewer may not see changes any row that viewer is served.
+ * A star is a SharedField row of kind `star` someone lit (fieldOwner is its
+ * lighter); a world gathered at a star is a relation, asked or gathered.
+ * All three are private tables behind caller-filtered views; no existing
+ * table changes, so today's rows read as they did.
+ */
+const worldBacking = table(
+  { name: 'world_backing', public: false },
+  {
+    worldRef: t.string().primaryKey(),
+    bodyJson: t.string(),
+    linked: t.bool(),
+    updatedAtMicros: t.u64(),
+  }
+);
+
+const worldOwner = table(
+  { public: false },
+  {
+    worldRef: t.string().primaryKey(),
+    ownerIdentity: t.identity().index('btree'),
+    createdAtMicros: t.u64(),
+  }
+);
+
+const worldClearingBacking = table(
+  { name: 'world_clearing_backing', public: false },
+  {
+    clearingKey: t.string().primaryKey(),
+    worldRef: t.string().index('btree'),
+    partRef: t.string(),
+    starRef: t.string().index('btree'),
+    audience: t.string(),
+    shownJson: t.string(),
+    shownAtMicros: t.u64(),
+  }
+);
+
+const worldGatheringBacking = table(
+  { name: 'world_gathering_backing', public: false },
+  {
+    gatheringKey: t.string().primaryKey(),
+    starRef: t.string().index('btree'),
+    worldRef: t.string().index('btree'),
+    state: t.string(),
+    askedAtMicros: t.u64(),
+    gatheredAtMicros: t.u64(),
+  }
+);
+
+/* A star's day (O-I #858, SF04): who came to the star, who was let in, who
+ * showed something there and who left, in the order they happened. It names
+ * that something was shown and of what kind, never what: what is shown at a
+ * star is the clearing's, and goes back under cloud with it. */
+const starDayBacking = table(
+  { name: 'star_day_backing', public: false },
+  {
+    rowId: t.u64().primaryKey().autoInc(),
+    starRef: t.string().index('btree'),
+    worldRef: t.string(),
+    what: t.string(),
+    kind: t.string(),
+    atMicros: t.u64(),
+  }
+);
+
 const spacetimedb = schema({
   sharedFieldBacking,
   fieldOwner,
@@ -597,6 +670,11 @@ const spacetimedb = schema({
   exchangeRequest,
   exchangeGrant,
   exchangeUse,
+  worldBacking,
+  worldOwner,
+  worldClearingBacking,
+  worldGatheringBacking,
+  starDayBacking,
 });
 
 export default spacetimedb;
@@ -1992,6 +2070,9 @@ export const put_shared_field = spacetimedb.reducer(
     requireEqual(contract.kind, args.kind, 'SharedField kind');
     requireEqual(contract.visibility, args.visibility, 'SharedField visibility');
     const existing = ctx.db.sharedFieldBacking.fieldRef.find(args.fieldRef);
+    // A star is lit, renamed and closed by its own acts (light_star,
+    // close_star), which keep its lighter's world gathered at it.
+    if (args.kind === STAR_KIND || existing?.kind === STAR_KIND) fail('A star is lit, renamed and closed from the World, not put as a field');
     if (existing) {
       requireFieldOwner(ctx, args.fieldRef);
       ctx.db.sharedFieldBacking.rowId.update({ ...existing, ...args });
@@ -3294,3 +3375,422 @@ function withdrawParticipantFieldTime(ctx: any, fieldRef: string, participantRef
     }
   }
 }
+
+/* ---------- Worlds first: a world, its clearings, the stars it gathers at (O-I #858) ---------- */
+
+const STAR_KIND = 'star';
+const STAR_REF_PATTERN = /^star:[A-Za-z0-9._:-]{1,200}$/;
+const STAR_COMES = new Set(['anyone', 'asked']);
+const CLEARING_AUDIENCES = new Set(['public', 'field', 'star']);
+const CLEARING_KINDS = new Set(['place', 'palace', 'portal', 'route', 'page', 'project', 'agent', 'skill', 'machine', 'work', 'reading', 'set']);
+const PART_REF_PATTERN = /^[^\u0000-\u001f\u007f]{1,512}$/;
+const WORLD_BODY_GENERATOR = 'fbm-sphere';
+const WORLD_BODY_KEYS = ['body_ref', 'seed', 'generator', 'landmass', 'climate', 'sky', 'landing'];
+
+function inRange(value: unknown, min: number, max: number): boolean {
+  return typeof value === 'number' && Number.isFinite(value) && value >= min && value <= max;
+}
+
+/** `aikit.world-body/v1`, exactly (the owner's record, ai-kit knowledge_wiki_facts.rs WorldBody; the shell's
+ * projections/atlas/src/globe/body.ts parseWorldBody): nothing rides along with it into the field. A newer
+ * generator version is stored as given; a shell that cannot draw it says so. */
+function requireWorldBody(bodyJson: string): Record<string, any> {
+  const body = requireJsonObject(bodyJson, 'The world body', 4096);
+  requireExactKeysOf(body, WORLD_BODY_KEYS, 'The world body');
+  if (typeof body.body_ref !== 'string' || !body.body_ref.trim() || body.body_ref.length > 256) fail('The world body names no body reference');
+  if (!Number.isInteger(body.seed) || body.seed < 0 || body.seed > 0xffffffff) fail('The seed is a whole number from 0 to 4294967295');
+  requireExactKeysOf(body.generator, ['id', 'version'], 'The world body generator');
+  if (body.generator.id !== WORLD_BODY_GENERATOR || !Number.isInteger(body.generator.version) || body.generator.version < 1 || body.generator.version > 64) {
+    fail(`The body is generated by ${WORLD_BODY_GENERATOR}, from version 1`);
+  }
+  requireExactKeysOf(body.landmass, ['sea_level', 'continents', 'relief', 'coast'], 'The landmass');
+  requireExactKeysOf(body.climate, ['warmth', 'moisture', 'ice_caps'], 'The climate');
+  requireExactKeysOf(body.sky, ['atmosphere', 'clouds', 'axial_tilt_deg'], 'The sky');
+  for (const [what, value] of [['Sea level', body.landmass.sea_level], ['Relief', body.landmass.relief], ['Warmth', body.climate.warmth],
+    ['Moisture', body.climate.moisture], ['Ice caps', body.climate.ice_caps], ['Atmosphere', body.sky.atmosphere], ['Clouds', body.sky.clouds]] as [string, unknown][]) {
+    if (!inRange(value, 0, 1)) fail(`${what} runs from 0 to 1`);
+  }
+  if (!inRange(body.landmass.continents, 0.6, 3.6)) fail('Continents runs from 0.6 to 3.6');
+  if (!['smooth', 'fjord', 'archipelago'].includes(body.landmass.coast)) fail('The coast is smooth, fjord or archipelago');
+  if (!inRange(body.sky.axial_tilt_deg, 0, 45)) fail('The axial tilt runs from 0 to 45 degrees');
+  if (body.landing !== undefined && body.landing !== null) {
+    requireExactKeysOf(body.landing, ['on_ref', 'lat', 'lon'], 'The landing');
+    if (typeof body.landing.on_ref !== 'string' || !body.landing.on_ref || body.landing.on_ref.length > 256 || !inRange(body.landing.lat, -90, 90) || !inRange(body.landing.lon, -180, 180)) {
+      fail('The landing names the body it lands on and a latitude and longitude on it');
+    }
+  }
+  refuseFieldTimeLeaks(body, 'The world body');
+  return body;
+}
+
+/** What a clearing shows: what kind of thing it is, its label, and where it stands on the body when it stands somewhere. */
+function requireShown(shownJson: string): Record<string, any> {
+  const shown = requireJsonObject(shownJson, 'What a clearing shows', 2048);
+  requireExactKeysOf(shown, ['kind', 'label', 'at'], 'What a clearing shows');
+  if (!CLEARING_KINDS.has(String(shown.kind))) fail('A clearing shows a place, palace, portal, route, page, project, agent, skill, machine, work, reading or set');
+  if (typeof shown.label !== 'string' || !shown.label.trim() || [...shown.label].length > 160) fail('A clearing is named in at most 160 characters');
+  if (shown.at !== undefined) {
+    requireExactKeysOf(shown.at, ['lat', 'lon'], 'Where a clearing stands');
+    if (!inRange(shown.at.lat, -90, 90) || !inRange(shown.at.lon, -180, 180)) fail('A clearing stands at a latitude and longitude on its body');
+  }
+  refuseFieldTimeLeaks(shown, 'A clearing');
+  return shown;
+}
+
+function clearingKey(worldRef: string, partRef: string, starRef: string): string {
+  return JSON.stringify([worldRef, partRef, starRef]);
+}
+
+function gatheringKey(starRef: string, worldRef: string): string {
+  return JSON.stringify([starRef, worldRef]);
+}
+
+function callerOwnsWorld(ctx: any, worldRef: string): boolean {
+  const owner = ctx.db.worldOwner.worldRef.find(worldRef);
+  return Boolean(owner && owner.ownerIdentity.isEqual(ctx.sender));
+}
+
+function requireOwnWorld(ctx: any, worldRef: string): any {
+  const world = ctx.db.worldBacking.worldRef.find(worldRef);
+  if (!world || !callerOwnsWorld(ctx, worldRef)) fail('That world is not yours');
+  return world;
+}
+
+/** The caller stands in the field when a world of theirs is linked into it. */
+function callerInField(ctx: any): boolean {
+  for (const owned of ctx.db.worldOwner.ownerIdentity.filter(ctx.sender)) {
+    if (ctx.db.worldBacking.worldRef.find(owned.worldRef)?.linked) return true;
+  }
+  return false;
+}
+
+function starRow(ctx: any, starRef: string): any {
+  const row = ctx.db.sharedFieldBacking.fieldRef.find(starRef);
+  return row && row.kind === STAR_KIND ? row : undefined;
+}
+
+function requireStar(ctx: any, starRef: string): any {
+  const row = starRow(ctx, starRef);
+  if (!row) fail('There is no such star');
+  return row;
+}
+
+function isGathered(ctx: any, starRef: string, worldRef: string): boolean {
+  return ctx.db.worldGatheringBacking.gatheringKey.find(gatheringKey(starRef, worldRef))?.state === 'gathered';
+}
+
+/** A linked world of the caller's is gathered at the star. */
+function callerGatheredAt(ctx: any, starRef: string): boolean {
+  for (const owned of ctx.db.worldOwner.ownerIdentity.filter(ctx.sender)) {
+    if (ctx.db.worldBacking.worldRef.find(owned.worldRef)?.linked && isGathered(ctx, starRef, owned.worldRef)) return true;
+  }
+  return false;
+}
+
+function callerCanSeeWorld(ctx: any, world: any): boolean {
+  return world.linked || callerOwnsWorld(ctx, world.worldRef);
+}
+
+/* A clearing is served to its world's owner; otherwise only while its world
+ * is linked, and then to the public, to anyone standing in the field, or to
+ * the star's lighter and the worlds gathered at that star while the showing
+ * world is gathered there too. Nothing else is served: the cloud is the
+ * absence of rows, the same over everything. */
+function callerCanSeeClearing(ctx: any, clearing: any): boolean {
+  const world = ctx.db.worldBacking.worldRef.find(clearing.worldRef);
+  if (!world) return false;
+  if (callerOwnsWorld(ctx, clearing.worldRef)) return true;
+  if (!world.linked) return false;
+  if (clearing.audience === 'public') return true;
+  if (clearing.audience === 'field') return callerInField(ctx);
+  if (clearing.audience !== 'star') return false;
+  if (!starRow(ctx, clearing.starRef) || !isGathered(ctx, clearing.starRef, clearing.worldRef)) return false;
+  return isFieldOwner(ctx, clearing.starRef) || callerGatheredAt(ctx, clearing.starRef);
+}
+
+/* Who has gathered at a star is served to whoever can see the star; a world
+ * that only asked waits at its edge, seen by the star's lighter and its own
+ * owner alone. */
+function callerCanSeeGathering(ctx: any, gathering: any): boolean {
+  const world = ctx.db.worldBacking.worldRef.find(gathering.worldRef);
+  const star = starRow(ctx, gathering.starRef);
+  if (!world || !star) return false;
+  if (callerOwnsWorld(ctx, gathering.worldRef)) return true;
+  if (!world.linked || !callerCanSeeField(ctx, star)) return false;
+  return gathering.state === 'gathered' || isFieldOwner(ctx, gathering.starRef);
+}
+
+function visibleWorldRows(ctx: any): any[] {
+  const rows = new Map<string, any>();
+  for (const row of ctx.db.worldBacking.iter()) if (callerCanSeeWorld(ctx, row)) rows.set(row.worldRef, row);
+  return Array.from(rows.values());
+}
+
+export const world = spacetimedb.view(
+  { name: 'world', public: true },
+  t.array(worldBacking.rowType),
+  (ctx) => visibleWorldRows(ctx)
+);
+
+/** The caller's own worlds, linked or not: which of the worlds it sees are its own. */
+export const my_world = spacetimedb.view(
+  { name: 'my_world', public: true },
+  t.array(worldBacking.rowType),
+  (ctx) => {
+    const rows: any[] = [];
+    for (const owned of ctx.db.worldOwner.ownerIdentity.filter(ctx.sender)) {
+      const row = ctx.db.worldBacking.worldRef.find(owned.worldRef);
+      if (row) rows.push(row);
+    }
+    return rows;
+  }
+);
+
+export const world_clearing = spacetimedb.view(
+  { name: 'world_clearing', public: true },
+  t.array(worldClearingBacking.rowType),
+  (ctx) => {
+    const rows: any[] = [];
+    for (const visible of visibleWorldRows(ctx)) {
+      for (const row of ctx.db.worldClearingBacking.worldRef.filter(visible.worldRef)) if (callerCanSeeClearing(ctx, row)) rows.push(row);
+    }
+    return rows;
+  }
+);
+
+/* A star's day is read by the star's lighter, and by whoever has a linked
+ * world gathered at the star; a world that only asked, or has left, reads its
+ * own part of it. An asking world is seen at the edge by the lighter and its
+ * own owner alone, as its gathering is. */
+function callerCanSeeStarDay(ctx: any, entry: any): boolean {
+  if (callerOwnsWorld(ctx, entry.worldRef)) return true;
+  const world = ctx.db.worldBacking.worldRef.find(entry.worldRef);
+  if (!world || !world.linked || !starRow(ctx, entry.starRef)) return false;
+  if (isFieldOwner(ctx, entry.starRef)) return true;
+  return entry.what !== 'asked' && callerGatheredAt(ctx, entry.starRef);
+}
+
+/** The most one star's day keeps: the oldest goes first. */
+const STAR_DAY_LIMIT = 512;
+
+function noteStarDay(ctx: any, starRef: string, worldRef: string, what: string, kind = ''): void {
+  ctx.db.starDayBacking.insert({ rowId: 0n, starRef, worldRef, what, kind, atMicros: nowMicros(ctx) });
+  const day = Array.from(ctx.db.starDayBacking.starRef.filter(starRef)) as any[];
+  if (day.length <= STAR_DAY_LIMIT) return;
+  day.sort((a, b) => (a.rowId < b.rowId ? -1 : 1));
+  for (const old of day.slice(0, day.length - STAR_DAY_LIMIT)) ctx.db.starDayBacking.rowId.delete(old.rowId);
+}
+
+export const star_day = spacetimedb.view(
+  { name: 'star_day', public: true },
+  t.array(starDayBacking.rowType),
+  (ctx) => {
+    const rows: any[] = [];
+    for (const row of ctx.db.starDayBacking.iter()) if (callerCanSeeStarDay(ctx, row)) rows.push(row);
+    return rows;
+  }
+);
+
+export const world_gathering = spacetimedb.view(
+  { name: 'world_gathering', public: true },
+  t.array(worldGatheringBacking.rowType),
+  (ctx) => {
+    const rows: any[] = [];
+    for (const visible of visibleWorldRows(ctx)) {
+      for (const row of ctx.db.worldGatheringBacking.worldRef.filter(visible.worldRef)) if (callerCanSeeGathering(ctx, row)) rows.push(row);
+    }
+    return rows;
+  }
+);
+
+/* A world is put by its first creator and stays theirs; Link takes it into
+ * the field and out again, leaving everything in it as it was. A put that
+ * changes nothing writes nothing (no viewer's cursor moves for it). */
+export const put_world = spacetimedb.reducer(
+  { worldRef: t.string(), bodyJson: t.string(), linked: t.bool() },
+  (ctx, args) => {
+    requireRef(args.worldRef, WORLD_REF_PATTERN, 'The world');
+    const body = requireWorldBody(args.bodyJson);
+    const bodyJson = JSON.stringify(body);
+    const existing = ctx.db.worldBacking.worldRef.find(args.worldRef);
+    if (existing) {
+      if (!callerOwnsWorld(ctx, args.worldRef)) fail('That world belongs to someone else');
+      if (existing.bodyJson === bodyJson && existing.linked === args.linked) return;
+      ctx.db.worldBacking.worldRef.update({ ...existing, bodyJson, linked: args.linked, updatedAtMicros: nowMicros(ctx) });
+      return;
+    }
+    if (Array.from(ctx.db.worldOwner.ownerIdentity.filter(ctx.sender)).length >= 64) fail('You hold as many worlds in the field as one person may');
+    ctx.db.worldBacking.insert({ worldRef: args.worldRef, bodyJson, linked: args.linked, updatedAtMicros: nowMicros(ctx) });
+    ctx.db.worldOwner.insert({ worldRef: args.worldRef, ownerIdentity: ctx.sender, createdAtMicros: nowMicros(ctx) });
+  }
+);
+
+/* Showing a part of a world opens a clearing for its audience. The world row
+ * itself is never touched, so a viewer who cannot see the clearing is sent
+ * nothing at all. */
+export const open_clearing = spacetimedb.reducer(
+  { worldRef: t.string(), partRef: t.string(), starRef: t.string(), audience: t.string(), shownJson: t.string() },
+  (ctx, args) => {
+    requireOwnWorld(ctx, args.worldRef);
+    if (!PART_REF_PATTERN.test(args.partRef)) fail('A clearing names the part of the world it shows');
+    if (!CLEARING_AUDIENCES.has(args.audience)) fail('A clearing is shown to the field, to the public, or at a star');
+    if (args.audience === 'star') {
+      requireStar(ctx, args.starRef);
+      if (!isGathered(ctx, args.starRef, args.worldRef)) fail('Your world shows things at a star only while it is gathered there');
+    } else if (args.starRef !== '') fail('Only a clearing shown at a star names the star');
+    const shown = requireShown(args.shownJson);
+    const key = clearingKey(args.worldRef, args.partRef, args.starRef);
+    const row = { clearingKey: key, worldRef: args.worldRef, partRef: args.partRef, starRef: args.starRef, audience: args.audience, shownJson: JSON.stringify(shown), shownAtMicros: nowMicros(ctx) };
+    const existing = ctx.db.worldClearingBacking.clearingKey.find(key);
+    if (existing) {
+      if (existing.audience === row.audience && existing.shownJson === row.shownJson) return;
+      ctx.db.worldClearingBacking.clearingKey.update(row);
+      return;
+    }
+    if (Array.from(ctx.db.worldClearingBacking.worldRef.filter(args.worldRef)).length >= 512) fail('This world shows as many clearings as one world may');
+    ctx.db.worldClearingBacking.insert(row);
+    if (args.audience === 'star') noteStarDay(ctx, args.starRef, args.worldRef, 'showed', shown.kind);
+  }
+);
+
+/* Withdrawing a clearing puts it back under cloud everywhere at once; the
+ * world keeps what it was. */
+export const withdraw_clearing = spacetimedb.reducer(
+  { worldRef: t.string(), partRef: t.string(), starRef: t.string() },
+  (ctx, args) => {
+    requireOwnWorld(ctx, args.worldRef);
+    const key = clearingKey(args.worldRef, args.partRef, args.starRef);
+    const shown = ctx.db.worldClearingBacking.clearingKey.find(key);
+    if (!shown) fail('That was not shown');
+    ctx.db.worldClearingBacking.clearingKey.delete(key);
+    if (shown.audience === 'star' && starRow(ctx, args.starRef)) noteStarDay(ctx, args.starRef, args.worldRef, 'took-back', parseStoredJson(shown.shownJson, 'Shown').kind ?? '');
+  }
+);
+
+function starContract(starRef: string, worldRef: string, name: string, gathers: string, comes: string, parentStarRef: string): string {
+  return JSON.stringify({
+    schema: 'oi.shared-field/v1',
+    field_ref: starRef,
+    kind: STAR_KIND,
+    visibility: 'public',
+    title: name,
+    ...(parentStarRef ? { parent_field_ref: parentStarRef } : {}),
+    presentation: { gathers, comes, lit_by: worldRef },
+    provenance: [{ kind: 'world', ref: worldRef, source_system: 'o-i' }],
+  });
+}
+
+/* Light a star where a shared interest should gather: its name, what it
+ * gathers and who may come. The lighter's world is the first gathered at it,
+ * and the star stays in the lighter's hands: lit again by them, it is renamed
+ * or its terms are changed. A star may stand inside another. */
+export const light_star = spacetimedb.reducer(
+  { starRef: t.string(), worldRef: t.string(), name: t.string(), gathers: t.string(), comes: t.string(), parentStarRef: t.string() },
+  (ctx, args) => {
+    if (!STAR_REF_PATTERN.test(args.starRef)) fail('A star is named star:<name>');
+    const world = requireOwnWorld(ctx, args.worldRef);
+    if (!world.linked) fail('Link your world into the field before you light a star');
+    if (!args.name.trim() || [...args.name].length > 120) fail('A star is named in at most 120 characters');
+    if (!args.gathers.trim() || [...args.gathers].length > 280) fail('Say what the star gathers in at most 280 characters');
+    if (!STAR_COMES.has(args.comes)) fail('A star lets anyone come, or asks you to let each world in');
+    if (args.parentStarRef !== '') {
+      if (args.parentStarRef === args.starRef) fail('A star cannot stand inside itself');
+      requireStar(ctx, args.parentStarRef);
+    }
+    refuseFieldTimeLeaks([args.name, args.gathers], 'A star');
+    const contractJson = starContract(args.starRef, args.worldRef, args.name, args.gathers, args.comes, args.parentStarRef);
+    const existing = ctx.db.sharedFieldBacking.fieldRef.find(args.starRef);
+    if (existing) {
+      if (existing.kind !== STAR_KIND || !isFieldOwner(ctx, args.starRef)) fail('That star is someone else’s');
+      if (existing.contractJson !== contractJson) ctx.db.sharedFieldBacking.rowId.update({ ...existing, contractJson });
+    } else {
+      ctx.db.sharedFieldBacking.insert({ rowId: 0n, fieldRef: args.starRef, kind: STAR_KIND, visibility: 'public', contractJson });
+      ctx.db.fieldOwner.insert({ fieldRef: args.starRef, ownerIdentity: ctx.sender, createdAtMicros: nowMicros(ctx) });
+      noteStarDay(ctx, args.starRef, args.worldRef, 'lit');
+    }
+    const key = gatheringKey(args.starRef, args.worldRef);
+    const gathered = ctx.db.worldGatheringBacking.gatheringKey.find(key);
+    const now = nowMicros(ctx);
+    if (!gathered) ctx.db.worldGatheringBacking.insert({ gatheringKey: key, starRef: args.starRef, worldRef: args.worldRef, state: 'gathered', askedAtMicros: now, gatheredAtMicros: now });
+    else if (gathered.state !== 'gathered') ctx.db.worldGatheringBacking.gatheringKey.update({ ...gathered, state: 'gathered', gatheredAtMicros: now });
+  }
+);
+
+/* Bring a world to a star: it gathers at once where the star lets anyone
+ * come, and otherwise waits at its edge with its request. */
+export const gather_at_star = spacetimedb.reducer(
+  { starRef: t.string(), worldRef: t.string() },
+  (ctx, args) => {
+    const world = requireOwnWorld(ctx, args.worldRef);
+    if (!world.linked) fail('Link your world into the field before you gather at a star');
+    const star = requireStar(ctx, args.starRef);
+    const key = gatheringKey(args.starRef, args.worldRef);
+    if (ctx.db.worldGatheringBacking.gatheringKey.find(key)) return;
+    const comes = parseStoredJson(star.contractJson, 'Star contract').presentation?.comes;
+    const now = nowMicros(ctx);
+    const open = comes === 'anyone' || isFieldOwner(ctx, args.starRef);
+    ctx.db.worldGatheringBacking.insert({ gatheringKey: key, starRef: args.starRef, worldRef: args.worldRef, state: open ? 'gathered' : 'asked', askedAtMicros: now, gatheredAtMicros: open ? now : 0n });
+    noteStarDay(ctx, args.starRef, args.worldRef, open ? 'came' : 'asked');
+  }
+);
+
+/* The star's lighter lets a waiting world in. It reaches no further into the
+ * lighter's world than what is shown at the star. */
+export const admit_to_star = spacetimedb.reducer(
+  { starRef: t.string(), worldRef: t.string() },
+  (ctx, args) => {
+    requireStar(ctx, args.starRef);
+    if (!isFieldOwner(ctx, args.starRef)) fail('Only the one who lit a star lets worlds in');
+    const key = gatheringKey(args.starRef, args.worldRef);
+    const asked = ctx.db.worldGatheringBacking.gatheringKey.find(key);
+    if (!asked) fail('That world has not asked to gather here');
+    if (asked.state === 'gathered') return;
+    ctx.db.worldGatheringBacking.gatheringKey.update({ ...asked, state: 'gathered', gatheredAtMicros: nowMicros(ctx) });
+    noteStarDay(ctx, args.starRef, args.worldRef, 'let-in');
+  }
+);
+
+function takeBackFromStar(ctx: any, starRef: string, worldRef: string): void {
+  for (const clearing of Array.from(ctx.db.worldClearingBacking.worldRef.filter(worldRef)) as any[]) {
+    if (clearing.starRef === starRef) ctx.db.worldClearingBacking.clearingKey.delete(clearing.clearingKey);
+  }
+}
+
+/* Leave a star: the world turns on in its own orbit and takes back what it
+ * showed there. The star's lighter may also turn a world away. */
+export const leave_star = spacetimedb.reducer(
+  { starRef: t.string(), worldRef: t.string() },
+  (ctx, args) => {
+    const own = callerOwnsWorld(ctx, args.worldRef);
+    if (!own && !isFieldOwner(ctx, args.starRef)) fail('That world is not yours to take away from this star');
+    const key = gatheringKey(args.starRef, args.worldRef);
+    if (!ctx.db.worldGatheringBacking.gatheringKey.find(key)) fail('That world is not at this star');
+    ctx.db.worldGatheringBacking.gatheringKey.delete(key);
+    takeBackFromStar(ctx, args.starRef, args.worldRef);
+    noteStarDay(ctx, args.starRef, args.worldRef, own ? 'left' : 'turned-away');
+  }
+);
+
+/* Closing a star returns every world to its own orbit and takes nothing out
+ * of anyone's world: what was shown there goes back under cloud. A star with
+ * a star inside it is closed from the inside out. */
+export const close_star = spacetimedb.reducer(
+  { starRef: t.string() },
+  (ctx, args) => {
+    const star = requireStar(ctx, args.starRef);
+    if (!isFieldOwner(ctx, args.starRef)) fail('Only the one who lit a star closes it');
+    for (const row of ctx.db.sharedFieldBacking.iter()) {
+      if (row.kind === STAR_KIND && parseStoredJson(row.contractJson, 'Star contract').parent_field_ref === args.starRef) fail('Close the stars inside this one first');
+    }
+    for (const gathering of Array.from(ctx.db.worldGatheringBacking.starRef.filter(args.starRef)) as any[]) {
+      ctx.db.worldGatheringBacking.gatheringKey.delete(gathering.gatheringKey);
+    }
+    for (const clearing of Array.from(ctx.db.worldClearingBacking.starRef.filter(args.starRef)) as any[]) {
+      ctx.db.worldClearingBacking.clearingKey.delete(clearing.clearingKey);
+    }
+    // the star's day closes with it
+    for (const entry of Array.from(ctx.db.starDayBacking.starRef.filter(args.starRef)) as any[]) ctx.db.starDayBacking.rowId.delete(entry.rowId);
+    ctx.db.sharedFieldBacking.rowId.delete(star.rowId);
+    ctx.db.fieldOwner.fieldRef.delete(args.starRef);
+  }
+);

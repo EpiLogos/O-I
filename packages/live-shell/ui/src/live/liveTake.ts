@@ -18,12 +18,18 @@
 // sources.rs `parts`) each time what sets it changes and rests, and when a take is laid on a part; a set opened again sets the Torus as its
 // part keeps it before anything more is kept (createTorusKeeper).
 //
-// What is not kept yet, because its owner keeps no record of it: the course of the body, the form and the forces, the seeds, and the sample
-// each note and move landed at. The take says so, and that it resumes from the body as it then rings (TAKE_RESUMES). Export
-// Audio renders what live-engine played, and the Torus does not sound there yet, so a take is not in its file (TAKE_NOT_EXPORTED).
+// The Torus's course (round 6d): the owner keeps the Torus as it rings (the frame's `torus` checkpoint, QL-MEF torus-checkpoint: its body,
+// form and forces, the M1′ session's steps, comma and notes, the event and its seeds) and journals each act it takes with the sample it
+// landed at (`performance-journal`). Record keeps the checkpoint taken as the take begins and the acts of the journal that land in it
+// (takeCourse), so each note lies at the sample it landed at. A take played again with its clip as it was laid sets the Torus as it
+// stood, rings it again from the checkpoint (`torus` restore) and lands each act at its own sample after that (ClipPrepared `exact`,
+// live/clipPlayer.ts); Export Audio on the take's clip renders the course offline (`render-take`), part after part, each part from the
+// checkpoint the last one ended at (renderTake, exportTake). A take whose course cannot be kept (an act that moved the scene, an owner
+// that kept no state of it) says why, plays as before from the body as it then rings (TAKE_RESUMES), and is not exported.
 import {useEffect, useState, useSyncExternalStore} from 'react'
-import {readInstrumentEdit, type InstrumentEdit, type StageResult} from '@epilogos/expressions-boundary'
-import type {LiveClipReading, LiveNote, LiveSetAct, LiveSetActed} from '../../../../../desktop/cradle/src/kernel/types'
+import {isStageSampleCursor, readInstrumentEdit, readStageTorusCheckpoint, stageJournalLanding, STAGE_JANKO_KEYS_MAX, STAGE_RENDER_FRAMES_MAX, type InstrumentEdit,
+  type StageCommand, type StageKey, type StagePerformanceJournal, type StageResult, type StageTakeAct, type StageTorusCheckpoint} from '@epilogos/expressions-boundary'
+import type {LiveClipAt, LiveClipReading, LiveNote, LiveSetAct, LiveSetActed} from '../../../../../desktop/cradle/src/kernel/types'
 import type {SlotBinding} from '../frame/transport/slots'
 import type {NoteSource, PlayedNote} from './janko/jankoInput'
 import type {ClipMove, ClipPrepared} from './clipPlayer'
@@ -39,6 +45,22 @@ export const TAKE_RESUMES = 'The take plays each note again at the touch-point i
 /** What the take does not keep, named for the record. */
 export const TAKE_NOT_KEPT = Object.freeze(['the course of the body', 'the form and the forces', 'the seeds', 'the sample each note landed at',
   'the sample each move landed at', 'how the ruler met the sound'] as const)
+
+export const TAKE_COURSE_SCHEMA = 'oi.live-take-course/v1'
+/** What a take with its course replays, and how: said with the take, and when it plays. */
+export const TAKE_REPLAYS = 'The take plays again as it was played: the Torus rings again from the state it rang in when the take began (its body, '
+  + 'its form and forces, the comma it had gathered and its seeds), and each note, release and setting of the Torus lands at the sample it landed '
+  + 'at. The level and effects move at their beats, within a block of the sound.'
+/** Where a take that keeps its course resumes when it cannot play it (its clip changed, or the Torus did not ring again from its state). */
+export const TAKE_RESUMES_INSTEAD = 'It plays its notes as its clip holds them, each at the touch-point it struck and at its strength, on the Torus set as it '
+  + 'stood when the take began, and makes each move again at its beat, within a block of the sound: it resumes from the body as it then rings.'
+/** What a take with its course does not keep: the frame's own sound moves by beat, not by sample. */
+export const TAKE_COURSE_NOT_KEPT = Object.freeze(['the sample each move of the level and effects landed at'] as const)
+/** Said with a take laid with its course. */
+export const TAKE_EXPORTS = 'Export Audio on its clip renders it as it was played, sample for sample.'
+const noCourse = (why: string) => `This take keeps no course of the Torus, so Export Audio cannot render it: ${sentence(why)}`
+/** The most a set keeps beside one take (packages/live-set sources.rs KEEP_BYTES_MAX): a course past it is not kept. */
+const KEEP_BYTES_MAX = 256 * 1024
 
 // ── the Torus, kept ────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -179,6 +201,103 @@ export function createTakeRecorder(): TakeRecorder {
   }
 }
 
+// ── the Torus's course ─────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+/** The Torus's course over a take: the state it rang in as the take began (its owner's checkpoint), the take's length in samples at the
+ * owner's rate, and each act the owner took that lands in it, at its sample, as render-take makes it, in the order of their samples. */
+export interface TakeCourse {
+  readonly schema: typeof TAKE_COURSE_SCHEMA
+  readonly checkpoint: StageTorusCheckpoint
+  readonly from_samples_elapsed: string
+  readonly frames: number
+  readonly sample_rate: number
+  readonly acts: readonly StageTakeAct[]
+}
+
+/** What Record read of the owner for a take: its course, with the samples each note struck now (a key, MIDI, a pointer: an act naming no
+ * sample of its own) and each release landed at, by key; or why it has none. */
+export type TakeLanding =
+  | {readonly course: TakeCourse; readonly struck: ReadonlyMap<string, readonly bigint[]>; readonly released: ReadonlyMap<string, readonly bigint[]>}
+  | {readonly refused: string}
+
+/** The owner's acts that move no sound: its stage's slots. The journal leaves out every read. */
+const STILL_OPERATIONS: ReadonlySet<string> = new Set(['stage-retire', 'stage-bind', 'stage-unbind'])
+const keyOf = (key: StageKey) => `${key.row}/${key.column}`
+/** 1..32 keys of the surface, read exact; null for anything else. Pure. */
+function takeKeys(raw: unknown): StageKey[] | null {
+  if (!Array.isArray(raw) || raw.length < 1 || raw.length > STAGE_JANKO_KEYS_MAX) return null
+  const keys = raw.map(key => plain(key) && Number.isSafeInteger(key.row) && (key.row as number) >= 0 && (key.row as number) < 6 && Number.isSafeInteger(key.column)
+    && (key.column as number) >= 0 && (key.column as number) <= 65535 ? {row: key.row as number, column: key.column as number} : null)
+  return keys.every(key => key !== null) && new Set(keys.map(key => keyOf(key!))).size === keys.length ? keys as StageKey[] : null
+}
+
+/** The take's course from what its owner kept: the checkpoint as the take began, and each act of its journal admitted before Stop (`until`,
+ * the owner's cursor then) that lands in the take's `frames`, made as render-take makes it. An act no render makes moved the scene: a take
+ * over it has no course. Pure. */
+export function takeCourse(checkpoint: StageTorusCheckpoint, journal: StagePerformanceJournal, until: string, frames: number): TakeLanding {
+  if (!Number.isSafeInteger(frames) || frames < 1) return {refused: 'the take has no length to render'}
+  const from = BigInt(checkpoint.taken_at_samples), stop = BigInt(until), end = from + BigInt(frames)
+  const acts: {at: bigint; act: StageTakeAct}[] = []
+  const struck = new Map<string, bigint[]>(), released = new Map<string, bigint[]>()
+  const note = (into: Map<string, bigint[]>, keys: readonly StageKey[], at: bigint) => { for (const key of keys) into.set(keyOf(key), [...(into.get(keyOf(key)) ?? []), at]) }
+  for (const entry of journal.acts) {
+    if (entry.kind !== 'act' || BigInt(entry.acknowledged.samples_elapsed) >= stop) continue
+    const at = stageJournalLanding(entry), sample = BigInt(at)
+    if (sample < from || sample >= end) continue
+    const command = entry.command
+    if (entry.operation === 'torus-play') {
+      const keys = takeKeys(command.keys), amplitude = command.amplitude
+      if (!Array.isArray(amplitude) || amplitude.length !== 2 || amplitude[1] !== 0)
+        return {refused: `torus-play struck at sample ${at} with a second amplitude, which a take's render does not strike`}
+      const strength = amplitude[0]
+      if (!keys || typeof strength !== 'number' || !(strength > 0 && strength <= 1)) return {refused: `torus-play at sample ${at} names no keys at a strength in (0, 1]`}
+      acts.push({at: sample, act: {action: 'strike', at_samples_elapsed: at, keys, amplitude: strength}})
+      if (!isStageSampleCursor(command.at_samples_elapsed)) note(struck, keys, sample)
+    } else if (entry.operation === 'torus-release') {
+      const keys = takeKeys(command.keys)
+      if (!keys) return {refused: `torus-release at sample ${at} names no keys`}
+      acts.push({at: sample, act: {action: 'release', at_samples_elapsed: at, keys}})
+      note(released, keys, sample)
+    } else if (entry.operation === 'torus-set') {
+      const edit = readInstrumentEdit({kind: 'torus', edit: command.edit})
+      if (!edit || edit.kind !== 'torus') return {refused: `torus-set at sample ${at} carries no setting a take's render makes`}
+      acts.push({at: sample, act: {action: 'set', at_samples_elapsed: at, edit: edit.edit}})
+    } else if (!STILL_OPERATIONS.has(entry.operation)) return {refused: `${entry.operation} moved the scene at sample ${at} during the take`}
+  }
+  // In the order of their samples; acts at one sample in the order the owner took them.
+  const ordered = acts.map((entry, index) => ({...entry, index})).sort((a, b) => a.at < b.at ? -1 : a.at > b.at ? 1 : a.index - b.index)
+  return {course: {schema: TAKE_COURSE_SCHEMA, checkpoint, from_samples_elapsed: checkpoint.taken_at_samples, frames, sample_rate: checkpoint.sample_rate,
+    acts: ordered.map(entry => entry.act)}, struck, released}
+}
+
+/** A kept course read back from the set, exact (its checkpoint within its bounds, each act within the take and in sample order); null
+ * for anything else. Pure. */
+export function takeCourseOf(raw: unknown): TakeCourse | null {
+  if (!plain(raw) || raw.schema !== TAKE_COURSE_SCHEMA || !Array.isArray(raw.acts)) return null
+  const checkpoint = readStageTorusCheckpoint(raw.checkpoint)
+  if (!checkpoint || raw.from_samples_elapsed !== checkpoint.taken_at_samples || raw.sample_rate !== checkpoint.sample_rate) return null
+  const frames = raw.frames
+  if (!Number.isSafeInteger(frames) || (frames as number) < 1) return null
+  const from = BigInt(checkpoint.taken_at_samples), end = from + BigInt(frames as number)
+  const acts: StageTakeAct[] = []
+  let last = from
+  for (const act of raw.acts) {
+    if (!plain(act) || !isStageSampleCursor(act.at_samples_elapsed)) return null
+    const at = BigInt(act.at_samples_elapsed)
+    if (at < last || at >= end) return null
+    last = at
+    const keys = act.action === 'set' ? null : takeKeys(act.keys)
+    if (act.action === 'strike' && keys && typeof act.amplitude === 'number' && act.amplitude > 0 && act.amplitude <= 1) acts.push({action: 'strike', at_samples_elapsed: act.at_samples_elapsed, keys, amplitude: act.amplitude})
+    else if (act.action === 'release' && keys) acts.push({action: 'release', at_samples_elapsed: act.at_samples_elapsed, keys})
+    else if (act.action === 'set') {
+      const edit = readInstrumentEdit({kind: 'torus', edit: act.edit})
+      if (!edit || edit.kind !== 'torus') return null
+      acts.push({action: 'set', at_samples_elapsed: act.at_samples_elapsed, edit: edit.edit})
+    } else return null
+  }
+  return {schema: TAKE_COURSE_SCHEMA, checkpoint, from_samples_elapsed: checkpoint.taken_at_samples, frames: frames as number, sample_rate: checkpoint.sample_rate, acts}
+}
+
 /** A bar of 4/4: a take lies from a bar's start and lasts whole bars, as a new clip does. */
 export const TAKE_BAR_BEATS = 4
 /** Said when Record is stopped with nothing played. */
@@ -187,33 +306,68 @@ export const NOTHING_PLAYED = 'Nothing was played on the part, so no take was la
 const beatsOf = (ms: number, bpm: number) => (ms / 1000) * (bpm / 60)
 const round = (value: number) => Math.round(value * 1e6) / 1e6
 
+/** A take's length in beats: the whole bars it spans, one at least. Pure. */
+export function takeLength(take: RecordedTake): number {
+  const span = beatsOf(take.stoppedAt - take.startedAt, take.context.bpm)
+  return Math.max(TAKE_BAR_BEATS, Math.ceil(round(span) / TAKE_BAR_BEATS) * TAKE_BAR_BEATS)
+}
+
+/** Said of a take Record laid with no stage channel to the Torus's owner. */
+const NO_STAGE = 'Record reached no stage channel to the Torus\'s owner, which keeps its state and journal'
+
 /** The set's act that lays the take (packages/live-set acts.rs take_record): its notes in beats of the take's own time, velocity from each
- * strength, its length the whole bars it spans, and what it keeps beyond its notes; or why there is nothing to lay. Pure. */
-export function takeRecordAct(take: RecordedTake, name: string): Extract<LiveSetAct, {kind: 'take_record'}> | {readonly refused: string} {
+ * strength, its length the whole bars it spans, and what it keeps beyond its notes; or why there is nothing to lay. With the Torus's
+ * course (`landing`), each note lies at the sample it landed at and is let go at the sample its release landed at, and the take keeps the
+ * course; else at the page's time, and the take says why it keeps none. Pure. */
+export function takeRecordAct(take: RecordedTake, name: string, landing?: TakeLanding): Extract<LiveSetAct, {kind: 'take_record'}> | {readonly refused: string} {
   const {context, startedAt, stoppedAt} = take
-  const span = beatsOf(stoppedAt - startedAt, context.bpm)
-  const length = Math.max(TAKE_BAR_BEATS, Math.ceil(round(span) / TAKE_BAR_BEATS) * TAKE_BAR_BEATS)
+  const length = takeLength(take)
   // A note struck as the take ends has no time in it to sound.
   const played = take.notes.filter(note => round(beatsOf(note.on - startedAt, context.bpm)) < length)
   if (played.length === 0) return {refused: NOTHING_PLAYED}
+  const course = landing && 'course' in landing ? landing : null
+  // Each key's strikes and releases as the owner landed them, taken in turn by the notes played on it.
+  const used = new Map<string, number>()
+  const landed = (note: RecordedNote): LiveNote | null => {
+    if (!course) return null
+    const key = keyOf(note.key), turn = used.get(key) ?? 0
+    const on = course.struck.get(key)?.[turn]
+    if (on === undefined) return null
+    used.set(key, turn + 1)
+    const {from_samples_elapsed, sample_rate} = course.course
+    const beatOf = (samples: bigint) => (Number(samples) / sample_rate) * (context.bpm / 60)
+    const at = round(beatOf(on - BigInt(from_samples_elapsed)))
+    if (at >= length) return null
+    const off = course.released.get(key)?.find(sample => sample >= on)
+    const len = off !== undefined ? beatOf(off - on) : beatsOf((note.off ?? stoppedAt) - note.on, context.bpm)
+    return {p: note.note, at, len: round(Math.max(0, Math.min(length - at, len))), vel: velocityOf(note.amplitude)}
+  }
   const notes: LiveNote[] = played.map(note => {
+    const sampled = landed(note)
+    if (sampled) return sampled
     const at = round(beatsOf(note.on - startedAt, context.bpm))
     const len = round(Math.max(0, Math.min(length - at, beatsOf((note.off ?? stoppedAt) - note.on, context.bpm))))
-    return {p: note.note, at, len, vel: Math.max(1, Math.min(127, Math.round(note.amplitude * 127)))}
+    return {p: note.note, at, len, vel: velocityOf(note.amplitude)}
   })
-  const keeps = {
+  const base = {
     schema: TAKE_SCHEMA,
-    // How each note was played, by its number and beat: the key and touch-point it struck, its exact strength and its source.
-    notes: played.map((note, i) => ({p: note.note, at: notes[i]!.at, key: note.key, touch: note.touch, strength: note.amplitude, source: note.source})),
+    // How each note was played, by its number and beat: the key and touch-point it struck, its exact strength and its source; and its
+    // length and velocity as it was laid, so a clip changed since is known.
+    notes: played.map((note, i) => ({p: note.note, at: notes[i]!.at, len: notes[i]!.len, vel: notes[i]!.vel, key: note.key, touch: note.touch,
+      strength: note.amplitude, source: note.source})),
     torus: context.torus,
     moves: take.moves.map(move => ({beat: round(beatsOf(move.at - startedAt, context.bpm)), torus: move.torus})),
     mode: context.mode,
     bpm: context.bpm,
-    resumes: TAKE_RESUMES,
-    not_kept: [...TAKE_NOT_KEPT],
   }
+  const without = (why: string) => ({...base, course: null, course_refused: why, resumes: TAKE_RESUMES, not_kept: [...TAKE_NOT_KEPT]})
+  let keeps: Record<string, unknown> = course ? {...base, course: course.course, resumes: TAKE_REPLAYS, not_kept: [...TAKE_COURSE_NOT_KEPT]}
+    : without(landing && 'refused' in landing ? landing.refused : NO_STAGE)
+  const bytes = new TextEncoder().encode(JSON.stringify(keeps)).length
+  if (course && bytes > KEEP_BYTES_MAX) keeps = without(`its course takes ${Math.ceil(bytes / 1024)} KiB beside the take, past the 256 KiB the set keeps beside one`)
   return {kind: 'take_record', track: context.track, start: context.start, length, name, notes, keeps}
 }
+const velocityOf = (amplitude: number) => Math.max(1, Math.min(127, Math.round(amplitude * 127)))
 
 /** The beat a new take lies from: the first bar after everything the part's main lane holds. Pure. */
 export function takeStartOf(clips: readonly {readonly end: number}[]): number {
@@ -239,10 +393,40 @@ export function takeVoice(keeps: unknown): ClipPrepared['voice'] | undefined {
   return voices.size ? (note, beat) => voices.get(placeOf(note, beat)) ?? null : undefined
 }
 
-/** Before a take's clip plays (live/clipPlayer.ts `prepare`): the Torus is set again as it stood when the take began, each note is voiced as
- * it was played, and the take says where it resumes. A clip no take gave answers null; a take whose Torus was not kept says it plays on the
- * Torus as it now stands. */
-export async function prepareTake(clip: LiveClipReading, commit: (edit: InstrumentEdit) => Promise<StageResult>): Promise<ClipPrepared | null> {
+/** What a take's clip plays through beside the instrument command: the frame's stage channel (the Torus rung again from the take's state)
+ * and the set's tempo. */
+export interface TakePlay {
+  readonly stage: (command: StageCommand) => Promise<StageResult>
+  readonly bpm: number
+}
+
+/** The edits the frame makes on its own sound: they move by beat in a take played as it was played, and are not in its render. */
+const FRAME_SOUND_KINDS: ReadonlySet<string> = new Set(['level', 'effect-chain', 'effect'])
+/** Notes as Live writes them back: a beat to well within a thousandth. */
+const SAME_BEAT = 5e-4
+
+/** Why a take's clip cannot play its course: it loops, plays from another start, at another tempo, or its notes changed since it was
+ * laid; null when it is as it was laid. Pure. */
+function clipChanged(clip: LiveClipReading, keeps: Plain, bpm: number): string | null {
+  if (clip.loop) return 'This take\'s clip loops, and its course plays once, from its beginning.'
+  if (typeof clip.start === 'number' && Math.abs(clip.start) > SAME_BEAT) return 'This take\'s clip plays from a start marker after its beginning, and its course plays from its beginning.'
+  if (typeof keeps.bpm === 'number' && Math.abs(keeps.bpm - bpm) > 1e-6) return `The set plays at ${bpm} BPM, and the take was played at ${keeps.bpm} BPM.`
+  const order = (a: {p: number; at: number}, b: {p: number; at: number}) => a.at - b.at || a.p - b.p
+  const now = (clip.notes ?? []).filter(note => note.on !== false).map(note => ({p: note.p, at: note.at, len: note.len, vel: note.vel})).sort(order)
+  const laid = (Array.isArray(keeps.notes) ? keeps.notes : []).filter(plain).map(note => ({p: Number(note.p), at: Number(note.at), len: Number(note.len), vel: Number(note.vel)})).sort(order)
+  const same = now.length === laid.length && now.every((note, i) => {
+    const was = laid[i]!
+    return note.p === was.p && note.vel === was.vel && Math.abs(note.at - was.at) <= SAME_BEAT && Math.abs(note.len - was.len) <= SAME_BEAT
+  })
+  return same ? null : 'This take\'s clip was changed since it was laid, and its course plays the take as it was played.'
+}
+
+/** Before a take's clip plays (live/clipPlayer.ts `prepare`): the Torus is set again as it stood when the take began, and the take says
+ * where it resumes. A take with its course, its clip as it was laid, rings again from the state the Torus rang in when it began (the
+ * owner's checkpoint, restored through the frame's stage channel) and answers the course to play at its samples from there (`exact`),
+ * with the moves of the frame's own sound by beat. Any other take voices each note as it was played and makes its moves at their beats.
+ * A clip no take gave answers null; a take whose Torus was not kept says it plays on the Torus as it now stands. */
+export async function prepareTake(clip: LiveClipReading, commit: (edit: InstrumentEdit) => Promise<StageResult>, play?: TakePlay): Promise<ClipPrepared | null> {
   const keeps = clip.take?.keeps
   if (!clip.take) return null
   if (!plain(keeps) || keeps.schema !== TAKE_SCHEMA) {
@@ -254,10 +438,33 @@ export async function prepareTake(clip: LiveClipReading, commit: (edit: Instrume
   const kept = torusKeptOf(keeps.torus)
   const moves = takeMoves(kept, keeps.moves)
   const played = {...(voice ? {voice} : {}), ...(moves.length ? {moves} : {})}
-  const resumes = typeof keeps.resumes === 'string' ? keeps.resumes : TAKE_RESUMES
-  if (!kept) return {resumes: `The Torus was not kept with this take, so it plays on the Torus as it now stands. ${resumes}`, ...played}
-  const {refused} = await setTorusAgain(kept, commit)
-  return {resumes: refused.length ? `${resumes} The Torus did not take all of it again: ${refused.join('; ')}.` : resumes, ...played}
+  // A take from before courses says what it said; one with a course that cannot play says why, and resumes from the body as it then rings.
+  const course = 'course' in keeps ? takeCourseOf(keeps.course) : undefined
+  const why = course === undefined ? null
+    : course === null ? (typeof keeps.course_refused === 'string' ? `This take keeps no course of the Torus: ${sentence(keeps.course_refused)}`
+      : 'This take\'s course could not be read.')
+    : !play ? 'Nothing here reaches the Torus\'s owner to ring it again from the take\'s state.'
+      : clipChanged(clip, keeps, play.bpm)
+  const resumes = why ? `${why} ${course === null ? TAKE_RESUMES : TAKE_RESUMES_INSTEAD}` : typeof keeps.resumes === 'string' ? keeps.resumes : course ? TAKE_REPLAYS : TAKE_RESUMES
+  if (!kept && !(course && !why)) return {resumes: `The Torus was not kept with this take, so it plays on the Torus as it now stands. ${resumes}`, ...played}
+  const {refused} = kept ? await setTorusAgain(kept, commit) : {refused: [] as string[]}
+  const told = (words: string) => refused.length ? `${words} The Torus did not take all of it again: ${refused.join('; ')}.` : words
+  if (!course || why || !play) return {resumes: told(resumes), ...played}
+  const restored = await play.stage({command: 'torus', action: 'restore', checkpoint: course.checkpoint})
+    .catch((cause: unknown): StageResult => ({ok: false, error: said(cause)}))
+  if (!restored.ok || !isStageSampleCursor(restored.landed_at_samples_elapsed)) {
+    const words = restored.ok ? 'its owner named no sample it rings again from' : restored.error
+    return {resumes: told(`The Torus did not ring again from the take's state: ${sentence(words)} ${TAKE_RESUMES_INSTEAD}`), ...played}
+  }
+  // The frame's own sound moves by beat; the Torus's moves are its course's acts.
+  const frameMoves = moves.map(move => ({beat: move.beat, edits: move.edits.filter(edit => FRAME_SOUND_KINDS.has(edit.kind))})).filter(move => move.edits.length > 0)
+  const numbers = new Map<string, number>()
+  for (const note of Array.isArray(keeps.notes) ? keeps.notes : []) {
+    if (plain(note) && Number.isSafeInteger(note.p) && plain(note.key)) numbers.set(`${note.key.row}/${note.key.column}`, note.p as number)
+  }
+  return {resumes: told(resumes), ...(frameMoves.length ? {moves: frameMoves} : {}),
+    exact: {landed: restored.landed_at_samples_elapsed!, from: course.from_samples_elapsed, frames: course.frames, sample_rate: course.sample_rate, acts: course.acts,
+      noteOf: key => numbers.get(keyOf(key)) ?? null}}
 }
 
 /** A take's moves as the clip player makes them again: at each move's beat, the edits that took the Torus there from where it stood. A
@@ -273,6 +480,121 @@ export function takeMoves(start: TorusKept | null, raw: unknown): ClipMove[] {
     if (edits.length) moves.push({beat: (move as Plain).beat as number, edits})
   }
   return moves
+}
+
+// ── Export Audio of a take ─────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+/** The take's course rendered offline by its owner (the frame's `render-take`, QL-MEF torus-render: a second owner of the scene set to the
+ * checkpoint, each act made at its sample; the live Torus neither moves nor sounds), in parts of at most `partFrames` (2^24, the most one
+ * render makes), each part from the checkpoint the last one ended at. Its PCM whole at the owner's rate, or why not, in words. */
+export async function renderTake(course: TakeCourse, stage: (command: StageCommand) => Promise<StageResult>, partFrames: number = STAGE_RENDER_FRAMES_MAX):
+  Promise<{readonly pcm: Float32Array; readonly sample_rate: number} | {readonly refused: string}> {
+  const pcm = new Float32Array(course.frames)
+  const from = BigInt(course.from_samples_elapsed)
+  let checkpoint = course.checkpoint, done = 0
+  while (done < course.frames) {
+    const frames = Math.min(partFrames, course.frames - done)
+    const start = from + BigInt(done), end = start + BigInt(frames)
+    if (BigInt(checkpoint.taken_at_samples) !== start)
+      return {refused: `The Torus's render did not end where the next part begins: it ended at sample ${checkpoint.taken_at_samples}, and the next part begins at ${start}.`}
+    const acts = course.acts.filter(act => { const at = BigInt(act.at_samples_elapsed); return at >= start && at < end })
+    const answer = await stage({command: 'render-take', checkpoint, acts: [...acts], frames}).catch((cause: unknown): StageResult => ({ok: false, error: said(cause)}))
+    if (!answer.ok) return {refused: `The Torus's owner did not render the take: ${sentence(answer.error)}`}
+    const render = answer.render
+    if (!render || render.from_samples_elapsed !== String(start) || render.frames !== frames || render.sample_rate !== course.sample_rate || render.pcm.length !== frames)
+      return {refused: 'The Torus\'s owner rendered another stretch than the take asked of it.'}
+    pcm.set(render.pcm, done)
+    checkpoint = render.ended
+    done += frames
+  }
+  if (BigInt(checkpoint.taken_at_samples) !== from + BigInt(course.frames))
+    return {refused: `The Torus's render did not end where the take ends: it ended at sample ${checkpoint.taken_at_samples}.`}
+  return {pcm, sample_rate: course.sample_rate}
+}
+
+/** The level the take played at, as gain steps over its PCM: the frame's presentation level as the take began, then each move of it at
+ * its beat (the frame's own gain, frame/native-field controller.ts setLevel). Pure. */
+export function takeLevels(keeps: Plain, course: TakeCourse): {readonly steps: readonly {readonly at: number; readonly gain: number}[]; readonly kept: boolean} {
+  const kept = torusKeptOf(keeps.torus)
+  const levelOf = (edits: readonly InstrumentEdit[]) => { const edit = edits.find(e => e.kind === 'level'); return edit && edit.kind === 'level' ? edit.value : undefined }
+  const steps = [{at: 0, gain: kept ? levelOf(kept.edits) ?? 1 : 1}]
+  const bpm = typeof keeps.bpm === 'number' && keeps.bpm > 0 ? keeps.bpm : null
+  if (bpm !== null) for (const move of takeMoves(kept, keeps.moves)) {
+    const gain = levelOf(move.edits)
+    const at = Math.round(move.beat * (60 / bpm) * course.sample_rate)
+    if (gain !== undefined && at < course.frames) steps.push({at, gain})
+  }
+  return {steps, kept: kept !== null}
+}
+
+/** Mono IEEE-754 32-bit float WAV (format tag 3) at `rate`, as live-engine writes it (wav.rs). Pure. */
+export function takeWav(pcm: Float32Array, rate: number): Uint8Array<ArrayBuffer> {
+  const bytes = new Uint8Array(new ArrayBuffer(44 + pcm.length * 4))
+  const view = new DataView(bytes.buffer)
+  const text = (at: number, word: string) => { for (let i = 0; i < word.length; i++) view.setUint8(at + i, word.charCodeAt(i)) }
+  text(0, 'RIFF'); view.setUint32(4, 36 + pcm.length * 4, true); text(8, 'WAVE')
+  text(12, 'fmt '); view.setUint32(16, 16, true); view.setUint16(20, 3, true); view.setUint16(22, 1, true)
+  view.setUint32(24, rate, true); view.setUint32(28, rate * 4, true); view.setUint16(32, 4, true); view.setUint16(34, 32, true)
+  text(36, 'data'); view.setUint32(40, pcm.length * 4, true)
+  for (let i = 0; i < pcm.length; i++) view.setFloat32(44 + i * 4, pcm[i]!, true)
+  return bytes
+}
+
+/** What Export Audio reaches: the frame's stage channel, and where the file is saved (a download, which the native host lands in
+ * Downloads and says where, studioExports.ts). */
+export interface TakeExportOwners {
+  readonly stage: (command: StageCommand) => Promise<StageResult>
+  readonly save: (name: string, bytes: Uint8Array<ArrayBuffer>) => Promise<unknown>
+}
+
+/** Export Audio of a take's clip (manual §21.2, "What Export Audio renders is what you heard, sample for sample"): its course rendered by
+ * the Torus's owner, at the level the take played at, written as WAV and saved; answered in words. A clip no take gave, or a take that
+ * keeps no course, is refused in words. The frame's effects are its own sound after the Torus and are not in the render: said. */
+export async function exportTake(clip: LiveClipReading, owners: TakeExportOwners): Promise<{readonly ok: true; readonly note: string} | {readonly ok: false; readonly error: string}> {
+  const named = clip.name || 'This clip'
+  if (!clip.take) return {ok: false, error: `${named} is not a take: Export Audio renders a take Record laid, as it was played.`}
+  const keeps = clip.take.keeps
+  if (!plain(keeps) || keeps.schema !== TAKE_SCHEMA) return {ok: false, error: noCourse(clip.take.keepsRefused ?? 'what it keeps beside its notes could not be read')}
+  const course = takeCourseOf(keeps.course)
+  if (!course) return {ok: false, error: noCourse(typeof keeps.course_refused === 'string' ? keeps.course_refused : 'it was laid before the Torus kept one')}
+  const rendered = await renderTake(course, owners.stage)
+  if ('refused' in rendered) return {ok: false, error: rendered.refused}
+  const {steps, kept} = takeLevels(keeps, course)
+  const pcm = rendered.pcm
+  for (const [i, step] of steps.entries()) {
+    const end = steps[i + 1]?.at ?? pcm.length
+    for (let n = step.at; n < end; n++) pcm[n] = pcm[n]! * step.gain
+  }
+  const name = `${(clip.name || `Take ${clip.take.id}`).replace(/[\\/:*?"<>|]/g, '-')}.wav`
+  try { await owners.save(name, takeWav(pcm, rendered.sample_rate)) } catch (cause) { return {ok: false, error: `${name} was not saved: ${sentence(said(cause))}`} }
+  const chain = torusKeptOf(keeps.torus)?.edits.find(edit => edit.kind === 'effect-chain')
+  const effects = chain && chain.kind === 'effect-chain' && chain.chain.length ? ` The frame's effects (${chain.chain.join(', ')}) are not in the file: they are its own sound, after the Torus.` : ''
+  const level = kept ? '' : ' The Torus was not kept with this take, so the file is at the owner\'s own level.'
+  return {ok: true, note: `Exported ${clip.name || `Take ${clip.take.id}`} as “${name}”: ${(pcm.length / rendered.sample_rate).toFixed(2)} s of the Torus at ${rendered.sample_rate} Hz, as the take played it.${effects}${level}`}
+}
+
+/** The candidate's Export Audio of the take at `at` on `track` of the set at `path`: the clip read whole from the set's owner (kernel
+ * live_clip_read), rendered through the frame's stage channel, saved as a download. */
+export async function exportLiveTake(address: {readonly path: string; readonly track: number; readonly at: LiveClipAt}): Promise<{readonly ok: true; readonly note: string} | {readonly ok: false; readonly error: string}> {
+  const [{detectTransport, kernelOp}, torus] = await Promise.all([import('../../../../../desktop/cradle/src/kernel/bridge'), import('./torusInstrument')])
+  const transport = detectTransport()
+  if (transport.kind === 'unavailable') return {ok: false, error: transport.reason}
+  const answer = await kernelOp(transport, {op: 'live_clip_read', path: address.path, track: address.track, clip: address.at})
+  if (answer.error || answer.outcome?.result !== 'live_clip_reading') return {ok: false, error: answer.error ?? 'The set\'s owner did not answer the clip'}
+  return exportTake(answer.outcome.reading.clip, {stage: torus.commitLiveStage, save: download})
+}
+
+/** A file saved as the page's download: the native host lands it in Downloads and says where (`oi:native-download`). */
+async function download(name: string, bytes: Uint8Array<ArrayBuffer>): Promise<void> {
+  const url = URL.createObjectURL(new Blob([bytes], {type: 'audio/wav'}))
+  const link = document.createElement('a')
+  link.href = url
+  link.download = name
+  link.rel = 'noopener'
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  setTimeout(() => URL.revokeObjectURL(url), 60_000)
 }
 
 // ── Record, in Live's transport ────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -339,19 +661,47 @@ export interface RecordOwners {
   /** The part the take was laid on keeps the Torus as it then stands (createTorusKeeper keepOn); answers why not, or null. */
   readonly keepTorus: (path: string, track: number) => Promise<string | null>
   readonly now: () => number
+  /** The frame's stage channel to the Torus's owner (torusInstrument.ts commitLiveStage): its checkpoint as a take begins, and at Stop its
+   * cursor and journal, which make the take's course. Absent, a take keeps no course and says so. */
+  readonly stage?: (command: StageCommand) => Promise<StageResult>
 }
 
 const said = (cause: unknown) => cause instanceof Error ? cause.message : String(cause)
 const sentence = (text: string) => /[.!?…]$/.test(text) ? text : `${text}.`
 
-/** What Export Audio does with a take, until the Torus sounds in its render: said with every take laid. */
-export const TAKE_NOT_EXPORTED = 'Export Audio renders what the engine played, and the Torus does not sound in it yet, so this take is not in the file.'
+/** The Torus as it rings, kept by its owner as a take begins; or why it was not. */
+type Begun = {readonly checkpoint: StageTorusCheckpoint} | {readonly refused: string}
+
+/** The Torus's checkpoint through the stage channel, or why there is none, in the owner's words. */
+async function checkpointOf(stage: (command: StageCommand) => Promise<StageResult>): Promise<Begun> {
+  const answer = await stage({command: 'torus', action: 'checkpoint'}).catch((cause: unknown): StageResult => ({ok: false, error: said(cause)}))
+  if (!answer.ok) return {refused: `the Torus's owner kept no state of it as the take began: ${answer.error}`}
+  return answer.checkpoint ? {checkpoint: answer.checkpoint} : {refused: 'the Torus\'s owner answered without its checkpoint as the take began'}
+}
+
+/** At Stop, the take's course from the owner: its cursor (what it was sent before Stop is the take's), then its journal from the take's first
+ * sample. The take lasts whole bars, or to the cursor when it rendered past them. */
+async function landingOf(stage: (command: StageCommand) => Promise<StageResult>, begun: Begun, bpm: number, beats: number): Promise<TakeLanding> {
+  if ('refused' in begun) return begun
+  const {checkpoint} = begun
+  const failed = (cause: unknown): StageResult => ({ok: false, error: said(cause)})
+  const clock = await stage({command: 'audio-clock'}).catch(failed)
+  if (!clock.ok || !clock.clock) return {refused: `the Torus's owner did not read its audio clock at Stop: ${clock.ok ? 'it answered without one' : clock.error}`}
+  if (clock.clock.sample_rate !== checkpoint.sample_rate) return {refused: `the Torus's owner renders at ${clock.clock.sample_rate} Hz now, and the take began at ${checkpoint.sample_rate} Hz`}
+  const from = BigInt(checkpoint.taken_at_samples), until = BigInt(clock.clock.samples_elapsed)
+  if (until < from) return {refused: 'the Torus\'s owner began again during the take: its cursor stands before the take\'s first sample'}
+  const journal = await stage({command: 'performance-journal', from_samples_elapsed: checkpoint.taken_at_samples}).catch(failed)
+  if (!journal.ok || !journal.journal) return {refused: `the Torus's owner did not give its journal: ${journal.ok ? 'it answered without one' : journal.error}`}
+  const frames = Math.max(Number(until - from), Math.round(beats * (60 / bpm) * checkpoint.sample_rate))
+  return takeCourse(checkpoint, journal.journal, clock.clock.samples_elapsed, frames)
+}
 
 /** Record's store: one take at a time, on the recorder the playing path tells its notes to. */
 export function createLiveRecord(recorder: TakeRecorder, owners: RecordOwners) {
   let state: RecordState = {recording: null, busy: false, said: null}
   const listeners = new Set<() => void>()
   let unwatch: (() => void) | null = null
+  let begun: Begun | null = null
   let takes = 0
   const publish = (next: Partial<RecordState>) => { state = {...state, ...next}; for (const listener of [...listeners]) listener() }
   return {
@@ -368,6 +718,8 @@ export function createLiveRecord(recorder: TakeRecorder, owners: RecordOwners) {
         const lane = (document as {tracks: Plain[]}).tracks[track]!.arrangement_clips
         const clips = Array.isArray(lane) ? lane.filter(plain).map(clip => ({end: Number(clip.end)})) : []
         const context: TakeContext = {path, track, part: part.name, bpm, start: takeStartOf(clips), torus: torusKept(owners.torus()), mode}
+        // The Torus as it rings as the take begins, then the take: its first beat stands on the owner's sample.
+        begun = owners.stage ? await checkpointOf(owners.stage) : null
         recorder.start(context, owners.now())
         unwatch = owners.subscribeTorus(() => recorder.moved(torusKept(owners.torus()), owners.now()))
         publish({recording: context, busy: false, said: null})
@@ -381,12 +733,18 @@ export function createLiveRecord(recorder: TakeRecorder, owners: RecordOwners) {
       unwatch?.(); unwatch = null
       if (!take) return
       publish({recording: null, busy: true})
-      const act = takeRecordAct(take, `Take ${++takes}`)
-      if ('refused' in act) { publish({busy: false, said: act.refused}); return }
+      const name = `Take ${++takes}`
+      const nothing = takeRecordAct(take, name)
+      if ('refused' in nothing) { publish({busy: false, said: nothing.refused}); return }
+      const from = begun
+      begun = null
+      const landing = owners.stage && from ? await landingOf(owners.stage, from, take.context.bpm, takeLength(take)) : undefined
+      const act = takeRecordAct(take, name, landing) as Extract<LiveSetAct, {kind: 'take_record'}>
+      const exported = act.keeps?.course ? TAKE_EXPORTS : noCourse(String(act.keeps?.course_refused ?? NO_STAGE))
       try {
         const laid = await owners.act(take.context.path, act)
         const kept = await owners.keepTorus(take.context.path, take.context.track)
-        publish({busy: false, said: [laid.done, laid.keepsRefused, kept, TAKE_NOT_EXPORTED].filter(Boolean).map(text => sentence(text!)).join(' ')})
+        publish({busy: false, said: [laid.done, laid.keepsRefused, kept, exported].filter(Boolean).map(text => sentence(text!)).join(' ')})
       } catch (cause) {
         publish({busy: false, said: `The take was not laid: ${sentence(said(cause))}`})
       }
@@ -551,6 +909,7 @@ export async function liveRecord(): Promise<{readonly record: LiveRecord; readon
     subscribeTorus: torus.subscribeLiveTorus,
     keepTorus: (path, track) => keeper.keepOn(path, track),
     now: () => performance.now(),
+    stage: torus.commitLiveStage,
   })
   candidate = {record, keeper}
   return candidate

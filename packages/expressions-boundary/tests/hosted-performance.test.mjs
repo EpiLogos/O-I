@@ -134,3 +134,80 @@ test('the presets module computes no digest and seals nothing: the kernel alone 
   const source = await readFile(new URL('../src/performanceBasis.ts', import.meta.url), 'utf8');
   assert.doesNotMatch(source, /createHash|sha256\(|crypto|digest\(|\.seal\(|content_digest\s*=(?!=)/i);
 });
+
+// ── 4 — what the Scene keeps on the Torus (O-I #852, manual §21.2 Sounds and instruments): its sounds, its instruments with their sounds,
+// its racks, each listed as the kernel holds it (kernel expression_performance/kept.rs). The listing reads; it seals and hashes nothing.
+
+const KEPT_DIGEST = n => 'sha256:' + String(n).repeat(64);
+const prepared = ref => ({schema: 'ql.physical-body-preparation/v1', contract: 'ql.physical-body/v1', request: {preparation_ref: ref}});
+const sound = (n, name, body = {kind: 'torus'}) => ({schema: 'oi.torus-sound/v1', sound_ref: KEPT_DIGEST(n), name, sample_rate: 48000,
+  checkpoint: {schema: 'ql.torus-checkpoint/v1'}, checkpoint_sha256: KEPT_DIGEST(9), body, sources: [], law: 'kept', seal: 'hmac-sha256:00'});
+const keptOnScene = () => ({
+  sounds: [sound(1, 'Warm Logic'), sound(2, 'Paper bell', {kind: 'form', prepared: prepared('ql:form-body:fold')}), sound(3, 'Paper hum', {kind: 'form', prepared: prepared('ql:form-body:fold')}),
+    {...sound(4, 'Forged'), schema: 'other'}],
+  instruments: [{schema: 'oi.torus-instrument/v1', instrument_ref: 'instrument:fold', name: 'Folded sheet', body: prepared('ql:form-body:fold'),
+    sounds: [KEPT_DIGEST(2), KEPT_DIGEST(3), KEPT_DIGEST(7)]}],
+  racks: [{schema: 'oi.torus-rack/v1', rack_ref: 'rack:warm', name: 'Warm rack', sound: KEPT_DIGEST(1),
+    chain: [{device_ref: 'arpeggiator', role: 'note', state: {}}, {device_ref: 'reverb', role: 'effect', state: {}}],
+    macros: [{name: 'Bloom', value: 0.5, targets: []}], variations: [{name: 'Open', values: [1]}, {name: 'Closed', values: [0]}]}],
+});
+
+test('the listing carries what the Scene keeps on the Torus: sounds on the torus, instruments with the sounds made on them, racks', async () => {
+  const {listPerformance} = await import('../src/performanceBasis.ts');
+  const listed = listPerformance({bases: [basis()], torus_kept: keptOnScene()});
+  assert.deepEqual(listed.bases, [{basis_ref: DIGEST, event_ref: 'event:kept', m1_coordinate: '#1-5-1'}], 'the presets list as they did');
+  assert.deepEqual(listed.kept.sounds, [{sound_ref: KEPT_DIGEST(1), name: 'Warm Logic', body: 'torus', body_ref: null, sample_rate: 48000}],
+    'a sound made on an instrument stands under it, not again under the Torus; a record that is not a sound is not listed');
+  assert.deepEqual(listed.kept.instruments, [{instrument_ref: 'instrument:fold', name: 'Folded sheet', body_ref: 'ql:form-body:fold', sounds: [
+    {sound_ref: KEPT_DIGEST(2), name: 'Paper bell', body: 'form', body_ref: 'ql:form-body:fold', sample_rate: 48000},
+    {sound_ref: KEPT_DIGEST(3), name: 'Paper hum', body: 'form', body_ref: 'ql:form-body:fold', sample_rate: 48000}]}],
+    'its sounds in its own order; one the Scene does not keep is not listed');
+  assert.deepEqual(listed.kept.racks, [{rack_ref: 'rack:warm', name: 'Warm rack', sound: KEPT_DIGEST(1), devices: 2, macros: ['Bloom'], variations: ['Open', 'Closed']}]);
+  assert.deepEqual(listPerformance({bases: []}), {state: 'listed', bases: []}, 'a Scene that keeps nothing lists as it did');
+  assert.deepEqual(listPerformance(undefined), {state: 'listed', bases: []});
+});
+
+test("the owner's listing is the Scene performance's, read by the kernel's own inspect", async () => {
+  const source = await readFile(new URL('../src/cradle.ts', import.meta.url), 'utf8');
+  assert.match(source, /if \(request\.action === 'list'\) return listPerformance\(scene\.performance\);/);
+});
+
+// ── 5 — a sound saved and opened (O-I #852, DLW §21.2 "Save the instrument as you tuned it"; "Drag it onto a part to play it"): the
+// Scene keeps the sound the kernel sealed, by one edit of its performance; a kept sound is read back whole by its ref, to open.
+
+test('a kept sound is asked for by its ref and kept whole; each action reads only its own keys', () => {
+  const kept = sound(1, 'Warm Logic');
+  assert.deepEqual(readFramePerformanceRequest({operation: 'performance', action: 'sound', sound_ref: KEPT_DIGEST(1), ...refs}),
+    {operation: 'performance', action: 'sound', sound_ref: KEPT_DIGEST(1), ...refs});
+  assert.deepEqual(readFramePerformanceRequest({operation: 'performance', action: 'keep-sound', sound: kept, ...refs}),
+    {operation: 'performance', action: 'keep-sound', sound: kept, ...refs});
+  for (const bad of [{sound_ref: 'sound'}, {sound_ref: KEPT_DIGEST(1), name: 'x'}, {}])
+    assert.equal(readFramePerformanceRequest({operation: 'performance', action: 'sound', ...bad, ...refs}), null, JSON.stringify(bad));
+  for (const bad of [undefined, {...kept, schema: 'oi.torus-take/v1'}, {...kept, sound_ref: 'x'}, {...kept, name: ''}, {...kept, name: 'x'.repeat(121)},
+    {...kept, checkpoint: 'x'.repeat(2 * 1024 * 1024 + 1)}])
+    assert.equal(readFramePerformanceRequest({operation: 'performance', action: 'keep-sound', sound: bad, ...refs}), null, JSON.stringify(bad)?.slice(0, 60));
+  assert.notEqual(readFramePerformanceRequest({operation: 'performance', action: 'keep-sound', sound: {...kept, name: 'x'.repeat(120)}, ...refs}), null,
+    'a name as long as the kernel keeps one');
+});
+
+test('the Scene keeps a sound by one edit of its performance, and answers what it keeps then; a kept sound is read back whole', async () => {
+  const {keepSoundChange, keptSoundReply, keptSoundRecord, listPerformance} = await import('../src/performanceBasis.ts');
+  const kept = sound(1, 'Warm Logic');
+  assert.deepEqual(keepSoundChange('scene:one', kept), {change: 'scene_performance_edit', scene_ref: 'scene:one', operations: [{operation: 'keep_torus_sound', sound: kept}]},
+    'the kernel opens the Scene\'s performance with it, or keeps it in the one it has; the seal is the kernel\'s to judge');
+  const performance = {bases: [], torus_kept: {sounds: [kept], instruments: [], racks: []}};
+  assert.deepEqual(keptSoundReply(performance, kept, false), {state: 'kept', sound_ref: KEPT_DIGEST(1), name: 'Warm Logic', unsaved: false,
+    kept: listPerformance(performance).kept});
+  assert.equal(keptSoundReply(performance, kept, true).unsaved, true, 'kept in the Scene, the Expression not yet written');
+  assert.deepEqual(keptSoundReply({bases: []}, kept, true), {state: 'refused', reason: 'The Scene did not keep "Warm Logic".', missing: []});
+  assert.deepEqual(keptSoundRecord(performance, KEPT_DIGEST(1)), {state: 'sound', sound: kept}, 'the record as the Scene keeps it');
+  assert.deepEqual(keptSoundRecord(performance, KEPT_DIGEST(2)), {state: 'refused', reason: 'The Scene keeps no sound ' + KEPT_DIGEST(2) + '.', missing: []});
+  assert.deepEqual(keptSoundRecord({bases: [], torus_kept: {sounds: [{...kept, schema: 'other'}]}}, KEPT_DIGEST(1)).state, 'refused', 'a record that is not a sound opens nothing');
+});
+
+test("the owner keeps a sound by the kernel's own edit of the inspected revision, and reads a kept one back by the kernel's own inspect", async () => {
+  const source = await readFile(new URL('../src/cradle.ts', import.meta.url), 'utf8');
+  assert.match(source, /if \(request\.action === 'sound'\) return keptSoundRecord\(scene\.performance, request\.sound_ref\);/);
+  assert.match(source, /operation: 'edit', expression_ref: request\.expression_ref, expected_revision: document\.revision, actor: PERFORMANCE_ACTOR,\s+changes: \[keepSoundChange\(request\.scene_ref, request\.sound\)\]/);
+  assert.match(source, /return keptSoundReply\(kept\?\.performance, request\.sound, edited\.dirty === true\);/);
+});

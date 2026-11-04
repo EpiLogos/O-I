@@ -4029,7 +4029,9 @@ impl Kernel {
                 // environment. Nothing is recorded, nothing is emitted.
                 let data = shared_field::reading(&request)?;
                 Ok(KernelOpOutcome {
-                    read_scopes: None,
+                    // Read from the window's held field, whose own news
+                    // (`shared_field_changed`) retires it; no ground scope.
+                    read_scopes: Some(vec![shared_field::READ_SCOPE.into()]),
                     receipts: Vec::new(),
                     result: KernelOpResult::SharedFieldReading { data },
                 })

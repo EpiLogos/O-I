@@ -37,7 +37,7 @@ import {SharedStagePanel} from "./SharedStage";
 // @ts-ignore -- language-neutral view-state codec, unit-tested in tests/explore-field.test.mjs.
 import {EXPLORE_TRAVEL_KEY,amendVisit,canTravel,currentVisit,decodeExploreTravel,freshExploreTravel,pushVisit,travelBy} from "./travel.mjs";
 // @ts-ignore -- language-neutral field reading, unit-tested in tests/explore-field.test.mjs.
-import {constellation,fieldReading,searchField,watchStanding,watchTargetKind} from "./field.mjs";
+import {OBSERVATION_RENEW_MS,constellation,fieldNews,fieldReading,searchField,watchStanding,watchTargetKind} from "./field.mjs";
 // @ts-ignore -- the owner's Watch contract validates the marker the desktop puts.
 import {createWatch} from "../../../../shared-field/watch.mjs";
 import "./explore.css";
@@ -54,7 +54,7 @@ const KIND_LABEL:Record<string,string>={"central-world":"world","wiki-space":"wi
 const kindLabel=(kind:string)=>KIND_LABEL[kind]??kind;
 
 export function ExploreSurface({binding,onOpenPresentation,onOpenExplore}:ExploreSurfaceProps) {
-  const {transport}=useKernel();
+  const {transport,receipts}=useKernel();
   const pinned=binding.kind==="presentation";
   const [travel,setTravel]=useState<Travel>(()=>pinned?{...freshExploreTravel(),visits:[{query:"",selected:binding.ref}]}:loadTravel());
   const visit=currentVisit(travel) as Visit;
@@ -93,34 +93,51 @@ export function ExploreSurface({binding,onOpenPresentation,onOpenExplore}:Explor
 
   const selected=visit.selected;
   const isEntry=!!selected&&!selected.startsWith("participant:")&&!selected.startsWith("human:")&&!selected.startsWith("oi:field:")&&!selected.startsWith("relation:");
+  // The field's news (O-I #858): the kernel's `shared_field_changed` receipt
+  // is what wakes the observation; nothing polls the field.
+  const news=useMemo(()=>fieldNews(receipts) as {seq:number;cursor:string}|null,[receipts]);
+  const wake=useRef<()=>void>(()=>{});
   useEffect(()=>{
     let active=true;let retry:ReturnType<typeof setTimeout>|undefined;
     const observerRef=`explore:${crypto.randomUUID()}`;
     let cursor:string|undefined;
+    let asking=false,again=false;
     setBusy(true);setReadBusy(Boolean(selected&&isEntry));setReading(undefined);setWatchError(undefined);
     // A serial native observation: no overlapping snapshot/read requests can
-    // overwrite newer material. Reconnect rebuilds the caller's authorised
+    // overwrite newer material, and news that arrives while one is asked is
+    // one more ask after it. Reconnect rebuilds the caller's authorised
     // rows, including withdrawal and producer liveness, before rendering.
+    // Between news the observation is only kept, inside the kernel's lease.
+    const later=(ms:number)=>{if(retry)clearTimeout(retry);retry=setTimeout(()=>void observe(),ms);};
     const observe=async()=>{
+      if(asking){again=true;return;}
+      asking=true;if(retry)clearTimeout(retry);
       try{
         const next=await sharedField<{state?:string;cursor:string;snapshot:Snapshot;reading?:SharedFieldReading}>(transport,{kind:"observe",observer_ref:observerRef,...(selected&&isEntry?{ref:selected}:{})});
         if(!active)return;
-        if(next.state==="observing"){retry=setTimeout(()=>void observe(),400);return;}
+        if(next.state==="observing"){later(400);return;}
         if(isUnavailable(next))throw new Error(next.detail);
         if(cursor!==next.cursor){setSnapshot(next.snapshot);setReading(next.reading);cursor=next.cursor;}
         setBusy(false);setReadBusy(false);
-        retry=setTimeout(()=>void observe(),500);
+        later(OBSERVATION_RENEW_MS);
       }catch(cause){
         if(!active)return;
         const unavailable={state:"unavailable" as const,owner_operation:"shared-field.observe",detail:String(cause instanceof Error?cause.message:cause)};
         setSnapshot(unavailable);if(selected&&isEntry)setReading(unavailable);setBusy(false);setReadBusy(false);
         cursor=undefined;
-        retry=setTimeout(()=>void observe(),2000);
+        later(2000);
+      }finally{
+        asking=false;
+        if(again&&active){again=false;void observe();}
       }
     };
+    wake.current=()=>{if(active)void observe();};
     void observe();
-    return()=>{active=false;if(retry)clearTimeout(retry);void sharedField(transport,{kind:"observe-stop",observer_ref:observerRef}).catch(()=>{});};
+    return()=>{active=false;wake.current=()=>{};if(retry)clearTimeout(retry);void sharedField(transport,{kind:"observe-stop",observer_ref:observerRef}).catch(()=>{});};
   },[selected,isEntry,transport,generation]);
+  // News already heard when Explore opened was read by its first observation.
+  const woken=useRef(news?.seq);
+  useEffect(()=>{if(news&&news.seq!==woken.current){woken.current=news.seq;wake.current();}},[news?.seq]);
   useEffect(()=>{if(!field.current)return;const observer=new ResizeObserver(entries=>{const {width,height}=entries[0].contentRect;if(width>0&&height>0)setExtent({width,height});});observer.observe(field.current);return()=>observer.disconnect();},[selected]);
 
   const view=useMemo(()=>fieldReading(snapshot) as unknown as FieldView,[snapshot]);

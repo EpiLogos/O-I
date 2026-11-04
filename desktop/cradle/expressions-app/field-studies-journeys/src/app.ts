@@ -2083,7 +2083,7 @@ function rebindAroundAct(frame:EngineFrame){
 }
 function tick(now:number){if(sceneEditHeld||researchInstruments?.active()&&!researchPreview){nativeField?.controller.frame(0,true);lastTime=now;rafId=requestAnimationFrame(tick);return;}updatePropertyTake(now);const rawDelta=Math.max(0,Math.min((now-lastTime)/1000,.25));lastTime=now;let delta=!fieldPaused&&!document.hidden&&!libraryOpen?Math.min(rawDelta,.05):0;delta=nativeField?.controller.frame(delta,fieldPaused||document.hidden||libraryOpen)??delta;const previousTime=simTime;if(engine.capabilities.kind!=='production'){delta*=liveOverrides.valueForBind('field.params.timeScale')??scene().field.params.timeScale;simTime+=delta;}
  if(recovery.hidden&&!libraryOpen&&(!fieldPaused||needsFrame||engine.needsRender?.()||pointer.active||recorder.active||transitionDuration>0)&&now-lastStudioRender>=(physisFpsCap?1000/physisFpsCap:0)){try{const frame=frameData(delta);rebindAroundAct(frame);engine.render(frame);needsFrame=false;lastStudioRender=now;}catch(err){nativeField?.controller.hold('native surface render failed: '+String(err));needsFrame=false;if(String(err).toLowerCase().includes('context'))recovery.hidden=false;else error(err);transportUI();}}
- const native=engine.telemetry?.();if(native){simTime=native.simTime;delta=simTime-previousTime;document.documentElement.style.setProperty('--paper',native.background);document.documentElement.style.setProperty('--ink',native.palette[0]);$('text-layers').style.opacity=String(.25+.75*native.transition);}
+ const native=engine.telemetry?.();nativeField?.hear({camera,width,height},native?.config?.depth?.fov);if(native){simTime=native.simTime;delta=simTime-previousTime;document.documentElement.style.setProperty('--paper',native.background);document.documentElement.style.setProperty('--ink',native.palette[0]);$('text-layers').style.opacity=String(.25+.75*native.transition);}
  // A finished property preview holds its recorded end values; the field itself
  // keeps breathing. The playhead runs only while the scene plays, and reaching
  // the scene's end stops it — the transport returns to Play.
@@ -2366,6 +2366,12 @@ async function runStageCommand(command:StageCommand):Promise<StageResult>{
    if(!nativeField)throw new Error('This application has no native instrument.');
    if(command.action==='checkpoint')return {ok:true,checkpoint:await nativeField.controller.torusCheckpoint()};
    {const landed_at_samples_elapsed=await nativeField.controller.torusRestore(command.checkpoint);announceHostState();return {ok:true,landed_at_samples_elapsed};}
+  case 'torus-sound':
+   // A sound saved from the Torus is a read; a kept sound opened sets the Torus again, as a restore does (O-I #852; controller.ts torusSound,
+   // openTorusSound): it answers the sample it rang again from and what moved since the sound was saved.
+   if(!nativeField)throw new Error('This application has no native instrument.');
+   if(command.action==='save')return {ok:true,sound:await nativeField.controller.torusSound(command.name)};
+   {const {landed_at_samples_elapsed,moved}=await nativeField.controller.openTorusSound(command.sound);announceHostState();return {ok:true,landed_at_samples_elapsed,moved};}
   case 'render-take':
    // A take rendered offline through the M1′ session for Export Audio (O-I 855; controller.ts renderTake): a second owner of the scene set to
    // the take's checkpoint, each act at its sample, its PCM as f32. The live owner neither moves nor sounds, so nothing is announced.

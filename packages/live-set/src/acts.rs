@@ -72,6 +72,13 @@ pub enum SetAct {
     TrackMove { track: usize, by: i64 },
     /// Duplicate (⌘D) a track: a copy with its clips and chain, right after it.
     TrackDuplicate { track: usize },
+    /// Insert MIDI Track (⌘⇧T): an empty MIDI part right after track `after`
+    /// (after the last part, before the returns, with none), in a group where
+    /// it stands after one of the group's members.
+    TrackInsert {
+        #[serde(default)]
+        after: Option<usize>,
+    },
     /// Insert row (⌘I): an empty row below row `after` (at the top with none).
     SceneInsert {
         #[serde(default)]
@@ -1026,6 +1033,221 @@ fn track_duplicate(root: &mut Element, track: usize) -> Result<Done, String> {
     })
 }
 
+/// Live's own mixer for a new part: 0 dB, centre, on, and every send off (the
+/// template's `Send` `Manual`, -70 dB).
+const SEND_OFF: &str = "0.0003162277571";
+
+/// A MIDI part made empty as Live makes a new one from the set's own MIDI
+/// track (its routings and mixer shape, as many sends as the set has returns):
+/// every slot and the ruler emptied, no take lane, no envelope, no device, the
+/// mixer at Live's own, in no linked group, and named as Live names a new MIDI
+/// track ("N-MIDI" with an empty `UserName`).
+fn emptied_part(donor: &Element, id: &str, name: &str, scenes: usize) -> Result<Element, String> {
+    let mut part = donor.clone();
+    part.set_attr("Id", id);
+    let holder = part
+        .child_mut("Name")
+        .ok_or("the set's MIDI track carries no Name in the document")?;
+    for (field, value) in [
+        ("EffectiveName", name),
+        ("UserName", ""),
+        ("MemorizedFirstClipName", ""),
+    ] {
+        match holder.child_mut(field) {
+            Some(e) => e.set_attr("Value", value),
+            None if field != "MemorizedFirstClipName" => {
+                holder.children.push(value_element(field, value))
+            }
+            None => {}
+        }
+    }
+    if let Some(linked) = part.child_mut("LinkedTrackGroupId") {
+        linked.set_attr("Value", "-1");
+    }
+    if let Some(list) = part
+        .child_mut("AutomationEnvelopes")
+        .and_then(|a| a.child_mut("Envelopes"))
+    {
+        list.children.clear();
+    }
+    if let Some(lanes) = part
+        .child_mut("TakeLanes")
+        .and_then(|t| t.child_mut("TakeLanes"))
+    {
+        lanes.children.clear();
+    }
+    let chain = part
+        .child_mut("DeviceChain")
+        .ok_or("the set's MIDI track carries no device chain in the document")?;
+    for sequencer in ["MainSequencer", "FreezeSequencer"] {
+        let Some(sequencer) = chain.child_mut(sequencer) else {
+            continue;
+        };
+        if let Some(list) = sequencer.child_mut("ClipSlotList") {
+            for slot in &mut list.children {
+                if let Ok(value) = slot_value(slot) {
+                    value.children.clear();
+                }
+            }
+        }
+        if let Some(events) = sequencer
+            .child_mut("ClipTimeable")
+            .and_then(|t| t.child_mut("ArrangerAutomation"))
+            .and_then(|a| a.child_mut("Events"))
+        {
+            events.children.clear();
+        }
+    }
+    if let Some(devices) = chain
+        .child_mut("DeviceChain")
+        .and_then(|dc| dc.child_mut("Devices"))
+    {
+        devices.children.clear();
+    }
+    if let Some(mixer) = chain.child_mut("Mixer") {
+        for (parameter, value) in [("Volume", "1"), ("Pan", "0"), ("Speaker", "true")] {
+            if let Some(manual) = mixer
+                .child_mut(parameter)
+                .and_then(|p| p.child_mut("Manual"))
+            {
+                manual.set_attr("Value", value);
+            }
+        }
+        if let Some(sends) = mixer.child_mut("Sends") {
+            for holder in &mut sends.children {
+                if let Some(manual) = holder.child_mut("Send").and_then(|s| s.child_mut("Manual")) {
+                    manual.set_attr("Value", SEND_OFF);
+                }
+            }
+        }
+    }
+    main_slots(&mut part, scenes)?;
+    Ok(part)
+}
+
+/// Whether the `Tracks` member stands in the group headed by `head` (its own
+/// group, or a group within it).
+fn within(members: &[Element], member: &Element, head: &str) -> bool {
+    let group_of = |t: &Element| value_of(t, "TrackGroupId").unwrap_or("-1").to_string();
+    let mut group = group_of(member);
+    let mut steps = 0;
+    while group != "-1" && steps < members.len() {
+        if group == head {
+            return true;
+        }
+        group = members
+            .iter()
+            .find(|t| t.name == "GroupTrack" && t.attr("Id") == Some(group.as_str()))
+            .map_or_else(|| "-1".to_string(), group_of);
+        steps += 1;
+    }
+    false
+}
+
+fn track_insert(root: &mut Element, after: Option<usize>) -> Result<Done, String> {
+    let scenes = scene_count(root);
+    let members = root
+        .find("LiveSet")
+        .and_then(|set| set.child("Tracks"))
+        .ok_or("the document holds no tracks")?;
+    let listed = |t: &Element| {
+        matches!(
+            t.name.as_str(),
+            "AudioTrack" | "MidiTrack" | "ReturnTrack" | "GroupTrack"
+        )
+    };
+    // Where it stands (the `Tracks` member it goes before), the group it stands in, and the track it follows.
+    let (at, group, follows) = match after {
+        Some(track) => {
+            let at = member_at(root, track)?;
+            let before = &members.children[at];
+            let named = track_name(before);
+            match before.name.as_str() {
+                "ReturnTrack" => {
+                    return Err(format!("{named} is a return track: a new part stands among the parts, before the returns"))
+                }
+                // A group's members follow its head: a part inserted after the group stands after them, in the group's own group.
+                "GroupTrack" => {
+                    let head = track_id(before)?;
+                    let end = (at + 1..members.children.len())
+                        .take_while(|&j| within(&members.children, &members.children[j], &head))
+                        .last()
+                        .unwrap_or(at);
+                    (end + 1, value_of(before, "TrackGroupId").unwrap_or("-1").to_string(), named)
+                }
+                _ => (at + 1, value_of(before, "TrackGroupId").unwrap_or("-1").to_string(), named),
+            }
+        }
+        None => {
+            let last = members
+                .children
+                .iter()
+                .rposition(|t| listed(t) && t.name != "ReturnTrack");
+            match last {
+                Some(last) => (
+                    last + 1,
+                    "-1".to_string(),
+                    track_name(&members.children[last]),
+                ),
+                None => (0, "-1".to_string(), String::new()),
+            }
+        }
+    };
+    let donor = after
+        .and_then(|track| member_at(root, track).ok())
+        .map(|m| &members.children[m])
+        .filter(|t| t.name == "MidiTrack")
+        .or_else(|| members.children.iter().find(|t| t.name == "MidiTrack"))
+        .ok_or("The set holds no MIDI part to make a new one in Live's own shape from: Live's Insert MIDI Track (⌘⇧T) makes one")?;
+    let track = members.children[..at].iter().filter(|t| listed(t)).count();
+    let name = format!("{}-MIDI", track + 1);
+    let new_id = members
+        .children
+        .iter()
+        .filter_map(|t| t.attr("Id")?.parse::<u64>().ok())
+        .max()
+        .map_or(0, |id| id + 1)
+        .to_string();
+    let mut part = emptied_part(donor, &new_id, &name, scenes)?;
+    match part.child_mut("TrackGroupId") {
+        Some(g) => g.set_attr("Value", &group),
+        None if group != "-1" => {
+            return Err("the set's MIDI track carries no TrackGroupId in the document".into())
+        }
+        None => {}
+    }
+    let set = root
+        .find("LiveSet")
+        .ok_or("the document holds no LiveSet")?;
+    let declared = set
+        .child("NextPointeeId")
+        .and_then(|n| n.attr("Value"))
+        .and_then(|v| v.parse::<u64>().ok());
+    let mut next = declared.unwrap_or(0).max(highest_pointee(set) + 1);
+    let mut map = std::collections::HashMap::new();
+    reallocate(&mut part, &mut next, &mut map);
+    repoint(&mut part, &map);
+    members_mut(root)?.insert(at, part);
+    if declared.is_some() {
+        if let Some(counter) = root
+            .find_mut("LiveSet")
+            .and_then(|set| set.child_mut("NextPointeeId"))
+        {
+            counter.set_attr("Value", &next.to_string());
+        }
+    }
+    let words = if follows.is_empty() {
+        format!("Inserted {name}, an empty MIDI part, first in the set.")
+    } else {
+        format!("Inserted {name}, an empty MIDI part, right after {follows}.")
+    };
+    Ok(Done {
+        words,
+        at: Some(json!({"track": track})),
+        places: Places::None,
+    })
+}
+
 fn scene_insert(root: &mut Element, after: Option<usize>) -> Result<Done, String> {
     let at = after.map_or(0, |a| a + 1);
     insert_row(root, at)?;
@@ -1902,6 +2124,7 @@ pub fn act(path: &str, expected_revision: &str, act: &SetAct) -> Result<Value, S
             SetAct::TrackRename { track, name } => track_rename(root, *track, name)?,
             SetAct::TrackMove { track, by } => track_move(root, *track, *by)?,
             SetAct::TrackDuplicate { track } => track_duplicate(root, *track)?,
+            SetAct::TrackInsert { after } => track_insert(root, *after)?,
             SetAct::SceneInsert { after } => scene_insert(root, *after)?,
             SetAct::SceneRename { scene, name } => scene_rename(root, *scene, name)?,
             SetAct::SceneDuplicate { scene } => scene_duplicate(root, *scene)?,
@@ -2630,6 +2853,108 @@ mod tests {
         let (_, document) = reread(&path);
         assert_eq!(document.tracks[0].name, "Rhodes 2");
         assert_eq!(document.tracks[1].name, "Rhodes");
+    }
+
+    /// Insert MIDI Track (⌘⇧T; O-I #852, DLW §21.2 "Drag it onto a part to play it"): a new empty MIDI part, in Live 12's own shape
+    /// as this set writes a MIDI track, its every slot empty, no clip on its ruler, no take lane, no device and no envelope, its
+    /// mixer at Live's own (0 dB, centre, on, every send off), named as Live names one by its place ("2-MIDI").
+    #[test]
+    fn a_midi_part_is_inserted_empty_in_lives_own_shape() {
+        let (_dir, path) = set_file(SET);
+        let inserted = run(&path, SetAct::TrackInsert { after: Some(0) }).unwrap();
+        assert_eq!(
+            inserted["done"],
+            "Inserted 2-MIDI, an empty MIDI part, right after Keys."
+        );
+        assert_eq!(inserted["at"], json!({"track": 1}));
+        let (root, document) = reread(&path);
+        let names: Vec<&str> = document.tracks.iter().map(|t| t.name.as_str()).collect();
+        assert_eq!(
+            names,
+            vec!["Keys", "2-MIDI", "Group", "Bass", "Drums", "A-Reverb", "Master"]
+        );
+        let part = &document.tracks[1];
+        assert_eq!(part.kind, document.tracks[0].kind, "a MIDI part");
+        assert_eq!(
+            part.session_slots,
+            vec![None, None],
+            "a slot for every row, each empty"
+        );
+        assert!(part.arrangement_clips.is_empty() && part.devices.is_empty());
+        let made = crate::edit::track_at(&root, 1).unwrap();
+        assert_eq!(made.attr("Id"), Some("18"), "the set's next track Id");
+        assert_eq!(
+            made.child("TrackGroupId").and_then(|g| g.attr("Value")),
+            Some("-1")
+        );
+        assert!(made.find("AutomationEnvelope").is_none() && made.find("ClipEnvelope").is_none());
+        let volume = made
+            .find("Mixer")
+            .and_then(|m| m.child("Volume"))
+            .and_then(|v| v.child("Manual"))
+            .unwrap();
+        assert_eq!(volume.attr("Value"), Some("1"));
+        // Its pointees are its own, allocated past the set's: nothing of Keys is pointed at from it.
+        let counter = root
+            .find("LiveSet")
+            .unwrap()
+            .child("NextPointeeId")
+            .unwrap()
+            .attr("Value")
+            .unwrap()
+            .parse::<u64>()
+            .unwrap();
+        assert!(counter > 2000, "{counter}");
+        // Keys is as it was.
+        assert_eq!(slots(&document, 0)[0].as_deref(), Some("Riff"));
+        // After a group's member it stands in that group; with none named it stands after the last part, before the returns.
+        run(&path, SetAct::TrackInsert { after: Some(3) }).unwrap();
+        let (root, document) = reread(&path);
+        assert_eq!(document.tracks[4].name, "5-MIDI");
+        assert_eq!(
+            crate::edit::track_at(&root, 4)
+                .unwrap()
+                .child("TrackGroupId")
+                .and_then(|g| g.attr("Value")),
+            Some("17")
+        );
+        let appended = run(&path, SetAct::TrackInsert { after: None }).unwrap();
+        assert_eq!(appended["at"], json!({"track": 6}));
+        let (_, document) = reread(&path);
+        let names: Vec<&str> = document.tracks.iter().map(|t| t.name.as_str()).collect();
+        assert_eq!(
+            names,
+            vec![
+                "Keys", "2-MIDI", "Group", "Bass", "5-MIDI", "Drums", "7-MIDI", "A-Reverb",
+                "Master"
+            ]
+        );
+        // Refused in words: after a return track, or after no track of the set.
+        assert!(run(&path, SetAct::TrackInsert { after: Some(7) })
+            .unwrap_err()
+            .contains("return track"));
+        assert!(run(&path, SetAct::TrackInsert { after: Some(40) })
+            .unwrap_err()
+            .contains("no track"));
+        // A set with no MIDI part has no shape of Live's own to make one from here, and says so.
+        let (_dir, audio) = set_file(
+            &SET.replace("<MidiTrack Id=\"12\">", "<AudioTrack Id=\"12\">")
+                .replace("</MidiTrack>\n<GroupTrack", "</AudioTrack>\n<GroupTrack")
+                .replace("<MidiTrack Id=\"13\">", "<AudioTrack Id=\"13\">")
+                .replace(
+                    "</MidiTrack>\n<AudioTrack Id=\"8\">",
+                    "</AudioTrack>\n<AudioTrack Id=\"8\">",
+                ),
+        );
+        assert!(run(&audio, SetAct::TrackInsert { after: None })
+            .unwrap_err()
+            .contains("MIDI part"));
+        // The wire names it as the shell sends it.
+        let wire: SetAct =
+            serde_json::from_value(json!({"kind": "track_insert", "after": 0})).unwrap();
+        assert_eq!(wire, SetAct::TrackInsert { after: Some(0) });
+        let wire: SetAct = serde_json::from_value(json!({"kind": "track_insert"})).unwrap();
+        assert_eq!(wire, SetAct::TrackInsert { after: None });
     }
 
     #[test]

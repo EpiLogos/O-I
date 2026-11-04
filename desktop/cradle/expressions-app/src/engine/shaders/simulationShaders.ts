@@ -4,6 +4,7 @@
  */
 
 import { curlNoiseGLSL } from './curlNoise';
+import { M3_TORUS_TUBE } from '../glyphLibrary';
 import { MAX_FORMATIONS, MAX_PINS, MAX_FORCE_EMITTERS } from '../fieldModel';
 import {
   SDF_GRID,
@@ -492,7 +493,8 @@ void main() {
     vec3 localPos = pos - morphCenter;
 
     float rMajor = max(25.0, uManifoldRadius);
-    float rMinor = rMajor * 0.42;
+    // M3′'s torus keeps the proportion of M1′'s: its tube nine to sixteen (manual §20.9).
+    float rMinor = rMajor * ${M3_TORUS_TUBE.toFixed(4)};
 
     float theta = atan(localPos.y, localPos.x);
     float dXY = length(localPos.xy);

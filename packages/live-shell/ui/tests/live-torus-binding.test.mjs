@@ -72,8 +72,9 @@ test('every key of the design is the owner\'s reading or is absent with its reas
   // The Rack page's keys are the rack's (qlRack.ts): the rack named absent until it is read, the part in the view's own hand.
   const bound = model.torusDesignBinding(state())
   // The Torus's session keys (O-I #850) wait on the owner's torus-state while the frame announces none, and say so.
+  // Receiver (O-I 856) is the owner's once the frame announces where the torus is heard from; a frame that announces none says so.
   for (const key of Object.keys(torus.defaults)) assert.ok(key in values || model.TORUS_ABSENT[key] || (key === 'rack' && bound.standing.rack.disabled) || bound.local[key]
-    || /torus-state/.test(bound.standing[key]?.disabled ?? ''), `${key}: read from the owner, named absent, waiting on the owner's session, or the view's own`)
+    || /torus-state|announces no receiver/.test(bound.standing[key]?.disabled ?? ''), `${key}: read from the owner, named absent, waiting on the owner's session, or the view's own`)
   assert.deepEqual(Object.keys(torus.defaults).filter(key => key in values),
     ['light', 'body', 'level', 'lens', 'context-frame', 'harmonic-basis', 'm3-transcription', 'sound', 'cadence', 'scale', 'standing'],
     'the owner reports the light, the body it rings (the torus, O-I #850), the level, its four determinants, its sound, cadence and scale, and its standing; with no Torus session announced, nothing else of the design')
@@ -100,7 +101,7 @@ test('a key the owner does not take is disabled with its reason; while the instr
   const live = model.torusDesignBinding(state())
   // Damping is the body's Q, taken through the stage channel's damping edit (O-I #745 lane N; ql-745-torus-body.test.mjs).
   for (const key of ['level', 'sound', 'cadence', 'scale', 'lens', 'context-frame', 'harmonic-basis', 'm3-transcription', 'damping']) assert.equal(live.writes(key), true, `${key} is the owner's to change`)
-  for (const key of ['modes', 'pan', 'meter', 'view', 'receiver']) {
+  for (const key of ['modes', 'pan', 'meter', 'view']) {
     assert.equal(live.writes(key), false, `${key} has no owner`)
     assert.equal(live.standing[key].disabled, model.TORUS_ABSENT[key])
   }
@@ -138,6 +139,43 @@ test('a change leaves through the one stage channel, in the owner\'s own form; a
     assert.equal(await flushDrafts(binding, 1), 'A reading: the owner reports it; nothing here changes it.', 'a key with no owner never reaches the channel')
     assert.equal(sent.length, 3)
     assert.throws(() => model.torusRowChanges([{key: 'pulseMix', value: 40}]), /pulseMix: no parameter of the owner's instrument/, 'a retired control has no owner (O-I #850)')
+  } finally { instrument.setLiveInstrumentCommander(null); resetHost(model.TORUS_DEVICE_ID) }
+})
+
+// O-I 856 (manual §21.2 View: "Receiver On makes your camera the place where the torus is heard"; Rules: "A camera move does not change the
+// sound, unless Receiver is On"): Receiver is the owner's receiving context, announced as parameters.receiver and written as the stage
+// channel's receiver edit. The binding shows the owner's On or Off, its refusal in its words, and never a place.
+test('Receiver is the owner\'s: On or Off as the frame announces it, written through the one stage channel, a refusal in the owner\'s words', async () => {
+  assert.equal('receiver' in model.TORUS_ABSENT, false, 'the camera is now a place the torus is heard from')
+  const announced = receiver => state('following', parameters({receiver}))
+  const off = model.torusDesignBinding(announced({on: false, context: 'world', refusal: null}))
+  assert.equal(off.values.receiver, false)
+  assert.equal(off.writes('receiver'), true)
+  assert.equal(off.standing.receiver, undefined, 'nothing stands in its way')
+  const on = model.torusDesignBinding(announced({on: true, context: 'personal', refusal: null}))
+  assert.equal(on.values.receiver, true)
+  const refused = model.torusDesignBinding(announced({on: false, context: 'world', refusal: 'no torus here'}))
+  assert.deepEqual(refused.standing.receiver, {refused: 'no torus here'}, 'the owner\'s refusal, in its words')
+  const none = model.torusDesignBinding(state())
+  assert.equal(none.writes('receiver'), false)
+  assert.match(none.standing.receiver.disabled, /announces no receiver/, 'a frame that announces none says so')
+  assert.equal('receiver' in none.values, false, 'and gives no value')
+  const manual = model.torusDesignBinding(state('manual', parameters({receiver: {on: false, context: 'world', refusal: null}})))
+  assert.equal(manual.standing.receiver.disabled, 'The owner takes edits only while the instrument follows or is held.')
+  const sent = []
+  let refuse = null
+  instrument.setLiveInstrumentCommander(async command => { sent.push(command); return refuse ? {ok: false, error: refuse} : {ok: true} })
+  try {
+    resetHost(off.id)
+    setDraft(off.id, 'receiver', true)
+    assert.equal(await flushDrafts(off, 1), null)
+    assert.deepEqual(sent, [{command: 'instrument', edit: {kind: 'receiver', on: true}}], 'On is the owner\'s receiver edit: no place leaves the shell')
+    refuse = 'native owner busy: where the Torus is heard from was not set'
+    resetHost(on.id)
+    setDraft(on.id, 'receiver', false)
+    assert.equal(await flushDrafts(on, 1), refuse, 'Off refused: the owner\'s words')
+    assert.deepEqual(sent.at(-1), {command: 'instrument', edit: {kind: 'receiver', on: false}})
+    await assert.rejects(model.torusReceiver(announced({on: false, context: 'world', refusal: null}), async () => ({ok: true})).write({key: 'receiver', value: 'on'}), /On or Off/)
   } finally { instrument.setLiveInstrumentCommander(null); resetHost(model.TORUS_DEVICE_ID) }
 })
 
@@ -377,4 +415,31 @@ test('the Torus\'s tattva is the live scene\'s M2 condition, by the map\'s name 
   const refused = names.readCoordinateName({outcome: null, error: 'ql: unknown exact M coordinate: #9'}, '#9')
   assert.deepEqual(refused, {ok: false, reason: 'ql: unknown exact M coordinate: #9'})
   names.resetCoordinateNames()
+})
+
+// O-I #852 (manual §21.2 "Save the instrument as you tuned it"): the Body page names the sound and saves it through its owners
+// (live/LivePresets.tsx saveTorusSound); what they said stands on the Info line.
+test('the Body page saves the Torus as a sound by its name, through its owners', async () => {
+  mapSession(live => {
+    const device = model.torusDevice(live), binding = model.torusDesignBinding(live, device)
+    setHostPage(binding.id, 'body')
+    const body = renderToStaticMarkup(h(HostedDevice, {designed: torus, binding, view: 'whole', nav: {}}))
+    setHostPage(binding.id, 'field')
+    assert.match(body, /class="dp-sec-label">Save as a sound</)
+    assert.match(body, /aria-label="Sound name"/)
+    assert.match(body, /<button type="button" class="dp-action"[^>]*>Save sound<\/button>/)
+    // The Body page stands as tall as the Pulse and Stage pages (two bands, as Live's devices keep one height): the Save stands in the
+    // Body band beside the body's own section, and the name field spans the section, so the name reads whole.
+    const bands = body.split('class="dp-band"').slice(1)
+    assert.equal(bands.length, 2, 'the Body page keeps two bands')
+    assert.match(bands[0], /class="dp-sec-label">Body<[^]*class="dp-sec-label">Save as a sound<[^]*aria-label="Sound name"[^]*>Save sound</, 'beside the body, in its band')
+    assert.match(bands[0], /<div style="grid-column:span 2;width:100%"><div class="dp-cell dp-cell--text dp-cell--wide" data-i="Sound name\|/, 'the name spans the section')
+    assert.match(bands[0], /<div class="dp-sec" data-grow="true" style="width:224px"><div class="dp-sec-label">Body</, 'the body\'s section keeps the width the Notes band gave it, so its words read whole')
+  })
+  const source = await readFile(new URL('../src/inhabitants/catalogue/panels/torus.tsx', import.meta.url), 'utf8')
+  assert.match(source, /import\('\.\.\/\.\.\/\.\.\/live\/LivePresets'\)\.then\(presets => presets\.saveTorusSound\(name\)\)/, 'the save goes through the presets\' owner route, loaded when pressed')
+  // The refusal on the Save control speaks plainly (shared/Refusal.tsx refusalWords; desktop/cradle/tests/plain-refusals.test.mjs): the
+  // owners' words when they are words, a thrown cause never raw.
+  assert.match(source, /setSaid\(answer\.ok \? \{done: answer\.words\} : \{refused: refusalWords\(UNSAVED, answer\.error\)\}\), \(cause: unknown\) => setSaid\(\{refused: refusalWords\(UNSAVED, cause\)\}\)/)
+  assert.doesNotMatch(source, /String\(cause\)/, 'no caught value is printed as it came')
 })

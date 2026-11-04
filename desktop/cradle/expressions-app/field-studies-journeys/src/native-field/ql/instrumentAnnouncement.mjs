@@ -7,7 +7,9 @@
  *  - playback policy: the controller's embedded policy, unchanged;
  *  - determinants: the scene's acting M1 state (scene.ts SceneActing: lens, context frame, harmonic source, M3 transcription);
  *  - the Torus's M1′ session (parameters.torus): QL's own `torus-state` reading as the controller last took it (O-I #850), its notes
- *    counted and its Carrier's drive named in the owner's word; absent until the owner has been read.
+ *    counted and its Carrier's drive named in the owner's word, with the maqām, the lens's material and the twelve classes it names
+ *    beside them (O-I #855); absent until the owner has been read;
+ *  - where the Torus is heard from (parameters.receiver): Receiver On or Off, the owner's context and its refusal, never the place (O-I 856).
  *
  * Absent when no session is open: the frame announces nothing, and the shell withdraws the reading. A missing identity ref is
  * left missing, so the boundary refuses it by name. */
@@ -57,6 +59,10 @@ export function announceInstrument(reading) {
       // The torus's four effects (native-field/effectsLaw.ts), as the controller keeps them; a reading without them announces none.
       ...(reading.presentation_effects ? {effects: reading.presentation_effects} : {}),
       ...(instrument?.torus ? {torus: torusSession(instrument.torus)} : {}),
+      // Where the Torus is heard from (O-I 856): Receiver On or Off, the owner's context and its refusal in its words. The place is the
+      // listener's own and is never announced.
+      ...(reading.receiver ? {receiver: {on: reading.receiver.on === true, context: reading.receiver.context === 'personal' ? 'personal' : 'world',
+        refusal: typeof reading.receiver.refusal === 'string' ? reading.receiver.refusal : null}} : {}),
     },
   };
 }
@@ -67,5 +73,8 @@ function torusSession(torus) {
     settings: torus.settings, steps_per_second: torus.steps_per_second, band: torus.band, fundamental_hz: torus.fundamental_hz, map_hz: torus.map_hz,
     figure: torus.figure ?? null, comma_cents: torus.comma_cents, notes: Array.isArray(torus.notes) ? torus.notes.length : torus.notes,
     resident_tunings: torus.resident_tunings, carrier_drive: torus.carrier?.drive,
+    // What torus-state names beside the session (O-I #855 round 6d): the M2 condition's maqām with its pitches or the owner's words for
+    // its absence, the lens's material and the twelve classes, as the owner gave them; one the owner does not name is not announced.
+    ...Object.fromEntries(['maqam', 'material', 'classes'].filter(key => torus[key] !== undefined && torus[key] !== null).map(key => [key, torus[key]])),
   };
 }

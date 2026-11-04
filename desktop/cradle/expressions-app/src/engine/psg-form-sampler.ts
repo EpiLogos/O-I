@@ -507,6 +507,132 @@ export function applyFold(body: SampleBody, progress: FoldProgressReceipt): Floa
 }
 
 // ---------------------------------------------------------------------------
+// The form made a body (O-I #852): the Torus's Body is the torus or a form of
+// the Expression. QL's form owner compiles the body (form_instrument::body,
+// ql.form-body-request/v1 → ql.physical-body-preparation/v1); this half names
+// what it is asked for, where its points stand and how the picture is drawn
+// from the native owner's own state.
+// ---------------------------------------------------------------------------
+
+export const FORM_BODY_REQUEST = 'ql.form-body-request/v1';
+export const PHYSICAL_BODY_PREPARATION = 'ql.physical-body-preparation/v1';
+export const PHYSICAL_BODY_CONTRACT = 'ql.physical-body/v1';
+/** The most samples QL prepares one body from (form_instrument::body MAX_BODY_SAMPLES). */
+export const MAX_BODY_SAMPLES = 256;
+export const MAX_BODY_MODES = 64;
+/** K8 names a point by an exact JSON integer: a body point's name is its sample ID's low 53 bits. */
+export const BODY_IDENTITY_MASK = (1n << 53n) - 1n;
+
+/** The name the native owner knows a body point by (form_instrument::body BodyPoint.identity). */
+export function bodyIdentity(sampleId: bigint): number {
+  return Number(sampleId & BODY_IDENTITY_MASK);
+}
+
+function turn(p: number[], a: number, b: number, angle: number): void {
+  const c = Math.cos(angle), s = Math.sin(angle), x = p[a], y = p[b];
+  p[a] = x * c - y * s;
+  p[b] = x * s + y * c;
+}
+
+/**
+ * The fold as a body takes it, the native law (form_instrument::body `crease`): site 0 folds the half
+ * beyond the X hinge about it (y, z), site 1 the half beyond the Y hinge (z, x), and site 2 turns the whole
+ * body in its plane (x, y). Unlike `applyFold` (the whole body turned about each hinge, a pose), the halves
+ * meet at a crease, so a fold changes how the body rings. Returns each sample's place and its face's normal,
+ * in allocation order, in stage units.
+ */
+export function creaseFold(body: SampleBody, progress: FoldProgressReceipt): { positions: Float64Array; normals: Float64Array } {
+  assertFoldProgress(progress);
+  const [ax, ay, az] = progress.site_angles_deg10.map((a) => a * DEG10_TO_RAD);
+  const positions = new Float64Array(body.samples.length * 3);
+  const normals = new Float64Array(body.samples.length * 3);
+  body.samples.forEach((sample, i) => {
+    const rest = restUnits(body, sample);
+    const p = [...rest], n = [0, 0, 1];
+    if (rest[1] > 0) { turn(p, 1, 2, ax); turn(n, 1, 2, ax); }
+    if (rest[0] > 0) { turn(p, 2, 0, ay); turn(n, 2, 0, ay); }
+    turn(p, 0, 1, az); turn(n, 0, 1, az);
+    positions.set(p, i * 3);
+    normals.set(n, i * 3);
+  });
+  return { positions, normals };
+}
+
+export interface FormSymbol { kind: 'fold' | 'codon' | 'hexagram' | 'glyph'; formRef: string; sourceRef: string }
+export interface BodyMaterial { fibre: 'earth' | 'fire' | 'water' | 'air'; qFactor: number; strikeShare: number; sourceRef: string }
+export interface FormBodyAsk {
+  eventRef: string; subjectRef: string; sourceGeneration: number;
+  form: FormSymbol; preparation: SamplePreparation; creaseDeg10: [number, number, number];
+  material: BodyMaterial; modes: number; sampleRate: number; pickupUv?: [number, number];
+}
+
+/** What QL's form owner is asked to prepare: the form's sheet, its creases, what it is made of and how many of its modes ring
+ * (ql.form-body-request/v1, in the owner's own field names). Refused in words, as the owner refuses it, before anything is sent. */
+export function formBodyRequest(ask: FormBodyAsk): Record<string, unknown> {
+  validatePreparation(ask.preparation);
+  const count = allocationCount(ask.preparation);
+  if (count > MAX_BODY_SAMPLES) {
+    throw new FormLawError(`a body is prepared from at most ${MAX_BODY_SAMPLES} samples; this form allocates ${count}: prepare its body at a coarser resolution`);
+  }
+  if (!Number.isInteger(ask.modes) || ask.modes < 1 || ask.modes > MAX_BODY_MODES) throw new FormLawError(`a body rings 1..=${MAX_BODY_MODES} modes for each voice`);
+  if (!(ask.material.qFactor >= 0.1 && ask.material.qFactor <= 40)) throw new FormLawError('a body\'s Q factor must be within 0.1 to 40: it is the Torus\'s Damping');
+  if (!(ask.material.strikeShare >= 0 && ask.material.strikeShare <= 1)) throw new FormLawError('a body\'s Strike must be a share within 0 to 1');
+  if (ask.creaseDeg10.some((a) => !Number.isInteger(a) || Math.abs(a) > 1800)) throw new FormLawError('a crease turns at most 180° either way');
+  const p = ask.preparation;
+  return {
+    schema: FORM_BODY_REQUEST,
+    event_ref: ask.eventRef,
+    subject_ref: ask.subjectRef,
+    source_generation: ask.sourceGeneration,
+    form: { kind: ask.form.kind, form_ref: ask.form.formRef, source_ref: ask.form.sourceRef },
+    samples: {
+      schema: p.schema, prep_ref: p.prepRef, treatment: p.treatment,
+      layers: p.layers.map((l) => ({ layer_ref: l.layerRef, rest_depth_w: l.restDepthW })),
+      resolution: p.resolution,
+      units: { extent_units: p.units.extentUnits, depth_units: p.units.depthUnits, metres_per_unit: p.units.metresPerUnit },
+      ...(p.mask ? { mask: { mask_ref: p.mask.maskRef, coverages: p.mask.coverages } } : {}),
+    },
+    crease_deg10: ask.creaseDeg10,
+    material: { fibre: ask.material.fibre, q_factor: ask.material.qFactor, strike_share: ask.material.strikeShare, source_ref: ask.material.sourceRef },
+    modes: ask.modes,
+    sample_rate: ask.sampleRate,
+    ...(ask.pickupUv ? { pickup_uv: ask.pickupUv } : {}),
+  };
+}
+
+/** What rings: the torus, or a form made a body (its owner's prepared body). */
+export type BodySelection = { kind: 'torus' } | { kind: 'form'; prepared: Record<string, any> };
+
+/** Takes a body as the Torus's Body: the torus, or a form's prepared body as QL's owner returned it. A body prepared for another
+ * request is refused as stale, never drawn. */
+export function selectBody(prepared: Record<string, any> | null, request?: Record<string, unknown>): BodySelection {
+  if (prepared === null) return { kind: 'torus' };
+  if (prepared?.schema !== PHYSICAL_BODY_PREPARATION || prepared?.contract !== PHYSICAL_BODY_CONTRACT) {
+    throw new FormLawError(`a form's body is its owner's ${PHYSICAL_BODY_PREPARATION}`);
+  }
+  if (request && (prepared.event_ref !== request.event_ref || JSON.stringify(prepared.form) !== JSON.stringify(request.form))) {
+    throw new FormLawError('this body was prepared for another form: prepare it again before it rings');
+  }
+  return { kind: 'form', prepared };
+}
+
+/** The body's picture from the native owner's own state: each point of the form where the frame's targets put it, by its native
+ * name. A point the frame does not draw is left out, never guessed. */
+export function bodyPicture(frame: { targets?: { identity: number | string; position: number[] }[] } | null, body: SampleBody): Map<bigint, [number, number, number]> {
+  const byName = new Map<string, [number, number, number]>();
+  for (const target of frame?.targets ?? []) {
+    const [x, y, z] = target.position ?? [];
+    if ([x, y, z].every(Number.isFinite)) byName.set(String(target.identity), [x, y, z]);
+  }
+  const picture = new Map<bigint, [number, number, number]>();
+  for (const sample of body.samples) {
+    const at = byName.get(String(bodyIdentity(sample.sampleId)));
+    if (at) picture.set(sample.sampleId, at);
+  }
+  return picture;
+}
+
+// ---------------------------------------------------------------------------
 // The instrument (ql.psg-form-instrument/v1): counters and receipts per
 // dependency-correct cache key, in the native disclosure's shapes.
 // ---------------------------------------------------------------------------

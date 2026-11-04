@@ -11,7 +11,8 @@ import {voiceModeRef} from './torusPlay.mjs';
 import {conditionReadingOf} from '../instrumentCondition';
 import {TorusObject} from '../../../src/engine/torusObject';
 import {isStageSampleCursor,stageJournalLanding,STAGE_JOURNAL_ACTS_MAX,STAGE_JOURNAL_BYTES_MAX,STAGE_EDIT_AHEAD_SECONDS,STAGE_RENDER_FRAMES_MAX,STAGE_RENDER_ACTS_MAX,
- readStageTorusCheckpoint,type StageAudioClock,type StagePerformanceJournal,type StageKey,type StageTakeAct,type StageTakeRender,type StageTorusCheckpoint} from '../stageCommands';
+ readStageTorusCheckpoint,readStageTorusSound,readStageSoundMoves,isStageSoundName,STAGE_TORUS_SOUND_NAME_MAX,type StageAudioClock,type StagePerformanceJournal,type StageKey,
+ type StageTakeAct,type StageTakeRender,type StageTorusCheckpoint,type StageTorusSound,type StageSoundMove} from '../stageCommands';
 import type {FieldScoreBasis,FieldScoreReply} from '../tarotScoreClient';
 export interface NativeRenderer {
  retainedTargetPort():any;releaseRetainedField():void;
@@ -42,6 +43,12 @@ export const PRESENTATION_LEVEL=Object.freeze({min:0,max:4,initial:1,
 const TRANSIENT=/owner busy|held before the event|presentation capacity|requires idle admitted owner/;
 /** How often the Torus's session is read while the field follows (O-I #850): a human cadence, never a beat. */
 const TORUS_READ_MS=1000;
+/** Where the Torus is heard from (O-I 856): metres in the scene the owner draws its targets in, and how long a place the owner refused is
+ * not asked again. */
+type ReceiverPlace=readonly [number,number,number];
+type ReceiverReading={schema:string;context:'world'|'personal';gains:{mode_ref:string;gain:number}[];law:string};
+const RECEIVER_RETRY_MS=1000;
+const samePlace=(a:ReceiverPlace|null,b:ReceiverPlace|null)=>a===null||b===null?a===b:a[0]===b[0]&&a[1]===b[1]&&a[2]===b[2];
 type Cadence={rate:number;period:number;source:string;timer:ReturnType<typeof setInterval>;started:number;
  beats:number;issued:number;applied:number;skipped:number;suspended:number;inFlight:boolean;lastEventMs?:number;maxEventMs?:number;stopped?:string;stopped_at?:number};
 /** Keys of the Jankó surface as the Torus's session takes them (instrument-session.mjs #keys: 1..32, row 0–5, column 0–65535), copied
@@ -78,13 +85,18 @@ export class NativeFieldController {
  /** The Torus's M1′ session as the owner last gave it (QL's `torus-state` or a Torus act's reply, ql.m1-prime-session/v1; O-I #850), when
   * it was read, and the owner's refusal of the read (an owner that holds no session), which stops the human-cadence re-read. */
  private torus:any=null;private torusAt=0;private torusRefused:string|null=null;
+ /** The name the kernel relayed the last Torus checkpoint under (its `value_sha256`, `torus_checkpoint_sha256`; O-I #852), with the sample
+  * it was taken at, and each kept checkpoint's name: a sound is saved from, and opened against, a checkpoint by that name. */
+ private relayed:{sha256:string;at:unknown}|null=null;private named=new WeakMap<object,string>();
  /** The Torus as an object of the scene (src/engine/torusObject.ts; DLW §21.2 "The Torus in the pane", O-I 851): it presents each
   * admitted frame on the shape the owner's figure law names, and offers the voices that sound as force points. One per lifetime. */
  private torusObject=new TorusObject();
  /** While the plate studies the modes under Manual, Focus or Automation the pulse is tuned to the drive (§20.14); the torus's own
   * rate is kept to give back. */
  private pulseTuning:{hz:number;before:unknown}|null=null;
- private event:any=null;private opening:any=null;private sourcesStale=false;private influenceStale=false;private timing:any=null;private timingStart=0;private lastInspect=0;
+ private event:any=null;private opening:any=null;private sourcesStale=false;
+ /** The latest sample a Torus Fundamental sent ahead waits for (O-I 855): sources read before the owner's sound reaches it stay stale. */
+ private fundamentalAt:bigint|null=null;private influenceStale=false;private timing:any=null;private timingStart=0;private lastInspect=0;
  private operating=0;private cadence:Cadence|null=null;private lastCadence:Cadence|null=null;
  private refusal:{operation:string;reason:string;at:number}|null=null;
  private played:{at:number;strikes:number;last_ms:number}|null=null;
@@ -92,6 +104,13 @@ export class NativeFieldController {
   * determinant event that strikes names every voice the owner tunes, and a strike at points of the surface names every voice the owner
   * tunes too, with the points it was struck at. The owner reports no per-voice amplitude, so the latest strike stands. */
  private struck:{at:number;source:'note'|'event'|'point';refs:string[];points?:{theta:number;phi:number}[]}|null=null;
+ /** Where the Torus is heard from (DLW manual §21.2 View: "Receiver On makes your camera the place where the torus is heard"; Rules: "A
+  * camera move does not change the sound, unless Receiver is On"; QL-MEF `torus-receiver`, O-I 856). On is the person's choice and outlives
+  * a lifetime, as the level does. The place last asked for (the camera's eye) and the place the owner hears from (null: the world's
+  * context) are this lifetime's and are never read out: the owner's answer names the context and the gain each voice is heard by, and a
+  * refusal its words with the place it refused, which is not asked again within RECEIVER_RETRY_MS. One ask is in flight at a time. */
+ private receiverOn=false;private wantedAt:ReceiverPlace|null=null;private heardAt:ReceiverPlace|null=null;private hearing:Promise<void>|null=null;
+ private heardReply:ReceiverReading|null=null;private receiverRefusal:{why:string;place:ReceiverPlace|null;at:number}|null=null;
  private level:GainNode|null=null;private levelValue:number=PRESENTATION_LEVEL.initial;
  /** A unity node the symbols' voices listen to (symbolVoices.ts): the torus's sound after the presentation level and before its effects. */
  private tap:GainNode|null=null;
@@ -113,7 +132,9 @@ export class NativeFieldController {
   const modes=sources?.current?.m2?.resonator?.modes;
   this.torusObject.setModeRefs(Array.isArray(modes)?modes.map((mode:any)=>mode?.mode_ref):null);
   if(this.scene){this.event=eventFromSources(sources);this.acting=readScene(sources,this.influenceReading,this.opened?.source);}
-  this.sourcesStale=false;this.lastInspect=performance.now();
+  // A Fundamental sent ahead moves the scene's event where it lands: sources read before then are stale already (O-I 855).
+  if(this.fundamentalAt!==null&&BigInt(reading.acknowledged.samples_elapsed)>=this.fundamentalAt)this.fundamentalAt=null;
+  this.sourcesStale=this.fundamentalAt!==null;this.lastInspect=performance.now();
   return sources;
  }
  private async readInfluence(session:InstrumentSession){
@@ -170,6 +191,8 @@ export class NativeFieldController {
   presentation_units_per_metre:this.projection?.scale??null,
   presentation_level:{value:this.levelValue,...PRESENTATION_LEVEL},
   presentation_effects:this.effects,
+  // Where the Torus is heard from: Receiver On or Off, the owner's context and gains, and its refusal; never the place (O-I 856).
+  receiver:this.receiverReading(),
   native:this.session?.reading??this.lastNative,muted:this.muted,
   domain:this.domain,source_currentness:this.domain?(this.sourcesStale?'inspected before the latest determinant event; influence is current':following?'inspected-native-basis; continuous cursor reported separately':'held-last-inspected-basis'):'unavailable',
   presented_clock:clock,
@@ -254,7 +277,12 @@ export class NativeFieldController {
    this.torusObject=new TorusObject();this.torusObject.setSampleRate(sampleRate);this.projection.setPresenter(this.torusObject);
    this.renderer.setNativeDomain(true);
    this.session=new InstrumentSession({...this.playback,context:this.stage(context),owner:this.renderer,initialReceipt:opened.receipt,
-    transport:{request:(request:any)=>this.port.request({operation:'exchange',lease:opened.lease,request}),close:()=>{void this.closeOwner(opened).catch(()=>{});}},fieldBinding:this.projection,muted:true});
+    transport:{request:async(request:any)=>{
+     const reply=await this.port.request({operation:'exchange',lease:opened.lease,request});
+     // The kernel names each Torus checkpoint it relays (O-I #852); the session passes the checkpoint on without it.
+     if(request?.command?.operation==='torus-checkpoint')this.relayed=typeof reply?.torus_checkpoint_sha256==='string'?{sha256:reply.torus_checkpoint_sha256,at:reply.torus_checkpoint?.taken_at_samples}:null;
+     return reply;
+    },close:()=>{void this.closeOwner(opened).catch(()=>{});}},fieldBinding:this.projection,muted:true});
    this.recovery=this.renderer.onRetainedRecoveryRequired(state=>{this.contextLost=state==='lost';this.hold(`GPU context ${state}; explicit same-state checkpoint recovery or disconnect required`);});
    const sources=await this.readSources(this.session);
    if(this.scene){await this.readInfluence(this.session);this.opening=eventFromSources(sources);}
@@ -655,13 +683,38 @@ export class NativeFieldController {
   * tempo_bpm, fundamental, carrier, shape, tuning and polyphony; O-I #850). The owner validates and refuses in its own words; the
   * session reading is taken from its reply, never set here. Only a Fundamental moves the owner (one modes continuation of the same
   * voices); every other setting is a still act: no hold, no source re-read. The reply's influence is admitted as a determinant's is. */
- torusSet(edit:unknown):Promise<string>{
+ torusSet(edit:unknown,at?:string):Promise<string>{
   if(!edit||typeof edit!=='object'||Array.isArray(edit)||!Object.keys(edit).length)return Promise.reject(new Error('a Torus edit names at least one setting'));
+  if(at!==undefined)return this.torusSetAt(edit,at);
   const still=(edit as {fundamental?:unknown}).fundamental===undefined;
   return this.determinant('Torus',()=>({operation:'torus-set',edit:structuredClone(edit)}),false,false,still).then(landed=>{
    const torus=this.session?.lastTorus;
    if(torus)this.admitTorus(torus);
    return landed;
+  });
+ }
+ /** A Torus setting sent ahead for sample `at` (QL-MEF `torus-set` with at_samples_elapsed; O-I 855). The owner makes it at that sample
+  * inside the block that reaches it, as it lands a strike, so it goes now through the one serial owner, as a played act does, and never
+  * waits for the cursor. It moves nothing until then; a Fundamental made there moves the scene's event, so the sources stand stale until
+  * they are read past it (readSources). At the cursor's own sample it is made now. Resolves with the sample it lands at. */
+ private torusSetAt(edit:object,at:string):Promise<string>{
+  const session=this.session;
+  if(!session||!this.scene)return Promise.reject(new Error('Open the live instrument first: the Torus belongs to a scene owner'));
+  if(!isStageSampleCursor(at))return Promise.reject(new Error('a setting names the sample it lands at as an exact sample cursor'));
+  if(this.status!=='following'||this.suspension)return Promise.reject(new Error('The field is not running: resume it, then play'));
+  return this.serial(async()=>{
+   if(!(await this.waitIdle(session,2000)))throw new Error('native owner busy; the setting was not sent');
+   if(this.status!=='following'||this.suspension||!this.current(session))throw new Error('instrument held before the setting was sent');
+   const waits=BigInt(at)>BigInt(session.reading.acknowledged.samples_elapsed);
+   try{await session.torusSet(structuredClone(edit) as Record<string,unknown>,{at_samples_elapsed:at});}
+   catch(error){this.refused('Torus',error,session);throw error;}
+   if((edit as {fundamental?:unknown}).fundamental!==undefined){
+    if(waits&&(this.fundamentalAt===null||BigInt(at)>this.fundamentalAt))this.fundamentalAt=BigInt(at);
+    this.checkpoint=null;this.sourcesStale=true;this.influenceStale=true;this.torusAt=0;
+   }
+   this.refusal=null;
+   const torus=session.lastTorus;if(torus)this.admitTorus(torus);
+   return at;
   });
  }
  /** The Torus as it rings, kept by its owner (QL-MEF `torus-checkpoint`, `ql.torus-checkpoint/v1`; O-I 855): the body's states, its form and
@@ -675,9 +728,10 @@ export class NativeFieldController {
   finally{if(this.current(held))this.hold('Torus checkpoint complete; resume explicitly');}
  });}
  private async keepTorus(session:InstrumentSession):Promise<StageTorusCheckpoint>{
-  const kept=readStageTorusCheckpoint(await session.torusCheckpoint());
+  const kept=readStageTorusCheckpoint(await session.torusCheckpoint()),relayed=this.relayed;this.relayed=null;
   if(this.session!==session||this.dead)throw new Error('Torus checkpoint belongs to a released lifetime');
   if(!kept)throw new Error('The owner kept the Torus in a checkpoint the stage cannot carry');
+  if(relayed&&relayed.at===kept.taken_at_samples)this.named.set(kept,relayed.sha256);
   const torus=session.lastTorus;if(torus)this.admitTorus(torus);
   return kept;
  }
@@ -691,6 +745,35 @@ export class NativeFieldController {
    if(torus)this.admitTorus(torus);
    return landed;
   });
+ }
+ /** A sound saved from the Torus as it rings (O-I #852, DLW §21.2; kernel `torus_sound`, `oi.torus-sound/v1`): the owner keeps a checkpoint
+  * through the one serial owner, and the kernel seals the sound from the checkpoint by the name it relayed it under, under this lease. The
+  * torus is its body. Resolves with the sealed sound. */
+ async torusSound(name:string):Promise<StageTorusSound>{
+  if(!isStageSoundName(name))throw new Error(`A sound is named in 1 to ${STAGE_TORUS_SOUND_NAME_MAX} characters with no control character`);
+  const {lease,checkpoint_sha256}=await this.namedCheckpoint();
+  const sound=readStageTorusSound(await this.port.request({operation:'torus_sound',lease,checkpoint_sha256,name}));
+  if(!sound)throw new Error('The kernel answered the sound with no oi.torus-sound/v1 the stage can carry');
+  return sound;
+ }
+ /** A kept sound opened (kernel `torus_sound_open`, `oi.torus-sound-opening/v1`): against a fresh checkpoint of the Torus as it stands now,
+  * the kernel answers the owner's restore, which is the sound as saved, and what has moved since; the owner restores it as torusRestore
+  * does. Resolves with the sample it rings again from and what has moved. */
+ async openTorusSound(raw:unknown):Promise<{landed_at_samples_elapsed:string;moved:StageSoundMove[]}>{
+  const sound=readStageTorusSound(raw);if(!sound)throw new Error('a sound opens from the kernel\'s oi.torus-sound/v1');
+  const {lease,checkpoint_sha256}=await this.namedCheckpoint();
+  const opening=await this.port.request({operation:'torus_sound_open',lease,sound,now_sha256:checkpoint_sha256});
+  const moved=readStageSoundMoves(opening?.moved);
+  if(opening?.schema!=='oi.torus-sound-opening/v1'||opening.sound_ref!==sound.sound_ref||opening.restore?.operation!=='torus-restore'||!moved)
+   throw new Error('The kernel answered the opening with no oi.torus-sound-opening/v1 of this sound');
+  return {landed_at_samples_elapsed:await this.torusRestore(opening.restore.checkpoint),moved};
+ }
+ /** A fresh checkpoint of the Torus, named as the kernel relayed it, and the lease it was given under. */
+ private async namedCheckpoint():Promise<{lease:string;checkpoint_sha256:string}>{
+  const kept=await this.torusCheckpoint(),checkpoint_sha256=this.named.get(kept),lease=this.opened?.lease;
+  if(!checkpoint_sha256)throw new Error('The kernel relayed the Torus checkpoint unnamed: a sound is saved from, and opened against, a checkpoint the kernel names');
+  if(typeof lease!=='string')throw new Error('the live instrument closed while the Torus was kept');
+  return {lease,checkpoint_sha256};
  }
  /** A take rendered offline through the M1′ session for Export Audio (QL-MEF `torus-render`, `ql.torus-render/v1`; O-I 855): a second owner
   * of the same scene set to `checkpoint`, each act made at its sample, `frames` of its PCM. It renders a second of sound at a time (the first
@@ -743,7 +826,8 @@ export class NativeFieldController {
   })();
  }
  /** Wait until the owner's sound has reached `at` (its acknowledged cursor at or past it; O-I 855), so an edit made then lands at the first
-  * block the owner renders from there; the edit's answer names that sample. A sample the owner has rendered is refused, as a strike behind
+  * block the owner renders from there; the edit's answer names that sample. For a determinant or a damping edit: the owner makes those only
+  * at its cursor (replace-event, m1-advance and set-damping take no sample), while a Torus setting is sent ahead (torusSetAt). A sample the owner has rendered is refused, as a strike behind
   * the cursor is, and one more than STAGE_EDIT_AHEAD_SECONDS ahead is refused rather than waited for. */
  async untilSample(at:string):Promise<void>{
   if(!isStageSampleCursor(at))throw new Error('an edit names the sample it lands at as an exact sample cursor');
@@ -843,6 +927,64 @@ export class NativeFieldController {
   const receipt=this.session?.lastStageReceipt;
   this.stageLast={standing:receipt?.applied===false?'refused':'applied',...(typeof receipt?.procedure_ref==='string'?{procedure_ref:receipt.procedure_ref}:{})};
   this.changed();
+ }
+ /** Receiver On or Off (O-I 856; DLW manual §21.2 View and Rules), an explicit act of the owner's receiving context. While the instrument
+  * follows, the owner is asked now (QL-MEF `torus-receiver`): from `place`, where the camera stands, when On, and the world's context when
+  * Off. It resolves with the owner's answer (the context and the gain each voice is heard by), or rejects with its refusal in its words and
+  * the choice stands as it was: a personal context the owner does not take is never shown. While no owner follows, the choice is kept,
+  * nothing is asked, and it resolves null; the owner is asked once it follows (hear). */
+ async setReceiver(on:boolean,place:ReceiverPlace|null=null):Promise<ReceiverReading|null>{
+  const before=this.receiverOn;
+  this.receiverOn=on;this.receiverRefusal=null;
+  if(!on)this.wantedAt=null;else if(place)this.wantedAt=[place[0],place[1],place[2]];
+  this.changed();
+  if(!this.asks())return null;
+  await this.hear(this.wantedAt);
+  if(!samePlace(this.heardAt,this.receiverOn?this.wantedAt:null)){
+   // The ask above set the refusal, if the owner refused (the narrowing from clearing it does not see that).
+   const why=(this.receiverRefusal as {why:string}|null)?.why??'native owner busy: where the Torus is heard from was not set';
+   this.receiverOn=before;this.changed();throw new Error(why);
+  }
+  return this.heardReply?structuredClone(this.heardReply):null;
+ }
+ /** Where the camera stands now (O-I 856; null: not known this frame, and the last place stands): asked of the owner when Receiver is On
+  * and it has moved. When Receiver is Off and the owner still hears from a place, the world's context is asked once; otherwise Off asks
+  * nothing, wherever the camera moves. One ask at a time: moves made while one is in flight are asked once it lands, for the latest.
+  * Resolves once the owner hears from where it was last asked, or at once when nothing is asked. */
+ hear(place:ReceiverPlace|null):Promise<void>{
+  if(place&&this.receiverOn)this.wantedAt=[place[0],place[1],place[2]];
+  return this.hearing??this.sendHearing();
+ }
+ /** Whether the frame has anything to ask the owner about where it is heard from: Receiver is On, or the owner still hears from a place. */
+ get receiving(){return this.receiverOn||this.heardAt!==null;}
+ /** The presentation's units per metre the targets are drawn at, which carries the engine's eye into the owner's metres; null with no owner. */
+ get unitsPerMetre(){return this.projection?.scale??null;}
+ private asks(){return !!this.session&&this.scene&&this.torusRefused===null&&this.status==='following'&&!this.suspension;}
+ private sendHearing():Promise<void>{
+  const session=this.session,wanted=this.receiverOn?this.wantedAt:null,refused=this.receiverRefusal;
+  if(!session||!this.asks()||samePlace(wanted,this.heardAt)||(refused&&samePlace(wanted,refused.place)&&performance.now()-refused.at<RECEIVER_RETRY_MS))return Promise.resolve();
+  const asked=this.serial(async()=>{
+   if(!(await this.waitIdle(session,1000))||!this.asks())return false;
+   const place:ReceiverPlace|null=this.receiverOn&&this.wantedAt?[this.wantedAt[0],this.wantedAt[1],this.wantedAt[2]]:null;
+   if(samePlace(place,this.heardAt))return false;
+   const context=this.heardReply?.context??'world',standing=this.receiverRefusal?.why??null;
+   try{
+    const reply=await session.torusReceiver(place?[place[0],place[1],place[2]]:null);
+    if(!this.current(session))return false;
+    this.heardAt=place;this.heardReply=reply;this.receiverRefusal=null;
+   }catch(error){
+    if(!this.current(session))return false;
+    this.receiverRefusal={why:String(error instanceof Error?error.message:error),place,at:performance.now()};
+   }
+   if((this.heardReply?.context??'world')!==context||(this.receiverRefusal?.why??null)!==standing)this.changed();
+   return true;
+  }).catch(()=>false);
+  const hearing:Promise<void>=asked.then(landed=>{if(this.hearing===hearing)this.hearing=null;if(landed)return this.hearing??this.sendHearing();});
+  this.hearing=hearing;return hearing;
+ }
+ private receiverReading(){
+  return {on:this.receiverOn,context:this.heardReply?.context??'world',gains:this.heardReply?structuredClone(this.heardReply.gains):null,
+   law:this.heardReply?.law??null,refusal:this.receiverRefusal?.why??null};
  }
  /** Human-cadence source refresh after determinant events; never while an event
   * is in flight, never while held. */
@@ -964,9 +1106,11 @@ export class NativeFieldController {
   this.renderer.releaseRetainedField();this.renderer.setNativeDomain(false);this.projection?.dispose();this.projection=null;
   const context=this.context;this.context=null;const opened=this.opened;this.opened=null;this.checkpoint=null;this.contextLost=false;
   this.sources=null;this.domain=null;this.openingHold=null;
-  this.scene=false;this.influenceReading=null;this.acting=null;this.event=null;this.opening=null;this.sourcesStale=false;this.level=null;this.tap=null;this.effectsGraph?.dispose();this.effectsGraph=null;
+  this.scene=false;this.influenceReading=null;this.acting=null;this.event=null;this.opening=null;this.sourcesStale=false;this.fundamentalAt=null;this.level=null;this.tap=null;this.effectsGraph?.dispose();this.effectsGraph=null;
   this.stageReading=null;this.stageStale=false;this.stageLast=null;
   this.torus=null;this.torusAt=0;this.torusRefused=null;this.torusObject=new TorusObject();this.pulseTuning=null;
+  // A new owner hears in the world's context until it is asked; Receiver itself is the person's and stays (O-I 856).
+  this.wantedAt=null;this.heardAt=null;this.heardReply=null;this.receiverRefusal=null;this.hearing=null;
   this.admitting=null;this.suspension=null;this.restoring=null;
   if(manual){this.status='manual';this.lastNative=null;this.reason=null;this.refusal=null;this.lastCadence=null;this.changed();}
   const close=async()=>{

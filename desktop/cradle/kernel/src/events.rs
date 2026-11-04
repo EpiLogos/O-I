@@ -279,6 +279,9 @@ pub enum KernelEvent {
     /// and ref, never their content — and `more` how many it did not name.
     /// It says "read again at this cursor"; the reading is the field's own.
     /// Another identity's private rows move nothing, so they say nothing.
+    /// One that names nothing (no changes, `more` 0) says the field came
+    /// back — its service returned, its client started again, or it came
+    /// back into view whole — so it is read again whole.
     SharedFieldChanged {
         cursor: String,
         changes: Vec<SharedFieldRowChange>,
@@ -291,7 +294,7 @@ pub enum KernelEvent {
 pub const SHARED_FIELD_CHANGES_PER_EVENT: usize = 128;
 
 /// The caller-filtered views a SharedField change can name.
-const SHARED_FIELD_VIEWS: [&str; 17] = [
+const SHARED_FIELD_VIEWS: [&str; 21] = [
     "shared_field",
     "participant",
     "projection",
@@ -309,6 +312,12 @@ const SHARED_FIELD_VIEWS: [&str; 17] = [
     "activity_liveness",
     "field_now",
     "field_day",
+    // The worlds in the field (O-I #858): each caller-visible world, the
+    // caller's own, the clearings it may see, who has gathered at a star.
+    "world",
+    "my_world",
+    "world_clearing",
+    "world_gathering",
 ];
 
 /// One row a SharedField transaction moved, as the held client names it:

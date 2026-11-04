@@ -96,6 +96,8 @@
 .one-browser .world-browser-results :is(.browser-item, .mode-browser-row, .world-work-row, .world-file-row, .agent-bitem, .browser-instruments li > button, .browser-sets li > button):is(.selected, .browser-item-active, [aria-current]:not([aria-current=false]), [aria-pressed=true]) {
   background: var(--bg-3); color: var(--text); box-shadow: inset 2px 0 0 var(--accent) }
 .one-browser .world-browser-results :is(.world-file-row, .world-work-row, .mode-browser-row):disabled { color: var(--text-faint) }
+/* a sound made on a kept instrument stands under it (manual §21.2) */
+.one-browser .world-browser-results .browser-item[data-depth="2"] { padding-left: 19px }
 /* the mark (.kg): 12px, faint; Live's leading ▸ before a device's own mark is not drawn twice (nothing expands there) */
 .one-browser .world-browser-results :is(.browser-item, .mode-browser-row, .world-work-row, .world-file-row) > span[aria-hidden]:first-child,
 .one-browser .world-browser-results .browser-item > span:first-child:not(:last-child) { flex: none; width: 12px; display: grid; place-items: center; font-size: 10px; color: var(--text-faint) }

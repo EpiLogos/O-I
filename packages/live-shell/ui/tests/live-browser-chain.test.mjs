@@ -141,3 +141,58 @@ test("the opened set's own devices stay browsable: its instruments under Instrum
   const source = readFileSync(new URL('../src/components/BrowserPane.tsx', import.meta.url), 'utf8')
   assert.match(source, /category === 'Instruments' \? INSTRUMENTS\.has\(name\) : category === 'Chain devices' && !INSTRUMENTS\.has\(name\)/, 'plug-ins and effects list under Chain devices')
 })
+
+// ── 6 — what you keep, under the Torus (O-I #852, manual §21.2 Sounds and instruments): a sound under the Torus as Live keeps a device's
+// presets, an instrument with its sounds under it, a rack as a rack; each drags onto a part to play it. The rows read the Scene's
+// performance as the owner lists it (expressions-boundary performanceBasis.ts listPerformance); the browser keeps nothing.
+
+const instruments = await import('../src/frame/instruments.ts')
+const KEPT = (n) => 'sha256:' + String(n).repeat(64)
+const keptListing = {
+  sounds: [{sound_ref: KEPT(1), name: 'Warm Logic', body: 'torus', body_ref: null, sample_rate: 48000}],
+  instruments: [{instrument_ref: 'instrument:fold', name: 'Folded sheet', body_ref: 'ql:form-body:fold', sounds: [
+    {sound_ref: KEPT(2), name: 'Paper bell', body: 'form', body_ref: 'ql:form-body:fold', sample_rate: 48000}]}],
+  racks: [{rack_ref: 'rack:warm', name: 'Warm rack', sound: KEPT(1), devices: 2, macros: ['Bloom'], variations: ['Open', 'Closed']}],
+}
+
+test('under the Torus: its sounds, then each instrument with the sounds made on it, then the racks — each row carries what a part plays', () => {
+  const rows = instruments.torusKeptRows(keptListing, '')
+  assert.deepEqual(rows.map(row => [row.kind, row.depth, row.name, row.meta]), [
+    ['sound', 1, 'Warm Logic', 'sound'],
+    ['instrument', 1, 'Folded sheet', 'instrument · 1 sound'],
+    ['sound', 2, 'Paper bell', 'sound'],
+    ['rack', 1, 'Warm rack', 'rack · 1 macro · 2 variations'],
+  ])
+  assert.deepEqual(rows.map(row => instruments.readTorusKeptDrag(row.payload)), [
+    {kind: 'sound', ref: KEPT(1)}, {kind: 'instrument', ref: 'instrument:fold'}, {kind: 'sound', ref: KEPT(2), instrument_ref: 'instrument:fold'}, {kind: 'rack', ref: 'rack:warm'},
+  ], 'a sound made on an instrument plays on that instrument')
+  assert.equal(instruments.TORUS_KEPT_MIME, 'application/x-oi-torus-kept')
+  for (const bad of ['', '{}', '{"kind":"sound"}', '{"kind":"preset","ref":"x"}', 'not json']) assert.equal(instruments.readTorusKeptDrag(bad), null, bad)
+  // The search finds a sound by its name, and keeps the instrument it stands under.
+  assert.deepEqual(instruments.torusKeptRows(keptListing, 'bell').map(row => row.name), ['Folded sheet', 'Paper bell'])
+  assert.deepEqual(instruments.torusKeptRows(keptListing, 'rack').map(row => row.name), ['Warm rack'])
+  assert.deepEqual(instruments.torusKeptRows(null, ''), [])
+})
+
+test('the kept rows drag onto a part, say what each holds, and stand under the Torus in the Instruments category', () => {
+  const markup = renderToStaticMarkup(React.createElement(browser.TorusKeptRows, {rows: instruments.torusKeptRows(keptListing, '')}))
+  assert.equal([...markup.matchAll(/draggable="true"/g)].length, 4)
+  assert.match(markup, /data-torus-kept="sound" data-depth="1"[^>]*title="Warm Logic — a sound: every parameter of the Torus, its body and its tuning, as they stood\. Drag it onto a part to play it\."/)
+  assert.match(markup, /data-torus-kept="instrument"[^>]*title="Folded sheet — an instrument: a body made from a form, with the sounds made on it\. Drag it onto a part to play it; the same pulse plays it\."/)
+  assert.match(markup, /data-torus-kept="rack"[^>]*title="Warm rack — a rack: the Torus with its note devices and effects, its macros and their variations\. Drag it onto a part to play it\."/)
+  const html = renderToStaticMarkup(React.createElement(browser.BrowserPane, {defaultSet: '', ctx: {set: null, openSet: () => {}}}))
+  assert.ok(html.indexOf('data-torus-kept-section') > html.indexOf('aria-label="Legacy generators"'), 'the kept stand after the expanded Torus and its generators')
+  assert.match(html, /data-torus-kept-section="listing"/, 'the section asks the owner for the Scene performance; it keeps none')
+  // As the owner's listing stands: the rows, none kept, a search that finds none, or the refusal in its words.
+  const view = listed => renderToStaticMarkup(React.createElement(browser.TorusKeptView, {listed, filter: ''}))
+  assert.match(view({kept: keptListing}), /data-torus-kept-section="listed"/)
+  assert.match(view({kept: null}), /data-torus-kept-section="empty"[^]*No sound, instrument or rack is kept on this Scene yet\./)
+  assert.match(renderToStaticMarkup(React.createElement(browser.TorusKeptView, {listed: {kept: keptListing}, filter: 'zzz'})), /No matching material\./)
+  assert.match(view({refused: 'No Expressions application is mounted for the presets'}), /data-torus-kept-section="refused"[^]*Couldn(?:'|&#x27;)t list what the Scene keeps\. No Expressions application is mounted for the presets\./)
+  const source = readFileSync(new URL('../src/components/BrowserPane.tsx', import.meta.url), 'utf8')
+  assert.doesNotMatch(source.slice(source.indexOf('function TorusKeptSection')), /localStorage\.setItem\(KEPT|sessionStorage|indexedDB/)
+  // O-I #852: a sound saved on the Torus stands here at once: the section lists what the Scene keeps each time a sound is kept.
+  const section = source.slice(source.indexOf('function TorusKeptSection'), source.indexOf('function TorusKeptView'))
+  assert.match(section, /const stop = subscribeTorusKept\(kept => \{ if \(live\) setListed\(\{kept\}\) \}\)/)
+  assert.match(section, /return \(\) => \{ live = false; stop\(\) \}/)
+})

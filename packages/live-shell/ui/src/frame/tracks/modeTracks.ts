@@ -222,7 +222,9 @@ export function liveTracks(set: SetSummary, document: SetDocument | null, colors
   const play = {launch: (track: number, at: LiveClipAt) => player().then(acts => acts.launch({path: set.path, track, at}, set.tempo_bpm)),
     stop: (track: number) => player().then(acts => acts.stop(set.path, track, set.tracks[track]?.name ?? 'the track')),
     stopAll: () => player().then(acts => acts.stopAll())}
-  const tracks = liveSetTrackAdapter.project({set, document, colors, ...liveSetWrites(set.path), play, engine})
+  // Export Audio of a take Record laid (O-I #855 round 6d): its course rendered by the Torus's owner, loaded when pressed.
+  const exportTake = (track: number, at: LiveClipAt) => import('../../live/liveTake').then(module => module.exportLiveTake({path: set.path, track, at}))
+  const tracks = liveSetTrackAdapter.project({set, document, colors, ...liveSetWrites(set.path), play, exportTake, engine})
   return maker ? withClipMaker(tracks, maker) : tracks
 }
 

@@ -27,7 +27,7 @@ export async function load(u, c, n) {
 }`)}`, import.meta.url)
 
 const {createOwnerReadings, scoped, unionScopes} = await import('../src/owners/ownerReading.ts')
-const {createReadingsChangedDriver} = await import('../src/owners/readingsChanged.ts')
+const {createReadingsChangedDriver, sharedFieldChangedOf} = await import('../src/owners/readingsChanged.ts')
 const {readOp} = await import('../src/owners/ownerCall.ts')
 const {announceReadingsMoved, onReadingsMoved} = await import('../../../../desktop/cradle/src/kernel/bridge.ts')
 
@@ -141,4 +141,47 @@ test('engine listeners hear every notice, with the scopes for those that can use
   announceReadingsMoved(['root']); announceReadingsMoved()
   off()
   assert.deepEqual(heard, [['root'], undefined])
+})
+
+// O-I #858: the held field's own news. A `shared_field_changed` receipt (kernel/src/events.rs `SharedFieldChanged`) retires the
+// answers read from the held field (the kernel scopes them `shared-field`, lib.rs `KernelOp::SharedField`) and the unscoped ones
+// (the graph's), never a ground reading; a receipt at a cursor already told retires nothing.
+const fieldNews = (seq, cursor, changes = [{table: 'world', op: 'insert', ref: 'world:a'}]) => ({seq, schema: 'oi.kernel-event/v1', version: 1, event: 'shared_field_changed', cursor, changes, more: 0})
+
+test('the field\'s news is read by its contract: a cursor, the rows it names, what it only counts', () => {
+  assert.deepEqual(sharedFieldChangedOf(fieldNews(1, 'tx:1:0')), {cursor: 'tx:1:0', changes: [{table: 'world', op: 'insert', ref: 'world:a'}], more: 0})
+  assert.deepEqual(sharedFieldChangedOf(fieldNews(2, 'tx:2:0', [])), {cursor: 'tx:2:0', changes: [], more: 0}, 'the field came back: read again, whole')
+  assert.equal(sharedFieldChangedOf(fieldNews(3, '')), null)
+  assert.equal(sharedFieldChangedOf({...fieldNews(3, 'tx:3:0'), changes: [{table: 'world', op: 'moved', ref: 'world:a'}]}), null)
+  assert.equal(sharedFieldChangedOf({...fieldNews(3, 'tx:3:0'), more: -1}), null)
+  assert.equal(sharedFieldChangedOf(notice(3, ['root'])), null)
+})
+
+test('the field\'s news re-asks what was read from the field and the unscoped answers, once per cursor, and no ground reading', async () => {
+  const registry = createOwnerReadings(() => 1_000)
+  const field = await held(registry, 'field', ['shared-field'])
+  const graph = await held(registry, 'graph', undefined)
+  const root = await held(registry, 'root', ['root'])
+  const timers = manualTimers()
+  const driver = createReadingsChangedDriver(registry, 250, timers)
+  const heard = []
+  const off = onReadingsMoved(scopes => heard.push(scopes))
+  driver.receive([fieldNews(1, 'tx:1:0'), fieldNews(2, 'tx:1:1')]); timers.fire(); await settle()
+  assert.equal(field.reads(), 2, 'a burst of news is one re-read')
+  assert.equal(graph.reads(), 2)
+  assert.equal(root.reads(), 1, 'the field moving moves no ground')
+  assert.deepEqual(heard, [['shared-field']])
+  // The same news again (a replay after a resync): the cursor was told.
+  driver.receive([fieldNews(2, 'tx:1:1')]); timers.fire(); await settle()
+  assert.equal(field.reads(), 2, 'a cursor already told retires nothing')
+  assert.equal(heard.length, 1)
+  // The field came back from a lost service: news naming nothing, at a new cursor.
+  driver.receive([fieldNews(3, 'tx:2:0', [])]); timers.fire(); await settle()
+  assert.equal(field.reads(), 3)
+  // A ground notice and the field's news in one burst are joined.
+  driver.receive([notice(4, ['root']), fieldNews(5, 'tx:2:1')]); timers.fire(); await settle()
+  assert.equal(root.reads(), 2)
+  assert.equal(field.reads(), 4)
+  assert.deepEqual(heard.at(-1)?.slice().sort(), ['root', 'shared-field'])
+  off()
 })

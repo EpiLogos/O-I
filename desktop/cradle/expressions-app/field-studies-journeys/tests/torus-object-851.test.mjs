@@ -11,7 +11,7 @@
 import test, {after} from 'node:test';
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
-import {mkdtempSync, rmSync} from 'node:fs';
+import {mkdtempSync, readFileSync, rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {fileURLToPath, pathToFileURL} from 'node:url';
@@ -402,4 +402,178 @@ test('the Live editor gives the torus a sequence of its shapes: a step\'s source
   const back = applyNativeGlyphChanges(next, scene.id, [{kind: 'step-source', entity_id: torus.id, step_id: 'step-b', shape: 'ring', text: 'O'}]);
   assert.equal(back.scenes[0].entities[0].sequence.steps[1].torusFigure, undefined, 'a step that leaves the torus leaves its shape');
   assert.throws(() => applyNativeGlyphChanges(journey, scene.id, [change('step-a', 'torus', 'cube')]), /torus/i);
+});
+
+// O-I 856 (DLW manual §21.2 View: "Receiver On makes your camera the place where the torus is heard"): the place is the engine's own eye,
+// as the stage hands the engine its view (production.ts setHostView) and the engine stands its camera (PointCloudField setHostView).
+test('Receiver On stands the listener at the engine\'s eye in metres: along right × up, as far as the view frames the workplane', async () => {
+  const {receiverPlace} = await object();
+  const view = {height: 800, pixelsPerUnit: 0.5, right: [1, 0, 0], up: [0, 1, 0], fovDegrees: 38};
+  // The eye stands at normal(right × up) × (height / s · ½) / tan(fov / 2) engine units; metres are engine units over the presentation's units
+  // per metre (surfaceTouch.ts: a stage unit is worldScale / unitsPerMetre metres, and the engine's unit is a stage unit over worldScale).
+  const far = 800 / 0.5 * 0.5 / Math.tan(19 * Math.PI / 180) / 100;
+  const place = receiverPlace(view, 100);
+  near(place[0], 0, 1e-12); near(place[1], 0, 1e-12); near(place[2], far, 1e-9, 'along z, the eye of the default view');
+  near(receiverPlace({...view, pixelsPerUnit: 1}, 100)[2], far / 2, 1e-9, 'zoomed in twice: half as far');
+  near(receiverPlace(view, 200)[2], far / 2, 1e-9, 'twice the units per metre: half the metres');
+  const turned = receiverPlace({...view, right: [0, 0, 1], up: [0, 1, 0]}, 100);
+  near(turned[0], -far, 1e-9, 'the eye turns with the camera'); near(turned[1], 0, 1e-12); near(turned[2], 0, 1e-12);
+  near(receiverPlace({...view, fovDegrees: 1}, 100)[2], 800 / 0.5 * 0.5 / Math.tan(2 * Math.PI / 180) / 100, 1e-6, 'the engine\'s own bounds on the field of view');
+  for (const [bad, scale] of [[view, 0], [view, NaN], [{...view, height: 0}, 100], [{...view, pixelsPerUnit: 0}, 100], [{...view, up: [1, 0, 0]}, 100],
+    [{...view, fovDegrees: NaN}, 100]])
+    assert.equal(receiverPlace(bad, scale), null, JSON.stringify([bad, scale]));
+  // The engine's own eye law, which the place follows.
+  const field = readFileSync(join(engine, 'PointCloudField.ts'), 'utf8');
+  const host = field.slice(field.indexOf('public setHostView('), field.indexOf('public setHostPointer('));
+  assert.match(host, /const normal = new THREE\.Vector3\(\)\.crossVectors\(right, up\)\.normalize\(\);/);
+  assert.match(host, /const distance = \(height \/ Math\.max\(0\.0001, s\) \* 0\.5\) \/ Math\.max\(0\.0001, Math\.tan\(fov \/ 2\)\);/);
+  assert.match(host, /cam\.position\.copy\(normal\)\.multiplyScalar\(eyeDistance\);/);
+  assert.match(field, /const fov = Math\.max\(4, Math\.min\(120, depth\.fov \?\? DEFAULT_DEPTH_CONFIG\.fov\)\);/);
+  // The view as the stage hands it to the engine (production.ts setHostView), from the frame's camera.
+  const {stageEye} = await bundle(join(journeys, 'src/native-field/surfaceTouch.ts'), 'touch-856');
+  const camera = {mode: '3d', yaw: 0.4, pitch: 0.3, zoom: 1.5, panX: 12, panY: -8, plane: 'XY', depth: 0, grid: false, snap: false};
+  const eye = stageEye({camera, width: 1200, height: 800}, 38, 400);
+  near(eye.pixelsPerUnit, Math.min(1200 * .435, 800 * .465) * 1.5 / 400, 1e-12, 'stageScale × zoom over the engine units per stage unit');
+  assert.deepEqual([eye.height, eye.fovDegrees], [800, 38]);
+  assert.deepEqual(eye.right, [Math.cos(0.4), 0, Math.sin(0.4)]);
+  assert.deepEqual(eye.up, [Math.sin(0.4) * Math.sin(0.3), Math.cos(0.3), -Math.cos(0.4) * Math.sin(0.3)]);
+  const production = readFileSync(join(journeys, 'src/production.ts'), 'utf8');
+  assert.match(production, /pixelsPerUnit:stageScale\(this\.width,this\.height\)\*frame\.camera\.zoom\/WORLD_SCALE,right:a,up:b\}/);
+});
+
+// O-I 856: the instrument edit, the controller and the frame. Receiver is an instrument edit of the owner's receiving context, made now and
+// never at a sample; the controller asks the owner (QL-MEF `torus-receiver`) where the Torus is heard from. Off, a camera move asks nothing;
+// On, the place goes to the owner when it moves, one ask at a time and then the latest; the act itself asks now and answers in the owner's
+// words. The owner is the controlled scene owner of desktop/cradle/tests/native-expression-fixture.mjs, taught the receiver here.
+const stageVocabulary = () => bundle(join(journeys, 'src/stageCommands.ts'), 'stage-856');
+test('Receiver On or Off is an instrument edit that names nothing but on: never a place, never a sample', async () => {
+  const {readStageRequest, readInstrumentEdit} = await stageVocabulary();
+  const request = command => ({v: 1, kind: 'host-command', req: 7, ...command});
+  for (const on of [true, false]) {
+    assert.deepEqual(readInstrumentEdit({kind: 'receiver', on}), {kind: 'receiver', on});
+    assert.deepEqual(readStageRequest(request({command: 'instrument', edit: {kind: 'receiver', on}})).command, {command: 'instrument', edit: {kind: 'receiver', on}});
+  }
+  for (const bad of [{kind: 'receiver'}, {kind: 'receiver', on: 1}, {kind: 'receiver', on: 'on'}, {kind: 'receiver', on: true, at_metres: [0, 0, 3]},
+    {kind: 'receiver', on: true, place: [0, 0, 3]}])
+    assert.equal(readInstrumentEdit(bad), null, JSON.stringify(bad));
+  assert.equal(readStageRequest(request({command: 'instrument', edit: {kind: 'receiver', on: true}, at_samples_elapsed: '48000'})), null,
+    'where the Torus is heard from is set now, for the owner\'s next block, not at a sample');
+});
+
+const openHearing = async () => {
+  const {ControlledAudio, ControlledSceneOwner} = await import(new URL('../../../tests/native-expression-fixture.mjs', import.meta.url));
+  const THREE = await import('three');
+  const {NativeFieldController} = await bundle(join(journeys, 'src/native-field/controller.ts'), 'controller-856');
+  class HearingOwner extends ControlledSceneOwner {
+    receiverCalls = []; refuseReceiver = null; gate = null;
+    async request(request) {
+      const command = request.request?.command;
+      if (command?.operation !== 'torus-receiver') return super.request(request);
+      // QL scene_field.rs set_receiver: a receiving setting, answered with the context and each voice's gain and never the place; the body,
+      // its cursor and its generation stand.
+      this.receiverCalls.push(structuredClone(command));
+      if (this.gate) await this.gate;
+      const read = structuredClone(request);
+      read.request.command = {operation: 'read'};
+      const reply = await super.request(read);
+      if (this.refuseReceiver) return {...reply, status: 'refused', error: this.refuseReceiver};
+      return {...reply, torus_receiver: {schema: 'ql.torus-receiver/v1', context: command.receiver ? 'personal' : 'world',
+        gains: [{mode_ref: 'scene:logic/0', gain: command.receiver ? 0.25 : 1}], law: 'controlled'}};
+    }
+  }
+  const texture = () => new THREE.DataTexture(new Float32Array(16), 2, 2, THREE.RGBAFormat, THREE.FloatType);
+  const port = {texWidth: 2, texHeight: 2, particleCount: 4, targetA: texture(), targetB: texture(), setTargetTextures() {}};
+  const renderer = {retainedTopology: () => ({tex_width: 2, tex_height: 2, particle_count: 4, slot_count: 4}), retainedTargetPort: () => port, setNativeDomain() {},
+    releaseRetainedField() {}, onRetainedRecoveryRequired: () => () => {}, checkpointRetainedField() { return {receipt: {}}; }, restoreRetainedField() {}};
+  const owner = new HearingOwner(), audio = new ControlledAudio(), c = new NativeFieldController(owner, renderer, () => audio);
+  await c.compose({sky: 'none'});
+  return {owner, c};
+};
+const heardFrom = owner => owner.receiverCalls.map(command => command.receiver?.at_metres ?? null);
+
+test('Receiver Off: a camera move asks nothing of the owner, and the sound is the world\'s', async () => {
+  const {owner, c} = await openHearing();
+  try {
+    for (const place of [[0, 0, 10], [0, 5, 10], [3, 0, 1]]) await c.hear(place);
+    assert.deepEqual(owner.receiverCalls, [], 'nothing is asked of the owner');
+    assert.deepEqual(c.reading.receiver, {on: false, context: 'world', gains: null, law: null, refusal: null});
+    assert.equal(c.receiving, false);
+  } finally { await c.dispose(); }
+});
+
+test('Receiver On: the act asks the owner now from where you stand, a moved camera is asked when it moves, and the place is kept nowhere', async () => {
+  const {owner, c} = await openHearing();
+  try {
+    const generation = c.reading.native.acknowledged.generation, cursor = c.audioClock().samples_elapsed;
+    const answered = await c.setReceiver(true, [0, 0, 10]);
+    assert.deepEqual(owner.receiverCalls, [{operation: 'torus-receiver', receiver: {at_metres: [0, 0, 10]}}], 'the act is the owner\'s own torus-receiver');
+    assert.deepEqual(answered, {schema: 'ql.torus-receiver/v1', context: 'personal', gains: [{mode_ref: 'scene:logic/0', gain: 0.25}], law: 'controlled'});
+    assert.deepEqual(c.reading.receiver, {on: true, context: 'personal', gains: [{mode_ref: 'scene:logic/0', gain: 0.25}], law: 'controlled', refusal: null});
+    await c.hear([0, 0, 10]);
+    assert.equal(owner.receiverCalls.length, 1, 'a camera that has not moved asks nothing');
+    await c.hear(null);
+    assert.equal(owner.receiverCalls.length, 1, 'a frame with no place keeps the last: never the world\'s by accident');
+    await c.hear([0, 4, 10]);
+    assert.deepEqual(heardFrom(owner), [[0, 0, 10], [0, 4, 10]], 'a moved camera is asked');
+    // Moves while one ask is in flight: the owner is asked once more, for the latest.
+    let open;
+    owner.gate = new Promise(resolve => { open = resolve; });
+    const first = c.hear([1, 0, 9]);
+    for (let i = 0; i < 200 && owner.receiverCalls.length < 3; i++) await new Promise(resolve => setTimeout(resolve, 2));
+    const rest = [c.hear([2, 0, 9]), c.hear([3, 0, 9])];
+    owner.gate = null; open();
+    await Promise.all([first, ...rest]);
+    assert.deepEqual(heardFrom(owner).slice(2), [[1, 0, 9], [3, 0, 9]], 'one ask at a time, then the latest');
+    assert.equal(c.reading.native.acknowledged.generation, generation, 'a receiving setting moves no generation');
+    assert.equal(c.audioClock().samples_elapsed, cursor, 'nor the cursor');
+    assert.doesNotMatch(JSON.stringify(c.reading), /at_metres|\[3,0,9\]/, 'the reading names the context, never the place');
+    // Off: the world's context, asked once; a camera move asks nothing after it.
+    const off = await c.setReceiver(false);
+    assert.equal(off.context, 'world');
+    assert.deepEqual(owner.receiverCalls.at(-1), {operation: 'torus-receiver', receiver: null});
+    const asked = owner.receiverCalls.length;
+    await c.hear([9, 9, 9]);
+    assert.equal(owner.receiverCalls.length, asked, 'Off: the camera is not where the torus is heard');
+    assert.deepEqual(c.reading.receiver, {on: false, context: 'world', gains: [{mode_ref: 'scene:logic/0', gain: 1}], law: 'controlled', refusal: null});
+  } finally { await c.dispose(); }
+});
+
+test('Receiver On refused by the owner says so in its words and stays Off; while held the choice waits; a new owner starts in the world', async () => {
+  const {owner, c} = await openHearing();
+  try {
+    owner.refuseReceiver = 'no torus here';
+    await assert.rejects(c.setReceiver(true, [0, 0, 10]), /no torus here/);
+    assert.equal(c.reading.receiver.on, false, 'a personal context with no native consequence is never shown as one');
+    assert.equal(c.reading.receiver.context, 'world');
+    assert.equal(c.reading.receiver.refusal, 'no torus here');
+    owner.refuseReceiver = null;
+    c.hold('held to test');
+    assert.equal(await c.setReceiver(true, [0, 0, 6]), null, 'held: the choice is kept, and the owner is asked once it follows');
+    assert.deepEqual(heardFrom(owner), [[0, 0, 10]], 'nothing is asked while held');
+    assert.equal(c.reading.receiver.on, true);
+    await c.resume();
+    await c.hear([0, 0, 6]);
+    assert.deepEqual(heardFrom(owner), [[0, 0, 10], [0, 0, 6]], 'following again: where you stand is asked');
+    assert.equal(c.reading.receiver.context, 'personal');
+    await c.release(false);
+    assert.equal(c.reading.receiver.on, true, 'Receiver is your choice: it outlives the instrument, as the level does');
+    assert.equal(c.reading.receiver.context, 'world', 'a new owner hears in the world\'s context until it is asked');
+  } finally { await c.dispose(); }
+});
+
+test('the frame asks the owner where you stand each frame while Receiver is On, and the act turns it On or Off from the camera now', () => {
+  const field = readFileSync(join(journeys, 'src/nativeField.ts'), 'utf8');
+  const command = field.slice(field.indexOf('const command=async(edit:InstrumentEdit'), field.indexOf('const liveEntry='));
+  const receiver = command.slice(command.indexOf("if(edit.kind==='receiver')"), command.indexOf("if(at!==undefined)throw new Error('This edit is made"));
+  assert.match(receiver, /await controller\.setReceiver\(edit\.on,heardPlace\(\)\);update\(\);return \{\};/, 'the act asks the owner now, from where the camera stands');
+  assert.match(receiver, /if\(at!==undefined\)throw new Error\('Where the Torus is heard from is set now/, 'and lands at no sample');
+  const hearing = field.slice(field.indexOf('const hear=(view:StageView'), field.indexOf('const openLive='));
+  assert.match(hearing, /if\(!controller\.receiving\)return;/, 'Off, a camera move asks nothing');
+  assert.match(hearing, /if\(now-heardWhen<RECEIVER_FRAME_MS\)return;/, 'at most ten times a second');
+  assert.match(field, /receiverPlace\(stageEye\(heardView\.view,heardView\.fov,WORLD_SCALE\),scale\)/, 'the engine\'s eye in the owner\'s metres');
+  assert.match(field, /return \{controller,panel,command,stage,touch,openLive,leaveLive,rebind,authoredMoved,hear,dispose:/);
+  const app = readFileSync(join(journeys, 'src/app.ts'), 'utf8');
+  const tick = app.slice(app.indexOf('function tick(now:number)'), app.indexOf('function tick(now:number)') + 4000);
+  assert.match(tick, /const native=engine\.telemetry\?\.\(\);nativeField\?\.hear\(\{camera,width,height\},native\?\.config\?\.depth\?\.fov\);/,
+    'each frame hands the field the camera the engine was just given and the engine\'s field of view');
 });

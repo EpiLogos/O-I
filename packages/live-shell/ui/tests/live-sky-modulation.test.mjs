@@ -179,3 +179,50 @@ test('the control a planet moves shows the move: the planet, the base and the va
   assert.equal(standingWords(standing.carrier), 'Venus (base 20 %, now 45 %) moves this value.')
   sm.resetSkyModulation()
 })
+
+// O-I 6e (manual §22.2: "On a Live part, its targets are the torus and its effects"; Use: "Own interval moves a frequency"; §21.2: the
+// Fundamental, "20 to 2,000 Hz · Map", "Every voice is a ratio over it"): the Torus's Fundamental is a target in its own (log) scale, and a
+// base taken under Map goes back as Map, the map's 1:1, not as the frequency Map gave when the planet took it.
+const under = fundamental => ({...state(), parameters: {...state().parameters, torus: {...torusSession(), settings: {...torusSession().settings, fundamental},
+  fundamental_hz: fundamental.source === 'hz' ? fundamental.hz : 130.81}}})
+
+test('a planet moves the Torus\'s Fundamental, a frequency, through the owner\'s Torus session', () => {
+  const fundamental = sm.skyTargets(playing()).find(t => t.id === 'quaternal-logic:torus/fundamental')
+  assert.ok(fundamental, 'the Fundamental is a target')
+  assert.equal(fundamental.device, 'Torus'); assert.equal(fundamental.label, 'Fundamental')
+  assert.equal(fundamental.value, 130.81, 'under Map: the frequency the map gives the Sun')
+  assert.equal(fundamental.min, 20); assert.equal(fundamental.max, 2000); assert.equal(fundamental.unit, 'Hz')
+  assert.equal(fundamental.log, true, 'a frequency moves in its own (log) scale, and by a planet\'s own interval')
+  assert.deepEqual(fundamental.edit(196), {kind: 'torus', edit: {fundamental: {source: 'hz', hz: 196}}})
+  assert.equal(sm.skyTargets(state()).some(t => t.id === 'quaternal-logic:torus/fundamental'), false, 'no session, no Fundamental')
+})
+
+test('the Fundamental taken under Map goes back as Map; taken at a frequency, it goes back to that frequency', async () => {
+  const writes = []
+  sm.resetSkyModulation({writer: async edit => { writes.push(edit); return {ok: true} }})
+  sm.placeSkyModulation(true)
+  const route = [{key: 'routes', value: JSON.stringify([{id: 'r1', planet: 'Saturn', target: 'quaternal-logic:torus/fundamental'}])},
+    {key: 'use:r1', value: 'interval'}, {key: 'amount:r1', value: 100}, {key: 'smoothing:r1', value: 0}]
+  await sm.skyModulationBinding(playing(), sky({Saturn: 40})).write(route)
+  await sm.runSkyModulation(playing(), sky({Saturn: 40}), false)
+  const fifth = Math.round(130.81 * 1.5 * 1000) / 1000
+  assert.deepEqual(writes, [{kind: 'torus', edit: {fundamental: {source: 'hz', hz: fifth}}}], 'Saturn 3:2 over the map\'s 1:1')
+  const moved = under({source: 'hz', hz: fifth})
+  assert.deepEqual(sm.skyHeldTorusKeys(undefined, sm.skyTargets(moved)), {fundamental: 'Saturn (base Map, 131 Hz, now 196 Hz)'},
+    'the control names the base as Map')
+  await sm.skyModulationBinding(moved, sky({Saturn: 40})).write([{key: 'routes', value: '[]'}])
+  await sm.runSkyModulation(moved, sky({Saturn: 40}), false)
+  assert.deepEqual(writes.at(-1), {kind: 'torus', edit: {fundamental: {source: 'map'}}}, 'given back as Map')
+  assert.deepEqual(sm.skyModulationPlan().bases, {})
+  // At a frequency: the base is that frequency, and it goes back as it stood.
+  writes.length = 0
+  const set = under({source: 'hz', hz: 220})
+  await sm.skyModulationBinding(set, sky({Saturn: 40})).write(route)
+  await sm.runSkyModulation(set, sky({Saturn: 40}), false)
+  assert.deepEqual(writes, [{kind: 'torus', edit: {fundamental: {source: 'hz', hz: 330}}}])
+  assert.deepEqual(sm.skyHeldTorusKeys(undefined, sm.skyTargets(under({source: 'hz', hz: 330}))), {fundamental: 'Saturn (base 220 Hz, now 330 Hz)'})
+  sm.placeSkyModulation(false)
+  await sm.runSkyModulation(under({source: 'hz', hz: 330}), sky({Saturn: 40}), false)
+  assert.deepEqual(writes.at(-1), {kind: 'torus', edit: {fundamental: {source: 'hz', hz: 220}}}, 'taken off: the frequency goes back')
+  sm.resetSkyModulation()
+})

@@ -6,8 +6,10 @@
 
 import {useEffect, useState} from 'react'
 import {registerPanel} from '../shell/panels'
-import type {InstrumentEdit, PerformanceAction, PerformanceBasisSummary, PerformanceReply} from '@epilogos/expressions-boundary'
-import {commitLiveInstrumentEdit} from './torusInstrument'
+import type {InstrumentEdit, PerformanceAction, PerformanceBasisSummary, PerformanceReply, StageCommand, StageResult, StageSoundMove, StageTorusSound,
+  TorusKeptSummary} from '@epilogos/expressions-boundary'
+import type {WorldActionReceipt} from '../timeline/worldTrackAdapter'
+import {commitLiveInstrumentEdit, commitLiveStage} from './torusInstrument'
 import './liveInstrumentSection.css'
 
 export type LivePerformanceChannel = (action: PerformanceAction) => Promise<unknown>
@@ -30,6 +32,8 @@ export async function commitLivePerformance(action: PerformanceAction): Promise<
   if (row?.state === 'listed' && Array.isArray(row.bases)) return reply as PerformanceReply
   if (row?.state === 'refused' && typeof row.reason === 'string') return reply as PerformanceReply
   if (row?.state === 'recalled' && Array.isArray(row.edits) && Array.isArray(row.not_applied)) return reply as PerformanceReply
+  if (row?.state === 'sound' && typeof row.sound === 'object' && row.sound !== null) return reply as PerformanceReply
+  if (row?.state === 'kept' && typeof row.sound_ref === 'string' && typeof row.name === 'string' && typeof row.unsaved === 'boolean') return reply as PerformanceReply
   return REFUSED('The owner answered the preset request in an unknown shape')
 }
 
@@ -52,6 +56,71 @@ export async function applyPresetRecall(
     else refused.push({edit, error: result.error ?? 'refused'})
   }
   return {applied, refused, notApplied: reply.not_applied}
+}
+
+// ── a sound saved and opened (O-I #852, manual §21.2 "Save the instrument as you tuned it"; "Drag it onto a part to play it") ─────────
+// The Torus's sounds go through the same owners as the presets: the stage (the owner keeps a checkpoint; the kernel seals the sound from
+// it, or opens a kept one against the Torus as it stands) and the Scene's performance (it keeps the sound, and gives its record back).
+
+/** The owners a sound goes through: the frame's stage channel and the Scene's performance (by default the mounted host's). */
+export interface LiveSoundOwners {
+  readonly stage: (command: StageCommand) => Promise<StageResult>
+  readonly perform: (action: PerformanceAction) => Promise<PerformanceReply>
+}
+const SOUND_OWNERS: LiveSoundOwners = {stage: command => commitLiveStage(command), perform: action => commitLivePerformance(action)}
+
+type KeptListener = (kept: TorusKeptSummary | null) => void
+const keptListeners = new Set<KeptListener>()
+/** Hear what the Scene keeps on the Torus each time a sound is kept (the browser's Instruments lists it again). Returns the unsubscribe. */
+export function subscribeTorusKept(listener: KeptListener): () => void {
+  keptListeners.add(listener)
+  return () => { keptListeners.delete(listener) }
+}
+
+/** Save the Torus as it rings as a sound the Scene keeps: the owner keeps a checkpoint and the kernel seals the sound from it by `name`
+ * (the stage's `torus-sound` save), then the Scene keeps it (the performance's keep-sound). Settles with the words, or the owner's refusal. */
+export async function saveTorusSound(name: string, owners: LiveSoundOwners = SOUND_OWNERS): Promise<{ok: true; words: string} | {ok: false; error: string}> {
+  const named = name.trim()
+  if (!named) return {ok: false, error: 'Name the sound first: the browser lists it by its name.'}
+  const sealed = await owners.stage({command: 'torus-sound', action: 'save', name: named})
+  if (!sealed.ok) return {ok: false, error: sealed.error}
+  if (!sealed.sound) return {ok: false, error: 'The owner answered the save with no sound'}
+  const kept = await owners.perform({action: 'keep-sound', sound: sealed.sound})
+  if (kept.state === 'refused') return {ok: false, error: kept.reason}
+  if (kept.state !== 'kept') return {ok: false, error: 'The Scene answered the keep in another shape'}
+  for (const listener of [...keptListeners]) listener(kept.kept)
+  return {ok: true, words: kept.unsaved ? `Saved "${kept.name}" under the Torus. The Scene keeps it until the Expression is saved, then the file does.`
+    : `Saved "${kept.name}" under the Torus.`}
+}
+
+const movedWords = (name: string, moved: readonly StageSoundMove[]) => moved.length
+  ? `"${name}" opens as saved. Moved since it was saved: ${moved.map(row => row.words.charAt(0).toLowerCase() + row.words.slice(1)).join('; ')}.`
+  : `"${name}" opens as saved; nothing it was tuned from has moved.`
+
+/** Open a kept sound on the Torus: the Scene's record by its ref, opened against the Torus as it stands now; the owner restores it as saved
+ * (the stage's `torus-sound` open). Settles with what has moved since it was saved, in the kernel's words, or the owner's refusal. */
+export async function openKeptSound(soundRef: string, owners: LiveSoundOwners = SOUND_OWNERS): Promise<{ok: true; name: string; moved: readonly StageSoundMove[]; words: string} | {ok: false; error: string}> {
+  const record = await owners.perform({action: 'sound', sound_ref: soundRef})
+  if (record.state === 'refused') return {ok: false, error: record.reason}
+  if (record.state !== 'sound') return {ok: false, error: 'The Scene answered the sound in another shape'}
+  const sound = record.sound as StageTorusSound
+  const opened = await owners.stage({command: 'torus-sound', action: 'open', sound})
+  if (!opened.ok) return {ok: false, error: opened.error}
+  // An answer that names no sample it rang again from, or no word of what moved, opened nothing.
+  if (opened.landed_at_samples_elapsed === undefined || opened.moved === undefined) return {ok: false, error: 'The frame answered the opening with no sample it rang again from: the sound was not opened'}
+  const moved = opened.moved, name = String(sound.name)
+  return {ok: true, name, moved, words: movedWords(name, moved)}
+}
+
+/** Play a kept sound on the part `track` of the set at `path` (manual §21.2 "Drag it onto a part to play it"): it opens on the Torus,
+ * then the part keeps the Torus as it then stands (live/liveTake.ts createTorusKeeper keepOn), so the set opens with it again. */
+export async function playKeptSoundOn(path: string, track: number, soundRef: string,
+  owners: LiveSoundOwners & {readonly keepOn?: (path: string, track: number) => Promise<string | null>} = SOUND_OWNERS): Promise<WorldActionReceipt> {
+  const opened = await openKeptSound(soundRef, owners)
+  if (!opened.ok) return {ok: false, error: opened.error}
+  const keepOn = owners.keepOn ?? (async (at: string, part: number) => { const {keeper} = await (await import('./liveTake')).liveRecord(); return keeper.keepOn(at, part) })
+  const refused = await keepOn(path, track)
+  return {ok: true, note: `${opened.words} ${refused ?? 'The part keeps it.'}`}
 }
 
 function describe(outcome: PresetRecallOutcome): string {

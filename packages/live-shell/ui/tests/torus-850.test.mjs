@@ -218,3 +218,25 @@ test('the Carrier\'s words follow the owner\'s drive: under the pulse, 0 % is si
   assert.doesNotMatch(whole, /its drive is not built yet/)
   resetHost(binding.id)
 })
+
+// O-I #855 round 6d (854's PROPOSE): the owner's session names the M2 condition's maqām beside the tunings it holds (QL scene_field.rs
+// maqam_reading: its pitches while the scene holds its voices, else `absent` in the owner's words naming the source it lacks), so the
+// Tuning control says why Maqām is absent before it is chosen, in the owner's words; a maqām the scene holds is named on its choice.
+test('the Tuning says why the maqām is absent before it is chosen, in the owner\'s words, and names the maqām the scene holds', () => {
+  const absent = 'maqām Kirdan (#2-4.3-0-4), the condition\'s tonic, has no Bimba spelling in the map, so its eight pitches have no source, and no other tuning stands in'
+  const maqam = {name: 'Kirdan', coordinate: '#2-4.3-0-4', role: 'tonic', tonic_hz: 196, tuning: 'bimba-spelled24-tet', standing: 'source-held', pitches_hz: null, absent}
+  const {binding} = bound(state(session({maqam})))
+  assert.deepEqual(JSON.parse(binding.values['tuning.maqam']), {name: 'Kirdan', absent}, 'the owner\'s maqām and its words for its absence')
+  assert.equal(binding.writes('tuning.maqam'), false, 'a reading')
+  setHostPage(binding.id, 'field')
+  const whole = renderToStaticMarkup(h(HostedDevice, {designed: torus, binding, view: 'whole', nav: {}}))
+  assert.ok(whole.includes('This scene holds no Maqām voices: maqām Kirdan (#2-4.3-0-4), the condition&#x27;s tonic, has no Bimba spelling in the map'),
+    'the Tuning says why, before Maqām is chosen')
+  resetHost(binding.id)
+  const held = bound(state(session({resident_tunings: ['logic', 'maqam', 'sky'], maqam: {...maqam, absent: null, pitches_hz: [196, 220, 233, 262, 294, 311, 349, 392]}}))).binding
+  assert.deepEqual(JSON.parse(held.values['tuning.maqam']), {name: 'Kirdan', absent: null})
+  setHostPage(held.id, 'field')
+  assert.match(renderToStaticMarkup(h(HostedDevice, {designed: torus, binding: held, view: 'whole', nav: {}})), /The voices sound the M2 condition&#x27;s maqām, Kirdan\./)
+  resetHost(held.id)
+  assert.equal(bound().binding.values['tuning.maqam'], undefined, 'an owner that names no maqām: nothing to say')
+})

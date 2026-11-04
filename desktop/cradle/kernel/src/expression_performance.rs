@@ -10,6 +10,7 @@ use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 
 /// The Torus's takes, sealed by the kernel from its own native owner (O-I #855).
+pub mod kept;
 pub mod torus;
 
 pub const SCHEMA: &str = "oi.expression-performance/v1";
@@ -1165,6 +1166,10 @@ pub struct Performance {
     /// omit this empty addition.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub torus_takes: Vec<torus::TorusTakeRecord>,
+    /// The Torus's saved sounds, its instruments (a form's body with the sounds made on it) and its racks
+    /// (`kept`): the Scene keeps them in its performance, and its Edition with it. Bytes without any omit it.
+    #[serde(default, skip_serializing_if = "kept::TorusKept::is_empty")]
+    pub torus_kept: kept::TorusKept,
     /// Seals the full act, including all event, route and transport operands.
     pub content_digest: String,
 }
@@ -1236,6 +1241,20 @@ pub enum PerformanceOperation {
         at_sample: Counter,
         micros_per_quarter: u32,
     },
+    /// A sound the kernel sealed from a checkpoint its native owner gave (native-expression `torus_sound`).
+    /// Never a frame's own record: the seal admits it.
+    KeepTorusSound {
+        sound: Box<kept::TorusSound>,
+    },
+    /// An instrument: a form's body with the sounds made on it. Kept again under its ref, it is replaced.
+    KeepTorusInstrument {
+        instrument: kept::KeptInstrument,
+    },
+    /// A rack: the Torus with its chain, its macros and their variations. Kept again under its ref, it is
+    /// replaced.
+    KeepTorusRack {
+        rack: kept::KeptRack,
+    },
 }
 impl Performance {
     pub fn events(&self) -> impl Iterator<Item = &TimedEvent> {
@@ -1278,10 +1297,15 @@ impl Performance {
         } else {
             digest(&(&recording, &self.native_reservations))?
         };
-        if self.torus_takes.is_empty() {
-            Ok(reserved)
+        let takes = if self.torus_takes.is_empty() {
+            reserved
         } else {
-            digest(&(&reserved, &self.torus_takes))
+            digest(&(&reserved, &self.torus_takes))?
+        };
+        if self.torus_kept.is_empty() {
+            Ok(takes)
+        } else {
+            digest(&(&takes, &self.torus_kept))
         }
     }
     pub fn seal(mut self) -> Result<Self, String> {
@@ -1338,7 +1362,7 @@ impl Performance {
             || !(8000..=192000).contains(&self.sample_rate)
             || self.ppq == 0
             || self.ppq > 32767
-            || (self.bases.is_empty() && self.torus_takes.is_empty())
+            || (self.bases.is_empty() && self.torus_takes.is_empty() && self.torus_kept.is_empty())
             || self.bases.len() > MAX_BASES
             || self.torus_takes.len() > torus::MAX_TAKES
             || self.pitches.len() > MAX_PITCHES
@@ -1504,6 +1528,7 @@ impl Performance {
                 return Err("a Torus take lies twice, off its lane, past the performance or at another sample rate".into());
             }
         }
+        self.torus_kept.validate(self.sample_rate)?;
         if crate::expression_act_storage::measure(self, MAX_PERFORMANCE_BYTES)?
             > MAX_PERFORMANCE_BYTES
         {
@@ -1688,7 +1713,54 @@ impl Performance {
     /// creates it): the take on its lane from `at_sample`, the transport at the tempo it lies on, no basis
     /// (the take's readings say what of one its owner keeps). The operations after it follow as an edit.
     pub fn opened_by(operations: Vec<PerformanceOperation>) -> Result<Self, String> {
-        let mut operations = operations.into_iter();
+        let mut operations = operations.into_iter().peekable();
+        if let Some(PerformanceOperation::KeepTorusSound { sound }) = operations.peek() {
+            sound.verify_seal()?;
+            let opened = Self {
+                schema: SCHEMA.into(),
+                performance_ref: format!("performance:torus/{}", sound.sound_ref),
+                sample_rate: sound.sample_rate,
+                duration_samples: Counter(0),
+                ppq: torus::TAKE_PPQ,
+                bases: Vec::new(),
+                pitches: Vec::new(),
+                layers: vec![Layer {
+                    layer_ref: "layer:torus".into(),
+                    title: "Torus".into(),
+                    enabled: true,
+                    solo: false,
+                }],
+                pages: Vec::new(),
+                parameters: Vec::new(),
+                routes: Vec::new(),
+                tempo: vec![TempoSegment {
+                    at_sample: Counter(0),
+                    at_tick: Counter(0),
+                    micros_per_quarter: 500_000,
+                }],
+                loop_range: None,
+                position_sample: Counter(0),
+                replay: torus::replay(0)?,
+                checkpoints: Vec::new(),
+                native_sources: Vec::new(),
+                native_recordings: Vec::new(),
+                native_reservations: Vec::new(),
+                torus_takes: Vec::new(),
+                torus_kept: kept::TorusKept {
+                    sounds: vec![(**sound).clone()],
+                    ..Default::default()
+                },
+                content_digest: String::new(),
+            }
+            .seal()?;
+            operations.next();
+            let rest: Vec<_> = operations.collect();
+            return if rest.is_empty() {
+                Ok(opened)
+            } else {
+                opened.edited(rest)
+            };
+        }
         let Some(PerformanceOperation::RecordTorusTake {
             take,
             lane,
@@ -1734,6 +1806,7 @@ impl Performance {
                 layer: 0,
                 at_sample,
             }],
+            torus_kept: kept::TorusKept::default(),
             content_digest: String::new(),
         }
         .seal()?;
@@ -1755,6 +1828,16 @@ impl Performance {
             });
             if !carried {
                 record.take.verify_seal()?;
+            }
+        }
+        for sound in &self.torus_kept.sounds {
+            let carried = kept.is_some_and(|kept| {
+                kept.torus_kept
+                    .sound(&sound.sound_ref)
+                    .is_some_and(|k| k.seal == sound.seal)
+            });
+            if !carried {
+                sound.verify_seal()?;
             }
         }
         Ok(())
@@ -2002,6 +2085,36 @@ impl Performance {
                 };
                 self.duration_samples = Counter(self.duration_samples.0.max(record.end()?));
                 self.torus_takes.push(record);
+            }
+            PerformanceOperation::KeepTorusSound { sound } => {
+                sound.verify_seal()?;
+                if self.torus_kept.sound(&sound.sound_ref).is_some() {
+                    return Err(format!("Sound {} is already kept", sound.name));
+                }
+                if self.torus_kept.sounds.len() >= kept::MAX_SOUNDS {
+                    return Err(format!(
+                        "A performance keeps at most {} sounds",
+                        kept::MAX_SOUNDS
+                    ));
+                }
+                self.torus_kept.sounds.push(*sound);
+            }
+            PerformanceOperation::KeepTorusInstrument { instrument } => {
+                let instruments = &mut self.torus_kept.instruments;
+                match instruments
+                    .iter_mut()
+                    .find(|kept| kept.instrument_ref == instrument.instrument_ref)
+                {
+                    Some(kept) => *kept = instrument,
+                    None => instruments.push(instrument),
+                }
+            }
+            PerformanceOperation::KeepTorusRack { rack } => {
+                let racks = &mut self.torus_kept.racks;
+                match racks.iter_mut().find(|kept| kept.rack_ref == rack.rack_ref) {
+                    Some(kept) => *kept = rack,
+                    None => racks.push(rack),
+                }
             }
         }
         Ok(())

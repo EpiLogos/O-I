@@ -117,8 +117,30 @@ export function clockAngle(clock: {inscription?: {half_degrees?: number}; lensin
   return 0;
 }
 
+// --------------------------------------------------------------------------------------------------------- where the Torus is heard
+
+/** The view the stage hands the engine (production.ts setHostView): the stage's height in pixels, the pixels per engine unit, the camera's
+ * right and up, and the engine's field of view in degrees (its depth config). */
+export interface HostEye {height: number; pixelsPerUnit: number; right: readonly number[]; up: readonly number[]; fovDegrees: number}
+/** Where the listener stands with Receiver On (DLW manual §21.2 View: "Receiver On makes your camera the place where the torus is heard";
+ * O-I 856): the engine's own eye, in metres of the scene the owner draws its targets in. PointCloudField setHostView stands its camera on
+ * the normal right × up at the distance that frames the host's pixel pitch at the workplane under its field of view (held to 4..120°), so
+ * the perspective eye is that place and the flat projection frames the same workplane from it; the flat camera's own 5000 units is how far
+ * back it draws, not where anyone stands. Metres are engine units over the presentation's units per metre. The owner turns the place into
+ * the body's frame by its clock (QL scene_field.rs TORUS_RECEIVER_LAW). Null when the view has no size, scale, field of view or eye. Pure. */
+export function receiverPlace(view: HostEye, unitsPerMetre: number): Vec3 | null {
+  const {height, pixelsPerUnit: s, right: a, up: b, fovDegrees} = view;
+  if (!(Number.isFinite(unitsPerMetre) && unitsPerMetre > 0 && Number.isFinite(height) && height > 0 && Number.isFinite(s) && s > 0 && Number.isFinite(fovDegrees))) return null;
+  const n: Vec3 = [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+  const length = Math.hypot(n[0], n[1], n[2]);
+  if (!(Number.isFinite(length) && length > 0)) return null;
+  const fov = Math.max(4, Math.min(120, fovDegrees)) * Math.PI / 180;
+  const metres = (height / Math.max(0.0001, s) * 0.5) / Math.max(0.0001, Math.tan(fov / 2)) / unitsPerMetre;
+  return [n[0] / length * metres, n[1] / length * metres, n[2] / length * metres];
+}
+
 /** A helix's place at a ring angle: the helix curve θ = φ/2 + hπ the keys and voices stand on (bimba h = 0, pratibimba h = 1). */
-export const helixIndex = (helix: unknown): 0 | 1 => (helix === 'pratibimba' || helix === 1 ? 1 : 0);
+export const helixIndex =(helix: unknown): 0 | 1 => (helix === 'pratibimba' || helix === 1 ? 1 : 0);
 export function helixPlace(helix: unknown, phi: number): {phi: number; theta: number} {
   return {phi: wrap(phi), theta: wrap(phi / 2 + helixIndex(helix) * Math.PI)};
 }

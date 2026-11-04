@@ -14,7 +14,7 @@ const STAGE_TIMEOUT_MS = 60000;
 /** The stage commands the owner takes while the frame is concealed: the Live instrument's edits, the Jankó's keys (their strikes and
  * releases, O-I #853), a strike at points, the owner's audio clock, and a Live take's reads (O-I 855): the performance journal (where
  * each note landed), the Torus kept and set again, and a take rendered offline. */
-const CONCEALED_STAGE_COMMANDS: ReadonlySet<StageCommand['command']> = new Set(['instrument', 'janko', 'strike-at', 'audio-clock', 'performance-journal', 'torus', 'render-take']);
+const CONCEALED_STAGE_COMMANDS: ReadonlySet<StageCommand['command']> = new Set(['instrument', 'janko', 'strike-at', 'audio-clock', 'performance-journal', 'torus', 'torus-sound', 'render-take']);
 /** An Expression open waiting for the frame's readiness, with the settle of its answer. */
 interface PendingExpressionOpen {ref: string; refresh: boolean; lens?: HostedTechneLens; recovery?: RecoveryBinding; settle: (result: StageResult) => void}
 const SUPERSEDED_OPEN = 'A newer open superseded this one before the Expressions application was ready';
@@ -311,7 +311,7 @@ export class ExpressionsHost {
       this.seen.add(key);
       if (!this.options.owners.native) throw Error('No native Expressions owner is attached');
       const request = data.request;
-      if (!object(request) || !['source', 'open', 'compose', 'prepare_world', 'exchange', 'observe', 'close'].includes(String(request.operation))) throw Error('Unsupported native-expression operation');
+      if (!object(request) || !['source', 'open', 'compose', 'prepare_world', 'exchange', 'observe', 'torus_sound', 'torus_sound_open', 'close'].includes(String(request.operation))) throw Error('Unsupported native-expression operation');
       if (request.operation === 'open' || request.operation === 'compose') {
         if (this.nativeLease || this.nativeOpening) throw Error('This frame already owns or is opening a native driver');
         this.nativeOpening = true;

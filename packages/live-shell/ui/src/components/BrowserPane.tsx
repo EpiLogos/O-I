@@ -18,6 +18,9 @@ import type {KernelOp, LiveSetsReading} from '../../../../../desktop/cradle/src/
 import {kernelOp, type KernelOpCall} from '../../../../../desktop/cradle/src/kernel/bridge'
 import {refusalWords} from '../../../../../desktop/cradle/src/shared/Refusal.tsx'
 import {centralRoot, centralRootHeld} from '../central/centralWorlds'
+import {commitLivePerformance, subscribeTorusKept} from '../live/LivePresets'
+import {TORUS_KEPT_MIME, torusKeptRows, type TorusKeptRow} from '../frame/instruments'
+import type {TorusKeptSummary} from '../../../../expressions-boundary/src/performanceBasis'
 const RECENTS_KEY = 'live-shell.recent.sets'
 function loadRecents(): string[] {
   try { const value: unknown = JSON.parse(localStorage.getItem(RECENTS_KEY) ?? '[]'); return Array.isArray(value) ? value.filter((p): p is string => typeof p === 'string').slice(0, 8) : [] } catch { return [] }
@@ -68,6 +71,48 @@ function NoteDeviceRows({filter}: {filter: string}) {
     </button>)}
   </>
 }
+/** What you keep, under the Torus (manual §21.2 Sounds and instruments): its sounds, each instrument with the sounds made on it, the
+ * racks (frame/instruments.ts torusKeptRows). Each row drags onto a part to play it (TORUS_KEPT_MIME). */
+export function TorusKeptRows({rows}: {rows: readonly TorusKeptRow[]}) {
+  return <>{rows.map(row => <div key={row.key} className="browser-item browser-kept-row" role="listitem" draggable data-torus-kept={row.kind} data-depth={row.depth} title={row.title}
+    onDragStart={event => { event.dataTransfer.effectAllowed = 'copy'; event.dataTransfer.setData(TORUS_KEPT_MIME, row.payload); event.dataTransfer.setData('text/plain', row.name) }}>
+    <Mark name={row.kind === 'rack' ? 'chain' : row.kind === 'instrument' ? 'form' : 'diamond'} size={12} /><span>{row.name}</span><span className="mode-browser-row-meta">{row.meta}</span>
+  </div>)}</>
+}
+
+/** The owner's listing of what the Scene keeps on the Torus: none kept, the records, or its refusal in words; null while it is asked. */
+export type KeptListing = {readonly kept: TorusKeptSummary | null} | {readonly refused: string}
+/** Under the Torus in Instruments: what the presented Scene keeps on it, listed by its owner with the presets (the Scene performance's
+ * listing, live/LivePresets.tsx commitLivePerformance), and listed again as the Scene keeps a sound (O-I #852: Save sound on the Torus).
+ * The browser keeps none of it. */
+export function TorusKeptSection({filter}: {filter: string}) {
+  const [listed, setListed] = useState<KeptListing | null>(null)
+  useEffect(() => {
+    let live = true
+    void commitLivePerformance({action: 'list'}).then(reply => {
+      if (live) setListed(reply.state === 'listed' ? {kept: reply.kept ?? null} : {refused: reply.state === 'refused' ? reply.reason : 'the owner answered in another shape'})
+    })
+    const stop = subscribeTorusKept(kept => { if (live) setListed({kept}) })
+    return () => { live = false; stop() }
+  }, [])
+  return <TorusKeptView listed={listed} filter={filter} />
+}
+
+/** The section as the owner's listing stands: asked, kept nothing, the rows, or the refusal. */
+export function TorusKeptView({listed, filter}: {listed: KeptListing | null; filter: string}) {
+  const kept = listed && 'kept' in listed ? listed.kept : null
+  const state = listed === null ? 'listing' : 'refused' in listed ? 'refused' : kept ? 'listed' : 'empty'
+  const rows = torusKeptRows(kept, filter)
+  return <section className="browser-torus-kept" aria-label="Kept on the Torus" data-torus-kept-section={state}>
+    <div className="browser-list-heading">Kept on the Torus</div>
+    {state === 'listing' && <div className="browser-empty">Listing what the presented Scene keeps…</div>}
+    {state === 'empty' && <div className="browser-empty">No sound, instrument or rack is kept on this Scene yet.</div>}
+    {listed && 'refused' in listed && <div className="browser-empty">{refusalWords("Couldn't list what the Scene keeps.", listed.refused)}</div>}
+    {state === 'listed' && !rows.length && <div className="browser-empty">No matching material.</div>}
+    {rows.length > 0 && <div role="list"><TorusKeptRows rows={rows} /></div>}
+  </section>
+}
+
 /** One row of Live sets: a set by its name, standing open, yours (the owner listed it), a template, the host's default, or recent. */
 export interface LiveSetRow {readonly path: string; readonly name: string; readonly standing: 'open' | 'yours' | 'template' | 'default' | 'recent'; readonly place?: string}
 
@@ -224,6 +269,7 @@ export function BrowserPane({ defaultSet, ctx, controlled }: { defaultSet: strin
       {category === 'Views' && LIVE_VIEWS.map(view => <div key={view.name} className="browser-item" title="The transport's view switch chooses the Live view"><Mark name={view.mark} size={12} /><span>{view.name}</span></div>)}
       {category === 'Open set' && <form className="browser-open" onSubmit={event => { event.preventDefault(); ctx.openSet(path) }}><label>Set path<input aria-label="Set path" placeholder="/path/to/set.als" value={path} onChange={e => setPath(e.target.value)} /></label><button type="submit">Open</button></form>}
       {getPanels('browser-section').filter(p => p.id === category).map(panel => { const Panel = panel.component; return <Panel key={panel.id} {...ctx} /> })}
+      {category === 'Instruments' && <TorusKeptSection filter={filter} />}
     </div>
   if (controlled) return results
   return <aside className="browser" aria-label="Browser"><div className="browser-search"><button disabled aria-label="Browser back">‹</button><button disabled aria-label="Browser forward">›</button><input aria-label="Search browser" placeholder="Search (⌘ F)" value={filter} onChange={e => setFilter(e.target.value)} /></div>

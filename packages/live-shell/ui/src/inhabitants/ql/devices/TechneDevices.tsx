@@ -39,8 +39,10 @@ import {lightOf, type DeviceInstance, type DeviceSize} from '../../../frame/devi
 import {commitLiveInstrumentEdit, liveInstrumentWritable, useLiveTorusReading, type LiveTorusState} from '../../../live/torusInstrument'
 import {useAtlasHandle, useAtlasView} from '../../../projections/atlas/AtlasProjectionPanel'
 import {PlacesPlate} from '../../../projections/atlas/places/PlacesPlate'
+import {atlasScale, subscribeAtlasScale} from '../../../projections/atlas/places/placesHost'
 import {PalacePlate} from '../../../projections/atlas/palaces/PalacePlate'; import {STAGE_OWN_PLATES} from '../../../projections/stageInstruments/StageInstrumentPlate'
 import {palaceState, subscribePalace} from '../../../projections/atlas/palaces/palaceSession'
+import {subscribeSystem} from '../../../projections/atlas/system/systemStore'
 import {knowledgeGraphSurface, subscribeKnowledgeGraph} from '../../../../../../../desktop/cradle/src/knowledge/knowledgeGraphHandle'
 import type {KnowledgeGraphSurface} from '../../../../../../../desktop/cradle/src/knowledge/knowledgeGraphHandle'
 import {Folded} from '../../sdk/panel'
@@ -247,8 +249,12 @@ function useAtlasReading(): AtlasReading {
     const offFaces = handle.ctl.subscribeFaces(bump)
     return () => { offClock(); offFaces() }
   }, [handle])
+  // [O-I #858] the held field and the view's own choices at Field scale: the World reads them whether or not the Earth stands
+  useEffect(() => subscribeSystem(() => setTick(count => count + 1)), [])
+  // [O-I #858] the scale the camera stands at, published as the camera moves across a scale's bounds
+  const scale = useSyncExternalStore(subscribeAtlasScale, atlasScale, atlasScale)
   // the tick is the atlas's own change notice: the reading is taken again when it comes
-  return useMemo(() => atlasReading(handle, view), [handle, view, tick])
+  return useMemo(() => atlasReading(handle, view, scale), [handle, view, scale, tick])
 }
 
 function useKnowledgeSurface(): KnowledgeGraphSurface | null {

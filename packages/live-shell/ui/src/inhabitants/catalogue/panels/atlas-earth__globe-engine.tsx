@@ -7,8 +7,16 @@
 // Owners. The Earth ⇄ Graph switch, the whole-field choice and the deep-time clock are the atlas's own, written through
 // shell.setAtlasView, shell.setAtlasWholeField and shell.setAtlasCursor / AllTime / Play / Cumulative (inhabitants/ql/devices/
 // atlasDevices.ts:34-51). The graph's steps, forces, relations, kinds, occurrences and sky anchors are the graph-tools rows (same file,
-// :35-44). The scale is the camera's: a reading (projections/atlas/places/placesModel.ts atlasScaleOf). Aperture and View as have no
-// owner yet; the panel keeps them, off, with the owner's reason (PlacesPlate.tsx:153-156). What the atlas drew over the globe stands here,
+// :35-44). The scale is the camera's: a reading (projections/atlas/places/placesModel.ts atlasScaleOf), but for the Field, the view's own
+// choice with Aperture and View as (O-I #858): the Field draws the held field's worlds and stars (system/fieldModel.ts fieldSceneOf, from
+// `field`, the binding's read of it, and `fieldYours`, your own body's ref); while the field holds no worlds, `fieldWhy` says why and
+// Aperture and View as stand dimmed with those words. `cameraScale` is the camera's scale, kept while the Field is chosen: the Scale
+// chooser takes the Field and that one scale back, and says the camera sets the others. At the Field, a star is acted on (manual §17.2
+// items 9 and 10): `fieldStar` the star chosen, `fieldWaiting` (JSON refs) the worlds waiting at its edge, `fieldAdmit` the one chosen to
+// let in, `starName`, `starGathers` and `starComes` the star to light, the view's own; the acts `starLight`, `starGather`, `starLeave`,
+// `starAdmit` and `starClose` go to the held field, each standing dimmed with its reason when it cannot be done. Showing work and
+// offering a task at a star (`starShow`, `starOffer`) are Software Factory's, which has not built them: they stand dimmed naming it.
+// What the atlas drew over the globe stands here,
 // the pane holding the material alone (O-I #762; manual §16.3 Full, "No controls"): the subject in focus with its line and its acts, the
 // closes of the reading cards (Space, Focus) and the graph's display (Graph, Display), each the atlas's own control, pressed through
 // `pane.press` (projections/atlas/paneChrome.ts; catalogue/panels/paneControls.tsx).
@@ -21,12 +29,13 @@
 // in the defaults below. A reading that the owner does not report is never drawn: the well names it ("No reading of the places"). The
 // filters that only narrow the globe (scope, whole field, relation) narrow when they are reported and leave it whole when they are not.
 import {useMemo} from 'react'
-import {Action, Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, type LightState, type RowItem, type Standing, unreadRows} from '../../sdk/panel'
+import {Action, Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, TextField, Tile, Toggle, type LightState, type RowItem, type Standing, unreadRows} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, json, numOf, shown, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import {WORLD_BODY_GENERATOR, WORLD_BODY_GENERATOR_VERSION, bodyDisc, isWorldBody, parseWorldBody, shoreOf, type BodyLook, type WorldBodyRecord} from '../../../projections/atlas/src/globe/body'
 import {discPngUrl} from '../../../projections/atlas/body/discPng'
 import {providerLabels} from '../../../projections/atlas/src/data/labels'
 import {PaneControls, paneControlsOf, paneReadings, paneTitle} from './paneControls'
+import {fieldSceneOf, starDayLine, type Aperture, type Audience, type FieldScene, type SceneStar} from '../../../projections/atlas/system/fieldModel'
 import './atlas-earth__globe-engine.css'
 
 type V = ViewProps['v']
@@ -188,10 +197,10 @@ interface ReactRect {x: number; y: number; w: number; h: number}
 
 const SIZES: Record<Size, {step: number; names: boolean; font: number}> = {tile: {step: 2, names: false, font: 8}, compact: {step: 2, names: false, font: 8}, whole: {step: 2, names: true, font: 8.5}, big: {step: 3, names: true, font: 10}}
 
-/** The ruler for the scale on the left edge: region above, body between, system below. */
-const SCALE_ORDER = ['region', 'body', 'system'] as const
+/** The ruler for the camera's scale on the left edge: place at the top, then region and body, system below. */
+const SCALE_ORDER = ['place', 'region', 'body', 'system'] as const
 const scaleOf = (v: V): (typeof SCALE_ORDER)[number] | undefined => { const s = strOf(v, 'scale'); return SCALE_ORDER.find(x => x === s) }
-const rulerY = (h: number, scale: (typeof SCALE_ORDER)[number]) => 22 + (h - 22 - 46) * SCALE_ORDER.indexOf(scale) / 2
+const rulerY = (h: number, scale: (typeof SCALE_ORDER)[number]) => 22 + (h - 22 - 46) * SCALE_ORDER.indexOf(scale) / (SCALE_ORDER.length - 1)
 
 /** What a picture names in its well where a reading it needs is not reported ("No reading of the places"): up to four lines. */
 const gapLines = (gaps: readonly string[]) => (gaps.length > 4 ? [...gaps.slice(0, 3).map(g => `No reading of ${g}`), `and ${gaps.length - 3} more`] : gaps.map(g => `No reading of ${g}`))
@@ -213,7 +222,7 @@ function SpaceArt({v, set, standing, w, h, size}: {v: V; set?: Put; standing?: S
   // places and its Sun's terminator are the Earth's, not the body's: they are not drawn over it)
   const handed = bodyOf(v, true), disc = useDisc(handed, size === 'big' ? 96 : size === 'whole' ? 64 : 40, numOf(v, 'bodyTime'))
   const scale = size === 'tile' ? 'body' : scaleOf(v), occasion = occasionOf(v), cursor = numOf(v, 'cursor'), places = placesOf(v), sky = skyOf(v), sun = sunRead(v)
-  const R = scale === 'region' ? Math.min(w, usable) * 1.18 : Math.min(w, usable) * .43
+  const R = scale === 'region' || scale === 'place' ? Math.min(w, usable) * 1.18 : Math.min(w, usable) * .43
   const x0 = 12, x1 = w - 12, ty = h - 17, tx = (u: number) => x0 + u * (x1 - x0)
   const toCursor = (x: number) => clampTo(0, 1, (x - x0) / (x1 - x0))
   const sel = strOf(v, 'selected'), own = (key: string): Standing => standing?.[key] ?? {}
@@ -277,8 +286,7 @@ function SpaceArt({v, set, standing, w, h, size}: {v: V; set?: Put; standing?: S
     {set && size === 'whole' && <g>
       <path d={`M10 22V${h - 46}`} className="dp-faint" />
       {SCALE_ORDER.map(s => <path key={s} d={`M7 ${f1(rulerY(h, s))}h6`} className="dp-faint" />)}
-      {scale !== undefined && <Handle n={2} shape="square" x={10} y={rulerY(h, scale)} label="Scale" does={said('Drag along the line: region, body or system.', scaleStand)}
-        onDrag={scaleStand.disabled ? undefined : (_, y) => set('scale', SCALE_ORDER[Math.round(clampTo(0, 2, (y - 22) / (h - 22 - 46) * 2))]!)} />}
+      {scale !== undefined && <Handle n={2} shape="square" x={10} y={rulerY(h, scale)} label="Scale" does={said('The camera’s scale: place, region, body or system. Come closer to the Earth or draw back from it to move it.', scaleStand)} />}
     </g>}
     <Gaps gaps={gaps} size={size} centred={scale === undefined} x={scale === undefined ? cx : 5} y={scale === undefined ? usable / 2 : usable - 4} />
   </>
@@ -428,10 +436,21 @@ const NOT_LOCAL = 'Steps count from a subject, so they apply in a local graph.'
 const NOT_GRAPH = 'The Graph is not a scale of the Earth.'
 const NOT_OPENED = 'The constellation has not been opened in this session. Its controls stand when the Graph view is first shown.'
 const NO_SUBJECT = 'Choose a subject on the Earth first: a place is declared by a subject.'
-const NO_APERTURE = 'No owner opens the shared or federated field to the atlas yet.'
-const NO_VIEW_AS = 'No owner discloses how the field or the public sees your world yet.'
+const NOT_FIELD = 'Aperture and View as are the Field scale’s: choose Field first.'
 
-const SCALES = [{value: 'system', label: 'System', does: 'The sky: the Earth among the Sun, the Moon and the planets.'}, {value: 'body', label: 'Body', does: 'The Earth whole.'}, {value: 'region', label: 'Region', does: 'A close view over a coast.'}] as const
+const SCALES = [{value: 'field', label: 'Field', does: 'Every world in the system, clear where its owner has shown it, and the stars people have made.'},
+  {value: 'system', label: 'System', does: 'The sky: the Earth among the Sun, the Moon and the planets.'}, {value: 'body', label: 'Body', does: 'The Earth whole.'}, {value: 'region', label: 'Region', does: 'A close view over a coast.'},
+  {value: 'place', label: 'Place', does: 'One place with its exact position.'}] as const
+const CAMERA_SETS = 'The camera sets this scale: come closer to the Earth or draw back from it.'
+const NO_CAMERA = 'No Earth stands, so the camera stands at no scale.'
+/** The scales to choose from: the Field, the view's own, and the one the camera stands at (the way back from the Field); the camera
+ * sets the others. */
+const scaleOptions = (v: V) => { const camera = strOf(v, 'cameraScale')
+  return SCALES.map(option => (option.value === 'field' || option.value === camera ? option : {...option, why: camera ? CAMERA_SETS : NO_CAMERA})) }
+const APERTURE_OPTIONS = [{value: 'world', label: 'World', does: 'Your world alone.'}, {value: 'local', label: 'Local', does: 'Your world and the worlds it holds.'},
+  {value: 'shared', label: 'Shared', does: 'The worlds and stars you are gathered with.'}, {value: 'federated', label: 'Federated', does: 'Everything the field shows.'}] as const
+const VIEW_AS_OPTIONS = [{value: 'me', label: 'Me', does: 'Your world as you know it.'}, {value: 'field', label: 'Field', does: 'Your world as the shared field sees it.'},
+  {value: 'public', label: 'Public', does: 'Your world as the public sees it.'}] as const
 const VIEWS = [{value: 'earth', label: 'Space', does: 'The bodies in space.'}, {value: 'graph', label: 'Graph', does: 'The same material, laid out by connection.'}] as const
 const gate = (v: V) => (boolOf(v, 'graphOpen') === false ? NOT_OPENED : undefined)
 const stepsText = (x: number) => `${x} step${x === 1 ? '' : 's'}`
@@ -447,10 +466,128 @@ const toggle = (p: ViewProps, key: string, label: string, does: string, extra: {
 }
 
 const viewRadio = (p: ViewProps, stack = true) => <Radio {...stand(p, 'view')} label="View" does="Space or Graph: the same material, drawn as bodies or by connection." value={strOf(p.v, 'view') ?? ''} options={VIEWS} stack={stack} onChange={x => p.set('view', x)} />
-const scaleChooser = (p: ViewProps) => <Chooser {...stand(p, 'scale', strOf(p.v, 'view') === 'graph' ? NOT_GRAPH : undefined)} label="Scale" does="How close you look: system, body or region. The camera sets it." value={strOf(p.v, 'scale') ?? ''} options={SCALES}
+const SCALE_DOES = 'How close you look: the field, the system, a body, a region or a place. The camera sets the closer four.'
+const scaleChooser = (p: ViewProps) => <Chooser {...stand(p, 'scale', strOf(p.v, 'view') === 'graph' ? NOT_GRAPH : undefined)} label="Scale" does={SCALE_DOES} value={strOf(p.v, 'scale') ?? ''} options={scaleOptions(p.v)}
   onChange={x => p.set('scale', x)} />
-const scaleRadio = (p: ViewProps) => <Radio {...stand(p, 'scale', strOf(p.v, 'view') === 'graph' ? NOT_GRAPH : undefined)} label="Scale" does="How close you look: system, body or region. The camera sets it." value={strOf(p.v, 'scale') ?? ''} options={SCALES} stack
+const scaleRadio = (p: ViewProps) => <Radio {...stand(p, 'scale', strOf(p.v, 'view') === 'graph' ? NOT_GRAPH : undefined)} label="Scale" does={SCALE_DOES} value={strOf(p.v, 'scale') ?? ''} options={scaleOptions(p.v)} stack
   onChange={x => p.set('scale', x)} />
+/** Aperture and View as: the view's own at Field scale, dimmed with the field's words while it holds no worlds. */
+const atField = (v: V) => strOf(v, 'scale') === 'field' && strOf(v, 'view') !== 'graph'
+const reachWhy = (v: V) => strOf(v, 'fieldWhy') ?? (atField(v) ? undefined : NOT_FIELD)
+const apertureChooser = (p: ViewProps) => <Chooser {...stand(p, 'aperture', reachWhy(p.v))} wide label="Aperture" does="How far you look: world, local, shared or federated. It filters the one system and takes you nowhere."
+  value={strOf(p.v, 'aperture') ?? ''} options={APERTURE_OPTIONS} onChange={x => p.set('aperture', x)} />
+const viewAsChooser = (p: ViewProps) => <Chooser {...stand(p, 'viewAs', reachWhy(p.v))} wide label="View as" does="Who you look as: your world as you know it, as the field sees it, or as the public sees it."
+  value={strOf(p.v, 'viewAs') ?? ''} options={VIEW_AS_OPTIONS} onChange={x => p.set('viewAs', x)} />
+const APERTURE_LABEL: Readonly<Record<Aperture, string>> = {world: 'World', local: 'Local', shared: 'Shared', federated: 'Federated'}
+/** The scene the Field draws, from the binding's read of the held field at the view's aperture and audience; undefined when none is read. */
+const sceneOf = (v: V): FieldScene | undefined => {
+  const aperture = (APERTURE_OPTIONS.find(x => x.value === strOf(v, 'aperture'))?.value ?? 'world') as Aperture
+  const viewAs = (VIEW_AS_OPTIONS.find(x => x.value === strOf(v, 'viewAs'))?.value ?? 'me') as Audience
+  return fieldSceneOf(json<unknown>(v, 'field', null), {aperture, viewAs}, strOf(v, 'fieldYours') ?? null) ?? undefined
+}
+const plural = (n: number, one: string) => `${n} ${one}${n === 1 ? '' : 's'}`
+/** What lies just past the edge, counted as one reading ("1 world and 1 star", never two that could echo the display's own count of
+ * what is in view): short enough to stand beside the star sections (Widen names the aperture that shows it). */
+const beyondText = (scene: FieldScene | undefined): string | undefined => {
+  const past = scene?.beyond
+  if (!scene) return undefined
+  if (!past) return 'nothing'
+  return [past.worlds ? plural(past.worlds, 'world') : '', past.stars ? plural(past.stars, 'star') : ''].filter(Boolean).join(' and ')
+}
+/** The same, short enough for the display's foot. */
+const beyondShort = (scene: FieldScene): string => {
+  const past = scene.beyond
+  return past ? `${[past.worlds ? plural(past.worlds, 'world') : '', past.stars ? plural(past.stars, 'star') : ''].filter(Boolean).join(', ')} past the edge` : 'nothing past the edge'
+}
+const widenAction = (p: ViewProps) => {
+  const past = sceneOf(p.v)?.beyond
+  return <Action {...stand(p, 'aperture', reachWhy(p.v) ?? (past ? undefined : 'Nothing lies past the edge of this view.'))} label="Widen"
+    does={past ? `Widen the aperture to ${APERTURE_LABEL[past.wider]}, which shows what lies just past the edge.` : 'Widen the aperture to what lies just past the edge.'}
+    onPress={past ? () => p.set('aperture', past.wider) : undefined} />
+}
+
+// ---------------------------------------------------------------- at a star (manual §17.2 items 9 and 10; O-I #858)
+
+const COMES_OPTIONS = [{value: 'anyone', label: 'Anyone', does: 'Any world gathers at once.'}, {value: 'asked', label: 'Asked', does: 'Each world waits at its edge until you let it in.'}] as const
+/** Software Factory's acts at a star, not built yet (stories SF12, SF13): dimmed with their owner named, whatever the host says. */
+const FACTORY_SHOW = 'Software Factory shows a piece of work in the field for the people you let in; it has not built that yet.'
+const FACTORY_OFFER = 'Software Factory offers a task at a star for another person’s agent to take up on their own machine; it has not built that yet.'
+const NO_STAR_HERE = 'No star stands in this aperture: widen it to Shared or Federated.'
+const tailOf = (ref: string) => ref.split(':').pop() ?? ref
+/** The star chosen, as the field shows it at every aperture (a star you chose stays chosen when the aperture narrows). */
+const chosenStar = (v: V): SceneStar | undefined => {
+  const ref = strOf(v, 'fieldStar')
+  if (!ref) return undefined
+  return fieldSceneOf(json<unknown>(v, 'field', null), {aperture: 'federated', viewAs: 'me'}, strOf(v, 'fieldYours') ?? null)?.stars.find(star => star.ref === ref)
+}
+const waitingOf = (v: V): readonly string[] => json<string[]>(v, 'fieldWaiting', [])
+const comesText = (star: SceneStar) => (star.comes === 'anyone' ? 'Anyone gathers at once' : 'Its lighter lets each world in')
+const hereText = (star: SceneStar) => `${star.gathered.length} gathered${star.waiting ? `, ${star.waiting} waiting` : ''}`
+const yoursText = (star: SceneStar) => (star.yoursAt === 'gathered' ? 'Your world is gathered here' : star.yoursAt === 'asked' ? 'Your world waits at the edge' : 'Your world is not here')
+/** The chosen star in lines: its lighter's words for what it gathers, who may come, who is there, and where your world stands. */
+const starRows = (star: SceneStar): RowItem[] => [
+  {id: 'gathers', name: star.gathers, light: 'lit', tone: 'value', does: 'What the star gathers, in its lighter’s words.'},
+  {id: 'comes', name: comesText(star), light: 'lit', does: 'Who may come: anyone at once, or each world its lighter lets in.'},
+  {id: 'here', name: hereText(star), light: 'lit', does: 'The worlds gathered at the star, and those waiting at its edge.'},
+  {id: 'yours', name: yoursText(star), light: star.yoursAt === 'gathered' ? 'lit' : 'dark', does: 'Where your world stands at the star.'}]
+/** An act at the chosen star: a press goes to the field; dimmed with the field's words while the field holds no worlds. */
+const starAct = (p: ViewProps, key: string, label: string, does: string, hold = false) =>
+  <Action {...stand(p, key, reachWhy(p.v))} key={key} label={label} does={does} hold={hold} onPress={() => p.set(key, Date.now())} />
+
+function starSection(p: ViewProps) {
+  const scene = sceneOf(p.v), star = chosenStar(p.v), options = (scene?.stars ?? []).map(s => ({value: s.ref, label: s.name, does: s.gathers}))
+  return <Section label="Star" width={164}>
+    <Chooser {...stand(p, 'fieldStar', reachWhy(p.v) ?? (options.length || star ? undefined : NO_STAR_HERE))} wide label="Star" does="The star to act at: the stars this aperture shows."
+      value={strOf(p.v, 'fieldStar') ?? ''} options={star && !options.some(o => o.value === star.ref) ? [...options, {value: star.ref, label: star.name, does: star.gathers}] : options} onChange={x => p.set('fieldStar', x)} />
+    <Rows label="At this star" does="The chosen star: what it gathers, who may come, who is there and where your world stands." size={4}
+      items={star ? starRows(star) : reachWhy(p.v) ? undefined : []} why={star ? undefined : reachWhy(p.v) ?? 'Choose a star first.'} />
+  </Section>
+}
+
+function atStarSection(p: ViewProps) {
+  const star = chosenStar(p.v), waiting = waitingOf(p.v)
+  const waitWhy = !star ? 'Choose a star first.' : !star.mine ? 'Only the one who lit a star sees who waits and lets them in.' : waiting.length ? undefined : 'No world waits at this star’s edge.'
+  return <Section label="At the star" width={104}>
+    {starAct(p, 'starGather', 'Gather', 'Bring your world to the star. Where its lighter lets each world in, yours waits at the edge with its request.')}
+    {starAct(p, 'starLeave', 'Leave', 'Take your world back from the star, with what it showed there.')}
+    <Chooser {...stand(p, 'fieldAdmit', reachWhy(p.v) ?? waitWhy)} wide label="Waiting" does="A world waiting at the edge of your star." value={strOf(p.v, 'fieldAdmit') ?? ''}
+      options={waiting.map(ref => ({value: ref, label: tailOf(ref)}))} onChange={x => p.set('fieldAdmit', x)} />
+    {starAct(p, 'starAdmit', 'Let in', 'Let the waiting world in. It reaches no further into your world than what you show at the star.')}
+    {starAct(p, 'starClose', 'Close', 'Hold to close your star: every world goes back to its own orbit, and what was shown there goes back under cloud.', true)}
+  </Section>
+}
+
+function lightSection(p: ViewProps) {
+  return <Section label="Light a star" width={150}>
+    <TextField {...stand(p, 'starName', reachWhy(p.v))} wide label="Name" does="The star's name, as the field shows it." value={strOf(p.v, 'starName') ?? ''} placeholder="A star's name" onChange={x => p.set('starName', x)} />
+    <TextField {...stand(p, 'starGathers', reachWhy(p.v))} wide label="Gathers" does="What the star gathers: the shared interest it stands for." value={strOf(p.v, 'starGathers') ?? ''} placeholder="What it gathers" onChange={x => p.set('starGathers', x)} />
+    <Radio {...stand(p, 'starComes', reachWhy(p.v))} label="Who may come" does="Anyone, or the worlds you let in." value={strOf(p.v, 'starComes') ?? ''} options={COMES_OPTIONS} onChange={x => p.set('starComes', x)} />
+    {starAct(p, 'starLight', 'Light a star', 'Light the star in the field with your world gathered at it first. It stays in your hands.')}
+  </Section>
+}
+
+/** The chosen star's day, newest last, as the field lets you read it (SF04): who came, was let in, showed something and left; none
+ * while no star is chosen (the list stands empty and says to choose one, or unread with the field's words while it holds no worlds). */
+const dayRows = (v: V): RowItem[] | undefined => {
+  const star = chosenStar(v)
+  if (!star) return undefined
+  if (star.day === null) return unreadRows(json<{dayWhy?: string}>(v, 'field', {}).dayWhy ?? 'No reading of the star’s day.')
+  return star.day.map((entry, i) => ({id: `${i}`, name: starDayLine(entry), light: entry.what === 'left' || entry.what === 'turned-away' || entry.what === 'took-back' ? 'dark' : 'lit', tone: 'value'}))
+}
+function daySection(p: ViewProps) {
+  const rows = dayRows(p.v), unheld = reachWhy(p.v)
+  return <Section label="Star’s day" width={150}>
+    <Rows does="The star’s day, as the field lets you read it: who came, who was let in, who showed something there and who left. What was shown stays with whoever showed it."
+      size={5} page={Math.max(0, Math.ceil((rows?.length ?? 0) / 5) - 1)} items={rows ?? (unheld ? undefined : [])} why={rows ? undefined : unheld ?? 'Choose a star first.'} />
+  </Section>
+}
+
+function factorySection(p: ViewProps) {
+  return <Section label="Factory" width={92}>
+    <Action {...stand(p, 'starShow', st(p, 'starShow').disabled ?? FACTORY_SHOW)} label="Show work" does="Show a piece of work being made, for the people you let in at the star." />
+    <Action {...stand(p, 'starOffer', st(p, 'starOffer').disabled ?? FACTORY_OFFER)} label="Offer a task" does="Offer a task at the star for another person's agent to take up." />
+  </Section>
+}
 const timeDial = (p: ViewProps) => {
   const own = st(p, 'cursor'), clock = boolOf(p.v, 'playing') === true
   return <Dial {...own} label="Year" does="The year in the window. The globe shows the places that stand in it." value={numOf(p.v, 'cursor') ?? NaN} def={1} scale={{min: 0, max: 1}} format={uText}
@@ -489,7 +626,7 @@ const placeRows = (v: V): RowItem[] => {
 
 function SpaceDisplay({v, set, standing, w, h, size}: {v: V; set?: Put; standing?: Stands; w: number; h: number; size: Size}) {
   return <Display w={w} h={h} label="The World" corner={cornerOf(v)}
-    does="The Earth under its Sun. Each place stands at its position, lit or in shade. Drag handle 1 for the year and handle 2 for the scale.">
+    does="The Earth under its Sun. Each place stands at its position, lit or in shade. Drag handle 1 for the year; handle 2 marks the camera’s scale.">
     <SpaceArt v={v} set={set} standing={standing} w={w} h={h} size={size} />
   </Display>
 }
@@ -500,7 +637,71 @@ function GraphDisplay({v, set, standing, w, h, size}: {v: V; set?: Put; standing
     <GraphArt v={v} set={set} standing={standing} w={w} h={h} size={size} />
   </Display>
 }
-const WorldDisplay = (props: {v: V; set?: Put; standing?: Stands; w: number; h: number; size: Size}) => (strOf(props.v, 'view') === 'graph' ? <GraphDisplay {...props} /> : <SpaceDisplay {...props} />)
+// ---------------------------------------------------------------- the Field scale (manual §17.2; O-I #858)
+//
+// Every world the field shows on one ring round yours, evenly spaced in an order keyed by each ref (so no two stand on one another, and
+// the same field draws the same way every time); the stars likewise on a ring within it; a world under cloud is drawn under the one even cloud, its clearings bright on it; a world the audience does not see is a dashed
+// ring that says why; each star stands nearer the middle, a line to every world gathered at it, and a dashed stub for those waiting at its edge.
+
+function FieldArt({v, w, h, size}: {v: V; w: number; h: number; size: Size}) {
+  const scene = sceneOf(v)
+  const cx = w / 2, cy = (h - (size === 'tile' ? 0 : 12)) / 2, ring = Math.min(w, h) * .36, inner = ring * .5
+  const named = size === 'whole' || size === 'big', rw = size === 'big' ? 13 : size === 'tile' ? 4 : 6
+  if (!scene) return <Gaps gaps={strOf(v, 'fieldWhy') ? [] : ['the shared field']} size={size} centred x={cx} y={cy} />
+  const centre = scene.worlds.find(world => world.yours)
+  const others = scene.worlds.filter(world => world !== centre)
+  const at = new Map<string, readonly [number, number]>()
+  if (centre) at.set(centre.ref, [cx, cy])
+  const around = (refs: readonly string[], r: number, turn: number) => [...refs].sort((a, b) => hash(a) - hash(b)).forEach((ref, i, all) => {
+    const a = turn + i * 6.283 / all.length; at.set(ref, [cx + r * Math.cos(a), cy + r * Math.sin(a)])
+  })
+  // the stars stand half a step round from the worlds, so a star and its name never sit on a world
+  around(others.map(world => world.ref), ring, 2.4)
+  around(scene.stars.map(star => star.ref), inner, 2.4 + Math.PI / Math.max(others.length, 1))
+  const tail = (ref: string) => ref.split(':').pop() ?? ref
+  return <>
+    <circle cx={cx} cy={cy} r={ring} className="dp-faint" strokeDasharray="2 3" opacity={.5} />
+    {scene.stars.flatMap(star => star.gathered.flatMap(ref => { const a = at.get(ref), b = at.get(star.ref); return a && b ? [<path key={`${star.ref}|${ref}`} d={`M${f1(a[0])} ${f1(a[1])}L${f1(b[0])} ${f1(b[1])}`} className="dp-curve" strokeWidth={.9} opacity={.7} />] : [] }))}
+    {scene.worlds.map(world => { const [x, y] = at.get(world.ref)!
+      return <g key={world.ref}>
+        <circle cx={x} cy={y} r={rw} fill={world.mine ? 'var(--dp-value-dim)' : 'color-mix(in srgb, var(--text, #d4d7da) 26%, transparent)'}
+          stroke={world.mine ? 'var(--dp-value)' : 'var(--text-dim, #a3a8ad)'} strokeWidth={world.yours ? 1.4 : .8} strokeDasharray={world.away ? '2 2' : undefined} opacity={world.away ? .5 : 1} />
+        {world.clouded && !world.away && <circle cx={x} cy={y} r={rw} fill="var(--text-dim, #a3a8ad)" opacity={.6} />}
+        {world.clearings.map((clearing, i) => { const a = hash(`${world.ref}/${clearing.part}`) * 6.283 + i * .9
+          return <circle key={clearing.part + (clearing.star ?? '')} cx={x + Math.cos(a) * rw * .55} cy={y + Math.sin(a) * rw * .55} r={size === 'big' ? 1.8 : 1.2} fill="var(--dp-value)" /> })}
+        {named && <text x={world.yours ? x : x + rw + 3} y={world.yours ? y + rw + (size === 'big' ? 12 : 9) : y + 3} textAnchor={world.yours ? 'middle' : 'start'} className="dp-ink-dim"
+          style={{fontSize: size === 'big' ? 10 : 8}}>{world.away ? `${tail(world.ref)} · Link off` : tail(world.ref)}</text>}
+      </g> })}
+    {scene.stars.map(star => { const [x, y] = at.get(star.ref)!, k = size === 'big' ? 6 : 4
+      return <g key={star.ref}>
+        <path d={`M${f1(x)} ${f1(y - k)}L${f1(x + k * .3)} ${f1(y - k * .3)}L${f1(x + k)} ${f1(y)}L${f1(x + k * .3)} ${f1(y + k * .3)}L${f1(x)} ${f1(y + k)}L${f1(x - k * .3)} ${f1(y + k * .3)}L${f1(x - k)} ${f1(y)}L${f1(x - k * .3)} ${f1(y - k * .3)}Z`} fill="var(--dp-on)" />
+        {star.waiting > 0 && <path d={`M${f1(x + k)} ${f1(y + k)}l${k} ${k}`} className="dp-faint" strokeDasharray="2 2" />}
+        {named && <text x={x} y={y > cy ? y + k + (size === 'big' ? 11 : 9) : y - k - 3} textAnchor="middle" className="dp-ink-dim" style={{fontSize: size === 'big' ? 10 : 8}}>{star.name}</text>}
+      </g> })}
+    {size !== 'tile' && <text x={5} y={h - 5} className="dp-axis">{scene.note ?? (size === 'big' ? beyondText(scene) : beyondShort(scene))}</text>}
+  </>
+}
+
+/** Words broken into lines of at most `width` characters, a word never split. */
+const wrapWords = (said: string, width: number): string[] => said.split(/\s+/).reduce<string[]>((lines, word) => {
+  const last = lines[lines.length - 1]
+  if (last !== undefined && `${last} ${word}`.length <= width) lines[lines.length - 1] = `${last} ${word}`
+  else lines.push(word)
+  return lines
+}, [])
+
+function FieldDisplay({v, w, h, size}: {v: V; w: number; h: number; size: Size}) {
+  const scene = sceneOf(v)
+  return <Display w={w} h={h} label="The field" corner={scene ? `${plural(scene.worlds.length, 'world')} · ${plural(scene.stars.length, 'star')}` : NONE}
+    does="Every world the aperture holds, clear where its owner has shown it and under one even cloud elsewhere, and the stars people have made, a line to each world gathered at them.">
+    <FieldArt v={v} w={w} h={h} size={size} />
+    {!scene && strOf(v, 'fieldWhy') && wrapWords(strOf(v, 'fieldWhy')!, Math.floor((w - 12) / 4.8)).map((line, i, all) =>
+      <text key={i} x={w / 2} y={h / 2 + (i - (all.length - 1) / 2) * 11} textAnchor="middle" className="dp-ink-dim">{line}</text>)}
+  </Display>
+}
+
+const SpaceOrField = (props: {v: V; set?: Put; standing?: Stands; w: number; h: number; size: Size}) => (atField(props.v) ? <FieldDisplay {...props} /> : <SpaceDisplay {...props} />)
+const WorldDisplay = (props: {v: V; set?: Put; standing?: Stands; w: number; h: number; size: Size}) => (strOf(props.v, 'view') === 'graph' ? <GraphDisplay {...props} /> : <SpaceOrField {...props} />)
 
 // ---------------------------------------------------------------- the body you build (manual §17.2 "Build a planet", "Your system")
 //
@@ -612,6 +813,29 @@ function displaySection(p: ViewProps) {
 // ---------------------------------------------------------------- the pane: the material itself
 
 const MARK = {exact: 'solid', region: 'outline'} as const
+/** The Field's table beside it in the pane: each world with what you see of it, then each star with who has gathered. */
+function FieldTable({v}: {v: V}) {
+  const scene = sceneOf(v)
+  if (!scene) return <text x={548} y={60} className="dp-ink-dim">{strOf(v, 'fieldWhy') ?? 'No reading of the shared field'}</text>
+  const tail = (ref: string) => ref.split(':').pop() ?? ref
+  const worlds = scene.worlds.slice(0, 7), stars = scene.stars.slice(0, 4), top = 60 + worlds.length * 20 + 28
+  return <>
+    <text x={548} y={34} className="dp-axis">world</text><text x={662} y={34} className="dp-axis">shown</text>
+    <path d="M548 42H748" className="dp-faint" />
+    {worlds.map((world, i) => <g key={world.ref} opacity={world.away ? .5 : 1}>
+      <text x={548} y={60 + i * 20} className="dp-ink">{`${tail(world.ref)}${world.yours ? ' (yours)' : ''}`}</text>
+      <text x={662} y={60 + i * 20} className="dp-ink-dim">{world.away ? 'Link off' : !world.clouded ? 'all' : world.clearings.length ? `${plural(world.clearings.length, 'clearing')}` : 'under cloud'}</text>
+    </g>)}
+    <text x={548} y={top - 8} className="dp-axis">star</text><text x={662} y={top - 8} className="dp-axis">gathered</text>
+    {stars.map((star, i) => <g key={star.ref}>
+      <text x={548} y={top + 12 + i * 20} className="dp-ink">{star.name}</text>
+      <text x={662} y={top + 12 + i * 20} className="dp-ink-dim">{`${star.gathered.length}${star.waiting ? ` · ${star.waiting} waiting` : ''}`}</text>
+    </g>)}
+    <text x={548} y={372} className="dp-axis">{`${APERTURE_LABEL[scene.aperture]} aperture, as ${scene.viewAs === 'me' ? 'you know it' : scene.viewAs === 'field' ? 'the field sees it' : 'the public sees it'}.`}</text>
+    <text x={548} y={386} className="dp-axis">Grey: under the one even cloud. Dots: clearings.</text>
+    <text x={548} y={400} className="dp-axis">A line: gathered at the star. A stub: waiting.</text>
+  </>
+}
 const TABLE_ROWS = 10
 function FullWorld({v}: {v: V}) {
   const graph = strOf(v, 'view') === 'graph', places = placesOf(v), occasion = occasionOf(v), sky = skyOf(v), sun = sunRead(v)
@@ -624,6 +848,9 @@ function FullWorld({v}: {v: V}) {
           <GraphArt v={v} w={760} h={420} size="big" />
           <text x={14} y={392} className="dp-axis">{`Ties: ${providerLabels().basisOwn} solid, inferred dashed, site faint.`}</text>
           <text x={14} y={404} className="dp-axis">Amber: an archetype. Teal: a form of the field.</text>
+        </> : atField(v) ? <>
+          <FieldArt v={v} w={520} h={420} size="big" />
+          <FieldTable v={v} />
         </> : <>
           <SpaceArt v={v} w={520} h={420} size="big" />
           <text x={548} y={34} className="dp-axis">place</text><text x={662} y={34} className="dp-axis">year</text><text x={716} y={34} className="dp-axis">mark</text>
@@ -718,6 +945,26 @@ export const design: DesignedDevice = {
     // The body you build (the design's own sample: no owner keeps one yet).
     body: 'own', bodyName: 'Teraphim', seed: 20261018, seaLevel: .5, continents: 1.7, relief: .55, coast: 'smooth', warmth: .58, moisture: .6, iceCaps: .3,
     atmosphere: .6, clouds: .35, tilt: 18, placeKind: 'place',
+    // The Field (O-I #858): the design's own sample of the held field's world part, as atlasDevices.fieldValues hands it. Yours, with your
+    // own body; a project world you hold; Mara's, gathered with yours at your star; a stranger's, waiting at its edge and gathered at another.
+    aperture: 'world', viewAs: 'me', fieldHeld: true, fieldYours: 'body:own:teraphim', cameraScale: 'body',
+    starName: '', starGathers: '', starComes: 'anyone',
+    field: JSON.stringify({
+      worlds: [{world_ref: 'world:teraphim', body: {body_ref: 'body:own:teraphim'}, linked: true, mine: true}, {world_ref: 'world:teraphim:o-i', body: {body_ref: 'body:o-i'}, linked: true, mine: true},
+        {world_ref: 'world:mara', body: {body_ref: 'body:mara'}, linked: true, mine: false}, {world_ref: 'world:stranger', body: {body_ref: 'body:stranger'}, linked: true, mine: false}],
+      clearings: [{world_ref: 'world:teraphim', part_ref: 'page:reading-of-plate-4', star_ref: null, audience: 'public', shown: {kind: 'page', label: 'A reading of the fourth plate'}},
+        {world_ref: 'world:teraphim', part_ref: 'place:rosarium-notes', star_ref: null, audience: 'field', shown: {kind: 'place', label: 'Rosarium notes'}},
+        {world_ref: 'world:teraphim', part_ref: 'page:for-the-circle', star_ref: 'star:rosarium', audience: 'star', shown: {kind: 'page', label: 'For the circle'}},
+        {world_ref: 'world:mara', part_ref: 'page:maras-plate', star_ref: null, audience: 'public', shown: {kind: 'page', label: 'Mara’s plate'}},
+        {world_ref: 'world:stranger', part_ref: 'page:elsewhere', star_ref: null, audience: 'public', shown: {kind: 'page', label: 'Elsewhere'}}],
+      stars: [{star_ref: 'star:rosarium', name: 'The Rosarium plates', gathers: 'Readings of the Rosarium plates', comes: 'asked', lit_by: 'world:teraphim', mine: true},
+        {star_ref: 'star:far', name: 'Far', gathers: 'Something else', comes: 'anyone', lit_by: 'world:stranger', mine: false}],
+      gatherings: [{star_ref: 'star:rosarium', world_ref: 'world:teraphim', state: 'gathered'}, {star_ref: 'star:rosarium', world_ref: 'world:mara', state: 'gathered'},
+        {star_ref: 'star:rosarium', world_ref: 'world:stranger', state: 'asked'}, {star_ref: 'star:far', world_ref: 'world:stranger', state: 'gathered'}],
+      days: [{star_ref: 'star:rosarium', world_ref: 'world:teraphim', what: 'lit'}, {star_ref: 'star:rosarium', world_ref: 'world:mara', what: 'asked'},
+        {star_ref: 'star:rosarium', world_ref: 'world:mara', what: 'let-in'}, {star_ref: 'star:rosarium', world_ref: 'world:teraphim', what: 'showed', kind: 'page'},
+        {star_ref: 'star:rosarium', world_ref: 'world:stranger', what: 'asked'}],
+    }),
     locations: JSON.stringify([
       {id: 'study', name: 'The study', lat: 22, lon: 10, kind: 'place'}, {id: 'book', name: 'The book', lat: -8, lon: 34, kind: 'palace'},
       {id: 'oi', name: 'O:I', lat: 38, lon: -18, kind: 'place'}, {id: 'mara', name: 'To Mara’s world', lat: -30, lon: -6, kind: 'portal'},
@@ -742,15 +989,21 @@ export const design: DesignedDevice = {
   fixtures: {
     'Whole Earth, all time': {},
     'Year 450 in the window': {allTime: false, cursor: toU(450)},
-    'Region, one scope': {scale: 'region', scope: 'this reading', selected: 'athens'},
+    'Region, one scope': {scale: 'region', cameraScale: 'region', scope: 'this reading', selected: 'athens'},
     'Graph, three steps': {view: 'graph', depth: 3, skyAnchors: true},
     'A wetter, rougher body': {seed: 7, seaLevel: .38, continents: 3.1, relief: .9, coast: 'fjord', moisture: .85, warmth: .4, iceCaps: .55, clouds: .6, tilt: 32},
     'Earth chosen': {body: 'earth'},
+    'Field scale': {scale: 'field', aperture: 'shared', viewAs: 'field'},
+    'Field, everything': {scale: 'field', aperture: 'federated', viewAs: 'me'},
+    'Field not held': {scale: 'field', field: undefined, fieldYours: undefined, fieldHeld: false, fieldWhy: 'This field’s service does not hold worlds yet'},
+    'Field, a star chosen': {scale: 'field', aperture: 'federated', viewAs: 'me', fieldStar: 'star:rosarium', fieldWaiting: JSON.stringify(['world:stranger']), fieldAdmit: 'world:stranger',
+      starName: 'The Bestiary', starGathers: 'Readings of the medieval beasts', starComes: 'asked'},
     'Nothing in focus': {'pane.title': undefined, 'pane.controls': JSON.stringify([])},
     'No readings': Object.fromEntries(['light', 'view', 'scale', 'cursor', 'allTime', 'playing', 'cumulative', 'scope', 'wholeField', 'relation', 'selected', 'placeArmed', 'placePage', 'baseKind',
       'graphOpen', 'local', 'depth', 'centre', 'repel', 'link', 'distance', 'tieJung', 'tieInferred', 'tieSite', 'kindArchetype', 'kindTheoretic', 'kindFamily', 'occurrences', 'skyAnchors',
       'places', 'sky', 'graph', 'subject', 'body', 'bodyName', 'seed', 'seaLevel', 'continents', 'relief', 'coast', 'warmth', 'moisture', 'iceCaps', 'atmosphere', 'clouds', 'tilt',
-      'placeKind', 'locations', 'bodyRecord', 'bodyLook', 'bodyTime', 'generationNote', 'pane.title', 'pane.controls'].map(k => [k, undefined])),
+      'placeKind', 'locations', 'bodyRecord', 'bodyLook', 'bodyTime', 'generationNote', 'pane.title', 'pane.controls',
+      'aperture', 'viewAs', 'field', 'fieldYours', 'fieldHeld', 'fieldWhy', 'cameraScale', 'fieldStar', 'fieldWaiting', 'fieldAdmit', 'starName', 'starGathers', 'starComes'].map(k => [k, undefined])),
   },
 
   folded: p => <Folded title="World" light={light(p)} readings={strOf(p.v, 'view') === 'graph' ? ['graph', depthText(p.v)] : [shown(p.v, 'scale'), whenOf(p.v) ?? NONE]} onUnfold={p.nav.unfold} />,
@@ -763,6 +1016,11 @@ export const design: DesignedDevice = {
         {depthDial(p)}
         {forceDial(p, FORCE_ROWS[0])}
         {forceDial(p, FORCE_ROWS[1])}
+      </> : atField(p.v) ? <>
+        {scaleChooser(p)}
+        {viewRadio(p)}
+        {apertureChooser(p)}
+        {viewAsChooser(p)}
       </> : <>
         {timeDial(p)}
         {scaleChooser(p)}
@@ -807,7 +1065,7 @@ export const design: DesignedDevice = {
       </Band>
     </> : p.page !== 'graph' ? <>
       <Band>
-        <Section width={198}><SpaceDisplay v={p.v} set={p.set} standing={p.standing} w={186} h={146} size="whole" /></Section>
+        <Section width={198}><SpaceOrField v={p.v} set={p.set} standing={p.standing} w={186} h={146} size="whole" /></Section>
         <Section label="Look" width={70}>
           {viewRadio(p)}
           {scaleRadio(p)}
@@ -819,7 +1077,19 @@ export const design: DesignedDevice = {
           {cumulativeToggle(p)}
         </Section>
       </Band>
-      <Band>
+      {atField(p.v) ? <Band>
+        {starSection(p)}
+        {daySection(p)}
+        {atStarSection(p)}
+        {lightSection(p)}
+        {factorySection(p)}
+        <Section label="Reach" grow>
+          {apertureChooser(p)}
+          {viewAsChooser(p)}
+          <Readout label="past the edge" value={beyondText(sceneOf(p.v))} does="What lies just past the edge of the aperture, counted. Widen shows it." />
+          {widenAction(p)}
+        </Section>
+      </Band> : <><Band>
         <Section label="Globe" width={72}>
           {wholeToggle(p)}
           <Readout label="shown" value={shownCount(p.v)} does="The places the Earth draws now, of all the field holds." />
@@ -835,11 +1105,13 @@ export const design: DesignedDevice = {
           <Readout label="day, night" value={dayNight(p.v)} does="Lit by the Sun that the sky reports. Evenly lit when no Sun is read." />
         </Section>
         <Section label="Reach" grow>
-          <Chooser wide label="Aperture" does="How far you look: world, local, shared or federated." value="" options={[{value: 'world', label: 'World'}, {value: 'local', label: 'Local'}, {value: 'shared', label: 'Shared'}, {value: 'federated', label: 'Federated'}]} disabled={NO_APERTURE} />
-          <Chooser wide label="View as" does="Who you look as: me, the field or the public." value="" options={[{value: 'me', label: 'Me'}, {value: 'field', label: 'Field'}, {value: 'public', label: 'Public'}]} disabled={NO_VIEW_AS} />
+          {apertureChooser(p)}
+          {viewAsChooser(p)}
+          <Readout label="past the edge" value={atField(p.v) ? beyondText(sceneOf(p.v)) : undefined} does="What lies just past the edge of the aperture, counted. Widen shows it." />
+          {widenAction(p)}
         </Section>
       </Band>
-      <Band>{focusSection(p)}</Band>
+      <Band>{focusSection(p)}</Band></>}
     </> : <>
       <Band>
         <Section width={198}><GraphDisplay v={p.v} set={p.set} standing={p.standing} w={186} h={146} size="whole" /></Section>
@@ -874,7 +1146,7 @@ export const design: DesignedDevice = {
   full: p => <FullWorld v={p.v} />,
 
   widget: p => <Tile title="World" light={light(p)} span={2} onFull={p.nav.full}>
-    <SpaceDisplay v={p.v} w={112} h={104} size="tile" />
+    <SpaceOrField v={p.v} w={112} h={104} size="tile" />
     <div className="ref-tile-side">
       <Readout label="scale" value={strOf(p.v, 'view') === 'graph' ? 'graph' : strOf(p.v, 'scale')} does="How close you look." />
       <Readout label="occasion" value={whenOf(p.v)} does="The year in the window, or all time." />

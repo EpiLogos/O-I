@@ -121,6 +121,8 @@ export function liveSetWrites(path: string) {
     insertClip: (track: number, scene: number) => writeLiveInsertClip(path, track, scene),
     clipInfo: {read: (track: number, clip: LiveClipAt) => readLiveClip(path, track, clip).then(reading => reading.info ?? ''),
       write: (track: number, clip: LiveClipAt, text: string) => writeLiveClip(path, track, clip, {set: {info: text}})},
+    // A kept sound played on a part (O-I #852): opened on the Torus, then kept by the part (live/LivePresets.tsx), loaded when it is dropped.
+    openSound: (soundRef: string, track: number) => import('./LivePresets').then(presets => presets.playKeptSoundOn(path, track, soundRef)),
   }
 }
 

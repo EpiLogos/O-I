@@ -63,8 +63,18 @@
  *   nara-presences {participant_ref?, field_ref?}   the consented Nara presences the caller sees, each with its consent and whether it was withdrawn
  *   withdraw_nara  {projection_ref, consent_ref, withdrawal_ref, withdrawn_at?}   withdraw a hosted presence: its consent and the projection's next,
  *                                        withdrawn revision (nara-expression-projection.mjs naraWithdrawal), published through publishArgs
+ *
+ * Worlds first (O-I #858; each answers once the caller's own view shows the act, with the world, clearing or star as the caller reads it):
+ *   world-put         {world_ref, body, linked}        put the caller's world: its `aikit.world-body/v1` record and whether it is linked into the field
+ *   clearing-open     {world_ref, part_ref, audience, star_ref?, shown}   show a part of the caller's world to the field, the public or one star
+ *   clearing-withdraw {world_ref, part_ref, star_ref?}  put it back under cloud everywhere at once
+ *   star-light        {star_ref, world_ref, name, gathers, comes, within?}   light a star (or rename it, or change its terms); the world gathers first
+ *   star-gather       {star_ref, world_ref}            bring the caller's world to a star: gathered, or asked where the lighter lets each world in
+ *   star-admit        {star_ref, world_ref}            the lighter lets an asking world in
+ *   star-leave        {star_ref, world_ref}            leave (or, for the lighter, turn a world away): what it showed there is taken back
+ *   star-close        {star_ref}                       close a star: every world returns to its own orbit
  */
-import { activityLivenessRow, bindingFile, close, fieldDayReading, fieldNowReading, fieldSnapshot, holdField, hostingTargets, open, publishArgs, readRef, resolveTarget, rows, stageReading, stageView, waitUntil, observeField, type Client } from './field-lib';
+import { activityLivenessRow, bindingFile, close, fieldDayReading, fieldNowReading, fieldSnapshot, holdField, hostingTargets, open, publishArgs, readRef, resolveTarget, rows, stageReading, stageView, waitUntil, observeField, worldReading, type Client } from './field-lib';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { createInterface } from 'node:readline';
 import { dirname } from 'node:path';
@@ -432,6 +442,16 @@ try {
       else await reducers.revokeFieldRead({ fieldRef: request.field_ref, participantRef: request.participant_ref });
       await emit({ ok: true, data: { schema: 'oi.shared-field.read-grant-result/v1', field_ref: request.field_ref, participant_ref: request.participant_ref, state: request.kind === 'grant-read' ? 'granted' : 'revoked' } });
     }
+    case 'world-put':
+    case 'clearing-open':
+    case 'clearing-withdraw':
+    case 'star-light':
+    case 'star-gather':
+    case 'star-admit':
+    case 'star-leave':
+    case 'star-close': {
+      await emit(await worldAct(client!, request));
+    }
     default:
       await emit({ ok: false, error: { kind: 'malformed', message: `unknown request kind: ${request.kind}` } });
   }
@@ -440,6 +460,68 @@ try {
   return { ok: false, error: { kind: 'refused', message: error?.message ?? String(error) } };
 }
 return { ok: false, error: { kind: 'refused', message: `request ${request.kind} returned no answer` } };
+}
+
+/** One act on the worlds in the field (O-I #858): the reducer, then the caller's own view of what it did. */
+async function worldAct(client: Client, request: any): Promise<Envelope> {
+  if (client.worlds.state !== 'held') return { ok: false, error: { kind: 'unavailable', message: client.worlds.detail } };
+  const reducers: any = client.conn.reducers;
+  const text = (value: unknown) => typeof value === 'string' && value.length > 0;
+  const malformed = (message: string): Envelope => ({ ok: false, error: { kind: 'malformed', message } });
+  const read = () => worldReading(client);
+  const clearingOf = (worldRef: string, partRef: string, starRef: string) => read().clearings.find((c: any) => c.world_ref === worldRef && c.part_ref === partRef && (c.star_ref ?? '') === starRef);
+  const gatheringOf = (starRef: string, worldRef: string) => read().gatherings.find((g: any) => g.star_ref === starRef && g.world_ref === worldRef);
+  const starOf = (starRef: string) => read().stars.find((star: any) => star.star_ref === starRef);
+  const starRef = text(request.star_ref) ? request.star_ref : '';
+  switch (request.kind) {
+    case 'world-put': {
+      if (!text(request.world_ref) || !request.body || typeof request.body !== 'object' || typeof request.linked !== 'boolean') return malformed('world-put requires `world_ref`, the `body` record and `linked`');
+      const bodyJson = JSON.stringify(request.body);
+      await reducers.putWorld({ worldRef: request.world_ref, bodyJson, linked: request.linked });
+      const world = await waitUntil(() => read().worlds.find((w: any) => w.world_ref === request.world_ref && w.linked === request.linked && JSON.stringify(w.body) === JSON.stringify(JSON.parse(bodyJson))), 'the world in the caller\'s own view');
+      return { ok: true, data: { schema: 'oi.shared-field.world-result/v1', world } };
+    }
+    case 'clearing-open': {
+      if (!text(request.world_ref) || !text(request.part_ref) || !text(request.audience) || !request.shown || typeof request.shown !== 'object') return malformed('clearing-open requires `world_ref`, `part_ref`, `audience` and what it `shown`s');
+      const shownJson = JSON.stringify(request.shown);
+      await reducers.openClearing({ worldRef: request.world_ref, partRef: request.part_ref, starRef, audience: request.audience, shownJson });
+      const clearing = await waitUntil(() => { const c = clearingOf(request.world_ref, request.part_ref, starRef); return c && c.audience === request.audience && JSON.stringify(c.shown) === JSON.stringify(JSON.parse(shownJson)) && c; }, 'the clearing in the caller\'s own view');
+      return { ok: true, data: { schema: 'oi.shared-field.clearing-result/v1', clearing, state: 'open' } };
+    }
+    case 'clearing-withdraw': {
+      if (!text(request.world_ref) || !text(request.part_ref)) return malformed('clearing-withdraw requires `world_ref` and `part_ref`');
+      await reducers.withdrawClearing({ worldRef: request.world_ref, partRef: request.part_ref, starRef });
+      await waitUntil(() => !clearingOf(request.world_ref, request.part_ref, starRef), 'the clearing to go back under cloud');
+      return { ok: true, data: { schema: 'oi.shared-field.clearing-result/v1', world_ref: request.world_ref, part_ref: request.part_ref, star_ref: starRef || null, state: 'withdrawn' } };
+    }
+    case 'star-light': {
+      if (!text(request.star_ref) || !text(request.world_ref) || !text(request.name) || !text(request.gathers) || !text(request.comes)) return malformed('star-light requires `star_ref`, `world_ref`, `name`, `gathers` and `comes`');
+      await reducers.lightStar({ starRef: request.star_ref, worldRef: request.world_ref, name: request.name, gathers: request.gathers, comes: request.comes, parentStarRef: text(request.within) ? request.within : '' });
+      const star = await waitUntil(() => { const s = starOf(request.star_ref); return s && s.name === request.name && s.gathers === request.gathers && s.comes === request.comes && gatheringOf(request.star_ref, request.world_ref)?.state === 'gathered' && s; }, 'the star in the caller\'s own view');
+      return { ok: true, data: { schema: 'oi.shared-field.star-result/v1', star, gathered: read().gatherings.filter((g: any) => g.star_ref === request.star_ref && g.state === 'gathered'), state: 'lit' } };
+    }
+    case 'star-gather':
+    case 'star-admit': {
+      if (!text(request.star_ref) || !text(request.world_ref)) return malformed(`${request.kind} requires \`star_ref\` and \`world_ref\``);
+      if (request.kind === 'star-gather') await reducers.gatherAtStar({ starRef: request.star_ref, worldRef: request.world_ref });
+      else await reducers.admitToStar({ starRef: request.star_ref, worldRef: request.world_ref });
+      const gathering = await waitUntil(() => { const g = gatheringOf(request.star_ref, request.world_ref); return g && (request.kind === 'star-gather' || g.state === 'gathered') && g; }, 'the gathering in the caller\'s own view');
+      return { ok: true, data: { schema: 'oi.shared-field.gathering-result/v1', ...gathering } };
+    }
+    case 'star-leave': {
+      if (!text(request.star_ref) || !text(request.world_ref)) return malformed('star-leave requires `star_ref` and `world_ref`');
+      await reducers.leaveStar({ starRef: request.star_ref, worldRef: request.world_ref });
+      await waitUntil(() => !gatheringOf(request.star_ref, request.world_ref), 'the world to leave the star');
+      return { ok: true, data: { schema: 'oi.shared-field.gathering-result/v1', star_ref: request.star_ref, world_ref: request.world_ref, state: 'left' } };
+    }
+    case 'star-close': {
+      if (!text(request.star_ref)) return malformed('star-close requires `star_ref`');
+      await reducers.closeStar({ starRef: request.star_ref });
+      await waitUntil(() => !starOf(request.star_ref), 'the star to close');
+      return { ok: true, data: { schema: 'oi.shared-field.star-result/v1', star_ref: request.star_ref, state: 'closed' } };
+    }
+  }
+  return malformed(`unknown world act: ${request.kind}`);
 }
 
 if (process.argv.includes('--held')) await held();

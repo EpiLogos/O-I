@@ -150,6 +150,10 @@ function clipMenu(target: Extract<ObjectTarget, {kind: 'clip'}>, set: WorldTrack
         () => press(`consolidate:${target.trackId}`, `Consolidate ${set.tracks.find(t => t.id === target.trackId)?.name ?? 'the track'}`,
           () => joins!.run(target.trackId, span!)), undefined, readOnly))
     items.push(act('crop', 'Crop', '⇧⌘J', undefined, 'clip.crop', a, () => {}, undefined, readOnly))
+    // Export Audio (manual §21.2): a take Record laid, rendered as it was played; listed where the set carries it.
+    const exportTake = a?.exportTake
+    if (exportTake) items.push(act('export-audio', 'Export Audio', undefined, exportTake, 'clip.export', a,
+      () => press(`export:${target.id}`, `Export Audio of ${named}`, () => exportTake.run(target.id))))
   }
   // In Central, Open and Reveal the page's file (§10.9): listed only where the set carries them; neither changes the clip.
   if (a?.openFile || a?.revealFile) {

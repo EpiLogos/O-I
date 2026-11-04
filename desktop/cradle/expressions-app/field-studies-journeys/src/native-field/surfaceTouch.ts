@@ -9,7 +9,7 @@
  * its first surface. The body vibrates along its normal (QL scene_field.rs `surface`), which keeps a point's angles, so the rest torus
  * names the point the person sees. Pure: no DOM, no engine, no owner. */
 import {basis,stageCentre,stageScale,type Camera} from '../camera';
-import {clockAngle,shapeRayHit,type PresentState} from '../../../src/engine/torusObject';
+import {clockAngle,shapeRayHit,type HostEye,type PresentState} from '../../../src/engine/torusObject';
 
 /** QL's M1 torus (QL-MEF crates/ql-mef/src/m1.rs `torus`, coordinate #1-5-1; the shell's live/torusInstrument.ts LIVE_TORUS_TOPOLOGY):
  * x = (R + cos θ) cos φ, y = (R + cos θ) sin φ, z = sin θ, with R = 16/9 and r = 1, in metres. */
@@ -24,6 +24,13 @@ export interface StageView {camera:Camera;width:number;height:number}
 /** How the stage is drawn: the engine's projection, the owner's presentation scale and the frame's engine units per stage unit. */
 export interface StageScale {projection:'orthographic'|'perspective';unitsPerMetre:number;worldScale:number}
 export type TouchReading={point:SurfacePoint;at:Vec3}|{point:null;why:string};
+/** The view the stage hands the engine (production.ts setHostView) from the frame's camera: the stage's height, stageScale × zoom pixels per
+ * stage unit over the engine units per stage unit, camera.ts `basis` as right and up, and the engine's field of view in degrees. Where the
+ * Torus is heard from with Receiver On stands at this view's eye (engine torusObject.ts receiverPlace; O-I 856). Pure. */
+export function stageEye(view:StageView,fovDegrees:number,worldScale:number):HostEye {
+ const {a,b}=basis(view.camera);
+ return {height:view.height,pixelsPerUnit:stageScale(view.width,view.height)*view.camera.zoom/worldScale,right:a,up:b,fovDegrees};
+}
 
 /** QL's m1::torus at (theta, phi). */
 export function torusPoint(theta:number,phi:number):Vec3 {

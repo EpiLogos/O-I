@@ -71,3 +71,30 @@ test("the presentation parameters are the owner's own fields: sound, level, scal
   const noScene = announceInstrument(controllerReading({instrument: null}));
   assert.equal(noScene.parameters.cadence, null, 'no scene: no cadence reading, never a default');
 });
+
+// O-I #855 round 6d: the Torus's session carries what QL's torus-state names beside it — the M2 condition's maqām (with its pitches or the
+// owner's words for its absence), the lens's material and the twelve classes — as the owner gave them, so the shell can say the maqām is
+// absent before it is chosen. An owner that names none of them announces none.
+test('the Torus session carries the owner\'s maqām, material and classes as torus-state gives them, and none an owner does not name', () => {
+  const torus = {settings: {tuning: 'logic'}, steps_per_second: 2.5, band: 'rhythm', fundamental_hz: 130.81, map_hz: 130.81, figure: 'torus', comma_cents: 0,
+    notes: [{key: {row: 0, column: 42}}], resident_tunings: ['logic', 'sky'], carrier: {drive: 'pulse'},
+    maqam: {name: 'Kirdan', coordinate: '#2-4.3-0-4', role: 'tonic', tonic_hz: 196, tuning: 'bimba-spelled24-tet', standing: 'source-held', pitches_hz: null, absent: 'no Bimba spelling'},
+    material: {absent: 'no lens names a surface here'}, classes: {absent: 'this scene holds no maqam voices: its event admits none'}};
+  const named = announceInstrument(controllerReading({instrument: {...controllerReading().instrument, torus}})).parameters.torus;
+  assert.deepEqual([named.maqam, named.material, named.classes], [torus.maqam, torus.material, torus.classes]);
+  assert.equal(named.notes, 1, 'the notes as their count, as before');
+  const {maqam: _m, material: _t, classes: _c, ...before} = torus;
+  const none = announceInstrument(controllerReading({instrument: {...controllerReading().instrument, torus: before}})).parameters.torus;
+  for (const key of ['maqam', 'material', 'classes']) assert.equal(key in none, false, `${key}: not named, not announced`);
+});
+
+// O-I 856: where the Torus is heard from is announced as the controller reads it — Receiver On or Off, the owner's context and its refusal —
+// and never the place, nor the gains the owner hears each voice by.
+test('Receiver is announced as On or Off, the owner\'s context and its refusal: never a place', () => {
+  const heard = controllerReading({receiver: {on: true, context: 'personal', gains: [{mode_ref: 'scene:logic/0', gain: 0.25}], law: 'the law', refusal: null}});
+  assert.deepEqual(announceInstrument(heard).parameters.receiver, {on: true, context: 'personal', refusal: null});
+  const refused = controllerReading({receiver: {on: false, context: 'world', gains: null, law: null, refusal: 'no torus here'}});
+  assert.deepEqual(announceInstrument(refused).parameters.receiver, {on: false, context: 'world', refusal: 'no torus here'});
+  assert.equal('receiver' in announceInstrument(controllerReading()).parameters, false, 'a reading without one announces none');
+  assert.doesNotMatch(JSON.stringify(announceInstrument(heard)), /at_metres|gains/);
+});

@@ -214,3 +214,26 @@ export function watchTargetKind(entryKind) {
   if (entryKind === 'participant') return 'agent';
   return 'object';
 }
+
+// ── the field's news (O-I #858) ────────────────────────────────────────────────────────────────────────────────────────────
+
+/** How often an observation is kept while no news comes: half the kernel's two-minute observer lease (kernel/src/shared_field.rs
+ * `Timing::WINDOW`), so the kernel never lets a standing observation go. Not a poll: what changes comes as news. */
+export const OBSERVATION_RENEW_MS = 60_000;
+
+const NEWS_OPS = new Set(['insert', 'update', 'delete']);
+
+/** The newest `shared_field_changed` receipt among the kernel's (kernel/src/events.rs `SharedFieldChanged`) as `{seq, cursor}`,
+ * or null: Explore observes again when it moves. News naming no rows is still news (the field came back: read it whole); news
+ * without a cursor, or with rows that are not the contract's, is none. */
+export function fieldNews(receipts) {
+  for (let i = receipts.length - 1; i >= 0; i--) {
+    const receipt = receipts[i];
+    if (receipt?.event !== 'shared_field_changed') continue;
+    const {seq, cursor, changes, more} = receipt;
+    if (typeof cursor !== 'string' || !cursor || !Array.isArray(changes) || !Number.isSafeInteger(more) || more < 0) continue;
+    if (!changes.every((change) => change && typeof change.table === 'string' && NEWS_OPS.has(change.op) && typeof change.ref === 'string')) continue;
+    return {seq, cursor};
+  }
+  return null;
+}

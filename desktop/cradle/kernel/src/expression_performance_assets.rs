@@ -458,6 +458,7 @@ fn performance_fields(p: &Performance) -> Result<(PerformanceHeader, Value), Str
         native_recordings,
         native_reservations,
         torus_takes,
+        torus_kept,
         content_digest,
     } = p;
     let header = PerformanceHeader {
@@ -501,6 +502,13 @@ fn performance_fields(p: &Performance) -> Result<(PerformanceHeader, Value), Str
         fields.insert(
             "torus_takes".into(),
             serde_json::to_value(torus_takes).map_err(|e| e.to_string())?,
+        );
+    }
+    // A sound, an instrument or a rack is an edition field, kept whole as the Scene kept it.
+    if !torus_kept.is_empty() {
+        fields.insert(
+            "torus_kept".into(),
+            serde_json::to_value(torus_kept).map_err(|e| e.to_string())?,
         );
     }
     Ok((header, Value::Object(fields)))

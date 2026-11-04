@@ -7,7 +7,8 @@
 // rate.mode ('free' | 'sync'), rate (steps a second, the owner's in either mode), rate.note ('n/d' under Sync), tempo (BPM, a reading: the
 // set's, from the transport), band (a reading), fundamental.source ('map' | 'hz'), fundamental (Hz), carrier (0..100 %), carrier.drive
 // (the owner's word: 'pulse', each step of the pulse driving the body), shape ('auto' | 'sequence' | 'torus' | 'figure-eight' | 'spiral' | 'klein-bottle'), figure (a reading),
-// comma (cents, a reading), tuning ('logic' | 'maqam' | 'sky'), tuning.resident (the tunings the scene holds, JSON), polyphony (1..32),
+// comma (cents, a reading), tuning ('logic' | 'maqam' | 'sky'), tuning.resident (the tunings the scene holds, JSON), tuning.maqam (the
+// condition's maqām: its name and the owner's words for its absence, JSON), polyphony (1..32),
 // notes (a reading). The retired Pulse mix, Helix balance, Drive, Agitation, Attack and Release are gone: QL holds none of them.
 //
 // Body source (M2's physical constants, manual §21.2): 'declared' keeps the body's own Strike and Damping; 'tattva' takes them from the
@@ -24,9 +25,10 @@
 // the owner's refusal. Writes: stage.procedure (the one you chose; the shell holds it), stage.budget (1..1024, 16: `--max-evaluations`), and
 // four acts, each on its own key with the procedure's ref: stage.evaluate, stage.bind, stage.unbind, stage.retire.
 // The Rack page carries the rack of M1′ (the rack kit, map-rack.tsx), on the keys rack and rack.part.
-import type {CSSProperties} from 'react'
-import {Action, Band, Chooser, Dial, Display, Folded, Handle, Meter, Panel, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, type LightState, type RowItem} from '../../sdk/panel'
+import {useState, type CSSProperties, type ReactNode} from 'react'
+import {Action, Band, Chooser, Dial, Display, Folded, Handle, Meter, Panel, Radio, Readout, Rows, Section, TextField, Tile, Toggle, ValueBox, type LightState, type RowItem} from '../../sdk/panel'
 import {RACK_M1, RackBands} from './map-rack'
+import {refusalWords} from '../../../../../../../desktop/cradle/src/shared/Refusal.tsx'
 import {LIVE_CADENCE_OPTIONS, LIVE_CONTEXT_FRAME_OPTIONS, LIVE_HARMONIC_OPTIONS, LIVE_LENS_OPTIONS} from '../../../live/torusInstrument'
 import {NONE, boolOf, clampTo, db, fixed, has, json, num, numOf, on, pct, shown, signed, st, strOf, type DesignedDevice, type ViewProps} from './design'
 
@@ -212,14 +214,28 @@ const pulse = (p: ViewProps) => <>
 /** The tunings the scene holds voices for; a tuning it holds none of is dimmed and says so. */
 const residentOf = (v: V): readonly string[] | undefined => { const raw = json<unknown>(v, 'tuning.resident', undefined); return Array.isArray(raw) ? raw.filter((x): x is string => typeof x === 'string') : undefined }
 
-/** Mode and tuning (manual §21.2): the lens and mode the Torus reads (the field's four determinants) and the Tuning. */
+/** The M2 condition's maqām as the owner names it: its name, and its words for why the scene holds none of its voices. */
+const maqamOf = (v: V): {name: string | null, absent: string | null} | undefined => {
+  const raw = json<unknown>(v, 'tuning.maqam', undefined)
+  if (!raw || typeof raw !== 'object') return undefined
+  const {name, absent} = raw as Record<string, unknown>
+  return {name: typeof name === 'string' ? name : null, absent: typeof absent === 'string' ? absent : null}
+}
+
+/** Mode and tuning (manual §21.2): the lens and mode the Torus reads (the field's four determinants) and the Tuning. A tuning the scene
+ * holds no voices for is not offered, and the Tuning says so; for the maqām, in the owner's words, before it is ever chosen. */
 const modeAndTuning = (p: ViewProps) => {
   const resident = residentOf(p.v)
-  const absent = resident ? TUNINGS.filter(x => !resident.includes(x.value)).map(x => x.label) : []
+  const maqam = maqamOf(p.v)
+  const absent = resident ? TUNINGS.filter(x => !resident.includes(x.value)) : []
+  const said = absent.filter(x => x.value !== 'maqam' || !maqam?.absent).map(x => x.label)
+  const why = absent.some(x => x.value === 'maqam') && maqam?.absent ? ` This scene holds no Maqām voices: ${maqam.absent.replace(/\.$/, '')}.` : ''
+  const options = TUNINGS.filter(x => !resident || resident.includes(x.value))
+    .map(x => x.value === 'maqam' && maqam?.name ? {...x, does: `The voices sound the M2 condition's maqām, ${maqam.name}.`} : x)
   return <>
     {determinants(p)}
-    <Radio {...st(p, 'tuning')} label="Tuning" does={`What the voices sound.${absent.length ? ` This scene holds no ${absent.join(' or ')} voices.` : ''}`} value={strOf(p.v, 'tuning') ?? ''}
-      options={TUNINGS.filter(x => !resident || resident.includes(x.value))} stack onChange={x => p.set('tuning', x)} />
+    <Radio {...st(p, 'tuning')} label="Tuning" does={`What the voices sound.${said.length ? ` This scene holds no ${said.join(' or ')} voices.` : ''}${why}`} value={strOf(p.v, 'tuning') ?? ''}
+      options={options} stack onChange={x => p.set('tuning', x)} />
   </>
 }
 
@@ -329,6 +345,29 @@ function StagePage({p}: {p: ViewProps}) {
   </>
 }
 
+/** Save the Torus as it rings as a sound (O-I #852, manual §21.2 "Save the instrument as you tuned it"): named here and saved through its
+ * owners (live/LivePresets.tsx saveTorusSound: the owner keeps a checkpoint, the kernel seals the sound from it, the Scene keeps it). The
+ * sound then stands under the Torus in the browser's Instruments. What the owners said stands on the Info line; a refusal is said plainly
+ * (shared/Refusal.tsx refusalWords): what happened, then the owners' words when they are words. */
+const UNSAVED = 'The sound was not saved.'
+/** A control across both of the section's columns (the kit's columns are 56 px: a name reads whole across two). */
+const span2 = (child: ReactNode) => <div style={{gridColumn: 'span 2', width: '100%'}}>{child}</div>
+function SaveSound() {
+  const [name, setName] = useState('')
+  const [said, setSaid] = useState<{readonly pending?: boolean; readonly refused?: string; readonly done?: string}>({})
+  // The name commits as the field is left (Enter, or the press that leaves it), so the press saves the name as typed.
+  const save = () => {
+    setSaid({pending: true})
+    void import('../../../live/LivePresets').then(presets => presets.saveTorusSound(name))
+      .then(answer => setSaid(answer.ok ? {done: answer.words} : {refused: refusalWords(UNSAVED, answer.error)}), (cause: unknown) => setSaid({refused: refusalWords(UNSAVED, cause)}))
+  }
+  return <>
+    {span2(<TextField label="Sound name" does="The name the browser lists the sound by, under the Torus." value={name} placeholder="New sound" wide onChange={setName} />)}
+    {span2(<Action label="Save sound" does={said.done ?? 'Saves the Torus as it rings now, every parameter, as a sound the Scene keeps.'}
+      pending={said.pending} refused={said.refused} onPress={save} />)}
+  </>
+}
+
 export const torus: DesignedDevice = {
   id: 'quaternal-logic:torus',
   title: 'Torus',
@@ -364,13 +403,15 @@ export const torus: DesignedDevice = {
     'Sync, a quarter note': {'rate.mode': 'sync', 'rate.note': '1/4', rate: 2, tuning: 'sky', carrier: 25},
     'Sequence: the scene sets the shapes': {shape: 'sequence', figure: undefined},
     'Tattva without a fibre': {'body.source': 'tattva', 'tattva.name': 'Akasha', 'tattva.fibre': undefined},
+    // The condition's maqām with no Bimba spelling: the owner's words for its absence (QL scene_field.rs maqam_reading).
+    'Maqām without a spelling': {'tuning.maqam': JSON.stringify({name: 'Kirdan', absent: 'maqām Kirdan (#2-4.3-0-4), the condition\'s tonic, has no Bimba spelling in the map, so its eight pitches have no source, and no other tuning stands in'})},
     'Stage, the fold evaluated': {'stage.slots': JSON.stringify([{slot: 'form', owner: 'ta-onta:stage:cli-fold', revision: 1}, {slot: 'material.damping'}, {slot: 'clock.inscription'}, {slot: 'clock.lensing'}]), 'stage.last': 'applied'},
     'Stage, a strike bound to the ring': {'stage.procedure': 'ta-onta:stage:cli-bound', 'stage.last': 'applied',
       'stage.bindings': JSON.stringify([{procedure: 'ta-onta:stage:cli-bound', trigger: 'm1-advance', evaluations: 5, max: 16, standing: 'active'}])},
     'Stage, the budget spent': {'stage.procedure': 'ta-onta:stage:cli-bound', 'stage.last': 'applied',
       'stage.bindings': JSON.stringify([{procedure: 'ta-onta:stage:cli-bound', trigger: 'm1-advance', evaluations: 16, max: 16, standing: 'exhausted'}])},
     'No readings': Object.fromEntries(['stage.slots', 'stage.bindings', 'stage.procedures', 'stage.procedure', 'stage.budget', 'stage.last', 'stage.why', 'rack', 'rack.part', 'light',
-      'rate.mode', 'rate', 'rate.note', 'tempo', 'band', 'fundamental.source', 'fundamental', 'carrier', 'carrier.drive', 'shape', 'figure', 'comma', 'tuning', 'tuning.resident', 'polyphony', 'notes',
+      'rate.mode', 'rate', 'rate.note', 'tempo', 'band', 'fundamental.source', 'fundamental', 'carrier', 'carrier.drive', 'shape', 'figure', 'comma', 'tuning', 'tuning.resident', 'tuning.maqam', 'polyphony', 'notes',
       'body', 'strike', 'damping', 'modes', 'level', 'pan', 'view', 'receiver', 'meter', 'lens', 'context-frame', 'harmonic-basis', 'm3-transcription', 'sound', 'cadence', 'scale', 'standing', 'sounding', 'body.source', 'tattva.name', 'tattva.fibre', 'tattva.standing'].map(k => [k, undefined])),
     'As the field reports it': {strike: undefined, damping: undefined, modes: undefined, pan: undefined, view: undefined, receiver: undefined, meter: undefined},
   },
@@ -395,7 +436,8 @@ export const torus: DesignedDevice = {
     </Band>
     </> : <>
     <Band>
-      <Section label="Body" cols={3} grow>
+      {/* 224: the width the Notes band below gives it, which it kept before the Save stood beside it (its words read whole). */}
+      <Section label="Body" cols={3} width={224} grow>
         <Radio {...st(p, 'body')} label="Body" does="What rings: the torus, or a form of the Expression." value={strOf(p.v, 'body') ?? ''} options={BODIES} stack onChange={x => p.set('body', x)} />
         <Dial {...st(p, 'strike')} disabled={st(p, 'strike').disabled ?? tattvaHold(p.v)} label="Strike" does="How strongly velocity excites the body." value={num(p.v, 'strike')} def={70} scale={{min: 0, max: 100}} format={pct} onChange={x => p.set('strike', x)} />
         <Dial {...st(p, 'damping')} disabled={st(p, 'damping').disabled ?? tattvaHold(p.v)} label="Damping" does="How sharply the body rings. A high value rings longer." value={num(p.v, 'damping')} def={4.5} scale={DAMP} format={fixed(1)} onChange={x => p.set('damping', x)} />
@@ -404,6 +446,8 @@ export const torus: DesignedDevice = {
         <Readout label={tattvaLabel(p.v)} does={tattvaDoes(p.v)}
           value={strOf(p.v, 'tattva.name')} tone={tattvaHold(p.v) ? 'accent' : undefined} />
       </Section>
+      {/* Beside the body, so the page keeps the two bands every page of the device stands in (O-I #852). */}
+      <Section label="Save as a sound" cols={2}><SaveSound /></Section>
     </Band>
     <Band>
       <Section label="Notes and output" cols={4} grow>
