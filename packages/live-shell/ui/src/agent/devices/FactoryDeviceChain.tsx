@@ -71,7 +71,8 @@ import {
 } from '../agentChainDrag'
 import {agentDataI} from '../agentFidelity'
 import {fireWritePath} from '../agentNativeDispatch'
-import {harnessAgentControl} from '../harnessAgentControl'
+import {harnessAgentControl, harnessIngressRule} from '../harnessAgentControl'
+import {chainListAct} from '../factoryTaskActs'
 import {RefusalCard, safeJson} from '../RefusalCard'
 import {CHAIN_DEVICE_IDS, agentChainDevices, chainDeviceId, gatewayDisclosed, rackMemberDevice, type ChainWrite} from './agentChainDevices'
 import {chainPicture, type PictureContext} from './AgentDevicePictures'
@@ -79,7 +80,7 @@ import {
   AGENT_DESIGN, AGENT_P0_ROWS, GATEWAY_DESIGN, LANDING_DESIGN, MEMBER_DESIGN, MEMBER_DEVICE_ID, RACK_DESIGN, SCOPE_DESIGN, SLOT_DESIGN_FACE, agentBinding, designWaits,
   gatewayBinding, memberBinding,
   holdView, memberChains, rackBinding, refiningBinding, scopeBinding, seatedProfile, useChainHolds, viewHolds, type AgentRows, type MemberPorts, type RackUpkeep,
-  type RefiningPorts,
+  type RefiningPorts, callsOf, type CallsDecision,
 } from './designBindings'
 import {useOwnerAccepted} from './ownerAccepted'
 import {useSelectedSkillChain} from './skillRackSelection'
@@ -124,7 +125,7 @@ import {RUN_MAP_DESIGN, RUN_MAP_ID, runMapBinding, runMapDevice} from './runMapB
 import {PROMPT_PADS_DESIGN, PROMPT_PADS_ID, padsLocation, promptPadsBinding, promptPadsDevice, type PromptPadsPorts} from './promptPadsBinding'
 import {useDecisionHelperReadings} from './decisionHelperReads'
 import {useTeamSpace, withTeamCell} from './teamCell'
-import {useActuationRead, useAikitRead, useConnectionShows, useSeatStatusAnswer, useWorkcellRead} from './workcellReads'
+import {useActuationRead, useAikitRead, useConnectionShows, useGatewayEcology, useSeatStatusAnswer, useWorkcellRead} from './workcellReads'
 import {workcellTrackId} from '../../frame/tracks/returnTracks'
 import '../agentShell.css'
 import './factoryDevices.css'
@@ -381,8 +382,17 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const writeModeRow = chain.find(entry => entry.slot.id === 'world')?.device.rows.find(row => row.key === 'write-mode')
   const toolCallsRow = chain.find(entry => entry.slot.id === 'gateway')?.device.rows.find(row => row.key === 'approvals')
   const toolCalls = gatewayDisclosed(reading.gatewayDoc).approvals
-  const scopeDesignBinding = useMemo(() => (waits.world ? null : scopeBinding(chainDeviceId('world'), holds, writeModeRow, write, {toolCalls, toolCallsRow})),
-    [waits.world, holds, writeModeRow, write, toolCalls, toolCallsRow])
+  // Calls to other agents: AIKit's rule for the sender kind agent on the session's gateway bindings, as its ecology reads it, set on every
+  // binding of the session through the kernel's harness_ingress_rule.
+  const ecology = useGatewayEcology(transport, !waits.world && sessionRef != null)
+  const calls = useMemo(() => (ecology.status === 'answered' ? callsOf(ecology.value, sessionRef)
+    : ecology.status === 'refused' ? {refused: ecology.error ?? 'AIKit refused the gateway\'s ecology.'} : null), [ecology, sessionRef])
+  const callsWrite = useMemo(() => (transport.kind === 'unavailable' ? undefined : async (bindings: readonly string[], decision: CallsDecision) => {
+    for (const ruled of bindings) await harnessIngressRule(transport, ruled, 'agent', decision)
+  }), [transport])
+  const scopeDesignBinding = useMemo(() => (waits.world ? null : scopeBinding(chainDeviceId('world'), holds, writeModeRow, write,
+    {toolCalls, toolCallsRow, calls, ...(callsWrite ? {callsWrite} : {})})),
+  [waits.world, holds, writeModeRow, write, toolCalls, toolCallsRow, calls, callsWrite])
   // Where the Device side stands (factoryPlaces.ts): a workcell's return track, a session (or a group), or the Main track.
   const groupTrack = track && track.group ? track : null
   // A lone session: its rack's one chain is its own agent (§19.15 "A session of one agent has a rack of that one chain").
@@ -505,6 +515,12 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     agent: oneAgent,
     // Solo (§19.15 the chain list): what you attend to, the one the Session view's mixer solos (the agent shell's, on the book).
     solo: (ref, on) => shell.setSolo(ref, on),
+    // The chain list's Activator, Add a chain and Drag out (§19.15): AIKit's bench, attach and drag out of a chain's session, through the kernel.
+    ...(transport.kind !== 'unavailable' ? {
+      bench: input => chainListAct(transport, {op: 'encounter_session_bench', ...input}, input.benched ? 'a chain was benched' : 'a chain\'s bench was lifted'),
+      attach: input => chainListAct(transport, {op: 'encounter_session_attach', ...input}, 'a chain joined the rack'),
+      dragOut: input => chainListAct(transport, {op: 'encounter_session_drag_out', ...input}, 'a chain was dragged out into a space of its own'),
+    } : {}),
   }), [transport, oneAgent, shell.setSolo])
   // The Decision helper (§19.20, T-AGENCY K5): a device of its own, a chain of the group's Agent rack in place of an Agent, on AIKit's
   // decision provider and QL's team space — read only while the rack stands on a group. The rack lists it among its chains.

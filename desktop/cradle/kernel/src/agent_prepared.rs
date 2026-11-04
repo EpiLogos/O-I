@@ -288,6 +288,24 @@ enum AgentRead {
     SessionDetach {
         agent_session: String,
     },
+    /// The Agent rack's chain list (SessionSpace `bench-agent-session`,
+    /// `attach-agent-session`, `session-space drag-out`): writes on the
+    /// Project's spaces.
+    SessionBench {
+        space: String,
+        agent_session: String,
+        benched: bool,
+    },
+    SessionAttach {
+        space: String,
+        agent_session: String,
+    },
+    SessionDragOut {
+        space: String,
+        agent_session: String,
+        into: String,
+        label: Option<String>,
+    },
     SettingsList {
         agent_sessions: Vec<String>,
     },
@@ -576,6 +594,54 @@ impl PreparedAgent {
                         .session_detach(&cwd, &project_ref, agent_session)?,
                 }
             }
+            AgentRead::SessionBench {
+                space,
+                agent_session,
+                benched,
+            } => {
+                let project_ref =
+                    project_ref(&self.client, &self.aikit, &self.reads, project, &cwd)?;
+                KernelOpResult::EncounterOwnerAct {
+                    data: self.aikit.session_bench(
+                        &cwd,
+                        &project_ref,
+                        space,
+                        agent_session,
+                        *benched,
+                    )?,
+                }
+            }
+            AgentRead::SessionAttach {
+                space,
+                agent_session,
+            } => {
+                let project_ref =
+                    project_ref(&self.client, &self.aikit, &self.reads, project, &cwd)?;
+                KernelOpResult::EncounterOwnerAct {
+                    data: self
+                        .aikit
+                        .session_attach(&cwd, &project_ref, space, agent_session)?,
+                }
+            }
+            AgentRead::SessionDragOut {
+                space,
+                agent_session,
+                into,
+                label,
+            } => {
+                let project_ref =
+                    project_ref(&self.client, &self.aikit, &self.reads, project, &cwd)?;
+                KernelOpResult::EncounterOwnerAct {
+                    data: self.aikit.session_drag_out(
+                        &cwd,
+                        &project_ref,
+                        space,
+                        agent_session,
+                        into,
+                        label.as_deref(),
+                    )?,
+                }
+            }
             AgentRead::SettingsList { agent_sessions } => {
                 let project_ref =
                     project_ref(&self.client, &self.aikit, &self.reads, project, &cwd)?;
@@ -647,7 +713,8 @@ impl PreparedAgent {
 impl Kernel {
     /// `AgencyRead`, `Encounter`, `EncounterTaskRead`, `EncounterSessionSettings`,
     /// `EncounterTaskConfigure`, `EncounterTaskRemove`, `EncounterTaskCopy`,
-    /// `EncounterSessionDetach`, `AgentDefinition`,
+    /// `EncounterSessionDetach`, `EncounterSessionBench`,
+    /// `EncounterSessionAttach`, `EncounterSessionDragOut`, `AgentDefinition`,
     /// `ModelRoster`, `HarnessAgentRead`, `HarnessStatus` and
     /// `ModelCatalogue`, prepared under the kernel lock; every other op is
     /// not an agent read.
@@ -725,6 +792,45 @@ impl Kernel {
                 Some(project.clone()),
                 AgentRead::SessionDetach {
                     agent_session: agent_session.clone(),
+                },
+            ),
+            KernelOp::EncounterSessionBench {
+                project,
+                space,
+                agent_session,
+                benched,
+            } => (
+                Some(project.clone()),
+                AgentRead::SessionBench {
+                    space: space.clone(),
+                    agent_session: agent_session.clone(),
+                    benched: *benched,
+                },
+            ),
+            KernelOp::EncounterSessionAttach {
+                project,
+                space,
+                agent_session,
+            } => (
+                Some(project.clone()),
+                AgentRead::SessionAttach {
+                    space: space.clone(),
+                    agent_session: agent_session.clone(),
+                },
+            ),
+            KernelOp::EncounterSessionDragOut {
+                project,
+                space,
+                agent_session,
+                into,
+                label,
+            } => (
+                Some(project.clone()),
+                AgentRead::SessionDragOut {
+                    space: space.clone(),
+                    agent_session: agent_session.clone(),
+                    into: into.clone(),
+                    label: label.clone(),
                 },
             ),
             KernelOp::EncounterSessionSettingsList {
@@ -846,6 +952,12 @@ if verb == "harness-disclose":
 elif verb == "agent-session-scope":
     print(json.dumps({"schema": "aikit.direct-agent-scope/v1", "execution_authority_granted": False,
                       "project_ref": "control:root", "central_root": cwd, "cwd": cwd}))
+elif verb == "discover" and os.path.exists(log + ".spaces.json"):
+    print(open(log + ".spaces.json").read())
+elif verb == "drag-out":
+    with open(log + ".drag-out.args", "w") as handle:
+        handle.write(json.dumps(args[4:]))
+    print(json.dumps([{"sequence": 1, "space": args[args.index("--into") + 1]}]))
 elif verb == "discover":
     project = args[args.index("--project") + 1]
     print(json.dumps([{"version": "aikit.session-space-application/v1",
@@ -1398,6 +1510,141 @@ else:
             serde_json::json!({"space": "session-space/s",
                 "intent": {"operation": "detach-agent-session", "agent_session": "agent-session/x"}})
         );
+    }
+
+    /// The Agent rack's chain list (manual §19.15): Activator benches a chain in the rack's space and lifts the bench, adding a chain
+    /// attaches a session standing elsewhere in the Project to a space that stands, and Drag out asks AIKit's drag-out for a space of
+    /// the chain's own; each through AIKit's own SessionSpace operations, on a space and a session of this Project only.
+    #[test]
+    fn the_chain_list_benches_adds_and_drags_out_a_chain_through_aikit_s_own_operations() {
+        let owner = crate::tests::FakeOwner::spawn_counter("chain-list");
+        let aikit = FakeAikit::new("chain-list");
+        let side = |name: &str| PathBuf::from(format!("{}.{name}", aikit.log.display()));
+        let _ = std::fs::remove_file(side("applied"));
+        std::fs::write(
+            side("spaces.json"),
+            serde_json::json!([
+                {"version": "aikit.session-space-application/v1",
+                 "definition": {"id": "session-space/crew", "projects": ["control:root"]},
+                 "agent_sessions": {"agent-session/ada": {"purpose": "drafts the essay"}, "agent-session/cy": {}}},
+                {"version": "aikit.session-space-application/v1",
+                 "definition": {"id": "session-space/desk", "projects": ["control:root"]},
+                 "agent_sessions": {"agent-session/bo": {}}}
+            ])
+            .to_string(),
+        )
+        .unwrap();
+        let mut kernel = owner.kernel_with_agency(aikit.client());
+        let last_applied = || -> Value {
+            let applied = std::fs::read_to_string(side("applied")).unwrap();
+            serde_json::from_str(applied.lines().last().unwrap()).unwrap()
+        };
+
+        let bench =
+            |space: &str, agent_session: &str, benched: bool| KernelOp::EncounterSessionBench {
+                project: String::new(),
+                space: space.into(),
+                agent_session: agent_session.into(),
+                benched,
+            };
+        let benched = kernel
+            .apply(bench("session-space/crew", "agent-session/cy", true))
+            .unwrap();
+        let KernelOpResult::EncounterOwnerAct { data } = benched.result else {
+            panic!("the bench's receipt is the outcome");
+        };
+        assert_eq!(data["schema"], "oi.encounter-session-bench/v1");
+        assert_eq!(data["benched"], true);
+        assert_eq!(
+            last_applied(),
+            serde_json::json!({"space": "session-space/crew", "intent": {"operation": "bench-agent-session",
+                "agent_session": "agent-session/cy", "benched": true}})
+        );
+        kernel
+            .apply(bench("session-space/crew", "agent-session/cy", false))
+            .unwrap();
+        assert_eq!(last_applied()["intent"]["benched"], false);
+        assert_eq!(
+            kernel
+                .apply(bench("session-space/crew", "agent-session/bo", true))
+                .unwrap_err(),
+            "agent-session/bo is not a chain of session-space/crew"
+        );
+        assert_eq!(
+            kernel
+                .apply(bench("session-space/elsewhere", "agent-session/cy", true))
+                .unwrap_err(),
+            "session-space/elsewhere is not one of this native Project's SessionSpaces"
+        );
+
+        let attach = |space: &str, agent_session: &str| KernelOp::EncounterSessionAttach {
+            project: String::new(),
+            space: space.into(),
+            agent_session: agent_session.into(),
+        };
+        let attached = kernel
+            .apply(attach("session-space/desk", "agent-session/ada"))
+            .unwrap();
+        let KernelOpResult::EncounterOwnerAct { data } = attached.result else {
+            panic!("the attachment's receipt is the outcome");
+        };
+        assert_eq!(data["outcome"], "attached");
+        assert_eq!(
+            last_applied(),
+            serde_json::json!({"space": "session-space/desk", "intent": {"operation": "attach-agent-session",
+                "attachment": {"agent_session": "agent-session/ada", "purpose": "drafts the essay",
+                    "provenance": ["added to the rack's chain list from the desk"]}}})
+        );
+        assert_eq!(
+            kernel
+                .apply(attach("session-space/crew", "agent-session/ada"))
+                .unwrap_err(),
+            "agent-session/ada is already a chain of session-space/crew"
+        );
+        assert_eq!(
+            kernel.apply(attach("session-space/desk", "agent-session/nobody")).unwrap_err(),
+            "agent-session/nobody stands in none of this native Project's SessionSpaces: only a standing session joins a rack"
+        );
+        assert_eq!(
+            aikit.calls("apply"),
+            3,
+            "a refused act reaches no owner write"
+        );
+
+        let drag = |agent_session: &str| KernelOp::EncounterSessionDragOut {
+            project: String::new(),
+            space: "session-space/crew".into(),
+            agent_session: agent_session.into(),
+            into: "session-space/ada-1a2b3c4d".into(),
+            label: Some("ada".into()),
+        };
+        let dragged = kernel.apply(drag("agent-session/ada")).unwrap();
+        let KernelOpResult::EncounterOwnerAct { data } = dragged.result else {
+            panic!("the drag-out's receipts are the outcome");
+        };
+        assert_eq!(data["schema"], "oi.encounter-session-drag-out/v1");
+        assert_eq!(data["into"], "session-space/ada-1a2b3c4d");
+        assert_eq!(data["receipts"][0]["space"], "session-space/ada-1a2b3c4d");
+        let asked: Value =
+            serde_json::from_str(&std::fs::read_to_string(side("drag-out.args")).unwrap()).unwrap();
+        assert_eq!(
+            asked,
+            serde_json::json!([
+                "--space",
+                "session-space/crew",
+                "--agent-session",
+                "agent-session/ada",
+                "--into",
+                "session-space/ada-1a2b3c4d",
+                "--label",
+                "ada"
+            ])
+        );
+        assert!(kernel.apply(drag("agent-session/bo")).is_err());
+        assert_eq!(aikit.calls("drag-out"), 1);
+        for name in ["applied", "spaces.json", "drag-out.args"] {
+            let _ = std::fs::remove_file(side(name));
+        }
     }
 
     /// The real exchange (tests/fixtures/owner-routes/aikit-task-configure-2026-10-28.json): the request the shell's Factory maker sent

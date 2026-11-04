@@ -42,6 +42,13 @@ async function act(transport: KernelTransportStatus, op: KernelOp): Promise<Reco
   return call.outcome.data as Record<string, unknown>
 }
 
+/** One act of the Agent rack's chain list on a session's space (§19.15): AIKit's bench, attach or drag out of a chain's session, through the
+ * kernel. Its receipt, or AIKit's refusal in its words; either way the agency readers are told, so the rack reads the spaces again. */
+export async function chainListAct(transport: KernelTransportStatus,
+  op: Extract<KernelOp, {op: 'encounter_session_bench' | 'encounter_session_attach' | 'encounter_session_drag_out'}>, cause: string): Promise<Record<string, unknown>> {
+  try { return await act(transport, op) } finally { tellOwnerChanged({topic: 'agency', cause, agentSession: op.agent_session}) }
+}
+
 /** The bound task as AIKit's record names it now (its ref and revision), or why there is none. */
 async function boundTask(transport: KernelTransportStatus, project: string, session: string): Promise<{taskRef: string; revision: string} | string> {
   const read = await readTaskOf(transport, project, session)()

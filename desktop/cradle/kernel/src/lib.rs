@@ -331,6 +331,18 @@ pub enum KernelOp {
         binding: String,
         control: HarnessAgentControl,
     },
+    /// One sender kind's ingress rule on a harness binding (manual §19.12,
+    /// Scope's Calls to other agents): AIKit's `gateway ingress`, whose
+    /// policy decides a sender by its own id first, then by its kind, then
+    /// by the binding's one default. `decision` is `allow`, `pair` (the
+    /// sender waits for an answer) or `deny`; none clears the kind's rule.
+    /// The gateway's answer, or its named refusal, comes back verbatim.
+    HarnessIngressRule {
+        binding: String,
+        kind: String,
+        #[serde(default)]
+        decision: Option<String>,
+    },
     /// Which contracts this kernel speaks and enforces, derived from the
     /// enforcing modules (see `protocol.rs`): advertised is enforced.
     ProtocolRead,
@@ -738,6 +750,38 @@ pub enum KernelOp {
     EncounterSessionDetach {
         project: String,
         agent_session: String,
+    },
+    /// Bench a chain of the Agent rack, or lift its bench (manual §19.15,
+    /// the chain list's Activator: "it stays in the rack and is given no
+    /// work"): AIKit's own `bench-agent-session` on the Project's space the
+    /// rack stands on, staged and applied as the session's attachment was.
+    /// AIKit's executor gives a benched session no work.
+    EncounterSessionBench {
+        project: String,
+        space: String,
+        agent_session: String,
+        benched: bool,
+    },
+    /// Add a chain to the Agent rack (manual §19.15 "Drag an agent or a set
+    /// into the list to add it"): a session already standing in the Project
+    /// joins one of its spaces through AIKit's own `attach-agent-session`,
+    /// its purpose as it stands where it was seated.
+    EncounterSessionAttach {
+        project: String,
+        space: String,
+        agent_session: String,
+    },
+    /// Drag a chain out of the Agent rack (manual §19.15 "it works there
+    /// alone, chain and all"): AIKit's `session-space drag-out` seats the
+    /// session in `into`, a space of its own in the same Project, with its
+    /// Project contexts and its bench, and detaches it from `space` last.
+    EncounterSessionDragOut {
+        project: String,
+        space: String,
+        agent_session: String,
+        into: String,
+        #[serde(default)]
+        label: Option<String>,
     },
     /// Several sessions' settings read at once (the owner's
     /// `aikit.encounter-session-settings-list/v1`), so a view of many tracks
@@ -1451,6 +1495,13 @@ pub enum KernelOpResult {
         control: HarnessAgentControl,
         document: serde_json::Value,
     },
+    /// The gateway's answer to an ingress rule (`HarnessIngressRule`): the
+    /// binding's ingress policy as it now stands, verbatim — or its named
+    /// refusal.
+    HarnessIngressOutcome {
+        binding: String,
+        document: serde_json::Value,
+    },
     /// The protocol disclosure: derived from the enforcing constants beside
     /// the live event log's generation (`oi.kernel-protocol/v1`).
     Protocol {
@@ -1676,8 +1727,10 @@ pub enum KernelOpResult {
         data: serde_json::Value,
     },
     /// An encounter act's receipt: a task removed or copied, a session
-    /// taken off the set (`EncounterTaskRemove`, `EncounterTaskCopy`,
-    /// `EncounterSessionDetach`), its schema naming which.
+    /// taken off the set, benched, added to a rack or dragged out of one
+    /// (`EncounterTaskRemove`, `EncounterTaskCopy`, `EncounterSessionDetach`,
+    /// `EncounterSessionBench`, `EncounterSessionAttach`,
+    /// `EncounterSessionDragOut`), its schema naming which.
     EncounterOwnerAct {
         data: serde_json::Value,
     },
@@ -3575,6 +3628,7 @@ impl Kernel {
             | KernelOp::EncounterProvision { .. }
             | KernelOp::FlowParticipantProvision { .. }
             | KernelOp::HarnessAgentControl { .. }
+            | KernelOp::HarnessIngressRule { .. }
             | KernelOp::GroundForm { .. }
             | KernelOp::GroundAuthority { .. }) => self.apply_owner_write(op),
             KernelOp::SettingsReveal { path } => Ok(KernelOpOutcome {
@@ -3645,6 +3699,9 @@ impl Kernel {
             | KernelOp::EncounterTaskRemove { .. }
             | KernelOp::EncounterTaskCopy { .. }
             | KernelOp::EncounterSessionDetach { .. }
+            | KernelOp::EncounterSessionBench { .. }
+            | KernelOp::EncounterSessionAttach { .. }
+            | KernelOp::EncounterSessionDragOut { .. }
             | KernelOp::EncounterSessionSettingsList { .. }
             | KernelOp::EncounterTaskAttemptsList { .. }
             | KernelOp::ModelRoster { .. }

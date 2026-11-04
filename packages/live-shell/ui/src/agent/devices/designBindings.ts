@@ -89,6 +89,17 @@ export const SHELL_MARK_SET = 'blade'
 /** A write no owner operation carries: refused in words that name the owner and the operation it lacks. */
 const missing = (what: string, op: string, owner: string) => `${what}: no owner operation carries it yet — missing op: ${op} (${owner}).`
 
+/** Scope's Calls to other agents (§19.12 Asks): AIKit's ingress rule for the sender kind agent on each gateway binding of the session
+ * (GatewayIngressPolicy kind_rules, decided after a sender's own id and before the binding's one default), set through the kernel's
+ * harness_ingress_rule. Why it is not pressable, or a value it does not take. */
+export const CALLS_REFUSE = {
+  uncarried: 'Calls to other agents: no carrier to AIKit\'s ingress rule for the sender kind agent (the kernel\'s harness_ingress_rule) stands on this chain.',
+  unread: 'Calls to other agents: AIKit\'s gateway has not answered yet, so no rule for calls from other agents is read.',
+  unbound: 'Calls to other agents: this session holds no conversation on AIKit\'s gateway, so no binding of it takes a rule for calls from other agents.',
+  refused: (why: string) => `Calls to other agents: AIKit's gateway did not answer, so no rule for calls from other agents is read. ${why}`,
+  decision: (value: string) => `Calls to other agents is Allow, Ask or Deny, not ${value}.`,
+} as const
+
 const REFUSE = {
   power: 'Power is a reading: the harness reports whether the agent is on; Actuation exposes no Power write.',
   budget: 'Budget is a reading here: used and cap come from the session\'s task record (encounter_task_read); Actuation exposes no budget write.',
@@ -103,12 +114,13 @@ const REFUSE = {
   run: missing('Run', 'the exact JSON input `aikit praxis method run <ref> --input` takes (the kernel\'s aikit_write method-run carries it; the member has no field for it)', 'AIKit'),
   prove: missing('Prove', 'the run\'s proof `aikit praxis method prove --method <ref> --proof-json` takes (its Activity, Return, Evidence and verification refs; the member holds no run receipt)', 'AIKit'),
   reach: missing('Reach', 'the scope reach write on the world device\'s apply path (WO-SF2)', 'Software Factory'),
-  // Scope's Asks page (§19.12 Asks): Calls to other agents is AIKit's ingress rule for a call from one agent to another, which no write
-  // reaches; Wait and On no answer are the harness's approvals timeout and what a timed-out request comes to, which harness_agent_control
-  // does not carry (it carries approvals, transport, connect and stall-after only: harnessAgentControl.ts).
-  calls: missing('Calls to other agents', 'an ingress rule for the sender kind agent: AIKit\'s GatewayIngressPolicy decides by a sender\'s own id (sender_overrides) or its one default, never by kind, and no write reaches it', 'AIKit'),
-  wait: missing('Wait', 'the agent\'s approvals timeout (Hermes\' approvals.timeout: harness_agent_control carries approvals, transport, connect and stall-after only)', 'Actuation'),
-  noAnswer: missing('On no answer', 'a timed-out request\'s outcome on the agent\'s harness', 'Actuation'),
+  // Scope's Asks page (§19.12 Asks): Calls to other agents is AIKit's ingress rule for the sender kind agent (CALLS_REFUSE; scopeBinding
+  // writes it where the chain hands in its carrier). Wait and On no answer are the harness's approvals timeout and what a request nobody
+  // answered comes to: Hermes keeps both itself (tools/approval_context.py: approvals.timeout, 300 s unless set; a request that times out
+  // is denied), no owner declares a seam on Hermes' config, and harness_agent_control does not carry them (harnessAgentControl.ts).
+  calls: CALLS_REFUSE.uncarried,
+  wait: missing('Wait', 'the agent\'s approvals timeout written for its harness (Hermes\' approvals.timeout, 300 s unless set: neither AIKit nor Actuation declares a seam on Hermes\' config, and harness_agent_control carries approvals, transport, connect and stall-after only)', 'Actuation'),
+  noAnswer: missing('On no answer', 'Hold for a request nobody answered: Hermes denies a request nobody answers when its approvals.timeout runs out, and holds none, so Deny is Hermes\' own and nothing carries Hold', 'Hermes'),
   place: missing('A place in reach', 'the scope places write (WO-SF2)', 'Software Factory'),
   scope: 'Choose where the composition applies — Home, Project or Session — then Preview.',
   noPlan: 'Nothing is previewed: press Preview, read the change, then Apply.',
@@ -1223,15 +1235,51 @@ export function memberBinding(id: string, rack: Values, chosen: string | null, h
 export interface ScopeAsks {
   readonly toolCalls?: Value
   readonly toolCallsRow?: SdkParamRow
+  /** Calls to other agents: AIKit's rule for the sender kind agent on the session's gateway bindings (callsOf), null while the gateway's
+   * ecology is unread, its refusal where it refused; and the write that sets one rule on every binding (the kernel's harness_ingress_rule). */
+  readonly calls?: CallsReading | {readonly refused: string} | null
+  readonly callsWrite?: (bindings: readonly string[], decision: CallsDecision) => Promise<void>
 }
 
+/** Calls to other agents as Scope's design names them: Allow, Ask (AIKit's pair: the call waits in Approvals) and Deny. */
+export type CallsDecision = 'allow' | 'pair' | 'deny'
+const CALLS_DECISIONS: readonly string[] = ['allow', 'pair', 'deny']
+/** The session's gateway bindings, and the one rule for calls from other agents they agree on (absent where they disagree or none). */
+export interface CallsReading {readonly bindings: readonly string[]; readonly decision?: CallsDecision}
+
+/** Calls to other agents on a session, from AIKit's gateway ecology (`aikit gateway ecology`; workcellReads.ts useGatewayEcology): each
+ * conversation surface of the session sits on a gateway binding, which decides a call from another agent by its rule for the sender kind
+ * agent, else by its one default (AIKit gateway_runtime.rs GatewayEcologySurface ingress_kinds, ingress_default). Null when the reading
+ * is not the ecology. Pure. */
+export function callsOf(ecology: unknown, sessionRef: string | null | undefined): CallsReading | null {
+  const doc = isObj(ecology) && ecology.type === 'ecology' && isObj(ecology.ecology) ? ecology.ecology : null
+  if (!doc || !Array.isArray(doc.agencies)) return null
+  const surfaces = doc.agencies.flatMap(agency => (isObj(agency) && Array.isArray(agency.sessions) ? agency.sessions : []))
+    .flatMap(row => (isObj(row) && row.agent_session_ref === sessionRef && Array.isArray(row.surfaces) ? row.surfaces : []))
+    .filter((surface): surface is Obj => isObj(surface) && typeof surface.binding_ref === 'string' && !!surface.binding_ref)
+  const bindings = [...new Set(surfaces.map(surface => surface.binding_ref as string))]
+  const decisions = new Set(surfaces.map(surface => (isObj(surface.ingress_kinds) && surface.ingress_kinds.agent !== undefined ? surface.ingress_kinds.agent : surface.ingress_default)))
+  const [only] = decisions
+  return decisions.size === 1 && typeof only === 'string' && CALLS_DECISIONS.includes(only) ? {bindings, decision: only as CallsDecision} : {bindings}
+}
+
+/** Why Calls to other agents is not pressable, or null where it writes. */
+const callsWhy = (asks: ScopeAsks): string | null =>
+  (!asks.callsWrite ? CALLS_REFUSE.uncarried : !asks.calls ? CALLS_REFUSE.unread : 'refused' in asks.calls ? CALLS_REFUSE.refused(asks.calls.refused)
+    : !asks.calls.bindings.length ? CALLS_REFUSE.unbound : null)
+/** The session's gateway bindings, where the ecology answered. */
+const callsReadingOf = (asks: ScopeAsks): CallsReading | null => (asks.calls && !('refused' in asks.calls) ? asks.calls : null)
+
 /** Scope's values (§19.12). No owner reports the reach, the write mode, the basis, the places or the receipts (the address table's world
- * rows are readings with no source: agentParamAddresses.ts:93-97), nor Calls to other agents, Wait or On no answer, so every one is absent;
- * Tool calls is the harness's own reading where the chain hands it in, and the only other value is a raised reach waiting for your Confirm. */
+ * rows are readings with no source: agentParamAddresses.ts:93-97), nor Wait or On no answer, so every one is absent; Tool calls is the
+ * harness's own reading and Calls to other agents AIKit's rule on the session's bindings where the chain hands them in, and the only other
+ * value is a raised reach waiting for your Confirm. */
 export function scopeValues(held: ChainHolds, asks: ScopeAsks = {}): Values {
   const values: Record<string, Value> = {}
   if (held.reachPending !== undefined) values.reachPending = held.reachPending
   if (asks.toolCalls !== undefined) values.toolCalls = asks.toolCalls
+  const calls = callsReadingOf(asks)
+  if (calls?.decision) values.calls = calls.decision
   return values
 }
 
@@ -1239,6 +1287,15 @@ export function scopeValues(held: ChainHolds, asks: ScopeAsks = {}): Values {
 const TOOL_CALLS_UNCARRIED = 'Tool calls: the Gateway\'s approvals row is not adopted on this chain, so nothing carries it (the kernel\'s harness_agent_control configure {approvals}).'
 
 const SCOPE_WRITES = (key: string) => ['reach', 'writeMode', 'toolCalls'].includes(key) || key in REFUSED_WRITES[SCOPE_DESIGN]! || key.startsWith('w:')
+
+/** Scope's refused settings, Tool calls where no row carries it, and Calls to other agents where it is not pressable. */
+function scopeStanding(asks: ScopeAsks): Record<string, Standing> {
+  const standing: Record<string, Standing> = {...disabled(REFUSED_WRITES[SCOPE_DESIGN]!), ...(asks.toolCallsRow?.writePath ? {} : {toolCalls: {disabled: TOOL_CALLS_UNCARRIED}})}
+  const why = callsWhy(asks)
+  if (why) standing.calls = {disabled: why}
+  else delete standing.calls
+  return standing
+}
 
 /** A raised reach the view holds: a ring, or none (Cancel's drop). */
 const reachOf = (value: Value | undefined): number | undefined => {
@@ -1255,7 +1312,7 @@ export function scopeBinding(id: string, held: ChainHolds, writeModeRow: SdkPara
     id,
     values: scopeValues(held, asks),
     local: {reachPending: value => updateHolds(was => (was.reachPending === reachOf(value) ? was : {...was, reachPending: reachOf(value)}))},
-    standing: {...disabled(REFUSED_WRITES[SCOPE_DESIGN]!), ...(asks.toolCallsRow?.writePath ? {} : {toolCalls: {disabled: TOOL_CALLS_UNCARRIED}})},
+    standing: scopeStanding(asks),
     writes: SCOPE_WRITES,
     write: async changes => {
       for (const {key, value} of changes) {
@@ -1276,6 +1333,13 @@ export function scopeBinding(id: string, held: ChainHolds, writeModeRow: SdkPara
           if (!asks.toolCallsRow?.writePath) throw Error(TOOL_CALLS_UNCARRIED)
           const receipt = await write(asks.toolCallsRow, value)
           if (receipt.kind === 'refused') throw Error(receipt.reason)
+          continue
+        }
+        if (key === 'calls') {
+          const why = callsWhy(asks)
+          if (why) throw Error(why)
+          if (typeof value !== 'string' || !CALLS_DECISIONS.includes(value)) throw Error(CALLS_REFUSE.decision(String(value)))
+          await asks.callsWrite!(callsReadingOf(asks)!.bindings, value as CallsDecision)
           continue
         }
         const refused = REFUSED_WRITES[SCOPE_DESIGN]![key]

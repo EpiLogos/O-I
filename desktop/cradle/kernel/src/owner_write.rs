@@ -122,6 +122,7 @@ impl PreparedWrite {
             | KernelOp::EncounterProvision { .. }
             | KernelOp::FlowParticipantProvision { .. }
             | KernelOp::HarnessAgentControl { .. }
+            | KernelOp::HarnessIngressRule { .. }
             | KernelOp::FileOperation { .. }
             | KernelOp::Routine { .. } => true,
             // Lane W3 (T-COVERAGE §1.2): the owner routes that write
@@ -159,6 +160,7 @@ impl PreparedWrite {
             | KernelOp::GroundAuthority { .. } => false,
             KernelOp::Central { .. }
             | KernelOp::HarnessAgentControl { .. }
+            | KernelOp::HarnessIngressRule { .. }
             | KernelOp::FileOperation { .. }
             | KernelOp::Page { .. }
             | KernelOp::NaraJourney { .. } => false,
@@ -420,6 +422,16 @@ impl PreparedWrite {
                     control: control.clone(),
                 }
             }
+            KernelOp::HarnessIngressRule {
+                binding,
+                kind,
+                decision,
+            } => KernelOpResult::HarnessIngressOutcome {
+                document: self
+                    .agency
+                    .gateway_ingress(binding, kind, decision.as_deref())?,
+                binding: binding.clone(),
+            },
             KernelOp::FileOperation { location, request } => {
                 let data = files::operate(&self.client, location, request)?;
                 // A write changed what a directory contains: the parent

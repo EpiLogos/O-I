@@ -771,6 +771,9 @@ export type KernelOp =
   | {op:"harness_agent_read";binding:string}
   /** Drive a conversation lifecycle control on the binding's gateway (the kernel owns no session state). */
   | {op:"harness_agent_control";binding:string;control:"new"|"stop"|"restart"|"pause"|"resume"}
+  /** One sender kind's ingress rule on a harness binding (O-I manual §19.12, Scope's Calls to other agents): AIKit's `gateway ingress`,
+   * deciding a sender by its own id, then its kind, then the binding's one default; no decision clears the kind's rule. */
+  | {op:"harness_ingress_rule";binding:string;kind:"human"|"agent"|"bot"|"system"|"unknown";decision?:"allow"|"pair"|"deny"|null}
   | { op: "agency_read"; project: string }
   | { op: "model_roster"; project?: string }
   | { op: "agent_definition"; project: string | null; request: import("../agency/nativeAgent").AgentRequest }
@@ -806,6 +809,12 @@ export type KernelOp =
   /** A session taken off the set (O-I #743, a Factory track's Delete): detached from the Project's SessionSpaces that hold it through
    * AIKit's own `detach-agent-session` mutation. Result `encounter_owner_act` (oi.encounter-session-detach/v1). */
   | {op:"encounter_session_detach";project:string;agent_session:string}
+  /** The Agent rack's chain list (O-I manual §19.15): Activator benches a chain's session in the rack's space, or lifts its bench (AIKit's
+   * bench-agent-session); adding a chain attaches a session standing in the Project to a space that stands (attach-agent-session); Drag
+   * out seats the session in `into`, a space of its own in the same Project, and detaches it from `space` last (`session-space drag-out`). */
+  | {op:"encounter_session_bench";project:string;space:string;agent_session:string;benched:boolean}
+  | {op:"encounter_session_attach";project:string;space:string;agent_session:string}
+  | {op:"encounter_session_drag_out";project:string;space:string;agent_session:string;into:string;label?:string|null}
   /** Several sessions' settings read at once (aikit.encounter-session-settings-list/v1), so a view of many tracks asks once. */
   | {op:"encounter_session_settings_list";project:string;agent_sessions:string[]}
   /** Several sessions' served attempts read at once (aikit.encounter-task-attempts-list/v1): for each session, the Factory attempts
@@ -1062,6 +1071,7 @@ export type KernelOpResult =
   | {result:"protocol";document:unknown}
   | {result:"harness_agent_reading";binding:string;document:unknown}
   | {result:"harness_agent_outcome";binding:string;control:"new"|"stop"|"restart"|"pause"|"resume";document:unknown}
+  | {result:"harness_ingress_outcome";binding:string;document:unknown}
   | { result: "agency_reading"; project_ref: string; spaces: unknown[]; harness_disclosure?: unknown; observed_at_unix_ms: number }
   | { result: "model_roster_reading"; reading: unknown }
   | { result: "knowledge"; data: unknown }
