@@ -141,6 +141,19 @@ jobs:
           SPACETIMEDB_URI: ws://127.0.0.1:3000
           SPACETIMEDB_A2A_DATABASE: oi-shared-field-a2a-ci
         run: npm --prefix shared-field/spacetimedb run acceptance:a2a
+      - name: Prove this module publishes over the base revision's rows and every one reads back
+        shell: bash
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          git fetch --no-tags --depth=1 origin "$BASE"
+          mkdir -p "$RUNNER_TEMP/base"
+          git archive "$BASE" shared-field packages/oi-design-system/expressions-engine | tar -x -C "$RUNNER_TEMP/base"
+          npm install --prefix "$RUNNER_TEMP/base/shared-field/spacetimedb"
+          node shared-field/scripts/upgrade-in-place-acceptance.mjs \
+            --base "$RUNNER_TEMP/base/shared-field" --next shared-field \
+            --server local --uri ws://127.0.0.1:3000 --database oi-shared-field-upgrade-ci \
+            --state "$RUNNER_TEMP/oi-upgrade"
       - name: Show SpaceTimeDB log on failure
         if: failure()
         run: cat /tmp/spacetimedb.log || true

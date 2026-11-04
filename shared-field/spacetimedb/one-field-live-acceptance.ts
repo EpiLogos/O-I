@@ -296,6 +296,10 @@ try {
   /* ---------- gathering: B asks, waits at the edge, is let in, shows there, leaves ---------- */
   const asked = await heldB.data({ kind: 'star-gather', star_ref: star, world_ref: worldB });
   assert.equal(asked.state, 'asked', 'a star whose lighter lets worlds in keeps an asking world at its edge');
+  // The star keeps its own day (SF04): who came, who was let in, who showed something there and who left, never what was shown.
+  const dayOf = (snapshot: any) => (snapshot.star_days ?? []).filter((entry: any) => entry.star_ref === star).map((entry: any) => [entry.world_ref, entry.what]);
+  const dayB0 = await waitFor(async () => { const day = dayOf(await heldB.data({ kind: 'snapshot' })); return day.length > 0 && day; }, 'B to read its own request in the star\'s day');
+  assert.deepEqual(dayB0, [[worldB, 'asked']], 'waiting at the edge, B reads only its own request in the star\'s day');
   await waitFor(async () => (await heldA2.data({ kind: 'snapshot' })).gatherings.some((g: any) => g.star_ref === star && g.world_ref === worldB && g.state === 'asked'), 'A to see B\'s request');
   assert.ok(!JSON.stringify(await heldB.data({ kind: 'snapshot' })).includes(STAR_MARK), 'waiting at the edge shows B nothing shown at the star');
   const refusedAdmit = await heldB.ask({ kind: 'star-admit', star_ref: star, world_ref: worldB });
@@ -305,11 +309,23 @@ try {
   assert.ok(!JSON.stringify(inside).includes(MARK), 'letting B in gives it no reach into A\'s world beyond what A shows at the star');
   assert.equal(clearingsOf(inside, hidden).length, 0);
   assert.equal(worldsOf(inside, hidden).length, 0);
+  const DAY_LET_IN = [[worldA, 'lit'], [worldA, 'showed'], [worldB, 'asked'], [worldB, 'let-in']];
+  assert.deepEqual(await waitFor(async () => { const day = dayOf(await heldA2.data({ kind: 'snapshot' })); return day.length === DAY_LET_IN.length && day; }, 'A to read the star\'s day'), DAY_LET_IN,
+    'the lighter reads the star\'s day: it was lit, A showed something there, B asked and was let in');
+  assert.deepEqual(await waitFor(async () => { const day = dayOf(await heldB.data({ kind: 'snapshot' })); return day.length === DAY_LET_IN.length && day; }, 'B, let in, to read the star\'s day'), DAY_LET_IN,
+    'let in, B reads the same day');
   await heldB.data({ kind: 'clearing-open', world_ref: worldB, part_ref: 'page:my-reading', audience: 'star', star_ref: star, shown: { kind: 'page', label: 'My reading of the fourth plate' } });
   await waitFor(async () => clearingsOf(await heldA2.data({ kind: 'snapshot' }), worldB).some((c: any) => c.part_ref === 'page:my-reading'), 'A to see what B shows at the star');
   await heldB.data({ kind: 'star-leave', star_ref: star, world_ref: worldB });
   await waitFor(async () => !clearingsOf(await heldA2.data({ kind: 'snapshot' }), worldB).length, 'leaving to take back what B showed at the star');
   assert.ok(!JSON.stringify(await heldB.data({ kind: 'snapshot' })).includes(STAR_MARK), 'and B no longer sees what A shows there');
+  const DAY_LEFT = [...DAY_LET_IN, [worldB, 'showed'], [worldB, 'left']];
+  const daySnapshotA = await waitFor(async () => { const seen = await heldA2.data({ kind: 'snapshot' }); return dayOf(seen).length === DAY_LEFT.length && seen; }, 'A to read B\'s leaving in the star\'s day');
+  assert.deepEqual(dayOf(daySnapshotA), DAY_LEFT, 'the star\'s day records that B showed something there and left');
+  const dayText = JSON.stringify((daySnapshotA.star_days ?? []).filter((entry: any) => entry.star_ref === star));
+  assert.ok(!dayText.includes(STAR_MARK) && !dayText.includes('My reading'), `the star\'s day records that something was shown, never what: ${dayText}`);
+  assert.deepEqual(dayOf(await heldB.data({ kind: 'snapshot' })), [[worldB, 'asked'], [worldB, 'let-in'], [worldB, 'showed'], [worldB, 'left']],
+    'gone from the star, B reads only its own part of the star\'s day');
 
   /* ---------- withdraw, link off, close ---------- */
   await heldA2.data({ kind: 'clearing-withdraw', world_ref: worldA, part_ref: 'place:rosarium-notes' });
@@ -323,6 +339,8 @@ try {
   assert.equal(closed.state, 'closed');
   await waitFor(async () => { const seen = await heldB.data({ kind: 'snapshot' }); return !seen.stars.some((s: any) => s.star_ref === star) && !seen.gatherings.some((g: any) => g.star_ref === star); }, 'a closed star to return every world to its own orbit');
   assert.equal(clearingsOf(await heldA2.data({ kind: 'snapshot' }), worldA).filter((c: any) => c.star_ref === star).length, 0, 'what was shown at a closed star goes with it');
+  assert.deepEqual(dayOf(await heldA2.data({ kind: 'snapshot' })), [], 'and so does its day');
+  assert.deepEqual(dayOf(await heldB.data({ kind: 'snapshot' })), []);
   // Today's rows stand beside the worlds: the slice-1 page is still read.
   assert.ok((await heldB.data({ kind: 'observe' })).snapshot.entries.some((entry: any) => entry.ref === fence), 'the field\'s other rows read as they did');
 
@@ -338,6 +356,7 @@ try {
     'a world carries its owner and its body record; another identity reads the same body and cannot put it',
     'what a world has not shown reaches no payload, count or transaction of another identity, and moves no cursor',
     'a star is lit by its owner with its world gathered first; an asking world waits at its edge until let in',
+    'the star keeps its day of who came, was let in, showed something and left, read by its lighter and the worlds gathered there, never what was shown',
     'leaving takes back what was shown at a star; withdrawing and Link off go back under cloud; closing returns every world',
   ] }));
 } finally {

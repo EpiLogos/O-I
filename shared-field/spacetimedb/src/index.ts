@@ -622,6 +622,22 @@ const worldGatheringBacking = table(
   }
 );
 
+/* A star's day (O-I #858, SF04): who came to the star, who was let in, who
+ * showed something there and who left, in the order they happened. It names
+ * that something was shown and of what kind, never what: what is shown at a
+ * star is the clearing's, and goes back under cloud with it. */
+const starDayBacking = table(
+  { name: 'star_day_backing', public: false },
+  {
+    rowId: t.u64().primaryKey().autoInc(),
+    starRef: t.string().index('btree'),
+    worldRef: t.string(),
+    what: t.string(),
+    kind: t.string(),
+    atMicros: t.u64(),
+  }
+);
+
 const spacetimedb = schema({
   sharedFieldBacking,
   fieldOwner,
@@ -658,6 +674,7 @@ const spacetimedb = schema({
   worldOwner,
   worldClearingBacking,
   worldGatheringBacking,
+  starDayBacking,
 });
 
 export default spacetimedb;
@@ -3541,6 +3558,39 @@ export const world_clearing = spacetimedb.view(
   }
 );
 
+/* A star's day is read by the star's lighter, and by whoever has a linked
+ * world gathered at the star; a world that only asked, or has left, reads its
+ * own part of it. An asking world is seen at the edge by the lighter and its
+ * own owner alone, as its gathering is. */
+function callerCanSeeStarDay(ctx: any, entry: any): boolean {
+  if (callerOwnsWorld(ctx, entry.worldRef)) return true;
+  const world = ctx.db.worldBacking.worldRef.find(entry.worldRef);
+  if (!world || !world.linked || !starRow(ctx, entry.starRef)) return false;
+  if (isFieldOwner(ctx, entry.starRef)) return true;
+  return entry.what !== 'asked' && callerGatheredAt(ctx, entry.starRef);
+}
+
+/** The most one star's day keeps: the oldest goes first. */
+const STAR_DAY_LIMIT = 512;
+
+function noteStarDay(ctx: any, starRef: string, worldRef: string, what: string, kind = ''): void {
+  ctx.db.starDayBacking.insert({ rowId: 0n, starRef, worldRef, what, kind, atMicros: nowMicros(ctx) });
+  const day = Array.from(ctx.db.starDayBacking.starRef.filter(starRef)) as any[];
+  if (day.length <= STAR_DAY_LIMIT) return;
+  day.sort((a, b) => (a.rowId < b.rowId ? -1 : 1));
+  for (const old of day.slice(0, day.length - STAR_DAY_LIMIT)) ctx.db.starDayBacking.rowId.delete(old.rowId);
+}
+
+export const star_day = spacetimedb.view(
+  { name: 'star_day', public: true },
+  t.array(starDayBacking.rowType),
+  (ctx) => {
+    const rows: any[] = [];
+    for (const row of ctx.db.starDayBacking.iter()) if (callerCanSeeStarDay(ctx, row)) rows.push(row);
+    return rows;
+  }
+);
+
 export const world_gathering = spacetimedb.view(
   { name: 'world_gathering', public: true },
   t.array(worldGatheringBacking.rowType),
@@ -3599,6 +3649,7 @@ export const open_clearing = spacetimedb.reducer(
     }
     if (Array.from(ctx.db.worldClearingBacking.worldRef.filter(args.worldRef)).length >= 512) fail('This world shows as many clearings as one world may');
     ctx.db.worldClearingBacking.insert(row);
+    if (args.audience === 'star') noteStarDay(ctx, args.starRef, args.worldRef, 'showed', shown.kind);
   }
 );
 
@@ -3609,8 +3660,10 @@ export const withdraw_clearing = spacetimedb.reducer(
   (ctx, args) => {
     requireOwnWorld(ctx, args.worldRef);
     const key = clearingKey(args.worldRef, args.partRef, args.starRef);
-    if (!ctx.db.worldClearingBacking.clearingKey.find(key)) fail('That was not shown');
+    const shown = ctx.db.worldClearingBacking.clearingKey.find(key);
+    if (!shown) fail('That was not shown');
     ctx.db.worldClearingBacking.clearingKey.delete(key);
+    if (shown.audience === 'star' && starRow(ctx, args.starRef)) noteStarDay(ctx, args.starRef, args.worldRef, 'took-back', parseStoredJson(shown.shownJson, 'Shown').kind ?? '');
   }
 );
 
@@ -3653,6 +3706,7 @@ export const light_star = spacetimedb.reducer(
     } else {
       ctx.db.sharedFieldBacking.insert({ rowId: 0n, fieldRef: args.starRef, kind: STAR_KIND, visibility: 'public', contractJson });
       ctx.db.fieldOwner.insert({ fieldRef: args.starRef, ownerIdentity: ctx.sender, createdAtMicros: nowMicros(ctx) });
+      noteStarDay(ctx, args.starRef, args.worldRef, 'lit');
     }
     const key = gatheringKey(args.starRef, args.worldRef);
     const gathered = ctx.db.worldGatheringBacking.gatheringKey.find(key);
@@ -3676,6 +3730,7 @@ export const gather_at_star = spacetimedb.reducer(
     const now = nowMicros(ctx);
     const open = comes === 'anyone' || isFieldOwner(ctx, args.starRef);
     ctx.db.worldGatheringBacking.insert({ gatheringKey: key, starRef: args.starRef, worldRef: args.worldRef, state: open ? 'gathered' : 'asked', askedAtMicros: now, gatheredAtMicros: open ? now : 0n });
+    noteStarDay(ctx, args.starRef, args.worldRef, open ? 'came' : 'asked');
   }
 );
 
@@ -3691,6 +3746,7 @@ export const admit_to_star = spacetimedb.reducer(
     if (!asked) fail('That world has not asked to gather here');
     if (asked.state === 'gathered') return;
     ctx.db.worldGatheringBacking.gatheringKey.update({ ...asked, state: 'gathered', gatheredAtMicros: nowMicros(ctx) });
+    noteStarDay(ctx, args.starRef, args.worldRef, 'let-in');
   }
 );
 
@@ -3705,11 +3761,13 @@ function takeBackFromStar(ctx: any, starRef: string, worldRef: string): void {
 export const leave_star = spacetimedb.reducer(
   { starRef: t.string(), worldRef: t.string() },
   (ctx, args) => {
-    if (!callerOwnsWorld(ctx, args.worldRef) && !isFieldOwner(ctx, args.starRef)) fail('That world is not yours to take away from this star');
+    const own = callerOwnsWorld(ctx, args.worldRef);
+    if (!own && !isFieldOwner(ctx, args.starRef)) fail('That world is not yours to take away from this star');
     const key = gatheringKey(args.starRef, args.worldRef);
     if (!ctx.db.worldGatheringBacking.gatheringKey.find(key)) fail('That world is not at this star');
     ctx.db.worldGatheringBacking.gatheringKey.delete(key);
     takeBackFromStar(ctx, args.starRef, args.worldRef);
+    noteStarDay(ctx, args.starRef, args.worldRef, own ? 'left' : 'turned-away');
   }
 );
 
@@ -3730,6 +3788,8 @@ export const close_star = spacetimedb.reducer(
     for (const clearing of Array.from(ctx.db.worldClearingBacking.starRef.filter(args.starRef)) as any[]) {
       ctx.db.worldClearingBacking.clearingKey.delete(clearing.clearingKey);
     }
+    // the star's day closes with it
+    for (const entry of Array.from(ctx.db.starDayBacking.starRef.filter(args.starRef)) as any[]) ctx.db.starDayBacking.rowId.delete(entry.rowId);
     ctx.db.sharedFieldBacking.rowId.delete(star.rowId);
     ctx.db.fieldOwner.fieldRef.delete(args.starRef);
   }

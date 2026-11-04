@@ -50,9 +50,14 @@ export const WORLD_SUBSCRIPTION = [
   'SELECT * FROM world_clearing',
   'SELECT * FROM world_gathering',
 ];
+/** Each star's day (O-I #858, SF04), subscribed on its own beside the worlds:
+ * a service that holds worlds but keeps no star's day yet is read as it was,
+ * and says so. */
+export const STAR_DAY_SUBSCRIPTION = ['SELECT * FROM star_day'];
 /** Whether this connection holds the field's worlds, or why not. */
 export type WorldsHeld = { state: 'held' } | { state: 'unavailable'; detail: string };
 const NO_WORLDS = 'This field\'s service does not hold worlds yet';
+const NO_STAR_DAY = 'This field\'s service does not keep a star\'s day yet';
 const TIMEOUT_MS = Number(process.env.OI_SHARED_FIELD_TIMEOUT_MS ?? 15_000);
 export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -101,7 +106,7 @@ export function tokenFile(database: string, label = 'owner') {
   return join(state, 'spacetimedb', label === 'owner' ? `${database}.owner-token` : `${database}.${label}-token`);
 }
 
-export interface Client { conn: DbConnection; identity: any; token: string; lifecycle: any; live: any; target: Target; identityHex: string; worlds: WorldsHeld }
+export interface Client { conn: DbConnection; identity: any; token: string; lifecycle: any; live: any; target: Target; identityHex: string; worlds: WorldsHeld; starDay: WorldsHeld }
 
 export async function connect(target: Target, token?: string): Promise<{ conn: DbConnection; identity: any; token: string; lifecycle: any }> {
   const lifecycle = createExploreTransportLifecycle();
@@ -141,15 +146,17 @@ export async function open(target: Target, label = 'owner'): Promise<Client> {
   }
   try { await subscribe(opened.conn, opened.lifecycle); }
   catch (error) { opened.conn.disconnect(); throw error; }
-  const worlds = await holdWorlds(opened.conn);
+  const { worlds, starDay } = await holdWorlds(opened.conn);
   const live = createLiveExploreApplication(createSpacetimeExploreSource(opened.conn.db, opened.lifecycle));
-  return { ...opened, live, target, identityHex: opened.identity.toHexString(), worlds };
+  return { ...opened, live, target, identityHex: opened.identity.toHexString(), worlds, starDay };
 }
 
-/** Subscribe the worlds beside the field; a service without them is said, never an error of the field. */
-async function holdWorlds(conn: DbConnection): Promise<WorldsHeld> {
-  try { await subscribeQueries(conn, WORLD_SUBSCRIPTION); return { state: 'held' }; }
-  catch { return { state: 'unavailable', detail: NO_WORLDS }; }
+/** Subscribe the worlds beside the field, and each star's day beside them; a service without either is said, never an error of the
+ * field. */
+async function holdWorlds(conn: DbConnection): Promise<{ worlds: WorldsHeld; starDay: WorldsHeld }> {
+  try { await subscribeQueries(conn, WORLD_SUBSCRIPTION); } catch { return { worlds: { state: 'unavailable', detail: NO_WORLDS }, starDay: { state: 'unavailable', detail: NO_STAR_DAY } }; }
+  try { await subscribeQueries(conn, STAR_DAY_SUBSCRIPTION); return { worlds: { state: 'held' }, starDay: { state: 'held' } }; }
+  catch { return { worlds: { state: 'held' }, starDay: { state: 'unavailable', detail: NO_STAR_DAY } }; }
 }
 
 export function close(client: Client) {
@@ -237,6 +244,10 @@ export function worldReading(client: Client) {
     clearings: rows(db.worldClearing).map((row: any) => ({ world_ref: row.worldRef, part_ref: row.partRef, star_ref: row.starRef || null, audience: row.audience, shown: parse(row.shownJson), shown_at_micros: String(row.shownAtMicros) })),
     stars,
     gatherings: rows(db.worldGathering).map((row: any) => ({ star_ref: row.starRef, world_ref: row.worldRef, state: row.state, asked_at_micros: String(row.askedAtMicros), ...(row.state === 'gathered' ? { gathered_at_micros: String(row.gatheredAtMicros) } : {}) })),
+    // each star's day, in the order it happened: who came, was let in, showed something (of what kind) and left
+    star_day: client.starDay,
+    star_days: rows(db.starDay).sort((a: any, b: any) => (BigInt(a.rowId) < BigInt(b.rowId) ? -1 : 1))
+      .map((row: any) => ({ star_ref: row.starRef, world_ref: row.worldRef, what: row.what, ...(row.kind ? { kind: row.kind } : {}), at_micros: String(row.atMicros) })),
   };
 }
 
@@ -268,7 +279,7 @@ export async function observeField(client: Client, cursor?: string, ref?: string
       };
       const timer = setTimeout(finish, 10_000);
       removers.push(client.lifecycle.subscribe(finish));
-      for (const name of ['sharedField', 'participant', 'projection', 'contribution', 'exploreEntry', 'exploreRelation', 'myFieldAuthority', 'myContributionReceipt', 'ownerPendingContribution', 'myWatch', 'myContact', 'sharedStage', 'myStageFollow', 'fieldPresence', 'activityLiveness', 'fieldNow', 'fieldDay', 'world', 'myWorld', 'worldClearing', 'worldGathering']) {
+      for (const name of ['sharedField', 'participant', 'projection', 'contribution', 'exploreEntry', 'exploreRelation', 'myFieldAuthority', 'myContributionReceipt', 'ownerPendingContribution', 'myWatch', 'myContact', 'sharedStage', 'myStageFollow', 'fieldPresence', 'activityLiveness', 'fieldNow', 'fieldDay', 'world', 'myWorld', 'worldClearing', 'worldGathering', 'starDay']) {
         const table = (client.conn.db as any)[name];
         if (!table) { finish(); return; }
         for (const event of ['Insert', 'Update', 'Delete']) {
@@ -343,6 +354,7 @@ export const HELD_TABLES: ReadonlyArray<readonly [property: string, table: strin
   ['sharedStage', 'shared_stage', 'stageRef'], ['myStageFollow', 'my_stage_follow', 'followKey'], ['fieldPresence', 'field_presence', 'presenceKey'],
   ['activityLiveness', 'activity_liveness', 'activityKey'], ['fieldNow', 'field_now', 'fieldRef'], ['fieldDay', 'field_day', 'dayKey'],
   ['world', 'world', 'worldRef'], ['myWorld', 'my_world', 'worldRef'], ['worldClearing', 'world_clearing', 'clearingKey'], ['worldGathering', 'world_gathering', 'gatheringKey'],
+  ['starDay', 'star_day', 'rowId'],
 ];
 
 export interface RowChange { table: string; op: 'insert' | 'update' | 'delete'; ref: string }
@@ -475,10 +487,10 @@ export function holdField(options: { label: string; answer: (client: Client, req
     });
     try { await subscribeQueries(opened.conn, HELD_BASE, opened.lifecycle); } catch (error) { try { opened.conn.disconnect(); } catch {} lost(error); return; }
     if (closed || connection !== epoch) { try { opened.conn.disconnect(); } catch {} return; }
-    const worlds = await holdWorlds(opened.conn);
+    const { worlds, starDay } = await holdWorlds(opened.conn);
     if (closed || connection !== epoch) { try { opened.conn.disconnect(); } catch {} return; }
     const live = createLiveExploreApplication(createSpacetimeExploreSource(opened.conn.db, opened.lifecycle));
-    client = { ...opened, live, target, identityHex: opened.identity.toHexString(), worlds };
+    client = { ...opened, live, target, identityHex: opened.identity.toHexString(), worlds, starDay };
     state = 'live';
     attempt = 0;
     status();

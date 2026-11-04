@@ -66,13 +66,28 @@ export interface FieldGathering {
   readonly state: 'asked' | 'gathered'
 }
 
-/** The field as the window last read it. */
+/** What a star's day records (O-I #858, SF04): a world lit it, asked to come, came, was let in, showed something there or took it back,
+ * left, or was turned away by its lighter. */
+export type StarDayWhat = 'lit' | 'asked' | 'came' | 'let-in' | 'showed' | 'took-back' | 'left' | 'turned-away'
+const STAR_DAY_WHATS: readonly StarDayWhat[] = ['lit', 'asked', 'came', 'let-in', 'showed', 'took-back', 'left', 'turned-away']
+/** One entry of a star's day, in the order the field gives: the kind of what was shown, never what it was. */
+export interface FieldDayEntry {
+  readonly star_ref: string
+  readonly world_ref: string
+  readonly what: StarDayWhat
+  readonly kind: string | null
+}
+
+/** The field as the window last read it. `days` is each star's day as you may read it, or null with `dayWhy` when the field's service
+ * keeps none. */
 export type HeldField =
   | {readonly state: 'reading'}
   | {readonly state: 'unavailable'; readonly reason: string}
-  | {readonly state: 'read'; readonly worlds: readonly FieldWorld[]; readonly clearings: readonly FieldClearing[]; readonly stars: readonly FieldStar[]; readonly gatherings: readonly FieldGathering[]}
+  | {readonly state: 'read'; readonly worlds: readonly FieldWorld[]; readonly clearings: readonly FieldClearing[]; readonly stars: readonly FieldStar[]; readonly gatherings: readonly FieldGathering[]
+    readonly days: readonly FieldDayEntry[] | null; readonly dayWhy: string | null}
 
 const NO_READING = 'The shared field gave no reading of its worlds.'
+const NO_DAY = 'This field’s service does not keep a star’s day yet.'
 const rec = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value)
 const text = (value: unknown): value is string => typeof value === 'string' && value.length > 0
 const rows = <T>(value: unknown, row: (item: Record<string, unknown>) => T | null): T[] =>
@@ -97,6 +112,18 @@ export function heldFieldOf(data: unknown): HeldField {
       ? {star_ref: row.star_ref, name: row.name, gathers: row.gathers, comes: row.comes, lit_by: row.lit_by, mine: row.mine, ...(text(row.within) ? {within: row.within} : {})} : null),
     gatherings: rows(data.gatherings, row => text(row.star_ref) && text(row.world_ref) && (row.state === 'asked' || row.state === 'gathered')
       ? {star_ref: row.star_ref, world_ref: row.world_ref, state: row.state} : null),
+    ...daysOf(data),
+  }
+}
+
+/** Each star's day as the snapshot carries it, or the field's words when its service keeps none. */
+function daysOf(data: Record<string, unknown>): {days: readonly FieldDayEntry[] | null; dayWhy: string | null} {
+  const kept = data.star_day
+  if (!rec(kept) || kept.state !== 'held') return {days: null, dayWhy: rec(kept) && text(kept.detail) ? kept.detail : NO_DAY}
+  return {
+    days: rows(data.star_days, row => text(row.star_ref) && text(row.world_ref) && (STAR_DAY_WHATS as readonly unknown[]).includes(row.what)
+      ? {star_ref: row.star_ref, world_ref: row.world_ref, what: row.what as StarDayWhat, kind: text(row.kind) ? row.kind : null} : null),
+    dayWhy: null,
   }
 }
 
@@ -135,6 +162,13 @@ export interface SceneStar {
   readonly gathered: readonly string[]
   /** worlds waiting at its edge with their request (the field shows them to the star's owner alone) */
   readonly waiting: number
+  /** the worlds waiting at its edge, by ref, as the field shows them to you (all of them at your own star; at another's, your own
+   * request alone) */
+  readonly asking: readonly string[]
+  /** where your own world stands at it: gathered, waiting at its edge, or not there */
+  readonly yoursAt: 'gathered' | 'asked' | null
+  /** its day as you may read it, in the order it happened; null when the field's service keeps none */
+  readonly day: readonly FieldDayEntry[] | null
 }
 export interface FieldScene {
   readonly aperture: Aperture
@@ -180,13 +214,28 @@ function sceneWorld(field: Extract<HeldField, {state: 'read'}>, world: FieldWorl
   }
 }
 
-function sceneStar(field: Extract<HeldField, {state: 'read'}>, star: FieldStar): SceneStar {
+function sceneStar(field: Extract<HeldField, {state: 'read'}>, star: FieldStar, yours: string | null): SceneStar {
   const at = field.gatherings.filter(gathering => gathering.star_ref === star.star_ref)
+  const asking = at.filter(gathering => gathering.state === 'asked').map(gathering => gathering.world_ref)
+  const own = yourFieldWorld(field, yours)
   return {
     ref: star.star_ref, name: star.name, gathers: star.gathers, comes: star.comes, mine: star.mine, within: star.within ?? null,
     gathered: at.filter(gathering => gathering.state === 'gathered').map(gathering => gathering.world_ref),
-    waiting: at.filter(gathering => gathering.state === 'asked').length,
+    waiting: asking.length, asking,
+    yoursAt: (own === null ? undefined : at.find(gathering => gathering.world_ref === own)?.state) ?? null,
+    day: field.days === null ? null : field.days.filter(entry => entry.star_ref === star.star_ref),
   }
+}
+
+const DAY_WORDS: Readonly<Record<StarDayWhat, string>> = {
+  lit: 'lit the star', asked: 'asked to come', came: 'came', 'let-in': 'was let in', showed: 'showed', 'took-back': 'took back', left: 'left',
+  'turned-away': 'was turned away',
+}
+/** One entry of a star's day in words: the world, and what it did there. */
+export function starDayLine(entry: FieldDayEntry): string {
+  const who = entry.world_ref.split(':').pop() ?? entry.world_ref
+  const what = DAY_WORDS[entry.what]
+  return entry.what === 'showed' || entry.what === 'took-back' ? `${who} ${what} ${entry.kind ? `a ${entry.kind}` : 'something'}` : `${who} ${what}`
 }
 
 /** The Field scale's scene: the worlds and stars the aperture holds, each world as the audience sees it, what lies past the edge. */
@@ -203,7 +252,7 @@ export function fieldScene(field: Extract<HeldField, {state: 'read'}>, view: {re
   return {
     aperture: view.aperture, viewAs: view.viewAs,
     worlds: here.worlds.map(world => sceneWorld(field, world, view.viewAs, yours)),
-    stars: here.stars.map(star => sceneStar(field, star)),
+    stars: here.stars.map(star => sceneStar(field, star, yours)),
     beyond, note,
   }
 }
@@ -212,6 +261,98 @@ export function fieldScene(field: Extract<HeldField, {state: 'read'}>, view: {re
  * no field was read: the design draws what the binding read, at the aperture and audience the view chose. */
 export function fieldSceneOf(field: unknown, view: {readonly aperture: Aperture; readonly viewAs: Audience}, yours: string | null): FieldScene | null {
   if (!rec(field)) return null
-  const held = heldFieldOf({...field, world_field: {state: 'held'}})
+  const kept = Array.isArray(field.days) ? {state: 'held'} : {state: 'unavailable', detail: text(field.dayWhy) ? field.dayWhy : NO_DAY}
+  const held = heldFieldOf({...field, world_field: {state: 'held'}, star_day: kept, star_days: field.days})
   return held.state === 'read' ? fieldScene(held, view, yours) : null
+}
+
+// ── the acts at a star (manual §17.2 items 9 and 10: Light a star, Gather, Leave; a world you have not let in waits at its edge) ─
+//
+// A star stays in the hands of whoever lit it, and a world gathered at a star stays its owner's: your world gathers, leaves and
+// lights; at your own star you let a waiting world in and close it. Each act is one request of the held SharedField client (the
+// kernel's `shared_field` op, shared-field/spacetimedb/field.ts worldAct), asked for your own world (the one of yours whose body is
+// your own body), or the reason it cannot be asked, in words a person reads. The field decides in the end: a refusal it gives is
+// passed on as it gave it.
+
+/** Who may come to a star: anyone, or a world its lighter lets in. */
+export type StarComes = 'anyone' | 'asked'
+export const STAR_COMES: readonly StarComes[] = ['anyone', 'asked']
+
+export type StarAct =
+  | {readonly act: 'light'; readonly name: string; readonly gathers: string; readonly comes: StarComes}
+  | {readonly act: 'gather' | 'leave' | 'close'; readonly star: string | null}
+  | {readonly act: 'admit'; readonly star: string | null; readonly world: string | null}
+
+/** Your world in the field: the one of yours whose body is your own body, or null. */
+export function yourFieldWorld(field: Extract<HeldField, {state: 'read'}>, yours: string | null): string | null {
+  if (yours === null) return null
+  return field.worlds.find(world => world.mine && bodyRefOf(world.body) === yours)?.world_ref ?? null
+}
+
+const NO_STAR = 'Choose a star first.'
+const NOT_IN_FIELD = 'That star is not in the field you see.'
+/** A new star's ref, from its name and a nonce (the moment it is lit): the field names a star star:<name>, once. */
+const starRefOf = (name: string, nonce: number): string => {
+  const slug = name.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60)
+  return `star:${slug || 'star'}-${Math.abs(Math.trunc(nonce)).toString(36)}`
+}
+
+/** The SharedField request for one act at a star, asked for your own world, or why it cannot be asked. */
+export function starRequest(field: HeldField, yours: string | null, act: StarAct, nonce: number): {readonly request: Record<string, unknown>} | {readonly refusal: string} {
+  if (field.state === 'reading') return {refusal: 'The shared field is being read.'}
+  if (field.state === 'unavailable') return {refusal: field.reason}
+  const world = yourFieldWorld(field, yours)
+  if (act.act === 'light') {
+    if (!world) return {refusal: NOT_YOURS_YET}
+    if (!act.name.trim()) return {refusal: 'Name the star first.'}
+    if ([...act.name].length > 120) return {refusal: 'A star is named in at most 120 characters.'}
+    if (!act.gathers.trim()) return {refusal: 'Say what the star gathers first.'}
+    if ([...act.gathers].length > 280) return {refusal: 'Say what the star gathers in at most 280 characters.'}
+    if (!STAR_COMES.includes(act.comes)) return {refusal: 'A star lets anyone come, or asks you to let each world in.'}
+    if (!field.worlds.find(row => row.world_ref === world)?.linked) return {refusal: 'Link your world into the field before you light a star.'}
+    return {request: {kind: 'star-light', star_ref: starRefOf(act.name, nonce), world_ref: world, name: act.name.trim(), gathers: act.gathers.trim(), comes: act.comes}}
+  }
+  if (!act.star) return {refusal: NO_STAR}
+  const star = field.stars.find(row => row.star_ref === act.star)
+  if (!star) return {refusal: NOT_IN_FIELD}
+  const at = (ref: string | null) => (ref ? field.gatherings.find(row => row.star_ref === star.star_ref && row.world_ref === ref)?.state ?? null : null)
+  switch (act.act) {
+    case 'gather': {
+      if (!world) return {refusal: NOT_YOURS_YET}
+      const now = at(world)
+      if (now === 'gathered') return {refusal: 'Your world is already gathered at that star.'}
+      if (now === 'asked') return {refusal: 'Your world already waits at that star’s edge for its lighter to let it in.'}
+      if (!field.worlds.find(row => row.world_ref === world)?.linked) return {refusal: 'Link your world into the field before you gather at a star.'}
+      return {request: {kind: 'star-gather', star_ref: star.star_ref, world_ref: world}}
+    }
+    case 'leave': {
+      if (!world) return {refusal: NOT_YOURS_YET}
+      if (!at(world)) return {refusal: 'Your world is not at that star.'}
+      return {request: {kind: 'star-leave', star_ref: star.star_ref, world_ref: world}}
+    }
+    case 'admit': {
+      if (!star.mine) return {refusal: 'Only the one who lit a star lets worlds in.'}
+      if (!act.world) return {refusal: 'Choose a world waiting at the star’s edge first.'}
+      if (at(act.world) !== 'asked') return {refusal: 'That world is not waiting at this star’s edge.'}
+      return {request: {kind: 'star-admit', star_ref: star.star_ref, world_ref: act.world}}
+    }
+    case 'close': {
+      if (!star.mine) return {refusal: 'Only the one who lit a star closes it.'}
+      if (field.stars.some(row => row.within === star.star_ref)) return {refusal: 'Close the stars inside this one first.'}
+      return {request: {kind: 'star-close', star_ref: star.star_ref}}
+    }
+  }
+}
+
+/** What the field did, in a line, from its answer to one act at a star. */
+export function starNote(request: Record<string, unknown>, data: unknown): string {
+  const answer = rec(data) ? data : {}
+  switch (request.kind) {
+    case 'star-light': return `${String(request.name)} is lit, and your world is gathered at it.`
+    case 'star-gather': return answer.state === 'asked' ? 'Your world waits at the star’s edge until its lighter lets it in.' : 'Your world is gathered at the star.'
+    case 'star-leave': return 'Your world has left the star and taken back what it showed there.'
+    case 'star-admit': return 'The world is let in.'
+    case 'star-close': return 'The star is closed: every world is back in its own orbit.'
+    default: return 'The field took it.'
+  }
 }
