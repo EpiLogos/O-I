@@ -496,8 +496,11 @@ test('13 · Accept and Discard are AIKit\'s own verbs on the member; Test runs t
   assert.equal(bind.viewHolds(bind.chainHolds(), RACK).refineMember, ALPHA)
   // REPLACED (O-I 795 round 13): "Central keeps a Control skill's source: Accept is Central's, and says so" — Accept hands it to Central
   // now (AIKit's own verb, ai-kit skill_sources.rs accept_revision), which keeps it for the person's Accept there (test 17).
-  const central = refining([proposal({owner: 'central'})], ports)
-  assert.equal(central.standing.accept, undefined, 'Accept hands a Control skill\'s revision to Central')
+  // REPLACED (O-I 795 round 14): with AIKit's verbs alone, Accept handed a Control skill's revision and stopped there. The person's one
+  // Accept hands it, writes it in Central and has AIKit follow (test 17), so it stands where a hand to Central does, and says so where none.
+  const central = refining([proposal({owner: 'central'})], {...ports, central: async () => {}})
+  assert.equal(central.standing.accept, undefined, 'Accept hands a Control skill\'s revision to Central and writes it there')
+  assert.match(refining([proposal({owner: 'central'})], ports).standing.accept.disabled, /no hand carries it to Central here/)
   // A stale draft is not accepted.
   const stale = refining([proposal({stale: true})], ports)
   assert.match(stale.standing.accept.disabled, /no longer in use/)
@@ -547,11 +550,14 @@ test('14 · the Skillset rack\'s Refining page stands beside Capture with §19.7
   assert.ok(whole.includes(escaped('Not met: the plan names each gate by its command')), 'the reason, in the close\'s words')
   assert.ok(whole.includes(escaped(bind.RESULT_WHY.untested)), 'Result says why it is Open')
   // Declared to the device law: one owning address for each of the page's parameters (§14).
-  for (const key of ['refine.member', 'refine.why', 'refine.revision', 'refine.test', 'refine.result', 'refine.accept', 'refine.discard']) {
+  for (const key of ['refine.member', 'refine.why', 'refine.revision', 'refine.test', 'refine.result', 'refine.discard']) {
     const row = addresses.agentAddress('skillset', key)
     assert.equal(row?.family, 'ai-kit', key)
   }
-  assert.equal(addresses.agentAddress('skillset', 'refine.accept').writePath, 'kernel:aikit_write')
+  // REPLACED (O-I 795 round 14): refine.accept was ai-kit's at kernel:aikit_write. The person's Accept of a Control skill's revision is
+  // Central's own act (control.skills.revision.accept, through invoke_action); AIKit's verbs hand it there and follow it.
+  assert.equal(addresses.agentAddress('skillset', 'refine.accept').family, 'central')
+  assert.equal(addresses.agentAddress('skillset', 'refine.accept').writePath, 'kernel:invoke_action')
   assert.equal(addresses.agentAddress('skillset', 'refine.why').writePath, undefined, 'a reading')
   bind.resetHolds()
 })
@@ -578,10 +584,12 @@ test('15 · Approvals: a proposed revision waits as a proposal with its Result f
   assert.match(unwired.standing.refineAccept.disabled, /aikit_write/)
   // REPLACED (O-I 795 round 13): "Central keeps … missing op: AIKit handing its proposed revision to Central's
   // control.skills.revision.propose (AIKit)": AIKit's Accept hands it to Central now, and the person's Accept there writes it (test 17).
+  // REPLACED (O-I 795 round 14): an Accept with no hand to Central handed it and stopped there. The person's one Accept hands it, writes it
+  // in Central and has AIKit follow, so where no hand carries it to Central, Accept says so and nothing is asked.
   const handedTo = []
   const central = approvals({refinements: {status: 'answered', value: {proposals: [proposal({owner: 'central'})]}, error: null}}, {refine: async request => { handedTo.push(request) }})
-  await central.write([{key: 'refineAccept', value: `refine:${ALPHA}`}])
-  assert.deepEqual(handedTo, [{kind: 'refinement-accept', member: ALPHA}])
+  await assert.rejects(central.write([{key: 'refineAccept', value: `refine:${ALPHA}`}]), /no hand carries it to Central here/)
+  assert.deepEqual(handedTo, [])
   // The design answers it with Accept and Discard, and draws its Result.
   host.setHostPage(binding.id, 'review')
   const drawn = hosted(approvalsDesign, {...binding, values: {...binding.values, pick: row.id}})
@@ -617,21 +625,41 @@ test('15 · Approvals: a proposed revision waits as a proposal with its Result f
 // skill_sources.rs accept_revision → Central's control.skills.revision.propose), and its listing names where it waits (`handed`, FAKE in
 // the REAL listing's shape); the person's Accept then writes it through Central's own act, at the digest reviewed, and Discard drops it
 // from Central and from AIKit (ctrl control_skills.rs control.skills.revision.accept · discard, person's presses: action.rs PERSON_ACTS).
+// O-I 795 round 14: the person's one Accept is enough. It hands the revision to Central where it is not yet handed, writes it there, and
+// AIKit's source follows (`aikit source refine follow`: sync from Central and promote, with a receipt; ai-kit skill_sources.rs
+// follow_revision), so nothing is left for the person to sync or promote. A revision Central already wrote is followed.
 const HANDED = {revision_ref: 'central:skill-revision:k1', proposed_digest: 'sha256:d1', scope: 'control-user', name: 'alpha', accept_action: 'control.skills.revision.accept'}
 const HANDED_READ = {revisionRef: HANDED.revision_ref, proposedDigest: HANDED.proposed_digest, scope: 'control-user', name: 'alpha', acceptAction: HANDED.accept_action}
 test('17 · a Control skill\'s revision: Accept hands it to Central, where the person\'s Accept writes it and Discard drops it, from the Refining page and from Approvals', async () => {
   bind.resetHolds()
   const calls = []
   const ports = {write: async request => { calls.push(['aikit', request]) }, central: async (verb, handed) => { calls.push(['central', verb, handed]) }}
-  // Not yet handed: Accept is AIKit's own verb, which hands it to Central.
-  await refining([proposal({owner: 'central'})], ports).write([{key: 'accept', value: ALPHA}])
+  // REPLACED (O-I 795 round 14): "Not yet handed: Accept is AIKit's own verb, which hands it to Central" and "Accept is the person's there,
+  // then AIKit's copy goes" (refinement-discard). One Accept: AIKit hands it (its answer names where it waits), Central writes it, AIKit
+  // follows.
+  const handing = {...ports, write: async request => { calls.push(['aikit', request]); return {route: 'aikit source refine accept', data: request.kind === 'refinement-accept' ? {member: ALPHA, handed: HANDED} : {followed: ALPHA}} }}
+  const fresh = refining([proposal({owner: 'central'})], handing)
+  assert.equal(fresh.standing.accept, undefined)
+  await fresh.write([{key: 'accept', value: ALPHA}])
+  assert.deepEqual(calls.splice(0), [['aikit', {kind: 'refinement-accept', member: ALPHA}], ['central', 'accept', HANDED_READ], ['aikit', {kind: 'refinement-follow', member: ALPHA}]])
+  // AIKit answering no hand: Central is not asked, in words.
+  await assert.rejects(refining([proposal({owner: 'central'})], {...ports, write: async request => { calls.push(['aikit', request]); return {route: 'r', data: {member: ALPHA}} }})
+    .write([{key: 'accept', value: ALPHA}]), /did not say where the revision of skill\/practice\/alpha waits in Central/)
   assert.deepEqual(calls.splice(0), [['aikit', {kind: 'refinement-accept', member: ALPHA}]])
-  // Handed: it waits in Central, and the page says so; Accept is the person's there, then AIKit's copy goes.
+  // Handed: it waits in Central, and the page says so; Accept writes it there, and AIKit follows.
   const waiting = refining([proposal({owner: 'central', handed: HANDED})], ports)
   assert.equal(waiting.standing.accept, undefined)
   assert.equal(waiting.values.handed, HANDED.revision_ref)
   await waiting.write([{key: 'accept', value: ALPHA}])
-  assert.deepEqual(calls.splice(0), [['central', 'accept', HANDED_READ], ['aikit', {kind: 'refinement-discard', member: ALPHA}]])
+  assert.deepEqual(calls.splice(0), [['central', 'accept', HANDED_READ], ['aikit', {kind: 'refinement-follow', member: ALPHA}]])
+  // Central wrote it already (an Accept whose follow was refused, pressed again): nothing waits there, and AIKit follows; AIKit judges
+  // whether Central accepted it (refinement.central_not_accepted) and the follow's refusal comes back in its words.
+  const written = refining([proposal({owner: 'central', handed: HANDED})], {...ports, central: async () => { throw Error('no proposed revision of alpha waits') }})
+  await written.write([{key: 'accept', value: ALPHA}])
+  assert.deepEqual(calls.splice(0), [['aikit', {kind: 'refinement-follow', member: ALPHA}]])
+  const unfollowed = refining([proposal({owner: 'central', handed: HANDED})], {...ports, write: async request => { calls.push(['aikit', request]); throw Error('Central keeps sha256:d0 in use, not the revision handed') }})
+  await assert.rejects(unfollowed.write([{key: 'accept', value: ALPHA}]), /not the revision handed/)
+  assert.deepEqual(calls.splice(0), [['central', 'accept', HANDED_READ], ['aikit', {kind: 'refinement-follow', member: ALPHA}]])
   // Discard drops it in Central and in AIKit; a revision Central no longer keeps is dropped from AIKit alone.
   await waiting.write([{key: 'discard', value: ALPHA}])
   assert.deepEqual(calls.splice(0), [['central', 'discard', HANDED_READ], ['aikit', {kind: 'refinement-discard', member: ALPHA}]])
@@ -642,16 +670,20 @@ test('17 · a Control skill\'s revision: Accept hands it to Central, where the p
   const stale = refining([proposal({owner: 'central', handed: HANDED})], {...ports, central: async () => { throw Error('alpha changed since the revision was proposed') }})
   await assert.rejects(stale.write([{key: 'accept', value: ALPHA}]), /changed since the revision was proposed/)
   assert.deepEqual(calls.splice(0), [])
-  // No hand to Central: Accept and Discard say where the revision waits and what carries the person's act there.
+  // No hand to Central: Accept and Discard say where the revision waits and what carries the person's act there; before it is handed,
+  // Accept says Central keeps it, and Discard drops AIKit's proposal alone (nothing waits in Central).
   const unhanded = refining([proposal({owner: 'central', handed: HANDED})], {write: ports.write})
   for (const key of ['accept', 'discard']) {
     assert.match(unhanded.standing[key].disabled, /waits in Central \(central:skill-revision:k1\)[\s\S]*control\.skills\.revision\./)
   }
+  const unhandedFresh = refining([proposal({owner: 'central'})], {write: ports.write})
+  assert.match(unhandedFresh.standing.accept.disabled, /Central keeps[\s\S]*control\.skills\.revision\.accept[\s\S]*no hand carries it to Central here/)
+  assert.equal(unhandedFresh.standing.discard, undefined)
   // Approvals answers it the same way.
   const app = approvals({refinements: {status: 'answered', value: {proposals: [proposal({owner: 'central', handed: HANDED})]}, error: null}},
     {refine: ports.write, refineCentral: ports.central})
   await app.write([{key: 'refineAccept', value: `refine:${ALPHA}`}])
-  assert.deepEqual(calls.splice(0), [['central', 'accept', HANDED_READ], ['aikit', {kind: 'refinement-discard', member: ALPHA}]])
+  assert.deepEqual(calls.splice(0), [['central', 'accept', HANDED_READ], ['aikit', {kind: 'refinement-follow', member: ALPHA}]])
   // Central's own acts, through the kernel's invoke_action with the person's own authority, at the digest the person reviewed.
   const routes = read('agent/devices/ownerRoutes.ts')
   assert.match(routes, /accept: 'control\.skills\.revision\.accept', discard: 'control\.skills\.revision\.discard'/)

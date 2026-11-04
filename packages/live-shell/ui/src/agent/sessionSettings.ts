@@ -102,6 +102,9 @@ export function clipValuesOfSettings(reading: EncounterSessionSettingsReading | 
   if (task.repeat_levels?.length) values['repeat.levels'] = task.repeat_levels.join(', ')
   // The takes a Repeat's set made, once it ends (O-I 795).
   own('takes', task.takes?.ended?.takes)
+  // Compare, the takes' own setting (§19.1: none · second · every, default none), as AIKit keeps it beside the Success conditions (O-I 795
+  // round 14); absent from an AIKit that keeps none.
+  own('compare', task.compare)
   // The Success conditions typed for the task (§19.1 The Intent panel), each without an answer until a run returns one; absent from an
   // AIKit that keeps none.
   if (Array.isArray(task.success)) values.criteria = JSON.stringify(task.success.map((text, i) => ({id: `c${i}`, text})))
@@ -177,6 +180,8 @@ export function taskSettingChange(setting: TaskSetting, value: Value, reading: E
     }
     case 'repeatRepeats': return set({repeat_repeats: count(value)})
     case 'repeatStop': return set({repeat_stop: text(value)})
+    // Compare draws the takes; it moves while they run (AIKit refuses a word it does not take, in its words).
+    case 'compare': return set({compare: text(value)})
     // Add: one condition more, after those that stand (§19.1 The Intent panel: "A new success condition. Press Enter to add it").
     case 'success': {
       const written = text(value)

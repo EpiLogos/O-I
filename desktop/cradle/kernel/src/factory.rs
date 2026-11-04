@@ -631,6 +631,16 @@ pub enum OwnerRequest {
         state_path: PathBuf,
         run_ref: String,
     },
+    /// A Run's Development Field as Factory keeps it beside the state that
+    /// holds the Run (`factory development field read --state <state>
+    /// <run-ref> --json` → `factory.development-field-reading/v1`): the
+    /// required difference, its evidence and what is still unresolved — the
+    /// Clip view's Intent (O-I 795 round 14). Factory refuses a Run its state
+    /// does not hold, and a Run whose field was never set, in its words.
+    DevelopmentFieldRead {
+        state_path: PathBuf,
+        run_ref: String,
+    },
     /// The person's act on a Run's plan (`factory development wave act
     /// <state> -`, `factory.wave-request/v1` → `factory.wave-receipt/v1`):
     /// the act carried verbatim; its caller is the desk and its authority the
@@ -711,6 +721,7 @@ impl OwnerRequest {
                 | OwnerRequest::CustodyList { .. }
                 | OwnerRequest::TaskActivityRead { .. }
                 | OwnerRequest::WaveRead { .. }
+                | OwnerRequest::DevelopmentFieldRead { .. }
         )
     }
 }
@@ -2130,6 +2141,13 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
             owner_call(&wave_read_args(&state_path, &run_ref), None)?,
             &[WAVE_READING],
         ),
+        OwnerRequest::DevelopmentFieldRead {
+            state_path,
+            run_ref,
+        } => expect_contract(
+            owner_call(&development_field_read_args(&state_path, &run_ref), None)?,
+            &[DEVELOPMENT_FIELD_READING],
+        ),
         OwnerRequest::WaveAct {
             state_path,
             request,
@@ -2496,6 +2514,22 @@ pub fn wave_read_args(state_path: &Path, run_ref: &str) -> Vec<std::ffi::OsStrin
         "read".into(),
         path_arg(state_path),
         "--run".into(),
+        run_ref.into(),
+        "--json".into(),
+    ]
+}
+
+/// Factory's reading of a Run's Development Field (`development_field.rs`).
+pub const DEVELOPMENT_FIELD_READING: &str = "factory.development-field-reading/v1";
+
+/// `factory development field read --state <state> <run-ref> --json`.
+pub fn development_field_read_args(state_path: &Path, run_ref: &str) -> Vec<std::ffi::OsString> {
+    vec![
+        "development".into(),
+        "field".into(),
+        "read".into(),
+        "--state".into(),
+        path_arg(state_path),
         run_ref.into(),
         "--json".into(),
     ]
@@ -4697,6 +4731,40 @@ mod run_close_tests {
         .unwrap_err()
         .message
         .contains("no one human grant"));
+    }
+
+    /// A Run's Development Field, read by the Factory state that holds the
+    /// Run (`factory development field read --state <state> <run-ref>`): the
+    /// Clip view's Intent, the required difference in Factory's words. A
+    /// reading, outside the lock; Factory keeps the ledger beside the state.
+    #[test]
+    fn a_run_s_development_field_is_read_by_the_state_that_holds_it() {
+        let read: OwnerRequest = serde_json::from_value(serde_json::json!({
+            "kind": "development-field-read", "state_path": "/s.json", "run_ref": "run:A"}))
+        .unwrap();
+        assert!(
+            read.is_read() && !read.needs_world(),
+            "a reading, outside the lock"
+        );
+        assert_eq!(
+            development_field_read_args(Path::new("/s.json"), "run:A")
+                .iter()
+                .map(|arg| arg.to_string_lossy().into_owned())
+                .collect::<Vec<_>>(),
+            [
+                "development",
+                "field",
+                "read",
+                "--state",
+                "/s.json",
+                "run:A",
+                "--json"
+            ]
+        );
+        assert_eq!(
+            DEVELOPMENT_FIELD_READING,
+            "factory.development-field-reading/v1"
+        );
     }
 
     #[test]

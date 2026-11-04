@@ -127,7 +127,9 @@ test('the rows are the track\'s Agent rack — its agents and its agent set — 
   const check = JSON.parse(values['score.check'])
   assert.equal(check.state, 'admitted')
   assert.match(check.why, /factory workflow check admits the song's file/)
-  assert.match(check.why, /ql vak compose/, 'QL\'s word on each unit names the operation it waits for')
+  // REPLACED (O-I 795 round 14): "QL's word on each unit names the operation it waits for" (`ql vak compose`, which takes no unit's
+  // composition). QL checks each unit's seven heads as a Vāk-block cell (`ql context-frame team-space check`); unasked, it says so.
+  assert.match(check.why, /QL's word on each unit is not read here[\s\S]*ql context-frame team-space check vak-block/)
   // Once the file is edited the Run still performs the edition it was commissioned with, and Factory marks the unit the file changed.
   const after = score.scoreValuesOf(read(REAL.score_allocated), rack, null)
   assert.match(JSON.parse(after['score.check']).why, /performs the edition it was commissioned with/)
@@ -252,8 +254,63 @@ test('Vāk draws the selected unit\'s heads, the open ones dashed; Fill heads as
   // Compose is Anima's act as an agent: it stands refused, naming that no operation composes a song from an Intent.
   setViewHold(HOLD, 'gen.tool', 'compose')
   await assert.rejects(binding.write([{key: 'gen.press', value: 1}]), /Anima/)
-  // The engine's word on a proposal: QL's per-unit word waits for its operation.
-  assert.match(binding.standing['gen.status']?.disabled ?? clip.factoryWiring({sessionRef: 'ses-eros', n: 1}, null, null, null, picked.port).absent['gen.status'], /ql vak compose/)
+  // The engine's word on a proposal: QL's check of the unit with its picks, unasked here.
+  // REPLACED (O-I 795 round 14): "QL's per-unit word waits for its operation" (`ql vak compose`).
+  assert.match(binding.standing['gen.status']?.disabled ?? clip.factoryWiring({sessionRef: 'ses-eros', n: 1}, null, null, null, picked.port).absent['gen.status'], /ql context-frame team-space check vak-block/)
+})
+
+// O-I 795 round 14: QL's word on each unit (§19.1 "the engine refusing one unit"; #843 "Vāk draws the selected unit's heads from" QL's
+// engine): a unit's seven heads are a cell of QL's Vāk-block instrument, and QL's engine checks every cell of the score in one ask (ql
+// team_space.rs check_cells: each chosen label held to its head and the instrument's constraints, the open heads named; `ql context-frame
+// team-space check vak-block -`, through the kernel's ql_read instrument-check). A proposal's picks are checked with the unit's heads as
+// their own cell, which is the engine's word on the proposal. SCRIPTED: QL's answers are in the REAL check's shape (its own test,
+// crates/ql-cli/src/lib.rs a_cell_of_an_instrument_is_checked_by_the_engine_with_its_open_heads_named, pins it on the built space).
+test('QL\'s word on each unit: its seven heads checked as a Vāk-block cell by QL\'s engine; one refused refuses the score, and a proposal is checked with its picks', async () => {
+  const reading = read(REAL.score)
+  const rack = score.rackRowsOf(eros, TRACKS)
+  const cells = score.vakCellsOf(reading, null)
+  const own = unitOf(REAL.score, 'eros-verify')
+  assert.equal(cells.length, REAL.score.units.length, 'one cell for each unit')
+  assert.deepEqual(cells.find(cell => cell.key === 'eros-verify').chosen, Object.fromEntries([['CPF', 'vak-cpf'], ['CT', 'vak-ct'], ['CP', 'vak-cp'],
+    ['CF', 'vak-cf'], ['CFP', 'vak-cfp'], ['CS', 'vak-cs'], ['direction', 'vak-direction']].filter(([head]) => own.heads[head]).map(([head, vak]) => [vak, [own.heads[head]]])),
+  'Factory\'s heads under QL\'s head ids')
+  const asked = []
+  const answering = data => async op => { asked.push(op); return {outcome: {result: 'owner_route_reading', route: 'ql context-frame team-space check', data}} }
+  const admitted = {schema: 'ql.instrument-cell-check/v1', instrument: 'vak-block', cells: cells.map(cell => ({key: cell.key, state: 'admitted', heads: [], open: [],
+    why: 'every head holds a label it allows, and no constraint is broken'}))}
+  const word = await score.readQlWord(answering(admitted), cells)
+  assert.deepEqual(asked, [{op: 'ql_read', request: {kind: 'instrument-check', instrument: 'vak-block', request: {schema: 'ql.instrument-cells/v1', cells}}}])
+  const check = JSON.parse(score.scoreValuesOf(reading, rack, null, word)['score.check'])
+  assert.equal(check.state, 'admitted')
+  assert.match(check.why, /factory workflow check admits the song's file · QL admits every unit's composition/)
+  // One unit refused: the score is refused, in QL's words.
+  const refusing = {...admitted, cells: admitted.cells.map(cell => cell.key === 'eros-verify'
+    ? {...cell, state: 'refused', why: 'label `CF8` is not legal for `vak-cf` (context-frame)'} : cell)}
+  const refused = JSON.parse(score.scoreValuesOf(reading, rack, null, await score.readQlWord(answering(refusing), cells))['score.check'])
+  assert.equal(refused.state, 'refused')
+  assert.match(refused.why, /QL refuses eros-verify: label `CF8` is not legal for `vak-cf`/)
+  // QL not reached, or an older QL: its words stand where its check would.
+  const absent = await score.readQlWord(async () => ({error: 'unknown Context-Frame operation `check`'}), cells)
+  assert.equal(absent.state, 'absent')
+  assert.match(JSON.parse(score.scoreValuesOf(reading, rack, null, absent)['score.check']).why, /QL's word on each unit is not read: QL did not check[\s\S]*unknown Context-Frame operation/)
+  assert.match((await score.readQlWord(answering({schema: 'ql.vak-team-space/v1'}), cells)).why, /ql\.instrument-cell-check\/v1/)
+  // The proposal: the unit's heads with the decision model's picks, a cell of its own; QL's word on it is the engine's word on the proposal.
+  const bare = structuredClone(REAL.score)
+  Object.assign(unitOf(bare, 'eros-verify'), {heads: null, composition: null})
+  const held = {unit: 'eros-verify', reading: FILL}
+  const proposing = score.vakCellsOf(read(bare), held)
+  assert.deepEqual(proposing.find(cell => cell.key === 'eros-verify#proposed').chosen, {'vak-cs': ['CS3'], 'vak-direction': ['returning-inquiry']})
+  const proposed = await score.readQlWord(answering({...admitted, cells: [...admitted.cells, {key: 'eros-verify#proposed', state: 'admitted', heads: [],
+    open: ['vak-cpf'], why: 'every chosen label is one its head holds, and no constraint is broken; open: participation'}]}), proposing)
+  const values = score.scoreValuesOf(read(bare), rack, held, proposed)
+  assert.deepEqual(JSON.parse(values['gen.status']), {state: 'admitted', why: 'eros-verify: every chosen label is one its head holds, and no constraint is broken; open: participation'})
+  const wiring = score.scoreWiring({...port(read(bare)).port, picks: held, word: proposed}, () => undefined)
+  assert.equal(wiring.absent['gen.status'], undefined, 'read')
+  assert.match(score.scoreWiring({...port(read(bare)).port, word: proposed}, () => undefined).absent['gen.status'], /Nothing proposed waits/)
+  assert.match(score.scoreWiring({...port(read(bare)).port, picks: held, word: absent}, () => undefined).absent['gen.status'], /QL did not check/)
+  // On the clip: the port carries QL's word.
+  const binding = bindingOf({...port(read(REAL.score)).port, word: await score.readQlWord(answering(refusing), cells)})
+  assert.equal(JSON.parse(binding.values['score.check']).state, 'refused')
 })
 
 test('Sample draws the task\'s log from the session\'s events, the retrospective readings where they were found; Warp lays it on the note; the tools change no log', async () => {

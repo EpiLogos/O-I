@@ -83,9 +83,9 @@ export interface TaskAddress {
 /** The settings that belong to one task (manual §19.1 Clip view: its name, colour and activator, its output style, its Loop with its stop
  * condition and cap, its Launch mode, Then and Quantize, what a Repeat varies — Variable, Levels, Repeats, Stop when — and its envelopes:
  * the Agent's Effort and Scope's Tool calls for this task, as Automation or Modulation, linked or not; the Agent's Autonomy is retired),
- * and the Success conditions typed for it in the Intent panel. */
+ * the Success conditions typed for it in the Intent panel, and Compare, the takes' own setting (O-I 795 round 14). */
 export type TaskSetting = 'name' | 'colour' | 'active' | 'register' | 'form' | 'loop' | 'loopUntil' | 'loopCap' | 'launch' | 'then' | 'quantize'
-  | 'repeatVariable' | 'repeatLevels' | 'repeatRepeats' | 'repeatStop' | 'effort' | 'toolCalls' | 'envelopeMode' | 'envelopeLink' | 'success'
+  | 'repeatVariable' | 'repeatLevels' | 'repeatRepeats' | 'repeatStop' | 'effort' | 'toolCalls' | 'envelopeMode' | 'envelopeLink' | 'success' | 'compare'
 
 /** The seam each task setting writes through (T-REALIGN R2: "Owner ops that do not exist yet are built, not listed"): the session's
  * settings on their owner. A seam whose owner op does not stand names why (`refused`) and its control stands disabled with it. */
@@ -126,6 +126,8 @@ export const TASK_SEAMS: Readonly<Record<TaskSetting, TaskSeam>> = {
   envelopeLink: settingSeam('envelopeLink'),
   // The Intent panel's Add: a Success condition typed for the task, kept with its settings (O-I 795).
   success: settingSeam('success'),
+  // Compare (§19.1 The Launch panel; Arrangement view's take settings): the takes' own setting, kept with the task's (O-I 795 round 14).
+  compare: settingSeam('compare'),
 }
 
 /** The owner op the task's own acts wait for, in its exact shape. */

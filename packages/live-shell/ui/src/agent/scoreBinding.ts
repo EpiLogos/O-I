@@ -13,8 +13,12 @@
 //     (`aikit decide invoke --instrument vak-block`, aikit.instrument-fill-request/v1 → aikit.instrument-fill/v1, aikit_write
 //     `decide-fill`), the ask kept against the session. A unit with no open head is not asked (zero heads, zero calls). AIKit's picks are
 //     evidence: they stand dashed on the unit until Accept writes them into its composition through Factory, or Discard drops them.
-//   - Compose (a song from the task's Intent) is Anima's act as an agent, and QL's per-unit word (`ql vak compose`) has no operation that
-//     takes a workflow unit's composition: both stand refused or absent, each naming what it waits for.
+//   - QL's word on each unit: a unit's seven heads are a cell of QL's Vāk-block instrument, and QL's engine checks every cell of the score
+//     in one ask (`ql context-frame team-space check vak-block -`, ql.instrument-cells/v1 → ql.instrument-cell-check/v1, the kernel's
+//     ql_read `instrument-check`): each chosen label held to its head and the instrument's constraints, an open head an abstention it
+//     names. One unit refused refuses the score (`score.check`), in QL's words. A proposal's picks, with the unit's heads, are a cell of
+//     their own: QL's word on it is the engine's word on the proposal (`gen.status`).
+//   - Compose (a song from the task's Intent) is Anima's act as an agent: it stands refused, naming what it waits for.
 //   - A unit that is a song's clip dropped on the track (O-I #844, songClips.ts; Factory marks it `form: canon`, its `songClip`, and draws
 //     the clip's score inside it as `song`) stands as one note with the thread form canon (CFP5), the song's notes small inside it; a
 //     double-click opens it (`score.open`) and Back returns. Its song is the clip's render, never edited here.
@@ -35,6 +39,12 @@ export const EDIT_REQUEST = 'factory.workflow-edit/v1'
 export const FILL_REQUEST = 'aikit.instrument-fill-request/v1'
 export const FILL_READING = 'aikit.instrument-fill/v1'
 export const VAK_BLOCK = 'vak-block'
+/** QL's check of an instrument's cells, the cells it takes and its answer (ql-mef team_space.rs check_cells). */
+export const INSTRUMENT_CELLS = 'ql.instrument-cells/v1'
+export const INSTRUMENT_CELL_CHECK = 'ql.instrument-cell-check/v1'
+const QL_CHECK = '`ql context-frame team-space check vak-block`'
+/** The cell of a unit's proposal: the unit's heads with the decision model's picks. */
+const PROPOSED = '#proposed'
 
 /** The seven heads of a unit's composition, in Factory's spelling, and the head of QL's Vāk-block instrument each is. */
 const HEADS: readonly (readonly [string, string])[] = [['CPF', 'vak-cpf'], ['CT', 'vak-ct'], ['CP', 'vak-cp'], ['CF', 'vak-cf'], ['CFP', 'vak-cfp'],
@@ -98,10 +108,73 @@ function picksOf(held: HeldPicks | null, unit: string): Record<string, string> |
   return Object.keys(out).length ? out : null
 }
 
-const QL_WORD = 'QL\'s word on each unit is not read: no QL operation takes a workflow unit\'s composition (`ql vak compose` takes a step grammar request, ql.vak-composition/v1)'
+/** A cell of QL's Vāk-block instrument: a unit's chosen labels under QL's head ids. */
+export interface VakCell {readonly key: string; readonly chosen: Record<string, readonly string[]>}
+/** QL's word on one cell: admitted or refused, the heads it leaves open, in its words. */
+export interface CellWord {readonly state: string; readonly why: string; readonly open: readonly string[]}
+/** QL's word on the score's cells, or why there is none. */
+export type QlWord = {readonly state: 'read'; readonly cells: ReadonlyMap<string, CellWord>} | {readonly state: 'absent'; readonly why: string}
 
-/** The engine's word on the score: Factory's check of the song, whether the Run performs this edition, and what QL's word waits for. */
-function checkOf(reading: Record<string, unknown>): {state: string; why: string} {
+export const QL_WORD_UNASKED = `QL's word on each unit is not read here: nothing carries the units' compositions to QL's engine (${QL_CHECK})`
+export const QL_WORD_READING = `QL's engine is checking each unit's composition (${QL_CHECK})`
+
+/** Factory's heads under QL's head ids: each head that holds a label. Pure. */
+function chosenOf(heads: Record<string, unknown>): Record<string, string[]> {
+  const chosen: Record<string, string[]> = {}
+  for (const [head, vak] of HEADS) { const label = text(heads[head]); if (label) chosen[vak] = [label] }
+  return chosen
+}
+
+const unitsOf = (reading: Record<string, unknown>): Record<string, unknown>[] =>
+  list(reading.units).map(object).filter((unit): unit is Record<string, unknown> => unit !== null)
+
+/** The score's cells QL checks: one for each unit, its heads as Factory reads them; and, while picks are held, the unit's heads with the
+ * picks as the proposal's own cell. Pure. */
+export function vakCellsOf(score: ScoreReading | null, picks: HeldPicks | null): VakCell[] {
+  if (score?.state !== 'read') return []
+  const units = unitsOf(score.reading)
+  const cells: VakCell[] = units.map(unit => ({key: String(unit.key), chosen: chosenOf(object(unit.heads) ?? {})}))
+  const held = picks ? picksOf(picks, picks.unit) : null
+  const unit = held && picks ? units.find(item => item.key === picks.unit) : null
+  if (held && unit && picks) cells.push({key: `${picks.unit}${PROPOSED}`, chosen: chosenOf({...(object(unit.heads) ?? {}), ...held})})
+  return cells
+}
+
+/** One check of the score's cells by QL's engine through the kernel (ql_read `instrument-check`): its word on each, or why there is none
+ * in QL's words. No cell, no ask. */
+export async function readQlWord(call: PlanCall, cells: readonly VakCell[]): Promise<QlWord> {
+  if (!cells.length) return {state: 'read', cells: new Map()}
+  const read = await call({op: 'ql_read', request: {kind: 'instrument-check', instrument: VAK_BLOCK, request: {schema: INSTRUMENT_CELLS, cells}}})
+  if (read.error) return {state: 'absent', why: `QL did not check the units' compositions: ${refusalWords(read.error)}`}
+  const data = object(read.outcome?.result === 'owner_route_reading' ? read.outcome.data : null)
+  if (data?.schema !== INSTRUMENT_CELL_CHECK) {
+    return {state: 'absent', why: `QL answered no check of the units (${INSTRUMENT_CELL_CHECK}): the QL installed here may predate \`ql context-frame team-space check\`.`}
+  }
+  const words = new Map<string, CellWord>()
+  for (const cell of list(data.cells).map(object)) {
+    const key = text(cell?.key)
+    if (key) words.set(key, {state: cell?.state === 'refused' ? 'refused' : 'admitted', why: text(cell?.why) ?? 'QL gave no reason', open: texts(cell?.open)})
+  }
+  return {state: 'read', cells: words}
+}
+
+/** QL's word on the score's own units: refused if it refuses one, in its words. Pure. */
+function qlWordOn(units: readonly Record<string, unknown>[], word: QlWord | null | undefined): {refused: boolean; why: string} {
+  if (!word) return {refused: false, why: QL_WORD_UNASKED}
+  if (word.state === 'absent') return {refused: false, why: `QL's word on each unit is not read: ${word.why}`}
+  const refusals: string[] = [], silent: string[] = []
+  for (const unit of units) {
+    const key = String(unit.key), cell = word.cells.get(key)
+    if (!cell) silent.push(key)
+    else if (cell.state === 'refused') refusals.push(`QL refuses ${key}: ${cell.why}`)
+  }
+  if (refusals.length) return {refused: true, why: refusals.join(' · ')}
+  if (silent.length) return {refused: false, why: `QL gave no word on ${silent.join(', ')}`}
+  return {refused: false, why: units.length ? 'QL admits every unit\'s composition' : 'QL has no unit to check'}
+}
+
+/** The engine's word on the score: Factory's check of the song, whether the Run performs this edition, and QL's word on each unit. */
+function checkOf(reading: Record<string, unknown>, word: QlWord | null | undefined): {state: string; why: string} {
   const check = object(reading.check) ?? {}, song = object(reading.song) ?? {}
   const refused = check.state === 'refused'
   const words: string[] = []
@@ -110,8 +183,9 @@ function checkOf(reading: Record<string, unknown>): {state: string; why: string}
   else words.push('Factory reads the edition the Run retained')
   if (text(song.why)) words.push(text(song.why)!)
   if (song.edition === 'file' && song.performed === false) words.push('the file was edited: the Run performs the edition it was commissioned with, and the song\'s next Run performs this one')
-  words.push(QL_WORD)
-  return {state: refused ? 'refused' : 'admitted', why: words.join(' · ')}
+  const ql = qlWordOn(unitsOf(reading), word)
+  words.push(ql.why)
+  return {state: refused || ql.refused ? 'refused' : 'admitted', why: words.join(' · ')}
 }
 
 const rowKindOf = (kind: unknown): string => kind === 'agent-set' ? 'set' : kind === 'agency' ? 'agency' : 'agent'
@@ -143,8 +217,9 @@ function canonOf(unit: Record<string, unknown>, depth: number): Record<string, u
 }
 
 /** The score as the design draws it (clips/factory.tsx Score): rows, units, joins and waves in Factory's words, the held picks on their
- * unit; `unit.own` this task's unit; `score.check` the engine's word. Empty where nothing is read. Pure. */
-export function scoreValuesOf(score: ScoreReading | null, rack: readonly RackRow[], picks: HeldPicks | null): Record<string, Value> {
+ * unit; `unit.own` this task's unit; `score.check` the engine's word, Factory's and QL's; `gen.status` QL's word on the proposal. Empty
+ * where nothing is read. Pure. */
+export function scoreValuesOf(score: ScoreReading | null, rack: readonly RackRow[], picks: HeldPicks | null, word?: QlWord | null): Record<string, Value> {
   if (score?.state !== 'read') return {}
   const {reading, target} = score
   const units = list(reading.units).map(object).filter((unit): unit is Record<string, unknown> => unit !== null)
@@ -166,9 +241,11 @@ export function scoreValuesOf(score: ScoreReading | null, rack: readonly RackRow
     waves: list(reading.waves).map(object).map(wave => ({id: String(wave?.wave), name: String(wave?.wave),
       ...(text(wave?.state) ? {state: WAVE_STATE_WORD[String(wave?.state)] ?? String(wave?.state)} : {})})),
   }
-  const values: Record<string, Value> = {score: JSON.stringify(drawn), 'score.check': JSON.stringify(checkOf(reading))}
+  const values: Record<string, Value> = {score: JSON.stringify(drawn), 'score.check': JSON.stringify(checkOf(reading, word))}
   const own = units.find(unit => unit.unitRef === target.unitRef)
   if (own) values['unit.own'] = String(own.key)
+  const proposal = picks && word?.state === 'read' ? word.cells.get(`${picks.unit}${PROPOSED}`) : undefined
+  if (picks && proposal) values['gen.status'] = JSON.stringify({state: proposal.state, why: `${picks.unit}: ${proposal.why}`})
   return values
 }
 
@@ -183,6 +260,8 @@ export interface ScorePort {
   readonly reading: ScoreReading
   readonly rack: readonly RackRow[]
   readonly picks: HeldPicks | null
+  /** QL's word on the score's cells, the proposal's among them; none where nothing asks QL. */
+  readonly word?: QlWord | null
   /** Factory writes the edit and the score is read again, or Factory's refusal is thrown in its words. */
   readonly edit: (request: SongEdit) => Promise<void>
   /** AIKit asks the decision model and its picks are held for the unit, or AIKit's refusal is thrown in its words. */
@@ -203,7 +282,18 @@ const SCORE_VIEW: Readonly<Record<string, string>> = {
  * the Run starts; the song holds none. */
 export const JOIN_IS_THE_SETS = 'The join is the agent set\'s join: Factory combines a stacked step\'s returns by it, read from Central\'s agent set as the Run starts. Set it on the Agent rack\'s Join; the song holds no join to write (Software Factory, Central).'
 export const NO_COMPOSE = 'Compose: composing a song from the task\'s Intent is Anima\'s act as an agent — no operation proposes a workflow from an intent yet (Anima).'
-export const GEN_STATUS_ABSENT = `The engine's word on the proposal: no reading reaches it — ${QL_WORD}; Factory checks the composition when you accept it (Quaternal Logic).`
+export const GEN_STATUS_ABSENT = `The engine's word on the proposal: no score is read, so QL's engine has no unit to check with the decision model's picks (${QL_CHECK}); Factory checks the composition when you accept it (Quaternal Logic).`
+const NOTHING_PROPOSED = `Nothing proposed waits: Fill heads asks the decision model for a unit's open heads, and QL's engine checks its picks with the unit's heads (${QL_CHECK}) (Quaternal Logic).`
+
+/** Why QL's word on the proposal is not on the clip, or null when it is. Pure. */
+function proposalWhy(port: ScorePort): string | null {
+  const held = port.picks
+  if (!held || !picksOf(held, held.unit)) return NOTHING_PROPOSED
+  const word = port.word
+  if (!word) return `The engine's word on the proposal: ${QL_WORD_UNASKED} (Quaternal Logic).`
+  if (word.state === 'absent') return `The engine's word on the proposal: ${word.why.replace(/\.$/, '')} (Quaternal Logic).`
+  return word.cells.has(`${held.unit}${PROPOSED}`) ? null : `The engine's word on the proposal: QL gave no word on ${held.unit}'s picks (Quaternal Logic).`
+}
 const NO_BRANCH = 'A song branches only by allocation: Transform gives units a thread form, an agent or agent set, or a unit to wait on, never a condition.'
 const SCORE_KEYS = ['score', 'unit.own', 'score.check'] as const
 const SCORE_WRITES = ['score', 'tr.press', 'gen.press', 'gen.accept', 'gen.discard'] as const
@@ -232,6 +322,7 @@ export function scoreWiring(port: ScorePort | null, choice: (key: string) => Val
     return {reads: {}, absent: {...Object.fromEntries(SCORE_KEYS.map(key => [key, why ?? SCORE_NOT_HERE])), 'gen.status': GEN_STATUS_ABSENT}, acts: {}, view: SCORE_VIEW, refused}
   }
   const reading = port.reading.reading, target = port.reading.target
+  const status = proposalWhy(port)
   const units = list(reading.units).map(object).filter((unit): unit is Record<string, unknown> => unit !== null)
   const own = text(units.find(unit => unit.unitRef === target.unitRef)?.key)
   const selected = (): Record<string, unknown> => {
@@ -312,9 +403,10 @@ export function scoreWiring(port: ScorePort | null, choice: (key: string) => Val
     reads: {
       score: 'Factory\'s score of the song the task\'s Run performs (factory workflow score): its units with their compositions, who does each, its joins and waves, on the rows of the track\'s Agent rack — its agents and agent sets — then those the song names that the rack does not hold',
       'unit.own': 'the unit the task\'s latest attempt names, as Factory keys it',
-      'score.check': 'Factory\'s check of the song\'s file (factory workflow check), whether the Run performs it, and what QL\'s word on each unit waits for',
+      'score.check': `Factory's check of the song's file (factory workflow check), whether the Run performs it, and QL's word on each unit's composition, its seven heads a Vāk-block cell (${QL_CHECK})`,
+      ...(status ? {} : {'gen.status': `QL's word on the proposal: the unit's heads with the decision model's picks, checked as a Vāk-block cell (${QL_CHECK})`}),
     },
-    absent: {'gen.status': GEN_STATUS_ABSENT},
+    absent: status ? {'gen.status': status} : {},
     acts,
     view: SCORE_VIEW,
     refused,
@@ -344,8 +436,10 @@ export function fillReadingOf(data: unknown): Record<string, unknown> {
 const carried = (transport: KernelTransportStatus): PlanCall => op =>
   kernelOp(transport, op as Parameters<typeof kernelOp>[1]) as unknown as ReturnType<PlanCall>
 
-/** The task's score, read once per Run and again after an edit; AIKit's picks held for one unit until Accept or Discard. */
-export function useScore(transport: KernelTransportStatus, target: PlanTarget | null, rack: readonly RackRow[], agentSession: string | null): ScorePort {
+/** The task's score, read once per Run and again after an edit; AIKit's picks held for one unit until Accept or Discard; and, where
+ * `checked`, QL's word on its cells, asked again whenever they change. */
+export function useScore(transport: KernelTransportStatus, target: PlanTarget | null, rack: readonly RackRow[], agentSession: string | null,
+  checked = false): ScorePort {
   const key = target ? JSON.stringify([transport, target.statePath, target.runRef, target.unitRef]) : null
   const [epoch, setEpoch] = useState(0)
   const [answer, setAnswer] = useState<{key: string; reading: ScoreReading} | null>(null)
@@ -363,11 +457,26 @@ export function useScore(transport: KernelTransportStatus, target: PlanTarget | 
     : transport.kind === 'unavailable' ? {state: 'absent', why: `Factory is not reached: ${transport.reason ?? 'the shell has no kernel carrier'}.`}
       // The last answer stands until the next arrives, so the score never flickers to unread between reads.
       : answer?.key === key ? answer.reading : {state: 'absent', why: SCORE_READING_NOW}
+  const held = picks && picks.key === key ? picks.held : null
+  const cells = checked ? vakCellsOf(reading, held) : []
+  const wordKey = JSON.stringify([key, cells])
+  const [said, setSaid] = useState<{key: string; word: QlWord} | null>(null)
+  useEffect(() => {
+    if (!cells.length || transport.kind === 'unavailable') return
+    let live = true
+    void readQlWord(carried(transport), cells).then(word => { if (live) setSaid({key: wordKey, word}) })
+    return () => { live = false }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wordKey])
+  const word: QlWord | null = !cells.length ? null
+    : transport.kind === 'unavailable' ? {state: 'absent', why: `QL is not reached: ${transport.reason ?? 'the shell has no kernel carrier'}.`}
+      : said?.key === wordKey ? said.word : {state: 'absent', why: QL_WORD_READING}
   const rackKey = JSON.stringify(rack)
   return useMemo((): ScorePort => ({
     reading,
     rack,
-    picks: picks && picks.key === key ? picks.held : null,
+    picks: held,
+    word,
     edit: async request => {
       if (!target) throw new Error(SCORE_NO_TAKE)
       await factoryOwnerWrite(transport, (scoreEditOp(target, request) as {request: {kind: string}}).request, '`factory workflow edit`')
@@ -380,5 +489,5 @@ export function useScore(transport: KernelTransportStatus, target: PlanTarget | 
     drop: () => setPicks(null),
   }),
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  [reading, picks, key, rackKey, agentSession])
+  [reading, picks, key, rackKey, agentSession, word])
 }

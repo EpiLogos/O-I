@@ -59,15 +59,40 @@ test('every launch mode, follow action, Loop and Repeat field reads as AIKit sta
   assert.deepEqual([on['repeat.variable'], on['repeat.levels'], on['repeat.repeats'], on['repeat.stop']], ['model', 'opus, sonnet, haiku', 4, 'turns'],
     'the levels as the design writes them: comma-separated')
   assert.equal('handoff' in on, false, 'Hand off to is retired')
-  // The wiring reads each from AIKit; only Compare and the takes stay absent, each naming its owner.
+  // The wiring reads each from AIKit; only the takes stay absent before a set stands, naming their owner.
+  // REPLACED (O-I 795 round 14): "only Compare and the takes stay absent" and LAUNCH_REFUSED.compare ("no owner operation carries it yet —
+  // missing op: a comparison of takes"): Compare is the takes' own setting, kept with the task's settings on AIKit (`compare`).
   const wiring = factory.factoryWiring(null)
-  for (const key of LAUNCH_KEYS) {
+  for (const key of [...LAUNCH_KEYS, 'compare']) {
     assert.equal(wiring.absent[key], undefined, `${key} is read`)
     assert.match(wiring.reads[key], /the session's settings/, key)
   }
-  assert.deepEqual(Object.keys(factory.LAUNCH_ABSENT).sort(), ['compare', 'takes'])
-  assert.deepEqual(Object.keys(factory.LAUNCH_REFUSED), ['compare'])
+  assert.deepEqual(Object.keys(factory.LAUNCH_ABSENT).sort(), ['takes'])
+  assert.equal(factory.LAUNCH_REFUSED, undefined, 'Compare is written through its seam')
   assert.equal(wiring.reads.handoff, undefined, 'Hand off to is retired')
+})
+
+// O-I 795 round 14: Compare (§19.1 The Launch panel; Arrangement view's take settings: "None, a second take, or every take of a Repeat",
+// default None) is the takes' own setting, kept by AIKit with the task's settings beside its Success conditions (ai-kit
+// encounter_task_settings.rs COMPARES: none · second · every). It is read and written as AIKit says it, and moves while the takes run:
+// it draws them, it does not make them.
+test('Compare is the takes\' own setting on AIKit: read as it states it, written through its seam, and free while the takes run', () => {
+  assert.equal(settings.clipValuesOfSettings(readingOf(taskOf({compare: 'none'}))).compare, 'none', 'None by default, as AIKit states it')
+  assert.equal(settings.clipValuesOfSettings(readingOf(taskOf({compare: 'every'}))).compare, 'every')
+  assert.equal('compare' in settings.clipValuesOfSettings(readingOf(taskOf())), false, 'an AIKit that keeps no Compare reads none')
+  const reading = readingOf(taskOf({compare: 'none'}))
+  assert.deepEqual(settings.taskSettingChange('compare', 'second', reading).change.task.set, {compare: 'second'})
+  assert.deepEqual(settings.taskSettingChange('compare', 'sideways', reading).change.task.set, {compare: 'sideways'}, 'AIKit refuses a word it does not take, in its words')
+  const context = over => ({transport: {kind: 'unavailable', reason: 'test'}, project: 'O-I', settings: readingOf(taskOf(over))})
+  const running = factory.factoryWiring({sessionRef: 'ses-214', n: 1}, context({compare: 'every', launch: 'repeat', takes: {trace_ref: 'takes:t9', running: true,
+    started_at_unix_ms: 1, variable: 'model', levels: ['opus', 'sonnet'], repeats: 2, stop: 'done', ended: null}}))
+  assert.equal(typeof running.acts.compare, 'function', 'Compare moves while the takes run')
+  assert.equal(running.refused.compare, undefined)
+  assert.match(running.refused['repeat.levels'], /takes:t9 are running/, 'what a Repeat varies holds while they run')
+  // An AIKit that keeps no Compare: absent and refused, saying which AIKit it needs.
+  const unkept = factory.factoryWiring({sessionRef: 'ses-214', n: 1}, context())
+  assert.match(unkept.absent.compare, /keeps no Compare/)
+  assert.match(unkept.refused.compare, /keeps no Compare/)
 })
 
 test('each word goes to AIKit as the clip says it, and AIKit judges it', () => {
