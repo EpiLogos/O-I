@@ -15,7 +15,7 @@ import type { DesignBinding, Standing, Value, ValueChange } from '../frame/devic
 import { HostedDevice, hostState, sayOnInfoLine, setHostPage } from '../frame/devices/deviceHost'
 import { design as windowDesign, searchResults } from '../inhabitants/catalogue/panels/settings__window'
 import { SETTINGS_LOCAL_KEYS, SETTINGS_WINDOW_ID, SETTINGS_WINDOW_WIRING, automationsRequestHolds, searchStep, windowCoreValues } from './windowValues'
-import { useAppearancePage, useAutomationsPage, useCredentialsPage, useHarnessPage, useMachinesPage, useProductsPage, useProfilesPage, useSetupPage, type Act, type PagePart } from './windowPages'
+import { useAppearancePage, useAutomationsPage, useCredentialsPage, useHarnessPage, useMachinesPage, useProductsPage, useProfilesPage, useSetupPage, useSignIn, type Act, type PagePart } from './windowPages'
 import { themeOwned } from './presentationSetting'
 import { chatDefaultOwned } from './chatDefaultSetting'
 import { configPlansOf, ownedRef, withOwnerAnswers, withOwnerPlans, type OwnedSetting } from './ownedSettings'
@@ -302,8 +302,10 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, re
   }), [draftEntries, adapter.ownerEpoch, entries])
   const requestProject = operationScope?.scope_kind === 'project' ? operationScope.scope_ref ?? null : null
   const context = typeof holds.context === 'string' ? holds.context || null : requestProject
-  const harness = useHarnessPage(adapter, wanted && visited.has('agents'))
-  const credentials = useCredentialsPage(adapter, wanted && visited.has('connections'), held, done)
+  // Sign in stands on Harnesses & models and beside a provider's key on Credentials (manual §10.10 Rules): one reading for both pages.
+  const signIn = useSignIn(adapter, wanted && (visited.has('agents') || visited.has('connections')))
+  const harness = useHarnessPage(adapter, wanted && visited.has('agents'), signIn.logins)
+  const credentials = useCredentialsPage(adapter, wanted && visited.has('connections'), held, done, signIn.logins)
   const appearance = useAppearancePage(adapter, wanted && visited.has('appearance'))
   // The owned settings: the owners outside the configuration plane, once each one's reading stands (ownedSettings.ts) — the presentation
   // owner's theme and O:I's chat default. Their entries stand first among the owners' settings, their readings as resolutions; their
@@ -326,7 +328,7 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, re
   const products = useProductsPage(adapter, wanted && (visited.has('products') || visited.has('inspection')))
   const setup = useSetupPage(adapter, wanted && setupOpened, held, done, [holds.folder, holds.make, holds.wiki, holds.where, holds.credential, holds.reference,
     holds.groundFolder, holds.groundName, holds.birthName, holds.birthDate])
-  const parts: readonly PagePart[] = [harness, credentials, appearance, profiles, machines, automations, products, setup]
+  const parts: readonly PagePart[] = [harness, credentials, signIn, appearance, profiles, machines, automations, products, setup]
 
   // ── the window's own presses ────────────────────────────────────────────────────────────────────────────────────────────────────
   const entryOf = (ref: string) => allEntries.find(entry => entry.spec.setting_ref === ref)

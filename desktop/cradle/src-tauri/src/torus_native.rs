@@ -1403,10 +1403,10 @@ mod tests {
             json!({"handed": 4, "unkeyed": 0, "before_torus": 0}),
             "{reading}"
         );
-        // the Torus's effects stand after it on its part (rounds 13 and 14): the frame's Reverb as Live's,
-        // the engine's own device at the frame's Decay, and its Filter as Live's Auto Filter, built to the
-        // frame's Filter from its settings, from the block that takes them. Main is the Torus its owner
-        // sounds, through that reverb and that filter.
+        // the Torus's effects stand after it on its part (rounds 13 to 15): the frame's Reverb as its own
+        // room, from the frame's settings, and its Filter as Live's Auto Filter, built to the frame's Filter
+        // from its settings, from the block that takes them. Main is the Torus its owner sounds, through
+        // that room and that filter.
         let effects = json!({"chain": ["reverb", "filter"],
             "reverb": {"on": true, "size": 50, "decay": 0.6, "damping": 40, "predelay": 20, "mix": 22},
             "filter": {"on": true, "type": "lowpass", "cutoff": 8000, "resonance": 20, "drive": 0, "mix": 100}});
@@ -1417,7 +1417,17 @@ mod tests {
         );
         let main = pull(&mut core, N);
         let mut chain = [
-            live_engine::rack_device("Reverb", &[("DecayTime", 600.0)]).unwrap(),
+            live_engine::rack_device(
+                "reverb",
+                &[
+                    ("size", 50.0),
+                    ("decay", 0.6),
+                    ("damping", 40.0),
+                    ("predelay", 20.0),
+                    ("mix", 22.0),
+                ],
+            )
+            .unwrap(),
             live_engine::rack_device(
                 "AutoFilter",
                 &[

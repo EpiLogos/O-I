@@ -96,7 +96,7 @@ export const AGENT_SHELL_ADDRESS_TABLE: readonly AgentParamAddress[] = Object.fr
   reading('ai-kit', 'skillset', 'refine.why', 'list', {disclosure: 'Reading only — the closes that show the reason, as AIKit keeps them with the proposal.'}),
   reading('ai-kit', 'skillset', 'refine.revision', 'string', {disclosure: 'Reading only — the proposed revision beside the revision in use.'}),
   reading('ai-kit', 'skillset', 'refine.test', 'list', {disclosure: 'Reading only — the takes AIKit\'s take body kept under the proposed revision, beside its Repeat\'s other takes.'}),
-  reading('ai-kit', 'skillset', 'refine.result', 'list', {disclosure: 'Met · Not met · Open per condition and level; Open while no take answers a Success condition (AIKit hands Actuation none).'}),
+  reading('ai-kit', 'skillset', 'refine.result', 'list', {disclosure: 'Met · Not met · Open per condition and level: what each take answered to the task\'s Success conditions, held to its evidence by Actuation.'}),
   agentParamAddress({family: 'ai-kit', deviceInstance: 'skillset', key: 'refine.run', type: 'boolean', writePath: 'kernel:encounter_session_settings'}),
   agentParamAddress({family: 'ai-kit', deviceInstance: 'skillset', key: 'refine.accept', type: 'boolean', writePath: 'kernel:aikit_write'}),
   agentParamAddress({family: 'ai-kit', deviceInstance: 'skillset', key: 'refine.discard', type: 'boolean', writePath: 'kernel:aikit_write'}),

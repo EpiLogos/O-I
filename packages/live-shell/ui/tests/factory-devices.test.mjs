@@ -134,7 +134,13 @@ test('compact is a picture and at most four controls: the others\' are their mos
   assert.deepEqual(settings.map(row => row.key), ['thoroughness', 'test-depth', 'reach', 'risk'])
   assert.ok(settings.every(row => !row.macro && !row.writePath), 'the settings are plain readings: ai-kit declares no mapping and no writer, so none claims macro')
   assert.equal(refining.length, 8, 'the Refining page\'s rows stand under their own group')
-  assert.deepEqual(refining.filter(row => row.writePath).map(row => row.key), ['refine.run', 'refine.accept', 'refine.discard'])
+  // REPLACED (O-I 795 round 13): "refine.run, refine.accept and refine.discard carry their write". The manual draws the rack's Whole as two
+  // pages, Set and Capture (§19.7 Whole), so the plate drawn where the rack's design waits draws no Test, Accept or Discard: each stays a
+  // reading there, saying where it is pressed. The rack's own design presses them on its Refining page (designBindings.ts refiningBinding).
+  assert.deepEqual(refining.filter(row => row.writePath).map(row => row.key), [], 'no press of the Refining page on the generic plate')
+  for (const key of ['refine.run', 'refine.accept', 'refine.discard']) {
+    assert.match(refining.find(row => row.key === key).disclosure ?? '', /Set and Capture[\s\S]*Refining page/, `${key}: says where it is pressed`)
+  }
   assert.ok(refining.every(row => row.compact === false && !row.macro), 'a page\'s presses are kept off the compact size')
   for (const {slot, device} of set) assert.ok(device.rows.every(row => !row.macro), `${slot.id}: no row of the chain claims a macro`)
 })
@@ -333,12 +339,13 @@ test('one device in three sizes: the same live rows, a picture in each — no te
   const rack = html(createElement(DeviceView, {device: slotOf(set, 'skillset').device, size: 'compact', picture: null}))
   assert.equal((rack.match(/data-param=/g) ?? []).length, 0, 'the compact rack draws no badge for settings it cannot map as macros')
   const rackWhole = html(createElement(DeviceView, {device: slotOf(set, 'skillset').device, size: 'whole', picture: null}))
-  // REPLACED (lane BD round 12): the whole rack drew ai-kit's four settings as its only readouts and no control. The Refining page's five
-  // readings stand beside them as readouts, and its three presses (Test, Accept, Discard) are controls on their owner's writes.
-  assert.equal((rackWhole.match(/data-control="readout"/g) ?? []).length, 9, 'the whole rack keeps ai-kit\'s four settings and the Refining page\'s five readings as readings')
+  // REPLACED (lane BD round 12, then O-I 795 round 13): the whole rack drew ai-kit's four settings as its only readouts and no control; then
+  // the Refining page's three presses as controls. The manual draws the rack's Whole as Set and Capture (§19.7 Whole), so where the design
+  // waits the plate draws the Refining page's five readings and its three presses as readings, and no control.
+  assert.equal((rackWhole.match(/data-control="readout"/g) ?? []).length, 12, 'ai-kit\'s four settings, the Refining page\'s five readings and its three presses, as readings')
   const controls = [...rackWhole.matchAll(/data-param="([^"]+)"[^>]*data-control="(?!readout)([^"]+)"|data-control="(?!readout)([^"]+)"[^>]*data-param="([^"]+)"/g)]
     .map(match => match[1] ?? match[4]).sort()
-  assert.deepEqual(controls, ['refine.accept', 'refine.discard', 'refine.run'], 'no control without an owner write')
+  assert.deepEqual(controls, [], 'no control the manual does not draw there')
   assert.doesNotMatch(rackWhole, /role="slider"|class="dp-sec-label">Macros</)
   assert.match(rackWhole, /class="dp-sec-label">Refining</)
   assert.match(rackWhole, /class="dp-sec-label">Settings</)

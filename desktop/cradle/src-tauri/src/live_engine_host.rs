@@ -452,9 +452,6 @@ pub(crate) mod host {
         ("delay", "Delay", "Delay", "Delay"),
         ("reverb", "Reverb", "Reverb", "Reverb"),
     ];
-    /// Live's Reverb keeps DecayTime in ms within this range (live-dynamics params.rs, the corpus's
-    /// surface; the shell's rackChainInLive carries the frame's Decay onto it so).
-    pub const REVERB_DECAY_MS: (f64, f64) = (199.999985, 60000.0039);
     /// The Torus's Filter's types (effectsLaw.ts `FILTER_TYPES`) as the engine's model of Live's Auto
     /// Filter sounds them.
     pub const TORUS_FILTER_TYPES: [(&str, live_engine::FilterKind); 4] = [
@@ -481,35 +478,46 @@ pub(crate) mod host {
     /// this: an engine decision, measured against the frame (O-I #849 round 14).
     pub const TORUS_ATTACK_SETTLES: f64 = 3.562_350_828_929_603;
 
-    /// What one chain on a part's rack was made from, device by device (Live's class and the settings
-    /// carried, by Live's key), so Export Audio makes it again.
+    /// What one chain on a part's rack was made from, device by device (what live-engine `rack_device`
+    /// makes it from: Live's class and the settings carried, by Live's key, or the frame's name for one
+    /// of the Torus's effects and its settings, by the frame's key), so Export Audio makes it again.
     pub type RackMade = Vec<(&'static str, Vec<(&'static str, f64)>)>;
 
     /// The frame's effects (effectsLaw.ts `EffectsState`: the chain, and each effect's parameters) as
     /// the chain after the Torus on its part: each effect on the frame's chain in order, on, as Live's
-    /// device of its kind with the frame's settings carried by Live's keys as the engine's model of it
-    /// reads them (live-engine `rack_device`, O-I #849 round 14): the Filter's type, cutoff, resonance
-    /// and drive as Auto Filter's FilterType, Cutoff, Resonance and Drive; the Dynamics' threshold (as
-    /// a level), ratio, attack (over [`TORUS_ATTACK_SETTLES`]), release and makeup, and a hard knee, as
-    /// Compressor's Threshold, Ratio, Attack, Release, Gain and Knee; the Delay's time (a synced one's
-    /// note length at its tempo, as its frame's delaySeconds), feedback, tone and mix as Delay's
-    /// DelayLine_TimeL, Feedback, Filter_Frequency and DryWet; Reverb's Decay as its DecayTime, in
-    /// ms. A setting over or under what Live's device holds stands at its nearer edge. An effect off
-    /// passes the sound as it came, so it stands nowhere. With it, how the engine stands each effect,
-    /// in words where it does not sound as the frame's. Refused in words for what is not the frame's
-    /// effects.
+    /// device of its kind with the frame's settings carried by Live's keys (the reading's `carried`, as
+    /// a set stores Live's device: the shell's rackChainInLive writes the same), and the engine's own
+    /// device for it (live-engine `rack_device`, O-I #849 rounds 14 and 15):
+    /// - the Filter as Auto Filter's model, from its type, cutoff, resonance and drive as Auto Filter's
+    ///   FilterType, Cutoff, Resonance and Drive;
+    /// - the Delay as Delay's model, from its time (a synced one's note length at its tempo, as its
+    ///   frame's delaySeconds), feedback, tone and mix as Delay's DelayLine_TimeL, Feedback,
+    ///   Filter_Frequency and DryWet;
+    /// - the Dynamics as its frame's own compressor, from the frame's settings (`dynamics`); Live's
+    ///   Compressor carries its threshold (as a level), ratio, attack (over
+    ///   [`TORUS_ATTACK_SETTLES`]), release and makeup, and a hard knee, as Threshold, Ratio, Attack,
+    ///   Release, Gain and Knee;
+    /// - the Reverb as its frame's own room, from the frame's settings (`reverb`); Live's Reverb
+    ///   carries its Decay and pre-delay as DecayTime and PreDelay, in ms.
+    ///
+    /// A setting over or under what Live's device holds stands at its nearer edge, and where the engine
+    /// sounds it through Live's model, so it sounds there, in words. An effect off passes the sound as
+    /// it came, so it stands nowhere. With it, how the engine stands each effect, in words where it does
+    /// not sound as the frame's. Refused in words for what is not the frame's effects.
     pub fn torus_chain(effects: &Value) -> Result<(RackMade, Value), String> {
         const NOT: &str = "The Torus's effects are its chain and each effect's settings, as the frame reports them (effectsLaw.ts)";
         let chain = effects.get("chain").and_then(Value::as_array).ok_or(NOT)?;
         let mut made: RackMade = Vec::new();
         let mut reading = Vec::new();
-        let mut seen = Vec::new();
-        for effect in chain {
+        // a chain naming an effect twice is refused as that, whatever its settings
+        for (at, effect) in chain.iter().enumerate() {
             let effect = effect.as_str().ok_or(NOT)?;
-            if seen.contains(&effect) {
+            if chain[..at].iter().any(|e| e.as_str() == Some(effect)) {
                 return Err(format!("{NOT}: {effect} stands on the chain twice"));
             }
-            seen.push(effect);
+        }
+        for effect in chain {
+            let effect = effect.as_str().ok_or(NOT)?;
             let settings = effects
                 .get(effect)
                 .filter(|v| v.is_object())
@@ -535,6 +543,8 @@ pub(crate) mod host {
                 continue;
             }
             let mut carried: Vec<(&'static str, f64)> = Vec::new();
+            // what the engine sounds it from, where that is not Live's keys: the frame's own effect, by its keys
+            let mut sounded: Option<(&'static str, Vec<(&'static str, f64)>)> = None;
             let mut words = Vec::new();
             let number = |key: &str| {
                 settings
@@ -601,23 +611,35 @@ pub(crate) mod host {
                 }
             }
             if effect == "dynamics" {
-                let (threshold, ratio) = (number("threshold")?, number("ratio")?);
-                let (attack, said) = within(
+                let (threshold, ratio, attack) =
+                    (number("threshold")?, number("ratio")?, number("attack")?);
+                let (release, makeup) = (number("release")?, number("makeup")?);
+                // the engine sounds the frame's compressor, so Live's edge is the set's alone
+                let (live_attack, _) = within(
                     "Attack",
-                    number("attack")? / TORUS_ATTACK_SETTLES,
+                    attack / TORUS_ATTACK_SETTLES,
                     "attack",
                     "ms",
                     |ms| ms * TORUS_ATTACK_SETTLES,
                 );
-                words.extend(said);
                 carried.extend([
                     ("Threshold", 10f64.powf(threshold / 20.0)),
                     ("Ratio", ratio),
-                    ("Attack", attack),
-                    ("Release", number("release")?),
-                    ("Gain", number("makeup")?),
+                    ("Attack", live_attack),
+                    ("Release", release),
+                    ("Gain", makeup),
                     ("Knee", 0.0),
                 ]);
+                sounded = Some((
+                    "dynamics",
+                    vec![
+                        ("threshold", threshold),
+                        ("ratio", ratio),
+                        ("attack", attack),
+                        ("release", release),
+                        ("makeup", makeup),
+                    ],
+                ));
             }
             if effect == "delay" {
                 let sync = settings
@@ -660,20 +682,36 @@ pub(crate) mod host {
                     .get("decay")
                     .and_then(Value::as_f64)
                     .ok_or_else(|| format!("{NOT}: Reverb's Decay is a number of seconds"))?;
-                let ms = (decay * 1e9).round() / 1e6;
-                if (REVERB_DECAY_MS.0..=REVERB_DECAY_MS.1).contains(&ms) {
-                    carried.push(("DecayTime", ms));
-                } else {
-                    words.push(format!("its decay of {decay} s is outside the {}–{} ms Live's Reverb holds, and stands at the model's", REVERB_DECAY_MS.0, REVERB_DECAY_MS.1));
-                }
-                words.push("its size, damping, pre-delay and dry/wet stand at the model's: the engine's model of Live's Reverb takes only its DecayTime".into());
+                let (size, damping) = (number("size")?, number("damping")?);
+                let (predelay, mix) = (number("predelay")?, number("mix")?);
+                // the engine sounds the frame's room, so Live's edges are the set's alone
+                let (decay_ms, _) = within(
+                    "DecayTime",
+                    (decay * 1e9).round() / 1e6,
+                    "decay",
+                    "ms",
+                    |ms| ms,
+                );
+                let (predelay_ms, _) = within("PreDelay", predelay, "pre-delay", "ms", |ms| ms);
+                carried.extend([("DecayTime", decay_ms), ("PreDelay", predelay_ms)]);
+                sounded = Some((
+                    "reverb",
+                    vec![
+                        ("size", size),
+                        ("decay", decay),
+                        ("damping", damping),
+                        ("predelay", predelay),
+                        ("mix", mix),
+                    ],
+                ));
             }
-            match rack_device(class, &carried) {
+            let (maker, from) = sounded.unwrap_or((class, carried.clone()));
+            match rack_device(maker, &from) {
                 Ok(_) => {
                     reading.push(json!({"effect": effect, "device": class, "on": true, "sounds": true,
                         "carried": carried.iter().map(|(id, v)| (id.to_string(), json!(v))).collect::<serde_json::Map<_, _>>(),
                         "words": if words.is_empty() { Value::Null } else { Value::from(format!("Live's {title} in the engine: {}.", words.join("; "))) }}));
-                    made.push((class, carried));
+                    made.push((maker, from));
                 }
                 Err(why) => reading.push(
                     json!({"effect": effect, "device": class, "on": true, "sounds": false,
@@ -1719,12 +1757,13 @@ pub(crate) mod host {
                 "resonator": {"on": true, "division": 300, "root": 0, "decay": 1, "tilt": 0, "span": 2, "mix": 50, "gain": 0}})
         }
 
-        /// The Torus's effects stand after it on its part (rounds 13 and 14): the frame's chain in its
-        /// order, each effect as Live's device of its kind and the engine's own, with the frame's settings
-        /// carried by Live's keys (Auto Filter, Compressor and Delay built to the Torus's effects, Reverb at
-        /// the frame's Decay); what Live's device does not hold stands at its edge, in words; an effect off
-        /// stands nowhere; an edit of a setting the engine does not take puts nothing again; Export renders
-        /// the part through each chain from the frame the engine put it there, as it was played.
+        /// The Torus's effects stand after it on its part (rounds 13 to 15): the frame's chain in its
+        /// order, each effect as Live's device of its kind, with the frame's settings carried by Live's
+        /// keys, and the engine's own (Auto Filter and Delay built to the Torus's effects from Live's keys,
+        /// Dynamics and Reverb the frame's own, from the frame's settings); what Live's device does not hold
+        /// stands at its edge, in words where the engine sounds it so; an effect off stands nowhere; an edit
+        /// that moves nothing the chain is made from puts nothing again; Export renders the part through
+        /// each chain from the frame the engine put it there, as it was played.
         #[test]
         fn the_torus_effects_stand_after_it_as_the_engines_own_devices_or_in_words() {
             let (made, reading) = torus_chain(&effects(&[
@@ -1744,14 +1783,23 @@ pub(crate) mod host {
                 (10f64.powf(-0.25 / 20.0) - (1.0 - (-TORUS_ATTACK_SETTLES).exp())).abs() < 1e-12
             );
             let dynamics: (&str, Vec<(&str, f64)>) = (
-                "Compressor2",
+                "dynamics",
                 vec![
-                    ("Threshold", 10f64.powf(-0.6)),
-                    ("Ratio", 4.0),
-                    ("Attack", 1.0 / TORUS_ATTACK_SETTLES),
-                    ("Release", 100.0),
-                    ("Gain", 2.0),
-                    ("Knee", 0.0),
+                    ("threshold", -12.0),
+                    ("ratio", 4.0),
+                    ("attack", 1.0),
+                    ("release", 100.0),
+                    ("makeup", 2.0),
+                ],
+            );
+            let reverb: (&str, Vec<(&str, f64)>) = (
+                "reverb",
+                vec![
+                    ("size", 50.0),
+                    ("decay", 2.4),
+                    ("damping", 40.0),
+                    ("predelay", 20.0),
+                    ("mix", 22.0),
                 ],
             );
             assert_eq!(
@@ -1776,18 +1824,25 @@ pub(crate) mod host {
                             ("DryWet", 0.25)
                         ]
                     ),
-                    ("Reverb", vec![("DecayTime", 2400.0)])
+                    reverb.clone()
                 ]
             );
-            for n in 0..3 {
+            for n in 0..4 {
                 assert_eq!(reading[n]["sounds"], true, "{}", reading[n]);
                 assert_eq!(reading[n]["words"], Value::Null, "{}", reading[n]);
             }
             assert_eq!(reading[0]["carried"]["Cutoff"], json!(cutoff));
+            // a set's Live's Compressor and Reverb carry the frame's settings by Live's keys
+            assert_eq!(
+                reading[1]["carried"],
+                json!({"Threshold": 10f64.powf(-0.6), "Ratio": 4.0, "Attack": 1.0 / TORUS_ATTACK_SETTLES,
+                    "Release": 100.0, "Gain": 2.0, "Knee": 0.0})
+            );
             assert_eq!(reading[2]["carried"]["DelayLine_TimeL"], json!(0.25));
-            assert_eq!(reading[3]["sounds"], true);
-            assert_eq!(reading[3]["carried"], json!({"DecayTime": 2400.0}));
-            assert!(reading[3]["words"].as_str().unwrap().contains("pre-delay"));
+            assert_eq!(
+                reading[3]["carried"],
+                json!({"DecayTime": 2400.0, "PreDelay": 20.0})
+            );
             assert!(reading[4]["words"].as_str().unwrap().contains("Resonator"));
             // what Live's device does not hold stands at its nearer edge, and what it keeps no setting
             // for stands at its own, in words; an unsynced Delay's time is its own
@@ -1819,26 +1874,34 @@ pub(crate) mod host {
                 .contains("its cutoff of 20 Hz is under the 26 Hz"));
             assert_eq!(made[1].1[0], ("DelayLine_TimeL", 4.0));
             assert_eq!(reading[1]["words"], Value::Null);
-            // the frame's attack over the law; one quicker than Live's Compressor holds stands at its floor
+            // Live's Compressor carries the frame's attack over the law, one quicker than it holds at its floor;
+            // the engine sounds the frame's own, so nothing is said
             let mut quick = effects(&["dynamics"]);
             quick["dynamics"]["attack"] = json!(30);
             let (made, reading) = torus_chain(&quick).unwrap();
-            assert_eq!(made[0].1[2], ("Attack", 30.0 / TORUS_ATTACK_SETTLES));
+            assert_eq!(made[0].1[2], ("attack", 30.0));
+            assert_eq!(
+                reading[0]["carried"]["Attack"],
+                json!(30.0 / TORUS_ATTACK_SETTLES)
+            );
             assert_eq!(reading[0]["words"], Value::Null);
             quick["dynamics"]["attack"] = json!(0.02);
             let (made, reading) = torus_chain(&quick).unwrap();
             let (floor, _) = live_engine::live_holds("Compressor2", "Attack").unwrap();
-            assert_eq!(made[0].1[2], ("Attack", floor));
-            assert_eq!(
-                reading[0]["words"],
-                "Live's Compressor in the engine: its attack of 0.02 ms is under the 0.0356 ms Live's Compressor holds, and stands there."
-            );
+            assert_eq!(made[0].1[2], ("attack", 0.02));
+            assert_eq!(reading[0]["carried"]["Attack"], json!(floor));
+            assert_eq!(reading[0]["words"], Value::Null);
+            // so does Live's Reverb a pre-delay under what it holds
+            let mut dry = effects(&["reverb"]);
+            dry["reverb"]["predelay"] = json!(0);
+            let (made, reading) = torus_chain(&dry).unwrap();
+            assert_eq!(made[0].1[3], ("predelay", 0.0));
+            let (least, _) = live_engine::live_holds("Reverb", "PreDelay").unwrap();
+            assert_eq!(reading[0]["carried"]["PreDelay"], json!(least));
+            assert_eq!(reading[0]["words"], Value::Null);
             // in the frame's order; an effect off stands nowhere
             let mut off = effects(&["reverb", "dynamics"]);
-            assert_eq!(
-                torus_chain(&off).unwrap().0,
-                vec![("Reverb", vec![("DecayTime", 2400.0)]), dynamics.clone()]
-            );
+            assert_eq!(torus_chain(&off).unwrap().0, vec![reverb, dynamics.clone()]);
             off["reverb"]["on"] = json!(false);
             assert_eq!(torus_chain(&off).unwrap().0, vec![dynamics]);
             for (bad, words) in [
@@ -1875,16 +1938,16 @@ pub(crate) mod host {
             let mut played = pull(&mut core, &[256, 256]);
             o.put_effects(0, &effects(&["reverb"])).unwrap();
             played.extend(pull(&mut core, &[256; 30]));
-            // a setting the engine does not take moves nothing
+            // an edit of an effect off the chain moves nothing
             let mut edited = effects(&["reverb"]);
-            edited["reverb"]["size"] = json!(80);
+            edited["delay"]["feedback"] = json!(80);
             o.put_effects(0, &edited).unwrap();
             assert_eq!(
                 o.racked.len(),
                 1,
                 "a chain made as the one standing is not put again"
             );
-            // its Decay is carried: the reverb is made again
+            // the room's Decay moves it: the reverb is made again
             edited["reverb"]["decay"] = json!(1.2);
             o.put_effects(0, &edited).unwrap();
             played.extend(pull(&mut core, &[256; 10]));
@@ -1892,7 +1955,7 @@ pub(crate) mod host {
             assert_eq!(reading["torus_effects"]["track"], 0);
             assert_eq!(
                 reading["torus_effects"]["chain"][0]["carried"],
-                json!({"DecayTime": 1200.0})
+                json!({"DecayTime": 1200.0, "PreDelay": 20.0})
             );
             assert_eq!(
                 reading["torus_effects"]["sounding_from_frame"],

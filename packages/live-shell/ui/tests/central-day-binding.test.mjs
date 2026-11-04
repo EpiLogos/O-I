@@ -607,18 +607,44 @@ test('the design: the Close pad presses Close now, the one move an owner takes; 
 
 // ── the Patterns pad's refinement (O-I 772, manual §18.2: "A pattern whose items point at one skill or method can open a refinement of it
 // (§19.7)") ──
-test('the Patterns pad: the one skill or method its items point at is absent with the field Central does not give, and Refine refuses saying so', async () => {
+// REPLACED (O-I 772, round 13): "the one skill or method its items point at is absent with the field Central does not give, and Refine
+// refuses saying so" — Central keeps it now, the Patterns move's gave.points_at (ctrl continuous_work/day_moves.rs, its test
+// the_patterns_move_names_the_one_skill_its_items_point_at), and Refine opens the Skillset rack's Refining page on it.
+/** FIXTURE — Central's Day moves in its own shape (central.day-moves-reading/v1; the REAL reading is stale-refusals-binding.test.mjs's), the
+ * Patterns move's last run ended with what it gave. */
+const patternsEnded = gave => ({...NO_OWN, timezone: 'Europe/London', moves: {schema: 'central.day-moves-reading/v1', moves: {
+  patterns: {running: null, last: {run_ref: 'r1', move: 'patterns', state: 'done', ended_at_unix_ms: Date.UTC(2026, 9, 16, 8, 30), end: {state: 'done', gave}}}}}})
+test('the Patterns pad: the one skill or method its items point at is Central\'s, the move\'s gave.points_at, and Refine opens a refinement of it', async () => {
   let wrote = 0
+  const refined = []
   const facts = factsOf(READY)
-  const binding = bind.dayDesignBinding(ID, facts, bind.dayValuesOf(facts, {face: 3, payload: PAYLOAD}),
-    {turn: async () => { wrote++ }, openToday: async () => { wrote++ }, closeNow: async () => { wrote++ }, begin: async () => { wrote++ }})
-  assert.equal(binding.values.patternPoints, undefined, 'no owner names it')
-  // Central's own law for a move's `gave` (ctrl continuous_work/day_moves.rs: {summary, proposals?, writes?, counts?}, any other key refused).
-  assert.match(bind.DAY_ABSENT.patternPoints, /summary, proposals\?, writes\?, counts\?/)
-  assert.match(bind.DAY_ABSENT.patternPoints, /missing field/)
-  assert.equal(binding.standing.refinePattern?.disabled, bind.DAY_ABSENT.patternPoints)
-  await assert.rejects(binding.write([{key: 'refinePattern', value: 'skill/practice/alpha'}]), /missing field/)
+  const writers = {turn: async () => { wrote++ }, openToday: async () => { wrote++ }, closeNow: async () => { wrote++ }, begin: async () => { wrote++ },
+    refine: async member => { refined.push(member) }}
+  const own = patternsEnded({summary: 'Three closes pull against one skill.', proposals: ['p1'], points_at: 'skill/practice/alpha'})
+  const values = bind.dayValuesOf(facts, {face: 3, payload: PAYLOAD}, own)
+  assert.equal(values.patternPoints, 'skill/practice/alpha', 'Central names it')
+  const binding = bind.dayDesignBinding(ID, facts, values, writers, own)
+  assert.equal(binding.standing.refinePattern, undefined, 'Refine presses')
+  await binding.write([{key: 'refinePattern', value: 'skill/practice/alpha'}])
+  assert.deepEqual(refined, ['skill/practice/alpha'], 'it opens a refinement of the one the pattern names')
+  await assert.rejects(binding.write([{key: 'refinePattern', value: 'skill/practice/beta'}]), /points at skill\/practice\/alpha/)
+  // A last run that named none, no run ended, Central's moves unread, and no hand to open the rack: each closes Refine in its own words.
+  const none = patternsEnded({summary: 'No pattern holds today.'})
+  const noneValues = bind.dayValuesOf(facts, {face: 3, payload: PAYLOAD}, none)
+  assert.equal(noneValues.patternPoints, undefined)
+  const noneBinding = bind.dayDesignBinding(ID, facts, noneValues, writers, none)
+  assert.match(noneBinding.standing.refinePattern?.disabled ?? '', /named no one skill or method/)
+  assert.match(bind.dayOwnAbsent(none, noneValues).patternPoints, /named no one skill or method/)
+  await assert.rejects(noneBinding.write([{key: 'refinePattern', value: 'skill/practice/alpha'}]), /named no one skill or method/)
+  const notYet = {...none, moves: {schema: 'central.day-moves-reading/v1', moves: {patterns: {running: null, last: null}}}}
+  assert.match(bind.dayOwnAbsent(notYet).patternPoints, /No run of the Patterns move has ended/)
+  const unread = bind.dayDesignBinding(ID, facts, bind.dayValuesOf(facts, {face: 3, payload: PAYLOAD}), writers)
+  assert.equal(unread.standing.refinePattern?.disabled, bind.DAY_ABSENT.patternPoints)
+  assert.match(bind.DAY_ABSENT.patternPoints, /gave\.points_at.*central\.day\.moves\.read/)
+  const handless = bind.dayDesignBinding(ID, facts, values, {...writers, refine: undefined}, own)
+  assert.equal(handless.standing.refinePattern?.disabled, bind.REFINE_UNWIRED)
   assert.equal(wrote, 0, 'nothing was sent to an owner')
+  assert.deepEqual(refined, ['skill/practice/alpha'])
   // The design names it on the Patterns move, and its Refine opens the rack's Refining page on it.
   const source = await readFile(new URL('../src/inhabitants/catalogue/panels/day.tsx', import.meta.url), 'utf8')
   // The reading stands over the press: a skill's name is wider than half of the Moves section (the gallery measured it clipped in a pair).

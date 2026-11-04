@@ -213,7 +213,19 @@ test('Scope on Central carries Context & world\'s readings in Scope\'s keys; the
   // it lacks. Before it lands, Escalate to and the grants are Custody's, laid in by the chain (sessionChainBindings.ts withCustodyAsks).
   const ASKS = ['toolCalls', 'calls', 'wait', 'noAnswer']
   for (const key of ['reach', 'writeMode', ...ASKS, 'writes', 'basis']) assert.equal(scope.values[key], undefined, `${key}: no owner reports it`)
-  for (const key of ['reach', 'writeMode', ...ASKS]) assert.match(scope.standing[key].disabled, /no owner operation carries it yet — missing op:/, key)
+  // REPLACED (round 860): Wait and On no answer were missing ops. They are the dialogue's session's own settings in AIKit now (track wait,
+  // track no_answer), which AIKit's executor plays at the Wait; handed no carrier, Central's Scope names it.
+  for (const key of ['reach', 'writeMode', 'toolCalls', 'calls']) assert.match(scope.standing[key].disabled, /no owner operation carries it yet — missing op:/, key)
+  assert.equal(scope.standing.wait.disabled, bind.WAIT_REFUSE.wait)
+  assert.equal(scope.standing.noAnswer.disabled, bind.WAIT_REFUSE.noAnswer)
+  // Handed the session's settings and their write, Central's Scope reads and sets them as Factory's does.
+  const written = []
+  const waited = world.centralScopeBinding(world.CENTRAL_SCOPE_ID, {...input, waits: {track: {wait: 7200, no_answer: 'deny'}, write: async change => { written.push(change) }}})
+  assert.deepEqual([waited.values.wait, waited.values.noAnswer], [7200, 'deny'])
+  assert.equal(waited.standing.wait, undefined)
+  await waited.write([{key: 'noAnswer', value: 'hold'}])
+  await waited.write([{key: 'wait', value: 86400}])
+  assert.deepEqual(written, [{no_answer: 'hold'}, {wait: 86400}])
   for (const key of ['src.wiki', 'linkDepth', 'readBudget']) assert.equal(scope.standing[key], undefined, `${key}: no Knowledge page stands on Scope`)
   await assert.rejects(() => scope.write([{key: 'writeMode', value: 'draft'}]), /Write mode: no owner operation/)
   scope.local.reachPending(2)

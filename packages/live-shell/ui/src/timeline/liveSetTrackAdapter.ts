@@ -302,31 +302,100 @@ export const liveSetTrackAdapter: WorldTrackAdapter<LiveSetReading> = {
 /** A device of a placed rack's chain as Live's own: the class a set stores it under, and the settings carried onto it (a switch 0 or 1). */
 export interface LiveChainDevice {readonly device: string; readonly parameters: readonly {readonly id: string; readonly value: number}[]}
 
-/** One setting of a Torus effect carried onto Live's device: Live's document key, the stored value made from the kept one, and the range
- * Live's device holds it in (packages/live-dynamics/src/params.rs, the corpus's surface). */
-interface CarriedSetting {readonly id: string; readonly of: (kept: number) => number; readonly min: number; readonly max: number; readonly unit: string}
+type KeptState = TorusRackPlacing['chain'][number]['state']
+/** One setting of a Torus effect carried onto Live's device: Live's document key, the stored value made from the kept settings (null where they
+ * do not make one), the range Live's device holds it in (packages/live-dynamics/src/params.rs, the corpus's surface), and the kept setting it
+ * comes from, as its words show it (the value in the kept unit, from the stored one). */
+interface CarriedSetting {readonly id: string; readonly from: readonly string[]; readonly of: (kept: KeptState) => number | null; readonly min: number
+  readonly max: number; readonly word: string; readonly unit: string; readonly shown: (stored: number) => number}
+/** A kept setting that has no stored setting of Live's to go to, but stands as Live's own does at one value of it: said in words otherwise. */
+interface StandingSetting {readonly key: string; readonly at: EffectValue; readonly words: (kept: EffectValue) => string}
+type EffectValue = KeptState[string]
+const keptNumber = (kept: KeptState, key: string): number | null => typeof kept[key] === 'number' && Number.isFinite(kept[key]) ? kept[key] as number : null
+/** A kept setting carried as it stands, or made by `law` from it. */
+const carry = (key: string, id: string, min: number, max: number, unit: string, law: (v: number) => number = v => v, shown: (s: number) => number = s => s,
+  word = key === 'predelay' ? 'pre-delay' : key): CarriedSetting => ({id, from: [key], of: kept => {
+  const v = keptNumber(kept, key)
+  return v === null ? null : law(v)
+}, min, max, word, unit, shown})
+/** How many of its Attack's times Live's Compressor takes to come within a quarter dB of a held level (the host's TORUS_ATTACK_SETTLES,
+ * live_engine_host.rs: Live's Attack is the frame's over it). */
+const TORUS_ATTACK_SETTLES = 3.562350828929603
+/** The Torus's Delay's note lengths in beats and the longest time its frame's line holds (effectsLaw.ts DELAY_DIVISIONS, presentationEffects.ts
+ * MAX_DELAY). */
+const DELAY_BEATS: Readonly<Record<string, number>> = {'1/32': 0.125, '1/16': 0.25, '1/8': 0.5, '1/4': 1, '1/2': 2, '1': 4}
+const DELAY_MAX_S = 6
+/** The Delay's time in seconds, as its frame holds it: a synced one's note length at its tempo, a free one's own. */
+function delaySeconds(kept: KeptState): number | null {
+  if (typeof kept.sync !== 'boolean') return null
+  if (kept.sync) {
+    const beats = typeof kept.division === 'string' ? DELAY_BEATS[kept.division] : undefined, tempo = keptNumber(kept, 'tempo')
+    return beats === undefined || tempo === null || tempo <= 0 ? null : Math.min(DELAY_MAX_S, 60 / tempo * beats)
+  }
+  const ms = keptNumber(kept, 'time')
+  return ms === null ? null : Math.min(DELAY_MAX_S, ms / 1000)
+}
+const delayTime = (id: string): CarriedSetting => ({id, from: ['sync', 'division', 'time', 'tempo'], of: delaySeconds, min: 0.001000000047, max: 5,
+  word: 'time', unit: 's', shown: s => s})
 
 /** The Torus's effects as Live's own devices on a placed rack's chain (O-I #852 round 10; manual §21.5 Filter, Dynamics, Delay, Reverb): each
- * by the class a set stores Live's device of its kind under, and the settings carried onto it. A setting is carried only where the corpus pins
- * Live's stored setting with the same meaning and unit (params.rs: Reverb's PreDelay "stored unit = ms", DecayTime "stored unit = ms,
- * RT60-referenced"); every other setting stands at Live's own. Whether each device is on is carried as Live's On (session-model.md §6). The
- * Resonator bank has no Live device in the corpus's surface. */
-const TORUS_EFFECT_IN_LIVE: Readonly<Record<string, {readonly device: string; readonly title: string; readonly carried: Readonly<Record<string, CarriedSetting>>}>> = {
-  filter: {device: 'AutoFilter', title: 'Auto Filter', carried: {}},
-  dynamics: {device: 'Compressor2', title: 'Compressor', carried: {}},
-  delay: {device: 'Delay', title: 'Delay', carried: {}},
-  reverb: {device: 'Reverb', title: 'Reverb', carried: {
-    decay: {id: 'DecayTime', of: seconds => Math.round(seconds * 1e9) / 1e6, min: 199.999985, max: 60000.0039, unit: 'ms'},
-    predelay: {id: 'PreDelay', of: ms => ms, min: 0.5, max: 249.999969, unit: 'ms'},
-  }},
+ * by the class a set stores Live's device of its kind under, and the settings carried onto it, as the engine reads Live's device (the host's
+ * torus_chain, live_engine_host.rs, carries the same; O-I #849 rounds 14 and 15), each from the corpus's surface only (params.rs: its key,
+ * its range and its kind):
+ *   Filter as Auto Filter: cutoff as Cutoff, a pitch (A 440 Hz at 69, a semitone a step: the engine's reading, the corpus pins no unit),
+ *     resonance as Resonance (0 to 1 for 0 to 100 %), drive as Drive (dB). Its type is Live's FilterType, a menu the writer does not write
+ *     yet: Live's own, 0, is the low-pass; another type stands at Live's own, in words. Auto Filter keeps no dry/wet: a mix under full, in words.
+ *   Dynamics as Compressor: threshold as Threshold (a level), ratio as Ratio, attack as Attack (ms, over TORUS_ATTACK_SETTLES), release as
+ *     Release (ms), makeup as Gain (dB), and Knee 0: the frame's compressor is hard-kneed.
+ *   Delay as Delay: its time (a synced one's note length at its tempo) as DelayLine_TimeL and DelayLine_TimeR (seconds), feedback as
+ *     Feedback (0 to 0.95), tone as Filter_Frequency (Hz), mix as DryWet (0 to 1); and the switches that make Live's Delay read its time so:
+ *     each side free, not synced (DelayLine_SyncL, DelayLine_SyncR: "false = free"), the sides linked (DelayLine_Link), not ping-pong
+ *     (DelayLine_PingPong), its filter on (Filter_On).
+ *   Reverb as Reverb: decay as DecayTime and pre-delay as PreDelay (params.rs: "stored unit = ms"); its size, damping and dry/wet have no
+ *     stored setting of Live's with their meaning, and stand at Live's own, in words.
+ * A setting over or under what Live's device holds stands at its nearer edge, in words. Whether each device is on is carried as Live's On
+ * (session-model.md §6). The Resonator bank has no Live device in the corpus's surface. */
+const TORUS_EFFECT_IN_LIVE: Readonly<Record<string, {readonly device: string; readonly title: string; readonly carried: readonly CarriedSetting[]
+  readonly fixed?: readonly {readonly id: string; readonly value: number}[]; readonly standing?: readonly StandingSetting[]}>> = {
+  filter: {device: 'AutoFilter', title: 'Auto Filter', carried: [
+    carry('cutoff', 'Cutoff', 20, 135, 'Hz', hz => 69 + 12 * Math.log2(hz / 440), cutoff => 440 * 2 ** ((cutoff - 69) / 12)),
+    carry('resonance', 'Resonance', 0, 1.25, '%', r => r / 100, r => r * 100),
+    carry('drive', 'Drive', 0, 24, 'dB'),
+  ], standing: [
+    {key: 'type', at: 'lowpass', words: type => `its ${String(type)} type stands at Live's own, the low-pass: Live's Auto Filter keeps its FilterType as a menu, and a menu's stored shape is not written here yet`},
+    {key: 'mix', at: 100, words: mix => `its mix of ${String(mix)} % stands at full: the corpus's surface of Live's Auto Filter keeps no dry/wet`},
+  ]},
+  dynamics: {device: 'Compressor2', title: 'Compressor', carried: [
+    carry('threshold', 'Threshold', 0.0003162277571, 1.99526238, 'dB', db => 10 ** (db / 20), level => 20 * Math.log10(level)),
+    carry('ratio', 'Ratio', 1, 3.4028232635611926e38, ':1'),
+    carry('attack', 'Attack', 0.009999999776, 1000, 'ms', ms => ms / TORUS_ATTACK_SETTLES, ms => ms * TORUS_ATTACK_SETTLES),
+    carry('release', 'Release', 1, 3000, 'ms'),
+    carry('makeup', 'Gain', -36, 36, 'dB'),
+  ], fixed: [{id: 'Knee', value: 0}]},
+  delay: {device: 'Delay', title: 'Delay', carried: [
+    delayTime('DelayLine_TimeL'), delayTime('DelayLine_TimeR'),
+    carry('feedback', 'Feedback', 0, 0.9499999881, '%', f => f / 100, f => f * 100),
+    carry('tone', 'Filter_Frequency', 49.9999962, 18000.0059, 'Hz'),
+    carry('mix', 'DryWet', 0, 1, '%', m => m / 100, m => m * 100),
+  ], fixed: [{id: 'DelayLine_Link', value: 1}, {id: 'DelayLine_PingPong', value: 0}, {id: 'DelayLine_SyncL', value: 0}, {id: 'DelayLine_SyncR', value: 0},
+    {id: 'Filter_On', value: 1}]},
+  reverb: {device: 'Reverb', title: 'Reverb', carried: [
+    carry('decay', 'DecayTime', 199.999985, 60000.0039, 's', seconds => Math.round(seconds * 1e9) / 1e6, ms => ms / 1000),
+    carry('predelay', 'PreDelay', 0.5, 249.999969, 'ms'),
+  ]},
 }
 /** A kept setting by the manual's word for it. */
 const settingWord = (key: string) => key === 'predelay' ? 'pre-delay' : key
+/** A value as the words show it: to a tenth, or to three figures under one (the host's torus_chain rounds so). */
+const shownValue = (x: number) => {
+  const places = Math.abs(x) >= 1 || x === 0 ? 1 : 2 - Math.floor(Math.log10(Math.abs(x)))
+  return Math.round(x * 10 ** places) / 10 ** places
+}
 
-/** A placed rack's chain as Live's own devices, with the words for what does not stand on it (O-I #852 round 10). A note device stays off the
- * chain, as does the Resonator bank: the corpus gives Live's note devices and Live's Resonators no parameter surface yet; a device that is
- * none of the Torus's has no Live device to stand as. Each placed device takes the settings the corpus pins, and the words name the rest,
- * which stand at Live's own. Pure. */
+/** A placed rack's chain as Live's own devices, with the words for what does not stand on it as kept (O-I #852 round 10; O-I #849 round 15:
+ * every key the engine maps). A note device stays off the chain, as does the Resonator bank: the corpus gives Live's note devices and Live's
+ * Resonators no parameter surface yet; a device that is none of the Torus's has no Live device to stand as. Each placed device takes the
+ * settings it carries (TORUS_EFFECT_IN_LIVE), within what Live's device holds, and the words name the rest, which stand at Live's own. Pure. */
 export function rackChainInLive(chain: TorusRackPlacing['chain']): {chain: LiveChainDevice[]; words: string[]} {
   const listed = (names: readonly string[]) => names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`
   const placed: LiveChainDevice[] = []
@@ -338,24 +407,31 @@ export function rackChainInLive(chain: TorusRackPlacing['chain']): {chain: LiveC
     const live = TORUS_EFFECT_IN_LIVE[kept.device_ref]
     if (!live) { off.push(`Its effect ${kept.device_ref} is none of the Torus's, so no Live device stands for it.`); continue }
     const parameters: {id: string; value: number}[] = []
-    const took: string[] = [], left: string[] = [], outside: string[] = []
+    const took: string[] = [], said: string[] = []
     if (typeof kept.state.on === 'boolean') parameters.push({id: 'On', value: kept.state.on ? 1 : 0})
-    for (const [key, value] of Object.entries(kept.state)) {
-      if (key === 'on' && typeof value === 'boolean') continue
-      const law = live.carried[key]
-      if (!law || typeof value !== 'number') { left.push(settingWord(key)); continue }
-      const stored = law.of(value)
-      if (stored < law.min || stored > law.max) {
-        outside.push(`its ${settingWord(key)} of ${value} ${law.unit} is ${stored < law.min ? 'under' : 'over'} the ${stored < law.min ? law.min : law.max} ${law.unit} Live's ${live.title} holds, and stands at Live's own`)
-        continue
-      }
-      parameters.push({id: law.id, value: stored})
-      took.push(settingWord(key))
+    const used = new Set(['on'])
+    for (const law of live.carried) {
+      const stored = law.of(kept.state)
+      if (stored === null || !Number.isFinite(stored)) continue
+      for (const key of law.from) used.add(key)
+      const value = Math.min(law.max, Math.max(law.min, stored))
+      parameters.push({id: law.id, value})
+      if (!took.includes(law.word)) took.push(law.word)
+      if (value !== stored && !said.some(words => words.startsWith(`its ${law.word} of `))) said.push(`its ${law.word} of ${shownValue(law.shown(stored))} ${law.unit} is ${stored < law.min ? 'under' : 'over'} the ${shownValue(law.shown(value))} ${law.unit} Live's ${live.title} holds, and stands there`)
     }
+    for (const standing of live.standing ?? []) {
+      const value = kept.state[standing.key]
+      if (value === undefined) continue
+      used.add(standing.key)
+      if (value === standing.at) took.push(settingWord(standing.key))
+      else said.push(standing.words(value))
+    }
+    if (parameters.some(p => p.id !== 'On')) parameters.push(...(live.fixed ?? []))
+    const left = Object.keys(kept.state).filter(key => !used.has(key)).map(settingWord)
     placed.push({device: live.device, parameters})
     const head = took.length ? `Live's ${live.title} takes its ${listed(took)}`
       : kept.state.on === false ? `Live's ${live.title} stands off, as it was kept` : ''
-    const rest = [left.length ? `its ${listed(left)} stand at Live's own, for the corpus pins no stored setting of Live's with their meaning and unit` : '', ...outside].filter(Boolean)
+    const rest = [left.length ? `its ${listed(left)} stand at Live's own, for the corpus pins no stored setting of Live's with their meaning and unit` : '', ...said].filter(Boolean)
     if (rest.length) settings.push(`${head ? `${head}; ` : `Live's ${live.title}: `}${rest.join('; ')}.`)
   }
   return {chain: placed, words: [...off, ...settings]}

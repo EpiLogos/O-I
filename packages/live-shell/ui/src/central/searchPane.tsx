@@ -23,7 +23,7 @@ import {openInstrument} from '../frame/instrumentDoor'
 import {familyFaceDevice} from '../agent/devices/mainTrackBindings'
 import {SEARCH_DEVICE_ID, useSearchDevice} from './devices/agentChainDevices'
 import {setHeld} from './devices/pageBindings'
-import {atQueryOf, captureFocus, openSearchLine, searchLineNow} from './searchLineDoor'
+import {atQueryOf, captureFocus, fieldInsert, openSearchLine, searchLineNow} from './searchLineDoor'
 
 export {atQueryOf}
 
@@ -80,8 +80,11 @@ export function useAtSearch(draft: string | undefined): void {
     if (open.current !== null) return
     open.current = query
     if (searchLineNow()) return
-    const field = typeof document === 'undefined' ? null : document.activeElement
-    const box = field instanceof HTMLElement ? field.getBoundingClientRect() : null
-    openSearchLine({door: 'composer', at: box ? {x: box.left, y: box.bottom} : null, passage: null, restore: typeof document === 'undefined' ? null : captureFocus()})
+    const active = typeof document === 'undefined' ? null : document.activeElement
+    const box = active instanceof HTMLElement ? active.getBoundingClientRect() : null
+    // With no passage selected, a choice puts its reference in place of the @ in the field typed in (§5, searchLineDoor.ts fieldInsert).
+    const field = typeof HTMLTextAreaElement !== 'undefined' && (active instanceof HTMLTextAreaElement || active instanceof HTMLInputElement) ? active : null
+    openSearchLine({door: 'composer', at: box ? {x: box.left, y: box.bottom} : null, passage: null, restore: typeof document === 'undefined' ? null : captureFocus(),
+      insert: field ? fieldInsert(field, field.selectionStart ?? field.value.length) : null})
   }, [query])
 }

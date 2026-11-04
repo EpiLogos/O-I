@@ -156,3 +156,161 @@ fn m1_gate_render_is_deterministic() {
         .zip(b.iter())
         .all(|(x, y)| x.to_bits() == y.to_bits()));
 }
+
+/// Live's own Glue, as its default set stores it (`harness/live/BULK-glue-compressor-default-steps-1k-wav.als`: Threshold
+/// −21.9047623, Range 25, Ratio 1, Makeup 5, playing the steps signal), and Live's render of that set.
+const LIVES_GLUE_SET: &str = "harness/live/BULK-glue-compressor-default-steps-1k-wav.als";
+const LIVES_GLUE_RENDER: &str = "BULK-glue-compressor-default-steps-1k-wav.aif";
+
+/// The steps the set gate measures, stated before any render was read: those at or below −12 dBFS peak in (the mixer
+/// gate's), each side's RMS over the step window within the static tolerance of the render's.
+const SET_GATE_STEPS: usize = 4;
+
+/// Each step's RMS (dB) of one side at `rate`, over the step windows `step_rms` measures ([t0+0.1, t0+0.4]).
+fn side_steps(side: &[f32], rate: u32) -> Vec<f64> {
+    STEPS
+        .iter()
+        .map(|(_, t0)| {
+            let at = |t: f64| ((t * rate as f64) as usize).min(side.len());
+            rms_db(&side[at(t0 + 0.1)..at(t0 + 0.4)])
+        })
+        .collect()
+}
+
+/// Each measured step's (in-peak dB, render dB, engine dB) per side, Live's render at its own rate and the engine's at
+/// its, and the first one off by more than the tolerance.
+fn set_gate(
+    render: (&[f32], &[f32]),
+    render_rate: u32,
+    engine: &[f32],
+) -> (Vec<String>, Option<String>) {
+    let side = |x: &[f32], s: usize| -> Vec<f32> { x.iter().skip(s).step_by(2).copied().collect() };
+    let (mut rows, mut off) = (Vec::new(), None);
+    for (name, live, ours) in [
+        ("L", render.0, side(engine, 0)),
+        ("R", render.1, side(engine, 1)),
+    ] {
+        let heard = side_steps(live, render_rate).into_iter();
+        for (k, ((db, _), (got, pred))) in STEPS
+            .iter()
+            .zip(heard.zip(side_steps(&ours, SR)))
+            .enumerate()
+        {
+            let d = pred - got;
+            rows.push(format!(
+                "{name} in_peak {db:>6} dB  render {got:>8.2}  engine {pred:>8.2}  Δ {d:+.3} dB"
+            ));
+            if k < SET_GATE_STEPS && d.abs() > verify::STATIC_TOLERANCE_DB && off.is_none() {
+                off = Some(format!(
+                    "{name} at the {db} dB step: engine {pred:.2} vs Live's render {got:.2} dB"
+                ));
+            }
+        }
+    }
+    (rows, off)
+}
+
+/// Live's render of a set: its left and right sides and its rate.
+type LivesRender = (Vec<f32>, Vec<f32>, u32);
+
+/// Live's own Glue as its set stores it, bridged from the document and rendered by the engine, Live's render of the set,
+/// and the bridge's warnings; None, with a notice, where the corpus does not carry them.
+fn lives_own_glue() -> Option<(Vec<f32>, LivesRender, Vec<String>)> {
+    let set = corpus::path(LIVES_GLUE_SET);
+    let Some(render_path) = corpus::render(LIVES_GLUE_RENDER).filter(|_| set.exists()) else {
+        eprintln!("skip: Live's default Glue set or its render is not present ({LIVES_GLUE_SET})");
+        return None;
+    };
+    if !corpus_present() {
+        return None;
+    }
+    let (l, r) =
+        live_dynamics::audio::read_aiff_i16_channels(&std::fs::read(render_path).unwrap()).unwrap();
+    let root = live_set::open_als(&set).unwrap_or_else(|e| panic!("{}: {e:?}", set.display()));
+    let bridged = live_engine::bridge::bridge_set(&root, SR).expect("a Live set");
+    let mut g = bridged.graph;
+    assert_eq!(g.tracks.len(), 1, "one audio part (STIM)");
+    assert_eq!(g.tracks[0].devices[0].name(), "GlueCompressor");
+    g.tracks[0].source = load_signal().samples;
+    let warnings = bridged
+        .warnings
+        .iter()
+        .map(|w| format!("{} · {}: {}", w.track, w.device, w.message))
+        .collect();
+    Some((
+        g.render(SR),
+        (l.samples, r.samples, l.sample_rate),
+        warnings,
+    ))
+}
+
+/// The Glue the bridge stood every set's Glue at before O-I #849 round 15, whatever the set stored (`known_device`'s
+/// factory values: Threshold −40, Range 3, Ratio 1, Makeup 0), on the same part.
+fn factory_glue() -> Vec<f32> {
+    render_set(Box::new(GlueDevice::new(GlueParams {
+        threshold_db: -40.0,
+        range: 3.0,
+        ratio: 1.0,
+        makeup_db: 0.0,
+    })))
+}
+
+/// O-I #849 round 15: Live's own Glue, bridged from its set's document, sounds at what the set stores, and so comes nearer
+/// Live's render of that set than the factory Glue the bridge stood it at before, at every level step on both sides.
+#[test]
+fn m1_gate_lives_own_glue_from_its_set_comes_nearer_lives_render_than_the_factory_glue() {
+    let Some((engine, (l, r, rate), warnings)) = lives_own_glue() else {
+        return;
+    };
+    let gap = |rendered: &[f32]| -> Vec<f64> {
+        let side =
+            |x: &[f32], s: usize| -> Vec<f32> { x.iter().skip(s).step_by(2).copied().collect() };
+        [(&l, side(rendered, 0)), (&r, side(rendered, 1))]
+            .iter()
+            .flat_map(|(live, ours)| {
+                side_steps(live, rate)
+                    .into_iter()
+                    .zip(side_steps(ours, SR))
+                    .map(|(got, pred)| (pred - got).abs())
+            })
+            .collect()
+    };
+    let (stored, factory) = (gap(&engine), gap(&factory_glue()));
+    println!("  |Δ| from Live's render per step, L then R: from the set {stored:.3?}, factory {factory:.3?}");
+    println!("  warnings: {warnings:?}");
+    for (k, (s, f)) in stored.iter().zip(&factory).enumerate() {
+        assert!(
+            s < f,
+            "step {k}: the set's Glue is {s:.3} dB from Live's render, the factory's {f:.3}"
+        );
+    }
+}
+
+/// O-I #849 round 15: Live's own Glue, bridged from its set's document, sounds as Live renders that set: each level step
+/// at or below −12 dBFS peak, per side, within the static tolerance (the M1 gate's 0.5 dB) of Live's render. Above them
+/// the render meets Glue's soft clip, which the model has not (glue.rs: MU10's deviation is the soft clip). Teeth: the
+/// factory Glue fails it.
+///
+/// STATUS: FAILS — the honest record and the acceptance target (cf. live-dynamics tests/golden.rs, the Overdrive and Glue
+/// LAM gates). At Live's own Glue (Threshold −21.9, Range 25, Makeup 5) the engine's step levels are −0.00, −0.18, −0.87
+/// and −1.56 dB from Live's at −30, −24, −18 and −12 dBFS in: the model's static curve is the measured transfer at Range
+/// 30 and Threshold −12, threshold-shifted (glue.rs `MEASURED_ANCHORS_R30_T12`), so its Range does not yet move it. Run
+/// with `LIVE_RE_CORPUS=<corpus> cargo test --test m1_gate -- --ignored --nocapture`.
+#[test]
+#[ignore]
+fn m1_gate_lives_own_glue_sounds_from_its_set_as_live_renders_it() {
+    let Some((engine, (l, r, rate), warnings)) = lives_own_glue() else {
+        return;
+    };
+    let (rows, off) = set_gate((&l, &r), rate, &engine);
+    println!("M1 set gate — Live's own Glue from its set, against Live's render");
+    for row in rows {
+        println!("  {row}");
+    }
+    println!("  warnings: {warnings:?}");
+    assert!(
+        set_gate((&l, &r), rate, &factory_glue()).1.is_some(),
+        "the set gate passed the factory Glue"
+    );
+    assert!(off.is_none(), "M1 set gate FAILED: {}", off.unwrap());
+}

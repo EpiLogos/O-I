@@ -217,6 +217,8 @@ interface RowPlan {
 }
 
 const GATEWAY_STALL = 'The table declares the write but no domain for it (the gateway judges the threshold), so no knob is drawn.'
+/** The Refining page's presses where the rack's design waits: the manual draws the rack's Whole as Set and Capture (§19.7 Whole). */
+const REFINING_PRESS = 'The manual draws the Skillset rack\'s Whole as its Set and Capture pages; press it on the rack\'s Refining page, which its own design draws.'
 
 /** Group and compact choices per row (the mockups' own: agent-device-mockup.html:512-520 the agent's compact controls, :562-590
  * the pool's groups; world-shell-mockup.html:1425-1431 the Factory chain's). Insertion order is the whole view's order. */
@@ -250,15 +252,17 @@ const PLAN: Readonly<Record<string, Readonly<Record<string, RowPlan>>>> = {
     reach: {group: 'Settings'},
     risk: {group: 'Settings'},
     // The Refining page's rows (§19.7 "Refining a skill"; skills.tsx `refine.` keys). Test, Accept and Discard are owner writes and a page's
-    // presses, Accept yours alone: none is one of the rack's most-played controls, so none stands on its compact size or as a plan key.
+    // presses, Accept yours alone: none is one of the rack's most-played controls, so none stands on its compact size or as a plan key. The
+    // manual draws the rack's Whole as its Set and Capture pages (§19.7 Whole), so the plate drawn where the rack's design waits keeps the
+    // three presses readings (O-I 795 round 13); the rack's own design presses them on its Refining page (designBindings.ts refiningBinding).
     'refine.member': {group: 'Refining', compact: false},
     'refine.why': {group: 'Refining', compact: false},
     'refine.revision': {group: 'Refining', compact: false},
     'refine.test': {group: 'Refining', compact: false},
     'refine.result': {group: 'Refining', compact: false},
-    'refine.run': {group: 'Refining', compact: false},
-    'refine.accept': {group: 'Refining', compact: false},
-    'refine.discard': {group: 'Refining', compact: false},
+    'refine.run': {group: 'Refining', compact: false, unwritten: REFINING_PRESS},
+    'refine.accept': {group: 'Refining', compact: false, unwritten: REFINING_PRESS},
+    'refine.discard': {group: 'Refining', compact: false, unwritten: REFINING_PRESS},
   },
   world: {
     reads: {group: 'Scope'},

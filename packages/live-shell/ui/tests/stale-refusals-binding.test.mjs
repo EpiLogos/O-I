@@ -155,7 +155,9 @@ test('REAL — the Day\'s own settings and moves: Rollover Off, Agent writes, ev
   }
   const why = day.dayOwnAbsent(OWN, values)
   for (const move of ['tasks', 'patterns', 'context', 'synthesis']) assert.match(why[`gave_${move}`], /No run of this move has ended in this Day/)
-  assert.deepEqual(Object.keys(why).filter(key => !key.startsWith('gave_')), [], 'nothing else is absent')
+  // REPLACED (O-I 772, round 13): "nothing else is absent" — the one skill or method a pattern points at is the Patterns move's gave too.
+  assert.equal(why.patternPoints, day.PATTERN_POINTS_NOT_YET, 'no Patterns run ended: no pattern names a skill yet')
+  assert.deepEqual(Object.keys(why).filter(key => !key.startsWith('gave_') && key !== 'patternPoints'), [], 'nothing else is absent')
 })
 
 test('FIXTURE — a move\'s runs in Central\'s own shape: the open run lights its pad; the last ended run gives its time on the policy\'s clock and what it gave', () => {

@@ -268,7 +268,7 @@ export function searchStep(count: number, hit: number, key: string): {hit: numbe
 
 /** Harnesses & models (the adapter's HarnessSource over harness_status, model_catalogue and the providers): the providers, the saved
  * default and the one in effect, each harness client, and the catalogue's routes. A section the owner refused stays absent. Pure. */
-export function harnessValues(reading: HarnessReading | null): Record<string, Value> {
+export function harnessValues(reading: HarnessReading | null, logins: HarnessLoginReading | null = null): Record<string, Value> {
   const values: Record<string, Value> = {}
   if (!reading) return values
   if (reading.providers.state === 'ok') {
@@ -283,7 +283,7 @@ export function harnessValues(reading: HarnessReading | null): Record<string, Va
   if (reading.harnesses.state === 'ok') values.harnesses = json(reading.harnesses.rows.map(row => ({client: row.client, harness: row.harness, installed: row.installed,
     detection: row.detected ? 'detected' : row.detection, ...(row.detection_reason ? {reason: row.detection_reason} : {}), capability: row.capability,
     ...(row.effect ? {effect: row.effect} : {}), ...(folderOf(row.config_dir) ? {folder: folderOf(row.config_dir)} : {}),
-    ...(row.adapter_gap ? {gap: {contract: row.adapter_gap.missing_contract, skill: row.adapter_gap.authoring_skill_ref}} : {})})))
+    ...(row.adapter_gap ? {gap: {contract: row.adapter_gap.missing_contract, skill: row.adapter_gap.authoring_skill_ref}} : {}), ...harnessSignIn(logins, row.client)})))
   if (reading.catalogue.state === 'ok') {
     values.routes = json(reading.catalogue.rows.entries.map(entry => ({model: entry.model, name: entry.name,
       routes: entry.routes.map(route => ({provider: route.provider, key: route.credential_required}))})))
@@ -291,6 +291,90 @@ export function harnessValues(reading: HarnessReading | null): Record<string, Va
   }
   return values
 }
+// ---------------------------------------------------------------------------------------------------------------- Sign in
+
+/** One login a harness has of its own, as AIKit's profile declares it (`aikit harness auth <client> --json`: own_login): a runnable one
+ * carries the argv it runs; one with no command to run carries only its note, the harness's own words for how it signs in. */
+export interface HarnessLogin {readonly provider: string; readonly command?: readonly string[]; readonly note?: string}
+/** What AIKit reads of one harness client for Sign in (manual §10.10 Rules): from its client status (harness_status), whether it is on this
+ * computer and its credential leg (whether AIKit finds what the client needs to sign in, and if not, why, in AIKit's words); from
+ * harness_auth_describe, its logins, or why they could not be read (that client's alone). */
+export interface HarnessLoginClient {
+  readonly client: string
+  readonly harness: string
+  readonly detected: boolean
+  readonly credential?: string
+  readonly credentialWhy?: string
+  readonly logins?: readonly HarnessLogin[]
+  readonly unread?: string
+}
+export interface HarnessLoginReading {readonly clients: readonly HarnessLoginClient[]}
+
+/** The clients of AIKit's client status with their credential leg (aikit-cli client.rs: `credential` ok | credential-gated | unsupported
+ * …, and `credential_reason`). Pure. */
+export function harnessLoginClients(status: unknown): Omit<HarnessLoginClient, 'logins' | 'unread'>[] {
+  const raw = rec(status) && Array.isArray(status.clients) ? status.clients.filter(rec) : []
+  return shapeHarnessClients(status).flatMap(row => {
+    if (!row.client) return []
+    const from = raw.find(item => item.client === row.client) ?? {}, credential = txt(from.credential), why = txt(from.credential_reason)
+    return [{client: row.client, harness: row.harness || row.client, detected: row.detected, ...(credential ? {credential} : {}), ...(why ? {credentialWhy: why} : {})}]
+  })
+}
+/** A harness's declared logins (harness_auth.rs AuthFace own_login). A login whose command cannot run (no argv) is offered by its note only,
+ * never as a command. Pure. */
+export function harnessLoginsOf(face: unknown): HarnessLogin[] {
+  const rows = rec(face) && Array.isArray(face.own_login) ? face.own_login.filter(rec) : []
+  return rows.flatMap((row): HarnessLogin[] => {
+    const provider = txt(row.provider_ref), note = txt(row.note)
+    const argv = Array.isArray(row.argv) ? row.argv.filter((token): token is string => typeof token === 'string' && token.length > 0) : []
+    if (!provider) return []
+    if (row.runnable === true && argv.length) return [{provider, command: argv, ...(note ? {note} : {})}]
+    return note ? [{provider, note}] : []
+  })
+}
+/** A provider as one name: `provider:openai`, `ai-kit:credential:openai`, `OpenAI` → openai. */
+const providerName = (ref: string): string => (ref.split(':').pop() ?? ref).trim().toLowerCase()
+/** A login's key on the window's press: the client and the provider it serves. */
+export const loginKey = (client: string, provider: string): string => `${client}|${provider}`
+/** The login's command as you would type it. */
+export const commandWords = (command: readonly string[]): string => command.join(' ')
+
+/** What AIKit finds now for a client's login, in words (its credential leg). */
+function loginNow(client: HarnessLoginClient): string | undefined {
+  if (client.credential === 'ok') return `AIKit finds what ${client.harness} needs to sign in.`
+  if (client.credential === 'credential-gated') return `AIKit does not find what ${client.harness} needs to sign in yet: ${client.credentialWhy ?? 'its credential is missing'}.`
+  return client.credential ? `AIKit cannot check ${client.harness}'s login: ${client.credentialWhy ?? client.credential}.` : undefined
+}
+/** One harness row's Sign in, from AIKit's reading of that client (manual §10.10 Rules): a runnable login, the command it runs; one that
+ * signs in only inside itself, its note and no button; a login AIKit could not read, why, on that row alone. A client not on this
+ * computer has none: it is installed first. Pure. */
+function harnessSignIn(logins: HarnessLoginReading | null, client: string): Record<string, unknown> {
+  const found = logins?.clients.find(item => item.client === client)
+  if (!found?.detected) return {}
+  if (found.unread) return {signInUnread: found.unread}
+  const runnable = (found.logins ?? []).filter(login => login.command), notes = (found.logins ?? []).filter(login => !login.command).map(login => login.note!)
+  const now = loginNow(found)
+  return {...(runnable.length ? {signIn: runnable.map(login => ({key: loginKey(client, login.provider), provider: providerName(login.provider), command: commandWords(login.command!)}))} : {}),
+    ...(!runnable.length && notes.length ? {signInNote: notes.join(' ')} : {}), ...(runnable.length && now ? {loginNow: now} : {})}
+}
+/** Beside a provider's key on Credentials: the runnable logins of the harnesses on this computer that serve that provider. Pure. */
+function providerSignIn(logins: HarnessLoginReading | null, row: CredentialRow): Record<string, unknown> {
+  const names = new Set([providerName(row.provider), providerName(row.credential)])
+  const offered = (logins?.clients ?? []).filter(client => client.detected && !client.unread).flatMap(client => (client.logins ?? [])
+    .filter(login => login.command && names.has(providerName(login.provider))).map(login => ({key: loginKey(client.client, login.provider), harness: client.harness, command: commandWords(login.command!)})))
+  return offered.length ? {signIn: offered} : {}
+}
+/** The result read back after a login's terminal ended: AIKit's client status read again, in words. Pure. */
+export function loginReadBack(login: {readonly client: string; readonly harness: string; readonly command: readonly string[]}, after: HarnessLoginReading | null, error?: string): string {
+  const ended = `${commandWords(login.command)} has ended`
+  if (!after) return `${ended}, but AIKit's client status could not be read again: ${error ?? 'no reading came back'}`
+  const client = after.clients.find(item => item.client === login.client)
+  if (!client) return `${ended}, but AIKit no longer reports ${login.harness} on this computer.`
+  if (client.credential === 'ok') return `${ended}, and AIKit now finds what ${client.harness} needs to sign in.`
+  if (client.credential === 'credential-gated') return `${ended}, but AIKit does not find what ${client.harness} needs yet: ${client.credentialWhy ?? 'its credential is missing'}.`
+  return `${ended}. AIKit cannot check ${client.harness}'s login: ${client.credentialWhy ?? client.credential ?? 'it reports no credential leg'}.`
+}
+
 /** A harness's configuration folder, as the owner names it (its first absolute path; HarnessPreferences.tsx's reveal path). */
 export const folderOf = (configDir: string | null): string | undefined => {
   const path = configDir?.split(' (')[0]?.split(' and ')[0]?.trim()
@@ -301,10 +385,10 @@ export const folderOf = (configDir: string | null): string | undefined => {
 
 export interface CredentialRow { readonly credential: string; readonly provider: string; readonly reference: string | null; readonly revoked: boolean; readonly verifiedAt: number | null }
 /** AIKit's credential binding metadata (credential_list), each with the verdict a Verify read back. No material enters these values. */
-export function credentialValues(rows: readonly CredentialRow[] | null, verdicts: Readonly<Record<string, string>>, found: number | null): Record<string, Value> {
+export function credentialValues(rows: readonly CredentialRow[] | null, verdicts: Readonly<Record<string, string>>, found: number | null, logins: HarnessLoginReading | null = null): Record<string, Value> {
   const values: Record<string, Value> = {}
   if (rows) values.credentials = json(rows.map(row => ({credential: row.credential, provider: row.provider, ...(row.reference ? {reference: row.reference} : {}), revoked: row.revoked,
-    ...(row.verifiedAt ? {verifiedAt: at(row.verifiedAt * 1000)} : {}), ...(verdicts[row.credential] ? {verdict: verdicts[row.credential]} : {})})))
+    ...(row.verifiedAt ? {verifiedAt: at(row.verifiedAt * 1000)} : {}), ...(verdicts[row.credential] ? {verdict: verdicts[row.credential]} : {}), ...providerSignIn(logins, row)})))
   if (found !== null) values.found = found
   return values
 }
@@ -979,6 +1063,7 @@ export const SETTINGS_WINDOW_WIRING = {
     secretRefs: 'the credential references Workcell records, each with where it is observed (workcell_read secret-list: `workcell secret list`, workcell.secret-reference-inventory/v1)',
     projections: 'Workcell\'s projection ledger, the projections it holds active (workcell_read secret-projections: `workcell secret projections`)',
     outside: 'the credentials Workcell\'s last scan found outside a secret store, by location and presence only (workcell_read secret-scan: `workcell secret scan`)',
+    loginSaid: 'the result read back after a login\'s terminal ended: AIKit\'s client status read again (harness_status: that client\'s credential leg), in words',
     routesWhy: 'why a route\'s standing stands unread (NO_STANDING: AIKit\'s catalogue is identity only; availability is `aikit compose` of a project)', profiles: 'O:I\'s named profiles (SettingsAdapter.profiles listProfiles)',
     machines: 'Workcell\'s machine declarations (RemoteMachinesSource.readMachines)', connections: 'its connection receipts (RemoteMachinesSource.readConnections)',
     operations: 'the control operations a declaration may expect (RemoteMachinesSource.allowedOperations)', workcell: 'the workcell the machines belong to (RemoteMachinesSource.scope)',
@@ -1004,7 +1089,7 @@ export const SETTINGS_WINDOW_WIRING = {
     reread: 'the owners read again: config_registry_read, config_resolutions_read and every opened page\'s reading',
     install: 'client_install',
     reveal: 'settings_reveal', scan: 'Workcell\'s scan for material outside a secret store (workcell_read secret-scan: `workcell secret scan`), said on the Info line',
-    revokeProjection: 'Workcell\'s revocation at the origin (workcell_write revoke-projection: `workcell secret revoke-projection --name`), the ledger read back', signIn: 'the conversation\'s connection control (SettingsAdapter.navigate)', discover: 'credential_discover', verify: 'credential_verify',
+    revokeProjection: 'Workcell\'s revocation at the origin (workcell_write revoke-projection: `workcell secret revoke-projection --name`), the ledger read back', signIn: 'the harness\'s own login as AIKit declares it (harness_auth_describe: `aikit harness auth <client> --json`), run in a terminal in the Workbench (LOGIN_TERMINAL_PRESENT, settings/host.ts), and AIKit\'s client status read back when that terminal ends (harness_status)', discover: 'credential_discover', verify: 'credential_verify',
     rotate: 'credential_rotate with new.reference', revoke: 'credential_revoke', bind: 'credential_setup with new.credential and new.reference',
     useProfile: 'profile_use_plan, staged as local changes', saveProfile: 'createProfile and saveProfile with your valid local changes', importProfile: 'the system file picker, then createProfile and saveProfile',
     runNow: 'routine run_now on the basis read', disableRoutine: 'routine disable on the basis read', revertTheme: 'theme_revert', removeTheme: 'theme_remove',

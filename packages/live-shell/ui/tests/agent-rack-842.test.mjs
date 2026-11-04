@@ -173,15 +173,167 @@ test('the macros turn the one agent through its own Agent; what the Agent does n
   await binding.write([{key: 'effort', value: 'high'}])
   assert.deepEqual(sent, [{key: 'effort', value: 'high'}], 'the Effort macro wrote the agent\'s Effort, through the Agent')
   assert.match(binding.standing.budget.disabled, /Budget is a reading here/, 'the Agent\'s own reason')
-  assert.match(binding.standing.model.disabled, /Model/, 'the Agent writes no Model here')
+  // REPLACED (round 862): a lone session's Model stood dimmed with the Agent's word (the Agent writes no Model). It turns through the
+  // session's own model select in AIKit now, the path a group's chains take; with no carrier handed to the rack it names that one.
+  assert.equal(binding.standing.model.disabled, own.AGENTSET_REFUSE.model, 'the Agent writes no Model; the session\'s model select carries it')
+  await assert.rejects(() => binding.write([{key: 'model', value: 'opus'}]), {message: own.AGENTSET_REFUSE.model})
   await assert.rejects(() => binding.write([{key: 'budget', value: 20}]), /Budget is a reading here/)
-  // A group's macros still name the operation each chain waits for: the rack holds no member's Agent, so the Agent it is handed is not theirs.
+  // A group's macros never reach the session's own Agent: the rack holds no member's Agent, so the Agent it is handed is not theirs.
+  // REPLACED (round 861): a group's Model and Effort were missing ops. Each chain's session carries its own (AIKit's encounter model-read
+  // and model-select, through the kernel), so with no carrier handed to the rack they name that one; Budget is still a missing op.
   const crew = own.agentsetBinding({group: CREW, tracks: TRACKS, holds: bind.chainHolds()}, {agent})
-  for (const key of ['model', 'effort', 'budget']) {
-    assert.match(crew.standing[key].disabled, /missing op/, key)
-    await assert.rejects(() => crew.write([{key, value: 'high'}]), /missing op/, key)
+  for (const key of ['model', 'effort']) {
+    assert.equal(crew.standing[key].disabled, own.AGENTSET_REFUSE[key], key)
+    assert.doesNotMatch(crew.standing[key].disabled, /missing op/, key)
+    await assert.rejects(() => crew.write([{key, value: 'high'}]), error => error.message === own.AGENTSET_REFUSE[key], key)
   }
+  assert.equal(own.AGENTSET_REFUSE.model, 'Model: no carrier to AIKit\'s model select of each chain\'s session (its encounter\'s model-read and model-select, through the kernel) stands on this rack.')
+  assert.equal(own.AGENTSET_REFUSE.effort, 'Effort: no carrier to AIKit\'s model select of each chain\'s session (its encounter\'s model-read and model-select, through the kernel) stands on this rack.')
+  assert.match(crew.standing.budget.disabled, /missing op/)
+  await assert.rejects(() => crew.write([{key: 'budget', value: 20}]), /missing op/)
   assert.equal(sent.length, 1, 'no member\'s macro reached the session\'s own Agent')
+})
+
+// Each chain's session's model as its harness reports it (AIKit's encounter model-read; desktop/cradle/src/encounter/nativeModel.ts
+// NativeModelReading), and the receipt its model-select gives.
+const EFFORTS3 = [{value: 'low', name: 'Low'}, {value: 'medium', name: 'Medium'}, {value: 'high', name: 'High'}]
+const modelReading = (session, over = {}) => ({agent_session: session, native_session_id: `native/${session.split('/')[1]}`, standing: 'fixture',
+  model_observation: {current_model_id: 'sonnet', available_models: [{modelId: 'sonnet', name: 'Sonnet'}, {modelId: 'opus', name: 'Opus'}],
+    reasoning_effort: {configId: 'reasoning_effort', currentValue: 'medium', options: EFFORTS3}, standing: 'fixture'},
+  model_controls: {model_selection: true, reasoning_effort_selection: true, reason: null}, pinned_model_id: null, ...over})
+const selected = request => ({agent_session: request.agent_session, native_session_id: request.expected_native_session_id, selected: true, inference_observed: false,
+  model_observation: {current_model_id: request.provider_model_id, available_models: [], standing: 'fixture',
+    reasoning_effort: {configId: 'reasoning_effort', currentValue: request.provider_reasoning_effort ?? 'medium', options: EFFORTS3}}})
+
+test('a group\'s Model and Effort macros turn every agent of the rack, each through its own session\'s model select in AIKit (§19.15 Macros, round 861)', async () => {
+  bind.resetHolds()
+  const calls = []
+  let fail = null
+  const sessionModel = {
+    read: async ({project, agent_session}) => { calls.push(['read', project, agent_session]); return modelReading(agent_session) },
+    select: async ({project, request}) => {
+      calls.push(['select', project, request])
+      if (fail && request.agent_session === fail) throw Error('AIKit: the native session is busy with a turn')
+      return selected(request)
+    },
+  }
+  const readings = new Map([KITE, CAIRN].map(t => [t.sessionRef, {status: 'answered', reading: modelReading(t.sessionRef)}]))
+  const input = {group: CREW, tracks: TRACKS, holds: bind.chainHolds(), chainModelReadings: readings}
+  const crew = own.agentsetBinding(input, {sessionModel})
+  // The macros stand where every agent's session stands: the models every chain's harness offers, and the Model and Effort they share.
+  assert.deepEqual(JSON.parse(crew.values.models), [{id: 'sonnet', label: 'Sonnet'}, {id: 'opus', label: 'Opus'}])
+  assert.equal(crew.values.model, 'sonnet')
+  assert.equal(crew.values.effort, 'medium')
+  for (const key of ['model', 'effort']) assert.equal(crew.standing[key], undefined, `${key} turns on a group`)
+  assert.match(crew.standing.budget.disabled, /missing op/, 'Budget has no owner of a session\'s budget yet')
+  // Model: each session is read for its native session, then selected, the effort left as the harness holds it.
+  await crew.write([{key: 'model', value: 'opus'}])
+  assert.deepEqual(calls.filter(c => c[0] === 'select').map(c => c[2]), [
+    {action: 'model-select', agent_session: KITE.sessionRef, expected_native_session_id: 'native/kite', provider_model_id: 'opus'},
+    {action: 'model-select', agent_session: CAIRN.sessionRef, expected_native_session_id: 'native/cairn', provider_model_id: 'opus'},
+  ])
+  assert.deepEqual(calls.filter(c => c[0] === 'read').map(c => c[2]), [KITE.sessionRef, CAIRN.sessionRef], 'each chain read fresh before its write')
+  assert.ok(calls.every(c => c[1] === 'O-I' || c[1] === ''), 'each call in its session\'s register')
+  // Effort: the session's own model kept, its reasoning effort set.
+  calls.length = 0
+  await crew.write([{key: 'effort', value: 'high'}])
+  assert.deepEqual(calls.filter(c => c[0] === 'select').map(c => [c[2].provider_model_id, c[2].provider_reasoning_effort]), [['sonnet', 'high'], ['sonnet', 'high']])
+  // A value a chain's harness does not offer turns no chain: every chain is checked before any is written.
+  calls.length = 0
+  await assert.rejects(() => crew.write([{key: 'effort', value: 'max'}]),
+    error => error.message === 'Effort: kite\'s harness offers no Effort Max (it offers Low, Medium and High), so no chain was turned.')
+  assert.deepEqual(calls.filter(c => c[0] === 'select'), [], 'nothing was written')
+  await assert.rejects(() => crew.write([{key: 'model', value: 'haiku'}]),
+    error => error.message === 'Model: kite\'s harness does not offer haiku (it offers Sonnet and Opus), so no chain was turned.')
+  // A write that stops partway says what stands and what to press next.
+  calls.length = 0
+  fail = CAIRN.sessionRef
+  await assert.rejects(() => crew.write([{key: 'model', value: 'opus'}]),
+    error => error.message === 'Model stopped at cairn: kite now uses Opus, and cairn keeps the model it had; AIKit: the native session is busy with a turn. Turn Model again to set the rest.')
+  fail = KITE.sessionRef
+  await assert.rejects(() => crew.write([{key: 'effort', value: 'low'}]),
+    error => error.message === 'Effort stopped at kite: nothing changed, and kite and cairn keep the Effort they had; AIKit: the native session is busy with a turn. Turn Effort again to set the rest.')
+  // The Decision helper has no Agent, so no macro reaches it (chains.ts macroTurns).
+  fail = null
+  calls.length = 0
+  const helped = own.agentsetBinding({...input, helper: {model: 'kev-latest'}}, {sessionModel})
+  await helped.write([{key: 'model', value: 'opus'}])
+  assert.deepEqual(calls.filter(c => c[0] === 'select').map(c => c[2].agent_session), [KITE.sessionRef, CAIRN.sessionRef])
+  // The chain hands the rack each chain's session's model select and its readings: the encounter's own model-read and model-select, never
+  // the focused harness's Effort (shell.setEffort).
+  const chainSource = read('agent/devices/FactoryDeviceChain.tsx'), acts = read('agent/factoryTaskActs.ts')
+  assert.match(chainSource, /sessionModel: \{read: \(\{project, agent_session\}\) => sessionModelRead\(transport, project, agent_session\), select: \(\{project, request\}\) => sessionModelSelect\(transport, project, request\)\}/)
+  assert.match(chainSource, /const chainModelReadings = useChainModelReadings\(transport, macroChains\)/)
+  assert.match(chainSource, /chainModels, chainModelReadings\}, agentsetPorts\)/)
+  assert.match(acts, /encounter<unknown>\(transport, project, \{action: 'model-read', agent_session: session\}\)/)
+  assert.match(acts, /return readNativeModel\(value, session, native\)/)
+  assert.doesNotMatch(read('agent/devices/sessionChainBindings.ts'), /shell\.setEffort\(/)
+  bind.resetHolds()
+})
+
+test('a chain\'s model select is refused in its owner\'s words where its harness, its policy or its reading does not allow it (round 861)', () => {
+  const S = KITE.sessionRef
+  const select = own.sessionModelSelectOf
+  assert.deepEqual(select(modelReading(S), S, 'model', 'opus', 'kite'),
+    {action: 'model-select', agent_session: S, expected_native_session_id: 'native/kite', provider_model_id: 'opus'})
+  assert.throws(() => select(modelReading(S, {pinned_model_id: 'sonnet'}), S, 'model', 'opus', 'kite'),
+    {message: 'kite\'s model policy pins sonnet: change the policy through its owner.'})
+  assert.throws(() => select(modelReading(S, {model_controls: {model_selection: false, reasoning_effort_selection: false, reason: 'pi selects per invocation'}}), S, 'model', 'opus', 'kite'),
+    {message: 'kite\'s harness turns no Model here: pi selects per invocation'})
+  assert.throws(() => select(modelReading(S, {model_observation: null}), S, 'effort', 'high', 'kite'),
+    {message: 'kite\'s harness reports no model yet, so no Effort can be set on it.'})
+  assert.throws(() => select(modelReading('agent-session/other'), S, 'effort', 'high', 'kite'),
+    {message: 'AIKit\'s model reading of kite names another session: read it again.'})
+  // A pinned model stays: Effort sets the reasoning on the model the policy pins.
+  assert.deepEqual(select(modelReading(S, {pinned_model_id: 'sonnet'}), S, 'effort', 'low', 'kite'),
+    {action: 'model-select', agent_session: S, expected_native_session_id: 'native/kite', provider_model_id: 'sonnet', provider_reasoning_effort: 'low'})
+  // The group's macros stand on what every chain reads: a chain unread, or refused, leaves the macro's value and its models unread.
+  const readings = new Map([[KITE.sessionRef, {status: 'answered', reading: modelReading(KITE.sessionRef)}],
+    [CAIRN.sessionRef, {status: 'refused', error: 'AIKit: no native session is resident'}]])
+  const values = own.agentsetValues({group: CREW, tracks: TRACKS, holds: bind.chainHolds(), chainModelReadings: readings})
+  for (const key of ['models', 'model', 'effort']) assert.equal(values[key], undefined, key)
+  const apart = new Map([[KITE.sessionRef, {status: 'answered', reading: modelReading(KITE.sessionRef)}],
+    [CAIRN.sessionRef, {status: 'answered', reading: modelReading(CAIRN.sessionRef, {model_observation: {...modelReading(CAIRN.sessionRef).model_observation, current_model_id: 'opus'}})}]])
+  const split = own.agentsetValues({group: CREW, tracks: TRACKS, holds: bind.chainHolds(), chainModelReadings: apart})
+  assert.equal(split.model, undefined, 'the chains use different models: the macro stands at none of them')
+  assert.equal(split.effort, 'medium')
+  assert.deepEqual(JSON.parse(split.models).map(m => m.id), ['sonnet', 'opus'])
+})
+
+test('a lone session\'s Model macro turns its one chain through the session\'s own model select, the path a group\'s chains take; its Effort stays the Agent\'s (round 862)', async () => {
+  bind.resetHolds()
+  const calls = [], sent = []
+  const agent = agentOf(sent)
+  const sessionModel = {
+    read: async ({project, agent_session}) => { calls.push(['read', project, agent_session]); return modelReading(agent_session) },
+    select: async ({project, request}) => { calls.push(['select', project, request]); return selected(request) },
+  }
+  const readings = new Map([[BUMBLE.sessionRef, {status: 'answered', reading: modelReading(BUMBLE.sessionRef)}]])
+  const input = {group: null, session: BUMBLE, tracks: TRACKS, agent: agent.values, models: ['model:sonnet-5.5'], holds: bind.chainHolds(), chainModelReadings: readings}
+  const lone = own.agentsetBinding(input, {agent, sessionModel})
+  // The macro stands where the session's harness stands: its model, and the models it offers (never AIKit's catalogue the Agent shows).
+  assert.equal(lone.values.model, 'sonnet')
+  assert.deepEqual(JSON.parse(lone.values.models), [{id: 'sonnet', label: 'Sonnet'}, {id: 'opus', label: 'Opus'}])
+  assert.equal(lone.values.effort, 'medium', 'the Effort macro reads the Agent, as before')
+  assert.equal(lone.standing.model, undefined, 'Model turns: the session\'s model select carries it')
+  await lone.write([{key: 'model', value: 'opus'}])
+  assert.deepEqual(calls.splice(0), [['read', '', BUMBLE.sessionRef],
+    ['select', '', {action: 'model-select', agent_session: BUMBLE.sessionRef, expected_native_session_id: 'native/bumble', provider_model_id: 'opus'}]])
+  assert.deepEqual(sent, [], 'the Model never went through the Agent')
+  await assert.rejects(() => lone.write([{key: 'model', value: 'haiku'}]),
+    error => error.message === 'Model: Bumble\'s harness does not offer haiku (it offers Sonnet and Opus), so no chain was turned.')
+  // Effort still turns through the session's own Agent.
+  await lone.write([{key: 'effort', value: 'high'}])
+  assert.deepEqual(sent, [{key: 'effort', value: 'high'}])
+  assert.deepEqual(calls.filter(c => c[0] === 'select'), [], 'Effort asked no model select of a lone session')
+  // Unread, the macro reads the Agent and AIKit's catalogue, as it did.
+  const unread = own.agentsetValues({...input, chainModelReadings: null})
+  assert.equal(unread.model, 'model:sonnet-5.5')
+  assert.deepEqual(JSON.parse(unread.models), [{id: 'model:sonnet-5.5'}])
+  // The chain reads the lone session's model as it reads a group's chains.
+  assert.deepEqual(own.agentChainSessions(null, TRACKS, BUMBLE), [{project: '', session: BUMBLE.sessionRef}])
+  assert.match(read('agent/devices/FactoryDeviceChain.tsx'), /const macroChains = useMemo\(\(\) => agentChainSessions\(groupTrack, tracks, loneTrack\), \[groupTrack, tracks, loneTrack\]\)/)
+  bind.resetHolds()
 })
 
 test('Group, on chains chosen in the list, asks Central to propose them as an agent set; Accept saves Central\'s record', async () => {
@@ -213,7 +365,7 @@ test('Group, on chains chosen in the list, asks Central to propose them as an ag
 
 // ---------------------------------------------------------------- the chain list on AIKit's own session-space operations (O-I #745 with #772)
 
-test('each chain-list control with no carrier refuses in the words of the operation that carries it; Hot-Swap in AIKit\'s own law (O-I #772)', async () => {
+test('each chain-list control with no carrier refuses in the words of the operation that carries it (O-I #772)', async () => {
   const R = own.AGENTSET_REFUSE
   // Solo is what you attend to, never what runs (§16.1 "Live's acts, kept as Live keeps them": Solo is never "A limit on what may run";
   // §16.6 Rules). REPLACED (round 858): the rack solos through the shell's attention, the one the Session view's mixer solos
@@ -228,10 +380,12 @@ test('each chain-list control with no carrier refuses in the words of the operat
   assert.equal(R.extract, 'Drag out: no carrier to AIKit\'s drag out of a chain\'s session into a space of its own (the kernel\'s encounter_session_drag_out) stands on this chain.')
   assert.equal(R.add, 'Add a chain: no carrier to AIKit\'s attach of a standing session to this rack\'s space (the kernel\'s encounter_session_attach) stands on this chain.')
   for (const key of ['bench', 'extract', 'add']) assert.doesNotMatch(R[key], /missing op/, key)
-  // Hot-Swap: AIKit's law keeps a session's agent for good (encounter_agency.rs configure_agency, encounter.agent_identity_changed), where
-  // the manual swaps the agent and keeps the rest of the chain; it is refused in AIKit's words, with what a person can do instead.
-  assert.match(R.swap, /^Hot-Swap: AIKit does not let a chain's session become another agent: "A canonical session must not silently become another Agent; create a separately attributed session" \(AIKit\)\./)
-  assert.match(R.swap, /drop the other agent's session into the chain list, then delete this chain's track/)
+  // REPLACED (round 860): Hot-Swap was refused in AIKit's law (a session keeps its agent for good: encounter_agency.rs configure_agency).
+  // AIKit carries it now without breaking that law: `aikit session-space hot-swap` seats a separately attributed session of the other agent
+  // in the chain's place, with the chain's bench, track settings and task, and detaches the old one last (the kernel's
+  // encounter_session_hot_swap). With no carrier handed to the rack, it names the one that carries it.
+  assert.equal(R.swap, 'Hot-Swap: no carrier to AIKit\'s hot-swap of a chain\'s agent in its space (the kernel\'s encounter_session_hot_swap) stands on this chain.')
+  assert.doesNotMatch(R.swap, /missing op|must not silently become another Agent/)
   // Each write refuses in exactly those words, and reaches no owner.
   const sent = []
   const ports = {saveSet: async input => { sent.push(['save', input]) }, propose: async input => { sent.push(['propose', input]) }, agent: agentOf(sent)}
@@ -277,7 +431,8 @@ test('the Activator reads AIKit\'s bench and benches a chain in its space; a sta
   }
   const rack = own.agentsetBinding({group: crew, tracks, holds: bind.chainHolds(), nowUnixMs: NOW, helper: {model: 'glm-5.3-flash'}}, ports)
   for (const control of ['bench', 'extract', 'add']) assert.equal(rack.standing[control], undefined, `${control}: its carrier stands, so it is pressable`)
-  assert.equal(rack.standing.swap.disabled, own.AGENTSET_REFUSE.swap, 'Hot-Swap stays refused in AIKit\'s law')
+  // REPLACED (round 860): Hot-Swap stayed refused in AIKit's law; handed no hot-swap carrier here, it names the one that carries it.
+  assert.equal(rack.standing.swap.disabled, own.AGENTSET_REFUSE.swap, 'no Hot-Swap carrier is handed to this rack')
 
   // The Activator: off benches the chain in its space; on lifts the bench. The session stays in the rack.
   await rack.write([{key: 'bench:agent-session/cairn', value: true}])
@@ -317,7 +472,150 @@ test('the Activator reads AIKit\'s bench and benches a chain in its space; a sta
   assert.deepEqual(calls.splice(0), [
     ['bench', {project: 'O-I', space: 'session-space/desk', agent_session: 'agent-session/bo', benched: true}],
     ['attach', {project: 'O-I', space: 'session-space/desk', agent_session: 'agent-session/cairn'}]])
-  await assert.rejects(() => lone.write([{key: 'add', value: helper.DECISION_HELPER_ID}]), {message: own.CHAIN_LIST_REFUSE.helperAdd})
+  // REPLACED (round 860): a Decision helper dropped on a lone session's rack was refused because AIKit's space named no helper. AIKit names
+  // one now (bind-decision-helper); a lone session's rack has one chain and no agents for a helper to answer.
+  await assert.rejects(() => lone.write([{key: 'add', value: helper.DECISION_HELPER_ID}]), {message: own.CHAIN_LIST_REFUSE.helperLone})
+  bind.resetHolds()
+})
+
+// A Project's crew whose record names its Decision helper (AIKit's `decision_helper` on aikit.session-space-application/v1, round 860).
+const HELPED = [{...SPACES[0], decision_helper: {agent_session: 'agent-session/settle', provenance: ['dropped on the Agent rack as its Decision helper']},
+  agent_sessions: {...SPACES[0].agent_sessions, 'agent-session/settle': {purpose: 'Decision helper'}}}]
+
+test('Hot-Swap seats the agent dropped on it from the browser in the chain\'s place; a Decision helper dropped on the chain list becomes the rack\'s helper (§19.15, round 860)', async () => {
+  bind.resetHolds()
+  const tracks = runModel.buildTracks(agencyRows(SPACES), ROSTER)
+  const crew = tracks.find(item => item.sessionRef === 'session-space/crew')
+  const calls = []
+  const ports = {
+    hotSwap: async input => { calls.push(['hotSwap', input]); return {steps: []} },
+    decisionHelper: async input => { calls.push(['decisionHelper', input]); return {bound: input.bound} },
+    attach: async input => { calls.push(['attach', input]) },
+  }
+  const rack = own.agentsetBinding({group: crew, tracks, holds: bind.chainHolds(), nowUnixMs: NOW}, ports)
+  assert.equal(rack.standing.swap, undefined, 'Hot-Swap: its carrier stands, so it is pressable')
+  // Hot-Swap (Live's: the browser swaps what the chain holds): the agent dragged from the browser onto the chosen chain's Hot-Swap.
+  const wren = drag.encodeChainDrag({family: 'agent', ref: 'agent/wren', label: 'Wren'})
+  const swap = (chain, dropped) => rack.write([{key: 'swap', value: own.hotSwapDrop(chain, dropped)}])
+  await swap('agent-session/kite', wren)
+  assert.deepEqual(calls.splice(0), [['hotSwap', {project: 'O-I', space: 'session-space/crew', agent_session: 'agent-session/kite', agent_ref: 'agent/wren'}]])
+  const S = own.CHAIN_LIST_REFUSE
+  await assert.rejects(() => rack.write([{key: 'swap', value: 'agent-session/kite'}]), {message: S.swapPress}, 'a press with no agent dropped on it')
+  await assert.rejects(() => swap('agent-session/kite', drag.encodeChainDrag({family: 'agent', ref: 'agent/kite', label: 'kite'})), {message: S.swapSame('kite')})
+  await assert.rejects(() => swap('agent-session/kite', drag.encodeChainDrag({family: 'session', ref: 'session-space/desk:agent-session/bo', label: 'Draft'})), {message: S.swapSession})
+  await assert.rejects(() => swap('agent-session/kite', drag.encodeChainDrag({family: 'skillset', ref: 'set/port', label: 'Port'})), {message: S.swapFamily('skillset')})
+  await assert.rejects(() => swap('agent-session/kite', 'a note'), {message: S.swapUnnamed})
+  await assert.rejects(() => swap(helper.DECISION_HELPER_ID, wren), {message: S.swapHelper})
+  await assert.rejects(() => swap('agent-session/bo', wren), {message: S.notChain('Hot-Swap', 'agent-session/bo')})
+  assert.deepEqual(calls, [], 'a refused swap reaches no owner')
+  assert.match(S.swapPress, /^Hot-Swap: drag the other agent from the browser onto Hot-Swap/)
+  assert.match(S.swapSession, /drop it under the chain list/)
+  // A lone session's one chain swaps its agent in the space it stands in.
+  const bo = tracks.find(item => item.sessionRef === 'agent-session/bo')
+  const lone = own.agentsetBinding({group: null, session: bo, tracks, holds: bind.chainHolds(), nowUnixMs: NOW}, ports)
+  await lone.write([{key: 'swap', value: own.hotSwapDrop('agent-session/bo', wren)}])
+  assert.deepEqual(calls.splice(0), [['hotSwap', {project: 'O-I', space: 'session-space/desk', agent_session: 'agent-session/bo', agent_ref: 'agent/wren'}]])
+
+  // The Decision helper: dropped under the chain list of a group's rack, AIKit seats one session of the space as its helper.
+  for (const dropped of [helper.DECISION_HELPER_ID, helper.DECISION_HELPER_DESIGN]) await rack.write([{key: 'add', value: dropped}])
+  assert.deepEqual(calls.splice(0), [['decisionHelper', {project: 'O-I', space: 'session-space/crew', bound: true}], ['decisionHelper', {project: 'O-I', space: 'session-space/crew', bound: true}]])
+  await assert.rejects(() => lone.write([{key: 'add', value: helper.DECISION_HELPER_ID}]), {message: S.helperLone})
+  const bare = own.agentsetBinding({group: crew, tracks, holds: bind.chainHolds(), nowUnixMs: NOW}, {attach: ports.attach})
+  await assert.rejects(() => bare.write([{key: 'add', value: helper.DECISION_HELPER_ID}]), {message: S.helperUncarried})
+  assert.equal('helperAdd' in S, false, 'retired: AIKit\'s space names its Decision helper now')
+  assert.deepEqual(calls, [])
+
+  // The space's record names its helper: the group reads it, the helper's session is no agent's chain, and the rack lists the helper once.
+  const helped = runModel.buildTracks(agencyRows(HELPED), ROSTER)
+  const crewHelped = helped.find(item => item.sessionRef === 'session-space/crew')
+  assert.equal(crewHelped.decisionHelper, 'agent-session/settle', 'the group reads its Decision helper from AIKit\'s record')
+  assert.equal(helped.find(item => item.sessionRef === 'agent-session/settle').decisionHelper, true, 'the helper\'s own track says it is the helper')
+  assert.deepEqual(own.agentsetMembers(crewHelped, helped).map(chain => chain.id), ['agent-session/kite', 'agent-session/cairn'], 'the helper is no agent\'s chain')
+  assert.equal(tracks.find(item => item.sessionRef === 'session-space/crew').decisionHelper, undefined, 'a space that names none has none')
+  const helpedRack = own.agentsetBinding({group: crewHelped, tracks: helped, holds: bind.chainHolds(), nowUnixMs: NOW, helper: {model: 'kev'}}, ports)
+  await assert.rejects(() => helpedRack.write([{key: 'add', value: helper.DECISION_HELPER_ID}]), {message: S.helperStands})
+  await assert.rejects(() => helpedRack.write([{key: 'swap', value: own.hotSwapDrop('agent-session/settle', wren)}]), {message: S.notChain('Hot-Swap', 'agent-session/settle')})
+  // The chain wires both through the kernel, and the helper stands on the rack only where AIKit's record names one.
+  const chainSource = read('agent/devices/FactoryDeviceChain.tsx')
+  assert.match(chainSource, /hotSwap: input => chainListAct\(transport, \{op: 'encounter_session_hot_swap', \.\.\.input\}/)
+  assert.match(chainSource, /decisionHelper: input => chainListAct\(transport, \{op: 'encounter_session_decision_helper', \.\.\.input\}/)
+  assert.match(chainSource, /const helperStands = sessionRef != null && !!groupTrack\?\.decisionHelper/)
+  // The rack's Hot-Swap takes the drop: the browser's agent onto the chosen chain's Hot-Swap.
+  const rackSource = read('inhabitants/catalogue/panels/software-factory__agentset-rack.tsx')
+  assert.match(rackSource, /p\.set\('swap', JSON\.stringify\(\{chain: chosen\.id, agent: dropped\}\)\)/)
+  assert.equal(own.hotSwapDrop('agent-session/kite', wren), JSON.stringify({chain: 'agent-session/kite', agent: wren}), 'the binding reads the design\'s own drop')
+  bind.resetHolds()
+})
+
+test('⌫ on the chosen chain deletes it as its own session track\'s Delete does: AIKit detaches its session; on the Decision helper its session leaves, and the helper with it (§10.9 Track: Delete, §19.15, round 862)', async () => {
+  bind.resetHolds()
+  const tracks = runModel.buildTracks(agencyRows(SPACES), ROSTER)
+  const crew = tracks.find(item => item.sessionRef === 'session-space/crew')
+  // With no carrier handed to the rack, Delete names the operation that carries it, and reaches no owner.
+  const bare = own.agentsetBinding({group: crew, tracks, holds: bind.chainHolds(), nowUnixMs: NOW})
+  assert.equal(own.AGENTSET_REFUSE.delete, 'Delete: no carrier to AIKit\'s detach of a chain\'s session from its space (the kernel\'s encounter_session_detach, as the session track\'s own Delete) stands on this chain.')
+  assert.equal(bare.standing.delete?.disabled, own.AGENTSET_REFUSE.delete)
+  assert.equal(bare.writes('delete'), true, 'the rack refuses Delete itself')
+  await assert.rejects(() => bare.write([{key: 'delete', value: 'agent-session/kite'}]), {message: own.AGENTSET_REFUSE.delete})
+  // The carrier is the track's own Delete: AIKit detaches the chain's session from the space that holds it; its task and settings stay AIKit's.
+  const calls = []
+  let refuse = null
+  const ports = {detach: async input => { calls.push(input); if (refuse) throw Error(refuse); return {spaces: ['session-space/crew']} }}
+  const rack = own.agentsetBinding({group: crew, tracks, holds: bind.chainHolds(), nowUnixMs: NOW}, ports)
+  assert.equal(rack.standing.delete, undefined, 'Delete: its carrier stands')
+  await rack.write([{key: 'delete', value: 'agent-session/kite'}])
+  assert.deepEqual(calls.splice(0), [{project: 'O-I', agent_session: 'agent-session/kite'}])
+  const S = own.CHAIN_LIST_REFUSE
+  await assert.rejects(() => rack.write([{key: 'delete', value: 'agent-session/bo'}]), {message: S.notChain('Delete', 'agent-session/bo')}, 'bo is the desk\'s, not this rack\'s')
+  await assert.rejects(() => rack.write([{key: 'delete', value: helper.DECISION_HELPER_ID}]), {message: S.helperUnnamed}, 'no helper stands on this rack')
+  // AIKit's refusal reaches the rack in AIKit's words.
+  refuse = 'AIKit: the session space is held by a running step'
+  await assert.rejects(() => rack.write([{key: 'delete', value: 'agent-session/cairn'}]), {message: refuse})
+  refuse = null
+  calls.length = 0
+  // The Decision helper: its session leaves the space, and AIKit takes the helper off with it (the space's helper is cleared when its session
+  // is detached), so ⌫ on the helper takes it off the rack.
+  const helped = runModel.buildTracks(agencyRows(HELPED), ROSTER)
+  const crewHelped = helped.find(item => item.sessionRef === 'session-space/crew')
+  const helpedRack = own.agentsetBinding({group: crewHelped, tracks: helped, holds: bind.chainHolds(), nowUnixMs: NOW, helper: {model: 'kev'}}, ports)
+  await helpedRack.write([{key: 'delete', value: helper.DECISION_HELPER_ID}])
+  assert.deepEqual(calls.splice(0), [{project: 'O-I', agent_session: 'agent-session/settle'}])
+  // A lone session's rack: its one chain is the session itself, deleted as its track's Delete deletes it.
+  const lone = own.agentsetBinding({group: null, session: BUMBLE, tracks: TRACKS, agent: agentOf().values, holds: bind.chainHolds()}, ports)
+  await lone.write([{key: 'delete', value: BUMBLE.sessionRef}])
+  assert.deepEqual(calls.splice(0), [{project: '', agent_session: BUMBLE.sessionRef}])
+  // The chain hands the rack the track's own Delete (encounter_session_detach) through the chain list's act.
+  const chainSource = read('agent/devices/FactoryDeviceChain.tsx'), acts = read('agent/factoryTaskActs.ts')
+  assert.match(chainSource, /detach: input => chainListAct\(transport, \{op: 'encounter_session_detach', \.\.\.input\}, 'a chain was deleted from the rack'\)/)
+  assert.match(acts, /'encounter_session_hot_swap'\s*\|\s*'encounter_session_decision_helper' \| 'encounter_session_detach'/)
+  // The design: ⌫ (Delete or Backspace, no modifier) on the chain list deletes the chosen chain, and goes no further, so the frame does not
+  // delete the track the rack stands on.
+  const rackSource = read('inhabitants/catalogue/panels/software-factory__agentset-rack.tsx')
+  assert.match(rackSource, /const deletesChain = \(e: \{key: string; metaKey: boolean; ctrlKey: boolean; altKey: boolean; shiftKey: boolean\}\): boolean =>\s*\(e\.key === 'Delete' \|\| e\.key === 'Backspace'\) && !e\.metaKey && !e\.ctrlKey && !e\.altKey && !e\.shiftKey/)
+  assert.match(rackSource, /if \(grouped \|\| !chosen \|\| !deletesChain\(e\)\) return\s*e\.preventDefault\(\)\s*e\.stopPropagation\(\)\s*p\.set\('delete', chosen\.id\)/)
+  assert.match(rackSource, /delete \(⌫ on the chosen[\s/]*chain in the chain list/)
+  bind.resetHolds()
+})
+
+test('each chain of a group\'s rack shows as its chip the model its session last reported (Actuation\'s usage records; §19.15 the chain list)', () => {
+  bind.resetHolds()
+  // `actuation usage list --json` over every session (actuation.usage-listing/v1): its records in the order kept, each its session's.
+  const listing = {schema: 'actuation.usage-listing/v1', records: [
+    {agent_session_ref: 'agent-session/kite', usage: {model: {name: 'glm-5.3'}}},
+    {agent_session_ref: 'agent-session/cairn', usage: {model: {name: 'sonnet-5.5'}}},
+    {agent_session_ref: 'agent-session/kite', usage: {model: {name: 'glm-5.3-flash'}}},
+    {agent_session_ref: 'agent-session/kite', usage: {tokens: {input: 3}}},
+    {agent_session_ref: 'agent-session/elsewhere', usage: {model: {name: 'other'}}}]}
+  const models = bind.lastUsageModels(listing)
+  assert.equal(models.get('agent-session/kite'), 'glm-5.3-flash', 'the last record that names a model')
+  assert.equal(models.get('agent-session/cairn'), 'sonnet-5.5')
+  assert.equal(bind.lastUsageModels({schema: 'actuation.stream-listing/v1', records: []}).size, 0, 'another listing names no model')
+  const chains = holds => JSON.parse(own.agentsetValues({group: CREW, tracks: TRACKS, holds, nowUnixMs: NOW, chainModels: models}).members)
+  assert.deepEqual(chains(bind.chainHolds()).map(chain => [chain.id, chain.model]), [['agent-session/kite', 'glm-5.3-flash'], ['agent-session/cairn', 'sonnet-5.5']])
+  const unread = JSON.parse(own.agentsetValues({group: CREW, tracks: TRACKS, holds: bind.chainHolds(), nowUnixMs: NOW}).members)
+  assert.ok(unread.every(chain => !('model' in chain)), 'unread, no chain names a model: never a default')
+  // The chain reads every session's usage once while the rack stands on a group.
+  assert.match(read('agent/devices/FactoryDeviceChain.tsx'), /useActuationRead\(transport, groupTrack \? \{kind: 'usage-list'\} : null\)/)
   bind.resetHolds()
 })
 
@@ -361,12 +659,14 @@ test('the chain draws the rack on every session, the session\'s own chain inside
   assert.match(view, /agentsetBinding\(\{group: groupTrack, session: loneTrack,/, 'the rack on a lone session reads that session')
   assert.match(view, /agent: oneAgent/, 'its macros turn the one agent through the Agent itself')
   // The chain list's carriers (#745 with #772): AIKit's bench, attach and drag out of a chain's session, each through the kernel.
-  for (const [port, op] of [['bench', 'encounter_session_bench'], ['attach', 'encounter_session_attach'], ['dragOut', 'encounter_session_drag_out']]) {
+  for (const [port, op] of [['bench', 'encounter_session_bench'], ['attach', 'encounter_session_attach'], ['dragOut', 'encounter_session_drag_out'],
+    ['hotSwap', 'encounter_session_hot_swap'], ['decisionHelper', 'encounter_session_decision_helper']]) {
     assert.match(view, new RegExp(`${port}: input => chainListAct\\(transport, \\{op: '${op}', \\.\\.\\.input\\}`), port)
   }
   // Scope's Calls to other agents: AIKit's rule for agents, read from the gateway's ecology and set on each binding of the session.
   assert.match(view, /callsOf\(ecology\.value, sessionRef\)/)
-  assert.match(view, /await harnessIngressRule\(transport, ruled, 'agent', decision\)/)
+  // REPLACED (round 860): set one binding at a time inline; now through callsOnEvery, which says which bindings stand changed when one refuses.
+  assert.match(view, /callsOnEvery\(bindings, decision, \(ruled, said\) => harnessIngressRule\(transport, ruled, 'agent', said\)\)/)
   assert.match(view, /data-reaches=\{reach\.reaches\}/, 'each plate says how far it reaches')
   assert.match(view, /case 'remote-carrier': return placed\(CARRIER_ID, cells\.carrier, carrierDesignBinding/)
   assert.doesNotMatch(view, /Agentset/)

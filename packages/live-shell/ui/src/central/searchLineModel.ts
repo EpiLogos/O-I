@@ -19,7 +19,7 @@ import {textToHtml} from '../../../../../desktop/cradle/src/flow/instance'
 import {MENU_COMMANDS, OBJECT_ACT_OF, type MenuCommand} from '../frame/menu/commandDoor'
 import {marksOf, searchGroupOf, SEARCH_GROUPS, type SearchGroup} from '../inhabitants/catalogue/panels/central__search'
 import {isFlowPath} from './documents/centralDocuments'
-import type {LinePassage} from './searchLineDoor'
+import type {LinePassage, LineReference} from './searchLineDoor'
 
 /** What the line is doing with what was typed: `>` offers acts; nothing offers what you opened; plain words jump; a mark searches. */
 export type LineMode = 'acts' | 'opened' | 'jump' | 'search'
@@ -266,6 +266,18 @@ export function flowEntryHtml(passage: LinePassage): string {
 
 /** The turn an agent is started on: the passage, and where it came from. */
 export const agentTurnText = flowEntryText
+
+/** The reference a choice puts in place in a Flow entry or a composer (§5; the owner's ruling on #820): what it names, by the address the
+ * line opens it by — a Flow of your world by its path (the page link route), a source or the wiki by AIKit's address (`oi:knowledge:`,
+ * in the world the line searched), a Vāk entry by the search that found it (`oi:vak:`, Search's own pane). Null when the owner gave no
+ * address to open it by: a person, an agent or a place is reached by a tag, not opened. Pure. */
+export function referenceOf(result: LineResult, query: string, project?: string): LineReference | null {
+  if (result.group === 'vak') return query.trim() ? {title: result.title, href: `oi:vak:${encodeURIComponent(query.trim())}`} : null
+  const path = pathOf(result)
+  if (path && isFlowPath(path)) return {title: result.title, href: path}
+  if (!result.address) return null
+  return {title: result.title, href: `oi:knowledge:${result.address.kind}:${encodeURIComponent(result.address.value)}${project ? `?project=${encodeURIComponent(project)}` : ''}`}
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // > : the menu bar's acts

@@ -8,11 +8,12 @@
 import {useEffect, useSyncExternalStore} from 'react'
 import {loadWhenDrawn} from '../shell/loadWhenDrawn'
 import {KeyReceiptLine} from '../frame/keys/FrameKeys'
-import {atKeyOf, captureFocus, lineReceipt, openSearchLine, registerSearchLineHost, searchLineNow, searchLineVersion, showLineReceipt, subscribeSearchLine} from './searchLineDoor'
+import {atKeyOf, captureFocus, fieldInsert, lineReceipt, openSearchLine, registerSearchLineHost, searchLineNow, searchLineVersion, showLineReceipt, subscribeSearchLine} from './searchLineDoor'
 
 const SearchLine = loadWhenDrawn('The search line', () => import('./searchLine').then(module => module.SearchLine))
 
-/** A composer's @: the line opens at the caret once the @ has landed in the field (or, with a passage selected, without it). Heard as the
+/** A composer's @: the line opens at the caret once the @ has landed in the field (or, with a passage selected, without it); with none, a
+ * choice puts its reference in place of the @ (§5, fieldInsert), and Esc leaves the @ as typed. Heard as the
  * press bubbles to the document, after the composer's own handlers: a composer that refuses the key (the agent layer's receiver guard,
  * desktop/cradle/src/agent/AgentLayer.tsx `guard`, while its conversation is not current) has stopped it, and the line does not open. */
 function useComposerAt(): void {
@@ -27,7 +28,7 @@ function useComposerAt(): void {
       // After this press has done what it does (the @ typed, or held), so the caret the line puts back is the one after it.
       window.setTimeout(() => {
         const box = field.getBoundingClientRect()
-        openSearchLine({...asked.request, at: {x: box.left, y: box.top}, restore: captureFocus()})
+        openSearchLine({...asked.request, at: {x: box.left, y: box.top}, restore: captureFocus(), ...(asked.hold ? {} : {insert: fieldInsert(field, field.selectionStart ?? field.value.length)})})
       }, 0)
     }
     document.addEventListener('keydown', onKey)

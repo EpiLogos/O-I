@@ -124,12 +124,13 @@ test('Scope\'s Asks on Factory\'s Scope: every key of it classified, each settin
   // harness_ingress_rule); a Scope handed no carrier names it.
   assert.equal(binding.standing.calls.disabled, bind.CALLS_REFUSE.uncarried)
   assert.match(binding.standing.calls.disabled, /^Calls to other agents: no carrier to AIKit's ingress rule for the sender kind agent \(the kernel's harness_ingress_rule\) stands on this chain\.$/)
-  // Wait and On no answer stay missing: Hermes keeps its own approvals timeout and denies a request nobody answered, holding none, and
-  // nothing declares a seam on Hermes' config (round 859, PROPOSE).
-  assert.match(binding.standing.wait.disabled, /^Wait: no owner operation carries it yet — missing op: the agent's approvals timeout/)
-  assert.match(binding.standing.wait.disabled, /Hermes' approvals\.timeout/)
-  assert.match(binding.standing.noAnswer.disabled, /^On no answer: no owner operation carries it yet/)
-  assert.match(binding.standing.noAnswer.disabled, /Hermes denies a request nobody answers when its approvals\.timeout runs out, and holds none/)
+  // REPLACED (round 860): Wait and On no answer were missing ops (Hermes keeps its own approvals timeout and holds no request). AIKit owns
+  // them now: each is the session's own setting (track wait, track no_answer, through the kernel's encounter_session_settings), and AIKit's
+  // executor answers a request at its Wait as the person chose. A Scope handed no carrier names it.
+  assert.equal(binding.standing.wait.disabled, bind.WAIT_REFUSE.wait)
+  assert.equal(binding.standing.noAnswer.disabled, bind.WAIT_REFUSE.noAnswer)
+  assert.match(binding.standing.wait.disabled, /^Wait: no carrier to AIKit's Wait on the session's own settings \(the kernel's encounter_session_settings, track wait\) stands on this chain\.$/)
+  for (const key of ['wait', 'noAnswer']) assert.doesNotMatch(binding.standing[key].disabled, /missing op|Hermes/, key)
   assert.match(binding.standing.toolCalls.disabled, /^Tool calls: the Gateway's approvals row is not adopted on this chain/)
   // Before it lands and Escalate to are Factory's custody record's (CustodyAssign --review-gate, --escalate-to), in Custody's own words.
   assert.equal(binding.standing.gate.disabled, chain.CUSTODY_REFUSE.gate)
@@ -192,6 +193,50 @@ test('Calls to other agents reads AIKit\'s ingress rule for agents on each gatew
   await assert.rejects(control.harnessIngressRule({kind: 'tauri'}, 'gateway-binding/x', 'agent', 'deny', async () => ({outcome: null, error: 'gateway-binding/x is not bound on this gateway'})), /gateway-binding\/x is not bound on this gateway/)
   await assert.rejects(control.harnessIngressRule({kind: 'tauri'}, 'gateway-binding/x', 'agent', 'deny', async () => ({outcome: {result: 'harness_agent_outcome', document: {}}})), /AIKit did not answer the ingress rule/)
   await assert.rejects(control.harnessIngressRule({kind: 'unavailable', reason: 'No kernel carrier here.'}, 'gateway-binding/x', 'agent', 'deny'), /No kernel carrier here/)
+})
+
+test('Wait and On no answer are the session\'s own settings in AIKit: read from them and written to them, each refusal in AIKit\'s words (§19.12, round 860)', async () => {
+  const written = []
+  const write = async change => { written.push(change) }
+  const scoped = (waits, more = {}) => bind.scopeBinding(chainDeviceId('world'), bind.chainHolds(), undefined, async () => assert.fail('no row is written'), {waits, ...more})
+  // AIKit's reading states the defaults (§19.12: Wait 4 h, On no answer Hold) as the session's own values.
+  const scope = scoped({track: {wait: 14400, no_answer: 'hold'}, write})
+  assert.equal(scope.values.wait, 14400)
+  assert.equal(scope.values.noAnswer, 'hold')
+  for (const key of ['wait', 'noAnswer']) assert.equal(scope.standing[key], undefined, `${key}: its carrier stands, so it is pressable`)
+  await scope.write([{key: 'wait', value: 3600}])
+  await scope.write([{key: 'noAnswer', value: 'deny'}])
+  assert.deepEqual(written.splice(0), [{wait: 3600}, {no_answer: 'deny'}], 'each the session\'s own track setting')
+  await assert.rejects(scope.write([{key: 'wait', value: 60}]), {message: bind.WAIT_REFUSE.range})
+  await assert.rejects(scope.write([{key: 'wait', value: 'soon'}]), {message: bind.WAIT_REFUSE.range})
+  await assert.rejects(scope.write([{key: 'noAnswer', value: 'allow'}]), {message: bind.WAIT_REFUSE.noAnswerValue('allow')})
+  // Unread, refused, a group's Scope, an AIKit that carries neither, no carrier: each stands dimmed with why, and nothing is written.
+  const unread = scoped({track: null, write})
+  assert.equal(unread.standing.wait.disabled, bind.WAIT_REFUSE.unread('Wait'))
+  assert.equal(unread.values.wait, undefined, 'no reading, never a default')
+  const refused = scoped({track: null, why: 'AIKit did not read the session\'s settings: no such session.', write})
+  assert.equal(refused.standing.noAnswer.disabled, 'On no answer: AIKit did not read the session\'s settings: no such session.')
+  const older = scoped({track: {telemetry: true}, write})
+  assert.equal(older.standing.wait.disabled, bind.WAIT_REFUSE.older('Wait'))
+  await assert.rejects(older.write([{key: 'wait', value: 3600}]), {message: bind.WAIT_REFUSE.older('Wait')})
+  const bare = scoped({track: {wait: 900, no_answer: 'deny'}})
+  assert.equal(bare.standing.wait.disabled, bind.WAIT_REFUSE.wait)
+  assert.equal(bare.values.wait, 900, 'read, though nothing here sets it')
+  assert.deepEqual(written, [], 'a refused press reaches no owner')
+})
+
+test('Calls to other agents set on every binding says, when it stops partway, which bindings answer what and what to press next', async () => {
+  const set = []
+  const one = async (binding, decision) => { if (binding === 'gateway-binding/b') throw Error('gateway-binding/b is not bound on this gateway'); set.push([binding, decision]) }
+  await bind.callsOnEvery(['gateway-binding/a'], 'deny', one)
+  assert.deepEqual(set.splice(0), [['gateway-binding/a', 'deny']])
+  await assert.rejects(bind.callsOnEvery(['gateway-binding/a', 'gateway-binding/b', 'gateway-binding/c'], 'pair', one),
+    {message: 'Calls to other agents stopped at gateway-binding/b: gateway-binding/a now asks you, and gateway-binding/b and gateway-binding/c keep the rule they had; gateway-binding/b is not bound on this gateway. Choose Ask again to set the rest.'})
+  await assert.rejects(bind.callsOnEvery(['gateway-binding/b'], 'allow', one),
+    {message: 'Calls to other agents stopped at gateway-binding/b: nothing changed, and gateway-binding/b keeps the rule it had; gateway-binding/b is not bound on this gateway. Choose Allow again to set it.'})
+  assert.deepEqual(set, [['gateway-binding/a', 'pair']])
+  // The chain sets each binding through it.
+  assert.match(read('agent/devices/FactoryDeviceChain.tsx'), /callsOnEvery\(bindings, decision, \(ruled, said\) => harnessIngressRule\(transport, ruled, 'agent', said\)\)/)
 })
 
 test('Scope draws its Asks and Grants pages on its binding in all five views: no NaN, no undefined, never its fixture\'s grants or people, each refusal drawn as why', () => {

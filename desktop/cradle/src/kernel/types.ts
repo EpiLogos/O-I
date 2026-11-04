@@ -244,6 +244,12 @@ export interface ActuationTakeStop {
   when: 'done' | 'turns' | 'time' | 'pass'; turns?: number; time_ms?: number; met: boolean
   reason?: string; at_turn?: number; elapsed_ms?: number
 }
+/** A take's answer to one Success condition: met or not met with the evidence Actuation found it kept (a file by its digest in the
+ * take's World, or the task's own test), or open, with why. */
+export interface ActuationTakeAnswer {
+  condition: string; answer: 'met' | 'not met' | 'open'
+  evidence: ({file: string; digest: string} | {test: {answer: string; code: number | null}})[]; why?: string
+}
 /** The takes a comparison made (the kernel's reading of the `ql-series1-run/0.3` manifest, which stays whole at `manifest_path`): what
  * varied over which levels, and each take's level, condition, agent and how its stop condition ended it. The variable, levels, stop,
  * agent and level are null from an Actuation before O-I 795's own-task comparison. */
@@ -252,7 +258,10 @@ export interface ActuationComparisonTakes {
   variable: string | null; levels: string[] | null; stop: ActuationTakeStop | {when: string} | null
   records: {condition: string; variable: string | null; level: string | null; agent: string | null; repetition: number; ordinal: number
     trace_ref: string; status: string | null; error: string | null; elapsed_ms: number | null; model_calls: number | null
-    total_tokens: number | null; stop: ActuationTakeStop | null; receipt_path: string}[]
+    total_tokens: number | null; stop: ActuationTakeStop | null; receipt_path: string
+    /** What the take answered to each of the task's Success conditions, held to its evidence (research execution.rs `answers`); null
+     * from an Actuation before O-I 795 round 13. */
+    answers?: ActuationTakeAnswer[] | null}[]
   held_constants_valid: boolean; determination: string; provider_mode: string; human_acceptance: boolean
 }
 /** `ql kernel m1` (answers ql.m1.engine/v1), `ql scene compose` (ql.scene/v1), `ql scene world` (ql.scene-world/v1). */
@@ -815,6 +824,8 @@ export type KernelOp =
   | {op:"encounter_session_bench";project:string;space:string;agent_session:string;benched:boolean}
   | {op:"encounter_session_attach";project:string;space:string;agent_session:string}
   | {op:"encounter_session_drag_out";project:string;space:string;agent_session:string;into:string;label?:string|null}
+  | {op:"encounter_session_hot_swap";project:string;space:string;agent_session:string;agent_ref:string}
+  | {op:"encounter_session_decision_helper";project:string;space:string;bound:boolean}
   /** Several sessions' settings read at once (aikit.encounter-session-settings-list/v1), so a view of many tracks asks once. */
   | {op:"encounter_session_settings_list";project:string;agent_sessions:string[]}
   /** Several sessions' served attempts read at once (aikit.encounter-task-attempts-list/v1): for each session, the Factory attempts
@@ -1287,7 +1298,7 @@ export interface FactoryAttemptArtifacts {
 /** A change to one session's settings: `null` returns a field to its default. Task fields bind to the session's bound task. */
 export interface EncounterSessionSettingsRequest {
   /** `name` is the session's own name (O-I #743, its track's Rename); null takes it away. */
-  track?: {telemetry?: boolean | null; solo?: boolean | null; name?: string | null}
+  track?: {telemetry?: boolean | null; solo?: boolean | null; name?: string | null; wait?: number | null; no_answer?: 'hold' | 'deny' | null}
   task?: {task_ref: string; set: Partial<Record<EncounterTaskSettingKey, unknown>>}
   /** A Repeat's takes starting (only on a task launched with Repeat, one set at a time) or ending, by whoever runs them (O-I 795). */
   takes?: {start: {task_ref: string; trace_ref: string}}
@@ -1298,10 +1309,12 @@ export interface EncounterSessionSettingsRequest {
 export interface EncounterTakesSet {
   trace_ref: string; started_at_unix_ms: number; running: boolean
   variable: string; levels: string[]; repeats: number; stop: string
+  /** The task's Success conditions as they stood at the set's first run: each take is read against them. Absent before O-I 795 round 13. */
+  success?: string[]
   ended: null | {at_unix_ms: number; outcome: 'made' | 'failed' | 'stopped'; takes?: number; root?: string; reason?: string}
 }
 export type EncounterTaskSettingKey = 'name' | 'colour' | 'active' | 'register' | 'form' | 'loop' | 'loop_until' | 'loop_cap' | 'launch' | 'then'
-  | 'quantize' | 'repeat_variable' | 'repeat_levels' | 'repeat_repeats' | 'repeat_stop' | 'envelope_mode' | 'envelope_linked' | 'source' | 'effort' | 'tool_calls'
+  | 'quantize' | 'repeat_variable' | 'repeat_levels' | 'repeat_repeats' | 'repeat_stop' | 'envelope_mode' | 'envelope_linked' | 'source' | 'success' | 'effort' | 'tool_calls'
 /** An envelope point: [seconds from the task's start, a level word under Automation or a step −2…+2 under Modulation]. */
 export type EncounterEnvelopePoint = [number, string | number]
 /** The owner's reading: every value as it stands (defaults stated), `set` naming what the person set. Its words are the manual's (§19.1
@@ -1318,8 +1331,9 @@ export interface EncounterSessionSettingsReading {
   schema: 'aikit.encounter-session-settings/v1'
   agent_session: string
   revision: string | null
-  /** `name`: the session's own name, null when it has none (an AIKit before O-I #743 gives none). */
-  track: {telemetry: boolean; solo: boolean; name?: string | null; set: string[]}
+  /** `name`: the session's own name, null when it has none (an AIKit before O-I #743 gives none). `wait` and `no_answer`: Scope's Wait
+   * (seconds, 900–86400, default 14400) and On no answer (hold · deny, default hold), §19.12; absent from an AIKit before O-I round 860. */
+  track: {telemetry: boolean; solo: boolean; name?: string | null; wait?: number; no_answer?: 'hold' | 'deny'; set: string[]}
   task: null | {
     task_ref: string; name: string; colour: string | null; active: boolean; register: 'plain' | 'warm' | 'terse'
     form: 'technical' | 'narrative' | 'list'; loop: boolean; loop_until: 'done' | 'pass'; loop_cap: number | null
@@ -1337,6 +1351,9 @@ export interface EncounterSessionSettingsReading {
     /** The constellation the task was made of (§19.1 The Clip panel's Constellation): its whole's wiki ref, the one the task was made with
      * until the person sets another; null when it was made of none. Absent from an AIKit before O-I #768 (ai-kit a3f43f84). */
     source?: string | null
+    /** The Success conditions the person typed for the task (§19.1 The Intent panel's Add), in their words, kept with its settings; a
+     * set of takes is read against them as they stood at its first run. Absent from an AIKit before O-I 795 round 13. */
+    success?: string[]
     /** The Repeat's set of takes that stands; null until one starts. Absent from an AIKit before O-I 795. */
     takes?: EncounterTakesSet | null
     /** The run a Repeat's takes share, in Actuation's own words, or why AIKit has none (EncounterTakeRun). Absent from an AIKit
@@ -1345,6 +1362,10 @@ export interface EncounterSessionSettingsReading {
   }
   previous_task: null | {task_ref: string; set: Record<string, unknown>}
   standing: string
+  /** What AIKit's executor did with the session's asks (ai-kit encounter_task_executor.rs asks_reading): the requests held past their Wait,
+   * what the Decision helper did with each it was asked (`answered`, `picked` with `refused`, or `passed`), and its last act. Absent from
+   * an AIKit before O-I round 860. */
+  asks?: {held: {request: string; past_wait_at_unix_ms: number}[]; helper: Record<string, Record<string, unknown>>; last: Record<string, unknown> | null}
 }
 
 /** Where a clip stands on its track: its arrangement index or its session slot's scene. */

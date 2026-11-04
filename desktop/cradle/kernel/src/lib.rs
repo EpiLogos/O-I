@@ -783,6 +783,27 @@ pub enum KernelOp {
         #[serde(default)]
         label: Option<String>,
     },
+    /// Hot-Swap a chain of the Agent rack (manual §19.15 "Swaps the chain's
+    /// agent ... and keeps the rest of its chain"): AIKit's `session-space
+    /// hot-swap` seats a new, separately attributed session for `agent_ref`
+    /// in `space` with the chain's purpose, bench, track settings and task,
+    /// and detaches `agent_session` last; the new session opens on the
+    /// provider the chain's session ran on, where it was open.
+    EncounterSessionHotSwap {
+        project: String,
+        space: String,
+        agent_session: String,
+        agent_ref: String,
+    },
+    /// Seat the rack's Decision helper (`bound`), or take it off (manual
+    /// §19.20 "one helper answers every agent of the rack"): AIKit's
+    /// `attach-agent-session` and `bind-decision-helper` on the space, or
+    /// `unbind-decision-helper` and the helper session's detach.
+    EncounterSessionDecisionHelper {
+        project: String,
+        space: String,
+        bound: bool,
+    },
     /// Several sessions' settings read at once (the owner's
     /// `aikit.encounter-session-settings-list/v1`), so a view of many tracks
     /// asks once. Every session must be attached to one of the Project's
@@ -1730,7 +1751,8 @@ pub enum KernelOpResult {
     /// taken off the set, benched, added to a rack or dragged out of one
     /// (`EncounterTaskRemove`, `EncounterTaskCopy`, `EncounterSessionDetach`,
     /// `EncounterSessionBench`, `EncounterSessionAttach`,
-    /// `EncounterSessionDragOut`), its schema naming which.
+    /// `EncounterSessionDragOut`, `EncounterSessionHotSwap`,
+    /// `EncounterSessionDecisionHelper`), its schema naming which.
     EncounterOwnerAct {
         data: serde_json::Value,
     },
@@ -3702,6 +3724,8 @@ impl Kernel {
             | KernelOp::EncounterSessionBench { .. }
             | KernelOp::EncounterSessionAttach { .. }
             | KernelOp::EncounterSessionDragOut { .. }
+            | KernelOp::EncounterSessionHotSwap { .. }
+            | KernelOp::EncounterSessionDecisionHelper { .. }
             | KernelOp::EncounterSessionSettingsList { .. }
             | KernelOp::EncounterTaskAttemptsList { .. }
             | KernelOp::ModelRoster { .. }

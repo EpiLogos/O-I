@@ -130,13 +130,13 @@ export function useIdentityDevice(transport: KernelTransportStatus, talkingTo: s
 }
 
 /** Scope on Central (one Scope, R4): Context & world's readings — the Agent's session's scope over Central's ground (its change horizon,
- * and the world's effective sources as Central resolves them) and the Packet's reading — in Scope's keys (contextWorldBinding.ts
- * centralScopeBinding). */
+ * and the world's effective sources as Central resolves them) and the Packet's reading — in Scope's keys, and the session's own Wait and On
+ * no answer in AIKit (contextWorldBinding.ts centralScopeBinding). */
 export function useScopeDevice(input: ContextWorldInput): DesignBinding {
   useSyncExternalStore(subscribeHolds, holdsVersion, holdsVersion)
   const version = holdsVersion()
-  const {answer, horizon, groundError, document, packet, effective, relations, saveRelations} = input
+  const {answer, horizon, groundError, document, packet, effective, relations, saveRelations, waits} = input
   // eslint-disable-next-line react-hooks/exhaustive-deps -- the parts are the input; the holds' version re-binds the view's own keys
-  return useMemo(() => centralScopeBinding(CENTRAL_SCOPE_ID, {answer, horizon, groundError, document, packet, effective, relations, saveRelations}),
-    [answer.bound, answer.session, horizon, groundError, document, packet?.items, packet?.session, effective, relations, saveRelations, version])
+  return useMemo(() => centralScopeBinding(CENTRAL_SCOPE_ID, {answer, horizon, groundError, document, packet, effective, relations, saveRelations, ...(waits ? {waits} : {})}),
+    [answer.bound, answer.session, horizon, groundError, document, packet?.items, packet?.session, effective, relations, saveRelations, waits, version])
 }

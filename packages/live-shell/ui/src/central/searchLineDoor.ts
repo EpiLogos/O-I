@@ -11,6 +11,12 @@
 // Ported, not recreated: putting the focus, the caret and the selection back on close is the cradle's search overlay's own
 // (desktop/cradle/src/knowledge/SearchOverlay.tsx:206-226); an @ word is the pane's reading of a composer's words (atQueryOf, moved
 // here from central/searchPane.tsx so the first frame can read it without the pane). No React, no store: a reference to the request.
+//
+// In a Flow entry and the agent's composer (§5: "`@` in a Flow entry or in an agent's composer … puts the chosen reference in place";
+// the owner's ruling on #820, round 862) the door says where a choice goes (`insert`): a reference to what it names, put where the @ was
+// typed, which opens what it names through the owner that opens it from the line. The line itself (⌘K) keeps Enter's open (§18.4).
+import type {KnowledgeAddress} from '../../../../../desktop/cradle/src/kernel/types'
+import {KNOWLEDGE_OPEN} from '../panels/knowledgeDoor'
 
 /** Where the line was asked from: the frame (⌘K), a Flow's entry, or a composer (@). */
 export type LineDoor = 'frame' | 'flow' | 'composer'
@@ -30,6 +36,15 @@ export interface LineRequest {
   readonly passage?: LinePassage | null
   /** Puts the focus, the caret and the selection back where they were. */
   readonly restore?: (() => void) | null
+  /** Where a choice goes in a Flow entry or a composer (§5): the reference put where the @ was typed. None: the line opens what is chosen. */
+  readonly insert?: ((reference: LineReference) => void) | null
+}
+
+/** A reference to what a result names: its words, and the address that opens it (a page of a world by its path; `oi:knowledge:` AIKit's
+ * address of a source or the wiki; `oi:vak:` the search a Vāk entry was found by). */
+export interface LineReference {
+  readonly title: string
+  readonly href: string
 }
 
 /** What an owner answered to the line, said once the line has closed (an open the owner refused, a send's receipt). */
@@ -133,6 +148,86 @@ export function atKeyOf(event: AtKeyLike, field: AtFieldLike, from = 'the agent\
   const selected = field.value.slice(Math.min(start, end), Math.max(start, end))
   if (selected.trim()) return {hold: true, request: {door: 'composer', passage: {text: selected, from}}}
   return atOpens(field.value.slice(0, start)) ? {hold: false, request: {door: 'composer', passage: null}} : null
+}
+
+// ---- a reference put in place, and opened
+
+/** What a reference's address names, as the owner that opens it reads it: AIKit's knowledge address (the Graph and source receiver, in
+ * the world it was found in), or a Vāk search (Search's own pane, the entry among its neighbours). A page of a world and an http(s)
+ * address are the page link route's (inhabitants/DocumentPageFace.tsx linkTarget). */
+export type ReferenceTarget =
+  | {readonly kind: 'knowledge'; readonly address: KnowledgeAddress; readonly project?: string}
+  | {readonly kind: 'vak'; readonly query: string}
+
+const KNOWLEDGE_KINDS: readonly string[] = ['wiki', 'source', 'project-map']
+const decoded = (text: string): string | null => { try { return decodeURIComponent(text) } catch { return null } }
+
+/** The owner a reference's address names, or null when it names none here. Pure. */
+export function referenceTargetOf(href: unknown): ReferenceTarget | null {
+  if (typeof href !== 'string') return null
+  const knowledge = /^oi:knowledge:([a-z-]+):([^?]+)(?:\?project=(.+))?$/.exec(href)
+  if (knowledge) {
+    const value = decoded(knowledge[2]!), project = knowledge[3] === undefined ? undefined : decoded(knowledge[3])
+    if (!KNOWLEDGE_KINDS.includes(knowledge[1]!) || !value || project === null || project === '') return null
+    return {kind: 'knowledge', address: {kind: knowledge[1] as KnowledgeAddress['kind'], value}, ...(project ? {project} : {})}
+  }
+  const vak = /^oi:vak:(.+)$/.exec(href)
+  if (!vak) return null
+  const query = decoded(vak[1]!)
+  return query ? {kind: 'vak', query} : null
+}
+
+/** A reference as text, in a composer: the link form the kernel writes into a Markdown page (kernel page.rs append_quote), the words'
+ * brackets escaped and the address's spaces and parentheses encoded. Pure. */
+export function referenceText(reference: LineReference): string {
+  const words = reference.title.replace(/[[\]\\]/g, c => `\\${c}`)
+  const href = reference.href.replace(/ /g, '%20').replace(/\(/g, '%28').replace(/\)/g, '%29')
+  return `[${words}](${href})`
+}
+
+/** The part of a text field a reference is put into (a real textarea or input satisfies it). */
+export interface InsertFieldLike {
+  value: string
+  focus(options?: FocusOptions): void
+  setRangeText(text: string, start: number, end: number, mode?: SelectionMode): void
+  dispatchEvent(event: Event): boolean
+}
+
+/** Where a choice goes in a composer: the reference, as text, in place of the @ typed before the caret (`at`, where the caret stood when
+ * the line opened; at the caret when the @ has gone), a space after it unless one follows, the caret after it. The field hears it as
+ * typing (an `input` event), so the composer's own draft takes it as it takes what is typed. */
+export function fieldInsert(field: InsertFieldLike, at: number): (reference: LineReference) => void {
+  return reference => {
+    const caret = Math.min(Math.max(0, at), field.value.length)
+    const start = caret > 0 && field.value[caret - 1] === '@' ? caret - 1 : caret
+    const next = field.value[caret]
+    const text = `${referenceText(reference)}${next === undefined || !/\s/.test(next) ? ' ' : ''}`
+    field.focus({preventScroll: true})
+    field.setRangeText(text, start, caret, 'end')
+    field.dispatchEvent(new Event('input', {bubbles: true}))
+  }
+}
+
+/** How long the Graph and source receiver has to acknowledge an open before its opener says it did not. */
+const OPEN_DEADLINE_MS = 10_000
+
+/** Open AIKit's address of a source or the wiki through the Graph and source receiver, as the Workbench does (native/Workbench.tsx:332-343):
+ * a wiki address as its graph, a source as its page; resolves when the receiver acknowledges, rejects with its refusal. */
+export function openKnowledgeAddress(title: string, address: KnowledgeAddress, project: string | undefined): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    let settled = false
+    const complete = (reason?: string) => { if (settled) return; settled = true; window.clearTimeout(deadline); if (reason) reject(new Error(reason)); else resolve() }
+    const deadline = window.setTimeout(() => complete('The Graph and source receiver (panels/knowledge.tsx) did not acknowledge this open.'), OPEN_DEADLINE_MS)
+    window.dispatchEvent(new CustomEvent(KNOWLEDGE_OPEN, {detail: {title, ...(project ? {project} : {}), address,
+      plane: address.kind === 'wiki' ? 'graph' : 'page', complete}}))
+  })
+}
+
+/** Open what a reference names through its owner: AIKit's address through the Graph and source receiver; a Vāk entry in Search's own pane
+ * on the search that found it. */
+export function openReference(target: ReferenceTarget, title: string): Promise<void> {
+  if (target.kind === 'knowledge') return openKnowledgeAddress(title, target.address, target.project)
+  return import('./searchPane').then(module => module.openSearchPane(target.query))
 }
 
 // ---- Esc: you are where you were

@@ -39,7 +39,7 @@ import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
 import type {SeatWriteRequest} from '../../../../../../desktop/cradle/src/kernel/types'
 import {parseSeatStatusJson} from '../../inhabitants/centralHygieneModel'
 import {chainDeviceId, type AgentChainReading} from './agentChainDevices'
-import {chainHolds, holdView, viewHolds, type ChainHolds} from './designBindings'
+import {chainHolds, holdView, viewHolds, type ChainHolds} from './chainHolds'
 import {familyFaceDevice} from './mainTrackBindings'
 import {offersOf, planOf, probeFields, probesByLabel} from './workcellMaterial'
 

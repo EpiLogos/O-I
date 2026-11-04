@@ -143,16 +143,46 @@ test('Factory on Arrangement view\'s ruler: no Launch tab, as in Live', async ()
 
 test('Factory\'s Intent panel: every key absent with the read it waits for, Intent and a new condition refused with the write they lack (§19.1)', async () => {
   const binding = factory.factoryClipBinding({ref: taskRef, tracks: [track], events: null})
-  for (const key of ['intent', 'intent.source', 'criteria', 'constraints', 'context']) {
+  for (const key of ['intent', 'intent.source', 'constraints', 'context']) {
     assert.equal(binding.values[key], undefined, `${key}: no reading`)
     assert.match(factory.INTENT_ABSENT[key], /missing op: /, key)
   }
-  assert.match(factory.INTENT_ABSENT.criteria, /project-development ledger \(bounded intent, success criteria, PraxisCondition\)/)
   assert.match(factory.INTENT_ABSENT.intent, /factory development field read/)
-  for (const [key, op] of [['intent', /factory development field set/], ['criterion', /success-condition write/]]) {
-    assert.match(binding.standing[key].disabled, op, `${key} stands disabled with its operation`)
-    await assert.rejects(() => binding.write([{key, value: 'x'}]), op)
-  }
+  assert.match(binding.standing.intent.disabled, /factory development field set/, 'Intent stands disabled with its operation')
+  await assert.rejects(() => binding.write([{key: 'intent', value: 'x'}]), /factory development field set/)
+  // REPLACED (O-I 795, round 13): "a success-condition write on the bounded intent of the project-development ledger". The Success
+  // conditions the person types are the task's own settings on AIKit (`success`), so where those are not read, they say so.
+  assert.equal(binding.values.criteria, undefined)
+  assert.equal(binding.standing.criterion.disabled, SETTINGS_WHY.notHere)
+  await assert.rejects(() => binding.write([{key: 'criterion', value: 'x'}]), {message: SETTINGS_WHY.notHere})
+})
+
+test('Factory\'s Intent panel: the Success conditions are the words typed for the task, kept with its settings; Add appends one (§19.1, O-I 795)', async () => {
+  const was = TASK_SEAMS.success
+  const sent = []
+  TASK_SEAMS.success = {send: async (task, value, context) => { sent.push([task, value, context.project]) }}
+  const settings = (over = {}) => ({transport: {kind: 'unavailable', reason: 'test'}, project: 'O-I', settings: {schema: 'aikit.encounter-session-settings/v1',
+    agent_session: 'ses-214', revision: 'r1', track: {telemetry: true, solo: false, set: []}, task: {task_ref: 'task:t', name: 'correlate occurrences',
+      launch: 'repeat', then: 'next', quantize: 'global', loop: false, loop_until: 'done', loop_cap: null, repeat_variable: 'condition', repeat_levels: [],
+      repeat_repeats: 3, repeat_stop: 'done', envelope_mode: 'automation', envelope_linked: true, effort: [], tool_calls: [], register: 'plain',
+      form: 'technical', active: true, colour: null, success: ['Every occurrence is correlated'], set: ['success'], ...over}, previous_task: null, standing: 's'}})
+  try {
+    const binding = factory.factoryClipBinding({ref: taskRef, tracks: [track], events: null, settings: settings()})
+    assert.deepEqual(JSON.parse(binding.values.criteria), [{id: 'c0', text: 'Every occurrence is correlated'}], 'no return yet: each condition has no answer')
+    assert.equal(binding.standing.criterion, undefined, 'Add stands')
+    await binding.write([{key: 'criterion', value: 'No occurrence is dropped'}])
+    assert.deepEqual(sent, [[{sessionRef: 'ses-214', n: 1}, 'No occurrence is dropped', 'O-I']])
+    // While a set of takes runs, its conditions do not change, in AIKit's words.
+    const running = factory.factoryClipBinding({ref: taskRef, tracks: [track], events: null,
+      settings: settings({takes: {trace_ref: 'takes:t9', running: true, started_at_unix_ms: 1, variable: 'condition', levels: [], repeats: 3, stop: 'done',
+        success: ['Every occurrence is correlated'], ended: null}})})
+    assert.match(running.standing.criterion.disabled, /takes:t9.*Success conditions as they stood at their first run/)
+  } finally { TASK_SEAMS.success = was }
+  // The change the seam sends: the condition added to those that stand, as the owner keeps them.
+  const {taskSettingChange} = await import('../src/agent/sessionSettings.ts')
+  assert.deepEqual(taskSettingChange('success', ' No occurrence is dropped ', settings().settings),
+    {change: {task: {task_ref: 'task:t', set: {success: ['Every occurrence is correlated', 'No occurrence is dropped']}}}})
+  assert.deepEqual(taskSettingChange('success', '  ', settings().settings), {refused: 'A success condition is its own words: type one, then press Enter.'})
 })
 
 // ---------------------------------------------------------------------------------------------------------------- Live

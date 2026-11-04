@@ -387,3 +387,85 @@ test('the frame mounts the knowledge door, and the receiver loads when a source 
   const gate = await read('./first-load-budget.test.mjs')
   assert.match(gate.slice(gate.indexOf('export const LOADS_LATER')), /knowledgeReceiver/)
 })
+
+// ---------------------------------------------------------------------------------------------------------------------
+// round 862 (the owner's ruling on #820): the line (⌘K, §18.4) keeps Enter's open with no selection; in a Flow entry and the agent's
+// composer (§5: "`@` in a Flow entry or in an agent's composer … puts the chosen reference in place") a choice puts a reference to it
+// where the @ was typed, a reference that opens what it names through the owner that opens it from the line; Esc leaves the text as typed.
+
+test('the reference a choice puts in place names what the line would open, through the same owner: a page by its path, a source or the wiki by AIKit\'s address, a Vāk entry by its search', () => {
+  const page = of('knowledge-source', {ref: 'central:source:control:root:Control/user/flows/flow-b.html', title: 'Flow B'})
+  assert.deepEqual(model.referenceOf(page, 'flow b'), {title: 'Flow B', href: 'Control/user/flows/flow-b.html'}, 'a page of a world: the page link route opens it')
+  const source = of('knowledge-source', {ref: 'central:source:project:O-I:README.md', title: 'README', address: {kind: 'source', value: 'central:source:project:O-I:README.md'}})
+  assert.deepEqual(model.referenceOf(source, 'readme'), {title: 'README', href: 'oi:knowledge:source:central%3Asource%3Aproject%3AO-I%3AREADME.md'})
+  const wiki = of('knowledge-frame', {ref: 'wiki:ariadne', title: 'Ariadne', address: {kind: 'wiki', value: 'wiki:ariadne'}})
+  assert.deepEqual(model.referenceOf(wiki, '@ariadne', 'O-I'), {title: 'Ariadne', href: 'oi:knowledge:wiki:wiki%3Aariadne?project=O-I'}, 'in the world the line searched')
+  const vak = of('vak-entry', {title: 'Vāk 4'})
+  assert.deepEqual(model.referenceOf(vak, '@3 form:brief'), {title: 'Vāk 4', href: 'oi:vak:%403%20form%3Abrief'}, 'the entry among its neighbours: Search on the search that found it')
+  assert.equal(model.referenceOf(of('participant', {title: 'Frank'}), '@frank'), null, 'the owner gave no address to open it by')
+  // The door reads each back as the owner that opens it.
+  assert.deepEqual(door.referenceTargetOf('oi:knowledge:wiki:wiki%3Aariadne?project=O-I'), {kind: 'knowledge', address: {kind: 'wiki', value: 'wiki:ariadne'}, project: 'O-I'})
+  assert.deepEqual(door.referenceTargetOf('oi:knowledge:source:central%3Asource%3Aproject%3AO-I%3AREADME.md'), {kind: 'knowledge', address: {kind: 'source', value: 'central:source:project:O-I:README.md'}})
+  assert.deepEqual(door.referenceTargetOf('oi:vak:%403%20form%3Abrief'), {kind: 'vak', query: '@3 form:brief'})
+  for (const href of ['Control/user/flows/flow-b.html', 'https://example.org', 'oi:knowledge:secret:x', 'oi:knowledge:wiki:', 'oi:vak:', 'oi:knowledge:wiki:%E0%A4%A']) assert.equal(door.referenceTargetOf(href), null, href)
+  // In a composer the reference is text: the link form the kernel writes into a Markdown page (kernel page.rs append_quote).
+  assert.equal(door.referenceText({title: 'Flow B', href: 'Control/user/flows/flow-b.html'}), '[Flow B](Control/user/flows/flow-b.html)')
+  assert.equal(door.referenceText({title: 'a [b]', href: 'Work/X/ProjectCentral/user/p (1).html'}), '[a \\[b\\]](Work/X/ProjectCentral/user/p%20%281%29.html)')
+})
+
+test('in a composer the reference takes the place of the @ typed before the caret, as if typed: the field hears it, and its caret stands after it', () => {
+  const field = (value, caret) => {
+    const heard = []
+    const f = {value, selectionStart: caret, selectionEnd: caret, focused: false, heard,
+      focus() { this.focused = true },
+      setRangeText(text, start, end, mode) { this.value = this.value.slice(0, start) + text + this.value.slice(end); if (mode === 'end') this.selectionStart = this.selectionEnd = start + text.length },
+      setSelectionRange(a, b) { this.selectionStart = a; this.selectionEnd = b },
+      dispatchEvent(event) { heard.push(event.type); return true }}
+    return f
+  }
+  const ref = {title: 'Flow B', href: 'Control/user/flows/flow-b.html'}
+  const asked = field('Read @ today', 6)
+  door.fieldInsert(asked, 6)(ref)
+  assert.equal(asked.value, 'Read [Flow B](Control/user/flows/flow-b.html) today')
+  assert.equal(asked.selectionStart, 'Read [Flow B](Control/user/flows/flow-b.html) '.length - 1, 'the caret after the reference')
+  assert.deepEqual(asked.heard, ['input'], 'the composer hears it as typing, so its own draft takes it')
+  assert.equal(asked.focused, true)
+  // The @ has gone from before the caret (moved, or typed over): the reference goes in at the caret, and nothing else is taken.
+  const moved = field('Read  today', 5)
+  door.fieldInsert(moved, 5)(ref)
+  assert.equal(moved.value, 'Read [Flow B](Control/user/flows/flow-b.html) today')
+  // The composer doors hand the line where a choice goes; the Flow's hands its form the reference to put in place.
+  return Promise.all([read('../src/central/SearchLineHost.tsx'), read('../src/central/searchPane.tsx'), read('../src/inhabitants/DocumentFlowFace.tsx')]).then(([host, pane, face]) => {
+    assert.match(host, /openSearchLine\(\{\.\.\.asked\.request, at: \{x: box\.left, y: box\.top\}, restore: captureFocus\(\), \.\.\.\(asked\.hold \? \{\} : \{insert: fieldInsert\(field, field\.selectionStart \?\? field\.value\.length\)\}\)\}\)/)
+    assert.match(pane, /insert: field \? fieldInsert\(field, field\.selectionStart \?\? field\.value\.length\) : null/)
+    assert.match(face, /insert: text \? null : reference => \{ host\.focus\(\); host\.contentWindow\?\.postMessage\(\{type: AT_SEARCH_INSERT_MESSAGE, href: reference\.href, title: reference\.title\}, '\*'\) \}/)
+  })
+})
+
+test('Enter in a Flow entry or the composer puts the chosen reference in place; Shift and Enter opens it; the line (⌘K) still opens; a passage selected is still sent', async () => {
+  const line = await read('../src/central/searchLine.tsx')
+  const enter = line.slice(line.indexOf('  const enter = (shift: boolean) => {'), line.indexOf('  const onKeyDown'))
+  assert.match(enter, /if \(!shift && !passage && request\.insert\) \{ place\(result\); return \}/)
+  assert.ok(enter.indexOf('place(result)') < enter.indexOf('void open(result)'), 'the place comes before the open')
+  const place = line.slice(line.indexOf('  const place = (result: LineResult) => {'), line.indexOf('  const send = async'))
+  assert.match(place, /const reference = referenceOf\(result, query, project\)/)
+  assert.match(place, /setProblem\(`\$\{result\.title\}: the owner gave no address to open it by, so no reference to it can be put in place\. Shift and Enter opens it where it can\.`\)/)
+  assert.match(place, /closeSearchLine\(\{restore: false\}\)\s*try \{ request\.insert\?\.\(reference\) \}/)
+  assert.match(line, /↵ \{mode === 'acts' \? 'run' : passage && !enterOpens \? 'send · ⇧↵ open' : request\.insert && !passage \? 'put in place · ⇧↵ open' : 'open'\}/)
+  // The line's opens and a reference's go through the same owner: the Graph and source receiver, by the address.
+  assert.match(line, /else if \(result\.address\) await openKnowledgeAddress\(result\.title, result\.address, project\)/)
+})
+
+test('the Flow\'s form puts the reference where the @ was typed, and its links reach the owner that opens what each names', async () => {
+  const form = await read('../../../../desktop/cradle/documents/ql-flow.html')
+  const insert = form.slice(form.indexOf("ev.data.type!=='oi:at-search-insert'") - 120, form.indexOf("ev.data.type!=='oi:at-search-insert'") + 900)
+  assert.match(insert, /if\(r\.collapsed&&node\.nodeType===3&&r\.startOffset>0&&node\.data\[r\.startOffset-1\]==='@'\) r\.setStart\(node,r\.startOffset-1\);/, 'the @ typed goes')
+  assert.match(insert, /document\.execCommand\('insertHTML',false,'<a href="'\+esc\(href\)\+'">'\+esc\(title\)\+'<\/a>&nbsp;'\)/, 'the reference takes its place, as the field\'s own edit')
+  assert.match(form, /window\.parent\.postMessage\(\{type:'oi:page-link',href,text:a\.textContent\|\|''\},'\*'\)/, 'a followed link carries its words, for the owner\'s title')
+  const face = await read('../src/inhabitants/DocumentFlowFace.tsx')
+  assert.match(face, /export const AT_SEARCH_INSERT_MESSAGE = 'oi:at-search-insert'/)
+  assert.match(face, /const reference = referenceTargetOf\(href\)\s*if \(reference\) \{ void openReference\(reference, title\)\.then\(\(\) => setNotice\(undefined\), cause => setNotice/)
+  const doorSource = await read('../src/central/searchLineDoor.ts')
+  assert.match(doorSource, /window\.dispatchEvent\(new CustomEvent\(KNOWLEDGE_OPEN, \{detail: \{title, \.\.\.\(project \? \{project\} : \{\}\), address,\s*plane: address\.kind === 'wiki' \? 'graph' : 'page', complete\}\}\)\)/)
+  assert.match(doorSource, /import\('\.\/searchPane'\)\.then\(module => module\.openSearchPane\(target\.query\)\)/, 'a Vāk entry opens in Search\'s own pane, loaded when it is first asked for')
+})

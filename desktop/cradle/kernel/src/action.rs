@@ -76,7 +76,10 @@ pub fn central_action(action: &str) -> bool {
 /// yours"), and Central admits it only on that authority (ctrl source_return.rs, O-I #805). Approvals' Changes
 /// (`projectcentral.source.return_comment`) is not among these: Central keeps a comment's declared `commented_by_ref` and reads no
 /// token for it, so the token is not handed to it (O-I #788).
-pub const PERSON_ACTS: [&str; 32] = [
+/// A Control skill's revision that waits in Central (`control.skills.revision.accept` · `discard`, O-I 795): Central writes it as the
+/// skill in use on the person's Accept, and drops it on the person's Discard, admitting each on that authority only (ctrl
+/// control_skills.rs). Proposing one (`control.skills.revision.propose`, AIKit's hand) carries no token.
+pub const PERSON_ACTS: [&str; 34] = [
     "central.now.lifecycle",
     "central.day.settings.write",
     "central.day.move.record",
@@ -109,6 +112,8 @@ pub const PERSON_ACTS: [&str; 32] = [
     "projectcentral.ground.apply",
     "central.world.name",
     "central.world.place",
+    "control.skills.revision.accept",
+    "control.skills.revision.discard",
 ];
 
 /// Whether an invoked Action is one of the person's own presses (`PERSON_ACTS`).
@@ -539,6 +544,16 @@ mod tests {
             person_act("central.world.place"),
             "central.world.place is the person's press"
         );
+        // A Control skill's revision that waits in Central (O-I 795): Central writes it on the person's Accept, and drops it on the
+        // person's Discard, admitting each on that authority only (ctrl control_skills.rs). Proposing one carries nothing.
+        for id in [
+            "control.skills.revision.accept",
+            "control.skills.revision.discard",
+        ] {
+            assert!(person_act(id), "{id} is the person's press");
+        }
+        assert!(!person_act("control.skills.revision.propose"));
+        assert!(!person_act("control.skills.revision.read"));
         // Their previews, plans and readings carry nothing.
         for id in [
             "work.candidates",

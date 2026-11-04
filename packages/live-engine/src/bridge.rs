@@ -1,20 +1,23 @@
 //! Document → graph bridging: a `live_set` summary becomes a renderable
 //! [`Graph`].
 //!
-//! KNOWN devices instantiate their documented models at the factory-preset
-//! stored values (`GlueCompressor` → `devices::GlueDevice`,
-//! `devices/glue-compressor.md`; `Echo` → `devices::EchoDevice`,
-//! `devices/echo.md`; `Reverb` → `devices::ReverbDevice`,
-//! `evidence`-pinned default state per the dossier — the stored values are
-//! cited at their construction below); UNKNOWN device element names
-//! instantiate `BypassDevice` and produce a warning. Sources are not
-//! loaded here: the host fills `Track::source` (arrangement clip playback
-//! is M5 warp territory). Parameter editing from document states is not
-//! bridged yet (the summary carries element names only) — M3 backlog.
+//! KNOWN devices instantiate their documented models (`GlueCompressor` →
+//! `devices::GlueDevice`, `devices/glue-compressor.md`; `Echo` →
+//! `devices::EchoDevice`, `devices/echo.md`; `Reverb` →
+//! `devices::ReverbDevice`; `Compressor2` → `devices::CompressorDevice`).
+//! From a summary (element names only) each stands at the factory-preset
+//! stored values cited at their construction below; from the document
+//! (`bridge_set`, O-I #849 round 15) each stands at the settings the set
+//! stores for it, a device stored off passes its sound through as Live's
+//! does, and what the set stores that a model does not take is named in a
+//! warning. UNKNOWN device element names instantiate `BypassDevice` and
+//! produce a warning. Sources are not loaded here: the host fills
+//! `Track::source` (arrangement clip playback is M5 warp territory).
 
 use crate::devices::{
-    BypassDevice, CompressorDevice, DelayDevice, DelayParams, EchoDevice, EchoParams, FilterDevice,
-    FilterKind, FilterParams, GlueDevice, ReverbDevice,
+    BypassDevice, CompressorDevice, DelayDevice, DelayParams, DynamicsDevice, DynamicsParams,
+    EchoDevice, EchoParams, FilterDevice, FilterKind, FilterParams, GlueDevice, ReverbDevice,
+    RoomDevice, RoomParams,
 };
 use crate::graph::{Clock, Graph, Note, RackDevice, ReturnTrack, Track};
 use crate::instruments::OperatorInstrument;
@@ -39,41 +42,46 @@ pub struct BridgeResult {
     pub warnings: Vec<BridgeWarning>,
 }
 
+// devices/glue-compressor.md, "Preset stored values (unpinned)":
+// Threshold −40, Range 3, Makeup 0 (ballistics pins live in the
+// device's smoother defaults).
+const GLUE_FACTORY: GlueParams = GlueParams {
+    threshold_db: -40.0,
+    range: 3.0,
+    ratio: 1.0,
+    makeup_db: 0.0,
+};
+
+// devices/echo.md E1 stored state (factory preset "Time Travel
+// Echo", evidence/devices/Echo/preset-time-travel.xml): Delay_Time
+// 0.1249999925 (stored unit = seconds; the synced-division mapping
+// is not modeled — backlog), Feedback 0.5, DryWet 0.5873016119.
+const ECHO_FACTORY: EchoParams = EchoParams {
+    delay_time_s: 0.1249999925,
+    feedback: 0.5,
+    dry_wet: 0.5873016119,
+};
+
+// Reverb default-preset stored state (evidence/devices/Reverb/
+// default.xml Manual: DecayTime 1200.00012 ms; the state carries
+// no global DryWet element — the direct level is MixDirect 0.55,
+// folded into the model's fitted constants — so the engine mix is
+// the model response, 1.0).
+const REVERB_FACTORY_DECAY_MS: f64 = 1200.00012;
+
+/// Live's Reverb as the engine convolves it: by partitions (O-I #849 round 14), since a set's part may
+/// sound every sample, and the scatter runs at 1.76 of real time on one at 2.4 s.
+fn reverb_of(decay_ms: f64) -> Box<dyn crate::graph::Device> {
+    Box::new(ReverbDevice::partitioned(ReverbParams { decay_ms }, 1.0))
+}
+
 /// The KNOWN devices of the engine: each instantiated at its
 /// factory-preset stored values, cited from the measuring document.
 fn known_device(element_name: &str) -> Option<Box<dyn crate::graph::Device>> {
     match element_name {
-        // devices/glue-compressor.md, "Preset stored values (unpinned)":
-        // Threshold −40, Range 3, Makeup 0 (ballistics pins live in the
-        // device's smoother defaults).
-        "GlueCompressor" => Some(Box::new(GlueDevice::new(GlueParams {
-            threshold_db: -40.0,
-            range: 3.0,
-            ratio: 1.0,
-            makeup_db: 0.0,
-        }))),
-        // devices/echo.md E1 stored state (factory preset "Time Travel
-        // Echo", evidence/devices/Echo/preset-time-travel.xml): Delay_Time
-        // 0.1249999925 (stored unit = seconds; the synced-division mapping
-        // is not modeled — backlog), Feedback 0.5, DryWet 0.5873016119.
-        "Echo" => Some(Box::new(EchoDevice::new(EchoParams {
-            delay_time_s: 0.1249999925,
-            feedback: 0.5,
-            dry_wet: 0.5873016119,
-        }))),
-        // Reverb default-preset stored state (evidence/devices/Reverb/
-        // default.xml Manual: DecayTime 1200.00012 ms; the state carries
-        // no global DryWet element — the direct level is MixDirect 0.55,
-        // folded into the model's fitted constants — so the engine mix is
-        // the model response, 1.0). Convolved by partitions (O-I #849
-        // round 14): a set's part may sound every sample, and the scatter
-        // runs at 1.76 of real time on one at 2.4 s.
-        "Reverb" => Some(Box::new(ReverbDevice::partitioned(
-            ReverbParams {
-                decay_ms: 1200.00012,
-            },
-            1.0,
-        ))),
+        "GlueCompressor" => Some(Box::new(GlueDevice::new(GLUE_FACTORY))),
+        "Echo" => Some(Box::new(EchoDevice::new(ECHO_FACTORY))),
+        "Reverb" => Some(reverb_of(REVERB_FACTORY_DECAY_MS)),
         // Live's Compressor (element Compressor2) at the corpus's stored
         // values, as a rack's chain has it (`rack_device`): never bypassed.
         "Compressor2" => Some(Box::new(CompressorDevice::new(
@@ -81,6 +89,160 @@ fn known_device(element_name: &str) -> Option<Box<dyn crate::graph::Device>> {
         ))),
         _ => None,
     }
+}
+
+/// A setting of a device element as the set stores it (session-model.md §6: `<Id><Manual Value="…" /></Id>`; a setting
+/// inside another element by its path, `SideChain/OnOff`): a number, a switch 1 for on and 0 for off. None where the
+/// set stores none, or none a number.
+fn stored(el: &Element, id: &str) -> Option<f64> {
+    let mut at = el;
+    for part in id.split('/') {
+        at = at.child(part)?;
+    }
+    match manual(Some(at))? {
+        "true" => Some(1.0),
+        "false" => Some(0.0),
+        v => v.parse().ok(),
+    }
+}
+
+/// What the set stores for one device the engine models, as its model takes it (O-I #849 round 15): each setting
+/// taken where the set stores it within the extent the corpus's surface gives it (live-dynamics `params::table`), and
+/// what is not taken kept for the warnings.
+struct Stored<'a> {
+    el: &'a Element,
+    taken: Vec<&'static str>,
+    strays: Vec<String>,
+}
+
+impl<'a> Stored<'a> {
+    fn of(el: &'a Element) -> Stored<'a> {
+        Stored {
+            el,
+            taken: Vec::new(),
+            strays: Vec::new(),
+        }
+    }
+
+    /// The set's `id`, taken where it stands within the surface's extent; a value outside it is a stray and leaves
+    /// the model's own.
+    fn take(&mut self, id: &'static str) -> Option<f64> {
+        self.taken.push(id);
+        let v = stored(self.el, id)?;
+        let (min, max) = live_holds(&self.el.name, id)?;
+        if v.is_finite() && (min..=max).contains(&v) {
+            Some(v)
+        } else {
+            self.strays.push(format!(
+                "Live's {} holds its {id} within {min} to {max}, and the set stores {v}: the engine keeps its own",
+                self.el.name
+            ));
+            None
+        }
+    }
+
+    /// The warnings: each stray, then the settings of the surface the set stores and the model does not take.
+    fn words(self) -> Vec<String> {
+        let mut words = self.strays;
+        let untaken: Vec<&str> = live_dynamics::params::table(&self.el.name)
+            .unwrap_or_default()
+            .iter()
+            .map(|row| row.id)
+            .filter(|id| *id != "On" && !self.taken.contains(id))
+            .filter(|id| stored(self.el, id).is_some())
+            .collect();
+        if !untaken.is_empty() {
+            words.push(format!(
+                "the engine's model does not take its {} yet: they sound as the model's own",
+                untaken.join(", ")
+            ));
+        }
+        words
+    }
+}
+
+/// One of the engine's models of Live's devices at the settings the set stores for `el` (O-I #849 round 15), each
+/// one the set stores none of at the model's factory value ([`known_device`]), with the words for what it does not
+/// take. None for a device the engine has no model of.
+fn as_stored(el: &Element) -> Option<(Box<dyn crate::graph::Device>, Vec<String>)> {
+    let mut s = Stored::of(el);
+    let device: Box<dyn crate::graph::Device> = match el.name.as_str() {
+        "GlueCompressor" => {
+            let mut p = GLUE_FACTORY;
+            p.threshold_db = s.take("Threshold").unwrap_or(p.threshold_db);
+            p.range = s.take("Range").unwrap_or(p.range);
+            p.ratio = s.take("Ratio").unwrap_or(p.ratio);
+            p.makeup_db = s.take("Makeup").unwrap_or(p.makeup_db);
+            Box::new(GlueDevice::new(p))
+        }
+        "Echo" => {
+            let mut p = ECHO_FACTORY;
+            // one hop, the shorter side's (devices/echo.md: measured hop = min(tL, tR))
+            let times = [s.take("Delay_TimeL"), s.take("Delay_TimeR")];
+            if let Some(hop) = times.into_iter().flatten().reduce(f64::min) {
+                p.delay_time_s = hop;
+            }
+            // the tap train decays only below a feedback of 1 (EchoDevice: FB ≥ 1 cannot be represented faithfully)
+            match s.take("Feedback") {
+                Some(feedback) if feedback < 1.0 => p.feedback = feedback,
+                Some(feedback) => s.strays.push(format!(
+                    "the engine's model of Live's Echo decays its repeats only below a Feedback of 1, and the set stores {feedback}: it keeps its own {}",
+                    p.feedback
+                )),
+                None => {}
+            }
+            p.dry_wet = s.take("DryWet").unwrap_or(p.dry_wet);
+            Box::new(EchoDevice::new(p))
+        }
+        "Reverb" => reverb_of(s.take("DecayTime").unwrap_or(REVERB_FACTORY_DECAY_MS)),
+        "Compressor2" => {
+            let mut p = live_dynamics::compressor::DEFAULTS;
+            let mut number = |id: &'static str, at: &mut f64| *at = s.take(id).unwrap_or(*at);
+            number("Threshold", &mut p.threshold);
+            number("Ratio", &mut p.ratio);
+            number("ExpansionRatio", &mut p.expansion_ratio);
+            number("Attack", &mut p.attack);
+            number("Release", &mut p.release);
+            number("Gain", &mut p.gain);
+            number("DryWet", &mut p.dry_wet);
+            number("Knee", &mut p.knee);
+            number(
+                "SideChain/RoutedInput/Volume",
+                &mut p.side_chain.routed_input_volume,
+            );
+            number("SideChain/DryWet", &mut p.side_chain.dry_wet);
+            number("SideChainEq/Freq", &mut p.side_chain_eq.freq);
+            number("SideChainEq/Q", &mut p.side_chain_eq.q);
+            number("SideChainEq/Gain", &mut p.side_chain_eq.gain);
+            let mut switch = |id: &'static str, at: &mut bool| {
+                if let Some(v) = s.take(id) {
+                    *at = v != 0.0;
+                }
+            };
+            switch(
+                "AutoReleaseControlOnOff",
+                &mut p.auto_release_control_on_off,
+            );
+            switch("GainCompensation", &mut p.gain_compensation);
+            switch("LogEnvelope", &mut p.log_envelope);
+            switch("SideListen", &mut p.side_listen);
+            switch("SideChain/OnOff", &mut p.side_chain.on_off);
+            switch("SideChainEq/On", &mut p.side_chain_eq.on);
+            let mut menu = |id: &'static str, at: &mut i64| {
+                if let Some(v) = s.take(id) {
+                    *at = v as i64;
+                }
+            };
+            menu("Model", &mut p.model);
+            menu("LegacyModel", &mut p.legacy_model);
+            menu("LegacyEnvFollowerMode", &mut p.legacy_env_follower_mode);
+            menu("LookAhead", &mut p.look_ahead);
+            menu("SideChainEq/Mode", &mut p.side_chain_eq.mode);
+            Box::new(CompressorDevice::new(p))
+        }
+        _ => return None,
+    };
+    Some((device, s.words()))
 }
 
 /// Live's Auto Filter's FilterType as the engine's model reads it, against the Torus's Filter's kinds:
@@ -115,10 +277,38 @@ pub fn live_holds(element: &str, id: &str) -> Option<(f64, f64)> {
         .map(|row| (row.stored_min, row.stored_max))
 }
 
+/// The Torus's Dynamics and Reverb by the frame's keys for their settings, each within the frame's law
+/// (effectsLaw.ts `EFFECT_LAW`): what [`rack_device`] makes the frame's own effects from.
+pub const TORUS_DYNAMICS_LAW: [(&str, f64, f64); 5] = [
+    ("threshold", -60.0, 0.0),
+    ("ratio", 1.0, 20.0),
+    ("attack", 0.01, 200.0),
+    ("release", 5.0, 1000.0),
+    ("makeup", 0.0, 24.0),
+];
+pub const TORUS_REVERB_LAW: [(&str, f64, f64); 5] = [
+    ("size", 0.0, 100.0),
+    ("decay", 0.2, 20.0),
+    ("damping", 0.0, 100.0),
+    ("predelay", 0.0, 250.0),
+    ("mix", 0.0, 100.0),
+];
+
 /// The engine's own device for Live's device `class` on an Instrument Rack's chain (O-I #849 rounds
 /// 13 and 14: the Torus's effects, as live-set `rack_place` places them), with the settings carried
 /// onto it, by Live's document key, each within the extent Live's device stores it in (the corpus's
-/// surface, live-dynamics params.rs):
+/// surface, live-dynamics params.rs); or, by the frame's name for it, one of the Torus's effects the
+/// engine sounds as the frame runs it (round 15), from the frame's settings by the frame's keys, each
+/// within the frame's law:
+/// - `dynamics`, the Torus's Dynamics as its frame's compressor ([`DynamicsDevice`]: the browser's
+///   DynamicsCompressorNode at a hard knee, then the frame's makeup), from its threshold (dB), ratio,
+///   attack and release (ms) and makeup (dB), all five carried ([`TORUS_DYNAMICS_LAW`]);
+/// - `reverb`, the Torus's Reverb as its frame's room ([`RoomDevice`]: the frame's generated room,
+///   normalised as the browser's convolver normalises it, after the pre-delay, blended by Dry/wet),
+///   from its size (%), decay (s), damping (%), pre-delay (ms) and dry/wet (%), all five carried
+///   ([`TORUS_REVERB_LAW`]).
+///
+/// Live's devices:
 /// - Live's Reverb as the gated model ([`ReverbDevice`], at its stored `DecayTime` in ms when
 ///   carried, the one setting the model takes), convolving by partitions since the part it stands
 ///   on sounds every sample;
@@ -169,7 +359,53 @@ pub fn rack_device(class: &str, carried: &[(&str, f64)]) -> Result<RackDevice, S
         }
         Ok::<_, String>(values)
     };
+    // the frame's settings of one of the Torus's effects, each carried and within the frame's law
+    let frame = |effect: &str, law: &[(&str, f64, f64); 5]| {
+        if let Some((id, _)) = carried
+            .iter()
+            .find(|(id, _)| !law.iter().any(|(k, ..)| k == id))
+        {
+            return Err(format!("the frame's {effect} has no setting {id}"));
+        }
+        let mut values = [0.0; 5];
+        for (value, (id, min, max)) in values.iter_mut().zip(law) {
+            let (_, v) = carried.iter().find(|(k, _)| k == id).ok_or_else(|| {
+                format!(
+                    "the engine sounds the Torus's {effect} as its frame does from its {}, and no {id} is carried",
+                    law.map(|(k, ..)| k).join(", ")
+                )
+            })?;
+            if !(v.is_finite() && (*min..=*max).contains(v)) {
+                return Err(format!(
+                    "the frame's {effect} holds its {id} within {min} to {max}, not {v}"
+                ));
+            }
+            *value = *v;
+        }
+        Ok::<_, String>(values)
+    };
     let device: Box<dyn crate::graph::Device> = match class {
+        "dynamics" => {
+            let [threshold_db, ratio, attack_ms, release_ms, makeup_db] =
+                frame("Dynamics", &TORUS_DYNAMICS_LAW)?;
+            Box::new(DynamicsDevice::new(DynamicsParams {
+                threshold_db,
+                ratio,
+                attack_ms,
+                release_ms,
+                makeup_db,
+            }))
+        }
+        "reverb" => {
+            let [size, decay_s, damping, predelay_ms, mix] = frame("Reverb", &TORUS_REVERB_LAW)?;
+            Box::new(RoomDevice::new(RoomParams {
+                size,
+                decay_s,
+                damping,
+                predelay_ms,
+                mix,
+            }))
+        }
         "Reverb" => {
             refuse_rest("Reverb", &["DecayTime"])?;
             let decay_ms = carried
@@ -454,21 +690,34 @@ pub fn arrangement_notes(track: &Element, clock: &Clock) -> Vec<Note> {
     notes
 }
 
-/// A device element on a chain: a known model at its factory values, else
-/// a bypass and a warning.
+/// A device element on a chain (O-I #849 round 15): one the set stores off passes its sound through, as Live's does;
+/// a known model at the settings the set stores for it ([`as_stored`]), with a warning for each thing it does not
+/// take; else a bypass and a warning.
 fn chain_device(
     el: &Element,
     track: &str,
     warnings: &mut Vec<BridgeWarning>,
 ) -> Box<dyn crate::graph::Device> {
-    known_device(&el.name).unwrap_or_else(|| {
+    let mut warn = |message: String| {
         warnings.push(BridgeWarning {
             track: track.to_string(),
             device: el.name.clone(),
-            message: "unknown device: bypassed".into(),
-        });
-        Box::new(BypassDevice)
-    })
+            message,
+        })
+    };
+    if stored(el, "On") == Some(0.0) {
+        return Box::new(BypassDevice);
+    }
+    match as_stored(el) {
+        Some((device, words)) => {
+            words.into_iter().for_each(&mut warn);
+            device
+        }
+        None => {
+            warn("unknown device: bypassed".into());
+            Box::new(BypassDevice)
+        }
+    }
 }
 
 /// Bridge a parsed set document (`<Ableton>`) into a graph at
@@ -477,8 +726,8 @@ fn chain_device(
 /// the return tracks, and the Main track's volume, pan and chain.
 ///
 /// A MIDI part's first `Operator` is its instrument (the gated default
-/// patch — the bridge reads device element names, not stored parameter
-/// states, as for the effects); a MIDI part with no instrument the engine
+/// patch: the bridge does not read an instrument's stored patch yet, as it
+/// reads each effect's stored settings, `chain_device`); a MIDI part with no instrument the engine
 /// models stays silent, with a warning. Audio parts keep empty sources
 /// (the host fills them). Group tracks are warnings: their members route
 /// to the Main track (ENGINE DECISION — there is no group bus yet).
@@ -719,6 +968,168 @@ mod tests {
         assert!(out.iter().any(|v| *v != 0.0));
     }
 
+    /// A part of one audio track whose chain is `devices` (each a device element as a set stores it).
+    fn set_of(devices: &str) -> Element {
+        xml::parse(&format!(
+            r#"<Ableton MajorVersion="5"><LiveSet><Tracks><AudioTrack Id="8"><Name><EffectiveName Value="A" /></Name>
+              <DeviceChain><DeviceChain><Devices>{devices}</Devices></DeviceChain></DeviceChain>
+            </AudioTrack></Tracks></LiveSet></Ableton>"#
+        ))
+        .unwrap()
+    }
+
+    /// A setting as a set stores it.
+    fn m(id: &str, value: &str) -> String {
+        format!(r#"<{id}><LomId Value="0" /><Manual Value="{value}" /></{id}>"#)
+    }
+
+    /// Whether `a` and `b` sound alike, sample for sample, over a second of a tone with a step down in it.
+    fn sound_alike(a: &mut dyn crate::graph::Device, b: &mut dyn crate::graph::Device) -> bool {
+        let clock = Clock::start(48_000, 120.0);
+        a.prepare(48_000, 2);
+        b.prepare(48_000, 2);
+        let w = 2.0 * std::f32::consts::PI * 1000.0 / 48_000.0;
+        (0..48_000).all(|i| {
+            let level = if i < 24_000 { 0.7 } else { 0.05 };
+            let x = level * (w * i as f32).sin();
+            let (mut l, mut r) = ([x, 0.8 * x], [x, 0.8 * x]);
+            a.process(&mut l, &clock);
+            b.process(&mut r, &clock);
+            l == r
+        })
+    }
+
+    /// O-I #849 round 15: a part's chain sounds as the set stores it. Each of the engine's models of Live's devices stands at
+    /// the settings the set holds for it, and one the set holds none of at the model's own; a device the set stores off,
+    /// known or not, passes its sound through as Live's does.
+    #[test]
+    fn a_sets_devices_sound_at_their_stored_settings_and_a_device_stored_off_passes_its_sound() {
+        let root = set_of(&format!(
+            concat!(
+                r#"<GlueCompressor Id="1">{}{}{}{}{}</GlueCompressor><Echo Id="2">{}{}{}{}</Echo><Reverb Id="3">{}</Reverb>"#,
+                r#"<Compressor2 Id="4">{}{}{}{}{}{}<SideChain>{}</SideChain></Compressor2>"#,
+                r#"<GlueCompressor Id="5">{}{}</GlueCompressor><VinylWarble Id="6">{}</VinylWarble><Echo Id="7" />"#
+            ),
+            m("On", "true"),
+            m("Threshold", "-21.9047623"),
+            m("Range", "25"),
+            m("Ratio", "1"),
+            m("Makeup", "5"),
+            m("Delay_TimeL", "0.25"),
+            m("Delay_TimeR", "0.3"),
+            m("Feedback", "0.3"),
+            m("DryWet", "0.4"),
+            m("DecayTime", "3000"),
+            m("Threshold", "0.5"),
+            m("Ratio", "2"),
+            m("Attack", "10"),
+            m("Gain", "6"),
+            m("LookAhead", "0"),
+            m("GainCompensation", "true"),
+            m("DryWet", "0.75"),
+            m("On", "false"),
+            m("Threshold", "-30"),
+            m("On", "false"),
+        ));
+        let mut r = bridge_set(&root, 48_000).unwrap();
+        assert!(r.warnings.is_empty(), "{:?}", r.warnings);
+        let chain = &mut r.graph.tracks[0].devices;
+        assert_eq!(
+            chain.iter().map(|d| d.name()).collect::<Vec<_>>(),
+            [
+                "GlueCompressor",
+                "Echo",
+                "Reverb",
+                "Compressor2",
+                "Bypass",
+                "Bypass",
+                "Echo"
+            ]
+        );
+        let stored_glue = GlueParams {
+            threshold_db: -21.9047623,
+            range: 25.0,
+            ratio: 1.0,
+            makeup_db: 5.0,
+        };
+        assert!(sound_alike(
+            chain[0].as_mut(),
+            &mut GlueDevice::new(stored_glue)
+        ));
+        assert!(
+            !sound_alike(chain[0].as_mut(), &mut GlueDevice::new(GLUE_FACTORY)),
+            "and not as the factory's Glue"
+        );
+        let stored_echo = EchoParams {
+            delay_time_s: 0.25,
+            feedback: 0.3,
+            dry_wet: 0.4,
+        };
+        assert!(sound_alike(
+            chain[1].as_mut(),
+            &mut EchoDevice::new(stored_echo)
+        ));
+        assert!(sound_alike(chain[2].as_mut(), reverb_of(3000.0).as_mut()));
+        let mut stored_compressor = live_dynamics::compressor::DEFAULTS;
+        stored_compressor.threshold = 0.5;
+        stored_compressor.ratio = 2.0;
+        stored_compressor.attack = 10.0;
+        stored_compressor.gain = 6.0;
+        stored_compressor.look_ahead = 0;
+        stored_compressor.gain_compensation = true;
+        stored_compressor.side_chain.dry_wet = 0.75;
+        assert!(sound_alike(
+            chain[3].as_mut(),
+            &mut CompressorDevice::new(stored_compressor)
+        ));
+        // stored with no settings: the model's own
+        assert!(sound_alike(
+            chain[6].as_mut(),
+            &mut EchoDevice::new(ECHO_FACTORY)
+        ));
+    }
+
+    /// O-I #849 round 15: what the set stores that the engine's model does not take is named, device by device: a setting
+    /// outside the extent the corpus's surface gives it (the model keeps its own), a Feedback the Echo's model cannot decay
+    /// from, and the settings of the surface the model does not take.
+    #[test]
+    fn what_a_set_stores_that_the_engines_model_does_not_take_is_named() {
+        let root = set_of(&format!(
+            r#"<GlueCompressor Id="1">{}{}</GlueCompressor><Echo Id="2">{}{}</Echo><Reverb Id="3">{}{}</Reverb>"#,
+            m("Threshold", "10"),
+            m("Makeup", "5"),
+            m("Feedback", "1.2"),
+            m("Filter_On", "true"),
+            m("DecayTime", "2000"),
+            m("PreDelay", "2.49999976"),
+        ));
+        let mut r = bridge_set(&root, 48_000).unwrap();
+        let words: Vec<(&str, &str)> = r
+            .warnings
+            .iter()
+            .map(|w| (w.device.as_str(), w.message.as_str()))
+            .collect();
+        assert_eq!(
+            words,
+            [
+                ("GlueCompressor", "Live's GlueCompressor holds its Threshold within -40 to 0, and the set stores 10: the engine keeps its own"),
+                ("Echo", "the engine's model of Live's Echo decays its repeats only below a Feedback of 1, and the set stores 1.2: it keeps its own 0.5"),
+                ("Echo", "the engine's model does not take its Filter_On yet: they sound as the model's own"),
+                ("Reverb", "the engine's model does not take its PreDelay yet: they sound as the model's own"),
+            ]
+        );
+        assert!(r.warnings.iter().all(|w| w.track == "A"));
+        let chain = &mut r.graph.tracks[0].devices;
+        let mut glue = GLUE_FACTORY;
+        glue.makeup_db = 5.0;
+        assert!(sound_alike(chain[0].as_mut(), &mut GlueDevice::new(glue)));
+        assert!(sound_alike(
+            chain[1].as_mut(),
+            &mut EchoDevice::new(ECHO_FACTORY)
+        ));
+        assert!(sound_alike(chain[2].as_mut(), reverb_of(2000.0).as_mut()));
+    }
+
     /// Live's devices on a rack's chain as the engine's own (O-I #849 rounds 13 and 14): Reverb at a
     /// carried DecayTime; Compressor at the corpus's values and the settings carried; Auto Filter and
     /// Delay built to the Torus's effects from the settings they need; a setting a model does not take,
@@ -874,5 +1285,235 @@ mod tests {
             "{:?}",
             started.elapsed()
         );
+    }
+
+    /// The frame's measure input (lane BB's scratch measure, rounds 14 and 15): half a second of silence, then 0.6 s of 220 Hz with
+    /// three overtones, faded 5 ms at each end, at 0.35; or, for `step`, at 0.5 for 0.3 s and then 12 dB down (over 1 ms).
+    fn frame_measure_input(step: bool, seconds: f64) -> Vec<f32> {
+        let mut x = vec![0f32; (seconds * 48_000.0) as usize];
+        for i in 0..28_800usize {
+            let t = i as f64 / 48_000.0;
+            let fade = (i as f64 / 240.0).min((28_800 - i) as f64 / 240.0).min(1.0);
+            let partials = [1.0, 0.5, 1.0 / 3.0, 0.25]
+                .iter()
+                .enumerate()
+                .fold(0.0, |s, (h, a)| {
+                    s + a * (2.0 * std::f64::consts::PI * 220.0 * (h + 1) as f64 * t).sin()
+                });
+            let level = if step {
+                let down = ((i as f64 - 14_400.0) / 48.0).clamp(0.0, 1.0);
+                0.5 - 0.375 * down
+            } else {
+                0.35
+            };
+            x[24_000 + i] = (level * fade * partials) as f32;
+        }
+        x
+    }
+
+    /// `input` on both sides through `device`, each side's output.
+    fn through(device: &mut RackDevice, input: &[f32]) -> [Vec<f32>; 2] {
+        let clock = Clock::start(48_000, 120.0);
+        device.device.prepare(48_000, 2);
+        let mut out = [
+            Vec::with_capacity(input.len()),
+            Vec::with_capacity(input.len()),
+        ];
+        for x in input {
+            let mut frame = [*x; 2];
+            device.device.process(&mut frame, &clock);
+            out[0].push(frame[0]);
+            out[1].push(frame[1]);
+        }
+        out
+    }
+
+    /// The level, dB RMS, of `sides` from `a` to `b` seconds, over `frames` frames (the window's own when none).
+    fn level_db(sides: &[&[f32]], (a, b): (f64, f64), frames: Option<usize>) -> f64 {
+        let (s, e) = (
+            (a * 48_000.0).round() as usize,
+            (b * 48_000.0).round() as usize,
+        );
+        let energy: f64 = sides
+            .iter()
+            .flat_map(|side| side[s..e].iter())
+            .map(|v| f64::from(*v).powi(2))
+            .sum();
+        10.0 * (energy / (sides.len() * frames.unwrap_or(e - s)) as f64).log10()
+    }
+
+    /// The windows of the frame's measure (seconds): the onset, the held note (or its loud half), the step down and after it, the end.
+    const FRAME_WINDOWS: [(f64, f64); 5] = [
+        (0.5, 0.52),
+        (0.52, 0.8),
+        (0.8, 0.85),
+        (0.85, 1.1),
+        (1.1, 1.5),
+    ];
+
+    /// O-I #849 round 15: the Torus's Dynamics on a rack's chain, made by the frame's name for it from the frame's settings, is the
+    /// frame's own compressor (the browser's DynamicsCompressorNode at a hard knee, then the frame's makeup), and comes to the frame's
+    /// level within 0.1 dB in every case, over the whole render and window by window: at its opening values, hard, slow, gentle and
+    /// deep, on a held note and on one that steps 12 dB down while it sounds (so the compressor lets go at its release). The reference
+    /// is the frame's own render of the same input: presentationEffects.ts in headless Chromium, an OfflineAudioContext at 48 kHz, 4.5 s
+    /// (lane BB's scratch measure, round 15); the browser's compressor ran from its reset state, as the engine's device does.
+    #[test]
+    fn the_torus_dynamics_comes_to_the_frames_level_in_every_case() {
+        // (threshold dB, ratio, attack ms, release ms, makeup dB), and the frame's level over 4.5 s and in each window, held and stepped
+        type Golden = (f64, [f64; 5]);
+        let cases: [(&str, [f64; 5], Golden, Golden); 5] = [
+            (
+                "opening",
+                [-12.0, 4.0, 1.0, 100.0, 2.0],
+                (-22.0857, [-15.9045, -13.3041, -13.2920, -13.2902, -33.5274]),
+                (-23.1904, [-15.0887, -12.4770, -18.1311, -17.6380, -38.0995]),
+            ),
+            (
+                "hard",
+                [-30.0, 10.0, 5.0, 250.0, 8.0],
+                (-32.5591, [-25.0848, -23.8014, -23.8047, -23.8020, -43.5811]),
+                (-33.2069, [-24.6685, -23.4189, -28.4293, -25.3833, -45.1154]),
+            ),
+            (
+                "slow",
+                [-18.0, 3.0, 30.0, 400.0, 4.0],
+                (-22.8056, [-12.4695, -14.0679, -14.2240, -14.2238, -34.6866]),
+                (-23.5258, [-10.1699, -12.8325, -19.5730, -19.4110, -38.3401]),
+            ),
+            (
+                "gentle",
+                [-8.0, 2.0, 10.0, 50.0, 2.0],
+                (-18.3714, [-12.0924, -9.5898, -9.5784, -9.5782, -29.9426]),
+                (-19.1672, [-10.2316, -7.8219, -14.1705, -17.5392, -38.0995]),
+            ),
+            (
+                "deep",
+                [-40.0, 20.0, 0.5, 1000.0, 20.0],
+                (-31.9523, [-25.6437, -23.1716, -23.1615, -23.1598, -43.4604]),
+                (-33.5195, [-25.4801, -23.0059, -29.4524, -27.2289, -44.8430]),
+            ),
+        ];
+        let mut worst = 0f64;
+        for (name, [threshold, ratio, attack, release, makeup], held, stepped) in cases {
+            let settings = [
+                ("threshold", threshold),
+                ("ratio", ratio),
+                ("attack", attack),
+                ("release", release),
+                ("makeup", makeup),
+            ];
+            for (step, (whole, windows)) in [(false, held), (true, stepped)] {
+                let mut made = rack_device("dynamics", &settings).unwrap();
+                assert_eq!(made.device.name(), "Dynamics");
+                let out = through(&mut made, &frame_measure_input(step, 1.5));
+                let sides = [&out[0][..], &out[1][..]];
+                assert_eq!(
+                    out[0], out[1],
+                    "{name}: one input on both sides is one output"
+                );
+                // the frame's render is silent after its last window: the whole level is the 4.5 s one
+                let at = [(
+                    whole,
+                    level_db(&sides, (0.0, 1.5), Some(4 * 48_000 + 24_000)),
+                )]
+                .into_iter()
+                .chain(
+                    windows
+                        .iter()
+                        .zip(FRAME_WINDOWS)
+                        .map(|(frame, w)| (*frame, level_db(&sides, w, None))),
+                );
+                for (n, (frame, engine)) in at.enumerate() {
+                    worst = worst.max((engine - frame).abs());
+                    assert!(
+                        (engine - frame).abs() < 0.1,
+                        "{name}{}: window {n} at {engine:.4} dB, the frame's at {frame:.4} dB",
+                        if step { " stepped" } else { "" }
+                    );
+                }
+            }
+        }
+        eprintln!("the Torus's Dynamics, against the frame: at worst {worst:.4} dB");
+    }
+
+    /// O-I #849 round 15: the Torus's Reverb on a rack's chain, made by the frame's name for it from the frame's settings, is the
+    /// frame's own room (presentationEffects.ts reverbImpulse, normalised as the browser's ConvolverNode normalises it, after the
+    /// pre-delay's DelayNode, blended by Dry/wet), convolved by partitions, each side through its own half of the room; and comes to the
+    /// frame's level within 0.1 dB, side by side and window by window, at its opening values, a wide room and a small one. The reference is
+    /// the frame's own render (as for the Dynamics, above).
+    #[test]
+    fn the_torus_reverb_comes_to_the_frames_level_side_by_side() {
+        // (size %, decay s, damping %, pre-delay ms, dry/wet %), and the frame's level of each side over 0–2 s and in each window to 2 s
+        type Sides = [(f64, f64); 7];
+        let cases: [(&str, [f64; 5], Sides); 3] = [
+            (
+                "opening",
+                [50.0, 2.4, 40.0, 20.0, 22.0],
+                [
+                    (-18.1199, -18.2521),
+                    (-13.3864, -13.3864),
+                    (-12.8343, -12.8988),
+                    (-12.6944, -13.1272),
+                    (-13.0145, -13.1477),
+                    (-34.0979, -37.5190),
+                    (-48.7047, -45.5379),
+                ],
+            ),
+            (
+                "wide",
+                [90.0, 6.0, 80.0, 100.0, 60.0],
+                [
+                    (-20.5401, -21.2847),
+                    (-19.1871, -19.1871),
+                    (-18.0493, -18.0732),
+                    (-17.8610, -19.6994),
+                    (-17.6450, -17.0284),
+                    (-17.8660, -21.8182),
+                    (-25.6024, -23.6640),
+                ],
+            ),
+            (
+                "small",
+                [10.0, 0.4, 0.0, 0.0, 100.0],
+                [
+                    (-39.0930, -32.4162),
+                    (-37.8991, -30.4267),
+                    (-33.6288, -27.1515),
+                    (-35.0762, -27.4071),
+                    (-34.9828, -27.4108),
+                    (-41.7263, -39.5572),
+                    (-98.8151, -101.7916),
+                ],
+            ),
+        ];
+        let input = frame_measure_input(false, 2.0);
+        let mut worst = 0f64;
+        for (name, [size, decay, damping, predelay, mix], frame) in cases {
+            let settings = [
+                ("size", size),
+                ("decay", decay),
+                ("damping", damping),
+                ("predelay", predelay),
+                ("mix", mix),
+            ];
+            let mut made = rack_device("reverb", &settings).unwrap();
+            assert_eq!(made.device.name(), "Reverb");
+            let out = through(&mut made, &input);
+            let windows = [(0.0, 2.0)]
+                .into_iter()
+                .chain(FRAME_WINDOWS)
+                .chain([(1.5, 2.0)]);
+            for (n, (w, (left, right))) in windows.zip(frame).enumerate() {
+                for (side, frame) in [(0, left), (1, right)] {
+                    let engine = level_db(&[&out[side][..]], w, None);
+                    worst = worst.max((engine - frame).abs());
+                    assert!(
+                        (engine - frame).abs() < 0.1,
+                        "{name}: side {side}, window {n} at {engine:.4} dB, the frame's at {frame:.4} dB"
+                    );
+                }
+            }
+        }
+        eprintln!("the Torus's Reverb, against the frame: at worst {worst:.4} dB");
     }
 }

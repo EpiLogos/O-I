@@ -716,7 +716,13 @@ fn a_repeat_over_a_sessions_own_task_reads_back_what_each_take_varied_and_how_it
     let _home = Bound::set("OI_HOME", dir.join("oi-home"));
     // Actuation's own comparison over a session's own task with its agent as
     // the body (REAL, 28 Oct 2026): effort over low and high, Stop when Test pass.
-    let real = fixture("actuation-comparison-own-task-2026-10-28.json");
+    let mut real = fixture("actuation-comparison-own-task-2026-10-28.json");
+    // What a later Actuation adds to a take's record (research execution.rs
+    // `answers`, O-I 795), FAKE on the REAL manifest: the take's answer to each
+    // of the task's Success conditions, held to its evidence.
+    let answered = json!([{"condition": "answer.txt says 42", "answer": "met",
+        "evidence": [{"file": "answer.txt", "digest": "ba89b8a30e9979c4"}], "why": "answer.txt says 42"}]);
+    real["answer"]["records"][0]["answers"] = answered.clone();
     research.answer(&real["answer"]);
     let (outcome, form) = dispatched(
         no_central(&dir),
@@ -780,6 +786,10 @@ fn a_repeat_over_a_sessions_own_task_reads_back_what_each_take_varied_and_how_it
     );
     assert_eq!(data["records"][0]["variable"], "effort");
     assert_eq!(data["records"][0]["stop"]["reason"], "its test passes");
+    // Each take's answers to the task's Success conditions, as Actuation read
+    // them; a record from an Actuation before them answers none.
+    assert_eq!(data["records"][0]["answers"], answered);
+    assert_eq!(data["records"][1]["answers"], Value::Null);
     assert_eq!(data["held_constants_valid"], true);
     let _ = fs::remove_dir_all(&dir);
 }

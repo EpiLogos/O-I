@@ -42,8 +42,11 @@
 // The owner is asked to write:  fanOut, depth and handBack (the Hermes delegation block of the harness config; no config.set key carries
 //   it yet); join (Central: central.agent-set.save of the group's set at its next revision, the set read with central.agent-set.read; a
 //   rack that names no set has no join to read or write); model, effort, budget and unmapped (each chain's Agent); bench:<id> and
-//   solo:<id>; and the acts swap (Hot-Swap: the chain's id, its agent to be swapped from the browser), extract (Drag out: the chain's
-//   id, dropped on an empty track), add (what was dropped under the chain list: an agent, a set or a Decision helper), store (where every
+//   solo:<id>; and the acts swap (Hot-Swap: the agent dragged from the browser onto the chosen chain's Hot-Swap, as JSON {chain: the
+//   chain's id, agent: what was dropped}; a press with nothing dropped sends the chain's id alone), extract (Drag out: the chain's
+//   id, dropped on an empty track), add (what was dropped under the chain list: an agent, a set or a Decision helper), delete (⌫ on the chosen
+//   chain in the chain list, as Live deletes a chain: the chain's id; its session leaves the space as its own session track's Delete takes
+//   it off, §10.9, and the Decision helper leaves with its session), store (where every
 //   macro stands, kept as a variation), variation (the name of a stored variation to move every macro to) and retry (Factory's
 //   RetryGrant, factory/src/orchestration.rs).
 // The crew's face (manual §19.15, §25.6): a pattern whose Count is Pair, Crew or Swarm is several whole creatures in one pane, each agent
@@ -61,7 +64,7 @@
 // `new.proposal` {ref, name, members, type}; Accept (`new.accept`) keeps it, Change returns to the fields, Discard (`new.discard`) drops it.
 // Choosing every chain makes a set of the whole list, as New did.
 // A key the owner has not reported is absent, and the view draws "—" for it and names it in words.
-import {memo, useEffect, useMemo, useState, type CSSProperties, type ReactNode} from 'react'
+import {memo, useEffect, useMemo, useState, type CSSProperties, type KeyboardEvent, type ReactNode} from 'react'
 import {KindMark} from '../../sdk/marks'
 import {maskStatic} from '../../../agent/maskFace'
 import {Action, Band, Chooser, Dial, Folded, Lamp, Panel, PlaceContext, Radio, Readout, Rows, Section, TextField, Tile, ValueBox, type LightState, type Option, type Place, type RowItem, type Scale, type Standing, type Tone, NoReading, useLayoutIso} from '../../sdk/panel'
@@ -117,7 +120,7 @@ const JOINS: readonly Option<string>[] = [
   {value: 'weighted', label: 'Weighted', does: 'Each return counts by its strength.', why: NO_WEIGHT},
 ]
 const SAYS = {
-  list: 'One chain for each agent or agent set, nested as they were spawned. The square is its activator, S its Solo, the light its state and the chip its model, or how many agents a set holds. Where a number shows, it counts tool calls. Press a name to choose it.',
+  list: 'One chain for each agent or agent set, nested as they were spawned. The square is its activator, S its Solo, the light its state and the chip its model, or how many agents a set holds. Where a number shows, it counts tool calls. Press a name to choose it. ⌫ deletes the chosen chain: its session leaves the rack, as its track\'s Delete takes it off.',
   grouped: 'The chains grouped by state, each group with its count. Press a group to open its first chain\'s thread.',
   bench: 'The activator. Off, the chain is benched: it stays in the rack and is given no work.',
   solo: 'You attend to this chain alone: the views, the tiles and the instruments show only it. The others keep running.',
@@ -297,8 +300,13 @@ function groupItems(list: readonly Node[]): RowItem[] {
   return STATES.filter(s => countOf(list, s) > 0).map(s => ({id: `state:${s}`, name: STATE_WORD[s], ...lampOf(s), busy: s === 'working', note: `${countOf(list, s)}`, does: STATE_SAYS[s]}))
 }
 
+/** ⌫ on the chain list (Delete or Backspace, no modifier): Live's Delete of the chosen chain. */
+const deletesChain = (e: {key: string; metaKey: boolean; ctrlKey: boolean; altKey: boolean; shiftKey: boolean}): boolean =>
+  (e.key === 'Delete' || e.key === 'Backspace') && !e.metaKey && !e.ctrlKey && !e.altKey && !e.shiftKey
+
 /** The chain list. `open`: pressing a chain opens its thread (Compact); `group`: many chains group by state; `pick`: each chain can be taken
- * into a set (Whole). */
+ * into a set (Whole). ⌫ on the list deletes the chosen chain, and goes no further: the frame's Delete of the track the rack stands on is
+ * not reached from inside it. */
 function MemberList({p, size, chip = true, note = true, label = true, open = false, group = false, pick = false}: {p: ViewProps; size: number; chip?: boolean; note?: boolean; label?: boolean; open?: boolean; group?: boolean; pick?: boolean}) {
   const [page, setPage] = useState(0)
   const list = membersOf(p.v), chosen = chosenOf(p.v, list)
@@ -309,12 +317,18 @@ function MemberList({p, size, chip = true, note = true, label = true, open = fal
     p.set('member', to)
     if (open) p.nav.full?.()
   }
+  const onKey = (e: KeyboardEvent<HTMLElement>) => {
+    if (grouped || !chosen || !deletesChain(e)) return
+    e.preventDefault()
+    e.stopPropagation()
+    p.set('delete', chosen.id)
+  }
   return <>
-    <Rows label={label ? (known ? `Chains · ${list.length}` : 'Chains') : undefined} does={grouped ? SAYS.grouped : `${SAYS.list} ${SAYS.bench}`}
+    <span className="as-list" style={{display: 'contents'}} onKeyDown={onKey}><Rows label={label ? (known ? `Chains · ${list.length}` : 'Chains') : undefined} does={grouped ? SAYS.grouped : `${SAYS.list} ${SAYS.bench}`}
       items={known ? (grouped ? groupItems(list) : rowItems(p, list, chip, note, pick)) : undefined}
       waiting={st(p, 'members').waiting} why="No reading of the chains." size={size} page={page} onPage={setPage}
       selected={grouped ? (chosen ? `state:${chosen.state}` : undefined) : chosen?.id} onSelect={st(p, 'member').disabled ? undefined : choose}
-      onRequest={grouped ? undefined : (id, x) => p.set(`bench:${id}`, !x)} />
+      onRequest={grouped ? undefined : (id, x) => p.set(`bench:${id}`, !x)} /></span>
     {list.length === 0 && <p className="as-none">{known ? 'The rack holds no chains.' : 'No reading of the chains.'}</p>}
   </>
 }
@@ -411,9 +425,20 @@ function Variations({p}: {p: ViewProps}) {
 
 // ---------------------------------------------------------------- the chosen chain's acts
 
+/** Hot-Swap: an agent dragged from the browser onto it takes the chosen chain's place (Live's Hot-Swap swaps from the browser); the rack keeps
+ * the rest of the chain. A press with nothing dropped asks for the drag. */
 const swapAction = (p: ViewProps, chosen: Node | undefined) => {
-  const s = st(p, 'swap')
-  return <Action {...s} label="Hot-Swap" does={SAYS.swap} disabled={s.disabled ?? (!chosen ? 'No chain is chosen.' : undefined)} onPress={chosen ? () => p.set('swap', chosen.id) : undefined} />
+  const s = st(p, 'swap'), why = s.disabled ?? (!chosen ? 'No chain is chosen.' : undefined)
+  return <span className="as-swap" style={{display: 'contents'}} onDragOver={e => { if (chosen && !why) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy' } }}
+    onDrop={e => {
+      if (!chosen || why) return
+      const type = Array.from(e.dataTransfer.types).find(t => t !== 'text/plain') ?? 'text/plain', dropped = e.dataTransfer.getData(type)
+      if (!dropped) return
+      e.preventDefault()
+      p.set('swap', JSON.stringify({chain: chosen.id, agent: dropped}))
+    }}>
+    <Action {...s} label="Hot-Swap" does={SAYS.swap} disabled={why} onPress={chosen ? () => p.set('swap', chosen.id) : undefined} />
+  </span>
 }
 /** Drag out: the chosen chain, dragged onto an empty track, works alone there; the rack asks for it once the track takes the drop. */
 function DragOut({p, chosen}: {p: ViewProps; chosen: Node | undefined}) {

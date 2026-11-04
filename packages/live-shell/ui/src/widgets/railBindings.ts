@@ -448,7 +448,8 @@ export const openedHold = (ids: readonly string[]): string => JSON.stringify(ids
 /** An Approvals binding with Notifications' readings laid in (ownerRequestsValues): the owner's requests after the queue's own rows, the
  * waiting count and the desktop's notice. Open (software-factory__approvals.tsx: "Every item takes open, which marks it opened here and tells
  * its owner nothing") on an owner's request first opens what it names where it belongs (`open`, which refuses in its own words where the shell
- * has no route for it), and only then is the item held as opened (`kept`); on any other item it marks it opened alone. While Central has not
+ * has no route for it), and only then is the item held as opened (`kept`); on the queue's own item it opens what its binding opens (a
+ * refinement, on the Skillset rack's Refining page), or marks it opened alone. While Central has not
  * answered personal.notifications.list the requests and the desktop wait; where it refused, the desktop's notice says Central's words. Every
  * other key stays the binding's. Pure. */
 export function withOwnerRequests(binding: DesignBinding, input: Parameters<typeof ownerRequestsValues>[0], open?: (target: string) => Promise<void>,
@@ -484,6 +485,9 @@ export function withOwnerRequests(binding: DesignBinding, input: Parameters<type
           if (!target) throw new Error('Open: the request names nothing to open (no callback, no subject).')
           if (!open) throw new Error(`Open: the shell has no hand that opens ${target}.`)
           await open(target)
+        } else if (binding.writes?.('open') && binding.write) {
+          // The queue's own item opens where its binding says (a refinement: the Skillset rack's Refining page), and only then is held.
+          await binding.write([change])
         }
         const opened = kept?.opened ?? []
         kept?.hold(opened.includes(id) ? opened : [...opened, id])

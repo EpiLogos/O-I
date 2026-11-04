@@ -229,7 +229,10 @@ test('5 · what no route carries stays refused: Retire and Restore (PERSON_ACTS 
   for (const key of ['retire', 'restore']) assert.match(member.standing[key].disabled, /PERSON_ACTS names it not/, key)
   const action = readFileSync(new URL('../../../../desktop/cradle/kernel/src/action.rs', import.meta.url), 'utf8')
   const acts = action.slice(action.indexOf('pub const PERSON_ACTS'), action.indexOf('];', action.indexOf('pub const PERSON_ACTS')))
-  assert.doesNotMatch(acts, /control\.skills/)
+  // REPLACED (O-I 795 round 13): /control\.skills/ — a Control skill's revision that waits in Central is the person's to accept or
+  // discard there (control.skills.revision.accept · discard are among PERSON_ACTS); Retire and Restore still are not.
+  assert.doesNotMatch(acts, /control\.skills\.(retire|restore)/)
+  assert.match(acts, /"control\.skills\.revision\.accept"/)
   // REPLACED (lane W9): Apply and Run write at the reviewed digest since the kernel's round of cdbde6fe7 (w9-approvals-ledger-sets.test.mjs).
   // REPLACED (lane K0): a bypass issue writes through aikit_write bypass-issue (k0-routes-bindings.test.mjs); no upkeep act stays refused.
   assert.deepEqual(Object.keys(bind.RACK_UPKEEP_REFUSE), [])

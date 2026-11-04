@@ -14,14 +14,15 @@
 //     each set of them — Cancel's drop included — to the hold at once, never to an owner.
 //
 // Pure, except the one hold store at the end (the shell's own state, never an owner reading).
-import {useSyncExternalStore} from 'react'
 import type {DesignBinding, DesignedDevice, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {SdkParamRow} from '../../inhabitants/sdk/define'
 import type {DispatchReceipt} from '../../inhabitants/sdk/shellSetters'
 import type {Form, Member, Rung} from '../../inhabitants/catalogue/panels/practice'
 import type {ConfigRequestWire} from '../../../../../../desktop/cradle/src/kernel/types'
 import {MISSING_OPS, missingOpRemedy} from '../agentChainDrag'
-import {gatewayDisclosed, type AgentChainReading} from './agentChainDevices'
+import {chainDeviceId, type AgentChainReading} from './agentChainDevices'
+import {flipDevice, publishedDevice, selectDevice, subscribeDeviceDoor} from '../../frame/devices/deviceDoor'
+import {setHostPage} from '../../frame/devices/deviceHost'
 import type {OwnerAcceptedValues} from './ownerAccepted'
 import type {TaskClip, TemporalEventLike} from '../agentRunModel'
 import {runStateOfSession, stageRecordingOf, threadRowsFrom} from './runFaces'
@@ -100,6 +101,87 @@ export const CALLS_REFUSE = {
   decision: (value: string) => `Calls to other agents is Allow, Ask or Deny, not ${value}.`,
 } as const
 
+/** Calls to other agents as the design's words name each rule: what a binding now does with a call from another agent. */
+const CALLS_SAID: Readonly<Record<string, {readonly one: string; readonly many: string; readonly word: string}>> = {
+  allow: {one: 'lets it through', many: 'let it through', word: 'Allow'}, pair: {one: 'asks you', many: 'ask you', word: 'Ask'},
+  deny: {one: 'denies it', many: 'deny it', word: 'Deny'}}
+const listed = (items: readonly string[]) => (items.length <= 1 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items.at(-1)}`)
+/** Set one rule for calls from other agents on every binding of a session, one binding at a time (AIKit keeps a rule per binding: the
+ * kernel's harness_ingress_rule). The bindings are not set as one: where one refuses, the words say which now answer the new way, which
+ * keep the rule they had, and what to press next. */
+export async function callsOnEvery(bindings: readonly string[], decision: CallsDecision,
+  set: (binding: string, decision: CallsDecision) => Promise<unknown>): Promise<void> {
+  for (const [at, binding] of bindings.entries()) {
+    try { await set(binding, decision) } catch (cause) {
+      const done = bindings.slice(0, at), left = bindings.slice(at)
+      const said = CALLS_SAID[decision] ?? {one: `answers ${decision}`, many: `answer ${decision}`, word: decision}
+      const why = cause instanceof Error ? cause.message : String(cause)
+      const stands = done.length ? `${listed(done)} now ${done.length > 1 ? said.many : said.one}` : 'nothing changed'
+      const keep = `${listed(left)} ${left.length > 1 ? 'keep the rule they had' : 'keeps the rule it had'}`
+      throw Error(`Calls to other agents stopped at ${binding}: ${stands}, and ${keep}; ${why.replace(/\.$/, '')}. Choose ${said.word} again to set ${left.length > 1 || done.length ? 'the rest' : 'it'}.`)
+    }
+  }
+}
+
+/** Scope's Wait and On no answer (§19.12 Asks: Wait 15 min–24 h, default 4 h; On no answer Hold or Deny, default Hold): the session's own
+ * settings in AIKit (`track.wait` in seconds, `track.no_answer`; ai-kit encounter_task_settings.rs), written through the kernel's
+ * encounter_session_settings. AIKit's executor plays them: a request nobody answered by its Wait is denied with the harness's own deny, or
+ * held in Approvals past its Wait, as the person chose (ai-kit encounter_task_executor.rs settle_asks). */
+export const WAIT_SECONDS = {min: 900, max: 86_400} as const
+export const NO_ANSWERS: readonly string[] = ['hold', 'deny']
+export const WAIT_REFUSE = {
+  wait: 'Wait: no carrier to AIKit\'s Wait on the session\'s own settings (the kernel\'s encounter_session_settings, track wait) stands on this chain.',
+  noAnswer: 'On no answer: no carrier to AIKit\'s On no answer on the session\'s own settings (the kernel\'s encounter_session_settings, track no_answer) stands on this chain.',
+  unread: (what: string) => `${what}: AIKit has not read the session's settings yet.`,
+  older: (what: string) => `${what}: this AIKit's session settings carry no ${what}, so it is neither read nor set (an AIKit before O-I round 860).`,
+  range: 'Wait is 15 min to 24 h: a whole number of seconds from 900 to 86400.',
+  noAnswerValue: (value: string) => `On no answer is Hold or Deny, not ${value}.`,
+} as const
+/** The session's Wait and On no answer as a Scope is handed them: AIKit's track settings (null while unread), why they are not read (AIKit's
+ * refusal, or where the Scope stands on no one session), and their write. */
+export interface ScopeWaits {
+  readonly track: {readonly wait?: unknown; readonly no_answer?: unknown} | null
+  readonly why?: string
+  readonly write?: (change: {wait?: number; no_answer?: 'hold' | 'deny'}) => Promise<unknown>
+}
+const WAIT_KEYS = {wait: {field: 'wait', what: 'Wait'}, noAnswer: {field: 'no_answer', what: 'On no answer'}} as const
+type WaitKey = keyof typeof WAIT_KEYS
+/** Why Wait or On no answer is not pressable, or null where it writes. */
+function waitWhy(key: WaitKey, waits: ScopeWaits | undefined): string | null {
+  const {field, what} = WAIT_KEYS[key]
+  if (waits?.why) return `${what}: ${waits.why}`
+  if (!waits?.write) return WAIT_REFUSE[key]
+  if (!waits.track) return WAIT_REFUSE.unread(what)
+  return field in waits.track ? null : WAIT_REFUSE.older(what)
+}
+/** Wait and On no answer as AIKit reads them, in Scope's keys. */
+export function waitValues(waits: ScopeWaits | undefined): Record<string, Value> {
+  const values: Record<string, Value> = {}
+  const track = waits?.track
+  if (typeof track?.wait === 'number') values.wait = track.wait
+  if (typeof track?.no_answer === 'string' && NO_ANSWERS.includes(track.no_answer)) values.noAnswer = track.no_answer
+  return values
+}
+/** Each of Wait and On no answer that is not pressable, with why. */
+export function waitStanding(waits: ScopeWaits | undefined): Record<string, Standing> {
+  const standing: Record<string, Standing> = {}
+  for (const key of Object.keys(WAIT_KEYS) as WaitKey[]) { const why = waitWhy(key, waits); if (why) standing[key] = {disabled: why} }
+  return standing
+}
+/** Write Wait or On no answer to the session's own settings, or refuse in the words of what stands in the way. */
+export async function waitWrite(key: WaitKey, value: Value | undefined, waits: ScopeWaits | undefined): Promise<void> {
+  const why = waitWhy(key, waits)
+  if (why) throw Error(why)
+  if (key === 'wait') {
+    const seconds = typeof value === 'number' ? Math.round(value) : NaN
+    if (!(seconds >= WAIT_SECONDS.min && seconds <= WAIT_SECONDS.max)) throw Error(WAIT_REFUSE.range)
+    await waits!.write!({wait: seconds})
+    return
+  }
+  if (typeof value !== 'string' || !NO_ANSWERS.includes(value)) throw Error(WAIT_REFUSE.noAnswerValue(String(value)))
+  await waits!.write!({no_answer: value as 'hold' | 'deny'})
+}
+
 const REFUSE = {
   power: 'Power is a reading: the harness reports whether the agent is on; Actuation exposes no Power write.',
   budget: 'Budget is a reading here: used and cap come from the session\'s task record (encounter_task_read); Actuation exposes no budget write.',
@@ -115,12 +197,11 @@ const REFUSE = {
   prove: missing('Prove', 'the run\'s proof `aikit praxis method prove --method <ref> --proof-json` takes (its Activity, Return, Evidence and verification refs; the member holds no run receipt)', 'AIKit'),
   reach: missing('Reach', 'the scope reach write on the world device\'s apply path (WO-SF2)', 'Software Factory'),
   // Scope's Asks page (§19.12 Asks): Calls to other agents is AIKit's ingress rule for the sender kind agent (CALLS_REFUSE; scopeBinding
-  // writes it where the chain hands in its carrier). Wait and On no answer are the harness's approvals timeout and what a request nobody
-  // answered comes to: Hermes keeps both itself (tools/approval_context.py: approvals.timeout, 300 s unless set; a request that times out
-  // is denied), no owner declares a seam on Hermes' config, and harness_agent_control does not carry them (harnessAgentControl.ts).
+  // writes it where the chain hands in its carrier). Wait and On no answer are the session's own settings in AIKit, which its executor plays
+  // (WAIT_REFUSE; scopeBinding writes them where the chain hands in the session's settings).
   calls: CALLS_REFUSE.uncarried,
-  wait: missing('Wait', 'the agent\'s approvals timeout written for its harness (Hermes\' approvals.timeout, 300 s unless set: neither AIKit nor Actuation declares a seam on Hermes\' config, and harness_agent_control carries approvals, transport, connect and stall-after only)', 'Actuation'),
-  noAnswer: missing('On no answer', 'Hold for a request nobody answered: Hermes denies a request nobody answers when its approvals.timeout runs out, and holds none, so Deny is Hermes\' own and nothing carries Hold', 'Hermes'),
+  wait: WAIT_REFUSE.wait,
+  noAnswer: WAIT_REFUSE.noAnswer,
   place: missing('A place in reach', 'the scope places write (WO-SF2)', 'Software Factory'),
   scope: 'Choose where the composition applies — Home, Project or Session — then Preview.',
   noPlan: 'Nothing is previewed: press Preview, read the change, then Apply.',
@@ -162,64 +243,9 @@ export const REFUSED_WRITES: Readonly<Record<string, Readonly<Record<string, str
 }
 
 // ---------------------------------------------------------------------------------------------------------------- the hold store
-// What the hand holds before an owner is asked. One store for the chain, so the chain, the pool, the pane and the rail draw the
-// same hold. Nothing here is an owner reading; each hold ends when the owner answers the act it waits for.
-
-export type ComposeScope = 'home' | 'project' | 'session'
-export interface ComposePlan {readonly changeset: unknown; readonly plans: readonly unknown[]}
-
-export interface ChainHolds {
-  /** The composer's text, and the last line an owner accepted from it (the shell's record of what it sent). */
-  readonly composer: {readonly draft?: string; readonly sent?: string}
-  /** The composition before Apply: your requests by member, the scope and profile it applies under, and the owner's plan once
-   * previewed (§19.6 "A change applies only after Preview and Apply"). */
-  readonly compose: {
-    readonly requests: Readonly<Record<string, boolean>>
-    readonly scope?: ComposeScope
-    readonly profile?: string
-    readonly target?: string
-    readonly plan?: ComposePlan
-  }
-  /** A raised reach waiting for Confirm (DEVICE-UI §5.2). */
-  readonly reachPending?: number
-  /** The member device's asks: a review before Trust, a run after its preflight. */
-  readonly member: {readonly reviewAsk?: boolean; readonly run?: 'asked'}
-  /** Each device's view-held keys, by device id (DesignBinding.local): what the person chose of a device's own view — the Thread's
-   * pin and filters, the rack's chosen chain, the Frames monitor's filters — never an owner reading and never sent to one. */
-  readonly views: Readonly<Record<string, Readonly<Record<string, Value>>>>
-}
-
-const EMPTY: ChainHolds = Object.freeze({composer: {}, compose: {requests: {}}, member: {}, views: {}})
-let holds: ChainHolds = EMPTY
-const listeners = new Set<() => void>()
-
-export const chainHolds = (): ChainHolds => holds
-export function updateHolds(change: (was: ChainHolds) => ChainHolds): void {
-  const next = change(holds)
-  if (next === holds) return
-  holds = next
-  for (const listener of [...listeners]) listener()
-}
-export function subscribeHolds(listener: () => void): () => void {
-  listeners.add(listener)
-  return () => { listeners.delete(listener) }
-}
-export function resetHolds(): void { updateHolds(() => EMPTY) }
-/** Set (or drop, with undefined) one view-held key of one device. */
-export function holdView(id: string, key: string, value: Value | undefined): void {
-  updateHolds(was => {
-    const view = was.views[id] ?? {}
-    if (view[key] === value || (value === undefined && !(key in view))) return was
-    const next: Record<string, Value> = {...view}
-    if (value === undefined) delete next[key]; else next[key] = value
-    return {...was, views: {...was.views, [id]: next}}
-  })
-}
-/** One device's view-held keys. */
-export const viewHolds = (held: ChainHolds, id: string): Readonly<Record<string, Value>> => held.views[id] ?? {}
-export function useChainHolds(): ChainHolds {
-  return useSyncExternalStore(subscribeHolds, chainHolds, chainHolds)
-}
+// The hold store is chainHolds.ts (the frame's first load carries it without these bindings).
+export {chainHolds, updateHolds, subscribeHolds, resetHolds, holdView, viewHolds, useChainHolds, type ComposeScope, type ComposePlan, type ChainHolds} from './chainHolds'
+import {chainHolds, updateHolds, holdView, viewHolds, type ComposeScope, type ComposePlan, type ChainHolds} from './chainHolds'
 
 const put = (values: Record<string, Value>, key: string, value: Value | null | undefined) => {
   if (value !== null && value !== undefined && !(typeof value === 'number' && !Number.isFinite(value))) values[key] = value
@@ -227,90 +253,9 @@ const put = (values: Record<string, Value>, key: string, value: Value | null | u
 
 // ---------------------------------------------------------------------------------------------------------------- the Gateway
 
-export interface GatewayInput {
-  readonly reading: Pick<AgentChainReading, 'gateway' | 'gatewayAdmitted' | 'gatewayDoc'>
-  readonly harness: {readonly binding: string; readonly resolved: boolean}
-}
-
-/** The Gateway's values (§19.2; catalogue/panels/actuation__gateway.tsx:6-13 names its keys): what the harness_agent_read answer
- * discloses under the carrier's own field names (agentChainDevices.ts gatewayDisclosed — readiness, transport, connect; stall_after_seconds;
- * its approvals is Scope's Tool calls, §19.12, scopeValues), the light from whether the gateway answered, its refusal in the owner's words, and the binding's link as AIKit's
- * gateway knows it (gatewayLinkValues: beatAge, running, inflight, frames, seq). The other session counters (epoch, peers, ring, ringCap,
- * viaLead, lead) and autoContinue and fanOut are in no document the shell reads, so they stay absent. */
-export function gatewayValues(input: GatewayInput): Values {
-  const {reading, harness} = input
-  const values: Record<string, Value> = {}
-  put(values, 'light', reading.gatewayAdmitted === true ? 'lit' : reading.gatewayAdmitted === false ? 'dark' : undefined)
-  if (harness.resolved) put(values, 'harness', harness.binding)
-  if (reading.gateway.kind === 'refused') put(values, 'refused', reading.gateway.line)
-  for (const [key, value] of Object.entries(gatewayDisclosed(reading.gatewayDoc))) if (key !== 'approvals') put(values, key, value)
-  const doc = isObj(reading.gatewayDoc) && !('refused' in reading.gatewayDoc) ? reading.gatewayDoc : null
-  if (doc && typeof doc.stall_after_seconds === 'number') put(values, 'stallAfter', doc.stall_after_seconds)
-  Object.assign(values, gatewayLinkValues(reading.gatewayDoc))
-  return values
-}
-
-// The Gateway's link readings (ticket 745, lane AA; actuation__gateway.tsx `beatAge`, `running`, `inflight`, `frames`, `seq`): the kernel's
-// harness_agent_read runs `aikit --json gateway agent --binding B sessions` and hands on the envelope's `data` — {binding_ref, operation,
-// type: conversation, result} — whose `result.link` is the binding's link as the gateway knows it (ai-kit aikit-adapters
-// gateway_conversation_engine.rs `link`): the newest frames of its Stream, each stamped when the gateway journaled it, and how many the
-// journal holds; the check-in (the newest frame's instant) and its age by the gateway's own clock; the turns running on the binding's turn
-// plane; and the frames in flight (the prompts waiting for the harness and the sends waiting for the connector's receipt).
-
-/** The engine's result in the gateway's answer (`data.result`), or null where the answer is no conversation reading. */
-const conversationResult = (doc: unknown): Obj | null => {
-  if (!isObj(doc) || 'refused' in doc) return null
-  return isObj(doc.result) ? doc.result : null
-}
-/** The binding's link in the gateway's answer, or null where it carries none. */
-export const gatewayLinkOf = (doc: unknown): Obj | null => {
-  const link = conversationResult(doc)?.link
-  return isObj(link) ? link : null
-}
-/** A session the answer does not name (the design draws "—"). */
-const NONE_WORD = '—'
-const count = (x: unknown): number | undefined => (typeof x === 'number' && Number.isFinite(x) && x >= 0 ? x : undefined)
-/** An instant on this machine's clock, as the Frames page reads one (`HH:MM:SS`, actuation__gateway.tsx clockSecs). */
-const clockOf = (unixMs: number): string => {
-  const at = new Date(unixMs)
-  return [at.getHours(), at.getMinutes(), at.getSeconds()].map(n => String(n).padStart(2, '0')).join(':')
-}
-/** Which way a frame went, by the door the gateway journaled it through: toward the agent from the surface is a frame the shell sent;
- * from the agent, one it received. */
-const LINK_DIRECTION: Readonly<Record<string, 'in' | 'out'>> = {'to-agent': 'out', 'from-agent': 'in'}
-
-/** The link's frames as the Frames page's rows ({seq, dir, kind, session, at, note}): the gateway's own kind (a custom frame by its custom
- * kind), the direction its door names, the instant it was journaled where the gateway stamped it, and how its words open. Pure. */
-export function linkFrames(link: Obj, session: string): Record<string, Value>[] {
-  return (Array.isArray(link.frames) ? link.frames : []).flatMap((row): Record<string, Value>[] => {
-    if (!isObj(row)) return []
-    const kind = typeof row.custom_kind === 'string' && row.custom_kind ? row.custom_kind : typeof row.kind === 'string' && row.kind ? row.kind : null
-    if (!kind) return []
-    const frame: Record<string, Value> = {kind, session}
-    put(frame, 'seq', count(row.sequence))
-    put(frame, 'dir', typeof row.direction === 'string' ? LINK_DIRECTION[row.direction] : undefined)
-    const at = count(row.recorded_at_unix_ms)
-    put(frame, 'at', at === undefined ? undefined : clockOf(at))
-    put(frame, 'note', typeof row.note === 'string' && row.note ? row.note : undefined)
-    return [frame]
-  })
-}
-
-/** The four link readings and the last sequence, from the gateway's answer; none where it carries no link. A gateway with no frame yet has
- * had no check-in (the design's -1); frames journaled before the gateway stamped them name no check-in, and beatAge stays absent. Pure. */
-export function gatewayLinkValues(doc: unknown): Record<string, Value> {
-  const link = gatewayLinkOf(doc)
-  if (!link) return {}
-  const values: Record<string, Value> = {}
-  const frames = count(link.frame_count)
-  put(values, 'beatAge', count(link.check_in_age_seconds) ?? (frames === 0 ? -1 : undefined))
-  put(values, 'running', count(link.turns_running))
-  put(values, 'inflight', count(link.frames_in_flight))
-  put(values, 'seq', count(link.last_sequence))
-  const session = conversationResult(doc)?.agent_session_ref
-  values.frames = JSON.stringify(linkFrames(link, typeof session === 'string' && session ? session : NONE_WORD))
-  return values
-}
+// The Gateway's values and link readings are gatewayValues.ts (the frame's first load carries them without these bindings).
+export {gatewayValues, gatewayLinkOf, linkFrames, gatewayLinkValues, type GatewayInput} from './gatewayValues'
+import {gatewayValues, gatewayLinkOf, type GatewayInput} from './gatewayValues'
 
 /** What each link reading is, for its standing. */
 const LINK_WORDS: Readonly<Record<string, string>> = {
@@ -420,6 +365,18 @@ export function lastUsageModelOf(listing: unknown): string | undefined {
     if (model && typeof model.name === 'string' && model.name) return model.name
   }
   return undefined
+}
+
+/** The model each session last reported using, from one listing of Actuation's usage records over every session
+ * (`actuation usage list --json`, actuation.usage-listing/v1): the last record of a session that names a model. Pure. */
+export function lastUsageModels(listing: unknown): ReadonlyMap<string, string> {
+  const models = new Map<string, string>()
+  if (!isObj(listing) || listing.schema !== 'actuation.usage-listing/v1' || !Array.isArray(listing.records)) return models
+  for (const record of listing.records) {
+    const model = isObj(record) && isObj(record.usage) && isObj(record.usage.model) ? record.usage.model : null
+    if (model && typeof model.name === 'string' && model.name && typeof record.agent_session_ref === 'string') models.set(record.agent_session_ref, model.name)
+  }
+  return models
 }
 
 /** The Agent's values: each key from the owner that reports it, or absent. */
@@ -971,15 +928,56 @@ export function rackBinding(id: string, input: RackInput, ports: ComposePorts | 
 export interface Refinement {
   readonly member: string
   readonly source: string
-  /** Who keeps the member's source: AIKit, or Central (a Control skill: AIKit refuses to accept it). */
+  /** Who keeps the member's source: AIKit, or Central (a Control skill: AIKit's Accept hands its revision to Central). */
   readonly owner: 'aikit' | 'central'
+  /** Where a Control skill's revision waits once AIKit handed it to Central (ai-kit skill_sources.rs HandedToCentral); null before. */
+  readonly handed: HandedRevision | null
   readonly why: readonly {readonly task: string; readonly reason: string}[]
   readonly proposed: {readonly snapshot: string; readonly revision: string}
   readonly inUse: {readonly snapshot: string; readonly revision: string} | null
   /** The source moved on since the proposal was drafted against it. */
   readonly stale: boolean
   readonly proposedAt: number | null
-  readonly tests: readonly {readonly trace: string; readonly beside: readonly string[]}[]
+  /** The takes that ran under the proposed revision, the takes of their Repeat beside them, and what each of those takes answered to the
+   * task's Success conditions, by its trace (ai-kit skill_sources.rs RefinementTest `answers`). */
+  readonly tests: readonly {readonly trace: string; readonly beside: readonly string[]; readonly answers: Readonly<Record<string, readonly TakeAnswer[]>>}[]
+}
+
+/** A Control skill's revision as Central keeps it beside the skill in use (ctrl control_skills.rs, `control.skills.revision.propose`):
+ * its ref, the digest the person reviews, the skill by its scope and name, and the act that writes it (the person's Accept there). */
+export interface HandedRevision {
+  readonly revisionRef: string
+  readonly proposedDigest: string
+  readonly scope: string
+  readonly name: string
+  readonly acceptAction: string
+}
+
+/** AIKit's record of a hand to Central, or null where it is not one. Pure. */
+function handedOf(value: unknown): HandedRevision | null {
+  if (!isObj(value)) return null
+  const {revision_ref: revisionRef, proposed_digest: proposedDigest, scope, name, accept_action: acceptAction} = value
+  return typeof revisionRef === 'string' && typeof proposedDigest === 'string' && typeof scope === 'string' && typeof name === 'string'
+    && typeof acceptAction === 'string' ? {revisionRef, proposedDigest, scope, name, acceptAction} : null
+}
+
+/** One take's answer to one of the task's Success conditions, as Actuation held it to its evidence (ai-kit RefinementAnswer). */
+export interface TakeAnswer {
+  readonly condition: string
+  readonly answer: 'met' | 'not met' | 'open'
+  readonly evidence: readonly string[]
+  readonly why: string | null
+}
+const ANSWER_WORDS: readonly TakeAnswer['answer'][] = ['met', 'not met', 'open']
+
+/** The answers AIKit keeps with a Test, by trace; what is not an answer in its shape is left out. Pure. */
+function answersOf(value: unknown): Record<string, TakeAnswer[]> {
+  if (!isObj(value)) return {}
+  return Object.fromEntries(Object.entries(value).filter(([, rows]) => Array.isArray(rows)).map(([trace, rows]) => [trace,
+    (rows as unknown[]).filter(isObj).flatMap((row): TakeAnswer[] => typeof row.condition === 'string'
+      && ANSWER_WORDS.includes(row.answer as TakeAnswer['answer'])
+      ? [{condition: row.condition, answer: row.answer as TakeAnswer['answer'], evidence: strings(row.evidence),
+        why: typeof row.why === 'string' ? row.why : null}] : [])]))
 }
 
 /** Central as the keeper of a member's source, in AIKit's listing (`owner`): an owner's name, not the shell's Central mode. */
@@ -996,24 +994,27 @@ export function refinementsOf(value: unknown): Refinement[] | null {
     if (!isObj(row) || typeof row.member !== 'string' || typeof row.source !== 'string') continue
     const proposed = revisionAt(row.proposed)
     if (!proposed) continue
-    rows.push({member: row.member, source: row.source, owner: row.owner === CENTRAL_SOURCE ? CENTRAL_SOURCE : 'aikit',
+    rows.push({member: row.member, source: row.source, owner: row.owner === CENTRAL_SOURCE ? CENTRAL_SOURCE : 'aikit', handed: handedOf(row.handed),
       why: (Array.isArray(row.why) ? row.why : []).filter(isObj).filter(item => typeof item.reason === 'string')
         .map(item => ({task: typeof item.task_ref === 'string' ? item.task_ref : '', reason: item.reason as string})),
       proposed, inUse: revisionAt(row.in_use), stale: row.stale === true,
       proposedAt: typeof row.proposed_at_unix_seconds === 'number' ? row.proposed_at_unix_seconds : null,
       tests: (Array.isArray(row.tests) ? row.tests : []).filter(isObj).filter(item => typeof item.trace === 'string')
-        .map(item => ({trace: item.trace as string, beside: strings(item.beside)}))})
+        .map(item => ({trace: item.trace as string, beside: strings(item.beside), answers: answersOf(item.answers)}))})
   }
   return rows
 }
 
-/** Why a proposal's Result reads Open (§19.7: "A proposal whose test did not run, or whose takes did not answer a condition that the
+/** Why a proposal's Result reads as it does (§19.7: "A proposal whose test did not run, or whose takes did not answer a condition that the
  * revision touches, shows Open"). */
 export const RESULT_WHY = {
   untested: 'Open: no take has run under the proposed revision yet. Press Test to run the task\'s own Repeat over Skillset — the set with '
     + 'the proposed revision in it, beside the set as it stands.',
-  noConditions: 'Open: the takes ran, but no take answered a Success condition — AIKit hands Actuation a task with no Success conditions, '
-    + 'and nothing reads a take against one (missing op: the task\'s Success conditions on AIKit\'s take run, and their reading of each take; AIKit, Actuation).',
+  // REPLACED (O-I 795, round 13): "AIKit hands Actuation a task with no Success conditions, and nothing reads a take against one".
+  noConditions: 'Open: the takes ran while the task had no Success conditions, so none was read against one. Add them in the task\'s '
+    + 'Intent panel (Clip view), then press Test again: each take answers each one.',
+  answered: (takes: number) => `What ${takes} take${takes === 1 ? '' : 's'} answered to the task's Success conditions, each held to its `
+    + 'evidence by Actuation: across a level\'s takes, not met if one is not met, open if one is open, met when all are met.',
 } as const
 
 /** The takes that ran under the proposed revision, beside the takes of the same Repeat that ran under the revision in use. Pure. */
@@ -1023,22 +1024,97 @@ export function refinementTakes(refinement: Refinement): {trace: string; level: 
   return [...[...proposed].map(trace => ({trace, level: 'proposed' as const})), ...inUse.map(trace => ({trace, level: 'in use' as const}))]
 }
 
-/** Result for each condition the revision touches (each close's reason in Why) at each level — Met · Not met · Open — and why it reads
- * as it does. Every condition is Open until a take answers it. Pure. */
-export function refinementResult(refinement: Refinement): {rows: {task: string; condition: string; proposed: 'met' | 'not met' | 'open'; inUse: 'met' | 'not met' | 'open'}[]; why: string} {
-  const rows = refinement.why.map(item => ({task: item.task, condition: item.reason, proposed: 'open' as const, inUse: 'open' as const}))
-  return {rows, why: refinement.tests.length ? RESULT_WHY.noConditions : RESULT_WHY.untested}
+type Outcome = TakeAnswer['answer']
+/** Across a level's takes, Return's rule (§19.1 The Intent panel): not met if one is not met, open if one is open, met when all are met. */
+const across = (answers: readonly Outcome[]): Outcome =>
+  answers.includes('not met') ? 'not met' : answers.length && answers.every(answer => answer === 'met') ? 'met' : 'open'
+
+export interface ResultRow {
+  readonly task: string
+  readonly condition: string
+  readonly proposed: Outcome
+  readonly inUse: Outcome
+  /** The evidence each level's takes named, in words. */
+  readonly evidence?: string
+  /** Why an Open row reads Open, in the reading's words. */
+  readonly why?: string
+}
+
+/** Result for each of the task's Success conditions at each level — Met · Not met · Open — from what each take answered (the Test's
+ * answers, by trace): the takes under the proposed revision, beside the takes of the same Repeat under the revision in use. A take that
+ * answered nothing to a condition stands Open for it. Where no take answered any, each close's reason in Why stands Open, saying why.
+ * Pure. */
+export function refinementResult(refinement: Refinement): {rows: ResultRow[]; why: string} {
+  const levels = refinementTakes(refinement)
+  const answers: Record<string, readonly TakeAnswer[]> = Object.assign({}, ...refinement.tests.map(test => test.answers))
+  const conditions = [...new Set(levels.flatMap(take => (answers[take.trace] ?? []).map(answer => answer.condition)))]
+  if (!conditions.length) {
+    const rows = refinement.why.map(item => ({task: item.task, condition: item.reason, proposed: 'open' as const, inUse: 'open' as const}))
+    return {rows, why: refinement.tests.length ? RESULT_WHY.noConditions : RESULT_WHY.untested}
+  }
+  const answered = levels.filter(take => answers[take.trace]?.length)
+  const rows = conditions.map((condition): ResultRow => {
+    const at = (level: 'proposed' | 'in use') => levels.filter(take => take.level === level)
+      .map(take => answers[take.trace]?.find(answer => answer.condition === condition) ?? null)
+    const proposed = at('proposed'), inUse = at('in use')
+    const outcome = (found: (TakeAnswer | null)[]) => across(found.map(answer => answer?.answer ?? 'open'))
+    const named = (found: (TakeAnswer | null)[]) => [...new Set(found.flatMap(answer => answer?.evidence ?? []))].join(', ')
+    const evidence = [named(proposed) && `proposed: ${named(proposed)}`, named(inUse) && `in use: ${named(inUse)}`].filter(Boolean).join(' · ')
+    const open = [...proposed, ...inUse].find(answer => answer?.answer === 'open' && answer.why)
+    const row: ResultRow = {task: '', condition, proposed: outcome(proposed), inUse: outcome(inUse), ...(evidence ? {evidence} : {})}
+    return open?.why ? {...row, why: open.why} : row
+  })
+  return {rows, why: RESULT_WHY.answered(answered.length)}
 }
 
 /** The AIKit acts of a refinement (aikit_write), each on the member chosen. */
 export const REFINE_WRITES: Readonly<Record<'accept' | 'discard', string>> = {accept: 'refinement-accept', discard: 'refinement-discard'}
 
-/** Why Accept stands refused for a proposal, or null where AIKit can be asked. Shared with Approvals' answer. */
-export function refinementAcceptWhy(refinement: Refinement): string | null {
-  if (refinement.owner === CENTRAL_SOURCE) return `Accept: Central keeps the source of ${refinement.member}, so AIKit does not adopt its revision — `
-    + 'missing op: Central keeping a proposed revision of a Control skill (Central).'
+/** Central's own acts on a revision it keeps, the person's presses (ownerRoutes.ts centralRevisionWrite): the revision as AIKit handed it. */
+export type CentralRevisionHand = (verb: 'accept' | 'discard', handed: HandedRevision) => Promise<unknown>
+
+/** Why Accept or Discard cannot reach Central for a revision that waits there: no hand carries the person's act to it here. */
+const centralUnwired = (verb: 'accept' | 'discard', refinement: Refinement, handed: HandedRevision) =>
+  `${verb === 'accept' ? 'Accept' : 'Discard'}: the revision of ${refinement.member} waits in Central (${handed.revisionRef}) for your `
+  + `${verb === 'accept' ? 'Accept' : 'Discard'} there (control.skills.revision.${verb}), and no hand carries it to Central here.`
+
+/** Why Accept stands refused for a proposal, or null where its owner can be asked. Shared with Approvals' answer. A Control skill's
+ * revision is Central's: AIKit's Accept hands it there, and once it waits there, Accept is the person's own act in Central. */
+export function refinementAcceptWhy(refinement: Refinement, hands: {readonly central?: boolean} = {}): string | null {
+  // REPLACED (O-I 795 round 13): "missing op: AIKit handing its proposed revision to Central's control.skills.revision.propose (AIKit)" —
+  // AIKit's Accept hands it now (ai-kit skill_sources.rs accept_revision), and Central keeps it beside the skill in use.
+  const handed = refinement.owner === CENTRAL_SOURCE ? refinement.handed : null
+  if (handed) return hands.central ? null : centralUnwired('accept', refinement, handed)
   if (refinement.stale) return `Accept: the revision of ${refinement.member} this was drafted against is no longer in use (its source moved on since); Discard it and propose again.`
   return null
+}
+
+/** Discard on a revision that waits in Central with no hand to Central here, or null. */
+export function refinementDiscardWhy(refinement: Refinement, hands: {readonly central?: boolean} = {}): string | null {
+  const handed = refinement.owner === CENTRAL_SOURCE ? refinement.handed : null
+  return handed && !hands.central ? centralUnwired('discard', refinement, handed) : null
+}
+
+/** Accept or Discard on one proposed revision, through its owners: AIKit's own verbs (`aikit source refine accept|discard`, an Accept that
+ * hands a Control skill's revision to Central), and for one that waits in Central the person's act there first — Accept writes the skill
+ * and Discard drops Central's revision; either way AIKit's copy then goes. A revision Central no longer keeps is dropped from AIKit alone.
+ * Shared by the Refining page and Approvals. */
+export async function answerRefinement(refinement: Refinement, verb: 'accept' | 'discard',
+  ports: {readonly write?: RefiningPorts['write']; readonly central?: CentralRevisionHand}): Promise<void> {
+  const why = verb === 'accept' ? refinementAcceptWhy(refinement, {central: !!ports.central}) : refinementDiscardWhy(refinement, {central: !!ports.central})
+  if (why) throw Error(why)
+  if (!ports.write) throw Error(REFINE_NO_CARRIER)
+  const handed = refinement.owner === CENTRAL_SOURCE ? refinement.handed : null
+  if (handed && ports.central) {
+    try {
+      await ports.central(verb, handed)
+    } catch (error) {
+      if (verb === 'accept' || !/no proposed revision of \S+ waits/.test(error instanceof Error ? error.message : String(error))) throw error
+    }
+    await ports.write({kind: REFINE_WRITES.discard, member: refinement.member})
+    return
+  }
+  await ports.write({kind: REFINE_WRITES[verb], member: refinement.member})
 }
 
 export interface RefiningPorts {
@@ -1046,6 +1122,8 @@ export interface RefiningPorts {
   readonly write?: (request: {kind: string; member: string}) => Promise<unknown>
   /** The session's own Repeat over Skillset (sessionSettings.ts testRefinement). Absent: no session's task stands here. */
   readonly test?: (set: string, member: string) => Promise<{ok: true; note: string} | {ok: false; error: string}>
+  /** Central's own acts on a revision that waits there (ownerRoutes.ts centralRevisionWrite). Absent: no kernel carries them here. */
+  readonly central?: CentralRevisionHand
 }
 
 export interface RefiningInput {
@@ -1086,6 +1164,7 @@ export function refiningBinding(id: string, input: RefiningInput, ports: Refinin
     const result = refinementResult(chosen)
     values.member = chosen.member
     values.owner = chosen.owner
+    if (chosen.owner === CENTRAL_SOURCE && chosen.handed) values.handed = chosen.handed.revisionRef
     values.stale = chosen.stale
     values.why = JSON.stringify(chosen.why)
     values.revision = chosen.proposed.revision
@@ -1095,9 +1174,11 @@ export function refiningBinding(id: string, input: RefiningInput, ports: Refinin
     values.resultWhy = result.why
     if (input.set) values.levels = `${input.set}+${chosen.member} · ${input.set}`
   } else for (const key of ['member', 'why', 'revision', 'test', 'result']) standing[key] = {disabled: noneWhy}
-  const acceptWhy = !ports.write ? REFINE_NO_CARRIER : !chosen ? noneWhy : refinementAcceptWhy(chosen)
+  const hands = {central: !!ports.central}
+  const acceptWhy = !ports.write ? REFINE_NO_CARRIER : !chosen ? noneWhy : refinementAcceptWhy(chosen, hands)
   if (acceptWhy) standing.accept = {disabled: acceptWhy}
-  if (!ports.write || !chosen) standing.discard = {disabled: !ports.write ? REFINE_NO_CARRIER : noneWhy}
+  const discardWhy = !ports.write ? REFINE_NO_CARRIER : !chosen ? noneWhy : refinementDiscardWhy(chosen, hands)
+  if (discardWhy) standing.discard = {disabled: discardWhy}
   const runWhy = !chosen ? noneWhy : !input.set ? REFINE_NO_SET : !ports.test ? REFINE_NO_SESSION : null
   if (runWhy) standing.run = {disabled: runWhy}
   const memberOf = (value: Value | undefined) => (typeof value === 'string' && value ? value : chosen?.member ?? '')
@@ -1111,10 +1192,7 @@ export function refiningBinding(id: string, input: RefiningInput, ports: Refinin
       for (const change of changes) {
         if (change.key === 'accept' || change.key === 'discard') {
           if (!ports.write) throw Error(REFINE_NO_CARRIER)
-          const refinement = refinementNamed(refinements, memberOf(change.value))
-          const why = change.key === 'accept' ? refinementAcceptWhy(refinement) : null
-          if (why) throw Error(why)
-          await ports.write({kind: REFINE_WRITES[change.key], member: refinement.member})
+          await answerRefinement(refinementNamed(refinements, memberOf(change.value)), change.key, ports)
           continue
         }
         if (change.key === 'run') {
@@ -1127,6 +1205,42 @@ export function refiningBinding(id: string, input: RefiningInput, ports: Refinin
       }
     },
   }
+}
+
+/** The Skillset rack on the door (factoryPlaces.ts SLOT_DEVICE.skillset), its Refining page (skills.tsx PAGES), and Factory, the mode whose
+ * session chains stand it (factoryPlaces.ts RACK_CHAIN: every session holds the one rack). */
+export const SKILLSET_RACK_ID = chainDeviceId('skillset')
+export const REFINING_PAGE = 'refine'
+export const REFINING_MODE = 'factory' as const
+/** Why a refinement cannot be shown where it is opened: no chain here stands the rack. */
+export const REFINING_ELSEWHERE = (member: string) => `${member}: the Skillset rack stands on a session's chain in Factory, and no chain stands it `
+  + `here now. Select a session on the Factory track: its rack stands on its Refining page with ${member} chosen.`
+
+/** The band a refinement waits to open, until its rack comes onto the door (one at a time: a later open replaces it). */
+let waitingBand: (() => void) | null = null
+
+/** Open a proposed revision on the Skillset rack's Refining page (§19.7) from where it is named: the Day's Patterns pad (§18.2: "A pattern
+ * whose items point at one skill or method can open a refinement of it") and Approvals' Open on a refinement (§19.14: "Open, which opens it
+ * where it belongs"). The rack holds the member and stands on its Refining page wherever it is drawn, and its whole view opens in its band
+ * above the chain. Where no chain stands the rack now, `toFactory` turns the shell to Factory and the band opens once a session's chain puts
+ * the rack on the door; with no such hand, the press says where the rack stands. It writes nothing to any owner. */
+export function openRefinement(member: string, hands: {readonly toFactory?: () => void} = {}): void {
+  if (!member) throw Error('Refine: no skill or method is named to open.')
+  holdView(SKILLSET_RACK_ID, 'refineMember', member)
+  setHostPage(SKILLSET_RACK_ID, REFINING_PAGE)
+  waitingBand?.()
+  waitingBand = null
+  const show = () => { selectDevice(SKILLSET_RACK_ID); flipDevice(SKILLSET_RACK_ID) }
+  if (publishedDevice(SKILLSET_RACK_ID)) { show(); return }
+  if (!hands.toFactory) throw Error(REFINING_ELSEWHERE(member))
+  const stop = subscribeDeviceDoor(() => {
+    if (!publishedDevice(SKILLSET_RACK_ID)) return
+    stop()
+    waitingBand = null
+    show()
+  })
+  waitingBand = stop
+  hands.toFactory()
 }
 
 // ---------------------------------------------------------------------------------------------------------------- the member
@@ -1239,6 +1353,8 @@ export interface ScopeAsks {
    * ecology is unread, its refusal where it refused; and the write that sets one rule on every binding (the kernel's harness_ingress_rule). */
   readonly calls?: CallsReading | {readonly refused: string} | null
   readonly callsWrite?: (bindings: readonly string[], decision: CallsDecision) => Promise<void>
+  /** Wait and On no answer: the session's own settings in AIKit, and their write (ScopeWaits). */
+  readonly waits?: ScopeWaits
 }
 
 /** Calls to other agents as Scope's design names them: Allow, Ask (AIKit's pair: the call waits in Approvals) and Deny. */
@@ -1271,15 +1387,16 @@ const callsWhy = (asks: ScopeAsks): string | null =>
 const callsReadingOf = (asks: ScopeAsks): CallsReading | null => (asks.calls && !('refused' in asks.calls) ? asks.calls : null)
 
 /** Scope's values (§19.12). No owner reports the reach, the write mode, the basis, the places or the receipts (the address table's world
- * rows are readings with no source: agentParamAddresses.ts:93-97), nor Wait or On no answer, so every one is absent; Tool calls is the
- * harness's own reading and Calls to other agents AIKit's rule on the session's bindings where the chain hands them in, and the only other
- * value is a raised reach waiting for your Confirm. */
+ * rows are readings with no source: agentParamAddresses.ts:93-97), so every one is absent; Tool calls is the harness's own reading, Calls to
+ * other agents AIKit's rule on the session's bindings and Wait and On no answer the session's own settings in AIKit, where the chain hands
+ * them in, and the only other value is a raised reach waiting for your Confirm. */
 export function scopeValues(held: ChainHolds, asks: ScopeAsks = {}): Values {
   const values: Record<string, Value> = {}
   if (held.reachPending !== undefined) values.reachPending = held.reachPending
   if (asks.toolCalls !== undefined) values.toolCalls = asks.toolCalls
   const calls = callsReadingOf(asks)
   if (calls?.decision) values.calls = calls.decision
+  Object.assign(values, waitValues(asks.waits))
   return values
 }
 
@@ -1288,13 +1405,16 @@ const TOOL_CALLS_UNCARRIED = 'Tool calls: the Gateway\'s approvals row is not ad
 
 const SCOPE_WRITES = (key: string) => ['reach', 'writeMode', 'toolCalls'].includes(key) || key in REFUSED_WRITES[SCOPE_DESIGN]! || key.startsWith('w:')
 
-/** Scope's refused settings, Tool calls where no row carries it, and Calls to other agents where it is not pressable. */
+/** Scope's refused settings, Tool calls where no row carries it, and Calls to other agents, Wait and On no answer where they are not
+ * pressable. */
 function scopeStanding(asks: ScopeAsks): Record<string, Standing> {
   const standing: Record<string, Standing> = {...disabled(REFUSED_WRITES[SCOPE_DESIGN]!), ...(asks.toolCallsRow?.writePath ? {} : {toolCalls: {disabled: TOOL_CALLS_UNCARRIED}})}
   const why = callsWhy(asks)
   if (why) standing.calls = {disabled: why}
   else delete standing.calls
-  return standing
+  delete standing.wait
+  delete standing.noAnswer
+  return {...standing, ...waitStanding(asks.waits)}
 }
 
 /** A raised reach the view holds: a ring, or none (Cancel's drop). */
@@ -1342,6 +1462,7 @@ export function scopeBinding(id: string, held: ChainHolds, writeModeRow: SdkPara
           await asks.callsWrite!(callsReadingOf(asks)!.bindings, value as CallsDecision)
           continue
         }
+        if (key === 'wait' || key === 'noAnswer') { await waitWrite(key, value, asks.waits); continue }
         const refused = REFUSED_WRITES[SCOPE_DESIGN]![key]
         if (refused) throw Error(refused)
         if (key.startsWith('w:')) throw Error(REFUSE.place)

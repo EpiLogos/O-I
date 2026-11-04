@@ -88,6 +88,9 @@ export interface AgentSessionTrack {
   /** On a session's track: its SessionSpace benches it (AIKit's `benched` on the space's record, the Agent rack's Activator, §19.15): it
    * stays in the rack and is given no work. Absent where the space benches it not. */
   benched?: boolean
+  /** On a group track: the session its SessionSpace names its Decision helper (AIKit's `decision_helper` on the space's record, §19.15,
+   * §19.20), which answers every agent's asks first. On that session's own track: true. Absent where the space names none. */
+  decisionHelper?: string | true
 }
 
 /** One row of an `agency_read` reading (desktop/cradle agencyTypes.ts:117). */
@@ -354,6 +357,15 @@ function agentSetOf(rows: readonly AgencyRowLike[]): {ref: string; revision: str
   return undefined
 }
 
+/** The session a space's record names its Decision helper (AIKit's `decision_helper`), from the first row that carries one. */
+function decisionHelperOf(rows: readonly AgencyRowLike[]): string | undefined {
+  for (const row of rows) {
+    const named = row.raw && typeof row.raw === 'object' ? (row.raw as {decision_helper?: {agent_session?: unknown}}).decision_helper?.agent_session : undefined
+    if (typeof named === 'string' && named) return named
+  }
+  return undefined
+}
+
 /** Whether a space's record benches a session (AIKit's `benched`, the session refs the space gives no work). */
 function benchedIn(row: AgencyRowLike): boolean {
   const benched = row.raw && typeof row.raw === 'object' ? (row.raw as {benched?: unknown}).benched : undefined
@@ -387,6 +399,7 @@ export function buildTracks(
   for (const [spaceRef, space] of bySpace) {
     const memberRefs = space.rows.map(row => row.sessionRef)
     const agentSet = agentSetOf(space.rows)
+    const helper = decisionHelperOf(space.rows)
     tracks.push({
       sessionRef: spaceRef,
       purpose: space.label,
@@ -406,6 +419,7 @@ export function buildTracks(
       disclosure: GROUP_DISCLOSURE,
       ...(typeof space.rows[0]?.project === 'string' ? {project: space.rows[0].project} : {}),
       ...(agentSet ? {agentSet} : {}),
+      ...(helper ? {decisionHelper: helper} : {}),
     })
     for (const row of space.rows) {
       const agentRef = typeof row.agentRef === 'string' && row.agentRef ? row.agentRef : null
@@ -429,6 +443,7 @@ export function buildTracks(
         disclosure: null,
         ...(typeof row.project === 'string' ? {project: row.project} : {}),
         ...(benchedIn(row) ? {benched: true} : {}),
+        ...(helper === row.sessionRef ? {decisionHelper: true as const} : {}),
       })
     }
   }

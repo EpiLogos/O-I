@@ -47,17 +47,19 @@
 //
 // The Intent panel: what the task is for, bounded, and how you will know it was met. Factory keeps it for the task's Run and never
 // copies its source. The required difference is the Development Field's (factory/src/development_field.rs:250 DevelopmentField
-// requiredDifference; `factory development field read`, `field set`, which creates the Field with it). The success conditions and their
-// evaluation are the bounded intent in Factory's project ledger (factory/src/project_development.rs:37 BoundedIntentCondition
+// requiredDifference; `factory development field read`, `field set`, which creates the Field with it). The bounded intent in Factory's
+// project ledger keeps refs to the success conditions and their evaluation (factory/src/project_development.rs:37 BoundedIntentCondition
 // intent_source_ref, success_condition_refs, constraint_refs, context_resolution_ref; :61 IntentCriterionEvaluation criterion_ref, state
-// satisfied | unsatisfied | indeterminate, evidence_refs), which no CLI route reads or writes yet.
+// satisfied | unsatisfied | indeterminate, evidence_refs), which no CLI route reads or writes yet; the words of a condition typed here
+// stay in the source they come from, the task's own settings on AIKit (`success`, O-I 795).
 // Keys: `intent` (the required difference, in words), `intent.source` (the source it is read from, named), `criteria` (JSON rows {id,
 // text, state?, evidence?}: state absent until the Run returns; evidence is the count of evidence refs), `constraints` (a count),
 // `context` (the context it resolves in, named). The return across the criteria is the owner's own law (project_development.rs:392-433):
 // one unsatisfied criterion makes it unsatisfied; else one indeterminate makes it indeterminate; else satisfied. A conclusive state
 // carries its evidence (ConclusiveCriterionWithoutEvidence refuses one without).
 // Writes: `intent` goes to `factory development field set`, which has no kernel op yet, so the binding stands it disabled with that
-// reason. `criterion` (a new success condition) has no owner operation at all: it stands disabled here with that reason.
+// reason. `criterion` (a new success condition, on Enter) is added to the task's settings on AIKit; the binding stands it disabled, saying
+// why, where those are not read or while a set of takes runs under the conditions as they stood.
 // The Plan panel (O-I #741, OpenRig's planning dial and wave SDLC, as Factory keeps them in its Run's plan of record: factory/src/
 // wave_sdlc.rs, `factory development wave read`): `plan` (the unit's rung, P0–P4, the planner's: a reading here), `plan.asks` (what the rung
 // asks), `plan.why` (the reason it was set with), `plan.territory` (the files the unit declares), `plan.needs` (the rounds the rung still
@@ -486,7 +488,8 @@ function ReturnedRows({p}: {p: ClipProps}) {
   return <List label="Returned" does="What the run returned: its artifacts and the evidence that shows them. Click one to open it beside you; one that does not open says why."
     items={items} size={2} page={numOf(p.v, 'returned.page') ?? 0} onPage={n => p.set('returned.page', n)} onSelect={id => p.set('open', id)} />
 }
-const NO_CRITERION_OWNER = 'No owner writes a success condition yet: Factory keeps the bounded intent in its project ledger, which no route reaches.'
+// REPLACED (O-I 795, round 13): NO_CRITERION_OWNER, "No owner writes a success condition yet": Add writes the task's own settings on AIKit
+// (agent/clipBinding.ts SETTING_OF criterion), and the binding says why where it cannot.
 
 function IntentPanel(p: ClipProps) {
   const list = criteriaOf(p.v), verdict = verdictOf(list)
@@ -501,7 +504,7 @@ function IntentPanel(p: ClipProps) {
       : list.length === 0 ? <Said>No success condition set.</Said>
         : <List label="Success" does="The conditions that show the task made its difference. The light is the run's return: green met, dark not met, hollow open or not returned."
           items={items} size={3} page={numOf(p.v, 'criteria.page') ?? 0} onPage={n => p.set('criteria.page', n)} />}
-    <Row label="Add"><TextField {...p.standing?.criterion} disabled={p.standing?.criterion?.disabled ?? NO_CRITERION_OWNER} label="Add" does="A new success condition: how you will know the task made its difference. Press Enter to add it." value={strOf(p.v, 'criterion') ?? ''} placeholder="How you will know" onChange={x => p.set('criterion', x.trim() || undefined)} /></Row>
+    <Row label="Add"><TextField {...p.standing?.criterion} label="Add" does="A new success condition: how you will know the task made its difference. Press Enter to add it." value={strOf(p.v, 'criterion') ?? ''} placeholder="How you will know" onChange={x => p.set('criterion', x.trim() || undefined)} /></Row>
     <Rule />
     <Row label="Return"><Fact label="Return" does="Across the conditions: not met if one is not met, open if one is open, met when all are met." value={verdict ? VERDICT_WORD[verdict] : undefined} tone={verdict ? VERDICT_TONE[verdict] : undefined} /></Row>
     <ReturnedRows p={p} />

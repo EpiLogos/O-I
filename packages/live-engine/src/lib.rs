@@ -38,11 +38,12 @@ pub mod realtime;
 
 pub use bridge::{
     auto_filter_cutoff, auto_filter_hz, bridge, live_holds, rack_device, BridgeResult,
-    BridgeWarning, AUTO_FILTER_TYPES,
+    BridgeWarning, AUTO_FILTER_TYPES, TORUS_DYNAMICS_LAW, TORUS_REVERB_LAW,
 };
 pub use devices::{
-    BypassDevice, CompressorDevice, DelayDevice, DelayParams, EchoDevice, EchoParams, FilterDevice,
-    FilterKind, FilterParams, GainDevice, GlueDevice, ReverbDevice,
+    convolver_normalisation, room_impulse, BypassDevice, CompressorDevice, DelayDevice,
+    DelayParams, DynamicsDevice, DynamicsParams, EchoDevice, EchoParams, FilterDevice, FilterKind,
+    FilterParams, GainDevice, GlueDevice, ReverbDevice, RoomDevice, RoomParams,
 };
 pub use engine::{
     engine, BlockStamp, Due, EngineCore, EngineEvent, EngineHandle, MixerState, Part, Performance,
