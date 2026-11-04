@@ -119,7 +119,7 @@ test('compact is a picture and at most four controls: the others\' are their mos
   const set = chain()
   const compact = slot => compactRows(slotOf(set, slot).device.rows).map(row => row.key)
   assert.deepEqual(compact('gateway'), ['transport', 'approvals', 'connect', 'readiness'])
-  assert.deepEqual(compact('agent'), ['autonomy', 'effort', 'budget-used', 'input'], 'the mockup\'s four: autonomy, effort, budget, input')
+  assert.deepEqual(compact('agent'), ['model', 'effort', 'budget-used', 'input'], 'the manual\'s four (§19.4 Compact: "Macros: Model, Effort, Budget, Input"): the Agent\'s Autonomy is retired')
   assert.deepEqual(compact('skillset'), [], 'the rack\'s four settings are readings no owner maps, so the compact rack draws its chains and no badge posing as a macro')
   assert.deepEqual(compact('world'), ['write-mode'])
   assert.deepEqual(compact('git'), ['commit-policy', 'push-policy', 'land'])
@@ -166,15 +166,17 @@ test('a value with no reading stays unknown — no default stands in for it', ()
   const {device: gateway} = slotOf(chain(), 'gateway')
   for (const key of ['transport', 'approvals', 'connect', 'readiness', 'spend']) assert.equal(gateway.values[key], undefined, key)
   const {device: agent} = slotOf(chain(), 'agent')
-  for (const key of ['autonomy', 'budget-used', 'identity', 'model']) assert.equal(agent.values[key], undefined, key)
+  for (const key of ['held', 'budget-used', 'identity', 'model']) assert.equal(agent.values[key], undefined, key)
+  assert.equal(agent.rows.some(row => row.key === 'autonomy'), false, 'the Agent has no Autonomy row: Scope\'s Tool calls took its place (§19.12)')
   for (const key of ['effort', 'input', 'heartbeat']) assert.equal(agent.values[key], undefined, `${key}: the shell\'s defaults (high, steer, heartbeat on) are not readings`)
   assert.equal(slotOf(chain(), 'world').device.values['write-mode'], undefined, 'nor is the write arm\'s flag')
   assert.equal(slotOf(chain({sessionRef: 's', accepted: {effort: 'max', input: 'queue'}}), 'agent').device.values.effort, 'max', 'what the owner accepted is')
   assert.equal(slotOf(chain({accepted: {effort: 'max', input: 'queue'}}), 'agent').device.values.input, 'queue')
   assert.equal(slotOf(chain({accepted: {effort: 'max', input: 'queue'}}), 'agent').device.values.heartbeat, undefined, 'heartbeat has no owner that has ever accepted it')
   assert.equal(slotOf(chain({accepted: {effort: 'max', input: 'queue'}}), 'world').device.values['write-mode'], undefined, 'nor has the write arm')
-  const read = slotOf(chain({sessionRef: 's', reading: {budget: {used: 3, cap: 12}, autonomy: 'review', identity: 'agent/ada'}}), 'agent').device
-  assert.deepEqual([read.values['budget-used'], read.values.autonomy, read.values.identity], ['3 / 12', 'review', 'agent/ada'])
+  const read = slotOf(chain({sessionRef: 's', reading: {budget: {used: 3, cap: 12}, identity: 'agent/ada'}}), 'agent').device
+  assert.deepEqual([read.values['budget-used'], read.values.identity], ['3 / 12', 'agent/ada'])
+  assert.equal('autonomy' in read.values, false, 'no task record word stands as the Agent\'s Autonomy')
   const git = slotOf(chain({reading: {gitRepo: {branch: 'dlw/build', uncommitted: 4}}}), 'git').device
   assert.deepEqual([git.values.branch, git.values.uncommitted], ['dlw/build', 4])
 })
@@ -193,7 +195,7 @@ test('owners write, faces read: a write row reaches its own write path, a readin
     {key: 'input', path: 'shell.setSteer', value: true},
     {key: 'heartbeat', path: 'shell.setHeartbeat', value: false},
   ], 'the shell\'s steer setter takes the boolean the transport gives it')
-  await assert.rejects(() => device.submit([{key: 'autonomy', value: 'auto'}]), /no owner write is declared/, 'autonomy is a reading here')
+  await assert.rejects(() => device.submit([{key: 'held', value: '[]'}]), /no owner write is declared/, 'what the agent holds is Factory\'s reading')
   await assert.rejects(() => device.submit([{key: 'budget-used', value: '1'}]), /no owner write is declared/)
   assert.equal(calls.length, 4, 'a reading dispatched nothing')
 
@@ -222,7 +224,7 @@ test('the harness\'s document supplies the gateway rows only under the carrier\'
   assert.equal(model.gatewayLine({schema: 's', binding: 'b'}), 'schema s · binding b')
   assert.deepEqual(model.gitRepoReading({repo_root: '/r', head_branch: 'main', worktrees: [{path: '/x', dirty_files: 9}, {path: '/r', dirty_files: 2}]}), {branch: 'main', uncommitted: 2})
   assert.deepEqual(model.gitRepoReading({repo_root: '/r', worktrees: []}), {})
-  assert.deepEqual(model.taskReading({turns: {used: 2, cap: 8}, custody: 'review'}), {used: 2, cap: 8, autonomy: 'review'})
+  assert.deepEqual(model.taskReading({turns: {used: 2, cap: 8}, custody: 'review', autonomy: 'auto'}), {used: 2, cap: 8}, 'a task record\'s custody or autonomy word is no Agent setting: the Autonomy is retired')
   assert.equal(model.budgetLine({used: 2}), '2')
   assert.equal(model.budgetLine(null), undefined)
 })
@@ -331,7 +333,8 @@ test('one device in three sizes: the same live rows, a picture in each — no te
   assert.equal((agent.match(/role="radio" aria-checked/g) ?? []).length, 6, 'their choices are the owner\'s own: low · medium · high · max, steer · queue')
   // A radio names every choice; none is drawn as the value until the owner reads one.
   assert.doesNotMatch(agent, /aria-checked="true"|aria-pressed="true"/, 'no default is drawn as a value')
-  assert.match(agent, /data-param="autonomy"[^>]*data-control="readout"[\s\S]*?<span class="dp-label">Autonomy<\/span>/, 'autonomy is a reading until the task record discloses it')
+  assert.match(agent, /data-param="model"[^>]*data-control="readout"/, 'the model is a reading until the harness discloses it')
+  assert.doesNotMatch(agent, /data-param="autonomy"|>Autonomy</, 'no Autonomy is drawn on the Agent')
 })
 
 test('the door shows the chosen device whole in its band and full in a pane — the same device, the same live settings', () => {

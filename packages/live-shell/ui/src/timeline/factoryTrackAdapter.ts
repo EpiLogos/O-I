@@ -34,23 +34,24 @@
 //   copies no part of it. The same attempts stack under the task's clip (`takes`), matched by the task_ref they serve.
 // - launch (W4): how a task plays once launched, what follows it and when a launch lands are its own settings on AIKit
 //   (`encounter-session-settings` `task`: launch, then, quantize — its defaults stated), read with the session's Telemetry
-//   and Solo and carried only onto the task whose task_ref they name. Factory reads no expected length for a task, so no clip carries
+//   and carried only onto the task whose task_ref they name. Factory reads no expected length for a task, so no clip carries
 //   progress.
 // - R3 (manual §19.1 "The mixer row", §16.6): each session's mixer row — Monitor is Watch (In · Auto · Off), the activator is
 //   Telemetry, Solo, and Arm, which is the shell's one write arm (`shell.setWriteArm`, the transport's own; its light is the flag
 //   the shell moves only when the owner accepts); the way in is the Gateway and the way out the landing, routes not settings. The
 //   Main track holds the gateways, the Experiment, Approvals, the Ledger and the Link; Stop All is the harness's stop. Under each
 //   session its event lanes, one per kind of event the temporal stream gives for it (agent/agentRunModel.ts eventsForSession),
-//   each event where it happened on the run's ruler. Telemetry and Solo are the session's own settings on their owner (AIKit
+//   each event where it happened on the run's ruler. Telemetry is the session's own setting on its owner (AIKit
 //   `encounter-session-settings`, read for every track at once and written one session at a time, against the revision that
-//   stands); Watch has no owner op, the attempts (takes) and the effort over a run (automation) no owner reading: each stands
+//   stands); Solo is what you attend to, which the shell holds and no owner is asked for (§16.1, §16.6: "Solo changes what you
+//   attend to, never what runs"), so only the attended sessions keep their clips, needles and lanes in view; Watch has no owner op, the attempts (takes) and the effort over a run (automation) no owner reading: each stands
 //   disabled or absent with the op it lacks.
 // - status: done → done (manual §19.1: Done is "dim and settled"; Stopped is ready, in full colour).
 //
 // Pure TypeScript. No React.
 import {AGENT_CHAIN_MIME, decodeChainDrag} from '../agent/agentChainDrag'
 import {takeNames, takeWords, type FactoryTake} from '../agent/factoryTakes'
-import {eventsForSession, sharedAxis, trackKey, type AgentSessionTrack, type TaskClip, type TaskState, type TemporalEventLike} from '../agent/agentRunModel'
+import {attendedKeys, eventsForSession, sharedAxis, trackKey, type AgentSessionTrack, type TaskClip, type TaskState, type TemporalEventLike} from '../agent/agentRunModel'
 import type {
   ClipLaunch,
   ClipStatus,
@@ -103,12 +104,22 @@ export interface FactoryTaskSettings {
   quantize: string
 }
 
-/** The sessions' own settings (AIKit `encounter-session-settings`): each session's Telemetry and Solo as its owner states them
- * (absent while unread), its current task's settings where the reading names a task (`task`; absent or null: none read), and the
- * write of one, which answers with the owner's reading or its refusal. */
+/** The sessions' own settings (AIKit `encounter-session-settings`): each session's Telemetry as its owner states it (absent while
+ * unread), its current task's settings where the reading names a task (`task`; absent or null: none read), and the write of its
+ * Telemetry, which answers with the owner's reading or its refusal. AIKit's session Solo is a gate on its executor's launches, a limit on
+ * what may run, which Solo never is (manual §16.1, §16.6): it is neither read nor written here (FactoryAttention is Solo). */
 export interface FactorySettingsPort {
-  of(sessionRef: string): {telemetry: boolean; solo: boolean; task?: FactoryTaskSettings | null} | null
-  set(sessionRef: string, setting: 'telemetry' | 'solo', on: boolean): Promise<unknown>
+  of(sessionRef: string): {telemetry: boolean; task?: FactoryTaskSettings | null} | null
+  set(sessionRef: string, setting: 'telemetry', on: boolean): Promise<unknown>
+}
+
+/** What you attend to (manual §16.1 Solo: "You attend to the soloed tracks alone: you see and hear only them, in the views and the
+ * instruments. The others keep running"; §16.6 "Solo changes what you attend to, never what runs"): the tracks soloed, by their keys,
+ * which the shell holds on the book's world context beside THE selection (agent/AgentShellContext.tsx `soloed`), and the press that solos
+ * one or lifts its solo. No owner is asked. */
+export interface FactoryAttention {
+  readonly soloed: ReadonlySet<string>
+  solo(trackId: string, on: boolean): void
 }
 
 /** A task's launch in the owner's words (manual §3: launch quantize and follow actions; the design's mode): the mode as AIKit names
@@ -131,7 +142,11 @@ export const FACTORY_CHOOSE_OP = 'factory_owner attempt-receiving — the attemp
 /** The ops the mixer's settings name. */
 export const FACTORY_SESSION_STOP_OP = 'encounter cancel — this session\'s running turn, on its own resident owner; the session stays and the harness\'s other sessions run on'
 export const FACTORY_TELEMETRY_OP = 'encounter_session_settings {track: {telemetry}} — the session\'s own Telemetry on AIKit, against the revision that stands'
-export const FACTORY_SOLO_OP = 'encounter_session_settings {track: {solo}} — the session\'s own Solo on AIKit, against the revision that stands'
+export const FACTORY_SOLO_OP = 'what you attend to (the book\'s world context, its Solo): the shell holds it and asks no owner; the views, the tiles and the instruments show only the soloed, and every session keeps running'
+
+/** What a Solo press answers: what you attend to changed, and nothing else did. */
+export const FACTORY_SOLO_ON = 'Soloed: the views, the tiles and the instruments show only what you solo. The others keep running.'
+export const FACTORY_SOLO_OFF = 'Solo lifted: you attend to everything again; nothing stopped or started.'
 
 /** The shell's one write arm (the transport's `shell.setWriteArm`, agent/shellSetterBridge.ts): its flag, which moves only when
  * the owner accepts (null when no shell holds one), and its dispatch, which answers with the owner's receipt or refusal. */
@@ -151,8 +166,11 @@ export interface FactorySessionsReading {
   events?: readonly TemporalEventLike[]
   /** The shell's write arm, for every session's Arm. Absent: no shell holds one, and Arm stands disabled. */
   writeArm?: FactoryWriteArm
-  /** The sessions' own settings, for every session's Telemetry and Solo. Absent: unread here, and both stand disabled. */
+  /** The sessions' own settings, for every session's Telemetry. Absent: unread here, and Telemetry stands disabled. */
   settings?: FactorySettingsPort
+  /** What you attend to, for every session's Solo: the views draw only the attended sessions' clips, needles and lanes. Absent: no
+   * attention is handed here, and Solo stands disabled. */
+  attention?: FactoryAttention
   /** The sessions' attempts as takes. Absent: unread here, and the take lanes stand absent with that reason. */
   takes?: FactoryTakesPort
   /** Stop one session: cancel its running turn on its own encounter owner. Absent: a track's Stop is the harness's. */
@@ -172,8 +190,8 @@ const missing = (what: string, op: string, owner: string) => `${what}: no owner 
 export const FACTORY_MIXER: WorldMixer = {
   activator: {meaning: 'Telemetry: on, the session feeds the widgets, the Ledger and other agents; off, it is muted — it keeps working, in silence, and stops sending to the tiles',
     disabled: missing('Telemetry', 'harness_agent_control {binding, control: "telemetry", session_ref, on: bool} → {ok, note} | {ok: false, error}; agency_read rows report `telemetry: bool` (the shell\'s flag is its own, never the owner\'s)', 'Actuation')},
-  solo: {meaning: 'Only soloed sessions may run',
-    disabled: missing('Solo', 'harness_agent_control {binding, control: "solo", session_ref, on: bool} — pauses every other session of the harness; agency_read rows report `solo: bool`', 'Actuation')},
+  solo: {meaning: 'You attend to the soloed sessions alone: the views, the tiles and the instruments show only them. The others keep running. Off by default.',
+    disabled: missing('Solo', 'what you attend to, handed to these tracks: the book\'s world context holds it (agent/AgentShellContext.tsx soloed, setSolo)', 'the live shell')},
   arm: {meaning: 'Lets the session\'s agent write directly, with receipts, where Scope allows; off, every write is a proposal. Arm and press Record to speak a new task onto it',
     grain: 'the shell\'s one write arm: arming one session arms every one'},
   monitor: {meaning: 'Watch: In streams the session into the widgets always; Auto streams it when it is armed or selected; Off does not stream it',
@@ -357,8 +375,12 @@ function launchByMode(launch: {op: string; run(clipId: string): unknown}, clips:
 export const factoryTrackAdapter: WorldTrackAdapter<FactorySessionsReading> = {
   id: FACTORY_TRACK_ADAPTER_ID,
   project(reading): WorldTrackSet {
-    const {tracks: agency, nowUnixMs, controls} = reading
+    const {tracks: agency, nowUnixMs, controls, attention} = reading
     if (!agency.length) return {columns: [], tracks: [], clips: []}
+    // Solo (§16.1, §16.6): with any soloed, only what you attend to keeps its clips, needle and lanes; every track keeps its head and its
+    // mixer, so you can solo another or lift this one. Nothing stops: the others keep running, out of view.
+    const attended = attention ? attendedKeys(agency, attention.soloed) : null
+    const attends = (track: AgentSessionTrack) => !attended || attended.has(trackKey(track))
     // The one shared axis: the provider's own (every needle carries it), else an hour ending now.
     const needled = agency.find(track => track.needle)?.needle
     const axis = needled ? {startUnixMs: needled.axisStartUnixMs, endUnixMs: needled.axisEndUnixMs} : sharedAxis(agency, nowUnixMs)
@@ -368,7 +390,7 @@ export const factoryTrackAdapter: WorldTrackAdapter<FactorySessionsReading> = {
     const tracks: WorldTrack[] = agency.map((track, index) => {
       const ancestors = ancestorsOf(agency, track)
       const parent = ancestors[ancestors.length - 1]
-      const at = track.needle?.atUnixMs
+      const at = attends(track) ? track.needle?.atUnixMs : undefined
       return {
         id: trackKey(track),
         name: trackName(track),
@@ -377,7 +399,7 @@ export const factoryTrackAdapter: WorldTrackAdapter<FactorySessionsReading> = {
         depth: ancestors.length,
         ...(parent ? {parentId: trackKey(parent)} : {}),
         ...(typeof at === 'number' ? {needle: secs(at)} : {}),
-        ...(track.needle?.state === 'stalled' ? {stalled: true} : {}),
+        ...(attends(track) && track.needle?.state === 'stalled' ? {stalled: true} : {}),
       }
     })
 
@@ -387,6 +409,7 @@ export const factoryTrackAdapter: WorldTrackAdapter<FactorySessionsReading> = {
 
     const clips: WorldTrackClip[] = []
     for (const track of agency) {
+      if (!attends(track)) continue
       const trackId = trackKey(track)
       for (const task of realTasks(track)) {
         const status = STATUS[task.state]
@@ -431,32 +454,40 @@ export const factoryTrackAdapter: WorldTrackAdapter<FactorySessionsReading> = {
     set.main = {name: 'Main', chain: FACTORY_MAIN_CHAIN}
     const arm = reading.writeArm
     if (arm && arm.on !== null) for (const track of tracks) track.mix = {arm: arm.on}
-    // Telemetry and Solo: each session's own settings, as the owner states them; a session unread draws them unread.
+    // Telemetry: each session's own setting, as the owner states it; a session unread draws it unread.
     const port = reading.settings
     const sessionOf: Map<string, string> = new Map(agency.filter(track => !track.group).map(track => [trackKey(track), track.sessionRef]))
     if (port) {
       for (const track of tracks) {
         const session = sessionOf.get(track.id)
         const own = session ? port.of(session) : null
-        if (own) track.mix = {...track.mix, activator: own.telemetry, solo: own.solo}
+        if (own) track.mix = {...track.mix, activator: own.telemetry}
       }
       const {disabled: _telemetry, ...activator} = FACTORY_MIXER.activator!
+      set.mixer = {...set.mixer, activator}
+    }
+    // Solo: what you attend to, lit on each soloed track (a session a soloed group holds is attended, not soloed).
+    if (attention) {
+      for (const track of tracks) track.mix = {...track.mix, solo: attention.soloed.has(track.id)}
       const {disabled: _solo, ...solo} = FACTORY_MIXER.solo!
-      set.mixer = {...FACTORY_MIXER, activator, solo}
+      set.mixer = {...set.mixer, solo}
     }
     const events = reading.events
-      ? agency.flatMap(track => track.group ? [] : factoryEventLanes(trackKey(track), track.sessionRef, reading.events!, secs))
+      ? agency.flatMap(track => track.group || !attends(track) ? [] : factoryEventLanes(trackKey(track), track.sessionRef, reading.events!, secs))
       : []
     // The takes: a lane for each attempt a session's task serves, the one that stands marked and shown on the main lane.
     const takePort = reading.takes
     const takeOfLane = new Map<string, FactoryTake>()
     const takeLanes: WorldTakeLane[] = []
     const comp: WorldCompStretch[] = []
+    let served = false
     if (takePort) {
       for (const track of agency) {
         if (track.group) continue
         const trackId = trackKey(track)
         const takes = takePort.of(track.sessionRef) ?? []
+        served ||= takes.length > 0
+        if (!attends(track)) continue
         const names = takeNames(takes)
         for (const take of takes) {
           // Where it ran: from its admission to its Return or failure, a running one to the live edge. An attempt whose owner
@@ -473,7 +504,8 @@ export const factoryTrackAdapter: WorldTrackAdapter<FactorySessionsReading> = {
       }
     }
     const absent: NonNullable<WorldTrackLanes['absent']> = {...FACTORY_LANES_ABSENT, ...(reading.events ? {} : {events: 'The temporal events are unread here: the sessions provider is not mounted above this pane.'})}
-    if (takePort && takeLanes.length) delete absent.takes
+    // Attempts served only on sessions out of view are not absent: you attend elsewhere.
+    if (takePort && (takeLanes.length || served)) delete absent.takes
     else if (takePort) absent.takes = FACTORY_NO_ATTEMPTS
     set.lanes = {events, ...(takePort ? {takes: takeLanes, comp} : {}), absent}
     if (controls) set.actions = actionsFor(controls, tracks, clips, columns)
@@ -494,11 +526,20 @@ export const factoryTrackAdapter: WorldTrackAdapter<FactorySessionsReading> = {
     const launch = set.actions?.launch
     if (launch && controls) set.actions = {...set.actions, launch: launchByMode(launch, clips, sessionOf, controls, sessionStop, reading.repeat)}
     if (port) {
-      const own = (setting: 'telemetry' | 'solo') => (trackId: string, on: boolean) => {
+      const telemetry = (trackId: string, on: boolean) => {
         const session = sessionOf.get(trackId)
-        return session ? port.set(session, setting, on) : Promise.resolve({ok: false, error: `"${trackId}" is not a session of this work.`})
+        return session ? port.set(session, 'telemetry', on) : Promise.resolve({ok: false, error: `"${trackId}" is not a session of this work.`})
       }
-      set.actions = {...set.actions, mixer: {...set.actions?.mixer, activator: {op: FACTORY_TELEMETRY_OP, run: own('telemetry')}, solo: {op: FACTORY_SOLO_OP, run: own('solo')}}}
+      set.actions = {...set.actions, mixer: {...set.actions?.mixer, activator: {op: FACTORY_TELEMETRY_OP, run: telemetry}}}
+    }
+    // A Solo press changes what you attend to, on a session or a group: no owner is asked, and nothing stops or starts.
+    if (attention) {
+      const held = new Set(tracks.map(track => track.id))
+      set.actions = {...set.actions, mixer: {...set.actions?.mixer, solo: {op: FACTORY_SOLO_OP, run: (trackId: string, on: boolean) => {
+        if (!held.has(trackId)) return {ok: false, error: `"${trackId}" is not a session of this work.`}
+        attention.solo(trackId, on)
+        return {ok: true, note: on ? FACTORY_SOLO_ON : FACTORY_SOLO_OFF}
+      }}}}
     }
     return set
   },
@@ -623,7 +664,7 @@ export const FACTORY_WAITING: Readonly<Record<string, string>> = {
   'track.rename': 'a kernel carrier reaching AIKit\'s encounter-session-settings: the shell publishes none to this pane',
   'track.remove': 'a kernel carrier reaching AIKit\'s SessionSpace detach-agent-session: the shell publishes none to this pane',
   'track.activator': 'a kernel carrier reaching AIKit\'s encounter-session-settings (Telemetry): the shell publishes none to this pane',
-  'track.solo': 'a kernel carrier reaching AIKit\'s encounter-session-settings (Solo): the shell publishes none to this pane',
+  'track.solo': 'what you attend to: the agent shell hands it from the book\'s world context, and none is handed to this pane',
   'clip.launch': 'the bound harness: harness_agent_control reaches it once the owner names the harness binding (agent/useHarnessBinding.ts)',
   'row.launch': 'the bound harness: harness_agent_control reaches it once the owner names the harness binding (agent/useHarnessBinding.ts)',
   'track.stop': 'the bound harness, or a kernel carrier reaching the session\'s own encounter (cancel)',

@@ -7,6 +7,6 @@ import {MODE_DETAILS} from '../modeDetails'
 import {Hosted} from './hosted'
 
 /** The selected task (THE selection names it, `<session track>#task/<n>`, or a session track whose first task it opens): its Clip
- * view after Live — Clip and Launch beside the log, the Agent's effort and autonomy for this task as its envelopes (§19.1). */
+ * view after Live — Clip and Launch beside the log, the Agent's Effort and Scope's Tool calls for this task as its envelopes (§19.1). */
 export function FactoryClip({place}: {place: ClipPlace}) { return <Hosted binding={useFactoryClip()} place={place} waits={MODE_DETAILS.factory.clipWaits} /> }
 export function FactoryChain() { const {factory} = useDetailReading(); return <AgentShellDeviceDetail tracks={factory.tracks} /> }

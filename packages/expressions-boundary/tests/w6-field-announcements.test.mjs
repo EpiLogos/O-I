@@ -45,3 +45,17 @@ test('the engine\'s morph phases and the plate\'s stations ride the editor readi
     {stations: [{...fixture.stations[0], frequencyHz: -1}]}, {stations: [{...fixture.stations[0], extra: true}]}, {stations: Array.from({length: 65}, () => fixture.stations[0])}])
     assert.equal(reading(editorReading(bad)), false, JSON.stringify(bad).slice(0, 80));
 });
+
+// O-I #757 (MAP B row: "the Resonance picture shows which source drives the plate (`telemetry().cymatic.driver`)"): the engine's resolved drive
+// (resonanceDrive.ts ResolvedResonanceDrive, the telemetry's cymatic.driver) rides the observation as `drive`, its fields as the engine names
+// them, admitted exactly. M2′'s roles are the engine's own reading of the torus and stay with it.
+test('the plate\'s resolved drive rides the editor reading\'s observation, admitted exactly', () => {
+  const torus = {kind: 'torus', targetHz: 264, bound: true, keySource: 'torus', tonesHz: [264, 396], silent: false, reason: null}
+  const silent = {kind: 'torus', targetHz: 396, bound: false, silent: true, reason: 'The torus is not playing.', keySource: 'torus'}
+  const focus = {kind: 'semanticFocus', targetHz: 341.3, bound: true, semanticNodeId: 'node:heart', anchorId: 'heart'}
+  for (const drive of [torus, silent, focus, {kind: 'frequency', targetHz: 396, bound: true}, {kind: 'sweep', targetHz: 520, bound: true}])
+    assert.equal(reading(editorReading({drive})), true, drive.kind)
+  for (const bad of [{kind: 'torus'}, {...torus, kind: 'pulse'}, {...torus, targetHz: NaN}, {...torus, bound: 'yes'}, {...torus, tonesHz: [264, Infinity]},
+    {...torus, tonesHz: Array.from({length: 65}, () => 264)}, {...torus, reason: 3}, {...torus, keySource: 'moon'}, {...torus, roles: {}}, 'torus'])
+    assert.equal(reading(editorReading({drive: bad})), false, JSON.stringify(bad).slice(0, 80))
+});

@@ -122,7 +122,7 @@ test('Ledger · the session\'s usage is read through actuation_read {usage-list}
   assert.equal(call.data.schema, 'actuation.usage-listing/v1')
   bind.resetHolds()
   const agent = (doc, usage) => bind.agentValues({sessionRef: 'session:a', track: null, nowUnixMs: 0, accepted: {}, harness: {binding: 'claude-code', resolved: false}, holds: bind.chainHolds(),
-    reading: {attached: true, budget: null, autonomy: null, gatewayAdmitted: doc !== null, gatewayDoc: doc}, ...(usage ? {usage} : {})})
+    reading: {attached: true, budget: null, gatewayAdmitted: doc !== null, gatewayDoc: doc}, ...(usage ? {usage} : {})})
   assert.equal(agent(null, answered(ACTUATION.usage_list_session)).model, 'claude-fable-5', 'the model the session last reported using')
   assert.equal(agent({model: 'model:claude-opus-4.8'}, answered(ACTUATION.usage_list_session)).model, 'model:claude-opus-4.8', 'the gateway\'s model stands first')
   assert.equal(agent(null, answered(ACTUATION.usage_list_empty)).model, undefined, 'no record, no model')

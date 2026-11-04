@@ -80,12 +80,12 @@ function factoryAgent() {
   const written = []
   const own = bind.agentBinding('factory:agent', {
     sessionRef: SESSION, track: TRACK, nowUnixMs: NOW,
-    reading: {attached: true, budget: {used: 3, cap: 12}, autonomy: 'review', gatewayAdmitted: false, gatewayDoc: null},
+    reading: {attached: true, budget: {used: 3, cap: 12}, gatewayAdmitted: false, gatewayDoc: null},
     accepted: {effort: 'high'}, harness: {binding: 'claude-code', resolved: true}, holds: bind.chainHolds(),
     thread: thread.threadJson(ENCOUNTER, 'Flint'), models: ['model:claude-sonnet-4.6'], harnesses: ['claude-code'],
   }, {effort: {family: 'actuation', deviceInstance: 'agent', key: 'effort', title: 'Effort', type: 'enumerated', writePath: 'shell.setEffort'}},
   async (row, value) => { written.push([row.key, value]); return {kind: 'fired', note: 'set'} }, () => true)
-  const custody = session.custodyBinding({sessionRef: SESSION, autonomy: 'review', agent: own.values}, null)
+  const custody = session.custodyBinding({sessionRef: SESSION, agent: own.values}, null)
   const id = identity.identityBinding('factory:agent/identity', {roster: {agents: ROSTER}, extras: new Map(), talkingTo: 'agent/flint', card: null})
   const conversation = thread.threadBinding({selected: SESSION, chainSession: SESSION, tracks: [TRACK], nowUnixMs: NOW, encounter: ENCOUNTER, agent: own.values,
     holds: bind.chainHolds()}, own, {select: () => {}})
@@ -111,16 +111,16 @@ test('the Agent\'s composed binding carries custody.*, id.* and thread.* from th
   assert.equal(v.light, 'lit', 'the task record says the agent is on the session')
   assert.equal(v.agent, 'Flint')
   assert.equal(v.effort, 'high')
-  // Custody: the session's custody word is Custody's (it owns the autonomy both pages show); its gate, contact, held items and hand-back
-  // have no owner reading, so nothing stands under custody.* — and each control stands disabled with the op it lacks.
-  assert.equal(v.autonomy, 'review')
+  // Custody: its gate, contact, held items and hand-back have no owner reading, so nothing stands under custody.* — and each control
+  // stands disabled with the op it lacks. REPLACED (O-I 787, §19.4 and §19.12): the Agent's Autonomy, which Custody owned here, is
+  // retired; Scope's Tool calls took its place, so no Autonomy stands on the Agent.
+  assert.equal('autonomy' in v, false, 'no Autonomy stands on the Agent')
+  assert.equal(one.CUSTODY_PAGE.owns, undefined, 'Custody owns no key the Agent shows')
   assert.deepEqual(Object.keys(v).filter(key => key.startsWith('custody.')), [], 'no custody reading is invented')
   // REPLACED (lane W9): Review gate and Escalate to name what an assignment from here lacks (Factory's record and the kernel carry them).
   // REPLACED (lane W11): Review gate and Escalate to say Factory's custody list is not read here (no custody handed in).
   for (const key of ['custody.gate', 'custody.escalate']) assert.match(agent.standing[key].disabled, /custody list is not read here/, key)
   assert.match(agent.standing['custody.handBack'].disabled, /missing op:/)
-  // REPLACED (lane W9): Custody's Autonomy names what an assignment from here lacks (sessionChainBindings.ts custodySetting).
-  assert.match(agent.standing.autonomy.disabled, /^Autonomy: set when Factory assigns custody/, 'the shared autonomy carries Custody\'s standing')
   // Identity: the roster and whose card, under id.*; the light is the Agent's.
   assert.equal(v['id.agent'], 'agent/flint')
   assert.match(String(v['id.roster']), /"name":"Flint"/)
@@ -147,7 +147,8 @@ test('a change goes to the owner of its key: the Agent\'s own row, a carried pag
   assert.deepEqual(written, [['effort', 'max']], 'Effort through the Agent\'s own row')
   assert.equal(agent.writes('custody.gate'), true)
   await assert.rejects(() => agent.write([{key: 'custody.gate', value: 'diffs'}]), /^Error: Review gate: set when Factory assigns custody/)
-  await assert.rejects(() => agent.write([{key: 'autonomy', value: 'auto'}]), /^Error: Autonomy: set when Factory assigns custody/, 'the shared autonomy is Custody\'s to refuse')
+  await assert.rejects(() => agent.write([{key: 'autonomy', value: 'auto'}]), /^Error: Autonomy is retired: Scope's Tool calls, on its Asks page/, 'a press that still names the retired Autonomy is refused naming what took its place')
+  assert.deepEqual(written, [['effort', 'max']], 'and nothing is sent')
   assert.equal(typeof agent.local['thread.pin'], 'function', 'the Thread page\'s pin is a view hold')
   assert.equal(typeof agent.local['id.agent'], 'function', 'the Identity page\'s choice is a view hold')
   agent.local['id.agent']('agent/nara')

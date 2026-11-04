@@ -101,7 +101,14 @@ test('Resonance draws what drives the plate (`drive`, the engine\'s resolved dri
   const absent = draw(resonance, 'whole', {...resonance.defaults, drive: undefined}, {page: 'tuning'})
   assert.match(absent, /driven by —/, 'no reading of the drive: the dash, not the setting passed off as the reading')
   const fieldBinding = await import('../src/components/devices/fieldDesignBinding.ts')
-  assert.match(fieldBinding.FIELD_ABSENT.resonance.drive ?? '', /observation/, 'the binding names `drive` absent: the editor reading carries no drive')
+  // REPLACED (round 858): the binding named `drive` absent, as the editor reading carried no drive. The observation now carries the engine's
+  // resolved drive (hostEditor.ts, from its telemetry cymatic.driver), so the binding reads it there and names it unreported only until then.
+  assert.equal(fieldBinding.FIELD_ABSENT.resonance.drive, undefined, 'no longer absent: the owner serves it')
+  assert.match(fieldBinding.FIELD_UNREPORTED.resonance.drive, /has not reported what drives the plate/)
+  const driven = {kind: 'torus', targetHz: 264, bound: true, keySource: 'torus', tonesHz: [264, 396]}
+  assert.equal(fieldBinding.fieldDesignValues('resonance', {id: 'resonance', rows: []}, {scene: {field: {}, engine: {}, entities: []}, observation: {drive: driven}}).drive, JSON.stringify(driven),
+    'the engine\'s drive, verbatim, under `drive`')
+  assert.equal('drive' in fieldBinding.fieldDesignValues('resonance', {id: 'resonance', rows: []}, {scene: {field: {}, engine: {}, entities: []}, observation: {}}), false, 'unreported: absent, never a default')
 })
 
 // ---------------------------------------------------------------- knowledge-graph__graph: Fit is the surface's own act

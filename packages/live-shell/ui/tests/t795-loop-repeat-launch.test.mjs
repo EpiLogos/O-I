@@ -142,7 +142,7 @@ const reading = (overrides = {}, revision = 'session-settings/0') => ({
   task: {task_ref: 'task:fixtures', name: 'run the fixtures', colour: null, active: true, register: 'plain', form: 'technical',
     loop: false, loop_until: 'done', loop_cap: null, launch: 'repeat', then: 'next', quantize: 'global', repeat_variable: 'condition',
     repeat_levels: [], repeat_repeats: 3, repeat_stop: 'done', envelope_mode: 'automation', envelope_linked: true,
-    effort: [], autonomy: [], set: ['launch'], takes: null, ...overrides},
+    effort: [], tool_calls: [], set: ['launch'], takes: null, ...overrides},
   previous_task: null, standing: 'intent',
 })
 /** The kernel's reading of a comparison run (owner_routes.rs takes_of over Actuation's REAL manifest, 28 Oct 2026). */
@@ -210,7 +210,7 @@ test('Repeat\'s takes: the set starts on AIKit, Actuation\'s comparison run make
 
 test('Repeat\'s variable, levels and stop when are the comparison\'s: a setting of the session\'s agent varies over its levels', async () => {
   for (const [variable, levels, stop] of [['effort', ['low', 'high'], 'pass'], ['model', ['claude-x', 'claude-y'], 'turns'],
-    ['autonomy', ['review'], 'time'], ['skillset', ['a', 'b', 'c'], 'done'], ['budget', ['10'], 'done']]) {
+    ['tool_calls', ['session'], 'time'], ['skillset', ['a', 'b', 'c'], 'done'], ['budget', ['10'], 'done']]) {
     const kernel = scriptedKernel(reading({repeat_variable: variable, repeat_levels: levels, repeat_repeats: 2, repeat_stop: stop}))
     await readSettings()
     const made = await settings.makeTakes(transport, project, 'ses-795', research)

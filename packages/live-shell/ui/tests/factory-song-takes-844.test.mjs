@@ -84,7 +84,7 @@ const reading = (overrides = {}, revision = 'session-settings/0') => ({
   task: {task_ref: TASK, name: 'verify the change', colour: null, active: true, register: 'plain', form: 'technical',
     loop: false, loop_until: 'done', loop_cap: null, launch: 'repeat', then: 'next', quantize: 'global', repeat_variable: 'condition',
     repeat_levels: [], repeat_repeats: 2, repeat_stop: 'done', envelope_mode: 'automation', envelope_linked: true,
-    effort: [], autonomy: [], set: ['launch'], takes: null, ...overrides},
+    effort: [], tool_calls: [], set: ['launch'], takes: null, ...overrides},
   previous_task: null, standing: 'intent',
 })
 /** DERIVED: Factory's take receipt, in the shape factory/tests/song_take.rs pins. */

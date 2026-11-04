@@ -448,7 +448,7 @@ export interface EnvelopeProps {
 /** Live's envelope editor: the lane over the clip's time, the breakpoints as handles, and its choosers along the foot. Click the
  * line to add a breakpoint, drag one to move it, double-click one to remove it. */
 export function EnvelopeEditor(e: EnvelopeProps) {
-  const keyW = 52, sideW = e.side ? (e.sideW ?? 0) : 0
+  const keyW = 52, labelX = keyW - 8, sideW = e.side ? (e.sideW ?? 0) : 0
   const w = e.w - sideW, laneH = e.h - RULER_H - FOOT_H
   const inner = w - keyW, top = 8, bottom = laneH - 8
   const x = (t: number) => keyW + (t - e.from) / (e.to - e.from) * inner
@@ -485,10 +485,11 @@ export function EnvelopeEditor(e: EnvelopeProps) {
       <svg ref={svg} className="clv-env-lane" width={w} height={laneH} viewBox={`0 0 ${w} ${laneH}`} role="group" aria-label="Envelope"
         data-i={said('Envelope', e.curve ? 'The shape the lane draws over the scene, from its settings at the right.' : 'Click the line to add a breakpoint. Drag a breakpoint to move it; double-click it to remove it.')}>
         <rect x={0} y={0} width={keyW} height={laneH} className="clv-key" data-key="gutter" />
-        {e.steps ? e.steps.map((step, i) => <text key={step} x={keyW - 4} y={yOf(i) + 3} className="clv-axis" textAnchor="end">{step}</text>)
+        {/* the level words end clear of a breakpoint's square at the clip's start (keyW - 3.5, with its stroke) */}
+        {e.steps ? e.steps.map((step, i) => <text key={step} x={labelX} y={yOf(i) + 3} className="clv-axis" textAnchor="end">{step}</text>)
           : <>
-            <text x={keyW - 4} y={top + 3} className="clv-axis" textAnchor="end">{e.format(e.max)}</text>
-            <text x={keyW - 4} y={bottom + 3} className="clv-axis" textAnchor="end">{e.format(e.min)}</text>
+            <text x={labelX} y={top + 3} className="clv-axis" textAnchor="end">{e.format(e.max)}</text>
+            <text x={labelX} y={bottom + 3} className="clv-axis" textAnchor="end">{e.format(e.min)}</text>
           </>}
         <rect x={keyW} y={0} width={inner} height={laneH} className="clv-env-field" data-mode={e.mode ?? 'clip'} onClick={add} />
         {e.behind?.(w, laneH, keyW)}

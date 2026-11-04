@@ -8,7 +8,8 @@
 //     AgentSessionsProvider into agent/agentRunModel.ts tracks): a session's tasks (TaskClip n, title, state, start, last activity),
 //     its needle (the last check-in on the shared axis, sharedAxis agentRunModel.ts:280 — a window ending at the reading instant),
 //     its budget, and a group track for each SessionSpace with its member sessions at depth 1 (buildTracks agentRunModel.ts:302);
-//   the session's task record (encounter_task_read, agentChainDevices.ts taskReading): `custody` or `autonomy` — Custody's Autonomy;
+//   the session's task record (encounter_task_read, agentChainDevices.ts taskReading): its turns (a `custody` or `autonomy` word is no
+//     setting: the Agent's Autonomy is retired, DLW §19.4 and §19.12, Scope's Tool calls carrying what it set);
 //   AIKit's encounter view (the Thread's rows, threadBinding.ts threadJson) — the Run's full view is the thread.
 // What no kernel op reaches: a session's Factory run (factory_attempt_read needs a run ref the agency reading never names, so the
 //   Run's takes are absent), the event lanes (the temporal stream names the session, not Messages · Files · Terminal · Web · Graph),
@@ -19,12 +20,13 @@ import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../fr
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
 import type {AgentSessionTrack, TaskClip} from '../agentRunModel'
 import type {ActionAnswer} from '../../central/devices/centralActions'
-import {chainHolds, holdView, viewHolds, type ChainHolds} from './designBindings'
+import {AGENT_AUTONOMY_RETIRED, chainHolds, holdView, viewHolds, type ChainHolds} from './designBindings'
 import {rackStateOf, runStateOfSession} from './runFaces'
 import {familyFaceDevice} from './mainTrackBindings'
 import {sessionRowsOf} from './threadBinding'
 import {DECISION_HELPER_DESIGN, DECISION_HELPER_ID} from './decisionHelperBinding'
 import {macroTurns, RACK_MACROS, type RackMacro, type RackNode} from '../../inhabitants/sdk/chains'
+import {trackKey} from '../agentRunModel'
 
 export const RUN_DESIGN = 'software-factory:run-device'
 export const CUSTODY_DESIGN = 'software-factory:agent-custody'
@@ -51,14 +53,15 @@ const reading = (key: string) => `${key} is a reading: its owner reports it; not
 
 // ---------------------------------------------------------------------------------------------------------------- the Run
 
-// Telemetry and Solo are the session's own settings on AIKit (lane K0 corrected): `encounter-session-settings` `track.telemetry` and
-// `track.solo`, written through the kernel's encounter_session_settings against the revision that stands (agent/sessionSettings.ts
-// trackSettingChange) — the Session view's mixer reads and writes them (timeline/factoryTrackAdapter.ts FACTORY_TELEMETRY_OP, FACTORY_SOLO_OP).
-// The Run device is handed neither the session's settings reading nor its writer, so it names that route and stands disabled here.
+// Telemetry is the session's own setting on AIKit (lane K0 corrected): `encounter-session-settings` `track.telemetry`, written through
+// the kernel's encounter_session_settings against the revision that stands (agent/sessionSettings.ts trackSettingChange) — the Session
+// view's mixer reads and writes it (timeline/factoryTrackAdapter.ts FACTORY_TELEMETRY_OP). Solo is what you attend to, never what runs
+// (§16.1, §16.6): the shell holds it on the book (agent/AgentShellContext.tsx setSolo), and AIKit's own session Solo, a gate on its
+// executor's launches, is never written. The Run device is handed neither, so it names each route and stands disabled here.
 // AIKit's gateway agent controls (`aikit gateway agent --binding B pause|resume`) address a gateway binding's connector, never a session.
 export const RUN_REFUSE = {
   telemetry: 'Telemetry: the session\'s own setting on AIKit (encounter_session_settings {track: {telemetry}}, as the Session view\'s mixer writes it); the Run device is not handed the session\'s settings or their writer, so it does not write it here (AIKit).',
-  solo: 'Solo: the session\'s own setting on AIKit (encounter_session_settings {track: {solo}}, as the Session view\'s mixer writes it); the Run device is not handed the session\'s settings or their writer, so it does not write it here (AIKit).',
+  solo: 'Solo: what you attend to, which the shell holds on the book (agent/AgentShellContext.tsx setSolo), as the Session view\'s mixer solos it; the Run device is not handed the attention, so it does not solo here (the live shell).',
   take: 'No takes are read: factory_attempt_read needs the run ref of the session\'s work, and the agency reading names none.',
   open: 'No events are read into lanes: the temporal stream names the session, not Messages, Files, Terminal, Web or Graph.',
 } as const
@@ -160,8 +163,11 @@ export function runBinding(input: RunInput, ports: RunPorts): DesignBinding {
 // custody_ref, position_ref, work_ref, state, autonomy?, review_gate?, escalate_to?, …]}; real shape in desktop/cradle/kernel/tests/
 // fixtures/owner-routes/factory-custody-list-2026-10-21.json). Lane W11 reads it for the project's Factory state:
 //   held        the open records (in-progress, blocked) of the Position the session's agent holds (AIKit's population), as the held items;
-//   the settings Autonomy, Review gate and Escalate to from the open record of the session's work (its bound task), where one stands.
-// Custody sits on the Agent (§19.4): Factory owns how much the agent decides alone. Each setting is written (CustodyAssign with that one
+//   the settings Review gate and Escalate to from the open record of the session's work (its bound task), where one stands. Factory's
+//   record still carries an `autonomy` (PR 288) and its `custody assign` still takes `--autonomy`; neither is read or sent here, since
+//   the manual retired the Agent's Autonomy (§19.4: Factory owns what the agent holds and what it does when it stalls; §19.12: Scope's
+//   Tool calls answers the harness's request to use a tool).
+// Custody's held items and Hand back stand on the Agent's Run page (§19.4). Each setting is written (CustodyAssign with that one
 // setting) only on the person's own press (re-checked at the press), only while the session's work is not yet assigned: the assignment's
 // Position is the one the session's agent holds, the work its bound task, and the reason says who set what from the desk. A session whose
 // agent holds no Position refuses naming that. Once the work is assigned, changing a setting waits for the owner's ruling, said verbatim
@@ -171,9 +177,9 @@ const CUSTODY_CARRIES = 'Factory\'s custody assign and update (factory_owner) ca
 /** Who may change a custody record's settings after assignment: the owner's ruling to make (lane W8, 3a). */
 export const CUSTODY_SETTINGS_RULING = 'Changing it after assignment waits for the owner\'s ruling on who may: `custody update` admits only the holding occupant, and Factory names no person authority for custody.'
 const custodySetting = (what: string, flag: string) => `${what}: set when Factory assigns custody (\`factory development custody assign ${flag}\`); Factory's custody list is not read here for this session (\`factory development custody list\`, the kernel's factory_owner custody-list), so whether its work is assigned is not known.`
-/** The settings Custody writes through CustodyAssign, each with the field and the words Factory admits. */
-export const CUSTODY_SETTING_FIELDS: Readonly<Record<'autonomy' | 'gate' | 'escalate', {readonly field: 'autonomy' | 'review_gate' | 'escalate_to'; readonly what: string; readonly admits?: readonly string[]}>> = {
-  autonomy: {field: 'autonomy', what: 'Autonomy', admits: ['suggest', 'review', 'auto']},
+/** The settings Custody writes through CustodyAssign, each with the field and the words Factory admits. The Agent's Autonomy is not one:
+ * it is retired (DLW §19.4, §19.12), and Scope's Tool calls carries what it set (AGENT_AUTONOMY_RETIRED). */
+export const CUSTODY_SETTING_FIELDS: Readonly<Record<'gate' | 'escalate', {readonly field: 'review_gate' | 'escalate_to'; readonly what: string; readonly admits?: readonly string[]}>> = {
   gate: {field: 'review_gate', what: 'Review gate', admits: ['diffs', 'approvals', 'both']},
   escalate: {field: 'escalate_to', what: 'Escalate to'},
 }
@@ -187,8 +193,10 @@ export const CUSTODY_SETTING_WHY = {
 } as const
 /** The custody record states that hold work (the others close it). */
 const OPEN_CUSTODY: readonly string[] = ['in-progress', 'blocked']
+// The Agent's Autonomy, retired (designBindings.ts AGENT_AUTONOMY_RETIRED): Custody refuses a press that still names it in those words.
+export {AGENT_AUTONOMY_RETIRED}
 export const CUSTODY_REFUSE = {
-  autonomy: custodySetting('Autonomy', '--autonomy suggest|review|auto'),
+  autonomy: AGENT_AUTONOMY_RETIRED,
   gate: custodySetting('Review gate', '--review-gate diffs|approvals|both'),
   escalate: custodySetting('Escalate to', '--escalate-to'),
   handBack: missing('Hand back', `a custody state for giving back what you edited (${CUSTODY_CARRIES}; giving control back is none of these states), and the custody refs of what the session holds (\`factory development custody list\` has no kernel route)`, 'Software Factory'),
@@ -262,7 +270,7 @@ export interface GrantsReading {
 export interface CustodyPorts {
   readonly revoke?: (authoritySourceRef: string, reason: string | undefined) => Promise<unknown>
   /** Factory's custody assignment (factory_owner custody-assign) with one setting. Absent: no carrier stands. */
-  readonly assign?: (request: {kind: 'custody-assign'; state_path: string; position_ref: string; work_ref: string; reason: string} & Partial<Record<'autonomy' | 'review_gate' | 'escalate_to', string>>) => Promise<unknown>
+  readonly assign?: (request: {kind: 'custody-assign'; state_path: string; position_ref: string; work_ref: string; reason: string} & Partial<Record<'review_gate' | 'escalate_to', string>>) => Promise<unknown>
   /** Who is current at the moment of the press (`currentIdentity()` read again): Revoke goes only when it is still the person the page
    * was drawn for. Absent: the person drawn stands. */
   readonly personNow?: () => string | null
@@ -275,8 +283,6 @@ export const CUSTODY_GRANT_SETTINGS: readonly string[] = ['grant:determine-agenc
 export interface CustodyInput {
   /** The chain's session, null when none is selected. */
   readonly sessionRef: string | null
-  /** The session's task record's custody word (encounter_task_read `custody` or `autonomy`), null when unread. */
-  readonly autonomy: string | null
   /** The Agent's values (its light: Custody stands on the Agent). */
   readonly agent: Values
   /** The hand's holds (the next grant's settings); absent, the store as it stands. */
@@ -306,7 +312,7 @@ export function openCustody(listing: unknown): Record<string, unknown>[] | null 
   return doc.custody.filter((row): row is Record<string, unknown> => !!row && typeof row === 'object' && OPEN_CUSTODY.includes(String((row as Record<string, unknown>).state)))
 }
 
-/** Custody's values: the Agent's light and the custody the session's task record names. Write mode is Scope's reading, and none is
+/** Custody's values: the Agent's light, the grants, and Factory's custody of the session's work. Write mode is Scope's reading, and none is
  * reported (designBindings.ts scopeValues); the gate, the contact, the people, the held items and the hand-back light have no owner
  * reading (the transport's Re-enable light is the shell's own flag, never set by an owner). */
 export function custodyValues(input: CustodyInput): Values {
@@ -320,7 +326,6 @@ export function custodyValues(input: CustodyInput): Values {
   }
   if (input.sessionRef == null) return values
   put(values, 'light', input.agent.light)
-  put(values, 'autonomy', input.autonomy)
   const open = input.custody?.listing?.status === 'answered' ? openCustody(input.custody.listing.value) : null
   if (open) {
     // What the session's agent holds: the open records of its Position, each a piece of work in its custody state.
@@ -361,7 +366,7 @@ export function custodyBinding(input: CustodyInput, scope: Pick<DesignBinding, '
   else if (listingWhy) standing.held = {disabled: listingWhy}
   const assigned = open && custody?.work ? open.find(row => row.work_ref === custody.work) : undefined
   /** Why one setting cannot be written now, in words; null when the person's press may assign it. */
-  const settingWhy = (key: 'autonomy' | 'gate' | 'escalate'): string | null => {
+  const settingWhy = (key: keyof typeof CUSTODY_SETTING_FIELDS): string | null => {
     const {what} = CUSTODY_SETTING_FIELDS[key]
     if (!custody) return CUSTODY_REFUSE[key]
     if (listingWhy) return `${what}: ${listingWhy}`
@@ -373,13 +378,13 @@ export function custodyBinding(input: CustodyInput, scope: Pick<DesignBinding, '
     if (!ports.assign) return `${what}: ${CUSTODY_SETTING_WHY.noCarrier}.`
     return null
   }
-  for (const key of ['autonomy', 'gate', 'escalate'] as const) {
+  for (const key of ['gate', 'escalate'] as const) {
     const why = settingWhy(key)
     if (why) standing[key] = {disabled: why}
     else delete standing[key]
   }
   /** One setting written as the assignment of the session's work to the person's Position (CustodyAssign with that one setting). */
-  const assign = async (key: 'autonomy' | 'gate' | 'escalate', value: Value | undefined) => {
+  const assign = async (key: keyof typeof CUSTODY_SETTING_FIELDS, value: Value | undefined) => {
     const why = settingWhy(key)
     if (why) throw Error(why)
     if (ports.personNow && ports.personNow() !== person) throw Error(`${CUSTODY_SETTING_FIELDS[key].what}: the current person is no longer the one this page was drawn for; nothing was sent to Factory.`)
@@ -412,7 +417,7 @@ export function custodyBinding(input: CustodyInput, scope: Pick<DesignBinding, '
           continue
         }
         if (key === 'revoke') { await revoke(value); continue }
-        if (key === 'autonomy' || key === 'gate' || key === 'escalate') { await assign(key, value); continue }
+        if (key === 'gate' || key === 'escalate') { await assign(key, value); continue }
         // Issue: the desk composes no authority record, whoever the value names as its issuer.
         if (key === 'issue') throw Error(CUSTODY_GRANTS_REFUSE.issue)
         throw Error(CUSTODY_REFUSE[key as keyof typeof CUSTODY_REFUSE] ?? reading(key))
@@ -476,10 +481,10 @@ export const AGENTSET_REFUSE = {
   // The chain list's controls (§19.15): each acts on a chain's session in its session space, or on what you attend to. Each names the
   // owner operation it waits for and, where one stands near, why that one is not it (O-I #772).
   bench: `${missing('Activator', 'benching a chain\'s session in its session space, so it stays in the rack and is given no work', 'AIKit')} ${SPACE_MUTATIONS} hold no bench.`,
-  // Solo is what you attend to, never what runs (§16.1 Live's acts: Solo is never "A limit on what may run"; §16.6 Rules). AIKit's session
-  // Solo, which the Session view's mixer writes (timeline/factoryTrackAdapter.ts FACTORY_SOLO_OP), is a launch gate: AIKit's executor
-  // launches only the soloed sessions of a space while any is soloed (encounter_task_executor.rs, the Solo gate).
-  solo: `${missing('Solo', 'attending to one chain alone, so the views, the tiles and the instruments show only it: an attention the shell holds and its views, tiles and instruments read', 'the live shell')} AIKit's session Solo (encounter_session_settings {track: {solo}}) gates launches to the soloed sessions, a limit on what may run, which Solo never is (§16.1, §16.6), so the rack does not write it.`,
+  // Solo is what you attend to, never what runs (§16.1 Live's acts: Solo is never "A limit on what may run"; §16.6 Rules): the shell's
+  // attention on the book (AgentRackPorts.solo, the agent shell's setSolo), the one the Session view's mixer solos. AIKit's session Solo is
+  // a launch gate (encounter_task_executor.rs, the Solo gate) and is never written. Refused only where no attention is handed.
+  solo: missing('Solo', 'what you attend to, handed to this rack: the book\'s world context holds it (agent/AgentShellContext.tsx soloed, setSolo)', 'the live shell'),
   swap: `${missing('Hot-Swap', 'swapping a chain\'s agent in its session space for another from the browser, the rest of its chain kept', 'AIKit')} ${SPACE_MUTATIONS} hold no swap of a session's agent.`,
   extract: `${missing('Drag out', 'moving a chain\'s session out of its session space onto a track of its own, chain and all', 'AIKit')} AIKit's detach-agent-session (the kernel's encounter_session_detach) is a track's Delete: it takes the session off every space of its Project, and no operation seats the same session in a space of its own.`,
   add: `${missing('Add a chain', 'seating an agent, or a Decision helper, dropped into the chain list as a member of the session space', 'AIKit')} AIKit's attach-agent-session reaches the kernel only inside encounter_provision, which seats a new session in a new space; no operation attaches a session to a space that stands.`,
@@ -534,6 +539,8 @@ export interface AgentRackPorts {
   readonly propose?: (input: {scope: 'root'; ref: string; revision: 'r1'; members: {kind: 'agent'; agent_ref: string}[]; reason: string}) => Promise<unknown>
   readonly agent?: DesignBinding | null
   readonly suffix?: () => string
+  /** Solo a chain (on) or lift its solo, by its track's key: what you attend to (the agent shell's setSolo), no owner asked. */
+  readonly solo?: (trackRef: string, on: boolean) => void
 }
 
 /** The set's next revision by Central's own convention (`r1`, `r2`, … : central.agent-set.save refuses a revision that does not move). */
@@ -559,6 +566,8 @@ export interface AgentRackInput {
   readonly nowUnixMs?: number
   /** The Decision helper's values (decisionHelperBinding.ts), where one stands on the group: a chain of the rack beside the agents. */
   readonly helper?: Values | null
+  /** What you attend to, by the tracks' keys (the agent shell's soloed): each chain's Solo reads it. Absent: unread, and Solo stands disabled. */
+  readonly soloed?: ReadonlySet<string> | null
   readonly holds: ChainHolds
 }
 
@@ -620,6 +629,7 @@ export function agentsetValues(input: AgentRackInput): Values {
     const chain: Record<string, Value> = {...sessionChain(lone, input.nowUnixMs ?? 0), ...(model ? {model} : {}), beside: true}
     values.members = JSON.stringify([chain])
     values.light = chain.state === 'working' ? 'lit' : 'dark'
+    if (input.soloed) values[`solo:${lone.sessionRef}`] = input.soloed.has(trackKey(lone))
     // The macros stand where the one agent's settings stand: one chain, so the rack keeps no value of its own.
     for (const macro of RACK_MACROS) put(values, macro, input.agent?.[AGENT_KEY[macro]])
   } else {
@@ -630,6 +640,8 @@ export function agentsetValues(input: AgentRackInput): Values {
       const members = agentsetMembers(group, input.tracks, input.nowUnixMs ?? 0)
       values.members = JSON.stringify(input.helper ? [...members, helperMember(input.helper)] : members)
       values.light = members.some(member => member.state === 'working') ? 'lit' : 'dark'
+      const soloed = input.soloed
+      if (soloed) for (const track of input.tracks) if (!track.group && track.parentRef === group.sessionRef) values[`solo:${track.sessionRef}`] = soloed.has(trackKey(track))
     }
     if (input.helper) values[memberDeviceKey(DECISION_HELPER_ID, DECISION_HELPER_DESIGN)] = JSON.stringify(input.helper)
   }
@@ -694,6 +706,7 @@ export function agentsetBinding(input: AgentRackInput, ports?: AgentRackPorts): 
   for (const macro of RACK_MACROS) { const why = macroStanding(macro, input, ports); if (why) standing[macro] = why; else delete standing[macro] }
   const join = joinStanding(input, ports)
   if (join) standing.join = join
+  if (ports?.solo) delete standing.solo
   standing['new.type'] = {disabled: GROUP_REFUSE.type}
   standing['new.discard'] = {disabled: GROUP_REFUSE.discard}
   const writable = join === null || join.refused !== undefined
@@ -711,6 +724,14 @@ export function agentsetBinding(input: AgentRackInput, ports?: AgentRackPorts): 
       if (lone && reached.chain === lone.sessionRef && ports?.agent?.write) await ports.agent.write([{key: AGENT_KEY[macro], value}])
       else throw Error(AGENTSET_REFUSE[macro])
     }
+  }
+  /** Solo a chain: what you attend to changes, by the chain's track (the key the views read); no owner is asked. */
+  const solo = (id: string, value: Value | undefined) => {
+    if (!ports?.solo) throw Error(AGENTSET_REFUSE.solo)
+    if (id === DECISION_HELPER_ID) throw Error('Solo: the Decision helper is a chain of the rack, not a session: the views, the tiles and the instruments draw sessions, so there is nothing of it to attend to alone.')
+    const chain = lone && lone.sessionRef === id ? lone : tracks.find(track => !track.group && track.sessionRef === id && track.parentRef === input.group?.sessionRef)
+    if (!chain) throw Error(`Solo: "${id}" is not a chain of this rack.`)
+    ports.solo(trackKey(chain), value === true)
   }
   /** Make: the chosen chains, proposed to Central as a set of agents, the proposal held on the card. */
   const make = async (value: Value | undefined) => {
@@ -757,6 +778,7 @@ export function agentsetBinding(input: AgentRackInput, ports?: AgentRackPorts): 
         if (key === 'new.make') { await make(value); continue }
         if (key === 'new.accept') { await accept(); continue }
         if (key === 'new.discard') throw Error(GROUP_REFUSE.discard)
+        if (key.startsWith('solo:')) { solo(key.slice('solo:'.length), value); continue }
         if (key !== 'join') throw Error(AGENTSET_REFUSE[memberControl(key) ?? key as keyof typeof AGENTSET_REFUSE] ?? reading(key))
         if (typeof value !== 'string' || !(JOINS as readonly string[]).includes(value)) throw Error(`Join is none, all, first, quorum or weighted, not ${String(value)}.`)
         if (!ports?.saveSet) throw Error('Join: no carrier to Central\'s central.agent-set.save stands on this chain.')

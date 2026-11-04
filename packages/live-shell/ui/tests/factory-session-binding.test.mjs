@@ -108,22 +108,26 @@ test('the Run holds its view, moves THE selection when you choose a session, and
   assert.deepEqual(calls, [HELPER.sessionRef])
   const after = own.runValues({session: LEAD, tracks: TRACKS, nowUnixMs: NOW, agent: {}, holds: bind.chainHolds()})
   assert.deepEqual([after.lanes, after.watch], ['all', 'off'])
-  // REPLACED (lane K0): Telemetry and Solo are the session's own settings on AIKit (encounter_session_settings, as the mixer writes them);
-  // the Run is not handed them, and says so.
-  for (const key of ['telemetry', 'solo']) {
-    assert.match(binding.standing[key].disabled, new RegExp(`encounter_session_settings \\{track: \\{${key}\\}\\}.*not handed the session's settings`), key)
-    await assert.rejects(() => binding.write([{key, value: true}]), {message: own.RUN_REFUSE[key]})
-  }
+  // REPLACED (lane K0): Telemetry is the session's own setting on AIKit (encounter_session_settings, as the mixer writes it); the Run is
+  // not handed it, and says so. REPLACED (round 858, §16.1, §16.6): Solo is what you attend to, the shell's on the book, never AIKit's.
+  assert.match(binding.standing.telemetry.disabled, /encounter_session_settings \{track: \{telemetry\}\}.*not handed the session's settings/)
+  assert.match(binding.standing.solo.disabled, /what you attend to.*not handed the attention/)
+  assert.doesNotMatch(binding.standing.solo.disabled, /encounter_session_settings/)
+  for (const key of ['telemetry', 'solo']) await assert.rejects(() => binding.write([{key, value: true}]), {message: own.RUN_REFUSE[key]})
   assert.match(binding.standing.take.disabled, /factory_attempt_read needs the run ref/)
   bind.resetHolds()
 })
 
-test('Custody reads the custody the task record names, shares Scope\'s Write mode (the same write, the same standing), and refuses the rest', async () => {
+test('Custody reads the Agent\'s light, shares Scope\'s Write mode (the same write, the same standing), refuses the retired Autonomy, and refuses the rest', async () => {
   const calls = []
   const scope = {write: async changes => { calls.push(...changes.map(change => [change.key, change.value])) }, standing: {writeMode: {disabled: 'Write mode: … (WO-SF2)'}}}
-  const binding = own.custodyBinding({sessionRef: LEAD.sessionRef, autonomy: 'review', agent: {light: 'lit'}}, scope)
-  assert.deepEqual(binding.values, {light: 'lit', autonomy: 'review'})
-  assert.deepEqual(own.custodyValues({sessionRef: null, autonomy: 'review', agent: {light: 'lit'}}), {}, 'no session: nothing')
+  const binding = own.custodyBinding({sessionRef: LEAD.sessionRef, agent: {light: 'lit'}}, scope)
+  assert.deepEqual(binding.values, {light: 'lit'}, 'no Autonomy stands: the Agent\'s Autonomy is retired (§19.4, §19.12)')
+  assert.deepEqual(own.custodyValues({sessionRef: null, agent: {light: 'lit'}}), {}, 'no session: nothing')
+  // The retired Autonomy: a press that still names it is refused naming what took its place, and nothing is sent.
+  assert.match(binding.standing.autonomy.disabled, /^Autonomy is retired: Scope's Tool calls, on its Asks page, answers the harness's request to use a tool/)
+  await assert.rejects(() => binding.write([{key: 'autonomy', value: 'auto'}]), /^Error: Autonomy is retired: Scope's Tool calls/)
+  assert.equal('autonomy' in own.CUSTODY_SETTING_FIELDS, false, 'Custody writes no Autonomy through Factory\'s custody assign')
   for (const key of ['gate', 'escalate', 'held', 'people', 'handBackLit', 'writeMode']) assert.equal(binding.values[key], undefined, `${key}: no reading`)
   assert.equal(binding.standing.writeMode.disabled, 'Write mode: … (WO-SF2)', 'Scope\'s standing, one row')
   await binding.write([{key: 'writeMode', value: 'direct'}])
@@ -132,12 +136,12 @@ test('Custody reads the custody the task record names, shares Scope\'s Write mod
   // (w11-custody-turn-thought-settings.test.mjs writes them).
   assert.match(binding.standing.handBack.disabled, /missing op/)
   await assert.rejects(() => binding.write([{key: 'handBack', value: true}]), /missing op/)
-  for (const key of ['autonomy', 'gate', 'escalate']) {
+  for (const key of ['gate', 'escalate']) {
     assert.match(binding.standing[key].disabled, /custody list is not read here for this session/, key)
     await assert.rejects(() => binding.write([{key, value: 'auto'}]), /custody list is not read here for this session/)
   }
   assert.equal(calls.length, 1)
-  const alone = own.custodyBinding({sessionRef: LEAD.sessionRef, autonomy: null, agent: {}}, null)
+  const alone = own.custodyBinding({sessionRef: LEAD.sessionRef, agent: {}}, null)
   await assert.rejects(() => alone.write([{key: 'writeMode', value: 'direct'}]), /Write mode is Scope's/)
 })
 
@@ -182,7 +186,7 @@ test('the two designs draw on their bindings in all five views — no NaN, no un
   host.resetHost()
   const scope = {standing: {writeMode: {disabled: 'Write mode: missing op (WO-SF2)'}}}
   const cases = [
-    [custodyDesign, own.custodyBinding({sessionRef: LEAD.sessionRef, autonomy: 'review', agent: {light: 'lit'}}, scope), /drop old captures|portPlan|Kite/, [own.CUSTODY_REFUSE.gate]],
+    [custodyDesign, own.custodyBinding({sessionRef: LEAD.sessionRef, agent: {light: 'lit'}}, scope), /drop old captures|portPlan|Kite/, [own.CUSTODY_REFUSE.gate]],
     [agentsetDesign, own.agentsetBinding({group: GROUP, tracks: TRACKS, holds: bind.chainHolds()}), /oi-guardians|aikit-guardian|tsc · three roots/, [own.AGENTSET_REFUSE.fanOut]],
   ]
   for (const [design, binding, fixture, reasons] of cases) {
@@ -197,6 +201,12 @@ test('the two designs draw on their bindings in all five views — no NaN, no un
     for (const why of reasons) assert.ok(all.includes(escaped(why)), `${design.id}: a refused control says why (${why})`)
   }
   assert.ok(hosted(agentsetDesign, cases[1][1]).join('\n').includes('aletheia'), 'the rack draws the group\'s real member')
+  // O-I 787: the Agent's Autonomy is retired (§19.4, §19.12), so Custody draws no Autonomy rail, dial, choice or readout in any view.
+  assert.doesNotMatch(hosted(custodyDesign, cases[0][1]).join('\n'), /[Aa]utonomy/, 'no Autonomy is drawn')
+  assert.equal('autonomy' in custodyDesign.defaults, false, 'nor is it a key of the design')
+  // The compact well is 140 wide: its "nothing read" words stand on two lines inside it, not cut off at the well's edge (round 11 capture).
+  const compact = hosted(custodyDesign, cases[0][1])[views.indexOf('compact')]
+  assert.match(compact, /<tspan x="7"[^>]*>No reading of what<\/tspan><tspan x="7"[^>]*>the agent holds<\/tspan>/, 'the compact well\'s empty words wrap inside it')
   host.resetHost()
 })
 
@@ -224,7 +234,7 @@ test('the chain places them where the manual does: Custody on the one Agent, the
   assert.match(view, /const place = factoryPlace\(\{sessionRef, group: !!groupTrack, workcell\}\)/)
   // REPLACED (lane W8): Custody takes the hand's holds, Actuation's authority list and the current person (the Grants page), and its
   // Revoke port; Scope still stands in its row.
-  assert.match(view, /custodyBinding\(\{sessionRef, autonomy: reading\.autonomy, agent: agentDesignBinding\?\.values \?\? \{\}, holds, grants, person: currentPerson,\s*custody: custodyRead\}, scopeDesignBinding, custodyPorts\)/, 'Custody and Scope, one row')
+  assert.match(view, /custodyBinding\(\{sessionRef, agent: agentDesignBinding\?\.values \?\? \{\}, holds, grants, person: currentPerson,\s*custody: custodyRead\}, scopeDesignBinding, custodyPorts\)/, 'Custody and Scope, one row; no task record word as the retired Autonomy')
   assert.match(view, /const currentPerson = currentIdentity\(\)\?\.reading\.person_ref \?\? null/, 'the person is the current identity, never a value the desk composes')
   assert.doesNotMatch(read('agent/devices/sessionChainBindings.ts'), /\.defaults\[|\.fixtures|catalogue\/panels\//, 'the bindings read no design default or fixture')
 })

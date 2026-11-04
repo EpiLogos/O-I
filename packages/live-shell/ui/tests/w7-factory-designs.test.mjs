@@ -244,7 +244,7 @@ test('the bound designs draw on their bindings in all their views — no NaN, no
     [captureDesign, capture.captureSkillBinding({inbox, holds: bind.chainHolds()}, {promote: async () => ({})}), /Release a changed skill|Release, take 2|central-skill-release|GITHUB_TOKEN/, [capture.CAPTURE_REFUSE.remove]],
     [padsDesign, pads.promptPadsBinding(bind.chainHolds()), /Sweep the manual|Morning NOWs|blake3:9f2c41d07a/, [pads.PADS_REFUSE.press]],
     [runMapDesign, runMap.runMapBinding(bind.chainHolds()), /Type-check the roots|run:3|AgentShellContext/, [runMap.RUN_MAP_REFUSE.retry]],
-    [custodyDesign, session.custodyBinding({sessionRef: 's', autonomy: 'review', agent: {light: 'lit'}, holds: bind.chainHolds()}, null), /flint-ql-20261014|Archetypal-Earth|owner withdrawal/, [session.CUSTODY_REFUSE.gate]],
+    [custodyDesign, session.custodyBinding({sessionRef: 's', agent: {light: 'lit'}, holds: bind.chainHolds()}, null), /flint-ql-20261014|Archetypal-Earth|owner withdrawal/, [session.CUSTODY_REFUSE.gate]],
     [rackDesign, bind.rackBinding('factory:skillset', {profile: null, sets: {}, setList: null, skills: null, capabilities: null, profiles: null, holds: bind.chainHolds()}, null, {project: 'O-I', sessionRef: null}),
       /prc_01M29MA279X5V519PSFXT0K3WV|b3:91d04c2e7a/, []],
     [memberDesign, bind.memberBinding(bind.MEMBER_DEVICE_ID, {}, null, bind.chainHolds()), /2 Oct 09:14|r6 reviewed and trusted/, []],
@@ -278,7 +278,7 @@ test('(b) every key the newly bound designs read is an owner reading, absent wit
     [captureDesign, capture.captureSkillBinding({inbox: answered(INBOX.data), holds: bind.chainHolds()}, {promote: async () => ({})})],
     [padsDesign, pads.promptPadsBinding(bind.chainHolds())],
     [runMapDesign, runMap.runMapBinding(bind.chainHolds())],
-    [custodyDesign, session.custodyBinding({sessionRef: 's', autonomy: 'review', agent: {light: 'lit'}, holds: bind.chainHolds()}, null)],
+    [custodyDesign, session.custodyBinding({sessionRef: 's', agent: {light: 'lit'}, holds: bind.chainHolds()}, null)],
   ]
   for (const [design, binding] of cases) for (const key of designKeys(design)) {
     // Custody's Write mode is Scope's own key (custodyBinding stands it on Scope's standing).

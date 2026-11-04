@@ -169,7 +169,7 @@ const KNOWN_GAPS = [
   {id: 'quaternal-logic:ql-instrument', rule: 'generates through "kernel:native_expression" has no row on that path', owner: 'src/inhabitants/ql/devices/qlDevices.ts',
     why: 'the face declares it generates through kernel:native_expression; its rows write through stage:instrument (QL_WRITE_PATH), the hosted stage channel. Either the declaration names the stage path or the rows write the declared op.'},
   {id: 'factory:agent', rule: 'generates through "kernel:harness_agent_control" has no row on that path', owner: 'src/agent/devices/agentChainDevices.ts',
-    why: 'the Agent is declared an instrument that generates through kernel:harness_agent_control; none of its rows (autonomy, effort, budget-used, input, heartbeat, model, identity) writes there — its writes are shell setters, and that op is the gateway rows\'.'},
+    why: 'the Agent is declared an instrument that generates through kernel:harness_agent_control; none of its rows (model, effort, budget-used, input, heartbeat, held, identity) writes there — its writes are shell setters, and that op is the gateway rows\'.'},
 ]
 
 test('the other families\' instances keep their declarations where their owners answer — and what is known to fall short is named, with its owner', t => {

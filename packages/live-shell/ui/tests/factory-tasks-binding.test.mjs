@@ -80,7 +80,7 @@ test('Tasks reads the session\'s clips as the run model holds them — a state n
   assert.equal(values.session, 'agent-session/fx-aletheia')
   assert.deepEqual([values.light, values.quantize], ['lit', 'next turn'], 'the Agent\'s light and timing (one binding feeds both)')
   assert.deepEqual(JSON.parse(values.sessions), [{id: 'agent-session/fx-aletheia', name: 'Explain run', agent: 'aletheia', used: 3, cap: 12}])
-  for (const key of ['log', 'color', 'mode', 'then', 'effort', 'autonomy', 'register', 'form']) assert.equal(values[key], undefined, `${key}: no owner reports it`)
+  for (const key of ['log', 'color', 'mode', 'then', 'effort', 'toolCalls', 'register', 'form']) assert.equal(values[key], undefined, `${key}: no owner reports it`)
   assert.deepEqual(tasks.tasksValues(input({session: null})), {}, 'no session: nothing')
   assert.deepEqual(tasks.tasksValues(input({session: GROUP})), {}, 'a group is not a session')
   assert.equal(tasks.tasksValues(input({selectedTask: 9})).task, undefined, 'a task this session does not hold is not its selection')
@@ -101,7 +101,7 @@ test('Tasks writes the owners\' way: the timing through the Agent, a new task th
   }
   assert.match(tasks.TASKS_REFUSE.retry, /factory_owner attempt-retry/)
   // The per-task settings are the session's settings on their owner (factory-session-settings.test.mjs): not read here, they say so.
-  for (const key of ['mode', 'then', 'to', 'effort', 'autonomy', 'register', 'form']) assert.equal(binding.standing[key].disabled, 'The session\'s settings are not read here.', key)
+  for (const key of ['mode', 'then', 'to', 'effort', 'toolCalls', 'register', 'form']) assert.equal(binding.standing[key].disabled, 'The session\'s settings are not read here.', key)
   assert.equal(calls.length, 3, 'no refusal dispatched anything')
   const none = tasks.tasksBinding(input({session: null}), null, {selectTask() {}, queue: async () => {}})
   await assert.rejects(() => none.write([{key: 'newTask', value: 'x'}]), /No session is selected/)

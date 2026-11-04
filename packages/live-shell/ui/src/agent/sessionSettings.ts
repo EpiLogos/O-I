@@ -1,6 +1,7 @@
 // One agent session's settings on their owner (AIKit `encounter-session-settings`, kernel `encounter_session_settings`): the track's
 // Telemetry and Solo, and its bound task's name, colour, activator, output style, Loop, Launch mode, Then, Quantize, what a Repeat varies
-// and envelopes (manual §19.1 Clip view, the Clip and Launch panels and the Envelopes). The owner keeps them under a revision with their
+// and envelopes (manual §19.1 Clip view, the Clip and Launch panels and the Envelopes: the Agent's Effort and Scope's Tool calls; the
+// Agent's Autonomy is retired, §19.4, §19.12). The owner keeps them under a revision with their
 // history and states every default, in the manual's words (ai-kit encounter_task_settings.rs: Launch mode trigger · gate · toggle ·
 // repeat, Then next · again · stop, Loop's stop condition done · pass, Repeat's variable and stop when); this module puts its reading on
 // the keys of the designed clip `clip:factory` and a control's change on the owner's request, each word as it is — the owner judges
@@ -33,10 +34,11 @@ export function settingsRefusal(context: {readonly settings: EncounterSessionSet
   return null
 }
 
-/** The envelope editor's rows (clips/factory.tsx EFFORT, AUTONOMY): Automation draws the level at a row; Modulation draws the five
- * steps −2…+2 on the same rows. */
+/** The envelope editor's rows (clips/factory.tsx EFFORT, TOOL_CALLS): Automation draws the level at a row; Modulation draws the five
+ * steps −2…+2 on the same rows. Tool calls (§19.1 Envelopes, §19.12 Asks) is the answer to the harness's request to use a tool: Inherit
+ * takes the session's Scope; the owner moves no Tool calls under Modulation (it reads no session value of it) and says so. */
 export const EFFORT_LEVELS = ['inherit', 'low', 'medium', 'high', 'max'] as const
-export const AUTONOMY_LEVELS = ['inherit', 'suggest', 'review', 'auto'] as const
+export const TOOL_CALLS_LEVELS = ['inherit', 'ask', 'session', 'always'] as const
 const MODULATION_ROWS = 5
 
 /** The design's Quantize words to the owner's. */
@@ -47,8 +49,8 @@ const QUANTIZE_TO_DESIGN: Readonly<Record<string, string>> = Object.fromEntries(
  * task onto that session's track"). */
 export const HANDOFF_RETIRED = 'Hand off to: retired with Then\'s handoff on the session\'s settings (AIKit encounter-session-settings) — to hand the work to another session, drag the task onto that session\'s track.'
 
-type Envelope = 'effort' | 'autonomy'
-const levelsOf = (envelope: Envelope): readonly string[] => envelope === 'effort' ? EFFORT_LEVELS : AUTONOMY_LEVELS
+type Envelope = 'effort' | 'tool_calls'
+const levelsOf = (envelope: Envelope): readonly string[] => envelope === 'effort' ? EFFORT_LEVELS : TOOL_CALLS_LEVELS
 
 /** The owner's points to the editor's: [second, row]. A point the rows cannot hold is left out, never moved. */
 export function rowsOfPoints(points: readonly EncounterEnvelopePoint[], envelope: Envelope, modulation: boolean): [number, number][] {
@@ -88,7 +90,7 @@ export function clipValuesOfSettings(reading: EncounterSessionSettingsReading | 
     name: task.name, active: task.active, 'style.register': task.register, 'style.form': task.form,
     quantize: QUANTIZE_TO_DESIGN[task.quantize] ?? task.quantize, 'env.mode': task.envelope_mode, 'env.linked': task.envelope_linked,
     'env.agent.effort': JSON.stringify(rowsOfPoints(task.effort, 'effort', modulation)),
-    'env.agent.autonomy': JSON.stringify(rowsOfPoints(task.autonomy, 'autonomy', modulation)),
+    'env.scope.toolCalls': JSON.stringify(rowsOfPoints(task.tool_calls ?? [], 'tool_calls', modulation)),
   }
   if (task.colour) values.colour = task.colour
   const own = (key: string, value: Value | null | undefined) => { if (value !== null && value !== undefined) values[key] = value }
@@ -101,7 +103,28 @@ export function clipValuesOfSettings(reading: EncounterSessionSettingsReading | 
   // What AIKit's executor did with Loop's last pass of a song (O-I #844, task.loop_pass): the take Factory started and its Run, or why
   // the loop stopped; nothing before a song's first pass, or from an AIKit before loop_pass.
   own('loop.pass', loopPassWords(task as {loop_pass?: unknown; loop_song?: unknown}))
+  // What the owner kept in retired words and left out, in its words (AIKit `retired`), and what Tool calls did at its last answer.
+  own('env.retired', retiredWords(task.retired))
+  own('env.toolCalls.play', toolCallsPlayWords(task.tool_calls_play))
   return values
+}
+
+/** The settings the owner kept in retired words, said once: which were left out, and the owner's words for what took their place. */
+function retiredWords(retired: NonNullable<EncounterSessionSettingsReading['task']>['retired']): string | null {
+  if (!Array.isArray(retired) || !retired.length) return null
+  const fields = retired.map(row => row.field === 'repeat_variable' ? 'Repeat over Autonomy' : row.field === 'autonomy' ? 'Autonomy envelope' : row.field)
+  const words = [...new Set(retired.map(row => row.words).filter(Boolean))]
+  return `Your ${fields.join(' and ')} ${fields.length > 1 ? 'were' : 'was'} left out: ${words.join(' ')}.`
+}
+
+/** What Tool calls did at its last answer to the harness (AIKit's `{answered, option_id}` or `{waiting, reason}`), in words. Pure. */
+function toolCallsPlayWords(play: unknown): string | null {
+  if (!play || typeof play !== 'object') return null
+  const said = play as {answered?: unknown; option_id?: unknown; waiting?: unknown; reason?: unknown; tool_calls?: unknown}
+  if (typeof said.answered === 'string' && typeof said.option_id === 'string')
+    return `Tool calls (${String(said.tool_calls ?? '')}) answered the harness's last request with its own ${said.option_id}.`
+  if (typeof said.waiting === 'string' && typeof said.reason === 'string') return `A tool's request waits for you: ${said.reason}`
+  return null
 }
 
 /** Loop's last pass of a song in words (AIKit's `{take, run_ref}` or `{refused}`), or null where AIKit names none. Pure. */
@@ -159,20 +182,22 @@ export function taskSettingChange(setting: TaskSetting, value: Value, reading: E
       if (mode !== 'automation' && mode !== 'modulation') return {refused: 'The envelope mode is Automation or Modulation.'}
       // The owner takes the points with the mode: each point keeps its row, read as the new mode reads it.
       const from = task.envelope_mode === 'modulation', to = mode === 'modulation'
-      const carried = (envelope: Envelope) => pointsOfRows(rowsOfPoints(task[envelope], envelope, from), envelope, to)
-      return set({envelope_mode: mode, effort: carried('effort'), autonomy: carried('autonomy')})
+      const carried = (envelope: Envelope) => pointsOfRows(rowsOfPoints(task[envelope] ?? [], envelope, from), envelope, to)
+      return set({envelope_mode: mode, effort: carried('effort'), tool_calls: carried('tool_calls')})
     }
     case 'effort':
-    case 'autonomy': {
+    case 'toolCalls': {
+      const envelope: Envelope = setting === 'effort' ? 'effort' : 'tool_calls'
       const rows = parseRows(value)
-      if (!rows) return {refused: `The ${setting} envelope is a list of [second, step] points.`}
-      return set({[setting]: pointsOfRows(rows, setting, task.envelope_mode === 'modulation')})
+      if (!rows) return {refused: `The ${setting === 'effort' ? 'Effort' : 'Tool calls'} envelope is a list of [second, step] points.`}
+      return set({[envelope]: pointsOfRows(rows, envelope, task.envelope_mode === 'modulation')})
     }
   }
 }
 
-/** A track's Telemetry or Solo as the owner's request. */
-export const trackSettingChange = (setting: 'telemetry' | 'solo', on: boolean): EncounterSessionSettingsRequest => ({track: {[setting]: on}})
+/** A track's Telemetry as the owner's request. Solo is what you attend to, the shell's on the book (§16.1, §16.6): AIKit's own session
+ * Solo, a gate on its executor's launches, is never written from here. */
+export const trackSettingChange = (setting: 'telemetry', on: boolean): EncounterSessionSettingsRequest => ({track: {[setting]: on}})
 
 /** Write one change to a session's settings against the revision its standing reading holds, then read them again. The owner's
  * refusal (a stale revision, another task, a word outside the manual's) is thrown in its words. */
@@ -302,17 +327,17 @@ export function tasksDeviceValues(reading: EncounterSessionSettingsReading | nul
   if (!task) return {}
   const modulation = task.envelope_mode === 'modulation'
   const values: Record<string, Value> = {mode: task.launch, then: task.then, register: task.register, form: task.form}
-  const effort = levelAt(task.effort, elapsedSeconds, modulation), autonomy = levelAt(task.autonomy, elapsedSeconds, modulation)
+  const effort = levelAt(task.effort, elapsedSeconds, modulation), toolCalls = levelAt(task.tool_calls ?? [], elapsedSeconds, modulation)
   if (effort) values.effort = effort
-  if (autonomy) values.autonomy = autonomy
+  if (toolCalls) values.toolCalls = toolCalls
   return values
 }
 
 /** The Tasks device's keys the settings take. */
-export const TASKS_DEVICE_SETTINGS = ['mode', 'then', 'to', 'effort', 'autonomy', 'register', 'form'] as const
+export const TASKS_DEVICE_SETTINGS = ['mode', 'then', 'to', 'effort', 'toolCalls', 'register', 'form'] as const
 export type TasksDeviceSetting = typeof TASKS_DEVICE_SETTINGS[number]
 
-/** A Tasks device control's change as the owner's request. Effort and Autonomy set one level for the whole task: an Automation
+/** A Tasks device control's change as the owner's request. Effort and Tool calls set one level for the whole task: an Automation
  * envelope of one point at its start (Inherit clears it), the other envelope carried into Automation with it. */
 export function tasksDeviceChange(key: TasksDeviceSetting, value: Value, reading: EncounterSessionSettingsReading | null):
   {change: EncounterSessionSettingsRequest} | {refused: string} {
@@ -329,14 +354,15 @@ export function tasksDeviceChange(key: TasksDeviceSetting, value: Value, reading
     case 'register': return taskSettingChange('register', value, reading)
     case 'form': return taskSettingChange('form', value, reading)
     case 'effort':
-    case 'autonomy': {
+    case 'toolCalls': {
       const task = reading?.task
       if (!reading || !task) return taskSettingChange(key, value, reading)
+      const envelope: Envelope = key === 'effort' ? 'effort' : 'tool_calls'
       const level = typeof value === 'string' ? value : ''
-      if (!(levelsOf(key) as readonly string[]).includes(level)) return {refused: `${key === 'effort' ? 'Effort' : 'Autonomy'} takes one of ${levelsOf(key).join(', ')}.`}
-      const other: Envelope = key === 'effort' ? 'autonomy' : 'effort'
-      const carried = pointsOfRows(rowsOfPoints(task[other], other, task.envelope_mode === 'modulation'), other, false)
-      return {change: {task: {task_ref: task.task_ref, set: {envelope_mode: 'automation', [key]: level === 'inherit' ? [] : [[0, level]], [other]: carried}}}}
+      if (!(levelsOf(envelope) as readonly string[]).includes(level)) return {refused: `${key === 'effort' ? 'Effort' : 'Tool calls'} takes one of ${levelsOf(envelope).join(', ')}.`}
+      const other: Envelope = envelope === 'effort' ? 'tool_calls' : 'effort'
+      const carried = pointsOfRows(rowsOfPoints(task[other] ?? [], other, task.envelope_mode === 'modulation'), other, false)
+      return {change: {task: {task_ref: task.task_ref, set: {envelope_mode: 'automation', [envelope]: level === 'inherit' ? [] : [[0, level]], [other]: carried}}}}
     }
   }
 }

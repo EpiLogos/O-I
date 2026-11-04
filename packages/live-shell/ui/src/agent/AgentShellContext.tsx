@@ -1,9 +1,9 @@
-import {createContext, useContext, useMemo, useRef, useState, type ReactNode, type RefObject} from 'react'
+import {createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode, type RefObject} from 'react'
 import {useDataIStatusInfo, type DataIStatusInfo} from './statusInfo'
 import {useOptionalContinuity} from '../continuity/workspace'
 import {parseFactoryTaskRef} from '../timeline/factoryTrackAdapter'
 import {defaultWidgets} from '../shell/widgetDefaults'
-import type {WorldSelection} from '../../../../../desktop/cradle/src/workspace/store'
+import {soloedIn, soloOnContext, type WorldSelection} from '../../../../../desktop/cradle/src/workspace/store'
 
 export type AgentCentreView = 'session' | 'arrangement' | 'thread'
 export type AgentEffort = 'low' | 'medium' | 'high' | 'max'
@@ -35,6 +35,12 @@ export interface AgentShellState {
   selectedTrackId: string | null
   /** Moves THE selection (WorldContext.selection) to an agent session — never a store of this context's own. */
   setSelectedTrackId: (id: string | null, title?: string) => void
+  /** What you attend to alone (manual §16.1 Solo: "You attend to the soloed tracks alone … The others keep running"; §16.6 "Solo changes
+   * what you attend to, never what runs"): Factory's soloed tracks and chains by their keys (agentRunModel trackKey), held on the book's
+   * world context beside THE selection. Empty while you attend to everything. */
+  soloed: ReadonlySet<string>
+  /** Solo a track or a chain (on), or lift its solo: what you attend to changes, and no owner is asked. */
+  setSolo: (ref: string, on: boolean) => void
   threadTrackId: string | null
   openThread: (trackId: string | null) => void
   openTiles: AgentTileId[]
@@ -106,6 +112,19 @@ export function AgentShellProvider({children, frameRef}: {children: ReactNode; f
   const setSelectedTrackId = (id: string | null, title?: string) => select
     ? select(id ? {mode: 'factory', kind: 'agent-session', ref: id, title: title ?? id} : null)
     : holdUnbooked(id)
+  // What you attend to rides on the same world context (WorldContext.soloed), off the trail: a move or a walk keeps it. With no book
+  // mounted it is held here only.
+  const [unbookedSolo, holdUnbookedSolo] = useState<ReadonlySet<string>>(() => new Set())
+  const soloedOnBook = continuity?.current.context?.soloed
+  const soloed = useMemo(() => continuity ? soloedIn(continuity.current.context, 'factory') : unbookedSolo, [soloedOnBook, unbookedSolo, !continuity]) // eslint-disable-line react-hooks/exhaustive-deps
+  // One press for the window's life (the book is read at the press), so the shell's value does not turn with every change to the book.
+  const bookAtPress = useRef(continuity)
+  bookAtPress.current = continuity
+  const setSolo = useCallback((ref: string, on: boolean) => {
+    const continuity = bookAtPress.current
+    if (continuity) continuity.setContext(context => soloOnContext(context, 'factory', ref, on))
+    else holdUnbookedSolo(current => { const next = new Set(current); if (on) next.add(ref); else next.delete(ref); return next })
+  }, [])
   const [threadTrackId, setThreadTrackId] = useState<string | null>(null)
   // The tiles are widgets of the one rail (F8): open in the book's one open set for the whole world, so a terminal opened
   // here is still open in Central. With no book mounted the choice is held here only.
@@ -135,6 +154,7 @@ export function AgentShellProvider({children, frameRef}: {children: ReactNode; f
   const value = useMemo<AgentShellState>(() => ({
     centreView, setCentreView,
     selectedTrackId, setSelectedTrackId,
+    soloed, setSolo,
     threadTrackId,
     openThread: id => { setThreadTrackId(id); if (id) setCentreView('thread') },
     openTiles,
@@ -162,7 +182,7 @@ export function AgentShellProvider({children, frameRef}: {children: ReactNode; f
     telemetryOn,
     toggleTelemetry: trackId => setTelemetryOn(current => ({...current, [trackId]: !(current[trackId] !== false)})),
     statusInfo,
-  }), [centreView, selectedTrackId, worldSelection, unbooked, threadTrackId, openTiles, effort, heartbeat, follow, steer, writeArm, handBackLit, loopOn, quantize, tokenScope, voiceArmed, capturing, tapNote, voiceNote, captureNote, captureLog, expandedDevice, telemetryOn, statusInfo])
+  }), [centreView, selectedTrackId, worldSelection, unbooked, soloed, setSolo, threadTrackId, openTiles, effort, heartbeat, follow, steer, writeArm, handBackLit, loopOn, quantize, tokenScope, voiceArmed, capturing, tapNote, voiceNote, captureNote, captureLog, expandedDevice, telemetryOn, statusInfo])
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

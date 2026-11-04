@@ -135,7 +135,6 @@ export function useAgentChainReading(sessionRef: string | null): {reading: Agent
     if (sessionRef && task.status === 'answered' && task.value) {
       const read = taskReading(task.value)
       next.budget = read.used !== undefined || read.cap !== undefined ? {used: read.used, cap: read.cap} : null
-      next.autonomy = read.autonomy ?? null
       next.attached = true
     }
     // The seat and the repository: lit once both have answered.

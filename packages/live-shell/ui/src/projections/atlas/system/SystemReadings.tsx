@@ -17,6 +17,8 @@
 import {useEffect, useMemo, useSyncExternalStore} from 'react'
 import {useWorkspace} from '../../../shell/workspaceContext'
 import {useAgentSessionsOptional} from '../../../agent/AgentSessionsProvider'
+import {useAgentShellOptional} from '../../../agent/AgentShellContext'
+import {attendedKeys, trackKey} from '../../../agent/agentRunModel'
 import {GROUND_OP, useCentralGroundAnswer} from '../../../central/devices/useCentralReadings'
 import {readWorlds, readWorldPages, type CentralWorld, type CentralWorldsReading} from '../../../central/centralWorlds'
 import {setReadingOf} from '../../../frame/tracks/useCentralTracks'
@@ -146,7 +148,14 @@ export function SystemReadings(): null {
   // each project world's ground, one reader of many held once for the window; none while no carrier stands
   const projects = useMemo(() => (transport.kind === 'unavailable' ? [] : inSet.flatMap(world => (world.project ? [world.project] : []))), [transport, inSetKey]) // eslint-disable-line react-hooks/exhaustive-deps
   const projectGrounds = useOwnerReadingsOf(projects, project => projectGroundKey(transport, project), project => readProjectGround(transport, project), epoch)
-  const sessionRows = useMemo(() => sessionsOf(sessions?.tracks ?? [], sessions?.rows ?? [], inSet), [sessions?.tracks, sessions?.rows, inSet])
+  // The instrument shows only the sessions you attend to (§16.1 Solo: "you see and hear only them, in the views and the instruments");
+  // the others keep running, out of view.
+  const soloed = useAgentShellOptional()?.soloed
+  const sessionRows = useMemo(() => {
+    const attended = soloed ? attendedKeys(sessions?.tracks ?? [], soloed) : null
+    const tracks = (sessions?.tracks ?? []).filter(track => !attended || attended.has(trackKey(track)))
+    return sessionsOf(tracks, sessions?.rows ?? [], inSet)
+  }, [sessions?.tracks, sessions?.rows, inSet, soloed])
   const allBodies = useMemo(() => {
     const merged = new Map(bodies)
     const own = inSet.find(world => world.kind === 'yours')

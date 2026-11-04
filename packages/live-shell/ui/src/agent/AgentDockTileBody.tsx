@@ -1,9 +1,9 @@
-import {useEffect, useState} from 'react'
+import {useEffect, useMemo, useState} from 'react'
 import {kernelRead} from '../../../../../desktop/cradle/src/kernel/bridge'
 import {NativeContextPanel} from '../components/NativeContextPanel'
 import {useWorkspace} from '../shell/workspaceContext'
 import {scalarEntries, safeJson} from './RefusalCard'
-import type {AgentTileId} from './AgentShellContext'
+import {useAgentShellOptional, type AgentTileId} from './AgentShellContext'
 import {DEVICE_WIDGET_PREFIX} from '../frame/devices/deviceDoor'
 import {deviceWidget} from '../frame/widgets/deviceWidgets'
 import {FRAMES_ID} from './devices/mainTrackBindings'
@@ -11,6 +11,9 @@ import {APPROVALS_ID, LEDGER_ID} from './devices/receiptBindings'
 import {tileTitle} from './agentDockTiles'
 import {useAgentSessionsOptional} from './AgentSessionsProvider'
 import {gitRepositoryAbsence, placeWord, projectOfSession} from './worldScope'
+import {attendedKeys, trackKey} from './agentRunModel'
+
+const NONE_SOLOED: ReadonlySet<string> = new Set()
 
 // The tiles' marks, titles and the rail widgets the Main track's devices claim stand in agentDockTiles.ts, so the rail has them
 // before this body's code loads.
@@ -68,6 +71,11 @@ export function AgentDockTileBody({id, sessionRef}: {id: AgentTileId; sessionRef
   // The tile's register: the selected session's own (agent/worldScope.ts), else your world's root register.
   const sessions = useAgentSessionsOptional()
   const project = projectOfSession(sessions?.rows ?? [], sessionRef)
+  // The tiles show only what you attend to (§19.1 the session's Solo row: "the views, the tiles and the instruments show only them"),
+  // over the same tracks the views read; with nothing soloed, every session.
+  const shell = useAgentShellOptional()
+  const attended = useMemo(() => attendedKeys(sessions?.tracks ?? [], shell?.soloed ?? NONE_SOLOED), [sessions?.tracks, shell?.soloed])
+  const attends = useMemo(() => attended ? (row: {spaceRef: string; sessionRef: string}) => attended.has(trackKey(row)) : undefined, [attended])
 
   useEffect(() => {
     if (id !== 'files') return
@@ -86,8 +94,8 @@ export function AgentDockTileBody({id, sessionRef}: {id: AgentTileId; sessionRef
     return () => { live = false }
   }, [id, transport, sessionRef, project])
 
-  if (id === 'sessions') return <NativeContextPanel project={project} />
-  if (id === 'agents') return <NativeContextPanel project={project} initialTab="agents" />
+  if (id === 'sessions') return <NativeContextPanel project={project} attends={attends} />
+  if (id === 'agents') return <NativeContextPanel project={project} initialTab="agents" attends={attends} />
   if (id === 'ledger' || id === 'approvals') { const Device = deviceWidget(`${DEVICE_WIDGET_PREFIX}${id === 'ledger' ? LEDGER_ID : APPROVALS_ID}`).Body; return <Device subject={sessionRef} pinned={false} /> }
   if (id === 'frames') { const Frames = deviceWidget(`${DEVICE_WIDGET_PREFIX}${FRAMES_ID}`).Body; return <Frames subject={sessionRef} pinned={false} /> }
   if (id === 'files') return <ReadingRows label={`git_repository_read · ${placeWord(project)}`} text={gitNote} />

@@ -78,9 +78,13 @@ test('writePath is present exactly where a real owner write exists — known-ref
 
 test('the split agent face carries three families on ONE device instance (the §14 composition)', () => {
   assert.equal(byKey('agent', 'effort')?.family, 'actuation')
-  assert.equal(byKey('agent', 'autonomy')?.family, 'software-factory')
+  // DLW §19.4 "One agent, three owners": Software Factory owns what the agent holds; the Agent's Autonomy is retired (§19.12: Scope's
+  // Tool calls took its place).
+  assert.equal(byKey('agent', 'held')?.family, 'software-factory')
+  assert.equal(byKey('agent', 'held')?.writePath, undefined, 'what it holds is a reading')
+  assert.equal(byKey('agent', 'autonomy'), undefined, 'no Autonomy row')
   assert.equal(byKey('agent', 'identity')?.family, 'central')
-  for (const key of ['model', 'effort', 'budget-used', 'input', 'heartbeat', 'autonomy', 'identity']) {
+  for (const key of ['model', 'effort', 'budget-used', 'input', 'heartbeat', 'held', 'identity']) {
     assert.equal(byKey('agent', key)?.deviceInstance, 'agent', key)
   }
 })

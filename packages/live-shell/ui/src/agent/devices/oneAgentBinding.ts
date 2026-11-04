@@ -3,8 +3,8 @@
 // lock §0.3.5 "the Agent carries Custody, Identity and the Thread (as its Full)"). The Agent's design carries the other three in its own
 // values, each under a prefix (inhabitants/catalogue/panels/design.ts `scoped`/`prefixed`; actuation__harness-model.tsx
 // custodyOf/identityOf/threadOf, 3679a9ceb): Custody's keys as `custody.*` (its held items and Hand back, on the Run page: §19.4), Identity's
-// as `id.*` (a page), the Thread's as `thread.*` (the Full), and the keys a page shares with the Agent (its light, the autonomy Custody
-// owns, the composer the thread sends) unprefixed. So a binding hosts the carried page by prefixing that page's own binding — this module
+// as `id.*` (a page), the Thread's as `thread.*` (the Full), and the keys a page shares with the Agent (its light, the composer the thread
+// sends) unprefixed. The Agent's Autonomy, which Custody once owned here, is retired (§19.4, §19.12: Scope's Tool calls took its place). So a binding hosts the carried page by prefixing that page's own binding — this module
 // is that prefixing, and nothing more: every value is still the carried binding's owner reading, every write still goes to the carried
 // binding's owner, every refusal is still in its words.
 //
@@ -21,8 +21,8 @@ import {chainHolds, holdView, viewHolds} from './designBindings'
 import {gitRepositoryAbsence} from '../worldScope'
 
 /** A page the Agent carries: its prefix, the keys it shares with the Agent (read and written as the Agent's own), and which of those
- * shared keys the page owns — read from the page's binding and written to its owner rather than the Agent's (Custody sets the autonomy
- * the session's record also reports). */
+ * shared keys the page owns — read from the page's binding and written to its owner rather than the Agent's (none since the Agent's
+ * Autonomy, which Custody owned, was retired: DLW §19.4, §19.12). */
 export interface CarriedPage {
   readonly prefix: string
   readonly shared: readonly string[]
@@ -35,7 +35,7 @@ export interface CarriedPage {
 // The shared keys restate the design's (actuation__harness-model.tsx CUSTODY_SHARED, IDENTITY_SHARED, THREAD_SHARED); the R4 test derives
 // Identity's and the Thread's again from the design's own defaults (a carried default absent under the prefix is shared) and fails on any
 // drift. Of Custody's, the design carries the held items and Hand back's light alone.
-export const CUSTODY_PAGE: CarriedPage = {prefix: 'custody.', shared: ['light', 'autonomy'], owns: ['autonomy']}
+export const CUSTODY_PAGE: CarriedPage = {prefix: 'custody.', shared: ['light']}
 export const IDENTITY_PAGE: CarriedPage = {prefix: 'id.', shared: ['light']}
 export const THREAD_PAGE: CarriedPage = {prefix: 'thread.', shared: ['light', 'input', 'quantize', 'draft', 'sent', 'age']}
 /** The voice the answer's face reads (§19.4 "The answer's face": Hears and Speaks, attending while you speak, its mouth moving with its

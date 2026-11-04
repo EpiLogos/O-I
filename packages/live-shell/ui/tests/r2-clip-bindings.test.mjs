@@ -82,7 +82,7 @@ test('Factory: the task THE selection names maps onto clip:factory — its name,
   assert.deepEqual(log.map(row => [row.at, row.tool, row.text]), [[60, 'tool.read', 'read widgets/handoff.tsx'], [540, 'tool.bash', 'pnpm test bridge']],
     'the session\'s own events inside the task\'s span, at seconds from its start, each the owner\'s kind and words')
   assert.equal('sessions' in v, false, 'Hand off to is retired: no session list')
-  for (const key of ['launch', 'then', 'loop', 'loop.cap', 'repeat.levels', 'quantize', 'style.register', 'style.form', 'env.agent.effort', 'env.agent.autonomy', 'active'])
+  for (const key of ['launch', 'then', 'loop', 'loop.cap', 'repeat.levels', 'quantize', 'style.register', 'style.form', 'env.agent.effort', 'env.scope.toolCalls', 'active'])
     assert.equal(key in v, false, `${key}: no owner reports it, so it reaches the view absent`)
   assert.equal(v['view.panel'], 'launch', 'a running task opens on its Launch tab beside the log, as the manual puts it first')
   assert.equal(factory.factoryClipBinding({ref: 'nothing:here', tracks: [track], events}), null, 'a selection that names no session names no clip')
@@ -92,7 +92,7 @@ test('Factory: the task THE selection names maps onto clip:factory — its name,
 test('Factory: where the session\'s settings are not read, every per-task setting stands disabled saying so, and a refused change keeps it', async () => {
   const binding = factory.factoryClipBinding({ref: taskRef, tracks: [track], events: null})
   // REPLACED (#787): Hand off to is retired; Loop and what a Repeat varies are the session's settings now.
-  for (const key of ['launch', 'then', 'loop', 'loop.until', 'repeat.variable', 'quantize', 'env.agent.effort', 'env.agent.autonomy', 'style.register', 'name']) {
+  for (const key of ['launch', 'then', 'loop', 'loop.until', 'repeat.variable', 'quantize', 'env.agent.effort', 'env.scope.toolCalls', 'style.register', 'name']) {
     assert.equal(binding.standing[key]?.disabled, SETTINGS_WHY.notHere, `${key} stands disabled saying why`)
     await assert.rejects(binding.write([{key, value: 'x'}]), {message: SETTINGS_WHY.notHere})
   }
@@ -109,7 +109,7 @@ test('Factory: a setting writes through its seam with the session\'s settings (f
     const context = {transport: {kind: 'unavailable', reason: 'test'}, project: 'O-I', settings: {schema: 'aikit.encounter-session-settings/v1', agent_session: 'ses-214',
       revision: null, track: {telemetry: true, solo: false, set: []}, task: {task_ref: 'task:t', name: 'correlate occurrences', launch: 'trigger', then: 'next', quantize: 'global',
         loop: false, loop_until: 'done', loop_cap: null, repeat_variable: 'condition', repeat_levels: [], repeat_repeats: 3, repeat_stop: 'done',
-        envelope_mode: 'automation', envelope_linked: true, effort: [], autonomy: [], register: 'plain', form: 'technical', active: true, colour: null, set: []},
+        envelope_mode: 'automation', envelope_linked: true, effort: [], tool_calls: [], register: 'plain', form: 'technical', active: true, colour: null, set: []},
       previous_task: null, standing: 's'}}
     const binding = factory.factoryClipBinding({ref: taskRef, tracks: [track], events: null, settings: context})
     assert.equal(binding.standing.launch, undefined, 'no longer disabled')

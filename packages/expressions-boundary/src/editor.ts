@@ -104,8 +104,25 @@ export interface NativeEditorReading {
     phases?: {theta: number; phi: number};
     /** W6: the resonance plate's stations as the engine computes them (its `stations()`, the Studio's station ticks), verbatim. */
     stations?: NativeResonanceStation[];
+    /** What drives the plate now, as the engine resolved it (its telemetry `cymatic.driver`, resonanceDrive.ts ResolvedResonanceDrive), with
+     * the fields the engine names. Absent while the plate is off or the engine reports no drive. */
+    drive?: NativeResonanceDrive;
   };
   standing: {dirty: boolean; pending: boolean; notice: string | null};
+}
+/** What drives the resonance plate, as the field engine resolved it (expressions-app/src/engine/resonanceDrive.ts ResolvedResonanceDrive): the
+ * source, the tone it drives at and whether it is bound; under Torus every tone the torus plays, whether it is silent and why, and its Key
+ * source; under Focus the node and anchor it follows. M2′'s roles are the engine's own reading of the torus and are not carried. */
+export interface NativeResonanceDrive {
+  kind: 'frequency' | 'sweep' | 'semanticFocus' | 'torus';
+  targetHz: number;
+  bound: boolean;
+  semanticNodeId?: string;
+  anchorId?: string;
+  tonesHz?: number[];
+  silent?: boolean;
+  reason?: string | null;
+  keySource?: 'torus' | 'sky' | 'manual';
 }
 /** One station of the resonance plate, as the field engine computes it (field-studies-journeys engine.ts `stations()`). */
 export interface NativeResonanceStation {id?: string; index: number; name: string; frequencyHz: number; m: number; n: number; color: string; energy?: number; semanticNodeId?: string; affinity?: number}

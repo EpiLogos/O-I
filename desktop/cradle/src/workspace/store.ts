@@ -81,12 +81,20 @@ export interface TrailStop {
  * Every pane that follows the selection reads it here; each move is a trail stop. `ref` is the owner's ref (or the
  * Central-relative path for ground material); `track` names the track a clip sits on. Refs only, never content. */
 export interface WorldSelection { mode: WorkspaceMode; kind: string; ref: string; title: string; track?: string }
+/** One thing soloed: what you attend to alone, beside THE selection (manual §16.1 "Live's acts, kept as Live keeps them": Solo is "You
+ * attend to the soloed tracks alone: you see and hear only them, in the views and the instruments. The others keep running", and never
+ * "A limit on what may run"; §16.6 Rules: "Solo changes what you attend to, never what runs"). A track or a chain of the mode, by its
+ * owner's ref. Refs only. */
+export interface WorldSolo { mode: WorkspaceMode; ref: string }
 export interface WorldContext {
   world?: WorldRef;
   subject?: { ref?: string; kind?: string; title: string; project?: string };
   /** The opened reading and the point in it; `title` is the page's own name, which a stop with nothing selected shows. */
   reading?: { ref: string; position?: string; title?: string };
   selection?: WorldSelection;
+  /** What you attend to alone (WorldSolo): with any of a mode's soloed, that mode's views, tiles and instruments show only them. It is
+   * how the window looks, never a place: it rides on the context and stays off the trail, so a move or a walk keeps it. */
+  soloed?: WorldSolo[];
   trail?: TrailStop[];
   /** The stop you stand on, once Back, Forward or the Trail has walked the trail (manual §23.5 "the stop you stand on");
    * absent, the newest. A move clears it. */
@@ -104,6 +112,19 @@ const placeParts = (context: WorldContext) => ({
   subject: context.subject && pick(context.subject, ["ref", "kind", "title", "project"]) as WorldContext["subject"],
   reading: context.reading && pick(context.reading, ["ref", "position", "title"]) as WorldContext["reading"],
 });
+/** The most a context keeps soloed: attention is a few things at once, never a list to grow without bound. */
+const SOLO_LIMIT = 64;
+/** Solo `ref` of `mode` (on), or lift its solo: what you attend to changes, and nothing else does. Pure. */
+export function soloOnContext(context: WorldContext, mode: WorkspaceMode, ref: string, on: boolean): WorldContext {
+  const others = (context.soloed ?? []).filter(item => item.mode !== mode || item.ref !== ref);
+  const soloed = on ? [...others, { mode, ref }].slice(-SOLO_LIMIT) : others;
+  const { soloed: _soloed, ...rest } = context;
+  return soloed.length ? { ...rest, soloed } : rest;
+}
+/** The refs soloed in `mode`: empty while you attend to everything. Pure. */
+export function soloedIn(context: WorldContext | undefined, mode: WorkspaceMode): ReadonlySet<string> {
+  return new Set((context?.soloed ?? []).filter(item => item.mode === mode).map(item => item.ref));
+}
 /** The stop you stand on: the book's walked place, else the newest. */
 export const standingOn = (context: WorldContext): number => context.trailAt ?? (context.trail?.length ?? 0) - 1;
 /** The place a move lands on, as a stop, stamped with the move's time: the mode, the world, THE selection, the subject and the
@@ -269,11 +290,16 @@ export function decodeWorldContext(raw: unknown): WorldContext | undefined {
   }) : undefined;
   const trail = stops?.slice(-TRAIL_LIMIT);
   const selection = decodeSelection(r.selection);
+  const soloed = Array.isArray(r.soloed) ? r.soloed.flatMap((item): WorldSolo[] => {
+    const o = item as Record<string, unknown> | null;
+    return o && typeof o === "object" && isWorkspaceMode(o.mode) && text(o.ref, 4096) ? [{ mode: o.mode, ref: text(o.ref, 4096)! }] : [];
+  }).slice(-SOLO_LIMIT) : undefined;
   // The stop you stand on, kept the same stop through the bound; the newest, or a place off the trail, is none.
   const trailAt = typeof r.trailAt === "number" && Number.isInteger(r.trailAt) && stops && trail ? r.trailAt - (stops.length - trail.length) : undefined;
   const context: WorldContext = { world: decodeWorld(r.world), subject, reading, selection, trail: trail?.length ? trail : undefined,
+    ...(soloed?.length ? { soloed } : {}),
     ...(trailAt !== undefined && trail && trailAt >= 0 && trailAt < trail.length - 1 ? { trailAt } : {}) };
-  return context.world || context.subject || context.reading || context.selection || context.trail ? context : undefined;
+  return context.world || context.subject || context.reading || context.selection || context.soloed || context.trail ? context : undefined;
 }
 /** What crosses a mode switch on the layout itself: the side-region widths,
  * the live accompanying session (one canonical conversation), and the

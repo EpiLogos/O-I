@@ -366,7 +366,7 @@ export function factoryClipValues(track: AgentSessionTrack, task: TaskClip | nul
 const SETTING_OF: Readonly<Record<string, TaskSetting>> = {
   name: 'name', colour: 'colour', active: 'active', 'style.register': 'register', 'style.form': 'form', loop: 'loop', 'loop.until': 'loopUntil',
   'loop.cap': 'loopCap', launch: 'launch', then: 'then', quantize: 'quantize', 'repeat.variable': 'repeatVariable', 'repeat.levels': 'repeatLevels',
-  'repeat.repeats': 'repeatRepeats', 'repeat.stop': 'repeatStop', 'env.agent.effort': 'effort', 'env.agent.autonomy': 'autonomy', 'env.mode': 'envelopeMode',
+  'repeat.repeats': 'repeatRepeats', 'repeat.stop': 'repeatStop', 'env.agent.effort': 'effort', 'env.scope.toolCalls': 'toolCalls', 'env.mode': 'envelopeMode',
   'env.linked': 'envelopeLink',
 }
 
@@ -529,7 +529,7 @@ function taskWiring(task: TaskAddress | null, context: TaskSeamContext | null): 
       'repeat.variable': 'the session\'s settings: Repeat\'s Variable', 'repeat.levels': 'the session\'s settings: Repeat\'s Levels, comma-separated (absent: none chosen, and Actuation\'s comparison run takes its own default three conditions)',
       'repeat.repeats': 'the session\'s settings: Repeat\'s Repeats', 'repeat.stop': 'the session\'s settings: Repeat\'s Stop when',
       quantize: 'the session\'s settings: Quantize', 'env.mode': 'the session\'s settings: the envelopes\' mode', 'env.linked': 'the session\'s settings: the envelopes\' link',
-      'env.agent.effort': 'the session\'s settings: the Effort envelope', 'env.agent.autonomy': 'the session\'s settings: the Autonomy envelope',
+      'env.agent.effort': 'the session\'s settings: the Effort envelope', 'env.scope.toolCalls': 'the session\'s settings: Scope\'s Tool calls envelope',
       state: 'how the task stands, Factory\'s word — queued · running · stalled · stopped · done (factory development task-activity, agent/taskActivity.ts) — left out where no evidence decides',
       'state.why': 'the evidence Factory read the state from, in its words: the check-in bound, AIKit\'s session state, a pending permission request, or why nothing decides',
       'state.retry': 'Factory\'s reading: the task stalled, so its track lights a retry',

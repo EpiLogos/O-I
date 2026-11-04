@@ -60,11 +60,22 @@ function deviceWidgets(value: unknown): boolean {
 }
 /** W6: the engine's morph phases and the plate's stations, admitted exactly when the observation carries them. */
 const STATION_KEYS = ['id', 'index', 'name', 'frequencyHz', 'm', 'n', 'color', 'energy', 'semanticNodeId', 'affinity'];
+/** The plate's resolved drive (editor.ts NativeResonanceDrive), its fields exactly as the engine names them. */
+const DRIVE_KEYS = ['kind', 'targetHz', 'bound', 'semanticNodeId', 'anchorId', 'tonesHz', 'silent', 'reason', 'keySource'];
+function resonanceDrive(drive: unknown): boolean {
+  return object(drive) && Object.keys(drive).every(key => DRIVE_KEYS.includes(key))
+    && ['frequency', 'sweep', 'semanticFocus', 'torus'].includes(drive.kind as string) && finite(drive.targetHz) && typeof drive.bound === 'boolean'
+    && (drive.semanticNodeId === undefined || typeof drive.semanticNodeId === 'string') && (drive.anchorId === undefined || typeof drive.anchorId === 'string')
+    && (drive.tonesHz === undefined || (Array.isArray(drive.tonesHz) && drive.tonesHz.length <= 64 && drive.tonesHz.every(finite)))
+    && (drive.silent === undefined || typeof drive.silent === 'boolean') && (drive.reason === undefined || drive.reason === null || typeof drive.reason === 'string')
+    && (drive.keySource === undefined || ['torus', 'sky', 'manual'].includes(drive.keySource as string));
+}
 function observationExtras(observation: unknown): boolean {
   if (observation === undefined) return true;
   if (!object(observation)) return false;
-  const {phases, stations} = observation;
+  const {phases, stations, drive} = observation;
   if (phases !== undefined && (!object(phases) || Object.keys(phases).length !== 2 || !finite(phases.theta) || !finite(phases.phi))) return false;
+  if (drive !== undefined && !resonanceDrive(drive)) return false;
   if (stations === undefined) return true;
   return Array.isArray(stations) && stations.length <= 64 && stations.every(s => object(s) && Object.keys(s).every(key => STATION_KEYS.includes(key))
     && Number.isSafeInteger(s.index) && typeof s.name === 'string' && finite(s.frequencyHz) && s.frequencyHz > 0

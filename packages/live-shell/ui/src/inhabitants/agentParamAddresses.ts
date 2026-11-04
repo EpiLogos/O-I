@@ -6,8 +6,8 @@ import type {FamilyManifestId} from './familyManifest.ts'
  * parameter carries exactly ONE owning address {family, deviceInstance, key,
  * type, values/range/unit, writePath}. The owning family per row is the
  * verified ownership map (AGENT-DEVICE-OWNERSHIP.md, 8 October 2026), not a
- * convenience: the split agent face addresses effort to actuation, autonomy
- * to software-factory and identity to central on one visible face.
+ * convenience: the split agent face addresses effort to actuation, what it
+ * holds to software-factory and identity to central on one visible face.
  *
  * writePath is present ONLY where a real owner write exists in the tree —
  * the kernel harness control for the gateway, the shell's own setters for
@@ -80,7 +80,9 @@ export const AGENT_SHELL_ADDRESS_TABLE: readonly AgentParamAddress[] = Object.fr
   reading('actuation', 'agent', 'budget-used', 'number', {unit: 'turns', disclosure: 'Reading only — used/cap come from the session task.'}),
   enumed('actuation', 'agent', 'input', ['steer', 'queue'], 'shell.setSteer'),
   agentParamAddress({family: 'actuation', deviceInstance: 'agent', key: 'heartbeat', type: 'boolean', writePath: 'shell.setHeartbeat'}),
-  enumed('software-factory', 'agent', 'autonomy', ['suggest', 'review', 'auto'], undefined, 'Custody is a reading here; writes ride review and hand-back.'),
+  // Software Factory's share (DLW §19.4 "One agent, three owners": it owns what the agent holds). The Agent's Autonomy, which this row
+  // once was, is retired (§19.4, §19.12): Scope's Tool calls on its Asks page answers the harness's request to use a tool.
+  reading('software-factory', 'agent', 'held', 'list', {disclosure: 'Reading only — what the agent holds is Factory\'s custody list, drawn on the Agent\'s Run page.'}),
   reading('central', 'agent', 'identity', 'string', {disclosure: 'Read-only from the kernel roster (agent-profile.roster); never a hardcoded crowd.'}),
 
   // — Skillset rack (ai-kit): admits are readings; macros have no live source —

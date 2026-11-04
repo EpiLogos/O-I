@@ -80,7 +80,7 @@ const RECORD = {schema: 'factory.work-custody/v1', custody_ref: 'factory:custody
   state: 'in-progress', assigned_at_unix_ms: 1, reason: 'handed out', revision: 1, updated_at_unix_ms: 1, transitions: [], autonomy: 'suggest', review_gate: 'diffs', escalate_to: PERSON}
 const listingWith = (...records) => ({...CUSTODY.list, count: records.length, custody: records})
 const custodyRead = over => ({statePath: STATE, listing: answered(CUSTODY.list), agentPosition: AGENT_POSITION, work: WORK, ...over})
-const custody = (read, ports = {}, person = PERSON) => session.custodyBinding({sessionRef: 's', autonomy: 'review', agent: {light: 'lit'}, holds: bind.chainHolds(), person, custody: read}, null, ports)
+const custody = (read, ports = {}, person = PERSON) => session.custodyBinding({sessionRef: 's', agent: {light: 'lit'}, holds: bind.chainHolds(), person, custody: read}, null, ports)
 function recorder(name) {
   const calls = []
   return {calls, port: {[name]: async request => { calls.push(request); return {} }}}
@@ -103,46 +103,48 @@ test('2 · Custody reads Factory\'s custody list (REAL: nothing retained): no he
   bind.resetHolds()
   const none = custody(custodyRead())
   assert.equal(none.values.held, '[]', 'the agent holds nothing in Factory\'s state')
-  assert.equal(none.values.autonomy, 'review', 'the task record\'s own word stands while no record names the setting')
+  assert.equal('autonomy' in none.values, false, 'no Autonomy stands: the Agent\'s Autonomy is retired (§19.4, §19.12)')
   const assigned = custody(custodyRead({listing: answered(listingWith(RECORD, {...RECORD, custody_ref: 'factory:custody:x', state: 'completed'}))}))
   assert.deepEqual(JSON.parse(assigned.values.held), [{id: RECORD.custody_ref, name: WORK, kind: 'work', state: 'in-progress'}], 'a closed record is no held item')
-  assert.deepEqual([assigned.values.autonomy, assigned.values.gate, assigned.values.escalate], ['suggest', 'diffs', PERSON])
+  assert.deepEqual([assigned.values.gate, assigned.values.escalate], ['diffs', PERSON])
+  assert.equal('autonomy' in assigned.values, false, 'Factory\'s record still carries its autonomy (PR 288); Custody shows none, the Agent\'s Autonomy being retired')
   const factorySays = `${CUSTODY.refused.fact} ${CUSTODY.refused.consequence}`
   const refusedRead = custody(custodyRead({listing: {status: 'refused', value: null, error: factorySays}}))
   assert.equal(refusedRead.standing.held.disabled, factorySays, 'Factory\'s refusal in its words')
-  assert.match(refusedRead.standing.autonomy.disabled, /is not a custody state/)
+  assert.match(refusedRead.standing.gate.disabled, /is not a custody state/)
 })
 
 test('3 · a setting is written (CustodyAssign with it alone) to the Position the session\'s agent holds, on the person\'s press, while the work is unassigned; after assignment the ruling, verbatim', async () => {
   bind.resetHolds()
   const {calls, port} = recorder('assign')
   const open = custody(custodyRead(), {...port, personNow: () => PERSON})
-  for (const key of ['autonomy', 'gate', 'escalate']) assert.equal(open.standing[key], undefined, `${key} stands`)
-  await open.write([{key: 'autonomy', value: 'auto'}])
+  for (const key of ['gate', 'escalate']) assert.equal(open.standing[key], undefined, `${key} stands`)
+  // The retired Autonomy is no setting Custody assigns: refused naming what took its place, before any port.
+  assert.match(open.standing.autonomy.disabled, /^Autonomy is retired: Scope's Tool calls/)
+  await assert.rejects(open.write([{key: 'autonomy', value: 'auto'}]), /^Error: Autonomy is retired: Scope's Tool calls, on its Asks page/)
   await open.write([{key: 'gate', value: 'both'}])
   await open.write([{key: 'escalate', value: PERSON}])
   // 1. The agent's Position is assigned.
   assert.deepEqual(calls, [
-    {kind: 'custody-assign', state_path: STATE, position_ref: AGENT_POSITION, work_ref: WORK, reason: `${PERSON} set Autonomy to auto from the desk.`, autonomy: 'auto'},
     {kind: 'custody-assign', state_path: STATE, position_ref: AGENT_POSITION, work_ref: WORK, reason: `${PERSON} set Review gate to both from the desk.`, review_gate: 'both'},
     {kind: 'custody-assign', state_path: STATE, position_ref: AGENT_POSITION, work_ref: WORK, reason: `${PERSON} set Escalate to to ${PERSON} from the desk.`, escalate_to: PERSON}])
   calls.length = 0
-  await assert.rejects(open.write([{key: 'autonomy', value: 'always'}]), /one of suggest, review, auto/)
+  await assert.rejects(open.write([{key: 'gate', value: 'always'}]), /one of diffs, approvals, both/)
   // The 3a ruling once the work is assigned, verbatim.
   const assigned = custody(custodyRead({listing: answered(listingWith(RECORD))}), port)
-  for (const key of ['autonomy', 'gate', 'escalate']) {
+  for (const key of ['gate', 'escalate']) {
     assert.ok(assigned.standing[key].disabled.endsWith(session.CUSTODY_SETTINGS_RULING), `${key}: the ruling, verbatim`)
     assert.match(assigned.standing[key].disabled, /the session's work is assigned already \(factory:custody:0a1b2c3d/)
   }
-  await assert.rejects(assigned.write([{key: 'autonomy', value: 'auto'}]), /Changing it after assignment waits for the owner's ruling/)
+  await assert.rejects(assigned.write([{key: 'gate', value: 'both'}]), /Changing it after assignment waits for the owner's ruling/)
   // 2. A session whose agent holds no Position refuses, naming that.
   const unplaced = custody(custodyRead({agentPosition: null}), port)
-  for (const key of ['autonomy', 'gate', 'escalate']) assert.match(unplaced.standing[key].disabled, /the session's agent holds no Position/, key)
+  for (const key of ['gate', 'escalate']) assert.match(unplaced.standing[key].disabled, /the session's agent holds no Position/, key)
   await assert.rejects(unplaced.write([{key: 'gate', value: 'both'}]), /the session's agent holds no Position \(AIKit's population names none whose occupant is this agent\)/)
   // 3. A non-person press never reaches the port: no person current, or the person changed since the drawing.
-  await assert.rejects(custody(custodyRead(), port, null).write([{key: 'autonomy', value: 'auto'}]), /only the person sets it from here, and no person is current/)
-  await assert.rejects(custody(custodyRead(), port, '  ').write([{key: 'autonomy', value: 'auto'}]), /no person is current/)
-  await assert.rejects(custody(custodyRead(), {...port, personNow: () => 'agent/factory-guardian'}).write([{key: 'autonomy', value: 'auto'}]), /no longer the one this page was drawn for/)
+  await assert.rejects(custody(custodyRead(), port, null).write([{key: 'gate', value: 'both'}]), /only the person sets it from here, and no person is current/)
+  await assert.rejects(custody(custodyRead(), port, '  ').write([{key: 'gate', value: 'both'}]), /no person is current/)
+  await assert.rejects(custody(custodyRead(), {...port, personNow: () => 'agent/factory-guardian'}).write([{key: 'gate', value: 'both'}]), /no longer the one this page was drawn for/)
   await assert.rejects(custody(custodyRead(), {...port, personNow: () => null}).write([{key: 'escalate', value: PERSON}]), /no longer the one this page was drawn for/)
   // And the rest: the work must be named, a carrier must stand.
   await assert.rejects(custody(custodyRead({work: null}), port).write([{key: 'gate', value: 'both'}]), /no reading names the session's work/)
@@ -292,7 +294,7 @@ test('9 · Custody and the Agent draw on these bindings in all their views — n
       assert.doesNotMatch(markup, fixture, `${design.id} ${view}: its fixture never stands in`)
     }
   }
-  for (const key of ['held', 'autonomy', 'gate', 'escalate']) assert.ok(classify(custodyBinding, key), `custody ${key}`)
+  for (const key of ['held', 'gate', 'escalate']) assert.ok(classify(custodyBinding, key), `custody ${key}`)
   for (const key of designKeys(custodyDesign)) if (key !== 'writeMode') assert.ok(classify(custodyBinding, key), `custody ${key}`)
   assert.equal(classify(agentBinding, 'ctx.turn'), 'reading')
   bind.resetHolds()
