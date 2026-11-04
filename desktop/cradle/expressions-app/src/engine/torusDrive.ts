@@ -46,6 +46,8 @@ export interface TorusPlayReading {
   /** Where the twelve classes stand on the body and what each sounds (torusPlay.mjs `classes`): the symbols' own harmonies read it, the
    * plate does not. */
   classes?: unknown;
+  /** The surface's material the lens in force gives it (torusPlay.mjs `material`; surfaceMaterial.ts), or why there is none. */
+  material?: import('./surfaceMaterial').SurfaceMaterialReading;
 }
 
 export interface ResolvedTorusDrive {

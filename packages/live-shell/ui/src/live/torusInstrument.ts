@@ -306,7 +306,8 @@ export function torusSessionEdit(session: TorusSession, {key, value}: ValueChang
     case 'tuning': {
       const tuning = value as (typeof TORUS_TUNINGS)[number]
       if (!TORUS_TUNINGS.includes(tuning)) throw new Error('Tuning is Logic, Maqām or Sky.')
-      if (!session.resident_tunings.includes(tuning)) throw new Error(`This scene holds no ${TORUS_TUNING_WORD[tuning]} voices: its event admits none (QL scene_field.rs resident tunings).`)
+      // Whether the scene holds the tuning's voices is the owner's to answer: a tuning it holds none for (the condition's maqām without
+      // its source, a scene with no sky) is refused by QL's torus-set in words naming what is missing (scene_field.rs maqam_absence; O-I 854).
       return {tuning}
     }
     case 'polyphony':

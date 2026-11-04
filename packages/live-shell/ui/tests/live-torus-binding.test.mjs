@@ -98,12 +98,13 @@ test('a key the owner does not take is disabled with its reason; while the instr
   const live = model.torusDesignBinding(state())
   // Damping is the body's Q, taken through the stage channel's damping edit (O-I #745 lane N; ql-745-torus-body.test.mjs).
   for (const key of ['level', 'sound', 'cadence', 'scale', 'lens', 'context-frame', 'harmonic-basis', 'm3-transcription', 'damping']) assert.equal(live.writes(key), true, `${key} is the owner's to change`)
-  for (const key of ['strike', 'modes', 'pan', 'meter', 'view', 'receiver']) {
+  for (const key of ['modes', 'pan', 'meter', 'view', 'receiver']) {
     assert.equal(live.writes(key), false, `${key} has no owner`)
     assert.equal(live.standing[key].disabled, model.TORUS_ABSENT[key])
   }
   // The Torus's session (O-I #850) is the owner's once the frame announces it; here it announces none, and each says what it waits on.
-  for (const key of ['rate', 'fundamental', 'carrier', 'tuning', 'shape', 'polyphony', 'notes']) {
+  // Strike is the session's share of velocity since O-I #854 (QL m1_prime.rs Settings.strike; ql-745-torus-body.test.mjs).
+  for (const key of ['rate', 'fundamental', 'carrier', 'tuning', 'shape', 'polyphony', 'notes', 'strike']) {
     assert.equal(live.writes(key), false, key)
     assert.match(live.standing[key].disabled, /torus-state/, `${key}: names the owner op it waits on`)
   }

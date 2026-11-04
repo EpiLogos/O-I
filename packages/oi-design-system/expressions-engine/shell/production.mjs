@@ -15,6 +15,7 @@ import { basis, project, stageCentre, stageScale } from "./camera.mjs";
 import { entitySoundPlan, activeFromFocus, objectSoundIsMuted, onObjectSoundMuted } from "./native-field/entitySound.mjs";
 import { SymbolVoices, placeOf } from "./native-field/symbolVoices.mjs";
 import { formMaskOf, symbolHarmonies } from "./native-field/symbolHarmony.mjs";
+import { nativeSurface } from "./native-field/surfaceConfig.mjs";
 import { bodyOf } from "../engine/torusObject.mjs";
 import { modeCatalogueReading, onModeCatalogue } from "./native-field/modeStore.mjs";
 import { DIP_AT_DEFAULT, transitionKindOf, paintedOverlayActive, transitionColourOf, edgeBlend } from "./transitions.mjs";
@@ -77,7 +78,6 @@ class EmbeddedProductionAdapter {
   symbolVoices = new SymbolVoices();
   releaseVoiceWatch = () => {
   };
-  nativeConfigs = /* @__PURE__ */ new WeakMap();
   setNativeDomain(active) {
     this.nativeDomain = active;
     this.applied = null;
@@ -148,17 +148,7 @@ class EmbeddedProductionAdapter {
     }
   }
   nativeConfig(config) {
-    if (!this.nativeDomain) return config;
-    let result = this.nativeConfigs.get(config);
-    if (!result) {
-      result = {
-        ...config,
-        toroidalMorph: config.toroidalMorph ? { ...config.toroidalMorph, enabled: false, autoOscillate: false } : void 0,
-        automations: config.automations?.filter((l) => !l.path.startsWith("toroidalMorph."))
-      };
-      this.nativeConfigs.set(config, result);
-    }
-    return result;
+    return this.nativeDomain ? nativeSurface(config, this.torusPlay) : config;
   }
   contextLost = false;
   seedRecoveredSources = false;

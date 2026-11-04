@@ -27,7 +27,7 @@ export function torusPlayReading(reading) {
   if (!instrument || !acting) {
     const closed = 'No instrument is open';
     return {torus: {tonesHz: [], silentBecause: closed}, sky: {tonesHz: [], absentBecause: closed}, root: {hz: null, absentBecause: closed}, body: null, pulse: null,
-      classes: {absentBecause: closed}};
+      classes: {absentBecause: closed}, material: {absentBecause: closed}};
   }
   const voices = Array.isArray(acting.voices) ? acting.voices : [];
   // Each voice by the owner's own mode ref (a Logic or Maqām voice names no planet, O-I #850), else its planet's.
@@ -40,7 +40,26 @@ export function torusPlayReading(reading) {
     body: {influence: instrument.influence ?? null, amplitudes},
     pulse: pulseReading(instrument.torus),
     // Where each of the twelve classes stands on the body and what it sounds: the symbols' own harmonies (symbolHarmony.ts).
-    classes: classesReading(reading.status, instrument.torus)};
+    classes: classesReading(reading.status, instrument.torus),
+    // The surface's material the lens in force gives it (O-I 854): the engine lays it on the marks (src/engine/surfaceMaterial.ts).
+    material: materialReading(instrument.torus)};
+}
+
+/** The surface's material in the owner's Torus reading (QL scene_field.rs `lens_material_of`, m2_material.rs MATERIAL_LAW): the lens in
+ * force at its position, its partner, a colour and four magnitudes, each 0..1, as given. */
+function materialReading(torus) {
+  const m = torus?.material;
+  if (!m || typeof m !== 'object') return {absentBecause: "The owner's Torus reading names no material, so the surface keeps the scene's own"};
+  if (typeof m.absent === 'string') return {absentBecause: `The owner gives no material: ${m.absent}`};
+  const share = value => typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1;
+  const colour = Array.isArray(m.colour_rgb) && m.colour_rgb.length === 3 ? m.colour_rgb : null;
+  if (typeof m.lens !== 'string' || typeof m.partner !== 'string' || !colour || ![...colour, m.roughness, m.elasticity, m.particle_affinity, m.tension].every(share)
+    || (m.valence !== 1 && m.valence !== -1) || !Number.isInteger(m.position)) {
+    return {absentBecause: "The owner's material is not a lens's surface (a colour and four magnitudes, each 0..1), so the surface keeps the scene's own"};
+  }
+  return {lens: m.lens, partner: m.partner, face: m.face === 'night' ? 'night' : 'day', position: m.position, valence: m.valence, colour_rgb: [...colour],
+    roughness: m.roughness, elasticity: m.elasticity, particle_affinity: m.particle_affinity, tension: m.tension,
+    standing: typeof m.standing === 'string' ? m.standing : null, absentBecause: null};
 }
 
 /** The twelve classes of the owner's Torus reading (QL scene_field.rs `class_sounds`, CLASS_SOUNDS_LAW): each at the one place of its helix,

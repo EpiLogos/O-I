@@ -138,7 +138,9 @@
     "shell/canvasEmbeds.mjs": "field-studies-journeys/src/canvasEmbeds.ts",
     "shell/canvasShapes.mjs": "field-studies-journeys/src/canvasShapes.ts",
     "shell/canvasConnectors.mjs": "field-studies-journeys/src/canvasConnectors.ts",
-    "shell/native-field/symbolHarmony.mjs": "field-studies-journeys/src/native-field/symbolHarmony.ts"
+    "shell/native-field/symbolHarmony.mjs": "field-studies-journeys/src/native-field/symbolHarmony.ts",
+    "shell/native-field/surfaceConfig.mjs": "field-studies-journeys/src/native-field/surfaceConfig.ts",
+    "engine/surfaceMaterial.mjs": "src/engine/surfaceMaterial.ts"
   },
   "module_refreshes": {
     "engine/sourceSampling.mjs": {
@@ -423,8 +425,8 @@
     },
     "shell/production.mjs": {
       "source": "desktop/cradle/expressions-app/field-studies-journeys/src/production.ts",
-      "source_sha256": "d96dd0392d555639e7a5d29066de4115c161a3e44abc029ab83fbeff8f72862b",
-      "output_sha256": "6505061c61244beb08931327871f7822926070c6473e0907da173edca5dbf09d",
+      "source_sha256": "a8c6b36016adc0b194f60e5823bf52da05539c7ae27be082fd3088acd6aa0a97",
+      "output_sha256": "286353fb7a677bfb3a033f0d1f22a2f8a232dded2a817f1a5512a104cc4a3d1e",
       "compiler": "esbuild@0.21.5",
       "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
     },
@@ -489,7 +491,7 @@
     },
     "engine/torusDrive.mjs": {
       "source": "desktop/cradle/expressions-app/src/engine/torusDrive.ts",
-      "source_sha256": "b44bd38120b79ec1f3340a6d911bb70dca03aef770c1a4e61b938df512abfe2f",
+      "source_sha256": "2bb37ec806448522cab392ca0a17d96972f860d30fff68d39bec3a2418af7b2e",
       "output_sha256": "f7e223edb31dd2cb8a49d0ca223fdd16b6c16efaf160df0009066740af1d39a0",
       "compiler": "esbuild@0.21.5",
       "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
@@ -652,6 +654,20 @@
       "source": "desktop/cradle/expressions-app/field-studies-journeys/src/native-field/symbolHarmony.ts",
       "source_sha256": "2099d287f0746e65c57b2eade93eb1d7ce2b4c6d629b5fa93d7f714c86870bed",
       "output_sha256": "fc753b991a08f7fd55d52627cbf0a4f183b8ade4018ad6ec4b28c6d90db8b91b",
+      "compiler": "esbuild@0.21.5",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "shell/native-field/surfaceConfig.mjs": {
+      "source": "desktop/cradle/expressions-app/field-studies-journeys/src/native-field/surfaceConfig.ts",
+      "source_sha256": "78c89eeef3cd7a177119042ad99a98f5891036bbce31470114de4100d6a9e0b5",
+      "output_sha256": "0e6d2f38276a04207573ebce87b0d3b1a315ca5829446e5910ae696048b01ef6",
+      "compiler": "esbuild@0.21.5",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "engine/surfaceMaterial.mjs": {
+      "source": "desktop/cradle/expressions-app/src/engine/surfaceMaterial.ts",
+      "source_sha256": "9d74847f141fad498ee9b44cd518f82d3955548912f0a3f7a4d7e227cef63945",
+      "output_sha256": "6de423c3957a4b59be0103880164e2ec1f29416240a545f70e943912845be5da",
       "compiler": "esbuild@0.21.5",
       "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
     }

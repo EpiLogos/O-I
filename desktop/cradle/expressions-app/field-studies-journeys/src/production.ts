@@ -18,6 +18,7 @@ import type {EngineFrame,FieldEngineAdapter,EngineCommand} from './engine';
 import {entitySoundPlan,activeFromFocus,objectSoundIsMuted,onObjectSoundMuted} from './native-field/entitySound';
 import {SymbolVoices,placeOf,type TorusTap} from './native-field/symbolVoices';
 import {formMaskOf,symbolHarmonies,type ClassesReading,type FormMask} from './native-field/symbolHarmony';
+import {nativeSurface} from './native-field/surfaceConfig';
 import {bodyOf} from '../../src/engine/torusObject';
 import {modeCatalogueReading,onModeCatalogue} from './native-field/modeStore';
 import {DIP_AT_DEFAULT,transitionKindOf,paintedOverlayActive,transitionColourOf,edgeBlend,type TransitionSpec} from './transitions';
@@ -47,7 +48,6 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
  /** The symbols' voices (authored `sound`): they carry the torus's sound to where their symbols stand, and have no oscillator of their own. */
  readonly symbolVoices=new SymbolVoices();
  private releaseVoiceWatch:()=>void=()=>{};
- private nativeConfigs=new WeakMap<PointCloudConfig,PointCloudConfig>();
  setNativeDomain(active:boolean){this.nativeDomain=active;this.applied=null;this.dirty=true;this.engine?.setPlateBody(active);}
  /** The torus's voices that sound, as force points (native-field/controller.ts torusVoicePoints; O-I 851): read every tick the engine
   * compiles its forces, so a voice pulls while it sounds and lets go as it fades. */
@@ -94,15 +94,9 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
  /** The node the controller offers for the symbols' voices to listen to (native-field/controller.ts `voiceTap`), or none while no instrument is open. */
  setTorusTap(tap:TorusTap|null){if(this.symbolVoices.attach(tap)){this.soundAt=-1;this.dirty=true;}}
  private nativeConfig(config:PointCloudConfig):PointCloudConfig{
-  if(!this.nativeDomain)return config;
-  let result=this.nativeConfigs.get(config);
   // The plate stays as authored: under the native instrument it is the body laid flat (setPlateBody), so its drive is resolved, and
-  // its lanes move that drive, but it rings no plate of its own here (O-I 851).
-  if(!result){result={...config,
-   toroidalMorph:config.toroidalMorph?{...config.toroidalMorph,enabled:false,autoOscillate:false}:undefined,
-   automations:config.automations?.filter(l=>!l.path.startsWith('toroidalMorph.'))};
-   this.nativeConfigs.set(config,result);}
-  return result;
+  // its lanes move that drive, but it rings no plate of its own here (O-I 851); the surface takes the lens's material (O-I 854).
+  return this.nativeDomain?nativeSurface(config,this.torusPlay):config;
  }
  private contextLost=false;private seedRecoveredSources=false;private restoredClock=false;
  private lost=(event:Event)=>{event.preventDefault();this.contextLost=true;this.dirty=true;};

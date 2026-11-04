@@ -104,7 +104,10 @@ export function readHostedTorus(raw: unknown): HostedTorusSession | string {
   if (!count(raw.notes)) return 'notes: expected a count';
   if (!Array.isArray(raw.resident_tunings) || !raw.resident_tunings.every(v => among(TORUS_TUNINGS, v))) return 'resident_tunings: expected logic, maqam or sky';
   if (!boundedText(raw.carrier_drive, 64)) return 'carrier_drive: expected the owner\'s word';
-  return {settings: {rate, fundamental, carrier: t.carrier, shape: t.shape, tuning: t.tuning, polyphony: t.polyphony, tempo_bpm: t.tempo_bpm},
+  // Strike (O-I #854): an owner from before it states none, and then the session has none; a stated Strike outside 0..1 refuses it.
+  if (t.strike !== undefined && (!finite(t.strike) || t.strike < 0 || t.strike > 1)) return 'settings: expected Strike as a share 0..1';
+  return {settings: {rate, fundamental, carrier: t.carrier, shape: t.shape, tuning: t.tuning, polyphony: t.polyphony, tempo_bpm: t.tempo_bpm,
+    ...(t.strike !== undefined ? {strike: t.strike as number} : {})},
     steps_per_second: raw.steps_per_second, band: raw.band, fundamental_hz: raw.fundamental_hz, map_hz: raw.map_hz, figure: raw.figure as HostedTorusSession['figure'],
     comma_cents: raw.comma_cents, notes: raw.notes, resident_tunings: [...raw.resident_tunings] as HostedTorusSession['resident_tunings'], carrier_drive: raw.carrier_drive};
 }

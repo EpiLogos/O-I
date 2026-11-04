@@ -205,8 +205,10 @@ export interface TorusSettingsEdit {
   shape?: StageTorusShape;
   tuning?: StageTorusTuning;
   polyphony?: number;
+  /** Strike, 0..1: the share of a key's velocity that excites the body (QL M1′ session; O-I #854). */
+  strike?: number;
 }
-const TORUS_EDIT_KEYS = ['rate', 'tempo_bpm', 'fundamental', 'carrier', 'shape', 'tuning', 'polyphony'] as const;
+const TORUS_EDIT_KEYS = ['rate', 'tempo_bpm', 'fundamental', 'carrier', 'shape', 'tuning', 'polyphony', 'strike'] as const;
 /** A closed, typed Torus session edit naming at least one setting, or null. */
 export function readTorusSettingsEdit(raw: unknown): TorusSettingsEdit | null {
   if (!plain(raw) || !closed(raw, TORUS_EDIT_KEYS) || Object.keys(raw).length === 0) return null;
@@ -233,6 +235,7 @@ export function readTorusSettingsEdit(raw: unknown): TorusSettingsEdit | null {
   if (raw.shape !== undefined) { if (!(STAGE_TORUS_SHAPES as readonly unknown[]).includes(raw.shape)) return null; edit.shape = raw.shape as StageTorusShape; }
   if (raw.tuning !== undefined) { if (!(STAGE_TORUS_TUNINGS as readonly unknown[]).includes(raw.tuning)) return null; edit.tuning = raw.tuning as StageTorusTuning; }
   if (raw.polyphony !== undefined) { if (!whole(raw.polyphony)) return null; edit.polyphony = raw.polyphony; }
+  if (raw.strike !== undefined) { if (!finite(raw.strike)) return null; edit.strike = raw.strike; }
   return edit;
 }
 export type InstrumentEdit =

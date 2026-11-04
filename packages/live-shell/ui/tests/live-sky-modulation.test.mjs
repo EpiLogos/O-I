@@ -103,7 +103,8 @@ test('run: a planet takes a target at its owner\'s value, writes the move throug
   const moved = {...effects, delay: {...effects.delay, feedback: 58.75}}
   await sm.runSkyModulation(state(moved), sky({Venus: 270, Moon: 180}), false)
   assert.equal(writes.length, 1, 'nothing new under the same sky')
-  assert.deepEqual(fx.torusEffectBinding('delay', state(moved), sm.skyHeldKeys('delay')).modulatedBy, {feedback: 'Venus'}, 'the effect names the planet')
+  assert.deepEqual(fx.torusEffectBinding('delay', state(moved), sm.skyHeldKeys('delay', undefined, sm.skyTargets(state(moved)))).modulatedBy,
+    {feedback: 'Venus (base 35 %, now 58.8 %)'}, 'the effect names the planet, the base and the value now (manual §22.2 Rules)')
   await sm.skyModulationBinding(state(moved), sky({Venus: 270})).write([{key: 'routes', value: '[]'}])
   await sm.runSkyModulation(state(moved), sky({Venus: 270}), false)
   assert.deepEqual(writes.at(-1), {kind: 'effect', effect: 'delay', key: 'feedback', value: 35}, 'the base goes back')
@@ -137,5 +138,44 @@ test('the design draws every view on the binding: the Sky\'s bodies, the part\'s
   binding.local.selected('r1'); assert.equal(sm.skyModulationPlan().selected, 'r1', 'the selection is the view\'s own')
   for (const view of VIEWS) assert.ok(renderToStaticMarkup(h(HostedDevice, {designed: design, binding, view, nav: {}})).length > 0, view)
   assert.match(sm.skyModulationBinding(null, sky({})).values.reason, /No owner reading in this host/)
+  sm.resetSkyModulation()
+})
+
+// O-I #854 (manual §22.2: "On a Live part, its targets are the torus and its effects"; Rules: "A parameter that the sky moves shows the
+// planet on the control. It shows the base value and the value now."): the torus's own sound, its Carrier and its Rate, is a target
+// through the owner's Torus session, and the control a planet moves shows the planet, the base and the value now.
+const torusSession = (rate = {mode: 'free', steps_per_second: 2.5}) => ({settings: {rate, fundamental: {source: 'map'}, carrier: 0.2, shape: 'auto',
+  tuning: 'logic', polyphony: 16, tempo_bpm: 120, strike: 0.7}, steps_per_second: 2.5, band: 'rhythm', fundamental_hz: 130.81, map_hz: 130.81,
+  figure: 'torus', comma_cents: 0, notes: 0, resident_tunings: ['logic', 'sky'], carrier_drive: 'pulse'})
+const playing = (rate) => ({...state(), parameters: {...state().parameters, torus: torusSession(rate)}})
+
+test('a planet moves the torus\'s own sound: its Carrier, and its Rate under Free, through the owner\'s Torus session', () => {
+  const targets = sm.skyTargets(playing())
+  const carrier = targets.find(t => t.id === 'quaternal-logic:torus/carrier'), rate = targets.find(t => t.id === 'quaternal-logic:torus/rate')
+  assert.ok(carrier && rate, 'the torus\'s Carrier and Rate are targets')
+  assert.equal(carrier.value, 20); assert.equal(carrier.unit, '%'); assert.equal(carrier.log, false)
+  assert.deepEqual(carrier.edit(45), {kind: 'torus', edit: {carrier: 0.45}})
+  assert.equal(rate.value, 2.5); assert.equal(rate.log, true, 'a rate moves in its own (log) scale')
+  assert.deepEqual(rate.edit(5), {kind: 'torus', edit: {rate: {mode: 'free', steps_per_second: 5}}})
+  assert.equal(sm.skyTargets(playing({mode: 'sync', note: {numerator: 1, denominator: 4}})).some(t => t.id === 'quaternal-logic:torus/rate'), false,
+    'under Sync the set\'s tempo holds the Rate: no planet may')
+  assert.equal(sm.skyTargets(state()).some(t => t.id === 'quaternal-logic:torus/carrier'), false, 'no session, no Carrier')
+})
+
+test('the control a planet moves shows the move: the planet, the base and the value now, in the status bar\'s words', async () => {
+  const {standingWords} = await import('../src/inhabitants/sdk/panel.tsx')
+  const {hostedStanding} = await import('../src/frame/devices/deviceHost.tsx')
+  const writes = []
+  sm.resetSkyModulation({writer: async edit => { writes.push(edit); return {ok: true} }})
+  sm.placeSkyModulation(true)
+  await sm.skyModulationBinding(playing(), sky({Venus: 270})).write([{key: 'routes', value: JSON.stringify([{id: 'r1', planet: 'Venus', target: 'quaternal-logic:torus/carrier'}])},
+    {key: 'amount:r1', value: 100}, {key: 'smoothing:r1', value: 0}])
+  assert.deepEqual(sm.skyHeldTorusKeys(undefined, sm.skyTargets(playing())), {carrier: 'Venus'}, 'before the sky has run: the planet alone')
+  await sm.runSkyModulation(playing(), sky({Venus: 270}), false)
+  assert.deepEqual(writes, [{kind: 'torus', edit: {carrier: 0.45}}], 'a quarter turn past the middle: a quarter of 0–100 % on the base of 20 %')
+  const held = sm.skyHeldTorusKeys(undefined, sm.skyTargets(playing()))
+  assert.deepEqual(held, {carrier: 'Venus (base 20 %, now 45 %)'})
+  const standing = hostedStanding({sent: {}, drafts: {}, refused: {}}, {id: 'x', values: {carrier: 45}, writes: () => true, write: async () => {}, modulatedBy: held}, ['carrier'])
+  assert.equal(standingWords(standing.carrier), 'Venus (base 20 %, now 45 %) moves this value.')
   sm.resetSkyModulation()
 })

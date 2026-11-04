@@ -122,9 +122,10 @@ export const TORUS_DETERMINANT_KEYS: Readonly<Record<string, string>> = {'lens':
 
 /** The Torus's Damping range: a Q factor (manual §21.2, "Damping | Q factor 0.1 to 40"; stageCommands.ts STAGE_INSTRUMENT_Q). */
 export const TORUS_Q = {min: 0.1, max: 40} as const
-/** QL's scene term the Body group has none of: its material is a decay rate, a strike depth in metres and a gain (scene_field.rs
- * SceneMaterial), so a share of velocity reaches nothing. */
-const NO_STRIKE_TERM = 'QL\'s scene has no strike share: its strike is a depth in metres, a declared policy (scene_field.rs SceneMaterial.strike_metres), so nothing takes a share of velocity'
+/** Strike's range on the page, in per cent of a key's velocity; the owner's session holds it as a share 0..1 (QL m1_prime.rs Settings.strike). */
+export const TORUS_STRIKE = {min: 0, max: 100} as const
+/** An owner whose M1′ session predates Strike (QL torus-state before O-I 854) states none, so no share of velocity reaches it. */
+const NO_STRIKE_SESSION = 'The owner\'s Torus session states no Strike: QL\'s torus-state reports no share of velocity for the keys to excite the body by'
 
 const NO_FIELD_PARAMETER = 'the native field announces only its lens, context frame, harmonic basis, M3 transcription, the Torus\'s M1′ session, sound, level, cadence and scale, and takes only those and the body\'s Damping through the stage channel (stageCommands.ts InstrumentEdit)'
 
@@ -178,7 +179,8 @@ export function torusStageCommand(change: ValueChange, held: Readonly<Record<str
 
 /** Why each design key the binding leaves absent has no reading (manual §16.12: "When a reading is missing, say which one"). */
 export const TORUS_ABSENT: Readonly<Record<string, string>> = {
-  strike: `No strike: ${NO_STRIKE_TERM}.`,
+  // strike: the owner's M1′ session Strike, written as its torus edit while the instrument follows or is held (torusBody).
+  strike: 'No Strike here: the share of velocity is the owner\'s Torus session setting, written while the instrument follows or is held, and no owner reading stands.',
   // damping: the body's Q, written through the stage channel's damping edit while the instrument follows or is held (torusBody).
   damping: 'No damping here: the body\'s Q is written through the stage channel while the instrument follows or is held, and no owner reading stands.',
   modes: `No mode count: the scene's modes are the voices of its tunings (scene_field.rs ShapeBasis), and no owner takes a count of them; ${NO_FIELD_PARAMETER}.`,
@@ -318,11 +320,20 @@ export const TORUS_BODY_SOURCE = 'body.source'
 /** The body source the hand holds: Declared until Tattva is chosen (manual §21.2 default). */
 export const torusBodySourceOf = (held: Readonly<Record<string, Value>>): BodySource => (held[TORUS_BODY_SOURCE] === 'tattva' ? 'tattva' : 'declared')
 
-/** The stage edit the body source writes: the fibre's Q under Tattva, none under Declared or a tattva without a fibre. Pure. */
-export function torusBodyEdit(condition: FrameInstrumentCondition | null | undefined, table: BodyTable | null, source: BodySource): InstrumentEdit | null {
-  if (source !== 'tattva') return null
+/** The edits the body source writes: under Tattva the fibre's Q through the stage channel and its Strike as the owner's torus edit (when
+ * the owner's session states Strike); none under Declared or under a tattva without a fibre (Space keeps the declared values). Pure. */
+export function torusBodyEdits(condition: FrameInstrumentCondition | null | undefined, table: BodyTable | null, source: BodySource,
+  session: TorusSession | null): InstrumentEdit[] {
+  if (source !== 'tattva') return []
   const set = tattvaBody(condition, table)
-  return set.row ? {kind: 'damping', q_factor: set.row.q_factor} : null
+  if (!set.row) return []
+  return [{kind: 'damping', q_factor: set.row.q_factor},
+    ...(typeof session?.settings.strike === 'number' ? [{kind: 'torus' as const, edit: {strike: set.row.strike_share}}] : [])]
+}
+/** The Strike you set, as the owner's share 0..1, or the words for why not. */
+function strikeShare(value: Value | undefined): number {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < TORUS_STRIKE.min || value > TORUS_STRIKE.max) throw new Error('Strike takes 0 to 100 %.')
+  return Math.round(value * 10) / 1000
 }
 
 /** The Damping you set, as a Q the stage channel takes, or the words for why not. */
@@ -336,7 +347,7 @@ export function torusBody(state: LiveTorusState | null, condition: FrameInstrume
   held: Readonly<Record<string, Value>>, commit: (edit: InstrumentEdit) => Promise<{ok: boolean; error?: string}>,
   keep: (key: string, value: Value) => void): {values: Record<string, Value>; standing: Record<string, Standing>; writes: ReadonlySet<string>; write: (change: ValueChange) => Promise<void>} {
   const values: Record<string, Value> = {}, standing: Record<string, Standing> = {}, writes = new Set<string>()
-  const source = torusBodySourceOf(held), set = tattvaBody(condition, table), row = set.row
+  const source = torusBodySourceOf(held), set = tattvaBody(condition, table), row = set.row, session = torusSessionOf(state)
   const owner = !liveInstrumentWritable(state) ? (state === null ? 'No owner reading stands in this host.' : NOT_WRITABLE) : null
   const would = row ? ` M2's table gives the ${row.fibre} fibre Strike ${Math.round(row.strike_share * 100)}% and Damping ${row.q_factor} (${table?.ok ? table.standing : 'unread'}).` : ''
   // The table's standing, a reading; Body source, the hand's choice once the table is read and the owner takes edits.
@@ -360,17 +371,38 @@ export function torusBody(state: LiveTorusState | null, condition: FrameInstrume
     if (owner) standing.damping = {disabled: owner}
     else writes.add('damping')
   }
-  // Strike: no QL scene term, under either source; named with what the fibre would set.
-  standing.strike = {disabled: `No strike:${row && source === 'tattva' ? ` the ${row.fibre} fibre Strike ${Math.round(row.strike_share * 100)}% is not written:` : ''} ${NO_STRIKE_TERM}.`}
-  const send = async (edit: InstrumentEdit) => { const result = await commit(edit); if (!result.ok) throw new Error(result.error ?? 'The native field refused the body\'s damping.') }
+  // Strike: the owner's session share of velocity; the fibre's held under Tattva, the share you set under Declared or a tattva without one.
+  const strikeOwned = typeof session?.settings.strike === 'number'
+  if (source === 'tattva' && row) {
+    values.strike = Math.round(row.strike_share * 100)
+    standing.strike = {disabled: `Body source is Tattva: the ${row.fibre} fibre sets it (Strike ${Math.round(row.strike_share * 100)}%, M2's body constants, ${table?.ok ? table.standing : 'unread'}). Set Body source to Declared to set it by hand.`}
+  } else if (!strikeOwned) {
+    standing.strike = {disabled: session ? `${NO_STRIKE_SESSION}.` : owner ?? `${NO_SESSION}.`}
+  } else {
+    values.strike = Math.round((session!.settings.strike as number) * 1000) / 10
+    if (owner) standing.strike = {disabled: owner}
+    else writes.add('strike')
+  }
+  const send = async (edit: InstrumentEdit) => { const result = await commit(edit); if (!result.ok) throw new Error(result.error ?? 'The native field refused the body\'s setting.') }
   const write = async ({key, value}: ValueChange) => {
     if (key === TORUS_BODY_SOURCE) {
       if (value !== 'declared' && value !== 'tattva') throw new Error('The body source is Declared or Tattva.')
       if (!writes.has(key)) throw new Error(standing[key]?.disabled ?? 'The body source cannot be chosen now.')
       keep(TORUS_BODY_SOURCE, value)
-      const edit = torusBodyEdit(condition, table, value)
-      if (edit) await send(edit)
-      else if (value === 'declared' && typeof held.damping === 'number') await send({kind: 'damping', q_factor: held.damping})
+      const edits = torusBodyEdits(condition, table, value, session)
+      for (const edit of edits) await send(edit)
+      if (!edits.length && value === 'declared') {
+        // Declared gives back the values you set.
+        if (typeof held.damping === 'number') await send({kind: 'damping', q_factor: held.damping})
+        if (strikeOwned && typeof held.strike === 'number') await send({kind: 'torus', edit: {strike: held.strike}})
+      }
+      return
+    }
+    if (key === 'strike') {
+      if (!writes.has(key)) throw new Error(standing.strike?.disabled ?? 'Strike cannot be set now.')
+      const share = strikeShare(value)
+      keep('strike', share)
+      await send({kind: 'torus', edit: {strike: share}})
       return
     }
     if (key === 'damping') {
@@ -413,7 +445,7 @@ export function torusRowChanges(changes: readonly ValueChange[]): {key: string; 
 }
 
 /** The Body group's keys the binding writes itself (torusBody), not as the device's rows. */
-const BODY_KEYS: ReadonlySet<string> = new Set([TORUS_BODY_SOURCE, 'damping'])
+const BODY_KEYS: ReadonlySet<string> = new Set([TORUS_BODY_SOURCE, 'damping', 'strike'])
 
 /** Every key the binding speaks for: the design's keys and the owner's own. */
 const TORUS_KEYS = ['light', 'standing', 'level', ...QL_PRESENTATION_KEYS.filter(key => key !== 'level'), ...Object.keys(TORUS_DETERMINANT_KEYS), ...Object.keys(TORUS_ABSENT)]
@@ -476,7 +508,8 @@ export function torusDesignBinding(state: LiveTorusState | null, device: DeviceI
       const rows = changes.filter(c => !(c.key in TORUS_STAGE_ACTS) && !BODY_KEYS.has(c.key) && !TORUS_SESSION_KEYS.has(c.key))
       if (rows.length) { if (!submit) throw new Error(NOT_WRITABLE); await submit(torusRowChanges(rows)) }
     }} : {}),
-    // The level or scale a planet moves (designBindings/skyModulation.ts): the status bar names the planet.
+    // The level, scale, Carrier or Rate a planet moves (designBindings/skyModulation.ts): the status bar names the planet, the base and the
+    // value now.
     ...(Object.keys(skyHeld).length ? {modulatedBy: skyHeld} : {}),
   }
 }

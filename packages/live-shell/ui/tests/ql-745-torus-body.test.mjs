@@ -84,9 +84,7 @@ test('under Tattva the earth fibre damps the body at its Q through the stage cha
   assert.match(binding.standing.damping.disabled, /Body source is Tattva: the earth fibre sets it/)
   assert.equal(binding.writes('damping'), false)
   await assert.rejects(binding.write([{key: 'damping', value: 3}]), /Body source is Tattva/)
-  assert.deepEqual(torus.torusBodyEdit(earth, table, 'tattva'), {kind: 'damping', q_factor: 12}, 'what the follow writes as the fibre moves')
-  assert.equal(torus.torusBodyEdit(earth, table, 'declared'), null)
-  assert.equal(torus.torusBodyEdit(space, table, 'tattva'), null, 'Space carries no element: the body keeps the values you set')
+  assert.deepEqual(torus.torusBodyEdits(earth, table, 'tattva', null), [{kind: 'damping', q_factor: 12}], 'with no session, Damping alone')
   const whole = renderToStaticMarkup(h(HostedDevice, {designed: torusDesign, binding, view: 'whole', nav: {}}))
   assert.doesNotMatch(whole, /\bNaN\b|data-device-fault/)
   holds.resetHolds()
@@ -104,17 +102,60 @@ test('under Declared, Damping is the Q you set, written through the stage channe
   holds.resetHolds()
 })
 
-test('Strike stays dimmed: QL\'s scene has no term for it, and the binding names it with what the fibre would set; Agitation is retired (O-I #850)', () => {
+/** The owner's Torus session (QL torus-state), stating Strike as QL's M1′ session does since O-I #854; null states none (an older owner). */
+const session = (strike = 0.7) => ({settings: {rate: {mode: 'free', steps_per_second: 2.5}, fundamental: {source: 'map'}, carrier: 0, shape: 'auto',
+  tuning: 'logic', polyphony: 16, tempo_bpm: 120, ...(strike === null ? {} : {strike})}, steps_per_second: 2.5, band: 'rhythm', fundamental_hz: 130.81,
+  map_hz: 130.81, figure: 'torus', comma_cents: 0, notes: 0, resident_tunings: ['logic', 'sky'], carrier_drive: 'pulse'})
+const withSession = (strike) => ({...following, parameters: {...following.parameters, torus: session(strike)}})
+
+// O-I #854: "Under Tattva, Strike and Damping take the element's values and hold them. Space keeps the declared values." Strike is the
+// owner's M1′ session setting (QL torus-set `strike`, the share of a key's velocity that excites the body).
+test('under Tattva the element sets Strike as it sets Damping, and holds both; Agitation is retired (O-I #850)', async () => {
   holds.resetHolds()
-  holds.hold(torus.TORUS_DESIGN_ID, 'body.source', 'tattva')
-  const {binding} = bound()
+  let {binding, sent} = bound(earth, withSession())
+  assert.equal(binding.values.strike, 70, 'Declared: the owner\'s Strike, in per cent')
+  await binding.write([{key: 'body.source', value: 'tattva'}])
+  assert.deepEqual(sent, [{kind: 'damping', q_factor: 12}, {kind: 'torus', edit: {strike: 0.45}}], 'the earth fibre\'s Q and Strike, M2\'s table')
+  ;({binding, sent} = bound(earth, withSession(0.45)))
+  assert.equal(binding.values.strike, 45)
   assert.equal(binding.writes('strike'), false)
-  assert.equal(binding.values.strike, undefined)
-  assert.match(binding.standing.strike.disabled, /earth fibre Strike 45%.*QL's scene has no strike share/)
+  assert.match(binding.standing.strike.disabled, /Body source is Tattva: the earth fibre sets it \(Strike 45%/)
+  await assert.rejects(binding.write([{key: 'strike', value: 90}]), /Body source is Tattva/)
+  assert.deepEqual(torus.torusBodyEdits(earth, table, 'tattva', session()), [{kind: 'damping', q_factor: 12}, {kind: 'torus', edit: {strike: 0.45}}],
+    'what the follow writes as the fibre moves')
+  assert.deepEqual(torus.torusBodyEdits(earth, table, 'declared', session()), [])
+  assert.deepEqual(torus.torusBodyEdits(space, table, 'tattva', session()), [], 'Space carries no element: the body keeps the values you set')
   // Manual §21.2 retires Agitation: the design carries no such key, so neither value, standing nor write names it.
   assert.equal(binding.writes('agitation'), false)
   assert.equal(binding.values.agitation, undefined)
   assert.equal(binding.standing.agitation, undefined)
+  holds.resetHolds()
+})
+
+test('under Declared, and under Space, Strike is the share you set, written as the owner\'s torus edit; back to Declared it is given back', async () => {
+  holds.resetHolds()
+  let {binding, sent} = bound(space, withSession())
+  assert.equal(binding.writes('strike'), true)
+  await binding.write([{key: 'strike', value: 60}])
+  assert.deepEqual(sent, [{kind: 'torus', edit: {strike: 0.6}}])
+  assert.equal(holds.heldFor(torus.TORUS_DESIGN_ID).strike, 0.6, 'the Strike you set is the hand\'s too')
+  await assert.rejects(binding.write([{key: 'strike', value: 140}]), /0 to 100 %/)
+  holds.hold(torus.TORUS_DESIGN_ID, 'body.source', 'tattva')
+  ;({binding, sent} = bound(space, withSession(0.6)))
+  assert.equal(binding.writes('strike'), true, 'Space, Ākāśa, carries no element: under Tattva it keeps the declared Strike')
+  assert.equal(binding.values.strike, 60)
+  holds.hold(torus.TORUS_DESIGN_ID, 'body.source', 'tattva')
+  ;({binding, sent} = bound(earth, withSession(0.45)))
+  await binding.write([{key: 'body.source', value: 'declared'}])
+  assert.deepEqual(sent, [{kind: 'torus', edit: {strike: 0.6}}], 'Declared gives back the Strike you set')
+  holds.resetHolds()
+})
+
+test('an owner whose session states no Strike leaves it dimmed and says so', () => {
+  holds.resetHolds()
+  const {binding} = bound(earth, withSession(null))
+  assert.equal(binding.writes('strike'), false)
+  assert.match(binding.standing.strike.disabled, /states no Strike/)
   holds.resetHolds()
 })
 

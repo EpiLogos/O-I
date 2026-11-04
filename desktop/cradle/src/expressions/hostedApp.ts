@@ -530,6 +530,8 @@ export interface HostedTorusSession {
     readonly tuning: HostedTorusTuning;
     readonly polyphony: number;
     readonly tempo_bpm: number;
+    /** Strike, 0..1, when the owner states it (QL M1′ session; O-I #854). */
+    readonly strike?: number;
   };
   readonly steps_per_second: number;
   readonly band: HostedTorusBand;
