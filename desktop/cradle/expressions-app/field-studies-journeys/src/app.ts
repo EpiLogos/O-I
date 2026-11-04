@@ -2342,8 +2342,6 @@ async function runStageCommand(command:StageCommand):Promise<StageResult>{
    // notes made way past Polyphony; a release lets keys go from its count while the body rings on (controller.ts torusPlay, torusRelease).
    if(command.action==='strike'){const made_way=await nativeField.controller.torusPlay(command.keys,command.amplitude,command.at_samples_elapsed);announceHostState();return made_way.length?{ok:true,made_way}:{ok:true};}
    if(command.action==='release'){await nativeField.controller.torusRelease(command.keys);return {ok:true};}
-   // A clip's chord: the owner's own played voices, struck through the native owner (nativeField.ts playJanko). Never synthesised.
-   await nativeField.playJanko(command.pitch_classes,command.amplitude,command.at_samples_elapsed);
    break;
   case 'strike-at':
    // A strike at points of the torus (DLW §21.2 "What strikes the Torus"): the owner's own strike at those points, through the native

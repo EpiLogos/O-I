@@ -297,11 +297,10 @@ export type StageCommand =
   | {command: 'live'; action: 'set' | 'hold'; target: string; value: number}
   | {command: 'live'; action: 'release'}
   | {command: 'instrument'; edit: InstrumentEdit}
-  /** A Jankó chord. `at_samples_elapsed` (O-I #809) is the owner's sample cursor the chord lands at; absent, it lands at the owner's own. */
-  | {command: 'janko'; action: 'play'; pitch_classes: number[]; amplitude: number; at_samples_elapsed?: string}
   /** Keys of the Jankó surface struck on the Torus's M1′ session (QL-MEF `torus-play`; O-I #853): every way of playing reaches the Torus
    * this one way. Each key is a new note at its moving point, one act of 1..32 distinct keys at one amplitude in (0, 1], landing at
-   * `at_samples_elapsed` as a chord does. Past Polyphony the oldest notes make way, and the answer names their keys (`made_way`). */
+   * `at_samples_elapsed` (O-I #809: the owner's sample cursor; absent, the owner's own). Past Polyphony the oldest notes make way, and the
+   * answer names their keys (`made_way`). The pitch-class chord this stood beside is retired (O-I #855 fold-in): every note is a key. */
   | {command: 'janko'; action: 'strike'; keys: StageKey[]; amplitude: number; at_samples_elapsed?: string}
   /** Keys let go: they leave the Torus's count of notes (QL-MEF `torus-release`), and the body rings on, as a released note keeps its
    * own tail (DLW §21.2 Rules). */
@@ -309,7 +308,7 @@ export type StageCommand =
   /** A strike at points of the torus surface (DLW §21.2 "What strikes the Torus": a touch, a note in a clip at its key's point), run as the
    * native field's own strike at points (controller.ts playAt; QL-MEF `strike-at`): one act of 1..64 points, each the torus's own angles
    * on the sampled sheet, theta the tube and phi the ring, each in [0, 2π), struck at one amplitude in (0, 1], at `at_samples_elapsed`
-   * as a chord is. */
+   * as a strike of keys is. */
   | {command: 'strike-at'; points: StageStrikePoint[]; amplitude: number; at_samples_elapsed?: string}
   /** The owner's audio clock (O-I #809), read so a player can schedule ahead on it: the answer carries a StageAudioClock. */
   | {command: 'audio-clock'}
@@ -567,15 +566,7 @@ export function readStageRequest(raw: unknown): {req: number; command: StageComm
         const at = landing(raw);
         return at ? {req, command: {command: 'janko', action: 'strike', keys, amplitude: raw.amplitude, ...at}} : null;
       }
-      // A chord is one act: distinct pitch classes, struck at one amplitude. Anything else is refused before the owner sees it.
-      if (!closed(raw, [...BASE_KEYS, 'action', 'pitch_classes', 'amplitude', 'at_samples_elapsed']) || raw.action !== 'play' || !Array.isArray(raw.pitch_classes)) return null;
-      const classes = raw.pitch_classes;
-      if (classes.length < 1 || classes.length > 12 || !classes.every(pc => Number.isSafeInteger(pc) && pc >= 0 && pc <= 11)) return null;
-      if (new Set(classes).size !== classes.length) return null;
-      if (typeof raw.amplitude !== 'number' || !Number.isFinite(raw.amplitude) || raw.amplitude <= 0 || raw.amplitude > STAGE_JANKO_AMPLITUDE_MAX) return null;
-      const at = landing(raw);
-      if (at === null) return null;
-      return {req, command: {command: 'janko', action: 'play', pitch_classes: [...classes], amplitude: raw.amplitude, ...at}};
+      return null;
     }
     case 'strike-at': {
       // One act of points, each closed to its two angles on the sheet; a point off it is refused here, never reduced (the mode shapes

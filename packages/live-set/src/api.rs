@@ -28,6 +28,26 @@ pub fn set_json(path: &str) -> Result<serde_json::Value, String> {
                 track.extend(extra);
             }
         }
+        // Each part's Torus as the DLW's record beside the set keeps it (sources.rs, O-I #855); null where it keeps none, and a
+        // record that cannot be read says why on each part instead.
+        let set = std::path::Path::new(path);
+        for (track, element) in tracks.iter_mut().zip(crate::edit::tracks(&root)) {
+            if let Some(fields) = track.as_object_mut() {
+                let kept = element
+                    .attr("Id")
+                    .ok_or_else(|| "the track carries no Id in the document".to_string())
+                    .and_then(|id| crate::sources::torus_of(set, id));
+                match kept {
+                    Ok(torus) => {
+                        fields.insert("torus".into(), torus.unwrap_or(serde_json::Value::Null));
+                    }
+                    Err(why) => {
+                        fields.insert("torus".into(), serde_json::Value::Null);
+                        fields.insert("torusRefused".into(), serde_json::Value::String(why));
+                    }
+                }
+            }
+        }
     }
     // Each row's own name (Live's scene `Name`; empty where it has none), in the rows' order.
     if let Some(fields) = document.as_object_mut() {

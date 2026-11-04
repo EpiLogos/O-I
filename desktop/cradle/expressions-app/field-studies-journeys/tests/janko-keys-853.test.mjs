@@ -80,10 +80,18 @@ test('a key off the surface, a repeated key, too many keys or an amplitude outsi
   assert.equal(readStageRequest(request({command: 'janko', action: 'hush', keys: [{row: 0, column: 0}]})), null, 'no third act');
 });
 
-test('the chord a clip strikes still reads as before: the pitch-class act stands beside the keys', async () => {
+// REPLACED (O-I #855 fold-in): was "the chord a clip strikes still reads as before: the pitch-class act stands beside the keys". The clip
+// strikes keys since #790 and the QL sitting's bell since this fold-in (live-shell/ui tests/sitting-bell-keys.test.mjs), so no act names
+// pitch classes: the frame refuses one, and runs its janko case on keys alone.
+test('every note is a key of the surface: a chord of pitch classes is refused before the owner sees it, and the frame plays none', async () => {
   const {readStageRequest} = await stage();
-  assert.deepEqual(readStageRequest(request({command: 'janko', action: 'play', pitch_classes: [0, 4, 7], amplitude: 0.35})).command,
-    {command: 'janko', action: 'play', pitch_classes: [0, 4, 7], amplitude: 0.35});
+  for (const body of [{pitch_classes: [0, 4, 7], amplitude: 0.35}, {pitch_classes: [2], amplitude: 0.35, at_samples_elapsed: '48000'}]) {
+    assert.equal(readStageRequest(request({command: 'janko', action: 'play', ...body})), null, JSON.stringify(body));
+  }
+  const app = await readFile(join(journeys, 'src/app.ts'), 'utf8');
+  const janko = app.slice(app.indexOf("case 'janko':"), app.indexOf("case 'strike-at':"));
+  assert.match(janko, /torusPlay\(command\.keys/);
+  assert.doesNotMatch(janko, /playJanko|pitch_classes/, 'no pitch-class act in the frame');
 });
 
 test('a strike\'s answer carries the keys whose notes made way, both ways across the channel, read exactly', async () => {

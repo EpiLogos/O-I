@@ -31,12 +31,18 @@
 //               clip is read, and the state the transport draws changes only on play, stop, a new refusal or a missed note.
 //   Stop        nothing more is struck, and every note the clip holds is let go at once, as Panic lets the keys' go; a note-on already
 //               sent lands at its sample, within one owner lookahead, and what was struck rings out on the torus.
+//   a take      a clip Record laid (O-I #855: its TakeId, and what it keeps beside the set) sets the Torus again as it stood when the
+//               take began before the owner's clock is read (live/liveTake.ts prepareTake), each of its notes strikes the touch-point it
+//               was played at, at its own strength (a note written since plays as any clip's), and each move of the Torus made during
+//               the take is made again at its beat: an instrument edit takes no sample, so it is sent as its beat's sound is rendered,
+//               one owner lookahead after the note-ons of that beat are sent, and lands within a block of it (a move in the pass's last
+//               lookahead is made at the pass's end). Play says from which state the take resumes.
 //
 // Ported from: the store with its owners handed in (inhabitants/ql/devices/qlSitting.ts: now, later, cancel, its bell rung through
 // commitLiveStage); the chord as one act (live/janko/jankoInput.ts flush); the clip's markers (packages/live-set/src/edit.rs markers).
 // MIDI out: a clip's notes do not leave as MIDI yet (jankoInput.ts: they are sent one owner lookahead before they sound).
 import {useEffect, useSyncExternalStore} from 'react'
-import type {StageAudioClock, StageCommand, StageResult} from '@epilogos/expressions-boundary'
+import type {InstrumentEdit, StageAudioClock, StageCommand, StageResult} from '@epilogos/expressions-boundary'
 import {detectTransport, kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
 import type {LiveClipAt, LiveClipReading} from '../../../../../desktop/cradle/src/kernel/types'
 import type {WorldSelection} from '../../../../../desktop/cradle/src/workspace/store'
@@ -46,7 +52,8 @@ import {setSelectionOf} from '../shell/liveSelection'
 import type {ClipHold} from './janko/jankoInput'
 import {livePlayingPath} from './keyboardLayout'
 import {clipAtOf} from './liveWrites'
-import {commitLiveStage, liveTorusState, useLiveTorusReading, type LiveTorusState} from './torusInstrument'
+import {prepareTake} from './liveTake'
+import {commitLiveInstrumentEdit, commitLiveStage, liveTorusState, useLiveTorusReading, type LiveTorusState} from './torusInstrument'
 
 /** A timer may wake a hair before its moment; a strike due within this many seconds is sent at that wake. */
 const DUE_EARLY_SECONDS = 0.002
@@ -125,8 +132,14 @@ export interface ClipAddress {readonly path: string; readonly track: number; rea
 export interface ClipPlayerOwners {
   /** The clip whole, from the set's owner; a refusal throws in the owner's words. */
   readonly read: (address: ClipAddress) => Promise<LiveClipReading>
+  /** Before a clip a take gave plays: the Torus set again as it stood when the take began (live/liveTake.ts prepareTake, O-I #855),
+   * answering where the take resumes from and how each of its notes was played; null for a clip no take gave. Absent, nothing is
+   * prepared. */
+  readonly prepare?: (clip: LiveClipReading) => Promise<ClipPrepared | null>
   /** The torus owner's audio clock, read once per press (readAudioClock); a refusal throws in the owner's words. */
   readonly clock: () => Promise<StageAudioClock>
+  /** One instrument edit of a take's move (commitLiveInstrumentEdit), settling with the owner's answer. Absent, no move is made. */
+  readonly edit?: (edit: InstrumentEdit) => Promise<StageResult>
   /** One act of the clip on the part's one playing path (keyboardLayout.ts livePlayingPath, jankoInput.ts clipStrike): its notes' keys
    * struck at the owner's sample `at`, each held until its hold is let go; settling with the owner's answer. */
   readonly strike: (notes: readonly ClipHold[], amplitude: number, at: string) => Promise<StageResult>
@@ -142,6 +155,16 @@ export interface ClipPlayerOwners {
   readonly random: () => number
 }
 
+/** A take prepared to play again: where it resumes from, in words; how a note of it was played (the touch-point it struck and its exact
+ * strength), by its number and its beat in the clip, null for a note the take did not play (one written since); and the moves of the
+ * Torus made during it, each the instrument edits it made, at its beat in the clip, in time order. */
+export interface ClipPrepared {
+  readonly resumes: string
+  readonly voice?: (note: number, beat: number) => {readonly touch: number; readonly strength: number} | null
+  readonly moves?: readonly ClipMove[]
+}
+export interface ClipMove {readonly beat: number; readonly edits: readonly InstrumentEdit[]}
+
 export interface ClipPlayState {
   /** The clip that plays: where it stands, its name and the tempo it plays at; null while none plays. */
   readonly playing: {readonly address: ClipAddress; readonly name: string; readonly bpm: number} | null
@@ -153,6 +176,8 @@ export interface ClipPlayState {
   readonly missed: number
   /** Why the clip did not play, or stopped. */
   readonly fault: string | null
+  /** A take's words on the state it resumes from, as it was prepared to play; null for a clip no take gave. */
+  readonly resumes: string | null
 }
 
 export interface ClipPlayer {
@@ -164,7 +189,7 @@ export interface ClipPlayer {
   stop(): void
 }
 
-const IDLE: ClipPlayState = {playing: null, starting: false, refused: null, missed: 0, fault: null}
+const IDLE: ClipPlayState = {playing: null, starting: false, refused: null, missed: 0, fault: null, resumes: null}
 const said = (cause: unknown) => cause instanceof Error ? cause.message : String(cause)
 
 /** Where a press stands on the owner's audio clock: the sample the clip's start lands at (one owner lookahead past the sound it has
@@ -195,6 +220,12 @@ interface Run {
   readonly origin: number
   /** Where the clip stands on the owner's audio clock. */
   readonly timing: Extract<ClipTiming, {anchor: bigint}>
+  /** How a take's notes were played, as it was prepared; null for a clip no take gave. */
+  readonly voice: ClipPrepared['voice'] | null
+  /** A take's moves, in time order, the next of them, and the owner's lookahead (seconds): a move is sent as its beat is rendered. */
+  readonly moves: readonly ClipMove[]
+  move: number
+  readonly lead: number
   plan: Extract<ClipPlan, {ok: true}>
   pass: ClipPass
   /** Seconds from the clip's start to the pass's first beat. */
@@ -239,15 +270,19 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
   /** One act, struck to land at its own sample (`seconds` from the clip's start); each note that sounds is held until its own end. */
   const send = (r: Run, strike: ClipStrike, seconds: number) => {
     const sounding: ClipHold[] = []
+    // A take's note strikes the touch-point it was played at, at its own strength; the act's strength is the strongest of its notes.
+    let amplitude = r.voice ? 0 : strike.amplitude
     for (const note of strike.notes) {
       if (note.chance < 1 && !(owners.random() < note.chance)) continue
       const hold = `clip:${++held}`
-      sounding.push({hold, note: note.note})
+      const voiced = r.voice?.(note.note, strike.beat) ?? null
+      sounding.push(voiced ? {hold, note: note.note, touch: voiced.touch} : {hold, note: note.note})
+      if (r.voice) amplitude = Math.max(amplitude, voiced ? voiced.strength : strike.amplitude)
       endAt(r, timeOf(r, note.end), hold)
     }
     if (sounding.length === 0) return
     const at = String(r.timing.anchor + BigInt(Math.round(seconds * r.timing.rate)))
-    owners.strike(sounding, strike.amplitude, at).then(answer, failed)
+    owners.strike(sounding, amplitude, at).then(answer, failed)
   }
 
   /** The run ends: no timer, no watch, and every note it holds let go at once. */
@@ -263,11 +298,28 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
     if (holds.length) owners.release(holds)
   }
 
-  /** Wait until the next note-on or note end comes within one owner lookahead of the owner's render, or for the pass's end. */
+  /** The take's next move within the run's pass, if any. */
+  const nextMove = (r: Run) => { const move = r.moves[r.move]; return move && move.beat < r.pass.to ? move : undefined }
+  /** A take's move made again: each of its edits through the instrument command; a refusal is said once, with where the take resumes,
+   * even when the take has played to its end before the owner answers (a later press or Stop leaves it unsaid). */
+  const makeMove = (move: ClipMove) => {
+    const mine = press
+    for (const edit of move.edits) {
+      void owners.edit?.(edit).catch(cause => ({ok: false as const, error: said(cause)})).then(result => {
+        if (mine !== press || result.ok) return
+        const words = `The Torus refused a move of the take: ${result.error}`
+        if (!state.resumes?.includes(words)) publish({resumes: state.resumes ? `${state.resumes} ${words}` : words})
+      })
+    }
+  }
+
+  /** Wait until the next note-on or note end comes within one owner lookahead of the owner's render, a take's move's beat is rendered,
+   * or for the pass's end. */
   const arm = (r: Run) => {
     const next = r.pass.strikes[r.index]
     const passEnd = timeOf(r, r.pass.to)
-    const due = Math.min(next ? timeOf(r, next.beat) : Infinity, r.ends[0]?.at ?? Infinity)
+    const move = nextMove(r)
+    const due = Math.min(next ? timeOf(r, next.beat) : Infinity, r.ends[0]?.at ?? Infinity, move ? timeOf(r, move.beat) + r.lead : Infinity)
     r.timer = owners.later(due <= passEnd ? r.fire : r.turn, Math.max(0, (r.origin + Math.min(due, passEnd) - owners.now()) * 1000))
   }
 
@@ -288,6 +340,7 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
       if (now - seconds > r.timing.slack) late += strike.notes.length
       else send(r, strike, seconds)
     }
+    for (let move = nextMove(r); move && timeOf(r, move.beat) + r.lead <= now + DUE_EARLY_SECONDS; move = nextMove(r)) { r.move++; makeMove(move) }
     missed(late)
     arm(r)
   }
@@ -297,11 +350,14 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
   const turn = (r: Run) => {
     if (r !== run) return
     r.timer = null
+    for (let move = nextMove(r); move; move = nextMove(r)) { r.move++; makeMove(move) }
     const again = r.plan.again
     if (!again) { halt(); publish({playing: null}); return }
     r.passStart += (r.pass.to - r.pass.from) * r.spb
     r.pass = again
     r.index = 0
+    r.move = r.moves.findIndex(move => move.beat >= again.from)
+    if (r.move < 0) r.move = r.moves.length
     const length = (again.to - again.from) * r.spb, now = owners.now() - r.origin
     let late = 0
     while (r.passStart + length + r.timing.slack < now) { for (const strike of again.strikes) late += strike.notes.length; r.passStart += length }
@@ -320,8 +376,12 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
     }, cause => { if (r === run) publish({fault: `The clip's edit was not read, so it plays as it was: ${said(cause)}`}) })
   }
 
-  const begin = (address: ClipAddress, bpm: number, plan: Extract<ClipPlan, {ok: true}>, timing: Extract<ClipTiming, {anchor: bigint}>) => {
-    const r: Run = {address, spb: 60 / bpm, origin: owners.now(), timing, plan, pass: plan.first, passStart: 0, index: 0, ends: [], timer: null,
+  const begin = (address: ClipAddress, bpm: number, plan: Extract<ClipPlan, {ok: true}>, timing: Extract<ClipTiming, {anchor: bigint}>,
+    take: ClipPrepared | null, lead: number) => {
+    const moves = [...(take?.moves ?? [])].filter(move => finite(move.beat) && move.edits.length > 0).sort((a, b) => a.beat - b.beat)
+    const first = moves.findIndex(move => move.beat >= plan.first.from)
+    const r: Run = {address, spb: 60 / bpm, origin: owners.now(), timing, voice: take?.voice ?? null, moves, move: first < 0 ? moves.length : first, lead,
+      plan, pass: plan.first, passStart: 0, index: 0, ends: [], timer: null,
       unwatch: () => {}, fire: () => fire(r), turn: () => turn(r)}
     run = r
     r.unwatch = owners.watch(address, () => retake(r))
@@ -341,12 +401,23 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
         if (mine !== press) return
         const plan = clipPlan(clip)
         if (!plan.ok) { publish({starting: false, fault: plan.reason}); return }
-        // The owner's clock is read last, so the clip's anchor stands on the sound the owner has rendered as the clip begins.
-        return owners.clock().then(clock => {
+        // A take's Torus is set again first; the owner's clock is read last, so the clip's anchor stands on the sound the owner has
+        // rendered as the clip begins.
+        let take: ClipPrepared | null = null
+        const prepared: Promise<ClipPrepared | null> = owners.prepare
+          ? owners.prepare(clip).catch((cause: unknown) => ({resumes: `The take's Torus was not set again: ${said(cause)}`}))
+          : Promise.resolve(null)
+        return prepared.then(ready => {
           if (mine !== press) return
+          take = ready
+          const resumes = ready?.resumes ?? null
+          if (resumes !== state.resumes) publish({resumes})
+          return owners.clock()
+        }).then(clock => {
+          if (mine !== press || clock === undefined) return
           const timing = clipTiming(clock)
           if ('refused' in timing) publish({starting: false, fault: timing.refused})
-          else begin(address, bpm, plan, timing)
+          else begin(address, bpm, plan, timing, take, clock.lookahead_seconds)
         }, cause => { if (mine === press) publish({starting: false, fault: `The torus did not read its audio clock: ${said(cause)}`}) })
       }, cause => { if (mine === press) publish({starting: false, fault: `The set's owner did not read the clip: ${said(cause)}`}) })
     },
@@ -371,7 +442,9 @@ function candidateOwners(): ClipPlayerOwners {
       if (answer.error || answer.outcome?.result !== 'live_clip_reading') throw new Error(answer.error ?? 'The set\'s owner did not answer the clip')
       return answer.outcome.reading.clip
     },
+    prepare: clip => prepareTake(clip, commitLiveInstrumentEdit),
     clock: () => readAudioClock(commitLiveStage),
+    edit: commitLiveInstrumentEdit,
     strike: (notes, amplitude, at) => livePlayingPath().clipStrike(notes, amplitude, at),
     release: holds => livePlayingPath().clipRelease(holds),
     watch: (address, changed) => subscribeSet(address.path, changed),
@@ -421,7 +494,7 @@ function torusRefusal(torus: LiveTorusState | null): string | null {
 export function clipPlayBindings(input: ClipPlayInput): {play: SlotBinding; stop: SlotBinding} {
   const {address, bpm, state} = input
   const lit = state.playing !== null
-  const notes = [state.fault, state.refused && `The torus refused a note: ${state.refused}`,
+  const notes = [state.fault, state.resumes, state.refused && `The torus refused a note: ${state.refused}`,
     state.missed > 0 && `${state.missed} note-on${state.missed === 1 ? ' came' : 's came'} too late to strike and ${state.missed === 1 ? 'was' : 'were'} let go.`]
     .filter((note): note is string => typeof note === 'string' && note.length > 0).join(' ')
   const tell = (text: string) => notes ? `${text} ${notes}` : text

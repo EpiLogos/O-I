@@ -1,12 +1,15 @@
 // Live's transport bindings (moved from shell/modeTransports.tsx, which registers them; O-I #740: loaded when Live's transport first
 // draws). The mode in force (root, scale) and its key and MIDI maps; Play and Stop over the clip THE selection names, else the open set in
-// the one engine (live/liveEngine.ts).
+// the one engine (live/liveEngine.ts); Record over the part THE selection chooses, with the Torus kept with the set (live/liveTake.ts).
 import type {UseModeTransport} from '../modeTransports'
 import {PITCH_CLASS_NAMES} from '../../live/modes'
 import {setLiveModeHold, useLiveModeInForce} from '../../native/liveModeCatalogue'
 import {MidiMapHost, MidiMapToggles} from '../../live/midiMap/midiMapControls'
 import {clipAddressOf, useLiveClipPlay} from '../../live/clipPlayer'
 import {useLiveEngineTransport} from '../../live/liveEngine'
+import {useLiveRecord} from '../../live/liveTake'
+import {useLiveTorusReading} from '../../live/torusInstrument'
+import {setSelectionOf} from '../liveSelection'
 import {useOptionalContinuity} from '../../continuity/workspace'
 
 export const useLiveTransport: UseModeTransport = ({tempoBpm, setPath = null}) => {
@@ -19,9 +22,15 @@ export const useLiveTransport: UseModeTransport = ({tempoBpm, setPath = null}) =
   const selection = useOptionalContinuity()?.current.context?.selection
   const clip = useLiveClipPlay(selection, tempoBpm)
   const engine = useLiveEngineTransport(setPath)
+  // Record (§21.2 Transport, "Record | Records what you play into Arrangement view as notes"; §21.1, "each pass lies as a take lane under
+  // its track"; O-I #855): what you play on the part THE selection chooses, laid in the set as a take; the set keeps the Torus with it.
+  const torus = useLiveTorusReading()
+  const record = useLiveRecord({setPath, track: setSelectionOf(selection, setPath ?? undefined)?.track ?? null, bpm: tempoBpm, torus,
+    mode: ready ? {root: hold.root, scale: hold.key} : null})
   const playStop = clipAddressOf(selection) ? clip : engine
   return {
     ...playStop,
+    record,
     tempo: {readout: {value: tempoBpm?.toFixed(2) ?? '—', title: 'Tempo — the set\'s tempo · document read-only until the editing owner lands'}},
     root: {control: <select aria-label="Root note" title={`Root — the mode in force's root. ${line}`} disabled={!ready}
       value={ready ? String(hold.root) : ''} onChange={event => setLiveModeHold({root: Number(event.target.value)})}>

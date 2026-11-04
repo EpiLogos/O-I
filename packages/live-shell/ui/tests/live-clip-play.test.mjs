@@ -546,16 +546,15 @@ test('the frame runs each strike through the native field with its sample, and a
   assert.match(run, /case 'janko':[\s\S]*?if\(command\.action==='strike'\)\{const made_way=await nativeField\.controller\.torusPlay\(command\.keys,command\.amplitude,command\.at_samples_elapsed\);/,
     'a clip\'s note-on: its keys at its sample')
   assert.match(run, /if\(command\.action==='release'\)\{await nativeField\.controller\.torusRelease\(command\.keys\);return \{ok:true\};\}/, 'a note\'s end')
-  // The pitch-class act stays for the QL sitting's bell (inhabitants/ql/devices/qlSitting.ts), struck through the owner's played voices.
-  assert.match(run, /case 'janko':[\s\S]*?await nativeField\.playJanko\(command\.pitch_classes,command\.amplitude,command\.at_samples_elapsed\);/)
+  // REPLACED (O-I #855 fold-in): the pitch-class act the QL sitting's bell struck through the owner's played voices (nativeField.ts
+  // playJanko, planJankoStrike) is retired; the bell strikes its key on the one path (sitting-bell-keys.test.mjs), so the janko case runs
+  // keys and nothing else.
+  const janko = run.slice(run.indexOf("case 'janko':"), run.indexOf("case 'strike-at':"))
+  assert.doesNotMatch(janko, /playJanko|pitch_classes/, 'no pitch-class act')
   assert.match(run, /case 'strike-at':[\s\S]*?await nativeField\.controller\.playAt\(command\.points,command\.amplitude,command\.at_samples_elapsed\);/)
   assert.match(run, /case 'audio-clock':[\s\S]*?return \{ok:true,clock:nativeField\.controller\.audioClock\(\)\};/)
   const answer = app.slice(app.indexOf('async function answerStageCommand('), app.indexOf('function openStudioSection('))
   assert.match(answer, /const answer=await runStageCommand\(command\);window\.parent\.postMessage\(stageReplyMessage\(req,answer,command\),'\*'\);/)
-  const nativeField = readFileSync(join(journeys, 'src/nativeField.ts'), 'utf8')
-  const body = nativeField.slice(nativeField.indexOf('const playJanko='), nativeField.indexOf('const touch=('))
-  assert.match(body, /planJankoStrike\(reading\.instrument\?\.influence\?\.played_addresses,pitchClasses\)/)
-  assert.match(body, /await controller\.playVoices\(plan\.refs,amplitude,at\)/)
 })
 
 // ---------------------------------------------------------------------------------------------------- Live's transport

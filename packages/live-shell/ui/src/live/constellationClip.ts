@@ -15,8 +15,9 @@
 //     chord", §21.1 The input), for the clip's whole length: the constellation's figure, not an order or a rhythm the wiki does not state.
 //     A key two members name sounds once. A member with no declared position strikes no key and is named.
 // What the grammar does not state is the clip's frame, and it is held to Live's own defaults for a new clip: one bar (CLIP_BEATS), looped,
-// each note at velocity 100, in the octave from C3 (MIDI 60; the torus strikes by pitch class, live/clipPlayer.ts, so the octave is
-// presentation until a key's point is ruled, MT1).
+// each note at velocity 100, in the octave from C3 (MIDI 60). The octave is the note's own: as the clip plays, each note strikes the key a
+// MIDI note of its number strikes, at its pitch's first touch-point (live/clipPlayer.ts on the one playing path, live/janko/jankoInput.ts
+// keyForNote; O-I #790), in that octave's period of the surface. A member's own touch-point on its key is not carried by a MIDI note.
 //
 // The clip is made by the set's owner (kernel live_clip_create → packages/live-set edit.rs clip_create, in the part's first empty slot, in
 // the document's own shape) with the constellation's ref as its source, kept in the DLW's record beside the set (live-set sources.rs), and

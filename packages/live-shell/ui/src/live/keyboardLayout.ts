@@ -7,6 +7,7 @@ import {useSyncExternalStore} from 'react'
 import type {KeyboardLayoutName} from './liveChainDevices'
 import {createJankoInput, KEYBOARD_SETTINGS_DEFAULT, KEYBOARD_TRANSPOSE, type JankoInput, type KeyboardSettings} from './janko/jankoInput'
 import {commitLiveStage} from './torusInstrument'
+import {liveTakeRecorder} from './liveTake'
 import {sendLiveMidiOut} from '../native/liveMidi'
 
 let layout: KeyboardLayoutName = 'janko'
@@ -71,7 +72,8 @@ function publish(next: LivePlaying): void {
 }
 
 /** The part's one playing path: every surface and the part's MIDI play through it, to the Torus through the hosted channel, and what it
- * plays leaves through MIDI out. Made once. Its window is the owner's (jankoLayout.ts), its settings these. */
+ * plays leaves through MIDI out; each note it plays is told to Record (live/liveTake.ts, O-I #855). Made once. Its window is the owner's
+ * (jankoLayout.ts), its settings these. */
 export function livePlayingPath(): JankoInput {
   if (live) return live.input
   const input = createJankoInput({
@@ -81,6 +83,7 @@ export function livePlayingPath(): JankoInput {
     midiOut: messages => sendLiveMidiOut(messages),
     onResult: result => { if (live) publish({held: live.state.held, refusal: result.ok ? null : result.error}) },
     onHeld: held => { if (live) publish({held, refusal: live.state.refusal}) },
+    onNote: played => liveTakeRecorder.played(played),
   })
   live = {input, state: IDLE, transform: null}
   if (typeof window !== 'undefined' && typeof globalThis === 'object') {

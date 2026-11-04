@@ -4,9 +4,10 @@
 // no rack stands it (TechneDevices.tsx); this binding of its owners stays for the practice world's sitting clip.
 //   the time       the transport's: Play begins the sitting, Stop ends it now, the length ends it at its bell. `playing` and `elapsed`
 //                  are readings of that time while it plays (desktop/cradle/src/nara/sitting.ts);
-//   the bell       the field's own sound: the one instrument rings the bell's note as its own strike (live/torusInstrument.ts
-//                  commitLiveStage, the Jankó's `janko play` command — the torus sounds it), at the start, at each interval and at the
-//                  end. No sample is added; with no instrument mounted the bell is silent and the sitting says so;
+//   the bell       the field's own sound: the bell's note strikes its key on the Torus through the part's one playing path and is
+//                  let go at once, so the body rings it out (live/keyboardLayout.ts livePlayingPath, live/janko/jankoInput.ts ring),
+//                  at the start, at each interval and at the end. No sample is added; with no instrument mounted, or no surface from
+//                  the owner, the bell is silent and the sitting says so;
 //   the record     a page in the practice world (desktop/cradle/src/nara/practiceWorld.ts makePracticePage): a Flow marked as a sitting
 //                  whose `meta.sitting` is the record — the time actually sat, never the length set — made through Central's own
 //                  creation door when the sitting ends. With After on Write a line, it opens in a pane for the line;
@@ -25,7 +26,7 @@ import type {CentralLocation} from '../../../../../../../desktop/cradle/src/kern
 import type {StageResult} from '@epilogos/expressions-boundary'
 import {readWorlds} from '../../../central/centralWorlds'
 import {documentLayoutWriter} from '../../../central/documents/documentDoor'
-import {commitLiveStage} from '../../../live/torusInstrument'
+import {livePlayingPath} from '../../../live/keyboardLayout'
 import {useLiveModeHold} from '../../../native/liveModeCatalogue'
 import type {TransportBindings} from '../../../frame/transport/slots'
 import type {SdkParamRow} from '../../sdk/define'
@@ -58,7 +59,7 @@ export interface SittingOwners {
   readonly cancel: (handle: unknown) => void
 }
 
-/** The torus's own strike for the bell (the Jankó's command: one note, struck as a pointer strikes, never a sample). */
+/** The bell's strike on the torus: one key, struck as a pointer strikes, never a sample. */
 const BELL_AMPLITUDE = 0.35
 
 const practiceWorld = async (transport: KernelTransportStatus) => {
@@ -77,7 +78,7 @@ const localDay = (ms: number) => {
 function centralOwners(): SittingOwners {
   const transport = () => detectTransport()
   return {
-    ring: pitchClass => commitLiveStage({command: 'janko', action: 'play', pitch_classes: [pitchClass], amplitude: BELL_AMPLITUDE}),
+    ring: pitchClass => livePlayingPath().ring(pitchClass, BELL_AMPLITUDE),
     keep: async record => {
       const world = await practiceWorld(transport())
       const title = sittingTitle(record)
