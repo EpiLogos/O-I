@@ -27,7 +27,7 @@ use std::{
     path::PathBuf,
     process::{Command, Stdio},
     sync::{
-        atomic::{AtomicU64, Ordering},
+        atomic::{AtomicBool, AtomicU64, Ordering},
         mpsc, Arc, Mutex, OnceLock,
     },
     time::{Duration, Instant},
@@ -35,6 +35,9 @@ use std::{
 
 /// The owner operation name every hosted node, edge and input carries.
 pub const OWNER_OPERATION: &str = "shared-field.projection";
+/// The read scope a SharedField reading depends on: the window's held field,
+/// retired by its own news (`shared_field_changed`), never by the ground's.
+pub const READ_SCOPE: &str = "shared-field";
 
 /// Why the SharedField client did not serve — the client's own failure
 /// kinds, verbatim, so the graph assembler and the kernel op can state the
@@ -287,6 +290,9 @@ pub struct HeldClient {
     next: AtomicU64,
     launches: AtomicU64,
     cursor: Mutex<String>,
+    /// The client ended after the window had read the field: its next
+    /// connection is news, as a returning service's is.
+    stale: AtomicBool,
     readings: Mutex<HashMap<String, (String, Value)>>,
     observers: Mutex<HashMap<String, Lease>>,
     presence: Mutex<HashMap<String, Lease>>,
@@ -323,6 +329,7 @@ impl HeldClient {
             next: AtomicU64::new(1),
             launches: AtomicU64::new(0),
             cursor: Mutex::new(String::new()),
+            stale: AtomicBool::new(false),
             readings: Mutex::new(HashMap::new()),
             observers: Mutex::new(HashMap::new()),
             presence: Mutex::new(HashMap::new()),
@@ -350,7 +357,18 @@ impl HeldClient {
     }
 
     fn launch(&self) -> Option<(std::process::Child, std::process::ChildStdout)> {
-        let spawned = Command::new(&self.executable)
+        let mut command = Command::new(&self.executable);
+        // In its own folder, never its host's: a host's folder can be removed
+        // while the client still loads, and a client left loading in a folder
+        // that is gone neither ends nor reads its input again, so it would
+        // outlive its host.
+        if let Some(own) = std::path::Path::new(&self.executable)
+            .parent()
+            .filter(|dir| dir.is_absolute())
+        {
+            command.current_dir(own);
+        }
+        let spawned = command
             .arg("--held")
             .env("OI_SHARED_FIELD_TOKEN_LABEL", &self.label)
             .stdin(Stdio::piped())
@@ -464,7 +482,24 @@ impl HeldClient {
             }
             Some("status") => {
                 if let Some(cursor) = message["cursor"].as_str() {
-                    *lock(&self.cursor) = cursor.to_owned();
+                    let told = std::mem::replace(&mut *lock(&self.cursor), cursor.to_owned());
+                    // The field came back (a returning service, a client
+                    // started again) or came back into view whole: what moved
+                    // meanwhile is not named, so the window is told to read
+                    // the field again at this cursor. The first connection is
+                    // no news: nothing was read before it.
+                    let returned = message["state"] == "live"
+                        && told != cursor
+                        && (!told.is_empty() || self.stale.swap(false, Ordering::AcqRel));
+                    if returned {
+                        if let Some(news) = lock(&self.news).as_ref() {
+                            let _ = news.send(FieldChange {
+                                cursor: cursor.to_owned(),
+                                changes: Vec::new(),
+                                more: 0,
+                            });
+                        }
+                    }
                 }
                 // A presence lives as long as the connection that entered
                 // it: when the connection goes, so does the presence, and
@@ -493,7 +528,9 @@ impl HeldClient {
         }
         lock(&self.observers).clear();
         lock(&self.readings).clear();
-        lock(&self.cursor).clear();
+        if !std::mem::take(&mut *lock(&self.cursor)).is_empty() {
+            self.stale.store(true, Ordering::Release);
+        }
     }
 
     /// Answer one request in the owner's words.
@@ -1219,6 +1256,7 @@ mod held_tests {
     const FAKE: &str = r#"#!/usr/bin/env bash
 d="@DIR@"
 printf 'launch %s\n' "$*" >> "$d/launches"
+pwd -P > "$d/cwd"
 printf '{"event":"status","state":"live","cursor":"%s"}\n' "$(cat "$d/cursor")"
 while IFS= read -r line; do
   id="${line#\{\"id\":}"; id="${id%%,*}"
@@ -1237,8 +1275,10 @@ while IFS= read -r line; do
 done
 "#;
 
+    /// Short leases and quick restarts, so a test sees them lapse; a reply
+    /// still has the headroom of every wait a test is owed.
     const QUICK: Timing = Timing {
-        reply: Duration::from_secs(10),
+        reply: HEARD,
         lease: Duration::from_millis(1500),
         sweep: Duration::from_millis(50),
         restart: Duration::from_millis(100),
@@ -1287,13 +1327,14 @@ done
             .collect()
     }
 
+    /// How long a test waits on an event it is owed before it fails: headroom
+    /// for a machine running every suite at once, never a measure of speed.
+    const HEARD: Duration = Duration::from_secs(30);
+
     fn eventually(what: &str, mut done: impl FnMut() -> bool) {
         let began = Instant::now();
         while !done() {
-            assert!(
-                began.elapsed() < Duration::from_secs(30),
-                "timed out waiting for {what}"
-            );
+            assert!(began.elapsed() < HEARD, "timed out waiting for {what}");
             std::thread::sleep(Duration::from_millis(20));
         }
     }
@@ -1387,9 +1428,7 @@ done
             "a second device reads the same cache"
         );
         held.call(&json!({"kind":"fake-tx"})).unwrap();
-        let change = heard
-            .recv_timeout(Duration::from_secs(5))
-            .expect("the transaction came out");
+        let change = heard.recv_timeout(HEARD).expect("the transaction came out");
         assert_eq!(
             change.cursor,
             held.cursor(),
@@ -1430,7 +1469,7 @@ done
         let (sink, heard) = listener();
         let held = HeldClient::start(bin, "owner".into(), Timing::WINDOW, Some(sink));
         held.route(r#"{"event":"transaction","cursor":"tx:1:9","changes":[{"table":"projection","op":"insert","ref":"projection:ok"},{"table":"backing_table","op":"insert","ref":"x"},{"table":"projection","op":"truncate","ref":"y"},{"table":"projection","op":"delete","ref":""}],"more":2}"#);
-        let change = heard.recv_timeout(Duration::from_secs(5)).unwrap();
+        let change = heard.recv_timeout(HEARD).unwrap();
         assert_eq!(change.changes.len(), 1);
         assert_eq!(change.changes[0].reference, "projection:ok");
         assert_eq!(
@@ -1455,6 +1494,105 @@ done
         assert!(
             untold.validate().is_err(),
             "a view the field does not serve is never an event"
+        );
+    }
+
+    #[test]
+    fn a_world_its_clearings_and_its_gatherings_are_named_on_the_event_channel() {
+        let (_, bin) = fake("worlds", json!([]), "projection:one");
+        let (sink, heard) = listener();
+        let held = HeldClient::start(bin, "owner".into(), Timing::WINDOW, Some(sink));
+        held.route(r#"{"event":"transaction","cursor":"tx:1:4","changes":[{"table":"world","op":"update","ref":"world:a"},{"table":"my_world","op":"update","ref":"world:a"},{"table":"world_clearing","op":"insert","ref":"[\"world:a\",\"page:p\",\"\"]"},{"table":"world_gathering","op":"insert","ref":"[\"star:s\",\"world:a\"]"}],"more":0}"#);
+        let change = heard.recv_timeout(HEARD).unwrap();
+        assert_eq!(
+            change
+                .changes
+                .iter()
+                .map(|c| c.table.as_str())
+                .collect::<Vec<_>>(),
+            ["world", "my_world", "world_clearing", "world_gathering"],
+            "the worlds' views are the field's own: each row is named, none only counted"
+        );
+        assert_eq!(change.more, 0);
+        crate::events::KernelEvent::SharedFieldChanged {
+            cursor: change.cursor,
+            changes: change.changes,
+            more: change.more,
+        }
+        .validate()
+        .unwrap();
+    }
+
+    #[test]
+    fn a_field_back_from_a_lost_service_tells_the_window_to_read_again() {
+        let (_, bin) = fake("back", json!([]), "projection:one");
+        let (sink, heard) = listener();
+        let held = HeldClient::start(bin, "owner".into(), Timing::WINDOW, Some(sink));
+        eventually("the first live status", || held.cursor() == "tx:1:0");
+        assert!(
+            heard.recv_timeout(Duration::from_millis(300)).is_err(),
+            "the first connection is no news: nothing was read before it"
+        );
+        held.route(r#"{"event":"status","state":"degraded","cursor":"tx:1:0","detail":"The SharedField connection ended"}"#);
+        held.route(r#"{"event":"status","state":"connecting","cursor":"tx:1:0"}"#);
+        assert!(
+            heard.recv_timeout(Duration::from_millis(300)).is_err(),
+            "losing the service moves nothing: the world stays as it was"
+        );
+        held.route(r#"{"event":"status","state":"live","cursor":"tx:2:0"}"#);
+        let back = heard
+            .recv_timeout(HEARD)
+            .expect("the window is told to read again when the field returns");
+        assert_eq!(back.cursor, "tx:2:0");
+        assert!(
+            back.changes.is_empty() && back.more == 0,
+            "it names nothing: read the field again, whole"
+        );
+        crate::events::KernelEvent::SharedFieldChanged {
+            cursor: back.cursor,
+            changes: back.changes,
+            more: back.more,
+        }
+        .validate()
+        .unwrap();
+        held.route(r#"{"event":"status","state":"live","cursor":"tx:2:0"}"#);
+        assert!(
+            heard.recv_timeout(Duration::from_millis(300)).is_err(),
+            "a status at the cursor already told says nothing more"
+        );
+        // The whole field back in view after a narrower one moved unseen.
+        held.route(r#"{"event":"status","state":"live","cursor":"tx:2:1"}"#);
+        assert_eq!(heard.recv_timeout(HEARD).unwrap().cursor, "tx:2:1");
+    }
+
+    #[test]
+    fn a_client_started_again_tells_the_window_to_read_again() {
+        let (_, bin) = fake("again", json!([]), "projection:one");
+        let (sink, heard) = listener();
+        let held = HeldClient::start(bin, "owner".into(), QUICK, Some(sink));
+        eventually("the first live status", || held.cursor() == "tx:1:0");
+        let _ = held.call(&json!({"kind":"fake-exit"}));
+        let again = heard
+            .recv_timeout(HEARD)
+            .expect("the client's next start tells the window to read again");
+        assert!(again.changes.is_empty());
+        assert_eq!(held.launches(), 2);
+    }
+
+    #[test]
+    fn the_client_stands_in_its_own_folder_whatever_folder_its_host_stands_in() {
+        // A host's working folder can be removed while its client still loads
+        // (a test's ground, a temporary folder), and a client left loading in
+        // a folder that is gone neither ends nor reads its input again: it
+        // outlives its host. Its own folder stands as long as it does.
+        let (dir, bin) = fake("cwd", json!([]), "projection:one");
+        let held = HeldClient::start(bin, "owner".into(), QUICK, None);
+        eventually("the client to stand", || held.cursor() == "tx:1:0");
+        let stood = std::fs::read_to_string(dir.join("cwd")).unwrap();
+        assert_eq!(
+            Path::new(stood.trim()),
+            dir.canonicalize().unwrap(),
+            "the client is started in its own folder, not its host's"
         );
     }
 
@@ -1501,10 +1639,18 @@ done
         );
     }
 
+    /// A lease no busy machine outlasts: what is judged by count (the budget,
+    /// the reducer's passage) never waits on the clock.
+    const KEPT: Timing = Timing {
+        lease: Duration::from_secs(600),
+        ..QUICK
+    };
+
     #[test]
-    fn presence_stands_on_the_held_connection_and_is_left_when_its_lease_lapses() {
+    fn presence_stands_on_the_held_connection_within_its_budget() {
         let (dir, bin) = fake("presence", json!([]), "projection:one");
-        let held = HeldClient::start(bin, "owner".into(), QUICK, None);
+        let held = HeldClient::start(bin, "owner".into(), KEPT, None);
+        eventually("the client to stand", || held.cursor() == "tx:1:0");
         let enter =
             json!({"kind":"enter","field_ref":"oi:field:here","participant_ref":"participant:me"});
         held.call(&enter).unwrap();
@@ -1526,20 +1672,64 @@ done
             held.call(&json!({"kind":"enter","field_ref":"oi:field:over","participant_ref":"participant:me"})),
             Err(CallError::Refused { .. })
         ));
-        // Nobody asks for the field any more: the presences lapse and are left.
-        eventually("the lapsed presences to be left", || {
-            asked_kind(&dir, "leave").len() == 8
-        });
-        assert!(asked_kind(&dir, "leave")
-            .iter()
-            .any(|leave| leave["field_ref"] == "oi:field:here"));
-        eventually("their views to go", || {
-            asked_kind(&dir, "view")
+        assert!(
+            asked_kind(&dir, "leave").is_empty(),
+            "a kept presence is never left"
+        );
+        assert_eq!(held.launches(), 1);
+    }
+
+    #[test]
+    fn a_presence_nobody_keeps_is_left_through_the_reducer_and_its_view_let_go() {
+        let (dir, bin) = fake("lapse", json!([]), "projection:one");
+        let held = HeldClient::start(bin, "owner".into(), QUICK, None);
+        // A start on a busy machine is not counted against the first lease.
+        eventually("the client to stand", || held.cursor() == "tx:1:0");
+        let fields: Vec<String> = (0..3).map(|n| format!("oi:field:{n}")).collect();
+        for field in &fields {
+            held.call(
+                &json!({"kind":"enter","field_ref":field,"participant_ref":"participant:me"}),
+            )
+            .unwrap();
+        }
+        // Nobody asks for the fields any more: each presence lapses and is
+        // left once, whenever the sweep finds it; the order is what is judged.
+        eventually(
+            "the lapsed presences to be left and their views let go",
+            || {
+                asked_kind(&dir, "leave").len() == fields.len()
+                    && asked_kind(&dir, "view")
+                        .iter()
+                        .filter(|view| view["scope"].is_null())
+                        .count()
+                        == fields.len()
+            },
+        );
+        let asked = asked(&dir);
+        let at = |kind: &str, field: &str| {
+            asked
                 .iter()
-                .filter(|view| view["scope"].is_null())
-                .count()
-                == 8
-        });
+                .position(|request| request["kind"] == kind && request["field_ref"] == field)
+        };
+        for field in &fields {
+            let entered = at("enter", field).expect("entered");
+            let left = at("leave", field).expect("each lapsed presence is left");
+            assert!(entered < left, "{field} is left after it was entered");
+        }
+        let views: Vec<&Value> = asked
+            .iter()
+            .filter(|request| request["kind"] == "view")
+            .collect();
+        for kept in views.iter().filter(|view| !view["scope"].is_null()) {
+            assert_eq!(
+                views
+                    .iter()
+                    .filter(|view| view["lease"] == kept["lease"] && view["scope"].is_null())
+                    .count(),
+                1,
+                "each presence's view is let go once"
+            );
+        }
         assert_eq!(held.launches(), 1);
     }
 
@@ -1607,10 +1797,7 @@ done
             "the mark was planted"
         );
         a.call(&json!({"kind":"fake-tx"})).unwrap();
-        assert!(a_heard
-            .recv_timeout(Duration::from_secs(5))
-            .unwrap()
-            .changes[0]
+        assert!(a_heard.recv_timeout(HEARD).unwrap().changes[0]
             .reference
             .contains(MARK));
         // B, on the same subject, at its own cursor.
@@ -1640,6 +1827,205 @@ done
             asked_kind(&b_dir, "observe").len(),
             1,
             "B's reading is B's own client's"
+        );
+    }
+}
+
+#[cfg(test)]
+mod tx14_walk {
+    use super::*;
+    use serde_json::json;
+
+    /// TX14 (docs/experience/STORIES.md): "If the field's service is lost, my
+    /// own work and its open moments stay as they are, and reconnecting brings
+    /// what I have shown back up to date." Walked on the window's own held
+    /// client (the real SharedField client, `client_executable`) against a
+    /// local SpacetimeDB the walk stops and starts again on the same data: the
+    /// client's target in SPACETIMEDB_URI and SPACETIMEDB_DATABASE, its
+    /// credentials under OI_STATE_HOME, and the two acts as shell commands,
+    /// OI_TX14_STOP and OI_TX14_START. Never in CI, never on a shared field.
+    #[test]
+    #[ignore = "TX14 walk: a local SpacetimeDB it stops and starts (SPACETIMEDB_URI, SPACETIMEDB_DATABASE, OI_STATE_HOME, OI_TX14_STOP, OI_TX14_START)"]
+    fn the_field_lost_and_found_again_keeps_my_world_and_brings_it_up_to_date() {
+        let env = |name: &str| {
+            std::env::var(name).unwrap_or_else(|_| panic!("the TX14 walk needs {name}"))
+        };
+        let uri = env("SPACETIMEDB_URI");
+        assert!(
+            uri.starts_with("ws://127.0.0.1:") || uri.starts_with("ws://localhost:"),
+            "the TX14 walk stops and starts a local SpacetimeDB only, not {uri}"
+        );
+        let (_, _, stop, start) = (
+            env("SPACETIMEDB_DATABASE"),
+            env("OI_STATE_HOME"),
+            env("OI_TX14_STOP"),
+            env("OI_TX14_START"),
+        );
+        let shell = |command: &str| {
+            let done = Command::new("/bin/sh").arg("-c").arg(command).status();
+            assert!(done.is_ok_and(|status| status.success()), "{command}");
+        };
+        let until = |what: &str, done: &mut dyn FnMut() -> bool| {
+            let began = Instant::now();
+            while !done() {
+                assert!(
+                    began.elapsed() < Duration::from_secs(90),
+                    "timed out waiting for {what}"
+                );
+                std::thread::sleep(Duration::from_millis(100));
+            }
+            eprintln!("tx14: {what} after {:?}", began.elapsed());
+        };
+        let run = std::process::id();
+        let body = |seed: u64| {
+            json!({"body_ref":format!("body:tx14:{run}:{seed}"),"seed":seed,"generator":{"id":"fbm-sphere","version":2},
+                "landmass":{"sea_level":0.5,"continents":1.7,"relief":0.55,"coast":"smooth"},
+                "climate":{"warmth":0.58,"moisture":0.6,"ice_caps":0.3},"sky":{"atmosphere":0.6,"clouds":0.35,"axial_tilt_deg":18}})
+        };
+        let (send, heard) = mpsc::channel();
+        let send = Mutex::new(send);
+        let sink: ChangeSink = Arc::new(move |change: &FieldChange| {
+            let _ = lock(&send).send(change.clone());
+        });
+        let me = HeldClient::start(
+            client_executable().into_os_string(),
+            "tx14-me".into(),
+            Timing::WINDOW,
+            Some(sink),
+        );
+        // The client's own standing on the field: `status` is answered by the
+        // client whatever its connection, with what it holds.
+        let held = |client: &HeldClient| {
+            client
+                .call(&json!({"kind":"status"}))
+                .map(|status| status["held"].clone())
+                .unwrap_or(Value::Null)
+        };
+        until("my held field to stand", &mut || {
+            held(&me)["state"] == "live"
+        });
+        let mine = format!("world:tx14:{run}:mine");
+        me.call(&json!({"kind":"world-put","world_ref":mine,"body":body(1234),"linked":true}))
+            .unwrap();
+        me.call(&json!({"kind":"clearing-open","world_ref":mine,"part_ref":"page:tx14-reading","audience":"public",
+            "shown":{"kind":"page","label":"A reading shown before the service went"}}))
+        .unwrap();
+        let observe = json!({"kind":"observe","observer_ref":"tx14:explore"});
+        let clearings = |reading: &Value| -> Vec<String> {
+            reading["snapshot"]["clearings"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .map(|c| {
+                    format!(
+                        "{}/{}",
+                        c["world_ref"].as_str().unwrap_or(""),
+                        c["part_ref"].as_str().unwrap_or("")
+                    )
+                })
+                .collect()
+        };
+        let worlds = |reading: &Value| -> Vec<String> {
+            reading["snapshot"]["worlds"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .filter_map(|w| w["world_ref"].as_str().map(str::to_owned))
+                .collect()
+        };
+        let before = me.call(&observe).unwrap();
+        let shown = format!("{mine}/page:tx14-reading");
+        assert!(worlds(&before).contains(&mine) && clearings(&before).contains(&shown));
+        // My own acts' news may still be on its way: let it settle first.
+        while heard.recv_timeout(Duration::from_millis(500)).is_ok() {}
+
+        // The service goes.
+        shell(&stop);
+        let mut lost = Value::Null;
+        until("the client to know the service is lost", &mut || {
+            lost = held(&me);
+            lost["state"] != "live"
+        });
+        eprintln!("tx14: while lost the client stands {lost}");
+        let kept = me.call(&observe).unwrap();
+        assert_eq!(
+            kept, before,
+            "my world and what it shows stay as they are while the service is lost"
+        );
+        let refused = me.call(&json!({"kind":"clearing-open","world_ref":mine,"part_ref":"page:tx14-while-lost","audience":"public",
+            "shown":{"kind":"page","label":"Shown while the service was lost"}}));
+        let Err(CallError::Unavailable { detail }) = refused else {
+            panic!("a showing while the service is lost is refused, not queued: {refused:?}")
+        };
+        eprintln!("tx14: a showing while lost is refused: {detail}");
+        let why = detail.rsplit(':').next().unwrap_or("").trim();
+        assert!(
+            why.len() > 3 && !why.contains('`'),
+            "the refusal reaches the person in words, saying why: {detail:?}"
+        );
+        let moved = heard.try_recv();
+        assert!(
+            moved.is_err(),
+            "losing the service moves nothing in the window: {moved:?}"
+        );
+
+        // The service comes back on the same data; another identity shows a
+        // page as soon as it can, before or after my client is back.
+        shell(&start);
+        let other = HeldClient::start(
+            client_executable().into_os_string(),
+            "tx14-other".into(),
+            Timing::WINDOW,
+            None,
+        );
+        until("the other identity's field to stand", &mut || {
+            held(&other)["state"] == "live"
+        });
+        let theirs = format!("world:tx14:{run}:theirs");
+        other
+            .call(&json!({"kind":"world-put","world_ref":theirs,"body":body(98765),"linked":true}))
+            .unwrap();
+        other.call(&json!({"kind":"clearing-open","world_ref":theirs,"part_ref":"page:tx14-meanwhile","audience":"public",
+            "shown":{"kind":"page","label":"Shown while you were away"}}))
+        .unwrap();
+        let mut news = Vec::new();
+        until("the window to be told to read the field again", &mut || {
+            while let Ok(change) = heard.try_recv() {
+                news.push(change);
+            }
+            news.iter()
+                .any(|change| change.changes.is_empty() && change.more == 0)
+        });
+        let after = me.call(&observe).unwrap();
+        assert_ne!(
+            after["cursor"], before["cursor"],
+            "the field is read at a new cursor"
+        );
+        let meanwhile = format!("{theirs}/page:tx14-meanwhile");
+        until("what was shown meanwhile to reach my window", &mut || {
+            clearings(&me.call(&observe).unwrap()).contains(&meanwhile)
+        });
+        let after = me.call(&observe).unwrap();
+        assert!(
+            worlds(&after).contains(&mine),
+            "my world is back up to date"
+        );
+        assert!(
+            clearings(&after).contains(&shown),
+            "what I had shown is shown again"
+        );
+        assert!(worlds(&after).contains(&theirs));
+        assert!(
+            !clearings(&after).contains(&format!("{mine}/page:tx14-while-lost")),
+            "nothing reconnecting replays an act"
+        );
+        eprintln!(
+            "tx14: {} news after the service returned ({} naming rows); read again at {}",
+            news.len(),
+            news.iter()
+                .filter(|change| !change.changes.is_empty())
+                .count(),
+            after["cursor"]
         );
     }
 }

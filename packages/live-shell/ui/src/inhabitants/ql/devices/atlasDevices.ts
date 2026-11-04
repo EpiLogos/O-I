@@ -26,7 +26,8 @@ import {
   type BodyChoice, type WorldBodyState,
 } from '../../../projections/atlas/body/worldBody'
 import {suiteStanding} from '../../../projections/atlas/provider/suiteStanding'
-import {systemReading} from '../../../projections/atlas/system/systemStore'
+import {chooseFieldView, fieldView, heldField, systemReading, type FieldView} from '../../../projections/atlas/system/systemStore'
+import {APERTURES, AUDIENCES, type Aperture, type Audience, type HeldField} from '../../../projections/atlas/system/fieldModel'
 import {yourLocations, type BodyLocation} from '../../../projections/atlas/system/bodyLocations'
 import {PLACE_KINDS, choosePlaceKind, notePlaceTool, placeKindChoice, type PlaceKind} from '../../../projections/atlas/places/placeTool'
 import {paneChrome, pressPane, type PaneChromeReading} from '../../../projections/atlas/paneChrome'
@@ -115,6 +116,9 @@ export interface AtlasReading {
   /** [#762] what the atlas drew over the globe that is the World's, stood down in the pane and read from it (projections/atlas/paneChrome.ts):
    * the focus label's name, line and acts, the reading cards' closes, the graph's display settings; absent where it is not read */
   readonly pane?: PaneChromeReading
+  /** [O-I #858] the held field as the window last read it, the view's own choices at Field scale, and your own body's ref (the world of
+   * yours whose body it is, is your world) */
+  readonly field?: {readonly held: HeldField; readonly view: FieldView; readonly yours: string | null}
 }
 
 /** Read the mounted atlas (null while none stands) and the view the Earth ⇄ Graph device presents. */
@@ -126,7 +130,8 @@ export function atlasReading(handle: AtlasHandle | null, view: AtlasView): Atlas
   const own = system.state === 'read' ? system.bodies.find(item => item.yours) : undefined
   const look = own ? {look: own.look} : {}
   const pane = paneChrome('world')
-  if (!handle) return {mounted: false, view, graph: null, clock: null, globe: null, body, locations, placeKind, pane, ...look}
+  const field = {held: heldField(), view: fieldView(), yours: system.state === 'read' ? system.bodies.find(item => item.yours)?.bodyRef ?? null : null}
+  if (!handle) return {mounted: false, view, graph: null, clock: null, globe: null, body, locations, placeKind, pane, field, ...look}
   const controls = handle.ctl.graphControls?.controls() ?? null
   const {scope, wholeField} = handle.ctl.globeScope
   return {
@@ -137,8 +142,37 @@ export function atlasReading(handle: AtlasHandle | null, view: AtlasView): Atlas
     },
     clock: {mode: handle.time.mode, cursorU: handle.time.cursorU, playing: handle.time.playing, cumulative: handle.time.cumulative},
     globe: {scopeLabel: scope ? scope.label : null, wholeField},
-    body, locations, placeKind, pane, ...look,
+    body, locations, placeKind, pane, field, ...look,
   }
+}
+
+const FIELD_BEING_READ = 'The shared field is being read.'
+
+/** The Field scale's values and standing (manual §17.2; O-I #858): the scale chosen, the aperture and who you look as, the view's own;
+ * the held field's worlds, clearings, stars and gatherings as read, and your own body's ref, from which the face draws the scene
+ * (system/fieldModel.ts fieldSceneOf); and, while the field holds no worlds, Aperture and View as dimmed with its words. */
+export function fieldValues(reading: NonNullable<AtlasReading['field']>): {values: Record<string, ParamValue>; standing: Record<string, Standing>} {
+  const values: Record<string, ParamValue> = {aperture: reading.view.aperture, viewAs: reading.view.viewAs, fieldHeld: reading.held.state === 'read'}
+  if (reading.view.field) values.scale = 'field'
+  const standing: Record<string, Standing> = {}
+  if (reading.held.state === 'read') {
+    const {worlds, clearings, stars, gatherings} = reading.held
+    values.field = JSON.stringify({worlds, clearings, stars, gatherings})
+    if (reading.yours) values.fieldYours = reading.yours
+  } else {
+    const why = reading.held.state === 'reading' ? FIELD_BEING_READ : reading.held.reason
+    standing.aperture = {disabled: why}
+    standing.viewAs = {disabled: why}
+    values.fieldWhy = why
+  }
+  return {values, standing}
+}
+
+/** The view's own hand at Field scale: the scale, the aperture and who you look as. A value that is none of them is not taken. */
+const FIELD_LOCAL: Readonly<Record<string, (value: ParamValue) => void>> = {
+  scale: value => { if (typeof value === 'string') chooseFieldView({field: value === 'field'}) },
+  aperture: value => { if ((APERTURES as readonly unknown[]).includes(value)) chooseFieldView({aperture: value as Aperture}) },
+  viewAs: value => { if ((AUDIENCES as readonly unknown[]).includes(value)) chooseFieldView({viewAs: value as Audience}) },
 }
 
 // ── your world's body: the World device's Body page (T-WORLDS §5 W3; manual §17.2 "Build a planet") ─────────────────────────
@@ -185,13 +219,15 @@ export function bodyRefusal(reading: AtlasReading): string | null {
  * change and a reroll go to the owner as one BodySet; the body choice is the view's own hand. Values no owner reads here (the places,
  * the sky, the graph, the locations on your body) are absent, never defaulted. */
 export function atlasGlobeBinding(reading: AtlasReading): DesignBinding {
-  const values: Record<string, ParamValue> = {...bodyValues(reading.body), view: reading.view, mounted: reading.mounted}
+  // A reading that carries no field part (one made before the field was read into it) hands the face no field: the face then names it.
+  const field = reading.field ? fieldValues(reading.field) : {values: {}, standing: {}}
+  const values: Record<string, ParamValue> = {...bodyValues(reading.body), ...field.values, view: reading.view, mounted: reading.mounted}
   if (reading.globe) {
     values.scope = reading.globe.scopeLabel ?? ''
     if (reading.globe.scopeLabel != null) values.wholeField = reading.globe.wholeField
   }
   const refusal = bodyRefusal(reading)
-  const standing: Record<string, Standing> = {}
+  const standing: Record<string, Standing> = {...field.standing}
   // the locations on your own body: a reading (the places stand on it through their owners' PlaceSet, the landings through each world's
   // own BodySet); the place kind is the view's own choice of what the next click places
   values.placeKind = reading.placeKind
@@ -234,6 +270,7 @@ export function atlasGlobeBinding(reading: AtlasReading): DesignBinding {
       if (Object.keys(body).length) await writeThroughOwner('shell.setWorldBody', body)
     },
     local: {
+      ...FIELD_LOCAL,
       body: value => { if (value === 'own' || value === 'earth' || value === 'other') chooseBody(value) },
       placeKind: value => { if ((PLACE_KINDS as readonly unknown[]).includes(value)) choosePlaceKind(value as PlaceKind) },
       'pane.press': value => { if (value !== undefined) pressPane(value, notePlaceTool) },

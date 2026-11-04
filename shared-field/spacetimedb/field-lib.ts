@@ -40,6 +40,19 @@ export const SUBSCRIPTION = [
   'SELECT * FROM field_now',
   'SELECT * FROM field_day',
 ];
+/** The worlds in the field (O-I #858): every caller-visible world, the
+ * caller's own, the clearings it may see and who has gathered at each star.
+ * Subscribed on their own, so a field whose service does not hold worlds
+ * yet is read as it always was, and says it holds no worlds. */
+export const WORLD_SUBSCRIPTION = [
+  'SELECT * FROM world',
+  'SELECT * FROM my_world',
+  'SELECT * FROM world_clearing',
+  'SELECT * FROM world_gathering',
+];
+/** Whether this connection holds the field's worlds, or why not. */
+export type WorldsHeld = { state: 'held' } | { state: 'unavailable'; detail: string };
+const NO_WORLDS = 'This field\'s service does not hold worlds yet';
 const TIMEOUT_MS = Number(process.env.OI_SHARED_FIELD_TIMEOUT_MS ?? 15_000);
 export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -88,7 +101,7 @@ export function tokenFile(database: string, label = 'owner') {
   return join(state, 'spacetimedb', label === 'owner' ? `${database}.owner-token` : `${database}.${label}-token`);
 }
 
-export interface Client { conn: DbConnection; identity: any; token: string; lifecycle: any; live: any; target: Target; identityHex: string }
+export interface Client { conn: DbConnection; identity: any; token: string; lifecycle: any; live: any; target: Target; identityHex: string; worlds: WorldsHeld }
 
 export async function connect(target: Target, token?: string): Promise<{ conn: DbConnection; identity: any; token: string; lifecycle: any }> {
   const lifecycle = createExploreTransportLifecycle();
@@ -128,8 +141,15 @@ export async function open(target: Target, label = 'owner'): Promise<Client> {
   }
   try { await subscribe(opened.conn, opened.lifecycle); }
   catch (error) { opened.conn.disconnect(); throw error; }
+  const worlds = await holdWorlds(opened.conn);
   const live = createLiveExploreApplication(createSpacetimeExploreSource(opened.conn.db, opened.lifecycle));
-  return { ...opened, live, target, identityHex: opened.identity.toHexString() };
+  return { ...opened, live, target, identityHex: opened.identity.toHexString(), worlds };
+}
+
+/** Subscribe the worlds beside the field; a service without them is said, never an error of the field. */
+async function holdWorlds(conn: DbConnection): Promise<WorldsHeld> {
+  try { await subscribeQueries(conn, WORLD_SUBSCRIPTION); return { state: 'held' }; }
+  catch { return { state: 'unavailable', detail: NO_WORLDS }; }
 }
 
 export function close(client: Client) {
@@ -185,7 +205,9 @@ export function fieldSnapshot(client: Client) {
     activity_liveness: rows(db.activityLiveness).map(activityLivenessRow),
     field_now: rows(db.fieldNow).map(fieldNowReading),
     field_day: rows(db.fieldDay).map(fieldDayReading),
-    counts: { fields: hosted.fields.length, participants: hosted.participants.length, projections: hosted.projections.length, entries: hosted.entries.length, relations: hosted.relations.length, field_now: rows(db.fieldNow).length, field_day: rows(db.fieldDay).length },
+    ...worldReading(client),
+    counts: { fields: hosted.fields.length, participants: hosted.participants.length, projections: hosted.projections.length, entries: hosted.entries.length, relations: hosted.relations.length, field_now: rows(db.fieldNow).length, field_day: rows(db.fieldDay).length,
+      worlds: rows(db.world).length, clearings: rows(db.worldClearing).length, stars: rows(db.sharedField).filter((row: any) => row.kind === 'star').length, gatherings: rows(db.worldGathering).length },
     // The SharedField each Explore entry is hosted in (the row's fieldRef;
     // the entry contract itself carries no field) — what a Watch or a
     // membership reading is scoped to. Keyed by the entry's semantic ref.
@@ -193,6 +215,28 @@ export function fieldSnapshot(client: Client) {
     // A Projection never moves between fields, so its ref names one field.
     projection_fields: Object.fromEntries(rows(db.projection).map((row: any) => [row.projectionRef, row.fieldRef])),
     relation_fields: Object.fromEntries(rows(db.exploreRelation).flatMap((row: any) => { const relation = parse(row.relationJson); return relation?.relation_ref ? [[relation.relation_ref, row.fieldRef]] : []; })),
+  };
+}
+
+/** The worlds as this caller may see them (O-I #858): each world with its body record and whether it is the
+ * caller's own; the clearings it may see; the stars (SharedField rows of kind `star`) with who lit them; and
+ * who has gathered or asked at each. What the caller may not see is not here, and nothing here counts it. */
+export function worldReading(client: Client) {
+  const db: any = client.conn.db;
+  const mine = new Set(rows(db.myWorld).map((row: any) => row.worldRef));
+  const worlds = rows(db.world).map((row: any) => ({ world_ref: row.worldRef, body: parse(row.bodyJson), linked: Boolean(row.linked), mine: mine.has(row.worldRef), updated_at_micros: String(row.updatedAtMicros) }));
+  const stars = rows(db.sharedField).filter((row: any) => row.kind === 'star').map((row: any) => {
+    const contract = parse(row.contractJson) ?? {};
+    const litBy = typeof contract.presentation?.lit_by === 'string' ? contract.presentation.lit_by : null;
+    return { star_ref: row.fieldRef, name: contract.title ?? row.fieldRef, gathers: contract.presentation?.gathers ?? '', comes: contract.presentation?.comes ?? 'asked',
+      lit_by: litBy, mine: litBy !== null && mine.has(litBy), ...(contract.parent_field_ref ? { within: contract.parent_field_ref } : {}) };
+  });
+  return {
+    world_field: client.worlds,
+    worlds,
+    clearings: rows(db.worldClearing).map((row: any) => ({ world_ref: row.worldRef, part_ref: row.partRef, star_ref: row.starRef || null, audience: row.audience, shown: parse(row.shownJson), shown_at_micros: String(row.shownAtMicros) })),
+    stars,
+    gatherings: rows(db.worldGathering).map((row: any) => ({ star_ref: row.starRef, world_ref: row.worldRef, state: row.state, asked_at_micros: String(row.askedAtMicros), ...(row.state === 'gathered' ? { gathered_at_micros: String(row.gatheredAtMicros) } : {}) })),
   };
 }
 
@@ -224,7 +268,7 @@ export async function observeField(client: Client, cursor?: string, ref?: string
       };
       const timer = setTimeout(finish, 10_000);
       removers.push(client.lifecycle.subscribe(finish));
-      for (const name of ['sharedField', 'participant', 'projection', 'contribution', 'exploreEntry', 'exploreRelation', 'myFieldAuthority', 'myContributionReceipt', 'ownerPendingContribution', 'myWatch', 'myContact', 'sharedStage', 'myStageFollow', 'fieldPresence', 'activityLiveness', 'fieldNow', 'fieldDay']) {
+      for (const name of ['sharedField', 'participant', 'projection', 'contribution', 'exploreEntry', 'exploreRelation', 'myFieldAuthority', 'myContributionReceipt', 'ownerPendingContribution', 'myWatch', 'myContact', 'sharedStage', 'myStageFollow', 'fieldPresence', 'activityLiveness', 'fieldNow', 'fieldDay', 'world', 'myWorld', 'worldClearing', 'worldGathering']) {
         const table = (client.conn.db as any)[name];
         if (!table) { finish(); return; }
         for (const event of ['Insert', 'Update', 'Delete']) {
@@ -298,6 +342,7 @@ export const HELD_TABLES: ReadonlyArray<readonly [property: string, table: strin
   ['ownerPendingContribution', 'owner_pending_contribution', 'ingressRef'], ['myWatch', 'my_watch', 'watchRef'], ['myContact', 'my_contact', 'contactRef'],
   ['sharedStage', 'shared_stage', 'stageRef'], ['myStageFollow', 'my_stage_follow', 'followKey'], ['fieldPresence', 'field_presence', 'presenceKey'],
   ['activityLiveness', 'activity_liveness', 'activityKey'], ['fieldNow', 'field_now', 'fieldRef'], ['fieldDay', 'field_day', 'dayKey'],
+  ['world', 'world', 'worldRef'], ['myWorld', 'my_world', 'worldRef'], ['worldClearing', 'world_clearing', 'clearingKey'], ['worldGathering', 'world_gathering', 'gatheringKey'],
 ];
 
 export interface RowChange { table: string; op: 'insert' | 'update' | 'delete'; ref: string }
@@ -395,7 +440,10 @@ export function holdField(options: { label: string; answer: (client: Client, req
     losing = true;
     try { drop(); } finally { losing = false; }
     state = 'degraded';
-    detail = String((error as any)?.message ?? error ?? 'The SharedField connection ended');
+    // The transport's own words when it has any; a socket that only closed
+    // says nothing, and the person is told what happened instead.
+    const said = String((error as any)?.message ?? error ?? '').trim();
+    detail = said || 'The SharedField connection ended';
     status();
     const delay = Math.min(15_000, 500 * 2 ** Math.min(attempt, 5));
     attempt += 1;
@@ -427,8 +475,10 @@ export function holdField(options: { label: string; answer: (client: Client, req
     });
     try { await subscribeQueries(opened.conn, HELD_BASE, opened.lifecycle); } catch (error) { try { opened.conn.disconnect(); } catch {} lost(error); return; }
     if (closed || connection !== epoch) { try { opened.conn.disconnect(); } catch {} return; }
+    const worlds = await holdWorlds(opened.conn);
+    if (closed || connection !== epoch) { try { opened.conn.disconnect(); } catch {} return; }
     const live = createLiveExploreApplication(createSpacetimeExploreSource(opened.conn.db, opened.lifecycle));
-    client = { ...opened, live, target, identityHex: opened.identity.toHexString() };
+    client = { ...opened, live, target, identityHex: opened.identity.toHexString(), worlds };
     state = 'live';
     attempt = 0;
     status();
@@ -501,7 +551,7 @@ export function holdField(options: { label: string; answer: (client: Client, req
       await ready;
       if (state === 'unbound') return { ok: false, error: { kind: 'unbound', message: detail ?? 'no SharedField target bound' } };
       const held = client;
-      if (!held || state !== 'live') return { ok: false, error: { kind: 'unavailable', message: `The SharedField is not reachable now: ${detail ?? 'connecting'}` } };
+      if (!held || state !== 'live') return { ok: false, error: { kind: 'unavailable', message: `The SharedField is not reachable now: ${detail ?? 'it is connecting again'}` } };
       if (!(await glance())) return { ok: false, error: { kind: 'unavailable', message: detail ?? 'The field could not be brought into view' } };
       if (request.kind === 'observe') {
         return { ok: true, data: { schema: 'oi.shared-field.observation/v1', cursor: cursor(), snapshot: { state: 'hosted', ...fieldSnapshot(held) }, ...(typeof request.ref === 'string' && request.ref ? { reading: readRef(held, request.ref) } : {}) } };

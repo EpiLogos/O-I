@@ -95,6 +95,16 @@ export interface ReadingsChangedReceipt extends KernelReceipt {
   epoch: number;
 }
 
+/** The held SharedField client took a transaction that changed what this window's identity can see (`KernelEvent::SharedFieldChanged`,
+ * O-I #858): the field's `cursor` after it, the rows it names (refs only, never content) and how many more it only counts. No rows and
+ * `more` 0 is the field come back from a lost service: read it again, whole. */
+export interface SharedFieldChangedReceipt extends KernelReceipt {
+  event: "shared_field_changed";
+  cursor: string;
+  changes: {table: string; op: "insert" | "update" | "delete"; ref: string}[];
+  more: number;
+}
+
 /** Ephemeral disclosure only. A gap or changed process generation requires
  * current owner readings; it cannot be accepted as an empty event history. */
 export interface KernelEventReplay {

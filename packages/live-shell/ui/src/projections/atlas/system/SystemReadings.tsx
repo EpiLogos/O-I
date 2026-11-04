@@ -23,9 +23,9 @@ import {setReadingOf} from '../../../frame/tracks/useCentralTracks'
 import {useCentralDocumentOpener} from '../../../central/documents/useOpenCentralDocument'
 import {useSpineEpoch} from '../../../owners/spine'
 import {useOwnerReadingsOf, type OwnerRead} from '../../../owners/ownerReading'
-import {useHeldRead, useStableMap} from '../../../owners/ownerCall'
+import {useHeldRead, useOwnerOp, useStableMap} from '../../../owners/ownerCall'
 import {readGround, sourceLocation, type CentralGroundReading} from '../../../../../../../desktop/cradle/src/central/client'
-import type {KernelTransportStatus} from '../../../../../../../desktop/cradle/src/kernel/types'
+import type {KernelOp, KernelTransportStatus} from '../../../../../../../desktop/cradle/src/kernel/types'
 import {baseBody, kernelWorldBodyOwner, subscribeWorldBody, worldBodyState, type WorldBodyOwner, type WorldBodyState} from '../body/worldBody'
 import {isWorldBody, parseWorldBody, type WorldBodyRecord} from '../src/globe/body'
 import {systemOf, systemWorlds, type SystemBody, type SystemBodyReading, type SystemSatellite} from './systemModel'
@@ -34,7 +34,8 @@ import {openSatellite} from './openSatellite'
 import {sessionsOf} from './sessionWorld'
 import {worldFactsOf} from './worldFacts'
 import {subscribeSystemNow, systemNow} from './systemClock'
-import {bindSystemActs, publishSystem} from './systemStore'
+import {bindSystemActs, publishField, publishSystem} from './systemStore'
+import {heldFieldOf} from './fieldModel'
 
 /** Your world's body as the body store reads it, in the System's terms. */
 export function yourBodyReading(state: WorldBodyState): SystemBodyReading {
@@ -104,6 +105,10 @@ const readProjectGround = (transport: KernelTransportStatus, project: string): O
 /** A ground's change horizon, once the owner has answered it: the horizon the agents' artefacts and the register's age are read from. */
 const horizonOf = (ground: CentralGroundReading | null | undefined): unknown => (ground?.sources.state === 'ready' ? ground.sources.data : null)
 
+/** One snapshot of the window's held SharedField (kernel `shared_field` op): the Field scale's reading (O-I #858). */
+const FIELD_SNAPSHOT: KernelOp = {op: 'shared_field', request: {kind: 'snapshot'}}
+const FIELD_SILENT = 'The shared field gave no answer.'
+
 export function SystemReadings(): null {
   const workspace = useWorkspace()
   const {transport} = workspace
@@ -155,6 +160,16 @@ export function SystemReadings(): null {
     return found ? [[world.ref, found] as const] : []
   })), [inSet, allBodies, horizons, held, nowMs])
   const system = useMemo(() => systemOf({worlds: inSet, bodies: allBodies, sessions: sessionRows, artifacts, nowMs, facts}), [inSet, allBodies, sessionRows, artifacts, nowMs, facts])
+
+  // [O-I #858] the held field for the Field scale: a held answer the kernel scopes `shared-field`, so the field's own news
+  // (`shared_field_changed`) retires it and this reader reads it again. Nothing polls the field.
+  const fieldAnswer = useOwnerOp(transport, FIELD_SNAPSHOT, 'shared_field_reading', FIELD_SILENT).reading
+  useEffect(() => {
+    if (transport.kind === 'unavailable') { publishField({state: 'unavailable', reason: transport.reason}); return }
+    if (fieldAnswer.value) publishField(heldFieldOf(fieldAnswer.value.data))
+    else if (fieldAnswer.status === 'refused') publishField({state: 'unavailable', reason: fieldAnswer.error ?? FIELD_SILENT})
+    else publishField({state: 'reading'})
+  }, [transport, fieldAnswer])
 
   useEffect(() => {
     if (transport.kind === 'unavailable') { publishSystem({state: 'unavailable', reason: transport.reason}); return }

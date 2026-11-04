@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { decodeKnowledgeEncounterView, decodeExploreTravel, freshExploreTravel, pushVisit, amendVisit, travelBy, canTravel, currentVisit, EXPLORE_TRAVEL_SCHEMA, EXPLORE_TRAVEL_LIMIT } from '../src/explore/travel.mjs';
-import { fieldReading, searchField, primaryProjection, constellation, relationsOf, watchStanding, watchTargetKind } from '../src/explore/field.mjs';
+import { fieldReading, searchField, primaryProjection, constellation, relationsOf, watchStanding, watchTargetKind, fieldNews, OBSERVATION_RENEW_MS } from '../src/explore/field.mjs';
 import { createExploreEntry } from '../../../shared-field/explore.mjs';
 import { createProjection } from '../../../shared-field/index.mjs';
 import { createWorldPresentation, WORLD_PRESENTATION_SCHEMA } from '../../../shared-field/presentation.mjs';
@@ -232,4 +232,21 @@ test('malformed or mismatched optional geometry preserves the original subject a
 test('view decoding is bounded geometry only and cannot retain copied body or simulation positions',()=>{
   assert.deepEqual(decodeKnowledgeEncounterView({...encounterView(),body:'not view state',positions:[{x:1,y:2}]}),encounterView());
   for(const camera of [{x:1000001,y:0,zoom:1},{x:0,y:0,zoom:.39},{x:0,y:0,zoom:3.01}])assert.equal(decodeKnowledgeEncounterView({...encounterView(),camera}),undefined);
+});
+
+// O-I #858: Explore reads the held field by its news, not by a 500 ms poll. The kernel's `shared_field_changed` receipt
+// (kernel/src/events.rs `SharedFieldChanged`) wakes the observation; between news the observation is only kept, well inside
+// the kernel's two-minute observer lease (kernel/src/shared_field.rs `Timing::WINDOW`).
+const news=(seq,cursor,extra={})=>({seq,schema:'oi.kernel-event/v1',version:1,event:'shared_field_changed',cursor,changes:[{table:'world',op:'insert',ref:'world:a'}],more:0,...extra});
+test('the field\'s newest news is the one Explore wakes on; other receipts and malformed news are none',()=>{
+  assert.equal(fieldNews([]),null);
+  assert.equal(fieldNews([{seq:1,schema:'oi.kernel-event/v1',version:1,event:'readings_changed',scopes:['root'],epoch:1}]),null);
+  assert.deepEqual(fieldNews([news(2,'tx:1:0'),{seq:3,schema:'oi.kernel-event/v1',version:1,event:'file_changed',path:'x'},news(4,'tx:1:1')]),{seq:4,cursor:'tx:1:1'});
+  // The field came back: news naming nothing is still news (read again, whole).
+  assert.deepEqual(fieldNews([news(5,'tx:2:0',{changes:[]})]),{seq:5,cursor:'tx:2:0'});
+  assert.deepEqual(fieldNews([news(6,'tx:2:1'),news(7,'',{}),news(8,'tx:2:2',{changes:'x'})]),{seq:6,cursor:'tx:2:1'},'malformed news wakes nothing');
+});
+test('between news the observation is kept inside the kernel\'s observer lease, never polled',()=>{
+  assert.ok(OBSERVATION_RENEW_MS>=30_000,'not a poll');
+  assert.ok(OBSERVATION_RENEW_MS<=60_000,'renewed at most halfway through the two-minute lease');
 });

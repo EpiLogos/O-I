@@ -4,17 +4,24 @@
 // owner answer its scopes touch (owners/ownerReading.ts `scopesTouch`) is marked unread, and those with live readers are asked again. The kernel answers from its read model unless the
 // scope moved, so the re-ask of an unmoved answer is cheap.
 //
+// The held field's own news is the other notice (kernel/src/events.rs `SharedFieldChanged`, O-I #858): the window's SharedField
+// client took a transaction, or the field came back from a lost service. It retires the answers read from the held field (the kernel
+// scopes them `shared-field`) and the unscoped ones, never a ground reading, once per cursor: news at a cursor already told is none.
+//
 // Pure TypeScript: no view.
 
-import type {KernelReceipt} from '../../../../../desktop/cradle/src/kernel/types'
+import type {KernelReceipt, SharedFieldChangedReceipt} from '../../../../../desktop/cradle/src/kernel/types'
 import {announceReadingsMoved} from '../../../../../desktop/cradle/src/kernel/bridge'
 import {ownerReadings, type OwnerReadings} from './ownerReading'
 
 export const READINGS_CHANGED_EVENT = 'readings_changed'
+export const SHARED_FIELD_CHANGED_EVENT = 'shared_field_changed'
+/** The scope of every answer read from the window's held field (kernel/src/shared_field.rs `READ_SCOPE`). */
+export const SHARED_FIELD_SCOPE = 'shared-field'
 
 /** A scope the kernel names: `root`, `seats`, `aikit`, `work` (any project: named with every project that moved), `clock`, `all`,
- * or `project:<Name>`. */
-export type ReadingsScope = 'root' | 'seats' | 'aikit' | 'work' | 'clock' | 'all' | `project:${string}`
+ * or `project:<Name>`; and `shared-field`, the held field's, which its own news moves. */
+export type ReadingsScope = 'root' | 'seats' | 'aikit' | 'work' | 'clock' | 'all' | 'shared-field' | `project:${string}`
 
 export interface ReadingsChanged {
   scopes: ReadingsScope[]
@@ -33,6 +40,22 @@ export function readingsChangedOf(receipt: KernelReceipt): ReadingsChanged | nul
   return {scopes: scopes as ReadingsScope[], epoch}
 }
 
+export type SharedFieldNews = Pick<SharedFieldChangedReceipt, 'cursor' | 'changes' | 'more'>
+
+const NEWS_OPS: ReadonlySet<string> = new Set(['insert', 'update', 'delete'])
+
+/** The field's news a receipt carries, or null when the receipt is another kind or its fields are not the contract's (a non-empty
+ * cursor, rows each a table, an insert, update or delete, and a ref, and a non-negative count of the rows only counted). */
+export function sharedFieldChangedOf(receipt: KernelReceipt): SharedFieldNews | null {
+  if (receipt.event !== SHARED_FIELD_CHANGED_EVENT) return null
+  const {cursor, changes, more} = receipt
+  if (typeof cursor !== 'string' || cursor === '') return null
+  if (typeof more !== 'number' || !Number.isSafeInteger(more) || more < 0) return null
+  if (!Array.isArray(changes) || !changes.every(change => change !== null && typeof change === 'object' && typeof change.table === 'string'
+    && NEWS_OPS.has(change.op) && typeof change.ref === 'string')) return null
+  return {cursor, changes: changes as SharedFieldNews['changes'], more}
+}
+
 export interface ReadingsChangedDriver {
   /** Take receipts as they arrive; any notice among them schedules the re-read. */
   receive(receipts: readonly KernelReceipt[]): void
@@ -49,11 +72,18 @@ export function createReadingsChangedDriver(registry: OwnerReadings = ownerReadi
   let pending: unknown = null
   /** The scopes of the notices waiting out the debounce. */
   let waiting = new Set<string>()
+  /** The field's cursor last told: news at it again (a replay after a resync) retires nothing. */
+  let told: string | null = null
   return {
     receive(receipts) {
-      const notices = receipts.map(readingsChangedOf).filter((notice): notice is ReadingsChanged => notice !== null)
-      if (notices.length === 0) return
-      for (const notice of notices) for (const scope of notice.scopes) waiting.add(scope)
+      let heard = false
+      for (const receipt of receipts) {
+        const notice = readingsChangedOf(receipt)
+        if (notice) { for (const scope of notice.scopes) waiting.add(scope); heard = true; continue }
+        const news = sharedFieldChangedOf(receipt)
+        if (news && news.cursor !== told) { told = news.cursor; waiting.add(SHARED_FIELD_SCOPE); heard = true }
+      }
+      if (!heard) return
       if (pending !== null) timers.clear(pending)
       pending = timers.set(() => {
         pending = null

@@ -3,6 +3,7 @@
 // overlay (system/systemOverlay.ts), the World device and the browser's Bodies group. It holds the last reading and nothing else:
 // no body is kept, defaulted or invented here, and every write goes to its owner through the acts the readings bind.
 import type {SystemBody, SystemSatellite} from './systemModel'
+import type {Aperture, Audience, HeldField} from './fieldModel'
 
 export type SystemReading =
   | {readonly state: 'unbound'}
@@ -52,3 +53,36 @@ const NO_BODIES: readonly SystemBody[] = []
 
 /** The bodies as they read now (none while the system is not read). */
 export const systemBodies = (): readonly SystemBody[] => (reading.state === 'read' ? reading.bodies : NO_BODIES)
+
+// ── the Field scale: the held field as the window last read it, and the view's own choices (manual §17.2; O-I #858) ─────────
+//
+// The reading is published by the pane's readings (system/SystemReadings.tsx), read through the kernel's `shared_field` op and retired
+// by the field's own news; the choices are the view's own hand (whether the Field is the scale drawn, the aperture and who you look
+// as), never written anywhere.
+
+/** The view's own choices at Field scale. */
+export interface FieldView {
+  /** the Field is the scale drawn (the other scales are the camera's) */
+  readonly field: boolean
+  readonly aperture: Aperture
+  readonly viewAs: Audience
+}
+
+let field: HeldField = {state: 'reading'}
+let fieldChoice: FieldView = {field: false, aperture: 'world', viewAs: 'me'}
+
+export const heldField = (): HeldField => field
+export const fieldView = (): FieldView => fieldChoice
+
+export function publishField(next: HeldField): void {
+  if (JSON.stringify(next) === JSON.stringify(field)) return
+  field = next
+  notify()
+}
+
+export function chooseFieldView(next: Partial<FieldView>): void {
+  const made = {...fieldChoice, ...next}
+  if (made.field === fieldChoice.field && made.aperture === fieldChoice.aperture && made.viewAs === fieldChoice.viewAs) return
+  fieldChoice = made
+  notify()
+}

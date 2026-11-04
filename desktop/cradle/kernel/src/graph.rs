@@ -1105,6 +1105,125 @@ pub fn assemble_shared_field(reading: &mut GraphReading, data: &Value) {
             metadata: Default::default(),
         });
     }
+    assemble_field_worlds(reading, data, &target);
+}
+
+/// The worlds in the held field by connection (O-I #858, manual §17.2 "The
+/// graph view"): each world and each star a node, each clearing a node its
+/// world shows (at its star, when it was shown there), and the ties between
+/// them — a world `gathered` at a star or one that `asks` to, what a world
+/// `shows`, a star `within` another. Only what SharedField gave this caller
+/// is here; what lies under the cloud is no node, no edge and no count.
+fn assemble_field_worlds(reading: &mut GraphReading, data: &Value, target: &str) {
+    let rows = |key: &str| data[key].as_array().cloned().unwrap_or_default();
+    let provenance = || GraphProvenance {
+        source: SHARED_FIELD_INPUT.into(),
+        revision: None,
+        detail: vec![target.to_owned()],
+    };
+    let text = |value: &Value| value.as_str().unwrap_or_default().to_owned();
+    let node = |reading: &mut GraphReading,
+                ref_id: String,
+                kind: &str,
+                label: String,
+                metadata: Vec<(&str, Value)>| {
+        reading.nodes.push(GraphNode {
+            ref_id,
+            kind: kind.into(),
+            label,
+            native_owner: "shared-field".into(),
+            provenance: provenance(),
+            actions: Vec::new(),
+            metadata: metadata
+                .into_iter()
+                .map(|(k, v)| (k.to_owned(), v))
+                .collect(),
+        });
+    };
+    let edge = |reading: &mut GraphReading, relation: &str, from_ref: String, to_ref: String| {
+        reading.edges.push(GraphEdge {
+            relation: relation.into(),
+            from_ref,
+            to_ref,
+            provenance: provenance(),
+            metadata: Default::default(),
+        });
+    };
+    for world in rows("worlds") {
+        let world_ref = text(&world["world_ref"]);
+        if world_ref.is_empty() {
+            continue;
+        }
+        node(
+            reading,
+            world_ref.clone(),
+            "hosted-world",
+            world_ref,
+            vec![
+                ("mine", Value::Bool(world["mine"] == true)),
+                ("linked", Value::Bool(world["linked"] == true)),
+            ],
+        );
+    }
+    for star in rows("stars") {
+        let star_ref = text(&star["star_ref"]);
+        if star_ref.is_empty() {
+            continue;
+        }
+        node(
+            reading,
+            star_ref.clone(),
+            "hosted-star",
+            text(&star["name"]),
+            vec![
+                ("gathers", star["gathers"].clone()),
+                ("comes", star["comes"].clone()),
+                ("mine", Value::Bool(star["mine"] == true)),
+            ],
+        );
+        if let Some(within) = star["within"].as_str().filter(|within| !within.is_empty()) {
+            edge(reading, "within", star_ref, within.to_owned());
+        }
+    }
+    for gathering in rows("gatherings") {
+        let relation = if gathering["state"] == "gathered" {
+            "gathered"
+        } else {
+            "asks"
+        };
+        edge(
+            reading,
+            relation,
+            text(&gathering["world_ref"]),
+            text(&gathering["star_ref"]),
+        );
+    }
+    for clearing in rows("clearings") {
+        let world_ref = text(&clearing["world_ref"]);
+        let part_ref = text(&clearing["part_ref"]);
+        let star_ref = clearing["star_ref"]
+            .as_str()
+            .filter(|star| !star.is_empty());
+        let ref_id = match star_ref {
+            Some(star) => format!("{world_ref}/{part_ref}@{star}"),
+            None => format!("{world_ref}/{part_ref}"),
+        };
+        node(
+            reading,
+            ref_id.clone(),
+            "hosted-clearing",
+            text(&clearing["shown"]["label"]),
+            vec![
+                ("audience", clearing["audience"].clone()),
+                ("shown_kind", clearing["shown"]["kind"].clone()),
+            ],
+        );
+        // A world shows a clearing; one shown at a star is shown there.
+        edge(reading, "shows", world_ref, ref_id.clone());
+        if let Some(star) = star_ref {
+            edge(reading, "shows", ref_id, star.to_owned());
+        }
+    }
 }
 
 /// The native knowledge graph's limit. Its question is the whole world, not
@@ -1244,6 +1363,97 @@ pub fn adapt_native_graph(reading: &mut GraphReading, data: &Value) {
     reading.counts.knowledge_rows = reading.nodes.len();
     reading.counts.nodes = reading.nodes.len();
     reading.counts.edges = reading.edges.len();
+}
+
+#[cfg(test)]
+mod shared_field_world_tests {
+    use super::*;
+    use serde_json::json;
+
+    /// The held field's worlds, stars and clearings, as SharedField's
+    /// snapshot gives them to this caller (field-lib.ts worldReading).
+    fn held_field() -> Value {
+        json!({"schema":"oi.shared-field.snapshot/v1","target":{"uri":"ws://127.0.0.1:3000","database":"field"},
+            "fields":[],"participants":[],"projections":[],"relations":[],"entries":[],
+            "world_field":{"state":"held"},
+            "worlds":[
+                {"world_ref":"world:mine","linked":true,"mine":true,"body":{"body_ref":"body:mine","seed":7}},
+                {"world_ref":"world:theirs","linked":true,"mine":false,"body":{"body_ref":"body:theirs","seed":9}}],
+            "stars":[
+                {"star_ref":"star:rosarium","name":"The Rosarium plates","gathers":"Readings of the plates","comes":"asked","lit_by":"world:mine","mine":true},
+                {"star_ref":"star:plate-4","name":"The fourth plate","gathers":"The vessel","comes":"anyone","lit_by":"world:mine","mine":true,"within":"star:rosarium"}],
+            "gatherings":[
+                {"star_ref":"star:rosarium","world_ref":"world:mine","state":"gathered"},
+                {"star_ref":"star:rosarium","world_ref":"world:theirs","state":"asked"}],
+            "clearings":[
+                {"world_ref":"world:mine","part_ref":"page:reading","star_ref":null,"audience":"public","shown":{"kind":"page","label":"A reading of the fourth plate"}},
+                {"world_ref":"world:mine","part_ref":"page:circle","star_ref":"star:rosarium","audience":"star","shown":{"kind":"page","label":"For the circle"}}]})
+    }
+
+    #[test]
+    fn the_held_fields_worlds_stars_and_clearings_are_drawn_by_connection() {
+        let mut reading = GraphReading::empty();
+        assemble_shared_field(&mut reading, &held_field());
+        let node = |id: &str| {
+            reading
+                .nodes
+                .iter()
+                .find(|n| n.ref_id == id)
+                .unwrap_or_else(|| panic!("no node {id}: {:?}", reading.nodes))
+        };
+        assert_eq!(node("world:mine").kind, "hosted-world");
+        assert_eq!(node("world:mine").metadata["mine"], true);
+        assert_eq!(node("world:theirs").metadata["mine"], false);
+        assert_eq!(node("star:rosarium").kind, "hosted-star");
+        assert_eq!(node("star:rosarium").label, "The Rosarium plates");
+        assert_eq!(node("star:rosarium").metadata["comes"], "asked");
+        let shown = node("world:mine/page:reading");
+        assert_eq!(
+            (shown.kind.as_str(), shown.label.as_str()),
+            ("hosted-clearing", "A reading of the fourth plate")
+        );
+        assert_eq!(
+            node("world:mine/page:circle@star:rosarium").metadata["audience"],
+            "star"
+        );
+        let edges: Vec<(&str, &str, &str)> = reading
+            .edges
+            .iter()
+            .map(|e| (e.relation.as_str(), e.from_ref.as_str(), e.to_ref.as_str()))
+            .collect();
+        for edge in [
+            ("gathered", "world:mine", "star:rosarium"),
+            ("asks", "world:theirs", "star:rosarium"),
+            ("shows", "world:mine", "world:mine/page:reading"),
+            (
+                "shows",
+                "world:mine/page:circle@star:rosarium",
+                "star:rosarium",
+            ),
+            ("within", "star:plate-4", "star:rosarium"),
+        ] {
+            assert!(edges.contains(&edge), "no edge {edge:?} in {edges:?}");
+        }
+        for node in &reading.nodes {
+            assert_eq!(node.native_owner, "shared-field");
+            assert_eq!(node.provenance.source, SHARED_FIELD_INPUT);
+        }
+    }
+
+    #[test]
+    fn a_field_without_worlds_draws_as_it_always_did() {
+        let mut data = held_field();
+        for key in ["worlds", "stars", "gatherings", "clearings", "world_field"] {
+            data.as_object_mut().unwrap().remove(key);
+        }
+        let mut reading = GraphReading::empty();
+        assemble_shared_field(&mut reading, &data);
+        assert!(reading.nodes.is_empty() && reading.edges.is_empty());
+        assert!(matches!(
+            reading.inputs.shared_field,
+            GraphInput::Available { .. }
+        ));
+    }
 }
 
 #[cfg(test)]
