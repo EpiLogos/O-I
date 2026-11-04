@@ -7,7 +7,8 @@
 // rate.mode ('free' | 'sync'), rate (steps a second, the owner's in either mode), rate.note ('n/d' under Sync), tempo (BPM, a reading: the
 // set's, from the transport), band (a reading), fundamental.source ('map' | 'hz'), fundamental (Hz), carrier (0..100 %), carrier.drive
 // (the owner's word: 'pulse', each step of the pulse driving the body), shape ('auto' | 'sequence' | 'torus' | 'figure-eight' | 'spiral' | 'klein-bottle'), figure (a reading),
-// comma (cents, a reading), tuning ('logic' | 'maqam' | 'sky'), tuning.resident (the tunings the scene holds, JSON), polyphony (1..32),
+// comma (cents, a reading), tuning ('logic' | 'maqam' | 'sky'), tuning.resident (the tunings the scene holds, JSON), tuning.maqam (the
+// condition's maqām: its name and the owner's words for its absence, JSON), polyphony (1..32),
 // notes (a reading). The retired Pulse mix, Helix balance, Drive, Agitation, Attack and Release are gone: QL holds none of them.
 //
 // Body source (M2's physical constants, manual §21.2): 'declared' keeps the body's own Strike and Damping; 'tattva' takes them from the
@@ -212,14 +213,28 @@ const pulse = (p: ViewProps) => <>
 /** The tunings the scene holds voices for; a tuning it holds none of is dimmed and says so. */
 const residentOf = (v: V): readonly string[] | undefined => { const raw = json<unknown>(v, 'tuning.resident', undefined); return Array.isArray(raw) ? raw.filter((x): x is string => typeof x === 'string') : undefined }
 
-/** Mode and tuning (manual §21.2): the lens and mode the Torus reads (the field's four determinants) and the Tuning. */
+/** The M2 condition's maqām as the owner names it: its name, and its words for why the scene holds none of its voices. */
+const maqamOf = (v: V): {name: string | null, absent: string | null} | undefined => {
+  const raw = json<unknown>(v, 'tuning.maqam', undefined)
+  if (!raw || typeof raw !== 'object') return undefined
+  const {name, absent} = raw as Record<string, unknown>
+  return {name: typeof name === 'string' ? name : null, absent: typeof absent === 'string' ? absent : null}
+}
+
+/** Mode and tuning (manual §21.2): the lens and mode the Torus reads (the field's four determinants) and the Tuning. A tuning the scene
+ * holds no voices for is not offered, and the Tuning says so; for the maqām, in the owner's words, before it is ever chosen. */
 const modeAndTuning = (p: ViewProps) => {
   const resident = residentOf(p.v)
-  const absent = resident ? TUNINGS.filter(x => !resident.includes(x.value)).map(x => x.label) : []
+  const maqam = maqamOf(p.v)
+  const absent = resident ? TUNINGS.filter(x => !resident.includes(x.value)) : []
+  const said = absent.filter(x => x.value !== 'maqam' || !maqam?.absent).map(x => x.label)
+  const why = absent.some(x => x.value === 'maqam') && maqam?.absent ? ` This scene holds no Maqām voices: ${maqam.absent.replace(/\.$/, '')}.` : ''
+  const options = TUNINGS.filter(x => !resident || resident.includes(x.value))
+    .map(x => x.value === 'maqam' && maqam?.name ? {...x, does: `The voices sound the M2 condition's maqām, ${maqam.name}.`} : x)
   return <>
     {determinants(p)}
-    <Radio {...st(p, 'tuning')} label="Tuning" does={`What the voices sound.${absent.length ? ` This scene holds no ${absent.join(' or ')} voices.` : ''}`} value={strOf(p.v, 'tuning') ?? ''}
-      options={TUNINGS.filter(x => !resident || resident.includes(x.value))} stack onChange={x => p.set('tuning', x)} />
+    <Radio {...st(p, 'tuning')} label="Tuning" does={`What the voices sound.${said.length ? ` This scene holds no ${said.join(' or ')} voices.` : ''}${why}`} value={strOf(p.v, 'tuning') ?? ''}
+      options={options} stack onChange={x => p.set('tuning', x)} />
   </>
 }
 
@@ -364,13 +379,15 @@ export const torus: DesignedDevice = {
     'Sync, a quarter note': {'rate.mode': 'sync', 'rate.note': '1/4', rate: 2, tuning: 'sky', carrier: 25},
     'Sequence: the scene sets the shapes': {shape: 'sequence', figure: undefined},
     'Tattva without a fibre': {'body.source': 'tattva', 'tattva.name': 'Akasha', 'tattva.fibre': undefined},
+    // The condition's maqām with no Bimba spelling: the owner's words for its absence (QL scene_field.rs maqam_reading).
+    'Maqām without a spelling': {'tuning.maqam': JSON.stringify({name: 'Kirdan', absent: 'maqām Kirdan (#2-4.3-0-4), the condition\'s tonic, has no Bimba spelling in the map, so its eight pitches have no source, and no other tuning stands in'})},
     'Stage, the fold evaluated': {'stage.slots': JSON.stringify([{slot: 'form', owner: 'ta-onta:stage:cli-fold', revision: 1}, {slot: 'material.damping'}, {slot: 'clock.inscription'}, {slot: 'clock.lensing'}]), 'stage.last': 'applied'},
     'Stage, a strike bound to the ring': {'stage.procedure': 'ta-onta:stage:cli-bound', 'stage.last': 'applied',
       'stage.bindings': JSON.stringify([{procedure: 'ta-onta:stage:cli-bound', trigger: 'm1-advance', evaluations: 5, max: 16, standing: 'active'}])},
     'Stage, the budget spent': {'stage.procedure': 'ta-onta:stage:cli-bound', 'stage.last': 'applied',
       'stage.bindings': JSON.stringify([{procedure: 'ta-onta:stage:cli-bound', trigger: 'm1-advance', evaluations: 16, max: 16, standing: 'exhausted'}])},
     'No readings': Object.fromEntries(['stage.slots', 'stage.bindings', 'stage.procedures', 'stage.procedure', 'stage.budget', 'stage.last', 'stage.why', 'rack', 'rack.part', 'light',
-      'rate.mode', 'rate', 'rate.note', 'tempo', 'band', 'fundamental.source', 'fundamental', 'carrier', 'carrier.drive', 'shape', 'figure', 'comma', 'tuning', 'tuning.resident', 'polyphony', 'notes',
+      'rate.mode', 'rate', 'rate.note', 'tempo', 'band', 'fundamental.source', 'fundamental', 'carrier', 'carrier.drive', 'shape', 'figure', 'comma', 'tuning', 'tuning.resident', 'tuning.maqam', 'polyphony', 'notes',
       'body', 'strike', 'damping', 'modes', 'level', 'pan', 'view', 'receiver', 'meter', 'lens', 'context-frame', 'harmonic-basis', 'm3-transcription', 'sound', 'cadence', 'scale', 'standing', 'sounding', 'body.source', 'tattva.name', 'tattva.fibre', 'tattva.standing'].map(k => [k, undefined])),
     'As the field reports it': {strike: undefined, damping: undefined, modes: undefined, pan: undefined, view: undefined, receiver: undefined, meter: undefined},
   },

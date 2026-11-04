@@ -37,12 +37,19 @@
 //               the take is made again at its beat: an instrument edit takes no sample, so it is sent as its beat's sound is rendered,
 //               one owner lookahead after the note-ons of that beat are sent, and lands within a block of it (a move in the pass's last
 //               lookahead is made at the pass's end). Play says from which state the take resumes.
+//   its course  a take with its course (O-I #855 round 6d), its clip as it was laid, plays as it was played: the Torus rings again from the
+//               state it rang in as the take began (prepareTake restores the owner's checkpoint, which lands at the owner's sample R),
+//               and each act of the course lands at R + (its sample − the take's first sample): the keys it struck, at its strength (the
+//               path's clipStrike with the very keys), each release in its sample's turn, each setting of the Torus at its sample (the
+//               instrument command with `at_samples_elapsed`). Each is sent as its sample comes within one owner lookahead of the render;
+//               one behind the render when it comes is missed and counted, a setting made at the owner's cursor and said. The level and
+//               effects move at their beats, as any take's. The take ends where its course ends, and lets go what it holds; Stop too.
 //
 // Ported from: the store with its owners handed in (inhabitants/ql/devices/qlSitting.ts: now, later, cancel, its bell rung through
 // commitLiveStage); the chord as one act (live/janko/jankoInput.ts flush); the clip's markers (packages/live-set/src/edit.rs markers).
 // MIDI out: a clip's notes do not leave as MIDI yet (jankoInput.ts: they are sent one owner lookahead before they sound).
 import {useEffect, useSyncExternalStore} from 'react'
-import type {InstrumentEdit, StageAudioClock, StageCommand, StageResult} from '@epilogos/expressions-boundary'
+import type {InstrumentEdit, StageAudioClock, StageCommand, StageKey, StageResult, StageTakeAct} from '@epilogos/expressions-boundary'
 import {detectTransport, kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
 import type {LiveClipAt, LiveClipReading} from '../../../../../desktop/cradle/src/kernel/types'
 import type {WorldSelection} from '../../../../../desktop/cradle/src/workspace/store'
@@ -135,11 +142,12 @@ export interface ClipPlayerOwners {
   /** Before a clip a take gave plays: the Torus set again as it stood when the take began (live/liveTake.ts prepareTake, O-I #855),
    * answering where the take resumes from and how each of its notes was played; null for a clip no take gave. Absent, nothing is
    * prepared. */
-  readonly prepare?: (clip: LiveClipReading) => Promise<ClipPrepared | null>
+  readonly prepare?: (clip: LiveClipReading, bpm: number) => Promise<ClipPrepared | null>
   /** The torus owner's audio clock, read once per press (readAudioClock); a refusal throws in the owner's words. */
   readonly clock: () => Promise<StageAudioClock>
-  /** One instrument edit of a take's move (commitLiveInstrumentEdit), settling with the owner's answer. Absent, no move is made. */
-  readonly edit?: (edit: InstrumentEdit) => Promise<StageResult>
+  /** One instrument edit of a take's move, at the owner's sample `at` where a take's course names one (the `instrument` stage command),
+   * settling with the owner's answer. Absent, no move is made. */
+  readonly edit?: (edit: InstrumentEdit, at?: string) => Promise<StageResult>
   /** One act of the clip on the part's one playing path (keyboardLayout.ts livePlayingPath, jankoInput.ts clipStrike): its notes' keys
    * struck at the owner's sample `at`, each held until its hold is let go; settling with the owner's answer. */
   readonly strike: (notes: readonly ClipHold[], amplitude: number, at: string) => Promise<StageResult>
@@ -162,6 +170,18 @@ export interface ClipPrepared {
   readonly resumes: string
   readonly voice?: (note: number, beat: number) => {readonly touch: number; readonly strength: number} | null
   readonly moves?: readonly ClipMove[]
+  /** A take that plays as it was played: its course, from the sample the Torus rang again from (`landed`). */
+  readonly exact?: TakeExact
+}
+/** A take's course to play at its samples (live/liveTake.ts TakeCourse): the owner's sample the Torus rang again from its checkpoint, the
+ * take's first sample, its length and rate, its acts at their samples in order, and the note a key of it was played as. */
+export interface TakeExact {
+  readonly landed: string
+  readonly from: string
+  readonly frames: number
+  readonly sample_rate: number
+  readonly acts: readonly StageTakeAct[]
+  readonly noteOf?: (key: StageKey) => number | null
 }
 export interface ClipMove {readonly beat: number; readonly edits: readonly InstrumentEdit[]}
 
@@ -240,10 +260,31 @@ interface Run {
   readonly turn: () => void
 }
 
+/** A take's course playing: its acts with the time each is due (seconds from the clip's anchor) and the sample it lands at, the frame's
+ * own moves by beat, where the course begins and ends (seconds from the anchor), and the keys it holds. */
+interface Course {
+  readonly address: ClipAddress
+  readonly origin: number
+  readonly timing: Extract<ClipTiming, {anchor: bigint}>
+  readonly spb: number
+  readonly lead: number
+  readonly acts: readonly {readonly seconds: number; readonly at: string; readonly act: StageTakeAct}[]
+  index: number
+  readonly moves: readonly ClipMove[]
+  move: number
+  readonly start: number
+  readonly end: number
+  readonly holds: Map<string, string[]>
+  readonly noteOf: TakeExact['noteOf']
+  timer: unknown
+  readonly fire: () => void
+}
+
 /** A clip player over its owners. */
 export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
   let state: ClipPlayState = IDLE
   let run: Run | null = null
+  let course: Course | null = null
   /** The press in progress: a Stop or a later press makes an earlier read stale. */
   let press = 0
   /** Every note the player strikes is its own hold on the path. */
@@ -287,6 +328,7 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
 
   /** The run ends: no timer, no watch, and every note it holds let go at once. */
   const halt = () => {
+    haltCourse()
     const was = run
     run = null
     if (!was) return
@@ -376,6 +418,82 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
     }, cause => { if (r === run) publish({fault: `The clip's edit was not read, so it plays as it was: ${said(cause)}`}) })
   }
 
+  /** A take's course ends: no timer, and every key it holds let go at once. */
+  const haltCourse = () => {
+    const was = course
+    course = null
+    if (!was) return
+    if (was.timer !== null) owners.cancel(was.timer)
+    was.timer = null
+    const holds = [...was.holds.values()].flat()
+    was.holds.clear()
+    if (holds.length) owners.release(holds)
+  }
+  /** Said once: a setting of the take's course that came too late to land at its sample was made at the owner's cursor. */
+  const LATE_SETTING = 'A setting of the take came too late to land at its sample, so the Torus made it as its sound then stood.'
+  const tellOnce = (words: string) => { if (!state.resumes?.includes(words)) publish({resumes: state.resumes ? `${state.resumes} ${words}` : words}) }
+  /** Wait for the course's next act, the frame's next move, or its end. */
+  const armCourse = (c: Course) => {
+    const next = c.acts[c.index], move = c.moves[c.move]
+    const due = Math.min(next ? next.seconds : Infinity, move ? c.start + move.beat * c.spb + c.lead : Infinity, c.end)
+    c.timer = owners.later(c.fire, Math.max(0, (c.origin + due - owners.now()) * 1000))
+  }
+  /** Send every act of the course whose sample has come within one owner lookahead of the render, in the order of their samples. */
+  const fireCourse = (c: Course) => {
+    if (c !== course) return
+    c.timer = null
+    const now = owners.now() - c.origin
+    let late = 0
+    while (c.index < c.acts.length) {
+      const next = c.acts[c.index]!
+      if (next.seconds > now + DUE_EARLY_SECONDS) break
+      c.index++
+      const behind = now - next.seconds > c.timing.slack
+      const act = next.act
+      if (act.action === 'release') {
+        const holds = act.keys.flatMap(key => { const id = `${key.row}/${key.column}`, held = c.holds.get(id) ?? []; c.holds.delete(id); return held })
+        if (holds.length) owners.release(holds)
+      } else if (act.action === 'strike') {
+        if (behind) { late += act.keys.length; continue }
+        const notes: ClipHold[] = act.keys.map(key => {
+          const hold = `take:${++held}`, id = `${key.row}/${key.column}`
+          c.holds.set(id, [...(c.holds.get(id) ?? []), hold])
+          return {hold, note: c.noteOf?.(key) ?? -1, key}
+        })
+        owners.strike(notes, act.amplitude, next.at).then(answer, failed)
+      } else {
+        if (behind) tellOnce(LATE_SETTING)
+        const mine = press
+        void owners.edit?.({kind: 'torus', edit: act.edit}, behind ? undefined : next.at).catch((cause: unknown) => ({ok: false as const, error: said(cause)})).then(result => {
+          if (mine === press && !result.ok) tellOnce(`The Torus refused a setting of the take: ${result.error}`)
+        })
+      }
+    }
+    for (let move = c.moves[c.move]; move && c.start + move.beat * c.spb + c.lead <= now + DUE_EARLY_SECONDS; move = c.moves[c.move]) { c.move++; makeMove(move) }
+    missed(late)
+    if (c.index >= c.acts.length && now + DUE_EARLY_SECONDS >= c.end) {
+      for (let move = c.moves[c.move]; move; move = c.moves[c.move]) { c.move++; makeMove(move) }
+      haltCourse()
+      publish({playing: null})
+      return
+    }
+    armCourse(c)
+  }
+  /** A take's course begins: each act at R + (its sample − the take's first), R the sample the Torus rang again from. */
+  const beginCourse = (address: ClipAddress, bpm: number, name: string, timing: Extract<ClipTiming, {anchor: bigint}>, take: ClipPrepared, exact: TakeExact,
+    lead: number) => {
+    const shift = BigInt(exact.landed) - BigInt(exact.from)
+    const seconds = (sample: bigint) => Number(sample - timing.anchor) / timing.rate
+    const acts = exact.acts.map(act => { const at = BigInt(act.at_samples_elapsed) + shift; return {seconds: seconds(at), at: String(at), act} })
+    const moves = [...(take.moves ?? [])].filter(move => finite(move.beat) && move.edits.length > 0).sort((a, b) => a.beat - b.beat)
+    const start = seconds(BigInt(exact.landed))
+    const c: Course = {address, origin: owners.now(), timing, spb: 60 / bpm, lead, acts, index: 0, moves, move: 0, start, end: start + exact.frames / exact.sample_rate,
+      holds: new Map(), noteOf: exact.noteOf, timer: null, fire: () => fireCourse(c)}
+    course = c
+    publish({starting: false, playing: {address, name, bpm}})
+    armCourse(c)
+  }
+
   const begin = (address: ClipAddress, bpm: number, plan: Extract<ClipPlan, {ok: true}>, timing: Extract<ClipTiming, {anchor: bigint}>,
     take: ClipPrepared | null, lead: number) => {
     const moves = [...(take?.moves ?? [])].filter(move => finite(move.beat) && move.edits.length > 0).sort((a, b) => a.beat - b.beat)
@@ -405,7 +523,7 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
         // rendered as the clip begins.
         let take: ClipPrepared | null = null
         const prepared: Promise<ClipPrepared | null> = owners.prepare
-          ? owners.prepare(clip).catch((cause: unknown) => ({resumes: `The take's Torus was not set again: ${said(cause)}`}))
+          ? owners.prepare(clip, bpm).catch((cause: unknown) => ({resumes: `The take's Torus was not set again: ${said(cause)}`}))
           : Promise.resolve(null)
         return prepared.then(ready => {
           if (mine !== press) return
@@ -416,7 +534,11 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
         }).then(clock => {
           if (mine !== press || clock === undefined) return
           const timing = clipTiming(clock)
+          const exact = (take as ClipPrepared | null)?.exact
           if ('refused' in timing) publish({starting: false, fault: timing.refused})
+          else if (exact && exact.sample_rate !== clock.sample_rate)
+            publish({starting: false, fault: `The torus renders at ${clock.sample_rate} Hz, and the take was played at ${exact.sample_rate} Hz.`})
+          else if (exact) beginCourse(address, bpm, plan.name, timing, take!, exact, clock.lookahead_seconds)
           else begin(address, bpm, plan, timing, take, clock.lookahead_seconds)
         }, cause => { if (mine === press) publish({starting: false, fault: `The torus did not read its audio clock: ${said(cause)}`}) })
       }, cause => { if (mine === press) publish({starting: false, fault: `The set's owner did not read the clip: ${said(cause)}`}) })
@@ -442,9 +564,9 @@ function candidateOwners(): ClipPlayerOwners {
       if (answer.error || answer.outcome?.result !== 'live_clip_reading') throw new Error(answer.error ?? 'The set\'s owner did not answer the clip')
       return answer.outcome.reading.clip
     },
-    prepare: clip => prepareTake(clip, commitLiveInstrumentEdit),
+    prepare: (clip, bpm) => prepareTake(clip, commitLiveInstrumentEdit, {stage: commitLiveStage, bpm}),
     clock: () => readAudioClock(commitLiveStage),
-    edit: commitLiveInstrumentEdit,
+    edit: (edit, at) => commitLiveStage({command: 'instrument', edit, ...(at === undefined ? {} : {at_samples_elapsed: at})}),
     strike: (notes, amplitude, at) => livePlayingPath().clipStrike(notes, amplitude, at),
     release: holds => livePlayingPath().clipRelease(holds),
     watch: (address, changed) => subscribeSet(address.path, changed),

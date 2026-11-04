@@ -295,3 +295,24 @@ test('the Arrangement draws its time selection over the marks and through the la
   assert.match(html, /class="tl-span" role="img" aria-label="Selected · /)
   assert.ok((html.match(/class="tl-span"/g) ?? []).length > 1, 'the band runs through the lanes too')
 })
+
+// O-I #855 round 6d: a take Record laid exports its audio as it was played (live/liveTake.ts exportTake, the frame's render-take), from the
+// clip's own menu in Arrangement view, where the take lies.
+test('a take\'s clip exports its audio from its menu in Arrangement view, through the set\'s Export Audio act', async () => {
+  const calls = []
+  const set = liveSetTrackAdapter.project({set: summary, document, act: async a => ({act: a.kind, done: 'ok', at: null, revision: 'r'}),
+    exportTake: (track, at) => { calls.push([track, at]); return Promise.resolve({ok: true, note: 'Exported Ebb as “Ebb.wav”.'}) }})
+  const a = set.actions
+  assert.ok(a.exportTake, 'carried where the set hands in its Export Audio')
+  assert.match(a.exportTake.op, /render-take/)
+  const clip = {kind: 'clip', id: `${ref(2)}/clip/0`, trackId: ref(2), name: 'Ebb'}
+  const items = acts.objectMenu(clip, set, context({view: 'arrangement'}))
+  const item = byId(items, 'export-audio')
+  assert.equal(item.label, 'Export Audio')
+  assert.equal(item.disabled, undefined)
+  await item.onSelect()
+  assert.deepEqual(calls, [[2, {arrangement: 0}]])
+  assert.equal(byId(acts.objectMenu(clip, set, context({view: 'session'})), 'export-audio'), undefined, 'a take lies in Arrangement view')
+  assert.equal(byId(acts.objectMenu(clip, liveSet().set, context({view: 'arrangement'})), 'export-audio'), undefined, 'a set with no Export Audio lists none')
+  assert.match((await a.exportTake.run(`als:/sets/other.als#track/2/clip/0`)).error, /another set/)
+})

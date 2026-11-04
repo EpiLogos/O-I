@@ -253,6 +253,7 @@ const TORUS_SESSION_READINGS: Readonly<Record<string, string>> = {
   'carrier.drive': 'The owner\'s word for the Carrier\'s drive. Under the pulse, each step of the pulse drives the body between strikes by the Carrier\'s share of an event\'s excitation (QL\'s native carrier).',
   tempo: 'A reading: the set\'s tempo, from the transport, which Sync steps one note length at. The transport is where it changes.',
   'tuning.resident': 'A reading: the tunings this scene holds voices for.',
+  'tuning.maqam': 'A reading: the M2 condition\'s maqām, and the owner\'s words for why the scene holds no voices of it.',
 }
 
 /** The design's values from the owner's session. Only what the owner reports. Pure. */
@@ -267,6 +268,8 @@ export function torusSessionValues(session: TorusSession): Record<string, Value>
   }
   if (t.rate.mode === 'sync') values['rate.note'] = `${t.rate.note.numerator}/${t.rate.note.denominator}`
   if (session.figure !== null) values.figure = session.figure
+  // The maqām the owner names (O-I 855): its name, and its words for the absence while the scene holds none of its voices.
+  if (session.maqam) values['tuning.maqam'] = JSON.stringify({name: session.maqam.name, absent: session.maqam.absent})
   return values
 }
 

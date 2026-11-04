@@ -219,8 +219,10 @@ export interface PlayedNote {
 export interface PlayingPress {readonly id: string; readonly source: NoteSource; readonly port: string | null}
 
 /** One note of a clip on the path (O-I #790): its number, as MIDI numbers notes, the hold that keeps it until the clip lets it go, and the
- * touch-point it strikes at (a take keeps the one each note was played at, O-I #855; absent, the pitch's first). */
-export interface ClipHold {readonly hold: string; readonly note: number; readonly touch?: number}
+ * touch-point it strikes at (a take keeps the one each note was played at, O-I #855; absent, the pitch's first). A take's course names
+ * the very key each act struck (`key`, O-I #855 round 6d): that key is struck, whatever the window, and its number is the one it was
+ * played as (-1 where the take did not name it). */
+export interface ClipHold {readonly hold: string; readonly note: number; readonly touch?: number; readonly key?: StageKey}
 
 export interface JankoInput {
   down(event: NoteEvent): void
@@ -270,6 +272,8 @@ type Act =
   | {kind: 'release'; keys: Map<string, StageKey>}
 
 const keyId = (key: StageKey) => `${key.row}/${key.column}`
+/** A key of the owner's six-row surface: row 0..5, column 0..65535. */
+const onSurface = (key: StageKey) => Number.isSafeInteger(key.row) && key.row >= 0 && key.row < 6 && Number.isSafeInteger(key.column) && key.column >= 0 && key.column <= COLUMN_MAX
 const enabled = (inputs: KeyboardInputs, source: NoteSource) => source === 'midi' ? inputs.midi : source === 'keyboard' ? inputs.keys : inputs.pointer
 const failed = (cause: unknown): StageResult => ({ok: false, error: String(cause instanceof Error ? cause.message : cause)})
 const OUT_CHANNEL = 0
@@ -388,16 +392,18 @@ export function createJankoInput(options: JankoInputOptions): JankoInput {
   function holdStrike(clipNotes: readonly ClipHold[], amplitude: number, at: string | undefined): Promise<StageResult> {
     const state = windowOf()
     const keys = state?.ok ? surfaceKeys(state.window) : null
-    if (!keys) {
+    // A key of its own needs no window: only a note the path must find a key for does.
+    if (!keys && clipNotes.some(clip => clip.key === undefined)) {
       const refusal: StageResult = {ok: false, error: state && !state.ok ? `${NO_SURFACE} (${state.fault})` : NO_SURFACE}
       options.onResult?.(refusal)
       options.onChange?.()
       return Promise.resolve(refusal)
     }
     const struck: Note[] = []
-    for (const {hold, note, touch} of clipNotes) {
+    for (const {hold, note, touch, key: own} of clipNotes) {
       if (!Number.isSafeInteger(note) || holds.has(hold)) continue
-      const key = keyForNote(keys, note, Number.isSafeInteger(touch) && touch! >= 0 ? touch : 0)
+      const key = own !== undefined ? (onSurface(own) ? {row: own.row, column: own.column} : null)
+        : keyForNote(keys!, note, Number.isSafeInteger(touch) && touch! >= 0 ? touch : 0)
       if (!key) continue
       const sounding = onKey(key)
       const target = sounding ?? {id: `clip:${keyId(key)}`, key, note, presses: new Set<string>(), clips: new Set<string>(), act: 0, lifted: null, out: false, played: false}

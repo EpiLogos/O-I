@@ -85,10 +85,14 @@ export interface LiveSetReading {
   /** Launch, Stop the track and Stop all on the torus (live/clipPlayer.ts liveClipActs), by the track's place and the clip's. */
   play?: {launch(track: number, at: LiveClipAt): Promise<WorldActionReceipt>; stop(track: number): WorldActionReceipt | Promise<WorldActionReceipt>
     stopAll(): WorldActionReceipt | Promise<WorldActionReceipt>}
+  /** Export Audio of a take Record laid (live/liveTake.ts exportLiveTake, O-I #855): its course rendered by the Torus's owner, saved as WAV. */
+  exportTake?: (track: number, at: LiveClipAt) => Promise<WorldActionReceipt>
 }
 
 /** The op an act of the set's names, in the words a menu shows. */
 export const LIVE_ACT_OP = (kind: LiveSetAct['kind']) => `live_set_act · ${kind} — the set's own ${kind.replace('_', ' ')}, against its revision (packages/live-set/src/acts.rs)`
+/** Export Audio of a take: its course rendered offline by the Torus's owner, part after part (O-I #855). */
+export const LIVE_EXPORT_TAKE_OP = 'render-take {checkpoint, acts, frames} — the take\'s course rendered by the Torus\'s owner (QL-MEF torus-render), saved as 32-bit float WAV'
 export const LIVE_INSERT_CLIP_OP = 'live_clip_create {path, track, scene, length: 4, notes: []} — an empty one-bar MIDI clip in the empty slot, as Live inserts one'
 /** What an act no op of the set's owner carries waits for (O-I #743, round two), as the status bar says after the missing op. */
 export const LIVE_RENDER_WAIT = 'Consolidating audio clips writes a new sample of what plays: a render of the part, which nothing here carries.'
@@ -159,7 +163,7 @@ const barBeat = (beats: number): string => `${Math.floor(beats / 4) + 1}.${Math.
 
 export const liveSetTrackAdapter: WorldTrackAdapter<LiveSetReading> = {
   id: LIVE_SET_TRACK_ADAPTER_ID,
-  project({set, document, colors, mixerWrite, sendWrite, compWrite, act, insertClip, clipInfo, play, engine}): WorldTrackSet {
+  project({set, document, colors, mixerWrite, sendWrite, compWrite, act, insertClip, clipInfo, play, exportTake, engine}): WorldTrackSet {
     if (!set) return {columns: [], tracks: [], clips: []}
     const trackRef = (index: number) => `als:${set.path}#track/${index}`
     // The set's master track is Live's Main track: its material stands at the end, and its chain is the devices the set lists on it.
@@ -281,7 +285,7 @@ export const liveSetTrackAdapter: WorldTrackAdapter<LiveSetReading> = {
       }}
       result.actions = {...result.actions, mixer}
     }
-    const objects = liveObjectActs(set, act, insertClip, play, clipInfo)
+    const objects = liveObjectActs(set, act, insertClip, play, clipInfo, exportTake)
     if (objects) result.actions = {...result.actions, ...objects}
     return result
   },
@@ -290,8 +294,8 @@ export const liveSetTrackAdapter: WorldTrackAdapter<LiveSetReading> = {
 /** The acts on the set's objects (manual §10.9), each through its owner: the set's own acts where its writer is handed in, Launch and
  * Stop where the player is. An object of another set, or the Main track, is refused here, before anything reaches the owner. Pure. */
 function liveObjectActs(set: SetSummary, act: LiveSetReading['act'], insertClip: LiveSetReading['insertClip'], play: LiveSetReading['play'],
-  clipInfo?: LiveSetReading['clipInfo']): WorldTrackActions | null {
-  if (!act && !play && !clipInfo) return null
+  clipInfo?: LiveSetReading['clipInfo'], exportTake?: LiveSetReading['exportTake']): WorldTrackActions | null {
+  if (!act && !play && !clipInfo && !exportTake) return null
   const prefix = `als:${set.path}#track/`
   const refused = (error: string) => Promise.resolve({ok: false as const, error})
   const said = (cause: unknown) => cause instanceof Error ? cause.message : String(cause)
@@ -410,6 +414,11 @@ function liveObjectActs(set: SetSummary, act: LiveSetReading['act'], insertClip:
     if (typeof scene === 'string') return refused(scene)
     return insertClip(track, scene).then(() => ({ok: true as const, note: `Inserted an empty MIDI clip in row ${scene + 1} of ${named(track)}.`}),
       (cause: unknown) => ({ok: false as const, error: said(cause)}))
+  }}
+  if (exportTake) actions.exportTake = {op: LIVE_EXPORT_TAKE_OP, run: clipId => {
+    const place = clipOf(clipId)
+    if (typeof place === 'string') return refused(place)
+    return 'arrangement' in place.at ? exportTake(place.track, place.at) : refused('A take lies in Arrangement view: Export Audio renders a take Record laid there.')
   }}
   if (clipInfo) actions.clipInfo = {op: LIVE_INFO_OP,
     read: clipId => { const place = clipOf(clipId); return typeof place === 'string' ? Promise.reject(new Error(place)) : clipInfo.read(place.track, place.at) },

@@ -150,10 +150,10 @@ test('Record keeps what the playing path played: each note\'s number, key and to
     'in beats of the take at 120 BPM; velocity from strength')
   assert.equal(act.keeps.schema, 'oi.live-take/v1')
   assert.deepEqual(act.keeps.notes, [
-    {p: 64, at: 1, key: E4, touch: 0, strength: typed, source: 'keyboard'},
-    {p: 67, at: 2, key: G4, touch: 0, strength: 0.75, source: 'midi'},
-    {p: 62, at: 3, key: D4_TOUCH_1, touch: 1, strength: typed, source: 'pointer'},
-  ], 'how each note was played: the key and touch-point it struck on the Jankó surface, its exact strength (a velocity rounds it), its source')
+    {p: 64, at: 1, len: 1, vel, key: E4, touch: 0, strength: typed, source: 'keyboard'},
+    {p: 67, at: 2, len: 2, vel: 95, key: G4, touch: 0, strength: 0.75, source: 'midi'},
+    {p: 62, at: 3, len: 1, vel, key: D4_TOUCH_1, touch: 1, strength: typed, source: 'pointer'},
+  ], 'how each note was played: the key and touch-point it struck on the Jankó surface, its exact strength (a velocity rounds it), its source; and as it was laid')
   assert.deepEqual(act.keeps.torus, context.torus, 'the Torus as it stood when the take began, with its tuning and its sources')
   assert.deepEqual(act.keeps.mode, {root: 0, scale: 'major'})
   assert.equal(act.keeps.resumes, take.TAKE_RESUMES, 'it says from which state it resumes')
@@ -253,7 +253,7 @@ test('Record lays the take in the set through its owner, and the part keeps the 
   assert.equal(laid.keeps.moves.length, 1, 'the Carrier\'s move is kept')
   assert.deepEqual(f.kept, [['/sets/a.als', 1]], 'the part keeps the Torus')
   assert.match(record.state().said, /^Recorded Take 1 on Keys at beat 8: 1 note, in take lane 1\. /)
-  assert.match(record.state().said, /Export Audio renders what the engine played, and the Torus does not sound in it yet/, 'what Export Audio does not yet hold is said')
+  assert.match(record.state().said, /keeps no course of the Torus, so Export Audio cannot render it/, 'what Export Audio cannot render is said')
   assert.equal(record.state().busy, false)
 })
 
@@ -488,8 +488,280 @@ test('the candidate records on the part\'s one playing path, prepares a take bef
   assert.match(path, /onNote: played => liveTakeRecorder\.played\(played\),/, 'every note the path plays is told to the recorder')
   const clip = source('live/clipPlayer.ts')
   const owners = clip.slice(clip.indexOf('function candidateOwners('), clip.indexOf('export const liveClipPlayer'))
-  assert.match(owners, /prepare: clip => prepareTake\(clip, commitLiveInstrumentEdit\),/)
+  assert.match(owners, /prepare: \(clip, bpm\) => prepareTake\(clip, commitLiveInstrumentEdit, \{stage: commitLiveStage, bpm\}\),/)
+  assert.match(owners, /edit: \(edit, at\) => commitLiveStage\(\{command: 'instrument', edit, \.\.\.\(at === undefined \? \{\} : \{at_samples_elapsed: at\}\)\}\),/,
+    'a setting of a take\'s course lands at its sample')
+  const record = source('live/liveTake.ts')
+  assert.match(record.slice(record.indexOf('export async function liveRecord(')), /stage: torus\.commitLiveStage,/, 'Record keeps the course through the stage channel')
+  const tracks = source('frame/tracks/modeTracks.ts')
+  assert.match(tracks, /const exportTake = \(track: number, at: LiveClipAt\) => import\('\.\.\/\.\.\/live\/liveTake'\)\.then\(module => module\.exportLiveTake\(\{path: set\.path, track, at\}\)\)/,
+    'a take\'s clip exports its audio from Live\'s set')
+  assert.match(tracks, /liveSetTrackAdapter\.project\(\{set, document, colors, \.\.\.liveSetWrites\(set\.path\), play, exportTake, engine\}\)/)
   const transport = source('shell/transports/useLiveTransport.tsx')
   assert.match(transport, /const record = useLiveRecord\(\{setPath, track: setSelectionOf\(selection, setPath \?\? undefined\)\?\.track \?\? null, bpm: tempoBpm, torus,/)
   assert.match(transport, /\.\.\.playStop,\n\s+record,/, 'Record stands in Live\'s place beside Play and Stop')
+})
+
+// ── the Torus's course: Record, replay and Export Audio (round 6d) ───────────────────────────────────────────────────────────────────
+// The owner keeps the Torus as it rings (`torus` checkpoint) and journals each act with the sample it landed at (`performance-journal`);
+// Record keeps both with the take, a take played again rings again from that state and each act lands at its sample after it, and Export
+// Audio renders the course offline (`render-take`), part after part. The frame's channel is a fake that answers as the frame does.
+
+const T0 = '480000'
+const CHECKPOINT = {schema: 'ql.torus-checkpoint/v1', taken_at_samples: T0, sample_rate: 48000, event: {ref: 'e'}, seeds: [7, 11], session: {steps: 12}}
+const journalAct = (request_id, operation, command, samples) => ({request_id, operation, command: {operation, ...command},
+  acknowledged: {generation: '5', samples_elapsed: samples}, kind: 'act'})
+const JOURNAL = acts => ({schema: 'ql.instrument-performance-journal/v1', instance_ref: 'ql:i', acts,
+  advances: {blocks: 0, frames: 0, first_samples_elapsed: null, last_samples_elapsed: null}})
+/** The frame's stage channel as a fake: the checkpoint, the audio clock, the journal and a restore, as the frame answers them. */
+const stageOwner = ({journal = [], clock = '528000', checkpoint = CHECKPOINT, refuse = {}} = {}) => {
+  const sent = []
+  return {sent, stage: async command => {
+    sent.push(structuredClone(command))
+    const key = command.command === 'torus' ? `torus:${command.action}` : command.command
+    if (refuse[key]) return {ok: false, error: refuse[key]}
+    if (key === 'torus:checkpoint') return {ok: true, checkpoint: structuredClone(checkpoint)}
+    if (key === 'audio-clock') return {ok: true, clock: {samples_elapsed: clock, sample_rate: 48000, lookahead_seconds: 0.05, block_frames: 512}}
+    if (key === 'performance-journal') return {ok: true, journal: JOURNAL(journal)}
+    if (key === 'torus:restore') return {ok: true, landed_at_samples_elapsed: '900000'}
+    return {ok: false, error: `unexpected ${key}`}
+  }}
+}
+const COURSE = {schema: 'oi.live-take-course/v1', checkpoint: CHECKPOINT, from_samples_elapsed: T0, frames: 96000, sample_rate: 48000, acts: [
+  {action: 'strike', at_samples_elapsed: '504000', keys: [C4], amplitude: 1},
+  {action: 'set', at_samples_elapsed: '510000', edit: {carrier: 0.5}},
+  {action: 'release', at_samples_elapsed: '526000', keys: [C4]},
+  {action: 'strike', at_samples_elapsed: '540000', keys: [E4], amplitude: 0.5},
+]}
+
+test('Record keeps the Torus\'s course: the state it rang in when the take began, and each act its owner took at the sample it landed at', async () => {
+  const recorder = take.createTakeRecorder()
+  const s = stageOwner({journal: [
+    journalAct('1', 'torus-play', {keys: [C4], amplitude: [1, 0]}, '504000'),
+    journalAct('2', 'stage-bind', {procedure: 'p'}, '506000'),
+    journalAct('3', 'torus-set', {edit: {carrier: 0.5}, at_samples_elapsed: '510000'}, '507000'),
+    // A clip's note sent ahead before Stop: it lands inside the take.
+    journalAct('4', 'torus-play', {keys: [E4], amplitude: [0.5, 0], at_samples_elapsed: '540000'}, '508000'),
+    journalAct('5', 'torus-release', {keys: [C4]}, '526000'),
+    // Played after Stop: not the take's.
+    journalAct('6', 'torus-play', {keys: [G4], amplitude: [1, 0]}, '530000'),
+  ]})
+  const f = recordOwners({document: SET})
+  const record = take.createLiveRecord(recorder, {...f.owners, stage: s.stage})
+  await record.start('/sets/a.als', 1, 120, null)
+  assert.deepEqual(s.sent, [{command: 'torus', action: 'checkpoint'}], 'the Torus is kept as it rings when the take begins')
+  f.at(520)
+  recorder.played({kind: 'on', id: 'p', note: 60, key: C4, touch: 0, amplitude: 1, source: 'pointer', at: 520})
+  f.at(980)
+  recorder.played({kind: 'off', id: 'p', note: 60, key: C4, touch: 0, amplitude: 0, source: null, at: 980})
+  f.at(1000)
+  await record.stop()
+  assert.deepEqual(s.sent.slice(1), [{command: 'audio-clock'}, {command: 'performance-journal', from_samples_elapsed: T0}],
+    'at Stop, the owner\'s cursor, then its journal from the take\'s first sample')
+  const laid = f.acts[0].act
+  assert.deepEqual(laid.keeps.course, COURSE,
+    'in the order of their samples, the take whole bars long; a stage act moves no sound; an act after Stop is not the take\'s')
+  assert.deepEqual(laid.notes, [{p: 60, at: 1, len: 0.916667, vel: 127}], 'the note lies at the sample it landed at, not at the page\'s time')
+  assert.equal(laid.keeps.resumes, take.TAKE_REPLAYS)
+  assert.match(take.TAKE_REPLAYS, /plays again as it was played/)
+  assert.deepEqual(laid.keeps.not_kept, [...take.TAKE_COURSE_NOT_KEPT])
+  for (const word of ['the seeds', 'the course of the body', 'the sample each note landed at']) assert.ok(!laid.keeps.not_kept.includes(word), word)
+  assert.match(record.state().said, /Export Audio on its clip renders it as it was played, sample for sample\./)
+  assert.doesNotMatch(record.state().said, /does not sound in it yet/)
+})
+
+test('a take whose window moved the scene, or whose owner kept no state of it, keeps no course and says why, as Export Audio does', async () => {
+  for (const [over, why] of [
+    [{journal: [journalAct('1', 'replace-event', {event: {}}, '505000')]}, /replace-event moved the scene at sample 505000/],
+    [{journal: [journalAct('1', 'torus-play', {keys: [C4], amplitude: [1, 0.25]}, '505000')]}, /second amplitude/],
+    [{refuse: {'torus:checkpoint': 'The torus is not following'}}, /The torus is not following/],
+    [{refuse: {'performance-journal': 'The journal holds 5000 acts from that sample: read it from a later sample'}}, /5000 acts/],
+    [{checkpoint: {...CHECKPOINT, event: {pad: 'x'.repeat(300 * 1024)}}}, /256 KiB/],
+  ]) {
+    const recorder = take.createTakeRecorder()
+    const s = stageOwner(over)
+    const f = recordOwners({document: SET})
+    const record = take.createLiveRecord(recorder, {...f.owners, stage: s.stage})
+    await record.start('/sets/a.als', 1, 120, null)
+    f.at(500)
+    recorder.played({kind: 'on', id: 'p', note: 60, key: C4, touch: 0, amplitude: 1, source: 'pointer', at: 500})
+    f.at(1000)
+    await record.stop()
+    const keeps = f.acts[0].act.keeps
+    assert.equal(keeps.course, null, String(why))
+    assert.match(keeps.course_refused, why)
+    assert.equal(keeps.resumes, take.TAKE_RESUMES, 'it resumes from the body as it then rings')
+    assert.deepEqual(keeps.not_kept, [...take.TAKE_NOT_KEPT])
+    assert.deepEqual(f.acts[0].act.notes, [{p: 60, at: 1, len: 1, vel: 127}], 'its notes lie at the page\'s time')
+    assert.match(record.state().said, /keeps no course of the Torus, so Export Audio cannot render it/)
+    assert.match(record.state().said, why)
+  }
+})
+
+test('a take with its course plays again as it was played: the Torus set as it stood, rung again from its state, each act at its sample', async () => {
+  const torus = take.torusKept(torusState({level: 0.5}))
+  const carrier = take.torusKept(torusState({level: 0.5, settings: {carrier: 0.5}}))
+  const carrierLevel = take.torusKept(torusState({level: 0.25, settings: {carrier: 0.5}}))
+  const keeps = {schema: 'oi.live-take/v1', torus, moves: [{beat: 1.0625, torus: carrier}, {beat: 2, torus: carrierLevel}], bpm: 120, resumes: take.TAKE_REPLAYS,
+    notes: [{p: 60, at: 1, len: 0.916667, vel: 127, key: C4, touch: 0, strength: 1, source: 'pointer'}], course: COURSE, not_kept: [...take.TAKE_COURSE_NOT_KEPT]}
+  const clip = {...REAL, name: 'Take 1', loop: false, start: 0, end: 4, take: {id: 7, keeps}, notes: [{id: 1, p: 60, at: 1, len: 0.916667, vel: 127, chance: 1, on: true}]}
+  const s = stageOwner(), order = []
+  const commit = async edit => { order.push('edit'); return {ok: true} }
+  const stage = async command => { order.push(`${command.command} ${command.action}`); return s.stage(command) }
+  const prepared = await take.prepareTake(clip, commit, {stage, bpm: 120})
+  assert.deepEqual(order, [...torus.edits.map(() => 'edit'), 'torus restore'], 'the Torus is set as it stood, then rung again from its state')
+  assert.deepEqual(s.sent, [{command: 'torus', action: 'restore', checkpoint: CHECKPOINT}])
+  assert.equal(prepared.resumes, take.TAKE_REPLAYS)
+  const {noteOf, ...exact} = prepared.exact
+  assert.deepEqual(exact, {landed: '900000', from: T0, frames: 96000, sample_rate: 48000, acts: COURSE.acts})
+  assert.equal(noteOf(C4), 60, 'a key names the note it was played as')
+  assert.equal(noteOf(G4), null)
+  assert.deepEqual(prepared.moves, [{beat: 2, edits: [{kind: 'level', value: 0.25}]}], 'only the frame\'s own sound moves by beat: the Torus\'s moves are its course\'s')
+  // What leaves the exact path, each in words, and resumes from the body as it then rings.
+  const plays = (over, bpm = 120, through = stage) => take.prepareTake({...clip, ...over}, commit, {stage: through, bpm})
+  for (const [over, words] of [
+    [{notes: [{...clip.notes[0], at: 2}]}, /changed since it was laid/],
+    [{loop: true, position: 0, length: 4}, /loop/],
+    [{start: 1}, /start marker/],
+  ]) {
+    const p = await plays(over)
+    assert.equal(p.exact, undefined, String(words))
+    assert.match(p.resumes, words)
+    assert.match(p.resumes, /resumes from the body as it then rings/)
+  }
+  const slower = await plays({}, 100)
+  assert.equal(slower.exact, undefined)
+  assert.match(slower.resumes, /120 BPM/)
+  const refused = await plays({}, 120, stageOwner({refuse: {'torus:restore': 'That checkpoint is not of this body'}}).stage)
+  assert.equal(refused.exact, undefined)
+  assert.match(refused.resumes, /did not ring again from the take's state: That checkpoint is not of this body/)
+  const none = await take.prepareTake({...clip, take: {id: 7, keeps: {...keeps, course: null, course_refused: 'replace-event moved the scene at sample 505000',
+    resumes: take.TAKE_RESUMES}}}, commit, {stage, bpm: 120})
+  assert.equal(none.exact, undefined)
+  assert.match(none.resumes, /keeps no course of the Torus: replace-event moved the scene at sample 505000\./)
+  assert.equal((await take.prepareTake(clip, commit)).exact, undefined, 'with no stage owner it plays as its notes are written')
+})
+
+test('the clip player plays a take\'s course at its samples from where the Torus rang again; an act behind the render is missed; Stop lets its keys go', async () => {
+  const clock = controlledClock()
+  const strikes = [], releases = [], edits = []
+  const exact = {landed: '900000', from: T0, frames: 96000, sample_rate: 48000, noteOf: key => key.row === 0 && key.column === 42 ? 60 : null, acts: [
+    // R + (480100 − T0) = 900100: behind the owner's render when the clock is read.
+    {action: 'strike', at_samples_elapsed: '480100', keys: [G4], amplitude: 1},
+    {action: 'strike', at_samples_elapsed: '504000', keys: [C4, E4], amplitude: 0.75},
+    {action: 'set', at_samples_elapsed: '510000', edit: {carrier: 0.5}},
+    {action: 'release', at_samples_elapsed: '526000', keys: [C4]},
+  ]}
+  const owners = {
+    read: async () => ({...REAL, name: 'Take 1', loop: false, start: 0, end: 4, take: {id: 7, keeps: {}}, notes: [{id: 1, p: 60, at: 1, len: 1, vel: 127, chance: 1, on: true}]}),
+    prepare: async (_clip, bpm) => ({resumes: take.TAKE_REPLAYS, exact, moves: [{beat: 3, edits: [{kind: 'level', value: 0.25}]}], bpm}),
+    // The owner's render stands at 902400; one lookahead is 2400 samples: the clip's anchor is 904800.
+    clock: async () => ({samples_elapsed: '902400', sample_rate: 48000, lookahead_seconds: 0.05, block_frames: 512}),
+    edit: async (edit, at) => { edits.push([edit, at, clock.now()]); return {ok: true} },
+    strike: async (notes, amplitude, at) => { strikes.push([notes, amplitude, at, clock.now()]); return {ok: true} },
+    release: holds => releases.push([holds, clock.now()]),
+    watch: () => () => {}, now: clock.now, later: clock.later, cancel: clock.cancel, random: () => 0,
+  }
+  const p = player.createClipPlayer(owners)
+  p.play({path: '/sets/a.als', track: 1, at: {arrangement: 0}}, 120)
+  for (let i = 0; i < 6; i++) await tick()
+  assert.equal(p.state().resumes, take.TAKE_REPLAYS)
+  await clock.run(100.39)
+  assert.equal(strikes.length, 0, 'nothing is sent before its sample comes within one lookahead of the render')
+  await clock.run(100.41)
+  assert.deepEqual(strikes.map(([notes, amplitude, at]) => [notes.map(n => [n.key, n.note]), amplitude, at]), [[[[C4, 60], [E4, -1]], 0.75, '924000']],
+    'its own keys, struck at R + (its sample − the take\'s first)')
+  assert.equal(p.state().missed, 1, 'the act behind the owner\'s render is missed, and said')
+  await clock.run(100.53)
+  assert.deepEqual(edits.map(([edit, at]) => [edit, at]), [[{kind: 'torus', edit: {carrier: 0.5}}, '930000']], 'a setting lands at its sample')
+  await clock.run(100.88)
+  assert.deepEqual(releases.map(([holds]) => holds), [[strikes[0][0][0].hold]], 'a release in its sample\'s turn')
+  await clock.run(101.46)
+  assert.deepEqual(edits.at(-1).slice(0, 2), [{kind: 'level', value: 0.25}, undefined], 'the frame\'s own level moves at its beat, within a block')
+  assert.notEqual(p.state().playing, null)
+  await clock.run(101.91)
+  assert.equal(p.state().playing, null, 'the take ends where its course ends')
+  assert.deepEqual(releases.at(-1)[0], [strikes[0][0][1].hold], 'what it still holds is let go there')
+  // Stop lets go of what the course holds.
+  strikes.length = 0; releases.length = 0
+  p.play({path: '/sets/a.als', track: 1, at: {arrangement: 0}}, 120)
+  for (let i = 0; i < 6; i++) await tick()
+  await clock.run(clock.now() + 0.41)
+  assert.equal(strikes.length, 1)
+  p.stop()
+  assert.deepEqual(releases.at(-1)[0].sort(), strikes[0][0].map(n => n.hold).sort(), 'Stop lets every key of the take go')
+})
+
+test('a take\'s keys strike those very keys at their sample on the one playing path, with no surface needed; Panic lets them go', async () => {
+  const o = owner()
+  const path = keys.createJankoInput({send: o.send, window: () => null})
+  const far = {row: 5, column: 900}
+  const answer = await Promise.race([path.clipStrike([{hold: 'take:1', note: 60, key: C4}, {hold: 'take:2', note: -1, key: far}], 0.75, '924000'),
+    tick().then(tick).then(() => 'unanswered')])
+  assert.notEqual(answer, 'unanswered')
+  assert.deepEqual(o.sent, [{command: 'janko', action: 'strike', keys: [C4, far], amplitude: 0.75, at_samples_elapsed: '924000'}])
+  assert.deepEqual(path.sounding(), [C4, far])
+  path.clipRelease(['take:2'])
+  await tick()
+  assert.deepEqual(o.sent.at(-1), {command: 'janko', action: 'release', keys: [far]})
+  path.panic()
+  await tick()
+  assert.deepEqual(o.sent.at(-1), {command: 'janko', action: 'release', keys: [C4]})
+  assert.equal((await path.clipStrike([{hold: 'c', note: 60}], 0.5, '1')).ok, false, 'a note with no key of its own still needs the surface')
+  await path.clipStrike([{hold: 'd', note: 60, key: {row: 6, column: 1}}], 0.5, '1')
+  assert.equal(o.sent.filter(c => c.action === 'strike').length, 1, 'a key off the surface is struck by no one')
+})
+
+/** The frame's `render-take`, as a fake: each part rendered from the checkpoint it was sent, its PCM the part's count, ending at its end. */
+const renderOwner = ({skew = 0n, refuse = null} = {}) => {
+  const sent = []
+  return {sent, stage: async command => {
+    sent.push(structuredClone(command))
+    if (refuse) return {ok: false, error: refuse}
+    const from = BigInt(command.checkpoint.taken_at_samples)
+    return {ok: true, render: {from_samples_elapsed: String(from), frames: command.frames, sample_rate: 48000,
+      pcm: new Float32Array(command.frames).fill(sent.length / 8), made_way: command.acts.map(() => []),
+      ended: {...CHECKPOINT, taken_at_samples: String(from + BigInt(command.frames) + skew), part: sent.length}}}
+  }}
+}
+
+test('Export Audio renders a take\'s course in parts, each from the checkpoint the last one ended at, and refuses a part that does not continue', async () => {
+  const course = {...COURSE, frames: 2500, acts: [{action: 'strike', at_samples_elapsed: '480010', keys: [C4], amplitude: 1},
+    {action: 'release', at_samples_elapsed: '481200', keys: [C4]}, {action: 'set', at_samples_elapsed: '482400', edit: {carrier: 0.5}}]}
+  const r = renderOwner()
+  const rendered = await take.renderTake(course, r.stage, 1000)
+  assert.deepEqual(r.sent.map(c => [c.command, c.checkpoint.taken_at_samples, c.frames, c.acts.map(a => a.at_samples_elapsed)]), [
+    ['render-take', T0, 1000, ['480010']], ['render-take', '481000', 1000, ['481200']], ['render-take', '482000', 500, ['482400']]],
+    'each part carries the acts that land in it')
+  assert.equal(r.sent[1].checkpoint.part, 1, 'each part renders on from the checkpoint the last one ended at')
+  assert.equal(rendered.sample_rate, 48000)
+  assert.deepEqual([rendered.pcm.length, rendered.pcm[999], rendered.pcm[1000], rendered.pcm[2499]], [2500, 0.125, 0.25, 0.375])
+  assert.match((await take.renderTake(course, renderOwner({skew: 1n}).stage, 1000)).refused, /did not end where the next part begins/)
+  assert.match((await take.renderTake(course, renderOwner({refuse: 'The scene holds no Torus'}).stage, 1000)).refused, /The scene holds no Torus/)
+  assert.equal((await take.renderTake(COURSE, renderOwner().stage)).pcm.length, 96000, 'a take within 2^24 frames is one part')
+})
+
+test('the take\'s file is 32-bit float WAV at the owner\'s rate, at the level it played at with each move of the level at its beat', async () => {
+  const torus = take.torusKept(torusState({level: 0.5, effects: {chain: ['filter'], filter: {cutoff: 1000}}}))
+  const louder = take.torusKept(torusState({level: 1, effects: {chain: ['filter'], filter: {cutoff: 1000}}}))
+  const keeps = {schema: 'oi.live-take/v1', torus, moves: [{beat: 0.0625, torus: louder}], bpm: 120, course: {...COURSE, frames: 2000, acts: []}}
+  const clip = {...REAL, name: 'Take 1', loop: false, start: 0, end: 4, take: {id: 7, keeps}}
+  const saved = []
+  const answer = await take.exportTake(clip, {stage: renderOwner().stage, save: (name, bytes) => { saved.push([name, bytes]); return Promise.resolve() }})
+  assert.equal(answer.ok, true, answer.error)
+  assert.match(answer.note, /^Exported Take 1 as “Take 1\.wav”: 0\.04 s of the Torus at 48000 Hz, as the take played it\./)
+  assert.match(answer.note, /The frame's effects \(filter\) are not in the file/)
+  const [[name, wav]] = saved
+  assert.equal(name, 'Take 1.wav')
+  const text = (at, n) => String.fromCharCode(...wav.slice(at, at + n))
+  const view = new DataView(wav.buffer, wav.byteOffset, wav.byteLength)
+  assert.deepEqual([text(0, 4), view.getUint32(4, true), text(8, 4), text(12, 4), view.getUint32(16, true)], ['RIFF', 36 + 8000, 'WAVE', 'fmt ', 16])
+  assert.deepEqual([view.getUint16(20, true), view.getUint16(22, true), view.getUint32(24, true), view.getUint32(28, true), view.getUint16(32, true),
+    view.getUint16(34, true)], [3, 1, 48000, 192000, 4, 32], 'IEEE float, mono, the owner\'s rate')
+  assert.deepEqual([text(36, 4), view.getUint32(40, true), wav.length], ['data', 8000, 44 + 8000])
+  // The render is 0.125 throughout; the level is 0.5 until beat 1/16 (sample 1500 at 120 BPM), then 1.
+  assert.deepEqual([view.getFloat32(44, true), view.getFloat32(44 + 4 * 1499, true), view.getFloat32(44 + 4 * 1500, true)], [0.0625, 0.0625, 0.125])
+  assert.match((await take.exportTake({...clip, take: {id: 7, keeps: {...keeps, course: null, course_refused: 'replace-event moved the scene at sample 505000'}}},
+    {stage: renderOwner().stage, save: async () => {}})).error, /keeps no course of the Torus, so Export Audio cannot render it: replace-event moved the scene/)
+  assert.match((await take.exportTake({...clip, take: null}, {stage: renderOwner().stage, save: async () => {}})).error, /not a take/)
 })
