@@ -805,7 +805,8 @@ export class NativeFieldController {
   * of the same scene set to `checkpoint`, each act made at its sample, `frames` of its PCM. It renders a second of sound at a time (the first
   * part from the checkpoint, each next continuing the last), each part one read through the one serial owner, so the live owner's sound runs
   * on between parts and the live owner neither moves nor sounds for it. Each act goes in the part its sample falls in; a key's strength is the
-  * owner's pair of metres. */
+  * owner's pair of metres, and so are a touch's and a singlet's, each made as the owner took it live (playAt: every point at the one impulse;
+  * torusSinglet), so the kernel finds the acts it relayed in the render (O-I #855, kept whole). */
  renderTake(checkpoint:unknown,acts:readonly StageTakeAct[],frames:number):Promise<StageTakeRender>{
   const kept=readStageTorusCheckpoint(checkpoint);
   if(!kept)return Promise.reject(new Error('a take renders from the owner\'s ql.torus-checkpoint/v1'));
@@ -822,7 +823,9 @@ export class NativeFieldController {
    if(at<last||at>=end)return Promise.reject(new Error('a take\'s acts lie within the take, in the order of their samples'));
    last=at;
   }
-  const owned=(act:StageTakeAct)=>act.action==='strike'?{...act,amplitude:[act.amplitude,0] as [number,number]}:act;
+  const metres=(amplitude:number):[number,number]=>[amplitude,0];
+  const owned=(act:StageTakeAct)=>act.action==='strike'||act.action==='singlet'?{...act,amplitude:metres(act.amplitude)}
+   :act.action==='strike-at'?{action:act.action,at_samples_elapsed:act.at_samples_elapsed,points:act.points.map(({theta,phi})=>({theta,phi,amplitude:metres(act.amplitude)}))}:act;
   return (async()=>{
    const pcm=new Float32Array(frames),made_way:StageKey[][]=[];
    let continues:string|undefined,ended:StageTorusCheckpoint|null=null,done=0,next=0;

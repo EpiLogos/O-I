@@ -88,6 +88,26 @@ test('a take to render: the owner\'s checkpoint, its acts at their samples in or
   for (const [why, change] of refused) assert.equal(readStageRequest(request({...take, ...change})), null, why);
 });
 
+test('a take holds a touch and a singlet as the owner was sent them: points on the sheet at one strength, a codon of the 64 at its strength', async () => {
+  // O-I #855, kept whole: a touch of the surface (`strike-at`) and a singlet (`torus-singlet`, O-I #771) are acts of a take, as a key is.
+  const {readStageRequest} = await stage();
+  const acts = [{action: 'strike-at', at_samples_elapsed: '48100', points: [{theta: 0.75, phi: 2.5}, {theta: 4, phi: 5.5}], amplitude: 0.3},
+    {action: 'singlet', at_samples_elapsed: '52800', codon: 8, amplitude: 0.35}];
+  const take = {command: 'render-take', checkpoint: checkpoint(), acts, frames: 96000};
+  assert.deepEqual(readStageRequest(request(take)).command, take);
+  const refused = [
+    ['a touch of nothing', {acts: [{...acts[0], points: []}]}], ['a touch of 65 points', {acts: [{...acts[0], points: Array(65).fill({theta: 1, phi: 1})}]}],
+    ['a touch off the sheet', {acts: [{...acts[0], points: [{theta: 2 * Math.PI, phi: 1}]}]}],
+    ['a point with its own impulse', {acts: [{...acts[0], points: [{theta: 1, phi: 1, amplitude: [0.3, 0]}]}]}],
+    ['a touch too strong', {acts: [{...acts[0], amplitude: 1.5}]}], ['a touch of no strength', {acts: [{...acts[0], amplitude: 0}]}],
+    ['a touch of keys', {acts: [{...acts[0], keys}]}],
+    ['a codon past the 64', {acts: [{...acts[1], codon: 64}]}], ['a codon that is no integer', {acts: [{...acts[1], codon: 2.5}]}],
+    ['a codon as words', {acts: [{...acts[1], codon: '8'}]}], ['a singlet of no strength', {acts: [{...acts[1], amplitude: 0}]}],
+    ['a singlet naming its places', {acts: [{...acts[1], arc: 9}]}],
+  ];
+  for (const [why, change] of refused) assert.equal(readStageRequest(request({...take, ...change})), null, why);
+});
+
 test('an instrument edit that acts on the owner may name the sample it lands at; one the frame makes on its own sound may not', async () => {
   const {readStageRequest, STAGE_INSTRUMENT_TIMED_KINDS} = await stage();
   assert.deepEqual([...STAGE_INSTRUMENT_TIMED_KINDS], ['lens', 'context-frame', 'harmonic', 'transcription', 'damping', 'torus']);
@@ -253,6 +273,27 @@ test('a take renders a second at a time: the first part from the checkpoint, eac
     await assert.rejects(c.renderTake({schema: 'x'}, [], 4800), /ql\.torus-checkpoint\/v1/);
     await assert.rejects(c.renderTake(checkpoint('0', {sample_rate: 44100}), [], 4800), /44100/);
     assert.equal(owner.renderCalls.length, 3, 'refused before the owner');
+  } finally { await c.dispose(); }
+});
+
+test('a take renders its touches and singlets as the owner\'s own acts: the acts it was sent, each strength the owner\'s pair of metres', async () => {
+  const {owner, c} = await openController();
+  try {
+    const kept = checkpoint('48000');
+    const acts = [{action: 'strike-at', at_samples_elapsed: '48100', points: [{theta: 0.75, phi: 2.5}, {theta: 4, phi: 5.5}], amplitude: 0.3},
+      {action: 'singlet', at_samples_elapsed: '52800', codon: 8, amplitude: 0.35},
+      {action: 'strike', at_samples_elapsed: '96100', keys, amplitude: 0.5}];
+    await c.renderTake(kept, acts, 96000);
+    assert.deepEqual(owner.renderCalls, [
+      {operation: 'torus-render', checkpoint: kept, acts: [
+        {action: 'strike-at', at_samples_elapsed: '48100', points: [{theta: 0.75, phi: 2.5, amplitude: [0.3, 0]}, {theta: 4, phi: 5.5, amplitude: [0.3, 0]}]},
+        {action: 'singlet', at_samples_elapsed: '52800', codon: 8, amplitude: [0.35, 0]}], frames: 48000},
+      {operation: 'torus-render', continues: 'render:1', acts: [{...acts[2], amplitude: [0.5, 0]}], frames: 48000}],
+    'as the owner took them live (controller.ts playAt, torusSinglet), so the kernel finds the acts it relayed in the render');
+    const sent = owner.renderCalls.length;
+    await assert.rejects(c.renderTake(kept, [{...acts[1], codon: 64}], 48000), /codon is 0 to 63/);
+    await assert.rejects(c.renderTake(kept, [{...acts[0], points: [{theta: 7, phi: 1}]}], 48000), /\[0, 2\*pi\)/);
+    assert.equal(owner.renderCalls.length, sent, 'refused before the owner');
   } finally { await c.dispose(); }
 });
 

@@ -30,6 +30,9 @@ pub const MAX_TAKES: usize = 256;
 /// The transport resolution of a performance a take opens.
 pub const TAKE_PPQ: u16 = 960;
 const MAX_KEYS: usize = 64;
+/// The most points one touch strikes (QL continuous.rs MAX_STRIKE_POINTS) and the most metres an impulse may be (STRIKE_CAP_METRES).
+const MAX_POINTS: usize = 64;
+const MAX_METRES: f64 = 1.0;
 const MAX_CHECKPOINT_BYTES: usize = super::MAX_CHECKPOINT_BYTES;
 /// What the kernel holds of one owner's lifetime to seal a take from: twice a take's acts, sixteen
 /// checkpoints and eight renders, the oldest let go first.
@@ -48,6 +51,16 @@ const REPLAY_POLICY: &str = "a take plays again from its checkpoint with its act
 pub struct TakeKey {
     pub row: u8,
     pub column: u16,
+}
+
+/// One point of the surface a touch strikes (QL continuous.rs `StrikeAtInput`): the torus's own angles on the sampled sheet,
+/// θ the tube and φ the ring, each in [0, 2π), and the impulse given there in modal metres.
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct TakePoint {
+    pub theta: Scalar,
+    pub phi: Scalar,
+    pub amplitude: [Scalar; 2],
 }
 
 /// One act of a take at the sample it landed at: the grammar of the owner's render (QL scene_field.rs
@@ -71,6 +84,17 @@ pub enum TakeAct {
         at_samples_elapsed: Counter,
         edit: Value,
     },
+    /// A touch strikes the surface at its points (`strike-at`; O-I #855, a performance kept whole).
+    StrikeAt {
+        at_samples_elapsed: Counter,
+        points: Vec<TakePoint>,
+    },
+    /// A singlet strikes its codon's place on the ring (`torus-singlet`, O-I #771).
+    Singlet {
+        at_samples_elapsed: Counter,
+        codon: u8,
+        amplitude: [Scalar; 2],
+    },
 }
 impl TakeAct {
     pub fn at(&self) -> u64 {
@@ -83,6 +107,12 @@ impl TakeAct {
             }
             | Self::Set {
                 at_samples_elapsed, ..
+            }
+            | Self::StrikeAt {
+                at_samples_elapsed, ..
+            }
+            | Self::Singlet {
+                at_samples_elapsed, ..
             } => at_samples_elapsed.0,
         }
     }
@@ -91,11 +121,24 @@ impl TakeAct {
             Self::Strike { .. } => "a strike",
             Self::Release { .. } => "a release",
             Self::Set { .. } => "a setting",
+            Self::StrikeAt { .. } => "a touch",
+            Self::Singlet { .. } => "a singlet",
         };
         let whole = serde_json::to_string(self).unwrap_or_default();
         format!("{action} at sample {} ({whole})", self.at())
     }
     fn validate(&self) -> Result<(), String> {
+        let impulse = |amplitude: &[Scalar; 2]| {
+            if amplitude
+                .iter()
+                .any(|metres| metres.value().abs() > MAX_METRES)
+            {
+                return Err(format!(
+                    "a take's impulse is two modal metres within {MAX_METRES} metre"
+                ));
+            }
+            Ok(())
+        };
         let keys = match self {
             Self::Strike { keys, .. } | Self::Release { keys, .. } => keys,
             Self::Set { edit, .. } => {
@@ -103,6 +146,31 @@ impl TakeAct {
                     return Err("a take's setting names at least one setting".into());
                 }
                 return safe(edit, 0);
+            }
+            Self::StrikeAt { points, .. } => {
+                if points.is_empty() || points.len() > MAX_POINTS {
+                    return Err(format!("a take's touch strikes 1 to {MAX_POINTS} points"));
+                }
+                for point in points {
+                    if [point.theta, point.phi]
+                        .iter()
+                        .any(|angle| !(0.0..std::f64::consts::TAU).contains(&angle.value()))
+                    {
+                        return Err("a take's touch strikes the sampled sheet of the torus: θ and φ each in [0, 2π)".into());
+                    }
+                    impulse(&point.amplitude)?;
+                }
+                return Ok(());
+            }
+            Self::Singlet {
+                codon, amplitude, ..
+            } => {
+                if *codon >= 64 {
+                    return Err(format!(
+                        "a take's singlet is of a codon 0 to 63; there is no codon {codon}"
+                    ));
+                }
+                return impulse(amplitude);
             }
         };
         if keys.is_empty() || keys.len() > MAX_KEYS || keys.iter().any(|key| key.row >= 6) {
@@ -148,11 +216,13 @@ pub struct TakeReading {
     pub why: String,
 }
 
-/// The eight readings, in REQUIRED_NATIVE_READINGS' order. Three the QL host's checkpoint keeps (its law,
-/// QL scene_field.rs TORUS_CHECKPOINT_LAW: "its form (the shapes' reference), the forces it answers to (the
-/// session's settings, which give the Carrier's drive, and the body's damping)"); five nothing a take's owner
-/// gives supplies. No producer in the suite writes an M2 relation plan or a physical body preparation.
-pub fn readings() -> Vec<TakeReading> {
+/// The eight readings of a take from `checkpoint`, in REQUIRED_NATIVE_READINGS' order. Three the QL host's
+/// checkpoint keeps (its law, QL scene_field.rs TORUS_CHECKPOINT_LAW: "its form (the shapes' reference), the forces
+/// it answers to (the session's settings, which give the Carrier's drive, and the body's damping)"); and where a
+/// form's body rang (`torus-body`, O-I #852), the checkpoint keeps that body too (scene_field.rs KeptBody: the form's
+/// request and its `ql.physical-body-preparation/v1`), which a restore prepares again. The rest nothing a take's
+/// owner gives supplies: no producer in the suite writes an M2 relation plan.
+pub fn readings(checkpoint: &Value) -> Vec<TakeReading> {
     let absent = |reading: &str, why: &str| TakeReading {
         reading: reading.into(),
         standing: "absent".into(),
@@ -165,15 +235,24 @@ pub fn readings() -> Vec<TakeReading> {
         kept_at: at.iter().map(|at| (*at).into()).collect(),
         why: why.into(),
     };
+    let on_form = checkpoint.get("body").is_some_and(|body| !body.is_null());
     vec![
         absent("m2_plan", "No owner of a Torus take plans M2 relations (epi.m2.relation-plan.v1): the scene owner reads its M2 as the event's Vimarśā seeds, which the checkpoint keeps (/seeds), with the M2 request it was composed from (/event/m2)."),
         absent("audio_determination", "No owner of a Torus take determines a prepared body's audio (an octet over a body preparation and its state): the scene owner sounds its resident voices, which the checkpoint keeps (/voices, /amplitudes)."),
         absent("m3_score", "The scene owner's M3 state is in the basis its world was composed from, not in its checkpoint, and a take keeps what the checkpoint keeps: only the M3 request stands there (/event/m3)."),
         absent("m3_replay", "The M3 request and commands the scene was composed with stand in the checkpoint's event (/event/m3, /event/m3_commands); the receipts M3 gave for them are not kept with it, so its replay is not whole. The take itself plays again from its checkpoint and its acts."),
-        absent("prepared_body", "No physical body preparation (ql.physical-body-preparation/v1) is made for the Torus: its body is the scene's resident shape as it rings, which the checkpoint keeps (/shape_ref, /amplitudes)."),
+        if on_form {
+            kept("prepared_body", &["/body/prepared"], "The form's body that rang, as its owner prepared it (ql.physical-body-preparation/v1), which a restore prepares again.")
+        } else {
+            absent("prepared_body", "No physical body preparation (ql.physical-body-preparation/v1) is made for the Torus: its body is the scene's resident shape as it rings, which the checkpoint keeps (/shape_ref, /amplitudes).")
+        },
         kept("tuning", &["/session/settings/tuning"], "The tuning in force as the take began, in the M1′ session's settings the checkpoint keeps."),
         kept("force_state", &["/session/settings", "/damping_per_second"], "The forces the body answers to: the session's settings, which give the Carrier's drive, and the body's damping."),
-        kept("form_state", &["/shape_ref"], "The body's form: the shapes' reference."),
+        if on_form {
+            kept("form_state", &["/shape_ref", "/body/request"], "The body's form: the shapes' reference, and the form its body was made from.")
+        } else {
+            kept("form_state", &["/shape_ref"], "The body's form: the shapes' reference.")
+        },
     ]
 }
 
@@ -379,7 +458,7 @@ impl TorusTake {
             }
             last = act.at();
         }
-        if self.readings != readings() {
+        if self.readings != readings(&self.checkpoint) {
             return Err(
                 "a take says what it keeps of a basis's readings as the kernel says it".into(),
             );
@@ -494,6 +573,22 @@ pub(crate) struct TakeWitness {
     cursor: u64,
 }
 
+fn touch(command: &Value, at: u64) -> Result<TakeAct, String> {
+    Ok(TakeAct::StrikeAt {
+        at_samples_elapsed: Counter(at),
+        points: serde_json::from_value(command["points"].clone()).map_err(|e| e.to_string())?,
+    })
+}
+
+fn singlet(command: &Value, at: u64) -> Result<TakeAct, String> {
+    Ok(TakeAct::Singlet {
+        at_samples_elapsed: Counter(at),
+        codon: serde_json::from_value(command["codon"].clone()).map_err(|e| e.to_string())?,
+        amplitude: serde_json::from_value(command["amplitude"].clone())
+            .map_err(|e| e.to_string())?,
+    })
+}
+
 fn strike(command: &Value, at: u64) -> Result<TakeAct, String> {
     Ok(TakeAct::Strike {
         at_samples_elapsed: Counter(at),
@@ -527,6 +622,8 @@ impl TakeWitness {
                 let at = *landed.as_ref().unwrap_or(&self.cursor);
                 let act = match op {
                     "torus-play" => Witnessed::Act(landed.and_then(|at| strike(command, at))),
+                    "strike-at" => Witnessed::Act(landed.and_then(|at| touch(command, at))),
+                    "torus-singlet" => Witnessed::Act(landed.and_then(|at| singlet(command, at))),
                     "torus-release" => Witnessed::Act(landed.and_then(|at| {
                         Ok(TakeAct::Release {
                             at_samples_elapsed: Counter(at),
@@ -734,7 +831,7 @@ impl TakeWitness {
         let mut acts = Vec::with_capacity(sent.len());
         for (at, act) in sent {
             match act {
-                Witnessed::Moved(operation) => return Err(format!("The take cannot be sealed: {operation} moved the scene at sample {at} during it, and a take plays again only the Torus's strikes, releases and settings from its checkpoint. Record it again without moving the scene")),
+                Witnessed::Moved(operation) => return Err(format!("The take cannot be sealed: {operation} moved the scene at sample {at} during it, and a take plays again only the Torus's strikes, touches, singlets, releases and settings from its checkpoint. Record it again without moving the scene")),
                 Witnessed::Act(Err(why)) => return Err(format!("The take cannot be sealed: the act the owner was sent at sample {at} is not one a take keeps ({why})")),
                 Witnessed::Act(Ok(act)) => acts.push(act.clone()),
             }
@@ -788,7 +885,7 @@ impl TakeWitness {
                 ended: render.ended.clone(),
                 ended_sha256: render.ended_sha256.clone(),
             },
-            readings: readings(),
+            readings: readings(&kept.checkpoint),
             law: TAKE_LAW.into(),
             seal: String::new(),
         };
@@ -1089,6 +1186,245 @@ pub(crate) mod tests {
             words.contains("not been rendered") && words.contains("did not give under this lease"),
             "{words}"
         );
+    }
+
+    /// A take that holds a touch of the surface (`strike-at`) and a singlet (`torus-singlet`, O-I #771) as the owner was sent them:
+    /// a touch sent ahead for a sample within it, a singlet struck now where the owner's cursor stood (O-I #855, kept whole).
+    fn touched() -> (TakeWitness, String, Value) {
+        let mut w = TakeWitness::default();
+        w.observe(
+            &json!({"operation":"advance","frames":9600}),
+            &reply(9600, json!({})),
+        );
+        w.observe(
+            &json!({"operation":"torus-checkpoint"}),
+            &reply(9600, json!({"torus_checkpoint":checkpoint(9600)})),
+        );
+        w.observe(&json!({"operation":"strike-at","points":[{"theta":0.75,"phi":2.5,"amplitude":[0.3,0]},{"theta":4.0,"phi":5.5,"amplitude":[0.3,0]}],"at_samples_elapsed":"12000"}), &reply(9600, json!({})));
+        w.observe(
+            &json!({"operation":"advance","frames":4800}),
+            &reply(14400, json!({})),
+        );
+        w.observe(
+            &json!({"operation":"torus-singlet","codon":8,"amplitude":[0.25,0]}),
+            &reply(14400, json!({})),
+        );
+        w.observe(
+            &json!({"operation":"advance","frames":9600}),
+            &reply(24000, json!({})),
+        );
+        // The acts as the owner's render makes them (QL scene_field.rs TorusRenderAct `strike-at` and `singlet`).
+        let acts = json!([
+            {"action":"strike-at","at_samples_elapsed":"12000","points":[{"theta":0.75,"phi":2.5,"amplitude":[0.3,0]},{"theta":4.0,"phi":5.5,"amplitude":[0.3,0]}]},
+            {"action":"singlet","at_samples_elapsed":"14400","codon":8,"amplitude":[0.25,0]}]);
+        (w, value_sha256(&checkpoint(9600)).unwrap(), acts)
+    }
+
+    #[test]
+    fn a_take_holding_a_touch_and_a_singlet_is_sealed_in_the_grammar_its_render_makes() {
+        let (mut w, sha, acts) = touched();
+        let (command, answer) = render(
+            9600,
+            14400,
+            json!({"checkpoint":checkpoint(9600)}),
+            acts.clone(),
+            "render:1",
+        );
+        w.observe(&command, &reply(24000, answer));
+        let take = w.seal(&sha, "lease:1", &identity()).unwrap();
+        assert_eq!(take.acts.len(), 2);
+        assert_eq!(
+            take.acts[0].at(),
+            12000,
+            "the touch sent ahead lands at its sample"
+        );
+        assert_eq!(
+            take.acts[1].at(),
+            14400,
+            "the singlet struck now lands where the owner's cursor stood"
+        );
+        // Kept as the owner's render takes it again: the same acts, field for field.
+        assert_eq!(
+            serde_json::to_value(&take.acts).unwrap(),
+            json!([
+                {"action":"strike-at","at_samples_elapsed":"12000","points":[{"theta":0.75,"phi":2.5,"amplitude":[0.3,0.0]},{"theta":4.0,"phi":5.5,"amplitude":[0.3,0.0]}]},
+                {"action":"singlet","at_samples_elapsed":"14400","codon":8,"amplitude":[0.25,0.0]}])
+        );
+        assert_eq!(take.render.pcm_sha256, pcm(9600, 24000));
+        take.verify_seal().unwrap();
+        let again: TorusTake =
+            serde_json::from_str(&serde_json::to_string(&take).unwrap()).unwrap();
+        again.verify_seal().unwrap();
+
+        // A render that made another singlet, or touched elsewhere, is not this take's.
+        for (index, key, value, words) in [
+            (
+                1,
+                "codon",
+                json!(5),
+                "The render made a singlet at sample 14400 (",
+            ),
+            (
+                0,
+                "points",
+                json!([{"theta":0.75,"phi":2.5,"amplitude":[0.3,0]}]),
+                "The render made a touch at sample 12000 (",
+            ),
+        ] {
+            let (mut other, _, _) = touched();
+            let mut moved = acts.clone();
+            moved[index][key] = value;
+            let (command, answer) = render(
+                9600,
+                14400,
+                json!({"checkpoint":checkpoint(9600)}),
+                moved,
+                "render:1",
+            );
+            other.observe(&command, &reply(24000, answer));
+            let said = other.seal(&sha, "lease:1", &identity()).unwrap_err();
+            assert!(said.contains(words), "{said}");
+        }
+
+        // An act the owner was sent that a take cannot keep says why.
+        let (mut odd, _, _) = touched();
+        odd.observe(
+            &json!({"operation":"torus-singlet","codon":"8","amplitude":[0.25,0]}),
+            &reply(24000, json!({})),
+        );
+        let (command, answer) = render(
+            9600,
+            14401,
+            json!({"checkpoint":checkpoint(9600)}),
+            acts.clone(),
+            "render:1",
+        );
+        odd.observe(&command, &reply(24001, answer));
+        let said = odd.seal(&sha, "lease:1", &identity()).unwrap_err();
+        assert!(
+            said.contains("the act the owner was sent at sample 24000 is not one a take keeps"),
+            "{said}"
+        );
+
+        // A plain strike of named modes still moved the scene: a take makes again only the Torus's own acts.
+        let (mut stirred, _, _) = touched();
+        stirred.observe(
+            &json!({"operation":"strike","strikes":[]}),
+            &reply(24000, json!({})),
+        );
+        let (command, answer) = render(
+            9600,
+            14401,
+            json!({"checkpoint":checkpoint(9600)}),
+            acts.clone(),
+            "render:1",
+        );
+        stirred.observe(&command, &reply(24001, answer));
+        let said = stirred.seal(&sha, "lease:1", &identity()).unwrap_err();
+        assert!(
+            said.contains("strike moved the scene at sample 24000")
+                && said.contains("strikes, touches, singlets, releases and settings"),
+            "{said}"
+        );
+    }
+
+    #[test]
+    fn a_kept_touch_or_singlet_is_one_its_render_can_make() {
+        let point = |theta: f64| TakePoint {
+            theta: Scalar::new(theta).unwrap(),
+            phi: Scalar::new(1.0).unwrap(),
+            amplitude: [Scalar::new(0.3).unwrap(), Scalar::new(0.0).unwrap()],
+        };
+        let touch = |points: Vec<TakePoint>| TakeAct::StrikeAt {
+            at_samples_elapsed: Counter(0),
+            points,
+        };
+        let singlet = |codon: u8, metres: f64| TakeAct::Singlet {
+            at_samples_elapsed: Counter(0),
+            codon,
+            amplitude: [Scalar::new(metres).unwrap(), Scalar::new(0.0).unwrap()],
+        };
+        touch(vec![point(0.5)]).validate().unwrap();
+        singlet(63, 0.3).validate().unwrap();
+        for (act, words) in [
+            (touch(vec![]), "1 to 64 points"),
+            (
+                touch((0..65).map(|_| point(0.5)).collect()),
+                "1 to 64 points",
+            ),
+            (touch(vec![point(std::f64::consts::TAU)]), "[0, 2π)"),
+            (touch(vec![point(-0.1)]), "[0, 2π)"),
+            (singlet(64, 0.3), "0 to 63"),
+            (singlet(8, 1.5), "within 1 metre"),
+        ] {
+            let said = act.validate().unwrap_err();
+            assert!(said.contains(words), "{words}: {said}");
+        }
+    }
+
+    #[test]
+    fn a_take_rung_on_a_forms_body_keeps_the_body_its_checkpoint_keeps() {
+        // O-I #855 under O-I #852: QL's checkpoint keeps the form's body that rang (scene_field.rs KeptBody: the request it is
+        // prepared from and its ql.physical-body-preparation/v1), and a restore prepares it again; a take kept from it says so.
+        let of = |readings: &[TakeReading], name: &str| {
+            readings
+                .iter()
+                .find(|reading| reading.reading == name)
+                .unwrap()
+                .clone()
+        };
+        let torus = readings(&checkpoint(9600));
+        assert_eq!(of(&torus, "prepared_body").standing, "absent");
+        assert_eq!(of(&torus, "form_state").kept_at, vec!["/shape_ref"]);
+        let mut on_fold = checkpoint(9600);
+        on_fold["body"] = json!({"request":{"schema":"ql.form-body-request/v1","form":{"kind":"fold","form_ref":"m3-prime:fold/v"}},
+            "prepared":{"schema":"ql.physical-body-preparation/v1","request":{"preparation_ref":"ql:form-body:1"}}});
+        let fold = readings(&on_fold);
+        assert_eq!(of(&fold, "prepared_body").standing, "kept");
+        assert_eq!(of(&fold, "prepared_body").kept_at, vec!["/body/prepared"]);
+        assert_eq!(
+            of(&fold, "form_state").kept_at,
+            vec!["/shape_ref", "/body/request"]
+        );
+        for name in [
+            "m2_plan",
+            "audio_determination",
+            "m3_score",
+            "m3_replay",
+            "tuning",
+            "force_state",
+        ] {
+            assert_eq!(of(&fold, name), of(&torus, name), "{name}");
+        }
+        // Sealed from that checkpoint, the take keeps the body's readings, and they verify.
+        let mut w = TakeWitness::default();
+        w.observe(
+            &json!({"operation":"torus-checkpoint"}),
+            &reply(9600, json!({"torus_checkpoint":on_fold})),
+        );
+        w.observe(&json!({"operation":"strike-at","points":[{"theta":0.75,"phi":2.5,"amplitude":[0.3,0]}],"at_samples_elapsed":"12000"}), &reply(9600, json!({})));
+        w.observe(
+            &json!({"operation":"advance","frames":14400}),
+            &reply(24000, json!({})),
+        );
+        let (command, mut answer) = render(
+            9600,
+            14400,
+            json!({"checkpoint":on_fold}),
+            json!([{"action":"strike-at","at_samples_elapsed":"12000","points":[{"theta":0.75,"phi":2.5,"amplitude":[0.3,0]}]}]),
+            "render:1",
+        );
+        answer["torus_render"]["checkpoint"]["body"] = on_fold["body"].clone();
+        w.observe(&command, &reply(24000, answer));
+        let take = w
+            .seal(&value_sha256(&on_fold).unwrap(), "lease:1", &identity())
+            .unwrap();
+        assert_eq!(take.readings, fold);
+        take.verify_seal().unwrap();
+        // A take that says it keeps no body while its checkpoint keeps one is not the kernel's.
+        let mut said = take.clone();
+        said.readings = torus;
+        assert!(said.verify_seal().is_err());
     }
 
     #[test]

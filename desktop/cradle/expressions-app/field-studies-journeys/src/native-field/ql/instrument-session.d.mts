@@ -45,6 +45,8 @@ export class InstrumentSession {
   * render, `frames` of sound with each act made at its sample. A read: this owner neither moves nor sounds. */
  torusRender(take: {checkpoint?: object; continues?: string; frames: number;
   acts?: Array<{action: 'strike'; at_samples_elapsed: string; keys: Array<{row: number; column: number}>; amplitude: [number, number]}
+   | {action: 'strike-at'; at_samples_elapsed: string; points: Array<{theta: number; phi: number; amplitude: [number, number]}>}
+   | {action: 'singlet'; at_samples_elapsed: string; codon: number; amplitude: [number, number]}
    | {action: 'release'; at_samples_elapsed: string; keys: Array<{row: number; column: number}>}
    | {action: 'set'; at_samples_elapsed: string; edit: object}>}): Promise<any>;
  /** Where the Torus is heard from (`ql.torus-receiver/v1`, O-I 856): a place, [x, y, z] metres in the frame the targets are drawn in,

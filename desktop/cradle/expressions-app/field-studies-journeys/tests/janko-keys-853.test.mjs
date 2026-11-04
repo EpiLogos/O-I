@@ -278,12 +278,15 @@ test('a codon past the 64 is refused before the owner is asked, and a singlet th
   } finally { await c.dispose(); }
 });
 
-test('the singlet stage command names one codon of the 64, and nothing else', async () => {
+test('the singlet stage command names one codon of the 64, and for a take played again its strength and sample', async () => {
   const {readStageRequest} = await stage();
   assert.deepEqual(readStageRequest(request({command: 'singlet', codon: 58})), {req: 7, command: {command: 'singlet', codon: 58}});
   assert.deepEqual(readStageRequest(request({command: 'singlet', codon: 0})).command, {command: 'singlet', codon: 0});
-  for (const body of [{}, {codon: 64}, {codon: -1}, {codon: 2.5}, {codon: '8'}, {codon: 8, amplitude: 0.35}, {codon: 8, at_samples_elapsed: '4800'},
-    {codon: 8, arc: 9}])
+  // A take's singlet strikes again as it was struck, at its sample (O-I #855; live/clipPlayer.ts).
+  assert.deepEqual(readStageRequest(request({command: 'singlet', codon: 8, amplitude: 0.35, at_samples_elapsed: '4800'})).command,
+    {command: 'singlet', codon: 8, amplitude: 0.35, at_samples_elapsed: '4800'});
+  for (const body of [{}, {codon: 64}, {codon: -1}, {codon: 2.5}, {codon: '8'}, {codon: 8, amplitude: 0}, {codon: 8, amplitude: 1.5},
+    {codon: 8, amplitude: '0.35'}, {codon: 8, at_samples_elapsed: 4800}, {codon: 8, at_samples_elapsed: '04800'}, {codon: 8, arc: 9}])
     assert.equal(readStageRequest(request({command: 'singlet', ...body})), null, JSON.stringify(body));
 });
 
@@ -292,7 +295,7 @@ test('the frame runs a singlet as the controller\'s torus-singlet and answers wh
   const start = app.indexOf("case 'singlet':");
   assert.ok(start >= 0);
   const block = app.slice(start, app.indexOf("case 'audio-clock':", start));
-  assert.match(block, /nativeField\.controller\.torusSinglet\(command\.codon\)/);
+  assert.match(block, /nativeField\.controller\.torusSinglet\(command\.codon,command\.amplitude,command\.at_samples_elapsed\)/);
   assert.match(block, /landed_at_samples_elapsed/);
 });
 

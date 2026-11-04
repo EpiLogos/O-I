@@ -598,6 +598,67 @@ test('a take whose window moved the scene, or whose owner kept no state of it, k
   }
 })
 
+test('the course keeps a touch and a singlet at the samples they landed at, as render-take makes them, and reads them back exactly', () => {
+  // O-I #855, kept whole: a touch of the surface (`strike-at`, controller.ts playAt) and a singlet (`torus-singlet`, O-I #771) are acts a take
+  // plays again and its render makes, as a key is (QL scene_field.rs TorusRenderAct; the kernel's take witness keeps them too).
+  const touch = [{theta: 0.75, phi: 2.5, amplitude: [0.3, 0]}, {theta: 4, phi: 5.5, amplitude: [0.3, 0]}]
+  const landed = take.takeCourse(CHECKPOINT, JOURNAL([
+    journalAct('1', 'strike-at', {points: touch, at_samples_elapsed: '500000'}, '490000'),
+    journalAct('2', 'torus-singlet', {codon: 8, amplitude: [0.35, 0]}, '512000'),
+    journalAct('3', 'torus-play', {keys: [C4], amplitude: [1, 0]}, '520000'),
+  ]), '528000', 96000)
+  assert.deepEqual(landed.course.acts, [
+    {action: 'strike-at', at_samples_elapsed: '500000', points: [{theta: 0.75, phi: 2.5}, {theta: 4, phi: 5.5}], amplitude: 0.3},
+    {action: 'singlet', at_samples_elapsed: '512000', codon: 8, amplitude: 0.35},
+    {action: 'strike', at_samples_elapsed: '520000', keys: [C4], amplitude: 1}])
+  assert.deepEqual(take.takeCourseOf(structuredClone(landed.course)), landed.course, 'kept beside the set, it reads back whole')
+  assert.deepEqual([...landed.struck.keys()], ['0/42'], 'only a key is a note struck')
+  // What a take's render does not strike so is said, and the take keeps no course.
+  for (const [act, why] of [
+    [journalAct('1', 'strike-at', {points: [touch[0], {...touch[1], amplitude: [0.5, 0]}]}, '500000'), /strike-at at sample 500000 struck its points at more than one strength/],
+    [journalAct('1', 'strike-at', {points: [{...touch[0], amplitude: [0.3, 0.1]}]}, '500000'), /strike-at struck at sample 500000 with a second amplitude/],
+    [journalAct('1', 'strike-at', {points: [{theta: 7, phi: 1, amplitude: [0.3, 0]}]}, '500000'), /strike-at at sample 500000 names no points on the sheet/],
+    [journalAct('1', 'torus-singlet', {codon: 64, amplitude: [0.35, 0]}, '500000'), /torus-singlet at sample 500000 names no codon of the 64 at a strength in \(0, 1\]/],
+    [journalAct('1', 'torus-singlet', {codon: 8, amplitude: [0.35, 0.2]}, '500000'), /torus-singlet struck at sample 500000 with a second amplitude/],
+  ]) assert.match(take.takeCourse(CHECKPOINT, JOURNAL([act]), '528000', 96000).refused, why)
+  const course = landed.course
+  for (const act of [{...course.acts[0], points: []}, {...course.acts[0], amplitude: 0}, {...course.acts[0], keys: [C4]}, {...course.acts[1], codon: 64},
+    {...course.acts[1], codon: 2.5}, {...course.acts[1], amplitude: 1.5}])
+    assert.equal(take.takeCourseOf({...course, acts: [act]}), null, JSON.stringify(act))
+})
+
+test('the clip player strikes a take\'s touch and singlet again at their samples through the frame\'s own commands; one behind the render is missed', async () => {
+  const clock = controlledClock()
+  const touches = [], singlets = []
+  const exact = {landed: '900000', from: T0, frames: 96000, sample_rate: 48000, noteOf: () => null, acts: [
+    {action: 'singlet', at_samples_elapsed: '480100', codon: 5, amplitude: 0.35},
+    {action: 'strike-at', at_samples_elapsed: '504000', points: [{theta: 0.75, phi: 2.5}], amplitude: 0.3},
+    {action: 'singlet', at_samples_elapsed: '510000', codon: 8, amplitude: 0.35},
+  ]}
+  const owners = {
+    read: async () => ({...REAL, name: 'Take 1', loop: false, start: 0, end: 4, take: {id: 7, keeps: {}}, notes: [{id: 1, p: 60, at: 1, len: 1, vel: 127, chance: 1, on: true}]}),
+    prepare: async () => ({resumes: take.TAKE_REPLAYS, exact}),
+    clock: async () => ({samples_elapsed: '902400', sample_rate: 48000, lookahead_seconds: 0.05, block_frames: 512}),
+    strike: async () => ({ok: true}), release: () => {},
+    touch: async (points, amplitude, at) => { touches.push([points, amplitude, at]); return {ok: true} },
+    singlet: async (codon, amplitude, at) => { singlets.push([codon, amplitude, at]); return {ok: false, error: 'No live instrument plays: open the instrument'} },
+    watch: () => () => {}, now: clock.now, later: clock.later, cancel: clock.cancel, random: () => 0,
+  }
+  const p = player.createClipPlayer(owners)
+  p.play({path: '/sets/a.als', track: 1, at: {arrangement: 0}}, 120)
+  for (let i = 0; i < 6; i++) await tick()
+  await clock.run(100.41)
+  assert.deepEqual(touches, [[[{theta: 0.75, phi: 2.5}], 0.3, '924000']], 'the touch at R + (its sample − the take\'s first), at its strength')
+  assert.equal(p.state().missed, 1, 'the singlet behind the owner\'s render is missed, and counted')
+  await clock.run(100.53)
+  assert.deepEqual(singlets, [[8, 0.35, '930000']], 'the singlet at its sample, at its strength')
+  for (let i = 0; i < 4; i++) await tick()
+  assert.match(p.state().refused ?? '', /No live instrument plays/, 'the Torus\'s refusal is said')
+  const wired = source('live/clipPlayer.ts')
+  assert.match(wired, /touch: \(points, amplitude, at\) => commitLiveStage\(\{command: 'strike-at', points: \[\.\.\.points\], amplitude, at_samples_elapsed: at\}\)/)
+  assert.match(wired, /singlet: \(codon, amplitude, at\) => commitLiveStage\(\{command: 'singlet', codon, amplitude, at_samples_elapsed: at\}\)/)
+})
+
 test('a take with its course plays again as it was played: the Torus set as it stood, rung again from its state, each act at its sample', async () => {
   const torus = take.torusKept(torusState({level: 0.5}))
   const carrier = take.torusKept(torusState({level: 0.5, settings: {carrier: 0.5}}))

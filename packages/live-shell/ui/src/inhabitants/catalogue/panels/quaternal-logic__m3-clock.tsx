@@ -19,6 +19,7 @@
 //   generation.lower, generation.upper, generation.positive, generation.negative, generation.nonDual
 //                        the cell of the form's hexagram under law.matrix (pole::generation::generate, C ql_m3_generate)
 //   pose.bin, pose.slot  the active pose under the laws: the raw bin 0..7 and the lawful slot
+//   singlet.why          the last singlet the clock struck that the Torus refused, in words (qlM3Clock.ts; O-I #771), drawn only while it stands
 // Writes are the owner's apply operations: a new degree is `advance-clock{steps}` by the difference. Turn, Open, Readout and showing
 // the reciprocal are the view's own choices; no owner keeps them. The entry's Run and Rate have no owner operation (m3_reception
 // carries no spanda-advance, and nothing runs the wheel), so they are not offered.
@@ -275,6 +276,9 @@ function bindingControls(p: ViewProps) {
   }
 }
 const bindingOf = (p: ViewProps) => scoped(p, 'binding.')
+/** A singlet the Torus refused, said where the reading is; nothing while none stands. */
+const singletRefused = (v: V) => { const why = strOf(v, 'singlet.why')
+  return why === undefined ? null : <Readout label="singlet" does={why} value="refused" tone="stall" /> }
 const onBinding = (v: V) => strOf(v, 'skin') === 'binding'
 
 /** The Binding page: the skin's picture and its settings, beside the clock's Skin. */
@@ -293,7 +297,7 @@ function BindingBands({p}: {p: ViewProps}) {
     <Band>
       <Section label="Show" width={84}>{c.nonets}{c.sound}</Section>
       <Section width={104}><Display w={92} h={70} label="Potential" does="V(r) = −(4/3)·α_s·ħc/r + σr over the string's length, the engine's stretch marked."><Potential v={b.v} w={92} h={70} /></Display></Section>
-      <Section label="Reading" grow><Rows does="The kernel's cell and the event behind the last motion. Every motion has a kernel event behind it." items={readingRows(b.v)} size={4} /></Section>
+      <Section label="Reading" grow><Rows does="The kernel's cell and the event behind the last motion. Every motion has a kernel event behind it." items={readingRows(b.v)} size={4} />{singletRefused(p.v)}</Section>
     </Band>
   </>
 }
@@ -383,6 +387,7 @@ export const design: DesignedDevice = {
           <Readout label="pairs" does="The two pairs of bases of the cell: the lower trigram's under the upper's." value={pairsWord(p.v)} />
           <Readout label={`pose · ${strOf(p.v, 'law.poseMap') === 'lawful-slot' ? 'slot' : 'bin'}`} does="The active pose, read under the seed and the pose map." tone="accent"
             value={strOf(p.v, 'law.poseMap') === 'lawful-slot' ? numOf(p.v, 'pose.slot') : numOf(p.v, 'pose.bin')} />
+          {singletRefused(p.v)}
         </Section>
       </Band>
       </>}
