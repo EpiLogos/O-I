@@ -46,6 +46,9 @@ const checkpoint = (at = '48000', extra = {}) => ({schema: 'ql.torus-checkpoint/
   event: {m1: {lens12: 11}}, seeds: {tick12: 7}, shape_ref: 'shape:one', damping_per_second: 0.35, voices: ['scene:logic/0'],
   amplitudes: [[0.25, -0.5]], session: {steps: 12.5, notes: []}, law: 'kept', ...extra});
 const keys = [{row: 2, column: 3}];
+/** A sound as the kernel seals one (kernel expression_performance/kept.rs TorusSound, `oi.torus-sound/v1`). */
+const sound = (extra = {}) => ({schema: 'oi.torus-sound/v1', sound_ref: 'sha256:sound', name: 'Low bell', sample_rate: 48000, checkpoint: checkpoint(),
+  checkpoint_sha256: 'sha256:kept', body: {kind: 'torus'}, sources: [], law: 'kept', seal: 'hmac-sha256:seal', ...extra});
 
 // ---------------------------------------------------------------------------------------------------- the stage vocabulary
 test('the Torus is kept and set again by name: a checkpoint names nothing, a restore carries the owner\'s checkpoint whole', async () => {
@@ -125,8 +128,21 @@ const openController = async () => {
   const THREE = await import('three');
   const {NativeFieldController} = await controller();
   class TorusOwner extends ControlledSceneOwner {
-    renders = 0; renderCalls = []; torusCalls = []; waiting = [];
+    renders = 0; renderCalls = []; torusCalls = []; waiting = []; soundCalls = []; moved = []; unlabelled = false; given = new Map();
     async request(request) {
+      // The kernel's own acts beside the owner (O-I #852, native_expression.rs torus_sound / torus_sound_open): a sound sealed from a
+      // checkpoint the kernel relayed under that name, and opened against one, its restore the sound as saved.
+      if (request.operation === 'torus_sound' || request.operation === 'torus_sound_open') {
+        this.soundCalls.push(structuredClone(request));
+        if (request.lease !== 'controlled:scene-lease') throw new Error('native-expression.foreign_lease');
+        if (request.operation === 'torus_sound_open') {
+          if (!this.given.has(request.now_sha256)) throw new Error(`No Torus checkpoint ${request.now_sha256} was given under this lease`);
+          return {schema: 'oi.torus-sound-opening/v1', sound_ref: request.sound.sound_ref, restore: {operation: 'torus-restore', checkpoint: request.sound.checkpoint}, moved: this.moved};
+        }
+        const kept = this.given.get(request.checkpoint_sha256);
+        if (!kept) throw new Error(`No Torus checkpoint ${request.checkpoint_sha256} was given under this lease`);
+        return sound({name: request.name, checkpoint: kept, checkpoint_sha256: request.checkpoint_sha256});
+      }
       const command = request.request?.command;
       // A Torus setting for a later sample waits for it and moves nothing (QL scene_field.rs torus_set_when); the block that reaches its
       // sample makes it there and names it in torus_set_landed, a Fundamental made there being that block's one generation.
@@ -159,7 +175,12 @@ const openController = async () => {
       const read = structuredClone(request);
       read.request.command = {operation: 'read'};
       const reply = await super.request(read);
-      if (command.operation === 'torus-checkpoint') return {...reply, torus: this.torus(), torus_checkpoint: checkpoint(this.frame.samples_elapsed)};
+      if (command.operation === 'torus-checkpoint') {
+        // The kernel relays each checkpoint it kept named by its digest (native_expression.rs `labelled`).
+        const kept = checkpoint(this.frame.samples_elapsed), sha256 = `sha256:checkpoint/${kept.taken_at_samples}/${this.given.size}`;
+        this.given.set(sha256, kept);
+        return {...reply, torus: this.torus(), torus_checkpoint: kept, ...(this.unlabelled ? {} : {torus_checkpoint_sha256: sha256})};
+      }
       if (command.operation === 'torus-restore') {
         this.bump(2n);
         return {...reply, field: {...structuredClone(this.frame), audio: []}, torus: this.torus(), influence: this.influence()};
@@ -317,4 +338,75 @@ test('the frame keeps and sets the Torus, renders a take and makes an edit at it
   const sources = controlled.slice(controlled.indexOf('private async readSources('), controlled.indexOf('private async readInfluence('));
   assert.match(sources, /this\.fundamentalAt/, 'sources read before a waiting Fundamental lands stay stale');
   assert.match(command, /This edit is made on the frame\\'s own sound/, 'an edit of the frame\'s own sound at a sample is refused in words');
+});
+
+// ---------------------------------------------------------------------------------------------------- a kept sound (O-I #852)
+test('a sound is saved from the Torus by its name alone, and a kept sound is opened whole (O-I #852)', async () => {
+  const {readStageRequest, STAGE_TORUS_SOUND_BYTES_MAX, STAGE_TORUS_SOUND_NAME_MAX} = await stage();
+  assert.equal(STAGE_TORUS_SOUND_NAME_MAX, 120, 'the kernel\'s own bound on a sound\'s name');
+  assert.deepEqual(readStageRequest(request({command: 'torus-sound', action: 'save', name: 'Low bell'})).command, {command: 'torus-sound', action: 'save', name: 'Low bell'});
+  for (const name of [undefined, '', '   ', 'a\nb', 'x'.repeat(121), 7])
+    assert.equal(readStageRequest(request({command: 'torus-sound', action: 'save', name})), null, JSON.stringify(name));
+  assert.equal(readStageRequest(request({command: 'torus-sound', action: 'save', name: 'Low bell', body: {}})), null, 'no other operand: the torus is its body');
+  const kept = sound();
+  assert.deepEqual(readStageRequest(request({command: 'torus-sound', action: 'open', sound: kept})).command, {command: 'torus-sound', action: 'open', sound: kept});
+  for (const bad of [undefined, null, [], {...kept, schema: 'oi.torus-take/v1'}, {...kept, sound_ref: ''}, {...kept, name: 4},
+    {...kept, checkpoint: 'x'.repeat(STAGE_TORUS_SOUND_BYTES_MAX)}])
+    assert.equal(readStageRequest(request({command: 'torus-sound', action: 'open', sound: bad})), null, JSON.stringify(bad)?.slice(0, 60));
+  assert.equal(readStageRequest(request({command: 'torus-sound', action: 'open', sound: kept, name: 'x'})), null, 'no other operand');
+});
+
+test('a saved sound and an opened one answer across the channel: the sound; where it rings again from and what has moved', async () => {
+  const {readStageResult, stageReplyMessage} = await stage();
+  const kept = sound();
+  assert.deepEqual(readStageResult(stageReplyMessage(7, {ok: true, sound: kept}, {command: 'torus-sound', action: 'save', name: 'Low bell'})), {req: 7, ok: true, sound: kept});
+  const moved = [{source: 'event', saved: 'sha256:a', now: 'sha256:b', words: 'The event the tuning was read from has moved'}];
+  assert.deepEqual(readStageResult(stageReplyMessage(8, {ok: true, landed_at_samples_elapsed: '52992', moved}, {command: 'torus-sound', action: 'open', sound: kept})),
+    {req: 8, ok: true, landed_at_samples_elapsed: '52992', moved});
+  assert.deepEqual(readStageResult(stageReplyMessage(9, {ok: true, landed_at_samples_elapsed: '52992', moved: []}, {command: 'torus-sound', action: 'open', sound: kept})),
+    {req: 9, ok: true, landed_at_samples_elapsed: '52992', moved: []}, 'nothing moved is said too');
+  const answer = {v: 1, kind: 'host-command-result', command: 'torus-sound', req: 8, ok: true, landed_at_samples_elapsed: '52992'};
+  for (const [why, bad] of [['a move with no words', {moved: [{source: 'event', saved: 'a', now: 'b'}]}], ['moves as text', {moved: 'event'}],
+    ['a sound of another schema', {sound: {...kept, schema: 'x'}}]])
+    assert.equal(readStageResult({...answer, ...bad}), null, why);
+});
+
+test('a sound is saved from the checkpoint the kernel named, and opens as saved through the one owner, saying what has moved (O-I #852)', async () => {
+  const {owner, c} = await openController();
+  try {
+    const saved = await c.torusSound('Low bell');
+    assert.deepEqual(sent(owner, 'torus-checkpoint'), [{operation: 'torus-checkpoint'}], 'the owner keeps the Torus as it rings');
+    const [named] = owner.given.keys();
+    assert.deepEqual(owner.soundCalls, [{operation: 'torus_sound', lease: 'controlled:scene-lease', checkpoint_sha256: named, name: 'Low bell'}],
+      'saved under the name the kernel relayed the checkpoint by, under the frame\'s own lease');
+    assert.equal(saved.schema, 'oi.torus-sound/v1');
+    owner.moved = [{source: 'event', saved: 'sha256:a', now: 'sha256:b', words: 'The event the tuning was read from has moved'}];
+    const generation = c.reading.native.acknowledged.generation;
+    const opened = await c.openTorusSound(saved);
+    const [, now] = owner.given.keys();
+    assert.deepEqual(owner.soundCalls[1], {operation: 'torus_sound_open', lease: 'controlled:scene-lease', sound: saved, now_sha256: now},
+      'opened against the Torus as it stands now, a fresh checkpoint');
+    assert.deepEqual(sent(owner, 'torus-restore'), [{operation: 'torus-restore', checkpoint: saved.checkpoint}], 'the owner restores the sound as saved');
+    assert.equal(BigInt(c.reading.native.acknowledged.generation), BigInt(generation) + 2n);
+    assert.deepEqual(opened, {landed_at_samples_elapsed: c.reading.native.acknowledged.samples_elapsed, moved: owner.moved});
+    // A checkpoint relayed unnamed saves nothing and opens nothing: refused in words before the kernel is asked.
+    owner.unlabelled = true;
+    await assert.rejects(c.torusSound('Low bell'), /relayed the Torus checkpoint unnamed/);
+    await assert.rejects(c.openTorusSound(saved), /relayed the Torus checkpoint unnamed/);
+    assert.equal(owner.soundCalls.length, 2);
+    await assert.rejects(c.openTorusSound({schema: 'oi.torus-take/v1'}), /oi\.torus-sound\/v1/);
+    await assert.rejects(c.torusSound(''), /1 to 120 characters/);
+    assert.equal(owner.soundCalls.length, 2, 'refused before the kernel');
+  } finally { await c.dispose(); }
+});
+
+test('the frame saves and opens a sound through its native field (O-I #852)', async () => {
+  const {STAGE_COMMANDS} = await stage();
+  assert.ok(STAGE_COMMANDS.includes('torus-sound'));
+  const app = await readFile(join(journeys, 'src/app.ts'), 'utf8');
+  assert.ok(app.includes("case 'torus-sound':"), 'the frame runs the sound\'s acts (until it does, the shell refuses an answer that carries no sound and no landing)');
+  const sound = app.slice(app.indexOf("case 'torus-sound':"), app.indexOf("case 'render-take':"));
+  assert.match(sound, /if\(command\.action==='save'\)return \{ok:true,sound:await nativeField\.controller\.torusSound\(command\.name\)\};/, 'saving is a read');
+  assert.match(sound, /\{const \{landed_at_samples_elapsed,moved\}=await nativeField\.controller\.openTorusSound\(command\.sound\);announceHostState\(\);return \{ok:true,landed_at_samples_elapsed,moved\};\}/,
+    'opening sets the Torus again, so the state is announced');
 });

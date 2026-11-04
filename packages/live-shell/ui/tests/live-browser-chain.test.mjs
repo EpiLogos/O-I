@@ -191,4 +191,8 @@ test('the kept rows drag onto a part, say what each holds, and stand under the T
   assert.match(view({refused: 'No Expressions application is mounted for the presets'}), /data-torus-kept-section="refused"[^]*Couldn(?:'|&#x27;)t list what the Scene keeps\. No Expressions application is mounted for the presets\./)
   const source = readFileSync(new URL('../src/components/BrowserPane.tsx', import.meta.url), 'utf8')
   assert.doesNotMatch(source.slice(source.indexOf('function TorusKeptSection')), /localStorage\.setItem\(KEPT|sessionStorage|indexedDB/)
+  // O-I #852: a sound saved on the Torus stands here at once: the section lists what the Scene keeps each time a sound is kept.
+  const section = source.slice(source.indexOf('function TorusKeptSection'), source.indexOf('function TorusKeptView'))
+  assert.match(section, /const stop = subscribeTorusKept\(kept => \{ if \(live\) setListed\(\{kept\}\) \}\)/)
+  assert.match(section, /return \(\) => \{ live = false; stop\(\) \}/)
 })

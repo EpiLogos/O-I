@@ -2366,6 +2366,12 @@ async function runStageCommand(command:StageCommand):Promise<StageResult>{
    if(!nativeField)throw new Error('This application has no native instrument.');
    if(command.action==='checkpoint')return {ok:true,checkpoint:await nativeField.controller.torusCheckpoint()};
    {const landed_at_samples_elapsed=await nativeField.controller.torusRestore(command.checkpoint);announceHostState();return {ok:true,landed_at_samples_elapsed};}
+  case 'torus-sound':
+   // A sound saved from the Torus is a read; a kept sound opened sets the Torus again, as a restore does (O-I #852; controller.ts torusSound,
+   // openTorusSound): it answers the sample it rang again from and what moved since the sound was saved.
+   if(!nativeField)throw new Error('This application has no native instrument.');
+   if(command.action==='save')return {ok:true,sound:await nativeField.controller.torusSound(command.name)};
+   {const {landed_at_samples_elapsed,moved}=await nativeField.controller.openTorusSound(command.sound);announceHostState();return {ok:true,landed_at_samples_elapsed,moved};}
   case 'render-take':
    // A take rendered offline through the M1′ session for Export Audio (O-I 855; controller.ts renderTake): a second owner of the scene set to
    // the take's checkpoint, each act at its sample, its PCM as f32. The live owner neither moves nor sounds, so nothing is announced.

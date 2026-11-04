@@ -316,3 +316,36 @@ test('a take\'s clip exports its audio from its menu in Arrangement view, throug
   assert.equal(byId(acts.objectMenu(clip, liveSet().set, context({view: 'arrangement'})), 'export-audio'), undefined, 'a set with no Export Audio lists none')
   assert.match((await a.exportTake.run(`als:/sets/other.als#track/2/clip/0`)).error, /another set/)
 })
+
+// O-I #852 (manual §21.2 "Drag it onto a part to play it"): a kept sound dropped on the empty track plays on a new part — Live's Insert
+// MIDI Track (`track_insert`, packages/live-set/src/acts.rs) after the last part, then the sound opened on the Torus and kept by that part.
+test('a kept sound dropped on the empty track plays on a new part: the part inserted, then the sound opened on it', async () => {
+  const {TORUS_KEPT_MIME} = await import('../src/frame/instruments.ts')
+  const SOUND = 'sha256:' + '1'.repeat(64)
+  const calls = []
+  const project = (refuse = null, unopened = null) => liveSetTrackAdapter.project({set: summary, document,
+    act: act => { calls.push(act); return refuse ? Promise.reject(new Error(refuse)) : Promise.resolve({act: act.kind, done: 'Inserted 4-MIDI, an empty MIDI part, right after Tide pad.', at: {track: 3}, revision: 'sha256:2'}) },
+    openSound: (soundRef, track) => { calls.push({open: [soundRef, track]}); return Promise.resolve(unopened ? {ok: false, error: unopened} : {ok: true, note: '"Low bell" opens as saved; nothing it was tuned from has moved. The part keeps it.'}) }})
+  const seat = project().actions.seat
+  assert.equal(seat.accepts, TORUS_KEPT_MIME)
+  assert.match(seat.op, /live_set_act · track_insert/)
+  assert.deepEqual(await seat.run(JSON.stringify({kind: 'sound', ref: SOUND})),
+    {ok: true, note: 'Inserted 4-MIDI, an empty MIDI part, right after Tide pad. "Low bell" opens as saved; nothing it was tuned from has moved. The part keeps it.'})
+  assert.deepEqual(calls, [{kind: 'track_insert', after: null}, {open: [SOUND, 3]}], 'after the last part, then opened on the part it made')
+  calls.length = 0
+  assert.match((await seat.run(JSON.stringify({kind: 'sound', ref: SOUND, instrument_ref: 'instrument:fold'}))).error, /form's body/)
+  assert.match((await seat.run(JSON.stringify({kind: 'instrument', ref: 'instrument:fold'}))).error, /form's body/)
+  assert.match((await seat.run(JSON.stringify({kind: 'rack', ref: 'rack:warm'}))).error, /rack/)
+  assert.match((await seat.run('Low bell')).error, /kept sound/)
+  assert.deepEqual(calls, [], 'refused before the set\'s owner')
+  // A refusal speaks plainly (shared/Refusal.tsx refusalWords): what happened first, then the owner's words when they are words.
+  assert.deepEqual(await project('The set changed since it was read').actions.seat.run(JSON.stringify({kind: 'sound', ref: SOUND})),
+    {ok: false, error: 'No part was made for the sound. The set changed since it was read.'})
+  assert.deepEqual(calls, [{kind: 'track_insert', after: null}], 'no part made, nothing opened')
+  calls.length = 0
+  assert.deepEqual(await project(null, 'Error: native owner busy; the Torus was not kept').actions.seat.run(JSON.stringify({kind: 'sound', ref: SOUND})),
+    {ok: false, error: 'Inserted 4-MIDI, an empty MIDI part, right after Tide pad. The sound did not open on it. Native owner busy; the Torus was not kept.'})
+  assert.deepEqual((await project(null, 'TypeError: Cannot read properties of undefined (reading \'restore\')').actions.seat.run(JSON.stringify({kind: 'sound', ref: SOUND}))).error,
+    'Inserted 4-MIDI, an empty MIDI part, right after Tide pad. The sound did not open on it.', 'a runtime fault is no reason, and stays out of the line')
+  assert.equal(liveSet().set.actions.seat, undefined, 'with no opener handed in, nothing is seated')
+})

@@ -416,3 +416,30 @@ test('the Torus\'s tattva is the live scene\'s M2 condition, by the map\'s name 
   assert.deepEqual(refused, {ok: false, reason: 'ql: unknown exact M coordinate: #9'})
   names.resetCoordinateNames()
 })
+
+// O-I #852 (manual §21.2 "Save the instrument as you tuned it"): the Body page names the sound and saves it through its owners
+// (live/LivePresets.tsx saveTorusSound); what they said stands on the Info line.
+test('the Body page saves the Torus as a sound by its name, through its owners', async () => {
+  mapSession(live => {
+    const device = model.torusDevice(live), binding = model.torusDesignBinding(live, device)
+    setHostPage(binding.id, 'body')
+    const body = renderToStaticMarkup(h(HostedDevice, {designed: torus, binding, view: 'whole', nav: {}}))
+    setHostPage(binding.id, 'field')
+    assert.match(body, /class="dp-sec-label">Save as a sound</)
+    assert.match(body, /aria-label="Sound name"/)
+    assert.match(body, /<button type="button" class="dp-action"[^>]*>Save sound<\/button>/)
+    // The Body page stands as tall as the Pulse and Stage pages (two bands, as Live's devices keep one height): the Save stands in the
+    // Body band beside the body's own section, and the name field spans the section, so the name reads whole.
+    const bands = body.split('class="dp-band"').slice(1)
+    assert.equal(bands.length, 2, 'the Body page keeps two bands')
+    assert.match(bands[0], /class="dp-sec-label">Body<[^]*class="dp-sec-label">Save as a sound<[^]*aria-label="Sound name"[^]*>Save sound</, 'beside the body, in its band')
+    assert.match(bands[0], /<div style="grid-column:span 2;width:100%"><div class="dp-cell dp-cell--text dp-cell--wide" data-i="Sound name\|/, 'the name spans the section')
+    assert.match(bands[0], /<div class="dp-sec" data-grow="true" style="width:224px"><div class="dp-sec-label">Body</, 'the body\'s section keeps the width the Notes band gave it, so its words read whole')
+  })
+  const source = await readFile(new URL('../src/inhabitants/catalogue/panels/torus.tsx', import.meta.url), 'utf8')
+  assert.match(source, /import\('\.\.\/\.\.\/\.\.\/live\/LivePresets'\)\.then\(presets => presets\.saveTorusSound\(name\)\)/, 'the save goes through the presets\' owner route, loaded when pressed')
+  // The refusal on the Save control speaks plainly (shared/Refusal.tsx refusalWords; desktop/cradle/tests/plain-refusals.test.mjs): the
+  // owners' words when they are words, a thrown cause never raw.
+  assert.match(source, /setSaid\(answer\.ok \? \{done: answer\.words\} : \{refused: refusalWords\(UNSAVED, answer\.error\)\}\), \(cause: unknown\) => setSaid\(\{refused: refusalWords\(UNSAVED, cause\)\}\)/)
+  assert.doesNotMatch(source, /String\(cause\)/, 'no caught value is printed as it came')
+})

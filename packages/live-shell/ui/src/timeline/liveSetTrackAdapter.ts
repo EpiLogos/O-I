@@ -37,6 +37,8 @@ import type {WorldActionReceipt, WorldAutomationLane, WorldCompStretch, WorldMix
 import type {LiveClipAt, LiveEnvelope, LiveSend, LiveSetAct, LiveSetActed, LiveTakeLane, LiveTrackMixer} from '../../../../../desktop/cradle/src/kernel/types'
 import {enginePartOf, type LiveEngineReading} from '../live/liveEngine'
 import type {LiveMixerControl, LiveMixerValue} from '../live/liveWrites'
+import {readTorusKeptDrag, TORUS_KEPT_MIME} from '../frame/instruments'
+import {refusalWords} from '../../../../../desktop/cradle/src/shared/Refusal.tsx'
 
 const missing = (what: string, op: string) => `${what}: no owner operation carries it yet — missing op: ${op} (kernel · live-set).`
 const MIXER_READ = 'live_set_read reporting each track\'s mixer {activator, solo, arm, monitor: "in" | "auto" | "off", input, output} from the .als (TrackActivator, Solo, Arm, MonitoringEnum, AudioInputRouting / MidiInputRouting, AudioOutputRouting)'
@@ -87,10 +89,15 @@ export interface LiveSetReading {
     stopAll(): WorldActionReceipt | Promise<WorldActionReceipt>}
   /** Export Audio of a take Record laid (live/liveTake.ts exportLiveTake, O-I #855): its course rendered by the Torus's owner, saved as WAV. */
   exportTake?: (track: number, at: LiveClipAt) => Promise<WorldActionReceipt>
+  /** A kept sound played on the part `track` (live/LivePresets.tsx playKeptSoundOn, O-I #852): opened on the Torus as saved, then kept by
+   * the part. With the set's acts, a kept sound dropped on the empty track plays on a new part. */
+  openSound?: (soundRef: string, track: number) => Promise<WorldActionReceipt>
 }
 
 /** The op an act of the set's names, in the words a menu shows. */
 export const LIVE_ACT_OP = (kind: LiveSetAct['kind']) => `live_set_act · ${kind} — the set's own ${kind.replace('_', ' ')}, against its revision (packages/live-set/src/acts.rs)`
+/** What the empty track seats (O-I #852): a kept sound, on a new part Live's Insert MIDI Track makes, opened there on the Torus. */
+export const LIVE_SEAT_SOUND_OP = `${LIVE_ACT_OP('track_insert')}, then the kept sound opened on the new part (the Torus's owner, through the frame's stage)`
 /** Export Audio of a take: its course rendered offline by the Torus's owner, part after part (O-I #855). */
 export const LIVE_EXPORT_TAKE_OP = 'render-take {checkpoint, acts, frames} — the take\'s course rendered by the Torus\'s owner (QL-MEF torus-render), saved as 32-bit float WAV'
 export const LIVE_INSERT_CLIP_OP = 'live_clip_create {path, track, scene, length: 4, notes: []} — an empty one-bar MIDI clip in the empty slot, as Live inserts one'
@@ -163,7 +170,7 @@ const barBeat = (beats: number): string => `${Math.floor(beats / 4) + 1}.${Math.
 
 export const liveSetTrackAdapter: WorldTrackAdapter<LiveSetReading> = {
   id: LIVE_SET_TRACK_ADAPTER_ID,
-  project({set, document, colors, mixerWrite, sendWrite, compWrite, act, insertClip, clipInfo, play, exportTake, engine}): WorldTrackSet {
+  project({set, document, colors, mixerWrite, sendWrite, compWrite, act, insertClip, clipInfo, play, exportTake, engine, openSound}): WorldTrackSet {
     if (!set) return {columns: [], tracks: [], clips: []}
     const trackRef = (index: number) => `als:${set.path}#track/${index}`
     // The set's master track is Live's Main track: its material stands at the end, and its chain is the devices the set lists on it.
@@ -285,7 +292,7 @@ export const liveSetTrackAdapter: WorldTrackAdapter<LiveSetReading> = {
       }}
       result.actions = {...result.actions, mixer}
     }
-    const objects = liveObjectActs(set, act, insertClip, play, clipInfo, exportTake)
+    const objects = liveObjectActs(set, act, insertClip, play, clipInfo, exportTake, openSound)
     if (objects) result.actions = {...result.actions, ...objects}
     return result
   },
@@ -294,7 +301,7 @@ export const liveSetTrackAdapter: WorldTrackAdapter<LiveSetReading> = {
 /** The acts on the set's objects (manual §10.9), each through its owner: the set's own acts where its writer is handed in, Launch and
  * Stop where the player is. An object of another set, or the Main track, is refused here, before anything reaches the owner. Pure. */
 function liveObjectActs(set: SetSummary, act: LiveSetReading['act'], insertClip: LiveSetReading['insertClip'], play: LiveSetReading['play'],
-  clipInfo?: LiveSetReading['clipInfo'], exportTake?: LiveSetReading['exportTake']): WorldTrackActions | null {
+  clipInfo?: LiveSetReading['clipInfo'], exportTake?: LiveSetReading['exportTake'], openSound?: LiveSetReading['openSound']): WorldTrackActions | null {
   if (!act && !play && !clipInfo && !exportTake) return null
   const prefix = `als:${set.path}#track/`
   const refused = (error: string) => Promise.resolve({ok: false as const, error})
@@ -400,6 +407,21 @@ function liveObjectActs(set: SetSummary, act: LiveSetReading['act'], insertClip:
     }, refuses: trackId => {
       const track = trackOf(trackId, 'holds no clips')
       return typeof track === 'string' ? track : consolidateRefusal(track)
+    }}
+    // A kept sound dropped on the empty track plays on a new part (manual §21.2 "Drag it onto a part to play it"): the part Live's Insert
+    // MIDI Track makes after the last one, then the sound opened on the Torus and kept by that part. Only a sound saved on the Torus opens.
+    if (openSound) actions.seat = {op: LIVE_SEAT_SOUND_OP, accepts: TORUS_KEPT_MIME, run: payload => {
+      const dropped = readTorusKeptDrag(payload)
+      if (!dropped) return refused('Only a kept sound plays on a new part: drag one from under the Torus in Instruments.')
+      if (dropped.kind === 'rack') return refused('Dropping a rack on a part is not carried yet: drop the sound it plays.')
+      if (dropped.kind === 'instrument' || dropped.instrument_ref) return refused('This rings on a form\'s body, and the live scene plays the torus until it can choose its body: drop a sound saved on the Torus.')
+      return act({kind: 'track_insert', after: null}).then(async (answer): Promise<WorldActionReceipt> => {
+        const track = answer.at?.track
+        if (typeof track !== 'number') return {ok: false, error: `${answer.done} The owner named no part it made, so the sound was not opened.`}
+        const opened = await openSound(dropped.ref, track)
+        // A refusal speaks plainly (shared/Refusal.tsx): what happened, then the owner's words when they are words.
+        return opened.ok ? {ok: true, note: [answer.done, opened.note].filter(Boolean).join(' ')} : {ok: false, error: refusalWords(`${answer.done} The sound did not open on it.`, opened.error)}
+      }, (cause: unknown) => ({ok: false as const, error: refusalWords('No part was made for the sound.', cause)}))
     }}
   }
   // An audio part's consolidate writes a new sample of what it plays: a render (the owner refuses it in the same words).

@@ -13,7 +13,10 @@ import {readWikiSceneTechne, resolveSceneConstellation} from '../../../desktop/c
 import {relateSceneConstellation} from '../../../desktop/cradle/src/techne/sceneConstellationRelation';
 import {ensureWikiNativeExpression, publishWikiNativeRegisters, selectedWikiNativeRegister, selectWikiNativeRegister, wikiNativeRegisters} from '../../../desktop/cradle/src/techne/wikiNativeExpression';
 import {assertReading, boundedText, decideFrameAction, object, readFrameActionRequest, type ChannelContext, type ExpressionsOwners} from './protocol.ts';
-import {listPerformance, readFramePerformanceRequest, recallPerformanceBasis, refusePerformanceSave} from './performanceBasis.ts';
+import {keepSoundChange, keptSoundRecord, keptSoundReply, listPerformance, readFramePerformanceRequest, recallPerformanceBasis, refusePerformanceSave} from './performanceBasis.ts';
+
+/** Who keeps a sound in the Scene: the person, through the Expressions application's own surfaces (as nativeMaterials.ts edits). */
+const PERFORMANCE_ACTOR = 'human:expressions-app';
 
 export type {KernelTransportStatus, KernelReceipt, NativeFileReading, NativeFileEntry, NativeDirectory, CentralLocation} from '../../../desktop/cradle/src/kernel/types';
 export {listFiles, readFile, resolveFileLocation} from '../../../desktop/cradle/src/files/client';
@@ -109,7 +112,7 @@ export function createCradleOwners(transport: KernelTransportStatus, options: Cr
     requireCurrent(context);
     const inspected = await kernelOp(transport, {op: 'expression', request: {operation: 'inspect', expression_ref: request.expression_ref}} as KernelOp, context.signal);
     const document = inspected.outcome?.result === 'expression'
-      ? (inspected.outcome.data as {document?: {expression_ref?: unknown; scenes?: Array<{scene_ref?: unknown; performance?: unknown}>}}).document : undefined;
+      ? (inspected.outcome.data as {document?: {expression_ref?: unknown; revision?: unknown; scenes?: Array<{scene_ref?: unknown; performance?: unknown}>}}).document : undefined;
     if (inspected.error || !document || document.expression_ref !== request.expression_ref) throw Error(inspected.error ?? 'The native Expression could not be read');
     requireCurrent(context);
     const scene = document.scenes?.find(row => row.scene_ref === request.scene_ref);
@@ -118,6 +121,16 @@ export function createCradleOwners(transport: KernelTransportStatus, options: Cr
     // The listing is the Scene performance's: its presets, and the sounds, instruments and racks it keeps on the Torus (O-I #852).
     if (request.action === 'list') return listPerformance(scene.performance);
     if (request.action === 'save') return refusePerformanceSave({performance: scene.performance}, request.name);
+    // A kept sound read back whole, to open; a sound the kernel sealed kept by one edit of the Scene's performance (O-I #852).
+    if (request.action === 'sound') return keptSoundRecord(scene.performance, request.sound_ref);
+    if (request.action === 'keep-sound') {
+      if (typeof document.revision !== 'number') throw Error('The native Expression reads with no revision to edit');
+      const edited = await data({op: 'expression', request: {operation: 'edit', expression_ref: request.expression_ref, expected_revision: document.revision, actor: PERFORMANCE_ACTOR,
+        changes: [keepSoundChange(request.scene_ref, request.sound)]}} as KernelOp, 'expression', context) as {state?: unknown; dirty?: unknown; document?: typeof document};
+      if (edited?.state === 'revision_conflict') return {state: 'refused', reason: 'The Expression changed since it was read: nothing was kept. Save the sound again on what stands.', missing: []};
+      const kept = edited?.document?.scenes?.find(row => row.scene_ref === request.scene_ref);
+      return keptSoundReply(kept?.performance, request.sound, edited.dirty === true);
+    }
     return recallPerformanceBasis(bases, request.basis_ref);
   };
   return {

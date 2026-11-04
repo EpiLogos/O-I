@@ -119,3 +119,85 @@ test('the presets module reads and writes no browser or shell storage, and the h
   const panel = await readFile(new URL('panels/expressions.tsx', here), 'utf8')
   assert.match(panel, /setLivePerformanceChannel\(action => host\.current \? host\.current\.performance\(action\)/)
 })
+
+// ── 3 — a sound saved and opened (O-I #852, manual §21.2 "Save the instrument as you tuned it", "Drag it onto a part to play it") ──
+// Save: the owner keeps a checkpoint and the kernel seals the sound from it (the stage's `torus-sound` save), then the Scene keeps it (the
+// performance's keep-sound). Open: the Scene's record by its ref, opened against the Torus as it stands now (the stage's `torus-sound` open).
+
+const SOUND_REF = 'sha256:' + '1'.repeat(64)
+const SEALED = {schema: 'oi.torus-sound/v1', sound_ref: SOUND_REF, name: 'Low bell', sample_rate: 48000, checkpoint: {schema: 'ql.torus-checkpoint/v1'},
+  checkpoint_sha256: 'sha256:' + '9'.repeat(64), body: {kind: 'torus'}, sources: [], law: 'kept', seal: 'hmac-sha256:00'}
+const KEPT = {sounds: [{sound_ref: SOUND_REF, name: 'Low bell', body: 'torus', body_ref: null, sample_rate: 48000}], instruments: [], racks: []}
+
+test('the owner\'s answers to a kept sound and to a keep are read in their own shapes', async () => {
+  const record = await withChannel(async () => ({state: 'sound', sound: SEALED}), () => presets.commitLivePerformance({action: 'sound', sound_ref: SOUND_REF}))
+  assert.deepEqual(record, {state: 'sound', sound: SEALED})
+  const kept = await withChannel(async () => ({state: 'kept', sound_ref: SOUND_REF, name: 'Low bell', unsaved: false, kept: KEPT}),
+    () => presets.commitLivePerformance({action: 'keep-sound', sound: SEALED}))
+  assert.equal(kept.state, 'kept')
+  for (const odd of [{state: 'sound'}, {state: 'kept', name: 'Low bell'}])
+    assert.match((await withChannel(async () => odd, () => presets.commitLivePerformance({action: 'sound', sound_ref: SOUND_REF}))).reason, /unknown shape/)
+})
+
+test('Save sound: the owner keeps the Torus, the kernel seals the sound, the Scene keeps it, and the browser hears what it keeps', async () => {
+  const asked = [], heard = []
+  const stage = async command => { asked.push(command); return {ok: true, sound: SEALED} }
+  const perform = async action => { asked.push(action); return {state: 'kept', sound_ref: SOUND_REF, name: 'Low bell', unsaved: true, kept: KEPT} }
+  const stop = presets.subscribeTorusKept(kept => heard.push(kept))
+  try {
+    const saved = await presets.saveTorusSound(' Low bell ', {stage, perform})
+    assert.deepEqual(asked, [{command: 'torus-sound', action: 'save', name: 'Low bell'}, {action: 'keep-sound', sound: SEALED}], 'named as typed, trimmed')
+    assert.deepEqual(saved, {ok: true, words: 'Saved "Low bell" under the Torus. The Scene keeps it until the Expression is saved, then the file does.'})
+    assert.deepEqual(heard, [KEPT], 'the browser lists what the Scene keeps now')
+    const stood = await presets.saveTorusSound('Low bell', {stage, perform: async () => ({state: 'kept', sound_ref: SOUND_REF, name: 'Low bell', unsaved: false, kept: KEPT})})
+    assert.equal(stood.words, 'Saved "Low bell" under the Torus.')
+    assert.equal(heard.length, 2)
+    // Each refusal in its owner's words, and nothing kept past a refusal.
+    asked.length = 0
+    assert.deepEqual(await presets.saveTorusSound('  ', {stage, perform}), {ok: false, error: 'Name the sound first: the browser lists it by its name.'})
+    assert.deepEqual(asked, [], 'refused before any owner')
+    assert.deepEqual(await presets.saveTorusSound('Low bell', {stage: async () => ({ok: false, error: 'Open the live instrument first'}), perform}),
+      {ok: false, error: 'Open the live instrument first'})
+    assert.deepEqual(asked, [], 'a sound the kernel did not seal is not kept')
+    assert.deepEqual(await presets.saveTorusSound('Low bell', {stage, perform: async () => ({state: 'refused', reason: 'Sound Low bell is already kept', missing: []})}),
+      {ok: false, error: 'Sound Low bell is already kept'})
+    assert.equal(heard.length, 2, 'a refused save or keep is not announced')
+  } finally { stop() }
+})
+
+test('a kept sound opens as saved through the owner, and says what has moved since it was saved', async () => {
+  const asked = []
+  const perform = async action => { asked.push(action); return {state: 'sound', sound: SEALED} }
+  const moved = [{source: 'event', saved: 'sha256:a', now: 'sha256:b', words: 'The event the tuning was read from has moved: its sky, its M2 condition or its M3 state'}]
+  const stage = async command => { asked.push(command); return {ok: true, landed_at_samples_elapsed: '52992', moved} }
+  const opened = await presets.openKeptSound(SOUND_REF, {stage, perform})
+  assert.deepEqual(asked, [{action: 'sound', sound_ref: SOUND_REF}, {command: 'torus-sound', action: 'open', sound: SEALED}])
+  assert.deepEqual(opened, {ok: true, name: 'Low bell', moved,
+    words: '"Low bell" opens as saved. Moved since it was saved: the event the tuning was read from has moved: its sky, its M2 condition or its M3 state.'})
+  const still = await presets.openKeptSound(SOUND_REF, {perform, stage: async () => ({ok: true, landed_at_samples_elapsed: '52992', moved: []})})
+  assert.equal(still.words, '"Low bell" opens as saved; nothing it was tuned from has moved.')
+  assert.deepEqual(await presets.openKeptSound(SOUND_REF, {stage, perform: async () => ({state: 'refused', reason: 'The Scene keeps no sound ' + SOUND_REF + '.', missing: []})}),
+    {ok: false, error: 'The Scene keeps no sound ' + SOUND_REF + '.'})
+  assert.deepEqual(await presets.openKeptSound(SOUND_REF, {perform, stage: async () => ({ok: false, error: 'native owner busy; the Torus was not kept'})}),
+    {ok: false, error: 'native owner busy; the Torus was not kept'})
+  // A frame that does not run the sound's acts answers ok with nothing in it: that opened nothing, and is said so.
+  assert.deepEqual(await presets.openKeptSound(SOUND_REF, {perform, stage: async () => ({ok: true})}),
+    {ok: false, error: 'The frame answered the opening with no sample it rang again from: the sound was not opened'})
+  assert.deepEqual(await presets.saveTorusSound('Low bell', {perform, stage: async () => ({ok: true})}), {ok: false, error: 'The owner answered the save with no sound'})
+})
+
+test('a kept sound played on a part: it opens on the Torus, then the part keeps the Torus as it stands', async () => {
+  const asked = []
+  const owners = {perform: async action => { asked.push(action); return {state: 'sound', sound: SEALED} },
+    stage: async command => { asked.push(command.action); return {ok: true, landed_at_samples_elapsed: '52992', moved: []} },
+    keepOn: async (path, track) => { asked.push({keepOn: [path, track]}); return null }}
+  const played = await presets.playKeptSoundOn('/sets/Tide Sketch.als', 3, SOUND_REF, owners)
+  assert.deepEqual(asked, [{action: 'sound', sound_ref: SOUND_REF}, 'open', {keepOn: ['/sets/Tide Sketch.als', 3]}])
+  assert.deepEqual(played, {ok: true, note: '"Low bell" opens as saved; nothing it was tuned from has moved. The part keeps it.'})
+  const unkept = await presets.playKeptSoundOn('/sets/Tide Sketch.als', 3, SOUND_REF, {...owners, keepOn: async () => 'The set is not open, so the part keeps no Torus.'})
+  assert.deepEqual(unkept, {ok: true, note: '"Low bell" opens as saved; nothing it was tuned from has moved. The set is not open, so the part keeps no Torus.'})
+  asked.length = 0
+  assert.deepEqual(await presets.playKeptSoundOn('/sets/Tide Sketch.als', 3, SOUND_REF, {...owners, stage: async () => ({ok: false, error: 'Open the live instrument first'})}),
+    {ok: false, error: 'Open the live instrument first'})
+  assert.equal(asked.some(row => row.keepOn), false, 'a sound that did not open is kept on no part')
+})

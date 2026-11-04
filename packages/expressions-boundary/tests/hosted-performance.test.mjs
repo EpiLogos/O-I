@@ -171,3 +171,43 @@ test("the owner's listing is the Scene performance's, read by the kernel's own i
   const source = await readFile(new URL('../src/cradle.ts', import.meta.url), 'utf8');
   assert.match(source, /if \(request\.action === 'list'\) return listPerformance\(scene\.performance\);/);
 });
+
+// ── 5 — a sound saved and opened (O-I #852, DLW §21.2 "Save the instrument as you tuned it"; "Drag it onto a part to play it"): the
+// Scene keeps the sound the kernel sealed, by one edit of its performance; a kept sound is read back whole by its ref, to open.
+
+test('a kept sound is asked for by its ref and kept whole; each action reads only its own keys', () => {
+  const kept = sound(1, 'Warm Logic');
+  assert.deepEqual(readFramePerformanceRequest({operation: 'performance', action: 'sound', sound_ref: KEPT_DIGEST(1), ...refs}),
+    {operation: 'performance', action: 'sound', sound_ref: KEPT_DIGEST(1), ...refs});
+  assert.deepEqual(readFramePerformanceRequest({operation: 'performance', action: 'keep-sound', sound: kept, ...refs}),
+    {operation: 'performance', action: 'keep-sound', sound: kept, ...refs});
+  for (const bad of [{sound_ref: 'sound'}, {sound_ref: KEPT_DIGEST(1), name: 'x'}, {}])
+    assert.equal(readFramePerformanceRequest({operation: 'performance', action: 'sound', ...bad, ...refs}), null, JSON.stringify(bad));
+  for (const bad of [undefined, {...kept, schema: 'oi.torus-take/v1'}, {...kept, sound_ref: 'x'}, {...kept, name: ''}, {...kept, name: 'x'.repeat(121)},
+    {...kept, checkpoint: 'x'.repeat(2 * 1024 * 1024 + 1)}])
+    assert.equal(readFramePerformanceRequest({operation: 'performance', action: 'keep-sound', sound: bad, ...refs}), null, JSON.stringify(bad)?.slice(0, 60));
+  assert.notEqual(readFramePerformanceRequest({operation: 'performance', action: 'keep-sound', sound: {...kept, name: 'x'.repeat(120)}, ...refs}), null,
+    'a name as long as the kernel keeps one');
+});
+
+test('the Scene keeps a sound by one edit of its performance, and answers what it keeps then; a kept sound is read back whole', async () => {
+  const {keepSoundChange, keptSoundReply, keptSoundRecord, listPerformance} = await import('../src/performanceBasis.ts');
+  const kept = sound(1, 'Warm Logic');
+  assert.deepEqual(keepSoundChange('scene:one', kept), {change: 'scene_performance_edit', scene_ref: 'scene:one', operations: [{operation: 'keep_torus_sound', sound: kept}]},
+    'the kernel opens the Scene\'s performance with it, or keeps it in the one it has; the seal is the kernel\'s to judge');
+  const performance = {bases: [], torus_kept: {sounds: [kept], instruments: [], racks: []}};
+  assert.deepEqual(keptSoundReply(performance, kept, false), {state: 'kept', sound_ref: KEPT_DIGEST(1), name: 'Warm Logic', unsaved: false,
+    kept: listPerformance(performance).kept});
+  assert.equal(keptSoundReply(performance, kept, true).unsaved, true, 'kept in the Scene, the Expression not yet written');
+  assert.deepEqual(keptSoundReply({bases: []}, kept, true), {state: 'refused', reason: 'The Scene did not keep "Warm Logic".', missing: []});
+  assert.deepEqual(keptSoundRecord(performance, KEPT_DIGEST(1)), {state: 'sound', sound: kept}, 'the record as the Scene keeps it');
+  assert.deepEqual(keptSoundRecord(performance, KEPT_DIGEST(2)), {state: 'refused', reason: 'The Scene keeps no sound ' + KEPT_DIGEST(2) + '.', missing: []});
+  assert.deepEqual(keptSoundRecord({bases: [], torus_kept: {sounds: [{...kept, schema: 'other'}]}}, KEPT_DIGEST(1)).state, 'refused', 'a record that is not a sound opens nothing');
+});
+
+test("the owner keeps a sound by the kernel's own edit of the inspected revision, and reads a kept one back by the kernel's own inspect", async () => {
+  const source = await readFile(new URL('../src/cradle.ts', import.meta.url), 'utf8');
+  assert.match(source, /if \(request\.action === 'sound'\) return keptSoundRecord\(scene\.performance, request\.sound_ref\);/);
+  assert.match(source, /operation: 'edit', expression_ref: request\.expression_ref, expected_revision: document\.revision, actor: PERFORMANCE_ACTOR,\s+changes: \[keepSoundChange\(request\.scene_ref, request\.sound\)\]/);
+  assert.match(source, /return keptSoundReply\(kept\?\.performance, request\.sound, edited\.dirty === true\);/);
+});

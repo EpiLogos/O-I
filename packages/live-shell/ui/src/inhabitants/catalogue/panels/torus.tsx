@@ -25,9 +25,10 @@
 // the owner's refusal. Writes: stage.procedure (the one you chose; the shell holds it), stage.budget (1..1024, 16: `--max-evaluations`), and
 // four acts, each on its own key with the procedure's ref: stage.evaluate, stage.bind, stage.unbind, stage.retire.
 // The Rack page carries the rack of M1′ (the rack kit, map-rack.tsx), on the keys rack and rack.part.
-import type {CSSProperties} from 'react'
-import {Action, Band, Chooser, Dial, Display, Folded, Handle, Meter, Panel, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, type LightState, type RowItem} from '../../sdk/panel'
+import {useState, type CSSProperties, type ReactNode} from 'react'
+import {Action, Band, Chooser, Dial, Display, Folded, Handle, Meter, Panel, Radio, Readout, Rows, Section, TextField, Tile, Toggle, ValueBox, type LightState, type RowItem} from '../../sdk/panel'
 import {RACK_M1, RackBands} from './map-rack'
+import {refusalWords} from '../../../../../../../desktop/cradle/src/shared/Refusal.tsx'
 import {LIVE_CADENCE_OPTIONS, LIVE_CONTEXT_FRAME_OPTIONS, LIVE_HARMONIC_OPTIONS, LIVE_LENS_OPTIONS} from '../../../live/torusInstrument'
 import {NONE, boolOf, clampTo, db, fixed, has, json, num, numOf, on, pct, shown, signed, st, strOf, type DesignedDevice, type ViewProps} from './design'
 
@@ -344,6 +345,29 @@ function StagePage({p}: {p: ViewProps}) {
   </>
 }
 
+/** Save the Torus as it rings as a sound (O-I #852, manual §21.2 "Save the instrument as you tuned it"): named here and saved through its
+ * owners (live/LivePresets.tsx saveTorusSound: the owner keeps a checkpoint, the kernel seals the sound from it, the Scene keeps it). The
+ * sound then stands under the Torus in the browser's Instruments. What the owners said stands on the Info line; a refusal is said plainly
+ * (shared/Refusal.tsx refusalWords): what happened, then the owners' words when they are words. */
+const UNSAVED = 'The sound was not saved.'
+/** A control across both of the section's columns (the kit's columns are 56 px: a name reads whole across two). */
+const span2 = (child: ReactNode) => <div style={{gridColumn: 'span 2', width: '100%'}}>{child}</div>
+function SaveSound() {
+  const [name, setName] = useState('')
+  const [said, setSaid] = useState<{readonly pending?: boolean; readonly refused?: string; readonly done?: string}>({})
+  // The name commits as the field is left (Enter, or the press that leaves it), so the press saves the name as typed.
+  const save = () => {
+    setSaid({pending: true})
+    void import('../../../live/LivePresets').then(presets => presets.saveTorusSound(name))
+      .then(answer => setSaid(answer.ok ? {done: answer.words} : {refused: refusalWords(UNSAVED, answer.error)}), (cause: unknown) => setSaid({refused: refusalWords(UNSAVED, cause)}))
+  }
+  return <>
+    {span2(<TextField label="Sound name" does="The name the browser lists the sound by, under the Torus." value={name} placeholder="New sound" wide onChange={setName} />)}
+    {span2(<Action label="Save sound" does={said.done ?? 'Saves the Torus as it rings now, every parameter, as a sound the Scene keeps.'}
+      pending={said.pending} refused={said.refused} onPress={save} />)}
+  </>
+}
+
 export const torus: DesignedDevice = {
   id: 'quaternal-logic:torus',
   title: 'Torus',
@@ -412,7 +436,8 @@ export const torus: DesignedDevice = {
     </Band>
     </> : <>
     <Band>
-      <Section label="Body" cols={3} grow>
+      {/* 224: the width the Notes band below gives it, which it kept before the Save stood beside it (its words read whole). */}
+      <Section label="Body" cols={3} width={224} grow>
         <Radio {...st(p, 'body')} label="Body" does="What rings: the torus, or a form of the Expression." value={strOf(p.v, 'body') ?? ''} options={BODIES} stack onChange={x => p.set('body', x)} />
         <Dial {...st(p, 'strike')} disabled={st(p, 'strike').disabled ?? tattvaHold(p.v)} label="Strike" does="How strongly velocity excites the body." value={num(p.v, 'strike')} def={70} scale={{min: 0, max: 100}} format={pct} onChange={x => p.set('strike', x)} />
         <Dial {...st(p, 'damping')} disabled={st(p, 'damping').disabled ?? tattvaHold(p.v)} label="Damping" does="How sharply the body rings. A high value rings longer." value={num(p.v, 'damping')} def={4.5} scale={DAMP} format={fixed(1)} onChange={x => p.set('damping', x)} />
@@ -421,6 +446,8 @@ export const torus: DesignedDevice = {
         <Readout label={tattvaLabel(p.v)} does={tattvaDoes(p.v)}
           value={strOf(p.v, 'tattva.name')} tone={tattvaHold(p.v) ? 'accent' : undefined} />
       </Section>
+      {/* Beside the body, so the page keeps the two bands every page of the device stands in (O-I #852). */}
+      <Section label="Save as a sound" cols={2}><SaveSound /></Section>
     </Band>
     <Band>
       <Section label="Notes and output" cols={4} grow>

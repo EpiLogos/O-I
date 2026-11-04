@@ -29,7 +29,8 @@
 //!
 //! The acts on the set's objects (DLW §10.9, O-I #743: paste, duplicate and
 //! delete a clip, an empty slot's stop button, rename, move and duplicate a
-//! track, insert, rename, duplicate and delete a row) are one op typed by its
+//! track, insert a MIDI part (O-I #852: a kept sound dropped on the grid
+//! plays on a new part), insert, rename, duplicate and delete a row) are one op typed by its
 //! act (`live_set_act`, `live_set::acts`), admitted, gated and refused as
 //! every other write.
 //!

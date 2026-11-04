@@ -11,7 +11,8 @@ import {voiceModeRef} from './torusPlay.mjs';
 import {conditionReadingOf} from '../instrumentCondition';
 import {TorusObject} from '../../../src/engine/torusObject';
 import {isStageSampleCursor,stageJournalLanding,STAGE_JOURNAL_ACTS_MAX,STAGE_JOURNAL_BYTES_MAX,STAGE_EDIT_AHEAD_SECONDS,STAGE_RENDER_FRAMES_MAX,STAGE_RENDER_ACTS_MAX,
- readStageTorusCheckpoint,type StageAudioClock,type StagePerformanceJournal,type StageKey,type StageTakeAct,type StageTakeRender,type StageTorusCheckpoint} from '../stageCommands';
+ readStageTorusCheckpoint,readStageTorusSound,readStageSoundMoves,isStageSoundName,STAGE_TORUS_SOUND_NAME_MAX,type StageAudioClock,type StagePerformanceJournal,type StageKey,
+ type StageTakeAct,type StageTakeRender,type StageTorusCheckpoint,type StageTorusSound,type StageSoundMove} from '../stageCommands';
 import type {FieldScoreBasis,FieldScoreReply} from '../tarotScoreClient';
 export interface NativeRenderer {
  retainedTargetPort():any;releaseRetainedField():void;
@@ -84,6 +85,9 @@ export class NativeFieldController {
  /** The Torus's M1′ session as the owner last gave it (QL's `torus-state` or a Torus act's reply, ql.m1-prime-session/v1; O-I #850), when
   * it was read, and the owner's refusal of the read (an owner that holds no session), which stops the human-cadence re-read. */
  private torus:any=null;private torusAt=0;private torusRefused:string|null=null;
+ /** The name the kernel relayed the last Torus checkpoint under (its `value_sha256`, `torus_checkpoint_sha256`; O-I #852), with the sample
+  * it was taken at, and each kept checkpoint's name: a sound is saved from, and opened against, a checkpoint by that name. */
+ private relayed:{sha256:string;at:unknown}|null=null;private named=new WeakMap<object,string>();
  /** The Torus as an object of the scene (src/engine/torusObject.ts; DLW §21.2 "The Torus in the pane", O-I 851): it presents each
   * admitted frame on the shape the owner's figure law names, and offers the voices that sound as force points. One per lifetime. */
  private torusObject=new TorusObject();
@@ -273,7 +277,12 @@ export class NativeFieldController {
    this.torusObject=new TorusObject();this.torusObject.setSampleRate(sampleRate);this.projection.setPresenter(this.torusObject);
    this.renderer.setNativeDomain(true);
    this.session=new InstrumentSession({...this.playback,context:this.stage(context),owner:this.renderer,initialReceipt:opened.receipt,
-    transport:{request:(request:any)=>this.port.request({operation:'exchange',lease:opened.lease,request}),close:()=>{void this.closeOwner(opened).catch(()=>{});}},fieldBinding:this.projection,muted:true});
+    transport:{request:async(request:any)=>{
+     const reply=await this.port.request({operation:'exchange',lease:opened.lease,request});
+     // The kernel names each Torus checkpoint it relays (O-I #852); the session passes the checkpoint on without it.
+     if(request?.command?.operation==='torus-checkpoint')this.relayed=typeof reply?.torus_checkpoint_sha256==='string'?{sha256:reply.torus_checkpoint_sha256,at:reply.torus_checkpoint?.taken_at_samples}:null;
+     return reply;
+    },close:()=>{void this.closeOwner(opened).catch(()=>{});}},fieldBinding:this.projection,muted:true});
    this.recovery=this.renderer.onRetainedRecoveryRequired(state=>{this.contextLost=state==='lost';this.hold(`GPU context ${state}; explicit same-state checkpoint recovery or disconnect required`);});
    const sources=await this.readSources(this.session);
    if(this.scene){await this.readInfluence(this.session);this.opening=eventFromSources(sources);}
@@ -719,9 +728,10 @@ export class NativeFieldController {
   finally{if(this.current(held))this.hold('Torus checkpoint complete; resume explicitly');}
  });}
  private async keepTorus(session:InstrumentSession):Promise<StageTorusCheckpoint>{
-  const kept=readStageTorusCheckpoint(await session.torusCheckpoint());
+  const kept=readStageTorusCheckpoint(await session.torusCheckpoint()),relayed=this.relayed;this.relayed=null;
   if(this.session!==session||this.dead)throw new Error('Torus checkpoint belongs to a released lifetime');
   if(!kept)throw new Error('The owner kept the Torus in a checkpoint the stage cannot carry');
+  if(relayed&&relayed.at===kept.taken_at_samples)this.named.set(kept,relayed.sha256);
   const torus=session.lastTorus;if(torus)this.admitTorus(torus);
   return kept;
  }
@@ -735,6 +745,35 @@ export class NativeFieldController {
    if(torus)this.admitTorus(torus);
    return landed;
   });
+ }
+ /** A sound saved from the Torus as it rings (O-I #852, DLW §21.2; kernel `torus_sound`, `oi.torus-sound/v1`): the owner keeps a checkpoint
+  * through the one serial owner, and the kernel seals the sound from the checkpoint by the name it relayed it under, under this lease. The
+  * torus is its body. Resolves with the sealed sound. */
+ async torusSound(name:string):Promise<StageTorusSound>{
+  if(!isStageSoundName(name))throw new Error(`A sound is named in 1 to ${STAGE_TORUS_SOUND_NAME_MAX} characters with no control character`);
+  const {lease,checkpoint_sha256}=await this.namedCheckpoint();
+  const sound=readStageTorusSound(await this.port.request({operation:'torus_sound',lease,checkpoint_sha256,name}));
+  if(!sound)throw new Error('The kernel answered the sound with no oi.torus-sound/v1 the stage can carry');
+  return sound;
+ }
+ /** A kept sound opened (kernel `torus_sound_open`, `oi.torus-sound-opening/v1`): against a fresh checkpoint of the Torus as it stands now,
+  * the kernel answers the owner's restore, which is the sound as saved, and what has moved since; the owner restores it as torusRestore
+  * does. Resolves with the sample it rings again from and what has moved. */
+ async openTorusSound(raw:unknown):Promise<{landed_at_samples_elapsed:string;moved:StageSoundMove[]}>{
+  const sound=readStageTorusSound(raw);if(!sound)throw new Error('a sound opens from the kernel\'s oi.torus-sound/v1');
+  const {lease,checkpoint_sha256}=await this.namedCheckpoint();
+  const opening=await this.port.request({operation:'torus_sound_open',lease,sound,now_sha256:checkpoint_sha256});
+  const moved=readStageSoundMoves(opening?.moved);
+  if(opening?.schema!=='oi.torus-sound-opening/v1'||opening.sound_ref!==sound.sound_ref||opening.restore?.operation!=='torus-restore'||!moved)
+   throw new Error('The kernel answered the opening with no oi.torus-sound-opening/v1 of this sound');
+  return {landed_at_samples_elapsed:await this.torusRestore(opening.restore.checkpoint),moved};
+ }
+ /** A fresh checkpoint of the Torus, named as the kernel relayed it, and the lease it was given under. */
+ private async namedCheckpoint():Promise<{lease:string;checkpoint_sha256:string}>{
+  const kept=await this.torusCheckpoint(),checkpoint_sha256=this.named.get(kept),lease=this.opened?.lease;
+  if(!checkpoint_sha256)throw new Error('The kernel relayed the Torus checkpoint unnamed: a sound is saved from, and opened against, a checkpoint the kernel names');
+  if(typeof lease!=='string')throw new Error('the live instrument closed while the Torus was kept');
+  return {lease,checkpoint_sha256};
  }
  /** A take rendered offline through the M1′ session for Export Audio (QL-MEF `torus-render`, `ql.torus-render/v1`; O-I 855): a second owner
   * of the same scene set to `checkpoint`, each act made at its sample, `frames` of its PCM. It renders a second of sound at a time (the first

@@ -954,7 +954,7 @@ impl Manager {
                     .map_err(|_| "native pipe closed".to_string())
                     .and_then(|_| owner.receive());
                 match reply {
-                    Ok(reply)
+                    Ok(mut reply)
                         if reply["schema"] == "ql.field-host-receipt/v1"
                             && reply["instance_ref"] == owner.identity["instance_ref"]
                             && cursor(&reply["request_id"]).ok() == Some(id)
@@ -967,6 +967,7 @@ impl Manager {
                         owner.retain_acknowledgement(&reply, Some(request_observation));
                         if reply["status"] == "ok" {
                             owner.take.observe(&command, &reply);
+                            labelled(&owner.take, &command, &mut reply);
                         }
                         Ok(reply)
                     }
@@ -1320,6 +1321,26 @@ const EXCHANGE_OPERATIONS: [&str; 26] = [
 
 fn exchange_admits(request: &Value) -> bool {
     EXCHANGE_OPERATIONS.contains(&request["command"]["operation"].as_str().unwrap_or(""))
+}
+
+/// A Torus checkpoint the owner gave is relayed under the name a sound and a take are saved from
+/// (`torus_checkpoint_sha256`, its `value_sha256` as the take witness keeps it): the frame cannot
+/// reproduce that digest, and a checkpoint the witness did not keep is relayed unnamed.
+fn labelled(
+    take: &crate::expression_performance::torus::TakeWitness,
+    command: &Value,
+    reply: &mut Value,
+) {
+    if command["operation"] != "torus-checkpoint" {
+        return;
+    }
+    let Ok(sha256) = crate::expression_performance::torus::value_sha256(&reply["torus_checkpoint"])
+    else {
+        return;
+    };
+    if take.given(&sha256).is_ok() {
+        reply["torus_checkpoint_sha256"] = json!(sha256);
+    }
 }
 
 const MAX_PARTICLES: u64 = 1_048_576;
@@ -4183,10 +4204,20 @@ for line in sys.stdin:
                 .unwrap()
         };
         exchange(&mut manager, json!({"operation":"advance","frames":9600}));
-        let kept = exchange(&mut manager, json!({"operation":"torus-checkpoint"}))
-            ["torus_checkpoint"]
-            .clone();
+        let answered = exchange(&mut manager, json!({"operation":"torus-checkpoint"}));
+        let kept = answered["torus_checkpoint"].clone();
         let sha = value_sha256(&kept).unwrap();
+        // The kernel names each checkpoint it relays by the digest a sound and a take are saved from.
+        assert_eq!(
+            answered["torus_checkpoint_sha256"],
+            json!(sha),
+            "{answered}"
+        );
+        assert!(
+            exchange(&mut manager, json!({"operation":"advance","frames":0}))
+                .get("torus_checkpoint_sha256")
+                .is_none()
+        );
         let save = |manager: &mut Manager, lease: &str, sha: &str| {
             manager.apply(
                 &CentralClient::with("/nonexistent".into(), None, String::new()),
@@ -4238,9 +4269,12 @@ for line in sys.stdin:
             .is_err()
         );
         // The owner as it stands now: nothing the sound's tuning was read from has moved.
-        let now = exchange(&mut manager, json!({"operation":"torus-checkpoint"}))
-            ["torus_checkpoint"]
-            .clone();
+        let now = exchange(&mut manager, json!({"operation":"torus-checkpoint"}));
+        assert_eq!(
+            now["torus_checkpoint_sha256"],
+            json!(value_sha256(&now["torus_checkpoint"]).unwrap())
+        );
+        let now = now["torus_checkpoint"].clone();
         assert!(sound.moved(&now).unwrap().is_empty());
         // Opening it: the owner restores the checkpoint as saved, and the kernel says what has moved
         // against the Torus as its owner gave it now.

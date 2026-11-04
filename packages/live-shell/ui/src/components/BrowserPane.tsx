@@ -18,7 +18,7 @@ import type {KernelOp, LiveSetsReading} from '../../../../../desktop/cradle/src/
 import {kernelOp, type KernelOpCall} from '../../../../../desktop/cradle/src/kernel/bridge'
 import {refusalWords} from '../../../../../desktop/cradle/src/shared/Refusal.tsx'
 import {centralRoot, centralRootHeld} from '../central/centralWorlds'
-import {commitLivePerformance} from '../live/LivePresets'
+import {commitLivePerformance, subscribeTorusKept} from '../live/LivePresets'
 import {TORUS_KEPT_MIME, torusKeptRows, type TorusKeptRow} from '../frame/instruments'
 import type {TorusKeptSummary} from '../../../../expressions-boundary/src/performanceBasis'
 const RECENTS_KEY = 'live-shell.recent.sets'
@@ -83,7 +83,8 @@ export function TorusKeptRows({rows}: {rows: readonly TorusKeptRow[]}) {
 /** The owner's listing of what the Scene keeps on the Torus: none kept, the records, or its refusal in words; null while it is asked. */
 export type KeptListing = {readonly kept: TorusKeptSummary | null} | {readonly refused: string}
 /** Under the Torus in Instruments: what the presented Scene keeps on it, listed by its owner with the presets (the Scene performance's
- * listing, live/LivePresets.tsx commitLivePerformance). The browser keeps none of it. */
+ * listing, live/LivePresets.tsx commitLivePerformance), and listed again as the Scene keeps a sound (O-I #852: Save sound on the Torus).
+ * The browser keeps none of it. */
 export function TorusKeptSection({filter}: {filter: string}) {
   const [listed, setListed] = useState<KeptListing | null>(null)
   useEffect(() => {
@@ -91,7 +92,8 @@ export function TorusKeptSection({filter}: {filter: string}) {
     void commitLivePerformance({action: 'list'}).then(reply => {
       if (live) setListed(reply.state === 'listed' ? {kept: reply.kept ?? null} : {refused: reply.state === 'refused' ? reply.reason : 'the owner answered in another shape'})
     })
-    return () => { live = false }
+    const stop = subscribeTorusKept(kept => { if (live) setListed({kept}) })
+    return () => { live = false; stop() }
   }, [])
   return <TorusKeptView listed={listed} filter={filter} />
 }
