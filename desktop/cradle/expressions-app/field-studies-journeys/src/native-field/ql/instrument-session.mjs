@@ -42,8 +42,11 @@ const STRIKE_AT_MAX_METRES = 1.0;
 // sounding. torus-receiver is where the Torus is heard from (O-I 856,
 // ql.torus-receiver/v1): a receiving setting, the body, its clock and its
 // generation standing, and never journaled: the listener is not the performance.
+// torus-native is the Torus handed over to a native audio host (O-I #849,
+// ql.torus-native/v1): the continuation read at the cursor, nothing moving.
 const READ_OPERATIONS = ['read', 'inspect', 'influence', 'personal', 'receive-personal', 'stage-state',
-  'score-resolve', 'score-state', 'torus-state', 'torus-checkpoint', 'torus-render', 'torus-receiver'];
+  'score-resolve', 'score-state', 'torus-state', 'torus-checkpoint', 'torus-render', 'torus-receiver', 'torus-native'];
+const TORUS_NATIVE = 'ql.torus-native/v1';
 const TORUS_RECEIVER = 'ql.torus-receiver/v1';
 // The owner's own bound on a receiver's place (ql-mef scene_field.rs TORUS_RECEIVER_METRES_MAX).
 const TORUS_RECEIVER_METRES_MAX = 1e6;
@@ -94,6 +97,7 @@ export class InstrumentSession {
   #disposed = false; #reason = null; #presented; #timer = null; #running = false;
   #generation = 0; #coalesced = 0; #influence = null; #stageReceipt = null; #torus = null; #torusPlay = null; #torusSinglet = null;
   #acts = []; #advances = { blocks: 0, frames: 0, first_samples_elapsed: null, last_samples_elapsed: null };
+  #torusNative = null;
 
   constructor({ context, owner, transport, initialReceipt, fieldBinding,
     blockFrames = 512, lookaheadSeconds = 0.1, maxBlocks = 16,
@@ -256,6 +260,8 @@ export class InstrumentSession {
       this.#journal(command, request.request_id);
       // A scene determinant acknowledgement carries its own influence reading.
       if (reply.influence !== undefined) this.#influence = structuredClone(reply.influence);
+      // The Torus handed over to a native host (O-I #849): the owner's handover, or the digest O:I's kernel relays.
+      if (reply.torus_native !== undefined) this.#torusNative = structuredClone(reply.torus_native);
       // A Torus acknowledgement carries the session reading, and a played act its receipt.
       if (reply.torus !== undefined) this.#torus = structuredClone(reply.torus);
       if (reply.torus_play !== undefined) this.#torusPlay = structuredClone(reply.torus_play);
@@ -649,6 +655,22 @@ export class InstrumentSession {
   /** Release keys from the count of notes; the body rings on, so no native state moves. */
   async torusRelease(keys) {
     return this.operate({ operation: 'torus-release', keys: this.#keys(keys) });
+  }
+
+  /** The Torus handed over to a native audio host (`ql.torus-native/v1`, O-I #849): the continuation exactly as it
+   * stands at the acknowledged sample and the played-address law of the tuning in force, for a host that sounds it
+   * sample for sample. A read: the field does not advance, there is nothing to present, and it is never journaled.
+   * Through O:I's kernel the answer is the digest the kernel relays in the document's place. */
+  async torusNative() {
+    need(!this.#busy && !this.#held, 'a handover requires an idle admitted owner'); this.#busy = true;
+    this.#torusNative = null;
+    try {
+      const reply = await this.#exchange({ operation: 'torus-native' });
+      need(!reply.refused, String(reply.error));
+      const handed = this.#torusNative;
+      need(handed?.schema === TORUS_NATIVE, 'the owner answered with no Torus handed over');
+      return handed;
+    } finally { this.#busy = false; this.#torusNative = null; }
   }
 
   /** Where the Torus is heard from (`ql.torus-receiver/v1`, O-I 856): `place`, [x, y, z] metres in the frame the

@@ -148,6 +148,12 @@ impl Field {
             .map_err(|_| "native field lock unavailable".to_owned())
     }
 
+    /// The Torus the owner under `lease` handed over last, by its digest `sha256` (`torus-native`, O-I
+    /// #849): for the native host's engine, on the field's own lock. The frame is relayed only the digest.
+    pub fn torus_native(&self, lease: &str, sha256: &str) -> Result<Value, String> {
+        self.lock()?.torus_native(lease, sha256)
+    }
+
     /// One field op on the field's own lock.
     pub fn apply(&self, request: Request) -> Result<Value, String> {
         self.apply_timed(request, &mut crate::dispatch::Timing::default())
@@ -200,6 +206,9 @@ struct Owner {
     /// What this owner was sent and answered that a Torus take is sealed from (O-I #855): bounded, gone
     /// with the owner.
     take: crate::expression_performance::torus::TakeWitness,
+    /// The Torus this owner handed over last (`torus-native`, O-I #849), by its `value_sha256`: the
+    /// native host takes it from here (`Field::torus_native`); the frame is relayed only its digest.
+    torus_native: Option<(String, Value)>,
     stopped: bool,
 }
 
@@ -243,6 +252,34 @@ impl Owner {
                 "inspect_sources_retained":false
             }))
         })();
+    }
+}
+
+/// The Torus as its owner hands it over to a native audio host (QL-MEF `torus-native`, O-I #849).
+pub const TORUS_NATIVE: &str = "ql.torus-native/v1";
+
+impl Owner {
+    /// Keep the Torus the owner handed over and relay its digest in its place: the frame never carries
+    /// the field a native host continues. An answer that is not one is relayed as none and kept as none.
+    fn hand_over(&mut self, reply: &mut Value) {
+        let handed = reply
+            .as_object_mut()
+            .and_then(|fields| fields.remove("torus_native"))
+            .filter(|handed| handed["schema"] == TORUS_NATIVE);
+        let kept = handed.and_then(|handed| {
+            let sha256 = crate::expression_performance::torus::value_sha256(&handed).ok()?;
+            Some((sha256, handed))
+        });
+        reply["torus_native"] = match &kept {
+            Some((sha256, handed)) => json!({
+                "schema": TORUS_NATIVE,
+                "sha256": sha256,
+                "generation": handed["generation"],
+                "at_samples_elapsed": handed["at_samples_elapsed"],
+            }),
+            None => Value::Null,
+        };
+        self.torus_native = kept;
     }
 }
 
@@ -969,6 +1006,9 @@ impl Manager {
                         if reply["status"] == "ok" {
                             owner.take.observe(&command, &reply);
                             labelled(&owner.take, &command, &mut reply);
+                            if command["operation"] == "torus-native" {
+                                owner.hand_over(&mut reply);
+                            }
                         }
                         Ok(reply)
                     }
@@ -1126,6 +1166,28 @@ impl Manager {
         }
     }
 
+    /// The Torus the owner under `lease` handed over last, if its digest is `sha256` (O-I #849): what the
+    /// native host continues. No worker request.
+    pub(crate) fn torus_native(&self, lease: &str, sha256: &str) -> Result<Value, String> {
+        let owner = self
+            .active
+            .as_ref()
+            .ok_or("native-expression.unavailable: no active owner")?;
+        if lease != owner.lease {
+            return Err("native-expression.foreign_lease".into());
+        }
+        match &owner.torus_native {
+            None => Err(
+                "The Torus's owner has not handed the Torus over: ask it for torus-native first"
+                    .into(),
+            ),
+            Some((kept, handed)) if kept == sha256 => Ok(handed.clone()),
+            Some(_) => Err(format!(
+                "{sha256} is not the Torus its owner handed over last: hand it over again"
+            )),
+        }
+    }
+
     fn open(&mut self, content: &str, source: Value) -> Result<Value, String> {
         if content.len() > MAX_REQUEST {
             return Err("binding source exceeds 32 MiB".into());
@@ -1245,6 +1307,7 @@ impl Manager {
             last_request_id: 0,
             observation: Err("native acknowledgement not yet received".into()),
             take: Default::default(),
+            torus_native: None,
             stopped: false,
         };
         let receipt = owner.receive()?;
@@ -1291,8 +1354,10 @@ impl Manager {
 /// performance acts on the scene owner, relayed the same way, as are the Torus
 /// kept, set again and a take rendered offline on a second owner of the scene
 /// (torus-checkpoint, torus-restore, torus-render; O-I 855), and a singlet
-/// struck at its codon's place on the ring (torus-singlet; O-I #771).
-const EXCHANGE_OPERATIONS: [&str; 28] = [
+/// struck at its codon's place on the ring (torus-singlet; O-I #771). The Torus
+/// handed over to the native host (torus-native; O-I #849) is relayed as its
+/// digest: the kernel keeps the document for the host (`Field::torus_native`).
+const EXCHANGE_OPERATIONS: [&str; 29] = [
     "read",
     "inspect",
     "advance",
@@ -1324,6 +1389,8 @@ const EXCHANGE_OPERATIONS: [&str; 28] = [
     "torus-render",
     // Where the Torus is heard from (QL-MEF `torus-receiver`, O-I 856): a receiving setting of the owner.
     "torus-receiver",
+    // The Torus handed over to the native host (QL-MEF `torus-native`, O-I #849): a read at the cursor.
+    "torus-native",
 ];
 
 fn exchange_admits(request: &Value) -> bool {
@@ -3117,7 +3184,7 @@ for line in sys.stdin: time.sleep(60)
         // torusState), so the exchange relays each by its exact name. So are
         // the Torus kept, set again and a take rendered offline (O-I 855:
         // torusCheckpoint, torusRestore, renderTake), and a singlet (O-I #771:
-        // torusSinglet).
+        // torusSinglet), and the Torus handed over to the native host (O-I #849).
         for op in [
             "strike-at",
             "torus-state",
@@ -3130,6 +3197,7 @@ for line in sys.stdin: time.sleep(60)
             "torus-checkpoint",
             "torus-restore",
             "torus-render",
+            "torus-native",
         ] {
             assert!(
                 exchange_admits(&json!({"command":{"operation":op}})),
@@ -4486,6 +4554,118 @@ for line in sys.stdin:
             )
             .unwrap();
         assert!(seal(&mut manager, &lease)
+            .unwrap_err()
+            .contains("no active owner"));
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    /// O-I #849: the Torus its owner hands over (`torus-native`, `ql.torus-native/v1`) is kept by the
+    /// kernel, and the frame is relayed its digest: the native host takes the document by that digest under
+    /// the lease (`Field::torus_native`), never from the frame. Only the last handed over is kept, and it
+    /// goes with its owner.
+    #[cfg(unix)]
+    #[test]
+    fn the_torus_handed_over_is_kept_by_the_kernel_and_given_to_the_native_host_by_its_digest() {
+        use crate::expression_performance::torus::value_sha256;
+        use std::os::unix::fs::PermissionsExt;
+        let dir =
+            std::env::temp_dir().join(format!("native-torus-native-test-{}", std::process::id()));
+        fs::create_dir_all(&dir).unwrap();
+        let script = dir.join("host.py");
+        fs::write(&script, r#"#!/usr/bin/env python3
+import json,sys
+base={'schema':'ql.field-host-receipt/v1','available':True,'instance_ref':'test:instance'}
+state={'samples':0}
+def field(): return {'event_ref':'test:event','subject_ref':'test:subject','generation':'0','samples_elapsed':str(state['samples']),'sample_rate':48000,'audio':[]}
+def handed(): return {'schema':'ql.torus-native/v1','instance_ref':'test:instance','event_ref':'test:event','subject_ref':'test:subject','generation':'0','at_samples_elapsed':str(state['samples']),'continuation':{'schema':'ql.continuous-handover/v1','samples_elapsed':str(state['samples']),'modes':[{'state_metres':[0.00125,-0.5e-5]}]},'keys':{'contract':'ql.torus-keys/v1','strike':0.75}}
+print(json.dumps(dict(base,status='ready',last_request_id='0',field=field())),flush=True)
+for line in sys.stdin:
+  r=json.loads(line); c=r['command']; op=c['operation']; extra={}
+  if op=='advance': state['samples']+=c['frames']
+  elif op=='torus-native': extra['torus_native']=handed()
+  print(json.dumps(dict(base,status='ok',request_id=r['request_id'],last_request_id=r['request_id'],field=field(),**extra)),flush=True)
+"#).unwrap();
+        fs::set_permissions(&script, fs::Permissions::from_mode(0o700)).unwrap();
+        crate::test_stub::settle_stub(&script);
+        let _env = EnvGuard::set(&[
+            ("OI_QL_FIELD_HOST_BIN", Some(script.as_os_str())),
+            ("OI_QL_FIELD_WORKER_BIN", Some(script.as_os_str())),
+        ]);
+        let mut manager = Manager::default();
+        let opened = manager.open(&json!({"schema":"oi.native-expression-binding/v1","host":{"instance_ref":"test:instance"},"presentation":{"units_per_metre":1,"slots_a":[0],"slots_b":[0]}}).to_string(), Value::Null).unwrap();
+        let lease = opened["lease"].as_str().unwrap().to_owned();
+        let client = CentralClient::with("/nonexistent".into(), None, String::new());
+        let mut id = 0u64;
+        let mut exchange = |manager: &mut Manager, command: Value| {
+            id += 1;
+            manager
+                .apply(
+                    &client,
+                    Request::Exchange {
+                        lease: lease.clone(),
+                        request: json!({"schema":"ql.field-host-request/v1","instance_ref":"test:instance",
+                            "event_ref":"test:event","subject_ref":"test:subject","request_id":id.to_string(),"command":command}),
+                    },
+                )
+                .unwrap()
+        };
+        exchange(&mut manager, json!({"operation":"advance","frames":9600}));
+        assert!(manager
+            .torus_native(&lease, "sha256:none")
+            .unwrap_err()
+            .contains("has not handed the Torus over"));
+        let relayed = exchange(&mut manager, json!({"operation":"torus-native"}));
+        let digest = &relayed["torus_native"];
+        // The frame is told what was handed over, never given it.
+        assert_eq!(digest["schema"], "ql.torus-native/v1");
+        assert_eq!(digest["at_samples_elapsed"], "9600");
+        assert_eq!(digest["generation"], "0");
+        assert!(digest.get("continuation").is_none() && digest.get("keys").is_none());
+        let sha = digest["sha256"].as_str().unwrap().to_owned();
+        let handed = manager.torus_native(&lease, &sha).unwrap();
+        assert_eq!(handed["schema"], "ql.torus-native/v1");
+        // The owner's numbers as it wrote them: the host continues exactly the field handed over.
+        assert_eq!(
+            handed["continuation"]["modes"][0]["state_metres"].to_string(),
+            "[0.00125,-5e-06]"
+        );
+        assert_eq!(handed["keys"]["strike"], json!(0.75));
+        assert_eq!(value_sha256(&handed).unwrap(), sha);
+        assert!(manager
+            .torus_native("lease:foreign", &sha)
+            .unwrap_err()
+            .contains("foreign_lease"));
+        assert!(manager
+            .torus_native(&lease, "sha256:other")
+            .unwrap_err()
+            .contains("is not the Torus its owner handed over last"));
+        // Handed over again, the last is the one kept.
+        exchange(&mut manager, json!({"operation":"advance","frames":4800}));
+        let again = exchange(&mut manager, json!({"operation":"torus-native"}))["torus_native"]
+            ["sha256"]
+            .as_str()
+            .unwrap()
+            .to_owned();
+        assert_ne!(again, sha);
+        assert!(manager
+            .torus_native(&lease, &sha)
+            .unwrap_err()
+            .contains("is not the Torus its owner handed over last"));
+        assert_eq!(
+            manager.torus_native(&lease, &again).unwrap()["at_samples_elapsed"],
+            "14400"
+        );
+        // It goes with its owner.
+        manager
+            .apply(
+                &client,
+                Request::Close {
+                    lease: lease.clone(),
+                },
+            )
+            .unwrap();
+        assert!(manager
+            .torus_native(&lease, &again)
             .unwrap_err()
             .contains("no active owner"));
         fs::remove_dir_all(dir).unwrap();

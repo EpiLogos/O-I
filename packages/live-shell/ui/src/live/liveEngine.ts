@@ -2,7 +2,9 @@
 // live_engine_host.rs over packages/live-engine); these are its owner ops, and nothing here keeps a mixer of its own:
 //   live_engine_open {path}    bridge the set into the engine (no sound)
 //   live_engine_play / _stop   start / stop the engine on the default output
-//   live_engine_send {event}   a note, Panic, or a mixer move — applied at the next audio block
+//   live_engine_send {event}   a note, a Torus act, Panic, or a mixer move — applied at the next audio block
+//   live_engine_torus          the Torus its owner handed over (QL's torus-native, kept by the kernel under the field's lease; named
+//                              here only by its digest) sounds on a MIDI part, continuing the owner's field from the sample it stood at
 //   live_engine_mixer          the reading: the mixer as the engine APPLIED it (a move asked is not in it until a block applied it)
 //   live_engine_export         Export Audio: the samples the engine played, rendered offline, as a 32-bit float WAV, to the file
 //                              the person chooses in the host's own save dialog (the webview never names the path)
@@ -26,6 +28,12 @@ export type LiveEngineEvent =
   | {kind: 'send'; track: number; send: number; gain: number}
   | {kind: 'active'; part: LiveEnginePart; on: boolean}
   | {kind: 'solo'; track: number; on: boolean}
+  /** An act of the Torus's keys on a part its owner's Torus was handed over to (O-I #849), as its owner's torus-play names it. */
+  | {kind: 'torus_play'; track: number; keys: {row: number; column: number}[]; amplitude: [number, number]}
+
+/** The Torus a part holds: the digest it was handed over by, the owner's sample it stood at, and the engine frame it sounds from once
+ * the engine has taken it. */
+export interface LiveEngineTorus {track: number; sha256: string; at_samples_elapsed: string; sounding_from_frame: number | null}
 
 /** One part's mixer as the engine applied it (gain and sends linear, pan −1…1). */
 export interface LiveEnginePartMix {name: string; gain: number; pan: number; active: boolean; solo: boolean; sends: number[]; midi: boolean}
@@ -38,10 +46,12 @@ export interface LiveEngineReading {
   /** What the bridge could not host, in its words (an unhosted device, a group, an audio part's clips). */
   warnings: string[]
   mixer: {tracks: LiveEnginePartMix[]; returns: LiveEnginePartMix[]; main: LiveEnginePartMix}
+  /** The Torus each part holds (O-I #849); none until its owner hands it over. */
+  toruses: LiveEngineTorus[]
 }
 export interface LiveEngineExport {path: string; frames: number; events: number; complete: boolean}
 
-export const LIVE_ENGINE_OPS = ['live_engine_open', 'live_engine_play', 'live_engine_stop', 'live_engine_send', 'live_engine_mixer', 'live_engine_export'] as const
+export const LIVE_ENGINE_OPS = ['live_engine_open', 'live_engine_play', 'live_engine_stop', 'live_engine_send', 'live_engine_torus', 'live_engine_mixer', 'live_engine_export'] as const
 type LiveEngineOp = typeof LIVE_ENGINE_OPS[number]
 
 const words = (e: unknown) => typeof e === 'string' ? e : e instanceof Error ? e.message : String(e)
@@ -124,6 +134,10 @@ export const liveEngine = {
   },
   stop: (): Promise<LiveEngineReading> => adopt(op<LiveEngineReading>('live_engine_stop')),
   send: (event: LiveEngineEvent): Promise<LiveEngineReading> => adopt(op<LiveEngineReading>('live_engine_send', {event})),
+  /** The Torus its owner handed over sounds on the set's part `track`: `lease` is the field's, `sha256` the digest the kernel relayed
+   * for the owner's torus-native (the document stays with the kernel). */
+  torus: (lease: string, track: number, sha256: string): Promise<LiveEngineReading> =>
+    adopt(op<LiveEngineReading>('live_engine_torus', {lease, track, sha256})),
   read: (): Promise<LiveEngineReading> => adopt(op<LiveEngineReading>('live_engine_mixer')),
   /** Export Audio: the samples the engine played since Play, to the `.wav` the person chooses in the host's save dialog (the same act
    * as File › Export Audio…); a cancelled dialog is a refusal in the host's words. No path is named from here. */

@@ -42,13 +42,13 @@ pub use engine::{
     engine, EngineCore, EngineEvent, EngineHandle, MixerState, Part, Performance, Refusal, Stamped,
 };
 pub use graph::{
-    Clock, Device, Graph, GraphError, Instrument, MasterTrack, Note, ReturnTrack, Track,
-    MAX_RETURNS,
+    Clock, Device, Graph, GraphError, Instrument, MasterTrack, Note, ReturnTrack, TorusAct, Track,
+    MAX_RETURNS, TORUS_ACT_KEYS,
 };
 pub use instruments::{OperatorInstrument, SilentInstrument};
 
 #[cfg(feature = "k8")]
-pub use k8::{K8Field, K8Input, K8Instrument};
+pub use k8::{K8Continuation, K8Field, K8Input, K8Instrument, K8KeyLaw};
 
 #[cfg(feature = "realtime")]
 pub use realtime::{EnginePlayer, Player, RealtimeError};

@@ -375,12 +375,16 @@ test('a star’s day reads beside it: who came, was let in, showed something and
   const handed = JSON.parse(atlasDevs.atlasGlobeBinding(YOURS_READING()).values.field)
   assert.equal(handed.days.length, 5)
   const v = {...world.defaults, ...world.fixtures['Field, a star chosen']}
-  const whole = renderToStaticMarkup(world.whole({v, set() {}, nav: {}, page: 'space', setPage() {}, standing: {}}))
+  // REPLACED (round 11, ruling of 4 Nov): the star's day stands on the Star page only; the Space page keeps a one-line pointer to it.
+  const space = renderToStaticMarkup(world.whole({v, set() {}, nav: {}, page: 'space', setPage() {}, standing: {}}))
+  assert.ok(!/The star’s day, as the field lets you read it/.test(space), 'the Space page states no star’s day')
+  assert.match(space, /data-i="Star’s day ›[^"]*stands on the Star page/, 'it points to the Star page in one line')
+  const whole = renderToStaticMarkup(world.whole({v, set() {}, nav: {}, page: 'star', setPage() {}, standing: {}}))
   assert.match(whole, /Star’s day/)
   // REPLACED (round 10, SF06): the design's sample day grew by what was said there, and the face opens on its newest page: the line read
   // is the newest of SF04's, and the older ones are a page back
   assert.match(whole, /stranger asked to come/)
-  const back = renderToStaticMarkup(world.whole({v: {...v, dayPage: 0}, set() {}, nav: {}, page: 'space', setPage() {}, standing: {}}))
+  const back = renderToStaticMarkup(world.whole({v: {...v, dayPage: 0}, set() {}, nav: {}, page: 'star', setPage() {}, standing: {}}))
   assert.match(back, /mara was let in/, 'a page back, who was let in')
 })
 
@@ -408,7 +412,8 @@ test('what lies past the edge reads as a count that fits beside the star section
 })
 
 test('with no star chosen, the star’s day stands empty, not as a reading the field has not given', () => {
-  const whole = renderToStaticMarkup(world.whole({v: {...world.defaults, ...world.fixtures['Field scale']}, set() {}, nav: {}, page: 'space', setPage() {}, standing: {}}))
+  // REPLACED (round 11): read on the Star page, where the star's day now stands alone
+  const whole = renderToStaticMarkup(world.whole({v: {...world.defaults, ...world.fixtures['Field scale']}, set() {}, nav: {}, page: 'star', setPage() {}, standing: {}}))
   const day = whole.match(/<[^>]*data-i="[^"]*The star’s day, as the field lets you read it[^"]*"[^>]*>/)?.[0] ?? ''
   assert.ok(day, 'the star’s day stands on the face')
   assert.ok(!/data-standing="(unread|awaiting)"/.test(day), `an unchosen star is no missing reading: ${day.slice(0, 160)}`)

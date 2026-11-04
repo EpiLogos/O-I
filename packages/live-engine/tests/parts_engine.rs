@@ -842,3 +842,99 @@ fn a_block_of_the_two_part_set_costs_under_a_quarter_of_its_deadline() {
         "{per_block} ns per block is over a quarter of the {deadline} ns deadline"
     );
 }
+
+/// O-I #849: an instrument made off the audio thread (the Torus its owner hands over) is handed to a MIDI
+/// part while the engine plays. It takes the part from the first frame of the block that takes it, every
+/// event after it reaches it, the instrument it replaced is given back to the control side (never dropped on
+/// the audio thread), and Export Audio renders the hand at the frame the engine took it.
+#[test]
+fn an_instrument_handed_to_a_part_sounds_from_the_block_that_takes_it_and_export_renders_it_there()
+{
+    let build = || {
+        let mut g = Graph::new(SR, 120.0);
+        g.tracks.push(Track::midi(
+            "Torus",
+            Box::new(live_engine::SilentInstrument),
+        ));
+        g
+    };
+    let (mut core, mut handle) = engine(build()).unwrap();
+    let key = EngineEvent::NoteOn {
+        track: 0,
+        key: 69,
+        velocity: 1.0,
+    };
+    let mut block = vec![0f32; 256 * 2];
+    let mut played = Vec::new();
+    handle.send(key).unwrap();
+    core.pull_block(&mut block);
+    played.extend_from_slice(&block);
+    assert!(
+        block.iter().all(|v| *v == 0.0),
+        "the silent part plays its key silently"
+    );
+    handle
+        .install(0, Box::new(OperatorInstrument::default_patch(SR)))
+        .unwrap();
+    assert!(
+        handle
+            .install(0, Box::new(OperatorInstrument::default_patch(SR)))
+            .is_err(),
+        "one hand at a time: the next waits until the engine has taken this one"
+    );
+    handle.send(key).unwrap();
+    core.pull_block(&mut block);
+    played.extend_from_slice(&block);
+    let model = OperatorVoiceA::default_patch(69, SR);
+    for k in 0..256 {
+        let want = model.sample_at(k, f64::INFINITY);
+        assert!(
+            block[k * 2] == want,
+            "frame {k}: {} vs {want}",
+            block[k * 2]
+        );
+    }
+    for _ in 0..3 {
+        core.pull_block(&mut block);
+        played.extend_from_slice(&block);
+    }
+    handle.collect();
+    assert_eq!(
+        handle.installs(),
+        &[(256, 0)],
+        "taken at the block's first frame"
+    );
+    let perf = handle.performance();
+    let exported = build().render_performance_with(
+        SR,
+        &perf,
+        vec![(
+            256,
+            0,
+            Box::new(OperatorInstrument::default_patch(SR)) as Box<dyn live_engine::Instrument>,
+        )],
+    );
+    assert_eq!(exported.len(), played.len());
+    for (n, (e, p)) in exported.iter().zip(&played).enumerate() {
+        assert_eq!(e.to_bits(), p.to_bits(), "sample {n}");
+    }
+    assert!(
+        build().render_performance(SR, &perf) != played,
+        "without the hand, Export would not render what was heard"
+    );
+}
+
+#[test]
+fn an_instrument_is_handed_only_to_a_part_that_plays_notes() {
+    let mut g = Graph::new(SR, 120.0);
+    g.tracks.push(constant_part("Tone", 0.25, 100));
+    let (_core, mut handle) = engine(g).unwrap();
+    let refused = handle
+        .install(0, Box::new(OperatorInstrument::default_patch(SR)))
+        .unwrap_err();
+    assert!(refused.to_string().contains("plays no notes"), "{refused}");
+    let refused = handle
+        .install(3, Box::new(OperatorInstrument::default_patch(SR)))
+        .unwrap_err();
+    assert!(refused.to_string().contains("no part"), "{refused}");
+}

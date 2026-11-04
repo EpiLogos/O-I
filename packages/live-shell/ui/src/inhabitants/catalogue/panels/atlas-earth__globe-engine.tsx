@@ -547,6 +547,7 @@ function starSection(p: ViewProps) {
     {starChooser(p)}
     <Rows label="At this star" does="The chosen star: what it gathers, who may come, who is there and where your world stands." size={4}
       items={star ? starRows(star) : reachWhy(p.v) ? undefined : []} why={star ? undefined : reachWhy(p.v) ?? 'Choose a star first.'} />
+    <Action label="Star’s day ›" does="The star’s day stands on the Star page, with who is there now and what was said: who came, was let in, showed or said something and left." onPress={() => p.setPage('star')} />
   </Section>
 }
 
@@ -1182,7 +1183,6 @@ export const design: DesignedDevice = {
       </Band>
       {atField(p.v) ? <Band>
         {starSection(p)}
-        {daySection(p)}
         {atStarSection(p)}
         {lightSection(p)}
         {factorySection(p)}

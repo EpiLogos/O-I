@@ -51,3 +51,20 @@ test('no device view says a number twice, except where its picture and its readi
   }
   assert.deepEqual([...unsaid].map(([key, lines]) => `${key}: ${[...new Set(lines)].join('; ')}`), [], 'a number stands once in a view')
 })
+
+// A section stands on one page of a view (§16.10). The World device is held to it (ruling, 4 Nov 2026: the star's day stands on the Star
+// page only, and the Space page keeps a one-line pointer to it). Each section the World states on two pages is held here with its reason.
+const PAGES_STAND = {
+  'atlas-earth:globe-engine · whole · Star': 'One star chooser acted through on both pages: Light, Gather and Leave on Space, Say and Unsay on Star.',
+}
+
+test('the World device states each section on one page: the star’s day on the Star page only', {timeout: 600_000}, async () => {
+  const {pageSweep} = await import('../scripts/design-sweep.mjs')
+  const findings = await pageSweep(['atlas-earth:globe-engine'])
+  const twice = new Map()
+  for (const f of findings) {
+    const key = `${f.id} · ${f.view} · ${f.section}`
+    if (!PAGES_STAND[key]) twice.set(key, f.pages.join(' and '))
+  }
+  assert.deepEqual([...twice].map(([key, pages]) => `${key}: on ${pages}`), [], 'a section stands on one page of a view')
+})

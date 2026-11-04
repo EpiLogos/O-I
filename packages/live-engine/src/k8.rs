@@ -5,29 +5,32 @@
 //! through QL's K8 typed API: it owns one `ql::ContinuousField` (the
 //! continuation of supplied M2 modes, `<ql/continuous_field.hpp>` from an
 //! installed QL prefix, linked by `build.rs` through the C ABI of
-//! `src/k8/field_shim.cpp`) and plays it on the engine's timeline. A key
-//! strikes the act the host prepared for it — named resident modes and
-//! their modal impulses — at the frame the engine applies the note, and
-//! every frame is the field's own `render_audio`: the node adds no physics,
-//! no pitch law and no envelope of its own. Picture and sound stay one
-//! state because the field the node renders is the continuation QL
-//! prepared (the host supplies its modes and samples); the node never
-//! re-derives one.
+//! `src/k8/field_shim.cpp`) and plays it on the engine's timeline. Every
+//! frame is the field's own `render_audio`: the node adds no physics, no
+//! pitch law and no envelope of its own.
 //!
-//! What the node does not decide, because QL has not said it: which modes
-//! a key strikes and how hard (the host's key table — QL's played-address
-//! law, #850), what a key's release does to a struck modal body (the modes
-//! ring on with their own damping; `note_off` does nothing), and how Panic
-//! silences it (`release_all` does nothing: the typed API has no
-//! allocation-free silencing operation — the lane's PROPOSE).
+//! The Torus in the candidate's one engine is the field its owner hands
+//! over (QL's `torus-native`, `ql.torus-native/v1`): the continuation as it
+//! stood at the owner's cursor ([`K8Continuation`], continued by
+//! [`K8Field::continue_from`] sample for sample) and the played-address law
+//! of the tuning in force ([`K8KeyLaw`], `<ql/torus_keys.hpp>`). An act of
+//! the Torus's keys ([`crate::EngineEvent::TorusPlay`]) strikes each key's
+//! moving point on the voices of the tuning, as QL's own `torus-play` would,
+//! at the frame the engine applies it. What QL says of the rest (its
+//! `release` and `silence` laws): a key's release moves no native state —
+//! the body rings on with its own damping, so `note_off` and `release_all`
+//! do nothing; Panic stills what was struck (`ql::ContinuousField::silence`,
+//! [`Instrument::panic`]). A MIDI note on the part strikes the act prepared
+//! for its key ([`K8Field::set_key`]); QL gives no law from a MIDI pitch to
+//! a Jankó key, so a part with none prepared strikes nothing for a note.
 //!
-//! Realtime: `strike` and `render_audio` run on the audio thread, the
-//! field's "one host-owned serial execution thread". The shim allocates
-//! nothing there; `ql::ContinuousField::strike` reserves one vector per act
-//! (see `field_shim.cpp`, `le_k8_strike_key`) — the one allocation on the
-//! engine's audio path with this node, and QL's to remove.
+//! Realtime: striking, silencing and `render_audio` run on the audio
+//! thread, the field's "one host-owned serial execution thread", and
+//! allocate nothing (`strike_now`, `silence`, `TorusKeys::play`;
+//! `tests/k8_no_alloc.rs` counts them at zero). Making a field and its law
+//! allocates, off the thread.
 
-use crate::graph::{Clock, Instrument};
+use crate::graph::{Clock, Instrument, TorusAct, TORUS_ACT_KEYS};
 use std::ffi::{c_char, c_int, CString};
 use std::ptr::NonNull;
 
@@ -138,6 +141,115 @@ struct LeK8Input {
     sample_count: usize,
 }
 
+/// The M1′ pulse's drive of the body as the field holds it (`ql::CarrierDrive`): the pulse and one
+/// impulse per mode (none: no drive), and the whole steps it has landed.
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct K8Carrier {
+    pub steps_per_second: f64,
+    pub anchor_samples: u64,
+    pub anchor_steps: f64,
+    pub reached: f64,
+    pub impulses: Vec<(f64, f64)>,
+}
+
+/// An act admitted for a later sample and not yet landed (`ql::PendingAct`): impulses by mode index.
+#[derive(Debug, Clone, PartialEq)]
+pub struct K8Pending {
+    pub at_samples_elapsed: u64,
+    pub impulses: Vec<(usize, (f64, f64))>,
+}
+
+/// A continuation as its owner hands it over (`ql::Continuation`, `ql.continuous-handover/v1`):
+/// the input with each mode's resident state as its amplitude, the clock and generation as they
+/// stand, the cursor, the driver's remainder, the Carrier's drive, the acts waiting for later
+/// samples and a receiver move not yet reached (`heard_from`, empty when none).
+#[derive(Debug, Clone, PartialEq)]
+pub struct K8Continuation {
+    pub input: K8Input,
+    pub samples_elapsed: u64,
+    pub driver_remainder: u64,
+    pub last_unmuted_sample: f64,
+    pub carrier: K8Carrier,
+    pub pending: Vec<K8Pending>,
+    pub heard_from: Vec<f64>,
+}
+
+/// One voice of the tuning in force (`ql::KeyVoice`): the mode it sounds through and its surface term.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct K8KeyVoice {
+    pub mode: usize,
+    pub longitude_radians: f64,
+    pub weight: f64,
+    pub phase_radians: f64,
+    pub m: u32,
+    pub n: u32,
+}
+
+/// QL's played-address law as its owner hands it over (`ql::TorusKeyLaw`, `ql.torus-keys/v1`): each
+/// key's ring arc, the voices of the tuning in force, Strike, the pulse, the rate and the material cap.
+#[derive(Debug, Clone, PartialEq)]
+pub struct K8KeyLaw {
+    pub arcs: [u8; 36],
+    pub voices: Vec<K8KeyVoice>,
+    pub strike: f64,
+    pub anchor_samples: u64,
+    pub anchor_steps: f64,
+    pub steps_per_second: f64,
+    pub sample_rate: u32,
+    pub cap_metres: f64,
+}
+
+#[repr(C)]
+struct LeK8Pending {
+    at_samples_elapsed: u64,
+    modes: *const usize,
+    re: *const f64,
+    im: *const f64,
+    n: usize,
+}
+
+#[repr(C)]
+struct LeK8Continuation {
+    input: LeK8Input,
+    samples_elapsed: u64,
+    driver_remainder: u64,
+    last_unmuted_sample: f64,
+    carrier_steps_per_second: f64,
+    carrier_anchor_samples: u64,
+    carrier_anchor_steps: f64,
+    carrier_reached: f64,
+    carrier_re: *const f64,
+    carrier_im: *const f64,
+    carrier_count: usize,
+    pending: *const LeK8Pending,
+    pending_count: usize,
+    heard_from: *const f64,
+    heard_count: usize,
+}
+
+#[repr(C)]
+struct LeK8KeyVoice {
+    mode: usize,
+    longitude_radians: f64,
+    weight: f64,
+    phase_radians: f64,
+    m: u32,
+    n: u32,
+}
+
+#[repr(C)]
+struct LeK8KeyLaw {
+    arcs: [u8; 36],
+    voices: *const LeK8KeyVoice,
+    voice_count: usize,
+    strike: f64,
+    anchor_samples: u64,
+    anchor_steps: f64,
+    steps_per_second: f64,
+    sample_rate: u32,
+    cap_metres: f64,
+}
+
 #[repr(C)]
 struct LeK8Field {
     _opaque: [u8; 0],
@@ -147,6 +259,27 @@ extern "C" {
     fn le_k8_clock_size() -> usize;
     fn le_k8_field_new(input: *const LeK8Input, err: *mut c_char, err_len: usize)
         -> *mut LeK8Field;
+    fn le_k8_field_continue(
+        input: *const LeK8Continuation,
+        err: *mut c_char,
+        err_len: usize,
+    ) -> *mut LeK8Field;
+    fn le_k8_set_law(
+        field: *mut LeK8Field,
+        law: *const LeK8KeyLaw,
+        err: *mut c_char,
+        err_len: usize,
+    ) -> c_int;
+    fn le_k8_play_keys(
+        field: *mut LeK8Field,
+        rows: *const u8,
+        columns: *const u32,
+        n: usize,
+        re: f64,
+        im: f64,
+    ) -> c_int;
+    fn le_k8_silence(field: *mut LeK8Field);
+    fn le_k8_amplitude(field: *const LeK8Field, mode: usize, re: *mut f64, im: *mut f64) -> c_int;
     fn le_k8_field_free(field: *mut LeK8Field);
     fn le_k8_mode_count(field: *const LeK8Field) -> usize;
     fn le_k8_sample_rate(field: *const LeK8Field) -> u32;
@@ -199,18 +332,31 @@ impl std::fmt::Debug for K8Field {
     }
 }
 
-impl K8Field {
-    /// Make the continuation (off the audio thread: it allocates). The
-    /// field's own validation answers, in its words, when it refuses.
-    pub fn new(input: &K8Input) -> Result<K8Field, String> {
-        // SAFETY: a pure query of a compile-time size.
-        let c_size = unsafe { le_k8_clock_size() };
-        if c_size != std::mem::size_of::<CoupledClock>() {
-            return Err(format!(
-                "QL_CoupledClock is {c_size} bytes in this QL, {} here: the prefix's clock header changed",
-                std::mem::size_of::<CoupledClock>()
-            ));
-        }
+/// The buffers a [`LeK8Input`] borrows: built off the audio thread, alive across the call.
+struct RawInput {
+    _refs: Vec<CString>,
+    _mode_text: Vec<(CString, CString)>,
+    _modes: Vec<LeK8Mode>,
+    _constituents: Vec<CString>,
+    _shapes: Vec<Vec<f64>>,
+    _samples: Vec<LeK8Sample>,
+    raw: LeK8Input,
+}
+
+fn clock_matches() -> Result<(), String> {
+    // SAFETY: a pure query of a compile-time size.
+    let c_size = unsafe { le_k8_clock_size() };
+    if c_size != std::mem::size_of::<CoupledClock>() {
+        return Err(format!(
+            "QL_CoupledClock is {c_size} bytes in this QL, {} here: the prefix's clock header changed",
+            std::mem::size_of::<CoupledClock>()
+        ));
+    }
+    Ok(())
+}
+
+impl RawInput {
+    fn of(input: &K8Input) -> Result<RawInput, String> {
         let refs = [
             &input.event_ref,
             &input.subject_ref,
@@ -287,14 +433,171 @@ impl K8Field {
             samples: samples.as_ptr(),
             sample_count: samples.len(),
         };
+        // Moving the vectors into the struct moves their headers, not their heap buffers: every
+        // pointer in `raw` stays valid while this value lives.
+        Ok(RawInput {
+            _refs: refs,
+            _mode_text: mode_text,
+            _modes: modes,
+            _constituents: constituents,
+            _shapes: shapes,
+            _samples: samples,
+            raw,
+        })
+    }
+}
+
+impl K8Field {
+    /// Make the continuation (off the audio thread: it allocates). The
+    /// field's own validation answers, in its words, when it refuses.
+    pub fn new(input: &K8Input) -> Result<K8Field, String> {
+        clock_matches()?;
+        let input = RawInput::of(input)?;
         let mut err = [0u8; 512];
-        // SAFETY: every pointer in `raw` borrows a buffer that outlives the
-        // call; the shim copies what it keeps and writes at most `err.len()`
-        // bytes (NUL-terminated) into `err`.
-        let ptr = unsafe { le_k8_field_new(&raw, err.as_mut_ptr().cast(), err.len()) };
+        // SAFETY: every pointer in `input.raw` borrows a buffer `input` owns, alive across
+        // the call; the shim copies what it keeps and writes at most `err.len()` bytes
+        // (NUL-terminated) into `err`.
+        let ptr = unsafe { le_k8_field_new(&input.raw, err.as_mut_ptr().cast(), err.len()) };
         NonNull::new(ptr)
             .map(|ptr| K8Field { ptr })
             .ok_or_else(|| text(&err))
+    }
+
+    /// Continue a handed-over continuation at its cursor (off the audio thread: it allocates):
+    /// the field renders, sample for sample, what the field it was taken from would have. One
+    /// that is not a continuation of its own input is refused in QL's words.
+    pub fn continue_from(handed: &K8Continuation) -> Result<K8Field, String> {
+        clock_matches()?;
+        let input = RawInput::of(&handed.input)?;
+        let carrier_re: Vec<f64> = handed.carrier.impulses.iter().map(|z| z.0).collect();
+        let carrier_im: Vec<f64> = handed.carrier.impulses.iter().map(|z| z.1).collect();
+        let acts: Vec<(Vec<usize>, Vec<f64>, Vec<f64>)> = handed
+            .pending
+            .iter()
+            .map(|p| {
+                (
+                    p.impulses.iter().map(|a| a.0).collect(),
+                    p.impulses.iter().map(|a| a.1 .0).collect(),
+                    p.impulses.iter().map(|a| a.1 .1).collect(),
+                )
+            })
+            .collect();
+        let pending: Vec<LeK8Pending> = handed
+            .pending
+            .iter()
+            .zip(&acts)
+            .map(|(p, (modes, re, im))| LeK8Pending {
+                at_samples_elapsed: p.at_samples_elapsed,
+                modes: modes.as_ptr(),
+                re: re.as_ptr(),
+                im: im.as_ptr(),
+                n: modes.len(),
+            })
+            .collect();
+        let raw = LeK8Continuation {
+            input: LeK8Input { ..input.raw },
+            samples_elapsed: handed.samples_elapsed,
+            driver_remainder: handed.driver_remainder,
+            last_unmuted_sample: handed.last_unmuted_sample,
+            carrier_steps_per_second: handed.carrier.steps_per_second,
+            carrier_anchor_samples: handed.carrier.anchor_samples,
+            carrier_anchor_steps: handed.carrier.anchor_steps,
+            carrier_reached: handed.carrier.reached,
+            carrier_re: carrier_re.as_ptr(),
+            carrier_im: carrier_im.as_ptr(),
+            carrier_count: carrier_re.len(),
+            pending: pending.as_ptr(),
+            pending_count: pending.len(),
+            heard_from: handed.heard_from.as_ptr(),
+            heard_count: handed.heard_from.len(),
+        };
+        let mut err = [0u8; 512];
+        // SAFETY: every pointer in `raw` borrows a buffer alive across the call (`input`,
+        // the carrier, pending and heard vectors); the shim copies what it keeps and
+        // writes at most `err.len()` bytes (NUL-terminated) into `err`.
+        let ptr = unsafe { le_k8_field_continue(&raw, err.as_mut_ptr().cast(), err.len()) };
+        NonNull::new(ptr)
+            .map(|ptr| K8Field { ptr })
+            .ok_or_else(|| text(&err))
+    }
+
+    /// Give the field the Torus's keys by QL's played-address law (off the audio thread: it
+    /// allocates). A law that cannot stand on this field is refused in QL's words and the field
+    /// keeps the law it had.
+    pub fn set_law(&mut self, law: &K8KeyLaw) -> Result<(), String> {
+        let voices: Vec<LeK8KeyVoice> = law
+            .voices
+            .iter()
+            .map(|v| LeK8KeyVoice {
+                mode: v.mode,
+                longitude_radians: v.longitude_radians,
+                weight: v.weight,
+                phase_radians: v.phase_radians,
+                m: v.m,
+                n: v.n,
+            })
+            .collect();
+        let raw = LeK8KeyLaw {
+            arcs: law.arcs,
+            voices: voices.as_ptr(),
+            voice_count: voices.len(),
+            strike: law.strike,
+            anchor_samples: law.anchor_samples,
+            anchor_steps: law.anchor_steps,
+            steps_per_second: law.steps_per_second,
+            sample_rate: law.sample_rate,
+            cap_metres: law.cap_metres,
+        };
+        let mut err = [0u8; 256];
+        // SAFETY: a live owned field; `voices` outlives the call; `err` bounds the message.
+        let ok =
+            unsafe { le_k8_set_law(self.ptr.as_ptr(), &raw, err.as_mut_ptr().cast(), err.len()) };
+        if ok == 1 {
+            Ok(())
+        } else {
+            Err(text(&err))
+        }
+    }
+
+    /// One act of the Torus's keys at the cursor, by the law the field was given (the audio
+    /// thread: no allocation). False when the field holds no law or refused the act whole (a key
+    /// off the surface, a velocity or a summed impulse past the material's cap): nothing moved.
+    pub fn play_keys(&mut self, act: &TorusAct) -> bool {
+        let n = usize::from(act.count);
+        if n == 0 || n > TORUS_ACT_KEYS {
+            return false;
+        }
+        let mut columns = [0u32; TORUS_ACT_KEYS];
+        for (c, k) in columns.iter_mut().zip(&act.columns[..n]) {
+            *c = u32::from(*k);
+        }
+        // SAFETY: a live owned field; `rows` and `columns` hold `n` keys each.
+        unsafe {
+            le_k8_play_keys(
+                self.ptr.as_ptr(),
+                act.rows.as_ptr(),
+                columns.as_ptr(),
+                n,
+                act.amplitude[0],
+                act.amplitude[1],
+            ) == 1
+        }
+    }
+
+    /// Still the body at the cursor (Panic; `ql::ContinuousField::silence`): every resident
+    /// state at rest and the acts waiting for later samples dropped; the voices, gains, clock,
+    /// cursor and the Carrier's drive stand. The audio thread: no allocation.
+    pub fn silence(&mut self) {
+        // SAFETY: a live owned field.
+        unsafe { le_k8_silence(self.ptr.as_ptr()) }
+    }
+
+    /// Mode `mode`'s resident state (re, im), metres; `None` past the modes.
+    pub fn amplitude(&self, mode: usize) -> Option<(f64, f64)> {
+        let (mut re, mut im) = (0.0, 0.0);
+        // SAFETY: a live owned field; the shim writes two doubles when it answers 1.
+        (unsafe { le_k8_amplitude(self.ptr.as_ptr(), mode, &mut re, &mut im) } == 1)
+            .then_some((re, im))
     }
 
     pub fn mode_count(&self) -> usize {
@@ -443,7 +746,21 @@ impl Instrument for K8Instrument {
 
     fn note_off(&mut self, _key: u8, _clock: &Clock) {}
 
+    // A released note of the struck body rings on with its own damping (QL's release law).
     fn release_all(&mut self, _clock: &Clock) {}
+
+    fn torus_play(&mut self, act: &TorusAct, _clock: &Clock) -> bool {
+        let struck = self.rate_ok && self.field.play_keys(act);
+        if !struck {
+            self.refused += 1;
+        }
+        struck
+    }
+
+    // Panic stills what was struck (QL's silence law); the body's drive stands.
+    fn panic(&mut self, _clock: &Clock) {
+        self.field.silence();
+    }
 
     fn process(&mut self, frame_io: &mut [f32], _clock: &Clock) {
         let v = if self.rate_ok && self.field.render(&mut self.one, false) {

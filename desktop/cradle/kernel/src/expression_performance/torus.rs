@@ -512,8 +512,9 @@ impl TorusTakeRecord {
 /// Reads of the scene owner, which move nothing (QL instrument-session.mjs READ_OPERATIONS), and the owner
 /// acts that move no native state by their own law (its `still`, but for the Torus's own acts). Where the
 /// Torus is heard from (`torus-receiver`, O-I 856) is a receiving setting: the body, its clock and its
-/// generation stand, and a take is the world's sound, rendered in the world's context.
-const READS: [&str; 7] = [
+/// generation stand, and a take is the world's sound, rendered in the world's context. The Torus handed over
+/// to the native host (`torus-native`, O-I #849) is the owner's continuation read at its cursor.
+const READS: [&str; 8] = [
     "read",
     "inspect",
     "influence",
@@ -521,6 +522,7 @@ const READS: [&str; 7] = [
     "score-resolve",
     "score-state",
     "torus-state",
+    "torus-native",
 ];
 const STILL: [&str; 4] = [
     "stage-retire",
@@ -1461,6 +1463,25 @@ pub(crate) mod tests {
         let text = text.replace("0.000015", "1.5e-5");
         let again: TorusTake = serde_json::from_str(&text).unwrap();
         again.verify_seal().unwrap();
+    }
+
+    #[test]
+    fn a_torus_handed_over_to_the_native_host_moves_nothing_a_take_plays_again() {
+        // O-I #849: `torus-native` is QL's handover, a read at the owner's cursor: a take across it seals.
+        let (mut w, sha, acts) = played();
+        w.observe(
+            &json!({"operation":"torus-native"}),
+            &reply(24000, json!({})),
+        );
+        let (command, answer) = render(
+            9600,
+            14401,
+            json!({"checkpoint":checkpoint(9600)}),
+            acts,
+            "render:1",
+        );
+        w.observe(&command, &reply(24001, answer));
+        w.seal(&sha, "lease:1", &identity()).unwrap();
     }
 
     fn sealed(frames: u64) -> TorusTake {

@@ -9,7 +9,7 @@
 mod k8_fixture;
 
 use live_engine::k8::{K8Field, K8Mode};
-use live_engine::{engine, EngineEvent, Graph, K8Instrument, Performance, Track};
+use live_engine::{engine, EngineEvent, Graph, K8Instrument, Performance, TorusAct, Track};
 
 const SR: u32 = 48_000;
 
@@ -229,4 +229,190 @@ fn a_block_of_two_ringing_toruses_costs_under_a_quarter_of_its_deadline() {
     let deadline = 128 * 1_000_000_000 / SR as u64;
     println!("two Torus parts: {per_block} ns CPU per 128-frame block (deadline {deadline} ns)");
     assert!(per_block * 4 < deadline);
+}
+
+/// QL's played-address law as a test sets it on the fixture (the product's comes from QL's
+/// `ql.torus-native/v1`): the Jankó keys' arcs (`janko.rs` `helix_place`), one voice per mode, the pulse.
+fn law(strike: f64) -> live_engine::k8::K8KeyLaw {
+    let mut arcs = [0u8; 36];
+    for row in 0..6u8 {
+        for column in 0..6u8 {
+            arcs[usize::from(row * 6 + column)] = (row % 2) * 6 + (column + row / 2) % 6;
+        }
+    }
+    live_engine::k8::K8KeyLaw {
+        arcs,
+        voices: vec![
+            live_engine::k8::K8KeyVoice {
+                mode: 0,
+                longitude_radians: 0.4,
+                weight: 0.9,
+                phase_radians: 0.3,
+                m: 2,
+                n: 3,
+            },
+            live_engine::k8::K8KeyVoice {
+                mode: 1,
+                longitude_radians: 2.1,
+                weight: 0.6,
+                phase_radians: -1.2,
+                m: 1,
+                n: 5,
+            },
+        ],
+        strike,
+        anchor_samples: 0,
+        anchor_steps: 0.25,
+        steps_per_second: 2.0,
+        sample_rate: SR,
+        cap_metres: 1.0,
+    }
+}
+
+fn played_field() -> K8Field {
+    let mut f = K8Field::new(&k8_fixture::input(SR)).unwrap();
+    f.set_law(&law(0.7)).unwrap();
+    f
+}
+
+fn act(keys: &[(u8, u16)], amplitude: [f64; 2]) -> TorusAct {
+    TorusAct::new(keys, amplitude).unwrap()
+}
+
+#[test]
+fn a_handed_over_field_continues_sample_for_sample() {
+    // A continuation at the input's own cursor is the field made from the input.
+    let at_rest = || live_engine::k8::K8Continuation {
+        input: k8_fixture::input(SR),
+        samples_elapsed: 0,
+        driver_remainder: 0,
+        last_unmuted_sample: 0.0,
+        carrier: live_engine::k8::K8Carrier::default(),
+        pending: Vec::new(),
+        heard_from: Vec::new(),
+    };
+    let mut made = played_field();
+    let mut continued = K8Field::continue_from(&at_rest()).unwrap();
+    continued.set_law(&law(0.7)).unwrap();
+    assert!(made.play_keys(&act(&[(0, 2)], [0.3, 0.0])));
+    assert!(continued.play_keys(&act(&[(0, 2)], [0.3, 0.0])));
+    let (mut a, mut b) = (vec![0f32; 4096], vec![0f32; 4096]);
+    assert!(made.render(&mut a, false) && continued.render(&mut b, false));
+    assert!(a.iter().any(|v| *v != 0.0));
+    assert_eq!(a, b, "the continuation rings as the field it continues");
+    // An act waiting for a later sample lands there, as a strike at that sample does.
+    let mut waiting = at_rest();
+    waiting.pending.push(live_engine::k8::K8Pending {
+        at_samples_elapsed: 300,
+        impulses: vec![(1, (0.02, -0.01))],
+    });
+    let mut handed = K8Field::continue_from(&waiting).unwrap();
+    let mut struck = K8Field::new(&k8_fixture::input(SR)).unwrap();
+    let (mut a, mut b) = (vec![0f32; 2048], vec![0f32; 2048]);
+    assert!(handed.render(&mut a, false));
+    assert!(struck.render(&mut b[..300], false));
+    struck.set_key(5, &[(1, (0.02, -0.01))]).unwrap();
+    assert!(struck.strike_key(5));
+    assert!(struck.render(&mut b[300..], false));
+    assert!(a[300..].iter().any(|v| *v != 0.0));
+    assert_eq!(a, b, "the waiting act lands at its sample");
+    // A continuation that is not one of its own input is refused in QL's words.
+    let mut past = at_rest();
+    past.driver_remainder = u64::from(SR) * u64::from(past.input.driver_denominator);
+    assert!(K8Field::continue_from(&past)
+        .unwrap_err()
+        .contains("remainder"));
+    let mut behind = at_rest();
+    behind.pending.push(live_engine::k8::K8Pending {
+        at_samples_elapsed: 0,
+        impulses: vec![(0, (0.01, 0.0))],
+    });
+    assert!(K8Field::continue_from(&behind)
+        .unwrap_err()
+        .contains("after its cursor"));
+}
+
+#[test]
+fn the_torus_keys_strike_as_one_act_by_the_law_the_node_was_given() {
+    let mut g = Graph::new(SR, 120.0);
+    g.tracks.push(Track::midi(
+        "Torus",
+        Box::new(K8Instrument::new(played_field())),
+    ));
+    let (mut core, mut handle) = engine(g).unwrap();
+    let mut block = vec![0f32; 300 * 2];
+    core.pull_block(&mut block);
+    let chord = act(&[(0, 2), (3, 7), (5, 11)], [0.35, -0.1]);
+    handle
+        .send(EngineEvent::TorusPlay {
+            track: 0,
+            act: chord,
+        })
+        .unwrap();
+    core.pull_block(&mut block);
+    let mut alone = played_field();
+    let mut want = vec![0f32; 600];
+    assert!(alone.render(&mut want[..300], false));
+    assert!(alone.play_keys(&chord));
+    assert!(alone.render(&mut want[300..], false));
+    assert_eq!(
+        left(&block),
+        want[300..].to_vec(),
+        "the node strikes the field's own act"
+    );
+    // A key off the surface, or a chord past the material's cap, is refused whole: the body stands.
+    let mut f = played_field();
+    let before = (f.amplitude(0), f.amplitude(1));
+    let mut rows = chord;
+    rows.rows[1] = 6;
+    assert!(!f.play_keys(&rows));
+    assert!(!f.play_keys(&act(&[(0, 2)], [1.5, 0.0])));
+    assert_eq!((f.amplitude(0), f.amplitude(1)), before);
+    assert!(TorusAct::new(&[], [0.1, 0.0]).is_err());
+    assert!(TorusAct::new(&[(0, 0); 33], [0.1, 0.0]).is_err());
+    // An engine refuses a Torus act for a part that is not there, in words.
+    let refused = handle
+        .send(EngineEvent::TorusPlay {
+            track: 4,
+            act: chord,
+        })
+        .unwrap_err();
+    assert!(refused.to_string().contains("no part"), "{refused}");
+}
+
+#[test]
+fn panic_stills_the_torus_and_a_release_lets_it_ring_on() {
+    let mut g = Graph::new(SR, 120.0);
+    g.tracks.push(Track::midi(
+        "Torus",
+        Box::new(K8Instrument::new(played_field())),
+    ));
+    let (mut core, mut handle) = engine(g).unwrap();
+    let mut block = vec![0f32; 256 * 2];
+    handle
+        .send(EngineEvent::TorusPlay {
+            track: 0,
+            act: act(&[(1, 4)], [0.4, 0.0]),
+        })
+        .unwrap();
+    core.pull_block(&mut block);
+    assert!(block.iter().any(|v| *v != 0.0));
+    // Releasing the key (and every note: losing focus) moves no native state: the body rings on.
+    let mut alone = played_field();
+    assert!(alone.play_keys(&act(&[(1, 4)], [0.4, 0.0])));
+    let mut want = vec![0f32; 512];
+    assert!(alone.render(&mut want, false));
+    handle
+        .send(EngineEvent::NoteOff { track: 0, key: 60 })
+        .unwrap();
+    core.pull_block(&mut block);
+    assert_eq!(
+        left(&block),
+        want[256..].to_vec(),
+        "a release lets the body ring on"
+    );
+    // Panic stills what was struck: an undriven body is silent from the block that takes it.
+    handle.send(EngineEvent::Panic).unwrap();
+    core.pull_block(&mut block);
+    assert!(block.iter().all(|v| *v == 0.0), "Panic stills the Torus");
 }

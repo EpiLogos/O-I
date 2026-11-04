@@ -159,6 +159,39 @@ export async function sweep(only = []) {
   return {findings, skipped, designs: found.length}
 }
 
+/** The pages a view's head offers (PagesNav's tabs), by id. */
+export const pagesIn = markup => [...markup.matchAll(/<button[^>]*data-page="([^"]*)"[^>]*role="tab"/g)].map(m => m[1])
+
+/** The sections a view's page stands (panel.tsx Section's label), in order. */
+export const sectionsIn = markup => textNodes(markup).filter(n => n.classes.at(-1)?.split(/\s+/).includes('dp-sec-label')).map(n => n.text)
+
+/** A section a view stands on two of its pages (manual §16.10: a panel states a thing once): for each device, each fixture and each view
+ * with pages, every page rendered, and each section label that more than one page stands. */
+export async function pageSweep(only = []) {
+  const {found} = await designs(only)
+  const findings = []
+  for (const design of found) {
+    const fixtures = [['defaults', {}], ...Object.entries(design.fixtures ?? {})]
+    for (const [name, fixture] of fixtures) {
+      const v = {...design.defaults}
+      for (const [k, x] of Object.entries(fixture)) { if (x === undefined) delete v[k]; else v[k] = x }
+      for (const view of VIEWS) {
+        const render = page => renderToStaticMarkup(h('div', null, design[view]({v, set: () => {}, nav: {}, page, setPage: () => {}})))
+        let pages
+        try { pages = pagesIn(render(design.firstPage ?? '')) } catch { continue }
+        const on = new Map()
+        for (const page of new Set(pages)) {
+          let markup
+          try { markup = render(page) } catch { continue }
+          for (const label of new Set(sectionsIn(markup))) on.set(label, [...(on.get(label) ?? []), page])
+        }
+        for (const [section, where] of on) if (where.length > 1) findings.push({id: design.id, fixture: name, view, section, pages: where})
+      }
+    }
+  }
+  return findings
+}
+
 /** The markup of one view of one design on its defaults (or on a fixture). */
 export function markupOf(design, view, fixture = {}) {
   const v = {...design.defaults}
