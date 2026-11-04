@@ -9,13 +9,14 @@
 //   has none and moves by position.
 // A target's base is its owner's value when a planet first takes it; every move is written through that target's own owner (the stage
 // channel's level, scale and effect edits), ramped over the route's Smoothing; when the last route on a target goes, or the modulator
-// is switched off or taken off the chain, the base is written back. Several routes on one target compose in route order.
+// is switched off or taken off the chain, the base is written back, as it stood: the Fundamental taken under Map goes back as Map.
+// Several routes on one target compose in route order.
 // Scope is the part's: a played strike is one act through the stage channel and carries no parameter of its own, so nothing moves per
 // note, and Note is refused in those words. The plan is held for this session, never in browser storage.
 import {EFFECT_LAW, EFFECT_TITLES, type InstrumentEdit, type PresentationEffect} from '@epilogos/expressions-boundary'
 import {useSyncExternalStore} from 'react'
 import type {DesignBinding, Standing, Value, ValueChange} from '../../frame/devices/designed'
-import {commitLiveInstrumentEdit, LIVE_TORUS_ABSENT_REASON, torusSessionOf, TORUS_RATE, type LiveTorusState} from '../torusInstrument'
+import {commitLiveInstrumentEdit, LIVE_TORUS_ABSENT_REASON, torusSessionOf, TORUS_FUNDAMENTAL, TORUS_RATE, type LiveTorusState} from '../torusInstrument'
 import {dbToGain, gainToDb} from '../torusDevice'
 import {QL_SKY_ABSENT, qlSkyHand, qlSkyValues, SKY_BODIES, type QlSkyState, type SkyBody} from '../../inhabitants/ql/devices/qlSky'
 
@@ -46,6 +47,13 @@ export interface SkyTarget {
   /** The owner's value now. */
   readonly value: number
   readonly edit: (value: number) => InstrumentEdit
+  /** Where the value now is not a setting of its own but the owner's (the Fundamental under Map): the edit that gives it back so, and
+   * the word for it. */
+  readonly back?: SkyBack
+}
+export interface SkyBack {
+  readonly word: string
+  readonly edit: InstrumentEdit
 }
 
 const LOG_KEYS = new Set(['cutoff', 'tone', 'time', 'attack', 'release', 'decay', 'ratio'])
@@ -56,9 +64,9 @@ const label = (key: string) => LABELS[key] ?? key[0]!.toUpperCase() + key.slice(
  * and root follow the M3 clock's and the mode in force's (inhabitants/ql/devices/qlResonatorBank.ts qlBankFollow). */
 const FOLLOWED = new Set(['delay/tempo', 'resonator/division', 'resonator/root'])
 
-/** The parameters the owner reports and takes: the torus's level and scale, its own sound in the owner's Torus session (the Carrier, and
- * the Rate while it runs Free: under Sync the set's tempo holds it), and every number of each effect on its chain (but those the shell
- * sets from another owner: FOLLOWED). */
+/** The parameters the owner reports and takes: the torus's level and scale, its own sound in the owner's Torus session (the Carrier, the
+ * Rate while it runs Free: under Sync the set's tempo holds it, and the Fundamental, a frequency, whose base under Map goes back as Map),
+ * and every number of each effect on its chain (but those the shell sets from another owner: FOLLOWED). */
 export function skyTargets(state: LiveTorusState | null): SkyTarget[] {
   if (state === null || !state.ok) return []
   const targets: SkyTarget[] = [], p = state.parameters
@@ -77,6 +85,10 @@ export function skyTargets(state: LiveTorusState | null): SkyTarget[] {
     if (session.settings.rate.mode === 'free')
       targets.push({id: 'quaternal-logic:torus/rate', device: 'Torus', label: 'Rate', min: TORUS_RATE.min, max: TORUS_RATE.max, unit: 'steps/s', log: true,
         value: session.settings.rate.steps_per_second, edit: value => ({kind: 'torus', edit: {rate: {mode: 'free', steps_per_second: value}}})})
+    // The note place 0 stands on (manual §21.2): every voice is a ratio over it, so a planet's own interval moves it as it moves a cutoff.
+    targets.push({id: 'quaternal-logic:torus/fundamental', device: 'Torus', label: 'Fundamental', min: TORUS_FUNDAMENTAL.min, max: TORUS_FUNDAMENTAL.max,
+      unit: 'Hz', log: true, value: session.fundamental_hz, edit: value => ({kind: 'torus', edit: {fundamental: {source: 'hz', hz: value}}}),
+      ...(session.settings.fundamental.source === 'map' ? {back: {word: 'Map', edit: {kind: 'torus', edit: {fundamental: {source: 'map'}}}}} : {})})
   }
   const effects = p?.effects
   for (const effect of (effects?.chain ?? []) as readonly PresentationEffect[]) {
@@ -139,6 +151,8 @@ export interface SkyModulationPlan {
   readonly routes: readonly SkyRoute[]
   /** Each routed target's base: its owner's value when a planet first took it. */
   readonly bases: Readonly<Record<string, number>>
+  /** A base that goes back as the owner's own setting, not as its value (the Fundamental under Map). */
+  readonly backs?: Readonly<Record<string, SkyBack>>
   /** What was last written to each target. */
   readonly written: Readonly<Record<string, number>>
   readonly selected?: string
@@ -165,8 +179,8 @@ export function resetSkyModulation(next: {writer?: SkyWriter} = {}): void {
   ramps.clear(); writer = next.writer ?? (edit => commitLiveInstrumentEdit(edit)); setPlan(EMPTY)
 }
 
-async function write(target: SkyTarget, value: number): Promise<void> {
-  const result = await writer(target.edit(value))
+async function write(target: SkyTarget, value: number, back?: SkyBack): Promise<void> {
+  const result = await writer(back ? back.edit : target.edit(value))
   if (!result.ok) { setPlan({...plan, refusal: `${target.device} ${target.label}: ${result.error}`}); return }
   setPlan({...plan, written: {...plan.written, [target.id]: value}, refusal: undefined})
 }
@@ -181,15 +195,21 @@ export async function runSkyModulation(state: LiveTorusState | null, sky: QlSkyS
     const timer = ramps.get(id); if (timer) { clearInterval(timer); ramps.delete(id) }
     const {[id]: _gone, ...bases} = plan.bases
     const {[id]: _was, ...written} = plan.written
-    setPlan({...plan, bases, written})
+    const {[id]: back, ...backs} = plan.backs ?? {}
+    setPlan({...plan, bases, written, backs})
     const target = byId.get(id)
-    if (target) await write(target, base)
+    if (target) await write(target, base, back)
   }
   if (!plan.placed || !plan.on || !sky.reading?.ok) return
   // A target first taken: its owner's value now is its base.
-  const bases = {...plan.bases}
-  for (const id of routed) if (bases[id] === undefined && byId.has(id)) bases[id] = byId.get(id)!.value
-  if (Object.keys(bases).length !== Object.keys(plan.bases).length) setPlan({...plan, bases})
+  const bases = {...plan.bases}, backs = {...plan.backs}
+  for (const id of routed) {
+    const target = byId.get(id)
+    if (bases[id] !== undefined || !target) continue
+    bases[id] = target.value
+    if (target.back) backs[id] = target.back
+  }
+  if (Object.keys(bases).length !== Object.keys(plan.bases).length) setPlan({...plan, bases, backs})
   const longitudes: Partial<Record<SkyBody, number>> = {}
   for (const body of sky.reading.sky.bodies) longitudes[body.body] = body.longitude_degrees
   const wanted = skyValues(targets, plan.routes, plan.bases, longitudes)
@@ -232,7 +252,7 @@ export function skyModulationValues(state: LiveTorusState | null, sky: QlSkyStat
   values.light = held.on ? 'lit' : 'dark'
   const targets = skyTargets(state)
   if (!targets.length) values.reason = state === null ? LIVE_TORUS_ABSENT_REASON : 'The part reports no parameter a planet may move.'
-  values.targets = JSON.stringify(targets.map(({edit: _edit, value, ...target}) => ({...target, base: held.bases[target.id] ?? value})))
+  values.targets = JSON.stringify(targets.map(({edit: _edit, back: _back, value, ...target}) => ({...target, base: held.bases[target.id] ?? value})))
   values.routes = JSON.stringify(held.routes.map(({id, planet, target}) => ({id, planet, target})))
   for (const route of held.routes) {
     values[`use:${route.id}`] = route.use; values[`amount:${route.id}`] = route.amount
@@ -323,8 +343,9 @@ export function skyHeldUnder(prefix: string, held: SkyModulationPlan = plan, tar
   }
   for (const [id, list] of planets) {
     const names = list.length > 1 ? `${list.slice(0, -1).join(', ')} and ${list.at(-1)}` : list[0]!
-    const base = held.bases[id], now = held.written[id] ?? base, unit = targets.find(target => target.id === id)?.unit
-    out[id.slice(prefix.length)] = base === undefined ? names : `${names} (base ${figure(base, unit)}, now ${figure(now!, unit)})`
+    const base = held.bases[id], now = held.written[id] ?? base, unit = targets.find(target => target.id === id)?.unit, back = held.backs?.[id]
+    const was = base === undefined ? '' : back ? `${back.word}, ${figure(base, unit)}` : figure(base, unit)
+    out[id.slice(prefix.length)] = base === undefined ? names : `${names} (base ${was}, now ${figure(now!, unit)})`
   }
   return out
 }
