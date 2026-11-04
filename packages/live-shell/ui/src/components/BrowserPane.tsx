@@ -105,7 +105,7 @@ export function TorusKeptView({listed, filter}: {listed: KeptListing | null; fil
     <div className="browser-list-heading">Kept on the Torus</div>
     {state === 'listing' && <div className="browser-empty">Listing what the presented Scene keeps…</div>}
     {state === 'empty' && <div className="browser-empty">No sound, instrument or rack is kept on this Scene yet.</div>}
-    {listed && 'refused' in listed && <div className="browser-empty">{`What the Scene keeps is not listed: ${listed.refused}`}</div>}
+    {listed && 'refused' in listed && <div className="browser-empty">{refusalWords("Couldn't list what the Scene keeps.", listed.refused)}</div>}
     {state === 'listed' && !rows.length && <div className="browser-empty">No matching material.</div>}
     {rows.length > 0 && <div role="list"><TorusKeptRows rows={rows} /></div>}
   </section>
