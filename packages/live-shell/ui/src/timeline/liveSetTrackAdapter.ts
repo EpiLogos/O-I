@@ -409,18 +409,24 @@ function liveObjectActs(set: SetSummary, act: LiveSetReading['act'], insertClip:
       return typeof track === 'string' ? track : consolidateRefusal(track)
     }}
     // A kept sound dropped on the empty track plays on a new part (manual §21.2 "Drag it onto a part to play it"): the part Live's Insert
-    // MIDI Track makes after the last one, then the sound opened on the Torus and kept by that part. Only a sound saved on the Torus opens.
+    // MIDI Track makes after the last one, then the sound opened on the Torus and kept by that part. A sound opens on the body it was saved
+    // on, a form's or the torus (its checkpoint chooses it again); an instrument plays the first sound made on it, and a rack the sound its
+    // Torus opens with.
     if (openSound) actions.seat = {op: LIVE_SEAT_SOUND_OP, accepts: TORUS_KEPT_MIME, run: payload => {
       const dropped = readTorusKeptDrag(payload)
       if (!dropped) return refused('Only a kept sound plays on a new part: drag one from under the Torus in Instruments.')
-      if (dropped.kind === 'rack') return refused('Dropping a rack on a part is not carried yet: drop the sound it plays.')
-      if (dropped.kind === 'instrument' || dropped.instrument_ref) return refused('This rings on a form\'s body, and the live scene plays the torus until it can choose its body: drop a sound saved on the Torus.')
+      const sound = dropped.kind === 'sound' ? dropped.ref : dropped.sound
+      if (!sound) return refused(dropped.kind === 'instrument'
+        ? 'This instrument has no sound made on it yet: save a sound while its body rings, then drop the instrument.'
+        : 'This rack opens no sound: keep a sound on it, then drop the rack.')
+      // What a rack keeps beside its sound is not placed on the part, and the note says so.
+      const rack = dropped.kind === 'rack' ? 'Only the rack\'s sound opens on the part: its note devices, effects and macros are not placed on it.' : ''
       return act({kind: 'track_insert', after: null}).then(async (answer): Promise<WorldActionReceipt> => {
         const track = answer.at?.track
         if (typeof track !== 'number') return {ok: false, error: `${answer.done} The owner named no part it made, so the sound was not opened.`}
-        const opened = await openSound(dropped.ref, track)
+        const opened = await openSound(sound, track)
         // A refusal speaks plainly (shared/Refusal.tsx): what happened, then the owner's words when they are words.
-        return opened.ok ? {ok: true, note: [answer.done, opened.note].filter(Boolean).join(' ')} : {ok: false, error: refusalWords(`${answer.done} The sound did not open on it.`, opened.error)}
+        return opened.ok ? {ok: true, note: [answer.done, opened.note, rack].filter(Boolean).join(' ')} : {ok: false, error: refusalWords(`${answer.done} The sound did not open on it.`, opened.error)}
       }, (cause: unknown) => ({ok: false as const, error: refusalWords('No part was made for the sound.', cause)}))
     }}
   }

@@ -80,8 +80,9 @@ export function parseInstrumentPayload(payload: string): {kind: string; lens?: H
 /** The drag type a kept sound, instrument or rack travels by, onto a part. */
 export const TORUS_KEPT_MIME = 'application/x-oi-torus-kept'
 export type TorusKeptKind = 'sound' | 'instrument' | 'rack'
-/** What a part is given to play: the sound, the instrument or the rack by its reference; a sound made on an instrument names it too. */
-export interface TorusKeptDrag {readonly kind: TorusKeptKind; readonly ref: string; readonly instrument_ref?: string}
+/** What a part is given to play: the sound, the instrument or the rack by its reference; a sound made on an instrument names it too. An
+ * instrument carries the first sound made on it, and a rack the sound its Torus opens with: the sound the part opens. */
+export interface TorusKeptDrag {readonly kind: TorusKeptKind; readonly ref: string; readonly instrument_ref?: string; readonly sound?: string}
 export interface TorusKeptRow {
   readonly key: string
   readonly kind: TorusKeptKind
@@ -115,23 +116,28 @@ export function torusKeptRows(kept: TorusKeptSummary | null | undefined, query: 
   for (const instrument of kept.instruments) {
     const sounds = instrument.sounds.filter(sound => hit(sound.name) || hit(instrument.name))
     if (!sounds.length && !hit(instrument.name)) continue
+    const first = instrument.sounds[0]?.sound_ref
     rows.push(row('instrument', 1, instrument.instrument_ref, instrument.name, `instrument · ${count(instrument.sounds.length, 'sound')}`,
-      {kind: 'instrument', ref: instrument.instrument_ref}))
+      first ? {kind: 'instrument', ref: instrument.instrument_ref, sound: first} : {kind: 'instrument', ref: instrument.instrument_ref}))
     for (const sound of sounds) rows.push(row('sound', 2, `${instrument.instrument_ref}/${sound.sound_ref}`, sound.name, 'sound',
       {kind: 'sound', ref: sound.sound_ref, instrument_ref: instrument.instrument_ref}))
   }
   for (const rack of kept.racks) if (hit(rack.name)) rows.push(row('rack', 1, rack.rack_ref, rack.name,
-    `rack · ${count(rack.macros.length, 'macro')} · ${count(rack.variations.length, 'variation')}`, {kind: 'rack', ref: rack.rack_ref}))
+    `rack · ${count(rack.macros.length, 'macro')} · ${count(rack.variations.length, 'variation')}`,
+    rack.sound ? {kind: 'rack', ref: rack.rack_ref, sound: rack.sound} : {kind: 'rack', ref: rack.rack_ref}))
   return rows
 }
 
-/** A kept drag, exact, or null: a part plays only a sound, an instrument or a rack named by its reference. */
+/** A kept drag, exact, or null: a part plays only a sound, an instrument or a rack named by its reference. Only a sound names the
+ * instrument it was made on; only an instrument or a rack carries the sound it opens. */
 export function readTorusKeptDrag(payload: string): TorusKeptDrag | null {
   let raw: unknown
   try { raw = JSON.parse(payload) } catch { return null }
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null
-  const {kind, ref, instrument_ref: on, ...rest} = raw as Record<string, unknown>
+  const {kind, ref, instrument_ref: on, sound, ...rest} = raw as Record<string, unknown>
   if (Object.keys(rest).length || (kind !== 'sound' && kind !== 'instrument' && kind !== 'rack') || typeof ref !== 'string' || !ref) return null
   if (on !== undefined && (kind !== 'sound' || typeof on !== 'string' || !on)) return null
-  return on === undefined ? {kind, ref} : {kind, ref, instrument_ref: on}
+  if (sound !== undefined && (kind === 'sound' || typeof sound !== 'string' || !sound)) return null
+  if (on !== undefined) return {kind, ref, instrument_ref: on as string}
+  return sound === undefined ? {kind, ref} : {kind, ref, sound: sound as string}
 }

@@ -333,9 +333,19 @@ test('a kept sound dropped on the empty track plays on a new part: the part inse
     {ok: true, note: 'Inserted 4-MIDI, an empty MIDI part, right after Tide pad. "Low bell" opens as saved; nothing it was tuned from has moved. The part keeps it.'})
   assert.deepEqual(calls, [{kind: 'track_insert', after: null}, {open: [SOUND, 3]}], 'after the last part, then opened on the part it made')
   calls.length = 0
-  assert.match((await seat.run(JSON.stringify({kind: 'sound', ref: SOUND, instrument_ref: 'instrument:fold'}))).error, /form's body/)
-  assert.match((await seat.run(JSON.stringify({kind: 'instrument', ref: 'instrument:fold'}))).error, /form's body/)
-  assert.match((await seat.run(JSON.stringify({kind: 'rack', ref: 'rack:warm'}))).error, /rack/)
+  // A sound made on an instrument opens on the form's body it was saved on; an instrument plays the first sound made on it; a rack the
+  // sound its Torus opens with, and only that sound: its chain and macros are not placed on the part.
+  const FOLD = 'sha256:' + '2'.repeat(64)
+  assert.equal((await seat.run(JSON.stringify({kind: 'sound', ref: FOLD, instrument_ref: 'instrument:fold'}))).ok, true)
+  assert.equal((await seat.run(JSON.stringify({kind: 'instrument', ref: 'instrument:fold', sound: FOLD}))).ok, true)
+  const rack = await seat.run(JSON.stringify({kind: 'rack', ref: 'rack:warm', sound: SOUND}))
+  assert.equal(rack.ok, true)
+  assert.match(rack.note, /The part keeps it\. Only the rack's sound opens on the part: its note devices, effects and macros are not placed on it\.$/)
+  assert.deepEqual(calls, [{kind: 'track_insert', after: null}, {open: [FOLD, 3]}, {kind: 'track_insert', after: null}, {open: [FOLD, 3]},
+    {kind: 'track_insert', after: null}, {open: [SOUND, 3]}])
+  calls.length = 0
+  assert.match((await seat.run(JSON.stringify({kind: 'instrument', ref: 'instrument:fold'}))).error, /no sound made on it/)
+  assert.match((await seat.run(JSON.stringify({kind: 'rack', ref: 'rack:warm'}))).error, /opens no sound/)
   assert.match((await seat.run('Low bell')).error, /kept sound/)
   assert.deepEqual(calls, [], 'refused before the set\'s owner')
   // A refusal speaks plainly (shared/Refusal.tsx refusalWords): what happened first, then the owner's words when they are words.

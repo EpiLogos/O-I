@@ -436,7 +436,7 @@ export const torus: DesignedDevice = {
     </Band>
     </> : <>
     <Band>
-      {/* 224: the width the Notes band below gives it, which it kept before the Save stood beside it (its words read whole). */}
+      {/* 224: the width the Notes band below gave it before the Save stood beside it, which it keeps (its words read whole). */}
       <Section label="Body" cols={3} width={224} grow>
         <Radio {...st(p, 'body')} label="Body" does="What rings: the torus, or a form of the Expression." value={strOf(p.v, 'body') ?? ''} options={BODIES} stack onChange={x => p.set('body', x)} />
         <Dial {...st(p, 'strike')} disabled={st(p, 'strike').disabled ?? tattvaHold(p.v)} label="Strike" does="How strongly velocity excites the body." value={num(p.v, 'strike')} def={70} scale={{min: 0, max: 100}} format={pct} onChange={x => p.set('strike', x)} />
@@ -449,8 +449,9 @@ export const torus: DesignedDevice = {
       {/* Beside the body, so the page keeps the two bands every page of the device stands in (O-I #852). */}
       <Section label="Save as a sound" cols={2}><SaveSound /></Section>
     </Band>
+    {/* Five columns: its ten controls stand in two rows, so this band is no taller than the Pulse page's. */}
     <Band>
-      <Section label="Notes and output" cols={4} grow>
+      <Section label="Notes and output" cols={5} grow>
         <ValueBox {...st(p, 'polyphony')} label="Polyphony" does="How many notes sound at once, each with its own eight voices. The oldest note makes way for a new one." value={numOf(p.v, 'polyphony') ?? NaN} def={16} scale={{min: 1, max: 32, step: 1}} format={x => `${Math.round(x)}`} onChange={x => p.set('polyphony', Math.round(x))} />
         <Readout label="notes" does="Notes that sound now, as the owner counts them." value={numOf(p.v, 'notes')} tone="accent" />
         <Dial {...st(p, 'pan')} label="Pan" does="The place of the sound, left to right." value={num(p.v, 'pan')} def={0} scale={{min: -1, max: 1}} format={x => (Math.abs(x) < .005 ? 'C' : `${Math.round(Math.abs(x) * 50)}${x < 0 ? 'L' : 'R'}`)} bipolar onChange={x => p.set('pan', x)} />

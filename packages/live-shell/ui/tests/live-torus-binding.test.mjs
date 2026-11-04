@@ -435,6 +435,11 @@ test('the Body page saves the Torus as a sound by its name, through its owners',
     assert.match(bands[0], /class="dp-sec-label">Body<[^]*class="dp-sec-label">Save as a sound<[^]*aria-label="Sound name"[^]*>Save sound</, 'beside the body, in its band')
     assert.match(bands[0], /<div style="grid-column:span 2;width:100%"><div class="dp-cell dp-cell--text dp-cell--wide" data-i="Sound name\|/, 'the name spans the section')
     assert.match(bands[0], /<div class="dp-sec" data-grow="true" style="width:224px"><div class="dp-sec-label">Body</, 'the body\'s section keeps the width the Notes band gave it, so its words read whole')
+    // Notes and output lays its ten controls in two rows of five, so the page's second band is no taller than the Pulse page's.
+    assert.match(bands[1], /^><div class="dp-sec" data-grow="true" style="width:280px"><div class="dp-sec-label">Notes and output<\/div><div class="dp-sec-body" style="grid-template-columns:repeat\(5, minmax\(0, 1fr\)\)">/)
+    const notes = bands[1].slice(bands[1].indexOf('class="dp-sec-body"'))
+    assert.deepEqual([...notes.matchAll(/data-i="([^|"]+)\|/g)].map(match => match[1]),
+      ['Polyphony', 'notes', 'Pan', 'View', 'Receiver', 'Sound', 'Cadence', 'Scale', 'Level', 'standing'], 'two rows of five')
   })
   const source = await readFile(new URL('../src/inhabitants/catalogue/panels/torus.tsx', import.meta.url), 'utf8')
   assert.match(source, /import\('\.\.\/\.\.\/\.\.\/live\/LivePresets'\)\.then\(presets => presets\.saveTorusSound\(name\)\)/, 'the save goes through the presets\' owner route, loaded when pressed')
