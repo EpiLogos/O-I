@@ -18,10 +18,17 @@
  *                correction (px, applied by the position pass), zw = velocity
  *                delta (px/s, applied by the velocity pass); buffer 1 carries
  *                the depth-axis components of those same two vectors (read only
- *                when uPairwise3D = 1). Separation lives at the position level
+ *                when uPairwise3D = 1) and, in z, the strongest closing speed
+ *                of the pairs this particle opens (the contact a collision
+ *                strike reads). Separation lives at the position level
  *                (a bounded projection cannot pump energy into a dense packing);
  *                velocity change is reserved for genuine approach/recession
  *                between pairs.
+ *   5. contact — collision strikes only (DLW §20.2 Field "Collisions strike"),
+ *                after the frame's last step and only while the engine listens:
+ *                two reductions keep the strongest contact of each block of
+ *                particles, (position, closing speed), in an 8 x 8 target the
+ *                engine reads back (GPGPUSimulator.readContacts).
  *
  * 3D bodies (uPairwise3D = 1, the glyphVolume signal): the hash and candidate
  * search stay on the composition plane, but each candidate pair's offset gains
@@ -37,7 +44,7 @@
  * pass writes every texel, so no clear pass is needed anywhere in the chain.
  */
 
-import { PAIRWISE_CELL_CAPACITY, PAIRWISE_KEY_SENTINEL, PAIRWISE_SEARCH_ITERATIONS } from '../pairwiseSchedule';
+import { PAIRWISE_CELL_CAPACITY, PAIRWISE_CONTACT_LOOP, PAIRWISE_KEY_SENTINEL, PAIRWISE_SEARCH_ITERATIONS } from '../pairwiseSchedule';
 
 /** Pass 1: (cellKey, particleLinearIndex) per texel; unused/padded texels get the sentinel key. */
 export const pairwiseCellIdShader = /* glsl */ `
@@ -175,7 +182,7 @@ uniform float uParticleCount;
 varying vec2 vUv;
 
 layout(location = 0) out vec4 outPlane; // xy = position correction, zw = velocity delta (plane axes)
-layout(location = 1) out vec4 outDepth; // x = position correction, y = velocity delta (depth axis)
+layout(location = 1) out vec4 outDepth; // x = position correction, y = velocity delta (depth axis), z = closing speed of the pairs it opens
 
 vec2 sortUv(float i) {
   return (vec2(mod(i, uSide), floor(i / uSide)) + 0.5) / uSide;
@@ -191,6 +198,9 @@ void main() {
   vec2 dv = vec2(0.0);
   float corrZ = 0.0;
   float dvZ = 0.0;
+  // A collision is a pair closing: each pair is opened once, by its lower index, and the strongest closing speed of the pairs
+  // this particle opens is the contact a collision strike reads (pairwiseContactShader).
+  float impact = 0.0;
   if (pIndex < uParticleCount && (pIndex < uConnectionStart || texture2D(uConnectionMetadata, vUv).z > 0.5)) {
     vec3 pos = texture2D(uPositionTexture, vUv).xyz;
     vec3 vel = texture2D(uVelocityTexture, vUv).xyz;
@@ -255,6 +265,7 @@ void main() {
             float bounce = -vn * (1.0 + uRestitution) * 0.5;
             dv += n * bounce;
             dvZ += n3.z * bounce;
+            if (other > pIndex) impact = max(impact, -vn);
           }
           dv -= (relV - n * vn) * (uPairViscosity * 0.5);
           dvZ -= (dvz - n3.z * vn) * (uPairViscosity * 0.5);
@@ -273,8 +284,51 @@ void main() {
     }
   }
   // Buffer 0 is the planar packing the consumers have always read; buffer 1
-  // holds the depth-axis components (exact zeros while uPairwise3D = 0).
+  // holds the depth-axis components (exact zeros while uPairwise3D = 0) and,
+  // in z, the contact (read only by the contact reduction).
   outPlane = vec4(corr, dv);
-  outDepth = vec4(corrZ, dvZ, 0.0, 1.0);
+  outDepth = vec4(corrZ, dvZ, impact, 1.0);
+}
+`;
+
+/**
+ * Pass 5 (collision strikes): the strongest contact of each block of texels. The first reduction reads the force pass's second buffer
+ * (closing speed in z) and the particle's position after the step, over a uBlock² block of particles; the second reads the first's
+ * (position, speed) texels over a uBlock² block of them, into the 8 x 8 slots. A texel with no closing pair holds zero speed. The block
+ * is pairwiseSchedule.ts contactReduction, within PAIRWISE_CONTACT_LOOP.
+ */
+export const pairwiseContactShader = /* glsl */ `
+precision highp float;
+
+uniform sampler2D uSource;          // the force pass's second buffer (speed in z), or the first reduction (position, speed)
+uniform sampler2D uPositionTexture; // the particles after the step (first reduction only)
+uniform vec2 uSourceSize;           // texels of uSource
+uniform float uBlock;               // uSource texels per output texel, per axis
+uniform float uFromForce;           // 1 = the first reduction, over particles
+uniform float uParticleCount;
+
+varying vec2 vUv;
+
+void main() {
+  vec2 cell = floor(gl_FragCoord.xy);
+  vec4 best = vec4(0.0);
+  for (int j = 0; j < ${PAIRWISE_CONTACT_LOOP}; j++) {
+    if (float(j) >= uBlock) break;
+    for (int i = 0; i < ${PAIRWISE_CONTACT_LOOP}; i++) {
+      if (float(i) >= uBlock) break;
+      vec2 t = cell * uBlock + vec2(float(i), float(j));
+      if (t.x >= uSourceSize.x || t.y >= uSourceSize.y) continue;
+      vec2 uv = (t + 0.5) / uSourceSize;
+      vec4 contact;
+      if (uFromForce > 0.5) {
+        if (t.y * uSourceSize.x + t.x >= uParticleCount) continue;
+        contact = vec4(texture2D(uPositionTexture, uv).xyz, texture2D(uSource, uv).z);
+      } else {
+        contact = texture2D(uSource, uv);
+      }
+      if (contact.w > best.w) best = contact;
+    }
+  }
+  gl_FragColor = best;
 }
 `;

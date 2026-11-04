@@ -11,6 +11,13 @@ const PAIRWISE_FORCE_SCALE = 8;
 const PAIRWISE_MAX_SPEED_FRACTION = 0.02;
 const PAIRWISE_SEARCH_ITERATIONS = 20;
 const PAIRWISE_MIN_DELTA = 1e-4;
+const PAIRWISE_CONTACT_SIDE = 8;
+const PAIRWISE_CONTACT_BLOCK = 8;
+const PAIRWISE_CONTACT_LOOP = 16;
+function contactReduction(particleTexSide) {
+  const levelSide = Math.max(1, Math.ceil(Math.max(1, Math.floor(particleTexSide)) / PAIRWISE_CONTACT_BLOCK));
+  return { levelSide, slotBlock: Math.max(1, Math.ceil(levelSide / PAIRWISE_CONTACT_SIDE)) };
+}
 function nextPowerOfTwo(n) {
   let p = 1;
   while (p < n) p *= 2;
@@ -76,6 +83,9 @@ function cellCenter(key, extent, grid) {
 }
 export {
   PAIRWISE_CELL_CAPACITY,
+  PAIRWISE_CONTACT_BLOCK,
+  PAIRWISE_CONTACT_LOOP,
+  PAIRWISE_CONTACT_SIDE,
   PAIRWISE_FORCE_SCALE,
   PAIRWISE_KEY_SENTINEL,
   PAIRWISE_MAX_CELLS_PER_SIDE,
@@ -89,6 +99,7 @@ export {
   cellGridDims,
   cellKeyToCoords,
   compareExchangePass,
+  contactReduction,
   executeSortSchedule,
   nextPowerOfTwo,
   sortSideForParticleTexSide,

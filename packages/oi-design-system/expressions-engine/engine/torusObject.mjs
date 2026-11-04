@@ -330,6 +330,23 @@ function shapeRayHit(origin, direction, state, metresPerUnit, tolerance = 0.12 *
   const hit = best;
   return { phi: hit.phi, theta: hit.theta, t: hit.t };
 }
+function shapeNearest(at, state, metresPerUnit, samples = 48) {
+  const point = [0, 0, 0];
+  let best = { phi: 0, theta: 0, distance: Infinity };
+  const consider = (phi, theta) => {
+    blendAt(state, phi, theta, 0, metresPerUnit, point, 0);
+    const distance = Math.hypot(point[0] - at[0], point[1] - at[1], point[2] - at[2]);
+    if (distance < best.distance) best = { phi: wrap(phi), theta: wrap(theta), distance };
+  };
+  for (let i = 0; i < samples; i++) for (let j = 0; j < samples / 2; j++) consider(TAU * i / samples, TAU * j / (samples / 2));
+  for (let pass = 1, ring = TAU / samples, tube2 = 2 * TAU / samples; pass <= 3; pass++) {
+    ring /= 4;
+    tube2 /= 4;
+    const found = best;
+    for (let i = -4; i <= 4; i++) for (let j = -4; j <= 4; j++) consider(found.phi + i * ring, found.theta + j * tube2);
+  }
+  return best;
+}
 function torusCandidates(figure, lon = 128, lat = 64) {
   const scale = 200 / (TORUS_MAJOR + TORUS_MINOR), out = [];
   for (let j = 0; j < lat; j++) for (let i = 0; i < lon; i++) {
@@ -453,6 +470,7 @@ export {
   readRoles,
   receiverPlace,
   ringingLevel,
+  shapeNearest,
   shapeNormal,
   shapePoint,
   shapeRayHit,

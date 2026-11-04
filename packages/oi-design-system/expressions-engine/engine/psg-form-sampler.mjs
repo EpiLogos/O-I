@@ -347,6 +347,99 @@ function applyFold(body, progress) {
   }
   return out;
 }
+const FORM_BODY_REQUEST = "ql.form-body-request/v1";
+const PHYSICAL_BODY_PREPARATION = "ql.physical-body-preparation/v1";
+const PHYSICAL_BODY_CONTRACT = "ql.physical-body/v1";
+const MAX_BODY_SAMPLES = 256;
+const MAX_BODY_MODES = 64;
+const BODY_IDENTITY_MASK = (1n << 53n) - 1n;
+function bodyIdentity(sampleId) {
+  return Number(sampleId & BODY_IDENTITY_MASK);
+}
+function turn(p, a, b, angle) {
+  const c = Math.cos(angle), s = Math.sin(angle), x = p[a], y = p[b];
+  p[a] = x * c - y * s;
+  p[b] = x * s + y * c;
+}
+function creaseFold(body, progress) {
+  assertFoldProgress(progress);
+  const [ax, ay, az] = progress.site_angles_deg10.map((a) => a * DEG10_TO_RAD);
+  const positions = new Float64Array(body.samples.length * 3);
+  const normals = new Float64Array(body.samples.length * 3);
+  body.samples.forEach((sample, i) => {
+    const rest = restUnits(body, sample);
+    const p = [...rest], n = [0, 0, 1];
+    if (rest[1] > 0) {
+      turn(p, 1, 2, ax);
+      turn(n, 1, 2, ax);
+    }
+    if (rest[0] > 0) {
+      turn(p, 2, 0, ay);
+      turn(n, 2, 0, ay);
+    }
+    turn(p, 0, 1, az);
+    turn(n, 0, 1, az);
+    positions.set(p, i * 3);
+    normals.set(n, i * 3);
+  });
+  return { positions, normals };
+}
+function formBodyRequest(ask) {
+  validatePreparation(ask.preparation);
+  const count = allocationCount(ask.preparation);
+  if (count > MAX_BODY_SAMPLES) {
+    throw new FormLawError(`a body is prepared from at most ${MAX_BODY_SAMPLES} samples; this form allocates ${count}: prepare its body at a coarser resolution`);
+  }
+  if (!Number.isInteger(ask.modes) || ask.modes < 1 || ask.modes > MAX_BODY_MODES) throw new FormLawError(`a body rings 1..=${MAX_BODY_MODES} modes for each voice`);
+  if (!(ask.material.qFactor >= 0.1 && ask.material.qFactor <= 40)) throw new FormLawError("a body's Q factor must be within 0.1 to 40: it is the Torus's Damping");
+  if (!(ask.material.strikeShare >= 0 && ask.material.strikeShare <= 1)) throw new FormLawError("a body's Strike must be a share within 0 to 1");
+  if (ask.creaseDeg10.some((a) => !Number.isInteger(a) || Math.abs(a) > 1800)) throw new FormLawError("a crease turns at most 180\xB0 either way");
+  const p = ask.preparation;
+  return {
+    schema: FORM_BODY_REQUEST,
+    event_ref: ask.eventRef,
+    subject_ref: ask.subjectRef,
+    source_generation: ask.sourceGeneration,
+    form: { kind: ask.form.kind, form_ref: ask.form.formRef, source_ref: ask.form.sourceRef },
+    samples: {
+      schema: p.schema,
+      prep_ref: p.prepRef,
+      treatment: p.treatment,
+      layers: p.layers.map((l) => ({ layer_ref: l.layerRef, rest_depth_w: l.restDepthW })),
+      resolution: p.resolution,
+      units: { extent_units: p.units.extentUnits, depth_units: p.units.depthUnits, metres_per_unit: p.units.metresPerUnit },
+      ...p.mask ? { mask: { mask_ref: p.mask.maskRef, coverages: p.mask.coverages } } : {}
+    },
+    crease_deg10: ask.creaseDeg10,
+    material: { fibre: ask.material.fibre, q_factor: ask.material.qFactor, strike_share: ask.material.strikeShare, source_ref: ask.material.sourceRef },
+    modes: ask.modes,
+    sample_rate: ask.sampleRate,
+    ...ask.pickupUv ? { pickup_uv: ask.pickupUv } : {}
+  };
+}
+function selectBody(prepared, request) {
+  if (prepared === null) return { kind: "torus" };
+  if (prepared?.schema !== PHYSICAL_BODY_PREPARATION || prepared?.contract !== PHYSICAL_BODY_CONTRACT) {
+    throw new FormLawError(`a form's body is its owner's ${PHYSICAL_BODY_PREPARATION}`);
+  }
+  if (request && (prepared.event_ref !== request.event_ref || JSON.stringify(prepared.form) !== JSON.stringify(request.form))) {
+    throw new FormLawError("this body was prepared for another form: prepare it again before it rings");
+  }
+  return { kind: "form", prepared };
+}
+function bodyPicture(frame, body) {
+  const byName = /* @__PURE__ */ new Map();
+  for (const target of frame?.targets ?? []) {
+    const [x, y, z] = target.position ?? [];
+    if ([x, y, z].every(Number.isFinite)) byName.set(String(target.identity), [x, y, z]);
+  }
+  const picture = /* @__PURE__ */ new Map();
+  for (const sample of body.samples) {
+    const at = byName.get(String(bodyIdentity(sample.sampleId)));
+    if (at) picture.set(sample.sampleId, at);
+  }
+  return picture;
+}
 const RETAINED_EVENTS = 64;
 function f64BeBytes(value) {
   const view = new DataView(new ArrayBuffer(8));
@@ -601,15 +694,21 @@ function glyphPreparation(declaration) {
   };
 }
 export {
+  BODY_IDENTITY_MASK,
   FOLD_PROGRESS_CONTRACT,
   FOLD_SEQUENCE_CONTRACT,
   FOLD_STAGE_EFFECT_CONTRACT,
+  FORM_BODY_REQUEST,
   FORM_INSTRUMENT_CONTRACT,
   FORM_SAMPLES_CONTRACT,
   FormInstrument,
   FormLawError,
+  MAX_BODY_MODES,
+  MAX_BODY_SAMPLES,
   MAX_LAYERS,
   MAX_RESOLUTION,
+  PHYSICAL_BODY_CONTRACT,
+  PHYSICAL_BODY_PREPARATION,
   PsgFormSampler,
   RESIDENT_GEOMETRY_CONTRACT,
   RESIDENT_OBSERVATION_CONTRACT,
@@ -617,9 +716,13 @@ export {
   allocationCount,
   applyFold,
   assertFoldProgress,
+  bodyIdentity,
+  bodyPicture,
   canonicalPreparationJson,
   coveragesFromAlpha,
+  creaseFold,
   fnv1a64,
+  formBodyRequest,
   glyphPreparation,
   observeBody,
   prepareSamples,
@@ -628,6 +731,7 @@ export {
   restUv,
   restW,
   sampleIdOf,
+  selectBody,
   sha256Hex,
   validatePreparation
 };

@@ -26,6 +26,7 @@ import {
 import { mediumVolumeSideFor } from './mediumGrid';
 import {
   pairwiseCellIdShader,
+  pairwiseContactShader,
   pairwiseForceShader,
   pairwiseRangeShader,
   pairwiseSortShader,
@@ -33,12 +34,19 @@ import {
 import {
   bitonicSchedule,
   cellGridDims,
+  contactReduction,
+  type FieldContact,
+  PAIRWISE_CONTACT_BLOCK,
+  PAIRWISE_CONTACT_SIDE,
   PAIRWISE_MAX_PARTICLES,
   PAIRWISE_MAX_SPEED_FRACTION,
   PairwiseSortPass,
   sortSideForParticleTexSide,
 } from './pairwiseSchedule';
 import { MAX_FORMATIONS, MAX_PINS, MAX_FORCE_EMITTERS } from './fieldModel';
+
+/** The most contacts read back and not yet taken: sixteen frames of slots. */
+const CONTACTS_HELD = 16 * PAIRWISE_CONTACT_SIDE * PAIRWISE_CONTACT_SIDE;
 
 export class GPGPUSimulator {
   private localModeData = new Float32Array(64 * MAX_FORMATIONS * 4);
@@ -113,7 +121,25 @@ export class GPGPUSimulator {
   private pairSide = 0;
   private pairCells = new THREE.Vector2(0, 0);
   private pairWarned = false;
+  /** Whether a step since the last contact read ran the pairwise pass (its force target holds that step's contacts). */
+  private pairwiseStepped = false;
   private rtTemplate: THREE.RenderTargetOptions;
+
+  // Collision strikes (DLW §20.2 Field "Collisions strike"): while the engine listens, the frame's last step's contacts are reduced
+  // into an 8 x 8 target and read back through a pixel buffer, harvested once its fence has passed — a frame behind, so the read never
+  // waits on the GPU. Allocated on the first read; zero passes and zero reads while the engine does not listen.
+  public contactsListening = false;
+  private contactMaterial: THREE.ShaderMaterial;
+  private contactLevel: THREE.WebGLRenderTarget | null = null;
+  private contactSlots: THREE.WebGLRenderTarget | null = null;
+  private contactBuffer: WebGLBuffer | null = null;
+  private contactFence: WebGLSync | null = null;
+  private contactData = new Float32Array(PAIRWISE_CONTACT_SIDE * PAIRWISE_CONTACT_SIDE * 4);
+  private contactQueue: Omit<FieldContact, 'share'>[] = [];
+  /** The readback's own account: frames reduced and read, reads come back, reads lost, frames not read because the last read had not come back,
+   *  contacts delivered, contacts past what is held for a taker (CONTACTS_HELD), and the milliseconds of the page's own time the reads (the
+   *  two reductions and the read into the pixel buffer) and the takes from the pixel buffer took. */
+  public readonly contactCounts = {read: 0, back: 0, lost: 0, unread: 0, delivered: 0, overflow: 0, ms: 0, takeMs: 0};
 
   constructor(renderer: THREE.WebGLRenderer, particleCount: number = 200000) {
     this.renderer = renderer;
@@ -525,6 +551,21 @@ export class GPGPUSimulator {
       depthWrite: false,
     });
 
+    this.contactMaterial = new THREE.ShaderMaterial({
+      vertexShader: simulationVertexShader,
+      fragmentShader: pairwiseContactShader,
+      uniforms: {
+        uSource: { value: null },
+        uPositionTexture: { value: null },
+        uSourceSize: { value: new THREE.Vector2(1, 1) },
+        uBlock: { value: 1.0 },
+        uFromForce: { value: 1.0 },
+        uParticleCount: { value: this.particleCount },
+      },
+      depthTest: false,
+      depthWrite: false,
+    });
+
     this.pairForceFallback = new THREE.DataTexture(new Float32Array([0, 0, 0, 0]), 1, 1, THREE.RGBAFormat, THREE.FloatType);
     this.pairForceFallback.needsUpdate = true;
     this.velMaterial.uniforms.uPairwiseForceTexture.value = this.pairForceFallback;
@@ -897,6 +938,97 @@ export class GPGPUSimulator {
     this.velMaterial.uniforms.uPairwiseForceZTexture.value = this.pairForceTarget.textures[1];
   }
 
+  /** Collision strikes: after the frame's last step, while the engine listens and that step ran the pairwise pass, the strongest contact
+   * of each block of particles is reduced into the 8 x 8 slots (pairwiseContactShader) and read into a pixel buffer behind a fence.
+   * The read a frame before is taken first (before the frame's steps, takeContactsBack); while it has not come back, this frame is not
+   * read and is counted unread. */
+  public readContacts(): void {
+    const stepped = this.pairwiseStepped;
+    this.pairwiseStepped = false;
+    if (!this.contactsListening || !stepped || !this.pairForceTarget) return;
+    const gl = this.renderer.getContext() as WebGL2RenderingContext;
+    if (this.contactFence && !this.harvestContacts(gl)) { this.contactCounts.unread++; return; }
+    const started = performance.now();
+    const {levelSide, slotBlock} = contactReduction(this.texWidth);
+    if (!this.contactLevel || this.contactLevel.width !== levelSide) {
+      this.contactLevel?.dispose();
+      this.contactLevel = new THREE.WebGLRenderTarget(levelSide, levelSide, this.rtTemplate);
+    }
+    if (!this.contactSlots) this.contactSlots = new THREE.WebGLRenderTarget(PAIRWISE_CONTACT_SIDE, PAIRWISE_CONTACT_SIDE, this.rtTemplate);
+    const previous = this.renderer.getRenderTarget();
+    const u = this.contactMaterial.uniforms;
+    this.quadMesh.material = this.contactMaterial;
+    u.uSource.value = this.pairForceTarget.textures[1];
+    u.uPositionTexture.value = this.currentPosTarget.texture;
+    (u.uSourceSize.value as THREE.Vector2).set(this.texWidth, this.texHeight);
+    u.uBlock.value = PAIRWISE_CONTACT_BLOCK;
+    u.uFromForce.value = 1.0;
+    u.uParticleCount.value = this.particleCount;
+    this.renderer.setRenderTarget(this.contactLevel);
+    this.renderer.render(this.quadScene, this.quadCamera);
+    u.uSource.value = this.contactLevel.texture;
+    (u.uSourceSize.value as THREE.Vector2).set(levelSide, levelSide);
+    u.uBlock.value = slotBlock;
+    u.uFromForce.value = 0.0;
+    this.renderer.setRenderTarget(this.contactSlots);
+    this.renderer.render(this.quadScene, this.quadCamera);
+    // The slots go into a pixel buffer; the fence says when they have arrived, so nothing here waits on the GPU.
+    if (!this.contactBuffer) {
+      this.contactBuffer = gl.createBuffer();
+      gl.bindBuffer(gl.PIXEL_PACK_BUFFER, this.contactBuffer);
+      gl.bufferData(gl.PIXEL_PACK_BUFFER, this.contactData.byteLength, gl.STREAM_READ);
+    } else gl.bindBuffer(gl.PIXEL_PACK_BUFFER, this.contactBuffer);
+    gl.readPixels(0, 0, PAIRWISE_CONTACT_SIDE, PAIRWISE_CONTACT_SIDE, gl.RGBA, gl.FLOAT, 0);
+    gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
+    this.renderer.setRenderTarget(previous);
+    this.contactFence = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
+    gl.flush();
+    this.contactCounts.read++;
+    this.contactCounts.ms += performance.now() - started;
+  }
+
+  /** Takes the last read into the held contacts if it has come back (PointCloudField.advance calls it before queuing a frame's steps). */
+  public takeContactsBack(): void {
+    if (this.contactFence) this.harvestContacts(this.renderer.getContext() as WebGL2RenderingContext);
+  }
+
+  /** The contacts whose read has come back since the last take, each once, in the order they were read. */
+  public takeContacts(): Omit<FieldContact, 'share'>[] {
+    if (this.contactFence) this.harvestContacts(this.renderer.getContext() as WebGL2RenderingContext);
+    const taken = this.contactQueue;
+    this.contactQueue = [];
+    return taken;
+  }
+
+  /** The last read, once its fence has passed: each slot holding a closing pair is a contact. False while it has not come back. */
+  private harvestContacts(gl: WebGL2RenderingContext): boolean {
+    const fence = this.contactFence;
+    if (!fence) return true;
+    // Polled, never waited on: a zero timeout.
+    const status = gl.clientWaitSync(fence, 0, 0);
+    if (status === gl.TIMEOUT_EXPIRED) return false;
+    // A read the context can no longer wait on (a lost context) is counted lost, never taken as empty.
+    if (status === gl.WAIT_FAILED) { gl.deleteSync(fence); this.contactFence = null; this.contactCounts.lost++; return true; }
+    // The read has landed (its fence has passed), so taking its 1 KiB from the pixel buffer waits on no drawing; its time is counted.
+    const started = performance.now();
+    gl.bindBuffer(gl.PIXEL_PACK_BUFFER, this.contactBuffer);
+    gl.getBufferSubData(gl.PIXEL_PACK_BUFFER, 0, this.contactData);
+    gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
+    gl.deleteSync(fence);
+    this.contactFence = null;
+    this.contactCounts.back++;
+    this.contactCounts.takeMs += performance.now() - started;
+    const d = this.contactData;
+    for (let i = 0; i < d.length; i += 4) {
+      if (!(d[i + 3] > 0 && Number.isFinite(d[i + 3]))) continue;
+      // Held for a taker for at most CONTACTS_HELD; any beyond that are counted, never silently lost.
+      if (this.contactQueue.length >= CONTACTS_HELD) { this.contactCounts.overflow++; continue; }
+      this.contactQueue.push({x: d[i], y: d[i + 1], z: d[i + 2], speed: d[i + 3]});
+      this.contactCounts.delivered++;
+    }
+    return true;
+  }
+
   public step(
     dt: number,
     time: number,
@@ -925,6 +1057,7 @@ export class GPGPUSimulator {
     const depthGeometry = (config.glyphVolume?.enabled && (config.glyphVolume?.depth ?? 0) > 0) ? 1.0 : 0.0;
     if (pwEnabled) {
       this.runPairwisePasses(pw!, this.velMaterial.uniforms.uCompPlane.value as number, clampedDt, depthGeometry);
+      this.pairwiseStepped = true;
     }
 
     // 1. Update uniforms for velocity simulation
@@ -1285,6 +1418,14 @@ export class GPGPUSimulator {
     this.pairCellTable?.dispose();
     this.pairForceTarget?.dispose();
     this.pairForceFallback.dispose();
+    this.contactLevel?.dispose();
+    this.contactSlots?.dispose();
+    this.contactMaterial.dispose();
+    const gl = this.renderer.getContext() as WebGL2RenderingContext;
+    if (this.contactFence) gl.deleteSync(this.contactFence);
+    if (this.contactBuffer) gl.deleteBuffer(this.contactBuffer);
+    this.contactFence = null;
+    this.contactBuffer = null;
     this.pairCellIdMaterial.dispose();
     this.pairSortMaterial.dispose();
     this.pairRangeMaterial.dispose();

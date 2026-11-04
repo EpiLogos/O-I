@@ -32,22 +32,26 @@
  *     exits 0. A skipped or impossible replay is a valid outcome; a faked one
  *     is not.
  *
- * Evidence: <programme>/new-shell/evidence/native-actions-audit-l6-20261009/
- * (override with OI_AUDIT_L6_EVIDENCE).
+ * Evidence: a temporary folder of the run's own. The recorded audit of 9 Oct
+ * is <programme>/new-shell/evidence/native-actions-audit-l6-20261009/; a run
+ * writes there only when OI_AUDIT_L6_EVIDENCE names it.
  */
 
 import {writeFileSync, mkdirSync} from 'node:fs'
-import {join} from 'node:path'
+import {join, dirname, resolve} from 'node:path'
+import {tmpdir} from 'node:os'
+import {fileURLToPath} from 'node:url'
 import {createRequire} from 'node:module'
 import {createServer, request as httpRequest} from 'node:http'
 import {bundleOptions, launchShell} from './support/agentShellHarness.mjs'
 
-const UI = '/Users/admin/Central/worktrees/env-1/o-i/packages/live-shell/ui'
-const CRADLE = '/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle'
+// This checkout's own tree: a run in any seat tests what that seat holds.
+const UI = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+const CRADLE = resolve(UI, '../../../desktop/cradle')
 const SHELL_BACKEND = process.env.OI_AUDIT_L6_BACKEND ?? 'http://127.0.0.1:8788'
 const BRIDGE = process.env.OI_AUDIT_L6_BRIDGE ?? 'http://127.0.0.1:4179'
-const EVIDENCE = process.env.OI_AUDIT_L6_EVIDENCE
-  ?? '/Users/admin/Central/Work/reverse-engineering/2026-10-07-techne-instrument-re/new-shell/evidence/native-actions-audit-l6-20261009'
+// A suite run writes its captures to a folder of its own; a recorded audit names its evidence folder (OI_AUDIT_L6_EVIDENCE).
+const EVIDENCE = process.env.OI_AUDIT_L6_EVIDENCE ?? join(tmpdir(), `oi-audit-l6-${process.pid}`)
 const EDITOR_CHANNEL = 'oi.native-editor/v1'
 
 const summary = {ok: false, replayed: [], impossibility: null, faults: [], warmup: []}
@@ -397,7 +401,7 @@ function finish(code) {
 
 // Playwright resolves from the cradle, exactly as the F2 support harness does.
 try {
-  const requireFromCradle = createRequire('/Users/admin/Central/worktrees/env-1/o-i/desktop/cradle/package.json')
+  const requireFromCradle = createRequire(join(CRADLE, 'package.json'))
   requireFromCradle(process.env.OI_BROWSER_RUNTIME || 'playwright')
 } catch (error) {
   summary.impossibility = `playwright did not resolve from desktop/cradle: ${error}`

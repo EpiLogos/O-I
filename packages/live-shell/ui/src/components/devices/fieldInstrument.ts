@@ -14,8 +14,8 @@
 //   resonance, dominance, baseFrequency   Resonance's rows (cymatics.frequencyHz, cymatics.dominance, cymatics.baseFrequency);
 //   tempo                 Physics's time scale (fluid.timeScale); hold the morph's dwell (toroidalMorph.holdRatio, Morph's row);
 //   particles             Ink's particle count (particleCount): a reading here, set in Ink;
-//   keySource, symbolVoices   the scene's own composition, read and written as the editor's panel settings (expressionsDevice.ts
-//                         SETTINGS.field; boundary nativeFieldPanelSettings.ts keySource, symbolVoices);
+//   keySource, symbolVoices, collisionsStrike   the scene's own composition, read and written as the editor's panel settings
+//                         (expressionsDevice.ts SETTINGS.field; boundary nativeFieldPanelSettings.ts keySource, symbolVoices, collisionsStrike);
 //   voices                the symbols of the open scene that have a voice (Entity.sound.enabled, native-field/entitySound.ts EntitySound).
 // The level has no owner: object sound carries a gain per symbol only (entitySound.ts EntitySound.gain), and the frame takes no field-wide
 // level, so it stands absent and its dial disabled with that operation's name. Pure: no React, no owner call (the ports carry them).
@@ -54,9 +54,9 @@ export const FIELD_ROWS: Readonly<Record<string, RowKey>> = {
 const MEDIUM_OF: Readonly<Record<string, string>> = {'2D': 'plate', '3D': 'chamber'}
 const DIMENSION_OF: Readonly<Record<string, string>> = {plate: '2D', chamber: '3D'}
 /** The Field's own settings: the scene's composition, through the editor's panel settings. */
-export const FIELD_SETTINGS = ['keySource', 'symbolVoices'] as const
+export const FIELD_SETTINGS = ['keySource', 'symbolVoices', 'collisionsStrike'] as const
 /** The keys the Field's controls set (the design's dials, toggles and radios). The rest it draws are readings: set them where they live. */
-export const FIELD_CONTROLS = ['sound', 'level', 'plate', 'medium', 'keySource', 'symbolVoices', 'resonance', 'tempo', 'hold'] as const
+export const FIELD_CONTROLS = ['sound', 'level', 'plate', 'medium', 'keySource', 'symbolVoices', 'collisionsStrike', 'resonance', 'tempo', 'hold'] as const
 
 export const FIELD_NO_LEVEL = 'Level: no owner operation carries it here — missing op: a field-wide level of the Expression\'s sound in the Expressions '
   + 'engine (object sound carries a gain per symbol only, native-field/entitySound.ts EntitySound.gain, and the frame takes no level command) (Expressions).'
@@ -116,6 +116,8 @@ export function fieldValues(input: FieldInput): Record<string, Value> {
     if (keySource) values.keySource = keySource
     const voiced = expressionsSettingRead('field', 'symbolVoices', scene)
     if (typeof voiced === 'boolean') values.symbolVoices = voiced
+    const striking = expressionsSettingRead('field', 'collisionsStrike', scene)
+    if (typeof striking === 'boolean') values.collisionsStrike = striking
     values.voices = scene.entities.filter(entity => (entity as {sound?: {enabled?: unknown}}).sound?.enabled === true).length
   }
   return values
@@ -154,6 +156,9 @@ export async function applyFieldChanges(input: FieldInput, changes: readonly Val
     } else if (key === 'symbolVoices') {
       if (typeof value !== 'boolean') throw new Error('Symbol voices are on or off.')
       edits.push(expressionsSettingChange('field', 'symbolVoices', value))
+    } else if (key === 'collisionsStrike') {
+      if (typeof value !== 'boolean') throw new Error('Collisions strike is on or off.')
+      edits.push(expressionsSettingChange('field', 'collisionsStrike', value))
     } else {
       const at = FIELD_ROWS[key]!
       let written: ParamValue

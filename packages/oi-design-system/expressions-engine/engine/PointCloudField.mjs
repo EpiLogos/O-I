@@ -9,6 +9,7 @@ import { DEFAULT_COLOR_CONFIG as DEFAULT_COLOR_CONFIG2, DEFAULT_TOROIDAL_CONFIG 
 import { DEFAULT_GLYPH_VOLUME } from "./glyphVolume.mjs";
 import { applyAutomations, createAutomationRuntime } from "./automation.mjs";
 import { GPGPUSimulator } from "./GPGPUSimulator.mjs";
+import { PAIRWISE_MAX_PARTICLES } from "./pairwiseSchedule.mjs";
 import { GlyphSampler } from "./GlyphSampler.mjs";
 import { PsgFormSampler, glyphPreparation, coveragesFromAlpha } from "./psg-form-sampler.mjs";
 import { particleVertexShader, particleFragmentShader } from "./shaders/particleShaders.mjs";
@@ -1143,10 +1144,13 @@ class PointCloudField {
       const count = Math.max(1, Math.ceil(delta / (1 / 60)));
       if (count > 600) throw new Error("Time scale exceeds the safe live stepping budget");
       if (auto.live.length > 0) this.syncLiveMaterialUniforms();
+      this.simulator.takeContactsBack();
       for (let i = 0; i < count; i++) {
         this.simTime += delta / count;
         this.tickFrame(delta / count, this.simTime, i === count - 1);
       }
+      this.simulator.contactsListening = this.listeningContacts;
+      this.simulator.readContacts();
       this.emitTelemetry(rawDelta, auto.live);
       return this.simTime;
     } finally {
@@ -1208,6 +1212,22 @@ class PointCloudField {
     this.hostPointerZ = point.z;
   }
   hostPointerZ = 0;
+  /** Collision strikes (DLW §20.2 Field "Collisions strike"): while listening, each frame's contacts the pairwise pass makes are reduced
+   * on the GPU and read back (GPGPUSimulator.readContacts). Not listening, no pass runs and nothing is read. */
+  listenContacts(on) {
+    this.listeningContacts = on;
+    this.simulator.contactsListening = on;
+  }
+  listeningContacts = false;
+  /** The contacts read back since the last take, each once, with their closing speed as a share of the field's top speed; whether the
+   * engine listens and, listening, whether its particles can make contacts at all ('no-contacts': the pairwise pass is off;
+   * 'beyond-capacity': more particles than it sorts); and the readback's own account. */
+  takeContacts() {
+    const top = Math.max(1, this.config.fluid.maxSpeed ?? 35e3);
+    const contacts = this.simulator.takeContacts().map((c) => ({ ...c, share: c.speed / top }));
+    const standing = !this.listeningContacts ? "off" : !this.config.pairwise?.enabled ? "no-contacts" : this.simulator.particleCount > PAIRWISE_MAX_PARTICLES ? "beyond-capacity" : "listening";
+    return { contacts, standing, counts: { ...this.simulator.contactCounts } };
+  }
   /** Diagnostics read real floating-point GPU state, only on explicit request. */
   inspectState(readParticles = false) {
     const result = {

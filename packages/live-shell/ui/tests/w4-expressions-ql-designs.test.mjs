@@ -189,14 +189,14 @@ test('the Field reads its owners: the frame\'s object sound, Resonance\'s plate,
   const binding = field.fieldBinding(input)
   assert.equal(binding.id, designKey('expressions', 'field'))
   assert.deepEqual(binding.values, {sound: true, plate: true, medium: 'chamber', resonance: 512, dominance: 0.75, baseFrequency: 32, tempo: 1.5, hold: 0.4,
-    particles: 120000, keySource: 'sky', symbolVoices: false, voices: 2})
+    particles: 120000, keySource: 'sky', symbolVoices: false, collisionsStrike: false, voices: 2})
   const keys = classify(DESIGNS.field, binding)
   assert.deepEqual(keys.absent, ['level'], 'only the level has no owner')
   assert.match(binding.standing.level.disabled, /missing op: a field-wide level of the Expression's sound/)
   assert.deepEqual(keys.local, [])
   const controls = controlStanding(binding, setKeysOf('expressions__field.tsx'))
   assert.deepEqual(controls.disabled, ['level'])
-  assert.deepEqual(controls.written.sort(), ['hold', 'keySource', 'medium', 'plate', 'resonance', 'sound', 'symbolVoices', 'tempo'])
+  assert.deepEqual(controls.written.sort(), ['collisionsStrike', 'hold', 'keySource', 'medium', 'plate', 'resonance', 'sound', 'symbolVoices', 'tempo'])
   // A scene saved before the key carries none: Key source is absent, never the manual's default.
   const older = fieldInput()
   delete older.r.scene.composition.keySource

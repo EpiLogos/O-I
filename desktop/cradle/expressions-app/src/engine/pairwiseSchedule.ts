@@ -35,6 +35,29 @@ export const PAIRWISE_SEARCH_ITERATIONS = 20;
 /** Guarded denominator for impulse/dt terms. */
 export const PAIRWISE_MIN_DELTA = 1e-4;
 
+/** Collision strikes (DLW §20.2 Field "Collisions strike"; §21.2 "A collision in the field | The point where it happens"): the force pass
+ *  marks each particle with the strongest closing speed of the pairs it opens, and two reduction passes keep the strongest contact of each
+ *  block of particles in a PAIRWISE_CONTACT_SIDE² target the engine reads back each frame. At most that many contacts a frame. */
+export const PAIRWISE_CONTACT_SIDE = 8;
+/** The first reduction's block: each of its texels holds the strongest contact of a block of this many particles a side. */
+export const PAIRWISE_CONTACT_BLOCK = 8;
+/** The reduction shader's loop bound per axis (GLSL loops need a constant): the largest block either pass reads. */
+export const PAIRWISE_CONTACT_LOOP = 16;
+
+/** Whether the engine listens for contacts and, listening, whether its particles can make any: 'no-contacts' while the pairwise pass is
+ *  off, 'beyond-capacity' while the field has more particles than it sorts (PAIRWISE_MAX_PARTICLES). */
+export type ContactStanding = 'off' | 'listening' | 'no-contacts' | 'beyond-capacity';
+/** A contact the engine read back: where it happened (the particle that opened the pair, in engine units), how fast the pair closed
+ *  (engine units a second) and that speed as a share of the field's top speed (fluid.maxSpeed). */
+export interface FieldContact {x: number; y: number; z: number; speed: number; share: number}
+
+/** The two reduction passes for a particle texture side: the first keeps one texel per PAIRWISE_CONTACT_BLOCK² particles (levelSide on
+ *  a side); the second gives each of the PAIRWISE_CONTACT_SIDE² slots a slotBlock² block of those texels. Pure. */
+export function contactReduction(particleTexSide: number): {levelSide: number; slotBlock: number} {
+  const levelSide = Math.max(1, Math.ceil(Math.max(1, Math.floor(particleTexSide)) / PAIRWISE_CONTACT_BLOCK));
+  return {levelSide, slotBlock: Math.max(1, Math.ceil(levelSide / PAIRWISE_CONTACT_SIDE))};
+}
+
 /** One compare-exchange draw of the bitonic network: uniforms (uPartner, uBlock). */
 export interface PairwiseSortPass {
   stage: number;     // 1-based; sorted block size at this stage is 2**stage

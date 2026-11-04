@@ -340,6 +340,34 @@ fn symbol_voices_is_an_on_or_off_that_the_scene_may_carry_and_absent_reads_as_on
     }
 }
 #[test]
+fn collisions_strike_is_an_on_or_off_that_the_scene_may_carry_and_absent_reads_as_off() {
+    // DLW 20.2 Field, "Collisions strike | On · Off | Off": a boolean in the Scene's composition, beside Symbol voices. Anything else is refused.
+    let mut app = setup();
+    let mut base = material();
+    base["scene"]["name"] = inspect(&mut app)["scenes"][0]["title"].clone();
+    let set = |app: &mut Application, strike: Option<Value>| {
+        let mut body = base.clone();
+        if let Some(value) = strike {
+            body["scene"]["composition"]["collisionsStrike"] = value;
+        }
+        let revision = inspect(app)["revision"].as_u64().unwrap();
+        edit(
+            app,
+            revision,
+            json!([{"change":"scene_material_set","scene_ref":"expression:craft:scene:main","presentation":body}]),
+        )
+    };
+    for value in [None, Some(json!(true)), Some(json!(false))] {
+        set(&mut app, value.clone()).unwrap_or_else(|e| panic!("{value:?} refused: {e}"));
+    }
+    let settled = inspect(&mut app);
+    for bad in [json!("on"), json!(1), json!(null), json!({"on":true})] {
+        let error = set(&mut app, Some(bad.clone())).expect_err(&format!("accepted {bad}"));
+        assert!(error.contains("collisions strike"), "{error}");
+        assert_eq!(inspect(&mut app), settled);
+    }
+}
+#[test]
 fn removing_a_scene_is_not_deleting_native_members_or_the_last_scene() {
     let mut app = setup();
     assert!(edit(

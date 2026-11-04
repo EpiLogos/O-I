@@ -390,6 +390,11 @@ fn drive_and_key(scene: &Value) -> Result<(), String> {
             return Err("Invalid Scene symbol voices".into());
         }
     }
+    if let Some(strike) = scene["composition"].get("collisionsStrike") {
+        if !strike.is_boolean() {
+            return Err("Invalid Scene collisions strike".into());
+        }
+    }
     if let Some(drive) = scene.get("resonanceDrive") {
         let drive = object(drive, "Scene resonance drive")?;
         one_of(

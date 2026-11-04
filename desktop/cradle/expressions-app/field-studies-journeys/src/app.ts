@@ -2083,6 +2083,8 @@ function rebindAroundAct(frame:EngineFrame){
 }
 function tick(now:number){if(sceneEditHeld||researchInstruments?.active()&&!researchPreview){nativeField?.controller.frame(0,true);lastTime=now;rafId=requestAnimationFrame(tick);return;}updatePropertyTake(now);const rawDelta=Math.max(0,Math.min((now-lastTime)/1000,.25));lastTime=now;let delta=!fieldPaused&&!document.hidden&&!libraryOpen?Math.min(rawDelta,.05):0;delta=nativeField?.controller.frame(delta,fieldPaused||document.hidden||libraryOpen)??delta;const previousTime=simTime;if(engine.capabilities.kind!=='production'){delta*=liveOverrides.valueForBind('field.params.timeScale')??scene().field.params.timeScale;simTime+=delta;}
  if(recovery.hidden&&!libraryOpen&&(!fieldPaused||needsFrame||engine.needsRender?.()||pointer.active||recorder.active||transitionDuration>0)&&now-lastStudioRender>=(physisFpsCap?1000/physisFpsCap:0)){try{const frame=frameData(delta);rebindAroundAct(frame);engine.render(frame);needsFrame=false;lastStudioRender=now;}catch(err){nativeField?.controller.hold('native surface render failed: '+String(err));needsFrame=false;if(String(err).toLowerCase().includes('context'))recovery.hidden=false;else error(err);transportUI();}}
+ // Collisions strike (DLW §20.2 Field): the contacts the engine read back this frame strike the torus, bound in rate (nativeField.ts collide).
+ {const said=nativeField?.collide(engine.takeContacts?.()??null,collisionStrike);if(said)toast(said,6500);}
  const native=engine.telemetry?.();nativeField?.hear({camera,width,height},native?.config?.depth?.fov);if(native){simTime=native.simTime;delta=simTime-previousTime;document.documentElement.style.setProperty('--paper',native.background);document.documentElement.style.setProperty('--ink',native.palette[0]);$('text-layers').style.opacity=String(.25+.75*native.transition);}
  // A finished property preview holds its recorded end values; the field itself
  // keeps breathing. The playhead runs only while the scene plays, and reaching
@@ -2326,6 +2328,14 @@ function journeyEdge(edit:EdgeEdit){
  applyEdgeWrite(probe,write);
  if(JSON.stringify(probe.find(v=>v.id===write.sceneId))===JSON.stringify(store.document.scenes.find(v=>v.id===write.sceneId)))return;
  changed(()=>applyTimelineMove(store.document,list=>applyEdgeWrite(list,write)),true,label);
+}
+/** A collision in the field strikes the torus at its point (DLW §20.2 Field "Collisions strike"; §21.2 "A collision in the field | The point
+ * where it happens"; nativeField.ts collide): read as the shell's strike-at is read and run as it runs, through the frame's one stage channel. */
+let collisionRequests=0;
+function collisionStrike(points:{theta:number;phi:number}[],amplitude:number){
+ const parsed=readStageRequest({v:1,kind:'host-command',req:++collisionRequests,command:'strike-at',points,amplitude});
+ if(!parsed)return Promise.reject(new Error('A collision\'s strike is outside the stage vocabulary.'));
+ return runStageCommand(parsed.command);
 }
 async function runStageCommand(command:StageCommand):Promise<StageResult>{
  const body=document.body;
