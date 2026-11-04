@@ -11,7 +11,10 @@ use std::{
     io::{BufRead, BufReader, Read, Write},
     path::PathBuf,
     process::{Child, Command, Stdio},
-    sync::{mpsc, Arc, Mutex},
+    sync::{
+        atomic::{AtomicU64, Ordering},
+        mpsc, Arc, Mutex,
+    },
     thread,
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
@@ -96,6 +99,24 @@ struct Binding {
     schema: String,
     host: Value,
     presentation: Value,
+}
+
+/// The count of every name this process's kernel gives a lease or a compose, and the file each names:
+/// the process's, never one Field's, so two Fields composing within one tick of the clock never share one.
+static NAMED: AtomicU64 = AtomicU64::new(0);
+
+/// `{kind}-{pid}-{stamp}-{n}`: [`NAMED`]'s n keeps two names of one process apart, the pid two processes,
+/// and the stamp a process that came back under a reused pid.
+fn kernel_name(kind: &str) -> Result<String, String> {
+    let n = NAMED
+        .fetch_add(1, Ordering::Relaxed)
+        .checked_add(1)
+        .ok_or("native name sequence exhausted")?;
+    let stamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_err(|e| e.to_string())?
+        .as_nanos();
+    Ok(format!("{kind}-{}-{stamp}-{n}", std::process::id()))
 }
 
 #[derive(Debug, Default)]
@@ -1293,15 +1314,7 @@ impl Manager {
             .sequence
             .checked_add(1)
             .ok_or("native lease sequence exhausted")?;
-        let stamp = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .map_err(|e| e.to_string())?
-            .as_nanos();
-        let lease = format!(
-            "native-expression-{}-{stamp}-{}",
-            std::process::id(),
-            self.sequence
-        );
+        let lease = kernel_name("native-expression")?;
         let config_path = std::env::temp_dir().join(format!("{lease}.json"));
         let mut options = OpenOptions::new();
         options.write(true).create_new(true);
@@ -2627,17 +2640,9 @@ impl Manager {
             .composed
             .checked_add(1)
             .ok_or("native compose sequence exhausted")?;
-        let stamp = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .map_err(|e| e.to_string())?
-            .as_nanos();
         Ok(PreparedCompose {
             request,
-            token: format!(
-                "native-compose-{}-{stamp}-{}",
-                std::process::id(),
-                self.composed
-            ),
+            token: kernel_name("native-compose")?,
             finish: ComposeFinish::Open,
         })
     }
@@ -4850,6 +4855,83 @@ for line in sys.stdin:
             ],
             "every landed act, exactly as the owner wrote its impulses, at the sample it landed; a refusal and a read are not tapped"
         );
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn two_fields_composing_in_one_microsecond_hold_distinct_leases_and_files() {
+        use std::os::unix::fs::PermissionsExt;
+        // A lease and a compose token are named pid-stamp-sequence, and each names a file the kernel
+        // creates new. The stamp is the clock's, which two Fields read alike within its resolution (a
+        // microsecond on macOS): what keeps two names apart must be something other than the clock.
+        let unstamped = |name: &str| {
+            let (head, sequence) = name.rsplit_once('-').unwrap();
+            let (head, _stamp) = head.rsplit_once('-').unwrap();
+            format!("{head}-{sequence}")
+        };
+        let request = json!({"texture":[1,1],"units_per_metre":120,"sky":{"epoch":"2026-09-30T11:44:49Z"},
+            "world":{"instance_ref":"expression:native:one","subject_ref":"identity:person:one"}});
+        let tokens = [Manager::default(), Manager::default()]
+            .map(|mut manager| manager.prepare_compose(&request).unwrap().token);
+        assert_ne!(
+            unstamped(&tokens[0]),
+            unstamped(&tokens[1]),
+            "two Fields' compose files at one stamp are one file: {tokens:?}"
+        );
+
+        let dir =
+            std::env::temp_dir().join(format!("native-two-fields-test-{}", std::process::id()));
+        fs::create_dir_all(&dir).unwrap();
+        let script = dir.join("host.py");
+        fs::write(&script, r#"#!/usr/bin/env python3
+import json,sys
+field={'event_ref':'test:event','subject_ref':'test:subject','generation':'0','samples_elapsed':'0','sample_rate':48000,'audio':[]}
+print(json.dumps({'schema':'ql.field-host-receipt/v1','available':True,'instance_ref':'test:instance','status':'ready','last_request_id':'0','field':field}),flush=True)
+for line in sys.stdin: pass
+"#).unwrap();
+        fs::set_permissions(&script, fs::Permissions::from_mode(0o700)).unwrap();
+        crate::test_stub::settle_stub(&script);
+        let _env = EnvGuard::set(&[
+            ("OI_QL_FIELD_HOST_BIN", Some(script.as_os_str())),
+            ("OI_QL_FIELD_WORKER_BIN", Some(script.as_os_str())),
+        ]);
+        let binding = json!({"schema":"oi.native-expression-binding/v1","host":{"instance_ref":"test:instance"},
+            "presentation":{"units_per_metre":1,"slots_a":[0],"slots_b":[0]}})
+        .to_string();
+        let together = Arc::new(std::sync::Barrier::new(2));
+        let opened: Vec<(Field, Result<String, String>)> = (0..2)
+            .map(|_| {
+                let (together, binding) = (together.clone(), binding.clone());
+                thread::spawn(move || {
+                    let field = Field::new(CentralClient::with(
+                        "/nonexistent".into(),
+                        None,
+                        String::new(),
+                    ));
+                    together.wait();
+                    let lease = field
+                        .lock()
+                        .unwrap()
+                        .open(&binding, Value::Null)
+                        .map(|opened| opened["lease"].as_str().unwrap().to_owned());
+                    (field, lease)
+                })
+            })
+            .collect::<Vec<_>>()
+            .into_iter()
+            .map(|opening| opening.join().unwrap())
+            .collect();
+        let leases: Vec<&String> = opened
+            .iter()
+            .map(|(_, lease)| lease.as_ref().expect("both Fields open at once"))
+            .collect();
+        assert_ne!(
+            unstamped(leases[0]),
+            unstamped(leases[1]),
+            "two Fields' leases at one stamp are one lease: {leases:?}"
+        );
+        drop(opened);
         fs::remove_dir_all(dir).unwrap();
     }
 }

@@ -12,8 +12,10 @@
 //! is M5 warp territory). Parameter editing from document states is not
 //! bridged yet (the summary carries element names only) — M3 backlog.
 
-use crate::devices::{BypassDevice, EchoDevice, EchoParams, GlueDevice, ReverbDevice};
-use crate::graph::{Clock, Graph, Note, ReturnTrack, Track};
+use crate::devices::{
+    BypassDevice, CompressorDevice, EchoDevice, EchoParams, GlueDevice, ReverbDevice,
+};
+use crate::graph::{Clock, Graph, Note, RackDevice, ReturnTrack, Track};
 use crate::instruments::OperatorInstrument;
 use live_dynamics::glue::GlueParams;
 use live_dynamics::reverb::ReverbParams;
@@ -71,6 +73,54 @@ fn known_device(element_name: &str) -> Option<Box<dyn crate::graph::Device>> {
         ))),
         _ => None,
     }
+}
+
+/// The engine's own device for Live's device `class` on an Instrument Rack's chain (O-I #849 round
+/// 13: the Torus's effects, as live-set `rack_place` places them), with the settings carried onto it,
+/// by Live's document key: Live's Reverb as the gated model ([`ReverbDevice`], at its stored
+/// `DecayTime` in ms when carried, the one setting the model takes), convolving by partitions since
+/// the part it stands on sounds every sample; Live's Compressor as its model at the corpus's stored
+/// values ([`CompressorDevice`]), which takes no setting yet. What it was made from names the class
+/// and the settings. Refused in words for a class the engine has no model of, and for a setting its
+/// model does not take.
+pub fn rack_device(class: &str, carried: &[(&str, f64)]) -> Result<RackDevice, String> {
+    let refuse_rest =
+        |title: &str, takes: &[&str]| match carried.iter().find(|(id, _)| !takes.contains(id)) {
+            Some((id, _)) => Err(format!(
+                "the engine's model of Live's {title} does not take its {id} yet"
+            )),
+            None => Ok(()),
+        };
+    let device: Box<dyn crate::graph::Device> = match class {
+        "Reverb" => {
+            refuse_rest("Reverb", &["DecayTime"])?;
+            let decay_ms = carried
+                .iter()
+                .find(|(id, _)| *id == "DecayTime")
+                .map_or(1200.00012, |(_, ms)| *ms);
+            if !(decay_ms.is_finite() && decay_ms > 0.0) {
+                return Err(format!(
+                    "Live's Reverb holds a DecayTime above 0 ms, not {decay_ms}"
+                ));
+            }
+            Box::new(ReverbDevice::partitioned(
+                live_dynamics::reverb::ReverbParams { decay_ms },
+                1.0,
+            ))
+        }
+        "Compressor2" => {
+            refuse_rest("Compressor", &[])?;
+            Box::new(CompressorDevice::new(live_dynamics::compressor::DEFAULTS))
+        }
+        "AutoFilter" => return Err("Live's Auto Filter has no model in the engine yet".into()),
+        "Delay" => return Err("Live's Delay has no model in the engine yet".into()),
+        other => return Err(format!("Live's {other} has no model in the engine yet")),
+    };
+    let mut made_from = class.to_string();
+    for (id, value) in carried {
+        made_from.push_str(&format!(" {id}={value}"));
+    }
+    Ok(RackDevice { made_from, device })
 }
 
 /// Bridge a summarized document into a graph at `sample_rate`.
@@ -484,5 +534,49 @@ mod tests {
         t.source[201] = 1.0;
         let out = r.graph.render(48_000);
         assert!(out.iter().any(|v| *v != 0.0));
+    }
+
+    /// Live's devices on a rack's chain as the engine's own (O-I #849 round 13): Reverb at a carried
+    /// DecayTime and Compressor at the corpus's values; Auto Filter and Delay have no model yet, and a
+    /// setting a model does not take is refused, each in words.
+    #[test]
+    fn a_rack_chains_live_devices_are_the_engines_own_or_refused_in_words() {
+        let reverb = rack_device("Reverb", &[("DecayTime", 2400.0)]).unwrap();
+        assert_eq!(reverb.device.name(), "Reverb");
+        assert_eq!(reverb.made_from, "Reverb DecayTime=2400");
+        assert_eq!(rack_device("Reverb", &[]).unwrap().made_from, "Reverb");
+        let compressor = rack_device("Compressor2", &[]).unwrap();
+        assert_eq!(compressor.device.name(), "Compressor2");
+        for (class, words) in [
+            (
+                "AutoFilter",
+                "Live's Auto Filter has no model in the engine yet",
+            ),
+            ("Delay", "Live's Delay has no model in the engine yet"),
+        ] {
+            assert_eq!(rack_device(class, &[]).unwrap_err(), words);
+        }
+        assert_eq!(
+            rack_device("Reverb", &[("PreDelay", 20.0)]).unwrap_err(),
+            "the engine's model of Live's Reverb does not take its PreDelay yet"
+        );
+        assert!(rack_device("Reverb", &[("DecayTime", 0.0)]).is_err());
+        // the reverb rings what it is given, every sample, in real time: a dense second renders
+        let mut r = rack_device("Reverb", &[("DecayTime", 600.0)]).unwrap();
+        r.device.prepare(48_000, 2);
+        let clock = Clock::start(48_000, 120.0);
+        let started = std::time::Instant::now();
+        let mut heard = 0f32;
+        for n in 0..48_000 {
+            let mut frame = [((n % 97) as f32 / 97.0) - 0.5; 2];
+            r.device.process(&mut frame, &clock);
+            heard = heard.max(frame[0].abs());
+        }
+        assert!(heard > 0.0);
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(20),
+            "{:?}",
+            started.elapsed()
+        );
     }
 }

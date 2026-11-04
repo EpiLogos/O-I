@@ -10,7 +10,8 @@ mod k8_fixture;
 
 use live_engine::k8::{K8Field, K8Mode};
 use live_engine::{
-    engine, EngineEvent, Graph, Instrument, K8Instrument, Performance, TorusAct, Track,
+    engine, ClipEdge, EngineEvent, Graph, Instrument, K8Instrument, Note, Performance, TorusAct,
+    Track,
 };
 
 const SR: u32 = 48_000;
@@ -709,61 +710,77 @@ fn an_owners_act_is_split_and_judged_before_it_travels() {
 }
 
 #[test]
-fn a_midi_note_strikes_its_key_by_the_pitch_law_at_its_velocity() {
-    let mut notes = [None; 128];
-    notes[60] = Some((2u8, 5u16));
-    notes[64] = Some((3, 7));
-    let mut g = Graph::new(SR, 120.0);
-    g.tracks.push(Track::midi(
+fn a_handed_over_torus_leaves_its_notes_to_its_owner() {
+    // Its clip's notes and a MIDI note-on are its owner's to play: the host hands them over as keys at
+    // their samples, and they sound here only as the owner's acts (EngineEvent::TorusStrike).
+    let notes = [
+        Note {
+            key: 60,
+            start: 64,
+            length: 32,
+            velocity: 100.0,
+        },
+        Note {
+            key: 67,
+            start: 200,
+            length: 32,
+            velocity: 80.0,
+        },
+    ];
+    let mut part = Track::midi(
         "Torus",
-        Box::new(
-            K8Instrument::new(played_field())
-                .handed_over(1)
-                .with_notes(notes),
-        ),
-    ));
+        Box::new(K8Instrument::new(k8_fixture::field(SR)).handed_over(1)),
+    );
+    part.set_notes(&notes);
+    let edge = |frame, key, velocity| ClipEdge {
+        frame,
+        key,
+        velocity,
+    };
+    assert_eq!(
+        part.clip_edges(),
+        vec![
+            edge(64, 60, Some(100.0)),
+            edge(96, 60, None),
+            edge(200, 67, Some(80.0)),
+            edge(232, 67, None)
+        ],
+        "the part's notes as it plays them, for its host to hand its owner"
+    );
+    let mut g = Graph::new(SR, 120.0);
+    g.tracks.push(part);
     let (mut core, mut handle) = engine(g).unwrap();
     let mut block = vec![0f32; 128 * 2];
     core.pull_block(&mut block);
+    let mut played = left(&block);
     handle
         .send(EngineEvent::NoteOn {
             track: 0,
-            key: 60,
+            key: 64,
             velocity: 100.0,
         })
         .unwrap();
-    let mut played = Vec::new();
-    let mut block = vec![0f32; 512 * 2];
+    let mut block = vec![0f32; 384 * 2];
     core.pull_block(&mut block);
     played.extend(left(&block));
-    let mut alone = played_field();
-    let mut want = vec![0f32; 640];
-    assert!(alone.render(&mut want[..128], false));
-    assert!(alone.play_keys(&act(&[(2, 5)], [100.0 / 127.0, 0.0])));
-    assert!(alone.render(&mut want[128..], false));
-    assert!(played.iter().any(|v| *v != 0.0));
+    let mut alone = k8_fixture::field(SR);
+    let mut want = vec![0f32; 512];
+    assert!(alone.render(&mut want, false));
     assert_eq!(
-        played,
-        want[128..].to_vec(),
-        "note 60 strikes its key at velocity over 127, by the Torus's own law"
+        played, want,
+        "no note of the part strikes the Torus its owner handed over"
     );
-    // A note the law gives no key strikes nothing; so does every note of a Torus with no key law (a form's body), counted.
-    let mut torus = K8Instrument::new(played_field())
-        .handed_over(1)
-        .with_notes(notes);
-    torus.prepare(SR);
-    let clock = live_engine::Clock::start(SR, 120.0);
-    torus.note_on(61, 100.0, &clock);
-    assert_eq!(torus.refused(), 1);
-    let mut body = K8Instrument::new(K8Field::new(&k8_fixture::input(SR)).unwrap())
-        .handed_over(1)
-        .with_notes(notes);
-    body.prepare(SR);
-    body.note_on(60, 100.0, &clock);
-    assert_eq!(body.refused(), 1, "no key law: the note is refused");
-    // The table a test prepares still strikes where the law gives no key.
-    let mut table = K8Instrument::new(k8_fixture::field(SR)).with_notes(notes);
-    table.prepare(SR);
-    table.note_on(67, 1.0, &clock);
-    assert_eq!(table.refused(), 0);
+    // Not handed over, the same notes strike the acts prepared for them.
+    let mut part = Track::midi("Torus", Box::new(K8Instrument::new(k8_fixture::field(SR))));
+    part.set_notes(&notes);
+    let mut g = Graph::new(SR, 120.0);
+    g.tracks.push(part);
+    let (mut core, _handle) = engine(g).unwrap();
+    let mut block = vec![0f32; 512 * 2];
+    core.pull_block(&mut block);
+    assert_ne!(
+        left(&block),
+        want,
+        "a Torus not handed over strikes a clip note's prepared act"
+    );
 }

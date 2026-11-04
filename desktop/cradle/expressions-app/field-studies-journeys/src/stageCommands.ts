@@ -604,14 +604,17 @@ export type StageResult = {ok: true; clock?: StageAudioClock; made_way?: StageKe
   checkpoint?: StageTorusCheckpoint; render?: StageTakeRender; sound?: StageTorusSound; moved?: StageSoundMove[]; torus_engine?: StageTorusEngine} | {ok: false; error: string};
 
 /** The Torus its owner handed over for the desktop's one engine (O-I #849): the field's lease the kernel keeps it under, the digest the kernel
- * relayed in its place (the document never crosses the channel), and the owner's generation and sample it stood at. */
-export interface StageTorusEngine {lease: string; sha256: string; generation: string; at_samples_elapsed: string}
+ * relayed in its place (the document never crosses the channel), and the owner's generation and sample it stood at; and, when the frame
+ * names it (round 13), `heard_at_ms`: when the frame's sound of that sample is heard, in the machine's wall clock (ms since the Unix epoch),
+ * so the engine takes the Torus at its own frame heard then and the part sounds on from where the frame stops. */
+export interface StageTorusEngine {lease: string; sha256: string; generation: string; at_samples_elapsed: string; heard_at_ms?: number}
 /** A StageTorusEngine read exactly, or null. */
 export function readStageTorusEngine(raw: unknown): StageTorusEngine | null {
-  if (!plain(raw) || !closed(raw, ['lease', 'sha256', 'generation', 'at_samples_elapsed'])) return null;
-  const {lease, sha256, generation, at_samples_elapsed} = raw;
+  if (!plain(raw) || !closed(raw, ['lease', 'sha256', 'generation', 'at_samples_elapsed', 'heard_at_ms'])) return null;
+  const {lease, sha256, generation, at_samples_elapsed, heard_at_ms} = raw;
+  if (heard_at_ms !== undefined && !(typeof heard_at_ms === 'number' && Number.isFinite(heard_at_ms) && heard_at_ms > 0)) return null;
   return bounded(lease) && typeof sha256 === 'string' && /^sha256:[0-9a-f]{64}$/.test(sha256) && isStageSampleCursor(generation) && isStageSampleCursor(at_samples_elapsed)
-    ? {lease, sha256, generation, at_samples_elapsed} : null;
+    ? {lease, sha256, generation, at_samples_elapsed, ...(heard_at_ms === undefined ? {} : {heard_at_ms})} : null;
 }
 
 const BASE_KEYS = ['v', 'kind', 'command', 'req'] as const;

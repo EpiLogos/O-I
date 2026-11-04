@@ -513,18 +513,22 @@ mod recovery {
         assert_eq!(fs::read(file).unwrap(), b"retained corrupt source");
         close_session(&row).unwrap();
     }
+    /// The regression and its two stages are one test. Run by the harness, it launches this same test
+    /// twice, each time as a whole owner process told its stage by OI_TERMINAL_RECOVERY_STAGE; launched
+    /// so, it is that stage. No stage stands as a test of its own, so `--include-ignored` runs none
+    /// without the context its regression gives it.
     #[test]
     fn two_real_owner_processes_restore_reading_and_start_a_fresh_pty() {
+        const ITSELF: &str =
+            "terminal::tests::recovery::two_real_owner_processes_restore_reading_and_start_a_fresh_pty";
+        if let Ok(phase) = std::env::var("OI_TERMINAL_RECOVERY_STAGE") {
+            return process_stage(&phase);
+        }
         let root = root("two-process");
         let binary = std::env::current_exe().unwrap();
         for phase in ["produce", "consume"] {
             let output = Command::new(&binary)
-                .args([
-                    "--exact",
-                    "terminal::tests::recovery::process_stage",
-                    "--nocapture",
-                    "--ignored",
-                ])
+                .args(["--exact", ITSELF, "--nocapture"])
                 .env("OI_TERMINAL_RECOVERY_STAGE", phase)
                 .env("OI_TERMINAL_RECOVERY_STAGE_ROOT", &*root)
                 .output()
@@ -542,12 +546,16 @@ mod recovery {
                 String::from_utf8_lossy(&output.stdout),
                 String::from_utf8_lossy(&output.stderr)
             );
+            // a launch that ran no test (a name the harness does not know) also exits 0
+            assert!(
+                String::from_utf8_lossy(&output.stdout).contains("running 1 test"),
+                "{phase} ran its stage: {}",
+                String::from_utf8_lossy(&output.stdout)
+            );
         }
     }
-    #[test]
-    #[ignore = "worker entry launched by the two-process regression with isolated native context"]
-    fn process_stage() {
-        let phase = std::env::var("OI_TERMINAL_RECOVERY_STAGE").expect("two-process worker phase");
+    /// One owner process's stage of the two-process regression, `produce` or `consume`.
+    fn process_stage(phase: &str) {
         let root = PathBuf::from(std::env::var_os("OI_TERMINAL_RECOVERY_STAGE_ROOT").unwrap());
         let store = store(&root);
         let command = Some(vec!["/bin/sh".into()]);

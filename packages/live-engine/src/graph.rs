@@ -129,6 +129,12 @@ pub trait Instrument: std::fmt::Debug + Send {
     fn torus_strike(&mut self, _strike: &TorusStrike, _clock: &Clock) -> bool {
         false
     }
+    /// The sample of its owner's continuation a Torus renders next (O-I #849 round 13), where a
+    /// hand-over again finds it ([`crate::Due::AtCursor`]); `None` for every other instrument, and for a
+    /// Torus that does not render.
+    fn torus_cursor(&self) -> Option<u64> {
+        None
+    }
     /// Panic ([`EngineEvent::Panic`]; manual §21.1 Rules: "Panic releases all notes at once"): by
     /// default every held note is released. The Torus is stilled instead, since a released note of
     /// a struck body rings on (O-I #849).
@@ -319,6 +325,26 @@ pub struct Note {
     pub velocity: f32,
 }
 
+/// One device of the chain an instrument's owner puts after it on its part (O-I #849 round 13: the
+/// Torus's effects, as Live's devices on the chain of the Instrument Rack the Torus is placed as —
+/// live-set `rack_place`): the engine's device, and what it was made from in its maker's words, so
+/// a chain put on the part again keeps the state of every device made from the same (a tail rings
+/// on through another device's edit) ([`Graph::rack`]).
+#[derive(Debug)]
+pub struct RackDevice {
+    pub made_from: String,
+    pub device: Box<dyn Device>,
+}
+
+/// One edge of a part's clip notes ([`Track::clip_edges`]): `key` struck at `velocity` (Live's
+/// document units) or, with none, let go, at `frame`.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct ClipEdge {
+    pub frame: u64,
+    pub key: u8,
+    pub velocity: Option<f32>,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum Edge {
     Off { key: u8 },
@@ -363,6 +389,9 @@ pub struct Track {
     pub source: Vec<f32>,
     /// The instrument of a MIDI track; `None` on an audio track.
     pub instrument: Option<Box<dyn Instrument>>,
+    /// The devices after the instrument on its rack's chain ([`RackDevice`]), before the part's own
+    /// chain: the sound passes them in order. Empty until an owner puts some there.
+    pub rack: Vec<RackDevice>,
     /// The clip notes as edges, sorted by frame (offs before ons at the
     /// same frame), and the next edge to fire.
     edges: Vec<(u64, Edge)>,
@@ -386,6 +415,7 @@ impl Track {
             devices: Vec::new(),
             source: Vec::new(),
             instrument: None,
+            rack: Vec::new(),
             edges: Vec::new(),
             next_edge: 0,
         }
@@ -429,6 +459,27 @@ impl Track {
         });
         self.edges = edges;
         self.next_edge = 0;
+    }
+
+    /// The part's clip notes as it plays them, in the order it plays them: each key struck (with
+    /// its velocity) or let go, at its frame. What a host hands the Torus's owner ahead of the
+    /// frames they fall on (O-I #849): the notes of a part the Torus sounds on are its owner's.
+    pub fn clip_edges(&self) -> Vec<ClipEdge> {
+        self.edges
+            .iter()
+            .map(|&(frame, edge)| match edge {
+                Edge::On { key, velocity } => ClipEdge {
+                    frame,
+                    key,
+                    velocity: Some(velocity),
+                },
+                Edge::Off { key } => ClipEdge {
+                    frame,
+                    key,
+                    velocity: None,
+                },
+            })
+            .collect()
     }
 
     fn frames(&self) -> u64 {
@@ -616,6 +667,36 @@ impl Graph {
         true
     }
 
+    /// The sample of its owner's continuation the Torus on part `track` renders next, if a Torus
+    /// that renders stands there ([`Instrument::torus_cursor`]).
+    pub fn torus_cursor(&self, track: usize) -> Option<u64> {
+        self.tracks
+            .get(track)
+            .and_then(|t| t.instrument.as_ref())
+            .and_then(|i| i.torus_cursor())
+    }
+
+    /// Put `chain` after the instrument of part `track` ([`RackDevice`]): a device made from what one
+    /// standing there was made from takes that one's state, and what stood there comes back in
+    /// `chain`, to be dropped off the audio thread. Answers whether the part is there and plays notes
+    /// (otherwise `chain` comes back as it was). Allocation-free.
+    pub fn rack(&mut self, track: usize, chain: &mut Vec<RackDevice>) -> bool {
+        let Some(t) = self
+            .tracks
+            .get_mut(track)
+            .filter(|t| t.instrument.is_some())
+        else {
+            return false;
+        };
+        for new in chain.iter_mut() {
+            if let Some(old) = t.rack.iter_mut().find(|old| old.made_from == new.made_from) {
+                std::mem::swap(&mut old.device, &mut new.device);
+            }
+        }
+        std::mem::swap(&mut t.rack, chain);
+        true
+    }
+
     /// Live's loader rules the engine relies on: no part has more sends
     /// than the set has return tracks, and there are at most
     /// [`MAX_RETURNS`]. ENGINE DECISION (the loader's words name only the
@@ -646,6 +727,9 @@ impl Graph {
         for t in &mut self.tracks {
             if let Some(i) = t.instrument.as_mut() {
                 i.prepare(sr);
+            }
+            for d in &mut t.rack {
+                d.device.prepare(sr, t.channels);
             }
             for d in &mut t.devices {
                 d.prepare(sr, t.channels);
@@ -700,10 +784,24 @@ impl Graph {
     /// frame's events, as the audio callback takes a hand at a block's start. The instruments are
     /// made again from what was handed (they carry state, so a render is one-shot).
     pub fn render_performance_with(
+        self,
+        sample_rate: u32,
+        performance: &Performance,
+        installs: Vec<(u64, usize, Box<dyn Instrument>)>,
+    ) -> Vec<f32> {
+        self.render_performance_racked(sample_rate, performance, installs, Vec::new())
+    }
+
+    /// [`Graph::render_performance_with`] with the chains put after parts' instruments while the
+    /// engine played ([`crate::EngineHandle::install_rack`]): each `(frame, track, chain)` is put on
+    /// its part at the frame the engine put it there ([`crate::EngineHandle::racks`]), after that
+    /// frame's instrument and before its events, as the audio callback does at a block's start.
+    pub fn render_performance_racked(
         mut self,
         sample_rate: u32,
         performance: &Performance,
         mut installs: Vec<(u64, usize, Box<dyn Instrument>)>,
+        mut racks: Vec<(u64, usize, Vec<RackDevice>)>,
     ) -> Vec<f32> {
         self.sample_rate = sample_rate;
         self.prepare();
@@ -711,7 +809,15 @@ impl Graph {
         for (_, _, instrument) in &mut installs {
             instrument.prepare(sample_rate);
         }
+        racks.sort_by_key(|(frame, _, _)| *frame);
+        for (_, track, chain) in &mut racks {
+            let channels = self.tracks.get(*track).map_or(2, |t| t.channels);
+            for d in chain.iter_mut() {
+                d.device.prepare(sample_rate, channels);
+            }
+        }
         let mut installs = installs.into_iter().peekable();
+        let mut racks = racks.into_iter().peekable();
         let frames = performance.frames as usize;
         let mut out = vec![0f32; frames * 2];
         let mut clock = Clock::start(sample_rate, self.tempo_bpm);
@@ -722,6 +828,9 @@ impl Graph {
                 installs.next_if(|(f, _, _)| *f <= i as u64)
             {
                 self.hand(track, &mut instrument, &clock);
+            }
+            while let Some((_, track, mut chain)) = racks.next_if(|(f, _, _)| *f <= i as u64) {
+                self.rack(track, &mut chain);
             }
             while let Some(e) = events.next_if(|e| e.frame <= i as u64) {
                 self.apply(&e.event, &clock);
@@ -874,6 +983,9 @@ impl Graph {
             track.fire_edges(clock);
             if let Some(instrument) = track.instrument.as_mut() {
                 instrument.process(&mut frame[..channels], clock);
+                for d in track.rack.iter_mut() {
+                    d.device.process(&mut frame[..channels], clock);
+                }
             } else {
                 for (c, slot) in frame.iter_mut().enumerate().take(channels) {
                     *slot = track
