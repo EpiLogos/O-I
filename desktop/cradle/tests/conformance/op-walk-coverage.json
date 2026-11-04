@@ -1331,7 +1331,7 @@
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "GPT/routines",
-      "reason": "Native list/show/history and run/disable handler implemented; create, enable and reprove (aikit routine create|enable|reprove) kernel-direct only against a fake AIKit in tests/shell_owner_routes.rs, never a real Routine; executed native app walk not yet recorded."
+      "reason": "Native list/show/history and run/disable handler implemented; create, enable and reprove (aikit routine create|enable|reprove) kernel-direct only against a fake AIKit in tests/shell_owner_routes.rs, never a real Routine; options and prepare_schedule (aikit routine options|prepare-schedule, reads; O-I #844/#758) unit-tested in routine.rs, the real AIKit probed only to its time-policy refusal; executed native app walk not yet recorded."
     },
     {
       "op": "seat_status_read",

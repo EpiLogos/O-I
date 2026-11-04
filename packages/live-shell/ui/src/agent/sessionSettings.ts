@@ -98,7 +98,20 @@ export function clipValuesOfSettings(reading: EncounterSessionSettingsReading | 
   if (task.repeat_levels?.length) values['repeat.levels'] = task.repeat_levels.join(', ')
   // The takes a Repeat's set made, once it ends (O-I 795).
   own('takes', task.takes?.ended?.takes)
+  // What AIKit's executor did with Loop's last pass of a song (O-I #844, task.loop_pass): the take Factory started and its Run, or why
+  // the loop stopped; nothing before a song's first pass, or from an AIKit before loop_pass.
+  own('loop.pass', loopPassWords(task as {loop_pass?: unknown; loop_song?: unknown}))
   return values
+}
+
+/** Loop's last pass of a song in words (AIKit's `{take, run_ref}` or `{refused}`), or null where AIKit names none. Pure. */
+function loopPassWords(task: {loop_pass?: unknown; loop_song?: unknown}): string | null {
+  const pass = task.loop_pass && typeof task.loop_pass === 'object' ? task.loop_pass as {take?: unknown; run_ref?: unknown; refused?: unknown} : null
+  if (!pass) return null
+  if (typeof pass.refused === 'string' && pass.refused) return `The loop stopped: ${pass.refused}`
+  if (typeof pass.take !== 'number' || typeof pass.run_ref !== 'string') return null
+  const song = task.loop_song && typeof task.loop_song === 'object' ? (task.loop_song as {unit?: unknown}).unit : null
+  return `Take ${pass.take}${typeof song === 'string' && song ? ` of ${song}` : ''} · Run ${pass.run_ref}`
 }
 
 /** A control's change as the owner's request, against the reading it was made on; or why the owner cannot take it. */

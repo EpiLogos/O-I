@@ -25,8 +25,13 @@
 //     (`factory workflow perform`) and the pass's turn names it; a take Factory refuses ends the loop, and the settings say so
 //     (task.loop_pass).
 //   - A routine — Automations': AIKit runs a proven Method on its schedule, and a Method whose native body is `factory-song-take`
-//     (aikit routine_native.rs, bound to the canon unit in its Run) makes each run a take Factory starts; the face has no road to write
-//     that Method or schedule its Routine yet, so Routine… on a song stands refused, naming both (ROUTINE_SONG).
+//     (aikit routine_native.rs, bound to the canon unit in its Run) makes each run a take Factory starts. Routine… on a song (its
+//     preview under Songs), with the song's note chosen in a task's Clip view (the selected task's binding publishes it: clipBinding.ts
+//     chosenNoteOf), has AIKit prepare the schedule (`aikit routine prepare-schedule` through the kernel's routine op: validated under
+//     Central's civil-time policy, kept nowhere) and then file the take's Method (`aikit capture --from-song --take-state --take-run
+//     --take-unit` through aikit_write capture: the clip, and the canon unit in the Run it stands in, as the Method's native body), in
+//     your AIKit home's inbox, where a Routine's Method is catalogued. Nothing is accepted, proven or scheduled by it: you accept the
+//     Method on the Capture page, prove a run, and make the routine in Settings › Automations (routineOfSong).
 // Pure, apart from the kernel calls and the selection.
 import {useSyncExternalStore} from 'react'
 import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
@@ -35,11 +40,12 @@ import type {WorldActionReceipt} from '../timeline/worldTrackAdapter'
 import {readAttemptTakes, type TakesCall} from '../owners/attemptTakes'
 import {tellOwnerChanged} from '../owners/notices'
 import {settingsReadingEntry} from '../owners/readers'
-import {factoryOwnerWrite, refusalWords} from './devices/ownerRoutes'
+import {aikitWriteOp, factoryOwnerWrite, ownerRouteWrite, refusalWords} from './devices/ownerRoutes'
 import {EDIT_REQUEST, readScore, type ScoreReading} from './scoreBinding'
 import {SETTINGS_WHY, TAKES_WHY, writeSessionSettings} from './sessionSettings'
 import {planTargetOf, type PlanCall, type PlanTarget} from './wavePlan'
 import type {ShownSpan} from '../frame/tracks/tracksDoor'
+import type {ScheduleShape} from '../settings/routines'
 
 /** Factory's clip of a song, a project's clips, and the kernel's gathering of every disclosed project's. */
 export const SONG_CLIP = 'factory.song-clip/v1'
@@ -257,10 +263,9 @@ export const performRequest = (target: PlanTarget, unit: string) =>
 
 export const CANON_VARIES = 'A song\'s takes are its Runs, each the song as its clip renders it: Repeat varies nothing in them. Set Variable to '
   + 'Condition with no levels, and Repeats to the number of takes.'
-export const ROUTINE_SONG = 'A routine runs a song: AIKit runs each of its runs as a take Factory starts (`factory workflow perform`), when its '
-  + 'proven Method\'s native body is `factory-song-take` bound to the canon unit in its Run, and the schedule is the routine\'s; nothing here writes '
-  + 'that Method or schedules it — missing op: a capture of the song\'s note that writes the Method\'s native-method song binding (the capture road '
-  + 'writes a Method\'s text only), and a schedule for its Routine (no `aikit routine` verb prepares one) (AIKit).'
+export const ROUTINE_SONG = 'Each run of a routine is a take of this song, which Factory starts (`factory workflow perform`) from the song\'s '
+  + 'note chosen in a task\'s Clip view. AIKit prepares the schedule you give (kept nowhere) and files the take\'s Method on your Capture page; you '
+  + 'accept it, prove a run of it, and make the routine in Settings › Automations. The schedule is the routine\'s, and the song keeps none.'
 
 /** The song Loop's passes take again (AIKit's encounter-session-settings task.loop_song): the canon unit, in the Run it stands in. */
 export interface LoopSong {readonly state_path: string; readonly run_ref: string; readonly unit: string}
@@ -292,9 +297,9 @@ export interface SongTake {readonly target: PlanTarget; readonly unit: string; r
 /** The song a note chosen in a session's Clip view names: the session's attempts name its Run, Factory's score names the note a canon
  * unit. Null when the note is no song, or when the session's Run or its score is not read (the task's own takes are made then). */
 export async function songOfNote(transport: KernelTransportStatus, project: string, session: string, key: string,
-  call: PlanCall & TakesCall = carried(transport) as PlanCall & TakesCall): Promise<SongTake | {readonly refused: string} | null> {
-  // A note is chosen, so Repeat must know whether it is a song before it makes anything: an unread Run or score is said, never guessed.
-  const unread = (why: string) => ({refused: `${key} is chosen in the Clip view, but ${why}, so Repeat cannot tell whether it is a song's note. Nothing is made.`})
+  call: PlanCall & TakesCall = carried(transport) as PlanCall & TakesCall, asker = 'Repeat'): Promise<SongTake | {readonly refused: string} | null> {
+  // A note is chosen, so the asker must know whether it is a song before it makes anything: an unread Run or score is said, never guessed.
+  const unread = (why: string) => ({refused: `${key} is chosen in the Clip view, but ${why}, so ${asker} cannot tell whether it is a song's note. Nothing is made.`})
   const takes = await readAttemptTakes(call, project, [session])
   const target = planTargetOf(takes?.get(session) ?? null)
   if (!target) return unread('the session\'s Run is not read')
@@ -303,6 +308,63 @@ export async function songOfNote(transport: KernelTransportStatus, project: stri
   const unit = canonNoteOf(score.reading, key)
   if (!unit) return null
   return {target, unit: key, name: text(unit.songClip)?.split('/').pop() ?? key}
+}
+
+/** The note chosen in the selected task's Clip view (its `unit` hold), as the task's binding publishes it (clipBinding.ts useFactoryClip):
+ * the session, the project it is read under and the note's key. Read at a press, as Export Song… reads the ruler's stretch. */
+export interface ChosenNote {readonly project: string; readonly session: string; readonly key: string}
+let chosenNote: ChosenNote | null = null
+/** The selected task's binding publishes the note its Clip view holds (null: no task selected, no note chosen, or the view left). */
+export function publishChosenNote(next: ChosenNote | null): void { chosenNote = next }
+export const chosenNoteNow = (): ChosenNote | null => chosenNote
+
+export const routineNoNote = (name: string) => `Routine… makes each run of a routine a take of ${name}, and a take is the song's note in a task's Run: `
+  + `choose ${name}'s note in that task's Clip view first (select the task, then the note in its score). Nothing is prepared or filed.`
+export const routineNoSong = (key: string) => `${key}, chosen in the Clip view, is no song's note (Factory's score names it the task's own unit), so a `
+  + 'routine has no song to take there. Nothing is prepared or filed.'
+export const routineOtherSong = (key: string, chosen: string, name: string) => `${key}, chosen in the Clip view, is the song ${chosen}, not ${name}: `
+  + `choose ${name}'s note there. Nothing is prepared or filed.`
+const SCHEDULE_WORDS: Readonly<Record<ScheduleShape['kind'], (shape: ScheduleShape) => string>> = {
+  daily: shape => `daily at ${(shape as {time: string}).time}`,
+  cron: shape => `on the cron ${(shape as {expression: string}).expression}`,
+  every: shape => `every ${(shape as {interval_ms: number}).interval_ms / 1000} seconds`,
+  once: shape => `once at ${(shape as {rfc3339: string}).rfc3339}`,
+}
+
+/** Routine… on a song (manual §19.1 Songs: "It comes round again … by a routine's schedule. The schedule is the routine's, and the song keeps
+ * none"): with the song's note chosen in a task's Clip view (a canon unit of the task's Run naming this song), AIKit first prepares the
+ * schedule — validated under Central's civil-time policy, its ScheduleRecord named and kept nowhere — and then files the Method of the take
+ * on its capture road: the clip as the body, the canon unit in its Run as the Method's native body (`factory-song-take`), in your AIKit
+ * home, where a Routine's Method is catalogued. It waits in the inbox for you: nothing is accepted, proven or scheduled here. Refused in
+ * words before any write where no note is chosen, the note is no song or another song, or AIKit refuses the schedule. */
+export async function routineOfSong(transport: KernelTransportStatus, row: SongRow, note: ChosenNote | null, shape: ScheduleShape,
+  call: PlanCall & TakesCall = carried(transport) as PlanCall & TakesCall): Promise<WorldActionReceipt> {
+  if (!note) return {ok: false, error: routineNoNote(row.name)}
+  const song = await songOfNote(transport, note.project, note.session, note.key, call, 'Routine…')
+  if (!song) return {ok: false, error: routineNoSong(note.key)}
+  if ('refused' in song) return {ok: false, error: song.refused}
+  if (song.name !== row.name) return {ok: false, error: routineOtherSong(note.key, song.name, row.name)}
+  if (!row.clip) return {ok: false, error: `Factory's listing carries no clip for ${row.name}, so there is no song to file a Method of: Remake it, then select it again.`}
+  const prepared = await call({op: 'routine', project: note.project, request: {action: 'prepare_schedule', schedule: {...shape}}})
+  if (prepared.error) return {ok: false, error: `AIKit did not prepare the schedule, so no Method is filed: ${refusalWords(prepared.error)}`}
+  const reading = object(prepared.outcome?.result === 'routine' ? prepared.outcome.data : null)
+  if (object(reading?.trigger)?.schema !== 'aikit.time-schedule/v1')
+    return {ok: false, error: 'AIKit answered no prepared schedule (aikit.prepared-schedule/v1): the AIKit installed here may predate `aikit routine prepare-schedule`. No Method is filed.'}
+  const due = Number(object(list(reading?.next_occurrences)[0])?.due_unix_ms)
+  const when = Number.isFinite(due) && due > 0 ? `, first due ${new Date(due).toISOString().replace('.000Z', 'Z')}` : ', with no occurrence in the next eight days'
+  const take = {state_path: song.target.statePath, run_ref: song.target.runRef, unit: song.unit}
+  let filed: Record<string, unknown> | null
+  try {
+    filed = object((await ownerRouteWrite(transport, aikitWriteOp({kind: 'capture', project: note.project, title: row.name, body: JSON.stringify(row.clip),
+      scope: 'home', ...(row.clipRef ? {source_ref: row.clipRef} : {}), by: 'human', from_song: true, take}), '`aikit capture --from-song`')).data)
+  } catch (cause) {
+    return {ok: false, error: `AIKit prepared the schedule but did not file the Method of ${row.name}'s take: ${cause instanceof Error ? cause.message : String(cause)}`}
+  }
+  const candidate = text(filed?.candidate), proposed = text(filed?.proposed_id)
+  if (!candidate) return {ok: false, error: 'AIKit answered no candidate for the Method of the take, so nothing waits on the Capture page.'}
+  return {ok: true, note: `AIKit filed the Method of ${row.name}'s take (${candidate}${proposed ? `, as ${proposed}` : ''}): each run of a routine over it is a `
+    + `take Factory starts of ${song.unit} in ${song.target.runRef}. It waits for you to accept it on the Capture page. The schedule, ${SCHEDULE_WORDS[shape.kind](shape)}`
+    + `${when}, is prepared and kept nowhere: accept the Method, prove a run of it, then make the routine with this schedule in Settings › Automations.`}
 }
 
 /** Repeat's takes of a song (manual §19.1 The Launch panel: "each run a take of its own"), through O-I 795's take path: the set starts on

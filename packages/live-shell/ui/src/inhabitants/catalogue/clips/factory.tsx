@@ -573,6 +573,7 @@ function ClipPanel(p: ClipProps) {
     <Row label="Cap"><TextField {...p.standing?.['loop.cap']} label="Cap" does="The most runs the loop makes, whatever its stop condition says." value={numOf(p.v, 'loop.cap') === undefined ? '' : String(numOf(p.v, 'loop.cap'))}
       placeholder={NONE} onChange={x => { const n = Math.round(Number(x)); p.set('loop.cap', Number.isFinite(n) && n > 0 ? n : undefined) }}
       disabled={p.standing?.['loop.cap']?.disabled ?? (p.v.loop === true ? undefined : 'Loop is Off.')} /></Row>
+    {strOf(p.v, 'loop.pass') !== undefined && <Row label="Last pass"><Fact label="Last pass" does="What Loop's last pass of a song made: the take Factory started and its Run, or why the loop stopped." value={strOf(p.v, 'loop.pass')} /></Row>}
   </Rows>
 }
 

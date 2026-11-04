@@ -1,0 +1,83 @@
+{
+ "_": "REAL, 4 Nov 2026, lane BD (O-I #844): the aikit-3 build (ai-kit dlw/844-loop + aikit-3.patch, target/debug/aikit) in a scratch world (HOME and AIKIT_HOME isolated). capture: `aikit capture release-check --scope home --source-ref factory-song:song-maker/release-check --by human --from-song --take-state /walk/taker/.factory/development-state.json --take-run run:01M6SONGTAKERRUN000000000 --take-unit release-check` with Factory's clip of the song on stdin (lane BD's capture walk of 3 Nov). options: `aikit routine options --method skill/personal/method-release-check` after `aikit promote` of that candidate: the Method resolves for a Routine, its actions the native body's (a project-scoped capture is not catalogued for a Routine: routine.method_not_found). prepare_refused: the installed aikit's `routine prepare-schedule --schedule-json {kind:daily,time:07:30}` on a scratch Central root with no adopted civil-time policy (central.time.policy.adopt takes a human's acceptance only).",
+ "capture": {
+  "by": "human",
+  "candidate": "cnd_01M6J3J2Z7TEBG2C1T7DMYNEHH",
+  "confidence": "declared",
+  "duplicate_of": null,
+  "exports": [],
+  "findings": [],
+  "inbox_item": "inb_01M6J3J2ZCFTMSFGYYDFRWS5RM",
+  "kind": "skill",
+  "kind_reason": "declared by the capturer",
+  "proposal": "prc_01M6J3J2ZAGDAK13DJJ40Z38DY",
+  "proposed_id": "skill/personal/method-release-check",
+  "quarantined": false,
+  "scope": "home",
+  "session": null,
+  "similar": [],
+  "song": {
+   "clip": "factory-song:song-maker/release-check",
+   "steps": [
+    "1. **logos-scope-plan** — Scope the change and write the plan it will be built from. Taken by the agent agent/anima-logos. Returns: Return the plan with its scope boundary and the exact verification it will need. Done when: the plan cites the repository's own gates. Stop when the request needs an owner decision before it can be scoped.",
+    "2. **techne-implement** — Implement the plan test-first in the repository. Taken by the agent agent/anima-techne-helper; after logos-scope-plan. Returns: Return the branch, the changed files and the test evidence. Done when: run the tests named in the plan and quote their results. Stop when the plan cannot be implemented without widening scope.",
+    "3. **eros-verify** — Verify the implementation against the plan with the repository's real gates. Taken by the agent agent/anima-eros; after techne-implement. Returns: Return the commands run, their results and every failure found. Done when: quote executed results; never infer a pass from a name or a fixture. Stop when the branch cannot be built.",
+    "4. **mythos-debug** — Find the organising cause of any verification failure and repair it at its owner. Taken by the agent agent/anima-mythos; after eros-verify. Returns: Return the causes, the repairs and the re-run evidence, or state that verification found no defect. Done when: never weaken an assertion to turn a failure green. Stop at once when verification returned no failure; return that finding with its evidence.",
+    "5. **sophia-finish** — Finish the branch: final checks, commit and a pull request ready for review. Taken by the agent agent/anima-sophia; after mythos-debug. Returns: Return the pull request ref, the final check results and any open item with its reason. Done when: the final check results are from the pushed head. Stop before merging; merge is the owner's review decision.",
+    "6. **aletheia-knowledge-return** — Return what the development taught through the NOW field and the wiki return door. Taken by the agent agent/aletheia; after sophia-finish. Returns: Return the NOW Return ref and any wiki promotion it proposes, each with its lineage. Done when: the Return points at the pull request and its evidence, not a paraphrase. Stop when nothing durable was learned; a routine record is enough."
+   ],
+   "take": {
+    "run_ref": "run:01M6SONGTAKERRUN000000000",
+    "state": "/walk/taker/.factory/development-state.json",
+    "unit": "release-check"
+   }
+  },
+  "source_ref": "factory-song:song-maker/release-check",
+  "state": "ready"
+ },
+ "options": {
+  "absences": [
+   "no verified run of skill/personal/method-release-check at 5d57a80e913ddfb65905917ce63b6f8eb58f1b0edae6c5b26380915418cd14ad: run it, verify it, then `aikit method prove --method skill/personal/method-release-check`",
+   "no granted authority receipt for this Method: AIKit mints none; Enable takes the receipt its authority owner supplies",
+   "agent profiles: agent-profile.list: No such file or directory (os error 2)",
+   "time policy: central.time.policy: No such file or directory (os error 2)"
+  ],
+  "authorities": [
+   {
+    "document": {
+     "action_refs": [
+      "factory:action/workflow.perform"
+     ],
+     "authority_ref": "authority:routine:pending-skill-personal-method-release-check",
+     "granted": false,
+     "unattended": false
+    },
+    "source": "aikit",
+    "title": "Pending: makes a Draft and grants nothing; Enable needs a granted receipt"
+   }
+  ],
+  "context_scopes": [],
+  "method": {
+   "actions": [
+    "factory:action/workflow.perform"
+   ],
+   "ref": "skill/personal/method-release-check",
+   "revision": "5d57a80e913ddfb65905917ce63b6f8eb58f1b0edae6c5b26380915418cd14ad"
+  },
+  "profiles": [],
+  "proofs": [],
+  "schema": "aikit.routine-options/v1",
+  "stale_proofs": 0,
+  "time_policy": null,
+  "triggers": [
+   {
+    "document": {
+     "kind": "manual"
+    },
+    "source": "aikit",
+    "title": "Manual: runs only when you press Run now"
+   }
+  ]
+ },
+ "prepare_refused": "central.time.occurrences: requires one explicitly recognised civil-time-policy source; the person adopts one with central.time.policy.adopt (preview: central.time.policy.preview)"
+}

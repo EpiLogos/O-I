@@ -880,6 +880,12 @@ pub enum AikitWrite {
         /// filed as a proposal that waits for the person's acceptance.
         #[serde(default)]
         from_song: bool,
+        /// The canon unit a Routine's run performs again (Routine… on a song,
+        /// O-I #844): AIKit binds it as the Method's native body, so the
+        /// accepted Method is one a Routine runs. AIKit refuses it without
+        /// `from_song`.
+        #[serde(default)]
+        take: Option<CaptureTake>,
     },
     Promote {
         #[serde(default)]
@@ -1100,9 +1106,19 @@ impl AikitWrite {
     }
 }
 
+/// A song's take as the capture route carries it: the Factory state, the Run
+/// and the canon unit `factory workflow perform` runs again.
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct CaptureTake {
+    pub state_path: String,
+    pub run_ref: String,
+    pub unit: String,
+}
+
 /// `aikit capture TITLE [--kind] [--export]… [--scope] [--source-ref] [--by]
-/// [--from-song]`, the body on stdin (the caller hands it over). Empty for
-/// any other write.
+/// [--from-song [--take-state --take-run --take-unit]]`, the body on stdin
+/// (the caller hands it over). Empty for any other write.
 pub fn capture_args(request: &AikitWrite) -> Vec<OsString> {
     let AikitWrite::Capture {
         title,
@@ -1112,6 +1128,7 @@ pub fn capture_args(request: &AikitWrite) -> Vec<OsString> {
         source_ref,
         by,
         from_song,
+        take,
         ..
     } = request
     else {
@@ -1129,6 +1146,11 @@ pub fn capture_args(request: &AikitWrite) -> Vec<OsString> {
     push_flag(&mut args, "--by", by.as_deref());
     if *from_song {
         args.push("--from-song".into());
+    }
+    if let Some(take) = take {
+        push_flag(&mut args, "--take-state", Some(&take.state_path));
+        push_flag(&mut args, "--take-run", Some(&take.run_ref));
+        push_flag(&mut args, "--take-unit", Some(&take.unit));
     }
     args
 }
@@ -3805,6 +3827,33 @@ mod tests {
                 "human",
                 "--from-song"
             ]
+        );
+        // Routine… on a song (O-I #844): the canon unit the take performs
+        // again travels with the clip, so the Method AIKit writes is one a
+        // Routine runs (its `[metadata.native-method]` body).
+        let take: AikitWrite = serde_json::from_value(serde_json::json!({
+            "kind": "capture", "project": "O-I", "title": "Release check", "body": "{}",
+            "scope": "project", "source_ref": "factory-song:o-i/release-check", "by": "human", "from_song": true,
+            "take": {"state_path": "/walk/taker/.factory/development-state.json", "run_ref": "run:R1", "unit": "release-check"}}))
+        .unwrap();
+        assert_eq!(
+            spelled(&capture_args(&take))[8..],
+            [
+                "--from-song",
+                "--take-state",
+                "/walk/taker/.factory/development-state.json",
+                "--take-run",
+                "run:R1",
+                "--take-unit",
+                "release-check"
+            ]
+        );
+        assert!(
+            serde_json::from_value::<AikitWrite>(serde_json::json!({
+                "kind": "capture", "title": "t", "body": "b", "from_song": true,
+                "take": {"state_path": "/s", "run_ref": "run:R1"}}))
+            .is_err(),
+            "a take names its state, its Run and its unit"
         );
         assert_eq!(
             spelled(&capture_args(&write)),

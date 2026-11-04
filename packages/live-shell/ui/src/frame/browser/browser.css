@@ -195,3 +195,7 @@
   border: 1px solid var(--line); border-radius: 2px }
 .browser-template-start button:disabled { opacity: 0.45 }
 .browser-template-start p { flex-basis: 100%; margin: 0 }
+/* Routine… on a song (SongRows.tsx SongRoutine): the same strip under the song's preview, its answer and refusal across it */
+.place-preview .browser-template-start { padding-left: 6px }
+.browser-template-start .native-error { flex-basis: 100% }
+.browser-template-start[data-song-routine] p { overflow-wrap: anywhere }

@@ -425,8 +425,10 @@ export type AikitReadRequest =
   | {kind:"reflection-laws";project?:string|null};
 export type AikitWriteRequest =
   /** `aikit capture TITLE` with the body on stdin; `capture_kind` is the owner's `--kind`. With `from_song` (O-I #844) the body is a
-   * Software Factory song's clip and AIKit writes a Method from it (`--from-song`). */
-  | {kind:"capture";project?:string|null;title:string;body:string;capture_kind?:string|null;export?:string[];scope?:string|null;source_ref?:string|null;by?:string|null;from_song?:boolean}
+   * Software Factory song's clip and AIKit writes a Method from it (`--from-song`); with `take` (Routine… on a song) the canon unit a
+   * Routine's run performs again is bound as the Method's native body (`--take-state --take-run --take-unit`). */
+  | {kind:"capture";project?:string|null;title:string;body:string;capture_kind?:string|null;export?:string[];scope?:string|null;source_ref?:string|null;by?:string|null;from_song?:boolean;
+     take?:{state_path:string;run_ref:string;unit:string}|null}
   | {kind:"promote";project?:string|null;candidate:string;id?:string|null}
   | {kind:"trust-record";project?:string|null;capability:string;source?:string|null;note?:string|null}
   | {kind:"method-run";project?:string|null;method:string;input?:unknown;confirm?:boolean}
@@ -478,7 +480,12 @@ export type RoutineAuthoringRequest =
   | {action:"create";name:string;method:string;proof:Record<string,unknown>;trigger:Record<string,unknown>;authority:Record<string,unknown>;
      description?:string|null;agent_profile?:string|null;context_scopes?:string[]}
   | {action:"enable";routine_ref:string;authority:Record<string,unknown>}
-  | {action:"reprove";routine_ref:string;proof:Record<string,unknown>};
+  | {action:"reprove";routine_ref:string;proof:Record<string,unknown>}
+  /** Reads, nothing kept (O-I #758/#844): `aikit routine options --method M` (`aikit.routine-options/v1`: the Method's verified runs,
+   * authority receipts, admitted triggers, agent profiles, context scopes, time policy) and `aikit routine prepare-schedule
+   * --schedule-json S` (`aikit.prepared-schedule/v1`: `trigger`, the ScheduleRecord a new Routine carries, and its next occurrences). */
+  | {action:"options";method:string}
+  | {action:"prepare_schedule";schedule:Record<string,unknown>};
 /** The person's presence consents through the kernel's nara_presence, each SharedField's own transport kind: `list` (`nara-presences
  * {participant_ref?, field_ref?}`) and `withdraw` (`withdraw_nara {projection_ref, consent_ref, withdrawal_ref, withdrawn_at?}`, the
  * person's own consent act, published on the desktop's SharedField identity). Neither admits anything of the Expression. */
