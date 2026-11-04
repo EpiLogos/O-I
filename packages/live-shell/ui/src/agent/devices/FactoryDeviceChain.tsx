@@ -78,7 +78,8 @@ import {chainPicture, type PictureContext} from './AgentDevicePictures'
 import {
   AGENT_DESIGN, AGENT_P0_ROWS, GATEWAY_DESIGN, LANDING_DESIGN, MEMBER_DESIGN, MEMBER_DEVICE_ID, RACK_DESIGN, SCOPE_DESIGN, SLOT_DESIGN_FACE, agentBinding, designWaits,
   gatewayBinding, memberBinding,
-  holdView, memberChains, rackBinding, scopeBinding, seatedProfile, useChainHolds, viewHolds, type AgentRows, type MemberPorts, type RackUpkeep,
+  holdView, memberChains, rackBinding, refiningBinding, scopeBinding, seatedProfile, useChainHolds, viewHolds, type AgentRows, type MemberPorts, type RackUpkeep,
+  type RefiningPorts,
 } from './designBindings'
 import {useOwnerAccepted} from './ownerAccepted'
 import {useSelectedSkillChain} from './skillRackSelection'
@@ -87,7 +88,8 @@ import {composePorts, useRackReading} from './useRackReading'
 import {observedState, useEncounterSessions} from './EncounterObservers'
 import {FRAMES_ID, mainDevices} from './mainTrackBindings'
 import {askRowsOf, shownSession, threadBinding, threadJson} from './threadBinding'
-import {CAPTURE_PAGE, SEAT_PAGE, carryPages, composeAgentBinding, withAgentGit} from './oneAgentBinding'
+import {CAPTURE_PAGE, REFINE_PAGE, SEAT_PAGE, carryPages, composeAgentBinding, withAgentGit} from './oneAgentBinding'
+import {testRefinement} from '../sessionSettings'
 import {openNotificationTarget, useOwnerRequests} from '../../widgets/railDevices'
 import {openedHold, openedOf, withOwnerRequests} from '../../widgets/railBindings'
 import {useIdentityDevice} from '../../central/devices/agentChainDevices'
@@ -107,7 +109,7 @@ import {
 } from './sessionChainBindings'
 import {APPROVALS_DESIGN, APPROVALS_ID, approvalsBinding, receiptDevices} from './receiptBindings'
 import {CARRIER_DESIGN, CARRIER_ID, carrierBinding, connectionLabels, gitBinding, planRunOf, runDemandOf, seatBinding, workcellDevices, type SeatPorts} from './workcellBindings'
-import {ROUTE_WORDS, aikitWriteOp, deskActorOf, factoryOwnerWrite, ownerRouteWrite, refusalWords, seatWriteOp} from './ownerRoutes'
+import {ROUTE_WORDS, aikitWriteOp, deskActorOf, factoryOwnerWrite, ownerRouteWrite, refinementWrite, refusalWords, seatWriteOp} from './ownerRoutes'
 import {worldsOf} from './workcellMaterial'
 import {currentIdentity} from '../../../../../../desktop/cradle/src/nara/identity/current'
 import {WORKCELL_RACK_ID, chosenWorld, workcellGitReading} from './workcellRackBinding'
@@ -405,6 +407,18 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
       }} : {}), [transport, register])
   const captureDesignBinding = useMemo(() => captureSkillBinding({inbox: {status: captureInbox.status, value: captureInbox.value?.data ?? null, error: captureInbox.error},
     holds, song: captureSong}, capturePorts), [captureInbox, holds, captureSong, capturePorts])
+  // The Skillset rack's Refining page (§19.7, lane BD round 12): AIKit's proposed revisions (`aikit source refine list`), read once for
+  // the rack and for Approvals, where each also waits. Accept and Discard are AIKit's own verbs on the member (aikit_write
+  // refinement-accept · refinement-discard); Test is the selected session's own Repeat over Skillset (sessionSettings.ts testRefinement),
+  // on a lone session's chain only.
+  const rackRefinements = useAikitRead(transport, {kind: 'refinement-list'})
+  const refineWrite = useMemo(() => refinementWrite(transport), [transport])
+  const refinePorts = useMemo((): RefiningPorts => ({...(refineWrite ? {write: refineWrite} : {}),
+    ...(captureOn && sessionRef && transport.kind !== 'unavailable' ? {test: (set: string, member: string) => testRefinement(transport, rackProject, sessionRef, set, member)} : {})}),
+  [refineWrite, captureOn, sessionRef, transport, rackProject])
+  const rackSet = typeof rackDesignBinding?.values.set === 'string' ? rackDesignBinding.values.set : null
+  const refiningDesignBinding = useMemo(() => refiningBinding(chainDeviceId('skillset'), {refinements: rackRefinements, set: rackSet, holds}, refinePorts),
+    [rackRefinements, rackSet, holds, refinePorts])
   // The seat instrument (lane K1's seat_status_read: slow, read once while a session's or a workcell's chain stands, and on demand): the
   // workcell's seats, the Seat, Git / landing on a workcell's chain, and the Workcells tile.
   const seats = useSeatStatusAnswer(transport, sessionRef != null || cellName != null).reading
@@ -461,9 +475,11 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const seatDesignBinding = useMemo(() => seatBinding({status: seats.status === 'answered' ? seats.value : null, ...(seatsUnread ? {unread: seatsUnread} : {}),
     project: rackProject, branch: reading.gitRepo.branch ?? null, workcell: cellName, ...(machineRef ? {machineRef} : {}), actor: deskActor, holds}, seatPorts),
   [seats, seatsUnread, reading.gitRepo.branch, cellName, machineRef, deskActor, holds, seatPorts, rackProject])
-  // The pages the chain's devices carry (oneAgentBinding.ts carryPages): the Skillset rack's Capture page; Git / landing's Seat group.
-  const rackCarrying = useMemo(() => (rackDesignBinding ? carryPages(rackDesignBinding, captureOn ? [{page: CAPTURE_PAGE, binding: captureDesignBinding}] : []) : null),
-    [rackDesignBinding, captureOn, captureDesignBinding])
+  // The pages the chain's devices carry (oneAgentBinding.ts carryPages): the Skillset rack's Capture page (on the armed session's chain)
+  // and its Refining page; Git / landing's Seat group.
+  const rackCarrying = useMemo(() => (rackDesignBinding ? carryPages(rackDesignBinding, [...(captureOn ? [{page: CAPTURE_PAGE, binding: captureDesignBinding}] : []),
+    {page: REFINE_PAGE, binding: refiningDesignBinding}]) : null),
+  [rackDesignBinding, captureOn, captureDesignBinding, refiningDesignBinding])
   const gitCarrying = useMemo(() => (gitDesignBinding ? carryPages(gitDesignBinding, [{page: SEAT_PAGE, binding: seatDesignBinding}]) : null),
     [gitDesignBinding, seatDesignBinding])
   // Scope's Before it lands, Escalate to and Grants page are Custody's (§19.12): laid in from its binding under their own keys.
@@ -538,8 +554,11 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     const actions = shownHandle && 'actions' in shownHandle ? shownHandle.actions : undefined
     // Approvals is handed no Gateway: the default answer is the Gateway's own, set on the Gateway (§19.14, §19.2; ticket 788).
     const binding = approvalsBinding({session: shownTrack, encounter: state?.reading ?? null, holds,
-      returns: returned, returnsAbsent: approvalsReturns.absent, returnsRefused: approvalsReturns.refusals, tracks, nowUnixMs: sessions?.nowUnixMs ?? Date.now(), units, person},
+      returns: returned, returnsAbsent: approvalsReturns.absent, returnsRefused: approvalsReturns.refusals, tracks, nowUnixMs: sessions?.nowUnixMs ?? Date.now(), units, person,
+      refinements: rackRefinements},
       {...(actions ? {permission: (id, decision) => actions.permission(id, decision)} : {}),
+        // A skill's proposed revision (§19.7): Accept and Discard through the Refining page's own AIKit verbs.
+        ...(refineWrite ? {refine: refineWrite} : {}),
         approve: row => acceptSourceReturn(transport, returnProjectOf(row, null), row, person),
         // Deny on a proposal (§19.14): Central's projectcentral.source.return_reject through invoke_action (sourceReturnAccept.ts).
         reject: row => rejectSourceReturn(transport, returnProjectOf(row, null), row),
@@ -553,7 +572,8 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     // withOwnerRequests), as Central's Approvals carries them; Open marks an item opened here, after opening an owner's request.
     return withOwnerRequests(commented, {...ownerRequests, nowUnixMs: sessions?.nowUnixMs || Date.now()}, openNotificationTarget,
       {opened: openedOf(viewHolds(holds, APPROVALS_ID).opened), hold: ids => holdView(APPROVALS_ID, 'opened', openedHold(ids))})
-  }, [shownHandle, shownTrack, holds, returned, approvalsReturns.absent, approvalsReturns.refusals, tracks, sessions?.nowUnixMs, transport, person, units, agentDraft, agentWrite, ownerRequests])
+  }, [shownHandle, shownTrack, holds, returned, approvalsReturns.absent, approvalsReturns.refusals, tracks, sessions?.nowUnixMs, transport, person, units, agentDraft, agentWrite, ownerRequests,
+    rackRefinements, refineWrite])
 
   // A workcell's devices (§19.23): Git / landing's Seat group (the seat instrument), starting at the selected workcell's seat of the project;
   // and the Remote carrier (Workcell's status). Workcell's instrument stands on no chain: the rail's publisher holds it with its Seats and

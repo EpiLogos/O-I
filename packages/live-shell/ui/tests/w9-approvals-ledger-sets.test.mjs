@@ -55,6 +55,10 @@ const comment = await import('../src/central/devices/sourceReturnComment.ts')
 const {design: approvalsDesign} = await import('../src/inhabitants/catalogue/panels/software-factory__approvals.tsx')
 const {design: ledgerDesign} = await import('../src/inhabitants/catalogue/panels/software-factory__ledger.tsx')
 const {design: agentsetDesign} = await import('../src/inhabitants/catalogue/panels/software-factory__agentset-rack.tsx')
+const {skills: rackDesign} = await import('../src/inhabitants/catalogue/panels/skills.tsx')
+const carry = await import('../src/agent/devices/oneAgentBinding.ts')
+const settings = await import('../src/agent/sessionSettings.ts')
+const addresses = await import('../src/inhabitants/agentParamAddresses.ts')
 
 family.resetFamilyManifestsForTest()
 loadAgentShellFamilies()
@@ -410,5 +414,174 @@ test('12 · the rack\'s Adopt page reads AIKit\'s own plan (REAL `aikit adopt RO
   // A refusal of the plan stands as AIKit said it; Apply waits on a plan.
   const refused = bind.rackBinding(id, input(), null, place, {collate: answered(COLLATE), adoption: {status: 'refused', value: null, error: SETUP_AIKIT.adopt_plan_again.error.message}, write})
   assert.equal(refused.standing.adoptApply.disabled, SETUP_AIKIT.adopt_plan_again.error.message)
+  bind.resetHolds()
+})
+
+// ------------------------------------------------------------------------------------------------------------- Refining a skill (O-I 795, 772)
+// REAL (4 Nov, read-only on a scratch home: HOME and AIKIT_HOME under the lane's scratch, a directory source `practice` of two skills, one
+// proposed revision of alpha): the AIKit of ai-kit dlw/787-tool-calls with round 12's `aikit source refine list|accept|discard --json`, each
+// envelope's data verbatim; `refused` is AIKit's error for an Accept with no proposal standing.
+const REFINE = {"list":{"proposals":[{"in_use":{"revision":"17b13b207706e82b242cce82bb471583e936c27bcbda2ba185735d7083456d39","snapshot":"075dd30e948941b09837f1312d99b3156f8ff3060c25c94388766800f9c19f1e"},"member":"skill/practice/alpha","owner":"aikit","proposed":{"revision":"a6083a4ed48c7932393db08c811e94f673dd176a176e62c4a6e6c0ec47387ec9","snapshot":"c9b0543ad046c9dd83799292b336c314accc0ecb22b733ef43c8ead2c9f49c5f"},"proposed_at_unix_seconds":1793802303,"source":"practice","stale":false,"tests":[],"why":[{"reason":"Not met: the plan names each gate by its command","task_ref":"task:plan-release"}]}]},"accept":{"active_snapshot":"c9b0543ad046c9dd83799292b336c314accc0ecb22b733ef43c8ead2c9f49c5f","member":"skill/practice/alpha","revision":"a6083a4ed48c7932393db08c811e94f673dd176a176e62c4a6e6c0ec47387ec9","rollback_to":"075dd30e948941b09837f1312d99b3156f8ff3060c25c94388766800f9c19f1e","source":"practice","user_scope":{"audited":[],"generation":"gen_7dec11c8996ec52e","replaced":"gen_387ae565d46cca0d","skill_roots":[]}},"discard":{"discarded":"skill/practice/beta","in_use":"c9b0543ad046c9dd83799292b336c314accc0ecb22b733ef43c8ead2c9f49c5f","snapshot":"622477d34f332f2f0c5aab3c423e57c11c2b20341adac0b083cbbc92df362338","source":"practice"},"refused":{"code":"refinement.none","details":{},"message":"no proposed revision of `skill/practice/beta` stands"}}
+const RACK = 'factory:skillset'
+const ALPHA = 'skill/practice/alpha'
+/** A proposal of the REAL listing, changed only where a case needs it (FAKE beyond the listing: a take kept as its test, a Central owner, a
+ * stale draft). */
+const proposal = (over = {}) => ({...REFINE.list.proposals[0], ...over})
+const refining = (proposals, ports = {}, over = {}) => bind.refiningBinding(RACK, {refinements: {status: 'answered', value: {proposals}, error: null}, set: 'docs',
+  holds: bind.chainHolds(), ...over}, ports)
+
+test('13 · Refining reads AIKit\'s proposals (REAL): the member beside the revision in use, why, its takes, and Result Open for each level, with why', () => {
+  bind.resetHolds()
+  const read = bind.refinementsOf(REFINE.list)
+  assert.equal(read.length, 1)
+  assert.deepEqual([read[0].member, read[0].owner, read[0].stale], [ALPHA, 'aikit', false])
+  assert.equal(read[0].proposed.revision, REFINE.list.proposals[0].proposed.revision)
+  assert.equal(read[0].inUse.revision, REFINE.list.proposals[0].in_use.revision)
+  assert.equal(bind.refinementsOf({nope: true}), null, 'what is not AIKit\'s listing is no reading')
+  const binding = refining(REFINE.list.proposals)
+  assert.equal(binding.values.member, ALPHA, 'the first proposal stands chosen')
+  assert.deepEqual(JSON.parse(binding.values.proposals).map(row => row.id), [ALPHA])
+  assert.deepEqual(JSON.parse(binding.values.why), [{task: 'task:plan-release', reason: 'Not met: the plan names each gate by its command'}])
+  assert.equal(binding.values.revision, REFINE.list.proposals[0].proposed.revision)
+  assert.equal(binding.values.inUse, REFINE.list.proposals[0].in_use.revision)
+  assert.equal(binding.values.levels, `docs+${ALPHA} · docs`, 'the Repeat\'s two levels: the set with the proposed revision, beside the set as it stands')
+  // No take ran under it yet: every level reads Open, saying why.
+  assert.deepEqual(JSON.parse(binding.values.test), [])
+  const untested = JSON.parse(binding.values.result)
+  assert.ok(untested.length >= 1 && untested.every(row => row.proposed === 'open' && row.inUse === 'open'), binding.values.result)
+  assert.equal(binding.values.resultWhy, bind.RESULT_WHY.untested)
+  // A take kept as its test, beside its family: the Test lists both levels; AIKit keeps no Success conditions, so Result stays Open.
+  const tested = refining([proposal({tests: [{trace: 'takes:own:5:trial:0', beside: ['takes:own:5:trial:1']}]})])
+  assert.deepEqual(JSON.parse(tested.values.test), [{trace: 'takes:own:5:trial:0', level: 'proposed'}, {trace: 'takes:own:5:trial:1', level: 'in use'}])
+  assert.equal(tested.values.resultWhy, bind.RESULT_WHY.noConditions)
+  assert.match(bind.RESULT_WHY.noConditions, /Success conditions/)
+  // AIKit's refusal is drawn in its words; nothing stands chosen.
+  const refused = bind.refiningBinding(RACK, {refinements: {status: 'refused', value: null, error: REFINE.refused.message}, set: 'docs', holds: bind.chainHolds()}, {})
+  assert.equal(refused.standing.proposals.disabled, REFINE.refused.message)
+  assert.equal(refused.values.member, undefined)
+  bind.resetHolds()
+})
+
+test('13 · Accept and Discard are AIKit\'s own verbs on the member; Test runs the task\'s own Repeat over Skillset; each refuses in words', async () => {
+  bind.resetHolds()
+  const calls = []
+  const ports = {write: async request => { calls.push(['write', request]) }, test: async (set, member) => { calls.push(['test', set, member]); return {ok: true, note: 'made'} }}
+  const binding = refining(REFINE.list.proposals, ports)
+  for (const key of ['accept', 'discard', 'run']) assert.equal(binding.standing?.[key], undefined, `${key} stands`)
+  await binding.write([{key: 'accept', value: ALPHA}])
+  await binding.write([{key: 'discard', value: ALPHA}])
+  await binding.write([{key: 'run', value: true}])
+  assert.deepEqual(calls, [['write', {kind: 'refinement-accept', member: ALPHA}], ['write', {kind: 'refinement-discard', member: ALPHA}], ['test', 'docs', ALPHA]])
+  await assert.rejects(binding.write([{key: 'accept', value: 'skill/practice/beta'}]), /no proposed revision of skill\/practice\/beta/)
+  // The member chosen is the hand's own hold.
+  binding.local.member(ALPHA)
+  assert.equal(bind.viewHolds(bind.chainHolds(), RACK).refineMember, ALPHA)
+  // Central keeps a Control skill's source: Accept is Central's, and says so; a stale draft is not accepted.
+  const central = refining([proposal({owner: 'central'})], ports)
+  assert.match(central.standing.accept.disabled, /Central keeps/)
+  const stale = refining([proposal({stale: true})], ports)
+  assert.match(stale.standing.accept.disabled, /no longer in use/)
+  // No carrier, no set on the chain, no session: each says what it lacks.
+  const none = refining(REFINE.list.proposals, {})
+  assert.match(none.standing.accept.disabled, /aikit_write/)
+  assert.match(none.standing.run.disabled, /session/)
+  const noSet = refining(REFINE.list.proposals, ports, {set: null})
+  assert.match(noSet.standing.run.disabled, /set/)
+  // A Test AIKit or Actuation refuses comes back in its words.
+  const refusedTest = refining(REFINE.list.proposals, {...ports, test: async () => ({ok: false, error: settings.TAKES_WHY.notRepeat})})
+  await assert.rejects(refusedTest.write([{key: 'run', value: true}]), new RegExp(settings.TAKES_WHY.notRepeat.slice(0, 40)))
+  bind.resetHolds()
+})
+
+test('13 · the Test is the session\'s own Repeat: its Variable Skillset, its Levels the set with the proposed revision beside the set; makeTakes runs it', () => {
+  const task = {task_ref: 'task:plan-release', name: 'Plan the release', launch: 'repeat', repeat_variable: 'condition', repeat_levels: []}
+  assert.deepEqual(settings.refinementRepeat(task, 'docs', ALPHA),
+    {change: {task: {task_ref: 'task:plan-release', set: {repeat_variable: 'skillset', repeat_levels: [`docs+${ALPHA}`, 'docs']}}}})
+  assert.deepEqual(settings.refinementRepeat(null, 'docs', ALPHA), {refused: settings.SETTINGS_WHY.noTask})
+  const source = read('agent/sessionSettings.ts')
+  assert.match(source, /export async function testRefinement\([^)]*\)[^{]*\{[\s\S]*?await writeSessionSettings\([\s\S]*?return makeTakes\(transport, project, agentSession, takeRunOf\(/, 'the same runner')
+  const chain = read('agent/devices/FactoryDeviceChain.tsx')
+  assert.match(chain, /const rackRefinements = useAikitRead\(transport, \{kind: 'refinement-list'\}\)/)
+  assert.match(chain, /testRefinement\(transport, rackProject, sessionRef, set, member\)/)
+})
+
+test('14 · the Skillset rack\'s Refining page stands beside Capture with §19.7\'s Member, Why, Revision, Test, Result, Accept and Discard, on its binding in every view', () => {
+  bind.resetHolds()
+  host.resetHost()
+  for (const key of ['member', 'proposals', 'why', 'revision', 'inUse', 'test', 'result', 'resultWhy', 'levels']) assert.ok(`refine.${key}` in rackDesign.defaults, `the rack carries refine.${key}`)
+  const rack = bind.rackBinding(RACK, {profile: null, sets: {}, setList: null, skills: null, capabilities: null, profiles: null, holds: bind.chainHolds()}, null, {project: 'O-I', sessionRef: null})
+  const binding = carry.carryPages(rack, [{page: carry.REFINE_PAGE, binding: refining(REFINE.list.proposals)}])
+  host.setHostPage(binding.id, 'refine')
+  const drawn = hosted(rackDesign, binding)
+  host.resetHost()
+  for (const [view, markup] of drawn) {
+    assert.doesNotMatch(markup, /\bNaN\b|undefined/, `${view}: no absent key drawn as text`)
+    assert.doesNotMatch(markup, /data-device-fault/, `${view}: its own view drew`)
+  }
+  const whole = drawn.find(([view]) => view === 'whole')[1]
+  for (const label of ['Set', 'Capture', 'Refining']) assert.match(whole, new RegExp(`>${label}<`), `the ${label} page`)
+  for (const label of ['Member', 'Why', 'Revision', 'Test', 'Result', 'Accept', 'Discard']) assert.ok(whole.includes(label), `Refining draws ${label}`)
+  assert.ok(whole.includes(escaped('Not met: the plan names each gate by its command')), 'the reason, in the close\'s words')
+  assert.ok(whole.includes(escaped(bind.RESULT_WHY.untested)), 'Result says why it is Open')
+  // Declared to the device law: one owning address for each of the page's parameters (§14).
+  for (const key of ['refine.member', 'refine.why', 'refine.revision', 'refine.test', 'refine.result', 'refine.accept', 'refine.discard']) {
+    const row = addresses.agentAddress('skillset', key)
+    assert.equal(row?.family, 'ai-kit', key)
+  }
+  assert.equal(addresses.agentAddress('skillset', 'refine.accept').writePath, 'kernel:aikit_write')
+  assert.equal(addresses.agentAddress('skillset', 'refine.why').writePath, undefined, 'a reading')
+  bind.resetHolds()
+})
+
+test('15 · Approvals: a proposed revision waits as a proposal with its Result for each condition; Accept and Discard are the Refining page\'s own AIKit verbs', async () => {
+  bind.resetHolds()
+  const refinements = {status: 'answered', value: REFINE.list, error: null}
+  const calls = []
+  const binding = approvals({refinements, nowUnixMs: (REFINE.list.proposals[0].proposed_at_unix_seconds + 600) * 1000}, {refine: async request => { calls.push(request) }})
+  const queue = JSON.parse(binding.values.queue)
+  const row = queue.find(item => item.refinement)
+  assert.ok(row, 'the refinement waits in the queue')
+  assert.equal(row.kind, 'proposal')
+  assert.equal(row.where, ALPHA)
+  assert.equal(row.age, 600)
+  assert.equal(row.refinement.revision, REFINE.list.proposals[0].proposed.revision)
+  assert.ok(row.refinement.result.every(level => level.proposed === 'open' && level.inUse === 'open'))
+  assert.equal(row.refinement.resultWhy, bind.RESULT_WHY.untested)
+  await binding.write([{key: 'refineAccept', value: row.id}])
+  await binding.write([{key: 'refineDiscard', value: row.id}])
+  assert.deepEqual(calls, [{kind: 'refinement-accept', member: ALPHA}, {kind: 'refinement-discard', member: ALPHA}])
+  await assert.rejects(binding.write([{key: 'refineAccept', value: 'refine:skill/practice/gone'}]), /no proposed revision/)
+  const unwired = approvals({refinements})
+  assert.match(unwired.standing.refineAccept.disabled, /aikit_write/)
+  const central = approvals({refinements: {status: 'answered', value: {proposals: [proposal({owner: 'central'})]}, error: null}}, {refine: async () => {}})
+  await assert.rejects(central.write([{key: 'refineAccept', value: `refine:${ALPHA}`}]), /Central keeps/)
+  // The design answers it with Accept and Discard, and draws its Result.
+  host.setHostPage(binding.id, 'review')
+  const drawn = hosted(approvalsDesign, {...binding, values: {...binding.values, pick: row.id}})
+  host.resetHost()
+  const all = drawn.map(([, markup]) => markup).join('\n')
+  assert.match(all, />Accept</)
+  assert.match(all, />Discard</)
+  assert.doesNotMatch(all, /\bNaN\b|undefined/)
+  // The gallery (the manual's Part Three) shows it too: a fixture with a refinement waiting, drawn with its Result and its answers.
+  const shown = approvalsDesign.fixtures?.['A skill refinement']
+  assert.ok(shown, 'the gallery carries a refinement waiting')
+  const fixtureRow = JSON.parse(shown.queue).find(item => item.id === shown.pick)
+  assert.ok(fixtureRow?.refinement?.result?.length, 'with its Result for each condition')
+  host.setHostPage('gallery:approvals', 'review')
+  const galleryDrawn = hosted(approvalsDesign, {id: 'gallery:approvals', values: {...approvalsDesign.defaults, ...shown}, standing: {}, write: async () => {}})
+  host.resetHost()
+  const galleryAll = galleryDrawn.map(([, markup]) => markup).join('\n')
+  assert.match(galleryAll, />Accept</)
+  assert.match(galleryAll, /aria-label="Result"/)
+  const chain = read('agent/devices/FactoryDeviceChain.tsx')
+  assert.match(chain, /refinements: rackRefinements/)
+  // Approvals is one device (§19.14): Central's Main track answers a refinement too, with the same AIKit read and the one write
+  // (ownerRoutes.ts refinementWrite) the Refining page presses.
+  const centralChain = read('central/devices/CentralDevices.tsx')
+  assert.match(centralChain, /useAikitRead\(transport, \{kind: 'refinement-list'\}\)/)
+  assert.match(centralChain, /refinements: (\w+)Refinements/)
+  for (const source of [chain, centralChain]) assert.match(source, /refinementWrite\(transport\)/, 'one write for both chains')
+  assert.match(centralChain, /\{refine: refineWrite\}/)
   bind.resetHolds()
 })

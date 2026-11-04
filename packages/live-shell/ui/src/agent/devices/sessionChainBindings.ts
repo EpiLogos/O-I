@@ -155,18 +155,19 @@ export function runBinding(input: RunInput, ports: RunPorts): DesignBinding {
 // Factory's custody writes reach the kernel since lane W3 (factory_owner {custody-assign, custody-update}: `factory development custody
 // assign <state> --position P --work W --reason R [--run, --workflow-unit, --journey, --origin-communique, --state in-progress|blocked,
 // --custody]` and `… update <state> --custody C --state in-progress|blocked|released|completed|handed-off --reason R [--reopen,
-// --to-position P, --expected-revision N]`, both answering factory.work-custody-receipt/v1). Factory's custody record carries Autonomy,
-// Review gate and Escalate to since EpiLogos/Factory PR 288 (set at assignment: `custody assign --autonomy suggest|review|auto --review-gate
-// diffs|approvals|both --escalate-to <ref>`; `update` does not change them), and the kernel's CustodyAssign carries all three since lane W6
-// round 2 (cdbde6fe7). Factory's custody list reaches the kernel since lane W6 round 3 (factory_owner custody-list: `factory development
-// custody list <state> [--position P] [--run R] [--state S]`, factory.work-custody-listing/v1 {count, custody [factory.work-custody/v1:
-// custody_ref, position_ref, work_ref, state, autonomy?, review_gate?, escalate_to?, …]}; real shape in desktop/cradle/kernel/tests/
+// --to-position P, --expected-revision N]`, both answering factory.work-custody-receipt/v1). Factory's custody record carries Review gate
+// and Escalate to since EpiLogos/Factory PR 288 (set at assignment: `custody assign --review-gate diffs|approvals|both --escalate-to
+// <ref>`; `update` does not change them), and the kernel's CustodyAssign carries both since lane W6 round 2 (cdbde6fe7). Autonomy is
+// retired on both (lane BD round 12): Factory's `custody assign` refuses `--autonomy` in words and drops it from a record an earlier
+// Factory kept, and the kernel's CustodyAssign refuses a request that still names one. Factory's custody list reaches the kernel since
+// lane W6 round 3 (factory_owner custody-list: `factory development custody list <state> [--position P] [--run R] [--state S]`,
+// factory.work-custody-listing/v1 {count, custody [factory.work-custody/v1: custody_ref, position_ref, work_ref, state, review_gate?,
+// escalate_to?, …]}; real shape in desktop/cradle/kernel/tests/
 // fixtures/owner-routes/factory-custody-list-2026-10-21.json). Lane W11 reads it for the project's Factory state:
 //   held        the open records (in-progress, blocked) of the Position the session's agent holds (AIKit's population), as the held items;
-//   the settings Review gate and Escalate to from the open record of the session's work (its bound task), where one stands. Factory's
-//   record still carries an `autonomy` (PR 288) and its `custody assign` still takes `--autonomy`; neither is read or sent here, since
-//   the manual retired the Agent's Autonomy (§19.4: Factory owns what the agent holds and what it does when it stalls; §19.12: Scope's
-//   Tool calls answers the harness's request to use a tool).
+//   the settings Review gate and Escalate to from the open record of the session's work (its bound task), where one stands. The manual
+//   retired the Agent's Autonomy (§19.4: Factory owns what the agent holds and what it does when it stalls; §19.12: Scope's Tool calls
+//   answers the harness's request to use a tool).
 // Custody's held items and Hand back stand on the Agent's Run page (§19.4). Each setting is written (CustodyAssign with that one
 // setting) only on the person's own press (re-checked at the press), only while the session's work is not yet assigned: the assignment's
 // Position is the one the session's agent holds, the work its bound task, and the reason says who set what from the desk. A session whose

@@ -73,6 +73,13 @@ export const DAY_RUN_KEYS: readonly string[] = DAY_MOVES.flatMap(move => [`last_
  * kernel's AIKit reads (kernel/src/owner_routes.rs AikitRead: inbox, wiki shape, gateway ecology and replay) do not include it. */
 export const NO_CLOSEOUT = 'Close-out is AIKit\'s reading of what the close left behind (`aikit work continuity closeout verify --json`); Central keeps no close-out verify of its own, and no kernel route reaches AIKit\'s — missing op: an aikit_read route for `work continuity closeout verify` (kernel/src/owner_routes.rs AikitRead; T-COVERAGE §1.2).'
 
+/** The Patterns pad's refinement (manual §18.2: "A pattern whose items point at one skill or method can open a refinement of it (§19.7)"):
+ * Central keeps what a move gave as {summary, proposals?, writes?, counts?} and refuses any other key (ctrl continuous_work/day_moves.rs),
+ * so no pattern names what its items point at, and Refine has nothing to open on the Skillset rack's Refining page. */
+export const PATTERN_POINTS_ABSENT = 'The one skill or method a pattern\'s items point at: Central keeps what the Patterns move gave as {summary, proposals?, '
+  + 'writes?, counts?} and names none — missing field: the skill or method the pattern\'s items point at, on the Patterns move\'s gave '
+  + '(Central, central.day.move.record). Refine opens it on the Skillset rack\'s Refining page once Central names it.'
+
 /** Why each design key no owner reports has no reading (manual §16.12: "When a reading is missing, say which one"). The settings' and
  * the runs' keys have their reasons from their readings (dayOwnAbsent). The views draw "—" where the kit draws them. */
 export const DAY_ABSENT: Readonly<Record<string, string>> = {
@@ -88,11 +95,13 @@ export const DAY_ABSENT: Readonly<Record<string, string>> = {
   c4: `Face 4 gathers what the sessions of ${NO_NOWS} touched, each entry with its author; until then context is free text on face 4, and the owner counts none.`,
   c5: 'Synthesis is free text on face 5: the owner counts none.',
   closeout: NO_CLOSEOUT,
+  patternPoints: PATTERN_POINTS_ABSENT,
 }
 
 /** The design's controls no write reaches from here, closed with their reason: Verify (AIKit's close-out read has no kernel route). */
 export const DAY_STANDING: Readonly<Record<string, Standing>> = {
   verifyCloseout: {disabled: NO_CLOSEOUT},
+  refinePattern: {disabled: PATTERN_POINTS_ABSENT},
 }
 
 /** What each setting key is called, for its refusal. */

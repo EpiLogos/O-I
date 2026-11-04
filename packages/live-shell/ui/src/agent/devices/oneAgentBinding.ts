@@ -61,6 +61,8 @@ export const CARRIER_PAGE: CarriedPage = {prefix: 'carrier.', shared: []}
 export const MACHINE_PAGE: CarriedPage = {prefix: 'mc.', shared: []}
 /** The Skillset rack's Capture page (§19.11 "the Capture page of the Skillset rack"; skills.tsx `capture.` keys). */
 export const CAPTURE_PAGE: CarriedPage = {prefix: 'capture.', shared: []}
+/** The Skillset rack's Refining page (§19.7 "Refining a skill"; skills.tsx `refine.` keys): AIKit's proposed revisions under `refine.`. */
+export const REFINE_PAGE: CarriedPage = {prefix: 'refine.', shared: []}
 /** The Left behind page of Workcell's instrument (§19.23 "What a run leaves behind"; workcell__workcell.tsx `left.` keys): Ground hygiene's
  * census under `left.` (its worlds, sandboxes, findings and sources, as the Seats page carries its checkouts), its Recover the census's Reconcile
  * (`workcell --receipt R reconcile --desired <binding>=present`). */

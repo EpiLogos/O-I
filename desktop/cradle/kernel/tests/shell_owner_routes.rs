@@ -1396,10 +1396,9 @@ fn factory_unit_decisions_and_custody_through_the_factory_owner() {
         outcome.unwrap().receipts.is_empty(),
         "a replay moved nothing"
     );
-    // How much the holder decides alone (Factory#288), carried as spelled;
-    // the record answers with it (FAKE, in the merged Factory's shape).
+    // The review gate and whom the holder escalates to, carried as spelled;
+    // the record answers with them (FAKE, in the merged Factory's shape).
     let mut decided = custody("applied");
-    decided["custody"]["autonomy"] = json!("auto");
     decided["custody"]["review_gate"] = json!("diffs");
     decided["custody"]["escalate_to"] = json!("central:person:frank");
     factory.answer(&decided);
@@ -1409,21 +1408,39 @@ fn factory_unit_decisions_and_custody_through_the_factory_owner() {
         op(
             json!({"op": "factory_owner", "request": {"kind": "custody-assign",
         "state_path": state, "position_ref": "central:position:project:O-I:anima", "work_ref": "work:take-4",
-        "reason": "Kite mixes alone", "autonomy": "auto", "review_gate": "diffs",
+        "reason": "Kite mixes alone", "review_gate": "diffs",
         "escalate_to": "central:person:frank"}}),
         ),
     );
     let outcome = outcome.unwrap();
     assert_eq!(
         factory.asked(),
-        [format!("development custody assign {} --position central:position:project:O-I:anima --work work:take-4 --reason Kite mixes alone --autonomy auto --review-gate diffs --escalate-to central:person:frank --json", state.display())]
+        [format!("development custody assign {} --position central:position:project:O-I:anima --work work:take-4 --reason Kite mixes alone --review-gate diffs --escalate-to central:person:frank --json", state.display())]
     );
     assert_eq!(receipts(&outcome)[0]["ref"], "factory:custody:01k8w3");
-    // Factory's own refusal of a value it does not admit, in its words.
+    // Autonomy is retired (O-I manual §19.4, §19.12): an assignment that
+    // carries one is refused in words, and Factory is not asked.
+    factory.forget();
+    let (outcome, _) = dispatched(
+        kernel(&central),
+        op(
+            json!({"op": "factory_owner", "request": {"kind": "custody-assign",
+        "state_path": state, "position_ref": "central:position:project:O-I:anima", "work_ref": "work:take-4",
+        "reason": "r", "autonomy": "auto"}}),
+        ),
+    );
+    let refused = outcome.unwrap_err();
+    assert!(
+        refused.contains("Autonomy is retired") && refused.contains("Tool calls"),
+        "{refused}"
+    );
+    assert!(factory.asked().is_empty(), "nothing asked of Factory");
+    // Factory's own refusal of a value it does not admit, in its words
+    // (Factory inhabitation_cli.rs `choice`).
     factory.refuse(
         Some(
             &json!({"schema": "factory.refusal/v1", "code": "factory.custody.usage",
-            "fact": "--autonomy sometimes is not an autonomy; use suggest, review or auto",
+            "fact": "--review-gate everything is not one of diffs, approvals or both",
             "consequence": "The command did not run; nothing was read or persisted.",
             "action": "run: factory development custody assign …"}),
         ),
@@ -1435,10 +1452,10 @@ fn factory_unit_decisions_and_custody_through_the_factory_owner() {
         op(
             json!({"op": "factory_owner", "request": {"kind": "custody-assign",
         "state_path": state, "position_ref": "central:position:project:O-I:anima", "work_ref": "work:take-4",
-        "reason": "r", "autonomy": "sometimes"}}),
+        "reason": "r", "review_gate": "everything"}}),
         ),
     );
-    assert!(outcome.unwrap_err().contains("suggest, review or auto"));
+    assert!(outcome.unwrap_err().contains("diffs, approvals or both"));
     factory.forget();
     factory.answer(&custody("applied"));
     let (outcome, _) = dispatched(
@@ -3451,6 +3468,96 @@ fn aikit_lists_its_registered_sources() {
     assert!(outcome
         .unwrap_err()
         .contains("unrecognized subcommand 'list'"));
+    let _ = fs::remove_dir_all(&dir);
+}
+
+/// Refining a skill (O-I manual §19.7): the proposed revisions AIKit keeps
+/// beside the revisions in use are read, and Accept and Discard are AIKit's
+/// own verbs on the member, whose source keeps its revisions.
+#[test]
+fn aikit_refinements_are_read_and_answered_through_aikits_own_verbs() {
+    let _held = hold();
+    let dir = scratch("aikit-refinements");
+    let aikit = Fake::new(&dir, "aikit");
+    let _bin = Bound::set("OI_AIKIT_BIN", &aikit.bin);
+    let listing = json!({"proposals": [{"member": "skill/practice/alpha", "source": "practice",
+        "owner": "aikit", "why": [{"task_ref": "task:plan", "reason": "Not met"}],
+        "proposed": {"snapshot": "d2", "revision": "r2"}, "in_use": {"snapshot": "d1", "revision": "r1"},
+        "stale": false, "proposed_at_unix_seconds": 1, "tests": []}]});
+    aikit.answer(&envelope(listing.clone()));
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(json!({"op": "aikit_read", "request": {"kind": "refinement-list"}})),
+    );
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-read");
+    let (route, data, _) = reading(&outcome);
+    assert_eq!(route, "aikit source refine list");
+    assert_eq!(data, listing, "AIKit's proposals, verbatim");
+    assert_eq!(aikit.asked(), ["source refine list --json"]);
+
+    aikit.forget();
+    aikit.answer(&envelope(
+        json!({"member": "skill/practice/alpha", "source": "practice",
+        "revision": "r2", "active_snapshot": "d2", "rollback_to": "d1", "user_scope": null}),
+    ));
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "aikit_write", "request": {"kind": "refinement-accept",
+            "member": "skill/practice/alpha"}}),
+        ),
+    );
+    assert_eq!(form, "owner-write");
+    let outcome = outcome.unwrap();
+    assert_eq!(
+        aikit.asked(),
+        ["source refine accept skill/practice/alpha --json"]
+    );
+    assert_eq!(receipts(&outcome)[0]["ref"], "skill/practice/alpha");
+    assert_eq!(
+        receipts(&outcome)[0]["revision"],
+        "r2",
+        "the member's next revision"
+    );
+
+    aikit.forget();
+    aikit.answer(&envelope(
+        json!({"discarded": "skill/practice/alpha", "source": "practice",
+        "snapshot": "d2", "in_use": "d1"}),
+    ));
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "aikit_write", "request": {"kind": "refinement-discard",
+            "member": "skill/practice/alpha"}}),
+        ),
+    );
+    let outcome = outcome.unwrap();
+    assert_eq!(
+        aikit.asked(),
+        ["source refine discard skill/practice/alpha --json"]
+    );
+    assert_eq!(receipts(&outcome)[0]["ref"], "skill/practice/alpha");
+
+    // AIKit's refusal is its own words, and nothing is asked for no member.
+    aikit.forget();
+    aikit.refuse(None, "Central keeps the source of `skill/central/a`", 2);
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "aikit_write", "request": {"kind": "refinement-accept",
+            "member": "skill/central/a"}}),
+        ),
+    );
+    assert!(outcome.unwrap_err().contains("Central keeps the source"));
+    aikit.forget();
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(json!({"op": "aikit_write", "request": {"kind": "refinement-discard", "member": " "}})),
+    );
+    assert_eq!(kind(&outcome.unwrap_err()), "incompatible");
+    assert!(aikit.asked().is_empty(), "nothing asked without a member");
     let _ = fs::remove_dir_all(&dir);
 }
 

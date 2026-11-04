@@ -69,7 +69,8 @@ export type SdkParamRow = Omit<AgentParamAddress, 'range'> & {
   readonly modulatedBy?: string
   /** The group the row sits in on the device's whole view (FOUNDATION F5: the runtime groups the rows). */
   readonly group?: string
-  /** One of the device's most-played controls: the compact size shows up to four, macros first. */
+  /** One of the device's most-played controls: the compact size shows up to four, macros first. False keeps a written row off the
+   * compact size (a page's press). */
   readonly compact?: boolean
   /** A macro: one knob that turns several rows at once, each within its own range (manual §10.4). */
   readonly macro?: {readonly maps: readonly {readonly key: string; readonly min?: number; readonly max?: number}[]}

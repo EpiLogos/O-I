@@ -946,6 +946,177 @@ export function rackBinding(id: string, input: RackInput, ports: ComposePorts | 
   }
 }
 
+// ---------------------------------------------------------------------------------------------------------------- the Refining page
+// The Skillset rack's Refining page (manual §19.7 "Refining a skill"; skills.tsx `refine.` keys, carried under the rack by
+// oneAgentBinding.ts REFINE_PAGE). AIKit keeps a proposed revision where it keeps the member's revisions — a snapshot of the member's own
+// source beside the snapshot in use (`aikit source refine list|accept|discard`, the kernel's aikit_read refinement-list and aikit_write
+// refinement-accept · refinement-discard) — with the closes that showed its reason (Why) and the takes that ran under it (Test). The Test
+// is the session's own Repeat over Skillset (sessionSettings.ts testRefinement, the same runner as Launch): its levels the set with the
+// proposed revision in it beside the set as it stands, which AIKit's take body carries into each take's World and reads back. Accept keeps
+// the proposal as the member's next revision (History's Rollback takes it back); Discard drops it. Member is the hand's own hold.
+
+/** One proposed revision as AIKit lists it (ai-kit skill_sources.rs Refinement). */
+export interface Refinement {
+  readonly member: string
+  readonly source: string
+  /** Who keeps the member's source: AIKit, or Central (a Control skill: AIKit refuses to accept it). */
+  readonly owner: 'aikit' | 'central'
+  readonly why: readonly {readonly task: string; readonly reason: string}[]
+  readonly proposed: {readonly snapshot: string; readonly revision: string}
+  readonly inUse: {readonly snapshot: string; readonly revision: string} | null
+  /** The source moved on since the proposal was drafted against it. */
+  readonly stale: boolean
+  readonly proposedAt: number | null
+  readonly tests: readonly {readonly trace: string; readonly beside: readonly string[]}[]
+}
+
+/** Central as the keeper of a member's source, in AIKit's listing (`owner`): an owner's name, not the shell's Central mode. */
+const CENTRAL_SOURCE = 'central' as const
+
+const revisionAt = (value: unknown): {snapshot: string; revision: string} | null =>
+  (isObj(value) && typeof value.snapshot === 'string' && typeof value.revision === 'string' ? {snapshot: value.snapshot, revision: value.revision} : null)
+
+/** AIKit's proposals (`aikit source refine list`: {proposals}), or null where the answer is not that listing. Pure. */
+export function refinementsOf(value: unknown): Refinement[] | null {
+  if (!isObj(value) || !Array.isArray(value.proposals)) return null
+  const rows: Refinement[] = []
+  for (const row of value.proposals) {
+    if (!isObj(row) || typeof row.member !== 'string' || typeof row.source !== 'string') continue
+    const proposed = revisionAt(row.proposed)
+    if (!proposed) continue
+    rows.push({member: row.member, source: row.source, owner: row.owner === CENTRAL_SOURCE ? CENTRAL_SOURCE : 'aikit',
+      why: (Array.isArray(row.why) ? row.why : []).filter(isObj).filter(item => typeof item.reason === 'string')
+        .map(item => ({task: typeof item.task_ref === 'string' ? item.task_ref : '', reason: item.reason as string})),
+      proposed, inUse: revisionAt(row.in_use), stale: row.stale === true,
+      proposedAt: typeof row.proposed_at_unix_seconds === 'number' ? row.proposed_at_unix_seconds : null,
+      tests: (Array.isArray(row.tests) ? row.tests : []).filter(isObj).filter(item => typeof item.trace === 'string')
+        .map(item => ({trace: item.trace as string, beside: strings(item.beside)}))})
+  }
+  return rows
+}
+
+/** Why a proposal's Result reads Open (§19.7: "A proposal whose test did not run, or whose takes did not answer a condition that the
+ * revision touches, shows Open"). */
+export const RESULT_WHY = {
+  untested: 'Open: no take has run under the proposed revision yet. Press Test to run the task\'s own Repeat over Skillset — the set with '
+    + 'the proposed revision in it, beside the set as it stands.',
+  noConditions: 'Open: the takes ran, but no take answered a Success condition — AIKit hands Actuation a task with no Success conditions, '
+    + 'and nothing reads a take against one (missing op: the task\'s Success conditions on AIKit\'s take run, and their reading of each take; AIKit, Actuation).',
+} as const
+
+/** The takes that ran under the proposed revision, beside the takes of the same Repeat that ran under the revision in use. Pure. */
+export function refinementTakes(refinement: Refinement): {trace: string; level: 'proposed' | 'in use'}[] {
+  const proposed = new Set(refinement.tests.map(test => test.trace))
+  const inUse = [...new Set(refinement.tests.flatMap(test => test.beside))].filter(trace => !proposed.has(trace))
+  return [...[...proposed].map(trace => ({trace, level: 'proposed' as const})), ...inUse.map(trace => ({trace, level: 'in use' as const}))]
+}
+
+/** Result for each condition the revision touches (each close's reason in Why) at each level — Met · Not met · Open — and why it reads
+ * as it does. Every condition is Open until a take answers it. Pure. */
+export function refinementResult(refinement: Refinement): {rows: {task: string; condition: string; proposed: 'met' | 'not met' | 'open'; inUse: 'met' | 'not met' | 'open'}[]; why: string} {
+  const rows = refinement.why.map(item => ({task: item.task, condition: item.reason, proposed: 'open' as const, inUse: 'open' as const}))
+  return {rows, why: refinement.tests.length ? RESULT_WHY.noConditions : RESULT_WHY.untested}
+}
+
+/** The AIKit acts of a refinement (aikit_write), each on the member chosen. */
+export const REFINE_WRITES: Readonly<Record<'accept' | 'discard', string>> = {accept: 'refinement-accept', discard: 'refinement-discard'}
+
+/** Why Accept stands refused for a proposal, or null where AIKit can be asked. Shared with Approvals' answer. */
+export function refinementAcceptWhy(refinement: Refinement): string | null {
+  if (refinement.owner === CENTRAL_SOURCE) return `Accept: Central keeps the source of ${refinement.member}, so AIKit does not adopt its revision — `
+    + 'missing op: Central keeping a proposed revision of a Control skill (Central).'
+  if (refinement.stale) return `Accept: the revision of ${refinement.member} this was drafted against is no longer in use (its source moved on since); Discard it and propose again.`
+  return null
+}
+
+export interface RefiningPorts {
+  /** AIKit's writes through the kernel (aikit_write). Absent: no carrier stands. */
+  readonly write?: (request: {kind: string; member: string}) => Promise<unknown>
+  /** The session's own Repeat over Skillset (sessionSettings.ts testRefinement). Absent: no session's task stands here. */
+  readonly test?: (set: string, member: string) => Promise<{ok: true; note: string} | {ok: false; error: string}>
+}
+
+export interface RefiningInput {
+  /** `aikit source refine list` (the kernel's aikit_read refinement-list). */
+  readonly refinements?: AikitAnswer
+  /** The set on the chain (rackValues `set`). */
+  readonly set: string | null
+  readonly holds: ChainHolds
+}
+
+export const REFINE_ABSENT = 'The proposed revisions: AIKit\'s `aikit source refine list` is not read here.'
+const REFINE_NO_CARRIER = 'The kernel carrier is unavailable here, so AIKit cannot be asked (aikit_write).'
+const REFINE_NO_SESSION = 'Test runs the selected session\'s own Repeat, and no session\'s task stands here: select a session on the Factory track.'
+const REFINE_NO_SET = 'Test: no set stands on the chain, so there is no set to carry the proposed revision in.'
+
+/** The refinement the person chose by member, or why there is none. */
+function refinementNamed(refinements: readonly Refinement[] | null, member: string): Refinement {
+  const found = refinements?.find(row => row.member === member)
+  if (!found) throw Error(`${member}: no proposed revision of ${member} stands in AIKit's list.`)
+  return found
+}
+
+/** The Refining page's binding (`refine.` keys): AIKit's proposals, the member chosen with its Why, Revision beside the revision in use,
+ * Test and Result, and Accept, Discard and Test through their owners. */
+export function refiningBinding(id: string, input: RefiningInput, ports: RefiningPorts = {}): DesignBinding {
+  const answer = input.refinements
+  const refinements = answer?.status === 'answered' ? refinementsOf(answer.value) : null
+  const values: Record<string, Value> = {}
+  const standing: Record<string, Standing> = {}
+  const listWhy = answer?.status === 'refused' ? answer.error ?? REFINE_ABSENT : answer?.status === 'reading' ? 'AIKit has not answered yet (`aikit source refine list`).'
+    : answer ? 'AIKit answered something other than its proposed revisions.' : REFINE_ABSENT
+  const held = viewHolds(input.holds, id).refineMember
+  const chosen = refinements?.find(row => row.member === held) ?? refinements?.[0] ?? null
+  if (refinements) values.proposals = JSON.stringify(refinements.map(row => ({id: row.member, source: row.source, owner: row.owner, stale: row.stale, revision: row.proposed.revision})))
+  else standing.proposals = {disabled: listWhy}
+  const noneWhy = refinements ? 'No proposed revision stands: a close whose reason Kev picks a member for sends one here.' : listWhy
+  if (chosen) {
+    const result = refinementResult(chosen)
+    values.member = chosen.member
+    values.owner = chosen.owner
+    values.stale = chosen.stale
+    values.why = JSON.stringify(chosen.why)
+    values.revision = chosen.proposed.revision
+    if (chosen.inUse) values.inUse = chosen.inUse.revision
+    values.test = JSON.stringify(refinementTakes(chosen))
+    values.result = JSON.stringify(result.rows)
+    values.resultWhy = result.why
+    if (input.set) values.levels = `${input.set}+${chosen.member} · ${input.set}`
+  } else for (const key of ['member', 'why', 'revision', 'test', 'result']) standing[key] = {disabled: noneWhy}
+  const acceptWhy = !ports.write ? REFINE_NO_CARRIER : !chosen ? noneWhy : refinementAcceptWhy(chosen)
+  if (acceptWhy) standing.accept = {disabled: acceptWhy}
+  if (!ports.write || !chosen) standing.discard = {disabled: !ports.write ? REFINE_NO_CARRIER : noneWhy}
+  const runWhy = !chosen ? noneWhy : !input.set ? REFINE_NO_SET : !ports.test ? REFINE_NO_SESSION : null
+  if (runWhy) standing.run = {disabled: runWhy}
+  const memberOf = (value: Value | undefined) => (typeof value === 'string' && value ? value : chosen?.member ?? '')
+  return {
+    id,
+    values,
+    standing,
+    local: {member: (value: Value | undefined) => holdView(id, 'refineMember', value)},
+    writes: key => key === 'accept' || key === 'discard' || key === 'run',
+    write: async changes => {
+      for (const change of changes) {
+        if (change.key === 'accept' || change.key === 'discard') {
+          if (!ports.write) throw Error(REFINE_NO_CARRIER)
+          const refinement = refinementNamed(refinements, memberOf(change.value))
+          const why = change.key === 'accept' ? refinementAcceptWhy(refinement) : null
+          if (why) throw Error(why)
+          await ports.write({kind: REFINE_WRITES[change.key], member: refinement.member})
+          continue
+        }
+        if (change.key === 'run') {
+          if (runWhy || !chosen || !input.set || !ports.test) throw Error(runWhy ?? noneWhy)
+          const made = await ports.test(input.set, chosen.member)
+          if (!made.ok) throw Error(made.error)
+          continue
+        }
+        throw Error(REFUSE.reading(change.key))
+      }
+    },
+  }
+}
+
 // ---------------------------------------------------------------------------------------------------------------- the member
 
 /** The member device's values (§19.7): the rack's chosen member over the same members, your request, and the asks it holds. */

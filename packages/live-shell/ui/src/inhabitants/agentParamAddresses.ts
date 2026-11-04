@@ -90,6 +90,16 @@ export const AGENT_SHELL_ADDRESS_TABLE: readonly AgentParamAddress[] = Object.fr
   reading('ai-kit', 'skillset', 'test-depth', 'enumerated'),
   reading('ai-kit', 'skillset', 'reach', 'enumerated'),
   reading('ai-kit', 'skillset', 'risk', 'enumerated'),
+  // Its Refining page (DLW §19.7 "Refining a skill"; skills.tsx `refine.` keys): AIKit's proposed revisions (`aikit source refine list`),
+  // answered through AIKit's own verbs, and tested by the session's own Repeat over Skillset.
+  reading('ai-kit', 'skillset', 'refine.member', 'string', {disclosure: 'The member chosen is the hand\'s own hold over AIKit\'s proposed revisions.'}),
+  reading('ai-kit', 'skillset', 'refine.why', 'list', {disclosure: 'Reading only — the closes that show the reason, as AIKit keeps them with the proposal.'}),
+  reading('ai-kit', 'skillset', 'refine.revision', 'string', {disclosure: 'Reading only — the proposed revision beside the revision in use.'}),
+  reading('ai-kit', 'skillset', 'refine.test', 'list', {disclosure: 'Reading only — the takes AIKit\'s take body kept under the proposed revision, beside its Repeat\'s other takes.'}),
+  reading('ai-kit', 'skillset', 'refine.result', 'list', {disclosure: 'Met · Not met · Open per condition and level; Open while no take answers a Success condition (AIKit hands Actuation none).'}),
+  agentParamAddress({family: 'ai-kit', deviceInstance: 'skillset', key: 'refine.run', type: 'boolean', writePath: 'kernel:encounter_session_settings'}),
+  agentParamAddress({family: 'ai-kit', deviceInstance: 'skillset', key: 'refine.accept', type: 'boolean', writePath: 'kernel:aikit_write'}),
+  agentParamAddress({family: 'ai-kit', deviceInstance: 'skillset', key: 'refine.discard', type: 'boolean', writePath: 'kernel:aikit_write'}),
 
   // — Context-world device: central reads + ai-kit route + software-factory receipts —
   reading('central', 'world', 'reads', 'scope'),

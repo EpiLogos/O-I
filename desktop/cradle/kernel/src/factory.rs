@@ -9,6 +9,9 @@ use std::path::{Path, PathBuf};
 pub struct Client {
     executable: PathBuf,
 }
+/// Why a custody assignment takes no autonomy (O-I manual §19.4, §19.12).
+const AUTONOMY_RETIRED: &str = "Autonomy is retired (O-I manual §19.4, §19.12): Scope's Tool calls answers the harness's request to use a tool, so a custody assignment carries only its review gate and whom its holder escalates to; Factory takes no --autonomy.";
+
 fn incompatible(message: impl ToString) -> Error {
     Error {
         kind: "incompatible".into(),
@@ -509,10 +512,11 @@ pub enum OwnerRequest {
         state: Option<String>,
         #[serde(default)]
         custody_ref: Option<String>,
-        /// How much the holder decides alone (Factory#288): `suggest`,
-        /// `review` or `auto`, carried as spelled; Factory refuses another.
-        #[serde(default)]
-        autonomy: Option<String>,
+        /// Retired (O-I manual §19.4, §19.12): a request that still names
+        /// how much the holder decides alone is refused in words
+        /// (AUTONOMY_RETIRED), and Factory is not asked.
+        #[serde(default, rename = "autonomy", skip_serializing_if = "Option::is_none")]
+        retired: Option<Value>,
         /// What it must show before acting: `diffs`, `approvals` or `both`.
         #[serde(default)]
         review_gate: Option<String>,
@@ -1983,10 +1987,13 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
             origin_communique,
             state,
             custody_ref,
-            autonomy,
+            retired,
             review_gate,
             escalate_to,
         } => {
+            if retired.is_some() {
+                return Err(incompatible(AUTONOMY_RETIRED));
+            }
             let mut args: Vec<std::ffi::OsString> = vec![
                 "development".into(),
                 "custody".into(),
@@ -2006,7 +2013,6 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
                 ("--origin-communique", origin_communique),
                 ("--state", state),
                 ("--custody", custody_ref),
-                ("--autonomy", autonomy),
                 ("--review-gate", review_gate),
                 ("--escalate-to", escalate_to),
             ] {

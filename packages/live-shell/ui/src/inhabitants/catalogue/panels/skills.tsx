@@ -4,7 +4,7 @@
 // the chain list with each member's evidence ladder: carried is not loaded, and loaded is not used. Every control here is an
 // AIKit operation: enable or disable through the profile, where a composition applies, preview then apply.
 //
-// Its pages: Set (the composition, with an Unused filter) and Capture (making a skill). Where the practice comes from, the skill trees on
+// Its pages: Set (the composition, with an Unused filter), Capture (making a skill) and Refining (refining one). Where the practice comes from, the skill trees on
 // this machine that AIKit does not own, packages for other harnesses and every change AIKit made are AIKit's instrument's (§19.26,
 // ai-kit__ai-kit.tsx), in a pane.
 //
@@ -20,6 +20,13 @@
 // work), steps (each found, with `step:<id>` your request to keep it), proposal (ready · held · accepted · removed), findings (Held
 // for, masked), similar (Resembles), recording (whether Capture records now). Acts: accept (held: a draft member), release, remove.
 // Its tab's light is lit while it records.
+//
+// Refining a skill (manual §19.7, the Refining page): a close whose reason Kev picks a member for drafts one revision of it, which waits
+// here and in Approvals. The page carries AIKit's proposed revisions under `refine.`: proposals (a JSON list {id, source, owner, stale,
+// revision} to choose from), member (the one chosen), owner (aikit · central: who keeps its source), why (JSON [{task, reason}]: the closes
+// that show the reason), revision (proposed) and inUse (the revision in use), test (JSON [{trace, level proposed | in use}]: the takes of
+// the Repeat over Skillset), result (JSON [{task, condition, proposed, inUse}], each met · not met · open), resultWhy (why it reads so),
+// levels (the Repeat's two levels). Acts: run (Test: the session's own Repeat), accept, discard. Its tab's light is lit while one waits.
 import {useState} from 'react'
 import {WoodMark} from '../../sdk/marks'
 import type {WoodSet} from '../../sdk/icons'
@@ -209,12 +216,84 @@ function CaptureBands({p}: {p: ViewProps}) {
 
 // ------------------------------------------------------------------------------------------------ the pages
 
-type PageId = 'set' | 'capture'
-const PAGES: readonly {id: PageId; label: string}[] = [{id: 'set', label: 'Set'}, {id: 'capture', label: 'Capture'}]
+type PageId = 'set' | 'capture' | 'refine'
+const PAGES: readonly {id: PageId; label: string}[] = [{id: 'set', label: 'Set'}, {id: 'capture', label: 'Capture'}, {id: 'refine', label: 'Refining'}]
 const captureOf = (p: ViewProps) => scoped(p, 'capture.')
+const refineOf = (p: ViewProps) => scoped(p, 'refine.')
 const pageOf = (p: ViewProps): PageId => (PAGES.some(x => x.id === p.page) ? p.page as PageId : 'set')
-/** Capture's dot shows while it records (the manual draws it red; a page's light here carries no tone of its own). */
-const pageLight = (v: V, id: PageId): LightState | undefined => (id === 'capture' && boolOf(v, 'capture.recording') === true ? 'lit' : undefined)
+/** Capture's dot shows while it records (the manual draws it red; a page's light here carries no tone of its own); Refining's while a
+ * proposal waits. */
+const pageLight = (v: V, id: PageId): LightState | undefined => (id === 'capture' && boolOf(v, 'capture.recording') === true ? 'lit'
+  : id === 'refine' && has(v, 'refine.member') ? 'lit' : undefined)
+
+// ------------------------------------------------------------------------------------------------ the Refining page
+
+type Outcome = 'met' | 'not met' | 'open'
+const OUTCOME_TONE: Readonly<Record<Outcome, 'green' | 'stall' | undefined>> = {met: 'green', 'not met': 'stall', open: undefined}
+const outcomeOf = (x: unknown): Outcome => (x === 'met' || x === 'not met' ? x : 'open')
+const refRows = <T,>(v: V, key: string, map: (x: Record<string, unknown>) => T | null): T[] | undefined => {
+  if (!has(v, key)) return undefined
+  const raw = json<unknown>(v, key, [])
+  return Array.isArray(raw) ? raw.flatMap(x => { const r = x && typeof x === 'object' ? map(x as Record<string, unknown>) : null; return r ? [r] : [] }) : undefined
+}
+const text = (x: unknown) => (typeof x === 'string' && x ? x : undefined)
+const shortRev = (x: string | undefined) => (x ? x.slice(0, 12) : undefined)
+const leaf = (id: string) => id.split('/').pop() ?? id
+
+function RefineBands({p}: {p: ViewProps}) {
+  const v = p.v, [whyPage, setWhyPage] = useState(0), [resultPage, setResultPage] = useState(0)
+  const proposals = refRows(v, 'proposals', x => (text(x.id) ? {id: x.id as string, stale: x.stale === true, owner: text(x.owner)} : null))
+  const why = refRows(v, 'why', x => (text(x.reason) ? {task: text(x.task), reason: x.reason as string} : null))
+  const takes = refRows(v, 'test', x => (text(x.trace) ? {trace: x.trace as string, level: x.level === 'in use' ? 'in use' : 'proposed'} : null))
+  const result = refRows(v, 'result', x => (text(x.condition) ? {condition: x.condition as string, task: text(x.task), proposed: outcomeOf(x.proposed), inUse: outcomeOf(x.inUse)} : null))
+  const member = strOf(v, 'member'), owner = strOf(v, 'owner'), resultWhy = strOf(v, 'resultWhy'), levels = strOf(v, 'levels')
+  const none = st(p, 'member').disabled
+  const whyRows: RowItem[] | undefined = why?.map((x, i) => ({id: `w${i}`, name: x.reason, light: 'lit', tone: 'stall', note: x.task ? leaf(x.task) : undefined,
+    does: x.task ? `The close of ${x.task}, and its reason.` : 'A close, and its reason.'}))
+  const takeRows: RowItem[] | undefined = takes?.map(x => ({id: x.trace, name: leaf(x.trace), light: 'lit', tone: x.level === 'proposed' ? 'accent' : 'value', note: x.level,
+    does: x.level === 'proposed' ? 'A take that ran under the proposed revision.' : 'A take of the same Repeat that ran under the revision in use.'}))
+  const resultRows: RowItem[] | undefined = result?.map((x, i) => ({id: `r${i}`, name: x.condition, light: x.proposed === 'open' ? 'unknown' : 'lit',
+    tone: OUTCOME_TONE[x.proposed], note: `${x.proposed} · ${x.inUse}`, does: `Proposed: ${x.proposed}. In use: ${x.inUse}.`, why: x.proposed === 'open' ? resultWhy : undefined}))
+  return <>
+    <Band>
+      <Section label="Member" width={160}>
+        <Chooser {...st(p, 'member')} wide label="Member" does="The member the proposal changes. Each proposed revision waits here and in Approvals."
+          value={member ?? ''} options={(proposals ?? []).map(x => ({value: x.id, label: leaf(x.id), why: x.stale ? 'Drafted against a revision no longer in use.' : undefined}))}
+          onChange={x => p.set('member', x)} />
+        <div className="ref-pair">
+          <Readout label="source" does="Who keeps the member's source: AIKit, or Central for a Control skill." value={owner === 'central' ? 'Central' : owner === 'aikit' ? 'AIKit' : undefined} />
+          <Readout label="waiting" does="The proposed revisions that wait." value={proposals?.length} tone="accent" />
+        </div>
+      </Section>
+      <Section label="Why" width={290}>
+        <Rows label="Why" does="The closes that show the reason, each with its reason." why={none ?? 'No reading of the closes.'} items={whyRows} size={4} page={whyPage} onPage={setWhyPage} />
+      </Section>
+      <Section label="Revision" width={124}>
+        <Readout label="proposed" does="The proposed revision. Press to copy it." value={shortRev(strOf(v, 'revision'))} copy={strOf(v, 'revision')} tone="accent" />
+        <Readout label="in use" does="The revision in use, which stays until you accept." value={shortRev(strOf(v, 'inUse'))} copy={strOf(v, 'inUse')} />
+      </Section>
+    </Band>
+    <Band>
+      <Section label="Test" width={168}>
+        <Rows label={takes ? `Takes · ${takes.length}` : 'Takes'} does="The takes that ran under the proposed revision, beside the takes that ran under the revision in use (Repeat, Variable: Skillset)."
+          why={none ?? 'No reading of the takes.'} items={takeRows} size={3} />
+        <Readout label="levels" does={`The Repeat's levels: the set with the proposed revision, beside the set as it stands${levels ? ` (${levels})` : ''}. Press to copy them.`}
+          value={levels ? levels.split(' · ').length : undefined} copy={levels} />
+        <Action {...st(p, 'run')} label="Test" does="Runs the task's own Repeat over Skillset: the set with the proposed revision, beside the set as it stands." onPress={() => p.set('run', true)} />
+      </Section>
+      <Section label="Result" width={290}>
+        <Rows label="Result · proposed · in use" does="What each take answered to the task's Success conditions, for each condition and level: met, not met or open."
+          why={none ?? 'No reading of the result.'} items={resultRows} size={3} page={resultPage} onPage={setResultPage} />
+        {resultWhy && <p className="ref-doc-lead" data-i={`Result|${resultWhy}`}>{resultWhy}</p>}
+      </Section>
+      <Section label="Answer" width={92}>
+        <Action {...st(p, 'accept')} hold label="Accept" does="Keeps the proposal as the member's next revision. AIKit records the change, and History can take it back."
+          onPress={member ? () => p.set('accept', member) : undefined} />
+        <Action {...st(p, 'discard')} label="Discard" does="Drops the proposal. The revision in use stays." onPress={member ? () => p.set('discard', member) : undefined} />
+      </Section>
+    </Band>
+  </>
+}
 
 function SetBands({p}: {p: ViewProps}) {
   // The rack's picture is its chain list (§16.12): expanded above the chain, where the bands stand side by side, it stands first (§16.9).
@@ -248,7 +327,7 @@ function SkillsWhole({p}: {p: ViewProps}) {
   const page = pageOf(p)
   return <Panel title={strOf(p.v, 'set') ?? 'Skillset rack'} mark={headMark(p.v)} view="whole" rack light={light(p.v, p.owner)} onFold={p.nav.fold} onFull={p.nav.full}
     pages={PAGES.map(x => ({id: x.id, label: x.label, light: pageLight(p.v, x.id)}))} page={page} onPage={p.setPage}>
-    {page === 'capture' ? <CaptureBands p={captureOf(p)} /> : <SetBands p={p} />}
+    {page === 'capture' ? <CaptureBands p={captureOf(p)} /> : page === 'refine' ? <RefineBands p={refineOf(p)} /> : <SetBands p={p} />}
   </Panel>
 }
 
@@ -277,6 +356,17 @@ function SetDoc({v}: {v: V}) {
   </>
 }
 
+/** The gallery's sample of the Refining page; the views never read it — AIKit's proposals arrive on `refine.`. */
+const REFINE_SAMPLE = {
+  proposals: JSON.stringify([{id: 'skill/central/docs-methodology', source: 'central-core', owner: 'aikit', stale: false, revision: '9c41e2a07b3d5f18'}]),
+  member: 'skill/central/docs-methodology', owner: 'aikit', revision: '9c41e2a07b3d5f18', inUse: '4e17b0c2d9a86f35', levels: 'docs+skill/central/docs-methodology · docs',
+  why: JSON.stringify([{task: 'task:plan-release', reason: 'Not met: the plan names each gate by its command'}, {task: 'task:write-manual', reason: 'The return names a skill the events never show'}]),
+  test: JSON.stringify([]),
+  result: JSON.stringify([{task: 'task:plan-release', condition: 'Not met: the plan names each gate by its command', proposed: 'open', inUse: 'open'},
+    {task: 'task:write-manual', condition: 'The return names a skill the events never show', proposed: 'open', inUse: 'open'}]),
+  resultWhy: 'Open: no take has run under the proposed revision yet. Press Test to run the task\'s own Repeat over Skillset.',
+}
+
 // The light reads the owner alone; hollow while it has not said.
 const light = (v: V, owner?: V) => (strOf(owner ?? v, 'light') ?? 'unknown') as LightState
 const short = (v: V) => { const set = strOf(v, 'set'); return set === undefined ? NONE : set.split(':')[1] ?? set }
@@ -296,13 +386,18 @@ export const skills: DesignedDevice = {
     // What has never been used.
     unused: JSON.stringify(['architecture-development', 'evidence-led-repair', 'diagram-authoring', 'projection-authoring', 'ui-mockup-authoring']), unusedOnly: false,
     // The Capture page: the Capture skill's own sample, under `capture.`.
-    ...prefixed('capture.', captureSkill.defaults)},
+    ...prefixed('capture.', captureSkill.defaults),
+    // The Refining page: one proposed revision of a member, its closes and its untested Result, under `refine.`.
+    ...prefixed('refine.', REFINE_SAMPLE)},
   fixtures: {'The blade': {marks: 'blade'}, 'The pen': {marks: 'pen'},
     'Unused only': {unusedOnly: true},
     'Capturing, held for a secret': {'capture.recording': true, ...prefixed('capture.', captureSkill.fixtures?.Held ?? {})},
+    'A refinement tested': prefixed('refine.', {...REFINE_SAMPLE, test: JSON.stringify([{trace: 'takes:own:1:trial:0', level: 'proposed'}, {trace: 'takes:own:1:trial:1', level: 'in use'}]),
+      resultWhy: 'Open: the takes ran, but no take answered a Success condition.'}),
     'No readings': {light: undefined, set: undefined, scope: undefined, profile: undefined, compose: undefined, revision: undefined,
       author: undefined, members: undefined, sets: undefined, profiles: undefined, unused: undefined, unusedOnly: undefined,
-      ...prefixed('capture.', captureSkill.fixtures?.['No readings'] ?? {})}},
+      ...prefixed('capture.', captureSkill.fixtures?.['No readings'] ?? {}),
+      ...prefixed('refine.', Object.fromEntries(Object.keys(REFINE_SAMPLE).map(k => [k, undefined])))}},
 
   folded: p => <Folded title={short(p.v)} light={light(p.v, p.owner)} readings={[`${reach(p.v, 5) === undefined ? NONE : reach(p.v, 5)} loaded`]} onUnfold={p.nav.unfold} />,
 

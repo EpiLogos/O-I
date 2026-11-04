@@ -20,10 +20,13 @@
 // about, not a command: Approve and Deny then answer in those words. A review carries the attempt's return set against what it was for (Factory's attempt reading and build
 // view): {criteria: [{text, state satisfied | unsatisfied | indeterminate}], claims: [{statement, evidence}], requests: [{question}],
 // artefacts, evidence, receipt (Central linked a receipt to the Return), outputs}. A recognition carries the Run's return:
-// {run, course, summary, recognised?: {at}} (the journey reading's returns and recognitions).
+// {run, course, summary, recognised?: {at}} (the journey reading's returns and recognitions). A proposal that is a skill's proposed revision
+// (§19.7 "The proposal waits in Approvals, and in the page") carries `refinement`: {member, owner, stale, revision, inUse, why: [{task,
+// reason}], result: [{condition, proposed, inUse}] (met · not met · open), resultWhy}; the Review page reads its Result for each condition.
 // Answers, each its own key set to the item's id, by kind:
 //   a proposal: approve (Central's projectcentral.source.return_accept, held), changes (projectcentral.source.return_comment), reject
-//     (Deny; no owner operation declines a return yet, held);
+//     (Deny; no owner operation declines a return yet, held); a skill's proposed revision: refineAccept (Accept, held) and refineDiscard
+//     (Discard), the Refining page's own;
 //   a request: allowOnce (Approve: the harness's consent, allow once, held), deny (reject once, held), open (where it belongs: a run in
 //     Factory, a Day in Central, an agent in Messages);
 //   a review: confirm (factory_owner AttemptReceiving, held), reviewChanges (Changes), collect (Workcell's collect, which no kernel route
@@ -76,6 +79,9 @@ type Criterion = {readonly text: string; readonly state: 'satisfied' | 'unsatisf
 interface Review {readonly criteria: readonly Criterion[]; readonly claims: readonly {statement: string; evidence: number}[]; readonly requests: readonly string[]
   readonly artefacts?: number; readonly evidence?: number; readonly receipt?: boolean; readonly outputs?: number}
 interface Recognition {readonly run?: string; readonly course?: string; readonly summary?: string; readonly recognisedAt?: string}
+type Outcome = 'met' | 'not met' | 'open'
+interface Refinement {readonly member: string; readonly revision?: string; readonly inUse?: string; readonly owner?: string; readonly stale: boolean
+  readonly why: readonly {task?: string; reason: string}[]; readonly result: readonly {condition: string; proposed: Outcome; inUse: Outcome}[]; readonly resultWhy?: string}
 interface Item {
   readonly id: string
   readonly kind?: Kind
@@ -97,6 +103,8 @@ interface Item {
   readonly recognition?: Recognition
   /** A decision's own answers, in its owner's words: Approve's (allowOnce) and Deny's. Absent: a request to run something. */
   readonly options?: {readonly allowOnce?: string; readonly deny?: string}
+  /** A skill's proposed revision (§19.7), answered Accept or Discard. */
+  readonly refinement?: Refinement
 }
 
 const word = (x: unknown): string | undefined => (typeof x === 'string' && x.length > 0 ? x : undefined)
@@ -116,6 +124,16 @@ function optionsOf(x: unknown): Item['options'] {
   const r = rec(x)
   return r && (word(r.allowOnce) || word(r.deny)) ? {allowOnce: word(r.allowOnce), deny: word(r.deny)} : undefined
 }
+const outcome = (x: unknown): Outcome => (x === 'met' || x === 'not met' ? x : 'open')
+function refinementOf(x: unknown): Refinement | undefined {
+  const r = rec(x)
+  if (!r || !word(r.member)) return undefined
+  const list = (y: unknown) => (Array.isArray(y) ? y.map(rec).filter((z): z is Record<string, unknown> => !!z) : [])
+  return {member: r.member as string, revision: word(r.revision), inUse: word(r.inUse), owner: word(r.owner), stale: r.stale === true,
+    why: list(r.why).flatMap(w => (word(w.reason) ? [{task: word(w.task), reason: w.reason as string}] : [])),
+    result: list(r.result).flatMap(c => (word(c.condition) ? [{condition: c.condition as string, proposed: outcome(c.proposed), inUse: outcome(c.inUse)}] : [])),
+    resultWhy: word(r.resultWhy)}
+}
 function recognitionOf(x: unknown): Recognition | undefined {
   const r = rec(x)
   return r ? {run: word(r.run), course: word(r.course), summary: word(r.summary), recognisedAt: word(rec(r.recognised)?.at)} : undefined
@@ -133,7 +151,7 @@ function queueOf(v: V): Item[] | undefined {
     rows.push({id: word(o.id) ?? `item:${n}`, kind: KINDS.includes(o.kind as Kind) ? o.kind as Kind : undefined, who: word(o.who), text: typeof o.text === 'string' ? o.text : '',
       where: word(o.where), session: word(o.session), age: typeof o.age === 'number' && Number.isFinite(o.age) && o.age >= 0 ? o.age : undefined, flag: word(o.flag), urgent: o.urgent === true,
       diff: Array.isArray(o.diff) ? o.diff.filter((l): l is string => typeof l === 'string') : undefined, denied: o.state === 'denied', by: word(o.by), opened: o.opened === true,
-      review: reviewOf(o.review), recognition: recognitionOf(o.recognition), options: optionsOf(o.options)})
+      review: reviewOf(o.review), recognition: recognitionOf(o.recognition), options: optionsOf(o.options), refinement: refinementOf(o.refinement)})
   }
   return rows
 }
@@ -160,8 +178,9 @@ const countText = (v: V) => { const n = waitingCount(v); return n === undefined 
 /** The item the queue has chosen: the one named by `pick`, else the first that waits. */
 const pickedOf = (v: V, list: Item[] | undefined) => list?.find(i => i.id === strOf(v, 'pick')) ?? list?.find(i => !i.denied) ?? list?.[0]
 /** The review or recognition the Review page shows: the chosen item when it is one, else the first that waits. */
+const reviewed = (i: Item) => i.kind === 'review' || i.kind === 'recognition' || !!i.refinement
 const reviewedOf = (v: V) => { const all = queueOf(v), chosen = all?.find(i => i.id === strOf(v, 'pick'))
-  return chosen && (chosen.kind === 'review' || chosen.kind === 'recognition') ? chosen : all?.find(i => !i.denied && (i.kind === 'review' || i.kind === 'recognition')) }
+  return chosen && reviewed(chosen) ? chosen : all?.find(i => !i.denied && reviewed(i)) }
 /** A request that has waited as long as the Wait set on its agent's Scope counts as unanswered. A proposal, a review and a recognition have no deadline. */
 const isPast = (i: Item, wait: number | undefined) => !i.denied && i.kind === 'request' && wait !== undefined && i.age !== undefined && i.age >= wait
 const ink = (i: Item, wait: number | undefined) => (i.denied ? 'var(--text-faint)' : i.urgent ? 'var(--rec)' : isPast(i, wait) ? 'var(--stall)' : 'var(--dp-value)')
@@ -265,6 +284,9 @@ function answers(p: ViewProps, item: Item | undefined, short?: boolean): ReactNo
   }
   const open = <Action key="open" {...st(p, 'open')} label="Open" does="Opens the item where it belongs: a run in Factory, a Day in Central, an agent in Messages. Marks it opened here; its owner is told nothing."
     disabled={st(p, 'open').disabled ?? why} onPress={item ? () => { p.set('pick', item.id); p.set('open', item.id) } : undefined} />
+  if (item?.refinement) return [act('refineAccept', 'Accept', 'Keeps the proposal as the member\'s next revision. AIKit records the change, and History can take it back.', true,
+    item.refinement.stale ? 'Drafted against a revision no longer in use: Discard it.' : undefined),
+    act('refineDiscard', 'Discard', 'Drops the proposal. The revision in use stays.'), ...(short ? [] : [open])]
   if (item?.kind === 'request') return [act('allowOnce', item.options?.allowOnce ?? 'Approve', item.options ? 'Answers the question so. Its owner takes the answer.' : 'Approves the request. Nothing else is allowed by it.', true),
     act('deny', item.options?.deny ?? 'Deny', item.options ? 'Answers the question so. Its owner takes the answer.' : 'Declines the request. Its author is told.', true), open]
   if (item?.kind === 'review') return short ? [open] : [act('confirm', 'Confirm', 'The attempt stands. Read the conditions and the claims first.', true), act('reviewChanges', 'Changes', 'Asks for another attempt. Say what to change in the thread.'), open]
@@ -321,6 +343,17 @@ function ReviewWell({item, w, h}: {item: Item | undefined; w: number; h: number}
       <text x={w / 2} y={90} className="dp-ink-dim" textAnchor="middle">{r?.course ?? NONE}</text>
       {(r?.summary ?? '').match(/.{1,34}(\s|$)/g)?.slice(0, 3).map((line, i) => <text key={i} x={w / 2} y={108 + i * 11} className="dp-axis" textAnchor="middle">{line.trim()}</text>)}
     </Display> }
+  if (item.refinement) { const rf = item.refinement, y = (i: number) => 32 + i * 14
+    const box = (x: number, yy: number, o: Outcome) => <g>
+      <rect x={x} y={yy - 5} width={9} height={9} fill={o === 'met' ? 'var(--dp-value)' : 'none'} stroke={o === 'not met' ? 'var(--stall)' : 'var(--dp-value)'} strokeDasharray={o === 'open' ? '2 1.5' : undefined} />
+      {o === 'not met' && <path d={`M${x + 1} ${yy - 4}l7 7m0 -7l-7 7`} stroke="var(--stall)" strokeWidth={1.1} />}
+    </g>
+    return <Display w={w} h={h} label="Result" corner={`${rf.result.filter(c => c.proposed === 'met').length}/${rf.result.length} met`}
+      does="Each condition the revision touches, a box for each level: the proposed revision, then the revision in use. Filled where met, crossed where not, dashed where open.">
+      <text x={8} y={18} className="dp-axis">proposed · in use</text>
+      {rf.result.slice(0, 7).map((c, i) => <g key={i} data-i={`${c.condition}|Proposed: ${c.proposed}. In use: ${c.inUse}.`}>{box(10, y(i), c.proposed)}{box(24, y(i), c.inUse)}</g>)}
+      {!rf.result.length && <text x={10} y={y(0) + 3} className="dp-ink-dim">No condition is named</text>}
+    </Display> }
   const rv = item.review, rowY = (i: number) => 32 + i * 14
   return <Display w={w} h={h} label="Review" corner={rv ? `${rv.criteria.filter(c => c.state === 'satisfied').length}/${rv.criteria.length} met` : NONE}
     does="Each success condition a box: filled where met, crossed where not, hollow where open. Each claim a box: solid with evidence, dashed without.">
@@ -343,7 +376,11 @@ function ReviewWell({item, w, h}: {item: Item | undefined; w: number; h: number}
 function ReviewBands({p}: {p: ViewProps}) {
   const item = reviewedOf(p.v), rv = item?.review, rg = item?.recognition, [page, setPage] = useState(0)
   const met = rv?.criteria.filter(c => c.state === 'satisfied').length, unmet = rv?.criteria.some(c => c.state === 'unsatisfied')
+  const rf = item?.refinement
   const rows: RowItem[] = !item ? (queueOf(p.v) ? [{id: 'none', name: 'No review or recognition waits', light: 'dark'}] : unreadRows('No reading of the queue.'))
+    : rf ? [...rf.result.map((c, i) => ({id: `r${i}`, name: c.condition, light: (c.proposed === 'open' ? 'unknown' : 'lit') as LightState,
+        tone: c.proposed === 'not met' ? 'stall' as const : 'value' as const, note: `${c.proposed} · ${c.inUse}`, why: c.proposed === 'open' ? rf.resultWhy : undefined})),
+      ...rf.why.map((w, i) => ({id: `w${i}`, name: w.reason, light: 'lit' as LightState, tone: 'accent' as const, note: w.task ?? 'a close'}))]
     : item.kind === 'recognition' ? [{id: 'ret', name: rg?.summary ?? NONE, light: 'lit', tone: 'value', note: 'return'}]
     : !rv ? unreadRows('No reading of the review.')
     : [...rv.criteria.map((c, i) => ({id: `c${i}`, name: c.text, light: (c.state === 'satisfied' ? 'lit' : 'dark') as LightState, tone: c.state === 'unsatisfied' ? 'stall' as const : 'value' as const,
@@ -353,7 +390,17 @@ function ReviewBands({p}: {p: ViewProps}) {
   return <>
     <Band>
       <Section width={206}><ReviewWell item={item} w={194} h={146} /></Section>
-      {item?.kind === 'recognition'
+      {rf
+        ? <Section label="Refinement" cols={2} grow>
+            <Readout label="member" does="The member the proposal changes." value={rf.member.split('/').pop()} />
+            <Readout label="source" does="Who keeps the member's source: AIKit, or Central for a Control skill." value={rf.owner === 'central' ? 'Central' : rf.owner === 'aikit' ? 'AIKit' : undefined} />
+            <Readout label="proposed" does="The proposed revision." value={rf.revision?.slice(0, 12)} copy={rf.revision} tone="accent" />
+            <Readout label="in use" does="The revision in use, which stays until you accept." value={rf.inUse?.slice(0, 12)} copy={rf.inUse} />
+            <Readout label="result" does={rf.resultWhy ?? 'What each take answered to the task\'s Success conditions.'}
+              value={rf.result.length && rf.result.every(c => c.proposed === 'met') ? 'met' : rf.result.some(c => c.proposed === 'not met') ? 'not met' : 'open'} />
+            <Readout label="closes" does="The closes that show the reason." value={rf.why.length} tone="accent" />
+          </Section>
+        : item?.kind === 'recognition'
         ? <Section label="Recognition" cols={2} grow>
             <Readout label="run" does="The run that returned." value={rg?.run} />
             <Readout label="course" does="The course the run belongs to." value={rg?.course} />
@@ -372,8 +419,8 @@ function ReviewBands({p}: {p: ViewProps}) {
     </Band>
     <Band>
       <Section grow><Rows label={item ? `${kindWord(item.kind)} · ${item.who ?? NONE}` : 'Review'} does="The conditions, the claims and the questions that wait on you, or the run's return." items={rows} size={7} page={page} onPage={setPage} /></Section>
-      <Section label={item?.kind === 'recognition' ? 'Answer' : 'Stand'} width={104}>
-        {item?.kind !== 'recognition' && <Action {...st(p, 'collect')} label="Collect" does="Gathers the outputs where the run kept them." onPress={item ? () => p.set('collect', item.id) : undefined} disabled={st(p, 'collect').disabled ?? (item ? undefined : 'No review waits.')} />}
+      <Section label={item?.kind === 'recognition' || rf ? 'Answer' : 'Stand'} width={104}>
+        {item?.kind !== 'recognition' && !rf && <Action {...st(p, 'collect')} label="Collect" does="Gathers the outputs where the run kept them." onPress={item ? () => p.set('collect', item.id) : undefined} disabled={st(p, 'collect').disabled ?? (item ? undefined : 'No review waits.')} />}
         {answers(p, item)}
       </Section>
     </Band>
@@ -419,7 +466,11 @@ function ApprovalsPane({p}: {p: ViewProps}) {
           {item.kind === 'request' && item.where && (item.options ? <p className="ap-note" aria-label="What it is about">About {item.where}.</p>
             : <pre className="ap-cmd" aria-label="What it asks">{item.where}</pre>)}
           {item.kind === 'request' && <p className="ap-note" data-flagged={item.flag || item.urgent ? 'true' : undefined}>{item.urgent ? 'Urgent.' : item.flag ? `Flagged: ${item.flag}.` : 'Not flagged.'}</p>}
-          {item.kind === 'proposal' && <pre className="ap-diff" aria-label="Diff">
+          {item.refinement && <ul className="ap-review" aria-label="Result">
+            {item.refinement.result.map((c, i) => <li key={`r${i}`} data-state={c.proposed === 'met' ? 'satisfied' : c.proposed === 'not met' ? 'unsatisfied' : 'indeterminate'}>{c.condition}<span>{c.proposed} · {c.inUse}</span></li>)}
+          </ul>}
+          {item.refinement?.resultWhy && <p className="ap-note">{item.refinement.resultWhy}</p>}
+          {item.kind === 'proposal' && !item.refinement && <pre className="ap-diff" aria-label="Diff">
             {item.diff === undefined ? 'No reading of the diff.' : item.diff.map((line, n) => <span key={n} data-d={line.startsWith('+') ? 'add' : line.startsWith('-') ? 'del' : undefined}>{line || ' '}{'\n'}</span>)}
           </pre>}
           {item.kind === 'review' && (item.review ? <ul className="ap-review">
@@ -433,6 +484,9 @@ function ApprovalsPane({p}: {p: ViewProps}) {
               {paneButton(p, item, 'allowOnce', item.options?.allowOnce ?? 'Approve', item.options ? 'Answers the question so.' : 'Approves the request.')}
               {paneButton(p, item, 'deny', item.options?.deny ?? 'Deny', item.options ? 'Answers the question so.' : 'Declines the request. Its author is told.')}
               {paneButton(p, item, 'open', 'Open', 'Opens it where it belongs.')}
+            </> : item.refinement ? <>
+              {paneButton(p, item, 'refineAccept', 'Accept', 'Keeps the proposal as the member\'s next revision; History can take it back.')}
+              {paneButton(p, item, 'refineDiscard', 'Discard', 'Drops the proposal. The revision in use stays.')}
             </> : item.kind === 'proposal' ? <>
               {paneButton(p, item, 'approve', 'Approve', 'The change lands, with a receipt.')}
               {paneButton(p, item, 'changes', 'Changes', 'Asks for a different result. Say what to change in the thread.')}
@@ -472,6 +526,14 @@ const sampleQueue = (declined?: boolean) => JSON.stringify([
   {id: 'req:rm', kind: 'request', who: 'Kite', where: 'rm -rf desktop/cradle/expressions-app/dist', text: 'Delete the app\'s build output', session: 'app root', age: 20000, flag: 'recursive delete',
     ...(declined ? {state: 'denied', by: 'no answer'} : {})},
 ])
+/** A skill's proposed revision waiting beside them (§19.7 "The proposal waits in Approvals, and in the page"), as AIKit lists it, its takes run. */
+const REFINEMENT_ROW = {id: 'refine:skill/central/docs-methodology', kind: 'proposal', who: 'AIKit', where: 'skill/central/docs-methodology',
+  text: 'A proposed revision of skill/central/docs-methodology', age: 600,
+  refinement: {member: 'skill/central/docs-methodology', owner: 'aikit', stale: false, revision: '9c41e2a07b3d5f18', inUse: '4e17b0c2d9a86f35',
+    why: [{task: 'task:plan-release', reason: 'Not met: the plan names each gate by its command'}],
+    result: [{condition: 'Not met: the plan names each gate by its command', proposed: 'open', inUse: 'open'}],
+    resultWhy: 'Open: the takes ran, but no take answered a Success condition.'}}
+const refinementQueue = () => JSON.stringify([...JSON.parse(sampleQueue()) as unknown[], REFINEMENT_ROW])
 
 export const design: DesignedDevice = {
   id: 'software-factory:approvals',
@@ -485,6 +547,7 @@ export const design: DesignedDevice = {
     'A run returned': {pick: 'rcg:run-12'},
     'Urgent only': {show: 'urgent', pick: 'req:deploy'},
     'Declined when nobody answered': {noAnswer: 'deny', queue: sampleQueue(true), pick: 'req:rm', desktop: 'refused'},
+    'A skill refinement': {queue: refinementQueue(), pick: REFINEMENT_ROW.id},
     'No readings': Object.fromEntries(['light', 'show', 'order', 'follow', 'desktop', 'wait', 'noAnswer', 'messages', 'queue', 'pick'].map(k => [k, undefined])),
   },
 

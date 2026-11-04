@@ -421,6 +421,9 @@ export type AikitReadRequest =
   | {kind:"source-show";id:string}
   /** `aikit source list` (ai-kit#542): `{sources:[each as source show reads it], unreadable:[{id, code, message}]}`. */
   | {kind:"source-list"}
+  /** `aikit source refine list` (O-I manual §19.7): {proposals: [{member, source, owner aikit|central, why [{task_ref, reason}], proposed
+   * {snapshot, revision}, in_use, stale, proposed_at_unix_seconds, tests [{trace, beside, now_ref?}]}]}. */
+  | {kind:"refinement-list"}
   | {kind:"collate";all?:boolean}
   /** `aikit init` (discovery only): `{roots:[{label, path, skills, dead_symlinks, missing_frontmatter, problems, ownership, procedure?,
    * generation?}], root_count, total_skills, total_problems, npx_skills}` — the skill roots on this computer and who owns each: `ownership`
@@ -475,6 +478,10 @@ export type AikitWriteRequest =
   /** `aikit source sync|rollback ID`; `aikit source promote ID [--trust] [--trust-skill C]…`. */
   | {kind:"source-sync"|"source-rollback";id:string}
   | {kind:"source-promote";id:string;trust?:boolean;trust_skills?:string[]}
+  /** `aikit source refine accept|discard MEMBER` (O-I manual §19.7): Accept keeps a member's proposed revision as its next (History's
+   * Rollback takes it back), Discard drops it; answers {member, revision, …} and {discarded, …}. AIKit refuses a Control skill's
+   * (Central keeps its source) and a proposal drafted against a revision no longer in use, in its words. */
+  | {kind:"refinement-accept"|"refinement-discard";member:string}
   /** `aikit decide invoke --instrument I --request-file - [--agent-session S]` (O-I #843, Factory's Fill heads): the cell's own words and
    * the heads it has chosen (`aikit.instrument-fill-request/v1`) on stdin; answers `aikit.instrument-fill/v1`, the picks as evidence. */
   | {kind:"decide-fill";instrument:string;request:unknown;agent_session?:string|null}

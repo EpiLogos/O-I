@@ -38,15 +38,18 @@
 // central/devices/sourceReturnComment.ts withReturnComments; unwrapped, it stands disabled saying so.
 // Factory's unit decisions (lane W9, unitDecisions.ts) stand in the queue as requests: the questions the shown session's Runs wait on, each
 // answered as the person — Allow once answers Resume bounded work, Deny answers Cancel bounded work — through Central's receiving Review of
-// the question Factory put to Central; Allow always is refused (a unit decision takes one answer). Pure, apart from the view holds
-// (designBindings.ts holdView).
+// the question Factory put to Central; Allow always is refused (a unit decision takes one answer). A skill's proposed revision (O-I 772,
+// manual §19.7 "The proposal waits in Approvals, and in the page") stands as a proposal with its Result for each condition, answered
+// Accept or Discard through the Refining page's own AIKit verbs (aikit_write refinement-accept · refinement-discard; designBindings.ts
+// refinementsOf, refinementAcceptWhy). Pure, apart from the view holds (designBindings.ts holdView).
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
 import type {EncounterReading, NativePermission, PermissionDecision} from '../../../../../../desktop/cradle/src/encounter/client'
 import {describePermission} from '../../../../../../desktop/cradle/src/agent/chat/PermissionCard'
 import type {AgentSessionTrack} from '../agentRunModel'
 import type {SourceReturnEntry} from '../../../../../../desktop/cradle/src/kernel/types'
-import {holdView, viewHolds, type ChainHolds} from './designBindings'
+import {REFINE_WRITES, holdView, refinementAcceptWhy, refinementResult, refinementsOf, viewHolds, type ChainHolds, type Refinement} from './designBindings'
+import type {AikitAnswer} from './aikitPages'
 import {familyFaceDevice} from './mainTrackBindings'
 import {pendingPermissions, verbStanding} from './threadBinding'
 import {unitAnswer, unitRows, waitingDecisions, type UnitDecisionsRead} from './unitDecisions'
@@ -386,7 +389,26 @@ export interface ApprovalsInput {
   readonly units?: UnitDecisionsRead | null
   /** The person Central's personal anchor names: only the unit's resolver answers a unit decision. */
   readonly person?: string | null
+  /** AIKit's proposed revisions (`aikit source refine list`, the kernel's aikit_read refinement-list); absent: not read here. */
+  readonly refinements?: AikitAnswer | null
 }
+
+/** A proposed revision's id in the queue. */
+const REFINE_ROW = 'refine:'
+/** AIKit's proposed revisions as the queue's proposals: {id refine:<member>, kind proposal, who AIKit, text, where (the member), age
+ * (seconds since AIKit kept it), refinement {member, owner, stale, revision, inUse, why, result, resultWhy}}. Pure. */
+export function refinementRows(refinements: readonly Refinement[], nowUnixMs: number | undefined): Record<string, Value>[] {
+  return refinements.map(row => {
+    const result = refinementResult(row)
+    return {id: `${REFINE_ROW}${row.member}`, kind: 'proposal', who: 'AIKit', text: `A revision of ${row.member}, for the closes that show its reason`,
+      where: row.member, ...(row.proposedAt !== null && nowUnixMs ? {age: Math.max(0, Math.round(nowUnixMs / 1000 - row.proposedAt))} : {}),
+      ...(row.stale ? {flag: 'drafted against a revision no longer in use'} : {}),
+      refinement: {member: row.member, owner: row.owner, stale: row.stale, revision: row.proposed.revision, inUse: row.inUse?.revision ?? null,
+        why: row.why.map(item => ({...item})), result: result.rows.map(item => ({...item})), resultWhy: result.why}} as unknown as Record<string, Value>
+  })
+}
+const refinementsRead = (input: ApprovalsInput): Refinement[] | null =>
+  (input.refinements?.status === 'answered' ? refinementsOf(input.refinements.value) : null)
 
 /** The tool a consent request names (its tool call's kind or title). */
 function toolOf(request: NativePermission): string | undefined {
@@ -440,8 +462,10 @@ export function approvalsValues(input: ApprovalsInput): Values {
   const requests = input.session && input.encounter ? queueRows(pendingPermissions(input.encounter), input.session) : null
   const proposals = input.returns ? proposalRows(input.returns.entries, input.tracks, input.nowUnixMs) : null
   const units = input.units ? unitRows(input.units, input.session, input.nowUnixMs) : null
-  if (requests || proposals || units) {
-    const rows = [...(proposals ?? []), ...(units ?? []), ...(requests ?? [])]
+  const read = refinementsRead(input)
+  const refined = read ? refinementRows(read, input.nowUnixMs) : null
+  if (requests || proposals || units || refined) {
+    const rows = [...(proposals ?? []), ...(refined ?? []), ...(units ?? []), ...(requests ?? [])]
     values.queue = JSON.stringify(rows)
     values.light = rows.length ? 'lit' : 'dark'
   }
@@ -460,7 +484,13 @@ export interface ApprovalsPorts {
   /** Answer one unit decision's question through Central's receiving Review (the kernel's `receiving` op, the person's press), in the
    * register its return belongs to. Absent: no carrier stands. */
   readonly answerUnit?: (project: string | null, review: {kind: 'review'; return_ref: string; expected_return_revision: string; disposition: 'answered'; answer: string}) => Promise<unknown>
+  /** Answer a skill's proposed revision through AIKit (aikit_write refinement-accept · refinement-discard), the Refining page's own verbs.
+   * Absent: no carrier stands. */
+  readonly refine?: (request: {kind: string; member: string}) => Promise<unknown>
 }
+
+/** Accept and Discard on a refinement where no carrier stands. */
+export const REFINE_UNWIRED = 'The kernel carrier is unavailable here, so AIKit cannot be asked (aikit_write refinement-accept · refinement-discard).'
 
 /** The harness's own choice for an answer: allow once, allow always, or reject (PermissionCard.tsx reads the same kinds). */
 function choiceFor(request: NativePermission, answer: 'allowOnce' | 'allowAlways' | 'deny'): PermissionDecision | null {
@@ -497,6 +527,8 @@ export function approvalsBinding(input: ApprovalsInput, ports: ApprovalsPorts, i
     ? input.returnsRefused.map(item => `${item.project}: ${item.error}`).join('; ') : null
   if (absent || unread) standing.queue = {disabled: absent ?? `Central's returned work of these projects was not read: ${unread}`}
   for (const [key, why] of Object.entries(APPROVALS_ANSWERS_REFUSED)) standing[key] = {disabled: why}
+  if (!ports.refine) for (const key of ['refineAccept', 'refineDiscard']) standing[key] = {disabled: REFINE_UNWIRED}
+  const refinements = refinementsRead(input)
   return {
     // `id` is the chain's own (Factory's Main track, or Central's: CentralDevices.tsx); the view's settings are the one Approvals'.
     id,
@@ -504,7 +536,7 @@ export function approvalsBinding(input: ApprovalsInput, ports: ApprovalsPorts, i
     standing,
     local: Object.fromEntries(APPROVALS_LOCAL.map(key => [key, (value: Value | undefined) => holdView(APPROVALS_ID, key, value)])),
     writes: key => key === 'allowOnce' || key === 'allowAlways' || key === 'deny' || key === 'approve' || key === 'reject' || key in APPROVALS_REFUSE
-      || key in APPROVALS_ANSWERS_REFUSED,
+      || key in APPROVALS_ANSWERS_REFUSED || key === 'refineAccept' || key === 'refineDiscard',
     write: async (changes: readonly ValueChange[]) => {
       for (const {key, value} of changes) {
         if (key === 'allowOnce' || key === 'allowAlways' || key === 'deny') {
@@ -539,6 +571,17 @@ export function approvalsBinding(input: ApprovalsInput, ports: ApprovalsPorts, i
           const row = input.returns.entries.find(entry => entry.return_ref === value)
           if (!row || (row.status !== 'pending' && row.status !== 'applying')) throw Error('Deny: that proposal waits no more among the returns Central lists now.')
           await ports.reject(row)
+          continue
+        }
+        if (key === 'refineAccept' || key === 'refineDiscard') {
+          // The proposal as AIKit lists it now, answered through the Refining page's own verbs.
+          if (!ports.refine) throw Error(REFINE_UNWIRED)
+          const member = typeof value === 'string' && value.startsWith(REFINE_ROW) ? value.slice(REFINE_ROW.length) : String(value)
+          const row = refinements?.find(item => item.member === member)
+          if (!row) throw Error(`${member}: no proposed revision of ${member} stands in AIKit's list.`)
+          const why = key === 'refineAccept' ? refinementAcceptWhy(row) : null
+          if (why) throw Error(why)
+          await ports.refine({kind: key === 'refineAccept' ? REFINE_WRITES.accept : REFINE_WRITES.discard, member})
           continue
         }
         if (key in APPROVALS_ANSWERS_REFUSED) throw Error(APPROVALS_ANSWERS_REFUSED[key])

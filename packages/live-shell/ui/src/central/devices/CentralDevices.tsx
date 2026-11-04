@@ -76,6 +76,7 @@ import {useAikitRead} from '../../agent/devices/workcellReads'
 import {holdView, useChainHolds, viewHolds} from '../../agent/devices/designBindings'
 import {familyFaceDevice} from '../../agent/devices/mainTrackBindings'
 import {APPROVALS_ID, approvalsBinding} from '../../agent/devices/receiptBindings'
+import {refinementWrite} from '../../agent/devices/ownerRoutes'
 import {observedSessionsOf, returnProjectOf, ROOT_REGISTER, useWorldReturns, worldRegisterOf} from '../../agent/worldScope'
 import {useAgentSessionsOptional} from '../../agent/AgentSessionsProvider'
 import {MAIN_TRACK_REF} from '../../frame/tracks/SessionGrid'
@@ -556,13 +557,19 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   // manual rewrite): the requests Central keeps for personal.notify, Messages' waiting agents and the desktop's notice (railBindings.ts
   // withOwnerRequests), read through the rail's own reader (widgets/railDevices.tsx useOwnerRequests).
   const ownerRequests = useOwnerRequests(transport)
+  // A proposed revision of a skill waits here as on Factory's Main track (§19.7 "Refining a skill"; Approvals is one device, §19.14): AIKit's
+  // `aikit source refine list`, answered with Accept or Discard through the one write the Skillset rack's Refining page presses.
+  const centralRefinements = useAikitRead(transport, {kind: 'refinement-list'})
+  const refineWrite = useMemo(() => refinementWrite(transport), [transport])
   const approvals = useMemo(() => {
     const actions = answerHandle && 'actions' in answerHandle ? answerHandle.actions : undefined
     // Approvals is handed no Gateway and stands no default answer: that answer is the Gateway's, never Approvals' (§19.14; ticket 788).
     const binding = approvalsBinding({session: naraTrack, encounter: answerObserved?.reading ?? null, holds, returns: returned,
-      returnsAbsent: worldReturns.absent, returnsRefused: worldReturns.refusals, tracks: agency.tracks, nowUnixMs: nowUnixMs || Date.now()},
+      returnsAbsent: worldReturns.absent, returnsRefused: worldReturns.refusals, tracks: agency.tracks, nowUnixMs: nowUnixMs || Date.now(),
+      refinements: centralRefinements},
       {...(actions ? {permission: (id, decision) => actions.permission(id, decision)} : {}), approve: row => acceptSourceReturn(transport, returnProjectOf(row, approvalsRegister), row, person),
-        reject: row => rejectSourceReturn(transport, returnProjectOf(row, approvalsRegister), row)},
+        reject: row => rejectSourceReturn(transport, returnProjectOf(row, approvalsRegister), row),
+        ...(refineWrite ? {refine: refineWrite} : {})},
       CENTRAL_APPROVALS_ID)
     // Changes (W6): a comment on the return, in the words written in the thread — the Agent's composer here — through Central's
     // projectcentral.source.return_comment (sourceReturnComment.ts); once Central keeps it, the composer is cleared.
@@ -575,7 +582,8 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
     const requested = withOwnerRequests(commented, {...ownerRequests, nowUnixMs: nowUnixMs || Date.now()}, openNotificationTarget,
       {opened, hold: ids => holdView(APPROVALS_ID, 'opened', openedHold(ids))})
     return requested
-  }, [answerHandle, naraTrack, answerObserved, holds, returned, worldReturns.absent, worldReturns.refusals, agency.tracks, nowUnixMs, transport, person, agentDraft, agentWrite, ownerRequests, approvalsRegister])
+  }, [answerHandle, naraTrack, answerObserved, holds, returned, worldReturns.absent, worldReturns.refusals, agency.tracks, nowUnixMs, transport, person, agentDraft, agentWrite, ownerRequests, approvalsRegister,
+    centralRefinements, refineWrite])
   const others = useMemo(() => centralAgentDevices(), [])
   // Docs (§18.5) on the selected world (pageDevices.ts useDocsDevice, pageBindings.ts docsBinding): the world's account on six tiers on
   // Central's own readings, and the person's presses through Central.

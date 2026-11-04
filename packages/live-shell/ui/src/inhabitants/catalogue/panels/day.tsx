@@ -19,6 +19,9 @@
 // `aikit work continuity closeout verify --json`: each clause continuation-registered | previous-handoff-superseded |
 // learned-material-recorded | deferred-work-registered, pass | fail | skipped, with AIKit's own detail). Verify (`verifyCloseout`)
 // reads it again; the kernel has no route to it yet, so the host stands Verify disabled with that reason.
+// The Patterns move (§18.2: "A pattern whose items point at one skill or method can open a refinement of it (§19.7)"): `patternPoints` is
+// the one skill or method its items point at, a reading, and Refine (`refinePattern`, the member) opens a refinement of it on the Skillset
+// rack's Refining page.
 import {useState} from 'react'
 import {Action, Band, Chooser, Dial, Display, Folded, Panel, Radio, Readout, Section, TextField, Tile, Toggle, type LightState} from '../../sdk/panel'
 import {NONE, boolOf, clock, cradleDocuments, grown, has, json, numOf, on, shown, st, strOf, type DesignedDevice, type ViewProps} from './design'
@@ -144,6 +147,11 @@ function MoveSettings({p, chosen, choose}: {p: ViewProps; chosen: MoveId; choose
       onChange={x => choose(x as MoveId)} />
     <TextField {...st(p, `prompt_${m.id}`)} label="Prompt" does={`What ${m.name} asks of the agent. Change it to make the move yours.`} wide
       value={strOf(p.v, `prompt_${m.id}`) ?? ''} placeholder={NONE} onChange={x => p.set(`prompt_${m.id}`, x)} />
+    {chosen === 'patterns' && <>
+      <Readout label="points at" does="The one skill or method the pattern's items point at." value={strOf(p.v, 'patternPoints')?.split('/').pop()} />
+      <Action {...st(p, 'refinePattern')} label="Refine" does="Opens a refinement of it on the Skillset rack's Refining page (§19.7)."
+        onPress={strOf(p.v, 'patternPoints') ? () => p.set('refinePattern', strOf(p.v, 'patternPoints')) : undefined} />
+    </>}
   </>
 }
 
@@ -255,6 +263,8 @@ export const day: DesignedDevice = {
     prompt_close: "Summarise the day, send what you learned to your knowledge, carry face 5's proposal to tomorrow's face 0.",
     // Readings: when each move last ran today (minutes after midnight; -1 not yet) and what it gave.
     last_tasks: 552, gave_tasks: 4, last_patterns: 870, gave_patterns: 2, last_context: 871, gave_context: 7, last_synthesis: -1, gave_synthesis: 0, last_close: -1,
+    // Reading: the one skill a pattern's items point at.
+    patternPoints: 'skill/central/docs-methodology',
     running_tasks: false, running_patterns: false, running_context: false, running_synthesis: false, running_close: false,
     // Reading: what yesterday's close left behind, as AIKit read it back (O-I's NOW field, 21 Oct).
     closeout: JSON.stringify({verified: false, clauses: [{clause: 'continuation-registered', state: 'pass'}, {clause: 'previous-handoff-superseded', state: 'fail', detail: '63 handoff returns stand open'},
@@ -268,7 +278,7 @@ export const day: DesignedDevice = {
       c2queue: undefined, c3: undefined, c3p: undefined, c4: undefined, c5: undefined,
       ...Object.fromEntries(MOVE_KEYS.filter(k => !k.startsWith('prompt_')).map(k => [k, undefined]))},
     'No readings': Object.fromEntries(['light', 'face', 'view', 'dayStart', 'rollover', 'closeRoutine', 'template', 'src_central', 'src_factory',
-      'src_expressions', 'src_techne', 'src_live', 'date', 'tomorrow', 'tomorrowOpen', 'c0', 'c1', 'c1p', 'c2done', 'c2run', 'c2queue', 'c3', 'c3p', 'c4', 'c5', 'canClose', 'closeout',
+      'src_expressions', 'src_techne', 'src_live', 'date', 'tomorrow', 'tomorrowOpen', 'c0', 'c1', 'c1p', 'c2done', 'c2run', 'c2queue', 'c3', 'c3p', 'c4', 'c5', 'canClose', 'closeout', 'patternPoints',
       ...MOVE_KEYS].map(k => [k, undefined])),
   },
 
