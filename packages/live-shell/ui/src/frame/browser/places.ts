@@ -5,20 +5,24 @@
 //   | Agents   | The agents of your roster, accepted and proposed, with the harnesses and skills they carry.  |
 //   | Machines | Your machines, and the workcells each one holds.                                             |
 //   | Work     | Your projects, each a world with its pages. Add folder… brings in another (§10.11).          |
+//   | Packs    | What you installed together: racks with their agents on their chains, songs, and the practice they carry, such as   |
+//   |          | Ta-Onta (§25.4). Drag a rack onto a track, a song onto a track, as from anywhere else.                               |
 //
 // Each place reads its real owner, through a read the shell already asks (PlaceRows.tsx): You — Central's world disclosure
 // (world_browse), its day surface (files_list at Control/user/day) and the identities the Studio's Nara chain keeps (nara_identity
 // list); Agents — Central's agent profiles (agent_definition roster: accepted and proposed, with their skills) and AIKit's harnesses
 // (aikit harness disclose); Machines — Workcell's status for this machine and its workcell (workcell_status_read) and the machines
-// Workcell declares (workcell machine list); Work — Central's Work projects (world_browse). A place's rows are pure functions of those
+// Workcell declares (workcell machine list); Work — Central's Work projects (world_browse). Packs has no owner that lists what was
+// installed together (O-I #844): AIKit keeps sets and Factory keeps songs, each read in its own place, and no product's read names a pack
+// of them, so the place stands refused, naming the read it waits for (PACKS_WAIT). A place's rows are pure functions of those
 // readings here; every row carries the ref its owner gives the thing, so a row can be put in a collection (collections.ts).
 import type {RootWorld, WorldProject, NativeFileEntry} from '../../../../../../desktop/cradle/src/kernel/types'
 import type {RosterAgent} from '../../../../../../desktop/cradle/src/agency/roster'
 import {civilDateOfDayFile, dayWords} from './rowWords'
 
-export type PlaceId = 'you' | 'agents' | 'machines' | 'work'
+export type PlaceId = 'you' | 'agents' | 'machines' | 'work' | 'packs'
 
-/** The four places, in the manual's order: their names, their hover words, their Info words. */
+/** The five places, in the manual's order: their names, their hover words, their Info words. */
 export const PLACES: readonly {readonly id: PlaceId; readonly label: string; readonly hint: string; readonly info: string}[] = [
   {id: 'you', label: 'You', hint: 'My World, your Days, and the identity you share',
     info: 'You: My World, your Days and the identity you share, from Central and the Studio\'s Nara chain. Select a row to preview it; double-click your world to bring it into today, or a Day to open it. Put any row in a collection from its preview.'},
@@ -28,7 +32,15 @@ export const PLACES: readonly {readonly id: PlaceId; readonly label: string; rea
     info: 'Machines: this machine and the workcell it holds, from Workcell\'s status, then the machines Workcell declares, each with what it may be asked. Select one to preview it; put it in a collection from its preview.'},
   {id: 'work', label: 'Work', hint: 'your projects, each a world with its pages; Add folder… brings in another',
     info: 'Work: your projects in your ground\'s Work, from Central, each a world with its pages. Double-click a world to bring it into today. Add folder… opens Setup\'s Projects step for a folder of your work (§10.11); nothing moves until you accept.'},
+  {id: 'packs', label: 'Packs', hint: 'what you installed together: racks with their agents on their chains, songs, and the practice they carry',
+    info: 'Packs: what you installed together — racks with their agents on their chains, songs, and the practice they carry, such as Ta-Onta. Drag a rack onto a track, a song onto a track, as from anywhere else. No owner lists installed packs yet, so this place says what it waits for; your songs stand under Material › Songs in Factory.'},
 ]
+
+/** What Packs says while no owner lists what was installed together: the plain line, and the read it waits for behind Why. */
+export const PACKS_WAIT = {
+  said: 'No owner lists what you installed together yet, so Packs holds nothing to show. Your songs stand under Material › Songs in Factory.',
+  waitsFor: 'Packs waits for an owner read of installed packs (racks with their agents, songs, and the practice they carry): no aikit, factory or ctrl verb lists one.',
+} as const
 
 /** One row of a place. `ref` is the thing's ref as its owner gives it (what a collection keeps); `kind` is what sort of thing it is. */
 export interface PlaceRow {

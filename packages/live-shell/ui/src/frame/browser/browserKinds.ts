@@ -13,7 +13,7 @@ export const BROWSER_KINDS: readonly {kind: BrowserKind; label: string; hint: st
   {kind: 'instruments', label: 'Instruments', hint: 'to open in a pane'},
   {kind: 'devices', label: 'Devices', hint: 'to put on a chain: drag onto a chain adds'},
   {kind: 'running', label: 'Running', hint: 'running things to work with where they are: drag an agent onto an empty track seats it'},
-  {kind: 'place', label: 'Places', hint: 'where your ground lies: you, your agents, your machines and your work'},
+  {kind: 'place', label: 'Places', hint: 'where your ground lies: you, your agents, your machines, your work and the packs you installed'},
 ]
 
 /** A row body's controls when the one browser holds it: the category it shows, the search, and where its preview goes. */

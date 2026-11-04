@@ -92,7 +92,7 @@ function maskPoints(shape:Shape,text:string,count:number,key:string,print:boolea
  const n=320,c=document.createElement('canvas');c.width=c.height=n;const ctx=c.getContext('2d',{willReadFrequently:true})!;ctx.fillStyle='#fff';
  if(shape==='text'){const glyph=text.trim()||'O';ctx.font=`900 240px ${glyph==='&'?'Georgia':'Arial'}`;const m=ctx.measureText(glyph);const width=m.actualBoundingBoxLeft+m.actualBoundingBoxRight,height=m.actualBoundingBoxAscent+m.actualBoundingBoxDescent;
  ctx.translate(n/2,n/2);ctx.scale((n-10)/Math.max(1,width),(n-10)/Math.max(1,height));ctx.fillText(glyph,(m.actualBoundingBoxLeft-m.actualBoundingBoxRight)/2,(m.actualBoundingBoxAscent-m.actualBoundingBoxDescent)/2);ctx.strokeStyle="#fff";ctx.lineWidth=8;ctx.strokeText(glyph,(m.actualBoundingBoxLeft-m.actualBoundingBoxRight)/2,(m.actualBoundingBoxAscent-m.actualBoundingBoxDescent)/2);
- }else if(shape==='ring'){ctx.beginPath();ctx.arc(n/2,n/2,n*.49,0,Math.PI*2);ctx.arc(n/2,n/2,n*.255,0,Math.PI*2,true);ctx.fill('evenodd');}
+ }else if(shape==='ring'||shape==='torus'){ctx.beginPath();ctx.arc(n/2,n/2,n*.49,0,Math.PI*2);ctx.arc(n/2,n/2,n*.255,0,Math.PI*2,true);ctx.fill('evenodd');}
  else if(shape==='disc'){ctx.beginPath();ctx.arc(n/2,n/2,n*.49,0,Math.PI*2);ctx.fill();}
  else if(shape==='triangle'){ctx.beginPath();ctx.moveTo(n/2,5);ctx.lineTo(n-5,n-5);ctx.lineTo(5,n-5);ctx.closePath();ctx.fill();}
  else ctx.fillRect(1,1,n-2,n-2);

@@ -512,8 +512,8 @@ export interface CompositionTelemetry {
     stationProximity: number; // 0..1
     stations: Array<{ id:string; index:number; name:string; frequencyHz:number; m:number; n:number; color:string; energy?:number; semanticNodeId?:string; affinity?:number }>;
     driver?: {kind:'frequency'|'sweep'|'semanticFocus'|'torus'; bound:boolean; semanticNodeId?:string; anchorId?:string;
-      /** Torus drive (DLW §20.14): every tone driving the plate, whether the torus is silent, and why in words; the eight audible roles and four nodes are absent with their reason. */
-      tonesHz?:number[]; silent?:boolean; reason?:string|null; keySource?:'torus'|'sky'|'manual'; roles?:{standing:'absent'; reason:string}};
+      /** Torus drive (DLW §20.14): every tone driving the plate, whether the torus is silent, and why in words; the eight and the four M2′ reads from the torus (torusObject.ts readRoles). */
+      tonesHz?:number[]; silent?:boolean; reason?:string|null; keySource?:'torus'|'sky'|'manual'; roles?:import('./torusObject').TorusRoles};
   } | null;
 }
 

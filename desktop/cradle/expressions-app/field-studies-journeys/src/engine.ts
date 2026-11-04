@@ -32,6 +32,10 @@ export interface FieldEngineAdapter {
  setTorusPlay?(reading:import('../../src/engine/torusDrive').TorusPlayReading|null):void;
  /** The node the controller offers for the symbols' voices to listen to (DLW §20.2: a symbol's voice carries part of the torus's sound), in the controller's audio context; null while no instrument is open. */
  setTorusTap?(tap:import('./native-field/symbolVoices').TorusTap|null):void;
+ /** The torus's voices that sound, as force points read each tick (O-I 851); null while no instrument is open. */
+ setTorusVoices?(source:(()=>readonly import('../../src/engine/forceRuntime').ForceEmitterState[])|null):void;
+ /** The plate as the body laid flat while the instrument holds the field, and the drive the pulse is tuned to (O-I 851). */
+ plateBody?():{flat:boolean;pulseHz:number|null};
  capture?(width:number,height:number):HTMLCanvasElement;
  withCleanFrame?<T>(copy:()=>T):T;
  inspect?(readParticles?:boolean):unknown;

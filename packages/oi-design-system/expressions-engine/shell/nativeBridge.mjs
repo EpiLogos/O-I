@@ -27,6 +27,7 @@ function checkNativeLimits(s) {
   }
 }
 function shapeOf(e, native) {
+  if (e.shape === "torus") return { kind: "torus", figure: e.torusFigure ?? (native?.kind === "torus" && native.figure !== "plate" ? native.figure : void 0) ?? "torus" };
   if (e.shape === "yantra") return { ...native, kind: "yantra", yantraId: e.yantraId ?? native?.yantraId ?? "anahata" };
   if (e.shape === "cymatic") return { ...native, kind: "cymatic", frequencyHz: e.templateFrequency ?? native?.frequencyHz ?? 396, plateGeometry: e.templateGeometry, dimension: e.templateDimension };
   if (e.shape === "text") return { ...native, kind: "glyph", text: e.text.trim() || "O" };
@@ -176,6 +177,7 @@ function toRenderConfig(s) {
   return s.entryOffset ? { ...config, sequenceOffsetS: s.entryOffset } : config;
 }
 const shellShape = (s) => s.kind === "glyph" ? "text" : s.kind === "primitive" ? s.primitive ?? "disc" : s.kind;
+const torusFigureOf = (s) => s.figure && s.figure !== "plate" ? s.figure : "torus";
 function fromNativeEntity(e) {
   const out = entity(e.name, e.shape.text ?? "", { x: e.x / WORLD_SCALE, y: e.y / WORLD_SCALE, z: e.z / WORLD_SCALE });
   out.id = e.id;
@@ -184,6 +186,7 @@ function fromNativeEntity(e) {
   out.native = clone(e);
   out.scale = e.scale;
   out.shape = shellShape(e.shape);
+  if (e.shape.kind === "torus") out.torusFigure = torusFigureOf(e.shape);
   out.yantraId = e.shape.yantraId;
   out.templateFrequency = e.shape.frequencyHz;
   out.templateGeometry = e.shape.plateGeometry;
@@ -207,6 +210,7 @@ function fromNativeEntity(e) {
     transitionOverride: k.transition !== void 0,
     text: k.shape.text ?? "",
     shape: shellShape(k.shape),
+    ...k.shape.kind === "torus" ? { torusFigure: torusFigureOf(k.shape) } : {},
     yantraId: k.shape.yantraId,
     templateFrequency: k.shape.frequencyHz,
     templateGeometry: k.shape.plateGeometry,

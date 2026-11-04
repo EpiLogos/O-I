@@ -84,7 +84,8 @@ export interface WorldSelection { mode: WorkspaceMode; kind: string; ref: string
 export interface WorldContext {
   world?: WorldRef;
   subject?: { ref?: string; kind?: string; title: string; project?: string };
-  reading?: { ref: string; position?: string };
+  /** The opened reading and the point in it; `title` is the page's own name, which a stop with nothing selected shows. */
+  reading?: { ref: string; position?: string; title?: string };
   selection?: WorldSelection;
   trail?: TrailStop[];
   /** The stop you stand on, once Back, Forward or the Trail has walked the trail (manual §23.5 "the stop you stand on");
@@ -101,18 +102,18 @@ const placeParts = (context: WorldContext) => ({
   world: context.world,
   selection: context.selection && pick(context.selection, ["mode", "kind", "ref", "title", "track"]) as WorldSelection,
   subject: context.subject && pick(context.subject, ["ref", "kind", "title", "project"]) as WorldContext["subject"],
-  reading: context.reading && pick(context.reading, ["ref", "position"]) as WorldContext["reading"],
+  reading: context.reading && pick(context.reading, ["ref", "position", "title"]) as WorldContext["reading"],
 });
 /** The stop you stand on: the book's walked place, else the newest. */
 export const standingOn = (context: WorldContext): number => context.trailAt ?? (context.trail?.length ?? 0) - 1;
 /** The place a move lands on, as a stop, stamped with the move's time: the mode, the world, THE selection, the subject and the
- * reading. It shows THE selection (else the subject, else the reading) and its track or point in the reading. */
+ * reading. It shows THE selection (else the subject, else the reading, by its page's title) and its track or point in the reading. */
 export function stopOf(mode: WorkspaceMode, context: WorldContext, at: number): TrailStop {
   const {world, selection, subject, reading} = placeParts(context);
   const shown = selection ? {surfaceRef: selection.ref, surfaceKind: selection.kind} : subject?.ref ? {surfaceRef: subject.ref, ...(subject.kind ? {surfaceKind: subject.kind} : {})}
     : reading ? {surfaceRef: reading.ref} : {};
   const shownPosition = selection?.track ?? reading?.position;
-  return {mode, label: selection?.title ?? subject?.title ?? MODE_CURATION[mode].label, ...shown, ...(shownPosition !== undefined ? {position: shownPosition} : {}), at,
+  return {mode, label: selection?.title ?? subject?.title ?? reading?.title ?? MODE_CURATION[mode].label, ...shown, ...(shownPosition !== undefined ? {position: shownPosition} : {}), at,
     ...(world ? {world} : {}), ...(selection ? {selection} : {}), ...(subject ? {subject} : {}), ...(reading ? {reading} : {})};
 }
 /** A stop made before stops named their whole place: its thing is the selection it returns to. */
@@ -143,7 +144,7 @@ export function selectOnTrail(context: WorldContext, selection: WorldSelection, 
 /** A point in a reading. When the stop you stand on names that reading, or the thing it is the reading of, the point is where you
  * stand (manual §10.7 "the same point in the reading"): the stop takes it and keeps its time, and no stop is added. Another
  * reading is an occasion change: a move. */
-export function readOnTrail(context: WorldContext, mode: WorkspaceMode, reading: {ref: string; position?: string}, at: number): WorldContext {
+export function readOnTrail(context: WorldContext, mode: WorkspaceMode, reading: NonNullable<WorldContext["reading"]>, at: number): WorldContext {
   const moved = {...context, reading: placeParts({reading}).reading};
   const trail = context.trail ?? [], here = standingOn(context), standingStop = trail[here];
   if (!standingStop || legacyStop(standingStop) || ![standingStop.reading?.ref, standingStop.selection?.ref, standingStop.subject?.ref].includes(reading.ref)) return moveOnTrail(moved, stopOf(mode, moved, at));
@@ -246,7 +247,7 @@ function decodeSubject(given: unknown): WorldContext["subject"] {
 }
 function decodeReading(given: unknown): WorldContext["reading"] {
   const g = given as Record<string, unknown> | undefined;
-  return g && typeof g === "object" && text(g.ref) ? { ref: text(g.ref)!, position: text(g.position) } : undefined;
+  return g && typeof g === "object" && text(g.ref) ? { ref: text(g.ref)!, position: text(g.position), ...(text(g.title) ? { title: text(g.title) } : {}) } : undefined;
 }
 function decodeSelection(given: unknown): WorldSelection | undefined {
   const g = given as Record<string, unknown> | undefined;

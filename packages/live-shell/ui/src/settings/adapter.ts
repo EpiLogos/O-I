@@ -43,7 +43,9 @@ export type SettingsRequest = {
   returnLabel?: string
 } & ({ setting_ref: string; page?: never } | { page: 'machines' | 'automations' | 'setup'; setting_ref?: never
   /** Setup's Projects step opened for this folder (the browser's Work place: Add folder…, manual §10.11). */
-  folder?: string })
+  folder?: string
+  /** Automations opened on this routine, in the request's work context (a routine opened where it lives, frame/openWhereItLives.ts). */
+  routine?: string })
 /** The AIKit ops Setup asks (manual §10.11, Harnesses and skills and Credentials): the tools AIKit detects and the providers each reaches
  * (harness_status, harness_auth_describe), the skill roots it discovers, names, holds and would adopt (aikit_read init, collate, tree,
  * adopt-plan), the person's adoption (aikit_write adopt), and the keys it finds, the bindings it keeps and a binding by reference

@@ -13,6 +13,7 @@ import {applyNativeStateFoldChanges, readNativeFoldTargets} from '../../../../..
 import type {NativeFoldChange} from '../../../../../packages/expressions-boundary/src/editor';
 import type {NativeRackChange, NativeRackTarget} from '../../../../../packages/expressions-boundary/src/nativeRackSchema';
 import {clone, uid, validateJourney, type Journey} from './model';
+import {isTorusFigure} from '../../src/engine/torusObject';
 import {appendFormationState} from './formationAuthoring';
 import {capturedStepState, refitEntityForGlyph, refitStepForGlyph, refitStepForText, refitStepForSource, refitFormationForFont} from './stateSizing';
 import {preserveLayerStates, setStateSource, useStateShape} from './sourceState';
@@ -109,10 +110,14 @@ export function applyNativeGlyphChanges(document: Journey, sceneId: string, chan
         if (change.transition !== undefined) {step!.transition = finite(change.transition,0,3600,'Transition'); step!.transitionOverride = true}
         break;
       case 'step-source': {
-        if (!['text','ring','disc','square','triangle','yantra','cymatic'].includes(change.shape)) throw Error('Unknown native glyph shape');
+        if (!['text','ring','disc','square','triangle','yantra','cymatic','torus'].includes(change.shape)) throw Error('Unknown native glyph shape');
         const old = step!.text;
+        // The torus is an object, not a glyph: its state names one of its shapes and carries no text (O-I 851).
+        if (change.shape === 'torus' && change.torusFigure !== undefined && !isTorusFigure(change.torusFigure)) throw Error('The torus has no such shape');
         useStateShape(e,index); step!.shape = change.shape;
-        if (change.text !== undefined) {if (!change.text.trim()) throw Error('A glyph state needs content'); step!.text = change.text}
+        if (change.shape === 'torus') step!.torusFigure = change.torusFigure ?? step!.torusFigure ?? 'torus';
+        else delete step!.torusFigure;
+        if (change.text !== undefined && change.shape !== 'torus') {if (!change.text.trim()) throw Error('A glyph state needs content'); step!.text = change.text}
         setStateSource(e,index,change.source);
         if (scene.engine.autoFitSizes !== false) {
           if (change.source) refitStepForSource(e,index);

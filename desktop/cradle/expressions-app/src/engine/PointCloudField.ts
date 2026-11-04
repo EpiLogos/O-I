@@ -1892,6 +1892,15 @@ export class PointCloudField {
     this.torusPlay = reading;
   }
 
+  /** The plate is the torus's body laid flat (DLW §20.14; O-I 851): while the native instrument holds the field, the Resonance device
+   * resolves its drive (and the roles Torus reads) but rings no plate of its own here. The body rings in the one native owner, the pulse
+   * tuned to the drive, and the pane lays it flat; the plate makes no tone and moves no particle of its own. */
+  private plateBody = false;
+  public setPlateBody(active: boolean) {
+    this.plateBody = active;
+    if (active) this.stopResonator();
+  }
+
   private stopResonator() {
     if (!this.resonatorActive) return;
     this.resonatorActive = false;
@@ -1979,6 +1988,12 @@ export class PointCloudField {
       this.lastResonanceDrive = {kind:'frequency',targetHz:target,bound:true};
     }
 
+    if (this.plateBody) {
+      // The drive is resolved and disclosed; the body, not this plate, rings with it.
+      this.cymaticFreqCurrent = torusTones ? torusTones[0] : target;
+      this.stopResonator();
+      return;
+    }
     // Continuous glide toward the target so editing never resets the modal envelopes.
     if (torusTones) {
       // Each voice glides on its own, lowest to lowest; a different number of voices starts from where the new ones are.

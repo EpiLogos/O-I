@@ -56,20 +56,21 @@ test('the host admits a strike at points while the frame is concealed, and the o
   assert.throws(() => host.stageCommand({command: 'strike-at', points: [], amplitude: 0.3}), /Unknown Expressions stage command/);
 });
 
-// O-I #809: a strike lands at the sample the player chooses. The Jankó's chord and a strike at points may name the owner's sample cursor
+// O-I #809: a strike lands at the sample the player chooses. The Jankó's strike of keys and a strike at points may name the owner's sample cursor
 // (`at_samples_elapsed`, QL instrument-session.mjs strike/strikeAt): the exact decimal every native cursor is, so a u64 never rounds. The
 // player reads the owner's audio clock first (`audio-clock`): where the owner's rendered sound stands, at its rate, how far ahead it
 // renders and in what blocks. That answer carries the clock; it travels while the frame is concealed, as the strikes do.
 const clock = {samples_elapsed: '480000', sample_rate: 48000, lookahead_seconds: 0.5, block_frames: 8192};
 
 test('a strike names the sample it lands at: janko and strike-at carry an exact cursor, or none', () => {
-  const chord = {command: 'janko', action: 'play', pitch_classes: [0, 4, 7], amplitude: 0.35};
-  for (const command of [{...chord, at_samples_elapsed: '504000'}, {...strike, at_samples_elapsed: '0'},
-    {...strike, at_samples_elapsed: '18446744073709551615'}, chord, strike]) {
+  // REPLACED (O-I #855 fold-in): the Jankó's act was a pitch-class chord; every note is now a key of the surface (O-I #853).
+  const keys = {command: 'janko', action: 'strike', keys: [{row: 0, column: 42}, {row: 0, column: 44}], amplitude: 0.35};
+  for (const command of [{...keys, at_samples_elapsed: '504000'}, {...strike, at_samples_elapsed: '0'},
+    {...strike, at_samples_elapsed: '18446744073709551615'}, keys, strike]) {
     assert.deepEqual(readStageRequest(stageRequestMessage(9, command)), {req: 9, command}, JSON.stringify(command));
   }
   for (const at of [504000, '0504000', '', '-1', '1e6', '18446744073709551616', null, true]) {
-    assert.equal(stageRequestMessage(1, {...chord, at_samples_elapsed: at}), null, `janko at ${JSON.stringify(at)}`);
+    assert.equal(stageRequestMessage(1, {...keys, at_samples_elapsed: at}), null, `janko at ${JSON.stringify(at)}`);
     assert.equal(stageRequestMessage(1, {...strike, at_samples_elapsed: at}), null, `strike-at at ${JSON.stringify(at)}`);
   }
 });

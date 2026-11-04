@@ -424,8 +424,9 @@ export type AikitReadRequest =
    * `{declared_in, laws:[{path, law}], unreadable:[{path, error}]}`, asked in the named world's ground (else the root's). */
   | {kind:"reflection-laws";project?:string|null};
 export type AikitWriteRequest =
-  /** `aikit capture TITLE` with the body on stdin; `capture_kind` is the owner's `--kind`. */
-  | {kind:"capture";project?:string|null;title:string;body:string;capture_kind?:string|null;export?:string[];scope?:string|null;source_ref?:string|null;by?:string|null}
+  /** `aikit capture TITLE` with the body on stdin; `capture_kind` is the owner's `--kind`. With `from_song` (O-I #844) the body is a
+   * Software Factory song's clip and AIKit writes a Method from it (`--from-song`). */
+  | {kind:"capture";project?:string|null;title:string;body:string;capture_kind?:string|null;export?:string[];scope?:string|null;source_ref?:string|null;by?:string|null;from_song?:boolean}
   | {kind:"promote";project?:string|null;candidate:string;id?:string|null}
   | {kind:"trust-record";project?:string|null;capability:string;source?:string|null;note?:string|null}
   | {kind:"method-run";project?:string|null;method:string;input?:unknown;confirm?:boolean}
@@ -1307,6 +1308,8 @@ export interface LiveClipReading {
   envelopes: LiveEnvelope[]; notes?: (LiveNote & {id: number; vel: number; chance: number; on: boolean})[]
   /** The constellation the clip was made of, as the DLW's record beside the set keeps it (null: none); `sourceRefused`: why it could not be read. */
   source?: string | null; sourceRefused?: string
+  /** The take this clip is, or was comped from (its `TakeId`), with what the take keeps beside the set (O-I #855; null: no take gave it). */
+  take?: {id: number; keeps: Record<string, unknown> | null; keepsRefused?: string} | null
 }
 /** An envelope: what it moves (the device and parameter its target sits under) and its points [[beat, value]…]. */
 export interface LiveEnvelope {target: string; device: string; parameter: string; points: [number, number][]}
@@ -1343,10 +1346,14 @@ export type LiveSetAct =
   | {kind: 'tracks_group'; tracks: number[]}
   | {kind: 'clip_split'; track: number; clip: LiveClipAt; at: number}
   | {kind: 'clips_consolidate'; track: number; from: number; to: number}
+  /** A recorded pass (O-I #855): its notes as a take lane under the part and laid in its main lane; what it keeps beside the set. */
+  | {kind: 'take_record'; track: number; start: number; length: number; name: string; notes: LiveNote[]; keeps?: Record<string, unknown> | null}
+  /** The part's Torus as it stands, kept beside the set (null: none); the set's document is not written. */
+  | {kind: 'torus_keep'; track: number; torus: Record<string, unknown> | null}
 /** What an act did: its kind, its words, where it left what it made, the set's new revision; and why the clips' sources beside the set
  * did not follow, when they did not. */
-export interface LiveSetActed {act: LiveSetAct['kind']; done: string; at: {track?: number; slot?: number; arrangement?: number; scene?: number} | null
-  revision: string; sourceRefused?: string}
+export interface LiveSetActed {act: LiveSetAct['kind']; done: string; at: {track?: number; slot?: number; arrangement?: number; scene?: number; take?: number; lane?: number} | null
+  revision: string; sourceRefused?: string; keepsRefused?: string}
 /** One groove of the set's pool: Base is Live's Grid ("1/4" … "1/32", triplets "1/8t", "1/16t"); the amounts are 0–100. */
 export interface LiveGroove {id: number | null; name: string; base: string | null; quantize: number | null; timing: number | null; random: number | null; velocity: number | null}
 /** The set's Groove Pool and its Global Amount (with the range Live keeps beside it). */

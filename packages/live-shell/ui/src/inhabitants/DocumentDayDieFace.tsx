@@ -77,6 +77,7 @@ import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kern
 import {classifySaveFailure, savedOutcome, unchangedOutcome, type SaveRouterReading} from './documentDeviceModel'
 import {keepDraft, keptDraftMoved, keptDraftNotice, keptDraftOf, keptDraftRefusal, releaseKeptDraft, useDraftKeeping} from '../central/documents/keptDrafts'
 import {useSaveKey} from '../central/documents/useSaveKey'
+import {dayReadingOf, useReadingPoint} from '../central/documents/readingPoint'
 import {useAutosave} from '../central/documents/useAutosave'
 import {autosaveHeldOf} from '../central/documents/autosave'
 import {AutosaveGlyph} from '../central/documents/AutosaveGlyph'
@@ -410,6 +411,8 @@ export function DocumentDayDieFace({transport, project, sourceRef, documentId, p
   useEffect(() => () => withdrawDocument(key), [key])
   // ⌘S pressed inside the form is this Save (§10.9, §17.8), not the form's HTML copy.
   useSaveKey(frame, standing.save)
+  // Its point in the reading, on the trail through the pane that holds it; a walk brings it back (§10.7; readingPoint.ts).
+  useReadingPoint(frame, dayReadingOf(sourceRef, documentId))
   // Autosave (§17.8): this same Save a second after you stop; held while the Day is blocked under Review or a save stands stale, in
   // conflict or refused. The form's own word that it is edited is an edit too.
   const autosave = useAutosave(frame, {settle: () => session.edited || session.draft !== undefined, save: standing.save ? saveToNative : undefined, pending, dirty,

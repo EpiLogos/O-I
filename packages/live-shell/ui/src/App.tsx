@@ -89,6 +89,7 @@ import {worldSubjectOf} from './techne/subject/worldRows'
 import {clampBrowserWidth, clampDetailHeight, clampRailWidth, collapseDetail, drawnSizes, draggedSize, enteredDetailHeight, expandDetail,
   expandedDetailHeight, focusKeyOf, frameToggleOf, keptDetailHeight, RESIZE_STEP, switchesDetailSide, type AreaDrag, type DetailExpansions, type FocusTarget, type FrameToggle} from './shell/workspaceAreas'
 import {DeviceFlipHost} from './frame/devices/DeviceFlip'
+import {useClipHomeDoor, type ClipLanding} from './frame/openWhereItLives'
 import {liveColour, liveColourIndex} from './live/livePalette'
 registerAtlasHost()
 // The world-shell families (Quaternal Logic, the atlas, the knowledge graph, Central's extensions) are admitted with the frame, as
@@ -311,8 +312,15 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   const worldSelection = continuity.current.context?.selection
   const centralSubject: CentralSubjectSelection | null = worldSelection && CENTRAL_SUBJECT_KINDS.has(worldSelection.kind)
     ? {kind: worldSelection.kind as CentralSubjectSelection['kind'], path: worldSelection.ref} : null
-  const selectCentralSubject = (subject: CentralSubjectSelection | null) => continuity.select(subject
-    ? {mode: 'base', kind: subject.kind, ref: subject.path, title: subjectWords(subject.path)} : null)
+  /** THE selection a piece of Central's ground makes: its Days or Files row's, in Central. */
+  const centralSelectionOf = (subject: CentralSubjectSelection): WorldSelection => ({mode: 'base', kind: subject.kind, ref: subject.path, title: subjectWords(subject.path)})
+  const selectCentralSubject = (subject: CentralSubjectSelection | null) => continuity.select(subject ? centralSelectionOf(subject) : null)
+  /** THE selection a track's clip or the track makes in book mode `mode` — selectTrackItem's, and the one an opened clip lands on with
+   * its mode (chooseMode): a day record on Central's Day track is its Days row's. */
+  const selectionOfTrackItem = (target: {kind: 'clip' | 'track'; ref: string; title: string; track?: string}, mode: WorldSelection['mode']): WorldSelection => {
+    const subject = target.kind === 'clip' ? centralSubjectOfClip(target.ref) : null
+    return subject ? centralSelectionOf(subject) : {mode, kind: target.kind, ref: target.ref, title: target.title, track: target.track}
+  }
   // The Session · Arrangement pane's material is the mode's registration (shell/modeFrames.ts), never a branch here.
   const tracks = MODE_TRACK_SOURCES[frameMode]
   const nativeProjection = useMemo(() => {
@@ -394,11 +402,14 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
    * dock is part of the frame in every mode (Rev 4): entering a ground or
    * agency mode opens it — an opening, never a closing. A mode switch is a
    * move (manual §10.7): the trail grows by the place it lands on, which Back
-   * returns to (projections/encounterBridge.ts moveTo). */
-  const chooseMode = (next: SurfMode) => {
+   * returns to (projections/encounterBridge.ts moveTo). A thing opened where it
+   * lives (frame/openWhereItLives.ts) lands with its mode: THE selection rides
+   * in with the move, so the open is one stop, and the selection the frame
+   * then makes is the one already held. */
+  const chooseMode = (next: SurfMode, landing?: ClipLanding) => {
     presentSettings(false)
-    const shell = next === 'live' ? 'audio' : next
-    continuity.setContext(context => moveTo({...context, world: next === 'base' ? 'central' : undefined}, BOOK_MODE_OF_SHELL[shell]))
+    const shell = next === 'live' ? 'audio' : next, mode = BOOK_MODE_OF_SHELL[shell]
+    continuity.setContext(context => moveTo({...context, world: next === 'base' ? 'central' : undefined, ...(landing ? {selection: selectionOfTrackItem(landing, mode)} : {})}, mode))
     // The mode's own frame returns with its layout (the restore below); nothing here sets another mode's parts.
     continuity.setMode(shell)
   }
@@ -654,13 +665,15 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     // A day record on Central's Day track is ground material: it opens as the browser's Days row does.
     const subject = target.kind === 'clip' ? centralSubjectOfClip(target.ref) : null
     if (subject) { selectCentralSubject(subject); return }
-    const next = {mode: (continuity.current.layout.mode ?? 'base') as WorldSelection['mode'], kind: target.kind, ref: target.ref, title: target.title, track: target.track}
+    const next = selectionOfTrackItem(target, (continuity.current.layout.mode ?? 'base') as WorldSelection['mode'])
     const live = setSelectionOf(next, state.set?.path)
     if (live) { holdLive(live); changeDetailMode(target.kind === 'clip' ? 'clip' : 'device') }
     const event = worldView.source.eventByClipId.get(target.ref)
     if (event) centralWorld.selectOccasion(event)
     continuity.select(next)
   }
+  // A thing opened where it lives (frame/openWhereItLives.ts): its mode first, then THE selection and Clip view.
+  useClipHomeDoor(frameMode, chooseMode, selectTrackItem)
   // The widget rail's book: the world's one open set, pins, presets and width (desktop/cradle/src/workspace/store.ts).
   // What the window draws now, read where a resize starts or a part's bound depends on another (the parts' own boxes).
   const shownBox = (selector: string) => document.querySelector(selector)?.getBoundingClientRect()
@@ -728,7 +741,7 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
         own tree, because the Earth's pane is a projection module drawn in a root of its own, without the workspace they read through
         (r18: the system was never read, so no world but yours was drawn and none could land). */}
     {atlas && <Suspense fallback={null}><SystemReadings /></Suspense>}
-    {<TransportBar tempoBpm={state.set?.tempo_bpm ?? null} name={state.set?.path.split('/').pop()?.replace(/\.als$/i, '') ?? ''} mode={frameMode} view={mainView} setView={view => { presentSettings(false); chooseView(view) }} chooseMode={chooseMode} modeReadouts={modeReadouts} timeSpine={worldView.spine} focusedInstrument={focusedInstrument} workName={workspace.reading?.document?.name} sceneName={workspace.reading?.sceneName} nativeTransport={nativeView('expressions')} browser={browser} dock={dock} toggleBrowser={() => setBrowser(!browser)} toggleDock={() => setDock(!dock)} />}
+    {<TransportBar tempoBpm={state.set?.tempo_bpm ?? null} setPath={state.set?.path ?? null} name={state.set?.path.split('/').pop()?.replace(/\.als$/i, '') ?? ''} mode={frameMode} view={mainView} setView={view => { presentSettings(false); chooseView(view) }} chooseMode={chooseMode} modeReadouts={modeReadouts} timeSpine={worldView.spine} focusedInstrument={focusedInstrument} workName={workspace.reading?.document?.name} sceneName={workspace.reading?.sceneName} nativeTransport={nativeView('expressions')} browser={browser} dock={dock} toggleBrowser={() => setBrowser(!browser)} toggleDock={() => setDock(!dock)} />}
     {/* The one browser (F6): the mode's row sources and the shared ones, under one search, grouped by the four kinds. */}
     <NativeInputRetentionProvider><div className="browser-residence" hidden={!browser}><WhenShown shown={browser}><BrowserReadingProvider value={browserReading}><Browser key={frameMode} sources={browserSources} category={browserCategory} onCategory={chooseBrowserCategory} pool={pool} poolFace={MODE_POOL_FACES[frameMode]?.({setPath: state.set?.path ?? null}) ?? null} /></BrowserReadingProvider></WhenShown></div>
     {browser && <div className="browser-resizer" role="separator" aria-label="Resize browser" aria-orientation="vertical" tabIndex={0} onKeyDown={event => { if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {event.preventDefault(); resizeBrowser(clampBrowserWidth(shownBrowserWidth() + (event.key === 'ArrowRight' ? RESIZE_STEP : -RESIZE_STEP), viewport[0], shownRailWidth()))} }} onPointerDown={event => { event.currentTarget.setPointerCapture(event.pointerId); areaDrag.current = {at: event.clientX, size: shownBrowserWidth()} }} onPointerMove={event => { if (event.currentTarget.hasPointerCapture(event.pointerId) && areaDrag.current) resizeBrowser(clampBrowserWidth(draggedSize(areaDrag.current, event.clientX, 1), viewport[0], shownRailWidth())) }} onPointerUp={() => { areaDrag.current = null }} />}

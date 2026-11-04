@@ -15,8 +15,12 @@
 //     evidence: they stand dashed on the unit until Accept writes them into its composition through Factory, or Discard drops them.
 //   - Compose (a song from the task's Intent) is Anima's act as an agent, and QL's per-unit word (`ql vak compose`) has no operation that
 //     takes a workflow unit's composition: both stand refused or absent, each naming what it waits for.
+//   - A unit that is a song's clip dropped on the track (O-I #844, songClips.ts; Factory marks it `form: canon`, its `songClip`, and draws
+//     the clip's score inside it as `song`) stands as one note with the thread form canon (CFP5), the song's notes small inside it; a
+//     double-click opens it (`score.open`) and Back returns. Its song is the clip's render, never edited here.
 // The tools reshape the score; nothing here writes the task's log. Pure, apart from the hook at the end.
 import {useEffect, useMemo, useState} from 'react'
+import {onOwnerChanged} from '../owners/notices'
 import type {Value} from '../frame/devices/designed'
 import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
 import type {KernelOp, KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
@@ -110,6 +114,34 @@ function checkOf(reading: Record<string, unknown>): {state: string; why: string}
   return {state: refused ? 'refused' : 'admitted', why: words.join(' · ')}
 }
 
+const rowKindOf = (kind: unknown): string => kind === 'agent-set' ? 'set' : kind === 'agency' ? 'agency' : 'agent'
+
+/** A clip's score as the design draws a song inside a note (clips/factory.tsx Score): its rows, its units on them with what they wait on,
+ * its joins, and the songs inside its own units, as deep as Factory rendered them. Pure. */
+export function songScoreOf(song: unknown, depth = 4): Record<string, unknown> | null {
+  const score = object(song)
+  if (!score || depth < 0) return null
+  const rows = list(score.rows).map(object).flatMap(row => {
+    const ref = text(row?.ref)
+    return ref ? [{id: ref, name: ref.split(/[/:]/).pop() || ref, kind: rowKindOf(row?.kind)}] : []
+  })
+  return {
+    name: text(score.workflowKey) ?? '—',
+    rows,
+    units: list(score.units).map(object).filter((unit): unit is Record<string, unknown> => unit !== null).map(unit => scoreUnitOf(unit, depth - 1)),
+    joins: list(score.joins).map(object).map(join => ({key: String(join?.key), waits: texts(join?.waitsFor), releases: texts(join?.releases), join: 'all'})),
+  }
+}
+
+/** A canon unit (Factory's `form: canon` in a score, a `songClip` inside a clip's render) stands with the thread form canon, its song
+ * inside it, and how many takes Factory started from it (the score's `takes`: Repeat's, Loop's and a routine's Runs of the song,
+ * O-I #844). Pure. */
+function canonOf(unit: Record<string, unknown>, depth: number): Record<string, unknown> {
+  if (unit.form !== 'canon' && !text(unit.songClip)) return {}
+  const song = depth >= 0 ? songScoreOf(unit.song, depth) : null
+  return {heads: {...(object(unit.heads) ?? {}), CFP: 'CFP5'}, ...(song ? {song} : {}), takes: list(unit.takes).length}
+}
+
 /** The score as the design draws it (clips/factory.tsx Score): rows, units, joins and waves in Factory's words, the held picks on their
  * unit; `unit.own` this task's unit; `score.check` the engine's word. Empty where nothing is read. Pure. */
 export function scoreValuesOf(score: ScoreReading | null, rack: readonly RackRow[], picks: HeldPicks | null): Record<string, Value> {
@@ -126,11 +158,8 @@ export function scoreValuesOf(score: ScoreReading | null, rack: readonly RackRow
     name: text(object(reading.song)?.workflowKey) ?? '—',
     rows,
     units: units.map(unit => {
-      const key = String(unit.key)
-      const heads = object(unit.heads), held = picksOf(picks, key)
-      return {key, row: text(unit.row) ?? '', deps: texts(unit.dependencies), ...(text(unit.wave) ? {wave: text(unit.wave)} : {}), ...(heads ? {heads} : {}),
-        ...(held ? {picks: held} : {}), concern: unit.concern, returns: unit.returns, sources: unit.sources, success: unit.success, may: unit.may,
-        stop: unit.stop, escalate: unit.escalate}
+      const held = picksOf(picks, String(unit.key))
+      return {...scoreUnitOf(unit), ...(held ? {picks: held} : {})}
     }),
     joins: list(reading.joins).map(object).map(join => ({key: String(join?.key), waits: texts(join?.waitsFor), releases: texts(join?.releases),
       join: join?.join === 'first' ? 'first' : 'all'})),
@@ -292,11 +321,12 @@ export function scoreWiring(port: ScorePort | null, choice: (key: string) => Val
   }
 }
 
-/** A unit as the design draws it, for comparing a moved score with the one read. */
-function scoreUnitOf(unit: Record<string, unknown>): Record<string, unknown> {
+/** A unit as the design draws it (and as a moved score is compared with the one read): a canon with its song inside it. */
+function scoreUnitOf(unit: Record<string, unknown>, depth = 4): Record<string, unknown> {
   const heads = object(unit.heads)
   return {key: String(unit.key), row: text(unit.row) ?? '', deps: texts(unit.dependencies), ...(text(unit.wave) ? {wave: text(unit.wave)} : {}), ...(heads ? {heads} : {}),
-    concern: unit.concern, returns: unit.returns, sources: unit.sources, success: unit.success, may: unit.may, stop: unit.stop, escalate: unit.escalate}
+    concern: unit.concern, returns: unit.returns, sources: unit.sources, success: unit.success, may: unit.may, stop: unit.stop, escalate: unit.escalate,
+    ...canonOf(unit, depth)}
 }
 const sansRow = ({row: _row, ...rest}: Record<string, unknown>) => rest
 const sansPicks = ({picks: _picks, ...rest}: Record<string, unknown>) => JSON.parse(JSON.stringify(rest)) as Record<string, unknown>
@@ -320,6 +350,8 @@ export function useScore(transport: KernelTransportStatus, target: PlanTarget | 
   const [epoch, setEpoch] = useState(0)
   const [answer, setAnswer] = useState<{key: string; reading: ScoreReading} | null>(null)
   const [picks, setPicks] = useState<{key: string; held: HeldPicks} | null>(null)
+  // A song dropped on a track, or a Run act the kernel carried, may have changed the song's file: read it again (owners/notices.ts).
+  useEffect(() => onOwnerChanged('temporal', () => setEpoch(n => n + 1)), [])
   useEffect(() => {
     if (!key || !target || transport.kind === 'unavailable') return
     let live = true

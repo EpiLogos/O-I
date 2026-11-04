@@ -2,10 +2,10 @@
  * every frequency here is a voice's own `frequency_hz` from the scene owner's influence reading (scene.ts `SceneVoice`), never one the
  * frame makes up. Two sources are read:
  *
- *  - the torus: the voices the instrument was last struck on (controller.ts `struck`), while the field is running. A played note
- *    strikes the voices it names; a determinant event strikes every voice, and so does a touch at a point of the surface (each voice by
- *    its own shape there). Ring-out is not modelled: the owner reports no per-voice
- *    amplitude, so the latest strike stands until the next one.
+ *  - the torus: the voices sounding now, while the field is running. The native frame carries each voice's amplitude (the torus
+ *    object's reading, controller.ts `torus_object`, O-I 851): a voice sounds while it rings above a thousandth of the strike, so a
+ *    chord rings out as the body does. An owner whose frames give no amplitudes is read as before: the voices the instrument was last
+ *    struck on (controller.ts `struck`), the latest strike standing until the next one.
  *  - the sky: the nine tuned voices, when the instrument was opened at a dated sky (`acting.sky.kind === 'dated'`).
  *
  * Each source that gives nothing says why in words; the engine (src/engine/torusDrive.ts) holds the last drive and says the torus is
@@ -26,12 +26,34 @@ export function torusPlayReading(reading) {
   const acting = instrument?.acting ?? null;
   if (!instrument || !acting) {
     const closed = 'No instrument is open';
-    return {torus: {tonesHz: [], silentBecause: closed}, sky: {tonesHz: [], absentBecause: closed}, root: {hz: null, absentBecause: closed}};
+    return {torus: {tonesHz: [], silentBecause: closed}, sky: {tonesHz: [], absentBecause: closed}, root: {hz: null, absentBecause: closed}, body: null, pulse: null};
   }
   const voices = Array.isArray(acting.voices) ? acting.voices : [];
   // Each voice by the owner's own mode ref (a Logic or Maqām voice names no planet, O-I #850), else its planet's.
   const pitchOf = new Map(voices.map(voice => [voice.mode_ref || voiceModeRef(voice.planet_ref), voice.frequency_hz]));
-  return {torus: torusReading(reading.status, instrument.struck, pitchOf), sky: skyReading(acting.sky, voices), root: rootReading(voices)};
+  const amplitudes = Array.isArray(instrument.torus_object?.amplitudes) ? instrument.torus_object.amplitudes : null;
+  const strike = instrument.influence?.material?.strike_metres;
+  return {torus: amplitudes ? soundingReading(reading.status, amplitudes, pitchOf, strike) : torusReading(reading.status, instrument.struck, pitchOf),
+    sky: skyReading(acting.sky, voices), root: rootReading(voices),
+    // The body the plate reads its eight and four from (torusDrive.ts rolesOf), and the pulse that rings it.
+    body: {influence: instrument.influence ?? null, amplitudes},
+    pulse: pulseReading(instrument.torus)};
+}
+
+/** A voice sounds while its amplitude rings above this share of the strike (torusObject.ts voicePoints lets go at the same level). */
+export const SOUNDING_SHARE = 1e-3;
+
+function soundingReading(status, amplitudes, pitchOf, strike) {
+  if (status !== 'following') return torusReading(status, null, pitchOf);
+  const full = typeof strike === 'number' && strike > 0 ? strike : 0.08;
+  const tonesHz = amplitudes.filter(a => Math.hypot(a.re, a.im) / full >= SOUNDING_SHARE).map(a => pitchOf.get(a.mode_ref)).filter(hz => typeof hz === 'number');
+  return tonesHz.length ? {tonesHz, silentBecause: null} : {tonesHz: [], silentBecause: 'The torus has rung down: no voice sounds now'};
+}
+
+function pulseReading(torus) {
+  const steps = torus?.pulse?.steps, sps = torus?.steps_per_second;
+  if (typeof steps !== 'number' || typeof sps !== 'number') return null;
+  return {steps, steps_per_second: sps, band: torus.band ?? null};
 }
 
 function rootReading(voices) {

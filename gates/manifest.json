@@ -75,6 +75,18 @@
       "command": "cargo fmt --manifest-path desktop/cradle/kernel/Cargo.toml -- --check"
     },
     {
+      "name": "rust-format-native-host",
+      "tier": "landing",
+      "area": "rust",
+      "cwd": ".",
+      "provenance": {
+        "workflow": "desktop.yml",
+        "job": "native-shell",
+        "step": "Native host format"
+      },
+      "command": "cargo fmt --manifest-path desktop/cradle/src-tauri/Cargo.toml -- --check"
+    },
+    {
       "name": "cli-hosted-contracts",
       "tier": "landing",
       "area": "cli",

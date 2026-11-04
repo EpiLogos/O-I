@@ -35,3 +35,14 @@
 .janko--plate .janko-row[data-janko-family="1"] .janko-key { background: var(--bg-1); }
 .janko--plate .janko-piano .janko-key { background: var(--bg-3); }
 .janko--plate .janko-piano .janko-key.is-black { background: var(--bg-1); }
+/* The part's input on the chain (live/KeyboardOnChain.tsx PartInput): its line, then its settings in the chain's small type. */
+.part-input { flex: 0 1 300px; align-self: center; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.part-input > .live-chain-waits { flex: none; align-self: stretch; }
+.part-input-settings { display: flex; flex-wrap: wrap; gap: 3px 8px; padding: 0 10px; color: var(--text-dim); font-size: 10px; }
+.part-input-row { display: inline-flex; align-items: center; gap: 3px; }
+.part-input-label { color: var(--text-faint); }
+.part-input-choice { display: inline-flex; gap: 2px; }
+.part-input button, .part-input select { font: inherit; color: var(--text-dim); background: transparent; border: 1px solid var(--line); border-radius: 3px; padding: 0 5px; cursor: pointer; }
+.part-input button[aria-pressed="true"] { color: var(--text); border-color: var(--accent); }
+.part-input button:disabled, .part-input select:disabled { opacity: .45; cursor: default; }
+.part-input output { min-width: 2.4em; text-align: center; color: var(--text); }

@@ -183,11 +183,15 @@ test('Notifications\' rail tile is gone; Approvals\' tile and the door ids it re
   const railDeviceIds = await readFile(new URL('../src/widgets/railDeviceIds.ts', import.meta.url), 'utf8')
   assert.match(railDeviceIds, /export const RAIL_DEVICES = \[/)
   assert.doesNotMatch(railDeviceIds, /\{id: 'notifications', title: 'Notifications'/, 'no Notifications device among the rail-born devices')
-  const messages = await readFile(new URL('../src/agent/devices/messagesBinding.ts', import.meta.url), 'utf8')
-  assert.match(messages, /export const MESSAGES_ID = 'ai-kit:messages'/)
+  // REPLACED (#861, the first load): MESSAGES_ID and APPROVALS_ID were read in messagesBinding.ts and receiptBindings.ts. The ids stand in
+  // their own light module (agent/devices/railTileIds.ts), so the rail's tiles claim them without loading the bindings; each binding
+  // re-exports its id.
+  const tileIds = await readFile(new URL('../src/agent/devices/railTileIds.ts', import.meta.url), 'utf8')
+  assert.match(tileIds, /export const MESSAGES_ID = 'ai-kit:messages'/)
   assert.match(railDevices, /export const NOTIFY_MESSAGES_ID = 'ai-kit:messages'/, 'the rail reads Messages\' agents off its own device')
+  assert.match(tileIds, /export const APPROVALS_ID = 'factory:main:approvals'/)
   const receipts = await readFile(new URL('../src/agent/devices/receiptBindings.ts', import.meta.url), 'utf8')
-  assert.match(receipts, /export const APPROVALS_ID = 'factory:main:approvals'/)
+  assert.match(receipts, /export \{LEDGER_ID, APPROVALS_ID\} from '\.\/railTileIds'/, 'the binding re-exports the id its tile stands under')
   const central = await readFile(new URL('../src/central/devices/CentralDevices.tsx', import.meta.url), 'utf8')
   assert.match(central, /export const CENTRAL_APPROVALS_ID = 'central:main:approvals'/)
   // REPLACED (#725): NOTIFY_APPROVALS_IDS (the monitor read Approvals' queue off the door) — Approvals carries the requests itself.

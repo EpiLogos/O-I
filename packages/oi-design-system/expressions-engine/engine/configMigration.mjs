@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
-import { DEFAULT_CONFIG, DEFAULT_COLOR_CONFIG, DEFAULT_TOROIDAL_CONFIG } from "./PointCloudField.mjs";
+import { DEFAULT_CONFIG, DEFAULT_COLOR_CONFIG, DEFAULT_TOROIDAL_CONFIG } from "./fieldDefaults.mjs";
 import { createDefaultChakraConfig } from "./chakraSystem.mjs";
 import { isLightHex } from "./colorPalettes.mjs";
 import { migrateLegacyFieldConfig } from "./fieldModel.mjs";
@@ -72,6 +72,26 @@ function migrateColor(raw, fromVersion, bg) {
 function migrateToroidal(raw) {
   if (!raw) return { ...DEFAULT_TOROIDAL_CONFIG, enabled: false };
   return { ...DEFAULT_TOROIDAL_CONFIG, ...raw, enabled: raw.enabled === true };
+}
+function migrateMedium(raw) {
+  const base = { ...DEFAULT_CONFIG.medium };
+  if (!raw) return { ...base, enabled: false };
+  return {
+    ...base,
+    ...raw,
+    enabled: raw.enabled === true,
+    plane: raw.plane === "world3d" ? "world3d" : "compositionPlane"
+  };
+}
+function migrateCollision(raw) {
+  const base = { ...DEFAULT_CONFIG.collision };
+  if (!raw) return { ...base, enabled: false };
+  return {
+    ...base,
+    ...raw,
+    enabled: raw.enabled === true,
+    mode: raw.mode === "vessel" ? "vessel" : "obstacle"
+  };
 }
 function cloneSemanticField(raw) {
   return {
@@ -150,6 +170,7 @@ function migrateConfig(incoming, fromVersion = CONFIG_SCHEMA_VERSION) {
       placedPoints: migratePlacedPoints(src.interaction?.placedPoints)
     },
     relational: src.relational ? { ...DEFAULT_CONFIG.relational, ...src.relational, enabled: src.relational.enabled === true } : { ...DEFAULT_CONFIG.relational, enabled: false },
+    pairwise: src.pairwise ? { ...DEFAULT_CONFIG.pairwise, ...src.pairwise, enabled: src.pairwise.enabled === true } : { ...DEFAULT_CONFIG.pairwise, enabled: false },
     chaining: src.chaining ? {
       ...DEFAULT_CONFIG.chaining,
       ...src.chaining,
@@ -164,6 +185,8 @@ function migrateConfig(incoming, fromVersion = CONFIG_SCHEMA_VERSION) {
       enabled: src.spatialChakra.enabled === true
     } : { ...chakraDefaults, enabled: false },
     toroidalMorph: migrateToroidal(src.toroidalMorph),
+    medium: migrateMedium(src.medium),
+    collision: migrateCollision(src.collision),
     color: migrateColor(src.color, fromVersion, bg),
     automations: migrateAutomations(src.automations),
     entities: field.entities,

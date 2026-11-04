@@ -297,12 +297,18 @@ export type StageCommand =
   | {command: 'live'; action: 'set' | 'hold'; target: string; value: number}
   | {command: 'live'; action: 'release'}
   | {command: 'instrument'; edit: InstrumentEdit}
-  /** A Jankó chord. `at_samples_elapsed` (O-I #809) is the owner's sample cursor the chord lands at; absent, it lands at the owner's own. */
-  | {command: 'janko'; action: 'play'; pitch_classes: number[]; amplitude: number; at_samples_elapsed?: string}
+  /** Keys of the Jankó surface struck on the Torus's M1′ session (QL-MEF `torus-play`; O-I #853): every way of playing reaches the Torus
+   * this one way. Each key is a new note at its moving point, one act of 1..32 distinct keys at one amplitude in (0, 1], landing at
+   * `at_samples_elapsed` (O-I #809: the owner's sample cursor; absent, the owner's own). Past Polyphony the oldest notes make way, and the
+   * answer names their keys (`made_way`). The pitch-class chord this stood beside is retired (O-I #855 fold-in): every note is a key. */
+  | {command: 'janko'; action: 'strike'; keys: StageKey[]; amplitude: number; at_samples_elapsed?: string}
+  /** Keys let go: they leave the Torus's count of notes (QL-MEF `torus-release`), and the body rings on, as a released note keeps its
+   * own tail (DLW §21.2 Rules). */
+  | {command: 'janko'; action: 'release'; keys: StageKey[]}
   /** A strike at points of the torus surface (DLW §21.2 "What strikes the Torus": a touch, a note in a clip at its key's point), run as the
    * native field's own strike at points (controller.ts playAt; QL-MEF `strike-at`): one act of 1..64 points, each the torus's own angles
    * on the sampled sheet, theta the tube and phi the ring, each in [0, 2π), struck at one amplitude in (0, 1], at `at_samples_elapsed`
-   * as a chord is. */
+   * as a strike of keys is. */
   | {command: 'strike-at'; points: StageStrikePoint[]; amplitude: number; at_samples_elapsed?: string}
   /** The owner's audio clock (O-I #809), read so a player can schedule ahead on it: the answer carries a StageAudioClock. */
   | {command: 'audio-clock'}
@@ -333,6 +339,23 @@ export type StageCommand =
   | {command: 'procedural-stage'; action: 'bind'; procedure_ref: string; max_evaluations?: number};
 /** A Jankó note: one to twelve distinct pitch classes (0–11) struck together as one act, at an amplitude in (0, 1] (modal metres; the owner's strike bound). */
 export const STAGE_JANKO_AMPLITUDE_MAX = 1;
+/** A key of the Jankó surface as the Torus's session names it (QL-MEF janko.rs JankoKey): its row, 0–5, and its column, 0–65535; the
+ * surface repeats every six columns, so a column names a key and the octave it is played in. */
+export interface StageKey {row: number; column: number}
+/** The most keys one Torus act names (QL-MEF m1_prime.rs POLYPHONY_MAX; instrument-session.mjs #keys). */
+export const STAGE_JANKO_KEYS_MAX = 32;
+/** The most keys one answer names as made way: each key of an act may push one note out and replace its own. */
+const STAGE_MADE_WAY_MAX = 2 * STAGE_JANKO_KEYS_MAX;
+const stageKey = (value: unknown): value is StageKey => plain(value) && closed(value, ['row', 'column']) &&
+  Number.isSafeInteger(value.row) && (value.row as number) >= 0 && (value.row as number) <= 5 &&
+  Number.isSafeInteger(value.column) && (value.column as number) >= 0 && (value.column as number) <= 65535;
+/** Keys read exactly: each on the surface, `min` to `max` of them, none twice (an act strikes a key once); anything else is null. */
+function readStageKeys(raw: unknown, min: number, max: number, distinct: boolean): StageKey[] | null {
+  if (!Array.isArray(raw) || raw.length < min || raw.length > max || !raw.every(stageKey)) return null;
+  const keys = raw.map(({row, column}) => ({row, column}));
+  if (distinct && new Set(keys.map(key => `${key.row}/${key.column}`)).size !== keys.length) return null;
+  return keys;
+}
 /** A point of the torus surface: its two angles on the sampled sheet [0, 2π) (instrument-session.mjs strikeAt, the owner's own bound). */
 export interface StageStrikePoint {theta: number; phi: number}
 /** The most points one strike at points holds (instrument-session.mjs STRIKE_AT_MAX_POINTS). */
@@ -355,8 +378,8 @@ export function readStageAudioClock(raw: unknown): StageAudioClock | null {
   if (!Number.isSafeInteger(block_frames) || (block_frames as number) < 128 || (block_frames as number) > 8192) return null;
   return {samples_elapsed, sample_rate: sample_rate as number, lookahead_seconds, block_frames: block_frames as number};
 }
-/** A stage answer. The audio clock's answer carries the clock. */
-export type StageResult = {ok: true; clock?: StageAudioClock} | {ok: false; error: string};
+/** A stage answer. The audio clock's answer carries the clock; a strike of keys, the keys whose notes made way. */
+export type StageResult = {ok: true; clock?: StageAudioClock; made_way?: StageKey[]} | {ok: false; error: string};
 
 const BASE_KEYS = ['v', 'kind', 'command', 'req'] as const;
 const SETTING_KEYS = ['width', 'aspect', 'includeText', 'transparent'] as const;
@@ -531,15 +554,19 @@ export function readStageRequest(raw: unknown): {req: number; command: StageComm
       if (raw.action === 'resume') return closed(raw, [...BASE_KEYS, 'action']) ? {req, command: {command: 'automation', action: 'resume'}} : null;
       return raw.action === 'loop' && closed(raw, [...BASE_KEYS, 'action', 'on']) && typeof raw.on === 'boolean' ? {req, command: {command: 'automation', action: 'loop', on: raw.on}} : null;
     case 'janko': {
-      // A chord is one act: distinct pitch classes, struck at one amplitude. Anything else is refused before the owner sees it.
-      if (!closed(raw, [...BASE_KEYS, 'action', 'pitch_classes', 'amplitude', 'at_samples_elapsed']) || raw.action !== 'play' || !Array.isArray(raw.pitch_classes)) return null;
-      const classes = raw.pitch_classes;
-      if (classes.length < 1 || classes.length > 12 || !classes.every(pc => Number.isSafeInteger(pc) && pc >= 0 && pc <= 11)) return null;
-      if (new Set(classes).size !== classes.length) return null;
-      if (typeof raw.amplitude !== 'number' || !Number.isFinite(raw.amplitude) || raw.amplitude <= 0 || raw.amplitude > STAGE_JANKO_AMPLITUDE_MAX) return null;
-      const at = landing(raw);
-      if (at === null) return null;
-      return {req, command: {command: 'janko', action: 'play', pitch_classes: [...classes], amplitude: raw.amplitude, ...at}};
+      // Keys of the surface (O-I #853): a strike of distinct keys at one amplitude, or a release of keys. Anything else is refused here.
+      if (raw.action === 'release') {
+        const keys = closed(raw, [...BASE_KEYS, 'action', 'keys']) ? readStageKeys(raw.keys, 1, STAGE_JANKO_KEYS_MAX, true) : null;
+        return keys ? {req, command: {command: 'janko', action: 'release', keys}} : null;
+      }
+      if (raw.action === 'strike') {
+        if (!closed(raw, [...BASE_KEYS, 'action', 'keys', 'amplitude', 'at_samples_elapsed'])) return null;
+        const keys = readStageKeys(raw.keys, 1, STAGE_JANKO_KEYS_MAX, true);
+        if (!keys || typeof raw.amplitude !== 'number' || !Number.isFinite(raw.amplitude) || raw.amplitude <= 0 || raw.amplitude > STAGE_JANKO_AMPLITUDE_MAX) return null;
+        const at = landing(raw);
+        return at ? {req, command: {command: 'janko', action: 'strike', keys, amplitude: raw.amplitude, ...at}} : null;
+      }
+      return null;
     }
     case 'strike-at': {
       // One act of points, each closed to its two angles on the sheet; a point off it is refused here, never reduced (the mode shapes
@@ -590,7 +617,7 @@ export function stageRequestMessage(req: number, command: StageCommand): Record<
 
 /** The application's answer. Capture answers by host-capture-result; the other commands by host-command-result. Errors are bounded and control-free. */
 export function stageReplyMessage(req: number, result: StageResult, command?: StageCommand): Record<string, unknown> {
-  const outcome = result.ok ? {ok: true, ...(result.clock ? {clock: result.clock} : {})} : {ok: false, error: String(result.error).replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, 512) || 'The application refused the stage command.'};
+  const outcome = result.ok ? {ok: true, ...(result.clock ? {clock: result.clock} : {}), ...(result.made_way?.length ? {made_way: result.made_way} : {})} : {ok: false, error: String(result.error).replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, 512) || 'The application refused the stage command.'};
   if (command?.command === 'capture') return {v: 1, kind: 'host-capture-result', req, ...outcome};
   return {v: 1, kind: 'host-command-result', ...(command ? {command: command.command} : {}), req, ...outcome};
 }
@@ -602,6 +629,10 @@ export function readStageResult(raw: unknown): ({req: number} & StageResult) | n
   if (ok && raw.clock !== undefined) {
     const clock = readStageAudioClock(raw.clock);
     return clock ? {req, ok: true, clock} : null;
+  }
+  if (ok && raw.made_way !== undefined) {
+    const made_way = readStageKeys(raw.made_way, 1, STAGE_MADE_WAY_MAX, false);
+    return made_way ? {req, ok: true, made_way} : null;
   }
   if (ok) return {req, ok: true};
   return bounded(error) ? {req, ok: false, error} : null;

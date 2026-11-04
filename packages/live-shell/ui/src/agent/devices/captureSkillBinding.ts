@@ -13,9 +13,16 @@
 // The write: Accept writes the proposal as a draft member through aikit_write {promote, candidate, id: the name} (`aikit promote <cnd>
 // --id <name>`), after its confirm (the view's `acceptAsk`). Remove is the inbox's `aikit inbox reject <cnd>` and Release a rescan of a
 // held candidate; neither has a kernel route, so each stands disabled with its command.
+// A selected clip as the Source (O-I #844; manual §19.1 Songs: "Select its clip and capture it on the Skillset rack's Capture page: the
+// rack writes a Method from it and sends it to you"): the clip selected under Material › Songs (agent/songClips.ts selectSongClip) is
+// Software Factory's clip of a song (factory.song-clip/v1), and choosing Source › A clip captures it through aikit_write {capture,
+// from_song} (`aikit capture <name> --from-song`, the clip on stdin): AIKit writes a Method from it — one step per unit, in the order the
+// song runs them — and files it on its one capture road, where it waits in the inbox as every capture does. Nothing is kept until the
+// person's Accept promotes it. A song's clip is always captured as a Method (Form Skill refuses it), named by the hand's Name or the
+// song's own, at the Scope chosen, with the clip's ref as where it came from.
 // What nothing reads, each absent with the operation it waits for: the transport's Capture as a recording (the shell's own flag; no owner
 // records an example), the example and its window (the transport hands no window of the track's frames and your commands to anything:
-// SPECIFIED, no code), the selected clip as a source, the steps and the skill's text (the track's agent drafting them from the example:
+// SPECIFIED, no code), a clip's span on that window, the steps and the skill's text (the track's agent drafting them from the example:
 // SPECIFIED, no code), the findings that hold a proposal and the members it resembles (`aikit capture` returns them for the capture it
 // makes; `aikit inbox` lists a message, its candidate and its proposed id, not them). The capture itself (`aikit capture`, aikit_write
 // capture) has no control on this design: the transport's Capture is its trigger, and it records the shell's own action labels, not an
@@ -44,7 +51,7 @@ const reading = (key: string) => `${key} is a reading: its owner reports it; not
 export const CAPTURE_ABSENT = {
   recording: unread('Whether Capture records', 'a record of the example kept by an owner (the transport\'s Capture is the shell\'s own flag)', 'AIKit'),
   example: unread('The example', 'a window of the track\'s frames and your commands handed to the capture (SPECIFIED: the transport hands none over)', 'AIKit'),
-  clip: unread('The selected clip as the source', 'a clip\'s material handed to the capture (SPECIFIED: no code)', 'AIKit'),
+  clip: unread('The selected clip\'s span on the window of your work', 'a clip\'s place on the transport\'s window (a song\'s clip is Factory\'s render: its units are the example, and it has no span in minutes)', 'Factory'),
   steps: unread('The steps found', 'the track\'s agent drafting the steps from the example (AIKit\'s authoring Method directs it; SPECIFIED, no code)', 'AIKit'),
   says: unread('The skill\'s text', 'the track\'s agent drafting the text from the example (SPECIFIED, no code)', 'AIKit'),
   findings: unread('What holds the proposal', 'the candidate\'s findings for a waiting proposal (`aikit capture` returns them for the capture it makes; `aikit inbox` lists a message, its candidate and proposed id, not them)', 'AIKit'),
@@ -59,7 +66,33 @@ export const CAPTURE_REFUSE = {
 
 /** The shell's own settings and the manual's starting value of each (§19.11: The last minutes, 10, Method, This project). */
 export const CAPTURE_VIEW: Readonly<Record<string, Value>> = {source: 'minutes', minutes: 10, form: 'method', scope: 'project'}
-const CAPTURE_LOCAL = [...Object.keys(CAPTURE_VIEW), 'name', 'acceptAsk'] as const
+const CAPTURE_HELD = [...Object.keys(CAPTURE_VIEW), 'name', 'acceptAsk'] as const
+/** What the hand sets at once. Source is held too, but goes through `write`: choosing A clip captures the selected song's clip. */
+const CAPTURE_LOCAL = CAPTURE_HELD.filter(key => key !== 'source')
+
+/** Why a song's clip is not captured, each in the page's words. */
+export const CAPTURE_SONG = {
+  none: 'A clip: select a song\'s clip under Material › Songs in Factory first; choosing A clip then captures it as a Method.',
+  unread: 'A clip: Factory\'s listing carries no clip for the selected song, so there is nothing to capture — Remake it, then select it again.',
+  skill: 'A clip: a song\'s clip is captured as a Method, its steps the song\'s units; choose Form › Method.',
+  carrier: 'A clip: the kernel carrier is unavailable here, so AIKit cannot be asked (`aikit capture --from-song` through the kernel\'s aikit_write).',
+} as const
+
+/** The clip selected under Material › Songs, as the Capture page takes it (agent/songClips.ts SongRow). */
+export interface CaptureSongClip {
+  readonly name: string
+  readonly clipRef: string | null
+  /** The clip as Factory wrote it (factory.song-clip/v1). */
+  readonly clip: Record<string, unknown> | null
+}
+
+/** What `aikit capture --from-song` is asked: the title, the clip, the scope and where it came from. */
+export interface CaptureSongRequest {
+  readonly title: string
+  readonly body: string
+  readonly scope: 'project' | 'home'
+  readonly sourceRef: string | null
+}
 
 /** A proposal that waits in AIKit's inbox: its candidate, its proposed id and the state its kept body names. */
 export interface WaitingProposal {
@@ -94,17 +127,21 @@ export interface CaptureSkillInput {
   /** AIKit's inbox (aikit_read {inbox}) as the window holds it. */
   readonly inbox: {readonly status: 'reading' | 'answered' | 'refused'; readonly value: unknown; readonly error: string | null}
   readonly holds: ChainHolds
+  /** The clip selected under Material › Songs; null or absent when none is. */
+  readonly song?: CaptureSongClip | null
 }
 
 /** The writes through AIKit (ownerRoutes.ts aikit_write). Absent: no carrier stands. */
 export interface CaptureSkillPorts {
   readonly promote?: (candidate: string, id: string | undefined) => Promise<unknown>
+  /** `aikit capture --from-song` (aikit_write capture with from_song). */
+  readonly capture?: (request: CaptureSongRequest) => Promise<unknown>
 }
 
 export function captureSkillValues(input: CaptureSkillInput): Values {
   const values: Record<string, Value> = {marks: SHELL_MARK_SET}
   const view = viewHolds(input.holds, CAPTURE_SKILL_ID)
-  for (const key of CAPTURE_LOCAL) { const held = view[key] ?? CAPTURE_VIEW[key]; if (held !== undefined) values[key] = held }
+  for (const key of CAPTURE_HELD) { const held = view[key] ?? CAPTURE_VIEW[key]; if (held !== undefined) values[key] = held }
   if (input.inbox.status === 'refused') values.light = 'dark'
   if (input.inbox.status !== 'answered') return values
   const waiting = waitingProposal(input.inbox.value)
@@ -132,6 +169,16 @@ export function captureSkillBinding(input: CaptureSkillInput, ports: CaptureSkil
   const acceptWhy = !ports.promote ? 'Accept: the kernel carrier is unavailable here, so AIKit cannot be asked (`aikit promote` through the kernel\'s aikit_write).'
     : !waiting ? inboxWhy : waiting.state === 'held' ? 'Accept: AIKit holds this proposal for a possible secret, and a held proposal is never promoted.' : null
   if (acceptWhy) standing.accept = {disabled: acceptWhy}
+  const songWhy = !input.song ? CAPTURE_SONG.none : !input.song.clip ? CAPTURE_SONG.unread : values.form === 'skill' ? CAPTURE_SONG.skill
+    : !ports.capture ? CAPTURE_SONG.carrier : null
+  if (values.source === 'clip') standing.clip = {disabled: songWhy ?? CAPTURE_ABSENT.clip}
+  // Choosing A clip captures the selected song's clip: the view holds the choice first, so a refusal leaves A clip chosen with its words.
+  const captureSong = async () => {
+    if (songWhy || !input.song?.clip || !ports.capture) throw Error(songWhy ?? CAPTURE_SONG.none)
+    const view = viewHolds(chainHolds(), CAPTURE_SKILL_ID)
+    const named = typeof view.name === 'string' && view.name.trim() ? view.name.trim() : input.song.name
+    await ports.capture({title: named, body: JSON.stringify(input.song.clip), scope: (view.scope ?? values.scope) === 'home' ? 'home' : 'project', sourceRef: input.song.clipRef})
+  }
   const accept = async () => {
     if (acceptWhy || !waiting || !ports.promote) throw Error(acceptWhy ?? inboxWhy)
     const name = viewHolds(chainHolds(), CAPTURE_SKILL_ID).name ?? waiting.proposedId
@@ -142,10 +189,11 @@ export function captureSkillBinding(input: CaptureSkillInput, ports: CaptureSkil
     values,
     standing,
     local: Object.fromEntries(CAPTURE_LOCAL.map(key => [key, (value: Value | undefined) => holdView(CAPTURE_SKILL_ID, key, value)])),
-    writes: key => key === 'accept' || key in CAPTURE_REFUSE || key.startsWith('step:'),
+    writes: key => key === 'accept' || key === 'source' || key in CAPTURE_REFUSE || key.startsWith('step:'),
     write: async (changes: readonly ValueChange[]) => {
-      for (const {key} of changes) {
+      for (const {key, value} of changes) {
         if (key === 'accept') { await accept(); continue }
+        if (key === 'source') { holdView(CAPTURE_SKILL_ID, 'source', value); if (value === 'clip') await captureSong(); continue }
         if (key.startsWith('step:')) throw Error(CAPTURE_ABSENT.steps)
         throw Error(CAPTURE_REFUSE[key as keyof typeof CAPTURE_REFUSE] ?? reading(key))
       }

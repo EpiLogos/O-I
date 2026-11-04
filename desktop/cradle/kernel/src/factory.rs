@@ -240,6 +240,47 @@ pub enum OwnerRequest {
         run_ref: String,
         request: Value,
     },
+    /// Export Song… (O-I #844; `factory workflow export <state> <entry>
+    /// [--name] [--rows] [--units]` → `factory.song-clip/v1`): the song in
+    /// the file `entry` under the project root, or the rows (tracks) and
+    /// units (range) chosen, rendered once into one clip the project keeps.
+    /// Factory refuses a second render of the same name: a render is never
+    /// edited in place.
+    WorkflowExport {
+        state_path: PathBuf,
+        entry: String,
+        #[serde(default)]
+        name: Option<String>,
+        #[serde(default)]
+        rows: Option<Vec<String>>,
+        #[serde(default)]
+        units: Option<Vec<String>>,
+    },
+    /// Remake (`factory workflow remake <state> <name>` →
+    /// `factory.song-clip/v1`): the clip made again from the set it names,
+    /// as that set now stands, with the same rows and range.
+    WorkflowRemake { state_path: PathBuf, name: String },
+    /// A song run again from its canon unit (O-I #844; `factory workflow
+    /// perform <state> <run-ref> <unit>` → `factory.song-take/v1`): a Run of
+    /// the set the unit's clip names, as it was rendered, commissioned as the
+    /// Run the unit stands in was — one take. Factory refuses a unit that is
+    /// no whole song, or a set that has moved, in its words; nothing executes.
+    WorkflowPerform {
+        state_path: PathBuf,
+        run_ref: String,
+        unit: String,
+    },
+    /// The songs under Material (`factory workflow songs <state>` →
+    /// `factory.song-clips/v1`, for each Factory source Central discloses):
+    /// each project's clips, whether each one's set has moved since it was
+    /// rendered, gathered as `oi.factory-songs/v1`. Roots come from Central's
+    /// own world reading, as `Locate` reads them; a read, outside the lock.
+    WorkflowSongsRead {
+        #[serde(default)]
+        project: Option<String>,
+        #[serde(default)]
+        all: bool,
+    },
     /// `factory telemetry status <state>`.
     TelemetryStatus { state_path: PathBuf },
     /// `factory telemetry inspect <state> <telemetry-ref>`.
@@ -630,6 +671,7 @@ impl OwnerRequest {
                 | OwnerRequest::AttemptDecisionSubmit { .. }
                 | OwnerRequest::AttemptDecisionRead { .. }
                 | OwnerRequest::ProjectSetup { .. }
+                | OwnerRequest::WorkflowSongsRead { .. }
         )
     }
     /// A reading of the owner's state, which may run outside the kernel lock
@@ -643,6 +685,7 @@ impl OwnerRequest {
             OwnerRequest::Locate { .. }
                 | OwnerRequest::WorkflowInspect { .. }
                 | OwnerRequest::WorkflowScoreRead { .. }
+                | OwnerRequest::WorkflowSongsRead { .. }
                 | OwnerRequest::TelemetryStatus { .. }
                 | OwnerRequest::TelemetryInspect { .. }
                 | OwnerRequest::TelemetryWatch { .. }
@@ -2033,6 +2076,47 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
                 &[WORKFLOW_EDIT_RECEIPT],
             )
         }
+        OwnerRequest::WorkflowExport {
+            state_path,
+            entry,
+            name,
+            rows,
+            units,
+        } => expect_contract(
+            owner_call(
+                &workflow_export_args(
+                    &state_path,
+                    &entry,
+                    name.as_deref(),
+                    rows.as_deref(),
+                    units.as_deref(),
+                ),
+                None,
+            )?,
+            &[SONG_CLIP],
+        ),
+        OwnerRequest::WorkflowRemake { state_path, name } => expect_contract(
+            owner_call(&workflow_remake_args(&state_path, &name), None)?,
+            &[SONG_CLIP],
+        ),
+        OwnerRequest::WorkflowPerform {
+            state_path,
+            run_ref,
+            unit,
+        } => expect_contract(
+            owner_call(&workflow_perform_args(&state_path, &run_ref, &unit), None)?,
+            &[SONG_TAKE],
+        ),
+        OwnerRequest::WorkflowSongsRead { project, all } => {
+            let world = world.ok_or_else(|| {
+                incompatible("Central's world reading is required to find the projects' songs")
+            })?;
+            let roots = locate_roots(world, project.as_deref(), all)?;
+            Ok(serde_json::json!({
+                "contract": SONGS_GATHERED,
+                "projects": locate_each(roots).into_iter().map(songs_of_location).collect::<Vec<_>>(),
+            }))
+        }
         OwnerRequest::WaveRead {
             state_path,
             run_ref,
@@ -2270,6 +2354,112 @@ pub fn workflow_edit_body(request: &Value) -> Result<Vec<u8>, Error> {
         )));
     }
     serde_json::to_vec(request).map_err(|e| incompatible(e.to_string()))
+}
+
+/// A song rendered into one clip, and a project's clips (O-I #844, Factory
+/// song_clip.rs); the kernel's gathering of every disclosed project's.
+pub const SONG_CLIP: &str = "factory.song-clip/v1";
+/// A canon unit's song run again, one take (`factory workflow perform`).
+pub const SONG_TAKE: &str = "factory.song-take/v1";
+pub const SONG_CLIPS: &str = "factory.song-clips/v1";
+pub const SONGS_GATHERED: &str = "oi.factory-songs/v1";
+
+/// `factory workflow export <state> <entry> [--name N] [--rows a,b] [--units x,y] --json`.
+pub fn workflow_export_args(
+    state_path: &Path,
+    entry: &str,
+    name: Option<&str>,
+    rows: Option<&[String]>,
+    units: Option<&[String]>,
+) -> Vec<std::ffi::OsString> {
+    let mut args: Vec<std::ffi::OsString> = vec![
+        "workflow".into(),
+        "export".into(),
+        path_arg(state_path),
+        entry.into(),
+    ];
+    if let Some(name) = name {
+        args.extend(["--name".into(), name.into()]);
+    }
+    if let Some(rows) = rows {
+        args.extend(["--rows".into(), rows.join(",").into()]);
+    }
+    if let Some(units) = units {
+        args.extend(["--units".into(), units.join(",").into()]);
+    }
+    args.push("--json".into());
+    args
+}
+
+/// `factory workflow remake <state> <name> --json`.
+pub fn workflow_remake_args(state_path: &Path, name: &str) -> Vec<std::ffi::OsString> {
+    vec![
+        "workflow".into(),
+        "remake".into(),
+        path_arg(state_path),
+        name.into(),
+        "--json".into(),
+    ]
+}
+
+/// `factory workflow perform <state> <run-ref> <unit> --json`.
+pub fn workflow_perform_args(
+    state_path: &Path,
+    run_ref: &str,
+    unit: &str,
+) -> Vec<std::ffi::OsString> {
+    vec![
+        "workflow".into(),
+        "perform".into(),
+        path_arg(state_path),
+        run_ref.into(),
+        unit.into(),
+        "--json".into(),
+    ]
+}
+
+/// `factory workflow songs <state> --json`.
+pub fn workflow_songs_args(state_path: &Path) -> Vec<std::ffi::OsString> {
+    vec![
+        "workflow".into(),
+        "songs".into(),
+        path_arg(state_path),
+        "--json".into(),
+    ]
+}
+
+/// One discovery row's songs: a located source's clips as Factory lists
+/// them, else the row as it stands (absent, refused). One refusal never
+/// hides another project's songs.
+fn songs_of_location(row: Value) -> Value {
+    let mut out = serde_json::json!({"project": row["project"], "root": row["root"]});
+    let state = row["location"]["statePath"].as_str();
+    match (row["state"].as_str(), state) {
+        (Some("located"), Some(state)) => {
+            out["statePath"] = state.into();
+            match owner_call(&workflow_songs_args(Path::new(state)), None)
+                .and_then(|data| expect_contract(data, &[SONG_CLIPS]))
+            {
+                Ok(reading) => {
+                    out["state"] = "read".into();
+                    out["reading"] = reading;
+                }
+                Err(error) => {
+                    out["state"] = "refused".into();
+                    out["error"] = error.message.into();
+                }
+            }
+        }
+        (Some("located"), None) => {
+            out["state"] = "refused".into();
+            out["error"] = "Factory located the project but named no developmental state".into();
+        }
+        (standing, _) => {
+            out["state"] = standing.unwrap_or("refused").into();
+            out["error"] = row["error"].clone();
+        }
+    }
+    out
 }
 
 /// The words of Factory's workflow diagnostic (`factory.workflow-diagnostic/v1`
@@ -4623,6 +4813,143 @@ mod run_close_tests {
             Some("The song's file changed since it was read; read the score again and repeat the edit.")
         );
         assert_eq!(workflow_diagnostic_words(b"error: unknown command"), None);
+    }
+
+    #[test]
+    fn a_song_runs_again_from_its_canon_unit_through_factory_s_perform() {
+        // O-I #844: a canon unit's song runs again, each run a take — a Run Factory commissions as the unit's Run was
+        // (`factory workflow perform <state> <run-ref> <unit>` → factory.song-take/v1). A write: it commissions a Run.
+        let perform: OwnerRequest = serde_json::from_value(serde_json::json!({
+            "kind": "workflow-perform", "state_path": "/s.json", "run_ref": "run:A", "unit": "release-check"}))
+        .unwrap();
+        assert!(!perform.is_read() && !perform.needs_world());
+        let OwnerRequest::WorkflowPerform {
+            state_path,
+            run_ref,
+            unit,
+        } = perform
+        else {
+            unreachable!()
+        };
+        assert_eq!(
+            workflow_perform_args(&state_path, &run_ref, &unit)
+                .iter()
+                .map(|arg| arg.to_string_lossy().into_owned())
+                .collect::<Vec<_>>(),
+            [
+                "workflow",
+                "perform",
+                "/s.json",
+                "run:A",
+                "release-check",
+                "--json"
+            ]
+        );
+        assert_eq!(SONG_TAKE, "factory.song-take/v1");
+    }
+
+    #[test]
+    fn a_song_is_exported_remade_and_listed_through_factory_s_workflow_verbs() {
+        let strings = |args: Vec<std::ffi::OsString>| {
+            args.iter()
+                .map(|arg| arg.to_string_lossy().into_owned())
+                .collect::<Vec<_>>()
+        };
+        let export: OwnerRequest = serde_json::from_value(serde_json::json!({
+            "kind": "workflow-export", "state_path": "/s.json", "entry": "release.workflow.ts",
+            "rows": ["agent/eros", "agent-set/anima"], "units": ["gather"]}))
+        .unwrap();
+        assert!(
+            !export.is_read() && !export.needs_world(),
+            "a render is a prepared write in the project that made it"
+        );
+        let OwnerRequest::WorkflowExport {
+            state_path,
+            entry,
+            name,
+            rows,
+            units,
+        } = export
+        else {
+            unreachable!()
+        };
+        assert_eq!(
+            strings(workflow_export_args(
+                &state_path,
+                &entry,
+                name.as_deref(),
+                rows.as_deref(),
+                units.as_deref()
+            )),
+            [
+                "workflow",
+                "export",
+                "/s.json",
+                "release.workflow.ts",
+                "--rows",
+                "agent/eros,agent-set/anima",
+                "--units",
+                "gather",
+                "--json"
+            ]
+        );
+        assert_eq!(
+            strings(workflow_export_args(
+                Path::new("/s.json"),
+                "a.workflow.ts",
+                Some("take-2"),
+                None,
+                None
+            )),
+            [
+                "workflow",
+                "export",
+                "/s.json",
+                "a.workflow.ts",
+                "--name",
+                "take-2",
+                "--json"
+            ]
+        );
+        let remake: OwnerRequest = serde_json::from_value(serde_json::json!({
+            "kind": "workflow-remake", "state_path": "/s.json", "name": "release-check"}))
+        .unwrap();
+        assert!(!remake.is_read());
+        assert_eq!(
+            strings(workflow_remake_args(Path::new("/s.json"), "release-check")),
+            ["workflow", "remake", "/s.json", "release-check", "--json"]
+        );
+        let songs: OwnerRequest = serde_json::from_value(serde_json::json!({
+            "kind": "workflow-songs-read", "all": true}))
+        .unwrap();
+        assert!(
+            songs.is_read() && songs.needs_world(),
+            "Material's songs are read across the projects Central discloses"
+        );
+        assert_eq!(
+            strings(workflow_songs_args(Path::new("/s.json"))),
+            ["workflow", "songs", "/s.json", "--json"]
+        );
+        // A project with no Factory source, or one Factory refused, stands as
+        // it is: never an empty list in place of a refusal.
+        let absent = songs_of_location(serde_json::json!({"project": "Work-A", "root": "/w/a",
+            "state": "absent", "error": "no .factory under /w/a"}));
+        assert_eq!(absent["state"], "absent");
+        assert_eq!(absent["error"], "no .factory under /w/a");
+        let unnamed = songs_of_location(serde_json::json!({"project": null, "root": "/c",
+            "state": "located", "location": {}}));
+        assert_eq!(unnamed["state"], "refused");
+        // Without Central's world the songs are not looked for.
+        assert!(owner(
+            OwnerRequest::WorkflowSongsRead {
+                project: None,
+                all: true
+            },
+            None
+        )
+        .unwrap_err()
+        .message
+        .contains("world reading"));
     }
 
     #[test]

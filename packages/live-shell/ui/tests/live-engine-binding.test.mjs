@@ -98,7 +98,7 @@ test('off the native candidate each engine act refuses, naming its op', async ()
 /** A native host standing in: the set owner's ops in the kernel's shape, and the engine as live_engine_host.rs answers — a move sent is
  * queued, and the reading shows it only after a block (here, the next live_engine_mixer read) applied it. */
 const exportArgs = []
-function nativeHost() {
+function nativeHost({refuseOpen = null} = {}) {
   const calls = []
   const part = name => ({name, gain: 1, pan: 0, active: true, solo: false, sends: [0], midi: name === 'P0'})
   let applied = null, queued = []
@@ -114,7 +114,7 @@ function nativeHost() {
     if (event.kind === 'pan') at(event.part).pan = event.pan
   }
   const engineOp = {
-    live_engine_open: ({path}) => { applied = {path, sample_rate: 48000, position: 0, playing: false, warnings: ['P1: a group is not hosted'],
+    live_engine_open: ({path}) => { if (refuseOpen?.(path)) throw refuseOpen(path); applied = {path, sample_rate: 48000, position: 0, playing: false, warnings: ['P1: a group is not hosted'],
       mixer: {tracks: [part('P0'), part('P2')], returns: [part('P3')], main: part('Main')}}; return reading() },
     live_engine_play: () => { applied.playing = true; return reading() },
     live_engine_stop: () => { applied.playing = false; return reading() },
@@ -124,7 +124,8 @@ function nativeHost() {
     live_engine_export: args => { exportArgs.push(args); return {path: '/Users/me/Exports/engine.wav', frames: applied.position, events: 0, complete: true} },
   }
   const kernel = op => {
-    if (op.op === 'live_set_read') return {result: 'live_set_reading', reading: {summary, document: {path: op.path, tracks: []}, revision: `sha256:${'0'.repeat(64)}`}}
+    if (op.op === 'live_set_read' && op.path === '/sets/unreadable.als') throw 'The set owner cannot read /sets/unreadable.als: no such file.'
+    if (op.op === 'live_set_read') return {result: 'live_set_reading', reading: {summary: {...summary, path: op.path}, document: {path: op.path, tracks: []}, revision: `sha256:${'0'.repeat(64)}`}}
     if (op.op === 'live_track_mixer_write') return {result: 'live_track_mixer_reading', reading: {mixer: {activator: op.control === 'activator' ? op.value : true}}}
     throw new Error(`unexpected kernel op ${op.op}`)
   }
@@ -266,4 +267,79 @@ test('the Live mode\'s tracks read the engine as it stands, and the pane draws a
     await engine.liveEngine.stop().catch(() => {})
     delete globalThis.window
   }
+})
+
+// Live's transport (shell/transports/useLiveTransport.tsx): with a clip selected, Play and Stop are the clip player's on the torus
+// (manual §21.2 Views, "In Clip view, the Torus plays the notes of the clip that you select"); with none, they play the open set in
+// the one engine (§21.1 Rules: every part sounds in one engine, to the Main track), lit while the engine plays THIS set, and a
+// refusal stands in the engine's own words.
+/** Waits for the engine's answer to a press (a press answers nothing of its own: the engine's state does). */
+async function until(ready, ms = 2000) {
+  for (const start = Date.now(); !ready(); await new Promise(resolve => setTimeout(resolve, 5))) if (Date.now() - start > ms) throw new Error('the engine did not answer')
+}
+test('with no clip selected, Live\'s Play and Stop play the open set in the engine, lit for this set, refusing in the engine\'s words', async () => {
+  const bind = (path, native = true) => engine.engineTransportBindings(path, engine.liveEngineState(), native)
+  assert.match(bind(null).play.refused, /Open a set/, 'no set open: nothing to play')
+  assert.match(bind(PATH, false).play.refused, /desktop's audio path, the native candidate's/, 'off the candidate: refused before a press')
+  assert.match(bind(PATH).stop.refused, /Nothing plays in the engine/)
+  const calls = nativeHost({refuseOpen: path => path === '/sets/elsewhere.als' && 'The engine opens only a set the kernel reads: /sets/elsewhere.als is not one.'})
+  try {
+    const idle = bind(PATH)
+    assert.equal(idle.play.lit, false)
+    idle.play.press()
+    await until(() => engine.liveEngineState().reading?.playing)
+    assert.deepEqual(calls.filter(c => c.startsWith('live_engine')), ['live_engine_open', 'live_engine_play'], 'Play bridges the set and starts it')
+    const playing = bind(PATH)
+    assert.equal(playing.play.lit, true, 'lit: the engine plays this set')
+    assert.match(playing.play.title, /P1: a group is not hosted/, 'what the bridge could not host is said on Play')
+    assert.equal(bind('/sets/other.als').play.lit, false, 'another set is not lit by this one playing')
+    assert.ok(playing.stop.press, 'Stop stops what the engine plays')
+    playing.stop.press()
+    await until(() => engine.liveEngineState().reading?.playing === false)
+    assert.equal(engine.liveEngineState().reading.playing, false)
+    assert.equal(bind(PATH).play.lit, false)
+    // the engine refuses: the press answers nothing of its own, and the slot says the engine's words
+    bind('/sets/elsewhere.als').play.press()
+    await until(() => engine.liveEngineState().error)
+    assert.match(bind('/sets/elsewhere.als').play.title, /The engine refused: The engine opens only a set the kernel reads/)
+    // the set's owner refuses to read it: Play says so, in the owner's words, and nothing was bridged
+    calls.length = 0
+    bind('/sets/unreadable.als').play.press()
+    await until(() => /unreadable/.test(engine.liveEngineState().error ?? ''))
+    assert.match(bind('/sets/unreadable.als').play.title, /The engine refused: .*cannot read \/sets\/unreadable\.als/)
+    assert.ok(!calls.includes('live_engine_open'), 'a set its owner cannot read is not bridged')
+  } finally {
+    await engine.liveEngine.stop().catch(() => {})
+    delete globalThis.window
+  }
+  const source = readFileSync(new URL('../src/shell/transports/useLiveTransport.tsx', import.meta.url), 'utf8')
+  const live = source.slice(source.indexOf('export const useLiveTransport'))
+  assert.match(live, /const playStop = clipAddressOf\(selection\) \? clip : engine/, 'a selected clip keeps the clip player; else the engine')
+  assert.match(live, /\.\.\.playStop,/)
+  const bar = readFileSync(new URL('../src/components/TransportBar.tsx', import.meta.url), 'utf8')
+  assert.match(bar, /reading=\{\{[^}]*setPath[^}]*\}\}/, 'the bar hands the transport the open set')
+})
+
+// The Main track's Volume and Pan in the Session's Main column (Live's Main has no Activator, Solo or Arm: its levels alone), and every
+// track's Volume and Pan in its Arrangement head, on a line under its name and switches (manual §21.1 "The mixer row"; Live cap 43).
+test('the Main column carries the Main track\'s Volume and Pan, and each Arrangement head its track\'s, each written through the set\'s owner', async () => {
+  const wrote = []
+  const tracks = adapter.liveSetTrackAdapter.project({set: mixSet, document: mixDocument, mixerWrite: async (...args) => { wrote.push(args) }})
+  const {SessionGrid} = await import('../src/frame/tracks/SessionGrid.tsx')
+  const {ArrangementRuler} = await import('../src/frame/tracks/ArrangementRuler.tsx')
+  const session = renderToStaticMarkup(createElement(SessionGrid, {set: tracks, selection: {select() {}}}))
+  const main = session.slice(session.indexOf('class="trk trk-main"'))
+  const mainRow = main.slice(main.indexOf('data-mixer="main"'), main.indexOf('data-mixer="main"') + 2000)
+  assert.match(mainRow, /class="mx-lv"[\s\S]*data-mix="volume"[\s\S]*data-mix="pan"/, 'the Main column: Volume, then Pan')
+  assert.doesNotMatch(mainRow.slice(0, mainRow.indexOf('class="mx-lv"')), /data-mix="(activator|solo|arm)"/, 'and no switch Live\'s Main has none of')
+  assert.match(mainRow, /data-mix="volume"[^>]*data-state="on"/, 'the Main track\'s volume, as the set holds it')
+  assert.match(mainRow, /data-mix="pan"[^>]*data-state="unread"/, 'a pan the set holds none of stands unread')
+  const arrangement = renderToStaticMarkup(createElement(ArrangementRuler, {set: tracks, selection: {select() {}}}))
+  const heads = [...arrangement.matchAll(/<div class="tl-head tl-track-head[^"]*">([\s\S]*?)<div class="tl-body">/g)].map(match => match[1])
+  assert.equal(heads.length, 3, 'a head per track, the Main track last')
+  for (const head of heads) assert.match(head, /<div class="mx-lv">[\s\S]*data-mix="volume"[\s\S]*data-mix="pan"/, 'each head: Volume, then Pan')
+  // the Main track's level writes the Main track (the set's last track: live-set edit.rs track_at_mut, the MainTrack after Tracks)
+  const level = lanes.mixerCells(tracks, tracks.tracks[2], 2).find(cell => cell.id === 'volume').level
+  await level.set.run(-3)
+  assert.deepEqual([wrote[0][0], wrote[0][1], dB(wrote[0][2])], [2, 'volume', -3])
 })

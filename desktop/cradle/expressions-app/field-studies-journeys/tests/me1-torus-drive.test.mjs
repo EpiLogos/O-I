@@ -191,12 +191,12 @@ test('only the owner\'s own finite positive pitches reach the plate', async () =
   assert.deepEqual(resolved.tonesHz, [220, 330]);
 });
 
-test('the eight audible roles and four nodes are named absent, with the reason, beside every torus drive', async () => {
+test('beside every torus drive the plate carries the eight and the four, unread with the reason while no body is given', async () => {
+  // O-I 851 reads the roles from the body (torus-object-851.test.mjs); a reading that carries no body says why they are not read.
   const {TorusDriveState} = await drive();
   const resolved = new TorusDriveState().resolve({keySource: 'torus', reading: reading({torus: [220]}), manualHz: 396});
-  assert.equal(resolved.roles.standing, 'absent');
-  assert.match(resolved.roles.reason, /eight audible roles and four nodes/);
-  assert.match(resolved.roles.reason, /no source/i);
+  assert.equal(resolved.roles.standing, 'unread');
+  assert.match(resolved.roles.reason, /no voices or boundaries/);
 });
 
 // ---------------------------------------------------------------------------------------------------- the plate

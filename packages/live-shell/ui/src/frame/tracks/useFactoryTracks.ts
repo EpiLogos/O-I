@@ -31,6 +31,8 @@ import {useSettingsAnswers} from '../../owners/readers'
 import {useAttemptTakes} from '../../owners/attemptTakes'
 import {makeTakes, takeRunOf, trackSettingChange, writeSessionSettings} from '../../agent/sessionSettings'
 import {taskMaker} from '../../agent/clipBinding'
+import {songOfNote, songTakes} from '../../agent/songClips'
+import {clipHostId, viewHoldsOf} from '../detail/clipBinding'
 import {projectOfSession, ROOT_REGISTER} from '../../agent/worldScope'
 import {withClipMaker} from './clipMakers'
 import {encounter} from '../../../../../../desktop/cradle/src/encounter/client'
@@ -120,10 +122,18 @@ export const useFactoryTracks: UseModeTracks = reading => {
 /** A Repeat's press (§19.1 The Launch panel: "Each run is a take"): its takes through Actuation's comparison run, the set started and
  * ended on AIKit (agent/sessionSettings.ts makeTakes), over the run AIKit hands with the session's settings — the session's own task
  * and its agent as an agent-jsonl body (`task.take_run`, takeRunOf). Where AIKit hands its refusal, or an AIKit before the take body
- * hands nothing, the press says so in words and writes nothing. Pure. */
+ * hands nothing, the press says so in words and writes nothing. With a song's note chosen in the pressed clip's Clip view (its `unit`
+ * hold, a canon unit of the session's Run in Factory's score), the takes are the song's: each a Run Factory starts from the note's clip
+ * (agent/songClips.ts songTakes, O-I #844). */
 export function repeatPress(transport: KernelTransportStatus, settingsOf: (session: string) => EncounterSessionSettingsReading | null | undefined,
   projectOf: (session: string) => string) {
-  return (session: string) => makeTakes(transport, projectOf(session), session, takeRunOf(settingsOf(session)?.task))
+  return async (session: string, _label?: string, clipId?: string) => {
+    const project = projectOf(session)
+    const note = clipId ? viewHoldsOf(clipHostId('factory', clipId)).unit : undefined
+    const song = typeof note === 'string' && note ? await songOfNote(transport, project, session, note) : null
+    if (song && 'refused' in song) return {ok: false as const, error: song.refused}
+    return song ? songTakes(transport, project, session, song) : makeTakes(transport, project, session, takeRunOf(settingsOf(session)?.task))
+  }
 }
 
 /** Factory's set as the pane draws it: the register's workcells as return tracks and each session's Works in (withWorkcells), and its

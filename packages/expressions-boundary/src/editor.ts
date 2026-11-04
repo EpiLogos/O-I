@@ -162,7 +162,7 @@ export type NativeGlyphChange =
   | {kind: 'field-font'; values: {fontFamily?: string; fontWeight?: number}}
   | {kind: 'sequence-settings'; entity_id: string; step_id?: string; values: NativeSequenceSettings}
   | {kind: 'step-timing'; entity_id: string; step_id: string; hold?: number; transition?: number}
-  | {kind: 'step-source'; entity_id: string; step_id: string; shape: SequenceStep['shape']; text?: string; source?: Entity['source']}
+  | {kind: 'step-source'; entity_id: string; step_id: string; shape: SequenceStep['shape']; text?: string; source?: Entity['source']; torusFigure?: SequenceStep['torusFigure']}
   | {kind: 'step-position'; entity_id: string; step_id: string; position: Vec3 | null}
   | {kind: 'step-overrides'; entity_id: string; step_id: string; operation: 'capture' | 'release'; values?: SequenceStep['objectState']}
   | {kind: 'step-layers'; entity_id: string; step_id: string; layers: NonNullable<Entity['layers']>}

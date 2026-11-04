@@ -21,6 +21,7 @@ import {
 } from "./fieldModel.mjs";
 import { resolveEntityPose } from "./entityPose.mjs";
 import { drawVolumeZ, mulberry32, hashString, buildDepthFieldsFromMask, cellVolumeShape, DEFAULT_GLYPH_VOLUME } from "./glyphVolume.mjs";
+import { torusCandidates } from "./torusObject.mjs";
 const BASE_SCALE = 0.56;
 const CANDIDATE_CACHE_MAX_ENTRIES = 128;
 const CANDIDATE_CACHE_MAX_BYTES = 32 * 1024 * 1024;
@@ -202,7 +203,7 @@ class EntityRuntime {
   }
   // ------------------------------------------------------------------ shapes
   shapeSignature(shape) {
-    return `${shape.kind}|${shape.text ?? ""}|${shape.yantraId ?? ""}|${shape.frequencyHz ?? ""}|${shape.primitive ?? ""}|${shape.plateGeometry ?? ""}|${shape.dimension ?? ""}`;
+    return `${shape.kind}|${shape.text ?? ""}|${shape.yantraId ?? ""}|${shape.frequencyHz ?? ""}|${shape.primitive ?? ""}|${shape.plateGeometry ?? ""}|${shape.dimension ?? ""}|${shape.figure ?? ""}`;
   }
   candidatesFor(shape, fontFamily, fontWeight) {
     const sig = this.shapeSignature(shape);
@@ -256,6 +257,8 @@ class EntityRuntime {
           c.cw = s.contourness;
         }
       }
+    } else if (shape.kind === "torus") {
+      out = torusCandidates(shape.figure ?? "torus");
     } else if (shape.kind === "cymatic") {
       out = this.sampler.sampleCymaticTemplate({ frequencyHz: shape.frequencyHz ?? 396, plateGeometry: shape.plateGeometry ?? this.templateGeometry, dimension: shape.dimension ?? this.templateDimension, seed: hashString(sig) }).candidates;
     } else {

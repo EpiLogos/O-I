@@ -1,12 +1,22 @@
+import { bodyOf, readRoles } from "./torusObject.mjs";
 const KEY_SOURCES = ["torus", "sky", "manual"];
 const isKeySource = (value) => typeof value === "string" && KEY_SOURCES.includes(value);
-const ROLES_ABSENT = "M2\u2032 reads eight audible roles and four nodes from the torus (the Vimar\u015B\u0101 reading's audio_octet_hz and nodal_quartet), but no source says which plate mode each role or node drives, so the plate is driven by the pitches the torus plays.";
+function rolesOf(reading) {
+  const body = reading?.body;
+  const amplitudes = Array.isArray(body?.amplitudes) ? new Map(body.amplitudes.map((a) => [a.mode_ref, [a.re, a.im]])) : null;
+  return readRoles(body ? bodyOf(body.influence) : null, amplitudes, reading ? "The owner states no eight voices and four boundaries for the torus yet, so the plate reads no voices or boundaries." : void 0);
+}
+function pulseRateFor(drive) {
+  if (!drive || drive.kind === "torus") return null;
+  const hz = drive.targetHz;
+  return typeof hz === "number" && Number.isFinite(hz) && hz > 0 ? hz : null;
+}
 const pitches = (tones) => (tones ?? []).filter((hz) => typeof hz === "number" && Number.isFinite(hz) && hz > 0);
 const SILENCE = "The torus is silent";
 class TorusDriveState {
   last = [];
   resolve(args) {
-    const roles = { standing: "absent", reason: ROLES_ABSENT };
+    const roles = rolesOf(args.reading);
     const { keySource, reading } = args;
     if (keySource === "manual") {
       return { source: "manual", tonesHz: [args.manualHz], silent: false, held: false, reason: null, roles };
@@ -25,7 +35,8 @@ class TorusDriveState {
 }
 export {
   KEY_SOURCES,
-  ROLES_ABSENT,
   TorusDriveState,
-  isKeySource
+  isKeySource,
+  pulseRateFor,
+  rolesOf
 };

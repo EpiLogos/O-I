@@ -1,13 +1,14 @@
 // The Jankó keyboard's layout (T-LIVE-JANKO-DEVICE; DEVICE-SEMANTICS-LOCK §0.2 item 4). The surface is the owner's: `ql music janko window`
 // (schema ql.janko-surface/v1) lays out six rows of keys, each row a whole-tone family, each pitch class held by repeated touch-points. The
-// shell reads that document exactly and never lays a key out by eye. The excitation point of a key on the torus is not in the window: its
-// angular placement is the kernel derivation (QL-MEF packet K), so the device names it as awaiting that derivation.
+// shell reads that document exactly and never lays a key out by eye. The point a key strikes is not in the window and never the shell's:
+// the Torus's session places each key on its helix and carries it as the torus turns (QL-MEF janko.rs POINT_LAW; O-I #850), and the
+// keyboard strikes the key itself (`janko` strike → torus-play, O-I #853).
 import {useSyncExternalStore} from 'react'
 
 export const JANKO_SCHEMA = 'ql.janko-surface/v1'
 export const JANKO_ROWS = 6
-/** The excitation point is not published: the device says so and never supplies an angle. */
-export const JANKO_PLACEMENT_NOTE = 'Excitation point: placement awaits the kernel derivation (packet K).'
+/** Where a key strikes is the Torus's, never the keyboard's: the device says so and never supplies a point. */
+export const JANKO_PLACEMENT_NOTE = 'Each key strikes its place on its helix, wherever the turning torus has carried it: the Torus places it, never the keyboard.'
 /** Conventional names of the twelve pitch classes, for the piano alternative only (presentation; the Jankó keys carry QL's own names). */
 const PIANO_NAMES = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B']
 const PIANO_BLACK = new Set([1, 3, 6, 8, 10])

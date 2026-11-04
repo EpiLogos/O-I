@@ -875,6 +875,11 @@ pub enum AikitWrite {
         source_ref: Option<String>,
         #[serde(default)]
         by: Option<String>,
+        /// The body is a Software Factory song's clip (`factory.song-clip/v1`):
+        /// AIKit writes a Method from it (`aikit capture --from-song`, O-I #844),
+        /// filed as a proposal that waits for the person's acceptance.
+        #[serde(default)]
+        from_song: bool,
     },
     Promote {
         #[serde(default)]
@@ -1093,6 +1098,39 @@ impl AikitWrite {
             | Self::DecideFill { .. } => None,
         }
     }
+}
+
+/// `aikit capture TITLE [--kind] [--export]… [--scope] [--source-ref] [--by]
+/// [--from-song]`, the body on stdin (the caller hands it over). Empty for
+/// any other write.
+pub fn capture_args(request: &AikitWrite) -> Vec<OsString> {
+    let AikitWrite::Capture {
+        title,
+        capture_kind,
+        export,
+        scope,
+        source_ref,
+        by,
+        from_song,
+        ..
+    } = request
+    else {
+        return Vec::new();
+    };
+    let mut args = words(&["capture"]);
+    args.push(title.into());
+    push_flag(&mut args, "--kind", capture_kind.as_deref());
+    for name in export {
+        args.push("--export".into());
+        args.push(name.into());
+    }
+    push_flag(&mut args, "--scope", scope.as_deref());
+    push_flag(&mut args, "--source-ref", source_ref.as_deref());
+    push_flag(&mut args, "--by", by.as_deref());
+    if *from_song {
+        args.push("--from-song".into());
+    }
+    args
 }
 
 /// `aikit decide invoke --instrument I --request-file - [--agent-session S]`:
@@ -3328,29 +3366,10 @@ fn aikit_written(request: &AikitWrite, cwd: Option<&Path>) -> Result<Written, Er
     let mut input = None;
     let mut limit = OWNER_WRITE_LIMIT;
     let (route, mut args) = match request {
-        AikitWrite::Capture {
-            title,
-            body,
-            capture_kind,
-            export,
-            scope,
-            source_ref,
-            by,
-            ..
-        } => {
+        AikitWrite::Capture { body, .. } => {
             // Without --body the owner reads the body from stdin.
-            let mut args = words(&["capture"]);
-            args.push(title.into());
-            push_flag(&mut args, "--kind", capture_kind.as_deref());
-            for name in export {
-                args.push("--export".into());
-                args.push(name.into());
-            }
-            push_flag(&mut args, "--scope", scope.as_deref());
-            push_flag(&mut args, "--source-ref", source_ref.as_deref());
-            push_flag(&mut args, "--by", by.as_deref());
             input = Some(body.as_bytes().to_vec());
-            ("aikit capture", args)
+            ("aikit capture", capture_args(request))
         }
         AikitWrite::Promote { candidate, id, .. } => {
             let mut args = words(&["promote"]);
@@ -3763,9 +3782,34 @@ mod tests {
             write,
             AikitWrite::Capture {
                 capture_kind: Some(_),
+                from_song: false,
                 ..
             }
         ));
+        // A song's clip on the Capture page (O-I #844): AIKit writes the Method
+        // from the clip; the clip travels as the body, on stdin.
+        let song: AikitWrite = serde_json::from_value(serde_json::json!({
+            "kind": "capture", "project": "O-I", "title": "Release check", "body": "{\"contract\":\"factory.song-clip/v1\"}",
+            "scope": "project", "source_ref": "factory-song:o-i/release-check", "by": "human", "from_song": true}))
+        .unwrap();
+        assert_eq!(
+            spelled(&capture_args(&song)),
+            [
+                "capture",
+                "Release check",
+                "--scope",
+                "project",
+                "--source-ref",
+                "factory-song:o-i/release-check",
+                "--by",
+                "human",
+                "--from-song"
+            ]
+        );
+        assert_eq!(
+            spelled(&capture_args(&write)),
+            ["capture", "t", "--kind", "script"]
+        );
     }
 
     #[test]

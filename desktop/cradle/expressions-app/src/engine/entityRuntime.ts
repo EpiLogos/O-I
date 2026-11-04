@@ -42,6 +42,7 @@ import {
 import { SpatialChakraNode, type GlyphVolumeConfig } from './types';
 import { resolveEntityPose, type EvaluatedEntityPose } from './entityPose';
 import { drawVolumeZ, mulberry32, hashString, buildDepthFieldsFromMask, cellVolumeShape, DEFAULT_GLYPH_VOLUME } from './glyphVolume';
+import { torusCandidates } from './torusObject';
 
 /** World px per canvas px at entity.scale = 1 (a glyph fills ≈ 400 px) */
 const BASE_SCALE = 0.56;
@@ -270,7 +271,7 @@ export class EntityRuntime {
 
   // ------------------------------------------------------------------ shapes
   private shapeSignature(shape: Shape): string {
-    return `${shape.kind}|${shape.text ?? ''}|${shape.yantraId ?? ''}|${shape.frequencyHz ?? ''}|${shape.primitive ?? ''}|${shape.plateGeometry ?? ''}|${shape.dimension ?? ''}`;
+    return `${shape.kind}|${shape.text ?? ''}|${shape.yantraId ?? ''}|${shape.frequencyHz ?? ''}|${shape.primitive ?? ''}|${shape.plateGeometry ?? ''}|${shape.dimension ?? ''}|${shape.figure ?? ''}`;
   }
 
   private candidatesFor(shape: Shape, fontFamily: string | undefined, fontWeight: string | number | undefined): Candidate[] {
@@ -327,6 +328,8 @@ export class EntityRuntime {
           c.hz=s.half;c.cw=s.contourness;
         }
       }
+    } else if (shape.kind === 'torus') {
+      out = torusCandidates(shape.figure ?? 'torus');
     } else if (shape.kind === 'cymatic') {
       out = this.sampler.sampleCymaticTemplate({frequencyHz:shape.frequencyHz??396,plateGeometry:shape.plateGeometry??this.templateGeometry,dimension:shape.dimension??this.templateDimension,seed:hashString(sig)}).candidates;
     } else {

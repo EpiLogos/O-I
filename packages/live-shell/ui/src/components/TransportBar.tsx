@@ -28,7 +28,7 @@ const VIEWS: ReadonlyArray<{view: MainView; label: string; mark: 'session' | 'ar
 /** The transport (manual §10.1): every control in one place, the same in every mode. From the left: the browser's toggle, the
  * mode's transport in Live's order (shell/modeTransports.tsx), the modes, the three views, and the widget rail's toggle. The
  * instruments are not here: they come from the browser. Settings open with ⌘, in a window of their own. */
-export function TransportBar({ tempoBpm, name, mode, view, setView, chooseMode, modeReadouts, timeSpine, focusedInstrument, workName, nativeTransport, browser, dock, toggleBrowser, toggleDock }: {
+export function TransportBar({ tempoBpm, setPath = null, name, mode, view, setView, chooseMode, modeReadouts, timeSpine, focusedInstrument, workName, nativeTransport, browser, dock, toggleBrowser, toggleDock }: {
   /** The Expressions owner's source for the bar's bindings; absent until the native reading is admitted. */
   nativeTransport?: NativeCompositionViewSource | null
   /** The frame's Rev-5 mode reading (surfModeOf maps it onto the surf). */
@@ -45,6 +45,8 @@ export function TransportBar({ tempoBpm, name, mode, view, setView, chooseMode, 
   focusedInstrument?: PaneInstrumentId | null
   workName?: string; sceneName?: string
   tempoBpm: number | null; name: string; browser: boolean; dock: boolean
+  /** The open Live set's path (Live's Play plays it in the engine when no clip is selected). */
+  setPath?: string | null
   toggleBrowser: () => void; toggleDock: () => void
 }) {
   const surf = surfModeOf(mode) ?? 'live'
@@ -54,7 +56,7 @@ export function TransportBar({ tempoBpm, name, mode, view, setView, chooseMode, 
   return <header className="transport" data-tauri-drag-region data-focus-region="transport" tabIndex={-1}><TransportTitle line={MODE_TITLE[surf]} setName={name} workName={workName} timeSpine={timeSpine} /><div className="transport-controls" data-tauri-drag-region>
     <button className="chrome-toggle" aria-label="Toggle browser" aria-pressed={browser} onClick={toggleBrowser} data-i="Browser|Shows or hides the browser (⌥⌘B)."><CutIcon name="browser" size={15} /></button>
     {/* One transport, five meanings (Rev 5): the SAME slots in the SAME places, in every mode, in Live's order. */}
-    <ModeTransport key={surf} mode={surf} reading={{readouts: modeReadouts, timeSpine, focusedInstrument, tempoBpm, nativeTransport}} />
+    <ModeTransport key={surf} mode={surf} reading={{readouts: modeReadouts, timeSpine, focusedInstrument, tempoBpm, setPath, nativeTransport}} />
     <nav className="surface-icons transport-modes" aria-label="Mode">
       <ModeModeRail mode={mode} chooseMode={chooseMode} />
     </nav>

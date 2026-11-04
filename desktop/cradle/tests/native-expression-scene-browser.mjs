@@ -9,7 +9,10 @@
  *   control A, control B (determinism baseline), varied V (one `m1-advance`).
  * The positive claim needs every layer: producer influence changes, transferred
  * targets change, GPU positions after N steps differ from control beyond the
- * A/B baseline and lie nearer the new targets, pixels differ, and scheduled PCM
+ * A/B baseline and lie nearer the new targets the projection presents from the
+ * admitted frame (the frame × scale, or the Torus object's showing of it: on the
+ * plate laid flat, on a shape of the figure law, settled while it rings; O-I 851),
+ * pixels differ, and scheduled PCM
  * carries the sky's top voice at its held pitch. K2_DISCONNECT_TARGETS=1 cuts GPU target delivery
  * (test-only projection flag) before the determinant: that run must FAIL.
  * Only Central disclosure is controlled; no fake field, PCM, M1, M2 or M3. */
@@ -102,6 +105,8 @@ async function run(label,vary){
   const held=await frame.evaluate(()=>window.__FIELD_STUDIES__.native());
   assert.equal(held.status,'held','the determinant commits while held');
   const influence1=held.instrument.influence,targets1=await frame.evaluate(()=>Array.from(window.__FIELD_STUDIES__.nativeTargets().target_a)),admitted1=await frame.evaluate(()=>Array.from(window.__FIELD_STUDIES__.nativeTargets().admitted_a));
+  // What the projection means the GPU to follow from the admitted frame, computed whether or not the GPU-bound textures received it.
+  const presentation1=await frame.evaluate(()=>{const t=window.__FIELD_STUDIES__.nativeTargets();return{intended:Array.from(t.intended_a),presented:!!t.presented,shape:t.presented_shape};});
   const steps=await frame.evaluate(({steps,dt})=>window.__FIELD_STUDIES__.probeSteps(steps,dt),{steps:STEPS,dt:DT});
   const gpu=await frame.evaluate(()=>{const s=window.__FIELD_STUDIES__.inspect(true);return{positions:s.positions,steps:s.steps,simTime:s.simTime};});
   const pixels=await frame.evaluate(()=>{const c=window.__FIELD_STUDIES__.capture(320,240);const x=c.getContext('2d');return Array.from(x.getImageData(0,0,c.width,c.height).data);});
@@ -121,7 +126,7 @@ async function run(label,vary){
   for(let i=0;i<200&&closes===closed;i++)await settle(25);
   assert.equal(closes,closed+1,'the owner is released exactly once before the next run');
   assert.deepEqual(errors,[]);
-  return{label,scale:held.presentation_units_per_metre,influence0,influence1,targets0,targets1,admitted0,admitted1,steps,gpu,pixels,pcm,particles:report.topology.particle_count};
+  return{label,scale:held.presentation_units_per_metre,influence0,influence1,targets0,targets1,admitted0,admitted1,presentation1,steps,gpu,pixels,pcm,particles:report.topology.particle_count};
  }finally{await context.close();}
 }
 /** The live cadence on the real owner: following, not held; beats skip while
@@ -210,9 +215,14 @@ try{
  // 3. GPU: resident particles after N fixed steps, against the A/B determinism baseline.
  const baseline=maxAbs(a.gpu.positions,b.gpu.positions,n),effect=meanAbs(a.gpu.positions,v.gpu.positions,n),effectMax=maxAbs(a.gpu.positions,v.gpu.positions,n);
  const tolerance=Math.max(1e-3,10*baseline);
- // The intended targets are the admitted frames at the presentation scale,
- // whether or not the GPU-bound textures received them.
- const intendedOld=a.admitted1.map(x=>x*a.scale),intendedNew=v.admitted1.map(x=>x*v.scale);
+ // The intended targets are what the projection presents from the admitted frames, whether or not the GPU-bound textures received
+ // them: each sample's native position × scale, or, while the Torus object shows the frame elsewhere, its showing of that same frame.
+ // Shown as it stands, they are the admitted frame × scale exactly; either way the one determinant must have moved them.
+ const intendedOld=a.presentation1.intended,intendedNew=v.presentation1.intended;
+ const asAdmitted=run=>maxAbs(run.presentation1.intended,run.admitted1.map(x=>x*run.scale),n);
+ report.presentation={control:{presented:a.presentation1.presented,shape:a.presentation1.shape,max_abs_from_admitted_times_scale:asAdmitted(a)},
+  varied:{presented:v.presentation1.presented,shape:v.presentation1.shape,max_abs_from_admitted_times_scale:asAdmitted(v)},intended_max_abs_difference:maxAbs(intendedOld,intendedNew,n)};
+ check([a,v].every(run=>run.presentation1.presented||asAdmitted(run)===0)&&report.presentation.intended_max_abs_difference>0,'presentation: the targets the projection presents are the admitted frame (× scale exactly unless the Torus object shows it elsewhere), and the determinant moved them',report.presentation);
  const movedSlots=moved(intendedOld,intendedNew,a.particles);
  const toward={displacement_target_change_cosine:alignment(a.gpu.positions,v.gpu.positions,intendedOld,intendedNew,a.particles),moved_particles:movedSlots.length,varied_to_new_targets:meanDistanceAt(v.gpu.positions,intendedNew,movedSlots),control_to_new_targets:meanDistanceAt(a.gpu.positions,intendedNew,movedSlots),control_to_own_targets:meanDistanceAt(a.gpu.positions,intendedOld,movedSlots),all_particles:{varied_to_new_targets:meanDistance(v.gpu.positions,intendedNew,a.particles),control_to_new_targets:meanDistance(a.gpu.positions,intendedNew,a.particles)}};
  report.gpu={steps:{control:a.gpu.steps,varied:v.gpu.steps},baseline_max_abs_difference:baseline,tolerance,effect_mean_abs_difference:effect,effect_max_abs_difference:effectMax,toward};

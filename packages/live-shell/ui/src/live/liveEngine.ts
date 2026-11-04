@@ -9,10 +9,11 @@
 // The set's own mixer writes (live/liveWrites.ts liveSetWrites: Activator, Solo, Volume, Pan, a send) land in the .als through the set's owner and,
 // while the engine plays that set, follow into it as the same move, so what you hear moves without the set being bridged again; Play
 // bridges the file as it then stands. The engine runs in the native candidate only; elsewhere each act refuses, naming its op.
-import {useSyncExternalStore} from 'react'
+import {useEffect, useSyncExternalStore} from 'react'
 import {detectTransport, tauriInvoke} from '../../../../../desktop/cradle/src/kernel/bridge'
 import {readSet} from '../native/application'
 import {readSetSummary} from '../shell/useSet'
+import type {SlotBinding} from '../frame/transport/slots'
 
 /** A part as the engine names it: one of the set's parts, one of its returns, or the Main track. */
 export type LiveEnginePart = {track: number} | {return: number} | 'main'
@@ -84,7 +85,7 @@ export function engineEventOfSendWrite(kinds: readonly string[], track: number, 
   return part && typeof part === 'object' && 'track' in part ? {kind: 'send', track: part.track, send: index, gain} : null
 }
 
-interface EngineState {
+export interface EngineState {
   readonly reading: LiveEngineReading | null
   /** The set's part kinds when the engine bridged it: the index space the set's writes name. */
   readonly kinds: readonly string[]
@@ -114,7 +115,9 @@ export const liveEngine = {
    * part kinds come from its owner's reading (`read`, the shell's own by default). */
   async play(path: string, read: (path: string) => Promise<{summary: unknown}> = readSet): Promise<LiveEngineReading> {
     if (state.reading?.path === path && state.reading.playing) return state.reading
-    const summary = readSetSummary((await read(path)).summary)
+    // the set's owner reads it first: a set it cannot read is never bridged, and its refusal is the engine's to show
+    let summary: ReturnType<typeof readSetSummary>
+    try { summary = readSetSummary((await read(path)).summary) } catch (e) { settle({error: words(e)}); throw e }
     await adopt(op<LiveEngineReading>('live_engine_open', {path}))
     settle({kinds: summary.tracks.map(track => track.kind)})
     return adopt(op<LiveEngineReading>('live_engine_play'))
@@ -143,4 +146,36 @@ export function subscribeLiveEngine(listener: () => void): () => void {
 /** The engine's reading and refusal as it stands (the applied mixer, never a move asked). */
 export function useLiveEngine(): EngineState {
   return useSyncExternalStore(subscribeLiveEngine, liveEngineState, liveEngineState)
+}
+
+const NATIVE_ONLY = 'The Live engine plays in the desktop\'s audio path, the native candidate\'s; it is out of reach here.'
+const setName = (path: string) => path.split('/').pop()?.replace(/\.als$/i, '') || path
+
+/** Live's Play and Stop over the open set, when no clip is selected (manual §21.2 Transport, "Play | Plays the clips of the part";
+ * §21.1 Rules: every part sounds in one engine, from the first device of its chain to the Main track). Play bridges the set as the file
+ * stands and starts the engine; Stop stops it. Play is lit while the engine plays THIS set; what the bridge could not host is said on
+ * it; the engine's last refusal stands in its own words. Off the native candidate Play is refused before a press. */
+export function engineTransportBindings(setPath: string | null, engine: EngineState, native = detectTransport().kind === 'tauri'): {play: SlotBinding; stop: SlotBinding} {
+  const reading = engine.reading
+  const refusal = engine.error ? ` The engine refused: ${engine.error}` : ''
+  const stop: SlotBinding = reading?.playing
+    ? {press: () => void liveEngine.stop().catch(() => {}), title: reading.path === setPath
+      ? 'Stop — the engine stops; what it played can be exported (File › Export Audio…).'
+      : `Stop — the engine stops ${setName(reading.path)}, the set it plays.`}
+    : {refused: 'Nothing plays in the engine, so there is nothing to stop.'}
+  if (!setPath) return {play: {lit: false, refused: 'Open a set: Play plays its parts in the engine.'}, stop}
+  if (!native) return {play: {lit: false, refused: NATIVE_ONLY}, stop}
+  const lit = !!reading?.playing && reading.path === setPath
+  const unhosted = lit && reading.warnings.length ? ` Not hosted: ${reading.warnings.join('; ')}.` : ''
+  return {play: {press: () => void liveEngine.play(setPath).catch(() => {}), lit,
+    title: `${lit ? `Play — ${setName(setPath)} plays in the engine, every part through its chain to the Main track.`
+      : `Play — ${setName(setPath)} plays in the engine as the file stands: every part through its chain to the Main track.`}${unhosted}${refusal}`}, stop}
+}
+
+/** Live's transport over the engine: its Play and Stop for the open set, as the engine stands. Leaving Live's transport stops the
+ * engine, as it stops the clip player (live/clipPlayer.ts useLiveClipPlay): nothing sounds that no bar in front of you can stop. */
+export function useLiveEngineTransport(setPath: string | null): {play: SlotBinding; stop: SlotBinding} {
+  const engine = useLiveEngine()
+  useEffect(() => () => { if (liveEngineState().reading?.playing) void liveEngine.stop().catch(() => {}) }, [])
+  return engineTransportBindings(setPath, engine)
 }

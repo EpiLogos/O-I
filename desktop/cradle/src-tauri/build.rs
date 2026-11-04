@@ -16,6 +16,7 @@ fn main() {
             "live_engine_send",
             "live_engine_mixer",
             "live_engine_export",
+            "midi_out",
             "expression_walk_observation",
             "terminal_attach",
             "terminal_poll",

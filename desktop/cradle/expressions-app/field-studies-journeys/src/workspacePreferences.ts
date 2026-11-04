@@ -36,6 +36,6 @@ export function formationSummary(e:Entity):string {
 export function syncHeldState(e:Entity,index:number){
  const step=e.sequence.steps[index];if(!step||e.sequence.enabled||e.sequence.manual)return;
  if(step.layers!==undefined)e.layers=structuredClone(step.layers);
- e.source=step.source?structuredClone(step.source):undefined;if(step.objectState){const {normalized,...appearance}=structuredClone(step.objectState);Object.assign(e,appearance);if(normalized!==undefined&&e.native)e.native={...e.native,extent:{width:e.size.x*400,height:e.size.y*400,rotation:e.rotation*Math.PI/180,...e.native.extent,normalized}};}e.shape=step.shape;e.text=step.text;e.yantraId=step.yantraId;e.templateFrequency=step.templateFrequency;
+ e.source=step.source?structuredClone(step.source):undefined;if(step.objectState){const {normalized,...appearance}=structuredClone(step.objectState);Object.assign(e,appearance);if(normalized!==undefined&&e.native)e.native={...e.native,extent:{width:e.size.x*400,height:e.size.y*400,rotation:e.rotation*Math.PI/180,...e.native.extent,normalized}};}e.shape=step.shape;e.text=step.text;e.yantraId=step.yantraId;e.templateFrequency=step.templateFrequency;if(step.torusFigure)e.torusFigure=step.torusFigure;
  e.templateGeometry=step.templateGeometry;e.templateDimension=step.templateDimension;
 }

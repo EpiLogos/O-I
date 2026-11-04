@@ -7,6 +7,7 @@ import { validateMarkers, validateLoopRegion } from "./journeyMarkers.mjs";
 import { validateTransitionSpec } from "./transitions.mjs";
 import { validateWorkspace, validateDeviceWidgets, defaultWorkspace } from "./workspacePreferences.mjs";
 import { validateTracks } from "./propertyTracks.mjs";
+import { isTorusFigure } from "../engine/torusObject.mjs";
 const ROLE_NAME = /^[A-Za-z0-9_.-]{1,64}$/;
 function validateRoleSlot(value) {
   if (value.role !== void 0 && !(typeof value.role === "string" && ROLE_NAME.test(value.role))) throw new Error("Invalid role name.");
@@ -372,6 +373,7 @@ function validateJourney(value) {
     }
     if (!s.view) s.view = { mode: "2d", yaw: 0, pitch: 0, zoom: 1, panX: 0, panY: 0 };
     if (s.view.nativeScaffold !== void 0 && !["off", "axis", "grid"].includes(s.view.nativeScaffold)) throw new Error("Invalid native scaffold.");
+    if (s.view.kept !== void 0 && typeof s.view.kept !== "boolean") throw new Error("Invalid kept view: it is kept or not.");
     if (!["2d", "3d"].includes(s.view.mode) || !finite(s.view.yaw, -1e3, 1e3) || !finite(s.view.pitch, -1e3, 1e3) || !finite(s.view.zoom, 0.01, 100) || !finite(s.view.panX, -10, 10) || !finite(s.view.panY, -10, 10)) throw new Error("Invalid scene framing.");
     if (!s.field || !color(s.field.background) || !["ink", "print", "round"].includes(s.field.material) || !Array.isArray(s.field.palette) || s.field.palette.length < 2 || s.field.palette.length > 8 || !s.field.palette.every(color) || !s.field.params) throw new Error("Scene material or palette is invalid.");
     for (const [key, defaultValue] of Object.entries(DEFAULT_PARAMS)) {
@@ -381,7 +383,7 @@ function validateJourney(value) {
     if (!Array.isArray(s.entities) || s.entities.length > 32 || !Array.isArray(s.text) || s.text.length > 16 || !Array.isArray(s.automation) || s.automation.length > 64) throw new Error("Scene exceeds safe authoring limits.");
     const eids = /* @__PURE__ */ new Set();
     for (const e of s.entities) {
-      if (!safeId(e.id) || eids.has(e.id) || !str(e.name, 160) || !str(e.text, 120) || !["formation", "pin"].includes(e.kind) || !["text", "ring", "disc", "square", "triangle", "yantra", "cymatic"].includes(e.shape)) throw new Error("Invalid entity.");
+      if (!safeId(e.id) || eids.has(e.id) || !str(e.name, 160) || !str(e.text, 120) || !["formation", "pin"].includes(e.kind) || !["text", "ring", "disc", "square", "triangle", "yantra", "cymatic", "torus"].includes(e.shape) || e.torusFigure !== void 0 && !isTorusFigure(e.torusFigure)) throw new Error("Invalid entity.");
       eids.add(e.id);
       if (!e.position || !Object.values(e.position).every((n) => finite(n, -100, 100)) || !["x", "y", "z"].every((k) => finite(e.position[k], -100, 100)) || !e.size || !finite(e.size.x, 1e-3, 100) || !finite(e.size.y, 1e-3, 100) || !finite(e.rotation, -36e3, 36e3) || !finite(e.share, 0, 1e3) || !color(e.tint) || !finite(e.tintWeight, 0, 1) || typeof e.locked !== "boolean") throw new Error("Invalid entity transform or appearance.");
       if (!e.force || !["none", "attract", "repel", "vortex"].includes(e.force.kind) || !finite(e.force.strength, -1e3, 1e3) || !finite(e.force.radius, 1e-3, 125) || !finite(e.force.spin, -1e3, 1e3) || !(e.station === null || Number.isInteger(e.station) && e.station >= 0 && e.station < 7)) throw new Error("Invalid entity influence.");
@@ -414,7 +416,7 @@ function validateJourney(value) {
           const v = step.objectState;
           if (v.normalized !== void 0 && typeof v.normalized !== "boolean" || !v.size || !finite(v.size.x, 1e-3, 100) || !finite(v.size.y, 1e-3, 100) || !finite(v.rotation, -36e3, 36e3) || v.scale !== void 0 && !finite(v.scale, 1e-3, 1e3) || !color(v.tint) || !finite(v.tintWeight, 0, 1) || !v.force || !["none", "attract", "repel", "vortex"].includes(v.force.kind) || !finite(v.force.radius, 1e-3, 125) || !finite(v.force.strength, -1e3, 1e3) || !finite(v.force.spin, -1e3, 1e3)) throw new Error("Invalid object state");
         }
-        if (!safeId(step.id) || !str(step.text, 120) || !["text", "ring", "disc", "square", "triangle", "yantra", "cymatic"].includes(step.shape) || !finite(step.hold, 0, 3600) || !finite(step.transition, 0, 3600) || step.position !== null && (!step.position || !["x", "y", "z"].every((k) => finite(step.position[k], -100, 100)))) throw new Error("Invalid sequence step.");
+        if (!safeId(step.id) || !str(step.text, 120) || !["text", "ring", "disc", "square", "triangle", "yantra", "cymatic", "torus"].includes(step.shape) || step.torusFigure !== void 0 && !isTorusFigure(step.torusFigure) || !finite(step.hold, 0, 3600) || !finite(step.transition, 0, 3600) || step.position !== null && (!step.position || !["x", "y", "z"].every((k) => finite(step.position[k], -100, 100)))) throw new Error("Invalid sequence step.");
       }
     }
     if (s.research !== void 0) validateResearchMaterial(s.research, eids);

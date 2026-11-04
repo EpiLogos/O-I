@@ -29,14 +29,16 @@
 // line, minimap, autosave, view. A line may carry its standing as a third element ([from, to, standing]).
 //
 // The Flow page draws a workflow as nodes and lines (manual §17.4 "Map a workflow"): the same workflow Factory's Notes draw in time
-// (clips/factory.tsx), never a copy. `flow` is Factory's reading of it (JSON {name, nodes: [{id, kind: task | song | agent | team | join |
+// (clips/factory.tsx), never a copy. `flow` is Factory's reading of it (JSON {name, nodes: [{id, kind: task | song | agent | set | join |
 // trigger, name, col, row}], lines: [{from, to, kind: handoff | allocation | start, proposed?}]}): its units and joins and what each waits on
-// (`factory workflow inspect`), the agents and teams each unit's agentRequirements name, and the routine that starts it (AIKit's
-// `aikit routine list`, the Automations page). col and row are presentation: the order of the work, left to right. A line you draw
-// is proposed until Factory admits it; `flow.check` and `flow.checkWhy` are Factory's word (`factory workflow check`). Promote
-// (`flow.promote`) would send the drawn lines to Factory, but no Factory operation writes a workflow source, so the binding stands it
-// disabled with that reason. Open (`flow.open`, the node's id) is the shell's: a task opens in Clip view, a song in its own Notes, a
-// routine on the Automations page. The view holds flow.show, flow.node and flow.line.
+// (`factory workflow score`), the agents and agent sets each unit's agentRequirements name, and the routine that starts it (the AIKit
+// routine whose invocation Factory continued into the Run, on the Automations page). col and row are presentation: the order of the work,
+// left to right. `flow.workflows` are the workflows to choose ([{value, label}]: the Runs the Factory tasks name) and `flow.workflow` the
+// one drawn. Relate (`flow.draw`, JSON {from, to, kind}) draws a line from the Node to the node it goes To (`flow.to`); it is proposed until
+// Factory admits it, and drawing it again takes it back. Promote (`flow.promote`) sends the lines drawn to Factory (`factory workflow
+// edit`: connect, allocate), which admits or refuses them; `flow.check` and `flow.checkWhy` are Factory's word, `flow.starts` how many
+// routines start it. Open (`flow.open`, the node's id) is the shell's: a task opens in Clip view, a song with its score opened, a routine
+// on the Automations page. The view holds flow.show, flow.node, flow.line, flow.workflow and flow.to.
 import type {CSSProperties, ReactNode} from 'react'
 import {Action, Band, Chooser, Display, Folded, Handle, Panel, Radio, Readout, Section, TextField, Tile, Toggle, type LightState, type Standing} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, grown, has, json, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
@@ -505,13 +507,13 @@ const declare = (p: ViewProps) => <Action {...st(p, 'declare')} label="Declare" 
 // ---------------------------------------------------------------- the flow: a workflow as nodes and lines
 
 // The Flow page draws the same workflow Factory's Notes draw in time (manual §19.1), as a map of what hands to what: a node for each
-// task, each agent or team that takes a part, each song that stands as one task, each join, and the routine that starts it; a solid
-// line where a task's return hands on to the next, a dashed line where an agent or team takes a task. Nodes stand in the order of the
-// work, left to right (presentation: `col`, `row`); nothing is copied out of the workflow.
-type FlowKind = 'task' | 'song' | 'agent' | 'team' | 'join' | 'trigger'
+// task, each agent or agent set that takes a part, each song that stands as one task, each join, and the routine that starts it; a solid
+// line where a task's return hands on to the next, a dashed line where an agent or agent set takes a task. Nodes stand in the order of
+// the work, left to right (presentation: `col`, `row`); nothing is copied out of the workflow.
+type FlowKind = 'task' | 'song' | 'agent' | 'set' | 'join' | 'trigger'
 interface FlowNode {readonly id: string; readonly kind: FlowKind; readonly name: string; readonly col: number; readonly row: number; readonly says?: string}
 interface FlowLine {readonly from: string; readonly to: string; readonly kind: 'handoff' | 'allocation' | 'start'; readonly proposed?: boolean}
-const FLOW_KINDS: readonly FlowKind[] = ['task', 'song', 'agent', 'team', 'join', 'trigger']
+const FLOW_KINDS: readonly FlowKind[] = ['task', 'song', 'agent', 'set', 'join', 'trigger']
 const flowOf = (v: V): {nodes: FlowNode[]; lines: FlowLine[]; name?: string} | undefined => {
   const raw = json<unknown>(v, 'flow', undefined) as {nodes?: unknown; lines?: unknown; name?: unknown} | undefined
   if (!raw || typeof raw !== 'object' || !Array.isArray(raw.nodes)) return undefined
@@ -529,24 +531,25 @@ const flowOf = (v: V): {nodes: FlowNode[]; lines: FlowLine[]; name?: string} | u
   return {nodes, lines, name: typeof raw.name === 'string' ? raw.name : undefined}
 }
 const FLOW_SHOW = [{value: 'both', label: 'Both', does: 'Hand-offs and who takes each task.'}, {value: 'handoff', label: 'Hand-offs', does: 'Only the lines where a return hands on.'},
-  {value: 'allocation', label: 'Who', does: 'Only the lines from each agent or team to the tasks it takes.'}] as const
+  {value: 'allocation', label: 'Who', does: 'Only the lines from each agent or agent set to the tasks it takes.'}] as const
 const FLOW_LINE = [{value: 'handoff', label: 'Hand-off', does: 'The next line hands one task\'s return on to another: the second waits on the first.'},
-  {value: 'allocation', label: 'Allocation', does: 'The next line gives a task to an agent or team.'}] as const
+  {value: 'allocation', label: 'Allocation', does: 'The next line gives a task to an agent or an agent set.'}] as const
 
 /** The flow drawn into a box: columns by the order of the work, rows within a column; a dashed line for who takes a task, a solid
- * one for a hand-off, amber and dashed for a line you drew that Factory has not admitted. */
-function FlowDrawing({v, w, h, big}: {v: V; w: number; h: number; big?: boolean}) {
+ * one for a hand-off, amber and dashed for a line you drew that Factory has not admitted. A click on a node chooses it (onNode). */
+function FlowDrawing({v, w, h, big, onNode}: {v: V; w: number; h: number; big?: boolean; onNode?: (id: string) => void}) {
   const flow = flowOf(v)
   if (!flow) return <Missing w={w} h={h} size={big ? 14 : undefined} say={['No reading', 'of the workflow']} />
   if (!flow.nodes.length) return <Missing w={w} h={h} size={big ? 14 : undefined} say={['The workflow', 'holds no tasks']} />
   const cols = Math.max(1, ...flow.nodes.map(n => n.col)), rows = Math.max(1, ...flow.nodes.map(n => n.row))
   const pad = big ? 46 : 18, nw = big ? 92 : Math.min(44, (w - 2 * pad) / (cols + 1) - 4), nh = big ? 30 : 13, font = big ? 11.5 : 7
-  // Rows run from under the workflow's name to above the names of the agents and teams, which stand under their marks.
+  // Rows run from under the workflow's name to above the names of the agents and agent sets, which stand under their marks.
   const top = big ? 40 : 18, bottom = big ? 46 : 22
   const at = (n: FlowNode) => ({x: pad + (n.col / cols) * (w - 2 * pad), y: top + (n.row / rows) * (h - top - bottom)})
-  const by = new Map(flow.nodes.map(n => [n.id, n] as const)), sel = strOf(v, 'flow.node'), show = strOf(v, 'flow.show') ?? 'both'
-  const half = (n: FlowNode) => (n.kind === 'join' ? {w: big ? 4 : 2, h: nh} : n.kind === 'agent' || n.kind === 'team' ? {w: nh * 0.62, h: nh * 0.62} : {w: nw / 2, h: nh / 2})
-  const charsFit = (n: FlowNode) => Math.max(3, Math.floor((n.kind === 'agent' || n.kind === 'team' ? nw * 1.4 : nw - 6) / (font * 0.58)))
+  const by = new Map(flow.nodes.map(n => [n.id, n] as const)), sel = strOf(v, 'flow.node'), to = strOf(v, 'flow.to'), show = strOf(v, 'flow.show') ?? 'both'
+  const who = (n: FlowNode) => n.kind === 'agent' || n.kind === 'set'
+  const half = (n: FlowNode) => (n.kind === 'join' ? {w: big ? 4 : 2, h: nh} : who(n) ? {w: nh * 0.62, h: nh * 0.62} : {w: nw / 2, h: nh / 2})
+  const charsFit = (n: FlowNode) => Math.max(3, Math.floor((who(n) ? nw * 1.4 : nw - 6) / (font * 0.58)))
   return <>
     {flow.lines.filter(l => show === 'both' || l.kind === show || l.kind === 'start').map((l, i) => {
       const a = by.get(l.from)!, b = by.get(l.to)!, pa = at(a), pb = at(b), ha = half(a), hb = half(b)
@@ -561,61 +564,85 @@ function FlowDrawing({v, w, h, big}: {v: V; w: number; h: number; big?: boolean}
       </g>
     })}
     {flow.nodes.map(n => {
-      const {x, y} = at(n), hs = half(n), on_ = n.id === sel
+      const {x, y} = at(n), hs = half(n), on_ = n.id === sel || n.id === to
       const stroke = on_ ? 'var(--dp-on)' : n.kind === 'trigger' ? 'var(--green, #8fd0a8)' : 'var(--text-dim, #a2a7ad)'
       const sw = (on_ ? 2 : 1) * (big ? 1.2 : 1)
-      return <g key={n.id}>
+      // The node a line goes To stands dashed, the Node solid.
+      return <g key={n.id} data-i={`${n.name} · ${n.kind}`} style={{cursor: onNode ? 'pointer' : undefined, strokeDasharray: n.id === to ? (big ? '4 3' : '2 2') : undefined}}
+        onClick={onNode ? () => onNode(n.id) : undefined}>
         {n.kind === 'join' ? <rect x={x - hs.w} y={y - hs.h} width={hs.w * 2} height={hs.h * 2} style={{fill: 'var(--text, #d4d7da)'}} />
           : n.kind === 'agent' ? <circle cx={x} cy={y} r={hs.w} style={{fill: 'var(--dp-well)', stroke, strokeWidth: sw}} />
-            : n.kind === 'team' ? <path d={`M${x} ${y - hs.h * 1.2}L${x + hs.w * 1.2} ${y}L${x} ${y + hs.h * 1.2}L${x - hs.w * 1.2} ${y}Z`} style={{fill: 'var(--dp-well)', stroke, strokeWidth: sw}} />
+            : n.kind === 'set' ? <path d={`M${x} ${y - hs.h * 1.2}L${x + hs.w * 1.2} ${y}L${x} ${y + hs.h * 1.2}L${x - hs.w * 1.2} ${y}Z`} style={{fill: 'var(--dp-well)', stroke, strokeWidth: sw}} />
               : n.kind === 'trigger' ? <path d={`M${x - hs.w} ${y - hs.h}H${x + hs.w - hs.h}L${x + hs.w} ${y}L${x + hs.w - hs.h} ${y + hs.h}H${x - hs.w}Z`} style={{fill: 'color-mix(in srgb, var(--green, #8fd0a8) 18%, var(--dp-well))', stroke, strokeWidth: sw}} />
                 : <>
                   <rect x={x - hs.w} y={y - hs.h} width={hs.w * 2} height={hs.h * 2} rx={big ? 4 : 2} style={{fill: 'color-mix(in srgb, var(--dp-value) 22%, var(--dp-well))', stroke, strokeWidth: sw}} />
                   {n.kind === 'song' && <rect x={x - hs.w + (big ? 3 : 1.5)} y={y - hs.h + (big ? 3 : 1.5)} width={hs.w * 2 - (big ? 6 : 3)} height={hs.h * 2 - (big ? 6 : 3)} rx={big ? 3 : 1.5} style={{fill: 'none', stroke, strokeWidth: sw * .8}} />}
                 </>}
-        {n.kind !== 'join' && <text x={x} y={n.kind === 'agent' || n.kind === 'team' ? y + hs.h + font + 1 : y + font * 0.36} textAnchor="middle"
-          style={{fill: n.kind === 'agent' || n.kind === 'team' ? 'var(--text-dim, #a2a7ad)' : 'var(--text, #d4d7da)', font: `${font}px var(--font-ui, sans-serif)`}}>{clip(n.name, charsFit(n))}</text>}
+        {n.kind !== 'join' && <text x={x} y={who(n) ? y + hs.h + font + 1 : y + font * 0.36} textAnchor="middle"
+          style={{fill: who(n) ? 'var(--text-dim, #a2a7ad)' : 'var(--text, #d4d7da)', font: `${font}px var(--font-ui, sans-serif)`, strokeDasharray: 'none'}}>{clip(n.name, charsFit(n))}</text>}
       </g>
     })}
     {flow.name && <text x={6} y={big ? 18 : 10} style={{fill: 'var(--text-dim)', font: `${big ? 12 : 8}px var(--font-ui, sans-serif)`}}>{flow.name}</text>}
   </>
 }
 
+/** A node's kind in words. */
+const KIND_WORD: Record<FlowKind, string> = {task: 'task', song: 'song', agent: 'agent', set: 'agent set', join: 'join', trigger: 'routine'}
 const flowCount = (v: V, kinds: readonly FlowKind[]) => flowOf(v)?.nodes.filter(n => kinds.includes(n.kind)).length
 const flowWaiting = (v: V) => flowOf(v)?.lines.filter(l => l.proposed).length
 const flowNode = (v: V) => { const id = strOf(v, 'flow.node'); return flowOf(v)?.nodes.find(n => n.id === id) }
 const FLOW_CHECK: Record<string, {label: string; tone?: 'green' | 'stall'}> = {admitted: {label: 'Admitted', tone: 'green'}, refused: {label: 'Refused', tone: 'stall'}}
+/** The workflows to choose from, as Factory's tasks name them ([{value, label}]); none, the page draws the one it reads. */
+const flowWorkflows = (v: V): {value: string; label: string}[] => {
+  const raw = json<unknown>(v, 'flow.workflows', [])
+  return Array.isArray(raw) ? raw.flatMap(o => (typeof o?.value === 'string' && typeof o.label === 'string' ? [{value: o.value as string, label: o.label as string}] : [])) : []
+}
+/** A click on a node: the first chooses the Node, the next (on another node) where a line goes To; a click after both chooses the Node again. */
+const pickNode = (p: ViewProps, id: string) => {
+  const from = strOf(p.v, 'flow.node'), to = strOf(p.v, 'flow.to')
+  if (from && from !== id && !to) { p.set('flow.to', id); return }
+  if (from !== id) p.set('flow.node', id)
+  if (to !== undefined) p.set('flow.to', undefined)
+}
 
 function FlowBands({p}: {p: ViewProps}) {
   // In a wide frame the two bands stand side by side: the display grows into what the Flow, Lines and Nodes sections leave.
   const w = grown(p, 300, 500, 640), node = flowNode(p.v), opens = node && (node.kind === 'song' || node.kind === 'task')
-  const nodes = flowOf(p.v)?.nodes ?? []
+  const nodes = flowOf(p.v)?.nodes ?? [], workflows = flowWorkflows(p.v), to = strOf(p.v, 'flow.to'), line = strOf(p.v, 'flow.line') ?? 'handoff'
   return <>
     <Band>
       <Section width={w + 12}><Display w={w} h={146} label="The flow" corner={flowOf(p.v) ? `${flowWaiting(p.v) ?? 0} wait` : NONE}
-        does="The workflow as nodes and lines: tasks, songs, joins and the routine that starts it, solid lines where a return hands on, dashed where an agent or team takes a task. A line you drew stands amber until Factory admits it.">
-        <FlowDrawing v={p.v} w={w} h={146} /></Display></Section>
+        does="The workflow as nodes and lines: tasks, songs, joins and the routine that starts it, solid lines where a return hands on, dashed where an agent or agent set takes a task. A line you drew stands amber until Factory admits it. Click a node to choose it, then another for where a line goes.">
+        <FlowDrawing v={p.v} w={w} h={146} onNode={id => pickNode(p, id)} /></Display></Section>
       <Section label="Flow" cols={2} grow>
-        <div style={{gridColumn: 'span 2', width: '100%'}}><Readout label="workflow" does="The workflow this page draws: the same one Factory's Notes draw in time." value={flowOf(p.v)?.name} /></div>
+        <div style={{gridColumn: 'span 2', width: '100%'}}>{workflows.length
+          ? <Chooser {...st(p, 'flow.workflow')} label="Workflow" does="The workflow this page draws, read from Factory: the song a Factory task's Run performs, the same one its Notes draw in time." value={strOf(p.v, 'flow.workflow') ?? ''}
+            options={workflows} onChange={x => p.set('flow.workflow', x)} />
+          : <Readout {...st(p, 'flow.workflows')} label="workflow" does="The workflow this page draws: the same one Factory's Notes draw in time." value={flowOf(p.v)?.name} />}</div>
         <div style={{gridColumn: 'span 2', width: '100%'}}><Chooser {...st(p, 'flow.show')} label="Show" does="Which lines the page draws." value={strOf(p.v, 'flow.show') ?? ''} options={FLOW_SHOW} onChange={x => p.set('flow.show', x)} /></div>
-        <div style={{gridColumn: 'span 2', width: '100%'}}><Chooser {...st(p, 'flow.node')} label="Node" does="The node you work on: a task, a song, an agent, a team, a join or a routine." value={strOf(p.v, 'flow.node') ?? ''}
-          options={nodes.map(n => ({value: n.id, label: `${n.name} · ${n.kind}`}))} onChange={x => p.set('flow.node', x)} disabled={st(p, 'flow.node').disabled ?? (nodes.length ? undefined : 'No reading of the workflow.')} /></div>
+        <div style={{gridColumn: 'span 2', width: '100%'}}><Chooser {...st(p, 'flow.node')} label="Node" does="The node you work on: a task, a song, an agent, an agent set, a join or a routine. A line you draw starts here." value={strOf(p.v, 'flow.node') ?? ''}
+          options={nodes.map(n => ({value: n.id, label: `${n.name} · ${KIND_WORD[n.kind]}`}))} onChange={x => p.set('flow.node', x)} disabled={st(p, 'flow.node').disabled ?? (nodes.length ? undefined : 'No reading of the workflow.')} /></div>
+        <div style={{gridColumn: 'span 2', width: '100%'}}><Chooser {...st(p, 'flow.to')} label="To" does="Where the line you draw goes: the task that waits on the Node, or the task an agent or agent set takes." value={to ?? ''}
+          options={nodes.filter(n => n.id !== node?.id).map(n => ({value: n.id, label: `${n.name} · ${KIND_WORD[n.kind]}`}))} onChange={x => p.set('flow.to', x)}
+          disabled={st(p, 'flow.to').disabled ?? (node ? undefined : 'Choose the Node a line starts from first.')} /></div>
       </Section>
     </Band>
     <Band>
       <Section label="Lines" cols={2}>
         <div style={{gridColumn: 'span 2', width: '100%'}}><Radio {...st(p, 'flow.line')} label="Line" does="What the next line you draw with Relate says." value={strOf(p.v, 'flow.line') ?? ''} options={FLOW_LINE} stack onChange={x => p.set('flow.line', x)} /></div>
+        <Action {...st(p, 'flow.draw')} label="Relate" does="Draws the next line from the Node to the node it goes To: it stands amber and dashed until Factory admits it. Draw a waiting line again to take it back."
+          disabled={st(p, 'flow.draw').disabled ?? (node && to ? undefined : 'Choose the Node and the node the line goes To.')} onPress={() => p.set('flow.draw', JSON.stringify({from: node?.id, to, kind: line}))} />
         <Action {...st(p, 'flow.promote')} label="Promote" does="Sends the lines you drew to Factory, which checks the workflow with them and admits or refuses them, and says why."
           disabled={st(p, 'flow.promote').disabled ?? (flowWaiting(p.v) ? undefined : 'No line you drew waits.')} onPress={() => p.set('flow.promote', true)} />
-        <Readout big label="wait" does="Lines you drew that Factory has not admitted." value={flowWaiting(p.v)} tone="accent" />
+        <div style={{gridColumn: 'span 2', width: '100%'}}><Readout big label="wait" does="Lines you drew that Factory has not admitted." value={flowWaiting(p.v)} tone="accent" /></div>
       </Section>
       <Section label="Nodes" cols={2} grow>
         <Readout label="tasks" does="Tasks in the workflow, songs among them." value={flowCount(p.v, ['task', 'song'])} />
-        <Readout label="who" does="Agents and teams that take a part." value={flowCount(p.v, ['agent', 'team'])} />
-        <Readout label="starts" does="The routines that start the workflow, from Settings, Automations." value={flowCount(p.v, ['trigger'])} />
-        <Readout label="check" does={strOf(p.v, 'flow.checkWhy') || 'Factory\'s word on the workflow, the last time it was checked.'} value={FLOW_CHECK[strOf(p.v, 'flow.check') ?? '']?.label} tone={FLOW_CHECK[strOf(p.v, 'flow.check') ?? '']?.tone} />
+        <Readout label="who" does="Agents and agent sets that take a part." value={flowCount(p.v, ['agent', 'set'])} />
+        <Readout {...st(p, 'flow.starts')} label="starts" does="The routines that start the workflow, from Settings, Automations." value={st(p, 'flow.starts').disabled ? undefined : flowCount(p.v, ['trigger'])} />
+        <Readout {...st(p, 'flow.check')} label="check" does={strOf(p.v, 'flow.checkWhy') || 'Factory\'s word on the workflow, the last time it was checked.'} value={FLOW_CHECK[strOf(p.v, 'flow.check') ?? '']?.label} tone={FLOW_CHECK[strOf(p.v, 'flow.check') ?? '']?.tone} />
         <div style={{gridColumn: 'span 2', width: '100%'}}><Action {...st(p, 'flow.open')} label={node?.kind === 'song' ? `Open ${clip(node.name, 14)}` : 'Open'}
-          does="Opens the node: a task in Clip view, a song in its own Notes, a routine on the Automations page."
+          does="Opens the node where it lives: a task in Clip view, a song with its score open, a routine in Settings, Automations."
           disabled={st(p, 'flow.open').disabled ?? (node ? (opens || node.kind === 'trigger' ? undefined : 'Choose a task, a song or a routine.') : 'Choose a node first.')} onPress={() => p.set('flow.open', node?.id ?? '')} /></div>
       </Section>
     </Band>
@@ -785,8 +812,8 @@ const FLOW = {
     {id: 'watch-ci', kind: 'task', name: 'watch-ci', col: 3, row: 2.4},
     {id: 'planner', kind: 'agent', name: 'Planner', col: 1, row: 3.4}, {id: 'builder-a', kind: 'agent', name: 'Builder A', col: 2, row: 3.4},
     {id: 'builder-b', kind: 'agent', name: 'Builder B', col: 2.6, row: 3.4}, {id: 'ci', kind: 'agent', name: 'CI watch', col: 3.4, row: 3.4},
-    {id: 'reviewers', kind: 'team', name: 'Reviewers', col: 4, row: 3.4}, {id: 'guardians', kind: 'team', name: 'Guardians', col: 4.7, row: 3.4},
-    {id: 'aletheia', kind: 'team', name: 'Aletheia', col: 6, row: 3.4},
+    {id: 'reviewers', kind: 'set', name: 'Reviewers', col: 4, row: 3.4}, {id: 'guardians', kind: 'set', name: 'Guardians', col: 4.7, row: 3.4},
+    {id: 'aletheia', kind: 'set', name: 'Aletheia', col: 6, row: 3.4},
   ],
   lines: [
     {from: 'routine', to: 'plan-fixtures', kind: 'start'},
@@ -943,7 +970,7 @@ export const design: DesignedDevice = {
       <svg viewBox={`0 0 ${PANE.w} ${PANE.h}`} width="100%" height="100%" preserveAspectRatio="xMidYMid meet" className="ref-pane-svg" aria-label="The Canvas">
         <g className="dp-display" style={{background: 'none'}}>
           <defs><clipPath id="canvas-pane"><rect width={PANE.w} height={PANE.h} /></clipPath></defs>
-          <g clipPath="url(#canvas-pane)">{p.page === 'flow' ? <FlowDrawing v={p.v} w={PANE.w} h={PANE.h} big /> : <World v={p.v} />}</g>
+          <g clipPath="url(#canvas-pane)">{p.page === 'flow' ? <FlowDrawing v={p.v} w={PANE.w} h={PANE.h} big onNode={id => pickNode(p, id)} /> : <World v={p.v} />}</g>
           {p.page !== 'flow' && <text x={14} y={24} style={label}>{status}</text>}
           {p.page !== 'flow' && boolOf(p.v, 'minimap') === true && <g transform={`translate(${PANE.w - 152} ${PANE.h - 118})`}>
             <rect width={140} height={106} rx={3} style={{fill: 'var(--dp-well)', stroke: 'var(--line, #24262a)', strokeWidth: 1}} opacity={.95} />

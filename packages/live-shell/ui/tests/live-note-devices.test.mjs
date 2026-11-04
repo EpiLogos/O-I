@@ -51,6 +51,11 @@ const {parseQlMusicModes, resolveModeInForce} = modes
 const {runNoteChain, traceNoteChain, composeInOrder, newNoteDevice, foldPitchClass, scalePlan} = noteDevices
 const {addNoteDevice, moveNoteDevice, removeNoteDevice, setNoteDevicePower, setScaleTie, resetNoteDeviceChain, noteDeviceChain} = store
 const settle = () => new Promise(resolve => setTimeout(resolve, 0))
+// The owner's Jankó window the keys are read from (O-I #853: the path strikes keys of the surface, not pitch classes).
+const jankoLayout = await import('../src/live/janko/jankoLayout.ts')
+const jankoWindow = jankoLayout.readJankoWindow(JSON.parse((await import('node:fs')).readFileSync(new URL('fixtures/janko-window-v1.json', import.meta.url), 'utf8')))
+/** The key a note of the octave from middle C strikes, in the fixture window (row 0 C D E…, row 1 C♯ D♯ F…; seven periods on). */
+const DSHARP4 = {row: 1, column: 43}
 
 // The owner's catalogue rows, as live-modes-catalogue.test.mjs states them (aeolian on L0' over the chromatic basis; a maqam).
 const provenance = symbol => ({operator: 'mode_tonic_instance', owner: 'ql-mef', revision: '1.0.0', source: {blob: 'b', path: 'docs/sources/ql-musical-derivation-v3.md', vendor_commit: 'c', version: '1.0.0'}, symbol})
@@ -85,7 +90,7 @@ const scale = (tie = 'up', enabled = true) => ({...newNoteDevice('scale', `scale
 // The commands one act produces through the one input path, from a list of events.
 async function commandsFor(options, events) {
   const commands = []
-  const path = input.createJankoInput({...options, send: async command => { commands.push(command); return {ok: true} }})
+  const path = input.createJankoInput({window: () => jankoWindow, ...options, send: async command => { commands.push(command); return {ok: true} }})
   for (const event of events) event.kind === 'down' ? path.down(event) : path.up(event)
   await settle()
   return commands
@@ -104,7 +109,8 @@ test('an empty chain and an all-bypassed chain are the identity: the act comes b
   const bypassed = await commandsFor({transform: classes => runNoteChain([scale('up', false)], classes, inForce)}, events)
   assert.deepEqual(identity, plain, 'an empty chain sends the same stage command as no chain')
   assert.deepEqual(bypassed, plain, 'an all-bypassed chain sends the same stage command as no chain')
-  assert.deepEqual(plain, [{command: 'janko', action: 'play', pitch_classes: [0, 4, 7], amplitude: 0.35}])
+  // REPLACED (O-I #853): was one `play` of pitch classes [0, 4, 7]; the chord is one strike of its keys, in the order they were pressed.
+  assert.deepEqual(plain, [{command: 'janko', action: 'strike', keys: [{row: 1, column: 45}, {row: 0, column: 42}, {row: 0, column: 44}], amplitude: 0.35}])
 })
 
 // ── 2 — Scale folds onto the owner's pitch set ──────────────────────────────
@@ -142,11 +148,11 @@ test('the Scale device through the input path: a pointer press, touch, a keyboar
   const pitchClass2 = {kind: 'down', pitchClass: 2}
   for (const source of ['pointer', 'touch', 'keyboard']) {
     const commands = await commandsFor({transform}, [{...pitchClass2, source}])
-    assert.deepEqual(commands.map(c => c.pitch_classes), [[3]], `${source} folds D onto D sharp`)
+    assert.deepEqual(commands.map(c => c.keys), [[DSHARP4]], `${source} folds D onto D sharp: the D sharp key is struck`)
   }
   const note = midi.midiNoteEvent({port: 'port', channel: 0, note: 62, velocity: 100, on: true}) // 62 mod 12 = 2
   const commands = await commandsFor({transform}, [note])
-  assert.deepEqual(commands.map(c => c.pitch_classes), [[3]], 'a MIDI D folds onto D sharp through the same chain')
+  assert.deepEqual(commands.map(c => c.keys), [[DSHARP4]], 'a MIDI D folds onto D sharp through the same chain')
   assert.equal(commands[0].amplitude, 100 / 127, 'MIDI still strikes at its own velocity')
 })
 
@@ -221,15 +227,18 @@ test('a pointer press and a MIDI note both reach the owner through the same chai
   try {
     const path = input.createJankoInput({
       send: torus.commitLiveStage,
+      window: () => jankoWindow,
       transform: classes => runNoteChain(noteDeviceChain(), classes, {mode: aeolianMode()}),
     })
     path.down({kind: 'down', pitchClass: 2, source: 'pointer', pressure: null})
     await settle()
+    // Lifted first: under Repeat touch One note a second press of the same (folded) pitch would hold the same note, not strike again.
+    path.up({kind: 'up', pitchClass: 2, source: 'pointer'})
     path.down(midi.midiNoteEvent({port: 'port', channel: 0, note: 62, velocity: 64, on: true}))
     await settle()
-    assert.deepEqual(captured.map(c => c.command), ['janko', 'janko'], 'one owner act per source')
-    assert.deepEqual(captured.map(c => c.pitch_classes), [[3], [3]], 'both folded before the stage command')
-    assert.deepEqual(captured.map(c => c.action), ['play', 'play'])
+    const strikes = captured.filter(c => c.action === 'strike')
+    assert.deepEqual(strikes.map(c => c.command), ['janko', 'janko'], 'one owner act per source')
+    assert.deepEqual(strikes.map(c => c.keys), [[DSHARP4], [DSHARP4]], 'both folded before the stage command (REPLACED: pitch classes [3], [3] — O-I #853)')
   } finally {
     torus.setLiveInstrumentCommander(null)
     resetNoteDeviceChain()
@@ -293,11 +302,12 @@ test('the plates: an empty chain draws nothing; a bypassed device says so; the w
 test('source reading: the one hook point is the input path\'s transform, applied to each act before the stage command; the chain is empty by default', async () => {
   const jankoInput = await readFile(new URL('../src/live/janko/jankoInput.ts', import.meta.url), 'utf8')
   assert.match(jankoInput, /readonly transform\?: \(pitchClasses: readonly number\[\]\) => readonly number\[\]/)
-  assert.match(jankoInput, /const played = options\.transform \? /)
-  assert.match(jankoInput, /pitch_classes: played/)
+  // REPLACED (O-I #853): the transform folds each note's class before its key is found (was: the act's classes, sent as pitch_classes).
+  assert.match(jankoInput, /const classes = options\.transform \? \[\.\.\.new Set\(options\.transform\(\[mod\(base, 12\)\]\)\)\]/)
+  assert.match(jankoInput, /const key = keyForNote\(keys, note, touchPoint\)/)
   const device = await readFile(new URL('../src/live/janko/JankoDevice.tsx', import.meta.url), 'utf8')
   assert.match(device, /runNoteChain\(chain, pitchClasses, \{mode\}\)/)
-  assert.match(device, /transform: classes => transformRef\.current\(classes\)/)
+  assert.match(device, /setLivePlayingTransform\(classes => transformRef\.current\(classes\)\)/)
   assert.match(device, /noteTransform/, 'the keyboard view takes the chain through its prop')
   assert.equal(noteDeviceChain().length, 0, 'no device is present until one is added: the chain is empty by default')
 })

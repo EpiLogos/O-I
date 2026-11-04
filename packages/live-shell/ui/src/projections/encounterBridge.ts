@@ -36,6 +36,16 @@ export function moveTo(context: WorldContext, mode: WorkspaceMode, at: number = 
   return moveOnTrail(context, stopOf(mode, context, at));
 }
 
+/** The shell's one mode switch (continuity/workspace.tsx setMode), from wherever it is made — the mode rail (App.tsx chooseMode, which
+ * moves first with the world it enters), the Canvas's return, the Expressions reveal, the Technē browser, a hosted request, the
+ * Workspace device: a move into `mode` (moveTo), then the book's tree turns to it. Turning to the mode you stand in is no move. A walk
+ * on the trail turns the tree alone (shell/TrailWidget.tsx returnToStop), so Back and Forward add no stop. */
+export function switchModeOnTrail(book: {setContext(change: (context: WorldContext) => WorldContext): void; switchMode(mode: WorkspaceMode): void},
+  mode: WorkspaceMode, at: number = Date.now()): void {
+  book.setContext(context => moveTo(context, mode, at));
+  book.switchMode(mode);
+}
+
 export interface SpineEncounterBridge extends EncounterBridge {
   /** Deliver the current spine reading to every live registration. The
    * React host calls this after each of its renders — the render IS the
@@ -143,8 +153,10 @@ export function createSpineEncounterBridge(
         return;
       }
       if (intent.kind === 'occasion') {
-        // An occasion change is a move; a new point in the reading you stand on is where you stand (the book's readOnTrail).
-        book.setContext(context => readOnTrail(context, mode(), {ref: intent.ref, ...(intent.position ? {position: intent.position} : {})}, Date.now()));
+        // An occasion change is a move; a new point in the reading you stand on is where you stand (the book's readOnTrail). A page's
+        // point arrives here from its pane (central/documents/readingPoint.ts), named by the page's title — never a word of it.
+        book.setContext(context => readOnTrail(context, mode(), {ref: intent.ref, ...(intent.position ? {position: intent.position} : {}),
+          ...(intent.title ? {title: intent.title} : {})}, Date.now()));
         return;
       }
       // 'present' is pane-local by contract (the projection's own cut —

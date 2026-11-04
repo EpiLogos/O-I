@@ -67,6 +67,7 @@ import {familyFaceDevice, gatewayAnswer} from './mainTrackBindings'
 import type {WorkcellAnswer} from './workcellBindings'
 import type {RunState} from '../../inhabitants/catalogue/faces/agency'
 import {messagesStateOf} from './runFaces'
+import {MESSAGES_ID} from './railTileIds'
 
 type Obj = Record<string, unknown>
 const isObj = (value: unknown): value is Obj => !!value && typeof value === 'object' && !Array.isArray(value)
@@ -74,8 +75,7 @@ const str = (value: unknown): string | undefined => (typeof value === 'string' &
 const num = (value: unknown): number | undefined => (typeof value === 'number' && Number.isFinite(value) ? value : undefined)
 
 export const MESSAGES_DESIGN = 'ai-kit:messages'
-/** Messages on the door: one device for the rail's tile and its Full. */
-export const MESSAGES_ID = 'ai-kit:messages'
+export {MESSAGES_ID} from './railTileIds'
 
 /** Messages as a device of the runtime: AIKit's admitted `messages` face (aiKitFamilyManifest.ts — an instrument born on the rail), so
  * designKey('ai-kit', 'messages') is the design's id by the family's own declaration. Null when the family does not admit it. Its design

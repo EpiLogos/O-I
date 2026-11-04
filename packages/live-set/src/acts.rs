@@ -94,6 +94,26 @@ pub enum SetAct {
     /// Consolidate (⌘J): what a MIDI part's arrangement clips play between
     /// the beats `from` and `to` of the ruler, made one clip there.
     ClipsConsolidate { track: usize, from: f64, to: f64 },
+    /// A recorded pass (O-I #855; DLW §21.1 "Record a part and each pass lies
+    /// as a take lane under its track"): the notes played (`{p, at, len,
+    /// vel}`, each `at` a beat of the take's own time) made one MIDI clip of
+    /// `length` beats from the ruler's beat `start`, in a new take lane of the
+    /// part and laid in its main lane there, both carrying the set's next
+    /// `TakeId`. What the take keeps beyond its notes (`keeps`, the shell's
+    /// own: live/liveTake.ts) stands beside the set by that `TakeId`.
+    TakeRecord {
+        track: usize,
+        start: f64,
+        length: f64,
+        name: String,
+        notes: Vec<Value>,
+        #[serde(default)]
+        keeps: Option<Value>,
+    },
+    /// The part's Torus as it stands, kept beside the set (none: it keeps
+    /// none). Live's document has no place for it, so the `.als` is not
+    /// written and the set's revision stands.
+    TorusKeep { track: usize, torus: Option<Value> },
 }
 
 // ---------------------------------------------------------------------------- the document's lists
@@ -1560,6 +1580,209 @@ fn clips_consolidate(root: &mut Element, track: usize, from: f64, to: f64) -> Re
     })
 }
 
+/// The set's next `TakeId`: one past the highest any clip of the set carries
+/// (Live numbers takes across the whole set: the template's takes run 1–21
+/// over its parts, while each part's `Recorder/TakeCounter` stays 0 or 1, so
+/// the counter is left as it stands).
+fn next_take_id(root: &Element) -> u64 {
+    fn walk(element: &Element, most: &mut u64) {
+        if CLIPS.contains(&element.name.as_str()) {
+            if let Some(id) = edit::num(element, "TakeId") {
+                if id.fract() == 0.0 && id >= 0.0 {
+                    *most = (*most).max(id as u64);
+                }
+            }
+        }
+        for child in &element.children {
+            walk(child, most);
+        }
+    }
+    let mut most = 0;
+    walk(root, &mut most);
+    most + 1
+}
+
+/// A take lane as Live 12 writes one (the template "Piano and voices
+/// mastering": `Height` 51, not selected, the clip in `ClipAutomation/Events`
+/// beside its transform state, then the lane's `Name`, `Annotation` and
+/// `Audition`).
+fn fresh_take_lane(id: usize, name: &str, clip: Element) -> Element {
+    let mut lane = Element::new("TakeLane");
+    lane.set_attr("Id", &id.to_string());
+    let mut events = Element::new("Events");
+    events.children.push(clip);
+    let mut transform = Element::new("AutomationTransformViewState");
+    transform.children = vec![
+        value_element("IsTransformPending", "false"),
+        Element::new("TimeAndValueTransforms"),
+    ];
+    let mut automation = Element::new("ClipAutomation");
+    automation.children = vec![events, transform];
+    lane.children = vec![
+        value_element("Height", "51"),
+        value_element("IsContentSelectedInDocument", "false"),
+        automation,
+        value_element("Name", name),
+        value_element("Annotation", ""),
+        value_element("Audition", "false"),
+    ];
+    lane
+}
+
+/// The take lanes of a part, their list made in Live's shape where the
+/// document keeps none.
+fn take_lanes_mut(track: &mut Element) -> &mut Element {
+    if track.child("TakeLanes").is_none() {
+        let mut outer = Element::new("TakeLanes");
+        outer.children = vec![
+            Element::new("TakeLanes"),
+            value_element("AreTakeLanesFolded", "true"),
+        ];
+        track.children.push(outer);
+    }
+    let outer = track.child_mut("TakeLanes").expect("made above");
+    if outer.child("TakeLanes").is_none() {
+        outer.children.insert(0, Element::new("TakeLanes"));
+    }
+    outer.child_mut("TakeLanes").expect("made above")
+}
+
+fn take_record(
+    root: &mut Element,
+    track: usize,
+    start: f64,
+    length: f64,
+    name: &str,
+    notes: &[Value],
+) -> Result<(Done, u64), String> {
+    if !(start.is_finite() && start >= 0.0) {
+        return Err("A take lies on the ruler from beat 0".into());
+    }
+    if !(length.is_finite() && length > 0.0 && length <= edit::MADE_LENGTH_MAX) {
+        return Err(format!(
+            "A take's length is more than 0 and at most {} beats",
+            number_text(edit::MADE_LENGTH_MAX)
+        ));
+    }
+    if name.trim().is_empty() || name.chars().count() > 256 || name.chars().any(char::is_control) {
+        return Err("A take's name is one line of at most 256 characters".into());
+    }
+    for note in notes {
+        let at = note.get("at").and_then(Value::as_f64).unwrap_or(f64::NAN);
+        let len = note.get("len").and_then(Value::as_f64).unwrap_or(0.0);
+        if !(at >= 0.0 && at < length && at + len <= length + 1e-9) {
+            return Err("Each note of a take lies within the take".into());
+        }
+    }
+    let part = track_at(root, track)?;
+    if part.name != "MidiTrack" {
+        return Err("Live records notes on a MIDI part, and this track is not one".into());
+    }
+    let id = track_id(part)?;
+    let part_name = track_name(part);
+    let colour = value_of(part, "Color").map(str::to_string);
+    let reference = root.clone();
+    // The set's own shape where it holds a MIDI clip that carries a new clip's settings; else the shape Live's loader took for a
+    // clip made by hand (crafted_clip), as Consolidate takes it.
+    let mut made = edit::shape_donor(&reference, track)
+        .and_then(|donor| edit::blank_clip(&reference, &donor, colour.as_deref(), length).ok())
+        .unwrap_or_else(|| crafted_clip(colour.as_deref(), length));
+    edit::apply_notes(&mut made, notes)?;
+    set_value(&mut made, "CurrentStart", &number_text(start))?;
+    set_value(&mut made, "CurrentEnd", &number_text(start + length))?;
+    made.set_attr("Time", &number_text(start));
+    if made.child("Name").is_some() {
+        set_value(&mut made, "Name", name)?;
+    }
+    // A recorded pass plays once: Live's own takes carry LoopOn false.
+    if let Some(looped) = made.child_mut("Loop") {
+        set_value(looped, "LoopOn", "false")?;
+    }
+    let take = next_take_id(&reference);
+    match made.child_mut("TakeId") {
+        Some(field) => field.set_attr("Value", &take.to_string()),
+        None => made
+            .children
+            .push(value_element("TakeId", &take.to_string())),
+    }
+    let tempo = edit::steady_tempo(root);
+    let was = lane_ids(part);
+    let target = listed_mut(root, track)?;
+    let lanes = take_lanes_mut(target);
+    let lane = lanes
+        .children
+        .iter()
+        .filter(|l| l.name == "TakeLane")
+        .count();
+    let lane_id = lanes
+        .children
+        .iter()
+        .filter(|l| l.name == "TakeLane")
+        .filter_map(|l| l.attr("Id")?.parse::<usize>().ok())
+        .max()
+        .map_or(0, |id| id + 1);
+    let mut taken = made.clone();
+    taken.set_attr("Id", "0");
+    lanes.children.push(fresh_take_lane(lane_id, name, taken));
+    edit::lay_over(
+        target,
+        "ClipTimeable",
+        start,
+        start + length,
+        tempo,
+        vec![made],
+    )?;
+    let now = lane_ids(target);
+    let laid = now.iter().position(|i| !was.contains(i));
+    Ok((
+        Done {
+            words: format!(
+                "Recorded {name} on {part_name} at beat {}: {} note{}, in take lane {}.",
+                number_text(start),
+                notes.len(),
+                if notes.len() == 1 { "" } else { "s" },
+                lane + 1
+            ),
+            at: laid.map(|j| json!({"track": track, "arrangement": j, "take": take, "lane": lane})),
+            places: Places::Lane {
+                track: id,
+                before: was,
+                after: now,
+                dropped: None,
+                copied: Vec::new(),
+            },
+        },
+        take,
+    ))
+}
+
+/// Keep the part's Torus beside the set (none: it keeps none). The set is
+/// read, never written: its revision must stand as the person read it.
+fn torus_keep(
+    path: &str,
+    expected_revision: &str,
+    track: usize,
+    torus: Option<&Value>,
+) -> Result<Value, String> {
+    let (bytes, root) = edit::open(path)?;
+    let standing = edit::revision(&bytes);
+    if standing != expected_revision {
+        return Err("The set changed since it was read (Live may have saved it): read it again and make the change on what stands".into());
+    }
+    let part = track_at(&root, track)?;
+    if part.name != "MidiTrack" {
+        return Err("The Torus plays a MIDI part, and this track is not one".into());
+    }
+    let id = track_id(part)?;
+    crate::sources::set_torus(std::path::Path::new(path), &id, torus)?;
+    let name = track_name(part);
+    let words = match torus {
+        Some(_) => format!("{name} keeps the Torus as it stands."),
+        None => format!("{name} keeps no Torus."),
+    };
+    Ok(json!({"act": "torus_keep", "done": words, "at": {"track": track}, "revision": standing}))
+}
+
 /// Where each kept clip's record row goes after the act: none (gone), one
 /// (moved or kept) or two (copied).
 fn new_places(places: &Places, track: &str, at: ClipAt) -> Vec<(String, ClipAt)> {
@@ -1651,6 +1874,16 @@ fn new_places(places: &Places, track: &str, at: ClipAt) -> Vec<(String, ClipAt)>
 /// `{act, done, at, revision}` (`at`: where it left what it made), with
 /// `sourceRefused` when the DLW's record beside the set could not follow.
 pub fn act(path: &str, expected_revision: &str, act: &SetAct) -> Result<Value, String> {
+    if let SetAct::TorusKeep { track, torus } = act {
+        return torus_keep(path, expected_revision, *track, torus.as_ref());
+    }
+    if let SetAct::TakeRecord {
+        keeps: Some(keeps), ..
+    } = act
+    {
+        crate::sources::checked_keep(keeps, "A take's keeps")?;
+    }
+    let mut take = None;
     let mut done = None;
     let (_root, revision) = edit::edit(path, expected_revision, |root| {
         done = Some(match act {
@@ -1679,6 +1912,19 @@ pub fn act(path: &str, expected_revision: &str, act: &SetAct) -> Result<Value, S
             SetAct::ClipsConsolidate { track, from, to } => {
                 clips_consolidate(root, *track, *from, *to)?
             }
+            SetAct::TakeRecord {
+                track,
+                start,
+                length,
+                name,
+                notes,
+                ..
+            } => {
+                let (done, id) = take_record(root, *track, *start, *length, name, notes)?;
+                take = Some((*track, id));
+                done
+            }
+            SetAct::TorusKeep { .. } => unreachable!("kept above, the set unwritten"),
         });
         Ok(())
     })?;
@@ -1695,6 +1941,24 @@ pub fn act(path: &str, expected_revision: &str, act: &SetAct) -> Result<Value, S
         if let Err(why) = kept {
             answer["sourceRefused"] = json!(format!(
                 "The act was made, but the clips' sources beside the set did not follow: {why}"
+            ));
+        }
+    }
+    if let (
+        SetAct::TakeRecord {
+            keeps: Some(keeps), ..
+        },
+        Some((track, id)),
+    ) = (act, take)
+    {
+        let kept = crate::edit::track_at(&_root, track)
+            .and_then(track_id)
+            .and_then(|track| {
+                crate::sources::set_keeps(std::path::Path::new(path), &track, id, keeps)
+            });
+        if let Err(why) = kept {
+            answer["keepsRefused"] = json!(format!(
+                "The take was recorded, but what it keeps beside its notes was not kept: {why}"
             ));
         }
     }

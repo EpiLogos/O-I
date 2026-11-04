@@ -35,6 +35,7 @@ import {DocumentPaneContext, documentStateWords, publishDocument, reachedDocumen
 import {classifySaveFailure, savedOutcome, unchangedOutcome, type SaveRouterReading} from './documentDeviceModel'
 import {keepDraft, keptDraftMoved, keptDraftNotice, keptDraftOf, keptDraftRefusal, releaseKeptDraft, useDraftKeeping} from '../central/documents/keptDrafts'
 import {useSaveKey} from '../central/documents/useSaveKey'
+import {useReadingPoint} from '../central/documents/readingPoint'
 import {useAutosave} from '../central/documents/useAutosave'
 import {autosaveHeldOf} from '../central/documents/autosave'
 import {AutosaveGlyph} from '../central/documents/AutosaveGlyph'
@@ -235,6 +236,8 @@ export function PageFace({transport, location, kind, openLink}: DocumentPageFace
   useEffect(() => () => withdrawDocument(key), [key])
   // ⌘S pressed inside the page is this Save (§10.9, §17.8), not the template's portable copy.
   useSaveKey(frame, standing.save)
+  // Its point in the reading, on the trail through the pane that holds it; a walk brings it back (§10.7; readingPoint.ts).
+  useReadingPoint(frame, {ref: location.path, title})
   // Autosave (§17.8): this same Save a second after you stop, held while a save stands stale, in conflict or refused.
   const autosave = useAutosave(frame, {settle, save: standing.save ? saveToOwner : undefined, pending, dirty, held: autosaveHeldOf(save)})
   // Before the pane closes (or splits, or moves), the page is read once more and its draft kept; a page as read lets any kept one go.

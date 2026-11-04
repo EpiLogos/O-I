@@ -1,4 +1,6 @@
 const paths = {
+  home: "M3 11 12 3l9 8M5 9v12h5v-7h4v7h5V9",
+  wiki: "M12 6v15M12 6C9 3 5 3 2 4v15c3-1 7-1 10 2M12 6c3-3 7-3 10-2v15c-3-1-7-1-10 2",
   globe: "M3 12h18M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm0 0c5 5 5 13 0 18-5-5-5-13 0-18",
   frame: "M3 3h18v18H3ZM6 16l5-6 4 4 3-3M7 7h.01",
   record: "M12 5a7 7 0 1 0 0 14 7 7 0 0 0 0-14",
@@ -48,7 +50,13 @@ const paths = {
   chevronRight: "m9 5 7 7-7 7",
   chevronDown: "m5 9 7 7 7-7",
   external: "M13 4h7v7M20 4 9 15M9 4H4v16h16v-5",
-  ripple: "M12 12m-1.6 0a1.6 1.6 0 1 0 3.2 0 1.6 1.6 0 1 0-3.2 0M6.7 13.5a5.4 5.4 0 0 1 10.6 0M3.4 15a8.8 8.8 0 0 1 17.2 0"
+  ripple: "M12 12m-1.6 0a1.6 1.6 0 1 0 3.2 0 1.6 1.6 0 1 0-3.2 0M6.7 13.5a5.4 5.4 0 0 1 10.6 0M3.4 15a8.8 8.8 0 0 1 17.2 0",
+  loop: "M17 2l4 4-4 4M3 11v-1a4 4 0 0 1 4-4h14M7 22l-4-4 4-4M21 13v1a4 4 0 0 1-4 4H3",
+  pen: "M4 20l1-4L15 6l3 3L8 19l-4 1Z M14 7l3 3",
+  eraser: "m7 20 -4-4a2 2 0 0 1 0-2.8l8.6-8.6a2 2 0 0 1 2.8 0l5 5a2 2 0 0 1 0 2.8L13 19H7Z M5 12l7 7 M13 20h8",
+  lasso: "M9 3C5 3 2 6 2 10c0 3 2 5 5 6l-1 4 4-2c1 0 2 1 3 1 4 0 7-3 7-7 0-4-3-7-11-9Z",
+  distributeH: "M4 4v16M20 4v16M9 8v8M15 8v8",
+  distributeV: "M4 4h16M4 20h16M8 9h8M8 15h8"
 };
 function icon(name) {
   return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${paths[name] ?? paths.formation}"/></svg>`;

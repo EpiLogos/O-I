@@ -1837,6 +1837,28 @@ pub(crate) fn with_source(path: &str, track: &Element, at: ClipAt, mut reading: 
                 fields.insert("sourceRefused".into(), Value::String(why));
             }
         }
+        // A take's clip, or a stretch comped from it (O-I #855): its `TakeId` and what the take keeps beside the set, by that id.
+        let take = clip_at(track, at)
+            .ok()
+            .and_then(|clip| num(clip, "TakeId"))
+            .filter(|id| id.fract() == 0.0 && *id >= 1.0)
+            .map(|id| id as u64);
+        let taken = match take {
+            None => Value::Null,
+            Some(id) => {
+                let kept = track
+                    .attr("Id")
+                    .ok_or_else(|| "the track carries no Id in the document".to_string())
+                    .and_then(|track| {
+                        crate::sources::keeps_of(std::path::Path::new(path), track, id)
+                    });
+                match kept {
+                    Ok(keeps) => json!({"id": id, "keeps": keeps}),
+                    Err(why) => json!({"id": id, "keeps": null, "keepsRefused": why}),
+                }
+            }
+        };
+        fields.insert("take".into(), taken);
     }
     reading
 }
@@ -1924,7 +1946,7 @@ pub(crate) fn blank_clip(
 
 /// The MIDI clip a new one takes its shape from: one of the part's own (its
 /// slots, then its arrangement), else the first the set holds on any part.
-fn shape_donor(root: &Element, track: usize) -> Option<Element> {
+pub(crate) fn shape_donor(root: &Element, track: usize) -> Option<Element> {
     let own = tracks(root).into_iter().nth(track);
     let of = |track: &Element| -> Option<Element> {
         let sequencer = track

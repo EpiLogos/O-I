@@ -1,27 +1,33 @@
 // The Jankó instrument device (T-LIVE-JANKO-DEVICE): the Live keyboard row beside the torus. Two layouts, one input path. The Jankó surface is the
-// owner's window (jankoLayout.ts); the piano is the admitted alternative. Every key sends its pitch class through the one input path
-// (jankoInput.ts) as a janko stage command; the owner answers, and a refusal is named here. The computer keyboard plays only while the
-// keyboard holds focus, never from editable text, and never with a modifier held. MIDI from the native host joins the same path (liveMidi.ts):
-// a hardware controller plays whether or not the keyboard holds focus, and only while this device is mounted.
+// owner's window (jankoLayout.ts); the piano is the admitted alternative. Every key plays through the part's one playing path
+// (keyboardLayout.ts livePlayingPath, jankoInput.ts): the key pressed, with its row and column, strikes the Torus and its release lets it
+// go (O-I #853); the owner answers, and a refusal is named here. The computer keyboard plays only while the keyboard holds focus, never
+// from editable text, and never with a modifier held; when the keyboard or the window loses focus, the notes it holds are released.
+// MIDI from the native host joins the same path (liveMidi.ts): a hardware controller plays whether or not the keyboard holds focus, and
+// only while this device is mounted.
 
-import {useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent} from 'react'
-import {commitLiveStage, useLiveTorusReading} from '../torusInstrument'
+import {useEffect, useRef, useState, type KeyboardEvent, type PointerEvent} from 'react'
+import {useLiveTorusReading} from '../torusInstrument'
 import {
   JANKO_PLACEMENT_NOTE, pianoKeys, useLiveJankoWindow, type JankoKey, type JankoWindowState,
 } from './jankoLayout'
 import {requestLiveJankoWindow} from '../../native/liveJankoWindow'
-import {liveMidiInitial, liveMidiLine, midiNoteEvent, subscribeLiveMidi, type LiveMidiState} from '../../native/liveMidi'
+import {liveMidiInitial, liveMidiLine, lostMidiPorts, midiNoteEvent, subscribeLiveMidi, type LiveMidiState} from '../../native/liveMidi'
 import {useLiveModeInForce} from '../../native/liveModeCatalogue'
 import {pitchMask} from '../modes'
 import {runNoteChain} from '../noteDevices/noteDevices'
 import {useNoteDeviceChain} from '../noteDevices/noteDeviceHold'
-import {COMPUTER_KEY_PITCH, createJankoInput, keyboardGate, type JankoInput, type NoteEvent} from './jankoInput'
+import {COMPUTER_KEY_PITCH, keyboardGate, type NoteEvent, type PlayingPress} from './jankoInput'
+import {livePlayingPath, setLivePlayingTransform, useLivePlaying} from '../keyboardLayout'
 import './janko.css'
 
 export type JankoLayout = 'janko' | 'piano'
 
 /** With no note device the act sounds as it was struck. */
 const NO_NOTE_DEVICES = (pitchClasses: readonly number[]): readonly number[] => pitchClasses
+
+/** The presses a surface holds: the pointer's, touch's and the computer keys'. A controller's notes are its device's. */
+const surfacePress = (press: PlayingPress) => press.source !== 'midi'
 
 const editable = (target: EventTarget | null): boolean => {
   const element = target as HTMLElement | null
@@ -62,40 +68,55 @@ export function JankoDeviceView({windowState, initialLayout = 'janko', modeMask 
   const [own, setLayout] = useState<JankoLayout>(initialLayout)
   const layout = plateLayout ?? own
   const [armed, setArmed] = useState(false)
-  const [held, setHeld] = useState<readonly number[]>([])
-  const [refusal, setRefusal] = useState<string | null>(null)
+  const {held, refusal} = useLivePlaying()
   const [midi, setMidi] = useState<LiveMidiState>(() => initialMidi ?? liveMidiInitial())
-  // The input is made once; it reads the chain as it stands at each act, through this ref.
+  // The part's one path; it reads the chain as it stands at each act.
+  const input = livePlayingPath()
   const transformRef = useRef(noteTransform)
   transformRef.current = noteTransform
-  const input: JankoInput = useMemo(() => createJankoInput({
-    send: command => commitLiveStage(command),
-    onResult: result => setRefusal(result.ok ? null : result.error),
-    onHeld: setHeld,
-    transform: classes => transformRef.current(classes),
-  }), [])
+  // The chain under the mode in force, as this surface last drew it: every surface and the part's input draw the same one.
+  useEffect(() => { setLivePlayingTransform(classes => transformRef.current(classes)) })
+  // The window losing focus (another application, a dialog) releases what the surface holds, as the keyboard losing focus does.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const lost = () => input.releaseWhere(surfacePress)
+    window.addEventListener('blur', lost)
+    return () => window.removeEventListener('blur', lost)
+  }, [input])
   // MIDI joins the one input path. A hardware controller is explicit input, so it plays whether or not the keyboard holds focus; it is heard
   // only while this device is mounted, and the unsubscribe on unmount releases the host's listeners. A surface that does not hear MIDI
   // (a second drawing of the keyboard) subscribes to nothing.
-  useEffect(() => hears ? subscribeLiveMidi({
-    onState: setMidi,
+  useEffect(() => {
+    if (!hears) return undefined
+    let heard: LiveMidiState = {kind: 'reading'}
+    return subscribeLiveMidi({
+    onState: state => {
+      // A device lost releases the notes it held.
+      const lost = lostMidiPorts(heard, state)
+      heard = state
+      if (lost.length) input.releaseWhere(press => press.source === 'midi' && lost.includes(press.port ?? ''))
+      setMidi(state)
+    },
     onNotes: notes => {
-      setRefusal(null)
       for (const note of notes) {
         const event = midiNoteEvent(note)
         if (event.kind === 'down') input.down(event)
         else input.up(event)
       }
     },
-  }) : undefined, [input, hears])
-  // `id` is the press's own identity (a pointer id), so two touch-points of one class release independently.
-  const press = (pitchClass: number, source: NoteEvent['source'], pressure?: number | null, id?: string) => {
-    setRefusal(null)
-    input.down({kind: 'down', pitchClass, source, pressure, press: id})
-  }
+    })
+  }, [input, hears])
+  // `id` is the press's own identity (a pointer id), so two touch-points of one class release independently. A Jankó key goes with its
+  // note, so the note sounds at that key's own touch-point; where the press landed on the key is its strength under Pointer height.
+  const press = (pitchClass: number, source: NoteEvent['source'], pressure?: number | null, id?: string, key?: JankoKey, height?: number | null) =>
+    input.down({kind: 'down', pitchClass, source, pressure, press: id, height, ...(key ? {key: {row: key.row, column: key.column}} : {})})
   const release = (pitchClass: number, source: NoteEvent['source'], id?: string) => input.up({kind: 'up', pitchClass, source, press: id})
   const pointerSource = (event: PointerEvent<HTMLButtonElement>): NoteEvent['source'] => event.pointerType === 'touch' ? 'touch' : 'pointer'
   const pen = (event: PointerEvent<HTMLButtonElement>) => event.pointerType === 'pen' ? event.pressure : null
+  const heightOn = (event: PointerEvent<HTMLButtonElement>) => {
+    const box = event.currentTarget.getBoundingClientRect()
+    return box.height > 0 ? Math.max(0, Math.min(1, (event.clientY - box.top) / box.height)) : null
+  }
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     const pitchClass = COMPUTER_KEY_PITCH[event.key.toLowerCase()]
@@ -114,10 +135,11 @@ export function JankoDeviceView({windowState, initialLayout = 'janko', modeMask 
       aria-label={`${label}, ${detail}${modeMask ? (modeMask[pitchClass] ? ', in the mode' : ', outside the mode') : ''}`} aria-pressed={held.includes(pitchClass)}
       data-janko-in-mode={modeMask ? (modeMask[pitchClass] ? 'yes' : 'no') : undefined}
       data-janko-pitch-class={pitchClass} data-janko-row={key?.row} data-janko-column={key?.column} data-janko-touch-point={key?.touchPoint}
-      onPointerDown={event => { press(pitchClass, pointerSource(event), pen(event), `pointer-${event.pointerId}`) }}
+      onPointerDown={event => { press(pitchClass, pointerSource(event), pen(event), `pointer-${event.pointerId}`, key, heightOn(event)) }}
       onPointerUp={event => release(pitchClass, pointerSource(event), `pointer-${event.pointerId}`)}
       onPointerLeave={event => release(pitchClass, pointerSource(event), `pointer-${event.pointerId}`)}
-      onClick={event => { if (event.detail === 0) { press(pitchClass, 'pointer'); release(pitchClass, 'pointer') } }}>
+      onPointerCancel={event => release(pitchClass, pointerSource(event), `pointer-${event.pointerId}`)}
+      onClick={event => { if (event.detail === 0) { press(pitchClass, 'pointer', null, undefined, key); release(pitchClass, 'pointer') } }}>
       {label}
     </button>
   )
@@ -150,7 +172,7 @@ export function JankoDeviceView({windowState, initialLayout = 'janko', modeMask 
       </header>}
       <div className="janko-play" tabIndex={0} role="application" aria-label="Keyboard input: focus to play from the computer keyboard"
         title={plate ? `${KEYBOARD_HINT} ${JANKO_PLACEMENT_NOTE}` : undefined} data-janko-placement={plate ? '' : undefined}
-        onFocus={() => setArmed(true)} onBlur={() => setArmed(false)} onKeyDown={onKeyDown} onKeyUp={onKeyUp}>
+        onFocus={() => setArmed(true)} onBlur={() => { setArmed(false); input.releaseWhere(surfacePress) }} onKeyDown={onKeyDown} onKeyUp={onKeyUp}>
         {surface}
       </div>
       {!plate && <p className="janko-hint">{KEYBOARD_HINT}</p>}

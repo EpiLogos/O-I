@@ -33,6 +33,8 @@ import {KindMark} from '../inhabitants/sdk/marks.tsx'
 const WorldBrowser = loadWhenDrawn<{controlled?: ControlledBrowser}>('Expressions\' browser', () => import('../components/WorldBrowser').then(module => module.WorldBrowser))
 // The Places' rows load when a place is first shown (frame/browser/PlaceRows.tsx).
 const PlaceRows = loadWhenDrawn<{controlled: ControlledBrowser}>('The places', () => import('../frame/browser/PlaceRows').then(module => module.PlaceRows))
+// Factory's songs made into clips load when Songs is first shown (agent/SongRows.tsx, O-I #844).
+const SongRows = loadWhenDrawn<{controlled: ControlledBrowser}>('Your songs', () => import('../agent/SongRows').then(module => module.SongRows))
 
 /** What the bodies read from the App: Live's panel context, the ground subject the browser selects, the agency reading. */
 export interface BrowserReading {
@@ -99,9 +101,16 @@ function ConstellationsRows({controlled}: {controlled: ControlledBrowser}) {
 /** Each place's mark, from the cut. */
 const PLACE_MARKS: Readonly<Record<PlaceId, ReactNode>> = {
   you: <Icon name="earth" size={12} />, agents: <KindMark kind="agent" size={12} />, machines: <Icon name="hex" size={12} />, work: <KindMark kind="world" size={12} />,
+  packs: <Icon name="lib" size={12} />,
 }
 
 const AGENTS: BrowserSource = {id: 'agents', categories: AGENT_BROWSER_CATEGORIES, Body: AgentRows}
+/** Factory's Material: songs made into clips (manual §10.3; §19.1 "It stands under Material in the browser, under the project that made
+ * it"). Factory's own drop takes one onto a session's track, so the category stands in Factory's browser. */
+const SONGS: BrowserSource = {id: 'songs', categories: [{id: 'songs', label: 'Songs', kind: 'material', mark: <KindMark kind="run" size={12} />,
+  hint: 'songs made into clips, under the project that made each: select one to preview it, drag one onto a session\'s track and it becomes a task of that session\'s song',
+  info: 'Songs: the songs made into clips, from Software Factory, under the project that keeps each. A clip is a render: it names its set, Remake in its preview makes it again, and it is never edited in place. Select one to preview it; the Skillset rack\'s Capture page takes the selected clip as its source. Drag one onto a session\'s track, in this project or another, and it becomes a task of that session\'s song with the thread form canon. File › Export Song… makes the selected task\'s song one.'}],
+  Body: SongRows}
 /** Outside Factory, the running agent sessions only (Factory browses the whole agent browser). */
 const SESSIONS: BrowserSource = {id: 'sessions', categories: AGENT_BROWSER_CATEGORIES.filter(category => category.id === 'sess'), Body: AgentRows}
 const SHARED: readonly BrowserSource[] = [
@@ -128,7 +137,7 @@ export const MODE_BROWSERS: Readonly<Record<SurfMode, () => readonly BrowserSour
   base: () => [grammar('base'), SESSIONS],
   techne: () => [grammar('techne'), SESSIONS],
   expressions: () => [{id: 'expressions', categories: WORLD_BROWSER_CATEGORIES, Body: ExpressionsRows}, SESSIONS],
-  factory: () => [AGENTS],
+  factory: () => [AGENTS, SONGS],
 }
 
 /** What a mode's set grooves are given: the set open in Live (its grooves are the set's own). */

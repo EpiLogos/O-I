@@ -36,6 +36,7 @@ import './centralDocuments.css'
 import {DocumentPaneContext, documentLayoutWriter} from './documentDoor'
 import {loadWhenDrawn} from '../../shell/loadWhenDrawn'
 import {DocumentFind} from './DocumentFind'
+import {ReadingEncounterContext} from './readingPoint'
 
 // The Day's and the Flow's hosted forms (each carries its whole form page) load when a Day or a Flow is first opened, never with the
 // shell's first frame (O-I #740); until one arrives the pane shows the shell's waiting line for it.
@@ -228,9 +229,13 @@ export function registerCentralDocumentPane(): void {
   registerProjectionModule({
     id: 'central-document',
     kind: CENTRAL_DOCUMENT_PANE_KIND,
-    create: ({element, binding}) => {
+    create: ({element, binding, encounter}) => {
       const root = createRoot(element)
-      root.render(<DocumentPaneContext.Provider value={binding.id}><CentralDocumentPane transport={detectTransport()} subjectRef={binding.subject_ref} /></DocumentPaneContext.Provider>)
+      // The pane's own encounter reaches the page it holds: its point in the reading goes on the trail, and a walk brings it back
+      // (readingPoint.ts).
+      root.render(<DocumentPaneContext.Provider value={binding.id}><ReadingEncounterContext.Provider value={encounter}>
+        <CentralDocumentPane transport={detectTransport()} subjectRef={binding.subject_ref} />
+      </ReadingEncounterContext.Provider></DocumentPaneContext.Provider>)
       // The pane session tears down inside a commit; the root leaves after it (its container is the session's own).
       return {unmount: () => queueMicrotask(() => root.unmount())}
     },

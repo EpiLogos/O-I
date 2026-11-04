@@ -9,6 +9,7 @@
  * its first surface. The body vibrates along its normal (QL scene_field.rs `surface`), which keeps a point's angles, so the rest torus
  * names the point the person sees. Pure: no DOM, no engine, no owner. */
 import {basis,stageCentre,stageScale,type Camera} from '../camera';
+import {clockAngle,shapeRayHit,type PresentState} from '../../../src/engine/torusObject';
 
 /** QL's M1 torus (QL-MEF crates/ql-mef/src/m1.rs `torus`, coordinate #1-5-1; the shell's live/torusInstrument.ts LIVE_TORUS_TOPOLOGY):
  * x = (R + cos θ) cos φ, y = (R + cos θ) sin φ, z = sin θ, with R = 16/9 and r = 1, in metres. */
@@ -77,7 +78,7 @@ export function rayHit(origin:Vec3,direction:Vec3):{t:number;point:Vec3}|null {
 }
 
 /** The surface point under a pointer at (x, y) on the stage, or why there is none. */
-export function touchedSurface(x:number,y:number,view:StageView,scale:StageScale):TouchReading {
+export function touchedSurface(x:number,y:number,view:StageView,scale:StageScale,shown:PresentState|null=null):TouchReading {
  if(!Number.isFinite(scale.unitsPerMetre)||scale.unitsPerMetre<=0||!Number.isFinite(scale.worldScale)||scale.worldScale<=0)
   throw new Error('a touch needs the presentation\'s units per metre and the stage\'s engine units per stage unit');
  // The engine's perspective eye frames the stage by its own field of view (PointCloudField setHostView), not by the frame's
@@ -91,6 +92,14 @@ export function touchedSurface(x:number,y:number,view:StageView,scale:StageScale
  const plane:Vec3=[0,1,2].map(i=>(across*a[i]+up*b[i])*metres) as Vec3;
  // The eye stands along right × up (setHostView), so the ray starts beyond the torus on that side and looks back along −(right × up).
  const origin:Vec3=[0,1,2].map(i=>plane[i]+toward[i]*2*BOUND) as Vec3;
+ // The torus object may stand on another of its shapes, or laid flat (O-I 851): the press finds the sample of the shape shown under it,
+ // by the body's own angles, so it strikes the body where the person sees it.
+ if(shown&&!(shown.morph.from==='torus'&&shown.morph.to==='torus')){
+  const found=shapeRayHit(origin,[-toward[0],-toward[1],-toward[2]],shown,1);
+  if(!found)return {point:null,why:'No surface of the torus is under the pointer.'};
+  const at:Vec3=[0,1,2].map(i=>origin[i]-toward[i]*found.t) as Vec3;
+  return {point:{theta:onSheet(found.theta),phi:onSheet(found.phi)},at};
+ }
  const hit=rayHit(origin,[-toward[0],-toward[1],-toward[2]]);
  const point=hit?surfaceAngles(hit.point):null;
  if(!hit||!point)return {point:null,why:'No surface of the torus is under the pointer.'};
@@ -98,7 +107,7 @@ export function touchedSurface(x:number,y:number,view:StageView,scale:StageScale
 }
 
 /** The live instrument as a touch reads it: the controller's reading (controller.ts `reading`). */
-export interface TouchInstrument {status?:string;instrument?:unknown;presentation_units_per_metre?:number|null}
+export interface TouchInstrument {status?:string;instrument?:unknown;presentation_units_per_metre?:number|null;presented_clock?:unknown}
 /** What a press strikes: the touched point and its impulse (undefined: the owner's default strike, controller.ts playAt), or why the
  * press is no touch. `say` is whether the person pressed the playing torus and should be told why it did not ring. */
 export type TouchStrike={point:SurfacePoint;amplitude:number|undefined}|{point:null;why:string;say:boolean};
@@ -111,7 +120,10 @@ export function touchStrike(reading:TouchInstrument|null|undefined,x:number,y:nu
  const unitsPerMetre=reading?.presentation_units_per_metre;
  if(!reading?.instrument||reading.status!=='following'||!(typeof unitsPerMetre==='number'&&unitsPerMetre>0))
   return {point:null,why:'The live instrument is not playing.',say:false};
- const touched=touchedSurface(x,y,view,{projection:stage.projection,unitsPerMetre,worldScale:stage.worldScale});
+ const object=(reading.instrument as any)?.torus_object,morph=object?.shape?.shown;
+ const shown:PresentState|null=morph&&typeof morph.from==='string'&&typeof morph.to==='string'
+  ?{morph,angle:clockAngle(reading.presented_clock as any,(reading.instrument as any)?.influence?.geometry?.attachment??1)}:null;
+ const touched=touchedSurface(x,y,view,{projection:stage.projection,unitsPerMetre,worldScale:stage.worldScale},shown);
  if(!touched.point)return {point:null,why:touched.why,say:stage.projection==='perspective'};
  const pressure=stage.pressure;
  return {point:touched.point,amplitude:typeof pressure==='number'&&pressure>0?Math.min(0.9,Math.max(0.15,pressure*0.9)):undefined};

@@ -311,6 +311,12 @@
       "classification": "dialog",
       "rationale": "Export Audio: the person chooses the file in the host's native save dialog; the page names no path, and a cancelled dialog is refused in words. The engine's offline render is written by the kernel's Live owner (Kernel::live_audio_export), which records its file_changed receipt; the host writes no file.",
       "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md §21.1 (Rules: every part sounds in one engine; Export Audio renders what you heard), O-I #849; docs/cradle/02-ARCHITECTURE.md §5/§12"
+    },
+    {
+      "command": "midi::midi_out",
+      "classification": "presentation-lease",
+      "rationale": "The part's MIDI output (midi.rs over midir): lists the system's MIDI outputs, connects the one the person chooses and sends the notes the part's playing path plays to it, refused in words when none is chosen or a message is not MIDI. It decides and writes nothing; what is played is the shell's playing path and the Torus's owner. Candidate webviews only.",
+      "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md §21.1 (The input: MIDI out sends what a part plays), O-I #853; docs/cradle/02-ARCHITECTURE.md §5/§12"
     }
   ],
   "filesystem": [
