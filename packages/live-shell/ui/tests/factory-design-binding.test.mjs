@@ -522,7 +522,9 @@ test('Scope: no owner reports a reach, a write mode, places or receipts, so none
   // REPLACED: Scope's Knowledge page (#725) — what the agent reads from is Sources' now (§19.9, §19.12), and Scope's settings beyond its reach
   // are its Asks (§19.12 Asks): Calls to other agents, Wait and On no answer refused by the operations they lack (designBindings.ts
   // REFUSED_WRITES); Tool calls through the Gateway slot's approvals row, or refused where the chain hands in none.
-  await assert.rejects(() => scope().write([{key: 'calls', value: 'allow'}]), /Calls to other agents: no owner operation carries it yet — missing op: an ingress rule for the sender kind agent/)
+  // REPLACED (round 859): Calls to other agents writes AIKit's ingress rule for agents through the kernel's harness_ingress_rule; a Scope
+  // handed no carrier names it (w4-unbound-designs-binding.test.mjs reads and writes it).
+  await assert.rejects(() => scope().write([{key: 'calls', value: 'allow'}]), /Calls to other agents: no carrier to AIKit's ingress rule for the sender kind agent \(the kernel's harness_ingress_rule\)/)
   await assert.rejects(() => scope().write([{key: 'wait', value: 3600}]), /Wait: no owner operation carries it yet — missing op: the agent's approvals timeout/)
   await assert.rejects(() => scope().write([{key: 'noAnswer', value: 'deny'}]), /On no answer: no owner operation carries it yet/)
   await assert.rejects(() => scope().write([{key: 'toolCalls', value: 'session'}]), /Tool calls: the Gateway's approvals row is not adopted on this chain/)

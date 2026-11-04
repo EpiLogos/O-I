@@ -207,6 +207,7 @@ export function budgetLine(budget: AgentChainReading['budget']): string | undefi
 
 interface RowPlan {
   group: string
+  /** True: one of the device's most-played controls. False: kept off the compact size even when it is written (a page's press). */
   compact?: boolean
   /** A macro, and only with the mapping its owner declares: at least one row of this device, each with a range (lock §0.1,
    * §5.3). A row that cannot name its mapping is not a macro, so there is no way to plan one without it. */
@@ -248,6 +249,16 @@ const PLAN: Readonly<Record<string, Readonly<Record<string, RowPlan>>>> = {
     'test-depth': {group: 'Settings'},
     reach: {group: 'Settings'},
     risk: {group: 'Settings'},
+    // The Refining page's rows (§19.7 "Refining a skill"; skills.tsx `refine.` keys). Test, Accept and Discard are owner writes and a page's
+    // presses, Accept yours alone: none is one of the rack's most-played controls, so none stands on its compact size or as a plan key.
+    'refine.member': {group: 'Refining', compact: false},
+    'refine.why': {group: 'Refining', compact: false},
+    'refine.revision': {group: 'Refining', compact: false},
+    'refine.test': {group: 'Refining', compact: false},
+    'refine.result': {group: 'Refining', compact: false},
+    'refine.run': {group: 'Refining', compact: false},
+    'refine.accept': {group: 'Refining', compact: false},
+    'refine.discard': {group: 'Refining', compact: false},
   },
   world: {
     reads: {group: 'Scope'},
@@ -285,7 +296,7 @@ function deviceRow(address: AgentParamAddress, plan: RowPlan | undefined, fallba
     ...rest,
     title: rowTitle(address.key),
     group: plan?.group ?? fallbackGroup,
-    ...(plan?.compact ? {compact: true} : {}),
+    ...(plan?.compact !== undefined ? {compact: plan.compact} : {}),
     // A macro maps what the owner maps; the plan carries the mapping or the row claims none.
     ...(plan?.macro ? {macro: plan.macro} : {}),
     ...(withheld ? {disclosure: address.disclosure ? `${address.disclosure} ${withheld}` : withheld} : writePath ? {writePath} : {}),

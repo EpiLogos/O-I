@@ -1067,6 +1067,173 @@ mod tests {
         std::fs::remove_dir_all(dir).unwrap();
     }
 
+    /// O-I #849 round 14 end to end, on QL's real companions: a receiver's move is reached in the engine over the samples its
+    /// owner reached it over, though the part's Torus renders a frame at a time in the engine's blocks of 256. Receiver On is
+    /// asked before the first hand-over, so the Torus is handed over heard by the gains it leaves, and its owner's next block
+    /// reaches the receiver's over its 512; a second place is asked while a setting waits 200 samples into the next block, so the
+    /// owner reaches it over those 200 only; Receiver Off reaches the declared gains over the next 512. The owner names each part
+    /// (`torus_heard`), the kernel taps it and the host reaches it on the part's Torus: Main is the owner's own sound throughout,
+    /// sample for sample, and Export Audio renders it again. No audio device is opened.
+    #[test]
+    #[ignore = "requires QL's real companions (OI_QL_BIN, OI_QL_SKY_BIN, OI_QL_FIELD_HOST_BIN, OI_QL_FIELD_WORKER_BIN) and QL_MEF_PREFIX"]
+    fn a_receivers_move_is_reached_in_the_engine_over_the_samples_its_owner_reached_it_over() {
+        use crate::live_engine_host::host::LiveEngineHost;
+        let client =
+            oi_cradle_kernel::CentralClient::with("/nonexistent".into(), None, String::new());
+        let field = oi_cradle_kernel::Kernel::new(client).native_field();
+        let (tap, tapped) = std::sync::mpsc::channel();
+        field.set_torus_tap(tap).unwrap();
+        let opened = field
+            .apply(Request::Compose {
+                request: json!({"texture":[8,8],"units_per_metre":120,"sky":"none"}),
+            })
+            .unwrap();
+        let lease = opened["lease"].as_str().unwrap().to_owned();
+        let mut current = opened["receipt"].clone();
+        let mut exchange = |command: Value| {
+            let id: u64 = current["last_request_id"]
+                .as_str()
+                .unwrap()
+                .parse()
+                .unwrap();
+            let reply = field
+                .apply(Request::Exchange {
+                    lease: lease.clone(),
+                    request: json!({"schema":"ql.field-host-request/v1",
+                        "instance_ref":current["instance_ref"],
+                        "event_ref":current["field"]["event_ref"],
+                        "subject_ref":current["field"]["subject_ref"],
+                        "request_id":(id + 1).to_string(),
+                        "expected_generation":current["field"]["generation"],
+                        "expected_samples_elapsed":current["field"]["samples_elapsed"],
+                        "command":command}),
+                })
+                .unwrap();
+            assert_eq!(reply["status"], "ok", "{reply}");
+            current = reply.clone();
+            reply
+        };
+        let kept = |lease: &str, sha256: &str| field.torus_native(lease, sha256);
+        let follow = |host: &LiveEngineHost| {
+            for told in tapped.try_iter() {
+                host.tapped(told, kept);
+            }
+        };
+        // The parts a block names that reached a receiver's gains, as (first sample, length).
+        let parts = |block: &Value| -> Vec<(u64, u64)> {
+            block["torus_heard"]
+                .as_array()
+                .unwrap_or_else(|| {
+                    panic!(
+                        "the block names the part that reached the receiver's gains: {}",
+                        block["torus_heard"]
+                    )
+                })
+                .iter()
+                .map(|p| {
+                    (
+                        p["at_samples_elapsed"].as_str().unwrap().parse().unwrap(),
+                        p["frames"].as_u64().unwrap(),
+                    )
+                })
+                .collect()
+        };
+
+        let dir = std::env::temp_dir().join(format!("oi-torus-receiver-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("torus.als");
+        let root = live_set::xml::parse(SET).unwrap();
+        std::fs::write(&path, live_set::write_gz(&root).unwrap()).unwrap();
+        let host = LiveEngineHost::default();
+        host.open(&path).unwrap();
+        let mut core = host
+            .0
+            .lock()
+            .unwrap()
+            .as_mut()
+            .unwrap()
+            .core
+            .take()
+            .unwrap();
+
+        exchange(json!({"operation":"advance","frames":4800,"muted":false}));
+        // Receiver On before the hand-over: the owner holds the move unreached, and hands the Torus over so.
+        let on =
+            exchange(json!({"operation":"torus-receiver","receiver":{"at_metres":[2.5,0.0,0.3]}}));
+        assert_eq!(on["torus_receiver"]["context"], "personal", "{on}");
+        let sha256 = exchange(json!({"operation":"torus-native"}))["torus_native"]["sha256"]
+            .as_str()
+            .unwrap()
+            .to_owned();
+        let document = field.torus_native(&lease, &sha256).unwrap();
+        host.bind_torus(&lease, 0, &sha256, &document, None, None, None, kept)
+            .unwrap();
+        exchange(
+            json!({"operation":"torus-play","keys":[{"row":2,"column":3},{"row":4,"column":1}],"amplitude":[0.3,0]}),
+        );
+        follow(&host);
+        let block = exchange(json!({"operation":"advance","frames":512,"muted":false}));
+        assert_eq!(
+            parts(&block),
+            vec![(4800, 512)],
+            "the move handed over unreached is reached over the owner's next block"
+        );
+        let mut owner = owner_sound(&block, 512);
+        follow(&host);
+        // Another place, asked while a setting waits 200 samples into the next block: reached over those 200 only.
+        exchange(json!({"operation":"torus-receiver","receiver":{"at_metres":[0.0,3.5,-0.2]}}));
+        exchange(
+            json!({"operation":"torus-set","edit":{"polyphony":3},"at_samples_elapsed":"5512"}),
+        );
+        let block = exchange(json!({"operation":"advance","frames":512,"muted":false}));
+        assert_eq!(parts(&block)[0], (5312, 200), "{}", block["torus_heard"]);
+        owner.extend(owner_sound(&block, 512));
+        follow(&host);
+        // Off: the declared gains, reached over the next block's 512; then nothing more is reached.
+        exchange(json!({"operation":"torus-receiver","receiver":null}));
+        let block = exchange(json!({"operation":"advance","frames":512,"muted":false}));
+        assert_eq!(parts(&block), vec![(5824, 512)]);
+        owner.extend(owner_sound(&block, 512));
+        follow(&host);
+        let block = exchange(json!({"operation":"advance","frames":512,"muted":false}));
+        assert!(
+            block.get("torus_heard").is_none(),
+            "{}",
+            block["torus_heard"]
+        );
+        owner.extend(owner_sound(&block, 512));
+        let main = pull(&mut core, 2048);
+        same(
+            &main,
+            &owner,
+            "the receiver's moves reached over the owner's samples, in the engine's blocks of 256",
+        );
+        let reading = host.mixer().unwrap();
+        assert!(
+            reading["torus_follow"]["heard"].as_u64().unwrap() >= 3,
+            "{reading}"
+        );
+        assert_eq!(reading["torus_follow"]["missed"], 0, "{reading}");
+        let (bytes, _) = host
+            .0
+            .lock()
+            .unwrap()
+            .as_mut()
+            .unwrap()
+            .render_wav()
+            .unwrap();
+        let wav = live_engine::wav::read_wav_f32(&bytes).unwrap();
+        assert_eq!(wav.samples.len(), main.len());
+        for (n, (e, p)) in wav.samples.iter().zip(&main).enumerate() {
+            assert_eq!(
+                e.to_bits(),
+                p.to_bits(),
+                "sample {n}: Export Audio is what was played"
+            );
+        }
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
     /// The Torus part with a clip (120 bpm, a beat 24000 frames): key 60 at 3000, 62 at 6000 (velocity 80), and 60 with 64
     /// at 12000.
     const CLIPPED: &str = r#"<?xml version="1.0" encoding="UTF-8"?>
@@ -1236,26 +1403,43 @@ mod tests {
             json!({"handed": 4, "unkeyed": 0, "before_torus": 0}),
             "{reading}"
         );
-        // the Torus's effects stand after it on its part (round 13): the frame's Reverb as Live's, the
-        // engine's own device at the frame's Decay, from the block that takes it; its Filter has no model
-        // in the engine and is said so. Main is the Torus its owner sounds, through that reverb.
+        // the Torus's effects stand after it on its part (rounds 13 and 14): the frame's Reverb as Live's,
+        // the engine's own device at the frame's Decay, and its Filter as Live's Auto Filter, built to the
+        // frame's Filter from its settings, from the block that takes them. Main is the Torus its owner
+        // sounds, through that reverb and that filter.
         let effects = json!({"chain": ["reverb", "filter"],
             "reverb": {"on": true, "size": 50, "decay": 0.6, "damping": 40, "predelay": 20, "mix": 22},
             "filter": {"on": true, "type": "lowpass", "cutoff": 8000, "resonance": 20, "drive": 0, "mix": 100}});
         let reading = host.torus_effects(&effects).unwrap();
         assert_eq!(
-            reading["torus_effects"]["chain"][1]["sounds"], false,
+            reading["torus_effects"]["chain"][1]["sounds"], true,
             "{reading}"
         );
         let main = pull(&mut core, N);
-        let mut reverb = live_engine::rack_device("Reverb", &[("DecayTime", 600.0)]).unwrap();
-        reverb.device.prepare(ENGINE_RATE, 2);
+        let mut chain = [
+            live_engine::rack_device("Reverb", &[("DecayTime", 600.0)]).unwrap(),
+            live_engine::rack_device(
+                "AutoFilter",
+                &[
+                    ("FilterType", 0.0),
+                    ("Cutoff", live_engine::auto_filter_cutoff(8000.0)),
+                    ("Resonance", 0.2),
+                    ("Drive", 0.0),
+                ],
+            )
+            .unwrap(),
+        ];
+        for d in &mut chain {
+            d.device.prepare(ENGINE_RATE, 2);
+        }
         let clock = live_engine::Clock::start(ENGINE_RATE, 120.0);
         let through: Vec<f32> = advance(N, &mut exchange)
             .iter()
             .flat_map(|s| {
                 let mut frame = [*s; 2];
-                reverb.device.process(&mut frame, &clock);
+                for d in &mut chain {
+                    d.device.process(&mut frame, &clock);
+                }
                 frame
             })
             .collect();
@@ -1264,7 +1448,7 @@ mod tests {
             assert_eq!(
                 m.to_bits(),
                 t.to_bits(),
-                "sample {n}: Main is the Torus its owner sounds, through its reverb"
+                "sample {n}: Main is the Torus its owner sounds, through its reverb and its filter"
             );
         }
         played.extend(main);

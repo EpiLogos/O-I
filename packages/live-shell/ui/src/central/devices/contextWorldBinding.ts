@@ -203,9 +203,9 @@ export const CENTRAL_SCOPE_REFUSED: Readonly<Record<string, string>> = {
   writeMode: SCOPE_MISSING('Write mode', 'write-arm enforcement on the session\'s writes (WO-SF2): propose · draft · direct', 'Software Factory'),
   // The Asks page (manual §19.12 Asks): the dialogue's session stands behind no harness gateway the kernel controls.
   toolCalls: SCOPE_MISSING('Tool calls', 'the harness\'s approvals mode for the dialogue\'s session (harness_agent_control configure {approvals} reaches a gateway\'s harness, and this session has none)', 'Actuation'),
-  calls: SCOPE_MISSING('Calls to other agents', 'an ingress rule for the sender kind agent: AIKit\'s GatewayIngressPolicy decides by a sender\'s own id (sender_overrides) or its one default, never by kind, and no write reaches it', 'AIKit'),
-  wait: SCOPE_MISSING('Wait', 'the agent\'s approvals timeout (harness_agent_control carries approvals, transport, connect and stall-after only)', 'Actuation'),
-  noAnswer: SCOPE_MISSING('On no answer', 'a timed-out request\'s outcome on the agent\'s harness', 'Actuation'),
+  calls: SCOPE_MISSING('Calls to other agents', 'a rule for calls from other agents on the dialogue\'s session: AIKit keeps one by sender kind on a gateway binding (the kernel\'s harness_ingress_rule), and this session holds no conversation on AIKit\'s gateway', 'AIKit'),
+  wait: SCOPE_MISSING('Wait', 'the agent\'s approvals timeout written for its harness (Hermes\' approvals.timeout, 300 s unless set: neither AIKit nor Actuation declares a seam on Hermes\' config, and harness_agent_control carries approvals, transport, connect and stall-after only)', 'Actuation'),
+  noAnswer: SCOPE_MISSING('On no answer', 'Hold for a request nobody answered: Hermes denies a request nobody answers when its approvals.timeout runs out, and holds none, so Deny is Hermes\' own and nothing carries Hold', 'Hermes'),
 }
 const NO_PLACE_REQUEST = 'A place in Writes: Central\'s world relations keep the sources a world reads (sources, excluded_sources), not where an agent writes — missing op: the session\'s writable places (write-arm enforcement, WO-SF2, Software Factory).'
 

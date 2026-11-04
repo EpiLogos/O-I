@@ -2,7 +2,9 @@
 // "Placement and order"; §16.1 "How far a setting reaches"; §16.4 a rack drawn as Live draws one; §19.4 "The agent's chain").
 //   src/agent/devices/factoryPlaces.ts          the session's chain, the rack's own chain, and how far each device on them reaches
 //   src/inhabitants/sdk/chains.ts                the rack's macros: how a turn reaches into the chains and nested racks, and comes off by hand
-//   src/agent/devices/sessionChainBindings.ts    the rack on its owners: a lone session's one chain, its macros through the Agent, Group
+//   src/agent/devices/sessionChainBindings.ts    the rack on its owners: a lone session's one chain, its macros through the Agent, Group,
+//                                                the chain list's Activator, Add a chain and Drag out through AIKit's session-space operations
+//   src/agent/agentRunModel.ts                   a chain's bench, read from its space's own record
 //   src/inhabitants/catalogue/panels/software-factory__agentset-rack.tsx   the device, named Agent rack
 //   src/agent/devices/FactoryDeviceChain.tsx     which draws the rack on every session, the session's own chain inside it
 //
@@ -49,6 +51,9 @@ const bind = await import('../src/agent/devices/designBindings.ts')
 const places = await import('../src/agent/devices/factoryPlaces.ts')
 const chains = await import('../src/inhabitants/sdk/chains.ts')
 const own = await import('../src/agent/devices/sessionChainBindings.ts')
+const runModel = await import('../src/agent/agentRunModel.ts')
+const drag = await import('../src/agent/agentChainDrag.ts')
+const helper = await import('../src/agent/devices/decisionHelperBinding.ts')
 const {design} = await import('../src/inhabitants/catalogue/panels/software-factory__agentset-rack.tsx')
 
 family.resetFamilyManifestsForTest()
@@ -206,32 +211,113 @@ test('Group, on chains chosen in the list, asks Central to propose them as an ag
   bind.resetHolds()
 })
 
-// ---------------------------------------------------------------- the chain list's controls wait on their owners (O-I #772)
+// ---------------------------------------------------------------- the chain list on AIKit's own session-space operations (O-I #745 with #772)
 
-test('each chain-list control refuses in the words of the operation it waits for, and of the nearest operation that is not it (O-I #772)', async () => {
+test('each chain-list control with no carrier refuses in the words of the operation that carries it; Hot-Swap in AIKit\'s own law (O-I #772)', async () => {
   const R = own.AGENTSET_REFUSE
   // Solo is what you attend to, never what runs (§16.1 "Live's acts, kept as Live keeps them": Solo is never "A limit on what may run";
   // §16.6 Rules). REPLACED (round 858): the rack solos through the shell's attention, the one the Session view's mixer solos
   // (tests/solo-attention.test.mjs); it refuses only where no attention is handed, and AIKit's session Solo is never named as its route.
   assert.match(R.solo, /^Solo: no owner operation carries it yet — missing op: what you attend to, handed to this rack: .*\(the live shell\)\.$/)
   assert.doesNotMatch(R.solo, /encounter_session_settings/)
-  // Drag out is a move; AIKit's one session move is a track's Delete.
-  assert.match(R.extract, /\(AIKit\)\. AIKit's detach-agent-session \(the kernel's encounter_session_detach\) is a track's Delete/)
-  // Add a chain: AIKit's attach reaches the kernel only for a new session in a new space.
-  assert.match(R.add, /\(AIKit\)\. AIKit's attach-agent-session reaches the kernel only inside encounter_provision, which seats a new session in a new space/)
-  // Bench and Hot-Swap: no session-space mutation holds either.
-  for (const key of ['bench', 'swap']) assert.match(R[key], /AIKit's session-space mutations \(create; bind and unbind a Project context; attach and detach a session/, key)
+  // REPLACED (round 859): Activator, Drag out and Add a chain were missing ops (no session-space mutation held a bench, a move into a space
+  // of its own, or an attach to a space that stands). AIKit carries each now (bench-agent-session; `aikit session-space drag-out`; attach-
+  // agent-session on a standing space) through the kernel's encounter_session_bench, _drag_out and _attach; with no carrier handed to the
+  // rack, each names the one that carries it, and none is a missing op.
+  assert.equal(R.bench, 'Activator: no carrier to AIKit\'s bench of a chain\'s session in its space (the kernel\'s encounter_session_bench) stands on this chain.')
+  assert.equal(R.extract, 'Drag out: no carrier to AIKit\'s drag out of a chain\'s session into a space of its own (the kernel\'s encounter_session_drag_out) stands on this chain.')
+  assert.equal(R.add, 'Add a chain: no carrier to AIKit\'s attach of a standing session to this rack\'s space (the kernel\'s encounter_session_attach) stands on this chain.')
+  for (const key of ['bench', 'extract', 'add']) assert.doesNotMatch(R[key], /missing op/, key)
+  // Hot-Swap: AIKit's law keeps a session's agent for good (encounter_agency.rs configure_agency, encounter.agent_identity_changed), where
+  // the manual swaps the agent and keeps the rest of the chain; it is refused in AIKit's words, with what a person can do instead.
+  assert.match(R.swap, /^Hot-Swap: AIKit does not let a chain's session become another agent: "A canonical session must not silently become another Agent; create a separately attributed session" \(AIKit\)\./)
+  assert.match(R.swap, /drop the other agent's session into the chain list, then delete this chain's track/)
   // Each write refuses in exactly those words, and reaches no owner.
   const sent = []
   const ports = {saveSet: async input => { sent.push(['save', input]) }, propose: async input => { sent.push(['propose', input]) }, agent: agentOf(sent)}
   const rack = own.agentsetBinding({group: CREW, tracks: TRACKS, holds: bind.chainHolds(), nowUnixMs: NOW}, ports)
   for (const [key, value, control] of [[`solo:${KITE.sessionRef}`, true, 'solo'], [`bench:${KITE.sessionRef}`, true, 'bench'], ['swap', KITE.sessionRef, 'swap'],
-    ['extract', CAIRN.sessionRef, 'extract'], ['add', 'agent/wren', 'add']]) {
+    ['extract', CAIRN.sessionRef, 'extract'], ['add', 'agent-session/wren', 'add']]) {
     assert.equal(rack.writes(key), true, `${key} is the rack's to refuse`)
     assert.equal(rack.standing[control].disabled, R[control], `${control} stands dimmed with its reason`)
     await assert.rejects(() => rack.write([{key, value}]), error => error.message === R[control], key)
   }
   assert.deepEqual(sent, [], 'no owner was asked')
+  bind.resetHolds()
+})
+
+// A Project's spaces as agency_read lists them (desktop/cradle agencySources.ts rows; `raw` the space's own record): the crew, whose record
+// benches kite (AIKit's `benched`), and the desk, where bo stands alone. The tracks are built as the sessions provider builds them.
+const SPACES = [
+  {definition: {id: 'session-space/crew'}, label: 'Port crew', benched: ['agent-session/kite'],
+    agent_sessions: {'agent-session/kite': {purpose: 'Check the port', agent_ref: 'agent/kite'}, 'agent-session/cairn': {purpose: 'Cite the port', agent_ref: 'agent/cairn'}}},
+  {definition: {id: 'session-space/desk'}, label: 'Desk', agent_sessions: {'agent-session/bo': {purpose: 'Draft', agent_ref: 'agent/bo'}}},
+]
+const agencyRows = spaces => spaces.flatMap(space => Object.entries(space.agent_sessions).map(([sessionRef, at]) =>
+  ({spaceRef: space.definition.id, spaceLabel: space.label, sessionRef, purpose: at.purpose, agentRef: at.agent_ref, raw: space, project: 'O-I'})))
+const ROSTER = new Map([['agent/kite', {name: 'kite', accepted: true}], ['agent/cairn', {name: 'cairn', accepted: true}], ['agent/bo', {name: 'bo', accepted: true}]])
+
+test('the Activator reads AIKit\'s bench and benches a chain in its space; a standing session dropped in joins; Drag out seats a chain in a space of its own', async () => {
+  bind.resetHolds()
+  const tracks = runModel.buildTracks(agencyRows(SPACES), ROSTER)
+  const crew = tracks.find(item => item.sessionRef === 'session-space/crew')
+  const kite = tracks.find(item => item.sessionRef === 'agent-session/kite')
+  assert.equal(kite.benched, true, 'the space\'s own record benches kite: the track reads it')
+  assert.equal(tracks.find(item => item.sessionRef === 'agent-session/cairn').benched, undefined, 'a session the record does not bench carries no bench')
+  const values = own.agentsetValues({group: crew, tracks, holds: bind.chainHolds(), nowUnixMs: NOW})
+  assert.equal(values['bench:agent-session/kite'], true, 'kite\'s activator reads AIKit\'s bench')
+  assert.equal(values['bench:agent-session/cairn'], false, 'cairn is not benched')
+
+  const calls = []
+  const ports = {
+    bench: async input => { calls.push(['bench', input]); return {outcome: 'applied'} },
+    attach: async input => { calls.push(['attach', input]); return {outcome: 'attached'} },
+    dragOut: async input => { calls.push(['dragOut', input]); return {receipts: []} },
+    suffix: () => '1a2b3c4d',
+  }
+  const rack = own.agentsetBinding({group: crew, tracks, holds: bind.chainHolds(), nowUnixMs: NOW, helper: {model: 'glm-5.3-flash'}}, ports)
+  for (const control of ['bench', 'extract', 'add']) assert.equal(rack.standing[control], undefined, `${control}: its carrier stands, so it is pressable`)
+  assert.equal(rack.standing.swap.disabled, own.AGENTSET_REFUSE.swap, 'Hot-Swap stays refused in AIKit\'s law')
+
+  // The Activator: off benches the chain in its space; on lifts the bench. The session stays in the rack.
+  await rack.write([{key: 'bench:agent-session/cairn', value: true}])
+  await rack.write([{key: 'bench:agent-session/kite', value: false}])
+  assert.deepEqual(calls.splice(0), [
+    ['bench', {project: 'O-I', space: 'session-space/crew', agent_session: 'agent-session/cairn', benched: true}],
+    ['bench', {project: 'O-I', space: 'session-space/crew', agent_session: 'agent-session/kite', benched: false}]])
+  await assert.rejects(() => rack.write([{key: 'bench:agent-session/bo', value: true}]), {message: own.CHAIN_LIST_REFUSE.notChain('Activator', 'agent-session/bo')})
+  await assert.rejects(() => rack.write([{key: `bench:${helper.DECISION_HELPER_ID}`, value: true}]), {message: own.CHAIN_LIST_REFUSE.helperBench})
+
+  // Add a chain: a session row dragged from the browser (AgentShellBrowser.tsx: `${spaceRef}:${sessionRef}`), or a session's own ref.
+  await rack.write([{key: 'add', value: drag.encodeChainDrag({family: 'session', ref: 'session-space/desk:agent-session/bo', label: 'Draft'})}])
+  await rack.write([{key: 'add', value: 'agent-session/wren'}])
+  assert.deepEqual(calls.splice(0), [
+    ['attach', {project: 'O-I', space: 'session-space/crew', agent_session: 'agent-session/bo'}],
+    ['attach', {project: 'O-I', space: 'session-space/crew', agent_session: 'agent-session/wren'}]])
+  await assert.rejects(() => rack.write([{key: 'add', value: drag.encodeChainDrag({family: 'agent', ref: 'agent/wren', label: 'Wren'})}]), {message: own.CHAIN_LIST_REFUSE.agent})
+  await assert.rejects(() => rack.write([{key: 'add', value: drag.encodeChainDrag({family: 'skillset', ref: 'set/port', label: 'Port'})}]), {message: own.CHAIN_LIST_REFUSE.family('skillset')})
+  await assert.rejects(() => rack.write([{key: 'add', value: 'agent-session/kite'}]), {message: own.CHAIN_LIST_REFUSE.already('kite')})
+  await assert.rejects(() => rack.write([{key: 'add', value: helper.DECISION_HELPER_ID}]), {message: own.CHAIN_LIST_REFUSE.helperStands})
+  await assert.rejects(() => rack.write([{key: 'add', value: 'a note'}]), {message: own.CHAIN_LIST_REFUSE.unnamed})
+
+  // Drag out: the chosen chain leaves its space for a space of its own, named for it, on a track of its own, chain and all.
+  await rack.write([{key: 'extract', value: 'agent-session/kite'}])
+  assert.deepEqual(calls.splice(0), [['dragOut', {project: 'O-I', space: 'session-space/crew', agent_session: 'agent-session/kite', into: 'session-space/kite-1a2b3c4d', label: 'kite'}]])
+  await assert.rejects(() => rack.write([{key: 'extract', value: helper.DECISION_HELPER_ID}]), {message: own.CHAIN_LIST_REFUSE.helperOut})
+  await assert.rejects(() => rack.write([{key: 'extract', value: 'agent-session/bo'}]), {message: own.CHAIN_LIST_REFUSE.notChain('Drag out', 'agent-session/bo')})
+  await assert.rejects(() => rack.write([{key: 'swap', value: 'agent-session/kite'}]), {message: own.AGENTSET_REFUSE.swap})
+  assert.deepEqual(calls, [], 'a refused press reaches no owner')
+
+  // A lone session's rack has one chain, its own: its Activator benches it in the space it stands in; a session dropped in joins that space.
+  const bo = tracks.find(item => item.sessionRef === 'agent-session/bo')
+  const lone = own.agentsetBinding({group: null, session: bo, tracks, holds: bind.chainHolds(), nowUnixMs: NOW}, ports)
+  assert.equal(own.agentsetValues({group: null, session: bo, tracks, holds: bind.chainHolds(), nowUnixMs: NOW})['bench:agent-session/bo'], false)
+  await lone.write([{key: 'bench:agent-session/bo', value: true}])
+  await lone.write([{key: 'add', value: 'agent-session/cairn'}])
+  assert.deepEqual(calls.splice(0), [
+    ['bench', {project: 'O-I', space: 'session-space/desk', agent_session: 'agent-session/bo', benched: true}],
+    ['attach', {project: 'O-I', space: 'session-space/desk', agent_session: 'agent-session/cairn'}]])
+  await assert.rejects(() => lone.write([{key: 'add', value: helper.DECISION_HELPER_ID}]), {message: own.CHAIN_LIST_REFUSE.helperAdd})
   bind.resetHolds()
 })
 
@@ -274,6 +360,13 @@ test('the chain draws the rack on every session, the session\'s own chain inside
   assert.match(view, /className="factory-rack__end"/, 'a narrow end bracket closes the rack')
   assert.match(view, /agentsetBinding\(\{group: groupTrack, session: loneTrack,/, 'the rack on a lone session reads that session')
   assert.match(view, /agent: oneAgent/, 'its macros turn the one agent through the Agent itself')
+  // The chain list's carriers (#745 with #772): AIKit's bench, attach and drag out of a chain's session, each through the kernel.
+  for (const [port, op] of [['bench', 'encounter_session_bench'], ['attach', 'encounter_session_attach'], ['dragOut', 'encounter_session_drag_out']]) {
+    assert.match(view, new RegExp(`${port}: input => chainListAct\\(transport, \\{op: '${op}', \\.\\.\\.input\\}`), port)
+  }
+  // Scope's Calls to other agents: AIKit's rule for agents, read from the gateway's ecology and set on each binding of the session.
+  assert.match(view, /callsOf\(ecology\.value, sessionRef\)/)
+  assert.match(view, /await harnessIngressRule\(transport, ruled, 'agent', decision\)/)
   assert.match(view, /data-reaches=\{reach\.reaches\}/, 'each plate says how far it reaches')
   assert.match(view, /case 'remote-carrier': return placed\(CARRIER_ID, cells\.carrier, carrierDesignBinding/)
   assert.doesNotMatch(view, /Agentset/)

@@ -77,8 +77,8 @@ pub(crate) mod host {
     use live_engine::bridge::bridge_set;
     use live_engine::engine::PartMix;
     use live_engine::{
-        engine, rack_device, ClipEdge, Due, EngineCore, EngineEvent, EngineHandle, EnginePlayer,
-        Graph, MixerState, Part, RackDevice, TorusAct,
+        engine, rack_device, BlockStamp, ClipEdge, Due, EngineCore, EngineEvent, EngineHandle,
+        EnginePlayer, Graph, MixerState, Part, RackDevice, TorusAct,
     };
     use live_set::xml::Element;
     use oi_cradle_kernel::native_expression::TorusTap;
@@ -108,20 +108,39 @@ pub(crate) mod host {
     /// The longest the frame names until it plays the sample the Torus was handed over at.
     pub const HEARD_IN_MS_MAX: f64 = 10_000.0;
 
-    /// The engine's frame heard `ms` from now: past the frames it has rendered by `ms` at its rate,
-    /// less the device's output latency (callback to playback). Refused in words for a time that is
-    /// not one from now within [`HEARD_IN_MS_MAX`].
+    /// The engine's frame heard `ms` from now ([`frame_heard_at`] its last block's stamp, now).
     pub fn frame_heard_in(handle: &EngineHandle, ms: f64) -> Result<Due, String> {
+        frame_heard_at(
+            handle.block_stamp(),
+            handle.now_ns(),
+            handle.latency().output_latency_ns,
+            ms,
+        )
+    }
+
+    /// The engine's frame heard `ms` after `now_ns` (round 14): the frame it mixes at `now_ns` — its
+    /// last block's first frame, on by the time since that block was pulled at its rate, never past
+    /// the block's end, the frames it has rendered — on by `ms` at its rate, less the device's output
+    /// latency (callback to playback), so it is right within a block. Refused in words for a time that
+    /// is not one from now within [`HEARD_IN_MS_MAX`].
+    pub fn frame_heard_at(
+        stamp: BlockStamp,
+        now_ns: u64,
+        latency_ns: u64,
+        ms: f64,
+    ) -> Result<Due, String> {
         if !(ms.is_finite() && (0.0..=HEARD_IN_MS_MAX).contains(&ms)) {
             return Err(format!(
                 "The frame names when it plays the Torus it handed over as a time from now, within {HEARD_IN_MS_MAX} ms, not {ms}"
             ));
         }
         let rate = f64::from(ENGINE_RATE);
+        let frames = |ns: f64| (ns / 1e9 * rate).round() as u64;
+        let mixing =
+            stamp.frame + frames(now_ns.saturating_sub(stamp.at_ns) as f64).min(stamp.frames);
         let ahead = (ms / 1000.0 * rate).round() as u64;
-        let latency = (handle.latency().output_latency_ns as f64 / 1e9 * rate).round() as u64;
         Ok(Due::AtFrame(
-            handle.position() + ahead.saturating_sub(latency),
+            mixing + ahead.saturating_sub(frames(latency_ns as f64)),
         ))
     }
 
@@ -375,11 +394,13 @@ pub(crate) mod host {
     }
 
     /// The engine following the Torus's owner (round 12): the part bound to it, the owner's acts struck on
-    /// it, those the host could not strike (with the last refusal's words) and the hand-overs taken again.
+    /// it, the owner's moves of the gains it is heard by reached on it (round 14), those the host could not
+    /// strike or reach (with the last refusal's words) and the hand-overs taken again.
     #[derive(Debug, Default)]
     pub struct Following {
         pub bound: Option<Bound>,
         pub struck: u64,
+        pub heard: u64,
         pub missed: u64,
         pub handed_again: u64,
         pub refusal: Option<String>,
@@ -434,6 +455,31 @@ pub(crate) mod host {
     /// Live's Reverb keeps DecayTime in ms within this range (live-dynamics params.rs, the corpus's
     /// surface; the shell's rackChainInLive carries the frame's Decay onto it so).
     pub const REVERB_DECAY_MS: (f64, f64) = (199.999985, 60000.0039);
+    /// The Torus's Filter's types (effectsLaw.ts `FILTER_TYPES`) as the engine's model of Live's Auto
+    /// Filter sounds them.
+    pub const TORUS_FILTER_TYPES: [(&str, live_engine::FilterKind); 4] = [
+        ("lowpass", live_engine::FilterKind::Lowpass),
+        ("highpass", live_engine::FilterKind::Highpass),
+        ("bandpass", live_engine::FilterKind::Bandpass),
+        ("notch", live_engine::FilterKind::Notch),
+    ];
+    /// The Torus's Delay's note lengths in beats (effectsLaw.ts `DELAY_DIVISIONS`), and the longest time
+    /// its frame's line holds (presentationEffects.ts `MAX_DELAY`).
+    pub const TORUS_DELAY_DIVISIONS: [(&str, f64); 6] = [
+        ("1/32", 0.125),
+        ("1/16", 0.25),
+        ("1/8", 0.5),
+        ("1/4", 1.0),
+        ("1/2", 2.0),
+        ("1", 4.0),
+    ];
+    pub const TORUS_DELAY_MAX_S: f64 = 6.0;
+    /// How many of its Attack's times Live's Compressor takes to come within a quarter dB of a held
+    /// level, ln(1/(1 − 10^(−1/80))): it reads the level through a one-pole of its Attack (live-dynamics
+    /// `CompressorModel`), where the frame's compressor (the browser's DynamicsCompressorNode) brings its
+    /// gain within a quarter dB of where it goes in its attack. So Live's Attack is the frame's over
+    /// this: an engine decision, measured against the frame (O-I #849 round 14).
+    pub const TORUS_ATTACK_SETTLES: f64 = 3.562_350_828_929_603;
 
     /// What one chain on a part's rack was made from, device by device (Live's class and the settings
     /// carried, by Live's key), so Export Audio makes it again.
@@ -441,10 +487,17 @@ pub(crate) mod host {
 
     /// The frame's effects (effectsLaw.ts `EffectsState`: the chain, and each effect's parameters) as
     /// the chain after the Torus on its part: each effect on the frame's chain in order, on, as Live's
-    /// device of its kind with the settings the corpus pins (Reverb's Decay as its DecayTime, in ms);
-    /// an effect off passes the sound as it came, so it stands nowhere. With it, how the engine stands
-    /// each effect, in words where it does not sound as the frame's. Refused in words for what is not
-    /// the frame's effects.
+    /// device of its kind with the frame's settings carried by Live's keys as the engine's model of it
+    /// reads them (live-engine `rack_device`, O-I #849 round 14): the Filter's type, cutoff, resonance
+    /// and drive as Auto Filter's FilterType, Cutoff, Resonance and Drive; the Dynamics' threshold (as
+    /// a level), ratio, attack (over [`TORUS_ATTACK_SETTLES`]), release and makeup, and a hard knee, as
+    /// Compressor's Threshold, Ratio, Attack, Release, Gain and Knee; the Delay's time (a synced one's
+    /// note length at its tempo, as its frame's delaySeconds), feedback, tone and mix as Delay's
+    /// DelayLine_TimeL, Feedback, Filter_Frequency and DryWet; Reverb's Decay as its DecayTime, in
+    /// ms. A setting over or under what Live's device holds stands at its nearer edge. An effect off
+    /// passes the sound as it came, so it stands nowhere. With it, how the engine stands each effect,
+    /// in words where it does not sound as the frame's. Refused in words for what is not the frame's
+    /// effects.
     pub fn torus_chain(effects: &Value) -> Result<(RackMade, Value), String> {
         const NOT: &str = "The Torus's effects are its chain and each effect's settings, as the frame reports them (effectsLaw.ts)";
         let chain = effects.get("chain").and_then(Value::as_array).ok_or(NOT)?;
@@ -483,6 +536,125 @@ pub(crate) mod host {
             }
             let mut carried: Vec<(&'static str, f64)> = Vec::new();
             let mut words = Vec::new();
+            let number = |key: &str| {
+                settings
+                    .get(key)
+                    .and_then(Value::as_f64)
+                    .ok_or_else(|| format!("{NOT}: the {key} of its {manual} is a number"))
+            };
+            // a setting Live's device holds only within its extent stands at its nearer edge, in words
+            let within = |id: &str, value: f64, said: &str, unit: &str, shown: fn(f64) -> f64| {
+                let (min, max) = live_engine::live_holds(class, id).unwrap_or((value, value));
+                let edge = value.clamp(min, max);
+                let (side, at) = if value < min {
+                    ("under", min)
+                } else {
+                    ("over", max)
+                };
+                // to a tenth, or to three figures under one
+                let shown = |x: f64| {
+                    let x = shown(x);
+                    let places = if x.abs() >= 1.0 || x == 0.0 {
+                        1
+                    } else {
+                        2 - x.abs().log10().floor() as i32
+                    };
+                    (x * 10f64.powi(places)).round() / 10f64.powi(places)
+                };
+                (edge, (edge != value).then(|| format!("its {said} of {} {unit} is {side} the {} {unit} Live's {title} holds, and stands there", shown(value), shown(at))))
+            };
+            if effect == "filter" {
+                let kind = settings.get("type").and_then(Value::as_str);
+                let kind = TORUS_FILTER_TYPES
+                    .iter()
+                    .find(|(name, _)| Some(*name) == kind)
+                    .map(|(_, k)| *k)
+                    .ok_or_else(|| {
+                        format!(
+                            "{NOT}: Filter's type is one of {}",
+                            TORUS_FILTER_TYPES.map(|(n, _)| n).join(", ")
+                        )
+                    })?;
+                let stored = live_engine::AUTO_FILTER_TYPES
+                    .iter()
+                    .find(|(k, _)| *k == kind)
+                    .map_or(0.0, |(_, s)| *s);
+                let hz = number("cutoff")?;
+                let (cutoff, said) = within(
+                    "Cutoff",
+                    live_engine::auto_filter_cutoff(hz),
+                    "cutoff",
+                    "Hz",
+                    live_engine::auto_filter_hz,
+                );
+                words.extend(said);
+                let (resonance, drive, mix) =
+                    (number("resonance")?, number("drive")?, number("mix")?);
+                carried.extend([
+                    ("FilterType", stored),
+                    ("Cutoff", cutoff),
+                    ("Resonance", resonance / 100.0),
+                    ("Drive", drive),
+                ]);
+                if mix != 100.0 {
+                    words.push(format!("its mix of {mix} % stands at full: the corpus's surface of Live's Auto Filter keeps no dry/wet"));
+                }
+            }
+            if effect == "dynamics" {
+                let (threshold, ratio) = (number("threshold")?, number("ratio")?);
+                let (attack, said) = within(
+                    "Attack",
+                    number("attack")? / TORUS_ATTACK_SETTLES,
+                    "attack",
+                    "ms",
+                    |ms| ms * TORUS_ATTACK_SETTLES,
+                );
+                words.extend(said);
+                carried.extend([
+                    ("Threshold", 10f64.powf(threshold / 20.0)),
+                    ("Ratio", ratio),
+                    ("Attack", attack),
+                    ("Release", number("release")?),
+                    ("Gain", number("makeup")?),
+                    ("Knee", 0.0),
+                ]);
+            }
+            if effect == "delay" {
+                let sync = settings
+                    .get("sync")
+                    .and_then(Value::as_bool)
+                    .ok_or_else(|| format!("{NOT}: Delay's sync is on or off"))?;
+                let time = if sync {
+                    let division = settings.get("division").and_then(Value::as_str);
+                    let beats = TORUS_DELAY_DIVISIONS
+                        .iter()
+                        .find(|(name, _)| Some(*name) == division)
+                        .map(|(_, b)| *b)
+                        .ok_or_else(|| {
+                            format!(
+                                "{NOT}: Delay's division is one of {}",
+                                TORUS_DELAY_DIVISIONS.map(|(n, _)| n).join(", ")
+                            )
+                        })?;
+                    60.0 / number("tempo")? * beats
+                } else {
+                    number("time")? / 1000.0
+                };
+                let (time, said) = within(
+                    "DelayLine_TimeL",
+                    time.min(TORUS_DELAY_MAX_S),
+                    "time",
+                    "s",
+                    |s| s,
+                );
+                words.extend(said);
+                carried.extend([
+                    ("DelayLine_TimeL", time),
+                    ("Feedback", number("feedback")? / 100.0),
+                    ("Filter_Frequency", number("tone")?),
+                    ("DryWet", number("mix")? / 100.0),
+                ]);
+            }
             if effect == "reverb" {
                 let decay = settings
                     .get("decay")
@@ -495,9 +667,6 @@ pub(crate) mod host {
                     words.push(format!("its decay of {decay} s is outside the {}–{} ms Live's Reverb holds, and stands at the model's", REVERB_DECAY_MS.0, REVERB_DECAY_MS.1));
                 }
                 words.push("its size, damping, pre-delay and dry/wet stand at the model's: the engine's model of Live's Reverb takes only its DecayTime".into());
-            }
-            if effect == "dynamics" {
-                words.push("its threshold, ratio, attack, release and makeup stand at the corpus's stored values: the engine's model of Live's Compressor takes no setting yet, and awaits the golden-render check".into());
             }
             match rack_device(class, &carried) {
                 Ok(_) => {
@@ -535,17 +704,28 @@ pub(crate) mod host {
     /// An owner's act as the kernel tells it: the impulse its law gave each mode, by `mode_ref`.
     pub type Impulses = Vec<(String, [f64; 2])>;
 
-    /// The most acts the host keeps of an owner's last hand-over before a part is bound to it; more are
-    /// counted as missed.
+    /// An owner's move as the kernel tells it: the gain each voice is heard by, by `mode_ref`.
+    pub type Gains = Vec<(String, f64)>;
+
+    /// What the Torus's owner did that its part follows: an act it landed at a sample, or a move of the
+    /// gains it is heard by that it reached over `frames` samples from one.
+    #[derive(Debug, Clone, PartialEq)]
+    pub enum Told {
+        Struck(u64, Impulses),
+        Heard(u64, u32, Gains),
+    }
+
+    /// The most acts and moves the host keeps of an owner's last hand-over before a part is bound to it;
+    /// more are counted as missed.
     pub const SINCE_ACTS: usize = 1024;
 
     /// What the Torus's owner told the host since it last handed the Torus over (the kernel's tap): its
-    /// lease, the digest, and the acts it landed since, as (sample, impulses by mode).
+    /// lease, the digest, and the acts it landed and the moves it reached since, in the order it did.
     #[derive(Debug)]
     pub struct Since {
         pub lease: String,
         pub sha256: String,
-        pub acts: Vec<(u64, Impulses)>,
+        pub acts: Vec<Told>,
         pub dropped: u64,
     }
 
@@ -685,6 +865,7 @@ pub(crate) mod host {
                     "handover": b.handover,
                     "notes": b.notes.is_some(),
                     "struck": f.struck,
+                    "heard": f.heard,
                     "missed": f.missed,
                     "handed_again": f.handed_again,
                     "refusal": f.refusal,
@@ -989,6 +1170,68 @@ pub(crate) mod host {
             }
         }
 
+        /// One move of the gains the Torus's owner is heard by, reached on the part's Torus of the hand-over
+        /// it follows from the owner's sample over the owner's samples: the gain the owner reached for each
+        /// mode, in the order of the modes that Torus was handed over with. Refused in words for a mode it
+        /// does not have, one named twice, or one the move does not name.
+        pub fn hear_owner(
+            &mut self,
+            track: usize,
+            handover: u32,
+            at: u64,
+            frames: u32,
+            gains: &[(String, f64)],
+        ) -> Result<(), String> {
+            #[cfg(feature = "k8")]
+            {
+                let torus = self
+                    .toruses
+                    .iter()
+                    .rev()
+                    .find(|t| t.track == track && t.handover == handover)
+                    .ok_or("The Torus this move follows gave way before the engine took it")?;
+                let modes = &torus.handed.continuation.input.modes;
+                let mut by_mode: Vec<Option<f64>> = vec![None; modes.len()];
+                for (reference, gain) in gains {
+                    let slot = torus
+                        .handed
+                        .mode(reference)
+                        .and_then(|m| by_mode.get_mut(m))
+                        .ok_or_else(|| {
+                            format!("The Torus handed over has no mode {reference}: the move was not reached")
+                        })?;
+                    if slot.replace(*gain).is_some() {
+                        return Err(format!(
+                            "The owner's move names mode {reference} twice: the move was not reached"
+                        ));
+                    }
+                }
+                let gains = by_mode
+                    .iter()
+                    .zip(modes)
+                    .map(|(gain, mode)| {
+                        gain.ok_or_else(|| {
+                            format!(
+                                "The owner's move names no gain for mode {}: the move was not reached",
+                                mode.reference
+                            )
+                        })
+                    })
+                    .collect::<Result<Vec<f64>, String>>()?;
+                for hear in live_engine::TorusHear::split(handover, at, frames, &gains)? {
+                    self.handle
+                        .send(EngineEvent::TorusHear { track, hear })
+                        .map_err(|e| e.to_string())?;
+                }
+                Ok(())
+            }
+            #[cfg(not(feature = "k8"))]
+            {
+                let _ = (track, handover, at, frames, gains);
+                Err(WITHOUT_K8.into())
+            }
+        }
+
         fn follow_act(&mut self, bound: &Bound, at: u64, impulses: &[(String, [f64; 2])]) {
             match self.strike_owner(bound.track, bound.handover, at, impulses) {
                 Ok(()) => self.following.struck += 1,
@@ -996,6 +1239,23 @@ pub(crate) mod host {
                     self.following.missed += 1;
                     self.following.refusal = Some(words);
                 }
+            }
+        }
+
+        fn follow_move(&mut self, bound: &Bound, at: u64, frames: u32, gains: &[(String, f64)]) {
+            match self.hear_owner(bound.track, bound.handover, at, frames, gains) {
+                Ok(()) => self.following.heard += 1,
+                Err(words) => {
+                    self.following.missed += 1;
+                    self.following.refusal = Some(words);
+                }
+            }
+        }
+
+        fn follow(&mut self, bound: &Bound, told: &Told) {
+            match told {
+                Told::Struck(at, impulses) => self.follow_act(bound, *at, impulses),
+                Told::Heard(at, frames, gains) => self.follow_move(bound, *at, *frames, gains),
             }
         }
 
@@ -1218,8 +1478,8 @@ pub(crate) mod host {
                 };
                 if let Some(since) = since.filter(|s| s.sha256 == sha256) {
                     o.following.missed += since.dropped;
-                    for (at, impulses) in &since.acts {
-                        o.follow_act(&bound, *at, impulses);
+                    for told in &since.acts {
+                        o.follow(&bound, told);
                     }
                 }
                 // its effects go with it: one that cannot be put there leaves the Torus sounding,
@@ -1287,26 +1547,46 @@ pub(crate) mod host {
                     lease,
                     at_samples_elapsed,
                     impulses,
-                } => {
-                    let Some(since) = follow.since.as_mut().filter(|s| s.lease == lease) else {
-                        return;
-                    };
-                    if let Some(o) = open.as_mut() {
-                        if let Some(bound) = o
-                            .following
-                            .bound
-                            .clone()
-                            .filter(|b| b.lease == lease && b.sha256 == since.sha256)
-                        {
-                            o.follow_act(&bound, at_samples_elapsed, &impulses);
-                        }
-                    }
-                    if since.acts.len() < SINCE_ACTS {
-                        since.acts.push((at_samples_elapsed, impulses));
-                    } else {
-                        since.dropped += 1;
-                    }
+                } => Self::told(
+                    &mut follow,
+                    &mut open,
+                    &lease,
+                    Told::Struck(at_samples_elapsed, impulses),
+                ),
+                TorusTap::Heard {
+                    lease,
+                    at_samples_elapsed,
+                    frames,
+                    gains,
+                } => Self::told(
+                    &mut follow,
+                    &mut open,
+                    &lease,
+                    Told::Heard(at_samples_elapsed, frames, gains),
+                ),
+            }
+        }
+
+        /// An act or a move of the owner under `lease`: followed on the bound part when it follows the
+        /// hand-over that part holds, and kept for a part bound later.
+        fn told(follow: &mut Follow, open: &mut Option<Opened>, lease: &str, told: Told) {
+            let Some(since) = follow.since.as_mut().filter(|s| s.lease == lease) else {
+                return;
+            };
+            if let Some(o) = open.as_mut() {
+                if let Some(bound) = o
+                    .following
+                    .bound
+                    .clone()
+                    .filter(|b| b.lease == lease && b.sha256 == since.sha256)
+                {
+                    o.follow(&bound, &told);
                 }
+            }
+            if since.acts.len() < SINCE_ACTS {
+                since.acts.push(told);
+            } else {
+                since.dropped += 1;
             }
         }
 
@@ -1439,11 +1719,12 @@ pub(crate) mod host {
                 "resonator": {"on": true, "division": 300, "root": 0, "decay": 1, "tilt": 0, "span": 2, "mix": 50, "gain": 0}})
         }
 
-        /// The Torus's effects stand after it on its part (round 13): the frame's chain in its order, each
-        /// effect as Live's device of its kind, the engine's own where it has one (Reverb at the frame's
-        /// Decay, Compressor at the corpus's values) and in words where it has none; an effect off stands
-        /// nowhere; an edit of a setting the engine does not take puts nothing again; Export renders the
-        /// part through each chain from the frame the engine put it there, as it was played.
+        /// The Torus's effects stand after it on its part (rounds 13 and 14): the frame's chain in its
+        /// order, each effect as Live's device of its kind and the engine's own, with the frame's settings
+        /// carried by Live's keys (Auto Filter, Compressor and Delay built to the Torus's effects, Reverb at
+        /// the frame's Decay); what Live's device does not hold stands at its edge, in words; an effect off
+        /// stands nowhere; an edit of a setting the engine does not take puts nothing again; Export renders
+        /// the part through each chain from the frame the engine put it there, as it was played.
         #[test]
         fn the_torus_effects_stand_after_it_as_the_engines_own_devices_or_in_words() {
             let (made, reading) = torus_chain(&effects(&[
@@ -1454,38 +1735,112 @@ pub(crate) mod host {
                 "resonator",
             ]))
             .unwrap();
+            let cutoff = live_engine::auto_filter_cutoff(8000.0);
+            assert!((live_engine::auto_filter_hz(cutoff) - 8000.0).abs() < 1e-9);
+            // Live's Compressor's one-pole comes within a quarter dB of a held level in this many times
+            let settles = -(1.0 - 10f64.powf(-0.25 / 20.0)).ln();
+            assert!((TORUS_ATTACK_SETTLES - settles).abs() < 1e-12);
+            assert!(
+                (10f64.powf(-0.25 / 20.0) - (1.0 - (-TORUS_ATTACK_SETTLES).exp())).abs() < 1e-12
+            );
+            let dynamics: (&str, Vec<(&str, f64)>) = (
+                "Compressor2",
+                vec![
+                    ("Threshold", 10f64.powf(-0.6)),
+                    ("Ratio", 4.0),
+                    ("Attack", 1.0 / TORUS_ATTACK_SETTLES),
+                    ("Release", 100.0),
+                    ("Gain", 2.0),
+                    ("Knee", 0.0),
+                ],
+            );
             assert_eq!(
                 made,
                 vec![
-                    ("Compressor2", vec![]),
+                    (
+                        "AutoFilter",
+                        vec![
+                            ("FilterType", 0.0),
+                            ("Cutoff", cutoff),
+                            ("Resonance", 0.2),
+                            ("Drive", 0.0)
+                        ]
+                    ),
+                    dynamics.clone(),
+                    (
+                        "Delay",
+                        vec![
+                            ("DelayLine_TimeL", 0.25),
+                            ("Feedback", 0.35),
+                            ("Filter_Frequency", 6000.0),
+                            ("DryWet", 0.25)
+                        ]
+                    ),
                     ("Reverb", vec![("DecayTime", 2400.0)])
                 ]
             );
-            assert_eq!(
-                reading[0],
-                json!({"effect":"filter","device":"AutoFilter","on":true,"sounds":false,
-                "words":"Live's Auto Filter has no model in the engine yet, so the Torus's Filter does not sound in it"})
-            );
-            assert_eq!(
-                reading[2]["words"],
-                "Live's Delay has no model in the engine yet, so the Torus's Delay does not sound in it"
-            );
-            assert_eq!(reading[1]["sounds"], true);
+            for n in 0..3 {
+                assert_eq!(reading[n]["sounds"], true, "{}", reading[n]);
+                assert_eq!(reading[n]["words"], Value::Null, "{}", reading[n]);
+            }
+            assert_eq!(reading[0]["carried"]["Cutoff"], json!(cutoff));
+            assert_eq!(reading[2]["carried"]["DelayLine_TimeL"], json!(0.25));
             assert_eq!(reading[3]["sounds"], true);
             assert_eq!(reading[3]["carried"], json!({"DecayTime": 2400.0}));
             assert!(reading[3]["words"].as_str().unwrap().contains("pre-delay"));
             assert!(reading[4]["words"].as_str().unwrap().contains("Resonator"));
+            // what Live's device does not hold stands at its nearer edge, and what it keeps no setting
+            // for stands at its own, in words; an unsynced Delay's time is its own
+            let mut edged = effects(&["filter", "delay"]);
+            edged["filter"]["type"] = json!("notch");
+            edged["filter"]["cutoff"] = json!(20000);
+            edged["filter"]["mix"] = json!(60);
+            edged["delay"]["division"] = json!("1");
+            edged["delay"]["tempo"] = json!(40);
+            let (made, reading) = torus_chain(&edged).unwrap();
+            assert_eq!(made[0].1[..2], [("FilterType", 4.0), ("Cutoff", 135.0)]);
+            assert_eq!(made[1].1[0], ("DelayLine_TimeL", 5.0));
+            assert_eq!(
+                reading[0]["words"],
+                "Live's Auto Filter in the engine: its cutoff of 20000 Hz is over the 19912.1 Hz Live's Auto Filter holds, and stands there; its mix of 60 % stands at full: the corpus's surface of Live's Auto Filter keeps no dry/wet."
+            );
+            assert_eq!(
+                reading[1]["words"],
+                "Live's Delay in the engine: its time of 6 s is over the 5 s Live's Delay holds, and stands there."
+            );
+            edged["filter"]["cutoff"] = json!(20);
+            edged["delay"]["sync"] = json!(false);
+            edged["delay"]["time"] = json!(4000);
+            let (made, reading) = torus_chain(&edged).unwrap();
+            assert_eq!(made[0].1[1], ("Cutoff", 20.0));
+            assert!(reading[0]["words"]
+                .as_str()
+                .unwrap()
+                .contains("its cutoff of 20 Hz is under the 26 Hz"));
+            assert_eq!(made[1].1[0], ("DelayLine_TimeL", 4.0));
+            assert_eq!(reading[1]["words"], Value::Null);
+            // the frame's attack over the law; one quicker than Live's Compressor holds stands at its floor
+            let mut quick = effects(&["dynamics"]);
+            quick["dynamics"]["attack"] = json!(30);
+            let (made, reading) = torus_chain(&quick).unwrap();
+            assert_eq!(made[0].1[2], ("Attack", 30.0 / TORUS_ATTACK_SETTLES));
+            assert_eq!(reading[0]["words"], Value::Null);
+            quick["dynamics"]["attack"] = json!(0.02);
+            let (made, reading) = torus_chain(&quick).unwrap();
+            let (floor, _) = live_engine::live_holds("Compressor2", "Attack").unwrap();
+            assert_eq!(made[0].1[2], ("Attack", floor));
+            assert_eq!(
+                reading[0]["words"],
+                "Live's Compressor in the engine: its attack of 0.02 ms is under the 0.0356 ms Live's Compressor holds, and stands there."
+            );
             // in the frame's order; an effect off stands nowhere
             let mut off = effects(&["reverb", "dynamics"]);
             assert_eq!(
                 torus_chain(&off).unwrap().0,
-                vec![
-                    ("Reverb", vec![("DecayTime", 2400.0)]),
-                    ("Compressor2", vec![])
-                ]
+                vec![("Reverb", vec![("DecayTime", 2400.0)]), dynamics.clone()]
             );
             off["reverb"]["on"] = json!(false);
-            assert_eq!(torus_chain(&off).unwrap().0, vec![("Compressor2", vec![])]);
+            assert_eq!(torus_chain(&off).unwrap().0, vec![dynamics]);
             for (bad, words) in [
                 (json!({}), "chain"),
                 (
@@ -1497,6 +1852,18 @@ pub(crate) mod host {
                     "twice",
                 ),
                 (json!({"chain": ["reverb"]}), "no settings"),
+                (
+                    json!({"chain": ["filter"], "filter": {"on": true, "type": "comb"}}),
+                    "type is one of lowpass, highpass, bandpass, notch",
+                ),
+                (
+                    json!({"chain": ["dynamics"], "dynamics": {"on": true}}),
+                    "the threshold of its Dynamics is a number",
+                ),
+                (
+                    json!({"chain": ["delay"], "delay": {"on": true, "sync": true, "division": "1/3"}}),
+                    "division is one of 1/32",
+                ),
             ] {
                 let refused = torus_chain(&bad).unwrap_err();
                 assert!(refused.contains(words), "{refused}");
@@ -1918,14 +2285,42 @@ pub(crate) mod host {
             let mut opened = Opened::open(&path).unwrap();
             let mut core = opened.core.take().unwrap();
             let mut block = vec![0.0f32; 2 * 512];
+            assert_eq!(opened.handle.block_stamp(), BlockStamp::default());
             core.pull_block(&mut block);
             assert_eq!(opened.handle.position(), 512);
+            // each block is stamped with when it was pulled (round 14), so the frame heard is right
+            // within a block: the block's first frame as it is pulled, on by the time since, never past
+            // what it rendered
+            let stamp = opened.handle.block_stamp();
+            assert_eq!((stamp.frame, stamp.frames), (0, 512));
+            assert!(stamp.at_ns <= opened.handle.now_ns());
+            let at = |since_ms: f64, ms: f64, latency_ns: u64| {
+                frame_heard_at(stamp, stamp.at_ns + (since_ms * 1e6) as u64, latency_ns, ms)
+            };
+            assert_eq!(at(0.0, 100.0, 0), Ok(Due::AtFrame(4800)));
+            assert_eq!(at(5.0, 100.0, 0), Ok(Due::AtFrame(240 + 4800)));
+            assert_eq!(at(50.0, 100.0, 0), Ok(Due::AtFrame(512 + 4800)));
+            assert_eq!(
+                at(5.0, 100.0, 25_000_000),
+                Ok(Due::AtFrame(240 + 4800 - 1200))
+            );
+            assert_eq!(at(5.0, 10.0, 25_000_000), Ok(Due::AtFrame(240)));
+            assert_eq!(at(5.0, 0.0, 0), Ok(Due::AtFrame(240)));
             let heard = |ms| frame_heard_in(&opened.handle, ms);
-            assert_eq!(heard(100.0), Ok(Due::AtFrame(512 + 4800)));
+            let Ok(Due::AtFrame(now)) = heard(100.0) else {
+                panic!("a frame")
+            };
+            assert!((4800..=512 + 4800).contains(&now), "{now}");
             core.report_output_latency(25_000_000);
-            assert_eq!(heard(100.0), Ok(Due::AtFrame(512 + 4800 - 1200)));
-            assert_eq!(heard(10.0), Ok(Due::AtFrame(512)));
-            assert_eq!(heard(0.0), Ok(Due::AtFrame(512)));
+            let Ok(Due::AtFrame(later)) = heard(100.0) else {
+                panic!("a frame")
+            };
+            assert!((now - 1200..=512 + 4800 - 1200).contains(&later), "{later}");
+            let mut half = vec![0.0f32; 2 * 256];
+            core.pull_block(&mut half);
+            let next = opened.handle.block_stamp();
+            assert_eq!((next.frame, next.frames), (512, 256));
+            assert!(next.at_ns >= stamp.at_ns);
             for ms in [-1.0, f64::NAN, f64::INFINITY, HEARD_IN_MS_MAX + 1.0] {
                 let refused = heard(ms).unwrap_err();
                 assert!(refused.contains("as a time from now"), "{refused}");

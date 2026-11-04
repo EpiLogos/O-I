@@ -780,6 +780,10 @@ pub enum AikitRead {
     /// (`aikit source list`, ai-kit#542): the ids Sync, Promote and Rollback
     /// name.
     SourceList,
+    /// The proposed revisions AIKit keeps beside the revisions in use, each
+    /// with the closes that show its reason and the takes that ran under it
+    /// (`aikit source refine list`; O-I manual §19.7 Refining a skill).
+    RefinementList,
     /// The skill trees on this machine, which version runs where (`aikit
     /// collate [--all]`).
     Collate {
@@ -1023,6 +1027,15 @@ pub enum AikitWrite {
     SourceRollback {
         id: String,
     },
+    /// A member's proposed revision kept as its next revision (`aikit source
+    /// refine accept <member>`: History's Rollback takes it back) or dropped
+    /// (`aikit source refine discard <member>`; O-I manual §19.7).
+    RefinementAccept {
+        member: String,
+    },
+    RefinementDiscard {
+        member: String,
+    },
     /// Fill the open heads of one instrument of QL's team space (O-I #843,
     /// Factory's Clip view, Generate → Fill heads: `aikit decide invoke
     /// --instrument I --request-file - [--agent-session S]`,
@@ -1087,6 +1100,7 @@ impl AikitRead {
             | Self::GatewayReplay { .. }
             | Self::SourceShow { .. }
             | Self::SourceList
+            | Self::RefinementList
             | Self::FlowThoughts { .. }
             | Self::DecisionAsks { .. }
             | Self::Collate { .. }
@@ -1123,6 +1137,8 @@ impl AikitWrite {
             | Self::SourceSync { .. }
             | Self::SourcePromote { .. }
             | Self::SourceRollback { .. }
+            | Self::RefinementAccept { .. }
+            | Self::RefinementDiscard { .. }
             | Self::DecideFill { .. } => None,
         }
     }
@@ -2608,6 +2624,10 @@ pub(crate) fn aikit_read_args(request: &AikitRead) -> (&'static str, Vec<OsStrin
             ("aikit work continuity closeout verify", args)
         }
         AikitRead::SourceList => ("aikit source list", words(&["source", "list", "--json"])),
+        AikitRead::RefinementList => (
+            "aikit source refine list",
+            words(&["source", "refine", "list", "--json"]),
+        ),
         AikitRead::ContinuityTurn { session, .. } => {
             let mut args = words(&["work", "continuity", "turn"]);
             push_flag(&mut args, "--session", session.as_deref());
@@ -2797,6 +2817,7 @@ fn aikit_read_answer(request: &AikitRead, cwd: Option<&Path>) -> Result<Reading,
             data,
             &[("sources", Kind::List), ("unreadable", Kind::List)],
         )?,
+        AikitRead::RefinementList => fields(route, data, &[("proposals", Kind::List)])?,
         AikitRead::ContinuityTurn { .. } => {
             if data.get("turn").is_none() {
                 return Err(unexpected(route, "the kept turn (or turn null)", &data));
@@ -3626,6 +3647,18 @@ fn aikit_written(request: &AikitWrite, cwd: Option<&Path>) -> Result<Written, Er
             args.push(id.into());
             ("aikit source rollback", args)
         }
+        AikitWrite::RefinementAccept { member } | AikitWrite::RefinementDiscard { member } => {
+            let (verb, route) = match request {
+                AikitWrite::RefinementAccept { .. } => ("accept", "aikit source refine accept"),
+                _ => ("discard", "aikit source refine discard"),
+            };
+            if member.trim().is_empty() {
+                return Err(incompatible(format!("{route} names the member it answers")));
+            }
+            let mut args = words(&["source", "refine", verb]);
+            args.push(member.into());
+            (route, args)
+        }
         AikitWrite::DecideFill {
             instrument,
             request,
@@ -3746,6 +3779,15 @@ fn aikit_written(request: &AikitWrite, cwd: Option<&Path>) -> Result<Written, Er
             let data = fields(route, data, &[("bypass_id", Kind::Text)])?;
             let reference = named(&data, &["/bypass_id"]);
             (data, reference)
+        }
+        // The member answered; Accept names the revision it keeps as the next.
+        AikitWrite::RefinementAccept { member } => {
+            let data = fields(route, data, &[("revision", Kind::Text)])?;
+            (data, Some(member.clone()))
+        }
+        AikitWrite::RefinementDiscard { member } => {
+            let data = fields(route, data, &[("discarded", Kind::Text)])?;
+            (data, Some(member.clone()))
         }
         AikitWrite::BypassRevoke { id }
         | AikitWrite::SourceSync { id }

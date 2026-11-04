@@ -309,6 +309,31 @@ export async function makeTakes(transport: KernelTransportStatus, project: strin
   return {ok: true, note: `Actuation's comparison run made ${made.takes} takes of ${task.name} (${traceRef}), kept in ${made.root}; AIKit ended the set.`}
 }
 
+/** A refinement's Test as the session's own Repeat (manual §19.7 Refining a skill: "Test — the takes of a Repeat, Variable: Skillset"):
+ * Variable Skillset, its two levels the set with the member's proposed revision in it (`set+member`, which the take body carries into
+ * the take's World and reads back) beside the set as it stands. Or why not, in words. Pure. */
+export function refinementRepeat(task: EncounterSessionSettingsReading['task'] | null | undefined, set: string, member: string):
+  {change: EncounterSessionSettingsRequest} | {refused: string} {
+  if (!task) return {refused: SETTINGS_WHY.noTask}
+  return {change: {task: {task_ref: task.task_ref, set: {repeat_variable: 'skillset', repeat_levels: [`${set}+${member}`, set]}}}}
+}
+
+/** Run a refinement's Test: set the session's task's Repeat to the refinement's levels on AIKit, then make its takes through the same
+ * runner as Launch (makeTakes); it is not a second runner. Refused in words where the session holds no task or the task is not launched
+ * with Repeat (makeTakes). */
+export async function testRefinement(transport: KernelTransportStatus, project: string, agentSession: string, set: string,
+  member: string): Promise<Receipt> {
+  const standing = settingsReadingEntry(transport, project, agentSession).snapshot()
+  if (standing.status !== 'answered' || !standing.value) return {ok: false, error: SETTINGS_WHY.reading}
+  const repeat = refinementRepeat((standing.value as EncounterSessionSettingsReading).task, set, member)
+  if ('refused' in repeat) return {ok: false, error: repeat.refused}
+  let reading: EncounterSessionSettingsReading
+  try {
+    reading = await writeSessionSettings(transport, project, agentSession, repeat.change)
+  } catch (cause) { return {ok: false, error: `AIKit did not set Repeat to the refinement: ${cause instanceof Error ? cause.message : String(cause)}`} }
+  return makeTakes(transport, project, agentSession, takeRunOf(reading.task))
+}
+
 // ---------------------------------------------------------------------------------------------------------------- the Tasks device
 
 /** The level an Automation envelope stands at a second of the task: its last point at or before it, else its first; an empty

@@ -85,6 +85,9 @@ export interface AgentSessionTrack {
   /** On a group track: the Central agent set its SessionSpace names as the set it runs (AIKit's `agent_set` tie on the space's record,
    * aikit.session-space-application/v1; O-I ticket 684). Absent where the space names none. */
   agentSet?: {ref: string; revision: string | null}
+  /** On a session's track: its SessionSpace benches it (AIKit's `benched` on the space's record, the Agent rack's Activator, §19.15): it
+   * stays in the rack and is given no work. Absent where the space benches it not. */
+  benched?: boolean
 }
 
 /** One row of an `agency_read` reading (desktop/cradle agencyTypes.ts:117). */
@@ -351,6 +354,12 @@ function agentSetOf(rows: readonly AgencyRowLike[]): {ref: string; revision: str
   return undefined
 }
 
+/** Whether a space's record benches a session (AIKit's `benched`, the session refs the space gives no work). */
+function benchedIn(row: AgencyRowLike): boolean {
+  const benched = row.raw && typeof row.raw === 'object' ? (row.raw as {benched?: unknown}).benched : undefined
+  return Array.isArray(benched) && benched.includes(row.sessionRef)
+}
+
 /** Build the session tracks from an `agency_read` row set. Each space becomes
  * one group track (the closest disclosed thing to a lead); its sessions are
  * members at depth 1. Roster entries name the agent and carry acceptance.
@@ -419,6 +428,7 @@ export function buildTracks(
         budget: {used: null, max: null},
         disclosure: null,
         ...(typeof row.project === 'string' ? {project: row.project} : {}),
+        ...(benchedIn(row) ? {benched: true} : {}),
       })
     }
   }

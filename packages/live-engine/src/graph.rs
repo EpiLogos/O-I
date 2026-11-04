@@ -129,6 +129,12 @@ pub trait Instrument: std::fmt::Debug + Send {
     fn torus_strike(&mut self, _strike: &TorusStrike, _clock: &Clock) -> bool {
         false
     }
+    /// One part of its owner's block that reached gains a receiver moved ([`EngineEvent::TorusHear`],
+    /// O-I #849 round 14), reached when the Torus's continuation reaches the owner's sample, over the
+    /// owner's samples. Answers whether the instrument took it (waiting for its sample).
+    fn torus_hear(&mut self, _hear: &TorusHear, _clock: &Clock) -> bool {
+        false
+    }
     /// The sample of its owner's continuation a Torus renders next (O-I #849 round 13), where a
     /// hand-over again finds it ([`crate::Due::AtCursor`]); `None` for every other instrument, and for a
     /// Torus that does not render.
@@ -270,6 +276,95 @@ impl TorusStrike {
     pub fn impulses(&self) -> impl Iterator<Item = (usize, [f64; 2])> + '_ {
         let n = usize::from(self.count).min(TORUS_STRIKE_MODES);
         (0..n).map(|i| (usize::from(self.modes[i]), [self.re[i], self.im[i]]))
+    }
+}
+
+/// The most gains one [`TorusHear`] carries; a move of more modes travels as several, for the same
+/// sample, landing as one.
+pub const TORUS_HEAR_MODES: usize = 16;
+
+/// The most samples a move is reached over (QL's `max_gain_ramp_frames`, the owner's block ceiling).
+pub const TORUS_HEAR_FRAMES: u32 = 8192;
+
+/// One part of its owner's block that reached gains a receiver moved (O-I #849 round 14; QL's
+/// `TORUS_HEARD_LAW`, manual §21.2 View: "Receiver On makes your camera the place where the torus is
+/// heard"): from the owner's sample `at`, each mode is heard by a gain reached linearly over `frames`
+/// samples, from the gain it was heard by to `gains`. The engine adds nothing of its own: the Torus
+/// reaches the owner's gains over the owner's samples, however it renders them, so the two sound alike
+/// sample for sample. A move names every mode of the continuation the owner handed over, in its order:
+/// this carries modes `first .. first + count` of `total`. `handover` names the handover it followed.
+/// Plain data, so it travels to the audio thread in an [`EngineEvent`].
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct TorusHear {
+    pub handover: u32,
+    pub at: u64,
+    pub frames: u32,
+    pub first: u16,
+    pub count: u8,
+    pub total: u16,
+    pub gains: [f64; TORUS_HEAR_MODES],
+}
+
+impl TorusHear {
+    /// The owner's move to `gains` (one per mode, in the order of the continuation handed over) over
+    /// `frames` samples from `at`, as one or more parts of at most [`TORUS_HEAR_MODES`] gains each (off
+    /// the audio thread: it allocates). Refused in words with no gain, more modes than 65535, a gain
+    /// that is not finite or past the owner's bound, or a length outside 1 to [`TORUS_HEAR_FRAMES`].
+    pub fn split(
+        handover: u32,
+        at: u64,
+        frames: u32,
+        gains: &[f64],
+    ) -> Result<Vec<TorusHear>, String> {
+        if gains.is_empty() || gains.len() > usize::from(u16::MAX) {
+            return Err("a move of the Torus's gains names one gain for each of its modes".into());
+        }
+        if gains.iter().any(|g| !g.is_finite() || g.abs() > 1e6) {
+            return Err("a move of the Torus's gains names finite gains within 1e6".into());
+        }
+        if frames == 0 || frames > TORUS_HEAR_FRAMES {
+            return Err(format!(
+                "a move of the Torus's gains is reached over 1 to {TORUS_HEAR_FRAMES} samples"
+            ));
+        }
+        Ok(gains
+            .chunks(TORUS_HEAR_MODES)
+            .enumerate()
+            .map(|(k, part)| {
+                let mut hear = TorusHear {
+                    handover,
+                    at,
+                    frames,
+                    first: (k * TORUS_HEAR_MODES) as u16,
+                    count: part.len() as u8,
+                    total: gains.len() as u16,
+                    gains: [0.0; TORUS_HEAR_MODES],
+                };
+                hear.gains[..part.len()].copy_from_slice(part);
+                hear
+            })
+            .collect())
+    }
+
+    /// The gains it carries, for modes `first ..`.
+    pub fn gains(&self) -> &[f64] {
+        &self.gains[..usize::from(self.count).min(TORUS_HEAR_MODES)]
+    }
+}
+
+/// What a Torus not yet on its part waits for from its owner: an act it landed, or a move it reached.
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum Followed {
+    Strike(TorusStrike),
+    Hear(TorusHear),
+}
+
+impl Followed {
+    fn handover(&self) -> u32 {
+        match self {
+            Followed::Strike(s) => s.handover,
+            Followed::Hear(h) => h.handover,
+        }
     }
 }
 
@@ -609,9 +704,9 @@ pub struct Graph {
     /// Live's Solo in Place (`LiveSet/SoloInPlace`; the template stores
     /// true): while a part is soloed, the return tracks still sound.
     pub solo_in_place: bool,
-    /// The owner's acts for a Torus not yet on its part, by part, in the order they came
+    /// The owner's acts and moves for a Torus not yet on its part, by part, in the order they came
     /// ([`Graph::hand`] gives them to it); capacity [`TORUS_WAITING`], made by [`Graph::prepare`].
-    torus_waiting: Vec<(usize, TorusStrike)>,
+    torus_waiting: Vec<(usize, Followed)>,
     torus_unplaced: u64,
 }
 
@@ -630,14 +725,15 @@ impl Graph {
         }
     }
 
-    /// The owner's acts dropped because more waited for their Torus than a graph keeps.
+    /// The owner's acts and moves dropped because more waited for their Torus than a graph keeps.
     pub fn torus_unplaced(&self) -> u64 {
         self.torus_unplaced
     }
 
     /// Put `instrument` on MIDI part `track`, swapping it with the one there (which `instrument` then
-    /// holds), and give a Torus the owner's acts that waited for its handover; acts of an earlier
-    /// handover are dropped, since its continuation holds them already. Answers whether the part
+    /// holds), and give a Torus the owner's acts and moves that waited for its handover, in the order
+    /// they came; those of an earlier handover are dropped, since its continuation holds them already.
+    /// Answers whether the part
     /// took it. Allocation-free: the audio thread takes a hand through it, and Export the same.
     pub fn hand(
         &mut self,
@@ -654,12 +750,15 @@ impl Graph {
         };
         std::mem::swap(slot, instrument);
         if let Some(handover) = slot.torus_handover() {
-            self.torus_waiting.retain(|(t, act)| {
-                if *t != track || act.handover > handover {
+            self.torus_waiting.retain(|(t, followed)| {
+                if *t != track || followed.handover() > handover {
                     return true;
                 }
-                if act.handover == handover {
-                    slot.torus_strike(act, clock);
+                if followed.handover() == handover {
+                    match followed {
+                        Followed::Strike(act) => slot.torus_strike(act, clock),
+                        Followed::Hear(hear) => slot.torus_hear(hear, clock),
+                    };
                 }
                 false
             });
@@ -898,7 +997,30 @@ impl Graph {
                     Some(h) if h > strike.handover => false,
                     // the Torus it follows is still on its way to the part: the act waits for it
                     _ if self.torus_waiting.len() < self.torus_waiting.capacity() => {
-                        self.torus_waiting.push((track, *strike));
+                        self.torus_waiting.push((track, Followed::Strike(*strike)));
+                        true
+                    }
+                    _ => {
+                        self.torus_unplaced += 1;
+                        false
+                    }
+                }
+            }
+            EngineEvent::TorusHear { track, ref hear } => {
+                let Some(i) = self
+                    .tracks
+                    .get_mut(track)
+                    .and_then(|t| t.instrument.as_mut())
+                else {
+                    return false;
+                };
+                match i.torus_handover() {
+                    Some(h) if h == hear.handover => i.torus_hear(hear, clock),
+                    // a later handover's continuation stands where the move left it
+                    Some(h) if h > hear.handover => false,
+                    // the Torus it follows is still on its way to the part: the move waits for it
+                    _ if self.torus_waiting.len() < self.torus_waiting.capacity() => {
+                        self.torus_waiting.push((track, Followed::Hear(*hear)));
                         true
                     }
                     _ => {

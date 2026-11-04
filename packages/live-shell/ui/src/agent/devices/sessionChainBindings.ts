@@ -27,6 +27,8 @@ import {sessionRowsOf} from './threadBinding'
 import {DECISION_HELPER_DESIGN, DECISION_HELPER_ID} from './decisionHelperBinding'
 import {macroTurns, RACK_MACROS, type RackMacro, type RackNode} from '../../inhabitants/sdk/chains'
 import {trackKey} from '../agentRunModel'
+import {decodeChainDrag} from '../agentChainDrag'
+import {ROOT_REGISTER} from '../worldScope'
 
 export const RUN_DESIGN = 'software-factory:run-device'
 export const CUSTODY_DESIGN = 'software-factory:agent-custody'
@@ -155,18 +157,19 @@ export function runBinding(input: RunInput, ports: RunPorts): DesignBinding {
 // Factory's custody writes reach the kernel since lane W3 (factory_owner {custody-assign, custody-update}: `factory development custody
 // assign <state> --position P --work W --reason R [--run, --workflow-unit, --journey, --origin-communique, --state in-progress|blocked,
 // --custody]` and `… update <state> --custody C --state in-progress|blocked|released|completed|handed-off --reason R [--reopen,
-// --to-position P, --expected-revision N]`, both answering factory.work-custody-receipt/v1). Factory's custody record carries Autonomy,
-// Review gate and Escalate to since EpiLogos/Factory PR 288 (set at assignment: `custody assign --autonomy suggest|review|auto --review-gate
-// diffs|approvals|both --escalate-to <ref>`; `update` does not change them), and the kernel's CustodyAssign carries all three since lane W6
-// round 2 (cdbde6fe7). Factory's custody list reaches the kernel since lane W6 round 3 (factory_owner custody-list: `factory development
-// custody list <state> [--position P] [--run R] [--state S]`, factory.work-custody-listing/v1 {count, custody [factory.work-custody/v1:
-// custody_ref, position_ref, work_ref, state, autonomy?, review_gate?, escalate_to?, …]}; real shape in desktop/cradle/kernel/tests/
+// --to-position P, --expected-revision N]`, both answering factory.work-custody-receipt/v1). Factory's custody record carries Review gate
+// and Escalate to since EpiLogos/Factory PR 288 (set at assignment: `custody assign --review-gate diffs|approvals|both --escalate-to
+// <ref>`; `update` does not change them), and the kernel's CustodyAssign carries both since lane W6 round 2 (cdbde6fe7). Autonomy is
+// retired on both (lane BD round 12): Factory's `custody assign` refuses `--autonomy` in words and drops it from a record an earlier
+// Factory kept, and the kernel's CustodyAssign refuses a request that still names one. Factory's custody list reaches the kernel since
+// lane W6 round 3 (factory_owner custody-list: `factory development custody list <state> [--position P] [--run R] [--state S]`,
+// factory.work-custody-listing/v1 {count, custody [factory.work-custody/v1: custody_ref, position_ref, work_ref, state, review_gate?,
+// escalate_to?, …]}; real shape in desktop/cradle/kernel/tests/
 // fixtures/owner-routes/factory-custody-list-2026-10-21.json). Lane W11 reads it for the project's Factory state:
 //   held        the open records (in-progress, blocked) of the Position the session's agent holds (AIKit's population), as the held items;
-//   the settings Review gate and Escalate to from the open record of the session's work (its bound task), where one stands. Factory's
-//   record still carries an `autonomy` (PR 288) and its `custody assign` still takes `--autonomy`; neither is read or sent here, since
-//   the manual retired the Agent's Autonomy (§19.4: Factory owns what the agent holds and what it does when it stalls; §19.12: Scope's
-//   Tool calls answers the harness's request to use a tool).
+//   the settings Review gate and Escalate to from the open record of the session's work (its bound task), where one stands. The manual
+//   retired the Agent's Autonomy (§19.4: Factory owns what the agent holds and what it does when it stalls; §19.12: Scope's Tool calls
+//   answers the harness's request to use a tool).
 // Custody's held items and Hand back stand on the Agent's Run page (§19.4). Each setting is written (CustodyAssign with that one
 // setting) only on the person's own press (re-checked at the press), only while the session's work is not yet assigned: the assignment's
 // Position is the one the session's agent holds, the work its bound task, and the reason says who set what from the desk. A session whose
@@ -458,12 +461,11 @@ export function withCustodyAsks(scope: DesignBinding, custody: DesignBinding): D
 // The rack on every session's track (O-I #842; §19.15 "A session of one agent has a rack of that one chain"): a group's chains are the
 // sessions of its SessionSpace (and the Decision helper where one stands); a lone session's one chain is its own agent, whose devices stand
 // beside the rack on the track's chain itself (FactoryDeviceChain.tsx), every setting live, so the rack keeps no copy of them (`beside`).
-// The owners' reads the chain list waits on stay where they are (#745): Activator, Hot-Swap, Drag out and adding a chain are AIKit's
-// session-space operations, Join is Central's set. Where none exists the control stands dimmed and names it.
-
-/** What AIKit's SessionSpace can be asked to do (aikit-core session_space_application.rs SessionSpaceMutation), for the chain list's
- * controls none of them carries. */
-const SPACE_MUTATIONS = 'AIKit\'s session-space mutations (create; bind and unbind a Project context; attach and detach a session, a surface, a working surface, a native reference; focus; bind and unbind the agent set; restore)'
+// The chain list's controls are AIKit's session-space operations (#745 with #772), each through the kernel: the Activator benches a chain's
+// session in its space (bench-agent-session; encounter_session_bench), Add a chain attaches a standing session to the rack's space
+// (attach-agent-session; encounter_session_attach), Drag out seats a chain's session in a space of its own, chain and all
+// (`aikit session-space drag-out`; encounter_session_drag_out). Hot-Swap stands refused in AIKit's own law: a session keeps its agent.
+// Join is Central's set. Where no carrier stands the control stands dimmed and names it.
 const DELEGATION = (what: string, key: string) => missing(what, `Hermes' delegation block (${key}) through the kernel: no config.set key carries it`, 'Hermes')
 /** A macro turns one setting of the Agent on every chain (§19.15 Macros); the rack holds each chain's session, never another session's Agent. */
 const MACRO = (what: string) => missing(what, `the ${what} macro turning the Agent's ${what} on every chain: the rack holds each chain's session, and no address of its Agent's ${what}`, 'Software Factory')
@@ -478,16 +480,18 @@ export const AGENTSET_REFUSE = {
   unmapped: missing('Unmap', 'keeping one chain\'s setting apart from its macro, with the rack\'s macros', 'Software Factory'),
   store: missing('Store', 'keeping where every macro stands as a variation of the rack', 'Software Factory'),
   variation: missing('Variations', 'moving every macro to where a stored variation keeps it', 'Software Factory'),
-  // The chain list's controls (§19.15): each acts on a chain's session in its session space, or on what you attend to. Each names the
-  // owner operation it waits for and, where one stands near, why that one is not it (O-I #772).
-  bench: `${missing('Activator', 'benching a chain\'s session in its session space, so it stays in the rack and is given no work', 'AIKit')} ${SPACE_MUTATIONS} hold no bench.`,
+  // The chain list's controls (§19.15): each acts on a chain's session in its session space, or on what you attend to. With no carrier
+  // handed to the rack, each names the operation that carries it (O-I #772, #745).
+  bench: 'Activator: no carrier to AIKit\'s bench of a chain\'s session in its space (the kernel\'s encounter_session_bench) stands on this chain.',
   // Solo is what you attend to, never what runs (§16.1 Live's acts: Solo is never "A limit on what may run"; §16.6 Rules): the shell's
   // attention on the book (AgentRackPorts.solo, the agent shell's setSolo), the one the Session view's mixer solos. AIKit's session Solo is
   // a launch gate (encounter_task_executor.rs, the Solo gate) and is never written. Refused only where no attention is handed.
   solo: missing('Solo', 'what you attend to, handed to this rack: the book\'s world context holds it (agent/AgentShellContext.tsx soloed, setSolo)', 'the live shell'),
-  swap: `${missing('Hot-Swap', 'swapping a chain\'s agent in its session space for another from the browser, the rest of its chain kept', 'AIKit')} ${SPACE_MUTATIONS} hold no swap of a session's agent.`,
-  extract: `${missing('Drag out', 'moving a chain\'s session out of its session space onto a track of its own, chain and all', 'AIKit')} AIKit's detach-agent-session (the kernel's encounter_session_detach) is a track's Delete: it takes the session off every space of its Project, and no operation seats the same session in a space of its own.`,
-  add: `${missing('Add a chain', 'seating an agent, or a Decision helper, dropped into the chain list as a member of the session space', 'AIKit')} AIKit's attach-agent-session reaches the kernel only inside encounter_provision, which seats a new session in a new space; no operation attaches a session to a space that stands.`,
+  // Hot-Swap keeps the chain and swaps its agent (§19.15); AIKit keeps a session's agent for good (encounter_agency.rs configure_agency,
+  // encounter.agent_identity_changed), so the swap is refused in AIKit's words, with what does change the agent.
+  swap: 'Hot-Swap: AIKit does not let a chain\'s session become another agent: "A canonical session must not silently become another Agent; create a separately attributed session" (AIKit). To change the agent, drop the other agent\'s session into the chain list, then delete this chain\'s track.',
+  extract: 'Drag out: no carrier to AIKit\'s drag out of a chain\'s session into a space of its own (the kernel\'s encounter_session_drag_out) stands on this chain.',
+  add: 'Add a chain: no carrier to AIKit\'s attach of a standing session to this rack\'s space (the kernel\'s encounter_session_attach) stands on this chain.',
   // The Devices view (§19.15 "Change a setting there and you change the agent"): each device of a chain answers to its own owner, and the
   // rack holds each chain's session, never the binding of a device of another session's chain.
   dev: missing('Devices', 'changing a device of another session\'s chain from the rack: the rack holds each chain\'s session, and no binding of the devices of its chain', 'Software Factory'),
@@ -495,6 +499,41 @@ export const AGENTSET_REFUSE = {
   // holds a chain, which is an agent session, and no reading names the Run or the workflow unit the chain's task is.
   retry: 'Retry: Factory retries a unit of a Run under its retry grant (factory_owner attempt-retry, the Run map\'s Retry); the rack holds the chosen chain, an agent session, and no reading here names the Run or the workflow unit its task is (Software Factory).',
 } as const
+/** What the chain list refuses with its carriers standing: a press on what is no chain of the rack, the Decision helper (it answers every
+ * agent of the rack and is no session: AIKit's SessionSpace holds sessions and names no decision provider), and a drop that names no
+ * standing session (AIKit attaches a session that stands; an agent from the browser has none yet). */
+const FAMILY_WORD: Readonly<Record<string, string>> = {skillset: 'skill set', git: 'Git seat'}
+export const CHAIN_LIST_REFUSE = {
+  notChain: (control: string, id: string) => `${control}: "${id}" is not a chain of this rack.`,
+  helperBench: 'Activator: the Decision helper answers the agents of the rack and is given no work of its own, so there is nothing of it to bench.',
+  helperOut: 'Drag out: the Decision helper answers every agent of the rack, so it does not work alone on a track of its own.',
+  helperStands: 'Add a chain: one Decision helper answers every agent of a rack, and this rack\'s already stands.',
+  helperAdd: 'Add a chain: AIKit\'s session space holds sessions and names no Decision helper, so none joins the list by hand: one stands on a rack of agents, answering all of them.',
+  agent: 'Add a chain: only a session that stands joins the list, and an agent from the browser has no session yet. Seat it on a track first, then drag its session here.',
+  family: (family: string) => `Add a chain: only a session that stands joins the list, and a ${FAMILY_WORD[family] ?? family} is not one.`,
+  already: (name: string) => `Add a chain: ${name} is already a chain of this rack.`,
+  unnamed: 'Add a chain: what was dropped names no session.',
+  noRack: 'Add a chain: choose a session or a group first: no rack stands here to add to.',
+} as const
+
+/** The session a drop under the chain list names (a browser row's drag, AgentShellBrowser.tsx: `${spaceRef}:${sessionRef}`; or a session's
+ * own ref), or why it names none. */
+function droppedSession(value: Value | undefined, helperStands: boolean): string {
+  const text = typeof value === 'string' ? value.trim() : ''
+  if (!text) throw Error(CHAIN_LIST_REFUSE.unnamed)
+  if (text.includes('decision-helper')) throw Error(helperStands ? CHAIN_LIST_REFUSE.helperStands : CHAIN_LIST_REFUSE.helperAdd)
+  const decoded = decodeChainDrag(text)
+  let session = text
+  if (decoded?.kind === 'chain-item') {
+    if (decoded.drag.family === 'agent') throw Error(CHAIN_LIST_REFUSE.agent)
+    if (decoded.drag.family !== 'session') throw Error(CHAIN_LIST_REFUSE.family(decoded.drag.family))
+    const at = decoded.drag.ref.indexOf(':')
+    session = at >= 0 ? decoded.drag.ref.slice(at + 1) : decoded.drag.ref
+  } else if (decoded) throw Error(CHAIN_LIST_REFUSE.unnamed)
+  if (!/^agent-session\/[^\s:]+$/.test(session)) throw Error(CHAIN_LIST_REFUSE.unnamed)
+  return session
+}
+
 /** A chain's own key (`bench:<id>`, `solo:<id>`, `dev:<id>@<device>`): the refusal of the control it belongs to. */
 const memberControl = (key: string): keyof typeof AGENTSET_REFUSE | undefined =>
   (key.startsWith('bench:') ? 'bench' : key.startsWith('solo:') ? 'solo' : key.startsWith('dev:') ? 'dev' : undefined)
@@ -532,8 +571,9 @@ export const GROUP_REFUSE = {
 const CARD_LOCAL = ['grouping', 'new.open', 'new.for', 'new.chains', 'new.proposal'] as const
 
 /** The rack's carriers: Central's central.agent-set.save and .propose, the person's own acts through the kernel's invoke_action; the
- * session's own Agent, whose own writes a macro turns on a lone session's chain; a fresh suffix for a proposed set's ref. Each absent:
- * no carrier stands. */
+ * session's own Agent, whose own writes a macro turns on a lone session's chain; a fresh suffix for a proposed set's ref and for the space a
+ * chain is dragged out into; AIKit's bench, attach and drag out of a chain's session (the kernel's encounter_session_bench, _attach and
+ * _drag_out). Each absent: no carrier stands. */
 export interface AgentRackPorts {
   readonly saveSet?: (input: {scope: 'root'; record: Record<string, unknown>; expected_revision: string}) => Promise<unknown>
   readonly propose?: (input: {scope: 'root'; ref: string; revision: 'r1'; members: {kind: 'agent'; agent_ref: string}[]; reason: string}) => Promise<unknown>
@@ -541,6 +581,12 @@ export interface AgentRackPorts {
   readonly suffix?: () => string
   /** Solo a chain (on) or lift its solo, by its track's key: what you attend to (the agent shell's setSolo), no owner asked. */
   readonly solo?: (trackRef: string, on: boolean) => void
+  /** The Activator: bench a chain's session in its space (true) or lift its bench. */
+  readonly bench?: (input: {project: string; space: string; agent_session: string; benched: boolean}) => Promise<unknown>
+  /** Add a chain: attach a standing session to the rack's space. */
+  readonly attach?: (input: {project: string; space: string; agent_session: string}) => Promise<unknown>
+  /** Drag out: seat a chain's session in a space of its own (`into`, named for it), chain and all, and take it out of its space. */
+  readonly dragOut?: (input: {project: string; space: string; agent_session: string; into: string; label: string}) => Promise<unknown>
 }
 
 /** The set's next revision by Central's own convention (`r1`, `r2`, … : central.agent-set.save refuses a revision that does not move). */
@@ -630,6 +676,7 @@ export function agentsetValues(input: AgentRackInput): Values {
     values.members = JSON.stringify([chain])
     values.light = chain.state === 'working' ? 'lit' : 'dark'
     if (input.soloed) values[`solo:${lone.sessionRef}`] = input.soloed.has(trackKey(lone))
+    values[`bench:${lone.sessionRef}`] = lone.benched === true
     // The macros stand where the one agent's settings stand: one chain, so the rack keeps no value of its own.
     for (const macro of RACK_MACROS) put(values, macro, input.agent?.[AGENT_KEY[macro]])
   } else {
@@ -641,7 +688,12 @@ export function agentsetValues(input: AgentRackInput): Values {
       values.members = JSON.stringify(input.helper ? [...members, helperMember(input.helper)] : members)
       values.light = members.some(member => member.state === 'working') ? 'lit' : 'dark'
       const soloed = input.soloed
-      if (soloed) for (const track of input.tracks) if (!track.group && track.parentRef === group.sessionRef) values[`solo:${track.sessionRef}`] = soloed.has(trackKey(track))
+      for (const track of input.tracks) {
+        if (track.group || track.parentRef !== group.sessionRef) continue
+        if (soloed) values[`solo:${track.sessionRef}`] = soloed.has(trackKey(track))
+        // The Activator reads the space's own record: a benched chain stays in the rack and is given no work.
+        values[`bench:${track.sessionRef}`] = track.benched === true
+      }
     }
     if (input.helper) values[memberDeviceKey(DECISION_HELPER_ID, DECISION_HELPER_DESIGN)] = JSON.stringify(input.helper)
   }
@@ -699,14 +751,17 @@ const proposalOf = (held: unknown): Proposal | null => {
 
 /** The rack's binding: the chosen chain, the chains chosen for Group and the card's fields are the view's own; a lone session's macros turn
  * its one agent through the Agent itself; Join reads and writes Central's agent set the group runs; Make and Accept propose and save a set
- * through Central; every delegation setting, chain-list control, device of another session's chain and Retry stands disabled with what it
- * lacks. */
+ * through Central; the Activator, Add a chain and Drag out act through AIKit's session-space operations; every delegation setting, Hot-Swap,
+ * device of another session's chain and Retry stands disabled with what it lacks. */
 export function agentsetBinding(input: AgentRackInput, ports?: AgentRackPorts): DesignBinding {
   const standing: Record<string, Standing> = disabled(AGENTSET_REFUSE)
   for (const macro of RACK_MACROS) { const why = macroStanding(macro, input, ports); if (why) standing[macro] = why; else delete standing[macro] }
   const join = joinStanding(input, ports)
   if (join) standing.join = join
   if (ports?.solo) delete standing.solo
+  if (ports?.bench) delete standing.bench
+  if (ports?.dragOut) delete standing.extract
+  if (ports?.attach) delete standing.add
   standing['new.type'] = {disabled: GROUP_REFUSE.type}
   standing['new.discard'] = {disabled: GROUP_REFUSE.discard}
   const writable = join === null || join.refused !== undefined
@@ -732,6 +787,39 @@ export function agentsetBinding(input: AgentRackInput, ports?: AgentRackPorts): 
     const chain = lone && lone.sessionRef === id ? lone : tracks.find(track => !track.group && track.sessionRef === id && track.parentRef === input.group?.sessionRef)
     if (!chain) throw Error(`Solo: "${id}" is not a chain of this rack.`)
     ports.solo(trackKey(chain), value === true)
+  }
+  /** A chain of this rack by its id: the lone session's own, or a session of the group's space. */
+  const chainOf = (id: string): AgentSessionTrack | null => (lone && lone.sessionRef === id ? lone
+    : tracks.find(track => !track.group && track.sessionRef === id && track.parentRef === input.group?.sessionRef) ?? null)
+  /** The Activator: off benches the chain's session in its space (it stays in the rack and is given no work); on lifts the bench. */
+  const bench = async (id: string, value: Value | undefined) => {
+    if (!ports?.bench) throw Error(AGENTSET_REFUSE.bench)
+    if (id === DECISION_HELPER_ID) throw Error(CHAIN_LIST_REFUSE.helperBench)
+    const chain = chainOf(id)
+    if (!chain) throw Error(CHAIN_LIST_REFUSE.notChain('Activator', id))
+    await ports.bench({project: chain.project ?? ROOT_REGISTER, space: chain.spaceRef, agent_session: chain.sessionRef, benched: value === true})
+  }
+  /** Drag out: the chosen chain's session leaves its space for a space of its own, named for it, on a track of its own, chain and all. */
+  const dragOut = async (value: Value | undefined) => {
+    if (!ports?.dragOut) throw Error(AGENTSET_REFUSE.extract)
+    const id = typeof value === 'string' ? value : String(value)
+    if (id === DECISION_HELPER_ID) throw Error(CHAIN_LIST_REFUSE.helperOut)
+    const chain = chainOf(id)
+    if (!chain) throw Error(CHAIN_LIST_REFUSE.notChain('Drag out', id))
+    const name = String(sessionChain(chain, 0).name)
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'session'
+    await ports.dragOut({project: chain.project ?? ROOT_REGISTER, space: chain.spaceRef, agent_session: chain.sessionRef,
+      into: `session-space/${slug}-${ports.suffix?.() ?? '1'}`, label: name})
+  }
+  /** Add a chain: a standing session dropped under the chain list joins the rack's space. */
+  const addChain = async (value: Value | undefined) => {
+    if (!ports?.attach) throw Error(AGENTSET_REFUSE.add)
+    const rack = input.group?.group ? input.group : lone
+    if (!rack) throw Error(CHAIN_LIST_REFUSE.noRack)
+    const session = droppedSession(value, !!input.helper && !!input.group?.group)
+    const standing = chainOf(session)
+    if (standing) throw Error(CHAIN_LIST_REFUSE.already(String(sessionChain(standing, 0).name)))
+    await ports.attach({project: rack.project ?? ROOT_REGISTER, space: rack.spaceRef, agent_session: session})
   }
   /** Make: the chosen chains, proposed to Central as a set of agents, the proposal held on the card. */
   const make = async (value: Value | undefined) => {
@@ -779,6 +867,9 @@ export function agentsetBinding(input: AgentRackInput, ports?: AgentRackPorts): 
         if (key === 'new.accept') { await accept(); continue }
         if (key === 'new.discard') throw Error(GROUP_REFUSE.discard)
         if (key.startsWith('solo:')) { solo(key.slice('solo:'.length), value); continue }
+        if (key.startsWith('bench:')) { await bench(key.slice('bench:'.length), value); continue }
+        if (key === 'extract') { await dragOut(value); continue }
+        if (key === 'add') { await addChain(value); continue }
         if (key !== 'join') throw Error(AGENTSET_REFUSE[memberControl(key) ?? key as keyof typeof AGENTSET_REFUSE] ?? reading(key))
         if (typeof value !== 'string' || !(JOINS as readonly string[]).includes(value)) throw Error(`Join is none, all, first, quorum or weighted, not ${String(value)}.`)
         if (!ports?.saveSet) throw Error('Join: no carrier to Central\'s central.agent-set.save stands on this chain.')

@@ -121,3 +121,25 @@ export async function harnessAgentControlOutcome(
   return controlOutcome(transport, {op: 'harness_agent_control', binding, control}, invoke)
 
 }
+
+/** The sender kinds AIKit's gateway rules by (aikit-adapters gateway_connector.rs SenderKind), and what a rule decides. */
+export type IngressSenderKind = 'human' | 'agent' | 'bot' | 'system' | 'unknown'
+export type IngressDecision = 'allow' | 'pair' | 'deny'
+
+/** Who of one kind may reach a gateway binding's conversation (§19.12 Asks, Calls to other agents): AIKit's ingress rule by sender kind
+ * (`aikit gateway ingress --binding B --kind K --decision D`; no decision clears it, and the binding's one default decides again), through
+ * the kernel's harness_ingress_rule. AIKit's answer, or its refusal in its words, thrown. */
+export async function harnessIngressRule(
+  transport: KernelTransportStatus,
+  binding: string,
+  kind: IngressSenderKind,
+  decision: IngressDecision | null,
+  invoke?: KernelInvoke,
+): Promise<unknown> {
+  if (transport.kind === 'unavailable') throw new Error(transport.reason ?? 'Native transport unavailable')
+  const call = {op: 'harness_ingress_rule' as const, binding, kind, decision}
+  const outcome = invoke ? await invoke(transport, call) : await kernelOp(transport, call)
+  if (outcome.error) throw new Error(outcome.error)
+  if (outcome.outcome?.result !== 'harness_ingress_outcome') throw new Error(`AIKit did not answer the ingress rule: ${outcome.outcome?.result ?? 'no result named'}`)
+  return outcome.outcome.document
+}

@@ -1,8 +1,9 @@
 //! The realtime law for the Torus node (O-I #849, feature `k8`): "the realtime path takes no allocation".
 //! A key's strike by QL's played-address law, a prepared key's strike, a MIDI note's key by the pitch→key
 //! table, the owner's acts (waiting for their sample, landing, late, waiting for the Torus they follow and
-//! given to it as it takes the part) and Panic's silence run on the audio thread through
-//! `ql::ContinuousField::strike_now` and `silence`; a global allocator counts every
+//! given to it as it takes the part), the owner's moves of the gains it is heard by (waiting, reached over
+//! the owner's samples across blocks, late, given to the Torus they follow) and Panic's silence run on the
+//! audio thread through `ql::ContinuousField::strike_now`, `move_gains` and `silence`; a global allocator counts every
 //! allocation Rust makes on the armed thread, and (on macOS) the system allocator's own logger every one
 //! the C++ side makes there — QL's field and the shim allocate past Rust's allocator. One test per binary,
 //! so no other test thread allocates while it runs.
@@ -15,7 +16,9 @@ use std::alloc::{GlobalAlloc, Layout, System};
 use std::cell::Cell;
 use std::sync::atomic::{AtomicU64, Ordering};
 
-use live_engine::{engine, EngineEvent, Graph, K8Instrument, TorusAct, TorusStrike, Track};
+use live_engine::{
+    engine, EngineEvent, Graph, K8Instrument, TorusAct, TorusHear, TorusStrike, Track,
+};
 
 struct Counting;
 
@@ -149,9 +152,15 @@ fn the_torus_strikes_and_is_stilled_without_allocating() {
         strike: TorusStrike::split(handover, at, &[(0, [0.01, -0.002]), (1, [-0.003, 0.0])])
             .unwrap()[0],
     };
+    let hears = |handover: u32, at: u64, frames: u32| EngineEvent::TorusHear {
+        track: 0,
+        hear: TorusHear::split(handover, at, frames, &[2.5, 0.5]).unwrap()[0],
+    };
     let events = [
         owners(1, 400),
+        hears(1, 300, 500),
         owners(1, 100),
+        hears(1, 10, 64),
         EngineEvent::NoteOn {
             track: 0,
             key: 60,
@@ -192,6 +201,7 @@ fn the_torus_strikes_and_is_stilled_without_allocating() {
         ARMED.with(|a| a.set(false));
     };
     handle.send(owners(2, 2000)).unwrap();
+    handle.send(hears(2, 2100, 128)).unwrap();
     pull(&mut core, &mut block);
     handle
         .install_latest(

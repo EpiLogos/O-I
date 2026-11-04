@@ -67,6 +67,15 @@ test('writePath is present exactly where a real owner write exists — known-ref
   for (const key of ['thoroughness', 'test-depth', 'reach', 'risk']) {
     assert.equal(byKey('skillset', key)?.writePath, undefined, key)
   }
+  // REPLACED (lane BD round 12): every skillset row was a reading; the rack's Refining page (§19.7) answers a proposed revision through
+  // AIKit's own verbs (aikit_write refinement-accept · refinement-discard), and its Test is the session's own Repeat over Skillset
+  // (encounter_session_settings). Its other parameters are readings.
+  for (const key of ['refine.accept', 'refine.discard']) assert.equal(byKey('skillset', key)?.writePath, 'kernel:aikit_write', key)
+  assert.equal(byKey('skillset', 'refine.run')?.writePath, 'kernel:encounter_session_settings')
+  for (const key of ['refine.member', 'refine.why', 'refine.revision', 'refine.test', 'refine.result']) {
+    assert.equal(byKey('skillset', key)?.writePath, undefined, key)
+    assert.equal(byKey('skillset', key)?.family, 'ai-kit', key)
+  }
   // Write receipts arrive; the knowledge route is available but unwired.
   assert.equal(byKey('world', 'write-receipts')?.writePath, undefined)
   assert.equal(byKey('world', 'knowledge-route')?.writePath, undefined)
@@ -114,10 +123,12 @@ test('the table counts exactly the rendered control set (F4, count from the tabl
   // parameter-bearing controls the devices render are gateway 7 + agent 7 +
   // skillset 4 + world 5 + git 5; admit lights are the rack's readings, not
   // §14 addresses. Never pad the table to meet a claim.
+  // REPLACED (lane BD round 12): skillset 4 → 12 and 28 → 36 — the rack's Refining page (§19.7) renders eight parameters: Member, Why,
+  // Revision, Test, Result, its Test press, Accept and Discard.
   const perDevice = {}
   for (const row of TABLE) perDevice[row.deviceInstance] = (perDevice[row.deviceInstance] ?? 0) + 1
-  assert.deepEqual(perDevice, {gateway: 7, agent: 7, skillset: 4, world: 5, git: 5})
-  assert.equal(TABLE.length, 28)
+  assert.deepEqual(perDevice, {gateway: 7, agent: 7, skillset: 12, world: 5, git: 5})
+  assert.equal(TABLE.length, 36)
 })
 
 test('the address table module stays pure (no React, no store)', async () => {

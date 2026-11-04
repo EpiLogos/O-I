@@ -13,7 +13,8 @@
 //! bridged yet (the summary carries element names only) — M3 backlog.
 
 use crate::devices::{
-    BypassDevice, CompressorDevice, EchoDevice, EchoParams, GlueDevice, ReverbDevice,
+    BypassDevice, CompressorDevice, DelayDevice, DelayParams, EchoDevice, EchoParams, FilterDevice,
+    FilterKind, FilterParams, GlueDevice, ReverbDevice,
 };
 use crate::graph::{Clock, Graph, Note, RackDevice, ReturnTrack, Track};
 use crate::instruments::OperatorInstrument;
@@ -64,25 +65,76 @@ fn known_device(element_name: &str) -> Option<Box<dyn crate::graph::Device>> {
         // default.xml Manual: DecayTime 1200.00012 ms; the state carries
         // no global DryWet element — the direct level is MixDirect 0.55,
         // folded into the model's fitted constants — so the engine mix is
-        // the model response, 1.0).
-        "Reverb" => Some(Box::new(ReverbDevice::new(
+        // the model response, 1.0). Convolved by partitions (O-I #849
+        // round 14): a set's part may sound every sample, and the scatter
+        // runs at 1.76 of real time on one at 2.4 s.
+        "Reverb" => Some(Box::new(ReverbDevice::partitioned(
             ReverbParams {
                 decay_ms: 1200.00012,
             },
             1.0,
         ))),
+        // Live's Compressor (element Compressor2) at the corpus's stored
+        // values, as a rack's chain has it (`rack_device`): never bypassed.
+        "Compressor2" => Some(Box::new(CompressorDevice::new(
+            live_dynamics::compressor::DEFAULTS,
+        ))),
         _ => None,
     }
 }
 
-/// The engine's own device for Live's device `class` on an Instrument Rack's chain (O-I #849 round
-/// 13: the Torus's effects, as live-set `rack_place` places them), with the settings carried onto it,
-/// by Live's document key: Live's Reverb as the gated model ([`ReverbDevice`], at its stored
-/// `DecayTime` in ms when carried, the one setting the model takes), convolving by partitions since
-/// the part it stands on sounds every sample; Live's Compressor as its model at the corpus's stored
-/// values ([`CompressorDevice`]), which takes no setting yet. What it was made from names the class
-/// and the settings. Refused in words for a class the engine has no model of, and for a setting its
-/// model does not take.
+/// Live's Auto Filter's FilterType as the engine's model reads it, against the Torus's Filter's kinds:
+/// the kinds the corpus's presets that store them are named for (params.rs `AUTOFILTER`: 0 the
+/// default, 2 "Bandpass Spinner", 4 "Stereo Notch"), 1 for the high-pass. The corpus pins no labels;
+/// 3 is none the model sounds.
+pub const AUTO_FILTER_TYPES: [(FilterKind, f64); 4] = [
+    (FilterKind::Lowpass, 0.0),
+    (FilterKind::Highpass, 1.0),
+    (FilterKind::Bandpass, 2.0),
+    (FilterKind::Notch, 4.0),
+];
+
+/// Live's Auto Filter's Cutoff, as the engine's model reads it: a pitch, A 440 Hz at 69 and a
+/// semitone a step, so Live's stored 20 to 135 is 26 Hz to 19.9 kHz. The corpus pins no unit for it
+/// (params.rs: "NOT a Hz span — note/semitone-scale mapping unmeasured").
+pub fn auto_filter_hz(cutoff: f64) -> f64 {
+    440.0 * 2f64.powf((cutoff - 69.0) / 12.0)
+}
+
+/// The Cutoff of Live's Auto Filter at `hz`, the inverse of [`auto_filter_hz`].
+pub fn auto_filter_cutoff(hz: f64) -> f64 {
+    69.0 + 12.0 * (hz / 440.0).log2()
+}
+
+/// The extent Live's device `element` stores its setting `id` in, as the corpus's surface gives it
+/// (live-dynamics params.rs `table`).
+pub fn live_holds(element: &str, id: &str) -> Option<(f64, f64)> {
+    live_dynamics::params::table(element)?
+        .iter()
+        .find(|row| row.id == id)
+        .map(|row| (row.stored_min, row.stored_max))
+}
+
+/// The engine's own device for Live's device `class` on an Instrument Rack's chain (O-I #849 rounds
+/// 13 and 14: the Torus's effects, as live-set `rack_place` places them), with the settings carried
+/// onto it, by Live's document key, each within the extent Live's device stores it in (the corpus's
+/// surface, live-dynamics params.rs):
+/// - Live's Reverb as the gated model ([`ReverbDevice`], at its stored `DecayTime` in ms when
+///   carried, the one setting the model takes), convolving by partitions since the part it stands
+///   on sounds every sample;
+/// - Live's Compressor as its model ([`CompressorDevice`]) at the corpus's stored values, and at
+///   its Threshold (a level), Ratio, Attack and Release (ms), Gain (dB of makeup) and Knee (dB)
+///   where carried, as the model reads them;
+/// - Live's Auto Filter as the Torus's Filter ([`FilterDevice`]): its FilterType by
+///   [`AUTO_FILTER_TYPES`], its Cutoff by [`auto_filter_hz`], its Resonance 0 to 1 as the Torus's 0
+///   to 100 %, its Drive in dB, all four carried;
+/// - Live's Delay as the Torus's Delay ([`DelayDevice`]): its DelayLine_TimeL in seconds on both
+///   sides, its Feedback, its Filter_Frequency as the Tone's low-pass, its DryWet as the level the
+///   repeats are heard at over the dry at full, all four carried.
+///
+/// What it was made from names the class and the settings. Refused in words for a class the engine
+/// has no model of, for a setting its model does not take or Live's device does not hold, and for one
+/// a model built to the Torus's effect needs and is not given.
 pub fn rack_device(class: &str, carried: &[(&str, f64)]) -> Result<RackDevice, String> {
     let refuse_rest =
         |title: &str, takes: &[&str]| match carried.iter().find(|(id, _)| !takes.contains(id)) {
@@ -91,6 +143,32 @@ pub fn rack_device(class: &str, carried: &[(&str, f64)]) -> Result<RackDevice, S
             )),
             None => Ok(()),
         };
+    // a setting within the extent Live's device stores it in
+    let held = |title: &str, element: &str, id: &str, value: f64| -> Result<f64, String> {
+        let (min, max) = live_holds(element, id)
+            .ok_or_else(|| format!("the corpus gives Live's {title} no {id}"))?;
+        if value.is_finite() && (min..=max).contains(&value) {
+            Ok(value)
+        } else {
+            Err(format!(
+                "Live's {title} holds its {id} within {min} to {max}, not {value}"
+            ))
+        }
+    };
+    // the settings a model built to the Torus's effect needs, each carried and held
+    let needs = |title: &str, element: &str, effect: &str, ids: &[&str; 4]| {
+        let mut values = [0.0; 4];
+        for (value, id) in values.iter_mut().zip(ids) {
+            let carried = carried.iter().find(|(k, _)| k == id).ok_or_else(|| {
+                format!(
+                    "the engine's model of Live's {title} sounds the Torus's {effect} from its {}, and no {id} is carried",
+                    ids.join(", ")
+                )
+            })?;
+            *value = held(title, element, id, carried.1)?;
+        }
+        Ok::<_, String>(values)
+    };
     let device: Box<dyn crate::graph::Device> = match class {
         "Reverb" => {
             refuse_rest("Reverb", &["DecayTime"])?;
@@ -109,11 +187,54 @@ pub fn rack_device(class: &str, carried: &[(&str, f64)]) -> Result<RackDevice, S
             ))
         }
         "Compressor2" => {
-            refuse_rest("Compressor", &[])?;
-            Box::new(CompressorDevice::new(live_dynamics::compressor::DEFAULTS))
+            refuse_rest(
+                "Compressor",
+                &["Threshold", "Ratio", "Attack", "Release", "Gain", "Knee"],
+            )?;
+            let mut params = live_dynamics::compressor::DEFAULTS;
+            for (id, value) in carried {
+                let value = held("Compressor", "Compressor2", id, *value)?;
+                match *id {
+                    "Threshold" => params.threshold = value,
+                    "Ratio" => params.ratio = value,
+                    "Attack" => params.attack = value,
+                    "Release" => params.release = value,
+                    "Gain" => params.gain = value,
+                    _ => params.knee = value,
+                }
+            }
+            Box::new(CompressorDevice::new(params))
         }
-        "AutoFilter" => return Err("Live's Auto Filter has no model in the engine yet".into()),
-        "Delay" => return Err("Live's Delay has no model in the engine yet".into()),
+        "AutoFilter" => {
+            const TAKES: [&str; 4] = ["FilterType", "Cutoff", "Resonance", "Drive"];
+            refuse_rest("Auto Filter", &TAKES)?;
+            let [kind, cutoff, resonance, drive] =
+                needs("Auto Filter", "AutoFilter", "Filter", &TAKES)?;
+            let kind = AUTO_FILTER_TYPES
+                .iter()
+                .find(|(_, stored)| *stored == kind)
+                .map(|(k, _)| *k)
+                .ok_or_else(|| {
+                    format!("the engine's model of Live's Auto Filter sounds its FilterType 0, 1, 2 or 4 (low-pass, high-pass, band-pass, notch), not {kind}")
+                })?;
+            Box::new(FilterDevice::new(FilterParams {
+                kind,
+                cutoff_hz: auto_filter_hz(cutoff),
+                resonance,
+                drive_db: drive,
+            }))
+        }
+        "Delay" => {
+            const TAKES: [&str; 4] = ["DelayLine_TimeL", "Feedback", "Filter_Frequency", "DryWet"];
+            refuse_rest("Delay", &TAKES)?;
+            let [time_s, feedback, tone_hz, mix] = needs("Delay", "Delay", "Delay", &TAKES)?;
+            Box::new(DelayDevice::new(DelayParams {
+                time_s,
+                feedback,
+                tone_hz,
+                mix,
+            }))
+        }
         other => return Err(format!("Live's {other} has no model in the engine yet")),
     };
     let mut made_from = class.to_string();
@@ -509,6 +630,68 @@ mod tests {
         assert!(r.graph.render(48_000).is_empty());
     }
 
+    /// O-I #849 round 14: a set's Reverb convolves by partitions (equal to the scatter to float rounding, and
+    /// real time on a part that sounds every sample), and its Compressor is the engine's model, never bypassed.
+    #[test]
+    fn a_sets_reverb_convolves_by_partitions_and_its_compressor_is_never_bypassed() {
+        use crate::graph::Device;
+        let s = summary_of(
+            r#"<Ableton MajorVersion="5"><LiveSet>
+          <Tracks><AudioTrack Id="8"><Name><EffectiveName Value="A" /></Name>
+            <DeviceChain><DeviceChain><Devices>
+              <Compressor2 Id="1" />
+              <Reverb Id="2" />
+            </Devices></DeviceChain></DeviceChain>
+          </AudioTrack></Tracks>
+        </LiveSet></Ableton>"#,
+        );
+        let mut r = bridge(&s, 48_000);
+        assert!(r.warnings.is_empty(), "{:?}", r.warnings);
+        let t = &mut r.graph.tracks[0];
+        assert_eq!(
+            t.devices.iter().map(|d| d.name()).collect::<Vec<_>>(),
+            ["Compressor2", "Reverb"]
+        );
+        let clock = Clock::start(48_000, 120.0);
+        let params = ReverbParams {
+            decay_ms: 1200.00012,
+        };
+        let mut by_parts = ReverbDevice::partitioned(params.clone(), 1.0);
+        let mut scatter = ReverbDevice::new(params, 1.0);
+        let bridged = &mut t.devices[1];
+        for d in [
+            &mut by_parts as &mut dyn Device,
+            &mut scatter,
+            bridged.as_mut(),
+        ] {
+            d.prepare(48_000, 2);
+        }
+        let (mut same, mut rounded) = (true, false);
+        for n in 0..4_096 {
+            let x = ((n * 7919) % 211) as f32 / 211.0 - 0.5;
+            let (mut a, mut b, mut c) = ([x; 2], [x; 2], [x; 2]);
+            bridged.process(&mut a, &clock);
+            by_parts.process(&mut b, &clock);
+            scatter.process(&mut c, &clock);
+            same &= a == b;
+            rounded |= a != c;
+            assert!(
+                (a[0] - c[0]).abs() < 1e-4,
+                "frame {n}: {} against the scatter's {}",
+                a[0],
+                c[0]
+            );
+        }
+        assert!(
+            same,
+            "the set's Reverb is the partitioned one, sample for sample"
+        );
+        assert!(
+            rounded,
+            "and not the scatter, from which it differs only by rounding"
+        );
+    }
+
     #[test]
     fn bridges_echo_and_reverb_as_known_devices() {
         let s = summary_of(
@@ -536,25 +719,139 @@ mod tests {
         assert!(out.iter().any(|v| *v != 0.0));
     }
 
-    /// Live's devices on a rack's chain as the engine's own (O-I #849 round 13): Reverb at a carried
-    /// DecayTime and Compressor at the corpus's values; Auto Filter and Delay have no model yet, and a
-    /// setting a model does not take is refused, each in words.
+    /// Live's devices on a rack's chain as the engine's own (O-I #849 rounds 13 and 14): Reverb at a
+    /// carried DecayTime; Compressor at the corpus's values and the settings carried; Auto Filter and
+    /// Delay built to the Torus's effects from the settings they need; a setting a model does not take,
+    /// one Live's device does not hold and one a model needs and is not given are refused, each in words.
     #[test]
     fn a_rack_chains_live_devices_are_the_engines_own_or_refused_in_words() {
         let reverb = rack_device("Reverb", &[("DecayTime", 2400.0)]).unwrap();
         assert_eq!(reverb.device.name(), "Reverb");
         assert_eq!(reverb.made_from, "Reverb DecayTime=2400");
         assert_eq!(rack_device("Reverb", &[]).unwrap().made_from, "Reverb");
+        let clock = Clock::start(48_000, 120.0);
+        // a chain's device sounds as the model made from what it was carried, sample for sample
+        let same = |mut made: RackDevice, mut model: Box<dyn crate::graph::Device>| {
+            made.device.prepare(48_000, 2);
+            model.prepare(48_000, 2);
+            (0..9_600u32).all(|n| {
+                let x = ((n * 7919 % 211) as f32 / 211.0 - 0.5) * 0.8;
+                let (mut a, mut b) = ([x, -x], [x, -x]);
+                made.device.process(&mut a, &clock);
+                model.process(&mut b, &clock);
+                a[0].to_bits() == b[0].to_bits() && a[1].to_bits() == b[1].to_bits()
+            })
+        };
         let compressor = rack_device("Compressor2", &[]).unwrap();
         assert_eq!(compressor.device.name(), "Compressor2");
-        for (class, words) in [
+        let settings = [
+            ("Threshold", 0.25),
+            ("Ratio", 4.0),
+            ("Attack", 1.0),
+            ("Release", 100.0),
+            ("Gain", 2.0),
+            ("Knee", 0.0),
+        ];
+        let carried = rack_device("Compressor2", &settings).unwrap();
+        assert_eq!(
+            carried.made_from,
+            "Compressor2 Threshold=0.25 Ratio=4 Attack=1 Release=100 Gain=2 Knee=0"
+        );
+        let model = live_dynamics::compressor::CompressorParams {
+            threshold: 0.25,
+            ratio: 4.0,
+            attack: 1.0,
+            release: 100.0,
+            gain: 2.0,
+            knee: 0.0,
+            ..live_dynamics::compressor::DEFAULTS
+        };
+        assert!(same(carried, Box::new(CompressorDevice::new(model))));
+        let unmoved = rack_device("Compressor2", &[]).unwrap();
+        assert!(
+            !same(unmoved, Box::new(CompressorDevice::new(model))),
+            "the carried settings move the Compressor"
+        );
+        let filter = [
+            ("FilterType", 2.0),
+            ("Cutoff", auto_filter_cutoff(1500.0)),
+            ("Resonance", 0.4),
+            ("Drive", 6.0),
+        ];
+        let made = rack_device("AutoFilter", &filter).unwrap();
+        assert_eq!(made.device.name(), "AutoFilter");
+        assert!(same(
+            made,
+            Box::new(FilterDevice::new(FilterParams {
+                kind: FilterKind::Bandpass,
+                cutoff_hz: auto_filter_hz(auto_filter_cutoff(1500.0)),
+                resonance: 0.4,
+                drive_db: 6.0,
+            }))
+        ));
+        assert!((auto_filter_hz(20.0) - 25.956_543_598_746_574).abs() < 1e-9);
+        assert!((auto_filter_hz(135.0) - 19_912.126_958_213_175).abs() < 1e-6);
+        let delay = [
+            ("DelayLine_TimeL", 0.25),
+            ("Feedback", 0.35),
+            ("Filter_Frequency", 6000.0),
+            ("DryWet", 0.25),
+        ];
+        let made = rack_device("Delay", &delay).unwrap();
+        assert_eq!(made.device.name(), "Delay");
+        assert!(same(
+            made,
+            Box::new(DelayDevice::new(DelayParams {
+                time_s: 0.25,
+                feedback: 0.35,
+                tone_hz: 6000.0,
+                mix: 0.25,
+            }))
+        ));
+        for (class, carried, words) in [
             (
                 "AutoFilter",
-                "Live's Auto Filter has no model in the engine yet",
+                &filter[..3],
+                "the engine's model of Live's Auto Filter sounds the Torus's Filter from its FilterType, Cutoff, Resonance, Drive, and no Drive is carried",
             ),
-            ("Delay", "Live's Delay has no model in the engine yet"),
+            (
+                "Delay",
+                &[][..],
+                "the engine's model of Live's Delay sounds the Torus's Delay from its DelayLine_TimeL, Feedback, Filter_Frequency, DryWet, and no DelayLine_TimeL is carried",
+            ),
+            (
+                "AutoFilter",
+                &[("FilterType", 3.0), ("Cutoff", 100.0), ("Resonance", 0.2), ("Drive", 0.0)][..],
+                "the engine's model of Live's Auto Filter sounds its FilterType 0, 1, 2 or 4 (low-pass, high-pass, band-pass, notch), not 3",
+            ),
+            (
+                "AutoFilter",
+                &[("FilterType", 0.0), ("Cutoff", 140.0), ("Resonance", 0.2), ("Drive", 0.0)][..],
+                "Live's Auto Filter holds its Cutoff within 20 to 135, not 140",
+            ),
+            (
+                "Delay",
+                &[("DelayLine_TimeL", 0.25), ("Feedback", 0.99), ("Filter_Frequency", 6000.0), ("DryWet", 0.25)][..],
+                "Live's Delay holds its Feedback within 0 to 0.9499999881, not 0.99",
+            ),
+            (
+                "Compressor2",
+                &[("Threshold", 0.0)][..],
+                "Live's Compressor holds its Threshold within 0.0003162277571 to 1.99526238, not 0",
+            ),
+            (
+                "Compressor2",
+                &[("DryWet", 0.5)][..],
+                "the engine's model of Live's Compressor does not take its DryWet yet",
+            ),
+            (
+                "Delay",
+                &[("Freeze", 1.0)][..],
+                "the engine's model of Live's Delay does not take its Freeze yet",
+            ),
+            ("Eq8", &[][..], "Live's Eq8 has no model in the engine yet"),
         ] {
-            assert_eq!(rack_device(class, &[]).unwrap_err(), words);
+            assert_eq!(rack_device(class, carried).unwrap_err(), words);
         }
         assert_eq!(
             rack_device("Reverb", &[("PreDelay", 20.0)]).unwrap_err(),
@@ -564,7 +861,6 @@ mod tests {
         // the reverb rings what it is given, every sample, in real time: a dense second renders
         let mut r = rack_device("Reverb", &[("DecayTime", 600.0)]).unwrap();
         r.device.prepare(48_000, 2);
-        let clock = Clock::start(48_000, 120.0);
         let started = std::time::Instant::now();
         let mut heard = 0f32;
         for n in 0..48_000 {

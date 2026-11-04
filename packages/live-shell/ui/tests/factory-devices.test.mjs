@@ -125,8 +125,17 @@ test('compact is a picture and at most four controls: the others\' are their mos
   assert.deepEqual(compact('git'), ['commit-policy', 'push-policy', 'land'])
   for (const {device} of set) assert.ok(compactRows(device.rows).length <= 4)
   const rack = slotOf(set, 'skillset').device.rows
-  assert.deepEqual(rack.map(row => row.key), ['thoroughness', 'test-depth', 'reach', 'risk'], 'the rows ai-kit declares are kept, none dropped')
-  assert.ok(rack.every(row => !row.macro && !row.writePath && row.group === 'Settings'), 'and they are plain readings: ai-kit declares no mapping and no writer, so none claims macro')
+  // REPLACED (lane BD round 12, §19.7 "Refining a skill"): the rack's rows were ai-kit's four settings alone. The Refining page's rows
+  // (agentParamAddresses.ts refine.*) are declared to the law too, and stand under their own group; Test, Accept and Discard are owner
+  // writes, and a page's presses: none is a compact control, so none becomes a macro or a plan key.
+  assert.deepEqual(rack.map(row => row.key), ['thoroughness', 'test-depth', 'reach', 'risk',
+    'refine.member', 'refine.why', 'refine.revision', 'refine.test', 'refine.result', 'refine.run', 'refine.accept', 'refine.discard'], 'the rows ai-kit declares are kept, none dropped')
+  const settings = rack.filter(row => row.group === 'Settings'), refining = rack.filter(row => row.group === 'Refining')
+  assert.deepEqual(settings.map(row => row.key), ['thoroughness', 'test-depth', 'reach', 'risk'])
+  assert.ok(settings.every(row => !row.macro && !row.writePath), 'the settings are plain readings: ai-kit declares no mapping and no writer, so none claims macro')
+  assert.equal(refining.length, 8, 'the Refining page\'s rows stand under their own group')
+  assert.deepEqual(refining.filter(row => row.writePath).map(row => row.key), ['refine.run', 'refine.accept', 'refine.discard'])
+  assert.ok(refining.every(row => row.compact === false && !row.macro), 'a page\'s presses are kept off the compact size')
   for (const {slot, device} of set) assert.ok(device.rows.every(row => !row.macro), `${slot.id}: no row of the chain claims a macro`)
 })
 
@@ -324,8 +333,14 @@ test('one device in three sizes: the same live rows, a picture in each — no te
   const rack = html(createElement(DeviceView, {device: slotOf(set, 'skillset').device, size: 'compact', picture: null}))
   assert.equal((rack.match(/data-param=/g) ?? []).length, 0, 'the compact rack draws no badge for settings it cannot map as macros')
   const rackWhole = html(createElement(DeviceView, {device: slotOf(set, 'skillset').device, size: 'whole', picture: null}))
-  assert.equal((rackWhole.match(/data-control="readout"/g) ?? []).length, 4, 'the whole rack keeps ai-kit\'s four settings as readings: no control without an owner write')
-  assert.doesNotMatch(rackWhole, /data-control="(?:radio|radio-stack|chooser|toggle|dial|box|field)"|role="slider"|class="dp-sec-label">Macros</)
+  // REPLACED (lane BD round 12): the whole rack drew ai-kit's four settings as its only readouts and no control. The Refining page's five
+  // readings stand beside them as readouts, and its three presses (Test, Accept, Discard) are controls on their owner's writes.
+  assert.equal((rackWhole.match(/data-control="readout"/g) ?? []).length, 9, 'the whole rack keeps ai-kit\'s four settings and the Refining page\'s five readings as readings')
+  const controls = [...rackWhole.matchAll(/data-param="([^"]+)"[^>]*data-control="(?!readout)([^"]+)"|data-control="(?!readout)([^"]+)"[^>]*data-param="([^"]+)"/g)]
+    .map(match => match[1] ?? match[4]).sort()
+  assert.deepEqual(controls, ['refine.accept', 'refine.discard', 'refine.run'], 'no control without an owner write')
+  assert.doesNotMatch(rackWhole, /role="slider"|class="dp-sec-label">Macros</)
+  assert.match(rackWhole, /class="dp-sec-label">Refining</)
   assert.match(rackWhole, /class="dp-sec-label">Settings</)
   const agent = html(createElement(DeviceView, {device: slotOf(set, 'agent').device, size: 'compact', picture: null}))
   // Effort (four short choices) and input (two) stand as the kit's radios (DEVICE-UI §5 Radio: one of two to five).

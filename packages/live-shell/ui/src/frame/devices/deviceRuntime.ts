@@ -26,14 +26,15 @@ export interface DeviceInstance {
   handBack?: (key: string) => Promise<void>
 }
 
-/** The compact size's controls: the declared macros, else the rows marked compact, else the first write rows — at most four. */
+/** The compact size's controls: the declared macros, else the rows marked compact, else the first write rows its device does not keep
+ * off the compact size (`compact: false`, a page's press) — at most four. */
 export function compactRows(rows: readonly SdkParamRow[]): SdkParamRow[] {
   // A macro is a macro only when it maps at least one row (lock §5.3); a mapping the owner has not declared is not one.
   const macros = rows.filter(row => (row.macro?.maps.length ?? 0) > 0)
   if (macros.length) return macros.slice(0, 4)
   const marked = rows.filter(row => row.compact)
   if (marked.length) return marked.slice(0, 4)
-  return rows.filter(row => row.writePath).slice(0, 4)
+  return rows.filter(row => row.writePath && row.compact !== false).slice(0, 4)
 }
 
 /** The whole size's rows, grouped by their declared group in first-seen order; ungrouped rows stand under the device's own name. */

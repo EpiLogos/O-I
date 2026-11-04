@@ -36,18 +36,22 @@ pub mod k8;
 #[cfg(feature = "realtime")]
 pub mod realtime;
 
-pub use bridge::{bridge, rack_device, BridgeResult, BridgeWarning};
+pub use bridge::{
+    auto_filter_cutoff, auto_filter_hz, bridge, live_holds, rack_device, BridgeResult,
+    BridgeWarning, AUTO_FILTER_TYPES,
+};
 pub use devices::{
-    BypassDevice, CompressorDevice, EchoDevice, EchoParams, GainDevice, GlueDevice, ReverbDevice,
+    BypassDevice, CompressorDevice, DelayDevice, DelayParams, EchoDevice, EchoParams, FilterDevice,
+    FilterKind, FilterParams, GainDevice, GlueDevice, ReverbDevice,
 };
 pub use engine::{
-    engine, Due, EngineCore, EngineEvent, EngineHandle, MixerState, Part, Performance, Refusal,
-    Stamped, HAND_HOLD_MAX,
+    engine, BlockStamp, Due, EngineCore, EngineEvent, EngineHandle, MixerState, Part, Performance,
+    Refusal, Stamped, HAND_HOLD_MAX,
 };
 pub use graph::{
     ClipEdge, Clock, Device, Graph, GraphError, Instrument, MasterTrack, Note, RackDevice,
-    ReturnTrack, TorusAct, TorusStrike, Track, MAX_RETURNS, TORUS_ACT_KEYS, TORUS_STRIKE_MODES,
-    TORUS_WAITING,
+    ReturnTrack, TorusAct, TorusHear, TorusStrike, Track, MAX_RETURNS, TORUS_ACT_KEYS,
+    TORUS_HEAR_FRAMES, TORUS_HEAR_MODES, TORUS_STRIKE_MODES, TORUS_WAITING,
 };
 pub use instruments::{OperatorInstrument, SilentInstrument};
 

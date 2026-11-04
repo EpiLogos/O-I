@@ -166,10 +166,17 @@ test('the Agentset rack: a group\'s sessions as its chains, each named by its ag
   const held = own.agentsetValues({group: GROUP, tracks: TRACKS, holds: bind.chainHolds()})
   assert.equal(held.member, HELPER.sessionRef, 'the chosen member is the view\'s')
   assert.equal('device' in binding.local, false, 'no device of the chain is chosen: the Devices view shows them all')
-  for (const key of ['fanOut', 'depth', 'handBack', 'returnCap', 'model', 'effort', 'budget', 'unmapped', 'store', 'variation', 'bench', 'solo', 'swap', 'extract', 'add', 'dev']) {
+  for (const key of ['fanOut', 'depth', 'handBack', 'returnCap', 'model', 'effort', 'budget', 'unmapped', 'store', 'variation', 'solo', 'dev']) {
     assert.match(binding.standing[key].disabled, /missing op/, key)
     await assert.rejects(() => binding.write([{key, value: 1}]), /missing op/)
   }
+  // REPLACED (round 859): bench, extract and add were missing ops. AIKit carries each (the kernel's encounter_session_bench, _drag_out and
+  // _attach), so a rack handed no carrier names the one that carries it; Hot-Swap is refused in AIKit's own law (a session keeps its agent).
+  for (const [key, op] of [['bench', 'encounter_session_bench'], ['extract', 'encounter_session_drag_out'], ['add', 'encounter_session_attach']]) {
+    assert.match(binding.standing[key].disabled, new RegExp(`no carrier to AIKit's .*\\(the kernel's ${op}\\) stands on this chain`), key)
+  }
+  assert.match(binding.standing.swap.disabled, /A canonical session must not silently become another Agent/)
+  await assert.rejects(() => binding.write([{key: 'swap', value: HELPER.sessionRef}]), {message: own.AGENTSET_REFUSE.swap})
   // The chain list's own keys, one for each member, answer with their control's refusal (§19.15 The members).
   await assert.rejects(() => binding.write([{key: `bench:${HELPER.sessionRef}`, value: true}]), {message: own.AGENTSET_REFUSE.bench})
   await assert.rejects(() => binding.write([{key: `solo:${HELPER.sessionRef}`, value: true}]), {message: own.AGENTSET_REFUSE.solo})

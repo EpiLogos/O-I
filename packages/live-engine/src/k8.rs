@@ -30,7 +30,10 @@
 //! `tests/k8_no_alloc.rs` counts them at zero). Making a field and its law
 //! allocates, off the thread.
 
-use crate::graph::{Clock, Instrument, TorusAct, TorusStrike, TORUS_ACT_KEYS, TORUS_STRIKE_MODES};
+use crate::graph::{
+    Clock, Instrument, TorusAct, TorusHear, TorusStrike, TORUS_ACT_KEYS, TORUS_HEAR_FRAMES,
+    TORUS_STRIKE_MODES,
+};
 use std::ffi::{c_char, c_int, CString};
 use std::ptr::NonNull;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -287,6 +290,7 @@ extern "C" {
         im: *const f64,
         n: usize,
     ) -> c_int;
+    fn le_k8_move_gains(field: *mut LeK8Field, gains: *const f64, n: usize, frames: u64) -> c_int;
     fn le_k8_silence(field: *mut LeK8Field);
     fn le_k8_amplitude(field: *const LeK8Field, mode: usize, re: *mut f64, im: *mut f64) -> c_int;
     fn le_k8_field_free(field: *mut LeK8Field);
@@ -613,6 +617,26 @@ impl K8Field {
         }
     }
 
+    /// Move the gains the body is heard by to `gains` (one per mode, in mode order) over the next `frames`
+    /// samples from the cursor, as its owner reached them over a part of its block (O-I #849 round 14;
+    /// `ql::ContinuousField::move_gains`), however those samples are rendered (the audio thread: no
+    /// allocation). A move under way is reached on from where it stands. False when the field refused it
+    /// whole (not one finite gain per mode within its bound, or a length outside 1 to 8192): nothing moved.
+    pub fn move_gains(&mut self, gains: &[f64], frames: u32) -> bool {
+        if frames == 0 || frames > TORUS_HEAR_FRAMES {
+            return false;
+        }
+        // SAFETY: a live owned field; `gains` holds `gains.len()` doubles, read during the call only.
+        unsafe {
+            le_k8_move_gains(
+                self.ptr.as_ptr(),
+                gains.as_ptr(),
+                gains.len(),
+                u64::from(frames),
+            ) == 1
+        }
+    }
+
     /// Still the body at the cursor (Panic; `ql::ContinuousField::silence`): every resident
     /// state at rest and the acts waiting for later samples dropped; the voices, gains, clock,
     /// cursor and the Carrier's drive stand. The audio thread: no allocation.
@@ -731,6 +755,11 @@ pub const K8_WAITING: usize = 256;
 /// strikes no note of its own: a note on its part (its clip's or a MIDI note-on) is its owner's to
 /// play, which the host hands the owner as a key at the note's sample and the owner strikes back as
 /// its act. A Torus not handed over strikes a note's prepared act ([`K8Field::set_key`]), if any.
+///
+/// It is heard by the gains its owner is heard by (O-I #849 round 14): a move its owner reached over a
+/// part of its block ([`crate::EngineEvent::TorusHear`]) waits for the owner's sample and is reached
+/// from it over the owner's samples, as the owner reached it, though the node renders one frame at a
+/// time; one whose sample has passed is reached at once and counted late.
 #[derive(Debug)]
 pub struct K8Instrument {
     field: K8Field,
@@ -741,6 +770,10 @@ pub struct K8Instrument {
     handover: Option<u32>,
     /// The owner's acts for later samples, by sample (capacity [`K8_WAITING`], made off the audio thread).
     waiting: Vec<TorusStrike>,
+    /// The owner's moves for later samples, by sample, a move's parts together (capacity [`K8_WAITING`]).
+    hearing: Vec<TorusHear>,
+    /// One gain per mode: where a move's parts are gathered as it is reached (made off the audio thread).
+    gains: Vec<f64>,
 }
 
 /// A Torus node's counts as its host reads them while it plays (O-I #849 round 13): the audio
@@ -763,6 +796,7 @@ impl K8Counts {
 
 impl K8Instrument {
     pub fn new(field: K8Field) -> K8Instrument {
+        let modes = field.mode_count();
         K8Instrument {
             field,
             one: [0.0],
@@ -770,6 +804,8 @@ impl K8Instrument {
             counts: Arc::default(),
             handover: None,
             waiting: Vec::with_capacity(K8_WAITING),
+            hearing: Vec::with_capacity(K8_WAITING),
+            gains: vec![0.0; modes],
         }
     }
 
@@ -808,6 +844,47 @@ impl K8Instrument {
     /// The owner's acts waiting for their sample.
     pub fn waiting(&self) -> usize {
         self.waiting.len()
+    }
+
+    /// The parts of the owner's moves waiting for their sample.
+    pub fn hearing(&self) -> usize {
+        self.hearing.len()
+    }
+
+    /// Reach the move whose parts stand first in `hearing`: gathered whole (one part after another,
+    /// every mode once, all for one sample and length) it is moved; otherwise refused and counted.
+    fn hear(&mut self) {
+        let Some(first) = self.hearing.first().copied() else {
+            return;
+        };
+        let ends = self
+            .hearing
+            .iter()
+            .position(|h| h.at != first.at || h.frames != first.frames)
+            .unwrap_or(self.hearing.len());
+        let mut whole = usize::from(first.total) == self.gains.len();
+        let mut reached = 0;
+        for part in &self.hearing[..ends] {
+            let from = usize::from(part.first);
+            let gains = part.gains();
+            if !whole
+                || from != reached
+                || part.total != first.total
+                || from + gains.len() > self.gains.len()
+            {
+                whole = false;
+                break;
+            }
+            self.gains[from..from + gains.len()].copy_from_slice(gains);
+            reached += gains.len();
+        }
+        self.hearing.drain(..ends);
+        if !(whole
+            && reached == self.gains.len()
+            && self.field.move_gains(&self.gains, first.frames))
+        {
+            K8Counts::add(&self.counts.refused);
+        }
     }
 
     fn strike(&mut self, act: &TorusStrike) -> bool {
@@ -888,8 +965,22 @@ impl Instrument for K8Instrument {
         true
     }
 
+    fn torus_hear(&mut self, hear: &TorusHear, _clock: &Clock) -> bool {
+        if self.handover != Some(hear.handover) {
+            return false;
+        }
+        if !self.rate_ok || self.hearing.len() == self.hearing.capacity() {
+            K8Counts::add(&self.counts.refused);
+            return false;
+        }
+        // after the parts for the same sample that came before it: a move's parts stay together, in order
+        let at = self.hearing.partition_point(|h| h.at <= hear.at);
+        self.hearing.insert(at, *hear);
+        true
+    }
+
     // Panic stills what was struck (QL's silence law) and drops the acts waiting for later samples;
-    // the body's drive stands.
+    // the body's drive and the gains it is heard by stand, and so do the moves its owner reached.
     fn panic(&mut self, _clock: &Clock) {
         self.field.silence();
         self.waiting.clear();
@@ -901,6 +992,15 @@ impl Instrument for K8Instrument {
             while self.waiting.first().is_some_and(|w| w.at <= now) {
                 let act = self.waiting.remove(0);
                 self.strike(&act);
+            }
+        }
+        if !self.hearing.is_empty() && self.rate_ok {
+            let now = self.field.samples_elapsed();
+            while self.hearing.first().is_some_and(|h| h.at <= now) {
+                if self.hearing[0].at < now {
+                    K8Counts::add(&self.counts.late);
+                }
+                self.hear();
             }
         }
         let v = if self.rate_ok && self.field.render(&mut self.one, false) {

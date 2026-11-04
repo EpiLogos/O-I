@@ -128,16 +128,56 @@ impl Client {
         binding: &str,
         op: &str,
     ) -> Result<Value, String> {
+        self.gateway_call(
+            cwd,
+            &["agent", "--binding", binding, op],
+            "AIKit gateway agent control",
+        )
+    }
+
+    /// One sender kind's ingress rule on a harness binding (manual §19.12,
+    /// Scope's Calls to other agents): `aikit gateway ingress --binding <REF>
+    /// --kind <KIND> --decision allow|pair|deny|clear --json`. AIKit's policy
+    /// decides a sender by its own id first, then by this kind rule, then by
+    /// the binding's one default; the answer is the binding's ingress as it
+    /// now stands, and a refusal comes back as named data as the agent
+    /// controls' does.
+    pub fn gateway_ingress(
+        &self,
+        binding: &str,
+        kind: &str,
+        decision: Option<&str>,
+    ) -> Result<Value, String> {
+        self.gateway_call(
+            None,
+            &[
+                "ingress",
+                "--binding",
+                binding,
+                "--kind",
+                kind,
+                "--decision",
+                decision.unwrap_or("clear"),
+            ],
+            "AIKit gateway ingress rule",
+        )
+    }
+
+    /// `aikit --json gateway <tail>`: the gateway's `data` verbatim, or its
+    /// refusal (or an unreachable gateway) as named data.
+    fn gateway_call(
+        &self,
+        cwd: Option<&Path>,
+        tail: &[&str],
+        what: &'static str,
+    ) -> Result<Value, String> {
         let mut args: Vec<std::ffi::OsString> = Vec::new();
         if self.suite_route {
             args.push("aikit".into());
         }
         args.push("--json".into());
         args.push("gateway".into());
-        args.push("agent".into());
-        args.push("--binding".into());
-        args.push(binding.into());
-        args.push(op.into());
+        args.extend(tail.iter().map(std::ffi::OsString::from));
         let mut environment = self
             .home
             .as_ref()
@@ -151,7 +191,7 @@ impl Client {
             &args,
             cwd,
             std::time::Duration::from_secs(15),
-            "AIKit gateway agent control",
+            what,
             &environment,
         ) {
             Ok(answer) => answer,
@@ -184,7 +224,7 @@ impl Client {
         answer
             .get("data")
             .cloned()
-            .ok_or_else(|| "AIKit gateway agent answer has no data".to_owned())
+            .ok_or_else(|| format!("{what}: the answer has no data"))
     }
 
     /// Read-only protocol currency comes from the same owner and isolated home
@@ -839,6 +879,126 @@ impl Client {
         Ok(
             serde_json::json!({"schema": "oi.encounter-session-detach/v1", "agent_session": agent_session,
             "outcome": "detached", "spaces": holding}),
+        )
+    }
+
+    /// The Project's SessionSpaces (AIKit's own records), and the one named
+    /// `space` among them: the chain list acts only on a rack of this Project.
+    fn project_space(
+        &self,
+        cwd: &Path,
+        project_ref: &str,
+        space: &str,
+    ) -> Result<(Vec<Value>, Value), String> {
+        let spaces = self.read_project(cwd, project_ref)?;
+        let rows = spaces.as_array().cloned().unwrap_or_default();
+        let found = rows
+            .iter()
+            .find(|row| row["definition"]["id"].as_str() == Some(space))
+            .cloned()
+            .ok_or_else(|| format!("{space} is not one of this native Project's SessionSpaces"))?;
+        Ok((rows, found))
+    }
+
+    /// Bench a chain of the rack, or lift its bench (manual §19.15, the
+    /// chain list's Activator: "it stays in the rack and is given no work"):
+    /// AIKit's own `bench-agent-session` on the rack's space, staged and
+    /// applied as the attachment was. The session stays in the space, and
+    /// AIKit's executor gives a benched session no work.
+    pub fn session_bench(
+        &self,
+        cwd: &Path,
+        project_ref: &str,
+        space: &str,
+        agent_session: &str,
+        benched: bool,
+    ) -> Result<Value, String> {
+        let (_, row) = self.project_space(cwd, project_ref, space)?;
+        if row["agent_sessions"].get(agent_session).is_none() {
+            return Err(format!("{agent_session} is not a chain of {space}"));
+        }
+        let intent = serde_json::json!({"operation": "bench-agent-session", "agent_session": agent_session,
+            "benched": benched});
+        let staged = self.stage_intent(cwd, space, &intent)?;
+        self.apply_preview(cwd, &staged)?;
+        Ok(
+            serde_json::json!({"schema": "oi.encounter-session-bench/v1", "agent_session": agent_session,
+            "space": space, "benched": benched}),
+        )
+    }
+
+    /// Add a chain to a rack (manual §19.15 "Drag an agent or a set into the
+    /// list to add it"): a session already standing in one of the Project's
+    /// spaces joins `space` through AIKit's own `attach-agent-session`, with
+    /// the purpose it was seated for. A session the Project does not hold is
+    /// not seated here: seating a new one is the provision's.
+    pub fn session_attach(
+        &self,
+        cwd: &Path,
+        project_ref: &str,
+        space: &str,
+        agent_session: &str,
+    ) -> Result<Value, String> {
+        let (rows, row) = self.project_space(cwd, project_ref, space)?;
+        if row["agent_sessions"].get(agent_session).is_some() {
+            return Err(format!("{agent_session} is already a chain of {space}"));
+        }
+        let seated = rows
+            .iter()
+            .find_map(|other| other["agent_sessions"].get(agent_session))
+            .ok_or_else(|| {
+                format!("{agent_session} stands in none of this native Project's SessionSpaces: only a standing session joins a rack")
+            })?;
+        let mut attachment = serde_json::json!({"agent_session": agent_session,
+            "provenance": ["added to the rack's chain list from the desk"]});
+        if let Some(purpose) = seated["purpose"].as_str() {
+            attachment["purpose"] = purpose.into();
+        }
+        let intent =
+            serde_json::json!({"operation": "attach-agent-session", "attachment": attachment});
+        let staged = self.stage_intent(cwd, space, &intent)?;
+        self.apply_preview(cwd, &staged)?;
+        Ok(
+            serde_json::json!({"schema": "oi.encounter-session-attach/v1", "agent_session": agent_session,
+            "space": space, "outcome": "attached"}),
+        )
+    }
+
+    /// Drag a chain out of its rack (manual §19.15 "it works there alone,
+    /// chain and all"): AIKit's own `session-space drag-out` makes `into`, a
+    /// space of its own in the same Project, seats the session there with its
+    /// Project contexts and its bench, and detaches it from `space` last;
+    /// each step is AIKit's stage and apply, with each space's history kept.
+    pub fn session_drag_out(
+        &self,
+        cwd: &Path,
+        project_ref: &str,
+        space: &str,
+        agent_session: &str,
+        into: &str,
+        label: Option<&str>,
+    ) -> Result<Value, String> {
+        let (_, row) = self.project_space(cwd, project_ref, space)?;
+        if row["agent_sessions"].get(agent_session).is_none() {
+            return Err(format!("{agent_session} is not a chain of {space}"));
+        }
+        let mut args = vec![
+            "drag-out",
+            "--space",
+            space,
+            "--agent-session",
+            agent_session,
+            "--into",
+            into,
+        ];
+        if let Some(label) = label {
+            args.extend(["--label", label]);
+        }
+        let receipts: Value = serde_json::from_str(&self.session_space(cwd, &args)?)
+            .map_err(|error| format!("AIKit's drag-out answer is not JSON: {error}"))?;
+        Ok(
+            serde_json::json!({"schema": "oi.encounter-session-drag-out/v1", "agent_session": agent_session,
+            "space": space, "into": into, "receipts": receipts}),
         )
     }
 }
@@ -1981,9 +2141,15 @@ impl Client {
         command.arg("-C").arg(cwd);
         command.args(args);
         let verb = args.first().copied().unwrap_or("session-space");
-        // `create` and `stage` return write-free previews; `apply` writes.
-        let output = output_bounded(&mut command, SESSION_SPACE_LIMIT, verb, verb == "apply")
-            .map_err(|error| format!("AIKit SessionSpace is unavailable: {error}"))?;
+        // `create` and `stage` return write-free previews; `apply` and
+        // `drag-out` write.
+        let output = output_bounded(
+            &mut command,
+            SESSION_SPACE_LIMIT,
+            verb,
+            matches!(verb, "apply" | "drag-out"),
+        )
+        .map_err(|error| format!("AIKit SessionSpace is unavailable: {error}"))?;
         if !output.status.success() {
             return Err(owner_process_failure(
                 args.first().copied().unwrap_or("session-space"),
@@ -2703,6 +2869,33 @@ mod gateway_agent_tests {
         ] {
             assert!(argv.contains(expected), "argv missing `{expected}`: {argv}");
         }
+    }
+
+    /// Scope's Calls to other agents (manual §19.12): one sender kind's rule
+    /// goes to AIKit's `gateway ingress` with the binding, the kind and the
+    /// decision in order, `clear` where no decision is named; the policy as
+    /// the gateway now holds it passes through.
+    #[test]
+    fn an_ingress_rule_carries_the_binding_the_kind_and_the_decision() {
+        let dir = unique_dir("ingress");
+        let canned = r#"{"ok":true,"data":{"type":"ingress-rule-set","binding_ref":"gateway-binding/telegram","ingress":{"default":"allow","kind_rules":{"agent":"pair"}}},"schema":1}"#;
+        let client = Client::with(fake_aikit(&dir, canned), None);
+        let document = super::tests::retry_busy(|| {
+            client.gateway_ingress("gateway-binding/telegram", "agent", Some("pair"))
+        })
+        .expect("fake answers");
+        assert_eq!(document["ingress"]["kind_rules"]["agent"], "pair");
+        let argv = std::fs::read_to_string(dir.join("argv.txt")).unwrap();
+        assert!(
+            argv.ends_with("--json gateway ingress --binding gateway-binding/telegram --kind agent --decision pair"),
+            "{argv}"
+        );
+        super::tests::retry_busy(|| {
+            client.gateway_ingress("gateway-binding/telegram", "agent", None)
+        })
+        .expect("fake answers");
+        let argv = std::fs::read_to_string(dir.join("argv.txt")).unwrap();
+        assert!(argv.ends_with("--kind agent --decision clear"), "{argv}");
     }
 
     #[test]

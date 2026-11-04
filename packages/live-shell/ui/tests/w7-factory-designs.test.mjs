@@ -176,7 +176,9 @@ test('2 · Capture skill is the Skillset rack\'s Capture page on the armed track
   assert.equal(places.SLOT_DEVICE.capture, undefined, 'no Capture plate')
   const view = read('agent/devices/FactoryDeviceChain.tsx')
   assert.match(view, /const captureOn = sessionChain && !groupTrack\n/)
-  assert.match(view, /const rackCarrying = useMemo\(\(\) => \(rackDesignBinding \? carryPages\(rackDesignBinding, captureOn \? \[\{page: CAPTURE_PAGE, binding: captureDesignBinding\}\] : \[\]\) : null\)/)
+  // REPLACED (lane BD round 12): the rack also carries its Refining page (§19.7) on every chain it stands on; Capture stays the armed
+  // session's alone.
+  assert.match(view, /const rackCarrying = useMemo\(\(\) => \(rackDesignBinding \? carryPages\(rackDesignBinding, \[\.\.\.\(captureOn \? \[\{page: CAPTURE_PAGE, binding: captureDesignBinding\}\] : \[\]\),\n    \{page: REFINE_PAGE, binding: refiningDesignBinding\}\]\) : null\)/)
   assert.doesNotMatch(view, /placed\(CAPTURE_SKILL_ID/, 'no Capture plate on any chain')
   // REPLACED (O-I #740 lane B): RACK_PROJECT ('O-I'); the chain's register — the session's own, the root's null (agent/worldScope.ts).
   assert.match(view, /promote: \(candidate, id\) => ownerRouteWrite\(transport, aikitWriteOp\(\{kind: 'promote', project: register, candidate/)

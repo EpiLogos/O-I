@@ -57,6 +57,14 @@ export const aikitWriteOp = (request: AikitWriteRequest): KernelOp => ({op: 'aik
 export const workcellReadOp = (request: WorkcellReadRequest): KernelOp => ({op: 'workcell_read', request})
 export const aikitReadOp = (request: AikitReadRequest): KernelOp => ({op: 'aikit_read', request})
 
+/** AIKit's answer to a proposed revision of a skill (DLW §19.7 "Refining a skill"): Accept or Discard on the member, through AIKit's own
+ * `aikit source refine accept|discard` (aikit_write refinement-accept · refinement-discard). The one write the Skillset rack's Refining
+ * page and Approvals both press, on Factory's chain and on Central's. Absent while no kernel is reached. */
+export const refinementWrite = (transport: KernelTransportStatus): ((request: {kind: string; member: string}) => Promise<OwnerRouteAnswer>) | undefined =>
+  transport.kind !== 'unavailable'
+    ? request => ownerRouteWrite(transport, aikitWriteOp(request as AikitWriteRequest), `\`aikit source refine ${request.kind.replace('refinement-', '')}\``)
+    : undefined
+
 /** The plain words of each write, for a refusal that names the command it could not ask. */
 export const ROUTE_WORDS = {
   send: '`aikit gateway send`',

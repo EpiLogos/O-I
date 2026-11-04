@@ -89,6 +89,17 @@ export const SHELL_MARK_SET = 'blade'
 /** A write no owner operation carries: refused in words that name the owner and the operation it lacks. */
 const missing = (what: string, op: string, owner: string) => `${what}: no owner operation carries it yet — missing op: ${op} (${owner}).`
 
+/** Scope's Calls to other agents (§19.12 Asks): AIKit's ingress rule for the sender kind agent on each gateway binding of the session
+ * (GatewayIngressPolicy kind_rules, decided after a sender's own id and before the binding's one default), set through the kernel's
+ * harness_ingress_rule. Why it is not pressable, or a value it does not take. */
+export const CALLS_REFUSE = {
+  uncarried: 'Calls to other agents: no carrier to AIKit\'s ingress rule for the sender kind agent (the kernel\'s harness_ingress_rule) stands on this chain.',
+  unread: 'Calls to other agents: AIKit\'s gateway has not answered yet, so no rule for calls from other agents is read.',
+  unbound: 'Calls to other agents: this session holds no conversation on AIKit\'s gateway, so no binding of it takes a rule for calls from other agents.',
+  refused: (why: string) => `Calls to other agents: AIKit's gateway did not answer, so no rule for calls from other agents is read. ${why}`,
+  decision: (value: string) => `Calls to other agents is Allow, Ask or Deny, not ${value}.`,
+} as const
+
 const REFUSE = {
   power: 'Power is a reading: the harness reports whether the agent is on; Actuation exposes no Power write.',
   budget: 'Budget is a reading here: used and cap come from the session\'s task record (encounter_task_read); Actuation exposes no budget write.',
@@ -103,12 +114,13 @@ const REFUSE = {
   run: missing('Run', 'the exact JSON input `aikit praxis method run <ref> --input` takes (the kernel\'s aikit_write method-run carries it; the member has no field for it)', 'AIKit'),
   prove: missing('Prove', 'the run\'s proof `aikit praxis method prove --method <ref> --proof-json` takes (its Activity, Return, Evidence and verification refs; the member holds no run receipt)', 'AIKit'),
   reach: missing('Reach', 'the scope reach write on the world device\'s apply path (WO-SF2)', 'Software Factory'),
-  // Scope's Asks page (§19.12 Asks): Calls to other agents is AIKit's ingress rule for a call from one agent to another, which no write
-  // reaches; Wait and On no answer are the harness's approvals timeout and what a timed-out request comes to, which harness_agent_control
-  // does not carry (it carries approvals, transport, connect and stall-after only: harnessAgentControl.ts).
-  calls: missing('Calls to other agents', 'an ingress rule for the sender kind agent: AIKit\'s GatewayIngressPolicy decides by a sender\'s own id (sender_overrides) or its one default, never by kind, and no write reaches it', 'AIKit'),
-  wait: missing('Wait', 'the agent\'s approvals timeout (Hermes\' approvals.timeout: harness_agent_control carries approvals, transport, connect and stall-after only)', 'Actuation'),
-  noAnswer: missing('On no answer', 'a timed-out request\'s outcome on the agent\'s harness', 'Actuation'),
+  // Scope's Asks page (§19.12 Asks): Calls to other agents is AIKit's ingress rule for the sender kind agent (CALLS_REFUSE; scopeBinding
+  // writes it where the chain hands in its carrier). Wait and On no answer are the harness's approvals timeout and what a request nobody
+  // answered comes to: Hermes keeps both itself (tools/approval_context.py: approvals.timeout, 300 s unless set; a request that times out
+  // is denied), no owner declares a seam on Hermes' config, and harness_agent_control does not carry them (harnessAgentControl.ts).
+  calls: CALLS_REFUSE.uncarried,
+  wait: missing('Wait', 'the agent\'s approvals timeout written for its harness (Hermes\' approvals.timeout, 300 s unless set: neither AIKit nor Actuation declares a seam on Hermes\' config, and harness_agent_control carries approvals, transport, connect and stall-after only)', 'Actuation'),
+  noAnswer: missing('On no answer', 'Hold for a request nobody answered: Hermes denies a request nobody answers when its approvals.timeout runs out, and holds none, so Deny is Hermes\' own and nothing carries Hold', 'Hermes'),
   place: missing('A place in reach', 'the scope places write (WO-SF2)', 'Software Factory'),
   scope: 'Choose where the composition applies — Home, Project or Session — then Preview.',
   noPlan: 'Nothing is previewed: press Preview, read the change, then Apply.',
@@ -946,6 +958,177 @@ export function rackBinding(id: string, input: RackInput, ports: ComposePorts | 
   }
 }
 
+// ---------------------------------------------------------------------------------------------------------------- the Refining page
+// The Skillset rack's Refining page (manual §19.7 "Refining a skill"; skills.tsx `refine.` keys, carried under the rack by
+// oneAgentBinding.ts REFINE_PAGE). AIKit keeps a proposed revision where it keeps the member's revisions — a snapshot of the member's own
+// source beside the snapshot in use (`aikit source refine list|accept|discard`, the kernel's aikit_read refinement-list and aikit_write
+// refinement-accept · refinement-discard) — with the closes that showed its reason (Why) and the takes that ran under it (Test). The Test
+// is the session's own Repeat over Skillset (sessionSettings.ts testRefinement, the same runner as Launch): its levels the set with the
+// proposed revision in it beside the set as it stands, which AIKit's take body carries into each take's World and reads back. Accept keeps
+// the proposal as the member's next revision (History's Rollback takes it back); Discard drops it. Member is the hand's own hold.
+
+/** One proposed revision as AIKit lists it (ai-kit skill_sources.rs Refinement). */
+export interface Refinement {
+  readonly member: string
+  readonly source: string
+  /** Who keeps the member's source: AIKit, or Central (a Control skill: AIKit refuses to accept it). */
+  readonly owner: 'aikit' | 'central'
+  readonly why: readonly {readonly task: string; readonly reason: string}[]
+  readonly proposed: {readonly snapshot: string; readonly revision: string}
+  readonly inUse: {readonly snapshot: string; readonly revision: string} | null
+  /** The source moved on since the proposal was drafted against it. */
+  readonly stale: boolean
+  readonly proposedAt: number | null
+  readonly tests: readonly {readonly trace: string; readonly beside: readonly string[]}[]
+}
+
+/** Central as the keeper of a member's source, in AIKit's listing (`owner`): an owner's name, not the shell's Central mode. */
+const CENTRAL_SOURCE = 'central' as const
+
+const revisionAt = (value: unknown): {snapshot: string; revision: string} | null =>
+  (isObj(value) && typeof value.snapshot === 'string' && typeof value.revision === 'string' ? {snapshot: value.snapshot, revision: value.revision} : null)
+
+/** AIKit's proposals (`aikit source refine list`: {proposals}), or null where the answer is not that listing. Pure. */
+export function refinementsOf(value: unknown): Refinement[] | null {
+  if (!isObj(value) || !Array.isArray(value.proposals)) return null
+  const rows: Refinement[] = []
+  for (const row of value.proposals) {
+    if (!isObj(row) || typeof row.member !== 'string' || typeof row.source !== 'string') continue
+    const proposed = revisionAt(row.proposed)
+    if (!proposed) continue
+    rows.push({member: row.member, source: row.source, owner: row.owner === CENTRAL_SOURCE ? CENTRAL_SOURCE : 'aikit',
+      why: (Array.isArray(row.why) ? row.why : []).filter(isObj).filter(item => typeof item.reason === 'string')
+        .map(item => ({task: typeof item.task_ref === 'string' ? item.task_ref : '', reason: item.reason as string})),
+      proposed, inUse: revisionAt(row.in_use), stale: row.stale === true,
+      proposedAt: typeof row.proposed_at_unix_seconds === 'number' ? row.proposed_at_unix_seconds : null,
+      tests: (Array.isArray(row.tests) ? row.tests : []).filter(isObj).filter(item => typeof item.trace === 'string')
+        .map(item => ({trace: item.trace as string, beside: strings(item.beside)}))})
+  }
+  return rows
+}
+
+/** Why a proposal's Result reads Open (§19.7: "A proposal whose test did not run, or whose takes did not answer a condition that the
+ * revision touches, shows Open"). */
+export const RESULT_WHY = {
+  untested: 'Open: no take has run under the proposed revision yet. Press Test to run the task\'s own Repeat over Skillset — the set with '
+    + 'the proposed revision in it, beside the set as it stands.',
+  noConditions: 'Open: the takes ran, but no take answered a Success condition — AIKit hands Actuation a task with no Success conditions, '
+    + 'and nothing reads a take against one (missing op: the task\'s Success conditions on AIKit\'s take run, and their reading of each take; AIKit, Actuation).',
+} as const
+
+/** The takes that ran under the proposed revision, beside the takes of the same Repeat that ran under the revision in use. Pure. */
+export function refinementTakes(refinement: Refinement): {trace: string; level: 'proposed' | 'in use'}[] {
+  const proposed = new Set(refinement.tests.map(test => test.trace))
+  const inUse = [...new Set(refinement.tests.flatMap(test => test.beside))].filter(trace => !proposed.has(trace))
+  return [...[...proposed].map(trace => ({trace, level: 'proposed' as const})), ...inUse.map(trace => ({trace, level: 'in use' as const}))]
+}
+
+/** Result for each condition the revision touches (each close's reason in Why) at each level — Met · Not met · Open — and why it reads
+ * as it does. Every condition is Open until a take answers it. Pure. */
+export function refinementResult(refinement: Refinement): {rows: {task: string; condition: string; proposed: 'met' | 'not met' | 'open'; inUse: 'met' | 'not met' | 'open'}[]; why: string} {
+  const rows = refinement.why.map(item => ({task: item.task, condition: item.reason, proposed: 'open' as const, inUse: 'open' as const}))
+  return {rows, why: refinement.tests.length ? RESULT_WHY.noConditions : RESULT_WHY.untested}
+}
+
+/** The AIKit acts of a refinement (aikit_write), each on the member chosen. */
+export const REFINE_WRITES: Readonly<Record<'accept' | 'discard', string>> = {accept: 'refinement-accept', discard: 'refinement-discard'}
+
+/** Why Accept stands refused for a proposal, or null where AIKit can be asked. Shared with Approvals' answer. */
+export function refinementAcceptWhy(refinement: Refinement): string | null {
+  if (refinement.owner === CENTRAL_SOURCE) return `Accept: Central keeps the source of ${refinement.member}, so AIKit does not adopt its revision — `
+    + 'missing op: Central keeping a proposed revision of a Control skill (Central).'
+  if (refinement.stale) return `Accept: the revision of ${refinement.member} this was drafted against is no longer in use (its source moved on since); Discard it and propose again.`
+  return null
+}
+
+export interface RefiningPorts {
+  /** AIKit's writes through the kernel (aikit_write). Absent: no carrier stands. */
+  readonly write?: (request: {kind: string; member: string}) => Promise<unknown>
+  /** The session's own Repeat over Skillset (sessionSettings.ts testRefinement). Absent: no session's task stands here. */
+  readonly test?: (set: string, member: string) => Promise<{ok: true; note: string} | {ok: false; error: string}>
+}
+
+export interface RefiningInput {
+  /** `aikit source refine list` (the kernel's aikit_read refinement-list). */
+  readonly refinements?: AikitAnswer
+  /** The set on the chain (rackValues `set`). */
+  readonly set: string | null
+  readonly holds: ChainHolds
+}
+
+export const REFINE_ABSENT = 'The proposed revisions: AIKit\'s `aikit source refine list` is not read here.'
+const REFINE_NO_CARRIER = 'The kernel carrier is unavailable here, so AIKit cannot be asked (aikit_write).'
+const REFINE_NO_SESSION = 'Test runs the selected session\'s own Repeat, and no session\'s task stands here: select a session on the Factory track.'
+const REFINE_NO_SET = 'Test: no set stands on the chain, so there is no set to carry the proposed revision in.'
+
+/** The refinement the person chose by member, or why there is none. */
+function refinementNamed(refinements: readonly Refinement[] | null, member: string): Refinement {
+  const found = refinements?.find(row => row.member === member)
+  if (!found) throw Error(`${member}: no proposed revision of ${member} stands in AIKit's list.`)
+  return found
+}
+
+/** The Refining page's binding (`refine.` keys): AIKit's proposals, the member chosen with its Why, Revision beside the revision in use,
+ * Test and Result, and Accept, Discard and Test through their owners. */
+export function refiningBinding(id: string, input: RefiningInput, ports: RefiningPorts = {}): DesignBinding {
+  const answer = input.refinements
+  const refinements = answer?.status === 'answered' ? refinementsOf(answer.value) : null
+  const values: Record<string, Value> = {}
+  const standing: Record<string, Standing> = {}
+  const listWhy = answer?.status === 'refused' ? answer.error ?? REFINE_ABSENT : answer?.status === 'reading' ? 'AIKit has not answered yet (`aikit source refine list`).'
+    : answer ? 'AIKit answered something other than its proposed revisions.' : REFINE_ABSENT
+  const held = viewHolds(input.holds, id).refineMember
+  const chosen = refinements?.find(row => row.member === held) ?? refinements?.[0] ?? null
+  if (refinements) values.proposals = JSON.stringify(refinements.map(row => ({id: row.member, source: row.source, owner: row.owner, stale: row.stale, revision: row.proposed.revision})))
+  else standing.proposals = {disabled: listWhy}
+  const noneWhy = refinements ? 'No proposed revision stands: a close whose reason Kev picks a member for sends one here.' : listWhy
+  if (chosen) {
+    const result = refinementResult(chosen)
+    values.member = chosen.member
+    values.owner = chosen.owner
+    values.stale = chosen.stale
+    values.why = JSON.stringify(chosen.why)
+    values.revision = chosen.proposed.revision
+    if (chosen.inUse) values.inUse = chosen.inUse.revision
+    values.test = JSON.stringify(refinementTakes(chosen))
+    values.result = JSON.stringify(result.rows)
+    values.resultWhy = result.why
+    if (input.set) values.levels = `${input.set}+${chosen.member} · ${input.set}`
+  } else for (const key of ['member', 'why', 'revision', 'test', 'result']) standing[key] = {disabled: noneWhy}
+  const acceptWhy = !ports.write ? REFINE_NO_CARRIER : !chosen ? noneWhy : refinementAcceptWhy(chosen)
+  if (acceptWhy) standing.accept = {disabled: acceptWhy}
+  if (!ports.write || !chosen) standing.discard = {disabled: !ports.write ? REFINE_NO_CARRIER : noneWhy}
+  const runWhy = !chosen ? noneWhy : !input.set ? REFINE_NO_SET : !ports.test ? REFINE_NO_SESSION : null
+  if (runWhy) standing.run = {disabled: runWhy}
+  const memberOf = (value: Value | undefined) => (typeof value === 'string' && value ? value : chosen?.member ?? '')
+  return {
+    id,
+    values,
+    standing,
+    local: {member: (value: Value | undefined) => holdView(id, 'refineMember', value)},
+    writes: key => key === 'accept' || key === 'discard' || key === 'run',
+    write: async changes => {
+      for (const change of changes) {
+        if (change.key === 'accept' || change.key === 'discard') {
+          if (!ports.write) throw Error(REFINE_NO_CARRIER)
+          const refinement = refinementNamed(refinements, memberOf(change.value))
+          const why = change.key === 'accept' ? refinementAcceptWhy(refinement) : null
+          if (why) throw Error(why)
+          await ports.write({kind: REFINE_WRITES[change.key], member: refinement.member})
+          continue
+        }
+        if (change.key === 'run') {
+          if (runWhy || !chosen || !input.set || !ports.test) throw Error(runWhy ?? noneWhy)
+          const made = await ports.test(input.set, chosen.member)
+          if (!made.ok) throw Error(made.error)
+          continue
+        }
+        throw Error(REFUSE.reading(change.key))
+      }
+    },
+  }
+}
+
 // ---------------------------------------------------------------------------------------------------------------- the member
 
 /** The member device's values (§19.7): the rack's chosen member over the same members, your request, and the asks it holds. */
@@ -1052,15 +1235,51 @@ export function memberBinding(id: string, rack: Values, chosen: string | null, h
 export interface ScopeAsks {
   readonly toolCalls?: Value
   readonly toolCallsRow?: SdkParamRow
+  /** Calls to other agents: AIKit's rule for the sender kind agent on the session's gateway bindings (callsOf), null while the gateway's
+   * ecology is unread, its refusal where it refused; and the write that sets one rule on every binding (the kernel's harness_ingress_rule). */
+  readonly calls?: CallsReading | {readonly refused: string} | null
+  readonly callsWrite?: (bindings: readonly string[], decision: CallsDecision) => Promise<void>
 }
 
+/** Calls to other agents as Scope's design names them: Allow, Ask (AIKit's pair: the call waits in Approvals) and Deny. */
+export type CallsDecision = 'allow' | 'pair' | 'deny'
+const CALLS_DECISIONS: readonly string[] = ['allow', 'pair', 'deny']
+/** The session's gateway bindings, and the one rule for calls from other agents they agree on (absent where they disagree or none). */
+export interface CallsReading {readonly bindings: readonly string[]; readonly decision?: CallsDecision}
+
+/** Calls to other agents on a session, from AIKit's gateway ecology (`aikit gateway ecology`; workcellReads.ts useGatewayEcology): each
+ * conversation surface of the session sits on a gateway binding, which decides a call from another agent by its rule for the sender kind
+ * agent, else by its one default (AIKit gateway_runtime.rs GatewayEcologySurface ingress_kinds, ingress_default). Null when the reading
+ * is not the ecology. Pure. */
+export function callsOf(ecology: unknown, sessionRef: string | null | undefined): CallsReading | null {
+  const doc = isObj(ecology) && ecology.type === 'ecology' && isObj(ecology.ecology) ? ecology.ecology : null
+  if (!doc || !Array.isArray(doc.agencies)) return null
+  const surfaces = doc.agencies.flatMap(agency => (isObj(agency) && Array.isArray(agency.sessions) ? agency.sessions : []))
+    .flatMap(row => (isObj(row) && row.agent_session_ref === sessionRef && Array.isArray(row.surfaces) ? row.surfaces : []))
+    .filter((surface): surface is Obj => isObj(surface) && typeof surface.binding_ref === 'string' && !!surface.binding_ref)
+  const bindings = [...new Set(surfaces.map(surface => surface.binding_ref as string))]
+  const decisions = new Set(surfaces.map(surface => (isObj(surface.ingress_kinds) && surface.ingress_kinds.agent !== undefined ? surface.ingress_kinds.agent : surface.ingress_default)))
+  const [only] = decisions
+  return decisions.size === 1 && typeof only === 'string' && CALLS_DECISIONS.includes(only) ? {bindings, decision: only as CallsDecision} : {bindings}
+}
+
+/** Why Calls to other agents is not pressable, or null where it writes. */
+const callsWhy = (asks: ScopeAsks): string | null =>
+  (!asks.callsWrite ? CALLS_REFUSE.uncarried : !asks.calls ? CALLS_REFUSE.unread : 'refused' in asks.calls ? CALLS_REFUSE.refused(asks.calls.refused)
+    : !asks.calls.bindings.length ? CALLS_REFUSE.unbound : null)
+/** The session's gateway bindings, where the ecology answered. */
+const callsReadingOf = (asks: ScopeAsks): CallsReading | null => (asks.calls && !('refused' in asks.calls) ? asks.calls : null)
+
 /** Scope's values (§19.12). No owner reports the reach, the write mode, the basis, the places or the receipts (the address table's world
- * rows are readings with no source: agentParamAddresses.ts:93-97), nor Calls to other agents, Wait or On no answer, so every one is absent;
- * Tool calls is the harness's own reading where the chain hands it in, and the only other value is a raised reach waiting for your Confirm. */
+ * rows are readings with no source: agentParamAddresses.ts:93-97), nor Wait or On no answer, so every one is absent; Tool calls is the
+ * harness's own reading and Calls to other agents AIKit's rule on the session's bindings where the chain hands them in, and the only other
+ * value is a raised reach waiting for your Confirm. */
 export function scopeValues(held: ChainHolds, asks: ScopeAsks = {}): Values {
   const values: Record<string, Value> = {}
   if (held.reachPending !== undefined) values.reachPending = held.reachPending
   if (asks.toolCalls !== undefined) values.toolCalls = asks.toolCalls
+  const calls = callsReadingOf(asks)
+  if (calls?.decision) values.calls = calls.decision
   return values
 }
 
@@ -1068,6 +1287,15 @@ export function scopeValues(held: ChainHolds, asks: ScopeAsks = {}): Values {
 const TOOL_CALLS_UNCARRIED = 'Tool calls: the Gateway\'s approvals row is not adopted on this chain, so nothing carries it (the kernel\'s harness_agent_control configure {approvals}).'
 
 const SCOPE_WRITES = (key: string) => ['reach', 'writeMode', 'toolCalls'].includes(key) || key in REFUSED_WRITES[SCOPE_DESIGN]! || key.startsWith('w:')
+
+/** Scope's refused settings, Tool calls where no row carries it, and Calls to other agents where it is not pressable. */
+function scopeStanding(asks: ScopeAsks): Record<string, Standing> {
+  const standing: Record<string, Standing> = {...disabled(REFUSED_WRITES[SCOPE_DESIGN]!), ...(asks.toolCallsRow?.writePath ? {} : {toolCalls: {disabled: TOOL_CALLS_UNCARRIED}})}
+  const why = callsWhy(asks)
+  if (why) standing.calls = {disabled: why}
+  else delete standing.calls
+  return standing
+}
 
 /** A raised reach the view holds: a ring, or none (Cancel's drop). */
 const reachOf = (value: Value | undefined): number | undefined => {
@@ -1084,7 +1312,7 @@ export function scopeBinding(id: string, held: ChainHolds, writeModeRow: SdkPara
     id,
     values: scopeValues(held, asks),
     local: {reachPending: value => updateHolds(was => (was.reachPending === reachOf(value) ? was : {...was, reachPending: reachOf(value)}))},
-    standing: {...disabled(REFUSED_WRITES[SCOPE_DESIGN]!), ...(asks.toolCallsRow?.writePath ? {} : {toolCalls: {disabled: TOOL_CALLS_UNCARRIED}})},
+    standing: scopeStanding(asks),
     writes: SCOPE_WRITES,
     write: async changes => {
       for (const {key, value} of changes) {
@@ -1105,6 +1333,13 @@ export function scopeBinding(id: string, held: ChainHolds, writeModeRow: SdkPara
           if (!asks.toolCallsRow?.writePath) throw Error(TOOL_CALLS_UNCARRIED)
           const receipt = await write(asks.toolCallsRow, value)
           if (receipt.kind === 'refused') throw Error(receipt.reason)
+          continue
+        }
+        if (key === 'calls') {
+          const why = callsWhy(asks)
+          if (why) throw Error(why)
+          if (typeof value !== 'string' || !CALLS_DECISIONS.includes(value)) throw Error(CALLS_REFUSE.decision(String(value)))
+          await asks.callsWrite!(callsReadingOf(asks)!.bindings, value as CallsDecision)
           continue
         }
         const refused = REFUSED_WRITES[SCOPE_DESIGN]![key]

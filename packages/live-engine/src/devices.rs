@@ -465,9 +465,13 @@ impl Fft {
 /// Uniformly partitioned convolution of every channel with one impulse response, with no latency:
 /// the response's first `b` taps directly, each later block of `b` taps by overlap-save in the
 /// frequency domain over a delay line of the input's spectra (a 2b-point FFT of each completed input
-/// block with the one before it). When an input block completes, the part of the next block's output
-/// that the later partitions make is computed whole; a sample's output is then its direct taps plus
-/// that. O(b + IR/b) per sample; built off the audio thread, it allocates nothing in `step`.
+/// block with the one before it). The part of the next block's output the later partitions make is
+/// a sum over the delay line, and every term of it but the newest block's meets a spectrum known a
+/// block before: those terms are added a few partitions a sample across the block (`acc`), so when
+/// an input block completes only its own FFT, the newest term and the inverse FFT remain, and no
+/// sample carries the whole delay line (O-I #849 round 14: a 20 s room's worst block was 8.3 ms of
+/// the 10.7 ms a 512-frame block lasts). A sample's output is its direct taps plus that part.
+/// O(b + IR/b) per sample; built off the audio thread, it allocates nothing in `step`.
 #[derive(Debug, Clone)]
 struct Partitioned {
     b: usize,
@@ -476,6 +480,8 @@ struct Partitioned {
     parts_re: Vec<f32>,
     parts_im: Vec<f32>,
     parts: usize,
+    /// The delay line's terms a sample adds to the next block's part (all but the newest's, over `b`).
+    per_sample: usize,
     fft: Fft,
     channels: Vec<PartChannel>,
 }
@@ -493,6 +499,11 @@ struct PartChannel {
     n: usize,
     re: Vec<f32>,
     im: Vec<f32>,
+    /// The next block's part so far, bins 0..=b, from the delay line's spectra known a block before.
+    acc_re: Vec<f32>,
+    acc_im: Vec<f32>,
+    /// The next term to add to `acc` (term p meets partition p+1 and the spectrum p blocks before the newest).
+    term: usize,
 }
 
 impl Partitioned {
@@ -524,6 +535,9 @@ impl Partitioned {
             n: 0,
             re: vec![0.0; 2 * b],
             im: vec![0.0; 2 * b],
+            acc_re: vec![0.0; bins],
+            acc_im: vec![0.0; bins],
+            term: 1,
         };
         Partitioned {
             b,
@@ -531,8 +545,33 @@ impl Partitioned {
             parts_re,
             parts_im,
             parts,
+            per_sample: parts.saturating_sub(1).div_ceil(b),
             fft,
             channels: vec![channel; channels],
+        }
+    }
+
+    /// Add terms `c.term..until` of the next block's part to `acc`: term p is the spectrum p blocks before the
+    /// next newest (`newest` stands one block behind it until the block completes) times partition p+1.
+    fn add_terms(
+        c: &mut PartChannel,
+        parts_re: &[f32],
+        parts_im: &[f32],
+        parts: usize,
+        bins: usize,
+        until: usize,
+    ) {
+        while c.term < until {
+            let p = c.term;
+            let x_at = ((c.newest + parts + 1 - p) % parts) * bins;
+            let h_at = p * bins;
+            for k in 0..bins {
+                let (xr, xi) = (c.fdl_re[x_at + k], c.fdl_im[x_at + k]);
+                let (hr, hi) = (parts_re[h_at + k], parts_im[h_at + k]);
+                c.acc_re[k] += xr * hr - xi * hi;
+                c.acc_im[k] += xr * hi + xi * hr;
+            }
+            c.term += 1;
         }
     }
 
@@ -549,11 +588,23 @@ impl Partitioned {
         for (k, h) in self.head.iter().enumerate().skip(n + 1) {
             y += h * c.prev[b + n - k];
         }
+        let bins = b + 1;
+        // a few of the next block's terms, from spectra already in the delay line
+        let until = (c.term + self.per_sample).min(self.parts);
+        Self::add_terms(c, &self.parts_re, &self.parts_im, self.parts, bins, until);
         c.n += 1;
         if c.n == b {
             c.n = 0;
             if self.parts > 0 {
-                let bins = b + 1;
+                // any term the block's samples left (none when per_sample covers them)
+                Self::add_terms(
+                    c,
+                    &self.parts_re,
+                    &self.parts_im,
+                    self.parts,
+                    bins,
+                    self.parts,
+                );
                 c.re[..b].copy_from_slice(&c.prev);
                 c.re[b..].copy_from_slice(&c.cur);
                 c.im.fill(0.0);
@@ -563,19 +614,18 @@ impl Partitioned {
                 c.fdl_re[at..at + bins].copy_from_slice(&c.re[..bins]);
                 c.fdl_im[at..at + bins].copy_from_slice(&c.im[..bins]);
                 // the next block's share of the later partitions: partition p+1 meets the input
-                // spectrum p blocks before the newest
+                // spectrum p blocks before the newest; every term but the newest's is in `acc`
                 c.re.fill(0.0);
                 c.im.fill(0.0);
-                for p in 0..self.parts {
-                    let x_at = ((c.newest + self.parts - p) % self.parts) * bins;
-                    let h_at = p * bins;
-                    for k in 0..bins {
-                        let (xr, xi) = (c.fdl_re[x_at + k], c.fdl_im[x_at + k]);
-                        let (hr, hi) = (self.parts_re[h_at + k], self.parts_im[h_at + k]);
-                        c.re[k] += xr * hr - xi * hi;
-                        c.im[k] += xr * hi + xi * hr;
-                    }
+                for k in 0..bins {
+                    let (xr, xi) = (c.fdl_re[at + k], c.fdl_im[at + k]);
+                    let (hr, hi) = (self.parts_re[k], self.parts_im[k]);
+                    c.re[k] = c.acc_re[k] + (xr * hr - xi * hi);
+                    c.im[k] = c.acc_im[k] + (xr * hi + xi * hr);
                 }
+                c.acc_re.fill(0.0);
+                c.acc_im.fill(0.0);
+                c.term = 1;
                 // the rest of the spectrum by conjugate symmetry (the response and input are real)
                 for k in 1..b {
                     c.re[2 * b - k] = c.re[k];
@@ -594,8 +644,10 @@ impl Partitioned {
 }
 
 /// Compressor (Live's Compressor2) — host of `live_dynamics::compressor`'s per-sample model at the
-/// corpus's stored values ([`live_dynamics::compressor::DEFAULTS`], the factory preset the surface
-/// was read from, as the bridge's other devices stand at theirs). Its model awaits the golden-render
+/// parameters it is made with: a set's at the corpus's stored values
+/// ([`live_dynamics::compressor::DEFAULTS`], the factory preset the surface was read from, as the
+/// bridge's other devices stand at theirs), a rack chain's with the settings it carries over them
+/// (bridge `rack_device`, O-I #849 round 14). Its model awaits the golden-render
 /// check (compressor.rs: no parity with Live's is claimed). Stereo in and out; a mono part's sample is
 /// fed to both sides and the left taken back.
 pub struct CompressorDevice {
@@ -645,6 +697,317 @@ impl Device for CompressorDevice {
         frame_io[0] = l;
         if frame_io.len() > 1 {
             frame_io[1] = r;
+        }
+    }
+}
+
+/// The kinds of the Torus's Filter, in the frame's order (effectsLaw.ts `FILTER_TYPES`): the
+/// engine's model of Live's Auto Filter reads its FilterType 0 to 3 as these.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FilterKind {
+    Lowpass,
+    Highpass,
+    Bandpass,
+    Notch,
+}
+
+/// The Torus's Filter as the engine sounds it (O-I #849 round 14), its frame's own effect
+/// (presentationEffects.ts: the input driven by Drive into a biquad of the Filter's kind at its
+/// cutoff, the Q its Resonance makes by the design's law, effectsLaw.ts `filterQ`).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct FilterParams {
+    pub kind: FilterKind,
+    pub cutoff_hz: f64,
+    /// 0 to 1, for the frame's 0 to 100 %.
+    pub resonance: f64,
+    pub drive_db: f64,
+}
+
+/// A second-order section as the browser's BiquadFilterNode runs it (Web Audio's biquad formulas,
+/// coefficients in doubles over a0, the state in doubles, each output a float that the state keeps):
+/// each setting first stands as the float an AudioParam holds.
+#[derive(Debug, Clone, Copy, Default)]
+struct Section {
+    b: [f64; 3],
+    a: [f64; 2],
+    x: [f64; 2],
+    y: [f64; 2],
+}
+
+impl Section {
+    fn over_a0(b0: f64, b1: f64, b2: f64, a0: f64, a1: f64, a2: f64) -> Section {
+        let inv = 1.0 / a0;
+        Section {
+            b: [b0 * inv, b1 * inv, b2 * inv],
+            a: [a1 * inv, a2 * inv],
+            ..Section::default()
+        }
+    }
+
+    /// The section of `kind` at `hz`, with `q` read as Web Audio reads a biquad's Q: a peak in dB for a
+    /// low- or high-pass, the plain quality factor for a band-pass or notch.
+    fn of(kind: FilterKind, hz: f32, q: f32, sample_rate: u32) -> Section {
+        let nyquist = 0.5 * f64::from(sample_rate);
+        let at = f64::from(hz) / nyquist;
+        let q = f64::from(q);
+        let whole = Section::over_a0(1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
+        let none = Section::over_a0(0.0, 0.0, 0.0, 1.0, 0.0, 0.0);
+        match kind {
+            FilterKind::Lowpass | FilterKind::Highpass => {
+                let at = at.clamp(0.0, 1.0);
+                let low = kind == FilterKind::Lowpass;
+                if at >= 1.0 {
+                    return if low { whole } else { none };
+                }
+                if at <= 0.0 {
+                    return if low { none } else { whole };
+                }
+                let resonance = 10f64.powf(q / 20.0);
+                let theta = std::f64::consts::PI * at;
+                let alpha = theta.sin() / (2.0 * resonance);
+                let cosw = theta.cos();
+                let (b0, b1) = if low {
+                    let beta = (1.0 - cosw) / 2.0;
+                    (beta, 2.0 * beta)
+                } else {
+                    let beta = (1.0 + cosw) / 2.0;
+                    (beta, -2.0 * beta)
+                };
+                Section::over_a0(b0, b1, b0, 1.0 + alpha, -2.0 * cosw, 1.0 - alpha)
+            }
+            FilterKind::Bandpass | FilterKind::Notch => {
+                let at = at.max(0.0);
+                let q = q.max(0.0);
+                let band = kind == FilterKind::Bandpass;
+                if !(at > 0.0 && at < 1.0) {
+                    return if band { none } else { whole };
+                }
+                if q <= 0.0 {
+                    return if band { whole } else { none };
+                }
+                let w0 = std::f64::consts::PI * at;
+                let alpha = w0.sin() / (2.0 * q);
+                let k = w0.cos();
+                if band {
+                    Section::over_a0(alpha, 0.0, -alpha, 1.0 + alpha, -2.0 * k, 1.0 - alpha)
+                } else {
+                    Section::over_a0(1.0, -2.0 * k, 1.0, 1.0 + alpha, -2.0 * k, 1.0 - alpha)
+                }
+            }
+        }
+    }
+
+    fn step(&mut self, x: f32) -> f32 {
+        let x = f64::from(x);
+        let y = (self.b[0] * x + self.b[1] * self.x[0] + self.b[2] * self.x[1]
+            - self.a[0] * self.y[0]
+            - self.a[1] * self.y[1]) as f32;
+        self.x = [x, self.x[0]];
+        self.y = [f64::from(y), self.y[0]];
+        // a silent input's tail stops short of subnormals, as the browser's does
+        if self.x == [0.0, 0.0]
+            && self
+                .y
+                .iter()
+                .all(|v| v.abs() < f64::from(f32::MIN_POSITIVE))
+        {
+            self.y = [0.0, 0.0];
+        }
+        y
+    }
+}
+
+/// The design's Q from a Resonance of 0 to 1 (effectsLaw.ts `filterQ`): a low- or high-pass peak at the
+/// cutoff from −3 dB at 0 to +21 dB at 1, as a peak in dB; a band-pass or notch Q as the plain factor.
+pub fn filter_q(kind: FilterKind, resonance: f64) -> f64 {
+    let q = std::f64::consts::FRAC_1_SQRT_2 * 10f64.powf(1.2 * resonance);
+    match kind {
+        FilterKind::Lowpass | FilterKind::Highpass => 20.0 * q.log10(),
+        FilterKind::Bandpass | FilterKind::Notch => q,
+    }
+}
+
+/// The engine's model of Live's Auto Filter (O-I #849 round 14), built to the Torus's Filter: its frame's
+/// biquad over the driven input, on each side.
+#[derive(Debug, Clone)]
+pub struct FilterDevice {
+    pub params: FilterParams,
+    drive: f32,
+    sections: Vec<Section>,
+    rate: u32,
+}
+
+impl FilterDevice {
+    pub fn new(params: FilterParams) -> FilterDevice {
+        FilterDevice {
+            params,
+            drive: 10f64.powf(params.drive_db / 20.0) as f32,
+            sections: Vec::new(),
+            rate: 0,
+        }
+    }
+}
+
+impl Device for FilterDevice {
+    fn name(&self) -> &str {
+        "AutoFilter"
+    }
+
+    fn prepare(&mut self, sample_rate: u32, channels: usize) {
+        if self.rate != sample_rate || self.sections.len() < channels {
+            let p = self.params;
+            let q = filter_q(p.kind, p.resonance) as f32;
+            let section = Section::of(p.kind, p.cutoff_hz as f32, q, sample_rate);
+            self.sections = vec![section; channels.max(2)];
+            self.rate = sample_rate;
+        }
+    }
+
+    fn process(&mut self, frame_io: &mut [f32], clock: &Clock) {
+        self.prepare(clock.sample_rate, frame_io.len());
+        for (v, section) in frame_io.iter_mut().zip(self.sections.iter_mut()) {
+            *v = section.step(*v * self.drive);
+        }
+    }
+}
+
+/// The Torus's Delay as the engine sounds it (O-I #849 round 14), its frame's own effect
+/// (presentationEffects.ts): the dry at full, plus a line whose repeats are darkened by Tone (a low-pass at
+/// Q 1/√2) and fed back by Feedback, heard at Mix.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct DelayParams {
+    /// Between repeats, in seconds: a synced Delay's note length at its tempo.
+    pub time_s: f64,
+    /// 0 to 0.95, for the frame's 0 to 95 %.
+    pub feedback: f64,
+    pub tone_hz: f64,
+    /// 0 to 1, for the frame's 0 to 100 %.
+    pub mix: f64,
+}
+
+/// Frames of the browser's render quantum: a feedback cycle through a DelayNode takes one more than the
+/// node's time, so the frame's loop runs one quantum short of the time (presentationEffects.ts).
+const QUANTUM_FRAMES: f64 = 128.0;
+
+/// A delay line read at a fractional delay, linearly between its two frames, as a DelayNode reads.
+#[derive(Debug, Clone)]
+struct Line {
+    ring: Vec<f32>,
+    at: usize,
+}
+
+impl Line {
+    fn new(frames: f64) -> Line {
+        Line {
+            ring: vec![0.0; frames.ceil() as usize + 2],
+            at: 0,
+        }
+    }
+
+    /// The frame written `frames` before the one at the write head (written or not yet this frame).
+    fn read(&self, frames: f64) -> f32 {
+        let len = self.ring.len();
+        let position = self.at as f64 + len as f64 - frames;
+        let position = if position >= len as f64 {
+            position - len as f64
+        } else {
+            position
+        };
+        let first = position as usize;
+        let fraction = position - first as f64;
+        let one = self.ring[first % len];
+        let two = self.ring[(first + 1) % len];
+        (f64::from(one) + fraction * (f64::from(two) - f64::from(one))) as f32
+    }
+
+    fn write(&mut self, v: f32) {
+        self.ring[self.at] = v;
+    }
+
+    fn advance(&mut self) {
+        self.at = (self.at + 1) % self.ring.len();
+    }
+}
+
+#[derive(Debug, Clone)]
+struct DelaySide {
+    line: Line,
+    feedback: Line,
+    tone: Section,
+}
+
+/// The engine's model of Live's Delay (O-I #849 round 14), built to the Torus's Delay: on each side, the
+/// first pass through its own line at the time, each repeat after through the loop one time after the last
+/// (the frame's loop line one quantum short, and the quantum its cycle takes), every pass through the
+/// tone, the loop fed by Feedback, the passes heard at Mix over the dry at full.
+#[derive(Debug, Clone)]
+pub struct DelayDevice {
+    pub params: DelayParams,
+    sides: Vec<DelaySide>,
+    line_frames: f64,
+    loop_frames: f64,
+    feedback: f32,
+    wet: f32,
+    rate: u32,
+}
+
+impl DelayDevice {
+    pub fn new(params: DelayParams) -> DelayDevice {
+        DelayDevice {
+            params,
+            sides: Vec::new(),
+            line_frames: 0.0,
+            loop_frames: 0.0,
+            feedback: params.feedback as f32,
+            wet: params.mix as f32,
+            rate: 0,
+        }
+    }
+}
+
+impl Device for DelayDevice {
+    fn name(&self) -> &str {
+        "Delay"
+    }
+
+    fn prepare(&mut self, sample_rate: u32, channels: usize) {
+        if self.rate == sample_rate && self.sides.len() >= channels {
+            return;
+        }
+        let rate = f64::from(sample_rate);
+        let quantum = QUANTUM_FRAMES / rate;
+        let time = self.params.time_s;
+        self.line_frames = f64::from(time as f32) * rate;
+        self.loop_frames = f64::from(quantum.max(time - quantum) as f32) * rate + QUANTUM_FRAMES;
+        let q = 20.0 * std::f64::consts::FRAC_1_SQRT_2.log10();
+        let tone = Section::of(
+            FilterKind::Lowpass,
+            self.params.tone_hz as f32,
+            q as f32,
+            sample_rate,
+        );
+        self.sides = (0..channels.max(2))
+            .map(|_| DelaySide {
+                line: Line::new(self.line_frames),
+                feedback: Line::new(self.loop_frames),
+                tone,
+            })
+            .collect();
+        self.rate = sample_rate;
+    }
+
+    fn process(&mut self, frame_io: &mut [f32], clock: &Clock) {
+        self.prepare(clock.sample_rate, frame_io.len());
+        let (line_frames, loop_frames) = (self.line_frames, self.loop_frames);
+        for (v, side) in frame_io.iter_mut().zip(self.sides.iter_mut()) {
+            let dry = *v;
+            side.line.write(dry);
+            let into = side.line.read(line_frames) + side.feedback.read(loop_frames);
+            let toned = side.tone.step(into);
+            side.feedback.write(toned * self.feedback);
+            side.line.advance();
+            side.feedback.advance();
+            *v = dry + toned * self.wet;
         }
     }
 }
@@ -1048,7 +1411,9 @@ mod tests {
     }
 
     /// The partitioned convolution is the scatter's to float rounding, on a part that sounds every
-    /// sample (seeded noise), in stereo, over an input that ends mid-block, and on a response shorter
+    /// sample (seeded noise), in stereo, over an input that ends mid-block, with a response whose tail
+    /// sounds in its later partitions (a 1.2 s room: a 100 ms one leaves them some 80 dB down, under
+    /// the rounding allowed, so a term meeting the wrong block would pass), and on a response shorter
     /// than one block (no later partitions).
     #[test]
     fn partitioned_reverb_equals_the_scatter_on_a_dense_input() {
@@ -1071,12 +1436,14 @@ mod tests {
             g.length_frames = Some(frames as u64 + 4 * super::PARTITION as u64);
             g.render(sr)
         };
-        let params = || live_dynamics::reverb::ReverbParams { decay_ms: 100.0 };
+        let params = || live_dynamics::reverb::ReverbParams { decay_ms: 1200.0 };
         let exact = render(ReverbDevice::new(params(), 0.7));
         let parts = render(ReverbDevice::partitioned(params(), 0.7));
+        let ir = reverb::impulse_response(&params(), sr);
+        let energy = |taps: &[f32]| taps.iter().map(|v| f64::from(*v).powi(2)).sum::<f64>();
         assert!(
-            reverb::impulse_response(&params(), sr).len() > 4 * super::PARTITION,
-            "the response spans later partitions"
+            energy(&ir[2 * super::PARTITION..]) > energy(&ir) * 1e-3,
+            "the response's tail sounds past its second partition"
         );
         let peak = exact.iter().fold(0f32, |m, v| m.max(v.abs()));
         let worst = exact
@@ -1117,5 +1484,114 @@ mod tests {
             .iter()
             .zip(b.iter())
             .all(|(x, y)| x.to_bits() == y.to_bits()));
+    }
+
+    /// The level (dB) a stereo device gives a sine of `hz` once it has settled: the input's RMS against
+    /// the output's over the second half of two seconds.
+    fn gain_at(device: &mut dyn Device, hz: f64) -> f64 {
+        device.prepare(SR, 2);
+        let clock = Clock::start(SR, 120.0);
+        let (mut inside, mut outside) = (0.0f64, 0.0f64);
+        for n in 0..2 * SR {
+            let x =
+                (0.25 * (std::f64::consts::TAU * hz * f64::from(n) / f64::from(SR)).sin()) as f32;
+            let mut frame = [x, x];
+            device.process(&mut frame, &clock);
+            if n >= SR {
+                inside += f64::from(x).powi(2);
+                outside += f64::from(frame[0]).powi(2);
+            }
+        }
+        10.0 * (outside / inside).log10()
+    }
+
+    /// The Torus's Filter in the engine (O-I #849 round 14) peaks at its cutoff by the design's
+    /// resonance law (effectsLaw.ts `filterQ`): a low- or high-pass from −3 dB at no resonance to
+    /// +21 dB at full; a band-pass passes its centre whole and a notch takes it out; Drive lifts the
+    /// whole by its dB.
+    #[test]
+    fn the_torus_filter_peaks_at_its_cutoff_by_the_designs_resonance_law() {
+        let through = |kind, resonance, drive_db| {
+            let mut filter = FilterDevice::new(FilterParams {
+                kind,
+                cutoff_hz: 1000.0,
+                resonance,
+                drive_db,
+            });
+            gain_at(&mut filter, 1000.0)
+        };
+        for (kind, resonance, peak) in [
+            (FilterKind::Lowpass, 0.0, -3.0103),
+            (FilterKind::Lowpass, 0.2, 1.7897),
+            (FilterKind::Lowpass, 1.0, 20.9897),
+            (FilterKind::Highpass, 0.2, 1.7897),
+            (FilterKind::Bandpass, 0.5, 0.0),
+        ] {
+            let heard = through(kind, resonance, 0.0);
+            assert!(
+                (heard - peak).abs() < 0.01,
+                "{kind:?} at resonance {resonance}: {heard} dB at its cutoff, not {peak}"
+            );
+        }
+        let notch = through(FilterKind::Notch, 0.2, 0.0);
+        assert!(notch < -80.0, "a notch at its centre: {notch} dB");
+        let lifted =
+            through(FilterKind::Lowpass, 0.0, 6.0) - through(FilterKind::Lowpass, 0.0, 0.0);
+        assert!(
+            (lifted - 6.0).abs() < 1e-3,
+            "Drive 6 dB lifts it {lifted} dB"
+        );
+        // a low-pass passes what is far under its cutoff whole
+        let mut low = FilterDevice::new(FilterParams {
+            kind: FilterKind::Lowpass,
+            cutoff_hz: 8000.0,
+            resonance: 0.2,
+            drive_db: 0.0,
+        });
+        assert!(gain_at(&mut low, 100.0).abs() < 0.01);
+    }
+
+    /// The Torus's Delay in the engine (O-I #849 round 14): the dry at full; every repeat one Time after
+    /// the last (the frame's loop takes back the render quantum its cycle adds); each pass darkened by
+    /// Tone, which passes a sum whole, fed back by Feedback and heard at Mix: an impulse comes back at
+    /// each Time, its pass summing to Mix times Feedback to the passes before.
+    #[test]
+    fn the_torus_delay_repeats_one_time_after_the_last_darkened_and_fed_back() {
+        // 2^-6 s: a time a float holds exactly, 750 frames
+        let mut delay = DelayDevice::new(DelayParams {
+            time_s: 0.015_625,
+            feedback: 0.5,
+            tone_hz: 12_000.0,
+            mix: 0.25,
+        });
+        delay.prepare(SR, 2);
+        let clock = Clock::start(SR, 120.0);
+        let out: Vec<f32> = (0..3_750)
+            .map(|n| {
+                let mut frame = [if n == 0 { 1.0 } else { 0.0 }; 2];
+                delay.process(&mut frame, &clock);
+                assert_eq!(frame[0], frame[1], "both sides alike");
+                frame[0]
+            })
+            .collect();
+        assert_eq!(out[0], 1.0, "the dry at full");
+        assert!(out[1..750].iter().all(|v| *v == 0.0), "nothing before Time");
+        for pass in 1..=4usize {
+            let at = pass * 750;
+            let heard = &out[at..at + 740];
+            let sum: f64 = heard.iter().map(|v| f64::from(*v)).sum();
+            let due = 0.25 * 0.5f64.powi(pass as i32 - 1);
+            assert!(
+                (sum - due).abs() < 1e-4 * due,
+                "pass {pass} sums to {sum}, not {due}"
+            );
+            let peak = heard
+                .iter()
+                .enumerate()
+                .max_by(|a, b| a.1.abs().total_cmp(&b.1.abs()))
+                .map(|(n, _)| n)
+                .unwrap();
+            assert!(peak < 12, "pass {pass} peaks {peak} frames after its Time");
+        }
     }
 }

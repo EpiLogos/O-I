@@ -605,6 +605,27 @@ test('the design: the Close pad presses Close now, the one move an owner takes; 
   assert.doesNotMatch(source, /label="(Runs at|Day start|Rollover)"/, 'the Day draws no time control')
 })
 
+// ── the Patterns pad's refinement (O-I 772, manual §18.2: "A pattern whose items point at one skill or method can open a refinement of it
+// (§19.7)") ──
+test('the Patterns pad: the one skill or method its items point at is absent with the field Central does not give, and Refine refuses saying so', async () => {
+  let wrote = 0
+  const facts = factsOf(READY)
+  const binding = bind.dayDesignBinding(ID, facts, bind.dayValuesOf(facts, {face: 3, payload: PAYLOAD}),
+    {turn: async () => { wrote++ }, openToday: async () => { wrote++ }, closeNow: async () => { wrote++ }, begin: async () => { wrote++ }})
+  assert.equal(binding.values.patternPoints, undefined, 'no owner names it')
+  // Central's own law for a move's `gave` (ctrl continuous_work/day_moves.rs: {summary, proposals?, writes?, counts?}, any other key refused).
+  assert.match(bind.DAY_ABSENT.patternPoints, /summary, proposals\?, writes\?, counts\?/)
+  assert.match(bind.DAY_ABSENT.patternPoints, /missing field/)
+  assert.equal(binding.standing.refinePattern?.disabled, bind.DAY_ABSENT.patternPoints)
+  await assert.rejects(binding.write([{key: 'refinePattern', value: 'skill/practice/alpha'}]), /missing field/)
+  assert.equal(wrote, 0, 'nothing was sent to an owner')
+  // The design names it on the Patterns move, and its Refine opens the rack's Refining page on it.
+  const source = await readFile(new URL('../src/inhabitants/catalogue/panels/day.tsx', import.meta.url), 'utf8')
+  // The reading stands over the press: a skill's name is wider than half of the Moves section (the gallery measured it clipped in a pair).
+  assert.match(source, /chosen === 'patterns' && <>[\s\S]*?label="points at"[\s\S]*?label="Refine"[\s\S]*?p\.set\('refinePattern'/)
+  assert.ok('patternPoints' in catalogueDay.defaults, 'the gallery draws a pattern that points at a skill')
+})
+
 // ── a ground that keeps no civil-time policy (O-I #740) ───────────────────────────────────────────────────────────────────────────
 // Central's words for it, exactly as the built ctrl answers (central.time.policy on a scratch ground Setup made, 29 Oct), and its Day read.
 const NO_POLICY_TIME = {state: 'denied', action: 'central.time.policy', error: {code: 'policy_or_source_denied',

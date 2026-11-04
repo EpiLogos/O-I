@@ -55,12 +55,15 @@ type ReceiverPlace=readonly [number,number,number];
 type ReceiverReading={schema:string;context:'world'|'personal';gains:{mode_ref:string;gain:number}[];law:string};
 const RECEIVER_RETRY_MS=1000;
 /** The owner's operations a Torus sounding in the desktop's one engine follows without being handed over again (O-I #849): the reads
- * (instrument-session.mjs READ_OPERATIONS but the receiver, which moves what is heard), the advance unless a setting landed in it, a
- * release (no native state moves) and the acts the kernel tells the engine (keys, a touch, a singlet, a named strike). */
+ * (instrument-session.mjs READ_OPERATIONS), the advance unless a setting landed in it, a release (no native state moves), the acts the
+ * kernel tells the engine (keys, a touch, a singlet, a named strike) and the receiver (round 14), which moves only the gains the Torus is
+ * heard by: the owner names each part of a block that reaches them (QL torus_heard), the kernel tells the engine, and it reaches them
+ * over the same samples. */
 const TORUS_FOLLOWS:ReadonlySet<string>=new Set(['read','inspect','influence','personal','receive-personal','stage-state','score-resolve','score-state',
- 'torus-state','torus-checkpoint','torus-render','torus-native','advance','torus-play','strike-at','torus-singlet','torus-release','strike']);
-/** Whether an acknowledged operation moved the owner's Torus past what the engine follows: a setting, a restore, a body, the receiver, a
- * determinant event, or a setting landing inside an advance. */
+ 'torus-state','torus-checkpoint','torus-render','torus-native','advance','torus-play','strike-at','torus-singlet','torus-release','strike',
+ 'torus-receiver']);
+/** Whether an acknowledged operation moved the owner's Torus past what the engine follows: a setting, a restore, a body, a determinant
+ * event, or a setting landing inside an advance. */
 export function torusMoved(command:unknown,reply:unknown):boolean{
  const op=(command as any)?.operation;
  if(typeof op!=='string')return false;
@@ -133,8 +136,8 @@ export class NativeFieldController {
  private level:GainNode|null=null;private levelValue:number=PRESENTATION_LEVEL.initial;
  /** The Torus heard in the desktop's one engine (O-I #849): handed over to it (torus-native, kept by the kernel under the lease), so this
   * frame's own sound of the torus is shut (`gate`, after the level and its voice tap: the symbols' voices still listen) and the part
-  * sounds once, through the engine's mixer and Main. The engine follows the owner's acts as the kernel tells them; whatever else moves the
-  * owner's Torus (torusMoved) has it handed over again. */
+  * sounds once, through the engine's mixer and Main. The engine follows the owner's acts and the receiver's moves as the kernel tells them;
+  * whatever else moves the owner's Torus (torusMoved) has it handed over again. */
  private engine:{on:boolean;stale:boolean;handed:StageTorusEngine|null;refusal:string|null;again:boolean}={on:false,stale:false,handed:null,refusal:null,again:false};
  private gate:GainNode|null=null;
  /** The context time the frame's own sound of the Torus shuts at (round 13): when it plays the sample the owner handed the Torus over at. */

@@ -1604,6 +1604,7 @@ else:
             json!({"op": "encounter_provision", "project": "p"}),
             json!({"op": "flow_participant_provision", "project": "p", "agent_ref": "a", "flow_ref": "f", "sender": "s"}),
             json!({"op": "harness_agent_control", "binding": "b", "control": "stop"}),
+            json!({"op": "harness_ingress_rule", "binding": "b", "kind": "agent", "decision": "pair"}),
             // Beside the table (lane W3): a file write and a routine's act.
             json!({"op": "file_operation", "location": location, "request": {"action": "write", "expected_revision": "v", "content": "c"}}),
             json!({"op": "routine", "request": {"action": "run_now", "routine_ref": "routine:r"}}),
@@ -1656,7 +1657,8 @@ else:
         credential_discover credential_list credential_revoke credential_rotate
         credential_setup credential_verify day_read decide decision_status dictation_probe
         dictation_transcribe encounter encounter_join encounter_provision
-        encounter_session_detach encounter_session_settings encounter_session_settings_list
+        encounter_session_attach encounter_session_bench encounter_session_detach
+        encounter_session_drag_out encounter_session_settings encounter_session_settings_list
         encounter_task_attempts_list encounter_task_configure encounter_task_copy
         encounter_task_read encounter_task_remove expression_recovery factory_attempt_read
         factory_attempt_task_list_read factory_attempt_task_read factory_build_snapshot
@@ -1664,7 +1666,7 @@ else:
         file_read file_resolve files_list flow_changed_since flow_participant_provision
         gateway_remotes_read gateway_team gateway_write git_diff_read git_repository_read graph
         ground ground_authority ground_form harness_agent_control harness_agent_read
-        harness_auth_describe harness_status inhabitation_read instance_commission
+        harness_auth_describe harness_ingress_rule harness_status inhabitation_read instance_commission
         invoke_action janko_window_read knowledge knowledge_impact live_clip_create
         live_clip_read live_clip_write live_device_descriptors live_device_param_write
         live_device_params_read live_groove_pool_read live_groove_pool_write live_set_act
