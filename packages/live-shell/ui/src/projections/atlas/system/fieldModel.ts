@@ -66,28 +66,48 @@ export interface FieldGathering {
   readonly state: 'asked' | 'gathered'
 }
 
-/** What a star's day records (O-I #858, SF04): a world lit it, asked to come, came, was let in, showed something there or took it back,
- * left, or was turned away by its lighter. */
-export type StarDayWhat = 'lit' | 'asked' | 'came' | 'let-in' | 'showed' | 'took-back' | 'left' | 'turned-away'
-const STAR_DAY_WHATS: readonly StarDayWhat[] = ['lit', 'asked', 'came', 'let-in', 'showed', 'took-back', 'left', 'turned-away']
-/** One entry of a star's day, in the order the field gives: the kind of what was shown, never what it was. */
+/** What a star's day records (O-I #858, SF04, SF06): a world lit it, asked to come, came, was let in, showed something there or took it
+ * back, said something there or unsaid it, left, or was turned away by its lighter. */
+export type StarDayWhat = 'lit' | 'asked' | 'came' | 'let-in' | 'showed' | 'took-back' | 'said' | 'unsaid' | 'left' | 'turned-away'
+const STAR_DAY_WHATS: readonly StarDayWhat[] = ['lit', 'asked', 'came', 'let-in', 'showed', 'took-back', 'said', 'unsaid', 'left', 'turned-away']
+/** One entry of a star's day, in the order the field gives: the kind of what was shown or said, never what it was; when it happened (ms
+ * since the epoch), or null where the field gave no time. */
 export interface FieldDayEntry {
   readonly star_ref: string
   readonly world_ref: string
   readonly what: StarDayWhat
   readonly kind: string | null
+  readonly at: number | null
+}
+
+/** What is said at a star (SF06, the grammar of SF07): a question, a finding, a correction or a reproduction. */
+export type SayingWhat = 'question' | 'finding' | 'correction' | 'reproduction'
+export const SAYING_WHATS: readonly SayingWhat[] = ['question', 'finding', 'correction', 'reproduction']
+/** One thing said at a star, as the field serves it: who said what, to something shown there (its part named only while you may see it)
+ * or to something said there before, and when. */
+export interface FieldSaying {
+  readonly saying_ref: string
+  readonly star_ref: string
+  readonly world_ref: string
+  readonly to_world_ref: string | null
+  readonly to_part_ref: string | null
+  readonly to_saying_ref: string | null
+  readonly what: SayingWhat
+  readonly words: string
+  readonly at: number
 }
 
 /** The field as the window last read it. `days` is each star's day as you may read it, or null with `dayWhy` when the field's service
- * keeps none. */
+ * keeps none; `sayings` what was said at each star, or null with `sayWhy` likewise. */
 export type HeldField =
   | {readonly state: 'reading'}
   | {readonly state: 'unavailable'; readonly reason: string}
   | {readonly state: 'read'; readonly worlds: readonly FieldWorld[]; readonly clearings: readonly FieldClearing[]; readonly stars: readonly FieldStar[]; readonly gatherings: readonly FieldGathering[]
-    readonly days: readonly FieldDayEntry[] | null; readonly dayWhy: string | null}
+    readonly days: readonly FieldDayEntry[] | null; readonly dayWhy: string | null; readonly sayings: readonly FieldSaying[] | null; readonly sayWhy: string | null}
 
 const NO_READING = 'The shared field gave no reading of its worlds.'
 const NO_DAY = 'This field’s service does not keep a star’s day yet.'
+const NO_SAYINGS = 'This field’s service does not keep what is said at a star yet.'
 const rec = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value)
 const text = (value: unknown): value is string => typeof value === 'string' && value.length > 0
 const rows = <T>(value: unknown, row: (item: Record<string, unknown>) => T | null): T[] =>
@@ -113,8 +133,14 @@ export function heldFieldOf(data: unknown): HeldField {
     gatherings: rows(data.gatherings, row => text(row.star_ref) && text(row.world_ref) && (row.state === 'asked' || row.state === 'gathered')
       ? {star_ref: row.star_ref, world_ref: row.world_ref, state: row.state} : null),
     ...daysOf(data),
+    ...sayingsOf(data),
   }
 }
+
+/** When a row says it happened, in ms since the epoch: micros as the client writes them (a decimal string), or ms as the binding hands a
+ * row on (`at`); null for anything else. */
+const atOf = (micros: unknown, ms: unknown): number | null =>
+  typeof micros === 'string' && /^\d{1,20}$/.test(micros) ? Math.floor(Number(micros) / 1000) : typeof ms === 'number' && Number.isFinite(ms) && ms >= 0 ? ms : null
 
 /** Each star's day as the snapshot carries it, or the field's words when its service keeps none. */
 function daysOf(data: Record<string, unknown>): {days: readonly FieldDayEntry[] | null; dayWhy: string | null} {
@@ -122,8 +148,25 @@ function daysOf(data: Record<string, unknown>): {days: readonly FieldDayEntry[] 
   if (!rec(kept) || kept.state !== 'held') return {days: null, dayWhy: rec(kept) && text(kept.detail) ? kept.detail : NO_DAY}
   return {
     days: rows(data.star_days, row => text(row.star_ref) && text(row.world_ref) && (STAR_DAY_WHATS as readonly unknown[]).includes(row.what)
-      ? {star_ref: row.star_ref, world_ref: row.world_ref, what: row.what as StarDayWhat, kind: text(row.kind) ? row.kind : null} : null),
+      ? {star_ref: row.star_ref, world_ref: row.world_ref, what: row.what as StarDayWhat, kind: text(row.kind) ? row.kind : null, at: atOf(row.at_micros, row.at)} : null),
     dayWhy: null,
+  }
+}
+
+/** What was said at each star as the snapshot carries it, or the field's words when its service keeps none. A saying is said to one
+ * thing: something shown (its world, and its part while you may see it) or something said. */
+function sayingsOf(data: Record<string, unknown>): {sayings: readonly FieldSaying[] | null; sayWhy: string | null} {
+  const kept = data.star_saying
+  if (!rec(kept) || kept.state !== 'held') return {sayings: null, sayWhy: rec(kept) && text(kept.detail) ? kept.detail : NO_SAYINGS}
+  const ref = (value: unknown) => (text(value) ? value : null)
+  return {
+    sayings: rows(data.star_sayings, row => {
+      const at = atOf(row.said_at_micros, row.at), toWorld = ref(row.to_world_ref), toPart = ref(row.to_part_ref), toSaying = ref(row.to_saying_ref)
+      const one = toSaying ? !toWorld && !toPart : toWorld !== null
+      return text(row.saying_ref) && text(row.star_ref) && text(row.world_ref) && (SAYING_WHATS as readonly unknown[]).includes(row.what) && text(row.words) && at !== null && one
+        ? {saying_ref: row.saying_ref, star_ref: row.star_ref, world_ref: row.world_ref, to_world_ref: toWorld, to_part_ref: toPart, to_saying_ref: toSaying, what: row.what as SayingWhat, words: row.words, at} : null
+    }),
+    sayWhy: null,
   }
 }
 
@@ -169,6 +212,41 @@ export interface SceneStar {
   readonly yoursAt: 'gathered' | 'asked' | null
   /** its day as you may read it, in the order it happened; null when the field's service keeps none */
   readonly day: readonly FieldDayEntry[] | null
+  /** what each world gathered at it shows there, in the order the field gives: who brought what */
+  readonly shown: readonly SceneShown[]
+  /** what was said at it, each under what it answers, in the order it was said; null when the field's service keeps none */
+  readonly said: readonly SceneSaying[] | null
+}
+/** One thing a world shows at a star. */
+export interface SceneShown {
+  /** the choice that names it as what something is said to (shownId) */
+  readonly id: string
+  readonly world: string
+  readonly who: string
+  readonly label: string
+  readonly kind: string
+}
+/** What a saying was said to: something shown at the star, something said there, something since unsaid, or something its world has
+ * taken back (it lies under the cloud now, and only whose it was is named). */
+export type SayingTo =
+  | {readonly kind: 'shown'; readonly id: string; readonly who: string; readonly label: string}
+  | {readonly kind: 'said'; readonly ref: string; readonly who: string; readonly what: SayingWhat}
+  | {readonly kind: 'unsaid'}
+  | {readonly kind: 'gone'; readonly who: string}
+/** One thing said at a star, as the star reads it. */
+export interface SceneSaying {
+  readonly ref: string
+  readonly world: string
+  readonly who: string
+  /** said by a world of yours */
+  readonly mine: boolean
+  readonly what: SayingWhat
+  readonly words: string
+  readonly to: SayingTo
+  /** how far it stands under what it answers: 0 for what was said to something shown */
+  readonly depth: number
+  /** when it was said, ms since the epoch */
+  readonly at: number
 }
 export interface FieldScene {
   readonly aperture: Aperture
@@ -214,27 +292,98 @@ function sceneWorld(field: Extract<HeldField, {state: 'read'}>, world: FieldWorl
   }
 }
 
+/** A world as a person reads its name: the last part of its ref. */
+const whoOf = (ref: string): string => ref.split(':').pop() || ref
+/** The choice that names one thing shown at a star as what something is said to. */
+export const shownId = (world: string, part: string): string => JSON.stringify([world, part])
+
 function sceneStar(field: Extract<HeldField, {state: 'read'}>, star: FieldStar, yours: string | null): SceneStar {
   const at = field.gatherings.filter(gathering => gathering.star_ref === star.star_ref)
   const asking = at.filter(gathering => gathering.state === 'asked').map(gathering => gathering.world_ref)
   const own = yourFieldWorld(field, yours)
+  const shown = field.clearings.filter(clearing => clearing.audience === 'star' && clearing.star_ref === star.star_ref)
+    .map(clearing => ({id: shownId(clearing.world_ref, clearing.part_ref), world: clearing.world_ref, who: whoOf(clearing.world_ref), label: clearing.shown.label, kind: clearing.shown.kind}))
   return {
     ref: star.star_ref, name: star.name, gathers: star.gathers, comes: star.comes, mine: star.mine, within: star.within ?? null,
     gathered: at.filter(gathering => gathering.state === 'gathered').map(gathering => gathering.world_ref),
     waiting: asking.length, asking,
     yoursAt: (own === null ? undefined : at.find(gathering => gathering.world_ref === own)?.state) ?? null,
     day: field.days === null ? null : field.days.filter(entry => entry.star_ref === star.star_ref),
+    shown,
+    said: field.sayings === null ? null : threadOf(field, field.sayings.filter(saying => saying.star_ref === star.star_ref), shown),
   }
 }
 
+/** What was said at one star, each under what it answers, in the order it was said: what was said to something shown (or to something
+ * since unsaid) stands at the top, with what answers it under it, to any depth. */
+function threadOf(field: Extract<HeldField, {state: 'read'}>, sayings: readonly FieldSaying[], shown: readonly SceneShown[]): SceneSaying[] {
+  const byRef = new Map(sayings.map(saying => [saying.saying_ref, saying]))
+  const mine = new Set(field.worlds.filter(world => world.mine).map(world => world.world_ref))
+  const toOf = (saying: FieldSaying): SayingTo => {
+    if (saying.to_saying_ref !== null) {
+      const said = byRef.get(saying.to_saying_ref)
+      return said ? {kind: 'said', ref: said.saying_ref, who: whoOf(said.world_ref), what: said.what} : {kind: 'unsaid'}
+    }
+    const id = saying.to_part_ref === null ? null : shownId(saying.to_world_ref ?? '', saying.to_part_ref)
+    const there = id === null ? undefined : shown.find(item => item.id === id)
+    return there ? {kind: 'shown', id: there.id, who: there.who, label: there.label} : {kind: 'gone', who: whoOf(saying.to_world_ref ?? '')}
+  }
+  const order = [...sayings].sort((a, b) => a.at - b.at || (a.saying_ref < b.saying_ref ? -1 : 1))
+  const under = new Map<string, FieldSaying[]>()
+  const top: FieldSaying[] = []
+  for (const saying of order) {
+    const parent = saying.to_saying_ref !== null && byRef.has(saying.to_saying_ref) ? saying.to_saying_ref : null
+    if (parent === null) top.push(saying)
+    else under.set(parent, [...(under.get(parent) ?? []), saying])
+  }
+  const out: SceneSaying[] = []
+  const walk = (saying: FieldSaying, depth: number) => {
+    if (out.some(one => one.ref === saying.saying_ref)) return
+    out.push({ref: saying.saying_ref, world: saying.world_ref, who: whoOf(saying.world_ref), mine: mine.has(saying.world_ref), what: saying.what, words: saying.words, to: toOf(saying), depth, at: saying.at})
+    for (const reply of under.get(saying.saying_ref) ?? []) walk(reply, depth + 1)
+  }
+  for (const saying of top) walk(saying, 0)
+  return out
+}
+
+const SAID_VERB: Readonly<Record<SayingWhat, string>> = {question: 'asks about', finding: 'has a finding on', correction: 'corrects', reproduction: 'reproduces'}
+/** What a saying was said to, in words. */
+export function sayingToText(to: SayingTo): string {
+  switch (to.kind) {
+    case 'shown': return to.label
+    case 'said': return `${to.who}’s ${to.what}`
+    case 'unsaid': return 'something since unsaid'
+    case 'gone': return `something ${to.who} no longer shows here`
+  }
+}
+/** One thing said at a star in words: who said what to what. */
+export function starSayingLine(saying: SceneSaying): string {
+  return `${saying.who} ${SAID_VERB[saying.what]} ${sayingToText(saying.to)}: ${saying.words}`
+}
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const two = (n: number) => String(n).padStart(2, '0')
+/** When something happened at a star, short, in this machine's civil time: the clock on the day it is (`07:35`), the day otherwise
+ * (`3 Nov`). */
+export function starWhen(at: number, now: number): string {
+  const when = new Date(at), today = new Date(now)
+  const sameDay = when.getFullYear() === today.getFullYear() && when.getMonth() === today.getMonth() && when.getDate() === today.getDate()
+  return sameDay ? `${two(when.getHours())}:${two(when.getMinutes())}` : `${when.getDate()} ${MONTHS[when.getMonth()]}`
+}
+
 const DAY_WORDS: Readonly<Record<StarDayWhat, string>> = {
-  lit: 'lit the star', asked: 'asked to come', came: 'came', 'let-in': 'was let in', showed: 'showed', 'took-back': 'took back', left: 'left',
+  lit: 'lit the star', asked: 'asked to come', came: 'came', 'let-in': 'was let in', showed: 'showed', 'took-back': 'took back', said: 'said', unsaid: 'unsaid', left: 'left',
   'turned-away': 'was turned away',
 }
-/** One entry of a star's day in words: the world, and what it did there. */
+const SAID_DAY: Readonly<Record<SayingWhat, string>> = {question: 'asked a question', finding: 'shared a finding', correction: 'made a correction', reproduction: 'shared a reproduction'}
+/** One entry of a star's day in words: the world, and what it did there. What was shown or said is named by its kind, never by what it
+ * was. */
 export function starDayLine(entry: FieldDayEntry): string {
-  const who = entry.world_ref.split(':').pop() ?? entry.world_ref
+  const who = whoOf(entry.world_ref)
   const what = DAY_WORDS[entry.what]
+  const said = entry.kind !== null && (SAYING_WHATS as readonly string[]).includes(entry.kind) ? entry.kind as SayingWhat : null
+  if (entry.what === 'said') return said ? `${who} ${SAID_DAY[said]}` : `${who} said something`
+  if (entry.what === 'unsaid') return said ? `${who} unsaid a ${said}` : `${who} unsaid something`
   return entry.what === 'showed' || entry.what === 'took-back' ? `${who} ${what} ${entry.kind ? `a ${entry.kind}` : 'something'}` : `${who} ${what}`
 }
 
@@ -262,7 +411,8 @@ export function fieldScene(field: Extract<HeldField, {state: 'read'}>, view: {re
 export function fieldSceneOf(field: unknown, view: {readonly aperture: Aperture; readonly viewAs: Audience}, yours: string | null): FieldScene | null {
   if (!rec(field)) return null
   const kept = Array.isArray(field.days) ? {state: 'held'} : {state: 'unavailable', detail: text(field.dayWhy) ? field.dayWhy : NO_DAY}
-  const held = heldFieldOf({...field, world_field: {state: 'held'}, star_day: kept, star_days: field.days})
+  const said = Array.isArray(field.sayings) ? {state: 'held'} : {state: 'unavailable', detail: text(field.sayWhy) ? field.sayWhy : NO_SAYINGS}
+  const held = heldFieldOf({...field, world_field: {state: 'held'}, star_day: kept, star_days: field.days, star_saying: said, star_sayings: field.sayings})
   return held.state === 'read' ? fieldScene(held, view, yours) : null
 }
 
@@ -282,6 +432,9 @@ export type StarAct =
   | {readonly act: 'light'; readonly name: string; readonly gathers: string; readonly comes: StarComes}
   | {readonly act: 'gather' | 'leave' | 'close'; readonly star: string | null}
   | {readonly act: 'admit'; readonly star: string | null; readonly world: string | null}
+  /** say something at the star to what `to` names (shownId, or a saying's ref) */
+  | {readonly act: 'say'; readonly star: string | null; readonly to: string | null; readonly what: string; readonly words: string}
+  | {readonly act: 'unsay'; readonly star: string | null; readonly saying: string | null}
 
 /** Your world in the field: the one of yours whose body is your own body, or null. */
 export function yourFieldWorld(field: Extract<HeldField, {state: 'read'}>, yours: string | null): string | null {
@@ -290,6 +443,9 @@ export function yourFieldWorld(field: Extract<HeldField, {state: 'read'}>, yours
 }
 
 const NO_STAR = 'Choose a star first.'
+const NOTHING_TO_UNSAY = 'Choose something your world said, in what was said here.'
+/** A new saying's ref, from the world that says it and a nonce (the moment it is said): the field names a saying saying:<name>, once. */
+const sayingRefOf = (world: string, nonce: number): string => `saying:${world.replace(/[^A-Za-z0-9._:-]+/g, '-').slice(-120)}:${Math.abs(Math.trunc(nonce)).toString(36)}`
 const NOT_IN_FIELD = 'That star is not in the field you see.'
 /** A new star's ref, from its name and a nonce (the moment it is lit): the field names a star star:<name>, once. */
 const starRefOf = (name: string, nonce: number): string => {
@@ -341,6 +497,29 @@ export function starRequest(field: HeldField, yours: string | null, act: StarAct
       if (field.stars.some(row => row.within === star.star_ref)) return {refusal: 'Close the stars inside this one first.'}
       return {request: {kind: 'star-close', star_ref: star.star_ref}}
     }
+    case 'say': {
+      if (field.sayings === null) return {refusal: field.sayWhy ?? NO_SAYINGS}
+      if (!world) return {refusal: NOT_YOURS_YET}
+      if (at(world) !== 'gathered') return {refusal: 'Your world says things at a star only while it is gathered there.'}
+      if (!field.worlds.find(row => row.world_ref === world)?.linked) return {refusal: 'Link your world into the field before you say anything at a star.'}
+      if (!act.to) return {refusal: 'Choose what to say it to: something shown at the star, or something said there.'}
+      const said = field.sayings.find(row => row.saying_ref === act.to && row.star_ref === star.star_ref)
+      const shown = said ? undefined : field.clearings.find(row => row.audience === 'star' && row.star_ref === star.star_ref && shownId(row.world_ref, row.part_ref) === act.to)
+      if (!said && !shown) return {refusal: 'That is no longer shown or said at this star.'}
+      if (!(SAYING_WHATS as readonly string[]).includes(act.what)) return {refusal: 'Say a question, a finding, a correction or a reproduction.'}
+      const words = act.words.trim()
+      if (!words) return {refusal: 'Say something first.'}
+      if ([...words].length > 1000) return {refusal: 'Say it in at most 1000 characters.'}
+      return {request: {kind: 'star-say', saying_ref: sayingRefOf(world, nonce), star_ref: star.star_ref, world_ref: world,
+        to: said ? {saying_ref: said.saying_ref} : {world_ref: shown!.world_ref, part_ref: shown!.part_ref}, what: act.what, words}}
+    }
+    case 'unsay': {
+      if (field.sayings === null) return {refusal: field.sayWhy ?? NO_SAYINGS}
+      const said = act.saying ? field.sayings.find(row => row.saying_ref === act.saying && row.star_ref === star.star_ref) : undefined
+      if (!said) return {refusal: NOTHING_TO_UNSAY}
+      if (!field.worlds.find(row => row.world_ref === said.world_ref)?.mine) return {refusal: 'Only the one who said it unsays it.'}
+      return {request: {kind: 'star-unsay', saying_ref: said.saying_ref}}
+    }
   }
 }
 
@@ -353,6 +532,8 @@ export function starNote(request: Record<string, unknown>, data: unknown): strin
     case 'star-leave': return 'Your world has left the star and taken back what it showed there.'
     case 'star-admit': return 'The world is let in.'
     case 'star-close': return 'The star is closed: every world is back in its own orbit.'
+    case 'star-say': return 'It is said at the star, under your world’s name.'
+    case 'star-unsay': return 'It is unsaid: it no longer stands at the star.'
     default: return 'The field took it.'
   }
 }

@@ -35,7 +35,7 @@ import {WORLD_BODY_GENERATOR, WORLD_BODY_GENERATOR_VERSION, bodyDisc, isWorldBod
 import {discPngUrl} from '../../../projections/atlas/body/discPng'
 import {providerLabels} from '../../../projections/atlas/src/data/labels'
 import {PaneControls, paneControlsOf, paneReadings, paneTitle} from './paneControls'
-import {fieldSceneOf, starDayLine, type Aperture, type Audience, type FieldScene, type SceneStar} from '../../../projections/atlas/system/fieldModel'
+import {fieldSceneOf, starDayLine, starSayingLine, starWhen, type Aperture, type Audience, type FieldScene, type SceneStar} from '../../../projections/atlas/system/fieldModel'
 import './atlas-earth__globe-engine.css'
 
 type V = ViewProps['v']
@@ -436,7 +436,7 @@ const NOT_LOCAL = 'Steps count from a subject, so they apply in a local graph.'
 const NOT_GRAPH = 'The Graph is not a scale of the Earth.'
 const NOT_OPENED = 'The constellation has not been opened in this session. Its controls stand when the Graph view is first shown.'
 const NO_SUBJECT = 'Choose a subject on the Earth first: a place is declared by a subject.'
-const NOT_FIELD = 'Aperture and View as are the Field scale’s: choose Field first.'
+const NOT_FIELD = 'The field and its stars are read at the Field scale: choose Field first.'
 
 const SCALES = [{value: 'field', label: 'Field', does: 'Every world in the system, clear where its owner has shown it, and the stars people have made.'},
   {value: 'system', label: 'System', does: 'The sky: the Earth among the Sun, the Moon and the planets.'}, {value: 'body', label: 'Body', does: 'The Earth whole.'}, {value: 'region', label: 'Region', does: 'A close view over a coast.'},
@@ -534,11 +534,17 @@ const starRows = (star: SceneStar): RowItem[] => [
 const starAct = (p: ViewProps, key: string, label: string, does: string, hold = false) =>
   <Action {...stand(p, key, reachWhy(p.v))} key={key} label={label} does={does} hold={hold} onPress={() => p.set(key, Date.now())} />
 
-function starSection(p: ViewProps) {
+/** The star to act at: the stars this aperture shows, and the one chosen wherever it stands. */
+function starChooser(p: ViewProps) {
   const scene = sceneOf(p.v), star = chosenStar(p.v), options = (scene?.stars ?? []).map(s => ({value: s.ref, label: s.name, does: s.gathers}))
+  return <Chooser {...stand(p, 'fieldStar', reachWhy(p.v) ?? (options.length || star ? undefined : NO_STAR_HERE))} wide label="Star" does="The star to act at: the stars this aperture shows."
+    value={strOf(p.v, 'fieldStar') ?? ''} options={star && !options.some(o => o.value === star.ref) ? [...options, {value: star.ref, label: star.name, does: star.gathers}] : options} onChange={x => p.set('fieldStar', x)} />
+}
+
+function starSection(p: ViewProps) {
+  const star = chosenStar(p.v)
   return <Section label="Star" width={164}>
-    <Chooser {...stand(p, 'fieldStar', reachWhy(p.v) ?? (options.length || star ? undefined : NO_STAR_HERE))} wide label="Star" does="The star to act at: the stars this aperture shows."
-      value={strOf(p.v, 'fieldStar') ?? ''} options={star && !options.some(o => o.value === star.ref) ? [...options, {value: star.ref, label: star.name, does: star.gathers}] : options} onChange={x => p.set('fieldStar', x)} />
+    {starChooser(p)}
     <Rows label="At this star" does="The chosen star: what it gathers, who may come, who is there and where your world stands." size={4}
       items={star ? starRows(star) : reachWhy(p.v) ? undefined : []} why={star ? undefined : reachWhy(p.v) ?? 'Choose a star first.'} />
   </Section>
@@ -572,13 +578,86 @@ const dayRows = (v: V): RowItem[] | undefined => {
   const star = chosenStar(v)
   if (!star) return undefined
   if (star.day === null) return unreadRows(json<{dayWhy?: string}>(v, 'field', {}).dayWhy ?? 'No reading of the star’s day.')
-  return star.day.map((entry, i) => ({id: `${i}`, name: starDayLine(entry), light: entry.what === 'left' || entry.what === 'turned-away' || entry.what === 'took-back' ? 'dark' : 'lit', tone: 'value'}))
+  const now = Date.now()
+  return star.day.map((entry, i) => ({id: `${i}`, name: starDayLine(entry), light: entry.what === 'left' || entry.what === 'turned-away' || entry.what === 'took-back' || entry.what === 'unsaid' ? 'dark' : 'lit',
+    tone: 'value', ...(entry.at === null ? {} : {note: starWhen(entry.at, now)})}))
 }
-function daySection(p: ViewProps) {
+/** A list's page: the one chosen, or the newest until one is. */
+const pageOf = (v: V, key: string, rows: readonly RowItem[] | undefined, size: number) => numOf(v, key) ?? Math.max(0, Math.ceil((rows?.length ?? 0) / size) - 1)
+function daySection(p: ViewProps, width = 150) {
   const rows = dayRows(p.v), unheld = reachWhy(p.v)
-  return <Section label="Star’s day" width={150}>
-    <Rows does="The star’s day, as the field lets you read it: who came, who was let in, who showed something there and who left. What was shown stays with whoever showed it."
-      size={5} page={Math.max(0, Math.ceil((rows?.length ?? 0) / 5) - 1)} items={rows ?? (unheld ? undefined : [])} why={rows ? undefined : unheld ?? 'Choose a star first.'} />
+  return <Section label="Star’s day" width={width}>
+    <Rows does="The star’s day, as the field lets you read it: who came, who was let in, who showed or said something there and who left, each with when. What was shown or said stays with whoever showed or said it."
+      size={5} page={pageOf(p.v, 'dayPage', rows, 5)} onPage={unheld ? undefined : x => p.set('dayPage', x)}
+      items={rows ?? (unheld ? undefined : [])} why={rows ? undefined : unheld ?? 'Choose a star first.'} />
+  </Section>
+}
+
+// ---------------------------------------------------------------- what was said to what at a star (O-I #858, SF06)
+
+const SAY_KINDS = [{value: 'question', label: 'Question', does: 'Ask about it.'}, {value: 'finding', label: 'Finding', does: 'Say what you found in it.'},
+  {value: 'correction', label: 'Correction', does: 'Say what is wrong in it.'}, {value: 'reproduction', label: 'Reproduction', does: 'Say that you made it again, and how.'}] as const
+/** Who is at the chosen star now and what each brought there: one line for each thing a world shows at the star, and one for a world
+ * gathered there that shows nothing. None while no star is chosen. */
+const hereRows = (star: SceneStar | undefined): RowItem[] | undefined => star && star.gathered.flatMap((world): RowItem[] => {
+  const brought = star.shown.filter(item => item.world === world), who = tailOf(world)
+  return brought.length ? brought.map(item => ({id: item.id, name: item.label, note: who, light: 'lit' as const, does: `A ${item.kind} ${who} shows at the star. Choose it to say something to it.`}))
+    : [{id: `here:${world}`, name: who, light: 'dark' as const, does: `${who} is here and shows nothing at the star.`}]
+})
+/** What was said at the chosen star, each under what it answers, with when; unread with the field's words where its service keeps none. */
+const saidRows = (v: V): RowItem[] | undefined => {
+  const star = chosenStar(v)
+  if (!star) return undefined
+  if (star.said === null) return unreadRows(json<{sayWhy?: string}>(v, 'field', {}).sayWhy ?? 'No reading of what was said at the star.')
+  const now = Date.now()
+  return star.said.map(saying => ({id: saying.ref, name: starSayingLine(saying), note: starWhen(saying.at, now), light: 'lit', tone: saying.mine ? 'value' : undefined,
+    does: `${saying.depth ? 'An answer to what stands above it. ' : ''}Choose it to answer it${saying.mine ? ', or to unsay it' : ''}.`}))
+}
+/** What something can be said to at the chosen star: what is shown there, and what was said there. */
+const sayToOptions = (star: SceneStar | undefined) => !star ? [] : [
+  ...star.shown.map(item => ({value: item.id, label: `${item.label}, ${item.who}’s`, does: `A ${item.kind} ${item.who} shows at the star.`})),
+  ...(star.said ?? []).map(saying => ({value: saying.ref, label: `${saying.who}’s ${saying.what}`, does: saying.words}))]
+const choose = (p: ViewProps, id: string) => { if (!id.startsWith('here:')) p.set('fieldSayTo', id) }
+
+/** The Star page's star: the one chosen, and who is there now with what each brought. */
+function hereSection(p: ViewProps) {
+  const star = chosenStar(p.v), unheld = reachWhy(p.v), rows = hereRows(star)
+  return <Section label="Star" width={170}>
+    {starChooser(p)}
+    <Rows label="Here now" does="Who is at the star now and what each world brought there. Choose a thing to say something to it." size={4}
+      items={rows ?? (unheld ? undefined : [])} why={rows ? undefined : unheld ?? 'Choose a star first.'}
+      selected={strOf(p.v, 'fieldSayTo')} onSelect={unheld ? undefined : id => choose(p, id)} />
+  </Section>
+}
+function saidSection(p: ViewProps) {
+  const rows = saidRows(p.v), unheld = reachWhy(p.v)
+  return <Section label="Said here" width={330}>
+    <Rows does="What was said at the star, to what, by whom and when: each answer under what it answers. A saying stays its sayer’s until they unsay it."
+      size={5} page={pageOf(p.v, 'saidPage', rows, 5)} onPage={unheld ? undefined : x => p.set('saidPage', x)}
+      items={rows ?? (unheld ? undefined : [])} why={rows ? undefined : unheld ?? 'Choose a star first.'}
+      selected={strOf(p.v, 'fieldSayTo')} onSelect={unheld ? undefined : id => choose(p, id)} />
+  </Section>
+}
+function saySection(p: ViewProps) {
+  const star = chosenStar(p.v), options = sayToOptions(star)
+  const toWhy = reachWhy(p.v) ?? (!star ? 'Choose a star first.' : options.length ? undefined : 'Nothing is shown or said at this star yet.')
+  // Say takes a star, what it is said to and the words; Unsay what your world said: the face names why not from what it reads, as the
+  // binding does
+  const sayWhy = reachWhy(p.v) ?? (!star ? 'Choose a star first.' : !strOf(p.v, 'fieldSayTo') ? 'Choose what to say it to: something shown at the star, or something said there.'
+    : !(strOf(p.v, 'sayWords') ?? '').trim() ? 'Say something first.' : undefined)
+  const chosen = star?.said?.find(saying => saying.ref === strOf(p.v, 'fieldSayTo'))
+  const unsayWhy = reachWhy(p.v) ?? (!chosen ? 'Choose something your world said, in what was said here.' : chosen.mine ? undefined : 'Only the one who said it unsays it.')
+  return <Section label="Say" grow>
+    <Chooser {...stand(p, 'fieldSayTo', toWhy)} wide label="To" does="What to say it to: something shown at the star, or something said there."
+      value={strOf(p.v, 'fieldSayTo') ?? ''} options={options} onChange={x => p.set('fieldSayTo', x)} />
+    <Chooser {...stand(p, 'sayWhat', reachWhy(p.v))} wide label="Kind" does="What you say: a question, a finding, a correction or a reproduction."
+      value={strOf(p.v, 'sayWhat') ?? ''} options={SAY_KINDS} onChange={x => p.set('sayWhat', x)} />
+    <TextField {...stand(p, 'sayWords', reachWhy(p.v))} wide label="Words" does="What you say, in your own words: at most 1000 characters." value={strOf(p.v, 'sayWords') ?? ''}
+      placeholder="What you say" onChange={x => p.set('sayWords', x)} />
+    <Action {...stand(p, 'starSay', sayWhy)} label="Say" does="Say it at the star, to what you chose, under your world’s name. It stays yours until you unsay it, and enters no one’s world."
+      onPress={() => p.set('starSay', Date.now())} />
+    <Action {...stand(p, 'starUnsay', unsayWhy)} label="Unsay" does="Unsay what your world said, chosen in what was said here. What answered it stands." hold
+      onPress={() => p.set('starUnsay', Date.now())} />
   </Section>
 }
 
@@ -947,23 +1026,38 @@ export const design: DesignedDevice = {
     atmosphere: .6, clouds: .35, tilt: 18, placeKind: 'place',
     // The Field (O-I #858): the design's own sample of the held field's world part, as atlasDevices.fieldValues hands it. Yours, with your
     // own body; a project world you hold; Mara's, gathered with yours at your star; a stranger's, waiting at its edge and gathered at another.
+    // At your star, Mara asked about what you show there, you answered and corrected what she brought (SF06).
     aperture: 'world', viewAs: 'me', fieldHeld: true, fieldYours: 'body:own:teraphim', cameraScale: 'body',
-    starName: '', starGathers: '', starComes: 'anyone',
+    starName: '', starGathers: '', starComes: 'anyone', sayWhat: 'question', sayWords: '',
     field: JSON.stringify({
       worlds: [{world_ref: 'world:teraphim', body: {body_ref: 'body:own:teraphim'}, linked: true, mine: true}, {world_ref: 'world:teraphim:o-i', body: {body_ref: 'body:o-i'}, linked: true, mine: true},
         {world_ref: 'world:mara', body: {body_ref: 'body:mara'}, linked: true, mine: false}, {world_ref: 'world:stranger', body: {body_ref: 'body:stranger'}, linked: true, mine: false}],
       clearings: [{world_ref: 'world:teraphim', part_ref: 'page:reading-of-plate-4', star_ref: null, audience: 'public', shown: {kind: 'page', label: 'A reading of the fourth plate'}},
         {world_ref: 'world:teraphim', part_ref: 'place:rosarium-notes', star_ref: null, audience: 'field', shown: {kind: 'place', label: 'Rosarium notes'}},
         {world_ref: 'world:teraphim', part_ref: 'page:for-the-circle', star_ref: 'star:rosarium', audience: 'star', shown: {kind: 'page', label: 'For the circle'}},
+        {world_ref: 'world:mara', part_ref: 'page:maras-reading', star_ref: 'star:rosarium', audience: 'star', shown: {kind: 'page', label: 'Mara’s reading of the second plate'}},
         {world_ref: 'world:mara', part_ref: 'page:maras-plate', star_ref: null, audience: 'public', shown: {kind: 'page', label: 'Mara’s plate'}},
         {world_ref: 'world:stranger', part_ref: 'page:elsewhere', star_ref: null, audience: 'public', shown: {kind: 'page', label: 'Elsewhere'}}],
       stars: [{star_ref: 'star:rosarium', name: 'The Rosarium plates', gathers: 'Readings of the Rosarium plates', comes: 'asked', lit_by: 'world:teraphim', mine: true},
         {star_ref: 'star:far', name: 'Far', gathers: 'Something else', comes: 'anyone', lit_by: 'world:stranger', mine: false}],
       gatherings: [{star_ref: 'star:rosarium', world_ref: 'world:teraphim', state: 'gathered'}, {star_ref: 'star:rosarium', world_ref: 'world:mara', state: 'gathered'},
         {star_ref: 'star:rosarium', world_ref: 'world:stranger', state: 'asked'}, {star_ref: 'star:far', world_ref: 'world:stranger', state: 'gathered'}],
-      days: [{star_ref: 'star:rosarium', world_ref: 'world:teraphim', what: 'lit'}, {star_ref: 'star:rosarium', world_ref: 'world:mara', what: 'asked'},
-        {star_ref: 'star:rosarium', world_ref: 'world:mara', what: 'let-in'}, {star_ref: 'star:rosarium', world_ref: 'world:teraphim', what: 'showed', kind: 'page'},
-        {star_ref: 'star:rosarium', world_ref: 'world:stranger', what: 'asked'}],
+      days: [{star_ref: 'star:rosarium', world_ref: 'world:teraphim', what: 'lit', at: Date.UTC(2026, 10, 3, 18, 2)},
+        {star_ref: 'star:rosarium', world_ref: 'world:mara', what: 'asked', at: Date.UTC(2026, 10, 4, 6, 41)},
+        {star_ref: 'star:rosarium', world_ref: 'world:mara', what: 'let-in', at: Date.UTC(2026, 10, 4, 6, 44)},
+        {star_ref: 'star:rosarium', world_ref: 'world:teraphim', what: 'showed', kind: 'page', at: Date.UTC(2026, 10, 4, 6, 50)},
+        {star_ref: 'star:rosarium', world_ref: 'world:mara', what: 'showed', kind: 'page', at: Date.UTC(2026, 10, 4, 7, 2)},
+        {star_ref: 'star:rosarium', world_ref: 'world:mara', what: 'said', kind: 'question', at: Date.UTC(2026, 10, 4, 7, 10)},
+        {star_ref: 'star:rosarium', world_ref: 'world:teraphim', what: 'said', kind: 'finding', at: Date.UTC(2026, 10, 4, 7, 18)},
+        {star_ref: 'star:rosarium', world_ref: 'world:teraphim', what: 'said', kind: 'correction', at: Date.UTC(2026, 10, 4, 7, 21)},
+        {star_ref: 'star:rosarium', world_ref: 'world:stranger', what: 'asked', at: Date.UTC(2026, 10, 4, 7, 30)}],
+      sayings: [
+        {saying_ref: 'saying:mara-q', star_ref: 'star:rosarium', world_ref: 'world:mara', to_world_ref: 'world:teraphim', to_part_ref: 'page:for-the-circle', to_saying_ref: null,
+          what: 'question', words: 'Where does the circle open on the fourth plate?', at: Date.UTC(2026, 10, 4, 7, 10)},
+        {saying_ref: 'saying:teraphim-f', star_ref: 'star:rosarium', world_ref: 'world:teraphim', to_world_ref: null, to_part_ref: null, to_saying_ref: 'saying:mara-q',
+          what: 'finding', words: 'At the rose, where the two lines cross.', at: Date.UTC(2026, 10, 4, 7, 18)},
+        {saying_ref: 'saying:teraphim-c', star_ref: 'star:rosarium', world_ref: 'world:teraphim', to_world_ref: 'world:mara', to_part_ref: 'page:maras-reading', to_saying_ref: null,
+          what: 'correction', words: 'The second plate is the white rose, not the red.', at: Date.UTC(2026, 10, 4, 7, 21)}],
     }),
     locations: JSON.stringify([
       {id: 'study', name: 'The study', lat: 22, lon: 10, kind: 'place'}, {id: 'book', name: 'The book', lat: -8, lon: 34, kind: 'palace'},
@@ -997,13 +1091,15 @@ export const design: DesignedDevice = {
     'Field, everything': {scale: 'field', aperture: 'federated', viewAs: 'me'},
     'Field not held': {scale: 'field', field: undefined, fieldYours: undefined, fieldHeld: false, fieldWhy: 'This field’s service does not hold worlds yet'},
     'Field, a star chosen': {scale: 'field', aperture: 'federated', viewAs: 'me', fieldStar: 'star:rosarium', fieldWaiting: JSON.stringify(['world:stranger']), fieldAdmit: 'world:stranger',
-      starName: 'The Bestiary', starGathers: 'Readings of the medieval beasts', starComes: 'asked'},
+      starName: 'The Bestiary', starGathers: 'Readings of the medieval beasts', starComes: 'asked',
+      fieldSayTo: 'saying:mara-q', sayWhat: 'finding', sayWords: 'It opens where the white rose meets the red.'},
     'Nothing in focus': {'pane.title': undefined, 'pane.controls': JSON.stringify([])},
     'No readings': Object.fromEntries(['light', 'view', 'scale', 'cursor', 'allTime', 'playing', 'cumulative', 'scope', 'wholeField', 'relation', 'selected', 'placeArmed', 'placePage', 'baseKind',
       'graphOpen', 'local', 'depth', 'centre', 'repel', 'link', 'distance', 'tieJung', 'tieInferred', 'tieSite', 'kindArchetype', 'kindTheoretic', 'kindFamily', 'occurrences', 'skyAnchors',
       'places', 'sky', 'graph', 'subject', 'body', 'bodyName', 'seed', 'seaLevel', 'continents', 'relief', 'coast', 'warmth', 'moisture', 'iceCaps', 'atmosphere', 'clouds', 'tilt',
       'placeKind', 'locations', 'bodyRecord', 'bodyLook', 'bodyTime', 'generationNote', 'pane.title', 'pane.controls',
-      'aperture', 'viewAs', 'field', 'fieldYours', 'fieldHeld', 'fieldWhy', 'cameraScale', 'fieldStar', 'fieldWaiting', 'fieldAdmit', 'starName', 'starGathers', 'starComes'].map(k => [k, undefined])),
+      'aperture', 'viewAs', 'field', 'fieldYours', 'fieldHeld', 'fieldWhy', 'cameraScale', 'fieldStar', 'fieldWaiting', 'fieldAdmit', 'starName', 'starGathers', 'starComes',
+      'fieldSayTo', 'sayWhat', 'sayWords', 'dayPage', 'saidPage'].map(k => [k, undefined])),
   },
 
   folded: p => <Folded title="World" light={light(p)} readings={strOf(p.v, 'view') === 'graph' ? ['graph', depthText(p.v)] : [shown(p.v, 'scale'), whenOf(p.v) ?? NONE]} onUnfold={p.nav.unfold} />,
@@ -1031,8 +1127,15 @@ export const design: DesignedDevice = {
   </Panel>,
 
   whole: p => <Panel title="World" view="whole" light={light(p)} onFold={p.nav.fold} onFull={p.nav.full}
-    pages={[{id: 'space', label: 'Space'}, {id: 'body', label: 'Body'}, {id: 'graph', label: 'Graph'}]} page={p.page === 'graph' || p.page === 'body' ? p.page : 'space'} onPage={p.setPage}>
-    {p.page === 'body' ? <>
+    pages={[{id: 'space', label: 'Space'}, {id: 'star', label: 'Star'}, {id: 'body', label: 'Body'}, {id: 'graph', label: 'Graph'}]}
+    page={p.page === 'graph' || p.page === 'body' || p.page === 'star' ? p.page : 'space'} onPage={p.setPage}>
+    {p.page === 'star' ? <Band>
+      <Section width={198}><SpaceOrField v={p.v} set={p.set} standing={p.standing} w={186} h={146} size="whole" /></Section>
+      {hereSection(p)}
+      {daySection(p, 190)}
+      {saidSection(p)}
+      {saySection(p)}
+    </Band> : p.page === 'body' ? <>
       <Band>
         <Section width={198}><BodyDisplay v={p.v} w={186} h={146} size="whole" /></Section>
         <Section label="Body" width={96}>

@@ -3,7 +3,7 @@
 // overlay (system/systemOverlay.ts), the World device and the browser's Bodies group. It holds the last reading and nothing else:
 // no body is kept, defaulted or invented here, and every write goes to its owner through the acts the readings bind.
 import type {SystemBody, SystemSatellite} from './systemModel'
-import type {Aperture, Audience, HeldField, StarComes} from './fieldModel'
+import type {Aperture, Audience, HeldField, SayingWhat, StarComes} from './fieldModel'
 
 export type SystemReading =
   | {readonly state: 'unbound'}
@@ -90,17 +90,25 @@ export function chooseFieldView(next: Partial<FieldView>): void {
   notify()
 }
 
-/** The view's own hand at a star (manual §17.2 items 9 and 10): the star chosen, the waiting world chosen to let in, and a star to
- * light, its name, what it gathers and who may come, until it is lit. Never written anywhere; the acts go to the field. */
+/** The view's own hand at a star (manual §17.2 items 9 and 10; SF06): the star chosen, the waiting world chosen to let in, a star to
+ * light (its name, what it gathers and who may come) until it is lit, what to say there (to what, of what kind, in what words) until
+ * it is said, and the page of its day and of what was said there. Never written anywhere; the acts go to the field. */
 export interface StarHand {
   readonly star: string | null
   readonly admit: string | null
   readonly name: string
   readonly gathers: string
   readonly comes: StarComes
+  /** what something is said to, or the saying to unsay: a thing shown at the star (fieldModel.ts shownId) or a saying's ref */
+  readonly to: string | null
+  readonly what: SayingWhat
+  readonly words: string
+  /** the page of the star's day and of what was said there you turned to, or null for the newest */
+  readonly dayPage: number | null
+  readonly saidPage: number | null
 }
 
-let hand: StarHand = {star: null, admit: null, name: '', gathers: '', comes: 'anyone'}
+let hand: StarHand = {star: null, admit: null, name: '', gathers: '', comes: 'anyone', to: null, what: 'question', words: '', dayPage: null, saidPage: null}
 
 export const starHand = (): StarHand => hand
 

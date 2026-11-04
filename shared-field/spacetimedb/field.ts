@@ -73,6 +73,9 @@
  *   star-admit        {star_ref, world_ref}            the lighter lets an asking world in
  *   star-leave        {star_ref, world_ref}            leave (or, for the lighter, turn a world away): what it showed there is taken back
  *   star-close        {star_ref}                       close a star: every world returns to its own orbit
+ *   star-say          {saying_ref, star_ref, world_ref, to, what, words}   say a question, finding, correction or reproduction at a star,
+ *                                        `to` {world_ref, part_ref} shown there or {saying_ref} said there; the caller's world is gathered
+ *   star-unsay        {saying_ref}                     unsay what the caller's world said at a star; what answered it stands
  */
 import { activityLivenessRow, bindingFile, close, fieldDayReading, fieldNowReading, fieldSnapshot, holdField, hostingTargets, open, publishArgs, readRef, resolveTarget, rows, stageReading, stageView, waitUntil, observeField, worldReading, type Client } from './field-lib';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
@@ -449,7 +452,9 @@ try {
     case 'star-gather':
     case 'star-admit':
     case 'star-leave':
-    case 'star-close': {
+    case 'star-close':
+    case 'star-say':
+    case 'star-unsay': {
       await emit(await worldAct(client!, request));
     }
     default:
@@ -472,6 +477,7 @@ async function worldAct(client: Client, request: any): Promise<Envelope> {
   const clearingOf = (worldRef: string, partRef: string, starRef: string) => read().clearings.find((c: any) => c.world_ref === worldRef && c.part_ref === partRef && (c.star_ref ?? '') === starRef);
   const gatheringOf = (starRef: string, worldRef: string) => read().gatherings.find((g: any) => g.star_ref === starRef && g.world_ref === worldRef);
   const starOf = (starRef: string) => read().stars.find((star: any) => star.star_ref === starRef);
+  const sayingOf = (sayingRef: string) => read().star_sayings.find((saying: any) => saying.saying_ref === sayingRef);
   const starRef = text(request.star_ref) ? request.star_ref : '';
   switch (request.kind) {
     case 'world-put': {
@@ -519,6 +525,25 @@ async function worldAct(client: Client, request: any): Promise<Envelope> {
       await reducers.closeStar({ starRef: request.star_ref });
       await waitUntil(() => !starOf(request.star_ref), 'the star to close');
       return { ok: true, data: { schema: 'oi.shared-field.star-result/v1', star_ref: request.star_ref, state: 'closed' } };
+    }
+    case 'star-say': {
+      if (client.sayings.state !== 'held') return { ok: false, error: { kind: 'unavailable', message: client.sayings.detail } };
+      const to = request.to && typeof request.to === 'object' ? request.to : null;
+      const toShown = to && text(to.world_ref) && text(to.part_ref) && to.saying_ref === undefined, toSaid = to && text(to.saying_ref) && to.world_ref === undefined && to.part_ref === undefined;
+      if (!text(request.saying_ref) || !text(request.star_ref) || !text(request.world_ref) || !text(request.what) || typeof request.words !== 'string' || !(toShown || toSaid)) {
+        return malformed('star-say requires `saying_ref`, `star_ref`, `world_ref`, `what`, `words` and `to`: {world_ref, part_ref} or {saying_ref}');
+      }
+      await reducers.sayAtStar({ sayingRef: request.saying_ref, starRef: request.star_ref, worldRef: request.world_ref, toWorldRef: toShown ? to.world_ref : '', toPartRef: toShown ? to.part_ref : '',
+        toSayingRef: toSaid ? to.saying_ref : '', what: request.what, words: request.words });
+      const saying = await waitUntil(() => sayingOf(request.saying_ref), 'the saying in the caller\'s own view');
+      return { ok: true, data: { schema: 'oi.shared-field.saying-result/v1', saying, state: 'said' } };
+    }
+    case 'star-unsay': {
+      if (client.sayings.state !== 'held') return { ok: false, error: { kind: 'unavailable', message: client.sayings.detail } };
+      if (!text(request.saying_ref)) return malformed('star-unsay requires `saying_ref`');
+      await reducers.unsayAtStar({ sayingRef: request.saying_ref });
+      await waitUntil(() => !sayingOf(request.saying_ref), 'the saying to be unsaid');
+      return { ok: true, data: { schema: 'oi.shared-field.saying-result/v1', saying_ref: request.saying_ref, state: 'unsaid' } };
     }
   }
   return malformed(`unknown world act: ${request.kind}`);

@@ -304,27 +304,63 @@ try {
   assert.ok(!JSON.stringify(await heldB.data({ kind: 'snapshot' })).includes(STAR_MARK), 'waiting at the edge shows B nothing shown at the star');
   const refusedAdmit = await heldB.ask({ kind: 'star-admit', star_ref: star, world_ref: worldB });
   assert.equal(refusedAdmit.ok, false, 'only the star\'s lighter lets a world in');
+  // What is said at a star (SF06) is read where its day is read: A says something there, and B, waiting at the edge, is told none of it
+  // and says nothing there itself.
+  const SAY_MARK = `SAY-MARK-858-${run}`;
+  const sayingsOf = (snapshot: any) => (snapshot.star_sayings ?? []).filter((saying: any) => saying.star_ref === star);
+  const said0 = await heldA2.data({ kind: 'star-say', saying_ref: `saying:one-field:${run}:a0`, star_ref: star, world_ref: worldA, to: { world_ref: worldA, part_ref: 'page:for-the-circle' }, what: 'finding', words: `The circle opens at the fourth plate ${SAY_MARK}` });
+  assert.equal(said0.saying.world_ref, worldA, 'a saying stands under its sayer\'s world');
+  const refusedSay = await heldB.ask({ kind: 'star-say', saying_ref: `saying:one-field:${run}:b-waiting`, star_ref: star, world_ref: worldB, to: { saying_ref: `saying:one-field:${run}:a0` }, what: 'question', words: 'May I ask?' });
+  assert.equal(refusedSay.ok, false, 'a world waiting at the edge says nothing at the star');
+  assert.match(refusedSay.error.message, /only while it is gathered there/, `refused in words: ${refusedSay.error.message}`);
+  assert.ok(!JSON.stringify(await heldB.data({ kind: 'snapshot' })).includes(SAY_MARK), 'waiting at the edge, B reads nothing said at the star');
+  assert.ok(!heldB.raw.slice(rawFrom).some((line) => line.includes(SAY_MARK)), 'and nothing B\'s client sent out names it');
   await heldA2.data({ kind: 'star-admit', star_ref: star, world_ref: worldB });
   const inside: any = await waitFor(async () => { const seen = await heldB.data({ kind: 'snapshot' }); return JSON.stringify(seen).includes(STAR_MARK) && seen; }, 'B, let in, to see what A shows at the star');
   assert.ok(!JSON.stringify(inside).includes(MARK), 'letting B in gives it no reach into A\'s world beyond what A shows at the star');
   assert.equal(clearingsOf(inside, hidden).length, 0);
   assert.equal(worldsOf(inside, hidden).length, 0);
-  const DAY_LET_IN = [[worldA, 'lit'], [worldA, 'showed'], [worldB, 'asked'], [worldB, 'let-in']];
+  assert.ok(await waitFor(async () => JSON.stringify(sayingsOf(await heldB.data({ kind: 'snapshot' }))).includes(SAY_MARK), 'B, let in, to read what A said at the star'));
+  const DAY_LET_IN = [[worldA, 'lit'], [worldA, 'showed'], [worldB, 'asked'], [worldA, 'said'], [worldB, 'let-in']];
   assert.deepEqual(await waitFor(async () => { const day = dayOf(await heldA2.data({ kind: 'snapshot' })); return day.length === DAY_LET_IN.length && day; }, 'A to read the star\'s day'), DAY_LET_IN,
-    'the lighter reads the star\'s day: it was lit, A showed something there, B asked and was let in');
+    'the lighter reads the star\'s day: it was lit, A showed something there, B asked, A said something and B was let in');
   assert.deepEqual(await waitFor(async () => { const day = dayOf(await heldB.data({ kind: 'snapshot' })); return day.length === DAY_LET_IN.length && day; }, 'B, let in, to read the star\'s day'), DAY_LET_IN,
     'let in, B reads the same day');
   await heldB.data({ kind: 'clearing-open', world_ref: worldB, part_ref: 'page:my-reading', audience: 'star', star_ref: star, shown: { kind: 'page', label: 'My reading of the fourth plate' } });
   await waitFor(async () => clearingsOf(await heldA2.data({ kind: 'snapshot' }), worldB).some((c: any) => c.part_ref === 'page:my-reading'), 'A to see what B shows at the star');
+  /* ---------- what was said to what (SF06): B asks about what A shows, A answers the question and corrects what B shows ---------- */
+  const Q = `saying:one-field:${run}:b-question`, F = `saying:one-field:${run}:a-finding`, C = `saying:one-field:${run}:a-correction`;
+  const question = await heldB.data({ kind: 'star-say', saying_ref: Q, star_ref: star, world_ref: worldB, to: { world_ref: worldA, part_ref: 'page:for-the-circle' }, what: 'question', words: 'Where does the circle open?' });
+  assert.deepEqual([question.saying.to_world_ref, question.saying.to_part_ref, question.saying.what], [worldA, 'page:for-the-circle', 'question'], 'B\'s question stands on what A shows at the star');
+  const seenQ = await waitFor(async () => sayingsOf(await heldA2.data({ kind: 'snapshot' })).find((saying: any) => saying.saying_ref === Q), 'A to read B\'s question');
+  assert.deepEqual([seenQ.world_ref, seenQ.to_part_ref, seenQ.words], [worldB, 'page:for-the-circle', 'Where does the circle open?'], 'A reads who said what to what');
+  assert.ok(Number(seenQ.said_at_micros) > 0, 'and when');
+  await heldA2.data({ kind: 'star-say', saying_ref: F, star_ref: star, world_ref: worldA, to: { saying_ref: Q }, what: 'finding', words: 'At the fourth plate.' });
+  await heldA2.data({ kind: 'star-say', saying_ref: C, star_ref: star, world_ref: worldA, to: { world_ref: worldB, part_ref: 'page:my-reading' }, what: 'correction', words: 'The second plate is the white rose.' });
+  const seenF = await waitFor(async () => sayingsOf(await heldB.data({ kind: 'snapshot' })).find((saying: any) => saying.saying_ref === F), 'B to read A\'s answer to its question');
+  assert.equal(seenF.to_saying_ref, Q, 'a saying answers a saying: it threads under it');
+  const unsayOthers = await heldB.ask({ kind: 'star-unsay', saying_ref: F });
+  assert.equal(unsayOthers.ok, false, 'only the one who said it unsays it');
+  const notHere = await heldB.ask({ kind: 'star-say', saying_ref: `saying:one-field:${run}:b-elsewhere`, star_ref: star, world_ref: worldB, to: { world_ref: worldA, part_ref: 'place:rosarium-notes' }, what: 'question', words: 'And this?' });
+  assert.equal(notHere.ok, false, 'a saying at a star is said to something shown at that star');
   await heldB.data({ kind: 'star-leave', star_ref: star, world_ref: worldB });
   await waitFor(async () => !clearingsOf(await heldA2.data({ kind: 'snapshot' }), worldB).length, 'leaving to take back what B showed at the star');
   assert.ok(!JSON.stringify(await heldB.data({ kind: 'snapshot' })).includes(STAR_MARK), 'and B no longer sees what A shows there');
-  const DAY_LEFT = [...DAY_LET_IN, [worldB, 'showed'], [worldB, 'left']];
+  // what A's correction was said to went back under cloud with B's leaving: the saying stands, and names nothing it was said to
+  const seenC = await waitFor(async () => { const saying = sayingsOf(await heldA2.data({ kind: 'snapshot' })).find((s: any) => s.saying_ref === C); return saying && saying.to_part_ref === null && saying; }, 'what A\'s correction was said to to go under cloud');
+  assert.equal(seenC.to_world_ref, worldB, 'it still says whose it was');
+  assert.ok(sayingsOf(await heldA2.data({ kind: 'snapshot' })).some((saying: any) => saying.saying_ref === Q), 'B\'s question stays under B\'s name when B leaves');
+  await heldB.data({ kind: 'star-unsay', saying_ref: Q });
+  const afterUnsay = await waitFor(async () => { const said = sayingsOf(await heldA2.data({ kind: 'snapshot' })); return !said.some((s: any) => s.saying_ref === Q) && said; }, 'B\'s unsaying to reach A');
+  assert.equal(afterUnsay.find((saying: any) => saying.saying_ref === F)?.to_saying_ref, Q, 'A\'s answer stands, under what is now unsaid');
+  const DAY_LEFT = [...DAY_LET_IN, [worldB, 'showed'], [worldB, 'said'], [worldA, 'said'], [worldA, 'said'], [worldB, 'left'], [worldB, 'unsaid']];
   const daySnapshotA = await waitFor(async () => { const seen = await heldA2.data({ kind: 'snapshot' }); return dayOf(seen).length === DAY_LEFT.length && seen; }, 'A to read B\'s leaving in the star\'s day');
   assert.deepEqual(dayOf(daySnapshotA), DAY_LEFT, 'the star\'s day records that B showed something there and left');
   const dayText = JSON.stringify((daySnapshotA.star_days ?? []).filter((entry: any) => entry.star_ref === star));
   assert.ok(!dayText.includes(STAR_MARK) && !dayText.includes('My reading'), `the star\'s day records that something was shown, never what: ${dayText}`);
-  assert.deepEqual(dayOf(await heldB.data({ kind: 'snapshot' })), [[worldB, 'asked'], [worldB, 'let-in'], [worldB, 'showed'], [worldB, 'left']],
+  assert.ok(!dayText.includes(SAY_MARK) && !dayText.includes('circle open'), `and that something was said, never what: ${dayText}`);
+  assert.ok((daySnapshotA.star_days ?? []).filter((entry: any) => entry.star_ref === star).every((entry: any) => Number(entry.at_micros) > 0), 'each entry of the day says when');
+  assert.deepEqual(dayOf(await heldB.data({ kind: 'snapshot' })), [[worldB, 'asked'], [worldB, 'let-in'], [worldB, 'showed'], [worldB, 'said'], [worldB, 'left'], [worldB, 'unsaid']],
     'gone from the star, B reads only its own part of the star\'s day');
 
   /* ---------- withdraw, link off, close ---------- */
@@ -340,6 +376,7 @@ try {
   await waitFor(async () => { const seen = await heldB.data({ kind: 'snapshot' }); return !seen.stars.some((s: any) => s.star_ref === star) && !seen.gatherings.some((g: any) => g.star_ref === star); }, 'a closed star to return every world to its own orbit');
   assert.equal(clearingsOf(await heldA2.data({ kind: 'snapshot' }), worldA).filter((c: any) => c.star_ref === star).length, 0, 'what was shown at a closed star goes with it');
   assert.deepEqual(dayOf(await heldA2.data({ kind: 'snapshot' })), [], 'and so does its day');
+  assert.deepEqual(sayingsOf(await heldA2.data({ kind: 'snapshot' })), [], 'and what was said there');
   assert.deepEqual(dayOf(await heldB.data({ kind: 'snapshot' })), []);
   // Today's rows stand beside the worlds: the slice-1 page is still read.
   assert.ok((await heldB.data({ kind: 'observe' })).snapshot.entries.some((entry: any) => entry.ref === fence), 'the field\'s other rows read as they did');
@@ -357,6 +394,7 @@ try {
     'what a world has not shown reaches no payload, count or transaction of another identity, and moves no cursor',
     'a star is lit by its owner with its world gathered first; an asking world waits at its edge until let in',
     'the star keeps its day of who came, was let in, showed something and left, read by its lighter and the worlds gathered there, never what was shown',
+    'what was said at a star stands under its sayer\'s name on what it was said to, threads under what it answers, goes under cloud with what it was said to, and is unsaid by its sayer alone',
     'leaving takes back what was shown at a star; withdrawing and Link off go back under cloud; closing returns every world',
   ] }));
 } finally {

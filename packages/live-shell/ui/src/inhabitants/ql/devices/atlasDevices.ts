@@ -27,7 +27,7 @@ import {
 } from '../../../projections/atlas/body/worldBody'
 import {suiteStanding} from '../../../projections/atlas/provider/suiteStanding'
 import {chooseFieldView, chooseStarHand, fieldView, heldField, starHand, systemActs, systemReading, type FieldView, type StarHand} from '../../../projections/atlas/system/systemStore'
-import {APERTURES, AUDIENCES, STAR_COMES, starRequest, type Aperture, type Audience, type HeldField, type StarAct, type StarComes} from '../../../projections/atlas/system/fieldModel'
+import {APERTURES, AUDIENCES, SAYING_WHATS, STAR_COMES, shownId, starRequest, type Aperture, type Audience, type HeldField, type SayingWhat, type StarAct, type StarComes} from '../../../projections/atlas/system/fieldModel'
 import type {AtlasScale} from '../../../projections/atlas/places/placesModel'
 import {yourLocations, type BodyLocation} from '../../../projections/atlas/system/bodyLocations'
 import {PLACE_KINDS, choosePlaceKind, notePlaceTool, placeKindChoice, type PlaceKind} from '../../../projections/atlas/places/placeTool'
@@ -159,8 +159,8 @@ export function fieldValues(reading: NonNullable<AtlasReading['field']>): {value
   if (reading.view.field) values.scale = 'field'
   const standing: Record<string, Standing> = {}
   if (reading.held.state === 'read') {
-    const {worlds, clearings, stars, gatherings, days, dayWhy} = reading.held
-    values.field = JSON.stringify({worlds, clearings, stars, gatherings, days, dayWhy})
+    const {worlds, clearings, stars, gatherings, days, dayWhy, sayings, sayWhy} = reading.held
+    values.field = JSON.stringify({worlds, clearings, stars, gatherings, days, dayWhy, sayings, sayWhy})
     if (reading.yours) values.fieldYours = reading.yours
   } else {
     const why = reading.held.state === 'reading' ? FIELD_BEING_READ : reading.held.reason
@@ -172,15 +172,15 @@ export function fieldValues(reading: NonNullable<AtlasReading['field']>): {value
   return {values: {...values, ...stars.values}, standing: {...standing, ...stars.standing}}
 }
 
-// ── the acts at a star (manual §17.2 items 9 and 10; O-I #858 SF04, SF05) ────────────────────────────────────────────────
+// ── the acts at a star (manual §17.2 items 9 and 10; O-I #858 SF04, SF05, SF06) ──────────────────────────────────────────
 //
-// The star chosen, the waiting world chosen and the star to light are the view's own hand (systemStore.ts StarHand); each act is one
+// The star chosen, the waiting world chosen, the star to light and what to say there are the view's own hand (systemStore.ts StarHand); each act is one
 // request of the held field for your own world (system/fieldModel.ts starRequest), standing dimmed with its reason when it cannot be
 // asked. Showing work and offering a task at a star are Software Factory's (stories SF12, SF13): no owner operation does them yet, so
 // they stand dimmed with that owner named.
 
 /** The acts at a star, by the World's value key. */
-export const STAR_ACT_KEYS = ['starLight', 'starGather', 'starLeave', 'starAdmit', 'starClose'] as const
+export const STAR_ACT_KEYS = ['starLight', 'starGather', 'starLeave', 'starAdmit', 'starClose', 'starSay', 'starUnsay'] as const
 type StarActKey = (typeof STAR_ACT_KEYS)[number]
 const isStarAct = (key: string): key is StarActKey => (STAR_ACT_KEYS as readonly string[]).includes(key)
 /** Software Factory's acts at a star, which it has not built (SF12, SF13). */
@@ -189,7 +189,7 @@ export const FACTORY_AT_STAR: Readonly<Record<'starShow' | 'starOffer', string>>
   starOffer: 'Software Factory offers a task at a star for another person’s agent to take up on their own machine; it has not built that yet.',
 }
 const NOT_REACHED = 'The shared field is not reached from this window.'
-const NO_HAND: StarHand = {star: null, admit: null, name: '', gathers: '', comes: 'anyone'}
+const NO_HAND: StarHand = {star: null, admit: null, name: '', gathers: '', comes: 'anyone', to: null, what: 'question', words: '', dayPage: null, saidPage: null}
 
 /** The act a key names, from the view's hand. */
 function starActOf(key: StarActKey, hand: StarHand): StarAct {
@@ -199,23 +199,32 @@ function starActOf(key: StarActKey, hand: StarHand): StarAct {
     case 'starLeave': return {act: 'leave', star: hand.star}
     case 'starAdmit': return {act: 'admit', star: hand.star, world: hand.admit}
     case 'starClose': return {act: 'close', star: hand.star}
+    case 'starSay': return {act: 'say', star: hand.star, to: hand.to, what: hand.what, words: hand.words}
+    case 'starUnsay': return {act: 'unsay', star: hand.star, saying: hand.to}
   }
 }
 
-/** The star chosen and its waiting worlds, the star to light, and each act's standing. */
+/** The star chosen and its waiting worlds, the star to light, what to say there, and each act's standing. */
 function starValues(reading: NonNullable<AtlasReading['field']>): {values: Record<string, ParamValue>; standing: Record<string, Standing>} {
   const hand = reading.hand ?? NO_HAND, held = reading.held
-  const values: Record<string, ParamValue> = {starName: hand.name, starGathers: hand.gathers, starComes: hand.comes}
+  const values: Record<string, ParamValue> = {starName: hand.name, starGathers: hand.gathers, starComes: hand.comes, sayWhat: hand.what, sayWords: hand.words}
   const standing: Record<string, Standing> = {starShow: {disabled: FACTORY_AT_STAR.starShow}, starOffer: {disabled: FACTORY_AT_STAR.starOffer}}
   if (held.state === 'read' && hand.star && held.stars.some(star => star.star_ref === hand.star)) {
     values.fieldStar = hand.star
     const waiting = held.gatherings.filter(gathering => gathering.star_ref === hand.star && gathering.state === 'asked').map(gathering => gathering.world_ref)
     values.fieldWaiting = JSON.stringify(waiting)
     if (hand.admit && waiting.includes(hand.admit)) values.fieldAdmit = hand.admit
+    // what something is said to stands chosen while it is still shown or said at the star
+    const at = (ref: string) => held.sayings?.some(saying => saying.star_ref === hand.star && saying.saying_ref === ref)
+      || held.clearings.some(clearing => clearing.audience === 'star' && clearing.star_ref === hand.star && shownId(clearing.world_ref, clearing.part_ref) === ref)
+    if (hand.to && at(hand.to)) values.fieldSayTo = hand.to
+    if (hand.dayPage !== null) values.dayPage = hand.dayPage
+    if (hand.saidPage !== null) values.saidPage = hand.saidPage
   }
   const reached = systemActs() !== null
   for (const key of STAR_ACT_KEYS) {
-    const made = starRequest(held, reading.yours, starActOf(key, {...hand, star: (values.fieldStar as string | undefined) ?? null, admit: (values.fieldAdmit as string | undefined) ?? null}), 0)
+    const made = starRequest(held, reading.yours, starActOf(key, {...hand, star: (values.fieldStar as string | undefined) ?? null, admit: (values.fieldAdmit as string | undefined) ?? null,
+      to: (values.fieldSayTo as string | undefined) ?? null}), 0)
     if ('refusal' in made) standing[key] = {disabled: made.refusal}
     else if (!reached) standing[key] = {disabled: NOT_REACHED}
   }
@@ -229,9 +238,11 @@ async function actAtStar(key: StarActKey, reading: NonNullable<AtlasReading['fie
   const acts = systemActs()
   if (!acts) throw Error(NOT_REACHED)
   await acts.fieldAct(made.request)
-  if (key === 'starLight') chooseStarHand({star: String(made.request.star_ref), admit: null, name: '', gathers: ''})
+  if (key === 'starLight') chooseStarHand({star: String(made.request.star_ref), admit: null, name: '', gathers: '', to: null})
   else if (key === 'starAdmit') chooseStarHand({admit: null})
-  else if (key === 'starClose') chooseStarHand({star: null, admit: null})
+  else if (key === 'starClose') chooseStarHand({star: null, admit: null, to: null})
+  else if (key === 'starSay') chooseStarHand({words: ''})
+  else if (key === 'starUnsay') chooseStarHand({to: null})
 }
 
 /** The view's own hand at Field scale: the scale, the aperture and who you look as. A value that is none of them is not taken. */
@@ -239,11 +250,16 @@ const FIELD_LOCAL: Readonly<Record<string, (value: ParamValue) => void>> = {
   scale: value => { if (typeof value === 'string') chooseFieldView({field: value === 'field'}) },
   aperture: value => { if ((APERTURES as readonly unknown[]).includes(value)) chooseFieldView({aperture: value as Aperture}) },
   viewAs: value => { if ((AUDIENCES as readonly unknown[]).includes(value)) chooseFieldView({viewAs: value as Audience}) },
-  fieldStar: value => chooseStarHand({star: typeof value === 'string' && value ? value : null, admit: null}),
+  fieldStar: value => chooseStarHand({star: typeof value === 'string' && value ? value : null, admit: null, to: null, dayPage: null, saidPage: null}),
   fieldAdmit: value => chooseStarHand({admit: typeof value === 'string' && value ? value : null}),
   starName: value => { if (typeof value === 'string') chooseStarHand({name: value}) },
   starGathers: value => { if (typeof value === 'string') chooseStarHand({gathers: value}) },
   starComes: value => { if ((STAR_COMES as readonly unknown[]).includes(value)) chooseStarHand({comes: value as StarComes}) },
+  fieldSayTo: value => chooseStarHand({to: typeof value === 'string' && value ? value : null}),
+  sayWhat: value => { if ((SAYING_WHATS as readonly unknown[]).includes(value)) chooseStarHand({what: value as SayingWhat}) },
+  sayWords: value => { if (typeof value === 'string') chooseStarHand({words: value}) },
+  dayPage: value => { if (typeof value === 'number' && Number.isInteger(value) && value >= 0) chooseStarHand({dayPage: value}) },
+  saidPage: value => { if (typeof value === 'number' && Number.isInteger(value) && value >= 0) chooseStarHand({saidPage: value}) },
 }
 
 // ── your world's body: the World device's Body page (T-WORLDS §5 W3; manual §17.2 "Build a planet") ─────────────────────────
