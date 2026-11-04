@@ -372,7 +372,7 @@ test('Expressions: an edit of a symbol\'s own controls is the owner\'s own chang
   assert.deepEqual(carried.sound.carry, {kind: 'name', ref: 'shem'}); assert.equal(carried.sound.gain, 0.2, 'each field is its own whole-sound change')
   assert.equal(regained.sound.gain, 0.4); assert.deepEqual(regained.sound.carry, {kind: 'mode', ref: 'maqam/00'})
   const none = structuredClone(objects); none.moon.sound.carry = ''
-  assert.equal('carry' in expressions.objectChanges(nativeReading, none)[0].sound, false, 'None yet clears the carry')
+  assert.equal('carry' in expressions.objectChanges(nativeReading, none)[0].sound, false, 'The symbol clears the carry')
   assert.throws(() => expressions.objectChanges(nativeReading, (() => { const x = structuredClone(objects); x.sun.sound.carry = 'mode:maqam/00'; return x })()), /no voice: turn Voice on first/)
   const meaning = structuredClone(objects); meaning.sun.meaning = {centre: 'heart'}
   assert.throws(() => expressions.objectChanges(nativeReading, meaning), /Meaning: the owner takes it as one entity-semantic change .*; Clip view does not compose it yet\./)

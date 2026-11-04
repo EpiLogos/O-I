@@ -50,6 +50,12 @@ const STAGE_ACTS = ['stage-evaluate', 'stage-retire', 'stage-bind', 'stage-unbin
 // native state (the body rings on). torus-set moves none either, except a
 // Fundamental edit, which is one modes continuation of the same voices.
 const TORUS_ACTS = ['torus-set', 'torus-play', 'torus-release'];
+// The owner acts that move no native state by their own law: a release (the body rings on), a session edit other than the
+// Fundamental, and the stage's retire, bind and unbind. Their acknowledgement is the field as it stands, so there is nothing
+// to present: they claim no presentation block and are never refused for want of one (O-I #790: a dense clip releases as
+// often as it strikes, and a release refused for presentation capacity left its note in the owner's count).
+const still = command => ['torus-release', 'stage-retire', 'stage-bind', 'stage-unbind'].includes(command.operation) ||
+  (command.operation === 'torus-set' && command.edit?.fundamental === undefined);
 const JANKO_ROWS = 6;
 
 export class InstrumentSession {
@@ -324,7 +330,8 @@ export class InstrumentSession {
     need(!this.#busy && !this.#held && !this.#disposed &&
       ['set-axis', 'replace', 'set-damping', 'strike', 'strike-at', ...EVENT_OPERATIONS, ...STAGE_ACTS, ...TORUS_ACTS].includes(command?.operation), 'domain operation requires idle admitted owner');
     this.present();
-    need(this.#queue.length < this.#maxBlocks &&
+    const presents = !still(command);
+    need(!presents || this.#queue.length < this.#maxBlocks &&
       this.#bytes + JSON.stringify(this.#native).length * 2 <= this.#maxBytes, 'wait for bounded presentation capacity');
     this.#busy = true; const generation = this.#generation;
     try {
@@ -332,6 +339,8 @@ export class InstrumentSession {
       need(!reply.refused, String(reply.error));
       if (STAGE_ACTS.includes(command.operation) && reply.stage !== undefined) this.#stageReceipt = structuredClone(reply.stage);
       if (generation !== this.#generation || this.#held || this.#disposed) return this.reading;
+      // The exchange has held a still act to its law (the cursor unchanged, no PCM): the field it answers with is the one presented.
+      if (!presents) return this.reading;
       try { this.#enqueue(reply.frame); } catch (error) { this.hold(`presentation-admission-failed: ${String(error)}`); throw error; }
       this.present(); return this.reading;
     } finally { this.#busy = false; }

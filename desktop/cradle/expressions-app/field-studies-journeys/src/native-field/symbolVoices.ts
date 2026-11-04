@@ -1,5 +1,6 @@
-/** A symbol's voice as sound (DLW §20.2: "A symbol can carry a voice: a name or a mode from M2′'s store of sound (§22.1). The voice carries
- * part of the torus's sound to where the symbol stands. It does not sound on its own").
+/** A symbol's voice as sound (DLW §20.2: "A symbol has a voice: the symbol translated into sound. It is the symbol's harmony, the chord whose
+ * figure on the torus is the symbol's shape, and you hear it from where the symbol stands. The pulse sounds it, as it sounds everything. A
+ * name or a mode from M2′'s store of sound (§22.1) can stand in for the translation").
  *
  * There is no oscillator here. A voice listens to the torus: the controller owns a tap on the torus's output (controller.ts `voiceTap`,
  * after the presentation level and before the torus's effects) and a voice takes its input from that node, in that audio context.
@@ -12,11 +13,16 @@
  * degree whose width is half the distance to the nearer neighbouring degree, so the width comes from the mode and nothing else.
  * Voices that carry the same mode share one bank; each has its own envelope and place.
  *
+ * The translation. A voice that carries no name or mode sounds the symbol's own harmony (symbolHarmony.ts): a band at each voice of the
+ * tuning in force, at the voice's own frequency, each through its own gain at the chord's weight for that voice. The bank is the symbol's
+ * own, since the chord is where its form lies; moving the symbol moves the weights in place.
+ *
  * Silence is the torus's: while the torus plays nothing the bank has no input, and the voice makes nothing. A voice that carries a name
  * the store serves no sound for is absent and says the store's own reason; a mode is never put in a name's place.
  * The stereo place is the symbol's place on the stage (placeOf), from the stage's own projection (camera.ts `project`). */
 import type {EntityVoice, EntitySoundPlan, VoiceCarry} from './entitySound';
 import type {ModeCatalogue, ModeRow} from './modeCatalogue';
+import type {Harmony, HarmonyBand} from './symbolHarmony';
 
 /** The audible range in Hz. A band stands only inside it (and below the device's Nyquist). */
 export const AUDIBLE_HZ=Object.freeze({low:20,high:20000});
@@ -101,6 +107,8 @@ export interface VoiceReading {
  because:string|null;
  carry:VoiceCarry|null;
  mode:string|null;
+ /** The classes the symbol's form covers, while it sounds its own harmony (null when a name or a mode stands in). */
+ harmony:number[]|null;
  tuning:string|null;
  rootHz:number|null;
  bands:number;
@@ -117,6 +125,8 @@ export interface VoiceInputs {
  /** Each symbol's place, −1 to 1 (placeOf). A symbol with no place is centred. */
  places:ReadonlyMap<string,number>;
  muted:boolean;
+ /** Each translated voice's harmony (symbolHarmony.ts `symbolHarmonies`): the voices that carry no name or mode. */
+ harmonies?:ReadonlyMap<string,Harmony>;
 }
 
 /** Run later and give back the cancel. Tests pass their own. */
@@ -124,7 +134,9 @@ export type Defer=(run:()=>void,ms:number)=>()=>void;
 const later:Defer=(run,ms)=>{const timer=setTimeout(run,ms);return ()=>clearTimeout(timer);};
 const SMOOTH=.02;
 
-interface Bank {mode:string;rootHz:number;filters:BiquadFilterNode[];sum:GainNode;users:Set<string>;signature:string}
+/** What a bank is tuned to: a mode's bands over the root, or a harmony's bands, each at its own weight. */
+interface Tuned {key:string;rootHz:number|null;bands:readonly {centreHz:number;q:number;gain?:number}[];weighted:boolean}
+interface Bank {mode:string;rootHz:number|null;filters:BiquadFilterNode[];weights:GainNode[];sum:GainNode;users:Set<string>;signature:string}
 interface Held {voice:EntityVoice;bank:string;env:GainNode;panner:StereoPannerNode|null;signature:string}
 
 /** The symbols' voices, wired to the torus tap. `attach` hands it the tap (or none, when no instrument is open); `sync` follows the
@@ -148,26 +160,35 @@ export class SymbolVoices {
  /** Follow the scene's plan. Cheap when nothing changed (the nodes are updated in place). */
  sync(input:VoiceInputs):VoiceReading[]{
   const readings:VoiceReading[]=[];
-  const reading=(entityId:string,state:VoiceReading['state'],because:string|null,carry:VoiceCarry|null,carried?:Carried&{state:'carrying'},place=0):VoiceReading=>
-   ({entityId,state,because,carry,mode:carried?.mode.key??null,tuning:carried?.tuning??null,rootHz:carried?.rootHz??null,bands:carried?.bands.length??0,place});
+  const reading=(entityId:string,state:VoiceReading['state'],because:string|null,carry:VoiceCarry|null,carried?:Carried&{state:'carrying'},place=0,classes:number[]|null=null,bands=0):VoiceReading=>
+   ({entityId,state,because,carry,mode:carried?.mode.key??null,harmony:classes,tuning:carried?.tuning??null,rootHz:carried?.rootHz??null,bands:carried?.bands.length??bands,place});
   for(const silent of input.plan.silent)readings.push(reading(silent.entityId,'silent',silent.because,null));
-  const wanted=new Map<string,{voice:EntityVoice;carried:Extract<Carried,{state:'carrying'}>}>();
+  const wanted=new Map<string,{voice:EntityVoice;tuned:Tuned}>();
   const tap=this.tap,rate=tap?.context.sampleRate;
   for(const voice of input.plan.voices){
    const place=input.places.get(voice.entityId)??0;
    if(!tap||rate===undefined){readings.push(reading(voice.entityId,'silent',input.torusSilentBecause??'No instrument is open: the torus is not sounding',voice.carry,undefined,place));continue;}
+   const silentTorus=input.torusSilentBecause?`The torus is silent: ${input.torusSilentBecause}`:null;
+   if(!voice.carry){
+    const harmony=input.harmonies?.get(voice.entityId)??{state:'absent' as const,because:"The symbol's harmony is not read yet"};
+    if(harmony.state==='absent'){readings.push(reading(voice.entityId,'absent',harmony.because,null,undefined,place));continue;}
+    const bands:readonly HarmonyBand[]=harmony.harmony.bands;
+    wanted.set(voice.entityId,{voice,tuned:{key:`harmony:${voice.entityId}`,rootHz:null,bands,weighted:true}});
+    readings.push(reading(voice.entityId,'carrying',silentTorus,null,undefined,place,[...harmony.harmony.classes],bands.length));
+    continue;
+   }
    const carried=resolveCarry(voice.carry,input.catalogue,input.catalogueWhy,input.root,rate);
    if(carried.state==='absent'){readings.push(reading(voice.entityId,'absent',carried.because,voice.carry,undefined,place));continue;}
-   wanted.set(voice.entityId,{voice,carried});
-   readings.push(reading(voice.entityId,'carrying',input.torusSilentBecause?`The torus is silent: ${input.torusSilentBecause}`:null,voice.carry,carried,place));
+   wanted.set(voice.entityId,{voice,tuned:{key:carried.mode.key,rootHz:carried.rootHz,bands:carried.bands,weighted:false}});
+   readings.push(reading(voice.entityId,'carrying',silentTorus,voice.carry,carried,place));
   }
   if(tap){
    const context=tap.context,now=context.currentTime;
    // Leave: the voices that are no longer wanted release on their own envelope, then their nodes go.
    for(const [id,held] of [...this.voices])if(!wanted.has(id))this.release(id,held,now);
-   for(const [id,{voice,carried}] of wanted){
-    const bankKey=carried.mode.key;
-    const bank=this.bank(tap,bankKey,carried);
+   for(const [id,{voice,tuned}] of wanted){
+    const bankKey=tuned.key;
+    const bank=this.bank(tap,tuned);
     let held=this.voices.get(id);
     if(held&&held.bank!==bankKey){this.release(id,held,now,true);held=undefined;}
     if(!held){
@@ -198,35 +219,43 @@ export class SymbolVoices {
  inspect(){
   return {
    attached:!!this.tap,
-   banks:[...this.banks].map(([key,bank])=>({mode:key,rootHz:bank.rootHz,bands:bank.filters.length,users:[...bank.users]})),
+   banks:[...this.banks].map(([key,bank])=>({mode:key,rootHz:bank.rootHz,bands:bank.filters.length,weighted:bank.weights.length>0,users:[...bank.users]})),
    voices:this.readings.map(reading=>({...reading})),
   };
  }
 
+ /** The rate of the context the voices sound in, or null while no instrument is open. */
+ sampleRate():number|null{return this.tap?.context.sampleRate??null;}
+
  dispose(){this.teardown();this.tap=null;this.readings=[];}
 
- /** The bank for a mode: made once and shared, and moved in place when the root moves (or rebuilt when the band count changes). */
- private bank(tap:TorusTap,key:string,carried:Extract<Carried,{state:'carrying'}>):Bank{
-  const context=tap.context,now=context.currentTime;
+ /** The bank for a mode: made once and shared, and moved in place when the root moves (or rebuilt when the band count changes). A harmony's
+  * bank is its symbol's own, and each band passes through its own gain at the chord's weight. */
+ private bank(tap:TorusTap,tuned:Tuned):Bank{
+  const context=tap.context,now=context.currentTime,key=tuned.key;
   let bank=this.banks.get(key);
-  if(bank&&bank.filters.length!==carried.bands.length){
+  if(bank&&bank.filters.length!==tuned.bands.length){
    for(const filter of bank.filters){try{tap.input.disconnect(filter);}catch{/* already apart */}filter.disconnect();}
-   bank.filters=[];
+   for(const weight of bank.weights)weight.disconnect();
+   bank.filters=[];bank.weights=[];
   }
-  if(!bank){bank={mode:key,rootHz:carried.rootHz,filters:[],sum:context.createGain(),users:new Set(),signature:''};this.banks.set(key,bank);}
-  const signature=carried.bands.map(band=>`${band.centreHz}:${band.q}`).join(' ');
+  if(!bank){bank={mode:key,rootHz:tuned.rootHz,filters:[],weights:[],sum:context.createGain(),users:new Set(),signature:''};this.banks.set(key,bank);}
+  const signature=tuned.bands.map(band=>`${band.centreHz}:${band.q}:${band.gain??1}`).join(' ');
   if(!bank.filters.length){
-   bank.filters=carried.bands.map(band=>{
+   bank.filters=tuned.bands.map(band=>{
     const filter=context.createBiquadFilter();filter.type='bandpass';
     filter.frequency.value=band.centreHz;filter.Q.value=band.q;
-    tap.input.connect(filter);filter.connect(bank!.sum);
+    tap.input.connect(filter);
+    if(tuned.weighted){const weight=context.createGain();weight.gain.value=band.gain??1;filter.connect(weight);weight.connect(bank!.sum);bank!.weights.push(weight);}
+    else filter.connect(bank!.sum);
     return filter;
    });
-  }else if(bank.signature!==signature)carried.bands.forEach((band,i)=>{
+  }else if(bank.signature!==signature)tuned.bands.forEach((band,i)=>{
    const filter=bank!.filters[i];
    filter.frequency.setTargetAtTime(band.centreHz,now,SMOOTH);filter.Q.setTargetAtTime(band.q,now,SMOOTH);
+   bank!.weights[i]?.gain.setTargetAtTime(band.gain??1,now,SMOOTH);
   });
-  bank.rootHz=carried.rootHz;bank.signature=signature;
+  bank.rootHz=tuned.rootHz;bank.signature=signature;
   return bank;
  }
 
@@ -248,6 +277,7 @@ export class SymbolVoices {
   for(const [key,bank] of [...this.banks]){
    if(bank.users.size>0||[...this.voices.values()].some(held=>held.bank===key))continue;
    for(const filter of bank.filters){try{tap?.input.disconnect(filter);}catch{/* already apart */}filter.disconnect();}
+   for(const weight of bank.weights)weight.disconnect();
    bank.sum.disconnect();this.banks.delete(key);
   }
  }
@@ -258,6 +288,7 @@ export class SymbolVoices {
   this.voices.clear();
   for(const bank of this.banks.values()){
    for(const filter of bank.filters){try{this.tap?.input.disconnect(filter);}catch{/* already apart */}filter.disconnect();}
+   for(const weight of bank.weights)weight.disconnect();
    bank.sum.disconnect();
   }
   this.banks.clear();

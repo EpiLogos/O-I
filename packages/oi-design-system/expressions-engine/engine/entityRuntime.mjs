@@ -43,6 +43,8 @@ class EntityRuntime {
   bakeSig = /* @__PURE__ */ new Map();
   lastStep = /* @__PURE__ */ new Map();
   customCandidates = /* @__PURE__ */ new Map();
+  /** Each formation's form as its current link is baked: the pool in its own 400-unit box (y up), before its size, scale and turn. */
+  formPools = /* @__PURE__ */ new Map();
   geometryProjection = null;
   candidateCache = /* @__PURE__ */ new Map();
   candidateCacheBytes = 0;
@@ -151,6 +153,11 @@ class EntityRuntime {
     }
     this.candidateCache.set(sig, { candidates, estimatedBytes });
     this.candidateCacheBytes += estimatedBytes;
+  }
+  /** The form a formation's particles take now (its current link's pool, in its own 400-unit box, y up, before its size, scale and turn),
+   *  or null before it is baked: the symbols' own harmonies lay it on the body (field-studies-journeys symbolHarmony.ts). */
+  formPool(entityId) {
+    return this.formPools.get(entityId) ?? null;
   }
   getPartitions() {
     return this.partitions;
@@ -276,6 +283,7 @@ class EntityRuntime {
     if (sig === this.layoutSig) return false;
     this.layoutSig = sig;
     this.bakeSig.clear();
+    for (const id of [...this.formPools.keys()]) if (!this.partitions.some((p) => p.entityId === id)) this.formPools.delete(id);
     return true;
   }
   writeCandidates(target, start, end, cands, scale, plane, jitterPx, channel, depthOffset = 0) {
@@ -349,6 +357,7 @@ class EntityRuntime {
       this.bakeGeneration++;
       const scale = e.extent && e.extent.normalized !== false ? 1 : BASE_SCALE;
       for (const channel of [0, 2]) this.writeCandidates(channel === 0 ? this.dataA : this.dataB, p.start, p.end, geometry.candidates, scale, plane, 0, channel);
+      this.formPools.set(e.id, scale === 1 ? geometry.candidates : geometry.candidates.map((c) => ({ x: c.x * scale, y: c.y * scale })));
       if (this.noiseTexture) this.noiseTexture.needsUpdate = true;
       if (this.textureA) this.textureA.needsUpdate = true;
       if (this.textureB) this.textureB.needsUpdate = true;
@@ -390,6 +399,7 @@ class EntityRuntime {
         this.writeCandidates(target, p.start, p.end, union, scale, plane, 2, channel);
       }
       this.bakeGeneration++;
+      if (channel === 0) this.formPools.set(e.id, scale === 1 ? union : union.map((c) => ({ x: c.x * scale, y: c.y * scale })));
       if (slot >= 0) writeSdfTile(this.collisionData, slot, channel === 0 ? 0 : 1, buildSdfTile(union, scale));
     }
     if (this.noiseTexture) this.noiseTexture.needsUpdate = true;

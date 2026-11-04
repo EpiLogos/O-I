@@ -98,10 +98,11 @@ test('a voice written for an oscillator is migrated: four fields dropped and nam
   assert.equal('carry' in after, false, 'no mode is made up from an old frequency');
   assert.deepEqual(migration.dropped.map(d => d.field), ['frequencyHz', 'followCymatic', 'waveform', 'pan']);
   assert.deepEqual(migration.dropped.map(d => d.was), [330, false, 'triangle', -0.2], 'the receipt keeps what each field held');
-  assert.equal(migration.silenced, true, 'it was sounding and is silent now');
+  assert.equal(migration.translated, true, 'it sounded a pitch of its own and sounds its symbol now (O-I 851: no carry is the translation)');
+  assert.equal('silenced' in migration, false, 'it is not silenced: a voice with no name or mode sounds its symbol');
   assert.ok(migration.words.includes('frequencyHz, followCymatic, waveform, pan') && migration.words.includes(NO_CARRY), migration.words);
-  // A voice that was off is not newly silenced; a voice already in the new shape migrates to itself with no receipt.
-  assert.equal(migrateEntitySound({...OLD, enabled: false}).migration.silenced, false);
+  // A voice that was off is not newly translated; a voice already in the new shape migrates to itself with no receipt.
+  assert.equal(migrateEntitySound({...OLD, enabled: false}).migration.translated, false);
   const fresh = {enabled: true, carry: {kind: 'mode', ref: 'maqam/00'}, gain: 0.2};
   assert.deepEqual(migrateEntitySound(fresh), {sound: fresh, migration: null});
   assert.deepEqual(migrateEntitySound(undefined), {sound: undefined, migration: null});
@@ -138,9 +139,9 @@ test('opening a journey migrates its voices, in the working scenes and the saved
 
 // ── the plan: what sounds, and why a voice does not ─────────────────────────
 
-test('a voice with no carry is silent and says why; Symbol voices Off silences every voice and leaves every block as it was', async () => {
+test('a voice with no carry sounds its symbol (O-I 851); Symbol voices Off silences every voice and leaves every block as it was', async () => {
   const {entitySoundPlan, NO_CARRY, VOICES_OFF} = await sound();
-  assert.equal(NO_CARRY, 'This voice has no name or mode yet: choose one on the Sound page');
+  assert.equal(NO_CARRY, "This voice sounds the symbol's own harmony: the chord of the classes its form covers where it stands. A name or a mode can stand in for it on the Sound page");
   const carry = {kind: 'mode', ref: "chromatic/L0'/aeolian"};
   const entities = [
     {id: 'a', sound: {enabled: true, carry, gain: 0.4}},
@@ -150,10 +151,11 @@ test('a voice with no carry is silent and says why; Symbol voices Off silences e
     {id: 'e'},
   ];
   const plan = entitySoundPlan({entities});
-  assert.deepEqual(plan.voices.map(v => v.entityId), ['a']);
+  assert.deepEqual(plan.voices.map(v => v.entityId), ['a', 'b']);
   assert.deepEqual(plan.voices[0], {entityId: 'a', carry, gain: 0.4, attack: 0.08, release: 0.8}, 'the defaults of an omitted field are the voice\'s own');
-  assert.deepEqual(plan.silent, [{entityId: 'b', because: NO_CARRY}], 'a symbol that is not present, or whose voice is off, is not a silent voice: it has none to speak of');
-  assert.deepEqual(entitySoundPlan({entities}, new Set(['b'])).voices, [], 'an active set narrows the plan (travelling focus)');
+  assert.deepEqual(plan.voices[1], {entityId: 'b', carry: null, gain: 0.2, attack: 0.08, release: 0.8}, 'no name or mode: the symbol\'s own harmony');
+  assert.deepEqual(plan.silent, [], 'a symbol that is not present, or whose voice is off, is not a silent voice: it has none to speak of');
+  assert.deepEqual(entitySoundPlan({entities}, new Set(['c'])).voices, [], 'an active set narrows the plan (travelling focus)');
   const blocks = JSON.stringify(entities);
   for (const composition of [{symbolVoices: false}, {symbolVoices: true}, {}]) {
     const off = entitySoundPlan({entities, composition}).voices.length === 0;

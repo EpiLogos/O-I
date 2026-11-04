@@ -103,6 +103,8 @@ export class EntityRuntime {
   private bakeSig = new Map<string, string>();
   private lastStep = new Map<string, number>();
   private customCandidates = new Map<string, Candidate[]>();
+  /** Each formation's form as its current link is baked: the pool in its own 400-unit box (y up), before its size, scale and turn. */
+  private formPools = new Map<string, readonly {x: number; y: number}[]>();
   private geometryProjection: {key:string;entityId:string;candidates:Candidate[]}|null=null;
   private candidateCache = new Map<string, {candidates: Candidate[]; estimatedBytes: number}>();
   private candidateCacheBytes = 0;
@@ -213,6 +215,12 @@ export class EntityRuntime {
     }
     this.candidateCache.set(sig, {candidates, estimatedBytes});
     this.candidateCacheBytes += estimatedBytes;
+  }
+
+  /** The form a formation's particles take now (its current link's pool, in its own 400-unit box, y up, before its size, scale and turn),
+   *  or null before it is baked: the symbols' own harmonies lay it on the body (field-studies-journeys symbolHarmony.ts). */
+  public formPool(entityId: string): readonly {x: number; y: number}[] | null {
+    return this.formPools.get(entityId) ?? null;
   }
 
   public getPartitions(): Partition[] {
@@ -348,6 +356,7 @@ export class EntityRuntime {
     if (sig === this.layoutSig) return false;
     this.layoutSig = sig;
     this.bakeSig.clear();
+    for (const id of [...this.formPools.keys()]) if (!this.partitions.some(p => p.entityId === id)) this.formPools.delete(id);
     // particles outside every partition (none normally) are parked at the origin
     return true;
   }
@@ -439,6 +448,7 @@ export class EntityRuntime {
       // Preserve the owner's angles and aspect; never stretch the local
       // geometry to its own bounding box. Outer authored transforms still apply.
       for(const channel of [0,2] as const)this.writeCandidates(channel===0?this.dataA:this.dataB,p.start,p.end,geometry.candidates,scale,plane,0,channel);
+      this.formPools.set(e.id,scale===1?geometry.candidates:geometry.candidates.map(c=>({x:c.x*scale,y:c.y*scale})));
       if(this.noiseTexture)this.noiseTexture.needsUpdate=true;
       if(this.textureA)this.textureA.needsUpdate=true;
       if(this.textureB)this.textureB.needsUpdate=true;
@@ -474,6 +484,7 @@ export class EntityRuntime {
         this.writeCandidates(target,p.start,p.end,union,scale,plane,2,channel);
       }
       this.bakeGeneration++;
+      if(channel===0)this.formPools.set(e.id,scale===1?union:union.map(c=>({x:c.x*scale,y:c.y*scale})));
       if(slot>=0)writeSdfTile(this.collisionData,slot,channel===0?0:1,buildSdfTile(union,scale));
     }
     if(this.noiseTexture)this.noiseTexture.needsUpdate=true;

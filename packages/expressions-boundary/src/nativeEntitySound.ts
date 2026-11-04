@@ -22,8 +22,8 @@ export function validateNativeEntitySoundChange(change: unknown): NativeEntitySo
   return {kind: 'entity-sound', entity_id: row.entity_id, sound: {...sound}};
 }
 
-/** The Sound page's "Name or mode" choice: the voice carries this name or mode (null removes the carry, leaving the voice silent with its
- * reason in words). The same arithmetic as soundControls.ts applySoundControl for the carry field. */
+/** The Sound page's "Name or mode" choice: the voice carries this name or mode (null removes the carry: the voice sounds the symbol's own
+ * harmony, DLW §20.2). The same arithmetic as soundControls.ts applySoundControl for the carry field. */
 export function soundWithCarry(sound: EntitySound | undefined, carry: VoiceCarry | null): EntitySound {
   const next: EntitySound = {...(sound ?? {enabled: false})};
   if (carry) next.carry = {...carry};

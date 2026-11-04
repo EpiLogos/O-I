@@ -13,7 +13,7 @@ const DEFAULT_ENTITY_SOUND = Object.freeze({
   attack: 0.08,
   release: 0.8
 });
-const NO_CARRY = "This voice has no name or mode yet: choose one on the Sound page";
+const NO_CARRY = "This voice sounds the symbol's own harmony: the chord of the classes its form covers where it stands. A name or a mode can stand in for it on the Sound page";
 const VOICES_OFF = "Symbol voices are off for this scene: no symbol carries the torus's sound";
 const finite = (value, low, high) => typeof value === "number" && Number.isFinite(value) && value >= low && value <= high;
 const plain = (value) => !!value && typeof value === "object" && !Array.isArray(value);
@@ -49,12 +49,12 @@ function migrateEntitySound(value) {
   const kept = Object.fromEntries(Object.entries(value).filter(([key]) => !REMOVED_SOUND_FIELDS.includes(key)));
   const sound = validateEntitySound(kept);
   if (!dropped.length) return { sound, migration: null };
-  const silenced = sound.enabled && !sound.carry;
+  const translated = sound.enabled && !sound.carry;
   const names = dropped.map((item) => item.field).join(", ");
   return { sound, migration: {
     dropped,
-    silenced,
-    words: `This voice was written for an oscillator. Dropped ${names}: a symbol's voice now carries a name or mode of the torus's sound. ${silenced ? `It was sounding and is silent now. ${NO_CARRY}.` : "It gained no name or mode."}`
+    translated,
+    words: `This voice was written for an oscillator. Dropped ${names}: a symbol's voice carries the torus's sound and has no pitch of its own. ${translated ? `It sounded a pitch of its own and sounds its symbol now. ${NO_CARRY}.` : "It gained no name or mode."}`
   } };
 }
 function activeFromFocus(focus) {
@@ -88,12 +88,8 @@ function entitySoundPlan(scene, active) {
       silent.push({ entityId: entity.id, because: VOICES_OFF });
       continue;
     }
-    if (!sound.carry) {
-      silent.push({ entityId: entity.id, because: NO_CARRY });
-      continue;
-    }
     const d = DEFAULT_ENTITY_SOUND;
-    voices.push({ entityId: entity.id, carry: { ...sound.carry }, gain: sound.gain ?? d.gain, attack: sound.attack ?? d.attack, release: sound.release ?? d.release });
+    voices.push({ entityId: entity.id, carry: sound.carry ? { ...sound.carry } : null, gain: sound.gain ?? d.gain, attack: sound.attack ?? d.attack, release: sound.release ?? d.release });
   }
   return { voices, silent };
 }

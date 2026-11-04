@@ -92,7 +92,7 @@ export const LOCKED_NOTE = 'This object is locked. Unlock this entity to change 
 
 // ── the voice choice: a name or a mode of M2′'s store ───────────────────────
 
-/** A carry as one option value: `mode:<catalogue key>` or `name:<the store's name>`; the empty value is "None yet". */
+/** A carry as one option value: `mode:<catalogue key>` or `name:<the store's name>`; the empty value is "The symbol" (its own harmony, DLW §20.2). */
 export const carryValue = (carry: VoiceCarry | null | undefined): string => carry ? `${carry.kind}:${carry.ref}` : ''
 export function carryFromValue(value: string): VoiceCarry | null {
   if (!value) return null
@@ -107,7 +107,7 @@ export interface VoiceChoiceGroup {label: string; options: readonly VoiceOption[
  * catalogue groups them, then the names of the store with the status the catalogue gives each. With no catalogue there are no modes to offer and the
  * row says why (voiceChoiceNote); a carry the voice already holds stays listed as what it is, so the row never shows a choice that is not there. */
 export function voiceChoices(catalogue: QlMusicModes | null, held: VoiceCarry | null = null): VoiceChoiceGroup[] {
-  const groups: VoiceChoiceGroup[] = [{label: 'No carry', options: [{value: '', label: 'None yet'}]}]
+  const groups: VoiceChoiceGroup[] = [{label: 'its own harmony', options: [{value: '', label: 'The symbol'}]}]
   const byGroup = new Map<string, VoiceOption[]>()
   for (const scale of catalogue?.scales ?? []) {
     const group = scale.kind === 'lens-cf' ? `${scale.lens} on the ${scale.anchorBasis} basis` : scale.family
@@ -141,7 +141,7 @@ const num = (value: number) => String(Number(value.toFixed(4)))
 export function soundSummaryText(sound: EntitySound | undefined): string {
   if (!sound) return 'No sound'
   const s = resolvedSound(sound)
-  const carries = s.carry ? `${s.carry.kind} ${s.carry.ref}` : 'no name or mode yet'
+  const carries = s.carry ? `${s.carry.kind} ${s.carry.ref}` : 'the symbol'
   return `${s.enabled ? '' : 'off · '}${carries} · gain ${num(s.gain)}`
 }
 export const soundSummary = (entity: Entity): string => soundSummaryText(entity.sound)

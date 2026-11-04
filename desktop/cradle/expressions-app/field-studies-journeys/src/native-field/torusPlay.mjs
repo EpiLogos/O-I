@@ -26,7 +26,8 @@ export function torusPlayReading(reading) {
   const acting = instrument?.acting ?? null;
   if (!instrument || !acting) {
     const closed = 'No instrument is open';
-    return {torus: {tonesHz: [], silentBecause: closed}, sky: {tonesHz: [], absentBecause: closed}, root: {hz: null, absentBecause: closed}, body: null, pulse: null};
+    return {torus: {tonesHz: [], silentBecause: closed}, sky: {tonesHz: [], absentBecause: closed}, root: {hz: null, absentBecause: closed}, body: null, pulse: null,
+      classes: {absentBecause: closed}};
   }
   const voices = Array.isArray(acting.voices) ? acting.voices : [];
   // Each voice by the owner's own mode ref (a Logic or Maqām voice names no planet, O-I #850), else its planet's.
@@ -37,7 +38,30 @@ export function torusPlayReading(reading) {
     sky: skyReading(acting.sky, voices), root: rootReading(voices),
     // The body the plate reads its eight and four from (torusDrive.ts rolesOf), and the pulse that rings it.
     body: {influence: instrument.influence ?? null, amplitudes},
-    pulse: pulseReading(instrument.torus)};
+    pulse: pulseReading(instrument.torus),
+    // Where each of the twelve classes stands on the body and what it sounds: the symbols' own harmonies (symbolHarmony.ts).
+    classes: classesReading(reading.status, instrument.torus)};
+}
+
+/** The twelve classes of the owner's Torus reading (QL scene_field.rs `class_sounds`, CLASS_SOUNDS_LAW): each at the one place of its helix,
+ * its point on the body at the reading's steps, and what it sounds of each voice of the tuning in force. The pulse carries the points on
+ * between reads at the owner's rate while the field follows it, and holds them while it is held. */
+function classesReading(status, torus) {
+  const classes = torus?.classes;
+  if (!classes || typeof classes !== 'object') return {absentBecause: "The owner's Torus reading names no classes, so no symbol has a harmony of its own yet"};
+  if (typeof classes.absent === 'string') return {absentBecause: `The owner gives no classes: ${classes.absent}`};
+  const finite = value => typeof value === 'number' && Number.isFinite(value);
+  const rows = (Array.isArray(classes.by_class) ? classes.by_class : []).map(row => ({
+    pitch_class: row?.pitch_class, pitch_name: typeof row?.pitch_name === 'string' ? row.pitch_name : String(row?.pitch_class),
+    place_arc: row?.place?.arc ?? row?.point?.place?.arc, phi: row?.point?.phi, theta: row?.point?.theta,
+    sounds: (Array.isArray(row?.sounds) ? row.sounds : []).filter(sound => typeof sound?.mode_ref === 'string' && finite(sound.frequency_hz) && finite(sound.coupling))
+      .map(sound => ({mode_ref: sound.mode_ref, frequency_hz: sound.frequency_hz, coupling: sound.coupling})),
+  }));
+  if (rows.length !== 12 || !finite(classes.steps) || !rows.every((row, c) => row.pitch_class === c && [row.place_arc, row.phi, row.theta].every(finite))) {
+    return {absentBecause: "The owner's classes are not the twelve, each with its place and its point, so no symbol has a harmony of its own"};
+  }
+  const rate = status === 'following' && finite(torus.steps_per_second) ? torus.steps_per_second : 0;
+  return {tuning: typeof classes.tuning === 'string' ? classes.tuning : null, steps: classes.steps, steps_per_second: rate, by_class: rows, absentBecause: null};
 }
 
 /** A voice sounds while its amplitude rings above this share of the strike (torusObject.ts voicePoints lets go at the same level). */

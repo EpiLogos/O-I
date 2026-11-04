@@ -128,8 +128,8 @@ test('the carry helper is pure, validated, and changes the voice the planner rea
  for(const bad of [{kind:'oscillator',ref:'x'},{kind:'mode',ref:''}])assert.throws(()=>sounds.soundWithCarry(base,bad),/Invalid entity sound/)
  assert.equal('soundWithFrequency' in sounds,false,'the frequency control is gone');assert.equal('soundWithFollow' in sounds,false,'and so is follow')
  const scene={entities:[{id:'a',enabled:true,sound:carries},{id:'b',enabled:true,sound:base}]}
- assert.deepEqual(appSound.entitySoundVoices(scene).map(v=>v.entityId),['a'],'a voice that carries something is planned')
- assert.deepEqual(appSound.entitySoundPlan(scene).silent,[{entityId:'b',because:appSound.NO_CARRY}],'one that carries nothing is silent and says why')
+ assert.deepEqual(appSound.entitySoundVoices(scene).map(v=>[v.entityId,v.carry]),[['a',carries.carry],['b',null]],'a voice is planned with what it carries, or none: its symbol\'s own harmony (O-I 851)')
+ assert.deepEqual(appSound.entitySoundPlan(scene).silent,[],'one that carries no name or mode is not silent')
  assert.deepEqual(Object.keys(appSound.entitySoundVoices(scene)[0]).sort(),['attack','carry','entityId','gain','release'],'no frequency, waveform or pan in the plan')
 })
 test('the retained host admits the kind through the device batch and commits one transaction, with readback from the reading',async()=>{

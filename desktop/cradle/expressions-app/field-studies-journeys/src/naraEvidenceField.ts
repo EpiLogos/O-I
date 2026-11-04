@@ -86,7 +86,7 @@ export function createEvidenceField(input:EvidencePresentation,view:KernelConver
         const b=bindings.find(b=>b.entityId===entity.id);if(!b)return entity;
         const share=partition.centres.find(c=>c.ordinal===b.ordinal)!.mass_share_l1!;
         // The evidence weighs each centre's voice by the centre's share of the partition. It makes no tone of the planet's frequency: a symbol's
-        // voice carries the torus's sound, and a centre whose voice carries nothing yet stays silent and says so (entitySound.ts `entitySoundPlan`).
+        // voice carries the torus's sound, and a centre whose voice carries no name or mode sounds its own harmony (entitySound.ts `entitySoundPlan`).
         return {...entity,sound:{...DEFAULT_ENTITY_SOUND,...entity.sound,enabled:share>0,gain:(entity.sound?.gain??DEFAULT_ENTITY_SOUND.gain)*share}};
       })};
     },

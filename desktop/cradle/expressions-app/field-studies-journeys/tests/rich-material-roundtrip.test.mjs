@@ -154,11 +154,12 @@ test('sound voices follow presence, activity and what they carry',()=>{
   {id:'e',sound:{enabled:true}},
  ]};
  const voices=entitySoundVoices(scene);
- assert.deepEqual(voices.map(v=>v.entityId),['a','b'],'a voice that carries something, present and on');
+ assert.deepEqual(voices.map(v=>v.entityId),['a','b','e'],'a voice present and on: what it carries, or its symbol (O-I 851)');
  assert.equal(voices[1].gain,.5);assert.deepEqual(voices[0].carry,carry);
  assert.deepEqual(Object.keys(voices[0]).sort(),['attack','carry','entityId','gain','release'],'no frequency, waveform or pan');
  assert.deepEqual(entitySoundVoices(scene,new Set(['b'])).map(v=>v.entityId),['b']);
- assert.deepEqual(entitySoundPlan(scene).silent.map(v=>v.entityId),['e'],'one that carries nothing is silent and says why');
+ assert.equal(voices[2].carry,null,'one that carries no name or mode sounds its symbol\'s own harmony');
+ assert.deepEqual(entitySoundPlan(scene).silent,[],'and none is silent for it');
 });
 
 test('validateJourney keeps the sound block (model carries it as authored material)',()=>{

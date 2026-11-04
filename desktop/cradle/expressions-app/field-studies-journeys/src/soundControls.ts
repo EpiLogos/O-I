@@ -1,8 +1,8 @@
 /** Sound — the per-object voice control group for the selected object.
  *
- * A symbol's voice is a name or a mode carrying the torus's sound (native-field/entitySound.ts, symbolVoices.ts): there is no frequency,
- * no waveform and no pan to set. The group holds the voice's switch, what it carries (a mode of the catalogue, or a name of the store),
- * its gain, and its attack and release. A voice with nothing to carry says so, and so does a name the store gives no sound for.
+ * A symbol's voice carries the torus's sound (native-field/entitySound.ts, symbolVoices.ts): there is no frequency, no waveform and no pan
+ * to set. The group holds the voice's switch, what it sounds (the symbol's own harmony, or a mode of the catalogue or a name of the store
+ * standing in for it), its gain, and its attack and release. A name the store gives no sound for says so.
  *
  * The inspector (inspector.ts, rendered by app.ts) builds its groups as HTML;
  * this module adds one more group beside "Influence" and owns its events, so
@@ -34,7 +34,7 @@ function slider(label:string,field:SoundControlField,value:number,min:number,max
  return `<label class="sound-field"><span>${label} <output>${value}</output></span><input type="range" data-sound="${field}" value="${value}" min="${min}" max="${max}" step="${step}" ${disabled?'disabled':''}></label>`;
 }
 
-/** A carry as one option value: `mode:<catalogue key>` or `name:<the store's name>`; the empty value is no carry. */
+/** A carry as one option value: `mode:<catalogue key>` or `name:<the store's name>`; the empty value is no carry: the symbol's own harmony. */
 export const carryValue=(carry:EntitySound['carry'])=>carry?`${carry.kind}:${carry.ref}`:'';
 export function carryFromValue(raw:string):EntitySound['carry']{
  if(!raw)return undefined;
@@ -53,7 +53,7 @@ function carrySelect(sound:EntitySound|undefined,store:ModeStoreReading,off:bool
  const names=store.catalogue?[...store.catalogue.absent.values()].map(entry=>option(`name:${entry.name}`,`${entry.name} · ${entry.status}`)).join(''):'';
  // A carry the store does not list (or no catalogue yet) stays visible as what it is, so the control never shows a choice that is not there.
  const unlisted=chosen&&!(store.catalogue&&(sound?.carry?.kind==='mode'?store.catalogue.modes.has(sound.carry.ref):store.catalogue.absent.has(sound?.carry?.ref??'')))?option(chosen,`${sound!.carry!.ref} · not in the store`):'';
- return `<label class="sound-field"><span>Name or mode</span><select data-sound="carry" ${off?'disabled':''}>${option('','None yet')}${unlisted}${modes}${names?`<optgroup label="names of the store">${names}</optgroup>`:''}</select></label>`;
+ return `<label class="sound-field"><span>Name or mode</span><select data-sound="carry" ${off?'disabled':''}>${option('','The symbol')}${unlisted}${modes}${names?`<optgroup label="names of the store">${names}</optgroup>`:''}</select></label>`;
 }
 
 /** What the voice says about itself, in words: why it is silent, or what it carries. */
