@@ -188,7 +188,7 @@ test('the kept rows drag onto a part, say what each holds, and stand under the T
   assert.match(view({kept: keptListing}), /data-torus-kept-section="listed"/)
   assert.match(view({kept: null}), /data-torus-kept-section="empty"[^]*No sound, instrument or rack is kept on this Scene yet\./)
   assert.match(renderToStaticMarkup(React.createElement(browser.TorusKeptView, {listed: {kept: keptListing}, filter: 'zzz'})), /No matching material\./)
-  assert.match(view({refused: 'No Expressions application is mounted for the presets'}), /data-torus-kept-section="refused"[^]*What the Scene keeps is not listed: No Expressions application is mounted for the presets/)
+  assert.match(view({refused: 'No Expressions application is mounted for the presets'}), /data-torus-kept-section="refused"[^]*Couldn(?:'|&#x27;)t list what the Scene keeps\. No Expressions application is mounted for the presets\./)
   const source = readFileSync(new URL('../src/components/BrowserPane.tsx', import.meta.url), 'utf8')
   assert.doesNotMatch(source.slice(source.indexOf('function TorusKeptSection')), /localStorage\.setItem\(KEPT|sessionStorage|indexedDB/)
 })
