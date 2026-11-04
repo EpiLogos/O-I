@@ -26,7 +26,7 @@ import {useHarnessBinding} from '../../agent/useHarnessBinding'
 import {harnessAgentControl} from '../../agent/harnessAgentControl'
 import {withChatSeat} from '../../agent/factoryChatsReopen'
 import {shellSetter} from '../../inhabitants/sdk/shellSetters'
-import {factoryTrackAdapter, type FactoryControls, type FactorySettingsPort, type FactoryWriteArm} from '../../timeline/factoryTrackAdapter'
+import {factoryTrackAdapter, type FactoryAttention, type FactoryControls, type FactorySettingsPort, type FactoryWriteArm} from '../../timeline/factoryTrackAdapter'
 import {useSettingsAnswers} from '../../owners/readers'
 import {useAttemptTakes} from '../../owners/attemptTakes'
 import {makeTakes, takeRunOf, trackSettingChange, writeSessionSettings} from '../../agent/sessionSettings'
@@ -72,6 +72,8 @@ export const useFactoryTracks: UseModeTracks = reading => {
   const shell = useAgentShellOptional()
   const armOn = shell ? shell.writeArm : null
   const writeArm = useMemo(() => shellWriteArm(armOn), [armOn])
+  const soloed = shell?.soloed, setSolo = shell?.setSolo
+  const attention = useMemo<FactoryAttention | undefined>(() => soloed && setSolo ? {soloed, solo: setSolo} : undefined, [soloed, setSolo])
   const harness = useHarnessBinding(transport)
   // Actions only once the owner has named its harness binding (never the shell's default 'cursor').
   const owned = transport.kind !== 'unavailable' && harness.error === null && harness.resolved
@@ -79,19 +81,19 @@ export const useFactoryTracks: UseModeTracks = reading => {
     () => owned ? {control: control => harnessAgentControl(transport, harness.binding, control)} : undefined,
     [owned, transport, harness.binding],
   )
-  // Every session's Telemetry and Solo, and its task's launch, follow and quantize: its own settings, all read in one owner call;
-  // Telemetry and Solo are each written on its own.
+  // Every session's Telemetry, and its task's launch, follow and quantize: its own settings, all read in one owner call; Telemetry is
+  // written on its own. Solo is what you attend to (§16.1, §16.6), the agent shell's on the book: it writes no setting.
   // Each session's own readings and writes are asked in the register its world-wide agency read listed it in (agent/worldScope.ts).
   const sessionRefs = useMemo(() => agency.tracks.filter(track => !track.group).map(track => track.sessionRef), [agency.tracks])
   const rows = agency.rows
   const projectOf = useCallback((session: string) => projectOfSession(rows, session), [rows])
   const own = useSettingsAnswers(transport, sessionRefs, projectOf)
   const settings = useMemo<FactorySettingsPort | undefined>(() => transport.kind === 'unavailable' ? undefined : {
-    of: session => { const reading = own.get(session); return reading ? {telemetry: reading.track.telemetry, solo: reading.track.solo, task: reading.task} : null },
+    of: session => { const reading = own.get(session); return reading ? {telemetry: reading.track.telemetry, task: reading.task} : null },
     set: async (session, setting, on) => {
       try {
         await writeSessionSettings(transport, projectOf(session), session, trackSettingChange(setting, on))
-        return {ok: true, note: `${setting === 'telemetry' ? 'Telemetry' : 'Solo'} ${on ? 'on' : 'off'} for this session (its own settings, on AIKit).`}
+        return {ok: true, note: `Telemetry ${on ? 'on' : 'off'} for this session (its own settings, on AIKit).`}
       } catch (cause) { return {ok: false, error: cause instanceof Error ? cause.message : String(cause)} }
     },
   }, [transport, own, projectOf])
@@ -115,7 +117,7 @@ export const useFactoryTracks: UseModeTracks = reading => {
   if (!agency.tracks.length && agency.error) return {waiting: `The agent sessions are unread: ${agency.error}`}
   if (!agency.tracks.length && agency.loading) return {waiting: 'The agent sessions arrive when the agency read answers.'}
   // A chat dragged from Factory's Projects (DLW §19.1) reopens on the empty track; an agent still starts a new agent there.
-  const set = withChatSeat(factoryTrackAdapter.project({tracks: agency.tracks, nowUnixMs: Date.now(), controls, ...(events ? {events} : {}), writeArm, ...(settings ? {settings} : {}), ...(takes ? {takes} : {}), ...(sessionStop ? {sessionStop} : {}), ...(repeat ? {repeat} : {})}), {transport})
+  const set = withChatSeat(factoryTrackAdapter.project({tracks: agency.tracks, nowUnixMs: Date.now(), controls, ...(events ? {events} : {}), writeArm, ...(settings ? {settings} : {}), ...(attention ? {attention} : {}), ...(takes ? {takes} : {}), ...(sessionStop ? {sessionStop} : {}), ...(repeat ? {repeat} : {})}), {transport})
   return factoryTrackSet(set, register, seats.status === 'refused' ? seats.error : null, transport, agency.tracks)
 }
 

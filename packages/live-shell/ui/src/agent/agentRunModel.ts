@@ -323,6 +323,22 @@ export function trackKey(track: Pick<AgentSessionTrack, 'spaceRef' | 'sessionRef
   return `${track.spaceRef}:${track.sessionRef}`
 }
 
+/** What you attend to (manual §16.1 Solo: "You attend to the soloed tracks alone … The others keep running"; §16.6 "Solo changes what you
+ * attend to, never what runs"), by the tracks' keys: each soloed track, what a soloed group holds, and the groups a soloed session sits in
+ * (their heads stand with it). Null while you attend to everything: nothing soloed, or only what these tracks no longer hold (a session that
+ * left hides nothing). Pure. */
+export function attendedKeys(tracks: readonly Pick<AgentSessionTrack, 'spaceRef' | 'sessionRef' | 'parentRef' | 'group'>[], soloed: ReadonlySet<string>): ReadonlySet<string> | null {
+  if (!soloed.size) return null
+  const groupOf = (spaceRef: string | null) => spaceRef ? tracks.find(track => track.group && track.spaceRef === spaceRef) : undefined
+  const attended = new Set<string>()
+  for (const track of tracks) {
+    const key = trackKey(track), above: string[] = [], seen = new Set([key])
+    for (let parent = groupOf(track.parentRef); parent && !seen.has(trackKey(parent)); parent = groupOf(parent.parentRef)) { seen.add(trackKey(parent)); above.push(trackKey(parent)) }
+    if (soloed.has(key) || above.some(ref => soloed.has(ref))) for (const ref of [key, ...above]) attended.add(ref)
+  }
+  return attended.size ? attended : null
+}
+
 const GROUP_DISCLOSURE =
   'agency_read discloses no parent linkage: this SessionSpace is the group and every session in it sits at depth 1 beneath it. Deeper subagent nesting awaits parent linkage in the native reading.'
 

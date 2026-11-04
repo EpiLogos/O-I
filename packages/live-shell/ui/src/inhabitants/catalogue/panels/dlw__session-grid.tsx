@@ -60,7 +60,7 @@ const hiddenByFold = (v: Values, t: Track) => ancestors(t).find(a => folded(v, a
 /** The tracks the grid draws: requested, and not folded away under a group. */
 const visible = (v: Values) => TRACKS.filter(t => shown(v, t) && !hiddenByFold(v, t))
 const soloed = (v: Values) => TRACKS.filter(t => on(v, `solo:${t.id}`))
-/** With a solo on, only the soloed tracks (and what they contain or sit in) may run. */
+/** With a solo on, you attend to the soloed tracks alone (and what they contain or sit in): the others keep running, out of view (§16.1, §16.6). */
 const active = (v: Values, t: Track) => {
   const s = soloed(v)
   return s.length === 0 || s.some(x => x.id === t.id || ancestors(x).some(a => a.id === t.id) || ancestors(t).some(a => a.id === x.id))
@@ -335,7 +335,7 @@ export const design: DesignedDevice = {
           onRequest={(id, x) => p.set(`show:${id}`, x)} size={7} />
       </Section>
       <Section label="Solo" width={76}>
-        {TRACKS.map(t => <Toggle key={t.id} label={t.short} does={`Let only the soloed tracks run. ${t.name}.`} on={on(p.v, `solo:${t.id}`)} onChange={x => p.set(`solo:${t.id}`, x)} />)}
+        {TRACKS.map(t => <Toggle key={t.id} label={t.short} does={`Attend to the soloed tracks alone; the others keep running. ${t.name}.`} on={on(p.v, `solo:${t.id}`)} onChange={x => p.set(`solo:${t.id}`, x)} />)}
       </Section>
       <Section label="Grid" cols={2} grow>
         <Radio label="Groups" does="Fold every group under its header, or open it." value={GROUPS.every(g => folded(p.v, g)) ? 'folded' : 'open'}

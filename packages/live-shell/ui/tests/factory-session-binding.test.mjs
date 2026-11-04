@@ -108,12 +108,12 @@ test('the Run holds its view, moves THE selection when you choose a session, and
   assert.deepEqual(calls, [HELPER.sessionRef])
   const after = own.runValues({session: LEAD, tracks: TRACKS, nowUnixMs: NOW, agent: {}, holds: bind.chainHolds()})
   assert.deepEqual([after.lanes, after.watch], ['all', 'off'])
-  // REPLACED (lane K0): Telemetry and Solo are the session's own settings on AIKit (encounter_session_settings, as the mixer writes them);
-  // the Run is not handed them, and says so.
-  for (const key of ['telemetry', 'solo']) {
-    assert.match(binding.standing[key].disabled, new RegExp(`encounter_session_settings \\{track: \\{${key}\\}\\}.*not handed the session's settings`), key)
-    await assert.rejects(() => binding.write([{key, value: true}]), {message: own.RUN_REFUSE[key]})
-  }
+  // REPLACED (lane K0): Telemetry is the session's own setting on AIKit (encounter_session_settings, as the mixer writes it); the Run is
+  // not handed it, and says so. REPLACED (round 858, §16.1, §16.6): Solo is what you attend to, the shell's on the book, never AIKit's.
+  assert.match(binding.standing.telemetry.disabled, /encounter_session_settings \{track: \{telemetry\}\}.*not handed the session's settings/)
+  assert.match(binding.standing.solo.disabled, /what you attend to.*not handed the attention/)
+  assert.doesNotMatch(binding.standing.solo.disabled, /encounter_session_settings/)
+  for (const key of ['telemetry', 'solo']) await assert.rejects(() => binding.write([{key, value: true}]), {message: own.RUN_REFUSE[key]})
   assert.match(binding.standing.take.disabled, /factory_attempt_read needs the run ref/)
   bind.resetHolds()
 })

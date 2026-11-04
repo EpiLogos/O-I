@@ -1,4 +1,4 @@
-import {EDITOR_CHANNEL, sameEditorBasis, type NativeDeviceChange, type NativeEditorReading, type NativeResonanceStation, type NativeEditorReply, type NativeEditorRequest, type NativeGlyphChange, type NativeChosenControlChange, type NativeDeviceWidgetChange, type NativeAutomationChange, type NativeFormationChange, type NativeObjectChange, type NativeTrackChange} from '../../../../../packages/expressions-boundary/src/editor';
+import {EDITOR_CHANNEL, sameEditorBasis, type NativeDeviceChange, type NativeEditorReading, type NativeResonanceDrive, type NativeResonanceStation, type NativeEditorReply, type NativeEditorRequest, type NativeGlyphChange, type NativeChosenControlChange, type NativeDeviceWidgetChange, type NativeAutomationChange, type NativeFormationChange, type NativeObjectChange, type NativeTrackChange} from '../../../../../packages/expressions-boundary/src/editor';
 import {applyNativeFormationChanges, applyNativeObjectChanges, validateFormationGlyph} from '../../../../../packages/expressions-boundary/src/nativeFormations';
 import {readNativeChosenControls, applyNativeChosenControlChanges} from '../../../../../packages/expressions-boundary/src/chosenControls';
 import {readNativeDeviceWidgets, applyNativeDeviceWidgetChanges} from '../../../../../packages/expressions-boundary/src/nativeDeviceWidgets';
@@ -205,7 +205,7 @@ interface RetainedEditorOptions {
   selectLocal(entityId: string | null, stepIndex: number): void;
   openEditor(editor: 'source' | 'layers' | 'placement', entityId: string, stepIndex: number): void;
   standing(): {busy: boolean; notice: string | null};
-  telemetry(): {params?: Record<string, number>; config?: unknown; simTime?: number; sequences?: NativeEditorReading['observation'] extends infer O ? O extends {sequences?: infer S} ? S : never : never; drive?: {theta: number; phi: number} | null} | undefined;
+  telemetry(): {params?: Record<string, number>; config?: unknown; simTime?: number; sequences?: NativeEditorReading['observation'] extends infer O ? O extends {sequences?: infer S} ? S : never : never; drive?: {theta: number; phi: number} | null; cymatic?: {driver?: unknown} | null} | undefined;
   /** The resonance plate's stations as the engine computes them (engine.ts stations), announced verbatim in the observation. */
   stations?(): NativeResonanceStation[] | undefined;
   fieldPaused(): boolean;
@@ -225,6 +225,18 @@ interface RetainedEditorOptions {
     seek(seconds: number): void;
     snapshot(input: {action: 'save-snapshot'; name: string; next: boolean} | {action: 'restore-snapshot'}): void;
   };
+}
+/** What drives the plate, as the engine resolved it (resonanceDrive.ts ResolvedResonanceDrive, its telemetry cymatic.driver): the fields the
+ * boundary admits (editor.ts NativeResonanceDrive), each only as the engine gave it; none, while it gives no source, tone or binding. */
+function resolvedDrive(raw: unknown): NativeResonanceDrive | null {
+  if (!raw||typeof raw!=='object')return null;
+  const d=raw as Record<string,unknown>,kinds=['frequency','sweep','semanticFocus','torus'],keys=['torus','sky','manual'];
+  if(!kinds.includes(d.kind as string)||typeof d.targetHz!=='number'||!Number.isFinite(d.targetHz)||typeof d.bound!=='boolean')return null;
+  const tones=Array.isArray(d.tonesHz)&&d.tonesHz.length<=64&&d.tonesHz.every(t=>typeof t==='number'&&Number.isFinite(t))?[...d.tonesHz as number[]]:undefined;
+  return {kind:d.kind as NativeResonanceDrive['kind'],targetHz:d.targetHz,bound:d.bound,
+    ...(typeof d.semanticNodeId==='string'?{semanticNodeId:d.semanticNodeId}:{}),...(typeof d.anchorId==='string'?{anchorId:d.anchorId}:{}),
+    ...(tones?{tonesHz:tones}:{}),...(typeof d.silent==='boolean'?{silent:d.silent}:{}),
+    ...(typeof d.reason==='string'||d.reason===null?{reason:d.reason as string|null}:{}),...(keys.includes(d.keySource as string)?{keySource:d.keySource as NativeResonanceDrive['keySource']}:{})};
 }
 /** Joins the existing app owners; the shell supplies no second document. */
 export function createRetainedNativeEditor(options: RetainedEditorOptions): NativeEditorReceiver {
@@ -277,7 +289,9 @@ export function createRetainedNativeEditor(options: RetainedEditorOptions): Nati
       observation:{fieldPaused:options.fieldPaused(),simTime:telemetry?.simTime,effectiveValues,sequences:telemetry?.sequences,
        // W6: the engine's own morph accumulators and the plate's stations, verbatim, when the engine reports them.
        ...(telemetry?.drive&&Number.isFinite(telemetry.drive.theta)&&Number.isFinite(telemetry.drive.phi)?{phases:{theta:telemetry.drive.theta,phi:telemetry.drive.phi}}:{}),
-       ...(()=>{const stations=options.stations?.();return stations?.length?{stations:clone(stations)}:{};})()}};
+       ...(()=>{const stations=options.stations?.();return stations?.length?{stations:clone(stations)}:{};})(),
+       // O-I #757: what drives the plate, as the engine resolved it (its telemetry cymatic.driver), with the fields the boundary admits.
+       ...(()=>{const drive=resolvedDrive(telemetry?.cymatic?.driver);return drive?{drive}:{};})()}};
   };
   return {
     read, transactionOpen:()=>options.store.transactionOpen,

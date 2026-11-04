@@ -195,8 +195,9 @@ export function taskSettingChange(setting: TaskSetting, value: Value, reading: E
   }
 }
 
-/** A track's Telemetry or Solo as the owner's request. */
-export const trackSettingChange = (setting: 'telemetry' | 'solo', on: boolean): EncounterSessionSettingsRequest => ({track: {[setting]: on}})
+/** A track's Telemetry as the owner's request. Solo is what you attend to, the shell's on the book (§16.1, §16.6): AIKit's own session
+ * Solo, a gate on its executor's launches, is never written from here. */
+export const trackSettingChange = (setting: 'telemetry', on: boolean): EncounterSessionSettingsRequest => ({track: {[setting]: on}})
 
 /** Write one change to a session's settings against the revision its standing reading holds, then read them again. The owner's
  * refusal (a stale revision, another task, a word outside the manual's) is thrown in its words. */

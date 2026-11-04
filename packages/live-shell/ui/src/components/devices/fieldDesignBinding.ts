@@ -53,9 +53,6 @@ export const FIELD_ABSENT: Readonly<Record<FieldDesignFamily, Readonly<Record<st
   depth: {},
   resonance: {
     stations: 'The engine reports no stations for the plate (the editor reading\'s observation.stations; it computes none while the native field follows the domain).',
-    // What drives the plate now (expressions__resonance.tsx `drive`): the engine resolves it (its telemetry cymatic.driver, PointCloudField.ts
-    // lastResonanceDrive; resonanceDrive.ts ResolvedResonanceDrive), and the editor reading's observation does not carry it.
-    drive: 'What drives the plate now: no reading reaches it yet — missing op: the engine\'s resolved drive in the editor reading\'s observation (its telemetry cymatic.driver; packages/expressions-boundary/src/editor.ts observation carries no drive) (Expressions).',
     // body.source and tattva.standing: M2's body constants by fibre (qlCoordinateName.ts BodyTable), absent with their reason until read.
     'body.source': 'Reading M2\'s body constants…',
     'tattva.name': NO_CONDITION,
@@ -75,7 +72,10 @@ export const FIELD_UNSET: Readonly<Partial<Record<FieldDesignFamily, Readonly<Re
 }
 /** Readings the engine reports only at times, each with why it is not drawn when it does not: a reading, never a control. */
 export const FIELD_UNREPORTED: Readonly<Partial<Record<FieldDesignFamily, Readonly<Record<string, string>>>>> = {
-  resonance: {'resonance.live': 'The engine has not reported the frequency the plate sounds now (observation.effectiveValues): a reading, when it does.'},
+  resonance: {'resonance.live': 'The engine has not reported the frequency the plate sounds now (observation.effectiveValues): a reading, when it does.',
+    // What drives the plate now (expressions__resonance.tsx `drive`): the engine resolves it (its telemetry cymatic.driver, PointCloudField.ts
+    // lastResonanceDrive; resonanceDrive.ts ResolvedResonanceDrive) and the frame's editor carries it in the observation (hostEditor.ts).
+    drive: 'The engine has not reported what drives the plate yet (its telemetry cymatic.driver, which the editor reading\'s observation carries while the plate is on): a reading, when it does.'},
 }
 /** The view's own keys of a family's design (DesignBinding.local): Focus's chosen formation in its route. */
 export const FIELD_LOCAL: Readonly<Partial<Record<FieldDesignFamily, readonly string[]>>> = {focus: ['chosen']}
@@ -111,6 +111,9 @@ function sceneValues(family: FieldDesignFamily, reading: Pick<NativeEditorReadin
     // The plate's stations as the engine computes them (the Studio's station ticks), verbatim from the observation.
     const stations = reading.observation?.stations
     if (stations?.length) values.stations = JSON.stringify(stations)
+    // What drives the plate now, as the engine resolved it, verbatim from the observation.
+    const drive = reading.observation?.drive
+    if (drive) values.drive = JSON.stringify(drive)
   }
   if (family === 'morph') {
     // The engine's own morph accumulators, radians (its telemetry drive.theta and drive.phi), verbatim from the observation.

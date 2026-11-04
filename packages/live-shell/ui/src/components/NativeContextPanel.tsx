@@ -20,7 +20,9 @@ function Receipt({ receipt }: { receipt: KernelReceipt }) {
 /** Read surfaces over the existing native owners. Agency and Day reads never
  * commission work; reading an Agent card requires selecting its disclosed ref. */
 /** `project` is a register (agent/worldScope.ts): a project's name, or '' for your world's root register — never assumed. */
-export function NativeContextPanel({ project, preparedContext, agency, initialTab }: { project: string; preparedContext?: NativePreparedContextProps; agency?: NativeAgencyParticipationProps; initialTab?: ContextTab }) {
+/** `attends`, where Solo stands (manual §16.1 "You attend to the soloed tracks alone … The others keep running"): the sessions you attend
+ * to; the participating sessions list shows only those, and says how many keep running out of view. */
+export function NativeContextPanel({ project, preparedContext, agency, initialTab, attends }: { project: string; preparedContext?: NativePreparedContextProps; agency?: NativeAgencyParticipationProps; initialTab?: ContextTab; attends?: (row: {spaceRef: string; sessionRef: string}) => boolean }) {
   const place = project ? project : 'Your world'
   const id = useId()
   const hasAgency = !!agency
@@ -118,6 +120,8 @@ export function NativeContextPanel({ project, preparedContext, agency, initialTa
     }
   }
   const sourcePreview = selectedSource?.content.slice(0, 32000)
+  const attendedRows = agencyReading ? agencyReading.rows.filter(row => !attends || attends(row)) : []
+  const outOfView = agencyReading ? agencyReading.rows.length - attendedRows.length : 0
   const dayPreview = day?.content.slice(0, 6000)
   return <section className="native-context-panel" aria-label="Native context">
     <div className="native-context-header"><div className="native-context-tabs" role="tablist" aria-label="Native work context">{(['agents', 'context', 'receipts'] as const).map(value => <button key={value} type="button" role="tab" id={`${id}-${value}-tab`} aria-selected={tab === value} aria-controls={`${id}-${value}-panel`} onClick={() => setTab(value)}>{value === 'agents' ? 'Agents' : value === 'context' ? 'Context' : 'Receipts'}{value === 'receipts' && receipts.length > 0 && <span className="native-receipt-count">{receipts.length}</span>}</button>)}</div>{tab !== 'receipts' && <button type="button" aria-label={`Refresh ${tab}`} title="Read the current native owner" onClick={() => setRefresh(value => value + 1)} disabled={transport.kind === 'unavailable' || (tab === 'agents' ? agencyLoading : dayLoading)}>↻</button>}</div>
@@ -133,7 +137,7 @@ export function NativeContextPanel({ project, preparedContext, agency, initialTa
         <h3>Participating sessions</h3>
         {agencyLoading && <p className="native-empty" role="status">Reading agent participation…</p>}
         {agencyError && <p className="native-error" role="alert">{agencyError}</p>}
-        {agencyReading && <><p className="native-context-meta" title={agencyReading.projectRef}>{place} · {agencyReading.rows.length} participating sessions{agencyReading.observedAtUnixMs !== undefined && <span> · read {new Date(agencyReading.observedAtUnixMs).toLocaleTimeString()}</span>}</p><ul className="native-agent-list">{agencyReading.rows.map(row => <li key={`${row.spaceRef}:${row.sessionRef}`}><button type="button" disabled={!row.agentRef} className={selectedAgent === row.agentRef ? 'selected' : undefined} title={row.agentRef ?? 'This session has no disclosed Agent card reference'} onClick={() => row.agentRef && void selectAgent(row.agentRef)}><strong>{row.spaceLabel ?? row.spaceRef}</strong><span>{row.purpose ?? row.sessionRef}</span></button></li>)}</ul>{!agencyReading.rows.length && <p className="native-empty">No participating sessions are disclosed by this owner.</p>}</>}
+        {agencyReading && <><p className="native-context-meta" title={agencyReading.projectRef}>{place} · {agencyReading.rows.length} participating sessions{outOfView > 0 && <span> · soloed: {outOfView} keep running out of view</span>}{agencyReading.observedAtUnixMs !== undefined && <span> · read {new Date(agencyReading.observedAtUnixMs).toLocaleTimeString()}</span>}</p><ul className="native-agent-list">{attendedRows.map(row => <li key={`${row.spaceRef}:${row.sessionRef}`}><button type="button" disabled={!row.agentRef} className={selectedAgent === row.agentRef ? 'selected' : undefined} title={row.agentRef ?? 'This session has no disclosed Agent card reference'} onClick={() => row.agentRef && void selectAgent(row.agentRef)}><strong>{row.spaceLabel ?? row.spaceRef}</strong><span>{row.purpose ?? row.sessionRef}</span></button></li>)}</ul>{!agencyReading.rows.length && <p className="native-empty">No participating sessions are disclosed by this owner.</p>}</>}
         {cardLoading && <p className="native-empty" role="status">Reading Agent card…</p>}
         {cardError && <p className="native-error" role="alert">{cardError}</p>}
         {card && <article className="native-agent-card"><h3 title={`${card.identity.agent_ref} · ${card.identity.revision}`}>{card.identity.name}</h3>{card.why_im_here.role && <p className="native-context-meta">{card.why_im_here.role}</p>}<Field label="Purpose" field={card.why_im_here} /><Field label="Capabilities" field={card.what_i_can_do} /><Field label="Current work" field={card.currently} /><details><summary>Participation and repertoire</summary><Field label="Participation" field={card.where_i_participate} /><Field label="Working practice" field={card.how_i_work} /><Field label="Repertoire" field={card.what_i_carry} />{card.citizenship.summary && <p>{card.citizenship.summary}</p>}</details></article>}

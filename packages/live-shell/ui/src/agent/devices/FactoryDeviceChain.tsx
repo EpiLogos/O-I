@@ -487,7 +487,9 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     propose: input => setAct(transport, 'central.agent-set.propose', input),
     suffix: () => globalThis.crypto.randomUUID().slice(0, 8),
     agent: oneAgent,
-  }), [transport, oneAgent])
+    // Solo (§19.15 the chain list): what you attend to, the one the Session view's mixer solos (the agent shell's, on the book).
+    solo: (ref, on) => shell.setSolo(ref, on),
+  }), [transport, oneAgent, shell.setSolo])
   // The Decision helper (§19.20, T-AGENCY K5): a device of its own, a chain of the group's Agent rack in place of an Agent, on AIKit's
   // decision provider and QL's team space — read only while the rack stands on a group. The rack lists it among its chains.
   const helperStands = sessionRef != null && !!groupTrack
@@ -496,8 +498,8 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const helperDesignBinding = useMemo(() => decisionHelperBinding({status: helperReadings.status, teamSpace: helperReadings.teamSpace}),
     [helperReadings.status, helperReadings.teamSpace])
   const agentsetDesignBinding = useMemo(() => agentsetBinding({group: groupTrack, session: loneTrack, agent: oneAgent?.values ?? null, tracks, models, holds,
-    nowUnixMs: sessions?.nowUnixMs ?? 0, ...(setRef ? {set: groupSet} : {}), ...(helperStands && helperDevice ? {helper: helperDesignBinding.values} : {})}, agentsetPorts),
-  [groupTrack, loneTrack, oneAgent, tracks, models, holds, sessions?.nowUnixMs, setRef, groupSet, helperStands, helperDevice, helperDesignBinding, agentsetPorts])
+    nowUnixMs: sessions?.nowUnixMs ?? 0, ...(setRef ? {set: groupSet} : {}), ...(helperStands && helperDevice ? {helper: helperDesignBinding.values} : {}), soloed: shell.soloed}, agentsetPorts),
+  [groupTrack, loneTrack, oneAgent, tracks, models, holds, sessions?.nowUnixMs, setRef, groupSet, helperStands, helperDevice, helperDesignBinding, agentsetPorts, shell.soloed])
   // How far each plate of a session's chain reaches (factoryPlaces.ts reachOf): the rack's chains, and the lone session's own inside it.
   const rackChains = useMemo(() => rackChainsOf(agentsetDesignBinding.values.members), [agentsetDesignBinding.values.members])
   const reachHere = (slot: FactorySlot): Reach => (place.kind === 'session' ? reachOf(slot, rackChains, loneTrack?.sessionRef) : ON_ITS_TRACK)

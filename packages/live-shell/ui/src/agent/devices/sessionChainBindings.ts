@@ -26,6 +26,7 @@ import {familyFaceDevice} from './mainTrackBindings'
 import {sessionRowsOf} from './threadBinding'
 import {DECISION_HELPER_DESIGN, DECISION_HELPER_ID} from './decisionHelperBinding'
 import {macroTurns, RACK_MACROS, type RackMacro, type RackNode} from '../../inhabitants/sdk/chains'
+import {trackKey} from '../agentRunModel'
 
 export const RUN_DESIGN = 'software-factory:run-device'
 export const CUSTODY_DESIGN = 'software-factory:agent-custody'
@@ -52,14 +53,15 @@ const reading = (key: string) => `${key} is a reading: its owner reports it; not
 
 // ---------------------------------------------------------------------------------------------------------------- the Run
 
-// Telemetry and Solo are the session's own settings on AIKit (lane K0 corrected): `encounter-session-settings` `track.telemetry` and
-// `track.solo`, written through the kernel's encounter_session_settings against the revision that stands (agent/sessionSettings.ts
-// trackSettingChange) — the Session view's mixer reads and writes them (timeline/factoryTrackAdapter.ts FACTORY_TELEMETRY_OP, FACTORY_SOLO_OP).
-// The Run device is handed neither the session's settings reading nor its writer, so it names that route and stands disabled here.
+// Telemetry is the session's own setting on AIKit (lane K0 corrected): `encounter-session-settings` `track.telemetry`, written through
+// the kernel's encounter_session_settings against the revision that stands (agent/sessionSettings.ts trackSettingChange) — the Session
+// view's mixer reads and writes it (timeline/factoryTrackAdapter.ts FACTORY_TELEMETRY_OP). Solo is what you attend to, never what runs
+// (§16.1, §16.6): the shell holds it on the book (agent/AgentShellContext.tsx setSolo), and AIKit's own session Solo, a gate on its
+// executor's launches, is never written. The Run device is handed neither, so it names each route and stands disabled here.
 // AIKit's gateway agent controls (`aikit gateway agent --binding B pause|resume`) address a gateway binding's connector, never a session.
 export const RUN_REFUSE = {
   telemetry: 'Telemetry: the session\'s own setting on AIKit (encounter_session_settings {track: {telemetry}}, as the Session view\'s mixer writes it); the Run device is not handed the session\'s settings or their writer, so it does not write it here (AIKit).',
-  solo: 'Solo: the session\'s own setting on AIKit (encounter_session_settings {track: {solo}}, as the Session view\'s mixer writes it); the Run device is not handed the session\'s settings or their writer, so it does not write it here (AIKit).',
+  solo: 'Solo: what you attend to, which the shell holds on the book (agent/AgentShellContext.tsx setSolo), as the Session view\'s mixer solos it; the Run device is not handed the attention, so it does not solo here (the live shell).',
   take: 'No takes are read: factory_attempt_read needs the run ref of the session\'s work, and the agency reading names none.',
   open: 'No events are read into lanes: the temporal stream names the session, not Messages, Files, Terminal, Web or Graph.',
 } as const
@@ -479,10 +481,10 @@ export const AGENTSET_REFUSE = {
   // The chain list's controls (§19.15): each acts on a chain's session in its session space, or on what you attend to. Each names the
   // owner operation it waits for and, where one stands near, why that one is not it (O-I #772).
   bench: `${missing('Activator', 'benching a chain\'s session in its session space, so it stays in the rack and is given no work', 'AIKit')} ${SPACE_MUTATIONS} hold no bench.`,
-  // Solo is what you attend to, never what runs (§16.1 Live's acts: Solo is never "A limit on what may run"; §16.6 Rules). AIKit's session
-  // Solo, which the Session view's mixer writes (timeline/factoryTrackAdapter.ts FACTORY_SOLO_OP), is a launch gate: AIKit's executor
-  // launches only the soloed sessions of a space while any is soloed (encounter_task_executor.rs, the Solo gate).
-  solo: `${missing('Solo', 'attending to one chain alone, so the views, the tiles and the instruments show only it: an attention the shell holds and its views, tiles and instruments read', 'the live shell')} AIKit's session Solo (encounter_session_settings {track: {solo}}) gates launches to the soloed sessions, a limit on what may run, which Solo never is (§16.1, §16.6), so the rack does not write it.`,
+  // Solo is what you attend to, never what runs (§16.1 Live's acts: Solo is never "A limit on what may run"; §16.6 Rules): the shell's
+  // attention on the book (AgentRackPorts.solo, the agent shell's setSolo), the one the Session view's mixer solos. AIKit's session Solo is
+  // a launch gate (encounter_task_executor.rs, the Solo gate) and is never written. Refused only where no attention is handed.
+  solo: missing('Solo', 'what you attend to, handed to this rack: the book\'s world context holds it (agent/AgentShellContext.tsx soloed, setSolo)', 'the live shell'),
   swap: `${missing('Hot-Swap', 'swapping a chain\'s agent in its session space for another from the browser, the rest of its chain kept', 'AIKit')} ${SPACE_MUTATIONS} hold no swap of a session's agent.`,
   extract: `${missing('Drag out', 'moving a chain\'s session out of its session space onto a track of its own, chain and all', 'AIKit')} AIKit's detach-agent-session (the kernel's encounter_session_detach) is a track's Delete: it takes the session off every space of its Project, and no operation seats the same session in a space of its own.`,
   add: `${missing('Add a chain', 'seating an agent, or a Decision helper, dropped into the chain list as a member of the session space', 'AIKit')} AIKit's attach-agent-session reaches the kernel only inside encounter_provision, which seats a new session in a new space; no operation attaches a session to a space that stands.`,
@@ -537,6 +539,8 @@ export interface AgentRackPorts {
   readonly propose?: (input: {scope: 'root'; ref: string; revision: 'r1'; members: {kind: 'agent'; agent_ref: string}[]; reason: string}) => Promise<unknown>
   readonly agent?: DesignBinding | null
   readonly suffix?: () => string
+  /** Solo a chain (on) or lift its solo, by its track's key: what you attend to (the agent shell's setSolo), no owner asked. */
+  readonly solo?: (trackRef: string, on: boolean) => void
 }
 
 /** The set's next revision by Central's own convention (`r1`, `r2`, … : central.agent-set.save refuses a revision that does not move). */
@@ -562,6 +566,8 @@ export interface AgentRackInput {
   readonly nowUnixMs?: number
   /** The Decision helper's values (decisionHelperBinding.ts), where one stands on the group: a chain of the rack beside the agents. */
   readonly helper?: Values | null
+  /** What you attend to, by the tracks' keys (the agent shell's soloed): each chain's Solo reads it. Absent: unread, and Solo stands disabled. */
+  readonly soloed?: ReadonlySet<string> | null
   readonly holds: ChainHolds
 }
 
@@ -623,6 +629,7 @@ export function agentsetValues(input: AgentRackInput): Values {
     const chain: Record<string, Value> = {...sessionChain(lone, input.nowUnixMs ?? 0), ...(model ? {model} : {}), beside: true}
     values.members = JSON.stringify([chain])
     values.light = chain.state === 'working' ? 'lit' : 'dark'
+    if (input.soloed) values[`solo:${lone.sessionRef}`] = input.soloed.has(trackKey(lone))
     // The macros stand where the one agent's settings stand: one chain, so the rack keeps no value of its own.
     for (const macro of RACK_MACROS) put(values, macro, input.agent?.[AGENT_KEY[macro]])
   } else {
@@ -633,6 +640,8 @@ export function agentsetValues(input: AgentRackInput): Values {
       const members = agentsetMembers(group, input.tracks, input.nowUnixMs ?? 0)
       values.members = JSON.stringify(input.helper ? [...members, helperMember(input.helper)] : members)
       values.light = members.some(member => member.state === 'working') ? 'lit' : 'dark'
+      const soloed = input.soloed
+      if (soloed) for (const track of input.tracks) if (!track.group && track.parentRef === group.sessionRef) values[`solo:${track.sessionRef}`] = soloed.has(trackKey(track))
     }
     if (input.helper) values[memberDeviceKey(DECISION_HELPER_ID, DECISION_HELPER_DESIGN)] = JSON.stringify(input.helper)
   }
@@ -697,6 +706,7 @@ export function agentsetBinding(input: AgentRackInput, ports?: AgentRackPorts): 
   for (const macro of RACK_MACROS) { const why = macroStanding(macro, input, ports); if (why) standing[macro] = why; else delete standing[macro] }
   const join = joinStanding(input, ports)
   if (join) standing.join = join
+  if (ports?.solo) delete standing.solo
   standing['new.type'] = {disabled: GROUP_REFUSE.type}
   standing['new.discard'] = {disabled: GROUP_REFUSE.discard}
   const writable = join === null || join.refused !== undefined
@@ -714,6 +724,14 @@ export function agentsetBinding(input: AgentRackInput, ports?: AgentRackPorts): 
       if (lone && reached.chain === lone.sessionRef && ports?.agent?.write) await ports.agent.write([{key: AGENT_KEY[macro], value}])
       else throw Error(AGENTSET_REFUSE[macro])
     }
+  }
+  /** Solo a chain: what you attend to changes, by the chain's track (the key the views read); no owner is asked. */
+  const solo = (id: string, value: Value | undefined) => {
+    if (!ports?.solo) throw Error(AGENTSET_REFUSE.solo)
+    if (id === DECISION_HELPER_ID) throw Error('Solo: the Decision helper is a chain of the rack, not a session: the views, the tiles and the instruments draw sessions, so there is nothing of it to attend to alone.')
+    const chain = lone && lone.sessionRef === id ? lone : tracks.find(track => !track.group && track.sessionRef === id && track.parentRef === input.group?.sessionRef)
+    if (!chain) throw Error(`Solo: "${id}" is not a chain of this rack.`)
+    ports.solo(trackKey(chain), value === true)
   }
   /** Make: the chosen chains, proposed to Central as a set of agents, the proposal held on the card. */
   const make = async (value: Value | undefined) => {
@@ -760,6 +778,7 @@ export function agentsetBinding(input: AgentRackInput, ports?: AgentRackPorts): 
         if (key === 'new.make') { await make(value); continue }
         if (key === 'new.accept') { await accept(); continue }
         if (key === 'new.discard') throw Error(GROUP_REFUSE.discard)
+        if (key.startsWith('solo:')) { solo(key.slice('solo:'.length), value); continue }
         if (key !== 'join') throw Error(AGENTSET_REFUSE[memberControl(key) ?? key as keyof typeof AGENTSET_REFUSE] ?? reading(key))
         if (typeof value !== 'string' || !(JOINS as readonly string[]).includes(value)) throw Error(`Join is none, all, first, quorum or weighted, not ${String(value)}.`)
         if (!ports?.saveSet) throw Error('Join: no carrier to Central\'s central.agent-set.save stands on this chain.')

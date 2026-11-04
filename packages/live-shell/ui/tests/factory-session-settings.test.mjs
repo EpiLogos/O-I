@@ -249,25 +249,27 @@ test('Tasks device: Mode, To and a single Effort go to the owner; Launch, Retry 
   await assert.rejects(() => unread.write([{key: 'mode', value: 'gate'}]), {message: settings.SETTINGS_WHY.notHere})
 })
 
-test('the mixer row: each session\'s Telemetry and Solo read its own settings, and a press writes that session\'s alone', async () => {
+test('the mixer row: each session\'s Telemetry reads its own setting, and a press writes that session\'s alone; Solo asks no owner', async () => {
   const {factoryTrackAdapter, FACTORY_TELEMETRY_OP} = await import('../src/timeline/factoryTrackAdapter.ts')
   const quiet = {...track, sessionRef: 'ses-300', purpose: 'widget tests', tasks: []}
   const pressed = []
   const port = {
-    of: session => session === 'ses-214' ? {telemetry: false, solo: true} : null,
+    of: session => session === 'ses-214' ? {telemetry: false, solo: true} : null,  // AIKit's own Solo, which the mixer does not read
     set: async (session, setting, on) => { pressed.push([session, setting, on]); return {ok: true, note: `${setting} ${on}`} },
   }
   const set = factoryTrackAdapter.project({tracks: [track, quiet], nowUnixMs: T(14, 30), settings: port})
   const mine = set.tracks.find(item => item.id === trackKey(track)), theirs = set.tracks.find(item => item.id === trackKey(quiet))
-  assert.equal(mine.mix.activator, false, 'muted: it keeps working, in silence'); assert.equal(mine.mix.solo, true)
+  assert.equal(mine.mix.activator, false, 'muted: it keeps working, in silence')
+  // REPLACED (round 858, §16.1, §16.6): Solo is what you attend to, the shell's (tests/solo-attention.test.mjs), never AIKit's launch gate.
+  assert.equal(mine.mix.solo, undefined, 'AIKit\'s session Solo is not read as the mixer\'s')
   assert.equal(theirs.mix?.activator, undefined, 'a session unread draws its settings unread')
-  assert.equal(set.mixer.activator.disabled, undefined); assert.equal(set.mixer.solo.disabled, undefined)
+  assert.equal(set.mixer.activator.disabled, undefined); assert.match(set.mixer.solo.disabled, /what you attend to/, 'no attention handed here')
   assert.equal(set.mixer.monitor.disabled !== undefined, true, 'Watch still names the op it lacks')
   assert.equal(set.actions.mixer.activator.op, FACTORY_TELEMETRY_OP)
   await set.actions.mixer.activator.run(mine.id, true)
-  await set.actions.mixer.solo.run(theirs.id, true)
-  assert.deepEqual(pressed, [['ses-214', 'telemetry', true], ['ses-300', 'solo', true]])
-  assert.deepEqual(await set.actions.mixer.solo.run('space:none:nobody', true), {ok: false, error: '"space:none:nobody" is not a session of this work.'})
+  assert.equal(set.actions.mixer.solo, undefined, 'the settings carry no Solo')
+  assert.deepEqual(pressed, [['ses-214', 'telemetry', true]])
+  assert.deepEqual(await set.actions.mixer.activator.run('space:none:nobody', true), {ok: false, error: '"space:none:nobody" is not a session of this work.'})
   const unported = factoryTrackAdapter.project({tracks: [track], nowUnixMs: T(14, 30)})
   assert.match(unported.mixer.activator.disabled, /missing op/, 'no settings read here: Telemetry says what it lacks')
   // The write a press makes: the track's own setting, no task in it.

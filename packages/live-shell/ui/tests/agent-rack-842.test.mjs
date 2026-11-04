@@ -211,11 +211,10 @@ test('Group, on chains chosen in the list, asks Central to propose them as an ag
 test('each chain-list control refuses in the words of the operation it waits for, and of the nearest operation that is not it (O-I #772)', async () => {
   const R = own.AGENTSET_REFUSE
   // Solo is what you attend to, never what runs (§16.1 "Live's acts, kept as Live keeps them": Solo is never "A limit on what may run";
-  // §16.6 Rules). AIKit's session Solo gates launches to the soloed sessions (encounter_task_executor.rs, the Solo gate), so the rack's
-  // Solo cannot be it, though it is the setting the Session view's mixer writes.
-  assert.match(R.solo, /^Solo: no owner operation carries it yet — missing op: .*\(the live shell\)\./)
-  assert.match(R.solo, /encounter_session_settings \{track: \{solo\}\}\) gates launches to the soloed sessions/)
-  assert.match(R.solo, /a limit on what may run, which Solo never is \(§16\.1, §16\.6\)/)
+  // §16.6 Rules). REPLACED (round 858): the rack solos through the shell's attention, the one the Session view's mixer solos
+  // (tests/solo-attention.test.mjs); it refuses only where no attention is handed, and AIKit's session Solo is never named as its route.
+  assert.match(R.solo, /^Solo: no owner operation carries it yet — missing op: what you attend to, handed to this rack: .*\(the live shell\)\.$/)
+  assert.doesNotMatch(R.solo, /encounter_session_settings/)
   // Drag out is a move; AIKit's one session move is a track's Delete.
   assert.match(R.extract, /\(AIKit\)\. AIKit's detach-agent-session \(the kernel's encounter_session_detach\) is a track's Delete/)
   // Add a chain: AIKit's attach reaches the kernel only for a new session in a new space.

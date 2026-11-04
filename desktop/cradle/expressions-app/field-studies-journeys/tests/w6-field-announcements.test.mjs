@@ -25,4 +25,6 @@ test('the controller carries the condition on its reading, the frame announces i
  assert.match(app,/stations:\(\)=>engine\.stations\?\.\(\),/,'the engine\'s own stations');
  assert.match(editor,/phases:\{theta:telemetry\.drive\.theta,phi:telemetry\.drive\.phi\}/,'the engine\'s own accumulators, verbatim');
  assert.match(editor,/const stations=options\.stations\?\.\(\);return stations\?\.length\?\{stations:clone\(stations\)\}:\{\};/);
+ // O-I #757: what drives the plate, as the engine resolved it (its telemetry cymatic.driver), carried with the fields the boundary admits.
+ assert.match(editor,/const drive=resolvedDrive\(telemetry\?\.cymatic\?\.driver\);return drive\?\{drive\}:\{\};/);
 });
