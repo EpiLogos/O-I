@@ -316,3 +316,124 @@ export const CHAIN_PRESETS: ChainPreset[] = [
     recommendedEasing: 'smoothstep',
   },
 ];
+
+// ------------------------------------------------------------------------------------------------- M3′ forms as glyphs (O-I #852)
+//
+// A symbol can take its glyph from a form of M3′: a fold, a codon or a hexagram, beside letters, shapes and images. The three are
+// one address of six bits (QL ql-core pole/codon.rs Codon64): bit ℓ is the I-Ching line ℓ (line 0 the bottom); the three sites own
+// two lines each (lines 0–1 the inner site Z, 2–3 the hinge Y, 4–5 the outer site X), the even bit a site's polarity (1 yang,
+// a mountain crease) and the odd bit its mobility (1 resting); the nucleotide of a site is its two bits (A 0, T 1, C 2, G 3,
+// pole/nucleotide.rs). A step changes the form by QL's own law: a moving line flips one bit (Codon64::line_change, the 384
+// one-line changes), and a turn about a matrix axis applies that matrix's partner on every site (MatrixFamily::apply_to_codon:
+// the address XOR 0x15 for the complementary matrix on i, 0x3F for moving/resting on j, 0x2A for same-quality on k).
+// The form keeps its meaning as a symbol: the glyph is drawn from the address, and the address travels with the shape.
+
+export type M3FormKind = 'fold' | 'codon' | 'hexagram';
+export interface M3Form { kind: M3FormKind; address: number }
+export type M3Axis = 'i' | 'j' | 'k';
+export type M3Step = { line: number } | { axis: M3Axis };
+
+/** The matrices' partner masks on a codon address, by quaternion axis (QL MatrixFamily::codon_mask). */
+export const M3_AXIS_MASK: Readonly<Record<M3Axis, number>> = { i: 0x15, j: 0x3f, k: 0x2a };
+/** The matrix each axis carries, by QL's names (MatrixFamily::axis). */
+export const M3_AXIS_MATRIX: Readonly<Record<M3Axis, 'complementary' | 'moving-resting' | 'same-quality'>> = {
+  i: 'complementary', j: 'moving-resting', k: 'same-quality',
+};
+const NUCLEOTIDES = ['A', 'T', 'C', 'G'] as const;
+
+function assertForm(form: M3Form): void {
+  if (!['fold', 'codon', 'hexagram'].includes(form.kind)) throw new Error(`An M3′ form is a fold, a codon or a hexagram, not ${String(form.kind)}`);
+  if (!Number.isInteger(form.address) || form.address < 0 || form.address > 63) throw new Error('An M3′ form\'s address is one of the 64, 0 to 63');
+}
+
+/** The form one step away: one line moved, or one turn about a matrix axis. Refused in words for any other step. */
+export function stepM3Form(form: M3Form, step: M3Step): M3Form {
+  assertForm(form);
+  if ('line' in step) {
+    if (!Number.isInteger(step.line) || step.line < 0 || step.line > 5) throw new Error('A moving line is one of the six, 0 (the bottom) to 5');
+    return { kind: form.kind, address: form.address ^ (1 << step.line) };
+  }
+  const mask = M3_AXIS_MASK[step.axis];
+  if (mask === undefined) throw new Error('A turn is about a matrix axis: i, j or k');
+  return { kind: form.kind, address: form.address ^ mask };
+}
+
+/** The three sites, outer X to inner Z: polarity (yang is a mountain crease) and mobility. */
+export function m3Sites(form: M3Form): { yang: boolean; resting: boolean }[] {
+  assertForm(form);
+  return [4, 2, 0].map(low => ({ yang: ((form.address >> low) & 1) === 1, resting: ((form.address >> (low + 1)) & 1) === 1 }));
+}
+
+/** The codon's letters, outer site first. */
+export function codonLetters(form: M3Form): string {
+  assertForm(form);
+  return [4, 2, 0].map(low => NUCLEOTIDES[(form.address >> low) & 3]).join('');
+}
+
+/** The trigrams in the King Wen table's order, each by its three lines bottom first (1 yang): Qian, Zhen, Kan, Gen, Kun, Xun, Li, Dui. */
+const TRIGRAMS = [0b111, 0b001, 0b010, 0b100, 0b000, 0b110, 0b101, 0b011] as const;
+/** The King Wen number of each hexagram, by lower trigram (row) and upper trigram (column), in TRIGRAMS order. */
+const KING_WEN: readonly (readonly number[])[] = [
+  [1, 34, 5, 26, 11, 9, 14, 43],
+  [25, 51, 3, 27, 24, 42, 21, 17],
+  [6, 40, 29, 4, 7, 59, 64, 47],
+  [33, 62, 39, 52, 15, 53, 56, 31],
+  [12, 16, 8, 23, 2, 20, 35, 45],
+  [44, 32, 48, 18, 46, 57, 50, 28],
+  [13, 55, 63, 22, 36, 37, 30, 49],
+  [10, 54, 60, 41, 19, 61, 38, 58],
+];
+
+/** The King Wen number of a hexagram address (line ℓ is bit ℓ, line 0 the bottom, 1 yang). */
+export function kingWen(address: number): number {
+  const lower = TRIGRAMS.indexOf((address & 0b111) as (typeof TRIGRAMS)[number]);
+  const upper = TRIGRAMS.indexOf(((address >> 3) & 0b111) as (typeof TRIGRAMS)[number]);
+  return KING_WEN[lower][upper];
+}
+
+/** The text the glyph rasteriser draws for a form: a fold's three creases (∧ a mountain, ∨ a valley; dotted ⋏ ⋎ when moving), a
+ * codon's letters, or a hexagram's sign (U+4DC0 ䷀ … U+4DFF ䷿, in King Wen order). */
+export function m3FormGlyph(form: M3Form): string {
+  assertForm(form);
+  if (form.kind === 'codon') return codonLetters(form);
+  if (form.kind === 'fold') return m3Sites(form).map(site => (site.yang ? (site.resting ? '∧' : '⋏') : (site.resting ? '∨' : '⋎'))).join('');
+  return String.fromCodePoint(0x4dc0 + kingWen(form.address) - 1);
+}
+
+/** M3′'s torus keeps the proportion of M1′'s, its tube nine to sixteen (manual §20.2, §20.9; torusObject TORUS_MINOR / TORUS_MAJOR). */
+export const M3_TORUS_TUBE = 9 / 16;
+export const M3_FORMS = 64;
+export const M3_LENSES = 12;
+
+/** Where a form read through a lens stands on M3′'s torus: one circle carries the forms (φ, by address), the other the lenses (θ). */
+export function m3TorusPlace(address: number, lens: number): { phi: number; theta: number; point: [number, number, number] } {
+  const phi = (2 * Math.PI * (((address % M3_FORMS) + M3_FORMS) % M3_FORMS)) / M3_FORMS;
+  const theta = (2 * Math.PI * (((lens % M3_LENSES) + M3_LENSES) % M3_LENSES)) / M3_LENSES;
+  const ring = 1 + M3_TORUS_TUBE * Math.cos(theta);
+  return { phi, theta, point: [ring * Math.cos(phi), ring * Math.sin(phi), M3_TORUS_TUBE * Math.sin(theta)] };
+}
+
+/** A Morph between a form and one of its changes: the two glyphs, the step, and the two places on M3′'s torus it moves between
+ * (through the lens in force). The engine's Morph drives the field between the two along a torus of that proportion. */
+export function m3FormMorph(form: M3Form, step: M3Step, lens = 0) {
+  const to = stepM3Form(form, step);
+  return {
+    from: { form, glyph: m3FormGlyph(form), place: m3TorusPlace(form.address, lens) },
+    to: { form: to, glyph: m3FormGlyph(to), place: m3TorusPlace(to.address, lens) },
+    step,
+    tube: M3_TORUS_TUBE,
+  };
+}
+
+/** The M3′ forms category of the glyph library: the 64 hexagrams, by address. */
+export const M3_FORM_CATEGORY: GlyphCategory = {
+  id: 'm3-forms',
+  name: 'M3′ forms',
+  description: 'Folds, codons and hexagrams of M3′: a step moves one line or turns about a matrix axis',
+  items: Array.from({ length: M3_FORMS }, (_, address) => ({
+    char: m3FormGlyph({ kind: 'hexagram', address }),
+    name: `${kingWen(address)} · ${codonLetters({ kind: 'codon', address })} · ${address.toString(2).padStart(6, '0')}`,
+    category: 'm3-forms',
+  })),
+};
+GLYPH_CATEGORIES.push(M3_FORM_CATEGORY);

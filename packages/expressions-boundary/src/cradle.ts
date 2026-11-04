@@ -13,7 +13,7 @@ import {readWikiSceneTechne, resolveSceneConstellation} from '../../../desktop/c
 import {relateSceneConstellation} from '../../../desktop/cradle/src/techne/sceneConstellationRelation';
 import {ensureWikiNativeExpression, publishWikiNativeRegisters, selectedWikiNativeRegister, selectWikiNativeRegister, wikiNativeRegisters} from '../../../desktop/cradle/src/techne/wikiNativeExpression';
 import {assertReading, boundedText, decideFrameAction, object, readFrameActionRequest, type ChannelContext, type ExpressionsOwners} from './protocol.ts';
-import {readFramePerformanceRequest, recallPerformanceBasis, refusePerformanceSave, summarizePerformanceBases} from './performanceBasis.ts';
+import {listPerformance, readFramePerformanceRequest, recallPerformanceBasis, refusePerformanceSave} from './performanceBasis.ts';
 
 export type {KernelTransportStatus, KernelReceipt, NativeFileReading, NativeFileEntry, NativeDirectory, CentralLocation} from '../../../desktop/cradle/src/kernel/types';
 export {listFiles, readFile, resolveFileLocation} from '../../../desktop/cradle/src/files/client';
@@ -115,7 +115,8 @@ export function createCradleOwners(transport: KernelTransportStatus, options: Cr
     const scene = document.scenes?.find(row => row.scene_ref === request.scene_ref);
     if (!scene) throw Error('The presented Scene is absent from this native Expression');
     const bases = object(scene.performance) ? scene.performance.bases : [];
-    if (request.action === 'list') return {state: 'listed', bases: summarizePerformanceBases(bases)};
+    // The listing is the Scene performance's: its presets, and the sounds, instruments and racks it keeps on the Torus (O-I #852).
+    if (request.action === 'list') return listPerformance(scene.performance);
     if (request.action === 'save') return refusePerformanceSave({performance: scene.performance}, request.name);
     return recallPerformanceBasis(bases, request.basis_ref);
   };

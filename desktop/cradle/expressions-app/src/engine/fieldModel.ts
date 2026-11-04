@@ -55,6 +55,9 @@ export interface Shape {
   primitive?: 'ring' | 'disc' | 'square' | 'triangle';
   kind: ShapeKind;
   text?: string;          // glyph / word (kind 'glyph')
+  /** The M3′ form a glyph is drawn from (kind 'glyph'): its text is glyphLibrary m3FormGlyph(form), and a step moves the form one
+   * line or one turn about a matrix axis (stepM3Form). The form keeps its meaning as a symbol beside the text it draws. */
+  form?: import('./glyphLibrary').M3Form;
   yantraId?: string;      // sacred geometry id from CANONICAL_CHAKRAS (kind 'yantra')
   frequencyHz?: number;   // Chladni template frequency (kind 'cymatic', authored geometry — NOT the resonator)
   /** The torus's shape (kind 'torus'): the figure the object takes, sampled on the body's own angles (torusObject.torusCandidates). */

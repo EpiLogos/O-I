@@ -7,6 +7,7 @@
 import {admittedProjectionKinds} from '../../../../../desktop/cradle/src/surface/projectionModules'
 import type {IconName} from '../inhabitants/sdk/icons'
 import type {HostedLens} from '../shell/paneInstrument'
+import type {TorusKeptSummary} from '../../../../expressions-boundary/src/performanceBasis'
 
 export interface InstrumentEntry {
   /** The pane kind the instrument opens as. */
@@ -69,4 +70,68 @@ export function parseInstrumentPayload(payload: string): {kind: string; lens?: H
   const kind = payload.slice(0, at), named = payload.slice(at + 1)
   const lens = STAGE_LENSES.find(entry => entry.kind === kind && entry.lens === named)?.lens
   return lens ? {kind, lens} : {kind}
+}
+
+// What you keep, under the Torus (O-I #852, manual §21.2 Sounds and instruments): a sound stands under the Torus in the browser's
+// Instruments as Live keeps a device's presets; an instrument (a body made from a form) stands under it with its sounds under it; a
+// rack stands as a rack. Each drags onto a part to play it, carrying what the part plays by the Scene's own references. The records are
+// the Scene performance's, as its owner lists them (expressions-boundary performanceBasis.ts listPerformance); none is kept here.
+
+/** The drag type a kept sound, instrument or rack travels by, onto a part. */
+export const TORUS_KEPT_MIME = 'application/x-oi-torus-kept'
+export type TorusKeptKind = 'sound' | 'instrument' | 'rack'
+/** What a part is given to play: the sound, the instrument or the rack by its reference; a sound made on an instrument names it too. */
+export interface TorusKeptDrag {readonly kind: TorusKeptKind; readonly ref: string; readonly instrument_ref?: string}
+export interface TorusKeptRow {
+  readonly key: string
+  readonly kind: TorusKeptKind
+  /** 1 under the Torus; 2 under an instrument. */
+  readonly depth: 1 | 2
+  readonly name: string
+  readonly meta: string
+  /** What the row says it holds, and how it plays (its tooltip). */
+  readonly title: string
+  /** The drag payload (TORUS_KEPT_MIME). */
+  readonly payload: string
+}
+
+const KEPT_WORDS: Readonly<Record<TorusKeptKind, string>> = {
+  sound: 'a sound: every parameter of the Torus, its body and its tuning, as they stood. Drag it onto a part to play it.',
+  instrument: 'an instrument: a body made from a form, with the sounds made on it. Drag it onto a part to play it; the same pulse plays it.',
+  rack: 'a rack: the Torus with its note devices and effects, its macros and their variations. Drag it onto a part to play it.',
+}
+const count = (n: number, one: string) => `${n} ${one}${n === 1 ? '' : 's'}`
+
+/** The kept rows under the Torus, in the manual's order: its sounds, then each instrument followed by the sounds made on it, then the
+ * racks. The search keeps a row whose name holds it, and an instrument with a sound that does. Pure. */
+export function torusKeptRows(kept: TorusKeptSummary | null | undefined, query: string): TorusKeptRow[] {
+  if (!kept) return []
+  const needle = query.trim().toLowerCase()
+  const hit = (name: string) => !needle || name.toLowerCase().includes(needle)
+  const row = (kind: TorusKeptKind, depth: 1 | 2, key: string, name: string, meta: string, drag: TorusKeptDrag): TorusKeptRow =>
+    ({key, kind, depth, name, meta, title: `${name} — ${KEPT_WORDS[kind]}`, payload: JSON.stringify(drag)})
+  const rows: TorusKeptRow[] = []
+  for (const sound of kept.sounds) if (hit(sound.name)) rows.push(row('sound', 1, sound.sound_ref, sound.name, 'sound', {kind: 'sound', ref: sound.sound_ref}))
+  for (const instrument of kept.instruments) {
+    const sounds = instrument.sounds.filter(sound => hit(sound.name) || hit(instrument.name))
+    if (!sounds.length && !hit(instrument.name)) continue
+    rows.push(row('instrument', 1, instrument.instrument_ref, instrument.name, `instrument · ${count(instrument.sounds.length, 'sound')}`,
+      {kind: 'instrument', ref: instrument.instrument_ref}))
+    for (const sound of sounds) rows.push(row('sound', 2, `${instrument.instrument_ref}/${sound.sound_ref}`, sound.name, 'sound',
+      {kind: 'sound', ref: sound.sound_ref, instrument_ref: instrument.instrument_ref}))
+  }
+  for (const rack of kept.racks) if (hit(rack.name)) rows.push(row('rack', 1, rack.rack_ref, rack.name,
+    `rack · ${count(rack.macros.length, 'macro')} · ${count(rack.variations.length, 'variation')}`, {kind: 'rack', ref: rack.rack_ref}))
+  return rows
+}
+
+/** A kept drag, exact, or null: a part plays only a sound, an instrument or a rack named by its reference. */
+export function readTorusKeptDrag(payload: string): TorusKeptDrag | null {
+  let raw: unknown
+  try { raw = JSON.parse(payload) } catch { return null }
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null
+  const {kind, ref, instrument_ref: on, ...rest} = raw as Record<string, unknown>
+  if (Object.keys(rest).length || (kind !== 'sound' && kind !== 'instrument' && kind !== 'rack') || typeof ref !== 'string' || !ref) return null
+  if (on !== undefined && (kind !== 'sound' || typeof on !== 'string' || !on)) return null
+  return on === undefined ? {kind, ref} : {kind, ref, instrument_ref: on}
 }

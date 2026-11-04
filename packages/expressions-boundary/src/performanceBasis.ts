@@ -45,8 +45,17 @@ export function readFramePerformanceRequest(raw: unknown): FramePerformanceReque
 }
 
 export interface PerformanceBasisSummary {readonly basis_ref: string; readonly event_ref: string; readonly m1_coordinate: string}
+/** A sound the Scene keeps (kernel kept.rs `oi.torus-sound/v1`): its digest and name as the kernel holds them, and what it rings on. */
+export interface KeptSoundSummary {readonly sound_ref: string; readonly name: string; readonly body: 'torus' | 'form'; readonly body_ref: string | null; readonly sample_rate: number}
+/** An instrument the Scene keeps (`oi.torus-instrument/v1`): a form's body, with the sounds made on it that the Scene keeps. */
+export interface KeptInstrumentSummary {readonly instrument_ref: string; readonly name: string; readonly body_ref: string; readonly sounds: readonly KeptSoundSummary[]}
+/** A rack the Scene keeps (`oi.torus-rack/v1`): the Torus with its chain, its macros and their variations. */
+export interface KeptRackSummary {readonly rack_ref: string; readonly name: string; readonly sound: string | null; readonly devices: number; readonly macros: readonly string[]; readonly variations: readonly string[]}
+/** What the Scene keeps on the Torus (manual §21.2 Sounds and instruments): the sounds that stand under the Torus itself, the
+ * instruments with their sounds under them, and the racks. */
+export interface TorusKeptSummary {readonly sounds: readonly KeptSoundSummary[]; readonly instruments: readonly KeptInstrumentSummary[]; readonly racks: readonly KeptRackSummary[]}
 export type PerformanceReply =
-  | {readonly state: 'listed'; readonly bases: readonly PerformanceBasisSummary[]}
+  | {readonly state: 'listed'; readonly bases: readonly PerformanceBasisSummary[]; readonly kept?: TorusKeptSummary}
   | {readonly state: 'refused'; readonly reason: string; readonly missing: readonly string[]}
   | {readonly state: 'recalled'; readonly basis_ref: string; readonly edits: readonly InstrumentEdit[]; readonly not_applied: readonly {readonly field: string; readonly reason: string}[]};
 
@@ -61,6 +70,53 @@ export function summarizePerformanceBases(bases: unknown): PerformanceBasisSumma
     listed.push({basis_ref: basis.content_digest, event_ref: identity.event_ref, m1_coordinate: basis.m1_coordinate});
   }
   return listed;
+}
+
+const name64 = (value: unknown): value is string => typeof value === 'string' && readPresetName(value) !== null;
+const list = (value: unknown): unknown[] => Array.isArray(value) ? value : [];
+const preparationOf = (body: unknown): string | null => object(body) && object(body.request) && refText(body.request.preparation_ref) ? body.request.preparation_ref : null;
+
+function keptSound(raw: unknown): KeptSoundSummary | null {
+  if (!object(raw) || raw.schema !== 'oi.torus-sound/v1' || typeof raw.sound_ref !== 'string' || !DIGEST.test(raw.sound_ref) || !name64(raw.name)) return null;
+  if (typeof raw.sample_rate !== 'number' || !Number.isInteger(raw.sample_rate) || raw.sample_rate <= 0 || !object(raw.body)) return null;
+  if (raw.body.kind === 'torus') return {sound_ref: raw.sound_ref, name: raw.name, body: 'torus', body_ref: null, sample_rate: raw.sample_rate};
+  const body_ref = raw.body.kind === 'form' ? preparationOf(raw.body.prepared) : null;
+  return body_ref === null ? null : {sound_ref: raw.sound_ref, name: raw.name, body: 'form', body_ref, sample_rate: raw.sample_rate};
+}
+
+/** What the Scene keeps on the Torus, each record as the kernel holds it (kernel expression_performance/kept.rs, `torus_kept`): a sound
+ * made on a kept instrument stands under that instrument, in its order, and not again under the Torus; a record that is not what it
+ * says, or an instrument's sound the Scene does not keep, is not listed. Null when the Scene keeps nothing. Reads only: the kernel
+ * sealed and validated every record when the Scene kept it. */
+export function summarizeTorusKept(kept: unknown): TorusKeptSummary | null {
+  if (!object(kept)) return null;
+  const sounds = new Map<string, KeptSoundSummary>();
+  for (const raw of list(kept.sounds)) { const sound = keptSound(raw); if (sound && !sounds.has(sound.sound_ref)) sounds.set(sound.sound_ref, sound); }
+  const onInstrument = new Set<string>();
+  const instruments: KeptInstrumentSummary[] = [];
+  for (const raw of list(kept.instruments)) {
+    const body_ref = object(raw) ? preparationOf(raw.body) : null;
+    if (!object(raw) || raw.schema !== 'oi.torus-instrument/v1' || !refText(raw.instrument_ref) || !name64(raw.name) || body_ref === null) continue;
+    const made = list(raw.sounds).flatMap(ref => typeof ref === 'string' && sounds.has(ref) ? [sounds.get(ref)!] : []);
+    for (const sound of made) onInstrument.add(sound.sound_ref);
+    instruments.push({instrument_ref: raw.instrument_ref, name: raw.name, body_ref, sounds: made});
+  }
+  const racks: KeptRackSummary[] = [];
+  for (const raw of list(kept.racks)) {
+    if (!object(raw) || raw.schema !== 'oi.torus-rack/v1' || !refText(raw.rack_ref) || !name64(raw.name)) continue;
+    const named = (rows: unknown) => list(rows).flatMap(row => object(row) && name64(row.name) ? [row.name] : []);
+    racks.push({rack_ref: raw.rack_ref, name: raw.name, sound: typeof raw.sound === 'string' && sounds.has(raw.sound) ? raw.sound : null,
+      devices: list(raw.chain).length, macros: named(raw.macros), variations: named(raw.variations)});
+  }
+  const torus = [...sounds.values()].filter(sound => !onInstrument.has(sound.sound_ref));
+  return torus.length || instruments.length || racks.length ? {sounds: torus, instruments, racks} : null;
+}
+
+/** The owner's listing of the presented Scene's performance: its bases (the presets), and what it keeps on the Torus when it keeps any. */
+export function listPerformance(performance: unknown): Extract<PerformanceReply, {state: 'listed'}> {
+  const bases = summarizePerformanceBases(object(performance) ? performance.bases : []);
+  const kept = summarizeTorusKept(object(performance) ? performance.torus_kept : undefined);
+  return kept ? {state: 'listed', bases, kept} : {state: 'listed', bases};
 }
 
 /** The native readings a save must carry and the frame does not supply: each one absent is named. */

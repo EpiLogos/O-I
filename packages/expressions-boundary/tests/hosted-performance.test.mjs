@@ -134,3 +134,40 @@ test('the presets module computes no digest and seals nothing: the kernel alone 
   const source = await readFile(new URL('../src/performanceBasis.ts', import.meta.url), 'utf8');
   assert.doesNotMatch(source, /createHash|sha256\(|crypto|digest\(|\.seal\(|content_digest\s*=(?!=)/i);
 });
+
+// ── 4 — what the Scene keeps on the Torus (O-I #852, manual §21.2 Sounds and instruments): its sounds, its instruments with their sounds,
+// its racks, each listed as the kernel holds it (kernel expression_performance/kept.rs). The listing reads; it seals and hashes nothing.
+
+const KEPT_DIGEST = n => 'sha256:' + String(n).repeat(64);
+const prepared = ref => ({schema: 'ql.physical-body-preparation/v1', contract: 'ql.physical-body/v1', request: {preparation_ref: ref}});
+const sound = (n, name, body = {kind: 'torus'}) => ({schema: 'oi.torus-sound/v1', sound_ref: KEPT_DIGEST(n), name, sample_rate: 48000,
+  checkpoint: {schema: 'ql.torus-checkpoint/v1'}, checkpoint_sha256: KEPT_DIGEST(9), body, sources: [], law: 'kept', seal: 'hmac-sha256:00'});
+const keptOnScene = () => ({
+  sounds: [sound(1, 'Warm Logic'), sound(2, 'Paper bell', {kind: 'form', prepared: prepared('ql:form-body:fold')}), sound(3, 'Paper hum', {kind: 'form', prepared: prepared('ql:form-body:fold')}),
+    {...sound(4, 'Forged'), schema: 'other'}],
+  instruments: [{schema: 'oi.torus-instrument/v1', instrument_ref: 'instrument:fold', name: 'Folded sheet', body: prepared('ql:form-body:fold'),
+    sounds: [KEPT_DIGEST(2), KEPT_DIGEST(3), KEPT_DIGEST(7)]}],
+  racks: [{schema: 'oi.torus-rack/v1', rack_ref: 'rack:warm', name: 'Warm rack', sound: KEPT_DIGEST(1),
+    chain: [{device_ref: 'arpeggiator', role: 'note', state: {}}, {device_ref: 'reverb', role: 'effect', state: {}}],
+    macros: [{name: 'Bloom', value: 0.5, targets: []}], variations: [{name: 'Open', values: [1]}, {name: 'Closed', values: [0]}]}],
+});
+
+test('the listing carries what the Scene keeps on the Torus: sounds on the torus, instruments with the sounds made on them, racks', async () => {
+  const {listPerformance} = await import('../src/performanceBasis.ts');
+  const listed = listPerformance({bases: [basis()], torus_kept: keptOnScene()});
+  assert.deepEqual(listed.bases, [{basis_ref: DIGEST, event_ref: 'event:kept', m1_coordinate: '#1-5-1'}], 'the presets list as they did');
+  assert.deepEqual(listed.kept.sounds, [{sound_ref: KEPT_DIGEST(1), name: 'Warm Logic', body: 'torus', body_ref: null, sample_rate: 48000}],
+    'a sound made on an instrument stands under it, not again under the Torus; a record that is not a sound is not listed');
+  assert.deepEqual(listed.kept.instruments, [{instrument_ref: 'instrument:fold', name: 'Folded sheet', body_ref: 'ql:form-body:fold', sounds: [
+    {sound_ref: KEPT_DIGEST(2), name: 'Paper bell', body: 'form', body_ref: 'ql:form-body:fold', sample_rate: 48000},
+    {sound_ref: KEPT_DIGEST(3), name: 'Paper hum', body: 'form', body_ref: 'ql:form-body:fold', sample_rate: 48000}]}],
+    'its sounds in its own order; one the Scene does not keep is not listed');
+  assert.deepEqual(listed.kept.racks, [{rack_ref: 'rack:warm', name: 'Warm rack', sound: KEPT_DIGEST(1), devices: 2, macros: ['Bloom'], variations: ['Open', 'Closed']}]);
+  assert.deepEqual(listPerformance({bases: []}), {state: 'listed', bases: []}, 'a Scene that keeps nothing lists as it did');
+  assert.deepEqual(listPerformance(undefined), {state: 'listed', bases: []});
+});
+
+test("the owner's listing is the Scene performance's, read by the kernel's own inspect", async () => {
+  const source = await readFile(new URL('../src/cradle.ts', import.meta.url), 'utf8');
+  assert.match(source, /if \(request\.action === 'list'\) return listPerformance\(scene\.performance\);/);
+});

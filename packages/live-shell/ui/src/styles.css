@@ -161,6 +161,7 @@ input { min-width:0; border:1px solid var(--line); background:var(--bg-1); paddi
 .browser-list-heading { display:flex; justify-content:space-between; height:20px; background:var(--bg-0); padding:2px 5px; font-size:10px }
 .browser-list-heading span { color:var(--text-faint) }
 .browser-item { height:21px; padding:2px 5px; color:var(--text-dim); font-size:11px }
+.browser-item[data-depth="2"] { padding-left:19px }
 .browser-empty { padding:8px 5px; color:var(--text-faint); font-size:10px }
 .center { border:1px solid var(--line-strong); border-radius:3px; overflow:hidden }
 .session-view { display:flex; height:100%; overflow:hidden }

@@ -256,6 +256,11 @@ fn seal_key() -> Result<&'static [u8; 32], String> {
     .map_err(|e| format!("The kernel cannot seal a take: it has no key ({e})"))
 }
 
+/// The kernel's seal over a message, under the key it seals takes with: what a sound is sealed by too.
+pub(super) fn seal_with_kernel_key(message: &str) -> Result<String, String> {
+    Ok(hmac(seal_key()?, message.as_bytes()))
+}
+
 fn hmac(key: &[u8; 32], message: &[u8]) -> String {
     let (mut inner, mut outer) = ([0x36u8; 64], [0x5cu8; 64]);
     for (i, byte) in key.iter().enumerate() {
@@ -273,7 +278,7 @@ fn hmac(key: &[u8; 32], message: &[u8]) -> String {
     format!("hmac-sha256:{outer:x}")
 }
 
-fn checkpoint_at(value: &Value, what: &str) -> Result<(u64, u32), String> {
+pub(super) fn checkpoint_at(value: &Value, what: &str) -> Result<(u64, u32), String> {
     if value["schema"] != TORUS_CHECKPOINT {
         return Err(format!("{what} is not the owner's {TORUS_CHECKPOINT}"));
     }
@@ -651,6 +656,27 @@ impl TakeWitness {
         render.ended_sha256 = ended_sha256;
         self.unread_render = None;
         Ok(())
+    }
+
+    /// Seal a sound, named, from the checkpoint `checkpoint_sha256` (its `value_sha256`) this owner gave under
+    /// the lease: the Torus as it stood, on `body` (kept.rs). Refused in words when no such checkpoint was given.
+    pub(crate) fn sound(
+        &self,
+        checkpoint_sha256: &str,
+        name: &str,
+        body: super::kept::SoundBody,
+    ) -> Result<super::kept::TorusSound, String> {
+        super::kept::TorusSound::sealed(name, self.given(checkpoint_sha256)?, body)
+    }
+
+    /// The Torus checkpoint `checkpoint_sha256` this owner gave under the lease, or a refusal in words.
+    pub(crate) fn given(&self, checkpoint_sha256: &str) -> Result<&Value, String> {
+        self.kept
+            .iter()
+            .rev()
+            .find(|kept| kept.sha256 == checkpoint_sha256)
+            .map(|kept| &kept.checkpoint)
+            .ok_or_else(|| format!("No Torus checkpoint {checkpoint_sha256} was given under this lease: a sound is saved from, and opened against, a checkpoint its owner gave while that owner is open"))
     }
 
     /// Seal the take that began at the checkpoint `checkpoint_sha256` (its `value_sha256`): the acts the owner
