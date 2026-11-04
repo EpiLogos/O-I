@@ -135,7 +135,10 @@ test('the owner\'s answers to a kept sound and to a keep are read in their own s
   const kept = await withChannel(async () => ({state: 'kept', sound_ref: SOUND_REF, name: 'Low bell', unsaved: false, kept: KEPT}),
     () => presets.commitLivePerformance({action: 'keep-sound', sound: SEALED}))
   assert.equal(kept.state, 'kept')
-  for (const odd of [{state: 'sound'}, {state: 'kept', name: 'Low bell'}])
+  const instrument = await withChannel(async () => ({state: 'instrument-kept', instrument_ref: 'instrument:ql:form-body:fold', name: 'Folded sheet', sounds: 2,
+    unsaved: false, kept: KEPT}), () => presets.commitLivePerformance({action: 'keep-instrument', name: 'Folded sheet', sound_ref: SOUND_REF}))
+  assert.equal(instrument.state, 'instrument-kept')
+  for (const odd of [{state: 'sound'}, {state: 'kept', name: 'Low bell'}, {state: 'instrument-kept', name: 'Folded sheet', sounds: '2'}])
     assert.match((await withChannel(async () => odd, () => presets.commitLivePerformance({action: 'sound', sound_ref: SOUND_REF}))).reason, /unknown shape/)
 })
 
@@ -147,7 +150,9 @@ test('Save sound: the owner keeps the Torus, the kernel seals the sound, the Sce
   try {
     const saved = await presets.saveTorusSound(' Low bell ', {stage, perform})
     assert.deepEqual(asked, [{command: 'torus-sound', action: 'save', name: 'Low bell'}, {action: 'keep-sound', sound: SEALED}], 'named as typed, trimmed')
-    assert.deepEqual(saved, {ok: true, words: 'Saved "Low bell" under the Torus. The Scene keeps it until the Expression is saved, then the file does.'})
+    // O-I #852: the save names the sound it kept and whether it rings on a form's body, which an instrument is kept from.
+    assert.deepEqual(saved, {ok: true, words: 'Saved "Low bell" under the Torus. The Scene keeps it until the Expression is saved, then the file does.',
+      sound_ref: SOUND_REF, form: false})
     assert.deepEqual(heard, [KEPT], 'the browser lists what the Scene keeps now')
     const stood = await presets.saveTorusSound('Low bell', {stage, perform: async () => ({state: 'kept', sound_ref: SOUND_REF, name: 'Low bell', unsaved: false, kept: KEPT})})
     assert.equal(stood.words, 'Saved "Low bell" under the Torus.')
@@ -200,4 +205,39 @@ test('a kept sound played on a part: it opens on the Torus, then the part keeps 
   assert.deepEqual(await presets.playKeptSoundOn('/sets/Tide Sketch.als', 3, SOUND_REF, {...owners, stage: async () => ({ok: false, error: 'Open the live instrument first'})}),
     {ok: false, error: 'Open the live instrument first'})
   assert.equal(asked.some(row => row.keepOn), false, 'a sound that did not open is kept on no part')
+})
+
+// O-I #852 (manual §21.2 Sounds and instruments; Tips: "make a form the body, make sounds on it, and keep it"): Keep instrument keeps the
+// body a saved sound rings on, with the sounds made on it, under the Torus; the browser hears what the Scene keeps then.
+test('Keep instrument: the Scene keeps the body the sound rings on, with its sounds, and the browser hears what it keeps', async () => {
+  const asked = [], heard = []
+  const FOLD = 'instrument:ql:form-body:fold'
+  const made = n => ({sound_ref: 'sha256:' + String(n).repeat(64), name: `Paper ${n}`, body: 'form', body_ref: 'ql:form-body:fold', sample_rate: 48000})
+  const KEPT_ON = {sounds: [], instruments: [{instrument_ref: FOLD, name: 'Folded sheet', body_ref: 'ql:form-body:fold', sounds: [made(2), made(3)]}], racks: []}
+  const perform = async action => { asked.push(action); return {state: 'instrument-kept', instrument_ref: FOLD, name: 'Folded sheet', sounds: 2, unsaved: true, kept: KEPT_ON} }
+  const stage = async command => { asked.push(command); return {ok: false, error: 'no stage here'} }
+  const stop = presets.subscribeTorusKept(kept => heard.push(kept))
+  try {
+    const kept = await presets.keepTorusInstrument(' Folded sheet ', SOUND_REF, {stage, perform})
+    assert.deepEqual(asked, [{action: 'keep-instrument', name: 'Folded sheet', sound_ref: SOUND_REF}], 'named as typed, trimmed; the stage is not asked')
+    assert.deepEqual(kept, {ok: true, words: 'Kept "Folded sheet" under the Torus: its body, with the 2 sounds made on it. The Scene keeps it until the Expression is saved, then the file does.'})
+    assert.deepEqual(heard, [KEPT_ON], 'the browser lists the instrument with its sounds under it')
+    const one = await presets.keepTorusInstrument('Folded sheet', SOUND_REF, {stage, perform: async () => ({state: 'instrument-kept', instrument_ref: FOLD, name: 'Folded sheet', sounds: 1, unsaved: false, kept: KEPT_ON})})
+    assert.equal(one.words, 'Kept "Folded sheet" under the Torus: its body, with the sound made on it.')
+    asked.length = 0
+    assert.deepEqual(await presets.keepTorusInstrument('  ', SOUND_REF, {stage, perform}), {ok: false, error: 'Name the instrument first: the browser lists it by its name.'})
+    assert.deepEqual(asked, [], 'refused before any owner')
+    const refused = {state: 'refused', reason: '"Low bell" rings on the torus itself, and an instrument is a form\'s body with the sounds made on it.', missing: []}
+    assert.deepEqual(await presets.keepTorusInstrument('Folded sheet', SOUND_REF, {stage, perform: async () => refused}), {ok: false, error: refused.reason})
+    assert.deepEqual(await presets.keepTorusInstrument('Folded sheet', SOUND_REF, {stage, perform: async () => ({state: 'kept', sound_ref: SOUND_REF, name: 'x', unsaved: false, kept: null})}),
+      {ok: false, error: 'The Scene answered the keep in another shape'})
+    assert.equal(heard.length, 2, 'a refused keep is not announced')
+  } finally { stop() }
+})
+
+test('a saved sound says whether it rings on a form, from the sound the kernel sealed', async () => {
+  const onForm = {...SEALED, body: {kind: 'form', prepared: {schema: 'ql.physical-body-preparation/v1', contract: 'ql.physical-body/v1', request: {preparation_ref: 'ql:form-body:fold'}}}}
+  const saved = await presets.saveTorusSound('Low bell', {stage: async () => ({ok: true, sound: onForm}),
+    perform: async () => ({state: 'kept', sound_ref: SOUND_REF, name: 'Low bell', unsaved: false, kept: KEPT})})
+  assert.deepEqual(saved, {ok: true, words: 'Saved "Low bell" under the Torus.', sound_ref: SOUND_REF, form: true})
 })

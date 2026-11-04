@@ -1722,6 +1722,48 @@ test('CODE-DERIVED — Sign in is each harness\'s own login as AIKit declares it
   await assert.rejects(settingsPages.harnessLogins({}).read(), /not connected/, 'no kernel channel: said, never an empty list')
 })
 
+test('CODE-DERIVED — Sign in reads the result back through the harness\'s own logged-in check where AIKit declares one (aikit harness auth <client> --check), and through AIKit\'s credential leg where it declares none', async () => {
+  const CHECK = ['codex', 'login', 'status']
+  const faces = {...LOGIN_FACES, codex: {...LOGIN_FACES.codex, own_login: [{...LOGIN_FACES.codex.own_login[0], status: CHECK}]}}
+  const checkAdapter = (answer, asked = []) => ({invoke: async op => {
+    asked.push(op)
+    if (op.op === 'harness_status') return {outcome: {result: 'harness_status_reading', data: LOGIN_STATUS}}
+    if (op.op === 'harness_auth_describe' && op.check) return answer(op)
+    if (op.op === 'harness_auth_describe' && faces[op.harness]) return {outcome: {result: 'harness_auth_reading', data: faces[op.harness]}}
+    return {error: `[harness_auth.unknown_harness] ${op.harness}`}
+  }})
+  const checks = (rows) => () => ({outcome: {result: 'harness_auth_reading', data: {slug: 'codex', checks: rows}}})
+  const asked = []
+  const logins = await settingsPages.harnessLogins(checkAdapter(checks([]), asked)).read()
+  assert.ok(asked.every(op => !op.check), 'reading the logins runs no check: describe names it only')
+  assert.deepEqual(win.harnessLoginsOf(faces.codex), [{provider: 'provider:openai', command: ['codex', 'login'], note: 'the ChatGPT OAuth flow', check: CHECK}], 'the declared check, by its argv')
+  const codex = settingsPages.loginOf(logins, 'codex|provider:openai')
+  assert.deepEqual(codex.check, CHECK, 'the login to run carries the check that reads it back')
+  const signedIn = [{provider_ref: 'provider:openai', argv: CHECK, signed_in: true}]
+  const ran = []
+  const yes = await settingsPages.loginResult(checkAdapter(checks(signedIn), ran), codex)
+  assert.deepEqual(ran.filter(op => op.check).map(op => [op.op, op.harness]), [['harness_auth_describe', 'codex']], 'the check is asked of AIKit once, for that client')
+  assert.equal(yes.said, 'codex login has ended, and codex login status says codex is signed in.')
+  assert.ok(yes.after?.clients.length, 'the logins are read again too')
+  assert.equal((await settingsPages.loginResult(checkAdapter(checks([{provider_ref: 'provider:openai', argv: CHECK, signed_in: false}])), codex)).said,
+    'codex login has ended, but codex login status says codex is not signed in.')
+  // No answer from the check: said, and the credential leg read back instead.
+  assert.equal((await settingsPages.loginResult(checkAdapter(checks([{provider_ref: 'provider:openai', argv: CHECK, unread: 'mux.command_timeout: codex took too long'}])), codex)).said,
+    'codex login status did not answer: mux.command_timeout: codex took too long. codex login has ended, but AIKit does not find what codex needs yet: credential:openai is unbound and the harness\'s own login store at ~/.codex is absent — the ChatGPT OAuth flow.')
+  assert.match((await settingsPages.loginResult(checkAdapter(() => ({error: 'aikit harness auth codex --check did not answer within 10s'})), codex)).said,
+    /^codex login status did not answer: aikit harness auth codex --check did not answer within 10s\. codex login has ended, but AIKit does not find/)
+  assert.match((await settingsPages.loginResult(checkAdapter(checks([])), codex)).said, /^codex login status did not answer: AIKit ran no check for provider:openai\. codex login has ended/)
+  // A login with no declared check: the credential leg, and no check is asked.
+  const opencode = {client: 'opencode', harness: 'opencode', provider: 'provider:openai', command: ['opencode', 'auth', 'login'], title: 'Sign in · opencode'}
+  const plain = []
+  const leg = await settingsPages.loginResult(checkAdapter(checks(signedIn), plain), opencode)
+  assert.ok(plain.every(op => !op.check), 'no declared check: none is asked')
+  assert.equal(leg.said, 'opencode auth login has ended, but AIKit does not find what opencode needs yet: not on PATH.')
+  const pages = readFileSync(new URL('../src/settings/windowPages.ts', import.meta.url), 'utf8')
+  assert.match(pages, /const result = await loginResult\(source, login\)/, 'Sign in reads back through loginResult')
+  assert.match(win.SETTINGS_WINDOW_WIRING.reads.loginSaid ?? '', /--check/, 'the wiring names the check')
+})
+
 test('SCRIPTED — Sign in runs the login in a terminal in the Workbench, where you answer it: the request names its id and command, a refusal comes back in words, and the end of that terminal is what the page reads back on', async () => {
   const was = globalThis.window, target = new EventTarget(), heard = []
   globalThis.window = target

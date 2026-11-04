@@ -794,4 +794,27 @@ mod tests {
             .unwrap_err()
             .contains("does not keep"));
     }
+
+    /// The edit the Expressions boundary writes to keep an instrument
+    /// (packages/expressions-boundary/src/performanceBasis.ts
+    /// `keepInstrumentChange`, O-I #852) is this performance's own
+    /// operation, field for field; a key it does not hold is refused.
+    #[test]
+    fn the_boundary_keeps_an_instrument_by_the_performance_own_operation() {
+        let body = prepared("ql:form-body:fold");
+        let wire = json!({"operation":"keep_torus_instrument","instrument":{"schema":INSTRUMENT_SCHEMA,
+            "instrument_ref":"instrument:ql:form-body:fold","name":"Folded sheet","body":body,"sounds":["sha256:a"]}});
+        let operation: super::super::PerformanceOperation =
+            serde_json::from_value(wire.clone()).unwrap();
+        let super::super::PerformanceOperation::KeepTorusInstrument { instrument } = operation
+        else {
+            panic!("the boundary's edit is the instrument keep");
+        };
+        assert_eq!(instrument.instrument_ref, "instrument:ql:form-body:fold");
+        assert_eq!(instrument.body, body);
+        assert_eq!(instrument.sounds, vec!["sha256:a".to_string()]);
+        let mut extra = wire;
+        extra["instrument"]["kind"] = json!("form");
+        assert!(serde_json::from_value::<super::super::PerformanceOperation>(extra).is_err());
+    }
 }

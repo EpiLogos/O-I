@@ -11,6 +11,7 @@ register(`data:text/javascript,${encodeURIComponent(`
 import ts from ${JSON.stringify(compiler)};
 import {readFile} from 'node:fs/promises';
 export async function resolve(specifier,context,next){
+  if(specifier==='react'||specifier.startsWith('react/')||specifier==='react-dom'||specifier.startsWith('react-dom/'))return next(specifier,{...context,parentURL:${JSON.stringify(import.meta.url)}});
   try{return await next(specifier,context)}catch(error){
     if(!specifier.startsWith('.'))throw error;
     if(specifier.endsWith('.js')){try{return await next(specifier.slice(0,-3)+'.ts',context)}catch{}}
@@ -468,4 +469,66 @@ test('the Flow\'s form puts the reference where the @ was typed, and its links r
   const doorSource = await read('../src/central/searchLineDoor.ts')
   assert.match(doorSource, /window\.dispatchEvent\(new CustomEvent\(KNOWLEDGE_OPEN, \{detail: \{title, \.\.\.\(project \? \{project\} : \{\}\), address,\s*plane: address\.kind === 'wiki' \? 'graph' : 'page', complete\}\}\)\)/)
   assert.match(doorSource, /import\('\.\/searchPane'\)\.then\(module => module\.openSearchPane\(target\.query\)\)/, 'a Vāk entry opens in Search\'s own pane, loaded when it is first asked for')
+})
+
+// ---------------------------------------------------------------------------------------------------------------------
+// round 863: §5 in the composer — the message as sent shows its references as links, opened by the same owners as the Flow's
+
+test('the transcript reads a sent message\'s references as the composer wrote them: [words](href), the words and the address given back exactly', async () => {
+  const transcript = await import('../../../../desktop/cradle/src/agent/chat/ChatTranscript.tsx')
+  const written = door.referenceText({title: 'Ariadne [map] \\ notes', href: 'Control/user/flows/2026-11-04 day (morning).html'})
+  assert.deepEqual(transcript.referencePieces(`See ${written} first.`), [
+    {kind: 'text', text: 'See '},
+    {kind: 'reference', title: 'Ariadne [map] \\ notes', href: 'Control/user/flows/2026-11-04 day (morning).html'},
+    {kind: 'text', text: ' first.'},
+  ], 'the composer\'s own form, read back')
+  const knowledge = model.referenceOf({group: 'pages', title: 'Ariadne', ref: 'x', owner: 'aikit', address: {kind: 'wiki', value: 'Ariadne map'}}, 'ariadne', 'O-I')
+  const [piece] = transcript.referencePieces(door.referenceText(knowledge))
+  assert.deepEqual(door.referenceTargetOf(piece.href), {kind: 'knowledge', address: {kind: 'wiki', value: 'Ariadne map'}, project: 'O-I'}, 'a knowledge reference opens what it named')
+  assert.deepEqual(transcript.referencePieces('a [b] c (d) and [not a link]'), [{kind: 'text', text: 'a [b] c (d) and [not a link]'}], 'words in brackets are words')
+  assert.deepEqual(transcript.referencePieces(''), [])
+})
+
+test('the transcript draws each reference as a link that opens through the frame\'s opener; with none, its words; a refusal is said plainly', async () => {
+  const {createElement} = await import('react')
+  const {renderToStaticMarkup} = await import('react-dom/server')
+  const transcript = await import('../../../../desktop/cradle/src/agent/chat/ChatTranscript.tsx')
+  const reading = {blocks: [{id: 'u1', kind: 'user', text: 'Read [Ariadne](oi:knowledge:wiki:Ariadne) and [the Day](Control/user/flows/day.html) now'}]}
+  const props = {reading, agentLabel: 'Fizz', onEarlier: noop, onLatest: noop, paged: false}
+  const linked = renderToStaticMarkup(createElement(transcript.ChatTranscript, {...props, onReference: async () => {}}))
+  assert.match(linked, /<button type="button" class="chat-reference" data-href="oi:knowledge:wiki:Ariadne" title="Open Ariadne">Ariadne<\/button>/)
+  assert.match(linked, /<button type="button" class="chat-reference" data-href="Control\/user\/flows\/day\.html" title="Open the Day">the Day<\/button>/)
+  assert.doesNotMatch(linked, /\]\(/, 'no reference stands in its raw form')
+  const bare = renderToStaticMarkup(createElement(transcript.ChatTranscript, props))
+  assert.match(bare, /<span class="chat-reference" data-href="oi:knowledge:wiki:Ariadne">Ariadne<\/span>/, 'a frame with no opener shows the words, never the raw link')
+  const source = await read('../../../../desktop/cradle/src/agent/chat/ChatTranscript.tsx')
+  assert.match(source, /<Refusal className="chat-reference-refusal" role="status" said=\{`\$\{refused\.title\} did not open\.`\} error=\{refused\.error\}\/>/, 'a reference that does not open is said in words')
+  // The opener is threaded from the shell: the Agent panel's AgentLayer → AgentChat → the transcript, with the panel's transport.
+  const chat = await read('../../../../desktop/cradle/src/agent/chat/AgentChat.tsx')
+  assert.match(chat, /<ChatTranscript [^>]*onReference=\{onReference\}/)
+  const layer = await read('../../../../desktop/cradle/src/agent/AgentLayer.tsx')
+  assert.match(layer, /onReference=\{onReference\?reference=>onReference\(\{\.\.\.reference,transport:kernel\.transport\}\):undefined\}/)
+  const participation = await read('../src/components/NativeAgencyParticipation.tsx')
+  assert.match(participation, /onReference=\{openMessageReference\}/)
+  // The opener loads with the line (a dynamic import, as SearchLineHost loads it), so the frame's first load does not carry it.
+  assert.match(participation, /const openMessageReference = [^\n]*\n\s*import\('\.\.\/central\/searchLine'\)\.then\(line => line\.openMessageReference\(reference\)\)/)
+  assert.doesNotMatch(participation, /from '\.\.\/central\/search/)
+})
+
+test('the shell opens a message\'s reference as the Flow does: a knowledge address or a Vāk entry through openReference, a world\'s page through the page door, anything else refused in words', async () => {
+  const opened = []
+  const was = globalThis.window
+  globalThis.__CRADLE_WALK__ ??= false // the build's define (vite.config.ts), for the line's own imports
+  const line = await import('../src/central/searchLine.tsx')
+  const target = Object.assign(new EventTarget(), {setTimeout: globalThis.setTimeout, clearTimeout: globalThis.clearTimeout})
+  globalThis.window = target
+  try {
+    target.addEventListener('oi:epi-open-knowledge', event => { opened.push(event.detail); event.detail.complete() })
+    await line.openMessageReference({href: 'oi:knowledge:wiki:Ariadne%20map?project=O-I', title: 'Ariadne', transport: {kind: 'unavailable'}})
+    assert.deepEqual([opened[0].title, opened[0].address, opened[0].project, opened[0].plane], ['Ariadne', {kind: 'wiki', value: 'Ariadne map'}, 'O-I', 'graph'])
+    await assert.rejects(line.openMessageReference({href: 'javascript:alert(1)', title: 'x', transport: {kind: 'unavailable'}}), /^Error: javascript:alert\(1\) is neither a page of a world nor an http\(s\) address\.$/)
+  } finally { globalThis.window = was }
+  const source = await read('../src/central/searchLine.tsx')
+  assert.match(source, /if \(link\.kind === 'none'\) throw new Error\(link\.why\)\s*await openPageLink\(reference\.transport, link\)/, 'a page of a world opens through the page door, as a page link does')
+  assert.doesNotMatch(await read('../src/central/searchLineDoor.ts'), /openMessageReference/, 'the door loads with the frame; the opener does not')
 })

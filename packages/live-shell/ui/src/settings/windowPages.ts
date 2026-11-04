@@ -22,7 +22,7 @@ import {authorityAllowsTrigger, eligibleProofs, routineBasis, scheduleFromInput,
 import {appearanceValues, automationValues, credentialValues, NEW_SCHEDULE, ROUTINE_FORM, scanWords, workcellSecretValues, folderOf, harnessValues, machineValues, NO_AUTHORING, NO_HARNESS, NO_INVOKE, NO_MACHINES, NO_NAVIGATE, NO_PRODUCTS,
   NO_PROFILES, NO_SETUP_AIKIT, NO_SETUP_SOURCE, NO_VISUALS, groundBound, productValues, profileValues, SECRET_REFERENCE, setupFolder, setupHarnessClients, setupHarnessProviders,
   setupKeyFindings, setupNamespace, setupSkillRoots, setupValues, systemValues, type CredentialRow, type SetupCredentials, type SetupHarnesses, type SetupMachine, type SetupPreview,
-  harnessLoginClients, harnessLoginsOf, loginReadBack, commandWords, type HarnessLoginClient, type HarnessLoginReading,
+  harnessLoginClients, harnessLoginsOf, loginCheckOf, loginReadBack, commandWords, type HarnessLoginClient, type HarnessLoginReading,
   setupExtensionLine, setupPlacementLine, possessive, type SetupExtension, type SetupLeft, type SetupPlacement, type SetupSnapshot, type SetupWorkFolder, type SetupFounding, type SetupKey, type SetupAgreement, type SetupForm, type CivilTimePreview, type SetupBirth, type SetupCivilTime, type SetupDisclosure, groundNameRefusal, groundParts, groundPath} from './windowValues'
 import type {IdentityProfile} from '../../../../../desktop/cradle/src/nara/identity/types'
 import {chooseFolder, nativeFolderChooser, NO_NATIVE_FOLDER_CHOOSER} from './folderChooser'
@@ -177,7 +177,7 @@ export function harnessLogins(adapter: SettingsAdapter) {
 
 /** The login a Sign in press names (`<client>|<provider>`, harnessValues' and credentialValues' `signIn` key), as AIKit declares it; or why
  * there is none to run, in words: one that signs in only inside itself is refused with its own note. */
-export function loginOf(reading: HarnessLoginReading | null, key: string): {client: string; harness: string; provider: string; command: readonly string[]; title: string} {
+export function loginOf(reading: HarnessLoginReading | null, key: string): {client: string; harness: string; provider: string; command: readonly string[]; title: string; check?: readonly string[]} {
   if (!reading) throw new Error('Sign in: AIKit\'s client status is not read yet, so no login is known here. Read again.')
   const cut = key.indexOf('|'), name = cut < 0 ? key : key.slice(0, cut), provider = cut < 0 ? '' : key.slice(cut + 1)
   const client = reading.clients.find(item => item.client === name)
@@ -186,7 +186,22 @@ export function loginOf(reading: HarnessLoginReading | null, key: string): {clie
   const logins = (client.logins ?? []).filter(login => !provider || login.provider === provider)
   const login = logins.find(item => item.command)
   if (!login) throw new Error(logins.find(item => item.note)?.note ?? `${client.harness} has no login of its own that AIKit declares${provider ? ` for ${provider}` : ''}.`)
-  return {client: client.client, harness: client.harness, provider: login.provider, command: login.command!, title: `Sign in · ${client.harness}`}
+  return {client: client.client, harness: client.harness, provider: login.provider, command: login.command!, title: `Sign in · ${client.harness}`, ...(login.check ? {check: login.check} : {})}
+}
+
+/** What Sign in reads back once a login's terminal ended (manual §10.10 Rules: "the page reads the result back"): the logins read again
+ * (AIKit's client status and each client's declared logins), and, where AIKit declares the harness's own logged-in check, that check run
+ * (harness_auth_describe with `check`: `aikit harness auth <client> --check --json`); the result in words (loginReadBack). */
+export async function loginResult(source: SettingsAdapter, login: ReturnType<typeof loginOf>): Promise<{after: HarnessLoginReading | null; said: string}> {
+  let after: HarnessLoginReading | null = null, error: string | undefined, check: {signedIn: boolean} | {unread: string} | undefined
+  try { after = await harnessLogins(source).read() } catch (cause) { error = words(cause) }
+  if (login.check) {
+    try {
+      const answer = await operation(source, {op: 'harness_auth_describe', harness: login.client, check: true}, 'harness_auth_reading')
+      check = loginCheckOf(answer.result === 'harness_auth_reading' ? answer.data : null, login.provider)
+    } catch (cause) { check = {unread: words(cause)} }
+  }
+  return {after, said: loginReadBack(login, after, error, check)}
 }
 
 /** Ask the frame for a terminal running the login (settings/host.ts LOGIN_TERMINAL_PRESENT): resolves with the terminal's id once the
@@ -240,11 +255,10 @@ export function useSignIn(adapter: SettingsAdapter, enabled: boolean): PagePart 
     const watch = watching.current = new AbortController()
     setSaid(null)
     void loginEnded(id, watch.signal).then(async () => {
-      let after: HarnessLoginReading | null = null, error: string | undefined
-      try { after = await harnessLogins(source).read() } catch (cause) { error = words(cause) }
+      const result = await loginResult(source, login)
       if (watch.signal.aborted || !read.current(source)) return
-      if (after) read.set(after)
-      setSaid(loginReadBack(login, after, error))
+      if (result.after) read.set(result.after)
+      setSaid(result.said)
     })
     return `${commandWords(login.command)} runs in a terminal in the Workbench: answer it there. When it ends, Settings reads ${login.harness}'s login again.`
   }, [adapter, read])

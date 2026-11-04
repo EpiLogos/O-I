@@ -484,10 +484,11 @@ export const design: DesignedDevice = {
       Jupiter: [136.6779, false], Saturn: [12.7437, true], Uranus: [65.6872, true], Neptune: [3.2876, true], Pluto: [303.2804, true]}),
     // The owner's compiled plan (qlModulationSources.ts `compileQlModulationPlan`), evaluated on the Vimarśā reading for the Venus ratio 9:8.
     moves: JSON.stringify([
-      {id: 'o0', source: 'octet 0', group: 'o', n: 0, target: 'Drive', min: 0, max: 6, base: 1, value: 1.661, held: false},
-      {id: 'o4', source: 'octet 4', group: 'o', n: 4, target: 'Pulse mix', min: 0, max: 100, base: 50, value: 73.573, held: false},
-      {id: 'q1', source: 'quartet 1', group: 'q', n: 1, target: 'Damping', min: .1, max: 40, base: 4.5, value: 10.155, held: false},
-      {id: 'o7', source: 'octet 7', group: 'o', n: 7, target: 'Agitation', min: 0, max: 5, base: .3, value: 5, held: true}]),
+      // Targets the Sky reports on the Torus (skyModulation.ts skyTargets; Drive, Pulse mix and Agitation are retired, O-I #850).
+      {id: 'o0', source: 'octet 0', group: 'o', n: 0, target: 'Fundamental', min: 20, max: 2000, base: 220, value: 247.5, held: false},
+      {id: 'o4', source: 'octet 4', group: 'o', n: 4, target: 'Carrier', min: 0, max: 100, base: 50, value: 73.573, held: false},
+      {id: 'q1', source: 'quartet 1', group: 'q', n: 1, target: 'Scale', min: 40, max: 400, base: 100, value: 112.5, held: false},
+      {id: 'o7', source: 'octet 7', group: 'o', n: 7, target: 'Level', min: -60, max: 12, base: -12, value: 12, held: true}]),
     now: false, year: 2026, day: 271, time: 720, run: false, speed: 3600,
     observer: 'shared', aspects: false, natal: false, havePlace: true, backend: 'moshier',
     // Counted at the world's declared place, Greenwich (51.48 N): sunrise and sunset by the NOAA solar formula; Monday, so the

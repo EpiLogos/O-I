@@ -222,6 +222,21 @@ const maqamOf = (v: V): {name: string | null, absent: string | null} | undefined
   return {name: typeof name === 'string' ? name : null, absent: typeof absent === 'string' ? absent : null}
 }
 
+/** The surface the lens in force gives the sound (manual §21.2 "The body"; O-I #854), as the owner reports it: the lens and its face, and
+ * how the surface takes the sound. */
+const materialOf = (v: V): {lens: string; partner: string; face: string; colour: number[]; grain: number; give: number; affinity: number; tension: number} | undefined => {
+  const raw = json<Record<string, unknown> | undefined>(v, 'material', undefined)
+  return raw && typeof raw.lens === 'string' && typeof raw.partner === 'string' && typeof raw.face === 'string' && Array.isArray(raw.colour)
+    && [raw.grain, raw.give, raw.affinity, raw.tension].every(x => typeof x === 'number') ? raw as never : undefined
+}
+const share = (x: number) => `${Math.round(x * 100)} %`
+const material = (p: ViewProps) => {
+  const m = materialOf(p.v)
+  const does = m ? `The surface the lens in force gives the sound: grain ${share(m.grain)}, give ${share(m.give)}, particle affinity ${share(m.affinity)}, tension ${share(m.tension)}, colour rgb(${m.colour.map(c => Math.round(Number(c) * 255)).join(', ')}). Its partner ${m.partner} shows the same notes on the opposite surface.`
+    : st(p, 'material').disabled ?? 'The surface the lens in force gives the sound.'
+  return <Readout label="material" does={does} value={m ? `${m.lens} · ${m.face}` : undefined} />
+}
+
 /** Mode and tuning (manual §21.2): the lens and mode the Torus reads (the field's four determinants) and the Tuning. A tuning the scene
  * holds no voices for is not offered, and the Tuning says so; for the maqām, in the owner's words, before it is ever chosen. */
 const modeAndTuning = (p: ViewProps) => {
@@ -236,6 +251,7 @@ const modeAndTuning = (p: ViewProps) => {
     {determinants(p)}
     <Radio {...st(p, 'tuning')} label="Tuning" does={`What the voices sound.${said.length ? ` This scene holds no ${said.join(' or ')} voices.` : ''}${why}`} value={strOf(p.v, 'tuning') ?? ''}
       options={options} stack onChange={x => p.set('tuning', x)} />
+    {material(p)}
   </>
 }
 
@@ -347,24 +363,44 @@ function StagePage({p}: {p: ViewProps}) {
 
 /** Save the Torus as it rings as a sound (O-I #852, manual §21.2 "Save the instrument as you tuned it"): named here and saved through its
  * owners (live/LivePresets.tsx saveTorusSound: the owner keeps a checkpoint, the kernel seals the sound from it, the Scene keeps it). The
- * sound then stands under the Torus in the browser's Instruments. What the owners said stands on the Info line; a refusal is said plainly
- * (shared/Refusal.tsx refusalWords): what happened, then the owners' words when they are words. */
-const UNSAVED = 'The sound was not saved.'
+ * sound then stands under the Torus in the browser's Instruments. Keep instrument (Tips: "make a form the body, make sounds on it, and
+ * keep it") keeps the form's body the sound saved here rings on, under the same name field, with the sounds made on it
+ * (LivePresets.tsx keepTorusInstrument); it waits on such a sound, and says so. What the owners said stands on the Info line; a refusal
+ * is said plainly (shared/Refusal.tsx refusalWords): what happened, then the owners' words when they are words. */
+const UNSAVED = 'The sound was not saved.', UNKEPT = 'The instrument was not kept.'
+const KEEP_WAITS = "Save a sound on a form's body first: an instrument is a form's body with the sounds made on it."
+const KEEP_ON_TORUS = "The sound saved here rings on the torus itself. Make a form the body and save a sound on it: an instrument is a form's body with the sounds made on it."
 /** A control across both of the section's columns (the kit's columns are 56 px: a name reads whole across two). */
 const span2 = (child: ReactNode) => <div style={{gridColumn: 'span 2', width: '100%'}}>{child}</div>
+type Said = {readonly pending?: boolean; readonly refused?: string; readonly done?: string}
 function SaveSound() {
   const [name, setName] = useState('')
-  const [said, setSaid] = useState<{readonly pending?: boolean; readonly refused?: string; readonly done?: string}>({})
+  const [said, setSaid] = useState<Said>({})
+  const [kept, setKept] = useState<Said>({})
+  // The sound saved here last, and whether it rings on a form's body (the kernel's sealed record says).
+  const [saved, setSaved] = useState<{readonly sound_ref: string; readonly form: boolean} | null>(null)
   // The name commits as the field is left (Enter, or the press that leaves it), so the press saves the name as typed.
   const save = () => {
     setSaid({pending: true})
     void import('../../../live/LivePresets').then(presets => presets.saveTorusSound(name))
-      .then(answer => setSaid(answer.ok ? {done: answer.words} : {refused: refusalWords(UNSAVED, answer.error)}), (cause: unknown) => setSaid({refused: refusalWords(UNSAVED, cause)}))
+      .then(answer => {
+        if (!answer.ok) return setSaid({refused: refusalWords(UNSAVED, answer.error)})
+        setSaid({done: answer.words}); setSaved({sound_ref: answer.sound_ref, form: answer.form}); setKept({})
+      }, (cause: unknown) => setSaid({refused: refusalWords(UNSAVED, cause)}))
+  }
+  const keep = () => {
+    if (!saved) return
+    setKept({pending: true})
+    void import('../../../live/LivePresets').then(presets => presets.keepTorusInstrument(name, saved.sound_ref))
+      .then(answer => setKept(answer.ok ? {done: answer.words} : {refused: refusalWords(UNKEPT, answer.error)}), (cause: unknown) => setKept({refused: refusalWords(UNKEPT, cause)}))
   }
   return <>
-    {span2(<TextField label="Sound name" does="The name the browser lists the sound by, under the Torus." value={name} placeholder="New sound" wide onChange={setName} />)}
+    {span2(<TextField label="Name" does="The name the browser lists it by, under the Torus: the sound you save, or the instrument you keep." value={name}
+      placeholder="New sound" wide onChange={setName} />)}
     {span2(<Action label="Save sound" does={said.done ?? 'Saves the Torus as it rings now, every parameter, as a sound the Scene keeps.'}
       pending={said.pending} refused={said.refused} onPress={save} />)}
+    {span2(<Action label="Keep instrument" does={kept.done ?? "Keeps the form's body the sound you saved rings on, with every sound made on it, as an instrument under the Torus."}
+      disabled={!saved ? KEEP_WAITS : !saved.form ? KEEP_ON_TORUS : undefined} pending={kept.pending} refused={kept.refused} onPress={keep} />)}
   </>
 }
 
@@ -380,6 +416,7 @@ export const torus: DesignedDevice = {
     body: 'torus', strike: 70, damping: 4.5, modes: 8, level: -6, pan: 0, view: 'surface', receiver: false, meter: -14,
     // The field's own controls, as the binding reads them (labels of the owner's choices).
     lens: 'L0', 'context-frame': 'CF1', 'harmonic-basis': 'B1', 'm3-transcription': 'DNA', sound: true, cadence: 'Hold', scale: 100, standing: 'following',
+    material: JSON.stringify({lens: 'L0', partner: 'L0′', face: 'day', valence: 1, colour: [0.78, 0.62, 0.32], grain: 0.3, give: 0.65, affinity: 0.5, tension: 0.4}),
     sounding: JSON.stringify([0, 4, 8]),
     // The tattva of the M2 condition (the M2 request's tattva selection) and its fibre; Declared keeps the body's own constants.
     'body.source': 'declared', 'tattva.name': 'Prithvi', 'tattva.fibre': 'earth', 'tattva.standing': 'proposed',
@@ -414,7 +451,7 @@ export const torus: DesignedDevice = {
       'stage.bindings': JSON.stringify([{procedure: 'ta-onta:stage:cli-bound', trigger: 'm1-advance', evaluations: 16, max: 16, standing: 'exhausted'}])},
     'No readings': Object.fromEntries(['stage.slots', 'stage.bindings', 'stage.procedures', 'stage.procedure', 'stage.budget', 'stage.last', 'stage.why', 'rack', 'rack.part', 'light',
       'rate.mode', 'rate', 'rate.note', 'tempo', 'band', 'fundamental.source', 'fundamental', 'carrier', 'carrier.drive', 'shape', 'figure', 'comma', 'tuning', 'tuning.resident', 'tuning.maqam', 'polyphony', 'notes',
-      'body', 'body.form', 'strike', 'damping', 'modes', 'level', 'pan', 'view', 'receiver', 'meter', 'lens', 'context-frame', 'harmonic-basis', 'm3-transcription', 'sound', 'cadence', 'scale', 'standing', 'sounding', 'body.source', 'tattva.name', 'tattva.fibre', 'tattva.standing'].map(k => [k, undefined])),
+      'body', 'body.form', 'strike', 'damping', 'modes', 'level', 'pan', 'view', 'receiver', 'meter', 'material', 'lens', 'context-frame', 'harmonic-basis', 'm3-transcription', 'sound', 'cadence', 'scale', 'standing', 'sounding', 'body.source', 'tattva.name', 'tattva.fibre', 'tattva.standing'].map(k => [k, undefined])),
     'As the field reports it': {strike: undefined, damping: undefined, modes: undefined, pan: undefined, view: undefined, receiver: undefined, meter: undefined},
   },
 
@@ -451,7 +488,7 @@ export const torus: DesignedDevice = {
           value={strOf(p.v, 'tattva.name')} tone={tattvaHold(p.v) ? 'accent' : undefined} />
       </Section>
       {/* Beside the body, so the page keeps the two bands every page of the device stands in (O-I #852). */}
-      <Section label="Save as a sound" cols={2}><SaveSound /></Section>
+      <Section label="Save and keep" cols={2}><SaveSound /></Section>
     </Band>
     {/* Five columns: its ten controls stand in two rows, so this band is no taller than the Pulse page's. */}
     <Band>

@@ -225,3 +225,43 @@ test("the owner keeps a sound by the kernel's own edit of the inspected revision
   assert.match(source, /operation: 'edit', expression_ref: request\.expression_ref, expected_revision: document\.revision, actor: PERFORMANCE_ACTOR,\s+changes: \[keepSoundChange\(request\.scene_ref, request\.sound\)\]/);
   assert.match(source, /return keptSoundReply\(kept\?\.performance, request\.sound, edited\.dirty === true\);/);
 });
+
+// ── 6 — a body kept as an instrument (O-I #852, manual §21.2 Sounds and instruments: "A body made from a form, with the sounds made on
+// it"; Tips: "make a form the body, make sounds on it, and keep it"). The instrument is the form's body a kept sound rings on, with every
+// sound the Scene keeps on that body, kept by one edit of the Scene's performance (the kernel's `keep_torus_instrument`); one body is one
+// instrument, so keeping it again replaces it. A sound on the torus itself makes none.
+
+test('an instrument is asked for by its name and a kept sound made on its body; the action reads only its own keys', () => {
+  const ask = {operation: 'performance', action: 'keep-instrument', name: 'Folded sheet', sound_ref: KEPT_DIGEST(2), ...refs};
+  assert.deepEqual(readFramePerformanceRequest(ask), ask);
+  assert.notEqual(readFramePerformanceRequest({...ask, name: 'x'.repeat(120)}), null, 'a name as long as the kernel keeps one');
+  for (const bad of [{name: ''}, {name: '  '}, {name: 'x'.repeat(121)}, {name: 'a\nb'}, {name: 7}, {sound_ref: 'sound'}, {sound_ref: undefined}, {extra: 1}])
+    assert.equal(readFramePerformanceRequest({...ask, ...bad}), null, JSON.stringify(bad));
+});
+
+test('the instrument kept is the body the sound rings on, with every sound the Scene keeps on it; a sound on the torus makes none', async () => {
+  const {instrumentToKeep, keepInstrumentChange, keptInstrumentReply, listPerformance} = await import('../src/performanceBasis.ts');
+  const scene = {bases: [], torus_kept: {sounds: keptOnScene().sounds}};
+  const instrument = {schema: 'oi.torus-instrument/v1', instrument_ref: 'instrument:ql:form-body:fold', name: 'Folded sheet',
+    body: prepared('ql:form-body:fold'), sounds: [KEPT_DIGEST(2), KEPT_DIGEST(3)]};
+  assert.deepEqual(instrumentToKeep(scene, 'Folded sheet', KEPT_DIGEST(3)), {instrument},
+    'the body as its owner prepared it, and the sounds made on it in the order the Scene keeps them; a record that is not a sound is left out');
+  assert.deepEqual(instrumentToKeep(scene, 'Paper', KEPT_DIGEST(2)).instrument.instrument_ref, instrument.instrument_ref, 'one body is one instrument');
+  assert.deepEqual(keepInstrumentChange('scene:one', instrument), {change: 'scene_performance_edit', scene_ref: 'scene:one',
+    operations: [{operation: 'keep_torus_instrument', instrument}]}, 'the kernel keeps it, or replaces the one kept under its ref');
+  assert.deepEqual(instrumentToKeep(scene, 'Warm', KEPT_DIGEST(1)),
+    {reason: '"Warm Logic" rings on the torus itself, and an instrument is a form\'s body with the sounds made on it. Make a form the body, save a sound on it, then keep it.'});
+  assert.deepEqual(instrumentToKeep(scene, 'Warm', KEPT_DIGEST(8)), {reason: 'The Scene keeps no sound ' + KEPT_DIGEST(8) + '.'});
+  assert.deepEqual(instrumentToKeep({bases: []}, 'Warm', KEPT_DIGEST(2)), {reason: 'The Scene keeps no sound ' + KEPT_DIGEST(2) + '.'});
+  const after = {bases: [], torus_kept: {sounds: keptOnScene().sounds, instruments: [instrument]}};
+  assert.deepEqual(keptInstrumentReply(after, instrument, true), {state: 'instrument-kept', instrument_ref: instrument.instrument_ref, name: 'Folded sheet',
+    sounds: 2, unsaved: true, kept: listPerformance(after).kept});
+  assert.deepEqual(keptInstrumentReply(scene, instrument, false), {state: 'refused', reason: 'The Scene did not keep "Folded sheet".', missing: []});
+});
+
+test("the owner keeps an instrument by the kernel's own edit of the inspected revision, and refuses one it cannot make before any edit", async () => {
+  const source = await readFile(new URL('../src/cradle.ts', import.meta.url), 'utf8');
+  assert.match(source, /const keeping = instrumentToKeep\(scene\.performance, request\.name, request\.sound_ref\);\s+if \('reason' in keeping\) return \{state: 'refused', reason: keeping\.reason, missing: \[\]\};/);
+  assert.match(source, /operation: 'edit', expression_ref: request\.expression_ref, expected_revision: document\.revision, actor: PERFORMANCE_ACTOR,\s+changes: \[keepInstrumentChange\(request\.scene_ref, keeping\.instrument\)\]/);
+  assert.match(source, /return keptInstrumentReply\(kept\?\.performance, keeping\.instrument, edited\.dirty === true\);/);
+});

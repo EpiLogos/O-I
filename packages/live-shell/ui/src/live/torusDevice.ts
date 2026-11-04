@@ -188,6 +188,8 @@ export const TORUS_ABSENT: Readonly<Record<string, string>> = {
   // channel's body edit while the instrument follows or is held (torusBody); absent with their reason until the owner names it.
   pan: `No pan: ${NO_FIELD_PARAMETER}.`,
   view: 'Surface, wire or both is a way of drawing the pane: no owner keeps it.',
+  // material: the surface the lens in force gives the sound (QL m2_material.rs LensMaterial, the owner's Torus session `material`, O-I 854).
+  material: 'No material here: the owner\'s Torus session names none for the lens in force, so the surface\'s colour, grain and give are not read.',
   meter: 'The owner reports no level meter: its audio receipt carries the presentation gain and its block counts, not a level.',
   sounding: 'No key is lit from the owner here: the keyboard strikes each key through QL\'s torus-play, which counts it as a note at its moving point, and the sounding notes stand in Notes (each key and the arc it struck); this picture lights pitch classes, which that reading does not name.',
   // body.source: the hand's choice over M2's body constants (QL's table, `ql kernel body-constants`; qlCoordinateName.ts BodyTable), written
@@ -292,6 +294,11 @@ export function torusSessionValues(session: TorusSession): Record<string, Value>
   if (session.figure !== null) values.figure = session.figure
   // The maqām the owner names (O-I 855): its name, and its words for the absence while the scene holds none of its voices.
   if (session.maqam) values['tuning.maqam'] = JSON.stringify({name: session.maqam.name, absent: session.maqam.absent})
+  // The surface the lens in force gives the sound (manual §21.2 "The body": its colour, its grain, how far it gives; a lens and its partner
+  // show the same notes on opposite surfaces), as the owner derives it (M2-1′, QL m2_material.rs LensMaterial; O-I 854). A reading.
+  const m = session.material
+  if (m && !('absent' in m)) values.material = JSON.stringify({lens: m.lens, partner: m.partner, face: m.face, valence: m.valence, colour: m.colour_rgb,
+    grain: m.roughness, give: m.elasticity, affinity: m.particle_affinity, tension: m.tension})
   return values
 }
 
@@ -326,6 +333,9 @@ export function torusSession(state: LiveTorusState | null, commit: (edit: Instru
   for (const key of TORUS_SESSION_KEYS) if (why) standing[key] = {disabled: why}; else writes.add(key)
   for (const [key, reading] of Object.entries(TORUS_SESSION_READINGS)) standing[key] = {disabled: session ? reading : why ?? reading}
   if (session && session.figure === null) standing.figure = {disabled: 'Shape is Sequence: the scene\'s own shapes set the figure (O-I issue 851), and QL names none here.'}
+  // The lens's material: a reading the lens in force sets, or the owner's words for why there is none.
+  if (session?.material) standing.material = {disabled: 'absent' in session.material ? session.material.absent
+    : 'A reading: the surface the lens in force gives the sound. Changing the lens changes it and leaves the notes alone.'}
   const write = async (change: ValueChange) => {
     if (!writes.has(change.key)) throw new Error(standing[change.key]?.disabled ?? `${change.key} cannot be set now.`)
     const result = await commit({kind: 'torus', edit: torusSessionEdit(session!, change)})

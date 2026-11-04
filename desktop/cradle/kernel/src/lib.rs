@@ -1105,9 +1105,14 @@ pub enum KernelOp {
     /// `aikit harness auth <slug> --json` — the harness's declared auth
     /// options (env-var names, own-login entries with runnable + argv or
     /// note) verbatim. Describe only: the login itself is a terminal act,
-    /// never a kernel op — nothing here spawns a login.
+    /// never a kernel op — nothing here spawns a login. With `check`,
+    /// `aikit harness auth <slug> --check --json` instead: the harness's own
+    /// logged-in check, run by AIKit where its profile declares one, and
+    /// what it answered (Sign in's read-back).
     HarnessAuthDescribe {
         harness: String,
+        #[serde(default)]
+        check: bool,
     },
     /// Settings · product pages (12 §3.9): run one owner-disclosed action.
     ProductActionRun {

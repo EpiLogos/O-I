@@ -25,7 +25,8 @@ export const SKY_MODULATION_FAMILY = 'quaternal-logic'
 export const SKY_MODULATION_FACE = 'sky-modulation'
 /** The device's id on the Live chain. */
 export const SKY_MODULATION_ID = 'live:sky-modulation'
-export const SKY_MODULATION_MAX_ROUTES = 8
+/** Up to sixteen assignments (manual §22.2 Assignments "Up to 16"; the design's own MAX_ROUTES). */
+export const SKY_MODULATION_MAX_ROUTES = 16
 
 /** The M2-5 map: each planet's just interval from the root (m2_sky.rs), as the design draws it. Uranus has none. */
 export const SKY_INTERVAL: Readonly<Record<SkyBody, readonly [number, number] | null>> = {Sun: [1, 1], Moon: [4, 3], Mercury: [5, 4], Venus: [9, 8],

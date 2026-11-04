@@ -25,9 +25,11 @@ export function readPresetName(value: unknown): string | null {
 }
 
 /** The Scene's performance actions: list its presets and what it keeps on the Torus; save a preset (refused by name); recall a preset; read
- * a kept sound back whole by its ref, to open it; and keep a sound the kernel sealed (O-I #852). */
+ * a kept sound back whole by its ref, to open it; keep a sound the kernel sealed; and keep, by `name`, the form's body a kept sound rings
+ * on as an instrument with the sounds made on it (O-I #852). */
 export type PerformanceAction = {action: 'list'} | {action: 'save'; name: string} | {action: 'recall'; basis_ref: string}
-  | {action: 'sound'; sound_ref: string} | {action: 'keep-sound'; sound: Readonly<Record<string, unknown>>};
+  | {action: 'sound'; sound_ref: string} | {action: 'keep-sound'; sound: Readonly<Record<string, unknown>>}
+  | {action: 'keep-instrument'; name: string; sound_ref: string};
 export type FramePerformanceRequest = PerformanceAction & {operation: 'performance'; expression_ref: string; scene_ref: string};
 
 /** A frame or host performance request, exact in shape, or null. Every key is closed to its action. */
@@ -51,6 +53,10 @@ export function readFramePerformanceRequest(raw: unknown): FramePerformanceReque
   if (raw.action === 'keep-sound') {
     const sound = closed(raw, [...common, 'sound']) ? readTorusSound(raw.sound) : null;
     return sound ? {...base, action: 'keep-sound', sound} : null;
+  }
+  if (raw.action === 'keep-instrument') {
+    return closed(raw, [...common, 'name', 'sound_ref']) && keptName(raw.name) && typeof raw.sound_ref === 'string' && DIGEST.test(raw.sound_ref)
+      ? {...base, action: 'keep-instrument', name: raw.name, sound_ref: raw.sound_ref} : null;
   }
   return null;
 }
@@ -98,7 +104,10 @@ export type PerformanceReply =
   /** A kept sound as the Scene keeps it, whole, to open (O-I #852). */
   | {readonly state: 'sound'; readonly sound: Readonly<Record<string, unknown>>}
   /** A sound the Scene now keeps, and all it keeps on the Torus then; `unsaved` while the Expression is not yet written with it. */
-  | {readonly state: 'kept'; readonly sound_ref: string; readonly name: string; readonly unsaved: boolean; readonly kept: TorusKeptSummary | null};
+  | {readonly state: 'kept'; readonly sound_ref: string; readonly name: string; readonly unsaved: boolean; readonly kept: TorusKeptSummary | null}
+  /** An instrument the Scene now keeps, with how many sounds stand under it, and all it keeps on the Torus then (O-I #852). */
+  | {readonly state: 'instrument-kept'; readonly instrument_ref: string; readonly name: string; readonly sounds: number; readonly unsaved: boolean
+    readonly kept: TorusKeptSummary | null};
 
 /** The bases the kernel reports for a Scene: each digest and identity exactly as the kernel holds it. A malformed record is not listed. */
 export function summarizePerformanceBases(bases: unknown): PerformanceBasisSummary[] {
@@ -210,6 +219,37 @@ export function keptSoundReply(performance: unknown, sound: Readonly<Record<stri
   const keeps = !!kept && [...kept.sounds, ...kept.instruments.flatMap(instrument => instrument.sounds)].some(row => row.sound_ref === ref);
   return keeps ? {state: 'kept', sound_ref: ref, name, unsaved, kept} : {state: 'refused', reason: `The Scene did not keep "${name}".`, missing: []};
 }
+/** An instrument as the kernel keeps one (kernel kept.rs `KeptInstrument`, `oi.torus-instrument/v1`). */
+export interface TorusInstrumentRecord {readonly schema: 'oi.torus-instrument/v1'; readonly instrument_ref: string; readonly name: string
+  readonly body: Readonly<Record<string, unknown>>; readonly sounds: readonly string[]}
+/** The instrument a kept sound's body makes (manual §21.2: "A body made from a form, with the sounds made on it"): the form's body as its
+ * owner prepared it, and every sound the Scene keeps on that body, in its order. One body is one instrument, by its preparation, so
+ * keeping it again replaces it with the sounds made on it since. A sound on the torus itself, or one the Scene does not keep, makes
+ * none, said by why. Pure. */
+export function instrumentToKeep(performance: unknown, name: string, soundRef: string): {instrument: TorusInstrumentRecord} | {reason: string} {
+  const sounds = list(object(performance) && object(performance.torus_kept) ? performance.torus_kept.sounds : undefined)
+    .flatMap(raw => { const sound = readTorusSound(raw), summary = sound && keptSound(sound); return summary ? [{sound: sound!, summary}] : []; });
+  const chosen = sounds.find(row => row.summary.sound_ref === soundRef);
+  if (!chosen) return {reason: `The Scene keeps no sound ${soundRef}.`};
+  const body = chosen.summary.body_ref, prepared = object(chosen.sound.body) ? chosen.sound.body.prepared : null;
+  if (body === null || !object(prepared)) return {reason: `"${chosen.summary.name}" rings on the torus itself, and an instrument is a form's body with the sounds made on it. Make a form the body, save a sound on it, then keep it.`};
+  return {instrument: {schema: 'oi.torus-instrument/v1', instrument_ref: `instrument:${body}`, name, body: prepared,
+    sounds: sounds.filter(row => row.summary.body_ref === body).map(row => row.summary.sound_ref)}};
+}
+/** The one edit that keeps an instrument in the Scene's performance (the performance's `keep_torus_instrument`): the kernel keeps it, or
+ * replaces the one it keeps under the same ref, and refuses in its words a body or a sound it does not hold. */
+export function keepInstrumentChange(sceneRef: string, instrument: TorusInstrumentRecord) {
+  return {change: 'scene_performance_edit', scene_ref: sceneRef, operations: [{operation: 'keep_torus_instrument', instrument}]};
+}
+/** What the Scene keeps once the instrument's edit is made: the instrument by its ref and name, how many sounds stand under it, with all
+ * the Scene keeps on the Torus; refused in words where the Scene does not keep it. */
+export function keptInstrumentReply(performance: unknown, instrument: TorusInstrumentRecord, unsaved: boolean): PerformanceReply {
+  const kept = listPerformance(performance).kept ?? null;
+  const row = kept?.instruments.find(item => item.instrument_ref === instrument.instrument_ref);
+  return row ? {state: 'instrument-kept', instrument_ref: row.instrument_ref, name: row.name, sounds: row.sounds.length, unsaved, kept}
+    : {state: 'refused', reason: `The Scene did not keep "${instrument.name}".`, missing: []};
+}
+
 /** A sound the Scene keeps, whole, by its ref: what opens it (the kernel opens it against the Torus as it stands). */
 export function keptSoundRecord(performance: unknown, soundRef: string): PerformanceReply {
   const kept = object(performance) && object(performance.torus_kept) ? performance.torus_kept : null;

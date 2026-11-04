@@ -63,7 +63,7 @@ export type SettingsRequest = {
  * adopt-plan), the person's adoption (aikit_write adopt), and the keys it finds, the bindings it keeps and a binding by reference
  * (credential_discover, credential_list, credential_setup: a reference, never material). */
 export type SetupAikitOp =
-  | { op: 'harness_status' } | { op: 'harness_auth_describe'; harness: string }
+  | { op: 'harness_status' } | { op: 'harness_auth_describe'; harness: string; check?: boolean }
   | { op: 'aikit_read'; request: Extract<AikitReadRequest, { kind: 'init' | 'collate' | 'tree' | 'adopt-plan' }> }
   | { op: 'aikit_write'; request: Extract<AikitWriteRequest, { kind: 'adopt' }> }
   | { op: 'credential_discover' } | { op: 'credential_list' } | { op: 'credential_setup'; credential: string; reference: string }

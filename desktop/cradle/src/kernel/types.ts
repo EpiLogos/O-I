@@ -912,7 +912,7 @@ export type KernelOp =
    * declared auth options (`aikit harness auth <slug> --json`): env-var
    * names and own-login entries, nothing executed. The login itself is a
    * terminal act — the declared argv runs in a real terminal surface. */
-  | {op:"harness_auth_describe";harness:string}
+  | {op:"harness_auth_describe";harness:string;check?:boolean}
   /** Settings · Harnesses (12-SETTINGS §3.2): `aikit client install <client>`. */
   | {op:"client_install";client:string}
   /** Settings · product pages (12-SETTINGS §3.9): run one owner-disclosed action. */

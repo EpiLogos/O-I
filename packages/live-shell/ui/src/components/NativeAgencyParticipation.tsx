@@ -6,6 +6,7 @@ import type {SurfaceBinding} from '../../../../../desktop/cradle/src/surface/typ
 import type {EncounterRow} from '../../../../../desktop/cradle/src/encounter/EncounterList'
 import {NativePreparedContext} from './NativePreparedContext'
 import {preparedContextScopeKey,type NativePreparedContextScope} from '../native/preparedContextBinding'
+import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 
 /** Presentation over the canonical Agent panel/shared native session. The
  * parent owns retained layout, native admission, provisioning and source open. */
@@ -30,6 +31,9 @@ export interface NativeAgencyParticipationProps {
   onPlane?: (plane: string) => void
   conversation?: boolean
 }
+/** A sent message's reference opens through the search line's opener, loaded with the line (central/searchLine.tsx). */
+const openMessageReference = (reference: {href: string; title: string; transport: KernelTransportStatus}): Promise<void> =>
+  import('../central/searchLine').then(line => line.openMessageReference(reference))
 export function NativeAgencyParticipation(props: NativeAgencyParticipationProps) {
   let key: string
   try { key = preparedContextScopeKey(props.scope) }
@@ -47,6 +51,6 @@ function ScopedNativeAgency(props: NativeAgencyParticipationProps) {
     mode={props.mode??'base'} conversation={props.conversation??true} prepareAgents
     onError={props.onError} onOpenSubject={onOpenSubject} onOpenConversation={props.onOpenConversation}
     onBringBack={props.onBringBack} resolveSurface={props.resolveSurface} preferredBodyRef={props.preferredBodyRef}
-    plane={props.plane} onPlane={props.onPlane} historyAvailable={false}
+    plane={props.plane} onPlane={props.onPlane} historyAvailable={false} onReference={openMessageReference}
     extraPlanes={[{id:'context',label:'Context',body:context}]}/>
 }

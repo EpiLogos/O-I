@@ -387,22 +387,49 @@ impl Client {
     /// reads the harness's profile only, and the login itself is a terminal
     /// act, never a kernel op.
     pub fn harness_auth(&self, cwd: &Path, harness: &str) -> Result<Value, String> {
-        let harness = harness.trim();
-        if harness.is_empty()
-            || !harness
-                .chars()
-                .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
-        {
-            return Err(
-                "A harness's auth options are read by its name (letters, digits and dashes)".into(),
-            );
-        }
+        let harness = harness_name(harness)?;
         let data = self.run(cwd, &["harness", "auth", harness, "--json"], Material::None)?;
         if data.get("slug").and_then(Value::as_str).is_none() {
             return Err("AIKit's auth answer carried no harness slug".into());
         }
         Ok(data)
     }
+
+    /// The harness's own logged-in check (`aikit harness auth <slug>
+    /// --check --json`, DLW.md §10.10 Sign in): AIKit runs the status
+    /// command the harness's profile declares and says, per provider,
+    /// whether it answered signed in. A harness with none answers an empty
+    /// list; AIKit carries nothing else the harness printed.
+    pub fn harness_auth_check(&self, cwd: &Path, harness: &str) -> Result<Value, String> {
+        let harness = harness_name(harness)?;
+        let data = self.run(
+            cwd,
+            &["harness", "auth", harness, "--check", "--json"],
+            Material::None,
+        )?;
+        if data.get("slug").and_then(Value::as_str).is_none()
+            || !data.get("checks").is_some_and(Value::is_array)
+        {
+            return Err("AIKit's login check answered no harness slug and checks list".into());
+        }
+        Ok(data)
+    }
+}
+
+/// A harness is read by its name alone (letters, digits, dashes,
+/// underscores): nothing else reaches AIKit's argv.
+fn harness_name(harness: &str) -> Result<&str, String> {
+    let harness = harness.trim();
+    if harness.is_empty()
+        || !harness
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+    {
+        return Err(
+            "A harness's auth options are read by its name (letters, digits and dashes)".into(),
+        );
+    }
+    Ok(harness)
 }
 
 /// The process-wide suite binding (its STDIN capability answer is asked
@@ -446,8 +473,12 @@ pub fn apply(cwd: &Path, op: crate::KernelOp) -> Result<crate::KernelOpResult, S
         KernelOp::ClientInstall { client: name } => KernelOpResult::ClientInstalled {
             data: client.client_install(cwd, &name)?,
         },
-        KernelOp::HarnessAuthDescribe { harness } => KernelOpResult::HarnessAuthReading {
-            data: client.harness_auth(cwd, &harness)?,
+        KernelOp::HarnessAuthDescribe { harness, check } => KernelOpResult::HarnessAuthReading {
+            data: if check {
+                client.harness_auth_check(cwd, &harness)?
+            } else {
+                client.harness_auth(cwd, &harness)?
+            },
         },
         _ => return Err("not a credential operation".into()),
     })
@@ -762,5 +793,51 @@ mod tests {
             .client()
             .harness_auth(&no_slug.dir, "codex")
             .is_err());
+    }
+
+    #[test]
+    fn harness_auth_check_runs_the_harness_own_logged_in_check_through_aikit() {
+        let scene = Scene::with(
+            r#"printf '%s' '{"ok":true,"schema":1,"data":{"slug":"codex","checks":[{"provider_ref":"provider:openai","argv":["codex","login","status"],"signed_in":true}]}}'"#,
+        );
+        let checks = scene
+            .client()
+            .harness_auth_check(&scene.dir, "codex")
+            .unwrap();
+        assert_eq!(checks["checks"][0]["signed_in"], true);
+        assert!(
+            scene
+                .read("argv.log")
+                .contains("harness auth codex --check --json"),
+            "the check runs through AIKit's own verb: {}",
+            scene.read("argv.log")
+        );
+        assert!(scene
+            .client()
+            .harness_auth_check(&scene.dir, "codex; rm -rf /")
+            .is_err());
+        // A reply that carries no checks list is no check.
+        let described = Scene::with(
+            r#"printf '%s' '{"ok":true,"schema":1,"data":{"slug":"codex","own_login":[]}}'"#,
+        );
+        assert!(described
+            .client()
+            .harness_auth_check(&described.dir, "codex")
+            .is_err());
+        // The op: `check` selects it; without it, describe as before.
+        let op: crate::KernelOp = serde_json::from_str(
+            r#"{"op":"harness_auth_describe","harness":"codex","check":true}"#,
+        )
+        .unwrap();
+        assert!(matches!(
+            op,
+            crate::KernelOp::HarnessAuthDescribe { ref harness, check: true } if harness == "codex"
+        ));
+        let op: crate::KernelOp =
+            serde_json::from_str(r#"{"op":"harness_auth_describe","harness":"codex"}"#).unwrap();
+        assert!(matches!(
+            op,
+            crate::KernelOp::HarnessAuthDescribe { check: false, .. }
+        ));
     }
 }

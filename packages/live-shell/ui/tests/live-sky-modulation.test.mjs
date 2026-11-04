@@ -89,6 +89,11 @@ test('the plan takes the design\'s changes and refuses in words; Note is refused
   assert.throws(() => sm.skyModulationChanges(plan, targets, [{key: 'routes', value: JSON.stringify([{id: 'r2', planet: 'Mars', target: 'live:reverb/mix'}])}]), /no parameter on the part's chain/)
   assert.throws(() => sm.skyModulationChanges(plan, targets, [{key: 'havePlace', value: true}]), /No place has reached the Sky yet: it reads your world's declared place/)
   assert.equal(sm.skyModulationChanges(plan, targets, [{key: 'light', value: 'dark'}]).on, false)
+  // Up to sixteen assignments, as the manual's Assignments row and the design say (§22.2; O-I #854).
+  const many = n => JSON.stringify(Array.from({length: n}, (_, i) => ({id: `r${i}`, planet: 'Venus', target: 'live:filter/cutoff'})))
+  assert.equal(sm.SKY_MODULATION_MAX_ROUTES, 16)
+  assert.equal(sm.skyModulationChanges(sm.skyModulationPlan(), targets, [{key: 'routes', value: many(16)}]).routes.length, 16)
+  assert.throws(() => sm.skyModulationChanges(sm.skyModulationPlan(), targets, [{key: 'routes', value: many(17)}]), /^Error: At most 16 assignments\.$/)
 })
 
 test('run: a planet takes a target at its owner\'s value, writes the move through its owner, and hands the base back when its route goes', async () => {
