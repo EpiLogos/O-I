@@ -1037,6 +1037,7 @@ fn factory_action(request: &factory::OwnerRequest) -> &'static str {
         factory::OwnerRequest::WorkflowEdit { .. } => "workflow edit",
         factory::OwnerRequest::WorkflowExport { .. } => "workflow export",
         factory::OwnerRequest::WorkflowRemake { .. } => "workflow remake",
+        factory::OwnerRequest::WorkflowPerform { .. } => "workflow perform",
         _ => "factory",
     }
 }

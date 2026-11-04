@@ -13,17 +13,28 @@
 //     session's Run performs: one unit of that song, given to the track's agent, naming the clip; a clip from another project is
 //     imported into the receiving one first, which keeps where it came from.
 // The clip selected under Songs is the browser's own selection (as the constellation's is: frame/browser/constellationFocus.ts); the
-// Skillset rack's Capture page reads it as its "A selected clip" source (devices/captureSkillBinding.ts). Nothing here executes a song:
-// a Run, Repeat or a routine performs it again, and the song keeps no schedule. Pure, apart from the kernel calls and the selection.
+// Skillset rack's Capture page reads it as its "A selected clip" source (devices/captureSkillBinding.ts). Nothing here executes a song.
+// It comes round again (§19.1: "by Loop, by Repeat, or by a routine's schedule. The schedule is the routine's, and the song keeps none"):
+//   - Repeat — with a song's note chosen in Clip view, Repeat's press makes the song's takes through O-I 795's take path: the set started
+//     on AIKit (encounter-session-settings takes start), each take a Run Factory starts from the note's clip (`factory workflow perform
+//     <state> <run> <unit>`, factory.song-take/v1, kind `workflow-perform`: the clip's set as it was rendered, commissioned as the
+//     session's Run was), and the set ended on AIKit with what Factory made, or failed in Factory's words (songTakes).
+//   - Loop — AIKit's task executor's, which gives the agent its turn again and starts no Run of a song: Loop on a song stands refused
+//     (LOOP_SONG).
+//   - A routine — Automations' (AIKit runs a proven Method on its schedule; Factory continues a Journey from a routine's invocation into
+//     a Run that performs no song): Routine… on a song stands refused (ROUTINE_SONG).
+// Pure, apart from the kernel calls and the selection.
 import {useSyncExternalStore} from 'react'
 import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
-import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
+import type {EncounterSessionSettingsReading, KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import type {WorldActionReceipt} from '../timeline/worldTrackAdapter'
 import {readAttemptTakes, type TakesCall} from '../owners/attemptTakes'
 import {tellOwnerChanged} from '../owners/notices'
+import {settingsReadingEntry} from '../owners/readers'
 import {factoryOwnerWrite, refusalWords} from './devices/ownerRoutes'
 import {EDIT_REQUEST, readScore, type ScoreReading} from './scoreBinding'
-import {planTargetOf, type PlanCall} from './wavePlan'
+import {SETTINGS_WHY, TAKES_WHY, writeSessionSettings} from './sessionSettings'
+import {planTargetOf, type PlanCall, type PlanTarget} from './wavePlan'
 
 /** Factory's clip of a song, a project's clips, and the kernel's gathering of every disclosed project's. */
 export const SONG_CLIP = 'factory.song-clip/v1'
@@ -214,6 +225,97 @@ export async function dropSong(transport: KernelTransportStatus, track: DropTrac
   } catch (cause) {
     return {ok: false, error: cause instanceof Error ? cause.message : String(cause)}
   }
+}
+
+// ---------------------------------------------------------------------------------------------------------------- run again
+
+/** Factory's take of a song: one Run of the song a canon unit names. */
+export const SONG_TAKE = 'factory.song-take/v1'
+/** One take: the song the canon unit `unit` names, in the song the Run performs. */
+export const performRequest = (target: PlanTarget, unit: string) =>
+  ({kind: 'workflow-perform', state_path: target.statePath, run_ref: target.runRef, unit})
+
+export const CANON_VARIES = 'A song\'s takes are its Runs, each the song as its clip renders it: Repeat varies nothing in them. Set Variable to '
+  + 'Condition with no levels, and Repeats to the number of takes.'
+export const LOOP_SONG = 'Loop on a song: AIKit\'s task executor runs Loop by giving the agent its turn again; it starts no Run of the song — '
+  + 'missing op: the executor\'s loop run as a take of the song (`factory workflow perform`, the kernel\'s factory_owner workflow-perform) '
+  + '(AIKit). Repeat makes the song\'s takes.'
+export const ROUTINE_SONG = 'A routine runs a song: no owner starts one — AIKit\'s routines run a proven Method on their schedule, and Factory '
+  + 'continues a Journey from a routine\'s invocation into a Run that performs no song (`factory development admit-routine-continuation`); '
+  + 'missing op: a routine whose run is a take of the song (`factory workflow perform` from the routine\'s invocation) (AIKit · Software Factory).'
+
+/** The unit a note's key names in Factory's score when it is a song (Factory's `form: canon`, its `songClip`), else null. Pure. */
+export function canonNoteOf(reading: Record<string, unknown> | null | undefined, key: unknown): Record<string, unknown> | null {
+  if (!reading || typeof key !== 'string' || !key) return null
+  const unit = list(reading.units).map(object).find(item => item?.key === key) ?? null
+  return unit && (unit.form === 'canon' || text(unit.songClip)) ? unit : null
+}
+
+/** A song a take runs: the Run its canon unit stands in, the unit, and the clip's name. */
+export interface SongTake {readonly target: PlanTarget; readonly unit: string; readonly name: string}
+
+/** The song a note chosen in a session's Clip view names: the session's attempts name its Run, Factory's score names the note a canon
+ * unit. Null when the note is no song, or when the session's Run or its score is not read (the task's own takes are made then). */
+export async function songOfNote(transport: KernelTransportStatus, project: string, session: string, key: string,
+  call: PlanCall & TakesCall = carried(transport) as PlanCall & TakesCall): Promise<SongTake | {readonly refused: string} | null> {
+  // A note is chosen, so Repeat must know whether it is a song before it makes anything: an unread Run or score is said, never guessed.
+  const unread = (why: string) => ({refused: `${key} is chosen in the Clip view, but ${why}, so Repeat cannot tell whether it is a song's note. Nothing is made.`})
+  const takes = await readAttemptTakes(call, project, [session])
+  const target = planTargetOf(takes?.get(session) ?? null)
+  if (!target) return unread('the session\'s Run is not read')
+  const score = await readScore(call, target)
+  if (score.state !== 'read') return unread(`Factory's score of the session's Run is not read (${score.why})`)
+  const unit = canonNoteOf(score.reading, key)
+  if (!unit) return null
+  return {target, unit: key, name: text(unit.songClip)?.split('/').pop() ?? key}
+}
+
+/** Repeat's takes of a song (manual §19.1 The Launch panel: "each run a take of its own"), through O-I 795's take path: the set starts on
+ * AIKit, which freezes Repeat's fields; Factory starts each take as a Run of the song (`factory workflow perform`), Repeats of them; and
+ * the set ends on AIKit with how many Factory made and where they are kept (the project's developmental state), or failed with Factory's
+ * words. Refused before any write where the task is not launched with Repeat, or Repeat varies a level (a take is the song as its clip
+ * renders it). */
+export async function songTakes(transport: KernelTransportStatus, project: string, agentSession: string, song: SongTake,
+  now: () => number = Date.now): Promise<{ok: true; note: string} | {ok: false; error: string}> {
+  const standing = settingsReadingEntry(transport, project, agentSession).snapshot()
+  const task = standing.status === 'answered' ? (standing.value as EncounterSessionSettingsReading | null)?.task ?? null : null
+  if (!task) return {ok: false, error: SETTINGS_WHY.reading}
+  if (task.launch !== 'repeat') return {ok: false, error: TAKES_WHY.notRepeat}
+  if (task.repeat_variable !== 'condition' || task.repeat_levels.length) return {ok: false, error: CANON_VARIES}
+  const traceRef = `takes:${agentSession}:${now()}`
+  const root = song.target.statePath
+  const said = (cause: unknown) => cause instanceof Error ? cause.message : String(cause)
+  const end = (fields: {outcome: 'made' | 'failed'; takes: number; reason?: string}) =>
+    writeSessionSettings(transport, project, agentSession, {takes: {end: {task_ref: task.task_ref, trace_ref: traceRef, root, ...fields}}})
+  try {
+    await writeSessionSettings(transport, project, agentSession, {takes: {start: {task_ref: task.task_ref, trace_ref: traceRef}}})
+  } catch (cause) { return {ok: false, error: `AIKit did not start the takes: ${said(cause)}`} }
+  const made: {take: number; run: string}[] = []
+  const runs = () => made.map(item => item.run).join(', ')
+  for (let n = 0; n < Math.max(1, task.repeat_repeats); n++) {
+    try {
+      const receipt = object(await factoryOwnerWrite(transport, performRequest(song.target, song.unit), '`factory workflow perform`'))
+      if (receipt?.contract !== SONG_TAKE) throw new Error(`Factory answered no take (${SONG_TAKE}).`)
+      made.push({take: Number(receipt.take), run: text(object(object(receipt.commission)?.commission)?.runRef) ?? 'a Run'})
+    } catch (cause) {
+      const reason = said(cause)
+      if (made.length) songsMoved()
+      const head = made.length
+        ? `Factory made ${made.length} take${made.length === 1 ? '' : 's'} of ${song.name} (${runs()}), then refused: ${reason}`
+        : `Factory made no take of ${song.name}: ${reason}`
+      try { await end({outcome: 'failed', takes: made.length, reason: reason.slice(0, 1024)}) } catch (ending) {
+        return {ok: false, error: `${head} AIKit did not end the set either: ${said(ending)}`}
+      }
+      return {ok: false, error: head}
+    }
+  }
+  songsMoved()
+  const first = made[0]!.take, last = made[made.length - 1]!.take
+  const started = `Factory started ${made.length} Run${made.length === 1 ? '' : 's'} of the song ${song.name} (take${made.length === 1 ? ` ${first}` : `s ${first}–${last}`} of ${song.unit}: ${runs()})`
+  try { await end({outcome: 'made', takes: made.length}) } catch (cause) {
+    return {ok: false, error: `${started}, but AIKit did not end the set: ${said(cause)}`}
+  }
+  return {ok: true, note: `${started}, each the song as its clip renders it; AIKit ended the set. Factory's attempt Actions start each Run's units.`}
 }
 
 // ---------------------------------------------------------------------------------------------------------------- the selection

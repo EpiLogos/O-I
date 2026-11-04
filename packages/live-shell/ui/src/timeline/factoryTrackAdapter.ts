@@ -157,9 +157,10 @@ export interface FactorySessionsReading {
   takes?: FactoryTakesPort
   /** Stop one session: cancel its running turn on its own encounter owner. Absent: a track's Stop is the harness's. */
   sessionStop?: (sessionRef: string) => Promise<FactoryControlReceipt>
-  /** Make a Repeat's takes (agent/sessionSettings.ts makeTakes): the session's task's set of takes, through Actuation's comparison run.
+  /** Make a Repeat's takes (agent/sessionSettings.ts makeTakes): the session's task's set of takes, through Actuation's comparison run,
+   * or a song's when the pressed clip's Clip view holds a song's note (`clipId`, agent/songClips.ts songTakes).
    * Absent: a Repeat's press says what it waits for (FACTORY_REPEAT_ABSENT). */
-  repeat?: (sessionRef: string, label: string) => Promise<FactoryControlReceipt>
+  repeat?: (sessionRef: string, label: string, clipId?: string) => Promise<FactoryControlReceipt>
 }
 
 /** Why a Repeat's press makes no takes where no port is handed. */
@@ -335,7 +336,7 @@ function launchByMode(launch: {op: string; run(clipId: string): unknown}, clips:
       if (mode === 'repeat') {
         const session = sessionOf.get(clip.trackId)
         if (!repeat || !session) return refused(`${clip.label} is launched with Repeat: ${FACTORY_REPEAT_ABSENT}`)
-        return repeat(session, clip.label)
+        return repeat(session, clip.label, clip.id)
       }
       const answer = Promise.resolve(launch.run(clipId))
       if (mode === 'gate') held.set(clipId, answer)

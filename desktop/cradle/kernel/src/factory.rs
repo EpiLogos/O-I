@@ -260,6 +260,16 @@ pub enum OwnerRequest {
     /// `factory.song-clip/v1`): the clip made again from the set it names,
     /// as that set now stands, with the same rows and range.
     WorkflowRemake { state_path: PathBuf, name: String },
+    /// A song run again from its canon unit (O-I #844; `factory workflow
+    /// perform <state> <run-ref> <unit>` → `factory.song-take/v1`): a Run of
+    /// the set the unit's clip names, as it was rendered, commissioned as the
+    /// Run the unit stands in was — one take. Factory refuses a unit that is
+    /// no whole song, or a set that has moved, in its words; nothing executes.
+    WorkflowPerform {
+        state_path: PathBuf,
+        run_ref: String,
+        unit: String,
+    },
     /// The songs under Material (`factory workflow songs <state>` →
     /// `factory.song-clips/v1`, for each Factory source Central discloses):
     /// each project's clips, whether each one's set has moved since it was
@@ -2089,6 +2099,14 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
             owner_call(&workflow_remake_args(&state_path, &name), None)?,
             &[SONG_CLIP],
         ),
+        OwnerRequest::WorkflowPerform {
+            state_path,
+            run_ref,
+            unit,
+        } => expect_contract(
+            owner_call(&workflow_perform_args(&state_path, &run_ref, &unit), None)?,
+            &[SONG_TAKE],
+        ),
         OwnerRequest::WorkflowSongsRead { project, all } => {
             let world = world.ok_or_else(|| {
                 incompatible("Central's world reading is required to find the projects' songs")
@@ -2341,6 +2359,8 @@ pub fn workflow_edit_body(request: &Value) -> Result<Vec<u8>, Error> {
 /// A song rendered into one clip, and a project's clips (O-I #844, Factory
 /// song_clip.rs); the kernel's gathering of every disclosed project's.
 pub const SONG_CLIP: &str = "factory.song-clip/v1";
+/// A canon unit's song run again, one take (`factory workflow perform`).
+pub const SONG_TAKE: &str = "factory.song-take/v1";
 pub const SONG_CLIPS: &str = "factory.song-clips/v1";
 pub const SONGS_GATHERED: &str = "oi.factory-songs/v1";
 
@@ -2378,6 +2398,22 @@ pub fn workflow_remake_args(state_path: &Path, name: &str) -> Vec<std::ffi::OsSt
         "remake".into(),
         path_arg(state_path),
         name.into(),
+        "--json".into(),
+    ]
+}
+
+/// `factory workflow perform <state> <run-ref> <unit> --json`.
+pub fn workflow_perform_args(
+    state_path: &Path,
+    run_ref: &str,
+    unit: &str,
+) -> Vec<std::ffi::OsString> {
+    vec![
+        "workflow".into(),
+        "perform".into(),
+        path_arg(state_path),
+        run_ref.into(),
+        unit.into(),
         "--json".into(),
     ]
 }
@@ -4777,6 +4813,39 @@ mod run_close_tests {
             Some("The song's file changed since it was read; read the score again and repeat the edit.")
         );
         assert_eq!(workflow_diagnostic_words(b"error: unknown command"), None);
+    }
+
+    #[test]
+    fn a_song_runs_again_from_its_canon_unit_through_factory_s_perform() {
+        // O-I #844: a canon unit's song runs again, each run a take — a Run Factory commissions as the unit's Run was
+        // (`factory workflow perform <state> <run-ref> <unit>` → factory.song-take/v1). A write: it commissions a Run.
+        let perform: OwnerRequest = serde_json::from_value(serde_json::json!({
+            "kind": "workflow-perform", "state_path": "/s.json", "run_ref": "run:A", "unit": "release-check"}))
+        .unwrap();
+        assert!(!perform.is_read() && !perform.needs_world());
+        let OwnerRequest::WorkflowPerform {
+            state_path,
+            run_ref,
+            unit,
+        } = perform
+        else {
+            unreachable!()
+        };
+        assert_eq!(
+            workflow_perform_args(&state_path, &run_ref, &unit)
+                .iter()
+                .map(|arg| arg.to_string_lossy().into_owned())
+                .collect::<Vec<_>>(),
+            [
+                "workflow",
+                "perform",
+                "/s.json",
+                "run:A",
+                "release-check",
+                "--json"
+            ]
+        );
+        assert_eq!(SONG_TAKE, "factory.song-take/v1");
     }
 
     #[test]

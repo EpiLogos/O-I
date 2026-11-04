@@ -1,8 +1,9 @@
 // Songs under Material (O-I #844; manual §10.3 Material: "songs made into clips"; §19.1: "It stands under Material in the browser, under
 // the project that made it"): Factory's clips, read for every Factory source Central discloses (songClips.ts readSongs), grouped by the
 // project that keeps each. A press selects one — the browser's own selection, which the Skillset rack's Capture page takes as its "A
-// selected clip" source — and its preview at the foot of the list says what it was made from and where its set stands, with Remake. A
-// drag carries the clip (SONG_CLIP_DRAG) onto a session's track, where it is one unit of that session's song with the thread form canon.
+// selected clip" source — and its preview at the foot of the list says what it was made from and where its set stands, with Remake, and
+// Routine…, which stands refused naming what it waits for (songClips.ts ROUTINE_SONG: no owner starts a song from a routine). A drag
+// carries the clip (SONG_CLIP_DRAG) onto a session's track, where it is one unit of that session's song with the thread form canon.
 // A project Factory refused says so in its words; a reading that has not come says it is reading.
 import {useEffect, useReducer, useState} from 'react'
 import {createPortal} from 'react-dom'
@@ -13,7 +14,7 @@ import {onOwnerChanged} from '../owners/notices'
 import {KindMark} from '../inhabitants/sdk/marks.tsx'
 import {Refusal} from '../../../../../desktop/cradle/src/shared/Refusal.tsx'
 import type {WorldActionReceipt} from '../timeline/worldTrackAdapter'
-import {readSongsThrough, remakeSong, selectSongClip, SONG_CLIP_DRAG, songPayload, songWords, STANDING_WORD, useSongClipFocus,
+import {readSongsThrough, remakeSong, ROUTINE_SONG, selectSongClip, SONG_CLIP_DRAG, songPayload, songWords, STANDING_WORD, useSongClipFocus,
   type SongRow, type SongsReading} from './songClips'
 
 export interface SongRowsViewProps {
@@ -51,12 +52,19 @@ export function SongRowsView({reading, query, selected, onSelect, onRemake, rema
     {!shown && <p className="browser-empty">{needle ? 'No song matches.' : 'No song is made into a clip yet: File › Export Song… makes the selected task\'s song one.'}</p>}
     {remade?.ok && <p className="browser-empty" role="status">{remade.note}</p>}
     {remade && !remade.ok && <Refusal className="native-error" said="Remake did not make the song again." error={remade.error} />}
-    {previewHost && selected && createPortal(<div className="place-preview" role="status" data-song-preview={selected.clipRef ?? selected.name}>
-      <p>{songWords(selected)}</p>
-      <button type="button" className="mode-browser-row" data-action="remake-song" onClick={() => onRemake(selected)}
-        data-i={`Remake|Makes ${selected.name} again from the set it names, as that set now stands. A render is never edited in place.`}>Remake</button>
-    </div>, previewHost)}
+    {previewHost && selected && createPortal(songPreview(selected, onRemake), previewHost)}
   </section>
+}
+
+/** The selected song's preview: what it was made from and where its set stands, Remake, and Routine… refused in its words. Pure. */
+export function songPreview(selected: SongRow, onRemake: (row: SongRow) => void) {
+  return <div className="place-preview" role="status" data-song-preview={selected.clipRef ?? selected.name}>
+    <p>{songWords(selected)}</p>
+    <button type="button" className="mode-browser-row" data-action="remake-song" onClick={() => onRemake(selected)}
+      data-i={`Remake|Makes ${selected.name} again from the set it names, as that set now stands. A render is never edited in place.`}>Remake</button>
+    <button type="button" className="mode-browser-row" data-action="song-routine" disabled title={ROUTINE_SONG}
+      data-i={`Routine…|${ROUTINE_SONG}`}>Routine…</button>
+  </div>
 }
 
 /** The Songs category's body: Factory's reading, read again when a song is exported, remade or dropped. */
