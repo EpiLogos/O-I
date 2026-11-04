@@ -105,6 +105,9 @@ export const LOADS_LATER = [
   /\/src\/settings\/native-inventory\.capture\.json$/, /\/src\/settings\/development\.ts$/,
   // the rail-born devices' publisher (App.tsx draws it when the rail first shows; their ids and claims are widgets/railDeviceIds.ts)
   /\/src\/widgets\/railDevices\.tsx$/,
+  // the bindings of Factory's and AIKit's rail tiles: the rail claims them by id (agent/devices/railTileIds.ts) and the publisher that
+  // reads their owners loads when the rail first draws (agent/devices/AgentRailDevices.tsx)
+  /\/src\/agent\/devices\/(messagesBinding|receiptBindings|workcellRackBinding)\.ts$/,
   // a catalogue device's design (frame/devices/designs.ts requestDesign)
   /\/src\/inhabitants\/catalogue\/panels\/[^/]+__[^/]+\.tsx$/, /\/src\/frame\/devices\/designsLoad\.ts$/,
   // the search line (central/SearchLineHost.tsx loads it when ⌘K or an @ first opens it; its door is central/searchLineDoor.ts)

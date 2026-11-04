@@ -45,6 +45,7 @@ import {FRAME_RING, familyFaceDevice} from './mainTrackBindings'
 import {SEAT_UNREAD, seatReading, type WorkcellAnswer} from './workcellBindings'
 import {NO_RUN, instancesOf, materialWorldOf, reconciledOf, servicesOf, worldsOf, type ListedWorld} from './workcellMaterial'
 import type {WorkcellWriteRequest} from '../../../../../../desktop/cradle/src/kernel/types'
+import {WORKCELL_RACK_ID} from './railTileIds'
 
 type Obj = Record<string, unknown>
 const isObj = (value: unknown): value is Obj => !!value && typeof value === 'object' && !Array.isArray(value)
@@ -52,8 +53,7 @@ const str = (value: unknown): string | undefined => (typeof value === 'string' &
 const num = (value: unknown): number | undefined => (typeof value === 'number' && Number.isFinite(value) ? value : undefined)
 
 export const WORKCELL_RACK_DESIGN = 'workcell:workcell'
-/** Workcell's instrument on the door: one device, drawn full in a pane and as the Workcells tile on the rail. */
-export const WORKCELL_RACK_ID = 'factory:workcell'
+export {WORKCELL_RACK_ID} from './railTileIds'
 
 /** Workcell's instrument as a device of the runtime: the Workcell family's admitted `workcell` face (workcellFamilyManifest.ts — an
  * instrument born in a pane, on no chain), so designKey('workcell', 'workcell') is the design's id by the family's own declaration. Null

@@ -4,10 +4,7 @@
 import type {IconName} from '../inhabitants/sdk/Icon'
 import type {AgentTileId} from './AgentShellContext'
 import {claimRailWidget} from '../frame/widgets/deviceWidgets'
-import {FRAMES_ID} from './devices/mainTrackBindings'
-import {APPROVALS_ID, LEDGER_ID} from './devices/receiptBindings'
-import {MESSAGES_ID} from './devices/messagesBinding'
-import {WORKCELL_RACK_ID} from './devices/workcellRackBinding'
+import {APPROVALS_ID, FRAMES_ID, LEDGER_ID, MESSAGES_ID, WORKCELL_RACK_ID} from './devices/railTileIds'
 
 // Messages is the rail's first device (DLW §19.24 "born on the widget rail, and opens full in a pane, in every mode"): its tile draws the
 // device's own Widget view on its binding (agent/devices/messagesBinding.ts: AIKit's population, the Agency gateway's mark).

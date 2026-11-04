@@ -31,6 +31,7 @@ import {inhabitantManifest} from '../../inhabitants/manifest'
 import {gatewayDisclosed, type AgentChainReading} from './agentChainDevices'
 import {gatewayValues, holdView, viewHolds, type ChainHolds, type GatewayInput} from './designBindings'
 import {refusalWords} from './ownerRoutes'
+import {FRAMES_ID} from './railTileIds'
 
 type Obj = Record<string, unknown>
 const isObj = (value: unknown): value is Obj => !!value && typeof value === 'object' && !Array.isArray(value)
@@ -40,8 +41,7 @@ const str = (value: unknown): string | undefined => (typeof value === 'string' &
 export const GATEWAYS_RACK_ID = 'factory:main:gateways'
 export const AGENCY_GATEWAY_ID = 'factory:main:agency-gateway'
 export const EXPERIMENT_ID = 'factory:main:experiment'
-/** The rail's Frames tile: the Gateway's widget on the frames' binding (§19.6). */
-export const FRAMES_ID = 'factory:frames'
+export {FRAMES_ID} from './railTileIds'
 /** The design the Frames tile draws: the Gateway's (actuation__gateway.tsx, its Frames page and its tile of the last eleven frames). */
 export const FRAMES_DESIGN = 'actuation:gateway'
 

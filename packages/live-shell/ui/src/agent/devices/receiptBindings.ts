@@ -50,6 +50,7 @@ import {holdView, viewHolds, type ChainHolds} from './designBindings'
 import {familyFaceDevice} from './mainTrackBindings'
 import {pendingPermissions, verbStanding} from './threadBinding'
 import {unitAnswer, unitRows, waitingDecisions, type UnitDecisionsRead} from './unitDecisions'
+import {LEDGER_ID, APPROVALS_ID} from './railTileIds'
 
 type Obj = Record<string, unknown>
 const isObj = (value: unknown): value is Obj => !!value && typeof value === 'object' && !Array.isArray(value)
@@ -57,8 +58,7 @@ const str = (value: unknown): string | undefined => (typeof value === 'string' &
 
 export const LEDGER_DESIGN = 'software-factory:ledger'
 export const APPROVALS_DESIGN = 'software-factory:approvals'
-export const LEDGER_ID = 'factory:main:ledger'
-export const APPROVALS_ID = 'factory:main:approvals'
+export {LEDGER_ID, APPROVALS_ID} from './railTileIds'
 export const RECEIPT_DEVICE_IDS: readonly string[] = [LEDGER_ID, APPROVALS_ID]
 
 export const receiptDevices = (): {ledger: DeviceInstance | null; approvals: DeviceInstance | null} => ({
