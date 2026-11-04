@@ -10,17 +10,22 @@
 // - a session's Delete takes it off the set: the SessionSpace's own detach-agent-session on the Project's spaces that hold it (kernel
 //   agency.rs session_detach).
 // After each act the readings it moved are asked again: the session's task and settings, and the agency's sessions.
-import {useMemo} from 'react'
+// A group's Model and Effort macros (§19.15) read and select each chain's session's model through AIKit's encounter model-read and
+// model-select (the cradle's route: encounter/nativeModel.ts), and the rack reads every chain again once one is selected.
+import {useEffect, useMemo, useState} from 'react'
 import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
+import {encounter} from '../../../../../desktop/cradle/src/encounter/client'
+import {readNativeModel, type NativeModelReading} from '../../../../../desktop/cradle/src/encounter/nativeModel'
 import type {KernelOp, KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 import {readTaskOf, settingsReadingEntry, taskReadingEntry, useSettingsAnswers} from '../owners/readers'
-import {tellOwnerChanged} from '../owners/notices'
+import {onOwnerChanged, tellOwnerChanged} from '../owners/notices'
 import {FACTORY_BLANK_PURPOSE, withFactoryTaskActs, type FactoryControlReceipt, type FactoryTaskActs} from '../timeline/factoryTrackAdapter'
 import type {UseModeTracks} from '../frame/tracks/modeTracks'
 import {useAgencySessions} from './useAgencySessions'
 import {projectOfSession} from './worldScope'
 import {newTaskRef} from './clipBinding'
 import {writeSessionSettings} from './sessionSettings'
+import type {ChainModelReading, SessionModelSelect} from './devices/sessionChainBindings'
 
 const text = (cause: unknown) => cause instanceof Error ? cause.message : String(cause)
 
@@ -51,6 +56,42 @@ export async function chainListAct(transport: KernelTransportStatus,
   try { return await act(transport, op) } finally {
     tellOwnerChanged({topic: 'agency', cause, ...('agent_session' in op ? {agentSession: op.agent_session} : {})})
   }
+}
+
+/** A session's model as its harness reports it: AIKit's encounter model-read, bound to the native session it names. */
+export async function sessionModelRead(transport: KernelTransportStatus, project: string, session: string): Promise<NativeModelReading> {
+  const value = await encounter<unknown>(transport, project, {action: 'model-read', agent_session: session})
+  const native = (value as {native_session_id?: unknown} | null)?.native_session_id
+  if (typeof native !== 'string' || !native) throw new Error('AIKit\'s model reading names no native session: the session is not open on its harness.')
+  return readNativeModel(value, session, native)
+}
+
+/** AIKit's model select of one session (its harness's model and reasoning effort), its receipt or AIKit's refusal; the rack reads again. */
+export async function sessionModelSelect(transport: KernelTransportStatus, project: string, request: SessionModelSelect): Promise<unknown> {
+  try { return await encounter<unknown>(transport, project, request) } finally {
+    tellOwnerChanged({topic: 'agency', cause: 'a chain\'s model was selected', agentSession: request.agent_session})
+  }
+}
+
+/** Each chain's session's model as its harness reports it, by session, while `chains` stand (a group's rack): read again whenever the
+ * agency readers are told something moved. Null while none is asked. */
+export function useChainModelReadings(transport: KernelTransportStatus, chains: readonly {project: string; session: string}[] | null): ReadonlyMap<string, ChainModelReading> | null {
+  const key = chains ? chains.map(chain => `${chain.project}\u0000${chain.session}`).join('\u0001') : null
+  const [readings, setReadings] = useState<ReadonlyMap<string, ChainModelReading> | null>(null)
+  const [asked, ask] = useState(0)
+  useEffect(() => onOwnerChanged('agency', () => ask(n => n + 1)), [])
+  useEffect(() => {
+    if (!chains?.length || transport.kind === 'unavailable') { setReadings(null); return }
+    let live = true
+    void Promise.all(chains.map(async ({project, session}): Promise<[string, ChainModelReading]> => {
+      try { return [session, {status: 'answered', reading: await sessionModelRead(transport, project, session)}] } catch (error) {
+        return [session, {status: 'refused', error: text(error)}]
+      }
+    })).then(rows => { if (live) setReadings(new Map(rows)) })
+    return () => { live = false }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `key` names the chains
+  }, [transport, key, asked])
+  return readings
 }
 
 /** The bound task as AIKit's record names it now (its ref and revision), or why there is none. */

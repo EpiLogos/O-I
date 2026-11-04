@@ -175,13 +175,126 @@ test('the macros turn the one agent through its own Agent; what the Agent does n
   assert.match(binding.standing.budget.disabled, /Budget is a reading here/, 'the Agent\'s own reason')
   assert.match(binding.standing.model.disabled, /Model/, 'the Agent writes no Model here')
   await assert.rejects(() => binding.write([{key: 'budget', value: 20}]), /Budget is a reading here/)
-  // A group's macros still name the operation each chain waits for: the rack holds no member's Agent, so the Agent it is handed is not theirs.
+  // A group's macros never reach the session's own Agent: the rack holds no member's Agent, so the Agent it is handed is not theirs.
+  // REPLACED (round 861): a group's Model and Effort were missing ops. Each chain's session carries its own (AIKit's encounter model-read
+  // and model-select, through the kernel), so with no carrier handed to the rack they name that one; Budget is still a missing op.
   const crew = own.agentsetBinding({group: CREW, tracks: TRACKS, holds: bind.chainHolds()}, {agent})
-  for (const key of ['model', 'effort', 'budget']) {
-    assert.match(crew.standing[key].disabled, /missing op/, key)
-    await assert.rejects(() => crew.write([{key, value: 'high'}]), /missing op/, key)
+  for (const key of ['model', 'effort']) {
+    assert.equal(crew.standing[key].disabled, own.AGENTSET_REFUSE[key], key)
+    assert.doesNotMatch(crew.standing[key].disabled, /missing op/, key)
+    await assert.rejects(() => crew.write([{key, value: 'high'}]), error => error.message === own.AGENTSET_REFUSE[key], key)
   }
+  assert.equal(own.AGENTSET_REFUSE.model, 'Model: no carrier to AIKit\'s model select of each chain\'s session (its encounter\'s model-read and model-select, through the kernel) stands on this rack.')
+  assert.equal(own.AGENTSET_REFUSE.effort, 'Effort: no carrier to AIKit\'s model select of each chain\'s session (its encounter\'s model-read and model-select, through the kernel) stands on this rack.')
+  assert.match(crew.standing.budget.disabled, /missing op/)
+  await assert.rejects(() => crew.write([{key: 'budget', value: 20}]), /missing op/)
   assert.equal(sent.length, 1, 'no member\'s macro reached the session\'s own Agent')
+})
+
+// Each chain's session's model as its harness reports it (AIKit's encounter model-read; desktop/cradle/src/encounter/nativeModel.ts
+// NativeModelReading), and the receipt its model-select gives.
+const EFFORTS3 = [{value: 'low', name: 'Low'}, {value: 'medium', name: 'Medium'}, {value: 'high', name: 'High'}]
+const modelReading = (session, over = {}) => ({agent_session: session, native_session_id: `native/${session.split('/')[1]}`, standing: 'fixture',
+  model_observation: {current_model_id: 'sonnet', available_models: [{modelId: 'sonnet', name: 'Sonnet'}, {modelId: 'opus', name: 'Opus'}],
+    reasoning_effort: {configId: 'reasoning_effort', currentValue: 'medium', options: EFFORTS3}, standing: 'fixture'},
+  model_controls: {model_selection: true, reasoning_effort_selection: true, reason: null}, pinned_model_id: null, ...over})
+const selected = request => ({agent_session: request.agent_session, native_session_id: request.expected_native_session_id, selected: true, inference_observed: false,
+  model_observation: {current_model_id: request.provider_model_id, available_models: [], standing: 'fixture',
+    reasoning_effort: {configId: 'reasoning_effort', currentValue: request.provider_reasoning_effort ?? 'medium', options: EFFORTS3}}})
+
+test('a group\'s Model and Effort macros turn every agent of the rack, each through its own session\'s model select in AIKit (§19.15 Macros, round 861)', async () => {
+  bind.resetHolds()
+  const calls = []
+  let fail = null
+  const sessionModel = {
+    read: async ({project, agent_session}) => { calls.push(['read', project, agent_session]); return modelReading(agent_session) },
+    select: async ({project, request}) => {
+      calls.push(['select', project, request])
+      if (fail && request.agent_session === fail) throw Error('AIKit: the native session is busy with a turn')
+      return selected(request)
+    },
+  }
+  const readings = new Map([KITE, CAIRN].map(t => [t.sessionRef, {status: 'answered', reading: modelReading(t.sessionRef)}]))
+  const input = {group: CREW, tracks: TRACKS, holds: bind.chainHolds(), chainModelReadings: readings}
+  const crew = own.agentsetBinding(input, {sessionModel})
+  // The macros stand where every agent's session stands: the models every chain's harness offers, and the Model and Effort they share.
+  assert.deepEqual(JSON.parse(crew.values.models), [{id: 'sonnet', label: 'Sonnet'}, {id: 'opus', label: 'Opus'}])
+  assert.equal(crew.values.model, 'sonnet')
+  assert.equal(crew.values.effort, 'medium')
+  for (const key of ['model', 'effort']) assert.equal(crew.standing[key], undefined, `${key} turns on a group`)
+  assert.match(crew.standing.budget.disabled, /missing op/, 'Budget has no owner of a session\'s budget yet')
+  // Model: each session is read for its native session, then selected, the effort left as the harness holds it.
+  await crew.write([{key: 'model', value: 'opus'}])
+  assert.deepEqual(calls.filter(c => c[0] === 'select').map(c => c[2]), [
+    {action: 'model-select', agent_session: KITE.sessionRef, expected_native_session_id: 'native/kite', provider_model_id: 'opus'},
+    {action: 'model-select', agent_session: CAIRN.sessionRef, expected_native_session_id: 'native/cairn', provider_model_id: 'opus'},
+  ])
+  assert.deepEqual(calls.filter(c => c[0] === 'read').map(c => c[2]), [KITE.sessionRef, CAIRN.sessionRef], 'each chain read fresh before its write')
+  assert.ok(calls.every(c => c[1] === 'O-I' || c[1] === ''), 'each call in its session\'s register')
+  // Effort: the session's own model kept, its reasoning effort set.
+  calls.length = 0
+  await crew.write([{key: 'effort', value: 'high'}])
+  assert.deepEqual(calls.filter(c => c[0] === 'select').map(c => [c[2].provider_model_id, c[2].provider_reasoning_effort]), [['sonnet', 'high'], ['sonnet', 'high']])
+  // A value a chain's harness does not offer turns no chain: every chain is checked before any is written.
+  calls.length = 0
+  await assert.rejects(() => crew.write([{key: 'effort', value: 'max'}]),
+    error => error.message === 'Effort: kite\'s harness offers no Effort Max (it offers Low, Medium and High), so no chain was turned.')
+  assert.deepEqual(calls.filter(c => c[0] === 'select'), [], 'nothing was written')
+  await assert.rejects(() => crew.write([{key: 'model', value: 'haiku'}]),
+    error => error.message === 'Model: kite\'s harness does not offer haiku (it offers Sonnet and Opus), so no chain was turned.')
+  // A write that stops partway says what stands and what to press next.
+  calls.length = 0
+  fail = CAIRN.sessionRef
+  await assert.rejects(() => crew.write([{key: 'model', value: 'opus'}]),
+    error => error.message === 'Model stopped at cairn: kite now uses Opus, and cairn keeps the model it had; AIKit: the native session is busy with a turn. Turn Model again to set the rest.')
+  fail = KITE.sessionRef
+  await assert.rejects(() => crew.write([{key: 'effort', value: 'low'}]),
+    error => error.message === 'Effort stopped at kite: nothing changed, and kite and cairn keep the Effort they had; AIKit: the native session is busy with a turn. Turn Effort again to set the rest.')
+  // The Decision helper has no Agent, so no macro reaches it (chains.ts macroTurns).
+  fail = null
+  calls.length = 0
+  const helped = own.agentsetBinding({...input, helper: {model: 'kev-latest'}}, {sessionModel})
+  await helped.write([{key: 'model', value: 'opus'}])
+  assert.deepEqual(calls.filter(c => c[0] === 'select').map(c => c[2].agent_session), [KITE.sessionRef, CAIRN.sessionRef])
+  // The chain hands the rack each chain's session's model select and its readings: the encounter's own model-read and model-select, never
+  // the focused harness's Effort (shell.setEffort).
+  const chainSource = read('agent/devices/FactoryDeviceChain.tsx'), acts = read('agent/factoryTaskActs.ts')
+  assert.match(chainSource, /sessionModel: \{read: \(\{project, agent_session\}\) => sessionModelRead\(transport, project, agent_session\), select: \(\{project, request\}\) => sessionModelSelect\(transport, project, request\)\}/)
+  assert.match(chainSource, /const chainModelReadings = useChainModelReadings\(transport, macroChains\)/)
+  assert.match(chainSource, /chainModels, chainModelReadings\}, agentsetPorts\)/)
+  assert.match(acts, /encounter<unknown>\(transport, project, \{action: 'model-read', agent_session: session\}\)/)
+  assert.match(acts, /return readNativeModel\(value, session, native\)/)
+  assert.doesNotMatch(read('agent/devices/sessionChainBindings.ts'), /shell\.setEffort\(/)
+  bind.resetHolds()
+})
+
+test('a chain\'s model select is refused in its owner\'s words where its harness, its policy or its reading does not allow it (round 861)', () => {
+  const S = KITE.sessionRef
+  const select = own.sessionModelSelectOf
+  assert.deepEqual(select(modelReading(S), S, 'model', 'opus', 'kite'),
+    {action: 'model-select', agent_session: S, expected_native_session_id: 'native/kite', provider_model_id: 'opus'})
+  assert.throws(() => select(modelReading(S, {pinned_model_id: 'sonnet'}), S, 'model', 'opus', 'kite'),
+    {message: 'kite\'s model policy pins sonnet: change the policy through its owner.'})
+  assert.throws(() => select(modelReading(S, {model_controls: {model_selection: false, reasoning_effort_selection: false, reason: 'pi selects per invocation'}}), S, 'model', 'opus', 'kite'),
+    {message: 'kite\'s harness turns no Model here: pi selects per invocation'})
+  assert.throws(() => select(modelReading(S, {model_observation: null}), S, 'effort', 'high', 'kite'),
+    {message: 'kite\'s harness reports no model yet, so no Effort can be set on it.'})
+  assert.throws(() => select(modelReading('agent-session/other'), S, 'effort', 'high', 'kite'),
+    {message: 'AIKit\'s model reading of kite names another session: read it again.'})
+  // A pinned model stays: Effort sets the reasoning on the model the policy pins.
+  assert.deepEqual(select(modelReading(S, {pinned_model_id: 'sonnet'}), S, 'effort', 'low', 'kite'),
+    {action: 'model-select', agent_session: S, expected_native_session_id: 'native/kite', provider_model_id: 'sonnet', provider_reasoning_effort: 'low'})
+  // The group's macros stand on what every chain reads: a chain unread, or refused, leaves the macro's value and its models unread.
+  const readings = new Map([[KITE.sessionRef, {status: 'answered', reading: modelReading(KITE.sessionRef)}],
+    [CAIRN.sessionRef, {status: 'refused', error: 'AIKit: no native session is resident'}]])
+  const values = own.agentsetValues({group: CREW, tracks: TRACKS, holds: bind.chainHolds(), chainModelReadings: readings})
+  for (const key of ['models', 'model', 'effort']) assert.equal(values[key], undefined, key)
+  const apart = new Map([[KITE.sessionRef, {status: 'answered', reading: modelReading(KITE.sessionRef)}],
+    [CAIRN.sessionRef, {status: 'answered', reading: modelReading(CAIRN.sessionRef, {model_observation: {...modelReading(CAIRN.sessionRef).model_observation, current_model_id: 'opus'}})}]])
+  const split = own.agentsetValues({group: CREW, tracks: TRACKS, holds: bind.chainHolds(), chainModelReadings: apart})
+  assert.equal(split.model, undefined, 'the chains use different models: the macro stands at none of them')
+  assert.equal(split.effort, 'medium')
+  assert.deepEqual(JSON.parse(split.models).map(m => m.id), ['sonnet', 'opus'])
 })
 
 test('Group, on chains chosen in the list, asks Central to propose them as an agent set; Accept saves Central\'s record', async () => {

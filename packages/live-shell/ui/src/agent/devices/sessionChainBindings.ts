@@ -29,6 +29,7 @@ import {macroTurns, RACK_MACROS, type RackMacro, type RackNode} from '../../inha
 import {trackKey} from '../agentRunModel'
 import {decodeChainDrag} from '../agentChainDrag'
 import {ROOT_REGISTER} from '../worldScope'
+import type {NativeModelReading, NativeModelRequest} from '../../../../../../desktop/cradle/src/encounter/nativeModel'
 
 export const RUN_DESIGN = 'software-factory:run-device'
 export const CUSTODY_DESIGN = 'software-factory:agent-custody'
@@ -467,18 +468,23 @@ export function withCustodyAsks(scope: DesignBinding, custody: DesignBinding): D
 // (`aikit session-space drag-out`; encounter_session_drag_out), Hot-Swap seats the agent dropped on it from the browser in the chain's place
 // (`aikit session-space hot-swap`; encounter_session_hot_swap: a separately attributed session of that agent, with the chain's bench, track
 // settings and task, the old one detached last, so a session still never becomes another agent), and a Decision helper dropped under the
-// chain list becomes the space's helper (bind-decision-helper; encounter_session_decision_helper). Join is Central's set. Where no carrier
-// stands the control stands dimmed and names it.
+// chain list becomes the space's helper (bind-decision-helper; encounter_session_decision_helper). A group's Model and Effort macros turn
+// each agent chain's own session through AIKit's model select of that session (the encounter's model-read and model-select, the cradle's
+// route: encounter/nativeModel.ts), never the focused harness's Effort (shell.setEffort). Join is Central's set. Where no carrier stands
+// the control stands dimmed and names it.
 const DELEGATION = (what: string, key: string) => missing(what, `Hermes' delegation block (${key}) through the kernel: no config.set key carries it`, 'Hermes')
 /** A macro turns one setting of the Agent on every chain (§19.15 Macros); the rack holds each chain's session, never another session's Agent. */
 const MACRO = (what: string) => missing(what, `the ${what} macro turning the Agent's ${what} on every chain: the rack holds each chain's session, and no address of its Agent's ${what}`, 'Software Factory')
+/** A group's Model and Effort turn each chain's own session, through AIKit's model select of that session (the encounter's model-read, then
+ * model-select, bound to the native session the read names: desktop/cradle/src/encounter/nativeModel.ts, the cradle's own route). */
+const SESSION_MACRO = (what: string) => `${what}: no carrier to AIKit's model select of each chain's session (its encounter's model-read and model-select, through the kernel) stands on this rack.`
 export const AGENTSET_REFUSE = {
   fanOut: DELEGATION('Fan-out', 'delegation.max_concurrent_children'),
   depth: DELEGATION('Depth', 'delegation.max_spawn_depth'),
   handBack: DELEGATION('Hand-back', 'the helper\'s return form'),
   returnCap: DELEGATION('Summary cap', 'delegation.max_summary_chars'),
-  model: MACRO('Model'),
-  effort: MACRO('Effort'),
+  model: SESSION_MACRO('Model'),
+  effort: SESSION_MACRO('Effort'),
   budget: MACRO('Budget'),
   unmapped: missing('Unmap', 'keeping one chain\'s setting apart from its macro, with the rack\'s macros', 'Software Factory'),
   store: missing('Store', 'keeping where every macro stands as a variation of the rack', 'Software Factory'),
@@ -606,7 +612,17 @@ export interface AgentRackPorts {
   readonly hotSwap?: (input: {project: string; space: string; agent_session: string; agent_ref: string}) => Promise<unknown>
   /** The Decision helper: seat one session of the space as the helper that answers its agents' asks (bound), or take it off. */
   readonly decisionHelper?: (input: {project: string; space: string; bound: boolean}) => Promise<unknown>
+  /** A group's Model and Effort macros: each chain's session's model as its harness reports it, and its select of a model and effort. */
+  readonly sessionModel?: {
+    readonly read: (input: {project: string; agent_session: string}) => Promise<NativeModelReading>
+    readonly select: (input: {project: string; request: SessionModelSelect}) => Promise<unknown>
+  }
 }
+
+/** AIKit's model select of one session: the model, and the reasoning effort, the harness is asked for. */
+export type SessionModelSelect = Extract<NativeModelRequest, {action: 'model-select'}>
+/** A chain's session's model, as AIKit read it (the encounter's model-read), or why it was not. */
+export type ChainModelReading = {readonly status: 'answered'; readonly reading: NativeModelReading} | {readonly status: 'refused'; readonly error: string}
 
 /** The set's next revision by Central's own convention (`r1`, `r2`, … : central.agent-set.save refuses a revision that does not move). */
 export function nextSetRevision(revision: string): string {
@@ -635,6 +651,9 @@ export interface AgentRackInput {
   readonly soloed?: ReadonlySet<string> | null
   /** The model each session last reported using (designBindings.ts lastUsageModels, Actuation's usage records): each chain's chip. */
   readonly chainModels?: ReadonlyMap<string, string> | null
+  /** Each agent chain's session's model as its harness reports it (AIKit's encounter model-read), by session: where a group's Model and
+   * Effort macros stand, and the models its Model macro offers. */
+  readonly chainModelReadings?: ReadonlyMap<string, ChainModelReading> | null
   readonly holds: ChainHolds
 }
 
@@ -658,6 +677,11 @@ function sessionChain(track: AgentSessionTrack, nowUnixMs: number, models?: Read
  * its session last reported (Actuation's usage records), and no tool count or files are reported. */
 export function agentsetMembers(group: AgentSessionTrack, tracks: readonly AgentSessionTrack[], nowUnixMs = 0, models?: ReadonlyMap<string, string> | null): Record<string, Value>[] {
   return tracks.filter(track => isAgentChain(track, group)).map(track => sessionChain(track, nowUnixMs, models))
+}
+/** The sessions of a group's agent chains, each in its own register: what a group's Model and Effort macros read (AIKit's model-read). */
+export function agentChainSessions(group: AgentSessionTrack | null, tracks: readonly AgentSessionTrack[] | null): {project: string; session: string}[] | null {
+  if (!group?.group || !tracks) return null
+  return tracks.filter(track => isAgentChain(track, group)).map(track => ({project: track.project ?? ROOT_REGISTER, session: track.sessionRef}))
 }
 /** A session of the group's space that is an agent's chain: the space's Decision helper is listed once, as the helper (helperMember). */
 const isAgentChain = (track: AgentSessionTrack, group: AgentSessionTrack | null | undefined): boolean =>
@@ -722,10 +746,12 @@ export function agentsetValues(input: AgentRackInput): Values {
       }
     }
     if (input.helper) values[memberDeviceKey(DECISION_HELPER_ID, DECISION_HELPER_DESIGN)] = JSON.stringify(input.helper)
+    if (input.tracks) Object.assign(values, groupMacroValues(input.tracks.filter(track => isAgentChain(track, group)), input.chainModelReadings))
   }
   put(values, 'member', view.member)
   for (const key of CARD_LOCAL) put(values, key, view[key])
-  if (input.models?.length) values.models = JSON.stringify(input.models.map(id => ({id})))
+  // A lone session's Model macro offers AIKit's catalogue, as its Agent does; a group's, the models every chain's harness offers.
+  if (lone && input.models?.length) values.models = JSON.stringify(input.models.map(id => ({id})))
   const join = setRecordOf(input)?.join
   if (typeof join === 'string' && (JOINS as readonly string[]).includes(join)) values.join = join
   return values
@@ -753,10 +779,71 @@ function joinStanding(input: AgentRackInput, ports: AgentRackPorts | undefined):
   return typeof record.join === 'string' ? null : {refused: JOIN_UNSAVED(tie.ref)}
 }
 
-/** Why a macro cannot turn, or null where it turns: on a group, the operation each chain waits for (the rack holds no member's Agent); on
- * a lone session, the Agent's own word for the setting it does not write. */
+/** The Agent's Effort in the macro's words (§19.4: Low · Medium · High · Max). */
+const EFFORT_WORD: Readonly<Record<string, string>> = {low: 'Low', medium: 'Medium', high: 'High', max: 'Max'}
+const listed = (items: readonly string[]) => (items.length <= 1 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items.at(-1)}`)
+const said = (error: unknown) => (error instanceof Error ? error.message : String(error)).replace(/\.$/, '')
+
+/** Where a group's Model and Effort macros stand, from every agent chain's reading: the models every chain's harness offers (in the first
+ * chain's order), the model they all use, and the Effort they all work at in the macro's words. A chain unread or refused leaves all three
+ * unread: the rack keeps no value of its own. Pure. */
+function groupMacroValues(chains: readonly AgentSessionTrack[], readings: ReadonlyMap<string, ChainModelReading> | null | undefined): Record<string, Value> {
+  const observed = chains.map(chain => { const read = readings?.get(chain.sessionRef); return read?.status === 'answered' ? read.reading.model_observation : null })
+  if (!observed.length || observed.some(o => !o)) return {}
+  const all = observed as NonNullable<NativeModelReading['model_observation']>[]
+  const values: Record<string, Value> = {}
+  const shared = all[0]!.available_models.filter(model => all.every(o => o.available_models.some(m => m.modelId === model.modelId)))
+  if (shared.length) values.models = JSON.stringify(shared.map(model => ({id: model.modelId, label: model.name})))
+  const models = new Set(all.map(o => o.current_model_id))
+  if (models.size === 1) values.model = [...models][0]!
+  const efforts = new Set(all.map(o => o.reasoning_effort?.currentValue))
+  const effort = efforts.size === 1 ? [...efforts][0] : undefined
+  if (effort && effort in EFFORT_WORD) values.effort = effort
+  return values
+}
+
+/** AIKit's model select for one chain's session from its fresh reading: the Model macro asks for the model (the effort left as the harness
+ * holds it), the Effort macro for the reasoning effort on the model the session uses (or its policy pins). Throws in the owner's words where
+ * the harness, the session's model policy or the reading does not allow it (the cradle's own checks: nativeModel.ts select). Pure. */
+export function sessionModelSelectOf(reading: NativeModelReading, session: string, macro: 'model' | 'effort', value: string, name: string): SessionModelSelect {
+  if (reading.agent_session !== session || !reading.native_session_id) throw Error(`AIKit's model reading of ${name} names another session: read it again.`)
+  const word = MACRO_WORD[macro], observation = reading.model_observation, controls = reading.model_controls
+  if (!observation) throw Error(`${name}'s harness reports no model yet, so no ${word} can be set on it.`)
+  const base = {action: 'model-select' as const, agent_session: session, expected_native_session_id: reading.native_session_id}
+  if (macro === 'model') {
+    if (!controls?.model_selection) throw Error(`${name}'s harness turns no Model here: ${controls?.reason ?? 'it advertises no writable model selector'}`)
+    if (reading.pinned_model_id && reading.pinned_model_id !== value) throw Error(`${name}'s model policy pins ${reading.pinned_model_id}: change the policy through its owner.`)
+    if (!observation.available_models.some(model => model.modelId === value)) {
+      throw Error(`${name}'s harness does not offer ${value} (it offers ${listed(observation.available_models.map(model => model.name)) || 'none'})`)
+    }
+    return {...base, provider_model_id: value}
+  }
+  if (!controls?.reasoning_effort_selection) throw Error(`${name}'s harness turns no Effort here: ${controls?.reason ?? 'it advertises no writable reasoning effort'}`)
+  const options = observation.reasoning_effort?.options ?? []
+  if (!options.some(option => option.value === value)) {
+    throw Error(`${name}'s harness offers no Effort ${EFFORT_WORD[value] ?? value} (it offers ${listed(options.map(option => option.name)) || 'none'})`)
+  }
+  return {...base, provider_model_id: reading.pinned_model_id ?? observation.current_model_id, provider_reasoning_effort: value}
+}
+
+/** Whether AIKit's model select confirmed what was asked of this session (the cradle's own check: nativeModel.ts select). */
+function confirmSelect(receipt: unknown, request: SessionModelSelect, name: string): void {
+  const r = receipt as {agent_session?: unknown; native_session_id?: unknown; selected?: unknown; model_observation?: NativeModelReading['model_observation']} | null
+  if (!r || r.agent_session !== request.agent_session || r.native_session_id !== request.expected_native_session_id || r.selected !== true) {
+    throw Error(`AIKit's model select of ${name} did not confirm this session; its outcome is unknown, so read the rack again before you turn it`)
+  }
+  const observed = r.model_observation
+  if (observed && (observed.current_model_id !== request.provider_model_id
+    || (request.provider_reasoning_effort !== undefined && observed.reasoning_effort?.currentValue !== request.provider_reasoning_effort))) {
+    throw Error(`AIKit's model select of ${name} did not confirm what was asked; its outcome is unknown, so read the rack again before you turn it`)
+  }
+}
+
+/** Why a macro cannot turn, or null where it turns: on a group, Model and Effort turn each chain's session through AIKit's model select
+ * where its carrier stands, and Budget names the operation each chain waits for; on a lone session, the Agent's own word for the setting it
+ * does not write. */
 function macroStanding(macro: RackMacro, input: AgentRackInput, ports: AgentRackPorts | undefined): Standing | null {
-  if (!loneOf(input)) return {disabled: AGENTSET_REFUSE[macro]}
+  if (!loneOf(input)) return macro !== 'budget' && ports?.sessionModel ? null : {disabled: AGENTSET_REFUSE[macro]}
   const agent = ports?.agent, key = AGENT_KEY[macro], word = MACRO_WORD[macro]
   if (!agent) return {disabled: `${word}: the session's Agent is not bound on this chain, so the macro reaches no agent.`}
   const own = agent.standing?.[key]?.disabled
@@ -802,9 +889,43 @@ export function agentsetBinding(input: AgentRackInput, ports?: AgentRackPorts): 
     const why = macroStanding(macro, input, ports)
     if (why?.disabled) throw Error(why.disabled)
     if (value === undefined) throw Error(`${MACRO_WORD[macro]}: the macro was turned to no value.`)
+    if (!lone && macro !== 'budget') { await turnSessions(macro, value); return }
     for (const reached of macroTurns(rackNodes(input), macro, value)) {
       if (lone && reached.chain === lone.sessionRef && ports?.agent?.write) await ports.agent.write([{key: AGENT_KEY[macro], value}])
       else throw Error(AGENTSET_REFUSE[macro])
+    }
+  }
+  /** A group's Model or Effort: every agent chain the macro reaches, each through its own session's model select in AIKit. Every chain is
+   * read and checked before any is written, so a value one harness does not offer turns none; a write that stops partway says what stands
+   * and what to press next. The macro keeps no value: each session's harness holds its own. */
+  const turnSessions = async (macro: 'model' | 'effort', value: Value) => {
+    const port = ports?.sessionModel, word = MACRO_WORD[macro]
+    if (!port) throw Error(AGENTSET_REFUSE[macro])
+    if (typeof value !== 'string' || !value) throw Error(`${word}: the macro was turned to no ${macro === 'model' ? 'model' : 'Effort'}.`)
+    const chains = macroTurns(rackNodes(input), macro, value).flatMap(reached => { const chain = reached.kind === 'agent' ? chainOf(reached.chain) : null; return chain ? [chain] : [] })
+    const planned: {name: string; project: string; request: SessionModelSelect; label: string}[] = []
+    for (const chain of chains) {
+      const name = chain.agentName ?? chain.purpose ?? chain.sessionRef, project = chain.project ?? ROOT_REGISTER
+      let reading: NativeModelReading
+      try { reading = await port.read({project, agent_session: chain.sessionRef}) } catch (error) {
+        throw Error(`${word}: AIKit did not read ${name}'s model (${said(error)}), so no chain was turned.`)
+      }
+      try {
+        const request = sessionModelSelectOf(reading, chain.sessionRef, macro, value, name)
+        const label = macro === 'model' ? reading.model_observation?.available_models.find(model => model.modelId === value)?.name ?? value : EFFORT_WORD[value] ?? value
+        planned.push({name, project, request, label})
+      } catch (error) { throw Error(`${word}: ${said(error)}, so no chain was turned.`) }
+    }
+    const done: string[] = []
+    for (const [at, step] of planned.entries()) {
+      try { confirmSelect(await port.select({project: step.project, request: step.request}), step.request, step.name) } catch (error) {
+        const left = planned.slice(at).map(p => p.name), noun = macro === 'model' ? 'model' : 'Effort'
+        const now = macro === 'model' ? (done.length > 1 ? `use ${step.label}` : `uses ${step.label}`) : (done.length > 1 ? `work at Effort ${step.label}` : `works at Effort ${step.label}`)
+        const stands = done.length ? `${listed(done)} now ${now}` : 'nothing changed'
+        const keep = `${listed(left)} ${left.length > 1 ? `keep the ${noun} they had` : `keeps the ${noun} it had`}`
+        throw Error(`${word} stopped at ${step.name}: ${stands}, and ${keep}; ${said(error)}. Turn ${word} again to set the rest.`)
+      }
+      done.push(step.name)
     }
   }
   /** Solo a chain: what you attend to changes, by the chain's track (the key the views read); no owner is asked. */

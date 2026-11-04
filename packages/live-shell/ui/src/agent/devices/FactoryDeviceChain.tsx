@@ -72,7 +72,7 @@ import {
 import {agentDataI} from '../agentFidelity'
 import {fireWritePath} from '../agentNativeDispatch'
 import {harnessAgentControl, harnessIngressRule} from '../harnessAgentControl'
-import {chainListAct} from '../factoryTaskActs'
+import {chainListAct, sessionModelRead, sessionModelSelect, useChainModelReadings} from '../factoryTaskActs'
 import {RefusalCard, safeJson} from '../RefusalCard'
 import {CHAIN_DEVICE_IDS, agentChainDevices, chainDeviceId, gatewayDisclosed, rackMemberDevice, type ChainWrite} from './agentChainDevices'
 import {chainPicture, type PictureContext} from './AgentDevicePictures'
@@ -106,7 +106,7 @@ import {useAttemptTakes} from '../../owners/attemptTakes'
 import {useTaskAnswer, useWorkcellAnswer} from '../../owners/readers'
 import {usePopulationAnswer} from './usePopulationAnswer'
 import {
-  AGENTSET_DESIGN, AGENTSET_ID, agentsetBinding, custodyBinding, sessionDevices, withCustodyAsks, type AgentRackPorts, type CustodyPorts,
+  AGENTSET_DESIGN, AGENTSET_ID, agentChainSessions, agentsetBinding, custodyBinding, sessionDevices, withCustodyAsks, type AgentRackPorts, type CustodyPorts,
 } from './sessionChainBindings'
 import {APPROVALS_DESIGN, APPROVALS_ID, approvalsBinding, receiptDevices} from './receiptBindings'
 import {CARRIER_DESIGN, CARRIER_ID, carrierBinding, connectionLabels, gitBinding, planRunOf, runDemandOf, seatBinding, workcellDevices, type SeatPorts} from './workcellBindings'
@@ -528,6 +528,8 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
       dragOut: input => chainListAct(transport, {op: 'encounter_session_drag_out', ...input}, 'a chain was dragged out into a space of its own'),
       hotSwap: input => chainListAct(transport, {op: 'encounter_session_hot_swap', ...input}, 'a chain\'s agent was hot-swapped'),
       decisionHelper: input => chainListAct(transport, {op: 'encounter_session_decision_helper', ...input}, input.bound ? 'a Decision helper joined the rack' : 'the Decision helper left the rack'),
+      // A group's Model and Effort macros: each chain's session's model select in AIKit (the encounter's model-read, then model-select).
+      sessionModel: {read: ({project, agent_session}) => sessionModelRead(transport, project, agent_session), select: ({project, request}) => sessionModelSelect(transport, project, request)},
     } : {}),
   }), [transport, oneAgent, shell.setSolo])
   // The Decision helper (§19.20, T-AGENCY K5): a device of its own, a chain of the group's Agent rack in place of an Agent, on AIKit's
@@ -541,10 +543,14 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   // Each chain's chip (§19.15 the chain list): the model its session last reported, from Actuation's usage records over every session.
   const groupUsage = useActuationRead(transport, groupTrack ? {kind: 'usage-list'} : null)
   const chainModels = useMemo(() => (groupUsage.status === 'answered' ? lastUsageModels(groupUsage.value) : null), [groupUsage])
+  // A group's Model and Effort macros stand where every agent chain's session stands: its model as its harness reports it (AIKit's model-read).
+  const macroChains = useMemo(() => agentChainSessions(groupTrack, tracks), [groupTrack, tracks])
+  const chainModelReadings = useChainModelReadings(transport, macroChains)
   const agentsetDesignBinding = useMemo(() => agentsetBinding({group: groupTrack, session: loneTrack, agent: oneAgent?.values ?? null, tracks, models, holds,
     nowUnixMs: sessions?.nowUnixMs ?? 0, ...(setRef ? {set: groupSet} : {}), ...(helperStands && helperDevice ? {helper: helperDesignBinding.values} : {}), soloed: shell.soloed,
-    chainModels}, agentsetPorts),
-  [groupTrack, loneTrack, oneAgent, tracks, models, holds, sessions?.nowUnixMs, setRef, groupSet, helperStands, helperDevice, helperDesignBinding, agentsetPorts, shell.soloed, chainModels])
+    chainModels, chainModelReadings}, agentsetPorts),
+  [groupTrack, loneTrack, oneAgent, tracks, models, holds, sessions?.nowUnixMs, setRef, groupSet, helperStands, helperDevice, helperDesignBinding, agentsetPorts, shell.soloed, chainModels,
+    chainModelReadings])
   // How far each plate of a session's chain reaches (factoryPlaces.ts reachOf): the rack's chains, and the lone session's own inside it.
   const rackChains = useMemo(() => rackChainsOf(agentsetDesignBinding.values.members), [agentsetDesignBinding.values.members])
   const reachHere = (slot: FactorySlot): Reach => (place.kind === 'session' ? reachOf(slot, rackChains, loneTrack?.sessionRef) : ON_ITS_TRACK)

@@ -153,7 +153,11 @@ test('the Agentset rack: a group\'s sessions as its chains, each named by its ag
     {id: HELPER.sessionRef, name: 'anima', state: 'stalled'},
     {id: IDLE.sessionRef, name: 'Sketch', goal: 'Sketch', state: 'done'},
   ], 'only this group\'s sessions; no parent below the space is disclosed, so none is given')
-  assert.deepEqual([values.crew, values.light, values.models], ['Port crew', 'lit', JSON.stringify([{id: 'glm-5.3-flash'}])])
+  // REPLACED (round 861): a group's Model macro offered AIKit's catalogue. It turns each chain's session through its harness's own model
+  // select, whose ids are the harness's, so it offers the models every chain's harness reports (agent-rack-842.test.mjs); a group whose
+  // chains are not read offers none. The catalogue stays a lone session's, as its Agent offers it.
+  assert.deepEqual([values.crew, values.light, values.models], ['Port crew', 'lit', undefined])
+  assert.equal(own.agentsetValues({group: null, session: LEAD, tracks: TRACKS, models: ['glm-5.3-flash'], holds: bind.chainHolds()}).models, JSON.stringify([{id: 'glm-5.3-flash'}]))
   for (const key of ['fanOut', 'depth', 'handBack', 'returnCap']) assert.equal(values[key], undefined, `${key}: Hermes' delegation block, not read`)
   // REPLACED (DLW agency designs): `model` was the Subagent model, Hermes' delegation.model — §19.15 names no Subagent model; Model,
   // Effort and Budget are the rack's macros, each turning that setting of every member's Agent, and the rack holds no member's Agent.
@@ -166,9 +170,15 @@ test('the Agentset rack: a group\'s sessions as its chains, each named by its ag
   const held = own.agentsetValues({group: GROUP, tracks: TRACKS, holds: bind.chainHolds()})
   assert.equal(held.member, HELPER.sessionRef, 'the chosen member is the view\'s')
   assert.equal('device' in binding.local, false, 'no device of the chain is chosen: the Devices view shows them all')
-  for (const key of ['fanOut', 'depth', 'handBack', 'returnCap', 'model', 'effort', 'budget', 'unmapped', 'store', 'variation', 'solo', 'dev']) {
+  for (const key of ['fanOut', 'depth', 'handBack', 'returnCap', 'budget', 'unmapped', 'store', 'variation', 'solo', 'dev']) {
     assert.match(binding.standing[key].disabled, /missing op/, key)
     await assert.rejects(() => binding.write([{key, value: 1}]), /missing op/)
+  }
+  // REPLACED (round 861): a group's Model and Effort were missing ops; each chain's session carries its own (AIKit's model select), so a
+  // rack handed no carrier names that one.
+  for (const key of ['model', 'effort']) {
+    assert.equal(binding.standing[key].disabled, own.AGENTSET_REFUSE[key], key)
+    await assert.rejects(() => binding.write([{key, value: 'high'}]), error => error.message === own.AGENTSET_REFUSE[key])
   }
   // REPLACED (round 859): bench, extract and add were missing ops. AIKit carries each (the kernel's encounter_session_bench, _drag_out and
   // _attach), so a rack handed no carrier names the one that carries it. REPLACED (round 860): Hot-Swap was refused in AIKit's own law (a
