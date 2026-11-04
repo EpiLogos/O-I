@@ -41,6 +41,7 @@ import {
   windowOfKey, zoomAround, type SnapMode, type TimeRange, type WindowBand,
 } from './rulerWindow'
 import {useTracksMenu} from '../menu/TracksMenu'
+import {publishShownSpan} from './tracksDoor'
 import './tracks.css'
 
 interface Placed {clip: WorldTrackClip; start: number; end: number}
@@ -561,6 +562,10 @@ export function ArrangementRuler({set, selection, empty}: {set: WorldTrackSet; s
   // What the wheel and the pinch read, current at the event (they are bound once).
   const live = useRef({range, bounds})
   live.current = {range, bounds}
+
+  // The stretch is shared with the set it was drawn on (tracksDoor.ts), for the commands that act on the range you select.
+  useEffect(() => { publishShownSpan(span ? {set, range: span} : null) }, [span, set])
+  useEffect(() => () => publishShownSpan(null), [])
 
   // The marks' width, for the 64px floor and the wheel's pan scale (nativeArrangementTimeline.tsx:82-90).
   useEffect(() => {

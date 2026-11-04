@@ -2,8 +2,9 @@
 // the project that made it"): Factory's clips, read for every Factory source Central discloses (songClips.ts readSongs), grouped by the
 // project that keeps each. A press selects one — the browser's own selection, which the Skillset rack's Capture page takes as its "A
 // selected clip" source — and its preview at the foot of the list says what it was made from and where its set stands, with Remake, and
-// Routine…, which stands refused naming what it waits for (songClips.ts ROUTINE_SONG: no owner starts a song from a routine). A drag
-// carries the clip (SONG_CLIP_DRAG) onto a session's track, where it is one unit of that session's song with the thread form canon.
+// Routine…, which stands refused naming what it waits for (songClips.ts ROUTINE_SONG: AIKit takes the song on each run of a routine,
+// and no face here writes its Method or schedules it yet). A drag carries the clip (SONG_CLIP_DRAG) onto a session's track, where it
+// is one unit of that session's song with the thread form canon.
 // A project Factory refused says so in its words; a reading that has not come says it is reading.
 import {useEffect, useReducer, useState} from 'react'
 import {createPortal} from 'react-dom'

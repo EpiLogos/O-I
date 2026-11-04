@@ -4,11 +4,10 @@
 // that note chosen in Clip view, Repeat's press makes the song's takes through #795's take path — the set started on AIKit
 // (encounter-session-settings takes start), each take a Run Software Factory starts from the note's clip (`factory workflow perform`,
 // factory.song-take/v1, the kernel's factory_owner `workflow-perform`), and the set ended on AIKit with what Factory made, or failed in
-// Factory's words. Loop is AIKit's task executor's, which gives the agent its turn again and starts no Run of a song: Loop on a song
-// stands refused, naming that. A routine is Automations' (AIKit runs a proven Method on its schedule; Factory continues a Journey from
-// a routine's invocation into a Run that performs no song): Routine… on a song stands refused, naming what it waits for. Export Song…
-// with a session's track selected renders that track's row; THE selection holds one object, and no face selects a stretch of a song's
-// units, so a range stays the whole song.
+// Factory's words. Loop is AIKit's task executor's: Loop turned on with a song's note chosen names the song (task.loop_song), and the
+// executor makes each pass a take through Factory's perform. A routine is Automations': AIKit runs each run of a Method whose native
+// body is factory-song-take as a take; Routine… on a song stands refused, naming the face's road it waits for. Export Song… with a
+// session's track selected renders that track's row, and with a stretch selected on the Arrangement's ruler, the units that ran in it.
 // Channels: REAL — Factory's score with the dropped canon unit (tests/fixtures/factory-songs-2026-11-03.json score_after). DERIVED —
 // Factory's take receipt, in the shape factory/tests/song_take.rs pins (contract, take, unit, of, clipRef, commission's runRef), and its
 // refusal in the owner envelope. SCRIPTED — the kernel behind the bridge's fetch, AIKit's settings kept as AIKit keeps them (as
@@ -231,33 +230,54 @@ test('Repeat\'s press with a note chosen whose Run or score is not read says so 
   setViewHold(clipHostId('factory', clip), 'unit', undefined)
 })
 
-test('Loop on a song stands refused: AIKit\'s executor gives the agent its turn again and starts no Run of the song', async () => {
+test('Loop on a song makes each pass a take: Loop turned on with a song\'s note chosen names the song for AIKit\'s executor; with the task\'s own note it loops the task', async () => {
   const songs = await import('../src/agent/songClips.ts')
   const clip = await import('../src/agent/clipBinding.ts')
-  assert.match(songs.LOOP_SONG, /^Loop on a song: AIKit's task executor runs Loop by giving the agent its turn again; it starts no Run of the song — missing op: /)
-  assert.match(songs.LOOP_SONG, /factory workflow perform/)
-  const sent = []
-  const context = {transport, project, settings: reading({launch: 'trigger'}), refused: null}
+  assert.equal(songs.LOOP_SONG, undefined, 'Loop on a song no longer stands refused: AIKit\'s executor takes the song each pass')
   const score = {reading: {state: 'read', reading: REAL.score_after, target: TARGET}, rack: [], edit: async () => {}, fill: async () => {}, picks: null, dismiss: noop}
-  for (const [unit, refused] of [['release-check', true], ['eros-verify', false]]) {
-    const wiring = clip.factoryWiring({sessionRef: 'ses-eros', n: 1}, context, null, null, score, key => key === 'unit' ? unit : undefined)
-    assert.equal(typeof wiring.acts.loop, 'function')
-    const was = globalThis.fetch
-    globalThis.fetch = async (_url, init) => { sent.push(JSON.parse(init.body)); return {json: async () => ({ok: false, error: 'not here'})} }
-    try {
-      if (refused) await assert.rejects(wiring.acts.loop(true), error => error.message === songs.LOOP_SONG)
-      else await wiring.acts.loop(true).catch(() => {})
-    } finally { globalThis.fetch = was }
+  const SONG_LOOP = {state_path: TAKER, run_ref: RUN, unit: 'release-check'}
+  const loopWith = async (start, unit, value) => {
+    const kernel = scriptedKernel(start)
+    await readSettings()
+    const wiring = clip.factoryWiring({sessionRef: 'ses-eros', n: 1}, {transport, project, settings: start, refused: null}, null, null, score,
+      key => key === 'unit' ? unit : undefined)
+    await wiring.acts.loop(value)
+    return kernel.sent.filter(op => op.op === 'encounter_session_settings' && op.request).map(op => op.request)
   }
-  assert.equal(sent.filter(op => op.op === 'encounter_session_settings' && op.request).length, 1, 'only the task\'s own Loop is written; the song\'s is refused before any write')
+  assert.deepEqual(await loopWith(reading({launch: 'trigger'}), 'release-check', true), [{task: {task_ref: TASK, set: {loop: true, loop_song: SONG_LOOP}}}],
+    'the song\'s note names the canon unit each pass takes again, in the Run it stands in')
+  assert.deepEqual(await loopWith(reading({launch: 'trigger', loop_song: SONG_LOOP}), 'eros-verify', true), [{task: {task_ref: TASK, set: {loop: true, loop_song: null}}}],
+    'the task\'s own note loops the task: the song named before is taken away')
+  assert.deepEqual(await loopWith(reading({launch: 'trigger', loop_song: SONG_LOOP}), 'release-check', false), [{task: {task_ref: TASK, set: {loop: false, loop_song: null}}}],
+    'Loop off ends the song\'s loop with it')
+  assert.deepEqual(await loopWith(reading({launch: 'trigger'}), 'eros-verify', true), [{task: {task_ref: TASK, set: {loop: true}}}],
+    'with no song named before or now, Loop writes Loop alone (an AIKit before loop_song takes it)')
+})
+
+test('a song\'s note draws how many takes Factory started from it', async () => {
+  const {scoreValuesOf} = await import('../src/agent/scoreBinding.ts')
+  const reading = JSON.parse(JSON.stringify(REAL.score_after))
+  const canon = reading.units.find(unit => unit.key === 'release-check')
+  canon.takes = [{take: 1, runRef: 'run:TAKE1'}, {take: 2, runRef: 'run:TAKE2'}]
+  const drawn = JSON.parse(scoreValuesOf({state: 'read', reading, target: TARGET}, [], null).score)
+  assert.equal(drawn.units.find(unit => unit.key === 'release-check').takes, 2, 'the canon note carries Factory\'s count of its takes')
+  assert.equal(drawn.units.find(unit => unit.key === 'eros-verify').takes, undefined, 'a task\'s note has no takes of a song')
+  delete canon.takes
+  assert.equal(JSON.parse(scoreValuesOf({state: 'read', reading, target: TARGET}, [], null).score).units.find(unit => unit.key === 'release-check').takes, 0,
+    'a canon note Factory lists no take of reads none')
+  const design = await source('../src/inhabitants/catalogue/clips/factory.tsx')
+  assert.ok(/u\.takes/.test(design), 'the design draws the count on the note')
 })
 
 test('Routine… on a song stands refused naming what it waits for; Export Song… with a track selected renders that track\'s row', async () => {
   const songs = await import('../src/agent/songClips.ts')
   const rows = await import('../src/agent/SongRows.tsx')
-  assert.match(songs.ROUTINE_SONG, /^A routine runs a song: no owner starts one — /)
-  assert.match(songs.ROUTINE_SONG, /admit-routine-continuation/)
-  assert.match(songs.ROUTINE_SONG, /\(AIKit · Software Factory\)\.$/)
+  // The owner runs it (AIKit's native body factory-song-take: each run of the routine a take Factory starts); what waits is the face's
+  // road to it: the Method that binds the song, and the Routine's schedule.
+  assert.match(songs.ROUTINE_SONG, /^A routine runs a song: AIKit runs each of its runs as a take Factory starts /)
+  assert.match(songs.ROUTINE_SONG, /`factory-song-take`/)
+  assert.match(songs.ROUTINE_SONG, /missing op: .*native-method.*schedule/)
+  assert.match(songs.ROUTINE_SONG, /\(AIKit\)\.$/)
   const row = {key: 'song-maker/release-check', name: 'release-check', clipRef: 'factory-song:song-maker/release-check', path: '/walk/maker/.factory/songs/release-check.song.json',
     statePath: '/walk/maker/.factory/development-state.json', standing: 'current', units: 6, rows: 6, entry: 'development-and-knowledge.workflow.ts', importedFrom: null, why: '', clip: {}}
   // The preview (portalled into the browser's preview host) holds Remake and Routine…, the latter refused in its words.
@@ -272,6 +292,56 @@ test('Routine… on a song stands refused naming what it waits for; Export Song�
   assert.deepEqual(clip.exportChoiceOf('space:anima:ses-eros#task/1', {track}), {})
   assert.deepEqual(clip.exportChoiceOf('space:anima:ses-eros', {track: {...track, agentRef: null}}), {})
   assert.deepEqual(clip.exportChoiceOf(null, null), {})
-  assert.ok(/exportSong\(transport, sessions && sessionRef \? scored\.reading : null, exportChoiceOf\(selected\.ref, chosen\)\)/.test(await source('../src/agent/clipBinding.ts')),
+  assert.ok(/exportChoiceOf\(selected\.ref, chosen, ranged\?\.units\)/.test(await source('../src/agent/clipBinding.ts')),
     'File › Export Song… hands Factory the choice the selection makes')
+})
+
+test('Export Song… of a range: the stretch the Arrangement\'s ruler selects, shared, gives the units of the song that ran in it', async () => {
+  const songs = await import('../src/agent/songClips.ts')
+  const door = await import('../src/frame/tracks/tracksDoor.ts')
+  const clip = await import('../src/agent/clipBinding.ts')
+  const score = {state: 'read', reading: REAL.score_after, target: TARGET}
+  const unit = key => REAL.score_after.units.find(item => item.key === key)
+  // The take lanes as Factory's Arrangement lays them: each attempt's stretch, with the Run and the unit it works; one on another
+  // session's track, one a take of the song (another Run), one whose owner disclosed no admission time.
+  const lane = (id, trackId, runRef, unitRef, spans) => ({id, trackId, name: id, spans: spans.map(([start, end]) => ({start, end, label: id})), of: {runRef, unitRef}})
+  const set = {tracks: [], clips: [], columns: [], lanes: {takes: [
+    lane('a', 'space:anima:ses-eros', RUN, unit('eros-verify').unitRef, [[10, 20]]),
+    lane('b', 'space:anima:ses-logos', RUN, unit('logos-scope-plan').unitRef, [[2, 8]]),
+    lane('c', 'space:anima:ses-sophia', RUN, unit('sophia-finish').unitRef, [[40, 50]]),
+    lane('d', 'space:anima:ses-eros', 'run:TAKE1', unit('mythos-debug').unitRef, [[12, 18]]),
+    lane('e', 'space:anima:ses-eros', RUN, unit('aletheia-knowledge-return').unitRef, []),
+  ]}}
+  assert.equal(songs.unitsInSpan(null, score), null, 'no stretch selected: the whole song, or the rows')
+  assert.deepEqual(songs.unitsInSpan({set, range: {start: 5, end: 25}}, score), {units: ['logos-scope-plan', 'eros-verify']},
+    'every track\'s units of the scored Run that ran in the stretch, in the song\'s order; a take of the song is another Run')
+  assert.deepEqual(songs.unitsInSpan({set, range: {start: 0, end: 60}}, score), {units: ['logos-scope-plan', 'eros-verify', 'sophia-finish']})
+  const none = songs.unitsInSpan({set, range: {start: 25, end: 35}}, score)
+  assert.match(none.refused, /^Export Song…: no unit of the song this task's Run performs ran in the selected stretch /)
+  assert.match(none.refused, /clear it \(Esc\)/)
+  assert.deepEqual(songs.unitsInSpan({set, range: {start: 5, end: 25}}, {state: 'absent', why: 'unread'}), null, 'an unread score: Export says so itself')
+  // The choice: the units in the range, with the selected track's row when a track is selected.
+  const track = {sessionRef: 'ses-eros', agentRef: 'agent/anima-eros', group: false}
+  assert.deepEqual(clip.exportChoiceOf('space:anima:ses-eros', {track}, ['eros-verify']), {rows: ['agent/anima-eros'], units: ['eros-verify']})
+  assert.deepEqual(clip.exportChoiceOf('space:anima:ses-eros#task/1', {track}, ['eros-verify']), {units: ['eros-verify']})
+  assert.deepEqual(clip.exportChoiceOf('space:anima:ses-eros#task/1', {track}, undefined), {})
+  // The shared stretch: what the ruler publishes, read at the press.
+  door.publishShownSpan({set, range: {start: 1, end: 2}})
+  assert.deepEqual(door.shownSpanNow()?.range, {start: 1, end: 2})
+  door.publishShownSpan(null)
+  assert.equal(door.shownSpanNow(), null)
+  // Factory hears the units: the export request carries them.
+  let sent = null
+  globalThis.fetch = async (_url, init) => {
+    sent = JSON.parse(init.body)
+    return {json: async () => ({ok: false, error: JSON.stringify({kind: 'owner-refused-or-failed', message: 'scripted', operation_may_have_run: false})})}
+  }
+  const scoreWithFile = {...score, reading: {...REAL.score_after, song: {...REAL.score_after.song, file: {...REAL.score_after.song?.file, entry: 'development-and-knowledge.workflow.ts'}}}}
+  await songs.exportSong(transport, scoreWithFile, {units: ['eros-verify']})
+  assert.deepEqual(sent?.request?.units, ['eros-verify'], JSON.stringify(sent))
+  // The ruler feeds the stretch with the set it was drawn on, and the take lanes carry what each take works.
+  assert.match(await source('../src/frame/tracks/ArrangementRuler.tsx'), /publishShownSpan\(span \? \{set, range: span\} : null\)/)
+  assert.match(await source('../src/timeline/factoryTrackAdapter.ts'), /of: \{runRef: take\.runRef, unitRef: take\.unitRef \?\? null\}/)
+  const binding = await source('../src/agent/clipBinding.ts')
+  assert.match(binding, /unitsInSpan\(shownSpanNow\(\), sessions && sessionRef \? scored\.reading : null\)/)
 })

@@ -15,9 +15,10 @@
 // A constellation dropped on a session's track makes the session's task of it (makeTaskOf, the maker the Factory set carries: taskMaker).
 // A song's clip dropped there (Material › Songs, O-I #844) is one unit of the song the session's Run performs, with the thread form canon
 // (songClips.ts dropSong); File › Export Song… makes the selected task's song one clip (songClips.ts exportSong, answered here while
-// Factory's Clip view stands), and with a session's track selected, that track's row of it (exportChoiceOf). Loop with a song's note
-// chosen stands refused (songClips.ts LOOP_SONG): AIKit's executor gives the agent its turn again and starts no Run of the song; Repeat
-// makes the song's takes (frame/tracks/useFactoryTracks.ts repeatPress).
+// Factory's Clip view stands), and with a session's track selected, that track's row of it, with a stretch selected on the
+// Arrangement's ruler, the units that ran in it (exportChoiceOf, songClips.ts unitsInSpan). Loop turned on with a song's note chosen
+// names the song for AIKit's executor, which makes each pass a take of it (songClips.ts loopSongChange); Repeat makes the song's
+// takes (frame/tracks/useFactoryTracks.ts repeatPress).
 // Every per-task setting writes through its seam in agent/devices/taskBindings.ts TASK_SEAMS, against the settings' standing
 // revision. The Intent panel (§19.1, the design's D3 panel) has no reading a kernel route reaches: its keys stand absent and its writes
 // refused, each with the operation it waits for (INTENT_ABSENT, INTENT_REFUSED). Of the Launch panel, Compare and the takes a Repeat made
@@ -59,8 +60,9 @@ import {eventsForSession, trackKey, type AgentSessionTrack, type TaskClip, type 
 import {TASK_SEAMS, type TaskAddress, type TaskSeamContext, type TaskSetting} from './devices/taskBindings'
 import {MENU_ACT} from '../native/openStudio'
 import {sayOnInfoLine} from '../frame/devices/deviceHost'
-import {canonNoteOf, dropSong, exportSong, LOOP_SONG, SONG_CLIP_DRAG, songOfPayload, type ExportChoice} from './songClips'
-import {clipValuesOfSettings, settingsRefusal, SETTINGS_RESULT} from './sessionSettings'
+import {canonNoteOf, dropSong, exportSong, loopSongChange, SONG_CLIP_DRAG, songOfPayload, unitsInSpan, type ExportChoice} from './songClips'
+import {shownSpanNow} from '../frame/tracks/tracksDoor'
+import {clipValuesOfSettings, settingsRefusal, SETTINGS_RESULT, SETTINGS_WHY, writeSessionSettings} from './sessionSettings'
 
 /** The register a session's settings are read in: the one its world-wide agency read listed it in (AgentSessionsProvider.tsx rows,
  * agent/worldScope.ts) — '' the root register, else its project. */
@@ -84,12 +86,13 @@ export function factoryTaskOf(ref: string | null, tracks: readonly AgentSessionT
 }
 
 /** What Export Song… renders of the selection (manual §10.9: "the song, or the tracks and the range you select"): a session's track
- * selected, that track's row (its agent's, as the score draws its rows); a task selected, or a track naming no agent, the whole song.
- * THE selection holds one object and no face selects a stretch of the song's units, so a range is never chosen here. Pure. */
-export function exportChoiceOf(ref: string | null, chosen: {track: Pick<AgentSessionTrack, 'agentRef'>} | null): ExportChoice {
-  if (!ref || !chosen || parseFactoryTaskRef(ref)) return {}
+ * selected, that track's row (its agent's, as the score draws its rows); a task selected, or a track naming no agent, the whole song;
+ * and with a stretch selected on the Arrangement's ruler, the units of the song that ran in it (songClips.ts unitsInSpan). Pure. */
+export function exportChoiceOf(ref: string | null, chosen: {track: Pick<AgentSessionTrack, 'agentRef'>} | null, units?: readonly string[]): ExportChoice {
+  const range = units?.length ? {units} : {}
+  if (!ref || !chosen || parseFactoryTaskRef(ref)) return range
   const agent = chosen.track.agentRef
-  return typeof agent === 'string' && agent ? {rows: [agent]} : {}
+  return typeof agent === 'string' && agent ? {rows: [agent], ...range} : range
 }
 
 /** One row of the design's log (factory.tsx Entry): at seconds from the task's start, the owner's own kind as the tool, its words; a
@@ -359,19 +362,27 @@ export const SOURCE_UNKEPT = 'The task\'s source is not read: the AIKit installe
 export function factoryWiring(task: TaskAddress | null, context: TaskSeamContext | null = null, returned: ReturnedPort | null = null,
   plan: PlanPort | null = null, score: ScorePort | null = null, choice: (key: string) => Value | undefined = () => undefined): ClipWiring {
   return withScore(withPlan(withReturned(withMadeOf(taskWiring(task, context), taskSourceOf(task, context)), task, returned), planPortOf(task, plan)),
-    scorePortOf(task, score), choice)
+    scorePortOf(task, score), choice, task && context ? {task, context} : null)
 }
 
 /** The score's keys on the wiring (agent/scoreBinding.ts scoreWiring): read from Factory, its edits Factory's, Fill heads AIKit's.
- * Loop turned on with a song's note chosen (a canon unit of the score) is refused before any write: Loop is AIKit's executor's, which
- * gives the agent its turn again and starts no Run of the song (songClips.ts LOOP_SONG). */
-function withScore(wiring: ClipWiring, score: ScorePort | null, choice: (key: string) => Value | undefined): ClipWiring {
+ * Loop turned on with a song's note chosen (a canon unit of the score) names that song on AIKit, whose task executor makes each of
+ * the loop's passes a take of it (songClips.ts loopSongChange); Loop off, or on with the task's own note, takes the song away. */
+function withScore(wiring: ClipWiring, score: ScorePort | null, choice: (key: string) => Value | undefined,
+  seat: {task: TaskAddress; context: TaskSeamContext} | null): ClipWiring {
   const own = scoreWiring(score, choice)
   const acts: Record<string, (value: Value) => Promise<void>> = {...wiring.acts, ...own.acts}
   const loop = wiring.acts.loop
-  if (loop) acts.loop = async value => {
-    if (value === true && score?.reading.state === 'read' && canonNoteOf(score.reading.reading, choice('unit'))) throw new Error(LOOP_SONG)
-    return loop(value)
+  if (loop && seat) acts.loop = async value => {
+    const read = score?.reading.state === 'read' ? score.reading : null
+    const unit = choice('unit')
+    const song = value === true && read && typeof unit === 'string' && canonNoteOf(read.reading, unit)
+      ? {state_path: read.target.statePath, run_ref: read.target.runRef, unit} : null
+    const change = loopSongChange(seat.context.settings, value, song)
+    if (!change) return loop(value)
+    if ('refused' in change) throw new Error(change.refused)
+    if (seat.task.n !== 1) throw new Error(SETTINGS_WHY.oneTask)
+    await writeSessionSettings(seat.context.transport, seat.context.project, seat.task.sessionRef, change.change)
   }
   return {
     reads: {...wiring.reads, ...own.reads},
@@ -556,7 +567,12 @@ export function useFactoryClip(): ClipBinding | null {
   // File › Export Song… (menus.rs `file.export.song`; App.tsx hands it to the mode that stands as MENU_ACT): the song the selected task's
   // Run performs, made one clip by Factory; its answer, or its refusal, on the Info line.
   const exported = useRef<() => Promise<WorldActionReceipt>>(async () => ({ok: false, error: ''}))
-  exported.current = () => exportSong(transport, sessions && sessionRef ? scored.reading : null, exportChoiceOf(selected.ref, chosen))
+  exported.current = async () => {
+    // The range: the stretch the Arrangement's ruler selects at the press (frame/tracks/tracksDoor.ts), as the units that ran in it.
+    const ranged = unitsInSpan(shownSpanNow(), sessions && sessionRef ? scored.reading : null)
+    if (ranged && 'refused' in ranged) return {ok: false, error: ranged.refused}
+    return exportSong(transport, sessions && sessionRef ? scored.reading : null, exportChoiceOf(selected.ref, chosen, ranged?.units))
+  }
   useEffect(() => {
     const act = (event: Event) => {
       if ((event as CustomEvent<{id?: unknown}>).detail?.id !== 'file.export.song') return

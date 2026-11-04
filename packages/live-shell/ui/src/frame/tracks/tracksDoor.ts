@@ -17,3 +17,13 @@ const subscribe = (listener: () => void) => { listeners.add(listener); return ()
 export function useShownTracks(): WorldTrackSet | null {
   return useSyncExternalStore(subscribe, () => shown, () => shown)
 }
+
+/** The stretch the Arrangement's ruler selects (shift-click from the insert marker), with the set it was drawn on: its ruler's units
+ * are that set's. The ruler keeps the stretch as its own presentation and publishes it here, so a command that acts on "the range you
+ * select" (manual §10.9) reads it at its press — File › Export Song… renders the units that ran in it (agent/songClips.ts unitsInSpan). */
+export interface ShownSpan {readonly set: WorldTrackSet; readonly range: {readonly start: number; readonly end: number}}
+let span: ShownSpan | null = null
+/** The ruler publishes its stretch (null when none is selected, or the ruler leaves). */
+export function publishShownSpan(next: ShownSpan | null): void { span = next }
+/** The stretch selected now, read at a command's press. */
+export function shownSpanNow(): ShownSpan | null { return span }

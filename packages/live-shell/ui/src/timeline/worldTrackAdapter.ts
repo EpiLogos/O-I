@@ -116,6 +116,9 @@ export interface WorldTakeLane {
   spans: readonly {start: number; end: number; label: string}[];
   /** This take stands, as the owner reports it. */
   standing?: boolean;
+  /** What the take works, in its owner's refs, where the owner names them (the run the take is of and the unit of work it does), so a
+   * stretch of the ruler reads as the units that ran in it. */
+  of?: {readonly runRef: string; readonly unitRef: string | null};
 }
 /** A stretch of a track's main lane and the take it came from (Live: "the main lane shows which take each stretch came from"). */
 export interface WorldCompStretch {

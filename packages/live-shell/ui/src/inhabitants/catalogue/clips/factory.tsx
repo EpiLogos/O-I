@@ -85,6 +85,8 @@ interface Unit {
   readonly key: string; readonly row: string; readonly deps?: readonly string[]; readonly len?: number; readonly wave?: string; readonly proposed?: boolean
   readonly heads?: Heads; readonly picks?: Heads; readonly concern?: string; readonly returns?: string; readonly sources?: readonly string[]; readonly success?: readonly string[]
   readonly may?: readonly string[]; readonly stop?: string; readonly escalate?: string; readonly song?: Score
+  /** A canon note's takes: the Runs Factory started from it. */
+  readonly takes?: number
 }
 interface Join {readonly key: string; readonly waits: readonly string[]; readonly releases: readonly string[]; readonly join?: 'all' | 'first'}
 interface Wave {readonly id: string; readonly name: string; readonly state?: string}
@@ -179,9 +181,12 @@ function Notes(p: ClipProps) {
     const pos = at.get(u.key) ?? {at: 0, len: 1}, f = u.heads?.CFP
     const inner = u.song ? (() => { const l = laid(u.song!), n = Math.max(1, u.song!.rows.length)
       return u.song!.units.map(x => { const q = l.at.get(x.key) ?? {at: 0, len: 1}; return [q.at / l.end, q.len / l.end, u.song!.rows.findIndex(r => r.id === x.row) / n] as const }) })() : undefined
-    return {id: u.key, lane: u.row, at: pos.at, len: pos.len, label: `${u.key}${f && f !== 'CFP0' ? ` · ${formWord(f)?.toLowerCase()}` : ''}`,
+    const takes = u.takes ? ` · ${u.takes} take${u.takes === 1 ? '' : 's'}` : ''
+    return {id: u.key, lane: u.row, at: pos.at, len: pos.len, label: `${u.key}${f && f !== 'CFP0' ? ` · ${formWord(f)?.toLowerCase()}` : ''}${takes}`,
       tone: hl !== 'none' && f === hl ? 'accent' : u.key === own && !inside ? 'green' : 'value', dashed: u.proposed, inner,
-      does: [`${u.key}, by ${score.rows.find(r => r.id === u.row)?.name ?? u.row}`, u.concern, f ? `${formWord(f)}.` : undefined, u.proposed ? 'Proposed: it waits for you to accept it.' : undefined].filter(Boolean).join(' · ')}
+      does: [`${u.key}, by ${score.rows.find(r => r.id === u.row)?.name ?? u.row}`, u.concern, f ? `${formWord(f)}.` : undefined,
+        u.takes ? `${u.takes} take${u.takes === 1 ? '' : 's'}: the Runs of the song Repeat, Loop or a routine started from it.` : undefined,
+        u.proposed ? 'Proposed: it waits for you to accept it.' : undefined].filter(Boolean).join(' · ')}
   })
   const waveSpan = (w: Wave) => {
     const mine = score.units.filter(u => u.wave === w.id && u.heads?.CFP !== 'CFP4').map(u => at.get(u.key)).filter((q): q is {at: number; len: number} => !!q)

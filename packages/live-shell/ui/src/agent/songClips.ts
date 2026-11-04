@@ -4,7 +4,8 @@
 // where it came from"). Everything here is Software Factory's (factory song_clip.rs, workflow-sdk/README.md "Songs: one clip, made
 // again, used whole"), reached through the kernel's factory_owner:
 //   - Export Song… — `factory workflow export <state> <entry>` (factory.song-clip/v1, kind `workflow-export`): the song the selected
-//     task's Run performs, from its file under the project root (the score names it, scoreBinding.ts), rendered once into one clip.
+//     task's Run performs, from its file under the project root (the score names it, scoreBinding.ts), rendered once into one clip; with a
+//     stretch selected on the Arrangement's ruler, the units of it that ran there (unitsInSpan, `--units`).
 //   - Material › Songs — `factory workflow songs <state>` for every Factory source Central discloses (factory.song-clips/v1, gathered by
 //     the kernel as oi.factory-songs/v1, kind `workflow-songs-read`), grouped by the project that keeps each clip, each with whether its
 //     set has moved since it was rendered.
@@ -19,10 +20,13 @@
 //     on AIKit (encounter-session-settings takes start), each take a Run Factory starts from the note's clip (`factory workflow perform
 //     <state> <run> <unit>`, factory.song-take/v1, kind `workflow-perform`: the clip's set as it was rendered, commissioned as the
 //     session's Run was), and the set ended on AIKit with what Factory made, or failed in Factory's words (songTakes).
-//   - Loop — AIKit's task executor's, which gives the agent its turn again and starts no Run of a song: Loop on a song stands refused
-//     (LOOP_SONG).
-//   - A routine — Automations' (AIKit runs a proven Method on its schedule; Factory continues a Journey from a routine's invocation into
-//     a Run that performs no song): Routine… on a song stands refused (ROUTINE_SONG).
+//   - Loop — AIKit's task executor's: Loop turned on with a song's note chosen names that canon unit for the executor
+//     (encounter-session-settings task.loop_song, loopSongChange), which makes each pass a take — Factory starts a Run of the song
+//     (`factory workflow perform`) and the pass's turn names it; a take Factory refuses ends the loop, and the settings say so
+//     (task.loop_pass).
+//   - A routine — Automations': AIKit runs a proven Method on its schedule, and a Method whose native body is `factory-song-take`
+//     (aikit routine_native.rs, bound to the canon unit in its Run) makes each run a take Factory starts; the face has no road to write
+//     that Method or schedule its Routine yet, so Routine… on a song stands refused, naming both (ROUTINE_SONG).
 // Pure, apart from the kernel calls and the selection.
 import {useSyncExternalStore} from 'react'
 import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
@@ -35,6 +39,7 @@ import {factoryOwnerWrite, refusalWords} from './devices/ownerRoutes'
 import {EDIT_REQUEST, readScore, type ScoreReading} from './scoreBinding'
 import {SETTINGS_WHY, TAKES_WHY, writeSessionSettings} from './sessionSettings'
 import {planTargetOf, type PlanCall, type PlanTarget} from './wavePlan'
+import type {ShownSpan} from '../frame/tracks/tracksDoor'
 
 /** Factory's clip of a song, a project's clips, and the kernel's gathering of every disclosed project's. */
 export const SONG_CLIP = 'factory.song-clip/v1'
@@ -150,6 +155,21 @@ export const exportRequest = (statePath: string, entry: string, choice: ExportCh
     ...(choice.units?.length ? {units: choice.units} : {})})
 export const remakeRequest = (statePath: string, name: string) => ({kind: 'workflow-remake', state_path: statePath, name})
 
+/** The range Export Song… renders (manual §10.9: "the song, or the tracks and the range you select"): the units of the song the task's
+ * Run performs that ran in the stretch the Arrangement's ruler selects — each take lane whose stretch meets it, on any track, that works
+ * a unit of that Run (a take of the song is another Run, with units of its own), in the song's order. Null when no stretch is selected or
+ * the score is unread (Export says so itself); refused, in words, when none of the song's units ran there. Pure. */
+export function unitsInSpan(span: ShownSpan | null, score: ScoreReading | null): {units: string[]} | {refused: string} | null {
+  if (!span || score?.state !== 'read') return null
+  const {start, end} = span.range
+  const ran = new Set((span.set.lanes?.takes ?? [])
+    .filter(lane => lane.of?.runRef === score.target.runRef && lane.of.unitRef && lane.spans.some(piece => piece.start <= end && piece.end >= start))
+    .map(lane => lane.of!.unitRef!))
+  const units = list(score.reading.units).map(object).filter(unit => ran.has(String(unit?.unitRef))).map(unit => text(unit?.key)).filter((key): key is string => !!key)
+  return units.length ? {units} : {refused: 'Export Song…: no unit of the song this task\'s Run performs ran in the selected stretch of the Arrangement, '
+    + 'so there is no range of it to render: select the stretch where its units ran, or clear it (Esc) to export the whole song.'}
+}
+
 export const EXPORT_NO_SCORE = 'Export Song…: select a task on a session\'s track whose Run Factory reads — the song exported is the one its Run performs.'
 const songsMoved = () => tellOwnerChanged({topic: 'temporal', cause: 'a song was made into a clip, remade or dropped: Material\'s songs moved'})
 
@@ -237,12 +257,27 @@ export const performRequest = (target: PlanTarget, unit: string) =>
 
 export const CANON_VARIES = 'A song\'s takes are its Runs, each the song as its clip renders it: Repeat varies nothing in them. Set Variable to '
   + 'Condition with no levels, and Repeats to the number of takes.'
-export const LOOP_SONG = 'Loop on a song: AIKit\'s task executor runs Loop by giving the agent its turn again; it starts no Run of the song — '
-  + 'missing op: the executor\'s loop run as a take of the song (`factory workflow perform`, the kernel\'s factory_owner workflow-perform) '
-  + '(AIKit). Repeat makes the song\'s takes.'
-export const ROUTINE_SONG = 'A routine runs a song: no owner starts one — AIKit\'s routines run a proven Method on their schedule, and Factory '
-  + 'continues a Journey from a routine\'s invocation into a Run that performs no song (`factory development admit-routine-continuation`); '
-  + 'missing op: a routine whose run is a take of the song (`factory workflow perform` from the routine\'s invocation) (AIKit · Software Factory).'
+export const ROUTINE_SONG = 'A routine runs a song: AIKit runs each of its runs as a take Factory starts (`factory workflow perform`), when its '
+  + 'proven Method\'s native body is `factory-song-take` bound to the canon unit in its Run, and the schedule is the routine\'s; nothing here writes '
+  + 'that Method or schedules it — missing op: a capture of the song\'s note that writes the Method\'s native-method song binding (the capture road '
+  + 'writes a Method\'s text only), and a schedule for its Routine (no `aikit routine` verb prepares one) (AIKit).'
+
+/** The song Loop's passes take again (AIKit's encounter-session-settings task.loop_song): the canon unit, in the Run it stands in. */
+export interface LoopSong {readonly state_path: string; readonly run_ref: string; readonly unit: string}
+
+/** Loop's write when a song is in play (manual §19.1 Songs: "It comes round again by Loop"): Loop on with a song's note chosen names
+ * the song, so AIKit's executor makes each pass a take of it; Loop off, or on with the task's own note, takes a song named before away.
+ * Null where no song is named now or before — the task's own Loop, written as it always was (an AIKit before loop_song takes it). */
+export function loopSongChange(reading: EncounterSessionSettingsReading | null, on: unknown, song: LoopSong | null):
+  {change: {task: {task_ref: string; set: Record<string, unknown>}}} | {refused: string} | null {
+  const task = reading?.task
+  const named = (task as {loop_song?: unknown} | null | undefined)?.loop_song
+  if (!song && (named === null || named === undefined)) return null
+  if (!reading) return {refused: SETTINGS_WHY.reading}
+  if (!task) return {refused: SETTINGS_WHY.noTask}
+  if (typeof on !== 'boolean') return {refused: 'Loop is on or off.'}
+  return {change: {task: {task_ref: task.task_ref, set: {loop: on, loop_song: on ? song : null}}}}
+}
 
 /** The unit a note's key names in Factory's score when it is a song (Factory's `form: canon`, its `songClip`), else null. Pure. */
 export function canonNoteOf(reading: Record<string, unknown> | null | undefined, key: unknown): Record<string, unknown> | null {

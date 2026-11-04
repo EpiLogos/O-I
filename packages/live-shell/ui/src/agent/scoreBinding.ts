@@ -134,11 +134,12 @@ export function songScoreOf(song: unknown, depth = 4): Record<string, unknown> |
 }
 
 /** A canon unit (Factory's `form: canon` in a score, a `songClip` inside a clip's render) stands with the thread form canon, its song
- * inside it. Pure. */
+ * inside it, and how many takes Factory started from it (the score's `takes`: Repeat's, Loop's and a routine's Runs of the song,
+ * O-I #844). Pure. */
 function canonOf(unit: Record<string, unknown>, depth: number): Record<string, unknown> {
   if (unit.form !== 'canon' && !text(unit.songClip)) return {}
   const song = depth >= 0 ? songScoreOf(unit.song, depth) : null
-  return {heads: {...(object(unit.heads) ?? {}), CFP: 'CFP5'}, ...(song ? {song} : {})}
+  return {heads: {...(object(unit.heads) ?? {}), CFP: 'CFP5'}, ...(song ? {song} : {}), takes: list(unit.takes).length}
 }
 
 /** The score as the design draws it (clips/factory.tsx Score): rows, units, joins and waves in Factory's words, the held picks on their
