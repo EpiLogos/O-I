@@ -109,6 +109,9 @@ test('a set device\'s well is its stored values on their ranges — the owner\'s
   const params = [{id: 'Gain', value: '0.7943282127', min: '0', max: '1'}, {id: 'Mode', value: 'Fast'}]
   const reading = devices.setDeviceReading({id: 'live:set/0/1', elementName: 'PluginDevice', title: 'Plugin', params})
   assert.deepEqual(setPicture.setValueMarks(reading, params), [{key: 'Gain', title: 'Gain', kind: 'range', at: 0.7943282127}], 'a word with no range draws nothing')
+  // O-I #852 round 9: a kept rack placed on a part is Live's Instrument Rack (element InstrumentGroupDevice): it plays, an instrument.
+  const rack = devices.setDeviceReading({id: 'live:set/3/0', elementName: 'InstrumentGroupDevice', title: 'Warm rack', params})
+  assert.deepEqual([rack.family, rack.face.liveSemantic], ['instrument', 'device-instrument'])
   const markup = renderToStaticMarkup(h(setPicture.SetDevicePicture, {marks: setPicture.setValueMarks(faced), size: 'compact'}))
   assert.match(markup, /data-set-values="3"/)
   assert.match(markup, /data-set-value="Threshold" data-set-mark="range"/)

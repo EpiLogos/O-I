@@ -37,7 +37,7 @@ import type {WorldActionReceipt, WorldAutomationLane, WorldCompStretch, WorldMix
 import type {LiveClipAt, LiveEnvelope, LiveSend, LiveSetAct, LiveSetActed, LiveTakeLane, LiveTrackMixer} from '../../../../../desktop/cradle/src/kernel/types'
 import {enginePartOf, type LiveEngineReading} from '../live/liveEngine'
 import type {LiveMixerControl, LiveMixerValue} from '../live/liveWrites'
-import {readTorusKeptDrag, TORUS_KEPT_MIME} from '../frame/instruments'
+import {readTorusKeptDrag, TORUS_KEPT_MIME, type TorusRackPlacing} from '../frame/instruments'
 import {refusalWords} from '../../../../../desktop/cradle/src/shared/Refusal.tsx'
 
 const missing = (what: string, op: string) => `${what}: no owner operation carries it yet — missing op: ${op} (kernel · live-set).`
@@ -96,8 +96,9 @@ export interface LiveSetReading {
 
 /** The op an act of the set's names, in the words a menu shows. */
 export const LIVE_ACT_OP = (kind: LiveSetAct['kind']) => `live_set_act · ${kind} — the set's own ${kind.replace('_', ' ')}, against its revision (packages/live-set/src/acts.rs)`
-/** What the empty track seats (O-I #852): a kept sound, on a new part Live's Insert MIDI Track makes, opened there on the Torus. */
-export const LIVE_SEAT_SOUND_OP = `${LIVE_ACT_OP('track_insert')}, then the kept sound opened on the new part (the Torus's owner, through the frame's stage)`
+/** What the empty track seats (O-I #852): a kept sound, on a new part Live's Insert MIDI Track makes, opened there on the Torus; a rack
+ * placed on the part first, as Live's Instrument Rack. */
+export const LIVE_SEAT_SOUND_OP = `${LIVE_ACT_OP('track_insert')}, a rack's ${LIVE_ACT_OP('rack_place')}, then the kept sound opened on the new part (the Torus's owner, through the frame's stage)`
 /** Export Audio of a take: its course rendered offline by the Torus's owner, part after part (O-I #855). */
 export const LIVE_EXPORT_TAKE_OP = 'render-take {checkpoint, acts, frames} — the take\'s course rendered by the Torus\'s owner (QL-MEF torus-render), saved as 32-bit float WAV'
 export const LIVE_INSERT_CLIP_OP = 'live_clip_create {path, track, scene, length: 4, notes: []} — an empty one-bar MIDI clip in the empty slot, as Live inserts one'
@@ -298,6 +299,23 @@ export const liveSetTrackAdapter: WorldTrackAdapter<LiveSetReading> = {
   },
 }
 
+/** What of a placed rack the part does not carry yet, in words (O-I #852 round 9): its chain's note devices and effects, for which no Live
+ * device stands here, and what its macros turn, which Live 12 keeps in a form not read yet (racks-session-model.md §1.7). Pure. */
+export function rackUnplaced(rack: TorusRackPlacing): string[] {
+  const listed = (names: readonly string[]) => names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`
+  const notes = rack.chain.filter(device => device.role === 'note').map(device => device.device_ref)
+  const effects = rack.chain.filter(device => device.role === 'effect').map(device => device.device_ref)
+  const held = [notes.length ? `${notes.length === 1 ? 'note device' : 'note devices'} ${listed(notes)}` : '',
+    effects.length ? `${effects.length === 1 ? 'effect' : 'effects'} ${listed(effects)}` : ''].filter(Boolean)
+  const one = rack.chain.length === 1
+  const turned = rack.macros.filter(item => item.targets.length).map(item => `${item.name} turns ${listed(item.targets.map(target =>
+    target.device_ref === 'torus' ? `the Torus's ${target.parameter}` : `${target.device_ref}'s ${target.parameter}`))}`)
+  return [
+    held.length ? `Its ${held.join(' and ')} ${one ? 'stays' : 'stay'} off its chain: no Live device stands for ${one ? 'it' : 'them'} here yet.` : '',
+    turned.length ? `What its macros turn is not mapped (${turned.join('; ')}): Live 12 keeps a macro's mapping in a form not read here yet.` : '',
+  ].filter(Boolean)
+}
+
 /** The acts on the set's objects (manual §10.9), each through its owner: the set's own acts where its writer is handed in, Launch and
  * Stop where the player is. An object of another set, or the Main track, is refused here, before anything reaches the owner. Pure. */
 function liveObjectActs(set: SetSummary, act: LiveSetReading['act'], insertClip: LiveSetReading['insertClip'], play: LiveSetReading['play'],
@@ -411,7 +429,8 @@ function liveObjectActs(set: SetSummary, act: LiveSetReading['act'], insertClip:
     // A kept sound dropped on the empty track plays on a new part (manual §21.2 "Drag it onto a part to play it"): the part Live's Insert
     // MIDI Track makes after the last one, then the sound opened on the Torus and kept by that part. A sound opens on the body it was saved
     // on, a form's or the torus (its checkpoint chooses it again); an instrument plays the first sound made on it, and a rack the sound its
-    // Torus opens with.
+    // Torus opens with. A rack is placed on the part first, in Live's own rack shape (O-I #852 round 9, `rack_place`): an Instrument Rack
+    // under its name, its macros where they stand, its variations; what the shell has no shape for yet is said in words.
     if (openSound) actions.seat = {op: LIVE_SEAT_SOUND_OP, accepts: TORUS_KEPT_MIME, run: payload => {
       const dropped = readTorusKeptDrag(payload)
       if (!dropped) return refused('Only a kept sound plays on a new part: drag one from under the Torus in Instruments.')
@@ -419,14 +438,22 @@ function liveObjectActs(set: SetSummary, act: LiveSetReading['act'], insertClip:
       if (!sound) return refused(dropped.kind === 'instrument'
         ? 'This instrument has no sound made on it yet: save a sound while its body rings, then drop the instrument.'
         : 'This rack opens no sound: keep a sound on it, then drop the rack.')
-      // What a rack keeps beside its sound is not placed on the part, and the note says so.
-      const rack = dropped.kind === 'rack' ? 'Only the rack\'s sound opens on the part: its note devices, effects and macros are not placed on it.' : ''
+      const rack = dropped.rack
       return act({kind: 'track_insert', after: null}).then(async (answer): Promise<WorldActionReceipt> => {
         const track = answer.at?.track
         if (typeof track !== 'number') return {ok: false, error: `${answer.done} The owner named no part it made, so the sound was not opened.`}
+        let placed = ''
+        if (rack) {
+          const made = await act({kind: 'rack_place', track, name: rack.name, macros: rack.macros.map(({name, value}) => ({name, value})),
+            variations: rack.variations.map(({name, values}) => ({name, values: [...values]}))}).then(
+            done => ({ok: true as const, done: done.done}), (cause: unknown) => ({ok: false as const, cause}))
+          // A refusal speaks plainly (shared/Refusal.tsx): what happened, then the owner's words when they are words.
+          if (!made.ok) return {ok: false, error: refusalWords(`${answer.done} The rack was not placed on it.`, made.cause)}
+          placed = made.done
+        }
         const opened = await openSound(sound, track)
-        // A refusal speaks plainly (shared/Refusal.tsx): what happened, then the owner's words when they are words.
-        return opened.ok ? {ok: true, note: [answer.done, opened.note, rack].filter(Boolean).join(' ')} : {ok: false, error: refusalWords(`${answer.done} The sound did not open on it.`, opened.error)}
+        return opened.ok ? {ok: true, note: [answer.done, placed, opened.note, ...(rack ? rackUnplaced(rack) : [])].filter(Boolean).join(' ')}
+          : {ok: false, error: refusalWords(`${answer.done} The sound did not open on it.`, opened.error)}
       }, (cause: unknown) => ({ok: false as const, error: refusalWords('No part was made for the sound.', cause)}))
     }}
   }

@@ -9,6 +9,9 @@ tauri-build = { version = "=2.6.3", features = [] }
 
 [features]
 native_shell = ["dep:sha2", "dep:live-set", "dep:live-dynamics", "dep:live-engine", "dep:uuid"]
+# The Torus in the one engine (O-I #849, src/torus_native.rs): live-engine's K8 node, built against an
+# installed QL prefix (QL_MEF_PREFIX: include/ql/continuous_field.hpp, torus_keys.hpp, lib/libql-mef-c.a).
+k8 = ["native_shell", "live-engine/k8"]
 
 [dependencies]
 portable-pty = "=0.9.0"

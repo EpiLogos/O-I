@@ -41,10 +41,16 @@ export class InstrumentSession {
  /** Ring the Torus again from a checkpoint the owner gave: one owner act (one to four generations), refused in words when the
   * checkpoint is not of this body. */
  torusRestore(checkpoint: Record<string, unknown>): Promise<any>;
+ /** Choose what rings (`torus-body`, O-I #852; DLW manual §21.2 Body): a form made a body (`ql.form-body-request/v1`, which the owner
+  * prepares), or the torus (null). One owner act, one generation, no samples, no PCM; the owner refuses in words a body this scene cannot
+  * ring. Its reply's session reading names what rings (`body`). */
+ torusBody(body: Record<string, unknown> | null): Promise<any>;
  /** A take rendered offline on a second owner of the scene (`ql.torus-render/v1`, O-I #855): from a checkpoint, or continuing the last
   * render, `frames` of sound with each act made at its sample. A read: this owner neither moves nor sounds. */
  torusRender(take: {checkpoint?: object; continues?: string; frames: number;
   acts?: Array<{action: 'strike'; at_samples_elapsed: string; keys: Array<{row: number; column: number}>; amplitude: [number, number]}
+   | {action: 'strike-at'; at_samples_elapsed: string; points: Array<{theta: number; phi: number; amplitude: [number, number]}>}
+   | {action: 'singlet'; at_samples_elapsed: string; codon: number; amplitude: [number, number]}
    | {action: 'release'; at_samples_elapsed: string; keys: Array<{row: number; column: number}>}
    | {action: 'set'; at_samples_elapsed: string; edit: object}>}): Promise<any>;
  /** Where the Torus is heard from (`ql.torus-receiver/v1`, O-I 856): a place, [x, y, z] metres in the frame the targets are drawn in,

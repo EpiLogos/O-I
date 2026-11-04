@@ -34,9 +34,9 @@
 //! candidate can measure — [`EngineHandle::latency`] reads what the
 //! realtime path recorded).
 
-use crate::graph::{Clock, Graph, GraphError};
+use crate::graph::{Clock, Graph, GraphError, Instrument, TorusAct, TORUS_ACT_KEYS};
 use crate::ring::{ring, Consumer, Producer};
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicPtr, AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::Instant;
 
@@ -62,7 +62,10 @@ pub enum EngineEvent {
     },
     /// Release a key on a MIDI part.
     NoteOff { track: usize, key: u8 },
-    /// Release every held note on every part (manual §21.1 Rules).
+    /// One act of the Torus's keys on a MIDI part that plays the Torus (O-I #849): its keys strike
+    /// their moving points by QL's played-address law, as one strike.
+    TorusPlay { track: usize, act: TorusAct },
+    /// Release every held note on every part (manual §21.1 Rules); a Torus is stilled.
     Panic,
     /// A part's, a return's or the Main track's volume (linear gain).
     Volume { part: Part, gain: f64 },
@@ -227,6 +230,18 @@ impl MixerState {
                     Ok(())
                 }
             }),
+            EngineEvent::TorusPlay { track: t, act } => track(t).and_then(|p| {
+                if !p.midi {
+                    Err(format!("'{}' is an audio part: it plays no notes", p.name))
+                } else if act.count == 0
+                    || usize::from(act.count) > TORUS_ACT_KEYS
+                    || act.amplitude.iter().any(|v| !v.is_finite())
+                {
+                    Err(format!("a Torus act strikes 1 to {TORUS_ACT_KEYS} keys at a finite velocity"))
+                } else {
+                    Ok(())
+                }
+            }),
             EngineEvent::Panic => Ok(()),
             EngineEvent::Volume { part: p, gain: g } => part(p).and_then(|_| gain(g)),
             EngineEvent::Pan { part: p, pan } => part(p).and_then(|_| {
@@ -287,7 +302,10 @@ impl MixerState {
                     t.solo = on;
                 }
             }
-            EngineEvent::NoteOn { .. } | EngineEvent::NoteOff { .. } | EngineEvent::Panic => {}
+            EngineEvent::NoteOn { .. }
+            | EngineEvent::NoteOff { .. }
+            | EngineEvent::TorusPlay { .. }
+            | EngineEvent::Panic => {}
         }
     }
 }
@@ -324,6 +342,37 @@ struct Shared {
     /// The device's output latency (callback to playback), ns, as the
     /// realtime stream last reported it (0 until a device reports).
     output_latency_ns: AtomicU64,
+    /// An instrument on its way to a part, and the one it replaced on its way back.
+    hands: Hands,
+}
+
+/// An instrument handed to a MIDI part while the engine plays (O-I #849: the Torus its owner hands
+/// over), made and prepared off the audio thread. The audio thread swaps it onto its part at a block's
+/// first frame and sends this back holding the instrument it replaced, so nothing is dropped there.
+struct Hand {
+    track: usize,
+    frame: u64,
+    instrument: Box<dyn Instrument>,
+}
+
+/// One hand at a time: `incoming` from the control side, `retired` back from the audio thread. Each
+/// pointer is a `Box<Hand>` given up by the side that stored it and taken whole by the other.
+struct Hands {
+    incoming: AtomicPtr<Hand>,
+    retired: AtomicPtr<Hand>,
+}
+
+impl Drop for Hands {
+    fn drop(&mut self) {
+        for slot in [&mut self.incoming, &mut self.retired] {
+            let p = *slot.get_mut();
+            if !p.is_null() {
+                // SAFETY: a non-null slot holds a `Box::into_raw` no side has taken; both
+                // sides are gone (this is the last `Arc`), so it is freed exactly once here.
+                drop(unsafe { Box::from_raw(p) });
+            }
+        }
+    }
 }
 
 /// The audio thread's half (see the module doc).
@@ -343,6 +392,9 @@ pub struct EngineHandle {
     shared: Arc<Shared>,
     record: Vec<Stamped>,
     mixer: MixerState,
+    sample_rate: u32,
+    /// Every hand the engine took: (frame, part), in the order taken.
+    installs: Vec<(u64, usize)>,
 }
 
 /// Why the engine refused an event.
@@ -401,8 +453,13 @@ pub fn engine(mut graph: Graph) -> Result<(EngineCore, EngineHandle), GraphError
         waits: Default::default(),
         longest_wait_ns: AtomicU64::new(0),
         output_latency_ns: AtomicU64::new(0),
+        hands: Hands {
+            incoming: AtomicPtr::new(std::ptr::null_mut()),
+            retired: AtomicPtr::new(std::ptr::null_mut()),
+        },
     });
     let clock = Clock::start(graph.sample_rate, graph.tempo_bpm);
+    let sample_rate = graph.sample_rate;
     let core = EngineCore {
         graph,
         clock,
@@ -416,6 +473,8 @@ pub fn engine(mut graph: Graph) -> Result<(EngineCore, EngineHandle), GraphError
         shared,
         record: Vec::new(),
         mixer,
+        sample_rate,
+        installs: Vec::new(),
     };
     Ok((core, handle))
 }
@@ -429,6 +488,7 @@ impl EngineCore {
     pub fn pull_block(&mut self, out: &mut [f32]) {
         let start = self.shared.position.load(Ordering::Relaxed);
         self.clock.sample = start;
+        self.take_hand(start);
         let now_ns = self.shared.epoch.elapsed().as_nanos() as u64;
         while let Some(inbound) = self.inbox.pop() {
             self.graph.apply(&inbound.event, &self.clock);
@@ -466,6 +526,33 @@ impl EngineCore {
         self.shared.position.store(frame_index, Ordering::Release);
     }
 
+    /// Take an instrument handed to a part ([`EngineHandle::install`]) at frame `start`, before
+    /// the block's events: swap it onto its part and send the hand back with the instrument it
+    /// replaced. While the last hand has not been taken back, the next waits. No allocation.
+    fn take_hand(&mut self, start: u64) {
+        let hands = &self.shared.hands;
+        if !hands.retired.load(Ordering::Acquire).is_null() {
+            return;
+        }
+        let p = hands.incoming.swap(std::ptr::null_mut(), Ordering::AcqRel);
+        if p.is_null() {
+            return;
+        }
+        // SAFETY: the control side gave up `p` (a `Box::into_raw`) when it stored it, and
+        // this thread alone takes `incoming`; it holds `p` until it stores it in `retired`.
+        let hand = unsafe { &mut *p };
+        if let Some(slot) = self
+            .graph
+            .tracks
+            .get_mut(hand.track)
+            .and_then(|t| t.instrument.as_mut())
+        {
+            std::mem::swap(slot, &mut hand.instrument);
+        }
+        hand.frame = start;
+        hands.retired.store(p, Ordering::Release);
+    }
+
     /// The realtime stream's report of the device's output latency.
     pub fn report_output_latency(&self, ns: u64) {
         self.shared.output_latency_ns.store(ns, Ordering::Relaxed);
@@ -495,6 +582,17 @@ impl EngineHandle {
     /// keep it in the performance record and move the mixer reading.
     /// Answers how many it took.
     pub fn collect(&mut self) -> usize {
+        let p = self
+            .shared
+            .hands
+            .retired
+            .swap(std::ptr::null_mut(), Ordering::AcqRel);
+        if !p.is_null() {
+            // SAFETY: the audio thread gave up `p` when it stored it in `retired`; this side
+            // alone takes `retired`. Dropping it drops the instrument the hand replaced, here.
+            let hand = unsafe { Box::from_raw(p) };
+            self.installs.push((hand.frame, hand.track));
+        }
         let mut n = 0;
         while let Some(stamped) = self.heard.pop() {
             self.mixer.apply(&stamped.event);
@@ -502,6 +600,54 @@ impl EngineHandle {
             n += 1;
         }
         n
+    }
+
+    /// Hand `instrument` to MIDI part `track` while the engine plays (O-I #849: the Torus its owner
+    /// hands over): prepared here at the engine's rate, it takes the part at the next block's first
+    /// frame, and the instrument it replaced comes back to be dropped on this side
+    /// ([`EngineHandle::collect`]). Refused, in words, for a part that is not there or plays no
+    /// notes, and while the last hand is still on its way.
+    pub fn install(
+        &mut self,
+        track: usize,
+        mut instrument: Box<dyn Instrument>,
+    ) -> Result<(), Refusal> {
+        let part = self.mixer.tracks.get(track).ok_or_else(|| {
+            Refusal::Invalid(format!(
+                "the set has no part {track} (it has {})",
+                self.mixer.tracks.len()
+            ))
+        })?;
+        if !part.midi {
+            return Err(Refusal::Invalid(format!(
+                "'{}' is an audio part: it plays no notes, so it takes no instrument",
+                part.name
+            )));
+        }
+        self.collect();
+        let hands = &self.shared.hands;
+        if !hands.incoming.load(Ordering::Acquire).is_null()
+            || !hands.retired.load(Ordering::Acquire).is_null()
+        {
+            return Err(Refusal::Invalid(
+                "an instrument handed to a part is still on its way to the engine: hand the next once the engine has taken it".into(),
+            ));
+        }
+        instrument.prepare(self.sample_rate);
+        let hand = Box::into_raw(Box::new(Hand {
+            track,
+            frame: 0,
+            instrument,
+        }));
+        hands.incoming.store(hand, Ordering::Release);
+        Ok(())
+    }
+
+    /// Every instrument the engine took from [`EngineHandle::install`], as (frame, part), in the
+    /// order taken (call [`EngineHandle::collect`] first to read the latest): what Export Audio
+    /// hands again ([`Graph::render_performance_with`]).
+    pub fn installs(&self) -> &[(u64, usize)] {
+        &self.installs
     }
 
     /// The mixer as the engine applied it (call [`EngineHandle::collect`]

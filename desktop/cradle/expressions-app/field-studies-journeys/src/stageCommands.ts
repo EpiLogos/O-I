@@ -238,6 +238,12 @@ export function readTorusSettingsEdit(raw: unknown): TorusSettingsEdit | null {
   if (raw.strike !== undefined) { if (!finite(raw.strike)) return null; edit.strike = raw.strike; }
   return edit;
 }
+/** The most modes of a form's body each voice rings (QL-MEF form_instrument/body.rs MAX_BODY_MODES). */
+export const STAGE_BODY_MODES_MAX = 64;
+/** A form chosen as the body (DLW manual §21.2 Body): how many of its modes each voice rings, the Q it rings at (the Torus's Damping), and
+ * whether its material is declared or the tattva's (Body source). The form is the scene's own M3 form and its fibre the scene's M2 fibre:
+ * the frame takes both from what the owner disclosed (controller.ts torusBody), so the hand names neither. */
+export interface StageFormBody {modes: number; q_factor: number; material: 'declared' | 'tattva'}
 export type InstrumentEdit =
   | {kind: 'lens'; lens12: number}
   | {kind: 'context-frame'; context_frame: number}
@@ -252,6 +258,8 @@ export type InstrumentEdit =
   | {kind: 'follow-scale'}
   /** Receiver On or Off (DLW manual §21.2 View; QL-MEF `torus-receiver`, O-I 856): the camera is the place the Torus is heard from, or the world. */
   | {kind: 'receiver'; on: boolean}
+  /** What rings (DLW manual §21.2 Body; QL-MEF `torus-body`, O-I #852): a form, or the torus (null). Chosen at the owner's cursor. */
+  | {kind: 'body'; body: StageFormBody | null}
   | {kind: 'effect'; effect: PresentationEffect; key: string; value: EffectValue}
   | {kind: 'effect-chain'; chain: PresentationEffect[]};
 /** A closed, validated instrument edit, or null. Every operand is exact: a determinant outside the owner's range is refused here. */
@@ -277,6 +285,15 @@ export function readInstrumentEdit(raw: unknown): InstrumentEdit | null {
     case 'torus': { const edit = closed(raw, ['kind', 'edit']) ? readTorusSettingsEdit(raw.edit) : null; return edit ? {kind: 'torus', edit} : null; }
     case 'follow-scale': return closed(raw, ['kind']) ? {kind: 'follow-scale'} : null;
     case 'receiver': return closed(raw, ['kind', 'on']) && typeof raw.on === 'boolean' ? {kind: 'receiver', on: raw.on} : null;
+    case 'body': {
+      if (!closed(raw, ['kind', 'body'])) return null;
+      if (raw.body === null) return {kind: 'body', body: null};
+      const body = raw.body;
+      if (!plain(body) || !closed(body, ['modes', 'q_factor', 'material']) || !integer(body.modes, 1, STAGE_BODY_MODES_MAX)) return null;
+      if (typeof body.q_factor !== 'number' || !Number.isFinite(body.q_factor) || body.q_factor < STAGE_INSTRUMENT_Q.min || body.q_factor > STAGE_INSTRUMENT_Q.max) return null;
+      if (body.material !== 'declared' && body.material !== 'tattva') return null;
+      return {kind: 'body', body: {modes: body.modes, q_factor: body.q_factor, material: body.material}};
+    }
     case 'effect-chain': return closed(raw, ['kind', 'chain']) && effectChainRefusal(raw.chain) === null ? {kind: 'effect-chain', chain: [...(raw.chain as PresentationEffect[])]} : null;
     case 'effect': { const operands = closed(raw, ['kind', 'effect', 'key', 'value']) ? readEffectOperands(raw) : null; return operands ? {kind: 'effect', ...operands} : null; }
   }
@@ -321,8 +338,9 @@ export type StageCommand =
   | {command: 'strike-at'; points: StageStrikePoint[]; amplitude: number; at_samples_elapsed?: string}
   /** A singlet (DLW §21.2 "What strikes the Torus": "A singlet | Its codon's place on the ring"; O-I #771): an applied M3 event left the
    * cell non-dual, and QL's singlet codon (0..63) strikes the Torus at its place on the ring, now (controller.ts torusSinglet; QL-MEF
-   * `torus-singlet`). Only the codon is named: its place and its point are the owner's. */
-  | {command: 'singlet'; codon: number}
+   * `torus-singlet`). Only the codon is named: its place and its point are the owner's. A take's singlet played again (O-I #855) names
+   * the strength it was struck at, in (0, 1], and the sample it lands at, as a strike of keys does. */
+  | {command: 'singlet'; codon: number; amplitude?: number; at_samples_elapsed?: string}
   /** The owner's audio clock (O-I #809), read so a player can schedule ahead on it: the answer carries a StageAudioClock. */
   | {command: 'audio-clock'}
   /** The owner's performance journal (QL instrument-session.mjs journal(), `ql.instrument-performance-journal/v1`; O-I 855): every admitted
@@ -395,6 +413,16 @@ export interface StageStrikePoint {theta: number; phi: number}
 /** The most points one strike at points holds (instrument-session.mjs STRIKE_AT_MAX_POINTS). */
 export const STAGE_STRIKE_AT_MAX_POINTS = 64;
 const onSheet = (angle: unknown): angle is number => typeof angle === 'number' && Number.isFinite(angle) && angle >= 0 && angle < 2 * Math.PI;
+/** 1..STAGE_STRIKE_AT_MAX_POINTS points, each closed to its two angles on the sheet; null for anything else. */
+function readStagePoints(raw: unknown): StageStrikePoint[] | null {
+  if (!Array.isArray(raw) || raw.length < 1 || raw.length > STAGE_STRIKE_AT_MAX_POINTS) return null;
+  if (!raw.every(point => plain(point) && closed(point, ['theta', 'phi']) && onSheet(point.theta) && onSheet(point.phi))) return null;
+  return raw.map(point => ({theta: point.theta as number, phi: point.phi as number}));
+}
+/** A strength in (0, 1], as a strike's. */
+const strength = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && value > 0 && value <= STAGE_JANKO_AMPLITUDE_MAX;
+/** A codon of the 64 (QL's 0..63). */
+export const isStageCodon = (value: unknown): value is number => typeof value === 'number' && Number.isInteger(value) && value >= 0 && value < 64;
 /** A native sample cursor: the exact unsigned 64-bit decimal every QL cursor is (instrument-session.mjs), so a cursor never rounds. */
 export const isStageSampleCursor = (value: unknown): value is string =>
   typeof value === 'string' && /^(0|[1-9][0-9]{0,19})$/.test(value) && BigInt(value) <= 0xffffffffffffffffn;
@@ -492,11 +520,14 @@ export function readStageTorusCheckpoint(raw: unknown): StageTorusCheckpoint | n
   return bytes <= STAGE_TORUS_CHECKPOINT_BYTES_MAX ? raw as StageTorusCheckpoint : null;
 }
 /** One act of a take at the sample it landed at (the journal's landing, stageJournalLanding): keys struck at a strength in (0, 1] (`janko`
- * strike), keys let go (`janko` release), or an edit of the Torus session (`instrument` torus). */
+ * strike), keys let go (`janko` release), an edit of the Torus session (`instrument` torus), a touch of 1..64 points of the sheet at one
+ * strength (`strike-at`), or a singlet of a codon of the 64 at its strength (`singlet`; O-I #855, a performance kept whole). */
 export type StageTakeAct =
   | {action: 'strike'; at_samples_elapsed: string; keys: StageKey[]; amplitude: number}
   | {action: 'release'; at_samples_elapsed: string; keys: StageKey[]}
-  | {action: 'set'; at_samples_elapsed: string; edit: TorusSettingsEdit};
+  | {action: 'set'; at_samples_elapsed: string; edit: TorusSettingsEdit}
+  | {action: 'strike-at'; at_samples_elapsed: string; points: StageStrikePoint[]; amplitude: number}
+  | {action: 'singlet'; at_samples_elapsed: string; codon: number; amplitude: number};
 /** The most frames one take renders (2^24, about 5.8 minutes at 48 kHz: 64 MiB of f32), and the most acts it carries. */
 export const STAGE_RENDER_FRAMES_MAX = 2 ** 24;
 export const STAGE_RENDER_ACTS_MAX = 16384;
@@ -522,6 +553,13 @@ function readStageTakeActs(raw: unknown, from: bigint, end: bigint): StageTakeAc
       const edit = closed(act, ['action', 'at_samples_elapsed', 'edit']) ? readTorusSettingsEdit(act.edit) : null;
       if (!edit) return null;
       acts.push({action: 'set', at_samples_elapsed, edit});
+    } else if (act.action === 'strike-at') {
+      const points = closed(act, ['action', 'at_samples_elapsed', 'points', 'amplitude']) ? readStagePoints(act.points) : null;
+      if (!points || !strength(act.amplitude)) return null;
+      acts.push({action: 'strike-at', at_samples_elapsed, points, amplitude: act.amplitude});
+    } else if (act.action === 'singlet') {
+      if (!closed(act, ['action', 'at_samples_elapsed', 'codon', 'amplitude']) || !isStageCodon(act.codon) || !strength(act.amplitude)) return null;
+      acts.push({action: 'singlet', at_samples_elapsed, codon: act.codon, amplitude: act.amplitude});
     } else return null;
   }
   return acts;
@@ -750,19 +788,21 @@ export function readStageRequest(raw: unknown): {req: number; command: StageComm
     case 'strike-at': {
       // One act of points, each closed to its two angles on the sheet; a point off it is refused here, never reduced (the mode shapes
       // change sign across its seam), as the owner refuses it.
-      if (!closed(raw, [...BASE_KEYS, 'points', 'amplitude', 'at_samples_elapsed']) || !Array.isArray(raw.points)) return null;
-      const points = raw.points;
-      if (points.length < 1 || points.length > STAGE_STRIKE_AT_MAX_POINTS) return null;
-      if (!points.every(point => plain(point) && closed(point, ['theta', 'phi']) && onSheet(point.theta) && onSheet(point.phi))) return null;
-      if (typeof raw.amplitude !== 'number' || !Number.isFinite(raw.amplitude) || raw.amplitude <= 0 || raw.amplitude > STAGE_JANKO_AMPLITUDE_MAX) return null;
+      if (!closed(raw, [...BASE_KEYS, 'points', 'amplitude', 'at_samples_elapsed'])) return null;
+      const points = readStagePoints(raw.points);
+      if (!points || !strength(raw.amplitude)) return null;
       const at = landing(raw);
       if (at === null) return null;
-      return {req, command: {command: 'strike-at', points: points.map(point => ({theta: point.theta as number, phi: point.phi as number})), amplitude: raw.amplitude, ...at}};
+      return {req, command: {command: 'strike-at', points, amplitude: raw.amplitude, ...at}};
     }
-    case 'singlet':
-      // One codon of the 64, and nothing else: the owner places it (O-I #771).
-      return closed(raw, [...BASE_KEYS, 'codon']) && typeof raw.codon === 'number' && Number.isInteger(raw.codon) && raw.codon >= 0 && raw.codon < 64
-        ? {req, command: {command: 'singlet', codon: raw.codon}} : null;
+    case 'singlet': {
+      // One codon of the 64: the owner places it (O-I #771); a take's names its strength and its sample (O-I #855).
+      if (!closed(raw, [...BASE_KEYS, 'codon', 'amplitude', 'at_samples_elapsed']) || !isStageCodon(raw.codon)) return null;
+      if (raw.amplitude !== undefined && !strength(raw.amplitude)) return null;
+      const at = landing(raw);
+      if (at === null) return null;
+      return {req, command: {command: 'singlet', codon: raw.codon, ...(raw.amplitude === undefined ? {} : {amplitude: raw.amplitude}), ...at}};
+    }
     case 'audio-clock':
       return closed(raw, [...BASE_KEYS]) ? {req, command: {command: 'audio-clock'}} : null;
     case 'performance-journal':

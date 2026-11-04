@@ -546,6 +546,13 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
    if(at!==undefined)throw new Error('Where the Torus is heard from is set now, for the owner\'s next block: it lands at no sample.');
    await controller.setReceiver(edit.on,heardPlace());update();return {};
   }
+  if(edit.kind==='body'){
+   // What rings (O-I #852, DLW §21.2 Body): the scene's own M3 form made a body, or the torus given back (controller.ts torusBody). The owner
+   // prepares it, rings it from rest at its cursor and answers in its words; nothing is chosen ahead of the owner's sound.
+   if(at!==undefined)throw new Error('A body is chosen at the owner\'s cursor, once no act waits for its sample: it lands at no later sample.');
+   if(!reading.instrument)throw new Error('No scene is open. Open the live instrument first; the body rings the scene\'s voices.');
+   const landed=await controller.torusBody(edit.body);update();return {landed_at_samples_elapsed:landed};
+  }
   if(at!==undefined)throw new Error('This edit is made on the frame\'s own sound, at the device\'s time: it lands at no sample of the owner.');
   if(edit.kind==='muted')controller.setMuted(edit.muted);
   else if(edit.kind==='cadence'){if(edit.rate==='hold')controller.pause('held by you');else controller.play(edit.rate);}

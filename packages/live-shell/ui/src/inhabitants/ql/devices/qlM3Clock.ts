@@ -14,7 +14,9 @@
 //   matrix its `set-matrix{family}` (QL's SetMatrix, carried by m3_reception: the matrix is chosen without turning the form);
 //   rack, rack.part                        the Rack page: M3′'s rack from the map's ledger and the part you choose (qlRack.ts).
 // A singlet (DLW §21.2 "What strikes the Torus"; O-I #771): an applied event that leaves the cell non-dual strikes the Torus with the codon
-// QL names (nativeM3.ts singletOfApplied), through the one stage channel the Live surfaces share; the Torus places it on the ring.
+// QL names (nativeM3.ts singletOfApplied), through the one stage channel the Live surfaces share; the Torus places it on the ring. A singlet
+// the Torus refuses is said in words where the clock's reading is (`singlet.why`, shared/Refusal.tsx refusalWords), as the frame's own M3
+// page says it; the M3 event stands.
 // Turn, Open, Readout and Reciprocal are the view's own (DesignBinding.local). The seed and the pose map are readings: QL's state names
 // the law in force and offers no operation that sets them. With no identity chosen, no Expression open, or no form
 // opened for them (status 'absent': the Nara instrument's M3 page opens it), every value stands absent and the well says which.
@@ -34,6 +36,7 @@ import {techneDeviceId, techneFaceDeclaration} from './faces'
 import {qlRackState, rackPage, type QlRackState} from './qlRack'
 import {NARA_CHANNEL_REGISTER} from '../../../agent/worldScope'
 import {commitLiveStage} from '../../../live/torusInstrument'
+import {refusalWords} from '../../../../../../../desktop/cradle/src/shared/Refusal.tsx'
 
 export const QL_M3_FAMILY = 'quaternal-logic'
 export const QL_M3_FACE = 'm3-clock'
@@ -96,8 +99,10 @@ export interface QlM3State {
   readonly reason: string | null
   readonly busy: boolean
   readonly view: M3View
+  /** The last singlet struck, refused by the Torus, in words; null when it played or none was struck. */
+  readonly singletRefused: string | null
 }
-const INITIAL: QlM3State = {key: null, basis: null, reading: null, reason: NO_IDENTITY, busy: false, view: {}}
+const INITIAL: QlM3State = {key: null, basis: null, reading: null, reason: NO_IDENTITY, busy: false, view: {}, singletRefused: null}
 let state: QlM3State = INITIAL
 let sequence = 0
 let call: KernelCall = op => kernelOp(detectTransport(), op)
@@ -114,7 +119,7 @@ export async function syncQlM3(basis: M3Basis | null, why: string | null = null)
   const key = keyOf(basis)
   if (key === state.key) return
   const ticket = ++sequence
-  setState({...state, key, basis, reading: null, reason: null, busy: true})
+  setState({...state, key, basis, reading: null, reason: null, busy: true, singletRefused: null})
   const answer = await m3Through(call, basis, {operation: 'read'})
   if (ticket !== sequence) return
   setState({...state, busy: false, reading: answer.ok ? answer.reading : null, reason: answer.ok ? (answer.reading.status === 'available' ? null : NO_FORM) : answer.reason})
@@ -132,7 +137,12 @@ export async function applyQlM3(operations: readonly M3Operation[]): Promise<voi
   setState({...state, busy: false, reading: answer.reading})
   // The event is applied whatever the Torus does: without a live instrument nothing sounds, and the form stands as the owner answered.
   const codon = singletOfApplied(answer.reading)
-  if (codon !== null) void commitLiveStage({command: 'singlet', codon})
+  if (codon === null) return
+  const said = `Singlet ${codon} was not played on the Torus.`
+  // The apply settles with the form; the Torus answers after it, and only the newest event's singlet is said.
+  void commitLiveStage({command: 'singlet', codon}).then(struck => {
+    if (ticket === sequence) setState({...state, singletRefused: struck.ok ? null : refusalWords(said, struck.error)})
+  })
 }
 
 export function setQlM3View(view: M3View): void { setState({...state, view: {...state.view, ...view}}) }
@@ -193,6 +203,7 @@ export function qlM3Values(m3: QlM3State): Record<string, Value> {
   for (const key of QL_M3_LOCAL) if (m3.view[key] !== undefined) values[key] = m3.view[key]!
   const form = m3.reading?.status === 'available' ? m3.reading.state : null
   if (!form) { values.reason = m3.busy ? 'Reading the M3 form…' : m3.reason ?? NO_FORM; return values }
+  if (m3.singletRefused !== null) values['singlet.why'] = m3.singletRefused
   const clock = form.clock as Record<string, unknown>
   if (int(clock.degree720)) values['clock.degree720'] = clock.degree720
   if (int(clock.tick12)) values['clock.tick12'] = clock.tick12

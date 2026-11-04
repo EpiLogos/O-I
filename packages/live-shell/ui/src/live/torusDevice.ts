@@ -21,6 +21,7 @@ import {qlRackState, rackPage, type QlRackState} from '../inhabitants/ql/devices
 import {handsFor, heldFor, hold as holdDesign} from '../techne/devices/designDevices'
 import type {StageRun} from '../components/expressions/studio/StudioStage'
 import {bodyTable, coordinateNames, NO_CONDITION, tattvaBody, tattvaKeys, type BodySource, type BodyTable, type CoordinateName} from '../inhabitants/ql/devices/qlCoordinateName'
+import {refusalWords} from '../../../../../desktop/cradle/src/shared/Refusal.tsx'
 
 // The session's law (its ranges and its `torus` edit) is torusInstrument.ts's, so the MIDI map reaches it without this device's faces.
 export {torusSessionOf, TORUS_RATE, TORUS_FUNDAMENTAL, TORUS_POLYPHONY, TORUS_TEMPO, TORUS_TUNINGS, TORUS_SHAPES, TORUS_TUNING_WORD, TORUS_SHAPE_WORD, TORUS_BAND_WORD, TORUS_NOTE_LENGTHS, torusSessionEdit, type TorusSession, type TorusSettingsEdit}
@@ -183,9 +184,8 @@ export const TORUS_ABSENT: Readonly<Record<string, string>> = {
   strike: 'No Strike here: the share of velocity is the owner\'s Torus session setting, written while the instrument follows or is held, and no owner reading stands.',
   // damping: the body's Q, written through the stage channel's damping edit while the instrument follows or is held (torusBody).
   damping: 'No damping here: the body\'s Q is written through the stage channel while the instrument follows or is held, and no owner reading stands.',
-  modes: `No mode count: the scene's modes are the voices of its tunings (scene_field.rs ShapeBasis), and no owner takes a count of them; ${NO_FIELD_PARAMETER}.`,
-  // body: what rings. The scene's body is the torus (scene_field.rs SceneGeometry); a form of the Expression as the body has no owner op.
-  body: 'Only the torus rings: no owner op takes a form of the Expression as the body yet (QL\'s scene field composes the torus alone).',
+  // body, body.form and modes: what rings, the owner's (its Torus session's `body`; QL-MEF `torus-body`, O-I 852), chosen through the stage
+  // channel's body edit while the instrument follows or is held (torusBody); absent with their reason until the owner names it.
   pan: `No pan: ${NO_FIELD_PARAMETER}.`,
   view: 'Surface, wire or both is a way of drawing the pane: no owner keeps it.',
   meter: 'The owner reports no level meter: its audio receipt carries the presentation gain and its block counts, not a level.',
@@ -239,8 +239,7 @@ export function torusDesignValues(state: LiveTorusState | null): Record<string, 
   const standing = state.value.standing
   values.light = standing === 'following' || standing === 'held' ? 'lit' : 'dark'
   values.standing = standing
-  // What rings: the scene's body is the torus (scene_field.rs SceneGeometry); the other choice stands dimmed (TORUS_ABSENT body).
-  values.body = 'torus'
+  // What rings is the owner's Torus session's (torusBody): never drawn here before the owner names it.
   if (typeof state.parameters?.level === 'number') values.level = gainToDb(state.parameters.level)
   const presentation = qlPresentation(TORUS_FAMILY, TORUS_DEVICE_ID, state, false).values
   for (const key of ['sound', 'cadence', 'scale']) if (presentation[key] !== undefined) values[key] = presentation[key]!
@@ -362,19 +361,50 @@ function strikeShare(value: Value | undefined): number {
   return Math.round(value * 10) / 1000
 }
 
+/** How many modes of a form's body each voice rings (QL-MEF form_instrument/body.rs MAX_BODY_MODES; stageCommands.ts STAGE_BODY_MODES_MAX).
+ * A form chosen before you set a count rings 8 a voice, as QL's own fold body does (QL-MEF tests/torus_host.rs `fold`). */
+export const TORUS_FORM_MODES = {min: 1, max: 64, def: 8} as const
+/** Modes you set, as the count a voice the body edit takes, or the words for why not. */
+function formModes(value: Value | undefined): number {
+  if (!Number.isInteger(value) || (value as number) < TORUS_FORM_MODES.min || (value as number) > TORUS_FORM_MODES.max) throw new Error(`Modes takes ${TORUS_FORM_MODES.min} to ${TORUS_FORM_MODES.max} a voice.`)
+  return value as number
+}
+const BODY_UNNAMED = 'The owner\'s Torus session names no body: QL\'s torus-state from before torus-body says nothing of what rings, so nothing is drawn as ringing.'
+const MODES_UNDER_TORUS = 'The torus rings the voices of its tunings, each through its own mode, so a count of modes is a form\'s: choose A form, then set how many modes each voice rings.'
+
 /** The Damping you set, as a Q the stage channel takes, or the words for why not. */
 function dampingQ(value: Value | undefined): number {
   if (typeof value !== 'number' || !Number.isFinite(value) || value < TORUS_Q.min || value > TORUS_Q.max) throw new Error(`Damping takes a Q factor ${TORUS_Q.min} to ${TORUS_Q.max}.`)
   return value
 }
 
-/** The Body group on the binding: its values and standing, whether Body source and Damping take a change now, and their two writes. */
+/** The Body group on the binding: its values and standing, whether Body, Modes, Body source, Strike and Damping take a change now, and their
+ * writes. What rings is the owner's Torus session's `body` (the torus, or a form with its form, material, modes and voices): Body chooses it
+ * as the stage channel's body edit, and under a form Modes, Damping and Body source choose it again, since the owner damps a form at the Q
+ * it was made at (QL refuses set-damping under one). */
 export function torusBody(state: LiveTorusState | null, condition: FrameInstrumentCondition | null | undefined, table: BodyTable | null,
   held: Readonly<Record<string, Value>>, commit: (edit: InstrumentEdit) => Promise<{ok: boolean; error?: string}>,
   keep: (key: string, value: Value) => void): {values: Record<string, Value>; standing: Record<string, Standing>; writes: ReadonlySet<string>; write: (change: ValueChange) => Promise<void>} {
   const values: Record<string, Value> = {}, standing: Record<string, Standing> = {}, writes = new Set<string>()
   const source = torusBodySourceOf(held), set = tattvaBody(condition, table), row = set.row, session = torusSessionOf(state)
   const owner = !liveInstrumentWritable(state) ? (state === null ? 'No owner reading stands in this host.' : NOT_WRITABLE) : null
+  // What rings: the owner's naming of it, or why none stands.
+  const rings = session?.body ?? null, formed = rings?.kind === 'form' ? rings : null
+  const unnamed = !session ? (owner ?? `${NO_SESSION}.`) : !rings ? BODY_UNNAMED : null
+  if (rings) values.body = rings.kind
+  if (unnamed) standing.body = {disabled: unnamed}
+  else if (owner) standing.body = {disabled: owner}
+  else writes.add('body')
+  if (formed) {
+    values.modes = formed.modes
+    values['body.form'] = formed.form.form_ref
+    standing['body.form'] = {disabled: `A reading: the form that rings, the scene's M3 form (${formed.form.kind} ${formed.form.form_ref}) as the owner prepared it, of ${formed.material.fibre}, ${formed.modes} modes a voice through ${formed.voices} voices.`}
+    if (owner) standing.modes = {disabled: owner}
+    else writes.add('modes')
+  } else {
+    standing.modes = {disabled: unnamed ?? MODES_UNDER_TORUS}
+    standing['body.form'] = {disabled: unnamed ?? 'The torus rings: no form is made a body. Choose A form to ring the scene\'s M3 form.'}
+  }
   const would = row ? ` M2's table gives the ${row.fibre} fibre Strike ${Math.round(row.strike_share * 100)}% and Damping ${row.q_factor} (${table?.ok ? table.standing : 'unread'}).` : ''
   // The table's standing, a reading; Body source, the hand's choice once the table is read and the owner takes edits.
   if (table?.ok) {
@@ -388,12 +418,14 @@ export function torusBody(state: LiveTorusState | null, condition: FrameInstrume
     standing['tattva.standing'] = {disabled: why}
     standing[TORUS_BODY_SOURCE] = {disabled: why}
   }
-  // Damping: the fibre's Q held under Tattva; the Q you set under Declared, or under a tattva that carries no element.
+  // Damping: the fibre's Q held under Tattva; the Q you set under Declared, or under a tattva that carries no element; under a form, the Q
+  // the owner made it at.
   if (source === 'tattva' && row) {
     values.damping = row.q_factor
     standing.damping = {disabled: `Body source is Tattva: the ${row.fibre} fibre sets it (Q ${row.q_factor}, M2's body constants, ${table?.ok ? table.standing : 'unread'}). Set Body source to Declared to set it by hand.`}
   } else {
-    if (typeof held.damping === 'number') values.damping = held.damping
+    if (formed) values.damping = formed.material.q_factor
+    else if (typeof held.damping === 'number') values.damping = held.damping
     if (owner) standing.damping = {disabled: owner}
     else writes.add('damping')
   }
@@ -410,12 +442,39 @@ export function torusBody(state: LiveTorusState | null, condition: FrameInstrume
     else writes.add('strike')
   }
   const send = async (edit: InstrumentEdit) => { const result = await commit(edit); if (!result.ok) throw new Error(result.error ?? 'The native field refused the body\'s setting.') }
+  // A form chosen, or chosen again: so many modes a voice at a Q, its material declared or the tattva's. The owner's refusal is said in words.
+  const choose = async (body: {modes: number; q_factor: number; material: BodySource} | null) => {
+    const result = await commit({kind: 'body', body})
+    if (!result.ok) throw new Error(refusalWords(body === null ? 'The torus was not given the body back.' : 'The body was not chosen.', result.error))
+  }
   const write = async ({key, value}: ValueChange) => {
+    if (key === 'body') {
+      if (value !== 'torus' && value !== 'form') throw new Error('The body is The torus or A form.')
+      if (!writes.has(key)) throw new Error(standing.body?.disabled ?? 'The body cannot be chosen now.')
+      if (value === 'torus') return choose(null)
+      const q = source === 'tattva' && row ? row.q_factor : formed ? formed.material.q_factor : typeof held.damping === 'number' ? held.damping : null
+      if (q === null) throw new Error('A form rings at the Damping you set: set Damping, then choose A form.')
+      const modes = formed ? formed.modes : typeof held.modes === 'number' ? held.modes : TORUS_FORM_MODES.def
+      return choose({modes, q_factor: q, material: source})
+    }
+    if (key === 'modes') {
+      if (!writes.has(key) || !formed) throw new Error(standing.modes?.disabled ?? 'Modes cannot be set now.')
+      const modes = formModes(value)
+      keep('modes', modes)
+      return choose({modes, q_factor: formed.material.q_factor, material: source})
+    }
     if (key === TORUS_BODY_SOURCE) {
       if (value !== 'declared' && value !== 'tattva') throw new Error('The body source is Declared or Tattva.')
       if (!writes.has(key)) throw new Error(standing[key]?.disabled ?? 'The body source cannot be chosen now.')
       keep(TORUS_BODY_SOURCE, value)
       const edits = torusBodyEdits(condition, table, value, session)
+      if (formed) {
+        // Under a form its Q is the form's own: the fibre's Strike goes to the session, then the form is made again of the material chosen.
+        for (const edit of edits) if (edit.kind !== 'damping') await send(edit)
+        if (!edits.length && value === 'declared' && strikeOwned && typeof held.strike === 'number') await send({kind: 'torus', edit: {strike: held.strike}})
+        const fibre = edits.find(edit => edit.kind === 'damping')
+        return choose({modes: formed.modes, q_factor: fibre?.kind === 'damping' ? fibre.q_factor : typeof held.damping === 'number' ? held.damping : formed.material.q_factor, material: value})
+      }
       for (const edit of edits) await send(edit)
       if (!edits.length && value === 'declared') {
         // Declared gives back the values you set.
@@ -435,6 +494,8 @@ export function torusBody(state: LiveTorusState | null, condition: FrameInstrume
       if (!writes.has(key)) throw new Error(standing.damping?.disabled ?? 'Damping cannot be set now.')
       const q = dampingQ(value)
       keep('damping', q)
+      // A form is damped at the Q it is made at: it is made again (the owner refuses set-damping under a form).
+      if (formed) return choose({modes: formed.modes, q_factor: q, material: source})
       await send({kind: 'damping', q_factor: q})
       return
     }
@@ -471,7 +532,7 @@ export function torusRowChanges(changes: readonly ValueChange[]): {key: string; 
 }
 
 /** The Body group's keys the binding writes itself (torusBody), not as the device's rows. */
-const BODY_KEYS: ReadonlySet<string> = new Set([TORUS_BODY_SOURCE, 'damping', 'strike'])
+const BODY_KEYS: ReadonlySet<string> = new Set([TORUS_BODY_SOURCE, 'damping', 'strike', 'body', 'modes', 'body.form'])
 
 /** Every key the binding speaks for: the design's keys and the owner's own. Receiver's standing is its own (torusReceiver). */
 const TORUS_KEYS = ['light', 'standing', 'level', ...QL_PRESENTATION_KEYS.filter(key => key !== 'level'), ...Object.keys(TORUS_DETERMINANT_KEYS), ...Object.keys(TORUS_ABSENT)]

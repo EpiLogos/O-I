@@ -150,11 +150,22 @@ fn the_audio_thread_pull_allocates_nothing() {
             handle.collect();
         }
     }
+    // O-I #849: an instrument handed to a part is taken on the audio thread without allocating, and the one
+    // it replaced goes back to the control side to be dropped there.
+    let handed = Box::new(OperatorInstrument::default_patch(SR));
+    handle.install(1, handed).unwrap();
+    handle.send(events[0]).unwrap();
+    ARMED.with(|a| a.set(true));
+    core.pull_block(&mut block);
+    core.pull_block(&mut block);
+    ARMED.with(|a| a.set(false));
+    handle.collect();
+    assert_eq!(handle.installs().len(), 1, "the hand was taken");
     let count = ALLOCATIONS.load(Ordering::Relaxed);
     assert!(heard, "the set sounded");
     assert_eq!(
         handle.performance().events.len(),
-        events.len(),
+        events.len() + 1,
         "every event was applied"
     );
     assert_eq!(count, 0, "the audio thread allocated {count} times");

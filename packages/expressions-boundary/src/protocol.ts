@@ -114,11 +114,40 @@ export function readHostedTorus(raw: unknown): HostedTorusSession | string {
   if (typeof material === 'string') return `material: ${material}`;
   const classes = raw.classes === undefined ? undefined : readTorusClasses(raw.classes);
   if (typeof classes === 'string') return `classes: ${classes}`;
+  // What rings (O-I #852): an owner from before it names none, and then the session carries none; one named is read exact.
+  const body = raw.body === undefined ? undefined : readTorusBody(raw.body);
+  if (typeof body === 'string') return `body: ${body}`;
   return {settings: {rate, fundamental, carrier: t.carrier, shape: t.shape, tuning: t.tuning, polyphony: t.polyphony, tempo_bpm: t.tempo_bpm,
     ...(t.strike !== undefined ? {strike: t.strike as number} : {})},
     steps_per_second: raw.steps_per_second, band: raw.band, fundamental_hz: raw.fundamental_hz, map_hz: raw.map_hz, figure: raw.figure as HostedTorusSession['figure'],
     comma_cents: raw.comma_cents, notes: raw.notes, resident_tunings: [...raw.resident_tunings] as HostedTorusSession['resident_tunings'], carrier_drive: raw.carrier_drive,
-    ...(maqam ? {maqam} : {}), ...(material ? {material} : {}), ...(classes ? {classes} : {})};
+    ...(maqam ? {maqam} : {}), ...(material ? {material} : {}), ...(classes ? {classes} : {}), ...(body ? {body} : {})};
+}
+
+/** The most modes of a form's body each voice rings (QL-MEF form_instrument/body.rs MAX_BODY_MODES). */
+const BODY_MODES_MAX = 64;
+const FORM_KINDS = ['fold', 'codon', 'hexagram', 'glyph'] as const;
+const BODY_FIBRES = ['earth', 'fire', 'water', 'air'] as const;
+/** What rings, as the frame announces the owner's naming of it (instrumentAnnouncement.mjs bodyOf; QL scene_field.rs `body`). */
+function readTorusBody(raw: unknown): NonNullable<HostedTorusSession['body']> | string {
+  if (!object(raw)) return 'expected the torus or a form';
+  if (raw.kind === 'torus') return Object.keys(raw).length === 1 ? {kind: 'torus'} : 'expected the torus alone';
+  if (raw.kind !== 'form' || Object.keys(raw).length !== 6) return 'expected the torus, or a form with its form, preparation, material, modes and voices';
+  const form = raw.form;
+  if (!object(form) || Object.keys(form).length !== 3 || !(FORM_KINDS as readonly unknown[]).includes(form.kind) || !boundedText(form.form_ref, 2048) || !boundedText(form.source_ref, 2048))
+    return 'form: expected its kind (fold, codon, hexagram or glyph), form_ref and source_ref';
+  if (!boundedText(raw.preparation_ref, 2048)) return 'preparation_ref: expected the owner\'s preparation';
+  const material = raw.material;
+  if (!object(material) || Object.keys(material).length !== 4 || !(BODY_FIBRES as readonly unknown[]).includes(material.fibre)
+    || typeof material.q_factor !== 'number' || !Number.isFinite(material.q_factor) || material.q_factor < 0.1 || material.q_factor > 40
+    || typeof material.strike_share !== 'number' || !Number.isFinite(material.strike_share) || material.strike_share < 0 || material.strike_share > 1
+    || !boundedText(material.source_ref, 2048)) return 'material: expected its fibre, a Q factor 0.1..40, a Strike 0..1 and where they came from';
+  if (!Number.isSafeInteger(raw.modes) || (raw.modes as number) < 1 || (raw.modes as number) > BODY_MODES_MAX) return `modes: expected 1..${BODY_MODES_MAX} a voice`;
+  if (!Number.isSafeInteger(raw.voices) || (raw.voices as number) < 0) return 'voices: expected a count';
+  return {kind: 'form', form: {kind: form.kind as (typeof FORM_KINDS)[number], form_ref: form.form_ref as string, source_ref: form.source_ref as string},
+    preparation_ref: raw.preparation_ref as string,
+    material: {fibre: material.fibre as (typeof BODY_FIBRES)[number], q_factor: material.q_factor, strike_share: material.strike_share, source_ref: material.source_ref as string},
+    modes: raw.modes as number, voices: raw.voices as number};
 }
 
 const textOrNull = (v: unknown): v is string | null => v === null || boundedText(v, 512);

@@ -110,6 +110,30 @@ test('the maqām, the lens\'s material and the twelve classes cross with the ses
   ]) assert.match(read(over), fault, JSON.stringify(over).slice(0, 80));
 });
 
+// O-I #852 (DLW manual §21.2 Body): what rings crosses exact, as the frame announces the owner's naming of it (instrumentAnnouncement.mjs
+// bodyOf, QL scene_field.rs `body`): the torus, or a form with the form it was made from, the owner's preparation, its modes a voice and the
+// voices that ring it, and the material it was made of. The Body page's choice crosses as the instrument's closed `body` edit: a form of so
+// many modes at a Q, or the torus.
+test('what rings crosses exact: the torus, or a form, its preparation, material, modes and voices; the Body page chooses it as one closed edit', () => {
+  const read = over => readHostedParameters(parameters({torus: session(over)}));
+  const form = {kind: 'fold', form_ref: '#3-controlled', source_ref: 'ql.m3-state/v1@1'};
+  const material = {fibre: 'earth', q_factor: 12, strike_share: 0.7, source_ref: 'declared'};
+  const body = {kind: 'form', form, preparation_ref: 'sha256:prepared', material, modes: 8, voices: 9};
+  assert.deepEqual(read({body}).torus.body, body);
+  assert.deepEqual(read({body: {kind: 'torus'}}).torus.body, {kind: 'torus'});
+  assert.equal('body' in read({}).torus, false, 'an owner from before names none');
+  for (const bad of [{kind: 'plate'}, {kind: 'torus', modes: 8}, {...body, modes: 0}, {...body, modes: 65}, {...body, voices: -1},
+    {...body, form: {...form, kind: 'sphere'}}, {...body, form: {...form, form_ref: ''}}, {...body, preparation_ref: 4}, {...body, prepared: {}},
+    {...body, material: {...material, fibre: 'wood'}}, {...body, material: {...material, q_factor: 0}}, {...body, material: {...material, strike_share: 1.5}},
+    {...body, material: {...material, source_ref: ''}}, {...body, material: {...material, damping: 'law'}}])
+    assert.match(read({body: bad}), /parameters\.torus\.body/, JSON.stringify(bad).slice(0, 80));
+  const choice = {kind: 'body', body: {modes: 8, q_factor: 4.5, material: 'tattva'}};
+  assert.deepEqual(readInstrumentEdit(choice), choice);
+  assert.deepEqual(readInstrumentEdit({kind: 'body', body: null}), {kind: 'body', body: null});
+  assert.deepEqual(readStageRequest(stageRequestMessage(3, {command: 'instrument', edit: choice})).command, {command: 'instrument', edit: choice});
+  assert.equal(readInstrumentEdit({kind: 'body', body: {modes: 8, q_factor: 4.5, material: 'tattva', form: 'fold'}}), null, 'the form is the scene\'s, never the hand\'s');
+});
+
 // O-I 856: where the Torus is heard from crosses exactly: Receiver On or Off, the owner's context and its refusal. The place is the listener's
 // own, so a frame that announced one would be refused by name.
 test('Receiver crosses exact: On or Off, the owner\'s context and its refusal, never a place; a frame from before it announces none', () => {

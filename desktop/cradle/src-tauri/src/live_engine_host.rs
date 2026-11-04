@@ -13,7 +13,8 @@
 //! | `live_engine_open {path}` | bridge the set and make its engine (nothing sounds yet); answers the mixer reading |
 //! | `live_engine_play` | the engine plays on the default output from where it stands |
 //! | `live_engine_stop` | the output stops; the engine and what it played are kept |
-//! | `live_engine_send {event}` | one note, Panic or mixer move, applied at the next block; answers the mixer reading |
+//! | `live_engine_send {event}` | one note, Torus act, Panic or mixer move, applied at the next block; answers the mixer reading |
+//! | `live_engine_torus {lease, track, sha256}` | the Torus its owner handed over (kept by the kernel under the field's lease) sounds on the part |
 //! | `live_engine_mixer` | the mixer as the engine applied it |
 //! | `live_engine_export` | Export Audio: what the engine played, rendered offline, as a 32-bit float WAV, into the file the person chooses in the host's own save dialog |
 //!
@@ -25,6 +26,16 @@
 //! the set as the engine bridged it at Play, so a mixer write made while it
 //! played (the set's own, followed into the engine) is heard where it was
 //! applied and nowhere earlier.
+//!
+//! The Torus (O-I #849, with QL's K8 node: the `k8` feature): its owner
+//! hands it over (QL's `torus-native`), the kernel keeps the document under
+//! the field's lease and relays the page only its digest, and
+//! `live_engine_torus` puts the node made from it on a MIDI part
+//! (torus_native.rs). The node continues the owner's field from the sample
+//! it stood at; a `torus_play` event strikes its keys by the owner's
+//! played-address law; Panic stills it; Export Audio makes it again from the
+//! same document at the frame the engine took it. A new engine (Play after
+//! Stop) holds no Torus until the owner hands it over again.
 //!
 //! Events are refused in the engine's words when the set has nothing they
 //! name. A mixer reading is what the engine APPLIED, never what was asked.
@@ -38,6 +49,7 @@ pub(crate) mod host {
     use live_engine::engine::PartMix;
     use live_engine::{
         engine, EngineCore, EngineEvent, EngineHandle, EnginePlayer, Graph, MixerState, Part,
+        TorusAct,
     };
     use live_set::xml::Element;
     use serde::Deserialize;
@@ -70,12 +82,13 @@ pub(crate) mod host {
     }
 
     /// One engine event as the UI sends it: `kind` names it (`note_on`,
-    /// `note_off`, `panic`, `volume`, `pan`, `send`, `active`, `solo`) and
-    /// the fields its kind takes sit beside it. A plain struct, not a
-    /// tagged enum: a tagged enum buffers its fields, and the buffered
-    /// numbers of this build's serde_json (arbitrary precision, enabled by
-    /// a dependency) arrive as maps — "invalid type: map, expected f64".
-    #[derive(Debug, Clone, Copy, Deserialize)]
+    /// `note_off`, `panic`, `volume`, `pan`, `send`, `active`, `solo`,
+    /// `torus_play`) and the fields its kind takes sit beside it. A plain
+    /// struct, not a tagged enum: a tagged enum buffers its fields, and the
+    /// buffered numbers of this build's serde_json (arbitrary precision,
+    /// enabled by a dependency) arrive as maps — "invalid type: map,
+    /// expected f64".
+    #[derive(Debug, Clone, Deserialize)]
     #[serde(deny_unknown_fields)]
     pub struct EventIn {
         kind: EventKind,
@@ -87,6 +100,18 @@ pub(crate) mod host {
         pan: Option<f64>,
         send: Option<usize>,
         on: Option<bool>,
+        /// A Torus act's keys, as its owner's `torus-play` names them (O-I #849).
+        keys: Option<Vec<KeyIn>>,
+        /// A Torus act's velocity: two modal metres, as its owner's `torus-play` takes it.
+        amplitude: Option<[f64; 2]>,
+    }
+
+    /// One of the Torus's keys: its row on the surface and its column.
+    #[derive(Debug, Clone, Copy, Deserialize)]
+    #[serde(deny_unknown_fields)]
+    pub struct KeyIn {
+        row: u8,
+        column: u16,
     }
 
     #[derive(Debug, Clone, Copy, Deserialize, serde::Serialize)]
@@ -100,6 +125,7 @@ pub(crate) mod host {
         Send,
         Active,
         Solo,
+        TorusPlay,
     }
 
     impl EventIn {
@@ -118,6 +144,8 @@ pub(crate) mod host {
                 pan,
                 send,
                 on,
+                keys,
+                amplitude,
             } = self;
             let name = serde_json::to_value(kind)
                 .ok()
@@ -155,6 +183,16 @@ pub(crate) mod host {
                     track: need(track, &name, "track")?,
                     on: need(on, &name, "on")?,
                 },
+                EventKind::TorusPlay => {
+                    let keys: Vec<(u8, u16)> = need(keys, &name, "keys")?
+                        .iter()
+                        .map(|key| (key.row, key.column))
+                        .collect();
+                    EngineEvent::TorusPlay {
+                        track: need(track, &name, "track")?,
+                        act: TorusAct::new(&keys, need(amplitude, &name, "amplitude")?)?,
+                    }
+                }
             })
         }
     }
@@ -203,6 +241,21 @@ pub(crate) mod host {
         })
     }
 
+    /// The words the Torus is refused in by a host built without QL's K8 node.
+    #[cfg(not(feature = "k8"))]
+    pub const WITHOUT_K8: &str = "The Torus sounds in the one engine through QL's K8 node, and this host was built without QL's K8 node (its k8 feature)";
+
+    /// A Torus handed over to one of the set's parts (O-I #849): the part, the digest its owner
+    /// handed it over by and the sample it stood at, and what it was made from, for Export Audio.
+    #[cfg_attr(not(feature = "k8"), allow(dead_code))]
+    pub struct TorusOnPart {
+        pub track: usize,
+        pub sha256: String,
+        pub at_samples_elapsed: u64,
+        #[cfg(feature = "k8")]
+        pub handed: crate::torus_native::Handed,
+    }
+
     /// One open set's engine.
     pub struct Opened {
         pub path: PathBuf,
@@ -213,6 +266,9 @@ pub(crate) mod host {
         /// The audio half while it is not playing (taken by `play`).
         pub core: Option<EngineCore>,
         pub player: Option<EnginePlayer>,
+        /// Every Torus handed over to a part, in the order handed: the engine takes each before the
+        /// next is handed ([`EngineHandle::install`]), so the n-th is the engine's n-th install.
+        pub toruses: Vec<TorusOnPart>,
     }
 
     impl Opened {
@@ -227,6 +283,7 @@ pub(crate) mod host {
                 handle,
                 core: Some(core),
                 player: None,
+                toruses: Vec::new(),
             })
         }
 
@@ -239,14 +296,82 @@ pub(crate) mod host {
                 "playing": self.player.is_some(),
                 "warnings": self.warnings,
                 "mixer": mixer_json(self.handle.mixer()),
+                "toruses": self.torus_reading(),
             })
         }
 
+        /// The Torus each part holds (the last handed over to it): its digest, the owner's sample it
+        /// stood at, and the engine frame it sounds from once the engine has taken it.
+        fn torus_reading(&self) -> Value {
+            let taken = self.handle.installs();
+            Value::Array(
+                self.toruses
+                    .iter()
+                    .enumerate()
+                    .filter(|(i, t)| {
+                        !self.toruses[i + 1..]
+                            .iter()
+                            .any(|later| later.track == t.track)
+                    })
+                    .map(|(i, t)| {
+                        json!({
+                            "track": t.track,
+                            "sha256": t.sha256,
+                            "at_samples_elapsed": t.at_samples_elapsed.to_string(),
+                            "sounding_from_frame": taken.get(i).map(|(frame, _)| *frame),
+                        })
+                    })
+                    .collect(),
+            )
+        }
+
         pub fn send(&mut self, event: EventIn) -> Result<Value, String> {
-            self.handle
-                .send(event.event()?)
-                .map_err(|e| e.to_string())?;
+            let event = event.event()?;
+            if let EngineEvent::TorusPlay { track, .. } = event {
+                let part = self.handle.mixer().tracks.get(track);
+                if let Some(part) = part.filter(|_| !self.toruses.iter().any(|t| t.track == track))
+                {
+                    return Err(format!(
+                        "{} holds no Torus: its owner's Torus is handed over to it first",
+                        part.name
+                    ));
+                }
+            }
+            self.handle.send(event).map_err(|e| e.to_string())?;
             Ok(self.reading())
+        }
+
+        /// Hand the Torus its owner handed over (`ql.torus-native/v1`, as the kernel kept it under its
+        /// digest `sha256`) to the set's part `track` (O-I #849): the node continues the owner's field
+        /// from the sample it stood at, takes the part at the engine's next block and sounds through
+        /// the part's chain and mixer row to Main. Refused in words for a document that is not one, a
+        /// part that plays no notes, a Torus still on its way, or a host without QL's K8 node.
+        pub fn install_torus(
+            &mut self,
+            track: usize,
+            sha256: &str,
+            document: &Value,
+        ) -> Result<Value, String> {
+            #[cfg(feature = "k8")]
+            {
+                let handed = crate::torus_native::read(document)?;
+                let node = handed.node(ENGINE_RATE)?;
+                self.handle
+                    .install(track, node)
+                    .map_err(|e| e.to_string())?;
+                self.toruses.push(TorusOnPart {
+                    track,
+                    sha256: sha256.to_owned(),
+                    at_samples_elapsed: handed.at_samples_elapsed,
+                    handed,
+                });
+                Ok(self.reading())
+            }
+            #[cfg(not(feature = "k8"))]
+            {
+                let _ = (track, sha256, document);
+                Err(WITHOUT_K8.into())
+            }
         }
 
         /// Export Audio's render: the set as the engine bridged it, rendered
@@ -258,6 +383,21 @@ pub(crate) mod host {
         pub fn render_wav(&mut self) -> Result<(Vec<u8>, Value), String> {
             let performance = self.handle.performance();
             let (graph, _) = bridged(&self.document)?;
+            // Each Torus made again from what was handed over, at the frame the engine took it.
+            #[cfg(feature = "k8")]
+            let samples = {
+                let toruses = self
+                    .handle
+                    .installs()
+                    .iter()
+                    .zip(&self.toruses)
+                    .map(|(&(frame, track), torus)| {
+                        Ok((frame, track, torus.handed.node(ENGINE_RATE)?))
+                    })
+                    .collect::<Result<Vec<_>, String>>()?;
+                graph.render_performance_with(ENGINE_RATE, &performance, toruses)
+            };
+            #[cfg(not(feature = "k8"))]
             let samples = graph.render_performance(ENGINE_RATE, &performance);
             Ok((
                 wav_f32(&samples, ENGINE_RATE),
@@ -349,6 +489,8 @@ pub(crate) mod host {
                                 ..
                             } = Opened::open(&o.path)?;
                             (o.document, o.warnings, o.handle) = (document, warnings, handle);
+                            // a new engine holds no Torus: the owner hands it over again
+                            o.toruses.clear();
                             core.ok_or("the engine was not made")?
                         }
                     };
@@ -367,6 +509,15 @@ pub(crate) mod host {
 
         pub fn send(&self, event: EventIn) -> Result<Value, String> {
             self.with(|o| o.send(event))
+        }
+
+        pub fn install_torus(
+            &self,
+            track: usize,
+            sha256: &str,
+            document: &Value,
+        ) -> Result<Value, String> {
+            self.with(|o| o.install_torus(track, sha256, document))
         }
 
         pub fn mixer(&self) -> Result<Value, String> {
@@ -800,6 +951,50 @@ pub(crate) mod host {
             assert!(!chosen.exists(), "the host writes no file: its owner does");
         }
 
+        /// A Torus act is an event on a part (O-I #849): it names its part, its keys and its velocity,
+        /// and a part holds no Torus until its owner's Torus is handed over to it.
+        #[test]
+        fn a_torus_act_names_its_keys_and_sounds_only_on_a_part_the_torus_was_handed_over_to() {
+            let path = write_set("torus-act", SET);
+            let mut opened = Opened::open(&path).unwrap();
+            let event = |json: &str| {
+                serde_json::from_str::<EventIn>(json).unwrap_or_else(|e| panic!("{json}: {e}"))
+            };
+            let refused = opened
+                .send(event(
+                    r#"{"kind":"torus_play","track":0,"amplitude":[0.3,0]}"#,
+                ))
+                .unwrap_err();
+            assert!(
+                refused.contains("a torus_play event names its keys"),
+                "{refused}"
+            );
+            let many = format!(
+                r#"{{"kind":"torus_play","track":0,"keys":[{}],"amplitude":[0.3,0]}}"#,
+                vec![r#"{"row":0,"column":0}"#; 33].join(",")
+            );
+            let refused = opened.send(event(&many)).unwrap_err();
+            assert!(refused.contains("1 to 32 keys"), "{refused}");
+            let refused = opened
+                .send(event(
+                    r#"{"kind":"torus_play","track":0,"keys":[{"row":2,"column":3}],"amplitude":[0.3,0]}"#,
+                ))
+                .unwrap_err();
+            assert!(refused.contains("Keys holds no Torus"), "{refused}");
+            assert_eq!(opened.reading()["toruses"], json!([]));
+        }
+
+        #[cfg(not(feature = "k8"))]
+        #[test]
+        fn a_host_built_without_qls_k8_node_refuses_the_torus_in_words() {
+            let path = write_set("torus-unbuilt", SET);
+            let mut opened = Opened::open(&path).unwrap();
+            let refused = opened
+                .install_torus(0, "sha256:none", &json!({}))
+                .unwrap_err();
+            assert!(refused.contains("built without QL's K8 node"), "{refused}");
+        }
+
         #[test]
         fn the_host_refuses_what_is_not_a_set_or_not_open() {
             let host = LiveEngineHost::default();
@@ -929,6 +1124,33 @@ pub fn live_engine_send(
     #[cfg(not(feature = "native_shell"))]
     {
         let _ = (app, webview, event);
+        Err(EVERYDAY.into())
+    }
+}
+
+/// The Torus its owner handed over sounds on the set's part `track` (O-I #849): the kernel kept the
+/// document under the field's lease (`Field::torus_native`), and the page names only its digest.
+#[tauri::command]
+pub fn live_engine_torus(
+    app: tauri::AppHandle,
+    webview: tauri::WebviewWindow,
+    lease: String,
+    track: usize,
+    sha256: String,
+) -> Result<serde_json::Value, String> {
+    #[cfg(feature = "native_shell")]
+    {
+        use tauri::Manager;
+        admit_candidate_webview(&webview)?;
+        let handed = app
+            .state::<crate::KernelHost>()
+            .1
+            .torus_native(&lease, &sha256)?;
+        host(&app).install_torus(track, &sha256, &handed)
+    }
+    #[cfg(not(feature = "native_shell"))]
+    {
+        let _ = (app, webview, lease, track, sha256);
         Err(EVERYDAY.into())
     }
 }

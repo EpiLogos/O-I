@@ -75,7 +75,9 @@ test('every event the UI sends is one the host parses: the same fields its own t
   }
   const sent = [engine.engineEventOfMixerWrite(KINDS, 2, 'activator', false), engine.engineEventOfMixerWrite(KINDS, 3, 'activator', false),
     engine.engineEventOfMixerWrite(KINDS, 2, 'solo', true), engine.engineEventOfSendWrite(KINDS, 2, 0, 0.5),
-    engine.engineEventOfMixerWrite(KINDS, 0, 'volume', 0.25), engine.engineEventOfMixerWrite(KINDS, 4, 'pan', 0.3)]
+    engine.engineEventOfMixerWrite(KINDS, 0, 'volume', 0.25), engine.engineEventOfMixerWrite(KINDS, 4, 'pan', 0.3),
+    // A Torus act, as its owner's torus-play names it (O-I #849).
+    {kind: 'torus_play', track: 0, keys: [{row: 2, column: 3}], amplitude: [0.3, 0]}]
   for (const event of sent) {
     const shape = JSON.stringify([Object.keys(event).sort(), typeof event.part === 'object' ? Object.keys(event.part) : event.part ?? null])
     assert.ok(pinned.has(`${event.kind} ${shape}`), `the host's tests parse a ${event.kind} event shaped ${shape}`)
@@ -87,11 +89,12 @@ test('off the native candidate each engine act refuses, naming its op', async ()
   await assert.rejects(engine.liveEngine.play(PATH, async () => ({summary})), /out of reach here \(live_engine_open\)/)
   await assert.rejects(engine.liveEngine.stop(), /\(live_engine_stop\)/)
   await assert.rejects(engine.liveEngine.send({kind: 'panic'}), /\(live_engine_send\)/)
+  await assert.rejects(engine.liveEngine.torus('lease:1', 0, 'sha256:0'), /\(live_engine_torus\)/)
   await assert.rejects(engine.liveEngine.read(), /\(live_engine_mixer\)/)
   await assert.rejects(engine.liveEngine.exportAudio(), here)
   assert.equal(engine.liveEngineState().reading, null, 'nothing is held that the engine did not answer')
   assert.match(engine.liveEngineState().error, here)
-  assert.deepEqual([...engine.LIVE_ENGINE_OPS], ['live_engine_open', 'live_engine_play', 'live_engine_stop', 'live_engine_send', 'live_engine_mixer', 'live_engine_export'])
+  assert.deepEqual([...engine.LIVE_ENGINE_OPS], ['live_engine_open', 'live_engine_play', 'live_engine_stop', 'live_engine_send', 'live_engine_torus', 'live_engine_mixer', 'live_engine_export'])
   for (const name of engine.LIVE_ENGINE_OPS) assert.match(hostSource, new RegExp(`pub (async )?fn ${name}\\(`), `the host serves ${name}`)
 })
 

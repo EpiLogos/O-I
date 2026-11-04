@@ -167,3 +167,83 @@ test('with no owner the body source stays closed and says why, naming what the f
   assert.match(binding.standing['body.source'].disabled, /No owner reading stands in this host/)
   assert.match(binding.standing['body.source'].disabled, /earth fibre Strike 45% and Damping 12 \(proposed\)/)
 })
+
+// O-I #852 (manual §21.2 Body: "The body is what rings. It is the torus unless you choose a form"): the Body radio chooses what rings
+// through the one stage channel, as the instrument's `body` edit (stageCommands.ts InstrumentEdit), and the page reads what rings from the
+// owner's Torus session (its `body`: the torus, or a form with its form, material, modes and voices; QL scene_field.rs), never its own idea
+// of it. Under a form, Modes, Damping and Body source choose the body again (the owner damps a form at the Q it was made at, and refuses
+// set-damping under one); under the torus, Modes is a form's and says so.
+const form = (over = {}) => ({kind: 'form', form: {kind: 'fold', form_ref: '#3-controlled', source_ref: 'ql.m3-state/v1@1'}, preparation_ref: 'sha256:prepared',
+  material: {fibre: 'earth', q_factor: 12, strike_share: 0.7, source_ref: 'declared'}, modes: 8, voices: 9, ...over})
+const ringing = (body, strike = 0.7) => ({...following, parameters: {...following.parameters, torus: {...session(strike), ...(body === undefined ? {} : {body})}}})
+function chosen(state, condition = earth, answer = {ok: true}) {
+  const sent = []
+  const binding = torus.torusDesignBinding(state, undefined, {}, null, undefined, null, holds.heldFor(torus.TORUS_DESIGN_ID), condition,
+    {ok: true, name: 'Prithvi Tattva'}, table, async edit => { sent.push(edit); return answer })
+  return {binding, sent}
+}
+
+test('the Body page reads what rings from the owner: the torus, or a form with its form, modes and Q; nothing while none is named', () => {
+  holds.resetHolds()
+  const none = chosen(following).binding
+  assert.equal(none.values.body, undefined, 'no session announced: no body is drawn as ringing')
+  assert.match(none.standing.body.disabled, /torus-state/)
+  assert.equal(none.writes('body'), false)
+  const older = chosen(ringing(undefined)).binding
+  assert.equal(older.values.body, undefined)
+  assert.match(older.standing.body.disabled, /names no body/, 'an owner from before torus-body says nothing of what rings')
+  const torusRings = chosen(ringing({kind: 'torus'})).binding
+  assert.equal(torusRings.values.body, 'torus')
+  assert.equal(torusRings.writes('body'), true)
+  assert.equal(torusRings.values.modes, undefined)
+  assert.match(torusRings.standing.modes.disabled, /a count of modes is a form's/, 'under the torus, Modes is a form\'s and says so')
+  assert.match(torusRings.standing['body.form'].disabled, /The torus rings/)
+  const formRings = chosen(ringing(form())).binding
+  assert.deepEqual([formRings.values.body, formRings.values.modes, formRings.values['body.form'], formRings.values.damping], ['form', 8, '#3-controlled', 12],
+    'the owner\'s form, its modes a voice and the Q it was made at')
+  assert.equal(formRings.writes('modes'), true)
+  assert.equal(formRings.writes('damping'), true)
+  assert.match(formRings.standing['body.form'].disabled, /A reading/)
+  holds.resetHolds()
+})
+
+test('choosing A form sends the body edit: the modes you hold, or 8, at the Q you set or the fibre\'s; the torus sends none; a refusal in words', async () => {
+  holds.resetHolds()
+  let {binding, sent} = chosen(ringing({kind: 'torus'}))
+  await assert.rejects(binding.write([{key: 'body', value: 'form'}]), /A form rings at the Damping you set: set Damping, then choose A form\./)
+  assert.deepEqual(sent, [], 'nothing reached the channel')
+  holds.hold(torus.TORUS_DESIGN_ID, 'damping', 4.5)
+  ;({binding, sent} = chosen(ringing({kind: 'torus'})))
+  await binding.write([{key: 'body', value: 'form'}])
+  assert.deepEqual(sent, [{kind: 'body', body: {modes: 8, q_factor: 4.5, material: 'declared'}}])
+  holds.hold(torus.TORUS_DESIGN_ID, 'modes', 16)
+  holds.hold(torus.TORUS_DESIGN_ID, 'body.source', 'tattva')
+  ;({binding, sent} = chosen(ringing({kind: 'torus'}, 0.45)))
+  await binding.write([{key: 'body', value: 'form'}])
+  assert.deepEqual(sent, [{kind: 'body', body: {modes: 16, q_factor: 12, material: 'tattva'}}], 'under Tattva the earth fibre\'s Q, M2\'s table')
+  ;({binding, sent} = chosen(ringing(form())))
+  await binding.write([{key: 'body', value: 'torus'}])
+  assert.deepEqual(sent, [{kind: 'body', body: null}], 'the torus: the body given back')
+  await assert.rejects(binding.write([{key: 'body', value: 'plate'}]), /The torus or A form/)
+  ;({binding, sent} = chosen(ringing({kind: 'torus'}), earth, {ok: false, error: 'Error: a body\'s Q factor must be within 0.1 to 40: it is the Torus\'s Damping'}))
+  await assert.rejects(binding.write([{key: 'body', value: 'form'}]), /^Error: The body was not chosen\. A body's Q factor must be within 0\.1 to 40/)
+  holds.resetHolds()
+})
+
+test('under a form, Modes, Damping and Body source choose the body again; set-damping is never sent to a form', async () => {
+  holds.resetHolds()
+  let {binding, sent} = chosen(ringing(form()))
+  await binding.write([{key: 'modes', value: 16}])
+  assert.deepEqual(sent, [{kind: 'body', body: {modes: 16, q_factor: 12, material: 'declared'}}], 'the owner\'s Q, the modes you chose')
+  assert.equal(holds.heldFor(torus.TORUS_DESIGN_ID).modes, 16, 'the count is the hand\'s')
+  await assert.rejects(binding.write([{key: 'modes', value: 65}]), /Modes takes 1 to 64 a voice/)
+  await assert.rejects(binding.write([{key: 'modes', value: 2.5}]), /Modes takes 1 to 64 a voice/)
+  await binding.write([{key: 'damping', value: 6}])
+  assert.deepEqual(sent.at(-1), {kind: 'body', body: {modes: 8, q_factor: 6, material: 'declared'}}, 'a form is damped at the Q it is made at')
+  assert.equal(sent.some(edit => edit.kind === 'damping'), false)
+  ;({binding, sent} = chosen(ringing(form())))
+  await binding.write([{key: 'body.source', value: 'tattva'}])
+  assert.deepEqual(sent, [{kind: 'torus', edit: {strike: 0.45}}, {kind: 'body', body: {modes: 8, q_factor: 12, material: 'tattva'}}],
+    'the fibre\'s Strike to the session, then the form again of the tattva\'s material')
+  holds.resetHolds()
+})

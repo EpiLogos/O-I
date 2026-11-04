@@ -7,7 +7,7 @@
 import {admittedProjectionKinds} from '../../../../../desktop/cradle/src/surface/projectionModules'
 import type {IconName} from '../inhabitants/sdk/icons'
 import type {HostedLens} from '../shell/paneInstrument'
-import type {TorusKeptSummary} from '../../../../expressions-boundary/src/performanceBasis'
+import type {KeptRackSummary, TorusKeptSummary} from '../../../../expressions-boundary/src/performanceBasis'
 
 export interface InstrumentEntry {
   /** The pane kind the instrument opens as. */
@@ -80,9 +80,15 @@ export function parseInstrumentPayload(payload: string): {kind: string; lens?: H
 /** The drag type a kept sound, instrument or rack travels by, onto a part. */
 export const TORUS_KEPT_MIME = 'application/x-oi-torus-kept'
 export type TorusKeptKind = 'sound' | 'instrument' | 'rack'
+/** What a rack's drop places on the part (O-I #852 round 9: Live's Instrument Rack, packages/live-set/src/acts.rs `rack_place`): its name,
+ * its chain's devices, its macros with where each stands and what it turns, and its variations, as the Scene keeps them. */
+export interface TorusRackPlacing {readonly name: string; readonly chain: KeptRackSummary['chain']; readonly macros: KeptRackSummary['macros']
+  readonly variations: KeptRackSummary['variations']}
 /** What a part is given to play: the sound, the instrument or the rack by its reference; a sound made on an instrument names it too. An
- * instrument carries the first sound made on it, and a rack the sound its Torus opens with: the sound the part opens. */
-export interface TorusKeptDrag {readonly kind: TorusKeptKind; readonly ref: string; readonly instrument_ref?: string; readonly sound?: string}
+ * instrument carries the first sound made on it, and a rack the sound its Torus opens with: the sound the part opens. A rack carries what
+ * it places on the part, too. */
+export interface TorusKeptDrag {readonly kind: TorusKeptKind; readonly ref: string; readonly instrument_ref?: string; readonly sound?: string
+  readonly rack?: TorusRackPlacing}
 export interface TorusKeptRow {
   readonly key: string
   readonly kind: TorusKeptKind
@@ -122,22 +128,50 @@ export function torusKeptRows(kept: TorusKeptSummary | null | undefined, query: 
     for (const sound of sounds) rows.push(row('sound', 2, `${instrument.instrument_ref}/${sound.sound_ref}`, sound.name, 'sound',
       {kind: 'sound', ref: sound.sound_ref, instrument_ref: instrument.instrument_ref}))
   }
-  for (const rack of kept.racks) if (hit(rack.name)) rows.push(row('rack', 1, rack.rack_ref, rack.name,
-    `rack · ${count(rack.macros.length, 'macro')} · ${count(rack.variations.length, 'variation')}`,
-    rack.sound ? {kind: 'rack', ref: rack.rack_ref, sound: rack.sound} : {kind: 'rack', ref: rack.rack_ref}))
+  for (const rack of kept.racks) if (hit(rack.name)) {
+    const placing: TorusRackPlacing = {name: rack.name, chain: rack.chain, macros: rack.macros, variations: rack.variations}
+    rows.push(row('rack', 1, rack.rack_ref, rack.name, `rack · ${count(rack.macros.length, 'macro')} · ${count(rack.variations.length, 'variation')}`,
+      rack.sound ? {kind: 'rack', ref: rack.rack_ref, sound: rack.sound, rack: placing} : {kind: 'rack', ref: rack.rack_ref, rack: placing}))
+  }
   return rows
 }
 
+/** Live's rack: sixteen macros (racks-session-model.md §1.7); a kept rack's bounds beside them (kernel kept.rs). */
+const RACK_MACROS = 16, RACK_VARIATIONS = 128, RACK_DEVICES = 64, MACRO_TARGETS = 32
+const text = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0 && value.length <= 512 && !/[\u0000-\u001f\u007f]/.test(value)
+const share = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1
+const exact = (raw: unknown, keys: readonly string[]): raw is Record<string, unknown> => !!raw && typeof raw === 'object' && !Array.isArray(raw)
+  && Object.keys(raw).length === keys.length && keys.every(key => key in raw)
+/** A rack's placing, exact, or null: every row what it says, within the rack's bounds, a value for every macro in each variation. */
+function readRackPlacing(raw: unknown): TorusRackPlacing | null {
+  if (!exact(raw, ['name', 'chain', 'macros', 'variations']) || !text(raw.name)) return null
+  const {chain, macros, variations} = raw
+  if (!Array.isArray(chain) || chain.length > RACK_DEVICES || !Array.isArray(macros) || macros.length > RACK_MACROS
+    || !Array.isArray(variations) || variations.length > RACK_VARIATIONS) return null
+  if (!chain.every(row => exact(row, ['device_ref', 'role']) && text(row.device_ref) && (row.role === 'note' || row.role === 'effect'))) return null
+  if (!macros.every(row => exact(row, ['name', 'value', 'targets']) && text(row.name) && share(row.value) && Array.isArray(row.targets)
+    && row.targets.length <= MACRO_TARGETS && row.targets.every(target => exact(target, ['device_ref', 'parameter']) && text(target.device_ref) && text(target.parameter)))) return null
+  if (!variations.every(row => exact(row, ['name', 'values']) && text(row.name) && Array.isArray(row.values) && row.values.length === macros.length
+    && row.values.every(share))) return null
+  return {name: raw.name, chain, macros, variations} as TorusRackPlacing
+}
+
 /** A kept drag, exact, or null: a part plays only a sound, an instrument or a rack named by its reference. Only a sound names the
- * instrument it was made on; only an instrument or a rack carries the sound it opens. */
+ * instrument it was made on; only an instrument or a rack carries the sound it opens; a rack always carries what it places, exactly. */
 export function readTorusKeptDrag(payload: string): TorusKeptDrag | null {
   let raw: unknown
   try { raw = JSON.parse(payload) } catch { return null }
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null
-  const {kind, ref, instrument_ref: on, sound, ...rest} = raw as Record<string, unknown>
+  const {kind, ref, instrument_ref: on, sound, rack: placed, ...rest} = raw as Record<string, unknown>
   if (Object.keys(rest).length || (kind !== 'sound' && kind !== 'instrument' && kind !== 'rack') || typeof ref !== 'string' || !ref) return null
   if (on !== undefined && (kind !== 'sound' || typeof on !== 'string' || !on)) return null
   if (sound !== undefined && (kind === 'sound' || typeof sound !== 'string' || !sound)) return null
+  if ((kind === 'rack') !== (placed !== undefined)) return null
+  if (kind === 'rack') {
+    const rack = readRackPlacing(placed)
+    if (!rack) return null
+    return sound === undefined ? {kind, ref, rack} : {kind, ref, sound: sound as string, rack}
+  }
   if (on !== undefined) return {kind, ref, instrument_ref: on as string}
   return sound === undefined ? {kind, ref} : {kind, ref, sound: sound as string}
 }

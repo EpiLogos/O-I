@@ -121,6 +121,32 @@ pub enum SetAct {
     /// none). Live's document has no place for it, so the `.als` is not
     /// written and the set's revision stands.
     TorusKeep { track: usize, torus: Option<Value> },
+    /// A kept rack placed on a MIDI part with nothing on its chain (O-I #852; DLW §21.2 "Drag it onto a part to play it"): Live's
+    /// Instrument Rack under the rack's name, its one chain, its macros by name and where each stands (0 to 1, as the rack keeps
+    /// it), and its variations, each a value for every macro. What a macro turns is not written: Live 12 keeps a macro's mapping in
+    /// a form no document here holds (racks-session-model.md §1.7), so the macros stand mapped to nothing.
+    RackPlace {
+        track: usize,
+        name: String,
+        macros: Vec<PlacedMacro>,
+        variations: Vec<PlacedVariation>,
+    },
+}
+
+/// One macro of a placed rack: its name, and where it stands, 0 to 1.
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct PlacedMacro {
+    pub name: String,
+    pub value: f64,
+}
+
+/// One variation of a placed rack: its name, and a value for every macro, in macro order.
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct PlacedVariation {
+    pub name: String,
+    pub values: Vec<f64>,
 }
 
 // ---------------------------------------------------------------------------- the document's lists
@@ -1248,6 +1274,277 @@ fn track_insert(root: &mut Element, after: Option<usize>) -> Result<Done, String
     })
 }
 
+// ---------------------------------------------------------------------------- a rack placed on a part
+
+/// The most macros Live's rack holds (racks-session-model.md §1.7: `MacroControls.0–15`).
+const RACK_MACROS: usize = 16;
+/// The most variations a kept rack holds (the kernel's `kept.rs` MAX_VARIATIONS), each one of Live's macro snapshots.
+const RACK_VARIATIONS: usize = 128;
+
+/// A pointee-carrying target as a device writes one, its Id allocated when the rack is placed.
+const TARGET: &str = r#"<LockEnvelope Value="0" />"#;
+
+/// A parameter Live writes as a TimeableFloat: its value, its controller range, its automation and modulation targets.
+fn timeable(tag: &str, manual: &str, min: &str, max: &str) -> String {
+    format!(
+        r#"<{tag}><LomId Value="0" /><Manual Value="{manual}" /><MidiControllerRange><Min Value="{min}" /><Max Value="{max}" /></MidiControllerRange><AutomationTarget Id="0">{TARGET}</AutomationTarget><ModulationTarget Id="0">{TARGET}</ModulationTarget></{tag}>"#
+    )
+}
+
+/// A switch Live writes as a TimeableBool (a device's On, a chain's Speaker).
+fn switch(tag: &str) -> String {
+    format!(
+        r#"<{tag}><LomId Value="0" /><Manual Value="true" /><AutomationTarget Id="0">{TARGET}</AutomationTarget><MidiCCOnOffThresholds><Min Value="64" /><Max Value="127" /></MidiCCOnOffThresholds></{tag}>"#
+    )
+}
+
+/// Every device's boilerplate (session-model.md §6), for a device made here, not loaded from a preset: Live's default preset of
+/// its kind, no source, no name of its own.
+fn boilerplate(device: &str, show_preset_name: bool) -> String {
+    format!(
+        concat!(
+            r#"<LomId Value="0" /><LomIdView Value="0" /><IsExpanded Value="true" />{on}<ModulationSourceCount Value="0" />"#,
+            r#"<ParametersListWrapper LomId="0" /><Pointee Id="0" /><LastSelectedTimeableIndex Value="0" />"#,
+            r#"<LastSelectedClipEnvelopeIndex Value="0" /><LastPresetRef><Value><AbletonDefaultPresetRef Id="0"><FileRef>"#,
+            r#"<RelativePathType Value="0" /><RelativePath Value="" /><Path Value="" /><Type Value="2" /><LivePackName Value="" />"#,
+            r#"<LivePackId Value="" /><OriginalFileSize Value="0" /><OriginalCrc Value="0" /></FileRef><DeviceId Name="{device}" />"#,
+            r#"</AbletonDefaultPresetRef></Value></LastPresetRef><LockedScripts /><IsFolded Value="false" />"#,
+            r#"<ShouldShowPresetName Value="{show}" /><UserName Value="" /><Annotation Value="" /><SourceContext><Value /></SourceContext>"#,
+            r#"<OverwriteProtectionNumber Value="3073" />"#
+        ),
+        on = switch("On"),
+        device = device,
+        show = show_preset_name
+    )
+}
+
+/// The rack's one chain as Live writes an empty one in an Instrument Rack (racks-session-model.md §1.3, §2.2): its name, no
+/// device, the whole selector zone and key and velocity range, its own mixer at 0 dB, centre, on, with no rack return to send to.
+fn rack_chain() -> String {
+    format!(
+        concat!(
+            r#"<InstrumentBranch Id="0"><LomId Value="0" /><Name><EffectiveName Value="" /><UserName Value="" />"#,
+            r#"<Annotation Value="" /><MemorizedFirstClipName Value="" /></Name><IsSelected Value="true" /><DeviceChain>"#,
+            r#"<MidiToAudioDeviceChain Id="0"><Devices /><SignalModulations /></MidiToAudioDeviceChain></DeviceChain>"#,
+            r#"<BranchSelectorRange><Min Value="0" /><Max Value="0" /><CrossfadeMin Value="0" /><CrossfadeMax Value="0" />"#,
+            r#"</BranchSelectorRange><IsSoloed Value="false" /><SessionViewBranchWidth Value="55" />"#,
+            r#"<IsHighlightedInSessionView Value="false" /><SourceContext><Value /></SourceContext><Color Value="0" />"#,
+            r#"<AutoColored Value="true" /><AutoColorScheme Value="0" /><SoloActivatedInSessionMixer Value="false" />"#,
+            r#"<DevicesListWrapper LomId="0" /><MixerDevice>{mixer}{speaker}{volume}{panorama}<SendInfos /><RoutingHelper>"#,
+            r#"<Routable><Target Value="AudioOut/None" /><UpperDisplayString Value="No Output" /><LowerDisplayString Value="" />"#,
+            r#"<MpeSettings><ZoneType Value="0" /><FirstNoteChannel Value="1" /><LastNoteChannel Value="15" /></MpeSettings>"#,
+            r#"</Routable><TargetEnum Value="0" /></RoutingHelper><SendsListWrapper LomId="0" /></MixerDevice><ZoneSettings>"#,
+            r#"<KeyRange><Min Value="0" /><Max Value="127" /><CrossfadeMin Value="0" /><CrossfadeMax Value="127" /></KeyRange>"#,
+            r#"<VelocityRange><Min Value="1" /><Max Value="127" /><CrossfadeMin Value="1" /><CrossfadeMax Value="127" />"#,
+            r#"</VelocityRange></ZoneSettings></InstrumentBranch>"#
+        ),
+        mixer = boilerplate("AudioBranchMixerDevice", false),
+        speaker = switch("Speaker"),
+        volume = timeable("Volume", "1", SEND_OFF, "1.99526238"),
+        panorama = timeable("Panorama", "0", "-1", "1"),
+    )
+}
+
+/// A share of a macro's travel (0 to 1, as a kept rack holds it) on Live's macro scale, 0 to 127.
+fn macro_value(share: f64) -> String {
+    number_text(share * 127.0)
+}
+
+/// Live 12's Instrument Rack as it writes a new one (racks-session-model.md §1.2; the order of Quick Start Beat's Instrument
+/// Racks): the device's boilerplate under the rack's name, its one chain named after it, sixteen macros (the rack's by name and
+/// value, the rest Live's own "Macro N" at 0) with their defaults, annotations and colours, the chain selector, and each variation
+/// a macro snapshot with a value for every macro (none for the rest). Every pointee stands at 0, for the set to allocate.
+fn instrument_rack(
+    name: &str,
+    macros: &[PlacedMacro],
+    variations: &[PlacedVariation],
+) -> Result<Element, String> {
+    let family = |each: &dyn Fn(usize) -> String| (0..RACK_MACROS).map(each).collect::<String>();
+    let value_of_macro = |i: usize| {
+        macros
+            .get(i)
+            .map_or_else(|| "0".to_string(), |m| macro_value(m.value))
+    };
+    let snapshots: String = variations
+        .iter()
+        .enumerate()
+        .map(|(id, variation)| {
+            let value = |i: usize| variation.values.get(i).map_or_else(|| "-1".to_string(), |v| macro_value(*v));
+            format!(
+                r#"<MacroSnapshot Id="{id}"><AutogeneratedNameIndex Value="0" /><SnapshotName Value="" />{}{}</MacroSnapshot>"#,
+                family(&|i| format!(r#"<MacroValues.{i} Value="{}" />"#, value(i))),
+                family(&|i| format!(r#"<MacroHasValue.{i} Value="{}" />"#, i < variation.values.len())),
+            )
+        })
+        .collect();
+    let shown = if macros.len() > 8 { 16 } else { 8 };
+    let xml = format!(
+        concat!(
+            r#"<InstrumentGroupDevice Id="0">{boilerplate}<Branches>{chain}</Branches><IsBranchesListVisible Value="false" />"#,
+            r#"<IsReturnBranchesListVisible Value="false" /><IsRangesEditorVisible Value="false" />"#,
+            r#"<AreDevicesVisible Value="true" /><NumVisibleMacroControls Value="{shown}" />{controls}{names}{defaults}"#,
+            r#"{annotations}{generic}<AreMacroControlsVisible Value="true" /><IsAutoSelectEnabled Value="false" />{selector}"#,
+            r#"<ChainSelectorRelativePosition Value="-1073741824" /><ViewsToRestoreWhenUnfolding Value="0" /><ReturnBranches />"#,
+            r#"<BranchesSplitterProportion Value="0.5" /><ShowBranchesInSessionMixer Value="false" />{colours}"#,
+            r#"<LockId Value="0" /><LockSeal Value="0" /><ChainsListWrapper LomId="0" /><ReturnChainsListWrapper LomId="0" />"#,
+            r#"<MacroVariations><MacroSnapshots>{snapshots}</MacroSnapshots></MacroVariations>{randomized}{snapshotted}"#,
+            r#"<AreMacroVariationsControlsVisible Value="{varied}" /><ChainSelectorFilterMidiCtrl Value="false" />"#,
+            r#"<RangeTypeIndex Value="1" /><ShowsZonesInsteadOfNoteNames Value="false" /></InstrumentGroupDevice>"#
+        ),
+        boilerplate = boilerplate("InstrumentGroupDevice", true),
+        chain = rack_chain(),
+        shown = shown,
+        controls = family(&|i| timeable(
+            &format!("MacroControls.{i}"),
+            &value_of_macro(i),
+            "0",
+            "127"
+        )),
+        names = family(&|i| format!(r#"<MacroDisplayNames.{i} Value="" />"#)),
+        defaults = family(&|i| format!(r#"<MacroDefaults.{i} Value="{}" />"#, value_of_macro(i))),
+        annotations = family(&|i| format!(r#"<MacroAnnotations.{i} Value="" />"#)),
+        generic = family(&|i| format!(r#"<ForceDisplayGenericValue.{i} Value="false" />"#)),
+        selector = timeable("ChainSelector", "0", "0", "127"),
+        colours = family(&|i| format!(r#"<MacroColor.{i} Value="-1" />"#)),
+        snapshots = snapshots,
+        randomized = family(&|i| format!(r#"<ExcludeMacroFromRandomization.{i} Value="false" />"#)),
+        snapshotted = family(&|i| format!(r#"<ExcludeMacroFromSnapshots.{i} Value="false" />"#)),
+        varied = !variations.is_empty(),
+    );
+    let mut rack =
+        crate::xml::parse(&xml).map_err(|why| format!("the rack's shape did not read: {why}"))?;
+    // The names are the person's own text: set as values, so the writer escapes them.
+    rack.child_mut("UserName")
+        .ok_or("the rack carries no UserName")?
+        .set_attr("Value", name);
+    for i in 0..RACK_MACROS {
+        let named = macros
+            .get(i)
+            .map_or_else(|| format!("Macro {}", i + 1), |m| m.name.clone());
+        rack.child_mut(&format!("MacroDisplayNames.{i}"))
+            .ok_or("the rack carries no macro name")?
+            .set_attr("Value", &named);
+    }
+    let chain = rack
+        .child_mut("Branches")
+        .and_then(|b| b.child_mut("InstrumentBranch"))
+        .and_then(|c| c.child_mut("Name"))
+        .ok_or("the rack carries no chain")?;
+    for field in ["EffectiveName", "UserName"] {
+        chain
+            .child_mut(field)
+            .ok_or("the chain carries no name")?
+            .set_attr("Value", name);
+    }
+    let held = rack
+        .child_mut("MacroVariations")
+        .and_then(|v| v.child_mut("MacroSnapshots"))
+        .ok_or("the rack carries no variations")?;
+    for (snapshot, variation) in held.children.iter_mut().zip(variations) {
+        snapshot
+            .child_mut("SnapshotName")
+            .ok_or("a variation carries no name")?
+            .set_attr("Value", &variation.name);
+    }
+    Ok(rack)
+}
+
+fn rack_place(
+    root: &mut Element,
+    track: usize,
+    name: &str,
+    macros: &[PlacedMacro],
+    variations: &[PlacedVariation],
+) -> Result<Done, String> {
+    let name = checked_name("A rack's name", name, false)?;
+    if macros.len() > RACK_MACROS || variations.len() > RACK_VARIATIONS {
+        return Err(format!(
+            "Live's rack holds at most {RACK_MACROS} macros, and a kept rack at most {RACK_VARIATIONS} variations"
+        ));
+    }
+    let share = |v: f64| v.is_finite() && (0.0..=1.0).contains(&v);
+    for item in macros {
+        checked_name("A macro's name", &item.name, false)?;
+        if !share(item.value) {
+            return Err(format!("Macro {} stands between 0 and 1", item.name));
+        }
+    }
+    for variation in variations {
+        checked_name("A variation's name", &variation.name, false)?;
+        if variation.values.len() != macros.len() {
+            return Err(format!(
+                "Variation {} holds {} values for {} macros: a variation holds a value for every macro",
+                variation.name,
+                variation.values.len(),
+                macros.len()
+            ));
+        }
+        if !variation.values.iter().all(|v| share(*v)) {
+            return Err(format!(
+                "Variation {}'s macros stand between 0 and 1",
+                variation.name
+            ));
+        }
+    }
+    let part = track_at(root, track)?;
+    let part_name = track_name(part);
+    if part.name != "MidiTrack" {
+        return Err(format!(
+            "An Instrument Rack plays the notes of a MIDI part, and {part_name} is not one"
+        ));
+    }
+    let held = part
+        .child("DeviceChain")
+        .and_then(|c| c.child("DeviceChain"))
+        .and_then(|c| c.child("Devices"))
+        .ok_or_else(|| format!("The part {part_name} carries no device chain in the document"))?;
+    if !held.children.is_empty() {
+        return Err(format!(
+            "A rack is placed on a part with nothing on its chain, as Insert MIDI Track makes one, and {part_name} holds a device already"
+        ));
+    }
+    let mut rack = instrument_rack(&name, macros, variations)?;
+    let set = root
+        .find("LiveSet")
+        .ok_or("the document holds no LiveSet")?;
+    let declared = set
+        .child("NextPointeeId")
+        .and_then(|n| n.attr("Value"))
+        .and_then(|v| v.parse::<u64>().ok());
+    let mut next = declared.unwrap_or(0).max(highest_pointee(set) + 1);
+    let mut map = std::collections::HashMap::new();
+    reallocate(&mut rack, &mut next, &mut map);
+    edit::track_at_mut(root, track)?
+        .child_mut("DeviceChain")
+        .and_then(|c| c.child_mut("DeviceChain"))
+        .and_then(|c| c.child_mut("Devices"))
+        .ok_or_else(|| format!("The part {part_name} carries no device chain in the document"))?
+        .children
+        .push(rack);
+    if declared.is_some() {
+        if let Some(counter) = root
+            .find_mut("LiveSet")
+            .and_then(|set| set.child_mut("NextPointeeId"))
+        {
+            counter.set_attr("Value", &next.to_string());
+        }
+    }
+    let count = |n: usize, one: &str| match n {
+        0 => format!("no {one}s"),
+        1 => format!("1 {one}"),
+        n => format!("{n} {one}s"),
+    };
+    Ok(Done {
+        words: format!(
+            "Placed {name} on {part_name}: an Instrument Rack with {} and {}.",
+            count(macros.len(), "macro"),
+            count(variations.len(), "variation")
+        ),
+        at: Some(json!({"track": track})),
+        places: Places::None,
+    })
+}
+
 fn scene_insert(root: &mut Element, after: Option<usize>) -> Result<Done, String> {
     let at = after.map_or(0, |a| a + 1);
     insert_row(root, at)?;
@@ -2147,6 +2444,12 @@ pub fn act(path: &str, expected_revision: &str, act: &SetAct) -> Result<Value, S
                 take = Some((*track, id));
                 done
             }
+            SetAct::RackPlace {
+                track,
+                name,
+                macros,
+                variations,
+            } => rack_place(root, *track, name, macros, variations)?,
             SetAct::TorusKeep { .. } => unreachable!("kept above, the set unwritten"),
         });
         Ok(())
@@ -2955,6 +3258,340 @@ mod tests {
         assert_eq!(wire, SetAct::TrackInsert { after: Some(0) });
         let wire: SetAct = serde_json::from_value(json!({"kind": "track_insert"})).unwrap();
         assert_eq!(wire, SetAct::TrackInsert { after: None });
+    }
+
+    /// A rack placed on a part (O-I #852; DLW §21.2 "Drag it onto a part to play it"): Live 12's Instrument Rack as Quick Start
+    /// Beat's racks stand (racks-session-model.md §1.2 the chassis, §1.3 the chain, §1.7 the macros and their snapshots): the
+    /// device's boilerplate, one chain named after the rack with its own mixer and zones and no device on it, the rack's macros by
+    /// name and value (Live's 0 to 127) and the rest Live's own "Macro N" at 0, each variation a snapshot with a value for every
+    /// macro it names and none for the rest, and every pointee its own, allocated past the set's.
+    #[test]
+    fn a_rack_stands_on_a_part_as_lives_instrument_rack_with_its_macros_and_variations() {
+        fn gather(element: &Element, ids: &mut Vec<u64>) {
+            if is_pointee(element) {
+                ids.push(element.attr("Id").unwrap().parse().unwrap());
+            }
+            for child in &element.children {
+                gather(child, ids);
+            }
+        }
+        let counter = |root: &Element| {
+            root.find("LiveSet")
+                .and_then(|set| set.child("NextPointeeId"))
+                .and_then(|n| n.attr("Value"))
+                .and_then(|v| v.parse::<u64>().ok())
+                .unwrap()
+        };
+        let value = |e: &Element, child: &str| {
+            e.child(child)
+                .and_then(|c| c.attr("Value"))
+                .map(str::to_string)
+        };
+        let (_dir, path) = set_file(SET);
+        run(&path, SetAct::TrackInsert { after: Some(0) }).unwrap();
+        let before = counter(&reread(&path).0);
+        // The wire names it as the shell sends it.
+        let wire: SetAct = serde_json::from_value(json!({"kind": "rack_place", "track": 1, "name": "Warm rack",
+            "macros": [{"name": "Bloom", "value": 0.5}, {"name": "Air", "value": 1.0}],
+            "variations": [{"name": "Open", "values": [1.0, 0.25]}, {"name": "Closed", "values": [0.0, 0.0]}]}))
+        .unwrap();
+        let placed = run(&path, wire).unwrap();
+        assert_eq!(placed["act"], "rack_place");
+        assert_eq!(
+            placed["done"],
+            "Placed Warm rack on 2-MIDI: an Instrument Rack with 2 macros and 2 variations."
+        );
+        assert_eq!(placed["at"], json!({"track": 1}));
+        let (root, document) = reread(&path);
+        let names: Vec<&str> = document.tracks[1]
+            .devices
+            .iter()
+            .map(|d| d.name.as_str())
+            .collect();
+        assert_eq!(
+            names,
+            vec!["InstrumentGroupDevice"],
+            "the part's one device"
+        );
+        let rack = crate::edit::track_at(&root, 1)
+            .unwrap()
+            .child("DeviceChain")
+            .and_then(|c| c.child("DeviceChain"))
+            .and_then(|c| c.child("Devices"))
+            .and_then(|d| d.child("InstrumentGroupDevice"))
+            .unwrap();
+        assert_eq!(
+            rack.attr("Id"),
+            Some("0"),
+            "a device list's member carries its Id"
+        );
+        assert_eq!(value(rack, "UserName").as_deref(), Some("Warm rack"));
+        // Live's own chassis, in Live's order, with each family of sixteen numbered 0 to 15.
+        let chassis: Vec<&str> = rack
+            .children
+            .iter()
+            .map(|c| c.name.as_str())
+            .filter(|n| !n.contains('.'))
+            .collect();
+        assert_eq!(
+            chassis,
+            vec![
+                "LomId",
+                "LomIdView",
+                "IsExpanded",
+                "On",
+                "ModulationSourceCount",
+                "ParametersListWrapper",
+                "Pointee",
+                "LastSelectedTimeableIndex",
+                "LastSelectedClipEnvelopeIndex",
+                "LastPresetRef",
+                "LockedScripts",
+                "IsFolded",
+                "ShouldShowPresetName",
+                "UserName",
+                "Annotation",
+                "SourceContext",
+                "OverwriteProtectionNumber",
+                "Branches",
+                "IsBranchesListVisible",
+                "IsReturnBranchesListVisible",
+                "IsRangesEditorVisible",
+                "AreDevicesVisible",
+                "NumVisibleMacroControls",
+                "AreMacroControlsVisible",
+                "IsAutoSelectEnabled",
+                "ChainSelector",
+                "ChainSelectorRelativePosition",
+                "ViewsToRestoreWhenUnfolding",
+                "ReturnBranches",
+                "BranchesSplitterProportion",
+                "ShowBranchesInSessionMixer",
+                "LockId",
+                "LockSeal",
+                "ChainsListWrapper",
+                "ReturnChainsListWrapper",
+                "MacroVariations",
+                "AreMacroVariationsControlsVisible",
+                "ChainSelectorFilterMidiCtrl",
+                "RangeTypeIndex",
+                "ShowsZonesInsteadOfNoteNames"
+            ]
+        );
+        for family in [
+            "MacroControls",
+            "MacroDisplayNames",
+            "MacroDefaults",
+            "MacroAnnotations",
+            "ForceDisplayGenericValue",
+            "MacroColor",
+            "ExcludeMacroFromRandomization",
+            "ExcludeMacroFromSnapshots",
+        ] {
+            let held: Vec<String> = rack
+                .children
+                .iter()
+                .filter_map(|c| {
+                    c.name
+                        .strip_prefix(&format!("{family}."))
+                        .map(str::to_string)
+                })
+                .collect();
+            assert_eq!(
+                held,
+                (0..16).map(|i| i.to_string()).collect::<Vec<_>>(),
+                "{family}"
+            );
+        }
+        let manual = |i: usize| {
+            rack.child(&format!("MacroControls.{i}"))
+                .and_then(|m| m.child("Manual"))
+                .and_then(|m| m.attr("Value"))
+                .map(str::to_string)
+        };
+        assert_eq!(
+            [manual(0), manual(1), manual(2)],
+            [Some("63.5".into()), Some("127".into()), Some("0".into())],
+            "a macro stands where it was kept, on Live's 0 to 127"
+        );
+        assert_eq!(
+            [
+                "MacroDisplayNames.0",
+                "MacroDisplayNames.1",
+                "MacroDisplayNames.2",
+                "MacroDefaults.0",
+                "NumVisibleMacroControls"
+            ]
+            .map(|child| value(rack, child)),
+            [
+                Some("Bloom".into()),
+                Some("Air".into()),
+                Some("Macro 3".into()),
+                Some("63.5".into()),
+                Some("8".into())
+            ]
+        );
+        assert_eq!(
+            rack.child("LastPresetRef")
+                .and_then(|p| p.find("DeviceId"))
+                .and_then(|d| d.attr("Name")),
+            Some("InstrumentGroupDevice"),
+            "a rack made here, not a preset's"
+        );
+        // One chain, named after the rack: no device on it, its own mixer and its zones.
+        let branches = rack.child("Branches").unwrap();
+        assert_eq!(list_ids(branches), vec!["0"]);
+        let chain = &branches.children[0];
+        assert_eq!(chain.name, "InstrumentBranch");
+        assert_eq!(
+            chain
+                .child("Name")
+                .and_then(|n| n.child("EffectiveName"))
+                .and_then(|e| e.attr("Value")),
+            Some("Warm rack")
+        );
+        let devices = chain
+            .child("DeviceChain")
+            .and_then(|d| d.child("MidiToAudioDeviceChain"))
+            .and_then(|d| d.child("Devices"))
+            .unwrap();
+        assert!(devices.children.is_empty(), "the chain holds no device");
+        let mixer = chain.child("MixerDevice").unwrap();
+        assert_eq!(
+            mixer
+                .child("Volume")
+                .and_then(|v| v.child("Manual"))
+                .and_then(|m| m.attr("Value")),
+            Some("1")
+        );
+        assert!(chain
+            .child("ZoneSettings")
+            .and_then(|z| z.child("KeyRange"))
+            .is_some());
+        // Each variation is a snapshot: a value for every macro it names, none for the rest.
+        let snapshots = rack
+            .child("MacroVariations")
+            .and_then(|v| v.child("MacroSnapshots"))
+            .unwrap();
+        assert_eq!(list_ids(snapshots), vec!["0", "1"]);
+        let open = &snapshots.children[0];
+        assert_eq!(
+            [
+                "SnapshotName",
+                "MacroValues.0",
+                "MacroValues.1",
+                "MacroValues.2",
+                "MacroHasValue.1",
+                "MacroHasValue.2"
+            ]
+            .map(|child| value(open, child)),
+            [
+                Some("Open".into()),
+                Some("127".into()),
+                Some("31.75".into()),
+                Some("-1".into()),
+                Some("true".into()),
+                Some("false".into())
+            ]
+        );
+        assert_eq!(
+            value(&snapshots.children[1], "SnapshotName").as_deref(),
+            Some("Closed")
+        );
+        assert_eq!(
+            value(rack, "AreMacroVariationsControlsVisible").as_deref(),
+            Some("true")
+        );
+        // Every pointee its own, past the set's, and the set's counter past them all.
+        let mut held = Vec::new();
+        gather(rack, &mut held);
+        assert!(
+            held.len() > 40 && held.iter().all(|id| *id >= before),
+            "{held:?}"
+        );
+        let mut all = Vec::new();
+        gather(root.find("LiveSet").unwrap(), &mut all);
+        let distinct: std::collections::BTreeSet<&u64> = all.iter().collect();
+        assert_eq!(distinct.len(), all.len(), "no pointee is shared");
+        assert!(counter(&root) > *held.iter().max().unwrap());
+        // Nine macros show sixteen; a rack with no variation keeps no snapshot.
+        let nine: Vec<PlacedMacro> = (0..9)
+            .map(|i| PlacedMacro {
+                name: format!("M{i}"),
+                value: 0.0,
+            })
+            .collect();
+        let bass = run(
+            &path,
+            SetAct::RackPlace {
+                track: 3,
+                name: "Low".into(),
+                macros: nine.clone(),
+                variations: vec![],
+            },
+        )
+        .unwrap();
+        assert_eq!(
+            bass["done"],
+            "Placed Low on Bass: an Instrument Rack with 9 macros and no variations."
+        );
+        let (root, _) = reread(&path);
+        let low = crate::edit::track_at(&root, 3)
+            .unwrap()
+            .find("InstrumentGroupDevice")
+            .unwrap();
+        assert_eq!(value(low, "NumVisibleMacroControls").as_deref(), Some("16"));
+        assert!(low
+            .child("MacroVariations")
+            .and_then(|v| v.child("MacroSnapshots"))
+            .unwrap()
+            .children
+            .is_empty());
+        assert_eq!(
+            value(low, "AreMacroVariationsControlsVisible").as_deref(),
+            Some("false")
+        );
+        // Refused in words, the set unwritten: a part that holds a device, a track that is no MIDI part, more than Live's sixteen
+        // macros, a variation without a value for every macro, a value off 0 to 1, and a nameless rack.
+        let standing_now = standing(&path);
+        let refused = |act: SetAct| run(&path, act).unwrap_err();
+        let one = vec![PlacedMacro {
+            name: "Bloom".into(),
+            value: 0.5,
+        }];
+        let place = |track: usize,
+                     name: &str,
+                     macros: Vec<PlacedMacro>,
+                     variations: Vec<PlacedVariation>| SetAct::RackPlace {
+            track,
+            name: name.into(),
+            macros,
+            variations,
+        };
+        assert!(refused(place(1, "Again", one.clone(), vec![])).contains("holds a device already"));
+        assert!(refused(place(4, "Warm rack", one.clone(), vec![])).contains("MIDI part"));
+        let seventeen: Vec<PlacedMacro> = (0..17)
+            .map(|i| PlacedMacro {
+                name: format!("M{i}"),
+                value: 0.0,
+            })
+            .collect();
+        assert!(refused(place(1, "Warm rack", seventeen, vec![])).contains("at most 16 macros"));
+        let short = vec![PlacedVariation {
+            name: "Open".into(),
+            values: vec![],
+        }];
+        assert!(
+            refused(place(1, "Warm rack", one.clone(), short)).contains("a value for every macro")
+        );
+        let high = vec![PlacedMacro {
+            name: "Bloom".into(),
+            value: 1.5,
+        }];
+        assert!(refused(place(1, "Warm rack", high, vec![])).contains("between 0 and 1"));
+        assert!(refused(place(1, " ", one.clone(), vec![])).contains("A rack's name"));
+        assert!(refused(place(40, "Warm rack", one, vec![])).contains("no track"));
+        assert_eq!(standing(&path), standing_now, "nothing refused is written");
     }
 
     #[test]

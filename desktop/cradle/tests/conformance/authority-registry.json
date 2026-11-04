@@ -301,6 +301,12 @@
       "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md §21.1 (Rules: every part sounds in one engine; Export Audio renders what you heard), O-I #849; docs/cradle/02-ARCHITECTURE.md §5/§12"
     },
     {
+      "command": "live_engine_host::live_engine_torus",
+      "classification": "presentation-lease",
+      "rationale": "The Torus its owner handed over (QL's torus-native, kept by the kernel under the field's lease, Field::torus_native; the page names only its digest) sounds on one of the set's MIDI parts: the engine's node continues the owner's field from the sample it stood at, refused in words for a document that is not one, a part that plays no notes or a host built without QL's K8 node. The Live set's sound on the default output (live_engine_host.rs over packages/live-engine): a native audio presentation of the set its kernel owner keeps (live_set_owner.rs). It decides and writes nothing. Candidate webviews only.",
+      "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md §21.1 (Rules: every part sounds in one engine; Export Audio renders what you heard) and §21.2 (the torus is the only generator), O-I #849; docs/cradle/02-ARCHITECTURE.md §5/§12"
+    },
+    {
       "command": "live_engine_host::live_engine_mixer",
       "classification": "presentation-lease",
       "rationale": "The mixer as the engine applied it: a reading, never the move asked. The Live set's sound on the default output (live_engine_host.rs over packages/live-engine): a native audio presentation of the set its kernel owner keeps (live_set_owner.rs). It decides and writes nothing; the set's mixer moves are the owner's writes, followed into it. Candidate webviews only.",

@@ -254,6 +254,8 @@ test('the Torus\'s Carrier and Fundamental are linear map targets and its Rate a
   assert.deepEqual(targets.mapTargetIdsOfEdit({kind: 'torus', edit: {rate: {mode: 'free', steps_per_second: 4}, carrier: 0.5}}), ['rate', 'carrier'])
   assert.deepEqual(targets.mapTargetIdsOfEdit({kind: 'torus', edit: {fundamental: {source: 'map'}, tuning: 'sky'}}), ['fundamental'])
   assert.deepEqual(targets.mapTargetIdsOfEdit({kind: 'damping', q_factor: 40}), [])
+  // O-I #852: the body chosen on the Body page is no map target.
+  assert.deepEqual(targets.mapTargetIdsOfEdit({kind: 'body', body: {modes: 8, q_factor: 12, material: 'declared'}}), [])
   // No session, or an owner that takes no edit now: nothing of the Torus is offered.
   session({state: okState()})
   assert.equal(targets.mapTargets(torus.liveTorusState(), []).some(t => ['rate', 'fundamental', 'carrier'].includes(t.id)), false)

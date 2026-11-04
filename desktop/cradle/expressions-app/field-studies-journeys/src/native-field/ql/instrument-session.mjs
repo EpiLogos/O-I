@@ -42,8 +42,11 @@ const STRIKE_AT_MAX_METRES = 1.0;
 // sounding. torus-receiver is where the Torus is heard from (O-I 856,
 // ql.torus-receiver/v1): a receiving setting, the body, its clock and its
 // generation standing, and never journaled: the listener is not the performance.
+// torus-native is the Torus handed over to a native audio host (O-I #849,
+// ql.torus-native/v1): the continuation read at the cursor, nothing moving.
 const READ_OPERATIONS = ['read', 'inspect', 'influence', 'personal', 'receive-personal', 'stage-state',
-  'score-resolve', 'score-state', 'torus-state', 'torus-checkpoint', 'torus-render', 'torus-receiver'];
+  'score-resolve', 'score-state', 'torus-state', 'torus-checkpoint', 'torus-render', 'torus-receiver', 'torus-native'];
+const TORUS_NATIVE = 'ql.torus-native/v1';
 const TORUS_RECEIVER = 'ql.torus-receiver/v1';
 // The owner's own bound on a receiver's place (ql-mef scene_field.rs TORUS_RECEIVER_METRES_MAX).
 const TORUS_RECEIVER_METRES_MAX = 1e6;
@@ -94,6 +97,7 @@ export class InstrumentSession {
   #disposed = false; #reason = null; #presented; #timer = null; #running = false;
   #generation = 0; #coalesced = 0; #influence = null; #stageReceipt = null; #torus = null; #torusPlay = null; #torusSinglet = null;
   #acts = []; #advances = { blocks: 0, frames: 0, first_samples_elapsed: null, last_samples_elapsed: null };
+  #torusNative = null;
 
   constructor({ context, owner, transport, initialReceipt, fieldBinding,
     blockFrames = 512, lookaheadSeconds = 0.1, maxBlocks = 16,
@@ -256,6 +260,8 @@ export class InstrumentSession {
       this.#journal(command, request.request_id);
       // A scene determinant acknowledgement carries its own influence reading.
       if (reply.influence !== undefined) this.#influence = structuredClone(reply.influence);
+      // The Torus handed over to a native host (O-I #849): the owner's handover, or the digest O:I's kernel relays.
+      if (reply.torus_native !== undefined) this.#torusNative = structuredClone(reply.torus_native);
       // A Torus acknowledgement carries the session reading, and a played act its receipt.
       if (reply.torus !== undefined) this.#torus = structuredClone(reply.torus);
       if (reply.torus_play !== undefined) this.#torusPlay = structuredClone(reply.torus_play);
@@ -474,17 +480,26 @@ export class InstrumentSession {
    * the mode shapes change sign across its seam. `at_samples_elapsed` names the
    * sample the act lands at, as for `strike`. */
   async strikeAt(points, { at_samples_elapsed } = {}) {
+    return this.operate({ operation: 'strike-at', points: this.#points(points), ...this.#landing(at_samples_elapsed) });
+  }
+
+  /** One act's struck points, each the torus's own angles on the sampled sheet with its impulse; refused in words before any exchange. */
+  #points(points) {
     need(Array.isArray(points) && points.length > 0 && points.length <= STRIKE_AT_MAX_POINTS,
       `a strike-at act names 1..${STRIKE_AT_MAX_POINTS} points`);
-    const acts = points.map(point => {
+    return points.map(point => {
       need(point && [point.theta, point.phi].every(angle => typeof angle === 'number' && Number.isFinite(angle) &&
         angle >= 0 && angle < TAU), 'a struck point names theta and phi as finite angles in [0, 2*pi): the sampled sheet of the torus');
-      need(Array.isArray(point.amplitude) && point.amplitude.length === 2 &&
-        point.amplitude.every(v => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) <= STRIKE_AT_MAX_METRES),
-        `a struck point's amplitude must be two finite metres within ${STRIKE_AT_MAX_METRES.toFixed(1)}`);
-      return { theta: point.theta, phi: point.phi, amplitude: [point.amplitude[0], point.amplitude[1]] };
+      return { theta: point.theta, phi: point.phi, amplitude: this.#impulse(point.amplitude, 'a struck point\'s amplitude') };
     });
-    return this.operate({ operation: 'strike-at', points: acts, ...this.#landing(at_samples_elapsed) });
+  }
+
+  /** An impulse of two finite modal metres within the material policy, as `what` says it; refused in words before any exchange. */
+  #impulse(amplitude, what) {
+    need(Array.isArray(amplitude) && amplitude.length === 2 &&
+      amplitude.every(v => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) <= STRIKE_AT_MAX_METRES),
+      `${what} must be two finite metres within ${STRIKE_AT_MAX_METRES.toFixed(1)}`);
+    return [amplitude[0], amplitude[1]];
   }
 
   /** The Torus's M1′ session (`ql.m1-prime-session/v1`): every setting, the band
@@ -532,7 +547,8 @@ export class InstrumentSession {
   /** A take rendered offline (`ql.torus-render/v1`, O-I #855): from `checkpoint` on a
    * second owner of the same scene, or continuing the last render (`continues`, the
    * token its answer gave), `frames` of sound with each act ({action:'strike', keys,
-   * amplitude} | {action:'release', keys} | {action:'set', edit}, each with the
+   * amplitude} | {action:'strike-at', points} | {action:'singlet', codon, amplitude} |
+   * {action:'release', keys} | {action:'set', edit}, each with the
    * `at_samples_elapsed` it lands at, in the order of their samples) made at its sample.
    * A read: this owner neither moves nor sounds. The answer keeps the render owner's
    * sound, the notes that made way strike by strike, where it ended as a checkpoint and
@@ -558,13 +574,18 @@ export class InstrumentSession {
           `a Torus act's amplitude must be two finite metres within ${STRIKE_AT_MAX_METRES.toFixed(1)}`);
         return { action: 'strike', at_samples_elapsed, keys: this.#keys(act.keys), amplitude: [amplitude[0], amplitude[1]] };
       }
+      if (act.action === 'strike-at') return { action: 'strike-at', at_samples_elapsed, points: this.#points(act.points) };
+      if (act.action === 'singlet') {
+        need(Number.isInteger(act.codon) && act.codon >= 0 && act.codon < 64, 'a singlet\'s codon is 0 to 63');
+        return { action: 'singlet', at_samples_elapsed, codon: act.codon, amplitude: this.#impulse(act.amplitude, 'a singlet\'s amplitude') };
+      }
       if (act.action === 'release') return { action: 'release', at_samples_elapsed, keys: this.#keys(act.keys) };
       if (act.action === 'set') {
         need(act.edit && typeof act.edit === 'object' && !Array.isArray(act.edit) && Object.keys(act.edit).length > 0,
           'a Torus edit names at least one setting');
         return { action: 'set', at_samples_elapsed, edit: structuredClone(act.edit) };
       }
-      return need(false, 'a take\'s act is a strike, release or set');
+      return need(false, 'a take\'s act is a strike, touch, singlet, release or set');
     });
     need(!this.#busy && !this.#held, 'a render requires an idle admitted owner'); this.#busy = true;
     try {
@@ -634,6 +655,22 @@ export class InstrumentSession {
   /** Release keys from the count of notes; the body rings on, so no native state moves. */
   async torusRelease(keys) {
     return this.operate({ operation: 'torus-release', keys: this.#keys(keys) });
+  }
+
+  /** The Torus handed over to a native audio host (`ql.torus-native/v1`, O-I #849): the continuation exactly as it
+   * stands at the acknowledged sample and the played-address law of the tuning in force, for a host that sounds it
+   * sample for sample. A read: the field does not advance, there is nothing to present, and it is never journaled.
+   * Through O:I's kernel the answer is the digest the kernel relays in the document's place. */
+  async torusNative() {
+    need(!this.#busy && !this.#held, 'a handover requires an idle admitted owner'); this.#busy = true;
+    this.#torusNative = null;
+    try {
+      const reply = await this.#exchange({ operation: 'torus-native' });
+      need(!reply.refused, String(reply.error));
+      const handed = this.#torusNative;
+      need(handed?.schema === TORUS_NATIVE, 'the owner answered with no Torus handed over');
+      return handed;
+    } finally { this.#busy = false; this.#torusNative = null; }
   }
 
   /** Where the Torus is heard from (`ql.torus-receiver/v1`, O-I 856): `place`, [x, y, z] metres in the frame the

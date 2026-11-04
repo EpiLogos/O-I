@@ -194,3 +194,42 @@ test('an applied M3 event that leaves the cell non-dual strikes its singlet on t
     assert.equal(sent.length, before)
   } finally { torusInstrument.setLiveInstrumentCommander(null); m3.resetQlM3() }
 })
+
+test('a singlet the Torus refuses is said in words on the clock, the M3 event standing; one that plays clears it', async () => {
+  // DLW §16.14, the frame's own M3 page (nativeField.ts onM3Applied): the refusal is said plainly through shared/Refusal.tsx refusalWords.
+  let answerOf = () => ({ok: false, error: 'No live instrument plays: open the instrument'})
+  torusInstrument.setLiveInstrumentCommander(command => Promise.resolve(answerOf(command)))
+  const settle = async () => { for (let i = 0; i < 4; i++) await new Promise(resolve => setImmediate(resolve)) }
+  const whole = () => renderToStaticMarkup(h(HostedDevice, {designed: design, binding: m3.qlM3Binding(m3.qlM3State()), view: 'whole', nav: {}}))
+  try {
+    let next = reading()
+    m3.resetQlM3({call: async () => answer(next)})
+    await m3.syncQlM3(basis)
+    assert.equal(m3.qlM3Values(m3.qlM3State())['singlet.why'], undefined, 'nothing is refused before a singlet is struck')
+    assert.doesNotMatch(whole(), /was not played on the Torus/)
+    next = appliedReading(underMatrix(2), [{operation: 'set-matrix', family: 2}], 11)
+    await m3.applyQlM3([{operation: 'set-matrix', family: 2}])
+    await settle()
+    assert.equal(m3.qlM3Values(m3.qlM3State())['singlet.why'], 'Singlet 10 was not played on the Torus. No live instrument plays: open the instrument.')
+    assert.equal(m3.qlM3State().reading.state.identity.profile_generation, 11, 'the M3 event stands')
+    assert.equal(m3.qlM3Binding(m3.qlM3State()).writes('singlet.why'), false, 'a reading, not a write')
+    assert.match(whole(), /Singlet 10 was not played on the Torus\. No live instrument plays: open the instrument\./, 'the clock says it where its reading is')
+    // The owner's words in code stay behind: only what happened is said.
+    answerOf = () => ({ok: false, error: 'stage_command {"command":"singlet"} at host.ts:212'})
+    next = appliedReading(underMatrix(0), [{operation: 'set-matrix', family: 0}], 12)
+    await m3.applyQlM3([{operation: 'set-matrix', family: 0}])
+    await settle()
+    assert.equal(m3.qlM3Values(m3.qlM3State())['singlet.why'], 'Singlet 58 was not played on the Torus.')
+    // An event that strikes no singlet leaves the last refusal said; a singlet that plays clears it.
+    next = appliedReading(underMatrix(0), [{operation: 'advance-clock', steps: 5}], 13)
+    await m3.applyQlM3([{operation: 'advance-clock', steps: 5}])
+    await settle()
+    assert.equal(m3.qlM3Values(m3.qlM3State())['singlet.why'], 'Singlet 58 was not played on the Torus.')
+    answerOf = () => ({ok: true})
+    next = appliedReading(underMatrix(2), [{operation: 'set-matrix', family: 2}], 14)
+    await m3.applyQlM3([{operation: 'set-matrix', family: 2}])
+    await settle()
+    assert.equal(m3.qlM3Values(m3.qlM3State())['singlet.why'], undefined)
+    assert.doesNotMatch(whole(), /was not played on the Torus/)
+  } finally { torusInstrument.setLiveInstrumentCommander(null); m3.resetQlM3() }
+})

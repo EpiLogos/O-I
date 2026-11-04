@@ -49,8 +49,8 @@ export const TAKE_NOT_KEPT = Object.freeze(['the course of the body', 'the form 
 export const TAKE_COURSE_SCHEMA = 'oi.live-take-course/v1'
 /** What a take with its course replays, and how: said with the take, and when it plays. */
 export const TAKE_REPLAYS = 'The take plays again as it was played: the Torus rings again from the state it rang in when the take began (its body, '
-  + 'its form and forces, the comma it had gathered and its seeds), and each note, release and setting of the Torus lands at the sample it landed '
-  + 'at. The level and effects move at their beats, within a block of the sound.'
+  + 'its form and forces, the comma it had gathered and its seeds), and each note, touch, singlet, release and setting of the Torus lands '
+  + 'at the sample it landed at. The level and effects move at their beats, within a block of the sound.'
 /** Where a take that keeps its course resumes when it cannot play it (its clip changed, or the Torus did not ring again from its state). */
 export const TAKE_RESUMES_INSTEAD = 'It plays its notes as its clip holds them, each at the touch-point it struck and at its strength, on the Torus set as it '
   + 'stood when the take began, and makes each move again at its beat, within a block of the sound: it resumes from the body as it then rings.'
@@ -223,6 +223,17 @@ export type TakeLanding =
 /** The owner's acts that move no sound: its stage's slots. The journal leaves out every read. */
 const STILL_OPERATIONS: ReadonlySet<string> = new Set(['stage-retire', 'stage-bind', 'stage-unbind'])
 const keyOf = (key: StageKey) => `${key.row}/${key.column}`
+/** The most points one touch strikes (the frame's STAGE_STRIKE_AT_MAX_POINTS). */
+const TAKE_POINTS_MAX = 64
+/** 1..64 points of the sheet, each its two angles in [0, 2π) (the frame's `strike-at`); null for anything else. Pure. */
+function takePoints(raw: unknown): {theta: number; phi: number}[] | null {
+  const onSheet = (angle: unknown): angle is number => typeof angle === 'number' && Number.isFinite(angle) && angle >= 0 && angle < 2 * Math.PI
+  if (!Array.isArray(raw) || raw.length < 1 || raw.length > TAKE_POINTS_MAX) return null
+  const points = raw.map(point => plain(point) && onSheet(point.theta) && onSheet(point.phi) ? {theta: point.theta, phi: point.phi} : null)
+  return points.every(point => point !== null) ? points as {theta: number; phi: number}[] : null
+}
+const isStrength = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && value > 0 && value <= 1
+const isCodon = (value: unknown): value is number => typeof value === 'number' && Number.isInteger(value) && value >= 0 && value < 64
 /** 1..32 keys of the surface, read exact; null for anything else. Pure. */
 function takeKeys(raw: unknown): StageKey[] | null {
   if (!Array.isArray(raw) || raw.length < 1 || raw.length > STAGE_JANKO_KEYS_MAX) return null
@@ -262,6 +273,25 @@ export function takeCourse(checkpoint: StageTorusCheckpoint, journal: StagePerfo
       const edit = readInstrumentEdit({kind: 'torus', edit: command.edit})
       if (!edit || edit.kind !== 'torus') return {refused: `torus-set at sample ${at} carries no setting a take's render makes`}
       acts.push({at: sample, act: {action: 'set', at_samples_elapsed: at, edit: edit.edit}})
+    } else if (entry.operation === 'strike-at') {
+      // A touch strikes each of its points at the one impulse (the frame's controller.ts playAt), as a take's render strikes it again.
+      const raw = Array.isArray(command.points) ? command.points as unknown[] : []
+      const points = takePoints(raw)
+      if (!points) return {refused: `strike-at at sample ${at} names no points on the sheet`}
+      const impulses = raw.map(point => (point as Plain).amplitude)
+      if (!impulses.every(pair => Array.isArray(pair) && pair.length === 2 && pair[1] === 0))
+        return {refused: `strike-at struck at sample ${at} with a second amplitude, which a take's render does not strike`}
+      const strengths = new Set(impulses.map(pair => (pair as unknown[])[0]))
+      if (strengths.size !== 1) return {refused: `strike-at at sample ${at} struck its points at more than one strength, which a take's render does not strike`}
+      const strength = (impulses[0] as unknown[])[0]
+      if (!isStrength(strength)) return {refused: `strike-at at sample ${at} names no points at a strength in (0, 1]`}
+      acts.push({at: sample, act: {action: 'strike-at', at_samples_elapsed: at, points, amplitude: strength}})
+    } else if (entry.operation === 'torus-singlet') {
+      const amplitude = command.amplitude
+      if (!Array.isArray(amplitude) || amplitude.length !== 2 || amplitude[1] !== 0)
+        return {refused: `torus-singlet struck at sample ${at} with a second amplitude, which a take's render does not strike`}
+      if (!isCodon(command.codon) || !isStrength(amplitude[0])) return {refused: `torus-singlet at sample ${at} names no codon of the 64 at a strength in (0, 1]`}
+      acts.push({at: sample, act: {action: 'singlet', at_samples_elapsed: at, codon: command.codon, amplitude: amplitude[0]}})
     } else if (!STILL_OPERATIONS.has(entry.operation)) return {refused: `${entry.operation} moved the scene at sample ${at} during the take`}
   }
   // In the order of their samples; acts at one sample in the order the owner took them.
@@ -286,9 +316,16 @@ export function takeCourseOf(raw: unknown): TakeCourse | null {
     const at = BigInt(act.at_samples_elapsed)
     if (at < last || at >= end) return null
     last = at
-    const keys = act.action === 'set' ? null : takeKeys(act.keys)
+    const keys = act.action === 'strike' || act.action === 'release' ? takeKeys(act.keys) : null
+    const only = (...names: string[]) => Object.keys(act).every(name => ['action', 'at_samples_elapsed', ...names].includes(name))
     if (act.action === 'strike' && keys && typeof act.amplitude === 'number' && act.amplitude > 0 && act.amplitude <= 1) acts.push({action: 'strike', at_samples_elapsed: act.at_samples_elapsed, keys, amplitude: act.amplitude})
     else if (act.action === 'release' && keys) acts.push({action: 'release', at_samples_elapsed: act.at_samples_elapsed, keys})
+    else if (act.action === 'strike-at' && only('points', 'amplitude') && isStrength(act.amplitude)) {
+      const points = takePoints(act.points)
+      if (!points || !(act.points as unknown[]).every(point => Object.keys(point as Plain).length === 2)) return null
+      acts.push({action: 'strike-at', at_samples_elapsed: act.at_samples_elapsed, points, amplitude: act.amplitude})
+    } else if (act.action === 'singlet' && only('codon', 'amplitude') && isCodon(act.codon) && isStrength(act.amplitude))
+      acts.push({action: 'singlet', at_samples_elapsed: act.at_samples_elapsed, codon: act.codon, amplitude: act.amplitude})
     else if (act.action === 'set') {
       const edit = readInstrumentEdit({kind: 'torus', edit: act.edit})
       if (!edit || edit.kind !== 'torus') return null

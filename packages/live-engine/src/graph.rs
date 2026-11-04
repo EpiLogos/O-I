@@ -111,6 +111,71 @@ pub trait Instrument: std::fmt::Debug + Send {
     fn release_all(&mut self, clock: &Clock);
     fn process(&mut self, frame_io: &mut [f32], clock: &Clock);
     fn prepare(&mut self, _sample_rate: u32) {}
+    /// One act of the Torus's keys ([`EngineEvent::TorusPlay`], O-I #849), struck at `clock`. Answers
+    /// whether the instrument struck it: only the Torus plays an act by its keys' places, so every
+    /// other instrument strikes nothing.
+    fn torus_play(&mut self, _act: &TorusAct, _clock: &Clock) -> bool {
+        false
+    }
+    /// Panic ([`EngineEvent::Panic`]; manual §21.1 Rules: "Panic releases all notes at once"): by
+    /// default every held note is released. The Torus is stilled instead, since a released note of
+    /// a struck body rings on (O-I #849).
+    fn panic(&mut self, clock: &Clock) {
+        self.release_all(clock)
+    }
+}
+
+/// The most keys one act of the Torus strikes (QL's `m1_prime::POLYPHONY_MAX`).
+pub const TORUS_ACT_KEYS: usize = 32;
+
+/// One act of the Torus's keys (O-I #849; manual §21.2 "What strikes the Torus"): 1 to
+/// [`TORUS_ACT_KEYS`] Jankó keys struck together, each at `(rows[i], columns[i])`, at one point
+/// velocity (`amplitude`, modal metres, re and im). The Torus strikes each key's moving point on the
+/// voices of the tuning in force by QL's played-address law, summed as one strike. Plain data, so it
+/// travels to the audio thread in an [`EngineEvent`].
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct TorusAct {
+    pub count: u8,
+    pub rows: [u8; TORUS_ACT_KEYS],
+    pub columns: [u16; TORUS_ACT_KEYS],
+    pub amplitude: [f64; 2],
+}
+
+impl TorusAct {
+    /// The act of `keys` (row, column) at `amplitude`; refused in words with no key, more than
+    /// [`TORUS_ACT_KEYS`], or a velocity that is not finite. Whether a key's row lies on the surface
+    /// and the velocity within the material's cap is the Torus's own law to judge.
+    pub fn new(keys: &[(u8, u16)], amplitude: [f64; 2]) -> Result<TorusAct, String> {
+        if keys.is_empty() || keys.len() > TORUS_ACT_KEYS {
+            return Err(format!(
+                "a Torus act strikes 1 to {TORUS_ACT_KEYS} keys, not {}",
+                keys.len()
+            ));
+        }
+        if amplitude.iter().any(|v| !v.is_finite()) {
+            return Err("a Torus act's velocity is two finite modal metres".into());
+        }
+        let mut act = TorusAct {
+            count: keys.len() as u8,
+            rows: [0; TORUS_ACT_KEYS],
+            columns: [0; TORUS_ACT_KEYS],
+            amplitude,
+        };
+        for (i, (row, column)) in keys.iter().enumerate() {
+            act.rows[i] = *row;
+            act.columns[i] = *column;
+        }
+        Ok(act)
+    }
+
+    /// The keys struck, as (row, column).
+    pub fn keys(&self) -> impl Iterator<Item = (u8, u16)> + '_ {
+        let n = usize::from(self.count).min(TORUS_ACT_KEYS);
+        self.rows[..n]
+            .iter()
+            .copied()
+            .zip(self.columns[..n].iter().copied())
+    }
 }
 
 /// Amplitude to dBFS (20·log10). Silence reads as the crate's -144 floor
@@ -491,15 +556,43 @@ impl Graph {
     /// frame is mixed, as the audio callback does at a block's start). The
     /// result is the samples the engine played, bit for bit
     /// (`tests/parts_engine.rs`).
-    pub fn render_performance(mut self, sample_rate: u32, performance: &Performance) -> Vec<f32> {
+    pub fn render_performance(self, sample_rate: u32, performance: &Performance) -> Vec<f32> {
+        self.render_performance_with(sample_rate, performance, Vec::new())
+    }
+
+    /// [`Graph::render_performance`] with the instruments handed to its parts while the engine
+    /// played (O-I #849; [`crate::EngineHandle::install`]): each `(frame, track, instrument)` takes
+    /// its part at the frame the engine took it ([`crate::EngineHandle::installs`]), before that
+    /// frame's events, as the audio callback takes a hand at a block's start. The instruments are
+    /// made again from what was handed (they carry state, so a render is one-shot).
+    pub fn render_performance_with(
+        mut self,
+        sample_rate: u32,
+        performance: &Performance,
+        mut installs: Vec<(u64, usize, Box<dyn Instrument>)>,
+    ) -> Vec<f32> {
         self.sample_rate = sample_rate;
         self.prepare();
+        installs.sort_by_key(|(frame, _, _)| *frame);
+        for (_, _, instrument) in &mut installs {
+            instrument.prepare(sample_rate);
+        }
+        let mut installs = installs.into_iter().peekable();
         let frames = performance.frames as usize;
         let mut out = vec![0f32; frames * 2];
         let mut clock = Clock::start(sample_rate, self.tempo_bpm);
         let mut events = performance.events.iter().peekable();
         for i in 0..frames {
             clock.sample = i as u64;
+            while let Some((_, track, instrument)) = installs.next_if(|(f, _, _)| *f <= i as u64) {
+                if let Some(slot) = self
+                    .tracks
+                    .get_mut(track)
+                    .and_then(|t| t.instrument.as_mut())
+                {
+                    *slot = instrument;
+                }
+            }
             while let Some(e) = events.next_if(|e| e.frame <= i as u64) {
                 self.apply(&e.event, &clock);
             }
@@ -547,10 +640,15 @@ impl Graph {
                     _ => false,
                 }
             }
+            EngineEvent::TorusPlay { track, ref act } => self
+                .tracks
+                .get_mut(track)
+                .and_then(|t| t.instrument.as_mut())
+                .is_some_and(|i| i.torus_play(act, clock)),
             EngineEvent::Panic => {
                 for t in &mut self.tracks {
                     if let Some(i) = t.instrument.as_mut() {
-                        i.release_all(clock);
+                        i.panic(clock);
                     }
                 }
                 true

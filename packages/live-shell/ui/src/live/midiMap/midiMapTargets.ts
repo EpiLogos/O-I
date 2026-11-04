@@ -111,8 +111,8 @@ export function mapTargetIdsOfEdit(edit: InstrumentEdit): readonly string[] {
     // The Torus's session: the macros its edit moved (O-I #850).
     case 'torus': return (['rate', 'fundamental', 'carrier'] as const).filter(key => edit.edit[key] !== undefined)
     // The torus's effects and its body's Damping (O-I #745) are not map targets yet: an accepted edit of them clears no map refusal. Nor is
-    // Receiver, where the torus is heard from (O-I 856).
-    case 'effect': case 'effect-chain': case 'damping': case 'receiver': return []
+    // Receiver, where the torus is heard from (O-I 856), nor the body chosen on the Body page (O-I #852).
+    case 'effect': case 'effect-chain': case 'damping': case 'receiver': case 'body': return []
   }
 }
 

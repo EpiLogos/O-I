@@ -40,8 +40,9 @@
 //   its course  a take with its course (O-I #855 round 6d), its clip as it was laid, plays as it was played: the Torus rings again from the
 //               state it rang in as the take began (prepareTake restores the owner's checkpoint, which lands at the owner's sample R),
 //               and each act of the course lands at R + (its sample − the take's first sample): the keys it struck, at its strength (the
-//               path's clipStrike with the very keys), each release in its sample's turn, each setting of the Torus at its sample (the
-//               instrument command with `at_samples_elapsed`). Each is sent as its sample comes within one owner lookahead of the render;
+//               path's clipStrike with the very keys), each touch of the surface and each singlet at its strength (the frame's own
+//               `strike-at` and `singlet` commands with `at_samples_elapsed`), each release in its sample's turn, each setting of the
+//               Torus at its sample (the instrument command with `at_samples_elapsed`). Each is sent as its sample comes within one owner lookahead of the render;
 //               one behind the render when it comes is missed and counted, a setting made at the owner's cursor and said. The level and
 //               effects move at their beats, as any take's. The take ends where its course ends, and lets go what it holds; Stop too.
 //
@@ -151,6 +152,12 @@ export interface ClipPlayerOwners {
   /** One act of the clip on the part's one playing path (keyboardLayout.ts livePlayingPath, jankoInput.ts clipStrike): its notes' keys
    * struck at the owner's sample `at`, each held until its hold is let go; settling with the owner's answer. */
   readonly strike: (notes: readonly ClipHold[], amplitude: number, at: string) => Promise<StageResult>
+  /** A touch of a take's course: its points of the surface struck at one strength at the owner's sample `at` (the frame's `strike-at`
+   * stage command, as controller.ts playAt strikes a touch); settling with the owner's answer. */
+  readonly touch: (points: readonly {theta: number; phi: number}[], amplitude: number, at: string) => Promise<StageResult>
+  /** A singlet of a take's course: its codon struck at its strength at the owner's sample `at` (the frame's `singlet` stage command,
+   * O-I #771); settling with the owner's answer. */
+  readonly singlet: (codon: number, amplitude: number, at: string) => Promise<StageResult>
   /** The clip lets these notes go: the end of each note's length, or Stop. */
   readonly release: (holds: readonly string[]) => void
   /** Tell `changed` when the set the clip stands in is read again (a write, Live saving it). Returns the unsubscribe. */
@@ -461,6 +468,12 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
           return {hold, note: c.noteOf?.(key) ?? -1, key}
         })
         owners.strike(notes, act.amplitude, next.at).then(answer, failed)
+      } else if (act.action === 'strike-at') {
+        if (behind) { late += 1; continue }
+        owners.touch(act.points, act.amplitude, next.at).then(answer, failed)
+      } else if (act.action === 'singlet') {
+        if (behind) { late += 1; continue }
+        owners.singlet(act.codon, act.amplitude, next.at).then(answer, failed)
       } else {
         if (behind) tellOnce(LATE_SETTING)
         const mine = press
@@ -568,6 +581,8 @@ function candidateOwners(): ClipPlayerOwners {
     clock: () => readAudioClock(commitLiveStage),
     edit: (edit, at) => commitLiveStage({command: 'instrument', edit, ...(at === undefined ? {} : {at_samples_elapsed: at})}),
     strike: (notes, amplitude, at) => livePlayingPath().clipStrike(notes, amplitude, at),
+    touch: (points, amplitude, at) => commitLiveStage({command: 'strike-at', points: [...points], amplitude, at_samples_elapsed: at}),
+    singlet: (codon, amplitude, at) => commitLiveStage({command: 'singlet', codon, amplitude, at_samples_elapsed: at}),
     release: holds => livePlayingPath().clipRelease(holds),
     watch: (address, changed) => subscribeSet(address.path, changed),
     now: () => performance.now() / 1000,

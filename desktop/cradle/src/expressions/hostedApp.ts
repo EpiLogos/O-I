@@ -552,7 +552,19 @@ export interface HostedTorusSession {
   readonly material?: HostedTorusMaterial;
   /** The twelve classes, or the owner's words for none (QL-MEF scene_field.rs class_sounds). */
   readonly classes?: HostedTorusClasses;
+  /** What rings, when the owner names it (QL-MEF scene_field.rs `body`, `torus-body`; O-I #852). */
+  readonly body?: HostedTorusBody;
 }
+
+/** What rings (DLW manual §21.2 Body: "It is the torus unless you choose a form"): the torus, or a form with the form it was made from
+ * (QL's form symbol), the owner's preparation of it, the material it was made of (its fibre, the Q it rings at, the Strike that excites
+ * it, and where they came from: "declared" or the tattva), how many modes each voice rings and how many voices ring it. */
+export type HostedTorusBody =
+  | {readonly kind: "torus"}
+  | {readonly kind: "form"; readonly form: {readonly kind: "fold" | "codon" | "hexagram" | "glyph"; readonly form_ref: string; readonly source_ref: string};
+    readonly preparation_ref: string;
+    readonly material: {readonly fibre: "earth" | "fire" | "water" | "air"; readonly q_factor: number; readonly strike_share: number; readonly source_ref: string};
+    readonly modes: number; readonly voices: number};
 
 /** The M2 condition's maqām as the Torus reads it: its name, coordinate, role, tonic and tuning, with its eight pitches while the scene
  * holds its voices (`pitches_hz`), or `absent` in the owner's words naming the source it lacks. Exactly one of the two stands. */

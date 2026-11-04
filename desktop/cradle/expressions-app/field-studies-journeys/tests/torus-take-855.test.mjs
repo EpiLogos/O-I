@@ -88,6 +88,26 @@ test('a take to render: the owner\'s checkpoint, its acts at their samples in or
   for (const [why, change] of refused) assert.equal(readStageRequest(request({...take, ...change})), null, why);
 });
 
+test('a take holds a touch and a singlet as the owner was sent them: points on the sheet at one strength, a codon of the 64 at its strength', async () => {
+  // O-I #855, kept whole: a touch of the surface (`strike-at`) and a singlet (`torus-singlet`, O-I #771) are acts of a take, as a key is.
+  const {readStageRequest} = await stage();
+  const acts = [{action: 'strike-at', at_samples_elapsed: '48100', points: [{theta: 0.75, phi: 2.5}, {theta: 4, phi: 5.5}], amplitude: 0.3},
+    {action: 'singlet', at_samples_elapsed: '52800', codon: 8, amplitude: 0.35}];
+  const take = {command: 'render-take', checkpoint: checkpoint(), acts, frames: 96000};
+  assert.deepEqual(readStageRequest(request(take)).command, take);
+  const refused = [
+    ['a touch of nothing', {acts: [{...acts[0], points: []}]}], ['a touch of 65 points', {acts: [{...acts[0], points: Array(65).fill({theta: 1, phi: 1})}]}],
+    ['a touch off the sheet', {acts: [{...acts[0], points: [{theta: 2 * Math.PI, phi: 1}]}]}],
+    ['a point with its own impulse', {acts: [{...acts[0], points: [{theta: 1, phi: 1, amplitude: [0.3, 0]}]}]}],
+    ['a touch too strong', {acts: [{...acts[0], amplitude: 1.5}]}], ['a touch of no strength', {acts: [{...acts[0], amplitude: 0}]}],
+    ['a touch of keys', {acts: [{...acts[0], keys}]}],
+    ['a codon past the 64', {acts: [{...acts[1], codon: 64}]}], ['a codon that is no integer', {acts: [{...acts[1], codon: 2.5}]}],
+    ['a codon as words', {acts: [{...acts[1], codon: '8'}]}], ['a singlet of no strength', {acts: [{...acts[1], amplitude: 0}]}],
+    ['a singlet naming its places', {acts: [{...acts[1], arc: 9}]}],
+  ];
+  for (const [why, change] of refused) assert.equal(readStageRequest(request({...take, ...change})), null, why);
+});
+
 test('an instrument edit that acts on the owner may name the sample it lands at; one the frame makes on its own sound may not', async () => {
   const {readStageRequest, STAGE_INSTRUMENT_TIMED_KINDS} = await stage();
   assert.deepEqual([...STAGE_INSTRUMENT_TIMED_KINDS], ['lens', 'context-frame', 'harmonic', 'transcription', 'damping', 'torus']);
@@ -123,12 +143,28 @@ test('the answers carry the checkpoint, the render and the sample an edit landed
 });
 
 // ---------------------------------------------------------------------------------------------------- the controller
-const openController = async () => {
+const openController = async ({prepare} = {}) => {
   const {ControlledAudio, ControlledSceneOwner} = await fixture();
   const THREE = await import('three');
   const {NativeFieldController} = await controller();
   class TorusOwner extends ControlledSceneOwner {
     renders = 0; renderCalls = []; torusCalls = []; waiting = []; soundCalls = []; moved = []; unlabelled = false; given = new Map();
+    // What rings (O-I #852, QL scene_field.rs set_body): the torus until a form is chosen. The scene's M2 condition and M3 form as the
+    // owner discloses them on inspect (current.m2.condition.source_path; current.m3.form.angles_deg10), and its session's Strike.
+    body = null; condition = {tattva_coordinate: '#2-2-2-5-5', material_fibre: 'earth'}; angles = [0, 600, -300];
+    torus() {
+      const body = this.body === null ? {kind: 'torus', law: 'controlled'}
+        : {kind: 'form', prepared: {schema: 'ql.physical-body-preparation/v1', request: {preparation_ref: `controlled:body/${this.body.modes}`,
+          material: {...this.body.material, damping: 'controlled'}}, form: this.body.form},
+          modes: this.body.modes, voices: 8, law: 'controlled'};
+      return {...super.torus(), body};
+    }
+    sources() {
+      const sources = super.sources();
+      if (this.condition) sources.current.m2.condition = {source_path: structuredClone(this.condition)};
+      sources.current.m3.form.angles_deg10 = [...this.angles];
+      return sources;
+    }
     async request(request) {
       // The kernel's own acts beside the owner (O-I #852, native_expression.rs torus_sound / torus_sound_open): a sound sealed from a
       // checkpoint the kernel relayed under that name, and opened against one, its restore the sound as saved.
@@ -169,12 +205,22 @@ const openController = async () => {
           torus_set_landed: due.map(({at_samples_elapsed, edit}) => ({at_samples_elapsed, edit, applied: true, moved: Object.keys(edit)})),
           torus: {...this.torus(), waiting: []}, influence: this.influence()};
       }
-      const own = ['torus-checkpoint', 'torus-restore', 'torus-render'];
+      const own = ['torus-checkpoint', 'torus-restore', 'torus-render', 'torus-body'];
       if (!own.includes(command?.operation)) return super.request(request);
       this.torusCalls.push(structuredClone(command));
       const read = structuredClone(request);
       read.request.command = {operation: 'read'};
       const reply = await super.request(read);
+      if (command.operation === 'torus-body') {
+        // One body act, one generation (QL scene_field.rs set_body): a form prepared for this scene's event, subject and rate, or the torus.
+        const body = command.body;
+        if (this.refuse?.(command)) return {...reply, status: 'refused', error: 'controlled refusal: torus-body'};
+        if (body !== null && (body.event_ref !== this.frame.event_ref || body.subject_ref !== this.frame.subject_ref || body.sample_rate !== this.frame.sample_rate))
+          return {...reply, status: 'refused', error: 'a form\'s body is prepared for this scene\'s event, subject and rate'};
+        this.body = body === null ? null : structuredClone(body);
+        this.bump(1n);
+        return {...reply, field: {...structuredClone(this.frame), audio: []}, torus: this.torus()};
+      }
       if (command.operation === 'torus-checkpoint') {
         // The kernel relays each checkpoint it kept named by its digest (native_expression.rs `labelled`).
         const kept = checkpoint(this.frame.samples_elapsed), sha256 = `sha256:checkpoint/${kept.taken_at_samples}/${this.given.size}`;
@@ -200,6 +246,7 @@ const openController = async () => {
   const renderer = {retainedTopology: () => ({tex_width: 2, tex_height: 2, particle_count: 4, slot_count: 4}), retainedTargetPort: () => port, setNativeDomain() {},
     releaseRetainedField() {}, onRetainedRecoveryRequired: () => () => {}, checkpointRetainedField() { return {receipt: {}}; }, restoreRetainedField() {}};
   const owner = new TorusOwner(), audio = new ControlledAudio(), c = new NativeFieldController(owner, renderer, () => audio);
+  prepare?.(owner);
   await c.compose({sky: 'none'});
   return {owner, audio, c};
 };
@@ -253,6 +300,27 @@ test('a take renders a second at a time: the first part from the checkpoint, eac
     await assert.rejects(c.renderTake({schema: 'x'}, [], 4800), /ql\.torus-checkpoint\/v1/);
     await assert.rejects(c.renderTake(checkpoint('0', {sample_rate: 44100}), [], 4800), /44100/);
     assert.equal(owner.renderCalls.length, 3, 'refused before the owner');
+  } finally { await c.dispose(); }
+});
+
+test('a take renders its touches and singlets as the owner\'s own acts: the acts it was sent, each strength the owner\'s pair of metres', async () => {
+  const {owner, c} = await openController();
+  try {
+    const kept = checkpoint('48000');
+    const acts = [{action: 'strike-at', at_samples_elapsed: '48100', points: [{theta: 0.75, phi: 2.5}, {theta: 4, phi: 5.5}], amplitude: 0.3},
+      {action: 'singlet', at_samples_elapsed: '52800', codon: 8, amplitude: 0.35},
+      {action: 'strike', at_samples_elapsed: '96100', keys, amplitude: 0.5}];
+    await c.renderTake(kept, acts, 96000);
+    assert.deepEqual(owner.renderCalls, [
+      {operation: 'torus-render', checkpoint: kept, acts: [
+        {action: 'strike-at', at_samples_elapsed: '48100', points: [{theta: 0.75, phi: 2.5, amplitude: [0.3, 0]}, {theta: 4, phi: 5.5, amplitude: [0.3, 0]}]},
+        {action: 'singlet', at_samples_elapsed: '52800', codon: 8, amplitude: [0.35, 0]}], frames: 48000},
+      {operation: 'torus-render', continues: 'render:1', acts: [{...acts[2], amplitude: [0.5, 0]}], frames: 48000}],
+    'as the owner took them live (controller.ts playAt, torusSinglet), so the kernel finds the acts it relayed in the render');
+    const sent = owner.renderCalls.length;
+    await assert.rejects(c.renderTake(kept, [{...acts[1], codon: 64}], 48000), /codon is 0 to 63/);
+    await assert.rejects(c.renderTake(kept, [{...acts[0], points: [{theta: 7, phi: 1}]}], 48000), /\[0, 2\*pi\)/);
+    assert.equal(owner.renderCalls.length, sent, 'refused before the owner');
   } finally { await c.dispose(); }
 });
 
@@ -409,4 +477,93 @@ test('the frame saves and opens a sound through its native field (O-I #852)', as
   assert.match(sound, /if\(command\.action==='save'\)return \{ok:true,sound:await nativeField\.controller\.torusSound\(command\.name\)\};/, 'saving is a read');
   assert.match(sound, /\{const \{landed_at_samples_elapsed,moved\}=await nativeField\.controller\.openTorusSound\(command\.sound\);announceHostState\(\);return \{ok:true,landed_at_samples_elapsed,moved\};\}/,
     'opening sets the Torus again, so the state is announced');
+});
+
+// ---------------------------------------------------------------------------------------------------- the body that rings (O-I #852)
+// DLW manual §21.2 Body: "The body is what rings. It is the torus unless you choose a form." The Body page's choice crosses the stage
+// channel as the instrument's `body` edit; the controller makes the scene's own M3 form (its codon at its angles, domain.m3) a body of
+// QL's fold sheet, of the scene's M2 fibre under the owner's Strike, and sends it as one `torus-body` act (QL scene_field.rs set_body,
+// instrument-session.mjs torusBody); null gives the body back to the torus. The owner prepares it and refuses in its words.
+test('a body is a form of so many modes a voice at a Q, its material declared or the tattva\'s, or the torus: nothing else, and at no sample', async () => {
+  const {readStageRequest, readInstrumentEdit, STAGE_BODY_MODES_MAX} = await stage();
+  assert.equal(STAGE_BODY_MODES_MAX, 64, 'QL form_instrument/body.rs MAX_BODY_MODES');
+  const form = {kind: 'body', body: {modes: 8, q_factor: 12, material: 'declared'}};
+  assert.deepEqual(readStageRequest(request({command: 'instrument', edit: form})).command, {command: 'instrument', edit: form});
+  assert.deepEqual(readInstrumentEdit({kind: 'body', body: null}), {kind: 'body', body: null}, 'the torus');
+  assert.deepEqual(readInstrumentEdit({kind: 'body', body: {modes: 64, q_factor: 0.1, material: 'tattva'}}), {kind: 'body', body: {modes: 64, q_factor: 0.1, material: 'tattva'}});
+  for (const body of [undefined, {}, {modes: 0, q_factor: 12, material: 'declared'}, {modes: 65, q_factor: 12, material: 'declared'},
+    {modes: 2.5, q_factor: 12, material: 'declared'}, {modes: 8, q_factor: 0, material: 'declared'}, {modes: 8, q_factor: 41, material: 'declared'},
+    {modes: 8, q_factor: 12, material: 'earth'}, {modes: 8, q_factor: 12}, {modes: 8, q_factor: 12, material: 'declared', fibre: 'earth'}, 'form'])
+    assert.equal(readInstrumentEdit({kind: 'body', body}), null, JSON.stringify(body));
+  assert.equal(readInstrumentEdit({kind: 'body', body: null, form: 'fold'}), null, 'no other operand');
+  assert.equal(readStageRequest(request({command: 'instrument', edit: form, at_samples_elapsed: '48000'})), null,
+    'a body is chosen at the owner\'s cursor, once no act waits: it lands at no later sample');
+});
+
+test('the controller makes the scene\'s M3 form a body and sends it as one torus-body act; the torus is the body given back', async () => {
+  const {owner, c} = await openController();
+  try {
+    owner.torusSettings = {...owner.torusSettings, strike: 0.7};
+    await c.torusState();
+    const generation = c.reading.native.acknowledged.generation;
+    assert.equal(c.reading.instrument.torus.body.kind, 'torus', 'the torus rings until a form is chosen');
+    const landed = await c.torusBody({modes: 8, q_factor: 12, material: 'declared'});
+    assert.deepEqual(sent(owner, 'torus-body'), [{operation: 'torus-body', body: {
+      schema: 'ql.form-body-request/v1', event_ref: 'controlled:scene', subject_ref: 'controlled:subject', source_generation: 1,
+      form: {kind: 'fold', form_ref: '#3-controlled', source_ref: 'ql.m3-state/v1@1'},
+      samples: {schema: 'ql.psg-form-samples/v1', prep_ref: 'oi:psg:m3-fold-body', treatment: 'sheet-carrier', layers: [{layer_ref: 'form:sheet', rest_depth_w: 0.5}],
+        resolution: 12, units: {extent_units: 2, depth_units: 0.1, metres_per_unit: 0.25}},
+      crease_deg10: [0, 600, -300], material: {fibre: 'earth', q_factor: 12, strike_share: 0.7, source_ref: 'declared'}, modes: 8, sample_rate: 48000}}],
+    'the scene\'s own codon at its own angles, of its own fibre, struck by the session\'s Strike');
+    assert.equal(BigInt(c.reading.native.acknowledged.generation), BigInt(generation) + 1n, 'one body act, one generation');
+    assert.equal(landed, c.reading.native.acknowledged.samples_elapsed, 'it rings from the owner\'s cursor');
+    assert.equal(c.reading.instrument.torus.body.kind, 'form', 'what rings is read back from the owner\'s reply, never set here');
+    assert.equal(c.reading.instrument.torus.body.modes, 8);
+    await c.torusBody({modes: 16, q_factor: 4.5, material: 'tattva'});
+    assert.deepEqual(sent(owner, 'torus-body').at(-1).body.material, {fibre: 'earth', q_factor: 4.5, strike_share: 0.7, source_ref: '#2-2-2-5-5'},
+      'under Tattva the material names the tattva it was taken from');
+    await c.torusBody(null);
+    assert.deepEqual(sent(owner, 'torus-body').at(-1), {operation: 'torus-body', body: null});
+    assert.equal(c.reading.instrument.torus.body.kind, 'torus');
+  } finally { await c.dispose(); }
+});
+
+test('a body the scene cannot make is refused in words before the owner is asked; one the owner refuses leaves the body as it rang', async () => {
+  const choice = {modes: 8, q_factor: 12, material: 'declared'};
+  const struck = owner => { owner.torusSettings = {...owner.torusSettings, strike: 0.7}; };
+  for (const [why, prepare, words, made = choice] of [
+    ['no Strike in the session', () => {}, /session states no Strike/],
+    ['no fibre', owner => { struck(owner); owner.condition = {tattva_coordinate: '#2-2-2-5-5', material_fibre: null}; }, /gives no material fibre/],
+    ['no condition', owner => { struck(owner); owner.condition = null; }, /gives no material fibre/],
+    ['an angle between tenths', owner => { struck(owner); owner.angles = [0, 600.5, -300]; }, /whole number of tenths of a degree within 180° either way/],
+    ['an angle past half a turn', owner => { struck(owner); owner.angles = [0, 1801, -300]; }, /whole number of tenths of a degree within 180° either way/],
+    ['Tattva on no tattva', owner => { struck(owner); owner.condition = {tattva_coordinate: null, material_fibre: 'earth'}; }, /stands on no tattva: set Body source to Declared/,
+      {...choice, material: 'tattva'}],
+    ['no modes', struck, /modes/, {...choice, modes: 0}],
+    ['too many modes', struck, /modes/, {...choice, modes: 65}],
+    ['a Q of nothing', struck, /Q factor/, {...choice, q_factor: 0}],
+  ]) {
+    const {owner, c} = await openController({prepare});
+    try {
+      await c.torusState();
+      await assert.rejects(c.torusBody(made), words, why);
+      assert.deepEqual(sent(owner, 'torus-body'), [], `${why}: nothing the scene cannot make reached the owner`);
+    } finally { await c.dispose(); }
+  }
+  const {owner, c} = await openController({prepare: struck});
+  try {
+    await c.torusState();
+    owner.refuse = command => command.operation === 'torus-body';
+    await assert.rejects(c.torusBody(choice), /controlled refusal/);
+    assert.equal(c.reading.instrument.torus.body.kind, 'torus', 'a body the owner did not take is not what rings');
+  } finally { await c.dispose(); }
+});
+
+test('the frame chooses the body through its native field at the owner\'s cursor, and refuses one for a later sample in words', async () => {
+  const field = await readFile(join(journeys, 'src/nativeField.ts'), 'utf8');
+  const command = field.slice(field.indexOf('const command=async(edit:InstrumentEdit'), field.indexOf('const liveEntry='));
+  const body = command.slice(command.indexOf("if(edit.kind==='body')"), command.indexOf("if(at!==undefined)throw new Error('This edit"));
+  assert.ok(body.length > 0, 'the frame runs the body edit');
+  assert.match(body, /if\(at!==undefined\)throw new Error\('A body is chosen at the owner\\'s cursor/);
+  assert.match(body, /const landed=await controller\.torusBody\(edit\.body\);update\(\);return \{landed_at_samples_elapsed:landed\};/);
 });

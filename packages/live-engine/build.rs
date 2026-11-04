@@ -1,7 +1,8 @@
 //! Feature `k8` only: compile the C ABI shim over QL's K8 typed API
 //! (`src/k8/field_shim.cpp`) against an installed QL prefix and link it.
-//! `QL_MEF_PREFIX` names the prefix: `include/ql/continuous_field.hpp` and
-//! `include/ql/coupled_clock.h` (with the headers it includes), and
+//! `QL_MEF_PREFIX` names the prefix: `include/ql/continuous_field.hpp`,
+//! `include/ql/torus_keys.hpp` (QL's played-address law, O-I #849) and
+//! `include/ql/coupled_clock.h` (with the headers they include), and
 //! `lib/libql-mef-c.a`. The default build (and the realtime build) never
 //! runs a compiler here.
 
@@ -23,8 +24,9 @@ fn main() {
         )
     }));
     let header = prefix.join("include/ql/continuous_field.hpp");
+    let keys = prefix.join("include/ql/torus_keys.hpp");
     let lib = prefix.join("lib/libql-mef-c.a");
-    for need in [&header, &lib] {
+    for need in [&header, &keys, &lib] {
         assert!(
             need.exists(),
             "QL_MEF_PREFIX {} lacks {}",

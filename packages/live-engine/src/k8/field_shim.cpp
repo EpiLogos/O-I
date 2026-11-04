@@ -7,10 +7,14 @@
 //
 // The field's own rule binds: "Control methods and rendering have one
 // host-owned serial execution thread. Prepare/change topology off the audio
-// callback." `le_k8_field_new` and `le_k8_set_key` allocate and run off the
-// audio thread; `le_k8_strike_key` and `le_k8_render` are the audio
-// thread's (see the allocation note at `le_k8_strike_key`).
+// callback." `le_k8_field_new`, `le_k8_field_continue`, `le_k8_set_key` and
+// `le_k8_set_law` allocate and run off the audio thread; `le_k8_strike_key`,
+// `le_k8_play_keys`, `le_k8_silence` and `le_k8_render` are the audio
+// thread's, and allocate nothing (`ql::ContinuousField::strike_now`,
+// `silence`, `render_audio` and `ql::TorusKeys::play` are noexcept and
+// allocation-free).
 #include <ql/continuous_field.hpp>
+#include <ql/torus_keys.hpp>
 
 #include <cstdio>
 #include <cstring>
@@ -51,11 +55,61 @@ struct LeK8Input {
     std::size_t sample_count;
 };
 
+// A continuation as QL hands it over (`ql.continuous-handover/v1`, O-I #849): the input with each mode's
+// resident state as its amplitude, the cursor and the driver's remainder, the Carrier's drive, the acts
+// waiting for later samples and a receiver move not yet reached.
+struct LeK8Pending {
+    std::uint64_t at_samples_elapsed;
+    const std::size_t *modes;
+    const double *re, *im;
+    std::size_t n;
+};
+
+struct LeK8Continuation {
+    LeK8Input input;
+    std::uint64_t samples_elapsed, driver_remainder;
+    double last_unmuted_sample;
+    double carrier_steps_per_second;
+    std::uint64_t carrier_anchor_samples;
+    double carrier_anchor_steps, carrier_reached;
+    const double *carrier_re, *carrier_im;
+    std::size_t carrier_count;
+    const LeK8Pending *pending;
+    std::size_t pending_count;
+    const double *heard_from;
+    std::size_t heard_count;
+};
+
+// QL's played-address law (`ql.torus-keys/v1`, <ql/torus_keys.hpp>) as the owner hands it over.
+struct LeK8KeyVoice {
+    std::size_t mode;
+    double longitude_radians, weight, phase_radians;
+    unsigned m, n;
+};
+
+struct LeK8KeyLaw {
+    std::uint8_t arcs[36];
+    const LeK8KeyVoice *voices;
+    std::size_t voice_count;
+    double strike;
+    std::uint64_t anchor_samples;
+    double anchor_steps, steps_per_second;
+    unsigned sample_rate;
+    double cap_metres;
+};
+
 struct LeK8Field {
     explicit LeK8Field(ql::ContinuationInput in) : field(std::move(in)) {}
+    explicit LeK8Field(ql::Continuation c) : field(std::move(c)) {}
     ql::ContinuousField field;
-    // the strike act each key plays, prepared off the audio thread
-    std::vector<ql::Strike> keys[128];
+    // the strike act each key plays, prepared off the audio thread, by prepared mode index
+    struct Act {
+        std::vector<std::size_t> modes;
+        std::vector<ql::Complex> impulses;
+    };
+    Act keys[128];
+    // the Torus's keys by QL's played-address law, made off the audio thread
+    std::unique_ptr<ql::TorusKeys> law;
 };
 
 static void say(char *err, std::size_t len, const char *what) {
@@ -64,44 +118,139 @@ static void say(char *err, std::size_t len, const char *what) {
 
 std::size_t le_k8_clock_size(void) { return sizeof(QL_CoupledClock); }
 
+static ql::ContinuationInput continuation_input(const LeK8Input *in) {
+    ql::ContinuationInput c;
+    c.event_ref = in->event_ref ? in->event_ref : "";
+    c.subject_ref = in->subject_ref ? in->subject_ref : "";
+    c.geometry_ref = in->geometry_ref ? in->geometry_ref : "";
+    c.material_ref = in->material_ref ? in->material_ref : "";
+    c.model_ref = in->model_ref ? in->model_ref : "";
+    c.generation = in->generation;
+    c.sample_rate = in->sample_rate;
+    c.clock = in->clock;
+    c.driver_numerator = in->driver_numerator;
+    c.driver_denominator = in->driver_denominator;
+    for (std::size_t i = 0; i < in->mode_count; ++i) {
+        const LeK8Mode &m = in->modes[i];
+        c.modes.push_back({m.reference ? m.reference : "", m.source_coordinate ? m.source_coordinate : "",
+                           m.frequency_hz, m.damping_per_second, {m.amplitude_re, m.amplitude_im},
+                           {m.drive_re, m.drive_im}, m.audio_gain_per_metre});
+    }
+    for (std::size_t i = 0; i < in->sample_count; ++i) {
+        const LeK8Sample &s = in->samples[i];
+        ql::Sample sample{s.identity, s.constituent ? s.constituent : "",
+                          static_cast<ql::ClockAttachment>(s.attachment), {s.rest[0], s.rest[1], s.rest[2]}, {}};
+        for (std::size_t j = 0; j < in->mode_count; ++j)
+            sample.mode_shapes.push_back({s.shapes[j * 3], s.shapes[j * 3 + 1], s.shapes[j * 3 + 2]});
+        c.samples.push_back(std::move(sample));
+    }
+    return c;
+}
+
 LeK8Field *le_k8_field_new(const LeK8Input *in, char *err, std::size_t err_len) {
     if (!in || (in->mode_count && !in->modes) || (in->sample_count && !in->samples)) {
         say(err, err_len, "missing continuation input");
         return nullptr;
     }
     try {
-        ql::ContinuationInput c;
-        c.event_ref = in->event_ref ? in->event_ref : "";
-        c.subject_ref = in->subject_ref ? in->subject_ref : "";
-        c.geometry_ref = in->geometry_ref ? in->geometry_ref : "";
-        c.material_ref = in->material_ref ? in->material_ref : "";
-        c.model_ref = in->model_ref ? in->model_ref : "";
-        c.generation = in->generation;
-        c.sample_rate = in->sample_rate;
-        c.clock = in->clock;
-        c.driver_numerator = in->driver_numerator;
-        c.driver_denominator = in->driver_denominator;
-        for (std::size_t i = 0; i < in->mode_count; ++i) {
-            const LeK8Mode &m = in->modes[i];
-            c.modes.push_back({m.reference ? m.reference : "", m.source_coordinate ? m.source_coordinate : "",
-                               m.frequency_hz, m.damping_per_second, {m.amplitude_re, m.amplitude_im},
-                               {m.drive_re, m.drive_im}, m.audio_gain_per_metre});
-        }
-        for (std::size_t i = 0; i < in->sample_count; ++i) {
-            const LeK8Sample &s = in->samples[i];
-            ql::Sample sample{s.identity, s.constituent ? s.constituent : "",
-                              static_cast<ql::ClockAttachment>(s.attachment), {s.rest[0], s.rest[1], s.rest[2]}, {}};
-            for (std::size_t j = 0; j < in->mode_count; ++j)
-                sample.mode_shapes.push_back({s.shapes[j * 3], s.shapes[j * 3 + 1], s.shapes[j * 3 + 2]});
-            c.samples.push_back(std::move(sample));
-        }
-        return new LeK8Field(std::move(c));
+        return new LeK8Field(continuation_input(in));
     } catch (const std::exception &e) {
         say(err, err_len, e.what());
     } catch (...) {
         say(err, err_len, "the continuation refused its input");
     }
     return nullptr;
+}
+
+// Off the audio thread: continue a handed-over continuation at its cursor (`ql::ContinuousField(ql::Continuation)`).
+// The field judges it whole and refuses, in its words, one that is not a continuation of its own input.
+LeK8Field *le_k8_field_continue(const LeK8Continuation *in, char *err, std::size_t err_len) {
+    if (!in || (in->input.mode_count && !in->input.modes) || (in->input.sample_count && !in->input.samples) ||
+        (in->carrier_count && (!in->carrier_re || !in->carrier_im)) || (in->pending_count && !in->pending) ||
+        (in->heard_count && !in->heard_from)) {
+        say(err, err_len, "missing continuation");
+        return nullptr;
+    }
+    try {
+        ql::Continuation c;
+        c.input = continuation_input(&in->input);
+        c.samples_elapsed = in->samples_elapsed;
+        c.driver_remainder = in->driver_remainder;
+        c.last_unmuted_sample = in->last_unmuted_sample;
+        c.carrier.steps_per_second = in->carrier_steps_per_second;
+        c.carrier.anchor_samples = in->carrier_anchor_samples;
+        c.carrier.anchor_steps = in->carrier_anchor_steps;
+        c.carrier.reached = in->carrier_reached;
+        for (std::size_t i = 0; i < in->carrier_count; ++i) c.carrier.impulses.push_back({in->carrier_re[i], in->carrier_im[i]});
+        for (std::size_t i = 0; i < in->pending_count; ++i) {
+            const LeK8Pending &p = in->pending[i];
+            if (p.n && (!p.modes || !p.re || !p.im)) {
+                say(err, err_len, "missing waiting act");
+                return nullptr;
+            }
+            ql::PendingAct act{p.at_samples_elapsed, {}};
+            for (std::size_t j = 0; j < p.n; ++j) act.impulses.push_back({p.modes[j], {p.re[j], p.im[j]}});
+            c.pending.push_back(std::move(act));
+        }
+        c.heard_from.assign(in->heard_from, in->heard_from + in->heard_count);
+        return new LeK8Field(std::move(c));
+    } catch (const std::exception &e) {
+        say(err, err_len, e.what());
+    } catch (...) {
+        say(err, err_len, "the continuation refused its handover");
+    }
+    return nullptr;
+}
+
+// Off the audio thread: the Torus's keys by QL's played-address law (`ql::TorusKeys`), made against this
+// field; the law it cannot stand on is refused in QL's words and the field keeps the law it had.
+int le_k8_set_law(LeK8Field *f, const LeK8KeyLaw *in, char *err, std::size_t err_len) {
+    if (!f || !in || (in->voice_count && !in->voices)) {
+        say(err, err_len, "missing key law");
+        return 0;
+    }
+    try {
+        ql::TorusKeyLaw law;
+        for (std::size_t i = 0; i < 36; ++i) law.arcs[i] = in->arcs[i];
+        for (std::size_t i = 0; i < in->voice_count; ++i) {
+            const LeK8KeyVoice &v = in->voices[i];
+            law.voices.push_back({v.mode, v.longitude_radians, v.weight, v.phase_radians, v.m, v.n});
+        }
+        law.strike = in->strike;
+        law.anchor_samples = in->anchor_samples;
+        law.anchor_steps = in->anchor_steps;
+        law.steps_per_second = in->steps_per_second;
+        law.sample_rate = in->sample_rate;
+        law.cap_metres = in->cap_metres;
+        f->law = std::make_unique<ql::TorusKeys>(std::move(law), f->field);
+        return 1;
+    } catch (const std::exception &e) {
+        say(err, err_len, e.what());
+    } catch (...) {
+        say(err, err_len, "key law refused");
+    }
+    return 0;
+}
+
+// The audio thread: one act of the Torus's keys at the cursor (`ql::TorusKeys::play`). 1 when struck; 0 when the
+// field holds no law or refused the act whole (the body stands as it was). noexcept and allocation-free.
+int le_k8_play_keys(LeK8Field *f, const std::uint8_t *rows, const std::uint32_t *columns, std::size_t n, double re,
+                    double im) {
+    return f && f->law && f->law->play(f->field, rows, columns, n, ql::Complex(re, im)) ? 1 : 0;
+}
+
+// The audio thread: Panic stills the body (`ql::ContinuousField::silence`). noexcept and allocation-free.
+void le_k8_silence(LeK8Field *f) {
+    if (f) f->field.silence();
+}
+
+// A resident state, for a reading off the audio thread.
+int le_k8_amplitude(const LeK8Field *f, std::size_t mode, double *re, double *im) {
+    if (!f || !re || !im || mode >= f->field.source().modes.size()) return 0;
+    const auto z = f->field.amplitude(mode);
+    *re = z.real();
+    *im = z.imag();
+    return 1;
 }
 
 void le_k8_field_free(LeK8Field *f) { delete f; }
@@ -122,17 +271,20 @@ int le_k8_set_key(LeK8Field *f, unsigned key, const std::size_t *modes, const do
         return 0;
     }
     try {
-        std::vector<ql::Strike> act;
-        act.reserve(n);
+        LeK8Field::Act act;
+        act.modes.reserve(n);
+        act.impulses.reserve(n);
         const auto &source = f->field.source().modes;
         for (std::size_t i = 0; i < n; ++i) {
             if (modes[i] >= source.size()) {
                 say(err, err_len, "a key's strike names a mode the continuation does not hold");
                 return 0;
             }
-            act.push_back({source[modes[i]].reference, {re[i], im[i]}});
+            act.modes.push_back(modes[i]);
+            act.impulses.push_back({re[i], im[i]});
         }
-        f->keys[key].swap(act);
+        f->keys[key].modes.swap(act.modes);
+        f->keys[key].impulses.swap(act.impulses);
         return 1;
     } catch (const std::exception &e) {
         say(err, err_len, e.what());
@@ -146,22 +298,13 @@ int le_k8_set_key(LeK8Field *f, unsigned key, const std::size_t *modes, const do
 // continuation's cursor (it lands before the next rendered sample). Returns
 // 1 when struck, 0 when the key has no act or the field refused it (the
 // body then stands exactly as it was — the typed API's own guarantee).
-//
-// ALLOCATION: the act vector is prepared, so this shim allocates nothing;
-// `ql::ContinuousField::strike` itself reserves one vector of mode pointers
-// per act (`std::vector<Prepared *> struck; struck.reserve(...)`). That is
-// the one allocation on this path, and it is QL's to remove (the lane's
-// PROPOSE: an allocation-free strike of a prepared act).
+// `ql::ContinuousField::strike_now` strikes by prepared mode index: noexcept
+// and allocation-free (O-I #849).
 int le_k8_strike_key(LeK8Field *f, unsigned key, char *err, std::size_t err_len) {
-    if (!f || key > 127 || f->keys[key].empty()) return 0;
-    try {
-        f->field.strike(f->keys[key]);
-        return 1;
-    } catch (const std::exception &e) {
-        say(err, err_len, e.what());
-    } catch (...) {
-        say(err, err_len, "strike refused");
-    }
+    if (!f || key > 127 || f->keys[key].modes.empty()) return 0;
+    const auto &act = f->keys[key];
+    if (f->field.strike_now(act.modes.data(), act.impulses.data(), act.modes.size())) return 1;
+    say(err, err_len, "the field refused the key's strike");
     return 0;
 }
 

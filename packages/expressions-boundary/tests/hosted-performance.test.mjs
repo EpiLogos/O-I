@@ -149,7 +149,8 @@ const keptOnScene = () => ({
     sounds: [KEPT_DIGEST(2), KEPT_DIGEST(3), KEPT_DIGEST(7)]}],
   racks: [{schema: 'oi.torus-rack/v1', rack_ref: 'rack:warm', name: 'Warm rack', sound: KEPT_DIGEST(1),
     chain: [{device_ref: 'arpeggiator', role: 'note', state: {}}, {device_ref: 'reverb', role: 'effect', state: {}}],
-    macros: [{name: 'Bloom', value: 0.5, targets: []}], variations: [{name: 'Open', values: [1]}, {name: 'Closed', values: [0]}]}],
+    macros: [{name: 'Bloom', value: 0.5, targets: [{device_ref: 'torus', parameter: 'damping', min: 0, max: 1}]}],
+    variations: [{name: 'Open', values: [1]}, {name: 'Closed', values: [0]}]}],
 });
 
 test('the listing carries what the Scene keeps on the Torus: sounds on the torus, instruments with the sounds made on them, racks', async () => {
@@ -162,7 +163,17 @@ test('the listing carries what the Scene keeps on the Torus: sounds on the torus
     {sound_ref: KEPT_DIGEST(2), name: 'Paper bell', body: 'form', body_ref: 'ql:form-body:fold', sample_rate: 48000},
     {sound_ref: KEPT_DIGEST(3), name: 'Paper hum', body: 'form', body_ref: 'ql:form-body:fold', sample_rate: 48000}]}],
     'its sounds in its own order; one the Scene does not keep is not listed');
-  assert.deepEqual(listed.kept.racks, [{rack_ref: 'rack:warm', name: 'Warm rack', sound: KEPT_DIGEST(1), devices: 2, macros: ['Bloom'], variations: ['Open', 'Closed']}]);
+  // O-I #852 round 9: a rack lists what its drop places on a part (Live's Instrument Rack, packages/live-set/src/acts.rs `rack_place`): its
+  // chain's devices by reference and role, each macro with where it stands and what it turns, and each variation with a value for every
+  // macro. A rack whose rows are not what they say is not listed.
+  assert.deepEqual(listed.kept.racks, [{rack_ref: 'rack:warm', name: 'Warm rack', sound: KEPT_DIGEST(1),
+    chain: [{device_ref: 'arpeggiator', role: 'note'}, {device_ref: 'reverb', role: 'effect'}],
+    macros: [{name: 'Bloom', value: 0.5, targets: [{device_ref: 'torus', parameter: 'damping'}]}],
+    variations: [{name: 'Open', values: [1]}, {name: 'Closed', values: [0]}]}]);
+  const rack = keptOnScene().racks[0];
+  for (const bad of [{...rack, chain: [{device_ref: 'arpeggiator', role: 'send', state: {}}]}, {...rack, macros: [{name: 'Bloom', value: 2, targets: []}]},
+    {...rack, variations: [{name: 'Open', values: []}]}, {...rack, macros: [{name: 'Bloom', value: 0.5, targets: [{device_ref: 'torus'}]}]}, {...rack, chain: 'arpeggiator'}])
+    assert.equal(listPerformance({bases: [], torus_kept: {racks: [bad]}}).kept, undefined, JSON.stringify(bad).slice(0, 80));
   assert.deepEqual(listPerformance({bases: []}), {state: 'listed', bases: []}, 'a Scene that keeps nothing lists as it did');
   assert.deepEqual(listPerformance(undefined), {state: 'listed', bases: []});
 });
