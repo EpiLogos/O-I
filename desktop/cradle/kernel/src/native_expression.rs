@@ -103,6 +103,66 @@ pub struct Manager {
     active: Option<Owner>,
     sequence: u64,
     composed: u64,
+    /// Where what the Torus's owner does is told to the native host that sounds it ([`TorusTap`]).
+    tap: Option<mpsc::Sender<TorusTap>>,
+}
+
+/// What the Torus's owner did that a native host sounding the Torus in its own engine follows (O-I #849),
+/// told as the owner acknowledged it, in the order it did. The frame is answered as it always is.
+#[derive(Debug, Clone, PartialEq)]
+pub enum TorusTap {
+    /// The owner under `lease` handed the Torus over (`torus-native`), kept here by its digest.
+    HandedOver { lease: String, sha256: String },
+    /// The owner under `lease` landed an act (`torus-play`, `strike-at`, `torus-singlet`, a named `strike`)
+    /// at its sample `at_samples_elapsed`: the impulse its own law gave each mode, by `mode_ref`, in modal
+    /// metres, exactly as its receipt names them.
+    Struck {
+        lease: String,
+        at_samples_elapsed: u64,
+        impulses: Vec<(String, [f64; 2])>,
+    },
+}
+
+/// The act an acknowledged command landed on the Torus's owner, or none: the receipt's `strike_at` (a key,
+/// a touch, a singlet: on the torus each voice's impulse, on a form's body each body mode's), or a named
+/// strike's own impulses at the sample it named or the cursor it struck at.
+fn torus_struck(lease: &str, command: &Value, reply: &Value) -> Option<TorusTap> {
+    let pairs = |list: &Value| -> Option<Vec<(String, [f64; 2])>> {
+        list.as_array()?
+            .iter()
+            .map(|item| {
+                let z = item["amplitude"].as_array().filter(|z| z.len() == 2)?;
+                Some((
+                    item["mode_ref"].as_str()?.to_owned(),
+                    [z[0].as_f64()?, z[1].as_f64()?],
+                ))
+            })
+            .collect()
+    };
+    let (at, impulses) = match command["operation"].as_str()? {
+        "torus-play" | "strike-at" | "torus-singlet" => {
+            let receipt = &reply["strike_at"];
+            let impulses = if receipt["voices"].is_array() {
+                pairs(&receipt["voices"])?
+            } else {
+                pairs(&receipt["modes"])?
+            };
+            (cursor(&receipt["at_samples_elapsed"]).ok()?, impulses)
+        }
+        "strike" => {
+            let at = match command.get("at_samples_elapsed") {
+                Some(at) => at,
+                None => &reply["field"]["samples_elapsed"],
+            };
+            (cursor(at).ok()?, pairs(&command["strikes"])?)
+        }
+        _ => return None,
+    };
+    (!impulses.is_empty()).then(|| TorusTap::Struck {
+        lease: lease.to_owned(),
+        at_samples_elapsed: at,
+        impulses,
+    })
 }
 
 /// The live field's own seat: the one manager behind a lock of its own,
@@ -152,6 +212,13 @@ impl Field {
     /// #849): for the native host's engine, on the field's own lock. The frame is relayed only the digest.
     pub fn torus_native(&self, lease: &str, sha256: &str) -> Result<Value, String> {
         self.lock()?.torus_native(lease, sha256)
+    }
+
+    /// Tell `tap` what the Torus's owner does from now on (O-I #849): every act it lands and every
+    /// handover, as it acknowledges them ([`TorusTap`]). The native host's engine follows the owner by it.
+    pub fn set_torus_tap(&self, tap: mpsc::Sender<TorusTap>) -> Result<(), String> {
+        self.lock()?.tap = Some(tap);
+        Ok(())
     }
 
     /// One field op on the field's own lock.
@@ -1008,6 +1075,22 @@ impl Manager {
                             labelled(&owner.take, &command, &mut reply);
                             if command["operation"] == "torus-native" {
                                 owner.hand_over(&mut reply);
+                            }
+                            if let Some(tap) = &self.tap {
+                                let told = if command["operation"] == "torus-native" {
+                                    owner.torus_native.as_ref().map(|(sha256, _)| {
+                                        TorusTap::HandedOver {
+                                            lease: owner.lease.clone(),
+                                            sha256: sha256.clone(),
+                                        }
+                                    })
+                                } else {
+                                    torus_struck(&owner.lease, &command, &reply)
+                                };
+                                // a host that stopped listening misses nothing the frame is answered
+                                if let Some(told) = told {
+                                    let _ = tap.send(told);
+                                }
                             }
                         }
                         Ok(reply)
@@ -4668,6 +4751,105 @@ for line in sys.stdin:
             .torus_native(&lease, &again)
             .unwrap_err()
             .contains("no active owner"));
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    /// O-I #849 round 12: what the Torus's owner does that a native host sounding it follows is tapped as it is
+    /// acknowledged — each act it landed (torus-play, strike-at, torus-singlet, a named strike) with the impulses its
+    /// own law gave each mode and the sample it landed at, and each handover by its digest — so the host's engine
+    /// strikes the owner's own impulses at the owner's sample and takes the Torus again when it is handed over again.
+    /// A refused act and a read are not tapped; the frame is answered as before.
+    #[cfg(unix)]
+    #[test]
+    fn the_torus_owners_acts_and_handovers_are_tapped_for_the_native_host() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir =
+            std::env::temp_dir().join(format!("native-torus-tap-test-{}", std::process::id()));
+        fs::create_dir_all(&dir).unwrap();
+        let script = dir.join("host.py");
+        fs::write(&script, r#"#!/usr/bin/env python3
+import json,sys
+base={'schema':'ql.field-host-receipt/v1','available':True,'instance_ref':'test:instance'}
+state={'samples':0}
+def field(): return {'event_ref':'test:event','subject_ref':'test:subject','generation':'0','samples_elapsed':str(state['samples']),'sample_rate':48000,'audio':[]}
+def handed(): return {'schema':'ql.torus-native/v1','instance_ref':'test:instance','event_ref':'test:event','subject_ref':'test:subject','generation':'0','at_samples_elapsed':str(state['samples']),'continuation':{'modes':[]},'keys':None}
+print(json.dumps(dict(base,status='ready',last_request_id='0',field=field())),flush=True)
+for line in sys.stdin:
+  r=json.loads(line); c=r['command']; op=c['operation']; extra={}; status='ok'
+  lands=c.get('at_samples_elapsed',str(state['samples']))
+  if op=='advance': state['samples']+=c['frames']
+  elif op=='torus-native': extra['torus_native']=handed()
+  elif op=='torus-play': extra['strike_at']={'at_samples_elapsed':lands,'voices':[{'mode_ref':'voice:a','amplitude':[0.30000000000000004,-3e-05]},{'mode_ref':'voice:b','amplitude':[-0.25,0.0]}]}
+  elif op=='strike-at': extra['strike_at']={'at_samples_elapsed':lands,'modes':[{'mode_ref':'voice:a/body/0','amplitude':[0.1,0.2]}]}
+  elif op=='torus-singlet':
+    if c['codon']==99: status='refused'
+    else: extra['strike_at']={'at_samples_elapsed':lands,'voices':[{'mode_ref':'voice:b','amplitude':[0.5,0.5]}]}
+  print(json.dumps(dict(base,status=status,request_id=r['request_id'],last_request_id=r['request_id'],field=field(),**extra)),flush=True)
+"#).unwrap();
+        fs::set_permissions(&script, fs::Permissions::from_mode(0o700)).unwrap();
+        crate::test_stub::settle_stub(&script);
+        let _env = EnvGuard::set(&[
+            ("OI_QL_FIELD_HOST_BIN", Some(script.as_os_str())),
+            ("OI_QL_FIELD_WORKER_BIN", Some(script.as_os_str())),
+        ]);
+        let field = Field::new(CentralClient::with(
+            "/nonexistent".into(),
+            None,
+            String::new(),
+        ));
+        let (tap, tapped) = mpsc::channel();
+        field.set_torus_tap(tap).unwrap();
+        let opened = field.lock().unwrap().open(&json!({"schema":"oi.native-expression-binding/v1","host":{"instance_ref":"test:instance"},"presentation":{"units_per_metre":1,"slots_a":[0],"slots_b":[0]}}).to_string(), Value::Null).unwrap();
+        let lease = opened["lease"].as_str().unwrap().to_owned();
+        let mut id = 0u64;
+        let mut exchange = |command: Value| {
+            id += 1;
+            field
+                .apply(Request::Exchange {
+                    lease: lease.clone(),
+                    request: json!({"schema":"ql.field-host-request/v1","instance_ref":"test:instance",
+                        "event_ref":"test:event","subject_ref":"test:subject","request_id":id.to_string(),"command":command}),
+                })
+                .unwrap()
+        };
+        exchange(json!({"operation":"advance","frames":480}));
+        let relayed = exchange(json!({"operation":"torus-native"}));
+        let sha256 = relayed["torus_native"]["sha256"]
+            .as_str()
+            .unwrap()
+            .to_owned();
+        exchange(
+            json!({"operation":"torus-play","keys":[{"row":1,"column":2}],"amplitude":[0.3,0]}),
+        );
+        exchange(
+            json!({"operation":"strike-at","points":[{"theta":0.1,"phi":0.2,"amplitude":[0.3,0]}],"at_samples_elapsed":"960"}),
+        );
+        let refused = exchange(json!({"operation":"torus-singlet","codon":99,"amplitude":[0.3,0]}));
+        assert_eq!(refused["status"], "refused");
+        exchange(
+            json!({"operation":"strike","strikes":[{"mode_ref":"voice:a","amplitude":[0.01,0.0]}]}),
+        );
+        exchange(
+            json!({"operation":"torus-singlet","codon":5,"amplitude":[0.3,0],"at_samples_elapsed":"1200"}),
+        );
+        exchange(json!({"operation":"torus-state"}));
+        let taps: Vec<TorusTap> = tapped.try_iter().collect();
+        let struck = |at: u64, impulses: &[(&str, [f64; 2])]| TorusTap::Struck {
+            lease: lease.clone(),
+            at_samples_elapsed: at,
+            impulses: impulses.iter().map(|(m, z)| (m.to_string(), *z)).collect(),
+        };
+        assert_eq!(
+            taps,
+            vec![
+                TorusTap::HandedOver { lease: lease.clone(), sha256 },
+                struck(480, &[("voice:a", [0.30000000000000004, -3e-05]), ("voice:b", [-0.25, 0.0])]),
+                struck(960, &[("voice:a/body/0", [0.1, 0.2])]),
+                struck(480, &[("voice:a", [0.01, 0.0])]),
+                struck(1200, &[("voice:b", [0.5, 0.5])]),
+            ],
+            "every landed act, exactly as the owner wrote its impulses, at the sample it landed; a refusal and a read are not tapped"
+        );
         fs::remove_dir_all(dir).unwrap();
     }
 }

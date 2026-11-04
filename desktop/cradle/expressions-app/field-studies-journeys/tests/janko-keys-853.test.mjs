@@ -116,6 +116,17 @@ const openController = async ({polyphony = 16} = {}) => {
     acts = []; notes = []; next = 0;
     async request(request) {
       const command = request.request?.command;
+      if (command?.operation === 'torus-native') {
+        // The kernel keeps the Torus handed over and relays its digest in the document's place (native_expression.rs hand_over): a read.
+        const read = structuredClone(request);
+        read.request.command = {operation: 'read'};
+        const reply = await super.request(read);
+        this.handovers = (this.handovers ?? 0) + 1;
+        if (this.refuseHandover) return {...reply, status: 'refused', error: 'controlled refusal: a setting waits for a later sample'};
+        reply.torus_native = {schema: 'ql.torus-native/v1', sha256: 'sha256:' + this.handovers.toString(16).padStart(64, '0'),
+          generation: reply.field.generation, at_samples_elapsed: reply.field.samples_elapsed};
+        return reply;
+      }
       if (!['torus-play', 'torus-release', 'torus-singlet'].includes(command?.operation)) return super.request(request);
       const read = structuredClone(request);
       read.request.command = {operation: 'read'};
@@ -343,4 +354,97 @@ test('the frame\'s Nara channel announces each applied M3 answer once it lands, 
     assert.equal(heard.length, 1, 'a listener let go hears nothing');
     assert.ok(posted.some(message => message.kind === 'nara-instrument' && message.request.request.operation === 'apply'));
   } finally { if (before === undefined) delete globalThis.window; else globalThis.window = before; }
+});
+
+// ---------------------------------------------------------------------------------------------------- the Torus in the desktop's one engine (O-I #849)
+// On Play the shell asks the frame to hand the Torus over (`torus-engine`), puts it on the set's MIDI part with the lease and digest the
+// answer carries (live_engine_torus), and the frame's own sound of it is shut so the part sounds once. The kernel tells the engine every act
+// the owner lands; whatever else moves the owner's Torus has it handed over again (src-tauri torus_native.rs follows it bit for bit).
+test('the torus-engine stage command says on or off, and its answer is the lease and digest the engine takes the Torus by, read exactly', async () => {
+  const {readStageRequest, readStageResult, stageReplyMessage, readStageTorusEngine, STAGE_COMMANDS} = await stage();
+  assert.ok(STAGE_COMMANDS.includes('torus-engine'));
+  assert.deepEqual(readStageRequest(request({command: 'torus-engine', on: true})), {req: 7, command: {command: 'torus-engine', on: true}});
+  assert.deepEqual(readStageRequest(request({command: 'torus-engine', on: false})).command, {command: 'torus-engine', on: false});
+  for (const body of [{}, {on: 'true'}, {on: 1}, {on: true, lease: 'l'}, {on: true, track: 0}])
+    assert.equal(readStageRequest(request({command: 'torus-engine', ...body})), null, JSON.stringify(body));
+  const handed = {lease: 'native-expression-1-2-3', sha256: 'sha256:' + 'ab'.repeat(32), generation: '4', at_samples_elapsed: '4800'};
+  assert.deepEqual(readStageTorusEngine(handed), handed);
+  for (const bad of [{...handed, sha256: 'sha256:' + 'AB'.repeat(32)}, {...handed, sha256: 'ab'.repeat(32)}, {...handed, at_samples_elapsed: 4800},
+    {...handed, generation: '04'}, {...handed, lease: ''}, {...handed, continuation: {}}, null, 'sha256:'])
+    assert.equal(readStageTorusEngine(bad), null, JSON.stringify(bad));
+  const reply = stageReplyMessage(7, {ok: true, torus_engine: handed}, {command: 'torus-engine', on: true});
+  assert.deepEqual(reply.torus_engine, handed);
+  assert.deepEqual(readStageResult(reply), {req: 7, ok: true, torus_engine: handed});
+  assert.equal(readStageResult({...reply, torus_engine: {...handed, continuation: {}}}), null, 'the field itself never crosses the channel');
+});
+
+test('the Torus handed over to the engine shuts the frame\'s own sound of it, and anything but an act the engine follows hands it over again', async () => {
+  const {c, owner} = await openController();
+  const handovers = () => owner.handovers ?? 0;
+  const settled = async () => { for (let i = 0; i < 100 && c.reading.torus_engine.stale; i++) await new Promise(resolve => setTimeout(resolve, 5)); };
+  try {
+    assert.deepEqual(c.reading.torus_engine, {on: false, handed: null, stale: false, refusal: null, frame_gain: 1}, 'the frame sounds the Torus until asked');
+    const handed = await c.torusEngine(true);
+    assert.deepEqual(handed, {lease: 'controlled:scene-lease', sha256: 'sha256:' + '1'.padStart(64, '0'), generation: owner.frame.generation,
+      at_samples_elapsed: owner.frame.samples_elapsed}, 'the lease and the digest the kernel relayed, never the field');
+    assert.equal(handovers(), 1);
+    assert.equal(c.reading.torus_engine.on, true);
+    assert.equal(c.reading.torus_engine.frame_gain, 0, 'the part sounds once: through the engine');
+    // an act the engine follows (the kernel tells it) is not a reason to hand the Torus over again
+    await c.torusPlay([{row: 0, column: 42}], 0.35);
+    await c.torusSinglet(5);
+    await settled();
+    assert.equal(handovers(), 1, 'a key and a singlet reach the engine as the owner landed them');
+    // a setting moves what the engine sounds: handed over again, in the serial owner's next turn
+    await c.torusSet({tuning: 'sky'});
+    await settled();
+    assert.equal(handovers(), 2, 'a setting has the Torus handed over again');
+    assert.equal(c.reading.torus_engine.handed.sha256, 'sha256:' + '2'.padStart(64, '0'));
+    assert.equal(c.reading.torus_engine.stale, false);
+    // a hand-over the owner refuses stands in words, and the frame stays shut: the engine still sounds what it was handed
+    owner.refuseHandover = true;
+    await c.torusSet({tuning: 'logic'});
+    await settled();
+    assert.equal(handovers(), 3);
+    assert.match(c.reading.torus_engine.refusal, /a setting waits for a later sample/);
+    assert.equal(c.reading.torus_engine.frame_gain, 0);
+    owner.refuseHandover = false;
+    // off: the frame sounds the Torus again, and nothing is asked of the owner
+    assert.equal(await c.torusEngine(false), null);
+    assert.deepEqual(c.reading.torus_engine, {on: false, handed: null, stale: false, refusal: null, frame_gain: 1});
+    await c.torusSet({tuning: 'sky'});
+    await settled();
+    assert.equal(handovers(), 3, 'off, nothing is handed over');
+  } finally { await c.dispose(); }
+});
+
+test('a hand-over the owner refuses leaves the frame sounding the Torus, and says why', async () => {
+  const {c, owner} = await openController();
+  try {
+    owner.refuseHandover = true;
+    await assert.rejects(c.torusEngine(true), /a setting waits for a later sample/);
+    assert.equal(c.reading.torus_engine.on, false);
+    assert.equal(c.reading.torus_engine.frame_gain, 1, 'nothing was handed over, so the frame still sounds it');
+    assert.match(c.reading.torus_engine.refusal, /a setting waits for a later sample/);
+  } finally { await c.dispose(); }
+});
+
+test('what moves the owner\'s Torus past what the engine follows: a setting, a restore, a body, the receiver, an event, a setting landing in an advance', async () => {
+  const {torusMoved} = await controller();
+  for (const operation of ['torus-set', 'torus-restore', 'torus-body', 'torus-receiver', 'm1-advance', 'replace-event', 'set-damping'])
+    assert.equal(torusMoved({operation}, {status: 'ok'}), true, operation);
+  for (const operation of ['torus-play', 'strike-at', 'torus-singlet', 'strike', 'torus-release', 'torus-native', 'torus-state', 'torus-checkpoint', 'read', 'inspect'])
+    assert.equal(torusMoved({operation}, {status: 'ok'}), false, operation);
+  assert.equal(torusMoved({operation: 'advance'}, {status: 'ok'}), false, 'an advance moves only the cursor the engine runs on');
+  assert.equal(torusMoved({operation: 'advance'}, {status: 'ok', torus_set_landed: {at_samples_elapsed: '4800'}}), true, 'a setting landed in it');
+  assert.equal(torusMoved(undefined, {}), false);
+});
+
+test('the frame runs torus-engine as the controller\'s torusEngine and answers what the engine takes the Torus by', async () => {
+  const app = await readFile(new URL('../src/app.ts', import.meta.url), 'utf8');
+  const start = app.indexOf("case 'torus-engine':");
+  assert.ok(start >= 0);
+  const block = app.slice(start, app.indexOf("case 'render-take':", start));
+  assert.match(block, /nativeField\.controller\.torusEngine\(command\.on\)/);
+  assert.match(block, /torus_engine/);
 });

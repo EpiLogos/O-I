@@ -4,7 +4,12 @@
 //   live_engine_play / _stop   start / stop the engine on the default output
 //   live_engine_send {event}   a note, a Torus act, Panic, or a mixer move — applied at the next audio block
 //   live_engine_torus          the Torus its owner handed over (QL's torus-native, kept by the kernel under the field's lease; named
-//                              here only by its digest) sounds on a MIDI part, continuing the owner's field from the sample it stood at
+//                              here only by its digest) sounds on a MIDI part, continuing the owner's field from the sample it stood at;
+//                              its MIDI notes strike the keys the one pitch→key law gives them (jankoInput.ts noteKeys, O-I #853), and
+//                              the host follows the owner from then on: each act it lands, and each time it is handed over again
+// Play hands the Torus over (the frame's `torus-engine` stage command: its owner hands it over and the frame's own sound of it is shut) and
+// puts it on the set's first MIDI part, so it sounds once, through the engine's mixer and Main; Stop gives the frame its sound back. A Torus
+// that cannot be handed over leaves the set playing and says why (EngineState.torus).
 //   live_engine_mixer          the reading: the mixer as the engine APPLIED it (a move asked is not in it until a block applied it)
 //   live_engine_export         Export Audio: the samples the engine played, rendered offline, as a 32-bit float WAV, to the file
 //                              the person chooses in the host's own save dialog (the webview never names the path)
@@ -16,6 +21,10 @@ import {detectTransport, tauriInvoke} from '../../../../../desktop/cradle/src/ke
 import {readSet} from '../native/application'
 import {readSetSummary} from '../shell/useSet'
 import type {SlotBinding} from '../frame/transport/slots'
+import type {StageCommand, StageResult} from '@epilogos/expressions-boundary'
+import {commitLiveStage} from './torusInstrument'
+import {liveJankoWindow} from './janko/jankoLayout'
+import {noteKeys} from './janko/jankoInput'
 
 /** A part as the engine names it: one of the set's parts, one of its returns, or the Main track. */
 export type LiveEnginePart = {track: number} | {return: number} | 'main'
@@ -74,6 +83,14 @@ export function enginePartOf(kinds: readonly string[], index: number): LiveEngin
 /** The set's kinds the engine hosts as parts (an audio or a MIDI part). */
 const PART_KINDS: ReadonlySet<string> = new Set(['audio', 'midi'])
 
+/** The engine part the Torus sounds on (O-I #849; manual §21.2 "The torus is the only generator"): the set's first MIDI part, or null
+ * for a set with none. */
+export function torusPartOf(kinds: readonly string[]): number | null {
+  const index = kinds.indexOf('midi')
+  const part = index < 0 ? null : enginePartOf(kinds, index)
+  return part && typeof part === 'object' && 'track' in part ? part.track : null
+}
+
 /** The engine's move for one of the set's mixer writes; null where the write changes nothing the engine plays (Arm, Monitor) or the
  * engine has no such move (a return's solo or sends, a group). Volume is linear gain and Pan −1…1, as the set keeps them. */
 export function engineEventOfMixerWrite(kinds: readonly string[], track: number, control: string, value: unknown): LiveEngineEvent | null {
@@ -101,8 +118,10 @@ export interface EngineState {
   readonly kinds: readonly string[]
   /** The engine's last refusal, in its words. */
   readonly error: string | null
+  /** Why the Torus does not sound in the engine while the set plays (it could not be handed over), in its owner's or the engine's words. */
+  readonly torus: string | null
 }
-let state: EngineState = {reading: null, kinds: [], error: null}
+let state: EngineState = {reading: null, kinds: [], error: null, torus: null}
 const listeners = new Set<() => void>()
 let poll: ReturnType<typeof setInterval> | null = null
 /** While the engine plays, its reading is read again this often (ms): a move shows once a block applied it. */
@@ -119,25 +138,60 @@ async function adopt<T extends LiveEngineReading>(answer: Promise<T>): Promise<T
   try { const reading = await answer; settle({reading, error: null}); return reading } catch (e) { settle({error: words(e)}); throw e }
 }
 
+/** The frame's stage, as the engine's Torus asks it (torusInstrument.ts commitLiveStage, the one channel to the live instrument). */
+type Stage = (command: StageCommand) => Promise<StageResult>
+
+/** The Torus handed over to the engine as it plays (O-I #849): the frame's owner hands it over and shuts the frame's own sound of it, and
+ * the engine takes it onto the set's first MIDI part with the key each MIDI note strikes. Refused anywhere on the way, the set plays on
+ * without it and the refusal stands in `torus`; the frame keeps sounding it. */
+async function handTorus(stage: Stage): Promise<void> {
+  const track = torusPartOf(state.kinds)
+  if (track === null) { settle({torus: 'The set has no MIDI part for the Torus to sound on'}); return }
+  const handed = await stage({command: 'torus-engine', on: true})
+  if (!handed.ok || !handed.torus_engine) {
+    settle({torus: handed.ok ? 'The live instrument answered with no Torus handed over' : handed.error})
+    return
+  }
+  const window = liveJankoWindow()
+  const notes = window?.ok ? noteKeys(window.window) : null
+  try {
+    await adopt(op<LiveEngineReading>('live_engine_torus', {lease: handed.torus_engine.lease, track, sha256: handed.torus_engine.sha256, notes}))
+    settle({torus: null})
+  } catch (e) {
+    settle({torus: words(e)})
+    await stage({command: 'torus-engine', on: false})
+  }
+}
+
 /** The engine's acts, each through its owner op; each answers the engine's reading (Export, what it wrote). */
 export const liveEngine = {
-  /** Play the set at `path`: bridge it as the file now stands (unless the engine already plays it), then start the output. The set's
-   * part kinds come from its owner's reading (`read`, the shell's own by default). */
-  async play(path: string, read: (path: string) => Promise<{summary: unknown}> = readSet): Promise<LiveEngineReading> {
+  /** Play the set at `path`: bridge it as the file now stands (unless the engine already plays it), then start the output, and hand the
+   * Torus over to it (handTorus, through `stage`). The set's part kinds come from its owner's reading (`read`, the shell's own by
+   * default). */
+  async play(path: string, read: (path: string) => Promise<{summary: unknown}> = readSet, stage: Stage = commitLiveStage): Promise<LiveEngineReading> {
     if (state.reading?.path === path && state.reading.playing) return state.reading
     // the set's owner reads it first: a set it cannot read is never bridged, and its refusal is the engine's to show
     let summary: ReturnType<typeof readSetSummary>
     try { summary = readSetSummary((await read(path)).summary) } catch (e) { settle({error: words(e)}); throw e }
     await adopt(op<LiveEngineReading>('live_engine_open', {path}))
     settle({kinds: summary.tracks.map(track => track.kind)})
-    return adopt(op<LiveEngineReading>('live_engine_play'))
+    const playing = await adopt(op<LiveEngineReading>('live_engine_play'))
+    await handTorus(stage)
+    return state.reading ?? playing
   },
-  stop: (): Promise<LiveEngineReading> => adopt(op<LiveEngineReading>('live_engine_stop')),
+  /** Stop the engine; the frame sounds the Torus again (its `torus-engine` off), and a Play hands it over again. */
+  async stop(stage: Stage = commitLiveStage): Promise<LiveEngineReading> {
+    const stopped = await adopt(op<LiveEngineReading>('live_engine_stop'))
+    settle({torus: null})
+    await stage({command: 'torus-engine', on: false})
+    return stopped
+  },
   send: (event: LiveEngineEvent): Promise<LiveEngineReading> => adopt(op<LiveEngineReading>('live_engine_send', {event})),
   /** The Torus its owner handed over sounds on the set's part `track`: `lease` is the field's, `sha256` the digest the kernel relayed
-   * for the owner's torus-native (the document stays with the kernel). */
-  torus: (lease: string, track: number, sha256: string): Promise<LiveEngineReading> =>
-    adopt(op<LiveEngineReading>('live_engine_torus', {lease, track, sha256})),
+   * for the owner's torus-native (the document stays with the kernel); `notes`, the key each MIDI note 0–127 strikes (noteKeys), or null
+   * for none. From then on the host follows the owner: each act it lands, and each hand-over again. */
+  torus: (lease: string, track: number, sha256: string, notes: readonly ({row: number; column: number} | null)[] | null = null): Promise<LiveEngineReading> =>
+    adopt(op<LiveEngineReading>('live_engine_torus', {lease, track, sha256, notes})),
   read: (): Promise<LiveEngineReading> => adopt(op<LiveEngineReading>('live_engine_mixer')),
   /** Export Audio: the samples the engine played since Play, to the `.wav` the person chooses in the host's save dialog (the same act
    * as File › Export Audio…); a cancelled dialog is a refusal in the host's words. No path is named from here. */
@@ -181,9 +235,10 @@ export function engineTransportBindings(setPath: string | null, engine: EngineSt
   if (!native) return {play: {lit: false, refused: NATIVE_ONLY}, stop}
   const lit = !!reading?.playing && reading.path === setPath
   const unhosted = lit && reading.warnings.length ? ` Not hosted: ${reading.warnings.join('; ')}.` : ''
+  const torus = lit && engine.torus ? ` The Torus sounds in the live instrument, not the engine: ${engine.torus}` : ''
   return {play: {press: () => void liveEngine.play(setPath).catch(() => {}), lit,
     title: `${lit ? `Play — ${setName(setPath)} plays in the engine, every part through its chain to the Main track.`
-      : `Play — ${setName(setPath)} plays in the engine as the file stands: every part through its chain to the Main track.`}${unhosted}${refusal}`}, stop}
+      : `Play — ${setName(setPath)} plays in the engine as the file stands: every part through its chain to the Main track.`}${unhosted}${torus}${refusal}`}, stop}
 }
 
 /** Live's transport over the engine: its Play and Stop for the open set, as the engine stands. Leaving Live's transport stops the

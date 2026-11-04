@@ -58,6 +58,10 @@ export class InstrumentSession {
   * presented, and it is never journaled. Answers the context and each voice's gain, never the place. */
  torusReceiver(place: readonly [number, number, number] | null): Promise<{schema: 'ql.torus-receiver/v1'; context: 'world' | 'personal';
   gains: Array<{mode_ref: string; gain: number}>; law: string}>;
+ /** The Torus handed over to a native audio host (`ql.torus-native/v1`, O-I #849): the continuation and the played-address law as they
+  * stand at the acknowledged sample. A read: nothing moves, and it is never journaled. Through O:I's kernel the answer is the digest the
+  * kernel relays in the document's place (`sha256`, `generation`, `at_samples_elapsed`); the kernel keeps the document under the lease. */
+ torusNative(): Promise<{schema: 'ql.torus-native/v1'; sha256?: string; generation?: string; at_samples_elapsed?: string; [field: string]: unknown}>;
  /** The Torus session reading the last Torus acknowledgement carried, or null before any. */
  readonly lastTorus: any;
  /** The last played Torus act's receipt (ql.torus-play/v1), or null before any. */

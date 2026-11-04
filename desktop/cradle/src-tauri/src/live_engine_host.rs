@@ -14,7 +14,7 @@
 //! | `live_engine_play` | the engine plays on the default output from where it stands |
 //! | `live_engine_stop` | the output stops; the engine and what it played are kept |
 //! | `live_engine_send {event}` | one note, Torus act, Panic or mixer move, applied at the next block; answers the mixer reading |
-//! | `live_engine_torus {lease, track, sha256}` | the Torus its owner handed over (kept by the kernel under the field's lease) sounds on the part |
+//! | `live_engine_torus {lease, track, sha256, notes?}` | the Torus its owner handed over (kept by the kernel under the field's lease) sounds on the part, which follows that owner from then on |
 //! | `live_engine_mixer` | the mixer as the engine applied it |
 //! | `live_engine_export` | Export Audio: what the engine played, rendered offline, as a 32-bit float WAV, into the file the person chooses in the host's own save dialog |
 //!
@@ -37,6 +37,17 @@
 //! same document at the frame the engine took it. A new engine (Play after
 //! Stop) holds no Torus until the owner hands it over again.
 //!
+//! The part follows the Torus's owner (round 12): the kernel tells the host
+//! every act the owner lands — a key, a touch, a singlet, a named strike — and
+//! every hand-over (`native_expression.rs` `TorusTap`), and the host strikes
+//! each act on the part's Torus at the owner's own sample with the impulse the
+//! owner's law gave each mode (no pitch or place of the host's own), and puts
+//! each later hand-over on the part in the last one's place (a setting landed,
+//! a restore, a body chosen). A MIDI note on the part strikes the key the
+//! shell's pitch→key law gives it (`notes`, O-I #853) by the owner's
+//! played-address law. A form's body is handed over with no key law, and its
+//! owner's words for why stand in the reading.
+//!
 //! Events are refused in the engine's words when the set has nothing they
 //! name. A mixer reading is what the engine APPLIED, never what was asked.
 //! Audio parts play no clip audio yet: the bridge leaves their sources empty
@@ -52,6 +63,7 @@ pub(crate) mod host {
         TorusAct,
     };
     use live_set::xml::Element;
+    use oi_cradle_kernel::native_expression::TorusTap;
     use serde::Deserialize;
     use serde_json::{json, Value};
     use std::path::{Path, PathBuf};
@@ -112,6 +124,28 @@ pub(crate) mod host {
     pub struct KeyIn {
         row: u8,
         column: u16,
+    }
+
+    /// The key (row, column) each MIDI note 0–127 strikes on a Torus part, by the shell's pitch→key law
+    /// (O-I #853 `keyForNote`), or none where the law gives the note no key.
+    pub type Notes = [Option<(u8, u16)>; 128];
+
+    /// A Torus part's notes as the shell sends them: for each of the 128 MIDI notes, a key or null.
+    pub fn notes(table: &Value) -> Result<Notes, String> {
+        let table: Vec<Option<KeyIn>> = serde_json::from_value(table.clone()).map_err(|e| {
+            format!("A Torus part's notes are a key or null for each MIDI note: {e}")
+        })?;
+        if table.len() != 128 {
+            return Err(format!(
+                "A Torus part's notes name a key or none for each of the 128 MIDI notes, not {}",
+                table.len()
+            ));
+        }
+        let mut notes = [None; 128];
+        for (note, key) in notes.iter_mut().zip(table) {
+            *note = key.map(|k| (k.row, k.column));
+        }
+        Ok(notes)
     }
 
     #[derive(Debug, Clone, Copy, Deserialize, serde::Serialize)]
@@ -246,14 +280,64 @@ pub(crate) mod host {
     pub const WITHOUT_K8: &str = "The Torus sounds in the one engine through QL's K8 node, and this host was built without QL's K8 node (its k8 feature)";
 
     /// A Torus handed over to one of the set's parts (O-I #849): the part, the digest its owner
-    /// handed it over by and the sample it stood at, and what it was made from, for Export Audio.
+    /// handed it over by and the sample it stood at, the host's count of the hand-over (the owner's acts
+    /// that follow it are struck on it alone), the key each MIDI note strikes on it, the owner's words
+    /// for a body handed over with no key law, and what it was made from, for Export Audio.
     #[cfg_attr(not(feature = "k8"), allow(dead_code))]
     pub struct TorusOnPart {
         pub track: usize,
         pub sha256: String,
         pub at_samples_elapsed: u64,
+        pub handover: u32,
+        pub notes: Option<Notes>,
+        pub keys_refused: Option<String>,
         #[cfg(feature = "k8")]
         pub handed: crate::torus_native::Handed,
+    }
+
+    /// The part that follows the Torus's owner: the owner's lease, the part, the hand-over it holds
+    /// (by digest and the host's count) and its notes.
+    #[derive(Debug, Clone)]
+    pub struct Bound {
+        pub lease: String,
+        pub track: usize,
+        pub sha256: String,
+        pub handover: u32,
+        pub notes: Option<Notes>,
+    }
+
+    /// The engine following the Torus's owner (round 12): the part bound to it, the owner's acts struck on
+    /// it, those the host could not strike (with the last refusal's words) and the hand-overs taken again.
+    #[derive(Debug, Default)]
+    pub struct Following {
+        pub bound: Option<Bound>,
+        pub struck: u64,
+        pub missed: u64,
+        pub handed_again: u64,
+        pub refusal: Option<String>,
+    }
+
+    /// An owner's act as the kernel tells it: the impulse its law gave each mode, by `mode_ref`.
+    pub type Impulses = Vec<(String, [f64; 2])>;
+
+    /// The most acts the host keeps of an owner's last hand-over before a part is bound to it; more are
+    /// counted as missed.
+    pub const SINCE_ACTS: usize = 1024;
+
+    /// What the Torus's owner told the host since it last handed the Torus over (the kernel's tap): its
+    /// lease, the digest, and the acts it landed since, as (sample, impulses by mode).
+    #[derive(Debug)]
+    pub struct Since {
+        pub lease: String,
+        pub sha256: String,
+        pub acts: Vec<(u64, Impulses)>,
+        pub dropped: u64,
+    }
+
+    /// The host's side of the kernel's tap: the owner's last hand-over and the acts since.
+    #[derive(Debug, Default)]
+    pub struct Follow {
+        pub since: Option<Since>,
     }
 
     /// One open set's engine.
@@ -266,9 +350,14 @@ pub(crate) mod host {
         /// The audio half while it is not playing (taken by `play`).
         pub core: Option<EngineCore>,
         pub player: Option<EnginePlayer>,
-        /// Every Torus handed over to a part, in the order handed: the engine takes each before the
-        /// next is handed ([`EngineHandle::install`]), so the n-th is the engine's n-th install.
+        /// Every Torus handed over to a part and taken or on its way, in the order handed: a hand the
+        /// engine never took gave way to the next ([`EngineHandle::install_latest`]) and is not kept, so
+        /// the n-th is the engine's n-th install.
         pub toruses: Vec<TorusOnPart>,
+        /// The host's count of hand-overs (never reset, so an act tagged for one never reaches another).
+        #[cfg_attr(not(feature = "k8"), allow(dead_code))]
+        pub handovers: u32,
+        pub following: Following,
     }
 
     impl Opened {
@@ -284,6 +373,8 @@ pub(crate) mod host {
                 core: Some(core),
                 player: None,
                 toruses: Vec::new(),
+                handovers: 0,
+                following: Following::default(),
             })
         }
 
@@ -297,7 +388,28 @@ pub(crate) mod host {
                 "warnings": self.warnings,
                 "mixer": mixer_json(self.handle.mixer()),
                 "toruses": self.torus_reading(),
+                "torus_follow": self.follow_reading(),
             })
+        }
+
+        /// The part following the Torus's owner, if one is: the lease, the part, the hand-over it holds,
+        /// whether MIDI notes strike its keys, and the owner's acts struck, missed and handed over again.
+        fn follow_reading(&self) -> Value {
+            let f = &self.following;
+            match &f.bound {
+                None => Value::Null,
+                Some(b) => json!({
+                    "lease": b.lease,
+                    "track": b.track,
+                    "sha256": b.sha256,
+                    "handover": b.handover,
+                    "notes": b.notes.is_some(),
+                    "struck": f.struck,
+                    "missed": f.missed,
+                    "handed_again": f.handed_again,
+                    "refusal": f.refusal,
+                }),
+            }
         }
 
         /// The Torus each part holds (the last handed over to it): its digest, the owner's sample it
@@ -318,6 +430,8 @@ pub(crate) mod host {
                             "track": t.track,
                             "sha256": t.sha256,
                             "at_samples_elapsed": t.at_samples_elapsed.to_string(),
+                            "handover": t.handover,
+                            "keys_refused": t.keys_refused,
                             "sounding_from_frame": taken.get(i).map(|(frame, _)| *frame),
                         })
                     })
@@ -342,35 +456,104 @@ pub(crate) mod host {
         }
 
         /// Hand the Torus its owner handed over (`ql.torus-native/v1`, as the kernel kept it under its
-        /// digest `sha256`) to the set's part `track` (O-I #849): the node continues the owner's field
-        /// from the sample it stood at, takes the part at the engine's next block and sounds through
-        /// the part's chain and mixer row to Main. Refused in words for a document that is not one, a
-        /// part that plays no notes, a Torus still on its way, or a host without QL's K8 node.
-        pub fn install_torus(
+        /// digest `sha256`) to the set's part `track` (O-I #849) as the host's next hand-over (its count
+        /// answered), with the key each MIDI note strikes: the node continues the owner's field from the
+        /// sample it stood at, takes the part at the engine's next block and sounds through the part's
+        /// chain and mixer row to Main. `latest`: a hand the engine has not taken yet gives way to it, and
+        /// is kept nowhere — it never sounded; otherwise such a hand refuses it. Refused in words for a
+        /// document that is not one, a part that plays no notes, or a host without QL's K8 node.
+        pub fn hand_torus(
             &mut self,
             track: usize,
             sha256: &str,
             document: &Value,
-        ) -> Result<Value, String> {
+            notes: Option<Notes>,
+            latest: bool,
+        ) -> Result<u32, String> {
             #[cfg(feature = "k8")]
             {
                 let handed = crate::torus_native::read(document)?;
-                let node = handed.node(ENGINE_RATE)?;
-                self.handle
-                    .install(track, node)
-                    .map_err(|e| e.to_string())?;
+                let handover = self.handovers + 1;
+                let node = handed.node_handed(ENGINE_RATE, handover, notes.as_ref())?;
+                if latest {
+                    let superseded = self
+                        .handle
+                        .install_latest(track, node)
+                        .map_err(|e| e.to_string())?;
+                    if superseded {
+                        self.toruses.pop();
+                    }
+                } else {
+                    self.handle
+                        .install(track, node)
+                        .map_err(|e| e.to_string())?;
+                }
+                self.handovers = handover;
                 self.toruses.push(TorusOnPart {
                     track,
                     sha256: sha256.to_owned(),
                     at_samples_elapsed: handed.at_samples_elapsed,
+                    handover,
+                    notes,
+                    keys_refused: handed.keys_refused.clone(),
                     handed,
                 });
-                Ok(self.reading())
+                Ok(handover)
             }
             #[cfg(not(feature = "k8"))]
             {
-                let _ = (track, sha256, document);
+                let _ = (track, sha256, document, notes, latest);
                 Err(WITHOUT_K8.into())
+            }
+        }
+
+        /// One act the Torus's owner landed, struck on the part's Torus of the hand-over it follows, at the
+        /// owner's sample: the impulse the owner's law gave each mode, by the modes that Torus was handed
+        /// over with — nothing of the host's own. Refused in words for a mode it does not have.
+        pub fn strike_owner(
+            &mut self,
+            track: usize,
+            handover: u32,
+            at: u64,
+            impulses: &[(String, [f64; 2])],
+        ) -> Result<(), String> {
+            #[cfg(feature = "k8")]
+            {
+                let torus = self
+                    .toruses
+                    .iter()
+                    .rev()
+                    .find(|t| t.track == track && t.handover == handover)
+                    .ok_or("The Torus this act follows gave way before the engine took it")?;
+                let modes = impulses
+                    .iter()
+                    .map(|(reference, z)| {
+                        torus.handed.mode(reference).map(|m| (m, *z)).ok_or_else(|| {
+                            format!("The Torus handed over has no mode {reference}: the act was not struck")
+                        })
+                    })
+                    .collect::<Result<Vec<_>, String>>()?;
+                for strike in live_engine::TorusStrike::split(handover, at, &modes)? {
+                    self.handle
+                        .send(EngineEvent::TorusStrike { track, strike })
+                        .map_err(|e| e.to_string())?;
+                }
+                Ok(())
+            }
+            #[cfg(not(feature = "k8"))]
+            {
+                let _ = (track, handover, at, impulses);
+                Err(WITHOUT_K8.into())
+            }
+        }
+
+        fn follow_act(&mut self, bound: &Bound, at: u64, impulses: &[(String, [f64; 2])]) {
+            match self.strike_owner(bound.track, bound.handover, at, impulses) {
+                Ok(()) => self.following.struck += 1,
+                Err(words) => {
+                    self.following.missed += 1;
+                    self.following.refusal = Some(words);
+                }
             }
         }
 
@@ -392,7 +575,12 @@ pub(crate) mod host {
                     .iter()
                     .zip(&self.toruses)
                     .map(|(&(frame, track), torus)| {
-                        Ok((frame, track, torus.handed.node(ENGINE_RATE)?))
+                        let node = torus.handed.node_handed(
+                            ENGINE_RATE,
+                            torus.handover,
+                            torus.notes.as_ref(),
+                        )?;
+                        Ok((frame, track, node))
                     })
                     .collect::<Result<Vec<_>, String>>()?;
                 graph.render_performance_with(ENGINE_RATE, &performance, toruses)
@@ -433,9 +621,10 @@ pub(crate) mod host {
     pub const EXPORT_CANCELLED: &str =
         "Export Audio was cancelled: no file was chosen, so nothing was written.";
 
-    /// The host's state: at most one open set.
+    /// The host's state: at most one open set, and what the Torus's owner told it. The follow lock is
+    /// taken before the set's, and the kernel's field lock is taken only under them, never around them.
     #[derive(Default)]
-    pub struct LiveEngineHost(pub Mutex<Option<Opened>>);
+    pub struct LiveEngineHost(pub Mutex<Option<Opened>>, pub Mutex<Follow>);
 
     impl LiveEngineHost {
         fn with<T>(&self, act: impl FnOnce(&mut Opened) -> Result<T, String>) -> Result<T, String> {
@@ -489,8 +678,9 @@ pub(crate) mod host {
                                 ..
                             } = Opened::open(&o.path)?;
                             (o.document, o.warnings, o.handle) = (document, warnings, handle);
-                            // a new engine holds no Torus: the owner hands it over again
+                            // a new engine holds no Torus and follows no owner: the owner hands it over again
                             o.toruses.clear();
+                            o.following = Following::default();
                             core.ok_or("the engine was not made")?
                         }
                     };
@@ -503,6 +693,8 @@ pub(crate) mod host {
         pub fn stop(&self) -> Result<Value, String> {
             self.with(|o| {
                 o.player = None;
+                // the stopped engine strikes nothing more: its part follows the owner no longer
+                o.following.bound = None;
                 Ok(o.reading())
             })
         }
@@ -511,17 +703,125 @@ pub(crate) mod host {
             self.with(|o| o.send(event))
         }
 
-        pub fn install_torus(
+        pub fn mixer(&self) -> Result<Value, String> {
+            self.with(|o| Ok(o.reading()))
+        }
+
+        /// `live_engine_torus`: the part `track` takes the Torus its owner under `lease` handed over by
+        /// `sha256` (`document`, as the kernel kept it) and follows that owner from then on — every act it
+        /// lands struck at its sample, every later hand-over taken in the last one's place. The owner may
+        /// have handed it over again since the page was told the digest: then the part takes that one
+        /// (`kept` answers the kernel's latest). The acts landed since the hand-over the part takes are
+        /// struck first. A hand the engine has not taken yet gives way to this one.
+        pub fn bind_torus(
             &self,
+            lease: &str,
             track: usize,
             sha256: &str,
             document: &Value,
+            notes: Option<Notes>,
+            kept: impl Fn(&str, &str) -> Result<Value, String>,
         ) -> Result<Value, String> {
-            self.with(|o| o.install_torus(track, sha256, document))
+            let follow = self
+                .1
+                .lock()
+                .map_err(|_| "the engine host is poisoned".to_string())?;
+            self.with(|o| {
+                let since = follow.since.as_ref().filter(|s| s.lease == lease);
+                let later = since
+                    .filter(|s| s.sha256 != sha256)
+                    .and_then(|s| Some((s.sha256.as_str(), kept(lease, &s.sha256).ok()?)));
+                let (sha256, document) = match &later {
+                    Some((sha256, document)) => (*sha256, document),
+                    None => (sha256, document),
+                };
+                let handover = o.hand_torus(track, sha256, document, notes, true)?;
+                let bound = Bound {
+                    lease: lease.to_owned(),
+                    track,
+                    sha256: sha256.to_owned(),
+                    handover,
+                    notes,
+                };
+                o.following = Following {
+                    bound: Some(bound.clone()),
+                    ..Following::default()
+                };
+                if let Some(since) = since.filter(|s| s.sha256 == sha256) {
+                    o.following.missed += since.dropped;
+                    for (at, impulses) in &since.acts {
+                        o.follow_act(&bound, *at, impulses);
+                    }
+                }
+                Ok(o.reading())
+            })
         }
 
-        pub fn mixer(&self) -> Result<Value, String> {
-            self.with(|o| Ok(o.reading()))
+        /// What the Torus's owner told the host (the kernel's tap), followed into the engine: a hand-over
+        /// is taken by the bound part in the last one's place (`kept` answers the document by its digest);
+        /// an act is struck on the bound part when it follows the hand-over that part holds, and is kept
+        /// for a part bound later. Nothing is answered: what could not be struck stands in the reading.
+        pub fn tapped(&self, told: TorusTap, kept: impl Fn(&str, &str) -> Result<Value, String>) {
+            let (Ok(mut follow), Ok(mut open)) = (self.1.lock(), self.0.lock()) else {
+                return;
+            };
+            match told {
+                TorusTap::HandedOver { lease, sha256 } => {
+                    follow.since = Some(Since {
+                        lease: lease.clone(),
+                        sha256: sha256.clone(),
+                        acts: Vec::new(),
+                        dropped: 0,
+                    });
+                    let Some(o) = open.as_mut() else { return };
+                    let Some(bound) = o
+                        .following
+                        .bound
+                        .clone()
+                        .filter(|b| b.lease == lease && b.sha256 != sha256)
+                    else {
+                        return;
+                    };
+                    let taken = kept(&lease, &sha256).and_then(|document| {
+                        o.hand_torus(bound.track, &sha256, &document, bound.notes, true)
+                    });
+                    match taken {
+                        Ok(handover) => {
+                            o.following.handed_again += 1;
+                            o.following.bound = Some(Bound {
+                                sha256,
+                                handover,
+                                ..bound
+                            });
+                        }
+                        Err(words) => o.following.refusal = Some(words),
+                    }
+                }
+                TorusTap::Struck {
+                    lease,
+                    at_samples_elapsed,
+                    impulses,
+                } => {
+                    let Some(since) = follow.since.as_mut().filter(|s| s.lease == lease) else {
+                        return;
+                    };
+                    if let Some(o) = open.as_mut() {
+                        if let Some(bound) = o
+                            .following
+                            .bound
+                            .clone()
+                            .filter(|b| b.lease == lease && b.sha256 == since.sha256)
+                        {
+                            o.follow_act(&bound, at_samples_elapsed, &impulses);
+                        }
+                    }
+                    if since.acts.len() < SINCE_ACTS {
+                        since.acts.push((at_samples_elapsed, impulses));
+                    } else {
+                        since.dropped += 1;
+                    }
+                }
+            }
         }
 
         /// Export Audio: `choose` asks the person where the file goes (the
@@ -990,7 +1290,7 @@ pub(crate) mod host {
             let path = write_set("torus-unbuilt", SET);
             let mut opened = Opened::open(&path).unwrap();
             let refused = opened
-                .install_torus(0, "sha256:none", &json!({}))
+                .hand_torus(0, "sha256:none", &json!({}), None, false)
                 .unwrap_err();
             assert!(refused.contains("built without QL's K8 node"), "{refused}");
         }
@@ -1035,6 +1335,37 @@ const EVERYDAY: &str =
 fn host(app: &tauri::AppHandle) -> tauri::State<'_, LiveEngineHost> {
     use tauri::Manager;
     app.state::<LiveEngineHost>()
+}
+
+/// The engine follows the Torus's owner (O-I #849 round 12): the kernel tells the host every act the
+/// owner lands and every hand-over (`Field::set_torus_tap`), and a thread of the host's own strikes each
+/// act on the part bound to that owner and puts each hand-over on it (`LiveEngineHost::tapped`). Called
+/// once, when the kernel's field is made; the frame is answered as it always is.
+pub(crate) fn follow_torus(
+    app: &tauri::AppHandle,
+    field: &oi_cradle_kernel::native_expression::Field,
+) {
+    #[cfg(feature = "native_shell")]
+    {
+        let (tap, tapped) = std::sync::mpsc::channel();
+        if let Err(error) = field.set_torus_tap(tap) {
+            eprintln!("The engine cannot follow the Torus's owner: {error}");
+            return;
+        }
+        let (app, field) = (app.clone(), field.clone());
+        let followed = std::thread::Builder::new()
+            .name("torus-follow".into())
+            .spawn(move || {
+                for told in tapped {
+                    host(&app).tapped(told, |lease, sha256| field.torus_native(lease, sha256));
+                }
+            });
+        if let Err(error) = followed {
+            eprintln!("The engine cannot follow the Torus's owner: {error}");
+        }
+    }
+    #[cfg(not(feature = "native_shell"))]
+    let _ = (app, field);
 }
 
 /// Install the engine host's state (the candidate build).
@@ -1129,7 +1460,9 @@ pub fn live_engine_send(
 }
 
 /// The Torus its owner handed over sounds on the set's part `track` (O-I #849): the kernel kept the
-/// document under the field's lease (`Field::torus_native`), and the page names only its digest.
+/// document under the field's lease (`Field::torus_native`), and the page names only its digest. The
+/// part follows that owner from then on (`follow_torus`); `notes` gives the key each MIDI note strikes
+/// on it, by the shell's pitch→key law (O-I #853): 128 entries, a key or null.
 #[tauri::command]
 pub fn live_engine_torus(
     app: tauri::AppHandle,
@@ -1137,20 +1470,22 @@ pub fn live_engine_torus(
     lease: String,
     track: usize,
     sha256: String,
+    notes: Option<serde_json::Value>,
 ) -> Result<serde_json::Value, String> {
     #[cfg(feature = "native_shell")]
     {
         use tauri::Manager;
         admit_candidate_webview(&webview)?;
-        let handed = app
-            .state::<crate::KernelHost>()
-            .1
-            .torus_native(&lease, &sha256)?;
-        host(&app).install_torus(track, &sha256, &handed)
+        let notes = notes.as_ref().map(host::notes).transpose()?;
+        let field = &app.state::<crate::KernelHost>().1;
+        let handed = field.torus_native(&lease, &sha256)?;
+        host(&app).bind_torus(&lease, track, &sha256, &handed, notes, |lease, sha256| {
+            field.torus_native(lease, sha256)
+        })
     }
     #[cfg(not(feature = "native_shell"))]
     {
-        let _ = (app, webview, lease, track, sha256);
+        let _ = (app, webview, lease, track, sha256, notes);
         Err(EVERYDAY.into())
     }
 }

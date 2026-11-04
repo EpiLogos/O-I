@@ -9,7 +9,9 @@
 mod k8_fixture;
 
 use live_engine::k8::{K8Field, K8Mode};
-use live_engine::{engine, EngineEvent, Graph, K8Instrument, Performance, TorusAct, Track};
+use live_engine::{
+    engine, EngineEvent, Graph, Instrument, K8Instrument, Performance, TorusAct, Track,
+};
 
 const SR: u32 = 48_000;
 
@@ -415,4 +417,353 @@ fn panic_stills_the_torus_and_a_release_lets_it_ring_on() {
     handle.send(EngineEvent::Panic).unwrap();
     core.pull_block(&mut block);
     assert!(block.iter().all(|v| *v == 0.0), "Panic stills the Torus");
+}
+
+// ── Round 12: the owner's acts in the engine, and MIDI notes by the pitch→key law (O-I #849) ────────────────────────────
+
+/// An act the Torus's owner landed: its impulses by mode index, as QL's `strike_at` receipt names them.
+const OWNER_ACT: [(usize, [f64; 2]); 2] = [(0, [0.02, -0.01]), (1, [-0.013, 0.004])];
+
+fn owners_act(handover: u32, at: u64) -> live_engine::TorusStrike {
+    let mut acts = live_engine::TorusStrike::split(handover, at, &OWNER_ACT).unwrap();
+    assert_eq!(acts.len(), 1, "two impulses travel as one act");
+    acts.remove(0)
+}
+
+/// The played field alone, struck by the owner's act before sample `at`, `frames` long.
+fn struck_alone(at: usize, frames: usize) -> Vec<f32> {
+    let mut f = played_field();
+    let mut out = vec![0f32; frames];
+    assert!(f.render(&mut out[..at], false));
+    let act: Vec<(usize, (f64, f64))> = OWNER_ACT.iter().map(|(m, z)| (*m, (z[0], z[1]))).collect();
+    f.set_key(9, &act).unwrap();
+    assert!(f.strike_key(9));
+    for chunk in out[at..].chunks_mut(4096) {
+        assert!(f.render(chunk, false));
+    }
+    out
+}
+
+fn handed(handover: u32) -> Box<K8Instrument> {
+    Box::new(K8Instrument::new(played_field()).handed_over(handover))
+}
+
+#[test]
+fn an_owners_act_lands_at_the_sample_its_owner_landed_it() {
+    let build = || {
+        let mut g = Graph::new(SR, 120.0);
+        g.tracks.push(Track::midi("Torus", handed(1)));
+        g
+    };
+    let (mut core, mut handle) = engine(build()).unwrap();
+    let mut played = Vec::new();
+    let mut block = vec![0f32; 256 * 2];
+    core.pull_block(&mut block);
+    played.extend(left(&block));
+    handle
+        .send(EngineEvent::TorusStrike {
+            track: 0,
+            strike: owners_act(1, 300),
+        })
+        .unwrap();
+    for _ in 0..3 {
+        core.pull_block(&mut block);
+        played.extend(left(&block));
+    }
+    assert!(
+        played[..300].iter().all(|v| *v == 0.0),
+        "nothing sounds before the owner's sample"
+    );
+    assert!(played[300..].iter().any(|v| *v != 0.0));
+    assert_eq!(
+        played,
+        struck_alone(300, 1024),
+        "the act lands at the owner's sample, inside a block, sample for sample the owner's strike"
+    );
+    let exported = build().render_performance(SR, &handle.performance());
+    assert_eq!(left(&exported), played, "Export renders what was heard");
+}
+
+#[test]
+fn a_late_act_lands_at_once_and_is_counted_and_panic_drops_what_waits() {
+    let mut torus = K8Instrument::new(played_field()).handed_over(1);
+    torus.prepare(SR);
+    let mut clock = live_engine::Clock::start(SR, 120.0);
+    let mut out = vec![0f32; 1024];
+    let mut io = [0f32; 1];
+    for (n, v) in out.iter_mut().enumerate() {
+        if n == 256 {
+            assert!(
+                torus.torus_strike(&owners_act(1, 100), &clock),
+                "a late act still strikes"
+            );
+        }
+        clock.sample = n as u64;
+        torus.process(&mut io, &clock);
+        *v = io[0];
+    }
+    assert_eq!(
+        torus.late(),
+        1,
+        "the act came after its sample: counted late"
+    );
+    assert_eq!(out, struck_alone(256, 1024), "a late act strikes at once");
+    // An act waiting for its sample is dropped by Panic with what was struck.
+    let mut torus = K8Instrument::new(played_field()).handed_over(1);
+    torus.prepare(SR);
+    assert!(torus.torus_strike(&owners_act(1, 600), &clock));
+    assert_eq!(torus.waiting(), 1);
+    torus.panic(&clock);
+    assert_eq!(
+        torus.waiting(),
+        0,
+        "Panic drops the acts waiting for later samples"
+    );
+    for _ in 0..1024 {
+        torus.process(&mut io, &clock);
+        assert_eq!(io[0], 0.0, "nothing lands after Panic");
+    }
+    // An act of another handover is not this Torus's to strike.
+    assert!(!torus.torus_strike(&owners_act(2, 2000), &clock));
+    assert_eq!(torus.waiting(), 0);
+}
+
+#[test]
+fn an_act_reaches_the_torus_of_the_handover_it_follows() {
+    let build = || {
+        let mut g = Graph::new(SR, 120.0);
+        g.tracks.push(Track::midi(
+            "Torus",
+            Box::new(live_engine::SilentInstrument),
+        ));
+        g
+    };
+    let (mut core, mut handle) = engine(build()).unwrap();
+    let mut played = Vec::new();
+    let mut block = vec![0f32; 256 * 2];
+    core.pull_block(&mut block);
+    played.extend(left(&block));
+    // The owner's act after handover 1 reaches the audio thread before the Torus it follows: it waits for that Torus.
+    handle
+        .send(EngineEvent::TorusStrike {
+            track: 0,
+            strike: owners_act(1, 300),
+        })
+        .unwrap();
+    core.pull_block(&mut block);
+    played.extend(left(&block));
+    assert!(block.iter().all(|v| *v == 0.0));
+    assert!(
+        !handle.install_latest(0, handed(1)).unwrap(),
+        "no hand was on its way"
+    );
+    for _ in 0..6 {
+        core.pull_block(&mut block);
+        played.extend(left(&block));
+    }
+    handle.collect();
+    assert_eq!(handle.installs(), &[(512, 0)]);
+    // The Torus continues its owner's field from the owner's cursor (0 here), so the act lands at the owner's sample 300 of it.
+    let want = struck_alone(300, 1536);
+    assert_eq!(&played[..512], &vec![0f32; 512][..]);
+    assert_eq!(
+        &played[512..],
+        &want[..],
+        "the waiting act lands on the Torus it follows, at its owner's sample"
+    );
+    // An act of an earlier handover is held already in the later one's continuation: the later Torus does not strike it again.
+    handle
+        .send(EngineEvent::TorusStrike {
+            track: 0,
+            strike: owners_act(0, 1300),
+        })
+        .unwrap();
+    let mut more = Vec::new();
+    for _ in 0..4 {
+        core.pull_block(&mut block);
+        played.extend(left(&block));
+        more.extend(left(&block));
+    }
+    let want = struck_alone(300, 2560);
+    assert_eq!(
+        more,
+        want[1536..].to_vec(),
+        "an earlier handover's act is not struck twice"
+    );
+    let exported = build().render_performance_with(
+        SR,
+        &handle.performance(),
+        vec![(512, 0, handed(1) as Box<dyn live_engine::Instrument>)],
+    );
+    assert_eq!(left(&exported), played, "Export renders what was heard");
+}
+
+#[test]
+fn the_latest_hand_takes_the_place_of_one_the_engine_has_not_taken() {
+    let mut g = Graph::new(SR, 120.0);
+    g.tracks.push(Track::midi(
+        "Torus",
+        Box::new(live_engine::SilentInstrument),
+    ));
+    let (mut core, mut handle) = engine(g).unwrap();
+    assert!(!handle.install_latest(0, handed(1)).unwrap());
+    assert!(
+        handle.install_latest(0, handed(2)).unwrap(),
+        "the hand on its way is dropped here, never played"
+    );
+    let mut block = vec![0f32; 256 * 2];
+    core.pull_block(&mut block);
+    handle.collect();
+    assert_eq!(handle.installs(), &[(0, 0)], "one hand taken: the latest");
+    // The Torus of handover 2 strikes its acts and leaves handover 1's.
+    handle
+        .send(EngineEvent::TorusStrike {
+            track: 0,
+            strike: owners_act(1, 300),
+        })
+        .unwrap();
+    core.pull_block(&mut block);
+    core.pull_block(&mut block);
+    assert!(
+        block.iter().all(|v| *v == 0.0),
+        "handover 1's act is not the latest Torus's"
+    );
+    handle
+        .send(EngineEvent::TorusStrike {
+            track: 0,
+            strike: owners_act(2, 900),
+        })
+        .unwrap();
+    let mut played = Vec::new();
+    for _ in 0..2 {
+        core.pull_block(&mut block);
+        played.extend(left(&block));
+    }
+    assert_eq!(played, struck_alone(900, 1280)[768..].to_vec());
+    // Both ways refuse a part that plays no notes, in words.
+    let refused = handle.install_latest(5, handed(3)).unwrap_err();
+    assert!(refused.to_string().contains("no part"), "{refused}");
+}
+
+#[test]
+fn an_owners_act_is_split_and_judged_before_it_travels() {
+    let many: Vec<(usize, [f64; 2])> = (0..20).map(|m| (m, [0.001 * m as f64, 0.0])).collect();
+    let acts = live_engine::TorusStrike::split(4, 900, &many).unwrap();
+    assert_eq!(
+        acts.len(),
+        2,
+        "{} impulses travel as {} acts",
+        many.len(),
+        acts.len()
+    );
+    assert_eq!(usize::from(acts[0].count), live_engine::TORUS_STRIKE_MODES);
+    assert_eq!(
+        usize::from(acts[1].count),
+        20 - live_engine::TORUS_STRIKE_MODES
+    );
+    assert!(acts.iter().all(|a| a.at == 900 && a.handover == 4));
+    assert_eq!(
+        acts[1].impulses().map(|(m, _)| m).collect::<Vec<_>>(),
+        (16..20).collect::<Vec<_>>()
+    );
+    assert!(
+        live_engine::TorusStrike::split(1, 0, &[]).is_err(),
+        "an act strikes some mode"
+    );
+    assert!(live_engine::TorusStrike::split(1, 0, &[(0, [f64::NAN, 0.0])]).is_err());
+    assert!(live_engine::TorusStrike::split(1, 0, &[(70_000, [0.1, 0.0])]).is_err());
+    assert!(
+        live_engine::TorusStrike::split(1, 0, &[(2, [0.1, 0.0]), (2, [0.1, 0.0])]).is_err(),
+        "a mode once"
+    );
+    // The engine refuses an act for a part that is not there or plays no notes, in words.
+    let mut g = Graph::new(SR, 120.0);
+    g.tracks.push(Track::midi("Torus", handed(1)));
+    let mut tone = Track::new("Tone", 1);
+    tone.source = vec![0.1; 16];
+    g.tracks.push(tone);
+    let (_core, mut handle) = engine(g).unwrap();
+    let act = owners_act(1, 0);
+    let refused = handle
+        .send(EngineEvent::TorusStrike {
+            track: 7,
+            strike: act,
+        })
+        .unwrap_err();
+    assert!(refused.to_string().contains("no part"), "{refused}");
+    let refused = handle
+        .send(EngineEvent::TorusStrike {
+            track: 1,
+            strike: act,
+        })
+        .unwrap_err();
+    assert!(refused.to_string().contains("plays no notes"), "{refused}");
+    let mut empty = act;
+    empty.count = 0;
+    assert!(handle
+        .send(EngineEvent::TorusStrike {
+            track: 0,
+            strike: empty
+        })
+        .is_err());
+}
+
+#[test]
+fn a_midi_note_strikes_its_key_by_the_pitch_law_at_its_velocity() {
+    let mut notes = [None; 128];
+    notes[60] = Some((2u8, 5u16));
+    notes[64] = Some((3, 7));
+    let mut g = Graph::new(SR, 120.0);
+    g.tracks.push(Track::midi(
+        "Torus",
+        Box::new(
+            K8Instrument::new(played_field())
+                .handed_over(1)
+                .with_notes(notes),
+        ),
+    ));
+    let (mut core, mut handle) = engine(g).unwrap();
+    let mut block = vec![0f32; 128 * 2];
+    core.pull_block(&mut block);
+    handle
+        .send(EngineEvent::NoteOn {
+            track: 0,
+            key: 60,
+            velocity: 100.0,
+        })
+        .unwrap();
+    let mut played = Vec::new();
+    let mut block = vec![0f32; 512 * 2];
+    core.pull_block(&mut block);
+    played.extend(left(&block));
+    let mut alone = played_field();
+    let mut want = vec![0f32; 640];
+    assert!(alone.render(&mut want[..128], false));
+    assert!(alone.play_keys(&act(&[(2, 5)], [100.0 / 127.0, 0.0])));
+    assert!(alone.render(&mut want[128..], false));
+    assert!(played.iter().any(|v| *v != 0.0));
+    assert_eq!(
+        played,
+        want[128..].to_vec(),
+        "note 60 strikes its key at velocity over 127, by the Torus's own law"
+    );
+    // A note the law gives no key strikes nothing; so does every note of a Torus with no key law (a form's body), counted.
+    let mut torus = K8Instrument::new(played_field())
+        .handed_over(1)
+        .with_notes(notes);
+    torus.prepare(SR);
+    let clock = live_engine::Clock::start(SR, 120.0);
+    torus.note_on(61, 100.0, &clock);
+    assert_eq!(torus.refused(), 1);
+    let mut body = K8Instrument::new(K8Field::new(&k8_fixture::input(SR)).unwrap())
+        .handed_over(1)
+        .with_notes(notes);
+    body.prepare(SR);
+    body.note_on(60, 100.0, &clock);
+    assert_eq!(body.refused(), 1, "no key law: the note is refused");
+    // The table a test prepares still strikes where the law gives no key.
+    let mut table = K8Instrument::new(k8_fixture::field(SR)).with_notes(notes);
+    table.prepare(SR);
+    table.note_on(67, 1.0, &clock);
+    assert_eq!(table.refused(), 0);
 }
