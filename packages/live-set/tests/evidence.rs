@@ -418,3 +418,101 @@ fn a_clip_made_on_a_copy_of_the_real_template_reads_back_with_its_source() {
     );
     std::fs::remove_dir_all(&dir).unwrap();
 }
+
+/// The research tree: `LIVE_SET_RESEARCH` when it names one, else beside this repository (provenance:
+/// docs/research/ableton-live-12.0.25/). None when it is absent, and the test that needs it skips.
+fn research(relative: &str) -> Option<String> {
+    let base = std::env::var("LIVE_SET_RESEARCH")
+        .unwrap_or_else(|_| "../../docs/research/ableton-live-12.0.25".to_string());
+    std::fs::read_to_string(std::path::Path::new(&base).join(relative)).ok()
+}
+
+/// O-I #852 round 10: a rack's chain placed on a copy of the real template set stands in Live's own shape for its device, as the
+/// corpus's Reverb default stores it (evidence/devices/Reverb/default.xml): the same boilerplate in the same order, each carried
+/// setting with the same children and the same controller range, in the default's order, and its On as Live writes it.
+#[test]
+fn a_racks_reverb_stands_in_the_shape_of_the_corpus_reverb() {
+    let (Some(set), Some(reverb)) = (
+        research("evidence/sets/template-piano-voices-mastering.xml"),
+        research("evidence/devices/Reverb/default.xml"),
+    ) else {
+        return;
+    };
+    let root = xml::parse(&set).expect("template set parses");
+    let corpus = xml::parse(&reverb).expect("Reverb default parses");
+    let corpus = corpus.find("Reverb").expect("the default holds its Reverb");
+    let dir = std::env::temp_dir().join(format!("live-set-evidence-rack-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let path = dir.join("template.als");
+    std::fs::write(&path, live_set::write_gz(&root).unwrap()).unwrap();
+    let path = path.to_str().unwrap().to_string();
+    let revision = |path: &str| {
+        live_set::api::set_json(path).unwrap()["revision"]
+            .as_str()
+            .unwrap()
+            .to_string()
+    };
+    let inserted = live_set::acts::act(
+        &path,
+        &revision(&path),
+        &live_set::acts::SetAct::TrackInsert { after: Some(0) },
+    )
+    .unwrap();
+    let track = inserted["at"]["track"].as_u64().unwrap() as usize;
+    let place: live_set::acts::SetAct = serde_json::from_value(serde_json::json!({"kind": "rack_place", "track": track,
+        "name": "Warm rack", "macros": [], "variations": [], "chain": [{"device": "Reverb", "parameters": [
+            {"id": "On", "value": 1.0}, {"id": "PreDelay", "value": 20.0}, {"id": "DecayTime", "value": 2400.0}]}]}))
+    .unwrap();
+    live_set::acts::act(&path, &revision(&path), &place).unwrap();
+    let reread = live_set::open_als(std::path::Path::new(&path)).unwrap();
+    let placed = reread
+        .find("LiveSet")
+        .and_then(|set| set.child("Tracks"))
+        .and_then(|tracks| tracks.children.get(track))
+        .and_then(|part| part.find("InstrumentGroupDevice"))
+        .and_then(|rack| rack.find("Reverb"))
+        .expect("the rack's chain holds the Reverb");
+    let names = |e: &xml::Element| {
+        e.children
+            .iter()
+            .map(|c| c.name.clone())
+            .collect::<Vec<_>>()
+    };
+    let written = names(placed);
+    let held = names(corpus);
+    assert_eq!(
+        written[..17],
+        held[..17],
+        "the corpus's boilerplate, in its order"
+    );
+    let order: Vec<usize> = written[17..]
+        .iter()
+        .map(|name| {
+            held.iter()
+                .position(|h| h == name)
+                .expect("a setting the corpus's Reverb holds")
+        })
+        .collect();
+    assert!(
+        order.windows(2).all(|w| w[0] < w[1]),
+        "in the default's order: {:?}",
+        &written[17..]
+    );
+    for parameter in ["On", "PreDelay", "DecayTime"] {
+        let (ours, theirs) = (
+            placed.child(parameter).unwrap(),
+            corpus.child(parameter).unwrap(),
+        );
+        assert_eq!(names(ours), names(theirs), "{parameter}: the same children");
+        let range = |e: &xml::Element, end: &str| {
+            e.child("MidiControllerRange")
+                .and_then(|r| r.child(end))
+                .and_then(|v| v.attr("Value"))
+                .map(|v| v.parse::<f64>().unwrap())
+        };
+        for end in ["Min", "Max"] {
+            assert_eq!(range(ours, end), range(theirs, end), "{parameter} {end}");
+        }
+    }
+    std::fs::remove_dir_all(&dir).unwrap();
+}

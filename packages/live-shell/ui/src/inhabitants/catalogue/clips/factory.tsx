@@ -176,14 +176,16 @@ function Notes(p: ClipProps) {
   const rows = rowsShown(score, fold)
   const lanes: Lane[] = [{id: WAVES, label: 'Waves', key: 'name'}, ...rows.map(r => ({id: r.id, label: `${r.kind === 'set' ? '◆ ' : ''}${r.name}`, key: 'name' as const,
     marked: r.rack === false}))]
-  const own = strOf(p.v, 'unit.own')
+  // This task's note stands in the clip's colour (§19.1 "This task's note is drawn in the clip's colour"), unless a form's tint is on it.
+  const own = strOf(p.v, 'unit.own'), colour = strOf(p.v, 'colour')
   const unitBlocks: Block[] = score.units.map(u => {
     const pos = at.get(u.key) ?? {at: 0, len: 1}, f = u.heads?.CFP
     const inner = u.song ? (() => { const l = laid(u.song!), n = Math.max(1, u.song!.rows.length)
       return u.song!.units.map(x => { const q = l.at.get(x.key) ?? {at: 0, len: 1}; return [q.at / l.end, q.len / l.end, u.song!.rows.findIndex(r => r.id === x.row) / n] as const }) })() : undefined
     const takes = u.takes ? ` · ${u.takes} take${u.takes === 1 ? '' : 's'}` : ''
+    const tone: Tone = hl !== 'none' && f === hl ? 'accent' : u.key === own && !inside ? 'green' : 'value'
     return {id: u.key, lane: u.row, at: pos.at, len: pos.len, label: `${u.key}${f && f !== 'CFP0' ? ` · ${formWord(f)?.toLowerCase()}` : ''}${takes}`,
-      tone: hl !== 'none' && f === hl ? 'accent' : u.key === own && !inside ? 'green' : 'value', dashed: u.proposed, inner,
+      tone, ...(tone === 'green' && colour ? {colour} : {}), dashed: u.proposed, inner,
       does: [`${u.key}, by ${score.rows.find(r => r.id === u.row)?.name ?? u.row}`, u.concern, f ? `${formWord(f)}.` : undefined,
         u.takes ? `${u.takes} take${u.takes === 1 ? '' : 's'}: the Runs of the song Repeat, Loop or a routine started from it.` : undefined,
         u.proposed ? 'Proposed: it waits for you to accept it.' : undefined].filter(Boolean).join(' · ')}

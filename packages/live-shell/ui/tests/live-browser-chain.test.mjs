@@ -152,10 +152,12 @@ const keptListing = {
   sounds: [{sound_ref: KEPT(1), name: 'Warm Logic', body: 'torus', body_ref: null, sample_rate: 48000}],
   instruments: [{instrument_ref: 'instrument:fold', name: 'Folded sheet', body_ref: 'ql:form-body:fold', sounds: [
     {sound_ref: KEPT(2), name: 'Paper bell', body: 'form', body_ref: 'ql:form-body:fold', sample_rate: 48000}]}],
-  racks: [{rack_ref: 'rack:warm', name: 'Warm rack', sound: KEPT(1), chain: [{device_ref: 'arp', role: 'note'}, {device_ref: 'echo', role: 'effect'}],
+  racks: [{rack_ref: 'rack:warm', name: 'Warm rack', sound: KEPT(1), chain: [{device_ref: 'arp', role: 'note', state: {}},
+    {device_ref: 'reverb', role: 'effect', state: {on: true, decay: 2.4, predelay: 20, mix: 22}}],
     macros: [{name: 'Bloom', value: 0.5, targets: [{device_ref: 'torus', parameter: 'damping'}]}], variations: [{name: 'Open', values: [1]}, {name: 'Closed', values: [0]}]}],
 }
-// O-I #852 round 9: a rack's drag carries what its drop places on a part (Live's Instrument Rack): its name, chain, macros and variations.
+// O-I #852 round 9: a rack's drag carries what its drop places on a part (Live's Instrument Rack): its name, chain, macros and variations;
+// round 10: each chain device with the settings it kept.
 const placing = {name: 'Warm rack', chain: keptListing.racks[0].chain, macros: keptListing.racks[0].macros, variations: keptListing.racks[0].variations}
 
 test('under the Torus: its sounds, then each instrument with the sounds made on it, then the racks — each row carries what a part plays', () => {
@@ -180,7 +182,9 @@ test('under the Torus: its sounds, then each instrument with the sounds made on 
   // A rack's drag says what the rack is, exactly: none without it, none on a sound or an instrument, and none whose rows are not what they say.
   const drag = (over, rack = placing) => JSON.stringify({kind: 'rack', ref: 'rack:warm', sound: KEPT(1), rack: {...rack, ...over}})
   for (const bad of [JSON.stringify({kind: 'rack', ref: 'rack:warm', sound: KEPT(1)}), JSON.stringify({kind: 'sound', ref: KEPT(1), rack: placing}),
-    drag({extra: 1}), drag({name: ''}), drag({chain: [{device_ref: 'arp', role: 'send'}]}), drag({macros: [{name: 'Bloom', value: 2, targets: []}]}),
+    drag({extra: 1}), drag({name: ''}), drag({chain: [{device_ref: 'arp', role: 'send', state: {}}]}), drag({macros: [{name: 'Bloom', value: 2, targets: []}]}),
+    drag({chain: [{device_ref: 'reverb', role: 'effect'}]}), drag({chain: [{device_ref: 'reverb', role: 'effect', state: {decay: {s: 2.4}}}]}),
+    drag({chain: [{device_ref: 'reverb', role: 'effect', state: [2.4]}]}), drag({chain: [{device_ref: 'reverb', role: 'effect', state: {decay: 2.4}, extra: 1}]}),
     drag({macros: [{name: 'Bloom', value: 0.5, targets: [{device_ref: 'torus'}]}]}), drag({variations: [{name: 'Open', values: []}]}),
     drag({macros: Array.from({length: 17}, (_, i) => ({name: `M${i}`, value: 0, targets: []})), variations: []})])
     assert.equal(instruments.readTorusKeptDrag(bad), null, bad.slice(0, 90))

@@ -323,7 +323,7 @@ test('a kept sound dropped on the empty track plays on a new part: the part inse
   const {TORUS_KEPT_MIME} = await import('../src/frame/instruments.ts')
   const SOUND = 'sha256:' + '1'.repeat(64)
   const calls = []
-  const DONE = {track_insert: 'Inserted 4-MIDI, an empty MIDI part, right after Tide pad.', rack_place: 'Placed Warm rack on 4-MIDI: an Instrument Rack with 1 macro and 2 variations.'}
+  const DONE = {track_insert: 'Inserted 4-MIDI, an empty MIDI part, right after Tide pad.', rack_place: 'Placed Warm rack on 4-MIDI: an Instrument Rack with 1 macro and 2 variations, its chain holding Live\'s Reverb and Compressor.'}
   const project = (refuse = null, unopened = null, refused = 'track_insert') => liveSetTrackAdapter.project({set: summary, document,
     act: act => { calls.push(act); return refuse && act.kind === refused ? Promise.reject(new Error(refuse)) : Promise.resolve({act: act.kind, done: DONE[act.kind], at: {track: 3}, revision: 'sha256:2'}) },
     openSound: (soundRef, track) => { calls.push({open: [soundRef, track]}); return Promise.resolve(unopened ? {ok: false, error: unopened} : {ok: true, note: '"Low bell" opens as saved; nothing it was tuned from has moved. The part keeps it.'}) }})
@@ -344,20 +344,40 @@ test('a kept sound dropped on the empty track plays on a new part: the part inse
   // Rack under its name with its macros where they stand and its variations, then its Torus opens the sound it opens with. What the shell
   // has no shape for yet is said in words: its chain's note devices and effects (no Live device stands for them) and what its macros turn
   // (Live 12 keeps a macro's mapping in a form not read yet, racks-session-model.md §1.7).
-  const placing = {name: 'Warm rack', chain: [{device_ref: 'arp', role: 'note'}, {device_ref: 'echo', role: 'effect'}],
+  // Round 10: the rack's chain stands on it as Live's own devices: each of the Torus's effects as Live's device of its kind (manual §21.5),
+  // taking only the settings whose stored meaning and unit the corpus pins (packages/live-dynamics/src/params.rs), and On as it was kept.
+  // A device with no Live surface in the corpus stays off the chain, by name.
+  const placing = {name: 'Warm rack', chain: [{device_ref: 'arp', role: 'note', state: {}},
+    {device_ref: 'reverb', role: 'effect', state: {on: true, size: 50, decay: 2.4, damping: 40, predelay: 20, mix: 22}},
+    {device_ref: 'dynamics', role: 'effect', state: {on: false, threshold: -12, ratio: 4, attack: 1, release: 100, makeup: 2}},
+    {device_ref: 'resonator', role: 'effect', state: {on: true, division: 300}}, {device_ref: 'echo', role: 'effect', state: {feedback: 0.4}}],
     macros: [{name: 'Bloom', value: 0.5, targets: [{device_ref: 'torus', parameter: 'damping'}]}], variations: [{name: 'Open', values: [1]}, {name: 'Closed', values: [0]}]}
   const rack = await seat.run(JSON.stringify({kind: 'rack', ref: 'rack:warm', sound: SOUND, rack: placing}))
   assert.deepEqual(calls, [{kind: 'track_insert', after: null},
-    {kind: 'rack_place', track: 3, name: 'Warm rack', macros: [{name: 'Bloom', value: 0.5}], variations: [{name: 'Open', values: [1]}, {name: 'Closed', values: [0]}]},
-    {open: [SOUND, 3]}], 'the part, then the rack on it, then its sound')
-  assert.deepEqual(rack, {ok: true, note: 'Inserted 4-MIDI, an empty MIDI part, right after Tide pad. Placed Warm rack on 4-MIDI: an Instrument Rack with 1 macro and 2 variations. '
-    + '"Low bell" opens as saved; nothing it was tuned from has moved. The part keeps it. Its note device arp and effect echo stay off its chain: no Live device stands '
-    + 'for them here yet. What its macros turn is not mapped (Bloom turns the Torus\'s damping): Live 12 keeps a macro\'s mapping in a form not read here yet.'})
+    {kind: 'rack_place', track: 3, name: 'Warm rack', macros: [{name: 'Bloom', value: 0.5}], variations: [{name: 'Open', values: [1]}, {name: 'Closed', values: [0]}],
+      chain: [{device: 'Reverb', parameters: [{id: 'On', value: 1}, {id: 'DecayTime', value: 2400}, {id: 'PreDelay', value: 20}]},
+        {device: 'Compressor2', parameters: [{id: 'On', value: 0}]}]},
+    {open: [SOUND, 3]}], 'the part, then the rack on it with its chain, then its sound')
+  assert.deepEqual(rack, {ok: true, note: 'Inserted 4-MIDI, an empty MIDI part, right after Tide pad. Placed Warm rack on 4-MIDI: an Instrument Rack with 1 macro and 2 '
+    + 'variations, its chain holding Live\'s Reverb and Compressor. "Low bell" opens as saved; nothing it was tuned from has moved. The part keeps it. '
+    + 'Its note device arp stays off its chain: the corpus gives Live\'s note devices no parameter surface yet. '
+    + 'Its Resonator bank stays off its chain: the corpus gives Live\'s Resonators no parameter surface yet. '
+    + 'Its effect echo is none of the Torus\'s, so no Live device stands for it. '
+    + 'Live\'s Reverb takes its decay and pre-delay; its size, damping and mix stand at Live\'s own, for the corpus pins no stored setting of Live\'s with their meaning and unit. '
+    + 'Live\'s Compressor stands off, as it was kept; its threshold, ratio, attack, release and makeup stand at Live\'s own, for the corpus pins no stored setting of Live\'s with their meaning and unit. '
+    + 'What its macros turn is not mapped (Bloom turns the Torus\'s damping): Live 12 keeps a macro\'s mapping in a form not read here yet.'})
+  calls.length = 0
+  // A setting off the range Live's device holds stays at Live's own, and says so.
+  const short = {...placing, chain: [{device_ref: 'reverb', role: 'effect', state: {decay: 2.4, predelay: 0}}], macros: [{...placing.macros[0], targets: []}]}
+  const shortNote = (await seat.run(JSON.stringify({kind: 'rack', ref: 'rack:warm', sound: SOUND, rack: short}))).note
+  assert.deepEqual(calls[1].chain, [{device: 'Reverb', parameters: [{id: 'DecayTime', value: 2400}]}])
+  assert.match(shortNote, /Live's Reverb takes its decay; its pre-delay of 0 ms is under the 0\.5 ms Live's Reverb holds, and stands at Live's own\.$/)
   calls.length = 0
   // A rack with nothing on its chain and macros that turn nothing is placed whole, and the note says nothing more.
   const bare = await seat.run(JSON.stringify({kind: 'rack', ref: 'rack:warm', sound: SOUND, rack: {...placing, chain: [], macros: [{...placing.macros[0], targets: []}]}}))
-  assert.equal(bare.note, 'Inserted 4-MIDI, an empty MIDI part, right after Tide pad. Placed Warm rack on 4-MIDI: an Instrument Rack with 1 macro and 2 variations. '
-    + '"Low bell" opens as saved; nothing it was tuned from has moved. The part keeps it.')
+  assert.deepEqual(calls[1].chain, [], 'an empty chain is placed empty')
+  assert.equal(bare.note, 'Inserted 4-MIDI, an empty MIDI part, right after Tide pad. Placed Warm rack on 4-MIDI: an Instrument Rack with 1 macro and 2 variations, '
+    + 'its chain holding Live\'s Reverb and Compressor. "Low bell" opens as saved; nothing it was tuned from has moved. The part keeps it.')
   calls.length = 0
   // The rack refused on the part: the part stands, the sound is not opened, and the owner's words follow (packages/live-set/src/acts.rs
   // says them words first, so a part Live names by its place, "4-MIDI", stays in the open line).

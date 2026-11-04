@@ -71,7 +71,9 @@
 .clv-ehead { flex: none; height: 18px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 6px; padding: 0 4px;
   background: var(--bg-2, #3f4348); border-bottom: 1px solid var(--line, #24262a); }
 .clv-ebar { display: flex; align-items: center; gap: 3px; min-width: 0; overflow: hidden; }
-.clv-ecorner { display: flex; justify-content: flex-end; align-items: center; gap: 4px; min-width: 0; }
+.clv-ecorner { display: flex; justify-content: flex-end; align-items: center; gap: 4px; min-width: 0; overflow: hidden; }
+/* A corner's words give way to the editor's tabs: they end in an ellipsis rather than run under them. */
+.clv-ecorner > .clv-own { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .clv-ebar .dp-cell > .dp-label, .clv-ecorner .dp-cell > .dp-label { display: none; }
 .clv-ebar .dp-cell, .clv-ecorner .dp-cell { flex: none; }
 .clv-ecorner .dp-chooser { min-width: 72px; }

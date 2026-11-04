@@ -27,7 +27,10 @@
 // session's track (§19.1). The score (Notes, Vāk and the Tools, O-I #843) is the song the task's Run performs, as Factory reads it, on
 // the rows of the track's Agent rack — its agents and agent sets — with Allocate, Connect and Thread form written into the song's file
 // by Factory and Fill heads asked of AIKit's decision model (agent/scoreBinding.ts); the log's retrospective readings stand where they
-// were found, and nothing the tools do writes the log. Pure, apart from the hook at the end.
+// were found, and nothing the tools do writes the log. Selecting another unit's note moves Clip view to that unit's task (§19.1 "Select
+// another note and Clip view moves to that unit's task"): the task whose latest attempt names the unit in this Run (unitTasksOf), read
+// from the takes of the track's Agent rack and of the sessions on the song's rows (noteSessionsOf), the note chosen there. Pure, apart
+// from the hook at the end.
 import {useContext, useEffect, useMemo, useRef, useState} from 'react'
 import type {Value, Values} from '../frame/devices/designed'
 import {clipBinding, type ClipBinding, type ClipWiring} from '../frame/detail/clipBinding'
@@ -47,13 +50,13 @@ import {useOptionalContinuity} from '../continuity/workspace'
 import {parseCentralPathRef} from '../central/centralVertical'
 import type {FactoryTake} from './factoryTakes'
 import {lockPlan, planTargetOf, planValuesOf, planWiring, useWavePlan, type PlanPort} from './wavePlan'
-import {rackRowsOf, scorePortOf, scoreValuesOf, scoreWiring, useScore, type ScorePort} from './scoreBinding'
+import {rackRowsOf, scorePortOf, scoreValuesOf, scoreWiring, useScore, type ScorePort, type ScoreReading} from './scoreBinding'
 import type {WorldActionReceipt, WorldTrackActions} from '../timeline/worldTrackAdapter'
-import {clipHostId, useViewHoldsVersion, viewHoldsOf} from '../frame/detail/clipBinding'
+import {clipHostId, setViewHold, useViewHoldsVersion, viewHoldsOf} from '../frame/detail/clipBinding'
 import {useSelectedClip} from '../frame/detail/ClipBox'
 import {useDetailReading} from '../frame/detail/detailReading'
-import {useTimelinePanePresentation} from '../projections/timelinePaneHost'
-import {parseFactoryTaskRef} from '../timeline/factoryTrackAdapter'
+import {timelineReading, useTimelinePanePresentation} from '../projections/timelinePaneHost'
+import {factoryTaskRef, parseFactoryTaskRef} from '../timeline/factoryTrackAdapter'
 import {readSettingsOf, settingsReadingEntry, taskReadingEntry, useSettingsAnswer} from '../owners/readers'
 import {useAgentSessionsOptional} from './AgentSessionsProvider'
 import {projectOfSession, ROOT_REGISTER} from './worldScope'
@@ -159,6 +162,62 @@ export interface FactoryClipInput {
   readonly plan?: PlanPort | null
   /** The song's score as Factory reads it, on the track's Agent rack, and the owners' writes it goes through; null where nothing reads it. */
   readonly score?: ScorePort | null
+  /** Each note's task, by the unit's key (unitTasksOf): where a note selected moves Clip view. */
+  readonly unitTasks?: ReadonlyMap<string, UnitTask> | null
+  /** THE selection's one writer (projections/timelinePaneHost.ts selectTrackItem). */
+  readonly select?: ((to: UnitTask) => void) | null
+}
+
+// ---------------------------------------------------------------------------------------------------------------- each note's task
+
+/** A unit's task as THE selection names it: its task clip on its session's track. */
+export interface UnitTask {readonly kind: 'clip'; readonly ref: string; readonly title: string; readonly track: string}
+
+/** The sessions whose tasks may work the score's notes: those of the track's Agent rack (its group's, else its own), then every session
+ * whose agent is a row of the song, or a member of the group that runs an agent set on a row of it. Pure. */
+export function noteSessionsOf(track: AgentSessionTrack | null, tracks: readonly AgentSessionTrack[], reading: ScoreReading | null): string[] {
+  if (!track) return []
+  const real = (item: AgentSessionTrack) => !item.group && item.tasks.some(task => !task.softStop)
+  const group = track.parentRef ? tracks.find(item => item.group && item.sessionRef === track.parentRef) ?? null : null
+  const rack = group ? tracks.filter(item => !item.group && item.parentRef === group.sessionRef) : [track]
+  const rows = new Set<string>()
+  if (reading?.state === 'read') {
+    const units = Array.isArray(reading.reading.units) ? reading.reading.units : []
+    for (const unit of units) { const row = (unit as {row?: unknown} | null)?.row; if (typeof row === 'string' && row) rows.add(row) }
+  }
+  const sets = new Set(tracks.filter(item => item.group && item.agentSet && rows.has(item.agentSet.ref)).map(item => item.sessionRef))
+  const onRows = tracks.filter(item => (item.agentRef && rows.has(item.agentRef)) || (item.parentRef && sets.has(item.parentRef)))
+  return [...new Set([...rack, ...onRows].filter(real).map(item => item.sessionRef))]
+}
+
+/** Each note's task (manual §19.1 "Select another note and Clip view moves to that unit's task"): for each unit of the score's Run, the
+ * task whose latest attempt names it there, as a task's own note is the unit its latest attempt names (wavePlan.ts planTargetOf) — the
+ * attempt's task on its session's track, else the track's first (the session's owner holds one bound task). Where two tasks work one
+ * unit, the one whose attempt began last. A unit no task's latest attempt names has none. Pure. */
+export function unitTasksOf(reading: ScoreReading | null, tracks: readonly AgentSessionTrack[],
+  takesOf: (sessionRef: string) => readonly FactoryTake[] | null): Map<string, UnitTask> {
+  const tasks = new Map<string, UnitTask>()
+  if (reading?.state !== 'read') return tasks
+  const keyOf = new Map<string, string>()
+  for (const unit of Array.isArray(reading.reading.units) ? reading.reading.units : []) {
+    const {key, unitRef} = (unit ?? {}) as {key?: unknown; unitRef?: unknown}
+    if (typeof key === 'string' && key && typeof unitRef === 'string' && unitRef) keyOf.set(unitRef, key)
+  }
+  const began = new Map<string, number>()
+  for (const track of tracks) {
+    if (track.group) continue
+    const take = [...(takesOf(track.sessionRef) ?? [])].reverse().find(item => item.unitRef && item.runRef && item.statePath)
+    if (!take || take.runRef !== reading.target.runRef || take.statePath !== reading.target.statePath) continue
+    const key = keyOf.get(take.unitRef!)
+    const task = track.tasks.find(item => !item.softStop && item.taskRef === take.taskRef) ?? track.tasks.find(item => !item.softStop)
+    if (!key || !task) continue
+    const at = take.startUnixMs ?? Number.NEGATIVE_INFINITY
+    if (tasks.has(key) && (began.get(key) ?? Number.NEGATIVE_INFINITY) >= at) continue
+    const id = trackKey(track)
+    tasks.set(key, {kind: 'clip', ref: factoryTaskRef(id, task.n), title: task.title ?? track.purpose ?? track.agentName ?? `task ${task.n}`, track: id})
+    began.set(key, at)
+  }
+  return tasks
 }
 
 // ---------------------------------------------------------------------------------------------------------------- what the run returned
@@ -501,9 +560,22 @@ export function factoryClipBinding(input: FactoryClipInput): ClipBinding | null 
   const viewDefaults = {'view.panel': 'launch', 'view.editor': 'log', fold: true} as const
   // A tool's press reads the choices the view holds at that moment: the note selected, the tool and what it gives or ties.
   const choice = (key: string): Value | undefined => ({...viewDefaults, ...viewHoldsOf(clipHostId('factory', ref))} as Record<string, Value>)[key]
-  return clipBinding({mode: 'factory', ref, values: factoryClipValues(track, task, input),
+  const binding = clipBinding({mode: 'factory', ref, values: factoryClipValues(track, task, input),
     wiring: factoryWiring(address, input.settings ?? null, input.returned ?? null, input.plan ?? null, input.score ?? null, choice), placed: input.placed,
     viewDefaults})
+  const {unitTasks, select} = input
+  const view = binding.local
+  if (!unitTasks?.size || !select || !view) return binding
+  // The note selected in the score: another task's unit moves THE selection to that task, whose Clip view holds the note (and so names
+  // it for Routine…, chosenNoteOf); this task's own note, and a note no task works, stay selected here, where the tools act on them.
+  const local = new Proxy(view, {get: (held, key, receiver) => key !== 'unit' ? Reflect.get(held, key, receiver) : (value: Value | undefined) => {
+    // A song opened inside a note (`score.open`) shows that song's notes, none a unit of this Run: nothing moves.
+    const to = typeof value === 'string' && choice('score.open') === undefined ? unitTasks.get(value) : undefined
+    if (!to || to.ref === ref) return held.unit?.(value)
+    setViewHold(clipHostId('factory', to.ref), 'unit', value)
+    select(to)
+  }})
+  return {...binding, local}
 }
 
 /** What a file opens through: the shell's workspace (its file route) and the book whose focused pane it opens in. */
@@ -577,6 +649,12 @@ export function useFactoryClip(): ClipBinding | null {
   const chosen = factoryTaskOf(selected.ref, factory.tracks)
   const rack = useMemo(() => rackRowsOf(chosen?.track ?? null, factory.tracks), [chosen?.track, factory.tracks])
   const scored = useScore(transport, target, rack, sessionRef)
+  // Each note's task: the takes of the rack's sessions and of the sessions on the song's rows, each read in its own register.
+  const noteSessions = useMemo(() => sessions && sessionRef ? noteSessionsOf(chosen?.track ?? null, factory.tracks, scored.reading).filter(ref => ref !== sessionRef) : [],
+    [sessions, sessionRef, chosen?.track, factory.tracks, scored.reading])
+  const others = useAttemptTakes(transport, noteSessions, ref => sessionProjectOf(sessions?.rows, ref))
+  const unitTasks = useMemo(() => unitTasksOf(scored.reading, factory.tracks, ref => (ref === sessionRef ? takes : others)?.of(ref) ?? null),
+    [scored.reading, factory.tracks, sessionRef, takes, others])
   // File › Export Song… (menus.rs `file.export.song`; App.tsx hands it to the mode that stands as MENU_ACT): the song the selected task's
   // Run performs, made one clip by Factory; its answer, or its refusal, on the Info line.
   const exported = useRef<() => Promise<WorldActionReceipt>>(async () => ({ok: false, error: ''}))
@@ -609,7 +687,7 @@ export function useFactoryClip(): ClipBinding | null {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   [files, sessions, sessionRef, JSON.stringify(transport)])
   return factoryClipBinding({ref: selected.ref, tracks: factory.tracks, events: sessions ? sessions.events : null, colour, placed: presentation === 'arrangement', settings,
-    constellations, returned, plan, score: sessions && sessionRef ? scored : null})
+    constellations, returned, plan, score: sessions && sessionRef ? scored : null, unitTasks, select: to => timelineReading()?.selectTrackItem(to)})
 }
 
 // ---------------------------------------------------------------------------------------------------------------- the drop

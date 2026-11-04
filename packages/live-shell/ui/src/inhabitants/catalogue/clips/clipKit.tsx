@@ -174,6 +174,8 @@ export interface Block {
   readonly len?: number
   readonly label?: string
   readonly tone?: Tone
+  /** Drawn in this colour over its tone's (a token or the clip's own colour): Factory's own note, in the clip's colour (§19.1). */
+  readonly colour?: string
   /** The change into the next step, after the hold (an Expression's glide), in the same unit as `len`. */
   readonly glide?: number
   /** 0–127, for the velocity lane. */
@@ -306,7 +308,7 @@ export function LaneGrid(g: LaneGridProps) {
     return <g key={block.id} className="clv-block" data-tone={block.tone ?? 'value'} data-selected={block.id === g.selected ? 'true' : undefined} data-faint={block.faint ? 'true' : undefined}
       data-i={said(block.label ?? 'Step', block.does)} onClick={g.onSelect ? () => g.onSelect!(block.id) : undefined} onDoubleClick={g.onOpen ? () => g.onOpen!(block.id) : undefined}
       onPointerDown={moves ? event => grab(event, block, false) : undefined} onPointerUp={moves ? letGo : undefined}
-      style={{cursor: moves ? 'grab' : g.onSelect ? 'pointer' : undefined}}>
+      style={{color: block.colour, cursor: moves ? 'grab' : g.onSelect ? 'pointer' : undefined}}>
       <rect x={x0} y={y0} width={wide} height={hh} className="clv-block-body" data-open={open ? 'true' : undefined}
         style={open ? {fill: 'url(#clv-open)'} : undefined} strokeDasharray={block.dashed ? '3 2' : undefined} />
       {block.striped && <rect x={x0} y={y0} width={wide} height={hh} fill="url(#clv-stripes)" />}

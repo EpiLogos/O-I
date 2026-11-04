@@ -299,19 +299,76 @@ export const liveSetTrackAdapter: WorldTrackAdapter<LiveSetReading> = {
   },
 }
 
-/** What of a placed rack the part does not carry yet, in words (O-I #852 round 9): its chain's note devices and effects, for which no Live
- * device stands here, and what its macros turn, which Live 12 keeps in a form not read yet (racks-session-model.md §1.7). Pure. */
+/** A device of a placed rack's chain as Live's own: the class a set stores it under, and the settings carried onto it (a switch 0 or 1). */
+export interface LiveChainDevice {readonly device: string; readonly parameters: readonly {readonly id: string; readonly value: number}[]}
+
+/** One setting of a Torus effect carried onto Live's device: Live's document key, the stored value made from the kept one, and the range
+ * Live's device holds it in (packages/live-dynamics/src/params.rs, the corpus's surface). */
+interface CarriedSetting {readonly id: string; readonly of: (kept: number) => number; readonly min: number; readonly max: number; readonly unit: string}
+
+/** The Torus's effects as Live's own devices on a placed rack's chain (O-I #852 round 10; manual §21.5 Filter, Dynamics, Delay, Reverb): each
+ * by the class a set stores Live's device of its kind under, and the settings carried onto it. A setting is carried only where the corpus pins
+ * Live's stored setting with the same meaning and unit (params.rs: Reverb's PreDelay "stored unit = ms", DecayTime "stored unit = ms,
+ * RT60-referenced"); every other setting stands at Live's own. Whether each device is on is carried as Live's On (session-model.md §6). The
+ * Resonator bank has no Live device in the corpus's surface. */
+const TORUS_EFFECT_IN_LIVE: Readonly<Record<string, {readonly device: string; readonly title: string; readonly carried: Readonly<Record<string, CarriedSetting>>}>> = {
+  filter: {device: 'AutoFilter', title: 'Auto Filter', carried: {}},
+  dynamics: {device: 'Compressor2', title: 'Compressor', carried: {}},
+  delay: {device: 'Delay', title: 'Delay', carried: {}},
+  reverb: {device: 'Reverb', title: 'Reverb', carried: {
+    decay: {id: 'DecayTime', of: seconds => Math.round(seconds * 1e9) / 1e6, min: 199.999985, max: 60000.0039, unit: 'ms'},
+    predelay: {id: 'PreDelay', of: ms => ms, min: 0.5, max: 249.999969, unit: 'ms'},
+  }},
+}
+/** A kept setting by the manual's word for it. */
+const settingWord = (key: string) => key === 'predelay' ? 'pre-delay' : key
+
+/** A placed rack's chain as Live's own devices, with the words for what does not stand on it (O-I #852 round 10). A note device stays off the
+ * chain, as does the Resonator bank: the corpus gives Live's note devices and Live's Resonators no parameter surface yet; a device that is
+ * none of the Torus's has no Live device to stand as. Each placed device takes the settings the corpus pins, and the words name the rest,
+ * which stand at Live's own. Pure. */
+export function rackChainInLive(chain: TorusRackPlacing['chain']): {chain: LiveChainDevice[]; words: string[]} {
+  const listed = (names: readonly string[]) => names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`
+  const placed: LiveChainDevice[] = []
+  const off: string[] = []
+  const settings: string[] = []
+  for (const kept of chain) {
+    if (kept.role === 'note') { off.push(`Its note device ${kept.device_ref} stays off its chain: the corpus gives Live's note devices no parameter surface yet.`); continue }
+    if (kept.device_ref === 'resonator') { off.push('Its Resonator bank stays off its chain: the corpus gives Live\'s Resonators no parameter surface yet.'); continue }
+    const live = TORUS_EFFECT_IN_LIVE[kept.device_ref]
+    if (!live) { off.push(`Its effect ${kept.device_ref} is none of the Torus's, so no Live device stands for it.`); continue }
+    const parameters: {id: string; value: number}[] = []
+    const took: string[] = [], left: string[] = [], outside: string[] = []
+    if (typeof kept.state.on === 'boolean') parameters.push({id: 'On', value: kept.state.on ? 1 : 0})
+    for (const [key, value] of Object.entries(kept.state)) {
+      if (key === 'on' && typeof value === 'boolean') continue
+      const law = live.carried[key]
+      if (!law || typeof value !== 'number') { left.push(settingWord(key)); continue }
+      const stored = law.of(value)
+      if (stored < law.min || stored > law.max) {
+        outside.push(`its ${settingWord(key)} of ${value} ${law.unit} is ${stored < law.min ? 'under' : 'over'} the ${stored < law.min ? law.min : law.max} ${law.unit} Live's ${live.title} holds, and stands at Live's own`)
+        continue
+      }
+      parameters.push({id: law.id, value: stored})
+      took.push(settingWord(key))
+    }
+    placed.push({device: live.device, parameters})
+    const head = took.length ? `Live's ${live.title} takes its ${listed(took)}`
+      : kept.state.on === false ? `Live's ${live.title} stands off, as it was kept` : ''
+    const rest = [left.length ? `its ${listed(left)} stand at Live's own, for the corpus pins no stored setting of Live's with their meaning and unit` : '', ...outside].filter(Boolean)
+    if (rest.length) settings.push(`${head ? `${head}; ` : `Live's ${live.title}: `}${rest.join('; ')}.`)
+  }
+  return {chain: placed, words: [...off, ...settings]}
+}
+
+/** What of a placed rack the part does not carry yet, in words (O-I #852 rounds 9 and 10): what of its chain does not stand on it as Live's
+ * own (rackChainInLive), and what its macros turn, which Live 12 keeps in a form not read yet (racks-session-model.md §1.7). Pure. */
 export function rackUnplaced(rack: TorusRackPlacing): string[] {
   const listed = (names: readonly string[]) => names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`
-  const notes = rack.chain.filter(device => device.role === 'note').map(device => device.device_ref)
-  const effects = rack.chain.filter(device => device.role === 'effect').map(device => device.device_ref)
-  const held = [notes.length ? `${notes.length === 1 ? 'note device' : 'note devices'} ${listed(notes)}` : '',
-    effects.length ? `${effects.length === 1 ? 'effect' : 'effects'} ${listed(effects)}` : ''].filter(Boolean)
-  const one = rack.chain.length === 1
   const turned = rack.macros.filter(item => item.targets.length).map(item => `${item.name} turns ${listed(item.targets.map(target =>
     target.device_ref === 'torus' ? `the Torus's ${target.parameter}` : `${target.device_ref}'s ${target.parameter}`))}`)
   return [
-    held.length ? `Its ${held.join(' and ')} ${one ? 'stays' : 'stay'} off its chain: no Live device stands for ${one ? 'it' : 'them'} here yet.` : '',
+    ...rackChainInLive(rack.chain).words,
     turned.length ? `What its macros turn is not mapped (${turned.join('; ')}): Live 12 keeps a macro's mapping in a form not read here yet.` : '',
   ].filter(Boolean)
 }
@@ -445,7 +502,8 @@ function liveObjectActs(set: SetSummary, act: LiveSetReading['act'], insertClip:
         let placed = ''
         if (rack) {
           const made = await act({kind: 'rack_place', track, name: rack.name, macros: rack.macros.map(({name, value}) => ({name, value})),
-            variations: rack.variations.map(({name, values}) => ({name, values: [...values]}))}).then(
+            variations: rack.variations.map(({name, values}) => ({name, values: [...values]})),
+            chain: rackChainInLive(rack.chain).chain.map(({device, parameters}) => ({device, parameters: parameters.map(p => ({...p}))}))}).then(
             done => ({ok: true as const, done: done.done}), (cause: unknown) => ({ok: false as const, cause}))
           // A refusal speaks plainly (shared/Refusal.tsx): what happened, then the owner's words when they are words.
           if (!made.ok) return {ok: false, error: refusalWords(`${answer.done} The rack was not placed on it.`, made.cause)}

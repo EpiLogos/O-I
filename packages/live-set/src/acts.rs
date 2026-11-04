@@ -124,12 +124,14 @@ pub enum SetAct {
     /// A kept rack placed on a MIDI part with nothing on its chain (O-I #852; DLW §21.2 "Drag it onto a part to play it"): Live's
     /// Instrument Rack under the rack's name, its one chain, its macros by name and where each stands (0 to 1, as the rack keeps
     /// it), and its variations, each a value for every macro. What a macro turns is not written: Live 12 keeps a macro's mapping in
-    /// a form no document here holds (racks-session-model.md §1.7), so the macros stand mapped to nothing.
+    /// a form no document here holds (racks-session-model.md §1.7), so the macros stand mapped to nothing. Its chain's devices
+    /// stand on the rack's one chain as Live's own (O-I #852 round 10), each with the settings carried onto it.
     RackPlace {
         track: usize,
         name: String,
         macros: Vec<PlacedMacro>,
         variations: Vec<PlacedVariation>,
+        chain: Vec<PlacedDevice>,
     },
 }
 
@@ -147,6 +149,23 @@ pub struct PlacedMacro {
 pub struct PlacedVariation {
     pub name: String,
     pub values: Vec<f64>,
+}
+
+/// One device of a placed rack's chain: Live's device by the class a set stores it under (the keys of live-dynamics
+/// `params::table`), and the settings carried onto it.
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct PlacedDevice {
+    pub device: String,
+    pub parameters: Vec<PlacedParameter>,
+}
+
+/// One setting carried onto a placed device: its document key, and its stored value (a switch 0 for off, 1 for on).
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct PlacedParameter {
+    pub id: String,
+    pub value: f64,
 }
 
 // ---------------------------------------------------------------------------- the document's lists
@@ -1291,10 +1310,15 @@ fn timeable(tag: &str, manual: &str, min: &str, max: &str) -> String {
     )
 }
 
-/// A switch Live writes as a TimeableBool (a device's On, a chain's Speaker).
+/// A switch Live writes as a TimeableBool (a device's On, a chain's Speaker), on.
 fn switch(tag: &str) -> String {
+    toggle(tag, true)
+}
+
+/// A switch Live writes as a TimeableBool, standing on or off.
+fn toggle(tag: &str, on: bool) -> String {
     format!(
-        r#"<{tag}><LomId Value="0" /><Manual Value="true" /><AutomationTarget Id="0">{TARGET}</AutomationTarget><MidiCCOnOffThresholds><Min Value="64" /><Max Value="127" /></MidiCCOnOffThresholds></{tag}>"#
+        r#"<{tag}><LomId Value="0" /><Manual Value="{on}" /><AutomationTarget Id="0">{TARGET}</AutomationTarget><MidiCCOnOffThresholds><Min Value="64" /><Max Value="127" /></MidiCCOnOffThresholds></{tag}>"#
     )
 }
 
@@ -1345,6 +1369,147 @@ fn rack_chain() -> String {
     )
 }
 
+/// The most devices a placed rack's chain holds (the kernel's `kept.rs` MAX_RACK_DEVICES).
+const RACK_DEVICES: usize = 64;
+
+/// The instruments among the classes the corpus gives a surface (devices/COVERAGE.md: Drift, Wavetable, Operator): a rack's chain
+/// here holds note devices and audio effects, and the Torus is its instrument.
+const INSTRUMENTS: [&str; 4] = ["Drift", "Wavetable", "InstrumentVector", "Operator"];
+
+/// A device's name as Live shows it (devices/COVERAGE.md), by the class a set stores it under.
+fn live_title(class: &str) -> &str {
+    match class {
+        "GlueCompressor" => "Glue Compressor",
+        "Eq8" => "EQ Eight",
+        "AutoFilter" => "Auto Filter",
+        "AutoPan" => "Auto Pan",
+        "DrumBuss" => "Drum Buss",
+        "Chorus2" => "Chorus-Ensemble",
+        "Hybrid" => "Hybrid Reverb",
+        "MultibandDynamics" => "Multiband Dynamics",
+        "StereoGain" => "Utility",
+        "Compressor2" => "Compressor",
+        "Redux2" => "Redux",
+        "FilterDelay" => "Filter Delay",
+        "BeatRepeat" => "Beat Repeat",
+        "ChannelEq" => "Channel EQ",
+        "FilterEQ3" => "EQ Three",
+        "GrainDelay" => "Grain Delay",
+        "PhaserNew" => "Phaser-Flanger",
+        other => other,
+    }
+}
+
+/// A device of a rack's chain as a set stores it (session-model.md §6; §4: a device in a set's list carries its Id and allocated
+/// pointees): Live's boilerplate under its class, then each setting carried onto it, in the order of the corpus's surface
+/// (live-dynamics `params::table`), in Live's parameter pattern with the surface's controller range; its On as Live writes it. A
+/// setting not carried is not written, and stands at Live's own when the set loads. What the corpus does not give is refused in
+/// words, by name: a class with no surface, an instrument, a setting outside the surface or its range, a menu, a setting inside
+/// another element, a switch off 0 and 1, a setting given twice.
+fn chain_device(id: usize, placed: &PlacedDevice) -> Result<Element, String> {
+    let class = placed.device.as_str();
+    let table = live_dynamics::params::table(class).ok_or_else(|| {
+        format!(
+            "Live's {class} has no parameter surface in the corpus (live-dynamics params), so it is not placed"
+        )
+    })?;
+    let title = live_title(class);
+    if INSTRUMENTS.contains(&class) {
+        return Err(format!(
+            "Live's {title} is an instrument, and a rack's chain here holds note devices and audio effects, the Torus its instrument"
+        ));
+    }
+    let mut on = true;
+    let mut given = std::collections::BTreeMap::new();
+    for parameter in &placed.parameters {
+        if given
+            .insert(parameter.id.as_str(), parameter.value)
+            .is_some()
+        {
+            return Err(format!("Live's {title} is given {} twice", parameter.id));
+        }
+        let switch_of = |value: f64| {
+            if value == 0.0 || value == 1.0 {
+                Ok(value == 1.0)
+            } else {
+                Err(format!(
+                    "Live's {title} is on or off: {} stands 0 or 1, not {}",
+                    parameter.id,
+                    number_text(value)
+                ))
+            }
+        };
+        if parameter.id == "On" {
+            on = switch_of(parameter.value)?;
+            continue;
+        }
+        let desc = table
+            .iter()
+            .find(|desc| desc.id == parameter.id)
+            .ok_or_else(|| {
+                format!(
+                    "Live's {title} has no setting {} in the corpus's surface",
+                    parameter.id
+                )
+            })?;
+        if let Some((parent, _)) = desc.id.split_once('/') {
+            return Err(format!(
+                "Live's {title} keeps {} inside {parent}, and an element's inner shape is not written here yet",
+                desc.id
+            ));
+        }
+        match desc.kind {
+            live_dynamics::params::ParamKind::Discrete { .. } => {
+                return Err(format!(
+                    "Live's {title} keeps {} as a menu, and a menu's stored shape is not written here yet",
+                    desc.id
+                ))
+            }
+            live_dynamics::params::ParamKind::Toggle => {
+                switch_of(parameter.value)?;
+            }
+            live_dynamics::params::ParamKind::Continuous => {
+                let value = parameter.value;
+                if !value.is_finite() || value < desc.stored_min || value > desc.stored_max {
+                    return Err(format!(
+                        "Live's {title} holds {} between {} and {}, not {}",
+                        desc.id,
+                        number_text(desc.stored_min),
+                        number_text(desc.stored_max),
+                        number_text(value)
+                    ));
+                }
+            }
+        }
+    }
+    let settings: String = table
+        .iter()
+        .filter_map(|desc| {
+            given.get(desc.id).map(|value| match desc.kind {
+                live_dynamics::params::ParamKind::Toggle => toggle(desc.id, *value == 1.0),
+                _ => timeable(
+                    desc.id,
+                    &number_text(*value),
+                    &number_text(desc.stored_min),
+                    &number_text(desc.stored_max),
+                ),
+            })
+        })
+        .collect();
+    let xml = format!(
+        r#"<{class} Id="{id}">{boilerplate}{settings}</{class}>"#,
+        boilerplate = boilerplate(class, true)
+    );
+    let mut device = crate::xml::parse(&xml)
+        .map_err(|why| format!("Live's {title}'s shape did not read: {why}"))?;
+    device
+        .child_mut("On")
+        .and_then(|o| o.child_mut("Manual"))
+        .ok_or_else(|| format!("Live's {title} carries no On"))?
+        .set_attr("Value", if on { "true" } else { "false" });
+    Ok(device)
+}
+
 /// A share of a macro's travel (0 to 1, as a kept rack holds it) on Live's macro scale, 0 to 127.
 fn macro_value(share: f64) -> String {
     number_text(share * 127.0)
@@ -1358,7 +1523,13 @@ fn instrument_rack(
     name: &str,
     macros: &[PlacedMacro],
     variations: &[PlacedVariation],
+    chain: &[PlacedDevice],
 ) -> Result<Element, String> {
+    let devices = chain
+        .iter()
+        .enumerate()
+        .map(|(id, placed)| chain_device(id, placed))
+        .collect::<Result<Vec<_>, _>>()?;
     let family = |each: &dyn Fn(usize) -> String| (0..RACK_MACROS).map(each).collect::<String>();
     let value_of_macro = |i: usize| {
         macros
@@ -1446,6 +1617,14 @@ fn instrument_rack(
             .ok_or("a variation carries no name")?
             .set_attr("Value", &variation.name);
     }
+    rack.child_mut("Branches")
+        .and_then(|b| b.child_mut("InstrumentBranch"))
+        .and_then(|c| c.child_mut("DeviceChain"))
+        .and_then(|d| d.child_mut("MidiToAudioDeviceChain"))
+        .and_then(|d| d.child_mut("Devices"))
+        .ok_or("the rack's chain carries no device list")?
+        .children
+        .extend(devices);
     Ok(rack)
 }
 
@@ -1455,11 +1634,17 @@ fn rack_place(
     name: &str,
     macros: &[PlacedMacro],
     variations: &[PlacedVariation],
+    chain: &[PlacedDevice],
 ) -> Result<Done, String> {
     let name = checked_name("A rack's name", name, false)?;
     if macros.len() > RACK_MACROS || variations.len() > RACK_VARIATIONS {
         return Err(format!(
             "Live's rack holds at most {RACK_MACROS} macros, and a kept rack at most {RACK_VARIATIONS} variations"
+        ));
+    }
+    if chain.len() > RACK_DEVICES {
+        return Err(format!(
+            "A rack's chain holds at most {RACK_DEVICES} devices"
         ));
     }
     let share = |v: f64| v.is_finite() && (0.0..=1.0).contains(&v);
@@ -1503,7 +1688,7 @@ fn rack_place(
             "A rack is placed on a part with nothing on its chain, as Insert MIDI Track makes one, and {part_name} holds a device already"
         ));
     }
-    let mut rack = instrument_rack(&name, macros, variations)?;
+    let mut rack = instrument_rack(&name, macros, variations, chain)?;
     let set = root
         .find("LiveSet")
         .ok_or("the document holds no LiveSet")?;
@@ -1534,9 +1719,15 @@ fn rack_place(
         1 => format!("1 {one}"),
         n => format!("{n} {one}s"),
     };
+    let titles: Vec<&str> = chain.iter().map(|d| live_title(&d.device)).collect();
+    let holding = match titles.as_slice() {
+        [] => String::new(),
+        [one] => format!(", its chain holding Live's {one}"),
+        [rest @ .., last] => format!(", its chain holding Live's {} and {last}", rest.join(", ")),
+    };
     Ok(Done {
         words: format!(
-            "Placed {name} on {part_name}: an Instrument Rack with {} and {}.",
+            "Placed {name} on {part_name}: an Instrument Rack with {} and {}{holding}.",
             count(macros.len(), "macro"),
             count(variations.len(), "variation")
         ),
@@ -2449,7 +2640,8 @@ pub fn act(path: &str, expected_revision: &str, act: &SetAct) -> Result<Value, S
                 name,
                 macros,
                 variations,
-            } => rack_place(root, *track, name, macros, variations)?,
+                chain,
+            } => rack_place(root, *track, name, macros, variations, chain)?,
             SetAct::TorusKeep { .. } => unreachable!("kept above, the set unwritten"),
         });
         Ok(())
@@ -3293,7 +3485,7 @@ mod tests {
         // The wire names it as the shell sends it.
         let wire: SetAct = serde_json::from_value(json!({"kind": "rack_place", "track": 1, "name": "Warm rack",
             "macros": [{"name": "Bloom", "value": 0.5}, {"name": "Air", "value": 1.0}],
-            "variations": [{"name": "Open", "values": [1.0, 0.25]}, {"name": "Closed", "values": [0.0, 0.0]}]}))
+            "variations": [{"name": "Open", "values": [1.0, 0.25]}, {"name": "Closed", "values": [0.0, 0.0]}], "chain": []}))
         .unwrap();
         let placed = run(&path, wire).unwrap();
         assert_eq!(placed["act"], "rack_place");
@@ -3528,6 +3720,7 @@ mod tests {
                 name: "Low".into(),
                 macros: nine.clone(),
                 variations: vec![],
+                chain: vec![],
             },
         )
         .unwrap();
@@ -3567,6 +3760,7 @@ mod tests {
             name: name.into(),
             macros,
             variations,
+            chain: vec![],
         };
         assert!(refused(place(1, "Again", one.clone(), vec![])).contains("holds a device already"));
         assert!(refused(place(4, "Warm rack", one.clone(), vec![])).contains("MIDI part"));
@@ -3591,6 +3785,206 @@ mod tests {
         assert!(refused(place(1, "Warm rack", high, vec![])).contains("between 0 and 1"));
         assert!(refused(place(1, " ", one.clone(), vec![])).contains("A rack's name"));
         assert!(refused(place(40, "Warm rack", one, vec![])).contains("no track"));
+        assert_eq!(standing(&path), standing_now, "nothing refused is written");
+    }
+
+    /// O-I #852 round 10: a placed rack's chain holds Live's own devices, each as a set stores it (session-model.md §6): the device's
+    /// boilerplate under its class, then each setting carried onto it in Live's parameter pattern, its controller range the corpus's
+    /// surface (live-dynamics params), its switch as Live writes On; what is not carried is not written. Every pointee is allocated
+    /// past the set's, and a device or setting the corpus does not give is refused in words, by name, with the set unwritten.
+    #[test]
+    fn a_racks_chain_stands_on_it_as_lives_own_devices_with_the_settings_carried() {
+        fn gather(element: &Element, ids: &mut Vec<u64>) {
+            if is_pointee(element) {
+                ids.push(element.attr("Id").unwrap().parse().unwrap());
+            }
+            for child in &element.children {
+                gather(child, ids);
+            }
+        }
+        let value = |e: &Element, path: &[&str]| {
+            let mut at = e;
+            for step in path {
+                at = at.child(step)?;
+            }
+            at.attr("Value").map(str::to_string)
+        };
+        let (_dir, path) = set_file(SET);
+        run(&path, SetAct::TrackInsert { after: Some(0) }).unwrap();
+        let wire: SetAct = serde_json::from_value(json!({"kind": "rack_place", "track": 1, "name": "Warm rack",
+            "macros": [], "variations": [], "chain": [
+                {"device": "Reverb", "parameters": [{"id": "DecayTime", "value": 2400.0}, {"id": "On", "value": 1.0}, {"id": "PreDelay", "value": 20.0}]},
+                {"device": "Compressor2", "parameters": [{"id": "On", "value": 0.0}]}]}))
+        .unwrap();
+        let placed = run(&path, wire).unwrap();
+        assert_eq!(
+            placed["done"],
+            "Placed Warm rack on 2-MIDI: an Instrument Rack with no macros and no variations, its chain holding Live's Reverb and Compressor."
+        );
+        let (root, _) = reread(&path);
+        let devices = crate::edit::track_at(&root, 1)
+            .unwrap()
+            .find("InstrumentGroupDevice")
+            .and_then(|r| r.child("Branches"))
+            .and_then(|b| b.child("InstrumentBranch"))
+            .and_then(|c| c.child("DeviceChain"))
+            .and_then(|d| d.child("MidiToAudioDeviceChain"))
+            .and_then(|d| d.child("Devices"))
+            .unwrap();
+        assert_eq!(
+            list_ids(devices),
+            vec!["0", "1"],
+            "each device a list member with its Id"
+        );
+        let classes: Vec<&str> = devices.children.iter().map(|d| d.name.as_str()).collect();
+        assert_eq!(
+            classes,
+            vec!["Reverb", "Compressor2"],
+            "in the chain's order"
+        );
+        let reverb = &devices.children[0];
+        let children: Vec<&str> = reverb.children.iter().map(|c| c.name.as_str()).collect();
+        assert_eq!(
+            children,
+            vec![
+                "LomId",
+                "LomIdView",
+                "IsExpanded",
+                "On",
+                "ModulationSourceCount",
+                "ParametersListWrapper",
+                "Pointee",
+                "LastSelectedTimeableIndex",
+                "LastSelectedClipEnvelopeIndex",
+                "LastPresetRef",
+                "LockedScripts",
+                "IsFolded",
+                "ShouldShowPresetName",
+                "UserName",
+                "Annotation",
+                "SourceContext",
+                "OverwriteProtectionNumber",
+                "PreDelay",
+                "DecayTime"
+            ],
+            "the boilerplate, then what is carried, in the surface's order"
+        );
+        assert_eq!(
+            reverb
+                .child("LastPresetRef")
+                .and_then(|p| p.find("DeviceId"))
+                .and_then(|d| d.attr("Name")),
+            Some("Reverb")
+        );
+        assert_eq!(value(reverb, &["On", "Manual"]).as_deref(), Some("true"));
+        assert_eq!(
+            value(&devices.children[1], &["On", "Manual"]).as_deref(),
+            Some("false"),
+            "a device kept off stands off"
+        );
+        for (parameter, manual, min, max) in [
+            ("DecayTime", "2400", "199.999985", "60000.0039"),
+            ("PreDelay", "20", "0.5", "249.999969"),
+        ] {
+            assert_eq!(
+                [
+                    value(reverb, &[parameter, "Manual"]),
+                    value(reverb, &[parameter, "MidiControllerRange", "Min"]),
+                    value(reverb, &[parameter, "MidiControllerRange", "Max"])
+                ],
+                [Some(manual.into()), Some(min.into()), Some(max.into())],
+                "{parameter}"
+            );
+            let held = reverb.child(parameter).unwrap();
+            assert!(
+                held.child("AutomationTarget").is_some()
+                    && held.child("ModulationTarget").is_some()
+            );
+        }
+        // Every pointee of the chain its own, allocated with the rack's.
+        let mut all = Vec::new();
+        gather(root.find("LiveSet").unwrap(), &mut all);
+        let distinct: std::collections::BTreeSet<&u64> = all.iter().collect();
+        assert_eq!(distinct.len(), all.len(), "no pointee is shared");
+        let mut chain = Vec::new();
+        gather(devices, &mut chain);
+        assert!(
+            chain.len() >= 6 && chain.iter().all(|id| *id > 0),
+            "{chain:?}"
+        );
+        // Refused in words, by name, the set unwritten.
+        run(&path, SetAct::TrackInsert { after: Some(1) }).unwrap();
+        let standing_now = standing(&path);
+        let one = |device: &str, id: &str, value: f64| PlacedDevice {
+            device: device.into(),
+            parameters: vec![PlacedParameter {
+                id: id.into(),
+                value,
+            }],
+        };
+        let refused = |chain: Vec<PlacedDevice>| {
+            run(
+                &path,
+                SetAct::RackPlace {
+                    track: 2,
+                    name: "Cold rack".into(),
+                    macros: vec![],
+                    variations: vec![],
+                    chain,
+                },
+            )
+            .unwrap_err()
+        };
+        for (chain, words) in [
+            (
+                vec![one("MidiScale", "On", 1.0)],
+                "Live's MidiScale has no parameter surface in the corpus",
+            ),
+            (
+                vec![one("Operator", "On", 1.0)],
+                "Live's Operator is an instrument",
+            ),
+            (
+                vec![one("Reverb", "RoomSize", 1.0)],
+                "Live's Reverb has no setting RoomSize in the corpus's surface",
+            ),
+            (
+                vec![one("Reverb", "DecayTime", 70000.0)],
+                "Live's Reverb holds DecayTime between 199.999985 and 60000.0039, not 70000",
+            ),
+            (
+                vec![one("AutoFilter", "FilterType", 1.0)],
+                "Live's Auto Filter keeps FilterType as a menu",
+            ),
+            (
+                vec![one("Compressor2", "SideChain/OnOff", 1.0)],
+                "Live's Compressor keeps SideChain/OnOff inside SideChain",
+            ),
+            (vec![one("Reverb", "On", 0.5)], "Live's Reverb is on or off"),
+            (
+                vec![PlacedDevice {
+                    device: "Reverb".into(),
+                    parameters: vec![
+                        PlacedParameter {
+                            id: "PreDelay".into(),
+                            value: 1.0,
+                        },
+                        PlacedParameter {
+                            id: "PreDelay".into(),
+                            value: 2.0,
+                        },
+                    ],
+                }],
+                "Live's Reverb is given PreDelay twice",
+            ),
+            (
+                (0..65).map(|_| one("Reverb", "On", 1.0)).collect(),
+                "A rack's chain holds at most 64 devices",
+            ),
+        ] {
+            let why = refused(chain);
+            assert!(why.contains(words), "{why}");
+        }
         assert_eq!(standing(&path), standing_now, "nothing refused is written");
     }
 

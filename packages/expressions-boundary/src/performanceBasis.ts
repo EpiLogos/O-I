@@ -76,7 +76,10 @@ export interface KeptSoundSummary {readonly sound_ref: string; readonly name: st
 /** An instrument the Scene keeps (`oi.torus-instrument/v1`): a form's body, with the sounds made on it that the Scene keeps. */
 export interface KeptInstrumentSummary {readonly instrument_ref: string; readonly name: string; readonly body_ref: string; readonly sounds: readonly KeptSoundSummary[]}
 /** One device of a kept rack's chain: its reference, and whether it plays before the Torus (a note device) or after it (an effect). */
-export interface KeptRackDevice {readonly device_ref: string; readonly role: 'note' | 'effect'}
+export interface KeptRackDevice {readonly device_ref: string; readonly role: 'note' | 'effect'
+  /** The settings the device kept, each by its own name (an effect's are its law's, native-field/effectsLaw.ts): its drop carries them
+   * onto Live's device where the corpus pins the setting (O-I #852 round 10). */
+  readonly state: Readonly<Record<string, number | boolean | string>>}
 /** One macro of a kept rack: its name, where it stands (0 to 1), and the parameters it turns (a device of the chain's, or the Torus's). */
 export interface KeptRackMacro {readonly name: string; readonly value: number; readonly targets: readonly {readonly device_ref: string; readonly parameter: string}[]}
 /** One variation of a kept rack: its name, and a value for every macro, in macro order. */
@@ -122,14 +125,28 @@ function keptSound(raw: unknown): KeptSoundSummary | null {
 }
 
 const share = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1;
+/** The most settings a kept device's state is read with (the Torus's effects keep at most nine, native-field/effectsLaw.ts). */
+const KEPT_DEVICE_SETTINGS = 32;
+/** A kept device's state as a flat record of settings, each a finite number, a switch or a word; null where it is anything else. */
+function keptSettings(raw: unknown): Record<string, number | boolean | string> | null {
+  if (!object(raw)) return null;
+  const entries = Object.entries(raw);
+  if (entries.length > KEPT_DEVICE_SETTINGS) return null;
+  for (const [key, value] of entries) {
+    if (!refText(key)) return null;
+    if (typeof value === 'number' ? !Number.isFinite(value) : typeof value === 'string' ? !refText(value) : typeof value !== 'boolean') return null;
+  }
+  return Object.fromEntries(entries) as Record<string, number | boolean | string>;
+}
 /** A kept rack's chain, macros and variations as the kernel validated them (kept.rs `KeptRack::validate`), or null where a row is not
  * what it says: a device a note device or an effect, a macro and each variation's values shares of 0 to 1, a value for every macro. */
 function keptRackRows(raw: Record<string, unknown>): Pick<KeptRackSummary, 'chain' | 'macros' | 'variations'> | null {
   if (!Array.isArray(raw.chain) || !Array.isArray(raw.macros) || !Array.isArray(raw.variations)) return null;
   const chain: KeptRackDevice[] = [];
   for (const row of raw.chain) {
-    if (!object(row) || !refText(row.device_ref) || (row.role !== 'note' && row.role !== 'effect')) return null;
-    chain.push({device_ref: row.device_ref, role: row.role});
+    const state = object(row) ? keptSettings(row.state) : null;
+    if (!object(row) || !refText(row.device_ref) || (row.role !== 'note' && row.role !== 'effect') || !state) return null;
+    chain.push({device_ref: row.device_ref, role: row.role, state});
   }
   const macros: KeptRackMacro[] = [];
   for (const row of raw.macros) {
