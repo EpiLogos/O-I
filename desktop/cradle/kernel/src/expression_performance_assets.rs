@@ -457,6 +457,7 @@ fn performance_fields(p: &Performance) -> Result<(PerformanceHeader, Value), Str
         native_sources,
         native_recordings,
         native_reservations,
+        torus_takes,
         content_digest,
     } = p;
     let header = PerformanceHeader {
@@ -493,6 +494,13 @@ fn performance_fields(p: &Performance) -> Result<(PerformanceHeader, Value), Str
         fields.insert(
             "native_reservations".into(),
             serde_json::to_value(native_reservations).map_err(|e| e.to_string())?,
+        );
+    }
+    // A Torus take is an edition field, kept whole as the kernel sealed it.
+    if !torus_takes.is_empty() {
+        fields.insert(
+            "torus_takes".into(),
+            serde_json::to_value(torus_takes).map_err(|e| e.to_string())?,
         );
     }
     Ok((header, Value::Object(fields)))

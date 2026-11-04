@@ -96,6 +96,7 @@ fn empty() -> Performance {
         native_sources: vec![],
         native_recordings: vec![],
         native_reservations: vec![],
+        torus_takes: vec![],
         content_digest: String::new(),
     }
     .seal()

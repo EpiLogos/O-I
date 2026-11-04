@@ -1390,18 +1390,21 @@ impl Document {
                 performance,
             } => {
                 performance.validate()?;
-                self.scene(&scene_ref)?.performance = Some(performance);
+                let scene = self.scene(&scene_ref)?;
+                // A Torus take is carried as the Scene kept it, or enters under the kernel's seal.
+                performance.admit_torus_takes(scene.performance.as_ref())?;
+                scene.performance = Some(performance);
             }
             Change::ScenePerformanceEdit {
                 scene_ref,
                 operations,
             } => {
                 let scene = self.scene(&scene_ref)?;
-                let old = scene
-                    .performance
-                    .as_ref()
-                    .ok_or("Scene has no retained performance")?;
-                scene.performance = Some(old.edited(operations)?);
+                // A Scene with no retained performance has one opened by a Torus take (O-I #855).
+                scene.performance = Some(match scene.performance.as_ref() {
+                    Some(old) => old.edited(operations)?,
+                    None => crate::expression_performance::Performance::opened_by(operations)?,
+                });
             }
             Change::ScenePerformanceClear { scene_ref } => {
                 self.scene(&scene_ref)?.performance = None;

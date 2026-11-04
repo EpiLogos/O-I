@@ -511,6 +511,7 @@ fn actual() -> (
         native_sources: vec![],
         native_recordings: vec![],
         native_reservations: vec![],
+        torus_takes: vec![],
         content_digest: String::new(),
     }
     .seal()
@@ -745,6 +746,7 @@ fn source_prepared() -> (Performance, Value) {
         native_sources: vec![asset],
         native_recordings: vec![],
         native_reservations: vec![],
+        torus_takes: vec![],
         content_digest: String::new(),
     }
     .seal()
@@ -855,6 +857,7 @@ fn activated_performance(actual: Value) -> (Performance, Value) {
         native_sources: vec![asset],
         native_recordings: vec![],
         native_reservations: vec![],
+        torus_takes: vec![],
         content_digest: String::new(),
     }
     .seal()

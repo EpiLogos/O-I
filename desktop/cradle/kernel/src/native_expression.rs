@@ -46,6 +46,15 @@ pub enum Request {
     Close {
         lease: String,
     },
+    /// Seal the Torus take that began at the checkpoint the owner gave whose `value_sha256` is
+    /// `checkpoint_sha256` (O-I #855): the acts this owner was sent that landed within the take's render,
+    /// the checkpoint, and the sha256 of the render's PCM, all as this kernel relayed them under the lease.
+    /// No worker request: the answer is the sealed `oi.torus-take/v1` a performance admits, or a refusal in
+    /// words where the take cannot be sealed.
+    TorusTake {
+        lease: String,
+        checkpoint_sha256: String,
+    },
     /// Ask QL to compose a K² binding from a bounded consumer request, then
     /// open it exactly as `Open` does. The request never names a program.
     Compose {
@@ -168,6 +177,9 @@ struct Owner {
     last_request_id: u64,
     // One bounded field/ACK witness, never a trace or private source cache.
     observation: Result<Value, String>,
+    /// What this owner was sent and answered that a Torus take is sealed from (O-I #855): bounded, gone
+    /// with the owner.
+    take: crate::expression_performance::torus::TakeWitness,
     stopped: bool,
 }
 
@@ -914,6 +926,7 @@ impl Manager {
                     "serialized_byte_len":request_bytes.len()
                 });
                 drop(request_bytes);
+                let command = request["command"].clone();
                 let reply = owner
                     .tx
                     .as_ref()
@@ -933,6 +946,9 @@ impl Manager {
                     {
                         owner.last_request_id = id;
                         owner.retain_acknowledgement(&reply, Some(request_observation));
+                        if reply["status"] == "ok" {
+                            owner.take.observe(&command, &reply);
+                        }
                         Ok(reply)
                     }
                     result => {
@@ -1023,6 +1039,22 @@ impl Manager {
                 let prepared = self.prepare_world(&request)?;
                 let composed = prepared.execute()?;
                 self.finish_compose(composed)
+            }
+            Request::TorusTake {
+                lease,
+                checkpoint_sha256,
+            } => {
+                let owner = self
+                    .active
+                    .as_ref()
+                    .ok_or("native-expression.unavailable: no active owner")?;
+                if lease != owner.lease {
+                    return Err("native-expression.foreign_lease".into());
+                }
+                let take = owner
+                    .take
+                    .seal(&checkpoint_sha256, &owner.lease, &owner.identity)?;
+                serde_json::to_value(take).map_err(|e| e.to_string())
             }
             Request::Close { lease } => {
                 if let Some(owner) = &self.active {
@@ -1154,6 +1186,7 @@ impl Manager {
             identity: Value::Null,
             last_request_id: 0,
             observation: Err("native acknowledgement not yet received".into()),
+            take: Default::default(),
             stopped: false,
         };
         let receipt = owner.receive()?;
@@ -4034,5 +4067,139 @@ print(json.dumps({"ok": True, "action": action, "data": data}))
             )
             .unwrap();
         }
+    }
+
+    /// O-I #855: the kernel seals a Torus take from what it relayed under its lease to a live owner: the
+    /// checkpoint the owner gave, each act at the sample it landed at, the render's parts and their PCM.
+    #[cfg(unix)]
+    #[test]
+    fn a_torus_take_is_sealed_from_what_the_owner_was_sent_under_the_lease() {
+        use crate::expression_performance::torus::value_sha256;
+        use std::os::unix::fs::PermissionsExt;
+        let dir =
+            std::env::temp_dir().join(format!("native-torus-take-test-{}", std::process::id()));
+        fs::create_dir_all(&dir).unwrap();
+        let script = dir.join("host.py");
+        fs::write(&script, r#"#!/usr/bin/env python3
+import json,sys
+base={'schema':'ql.field-host-receipt/v1','available':True,'instance_ref':'test:instance'}
+state={'samples':0,'end':0}
+def field(): return {'event_ref':'test:event','subject_ref':'test:subject','generation':'0','samples_elapsed':str(state['samples']),'sample_rate':48000,'audio':[]}
+def kept(at): return {'schema':'ql.torus-checkpoint/v1','taken_at_samples':str(at),'sample_rate':48000,'event':{'m2':{},'m3':{},'m3_commands':[]},'seeds':{'tick12':7},'shape_ref':'shape:torus/1','damping_per_second':0.5,'voices':['scene:logic/0'],'amplitudes':[[0.001,0.0]],'session':{'settings':{'tuning':'logic','tempo_bpm':120.0}},'law':'kept'}
+print(json.dumps(dict(base,status='ready',last_request_id='0',field=field())),flush=True)
+for line in sys.stdin:
+  r=json.loads(line); c=r['command']; op=c['operation']; extra={}
+  if op=='advance': state['samples']+=c['frames']
+  elif op=='torus-checkpoint': extra['torus_checkpoint']=kept(state['samples'])
+  elif op=='torus-render':
+    start=int(c['checkpoint']['taken_at_samples']) if 'checkpoint' in c else state['end']
+    end=start+c['frames']; state['end']=end
+    extra['torus_render']={'schema':'ql.torus-render/v1','from_samples':str(start),'frames':c['frames'],'sample_rate':48000,'audio':[(i%7)/7 for i in range(start,end)],'made_way':[],'checkpoint':kept(end),'continues':'render:%d'%end}
+  print(json.dumps(dict(base,status='ok',request_id=r['request_id'],last_request_id=r['request_id'],field=field(),**extra)),flush=True)
+"#).unwrap();
+        fs::set_permissions(&script, fs::Permissions::from_mode(0o700)).unwrap();
+        crate::test_stub::settle_stub(&script);
+        let _env = EnvGuard::set(&[
+            ("OI_QL_FIELD_HOST_BIN", Some(script.as_os_str())),
+            ("OI_QL_FIELD_WORKER_BIN", Some(script.as_os_str())),
+        ]);
+        let mut manager = Manager::default();
+        let opened = manager.open(&json!({"schema":"oi.native-expression-binding/v1","host":{"instance_ref":"test:instance"},"presentation":{"units_per_metre":1,"slots_a":[0],"slots_b":[0]}}).to_string(), Value::Null).unwrap();
+        let lease = opened["lease"].as_str().unwrap().to_owned();
+        let client = CentralClient::with("/nonexistent".into(), None, String::new());
+        let mut id = 0u64;
+        let mut exchange = |manager: &mut Manager, command: Value| {
+            id += 1;
+            manager
+                .apply(
+                    &client,
+                    Request::Exchange {
+                        lease: lease.clone(),
+                        request: json!({"schema":"ql.field-host-request/v1","instance_ref":"test:instance",
+                            "event_ref":"test:event","subject_ref":"test:subject","request_id":id.to_string(),"command":command}),
+                    },
+                )
+                .unwrap()
+        };
+        exchange(&mut manager, json!({"operation":"advance","frames":9600}));
+        let kept = exchange(&mut manager, json!({"operation":"torus-checkpoint"}))
+            ["torus_checkpoint"]
+            .clone();
+        let sha = value_sha256(&kept).unwrap();
+        let seal = |manager: &mut Manager, lease: &str| {
+            manager.apply(
+                &CentralClient::with("/nonexistent".into(), None, String::new()),
+                serde_json::from_value(
+                    json!({"operation":"torus_take","lease":lease,"checkpoint_sha256":sha}),
+                )
+                .unwrap(),
+            )
+        };
+        let key = json!([{"row":2,"column":3}]);
+        exchange(
+            &mut manager,
+            json!({"operation":"torus-play","keys":key,"amplitude":[0.3,0],"at_samples_elapsed":"12000"}),
+        );
+        exchange(&mut manager, json!({"operation":"advance","frames":4800}));
+        exchange(
+            &mut manager,
+            json!({"operation":"torus-release","keys":key}),
+        );
+        let early = seal(&mut manager, &lease).unwrap_err();
+        assert!(early.contains("has not been rendered"), "{early}");
+        exchange(&mut manager, json!({"operation":"advance","frames":9600}));
+        let acts = json!([
+            {"action":"strike","at_samples_elapsed":"12000","keys":key,"amplitude":[0.3,0]},
+            {"action":"release","at_samples_elapsed":"14400","keys":key}]);
+        let parts = acts.as_array().unwrap();
+        exchange(
+            &mut manager,
+            json!({"operation":"torus-render","checkpoint":kept,"acts":parts[..1],"frames":4800}),
+        );
+        exchange(
+            &mut manager,
+            json!({"operation":"torus-render","continues":"render:14400","acts":parts[1..],"frames":9600}),
+        );
+        assert!(seal(&mut manager, "lease:foreign")
+            .unwrap_err()
+            .contains("foreign_lease"));
+        let take = seal(&mut manager, &lease).unwrap();
+        assert_eq!(take["schema"], "oi.torus-take/v1");
+        assert_eq!(take["lease"], lease);
+        assert_eq!(
+            take["identity"],
+            json!({"instance_ref":"test:instance","event_ref":"test:event","subject_ref":"test:subject"})
+        );
+        // Each act as the take keeps it: a strength is the owner's pair of numbers.
+        let mut kept_acts = acts.clone();
+        kept_acts[0]["amplitude"] = json!([0.3, 0.0]);
+        assert_eq!(take["acts"], kept_acts);
+        assert_eq!(take["from_samples"], "9600");
+        assert_eq!(take["frames"], "14400");
+        let mut pcm = Sha256::new();
+        for i in 9600..24000u64 {
+            pcm.update((((i % 7) as f64 / 7.0) as f32).to_le_bytes());
+        }
+        assert_eq!(
+            take["render"]["pcm_sha256"],
+            format!("sha256:{:x}", pcm.finalize())
+        );
+        assert_eq!(take["render"]["parts"], "2");
+        let sealed: crate::expression_performance::torus::TorusTake =
+            serde_json::from_value(take).unwrap();
+        sealed.verify_seal().unwrap();
+        // The witness is the owner's: a closed owner seals nothing.
+        manager
+            .apply(
+                &client,
+                Request::Close {
+                    lease: lease.clone(),
+                },
+            )
+            .unwrap();
+        assert!(seal(&mut manager, &lease)
+            .unwrap_err()
+            .contains("no active owner"));
+        fs::remove_dir_all(dir).unwrap();
     }
 }
