@@ -8,6 +8,9 @@
 //     Search's own held query, so AIKit's knowledge search and resolve, Central's search of Control and Quaternal Logic's Vāk reads answer
 //     it, in Search's held reach and kinds; a Search pane that stands follows what the line asks;
 //   - nothing typed asks AIKit's own zero-query search (the same `knowledge` op) and keeps what it counted you opening;
+//   - in a Flow entry or the agent's composer, with no passage selected, a choice puts a reference to it where the @ was typed (§5; the
+//     owner's ruling on #820): the door's `insert` (searchLineDoor.ts), the reference that opens what it names (searchLineModel.ts
+//     referenceOf); the line over the frame (⌘K) keeps Enter's open;
 //   - opening a result goes through the Graph and source receiver (panels/knowledge.tsx, `oi:epi-open-knowledge`, as the Workbench
 //     opens one: native/Workbench.tsx:332-343), a page of a world through the page link route (CentralDocumentPane.tsx openPageLink),
 //     a Vāk entry in Search's own pane among its neighbours (searchPane.tsx openSearchPane); each open is then counted by AIKit
@@ -41,34 +44,19 @@ import {aikitWriteOp, ownerRouteWrite} from '../agent/devices/ownerRoutes'
 import {searchProjectOf, searchResultsOf} from './devices/searchBinding'
 import {openPageLink} from './documents/CentralDocumentPane'
 import {openSearchPane} from './searchPane'
-import {closeSearchLine, menuCommands, showLineReceipt, type LinePassage, type LineRequest} from './searchLineDoor'
+import {closeSearchLine, menuCommands, openKnowledgeAddress, showLineReceipt, type LinePassage, type LineRequest} from './searchLineDoor'
 import {actsOf, agentTurnText, documentPathOf, flowEntryHtml, flowEntryText, flowOf, forgetRequestOf, groupsOf, historyOn, jumpOrder, latelyOf, lineModeOf, lineResultsOf,
-  pathOf, placeWorldOf, sendPlanOf, unranked, usedWords, type AgentSessionFact, type LineAct, type LineResult, type SendFacts, type SendPlan} from './searchLineModel'
+  pathOf, placeWorldOf, referenceOf, sendPlanOf, unranked, usedWords, type AgentSessionFact, type LineAct, type LineResult, type SendFacts, type SendPlan} from './searchLineModel'
 import './searchLine.css'
 
 /** Results shown: the manual's default (§18.4 Parameters, "Results shown 5 to 30, 12"); no owner holds the setting yet. */
 const SHOWN = 12
 /** The typing settles this long before the held search changes (each change asks AIKit again). */
 const SETTLE_MS = 220
-/** How long the Graph and source receiver has to acknowledge an open before the line says it did not. */
-const OPEN_DEADLINE_MS = 10_000
 
 type Item = {readonly key: string; readonly act: LineAct} | {readonly key: string; readonly result: LineResult; readonly group?: string}
 const message = (cause: unknown): string => (cause instanceof Error ? cause.message : String(cause))
 const size = (passage: LinePassage) => `${passage.text.length} character${passage.text.length === 1 ? '' : 's'}`
-
-/** Open a result through the Graph and source receiver, as the Workbench does (native/Workbench.tsx:332-343): a wiki address as its
- * graph, a source as its page; resolves when the receiver acknowledges, rejects with its refusal. */
-function openKnowledge(result: LineResult, project: string | undefined): Promise<void> {
-  const address = result.address!
-  return new Promise<void>((resolve, reject) => {
-    let settled = false
-    const complete = (reason?: string) => { if (settled) return; settled = true; window.clearTimeout(deadline); if (reason) reject(new Error(reason)); else resolve() }
-    const deadline = window.setTimeout(() => complete('The Graph and source receiver (panels/knowledge.tsx) did not acknowledge this open.'), OPEN_DEADLINE_MS)
-    window.dispatchEvent(new CustomEvent('oi:epi-open-knowledge', {detail: {title: result.title, ...(project ? {project} : {}), address,
-      plane: address.kind === 'wiki' ? 'graph' : 'page', complete}}))
-  })
-}
 
 /** What AIKit counts: an open or a send the line made (`knowledge` use → `aikit knowledge route`, one familiarity observation). Its refusal
  * is said once the line has closed. History Off (`remember` false): nothing is counted. */
@@ -206,13 +194,26 @@ export function SearchLine({request}: {request: LineRequest}) {
       }
       setBusy(`Opening ${result.title}…`)
       if (path && linkTarget(path).kind === 'page') await openPageLink(transport, {kind: 'page', path})
-      else if (result.address) await openKnowledge(result, project)
+      else if (result.address) await openKnowledgeAddress(result.title, result.address, project)
       else { setProblem(`${result.title}: the owner gave no address to open it by.`); return }
       closeSearchLine({restore: false})
       countUse(transport, project, result, `Opened ${result.title}`, remember)
     } catch (cause) {
       setProblem(`${result.title} did not open: ${message(cause)}`)
     } finally { setBusy(null) }
+  }
+
+  /** A choice in a Flow entry or a composer (§5): a reference to it goes where the @ was typed, and the line closes there. */
+  const place = (result: LineResult) => {
+    setProblem(null)
+    const reference = referenceOf(result, query, project)
+    if (!reference) { setProblem(`${result.title}: the owner gave no address to open it by, so no reference to it can be put in place. Shift and Enter opens it where it can.`); return }
+    closeSearchLine({restore: false})
+    try { request.insert?.(reference) } catch (cause) {
+      showLineReceipt({ok: false, what: `@ ${result.title}`, text: `The reference was not put in place: ${message(cause)}`})
+      return
+    }
+    countUse(transport, project, result, `Put ${result.title} in place`, remember)
   }
 
   const send = async (result: LineResult, sending: Extract<SendPlan, {verb: 'send'}>) => {
@@ -293,6 +294,8 @@ export function SearchLine({request}: {request: LineRequest}) {
     if (!chosen || busy) return
     if ('act' in chosen) { runAct(chosen.act); return }
     const result = chosen.result
+    // In a Flow entry or a composer, with no passage selected, a choice puts its reference in place (§5); Shift and Enter opens it.
+    if (!shift && !passage && request.insert) { place(result); return }
     const chosenPlan = planOf(result)
     if (shift || chosenPlan.verb === 'open') { void open(result); return }
     if (chosenPlan.verb === 'dim') { setProblem(chosenPlan.why); return }
@@ -364,6 +367,6 @@ export function SearchLine({request}: {request: LineRequest}) {
       })}
     </ul>
     {problem && <p className="search-line-problem" role="alert">{problem}</p>}
-    <p className="search-line-status" role="status">{status}<span className="search-line-keys">↑↓ choose · ↵ {mode === 'acts' ? 'run' : passage && !enterOpens ? 'send · ⇧↵ open' : 'open'} · esc</span></p>
+    <p className="search-line-status" role="status">{status}<span className="search-line-keys">↑↓ choose · ↵ {mode === 'acts' ? 'run' : passage && !enterOpens ? 'send · ⇧↵ open' : request.insert && !passage ? 'put in place · ⇧↵ open' : 'open'} · esc</span></p>
   </div>
 }

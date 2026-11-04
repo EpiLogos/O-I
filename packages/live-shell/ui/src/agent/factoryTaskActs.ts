@@ -47,12 +47,12 @@ async function act(transport: KernelTransportStatus, op: KernelOp): Promise<Reco
   return call.outcome.data as Record<string, unknown>
 }
 
-/** One act of the Agent rack's chain list on a session's space (§19.15): AIKit's bench, attach, drag out or hot-swap of a chain's session,
- * or its Decision helper of the space, through the kernel. Its receipt, or AIKit's refusal in its words; either way the agency readers are
- * told, so the rack reads the spaces again. */
+/** One act of the Agent rack's chain list on a session's space (§19.15): AIKit's bench, attach, drag out, hot-swap or detach (Delete, as
+ * the session track's own) of a chain's session, or its Decision helper of the space, through the kernel. Its receipt, or AIKit's refusal
+ * in its words; either way the agency readers are told, so the rack reads the spaces again. */
 export async function chainListAct(transport: KernelTransportStatus,
   op: Extract<KernelOp, {op: 'encounter_session_bench' | 'encounter_session_attach' | 'encounter_session_drag_out' | 'encounter_session_hot_swap'
-    | 'encounter_session_decision_helper'}>, cause: string): Promise<Record<string, unknown>> {
+    | 'encounter_session_decision_helper' | 'encounter_session_detach'}>, cause: string): Promise<Record<string, unknown>> {
   try { return await act(transport, op) } finally {
     tellOwnerChanged({topic: 'agency', cause, ...('agent_session' in op ? {agentSession: op.agent_session} : {})})
   }

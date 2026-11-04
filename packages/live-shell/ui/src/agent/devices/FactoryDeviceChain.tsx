@@ -530,6 +530,7 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
       dragOut: input => chainListAct(transport, {op: 'encounter_session_drag_out', ...input}, 'a chain was dragged out into a space of its own'),
       hotSwap: input => chainListAct(transport, {op: 'encounter_session_hot_swap', ...input}, 'a chain\'s agent was hot-swapped'),
       decisionHelper: input => chainListAct(transport, {op: 'encounter_session_decision_helper', ...input}, input.bound ? 'a Decision helper joined the rack' : 'the Decision helper left the rack'),
+      detach: input => chainListAct(transport, {op: 'encounter_session_detach', ...input}, 'a chain was deleted from the rack'),
       // A group's Model and Effort macros: each chain's session's model select in AIKit (the encounter's model-read, then model-select).
       sessionModel: {read: ({project, agent_session}) => sessionModelRead(transport, project, agent_session), select: ({project, request}) => sessionModelSelect(transport, project, request)},
     } : {}),
@@ -545,8 +546,9 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   // Each chain's chip (§19.15 the chain list): the model its session last reported, from Actuation's usage records over every session.
   const groupUsage = useActuationRead(transport, groupTrack ? {kind: 'usage-list'} : null)
   const chainModels = useMemo(() => (groupUsage.status === 'answered' ? lastUsageModels(groupUsage.value) : null), [groupUsage])
-  // A group's Model and Effort macros stand where every agent chain's session stands: its model as its harness reports it (AIKit's model-read).
-  const macroChains = useMemo(() => agentChainSessions(groupTrack, tracks), [groupTrack, tracks])
+  // A group's Model and Effort macros, and a lone session's Model, stand where every agent chain's session stands: its model as its harness
+  // reports it (AIKit's model-read).
+  const macroChains = useMemo(() => agentChainSessions(groupTrack, tracks, loneTrack), [groupTrack, tracks, loneTrack])
   const chainModelReadings = useChainModelReadings(transport, macroChains)
   const agentsetDesignBinding = useMemo(() => agentsetBinding({group: groupTrack, session: loneTrack, agent: oneAgent?.values ?? null, tracks, models, holds,
     nowUnixMs: sessions?.nowUnixMs ?? 0, ...(setRef ? {set: groupSet} : {}), ...(helperStands && helperDevice ? {helper: helperDesignBinding.values} : {}), soloed: shell.soloed,

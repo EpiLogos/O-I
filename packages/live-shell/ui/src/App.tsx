@@ -20,7 +20,7 @@ import './shell/modeSurface.css'
 import { useSetSummary, useShellConfig } from './shell/useSet'
 import { useSetDocument } from './shell/document'
 import { getPanels, type PanelContext } from './shell/panels'
-import { configureSettingsHost, openSettings, returnToMode, setSettingsReturnLabel, useSettingsHost } from './settings/host'
+import { configureSettingsHost, LOGIN_TERMINAL_OPEN, LOGIN_TERMINAL_PRESENT, openSettings, returnToMode, setSettingsReturnLabel, useSettingsHost, type LoginTerminalRequest } from './settings/host'
 import {createNativeContentActions, readNativeExpressionsContent} from './shell/nativeContent'
 import type {NativeCompositionViewSource} from './shell/compositionViews'
 import {useWorldTemporalReading, type WorldTimelineView} from './projections/useWorldTemporalReading'
@@ -285,6 +285,23 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     requestAnimationFrame(() => settingsOrigin.current?.focus())
   }, [])
   useEffect(() => { configureSettingsHost(settingsHost.adapter, returnFromSettings) }, [settingsHost.adapter, returnFromSettings])
+  // Sign in from Settings (manual §10.10 Rules): the login runs in a terminal in the Workbench, where you answer it. Settings steps back
+  // and the Workbench is presented first, then handed the request (it acts only while presented: settings/host.ts).
+  const [loginIntent, setLoginIntent] = useState<LoginTerminalRequest | null>(null)
+  useEffect(() => {
+    const present = (event: Event) => {
+      const detail = (event as CustomEvent<LoginTerminalRequest>).detail
+      if (!detail?.id || !detail.command?.length) return
+      presentSettings(false); openSettings(null); setCenterPanel('native.workbench'); setLoginIntent(detail)
+    }
+    window.addEventListener(LOGIN_TERMINAL_PRESENT, present)
+    return () => window.removeEventListener(LOGIN_TERMINAL_PRESENT, present)
+  }, [])
+  useEffect(() => {
+    if (!loginIntent || settingsPresented || centerPanel !== 'native.workbench') return
+    window.dispatchEvent(new CustomEvent(LOGIN_TERMINAL_OPEN, {detail: loginIntent}))
+    setLoginIntent(null)
+  }, [loginIntent, settingsPresented, centerPanel])
   // Settings' way back names the work it returns to: the mode the frame stands in (manual §10.10; #739 gap 19).
   useEffect(() => { setSettingsReturnLabel(returnToMode(frameMode)) }, [frameMode])
   useEffect(() => {

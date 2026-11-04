@@ -58,6 +58,7 @@ import {isRetainedCentreKind, WARM_WORKSPACES, type WarmTreeRef} from '../../../
 import {RETAINED_VIEW_BUDGET} from '../../../../../desktop/cradle/src/surface/runtime'
 import {CENTRAL_DOCUMENT_DRAG, CENTRAL_DOCUMENT_PANE_KIND, documentTargetOf, openCentralDocumentAt, subjectOf, type CentralDocumentTarget} from '../central/documents/centralDocuments'
 import {usePaneDrafts} from '../central/documents/paneDrafts'
+import {LOGIN_TERMINAL_OPEN, type LoginTerminalRequest} from '../settings/host'
 import './workbench.css'
 
 const OMIT_BODY_KINDS = ['expressions'] as const
@@ -500,7 +501,8 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
     if (!side && id && kernel.transport.kind === 'tauri') items.push({action_ref: 'surface.detach', title: 'Detach into native window', enabled: !!book.current.layout.surfaces[id] && nativeDetachedBodySupported(book.current.layout.surfaces[id].kind)})
     if (items.length) setMenu({x, y, items, surfaceId: id})
   }
-  const openKind = (kind: string, id?: string, project = latest.current.book.current.project) => {
+  /** `carried`: a terminal that runs one program (Settings' Sign in: the harness's declared login), under its own title. */
+  const openKind = (kind: string, id?: string, project = latest.current.book.current.project, carried?: {readonly command: readonly string[]; readonly title: string}) => {
     const held = registeredHostedSurfaces.some(entry => entry.descriptor.kind === kind) ? Object.values(latest.current.book.current.layout.surfaces).find(binding => binding.kind === kind && binding.project === project) : undefined
     if (held && held.id !== id) {
       latest.current.book.setLayout(layout => openBinding(id ? executeFrameAction(layout, 'surface.close', {surfaceId: id}) : layout, held))
@@ -511,7 +513,8 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
       const root = kernel.snapshot.navigator?.root?.root ?? config?.world_scope?.personal_ground
       const path = kernel.snapshot.navigator?.root?.work.projects.find(entry => entry.name === project)?.path
       const cwd = path?.startsWith('/') ? path : root && path ? `${root.replace(/\/$/, '')}/${path}` : root
-      insert({id: id ?? crypto.randomUUID(), kind, title: kind === 'terminal' ? 'Terminal' : 'Browser', project, ...(kind === 'terminal' ? {terminal: {cwd}} : {browser: {url: ''}})}, id)
+      insert({id: id ?? crypto.randomUUID(), kind, title: kind === 'terminal' ? carried?.title ?? 'Terminal' : 'Browser', project,
+        ...(kind === 'terminal' ? {terminal: {cwd, ...(carried ? {command: [...carried.command]} : {})}} : {browser: {url: ''}})}, id)
     } else insert(withHostedDescriptor({id: id ?? crypto.randomUUID(), kind, title: registeredHostedSurfaces.find(entry => entry.descriptor.kind === kind)?.descriptor.title ?? kind, project}), id)
   }
 
@@ -721,8 +724,8 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
     return () => {live = false; unlisten.forEach(stop => stop())}
   }, [kernel.transport.kind, workspace.accessReady, workspace.accessEpoch, report])
 
-  const callbacks = useRef({freshChoice, createFlow, openEncounter, execute, report, insert, capture})
-  callbacks.current = {freshChoice, createFlow, openEncounter, execute, report, insert, capture}
+  const callbacks = useRef({freshChoice, createFlow, openEncounter, execute, report, insert, capture, openKind})
+  callbacks.current = {freshChoice, createFlow, openEncounter, execute, report, insert, capture, openKind}
   useEffect(() => {
     const ownsPresented = (id?: string) => {
       if (host.current?.closest<HTMLElement>('.inhabitant')?.hidden) return false
@@ -768,6 +771,16 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
         if (typeof request.note === 'string' && request.note) callbacks.current.report(request.note)
       } catch (cause) {callbacks.current.report(cause)}
     }
+    // Settings' Sign in (settings/host.ts): one terminal under the request's id, running the harness's declared login, answered in words.
+    const loginOpen = (event: Event) => {
+      const request = (event as CustomEvent<LoginTerminalRequest>).detail
+      if (!request?.id || !request.command?.length || !ownsPresented()) return
+      try {
+        callbacks.current.capture(undefined, true)
+        callbacks.current.openKind('terminal', request.id, undefined, {command: request.command, title: request.title})
+        request.complete?.()
+      } catch (cause) {request.complete?.(cause instanceof Error ? cause.message : String(cause))}
+    }
     const message = (event: Event) => {if (ownsPresented()) callbacks.current.report((event as CustomEvent<{message?: string}>).detail?.message ?? 'The native workspace operation was refused.')}
     const key = (event: KeyboardEvent) => {
       if (event.defaultPrevented || !ownsPresented()) return
@@ -781,7 +794,7 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
       if (!ownsPresented() || !id || !/^device-recovery:[a-zA-Z0-9-]{1,80}$/.test(id) || !readUnplacedDraft(id)?.unverified_recovery) return
       latest.current.book.setLayout(layout => openBinding(layout, {id, kind: 'draft', title: 'Recovered device draft', project: latest.current.book.current.project}))
     }
-    const pairs: [string, EventListener][] = [['oi:fresh-choice', fresh], ['oi:place-draft', place], ['oi:new-tab', newTab], ['oi:open-encounter', encounterOpen], ['oi:recover-device-copy', recovery], ['oi:epi-open-source', sourceOpen], ['oi:workspace-message', message]]
+    const pairs: [string, EventListener][] = [['oi:fresh-choice', fresh], ['oi:place-draft', place], ['oi:new-tab', newTab], ['oi:open-encounter', encounterOpen], ['oi:recover-device-copy', recovery], ['oi:epi-open-source', sourceOpen], [LOGIN_TERMINAL_OPEN, loginOpen], ['oi:workspace-message', message]]
     pairs.forEach(([name, receive]) => window.addEventListener(name, receive)); window.addEventListener('keydown', key)
     return () => {pairs.forEach(([name, receive]) => window.removeEventListener(name, receive)); window.removeEventListener('keydown', key)}
   }, [])

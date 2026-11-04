@@ -25,7 +25,9 @@ import {useContext, useCallback, useEffect, useRef, useState} from 'react'
  * opens the shell's search line at the caret with the passage and where it
  * came from — this Flow, the link back (central/searchLineDoor.ts; DLW §18.4,
  * O-I #820) — and on close asks the form to put the caret and the selection
- * back (`oi:at-search-closed`).
+ * back (`oi:at-search-closed`). With no passage selected, a choice in the line puts a reference to it where the
+ * @ was typed (§5; the owner's ruling on #820): the host hands the form the reference (`oi:at-search-insert`),
+ * and the form writes it into the entry as a link, its own edit; Esc leaves the @ as typed.
  *
  * A link the page follows (⌘-click in an entry, a click elsewhere) reaches the
  * host as `oi:page-link` (ql-flow.html); the host opens it in the shell
@@ -68,6 +70,7 @@ import {useContext, useCallback, useEffect, useRef, useState} from 'react'
 
 import {embedDocument, parseInstance, type QlDoc} from '../../../../../desktop/cradle/src/flow/instance'
 import {TEMPLATE_V4} from '../../../../../desktop/cradle/src/flow/plural'
+import {refusalWords} from '../../../../../desktop/cradle/src/shared/Refusal'
 import flowForm from '../../../../../desktop/cradle/documents/ql-flow.html?raw'
 import {readFlowInstance, writeFlowInstance, type FlowInstance} from '../../../../../desktop/cradle/src/flow/instances'
 import {documentPayloadSource, documentScripts, useDocumentFrame, useDocumentHostRead, type FrameIsland} from '../../../../../desktop/cradle/src/document/frame'
@@ -77,7 +80,7 @@ import {SaveOutcomeChip} from './inhabitantCard.tsx'
 import {linkTarget, PAGE_LINK_MESSAGE, type PageLinkTarget} from './DocumentPageFace'
 import './inhabitantDevices.css'
 import {DocumentPaneContext, documentStateWords, publishDocument, reachedDocument, revisionShort, withdrawDocument, type DocumentInPane} from '../central/documents/documentDoor'
-import {openSearchLine} from '../central/searchLineDoor'
+import {openReference, openSearchLine, referenceTargetOf} from '../central/searchLineDoor'
 import {flowPacketOf, type PagePacketItem} from '../central/devices/pageReadings'
 import {followDocumentPacket} from '../central/devices/documentPacketContext'
 import {keepDraft, keptDraftMoved, keptDraftNotice, keptDraftOf, keptDraftRefusal, releaseKeptDraft, useDraftKeeping} from '../central/documents/keptDrafts'
@@ -91,6 +94,8 @@ import {AutosaveGlyph} from '../central/documents/AutosaveGlyph'
  * closes, so the form puts the caret and the selection back. */
 export const AT_SEARCH_MESSAGE = 'oi:at-search'
 export const AT_SEARCH_CLOSED_MESSAGE = 'oi:at-search-closed'
+/** The message the host sends the form when a choice in the line puts a reference where the @ was typed (§5): its address and its words. */
+export const AT_SEARCH_INSERT_MESSAGE = 'oi:at-search-insert'
 
 export interface DocumentFlowFaceProps {
   readonly transport: KernelTransportStatus
@@ -383,7 +388,12 @@ export function FlowFace({transport, location, presentation = 'device', openLink
   useEffect(() => {
     const listener = (event: MessageEvent) => {
       if (event.source !== frame.current?.contentWindow || (event.data as {type?: unknown})?.type !== PAGE_LINK_MESSAGE) return
-      const target = linkTarget((event.data as {href?: unknown}).href)
+      const {href, text} = event.data as {href?: unknown; text?: unknown}
+      // A reference the line put in place opens through the owner that opens it from the line (searchLineDoor.ts openReference).
+      const title = typeof text === 'string' && text.trim() ? text.trim() : String(href)
+      const reference = referenceTargetOf(href)
+      if (reference) { void openReference(reference, title).then(() => setNotice(undefined), cause => setNotice(refusalWords(`${title} did not open.`, cause))); return }
+      const target = linkTarget(href)
       if (target.kind === 'none') { setNotice(target.why); return }
       if (!openLink) { setNotice('No pane tree is mounted to open the link in.'); return }
       setNotice(undefined)
@@ -407,7 +417,8 @@ export function FlowFace({transport, location, presentation = 'device', openLink
       const x = typeof data.at?.x === 'number' ? box.left + data.at.x : box.left, y = typeof data.at?.y === 'number' ? box.top + data.at.y : box.top
       const text = typeof data.passage === 'string' && data.passage.trim() ? data.passage : null
       openSearchLine({door: 'flow', at: {x, y}, passage: text ? {text, from: `Flow — ${labelNow.current}`, path: location.path} : null,
-        restore: () => { host.focus(); host.contentWindow?.postMessage({type: AT_SEARCH_CLOSED_MESSAGE}, '*') }})
+        restore: () => { host.focus(); host.contentWindow?.postMessage({type: AT_SEARCH_CLOSED_MESSAGE}, '*') },
+        insert: text ? null : reference => { host.focus(); host.contentWindow?.postMessage({type: AT_SEARCH_INSERT_MESSAGE, href: reference.href, title: reference.title}, '*') }})
     }
     window.addEventListener('message', listener)
     return () => window.removeEventListener('message', listener)

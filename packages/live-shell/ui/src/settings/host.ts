@@ -37,3 +37,19 @@ export function setupRequest(returnLabel?: string, folder?: string): SettingsReq
 }
 export function getSettingsHostSnapshot(): SettingsHost { return host }
 export function useSettingsHost(): SettingsHost { return useSyncExternalStore(listener => { listeners.add(listener); return () => listeners.delete(listener) }, getSettingsHostSnapshot) }
+
+/** Sign in (manual §10.10 Rules: "Sign in runs it in a terminal, where you answer it, and the page reads the result back"). Settings
+ * asks the frame for a login terminal (LOGIN_TERMINAL_PRESENT): App steps back from Settings and presents the Workbench, then hands it
+ * the request (LOGIN_TERMINAL_OPEN), and the Workbench opens one terminal under the request's id running the declared command, answering
+ * `complete` (with its refusal in words, if it cannot). The page then reads the end of that terminal (terminalReadings.ts) and AIKit's
+ * client status again. */
+export const LOGIN_TERMINAL_PRESENT = 'oi:candidate-login-terminal-present'
+export const LOGIN_TERMINAL_OPEN = 'oi:epi-open-login-terminal'
+export interface LoginTerminalRequest {
+  /** The terminal's binding id: the page watches that terminal's reading by it. */
+  readonly id: string
+  /** The login's declared argv, as AIKit's harness profile names it (`aikit harness auth <client>`'s own_login). */
+  readonly command: readonly string[]
+  readonly title: string
+  readonly complete?: (error?: string) => void
+}

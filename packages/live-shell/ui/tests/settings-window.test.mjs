@@ -42,6 +42,7 @@ const {renderToStaticMarkup} = await import('react-dom/server')
 const host = await import('../src/frame/devices/deviceHost.tsx')
 const win = await import('../src/settings/windowValues.ts')
 const settingsPages = await import('../src/settings/windowPages.ts')
+const settingsHost = await import('../src/settings/host.ts')
 const {createDevelopmentSettingsAdapter} = await import('../src/settings/development.ts')
 const {design, searchResults} = await import('../src/inhabitants/catalogue/panels/settings__window.tsx')
 const {initialScope, settingKey, createDraft, settingHelp} = await import('../src/settings/model.ts')
@@ -1656,4 +1657,134 @@ test('CODE-DERIVED — the Ground step keeps the Day\'s form in a ground no O-I 
   assert.match(row(project).change, /Work\/O-I\/desktop\/cradle\/documents/)
   assert.equal(stepOf(project, 'ground').state, 'accepted', 'the owner\'s ground changes nothing')
   assert.match(row(of({state: 'refused', error: 'no route'})).why, /no route/)
+})
+
+// ── Sign in (manual §10.10 Rules; #758, round 862) ──────────────────────────────────────────────────────────────────────────
+
+/** AIKit's client status (`aikit client status --json`, the kernel's harness_status) and each client's declared logins (`aikit harness
+ * auth <client> --json`, harness_auth_describe), shaped as AIKit answers them (aikit-cli client.rs, harness_auth.rs AuthFace). */
+const LOGIN_STATUS = {clients: [
+  {client: 'codex', harness: 'codex', detection: 'detected', installed: true, credential: 'credential-gated',
+    credential_reason: 'credential:openai is unbound and the harness\'s own login store at ~/.codex is absent — the ChatGPT OAuth flow'},
+  {client: 'claude-code', harness: 'claude-code', detection: 'detected', installed: true, credential: 'ok', credential_reason: null},
+  {client: 'hermes', harness: 'hermes', detection: 'detected', installed: true, credential: 'unsupported', credential_reason: 'the hermes profile declares no key-delivery facts'},
+  {client: 'opencode', harness: 'opencode', detection: 'unavailable', installed: false, credential: 'credential-gated', credential_reason: 'not on PATH'},
+  {client: 'pi', harness: 'pi', detection: 'detected', installed: true, credential: 'unsupported', credential_reason: 'no harness profile carries pi'},
+]}
+const LOGIN_FACES = {
+  codex: {slug: 'codex', env_var: [{provider_ref: 'provider:openai', env_var: 'OPENAI_API_KEY'}], own_login: [{provider_ref: 'provider:openai', runnable: true, argv: ['codex', 'login'], note: 'the ChatGPT OAuth flow'}]},
+  'claude-code': {slug: 'claude-code', env_var: [{provider_ref: 'provider:anthropic', env_var: 'ANTHROPIC_API_KEY'}], own_login: [{provider_ref: 'provider:anthropic', runnable: false, note: 'Claude Code signs in inside itself: run claude and type /login.'}]},
+  opencode: {slug: 'opencode', own_login: [{provider_ref: 'provider:openai', runnable: true, argv: ['opencode', 'auth', 'login']}]},
+}
+const loginAdapter = (status = LOGIN_STATUS, asked = []) => ({invoke: async op => {
+  asked.push(op)
+  if (op.op === 'harness_status') return {outcome: {result: 'harness_status_reading', data: status}}
+  if (op.op === 'harness_auth_describe' && LOGIN_FACES[op.harness]) return {outcome: {result: 'harness_auth_reading', data: LOGIN_FACES[op.harness]}}
+  if (op.op === 'harness_auth_describe' && op.harness === 'pi') return {error: '[harness_auth.unknown_harness] `pi` is not a harness AIKit carries a profile for'}
+  return {error: `aikit harness auth ${op.harness} did not answer within 10s`}
+}})
+const HARNESS_READING = {kind: 'live', label: 'live', observed_at_unix_ms: 1, heldDefault: null, defaultState: {state: 'ok'}, providers: {state: 'ok', rows: []},
+  harnesses: {state: 'ok', rows: ['codex', 'claude-code', 'hermes', 'opencode', 'pi'].map(client => ({harness: client, client, detection: client === 'opencode' ? 'unavailable' : 'detected',
+    detected: client !== 'opencode', detection_reason: null, installed: client !== 'opencode', config_dir: null, dispatch: 'acp', capability: 'descriptor', effect: null, items: null, adapter_gap: null}))},
+  catalogue: {state: 'ok', rows: {count: 0, entries: []}}}
+
+test('CODE-DERIVED — Sign in is each harness\'s own login as AIKit declares it: a runnable one runs its command, one that signs in inside itself says so in its own words and offers no button, a login that cannot be read affects that harness alone', async () => {
+  const asked = []
+  const logins = await settingsPages.harnessLogins(loginAdapter(LOGIN_STATUS, asked)).read()
+  assert.deepEqual(asked.map(op => op.op === 'harness_auth_describe' ? op.harness : op.op), ['harness_status', 'codex', 'claude-code', 'hermes', 'pi'],
+    'AIKit\'s client status, then the declared logins of each client it detects')
+  const rows = Object.fromEntries(JSON.parse(win.harnessValues(HARNESS_READING, logins).harnesses).map(row => [row.client, row]))
+  assert.deepEqual(rows.codex.signIn, [{key: 'codex|provider:openai', provider: 'openai', command: 'codex login'}], 'a runnable login: its command, as AIKit declares it')
+  assert.match(rows.codex.loginNow, /^AIKit does not find what codex needs to sign in yet: credential:openai is unbound/, 'what AIKit finds now, in its words')
+  assert.equal(rows['claude-code'].signIn, undefined, 'a harness that signs in inside itself offers no button')
+  assert.equal(rows['claude-code'].signInNote, 'Claude Code signs in inside itself: run claude and type /login.', '… and says so in its own words')
+  assert.match(rows.hermes.signInUnread, /^AIKit did not say how hermes signs in: aikit harness auth hermes did not answer within 10s$/, 'a login it cannot read is that harness\'s alone')
+  for (const client of ['codex', 'claude-code', 'pi']) assert.equal(rows[client].signInUnread, undefined, `${client}: unaffected by hermes`)
+  assert.deepEqual([rows.pi.signIn, rows.pi.signInNote], [undefined, undefined], 'a harness AIKit carries no profile for has no login to offer, and no fault')
+  assert.deepEqual([rows.opencode.signIn, rows.opencode.signInNote], [undefined, undefined], 'a harness not on this computer is installed first: no login stands on it')
+  // Credentials: beside a provider's key, the runnable logins of the harnesses here that serve that provider.
+  const creds = JSON.parse(win.credentialValues([{credential: 'ai-kit:credential:openai', provider: 'provider:openai', reference: 'keychain://aikit/openai', revoked: false, verifiedAt: null},
+    {credential: 'ai-kit:credential:anthropic', provider: 'provider:anthropic', reference: 'keychain://aikit/anthropic', revoked: false, verifiedAt: null}], {}, null, logins).credentials)
+  assert.deepEqual(creds[0].signIn, [{key: 'codex|provider:openai', harness: 'codex', command: 'codex login'}], 'OpenAI\'s key: codex\'s own login, never opencode\'s (not on this computer)')
+  assert.equal(creds[1].signIn, undefined, 'Anthropic\'s key: Claude Code signs in only inside itself, so no button stands beside it')
+  assert.equal(JSON.parse(win.credentialValues([], {}, null, null).credentials).length, 0, 'no login reading: nothing invented')
+  // The login to run, and the result read back after it ends.
+  const codex = settingsPages.loginOf(logins, 'codex|provider:openai')
+  assert.deepEqual([codex.command, codex.title], [['codex', 'login'], 'Sign in · codex'])
+  assert.throws(() => settingsPages.loginOf(logins, 'claude-code|provider:anthropic'), /^Error: Claude Code signs in inside itself: run claude and type \/login\.$/)
+  assert.throws(() => settingsPages.loginOf(logins, 'hermes|provider:x'), /AIKit did not say how hermes signs in/)
+  assert.throws(() => settingsPages.loginOf(null, 'codex|provider:openai'), /AIKit's client status is not read yet/)
+  assert.throws(() => settingsPages.loginOf(logins, 'nosuch|provider:x'), /nosuch is no harness client AIKit finds on this computer/)
+  const after = await settingsPages.harnessLogins(loginAdapter({clients: LOGIN_STATUS.clients.map(row => row.client === 'codex' ? {...row, credential: 'ok', credential_reason: null} : row)})).read()
+  assert.equal(win.loginReadBack(codex, after), 'codex login has ended, and AIKit now finds what codex needs to sign in.')
+  assert.match(win.loginReadBack(codex, logins), /^codex login has ended, but AIKit does not find what codex needs yet: credential:openai is unbound/)
+  assert.match(win.loginReadBack(codex, null, 'the kernel did not answer'), /^codex login has ended, but AIKit's client status could not be read again: the kernel did not answer$/)
+  await assert.rejects(settingsPages.harnessLogins({}).read(), /not connected/, 'no kernel channel: said, never an empty list')
+})
+
+test('SCRIPTED — Sign in runs the login in a terminal in the Workbench, where you answer it: the request names its id and command, a refusal comes back in words, and the end of that terminal is what the page reads back on', async () => {
+  const was = globalThis.window, target = new EventTarget(), heard = []
+  globalThis.window = target
+  try {
+    target.addEventListener(settingsHost.LOGIN_TERMINAL_PRESENT, event => { heard.push(event.detail); event.detail.complete() })
+    const id = await settingsPages.openLoginTerminal({command: ['codex', 'login'], title: 'Sign in · codex'})
+    assert.equal(heard.length, 1)
+    assert.deepEqual([heard[0].id, heard[0].command, heard[0].title], [id, ['codex', 'login'], 'Sign in · codex'])
+    const refusing = new EventTarget()
+    globalThis.window = refusing
+    refusing.addEventListener(settingsHost.LOGIN_TERMINAL_PRESENT, event => event.detail.complete('The real native terminal requires the desktop host.'))
+    await assert.rejects(settingsPages.openLoginTerminal({command: ['codex', 'login'], title: 'x'}), /^Error: The real native terminal requires the desktop host\.$/)
+    globalThis.window = new EventTarget()
+    await assert.rejects(settingsPages.openLoginTerminal({command: ['codex', 'login'], title: 'x'}, 5), /^Error: No Workbench took the login terminal, so nothing ran\.$/)
+  } finally { globalThis.window = was }
+  // The end: the terminal's process exits, or its tab closes after it stood.
+  const terminals = await import('../../../../desktop/cradle/src/terminal/terminalReadings.ts')
+  const reading = (id, exited) => ({id, title: 'Sign in · codex', cwd: '/w', cwdStanding: null, command: 'codex login', exited, archived: false, fontSize: 12, scrollback: 1000, lines: 1, watch: false, attachedAt: 1})
+  const hand = {fontSize() {}, scrollback() {}, watch() {}}
+  let ended = false
+  const exits = settingsPages.loginEnded('t-exit').then(() => { ended = true })
+  terminals.publishTerminal(reading('t-exit', false), hand)
+  await new Promise(resolve => setTimeout(resolve, 0))
+  assert.equal(ended, false, 'still running: nothing is read back')
+  terminals.publishTerminal(reading('t-exit', true), hand)
+  await exits
+  terminals.retireTerminal('t-exit')
+  const closes = settingsPages.loginEnded('t-close')
+  terminals.publishTerminal(reading('t-close', false), hand)
+  terminals.retireTerminal('t-close')
+  await closes
+})
+
+test('SCRIPTED — the design draws Sign in where the manual puts it: on each harness client with a login of its own, beside a provider\'s key on Credentials; the note of one that signs in inside itself, no button; and the result read back', () => {
+  const tr = (markup, name) => markup.split('<tr').find(row => row.includes(`<b>${name}</b>`)) ?? ''
+  const harnesses = drawn({...design.defaults}, 'harnesses')
+  assert.match(tr(harnesses, 'Codex'), /Sign in…/, 'Codex: its own login')
+  assert.match(tr(harnesses, 'Codex'), /codex login/, '… naming the command it runs')
+  assert.doesNotMatch(tr(harnesses, 'Claude Code'), /Sign in…/, 'Claude Code signs in inside itself: no button')
+  assert.match(tr(harnesses, 'Claude Code'), />Signs in inside itself</, '… says so')
+  assert.match(tr(harnesses, 'Claude Code'), /data-i="Sign in\|Claude Code signs in inside itself: run claude and type \/login\."/, '… in its own words when you point at it')
+  assert.doesNotMatch(tr(harnesses, 'OpenCode'), /Sign in…/, 'not installed: no login stands')
+  const read = drawn({...design.defaults, loginSaid: 'codex login has ended, and AIKit now finds what codex needs to sign in.'}, 'harnesses')
+  assert.match(read, /codex login has ended, and AIKit now finds what codex needs to sign in\./, 'the result read back stands on the page')
+  const credentials = drawn({...design.defaults}, 'credentials')
+  assert.match(tr(credentials, 'OpenAI'), /Sign in…/, 'beside OpenAI\'s key: the harness that serves it signs in')
+  assert.doesNotMatch(tr(credentials, 'Anthropic'), /Sign in…/)
+  const text = readFileSync(new URL('../src/inhabitants/catalogue/panels/settings__window.tsx', import.meta.url), 'utf8')
+  assert.doesNotMatch(text, /Opens this harness's connection beside the conversation/, 'no stale claim of a connection beside the conversation')
+})
+
+test('CODE-DERIVED — the login terminal\'s door: App steps back from Settings and presents the Workbench, which opens the terminal under the request\'s id with its command; the wiring names AIKit\'s routes, never a navigation', () => {
+  const app = readFileSync(new URL('../src/App.tsx', import.meta.url), 'utf8')
+  const bench = readFileSync(new URL('../src/native/Workbench.tsx', import.meta.url), 'utf8')
+  const pages = readFileSync(new URL('../src/settings/windowPages.ts', import.meta.url), 'utf8')
+  assert.match(app, /addEventListener\(LOGIN_TERMINAL_PRESENT/, 'App hears Sign in')
+  assert.match(app, /presentSettings\(false\); openSettings\(null\); setCenterPanel\('native\.workbench'\); setLoginIntent\(/, 'Settings steps back and the Workbench is presented')
+  assert.match(app, /new CustomEvent\(LOGIN_TERMINAL_OPEN, \{detail: loginIntent\}\)/, 'then the Workbench is handed the request')
+  assert.match(bench, /\[LOGIN_TERMINAL_OPEN, loginOpen\]/, 'the Workbench receives it')
+  assert.match(bench, /openKind\('terminal', request\.id, undefined, \{command: request\.command, title: request\.title\}\)/, 'one terminal, under the request\'s id, running its command')
+  assert.match(bench, /terminal: \{cwd, \.\.\.\(carried \? \{command: \[\.\.\.carried\.command\]\} : \{\}\)\}/)
+  assert.doesNotMatch(pages, /NO_NAVIGATE\('Sign in/, 'Sign in reaches no navigation: it runs the login')
+  const w = win.SETTINGS_WINDOW_WIRING
+  for (const route of ['harness_auth_describe', 'harness_status', 'LOGIN_TERMINAL_PRESENT']) assert.ok(w.writes.signIn.includes(route), `signIn: ${route}`)
+  assert.match(w.reads.loginSaid ?? '', /harness_status/, 'the result read back is AIKit\'s client status')
 })
