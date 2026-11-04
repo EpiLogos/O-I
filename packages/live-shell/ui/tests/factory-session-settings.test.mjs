@@ -91,14 +91,16 @@ const contextOf = entry => ({transport, project, settings: entry.snapshot().valu
 
 // ---------------------------------------------------------------------------------------------------------------- mapping
 
-test('the owner\'s reading lands on clip:factory\'s keys: Quantize in the design\'s words, the envelopes as editor rows', () => {
+test('the owner\'s reading lands on clip:factory\'s keys: Quantize in AIKit\'s words, the envelopes as editor rows', () => {
   const values = settings.clipValuesOfSettings(defaults({name: 'Fixtures', colour: 'var(--fizz)', loop: true, launch: 'gate', then: 'again',
     quantize: 'next-tool', effort: [[0, 'medium'], [28, 'high']], tool_calls: [[0, 'session']]}))
   assert.equal(values.name, 'Fixtures'); assert.equal(values.colour, 'var(--fizz)')
   // REPLACED (#787): #772 read the owner's loop as Loop with no launch mode and its handoff as no follow action, Hand off to beside it.
   // AIKit speaks the manual's words now, Loop its own setting and Hand off to retired: each lands as it is (factory-clip-owner-words.test.mjs).
   assert.equal(values.launch, 'gate'); assert.equal(values.loop, true); assert.equal(values.then, 'again'); assert.equal('handoff' in values, false)
-  assert.equal(values.quantize, 'next tool', 'the owner\'s next-tool is the design\'s "next tool"')
+  // REPLACED (O-I 787 round 15): Quantize read through a table, "the owner's next-tool is the design's \"next tool\"". It lands as AIKit
+  // states it; the Launch panel labels it Next tool (factory-clip-owner-words.test.mjs).
+  assert.equal(values.quantize, 'next-tool', 'the owner\'s next-tool, as it states it')
   assert.deepEqual(JSON.parse(values['env.agent.effort']), [[0, 2], [28, 3]], 'Automation: a level is its row')
   // REPLACED (#787, manual §19.1 Envelopes): the Agent's Autonomy is retired; Scope's Tool calls is the task's other envelope, under Scope.
   assert.deepEqual(JSON.parse(values['env.scope.toolCalls']), [[0, 2]], 'Session is the third of Inherit, Ask, Session, Always')
@@ -132,7 +134,8 @@ test('a control\'s change becomes the owner\'s request: its words, null for a cl
   // REPLACED (#787): #772 asked the owner its own word (hold) for the manual's Gate; AIKit's word is Gate. Hand off to (handoff_to) is
   // retired: the Tasks device's To names the drag that replaces it (factory-clip-owner-words.test.mjs).
   assert.deepEqual(set('launch', 'gate'), {launch: 'gate'})
-  assert.deepEqual(set('quantize', 'next turn'), {quantize: 'next-turn'})
+  // REPLACED (O-I 787 round 15): set('quantize', 'next turn') asked the owner next-turn through a table; the clip says AIKit's word.
+  assert.deepEqual(set('quantize', 'next-turn'), {quantize: 'next-turn'})
   assert.deepEqual(set('name', '  '), {name: null}, 'an emptied name returns to the task\'s purpose')
   assert.deepEqual(set('effort', JSON.stringify([[0, 1], [40, 4]])), {effort: [[0, 'low'], [40, 'max']]})
   assert.deepEqual(set('toolCalls', JSON.stringify([[0, 1], [30, 2]])), {tool_calls: [[0, 'ask'], [30, 'session']]})
