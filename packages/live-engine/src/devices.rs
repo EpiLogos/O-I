@@ -77,7 +77,8 @@ impl Device for BypassDevice {
 ///    `MEASURED_ANCHORS_R30_T12`, threshold-shifted — to get the target
 ///    gain;
 /// 3. the applied gain follows the target through a one-pole smoother
-///    (attack when more reduction is needed, release when recovering).
+///    (attack when more reduction is needed, release when recovering);
+/// 4. the makeup is added to it, exactly (MU5).
 ///
 /// BALLISTICS ARE BACKLOG: the anchors hold at the measured pins
 /// Attack=2 / Release=0 (glue-compressor.md, "BALLISTICS CAVEAT" in
@@ -142,7 +143,8 @@ impl Device for GlueDevice {
         let peak = frame_io.iter().fold(0f32, |m, v| m.max(v.abs()));
         self.block_peak = self.block_peak.max(peak);
 
-        let g = db_to_amplitude(self.gain_db) as f32;
+        // the follower's gain change, then the makeup, exactly additive (glue.rs `GlueParams::makeup_db`, MU5)
+        let g = db_to_amplitude(self.gain_db + self.params.makeup_db) as f32;
         for v in frame_io.iter_mut() {
             *v *= g;
         }
@@ -462,7 +464,8 @@ impl Fft {
     }
 }
 
-/// Uniformly partitioned convolution of every channel with one impulse response, with no latency:
+/// Uniformly partitioned convolution of each channel with an impulse response (one for every channel, or
+/// one a channel: the frame's room has a response for each side), with no latency:
 /// the response's first `b` taps directly, each later block of `b` taps by overlap-save in the
 /// frequency domain over a delay line of the input's spectra (a 2b-point FFT of each completed input
 /// block with the one before it). The part of the next block's output the later partitions make is
@@ -475,10 +478,8 @@ impl Fft {
 #[derive(Debug, Clone)]
 struct Partitioned {
     b: usize,
-    head: Vec<f32>,
-    /// The spectra of the later partitions, bins 0..=b each, re then im.
-    parts_re: Vec<f32>,
-    parts_im: Vec<f32>,
+    /// The responses, all of one length; channel c convolves with response c modulo how many there are.
+    responses: Vec<Response>,
     parts: usize,
     /// The delay line's terms a sample adds to the next block's part (all but the newest's, over `b`).
     per_sample: usize,
@@ -486,8 +487,19 @@ struct Partitioned {
     channels: Vec<PartChannel>,
 }
 
+/// One impulse response, partitioned: its first `b` taps, and the spectra of the later partitions, bins
+/// 0..=b each, re then im.
+#[derive(Debug, Clone)]
+struct Response {
+    head: Vec<f32>,
+    parts_re: Vec<f32>,
+    parts_im: Vec<f32>,
+}
+
 #[derive(Debug, Clone)]
 struct PartChannel {
+    /// Which of the responses this channel convolves with.
+    response: usize,
     prev: Vec<f32>,
     cur: Vec<f32>,
     /// The input spectra, newest at `newest`, bins 0..=b each.
@@ -508,24 +520,45 @@ struct PartChannel {
 
 impl Partitioned {
     fn new(ir: &[f32], b: usize, channels: usize) -> Partitioned {
+        Partitioned::of(&[ir], b, channels)
+    }
+
+    /// Every channel c with `irs[c % irs.len()]`; the responses are of one length.
+    fn of(irs: &[&[f32]], b: usize, channels: usize) -> Partitioned {
+        assert!(
+            !irs.is_empty() && irs.iter().all(|ir| ir.len() == irs[0].len()),
+            "the responses are of one length"
+        );
         let fft = Fft::new(2 * b);
         let bins = b + 1;
-        let mut head = ir[..ir.len().min(b)].to_vec();
-        head.resize(b, 0.0);
-        let parts = ir.len().saturating_sub(b).div_ceil(b);
-        let (mut parts_re, mut parts_im) = (vec![0f32; parts * bins], vec![0f32; parts * bins]);
+        let parts = irs[0].len().saturating_sub(b).div_ceil(b);
         let (mut re, mut im) = (vec![0f32; 2 * b], vec![0f32; 2 * b]);
-        for p in 0..parts {
-            re.fill(0.0);
-            im.fill(0.0);
-            let from = (p + 1) * b;
-            let taps = &ir[from..ir.len().min(from + b)];
-            re[..taps.len()].copy_from_slice(taps);
-            fft.run(&mut re, &mut im, false);
-            parts_re[p * bins..(p + 1) * bins].copy_from_slice(&re[..bins]);
-            parts_im[p * bins..(p + 1) * bins].copy_from_slice(&im[..bins]);
-        }
+        let responses = irs
+            .iter()
+            .map(|ir| {
+                let mut head = ir[..ir.len().min(b)].to_vec();
+                head.resize(b, 0.0);
+                let (mut parts_re, mut parts_im) =
+                    (vec![0f32; parts * bins], vec![0f32; parts * bins]);
+                for p in 0..parts {
+                    re.fill(0.0);
+                    im.fill(0.0);
+                    let from = (p + 1) * b;
+                    let taps = &ir[from..ir.len().min(from + b)];
+                    re[..taps.len()].copy_from_slice(taps);
+                    fft.run(&mut re, &mut im, false);
+                    parts_re[p * bins..(p + 1) * bins].copy_from_slice(&re[..bins]);
+                    parts_im[p * bins..(p + 1) * bins].copy_from_slice(&im[..bins]);
+                }
+                Response {
+                    head,
+                    parts_re,
+                    parts_im,
+                }
+            })
+            .collect::<Vec<_>>();
         let channel = PartChannel {
+            response: 0,
             prev: vec![0.0; b],
             cur: vec![0.0; b],
             fdl_re: vec![0.0; parts.max(1) * bins],
@@ -539,15 +572,19 @@ impl Partitioned {
             acc_im: vec![0.0; bins],
             term: 1,
         };
+        let many = responses.len();
         Partitioned {
             b,
-            head,
-            parts_re,
-            parts_im,
+            responses,
             parts,
             per_sample: parts.saturating_sub(1).div_ceil(b),
             fft,
-            channels: vec![channel; channels],
+            channels: (0..channels)
+                .map(|c| PartChannel {
+                    response: c % many,
+                    ..channel.clone()
+                })
+                .collect(),
         }
     }
 
@@ -579,32 +616,26 @@ impl Partitioned {
     fn step(&mut self, ch: usize, x: f32) -> f32 {
         let b = self.b;
         let c = &mut self.channels[ch];
+        let r = &self.responses[c.response];
         let n = c.n;
         c.cur[n] = x;
         let mut y = c.tail[n];
-        for (k, h) in self.head[..=n].iter().enumerate() {
+        for (k, h) in r.head[..=n].iter().enumerate() {
             y += h * c.cur[n - k];
         }
-        for (k, h) in self.head.iter().enumerate().skip(n + 1) {
+        for (k, h) in r.head.iter().enumerate().skip(n + 1) {
             y += h * c.prev[b + n - k];
         }
         let bins = b + 1;
         // a few of the next block's terms, from spectra already in the delay line
         let until = (c.term + self.per_sample).min(self.parts);
-        Self::add_terms(c, &self.parts_re, &self.parts_im, self.parts, bins, until);
+        Self::add_terms(c, &r.parts_re, &r.parts_im, self.parts, bins, until);
         c.n += 1;
         if c.n == b {
             c.n = 0;
             if self.parts > 0 {
                 // any term the block's samples left (none when per_sample covers them)
-                Self::add_terms(
-                    c,
-                    &self.parts_re,
-                    &self.parts_im,
-                    self.parts,
-                    bins,
-                    self.parts,
-                );
+                Self::add_terms(c, &r.parts_re, &r.parts_im, self.parts, bins, self.parts);
                 c.re[..b].copy_from_slice(&c.prev);
                 c.re[b..].copy_from_slice(&c.cur);
                 c.im.fill(0.0);
@@ -619,7 +650,7 @@ impl Partitioned {
                 c.im.fill(0.0);
                 for k in 0..bins {
                     let (xr, xi) = (c.fdl_re[at + k], c.fdl_im[at + k]);
-                    let (hr, hi) = (self.parts_re[k], self.parts_im[k]);
+                    let (hr, hi) = (r.parts_re[k], r.parts_im[k]);
                     c.re[k] = c.acc_re[k] + (xr * hr - xi * hi);
                     c.im[k] = c.acc_im[k] + (xr * hi + xi * hr);
                 }
@@ -697,6 +728,258 @@ impl Device for CompressorDevice {
         frame_io[0] = l;
         if frame_io.len() > 1 {
             frame_io[1] = r;
+        }
+    }
+}
+
+/// The Torus's Dynamics as its frame sets it (effectsLaw.ts: threshold −60 to 0 dB, ratio 1 to 20, attack 0.01 to 200 ms, release 5
+/// to 1000 ms, makeup 0 to 24 dB).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct DynamicsParams {
+    pub threshold_db: f64,
+    pub ratio: f64,
+    pub attack_ms: f64,
+    pub release_ms: f64,
+    pub makeup_db: f64,
+}
+
+/// The frames of one of the browser's compressor's divisions: its envelope's rate is set once a division.
+const DIVISION_FRAMES: usize = 32;
+/// The browser's compressor's look-ahead ring, frames a side (a power of two).
+const LOOK_AHEAD_RING: usize = 1024;
+
+// Ported from Chromium's third_party/blink/renderer/platform/audio/dynamics_compressor.cc,
+// Copyright (C) 2011 Google Inc. All rights reserved. Used under its BSD licence, reproduced in full in ../NOTICE.
+/// The Torus's Dynamics as the engine sounds it (O-I #849 round 15): its frame's own effect as the frame runs it
+/// (presentationEffects.ts: a DynamicsCompressorNode at a hard knee, then a makeup gain of the effect's Makeup less the node's own,
+/// 0.6 of the reduction at full level). The node is the browser's, Web Audio's dynamics compressor as Chromium runs it, ported in its
+/// own single-precision arithmetic: the input's largest side read undelayed against the static curve (linear to the threshold, then
+/// the ratio's slope in dB), a detector that follows a falling attenuation at once and lets a rising one go at 2 dB or more every
+/// 2.5 ms, and the gain moving to the detector's (pre-warped by an arcsine) once every 32 frames, attacking at a rate set by its
+/// Attack (1 ms at the least) and the reduction still to come, and releasing at an adaptive rate (a fourth-order curve through 0.09,
+/// 0.16, 0.42 and 0.98 of its Release, by how far there is to go); the gain warped by a sine and the node's own makeup applied to
+/// each side 6 ms late (its look-ahead), from the state the node starts in (the detector at full attenuation, the gain at one).
+/// Stereo in and out; a mono part's sample is both sides, as the node reads one channel.
+#[derive(Debug, Clone)]
+pub struct DynamicsDevice {
+    pub params: DynamicsParams,
+    rate: u32,
+    // the node's settings, each as an AudioParam holds it, and what follows from them at the rate
+    knee_threshold: f32,
+    yknee_db: f32,
+    db_threshold: f32,
+    slope: f32,
+    master: f32,
+    attack_frames: f32,
+    sat_release_frames: f32,
+    release: [f32; 5],
+    /// The frame's makeup stage after the node.
+    makeup: f32,
+    // the node's state
+    detector: f32,
+    gain: f32,
+    max_attack_db: f32,
+    envelope_rate: f32,
+    scaled_desired: f32,
+    in_division: usize,
+    ring: Vec<[f32; 2]>,
+    read: usize,
+    write: usize,
+}
+
+impl DynamicsDevice {
+    pub fn new(params: DynamicsParams) -> DynamicsDevice {
+        DynamicsDevice {
+            params,
+            rate: 0,
+            knee_threshold: 0.0,
+            yknee_db: 0.0,
+            db_threshold: 0.0,
+            slope: 1.0,
+            master: 1.0,
+            attack_frames: 1.0,
+            sat_release_frames: 1.0,
+            release: [0.0; 5],
+            makeup: 1.0,
+            detector: 0.0,
+            gain: 1.0,
+            max_attack_db: -1.0,
+            envelope_rate: 1.0,
+            scaled_desired: 0.0,
+            in_division: 0,
+            ring: Vec::new(),
+            read: 0,
+            write: 0,
+        }
+    }
+
+    fn to_linear(db: f32) -> f32 {
+        10f32.powf(0.05 * db)
+    }
+
+    fn to_db(linear: f32) -> f32 {
+        20.0 * linear.log10()
+    }
+
+    /// The node's static curve at a hard knee: linear to the threshold, then the ratio's slope in dB.
+    fn saturate(&self, x: f32) -> f32 {
+        if x < self.knee_threshold {
+            return x;
+        }
+        let y_db = self.yknee_db + self.slope * (Self::to_db(x) - self.db_threshold);
+        Self::to_linear(y_db)
+    }
+
+    /// The envelope's rate for the next division, from where the detector and the gain stand.
+    fn division(&mut self) {
+        if !self.detector.is_finite() {
+            self.detector = 1.0;
+        }
+        let scaled = self.detector.asin() / std::f32::consts::FRAC_PI_2;
+        let releasing = scaled > self.gain;
+        let diff_db = Self::to_db(self.gain / scaled);
+        self.envelope_rate = if releasing {
+            self.max_attack_db = -1.0;
+            let diff_db = if diff_db.is_finite() { diff_db } else { -1.0 };
+            let x = 0.25 * (diff_db.clamp(-12.0, 0.0) + 12.0);
+            let (x2, [a, b, c, d, e]) = (x * x, self.release);
+            let (x3, x4) = (x2 * x, x2 * x2);
+            let frames = a + b * x + c * x2 + d * x3 + e * x4;
+            Self::to_linear(5.0 / frames)
+        } else {
+            let diff_db = if diff_db.is_finite() { diff_db } else { 1.0 };
+            if self.max_attack_db == -1.0 || self.max_attack_db < diff_db {
+                self.max_attack_db = diff_db;
+            }
+            let x = 0.25 / self.max_attack_db.max(0.5);
+            1.0 - x.powf(1.0 / self.attack_frames)
+        };
+        self.scaled_desired = scaled;
+    }
+}
+
+impl Device for DynamicsDevice {
+    fn name(&self) -> &str {
+        "Dynamics"
+    }
+
+    fn prepare(&mut self, sample_rate: u32, _channels: usize) {
+        if self.rate == sample_rate {
+            return;
+        }
+        let p = self.params;
+        let rate = sample_rate as f32;
+        let threshold = p.threshold_db as f32;
+        let ratio = p.ratio as f32;
+        self.db_threshold = threshold;
+        self.knee_threshold = Self::to_linear(threshold);
+        self.yknee_db = Self::to_db(self.knee_threshold);
+        self.slope = 1.0 / ratio;
+        self.master = (1.0 / self.saturate(1.0)).powf(0.6);
+        self.attack_frames = ((p.attack_ms / 1000.0) as f32).max(0.001) * rate;
+        let release_frames = rate * (p.release_ms / 1000.0) as f32;
+        self.sat_release_frames = 0.0025 * rate;
+        let y = [0.09f32, 0.16, 0.42, 0.98].map(|zone| release_frames * zone);
+        // the fourth-order curve through the four zones at 0, 1, 2 and 3 (the browser's own coefficients, as
+        // its source writes them: float literals past what a float holds, each rounding to the float it is)
+        #[allow(clippy::excessive_precision)]
+        let fit: [[f32; 4]; 5] = [
+            [
+                0.999_999_999_999_999_8,
+                1.843_221_968_432_392_3e-16,
+                -1.937_339_435_167_642_3e-16,
+                8.824_516_011_816_245e-18,
+            ],
+            [
+                -1.578_832_035_284_588_8,
+                2.330_583_703_207_428_6,
+                -0.914_119_420_484_042_9,
+                0.162_367_752_561_203_2,
+            ],
+            [
+                0.533_414_286_910_642_4,
+                -1.272_736_789_213_631,
+                0.925_885_604_220_751_2,
+                -0.186_563_101_917_762_26,
+            ],
+            [
+                0.087_834_631_382_072_34,
+                -0.169_416_296_792_562_2,
+                0.085_880_579_515_952_72,
+                -0.004_298_914_105_462_83,
+            ],
+            [
+                -0.042_416_883_008_123_074,
+                0.111_569_382_798_760_2,
+                -0.097_646_763_252_658_72,
+                0.028_494_263_462_021_576,
+            ],
+        ];
+        self.release = fit.map(|[w1, w2, w3, w4]| w1 * y[0] + w2 * y[1] + w3 * y[2] + w4 * y[3]);
+        // the frame's makeup takes back the node's own (presentationEffects.ts compressorOwnMakeupDb), in its own doubles
+        let own = -0.6 * p.threshold_db * (1.0 - 1.0 / p.ratio);
+        self.makeup = 10f64.powf((p.makeup_db - own) / 20.0) as f32;
+        // the state the node starts in, its look-ahead set: the ring cleared, read 6 ms behind the write
+        let look_ahead = ((0.006f32 * rate) as usize).min(LOOK_AHEAD_RING - 1);
+        self.ring = vec![[0.0; 2]; LOOK_AHEAD_RING];
+        self.read = 0;
+        self.write = look_ahead;
+        self.detector = 0.0;
+        self.gain = 1.0;
+        self.max_attack_db = -1.0;
+        self.in_division = 0;
+        self.rate = sample_rate;
+    }
+
+    fn process(&mut self, frame_io: &mut [f32], clock: &Clock) {
+        self.prepare(clock.sample_rate, frame_io.len());
+        if frame_io.is_empty() {
+            return;
+        }
+        if self.in_division == 0 {
+            self.division();
+        }
+        let sides = [frame_io[0], frame_io[frame_io.len().min(2) - 1]];
+        self.ring[self.write] = sides;
+        let input = sides[0].abs().max(sides[1].abs());
+        let attenuation = if input <= 0.0001 {
+            1.0
+        } else {
+            self.saturate(input) / input
+        };
+        let attenuation_db = (-Self::to_db(attenuation)).max(2.0);
+        let sat_release = Self::to_linear(attenuation_db / self.sat_release_frames) - 1.0;
+        let rate = if attenuation > self.detector {
+            sat_release
+        } else {
+            1.0
+        };
+        self.detector += (attenuation - self.detector) * rate;
+        self.detector = self.detector.min(1.0);
+        if !self.detector.is_finite() {
+            self.detector = 1.0;
+        }
+        if self.envelope_rate < 1.0 {
+            self.gain += (self.scaled_desired - self.gain) * self.envelope_rate;
+        } else {
+            self.gain = (self.gain * self.envelope_rate).min(1.0);
+        }
+        let total = self.master * (std::f32::consts::FRAC_PI_2 * self.gain).sin();
+        let delayed = self.ring[self.read];
+        for (v, d) in frame_io.iter_mut().zip(delayed) {
+            *v = d * total * self.makeup;
+        }
+        self.read = (self.read + 1) & (LOOK_AHEAD_RING - 1);
+        self.write = (self.write + 1) & (LOOK_AHEAD_RING - 1);
+        self.in_division += 1;
+        if self.in_division == DIVISION_FRAMES {
+            self.in_division = 0;
+            // subnormals flushed at a division's end, as the node does
+            for v in [&mut self.detector, &mut self.gain] {
+                if v.abs() < f32::MIN_POSITIVE {
+                    *v = 0.0;
+                }
+            }
         }
     }
 }
@@ -1059,6 +1342,174 @@ impl Device for ReverbDevice {
             *v = x * dry + wet * m;
         }
         self.pos = (pos + 1) % len;
+    }
+}
+
+/// The Torus's Reverb as its frame sets it (effectsLaw.ts: size 0 to 100 %, decay 0.2 to 20 s, damping 0 to 100 %, pre-delay 0 to
+/// 250 ms, dry/wet 0 to 100 %).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct RoomParams {
+    pub size: f64,
+    pub decay_s: f64,
+    pub damping: f64,
+    pub predelay_ms: f64,
+    pub mix: f64,
+}
+
+/// The longest the frame's room lasts, and the frames each block of it is made silent at half the sample rate over
+/// (presentationEffects.ts `MAX_ROOM`, `NYQUIST_BLOCK`).
+const ROOM_MAX_S: f64 = 22.0;
+const ROOM_NYQUIST_BLOCK: usize = 64;
+/// The longest pre-delay the frame's line holds (presentationEffects.ts `MAX_PREDELAY`).
+const ROOM_MAX_PREDELAY_S: f64 = 0.3;
+
+/// The frame's seeded noise (presentationEffects.ts `noise`): uniform in [−1, 1), the same seed the same sequence.
+fn room_noise(seed: u32) -> impl FnMut() -> f64 {
+    let mut a = seed;
+    move || {
+        a = a.wrapping_add(0x6d2b_79f5);
+        let mut t = a;
+        t = (t ^ (t >> 15)).wrapping_mul(t | 1);
+        t ^= t.wrapping_add((t ^ (t >> 7)).wrapping_mul(t | 61));
+        f64::from(t ^ (t >> 14)) / 4_294_967_296.0 * 2.0 - 1.0
+    }
+}
+
+/// The frame's room, both sides (presentationEffects.ts `reverbImpulse`), as its doubles make it and its Float32Arrays keep it: noise
+/// falling 60 dB in Decay, its bright part (what a one-pole low-pass at 2 kHz leaves out) 60 dB in Decay·(1 − 0.8·Damping), six early
+/// reflections spaced by Size, each side its own seed and the reflections' signs alternating between the sides; then each 64-frame
+/// block's part at half the sample rate taken out.
+pub fn room_impulse(sample_rate: u32, size: f64, decay: f64, damping: f64) -> [Vec<f32>; 2] {
+    let rate = f64::from(sample_rate);
+    let length = ((decay * 1.1 + 0.05).min(ROOM_MAX_S) * rate)
+        .ceil()
+        .max(1.0) as usize;
+    let bright = decay * (1.0 - 0.8 * damping / 100.0);
+    let gap = (3.0 + size / 100.0 * 27.0) / 1000.0;
+    let pole = (-2.0 * std::f64::consts::PI * 2000.0 / rate).exp();
+    [0u32, 1].map(|channel| {
+        let mut out = vec![0f32; length];
+        let mut random = room_noise(0x5eed + channel);
+        let fall = 10f64.powf(-3.0 / (decay * rate));
+        let fall_bright = 10f64.powf(-3.0 / (bright * rate));
+        let (mut low, mut env, mut env_bright) = (0f64, 1f64, 1f64);
+        for v in out.iter_mut() {
+            let n = random();
+            low = (1.0 - pole) * n + pole * low;
+            *v = (low * env + (n - low) * env_bright) as f32;
+            env *= fall;
+            env_bright *= fall_bright;
+        }
+        for k in 0..6u32 {
+            let at = (gap * f64::from(k + 1) * rate).round() as usize;
+            if at < length {
+                let sign = if channel == k % 2 { 1.0 } else { -1.0 };
+                let db = -60.0 * gap * f64::from(k + 1) / decay - 3.0 * f64::from(k);
+                out[at] = (f64::from(out[at]) + sign * 10f64.powf(db / 20.0)) as f32;
+            }
+        }
+        let alternate = |i: usize, v: f64| if i % 2 == 1 { -v } else { v };
+        for at in (0..length).step_by(ROOM_NYQUIST_BLOCK) {
+            let end = length.min(at + ROOM_NYQUIST_BLOCK);
+            let sum: f64 = (at..end).map(|i| alternate(i, f64::from(out[i]))).sum();
+            let mean = sum / (end - at) as f64;
+            for (i, v) in out.iter_mut().enumerate().take(end).skip(at) {
+                *v = (f64::from(*v) - alternate(i, mean)) as f32;
+            }
+        }
+        out
+    })
+}
+
+// Ported from Chromium's CalculateNormalizationScale in third_party/blink/renderer/platform/audio/reverb.cc,
+// Copyright (C) 2010 Google Inc. All rights reserved. Used under its BSD licence, reproduced in full in ../NOTICE.
+/// What the browser's ConvolverNode scales a response by when it normalises it (Chromium's Reverb, `normalize` true): one over the
+/// root of its mean power over every side and frame (at the least 0.000125), −58 dB, and 44.1 kHz over its rate.
+pub fn convolver_normalisation(sides: &[Vec<f32>], sample_rate: u32) -> f32 {
+    let frames = sides.iter().map(Vec::len).sum::<usize>();
+    let energy: f64 = sides
+        .iter()
+        .flat_map(|side| side.iter())
+        .map(|v| f64::from(*v) * f64::from(*v))
+        .sum();
+    let power = (energy as f32 / frames as f32).sqrt();
+    let power = if power.is_finite() && power >= 0.000125 {
+        power
+    } else {
+        0.000125
+    };
+    1.0 / power * 10f32.powf(-58.0 * 0.05) * (44_100.0 / sample_rate as f32)
+}
+
+/// The Torus's Reverb as the engine sounds it (O-I #849 round 15): its frame's own effect as the frame runs it (presentationEffects.ts:
+/// the dry at 1 − Dry/wet, and the input after the pre-delay's DelayNode through a ConvolverNode over the frame's room at Dry/wet).
+/// The room is the frame's, sample for sample ([`room_impulse`]), normalised as the browser's convolver normalises it
+/// ([`convolver_normalisation`]); each side rings through its own half of it, as the browser's convolver rings a two-sided response,
+/// convolved by partitions so a part that sounds every sample is heard in real time. Made off the audio thread at its rate.
+#[derive(Debug, Clone)]
+pub struct RoomDevice {
+    pub params: RoomParams,
+    rate: u32,
+    conv: Option<Partitioned>,
+    pre: Vec<Line>,
+    pre_frames: f64,
+    dry: f32,
+    wet: f32,
+}
+
+impl RoomDevice {
+    pub fn new(params: RoomParams) -> RoomDevice {
+        let wet = params.mix / 100.0;
+        RoomDevice {
+            params,
+            rate: 0,
+            conv: None,
+            pre: Vec::new(),
+            pre_frames: 0.0,
+            dry: (1.0 - wet) as f32,
+            wet: wet as f32,
+        }
+    }
+}
+
+impl Device for RoomDevice {
+    fn name(&self) -> &str {
+        "Reverb"
+    }
+
+    fn prepare(&mut self, sample_rate: u32, _channels: usize) {
+        if self.rate == sample_rate {
+            return;
+        }
+        let p = self.params;
+        let mut sides = room_impulse(sample_rate, p.size, p.decay_s, p.damping).to_vec();
+        let scale = convolver_normalisation(&sides, sample_rate);
+        for v in sides.iter_mut().flat_map(|side| side.iter_mut()) {
+            *v *= scale;
+        }
+        self.conv = Some(Partitioned::of(
+            &[&sides[0][..], &sides[1][..]],
+            PARTITION,
+            2,
+        ));
+        let time = (p.predelay_ms / 1000.0).clamp(0.0, ROOM_MAX_PREDELAY_S) as f32;
+        self.pre_frames = f64::from(time) * f64::from(sample_rate);
+        self.pre = (0..2).map(|_| Line::new(self.pre_frames)).collect();
+        self.rate = sample_rate;
+    }
+
+    fn process(&mut self, frame_io: &mut [f32], clock: &Clock) {
+        self.prepare(clock.sample_rate, frame_io.len());
+        let Some(conv) = self.conv.as_mut() else {
+            return;
+        };
+        for (ch, (v, line)) in frame_io.iter_mut().zip(self.pre.iter_mut()).enumerate() {
+            let x = *v;
+            line.write(x);
+            let delayed = line.read(self.pre_frames);
+            line.advance();
+            *v = x * self.dry + conv.step(ch, delayed) * self.wet;
+        }
     }
 }
 
@@ -1593,5 +2044,137 @@ mod tests {
                 .unwrap();
             assert!(peak < 12, "pass {pass} peaks {peak} frames after its Time");
         }
+    }
+    /// O-I #849 round 15: Glue's Makeup is added to what its curve does, exactly (glue.rs `makeup_db`, verified at MU5), so a
+    /// set's Glue stored at a Makeup sounds at it: sample for sample the same Glue at Makeup 0, that many dB up.
+    #[test]
+    fn the_glue_adds_its_makeup_exactly() {
+        let clock = Clock::start(SR, 120.0);
+        let glue = |makeup_db: f64| {
+            GlueDevice::new(GlueParams {
+                threshold_db: -21.9047623,
+                range: 25.0,
+                ratio: 1.0,
+                makeup_db,
+            })
+        };
+        let (mut none, mut five) = (glue(0.0), glue(5.0));
+        let up = db_to_amplitude(5.0) as f32;
+        let w = 2.0 * std::f32::consts::PI * 1000.0 / SR as f32;
+        for i in 0..SR as usize {
+            let x = 0.5 * (w * i as f32).sin();
+            let (mut a, mut b) = ([x; 2], [x; 2]);
+            none.process(&mut a, &clock);
+            five.process(&mut b, &clock);
+            assert!(
+                (b[0] - a[0] * up).abs() <= 1e-6 * up && b[1] == b[0],
+                "frame {i}: {} at Makeup 5 against {} at 0",
+                b[0],
+                a[0]
+            );
+        }
+    }
+
+    /// O-I #849 round 15: the frame's compressor (the browser's, as the frame runs it) once settled passes a sound under its threshold
+    /// 6 ms late (its look-ahead, 288 frames at 48 kHz) at the Makeup the design gives, the node's own makeup taken back; and from
+    /// the state it starts in, a sound at its first frame dips, its detector starting at full attenuation.
+    #[test]
+    fn the_frames_compressor_passes_quiet_sound_6_ms_late_at_its_makeup() {
+        let clock = Clock::start(SR, 120.0);
+        let opening = DynamicsParams {
+            threshold_db: -12.0,
+            ratio: 4.0,
+            attack_ms: 1.0,
+            release_ms: 100.0,
+            makeup_db: 2.0,
+        };
+        let mut dynamics = DynamicsDevice::new(opening);
+        dynamics.prepare(SR, 2);
+        let run = |dynamics: &mut DynamicsDevice, x: f32, n: usize| -> Vec<f32> {
+            (0..n)
+                .map(|_| {
+                    let mut frame = [x, x];
+                    dynamics.process(&mut frame, &clock);
+                    assert_eq!(frame[0], frame[1]);
+                    frame[0]
+                })
+                .collect()
+        };
+        run(&mut dynamics, 0.0, 48_000);
+        let heard = run(&mut dynamics, 0.01, 600);
+        assert!(
+            heard[..288].iter().all(|v| *v == 0.0),
+            "nothing before its look-ahead"
+        );
+        let gain = heard[400] / 0.01;
+        assert!(
+            (20.0 * f64::from(gain).log10() - 2.0).abs() < 1e-3,
+            "under the threshold at {} dB, not its Makeup",
+            20.0 * f64::from(gain).log10()
+        );
+        // from its first state, the same sound dips: the detector starts at full attenuation
+        let mut fresh = DynamicsDevice::new(opening);
+        let first = run(&mut fresh, 0.01, 600);
+        assert!(first[..288].iter().all(|v| *v == 0.0));
+        assert!(
+            first[400] < 0.5 * heard[400],
+            "{} from its first state, {} settled",
+            first[400],
+            heard[400]
+        );
+    }
+
+    /// O-I #849 round 15: the frame's room (presentationEffects.ts reverbImpulse) is seeded, each side its own, 1.1 Decays and 50 ms
+    /// long; its first reflection stands at the Size's gap, a side up and a side down; no 64-frame block of it carries anything at half
+    /// the sample rate; and the browser's convolver scales it to a mean power of −58 dB, by 44.1 kHz over the rate.
+    #[test]
+    fn the_frames_room_is_seeded_nyquist_free_and_normalised_as_the_browser_does() {
+        let room = room_impulse(SR, 50.0, 2.4, 40.0);
+        assert_eq!(room, room_impulse(SR, 50.0, 2.4, 40.0), "seeded");
+        assert_eq!(room[0].len(), (2.69 * 48_000f64).ceil() as usize);
+        assert_ne!(room[0], room[1], "each side its own");
+        // the gap at Size 50 is 16.5 ms, 792 frames, its first reflection 60·gap/Decay dB down on the noise; at Size 51 the same noise
+        // has it at 805, in the same 64-frame block, so the two differ at 792 by the reflection less the block's share of both
+        let other = room_impulse(SR, 51.0, 2.4, 40.0);
+        let level = |gap: f64| 10f64.powf(-60.0 * gap / 2.4 / 20.0);
+        let (here, there) = (level(0.0165), level(0.016_77));
+        for (side, sign) in [(0, 1.0), (1, -1.0)] {
+            let lift = f64::from(room[side][792]) - f64::from(other[side][792]);
+            let due = sign * (here - (here + there) / 64.0);
+            assert!(
+                (lift - due).abs() < 1e-6,
+                "side {side}: {lift} against {due}"
+            );
+        }
+        for side in &room {
+            for block in side.chunks(64) {
+                let alternating: f64 = block
+                    .iter()
+                    .enumerate()
+                    .map(|(i, v)| {
+                        if i % 2 == 1 {
+                            -f64::from(*v)
+                        } else {
+                            f64::from(*v)
+                        }
+                    })
+                    .sum();
+                assert!(alternating.abs() < 1e-5, "{alternating}");
+            }
+        }
+        let scale = convolver_normalisation(&room, SR);
+        let frames = (room[0].len() * 2) as f64;
+        let power: f64 = room
+            .iter()
+            .flat_map(|side| side.iter())
+            .map(|v| (f64::from(*v) * f64::from(scale)).powi(2))
+            .sum::<f64>()
+            / frames;
+        let due = 10f64.powf(-2.9) * 44_100.0 / 48_000.0;
+        assert!(
+            (power.sqrt() / due - 1.0).abs() < 1e-5,
+            "{} against {due}",
+            power.sqrt()
+        );
     }
 }

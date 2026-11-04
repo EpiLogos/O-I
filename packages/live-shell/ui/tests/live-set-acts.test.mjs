@@ -345,8 +345,8 @@ test('a kept sound dropped on the empty track plays on a new part: the part inse
   // has no shape for yet is said in words: its chain's note devices and effects (no Live device stands for them) and what its macros turn
   // (Live 12 keeps a macro's mapping in a form not read yet, racks-session-model.md §1.7).
   // Round 10: the rack's chain stands on it as Live's own devices: each of the Torus's effects as Live's device of its kind (manual §21.5),
-  // taking only the settings whose stored meaning and unit the corpus pins (packages/live-dynamics/src/params.rs), and On as it was kept.
-  // A device with no Live surface in the corpus stays off the chain, by name.
+  // taking the settings the engine reads Live's device by (O-I #849 round 15; packages/live-dynamics/src/params.rs, the corpus's surface), and
+  // On as it was kept. A device with no Live surface in the corpus stays off the chain, by name.
   const placing = {name: 'Warm rack', chain: [{device_ref: 'arp', role: 'note', state: {}},
     {device_ref: 'reverb', role: 'effect', state: {on: true, size: 50, decay: 2.4, damping: 40, predelay: 20, mix: 22}},
     {device_ref: 'dynamics', role: 'effect', state: {on: false, threshold: -12, ratio: 4, attack: 1, release: 100, makeup: 2}},
@@ -356,7 +356,8 @@ test('a kept sound dropped on the empty track plays on a new part: the part inse
   assert.deepEqual(calls, [{kind: 'track_insert', after: null},
     {kind: 'rack_place', track: 3, name: 'Warm rack', macros: [{name: 'Bloom', value: 0.5}], variations: [{name: 'Open', values: [1]}, {name: 'Closed', values: [0]}],
       chain: [{device: 'Reverb', parameters: [{id: 'On', value: 1}, {id: 'DecayTime', value: 2400}, {id: 'PreDelay', value: 20}]},
-        {device: 'Compressor2', parameters: [{id: 'On', value: 0}]}]},
+        {device: 'Compressor2', parameters: [{id: 'On', value: 0}, {id: 'Threshold', value: 10 ** (-12 / 20)}, {id: 'Ratio', value: 4},
+          {id: 'Attack', value: 1 / 3.562350828929603}, {id: 'Release', value: 100}, {id: 'Gain', value: 2}, {id: 'Knee', value: 0}]}]},
     {open: [SOUND, 3]}], 'the part, then the rack on it with its chain, then its sound')
   assert.deepEqual(rack, {ok: true, note: 'Inserted 4-MIDI, an empty MIDI part, right after Tide pad. Placed Warm rack on 4-MIDI: an Instrument Rack with 1 macro and 2 '
     + 'variations, its chain holding Live\'s Reverb and Compressor. "Low bell" opens as saved; nothing it was tuned from has moved. The part keeps it. '
@@ -364,14 +365,48 @@ test('a kept sound dropped on the empty track plays on a new part: the part inse
     + 'Its Resonator bank stays off its chain: the corpus gives Live\'s Resonators no parameter surface yet. '
     + 'Its effect echo is none of the Torus\'s, so no Live device stands for it. '
     + 'Live\'s Reverb takes its decay and pre-delay; its size, damping and mix stand at Live\'s own, for the corpus pins no stored setting of Live\'s with their meaning and unit. '
-    + 'Live\'s Compressor stands off, as it was kept; its threshold, ratio, attack, release and makeup stand at Live\'s own, for the corpus pins no stored setting of Live\'s with their meaning and unit. '
     + 'What its macros turn is not mapped (Bloom turns the Torus\'s damping): Live 12 keeps a macro\'s mapping in a form not read here yet.'})
   calls.length = 0
-  // A setting off the range Live's device holds stays at Live's own, and says so.
+  // A setting off the range Live's device holds stands at its nearer edge, and says so (round 15, as the engine's host stands it).
   const short = {...placing, chain: [{device_ref: 'reverb', role: 'effect', state: {decay: 2.4, predelay: 0}}], macros: [{...placing.macros[0], targets: []}]}
   const shortNote = (await seat.run(JSON.stringify({kind: 'rack', ref: 'rack:warm', sound: SOUND, rack: short}))).note
-  assert.deepEqual(calls[1].chain, [{device: 'Reverb', parameters: [{id: 'DecayTime', value: 2400}]}])
-  assert.match(shortNote, /Live's Reverb takes its decay; its pre-delay of 0 ms is under the 0\.5 ms Live's Reverb holds, and stands at Live's own\.$/)
+  assert.deepEqual(calls[1].chain, [{device: 'Reverb', parameters: [{id: 'DecayTime', value: 2400}, {id: 'PreDelay', value: 0.5}]}])
+  assert.match(shortNote, /Live's Reverb takes its decay and pre-delay; its pre-delay of 0 ms is under the 0\.5 ms Live's Reverb holds, and stands there\.$/)
+  calls.length = 0
+  // O-I #849 round 15: every key the engine maps stands on Live's device as the engine reads it (the host's torus_chain carries the same):
+  // the Filter's cutoff as a pitch, its resonance and drive; the Dynamics' threshold as a level, its ratio, its attack over the law, its release
+  // and makeup, a hard knee; the Delay's time on both sides, free, linked, not ping-pong, its feedback, its tone through its filter, its mix; the
+  // Reverb's decay and pre-delay. What Live's device does not hold stands at its edge; a menu and what the surface keeps no setting for stand at
+  // Live's own, each in words.
+  const mapped = {...placing, chain: [
+    {device_ref: 'filter', role: 'effect', state: {on: true, type: 'notch', cutoff: 20000, resonance: 40, drive: 6, mix: 60}},
+    {device_ref: 'dynamics', role: 'effect', state: {on: true, threshold: -30, ratio: 10, attack: 0.02, release: 250, makeup: 8}},
+    {device_ref: 'delay', role: 'effect', state: {on: true, sync: true, division: '1', time: 250, feedback: 35, tone: 6000, mix: 25, tempo: 40}},
+    {device_ref: 'filter', role: 'effect', state: {on: true, type: 'lowpass', cutoff: 440, resonance: 20, drive: 0, mix: 100}},
+  ], macros: [{...placing.macros[0], targets: []}]}
+  const mappedNote = (await seat.run(JSON.stringify({kind: 'rack', ref: 'rack:warm', sound: SOUND, rack: mapped}))).note
+  assert.deepEqual(calls[1].chain, [
+    {device: 'AutoFilter', parameters: [{id: 'On', value: 1}, {id: 'Cutoff', value: 135}, {id: 'Resonance', value: 0.4}, {id: 'Drive', value: 6}]},
+    {device: 'Compressor2', parameters: [{id: 'On', value: 1}, {id: 'Threshold', value: 10 ** (-30 / 20)}, {id: 'Ratio', value: 10},
+      {id: 'Attack', value: 0.009999999776}, {id: 'Release', value: 250}, {id: 'Gain', value: 8}, {id: 'Knee', value: 0}]},
+    {device: 'Delay', parameters: [{id: 'On', value: 1}, {id: 'DelayLine_TimeL', value: 5}, {id: 'DelayLine_TimeR', value: 5}, {id: 'Feedback', value: 0.35},
+      {id: 'Filter_Frequency', value: 6000}, {id: 'DryWet', value: 0.25}, {id: 'DelayLine_Link', value: 1}, {id: 'DelayLine_PingPong', value: 0},
+      {id: 'DelayLine_SyncL', value: 0}, {id: 'DelayLine_SyncR', value: 0}, {id: 'Filter_On', value: 1}]},
+    {device: 'AutoFilter', parameters: [{id: 'On', value: 1}, {id: 'Cutoff', value: 69}, {id: 'Resonance', value: 0.2}, {id: 'Drive', value: 0}]}])
+  for (const said of [
+    'Live\'s Auto Filter takes its cutoff, resonance and drive; its cutoff of 20000 Hz is over the 19912.1 Hz Live\'s Auto Filter holds, and stands there; '
+      + 'its notch type stands at Live\'s own, the low-pass: Live\'s Auto Filter keeps its FilterType as a menu, and a menu\'s stored shape is not written here yet; '
+      + 'its mix of 60 % stands at full: the corpus\'s surface of Live\'s Auto Filter keeps no dry/wet.',
+    'Live\'s Compressor takes its threshold, ratio, attack, release and makeup; its attack of 0.02 ms is under the 0.0356 ms Live\'s Compressor holds, and stands there.',
+    'Live\'s Delay takes its time, feedback, tone and mix; its time of 6 s is over the 5 s Live\'s Delay holds, and stands there.',
+  ]) assert.ok(mappedNote.includes(said), `${said}\n in: ${mappedNote}`)
+  assert.equal(mappedNote.match(/Live's Auto Filter takes/g).length, 1, 'a low-pass filter at full, within what Live holds, says nothing')
+  calls.length = 0
+  // a free Delay's time is its own
+  const free = {...mapped, chain: [{device_ref: 'delay', role: 'effect', state: {on: false, sync: false, division: '1/8', time: 180, feedback: 70, tone: 2000, mix: 50, tempo: 120}}]}
+  const freeNote = (await seat.run(JSON.stringify({kind: 'rack', ref: 'rack:warm', sound: SOUND, rack: free}))).note
+  assert.deepEqual(calls[1].chain[0].parameters.slice(0, 3), [{id: 'On', value: 0}, {id: 'DelayLine_TimeL', value: 0.18}, {id: 'DelayLine_TimeR', value: 0.18}])
+  assert.doesNotMatch(freeNote, /Live's Delay/, 'all of it stands on Live\'s Delay')
   calls.length = 0
   // A rack with nothing on its chain and macros that turn nothing is placed whole, and the note says nothing more.
   const bare = await seat.run(JSON.stringify({kind: 'rack', ref: 'rack:warm', sound: SOUND, rack: {...placing, chain: [], macros: [{...placing.macros[0], targets: []}]}}))
