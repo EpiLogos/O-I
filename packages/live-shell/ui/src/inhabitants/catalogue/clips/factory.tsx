@@ -6,7 +6,7 @@
 // that session's track: no follow action leaves the track. A task launched with Repeat is an experiment (§19.5): each run a take, and
 // the Launch panel adds what varies between the runs (`repeat.variable`, `repeat.levels`, `repeat.repeats`, `repeat.stop`) and Compare
 // (`compare`, the takes' own setting: None, a second take, or every take of the Repeat), with the takes it has made (`takes`, a
-// reading). Envelopes set the Agent's Effort and Autonomy for this task only.
+// reading). Envelopes set the Agent's Effort and Scope's Tool calls for this task only (the Agent's Autonomy is retired, §19.4, §19.12).
 //
 // The editor holds a task's two materials, as Live's Clip View holds a MIDI clip's notes or an audio clip's sample (caps 01, 23):
 // - Notes: the score of the workflow the task is a unit of (manual §19.1 "The score"). Its rows are the agents and agent sets that
@@ -27,7 +27,7 @@
 //
 // The owner's material: `log` (JSON rows {at, kind, tool?, text, dur?, state?, heard?, reading?}; at and dur in seconds from the task's
 // start; kind is tool | spawn | steer | say | stall | reading), `elapsed` (seconds to the last output), and each envelope's steps on
-// `env.agent.<control>` (JSON [[second, step]…]). `score` (JSON {name, rows: [{id, name, kind: agent | set | agency, rack?}], units:
+// `env.agent.effort` and `env.scope.toolCalls` (JSON [[second, step]…]; `env.retired` and `env.toolCalls.play` the owner's words). `score` (JSON {name, rows: [{id, name, kind: agent | set | agency, rack?}], units:
 // [{key, row, deps?, len?, wave?, proposed?, heads?: {CPF, CT, CP, CF, CFP, CS, direction}, picks?: <heads the decision model picked>,
 // concern?, returns?, sources?, success?, may?, stop?, escalate?, song?: <a score>}], joins: [{key, waits, releases, join}], waves: [{id,
 // name, state}]}): Factory's score of the song the task's Run performs (`factory workflow score <state> <run>`), its units with their
@@ -409,26 +409,34 @@ function Log(p: ClipProps) {
 }
 
 const EFFORT = ['Inherit', 'Low', 'Medium', 'High', 'Max'] as const
-const AUTONOMY = ['Inherit', 'Suggest', 'Review', 'Auto'] as const
-const CONTROLS: readonly Option<string>[] = [
-  {value: 'effort', label: 'Effort', does: 'How hard the agent thinks in each turn of this task.'},
-  {value: 'autonomy', label: 'Autonomy', does: 'How much the agent decides alone in this task.'},
-]
+const TOOL_CALLS = ['Inherit', 'Ask', 'Session', 'Always'] as const
+/** The Envelopes' choosers (§19.1 Envelopes): "The Device chooser holds the Agent and Scope; the Control chooser holds the Agent's Effort
+ * and Scope's Tool calls" — each device's control under it, as Live's Control chooser lists the chosen device's parameters. */
+const ENVELOPE_DEVICES: readonly Option<string>[] = [{value: 'agent', label: 'Agent'}, {value: 'scope', label: 'Scope'}]
+const ENVELOPE_CONTROLS: Readonly<Record<'agent' | 'scope', readonly Option<string>[]>> = {
+  agent: [{value: 'effort', label: 'Effort', does: 'How hard the agent thinks in each turn of this task.'}],
+  scope: [{value: 'toolCalls', label: 'Tool calls', does: 'Which of the agent\'s tool calls wait for you in this task.'}],
+}
 
 function Envelopes(p: ClipProps) {
-  const control = choice(p.v, 'env.control', 'effort') === 'autonomy' ? 'autonomy' : 'effort'
-  const steps = control === 'effort' ? EFFORT : AUTONOMY
-  const key = `env.agent.${control}`
+  const control = choice(p.v, 'env.control', 'effort') === 'toolCalls' ? 'toolCalls' : 'effort'
+  const device = control === 'toolCalls' ? 'scope' : 'agent'
+  const steps = control === 'effort' ? EFFORT : TOOL_CALLS
+  const key = control === 'effort' ? 'env.agent.effort' : 'env.scope.toolCalls'
   const log = logOf(p.v), elapsed = numOf(p.v, 'elapsed') ?? 60
   const to = Math.max(60, Math.ceil((elapsed + 8) / 30) * 30)
   const mode = choice(p.v, 'env.mode', 'automation') as 'automation' | 'modulation'
-  return <EnvelopeEditor p={p} devices={[{value: 'agent', label: 'Agent'}]} device="agent" onDevice={() => undefined}
-    controls={CONTROLS} control={control} onControl={x => p.set('env.control', x)} mode={mode} onMode={x => p.set('env.mode', x)}
+  // What the owner left out in retired words, and what Tool calls did at its last answer to the harness, in the owner's words.
+  const said = [strOf(p.v, 'env.retired'), device === 'scope' ? strOf(p.v, 'env.toolCalls.play') : undefined].filter((x): x is string => !!x)
+  const saidH = said.length ? 18 * said.length + 6 : 0
+  const editor = <EnvelopeEditor p={p} devices={ENVELOPE_DEVICES} device={device} onDevice={x => p.set('env.control', x === 'scope' ? 'toolCalls' : 'effort')}
+    controls={ENVELOPE_CONTROLS[device]} control={control} onControl={x => p.set('env.control', x)} mode={mode} onMode={x => p.set('env.mode', x)}
     linked={p.v['env.linked'] !== false} onLinked={x => p.set('env.linked', x)} own={{start: 0, end: to, format: clock}}
     points={read<Point[]>(p.v, key, [])} onPoints={pts => write(p, key, pts)}
     min={0} max={steps.length - 1} steps={mode === 'modulation' ? ['−2', '−1', '0', '+1', '+2'] : steps} format={x => steps[Math.round(x)] ?? String(x)}
-    from={0} to={to} major={30} minor={5} label={clock} w={p.room.w} h={p.room.h}
+    from={0} to={to} major={30} minor={5} label={clock} w={p.room.w} h={p.room.h - saidH}
     behind={(w, h, keyW) => log.filter(e => e.kind === 'tool').map((e, i) => <rect key={i} className="clv-env-behind" x={keyW + e.at / to * (w - keyW)} width={Math.max(2, (e.dur ?? 1.5) / to * (w - keyW))} y={h - 10} height={4} />)} />
+  return said.length ? <>{editor}{said.map(words => <Said key={words}>{words}</Said>)}</> : editor
 }
 
 // ---------------------------------------------------------------- the Intent panel
@@ -587,8 +595,9 @@ const LAUNCH_MODES: readonly Option<string>[] = [
 ]
 const THENS: readonly Option<string>[] = [{value: 'next', label: 'Next task', does: 'The next task on this track starts.'}, {value: 'again', label: 'Again', does: 'The task runs again.'},
   {value: 'stop', label: 'Stop', does: 'The track stops after the task.'}]
-const VARIABLES: readonly Option<string>[] = ['Condition', 'Model', 'Effort', 'Skillset', 'Budget', 'Autonomy'].map(x => ({value: x.toLowerCase(), label: x,
-  does: x === 'Condition' ? 'How the agent\'s loop recurs: classic, or one of Quaternal Logic\'s conditions.' : `The ${x.toLowerCase()} changes from one run to the next.`}))
+const VARIABLES: readonly Option<string>[] = ['Condition', 'Model', 'Effort', 'Skillset', 'Budget', 'Tool calls'].map(x => ({value: x.toLowerCase().replace(' ', '_'), label: x,
+  does: x === 'Condition' ? 'How the agent\'s loop recurs: classic, or one of Quaternal Logic\'s conditions.'
+    : x === 'Tool calls' ? 'Which of the agent\'s tool calls wait for you changes from one run to the next.' : `The ${x.toLowerCase()} changes from one run to the next.`}))
 const STOPS: readonly Option<string>[] = [{value: 'turns', label: 'Turn cap'}, {value: 'time', label: 'Time cap'}, {value: 'done', label: 'Task done'}, {value: 'pass', label: 'Test pass'}]
 const COMPARES: readonly Option<string>[] = [{value: 'none', label: 'None'}, {value: 'second', label: 'A second take'}, {value: 'every', label: 'Every take'}]
 /** The levels as you wrote them, one to three values. */
@@ -743,7 +752,7 @@ export const clip: DesignedClip = {
     criteria: JSON.stringify([
       {id: 'c1', text: 'Every widget has a hand-off fixture'}, {id: 'c2', text: 'Old fixture ids are kept'}, {id: 'c3', text: 'pnpm test bridge passes'}]),
     'env.control': 'effort', 'env.mode': 'automation', 'env.linked': true,
-    'env.agent.effort': JSON.stringify([[0, 2], [28, 3], [40, 1], [60, 3]]), 'env.agent.autonomy': JSON.stringify([[0, 2], [50, 3]]),
+    'env.agent.effort': JSON.stringify([[0, 2], [28, 3], [40, 1], [60, 3]]), 'env.scope.toolCalls': JSON.stringify([[0, 1], [50, 2]]),
     plan: 'P2', 'plan.asks': 'The spec, plus a research round that returns before the spec freezes.', 'plan.why': 'The fixture format is an unknown only research can close.',
     'plan.territory': 'fixtures/', 'plan.needs': 'Research', 'plan.rounds': JSON.stringify([]), wave: 'w1 · Planning',
     'wave.gate': 'write-fixtures\'s plan at P2 is not locked', 'wave.next': 'record write-fixtures\'s research round, then lock its plan',
@@ -808,7 +817,7 @@ export const clip: DesignedClip = {
   editor: [
     {id: 'notes', label: 'Notes', does: 'The score: the workflow the task is a unit of, each unit a note on the row of the agent or agent set that does it.', draw: Notes, bar: notesBar},
     {id: 'log', label: 'Sample', does: 'The task\'s log as a recording: each tool the agent used along its time, your steers, where the output stopped, and where the unit started and returned.', draw: Log, bar: logBar},
-    {id: 'envelopes', label: 'Envelopes', does: 'The Agent\'s Effort and Autonomy for this task only.', draw: Envelopes},
+    {id: 'envelopes', label: 'Envelopes', does: 'The Agent\'s Effort and Scope\'s Tool calls for this task only.', draw: Envelopes},
     {id: 'vak', label: 'Vāk', does: 'What each unit carries on its own, lane by lane: the seven heads of its composition, and its own words.', draw: Vak},
   ],
   corner,

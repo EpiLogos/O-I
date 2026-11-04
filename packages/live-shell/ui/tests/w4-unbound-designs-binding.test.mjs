@@ -111,7 +111,7 @@ test('REPLACED — the Knowledge route keeps no binding of its own, and Scope no
 const ASKS_OWN = ['toolCalls', 'calls', 'wait', 'noAnswer']
 const ASKS_CUSTODY = ['gate', 'escalate']
 const factoryScope = () => bind.scopeBinding(chainDeviceId('world'), bind.chainHolds(), undefined, async () => assert.fail('nothing is written'))
-const carriedScope = () => chain.withCustodyAsks(factoryScope(), chain.custodyBinding({sessionRef: null, autonomy: null, agent: {}}, null))
+const carriedScope = () => chain.withCustodyAsks(factoryScope(), chain.custodyBinding({sessionRef: null, agent: {}}, null))
 
 test('Scope\'s Asks on Factory\'s Scope: every key of it classified, each setting refused by the operation it lacks, Before it lands and Escalate to Custody\'s', async () => {
   const keys = designKeys(scopeDesign)

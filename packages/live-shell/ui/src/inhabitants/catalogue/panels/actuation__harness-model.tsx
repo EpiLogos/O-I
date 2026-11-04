@@ -50,8 +50,9 @@ import {design as thread} from './thread'
 import {ANSWER_FIXTURES, AnswerBands, AnswerPane, AnswerWell, FaceBands, SmallFace, answerAsWord, answerBusy, answerStateWord, answersWithFace, poseOf} from './agent-answer'
 import './actuation__harness-model.css'
 
-/** The keys the carried pages share with the Agent: its light, the autonomy Custody reads, and the input the thread's composer sends. */
-const CUSTODY_SHARED = ['light', 'autonomy'] as const
+/** The keys the carried pages share with the Agent: its light, and the input the thread's composer sends. The Agent's Autonomy, which
+ * Custody read, is retired (§19.4, §19.12: Scope's Tool calls took its place). */
+const CUSTODY_SHARED = ['light'] as const
 const IDENTITY_SHARED = ['light'] as const
 const THREAD_SHARED = ['light', 'input', 'quantize', 'draft', 'sent', 'age'] as const
 const PAGES = [{id: 'agent', label: 'Run'}, {id: 'identity', label: 'Identity'}, {id: 'type', label: 'Type'}] as const

@@ -8,7 +8,8 @@
 //     AgentSessionsProvider into agent/agentRunModel.ts tracks): a session's tasks (TaskClip n, title, state, start, last activity),
 //     its needle (the last check-in on the shared axis, sharedAxis agentRunModel.ts:280 — a window ending at the reading instant),
 //     its budget, and a group track for each SessionSpace with its member sessions at depth 1 (buildTracks agentRunModel.ts:302);
-//   the session's task record (encounter_task_read, agentChainDevices.ts taskReading): `custody` or `autonomy` — Custody's Autonomy;
+//   the session's task record (encounter_task_read, agentChainDevices.ts taskReading): its turns (a `custody` or `autonomy` word is no
+//     setting: the Agent's Autonomy is retired, DLW §19.4 and §19.12, Scope's Tool calls carrying what it set);
 //   AIKit's encounter view (the Thread's rows, threadBinding.ts threadJson) — the Run's full view is the thread.
 // What no kernel op reaches: a session's Factory run (factory_attempt_read needs a run ref the agency reading never names, so the
 //   Run's takes are absent), the event lanes (the temporal stream names the session, not Messages · Files · Terminal · Web · Graph),
@@ -19,7 +20,7 @@ import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../fr
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
 import type {AgentSessionTrack, TaskClip} from '../agentRunModel'
 import type {ActionAnswer} from '../../central/devices/centralActions'
-import {chainHolds, holdView, viewHolds, type ChainHolds} from './designBindings'
+import {AGENT_AUTONOMY_RETIRED, chainHolds, holdView, viewHolds, type ChainHolds} from './designBindings'
 import {rackStateOf, runStateOfSession} from './runFaces'
 import {familyFaceDevice} from './mainTrackBindings'
 import {sessionRowsOf} from './threadBinding'
@@ -160,8 +161,11 @@ export function runBinding(input: RunInput, ports: RunPorts): DesignBinding {
 // custody_ref, position_ref, work_ref, state, autonomy?, review_gate?, escalate_to?, …]}; real shape in desktop/cradle/kernel/tests/
 // fixtures/owner-routes/factory-custody-list-2026-10-21.json). Lane W11 reads it for the project's Factory state:
 //   held        the open records (in-progress, blocked) of the Position the session's agent holds (AIKit's population), as the held items;
-//   the settings Autonomy, Review gate and Escalate to from the open record of the session's work (its bound task), where one stands.
-// Custody sits on the Agent (§19.4): Factory owns how much the agent decides alone. Each setting is written (CustodyAssign with that one
+//   the settings Review gate and Escalate to from the open record of the session's work (its bound task), where one stands. Factory's
+//   record still carries an `autonomy` (PR 288) and its `custody assign` still takes `--autonomy`; neither is read or sent here, since
+//   the manual retired the Agent's Autonomy (§19.4: Factory owns what the agent holds and what it does when it stalls; §19.12: Scope's
+//   Tool calls answers the harness's request to use a tool).
+// Custody's held items and Hand back stand on the Agent's Run page (§19.4). Each setting is written (CustodyAssign with that one
 // setting) only on the person's own press (re-checked at the press), only while the session's work is not yet assigned: the assignment's
 // Position is the one the session's agent holds, the work its bound task, and the reason says who set what from the desk. A session whose
 // agent holds no Position refuses naming that. Once the work is assigned, changing a setting waits for the owner's ruling, said verbatim
@@ -171,9 +175,9 @@ const CUSTODY_CARRIES = 'Factory\'s custody assign and update (factory_owner) ca
 /** Who may change a custody record's settings after assignment: the owner's ruling to make (lane W8, 3a). */
 export const CUSTODY_SETTINGS_RULING = 'Changing it after assignment waits for the owner\'s ruling on who may: `custody update` admits only the holding occupant, and Factory names no person authority for custody.'
 const custodySetting = (what: string, flag: string) => `${what}: set when Factory assigns custody (\`factory development custody assign ${flag}\`); Factory's custody list is not read here for this session (\`factory development custody list\`, the kernel's factory_owner custody-list), so whether its work is assigned is not known.`
-/** The settings Custody writes through CustodyAssign, each with the field and the words Factory admits. */
-export const CUSTODY_SETTING_FIELDS: Readonly<Record<'autonomy' | 'gate' | 'escalate', {readonly field: 'autonomy' | 'review_gate' | 'escalate_to'; readonly what: string; readonly admits?: readonly string[]}>> = {
-  autonomy: {field: 'autonomy', what: 'Autonomy', admits: ['suggest', 'review', 'auto']},
+/** The settings Custody writes through CustodyAssign, each with the field and the words Factory admits. The Agent's Autonomy is not one:
+ * it is retired (DLW §19.4, §19.12), and Scope's Tool calls carries what it set (AGENT_AUTONOMY_RETIRED). */
+export const CUSTODY_SETTING_FIELDS: Readonly<Record<'gate' | 'escalate', {readonly field: 'review_gate' | 'escalate_to'; readonly what: string; readonly admits?: readonly string[]}>> = {
   gate: {field: 'review_gate', what: 'Review gate', admits: ['diffs', 'approvals', 'both']},
   escalate: {field: 'escalate_to', what: 'Escalate to'},
 }
@@ -187,8 +191,10 @@ export const CUSTODY_SETTING_WHY = {
 } as const
 /** The custody record states that hold work (the others close it). */
 const OPEN_CUSTODY: readonly string[] = ['in-progress', 'blocked']
+// The Agent's Autonomy, retired (designBindings.ts AGENT_AUTONOMY_RETIRED): Custody refuses a press that still names it in those words.
+export {AGENT_AUTONOMY_RETIRED}
 export const CUSTODY_REFUSE = {
-  autonomy: custodySetting('Autonomy', '--autonomy suggest|review|auto'),
+  autonomy: AGENT_AUTONOMY_RETIRED,
   gate: custodySetting('Review gate', '--review-gate diffs|approvals|both'),
   escalate: custodySetting('Escalate to', '--escalate-to'),
   handBack: missing('Hand back', `a custody state for giving back what you edited (${CUSTODY_CARRIES}; giving control back is none of these states), and the custody refs of what the session holds (\`factory development custody list\` has no kernel route)`, 'Software Factory'),
@@ -262,7 +268,7 @@ export interface GrantsReading {
 export interface CustodyPorts {
   readonly revoke?: (authoritySourceRef: string, reason: string | undefined) => Promise<unknown>
   /** Factory's custody assignment (factory_owner custody-assign) with one setting. Absent: no carrier stands. */
-  readonly assign?: (request: {kind: 'custody-assign'; state_path: string; position_ref: string; work_ref: string; reason: string} & Partial<Record<'autonomy' | 'review_gate' | 'escalate_to', string>>) => Promise<unknown>
+  readonly assign?: (request: {kind: 'custody-assign'; state_path: string; position_ref: string; work_ref: string; reason: string} & Partial<Record<'review_gate' | 'escalate_to', string>>) => Promise<unknown>
   /** Who is current at the moment of the press (`currentIdentity()` read again): Revoke goes only when it is still the person the page
    * was drawn for. Absent: the person drawn stands. */
   readonly personNow?: () => string | null
@@ -275,8 +281,6 @@ export const CUSTODY_GRANT_SETTINGS: readonly string[] = ['grant:determine-agenc
 export interface CustodyInput {
   /** The chain's session, null when none is selected. */
   readonly sessionRef: string | null
-  /** The session's task record's custody word (encounter_task_read `custody` or `autonomy`), null when unread. */
-  readonly autonomy: string | null
   /** The Agent's values (its light: Custody stands on the Agent). */
   readonly agent: Values
   /** The hand's holds (the next grant's settings); absent, the store as it stands. */
@@ -306,7 +310,7 @@ export function openCustody(listing: unknown): Record<string, unknown>[] | null 
   return doc.custody.filter((row): row is Record<string, unknown> => !!row && typeof row === 'object' && OPEN_CUSTODY.includes(String((row as Record<string, unknown>).state)))
 }
 
-/** Custody's values: the Agent's light and the custody the session's task record names. Write mode is Scope's reading, and none is
+/** Custody's values: the Agent's light, the grants, and Factory's custody of the session's work. Write mode is Scope's reading, and none is
  * reported (designBindings.ts scopeValues); the gate, the contact, the people, the held items and the hand-back light have no owner
  * reading (the transport's Re-enable light is the shell's own flag, never set by an owner). */
 export function custodyValues(input: CustodyInput): Values {
@@ -320,7 +324,6 @@ export function custodyValues(input: CustodyInput): Values {
   }
   if (input.sessionRef == null) return values
   put(values, 'light', input.agent.light)
-  put(values, 'autonomy', input.autonomy)
   const open = input.custody?.listing?.status === 'answered' ? openCustody(input.custody.listing.value) : null
   if (open) {
     // What the session's agent holds: the open records of its Position, each a piece of work in its custody state.
@@ -361,7 +364,7 @@ export function custodyBinding(input: CustodyInput, scope: Pick<DesignBinding, '
   else if (listingWhy) standing.held = {disabled: listingWhy}
   const assigned = open && custody?.work ? open.find(row => row.work_ref === custody.work) : undefined
   /** Why one setting cannot be written now, in words; null when the person's press may assign it. */
-  const settingWhy = (key: 'autonomy' | 'gate' | 'escalate'): string | null => {
+  const settingWhy = (key: keyof typeof CUSTODY_SETTING_FIELDS): string | null => {
     const {what} = CUSTODY_SETTING_FIELDS[key]
     if (!custody) return CUSTODY_REFUSE[key]
     if (listingWhy) return `${what}: ${listingWhy}`
@@ -373,13 +376,13 @@ export function custodyBinding(input: CustodyInput, scope: Pick<DesignBinding, '
     if (!ports.assign) return `${what}: ${CUSTODY_SETTING_WHY.noCarrier}.`
     return null
   }
-  for (const key of ['autonomy', 'gate', 'escalate'] as const) {
+  for (const key of ['gate', 'escalate'] as const) {
     const why = settingWhy(key)
     if (why) standing[key] = {disabled: why}
     else delete standing[key]
   }
   /** One setting written as the assignment of the session's work to the person's Position (CustodyAssign with that one setting). */
-  const assign = async (key: 'autonomy' | 'gate' | 'escalate', value: Value | undefined) => {
+  const assign = async (key: keyof typeof CUSTODY_SETTING_FIELDS, value: Value | undefined) => {
     const why = settingWhy(key)
     if (why) throw Error(why)
     if (ports.personNow && ports.personNow() !== person) throw Error(`${CUSTODY_SETTING_FIELDS[key].what}: the current person is no longer the one this page was drawn for; nothing was sent to Factory.`)
@@ -412,7 +415,7 @@ export function custodyBinding(input: CustodyInput, scope: Pick<DesignBinding, '
           continue
         }
         if (key === 'revoke') { await revoke(value); continue }
-        if (key === 'autonomy' || key === 'gate' || key === 'escalate') { await assign(key, value); continue }
+        if (key === 'gate' || key === 'escalate') { await assign(key, value); continue }
         // Issue: the desk composes no authority record, whoever the value names as its issuer.
         if (key === 'issue') throw Error(CUSTODY_GRANTS_REFUSE.issue)
         throw Error(CUSTODY_REFUSE[key as keyof typeof CUSTODY_REFUSE] ?? reading(key))

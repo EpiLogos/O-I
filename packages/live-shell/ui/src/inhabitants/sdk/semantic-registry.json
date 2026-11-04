@@ -540,11 +540,11 @@
     "invariant": {
       "maps": [
         {
-          "key": "autonomy",
+          "key": "write-mode",
           "range": [
-            "suggest",
-            "review",
-            "auto"
+            "propose",
+            "draft",
+            "direct"
           ]
         }
       ]

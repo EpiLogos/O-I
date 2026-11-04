@@ -184,14 +184,16 @@ test('4 · the Experiment: its comparison readings read the records a run made, 
 })
 
 test('5 · Custody and the Decision helper: Factory\'s custody and unit-decision commands carry none of their settings, and each refusal says what they do carry', () => {
-  const custody = session.custodyBinding({sessionRef: 's', autonomy: 'review', agent: {light: 'lit'}}, null)
+  const custody = session.custodyBinding({sessionRef: 's', agent: {light: 'lit'}}, null)
   assert.match(custody.standing.handBack.disabled, /no owner operation carries it yet — missing op:/)
   // REPLACED (lane W11): with no custody read handed in, each says Factory's custody list is not read here.
-  for (const key of ['autonomy', 'gate', 'escalate']) assert.match(custody.standing[key].disabled, /custody list is not read here/, key)
+  for (const key of ['gate', 'escalate']) assert.match(custody.standing[key].disabled, /custody list is not read here/, key)
+  // REPLACED (O-I 787): the Agent's Autonomy is retired (§19.4, §19.12); Custody names what took its place instead of a custody flag.
+  assert.equal(custody.standing.autonomy.disabled, session.AGENT_AUTONOMY_RETIRED)
   // REPLACED (lane W9): Factory's custody record carries Autonomy, Review gate and Escalate to since Factory PR 288; each names the kernel's
   // CustodyAssign that carries none yet, and the owner's ruling on changing them after assignment (w9-approvals-ledger-sets.test.mjs).
   assert.match(custody.standing.handBack.disabled, /Factory's custody assign and update \(factory_owner\) carry a Position, its work, a reason, the custody state — in-progress, blocked, released, completed or handed-off — and a Position to hand off to/)
-  for (const key of ['autonomy', 'gate', 'escalate']) assert.match(custody.standing[key].disabled, /`factory development custody assign --/, key)
+  for (const key of ['gate', 'escalate']) assert.match(custody.standing[key].disabled, /`factory development custody assign --/, key)
   assert.match(custody.standing.handBack.disabled, /`factory development custody list` has no kernel route/)
   // REPLACED (lane W11): what the agent holds is Factory's custody list, not read here with no custody handed in.
   assert.match(custody.standing.held.disabled, /custody list is not read here/)
@@ -351,7 +353,7 @@ test('every bound design draws on its binding in all its views — no NaN, no un
     [carrierDesign, cell.carrierBinding(answered(READ16.workcellStatus), bind.chainHolds(), new Map([['omarchy', {value: CONNECTIONS.show}]])), /ready-to-carry|private-tailnet|1791417468786/, []],
     [gatewayDesign, framesTile(main.framesBinding(gateway, bind.chainHolds(), {ecology: answered(ECOLOGY), replays: new Map([['actuation-stream/replay', {value: REPLAY}]])})), GATEWAY_FIXTURE, []],
     [gatewayDesign, framesTile(main.framesBinding(gateway, bind.chainHolds(), {ecology: answered(ECOLOGY), replays: new Map([['actuation-stream/replay', {error: NO_REPLAY}]])})), GATEWAY_FIXTURE, []],
-    [custodyDesign, session.custodyBinding({sessionRef: 's', autonomy: 'review', agent: {light: 'lit'}}, null), /Flint|kite|agent\/anima/, [session.CUSTODY_REFUSE.gate]],
+    [custodyDesign, session.custodyBinding({sessionRef: 's', agent: {light: 'lit'}}, null), /Flint|kite|agent\/anima/, [session.CUSTODY_REFUSE.gate]],
     [ledgerDesign, rec.ledgerBinding({ground: null, groundError: null, holds: bind.chainHolds()}, {openSession: () => null}), /generate fixtures|run:2|128400/, []],
     [helperDesign, helper.decisionHelperBinding({status: null, teamSpace: null, holds: bind.chainHolds()}), /kev-latest|Qwen3\.5|127\.0\.0\.1:8019/, [helper.DECISION_HELPER_REFUSE.when]],
   ]

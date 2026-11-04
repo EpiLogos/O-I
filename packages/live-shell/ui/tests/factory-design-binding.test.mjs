@@ -215,14 +215,15 @@ test('the Agent reads only what an owner reported: nothing read is absent, never
 
   const read = bind.agentValues(agentInput({
     track: {agentRef: 'agent:kite', agentName: 'Kite', needle: {atUnixMs: 1_000_000 - 12_000}, budget: {used: 2, max: 9}},
-    reading: {...model.INITIAL_READING, attached: true, budget: {used: 3, cap: 12}, autonomy: 'review', gatewayAdmitted: true, gatewayDoc: {model: 'claude-opus-5.5', state: 'ready'}},
+    reading: {...model.INITIAL_READING, attached: true, budget: {used: 3, cap: 12}, gatewayAdmitted: true, gatewayDoc: {model: 'claude-opus-5.5', state: 'ready'}},
     accepted: {effort: 'max', input: 'queue', quantize: 'now'},
     harness: {binding: 'claude-code', resolved: true},
   }))
   assert.deepEqual(read, {
     light: 'lit', agent: 'Kite', age: 12, harness: 'claude-code', model: 'claude-opus-5.5', effort: 'max', input: 'queue', quantize: 'now',
-    used: 3, cap: 12, autonomy: 'review',
-  }, 'each key from the owner that reports it: the task record, the agency track, the gateway, what the harness accepted')
+    used: 3, cap: 12,
+  }, 'each key from the owner that reports it: the task record, the agency track, the gateway, what the harness accepted; no Autonomy (retired, §19.4)')
+  assert.equal('autonomy' in model.INITIAL_READING, false, 'the chain reads no task record word as the Agent\'s Autonomy')
   assert.equal(bind.agentValues(agentInput({track: {agentRef: 'a', agentName: null, needle: {atUnixMs: null}, budget: {used: null, max: null}}})).age, -1,
     'a temporal reading with no check-in is "no check-in" (-1), not a zero')
   assert.equal(bind.agentValues(agentInput({track: {agentRef: 'a', agentName: null, needle: null, budget: {used: null, max: null}}})).age, undefined, 'no temporal reading: absent')
@@ -284,7 +285,11 @@ test('the Agent writes through its rows\' own write paths; a reading is refused 
   await assert.rejects(() => binding.write([{key: 'model', value: 'x'}]), /model is a reading/)
   assert.equal(calls.length, 2, 'no reading dispatched anything')
   assert.deepEqual(['effort', 'input', 'quantize', 'heartbeat', 'draft', 'sent'].map(binding.writes), [true, true, true, true, true, true])
-  assert.deepEqual(['agent', 'model', 'harness', 'autonomy', 'used', 'age', 'effortHeld'].map(binding.writes), [false, false, false, false, false, false, false])
+  assert.deepEqual(['agent', 'model', 'harness', 'used', 'age', 'effortHeld'].map(binding.writes), [false, false, false, false, false, false])
+  // The retired Autonomy (§19.4, §19.12): the Agent takes a press that still names it only to refuse it, naming what took its place.
+  assert.equal(binding.standing.autonomy.disabled, bind.AGENT_AUTONOMY_RETIRED)
+  await assert.rejects(() => binding.write([{key: 'autonomy', value: 'auto'}]), {message: bind.AGENT_AUTONOMY_RETIRED})
+  assert.equal(calls.length, 2, 'nothing sent for it')
   bind.resetHolds()
 })
 
@@ -300,8 +305,10 @@ test('a change goes to the owner on release through the runtime\'s own path, and
   assert.equal(host.hostState('factory:agent').refused.effort.reason, 'the harness refused the effort')
   host.setDraft('factory:agent', 'cap', 30)
   assert.match(await host.flushDrafts(binding, 0), /used and cap come from the session's task record/, 'Budget has no owner write: refused in words that say whose it is, nothing sent')
-  host.setDraft('factory:agent', 'autonomy', 'auto')
+  host.setDraft('factory:agent', 'model', 'x')
   assert.match(await host.flushDrafts(binding, 0), /A reading/, 'a pure reading is refused by the host before anything is sent')
+  host.setDraft('factory:agent', 'autonomy', 'auto')
+  assert.equal(await host.flushDrafts(binding, 0), bind.AGENT_AUTONOMY_RETIRED, 'the retired Autonomy is refused in the words that name Scope\'s Tool calls')
   assert.equal(calls.length, 1)
   host.resetHost()
 })

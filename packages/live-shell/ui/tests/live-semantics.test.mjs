@@ -114,6 +114,8 @@ test('the registry names the write path and the Live exemplar of each face', () 
   const globe = find('atlas-earth', 'globe-engine')
   assert.deepEqual(globe.writePaths, [], 'a generatesAbsent face names no write path')
   assert.equal(find('software-factory', 'agent-custody').liveSemantic, 'macro')
+  // O-I 787: the Agent's Autonomy is retired (§19.4, §19.12); Custody's macro maps the write mode it shares with Scope, a declared row.
+  assert.deepEqual(find('software-factory', 'agent-custody').invariant.maps, [{key: 'write-mode', range: ['propose', 'draft', 'direct']}])
 })
 
 test('every registry entry names its holders (heldBy): an array of known holders (lock §4.8, §4.9)', () => {

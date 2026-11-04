@@ -12,10 +12,12 @@ export function softwareFactoryFamilyManifest(): FamilyManifest {
     browser: [],
     browserEntries: [],
     faces: [
-      // Software Factory's half of the one Agent (DLW §19.4 "One agent, three owners": Software Factory owns how much it decides alone —
-      // autonomy, the review gate and what it holds). Not a device of its own: the Agent (actuation:harness-model) draws what it holds and
-      // Hand back on its Run page, and the Scope draws what waits before a change lands on its Asks page (§19.12); it stands on no chain.
-      {id: 'agent-custody', presentations: ['compact', 'expanded'], liveSemantic: 'macro', invariant: {maps: [{key: 'autonomy', range: ['suggest', 'review', 'auto']}]}, note: 'What the one Agent holds and Hand back (DLW §19.4, the Agent\'s Run page); what waits before a change lands is the Scope\'s Before it lands (§19.12). No device of its own.'},
+      // Software Factory's half of the one Agent (DLW §19.4 "One agent, three owners": Software Factory owns what it holds and what it
+      // does when it stalls). Not a device of its own: the Agent (actuation:harness-model) draws what it holds and Hand back on its Run
+      // page, and the Scope draws what waits before a change lands on its Asks page (§19.12); it stands on no chain. Its macro maps the
+      // write mode it shares with Scope (the declared row; its review gate is no row of the family): the Autonomy it once mapped is
+      // retired (§19.4, §19.12: Scope's Tool calls took its place).
+      {id: 'agent-custody', presentations: ['compact', 'expanded'], liveSemantic: 'macro', invariant: {maps: [{key: 'write-mode', range: ['propose', 'draft', 'direct']}]}, note: 'What the one Agent holds and Hand back (DLW §19.4, the Agent\'s Run page); what waits before a change lands is the Scope\'s Before it lands (§19.12). No device of its own.'},
       {id: 'context-write-mode', presentations: statePresentations('software-factory:context-write-mode'), liveSemantic: 'return', invariant: {routesTo: 'shell.setWriteArm'}, note: 'Write receipts and Return on context-world device.'},
       {id: 'ledger', presentations: statePresentations('software-factory:ledger'), liveSemantic: 'track', invariant: {stream: 'the Factory ledger (main-track receipts)'}, note: 'Main-track ledger device and dock tile.'},
       {id: 'approvals', presentations: statePresentations('software-factory:approvals'), liveSemantic: 'return', invariant: {routesTo: 'kernel:harness_agent_control'}, note: 'Default approvals and approval queue tile.'},

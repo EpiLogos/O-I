@@ -512,7 +512,7 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   // Voice the Answer's voice, above.
   const identity = useIdentityDevice(transport, centralAgentRef(answerInput), IDENTITY_DEVICE_ID)
   const holds = useChainHolds()
-  const custody = useMemo(() => custodyBinding({sessionRef: nara.session, autonomy: null, agent: own.values}, scope), [nara.session, own.values, scope])
+  const custody = useMemo(() => custodyBinding({sessionRef: nara.session, agent: own.values}, scope), [nara.session, own.values, scope])
   // The session the Thread page shows (the dialogue's, or the one it is pinned to), and that session's asks to the decision helper.
   const threadShown = shownSession({selected: nara.session, holds}, CENTRAL_THREAD_HOLD)
   const shownAsks = useAikitRead(transport, threadShown ? {kind: 'decision-asks', agent_session: threadShown} : null)

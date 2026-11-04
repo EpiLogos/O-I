@@ -231,7 +231,7 @@ export type ActuationWriteRequest =
 export interface ActuationComparisonRunRequest {
   trace_ref: string
   repetitions: number
-  variable?: 'condition' | 'model' | 'effort' | 'skillset' | 'budget' | 'autonomy'
+  variable?: 'condition' | 'model' | 'effort' | 'skillset' | 'budget' | 'tool_calls'
   levels?: string[]
   conditions?: string[]
   stop?: {when: 'done' | 'turns' | 'time' | 'pass'; turns?: number; time_ms?: number}
@@ -1284,7 +1284,7 @@ export interface EncounterTakesSet {
   ended: null | {at_unix_ms: number; outcome: 'made' | 'failed' | 'stopped'; takes?: number; root?: string; reason?: string}
 }
 export type EncounterTaskSettingKey = 'name' | 'colour' | 'active' | 'register' | 'form' | 'loop' | 'loop_until' | 'loop_cap' | 'launch' | 'then'
-  | 'quantize' | 'repeat_variable' | 'repeat_levels' | 'repeat_repeats' | 'repeat_stop' | 'envelope_mode' | 'envelope_linked' | 'source' | 'effort' | 'autonomy'
+  | 'quantize' | 'repeat_variable' | 'repeat_levels' | 'repeat_repeats' | 'repeat_stop' | 'envelope_mode' | 'envelope_linked' | 'source' | 'effort' | 'tool_calls'
 /** An envelope point: [seconds from the task's start, a level word under Automation or a step −2…+2 under Modulation]. */
 export type EncounterEnvelopePoint = [number, string | number]
 /** The owner's reading: every value as it stands (defaults stated), `set` naming what the person set. Its words are the manual's (§19.1
@@ -1307,9 +1307,16 @@ export interface EncounterSessionSettingsReading {
     task_ref: string; name: string; colour: string | null; active: boolean; register: 'plain' | 'warm' | 'terse'
     form: 'technical' | 'narrative' | 'list'; loop: boolean; loop_until: 'done' | 'pass'; loop_cap: number | null
     launch: 'trigger' | 'gate' | 'toggle' | 'repeat'; then: 'next' | 'again' | 'stop'; quantize: 'global' | 'now' | 'next-tool' | 'next-turn'
-    repeat_variable: 'condition' | 'model' | 'effort' | 'skillset' | 'budget' | 'autonomy'; repeat_levels: string[]; repeat_repeats: number
+    repeat_variable: 'condition' | 'model' | 'effort' | 'skillset' | 'budget' | 'tool_calls'; repeat_levels: string[]; repeat_repeats: number
     repeat_stop: 'turns' | 'time' | 'done' | 'pass'; envelope_mode: 'automation' | 'modulation'; envelope_linked: boolean
-    effort: EncounterEnvelopePoint[]; autonomy: EncounterEnvelopePoint[]; set: string[]
+    /** Scope's Tool calls for this task (§19.1 Envelopes): inherit · ask · session · always; the Agent's Autonomy is retired. Absent
+     * from an AIKit before O-I 787's Tool calls. */
+    effort: EncounterEnvelopePoint[]; tool_calls?: EncounterEnvelopePoint[]; set: string[]
+    /** What the stored settings held in retired words, each with what took its place and the owner's words (ai-kit `migrate`). */
+    retired?: {field: string; held: unknown; replaced_by: string; words: string}[]
+    /** What Tool calls did at its last answer to the harness: `{answered, option_id, tool_calls}` or `{waiting, tool_calls, reason}`;
+     * null while it answered nothing (ai-kit encounter_task_executor.rs `tool_calls_play`). */
+    tool_calls_play?: {answered: string; option_id: string; tool_calls: string} | {waiting: string; tool_calls: string; reason: string} | null
     /** The constellation the task was made of (§19.1 The Clip panel's Constellation): its whole's wiki ref, the one the task was made with
      * until the person sets another; null when it was made of none. Absent from an AIKit before O-I #768 (ai-kit a3f43f84). */
     source?: string | null

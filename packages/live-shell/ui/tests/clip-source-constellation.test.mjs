@@ -244,7 +244,7 @@ function settingsOf(source, {revision = 'session-settings/01', task = true} = {}
   return {schema: 'aikit.encounter-session-settings/v1', agent_session: 'ses-214', revision, track: {telemetry: true, solo: false, set: []},
     task: task ? {task_ref: 'task:fixtures', name: 'correlate occurrences', colour: null, active: true, register: 'plain', form: 'technical', loop: false,
       loop_until: 'done', loop_cap: null, launch: 'trigger', then: 'next', quantize: 'global', repeat_variable: 'condition', repeat_levels: [], repeat_repeats: 3,
-      repeat_stop: 'done', envelope_mode: 'automation', envelope_linked: true, source, effort: [], autonomy: [], set: source ? ['source'] : []} : null,
+      repeat_stop: 'done', envelope_mode: 'automation', envelope_linked: true, source, effort: [], tool_calls: [], set: source ? ['source'] : []} : null,
     previous_task: null, standing: 'The person\'s settings for this session and its bound task.'}
 }
 const BRIDGE = {kind: 'bridge', url: 'http://kernel.test'}

@@ -156,7 +156,7 @@ declare global {
 
 /** A view onto the values kept under a prefix, for a device that carries another's page — the Agent carries Custody's and
  * Identity's as its own pages, and the Thread as its Full. Keys read and write as `prefix + key`; the shared keys are the
- * device's own (its light, the autonomy both pages show). A binding hosts the carried page by prefixing that page's binding. */
+ * device's own (its light). A binding hosts the carried page by prefixing that page's binding. */
 export function scoped(p: ViewProps, prefix: string, shared: readonly string[] = []): ViewProps {
   const own = (key: string) => (shared.includes(key) ? key : prefix + key)
   function pick<T>(all: Readonly<Record<string, T>>): Record<string, T> {

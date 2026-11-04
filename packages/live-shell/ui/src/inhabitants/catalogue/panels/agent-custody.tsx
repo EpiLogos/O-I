@@ -1,16 +1,15 @@
 // Retired as a device of its own (22 Oct manual rewrite): not a `<family>__<face>.tsx` panel any more, so the catalogue does not load
 // it; the Agent (actuation:harness-model) carries its pages through this module.
-// Custody (manual §19.4, software-factory:agent-custody): how much an agent decides alone, what waits for you before a change lands,
-// how a write arrives, and what the agent holds now. Live's nearest: Utility with a small display — a few plain settings whose meaning
-// shows at a glance. It shares the Agent's chain slot (agentDeviceCatalogue.ts) and its `autonomy` key (agentParamAddresses.ts: the
-// Agent shows it, Custody sets it), and it shares Scope's `writeMode` row (shell.setWriteArm; the transport's Arm).
+// Custody (manual §19.4, software-factory:agent-custody): what waits for you before a change lands, how a write arrives, and what the
+// agent holds now. Live's nearest: Utility with a small display — a few plain settings whose meaning shows at a glance. It shares the
+// Agent's chain slot (agentDeviceCatalogue.ts) and Scope's `writeMode` row (shell.setWriteArm; the transport's Arm). The Agent's
+// Autonomy, which it once set (a rail from Suggest to Auto), is retired (§19.4, §19.12): Scope's Tool calls took its place.
 //
-// The well draws the device's own law. A rail runs from the agent to the point where its work stops and waits for you: Suggest stops at
-// the proposal, Review at your check, Auto lands. Two gate boxes (diffs, approvals) light for the review gate; a line of three stops
-// shows how a write arrives; a dot for each held item shows what the agent holds (Factory's custody: filled orange while the agent
-// works on it, ringed orange when it is blocked, ringed red when you edited it).
+// The well draws the device's own law. Two gate boxes (diffs, approvals) light for the review gate; a line of three stops shows how a
+// write arrives; a dot for each held item shows what the agent holds (Factory's custody: filled orange while the agent works on it,
+// ringed orange when it is blocked, ringed red when you edited it).
 //
-// Keys. Settings: `autonomy` (suggest|review|auto), `gate` (diffs|approvals|both), `writeMode` (propose|draft|direct), `escalate` (a
+// Keys. Settings: `gate` (diffs|approvals|both), `writeMode` (propose|draft|direct), `escalate` (a
 // person's id). Readings: `light`, `handBackLit` (the transport's Re-enable light), `held` (JSON rows of {id, name, kind work|file|value,
 // state in-progress|blocked|edited, by, receipts, why}) and `people` (JSON rows of {id, name}). The action: `handBack`, set true to give
 // the held items back. A key the owner does not report arrives absent, and the views draw "—" and name what is missing.
@@ -24,11 +23,6 @@ type V = ViewProps['v']
 
 // ---------------------------------------------------------------- fixed vocabulary (the settings' words, not the owner's data)
 
-const LEVELS = [
-  {value: 'suggest', label: 'Suggest', does: 'The agent proposes only. Nothing lands.'},
-  {value: 'review', label: 'Review', does: 'The agent works and you check each result.'},
-  {value: 'auto', label: 'Auto', does: 'The agent works and lands changes with receipts.'},
-] as const
 const GATES = [
   {value: 'diffs', label: 'Diffs', does: 'A change waits for you to read its diff.'},
   {value: 'approvals', label: 'Approvals', does: 'A change waits for you to answer its request.'},
@@ -40,7 +34,6 @@ const MODES = [
   {value: 'direct', label: 'Direct', does: 'A write goes into the thing itself, with a receipt.'},
 ] as const
 const SAYS = {
-  autonomy: 'How much the agent decides alone. Drag handle 1 along the rail.',
   gate: 'What waits for you before a change lands.',
   write: 'The most the agent may do with a write. Scope limits each part of the world; the stricter value stands.',
   escalate: 'Who the agent asks when it needs a decision.',
@@ -53,10 +46,9 @@ type State = (typeof STATES)[number]
 
 /** The place of a value in its list, or undefined when the owner has not reported it (or reports a word the list lacks). */
 const at = (list: readonly {value: string}[], x: string | undefined) => { const i = list.findIndex(o => o.value === x); return i < 0 ? undefined : i }
-const autonomyAt = (v: V) => at(LEVELS, strOf(v, 'autonomy'))
 const gateAt = (v: V) => at(GATES, strOf(v, 'gate'))
 const modeAt = (v: V) => at(MODES, strOf(v, 'writeMode'))
-const levelWord = (v: V) => { const i = autonomyAt(v); return i === undefined ? undefined : LEVELS[i]!.label }
+const gateWord = (v: V) => { const i = gateAt(v); return i === undefined ? undefined : GATES[i]!.label }
 
 // ---------------------------------------------------------------- the owner's rows, read safely
 
@@ -121,73 +113,64 @@ function Dots({items, x, y, pitch, cols, rows, r}: {items: Held[]; x: number; y:
 
 // ---------------------------------------------------------------- the well
 
-/** The well: the rail of autonomy, the gate boxes and the write stops (whole), the held dots. A reading the owner has not reported is
- * left off the picture and named in words; a handle shows only where its key can be written. */
+/** The well: the gate boxes and the write stops (whole), the held dots. A reading the owner has not reported is left off the picture
+ * and named in words; a handle shows only where its key can be written. */
 function CustodyWell({v, set, standing, w, h, size}: {v: V; set?: ViewProps['set']; standing?: ViewProps['standing']; w: number; h: number; size: 'mini' | 'compact' | 'whole'}) {
   const mini = size === 'mini', whole = size === 'whole'
-  const a = autonomyAt(v), g = gateAt(v), m = modeAt(v), items = heldItems(v), known = has(v, 'held'), lit = boolOf(v, 'handBackLit') === true
+  const g = gateAt(v), m = modeAt(v), items = heldItems(v), known = has(v, 'held'), lit = boolOf(v, 'handBackLit') === true
   const handle = (key: string) => !!set && !mini && !standing?.[key]?.disabled
-  const x0 = mini ? 10 : 14, x1 = w - x0, mid = (x0 + x1) / 2, railY = mini ? 14 : whole ? 27 : 31
+  const x0 = mini ? 10 : 14, x1 = w - x0, mid = (x0 + x1) / 2
   const sx = (i: number) => x0 + i * (x1 - x0) / 2
   const nearest = (x: number, stops: number[]) => stops.reduce((best, s, i) => (Math.abs(s - x) < Math.abs(stops[best]! - x) ? i : best), 0)
   // the whole well's gate boxes sit at the left and right, the "both" stop between them; the write stops run across like the rail
   const boxW = 62, boxL = 14, boxR = w - 14 - boxW, gateStops = [boxL + boxW / 2, mid, boxR + boxW / 2], gateOrder = ['diffs', 'both', 'approvals'] as const
   const gateIndex = g === undefined ? undefined : gateOrder.indexOf(GATES[g]!.value)
   const diffsOn = g !== undefined && GATES[g]!.value !== 'approvals', approvalsOn = g !== undefined && GATES[g]!.value !== 'diffs'
-  const writeY = 115
-  return <Display w={w} h={h} label="Custody" does={mini ? 'How far the agent works alone, and what it holds.' : 'How far the agent works alone, what waits for you, how a write arrives, and what the agent holds. Drag the handles to set them.'}
+  const writeY = 85
+  return <Display w={w} h={h} label="Custody" does={mini ? 'What waits for you, and what the agent holds.' : 'What waits for you before a change lands, how a write arrives, and what the agent holds. Drag the handles to set them.'}
     corner={mini ? undefined : countText(v)}>
-    {/* autonomy: the rail runs from the agent to where its work stops and waits for you */}
-    {!mini && <text x={7} y={whole ? 11 : 14} className="dp-axis">{a === undefined ? `autonomy ${NONE}` : 'autonomy'}</text>}
-    <path d={`M${x0} ${railY}H${x1}`} className="dp-faint" />
-    {a !== undefined && a > 0 && <path d={`M${x0} ${railY}H${sx(a)}`} stroke="var(--dp-value)" strokeWidth={2} fill="none" />}
-    {[0, 1, 2].map(i => <circle key={i} cx={sx(i)} cy={railY} r={3} className={a !== undefined && i <= a ? undefined : 'dp-faint'} fill={a !== undefined && i <= a ? 'var(--dp-value)' : 'none'} />)}
-    {!mini && ['suggest', 'review', 'auto'].map((word, i) => <text key={word} x={i === 0 ? 7 : i === 1 ? mid : w - 7} y={railY + 14} className="dp-axis" textAnchor={i === 0 ? 'start' : i === 1 ? 'middle' : 'end'}>{word}</text>)}
-    {handle('autonomy') && a !== undefined && <Handle n={1} shape="ring" x={sx(a)} y={railY} label="Autonomy" does={SAYS.autonomy}
-      onDrag={x => set!('autonomy', LEVELS[Math.round(clampTo(0, 2, (x - x0) / ((x1 - x0) / 2)))]!.value)} onReset={() => set!('autonomy', 'review')} />}
-
     {whole && <>
       {/* the review gate: two boxes that light for what waits for you */}
-      <text x={7} y={55} className="dp-axis">{g === undefined ? `review gate ${NONE}` : 'review gate'}</text>
-      <path d={`M${boxL + boxW} 67H${boxR}`} className="dp-faint" />
+      <text x={7} y={11} className="dp-axis">{g === undefined ? `review gate ${NONE}` : 'review gate'}</text>
+      <path d={`M${boxL + boxW} 37H${boxR}`} className="dp-faint" />
       {[{x: boxL, word: 'diffs', on: diffsOn}, {x: boxR, word: 'approvals', on: approvalsOn}].map(box => <g key={box.word}>
-        <rect x={box.x + 0.5} y={60.5} width={boxW - 1} height={14} className={box.on ? undefined : 'dp-faint'} fill={box.on ? 'color-mix(in srgb, var(--dp-value) 22%, transparent)' : 'none'} stroke={box.on ? 'var(--dp-value)' : undefined} />
-        <text x={box.x + boxW / 2} y={70.5} className="dp-ink-dim" textAnchor="middle">{box.word}</text>
+        <rect x={box.x + 0.5} y={30.5} width={boxW - 1} height={14} className={box.on ? undefined : 'dp-faint'} fill={box.on ? 'color-mix(in srgb, var(--dp-value) 22%, transparent)' : 'none'} stroke={box.on ? 'var(--dp-value)' : undefined} />
+        <text x={box.x + boxW / 2} y={40.5} className="dp-ink-dim" textAnchor="middle">{box.word}</text>
       </g>)}
-      {gateStops.map((gx, i) => <path key={i} d={`M${gx} 83V89`} className="dp-faint" />)}
-      {handle('gate') && gateIndex !== undefined && <Handle n={2} x={gateStops[gateIndex]!} y={86} label="Review gate" does="Drag along the line: diffs, both, or approvals wait for you."
+      {gateStops.map((gx, i) => <path key={i} d={`M${gx} 53V59`} className="dp-faint" />)}
+      {handle('gate') && gateIndex !== undefined && <Handle n={1} x={gateStops[gateIndex]!} y={56} label="Review gate" does="Drag along the line: diffs, both, or approvals wait for you."
         onDrag={x => set!('gate', gateOrder[nearest(x, gateStops)]!)} onReset={() => set!('gate', 'both')} />}
-      {gateIndex !== undefined && !handle('gate') && <circle cx={gateStops[gateIndex]!} cy={86} r={3.5} fill="var(--dp-on)" />}
+      {gateIndex !== undefined && !handle('gate') && <circle cx={gateStops[gateIndex]!} cy={56} r={3.5} fill="var(--dp-on)" />}
 
       {/* the write stops: how a write arrives */}
-      <text x={7} y={101} className="dp-axis">{m === undefined ? `write ${NONE}` : 'write'}</text>
+      <text x={7} y={71} className="dp-axis">{m === undefined ? `write ${NONE}` : 'write'}</text>
       <path d={`M${x0} ${writeY}H${x1}`} className="dp-faint" />
       {MODES.map((mode, i) => <g key={mode.value}>
         <path d={`M${sx(i)} ${writeY - 4}V${writeY + 4}`} className="dp-faint" />
         <text x={i === 0 ? 7 : i === 1 ? mid : w - 7} y={writeY + 13} className="dp-axis" textAnchor={i === 0 ? 'start' : i === 1 ? 'middle' : 'end'}>{mode.value}</text>
       </g>)}
       {m !== undefined && !handle('writeMode') && <circle cx={sx(m)} cy={writeY} r={3.5} fill="var(--dp-on)" />}
-      {handle('writeMode') && m !== undefined && <Handle n={3} x={sx(m)} y={writeY} label="Write mode" does="Drag along the line: how a write arrives."
+      {handle('writeMode') && m !== undefined && <Handle n={2} x={sx(m)} y={writeY} label="Write mode" does="Drag along the line: how a write arrives."
         onDrag={x => set!('writeMode', MODES[Math.round(clampTo(0, 2, (x - x0) / ((x1 - x0) / 2)))]!.value)} onReset={() => set!('writeMode', 'propose')} />}
     </>}
 
     {/* what the agent holds, a dot for each item */}
-    {!mini && !whole && <text x={7} y={66} className="dp-axis">{known ? 'held' : `held ${NONE}`}</text>}
-    {!mini && !whole && lit && <text x={w - 7} y={66} className="dp-axis" textAnchor="end" style={{fill: 'var(--rec)'}}>hand back lit</text>}
-    {!mini && !whole && <text x={7} y={h - 6} className="dp-axis">gate {g === undefined ? NONE : GATES[g]!.value} · writes {m === undefined ? NONE : MODES[m]!.value}</text>}
-    {known && size === 'compact' && <Dots items={items} x={14} y={82} pitch={14} cols={8} rows={4} r={4.5} />}
-    {known && whole && <Dots items={items} x={11} y={138} pitch={10} cols={18} rows={1} />}
-    {known && mini && <Dots items={items} x={13} y={34} pitch={9} cols={10} rows={6} />}
+    {!mini && !whole && <text x={7} y={14} className="dp-axis">gate {g === undefined ? NONE : GATES[g]!.value} · writes {m === undefined ? NONE : MODES[m]!.value}</text>}
+    {!mini && !whole && <text x={7} y={34} className="dp-axis">{known ? 'held' : `held ${NONE}`}</text>}
+    {!mini && !whole && lit && <text x={w - 7} y={34} className="dp-axis" textAnchor="end" style={{fill: 'var(--rec)'}}>hand back lit</text>}
+    {known && size === 'compact' && <Dots items={items} x={14} y={50} pitch={14} cols={8} rows={4} r={4.5} />}
+    {known && whole && <Dots items={items} x={11} y={110} pitch={10} cols={18} rows={1} />}
+    {known && mini && <Dots items={items} x={13} y={14} pitch={9} cols={10} rows={6} />}
     {mini && lit && <text x={7} y={h - 6} className="dp-axis" style={{fill: 'var(--rec)'}}>hand back lit</text>}
-    {!known && <text x={7} y={whole ? 140 : mini ? 52 : 96} className="dp-ink-dim">{mini ? 'Held not read' : 'No reading of what the agent holds'}</text>}
-    {known && items.length === 0 && <text x={7} y={whole ? 140 : mini ? 52 : 96} className="dp-ink-dim">Nothing held</text>}
+    {/* the compact well (140 wide) holds the words on two lines; the whole well holds them on one */}
+    {!known && <text x={7} y={whole ? 112 : mini ? 32 : 64} className="dp-ink-dim">{mini ? 'Held not read' : whole ? 'No reading of what the agent holds'
+      : <><tspan x={7}>No reading of what</tspan><tspan x={7} dy={12}>the agent holds</tspan></>}</text>}
+    {known && items.length === 0 && <text x={7} y={whole ? 112 : mini ? 32 : 64} className="dp-ink-dim">Nothing held</text>}
   </Display>
 }
 
 // ---------------------------------------------------------------- the controls
 
-const levelDial = (p: ViewProps) => <Dial {...st(p, 'autonomy')} label="Autonomy" does={SAYS.autonomy} value={autonomyAt(p.v) ?? NaN} def={1} scale={{min: 0, max: 2, step: 1}}
-  format={i => LEVELS[Math.round(i)]?.label ?? NONE} onChange={i => p.set('autonomy', LEVELS[Math.round(i)]!.value)} />
 const gateDial = (p: ViewProps) => <Dial {...st(p, 'gate')} label="Gate" does={`${SAYS.gate} Diffs, approvals or both.`} value={gateAt(p.v) ?? NaN} def={2} scale={{min: 0, max: 2, step: 1}}
   format={i => GATES[Math.round(i)]?.label ?? NONE} onChange={i => p.set('gate', GATES[Math.round(i)]!.value)} />
 const writeDial = (p: ViewProps) => <Dial {...st(p, 'writeMode')} label="Writes" does={SAYS.write} value={modeAt(p.v) ?? NaN} def={0} scale={{min: 0, max: 2, step: 1}}
@@ -198,7 +181,7 @@ function handBackToggle(p: ViewProps) {
   return <Toggle {...s} disabled={s.disabled ?? (lit === false ? 'Nothing you edited is held.' : undefined)} tone="rec" label="Hand back" does={SAYS.handBack}
     on={lit === true} unknown={lit === undefined} onChange={lit === true ? () => p.set('handBack', true) : undefined} />
 }
-const radio = (p: ViewProps, key: 'autonomy' | 'gate' | 'writeMode', label: string | undefined, does: string, options: readonly Option<string>[]) =>
+const radio = (p: ViewProps, key: 'gate' | 'writeMode', label: string | undefined, does: string, options: readonly Option<string>[]) =>
   <Radio {...st(p, key)} label={label} does={does} value={strOf(p.v, key) ?? ''} options={options} stack onChange={x => p.set(key, x)} />
 
 // ---------------------------------------------------------------- the pane: what the agent holds
@@ -207,7 +190,7 @@ function HeldPane({p}: {p: ViewProps}) {
   const v = p.v, items = heldItems(v), known = has(v, 'held'), lit = boolOf(v, 'handBackLit')
   return <div className="cu-pane">
     <div className="cu-pane-head" aria-label="Custody">
-      <b>Custody</b><span>autonomy {shown(v, 'autonomy')}</span><span>gate {shown(v, 'gate')}</span><span>writes {shown(v, 'writeMode')}</span><span>{countText(v)}</span>
+      <b>Custody</b><span>gate {shown(v, 'gate')}</span><span>writes {shown(v, 'writeMode')}</span><span>{countText(v)}</span>
       <span data-lit={lit === true ? 'true' : undefined}>{lit === undefined ? `hand back ${NONE}` : lit ? 'hand back lit' : 'hand back dark'}</span>
     </div>
     <div className="cu-list" role="table" aria-label="Held items">
@@ -250,9 +233,6 @@ export function CustodyBands({p, writes = true}: {p: ViewProps; writes?: boolean
       <Section width={206}>
         <CustodyWell v={p.v} set={p.set} standing={p.standing} w={194} h={146} size="whole" />
       </Section>
-      <Section label="Autonomy" width={78}>
-        {radio(p, 'autonomy', undefined, SAYS.autonomy, LEVELS)}
-      </Section>
       <Section label="Writes" grow>
         {writes ? radio(p, 'writeMode', undefined, SAYS.write, MODES)
           : <Readout label="writes" does="How a write arrives is set by Scope, the next device on the chain, and by Arm in the transport." value="as Scope allows" />}
@@ -277,21 +257,20 @@ export const design: DesignedDevice = {
   id: 'software-factory:agent-custody',
   title: 'Custody',
   kind: 'effect',
-  defaults: {light: 'lit', autonomy: 'review', gate: 'both', writeMode: 'propose', escalate: 'you', people: JSON.stringify(SAMPLE_PEOPLE), held: sampleHeld(), handBackLit: false},
+  defaults: {light: 'lit', gate: 'both', writeMode: 'propose', escalate: 'you', people: JSON.stringify(SAMPLE_PEOPLE), held: sampleHeld(), handBackLit: false},
   fixtures: {
-    'Review, five held': {},
+    'Both gates, five held': {},
     'You edited a file': {held: sampleHeld(true), handBackLit: true},
-    'No readings': Object.fromEntries(['light', 'autonomy', 'gate', 'writeMode', 'escalate', 'people', 'held', 'handBackLit'].map(k => [k, undefined])),
+    'No readings': Object.fromEntries(['light', 'gate', 'writeMode', 'escalate', 'people', 'held', 'handBackLit'].map(k => [k, undefined])),
   },
 
-  folded: p => <Folded title="Custody" light={lightOf(p)} readings={[levelWord(p.v) ?? NONE, countText(p.v)]} onUnfold={p.nav.unfold} />,
+  folded: p => <Folded title="Custody" light={lightOf(p)} readings={[gateWord(p.v) ?? NONE, countText(p.v)]} onUnfold={p.nav.unfold} />,
 
   compact: p => <Panel title="Custody" view="compact" light={lightOf(p)} onFold={p.nav.fold} onFull={p.nav.full} onSelect={p.nav.select}>
     <Section width={152}>
       <CustodyWell v={p.v} set={p.set} standing={p.standing} w={140} h={146} size="compact" />
     </Section>
     <Section label="Macros" cols={2} width={124}>
-      {levelDial(p)}
       {gateDial(p)}
       {writeDial(p)}
       {handBackToggle(p)}
@@ -306,7 +285,7 @@ export const design: DesignedDevice = {
     <CustodyWell v={p.v} standing={p.standing} w={104} h={100} size="mini" />
     <div className="cu-tile-side">
       <Readout big label="held" does="The items the agent holds now." value={heldCount(p.v)} tone="stall" />
-      <Readout label="autonomy" does="How much the agent decides alone." value={levelWord(p.v)} tone="value" />
+      <Readout label="gate" does="What waits for you before a change lands." value={gateWord(p.v)} tone="value" />
       {handBackToggle(p)}
     </div>
   </Tile>,

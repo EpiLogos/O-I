@@ -377,7 +377,7 @@ export interface AgentInput {
   readonly track: AgentTrackReading | null
   /** The reading instant the tracks were built at (AgentSessionsProvider nowUnixMs), never a later clock. */
   readonly nowUnixMs: number
-  readonly reading: Pick<AgentChainReading, 'attached' | 'budget' | 'autonomy' | 'gatewayAdmitted' | 'gatewayDoc'>
+  readonly reading: Pick<AgentChainReading, 'attached' | 'budget' | 'gatewayAdmitted' | 'gatewayDoc'>
   readonly accepted: OwnerAcceptedValues
   /** The harness the gateway binding names, and whether its owner named it (useHarnessBinding: until it has, the binding is only
    * the shell's default and is no reading). */
@@ -463,7 +463,6 @@ function agentOwnValues(input: AgentInput): Record<string, Value> {
   if (sessionRef != null) {
     put(values, 'used', reading.budget?.used ?? track?.budget.used)
     put(values, 'cap', reading.budget?.cap ?? track?.budget.max)
-    put(values, 'autonomy', reading.autonomy)
   }
   // The composer is the shell's own: its text while you type, and the last line an owner accepted from it — absent until then
   // (design.ts:8-10: an absent key stays absent). Nobody reports a holder of Effort, so effortHeld is absent too; a holder the
@@ -502,7 +501,12 @@ export const AGENT_P0_ROWS: Readonly<{quantize: SdkParamRow; steerLine: SdkParam
   newTask: {family: 'software-factory', deviceInstance: 'agent', key: 'new-task', title: 'New task', type: 'string', writePath: 'kernel:harness_agent_control'},
 }
 
-const AGENT_WRITES = new Set(['effort', 'input', 'heartbeat', 'quantize', 'draft', 'sent', 'light', 'cap'])
+/** The Agent's Autonomy, retired (DLW §19.4: the Agent's pages are Run, Identity and Type, its macros Model, Effort, Budget and Input;
+ * §19.12 Asks: Tool calls is "the answer to the harness's request to use a tool"): what took its place, for a press that still names it. */
+export const AGENT_AUTONOMY_RETIRED = 'Autonomy is retired: Scope\'s Tool calls, on its Asks page, answers the harness\'s request to use a tool — Ask, Session or Always — and a task\'s Envelopes set it for that task.'
+
+// `autonomy` is taken only to be refused in words (AGENT_AUTONOMY_RETIRED): a preset or a hold from before may still name it.
+const AGENT_WRITES = new Set(['effort', 'input', 'heartbeat', 'quantize', 'draft', 'sent', 'light', 'cap', 'autonomy'])
 
 /** The Agent's binding: its values, and each change through its row's own write path (or held, for the composer's text). */
 /** Why the Agent stands in no run state: no session is selected, or its task, needle and thread say none (runFaces.ts runStateOfSession). */
@@ -519,7 +523,8 @@ export function agentBinding(id: string, input: AgentInput, rows: AgentRows, wri
   return {
     id,
     values,
-    standing: {...disabled(contextStanding(input.context, values)), ...disabled(REFUSED_WRITES[AGENT_DESIGN]!), ...('run' in values ? {} : {run: {disabled: RUN_UNREAD}})},
+    standing: {...disabled(contextStanding(input.context, values)), ...disabled(REFUSED_WRITES[AGENT_DESIGN]!), ...('run' in values ? {} : {run: {disabled: RUN_UNREAD}}),
+      autonomy: {disabled: AGENT_AUTONOMY_RETIRED}},
     writes: key => AGENT_WRITES.has(key),
     write: async (changes: readonly ValueChange[]) => {
       for (const {key, value} of changes) {
@@ -541,6 +546,7 @@ export function agentBinding(id: string, input: AgentInput, rows: AgentRows, wri
           }
           case 'light': throw Error(REFUSE.power)
           case 'cap': throw Error(REFUSE.budget)
+          case 'autonomy': throw Error(AGENT_AUTONOMY_RETIRED)
           default: throw Error(REFUSE.reading(key))
         }
       }

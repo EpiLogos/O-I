@@ -42,7 +42,7 @@ const settings = await import('../src/agent/sessionSettings.ts')
 
 const taskOf = (extra = {}) => ({task_ref: 'task:t', name: 'correlate occurrences', launch: 'trigger', then: 'next', loop: false, loop_until: 'done',
   loop_cap: null, quantize: 'global', repeat_variable: 'condition', repeat_levels: [], repeat_repeats: 3, repeat_stop: 'done', envelope_mode: 'automation',
-  envelope_linked: true, effort: [], autonomy: [], register: 'plain', form: 'technical', active: true, colour: null, set: [], ...extra})
+  envelope_linked: true, effort: [], tool_calls: [], register: 'plain', form: 'technical', active: true, colour: null, set: [], ...extra})
 const readingOf = task => ({schema: 'aikit.encounter-session-settings/v1', agent_session: 'ses-214', revision: 'r1', track: {telemetry: true, solo: false, set: []}, task,
   previous_task: null, standing: 's'})
 const LAUNCH_KEYS = ['launch', 'then', 'loop', 'loop.until', 'loop.cap', 'repeat.variable', 'repeat.levels', 'repeat.repeats', 'repeat.stop']

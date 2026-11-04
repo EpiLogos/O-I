@@ -266,8 +266,10 @@ test('8 · the Agentset rack\'s Join: a group whose space names no Central set s
   assert.equal(rack.standing.join.disabled, session.JOIN_UNTIED)
   assert.match(rack.standing.join.disabled, /bind-agent-set/)
   await assert.rejects(rack.write([{key: 'join', value: 'quorum'}]), /no carrier|names no Central agent set/)
-  const custody = session.custodyBinding({sessionRef: 's', autonomy: 'review', agent: {light: 'lit'}, holds: bind.chainHolds()}, null)
-  for (const [key, flag] of [['autonomy', '--autonomy suggest|review|auto'], ['gate', '--review-gate diffs|approvals|both'], ['escalate', '--escalate-to']]) {
+  const custody = session.custodyBinding({sessionRef: 's', agent: {light: 'lit'}, holds: bind.chainHolds()}, null)
+  // REPLACED (O-I 787): Factory's `--autonomy` is no setting the desk assigns: the Agent's Autonomy is retired (§19.4, §19.12).
+  await assert.rejects(custody.write([{key: 'autonomy', value: 'auto'}]), {message: session.AGENT_AUTONOMY_RETIRED})
+  for (const [key, flag] of [['gate', '--review-gate diffs|approvals|both'], ['escalate', '--escalate-to']]) {
     // REPLACED (lane W11): with no custody read handed in, the setting says so; the ruling stands on an assigned work
     // (w11-custody-turn-thought-settings.test.mjs).
     assert.ok(custody.standing[key].disabled.includes(`\`factory development custody assign ${flag}\``), key)

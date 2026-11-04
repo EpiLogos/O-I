@@ -192,7 +192,7 @@ test('the Thread reads only what an owner reported, the Agent\'s shared keys, an
     assert.notDeepEqual([key, values[key]], [key, value], `${key} carries the design's default as if an owner reported it`)
   }
   // The Agent's thread is the same rows; its models and harnesses the owners' lists.
-  const agent = bind.agentValues({sessionRef: 's', track: null, nowUnixMs: 0, reading: {attached: null, budget: null, autonomy: null, gatewayAdmitted: null, gatewayDoc: null},
+  const agent = bind.agentValues({sessionRef: 's', track: null, nowUnixMs: 0, reading: {attached: null, budget: null, gatewayAdmitted: null, gatewayDoc: null},
     accepted: {}, harness: {binding: 'cursor', resolved: false}, holds: bind.chainHolds(),
     thread: thread.threadJson({reading: ALETHEIA, status: DISCONNECTED}, 'aletheia'), models: catalogueModels(CATALOGUE), harnesses: foundHarnesses(CLIENT_STATUS)})
   assert.equal(agent.thread, values.thread, 'the Agent and the Thread draw one stream')
@@ -295,7 +295,7 @@ test('the Thread draws its design on the binding in all five views: the real str
 
 test('the Agent\'s light only reads: its standing names Power, so its activator is never pressed only to be refused', () => {
   bind.resetHolds()
-  const binding = bind.agentBinding('factory:agent', {sessionRef: 's', track: null, nowUnixMs: 0, reading: {attached: true, budget: null, autonomy: null, gatewayAdmitted: null, gatewayDoc: null},
+  const binding = bind.agentBinding('factory:agent', {sessionRef: 's', track: null, nowUnixMs: 0, reading: {attached: true, budget: null, gatewayAdmitted: null, gatewayDoc: null},
     accepted: {}, harness: {binding: 'cursor', resolved: false}, holds: bind.chainHolds()}, {}, async () => ({kind: 'fired'}), () => true)
   assert.match(binding.standing.light.disabled, /^Power is a reading/)
   const drawn = hosted(agentDesign, binding).join('\n')

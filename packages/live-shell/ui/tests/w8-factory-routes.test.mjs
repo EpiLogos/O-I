@@ -99,7 +99,7 @@ function fakeKernel(answer) {
   return {transport: {kind: 'bridge', url: 'http://fake-kernel.test'}, ops, restore: () => { globalThis.fetch = was }}
 }
 
-const custody = (over = {}, ports = {}) => session.custodyBinding({sessionRef: 's', autonomy: 'review', agent: {light: 'lit'}, holds: bind.chainHolds(),
+const custody = (over = {}, ports = {}) => session.custodyBinding({sessionRef: 's', agent: {light: 'lit'}, holds: bind.chainHolds(),
   grants: grantsAnswered(), person: PERSON, ...over}, null, ports)
 
 // ------------------------------------------------------------------------------------------------------------------ Custody's Grants

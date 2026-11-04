@@ -440,8 +440,8 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     return {statePath: custodyState, listing: custodyState ? {status: custodyListing.status, value: custodyListing.value?.data ?? null, error: custodyListing.error ? refusalWords(custodyListing.error) : null} : null,
       agentPosition: heldBy(track?.agentRef), work: typeof central?.task_ref === 'string' && central.task_ref.trim() ? central.task_ref : null}
   }, [custodyState, custodyListing, custodyPopulation, sessionTask, track?.agentRef])
-  const custodyDesignBinding = useMemo(() => custodyBinding({sessionRef, autonomy: reading.autonomy, agent: agentDesignBinding?.values ?? {}, holds, grants, person: currentPerson,
-    custody: custodyRead}, scopeDesignBinding, custodyPorts), [sessionRef, reading.autonomy, agentDesignBinding, scopeDesignBinding, holds, grants, currentPerson, custodyRead, custodyPorts])
+  const custodyDesignBinding = useMemo(() => custodyBinding({sessionRef, agent: agentDesignBinding?.values ?? {}, holds, grants, person: currentPerson,
+    custody: custodyRead}, scopeDesignBinding, custodyPorts), [sessionRef, agentDesignBinding, scopeDesignBinding, holds, grants, currentPerson, custodyRead, custodyPorts])
   const identityDesignBinding = useIdentityDevice(transport, track?.agentRef ?? null, FACTORY_IDENTITY_ID)
   // The Context page's Git row: the session's own repository, and Diff to Files' Diff page (§19.4 Context; §23.2).
   const oneAgent = useMemo(() => (agentDesignBinding ? withAgentGit(composeAgentBinding(agentDesignBinding, {custody: custodyDesignBinding, identity: identityDesignBinding, thread: threadDesignBinding}),

@@ -64,7 +64,6 @@ export interface AgentChainReading {
   skillsNote: string | null
   identity: string | null
   budget: {used?: number; cap?: number} | null
-  autonomy: string | null
   /** The owner disclosed a task record for the selected session (encounter_task_read). The agent's light reads it: the shell's
    * selection is the person's choice, not the owner saying the agent is on the session. Null until the owner has said so. */
   attached: boolean | null
@@ -82,7 +81,6 @@ export const INITIAL_READING: AgentChainReading = {
   skillsNote: 'Reading roster…',
   identity: null,
   budget: null,
-  autonomy: null,
   attached: null,
 }
 
@@ -159,17 +157,16 @@ export function rosterChains(data: unknown): SkillChain[] {
   return [...byRef].sort(([a], [b]) => a.localeCompare(b)).map(([ref, held]) => ({ref, admitted: held.admitted, carriedBy: held.carriedBy}))
 }
 
-/** The values a task record discloses for the agent rows (AgentDeviceChain.tsx:152-164). */
-export function taskReading(data: unknown): {used?: number; cap?: number; autonomy?: string} {
+/** The values a task record discloses for the agent rows (AgentDeviceChain.tsx:152-164). A `custody` or `autonomy` word is none of them:
+ * the Agent's Autonomy is retired (DLW §19.4, §19.12), and Scope's Tool calls carries what it set. */
+export function taskReading(data: unknown): {used?: number; cap?: number} {
   if (!isObj(data)) return {}
   const turns = isObj(data.turns) ? data.turns : undefined
   const used = turns?.used ?? data.turns_used
   const cap = turns?.cap ?? data.turn_budget ?? data.budget_cap
-  const custody = data.custody ?? data.autonomy
   return {
     ...(typeof used === 'number' ? {used} : {}),
     ...(typeof cap === 'number' ? {cap} : {}),
-    ...(typeof custody === 'string' ? {autonomy: custody} : {}),
   }
 }
 
@@ -232,14 +229,16 @@ const PLAN: Readonly<Record<string, Readonly<Record<string, RowPlan>>>> = {
     frames: {group: 'Reading'},
     spend: {group: 'Reading'},
   },
+  // The Agent's compact macros are the manual's (§19.4 Compact: "Macros: Model, Effort, Budget, Input"); its Autonomy is retired, Scope's
+  // Tool calls carrying what it set (§19.12 Asks).
   agent: {
-    autonomy: {group: 'Autonomy', compact: true},
-    effort: {group: 'Autonomy', compact: true},
+    model: {group: 'Runtime', compact: true},
+    effort: {group: 'Runtime', compact: true},
     'budget-used': {group: 'Budget', compact: true},
     input: {group: 'Steering', compact: true},
     heartbeat: {group: 'Steering'},
-    model: {group: 'Runtime'},
     identity: {group: 'Runtime'},
+    held: {group: 'Runtime'},
   },
   // The rack's four settings are ai-kit readings that no owner writes (agentParamAddresses.ts: "macros have no live source"), and
   // ai-kit declares no mapping from them to any row. They stand as readings under "Settings", not as macros, until ai-kit
@@ -379,7 +378,6 @@ function slotValues(slot: string, input: AgentChainInput): Record<string, ParamV
       // and its heartbeat flag (on) is presentation-state the dispatcher refuses: none of them is a reading, so none is put.
       put('effort', accepted.effort)
       put('input', accepted.input)
-      put('autonomy', reading.autonomy)
       put('budget-used', budgetLine(reading.budget))
       put('identity', reading.identity)
       break

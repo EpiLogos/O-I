@@ -82,9 +82,9 @@ export interface TaskAddress {
 
 /** The settings that belong to one task (manual §19.1 Clip view: its name, colour and activator, its output style, its Loop with its stop
  * condition and cap, its Launch mode, Then and Quantize, what a Repeat varies — Variable, Levels, Repeats, Stop when — and its envelopes:
- * the Agent's Effort and Autonomy for this task, as Automation or Modulation, linked or not). */
+ * the Agent's Effort and Scope's Tool calls for this task, as Automation or Modulation, linked or not; the Agent's Autonomy is retired). */
 export type TaskSetting = 'name' | 'colour' | 'active' | 'register' | 'form' | 'loop' | 'loopUntil' | 'loopCap' | 'launch' | 'then' | 'quantize'
-  | 'repeatVariable' | 'repeatLevels' | 'repeatRepeats' | 'repeatStop' | 'effort' | 'autonomy' | 'envelopeMode' | 'envelopeLink'
+  | 'repeatVariable' | 'repeatLevels' | 'repeatRepeats' | 'repeatStop' | 'effort' | 'toolCalls' | 'envelopeMode' | 'envelopeLink'
 
 /** The seam each task setting writes through (T-REALIGN R2: "Owner ops that do not exist yet are built, not listed"): the session's
  * settings on their owner. A seam whose owner op does not stand names why (`refused`) and its control stands disabled with it. */
@@ -120,7 +120,7 @@ export const TASK_SEAMS: Readonly<Record<TaskSetting, TaskSeam>> = {
   repeatRepeats: settingSeam('repeatRepeats'),
   repeatStop: settingSeam('repeatStop'),
   effort: settingSeam('effort'),
-  autonomy: settingSeam('autonomy'),
+  toolCalls: settingSeam('toolCalls'),
   envelopeMode: settingSeam('envelopeMode'),
   envelopeLink: settingSeam('envelopeLink'),
 }
