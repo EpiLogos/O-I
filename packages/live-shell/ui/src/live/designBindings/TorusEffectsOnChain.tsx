@@ -18,7 +18,7 @@ import {EFFECT_TITLES} from '@epilogos/expressions-boundary'
 import {TORUS_EFFECTS, followSetTempo, moveTorusEffect, placeTorusEffect, removeTorusEffect, torusEffectBinding, torusEffectDevice, torusEffectId,
   torusEffectsChain, type TorusEffect} from './torusEffects'
 import {QL_RESONATOR_CHAIN_ID, QL_RESONATOR_EFFECT, qlBankBinding, qlBankDevice, useQlBankFollow, useQlBankReadings} from '../../inhabitants/ql/devices/qlResonatorBank'
-import {placeSkyModulation, runSkyModulation, skyHeldKeys, skyModulationBinding, SKY_MODULATION_FACE, SKY_MODULATION_FAMILY, SKY_MODULATION_ID,
+import {placeSkyModulation, runSkyModulation, skyHeldKeys, skyModulationBinding, skyTargets, SKY_MODULATION_FACE, SKY_MODULATION_FAMILY, SKY_MODULATION_ID,
   useSkyModulationPlan, type SkyModulationPlan} from './skyModulation'
 import {useQlSky, type QlSkyState} from '../../inhabitants/ql/devices/qlSky'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
@@ -37,7 +37,7 @@ const ADD_NOTE: Readonly<Record<(typeof ADDABLE)[number], string>> = {
 function TorusEffectOnChain({effect, state, first, refused, plan}: {effect: TorusEffect; state: LiveTorusState | null; first: boolean; refused: (error: unknown) => void; plan: SkyModulationPlan}) {
   const id = torusEffectId(effect), title = EFFECT_TITLES[effect]
   const device = useMemo(() => torusEffectDevice(effect, state), [effect, state])
-  const held = useMemo(() => skyHeldKeys(effect, plan), [effect, plan])
+  const held = useMemo(() => skyHeldKeys(effect, plan, skyTargets(state)), [effect, plan, state])
   const binding = useMemo(() => torusEffectBinding(effect, state, held), [effect, state, held])
   useEffect(() => { publishDevice(id, {device, binding}) }, [id, device, binding])
   useEffect(() => () => publishDevice(id, null), [id])
@@ -56,7 +56,7 @@ function TorusEffectOnChain({effect, state, first, refused, plan}: {effect: Toru
 function ResonatorBankOnChain({state, first, refused, plan}: {state: LiveTorusState | null; first: boolean; refused: (error: unknown) => void; plan: SkyModulationPlan}) {
   const id = QL_RESONATOR_CHAIN_ID, title = EFFECT_TITLES[QL_RESONATOR_EFFECT]
   const {clock, mode} = useQlBankReadings()
-  const held = useMemo(() => skyHeldKeys(QL_RESONATOR_EFFECT, plan), [plan])
+  const held = useMemo(() => skyHeldKeys(QL_RESONATOR_EFFECT, plan, skyTargets(state)), [plan, state])
   const device = useMemo(() => qlBankDevice(id, state, clock, mode), [id, state, clock, mode])
   const binding = useMemo(() => qlBankBinding(id, state, clock, mode, held), [id, state, clock, mode, held])
   useEffect(() => { publishDevice(id, {device, binding}) }, [id, device, binding])

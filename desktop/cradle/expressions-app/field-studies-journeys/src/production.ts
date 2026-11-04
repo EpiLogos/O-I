@@ -17,6 +17,9 @@ import {basis,project,stageCentre,stageScale} from './camera';
 import type {EngineFrame,FieldEngineAdapter,EngineCommand} from './engine';
 import {entitySoundPlan,activeFromFocus,objectSoundIsMuted,onObjectSoundMuted} from './native-field/entitySound';
 import {SymbolVoices,placeOf,type TorusTap} from './native-field/symbolVoices';
+import {formMaskOf,symbolHarmonies,type ClassesReading,type FormMask} from './native-field/symbolHarmony';
+import {nativeSurface} from './native-field/surfaceConfig';
+import {bodyOf} from '../../src/engine/torusObject';
 import {modeCatalogueReading,onModeCatalogue} from './native-field/modeStore';
 import {DIP_AT_DEFAULT,transitionKindOf,paintedOverlayActive,transitionColourOf,edgeBlend,type TransitionSpec} from './transitions';
 import type {TransitionOverlay} from '../../src/engine/transitionPass';
@@ -45,7 +48,6 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
  /** The symbols' voices (authored `sound`): they carry the torus's sound to where their symbols stand, and have no oscillator of their own. */
  readonly symbolVoices=new SymbolVoices();
  private releaseVoiceWatch:()=>void=()=>{};
- private nativeConfigs=new WeakMap<PointCloudConfig,PointCloudConfig>();
  setNativeDomain(active:boolean){this.nativeDomain=active;this.applied=null;this.dirty=true;this.engine?.setPlateBody(active);}
  /** The torus's voices that sound, as force points (native-field/controller.ts torusVoicePoints; O-I 851): read every tick the engine
   * compiles its forces, so a voice pulls while it sounds and lets go as it fades. */
@@ -75,19 +77,26 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
  setTorusPlay(reading:TorusPlayReading|null){
   if(JSON.stringify(reading)===JSON.stringify(this.torusPlay))return;
   this.torusPlay=reading;this.engine?.setTorusPlay(reading);this.soundAt=-1;this.dirty=true;
+  // The classes stand where the owner read them at its steps; from then the pulse carries them on at its rate (symbolHarmony.ts classesAt).
+  const classes=reading?.classes as ClassesReading|undefined,steps=classes&&classes.absentBecause===null?classes.steps:null;
+  if(steps!==this.classesSteps){this.classesSteps=steps;this.classesSince=performance.now();}
+ }
+ private classesSteps:number|null=null;private classesSince=0;
+ /** A symbol's form as cells of its box, from the engine's own pool for it; made once per bake. */
+ private forms=new WeakMap<readonly {x:number;y:number}[],FormMask|null>();
+ private formOf(entityId:string):FormMask|null{
+  const pool=this.engine?.getFormPool(entityId)??null;
+  if(!pool)return null;
+  let mask=this.forms.get(pool);
+  if(mask===undefined){mask=formMaskOf(pool);this.forms.set(pool,mask);}
+  return mask;
  }
  /** The node the controller offers for the symbols' voices to listen to (native-field/controller.ts `voiceTap`), or none while no instrument is open. */
  setTorusTap(tap:TorusTap|null){if(this.symbolVoices.attach(tap)){this.soundAt=-1;this.dirty=true;}}
  private nativeConfig(config:PointCloudConfig):PointCloudConfig{
-  if(!this.nativeDomain)return config;
-  let result=this.nativeConfigs.get(config);
   // The plate stays as authored: under the native instrument it is the body laid flat (setPlateBody), so its drive is resolved, and
-  // its lanes move that drive, but it rings no plate of its own here (O-I 851).
-  if(!result){result={...config,
-   toroidalMorph:config.toroidalMorph?{...config.toroidalMorph,enabled:false,autoOscillate:false}:undefined,
-   automations:config.automations?.filter(l=>!l.path.startsWith('toroidalMorph.'))};
-   this.nativeConfigs.set(config,result);}
-  return result;
+  // its lanes move that drive, but it rings no plate of its own here (O-I 851); the surface takes the lens's material (O-I 854).
+  return this.nativeDomain?nativeSurface(config,this.torusPlay):config;
  }
  private contextLost=false;private seedRecoveredSources=false;private restoredClock=false;
  private lost=(event:Event)=>{event.preventDefault();this.contextLost=true;this.dirty=true;};
@@ -178,7 +187,11 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
   const places=new Map<string,number>();
   for(const voice of plan.voices){const entity=scene.entities.find(e=>e.id===voice.entityId);if(entity)places.set(voice.entityId,placeOf(project(entity.position,frame.camera,this.width,this.height).x,this.width));}
   const store=modeCatalogueReading();
-  this.symbolVoices.sync({...none,plan,catalogue:store.catalogue,catalogueWhy:store.why,places});
+  // A voice with no name or mode is its symbol's own harmony: its form laid where it stands, on the classes the pulse has carried there now.
+  const classes=(reading?.classes as ClassesReading|undefined)??{absentBecause:closed};
+  const steps=classes.absentBecause===null?classes.steps+classes.steps_per_second*Math.max(0,now-this.classesSince)/1000:0;
+  const harmonies=symbolHarmonies(scene.entities,plan,classes,reading?.body?bodyOf(reading.body.influence):null,steps,id=>this.formOf(id),this.symbolVoices.sampleRate()??48000);
+  this.symbolVoices.sync({...none,plan,catalogue:store.catalogue,catalogueWhy:store.why,places,harmonies});
  }
  hitEntity(x:number,y:number){return this.connections?.pickEntity(x,y)??null;}
  hitConnection(x:number,y:number){return this.connections?.hitTest(x,y)??null;}

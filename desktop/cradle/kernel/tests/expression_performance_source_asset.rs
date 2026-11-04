@@ -79,6 +79,7 @@ fn prepared() -> (Performance, Value) {
         native_sources: vec![asset],
         native_recordings: vec![],
         native_reservations: vec![],
+        torus_takes: vec![],
         content_digest: String::new(),
     }
     .seal()

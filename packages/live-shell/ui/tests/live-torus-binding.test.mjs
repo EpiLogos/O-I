@@ -77,8 +77,10 @@ test('every key of the design is the owner\'s reading or is absent with its reas
   assert.deepEqual(Object.keys(torus.defaults).filter(key => key in values),
     ['light', 'body', 'level', 'lens', 'context-frame', 'harmonic-basis', 'm3-transcription', 'sound', 'cadence', 'scale', 'standing'],
     'the owner reports the light, the body it rings (the torus, O-I #850), the level, its four determinants, its sound, cadence and scale, and its standing; with no Torus session announced, nothing else of the design')
-  assert.equal('sounding' in values, false, 'sounding: the owner reports none, so the binding gives none')
-  assert.match(model.TORUS_ABSENT.sounding, /^The owner reports no sounding keys/, 'sounding: absent with its reason')
+  assert.equal('sounding' in values, false, 'sounding: the lit keys are not drawn from the owner, so the binding gives none')
+  // The pitch-class Jankó chord is retired (O-I 855): the words name the keyboard's one path and where the sounding notes stand.
+  assert.match(model.TORUS_ABSENT.sounding, /^No key is lit from the owner here: .*torus-play.*Notes/, 'sounding: absent with its reason')
+  assert.doesNotMatch(model.TORUS_ABSENT.sounding, /playJanko|played voices/, 'sounding: no word of the retired chord')
   assert.equal('driveMod' in torus.defaults, false, 'the drive\'s modulation went with the Drive (manual §21.2 retires it, O-I #850)')
   assert.equal(values.light, 'lit', 'following: the instrument is at work')
   assert.equal(values.level, -6, 'a presentation gain of 0.5 is −6 dB')
@@ -98,12 +100,13 @@ test('a key the owner does not take is disabled with its reason; while the instr
   const live = model.torusDesignBinding(state())
   // Damping is the body's Q, taken through the stage channel's damping edit (O-I #745 lane N; ql-745-torus-body.test.mjs).
   for (const key of ['level', 'sound', 'cadence', 'scale', 'lens', 'context-frame', 'harmonic-basis', 'm3-transcription', 'damping']) assert.equal(live.writes(key), true, `${key} is the owner's to change`)
-  for (const key of ['strike', 'modes', 'pan', 'meter', 'view', 'receiver']) {
+  for (const key of ['modes', 'pan', 'meter', 'view', 'receiver']) {
     assert.equal(live.writes(key), false, `${key} has no owner`)
     assert.equal(live.standing[key].disabled, model.TORUS_ABSENT[key])
   }
   // The Torus's session (O-I #850) is the owner's once the frame announces it; here it announces none, and each says what it waits on.
-  for (const key of ['rate', 'fundamental', 'carrier', 'tuning', 'shape', 'polyphony', 'notes']) {
+  // Strike is the session's share of velocity since O-I #854 (QL m1_prime.rs Settings.strike; ql-745-torus-body.test.mjs).
+  for (const key of ['rate', 'fundamental', 'carrier', 'tuning', 'shape', 'polyphony', 'notes', 'strike']) {
     assert.equal(live.writes(key), false, key)
     assert.match(live.standing[key].disabled, /torus-state/, `${key}: names the owner op it waits on`)
   }

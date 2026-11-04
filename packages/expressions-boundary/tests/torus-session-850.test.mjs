@@ -59,3 +59,18 @@ test('the frame\'s announced Torus session is read exact, and a malformed one is
     [{carrier_drive: 7}, /parameters\.torus\.carrier_drive/],
   ]) assert.match(readHostedParameters(parameters({torus: session(over)})), fault, JSON.stringify(over));
 });
+
+// O-I #854 (DLW manual §21.2 Body: "Strike | 0 to 100 % | 70 % | How strongly velocity excites the body"): QL's M1′ session holds Strike
+// as a share 0..1, so the Body group's Strike crosses as the same closed `torus` edit, and the announced session carries it.
+test('Strike crosses as a share of velocity: the edit as given, the announced session exact, an owner from before it stating none', () => {
+  for (const edit of [{strike: 0}, {strike: 0.45}, {strike: 1}, {strike: 0.7, carrier: 0.5}]) {
+    const instrument = {kind: 'torus', edit};
+    assert.deepEqual(readInstrumentEdit(instrument), instrument, JSON.stringify(edit));
+    assert.deepEqual(readStageRequest(stageRequestMessage(2, {command: 'instrument', edit: instrument})), {req: 2, command: {command: 'instrument', edit: instrument}});
+  }
+  for (const edit of [{strike: '45%'}, {strike: NaN}, {strike: null}]) assert.equal(readInstrumentEdit({kind: 'torus', edit}), null, JSON.stringify(edit));
+  const stated = session({settings: {...session().settings, strike: 0.45}});
+  assert.deepEqual(readHostedParameters(parameters({torus: stated})).torus, stated, 'the owner\'s Strike, unchanged');
+  assert.equal('strike' in readHostedParameters(parameters({torus: session()})).torus.settings, false, 'an owner stating no Strike carries none');
+  for (const strike of [1.5, -0.1, '70%']) assert.match(readHostedParameters(parameters({torus: session({settings: {...session().settings, strike}})})), /parameters\.torus\.settings: expected Strike as a share 0\.\.1/, String(strike));
+});

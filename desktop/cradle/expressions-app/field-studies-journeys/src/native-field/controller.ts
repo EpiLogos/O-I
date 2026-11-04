@@ -10,7 +10,8 @@ import {PresentationEffects} from './presentationEffects';
 import {voiceModeRef} from './torusPlay.mjs';
 import {conditionReadingOf} from '../instrumentCondition';
 import {TorusObject} from '../../../src/engine/torusObject';
-import type {StageAudioClock} from '../stageCommands';
+import {isStageSampleCursor,stageJournalLanding,STAGE_JOURNAL_ACTS_MAX,STAGE_JOURNAL_BYTES_MAX,STAGE_EDIT_AHEAD_SECONDS,STAGE_RENDER_FRAMES_MAX,STAGE_RENDER_ACTS_MAX,
+ readStageTorusCheckpoint,type StageAudioClock,type StagePerformanceJournal,type StageKey,type StageTakeAct,type StageTakeRender,type StageTorusCheckpoint} from '../stageCommands';
 import type {FieldScoreBasis,FieldScoreReply} from '../tarotScoreClient';
 export interface NativeRenderer {
  retainedTargetPort():any;releaseRetainedField():void;
@@ -50,6 +51,10 @@ function torusKeys(keys:unknown,min=1):{row:number;column:number}[]|null{
  const read=keys.map((key:any)=>Number.isInteger(key?.row)&&key.row>=0&&key.row<=5&&Number.isInteger(key?.column)&&key.column>=0&&key.column<=65535?{row:key.row as number,column:key.column as number}:null);
  return read.every(key=>key!==null)?read as {row:number;column:number}[]:null;
 }
+/** The sample a played act landed at (O-I 855): `at` when it named one, else the cursor the owner acknowledged it at, where the owner's
+ * render lands an act struck now (QL-MEF continuous.rs strike_when; cpp/src/field_worker.cpp strike). A played act renders no frames, so
+ * that cursor is the one it was sent at; it is the cursor the session journals the act at (instrument-session.mjs #journal). */
+function landedAt(session:InstrumentSession,at?:string):string{return at??String(session.reading.acknowledged.samples_elapsed);}
 /** The QL driver schedules PCM/targets; the app remains the sole GPU stage.
  * The controller owns admission/lifetime only, never native math or a second clock.
  * Determinant events (M1 advance, a changed event) go to the same serial owner;
@@ -389,7 +394,8 @@ export class NativeFieldController {
  /** A scene determinant event through the one serial owner. While following, the
   * re-read targets queue behind already scheduled sound (no hold, no rebase);
   * while held, the event commits and the owner stays held. */
- private determinant(operation:string,build:()=>any,needsEvent:boolean,cadence=false,still=false):Promise<void>{
+ /** Resolves with the sample the act landed at: the owner's cursor when it acknowledged the act (the journal's own; O-I 855). */
+ private determinant(operation:string,build:()=>any,needsEvent:boolean,cadence=false,still=false):Promise<string>{
   const session=this.session;
   if(!session||!this.scene)return Promise.reject(new Error('Open the live instrument first: determinant events belong to a scene owner'));
   if(this.status==='following'&&!this.suspension){
@@ -411,9 +417,9 @@ export class NativeFieldController {
      }
      const command=build();
      const sent=performance.now();
-     await session.operate(command);
+     const landed=(await session.operate(command)).acknowledged.samples_elapsed as string;
      this.timing={fill_ms:sent-this.timingStart,operate_ms:performance.now()-sent};
-     if(!this.current(session))return;
+     if(!this.current(session))return landed;
      // The owner acknowledged: the event happened. A busy follow-up read only
      // leaves the influence stale for the next refresh; it never un-counts it.
      // A still act (a Torus setting that moves no native state, O-I #850) leaves the sources, the stage and the checkpoint as they stood.
@@ -427,6 +433,7 @@ export class NativeFieldController {
      if(carried&&carried.generation===session.reading.acknowledged?.generation)this.admitInfluence(carried);
      this.noteEventStrike(command);
      this.changed();
+     return landed;
     }catch(error){if(!(cadence&&TRANSIENT.test(String(error))))this.refused(operation,error,session);throw error;}
     finally{this.operating--;}
    };
@@ -440,13 +447,14 @@ export class NativeFieldController {
     await held.recover('native determinant admission');
     if(needsEvent&&this.sourcesStale)await this.readSources(held);
     const command=build();
-    await held.operate(command);
+    const landed=(await held.operate(command)).acknowledged.samples_elapsed as string;
     this.refusal=null;this.stageStale=true;
     await this.readSources(held);await this.readInfluence(held);
     this.noteEventStrike(command);
     await held.recover('native determinant readback admitted; rebase device only');
     this.reason=following?null:prior;
     this.finishCommand(held,following,revision,'determinant applied while held; resume explicitly');
+    return landed;
    }catch(error){
     if(this.refused(operation,error,held)){held.hold(prior??'determinant refused');this.status='held';this.reason=prior??'determinant refused';this.changed();}
     else if(this.current(held))this.hold(String(error));
@@ -507,8 +515,8 @@ export class NativeFieldController {
   * in one act. The owner excites every standing voice by its own shape at each point (QL scene_field.rs ShapeBasis::strike_at), so the
   * torus plays every voice it tunes. A performance act like playVoices: no hold, no re-read, and the struck body sounds behind sound
   * already scheduled, or lands at `at`, the owner's sample cursor, as playVoices does. A point off the sheet is refused here, before the
-  * owner sees it, as InstrumentSession.strikeAt refuses it. */
- playAt(points:{theta:number;phi:number}[],amplitude=0.35,at?:string){
+  * owner sees it, as InstrumentSession.strikeAt refuses it. The answer names the sample the act landed at (O-I 855: landedAt). */
+ playAt(points:{theta:number;phi:number}[],amplitude=0.35,at?:string):Promise<{landed_at_samples_elapsed:string}>{
   const session=this.session;
   if(!session||!this.scene)return Promise.reject(new Error('Open the live instrument first: a played strike belongs to a scene owner'));
   if(!Array.isArray(points)||points.length<1||points.length>64)return Promise.reject(new Error('a strike at points names 1..64 points of the torus'));
@@ -526,6 +534,7 @@ export class NativeFieldController {
    catch(error){this.refused('strike at a point',error,session);throw error;}
    const refs=this.voiceRefs();
    this.refusal=null;this.played={at:Date.now(),strikes:(this.played?.strikes??0)+1,last_ms:performance.now()-sent};this.struck={at:Date.now(),source:'point',refs,points:struck};this.changed();
+   return {landed_at_samples_elapsed:landedAt(session,at)};
   });
  }
  /** Keys of the Jankó surface struck on the Torus's M1′ session (QL-MEF `torus-play`; DLW §21.2 "What strikes the Torus": a key strikes
@@ -535,6 +544,11 @@ export class NativeFieldController {
   * key's point and counts the notes; past Polyphony the oldest make way, and so does a key struck again. The answer is the keys whose
   * notes made way, read from the owner's receipt (ql.torus-play/v1); the points it struck are what the plate follows, as for a touch. */
  torusPlay(keys:{row:number;column:number}[],amplitude=0.35,at?:string):Promise<{row:number;column:number}[]>{
+  return this.torusPlayed(keys,amplitude,at).then(played=>played.made_way);
+ }
+ /** torusPlay's act, answered whole (O-I 855): the keys whose notes made way and the sample the act landed at (landedAt), which a take
+  * keeps so it replays each note where it sounded. */
+ torusPlayed(keys:{row:number;column:number}[],amplitude=0.35,at?:string):Promise<{made_way:{row:number;column:number}[];landed_at_samples_elapsed:string}>{
   const session=this.session;
   if(!session||!this.scene)return Promise.reject(new Error('Open the live instrument first: a played key belongs to a scene owner'));
   const acts=torusKeys(keys);
@@ -553,7 +567,7 @@ export class NativeFieldController {
     .map((point:any)=>({theta:point.theta as number,phi:point.phi as number}));
    this.refusal=null;this.played={at:Date.now(),strikes:(this.played?.strikes??0)+1,last_ms:performance.now()-sent};
    this.struck={at:Date.now(),source:'point',refs:this.voiceRefs(),points};this.changed();
-   return torusKeys((Array.isArray(receipt?.made_way)?receipt.made_way:[]).map((note:any)=>note?.key),0)??[];
+   return {made_way:torusKeys((Array.isArray(receipt?.made_way)?receipt.made_way:[]).map((note:any)=>note?.key),0)??[],landed_at_samples_elapsed:landedAt(session,at)};
   });
  }
  /** Keys let go (QL-MEF `torus-release`): they leave the count of notes, and the body rings on (a released note keeps its own tail,
@@ -572,6 +586,23 @@ export class NativeFieldController {
  }
  /** The performance journal of the current native lifetime (acts and aggregate advances). */
  journal(){return this.session?this.session.journal():null;}
+ /** The owner's performance journal as the stage reads it (O-I 855; stageCommands.ts `performance-journal`): the session's own
+  * `ql.instrument-performance-journal/v1`, and from `from` on, only the acts that land at or after that sample (stageJournalLanding).
+  * The advances are aggregate ranges and stand whole. A read past STAGE_JOURNAL_ACTS_MAX acts or STAGE_JOURNAL_BYTES_MAX bytes is
+  * refused in words naming its count, so the reader asks from a later sample: an answer is never cut. */
+ performanceJournal(from?:string):StagePerformanceJournal{
+  if(from!==undefined&&!isStageSampleCursor(from))throw new Error('the journal is read from an exact sample cursor');
+  const session=this.session;
+  if(!session)throw new Error('Open the live instrument first: the performance journal belongs to a scene owner');
+  const whole=session.journal() as unknown as StagePerformanceJournal;
+  const acts=from===undefined?[...whole.acts]:whole.acts.filter(act=>BigInt(stageJournalLanding(act))>=BigInt(from));
+  const journal:StagePerformanceJournal={schema:whole.schema,instance_ref:whole.instance_ref,acts,advances:{...whole.advances}};
+  const where=from===undefined?'':` from sample ${from}`;
+  if(acts.length>STAGE_JOURNAL_ACTS_MAX)throw new Error(`The journal holds ${acts.length} acts${where}, more than one answer carries (${STAGE_JOURNAL_ACTS_MAX}): read it from a later sample`);
+  const bytes=new TextEncoder().encode(JSON.stringify(journal)).length;
+  if(bytes>STAGE_JOURNAL_BYTES_MAX)throw new Error(`The journal${where} takes ${bytes} bytes, more than one answer carries (${STAGE_JOURNAL_BYTES_MAX}): read it from a later sample`);
+  return journal;
+ }
  /** Re-excite the same voices from the declared strike amplitude. */
  strike(){return this.determinant('strike',()=>({operation:'replace-event',event:structuredClone(this.event),strike:true}),true);}
  /** The first admitted event, carried under the owner's next M1 revision so M1's
@@ -624,13 +655,108 @@ export class NativeFieldController {
   * tempo_bpm, fundamental, carrier, shape, tuning and polyphony; O-I #850). The owner validates and refuses in its own words; the
   * session reading is taken from its reply, never set here. Only a Fundamental moves the owner (one modes continuation of the same
   * voices); every other setting is a still act: no hold, no source re-read. The reply's influence is admitted as a determinant's is. */
- torusSet(edit:unknown){
+ torusSet(edit:unknown):Promise<string>{
   if(!edit||typeof edit!=='object'||Array.isArray(edit)||!Object.keys(edit).length)return Promise.reject(new Error('a Torus edit names at least one setting'));
   const still=(edit as {fundamental?:unknown}).fundamental===undefined;
-  return this.determinant('Torus',()=>({operation:'torus-set',edit:structuredClone(edit)}),false,false,still).then(()=>{
+  return this.determinant('Torus',()=>({operation:'torus-set',edit:structuredClone(edit)}),false,false,still).then(landed=>{
    const torus=this.session?.lastTorus;
    if(torus)this.admitTorus(torus);
+   return landed;
   });
+ }
+ /** The Torus as it rings, kept by its owner (QL-MEF `torus-checkpoint`, `ql.torus-checkpoint/v1`; O-I 855): the body's states, its form and
+  * forces, the M1′ session's steps, comma and notes, the event and its seeds, at the owner's cursor. A read through the one serial owner, as
+  * the session's reading is; acts already sent for later samples are not in it (the journal keeps them). */
+ torusCheckpoint():Promise<StageTorusCheckpoint>{return this.serial(async()=>{
+  const session=this.session;if(!session||!this.scene)throw new Error('Open the live instrument first: the Torus belongs to a scene owner');
+  if(this.status==='following'){if(!(await this.waitIdle(session,5000)))throw new Error('native owner busy; the Torus was not kept');return this.keepTorus(session);}
+  this.hold('Torus checkpoint');const held=await this.idle();
+  try{await held.recover('Torus checkpoint');return await this.keepTorus(held);}
+  finally{if(this.current(held))this.hold('Torus checkpoint complete; resume explicitly');}
+ });}
+ private async keepTorus(session:InstrumentSession):Promise<StageTorusCheckpoint>{
+  const kept=readStageTorusCheckpoint(await session.torusCheckpoint());
+  if(this.session!==session||this.dead)throw new Error('Torus checkpoint belongs to a released lifetime');
+  if(!kept)throw new Error('The owner kept the Torus in a checkpoint the stage cannot carry');
+  const torus=session.lastTorus;if(torus)this.admitTorus(torus);
+  return kept;
+ }
+ /** The Torus set again from a checkpoint its owner gave (QL-MEF `torus-restore`): the event and the damping where they moved, then the body's
+  * states and the session's steps, one owner act through the one serial owner as a determinant is. The owner refuses in its own words a
+  * checkpoint that is not of this body. Resolves with the sample it rings again from. */
+ torusRestore(checkpoint:unknown):Promise<string>{
+  if(!readStageTorusCheckpoint(checkpoint))return Promise.reject(new Error('a Torus restore takes the owner\'s ql.torus-checkpoint/v1'));
+  return this.determinant('Torus restore',()=>({operation:'torus-restore',checkpoint:structuredClone(checkpoint)}),false).then(landed=>{
+   const torus=this.session?.lastTorus;
+   if(torus)this.admitTorus(torus);
+   return landed;
+  });
+ }
+ /** A take rendered offline through the M1′ session for Export Audio (QL-MEF `torus-render`, `ql.torus-render/v1`; O-I 855): a second owner
+  * of the same scene set to `checkpoint`, each act made at its sample, `frames` of its PCM. It renders a second of sound at a time (the first
+  * part from the checkpoint, each next continuing the last), each part one read through the one serial owner, so the live owner's sound runs
+  * on between parts and the live owner neither moves nor sounds for it. Each act goes in the part its sample falls in; a key's strength is the
+  * owner's pair of metres. */
+ renderTake(checkpoint:unknown,acts:readonly StageTakeAct[],frames:number):Promise<StageTakeRender>{
+  const kept=readStageTorusCheckpoint(checkpoint);
+  if(!kept)return Promise.reject(new Error('a take renders from the owner\'s ql.torus-checkpoint/v1'));
+  if(!Number.isSafeInteger(frames)||frames<1||frames>STAGE_RENDER_FRAMES_MAX)return Promise.reject(new Error(`a take renders 1 to ${STAGE_RENDER_FRAMES_MAX} frames`));
+  if(!Array.isArray(acts)||acts.length>STAGE_RENDER_ACTS_MAX)return Promise.reject(new Error(`a take renders at most ${STAGE_RENDER_ACTS_MAX} acts`));
+  const session=this.session,rate=this.opened?.receipt?.field?.sample_rate;
+  if(!session||!this.scene||!Number.isSafeInteger(rate))return Promise.reject(new Error('Open the live instrument first: a take renders on a second owner of its scene'));
+  if(kept.sample_rate!==rate)return Promise.reject(new Error(`the take was kept at ${kept.sample_rate} Hz and this field runs at ${rate} Hz`));
+  const from=BigInt(kept.taken_at_samples),end=from+BigInt(frames);
+  let last=from;
+  for(const act of acts){
+   if(!isStageSampleCursor(act?.at_samples_elapsed))return Promise.reject(new Error('a take\'s act names the sample it landed at as an exact sample cursor'));
+   const at=BigInt(act.at_samples_elapsed);
+   if(at<last||at>=end)return Promise.reject(new Error('a take\'s acts lie within the take, in the order of their samples'));
+   last=at;
+  }
+  const owned=(act:StageTakeAct)=>act.action==='strike'?{...act,amplitude:[act.amplitude,0] as [number,number]}:act;
+  return (async()=>{
+   const pcm=new Float32Array(frames),made_way:StageKey[][]=[];
+   let continues:string|undefined,ended:StageTorusCheckpoint|null=null,done=0,next=0;
+   while(done<frames){
+    const part=Math.min(rate as number,frames-done),stop=from+BigInt(done+part);
+    let count=0;while(next+count<acts.length&&BigInt(acts[next+count].at_samples_elapsed)<stop)count++;
+    const take={...(continues===undefined?{checkpoint:kept}:{continues}),acts:acts.slice(next,next+count).map(owned),frames:part};
+    const render=await this.serial(async()=>{
+     if(this.session!==session||this.dead)throw new Error('the live instrument closed while the take rendered');
+     if(this.status==='following'){if(!(await this.waitIdle(session,5000)))throw new Error('native owner busy; the take was not rendered');return session.torusRender(take);}
+     this.hold('take render');const held=await this.idle();
+     try{await held.recover('take render');return await held.torusRender(take);}
+     finally{if(this.current(held))this.hold('take render complete; resume explicitly');}
+    });
+    const audio=render?.audio;
+    if(!Array.isArray(audio)||audio.length!==part)throw new Error('the owner rendered a part of the take that is not its length');
+    pcm.set(audio,done);
+    for(const way of Array.isArray(render.made_way)?render.made_way:[]){
+     if(!Array.isArray(way)||!way.every((note:any)=>Number.isSafeInteger(note?.key?.row)&&Number.isSafeInteger(note?.key?.column)))throw new Error('the owner named a note that made way without its key');
+     made_way.push(way.map((note:any)=>({row:note.key.row,column:note.key.column})));
+    }
+    ended=readStageTorusCheckpoint(render.checkpoint);continues=render.continues;
+    if(!ended||typeof continues!=='string')throw new Error('the owner rendered a part of the take without where it ended');
+    done+=part;next+=count;
+   }
+   return {from_samples_elapsed:kept.taken_at_samples,frames,sample_rate:rate as number,pcm,made_way,ended:ended as StageTorusCheckpoint};
+  })();
+ }
+ /** Wait until the owner's sound has reached `at` (its acknowledged cursor at or past it; O-I 855), so an edit made then lands at the first
+  * block the owner renders from there; the edit's answer names that sample. A sample the owner has rendered is refused, as a strike behind
+  * the cursor is, and one more than STAGE_EDIT_AHEAD_SECONDS ahead is refused rather than waited for. */
+ async untilSample(at:string):Promise<void>{
+  if(!isStageSampleCursor(at))throw new Error('an edit names the sample it lands at as an exact sample cursor');
+  const session=this.session,rate=this.opened?.receipt?.field?.sample_rate;
+  if(!session||!this.scene||!Number.isSafeInteger(rate))throw new Error('Open the live instrument first: an edit at a sample belongs to a scene owner');
+  if(this.status!=='following'||this.suspension)throw new Error('The field is not running: resume it, then play');
+  const cursor=BigInt(session.reading.acknowledged.samples_elapsed),target=BigInt(at);
+  if(target<cursor)throw new Error(`an edit at sample ${at} is behind the owner's cursor ${cursor}: that sound is already rendered`);
+  if(target-cursor>BigInt(rate as number)*BigInt(STAGE_EDIT_AHEAD_SECONDS))throw new Error(`an edit at sample ${at} is more than ${STAGE_EDIT_AHEAD_SECONDS} s ahead of the owner's cursor ${cursor}: send it nearer its sample`);
+  while(BigInt(session.reading.acknowledged.samples_elapsed)<target){
+   if(!this.current(session)||this.status!=='following'||this.suspension)throw new Error('The field stopped before the edit\'s sample: the edit was not made');
+   await new Promise(resolve=>setTimeout(resolve,4));
+  }
  }
  /** Tune the pulse to the plate's drive (DLW §20.14: under Manual, Focus and Automation "the pulse is tuned to the drive and rings the
   * plate"), through the owner's own torus-set; null gives the torus its own rate back. A drive within half a percent of the one asked is

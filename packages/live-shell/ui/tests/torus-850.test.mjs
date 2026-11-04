@@ -103,9 +103,21 @@ test('each change reaches the owner\'s torus edit through the one stage channel,
     assert.deepEqual(sent, [{kind: 'torus', edit}], change.key)
   }
   const {binding} = bound()
-  await assert.rejects(binding.write([{key: 'tuning', value: 'maqam'}]), /holds no Maqām voices/, 'a tuning the scene holds no voices for is refused by name')
   await assert.rejects(binding.write([{key: 'fundamental', value: 2500}]), /20 to 2,000 Hz/)
   await assert.rejects(binding.write([{key: 'polyphony', value: 40}]), /1 to 32/)
+  holds.resetHolds()
+})
+
+test('Maqām reaches the owner, which sounds the condition\'s maqām or refuses in its words, naming the source it lacks (O-I 854)', async () => {
+  holds.resetHolds()
+  // QL scene_field.rs maqam_absence: the scene holds no maqām voices, and the owner says why, the frame never guesses it.
+  const words = 'maqām Kirdan (#2-4.3-0-4), the condition\'s tonic, has no Bimba spelling in the map, so its eight pitches have no source, and no other tuning stands in'
+  const sent = []
+  const binding = model.torusDesignBinding(state(), undefined, {}, null, undefined, null, holds.heldFor(model.TORUS_DESIGN_ID), null, null, null,
+    async edit => { sent.push(edit); return {ok: false, error: words} })
+  assert.equal(binding.writes('tuning'), true, 'Maqām is offered whether or not the scene holds its voices: the owner answers')
+  await assert.rejects(binding.write([{key: 'tuning', value: 'maqam'}]), error => error.message.includes('no Bimba spelling') && error.message.includes('Kirdan'))
+  assert.deepEqual(sent, [{kind: 'torus', edit: {tuning: 'maqam'}}], 'the choice left in QL\'s form; the refusal is the owner\'s')
   holds.resetHolds()
 })
 

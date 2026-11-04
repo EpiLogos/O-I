@@ -50,6 +50,19 @@ pub enum Request {
         routine_ref: String,
         proof: Value,
     },
+    /// `aikit routine options --method M`: what a new Routine over the Method
+    /// can be made from (its verified runs, authority receipts, admitted
+    /// triggers, agent profiles, context scopes and time policy). Reads only.
+    Options {
+        method: String,
+    },
+    /// `aikit routine prepare-schedule --schedule-json S`: AIKit validates
+    /// the shape (`{"kind":"daily","time":"07:30"}`, cron, every, once) under
+    /// the civil-time policy and names the ScheduleRecord a new Routine would
+    /// carry, with its next occurrences. Nothing is kept or enabled.
+    PrepareSchedule {
+        schedule: Value,
+    },
 }
 
 fn reference(value: &str, what: &str) -> Result<(), String> {
@@ -77,7 +90,12 @@ impl Request {
             Self::Create { .. } => Some("create"),
             Self::Enable { .. } => Some("enable"),
             Self::Reprove { .. } => Some("reprove"),
-            Self::List | Self::Methods | Self::History | Self::Show { .. } => None,
+            Self::List
+            | Self::Methods
+            | Self::History
+            | Self::Show { .. }
+            | Self::Options { .. }
+            | Self::PrepareSchedule { .. } => None,
         }
     }
 
@@ -89,7 +107,12 @@ impl Request {
             | Self::RunNow { routine_ref }
             | Self::Enable { routine_ref, .. }
             | Self::Reprove { routine_ref, .. } => Some(routine_ref),
-            Self::List | Self::Methods | Self::History | Self::Create { .. } => None,
+            Self::List
+            | Self::Methods
+            | Self::History
+            | Self::Create { .. }
+            | Self::Options { .. }
+            | Self::PrepareSchedule { .. } => None,
         }
     }
 
@@ -159,6 +182,15 @@ impl Request {
                 let mut args = words(&["routine", "reprove", "--proof-json"]);
                 args.push(document(proof, "proof")?);
                 args.extend(["--".into(), routine_ref.clone()]);
+                Ok(args)
+            }
+            Self::Options { method } => {
+                reference(method, "Method")?;
+                Ok(words(&["routine", "options", "--method", method]))
+            }
+            Self::PrepareSchedule { schedule } => {
+                let mut args = words(&["routine", "prepare-schedule", "--schedule-json"]);
+                args.push(document(schedule, "schedule shape")?);
                 Ok(args)
             }
         }
@@ -248,6 +280,50 @@ mod tests {
             context_scopes: vec![],
         };
         assert!(create.args().is_err(), "a trigger is one JSON object");
+    }
+    #[test]
+    fn preparing_a_new_routine_reads_its_options_and_its_schedule_from_aikit() {
+        // Settings › Automations' "preparing a new schedule" (O-I #758) and
+        // Routine… on a song (#844): what a new Routine over one Method can be
+        // made from, and the ScheduleRecord a schedule shape would carry.
+        // Both are reads: nothing is kept or enabled.
+        let options: Request = serde_json::from_value(
+            serde_json::json!({"action": "options", "method": "method/song-take"}),
+        )
+        .unwrap();
+        assert_eq!(
+            options.args().unwrap(),
+            ["routine", "options", "--method", "method/song-take"]
+        );
+        let prepare: Request = serde_json::from_value(serde_json::json!({
+            "action": "prepare_schedule", "schedule": {"kind": "daily", "time": "07:30"}}))
+        .unwrap();
+        assert_eq!(
+            prepare.args().unwrap(),
+            [
+                "routine",
+                "prepare-schedule",
+                "--schedule-json",
+                r#"{"kind":"daily","time":"07:30"}"#
+            ]
+        );
+        assert_eq!((options.mutation(), prepare.mutation()), (None, None));
+        assert_eq!((options.routine_ref(), prepare.routine_ref()), (None, None));
+        let shapeless: Request = serde_json::from_value(
+            serde_json::json!({"action": "prepare_schedule", "schedule": "daily"}),
+        )
+        .unwrap();
+        assert!(
+            shapeless.args().is_err(),
+            "a schedule shape is one JSON object"
+        );
+        let unnamed: Request =
+            serde_json::from_value(serde_json::json!({"action": "options", "method": " "}))
+                .unwrap();
+        assert!(
+            unnamed.args().is_err(),
+            "the options are of one named Method"
+        );
     }
     #[test]
     fn a_failed_run_is_still_an_actual_return_but_never_a_completion_claim() {

@@ -273,6 +273,75 @@ pub enum KernelEvent {
         scopes: Vec<String>,
         epoch: u64,
     },
+    /// The window's held SharedField connection took a server transaction
+    /// that changed what its identity can see (shared_field.rs, O-I #858):
+    /// `cursor` is that transaction, `changes` the rows it moved — view, op
+    /// and ref, never their content — and `more` how many it did not name.
+    /// It says "read again at this cursor"; the reading is the field's own.
+    /// Another identity's private rows move nothing, so they say nothing.
+    SharedFieldChanged {
+        cursor: String,
+        changes: Vec<SharedFieldRowChange>,
+        #[serde(default)]
+        more: u64,
+    },
+}
+
+/// The most rows one `SharedFieldChanged` names; the rest are counted.
+pub const SHARED_FIELD_CHANGES_PER_EVENT: usize = 128;
+
+/// The caller-filtered views a SharedField change can name.
+const SHARED_FIELD_VIEWS: [&str; 17] = [
+    "shared_field",
+    "participant",
+    "projection",
+    "contribution",
+    "explore_entry",
+    "explore_relation",
+    "my_field_authority",
+    "my_contribution_receipt",
+    "owner_pending_contribution",
+    "my_watch",
+    "my_contact",
+    "shared_stage",
+    "my_stage_follow",
+    "field_presence",
+    "activity_liveness",
+    "field_now",
+    "field_day",
+];
+
+/// One row a SharedField transaction moved, as the held client names it:
+/// the caller-filtered view it belongs to, what happened to it, its ref.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct SharedFieldRowChange {
+    pub table: String,
+    pub op: String,
+    #[serde(rename = "ref")]
+    pub reference: String,
+}
+
+impl SharedFieldRowChange {
+    /// Why this row cannot be told on the event channel: a view the field
+    /// does not serve, an op it does not make, or no bounded ref.
+    pub fn fault(&self) -> Option<String> {
+        if !SHARED_FIELD_VIEWS.contains(&self.table.as_str()) {
+            return Some(format!(
+                "SharedFieldChanged names an unknown view ({})",
+                self.table
+            ));
+        }
+        if !matches!(self.op.as_str(), "insert" | "update" | "delete") {
+            return Some(format!(
+                "SharedFieldChanged names an unknown op ({})",
+                self.op
+            ));
+        }
+        if self.reference.is_empty() || self.reference.len() > 1024 {
+            return Some("SharedFieldChanged names a row without a bounded ref".into());
+        }
+        None
+    }
 }
 
 impl KernelEvent {
@@ -295,7 +364,8 @@ impl KernelEvent {
             | Self::ReceivingChanged { .. }
             | Self::FactoryRunChanged { .. }
             | Self::OwnerChanged { .. }
-            | Self::ReadingsChanged { .. } => None,
+            | Self::ReadingsChanged { .. }
+            | Self::SharedFieldChanged { .. } => None,
             Self::FocusChanged { focus } => focus.subject_ref(),
             Self::SurfaceChanged { surface_ref, .. } => surface_ref.as_ref(),
             Self::SourceOpened { source, .. }
@@ -331,6 +401,7 @@ impl KernelEvent {
             Self::FactoryRunChanged { .. } => "factory_run_changed",
             Self::OwnerChanged { .. } => "owner_changed",
             Self::ReadingsChanged { .. } => "readings_changed",
+            Self::SharedFieldChanged { .. } => "shared_field_changed",
         }
     }
 
@@ -554,6 +625,20 @@ impl KernelEvent {
                     }
                 }
                 Ok(())
+            }
+            Self::SharedFieldChanged {
+                cursor, changes, ..
+            } => {
+                if !cursor.starts_with("tx:") || cursor.len() > 64 {
+                    return Err("SharedFieldChanged.cursor must name a transaction".into());
+                }
+                if changes.len() > SHARED_FIELD_CHANGES_PER_EVENT {
+                    return Err("SharedFieldChanged names more rows than one event carries".into());
+                }
+                match changes.iter().find_map(SharedFieldRowChange::fault) {
+                    Some(fault) => Err(fault),
+                    None => Ok(()),
+                }
             }
         }
     }

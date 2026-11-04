@@ -9,6 +9,9 @@ use serde_json::Value;
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 
+/// The Torus's takes, sealed by the kernel from its own native owner (O-I #855).
+pub mod torus;
+
 pub const SCHEMA: &str = "oi.expression-performance/v1";
 pub const SOURCE_SCHEMA: &str = "oi.expression-performance/v2";
 pub const RECORDING_SCHEMA: &str = "oi.expression-performance/v3";
@@ -1156,6 +1159,12 @@ pub struct Performance {
     pub native_recordings: Vec<crate::expression_performance_recording::NativeRecordingPage>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub native_reservations: Vec<crate::expression_performance_reservation::NativeScoreReservation>,
+    /// The Torus's takes, each on a layer from a sample of this transport, as the kernel sealed them from
+    /// its native owner (`torus`). A performance of takes alone has no basis: each take says which of a
+    /// basis's readings its owner's checkpoint keeps and which are absent, and why. Bytes without takes
+    /// omit this empty addition.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub torus_takes: Vec<torus::TorusTakeRecord>,
     /// Seals the full act, including all event, route and transport operands.
     pub content_digest: String,
 }
@@ -1218,6 +1227,15 @@ pub enum PerformanceOperation {
     RetainNativeSource {
         source: Box<crate::expression_performance_source_asset::NativePerformanceSourceAsset>,
     },
+    /// A Torus take the kernel sealed from what its native owner was sent (native-expression
+    /// `torus_take`), laid on `lane` (a layer, added when new) from `at_sample` of this transport at
+    /// `micros_per_quarter`, the tempo it lies on. Never a frame's own record: the seal admits it.
+    RecordTorusTake {
+        take: Box<torus::TorusTake>,
+        lane: Layer,
+        at_sample: Counter,
+        micros_per_quarter: u32,
+    },
 }
 impl Performance {
     pub fn events(&self) -> impl Iterator<Item = &TimedEvent> {
@@ -1255,10 +1273,15 @@ impl Performance {
         } else {
             digest(&(&source, &self.native_recordings))?
         };
-        if self.native_reservations.is_empty() {
-            Ok(recording)
+        let reserved = if self.native_reservations.is_empty() {
+            recording
         } else {
-            digest(&(&recording, &self.native_reservations))
+            digest(&(&recording, &self.native_reservations))?
+        };
+        if self.torus_takes.is_empty() {
+            Ok(reserved)
+        } else {
+            digest(&(&reserved, &self.torus_takes))
         }
     }
     pub fn seal(mut self) -> Result<Self, String> {
@@ -1315,8 +1338,9 @@ impl Performance {
             || !(8000..=192000).contains(&self.sample_rate)
             || self.ppq == 0
             || self.ppq > 32767
-            || self.bases.is_empty()
+            || (self.bases.is_empty() && self.torus_takes.is_empty())
             || self.bases.len() > MAX_BASES
+            || self.torus_takes.len() > torus::MAX_TAKES
             || self.pitches.len() > MAX_PITCHES
             || self.layers.is_empty()
             || self.layers.len() > MAX_LAYERS
@@ -1469,6 +1493,17 @@ impl Performance {
         }
         crate::expression_performance_reservation::validate_pending(self)?;
         crate::expression_performance_recording::validate_recording_pages(self)?;
+        let mut takes = BTreeSet::new();
+        for record in &self.torus_takes {
+            record.take.validate()?;
+            if !takes.insert(&record.take.take_ref)
+                || usize::from(record.layer) >= self.layers.len()
+                || record.end()? > self.duration_samples.0
+                || record.take.sample_rate != self.sample_rate
+            {
+                return Err("a Torus take lies twice, off its lane, past the performance or at another sample rate".into());
+            }
+        }
         if crate::expression_act_storage::measure(self, MAX_PERFORMANCE_BYTES)?
             > MAX_PERFORMANCE_BYTES
         {
@@ -1648,6 +1683,81 @@ impl Performance {
             next.change(op)?;
         }
         next.seal()
+    }
+    /// The retained performance a Torus take opens on a Scene that has none (the native recording path
+    /// creates it): the take on its lane from `at_sample`, the transport at the tempo it lies on, no basis
+    /// (the take's readings say what of one its owner keeps). The operations after it follow as an edit.
+    pub fn opened_by(operations: Vec<PerformanceOperation>) -> Result<Self, String> {
+        let mut operations = operations.into_iter();
+        let Some(PerformanceOperation::RecordTorusTake {
+            take,
+            lane,
+            at_sample,
+            micros_per_quarter,
+        }) = operations.next()
+        else {
+            return Err("Scene has no retained performance".into());
+        };
+        take.verify_seal()?;
+        let frames = take.frames.0;
+        let opened = Self {
+            schema: SCHEMA.into(),
+            performance_ref: format!("performance:torus/{}", take.take_ref),
+            sample_rate: take.sample_rate,
+            duration_samples: Counter(
+                at_sample
+                    .0
+                    .checked_add(frames)
+                    .ok_or("the take lies past the performance's last sample")?,
+            ),
+            ppq: torus::TAKE_PPQ,
+            bases: Vec::new(),
+            pitches: Vec::new(),
+            layers: vec![lane],
+            pages: Vec::new(),
+            parameters: Vec::new(),
+            routes: Vec::new(),
+            tempo: vec![TempoSegment {
+                at_sample: Counter(0),
+                at_tick: Counter(0),
+                micros_per_quarter,
+            }],
+            loop_range: None,
+            position_sample: Counter(0),
+            replay: torus::replay(frames)?,
+            checkpoints: Vec::new(),
+            native_sources: Vec::new(),
+            native_recordings: Vec::new(),
+            native_reservations: Vec::new(),
+            torus_takes: vec![torus::TorusTakeRecord {
+                take: *take,
+                layer: 0,
+                at_sample,
+            }],
+            content_digest: String::new(),
+        }
+        .seal()?;
+        let rest: Vec<_> = operations.collect();
+        if rest.is_empty() {
+            Ok(opened)
+        } else {
+            opened.edited(rest)
+        }
+    }
+    /// A whole performance set on a Scene: each Torus take it holds is carried as the Scene kept it, or
+    /// enters under this kernel's seal. A frame's record of a take is never one.
+    pub fn admit_torus_takes(&self, kept: Option<&Self>) -> Result<(), String> {
+        for record in &self.torus_takes {
+            let carried = kept.is_some_and(|kept| {
+                kept.torus_takes.iter().any(|k| {
+                    k.take.take_ref == record.take.take_ref && k.take.seal == record.take.seal
+                })
+            });
+            if !carried {
+                record.take.verify_seal()?;
+            }
+        }
+        Ok(())
     }
     fn append(&mut self, events: Vec<TimedEvent>) -> Result<(), String> {
         if events.is_empty()
@@ -1832,6 +1942,66 @@ impl Performance {
                         RECORDING_SCHEMA
                     }
                     .into();
+            }
+            PerformanceOperation::RecordTorusTake {
+                take,
+                lane,
+                at_sample,
+                micros_per_quarter,
+            } => {
+                take.verify_seal()?;
+                if self.torus_takes.len() >= torus::MAX_TAKES {
+                    return Err(format!(
+                        "A performance keeps at most {} takes",
+                        torus::MAX_TAKES
+                    ));
+                }
+                if self
+                    .torus_takes
+                    .iter()
+                    .any(|kept| kept.take.take_ref == take.take_ref)
+                {
+                    return Err("This take is already kept in the performance".into());
+                }
+                if take.sample_rate != self.sample_rate {
+                    return Err(format!(
+                        "The take was played at {} Hz and the performance runs at {} Hz",
+                        take.sample_rate, self.sample_rate
+                    ));
+                }
+                let tempo = self
+                    .tempo
+                    .iter()
+                    .rev()
+                    .find(|segment| segment.at_sample <= at_sample)
+                    .ok_or("musical transport requires an explicit initial tempo mapping")?;
+                if tempo.micros_per_quarter != micros_per_quarter {
+                    return Err(format!(
+                        "The take lies at {micros_per_quarter} µs a quarter and the performance's tempo there is {} µs a quarter: a take lies on the performance's own tempo",
+                        tempo.micros_per_quarter
+                    ));
+                }
+                let layer = match self
+                    .layers
+                    .iter()
+                    .position(|layer| layer.layer_ref == lane.layer_ref)
+                {
+                    Some(layer) => layer,
+                    None => {
+                        if self.layers.len() >= MAX_LAYERS {
+                            return Err("performance layer budget exceeded".into());
+                        }
+                        self.layers.push(lane);
+                        self.layers.len() - 1
+                    }
+                };
+                let record = torus::TorusTakeRecord {
+                    take: *take,
+                    layer: u16::try_from(layer).map_err(|_| "performance layer budget exceeded")?,
+                    at_sample,
+                };
+                self.duration_samples = Counter(self.duration_samples.0.max(record.end()?));
+                self.torus_takes.push(record);
             }
         }
         Ok(())

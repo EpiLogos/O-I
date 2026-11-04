@@ -7,6 +7,10 @@ export interface TorusPlayReading {
   body: {influence: unknown; amplitudes: {mode_ref: string; re: number; im: number}[] | null} | null;
   /** The Torus's pulse as the owner last read it. */
   pulse: {steps: number; steps_per_second: number; band: string | null} | null;
+  /** The twelve classes on the body and what each sounds under the tuning in force (symbolHarmony.ts ClassesReading). */
+  classes: import('./symbolHarmony').ClassesReading;
+  /** The surface's material the lens in force gives it (QL scene_field.rs lens_material_of), or why there is none. */
+  material: import('../../../src/engine/surfaceMaterial').SurfaceMaterialReading;
 }
 export const SOUNDING_SHARE: number;
 export const ROOT_PLANET_REF: string;

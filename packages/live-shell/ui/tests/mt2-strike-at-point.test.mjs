@@ -244,7 +244,7 @@ test('the frame wires the touch: the stage press hands its pixel and the stage t
   const body = nativeField.slice(nativeField.indexOf('const touch=('), nativeField.indexOf('const openLive='))
   assert.match(body, /touchStrike\(controller\.reading as any,x,y,view,\{projection,worldScale:WORLD_SCALE,pressure\}\)/)
   assert.match(body, /controller\.playAt\(\[strike\.point\],strike\.amplitude\)/)
-  assert.match(nativeField, /return \{controller,panel,command,stage,playJanko,touch,/, 'the frame holds the touch on the native field it installs')
+  assert.match(nativeField, /return \{controller,panel,command,stage,touch,/, 'the frame holds the touch on the native field it installs')
 })
 
 test('a touch the owner refuses changes nothing the torus plays, and the refusal is the owner\'s', async () => {

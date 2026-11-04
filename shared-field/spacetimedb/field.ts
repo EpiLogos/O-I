@@ -9,6 +9,18 @@
  * stays under `OI_STATE_HOME` and never appears in any envelope. The renderer
  * never reaches this program: the kernel does, on the desktop's own account.
  *
+ * Held (`field.sh --held`, O-I #858): the native host's one client for its
+ * identity, for the life of the window. One request per line in,
+ * `{"id":n,"request":{...}}`; its envelope out on one line with the same id;
+ * and, unasked, `{"event":"transaction","cursor","changes","more"}` whenever a
+ * server transaction changes what this caller can see (the rows it moved, by
+ * table and ref, never their content) and `{"event":"status",...}` when the
+ * connection's standing changes. The connection, its subscription and its
+ * credential are made once (field-lib `holdField`); a lost service is
+ * reconnected, no act replayed. `observe` answers at once with the held
+ * cursor; `view {lease, scope}` says what is in view (`"whole"`, field refs,
+ * or null to let the lease go). End of input ends the client.
+ *
  * Requests:
  *   status                              target binding only; no network
  *   bind      {target}                  bind this machine's SharedField target (non-secret; no network)
@@ -52,8 +64,9 @@
  *   withdraw_nara  {projection_ref, consent_ref, withdrawal_ref, withdrawn_at?}   withdraw a hosted presence: its consent and the projection's next,
  *                                        withdrawn revision (nara-expression-projection.mjs naraWithdrawal), published through publishArgs
  */
-import { activityLivenessRow, bindingFile, close, fieldDayReading, fieldNowReading, fieldSnapshot, hostingTargets, open, publishArgs, readRef, resolveTarget, rows, stageReading, stageView, waitUntil, observeField } from './field-lib';
+import { activityLivenessRow, bindingFile, close, fieldDayReading, fieldNowReading, fieldSnapshot, holdField, hostingTargets, open, publishArgs, readRef, resolveTarget, rows, stageReading, stageView, waitUntil, observeField, type Client } from './field-lib';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { createInterface } from 'node:readline';
 import { dirname } from 'node:path';
 import { createProjection } from '../index.mjs';
 import { projectionStorageKey } from '../spacetimedb.mjs';
@@ -70,57 +83,98 @@ async function readStdin(): Promise<string> {
   return Buffer.concat(chunks).toString('utf8');
 }
 
-async function emit(envelope: Envelope): Promise<never> {
+/** Write the one envelope a one-shot run answers, and end the run. */
+async function send(envelope: Envelope): Promise<never> {
   await new Promise<void>((resolve, reject) => {
     process.stdout.write(`${JSON.stringify(envelope)}\n`, error => error ? reject(error) : resolve());
   });
   process.exit(envelope.ok ? 0 : 1);
 }
 
-/** Native host lease: keep the entered connection itself alive. Losing the
- * host, transport or explicit lease ends presence; no effect is replayed. */
-async function holdPresence(data: unknown): Promise<never> {
-  await new Promise<void>((resolve, reject) => process.stdout.write(`${JSON.stringify({ok: true, data})}\n`, (error) => error ? reject(error) : resolve()));
-  const parent = process.ppid;
-  const end = () => { if (client) close(client); process.exit(0); };
-  process.once('SIGTERM', end); process.once('SIGINT', end);
-  client!.lifecycle.subscribe((event: any) => { if (event.transport.state === 'offline') end(); });
-  setInterval(() => { if (process.ppid !== parent) end(); }, 1000);
-  return await new Promise<never>(() => {});
+/** A request's answer ends it: `emit` throws its envelope back to `answer`,
+ * which returns it, so one law answers a one-shot run and a held client. */
+class Reply { constructor(readonly envelope: Envelope) {} }
+async function emit(envelope: Envelope): Promise<never> { throw new Reply(envelope); }
+
+/** The machine's own binding, answered without the network in either mode;
+ * null for every request that needs the field. */
+function bindingAnswer(request: any): Envelope | null {
+  if (request.kind === 'bind') {
+    const targets = hostingTargets();
+    if (typeof request.target !== 'string' || !targets[request.target]) return { ok: false, error: { kind: 'malformed', message: `bind requires a \`target\` named in hosting.json (${Object.keys(targets).join(', ')})` } };
+    const file = bindingFile();
+    mkdirSync(dirname(file), { recursive: true });
+    writeFileSync(file, `${JSON.stringify({ schema: 'oi.shared-field-binding/v1', target: request.target, bound_at: new Date().toISOString() }, null, 2)}\n`);
+  }
+  if (request.kind === 'unbind') {
+    rmSync(bindingFile(), { force: true });
+  }
+  if (request.kind !== 'status' && request.kind !== 'bind' && request.kind !== 'unbind') return null;
+  const binding = resolveTarget();
+  return { ok: true, data: binding.bound ? { schema: 'oi.shared-field.status/v1', bound: true, binding_source: binding.source, binding_file: bindingFile(), target: { name: binding.target.name, uri: binding.target.uri, database: binding.target.database } } : { schema: 'oi.shared-field.status/v1', bound: false, binding_file: bindingFile(), reason: binding.reason } };
 }
 
-const raw = (await readStdin()).trim();
-let request: any;
-try { request = raw ? JSON.parse(raw) : { kind: 'status' }; } catch (error: any) { await emit({ ok: false, error: { kind: 'malformed', message: `request is not JSON: ${error.message}` } }); }
-if (!request || typeof request !== 'object' || typeof request.kind !== 'string') await emit({ ok: false, error: { kind: 'malformed', message: 'request must be an object with a string `kind`' } });
-
-if (request.kind === 'bind') {
-  const targets = hostingTargets();
-  if (typeof request.target !== 'string' || !targets[request.target]) await emit({ ok: false, error: { kind: 'malformed', message: `bind requires a \`target\` named in hosting.json (${Object.keys(targets).join(', ')})` } });
-  const file = bindingFile();
-  mkdirSync(dirname(file), { recursive: true });
-  writeFileSync(file, `${JSON.stringify({ schema: 'oi.shared-field-binding/v1', target: request.target, bound_at: new Date().toISOString() }, null, 2)}\n`);
-}
-if (request.kind === 'unbind') {
-  rmSync(bindingFile(), { force: true });
-}
-const binding = resolveTarget();
-if (request.kind === 'status' || request.kind === 'bind' || request.kind === 'unbind') {
-  await emit({ ok: true, data: binding.bound ? { schema: 'oi.shared-field.status/v1', bound: true, binding_source: binding.source, binding_file: bindingFile(), target: { name: binding.target.name, uri: binding.target.uri, database: binding.target.database } } : { schema: 'oi.shared-field.status/v1', bound: false, binding_file: bindingFile(), reason: binding.reason } });
-}
-const target = binding.bound ? binding.target : await emit({ ok: false, error: { kind: 'unbound', message: binding.reason } });
-
-const configuredLabel = process.env.OI_SHARED_FIELD_TOKEN_LABEL;
-const label = typeof request.token_label === 'string' && /^[a-z0-9-]+$/.test(request.token_label)
-  ? request.token_label
-  : configuredLabel && /^[a-z0-9-]+$/.test(configuredLabel) ? configuredLabel : 'owner';
-let client: Awaited<ReturnType<typeof open>> | undefined;
-try {
-  client = await open(target, label);
-} catch (error: any) {
-  await emit({ ok: false, error: { kind: 'unavailable', message: `SharedField ${target.database} at ${target.uri} is unavailable: ${error?.message ?? String(error)}` } });
+/** The one identity a client stands as: the configured label, else the owner's. */
+function configuredLabel(): string {
+  const configured = process.env.OI_SHARED_FIELD_TOKEN_LABEL;
+  return configured && /^[a-z0-9-]+$/.test(configured) ? configured : 'owner';
 }
 
+/** One run, one request: the doorway acceptance scripts and the CLI use. */
+async function once(): Promise<never> {
+  const raw = (await readStdin()).trim();
+  let request: any;
+  try { request = raw ? JSON.parse(raw) : { kind: 'status' }; } catch (error: any) { await send({ ok: false, error: { kind: 'malformed', message: `request is not JSON: ${error.message}` } }); }
+  if (!request || typeof request !== 'object' || typeof request.kind !== 'string') await send({ ok: false, error: { kind: 'malformed', message: 'request must be an object with a string `kind`' } });
+  const bound = bindingAnswer(request);
+  if (bound) await send(bound);
+  const binding = resolveTarget();
+  const target = binding.bound ? binding.target : await send({ ok: false, error: { kind: 'unbound', message: binding.reason } });
+  const label = typeof request.token_label === 'string' && /^[a-z0-9-]+$/.test(request.token_label) ? request.token_label : configuredLabel();
+  let client: Client | undefined;
+  try {
+    client = await open(target, label);
+  } catch (error: any) {
+    await send({ ok: false, error: { kind: 'unavailable', message: `SharedField ${target.database} at ${target.uri} is unavailable: ${error?.message ?? String(error)}` } });
+  }
+  const envelope = await answer(client!, request);
+  close(client!);
+  return send(envelope);
+}
+
+/** The native host's one client for its identity: requests by line, answers
+ * and the field's own transactions by line, until the host lets go. */
+async function held(): Promise<never> {
+  const write = (line: Record<string, unknown>) => { process.stdout.write(`${JSON.stringify(line)}\n`); };
+  const hold = holdField({ label: configuredLabel(), answer, emit: write });
+  const input = createInterface({ input: process.stdin, crlfDelay: Infinity });
+  const inflight = new Set<Promise<void>>();
+  input.on('line', (line) => { const answering = (async () => {
+    let message: any;
+    try { message = JSON.parse(line); } catch { process.stderr.write('SharedField held client: a line that is not JSON was ignored\n'); return; }
+    if (!message || !Number.isSafeInteger(message.id)) { process.stderr.write('SharedField held client: a request without an id was ignored\n'); return; }
+    const request = message.request;
+    let envelope: Envelope;
+    try {
+      const bound = request && typeof request === 'object' && typeof request.kind === 'string' ? bindingAnswer(request) : null;
+      if (bound?.ok && request.kind !== 'status') await hold.rebind();
+      envelope = bound ? (bound.ok ? { ok: true, data: { ...(bound.data as object), held: hold.reading() } } : bound) : await hold.request(request);
+    } catch (error: any) {
+      envelope = { ok: false, error: { kind: 'refused', message: error?.message ?? String(error) } };
+    }
+    write({ id: message.id, ...envelope });
+  })(); inflight.add(answering); void answering.finally(() => inflight.delete(answering)); });
+  await new Promise<void>((resolve) => input.once('close', () => resolve()));
+  // The host let go: answer what it asked, let the field go, and drain every
+  // answer before the process ends (a pipe is written asynchronously here).
+  while (inflight.size) await Promise.allSettled([...inflight]);
+  hold.close();
+  await new Promise<void>((resolve) => process.stdout.write('', () => resolve()));
+  process.exit(0);
+}
+
+/** One request against an open client, in the owner's words. */
+async function answer(client: Client, request: any): Promise<Envelope> {
 try {
   const reducers: any = client!.conn.reducers;
   const db: any = client!.conn.db;
@@ -276,7 +330,8 @@ try {
       if (typeof request.field_ref !== 'string' || typeof request.participant_ref !== 'string') await emit({ ok: false, error: { kind: 'malformed', message: 'enter requires `field_ref` and `participant_ref`' } });
       await reducers.enterField({ fieldRef: request.field_ref, participantRef: request.participant_ref, state: request.state ?? 'entered' });
       const row = await waitUntil(() => rows(db.fieldPresence).find((candidate: any) => candidate.fieldRef === request.field_ref && candidate.participantRef === request.participant_ref), 'the caller presence in the caller-visible view');
-      if (request.hold_presence === true) await holdPresence({ schema: 'oi.shared-field.presence-result/v1', field_ref: row.fieldRef, participant_ref: row.participantRef, state: row.state });
+      // The presence lives as long as the connection that entered it: a held
+      // client's for the window's life (the native host), a one-shot run's until it ends.
       await emit({ ok: true, data: { schema: 'oi.shared-field.presence-result/v1', field_ref: row.fieldRef, participant_ref: row.participantRef, state: row.state } });
     }
     case 'leave': {
@@ -381,7 +436,11 @@ try {
       await emit({ ok: false, error: { kind: 'malformed', message: `unknown request kind: ${request.kind}` } });
   }
 } catch (error: any) {
-  await emit({ ok: false, error: { kind: 'refused', message: error?.message ?? String(error) } });
-} finally {
-  if (client) close(client);
+  if (error instanceof Reply) return error.envelope;
+  return { ok: false, error: { kind: 'refused', message: error?.message ?? String(error) } };
 }
+return { ok: false, error: { kind: 'refused', message: `request ${request.kind} returned no answer` } };
+}
+
+if (process.argv.includes('--held')) await held();
+else await once();

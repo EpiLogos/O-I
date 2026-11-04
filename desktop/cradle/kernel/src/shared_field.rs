@@ -1,17 +1,23 @@
 //! Thin transport to the O:I-owned SharedField client (Lane C step 5,
 //! cell S→S0 · aperture mode). The hosted field is an owner read model
-//! the kernel pulls through `shared-field/spacetimedb/field.sh`; the
+//! the kernel reaches through `shared-field/spacetimedb/field.sh`; the
 //! kernel invents no store, no second index and no identity, and it never
 //! reads the owner transport token — the hosting target and the token live
 //! in the client's own environment (`OI_SHARED_FIELD_TARGET`,
 //! `OI_STATE_HOME`), which the kernel passes through untouched.
 //!
-//! One request on stdin, one envelope on stdout, decoded exactly like
-//! `knowledge.rs::decode_envelope`: `{ok:true,data}` is the owner reading;
-//! `{ok:false,error:{kind,message}}` is the owner's own failure truth, and
-//! the failure kinds the client speaks (`unbound` | `unavailable` |
-//! `refused` | `malformed`) are carried as distinct states. An unbound
-//! target is absence, never an error.
+//! One held client per identity for the life of the window (O-I #858): the
+//! client runs `--held`, one request per line in and its envelope back by
+//! id, and the field's own transactions come out of it unasked (the rows
+//! each moved, by table and ref) to the native host's event channel
+//! (`on_change`). The cursor is the transaction; every device reads the one
+//! cache; no request starts a process.
+//!
+//! Each envelope is decoded exactly like `knowledge.rs::decode_envelope`:
+//! `{ok:true,data}` is the owner reading; `{ok:false,error:{kind,message}}`
+//! is the owner's own failure truth, and the failure kinds the client speaks
+//! (`unbound` | `unavailable` | `refused` | `malformed`) are carried as
+//! distinct states. An unbound target is absence, never an error.
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::{
@@ -21,7 +27,7 @@ use std::{
     path::PathBuf,
     process::{Command, Stdio},
     sync::{
-        atomic::{AtomicBool, Ordering},
+        atomic::{AtomicU64, Ordering},
         mpsc, Arc, Mutex, OnceLock,
     },
     time::{Duration, Instant},
@@ -149,32 +155,573 @@ pub fn is_read(request: &Value) -> bool {
     )
 }
 
-/// Send one request to the SharedField client and return the owner `data`.
+/// Send one request to this window's held SharedField client and return the
+/// owner `data`. No request starts a process: the one client for this
+/// identity is held for the life of the window (`hold`), and every request,
+/// observation and presence goes in on it (O-I #858).
 pub fn call(request: &Value) -> Result<Value, CallError> {
     if request.get("token_label").is_some() || request.get("hold_presence").is_some() {
         return Err(CallError::Refused {
             message: "The native host owns the transport credential and presence connection".into(),
         });
     }
-    if matches!(request["kind"].as_str(), Some("observe" | "observe-stop")) {
-        renew_presence();
-        return observer_reading(request);
-    }
-    if request["kind"] == "enter" {
-        return enter_presence(request);
-    }
-    if request["kind"] == "leave" {
-        release_presence(request);
-    }
-    call_with_executable(request, &client_executable().into_os_string())
+    held().call(request)
 }
 
-struct PresenceLease {
-    last_poll: Mutex<Instant>,
-    stopped: AtomicBool,
-    reading: Mutex<Option<Result<Value, CallError>>>,
+/// Stand this window's SharedField client up for its identity, once. The
+/// native host calls it as the window opens, so the first request finds the
+/// client already held.
+pub fn hold() {
+    let _ = held();
 }
-static PRESENCE: OnceLock<Mutex<HashMap<String, Arc<PresenceLease>>>> = OnceLock::new();
+
+/// Hear every transaction a held client takes: the native host records it
+/// as `KernelEvent::SharedFieldChanged` and sends it on its event channel.
+/// The first listener is kept.
+pub fn on_change(listener: impl Fn(&FieldChange) + Send + Sync + 'static) -> bool {
+    CHANGES.set(Arc::new(listener)).is_ok()
+}
+
+/// The identity this window stands as on the field: the configured transport
+/// label (`OI_SHARED_FIELD_TOKEN_LABEL`), else the owner's. The credential
+/// itself stays in the client's own state home.
+fn identity_label() -> String {
+    std::env::var("OI_SHARED_FIELD_TOKEN_LABEL")
+        .ok()
+        .filter(|label| {
+            !label.is_empty()
+                && label.len() <= 64
+                && label
+                    .bytes()
+                    .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-')
+        })
+        .unwrap_or_else(|| "owner".into())
+}
+
+type ChangeSink = Arc<dyn Fn(&FieldChange) + Send + Sync>;
+static CHANGES: OnceLock<ChangeSink> = OnceLock::new();
+/// The held clients, one per (client executable, identity label).
+type HeldClients = HashMap<(OsString, String), Arc<HeldClient>>;
+static HELD: OnceLock<Mutex<HeldClients>> = OnceLock::new();
+
+/// The held client for this identity and client executable, started the
+/// first time it is asked for and kept for the life of the process.
+fn held() -> Arc<HeldClient> {
+    let key = (client_executable().into_os_string(), identity_label());
+    let mut clients = lock(HELD.get_or_init(Default::default));
+    Arc::clone(clients.entry(key.clone()).or_insert_with(|| {
+        let heard: ChangeSink = Arc::new(|change: &FieldChange| {
+            if let Some(listener) = CHANGES.get() {
+                listener(change);
+            }
+        });
+        HeldClient::start(key.0, key.1, Timing::WINDOW, Some(heard))
+    }))
+}
+
+fn lock<T>(mutex: &Mutex<T>) -> std::sync::MutexGuard<'_, T> {
+    mutex
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
+}
+
+/// One transaction a held client took: its cursor, the rows it moved — by
+/// table, op and ref, never their content — and how many it did not name.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct FieldChange {
+    pub cursor: String,
+    pub changes: Vec<crate::events::SharedFieldRowChange>,
+    pub more: u64,
+}
+
+/// The bounds a held client keeps: one reply's wait, an observation's or a
+/// presence's lease without a poll, how often lapsed leases are let go, and
+/// the first wait before a client that ended is started again.
+#[derive(Clone, Copy, Debug)]
+pub struct Timing {
+    pub reply: Duration,
+    pub lease: Duration,
+    pub sweep: Duration,
+    pub restart: Duration,
+}
+
+impl Timing {
+    /// A window's: a minute for one reply, two minutes' lease.
+    pub const WINDOW: Timing = Timing {
+        reply: CLIENT_CALL_LIMIT,
+        lease: Duration::from_secs(120),
+        sweep: Duration::from_secs(5),
+        restart: Duration::from_secs(1),
+    };
+}
+
+/// What an observation or a presence holds: its subject, the view lease it
+/// keeps on the held client, and when it was last asked for.
+struct Lease {
+    subject: Value,
+    view: String,
+    last: Instant,
+    /// The connection that held it went; nothing is replayed.
+    gone: bool,
+}
+
+/// One identity's SharedField client, held for the life of the window: the
+/// one process (`field.sh --held`, field.ts), its one connection and its
+/// one cache, which every device reads. Requests go in by id and come back
+/// by id; the field's own transactions come out unasked and move the
+/// cursor. A client that ends is started again by this holder, never by a
+/// request; while none stands, a request is unavailable with the reason.
+pub struct HeldClient {
+    executable: OsString,
+    label: String,
+    timing: Timing,
+    /// The field's news, carried off the reader so a listener that waits
+    /// (on the kernel lock, say) never holds a reply back.
+    news: Mutex<Option<mpsc::Sender<FieldChange>>>,
+    link: Mutex<Option<std::process::ChildStdin>>,
+    down: Mutex<String>,
+    /// A client that could not hold (no runtime, say) says why in one
+    /// unnumbered envelope before it ends; that is the reason it is down.
+    last_word: Mutex<Option<String>>,
+    pending: Mutex<HashMap<u64, mpsc::Sender<Result<Value, CallError>>>>,
+    next: AtomicU64,
+    launches: AtomicU64,
+    cursor: Mutex<String>,
+    readings: Mutex<HashMap<String, (String, Value)>>,
+    observers: Mutex<HashMap<String, Lease>>,
+    presence: Mutex<HashMap<String, Lease>>,
+    views: AtomicU64,
+}
+
+impl HeldClient {
+    /// Start the client for `label` and hold it. The first launch happens
+    /// here, so the first request finds it standing (or the reason it is not).
+    pub fn start(
+        executable: OsString,
+        label: String,
+        timing: Timing,
+        sink: Option<ChangeSink>,
+    ) -> Arc<Self> {
+        let news = sink.map(|sink| {
+            let (send, receive) = mpsc::channel::<FieldChange>();
+            std::thread::spawn(move || {
+                for change in receive {
+                    sink(&change);
+                }
+            });
+            send
+        });
+        let held = Arc::new(Self {
+            executable,
+            label,
+            timing,
+            news: Mutex::new(news),
+            link: Mutex::new(None),
+            down: Mutex::new("The SharedField client is starting".into()),
+            last_word: Mutex::new(None),
+            pending: Mutex::new(HashMap::new()),
+            next: AtomicU64::new(1),
+            launches: AtomicU64::new(0),
+            cursor: Mutex::new(String::new()),
+            readings: Mutex::new(HashMap::new()),
+            observers: Mutex::new(HashMap::new()),
+            presence: Mutex::new(HashMap::new()),
+            views: AtomicU64::new(1),
+        });
+        let first = held.launch();
+        let supervisor = Arc::clone(&held);
+        std::thread::spawn(move || supervisor.supervise(first));
+        let sweeper = Arc::clone(&held);
+        std::thread::spawn(move || loop {
+            std::thread::sleep(sweeper.timing.sweep);
+            sweeper.sweep();
+        });
+        held
+    }
+
+    /// How many times this holder has started its client.
+    pub fn launches(&self) -> u64 {
+        self.launches.load(Ordering::Acquire)
+    }
+
+    /// The transaction the held client last reported.
+    pub fn cursor(&self) -> String {
+        lock(&self.cursor).clone()
+    }
+
+    fn launch(&self) -> Option<(std::process::Child, std::process::ChildStdout)> {
+        let spawned = Command::new(&self.executable)
+            .arg("--held")
+            .env("OI_SHARED_FIELD_TOKEN_LABEL", &self.label)
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::inherit())
+            .spawn();
+        match spawned {
+            Ok(mut child) => match (child.stdin.take(), child.stdout.take()) {
+                (Some(stdin), Some(stdout)) => {
+                    *lock(&self.link) = Some(stdin);
+                    lock(&self.down).clear();
+                    // Counted once it can be asked.
+                    self.launches.fetch_add(1, Ordering::AcqRel);
+                    Some((child, stdout))
+                }
+                _ => {
+                    let _ = child.kill();
+                    let _ = child.wait();
+                    self.launches.fetch_add(1, Ordering::AcqRel);
+                    *lock(&self.down) = "The SharedField client gave no pipes".into();
+                    None
+                }
+            },
+            Err(error) => {
+                *lock(&self.down) = format!(
+                    "SharedField client could not be launched ({}): {error}",
+                    self.executable.to_string_lossy()
+                );
+                None
+            }
+        }
+    }
+
+    /// Read the client until it ends, then start it again after a wait that
+    /// doubles to half a minute (and starts over after a long run).
+    fn supervise(
+        self: Arc<Self>,
+        mut running: Option<(std::process::Child, std::process::ChildStdout)>,
+    ) {
+        let mut wait = self.timing.restart;
+        loop {
+            if let Some((mut child, stdout)) = running.take() {
+                let began = Instant::now();
+                for line in BufReader::new(stdout).lines() {
+                    match line {
+                        Ok(line) => self.route(&line),
+                        Err(_) => break,
+                    }
+                }
+                *lock(&self.link) = None;
+                *lock(&self.down) = lock(&self.last_word).take().unwrap_or_else(|| {
+                    "The SharedField client ended; it is being started again".into()
+                });
+                let _ = child.kill();
+                let _ = child.wait();
+                self.lost();
+                if began.elapsed() > Duration::from_secs(30) {
+                    wait = self.timing.restart;
+                }
+            }
+            std::thread::sleep(wait);
+            wait = (wait * 2).min(Duration::from_secs(30));
+            running = self.launch();
+        }
+    }
+
+    /// One line from the client: a reply to its waiting request, or the
+    /// field's own news. Never asks the client anything (this is the only
+    /// reader of its answers).
+    fn route(&self, line: &str) {
+        let Ok(message) = serde_json::from_str::<Value>(line) else {
+            return;
+        };
+        if let Some(id) = message.get("id").and_then(Value::as_u64) {
+            if let Some(reply) = lock(&self.pending).remove(&id) {
+                let _ = reply.send(decode_value(&message));
+            }
+            return;
+        }
+        match message["event"].as_str() {
+            Some("transaction") => {
+                let Some(cursor) = message["cursor"].as_str() else {
+                    return;
+                };
+                *lock(&self.cursor) = cursor.to_owned();
+                // Only what the event channel can tell is named; the rest is
+                // counted, so a reader knows to read the whole field again.
+                let named = message["changes"].as_array().map_or(&[][..], Vec::as_slice);
+                let changes: Vec<crate::events::SharedFieldRowChange> = named
+                    .iter()
+                    .filter_map(|change| serde_json::from_value(change.clone()).ok())
+                    .filter(|change: &crate::events::SharedFieldRowChange| change.fault().is_none())
+                    .take(crate::events::SHARED_FIELD_CHANGES_PER_EVENT)
+                    .collect();
+                let more = message["more"]
+                    .as_u64()
+                    .unwrap_or(0)
+                    .saturating_add((named.len() - changes.len()) as u64);
+                if let Some(news) = lock(&self.news).as_ref() {
+                    let _ = news.send(FieldChange {
+                        cursor: cursor.to_owned(),
+                        changes,
+                        more,
+                    });
+                }
+            }
+            None => {
+                if let Some(said) = message["error"]["message"].as_str() {
+                    *lock(&self.last_word) = Some(said.to_owned());
+                }
+            }
+            Some("status") => {
+                if let Some(cursor) = message["cursor"].as_str() {
+                    *lock(&self.cursor) = cursor.to_owned();
+                }
+                // A presence lives as long as the connection that entered
+                // it: when the connection goes, so does the presence, and
+                // nothing re-enters on its own.
+                if message["state"] != "live" {
+                    for lease in lock(&self.presence).values_mut() {
+                        lease.gone = true;
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+
+    /// The client ended: what waited is unavailable, and what it held (its
+    /// presences, its observations' views, its cursor) went with it.
+    fn lost(&self) {
+        let detail = lock(&self.down).clone();
+        for (_, reply) in lock(&self.pending).drain() {
+            let _ = reply.send(Err(CallError::Unavailable {
+                detail: detail.clone(),
+            }));
+        }
+        for lease in lock(&self.presence).values_mut() {
+            lease.gone = true;
+        }
+        lock(&self.observers).clear();
+        lock(&self.readings).clear();
+        lock(&self.cursor).clear();
+    }
+
+    /// Answer one request in the owner's words.
+    pub fn call(&self, request: &Value) -> Result<Value, CallError> {
+        match request["kind"].as_str() {
+            Some("observe" | "observe-stop") => {
+                self.renew_presence();
+                self.observe(request)
+            }
+            Some("enter") => self.enter(request),
+            Some("leave") => self.leave(request),
+            _ => self.request(request),
+        }
+    }
+
+    /// Put one request to the client and wait for its own reply.
+    fn request(&self, request: &Value) -> Result<Value, CallError> {
+        let id = self.next.fetch_add(1, Ordering::AcqRel);
+        let (reply, answer) = mpsc::channel();
+        lock(&self.pending).insert(id, reply);
+        let line = format!("{{\"id\":{id},\"request\":{request}}}\n");
+        let written = match lock(&self.link).as_mut() {
+            Some(stdin) => stdin
+                .write_all(line.as_bytes())
+                .and_then(|()| stdin.flush())
+                .map_err(|error| format!("The SharedField client could not be asked: {error}")),
+            None => Err(lock(&self.down).clone()),
+        };
+        if let Err(detail) = written {
+            lock(&self.pending).remove(&id);
+            return Err(CallError::Unavailable { detail });
+        }
+        answer.recv_timeout(self.timing.reply).unwrap_or_else(|_| {
+            lock(&self.pending).remove(&id);
+            Err(CallError::Unavailable {
+                detail: format!(
+                    "The SharedField client did not answer {} within {} s",
+                    request["kind"].as_str().unwrap_or("a request"),
+                    self.timing.reply.as_secs()
+                ),
+            })
+        })
+    }
+
+    /// An observation reads the one cache: while the cursor has not moved,
+    /// every observer of a subject is answered from the reading already
+    /// taken, and the client is not asked again.
+    fn observe(&self, request: &Value) -> Result<Value, CallError> {
+        let id = request["observer_ref"]
+            .as_str()
+            .filter(|id| {
+                !id.is_empty()
+                    && id.len() <= 96
+                    && id
+                        .bytes()
+                        .all(|b| b.is_ascii_alphanumeric() || b"-:".contains(&b))
+            })
+            .ok_or_else(|| CallError::Malformed {
+                detail: "Observation requires a bounded observer_ref".into(),
+            })?;
+        self.sweep();
+        if request["kind"] == "observe-stop" {
+            let released = lock(&self.observers).remove(id);
+            if let Some(lease) = released {
+                let _ = self
+                    .request(&serde_json::json!({"kind":"view","lease":lease.view,"scope":null}));
+            }
+            return Ok(serde_json::json!({"state":"released","observer_ref":id}));
+        }
+        let subject = serde_json::json!({"kind":"observe","ref":request.get("ref").cloned().unwrap_or(Value::Null)});
+        let fresh = {
+            let mut observers = lock(&self.observers);
+            let held = observers.len();
+            match observers.get_mut(id) {
+                Some(lease) if lease.subject != subject => {
+                    return Err(CallError::Refused {
+                        message: "An observation lease cannot change its subject".into(),
+                    })
+                }
+                Some(lease) => {
+                    lease.last = Instant::now();
+                    None
+                }
+                None if held >= 16 => {
+                    return Err(CallError::Refused {
+                        message: "This window has reached its native observation budget".into(),
+                    })
+                }
+                None => {
+                    let view = format!("observe:{}", self.views.fetch_add(1, Ordering::AcqRel));
+                    observers.insert(
+                        id.into(),
+                        Lease {
+                            subject: subject.clone(),
+                            view: view.clone(),
+                            last: Instant::now(),
+                            gone: false,
+                        },
+                    );
+                    Some(view)
+                }
+            }
+        };
+        if let Some(view) = fresh {
+            // An observer has the whole field in view (Explore draws it all).
+            let _ = self.request(&serde_json::json!({"kind":"view","lease":view,"scope":"whole"}));
+        }
+        let key = subject["ref"].to_string();
+        let now = self.cursor();
+        if !now.is_empty() {
+            if let Some((at, reading)) = lock(&self.readings).get(&key) {
+                if *at == now {
+                    return Ok(reading.clone());
+                }
+            }
+        }
+        let reading = self.request(&subject)?;
+        if let Some(at) = reading["cursor"].as_str() {
+            lock(&self.readings).insert(key, (at.to_owned(), reading.clone()));
+        }
+        Ok(reading)
+    }
+
+    /// Enter a field on the held connection. The presence lasts while the
+    /// connection does and while the window keeps asking (its lease); an
+    /// entry goes through the reducer every time, judged by its owner.
+    fn enter(&self, request: &Value) -> Result<Value, CallError> {
+        let key = presence_key(request)?;
+        self.sweep();
+        let (view, fresh) = {
+            let mut presence = lock(&self.presence);
+            let held = presence.len();
+            match presence.get_mut(&key) {
+                Some(lease) => {
+                    lease.last = Instant::now();
+                    (lease.view.clone(), false)
+                }
+                None if held >= 8 => {
+                    return Err(CallError::Refused {
+                        message: "Native field presence budget reached".into(),
+                    })
+                }
+                None => {
+                    let view = format!("presence:{}", self.views.fetch_add(1, Ordering::AcqRel));
+                    presence.insert(
+                        key.clone(),
+                        Lease {
+                            subject: serde_json::json!({"field_ref":request["field_ref"],"participant_ref":request["participant_ref"]}),
+                            view: view.clone(),
+                            last: Instant::now(),
+                            gone: false,
+                        },
+                    );
+                    (view, true)
+                }
+            }
+        };
+        let entered = self.request(&serde_json::json!({"kind":"enter","field_ref":request["field_ref"],"participant_ref":request["participant_ref"],"state":request.get("state").cloned().unwrap_or_else(|| Value::String("entered".into()))}));
+        match &entered {
+            // The field it stands in stays in view while it stands there.
+            Ok(_) => {
+                let _ = self.request(
+                    &serde_json::json!({"kind":"view","lease":view,"scope":[request["field_ref"]]}),
+                );
+            }
+            Err(_) if fresh => {
+                lock(&self.presence).remove(&key);
+            }
+            Err(_) => {}
+        }
+        entered
+    }
+
+    fn leave(&self, request: &Value) -> Result<Value, CallError> {
+        let released = presence_key(request)
+            .ok()
+            .and_then(|key| lock(&self.presence).remove(&key));
+        let left = self.request(request);
+        if let Some(lease) = released {
+            let _ =
+                self.request(&serde_json::json!({"kind":"view","lease":lease.view,"scope":null}));
+        }
+        left
+    }
+
+    fn renew_presence(&self) {
+        for lease in lock(&self.presence).values_mut() {
+            lease.last = Instant::now();
+        }
+    }
+
+    /// Let lapsed leases go: an observation nobody asked for within its
+    /// lease, a presence the window stopped keeping (left through the
+    /// reducer) or one whose connection went (nothing to leave).
+    fn sweep(&self) {
+        let lease = self.timing.lease;
+        let lapsed = |held: &Lease| held.gone || held.last.elapsed() >= lease;
+        let mut released: Vec<(String, Option<Value>)> = Vec::new();
+        lock(&self.observers).retain(|_, held| {
+            let keep = !lapsed(held);
+            if !keep {
+                released.push((held.view.clone(), None));
+            }
+            keep
+        });
+        lock(&self.presence).retain(|_, held| {
+            let keep = !lapsed(held);
+            if !keep {
+                released.push((
+                    held.view.clone(),
+                    (!held.gone).then(|| held.subject.clone()),
+                ));
+            }
+            keep
+        });
+        let observed: std::collections::HashSet<String> = lock(&self.observers)
+            .values()
+            .map(|held| held.subject["ref"].to_string())
+            .collect();
+        lock(&self.readings).retain(|subject, _| observed.contains(subject));
+        for (view, presence) in released {
+            if let Some(presence) = presence {
+                let _ = self.request(&serde_json::json!({"kind":"leave","field_ref":presence["field_ref"],"participant_ref":presence["participant_ref"]}));
+            }
+            let _ = self.request(&serde_json::json!({"kind":"view","lease":view,"scope":null}));
+        }
+    }
+}
 
 fn presence_key(request: &Value) -> Result<String, CallError> {
     let mut refs = Vec::new();
@@ -190,293 +737,11 @@ fn presence_key(request: &Value) -> Result<String, CallError> {
     Ok(serde_json::json!(refs).to_string())
 }
 
-fn renew_presence() {
-    if let Some(registry) = PRESENCE.get() {
-        if let Ok(leases) = registry.lock() {
-            for lease in leases.values() {
-                if let Ok(mut last) = lease.last_poll.lock() {
-                    *last = Instant::now();
-                }
-            }
-        }
-    }
-}
-
-fn release_presence(request: &Value) {
-    if let (Ok(key), Some(registry)) = (presence_key(request), PRESENCE.get()) {
-        if let Ok(mut leases) = registry.lock() {
-            if let Some(lease) = leases.remove(&key) {
-                lease.stopped.store(true, Ordering::Release);
-            }
-        }
-    }
-}
-
-fn enter_presence(request: &Value) -> Result<Value, CallError> {
-    let key = presence_key(request)?;
-    let mut leases = PRESENCE
-        .get_or_init(|| Mutex::new(HashMap::new()))
-        .lock()
-        .map_err(|_| CallError::Unavailable {
-            detail: "Presence registry unavailable".into(),
-        })?;
-    leases.retain(|_, lease| !lease.stopped.load(Ordering::Acquire));
-    if let Some(lease) = leases.get(&key) {
-        if let Ok(mut last) = lease.last_poll.lock() {
-            *last = Instant::now();
-        }
-        drop(leases);
-        // A retained process is not renewed authority. Re-enter through the
-        // reducer: revocation/expiry is judged by its owner on every act.
-        return call_with_executable(request, &client_executable().into_os_string());
-    }
-    if leases.len() >= 8 {
-        return Err(CallError::Refused {
-            message: "Native field presence budget reached".into(),
-        });
-    }
-    let lease = Arc::new(PresenceLease {
-        last_poll: Mutex::new(Instant::now()),
-        stopped: AtomicBool::new(false),
-        reading: Mutex::new(None),
-    });
-    leases.insert(key, Arc::clone(&lease));
-    drop(leases);
-    let owner_request = serde_json::json!({"kind":"enter", "field_ref":request["field_ref"], "participant_ref":request["participant_ref"], "state":request.get("state").cloned().unwrap_or_else(|| Value::String("entered".into())), "hold_presence":true});
-    let (send, receive) = mpsc::channel();
-    let worker_lease = Arc::clone(&lease);
-    std::thread::spawn(move || {
-        let outcome = (|| -> Result<(), CallError> {
-            let mut child = Command::new(client_executable())
-                .stdin(Stdio::piped())
-                .stdout(Stdio::piped())
-                .stderr(Stdio::inherit())
-                .spawn()
-                .map_err(|e| CallError::Unavailable {
-                    detail: format!("Presence client launch failed: {e}"),
-                })?;
-            let written = child
-                .stdin
-                .take()
-                .ok_or_else(|| CallError::Unavailable {
-                    detail: "Presence input unavailable".into(),
-                })?
-                .write_all(owner_request.to_string().as_bytes());
-            if let Err(e) = written {
-                let _ = child.kill();
-                let _ = child.wait();
-                return Err(CallError::Unavailable {
-                    detail: e.to_string(),
-                });
-            }
-            let stdout = child.stdout.take().ok_or_else(|| CallError::Unavailable {
-                detail: "Presence output unavailable".into(),
-            })?;
-            let (first_send, first_receive) = mpsc::channel();
-            std::thread::spawn(move || {
-                let mut line = String::new();
-                let result = BufReader::new(stdout).read_line(&mut line).map(|_| line);
-                let _ = first_send.send(result);
-            });
-            let initial = first_receive.recv_timeout(Duration::from_secs(25));
-            let reading = match initial {
-                Ok(Ok(line)) => decode_reply(line.as_bytes(), &[]),
-                _ => Err(CallError::Unavailable {
-                    detail: "Presence admission timed out; held connection released".into(),
-                }),
-            };
-            if let Ok(mut cached) = worker_lease.reading.lock() {
-                *cached = Some(reading.clone());
-            }
-            let failed = reading.is_err();
-            let _ = send.send(reading);
-            while !failed
-                && !worker_lease.stopped.load(Ordering::Acquire)
-                && worker_lease
-                    .last_poll
-                    .lock()
-                    .map(|t| t.elapsed() < Duration::from_secs(120))
-                    .unwrap_or(false)
-            {
-                if child.try_wait().map(|s| s.is_some()).unwrap_or(true) {
-                    break;
-                }
-                std::thread::sleep(Duration::from_millis(250));
-            }
-            let _ = child.kill();
-            let _ = child.wait();
-            Ok(())
-        })();
-        if let Err(error) = outcome {
-            if let Ok(mut cached) = worker_lease.reading.lock() {
-                *cached = Some(Err(error.clone()));
-            }
-            let _ = send.send(Err(error));
-        }
-        worker_lease.stopped.store(true, Ordering::Release);
-    });
-    receive
-        .recv_timeout(Duration::from_secs(27))
-        .unwrap_or_else(|_| {
-            lease.stopped.store(true, Ordering::Release);
-            Err(CallError::Unavailable {
-                detail: "Native presence did not answer; inspect before entering again".into(),
-            })
-        })
-}
-
-struct Observer {
-    ref_request: Value,
-    last_poll: Mutex<Instant>,
-    reading: Mutex<Option<Result<Value, CallError>>>,
-    stopped: AtomicBool,
-}
-static OBSERVERS: OnceLock<Mutex<HashMap<String, Arc<Observer>>>> = OnceLock::new();
-
-/// The wait belongs outside the kernel's operation mutex. This worker holds
-/// only an expiring read cache of owner-produced, credential-filtered rows;
-/// it has no reducers, document store or identity authority. Clients explicitly
-/// release their lease, and abandoned leases expire after two minutes.
-fn observer_reading(request: &Value) -> Result<Value, CallError> {
-    let id = request["observer_ref"]
-        .as_str()
-        .filter(|id| {
-            !id.is_empty()
-                && id.len() <= 96
-                && id
-                    .bytes()
-                    .all(|b| b.is_ascii_alphanumeric() || b"-:".contains(&b))
-        })
-        .ok_or_else(|| CallError::Malformed {
-            detail: "Observation requires a bounded observer_ref".into(),
-        })?;
-    let mut observers = OBSERVERS
-        .get_or_init(|| Mutex::new(HashMap::new()))
-        .lock()
-        .map_err(|_| CallError::Unavailable {
-            detail: "Observation registry unavailable".into(),
-        })?;
-    observers.retain(|_, observer| {
-        let current = !observer.stopped.load(Ordering::Acquire)
-            && observer
-                .last_poll
-                .lock()
-                .map(|t| t.elapsed() < Duration::from_secs(120))
-                .unwrap_or(false);
-        if !current {
-            observer.stopped.store(true, Ordering::Release);
-        }
-        current
-    });
-    if request["kind"] == "observe-stop" {
-        if let Some(observer) = observers.remove(id) {
-            observer.stopped.store(true, Ordering::Release);
-        }
-        return Ok(serde_json::json!({"state":"released","observer_ref":id}));
-    }
-    let owner_request = serde_json::json!({"kind":"observe","ref":request.get("ref").cloned().unwrap_or(Value::Null)});
-    if let Some(observer) = observers.get(id) {
-        if observer.ref_request != owner_request {
-            return Err(CallError::Refused {
-                message: "An observation lease cannot change its subject".into(),
-            });
-        }
-        if let Ok(mut last) = observer.last_poll.lock() {
-            *last = Instant::now();
-        }
-        return observer
-            .reading
-            .lock()
-            .map(|reading| {
-                reading
-                    .clone()
-                    .unwrap_or_else(|| Ok(serde_json::json!({"state":"observing"})))
-            })
-            .map_err(|_| CallError::Unavailable {
-                detail: "Observation reading unavailable".into(),
-            })?;
-    }
-    if observers.len() >= 16 {
-        return Err(CallError::Refused {
-            message: "This window has reached its native observation budget".into(),
-        });
-    }
-    let observer = Arc::new(Observer {
-        ref_request: owner_request,
-        last_poll: Mutex::new(Instant::now()),
-        reading: Mutex::new(None),
-        stopped: AtomicBool::new(false),
-    });
-    observers.insert(id.into(), Arc::clone(&observer));
-    let executable = client_executable().into_os_string();
-    std::thread::spawn(move || {
-        let mut cursor = Value::Null;
-        while !observer.stopped.load(Ordering::Acquire) {
-            if observer
-                .last_poll
-                .lock()
-                .map(|t| t.elapsed() >= Duration::from_secs(120))
-                .unwrap_or(true)
-            {
-                break;
-            }
-            let mut next = observer.ref_request.clone();
-            next["cursor"] = cursor;
-            let reading = call_with_executable(&next, &executable);
-            let failed = reading.is_err();
-            cursor = reading
-                .as_ref()
-                .ok()
-                .and_then(|r| r.get("cursor"))
-                .cloned()
-                .unwrap_or(Value::Null);
-            if observer.stopped.load(Ordering::Acquire) {
-                break;
-            }
-            if let Ok(mut cached) = observer.reading.lock() {
-                *cached = Some(reading);
-            }
-            std::thread::sleep(Duration::from_millis(if failed { 2000 } else { 100 }));
-        }
-        observer.stopped.store(true, Ordering::Release);
-    });
-    Ok(serde_json::json!({"state":"observing"}))
-}
-
 /// One SharedField client call's bound: the client reaches the hosted field
 /// over the network; the bound is for a client that never answers.
 const CLIENT_CALL_LIMIT: Duration = Duration::from_secs(60);
 /// One A2A exchange's bound: the runner waits for the other agent's reply.
 const A2A_EXCHANGE_LIMIT: Duration = Duration::from_secs(300);
-
-fn call_with_executable(request: &Value, executable: &OsString) -> Result<Value, CallError> {
-    let operation = request["kind"]
-        .as_str()
-        .or_else(|| request["action"].as_str())
-        .unwrap_or("call")
-        .to_owned();
-    // Bounded like every owner call (owner_process.rs).
-    let output = crate::owner_process::output(
-        &mut Command::new(executable),
-        Some(request.to_string().into_bytes()),
-        crate::owner_process::Bound {
-            owner: "SharedField client",
-            operation: &operation,
-            limit: CLIENT_CALL_LIMIT,
-            effect: crate::owner_process::Effect::Unclassified,
-        },
-    )
-    .map_err(|failure| CallError::Unavailable {
-        detail: match failure.failed {
-            crate::owner_process::Failed::Unavailable => format!(
-                "SharedField client could not be launched ({}): {failure}",
-                executable.to_string_lossy()
-            ),
-            _ => failure.message,
-        },
-    })?;
-    decode_envelope(&output)
-}
 
 /// The envelope law shared with the knowledge transport: an empty stdout
 /// on failure is a launch/runtime fault (Unavailable); an unreadable
@@ -502,6 +767,12 @@ fn decode_reply(stdout: &[u8], stderr: &[u8]) -> Result<Value, CallError> {
             String::from_utf8_lossy(stderr).trim()
         ),
     })?;
+    decode_value(&envelope)
+}
+
+/// One envelope, held client or one-shot: `ok:true` is the owner's data;
+/// `ok:false` carries the client's own error kind.
+fn decode_value(envelope: &Value) -> Result<Value, CallError> {
     if envelope["ok"] == true {
         return envelope
             .get("data")
@@ -801,12 +1072,19 @@ mod tests {
     }
 
     #[test]
+    // REPLACED (#858, lane BB): the client is held, not launched per request.
+    // A held client that cannot be launched answers every request
+    // Unavailable with the launch's reason.
     fn a_missing_client_is_unavailable_with_its_reason() {
-        let error = call_with_executable(
-            &serde_json::json!({"kind":"status"}),
-            &OsString::from(NO_CLIENT),
-        )
-        .unwrap_err();
+        let held = HeldClient::start(
+            OsString::from(NO_CLIENT),
+            "owner".into(),
+            Timing::WINDOW,
+            None,
+        );
+        let error = held
+            .call(&serde_json::json!({"kind":"status"}))
+            .unwrap_err();
         match error {
             CallError::Unavailable { detail } => assert!(
                 detail.contains("carries no bundled shared-field/"),
@@ -907,12 +1185,461 @@ mod tests {
     }
 
     #[test]
+    // REPLACED (#858, lane BB): absence through the held client.
     fn a_missing_client_executable_is_absence_not_a_panic() {
-        let error = call_with_executable(
-            &serde_json::json!({"kind":"status"}),
-            &OsString::from("/nonexistent/oi-shared-field-client"),
-        )
-        .unwrap_err();
+        let held = HeldClient::start(
+            OsString::from("/nonexistent/oi-shared-field-client"),
+            "owner".into(),
+            Timing::WINDOW,
+            None,
+        );
+        let error = held
+            .call(&serde_json::json!({"kind":"status"}))
+            .unwrap_err();
         assert!(matches!(error, CallError::Unavailable { .. }));
+        assert_eq!(held.launches(), 0, "nothing was started");
+    }
+}
+
+/// The held client (O-I #858) over a fake that speaks its line protocol.
+#[cfg(all(test, unix))]
+mod held_tests {
+    use super::*;
+    use crate::events::SharedFieldRowChange;
+    use serde_json::json;
+    use std::os::unix::fs::PermissionsExt;
+    use std::path::Path;
+
+    /// A fake held client (field.ts `--held`'s protocol) over files in its
+    /// directory: each launch is logged with its arguments, each request
+    /// kept; `snapshot.json` answers snapshot and observe at the cursor in
+    /// `cursor`; `fake-tx` stands for a transaction the field sends (moving
+    /// the row named in `moved`), `fake-exit` for the client ending. Not a
+    /// SharedField — a transport fixture.
+    const FAKE: &str = r#"#!/usr/bin/env bash
+d="@DIR@"
+printf 'launch %s\n' "$*" >> "$d/launches"
+printf '{"event":"status","state":"live","cursor":"%s"}\n' "$(cat "$d/cursor")"
+while IFS= read -r line; do
+  id="${line#\{\"id\":}"; id="${id%%,*}"
+  request="${line#*\"request\":}"; request="${request%\}}"
+  printf '%s\n' "$request" >> "$d/asked.jsonl"
+  case "$request" in
+    *'"kind":"fake-exit"'*) exit 0 ;;
+    *'"kind":"fake-tx"'*)
+      printf 'tx:1:%s' "$id" > "$d/cursor"
+      printf '{"event":"transaction","cursor":"tx:1:%s","changes":[{"table":"projection","op":"insert","ref":"%s"}],"more":0}\n' "$id" "$(cat "$d/moved")"
+      printf '{"id":%s,"ok":true,"data":{}}\n' "$id" ;;
+    *'"kind":"observe"'*) printf '{"id":%s,"ok":true,"data":{"schema":"oi.shared-field.observation/v1","cursor":"%s","snapshot":%s}}\n' "$id" "$(cat "$d/cursor")" "$(cat "$d/snapshot.json")" ;;
+    *'"kind":"snapshot"'*) printf '{"id":%s,"ok":true,"data":%s}\n' "$id" "$(cat "$d/snapshot.json")" ;;
+    *) printf '{"id":%s,"ok":true,"data":{"echo":%s}}\n' "$id" "$request" ;;
+  esac
+done
+"#;
+
+    const QUICK: Timing = Timing {
+        reply: Duration::from_secs(10),
+        lease: Duration::from_millis(1500),
+        sweep: Duration::from_millis(50),
+        restart: Duration::from_millis(100),
+    };
+
+    fn snapshot(entries: Value) -> Value {
+        json!({"schema":"oi.shared-field.snapshot/v1","target":{"uri":"ws://fake.invalid:3000","database":"fake"},
+            "fields":[],"participants":[],"projections":[],"relations":[],"entries":entries,
+            "counts":{"entries":entries.as_array().map_or(0, Vec::len)}})
+    }
+
+    fn fake(name: &str, entries: Value, moved: &str) -> (PathBuf, OsString) {
+        let dir = std::env::temp_dir().join(format!("oi-sf-held-{name}-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(dir.join("cursor"), "tx:1:0").unwrap();
+        std::fs::write(dir.join("moved"), moved).unwrap();
+        std::fs::write(dir.join("snapshot.json"), snapshot(entries).to_string()).unwrap();
+        let bin = dir.join("field-client");
+        std::fs::write(&bin, FAKE.replace("@DIR@", &dir.display().to_string())).unwrap();
+        std::fs::set_permissions(&bin, std::fs::Permissions::from_mode(0o755)).unwrap();
+        crate::test_stub::settle_stub(&bin);
+        (dir, bin.into_os_string())
+    }
+
+    fn asked(dir: &Path) -> Vec<Value> {
+        std::fs::read_to_string(dir.join("asked.jsonl"))
+            .unwrap_or_default()
+            .lines()
+            .map(|line| serde_json::from_str(line).unwrap())
+            .collect()
+    }
+
+    fn asked_kind(dir: &Path, kind: &str) -> Vec<Value> {
+        asked(dir)
+            .into_iter()
+            .filter(|request| request["kind"] == kind)
+            .collect()
+    }
+
+    fn launches(dir: &Path) -> Vec<String> {
+        std::fs::read_to_string(dir.join("launches"))
+            .unwrap_or_default()
+            .lines()
+            .map(str::to_owned)
+            .collect()
+    }
+
+    fn eventually(what: &str, mut done: impl FnMut() -> bool) {
+        let began = Instant::now();
+        while !done() {
+            assert!(
+                began.elapsed() < Duration::from_secs(30),
+                "timed out waiting for {what}"
+            );
+            std::thread::sleep(Duration::from_millis(20));
+        }
+    }
+
+    fn listener() -> (ChangeSink, mpsc::Receiver<FieldChange>) {
+        let (send, heard) = mpsc::channel();
+        let send = Mutex::new(send);
+        let sink: ChangeSink = Arc::new(move |change: &FieldChange| {
+            let _ = lock(&send).send(change.clone());
+        });
+        (sink, heard)
+    }
+
+    #[test]
+    fn one_client_answers_every_request_and_no_request_starts_a_process() {
+        let (dir, bin) = fake("one", json!([]), "projection:one");
+        let held = HeldClient::start(bin, "owner".into(), Timing::WINDOW, None);
+        assert_eq!(
+            held.call(&json!({"kind":"status"})).unwrap()["echo"]["kind"],
+            "status"
+        );
+        assert_eq!(
+            held.call(&json!({"kind":"snapshot"})).unwrap()["schema"],
+            "oi.shared-field.snapshot/v1"
+        );
+        for _ in 0..3 {
+            let reading = held
+                .call(&json!({"kind":"observe","observer_ref":"explore:one"}))
+                .unwrap();
+            assert_eq!(
+                reading["cursor"], "tx:1:0",
+                "an observation answers at once, at the held cursor"
+            );
+        }
+        held.call(
+            &json!({"kind":"enter","field_ref":"oi:field:one","participant_ref":"participant:one"}),
+        )
+        .unwrap();
+        held.call(
+            &json!({"kind":"leave","field_ref":"oi:field:one","participant_ref":"participant:one"}),
+        )
+        .unwrap();
+        held.call(&json!({"kind":"observe-stop","observer_ref":"explore:one"}))
+            .unwrap();
+        // Many callers at once, each answered by its own id.
+        std::thread::scope(|scope| {
+            let callers: Vec<_> = (0..8)
+                .map(|n| {
+                    let held = &held;
+                    scope.spawn(move || {
+                        (
+                            n,
+                            held.call(&json!({"kind":"read","ref":format!("ref:{n}")}))
+                                .unwrap(),
+                        )
+                    })
+                })
+                .collect();
+            for caller in callers {
+                let (n, answer) = caller.join().unwrap();
+                assert_eq!(answer["echo"]["ref"], format!("ref:{n}"));
+            }
+        });
+        assert_eq!(held.launches(), 1, "one client for the window's life");
+        assert_eq!(launches(&dir), vec!["launch --held".to_owned()]);
+        assert_eq!(
+            asked_kind(&dir, "observe").len(),
+            1,
+            "three polls at one cursor read one cache"
+        );
+        assert!(
+            asked(&dir)
+                .iter()
+                .all(|request| request.get("hold_presence").is_none()),
+            "the held connection is the presence; no process holds it"
+        );
+    }
+
+    #[test]
+    fn a_transaction_comes_out_as_its_rows_and_moves_the_cursor_for_every_device() {
+        let (dir, bin) = fake("tx", json!([]), "projection:key:1");
+        let (sink, heard) = listener();
+        let held = HeldClient::start(bin, "owner".into(), Timing::WINDOW, Some(sink));
+        held.call(&json!({"kind":"observe","observer_ref":"explore:first"}))
+            .unwrap();
+        held.call(&json!({"kind":"observe","observer_ref":"explore:second"}))
+            .unwrap();
+        assert_eq!(
+            asked_kind(&dir, "observe").len(),
+            1,
+            "a second device reads the same cache"
+        );
+        held.call(&json!({"kind":"fake-tx"})).unwrap();
+        let change = heard
+            .recv_timeout(Duration::from_secs(5))
+            .expect("the transaction came out");
+        assert_eq!(
+            change.cursor,
+            held.cursor(),
+            "the cursor is the transaction"
+        );
+        assert_eq!(
+            change.changes,
+            vec![SharedFieldRowChange {
+                table: "projection".into(),
+                op: "insert".into(),
+                reference: "projection:key:1".into()
+            }],
+            "the rows it moved, by view, op and ref"
+        );
+        crate::events::KernelEvent::SharedFieldChanged {
+            cursor: change.cursor.clone(),
+            changes: change.changes.clone(),
+            more: change.more,
+        }
+        .validate()
+        .expect("what the host records is a kernel event");
+        for observer in ["explore:first", "explore:second"] {
+            let reading = held
+                .call(&json!({"kind":"observe","observer_ref":observer}))
+                .unwrap();
+            assert_eq!(reading["cursor"], change.cursor.as_str());
+        }
+        assert_eq!(
+            asked_kind(&dir, "observe").len(),
+            2,
+            "the moved cursor is read once, for both"
+        );
+    }
+
+    #[test]
+    fn a_row_the_event_channel_cannot_tell_is_counted_not_named() {
+        let (_, bin) = fake("untold", json!([]), "projection:one");
+        let (sink, heard) = listener();
+        let held = HeldClient::start(bin, "owner".into(), Timing::WINDOW, Some(sink));
+        held.route(r#"{"event":"transaction","cursor":"tx:1:9","changes":[{"table":"projection","op":"insert","ref":"projection:ok"},{"table":"backing_table","op":"insert","ref":"x"},{"table":"projection","op":"truncate","ref":"y"},{"table":"projection","op":"delete","ref":""}],"more":2}"#);
+        let change = heard.recv_timeout(Duration::from_secs(5)).unwrap();
+        assert_eq!(change.changes.len(), 1);
+        assert_eq!(change.changes[0].reference, "projection:ok");
+        assert_eq!(
+            change.more, 5,
+            "two the client did not name and three it could not"
+        );
+        let event = crate::events::KernelEvent::SharedFieldChanged {
+            cursor: change.cursor,
+            changes: change.changes,
+            more: change.more,
+        };
+        event.validate().unwrap();
+        let untold = crate::events::KernelEvent::SharedFieldChanged {
+            cursor: "tx:1:9".into(),
+            changes: vec![SharedFieldRowChange {
+                table: "backing_table".into(),
+                op: "insert".into(),
+                reference: "x".into(),
+            }],
+            more: 0,
+        };
+        assert!(
+            untold.validate().is_err(),
+            "a view the field does not serve is never an event"
+        );
+    }
+
+    #[test]
+    fn an_observation_keeps_its_subject_and_budget_and_lets_its_view_go() {
+        let (dir, bin) = fake("observe", json!([]), "projection:one");
+        let held = HeldClient::start(bin, "owner".into(), Timing::WINDOW, None);
+        held.call(&json!({"kind":"observe","observer_ref":"explore:lease"}))
+            .unwrap();
+        let views = asked_kind(&dir, "view");
+        assert_eq!(views.len(), 1);
+        assert_eq!(
+            views[0]["scope"], "whole",
+            "an observer has the whole field in view"
+        );
+        let lease = views[0]["lease"].clone();
+        assert!(matches!(
+            held.call(
+                &json!({"kind":"observe","observer_ref":"explore:lease","ref":"world:other"})
+            ),
+            Err(CallError::Refused { .. })
+        ));
+        assert!(matches!(
+            held.call(&json!({"kind":"observe","observer_ref":"bad ref!"})),
+            Err(CallError::Malformed { .. })
+        ));
+        for n in 1..16 {
+            held.call(&json!({"kind":"observe","observer_ref":format!("explore:{n}")}))
+                .unwrap();
+        }
+        assert!(matches!(
+            held.call(&json!({"kind":"observe","observer_ref":"explore:over"})),
+            Err(CallError::Refused { .. })
+        ));
+        let released = held
+            .call(&json!({"kind":"observe-stop","observer_ref":"explore:lease"}))
+            .unwrap();
+        assert_eq!(released["state"], "released");
+        assert!(
+            asked_kind(&dir, "view")
+                .iter()
+                .any(|view| view["lease"] == lease && view["scope"].is_null()),
+            "a stopped observation lets its view go"
+        );
+    }
+
+    #[test]
+    fn presence_stands_on_the_held_connection_and_is_left_when_its_lease_lapses() {
+        let (dir, bin) = fake("presence", json!([]), "projection:one");
+        let held = HeldClient::start(bin, "owner".into(), QUICK, None);
+        let enter =
+            json!({"kind":"enter","field_ref":"oi:field:here","participant_ref":"participant:me"});
+        held.call(&enter).unwrap();
+        held.call(&enter).unwrap();
+        assert_eq!(
+            asked_kind(&dir, "enter").len(),
+            2,
+            "every entry goes through the reducer"
+        );
+        let view = asked_kind(&dir, "view")
+            .into_iter()
+            .next()
+            .expect("a presence keeps its field in view");
+        assert_eq!(view["scope"], json!(["oi:field:here"]));
+        for n in 1..8 {
+            held.call(&json!({"kind":"enter","field_ref":format!("oi:field:{n}"),"participant_ref":"participant:me"})).unwrap();
+        }
+        assert!(matches!(
+            held.call(&json!({"kind":"enter","field_ref":"oi:field:over","participant_ref":"participant:me"})),
+            Err(CallError::Refused { .. })
+        ));
+        // Nobody asks for the field any more: the presences lapse and are left.
+        eventually("the lapsed presences to be left", || {
+            asked_kind(&dir, "leave").len() == 8
+        });
+        assert!(asked_kind(&dir, "leave")
+            .iter()
+            .any(|leave| leave["field_ref"] == "oi:field:here"));
+        eventually("their views to go", || {
+            asked_kind(&dir, "view")
+                .iter()
+                .filter(|view| view["scope"].is_null())
+                .count()
+                == 8
+        });
+        assert_eq!(held.launches(), 1);
+    }
+
+    #[test]
+    fn a_client_that_ends_fails_what_waits_and_is_started_again_by_its_holder_alone() {
+        let (dir, bin) = fake("ends", json!([]), "projection:one");
+        let held = HeldClient::start(bin, "owner".into(), QUICK, None);
+        assert!(matches!(
+            held.call(&json!({"kind":"fake-exit"})),
+            Err(CallError::Unavailable { .. })
+        ));
+        eventually("the holder to start the client again", || {
+            held.launches() == 2
+        });
+        for _ in 0..5 {
+            held.call(&json!({"kind":"status"})).unwrap();
+        }
+        assert_eq!(held.launches(), 2, "requests start nothing");
+        assert_eq!(launches(&dir).len(), 2);
+    }
+
+    #[test]
+    fn a_client_that_cannot_hold_says_why_and_that_is_the_reason_it_is_down() {
+        let dir = std::env::temp_dir().join(format!("oi-sf-held-word-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let bin = dir.join("field-client");
+        std::fs::write(
+            &bin,
+            "#!/bin/sh\nprintf '%s\\n' '{\"ok\":false,\"error\":{\"kind\":\"unavailable\",\"message\":\"the SharedField client needs a node runtime\"}}'\nexit 1\n",
+        )
+        .unwrap();
+        std::fs::set_permissions(&bin, std::fs::Permissions::from_mode(0o755)).unwrap();
+        crate::test_stub::settle_stub(&bin);
+        let held = HeldClient::start(bin.into_os_string(), "owner".into(), Timing::WINDOW, None);
+        eventually("the client's own reason", || {
+            matches!(held.call(&json!({"kind":"status"})),
+                Err(CallError::Unavailable { detail }) if detail.contains("needs a node runtime"))
+        });
+    }
+
+    /// The no-leaks law at the held client (O-I #858): each identity's client
+    /// is its own — its own cache, cursor and news. A private mark another
+    /// identity's client takes reaches none of them (the graph the kernel
+    /// folds is asked in tests/shared_field_held.rs).
+    #[test]
+    fn another_identitys_private_mark_reaches_neither_this_identitys_cache_nor_its_news() {
+        const MARK: &str = "PRIVATE-MARK-858";
+        let unshown = json!({"ref":format!("world:a/page:unshown-{MARK}"),"kind":"page","world_ref":"world:a","label":format!("unshown {MARK}"),"aliases":[]});
+        let shown = json!({"ref":"world:b/page:shown","kind":"page","world_ref":"world:b","label":"shown","aliases":[]});
+        let (_, a_bin) = fake(
+            "leak-a",
+            json!([unshown, shown.clone()]),
+            &format!("world:a/page:unshown-{MARK}"),
+        );
+        let (b_dir, b_bin) = fake("leak-b", json!([shown]), "world:b/page:shown");
+        let (a_sink, a_heard) = listener();
+        let (b_sink, b_heard) = listener();
+        let a = HeldClient::start(a_bin, "leak-a".into(), Timing::WINDOW, Some(a_sink));
+        let b = HeldClient::start(b_bin, "leak-b".into(), Timing::WINDOW, Some(b_sink));
+        let observe = json!({"kind":"observe","observer_ref":"explore:same"});
+        // A reads its own mark and takes a transaction naming it.
+        assert!(
+            a.call(&observe).unwrap().to_string().contains(MARK),
+            "the mark was planted"
+        );
+        a.call(&json!({"kind":"fake-tx"})).unwrap();
+        assert!(a_heard
+            .recv_timeout(Duration::from_secs(5))
+            .unwrap()
+            .changes[0]
+            .reference
+            .contains(MARK));
+        // B, on the same subject, at its own cursor.
+        let observed = b.call(&observe).unwrap();
+        let snapshot = b.call(&json!({"kind":"snapshot"})).unwrap();
+        for payload in [observed.to_string(), snapshot.to_string()] {
+            assert!(
+                !payload.contains(MARK),
+                "B received A's private mark: {payload}"
+            );
+        }
+        assert_eq!(
+            snapshot["counts"]["entries"], 1,
+            "B counts only what it is shown"
+        );
+        assert_ne!(
+            b.cursor(),
+            a.cursor(),
+            "A's transaction moved A's cursor alone"
+        );
+        std::thread::sleep(Duration::from_millis(200));
+        assert!(
+            b_heard.try_recv().is_err(),
+            "B heard nothing of A's transaction"
+        );
+        assert_eq!(
+            asked_kind(&b_dir, "observe").len(),
+            1,
+            "B's reading is B's own client's"
+        );
     }
 }

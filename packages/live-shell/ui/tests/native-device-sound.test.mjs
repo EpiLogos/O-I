@@ -80,7 +80,7 @@ test('the activator is the object sound\'s own enabled flag, undefined while no 
 test('the strip summary is read from the reading: what the voice carries and its gain, with off when disabled', () => {
   assert.equal(soundSummaryText(SOUND), "mode chromatic/L0'/aeolian · gain 0.2")
   assert.equal(soundSummaryText({...SOUND, enabled: false, carry: {kind: 'name', ref: 'shem'}, gain: 0.5}), 'off · name shem · gain 0.5')
-  assert.equal(soundSummaryText({enabled: true, gain: 0.2}), 'no name or mode yet · gain 0.2', 'a voice that carries nothing says so')
+  assert.equal(soundSummaryText({enabled: true, gain: 0.2}), 'the symbol · gain 0.2', 'a voice that carries no name or mode sounds its symbol (O-I 851)')
   assert.equal(soundSummaryText(undefined), 'No sound')
   const r = reading({selection: ['entity-a']})
   assert.equal(soundFaceModel.strip.summary(r, withSound(SOUND)), "mode chromatic/L0'/aeolian · gain 0.2")
@@ -135,7 +135,7 @@ test('the voice choice: a carry is one whole-sound change, the choice is the own
   const carried = soundWithField(base, 'carry', CARRY)
   assert.deepEqual(carried, {...base, carry: CARRY})
   assert.deepEqual(base, snapshot)
-  assert.deepEqual(soundWithField(carried, 'carry', null), base, 'None yet removes the carry')
+  assert.deepEqual(soundWithField(carried, 'carry', null), base, 'The symbol removes the carry')
   assert.equal(soundWithField(carried, 'gain', 0.5).carry.ref, CARRY.ref, 'a gain edit keeps what the voice carries')
   assert.throws(() => soundWithField(base, 'carry', {kind: 'oscillator', ref: 'x'}), /Invalid entity sound/)
   assert.throws(() => soundWithField(base, 'gain', 3), /Invalid entity sound/)
@@ -152,19 +152,19 @@ const catalogueOf = async () => { const {parseQlMusicModes} = await import('../s
 test('the "Name or mode" row lists the catalogue\'s modes as it groups them and the store\'s names with the status it gives each, and says why a voice is silent', async () => {
   const catalogue = await catalogueOf()
   const groups = voiceChoices(catalogue)
-  assert.deepEqual(groups.map(group => group.label), ['No carry', "L0' on the chromatic basis", "L0' on the fifths basis", 'maqam', 'names of the store'])
-  assert.deepEqual(groups[0].options, [{value: '', label: 'None yet'}])
+  assert.deepEqual(groups.map(group => group.label), ['its own harmony', "L0' on the chromatic basis", "L0' on the fifths basis", 'maqam', 'names of the store'])
+  assert.deepEqual(groups[0].options, [{value: '', label: 'The symbol'}], 'no carry is the symbol translated (DLW §20.2 Source: The symbol)')
   assert.deepEqual(groups[1].options.map(option => option.value), ["mode:chromatic/L0'/aeolian", "mode:chromatic/L0'/dorian"])
   assert.deepEqual(groups[3].options.map(option => option.value), ['mode:maqam/00', 'mode:maqam/01'])
   assert.deepEqual(groups[4].options, [{value: 'name:shem', label: 'shem · absent'}, {value: 'name:ficino-planetary', label: 'ficino-planetary · needs owner authoring'}])
   // A carry the store does not list stays visible as what it is; with no catalogue there are no modes, and the held one is still shown.
   assert.equal(voiceChoices(catalogue, {kind: 'mode', ref: 'maqam/99'})[1].options[0].label, 'maqam/99 · not in the store')
-  assert.deepEqual(voiceChoices(null).map(group => group.label), ['No carry'])
+  assert.deepEqual(voiceChoices(null).map(group => group.label), ['its own harmony'])
   assert.equal(voiceChoices(null, CARRY)[1].options[0].value, carryValue(CARRY))
   for (const group of groups) for (const option of group.options) assert.doesNotMatch(option.label, /Hz|waveform|frequency/i, 'no oscillator in a choice')
   const ready = {state: 'ready', catalogue}
   assert.equal(voiceChoiceNote(undefined, ready), 'This voice is off.')
-  assert.equal(voiceChoiceNote({enabled: true}, ready), 'This voice has no name or mode yet: choose one on the Sound page')
+  assert.equal(voiceChoiceNote({enabled: true}, ready), "This voice sounds the symbol's own harmony: the chord of the classes its form covers where it stands. A name or a mode can stand in for it on the Sound page")
   assert.equal(voiceChoiceNote(SOUND, ready), "Carries aeolian on L0', chromatic basis of the torus's sound, over the torus's root.")
   assert.match(voiceChoiceNote({enabled: true, carry: {kind: 'name', ref: 'shem'}}, ready), /^shem \(absent\): Register72::Shem is a register of 72 names/, 'a name the store gives no sound for says the store\'s reason')
   assert.match(voiceChoiceNote({enabled: true, carry: {kind: 'name', ref: 'asma'}}, ready), /^The store names no "asma"/)
@@ -267,13 +267,13 @@ test('with a sound: the diagram has three named handles, the exact-value fields 
   assert.match(html, /<button[^>]*>Remove sound<\/button>/)
   assert.doesNotMatch(html, /Add sound/)
   assert.match(html, /mode chromatic\/L0&#x27;\/aeolian · gain 0.2|mode chromatic\/L0'\/aeolian · gain 0.2/)
-  assert.match(html, /<select[^>]*>.*None yet/s, 'the choice starts with None yet')
+  assert.match(html, /<select[^>]*>.*The symbol/s, 'the choice starts with The symbol')
 })
 
-test('a voice with nothing to carry says so in the panel, in the same words the frame uses', () => {
+test('a voice with no name or mode says it sounds its symbol, in the same words the frame uses', () => {
   const html = SSR(withSound({enabled: true, gain: 0.2}))
-  assert.match(html, /This voice has no name or mode yet: choose one on the Sound page/)
-  assert.match(html, /no name or mode yet · gain 0.2/)
+  assert.match(html, /This voice sounds the symbol(&#x27;|')s own harmony: the chord of the classes its form covers where it stands/)
+  assert.match(html, /the symbol · gain 0.2/)
 })
 
 test('the diagram follows the reading: a different attack or gain draws a different envelope path', () => {

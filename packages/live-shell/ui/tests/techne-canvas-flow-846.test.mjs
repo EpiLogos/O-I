@@ -334,6 +334,9 @@ test('Open is the shell\'s act: a task in Clip view with its note chosen, a song
     assert.equal(request.page, 'automations')
     assert.equal(request.routine, 'routine:weekdays')
     assert.deepEqual(request.scope, {scope_kind: 'project', scope_ref: 'song-maker'})
+    // Settings holds what the request names (windowValues.ts automationsRequestHolds, O-I #758): the routine, chosen.
+    const {automationsRequestHolds} = await import('../src/settings/windowValues.ts')
+    assert.equal(automationsRequestHolds(request).routine, 'routine:weekdays')
     openSettings(null)
   } finally { home.publishClipHomeDoor(null); resetViewHolds() }
   // With no frame's door, opening a clip says so.
@@ -342,7 +345,7 @@ test('Open is the shell\'s act: a task in Clip view with its note chosen, a song
   // The frame's half: App hands its mode switch and its selection to the door; Settings takes the routine a request names.
   const app = await source('../src/App.tsx'), settings = await source('../src/settings/SettingsWorkspace.tsx')
   assert.match(app, /useClipHomeDoor\(frameMode, chooseMode, selectTrackItem\)/)
-  assert.match(settings, /request\.page==='automations'&&request\.routine\)\{[^}]*hold\('routine',request\.routine\)/)
+  assert.match(settings, /request\.page==='automations'\)for\(const \[key,value\] of Object\.entries\(automationsRequestHolds\(request\)\)\)hold\(key,value\)/)
 })
 
 test('the Flow page says agent set, never team; the design draws the map, the workflows to choose, To, Relate and Promote', async () => {

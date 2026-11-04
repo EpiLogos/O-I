@@ -2339,27 +2339,44 @@ async function runStageCommand(command:StageCommand):Promise<StageResult>{
   /* T-FRAME-CHROME-ONTO-PLATES: the shell's declaration of how it presents this frame (the chrome stands down or returns, nothing else moves), and one control of the chrome pressed from a device: the frame's own control, through its own handler (presentedChrome.ts). */case 'presentation':if(!presentedChrome)throw new Error('This application has not drawn its chrome yet.');presentedChrome.setPresentation(command.chrome);break;case 'chrome':if(!presentedChrome)throw new Error('This application has not drawn its chrome yet.');presentedChrome.press(command.id,command.value);break;case 'janko':
    if(!nativeField)throw new Error('This application has no native instrument.');
    // Keys of the surface (O-I #853): the Torus's M1′ session strikes each key's moving point as a new note and answers the keys whose
-   // notes made way past Polyphony; a release lets keys go from its count while the body rings on (controller.ts torusPlay, torusRelease).
-   if(command.action==='strike'){const made_way=await nativeField.controller.torusPlay(command.keys,command.amplitude,command.at_samples_elapsed);announceHostState();return made_way.length?{ok:true,made_way}:{ok:true};}
+   // notes made way past Polyphony; a release lets keys go from its count while the body rings on (controller.ts torusPlayed, torusRelease).
+   // The answer also names the sample the act landed at, which a Live take keeps (O-I 855).
+   if(command.action==='strike'){const {made_way,landed_at_samples_elapsed}=await nativeField.controller.torusPlayed(command.keys,command.amplitude,command.at_samples_elapsed);announceHostState();return made_way.length?{ok:true,made_way,landed_at_samples_elapsed}:{ok:true,landed_at_samples_elapsed};}
    if(command.action==='release'){await nativeField.controller.torusRelease(command.keys);return {ok:true};}
    break;
   case 'strike-at':
    // A strike at points of the torus (DLW §21.2 "What strikes the Torus"): the owner's own strike at those points, through the native
    // field's controller (controller.ts playAt), as a touch on the stage strikes, at the sample a player chose (O-I #809). Never synthesised.
    if(!nativeField)throw new Error('This application has no native instrument.');
-   await nativeField.controller.playAt(command.points,command.amplitude,command.at_samples_elapsed);
-   break;
+   {const {landed_at_samples_elapsed}=await nativeField.controller.playAt(command.points,command.amplitude,command.at_samples_elapsed);announceHostState();return {ok:true,landed_at_samples_elapsed};}
   case 'audio-clock':
    // The owner's audio clock (O-I #809): where its rendered sound stands, its rate, lookahead and block, for a player that schedules each
    // strike ahead at its sample (packages/live-shell/ui/src/live/clipPlayer.ts). Read from the native field's controller: it writes nothing,
    // so it returns before the announce below, as the streamed set does.
    if(!nativeField)throw new Error('This application has no native instrument.');
    return {ok:true,clock:nativeField.controller.audioClock()};
+  case 'performance-journal':
+   // The owner's performance journal (O-I 855): each admitted act with the cursor it was acknowledged at, from a sample on, as a Live take
+   // keeps the sample each note landed at (controller.ts performanceJournal). A read: it returns before the announce below.
+   if(!nativeField)throw new Error('This application has no native instrument.');
+   return {ok:true,journal:nativeField.controller.performanceJournal(command.from_samples_elapsed)};
+  case 'torus':
+   // The Torus as it rings, kept by its owner and set again from that checkpoint (O-I 855; controller.ts torusCheckpoint, torusRestore): what a
+   // Live take begins on and is played again from. Keeping is a read and returns before the announce below.
+   if(!nativeField)throw new Error('This application has no native instrument.');
+   if(command.action==='checkpoint')return {ok:true,checkpoint:await nativeField.controller.torusCheckpoint()};
+   {const landed_at_samples_elapsed=await nativeField.controller.torusRestore(command.checkpoint);announceHostState();return {ok:true,landed_at_samples_elapsed};}
+  case 'render-take':
+   // A take rendered offline through the M1′ session for Export Audio (O-I 855; controller.ts renderTake): a second owner of the scene set to
+   // the take's checkpoint, each act at its sample, its PCM as f32. The live owner neither moves nor sounds, so nothing is announced.
+   if(!nativeField)throw new Error('This application has no native instrument.');
+   return {ok:true,render:await nativeField.controller.renderTake(command.checkpoint,command.acts,command.frames)};
   case 'instrument':
    // The Live instrument's edits run the native field's own controller operations (nativeField.ts command): the same path as the Studio's controls.
+   // An edit that acts on the owner answers the sample it landed at, and with at_samples_elapsed waits for the owner's sound to reach it (O-I 855).
    if(!nativeField)throw new Error('This application has no native instrument.');
-   await nativeField.command(command.edit);
-   break;
+   {const {landed_at_samples_elapsed}=await nativeField.command(command.edit,command.at_samples_elapsed);announceHostState();
+    return landed_at_samples_elapsed===undefined?{ok:true}:{ok:true,landed_at_samples_elapsed};}
   case 'procedural-stage':
    // The procedural stage's own operations (stageCommands.ts STAGE_PROCEDURAL_ACTIONS) through the native field's controller, as the
    // Studio's Procedural stage block runs them (nativeField.ts stage), each followed by the stage read back.

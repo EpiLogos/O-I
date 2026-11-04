@@ -20,12 +20,12 @@ import {DeviceView} from '../frame/devices/DeviceView'
 import {publishDevice, selectDevice} from '../frame/devices/deviceDoor'
 import {DEVICE_PANE_KIND} from '../frame/devices/devicePane'
 import {openInstrument} from '../frame/instrumentDoor'
-import {followSetTempoOnTorus, torusTempoEdit, TORUS_DESIGN_ID, TORUS_DEVICE, TORUS_DEVICE_ID, torusBodyEdit, torusBodySourceOf, torusDesignBinding, torusDevice, torusFigure, torusTone, type TorusFigureSize} from './torusDevice'
+import {followSetTempoOnTorus, torusTempoEdit, TORUS_DESIGN_ID, TORUS_DEVICE, TORUS_DEVICE_ID, torusBodyEdits, torusBodySourceOf, torusDesignBinding, torusDevice, torusFigure, torusTone, torusSessionOf, type TorusFigureSize} from './torusDevice'
 import {commitLiveInstrumentEdit, LIVE_TORUS_ABSENT_REASON, liveInstrumentWritable, useLiveTorusReading, type LiveTorusState} from './torusInstrument'
 import {JankoDevice} from './janko/JankoDevice'
 import {useKeyboardLayout} from './keyboardLayout'
 import {MidiMapTarget} from './midiMap/midiMapControls'
-import {skyHeldTorusKeys, useSkyModulationPlan} from './designBindings/skyModulation'
+import {skyHeldTorusKeys, skyTargets, useSkyModulationPlan} from './designBindings/skyModulation'
 import {useHostedChrome} from '../projections/expressionsPaneHost'
 import type {DeviceInstance} from '../frame/devices/deviceRuntime'
 import {useQlRack} from '../inhabitants/ql/devices/qlRack'
@@ -93,17 +93,26 @@ export function useTorusChainBinding(state: LiveTorusState | null, device: Devic
   // M2's body constants (QL's table): the Body group reads their standing and what the fibre would set.
   const table = useBodyTable()
   // Under Tattva the body follows the tattva (manual §21.2): when the condition's fibre moves, or a determinant moves the voices the Q is
-  // lowered on, its Damping is written again through the stage channel, once per target.
+  // lowered on, its Damping and Strike are written again (the stage channel's damping, the owner's torus edit), once per target.
   const followed = useRef('')
   useEffect(() => {
-    const edit = liveInstrumentWritable(state) ? torusBodyEdit(condition, table, torusBodySourceOf(held ?? {})) : null
-    if (!edit) { followed.current = ''; return }
-    const target = JSON.stringify([edit, state?.ok ? state.determinants : null])
+    const session = torusSessionOf(state)
+    const edits = liveInstrumentWritable(state) ? torusBodyEdits(condition, table, torusBodySourceOf(held ?? {}), session) : []
+    if (!edits.length) { followed.current = ''; return }
+    const target = JSON.stringify([edits, state?.ok ? state.determinants : null])
     if (target === followed.current) return
     followed.current = target
-    void commitLiveInstrumentEdit(edit).then(result => { if (!result.ok) followed.current = '' }, () => { followed.current = '' })
+    const strikeHeld = typeof session?.settings.strike === 'number' && edits.every(edit => edit.kind !== 'torus' || edit.edit.strike === session.settings.strike)
+    void (async () => {
+      for (const edit of edits) {
+        // The owner already holds the element's Strike: a session edit that moves nothing is not sent again.
+        if (edit.kind === 'torus' && strikeHeld) continue
+        const result = await commitLiveInstrumentEdit(edit)
+        if (!result.ok) { followed.current = ''; return }
+      }
+    })().catch(() => { followed.current = '' })
   }, [state, condition, table, held])
-  return useMemo(() => torusDesignBinding(state, device, skyHeldTorusKeys(plan), stage, rack, run, held ?? {}, condition, tattvaName, table),
+  return useMemo(() => torusDesignBinding(state, device, skyHeldTorusKeys(plan, skyTargets(state)), stage, rack, run, held ?? {}, condition, tattvaName, table),
     [state, device, plan, stage, rack, run, held, condition, tattvaName, table])
 }
 

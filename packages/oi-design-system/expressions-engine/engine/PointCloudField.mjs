@@ -355,6 +355,10 @@ class PointCloudField {
     return this.activeEntityId;
   }
   /** World centre of an entity this frame (entity position + current link offset) */
+  /** The form a formation's particles take now, in its own 400-unit box (EntityRuntime.formPool), or null before it is baked. */
+  getFormPool(id) {
+    return this.entities.formPool(id);
+  }
   getEntityCentre(id) {
     const parts = this.entities.getPartitions();
     const i = parts.findIndex((p) => p.entityId === id);

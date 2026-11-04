@@ -276,6 +276,22 @@ fn main() {
             }
             let field = kernel.native_field();
             app.manage(KernelHost(Mutex::new(kernel), field));
+            // The window's one SharedField client for its identity (O-I #858),
+            // held for the window's life: every transaction it takes — the
+            // rows it moved, by view and ref — is recorded in the event log
+            // and told to the shell on the event topic.
+            {
+                let handle = app.handle().clone();
+                oi_cradle_kernel::shared_field::on_change(move |change| {
+                    let host = handle.state::<KernelHost>();
+                    let receipt = match host.0.lock() {
+                        Ok(mut kernel) => kernel.record_shared_field_changed(change),
+                        Err(_) => return,
+                    };
+                    let _ = handle.emit(KERNEL_EVENT_TOPIC, &receipt);
+                });
+                oi_cradle_kernel::shared_field::hold();
+            }
             // The shell's configuration keeps the World it read while the
             // watch sees no change.
             #[cfg(feature = "native_shell")]

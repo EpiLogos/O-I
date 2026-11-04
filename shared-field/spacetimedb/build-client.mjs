@@ -62,7 +62,8 @@ copyFileSync(join(here, 'hosting.json'), join(out, 'hosting.json'));
 const launcher = `#!/bin/sh
 # The installed desktop's SharedField client doorway (built by
 # shared-field/spacetimedb/build-client.mjs). One JSON request on stdin, one
-# envelope on stdout — the same contract as the source checkout's field.sh.
+# envelope on stdout — or, with --held, the native host's one held client
+# (O-I #858) — the same contract as the source checkout's field.sh.
 here=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 node="\${OI_NODE:-}"
 if [ -z "$node" ]; then

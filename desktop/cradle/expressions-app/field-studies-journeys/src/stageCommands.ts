@@ -7,7 +7,7 @@ import {NATIVE_BINDINGS} from './nativeParameters.js';
 import {effectChainRefusal, readEffectOperands, type EffectValue, type PresentationEffect} from './native-field/effectsLaw.js';
 import {CURVE_TYPES, SWITCH_MODES, TRANSITION_KINDS, WIPE_DIRECTIONS, type CurveType, type SwitchMode, type TransitionKind, type WipeDirection} from '../../src/engine/transitionMath.js';
 import {TIMELINE_CATEGORY_IDS} from './timelineCategoryIds.js';
-export const STAGE_COMMANDS = ['view', 'capture', 'present', 'export', 'import', 'tool', 'engine', 'take', 'tracks', 'automation', 'live', 'instrument', 'janko', 'strike-at', 'audio-clock', 'presentation', 'chrome', 'sound', 'journey', 'canvas', 'timeline', 'procedural-stage'] as const;
+export const STAGE_COMMANDS = ['view', 'capture', 'present', 'export', 'import', 'tool', 'engine', 'take', 'tracks', 'automation', 'live', 'instrument', 'janko', 'strike-at', 'audio-clock', 'performance-journal', 'torus', 'render-take', 'presentation', 'chrome', 'sound', 'journey', 'canvas', 'timeline', 'procedural-stage'] as const;
 /** The Ta-Onta procedural stage's own operations on the native field (DLW §21.2, the Torus's Stage page; QL-MEF continuous/host.rs
  * stage_operation): read its state, evaluate a procedure, bind one to the live flow within a budget, unbind it, retire its slots. Each
  * runs the native field's own controller operation (nativeField.ts stage), through the kernel's native_expression exchange. */
@@ -205,8 +205,10 @@ export interface TorusSettingsEdit {
   shape?: StageTorusShape;
   tuning?: StageTorusTuning;
   polyphony?: number;
+  /** Strike, 0..1: the share of a key's velocity that excites the body (QL M1′ session; O-I #854). */
+  strike?: number;
 }
-const TORUS_EDIT_KEYS = ['rate', 'tempo_bpm', 'fundamental', 'carrier', 'shape', 'tuning', 'polyphony'] as const;
+const TORUS_EDIT_KEYS = ['rate', 'tempo_bpm', 'fundamental', 'carrier', 'shape', 'tuning', 'polyphony', 'strike'] as const;
 /** A closed, typed Torus session edit naming at least one setting, or null. */
 export function readTorusSettingsEdit(raw: unknown): TorusSettingsEdit | null {
   if (!plain(raw) || !closed(raw, TORUS_EDIT_KEYS) || Object.keys(raw).length === 0) return null;
@@ -233,6 +235,7 @@ export function readTorusSettingsEdit(raw: unknown): TorusSettingsEdit | null {
   if (raw.shape !== undefined) { if (!(STAGE_TORUS_SHAPES as readonly unknown[]).includes(raw.shape)) return null; edit.shape = raw.shape as StageTorusShape; }
   if (raw.tuning !== undefined) { if (!(STAGE_TORUS_TUNINGS as readonly unknown[]).includes(raw.tuning)) return null; edit.tuning = raw.tuning as StageTorusTuning; }
   if (raw.polyphony !== undefined) { if (!whole(raw.polyphony)) return null; edit.polyphony = raw.polyphony; }
+  if (raw.strike !== undefined) { if (!finite(raw.strike)) return null; edit.strike = raw.strike; }
   return edit;
 }
 export type InstrumentEdit =
@@ -296,7 +299,10 @@ export type StageCommand =
   | {command: 'automation'; action: 'resume'}
   | {command: 'live'; action: 'set' | 'hold'; target: string; value: number}
   | {command: 'live'; action: 'release'}
-  | {command: 'instrument'; edit: InstrumentEdit}
+  /** An instrument edit, made now or, for an edit that acts on the owner (STAGE_INSTRUMENT_TIMED_KINDS), once the owner's sound has reached
+   * `at_samples_elapsed` (O-I 855). The answer names the sample its act landed at, as a strike's does; an edit the frame makes on its own
+   * sound (level, effects, mute, cadence, scale) lands at the device's time and names none. */
+  | {command: 'instrument'; edit: InstrumentEdit; at_samples_elapsed?: string}
   /** Keys of the Jankó surface struck on the Torus's M1′ session (QL-MEF `torus-play`; O-I #853): every way of playing reaches the Torus
    * this one way. Each key is a new note at its moving point, one act of 1..32 distinct keys at one amplitude in (0, 1], landing at
    * `at_samples_elapsed` (O-I #809: the owner's sample cursor; absent, the owner's own). Past Polyphony the oldest notes make way, and the
@@ -312,6 +318,20 @@ export type StageCommand =
   | {command: 'strike-at'; points: StageStrikePoint[]; amplitude: number; at_samples_elapsed?: string}
   /** The owner's audio clock (O-I #809), read so a player can schedule ahead on it: the answer carries a StageAudioClock. */
   | {command: 'audio-clock'}
+  /** The owner's performance journal (QL instrument-session.mjs journal(), `ql.instrument-performance-journal/v1`; O-I 855): every admitted
+   * act with the cursor it was acknowledged at, and the advances aggregated. From `from_samples_elapsed` on, only the acts that land at or
+   * after that sample (stageJournalLanding); the advances are aggregate and stand whole. The answer carries a StagePerformanceJournal. */
+  | {command: 'performance-journal'; from_samples_elapsed?: string}
+  /** The Torus as it rings, kept by its owner (QL-MEF `torus-checkpoint`, `ql.torus-checkpoint/v1`; O-I 855): the body's states, its form and
+   * forces, the M1′ session's steps, comma and notes, the event and its seeds. A read; the answer carries the checkpoint. */
+  | {command: 'torus'; action: 'checkpoint'}
+  /** The Torus set again from a checkpoint its owner gave (QL-MEF `torus-restore`): the owner judges the checkpoint and refuses in words one
+   * that is not of this body; the answer names the sample it rings again from. */
+  | {command: 'torus'; action: 'restore'; checkpoint: StageTorusCheckpoint}
+  /** A take rendered offline through the M1′ session for Export Audio (QL-MEF `torus-render`, `ql.torus-render/v1`): a second owner of the same
+   * scene set to the checkpoint, each act made at its sample (each in [the checkpoint's sample, + frames), in the order of their samples),
+   * `frames` of its PCM. The live owner neither moves nor sounds. The answer carries a StageTakeRender. */
+  | {command: 'render-take'; checkpoint: StageTorusCheckpoint; acts: StageTakeAct[]; frames: number}
   | {command: 'presentation'; chrome: FramePresentation}
   | {command: 'chrome'; id: string; value?: string}
   /** The Expression's own sound (DLW §20.1 the mixer row's Activator and Solo): every object sound of the open Expression silenced or
@@ -378,8 +398,123 @@ export function readStageAudioClock(raw: unknown): StageAudioClock | null {
   if (!Number.isSafeInteger(block_frames) || (block_frames as number) < 128 || (block_frames as number) > 8192) return null;
   return {samples_elapsed, sample_rate: sample_rate as number, lookahead_seconds, block_frames: block_frames as number};
 }
-/** A stage answer. The audio clock's answer carries the clock; a strike of keys, the keys whose notes made way. */
-export type StageResult = {ok: true; clock?: StageAudioClock; made_way?: StageKey[]} | {ok: false; error: string};
+/** One admitted act of the owner's journal, as its session keeps it (instrument-session.mjs #journal): the exchange's request, the
+ * operation and its whole command, the native cursor it was acknowledged at, and whether it was an act or an explicit recovery read. */
+export interface StageJournalAct {
+  request_id: string; operation: string; command: Record<string, unknown>;
+  acknowledged: {generation: string; samples_elapsed: string}; kind: 'act' | 'recovery';
+}
+/** The owner's performance journal of the current native lifetime (`ql.instrument-performance-journal/v1`). */
+export interface StagePerformanceJournal {
+  schema: 'ql.instrument-performance-journal/v1'; instance_ref: string; acts: StageJournalAct[];
+  advances: {blocks: number; frames: number; first_samples_elapsed: string | null; last_samples_elapsed: string | null};
+}
+/** The most acts one journal answer carries, and the most bytes it may take on the channel: past either, the frame refuses the read in
+ * words and names the count, so a reader asks from a later sample; an answer is never cut. */
+export const STAGE_JOURNAL_ACTS_MAX = 4096;
+export const STAGE_JOURNAL_BYTES_MAX = 8 * 1024 * 1024;
+/** The sample a journaled act landed at: the one its command named (`at_samples_elapsed`, O-I 809), else the cursor it was acknowledged
+ * at, where the owner's render lands an act struck now (QL-MEF continuous.rs strike_when; cpp/src/field_worker.cpp strike). */
+export function stageJournalLanding(act: StageJournalAct): string {
+  const at = act.command.at_samples_elapsed;
+  return isStageSampleCursor(at) ? at : act.acknowledged.samples_elapsed;
+}
+const journalAct = (raw: unknown): raw is StageJournalAct => plain(raw) &&
+  closed(raw, ['request_id', 'operation', 'command', 'acknowledged', 'kind']) && isStageSampleCursor(raw.request_id) &&
+  bounded(raw.operation) && plain(raw.command) && (raw.kind === 'act' || raw.kind === 'recovery') && plain(raw.acknowledged) &&
+  closed(raw.acknowledged, ['generation', 'samples_elapsed']) && isStageSampleCursor(raw.acknowledged.generation) &&
+  isStageSampleCursor(raw.acknowledged.samples_elapsed);
+const cursorOrNull = (value: unknown) => value === null || isStageSampleCursor(value);
+/** A StagePerformanceJournal read exactly, within STAGE_JOURNAL_ACTS_MAX acts; anything else is null. */
+export function readStageJournal(raw: unknown): StagePerformanceJournal | null {
+  if (!plain(raw) || !closed(raw, ['schema', 'instance_ref', 'acts', 'advances']) || raw.schema !== 'ql.instrument-performance-journal/v1') return null;
+  if (!bounded(raw.instance_ref) || !Array.isArray(raw.acts) || raw.acts.length > STAGE_JOURNAL_ACTS_MAX || !raw.acts.every(journalAct)) return null;
+  const advances = raw.advances;
+  if (!plain(advances) || !closed(advances, ['blocks', 'frames', 'first_samples_elapsed', 'last_samples_elapsed'])) return null;
+  if (![advances.blocks, advances.frames].every(n => Number.isSafeInteger(n) && (n as number) >= 0)) return null;
+  if (!cursorOrNull(advances.first_samples_elapsed) || !cursorOrNull(advances.last_samples_elapsed)) return null;
+  return raw as unknown as StagePerformanceJournal;
+}
+/** The Torus as it rings, as its owner keeps it (QL-MEF scene_field.rs TorusCheckpoint, `ql.torus-checkpoint/v1`; O-I 855). The frame reads
+ * its schema, the sample it was kept at and the rate; everything else is the owner's, judged by the owner when the Torus is set again. */
+export interface StageTorusCheckpoint {schema: 'ql.torus-checkpoint/v1'; taken_at_samples: string; sample_rate: number; [owner: string]: unknown}
+/** The most bytes one checkpoint takes on the channel: the scene's event (with its sky) is most of it, some 14 kB for a scene today. */
+export const STAGE_TORUS_CHECKPOINT_BYTES_MAX = 1024 * 1024;
+/** A StageTorusCheckpoint read within its bounds, or null. */
+export function readStageTorusCheckpoint(raw: unknown): StageTorusCheckpoint | null {
+  if (!plain(raw) || raw.schema !== 'ql.torus-checkpoint/v1' || !isStageSampleCursor(raw.taken_at_samples)) return null;
+  if (!Number.isSafeInteger(raw.sample_rate) || (raw.sample_rate as number) < 8000 || (raw.sample_rate as number) > 192000) return null;
+  let bytes: number;
+  try { bytes = new TextEncoder().encode(JSON.stringify(raw)).length; } catch { return null; }
+  return bytes <= STAGE_TORUS_CHECKPOINT_BYTES_MAX ? raw as StageTorusCheckpoint : null;
+}
+/** One act of a take at the sample it landed at (the journal's landing, stageJournalLanding): keys struck at a strength in (0, 1] (`janko`
+ * strike), keys let go (`janko` release), or an edit of the Torus session (`instrument` torus). */
+export type StageTakeAct =
+  | {action: 'strike'; at_samples_elapsed: string; keys: StageKey[]; amplitude: number}
+  | {action: 'release'; at_samples_elapsed: string; keys: StageKey[]}
+  | {action: 'set'; at_samples_elapsed: string; edit: TorusSettingsEdit};
+/** The most frames one take renders (2^24, about 5.8 minutes at 48 kHz: 64 MiB of f32), and the most acts it carries. */
+export const STAGE_RENDER_FRAMES_MAX = 2 ** 24;
+export const STAGE_RENDER_ACTS_MAX = 16384;
+function readStageTakeActs(raw: unknown, from: bigint, end: bigint): StageTakeAct[] | null {
+  if (!Array.isArray(raw) || raw.length > STAGE_RENDER_ACTS_MAX) return null;
+  const acts: StageTakeAct[] = [];
+  let last = from;
+  for (const act of raw) {
+    if (!plain(act) || !isStageSampleCursor(act.at_samples_elapsed)) return null;
+    const at = BigInt(act.at_samples_elapsed);
+    if (at < last || at >= end) return null;
+    last = at;
+    const at_samples_elapsed = act.at_samples_elapsed;
+    if (act.action === 'strike') {
+      const keys = closed(act, ['action', 'at_samples_elapsed', 'keys', 'amplitude']) ? readStageKeys(act.keys, 1, STAGE_JANKO_KEYS_MAX, true) : null;
+      if (!keys || typeof act.amplitude !== 'number' || !Number.isFinite(act.amplitude) || act.amplitude <= 0 || act.amplitude > STAGE_JANKO_AMPLITUDE_MAX) return null;
+      acts.push({action: 'strike', at_samples_elapsed, keys, amplitude: act.amplitude});
+    } else if (act.action === 'release') {
+      const keys = closed(act, ['action', 'at_samples_elapsed', 'keys']) ? readStageKeys(act.keys, 1, STAGE_JANKO_KEYS_MAX, true) : null;
+      if (!keys) return null;
+      acts.push({action: 'release', at_samples_elapsed, keys});
+    } else if (act.action === 'set') {
+      const edit = closed(act, ['action', 'at_samples_elapsed', 'edit']) ? readTorusSettingsEdit(act.edit) : null;
+      if (!edit) return null;
+      acts.push({action: 'set', at_samples_elapsed, edit});
+    } else return null;
+  }
+  return acts;
+}
+/** A take as its owner rendered it: from the checkpoint's sample, `frames` of PCM at the owner's rate as f32, the keys whose notes made way
+ * strike by strike, and where it ended, kept as a checkpoint (a later part renders on from it). */
+export interface StageTakeRender {
+  from_samples_elapsed: string; frames: number; sample_rate: number; pcm: Float32Array; made_way: StageKey[][]; ended: StageTorusCheckpoint;
+}
+function readStageTakeRender(raw: unknown): StageTakeRender | null {
+  if (!plain(raw) || !closed(raw, ['from_samples_elapsed', 'frames', 'sample_rate', 'pcm', 'made_way', 'ended'])) return null;
+  const {from_samples_elapsed, frames, sample_rate, pcm, made_way} = raw;
+  if (!isStageSampleCursor(from_samples_elapsed) || !Number.isSafeInteger(frames) || (frames as number) < 1 || (frames as number) > STAGE_RENDER_FRAMES_MAX) return null;
+  if (!Number.isSafeInteger(sample_rate) || (sample_rate as number) < 8000 || (sample_rate as number) > 192000) return null;
+  if (!(pcm instanceof Float32Array) || pcm.length !== frames) return null;
+  if (!Array.isArray(made_way) || made_way.length > STAGE_RENDER_ACTS_MAX) return null;
+  const ways: StageKey[][] = [];
+  for (const way of made_way) {
+    const keys = Array.isArray(way) && way.length === 0 ? [] : readStageKeys(way, 1, STAGE_MADE_WAY_MAX, false);
+    if (!keys) return null;
+    ways.push(keys);
+  }
+  const ended = readStageTorusCheckpoint(raw.ended);
+  if (!ended) return null;
+  return {from_samples_elapsed, frames: frames as number, sample_rate: sample_rate as number, pcm, made_way: ways, ended};
+}
+/** The instrument edits that act on the owner (a determinant, the body's damping, the Torus session): each may name the sample it lands at. */
+export const STAGE_INSTRUMENT_TIMED_KINDS = Object.freeze(['lens', 'context-frame', 'harmonic', 'transcription', 'damping', 'torus'] as const);
+/** How far ahead of the owner's cursor an edit may name its sample: it waits that long at most for the owner's sound to reach it. */
+export const STAGE_EDIT_AHEAD_SECONDS = 30;
+
+/** A stage answer. The audio clock's answer carries the clock; a strike of keys, the keys whose notes made way; a strike of keys or at
+ * points, an edit that acts on the owner and a restore, the sample its act landed at (O-I 855); the journal's read, the owner's journal; a
+ * kept Torus, its checkpoint; a rendered take, its render. */
+export type StageResult = {ok: true; clock?: StageAudioClock; made_way?: StageKey[]; landed_at_samples_elapsed?: string; journal?: StagePerformanceJournal;
+  checkpoint?: StageTorusCheckpoint; render?: StageTakeRender} | {ok: false; error: string};
 
 const BASE_KEYS = ['v', 'kind', 'command', 'req'] as const;
 const SETTING_KEYS = ['width', 'aspect', 'includeText', 'transparent'] as const;
@@ -582,6 +717,26 @@ export function readStageRequest(raw: unknown): {req: number; command: StageComm
     }
     case 'audio-clock':
       return closed(raw, [...BASE_KEYS]) ? {req, command: {command: 'audio-clock'}} : null;
+    case 'performance-journal':
+      if (!closed(raw, [...BASE_KEYS, 'from_samples_elapsed'])) return null;
+      if (raw.from_samples_elapsed === undefined) return {req, command: {command: 'performance-journal'}};
+      return isStageSampleCursor(raw.from_samples_elapsed) ? {req, command: {command: 'performance-journal', from_samples_elapsed: raw.from_samples_elapsed}} : null;
+    case 'torus': {
+      // The Torus kept (a read) or set again from its owner's checkpoint (O-I 855).
+      if (raw.action === 'checkpoint') return closed(raw, [...BASE_KEYS, 'action']) ? {req, command: {command: 'torus', action: 'checkpoint'}} : null;
+      if (raw.action !== 'restore' || !closed(raw, [...BASE_KEYS, 'action', 'checkpoint'])) return null;
+      const checkpoint = readStageTorusCheckpoint(raw.checkpoint);
+      return checkpoint ? {req, command: {command: 'torus', action: 'restore', checkpoint}} : null;
+    }
+    case 'render-take': {
+      // A take rendered offline (O-I 855): every act within the take and in the order of its samples, or the whole take is refused.
+      if (!closed(raw, [...BASE_KEYS, 'checkpoint', 'acts', 'frames'])) return null;
+      const checkpoint = readStageTorusCheckpoint(raw.checkpoint);
+      if (!checkpoint || !Number.isSafeInteger(raw.frames) || (raw.frames as number) < 1 || (raw.frames as number) > STAGE_RENDER_FRAMES_MAX) return null;
+      const from = BigInt(checkpoint.taken_at_samples);
+      const acts = readStageTakeActs(raw.acts, from, from + BigInt(raw.frames as number));
+      return acts ? {req, command: {command: 'render-take', checkpoint, acts, frames: raw.frames as number}} : null;
+    }
     case 'presentation':
       return closed(raw, [...BASE_KEYS, 'chrome']) && stageOneOf(FRAME_PRESENTATIONS, raw.chrome) ? {req, command: {command: 'presentation', chrome: raw.chrome}} : null;
     case 'chrome':
@@ -591,8 +746,12 @@ export function readStageRequest(raw: unknown): {req: number; command: StageComm
       if (raw.value === undefined) return {req, command: {command: 'chrome', id: raw.id}};
       return chromeValue(raw.value) ? {req, command: {command: 'chrome', id: raw.id, value: raw.value}} : null;
     case 'instrument': {
-      const edit = closed(raw, [...BASE_KEYS, 'edit']) ? readInstrumentEdit(raw.edit) : null;
-      return edit ? {req, command: {command: 'instrument', edit}} : null;
+      const edit = closed(raw, [...BASE_KEYS, 'edit', 'at_samples_elapsed']) ? readInstrumentEdit(raw.edit) : null;
+      if (!edit) return null;
+      if (raw.at_samples_elapsed === undefined) return {req, command: {command: 'instrument', edit}};
+      // Only an edit that acts on the owner lands at a sample of it (O-I 855).
+      if (!(STAGE_INSTRUMENT_TIMED_KINDS as readonly string[]).includes(edit.kind) || !isStageSampleCursor(raw.at_samples_elapsed)) return null;
+      return {req, command: {command: 'instrument', edit, at_samples_elapsed: raw.at_samples_elapsed}};
     }
     case 'live':
       // target and value belong to set and hold; release names no operand. A refused value never reaches the frame's override layer.
@@ -617,7 +776,10 @@ export function stageRequestMessage(req: number, command: StageCommand): Record<
 
 /** The application's answer. Capture answers by host-capture-result; the other commands by host-command-result. Errors are bounded and control-free. */
 export function stageReplyMessage(req: number, result: StageResult, command?: StageCommand): Record<string, unknown> {
-  const outcome = result.ok ? {ok: true, ...(result.clock ? {clock: result.clock} : {}), ...(result.made_way?.length ? {made_way: result.made_way} : {})} : {ok: false, error: String(result.error).replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, 512) || 'The application refused the stage command.'};
+  const outcome = result.ok ? {ok: true, ...(result.clock ? {clock: result.clock} : {}), ...(result.made_way?.length ? {made_way: result.made_way} : {}),
+    ...(result.landed_at_samples_elapsed !== undefined ? {landed_at_samples_elapsed: result.landed_at_samples_elapsed} : {}),
+    ...(result.journal ? {journal: result.journal} : {}), ...(result.checkpoint ? {checkpoint: result.checkpoint} : {}),
+    ...(result.render ? {render: result.render} : {})} : {ok: false, error: String(result.error).replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, 512) || 'The application refused the stage command.'};
   if (command?.command === 'capture') return {v: 1, kind: 'host-capture-result', req, ...outcome};
   return {v: 1, kind: 'host-command-result', ...(command ? {command: command.command} : {}), req, ...outcome};
 }
@@ -626,14 +788,37 @@ export function stageReplyMessage(req: number, result: StageResult, command?: St
 export function readStageResult(raw: unknown): ({req: number} & StageResult) | null {
   if (!plain(raw) || raw.v !== 1 || (raw.kind !== 'host-command-result' && raw.kind !== 'host-capture-result') || !positive(raw.req) || typeof raw.ok !== 'boolean') return null;
   const req = raw.req, ok = raw.ok, error = raw.error;
-  if (ok && raw.clock !== undefined) {
+  if (!ok) return bounded(error) ? {req, ok: false, error} : null;
+  // Each part an answer may carry is read exactly; one that does not read refuses the whole answer.
+  const result: {req: number} & StageResult & {ok: true} = {req, ok: true};
+  if (raw.clock !== undefined) {
     const clock = readStageAudioClock(raw.clock);
-    return clock ? {req, ok: true, clock} : null;
+    if (!clock) return null;
+    result.clock = clock;
   }
-  if (ok && raw.made_way !== undefined) {
+  if (raw.made_way !== undefined) {
     const made_way = readStageKeys(raw.made_way, 1, STAGE_MADE_WAY_MAX, false);
-    return made_way ? {req, ok: true, made_way} : null;
+    if (!made_way) return null;
+    result.made_way = made_way;
   }
-  if (ok) return {req, ok: true};
-  return bounded(error) ? {req, ok: false, error} : null;
+  if (raw.landed_at_samples_elapsed !== undefined) {
+    if (!isStageSampleCursor(raw.landed_at_samples_elapsed)) return null;
+    result.landed_at_samples_elapsed = raw.landed_at_samples_elapsed;
+  }
+  if (raw.journal !== undefined) {
+    const journal = readStageJournal(raw.journal);
+    if (!journal) return null;
+    result.journal = journal;
+  }
+  if (raw.checkpoint !== undefined) {
+    const checkpoint = readStageTorusCheckpoint(raw.checkpoint);
+    if (!checkpoint) return null;
+    result.checkpoint = checkpoint;
+  }
+  if (raw.render !== undefined) {
+    const render = readStageTakeRender(raw.render);
+    if (!render) return null;
+    result.render = render;
+  }
+  return result;
 }

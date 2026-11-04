@@ -15,7 +15,7 @@
 import {EFFECT_LAW, EFFECT_TITLES, type InstrumentEdit, type PresentationEffect} from '@epilogos/expressions-boundary'
 import {useSyncExternalStore} from 'react'
 import type {DesignBinding, Standing, Value, ValueChange} from '../../frame/devices/designed'
-import {commitLiveInstrumentEdit, LIVE_TORUS_ABSENT_REASON, type LiveTorusState} from '../torusInstrument'
+import {commitLiveInstrumentEdit, LIVE_TORUS_ABSENT_REASON, torusSessionOf, TORUS_RATE, type LiveTorusState} from '../torusInstrument'
 import {dbToGain, gainToDb} from '../torusDevice'
 import {QL_SKY_ABSENT, qlSkyHand, qlSkyValues, SKY_BODIES, type QlSkyState, type SkyBody} from '../../inhabitants/ql/devices/qlSky'
 
@@ -56,8 +56,9 @@ const label = (key: string) => LABELS[key] ?? key[0]!.toUpperCase() + key.slice(
  * and root follow the M3 clock's and the mode in force's (inhabitants/ql/devices/qlResonatorBank.ts qlBankFollow). */
 const FOLLOWED = new Set(['delay/tempo', 'resonator/division', 'resonator/root'])
 
-/** The parameters the owner reports and takes: the torus's level and scale, and every number of each effect on its chain (but those the
- * shell sets from another owner: FOLLOWED). */
+/** The parameters the owner reports and takes: the torus's level and scale, its own sound in the owner's Torus session (the Carrier, and
+ * the Rate while it runs Free: under Sync the set's tempo holds it), and every number of each effect on its chain (but those the shell
+ * sets from another owner: FOLLOWED). */
 export function skyTargets(state: LiveTorusState | null): SkyTarget[] {
   if (state === null || !state.ok) return []
   const targets: SkyTarget[] = [], p = state.parameters
@@ -68,6 +69,15 @@ export function skyTargets(state: LiveTorusState | null): SkyTarget[] {
   if (typeof scale === 'number')
     targets.push({id: 'quaternal-logic:torus/scale', device: 'Torus', label: 'Scale', min: 40, max: 400, unit: 'u/m', log: false, value: scale,
       edit: value => ({kind: 'scale', units_per_metre: value})})
+  // The torus's own sound (manual §22.2: "On a Live part, its targets are the torus and its effects"), written as the owner's torus edit.
+  const session = torusSessionOf(state)
+  if (session) {
+    targets.push({id: 'quaternal-logic:torus/carrier', device: 'Torus', label: 'Carrier', min: 0, max: 100, unit: '%', log: false,
+      value: Math.round(session.settings.carrier * 1000) / 10, edit: value => ({kind: 'torus', edit: {carrier: Math.round(value * 10) / 1000}})})
+    if (session.settings.rate.mode === 'free')
+      targets.push({id: 'quaternal-logic:torus/rate', device: 'Torus', label: 'Rate', min: TORUS_RATE.min, max: TORUS_RATE.max, unit: 'steps/s', log: true,
+        value: session.settings.rate.steps_per_second, edit: value => ({kind: 'torus', edit: {rate: {mode: 'free', steps_per_second: value}}})})
+  }
   const effects = p?.effects
   for (const effect of (effects?.chain ?? []) as readonly PresentationEffect[]) {
     for (const [key, law] of Object.entries(EFFECT_LAW[effect])) {
@@ -295,13 +305,30 @@ export function skyModulationBinding(state: LiveTorusState | null, sky: QlSkySta
   }
 }
 
-/** Which planet holds each routed key under a target prefix (an effect's `live:<effect>/`, the torus's `quaternal-logic:torus/`), for that
- * device's binding (designed.ts modulatedBy): the status bar names the planet. */
-export function skyHeldUnder(prefix: string, held: SkyModulationPlan = plan): Record<string, string> {
+const figure = (x: number, unit: string | undefined) => `${Number(x.toPrecision(3))}${unit ? ` ${unit}` : ''}`
+
+/** What the sky does to each routed key under a target prefix (an effect's `live:<effect>/`, the torus's `quaternal-logic:torus/`), for
+ * that device's binding (designed.ts modulatedBy): the planets that move it and, once the sky has run, the base and the value now in the
+ * target's unit (manual §22.2 Rules: "A parameter that the sky moves shows the planet on the control. It shows the base value and the
+ * value now."). The status bar says it; the control rings with it when it moves. */
+export function skyHeldUnder(prefix: string, held: SkyModulationPlan = plan, targets: readonly SkyTarget[] = []): Record<string, string> {
   const out: Record<string, string> = {}
   if (!held.placed || !held.on) return out
-  for (const route of held.routes) if (route.target.startsWith(prefix)) out[route.target.slice(prefix.length)] = route.planet
+  const planets = new Map<string, SkyBody[]>()
+  for (const route of held.routes) {
+    if (!route.target.startsWith(prefix)) continue
+    const list = planets.get(route.target) ?? []
+    if (!list.includes(route.planet)) list.push(route.planet)
+    planets.set(route.target, list)
+  }
+  for (const [id, list] of planets) {
+    const names = list.length > 1 ? `${list.slice(0, -1).join(', ')} and ${list.at(-1)}` : list[0]!
+    const base = held.bases[id], now = held.written[id] ?? base, unit = targets.find(target => target.id === id)?.unit
+    out[id.slice(prefix.length)] = base === undefined ? names : `${names} (base ${figure(base, unit)}, now ${figure(now!, unit)})`
+  }
   return out
 }
-export const skyHeldKeys = (effect: PresentationEffect, held: SkyModulationPlan = plan): Record<string, string> => skyHeldUnder(`live:${effect}/`, held)
-export const skyHeldTorusKeys = (held: SkyModulationPlan = plan): Record<string, string> => skyHeldUnder('quaternal-logic:torus/', held)
+export const skyHeldKeys = (effect: PresentationEffect, held: SkyModulationPlan = plan, targets: readonly SkyTarget[] = []): Record<string, string> =>
+  skyHeldUnder(`live:${effect}/`, held, targets)
+export const skyHeldTorusKeys = (held: SkyModulationPlan = plan, targets: readonly SkyTarget[] = []): Record<string, string> =>
+  skyHeldUnder('quaternal-logic:torus/', held, targets)

@@ -238,6 +238,18 @@ fn main() {
             eprintln!("Change watch live");
         }
     }
+    // The one SharedField client for this identity (O-I #858), held for the
+    // bridge's life: each transaction it takes is recorded in the event log,
+    // so /event-replay carries it like any other receipt.
+    {
+        let heard = Arc::clone(&kernel);
+        oi_cradle_kernel::shared_field::on_change(move |change| {
+            if let Ok(mut kernel) = heard.lock() {
+                kernel.record_shared_field_changed(change);
+            }
+        });
+        oi_cradle_kernel::shared_field::hold();
+    }
     #[cfg(unix)]
     let _native_owner_server = oi_cradle_kernel::native_owner_transport::configured_offer()
         .expect("read native owner offer")

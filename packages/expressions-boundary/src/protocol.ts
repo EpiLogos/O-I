@@ -41,8 +41,8 @@ export {STUDIO_SECTIONS, isStudioSection, studioPlacement, type StudioSection} f
 import {isStudioSection, type StudioSection} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/studioSections.ts';
 /** The stage-control vocabulary (view, capture, present, export, import, tool, engine): one closed list for host, frame and shell. */
 export {STAGE_COMMANDS, STAGE_VIEW_ACTIONS, STAGE_CAPTURE_WIDTHS, STAGE_CAPTURE_ASPECTS, STAGE_EXPORT_FORMATS, STAGE_TOOLS, STAGE_TOOL_READINGS, STAGE_ENGINE_ACTIONS, STAGE_TAKE_MODES, STAGE_TRACK_ACTIONS, stageOneOf, stageRefusal,
-  readStageRequest, stageRequestMessage, stageReplyMessage, readStageResult, readStageAudioClock, isStageSampleCursor, STAGE_JANKO_KEYS_MAX, readInstrumentEdit, STAGE_INSTRUMENT_CADENCES, STAGE_INSTRUMENT_LEVEL, STAGE_INSTRUMENT_SCALE_MAX, FRAME_PRESENTATIONS, FRAME_CHROME_HOMES, FRAME_CHROME_KINDS, FRAME_CHROME_LIMITS, readFrameChrome, type FramePresentation, type FrameChromeHome, type FrameChromeKind, type FrameChromeControl, type FrameChromeOption, type FrameChromeReading,
-  type StageCommand, type StageCommandName, type StageResult, type StageAudioClock, type StageKey, type StageViewAction, type StageCaptureSettings, type StageCaptureWidth, type StageCaptureAspect, type StageExportFormat, type StageTakeMode, type StageTrackAction,
+  readStageRequest, stageRequestMessage, stageReplyMessage, readStageResult, readStageAudioClock, isStageSampleCursor, readStageJournal, stageJournalLanding, STAGE_JOURNAL_ACTS_MAX, STAGE_JOURNAL_BYTES_MAX, readStageTorusCheckpoint, STAGE_TORUS_CHECKPOINT_BYTES_MAX, STAGE_RENDER_FRAMES_MAX, STAGE_RENDER_ACTS_MAX, STAGE_INSTRUMENT_TIMED_KINDS, STAGE_EDIT_AHEAD_SECONDS, STAGE_JANKO_KEYS_MAX, readInstrumentEdit, STAGE_INSTRUMENT_CADENCES, STAGE_INSTRUMENT_LEVEL, STAGE_INSTRUMENT_SCALE_MAX, FRAME_PRESENTATIONS, FRAME_CHROME_HOMES, FRAME_CHROME_KINDS, FRAME_CHROME_LIMITS, readFrameChrome, type FramePresentation, type FrameChromeHome, type FrameChromeKind, type FrameChromeControl, type FrameChromeOption, type FrameChromeReading,
+  type StageCommand, type StageCommandName, type StageResult, type StageAudioClock, type StageJournalAct, type StagePerformanceJournal, type StageTorusCheckpoint, type StageTakeAct, type StageTakeRender, type StageKey, type StageViewAction, type StageCaptureSettings, type StageCaptureWidth, type StageCaptureAspect, type StageExportFormat, type StageTakeMode, type StageTrackAction,
   type StageTool, type StageToolReading, type StageEngineAction, type InstrumentEdit,
 } from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageCommands.ts';
 import {stageOneOf, STAGE_TAKE_MODES, STAGE_TOOL_READINGS, FRAME_PRESENTATIONS, readFrameChrome} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageCommands.ts';
@@ -104,7 +104,10 @@ export function readHostedTorus(raw: unknown): HostedTorusSession | string {
   if (!count(raw.notes)) return 'notes: expected a count';
   if (!Array.isArray(raw.resident_tunings) || !raw.resident_tunings.every(v => among(TORUS_TUNINGS, v))) return 'resident_tunings: expected logic, maqam or sky';
   if (!boundedText(raw.carrier_drive, 64)) return 'carrier_drive: expected the owner\'s word';
-  return {settings: {rate, fundamental, carrier: t.carrier, shape: t.shape, tuning: t.tuning, polyphony: t.polyphony, tempo_bpm: t.tempo_bpm},
+  // Strike (O-I #854): an owner from before it states none, and then the session has none; a stated Strike outside 0..1 refuses it.
+  if (t.strike !== undefined && (!finite(t.strike) || t.strike < 0 || t.strike > 1)) return 'settings: expected Strike as a share 0..1';
+  return {settings: {rate, fundamental, carrier: t.carrier, shape: t.shape, tuning: t.tuning, polyphony: t.polyphony, tempo_bpm: t.tempo_bpm,
+    ...(t.strike !== undefined ? {strike: t.strike as number} : {})},
     steps_per_second: raw.steps_per_second, band: raw.band, fundamental_hz: raw.fundamental_hz, map_hz: raw.map_hz, figure: raw.figure as HostedTorusSession['figure'],
     comma_cents: raw.comma_cents, notes: raw.notes, resident_tunings: [...raw.resident_tunings] as HostedTorusSession['resident_tunings'], carrier_drive: raw.carrier_drive};
 }

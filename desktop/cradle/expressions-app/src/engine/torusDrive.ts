@@ -43,6 +43,11 @@ export interface TorusPlayReading {
   body?: { influence: unknown; amplitudes: readonly { mode_ref: string; re: number; im: number }[] | null } | null;
   /** The Torus's pulse as the owner last read it. */
   pulse?: { steps: number; steps_per_second: number; band: string | null } | null;
+  /** Where the twelve classes stand on the body and what each sounds (torusPlay.mjs `classes`): the symbols' own harmonies read it, the
+   * plate does not. */
+  classes?: unknown;
+  /** The surface's material the lens in force gives it (torusPlay.mjs `material`; surfaceMaterial.ts), or why there is none. */
+  material?: import('./surfaceMaterial').SurfaceMaterialReading;
 }
 
 export interface ResolvedTorusDrive {

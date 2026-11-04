@@ -18,7 +18,8 @@
 // Factory's Clip view stands), and with a session's track selected, that track's row of it, with a stretch selected on the
 // Arrangement's ruler, the units that ran in it (exportChoiceOf, songClips.ts unitsInSpan). Loop turned on with a song's note chosen
 // names the song for AIKit's executor, which makes each pass a take of it (songClips.ts loopSongChange); Repeat makes the song's
-// takes (frame/tracks/useFactoryTracks.ts repeatPress).
+// takes (frame/tracks/useFactoryTracks.ts repeatPress); the note chosen is published for Routine… on a song (chosenNoteOf,
+// songClips.ts routineOfSong).
 // Every per-task setting writes through its seam in agent/devices/taskBindings.ts TASK_SEAMS, against the settings' standing
 // revision. The Intent panel (§19.1, the design's D3 panel) has no reading a kernel route reaches: its keys stand absent and its writes
 // refused, each with the operation it waits for (INTENT_ABSENT, INTENT_REFUSED). Of the Launch panel, Compare and the takes a Repeat made
@@ -60,7 +61,8 @@ import {eventsForSession, trackKey, type AgentSessionTrack, type TaskClip, type 
 import {TASK_SEAMS, type TaskAddress, type TaskSeamContext, type TaskSetting} from './devices/taskBindings'
 import {MENU_ACT} from '../native/openStudio'
 import {sayOnInfoLine} from '../frame/devices/deviceHost'
-import {canonNoteOf, dropSong, exportSong, loopSongChange, SONG_CLIP_DRAG, songOfPayload, unitsInSpan, type ExportChoice} from './songClips'
+import {canonNoteOf, dropSong, exportSong, loopSongChange, publishChosenNote, SONG_CLIP_DRAG, songOfPayload, unitsInSpan, type ChosenNote,
+  type ExportChoice} from './songClips'
 import {shownSpanNow} from '../frame/tracks/tracksDoor'
 import {clipValuesOfSettings, settingsRefusal, SETTINGS_RESULT, SETTINGS_WHY, writeSessionSettings} from './sessionSettings'
 
@@ -83,6 +85,16 @@ export function factoryTaskOf(ref: string | null, tracks: readonly AgentSessionT
   if (!track) return null
   const task = track.tasks.find(item => !item.softStop && (named ? item.n === named.n : true)) ?? null
   return {track, task, trackId}
+}
+
+/** The note chosen in the Clip view of the task THE selection names (its view's `unit` hold): the session, the project it is read under
+ * and the note's key — what Routine… on a song takes (songClips.ts routineOfSong). A session's track selected opens its first task's
+ * Clip view (factoryClipBinding), so it names that task's note. Null when no task is open or no note is chosen. */
+export function chosenNoteOf(ref: string | null, tracks: readonly AgentSessionTrack[], project: string): ChosenNote | null {
+  const chosen = factoryTaskOf(ref, tracks)
+  if (!chosen?.task) return null
+  const key = viewHoldsOf(clipHostId('factory', `${chosen.trackId}#task/${chosen.task.n}`)).unit
+  return typeof key === 'string' && key ? {project, session: chosen.track.sessionRef, key} : null
 }
 
 /** What Export Song… renders of the selection (manual §10.9: "the song, or the tracks and the range you select"): a session's track
@@ -454,6 +466,7 @@ function taskWiring(task: TaskAddress | null, context: TaskSeamContext | null): 
       then: 'the session\'s settings: Then, the follow action on the task\'s own track — next · again · stop',
       loop: 'the session\'s settings: Loop, which runs the task again after each finish (On) or not (Off)',
       'loop.until': 'the session\'s settings: Loop\'s stop condition — done · pass', 'loop.cap': 'the session\'s settings: Loop\'s cap, the most runs (absent: none)',
+      'loop.pass': 'the session\'s settings: what AIKit\'s executor did with Loop\'s last pass of a song (task.loop_pass) — the take Factory started and its Run, or why the loop stopped (left out before a song\'s first pass)',
       'repeat.variable': 'the session\'s settings: Repeat\'s Variable', 'repeat.levels': 'the session\'s settings: Repeat\'s Levels, comma-separated (absent: none chosen, and Actuation\'s comparison run takes its own default three conditions)',
       'repeat.repeats': 'the session\'s settings: Repeat\'s Repeats', 'repeat.stop': 'the session\'s settings: Repeat\'s Stop when',
       quantize: 'the session\'s settings: Quantize', 'env.mode': 'the session\'s settings: the envelopes\' mode', 'env.linked': 'the session\'s settings: the envelopes\' link',
@@ -573,6 +586,13 @@ export function useFactoryClip(): ClipBinding | null {
     if (ranged && 'refused' in ranged) return {ok: false, error: ranged.refused}
     return exportSong(transport, sessions && sessionRef ? scored.reading : null, exportChoiceOf(selected.ref, chosen, ranged?.units))
   }
+  // The note the task's Clip view holds, for Routine… on a song (read at its press under Material › Songs).
+  const note = sessions ? chosenNoteOf(selected.ref, factory.tracks, project) : null
+  const noteKey = note ? JSON.stringify(note) : null
+  useEffect(() => {
+    publishChosenNote(noteKey ? JSON.parse(noteKey) as ChosenNote : null)
+    return () => publishChosenNote(null)
+  }, [noteKey])
   useEffect(() => {
     const act = (event: Event) => {
       if ((event as CustomEvent<{id?: unknown}>).detail?.id !== 'file.export.song') return

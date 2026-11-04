@@ -543,7 +543,9 @@ test('a sample behind the owner\'s cursor is sound already rendered: the owner\'
 test('the frame runs each strike through the native field with its sample, and answers the audio clock from its controller', () => {
   const app = readFileSync(join(journeys, 'src/app.ts'), 'utf8')
   const run = app.slice(app.indexOf('async function runStageCommand('), app.indexOf('async function answerStageCommand('))
-  assert.match(run, /case 'janko':[\s\S]*?if\(command\.action==='strike'\)\{const made_way=await nativeField\.controller\.torusPlay\(command\.keys,command\.amplitude,command\.at_samples_elapsed\);/,
+  // REPLACED (O-I #855, the owner's half): a strike's answer also names the sample its act landed at, which a Live take keeps
+  // (controller.ts torusPlayed, the act torusPlay makes, answered whole); the keys and their sample are the clip's note-on as before.
+  assert.match(run, /case 'janko':[\s\S]*?if\(command\.action==='strike'\)\{const \{made_way,landed_at_samples_elapsed\}=await nativeField\.controller\.torusPlayed\(command\.keys,command\.amplitude,command\.at_samples_elapsed\);/,
     'a clip\'s note-on: its keys at its sample')
   assert.match(run, /if\(command\.action==='release'\)\{await nativeField\.controller\.torusRelease\(command\.keys\);return \{ok:true\};\}/, 'a note\'s end')
   // REPLACED (O-I #855 fold-in): the pitch-class act the QL sitting's bell struck through the owner's played voices (nativeField.ts

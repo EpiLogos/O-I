@@ -30,6 +30,18 @@ export class InstrumentSession {
  torusPlay(keys: Array<{row: number; column: number}>, options?: {amplitude?: [number, number]; at_samples_elapsed?: string}): Promise<any>;
  /** Release keys from the count of notes; the body rings on, no native state moves. */
  torusRelease(keys: Array<{row: number; column: number}>): Promise<any>;
+ /** The Torus as it rings (`ql.torus-checkpoint/v1`, O-I #855): the body's state, form, forces, comma and seeds at the acknowledged
+  * sample. A read: the field never advances. */
+ torusCheckpoint(): Promise<any>;
+ /** Ring the Torus again from a checkpoint the owner gave: one owner act (one to four generations), refused in words when the
+  * checkpoint is not of this body. */
+ torusRestore(checkpoint: Record<string, unknown>): Promise<any>;
+ /** A take rendered offline on a second owner of the scene (`ql.torus-render/v1`, O-I #855): from a checkpoint, or continuing the last
+  * render, `frames` of sound with each act made at its sample. A read: this owner neither moves nor sounds. */
+ torusRender(take: {checkpoint?: object; continues?: string; frames: number;
+  acts?: Array<{action: 'strike'; at_samples_elapsed: string; keys: Array<{row: number; column: number}>; amplitude: [number, number]}
+   | {action: 'release'; at_samples_elapsed: string; keys: Array<{row: number; column: number}>}
+   | {action: 'set'; at_samples_elapsed: string; edit: object}>}): Promise<any>;
  /** The Torus session reading the last Torus acknowledgement carried, or null before any. */
  readonly lastTorus: any;
  /** The last played Torus act's receipt (ql.torus-play/v1), or null before any. */

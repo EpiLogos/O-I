@@ -330,7 +330,14 @@ export type WorkcellReadRequest = {kind:"connections-list"} | {kind:"connections
   /** `workcell --receipt R checkpoints` (EpiLogos/Workcell#123): `workcell.material-checkpoints/v1` `{world_ref, ledger,
    * checkpoints:[workcell.material-checkpoint/v1: checkpoint_ref, logical_ref, source_material_ref, provider_ref, state, reusable, name?,
    * taken_at_unix_ms], unreadable:[{line, error}]}`. */
-  | {kind:"checkpoints";receipt:string};
+  | {kind:"checkpoints";receipt:string}
+  /** Workcell's secrets, references and presence only (O-I #758, Settings › Credentials): `workcell secret list`
+   * (`workcell.secret-reference-inventory/v1` `{coverage, credentials:[{credential_ref, name, scheme, observed_in, created_at_unix_ms}],
+   * origin_inventory}`), `workcell secret projections` (`{projections:[{projection_ref, credential_ref, class, purpose, scope,
+   * requested_by, source_provider_ref, target_workcell_ref, target_connection_label, target_allocation_ref, target_provider_ref, state,
+   * created_at_unix_ms, revoked_at_unix_ms}]}`) and `workcell secret scan` (`workcell.secret-exposure-scan/v1` `{findings:[{key, kind,
+   * location, line, reference_only}], refusals, scanned}`). */
+  | {kind:"secret-list"|"secret-projections"|"secret-scan"};
 /** A material demand in `workcell plan`'s own flags, one field per flag. `demand_json` is Workcell's `--demand-json PATH` (a run's
  * kept demand, `run-show`'s `demand.path`); Workcell refuses it mixed with any other field. */
 export interface WorkcellDemand { demand_json?:string; demand_ref?:string; require?:string[]; prefer?:string[]; optional?:string[]; workspace?:"writable"|"read-only"; workspace_ref?:string; revision?:string; project_runtime?:string; connect?:string[]; prefer_connect?:string[]; optional_connect?:string[]; expose?:string[]; prefer_expose?:string[]; optional_expose?:string[]; output?:string[]; prefer_output?:string[]; optional_output?:string[]; resource?:string[]; subject?:string[]; persistence?:string; isolation?:string; retention?:string; extension?:string[] }
@@ -349,7 +356,10 @@ export type WorkcellWriteRequest =
   | {kind:"release-orphans";server:string}
   /** `workcell --receipt R checkpoint [--binding L] [--name N]` (EpiLogos/Workcell#123): `workcell.material-checkpoint/v1` (checkpoint_ref,
    * state, reusable, taken_at_unix_ms, …). A binding whose provider takes no checkpoint is Workcell's refusal (kind unsupported). */
-  | {kind:"checkpoint";receipt:string;binding?:string|null;name?:string|null};
+  | {kind:"checkpoint";receipt:string;binding?:string|null;name?:string|null}
+  /** `workcell secret revoke-projection --name LABEL`: `{projection_ref, state, vault_deleted, note}`; the target loses the projection at its
+   * next use. */
+  | {kind:"revoke-projection";name:string};
 /** `seat join|release WORKCELL PRODUCT --actor REF --json`: the actor is the desk's, claims are attributed; every region goes to one
  * `--region` flag. Answers central.workcell-seat-result/v1. */
 export type SeatWriteRequest =
@@ -425,8 +435,10 @@ export type AikitReadRequest =
   | {kind:"reflection-laws";project?:string|null};
 export type AikitWriteRequest =
   /** `aikit capture TITLE` with the body on stdin; `capture_kind` is the owner's `--kind`. With `from_song` (O-I #844) the body is a
-   * Software Factory song's clip and AIKit writes a Method from it (`--from-song`). */
-  | {kind:"capture";project?:string|null;title:string;body:string;capture_kind?:string|null;export?:string[];scope?:string|null;source_ref?:string|null;by?:string|null;from_song?:boolean}
+   * Software Factory song's clip and AIKit writes a Method from it (`--from-song`); with `take` (Routine… on a song) the canon unit a
+   * Routine's run performs again is bound as the Method's native body (`--take-state --take-run --take-unit`). */
+  | {kind:"capture";project?:string|null;title:string;body:string;capture_kind?:string|null;export?:string[];scope?:string|null;source_ref?:string|null;by?:string|null;from_song?:boolean;
+     take?:{state_path:string;run_ref:string;unit:string}|null}
   | {kind:"promote";project?:string|null;candidate:string;id?:string|null}
   | {kind:"trust-record";project?:string|null;capability:string;source?:string|null;note?:string|null}
   | {kind:"method-run";project?:string|null;method:string;input?:unknown;confirm?:boolean}
@@ -478,7 +490,12 @@ export type RoutineAuthoringRequest =
   | {action:"create";name:string;method:string;proof:Record<string,unknown>;trigger:Record<string,unknown>;authority:Record<string,unknown>;
      description?:string|null;agent_profile?:string|null;context_scopes?:string[]}
   | {action:"enable";routine_ref:string;authority:Record<string,unknown>}
-  | {action:"reprove";routine_ref:string;proof:Record<string,unknown>};
+  | {action:"reprove";routine_ref:string;proof:Record<string,unknown>}
+  /** Reads, nothing kept (O-I #758/#844): `aikit routine options --method M` (`aikit.routine-options/v1`: the Method's verified runs,
+   * authority receipts, admitted triggers, agent profiles, context scopes, time policy) and `aikit routine prepare-schedule
+   * --schedule-json S` (`aikit.prepared-schedule/v1`: `trigger`, the ScheduleRecord a new Routine carries, and its next occurrences). */
+  | {action:"options";method:string}
+  | {action:"prepare_schedule";schedule:Record<string,unknown>};
 /** The person's presence consents through the kernel's nara_presence, each SharedField's own transport kind: `list` (`nara-presences
  * {participant_ref?, field_ref?}`) and `withdraw` (`withdraw_nara {projection_ref, consent_ref, withdrawal_ref, withdrawn_at?}`, the
  * person's own consent act, published on the desktop's SharedField identity). Neither admits anything of the Expression. */

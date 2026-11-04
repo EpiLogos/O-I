@@ -6,14 +6,18 @@
 // factory.song-take/v1, the kernel's factory_owner `workflow-perform`), and the set ended on AIKit with what Factory made, or failed in
 // Factory's words. Loop is AIKit's task executor's: Loop turned on with a song's note chosen names the song (task.loop_song), and the
 // executor makes each pass a take through Factory's perform. A routine is Automations': AIKit runs each run of a Method whose native
-// body is factory-song-take as a take; Routine… on a song stands refused, naming the face's road it waits for. Export Song… with a
-// session's track selected renders that track's row, and with a stretch selected on the Arrangement's ruler, the units that ran in it.
-// Channels: REAL — Factory's score with the dropped canon unit (tests/fixtures/factory-songs-2026-11-03.json score_after). DERIVED —
+// body is factory-song-take as a take; Routine… on a song, with its note chosen in a task's Clip view, has AIKit prepare the schedule
+// (`aikit routine prepare-schedule`) and then file the take's Method (`aikit capture --from-song --take-…`) for the person to accept.
+// Export Song… with a session's track selected renders that track's row, and with a stretch selected on the Arrangement's ruler, the
+// units that ran in it.
+// Channels: REAL — Factory's score with the dropped canon unit (tests/fixtures/factory-songs-2026-11-03.json score_after); AIKit's
+// capture of the song's take from the aikit-3 build and its refusal of a schedule with no civil-time policy, both in a scratch world
+// (tests/fixtures/aikit-song-routine-2026-11-04.json). FAKE — AIKit's prepared schedule, in its shape (aikit.prepared-schedule/v1). DERIVED —
 // Factory's take receipt, in the shape factory/tests/song_take.rs pins (contract, take, unit, of, clipRef, commission's runRef), and its
 // refusal in the owner envelope. SCRIPTED — the kernel behind the bridge's fetch, AIKit's settings kept as AIKit keeps them (as
 // tests/t795-loop-repeat-launch.test.mjs scripts them), recording every op. FIXTURE — the session's attempt readings, owner-shaped, as
-// tests/factory-songs-844.test.mjs has them. Not a screen pass: choosing the note and pressing Repeat in the native window are
-// UNVERIFIED (the lead's walk).
+// tests/factory-songs-844.test.mjs has them. Not a screen pass: choosing the note and pressing Repeat or Routine… in the native window
+// are UNVERIFIED (the lead's walk).
 //
 // Each test loads what it reads itself, so each one fails on its own reason against a tree without the change.
 import test from 'node:test'
@@ -254,6 +258,25 @@ test('Loop on a song makes each pass a take: Loop turned on with a song\'s note 
     'with no song named before or now, Loop writes Loop alone (an AIKit before loop_song takes it)')
 })
 
+test('Loop on a song shows its last pass in the Clip view: the take Factory started and its Run, or why the loop stopped (AIKit task.loop_pass)', async () => {
+  const settings = await import('../src/agent/sessionSettings.ts')
+  const clip = await import('../src/agent/clipBinding.ts')
+  const SONG_LOOP = {state_path: TAKER, run_ref: RUN, unit: 'release-check'}
+  // AIKit's reading (encounter_task_executor.rs loop_pass): {take, run_ref}, {refused}, or null — no song's pass yet.
+  const pass = loop_pass => settings.clipValuesOfSettings(reading({launch: 'trigger', loop: true, loop_song: SONG_LOOP, loop_pass}))['loop.pass']
+  assert.equal(pass({take: 3, run_ref: 'run:TAKE3'}), 'Take 3 of release-check · Run run:TAKE3')
+  const words = 'Factory did not perform take 4 of the song release-check: the set release-check names has moved since it was rendered.'
+  assert.equal(pass({refused: words}), `The loop stopped: ${words}`)
+  assert.equal(pass(null), undefined, 'no pass yet: nothing drawn')
+  assert.equal(settings.clipValuesOfSettings(reading())['loop.pass'], undefined, 'an AIKit before loop_pass: nothing drawn')
+  assert.equal(settings.clipValuesOfSettings(reading({loop_pass: {take: 2, run_ref: 'run:TAKE2'}}))['loop.pass'], 'Take 2 · Run run:TAKE2',
+    'a pass kept after the song was taken away names no unit')
+  const wiring = clip.factoryWiring({sessionRef: 'ses-eros', n: 1}, {transport, project, settings: reading(), refused: null})
+  assert.match(wiring.reads['loop.pass'], /task\.loop_pass/)
+  const design = await source('../src/inhabitants/catalogue/clips/factory.tsx')
+  assert.ok(/<Row label="Last pass"><Fact label="Last pass"[^\n]*'loop\.pass'/.test(design), 'the Clip panel draws it under Loop')
+})
+
 test('a song\'s note draws how many takes Factory started from it', async () => {
   const {scoreValuesOf} = await import('../src/agent/scoreBinding.ts')
   const reading = JSON.parse(JSON.stringify(REAL.score_after))
@@ -269,24 +292,91 @@ test('a song\'s note draws how many takes Factory started from it', async () => 
   assert.ok(/u\.takes/.test(design), 'the design draws the count on the note')
 })
 
-test('Routine… on a song stands refused naming what it waits for; Export Song… with a track selected renders that track\'s row', async () => {
+test('Routine… on a song: with its note chosen in a task\'s Clip view, AIKit prepares the schedule, then files the take\'s Method for you to accept; refused in words before any write otherwise', async () => {
   const songs = await import('../src/agent/songClips.ts')
   const rows = await import('../src/agent/SongRows.tsx')
-  // The owner runs it (AIKit's native body factory-song-take: each run of the routine a take Factory starts); what waits is the face's
-  // road to it: the Method that binds the song, and the Routine's schedule.
-  assert.match(songs.ROUTINE_SONG, /^A routine runs a song: AIKit runs each of its runs as a take Factory starts /)
-  assert.match(songs.ROUTINE_SONG, /`factory-song-take`/)
-  assert.match(songs.ROUTINE_SONG, /missing op: .*native-method.*schedule/)
-  assert.match(songs.ROUTINE_SONG, /\(AIKit\)\.$/)
+  const clip = await import('../src/agent/clipBinding.ts')
+  const {clipHostId, setViewHold} = await import('../src/frame/detail/clipBinding.ts')
+  const ROUTINE = JSON.parse(await readFile(new URL('./fixtures/aikit-song-routine-2026-11-04.json', import.meta.url), 'utf8'))
+  assert.match(songs.ROUTINE_SONG, /^Each run of a routine is a take of this song/)
+  assert.doesNotMatch(songs.ROUTINE_SONG, /missing op/, 'Routine… on a song no longer stands refused')
   const row = {key: 'song-maker/release-check', name: 'release-check', clipRef: 'factory-song:song-maker/release-check', path: '/walk/maker/.factory/songs/release-check.song.json',
-    statePath: '/walk/maker/.factory/development-state.json', standing: 'current', units: 6, rows: 6, entry: 'development-and-knowledge.workflow.ts', importedFrom: null, why: '', clip: {}}
-  // The preview (portalled into the browser's preview host) holds Remake and Routine…, the latter refused in its words.
-  const markup = renderToStaticMarkup(rows.songPreview(row, noop))
+    statePath: '/walk/maker/.factory/development-state.json', standing: 'current', units: 6, rows: 6, entry: 'development-and-knowledge.workflow.ts', importedFrom: null, why: '',
+    clip: {contract: 'factory.song-clip/v1', name: 'release-check'}}
+  const daily = {kind: 'daily', time: '07:30'}
+  // The note chosen in the selected task's Clip view, as its binding publishes it: the session, its project and the note's key.
+  const tracks = [{spaceRef: 'space:anima', sessionRef: 'ses-eros', group: false, tasks: [{n: 1}]}]
+  setViewHold(clipHostId('factory', 'space:anima:ses-eros#task/1'), 'unit', 'release-check')
+  assert.deepEqual(clip.chosenNoteOf('space:anima:ses-eros#task/1', tracks, project), {project, session: 'ses-eros', key: 'release-check'})
+  assert.deepEqual(clip.chosenNoteOf('space:anima:ses-eros', tracks, project), {project, session: 'ses-eros', key: 'release-check'},
+    'a session\'s track selected opens its first task\'s Clip view, and names its note')
+  assert.equal(clip.chosenNoteOf('space:anima:ses-logos#task/1', tracks, project), null, 'no session of the reading')
+  setViewHold(clipHostId('factory', 'space:anima:ses-eros#task/1'), 'unit', undefined)
+  assert.equal(clip.chosenNoteOf('space:anima:ses-eros#task/1', tracks, project), null)
+  assert.ok(/publishChosenNote\(/.test(await source('../src/agent/clipBinding.ts')), 'the selected task\'s binding publishes the note it holds')
+  // A scripted kernel that also answers AIKit's routine op (FAKE prepared schedule in AIKit's shape, or its REAL refusal) and the capture
+  // route (REAL: the aikit-3 build's answer for this song's take).
+  const prepared = {schema: 'aikit.prepared-schedule/v1', trigger: {schema: 'aikit.time-schedule/v1', schedule_ref: 'schedule/daily-0f3c', schedule: daily},
+    time_policy: {ref: 'control:root/civil-time-policy', revision: 'rev-1'}, window: {from_unix_ms: 1, to_unix_ms: 2},
+    next_occurrences: [{occurrence_ref: 'occurrence/1', due_unix_ms: Date.UTC(2026, 10, 5, 7, 30)}], kept: false, note: 'prepared and not kept: create the Routine with this trigger, then enable it'}
+  const withRoutine = (schedule = {ok: true, outcome: {result: 'routine', data: prepared, receipts: []}}) => {
+    const kernel = scriptedKernel(reading())
+    const scripted = globalThis.fetch
+    globalThis.fetch = async (url, init) => {
+      const op = JSON.parse(init.body)
+      if (op.op === 'routine') { kernel.sent.push(op); return {json: async () => schedule} }
+      if (op.op === 'aikit_write') { kernel.sent.push(op); return {json: async () => ({ok: true, outcome: {result: 'owner_route_reading', route: 'aikit capture', data: ROUTINE.capture, warnings: [], receipts: []}})} }
+      return scripted(url, init)
+    }
+    return kernel
+  }
+  const writes = kernel => kernel.sent.filter(op => op.op === 'routine' || op.op === 'aikit_write')
+  const note = key => ({project, session: 'ses-eros', key})
+  // Refused before any write: no note chosen, a note that is no song, another song's note.
+  let kernel = withRoutine()
+  assert.deepEqual(await songs.routineOfSong(transport, row, null, daily), {ok: false, error: songs.routineNoNote('release-check')})
+  assert.match(songs.routineNoNote('release-check'), /choose release-check's note in that task's Clip view/)
+  assert.deepEqual(await songs.routineOfSong(transport, row, note('eros-verify'), daily), {ok: false, error: songs.routineNoSong('eros-verify')})
+  assert.deepEqual(await songs.routineOfSong(transport, {...row, name: 'verify-part'}, note('release-check'), daily),
+    {ok: false, error: songs.routineOtherSong('release-check', 'release-check', 'verify-part')})
+  assert.deepEqual(writes(kernel), [], 'nothing is prepared or captured')
+  // AIKit refuses the schedule (REAL words): nothing is captured.
+  kernel = withRoutine({ok: false, error: ROUTINE.prepare_refused})
+  let made = await songs.routineOfSong(transport, row, note('release-check'), daily)
+  assert.equal(made.ok, false)
+  assert.ok(made.error.endsWith(ROUTINE.prepare_refused), made.error)
+  assert.deepEqual(writes(kernel).map(op => op.op), ['routine'], 'no Method is filed for a schedule AIKit refuses')
+  // The schedule prepared (kept nowhere), then the take's Method filed in your inbox: the clip, and the canon unit in the Run it stands in.
+  kernel = withRoutine()
+  made = await songs.routineOfSong(transport, row, note('release-check'), daily)
+  assert.equal(made.ok, true, made.error)
+  assert.deepEqual(writes(kernel), [
+    {op: 'routine', project, request: {action: 'prepare_schedule', schedule: daily}},
+    {op: 'aikit_write', request: {kind: 'capture', project, title: 'release-check', body: JSON.stringify(row.clip), scope: 'home',
+      source_ref: 'factory-song:song-maker/release-check', by: 'human', from_song: true, take: {state_path: TAKER, run_ref: RUN, unit: 'release-check'}}}])
+  assert.ok(made.note.includes(ROUTINE.capture.candidate) && made.note.includes(ROUTINE.capture.proposed_id), made.note)
+  assert.match(made.note, /waits for you to accept it on the Capture page/)
+  assert.match(made.note, /Settings › Automations/)
+  assert.match(made.note, /daily at 07:30/)
+  // Make routine… (O-I #758): the receipt carries the new routine Settings › Automations opens on — what opened it, the song's name, the
+  // take's Method and the schedule's Repeat and When as you gave them (Create prepares it again: AIKit keeps a prepared schedule nowhere).
+  assert.deepEqual(made.routine, {from: 'Songs · release-check', name: 'release-check', method: ROUTINE.capture.proposed_id, repeat: 'daily', schedule: '07:30'})
+  assert.match(renderToStaticMarkup(rows.songPreview(row, noop, noop, made, noop)), /<button[^>]*data-action="song-make-routine"[^>]*>Make routine…<\/button>/)
+  assert.doesNotMatch(renderToStaticMarkup(rows.songPreview(row, noop, noop, null, noop)), /song-make-routine/, 'nothing to make before AIKit files the Method')
+  const opening = songs.songRoutineRequest(row, made.routine)
+  assert.deepEqual({...opening, requestId: typeof opening.requestId}, {requestId: 'string', page: 'automations', scope: {scope_kind: 'world', scope_ref: null},
+    returnLabel: 'Back to Songs · release-check', newRoutine: made.routine}, 'the take\'s Method is your AIKit home\'s, so the routine is made in that context')
+  assert.match(await source('../src/agent/SongRows.tsx'), /openSettings\(songRoutineRequest\(/)
+  const {scheduleFromInput, scheduleInputOf} = await import('../src/settings/routines.ts')
+  for (const [kind, raw] of [['daily', '07:30'], ['every', '3600'], ['every', '1.5'], ['once', '2026-11-05T07:30:00Z'], ['cron', '0 8 * * 1-5']])
+    assert.equal(scheduleInputOf(scheduleFromInput(kind, raw)), raw, `${kind} ${raw}: the When the form takes is the one given`)
+  // The preview: Routine… stands enabled beside its schedule (Repeat and when, parsed by Settings' scheduleFromInput at the press).
+  const markup = renderToStaticMarkup(rows.songPreview(row, noop, noop))
   assert.match(markup, /data-action="remake-song"/)
-  assert.match(markup, /<button[^>]*data-action="song-routine"[^>]*disabled=""/)
+  assert.doesNotMatch(markup, /<button[^>]*data-action="song-routine"[^>]*disabled/)
+  assert.match(markup, /<select[^>]*data-song-routine-repeat/)
   assert.ok(markup.includes(songs.ROUTINE_SONG.replace(/'/g, '&#x27;')), markup)
   // Export Song…: a session's track selected renders its row; a task selected renders the whole song.
-  const clip = await import('../src/agent/clipBinding.ts')
   const track = {sessionRef: 'ses-eros', agentRef: 'agent/anima-eros', group: false}
   assert.deepEqual(clip.exportChoiceOf('space:anima:ses-eros', {track}), {rows: ['agent/anima-eros']})
   assert.deepEqual(clip.exportChoiceOf('space:anima:ses-eros#task/1', {track}), {})

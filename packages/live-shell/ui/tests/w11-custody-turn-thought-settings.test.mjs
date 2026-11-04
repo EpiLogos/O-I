@@ -217,7 +217,7 @@ test('7 · Machines offer Workcell\'s own control operations once its list answe
   assert.equal(machines.allowedOperations.length, 14)
 })
 
-test('8 · Routine authoring on the kernel\'s routine verbs (fake owner only): create, enable and reprove carry AIKit\'s documents verbatim; options and schedule preparation name the AIKit commands that do not exist', async () => {
+test('8 · Routine authoring on the kernel\'s routine verbs (fake owner only): create, enable and reprove carry AIKit\'s documents verbatim; options and schedule preparation read AIKit\'s own (`aikit routine options|prepare-schedule`, O-I #758/#844)', async () => {
   const sent = []
   const call = async op => { sent.push(op); return op.request.action === 'enable' ? {error: 'aikit routine enable: a schedule trigger needs unattended authority'}
     : {outcome: {result: 'routine', data: {routine: 'routine/morning', state: op.request.action === 'create' ? 'draft' : 'disabled', note: op.request.action === 'create' ? 'Stored as a Draft; nothing fires.' : ''}}} }
@@ -232,10 +232,46 @@ test('8 · Routine authoring on the kernel\'s routine verbs (fake owner only): c
     {op: 'routine', project: 'O-I', request: {action: 'create', name: 'Morning', method: 'method:read-day', proof, trigger: {kind: 'manual'}, authority}},
     {op: 'routine', project: 'O-I', request: {action: 'enable', routine_ref: 'routine/morning', authority}},
     {op: 'routine', request: {action: 'reprove', routine_ref: 'routine/morning', proof}}])
-  await assert.rejects(authoring.options('method:read-day', 'O-I'), {message: config.ROUTINE_ABSENT.options})
-  await assert.rejects(authoring.prepareSchedule({kind: 'daily', time: '07:30'}), {message: config.ROUTINE_ABSENT.prepareSchedule})
-  assert.match(config.ROUTINE_ABSENT.options, /missing op: an AIKit command listing a method's verified runs/)
   assert.match(read('native/configuration.ts'), /routineAuthoring: nativeRoutineAuthoring\(call\)/)
+  // Options and a new schedule (FAKE, in AIKit's own shapes: `aikit.routine-options/v1` and `aikit.prepared-schedule/v1`, as ai-kit's
+  // routine_options.rs asserts them); REAL (aikit-song-routine-2026-11-04.json): the options of a song's take Method as AIKit answered
+  // them in a scratch world, and AIKit's refusal of a schedule on a world with no adopted civil-time policy.
+  const ROUTINE_REAL = JSON.parse(readFileSync(new URL('./fixtures/aikit-song-routine-2026-11-04.json', import.meta.url), 'utf8'))
+  const scheduled = {schema: 'aikit.time-schedule/v1', schedule_ref: 'schedule/daily-0f3c', schedule: {kind: 'daily', time: '07:30'}}
+  const OPTIONS = {schema: 'aikit.routine-options/v1', method: {ref: 'skill/song/release-check', revision: 'r1', actions: ['factory.workflow.perform']},
+    proofs: [{title: 'proof:1 (verified)', source: 'aikit', document: proof}], stale_proofs: [],
+    authorities: [{title: 'authority:1 (granted, attended only)', source: 'routine/morning', document: authority}],
+    triggers: [{title: 'Manual', source: 'aikit', document: {kind: 'manual'}}, {title: 'Daily at 07:30', source: 'routine/morning', document: scheduled}],
+    profiles: [{title: 'Kite', ref: 'agent-profile:kite'}], context_scopes: [{title: 'scope/o-i', ref: 'scope/o-i'}],
+    time_policy: {ref: 'control:root/civil-time-policy', revision: 'rev-1', timezone: 'Europe/London'}, absences: []}
+  const PREPARED = {schema: 'aikit.prepared-schedule/v1', trigger: scheduled, time_policy: {ref: 'control:root/civil-time-policy', revision: 'rev-1'},
+    window: {from_unix_ms: 1, to_unix_ms: 2}, next_occurrences: [{occurrence_ref: 'occurrence/1', due_unix_ms: 1793779800000}], kept: false,
+    note: 'prepared and not kept: create the Routine with this trigger, then enable it'}
+  const POLICY_REFUSAL = ROUTINE_REAL.prepare_refused
+  const reads = []
+  let policy = true
+  const reading = config.nativeRoutineAuthoring(async op => { reads.push(op)
+    if (op.request.action === 'options') return {outcome: {result: 'routine', data: OPTIONS}}
+    return policy ? {outcome: {result: 'routine', data: PREPARED}} : {error: POLICY_REFUSAL} })
+  assert.deepEqual(await reading.options('skill/song/release-check', 'O-I'), {proofs: [{title: 'proof:1 (verified)', document: proof}],
+    authorities: [{title: 'authority:1 (granted, attended only)', document: authority}],
+    triggers: [{title: 'Manual', document: {kind: 'manual'}}, {title: 'Daily at 07:30', document: scheduled}],
+    profiles: [{title: 'Kite', ref: 'agent-profile:kite'}], contextScopes: [{title: 'scope/o-i', ref: 'scope/o-i'}],
+    timePolicy: {timezone: 'Europe/London', revision: 'rev-1'}})
+  assert.deepEqual(await reading.prepareSchedule({kind: 'daily', time: '07:30'}, 'O-I'), scheduled, 'the ScheduleRecord create takes, nothing else')
+  policy = false
+  await assert.rejects(reading.prepareSchedule({kind: 'daily', time: '07:30'}), {message: POLICY_REFUSAL})
+  assert.deepEqual(reads, [
+    {op: 'routine', project: 'O-I', request: {action: 'options', method: 'skill/song/release-check'}},
+    {op: 'routine', project: 'O-I', request: {action: 'prepare_schedule', schedule: {kind: 'daily', time: '07:30'}}},
+    {op: 'routine', request: {action: 'prepare_schedule', schedule: {kind: 'daily', time: '07:30'}}}])
+  const real = await config.nativeRoutineAuthoring(async () => ({outcome: {result: 'routine', data: ROUTINE_REAL.options}})).options(ROUTINE_REAL.options.method.ref)
+  assert.deepEqual(real, {proofs: [], authorities: [{title: ROUTINE_REAL.options.authorities[0].title, document: ROUTINE_REAL.options.authorities[0].document}],
+    triggers: [{title: 'Manual: runs only when you press Run now', document: {kind: 'manual'}}], profiles: [], contextScopes: []},
+    'REAL: no verified run yet, a pending authority that grants nothing, Manual, and no time policy where Central has none')
+  const odd = config.nativeRoutineAuthoring(async () => ({outcome: {result: 'routine', data: {schema: 'aikit.prepared-schedule/v1', trigger: {kind: 'manual'}}}}))
+  await assert.rejects(odd.prepareSchedule({kind: 'daily', time: '07:30'}), /AIKit's prepared schedule carries no ScheduleRecord/)
+  assert.equal(config.ROUTINE_ABSENT, undefined, 'no missing-op refusal stands where AIKit answers')
 })
 
 // ------------------------------------------------------------------------------------------------------------------ drawn, classified

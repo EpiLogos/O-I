@@ -393,8 +393,8 @@ function ExpressionTab(p: ClipProps) {
       {page === 'sound' && <>
         <Section label="Voice" width={170}>
           <Toggle label="Voice" does="Lets the symbol carry part of the torus's sound to where it stands." on={objBool(p.v, 'sound', 'voice')} onChange={x => setObj(p, 'sound', 'voice', x)} disabled={why} />
-          <Chooser label="Name or mode" does="What the voice carries of the torus's sound: a mode, or a name of the store of sound. It does not sound on its own." value={objStr(p.v, 'sound', 'carry')}
-            options={read<Option<string>[]>(p.v, 'carryOptions', [{value: '', label: 'None yet'}])} onChange={x => setObj(p, 'sound', 'carry', x)} disabled={why} />
+          <Chooser label="Name or mode" does="What the voice sounds of the torus's sound: the symbol's own harmony, or a mode or a name of the store of sound standing in for it. It does not sound on its own." value={objStr(p.v, 'sound', 'carry')}
+            options={read<Option<string>[]>(p.v, 'carryOptions', [{value: '', label: 'The symbol'}])} onChange={x => setObj(p, 'sound', 'carry', x)} disabled={why} />
         </Section>
         <Section label="Level" width={90}>
           {dial('sound', 'gain', 'Gain', 'The loudness of the voice. 0 is silent.', 0, 1, 0.2, f2)}

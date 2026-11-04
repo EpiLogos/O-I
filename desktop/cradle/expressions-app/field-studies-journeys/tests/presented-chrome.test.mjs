@@ -109,7 +109,9 @@ test('#747 X1: opening another Expression binds the live field again on its scen
  const own=field.slice(field.indexOf('const rebind='),field.indexOf('const authoredMoved='));
  assert.match(own,/const held=status==='following'\|\|status==='held'\|\|status==='opening';\s*if\(!held&&!reopening\)return null;/,'no live field held and none waiting: nothing happens');
  assert.match(own,/if\(held\)released=controller\.release\(true\)\.catch\(fail\);/,'released; it opens again on the new scene once still (round two)');
- assert.match(field,/return \{controller,panel,command,stage,playJanko,touch,openLive,leaveLive,rebind,authoredMoved,/);
+ // The pitch-class Jankó chord (playJanko over planJankoStrike) is retired: keys strike the Torus through torus-play (O-I 855).
+ assert.match(field,/return \{controller,panel,command,stage,touch,openLive,leaveLive,rebind,authoredMoved,/);
+ assert.doesNotMatch(field,/playJanko|planJankoStrike|jankoStrike/,'no pitch-class chord is left in the native field');
 });
 
 // O-I #747 round two (lead's ruling of 29 Oct): a live field held on the scene is let go and opened again around each of the person's

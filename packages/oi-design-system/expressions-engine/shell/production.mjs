@@ -14,6 +14,9 @@ import { NATIVE_BINDINGS, WORLD_SCALE } from "./nativeParameters.mjs";
 import { basis, project, stageCentre, stageScale } from "./camera.mjs";
 import { entitySoundPlan, activeFromFocus, objectSoundIsMuted, onObjectSoundMuted } from "./native-field/entitySound.mjs";
 import { SymbolVoices, placeOf } from "./native-field/symbolVoices.mjs";
+import { formMaskOf, symbolHarmonies } from "./native-field/symbolHarmony.mjs";
+import { nativeSurface } from "./native-field/surfaceConfig.mjs";
+import { bodyOf } from "../engine/torusObject.mjs";
 import { modeCatalogueReading, onModeCatalogue } from "./native-field/modeStore.mjs";
 import { DIP_AT_DEFAULT, transitionKindOf, paintedOverlayActive, transitionColourOf, edgeBlend } from "./transitions.mjs";
 const mix = (a, b, t) => a + (b - a) * t;
@@ -75,7 +78,6 @@ class EmbeddedProductionAdapter {
   symbolVoices = new SymbolVoices();
   releaseVoiceWatch = () => {
   };
-  nativeConfigs = /* @__PURE__ */ new WeakMap();
   setNativeDomain(active) {
     this.nativeDomain = active;
     this.applied = null;
@@ -118,6 +120,25 @@ class EmbeddedProductionAdapter {
     this.engine?.setTorusPlay(reading);
     this.soundAt = -1;
     this.dirty = true;
+    const classes = reading?.classes, steps = classes && classes.absentBecause === null ? classes.steps : null;
+    if (steps !== this.classesSteps) {
+      this.classesSteps = steps;
+      this.classesSince = performance.now();
+    }
+  }
+  classesSteps = null;
+  classesSince = 0;
+  /** A symbol's form as cells of its box, from the engine's own pool for it; made once per bake. */
+  forms = /* @__PURE__ */ new WeakMap();
+  formOf(entityId) {
+    const pool = this.engine?.getFormPool(entityId) ?? null;
+    if (!pool) return null;
+    let mask = this.forms.get(pool);
+    if (mask === void 0) {
+      mask = formMaskOf(pool);
+      this.forms.set(pool, mask);
+    }
+    return mask;
   }
   /** The node the controller offers for the symbols' voices to listen to (native-field/controller.ts `voiceTap`), or none while no instrument is open. */
   setTorusTap(tap) {
@@ -127,17 +148,7 @@ class EmbeddedProductionAdapter {
     }
   }
   nativeConfig(config) {
-    if (!this.nativeDomain) return config;
-    let result = this.nativeConfigs.get(config);
-    if (!result) {
-      result = {
-        ...config,
-        toroidalMorph: config.toroidalMorph ? { ...config.toroidalMorph, enabled: false, autoOscillate: false } : void 0,
-        automations: config.automations?.filter((l) => !l.path.startsWith("toroidalMorph."))
-      };
-      this.nativeConfigs.set(config, result);
-    }
-    return result;
+    return this.nativeDomain ? nativeSurface(config, this.torusPlay) : config;
   }
   contextLost = false;
   seedRecoveredSources = false;
@@ -287,7 +298,10 @@ class EmbeddedProductionAdapter {
       if (entity) places.set(voice.entityId, placeOf(project(entity.position, frame.camera, this.width, this.height).x, this.width));
     }
     const store = modeCatalogueReading();
-    this.symbolVoices.sync({ ...none, plan, catalogue: store.catalogue, catalogueWhy: store.why, places });
+    const classes = reading?.classes ?? { absentBecause: closed };
+    const steps = classes.absentBecause === null ? classes.steps + classes.steps_per_second * Math.max(0, now - this.classesSince) / 1e3 : 0;
+    const harmonies = symbolHarmonies(scene.entities, plan, classes, reading?.body ? bodyOf(reading.body.influence) : null, steps, (id) => this.formOf(id), this.symbolVoices.sampleRate() ?? 48e3);
+    this.symbolVoices.sync({ ...none, plan, catalogue: store.catalogue, catalogueWhy: store.why, places, harmonies });
   }
   hitEntity(x, y) {
     return this.connections?.pickEntity(x, y) ?? null;

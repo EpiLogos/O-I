@@ -241,6 +241,282 @@ export async function observeField(client: Client, cursor?: string, ref?: string
   return {schema: 'oi.shared-field.observation/v1', cursor: fieldCursor(client), snapshot: {state: 'hosted', ...fieldSnapshot(client)}, ...(ref ? {reading: readRef(client, ref)} : {})};
 }
 
+/* ---------- The held field (O-I #858): one connection for the window's life ----------
+ *
+ * The native host holds one client per identity for as long as its window
+ * lives (field.ts `--held`, spoken to by desktop/cradle/kernel/src/shared_field.rs).
+ * Requests go in on it and the rows they change come out of it; nothing is
+ * reconnected, resubscribed or relaunched per request. Its cursor is the
+ * transaction: it moves once for each server transaction that changed what
+ * this caller can see, and never for one it cannot (another identity's
+ * private rows change nothing here, so they move nothing). Rows that only
+ * enter or leave the subscription as the view narrows and widens are no
+ * transaction; but a field that was out of view may have moved unseen, so
+ * the cursor moves once when the whole field comes back into view. */
+
+/** The views a field scope narrows: every caller-filtered view whose rows
+ * belong to one field. The rest of SUBSCRIPTION — the fields themselves and
+ * the caller's own rows — is held whatever is in view. */
+export const FIELD_SCOPED_VIEWS = ['participant', 'projection', 'contribution', 'explore_entry', 'explore_relation', 'shared_stage', 'field_presence', 'activity_liveness', 'field_now', 'field_day'];
+export const HELD_BASE = SUBSCRIPTION.filter((query) => !FIELD_SCOPED_VIEWS.includes(query.slice('SELECT * FROM '.length)));
+
+/** What is in view: the whole field, or the fields named. */
+export type FieldScope = 'whole' | string[];
+
+const SCOPED_REF = /^[^\u0000-\u001f\u007f]{1,512}$/;
+/** A scope as a request names it, or null when it names none. */
+export function fieldScopeOf(value: unknown): FieldScope | null {
+  if (value === 'whole') return 'whole';
+  if (Array.isArray(value) && value.length <= 64 && value.every((ref) => typeof ref === 'string' && SCOPED_REF.test(ref))) return [...new Set(value as string[])].sort();
+  return null;
+}
+
+/** The subscription a scope asks for: each scoped view whole, or each
+ * filtered to the fields named (refs as SQL string literals, quotes doubled).
+ * Every query names a caller-filtered view, never a backing table. */
+export function scopeQueries(scope: FieldScope): string[] {
+  if (scope === 'whole') return FIELD_SCOPED_VIEWS.map((view) => `SELECT * FROM ${view}`);
+  return scope.flatMap((ref) => FIELD_SCOPED_VIEWS.map((view) => `SELECT * FROM ${view} WHERE field_ref = '${ref.replaceAll("'", "''")}'`));
+}
+
+/** What every lease has in view, together. */
+export function unionScope(scopes: Iterable<FieldScope>): FieldScope {
+  const refs = new Set<string>();
+  for (const scope of scopes) {
+    if (scope === 'whole') return 'whole';
+    for (const ref of scope) refs.add(ref);
+  }
+  return [...refs].sort();
+}
+
+/** Each held table: its SDK handle, its wire name, and the column that
+ * names one of its rows. A change carries these refs, never a row's content. */
+export const HELD_TABLES: ReadonlyArray<readonly [property: string, table: string, key: string]> = [
+  ['sharedField', 'shared_field', 'fieldRef'], ['participant', 'participant', 'participantRef'], ['projection', 'projection', 'projectionKey'],
+  ['contribution', 'contribution', 'contributionRef'], ['exploreEntry', 'explore_entry', 'semanticRef'], ['exploreRelation', 'explore_relation', 'relationRef'],
+  ['myFieldAuthority', 'my_field_authority', 'authorityKey'], ['myContributionReceipt', 'my_contribution_receipt', 'ingressRef'],
+  ['ownerPendingContribution', 'owner_pending_contribution', 'ingressRef'], ['myWatch', 'my_watch', 'watchRef'], ['myContact', 'my_contact', 'contactRef'],
+  ['sharedStage', 'shared_stage', 'stageRef'], ['myStageFollow', 'my_stage_follow', 'followKey'], ['fieldPresence', 'field_presence', 'presenceKey'],
+  ['activityLiveness', 'activity_liveness', 'activityKey'], ['fieldNow', 'field_now', 'fieldRef'], ['fieldDay', 'field_day', 'dayKey'],
+];
+
+export interface RowChange { table: string; op: 'insert' | 'update' | 'delete'; ref: string }
+type HeldEnvelope = { ok: true; data: unknown } | { ok: false; error: { kind: 'unbound' | 'unavailable' | 'refused' | 'malformed'; message: string } };
+
+/** How long one request keeps the whole field in view after it is answered. */
+const GLANCE_MS = Number(process.env.OI_SHARED_FIELD_GLANCE_MS ?? 30_000);
+/** The most changes one transaction event names; the rest are counted. */
+const CHANGES_PER_EVENT = 128;
+
+function subscribeQueries(conn: DbConnection, queries: string[], lifecycle?: any): Promise<any> {
+  if (queries.length === 0) return Promise.resolve(undefined);
+  lifecycle?.subscribing();
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`subscription did not apply within ${TIMEOUT_MS} ms`)), TIMEOUT_MS);
+    const handle: any = conn.subscriptionBuilder()
+      .onApplied(() => { clearTimeout(timer); lifecycle?.applied(); resolve(handle); })
+      .onError((_ctx: any, error: any) => { clearTimeout(timer); lifecycle?.subscriptionError(error ?? new Error('subscription refused')); reject(error ?? new Error('subscription refused')); })
+      .subscribe(queries);
+  });
+}
+
+/**
+ * Hold one identity's field: one connection, kept and re-made when the
+ * service is lost (500 ms doubling to 15 s, as the site's own connection
+ * does: site/src/explore/spacetimedb-provider.ts), its base subscription,
+ * and a field-scoped subscription that follows what is in view — the leases
+ * (`view`) and a glance of the whole field for GLANCE_MS after any request.
+ * `answer` is the request law (field.ts); `emit` carries a transaction or a
+ * status line out. Nothing reconnecting replays a presence or any other act.
+ */
+export function holdField(options: { label: string; answer: (client: Client, request: any) => Promise<HeldEnvelope>; emit: (line: Record<string, unknown>) => void }) {
+  const { label, answer, emit } = options;
+  let client: Client | undefined;
+  // A connection's epoch starts from this client's start (ms): a cursor names
+  // one transaction on one connection of one client, never one seen before.
+  let epoch = Date.now(), count = 0, attempt = 0, closed = false;
+  let state: 'connecting' | 'live' | 'degraded' | 'unbound' = 'connecting';
+  let detail: string | undefined;
+  let retry: ReturnType<typeof setTimeout> | undefined;
+  let glanceUntil = 0;
+  let glanceTimer: ReturnType<typeof setTimeout> | undefined;
+  let scoped: { key: string; scope: FieldScope; handle: any } | undefined;
+  let scoping: Promise<void> = Promise.resolve();
+  let batch: RowChange[] | undefined;
+  /** The whole field was let out of view since it was last read whole. */
+  let blind = false;
+  const leases = new Map<string, FieldScope>();
+
+  const cursor = () => `tx:${epoch}:${count}`;
+  const inView = (): FieldScope => unionScope([...leases.values(), ...(Date.now() < glanceUntil ? ['whole' as const] : [])]);
+  const reading = () => ({ state, ...(detail ? { detail } : {}), cursor: cursor(), scope: scoped?.scope ?? [], leases: leases.size, transport_identity: client?.identityHex ?? null });
+  const status = () => emit({ event: 'status', ...reading() });
+
+  function changed(connection: number, table: string, op: RowChange['op'], ref: unknown) {
+    if (connection !== epoch || closed) return;
+    if (!batch) {
+      count += 1;
+      batch = [];
+      const at = cursor();
+      // One server transaction's callbacks all run before this timer does.
+      setTimeout(() => {
+        const changes = batch ?? [];
+        batch = undefined;
+        emit({ event: 'transaction', cursor: at, changes: changes.slice(0, CHANGES_PER_EVENT), more: Math.max(0, changes.length - CHANGES_PER_EVENT) });
+      }, 0);
+    }
+    batch.push({ table, op, ref: String(ref) });
+  }
+
+  /** A row moved by a transaction — this caller's own reducer or anyone's
+   * the caller can see — not one the view brought in or let go. */
+  const transacted = (ctx: any) => !['SubscribeApplied', 'UnsubscribeApplied'].includes(ctx?.event?.tag);
+  function watchRows(conn: DbConnection, connection: number) {
+    for (const [property, table, key] of HELD_TABLES) {
+      const handle = (conn.db as any)[property];
+      if (!handle) continue;
+      handle.onInsert?.((ctx: any, row: any) => { if (transacted(ctx)) changed(connection, table, 'insert', row?.[key]); });
+      handle.onDelete?.((ctx: any, row: any) => { if (transacted(ctx)) changed(connection, table, 'delete', row?.[key]); });
+      handle.onUpdate?.((ctx: any, _old: any, row: any) => { if (transacted(ctx)) changed(connection, table, 'update', row?.[key]); });
+    }
+  }
+
+  function drop() {
+    const held = client;
+    client = undefined;
+    scoped = undefined;
+    if (held) close(held);
+  }
+
+  let losing = false;
+  function lost(error: unknown) {
+    // A loss is met once: letting the connection go reports its own end.
+    if (closed || retry || losing) return;
+    losing = true;
+    try { drop(); } finally { losing = false; }
+    state = 'degraded';
+    detail = String((error as any)?.message ?? error ?? 'The SharedField connection ended');
+    status();
+    const delay = Math.min(15_000, 500 * 2 ** Math.min(attempt, 5));
+    attempt += 1;
+    retry = setTimeout(() => { retry = undefined; ready = connectHeld(); }, delay);
+  }
+
+  async function connectHeld(): Promise<void> {
+    if (closed) return;
+    const binding = resolveTarget();
+    if (!binding.bound) { state = 'unbound'; detail = binding.reason; status(); return; }
+    state = 'connecting';
+    detail = undefined;
+    status();
+    const target = binding.target;
+    const file = tokenFile(target.database, label);
+    const saved = existsSync(file) ? readFileSync(file, 'utf8').trim() : undefined;
+    let opened: Awaited<ReturnType<typeof connect>>;
+    try { opened = await connect(target, saved); } catch (error) { lost(error); return; }
+    if (closed) { opened.conn.disconnect(); return; }
+    if (!saved || saved !== opened.token) {
+      mkdirSync(dirname(file), { recursive: true, mode: 0o700 });
+      writeFileSync(file, opened.token, { mode: 0o600 });
+    }
+    const connection = ++epoch;
+    count = 0;
+    watchRows(opened.conn, connection);
+    opened.lifecycle.subscribe((event: any) => {
+      if (connection === epoch && ['offline', 'error'].includes(event?.transport?.state)) lost(new Error(event.transport.error ?? 'The SharedField connection ended'));
+    });
+    try { await subscribeQueries(opened.conn, HELD_BASE, opened.lifecycle); } catch (error) { try { opened.conn.disconnect(); } catch {} lost(error); return; }
+    if (closed || connection !== epoch) { try { opened.conn.disconnect(); } catch {} return; }
+    const live = createLiveExploreApplication(createSpacetimeExploreSource(opened.conn.db, opened.lifecycle));
+    client = { ...opened, live, target, identityHex: opened.identity.toHexString() };
+    state = 'live';
+    attempt = 0;
+    status();
+    await rescope();
+  }
+
+  /** Bring the subscription to what is in view now: subscribe the new
+   * scope, and only once it has applied let the old one go. */
+  function rescope(): Promise<void> {
+    scoping = scoping.then(async () => {
+      const held = client;
+      if (!held) return;
+      const want = inView();
+      const key = JSON.stringify(want);
+      if (scoped?.key === key) return;
+      const handle = await subscribeQueries(held.conn, scopeQueries(want));
+      if (client !== held) { try { handle?.unsubscribe(); } catch {} return; }
+      const prior = scoped;
+      scoped = { key, scope: want, handle };
+      try { prior?.handle?.unsubscribe(); } catch {}
+      if (want !== 'whole') blind = true;
+      else if (blind) {
+        // Back in view whole after a narrower view: what moved unseen meanwhile
+        // is read now, at a new cursor.
+        blind = false;
+        count += 1;
+        status();
+      }
+    }).catch((error) => { detail = `The field could not be brought into view: ${error?.message ?? error}`; status(); });
+    return scoping;
+  }
+
+  /** Keep the whole field in view for this request and GLANCE_MS after it. */
+  async function glance(): Promise<boolean> {
+    glanceUntil = Date.now() + GLANCE_MS;
+    if (glanceTimer) clearTimeout(glanceTimer);
+    glanceTimer = setTimeout(() => { glanceTimer = undefined; void rescope(); }, GLANCE_MS + 10);
+    await rescope();
+    return scoped?.scope === 'whole';
+  }
+
+  let ready: Promise<void> = connectHeld();
+
+  return Object.freeze({
+    reading,
+    /** The binding changed: let the connection go and stand on the new target. */
+    async rebind() {
+      if (retry) { clearTimeout(retry); retry = undefined; }
+      epoch += 1;
+      drop();
+      attempt = 0;
+      ready = connectHeld();
+      await ready;
+    },
+    async request(request: any): Promise<HeldEnvelope> {
+      if (!request || typeof request !== 'object' || typeof request.kind !== 'string') return { ok: false, error: { kind: 'malformed', message: 'request must be an object with a string `kind`' } };
+      if (request.token_label !== undefined) return { ok: false, error: { kind: 'refused', message: 'This held client serves one identity and takes no other credential' } };
+      if (request.kind === 'view') {
+        if (typeof request.lease !== 'string' || !/^[A-Za-z0-9:._-]{1,128}$/.test(request.lease)) return { ok: false, error: { kind: 'malformed', message: 'view requires a bounded `lease`' } };
+        if (request.scope === null) leases.delete(request.lease);
+        else {
+          const scope = fieldScopeOf(request.scope);
+          if (!scope) return { ok: false, error: { kind: 'malformed', message: 'view requires `scope`: "whole", a list of field refs, or null to let the lease go' } };
+          if (!leases.has(request.lease) && leases.size >= 64) return { ok: false, error: { kind: 'refused', message: 'This window has reached its field view budget' } };
+          leases.set(request.lease, scope);
+        }
+        await rescope();
+        return { ok: true, data: { schema: 'oi.shared-field.view/v1', lease: request.lease, in_view: inView(), scope: scoped?.scope ?? [], cursor: cursor() } };
+      }
+      await ready;
+      if (state === 'unbound') return { ok: false, error: { kind: 'unbound', message: detail ?? 'no SharedField target bound' } };
+      const held = client;
+      if (!held || state !== 'live') return { ok: false, error: { kind: 'unavailable', message: `The SharedField is not reachable now: ${detail ?? 'connecting'}` } };
+      if (!(await glance())) return { ok: false, error: { kind: 'unavailable', message: detail ?? 'The field could not be brought into view' } };
+      if (request.kind === 'observe') {
+        return { ok: true, data: { schema: 'oi.shared-field.observation/v1', cursor: cursor(), snapshot: { state: 'hosted', ...fieldSnapshot(held) }, ...(typeof request.ref === 'string' && request.ref ? { reading: readRef(held, request.ref) } : {}) } };
+      }
+      return answer(held, request);
+    },
+    close() {
+      closed = true;
+      if (retry) clearTimeout(retry);
+      if (glanceTimer) clearTimeout(glanceTimer);
+      drop();
+    },
+  });
+}
+
 /** One activity-liveness row as the caller reads it, in the snake_case shape
  * `activity-liveness.mjs` consumes. Server facts only: who produced it, the
  * owner state/revision it reported, and when (server microseconds). */

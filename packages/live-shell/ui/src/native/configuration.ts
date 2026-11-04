@@ -8,7 +8,7 @@ import type {SettingsAdapter, SettingsBasis, SetupAikitOp, SetupSource} from '..
 import {createAdoptionNative} from '../../../../../desktop/cradle/src/configuration/adoptionNative'
 import {actionAnswerOf, centralActionOp} from '../central/devices/centralActions'
 import type {MachineConnection, MachineOperationResult, RemoteMachineDeclaration, RemoteMachinesSource} from '../settings/machines'
-import type {RoutineAuthoringResult, RoutineAuthoringSource} from '../settings/routines'
+import type {RoutineAuthoringOptions, RoutineAuthoringResult, RoutineAuthoringSource, RoutineAuthority, RoutineProof, RoutineTriggerDocument} from '../settings/routines'
 export type {SettingsAdapter, SettingsBasis} from '../settings/adapter'
 
 export interface NativeSettingsContext {
@@ -106,16 +106,32 @@ export function nativeRemoteMachines(call: Call, workcellRef: string): RemoteMac
   }
 }
 
-/** Why the Automations page's options and schedule preparation stand absent: no AIKit command answers either. */
-export const ROUTINE_ABSENT = {
-  options: 'A Routine\'s options: no owner operation carries them yet — missing op: an AIKit command listing a method\'s verified runs (proofs), the authorities and the admitted triggers for a new Routine (no `aikit routine` verb answers them) (AIKit).',
-  prepareSchedule: 'A schedule for a Routine: no owner operation carries it yet — missing op: an AIKit command that validates a schedule and allocates its ScheduleRecord without enabling anything (no `aikit routine` verb prepares one) (AIKit).',
-} as const
+/** AIKit's `{title, document}` rows (`aikit.routine-options/v1`), each document an object carried as AIKit handed it. */
+function documentRows<T>(value: unknown): {title: string; document: T}[] {
+  return (Array.isArray(value) ? value : []).flatMap(row => {
+    const entry = (row ?? {}) as {title?: unknown; document?: unknown}
+    return typeof entry.title === 'string' && entry.document && typeof entry.document === 'object' ? [{title: entry.title, document: entry.document as T}] : []
+  })
+}
+function refRows(value: unknown): {title: string; ref: string}[] {
+  return (Array.isArray(value) ? value : []).flatMap(row => {
+    const entry = (row ?? {}) as {title?: unknown; ref?: unknown}
+    return typeof entry.ref === 'string' ? [{title: typeof entry.title === 'string' ? entry.title : entry.ref, ref: entry.ref}] : []
+  })
+}
 
 /** Routine authoring through the kernel's routine op (lane W6 round 3: `aikit routine create` stores a Draft — nothing fires; `enable` arms
  * it with the authority given; `reprove` returns it to Disabled on a new proof), each answering AIKit's {routine, state, note} in its words.
- * Options and schedule preparation have no AIKit command: each refuses naming it, so the page offers neither. */
+ * Options (`aikit routine options --method M`) and a new schedule (`aikit routine prepare-schedule`, O-I #758/#844) are AIKit's reads: the
+ * verified runs, authorities, admitted triggers, profiles, scopes and time policy a new Routine is made from, and the ScheduleRecord a
+ * schedule shape would carry — nothing kept or enabled. AIKit's refusal rejects in its words. */
 export function nativeRoutineAuthoring(call: Call): RoutineAuthoringSource {
+  const read = async (request: Extract<KernelOp, {op: 'routine'}>['request'], project: string | undefined): Promise<Record<string, unknown>> => {
+    const answer = await call({op: 'routine', ...(project ? {project} : {}), request})
+    if (answer.error) throw new Error(answer.error)
+    if (answer.outcome?.result !== 'routine') throw new Error('AIKit did not answer the Routine operation.')
+    return (answer.outcome.data ?? {}) as Record<string, unknown>
+  }
   const author = async (request: Extract<KernelOp, {op: 'routine'}>['request'], project: string | undefined): Promise<RoutineAuthoringResult> => {
     const answer = await call({op: 'routine', ...(project ? {project} : {}), request})
     if (answer.error) return {status: 'refused', message: answer.error}
@@ -126,8 +142,19 @@ export function nativeRoutineAuthoring(call: Call): RoutineAuthoringSource {
     return {status: 'acknowledged', message: typeof data.note === 'string' && data.note ? data.note : `${routine ?? 'The Routine'} is ${state ?? 'recorded'}.`, ...(routine ? {routine_ref: routine} : {})}
   }
   return {
-    options: async () => { throw new Error(ROUTINE_ABSENT.options) },
-    prepareSchedule: async () => { throw new Error(ROUTINE_ABSENT.prepareSchedule) },
+    options: async (method, project) => {
+      const data = await read({action: 'options', method}, project)
+      const policy = (data.time_policy ?? null) as {timezone?: unknown; revision?: unknown} | null
+      const options: RoutineAuthoringOptions = {proofs: documentRows<RoutineProof>(data.proofs), authorities: documentRows<RoutineAuthority>(data.authorities),
+        triggers: documentRows<RoutineTriggerDocument>(data.triggers), profiles: refRows(data.profiles), contextScopes: refRows(data.context_scopes)}
+      return policy && typeof policy.timezone === 'string' && policy.revision != null ? {...options, timePolicy: {timezone: policy.timezone, revision: String(policy.revision)}} : options
+    },
+    prepareSchedule: async (shape, project) => {
+      const trigger = (await read({action: 'prepare_schedule', schedule: {...shape}}, project)).trigger as Record<string, unknown> | undefined
+      if (!trigger || trigger.schema !== 'aikit.time-schedule/v1' || typeof trigger.schedule_ref !== 'string' || !trigger.schedule || typeof trigger.schedule !== 'object')
+        throw new Error('AIKit\'s prepared schedule carries no ScheduleRecord (aikit.time-schedule/v1).')
+      return trigger as Extract<RoutineTriggerDocument, {schema: string}>
+    },
     create: (input, project) => author({action: 'create', name: input.name, method: input.method, proof: {...input.proof}, trigger: {...input.trigger} as Record<string, unknown>,
       authority: {...input.authority}, ...(input.description ? {description: input.description} : {}), ...(input.agent_profile ? {agent_profile: input.agent_profile} : {}),
       ...(input.context_scope.length ? {context_scopes: [...input.context_scope]} : {})}, project),

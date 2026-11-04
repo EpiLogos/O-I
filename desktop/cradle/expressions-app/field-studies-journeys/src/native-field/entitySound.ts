@@ -1,17 +1,20 @@
 /** A symbol's voice: the optional `sound` block of an authored Entity.
  *
- * "A symbol's voice is a name or a mode carrying the torus's sound, never its own oscillator" (owner, 20 Oct 2026; DLW §20.2). The voice
- * has no pitch of its own and no waveform. It names what it carries out of M2′'s store of sound (DLW §22.1) and takes its sound from
- * the torus: symbolVoices.ts filters the torus's output through the bands of the mode and places the result where the symbol stands.
+ * "A symbol has a voice: the symbol translated into sound. It is the symbol's harmony, the chord whose figure on the torus is the symbol's
+ * shape, and you hear it from where the symbol stands. The pulse sounds it, as it sounds everything. A name or a mode from M2′'s store of
+ * sound (§22.1) can stand in for the translation" (DLW §20.2). The voice has no pitch of its own and no waveform, never its own oscillator
+ * (owner, 20 Oct 2026): it takes its sound from the torus. With no `carry` it sounds the symbol's own harmony (symbolHarmony.ts: the classes
+ * its form covers where it stands); a `carry` names what stands in for it out of the store, and symbolVoices.ts filters the torus's output
+ * through the bands of the mode. Either way the result stands where the symbol stands.
  *
  *   {enabled, carry?: {kind: 'mode' | 'name', ref}, gain?, attack?, release?}
  *
  * `carry.kind` 'mode' names a row of the mode catalogue by the catalogue's own key (ql.music-modes/v1); 'name' names an entry of the
- * store that is not a mode (the divine names, the mantras, the Shem). A voice with no `carry` is silent and says why (NO_CARRY). The
+ * store that is not a mode (the divine names, the mantras, the Shem). A voice with no `carry` is the translation (NO_CARRY says so). The
  * kernel validates the same shape (`expression_profile::sound`), and refuses the fields the oscillator had.
  *
  * Saved documents written before 20 Oct carry `frequencyHz`, `followCymatic`, `waveform` and `pan`. `migrateEntitySound` drops them,
- * names each one it dropped, and gives the voice no `carry`: the frame makes up no mode from an old frequency.
+ * names each one it dropped, and gives the voice no `carry`: the frame makes up no mode from an old frequency, so the voice sounds its symbol.
  */
 export type VoiceCarryKind='mode'|'name';
 export interface VoiceCarry {
@@ -21,7 +24,7 @@ export interface VoiceCarry {
 }
 export interface EntitySound {
  enabled:boolean;
- /** What the voice carries of the torus's sound. Absent: the voice is silent and says so. */
+ /** What stands in for the symbol's own harmony, out of the store. Absent: the voice sounds the symbol's own harmony. */
  carry?:VoiceCarry;
  /** Linear gain 0..1. */
  gain?:number;
@@ -45,8 +48,8 @@ export const REMOVED_SOUND_WORDS:Readonly<Record<RemovedSoundField,string>>=Obje
 export const DEFAULT_ENTITY_SOUND:Readonly<{enabled:boolean;gain:number;attack:number;release:number}>=Object.freeze({
  enabled:false,gain:.2,attack:.08,release:.8,
 });
-/** What a voice with no `carry` says. */
-export const NO_CARRY='This voice has no name or mode yet: choose one on the Sound page';
+/** What a voice with no `carry` says: it is the symbol translated, and a name or a mode can stand in. */
+export const NO_CARRY="This voice sounds the symbol's own harmony: the chord of the classes its form covers where it stands. A name or a mode can stand in for it on the Sound page";
 /** What the voices say while the scene's Symbol voices parameter is Off (DLW §20.2). */
 export const VOICES_OFF='Symbol voices are off for this scene: no symbol carries the torus\'s sound';
 const finite=(value:unknown,low:number,high:number)=>typeof value==='number'&&Number.isFinite(value)&&value>=low&&value<=high;
@@ -83,11 +86,11 @@ export function validateEntitySound(value:unknown):EntitySound|undefined{
 
 /** One field a migration dropped, with the value it held. */
 export interface DroppedSoundField {field:RemovedSoundField;was:unknown}
-/** What a migration did to one voice: each field it dropped, and whether that silences a voice that was sounding. */
+/** What a migration did to one voice: each field it dropped, and whether a voice that was sounding now sounds its symbol instead. */
 export interface SoundMigration {
  dropped:DroppedSoundField[];
- /** The voice was enabled and now has no `carry`: it was heard before and is silent now. */
- silenced:boolean;
+ /** The voice was enabled and now has no `carry`: it sounded a pitch of its own before and sounds the symbol's own harmony now. */
+ translated:boolean;
  words:string;
 }
 /** A migration receipt as a journey keeps it: which symbol of which scene, and what happened to its voice. */
@@ -106,17 +109,17 @@ export function migrateEntitySound(value:unknown):{sound:EntitySound|undefined;m
  const kept:Record<string,unknown>=Object.fromEntries(Object.entries(value).filter(([key])=>!(REMOVED_SOUND_FIELDS as readonly string[]).includes(key)));
  const sound=validateEntitySound(kept) as EntitySound;
  if(!dropped.length)return {sound,migration:null};
- const silenced=sound.enabled&&!sound.carry;
+ const translated=sound.enabled&&!sound.carry;
  const names=dropped.map(item=>item.field).join(', ');
- return {sound,migration:{dropped,silenced,
-  words:`This voice was written for an oscillator. Dropped ${names}: a symbol's voice now carries a name or mode of the torus's sound. ${silenced?`It was sounding and is silent now. ${NO_CARRY}.`:'It gained no name or mode.'}`}};
+ return {sound,migration:{dropped,translated,
+  words:`This voice was written for an oscillator. Dropped ${names}: a symbol's voice carries the torus's sound and has no pitch of its own. ${translated?`It sounded a pitch of its own and sounds its symbol now. ${NO_CARRY}.`:'It gained no name or mode.'}`}};
 }
 
 /** The minimal entity/scene shape the planner reads (model.ts Entity/Scene). */
 interface SoundingEntity {id:string;enabled?:boolean;kind?:string;sound?:EntitySound}
 interface SoundingScene {entities:readonly SoundingEntity[];composition?:{symbolVoices?:boolean}}
-/** One voice the scene sounds now: a symbol's own envelope, and what it carries. */
-export interface EntityVoice {entityId:string;carry:VoiceCarry;gain:number;attack:number;release:number}
+/** One voice the scene sounds now: a symbol's own envelope, and what it carries (null: the symbol's own harmony). */
+export interface EntityVoice {entityId:string;carry:VoiceCarry|null;gain:number;attack:number;release:number}
 /** One symbol whose voice is on and does not sound, with the reason in words. */
 export interface SilentVoice {entityId:string;because:string}
 export interface EntitySoundPlan {voices:EntityVoice[];silent:SilentVoice[]}
@@ -140,9 +143,10 @@ export function setObjectSoundMuted(muted:boolean){objectSoundMuted=muted;for(co
 export function onObjectSoundMuted(listener:(muted:boolean)=>void){muteListeners.add(listener);return()=>{muteListeners.delete(listener);};}
 
 /** Pure plan: which voices a Scene sounds now, and which symbols have a voice that does not sound and why. A symbol sounds when it is
- * present (not disabled), its voice is enabled and carries something, the scene's Symbol voices are On (absent reads as On), and, when an
- * `active` set is given (e.g. the entities a performed state/gesture addresses), it is in it. Whether the carried name or mode has a
- * sound is symbolVoices.ts's reading, because it needs the catalogue and the torus. */
+ * present (not disabled), its voice is enabled, the scene's Symbol voices are On (absent reads as On), and, when an `active` set is given
+ * (e.g. the entities a performed state/gesture addresses), it is in it. It sounds what its `carry` names, or with none its own harmony.
+ * Whether the carried name or mode has a sound, and what the harmony is, is symbolVoices.ts's reading, because it needs the catalogue,
+ * the torus and where the symbol stands. */
 export function entitySoundPlan(scene:SoundingScene,active?:ReadonlySet<string>):EntitySoundPlan{
  const voices:EntityVoice[]=[],silent:SilentVoice[]=[];
  const on=scene.composition?.symbolVoices!==false;
@@ -150,9 +154,8 @@ export function entitySoundPlan(scene:SoundingScene,active?:ReadonlySet<string>)
   const sound=entity.sound;
   if(!sound?.enabled||entity.enabled===false||active&&!active.has(entity.id))continue;
   if(!on){silent.push({entityId:entity.id,because:VOICES_OFF});continue;}
-  if(!sound.carry){silent.push({entityId:entity.id,because:NO_CARRY});continue;}
   const d=DEFAULT_ENTITY_SOUND;
-  voices.push({entityId:entity.id,carry:{...sound.carry},gain:sound.gain??d.gain,attack:sound.attack??d.attack,release:sound.release??d.release});
+  voices.push({entityId:entity.id,carry:sound.carry?{...sound.carry}:null,gain:sound.gain??d.gain,attack:sound.attack??d.attack,release:sound.release??d.release});
  }
  return {voices,silent};
 }
