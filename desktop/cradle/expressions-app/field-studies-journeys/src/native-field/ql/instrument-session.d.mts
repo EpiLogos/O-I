@@ -24,8 +24,9 @@ export class InstrumentSession {
   * notes. A read: the field never advances. */
  torusState(): Promise<any>;
  /** One edit of the Torus session (rate, tempo_bpm, fundamental, carrier, shape, tuning, polyphony); the owner refuses in words.
-  * Only a Fundamental change moves the owner (one modes continuation). */
- torusSet(edit: Record<string, unknown>): Promise<any>;
+  * Only a Fundamental change moves the owner (one modes continuation). `at_samples_elapsed`, as for a strike (O-I 855): for a later sample
+  * it waits, moving nothing, and the block that reaches that sample makes it there (its reply's torus_set_landed). */
+ torusSet(edit: Record<string, unknown>, options?: {at_samples_elapsed?: string}): Promise<any>;
  /** Jankó keys strike their moving points on the tuning in force: one strike at points, one generation; receipt as lastTorusPlay. */
  torusPlay(keys: Array<{row: number; column: number}>, options?: {amplitude?: [number, number]; at_samples_elapsed?: string}): Promise<any>;
  /** Release keys from the count of notes; the body rings on, no native state moves. */

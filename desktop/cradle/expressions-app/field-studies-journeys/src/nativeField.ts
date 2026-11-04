@@ -507,7 +507,9 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   }finally{update();}
  };
  /** An instrument edit (stageCommands.ts InstrumentEdit). One that acts on the owner answers the sample its act landed at (the owner's cursor
-  * when it took the act; O-I 855), and with `at` it is made once the owner's sound has reached that sample (controller.ts untilSample). */
+  * when it took the act; O-I 855). With `at`, a Torus setting is sent at once and the owner makes it at that sample inside the block that
+  * reaches it, as it lands a strike; a determinant or a damping edit, which the owner makes only at its cursor, is made once the owner's
+  * sound has reached that sample (controller.ts untilSample). */
  const command=async(edit:InstrumentEdit,at?:string):Promise<{landed_at_samples_elapsed?:string}>=>{
   const reading=controller.reading as any;
   // An edit that acts on the owner answers the sample it landed at; with `at` it first waits for the owner's sound to reach that sample (O-I 855).
@@ -529,9 +531,9 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   }
   if(edit.kind==='torus'){
    // The Torus's M1′ session through QL's own torus-set (O-I #850): the owner validates, refuses in its words, and its reply is read back.
+   // With `at` the owner makes it at that sample inside the block that reaches it, as a strike (O-I 855): nothing waits for the cursor.
    if(!reading.instrument)throw new Error('No scene is open. Open the live instrument first; the Torus plays the scene.');
-   await reach();
-   const landed=await controller.torusSet(edit.edit);update();return {landed_at_samples_elapsed:landed};
+   const landed=await controller.torusSet(edit.edit,at);update();return {landed_at_samples_elapsed:landed};
   }
   if(at!==undefined)throw new Error('This edit is made on the frame\'s own sound, at the device\'s time: it lands at no sample of the owner.');
   if(edit.kind==='muted')controller.setMuted(edit.muted);

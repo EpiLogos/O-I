@@ -84,7 +84,9 @@ export class NativeFieldController {
  /** While the plate studies the modes under Manual, Focus or Automation the pulse is tuned to the drive (§20.14); the torus's own
   * rate is kept to give back. */
  private pulseTuning:{hz:number;before:unknown}|null=null;
- private event:any=null;private opening:any=null;private sourcesStale=false;private influenceStale=false;private timing:any=null;private timingStart=0;private lastInspect=0;
+ private event:any=null;private opening:any=null;private sourcesStale=false;
+ /** The latest sample a Torus Fundamental sent ahead waits for (O-I 855): sources read before the owner's sound reaches it stay stale. */
+ private fundamentalAt:bigint|null=null;private influenceStale=false;private timing:any=null;private timingStart=0;private lastInspect=0;
  private operating=0;private cadence:Cadence|null=null;private lastCadence:Cadence|null=null;
  private refusal:{operation:string;reason:string;at:number}|null=null;
  private played:{at:number;strikes:number;last_ms:number}|null=null;
@@ -113,7 +115,9 @@ export class NativeFieldController {
   const modes=sources?.current?.m2?.resonator?.modes;
   this.torusObject.setModeRefs(Array.isArray(modes)?modes.map((mode:any)=>mode?.mode_ref):null);
   if(this.scene){this.event=eventFromSources(sources);this.acting=readScene(sources,this.influenceReading,this.opened?.source);}
-  this.sourcesStale=false;this.lastInspect=performance.now();
+  // A Fundamental sent ahead moves the scene's event where it lands: sources read before then are stale already (O-I 855).
+  if(this.fundamentalAt!==null&&BigInt(reading.acknowledged.samples_elapsed)>=this.fundamentalAt)this.fundamentalAt=null;
+  this.sourcesStale=this.fundamentalAt!==null;this.lastInspect=performance.now();
   return sources;
  }
  private async readInfluence(session:InstrumentSession){
@@ -655,13 +659,38 @@ export class NativeFieldController {
   * tempo_bpm, fundamental, carrier, shape, tuning and polyphony; O-I #850). The owner validates and refuses in its own words; the
   * session reading is taken from its reply, never set here. Only a Fundamental moves the owner (one modes continuation of the same
   * voices); every other setting is a still act: no hold, no source re-read. The reply's influence is admitted as a determinant's is. */
- torusSet(edit:unknown):Promise<string>{
+ torusSet(edit:unknown,at?:string):Promise<string>{
   if(!edit||typeof edit!=='object'||Array.isArray(edit)||!Object.keys(edit).length)return Promise.reject(new Error('a Torus edit names at least one setting'));
+  if(at!==undefined)return this.torusSetAt(edit,at);
   const still=(edit as {fundamental?:unknown}).fundamental===undefined;
   return this.determinant('Torus',()=>({operation:'torus-set',edit:structuredClone(edit)}),false,false,still).then(landed=>{
    const torus=this.session?.lastTorus;
    if(torus)this.admitTorus(torus);
    return landed;
+  });
+ }
+ /** A Torus setting sent ahead for sample `at` (QL-MEF `torus-set` with at_samples_elapsed; O-I 855). The owner makes it at that sample
+  * inside the block that reaches it, as it lands a strike, so it goes now through the one serial owner, as a played act does, and never
+  * waits for the cursor. It moves nothing until then; a Fundamental made there moves the scene's event, so the sources stand stale until
+  * they are read past it (readSources). At the cursor's own sample it is made now. Resolves with the sample it lands at. */
+ private torusSetAt(edit:object,at:string):Promise<string>{
+  const session=this.session;
+  if(!session||!this.scene)return Promise.reject(new Error('Open the live instrument first: the Torus belongs to a scene owner'));
+  if(!isStageSampleCursor(at))return Promise.reject(new Error('a setting names the sample it lands at as an exact sample cursor'));
+  if(this.status!=='following'||this.suspension)return Promise.reject(new Error('The field is not running: resume it, then play'));
+  return this.serial(async()=>{
+   if(!(await this.waitIdle(session,2000)))throw new Error('native owner busy; the setting was not sent');
+   if(this.status!=='following'||this.suspension||!this.current(session))throw new Error('instrument held before the setting was sent');
+   const waits=BigInt(at)>BigInt(session.reading.acknowledged.samples_elapsed);
+   try{await session.torusSet(structuredClone(edit) as Record<string,unknown>,{at_samples_elapsed:at});}
+   catch(error){this.refused('Torus',error,session);throw error;}
+   if((edit as {fundamental?:unknown}).fundamental!==undefined){
+    if(waits&&(this.fundamentalAt===null||BigInt(at)>this.fundamentalAt))this.fundamentalAt=BigInt(at);
+    this.checkpoint=null;this.sourcesStale=true;this.influenceStale=true;this.torusAt=0;
+   }
+   this.refusal=null;
+   const torus=session.lastTorus;if(torus)this.admitTorus(torus);
+   return at;
   });
  }
  /** The Torus as it rings, kept by its owner (QL-MEF `torus-checkpoint`, `ql.torus-checkpoint/v1`; O-I 855): the body's states, its form and
@@ -743,7 +772,8 @@ export class NativeFieldController {
   })();
  }
  /** Wait until the owner's sound has reached `at` (its acknowledged cursor at or past it; O-I 855), so an edit made then lands at the first
-  * block the owner renders from there; the edit's answer names that sample. A sample the owner has rendered is refused, as a strike behind
+  * block the owner renders from there; the edit's answer names that sample. For a determinant or a damping edit: the owner makes those only
+  * at its cursor (replace-event, m1-advance and set-damping take no sample), while a Torus setting is sent ahead (torusSetAt). A sample the owner has rendered is refused, as a strike behind
   * the cursor is, and one more than STAGE_EDIT_AHEAD_SECONDS ahead is refused rather than waited for. */
  async untilSample(at:string):Promise<void>{
   if(!isStageSampleCursor(at))throw new Error('an edit names the sample it lands at as an exact sample cursor');
@@ -964,7 +994,7 @@ export class NativeFieldController {
   this.renderer.releaseRetainedField();this.renderer.setNativeDomain(false);this.projection?.dispose();this.projection=null;
   const context=this.context;this.context=null;const opened=this.opened;this.opened=null;this.checkpoint=null;this.contextLost=false;
   this.sources=null;this.domain=null;this.openingHold=null;
-  this.scene=false;this.influenceReading=null;this.acting=null;this.event=null;this.opening=null;this.sourcesStale=false;this.level=null;this.tap=null;this.effectsGraph?.dispose();this.effectsGraph=null;
+  this.scene=false;this.influenceReading=null;this.acting=null;this.event=null;this.opening=null;this.sourcesStale=false;this.fundamentalAt=null;this.level=null;this.tap=null;this.effectsGraph?.dispose();this.effectsGraph=null;
   this.stageReading=null;this.stageStale=false;this.stageLast=null;
   this.torus=null;this.torusAt=0;this.torusRefused=null;this.torusObject=new TorusObject();this.pulseTuning=null;
   this.admitting=null;this.suspension=null;this.restoring=null;

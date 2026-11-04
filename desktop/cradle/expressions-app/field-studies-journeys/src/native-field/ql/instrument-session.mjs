@@ -52,7 +52,10 @@ const STAGE_ACTS = ['stage-evaluate', 'stage-retire', 'stage-bind', 'stage-unbin
 // The Torus's acts on the one owner (O-I #850). torus-play strikes the keys'
 // moving points: one strike at points, one generation. torus-release moves no
 // native state (the body rings on). torus-set moves none either, except a
-// Fundamental edit, which is one modes continuation of the same voices.
+// Fundamental edit, which is one modes continuation of the same voices. A
+// torus-set for a later sample (O-I 855) waits and moves nothing; the advance
+// whose block reaches its sample makes it there and names it in its
+// torus_set_landed, a Fundamental made there being that block's one generation.
 // torus-restore (O-I #855) rings the body again from a checkpoint: the event's
 // modes and shape continuations when the event moved, the damping when it
 // moved, and the body's state, so one to four generations, no samples, no PCM.
@@ -66,8 +69,11 @@ const TORUS_RENDER_ACTS_MAX = 4096;
 // Fundamental, and the stage's retire, bind and unbind. Their acknowledgement is the field as it stands, so there is nothing
 // to present: they claim no presentation block and are never refused for want of one (O-I #790: a dense clip releases as
 // often as it strikes, and a release refused for presentation capacity left its note in the owner's count).
-const still = command => ['torus-release', 'stage-retire', 'stage-bind', 'stage-unbind'].includes(command.operation) ||
-  (command.operation === 'torus-set' && command.edit?.fundamental === undefined);
+// A setting sent for a later sample than the cursor waits for it, and moves nothing now.
+const waits = (command, cursor) => command.operation === 'torus-set' && command.at_samples_elapsed !== undefined &&
+  BigInt(command.at_samples_elapsed) > BigInt(cursor);
+const still = (command, cursor) => ['torus-release', 'stage-retire', 'stage-bind', 'stage-unbind'].includes(command.operation) ||
+  (command.operation === 'torus-set' && (command.edit?.fundamental === undefined || waits(command, cursor)));
 const JANKO_ROWS = 6;
 
 export class InstrumentSession {
@@ -198,9 +204,13 @@ export class InstrumentSession {
       const changing = command.operation === 'set-axis' || command.operation === 'replace' ||
         command.operation === 'set-damping' || command.operation === 'strike' || command.operation === 'strike-at' ||
         command.operation === 'torus-play';
-      // A Torus edit moves the owner only when it changes the Fundamental.
+      // A Torus edit moves the owner only when it changes the Fundamental, and only when it is made now.
       const torusSet = command.operation === 'torus-set';
-      const fundamental = torusSet && command.edit?.fundamental !== undefined;
+      const fundamental = torusSet && command.edit?.fundamental !== undefined && !waits(command, this.#native.samples_elapsed);
+      // A block that made waiting settings at their samples moves one generation for each Fundamental it made.
+      const landed = command.operation === 'advance' && Array.isArray(reply.torus_set_landed)
+        ? BigInt(reply.torus_set_landed.filter(set => set?.applied === true && Array.isArray(set.moved) &&
+          set.moved.includes('fundamental')).length) : 0n;
       const torusRestore = command.operation === 'torus-restore';
       // replace-event commits modes and, when required, shape. m1-advance
       // additionally commits inscription-axis alignment. replace-event's own
@@ -221,7 +231,7 @@ export class InstrumentSession {
         : stageEvaluation ? after > before
         : torusSet ? after === before || (fundamental && after === before + 1n)
         : torusRestore ? after >= before + 1n && after <= before + 4n
-        : after === before + (changing ? 1n : 0n)) &&
+        : after === before + (changing ? 1n : 0n) + landed) &&
         cursor(frame.samples_elapsed) === cursor(this.#native.samples_elapsed) + BigInt(frames) &&
         frame.audio.length === frames, 'host operation and native cursor disagree');
       if (READ_OPERATIONS.includes(command.operation)) need(unchanged, 'native read advanced or reset state');
@@ -242,7 +252,7 @@ export class InstrumentSession {
       return { frame, sources: reply.sources, influence: reply.influence, personal: reply.personal, stage: reply.stage,
         score: reply.score, current: reply.current, resolved_event_ref: reply.resolved_event_ref,
         torus: reply.torus, torus_play: reply.torus_play, strike_at: reply.strike_at, torus_checkpoint: reply.torus_checkpoint,
-        torus_render: reply.torus_render };
+        torus_render: reply.torus_render, torus_set_landed: reply.torus_set_landed };
     } catch (error) {
       this.#unknown(String(error)); throw error;
     } finally { clearTimeout(timer); }
@@ -345,7 +355,7 @@ export class InstrumentSession {
     need(!this.#busy && !this.#held && !this.#disposed &&
       ['set-axis', 'replace', 'set-damping', 'strike', 'strike-at', ...EVENT_OPERATIONS, ...STAGE_ACTS, ...TORUS_ACTS].includes(command?.operation), 'domain operation requires idle admitted owner');
     this.present();
-    const presents = !still(command);
+    const presents = !still(command, this.#native.samples_elapsed);
     need(!presents || this.#queue.length < this.#maxBlocks &&
       this.#bytes + JSON.stringify(this.#native).length * 2 <= this.#maxBytes, 'wait for bounded presentation capacity');
     this.#busy = true; const generation = this.#generation;
@@ -400,16 +410,16 @@ export class InstrumentSession {
     } finally { this.#busy = false; }
   }
 
-  /** The sample a played act lands at (O-I #809): absent, the owner's cursor;
-   * given, an exact cursor at or after the acknowledged one. A sample behind it
-   * is sound already rendered, refused before any exchange as the owner refuses it. */
-  #landing(at) {
+  /** The sample a played act (or a setting, `what`) lands at (O-I #809, 855): absent,
+   * the owner's cursor; given, an exact cursor at or after the acknowledged one. A sample
+   * behind it is sound already rendered, refused before any exchange as the owner refuses it. */
+  #landing(at, what = 'strike') {
     if (at === undefined) return {};
     need(typeof at === 'string' && /^(0|[1-9][0-9]{0,19})$/.test(at) && BigInt(at) <= U64,
-      'a strike names the sample it lands at as an exact sample cursor');
+      `a ${what} names the sample it lands at as an exact sample cursor`);
     const cursor = this.#native.samples_elapsed;
     need(BigInt(at) >= BigInt(cursor),
-      `a strike at sample ${at} is behind the owner's cursor ${cursor}: that sound is already rendered`);
+      `a ${what} at sample ${at} is behind the owner's cursor ${cursor}: that sound is already rendered`);
     return { at_samples_elapsed: at };
   }
 
@@ -549,11 +559,14 @@ export class InstrumentSession {
    * or {mode:'sync', note:{numerator, denominator}}), tempo_bpm, fundamental
    * ({source:'map'} or {source:'hz', hz}), carrier, shape, tuning and polyphony.
    * The owner validates and refuses in words; the reply's session reading is
-   * kept as lastTorus and its influence as lastInfluence. */
-  async torusSet(edit) {
+   * kept as lastTorus and its influence as lastInfluence. `at_samples_elapsed`
+   * names the sample it is made at, as for `strike` (O-I 855): for a later sample
+   * it waits, moving nothing, and the block that reaches that sample makes it
+   * there, its reading and influence then kept from that block's reply. */
+  async torusSet(edit, { at_samples_elapsed } = {}) {
     need(edit && typeof edit === 'object' && !Array.isArray(edit) && Object.keys(edit).length > 0,
       'a Torus edit names at least one setting');
-    return this.operate({ operation: 'torus-set', edit: structuredClone(edit) });
+    return this.operate({ operation: 'torus-set', edit: structuredClone(edit), ...this.#landing(at_samples_elapsed, 'setting') });
   }
 
   #keys(keys) {
