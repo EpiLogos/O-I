@@ -46,13 +46,14 @@ pub use devices::{
     FilterParams, GainDevice, GlueDevice, ReverbDevice, RoomDevice, RoomParams,
 };
 pub use engine::{
-    engine, BlockStamp, Due, EngineCore, EngineEvent, EngineHandle, MixerState, Part, Performance,
-    Refusal, Stamped, HAND_HOLD_MAX,
+    engine, BlockStamp, DeviceAt, DeviceFace, Due, EngineCore, EngineEvent, EngineHandle,
+    MixerState, Part, Performance, Refusal, Stamped, HAND_HOLD_MAX,
 };
 pub use graph::{
-    ClipEdge, Clock, Device, Graph, GraphError, Instrument, MasterTrack, Note, RackDevice,
-    ReturnTrack, TorusAct, TorusHear, TorusStrike, Track, MAX_RETURNS, TORUS_ACT_KEYS,
-    TORUS_HEAR_FRAMES, TORUS_HEAR_MODES, TORUS_STRIKE_MODES, TORUS_WAITING,
+    ClipEdge, Clock, Device, Graph, GraphError, GroupTrack, Instrument, MasterTrack, Note,
+    RackDevice, ReturnTrack, TorusAct, TorusHear, TorusStrike, Touch, Track, MAX_GROUPS,
+    MAX_RETURNS, TORUS_ACT_KEYS, TORUS_HEAR_FRAMES, TORUS_HEAR_MODES, TORUS_STRIKE_MODES,
+    TORUS_WAITING,
 };
 pub use instruments::{OperatorInstrument, SilentInstrument};
 

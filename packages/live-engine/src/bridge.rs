@@ -19,7 +19,7 @@ use crate::devices::{
     EchoDevice, EchoParams, FilterDevice, FilterKind, FilterParams, GlueDevice, ReverbDevice,
     RoomDevice, RoomParams,
 };
-use crate::graph::{Clock, Graph, Note, RackDevice, ReturnTrack, Track};
+use crate::graph::{Clock, Graph, GroupTrack, Note, RackDevice, ReturnTrack, Track, MAX_GROUPS};
 use crate::instruments::OperatorInstrument;
 use live_dynamics::glue::GlueParams;
 use live_dynamics::reverb::ReverbParams;
@@ -159,6 +159,79 @@ impl<'a> Stored<'a> {
         }
         words
     }
+}
+
+/// What Operator's default patch stores for the settings the engine's model of it does not take
+/// (`evidence/devices/Operator/default.xml`): the model sounds the default patch, so a set storing these sounds as
+/// stored, and one storing another value is named in a warning.
+const OPERATOR_DEFAULT_PATCH: [(&str, f64); 13] = [
+    ("Operator.0/IsOn", 1.0),
+    ("Operator.0/Tune/Coarse", 1.0),
+    ("Operator.0/Tune/Fine", 0.0),
+    ("Operator.0/Tune/VelCoarseScale", 0.0),
+    ("Operator.0/WaveForm", 0.0),
+    ("Operator.0/Phase", 0.0),
+    ("Operator.0/Feedback", 0.0),
+    ("Operator.0/VelScale", 50.0),
+    ("Operator.0/KeyScale", 0.0),
+    ("Operator.0/Envelope/AttackSlope", 0.0),
+    ("Operator.0/Envelope/DecaySlope", 1.0),
+    ("Operator.0/Envelope/ReleaseSlope", 1.0),
+    ("Operator.0/Envelope/TimeVelScale", 0.0),
+];
+
+/// An Operator as the set stores it (O-I #849 round 16), as the engine's model of it takes it
+/// (`live_dynamics::operator`, oscillator A and its amp envelope): A's level, the device's output level, and A's
+/// envelope (its times in ms, as stored; the decay's time constant at the model's two-pin reading of 0.120 s per
+/// stored second, `OscBModulator::factory`; one floor, where the attack starts and the release ends), each where the
+/// set stores it within the extent the corpus's surface gives it; what the model does not take, named where the set
+/// stores other than the default patch's (oscillator B too, which the surface gives no extent for).
+fn operator_of(el: &Element, sample_rate: u32) -> (OperatorInstrument, Vec<String>) {
+    use live_dynamics::operator::{fitted, stored as default, OperatorVoiceA};
+    let mut s = Stored::of(el);
+    let mut voice = OperatorVoiceA::default_patch(69, sample_rate);
+    voice.osc_a_level = s.take("Operator.0/Volume").unwrap_or(voice.osc_a_level);
+    voice.globals_volume = s.take("Globals/Volume").unwrap_or(voice.globals_volume);
+    let e = &mut voice.envelope;
+    if let Some(ms) = s.take("Operator.0/Envelope/AttackTime") {
+        e.attack_s = ms / 1000.0;
+    }
+    if let Some(ms) = s.take("Operator.0/Envelope/DecayTime") {
+        e.decay_time_s = ms / 1000.0;
+        e.decay_tau_s = fitted::DECAY_TAU_S * e.decay_time_s;
+    }
+    e.decay_level_amp = s
+        .take("Operator.0/Envelope/DecayLevel")
+        .unwrap_or(e.decay_level_amp);
+    e.sustain_amp = s
+        .take("Operator.0/Envelope/SustainLevel")
+        .unwrap_or(e.sustain_amp);
+    if let Some(ms) = s.take("Operator.0/Envelope/ReleaseTime") {
+        e.release_time_s = ms / 1000.0;
+    }
+    let attack_level = s.take("Operator.0/Envelope/AttackLevel");
+    if let Some(floor) = s.take("Operator.0/Envelope/ReleaseLevel") {
+        e.floor_amp = floor;
+    }
+    if let Some(level) = attack_level.filter(|level| *level != e.floor_amp) {
+        s.strays.push(format!(
+            "the engine's model of Live's Operator starts its attack where its release ends, and the set stores an AttackLevel of {level} and a ReleaseLevel of {}: the attack starts at {}",
+            e.floor_amp, e.floor_amp
+        ));
+    }
+    if let Some(level) =
+        stored(el, "Operator.1/Volume").filter(|v| *v != default::OSC_B_LEVEL_FLOOR_AMP)
+    {
+        s.strays.push(format!(
+            "its oscillator B stores a Volume of {level}, and the corpus's surface of Live's Operator gives it no extent: the engine keeps B at its floor"
+        ));
+    }
+    for (id, value) in OPERATOR_DEFAULT_PATCH {
+        if stored(el, id) == Some(value) {
+            s.taken.push(id);
+        }
+    }
+    (OperatorInstrument::new(voice), s.words())
 }
 
 /// One of the engine's models of Live's devices at the settings the set stores for `el` (O-I #849 round 15), each
@@ -725,18 +798,35 @@ fn chain_device(
 /// solo, sends), MIDI parts with their instrument and arrangement notes,
 /// the return tracks, and the Main track's volume, pan and chain.
 ///
-/// A MIDI part's first `Operator` is its instrument (the gated default
-/// patch: the bridge does not read an instrument's stored patch yet, as it
-/// reads each effect's stored settings, `chain_device`); a MIDI part with no instrument the engine
+/// A MIDI part's first `Operator` is its instrument, at the patch the set
+/// stores for it as the engine's model takes it (O-I #849 round 16,
+/// `operator_of`, as each effect's stored settings, `chain_device`); a MIDI part with no instrument the engine
 /// models stays silent, with a warning. Audio parts keep empty sources
-/// (the host fills them). Group tracks are warnings: their members route
-/// to the Main track (ENGINE DECISION — there is no group bus yet).
+/// (the host fills them). A group track is a bus (O-I #849 round 16,
+/// [`GroupTrack`]): with its chain, mixer row and sends, it takes the sound
+/// of each part and group whose `TrackGroupId` names its `Id`, and sounds
+/// into the group it stands in or the Main track. ENGINE DECISION (no set in
+/// the corpus routes a grouped part elsewhere): a part in a group sounds
+/// through it, as Live routes one by default; its output routing is not read.
 pub fn bridge_set(root: &Element, sample_rate: u32) -> Option<BridgeResult> {
     let ls = root.find("LiveSet")?;
     let tempo_bpm = num(ls.child("MainTrack").and_then(|m| m.find("Tempo"))).unwrap_or(120.0);
     let mut graph = Graph::new(sample_rate, tempo_bpm);
     let clock = Clock::start(sample_rate, tempo_bpm);
     let mut warnings = Vec::new();
+    // each group track's `Id`, in the set's order: its index among the graph's groups
+    let group_ids: Vec<&str> = ls
+        .child("Tracks")
+        .map(|tracks| {
+            tracks
+                .children_named("GroupTrack")
+                .filter_map(|g| g.attr("Id"))
+                .collect()
+        })
+        .unwrap_or_default();
+    let group_of = |tr: &Element| {
+        value_attr(tr.child("TrackGroupId")).and_then(|id| group_ids.iter().position(|g| *g == id))
+    };
     if let Some(tracks) = ls.child("Tracks") {
         for tr in &tracks.children {
             let name = tr
@@ -752,8 +842,13 @@ pub fn bridge_set(root: &Element, sample_rate: u32) -> Option<BridgeResult> {
                     let mut instrument_seen = false;
                     for d in devices_of(tr) {
                         if midi && !instrument_seen && d.name == "Operator" {
-                            track.instrument =
-                                Some(Box::new(OperatorInstrument::default_patch(sample_rate)));
+                            let (operator, words) = operator_of(d, sample_rate);
+                            warnings.extend(words.into_iter().map(|message| BridgeWarning {
+                                track: name.clone(),
+                                device: d.name.clone(),
+                                message,
+                            }));
+                            track.instrument = Some(Box::new(operator));
                             instrument_seen = true;
                         } else {
                             track.devices.push(chain_device(d, &name, &mut warnings));
@@ -775,6 +870,7 @@ pub fn bridge_set(root: &Element, sample_rate: u32) -> Option<BridgeResult> {
                     track.active = active;
                     track.solo = solo;
                     track.sends = sends;
+                    track.group = group_of(tr);
                     graph.tracks.push(track);
                 }
                 "ReturnTrack" => {
@@ -787,12 +883,33 @@ pub fn bridge_set(root: &Element, sample_rate: u32) -> Option<BridgeResult> {
                     ret.active = active;
                     graph.returns.push(ret);
                 }
-                "GroupTrack" => warnings.push(BridgeWarning {
-                    track: name,
-                    device: String::new(),
-                    message: "group track: its members route to the Main track (no group bus yet)"
-                        .into(),
-                }),
+                "GroupTrack" => {
+                    let mut group = GroupTrack::new(&name);
+                    for d in devices_of(tr) {
+                        group.devices.push(chain_device(d, &name, &mut warnings));
+                    }
+                    group.gain = gain;
+                    group.pan = pan;
+                    group.active = active;
+                    group.solo = solo;
+                    group.sends = sends;
+                    let at = graph.groups.len();
+                    group.group = group_of(tr);
+                    let mut warn = |message: String| {
+                        warnings.push(BridgeWarning {
+                            track: name.clone(),
+                            device: String::new(),
+                            message,
+                        })
+                    };
+                    if group.group.is_some_and(|up| up >= at) {
+                        warn("group track: it stands in a group after it in the set, so it sounds to the Main track".into());
+                    }
+                    if at >= MAX_GROUPS {
+                        warn(format!("group track: the engine mixes at most {MAX_GROUPS} groups, so what stands in it sounds to the Main track"));
+                    }
+                    graph.groups.push(group);
+                }
                 _ => {}
             }
         }
@@ -1128,6 +1245,221 @@ mod tests {
             &mut EchoDevice::new(ECHO_FACTORY)
         ));
         assert!(sound_alike(chain[2].as_mut(), reverb_of(2000.0).as_mut()));
+    }
+
+    /// A MIDI part holding `operator` (the element's children) as its instrument.
+    fn operator_set(operator: &str) -> Element {
+        xml::parse(&format!(
+            r#"<Ableton MajorVersion="5"><LiveSet><Tracks><MidiTrack Id="8"><Name><EffectiveName Value="Keys" /></Name>
+              <DeviceChain><DeviceChain><Devices><Operator Id="1">{operator}</Operator></Devices></DeviceChain></DeviceChain>
+            </MidiTrack></Tracks></LiveSet></Ableton>"#
+        ))
+        .unwrap()
+    }
+
+    /// A shell's or the device's settings as Operator stores them, one element holding each.
+    fn shell(name: &str, settings: &[(&str, &str)], envelope: &[(&str, &str)]) -> String {
+        let of = |s: &[(&str, &str)]| s.iter().map(|(id, v)| m(id, v)).collect::<String>();
+        let envelope = if envelope.is_empty() {
+            String::new()
+        } else {
+            format!("<Envelope>{}</Envelope>", of(envelope))
+        };
+        format!("<{name}>{}{envelope}</{name}>", of(settings))
+    }
+
+    /// `a` played as `b` plays: a note held a quarter second and let go, sample for sample.
+    fn plays_alike(
+        a: &mut dyn crate::graph::Instrument,
+        b: &mut dyn crate::graph::Instrument,
+    ) -> bool {
+        let mut clock = Clock::start(48_000, 120.0);
+        a.prepare(48_000);
+        b.prepare(48_000);
+        (0..48_000u64).all(|n| {
+            clock.sample = n;
+            if n == 0 {
+                a.note_on(60, 1.0, &clock);
+                b.note_on(60, 1.0, &clock);
+            }
+            if n == 12_000 {
+                a.note_off(60, &clock);
+                b.note_off(60, &clock);
+            }
+            let (mut x, mut y) = ([0f32; 2], [0f32; 2]);
+            a.process(&mut x, &clock);
+            b.process(&mut y, &clock);
+            x == y
+        })
+    }
+
+    /// O-I #849 round 16: a MIDI part's Operator plays the patch the set stores for it, as the engine's model takes it
+    /// (A's level, the device's level, A's envelope), and what the model does not take is named where the set stores
+    /// other than the default patch's; the default patch as Live stores it sounds as the model's own, with no word.
+    #[test]
+    fn an_operator_plays_the_patch_the_set_stores_and_names_what_its_model_does_not_take() {
+        use live_dynamics::operator::OperatorVoiceA;
+        let default_envelope = [
+            ("AttackTime", "0.1000000015"),
+            ("AttackLevel", "0.0003162277571"),
+            ("AttackSlope", "0"),
+            ("DecayTime", "1000"),
+            ("DecayLevel", "1"),
+            ("DecaySlope", "1"),
+            ("SustainLevel", "1"),
+            ("ReleaseTime", "400"),
+            ("ReleaseLevel", "0.0003162277571"),
+            ("ReleaseSlope", "1"),
+            ("TimeVelScale", "0"),
+        ];
+        let default_a = [
+            ("IsOn", "true"),
+            ("Volume", "1"),
+            ("WaveForm", "0"),
+            ("Phase", "0"),
+            ("Feedback", "0"),
+            ("VelScale", "50"),
+            ("KeyScale", "0"),
+        ];
+        let tune = |coarse: &str| {
+            format!(
+                "<Tune>{}{}{}</Tune>",
+                m("Coarse", coarse),
+                m("Fine", "0"),
+                m("VelCoarseScale", "0")
+            )
+        };
+        let as_live_stores_it = format!(
+            "{}{}{}",
+            shell("Operator.0", &default_a, &default_envelope)
+                .replace("</Operator.0>", &format!("{}</Operator.0>", tune("1"))),
+            shell("Operator.1", &[("Volume", "0.0003162277571")], &[]),
+            shell("Globals", &[("Volume", "0.1258925349")], &[]),
+        );
+        let mut r = bridge_set(&operator_set(&as_live_stores_it), 48_000).unwrap();
+        assert!(r.warnings.is_empty(), "{:?}", r.warnings);
+        assert!(plays_alike(
+            r.graph.tracks[0].instrument.as_mut().unwrap().as_mut(),
+            &mut OperatorInstrument::default_patch(48_000)
+        ));
+        // a patch of its own: A at half, the device 6 dB up from its default, a falling envelope, and what the model
+        // does not take
+        let mut a = default_a;
+        a[1] = ("Volume", "0.5");
+        a[2] = ("WaveForm", "3");
+        let mut envelope = default_envelope;
+        envelope[1] = ("AttackLevel", "0.1");
+        envelope[3] = ("DecayTime", "500");
+        envelope[6] = ("SustainLevel", "0.06309572607");
+        envelope[7] = ("ReleaseTime", "200");
+        let stored = format!(
+            "{}{}{}",
+            shell("Operator.0", &a, &envelope)
+                .replace("</Operator.0>", &format!("{}</Operator.0>", tune("2"))),
+            shell("Operator.1", &[("Volume", "1")], &[]),
+            shell("Globals", &[("Volume", "0.2511886432")], &[]),
+        );
+        let mut r = bridge_set(&operator_set(&stored), 48_000).unwrap();
+        let words: Vec<(&str, &str, &str)> = r
+            .warnings
+            .iter()
+            .map(|w| (w.track.as_str(), w.device.as_str(), w.message.as_str()))
+            .collect();
+        assert_eq!(
+            words,
+            [
+                ("Keys", "Operator", "the engine's model of Live's Operator starts its attack where its release ends, and the set stores an AttackLevel of 0.1 and a ReleaseLevel of 0.0003162277571: the attack starts at 0.0003162277571"),
+                ("Keys", "Operator", "its oscillator B stores a Volume of 1, and the corpus's surface of Live's Operator gives it no extent: the engine keeps B at its floor"),
+                ("Keys", "Operator", "the engine's model does not take its Operator.0/Tune/Coarse, Operator.0/WaveForm yet: they sound as the model's own"),
+            ]
+        );
+        let mut voice = OperatorVoiceA::default_patch(69, 48_000);
+        voice.osc_a_level = 0.5;
+        voice.globals_volume = 0.2511886432;
+        voice.envelope.decay_time_s = 0.5;
+        voice.envelope.decay_tau_s = live_dynamics::operator::fitted::DECAY_TAU_S * 0.5;
+        voice.envelope.sustain_amp = 0.06309572607;
+        voice.envelope.release_time_s = 0.2;
+        let instrument = r.graph.tracks[0].instrument.as_mut().unwrap().as_mut();
+        assert!(plays_alike(instrument, &mut OperatorInstrument::new(voice)));
+        assert!(
+            !plays_alike(instrument, &mut OperatorInstrument::default_patch(48_000)),
+            "and not as the default patch"
+        );
+    }
+
+    /// O-I #849 round 16: a set's group tracks are the engine's group buses, each with its row and chain, in the set's
+    /// order; each part and group stands in the group its `TrackGroupId` names, and a group naming one after it in the
+    /// set sounds to the Main track, in words.
+    #[test]
+    fn a_sets_group_tracks_are_buses_and_what_stands_in_each_is_read() {
+        let track = |kind: &str, id: u32, name: &str, group: i32, inner: &str| {
+            format!(
+                r#"<{kind} Id="{id}"><Name><EffectiveName Value="{name}" /></Name><TrackGroupId Value="{group}" />
+                  <DeviceChain><Mixer>{}{}</Mixer><DeviceChain><Devices>{inner}</Devices></DeviceChain></DeviceChain></{kind}>"#,
+                m("Volume", "0.5"),
+                m("Pan", "-0.25"),
+            )
+        };
+        let root = xml::parse(&format!(
+            r#"<Ableton MajorVersion="5"><LiveSet><Tracks>{}{}{}{}{}{}</Tracks></LiveSet></Ableton>"#,
+            track("GroupTrack", 20, "Drums", -1, &format!(r#"<Echo Id="1">{}</Echo>"#, m("DryWet", "0.4"))),
+            track("GroupTrack", 21, "Kit", 20, ""),
+            track("AudioTrack", 22, "Kick", 21, ""),
+            track("MidiTrack", 23, "Keys", 20, "<Operator Id=\"2\" />"),
+            track("AudioTrack", 24, "Bass", -1, ""),
+            track("GroupTrack", 25, "Late", 26, ""),
+        ))
+        .unwrap();
+        let r = bridge_set(&root, 48_000).unwrap();
+        let g = &r.graph;
+        assert_eq!(
+            g.groups
+                .iter()
+                .map(|x| (x.name.as_str(), x.group, x.gain, x.pan, x.devices.len()))
+                .collect::<Vec<_>>(),
+            [
+                ("Drums", None, 0.5, -0.25, 1),
+                ("Kit", Some(0), 0.5, -0.25, 0),
+                ("Late", None, 0.5, -0.25, 0)
+            ]
+        );
+        assert_eq!(g.groups[0].devices[0].name(), "Echo");
+        assert_eq!(
+            g.tracks
+                .iter()
+                .map(|t| (t.name.as_str(), t.group))
+                .collect::<Vec<_>>(),
+            [("Kick", Some(1)), ("Keys", Some(0)), ("Bass", None)]
+        );
+        let words: Vec<(&str, &str)> = r
+            .warnings
+            .iter()
+            .map(|w| (w.track.as_str(), w.message.as_str()))
+            .collect();
+        assert_eq!(
+            words,
+            [] as [(&str, &str); 0],
+            "a group naming no group of the set stands in none"
+        );
+        // one naming a group after it in the set
+        let root = xml::parse(&format!(
+            r#"<Ableton MajorVersion="5"><LiveSet><Tracks>{}{}</Tracks></LiveSet></Ableton>"#,
+            track("GroupTrack", 30, "First", 31, ""),
+            track("GroupTrack", 31, "Second", -1, ""),
+        ))
+        .unwrap();
+        let r = bridge_set(&root, 48_000).unwrap();
+        assert_eq!(r.graph.groups[0].group, Some(1));
+        let words: Vec<(&str, &str)> = r
+            .warnings
+            .iter()
+            .map(|w| (w.track.as_str(), w.message.as_str()))
+            .collect();
+        assert_eq!(
+            words,
+            [("First", "group track: it stands in a group after it in the set, so it sounds to the Main track")]
+        );
     }
 
     /// Live's devices on a rack's chain as the engine's own (O-I #849 rounds 13 and 14): Reverb at a

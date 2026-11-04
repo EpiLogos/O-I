@@ -193,7 +193,9 @@ export const liveSetTrackAdapter: WorldTrackAdapter<LiveSetReading> = {
     const applied = (index: number) => {
       const part = heard && enginePartOf(kinds, index)
       if (!heard || !part) return undefined
-      return part === 'main' ? heard.mixer.main : 'track' in part ? heard.mixer.tracks[part.track] : heard.mixer.returns[part.return]
+      // a group is the engine's bus (O-I #849 round 16): its row as the engine applied it
+      return part === 'main' ? heard.mixer.main : 'track' in part ? heard.mixer.tracks[part.track]
+        : 'group' in part ? heard.mixer.groups?.[part.group] : heard.mixer.returns[part.return]
     }
     const tracks = set.tracks.map((track, index) => {
       const mixer = document?.tracks[index]?.mixer

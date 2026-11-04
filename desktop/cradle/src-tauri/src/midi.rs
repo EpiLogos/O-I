@@ -1,7 +1,8 @@
 //! MIDI input for the Jankó keyboard and the MIDI map (T-LIVE-MIDI). The native host opens the MIDI inputs the system offers (midir;
 //! CoreMIDI on macOS), follows ports as they appear and disappear, and sends each note-on and note-off to the shell window as the
-//! `oi://midi-note` event, and each control change as `oi://midi-cc`. The shell hands every note to the one Jankó input path and every
-//! control to the MIDI map; nothing here decides what sounds or what a control moves.
+//! `oi://midi-note` event, each control change as `oi://midi-cc`, and each pitch bend and channel pressure as `oi://midi-expression`
+//! (O-I #853). The shell hands every note to the one Jankó input path, every control to the MIDI map, and each bend and pressure to the
+//! part's instrument; nothing here decides what sounds or what a control moves.
 //!
 //! Latency: the CoreMIDI callback only decodes three bytes, reads the wall clock and queues a small value. A forwarder thread drains what
 //! has queued and emits it as one event, so notes that arrived together reach the shell in one task: one chord, one owner act. Each note
@@ -22,6 +23,9 @@ pub const NOTE_EVENT: &str = "oi://midi-note";
 /// The control changes (T-LIVE-MIDI leg 2): an array, one entry per decoded controller message, in arrival order. A sibling of the notes,
 /// so a note batch keeps its shape; a drain that carries only controls emits only this event.
 pub const CONTROL_EVENT: &str = "oi://midi-cc";
+/// The pitch bends and channel pressures (O-I #853): an array, one entry per decoded message, in arrival order, each naming its kind.
+/// A sibling of the notes and the controls, so neither changes shape.
+pub const EXPRESSION_EVENT: &str = "oi://midi-expression";
 /// The ports the host hears, with a named refusal when it could not open some or any of them.
 pub const PORTS_EVENT: &str = "oi://midi-ports";
 /// The one window that plays the Jankó keyboard. Detached surfaces receive no MIDI, so a note is never struck twice.
@@ -48,18 +52,53 @@ pub struct ControlMessage {
     pub value: u8,
 }
 
-/// One decoded channel message the host forwards: a note, or a control change.
+/// How a channel's sound is moved while its notes sound (O-I #853): its pitch bend (0xEn, the 14-bit wire value less its centre, so
+/// −8192 to 8191, 0 unbent), or its channel pressure (0xDn, 0 to 127).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Expression {
+    Bend(i16),
+    Pressure(u8),
+}
+
+/// One channel's pitch bend or channel pressure. `channel` is the wire value (0 to 15).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ExpressionMessage {
+    pub channel: u8,
+    pub expression: Expression,
+}
+
+/// One decoded channel message the host forwards: a note, a control change, or a pitch bend or channel pressure.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum MidiMessage {
     Note(NoteMessage),
     Control(ControlMessage),
+    Expression(ExpressionMessage),
 }
 
-/// Decode one complete MIDI message as the host forwards it: a note when it is one, else a control change when it is one, else nothing.
+/// Decode one complete MIDI message as the host forwards it: a note when it is one, else a control change when it is one, else a
+/// pitch bend or channel pressure when it is one, else nothing.
 pub fn decode_message(bytes: &[u8]) -> Option<MidiMessage> {
     decode(bytes)
         .map(MidiMessage::Note)
         .or_else(|| decode_control(bytes).map(MidiMessage::Control))
+        .or_else(|| decode_expression(bytes).map(MidiMessage::Expression))
+}
+
+/// Decode one channel pitch bend (0xEn, least then most significant seven bits: three bytes) or channel pressure (0xDn value: two
+/// bytes). A data byte with its top bit set, or a message of another length, is malformed and decodes to `None`.
+pub fn decode_expression(bytes: &[u8]) -> Option<ExpressionMessage> {
+    let status = *bytes.first()?;
+    let expression = match (status & 0xF0, bytes) {
+        (0xE0, [_, lsb, msb]) if *lsb <= 127 && *msb <= 127 => {
+            Expression::Bend(((i16::from(*msb) << 7) | i16::from(*lsb)) - 8192)
+        }
+        (0xD0, [_, value]) if *value <= 127 => Expression::Pressure(*value),
+        _ => return None,
+    };
+    Some(ExpressionMessage {
+        channel: status & 0x0F,
+        expression,
+    })
 }
 
 /// Decode one channel control change (0xBn controller value). Controllers 120 to 127 are channel mode messages (all notes off, reset
@@ -126,6 +165,10 @@ enum Heard {
         port: Arc<str>,
         message: ControlMessage,
     },
+    Expression {
+        port: Arc<str>,
+        message: ExpressionMessage,
+    },
 }
 
 #[derive(Serialize, Clone)]
@@ -145,6 +188,31 @@ struct ControlEvent<'a> {
     channel: u8,
     controller: u8,
     value: u8,
+}
+
+/// A pitch bend (`kind` "bend", `value` −8192 to 8191) or a channel pressure (`kind` "pressure", `value` 0 to 127), as the shell hears
+/// it.
+#[derive(Serialize, Clone, Debug, PartialEq)]
+struct ExpressionEvent<'a> {
+    port: &'a str,
+    channel: u8,
+    kind: &'static str,
+    value: i16,
+}
+
+impl<'a> ExpressionEvent<'a> {
+    fn of(port: &'a str, message: &ExpressionMessage) -> Self {
+        let (kind, value) = match message.expression {
+            Expression::Bend(value) => ("bend", value),
+            Expression::Pressure(value) => ("pressure", i16::from(value)),
+        };
+        ExpressionEvent {
+            port,
+            channel: message.channel,
+            kind,
+            value,
+        }
+    }
 }
 
 /// The wall clock in ms since the epoch, as the shell's `Date.now()` reads it.
@@ -391,7 +459,7 @@ fn forward(app: AppHandle, rx: Receiver<Heard>) {
                     on: message.on,
                     received_ms: *received_ms,
                 }),
-                Heard::Control { .. } => None,
+                Heard::Control { .. } | Heard::Expression { .. } => None,
             })
             .collect();
         if !notes.is_empty() {
@@ -406,11 +474,21 @@ fn forward(app: AppHandle, rx: Receiver<Heard>) {
                     controller: message.controller,
                     value: message.value,
                 }),
-                Heard::Note { .. } => None,
+                Heard::Note { .. } | Heard::Expression { .. } => None,
             })
             .collect();
         if !controls.is_empty() {
             let _ = app.emit_to(SHELL_WINDOW, CONTROL_EVENT, controls);
+        }
+        let expressions: Vec<ExpressionEvent<'_>> = batch
+            .iter()
+            .filter_map(|heard| match heard {
+                Heard::Expression { port, message } => Some(ExpressionEvent::of(port, message)),
+                Heard::Note { .. } | Heard::Control { .. } => None,
+            })
+            .collect();
+        if !expressions.is_empty() {
+            let _ = app.emit_to(SHELL_WINDOW, EXPRESSION_EVENT, expressions);
         }
     }
 }
@@ -519,6 +597,12 @@ mod backend {
                     }
                     Some(MidiMessage::Control(message)) => {
                         let _ = tx.send(Heard::Control {
+                            port: Arc::clone(port_name),
+                            message,
+                        });
+                    }
+                    Some(MidiMessage::Expression(message)) => {
+                        let _ = tx.send(Heard::Expression {
                             port: Arc::clone(port_name),
                             message,
                         });
@@ -716,6 +800,92 @@ mod tests {
         assert_eq!(decode_message(&[0xF8]), None, "timing clock is neither");
         // A control is never a note: the notes path still ignores 0xBn, so a sustain pedal cannot sound a key.
         assert_eq!(decode(&[0xB0, 64, 127]), None);
+    }
+
+    /// O-I #853: a pitch bend decodes as its 14-bit value less its centre, least significant seven bits first, and a channel
+    /// pressure as its value, each with its channel; neither is a note or a control, and a malformed one is nothing.
+    #[test]
+    fn pitch_bend_and_channel_pressure_decode_with_their_channel_and_value() {
+        let bend = |channel, value| {
+            Some(MidiMessage::Expression(ExpressionMessage {
+                channel,
+                expression: Expression::Bend(value),
+            }))
+        };
+        assert_eq!(
+            decode_message(&[0xE0, 0x00, 0x40]),
+            bend(0, 0),
+            "the centre"
+        );
+        assert_eq!(
+            decode_message(&[0xE3, 0x00, 0x00]),
+            bend(3, -8192),
+            "all the way down"
+        );
+        assert_eq!(
+            decode_message(&[0xEF, 0x7F, 0x7F]),
+            bend(15, 8191),
+            "all the way up"
+        );
+        assert_eq!(
+            decode_message(&[0xE0, 0x01, 0x40]),
+            bend(0, 1),
+            "the least significant bits come first"
+        );
+        assert_eq!(decode_message(&[0xE0, 0x00, 0x41]), bend(0, 128));
+        assert_eq!(
+            decode_message(&[0xD5, 100]),
+            Some(MidiMessage::Expression(ExpressionMessage {
+                channel: 5,
+                expression: Expression::Pressure(100)
+            }))
+        );
+        assert_eq!(
+            decode_expression(&[0xE0, 0x80, 0x40]),
+            None,
+            "a data byte with its top bit set"
+        );
+        assert_eq!(
+            decode_expression(&[0xE0, 0x00]),
+            None,
+            "a bend is three bytes"
+        );
+        assert_eq!(
+            decode_expression(&[0xD0, 100, 0]),
+            None,
+            "a channel pressure is two"
+        );
+        assert_eq!(decode_expression(&[0xD0, 0x80]), None);
+        assert_eq!(
+            decode_expression(&[0xA0, 60, 100]),
+            None,
+            "polyphonic pressure is not channel pressure"
+        );
+        assert_eq!(decode(&[0xE0, 0x00, 0x40]), None, "a bend is never a note");
+        assert_eq!(decode_control(&[0xD0, 100]), None, "nor a control");
+    }
+
+    /// O-I #853: what the shell hears of a bend and a pressure: the port, the channel, the kind and the value.
+    #[test]
+    fn a_bend_and_a_pressure_reach_the_shell_with_their_kind_and_value() {
+        let heard = |expression| {
+            serde_json::to_value(ExpressionEvent::of(
+                "Keys",
+                &ExpressionMessage {
+                    channel: 2,
+                    expression,
+                },
+            ))
+            .unwrap()
+        };
+        assert_eq!(
+            heard(Expression::Bend(-4096)),
+            serde_json::json!({"port": "Keys", "channel": 2, "kind": "bend", "value": -4096})
+        );
+        assert_eq!(
+            heard(Expression::Pressure(127)),
+            serde_json::json!({"port": "Keys", "channel": 2, "kind": "pressure", "value": 127})
+        );
     }
 
     #[test]

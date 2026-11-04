@@ -19,7 +19,7 @@
 //! gated `live-dynamics` models only. Mixing-topology decisions that no
 //! document pins down are marked ENGINE DECISION where they are made.
 
-use crate::engine::{EngineEvent, Part, Performance};
+use crate::engine::{DeviceAt, EngineEvent, Part, Performance};
 
 /// One audio clock position, passed to every device frame.
 ///
@@ -72,7 +72,7 @@ impl Clock {
 /// the offline render bit-deterministic, which the acceptance gates rely
 /// on. Block/buffer processing is a later optimization, not a semantic
 /// change.
-pub trait Device: std::fmt::Debug + Send {
+pub trait Device: std::fmt::Debug + Send + AsAny {
     /// The document element name this device instantiates (e.g.
     /// `GlueCompressor`), or the engine-side name for engine-native
     /// devices (`Gain`, `Bypass`).
@@ -83,10 +83,38 @@ pub trait Device: std::fmt::Debug + Send {
     /// thread: [`Graph::prepare`] calls it, so `process` allocates
     /// nothing. The default has nothing to build.
     fn prepare(&mut self, _sample_rate: u32, _channels: usize) {}
+    /// The settings the device takes while it plays (O-I #849 round 16), each by its maker's key
+    /// with the extent it takes it within: [`EngineEvent::Set`] moves one from the next block, and
+    /// any other setting is taken by making the device again ([`Graph::rack`]). None by default.
+    fn settings(&self) -> &'static [(&'static str, f64, f64)] {
+        &[]
+    }
+    /// Take setting `at` of [`Device::settings`] at `value`, within its extent: from the next
+    /// frame, moving to it as its maker moves an edited setting. On the audio thread, so
+    /// allocation-free.
+    fn set(&mut self, _at: usize, _value: f64) {}
+    /// Stand in the place of `was`, the device of its kind this one replaces on a chain (O-I #849
+    /// round 16, [`Graph::rack`]): take what still sounds in it, so the sound goes on through the
+    /// change (a room's tail rings out, a line's repeats go on). What this one gives up for it goes
+    /// back in `was`, to be dropped off the audio thread. On the audio thread, so allocation-free.
+    /// By default nothing is taken: a device with no state to carry starts afresh.
+    fn follow(&mut self, _was: &mut dyn Device) {}
     // `Send` is a supertrait because a Graph is mixed on the realtime
     // callback (realtime.rs): cpal's stream closure is a `Send` bound, so
     // `Box<dyn Device>` must be Send. Every device is plain DSP state
     // (floats, usize, Vec<f32>), which is exactly what the bound asks for.
+}
+
+/// What lets a device read the one it stands in place of as the device it is ([`Device::follow`]):
+/// every device is one, as every type is.
+pub trait AsAny {
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any;
+}
+
+impl<T: std::any::Any> AsAny for T {
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
 }
 
 /// The sounding head of a MIDI track's chain (manual §21.1: "A MIDI
@@ -111,6 +139,21 @@ pub trait Instrument: std::fmt::Debug + Send {
     fn release_all(&mut self, clock: &Clock);
     fn process(&mut self, frame_io: &mut [f32], clock: &Clock);
     fn prepare(&mut self, _sample_rate: u32) {}
+    /// What it takes of a channel's expression while its notes sound (O-I #853): its pitch bend and
+    /// its channel pressure, each taken or why not ([`Touch`]). The control side reads it when the
+    /// instrument is put on its part, so a move it does not take is refused in words. None by default.
+    fn touch(&self) -> Touch {
+        Touch::NONE
+    }
+    /// Bend every note it sounds, and those struck after, by `amount` of its bend's range (−1 down to 1
+    /// up, 0 unbent), from `clock`. Answers whether it took it. On the audio thread, so allocation-free.
+    fn bend(&mut self, _amount: f32, _clock: &Clock) -> bool {
+        false
+    }
+    /// Press on every note it sounds by `amount` (0 to 1), from `clock`. Answers whether it took it.
+    fn pressure(&mut self, _amount: f32, _clock: &Clock) -> bool {
+        false
+    }
     /// One act of the Torus's keys ([`EngineEvent::TorusPlay`], O-I #849), struck at `clock`. Answers
     /// whether the instrument struck it: only the Torus plays an act by its keys' places, so every
     /// other instrument strikes nothing.
@@ -487,6 +530,9 @@ pub struct Track {
     /// The devices after the instrument on its rack's chain ([`RackDevice`]), before the part's own
     /// chain: the sound passes them in order. Empty until an owner puts some there.
     pub rack: Vec<RackDevice>,
+    /// The group it stands in ([`Graph::groups`], O-I #849 round 16): its sound goes to that group's
+    /// bus, not straight to the Main track (its sends still go to the returns). None: the Main track.
+    pub group: Option<usize>,
     /// The clip notes as edges, sorted by frame (offs before ons at the
     /// same frame), and the next edge to fire.
     edges: Vec<(u64, Edge)>,
@@ -511,6 +557,7 @@ impl Track {
             source: Vec::new(),
             instrument: None,
             rack: Vec::new(),
+            group: None,
             edges: Vec::new(),
             next_edge: 0,
         }
@@ -633,6 +680,87 @@ impl ReturnTrack {
     }
 }
 
+/// The most group tracks a mix holds: their buses are a fixed array, so the realtime path allocates
+/// none for them (a group past it sounds straight to the Main track, `bridge_set` warns).
+pub const MAX_GROUPS: usize = 32;
+
+/// A group track (Live's `GroupTrack`, O-I #849 round 16): what stands in it (each part and each group
+/// whose [`Track::group`] or [`GroupTrack::group`] names it) is summed on its bus, which passes its chain,
+/// then its mixer row (gain, then pan, as a part's), into the group it stands in or the Main track; its
+/// sends feed the returns as a part's do.
+#[derive(Debug)]
+pub struct GroupTrack {
+    pub name: String,
+    pub gain: f64,
+    pub pan: f64,
+    pub active: bool,
+    pub solo: bool,
+    pub sends: Vec<f64>,
+    pub devices: Vec<Box<dyn Device>>,
+    /// The group it stands in, always one before it in [`Graph::groups`] (the set's order: a group
+    /// comes before what it holds), so each bus is mixed before the one it feeds. None: the Main
+    /// track; a later index is not followed (it sounds to the Main track).
+    pub group: Option<usize>,
+}
+
+impl GroupTrack {
+    pub fn new(name: &str) -> GroupTrack {
+        GroupTrack {
+            name: name.to_string(),
+            gain: 1.0,
+            pan: 0.0,
+            active: true,
+            solo: false,
+            sends: Vec::new(),
+            devices: Vec::new(),
+            group: None,
+        }
+    }
+}
+
+/// Whether the group `at` or any group it stands in is soloed (bounded by the groups there are, so a
+/// malformed chain of groups ends).
+fn soloed_from(groups: &[GroupTrack], mut at: Option<usize>) -> bool {
+    for _ in 0..groups.len() {
+        let Some(g) = at.and_then(|g| groups.get(g).map(|group| (g, group))) else {
+            return false;
+        };
+        if g.1.solo {
+            return true;
+        }
+        at = g.1.group.filter(|up| *up < g.0);
+    }
+    false
+}
+
+/// Mark the group `at` and each group it stands in as on a soloed sound's way to the Main track.
+fn light_from(groups: &[GroupTrack], lit: &mut [bool; MAX_GROUPS], mut at: Option<usize>) {
+    for _ in 0..groups.len() {
+        let Some(g) = at.filter(|g| *g < groups.len().min(MAX_GROUPS)) else {
+            return;
+        };
+        lit[g] = true;
+        at = groups[g].group.filter(|up| *up < g);
+    }
+}
+
+/// What an instrument takes of a channel's expression (O-I #853, [`Instrument::touch`]): its pitch
+/// bend and its channel pressure, each taken (`Ok`) or not, with the words for why (completing "the
+/// engine's Operator ...").
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Touch {
+    pub bend: Result<(), &'static str>,
+    pub pressure: Result<(), &'static str>,
+}
+
+impl Touch {
+    /// An instrument that takes neither.
+    pub const NONE: Touch = Touch {
+        bend: Err("takes no pitch bend"),
+        pressure: Err("takes no channel pressure"),
+    };
+}
+
 /// The Main track (Live's master): its gain, its pan and its own device
 /// chain (session-model.md §2, MainTrack/DeviceChain/Mixer carries the
 /// staging; manual §21.1 "The Main track": "the level and the place of the
@@ -697,6 +825,8 @@ pub struct Graph {
     pub tracks: Vec<Track>,
     /// The return tracks, in the set's order (Send A feeds the first).
     pub returns: Vec<ReturnTrack>,
+    /// The group tracks, in the set's order ([`GroupTrack`], O-I #849 round 16).
+    pub groups: Vec<GroupTrack>,
     pub master: MasterTrack,
     /// The arrangement length in frames, when the host knows it (a set's
     /// stored length); otherwise the longest source or last note edge.
@@ -717,6 +847,7 @@ impl Graph {
             tempo_bpm,
             tracks: Vec::new(),
             returns: Vec::new(),
+            groups: Vec::new(),
             master: MasterTrack::default(),
             length_frames: None,
             solo_in_place: true,
@@ -776,9 +907,12 @@ impl Graph {
     }
 
     /// Put `chain` after the instrument of part `track` ([`RackDevice`]): a device made from what one
-    /// standing there was made from takes that one's state, and what stood there comes back in
-    /// `chain`, to be dropped off the audio thread. Answers whether the part is there and plays notes
-    /// (otherwise `chain` comes back as it was). Allocation-free.
+    /// standing there was made from takes that one's place, state and all; any other of a kind that
+    /// stands there follows the first of that kind not taken ([`Device::follow`], O-I #849 round 16:
+    /// a room made again rings the last one's tail out, a line made again keeps its repeats); and what
+    /// stood there comes back in `chain`, to be dropped off the audio thread. Answers whether the part
+    /// is there and plays notes (otherwise `chain` comes back as it was). Allocation-free; past the
+    /// 64th device of a chain, a device starts afresh.
     pub fn rack(&mut self, track: usize, chain: &mut Vec<RackDevice>) -> bool {
         let Some(t) = self
             .tracks
@@ -787,9 +921,27 @@ impl Graph {
         else {
             return false;
         };
-        for new in chain.iter_mut() {
-            if let Some(old) = t.rack.iter_mut().find(|old| old.made_from == new.made_from) {
-                std::mem::swap(&mut old.device, &mut new.device);
+        // which standing devices a new one has taken, and which new ones took one made as they are
+        let (mut taken, mut same) = (0u64, 0u64);
+        let standing = t.rack.len().min(64);
+        for (n, new) in chain.iter_mut().enumerate().take(64) {
+            if let Some(o) =
+                (0..standing).find(|&o| taken & 1 << o == 0 && t.rack[o].made_from == new.made_from)
+            {
+                std::mem::swap(&mut t.rack[o].device, &mut new.device);
+                taken |= 1 << o;
+                same |= 1 << n;
+            }
+        }
+        for (n, new) in chain.iter_mut().enumerate().take(64) {
+            if same & 1 << n != 0 {
+                continue;
+            }
+            if let Some(o) = (0..standing)
+                .find(|&o| taken & 1 << o == 0 && t.rack[o].device.name() == new.device.name())
+            {
+                new.device.follow(t.rack[o].device.as_mut());
+                taken |= 1 << o;
             }
         }
         std::mem::swap(&mut t.rack, chain);
@@ -805,11 +957,13 @@ impl Graph {
         if self.returns.len() > MAX_RETURNS {
             return Err(GraphError::TooManyReturns(self.returns.len()));
         }
-        for t in &self.tracks {
-            if t.sends.len() > self.returns.len() {
+        let sends = self.tracks.iter().map(|t| (&t.name, t.sends.len()));
+        let sends = sends.chain(self.groups.iter().map(|g| (&g.name, g.sends.len())));
+        for (name, sends) in sends {
+            if sends > self.returns.len() {
                 return Err(GraphError::SendCount {
-                    track: t.name.clone(),
-                    sends: t.sends.len(),
+                    track: name.clone(),
+                    sends,
                     returns: self.returns.len(),
                 });
             }
@@ -836,6 +990,11 @@ impl Graph {
         }
         for r in &mut self.returns {
             for d in &mut r.devices {
+                d.prepare(sr, 2);
+            }
+        }
+        for g in &mut self.groups {
+            for d in &mut g.devices {
                 d.prepare(sr, 2);
             }
         }
@@ -965,6 +1124,16 @@ impl Graph {
                     _ => false,
                 }
             }
+            EngineEvent::Bend { track, amount } => self
+                .tracks
+                .get_mut(track)
+                .and_then(|t| t.instrument.as_mut())
+                .is_some_and(|i| i.bend(amount, clock)),
+            EngineEvent::Pressure { track, amount } => self
+                .tracks
+                .get_mut(track)
+                .and_then(|t| t.instrument.as_mut())
+                .is_some_and(|i| i.pressure(amount, clock)),
             EngineEvent::NoteOff { track, key } => {
                 match self
                     .tracks
@@ -1040,6 +1209,7 @@ impl Graph {
             EngineEvent::Volume { part, gain } => match part {
                 Part::Track(i) => self.tracks.get_mut(i).map(|t| t.gain = gain).is_some(),
                 Part::Return(i) => self.returns.get_mut(i).map(|r| r.gain = gain).is_some(),
+                Part::Group(i) => self.groups.get_mut(i).map(|g| g.gain = gain).is_some(),
                 Part::Main => {
                     self.master.gain = gain;
                     true
@@ -1050,6 +1220,7 @@ impl Graph {
                 match part {
                     Part::Track(i) => self.tracks.get_mut(i).map(|t| t.pan = pan).is_some(),
                     Part::Return(i) => self.returns.get_mut(i).map(|r| r.pan = pan).is_some(),
+                    Part::Group(i) => self.groups.get_mut(i).map(|g| g.pan = pan).is_some(),
                     Part::Main => {
                         self.master.pan = pan;
                         true
@@ -1065,10 +1236,55 @@ impl Graph {
             EngineEvent::Active { part, on } => match part {
                 Part::Track(i) => self.tracks.get_mut(i).map(|t| t.active = on).is_some(),
                 Part::Return(i) => self.returns.get_mut(i).map(|r| r.active = on).is_some(),
+                Part::Group(i) => self.groups.get_mut(i).map(|g| g.active = on).is_some(),
                 Part::Main => false,
             },
             EngineEvent::Solo { track, on } => {
                 self.tracks.get_mut(track).map(|t| t.solo = on).is_some()
+            }
+            EngineEvent::Set {
+                part,
+                device,
+                key,
+                value,
+            } => {
+                let standing: Option<&mut dyn Device> = match (part, device) {
+                    (Part::Track(i), DeviceAt::Rack(d)) => self
+                        .tracks
+                        .get_mut(i)
+                        .and_then(|t| t.rack.get_mut(d))
+                        .map(|r| r.device.as_mut()),
+                    (Part::Track(i), DeviceAt::Chain(d)) => self
+                        .tracks
+                        .get_mut(i)
+                        .and_then(|t| t.devices.get_mut(d))
+                        .map(|d| d.as_mut()),
+                    (Part::Return(i), DeviceAt::Chain(d)) => self
+                        .returns
+                        .get_mut(i)
+                        .and_then(|r| r.devices.get_mut(d))
+                        .map(|d| d.as_mut()),
+                    (Part::Group(i), DeviceAt::Chain(d)) => self
+                        .groups
+                        .get_mut(i)
+                        .and_then(|g| g.devices.get_mut(d))
+                        .map(|d| d.as_mut()),
+                    (Part::Main, DeviceAt::Chain(d)) => {
+                        self.master.devices.get_mut(d).map(|d| d.as_mut())
+                    }
+                    _ => None,
+                };
+                // a device takes only a setting it names (one of another kind standing there takes none)
+                match standing.and_then(|d| {
+                    let at = d.settings().iter().position(|(k, ..)| *k == key)?;
+                    Some((d, at))
+                }) {
+                    Some((d, at)) => {
+                        d.set(at, value);
+                        true
+                    }
+                    None => false,
+                }
             }
         }
     }
@@ -1091,7 +1307,22 @@ impl Graph {
         // nothing; with Solo in Place on (the template's stored value) the
         // return tracks still sound, so what a soloed part sends is heard
         // through them; with it off they fall silent with the rest.
-        let soloing = self.tracks.iter().any(|t| t.solo);
+        let soloing = self.tracks.iter().any(|t| t.solo) || self.groups.iter().any(|g| g.solo);
+        // the group buses (O-I #849 round 16): while soloing, a part or a group is heard where it or a
+        // group it stands in is soloed, and a group passes the sound of what it holds that is
+        let groups = self.groups.len().min(MAX_GROUPS);
+        let mut group_bus = [[0f64; 2]; MAX_GROUPS];
+        let mut lit = [false; MAX_GROUPS];
+        if soloing {
+            for t in self.tracks.iter().filter(|t| t.solo) {
+                light_from(&self.groups, &mut lit, t.group);
+            }
+            for g in 0..groups {
+                if self.groups[g].solo {
+                    light_from(&self.groups, &mut lit, Some(g));
+                }
+            }
+        }
         let mut pre_fader = [false; MAX_RETURNS];
         for (pre, ret) in pre_fader.iter_mut().zip(self.returns.iter()) {
             *pre = ret.pre_fader;
@@ -1122,7 +1353,8 @@ impl Graph {
             }
             // the chain runs whether or not the part is heard (a tail
             // resumes where it would have been)
-            if !track.active || (soloing && !track.solo) {
+            if !track.active || (soloing && !track.solo && !soloed_from(&self.groups, track.group))
+            {
                 continue;
             }
             // mixer staging: gain then pan; a mono track fans out to
@@ -1136,8 +1368,12 @@ impl Graph {
             let (dry_l, dry_r) = (l as f64, r as f64);
             let l = dry_l * track.gain * lw;
             let r = dry_r * track.gain * rw;
-            mix[0] += l;
-            mix[1] += r;
+            let out = match track.group.filter(|g| *g < groups) {
+                Some(g) => &mut group_bus[g],
+                None => &mut mix,
+            };
+            out[0] += l;
+            out[1] += r;
             // ENGINE DECISION (no dossier measures Live's send taps yet;
             // tests/mixer_gate.rs holds them to the SEND_* probe renders):
             // a post-fader send taps the part after its volume and pan; a
@@ -1145,6 +1381,38 @@ impl Graph {
             for ((bus, send), pre) in buses
                 .iter_mut()
                 .zip(track.sends.iter())
+                .zip(pre_fader.iter())
+                .take(returns)
+            {
+                let (sl, sr) = if *pre { (dry_l, dry_r) } else { (l, r) };
+                bus[0] += sl * send;
+                bus[1] += sr * send;
+            }
+        }
+        // each group's bus after the parts, the last first: what a group holds comes after it in the
+        // set, so a group is mixed before the one it stands in
+        for g in (0..groups).rev() {
+            let heard = !soloing || lit[g] || soloed_from(&self.groups, Some(g));
+            let group = &mut self.groups[g];
+            let mut frame = [group_bus[g][0] as f32, group_bus[g][1] as f32];
+            for d in group.devices.iter_mut() {
+                d.process(&mut frame, clock);
+            }
+            if !group.active || !heard {
+                continue;
+            }
+            let (lw, rw) = pan_weights(group.pan);
+            let (dry_l, dry_r) = (frame[0] as f64, frame[1] as f64);
+            let (l, r) = (dry_l * group.gain * lw, dry_r * group.gain * rw);
+            let out = match group.group.filter(|up| *up < g) {
+                Some(up) => &mut group_bus[up],
+                None => &mut mix,
+            };
+            out[0] += l;
+            out[1] += r;
+            for ((bus, send), pre) in buses
+                .iter_mut()
+                .zip(group.sends.iter())
                 .zip(pre_fader.iter())
                 .take(returns)
             {

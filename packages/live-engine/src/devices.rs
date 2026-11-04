@@ -15,10 +15,49 @@
 //! Live truth — no dossier measures the stored Attack/Release → time
 //! mapping (that is the D6 backlog item), so none is invented here.
 
+use crate::bridge::{auto_filter_hz, TORUS_DYNAMICS_LAW, TORUS_REVERB_LAW};
 use crate::graph::{amplitude_to_db, db_to_amplitude, Clock, Device};
 use live_dynamics::compressor::{CompressorModel, CompressorParams};
 use live_dynamics::glue::{self, GlueParams};
 use live_dynamics::reverb::{self, ReverbParams};
+
+/// The time an edited setting of the frame's effects takes to move (presentationEffects.ts `SMOOTH`: each
+/// AudioParam set while it sounds moves by setTargetAtTime over 15 ms).
+const SMOOTH_S: f64 = 0.015;
+
+/// A setting moving to where it was set, as the frame moves an edited one (O-I #849 round 16;
+/// presentationEffects.ts `#param`): Web Audio's setTargetAtTime as its specification approaches the target,
+/// the AudioParam's float stepping toward it by 1 − e^(−1/(15 ms × rate)) a frame (a setting read once a
+/// render quantum, by a quantum's share), and standing at the target once a step no longer moves the
+/// float (a few hundred of its last places short of it).
+#[derive(Debug, Clone, Copy, PartialEq)]
+struct Glide {
+    now: f32,
+    to: f32,
+}
+
+impl Glide {
+    fn at(v: f32) -> Glide {
+        Glide { now: v, to: v }
+    }
+
+    fn moving(&self) -> bool {
+        self.now != self.to
+    }
+
+    fn step(&mut self, by: f32) -> f32 {
+        if self.now != self.to {
+            let next = self.now + (self.to - self.now) * by;
+            self.now = if next == self.now { self.to } else { next };
+        }
+        self.now
+    }
+}
+
+/// What a [`Glide`] steps by over `frames` frames at `rate`.
+fn glide_by(rate: u32, frames: f64) -> f32 {
+    (1.0 - (-frames / (SMOOTH_S * f64::from(rate))).exp()) as f32
+}
 
 /// Utility gain device: applies a fixed gain to every frame.
 #[derive(Debug, Clone)]
@@ -74,8 +113,8 @@ impl Device for BypassDevice {
 ///    detector block;
 /// 2. every block boundary, the block peak (dB) feeds
 ///    `glue::static_gain_change_db` — the measured transfer of
-///    `MEASURED_ANCHORS_R30_T12`, threshold-shifted — to get the target
-///    gain;
+///    `MEASURED_ANCHORS_R30_T12`, threshold-shifted, under the Range's soft
+///    ceiling (the Range law, O-I #849 round 16) — to get the target gain;
 /// 3. the applied gain follows the target through a one-pole smoother
 ///    (attack when more reduction is needed, release when recovering);
 /// 4. the makeup is added to it, exactly (MU5).
@@ -523,6 +562,11 @@ impl Partitioned {
         Partitioned::of(&[ir], b, channels)
     }
 
+    /// Frames its responses last, partitioned: after an input's last sample, what it rings for.
+    fn frames(&self) -> usize {
+        self.b * (self.parts + 1)
+    }
+
     /// Every channel c with `irs[c % irs.len()]`; the responses are of one length.
     fn of(irs: &[&[f32]], b: usize, channels: usize) -> Partitioned {
         assert!(
@@ -760,11 +804,23 @@ const LOOK_AHEAD_RING: usize = 1024;
 /// 0.16, 0.42 and 0.98 of its Release, by how far there is to go); the gain warped by a sine and the node's own makeup applied to
 /// each side 6 ms late (its look-ahead), from the state the node starts in (the detector at full attenuation, the gain at one).
 /// Stereo in and out; a mono part's sample is both sides, as the node reads one channel.
+///
+/// While it plays it takes each of its five settings ([`TORUS_DYNAMICS_LAW`]) as the frame takes an edit
+/// (O-I #849 round 16): the node's four, read once a render quantum, each moving over 15 ms a quantum at a
+/// time; the makeup after it, a gain, moving a frame at a time.
 #[derive(Debug, Clone)]
 pub struct DynamicsDevice {
     pub params: DynamicsParams,
     rate: u32,
-    // the node's settings, each as an AudioParam holds it, and what follows from them at the rate
+    // the node's settings as its AudioParams hold them (dB, the ratio, seconds), moving to where they were set
+    threshold: Glide,
+    ratio: Glide,
+    attack: Glide,
+    release: Glide,
+    by_quantum: f32,
+    by_frame: f32,
+    in_quantum: usize,
+    // what follows from them at the rate
     knee_threshold: f32,
     yknee_db: f32,
     db_threshold: f32,
@@ -772,9 +828,9 @@ pub struct DynamicsDevice {
     master: f32,
     attack_frames: f32,
     sat_release_frames: f32,
-    release: [f32; 5],
-    /// The frame's makeup stage after the node.
-    makeup: f32,
+    release_fit: [f32; 5],
+    /// The frame's makeup stage after the node, a gain.
+    makeup: Glide,
     // the node's state
     detector: f32,
     gain: f32,
@@ -792,6 +848,13 @@ impl DynamicsDevice {
         DynamicsDevice {
             params,
             rate: 0,
+            threshold: Glide::at(params.threshold_db as f32),
+            ratio: Glide::at(params.ratio as f32),
+            attack: Glide::at((params.attack_ms / 1000.0) as f32),
+            release: Glide::at((params.release_ms / 1000.0) as f32),
+            by_quantum: 1.0,
+            by_frame: 1.0,
+            in_quantum: 0,
             knee_threshold: 0.0,
             yknee_db: 0.0,
             db_threshold: 0.0,
@@ -799,8 +862,8 @@ impl DynamicsDevice {
             master: 1.0,
             attack_frames: 1.0,
             sat_release_frames: 1.0,
-            release: [0.0; 5],
-            makeup: 1.0,
+            release_fit: [0.0; 5],
+            makeup: Glide::at(Self::makeup_of(&params)),
             detector: 0.0,
             gain: 1.0,
             max_attack_db: -1.0,
@@ -817,67 +880,24 @@ impl DynamicsDevice {
         10f32.powf(0.05 * db)
     }
 
-    fn to_db(linear: f32) -> f32 {
-        20.0 * linear.log10()
+    /// The frame's makeup gain after the node: the effect's Makeup less the node's own
+    /// (presentationEffects.ts compressorOwnMakeupDb), in its own doubles.
+    fn makeup_of(p: &DynamicsParams) -> f32 {
+        let own = -0.6 * p.threshold_db * (1.0 - 1.0 / p.ratio);
+        10f64.powf((p.makeup_db - own) / 20.0) as f32
     }
 
-    /// The node's static curve at a hard knee: linear to the threshold, then the ratio's slope in dB.
-    fn saturate(&self, x: f32) -> f32 {
-        if x < self.knee_threshold {
-            return x;
-        }
-        let y_db = self.yknee_db + self.slope * (Self::to_db(x) - self.db_threshold);
-        Self::to_linear(y_db)
-    }
-
-    /// The envelope's rate for the next division, from where the detector and the gain stand.
-    fn division(&mut self) {
-        if !self.detector.is_finite() {
-            self.detector = 1.0;
-        }
-        let scaled = self.detector.asin() / std::f32::consts::FRAC_PI_2;
-        let releasing = scaled > self.gain;
-        let diff_db = Self::to_db(self.gain / scaled);
-        self.envelope_rate = if releasing {
-            self.max_attack_db = -1.0;
-            let diff_db = if diff_db.is_finite() { diff_db } else { -1.0 };
-            let x = 0.25 * (diff_db.clamp(-12.0, 0.0) + 12.0);
-            let (x2, [a, b, c, d, e]) = (x * x, self.release);
-            let (x3, x4) = (x2 * x, x2 * x2);
-            let frames = a + b * x + c * x2 + d * x3 + e * x4;
-            Self::to_linear(5.0 / frames)
-        } else {
-            let diff_db = if diff_db.is_finite() { diff_db } else { 1.0 };
-            if self.max_attack_db == -1.0 || self.max_attack_db < diff_db {
-                self.max_attack_db = diff_db;
-            }
-            let x = 0.25 / self.max_attack_db.max(0.5);
-            1.0 - x.powf(1.0 / self.attack_frames)
-        };
-        self.scaled_desired = scaled;
-    }
-}
-
-impl Device for DynamicsDevice {
-    fn name(&self) -> &str {
-        "Dynamics"
-    }
-
-    fn prepare(&mut self, sample_rate: u32, _channels: usize) {
-        if self.rate == sample_rate {
-            return;
-        }
-        let p = self.params;
-        let rate = sample_rate as f32;
-        let threshold = p.threshold_db as f32;
-        let ratio = p.ratio as f32;
+    /// What follows at the rate from the node's settings as they stand.
+    fn derive(&mut self) {
+        let rate = self.rate as f32;
+        let threshold = self.threshold.now;
         self.db_threshold = threshold;
         self.knee_threshold = Self::to_linear(threshold);
         self.yknee_db = Self::to_db(self.knee_threshold);
-        self.slope = 1.0 / ratio;
+        self.slope = 1.0 / self.ratio.now;
         self.master = (1.0 / self.saturate(1.0)).powf(0.6);
-        self.attack_frames = ((p.attack_ms / 1000.0) as f32).max(0.001) * rate;
-        let release_frames = rate * (p.release_ms / 1000.0) as f32;
+        self.attack_frames = self.attack.now.max(0.001) * rate;
+        let release_frames = rate * self.release.now;
         self.sat_release_frames = 0.0025 * rate;
         let y = [0.09f32, 0.16, 0.42, 0.98].map(|zone| release_frames * zone);
         // the fourth-order curve through the four zones at 0, 1, 2 and 3 (the browser's own coefficients, as
@@ -915,10 +935,122 @@ impl Device for DynamicsDevice {
                 0.028_494_263_462_021_576,
             ],
         ];
-        self.release = fit.map(|[w1, w2, w3, w4]| w1 * y[0] + w2 * y[1] + w3 * y[2] + w4 * y[3]);
-        // the frame's makeup takes back the node's own (presentationEffects.ts compressorOwnMakeupDb), in its own doubles
-        let own = -0.6 * p.threshold_db * (1.0 - 1.0 / p.ratio);
-        self.makeup = 10f64.powf((p.makeup_db - own) / 20.0) as f32;
+        self.release_fit =
+            fit.map(|[w1, w2, w3, w4]| w1 * y[0] + w2 * y[1] + w3 * y[2] + w4 * y[3]);
+    }
+
+    fn to_db(linear: f32) -> f32 {
+        20.0 * linear.log10()
+    }
+
+    /// The node's static curve at a hard knee: linear to the threshold, then the ratio's slope in dB.
+    fn saturate(&self, x: f32) -> f32 {
+        if x < self.knee_threshold {
+            return x;
+        }
+        let y_db = self.yknee_db + self.slope * (Self::to_db(x) - self.db_threshold);
+        Self::to_linear(y_db)
+    }
+
+    /// The envelope's rate for the next division, from where the detector and the gain stand.
+    fn division(&mut self) {
+        if !self.detector.is_finite() {
+            self.detector = 1.0;
+        }
+        let scaled = self.detector.asin() / std::f32::consts::FRAC_PI_2;
+        let releasing = scaled > self.gain;
+        let diff_db = Self::to_db(self.gain / scaled);
+        self.envelope_rate = if releasing {
+            self.max_attack_db = -1.0;
+            let diff_db = if diff_db.is_finite() { diff_db } else { -1.0 };
+            let x = 0.25 * (diff_db.clamp(-12.0, 0.0) + 12.0);
+            let (x2, [a, b, c, d, e]) = (x * x, self.release_fit);
+            let (x3, x4) = (x2 * x, x2 * x2);
+            let frames = a + b * x + c * x2 + d * x3 + e * x4;
+            Self::to_linear(5.0 / frames)
+        } else {
+            let diff_db = if diff_db.is_finite() { diff_db } else { 1.0 };
+            if self.max_attack_db == -1.0 || self.max_attack_db < diff_db {
+                self.max_attack_db = diff_db;
+            }
+            let x = 0.25 / self.max_attack_db.max(0.5);
+            1.0 - x.powf(1.0 / self.attack_frames)
+        };
+        self.scaled_desired = scaled;
+    }
+}
+
+impl Device for DynamicsDevice {
+    fn name(&self) -> &str {
+        "Dynamics"
+    }
+
+    fn settings(&self) -> &'static [(&'static str, f64, f64)] {
+        &TORUS_DYNAMICS_LAW
+    }
+
+    fn set(&mut self, at: usize, value: f64) {
+        let p = &mut self.params;
+        match at {
+            0 => p.threshold_db = value,
+            1 => p.ratio = value,
+            2 => p.attack_ms = value,
+            3 => p.release_ms = value,
+            4 => p.makeup_db = value,
+            _ => return,
+        }
+        self.threshold.to = p.threshold_db as f32;
+        self.ratio.to = p.ratio as f32;
+        self.attack.to = (p.attack_ms / 1000.0) as f32;
+        self.release.to = (p.release_ms / 1000.0) as f32;
+        self.makeup.to = Self::makeup_of(p);
+    }
+
+    /// The node's state goes on (its detector, its gain and what its look-ahead holds), and each setting
+    /// moves from where the last one's stood.
+    fn follow(&mut self, was: &mut dyn Device) {
+        let Some(was) = was.as_any_mut().downcast_mut::<DynamicsDevice>() else {
+            return;
+        };
+        if was.rate != self.rate || self.rate == 0 {
+            return;
+        }
+        for (now, then) in [
+            (&mut self.threshold, &was.threshold),
+            (&mut self.ratio, &was.ratio),
+            (&mut self.attack, &was.attack),
+            (&mut self.release, &was.release),
+            (&mut self.makeup, &was.makeup),
+        ] {
+            now.now = then.now;
+        }
+        std::mem::swap(&mut self.ring, &mut was.ring);
+        (self.read, self.write) = (was.read, was.write);
+        self.detector = was.detector;
+        self.gain = was.gain;
+        self.max_attack_db = was.max_attack_db;
+        self.envelope_rate = was.envelope_rate;
+        self.scaled_desired = was.scaled_desired;
+        self.in_division = was.in_division;
+        self.in_quantum = was.in_quantum;
+        self.derive();
+    }
+
+    fn prepare(&mut self, sample_rate: u32, _channels: usize) {
+        if self.rate == sample_rate {
+            return;
+        }
+        let rate = sample_rate as f32;
+        let p = self.params;
+        self.threshold = Glide::at(p.threshold_db as f32);
+        self.ratio = Glide::at(p.ratio as f32);
+        self.attack = Glide::at((p.attack_ms / 1000.0) as f32);
+        self.release = Glide::at((p.release_ms / 1000.0) as f32);
+        self.makeup = Glide::at(Self::makeup_of(&p));
+        self.rate = sample_rate;
+        self.by_quantum = glide_by(sample_rate, QUANTUM_FRAMES);
+        self.by_frame = glide_by(sample_rate, 1.0);
+        self.derive();
         // the state the node starts in, its look-ahead set: the ring cleared, read 6 ms behind the write
         let look_ahead = ((0.006f32 * rate) as usize).min(LOOK_AHEAD_RING - 1);
         self.ring = vec![[0.0; 2]; LOOK_AHEAD_RING];
@@ -928,7 +1060,7 @@ impl Device for DynamicsDevice {
         self.gain = 1.0;
         self.max_attack_db = -1.0;
         self.in_division = 0;
-        self.rate = sample_rate;
+        self.in_quantum = 0;
     }
 
     fn process(&mut self, frame_io: &mut [f32], clock: &Clock) {
@@ -936,6 +1068,24 @@ impl Device for DynamicsDevice {
         if frame_io.is_empty() {
             return;
         }
+        // the node reads its settings once a render quantum
+        if self.in_quantum == 0
+            && [self.threshold, self.ratio, self.attack, self.release]
+                .iter()
+                .any(Glide::moving)
+        {
+            let by = self.by_quantum;
+            for glide in [
+                &mut self.threshold,
+                &mut self.ratio,
+                &mut self.attack,
+                &mut self.release,
+            ] {
+                glide.step(by);
+            }
+            self.derive();
+        }
+        self.in_quantum = (self.in_quantum + 1) % QUANTUM_FRAMES as usize;
         if self.in_division == 0 {
             self.division();
         }
@@ -966,8 +1116,9 @@ impl Device for DynamicsDevice {
         }
         let total = self.master * (std::f32::consts::FRAC_PI_2 * self.gain).sin();
         let delayed = self.ring[self.read];
+        let makeup = self.makeup.step(self.by_frame);
         for (v, d) in frame_io.iter_mut().zip(delayed) {
-            *v = d * total * self.makeup;
+            *v = d * total * makeup;
         }
         self.read = (self.read + 1) & (LOOK_AHEAD_RING - 1);
         self.write = (self.write + 1) & (LOOK_AHEAD_RING - 1);
@@ -1110,12 +1261,25 @@ pub fn filter_q(kind: FilterKind, resonance: f64) -> f64 {
     }
 }
 
+/// The settings the engine's Auto Filter takes while it plays, by Live's keys within what Live's device
+/// holds (params.rs `AUTOFILTER`): its kind is taken by making it again ([`FilterDevice::follow`]).
+pub const FILTER_SETTINGS: [(&str, f64, f64); 3] = [
+    ("Cutoff", 20.0, 135.0),
+    ("Resonance", 0.0, 1.25),
+    ("Drive", 0.0, 24.0),
+];
+
 /// The engine's model of Live's Auto Filter (O-I #849 round 14), built to the Torus's Filter: its frame's
-/// biquad over the driven input, on each side.
+/// biquad over the driven input, on each side. While it plays it takes its Cutoff, Resonance and Drive
+/// ([`FILTER_SETTINGS`]) as the frame takes an edit (round 16): the biquad's frequency and Q and the drive's
+/// gain each moving over 15 ms, the biquad made again at each frame they move.
 #[derive(Debug, Clone)]
 pub struct FilterDevice {
     pub params: FilterParams,
-    drive: f32,
+    drive: Glide,
+    hz: Glide,
+    q: Glide,
+    by_frame: f32,
     sections: Vec<Section>,
     rate: u32,
 }
@@ -1124,9 +1288,20 @@ impl FilterDevice {
     pub fn new(params: FilterParams) -> FilterDevice {
         FilterDevice {
             params,
-            drive: 10f64.powf(params.drive_db / 20.0) as f32,
+            drive: Glide::at(10f64.powf(params.drive_db / 20.0) as f32),
+            hz: Glide::at(params.cutoff_hz as f32),
+            q: Glide::at(filter_q(params.kind, params.resonance) as f32),
+            by_frame: 1.0,
             sections: Vec::new(),
             rate: 0,
+        }
+    }
+
+    /// Each side's biquad at the frequency and Q as they stand, its state kept.
+    fn retune(&mut self) {
+        let at = Section::of(self.params.kind, self.hz.now, self.q.now, self.rate);
+        for section in self.sections.iter_mut() {
+            (section.b, section.a) = (at.b, at.a);
         }
     }
 }
@@ -1136,20 +1311,70 @@ impl Device for FilterDevice {
         "AutoFilter"
     }
 
+    fn settings(&self) -> &'static [(&'static str, f64, f64)] {
+        &FILTER_SETTINGS
+    }
+
+    fn set(&mut self, at: usize, value: f64) {
+        let p = &mut self.params;
+        match at {
+            0 => {
+                p.cutoff_hz = auto_filter_hz(value);
+                self.hz.to = p.cutoff_hz as f32;
+            }
+            1 => {
+                p.resonance = value;
+                self.q.to = filter_q(p.kind, value) as f32;
+            }
+            2 => {
+                p.drive_db = value;
+                self.drive.to = 10f64.powf(value / 20.0) as f32;
+            }
+            _ => {}
+        }
+    }
+
+    /// Each side's biquad goes on from its state (a filter made again for another kind rings on), and
+    /// each setting moves from where the last one's stood.
+    fn follow(&mut self, was: &mut dyn Device) {
+        let Some(was) = was.as_any_mut().downcast_mut::<FilterDevice>() else {
+            return;
+        };
+        if was.rate != self.rate || self.rate == 0 {
+            return;
+        }
+        for (now, then) in self.sections.iter_mut().zip(&was.sections) {
+            (now.x, now.y) = (then.x, then.y);
+        }
+        self.hz.now = was.hz.now;
+        self.q.now = was.q.now;
+        self.drive.now = was.drive.now;
+        self.retune();
+    }
+
     fn prepare(&mut self, sample_rate: u32, channels: usize) {
         if self.rate != sample_rate || self.sections.len() < channels {
             let p = self.params;
-            let q = filter_q(p.kind, p.resonance) as f32;
-            let section = Section::of(p.kind, p.cutoff_hz as f32, q, sample_rate);
+            self.hz = Glide::at(p.cutoff_hz as f32);
+            self.q = Glide::at(filter_q(p.kind, p.resonance) as f32);
+            self.drive = Glide::at(10f64.powf(p.drive_db / 20.0) as f32);
+            let section = Section::of(p.kind, self.hz.now, self.q.now, sample_rate);
             self.sections = vec![section; channels.max(2)];
             self.rate = sample_rate;
+            self.by_frame = glide_by(sample_rate, 1.0);
         }
     }
 
     fn process(&mut self, frame_io: &mut [f32], clock: &Clock) {
         self.prepare(clock.sample_rate, frame_io.len());
+        if self.hz.moving() || self.q.moving() {
+            self.hz.step(self.by_frame);
+            self.q.step(self.by_frame);
+            self.retune();
+        }
+        let drive = self.drive.step(self.by_frame);
         for (v, section) in frame_io.iter_mut().zip(self.sections.iter_mut()) {
-            *v = section.step(*v * self.drive);
+            *v = section.step(*v * drive);
         }
     }
 }
@@ -1219,18 +1444,39 @@ struct DelaySide {
     tone: Section,
 }
 
+/// The settings the engine's Delay takes while it plays, by Live's keys within what Live's device holds
+/// (params.rs `DELAY`): all four it is made from.
+pub const DELAY_SETTINGS: [(&str, f64, f64); 4] = [
+    ("DelayLine_TimeL", 0.001000000047, 5.0),
+    ("Feedback", 0.0, 0.9499999881),
+    ("Filter_Frequency", 49.9999962, 18000.0059),
+    ("DryWet", 0.0, 1.0),
+];
+
+/// The Tone's low-pass at Q 1/√2, as a peak in dB (the frame's `tone` biquad).
+fn delay_tone_q() -> f32 {
+    (20.0 * std::f64::consts::FRAC_1_SQRT_2.log10()) as f32
+}
+
 /// The engine's model of Live's Delay (O-I #849 round 14), built to the Torus's Delay: on each side, the
 /// first pass through its own line at the time, each repeat after through the loop one time after the last
 /// (the frame's loop line one quantum short, and the quantum its cycle takes), every pass through the
-/// tone, the loop fed by Feedback, the passes heard at Mix over the dry at full.
+/// tone, the loop fed by Feedback, the passes heard at Mix over the dry at full. While it plays it takes
+/// all four of its settings ([`DELAY_SETTINGS`]) as the frame takes an edit (round 16): the line's and the
+/// loop's times, the tone's frequency and the two gains each moving over 15 ms; its lines hold the longest
+/// time Live's Delay holds, so a time moved needs no line made again.
 #[derive(Debug, Clone)]
 pub struct DelayDevice {
     pub params: DelayParams,
     sides: Vec<DelaySide>,
+    time: Glide,
+    loop_time: Glide,
+    tone: Glide,
+    feedback: Glide,
+    wet: Glide,
+    by_frame: f32,
     line_frames: f64,
     loop_frames: f64,
-    feedback: f32,
-    wet: f32,
     rate: u32,
 }
 
@@ -1239,11 +1485,41 @@ impl DelayDevice {
         DelayDevice {
             params,
             sides: Vec::new(),
+            time: Glide::at(params.time_s as f32),
+            loop_time: Glide::at(params.time_s as f32),
+            tone: Glide::at(params.tone_hz as f32),
+            feedback: Glide::at(params.feedback as f32),
+            wet: Glide::at(params.mix as f32),
+            by_frame: 1.0,
             line_frames: 0.0,
             loop_frames: 0.0,
-            feedback: params.feedback as f32,
-            wet: params.mix as f32,
             rate: 0,
+        }
+    }
+
+    /// The loop's time for a time between repeats: one quantum short of it, at the least one quantum.
+    fn loop_of(&self, time: f64) -> f32 {
+        let quantum = QUANTUM_FRAMES / f64::from(self.rate);
+        quantum.max(time - quantum) as f32
+    }
+
+    /// The lines' read points at the times as they stand.
+    fn reach(&mut self) {
+        let rate = f64::from(self.rate);
+        self.line_frames = f64::from(self.time.now) * rate;
+        self.loop_frames = f64::from(self.loop_time.now) * rate + QUANTUM_FRAMES;
+    }
+
+    /// Each side's tone at the frequency as it stands, its state kept.
+    fn retone(&mut self) {
+        let at = Section::of(
+            FilterKind::Lowpass,
+            self.tone.now,
+            delay_tone_q(),
+            self.rate,
+        );
+        for side in self.sides.iter_mut() {
+            (side.tone.b, side.tone.a) = (at.b, at.a);
         }
     }
 }
@@ -1253,44 +1529,110 @@ impl Device for DelayDevice {
         "Delay"
     }
 
+    fn settings(&self) -> &'static [(&'static str, f64, f64)] {
+        &DELAY_SETTINGS
+    }
+
+    fn set(&mut self, at: usize, value: f64) {
+        match at {
+            0 => {
+                self.params.time_s = value;
+                self.time.to = value as f32;
+                self.loop_time.to = self.loop_of(value);
+            }
+            1 => {
+                self.params.feedback = value;
+                self.feedback.to = value as f32;
+            }
+            2 => {
+                self.params.tone_hz = value;
+                self.tone.to = value as f32;
+            }
+            3 => {
+                self.params.mix = value;
+                self.wet.to = value as f32;
+            }
+            _ => {}
+        }
+    }
+
+    /// The lines go on with what they hold (the repeats ring on), and each setting moves from where the
+    /// last one's stood.
+    fn follow(&mut self, was: &mut dyn Device) {
+        let Some(was) = was.as_any_mut().downcast_mut::<DelayDevice>() else {
+            return;
+        };
+        if was.rate != self.rate || self.rate == 0 || was.sides.len() != self.sides.len() {
+            return;
+        }
+        std::mem::swap(&mut self.sides, &mut was.sides);
+        for (now, then) in [
+            (&mut self.time, &was.time),
+            (&mut self.loop_time, &was.loop_time),
+            (&mut self.tone, &was.tone),
+            (&mut self.feedback, &was.feedback),
+            (&mut self.wet, &was.wet),
+        ] {
+            now.now = then.now;
+        }
+        self.reach();
+        self.retone();
+    }
+
     fn prepare(&mut self, sample_rate: u32, channels: usize) {
         if self.rate == sample_rate && self.sides.len() >= channels {
             return;
         }
-        let rate = f64::from(sample_rate);
-        let quantum = QUANTUM_FRAMES / rate;
-        let time = self.params.time_s;
-        self.line_frames = f64::from(time as f32) * rate;
-        self.loop_frames = f64::from(quantum.max(time - quantum) as f32) * rate + QUANTUM_FRAMES;
-        let q = 20.0 * std::f64::consts::FRAC_1_SQRT_2.log10();
+        self.rate = sample_rate;
+        self.by_frame = glide_by(sample_rate, 1.0);
+        let p = self.params;
+        self.time = Glide::at(p.time_s as f32);
+        self.loop_time = Glide::at(self.loop_of(p.time_s));
+        self.tone = Glide::at(p.tone_hz as f32);
+        self.feedback = Glide::at(p.feedback as f32);
+        self.wet = Glide::at(p.mix as f32);
+        self.reach();
         let tone = Section::of(
             FilterKind::Lowpass,
-            self.params.tone_hz as f32,
-            q as f32,
+            self.tone.now,
+            delay_tone_q(),
             sample_rate,
         );
+        // the lines hold the longest time Live's Delay holds
+        let longest = DELAY_SETTINGS[0].2;
+        let rate = f64::from(sample_rate);
         self.sides = (0..channels.max(2))
             .map(|_| DelaySide {
-                line: Line::new(self.line_frames),
-                feedback: Line::new(self.loop_frames),
+                line: Line::new(longest * rate),
+                feedback: Line::new(longest * rate + QUANTUM_FRAMES),
                 tone,
             })
             .collect();
-        self.rate = sample_rate;
     }
 
     fn process(&mut self, frame_io: &mut [f32], clock: &Clock) {
         self.prepare(clock.sample_rate, frame_io.len());
+        let by = self.by_frame;
+        if self.time.moving() || self.loop_time.moving() {
+            self.time.step(by);
+            self.loop_time.step(by);
+            self.reach();
+        }
+        if self.tone.moving() {
+            self.tone.step(by);
+            self.retone();
+        }
+        let (feedback, wet) = (self.feedback.step(by), self.wet.step(by));
         let (line_frames, loop_frames) = (self.line_frames, self.loop_frames);
         for (v, side) in frame_io.iter_mut().zip(self.sides.iter_mut()) {
             let dry = *v;
             side.line.write(dry);
             let into = side.line.read(line_frames) + side.feedback.read(loop_frames);
             let toned = side.tone.step(into);
-            side.feedback.write(toned * self.feedback);
+            side.feedback.write(toned * feedback);
             side.line.advance();
             side.feedback.advance();
-            *v = dry + toned * self.wet;
+            *v = dry + toned * wet;
         }
     }
 }
@@ -1441,20 +1783,43 @@ pub fn convolver_normalisation(sides: &[Vec<f32>], sample_rate: u32) -> f32 {
     1.0 / power * 10f32.powf(-58.0 * 0.05) * (44_100.0 / sample_rate as f32)
 }
 
+/// The settings the Torus's Reverb takes while it plays (O-I #849 round 16): its pre-delay and its dry/wet,
+/// by the frame's keys within its law ([`TORUS_REVERB_LAW`]). Its size, decay and damping make its room, so
+/// it is made again for them ([`RoomDevice::follow`]).
+pub const ROOM_SETTINGS: [(&str, f64, f64); 2] = [TORUS_REVERB_LAW[3], TORUS_REVERB_LAW[4]];
+
 /// The Torus's Reverb as the engine sounds it (O-I #849 round 15): its frame's own effect as the frame runs it (presentationEffects.ts:
 /// the dry at 1 − Dry/wet, and the input after the pre-delay's DelayNode through a ConvolverNode over the frame's room at Dry/wet).
 /// The room is the frame's, sample for sample ([`room_impulse`]), normalised as the browser's convolver normalises it
 /// ([`convolver_normalisation`]); each side rings through its own half of it, as the browser's convolver rings a two-sided response,
 /// convolved by partitions so a part that sounds every sample is heard in real time. Made off the audio thread at its rate.
+///
+/// While it plays (round 16) it takes its pre-delay and dry/wet ([`ROOM_SETTINGS`]) as the frame takes an edit, the delay's time
+/// and the two gains each moving over 15 ms, its room ringing on; the pre-delay's line holds the longest pre-delay the frame's
+/// does. Made again for another room ([`Device::follow`]), it takes the last one's input over a 15 ms crossfade, and the last
+/// room rings its tail out whole; a room before that, still ringing, fades out over 15 ms.
 #[derive(Debug, Clone)]
 pub struct RoomDevice {
     pub params: RoomParams,
     rate: u32,
     conv: Option<Partitioned>,
     pre: Vec<Line>,
+    /// The pre-delay's time (s) and the two gains, as their AudioParams hold them.
+    pre_time: Glide,
     pre_frames: f64,
-    dry: f32,
-    wet: f32,
+    dry: Glide,
+    wet: Glide,
+    by_frame: f32,
+    /// Frames of a crossfade or a fade (15 ms at the rate).
+    fade_frames: usize,
+    /// The room it was made again from, ringing out, and the frames it rings for yet; the frames this
+    /// room has taken its input over since.
+    last: Option<Partitioned>,
+    last_left: usize,
+    taking: usize,
+    /// A room before that, still ringing when this one was made, fading out, and the frames it fades for yet.
+    fading: Option<Partitioned>,
+    fading_left: usize,
 }
 
 impl RoomDevice {
@@ -1465,16 +1830,91 @@ impl RoomDevice {
             rate: 0,
             conv: None,
             pre: Vec::new(),
+            pre_time: Glide::at(Self::pre_time_of(params.predelay_ms)),
             pre_frames: 0.0,
-            dry: (1.0 - wet) as f32,
-            wet: wet as f32,
+            dry: Glide::at((1.0 - wet) as f32),
+            wet: Glide::at(wet as f32),
+            by_frame: 1.0,
+            fade_frames: 0,
+            last: None,
+            last_left: 0,
+            taking: 0,
+            fading: None,
+            fading_left: 0,
         }
+    }
+
+    /// The pre-delay's DelayNode time for a pre-delay in ms.
+    fn pre_time_of(ms: f64) -> f32 {
+        (ms / 1000.0).clamp(0.0, ROOM_MAX_PREDELAY_S) as f32
+    }
+
+    /// Whether `other` rings the same room: its size, decay and damping.
+    fn same_room(&self, other: &RoomParams) -> bool {
+        let p = &self.params;
+        (p.size, p.decay_s, p.damping) == (other.size, other.decay_s, other.damping)
     }
 }
 
 impl Device for RoomDevice {
     fn name(&self) -> &str {
         "Reverb"
+    }
+
+    fn settings(&self) -> &'static [(&'static str, f64, f64)] {
+        &ROOM_SETTINGS
+    }
+
+    fn set(&mut self, at: usize, value: f64) {
+        match at {
+            0 => {
+                self.params.predelay_ms = value;
+                self.pre_time.to = Self::pre_time_of(value);
+            }
+            1 => {
+                self.params.mix = value;
+                let wet = value / 100.0;
+                self.dry.to = (1.0 - wet) as f32;
+                self.wet.to = wet as f32;
+            }
+            _ => {}
+        }
+    }
+
+    /// The sound in the pre-delay goes on, and each setting moves from where the last one's stood. The same
+    /// room rings on as it was; another rings the last one out (see the type).
+    fn follow(&mut self, was: &mut dyn Device) {
+        let Some(was) = was.as_any_mut().downcast_mut::<RoomDevice>() else {
+            return;
+        };
+        if was.rate != self.rate || self.rate == 0 || was.pre.len() != self.pre.len() {
+            return;
+        }
+        std::mem::swap(&mut self.pre, &mut was.pre);
+        self.pre_time.now = was.pre_time.now;
+        self.pre_frames = was.pre_frames;
+        self.dry.now = was.dry.now;
+        self.wet.now = was.wet.now;
+        if self.same_room(&was.params) {
+            std::mem::swap(&mut self.conv, &mut was.conv);
+            std::mem::swap(&mut self.last, &mut was.last);
+            std::mem::swap(&mut self.fading, &mut was.fading);
+            (self.last_left, self.taking, self.fading_left) =
+                (was.last_left, was.taking, was.fading_left);
+            return;
+        }
+        // the room before the last, while it still rings, fades out (one still fading then stops here)
+        if was.last_left > 0 {
+            std::mem::swap(&mut self.fading, &mut was.last);
+            self.fading_left = self.fade_frames;
+        }
+        // the last room takes the input less and less over the crossfade, then rings out
+        std::mem::swap(&mut self.last, &mut was.conv);
+        self.last_left = self
+            .last
+            .as_ref()
+            .map_or(0, |last| last.frames() + self.fade_frames);
+        self.taking = 0;
     }
 
     fn prepare(&mut self, sample_rate: u32, _channels: usize) {
@@ -1492,9 +1932,18 @@ impl Device for RoomDevice {
             PARTITION,
             2,
         ));
-        let time = (p.predelay_ms / 1000.0).clamp(0.0, ROOM_MAX_PREDELAY_S) as f32;
-        self.pre_frames = f64::from(time) * f64::from(sample_rate);
-        self.pre = (0..2).map(|_| Line::new(self.pre_frames)).collect();
+        let wet = p.mix / 100.0;
+        self.pre_time = Glide::at(Self::pre_time_of(p.predelay_ms));
+        self.dry = Glide::at((1.0 - wet) as f32);
+        self.wet = Glide::at(wet as f32);
+        self.pre_frames = f64::from(self.pre_time.now) * f64::from(sample_rate);
+        // the line holds the longest pre-delay the frame's holds, so a pre-delay moved needs none made
+        let longest = ROOM_MAX_PREDELAY_S * f64::from(sample_rate);
+        self.pre = (0..2).map(|_| Line::new(longest)).collect();
+        self.by_frame = glide_by(sample_rate, 1.0);
+        self.fade_frames = ((SMOOTH_S * f64::from(sample_rate)).round() as usize).max(1);
+        (self.last, self.last_left, self.taking) = (None, 0, self.fade_frames);
+        (self.fading, self.fading_left) = (None, 0);
         self.rate = sample_rate;
     }
 
@@ -1503,13 +1952,43 @@ impl Device for RoomDevice {
         let Some(conv) = self.conv.as_mut() else {
             return;
         };
+        let by = self.by_frame;
+        if self.pre_time.moving() {
+            self.pre_frames = f64::from(self.pre_time.step(by)) * f64::from(self.rate);
+        }
+        let (dry, wet) = (self.dry.step(by), self.wet.step(by));
+        // while it takes the last room's input, its share of it, linearly to all of it
+        let taking = self.taking < self.fade_frames;
+        let share = (self.taking + 1) as f32 / self.fade_frames as f32;
+        let fade = self.fading_left as f32 / self.fade_frames.max(1) as f32;
         for (ch, (v, line)) in frame_io.iter_mut().zip(self.pre.iter_mut()).enumerate() {
             let x = *v;
             line.write(x);
             let delayed = line.read(self.pre_frames);
             line.advance();
-            *v = x * self.dry + conv.step(ch, delayed) * self.wet;
+            let mut room = if taking {
+                conv.step(ch, delayed * share)
+            } else {
+                conv.step(ch, delayed)
+            };
+            if self.last_left > 0 {
+                if let Some(last) = self.last.as_mut() {
+                    let into = if taking { delayed * (1.0 - share) } else { 0.0 };
+                    room += last.step(ch, into);
+                }
+            }
+            if self.fading_left > 0 {
+                if let Some(fading) = self.fading.as_mut() {
+                    room += fading.step(ch, 0.0) * fade;
+                }
+            }
+            *v = x * dry + room * wet;
         }
+        if taking {
+            self.taking += 1;
+        }
+        self.last_left = self.last_left.saturating_sub(1);
+        self.fading_left = self.fading_left.saturating_sub(1);
     }
 }
 

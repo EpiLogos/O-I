@@ -50,6 +50,8 @@ pub enum Part {
     Track(usize),
     /// A return track, by its index (0 = A).
     Return(usize),
+    /// A group track, by its index in the set's order of groups (O-I #849 round 16).
+    Group(usize),
     /// The Main track.
     Main,
 }
@@ -65,6 +67,12 @@ pub enum EngineEvent {
     },
     /// Release a key on a MIDI part.
     NoteOff { track: usize, key: u8 },
+    /// A MIDI part's pitch bend (O-I #853): `amount` of its instrument's bend range, −1 down to 1 up,
+    /// 0 unbent, on every note it sounds and those struck after ([`crate::Instrument::bend`]).
+    Bend { track: usize, amount: f32 },
+    /// A MIDI part's channel pressure (O-I #853): `amount` from 0 to 1 on every note it sounds
+    /// ([`crate::Instrument::pressure`]).
+    Pressure { track: usize, amount: f32 },
     /// One act of the Torus's keys on a MIDI part that plays the Torus (O-I #849): its keys strike
     /// their moving points by QL's played-address law, as one strike.
     TorusPlay { track: usize, act: TorusAct },
@@ -90,6 +98,40 @@ pub enum EngineEvent {
     Active { part: Part, on: bool },
     /// A part's solo.
     Solo { track: usize, on: bool },
+    /// One setting of a device on a part's chain, while it plays (O-I #849 round 16): one of the
+    /// settings the device takes so ([`crate::Device::settings`], by its maker's `key`), moving from
+    /// the next block to `value` as its maker moves an edited one. The part's sound goes on.
+    Set {
+        part: Part,
+        device: DeviceAt,
+        key: &'static str,
+        value: f64,
+    },
+}
+
+/// Where a device stands on a part (O-I #849 round 16): on the part's own chain, or on the chain of
+/// the rack after a MIDI part's instrument ([`crate::Track::rack`]), by its place there.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DeviceAt {
+    Chain(usize),
+    Rack(usize),
+}
+
+/// A device as the control side knows it (O-I #849 round 16): its name and the settings it takes
+/// while it plays, with their extents ([`crate::Device::settings`]).
+#[derive(Debug, Clone, PartialEq)]
+pub struct DeviceFace {
+    pub name: String,
+    pub settings: &'static [(&'static str, f64, f64)],
+}
+
+impl DeviceFace {
+    pub fn of(device: &dyn crate::Device) -> DeviceFace {
+        DeviceFace {
+            name: device.name().to_string(),
+            settings: device.settings(),
+        }
+    }
 }
 
 /// An event as the engine applied it: at `frame` (before that frame was
@@ -132,13 +174,22 @@ pub struct PartMix {
     pub sends: Vec<f64>,
     /// A MIDI part (plays notes).
     pub midi: bool,
+    /// The devices of its own chain, and of the rack after its instrument as last put there, as
+    /// the control side knows them (O-I #849 round 16): what a [`EngineEvent::Set`] can move.
+    pub chain: Vec<DeviceFace>,
+    pub rack: Vec<DeviceFace>,
+    /// A MIDI part's instrument as the control side knows it (O-I #853): its name, and what it takes
+    /// of a channel's expression ([`crate::Instrument::touch`]); none on a part with no instrument.
+    pub instrument: Option<(String, crate::graph::Touch)>,
 }
 
-/// The mixer as the engine applied it: every part, every return, Main.
+/// The mixer as the engine applied it: every part, every return, every group, Main.
 #[derive(Debug, Clone, PartialEq)]
 pub struct MixerState {
     pub tracks: Vec<PartMix>,
     pub returns: Vec<PartMix>,
+    /// The group tracks (O-I #849 round 16), in the set's order of groups.
+    pub groups: Vec<PartMix>,
     pub main: PartMix,
 }
 
@@ -157,6 +208,20 @@ impl MixerState {
                     solo: t.solo,
                     sends: t.sends.clone(),
                     midi: t.is_midi(),
+                    chain: t
+                        .devices
+                        .iter()
+                        .map(|d| DeviceFace::of(d.as_ref()))
+                        .collect(),
+                    rack: t
+                        .rack
+                        .iter()
+                        .map(|r| DeviceFace::of(r.device.as_ref()))
+                        .collect(),
+                    instrument: t
+                        .instrument
+                        .as_ref()
+                        .map(|i| (i.name().to_string(), i.touch())),
                 })
                 .collect(),
             returns: graph
@@ -170,6 +235,33 @@ impl MixerState {
                     solo: false,
                     sends: Vec::new(),
                     midi: false,
+                    chain: r
+                        .devices
+                        .iter()
+                        .map(|d| DeviceFace::of(d.as_ref()))
+                        .collect(),
+                    rack: Vec::new(),
+                    instrument: None,
+                })
+                .collect(),
+            groups: graph
+                .groups
+                .iter()
+                .map(|g| PartMix {
+                    name: g.name.clone(),
+                    gain: g.gain,
+                    pan: g.pan,
+                    active: g.active,
+                    solo: g.solo,
+                    sends: g.sends.clone(),
+                    midi: false,
+                    chain: g
+                        .devices
+                        .iter()
+                        .map(|d| DeviceFace::of(d.as_ref()))
+                        .collect(),
+                    rack: Vec::new(),
+                    instrument: None,
                 })
                 .collect(),
             main: PartMix {
@@ -180,6 +272,14 @@ impl MixerState {
                 solo: false,
                 sends: Vec::new(),
                 midi: false,
+                chain: graph
+                    .master
+                    .devices
+                    .iter()
+                    .map(|d| DeviceFace::of(d.as_ref()))
+                    .collect(),
+                rack: Vec::new(),
+                instrument: None,
             },
         }
     }
@@ -188,8 +288,72 @@ impl MixerState {
         match part {
             Part::Track(i) => self.tracks.get_mut(i),
             Part::Return(i) => self.returns.get_mut(i),
+            Part::Group(i) => self.groups.get_mut(i),
             Part::Main => Some(&mut self.main),
         }
+    }
+
+    /// The device standing at `at` on `part`, as the control side knows it, or why none does, in words.
+    pub fn device(&self, part: Part, at: DeviceAt) -> Result<&DeviceFace, String> {
+        let mix = match part {
+            Part::Track(i) => self
+                .tracks
+                .get(i)
+                .ok_or_else(|| format!("the set has no part {i} (it has {})", self.tracks.len()))?,
+            Part::Return(i) => self.returns.get(i).ok_or_else(|| {
+                format!("the set has no return {i} (it has {})", self.returns.len())
+            })?,
+            Part::Group(i) => self.groups.get(i).ok_or_else(|| {
+                format!("the set has no group {i} (it has {})", self.groups.len())
+            })?,
+            Part::Main => &self.main,
+        };
+        let (devices, place) = match at {
+            DeviceAt::Chain(d) => (&mix.chain, d),
+            DeviceAt::Rack(d) => (&mix.rack, d),
+        };
+        let chain = match at {
+            DeviceAt::Chain(_) => "its chain",
+            DeviceAt::Rack(_) => "the rack after its instrument",
+        };
+        devices.get(place).ok_or_else(|| match devices.len() {
+            0 => format!("'{}' holds no device on {chain}", mix.name),
+            n => format!(
+                "'{}' holds {n} device{} on {chain}: there is no device {place}",
+                mix.name,
+                if n == 1 { "" } else { "s" }
+            ),
+        })
+    }
+
+    /// The setting `key` of the device at `at` on `part` (O-I #849 round 16), by the key the device names
+    /// it by, with its extent, or why the device does not take it while it plays, in words.
+    pub fn setting(
+        &self,
+        part: Part,
+        at: DeviceAt,
+        key: &str,
+    ) -> Result<(&'static str, f64, f64), String> {
+        let face = self.device(part, at)?;
+        face.settings
+            .iter()
+            .find(|(k, ..)| *k == key)
+            .copied()
+            .ok_or_else(|| match face.settings {
+                [] => format!(
+                    "the engine's {} takes no setting while it plays: it is made again for one",
+                    face.name
+                ),
+                takes => format!(
+                    "the engine's {} takes its {} while it plays, not its {key}",
+                    face.name,
+                    takes
+                        .iter()
+                        .map(|(k, ..)| *k)
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                ),
+            })
     }
 
     /// Why `event` cannot be applied to this mixer, in words; `None` when
@@ -208,6 +372,11 @@ impl MixerState {
                     "the set has no return {i} (it has {})",
                     self.returns.len()
                 )),
+                Part::Group(i) if i < self.groups.len() => Ok(()),
+                Part::Group(i) => Err(format!(
+                    "the set has no group {i} (it has {})",
+                    self.groups.len()
+                )),
                 Part::Main => Ok(()),
             }
         };
@@ -220,6 +389,13 @@ impl MixerState {
                 ))
             }
         };
+        // the instrument a MIDI part plays, as the control side knows it
+        let played = |p: &PartMix| -> Result<(String, crate::graph::Touch), String> {
+            match (&p.instrument, p.midi) {
+                (Some((name, touch)), true) => Ok((name.clone(), *touch)),
+                _ => Err(format!("'{}' is an audio part: it plays no notes", p.name)),
+            }
+        };
         let checked = match *event {
             EngineEvent::NoteOn { track: t, key, velocity } => track(t).and_then(|p| {
                 if !p.midi {
@@ -228,6 +404,22 @@ impl MixerState {
                     Err(format!("a note is a key 0–127 at a velocity of 0 or more, not key {key} at {velocity}"))
                 } else {
                     Ok(())
+                }
+            }),
+            EngineEvent::Bend { track: t, amount } => track(t).and_then(|p| {
+                let (name, touch) = played(p)?;
+                if !amount.is_finite() || !(-1.0..=1.0).contains(&amount) {
+                    Err(format!("a pitch bend is −1 (down) to 1 (up), not {amount}"))
+                } else {
+                    touch.bend.map_err(|why| format!("'{}' plays the engine's {name}, which {why}", p.name))
+                }
+            }),
+            EngineEvent::Pressure { track: t, amount } => track(t).and_then(|p| {
+                let (name, touch) = played(p)?;
+                if !amount.is_finite() || !(0.0..=1.0).contains(&amount) {
+                    Err(format!("a channel pressure is 0 to 1, not {amount}"))
+                } else {
+                    touch.pressure.map_err(|why| format!("'{}' plays the engine's {name}, which {why}", p.name))
                 }
             }),
             EngineEvent::NoteOff { track: t, key } => track(t).and_then(|p| {
@@ -306,6 +498,21 @@ impl MixerState {
                 }
             }
             EngineEvent::Solo { track: t, .. } => track(t).map(|_| ()),
+            EngineEvent::Set {
+                part: p,
+                device,
+                key,
+                value,
+            } => self.setting(p, device, key).and_then(|(key, min, max)| {
+                if value.is_finite() && (min..=max).contains(&value) {
+                    Ok(())
+                } else {
+                    let name = &self.device(p, device).map_or("", |f| f.name.as_str());
+                    Err(format!(
+                        "the engine's {name} takes its {key} within {min} to {max}, not {value}"
+                    ))
+                }
+            }),
         };
         checked.err()
     }
@@ -344,10 +551,13 @@ impl MixerState {
             }
             EngineEvent::NoteOn { .. }
             | EngineEvent::NoteOff { .. }
+            | EngineEvent::Bend { .. }
+            | EngineEvent::Pressure { .. }
             | EngineEvent::TorusPlay { .. }
             | EngineEvent::TorusStrike { .. }
             | EngineEvent::TorusHear { .. }
-            | EngineEvent::Panic => {}
+            | EngineEvent::Panic
+            | EngineEvent::Set { .. } => {}
         }
     }
 }
@@ -750,6 +960,30 @@ impl EngineHandle {
             .map_err(|_| Refusal::Full)
     }
 
+    /// Move setting `key` of the device at `device` on `part` to `value` while the engine plays (O-I
+    /// #849 round 16: a chain device's setting changed in the shell), from the next block, the part
+    /// sounding on ([`EngineEvent::Set`]). Refused, in words, for a device that is not there, for a
+    /// setting it does not take while it plays (it is made again for that one), for a value outside
+    /// the setting's extent, and when the queue is full.
+    pub fn set(
+        &mut self,
+        part: Part,
+        device: DeviceAt,
+        key: &str,
+        value: f64,
+    ) -> Result<(), Refusal> {
+        let (key, ..) = self
+            .mixer
+            .setting(part, device, key)
+            .map_err(Refusal::Invalid)?;
+        self.send(EngineEvent::Set {
+            part,
+            device,
+            key,
+            value,
+        })
+    }
+
     /// Take back every event the engine applied since the last collect:
     /// keep it in the performance record and move the mixer reading.
     /// Answers how many it took.
@@ -818,6 +1052,8 @@ impl EngineHandle {
             ));
         }
         instrument.prepare(self.sample_rate);
+        self.mixer.tracks[track].instrument =
+            Some((instrument.name().to_string(), instrument.touch()));
         let hand = Box::into_raw(Box::new(Hand {
             track,
             frame: 0,
@@ -868,6 +1104,8 @@ impl EngineHandle {
             )));
         }
         instrument.prepare(self.sample_rate);
+        self.mixer.tracks[track].instrument =
+            Some((instrument.name().to_string(), instrument.touch()));
         self.collect();
         let hand = Box::into_raw(Box::new(Hand {
             track,
@@ -916,6 +1154,11 @@ impl EngineHandle {
         for d in chain.iter_mut() {
             d.device.prepare(self.sample_rate, 2);
         }
+        // what a setting moved from now on finds there
+        self.mixer.tracks[track].rack = chain
+            .iter()
+            .map(|d| DeviceFace::of(d.device.as_ref()))
+            .collect();
         self.collect();
         let hand = Box::into_raw(Box::new(RackHand {
             track,

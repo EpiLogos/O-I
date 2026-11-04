@@ -46,13 +46,82 @@ pub const MEASURED_ANCHORS_R30_T12: &[(f64, f64)] = &[
     (0.0, -8.12),
 ];
 
+/// The Range law (O-I #849 round 16): the Range is a SOFT CEILING on the gain
+/// reduction, applied to the reduction the curve would make without it.
+/// With `u` that unceiled reduction (dB, ≥ 0) and `c` the ceiling,
+///
+///   reduction = (u^−p + c^−p)^(−1/p),   p = 6,   c = 0.932 · Range.
+///
+/// Behavioural — fitted to Live's renders only (devices/glue-compressor.md,
+/// "D1 verdict" and "THE GRID TABLE"): each Range-10 cell against its own
+/// Range-30/60 twin at the same Ratio — G3_T-12_R10_v2 vs G1/G9,
+/// G10_CEILING (T −24) vs G2, D1b_R0_R10 vs D1a/D1c, D1d_R2_R10 vs D1e/D1f.
+/// Fourteen cells at Ratio 0, 1 and 2 from 4 to 17 dB of unceiled reduction
+/// are met within 0.17 dB (the worst, D1b at +6 over: 6.65 vs 6.48); G10's
+/// deep steps 9.07 / 9.22 / 9.28 vs 9.08 / 9.21 / 9.27. The law needs no
+/// Ratio: the ceiling acts on whatever reduction the Ratio's curve makes.
+/// (The dossier's one-parameter attempts, C·tanh(u/C) and C·u/(u+C), miss G10
+/// by ±0.5 dB; this p-norm soft minimum is sharper than both.) At Range 30 the
+/// ceiling (27.96 dB) is all but out of reach — 0.0008 dB at 8.12 dB of
+/// reduction — so R60 ≡ R30 within 0.001 dB at the T −12 levels, as G9 ≡ G1.
+///
+/// OPEN — the scaling: only Range 10 bites in the corpus (30 and 60 are
+/// inactive at every level rendered), so c ∝ Range is one law through the
+/// one point c(10) = 9.32; c = Range − 0.68 fits it as well. Renders at
+/// Range 3, 5 and 20 (T −24, Ratio 1, steps signal) would pin it.
+pub const RANGE_CEILING_SHARPNESS: f64 = 6.0;
+/// The ceiling per dB of stored Range (see [`RANGE_CEILING_SHARPNESS`]).
+pub const RANGE_CEILING_PER_DB: f64 = 0.932;
+/// The Range the measured anchors were rendered at: they carry its ceiling.
+pub const ANCHORS_RANGE: f64 = 30.0;
+
+/// The soft ceiling (dB of reduction) a stored Range sets; none below 0.
+pub fn range_ceiling_db(range: f64) -> f64 {
+    RANGE_CEILING_PER_DB * range.max(0.0)
+}
+
+/// The reduction (dB, ≥ 0) the ceiling `ceiling_db` leaves of an unceiled
+/// reduction `unceiled_db`: (u^−p + c^−p)^(−1/p); the ceiling itself for an
+/// unbounded one, nothing where either is nothing.
+pub fn ceiled_reduction_db(unceiled_db: f64, ceiling_db: f64) -> f64 {
+    if unceiled_db <= 0.0 || ceiling_db <= 0.0 {
+        return 0.0;
+    }
+    let p = RANGE_CEILING_SHARPNESS;
+    (unceiled_db.powf(-p) + ceiling_db.powf(-p)).powf(-1.0 / p)
+}
+
+/// The unceiled reduction that `ceiling_db` leaves as `ceiled_db` — the
+/// inverse of [`ceiled_reduction_db`]; unbounded at or past the ceiling.
+pub fn unceiled_reduction_db(ceiled_db: f64, ceiling_db: f64) -> f64 {
+    if ceiled_db <= 0.0 {
+        return 0.0;
+    }
+    let p = RANGE_CEILING_SHARPNESS;
+    let rest = ceiled_db.powf(-p) - ceiling_db.max(0.0).powf(-p);
+    if rest <= 0.0 {
+        f64::INFINITY
+    } else {
+        rest.powf(-1.0 / p)
+    }
+}
+
 /// Static gain applied (dB, negative = reduction) for a sine at
-/// `input_peak_db`, monotone-interpolated through the measured anchors,
-/// shifted for other thresholds by moving the anchor curve with the
-/// threshold (hypothesis: the curve shape is threshold-invariant —
+/// `input_peak_db`: the measured curve (`MEASURED_ANCHORS_R30_T12`, moved
+/// with the threshold) taken out of its Range-30 ceiling and put under the
+/// Range's (the Range law above). At Range 30 it is the measured curve.
+pub fn static_gain_change_db(input_peak_db: f64, p: &GlueParams) -> f64 {
+    let measured = -measured_curve_db(input_peak_db, p);
+    let unceiled = unceiled_reduction_db(measured, range_ceiling_db(ANCHORS_RANGE));
+    -ceiled_reduction_db(unceiled, range_ceiling_db(p.range))
+}
+
+/// The measured curve, at Range 30: monotone-interpolated through the
+/// measured anchors, shifted for other thresholds by moving the anchor curve
+/// with the threshold (hypothesis: the curve shape is threshold-invariant —
 /// confidence: low, unverified across thresholds until the G2/G4 renders
 /// are folded in).
-pub fn static_gain_change_db(input_peak_db: f64, p: &GlueParams) -> f64 {
+fn measured_curve_db(input_peak_db: f64, p: &GlueParams) -> f64 {
     let shift = p.threshold_db - (-12.0);
     let x = input_peak_db - shift;
     let anchors = MEASURED_ANCHORS_R30_T12;
@@ -151,6 +220,130 @@ pub fn measure_envelope(samples: &[f32], sample_rate: u32) -> EnvelopeReading {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The sine peak levels of the harness steps signal (devices/glue-compressor.md gain maps).
+    const STEPS_DB: [f64; 7] = [-30.0, -24.0, -18.0, -12.0, -6.0, -3.0, 0.0];
+
+    /// O-I #849 round 16: the Range is a soft ceiling on the gain reduction. The ten-dB renders' gain maps
+    /// (devices/glue-compressor.md: G3_T-12_R10_v2 and G10_CEILING, T −24 R 10, the ceiling discriminator) are
+    /// met within 0.2 dB at every step, stated before the law was fitted; at Range 30 the curve is the one measured.
+    #[test]
+    fn the_range_ceils_the_reduction_as_the_ten_db_renders_measure() {
+        let at = |threshold_db: f64, range: f64| GlueParams {
+            threshold_db,
+            range,
+            ratio: 1.0,
+            makeup_db: 0.0,
+        };
+        for (name, params, measured) in [
+            (
+                "G3_T-12_R10_v2",
+                at(-12.0, 10.0),
+                [0.0, 0.0, 0.0, -0.27, -3.89, -5.84, -7.63],
+            ),
+            (
+                "G10_CEILING",
+                at(-24.0, 10.0),
+                [0.0, -0.27, -3.89, -7.63, -9.08, -9.21, -9.27],
+            ),
+        ] {
+            for (db, gr) in STEPS_DB.iter().zip(measured) {
+                let model = static_gain_change_db(*db, &params);
+                assert!(
+                    (model - gr).abs() <= 0.2,
+                    "{name} at {db} dB peak: the model reduces {model:.3} dB, the render {gr:.2} dB"
+                );
+            }
+        }
+        for (input, measured) in MEASURED_ANCHORS_R30_T12 {
+            let model = static_gain_change_db(*input, &at(-12.0, 30.0));
+            assert!(
+                (model - measured).abs() < 1e-9,
+                "at Range 30 the measured curve stands: {model} vs {measured} at {input} dB"
+            );
+        }
+    }
+
+    /// O-I #849 round 16: the law holds at every Ratio the corpus rendered at Range 10, acting on that Ratio's own
+    /// reduction. Each cell is (render, the reduction its Range-30 twin makes, the reduction it makes at Range 10), from
+    /// devices/glue-compressor.md (G3 vs G1, G10_CEILING vs G2 at T −24, D1b vs D1a, D1d vs D1e); every cell within 0.2 dB.
+    #[test]
+    fn the_range_law_takes_each_ratios_own_reduction_under_the_ceiling() {
+        let cells: [(&str, f64, f64); 16] = [
+            ("D1b_R0_R10 −18", 2.17, 2.17),
+            ("D1b_R0_R10 −12", 4.16, 4.12),
+            ("D1b_R0_R10 −6", 6.81, 6.48),
+            ("D1b_R0_R10 −3", 8.35, 7.64),
+            ("D1b_R0_R10 0", 10.01, 8.58),
+            ("G3_T-12_R10_v2 −12", 0.27, 0.27),
+            ("G3_T-12_R10_v2 −6", 3.91, 3.89),
+            ("G3_T-12_R10_v2 −3", 5.98, 5.84),
+            ("G3_T-12_R10_v2 0", 8.12, 7.63),
+            ("G10_CEILING −6", 12.57, 9.08),
+            ("G10_CEILING −3", 14.87, 9.21),
+            ("G10_CEILING 0", 17.22, 9.27),
+            ("D1d_R2_R10 −6", 2.04, 2.04),
+            ("D1d_R2_R10 −3", 4.68, 4.65),
+            ("D1d_R2_R10 0", 7.34, 7.16),
+            ("D1d_R2_R10 −12", 0.0, 0.0),
+        ];
+        let mut worst = (0f64, "");
+        for (cell, twin, measured) in cells {
+            let unceiled = unceiled_reduction_db(twin, range_ceiling_db(30.0));
+            let model = ceiled_reduction_db(unceiled, range_ceiling_db(10.0));
+            let err = (model - measured).abs();
+            if err > worst.0 {
+                worst = (err, cell);
+            }
+            assert!(
+                err <= 0.2,
+                "{cell}: the law leaves {model:.3} dB of {twin}, the render {measured}"
+            );
+        }
+        println!("worst cell {} at {:.3} dB", worst.1, worst.0);
+        assert!(
+            (ceiled_reduction_db(f64::INFINITY, 9.32) - 9.32).abs() < 1e-12,
+            "an unbounded reduction stops at the ceiling"
+        );
+        assert_eq!(
+            unceiled_reduction_db(9.32, 9.32),
+            f64::INFINITY,
+            "at the ceiling, unbounded"
+        );
+    }
+
+    /// O-I #849 round 16: above thirty the ceiling is out of reach at these levels — G9_RANGE60 reads G1 at every step
+    /// (devices/glue-compressor.md "R60 ≡ R30") — so Range 60 moves the curve less than 0.001 dB; below it, each step
+    /// of Range lowers the ceiling (Range 20 reduces less than 30 where the drive is deep).
+    #[test]
+    fn a_range_above_thirty_moves_nothing_the_renders_hear_and_one_below_lowers_the_ceiling() {
+        let at = |threshold_db: f64, range: f64| GlueParams {
+            threshold_db,
+            range,
+            ratio: 1.0,
+            makeup_db: 0.0,
+        };
+        for db in STEPS_DB {
+            let (r30, r60) = (
+                static_gain_change_db(db, &at(-12.0, 30.0)),
+                static_gain_change_db(db, &at(-12.0, 60.0)),
+            );
+            assert!(
+                (r30 - r60).abs() < 0.001,
+                "at {db} dB peak, T −12: R30 {r30} vs R60 {r60}"
+            );
+        }
+        // 24 dB over T −24, where the reduction runs deep (G2's −17.22 at Range 30)
+        let deep = |range: f64| static_gain_change_db(0.0, &at(-24.0, range));
+        assert!(
+            deep(30.0) < deep(20.0) && deep(20.0) < deep(10.0),
+            "a lower Range ceils a deep reduction lower: R30 {}, R20 {}, R10 {}",
+            deep(30.0),
+            deep(20.0),
+            deep(10.0)
+        );
+        assert_eq!(deep(0.0), 0.0, "Range 0 leaves nothing to reduce");
+    }
 
     /// Synthetic: unity gain (no compression) — steady states must equal the
     /// input step levels; attack/release effectively instant.

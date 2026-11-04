@@ -12,7 +12,10 @@ use std::sync::atomic::{AtomicU64, Ordering};
 
 use live_dynamics::glue::GlueParams;
 use live_engine::devices::{EchoDevice, EchoParams, GlueDevice};
-use live_engine::{engine, EngineEvent, Graph, Note, OperatorInstrument, Part, ReturnTrack, Track};
+use live_engine::{
+    engine, rack_device, DeviceAt, EngineEvent, Graph, Note, OperatorInstrument, Part, RackDevice,
+    ReturnTrack, Track,
+};
 
 struct Counting;
 
@@ -86,6 +89,17 @@ fn the_audio_thread_pull_allocates_nothing() {
     let mut tone = Track::new("Tone", 1);
     tone.source = (0..20_000).map(|i| (i as f32 * 0.01).sin() * 0.3).collect();
     g.tracks.extend([keys, bass, tone]);
+    // O-I #849 round 16: the tone stands in a group, a bus with its own chain and send
+    g.tracks[2].group = Some(0);
+    let mut group = live_engine::GroupTrack::new("Group");
+    group.devices.push(Box::new(GlueDevice::new(GlueParams {
+        threshold_db: -18.0,
+        range: 30.0,
+        ratio: 1.0,
+        makeup_db: 0.0,
+    })));
+    group.sends = vec![0.2];
+    g.groups.push(group);
     let mut ret = ReturnTrack::new("A-Echo");
     ret.devices.push(Box::new(EchoDevice::new(EchoParams {
         delay_time_s: 0.02,
@@ -135,6 +149,15 @@ fn the_audio_thread_pull_allocates_nothing() {
             part: Part::Main,
             gain: 0.8,
         },
+        // O-I #849 round 16 and #853: a group's level, and a part's pitch bend
+        EngineEvent::Volume {
+            part: Part::Group(0),
+            gain: 0.7,
+        },
+        EngineEvent::Bend {
+            track: 1,
+            amount: 0.5,
+        },
         EngineEvent::NoteOff { track: 1, key: 36 },
         EngineEvent::Panic,
     ];
@@ -161,11 +184,74 @@ fn the_audio_thread_pull_allocates_nothing() {
     ARMED.with(|a| a.set(false));
     handle.collect();
     assert_eq!(handle.installs().len(), 1, "the hand was taken");
+    // O-I #849 round 16: a chain device's setting moved while it plays moves in place, and a room made again
+    // for another rings the last one out (and the one before that fades), all on the audio thread without
+    // allocating; what each replaced goes back to the control side to be dropped there.
+    let room = |decay: f64| -> RackDevice {
+        rack_device(
+            "reverb",
+            &[
+                ("size", 50.0),
+                ("decay", decay),
+                ("damping", 40.0),
+                ("predelay", 20.0),
+                ("mix", 30.0),
+            ],
+        )
+        .unwrap()
+    };
+    let filter = rack_device(
+        "AutoFilter",
+        &[
+            ("FilterType", 0.0),
+            ("Cutoff", 100.0),
+            ("Resonance", 0.3),
+            ("Drive", 0.0),
+        ],
+    )
+    .unwrap();
+    handle.install_rack(0, vec![filter, room(1.0)]).unwrap();
+    let mut pull = |core: &mut live_engine::EngineCore| {
+        ARMED.with(|a| a.set(true));
+        core.pull_block(&mut block);
+        core.pull_block(&mut block);
+        ARMED.with(|a| a.set(false));
+    };
+    pull(&mut core);
+    handle.collect();
+    let moves = [
+        (1, "mix", 60.0),
+        (1, "predelay", 120.0),
+        (0, "Cutoff", 60.0),
+        (0, "Resonance", 1.0),
+    ];
+    for (at, key, value) in moves {
+        handle
+            .set(Part::Track(0), DeviceAt::Rack(at), key, value)
+            .unwrap();
+        pull(&mut core);
+    }
+    for decay in [2.0, 3.0] {
+        let filter = rack_device(
+            "AutoFilter",
+            &[
+                ("FilterType", 1.0),
+                ("Cutoff", 80.0),
+                ("Resonance", 0.3),
+                ("Drive", 0.0),
+            ],
+        )
+        .unwrap();
+        handle.install_rack(0, vec![filter, room(decay)]).unwrap();
+        pull(&mut core);
+        handle.collect();
+    }
+    assert_eq!(handle.racks().len(), 3, "every chain was put there");
     let count = ALLOCATIONS.load(Ordering::Relaxed);
     assert!(heard, "the set sounded");
     assert_eq!(
         handle.performance().events.len(),
-        events.len() + 1,
+        events.len() + 1 + moves.len(),
         "every event was applied"
     );
     assert_eq!(count, 0, "the audio thread allocated {count} times");
