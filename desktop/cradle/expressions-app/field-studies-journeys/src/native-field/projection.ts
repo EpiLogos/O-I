@@ -49,16 +49,19 @@ export class NativeProjection {
   const shown=(globalThis as any).__OI_TEST_CUT_TORUS_STATE__===true?(this.held??=this.frame):this.frame;
   this.presented=this.presenter.present(shown);
  }
+ /** The targets the projection presents from the admitted frame, texel by texel in presentation units: each sample where the object
+  * stands it, or, with no presenter showing it elsewhere, the native position × scale. Density stays the authored fourth channel. */
+ private place(input:Float32Array,data:Float32Array,slots:ArrayLike<number>){
+  const presented=this.presented;
+  if(presented&&slots.length*4===input.length){
+   for(let t=0,i=0;i<input.length;t++,i+=4){const s=slots[t]*3;data[i]=presented[s]*this._scale;data[i+1]=presented[s+1]*this._scale;data[i+2]=presented[s+2]*this._scale;data[i+3]=input[i+3];}
+  }else for(let i=0;i<input.length;i+=4){data[i]=input[i]*this._scale;data[i+1]=input[i+1]*this._scale;data[i+2]=input[i+2]*this._scale;data[i+3]=input[i+3];}
+ }
  private sync(){
   if(!this.inputA||!this.inputB)return;
-  const presented=this.presented;
   const fill=(source:any,texture:THREE.DataTexture|null,slots:ArrayLike<number>)=>{
    if(!texture){texture=new THREE.DataTexture(source.image.data.slice(),source.image.width,source.image.height,THREE.RGBAFormat,THREE.FloatType);texture.minFilter=texture.magFilter=THREE.NearestFilter;}
-   const data=texture.image.data as unknown as Float32Array,input=source.image.data as Float32Array;
-   if(presented&&slots.length*4===input.length){
-    // Each texel shows its own sample where the object stands it; density stays the authored fourth channel.
-    for(let t=0,i=0;i<input.length;t++,i+=4){const s=slots[t]*3;data[i]=presented[s]*this._scale;data[i+1]=presented[s+1]*this._scale;data[i+2]=presented[s+2]*this._scale;data[i+3]=input[i+3];}
-   }else for(let i=0;i<input.length;i+=4){data[i]=input[i]*this._scale;data[i+1]=input[i+1]*this._scale;data[i+2]=input[i+2]*this._scale;data[i+3]=input[i+3];}
+   this.place(source.image.data as Float32Array,texture.image.data as unknown as Float32Array,slots);
    texture.needsUpdate=true;return texture;
   };
   // Negative acceptance only: admitted frames stop short of the GPU-bound
@@ -69,7 +72,11 @@ export class NativeProjection {
  checkpoint(renderer:any){return this.native.checkpoint(renderer);}
  restore(renderer:any,checkpoint:any){this.native.restore(renderer,checkpoint);this.sync();}
  inspect(){return{native:this.native.lastReceipt,presentation_units_per_metre:this._scale,target_a:this.a?.image.data,target_b:this.b?.image.data,admitted_a:this.inputA?.image.data,
+  // What the GPU-bound targets are meant to be from the admitted frame, computed apart from delivery: the trace's measure of whether the
+  // particles go where the projection presents the determinant (native-expression-scene-browser.mjs).
+  intended_a:this.inputA?this.intended(this.inputA.image.data as Float32Array,this.slotsA):null,
   presented:this.presented,presented_shape:(this.presenter?.state() as any)?.morph??null};}
+ private intended(input:Float32Array,slots:ArrayLike<number>){const data=new Float32Array(input.length);this.place(input,data,slots);return data;}
  /** The frame last admitted (metres), as the owner gave it. */
  get current(){return this.frame;}
  dispose(){if(this.dead)return;this.dead=true;this.presenter=null;this.native.dispose();this.a?.dispose();this.b?.dispose();}
