@@ -2983,6 +2983,20 @@ impl Kernel {
             .record(events::KernelEvent::ReadingsChanged { scopes, epoch })
     }
 
+    /// The held SharedField client took a transaction that changed what this
+    /// window's identity can see (shared_field.rs `on_change`, O-I #858):
+    /// record it and hand back the receipt the host sends on its channel.
+    pub fn record_shared_field_changed(
+        &mut self,
+        change: &shared_field::FieldChange,
+    ) -> events::KernelEventReceipt {
+        self.log.record(events::KernelEvent::SharedFieldChanged {
+            cursor: change.cursor.clone(),
+            changes: change.changes.clone(),
+            more: change.more,
+        })
+    }
+
     pub fn snapshot(&self) -> KernelSnapshot {
         KernelSnapshot {
             focus: self.focus.clone(),

@@ -22,14 +22,23 @@ fn fixture() -> Value {
     serde_json::from_slice(&fs::read(path).unwrap()).unwrap()
 }
 
-/// A SharedField client that keeps each request and answers `answer.json`.
+/// A SharedField client, held (`--held`, O-I #858), that keeps each
+/// request and answers it, by id, with `answer.json`.
 fn client(dir: &Path) -> PathBuf {
     let bin = dir.join("field-client");
     let d = dir.display();
     fs::write(
         &bin,
         format!(
-            "#!/bin/sh\ncat >> \"{d}/asked.jsonl\"\nprintf '\\n' >> \"{d}/asked.jsonl\"\ncat \"{d}/answer.json\"\n"
+            r#"#!/usr/bin/env bash
+while IFS= read -r line; do
+  id="${{line#\{{\"id\":}}"; id="${{id%%,*}}"
+  request="${{line#*\"request\":}}"; request="${{request%\}}}}"
+  printf '%s\n' "$request" >> "{d}/asked.jsonl"
+  answer="$(cat "{d}/answer.json")"
+  printf '{{"id":%s,%s\n' "$id" "${{answer#\{{}}"
+done
+"#
         ),
     )
     .unwrap();
