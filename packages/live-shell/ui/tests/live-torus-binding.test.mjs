@@ -75,9 +75,12 @@ test('every key of the design is the owner\'s reading or is absent with its reas
   // Receiver (O-I 856) is the owner's once the frame announces where the torus is heard from; a frame that announces none says so.
   for (const key of Object.keys(torus.defaults)) assert.ok(key in values || model.TORUS_ABSENT[key] || (key === 'rack' && bound.standing.rack.disabled) || bound.local[key]
     || /torus-state|announces no receiver/.test(bound.standing[key]?.disabled ?? ''), `${key}: read from the owner, named absent, waiting on the owner's session, or the view's own`)
+  // REPLACED (O-I #852): the body was drawn as the torus before any owner named it. What rings is the owner's Torus session's `body` now
+  // (QL torus-body), so with no session announced the body waits on torus-state and says so (ql-745-torus-body.test.mjs).
   assert.deepEqual(Object.keys(torus.defaults).filter(key => key in values),
-    ['light', 'body', 'level', 'lens', 'context-frame', 'harmonic-basis', 'm3-transcription', 'sound', 'cadence', 'scale', 'standing'],
-    'the owner reports the light, the body it rings (the torus, O-I #850), the level, its four determinants, its sound, cadence and scale, and its standing; with no Torus session announced, nothing else of the design')
+    ['light', 'level', 'lens', 'context-frame', 'harmonic-basis', 'm3-transcription', 'sound', 'cadence', 'scale', 'standing'],
+    'the owner reports the light, the level, its four determinants, its sound, cadence and scale, and its standing; with no Torus session announced, nothing else of the design')
+  assert.match(bound.standing.body.disabled, /torus-state/, 'what rings waits on the owner\'s session')
   assert.equal('sounding' in values, false, 'sounding: the lit keys are not drawn from the owner, so the binding gives none')
   // The pitch-class Jankó chord is retired (O-I 855): the words name the keyboard's one path and where the sounding notes stand.
   assert.match(model.TORUS_ABSENT.sounding, /^No key is lit from the owner here: .*torus-play.*Notes/, 'sounding: absent with its reason')
@@ -101,10 +104,13 @@ test('a key the owner does not take is disabled with its reason; while the instr
   const live = model.torusDesignBinding(state())
   // Damping is the body's Q, taken through the stage channel's damping edit (O-I #745 lane N; ql-745-torus-body.test.mjs).
   for (const key of ['level', 'sound', 'cadence', 'scale', 'lens', 'context-frame', 'harmonic-basis', 'm3-transcription', 'damping']) assert.equal(live.writes(key), true, `${key} is the owner's to change`)
-  for (const key of ['modes', 'pan', 'meter', 'view']) {
+  for (const key of ['pan', 'meter', 'view']) {
     assert.equal(live.writes(key), false, `${key} has no owner`)
     assert.equal(live.standing[key].disabled, model.TORUS_ABSENT[key])
   }
+  // O-I #852: Modes is a form's count, the owner's once it names a form (ql-745-torus-body.test.mjs); here no session names what rings.
+  assert.equal(live.writes('modes'), false)
+  assert.match(live.standing.modes.disabled, /torus-state/)
   // The Torus's session (O-I #850) is the owner's once the frame announces it; here it announces none, and each says what it waits on.
   // Strike is the session's share of velocity since O-I #854 (QL m1_prime.rs Settings.strike; ql-745-torus-body.test.mjs).
   for (const key of ['rate', 'fundamental', 'carrier', 'tuning', 'shape', 'polyphony', 'notes', 'strike']) {
@@ -434,7 +440,11 @@ test('the Body page saves the Torus as a sound by its name, through its owners',
     assert.equal(bands.length, 2, 'the Body page keeps two bands')
     assert.match(bands[0], /class="dp-sec-label">Body<[^]*class="dp-sec-label">Save as a sound<[^]*aria-label="Sound name"[^]*>Save sound</, 'beside the body, in its band')
     assert.match(bands[0], /<div style="grid-column:span 2;width:100%"><div class="dp-cell dp-cell--text dp-cell--wide" data-i="Sound name\|/, 'the name spans the section')
-    assert.match(bands[0], /<div class="dp-sec" data-grow="true" style="width:224px"><div class="dp-sec-label">Body</, 'the body\'s section keeps the width the Notes band gave it, so its words read whole')
+    assert.match(bands[0], /<div class="dp-sec" data-grow="true" style="width:224px"><div class="dp-sec-label">Body<\/div><div class="dp-sec-body" style="grid-template-columns:repeat\(4, minmax\(0, 1fr\)\)">/,
+      'the body\'s section keeps the width the Notes band gave it, its seven cells in two rows of four, the Notes band\'s column (O-I #852)')
+    const sec = bands[0].slice(bands[0].indexOf('class="dp-sec-body"'), bands[0].indexOf('class="dp-sec-label">Save as a sound'))
+    assert.deepEqual([...sec.matchAll(/class="dp-cell [^"]*"[^>]*?data-i="([^|"]+)\|/g)].map(match => match[1]), ['Body', 'Strike', 'Damping', 'Modes', 'form', 'Source', 'tattva'],
+      'what rings, how it is struck and damped, its modes and the form that rings, then where they come from')
     // Notes and output lays its ten controls in two rows of five, so the page's second band is no taller than the Pulse page's.
     assert.match(bands[1], /^><div class="dp-sec" data-grow="true" style="width:280px"><div class="dp-sec-label">Notes and output<\/div><div class="dp-sec-body" style="grid-template-columns:repeat\(5, minmax\(0, 1fr\)\)">/)
     const notes = bands[1].slice(bands[1].indexOf('class="dp-sec-body"'))

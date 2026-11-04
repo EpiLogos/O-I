@@ -75,8 +75,16 @@ export interface PerformanceBasisSummary {readonly basis_ref: string; readonly e
 export interface KeptSoundSummary {readonly sound_ref: string; readonly name: string; readonly body: 'torus' | 'form'; readonly body_ref: string | null; readonly sample_rate: number}
 /** An instrument the Scene keeps (`oi.torus-instrument/v1`): a form's body, with the sounds made on it that the Scene keeps. */
 export interface KeptInstrumentSummary {readonly instrument_ref: string; readonly name: string; readonly body_ref: string; readonly sounds: readonly KeptSoundSummary[]}
-/** A rack the Scene keeps (`oi.torus-rack/v1`): the Torus with its chain, its macros and their variations. */
-export interface KeptRackSummary {readonly rack_ref: string; readonly name: string; readonly sound: string | null; readonly devices: number; readonly macros: readonly string[]; readonly variations: readonly string[]}
+/** One device of a kept rack's chain: its reference, and whether it plays before the Torus (a note device) or after it (an effect). */
+export interface KeptRackDevice {readonly device_ref: string; readonly role: 'note' | 'effect'}
+/** One macro of a kept rack: its name, where it stands (0 to 1), and the parameters it turns (a device of the chain's, or the Torus's). */
+export interface KeptRackMacro {readonly name: string; readonly value: number; readonly targets: readonly {readonly device_ref: string; readonly parameter: string}[]}
+/** One variation of a kept rack: its name, and a value for every macro, in macro order. */
+export interface KeptRackVariation {readonly name: string; readonly values: readonly number[]}
+/** A rack the Scene keeps (`oi.torus-rack/v1`): the Torus with its chain, its macros and their variations, as its drop places them on a
+ * part (O-I #852: Live's Instrument Rack, packages/live-set/src/acts.rs `rack_place`). */
+export interface KeptRackSummary {readonly rack_ref: string; readonly name: string; readonly sound: string | null; readonly chain: readonly KeptRackDevice[]
+  readonly macros: readonly KeptRackMacro[]; readonly variations: readonly KeptRackVariation[]}
 /** What the Scene keeps on the Torus (manual §21.2 Sounds and instruments): the sounds that stand under the Torus itself, the
  * instruments with their sounds under them, and the racks. */
 export interface TorusKeptSummary {readonly sounds: readonly KeptSoundSummary[]; readonly instruments: readonly KeptInstrumentSummary[]; readonly racks: readonly KeptRackSummary[]}
@@ -113,6 +121,31 @@ function keptSound(raw: unknown): KeptSoundSummary | null {
   return body_ref === null ? null : {sound_ref: raw.sound_ref, name: raw.name, body: 'form', body_ref, sample_rate: raw.sample_rate};
 }
 
+const share = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1;
+/** A kept rack's chain, macros and variations as the kernel validated them (kept.rs `KeptRack::validate`), or null where a row is not
+ * what it says: a device a note device or an effect, a macro and each variation's values shares of 0 to 1, a value for every macro. */
+function keptRackRows(raw: Record<string, unknown>): Pick<KeptRackSummary, 'chain' | 'macros' | 'variations'> | null {
+  if (!Array.isArray(raw.chain) || !Array.isArray(raw.macros) || !Array.isArray(raw.variations)) return null;
+  const chain: KeptRackDevice[] = [];
+  for (const row of raw.chain) {
+    if (!object(row) || !refText(row.device_ref) || (row.role !== 'note' && row.role !== 'effect')) return null;
+    chain.push({device_ref: row.device_ref, role: row.role});
+  }
+  const macros: KeptRackMacro[] = [];
+  for (const row of raw.macros) {
+    if (!object(row) || !keptName(row.name) || !share(row.value) || !Array.isArray(row.targets)) return null;
+    const targets = row.targets.map(target => object(target) && refText(target.device_ref) && refText(target.parameter) ? {device_ref: target.device_ref, parameter: target.parameter} : null);
+    if (targets.includes(null)) return null;
+    macros.push({name: row.name, value: row.value, targets: targets as KeptRackMacro['targets']});
+  }
+  const variations: KeptRackVariation[] = [];
+  for (const row of raw.variations) {
+    if (!object(row) || !keptName(row.name) || !Array.isArray(row.values) || row.values.length !== macros.length || !row.values.every(share)) return null;
+    variations.push({name: row.name, values: [...row.values]});
+  }
+  return {chain, macros, variations};
+}
+
 /** What the Scene keeps on the Torus, each record as the kernel holds it (kernel expression_performance/kept.rs, `torus_kept`): a sound
  * made on a kept instrument stands under that instrument, in its order, and not again under the Torus; a record that is not what it
  * says, or an instrument's sound the Scene does not keep, is not listed. Null when the Scene keeps nothing. Reads only: the kernel
@@ -133,9 +166,8 @@ export function summarizeTorusKept(kept: unknown): TorusKeptSummary | null {
   const racks: KeptRackSummary[] = [];
   for (const raw of list(kept.racks)) {
     if (!object(raw) || raw.schema !== 'oi.torus-rack/v1' || !refText(raw.rack_ref) || !keptName(raw.name)) continue;
-    const named = (rows: unknown) => list(rows).flatMap(row => object(row) && keptName(row.name) ? [row.name] : []);
-    racks.push({rack_ref: raw.rack_ref, name: raw.name, sound: typeof raw.sound === 'string' && sounds.has(raw.sound) ? raw.sound : null,
-      devices: list(raw.chain).length, macros: named(raw.macros), variations: named(raw.variations)});
+    const rows = keptRackRows(raw);
+    if (rows) racks.push({rack_ref: raw.rack_ref, name: raw.name, sound: typeof raw.sound === 'string' && sounds.has(raw.sound) ? raw.sound : null, ...rows});
   }
   const torus = [...sounds.values()].filter(sound => !onInstrument.has(sound.sound_ref));
   return torus.length || instruments.length || racks.length ? {sounds: torus, instruments, racks} : null;

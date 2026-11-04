@@ -79,8 +79,9 @@ export function noteDevice(device: NoteDevice, mode: ModeInForce, hold: NoteDevi
 // ── the set's devices ────────────────────────────────────────────────────────
 
 /** The instruments among the set's devices, by the element name the document stores (the browser files them under
- * Instruments, everything else under Chain devices). */
-export const SET_INSTRUMENT_ELEMENTS: ReadonlySet<string> = new Set(['Operator', 'Wavetable', 'Simpler', 'Sampler', 'OriginalSimpler', 'InstrumentVector', 'Collision', 'DrumRack', 'InstrumentRack', 'Analog', 'Drift'])
+ * Instruments, everything else under Chain devices). An Instrument Rack is stored as `InstrumentGroupDevice` (racks-session-model.md
+ * §1.1), as a kept rack is placed on a part (O-I 852). */
+export const SET_INSTRUMENT_ELEMENTS: ReadonlySet<string> = new Set(['Operator', 'Wavetable', 'Simpler', 'Sampler', 'OriginalSimpler', 'InstrumentVector', 'Collision', 'DrumRack', 'InstrumentRack', 'InstrumentGroupDevice', 'Analog', 'Drift'])
 
 /** The Live document owner's write of one stored parameter (panels/devices/api.ts postDeviceParam). */
 export const SET_DEVICE_WRITE = 'kernel:live_device_param_write'

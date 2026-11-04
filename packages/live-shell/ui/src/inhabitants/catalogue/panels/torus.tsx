@@ -377,7 +377,7 @@ export const torus: DesignedDevice = {
     // The Torus's M1′ session (QL's torus-state), as a scene opens it: Free at 2.5 steps a second, a rhythm; the map's 1:1; no carrier.
     'rate.mode': 'free', rate: 2.5, tempo: 120, band: 'Rhythm', 'fundamental.source': 'map', fundamental: 130.81, carrier: 0, 'carrier.drive': 'pulse',
     shape: 'auto', figure: 'figure-eight', comma: 0, tuning: 'logic', 'tuning.resident': JSON.stringify(['logic', 'sky']), polyphony: 16, notes: 3,
-    body: 'torus', strike: 70, damping: 4.5, modes: 64, level: -6, pan: 0, view: 'surface', receiver: false, meter: -14,
+    body: 'torus', strike: 70, damping: 4.5, modes: 8, level: -6, pan: 0, view: 'surface', receiver: false, meter: -14,
     // The field's own controls, as the binding reads them (labels of the owner's choices).
     lens: 'L0', 'context-frame': 'CF1', 'harmonic-basis': 'B1', 'm3-transcription': 'DNA', sound: true, cadence: 'Hold', scale: 100, standing: 'following',
     sounding: JSON.stringify([0, 4, 8]),
@@ -397,6 +397,8 @@ export const torus: DesignedDevice = {
     'Ringing': {},
     // M2's proposed body constants for the earth fibre: Damping 12, Strike 45 %.
     'Tattva: Prithvi, earth': {'body.source': 'tattva', damping: 12, strike: 45},
+    // A form rings (O-I #852): the scene's M3 form folded at its angles, eight modes a voice at the earth fibre's Q.
+    'A form rings': {body: 'form', 'body.form': '#3-2-4', modes: 8, damping: 12},
     // The pulse at pitch: 440 steps a second, the torus shape; twelve returns gathered.
     'Pulse at pitch': {rate: 440, band: 'Pitch', figure: 'torus', comma: 281.52},
     // Sync, a quarter note at 120 BPM: two steps a second; the sky's voices.
@@ -412,7 +414,7 @@ export const torus: DesignedDevice = {
       'stage.bindings': JSON.stringify([{procedure: 'ta-onta:stage:cli-bound', trigger: 'm1-advance', evaluations: 16, max: 16, standing: 'exhausted'}])},
     'No readings': Object.fromEntries(['stage.slots', 'stage.bindings', 'stage.procedures', 'stage.procedure', 'stage.budget', 'stage.last', 'stage.why', 'rack', 'rack.part', 'light',
       'rate.mode', 'rate', 'rate.note', 'tempo', 'band', 'fundamental.source', 'fundamental', 'carrier', 'carrier.drive', 'shape', 'figure', 'comma', 'tuning', 'tuning.resident', 'tuning.maqam', 'polyphony', 'notes',
-      'body', 'strike', 'damping', 'modes', 'level', 'pan', 'view', 'receiver', 'meter', 'lens', 'context-frame', 'harmonic-basis', 'm3-transcription', 'sound', 'cadence', 'scale', 'standing', 'sounding', 'body.source', 'tattva.name', 'tattva.fibre', 'tattva.standing'].map(k => [k, undefined])),
+      'body', 'body.form', 'strike', 'damping', 'modes', 'level', 'pan', 'view', 'receiver', 'meter', 'lens', 'context-frame', 'harmonic-basis', 'm3-transcription', 'sound', 'cadence', 'scale', 'standing', 'sounding', 'body.source', 'tattva.name', 'tattva.fibre', 'tattva.standing'].map(k => [k, undefined])),
     'As the field reports it': {strike: undefined, damping: undefined, modes: undefined, pan: undefined, view: undefined, receiver: undefined, meter: undefined},
   },
 
@@ -437,11 +439,13 @@ export const torus: DesignedDevice = {
     </> : <>
     <Band>
       {/* 224: the width the Notes band below gave it before the Save stood beside it, which it keeps (its words read whole). */}
-      <Section label="Body" cols={3} width={224} grow>
+      {/* Four columns, the Notes band's own: what rings, how it is struck and damped, its modes and the form that rings, then where they come from (O-I #852). */}
+      <Section label="Body" cols={4} width={224} grow>
         <Radio {...st(p, 'body')} label="Body" does="What rings: the torus, or a form of the Expression." value={strOf(p.v, 'body') ?? ''} options={BODIES} stack onChange={x => p.set('body', x)} />
         <Dial {...st(p, 'strike')} disabled={st(p, 'strike').disabled ?? tattvaHold(p.v)} label="Strike" does="How strongly velocity excites the body." value={num(p.v, 'strike')} def={70} scale={{min: 0, max: 100}} format={pct} onChange={x => p.set('strike', x)} />
         <Dial {...st(p, 'damping')} disabled={st(p, 'damping').disabled ?? tattvaHold(p.v)} label="Damping" does="How sharply the body rings. A high value rings longer." value={num(p.v, 'damping')} def={4.5} scale={DAMP} format={fixed(1)} onChange={x => p.set('damping', x)} />
-        <Dial {...st(p, 'modes')} label="Modes" does="How many modes of the body take part." value={num(p.v, 'modes')} def={64} scale={{min: 1, max: 4096, log: true, step: 1}} format={x => `${Math.round(x)}`} onChange={x => p.set('modes', Math.round(x))} />
+        <Dial {...st(p, 'modes')} label="Modes" does="How many modes of the form each voice rings." value={num(p.v, 'modes')} def={8} scale={{min: 1, max: 64, log: true, step: 1}} format={x => `${Math.round(x)}`} onChange={x => p.set('modes', Math.round(x))} />
+        <Readout label="form" does={st(p, 'body.form').disabled ?? 'The form that rings, as the owner made it a body.'} value={strOf(p.v, 'body.form')} tone={strOf(p.v, 'body') === 'form' ? 'accent' : undefined} />
         <Radio {...st(p, 'body.source')} label="Source" does="Where Strike and Damping come from: the values you set, or the tattva of the M2 condition." value={strOf(p.v, 'body.source') ?? ''} options={BODY_SOURCES} stack onChange={x => p.set('body.source', x)} />
         <Readout label={tattvaLabel(p.v)} does={tattvaDoes(p.v)}
           value={strOf(p.v, 'tattva.name')} tone={tattvaHold(p.v) ? 'accent' : undefined} />

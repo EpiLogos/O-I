@@ -1292,7 +1292,7 @@ impl Manager {
 /// kept, set again and a take rendered offline on a second owner of the scene
 /// (torus-checkpoint, torus-restore, torus-render; O-I 855), and a singlet
 /// struck at its codon's place on the ring (torus-singlet; O-I #771).
-const EXCHANGE_OPERATIONS: [&str; 27] = [
+const EXCHANGE_OPERATIONS: [&str; 28] = [
     "read",
     "inspect",
     "advance",
@@ -1315,6 +1315,9 @@ const EXCHANGE_OPERATIONS: [&str; 27] = [
     "torus-set",
     "torus-play",
     "torus-singlet",
+    // The body the Torus rings, chosen on its Body page (QL-MEF `torus-body`, O-I #852): a form's
+    // prepared modes or the torus itself, one generation of the owner.
+    "torus-body",
     "torus-release",
     "torus-checkpoint",
     "torus-restore",
@@ -3121,6 +3124,8 @@ for line in sys.stdin: time.sleep(60)
             "torus-set",
             "torus-play",
             "torus-singlet",
+            // The body the Torus rings, chosen on its Body page (O-I #852: torusBody).
+            "torus-body",
             "torus-release",
             "torus-checkpoint",
             "torus-restore",
@@ -3150,6 +3155,8 @@ for line in sys.stdin: time.sleep(60)
             "torus_receiver",
             "torus_singlet",
             "singlet",
+            "torus_body",
+            "body",
         ] {
             assert!(
                 !exchange_admits(&json!({"command":{"operation":op}})),

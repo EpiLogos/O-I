@@ -88,6 +88,25 @@ test('the Torus session carries the owner\'s maqām, material and classes as tor
   for (const key of ['maqam', 'material', 'classes']) assert.equal(key in none, false, `${key}: not named, not announced`);
 });
 
+// O-I #852 (DLW manual §21.2 Body): what rings is announced as the owner's torus reading names it (QL scene_field.rs `body`): the torus, or a
+// form with the form it was made from, the preparation the owner made and the material it made it of, its modes a voice and the voices that
+// ring it. The prepared modes and lattice stay with the owner; a body the owner does not name is not announced.
+test('the Torus session carries what rings as the owner names it: the torus, or a form, its preparation, material, modes and voices', () => {
+  const session = {settings: {tuning: 'logic'}, steps_per_second: 2.5, band: 'rhythm', fundamental_hz: 130.81, map_hz: 130.81, figure: 'torus', comma_cents: 0,
+    notes: [], resident_tunings: ['logic', 'sky'], carrier: {drive: 'pulse'}};
+  const announced = torus => announceInstrument(controllerReading({instrument: {...controllerReading().instrument, torus}})).parameters.torus;
+  assert.deepEqual(announced({...session, body: {kind: 'torus', law: 'the body is what rings'}}).body, {kind: 'torus'});
+  const form = {kind: 'fold', form_ref: '#3-controlled', source_ref: 'ql.m3-state/v1@1'};
+  const material = {fibre: 'earth', q_factor: 12, strike_share: 0.7, source_ref: 'declared'};
+  const prepared = {schema: 'ql.physical-body-preparation/v1', request: {preparation_ref: 'sha256:prepared', geometry: {points: 144},
+    material: {...material, damping: 'the owner\'s damping law'}}, form, modes: [{index: 0, ratio: 1, eigenvalue: 1}]};
+  assert.deepEqual(announced({...session, body: {kind: 'form', prepared, modes: 8, voices: 9, law: 'the body is what rings'}}).body,
+    {kind: 'form', form, preparation_ref: 'sha256:prepared', material, modes: 8, voices: 9});
+  for (const body of [undefined, null, {kind: 'plate'}, {kind: 'form', prepared: null, modes: 8, voices: 9}, {kind: 'form', prepared, modes: '8', voices: 9},
+    {kind: 'form', prepared: {...prepared, request: {preparation_ref: 'sha256:prepared'}}, modes: 8, voices: 9}])
+    assert.equal('body' in announced({...session, body}), false, JSON.stringify(body)?.slice(0, 60));
+});
+
 // O-I 856: where the Torus is heard from is announced as the controller reads it — Receiver On or Off, the owner's context and its refusal —
 // and never the place, nor the gains the owner hears each voice by.
 test('Receiver is announced as On or Off, the owner\'s context and its refusal: never a place', () => {

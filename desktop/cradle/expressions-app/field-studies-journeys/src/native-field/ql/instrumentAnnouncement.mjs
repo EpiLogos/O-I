@@ -76,5 +76,21 @@ function torusSession(torus) {
     // What torus-state names beside the session (O-I #855 round 6d): the M2 condition's maqām with its pitches or the owner's words for
     // its absence, the lens's material and the twelve classes, as the owner gave them; one the owner does not name is not announced.
     ...Object.fromEntries(['maqam', 'material', 'classes'].filter(key => torus[key] !== undefined && torus[key] !== null).map(key => [key, torus[key]])),
+    // What rings (O-I #852, QL scene_field.rs `body`): the torus, or a form with the form it was made from, the preparation the owner made and
+    // the material it made it of, its modes a voice and the voices that ring it. The prepared modes and lattice stay with the owner; a body it
+    // does not name is not announced.
+    ...(bodyOf(torus.body) ? {body: bodyOf(torus.body)} : {}),
   };
+}
+
+/** What rings, as the owner's torus reading names it, or null where it names none the frame can carry. */
+function bodyOf(body) {
+  if (body?.kind === 'torus') return {kind: 'torus'};
+  const prepared = body?.kind === 'form' ? body.prepared : null;
+  const form = prepared?.form, preparation_ref = prepared?.request?.preparation_ref, material = prepared?.request?.material;
+  if (!form || typeof form !== 'object' || typeof preparation_ref !== 'string' || !material || typeof material !== 'object'
+    || !Number.isSafeInteger(body.modes) || !Number.isSafeInteger(body.voices)) return null;
+  return {kind: 'form', form: {kind: form.kind, form_ref: form.form_ref, source_ref: form.source_ref}, preparation_ref,
+    material: {fibre: material.fibre, q_factor: material.q_factor, strike_share: material.strike_share, source_ref: material.source_ref},
+    modes: body.modes, voices: body.voices};
 }

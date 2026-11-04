@@ -238,6 +238,12 @@ export function readTorusSettingsEdit(raw: unknown): TorusSettingsEdit | null {
   if (raw.strike !== undefined) { if (!finite(raw.strike)) return null; edit.strike = raw.strike; }
   return edit;
 }
+/** The most modes of a form's body each voice rings (QL-MEF form_instrument/body.rs MAX_BODY_MODES). */
+export const STAGE_BODY_MODES_MAX = 64;
+/** A form chosen as the body (DLW manual §21.2 Body): how many of its modes each voice rings, the Q it rings at (the Torus's Damping), and
+ * whether its material is declared or the tattva's (Body source). The form is the scene's own M3 form and its fibre the scene's M2 fibre:
+ * the frame takes both from what the owner disclosed (controller.ts torusBody), so the hand names neither. */
+export interface StageFormBody {modes: number; q_factor: number; material: 'declared' | 'tattva'}
 export type InstrumentEdit =
   | {kind: 'lens'; lens12: number}
   | {kind: 'context-frame'; context_frame: number}
@@ -252,6 +258,8 @@ export type InstrumentEdit =
   | {kind: 'follow-scale'}
   /** Receiver On or Off (DLW manual §21.2 View; QL-MEF `torus-receiver`, O-I 856): the camera is the place the Torus is heard from, or the world. */
   | {kind: 'receiver'; on: boolean}
+  /** What rings (DLW manual §21.2 Body; QL-MEF `torus-body`, O-I #852): a form, or the torus (null). Chosen at the owner's cursor. */
+  | {kind: 'body'; body: StageFormBody | null}
   | {kind: 'effect'; effect: PresentationEffect; key: string; value: EffectValue}
   | {kind: 'effect-chain'; chain: PresentationEffect[]};
 /** A closed, validated instrument edit, or null. Every operand is exact: a determinant outside the owner's range is refused here. */
@@ -277,6 +285,15 @@ export function readInstrumentEdit(raw: unknown): InstrumentEdit | null {
     case 'torus': { const edit = closed(raw, ['kind', 'edit']) ? readTorusSettingsEdit(raw.edit) : null; return edit ? {kind: 'torus', edit} : null; }
     case 'follow-scale': return closed(raw, ['kind']) ? {kind: 'follow-scale'} : null;
     case 'receiver': return closed(raw, ['kind', 'on']) && typeof raw.on === 'boolean' ? {kind: 'receiver', on: raw.on} : null;
+    case 'body': {
+      if (!closed(raw, ['kind', 'body'])) return null;
+      if (raw.body === null) return {kind: 'body', body: null};
+      const body = raw.body;
+      if (!plain(body) || !closed(body, ['modes', 'q_factor', 'material']) || !integer(body.modes, 1, STAGE_BODY_MODES_MAX)) return null;
+      if (typeof body.q_factor !== 'number' || !Number.isFinite(body.q_factor) || body.q_factor < STAGE_INSTRUMENT_Q.min || body.q_factor > STAGE_INSTRUMENT_Q.max) return null;
+      if (body.material !== 'declared' && body.material !== 'tattva') return null;
+      return {kind: 'body', body: {modes: body.modes, q_factor: body.q_factor, material: body.material}};
+    }
     case 'effect-chain': return closed(raw, ['kind', 'chain']) && effectChainRefusal(raw.chain) === null ? {kind: 'effect-chain', chain: [...(raw.chain as PresentationEffect[])]} : null;
     case 'effect': { const operands = closed(raw, ['kind', 'effect', 'key', 'value']) ? readEffectOperands(raw) : null; return operands ? {kind: 'effect', ...operands} : null; }
   }

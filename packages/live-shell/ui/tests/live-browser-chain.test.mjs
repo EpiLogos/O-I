@@ -152,8 +152,11 @@ const keptListing = {
   sounds: [{sound_ref: KEPT(1), name: 'Warm Logic', body: 'torus', body_ref: null, sample_rate: 48000}],
   instruments: [{instrument_ref: 'instrument:fold', name: 'Folded sheet', body_ref: 'ql:form-body:fold', sounds: [
     {sound_ref: KEPT(2), name: 'Paper bell', body: 'form', body_ref: 'ql:form-body:fold', sample_rate: 48000}]}],
-  racks: [{rack_ref: 'rack:warm', name: 'Warm rack', sound: KEPT(1), devices: 2, macros: ['Bloom'], variations: ['Open', 'Closed']}],
+  racks: [{rack_ref: 'rack:warm', name: 'Warm rack', sound: KEPT(1), chain: [{device_ref: 'arp', role: 'note'}, {device_ref: 'echo', role: 'effect'}],
+    macros: [{name: 'Bloom', value: 0.5, targets: [{device_ref: 'torus', parameter: 'damping'}]}], variations: [{name: 'Open', values: [1]}, {name: 'Closed', values: [0]}]}],
 }
+// O-I #852 round 9: a rack's drag carries what its drop places on a part (Live's Instrument Rack): its name, chain, macros and variations.
+const placing = {name: 'Warm rack', chain: keptListing.racks[0].chain, macros: keptListing.racks[0].macros, variations: keptListing.racks[0].variations}
 
 test('under the Torus: its sounds, then each instrument with the sounds made on it, then the racks — each row carries what a part plays', () => {
   const rows = instruments.torusKeptRows(keptListing, '')
@@ -166,14 +169,21 @@ test('under the Torus: its sounds, then each instrument with the sounds made on 
   // An instrument plays the first sound made on it, and a rack the sound its Torus opens with: each drag carries that sound.
   assert.deepEqual(rows.map(row => instruments.readTorusKeptDrag(row.payload)), [
     {kind: 'sound', ref: KEPT(1)}, {kind: 'instrument', ref: 'instrument:fold', sound: KEPT(2)}, {kind: 'sound', ref: KEPT(2), instrument_ref: 'instrument:fold'},
-    {kind: 'rack', ref: 'rack:warm', sound: KEPT(1)},
+    {kind: 'rack', ref: 'rack:warm', sound: KEPT(1), rack: placing},
   ], 'a sound made on an instrument plays on that instrument')
   // An instrument with no sound made on it yet, and a rack that opens none, carry no sound.
   const bare = instruments.torusKeptRows({sounds: [], instruments: [{...keptListing.instruments[0], sounds: []}], racks: [{...keptListing.racks[0], sound: null}]}, '')
-  assert.deepEqual(bare.map(row => instruments.readTorusKeptDrag(row.payload)), [{kind: 'instrument', ref: 'instrument:fold'}, {kind: 'rack', ref: 'rack:warm'}])
+  assert.deepEqual(bare.map(row => instruments.readTorusKeptDrag(row.payload)), [{kind: 'instrument', ref: 'instrument:fold'}, {kind: 'rack', ref: 'rack:warm', rack: placing}])
   assert.equal(instruments.TORUS_KEPT_MIME, 'application/x-oi-torus-kept')
   for (const bad of ['', '{}', '{"kind":"sound"}', '{"kind":"preset","ref":"x"}', 'not json', '{"kind":"sound","ref":"x","sound":"y"}',
     '{"kind":"rack","ref":"x","sound":""}', '{"kind":"instrument","ref":"x","sound":7}', '{"kind":"rack","ref":"x","instrument_ref":"y"}']) assert.equal(instruments.readTorusKeptDrag(bad), null, bad)
+  // A rack's drag says what the rack is, exactly: none without it, none on a sound or an instrument, and none whose rows are not what they say.
+  const drag = (over, rack = placing) => JSON.stringify({kind: 'rack', ref: 'rack:warm', sound: KEPT(1), rack: {...rack, ...over}})
+  for (const bad of [JSON.stringify({kind: 'rack', ref: 'rack:warm', sound: KEPT(1)}), JSON.stringify({kind: 'sound', ref: KEPT(1), rack: placing}),
+    drag({extra: 1}), drag({name: ''}), drag({chain: [{device_ref: 'arp', role: 'send'}]}), drag({macros: [{name: 'Bloom', value: 2, targets: []}]}),
+    drag({macros: [{name: 'Bloom', value: 0.5, targets: [{device_ref: 'torus'}]}]}), drag({variations: [{name: 'Open', values: []}]}),
+    drag({macros: Array.from({length: 17}, (_, i) => ({name: `M${i}`, value: 0, targets: []})), variations: []})])
+    assert.equal(instruments.readTorusKeptDrag(bad), null, bad.slice(0, 90))
   // The search finds a sound by its name, and keeps the instrument it stands under.
   assert.deepEqual(instruments.torusKeptRows(keptListing, 'bell').map(row => row.name), ['Folded sheet', 'Paper bell'])
   assert.deepEqual(instruments.torusKeptRows(keptListing, 'rack').map(row => row.name), ['Warm rack'])

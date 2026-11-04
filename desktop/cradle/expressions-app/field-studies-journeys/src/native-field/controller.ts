@@ -10,9 +10,10 @@ import {PresentationEffects} from './presentationEffects';
 import {voiceModeRef} from './torusPlay.mjs';
 import {conditionReadingOf} from '../instrumentCondition';
 import {TorusObject} from '../../../src/engine/torusObject';
+import {formBodyRequest,FORM_SAMPLES_CONTRACT,type SamplePreparation} from '../../../src/engine/psg-form-sampler';
 import {isStageSampleCursor,stageJournalLanding,STAGE_JOURNAL_ACTS_MAX,STAGE_JOURNAL_BYTES_MAX,STAGE_EDIT_AHEAD_SECONDS,STAGE_RENDER_FRAMES_MAX,STAGE_RENDER_ACTS_MAX,
  readStageTorusCheckpoint,readStageTorusSound,readStageSoundMoves,isStageSoundName,STAGE_TORUS_SOUND_NAME_MAX,type StageAudioClock,type StagePerformanceJournal,type StageKey,
- type StageTakeAct,type StageTakeRender,type StageTorusCheckpoint,type StageTorusSound,type StageSoundMove} from '../stageCommands';
+ type StageTakeAct,type StageTakeRender,type StageTorusCheckpoint,type StageTorusSound,type StageSoundMove,type StageFormBody} from '../stageCommands';
 import type {FieldScoreBasis,FieldScoreReply} from '../tarotScoreClient';
 export interface NativeRenderer {
  retainedTargetPort():any;releaseRetainedField():void;
@@ -40,6 +41,11 @@ export const CADENCES=Object.freeze([
 export const PRESENTATION_LEVEL=Object.freeze({min:0,max:4,initial:1,
  standing:'presentation gain after the native PCM (× the audio receiver\'s 0.1); not a source value'});
 /** Owner busy, held mid-beat, or presentation capacity full: a skipped beat. */
+/** The sheet a fold's body is prepared from: one sheet carrier of 12 × 12 samples, two stage units a side and a tenth deep, a quarter metre
+ * a unit, as QL's own fold body is (QL-MEF tests/form_body.rs, tests/torus_host.rs `fold`). No source gives the scene's fold a size of its
+ * own, so the frame asks for QL's; the preparation is named for this frame. */
+const FOLD_BODY_SHEET:SamplePreparation={schema:FORM_SAMPLES_CONTRACT,prepRef:'oi:psg:m3-fold-body',treatment:'sheet-carrier',
+ layers:[{layerRef:'form:sheet',restDepthW:0.5}],resolution:12,units:{extentUnits:2,depthUnits:0.1,metresPerUnit:0.25}};
 const TRANSIENT=/owner busy|held before the event|presentation capacity|requires idle admitted owner/;
 /** How often the Torus's session is read while the field follows (O-I #850): a human cadence, never a beat. */
 const TORUS_READ_MS=1000;
@@ -771,6 +777,40 @@ export class NativeFieldController {
    if(torus)this.admitTorus(torus);
    return landed;
   });
+ }
+ /** What rings (QL-MEF `torus-body`, O-I #852; DLW manual §21.2 Body: "The body is what rings. It is the torus unless you choose a form"):
+  * the scene's own M3 form made a body (formBody), or the torus given back (null). One body act on the owner at its cursor, through the one
+  * serial owner as a determinant is: the owner prepares the form, rings it from rest and refuses in its words a body this scene cannot ring.
+  * What rings is read back from its reply's session reading (its `body`), never set here. Resolves with the sample it rings from. */
+ torusBody(choice:StageFormBody|null):Promise<string>{
+  let body:Record<string,unknown>|null=null;
+  try{if(choice!==null)body=this.formBody(choice);}catch(error){return Promise.reject(error);}
+  return this.determinant('Torus body',()=>({operation:'torus-body',body:structuredClone(body)}),false).then(landed=>{
+   const torus=this.session?.lastTorus;
+   if(torus)this.admitTorus(torus);
+   return landed;
+  });
+ }
+ /** The scene's M3 form as QL's form owner is asked to prepare it (ql.form-body-request/v1, psg-form-sampler.ts formBodyRequest): its codon
+  * folded at its own angles (the M3 state's `form`, domain.m3) on the sheet QL's fold body is prepared from (FOLD_BODY_SHEET), made of the
+  * scene's M2 fibre (its condition, instrumentCondition.ts), struck by the owner's session Strike, ringing the modes and Q the hand chose,
+  * for the scene's event, subject and rate. Whatever the scene has not disclosed is refused in words; nothing stands in for it. */
+ private formBody(choice:StageFormBody):Record<string,unknown>{
+  const m3=this.domain?.m3,session=this.session,rate=this.opened?.receipt?.field?.sample_rate;
+  if(!m3||!session||typeof rate!=='number')throw new Error('The scene\'s M3 form is not read yet: open the live instrument, then choose A form.');
+  const crease=m3.angles_deg10;
+  if(crease.length!==3||!crease.every(angle=>Number.isInteger(angle)&&Math.abs(angle)<=1800))
+   throw new Error(`The scene's M3 form stands at ${crease.join(', ')} tenths of a degree: a fold's crease is a whole number of tenths of a degree within 180° either way, so this form cannot be folded into a body.`);
+  const condition=conditionReadingOf(this.sources);
+  if(!condition?.material_fibre)throw new Error('The scene\'s M2 condition gives no material fibre: a form\'s body is made of one, so no form can ring here yet.');
+  const strike=this.torus?.settings?.strike;
+  if(typeof strike!=='number')throw new Error('The owner\'s Torus session states no Strike: a form\'s body is struck by the session\'s share of velocity, and none is read.');
+  const sourceRef=choice.material==='tattva'?condition.tattva_ref:'declared';
+  if(!sourceRef)throw new Error('Body source is Tattva, and the M2 condition stands on no tattva: set Body source to Declared.');
+  return formBodyRequest({eventRef:session.reading.event_ref,subjectRef:session.reading.subject_ref,sourceGeneration:m3.generation,
+   form:{kind:'fold',formRef:m3.codon_ref,sourceRef:`ql.m3-state/v1@${m3.generation}`},preparation:structuredClone(FOLD_BODY_SHEET),
+   creaseDeg10:[crease[0]!,crease[1]!,crease[2]!],material:{fibre:condition.material_fibre,qFactor:choice.q_factor,strikeShare:strike,sourceRef},
+   modes:choice.modes,sampleRate:rate});
  }
  /** A sound saved from the Torus as it rings (O-I #852, DLW §21.2; kernel `torus_sound`, `oi.torus-sound/v1`): the owner keeps a checkpoint
   * through the one serial owner, and the kernel seals the sound from the checkpoint by the name it relayed it under, under this lease. The

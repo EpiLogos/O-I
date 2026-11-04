@@ -323,29 +323,52 @@ test('a kept sound dropped on the empty track plays on a new part: the part inse
   const {TORUS_KEPT_MIME} = await import('../src/frame/instruments.ts')
   const SOUND = 'sha256:' + '1'.repeat(64)
   const calls = []
-  const project = (refuse = null, unopened = null) => liveSetTrackAdapter.project({set: summary, document,
-    act: act => { calls.push(act); return refuse ? Promise.reject(new Error(refuse)) : Promise.resolve({act: act.kind, done: 'Inserted 4-MIDI, an empty MIDI part, right after Tide pad.', at: {track: 3}, revision: 'sha256:2'}) },
+  const DONE = {track_insert: 'Inserted 4-MIDI, an empty MIDI part, right after Tide pad.', rack_place: 'Placed Warm rack on 4-MIDI: an Instrument Rack with 1 macro and 2 variations.'}
+  const project = (refuse = null, unopened = null, refused = 'track_insert') => liveSetTrackAdapter.project({set: summary, document,
+    act: act => { calls.push(act); return refuse && act.kind === refused ? Promise.reject(new Error(refuse)) : Promise.resolve({act: act.kind, done: DONE[act.kind], at: {track: 3}, revision: 'sha256:2'}) },
     openSound: (soundRef, track) => { calls.push({open: [soundRef, track]}); return Promise.resolve(unopened ? {ok: false, error: unopened} : {ok: true, note: '"Low bell" opens as saved; nothing it was tuned from has moved. The part keeps it.'}) }})
   const seat = project().actions.seat
   assert.equal(seat.accepts, TORUS_KEPT_MIME)
-  assert.match(seat.op, /live_set_act · track_insert/)
+  assert.match(seat.op, /live_set_act · track_insert[^]*live_set_act · rack_place/, 'the part, and a rack placed on it')
   assert.deepEqual(await seat.run(JSON.stringify({kind: 'sound', ref: SOUND})),
     {ok: true, note: 'Inserted 4-MIDI, an empty MIDI part, right after Tide pad. "Low bell" opens as saved; nothing it was tuned from has moved. The part keeps it.'})
   assert.deepEqual(calls, [{kind: 'track_insert', after: null}, {open: [SOUND, 3]}], 'after the last part, then opened on the part it made')
   calls.length = 0
-  // A sound made on an instrument opens on the form's body it was saved on; an instrument plays the first sound made on it; a rack the
-  // sound its Torus opens with, and only that sound: its chain and macros are not placed on the part.
+  // A sound made on an instrument opens on the form's body it was saved on; an instrument plays the first sound made on it.
   const FOLD = 'sha256:' + '2'.repeat(64)
   assert.equal((await seat.run(JSON.stringify({kind: 'sound', ref: FOLD, instrument_ref: 'instrument:fold'}))).ok, true)
   assert.equal((await seat.run(JSON.stringify({kind: 'instrument', ref: 'instrument:fold', sound: FOLD}))).ok, true)
-  const rack = await seat.run(JSON.stringify({kind: 'rack', ref: 'rack:warm', sound: SOUND}))
-  assert.equal(rack.ok, true)
-  assert.match(rack.note, /The part keeps it\. Only the rack's sound opens on the part: its note devices, effects and macros are not placed on it\.$/)
-  assert.deepEqual(calls, [{kind: 'track_insert', after: null}, {open: [FOLD, 3]}, {kind: 'track_insert', after: null}, {open: [FOLD, 3]},
-    {kind: 'track_insert', after: null}, {open: [SOUND, 3]}])
+  assert.deepEqual(calls, [{kind: 'track_insert', after: null}, {open: [FOLD, 3]}, {kind: 'track_insert', after: null}, {open: [FOLD, 3]}])
+  calls.length = 0
+  // O-I #852 round 9: a rack is placed on the new part in Live's own rack shape (packages/live-set/src/acts.rs `rack_place`): an Instrument
+  // Rack under its name with its macros where they stand and its variations, then its Torus opens the sound it opens with. What the shell
+  // has no shape for yet is said in words: its chain's note devices and effects (no Live device stands for them) and what its macros turn
+  // (Live 12 keeps a macro's mapping in a form not read yet, racks-session-model.md §1.7).
+  const placing = {name: 'Warm rack', chain: [{device_ref: 'arp', role: 'note'}, {device_ref: 'echo', role: 'effect'}],
+    macros: [{name: 'Bloom', value: 0.5, targets: [{device_ref: 'torus', parameter: 'damping'}]}], variations: [{name: 'Open', values: [1]}, {name: 'Closed', values: [0]}]}
+  const rack = await seat.run(JSON.stringify({kind: 'rack', ref: 'rack:warm', sound: SOUND, rack: placing}))
+  assert.deepEqual(calls, [{kind: 'track_insert', after: null},
+    {kind: 'rack_place', track: 3, name: 'Warm rack', macros: [{name: 'Bloom', value: 0.5}], variations: [{name: 'Open', values: [1]}, {name: 'Closed', values: [0]}]},
+    {open: [SOUND, 3]}], 'the part, then the rack on it, then its sound')
+  assert.deepEqual(rack, {ok: true, note: 'Inserted 4-MIDI, an empty MIDI part, right after Tide pad. Placed Warm rack on 4-MIDI: an Instrument Rack with 1 macro and 2 variations. '
+    + '"Low bell" opens as saved; nothing it was tuned from has moved. The part keeps it. Its note device arp and effect echo stay off its chain: no Live device stands '
+    + 'for them here yet. What its macros turn is not mapped (Bloom turns the Torus\'s damping): Live 12 keeps a macro\'s mapping in a form not read here yet.'})
+  calls.length = 0
+  // A rack with nothing on its chain and macros that turn nothing is placed whole, and the note says nothing more.
+  const bare = await seat.run(JSON.stringify({kind: 'rack', ref: 'rack:warm', sound: SOUND, rack: {...placing, chain: [], macros: [{...placing.macros[0], targets: []}]}}))
+  assert.equal(bare.note, 'Inserted 4-MIDI, an empty MIDI part, right after Tide pad. Placed Warm rack on 4-MIDI: an Instrument Rack with 1 macro and 2 variations. '
+    + '"Low bell" opens as saved; nothing it was tuned from has moved. The part keeps it.')
+  calls.length = 0
+  // The rack refused on the part: the part stands, the sound is not opened, and the owner's words follow (packages/live-set/src/acts.rs
+  // says them words first, so a part Live names by its place, "4-MIDI", stays in the open line).
+  const held = 'A rack is placed on a part with nothing on its chain, as Insert MIDI Track makes one, and 4-MIDI holds a device already'
+  assert.deepEqual(await project(held, null, 'rack_place').actions.seat.run(JSON.stringify({kind: 'rack', ref: 'rack:warm', sound: SOUND, rack: placing})),
+    {ok: false, error: `Inserted 4-MIDI, an empty MIDI part, right after Tide pad. The rack was not placed on it. ${held}.`})
+  assert.deepEqual(calls.map(call => call.kind ?? 'open'), ['track_insert', 'rack_place'], 'nothing opened on a part the rack is not on')
   calls.length = 0
   assert.match((await seat.run(JSON.stringify({kind: 'instrument', ref: 'instrument:fold'}))).error, /no sound made on it/)
-  assert.match((await seat.run(JSON.stringify({kind: 'rack', ref: 'rack:warm'}))).error, /opens no sound/)
+  assert.match((await seat.run(JSON.stringify({kind: 'rack', ref: 'rack:warm', rack: placing}))).error, /opens no sound/)
+  assert.match((await seat.run(JSON.stringify({kind: 'rack', ref: 'rack:warm', sound: SOUND}))).error, /kept sound/, 'a rack that does not say what it is')
   assert.match((await seat.run('Low bell')).error, /kept sound/)
   assert.deepEqual(calls, [], 'refused before the set\'s owner')
   // A refusal speaks plainly (shared/Refusal.tsx refusalWords): what happened first, then the owner's words when they are words.
