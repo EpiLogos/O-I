@@ -371,7 +371,10 @@ test('#764 the stop you stand on is the book\'s: it decodes with the trail and f
 
 test('#764 chooseMode, the title line and the Trail move and walk through the one law (code-reading)', async () => {
   const app = await source('App.tsx')
-  assert.match(app, /const chooseMode = \(next: SurfMode\) => \{[\s\S]*?continuity\.setContext\(context => moveTo\(\{\.\.\.context, world: [^}]*\}, BOOK_MODE_OF_SHELL\[shell\]\)\)[\s\S]*?continuity\.setMode\(shell\)/,
+  // REPLACED (#764, lane BB): chooseMode takes the clip an open-where-it-lives lands on and moves into the book mode it names
+  // (tests/going-back-764.test.mjs '… an open-where-it-lives is one stop'); its shell mode switch is itself a move
+  // (continuity/workspace.tsx setMode → switchModeOnTrail, '… a mode switch made anywhere is a move').
+  assert.match(app, /const chooseMode = \(next: SurfMode, landing\?: ClipLanding\) => \{[\s\S]*?continuity\.setContext\(context => moveTo\(\{\.\.\.context, world: [^\n]*?\}, mode\)\)[\s\S]*?continuity\.setMode\(shell\)/,
     'a mode switch is a move: it appends the place it lands on')
   const bar = await source('components/TransportBar.tsx')
   assert.match(bar, /trailSteps\(trail\.length, standingOn\(context \?\? \{\}\)\)/, 'the title line steps from the book\'s place on the trail')

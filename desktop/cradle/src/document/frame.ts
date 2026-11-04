@@ -13,6 +13,7 @@ import documentHostScript from "../context/document-host.js?raw";
 import documentFindRaw from "../context/document-find.js?raw";
 import documentSaveKeyRaw from "../context/document-save-key.js?raw";
 import documentEditRaw from "../context/document-edit.js?raw";
+import documentPointRaw from "../context/document-point.js?raw";
 
 /** The find every hosted document frame carries (DLW §18.4: ⌘F in a pane finds in the instrument in front, as VS Code's ⌘F finds in the
  * file in front; context/document-find.js). It answers its host and marks; it reads and writes no owner. */
@@ -23,6 +24,22 @@ const documentSaveScript = `<script>${documentSaveKeyRaw}</script>`;
 /** An edit in every hosted document frame, told to its host as it happens (DLW §17.8 Autosave "Saves a short time after you stop";
  * context/document-edit.js): which gesture, never a word of the page. The host only listens (live-shell central/documents/useAutosave.ts). */
 const documentEditScript = `<script>${documentEditRaw}</script>`;
+/** The point in the reading every hosted document frame tells its host, and returns to when its host sends one (DLW §10.7, §23.5;
+ * context/document-point.js): a position, never a word of the page. The host relays it to the trail (live-shell central/documents/
+ * readingPoint.ts). */
+const documentPointScript = `<script>${documentPointRaw}</script>`;
+/** A frame's word that the reader stands at a point (`{type, position: "¶N"}`), that it stands ready to be sent one, and the host's word
+ * that sends it one (`{type, position}`). */
+export const DOCUMENT_POINT = "oi:document-point";
+export const DOCUMENT_POINT_READY = "oi:document-point-ready";
+export const DOCUMENT_POINT_GO = "oi:document-point-go";
+/** What a frame's message says of the point in its reading: the point it stands at, that it stands ready, or nothing. Pure. */
+export function documentPointOf(data: unknown): {position: string} | "ready" | null {
+  const message = data as {type?: unknown; position?: unknown} | null | undefined;
+  if (!message || typeof message !== "object") return null;
+  if (message.type === DOCUMENT_POINT_READY) return "ready";
+  return message.type === DOCUMENT_POINT && typeof message.position === "string" && /^¶[1-9]\d{0,5}$/.test(message.position) ? {position: message.position} : null;
+}
 
 /** Place a page script in a projection: after the page's <head>, else after its <html>, else after its doctype, else first — never
  * before a doctype, which would drop the page out of standards mode. Pure. */
@@ -95,10 +112,10 @@ const useCommitEffect = typeof window === "undefined" ? useEffect : useLayoutEff
  * frame (a layout effect), so the frame's question — a later task — is never posted unheard. */
 export function useDocumentFrame(frame: RefObject<HTMLIFrameElement | null>, projection: string | undefined, transport: KernelTransportStatus): DocumentFrameProps | undefined {
   const kind = transport.kind;
-  // The page carries its pane's find, its ⌘S and its edits told (withFrameScript): the srcdoc and the native frame's write both frame the
-  // same projection.
+  // The page carries its pane's find, its ⌘S, its edits told and its point in the reading (withFrameScript): the srcdoc and the native
+  // frame's write both frame the same projection.
   const html = useMemo(() => (projection === undefined ? undefined
-    : withFrameScript(withFrameScript(withFrameScript(projection, documentFindScript), documentSaveScript), documentEditScript)), [projection]);
+    : withFrameScript(withFrameScript(withFrameScript(withFrameScript(projection, documentFindScript), documentSaveScript), documentEditScript), documentPointScript)), [projection]);
   const props = useMemo(() => (html === undefined ? undefined : documentFrameProps(kind, html)), [html, kind]);
   const native = props?.src !== undefined;
   useCommitEffect(() => {

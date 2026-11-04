@@ -1,8 +1,10 @@
 // The shell's one act that opens a thing where it lives (manual §17.4 "Open, on a task, opens it in Clip view; on a song, opens its score;
 // on a routine, opens it in Settings, Automations (§10.10)"). A device names where the thing lives; the shell takes it there:
-//   - a clip: its mode stands (a mode switch is a move, App.tsx chooseMode, so Back returns), THE selection names the clip (App.tsx
-//     selectTrackItem), the clip's own view holds are set (frame/detail/clipBinding.ts setViewHold: which editor shows, the note chosen,
-//     the song opened inside a note), and Clip view comes forward (frame/menu/objectDoor.ts showClipView);
+//   - a clip: its mode stands landing on the clip — one move, one stop on the trail (App.tsx chooseMode, so Back returns where you
+//     were, never to the clip's mode with what you had selected before), THE selection names the clip (App.tsx selectTrackItem, the
+//     selection the move already landed on, so it adds none), the clip's own view holds are set (frame/detail/clipBinding.ts
+//     setViewHold: which editor shows, the note chosen, the song opened inside a note), and Clip view comes forward
+//     (frame/menu/objectDoor.ts showClipView);
 //   - a routine: Settings opens on Automations in the routine's work context with the routine chosen (settings/host.ts openSettings).
 // Nothing here writes an owner. The frame publishes the clip door (useClipHomeDoor, from App.tsx); where no frame publishes one, opening a
 // clip is refused in words.
@@ -44,10 +46,22 @@ export function openWhereItLives(home: NodeHome): void {
   door(home)
 }
 
+/** What an opened clip lands on: the clip THE selection names (App.tsx selectTrackItem makes it). */
+export interface ClipLanding {readonly kind: 'clip'; readonly ref: string; readonly title: string; readonly track?: string}
+/** The frame's mode switch (App.tsx chooseMode), which may land on a clip with the mode. */
+export type ChooseMode = (mode: SurfMode, landing?: ClipLanding) => void
+
+export const clipLanding = (home: ClipHome): ClipLanding => ({kind: 'clip', ref: home.clip, title: home.title, ...(home.track ? {track: home.track} : {})})
+
+/** The door's first half: the mode the clip lives in stands, landing on the clip — one move, so the open is one stop on the trail. A clip
+ * in the mode the frame stands in already needs no switch: the selection alone is the move. */
+export function standClipHome(home: ClipHome, frame: {readonly mode: SurfMode; readonly chooseMode: ChooseMode}): void {
+  if (frame.mode !== home.mode) frame.chooseMode(home.mode, clipLanding(home))
+}
+
 /** The frame's half of the act: the mode the clip lives in stands first, then THE selection names the clip and Clip view comes forward,
  * once the mode's frame has rendered (the selection is made in the mode it belongs to). */
-export function useClipHomeDoor(mode: SurfMode, chooseMode: (mode: SurfMode) => void,
-  select: (target: {kind: 'clip'; ref: string; title: string; track?: string}) => void): void {
+export function useClipHomeDoor(mode: SurfMode, chooseMode: ChooseMode, select: (target: ClipLanding) => void): void {
   const pending = useRef<ClipHome | null>(null)
   const [asked, ask] = useState(0)
   const now = useRef({mode, chooseMode, select})
@@ -55,7 +69,7 @@ export function useClipHomeDoor(mode: SurfMode, chooseMode: (mode: SurfMode) => 
   useEffect(() => {
     publishClipHomeDoor(home => {
       pending.current = home
-      if (now.current.mode !== home.mode) now.current.chooseMode(home.mode)
+      standClipHome(home, now.current)
       ask(n => n + 1)
     })
     return () => publishClipHomeDoor(null)
@@ -64,7 +78,7 @@ export function useClipHomeDoor(mode: SurfMode, chooseMode: (mode: SurfMode) => 
     const home = pending.current
     if (!home || home.mode !== mode) return
     pending.current = null
-    select({kind: 'clip', ref: home.clip, title: home.title, ...(home.track ? {track: home.track} : {})})
+    select(clipLanding(home))
     showClipView()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, asked])

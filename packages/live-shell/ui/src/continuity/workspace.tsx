@@ -7,6 +7,7 @@ import {admissionReport, applyPendingAdmission, type AdmissionOutcome, type Pend
 import {nativeHost} from '../native/application'
 import {setsAsWorkspaces} from './workspacePool'
 import {createBookKeeper, seedFromNative, type BookHost, type NativeBookReading} from './nativeBook'
+import {switchModeOnTrail} from '../projections/encounterBridge'
 
 export const CANDIDATE_WORKSPACE_KEY = 'oi.live-shell.candidate.workspace.v2'
 export const CANDIDATE_LEGACY_LAYOUT_KEY = 'oi.live-shell.candidate.layout.v1'
@@ -43,7 +44,9 @@ export function useCandidateWorkspace() {
   const holdsSets = book.workspaces.some(workspace => workspace.sets?.length)
   useEffect(() => { if (holdsSets) book.changeBook(next => setsAsWorkspaces(next)) }, [holdsSets])
   const mode: ShellMode = standsInOldLive ? 'audio' : SHELL_MODE_OF_BOOK[storedMode] ?? 'base'
-  const setMode = (next: ShellMode) => book.switchMode(BOOK_MODE_OF_SHELL[next])
+  // The shell's one mode switch is a move (manual §10.7 "Every place you go is kept on the trail"), wherever it is made: the trail grows by
+  // the place it lands on, then the tree turns (projections/encounterBridge.ts switchModeOnTrail). A walk turns book.switchMode alone.
+  const setMode = (next: ShellMode) => switchModeOnTrail(book, BOOK_MODE_OF_SHELL[next])
   const warmTrees = warmWorkspaceTrees(book.workspaces, book.current.id, storedMode)
   const applicationView = useMemo(() => readCandidateApplicationView(book.current.layout.applicationView), [book.current.layout.applicationView])
   const currentBook = useRef(book)

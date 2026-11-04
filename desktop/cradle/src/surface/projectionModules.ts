@@ -61,8 +61,8 @@ export interface EncounterSnapshot {
   subject?: EncounterSubject;
   /** THE selection a following pane moves with (manual §10.2). Absent while the host does not publish it. */
   selection?: EncounterSelection;
-  /** The opened reading — Atlas Manifestation. */
-  reading?: {ref: string; position?: string};
+  /** The opened reading — Atlas Manifestation — at its point; `title` names its page. */
+  reading?: {ref: string; position?: string; title?: string};
   /** The route back — Atlas Thread. */
   trail?: readonly {mode: string; label: string; position?: string}[];
   /** The kernel connection generation at publication (Atlas Deep gate). */
@@ -81,7 +81,7 @@ export type EncounterListener = (snapshot: EncounterSnapshot) => void;
  * but owned by the pane. */
 export type EncounterTransitionIntent =
   | {kind: "subject"; ref?: string; title: string; subjectKind?: string}
-  | {kind: "occasion"; ref: string; position?: string}
+  | {kind: "occasion"; ref: string; position?: string; title?: string}
   | {kind: "present"; presentation: string};
 
 export interface EncounterBridge {
