@@ -493,12 +493,15 @@ test('a hand-over the owner refuses leaves the frame sounding the Torus, and say
   } finally { await c.dispose(); }
 });
 
-test('what moves the owner\'s Torus past what the engine follows: a setting, a restore, a body, the receiver, an event, a setting landing in an advance', async () => {
+test('what moves the owner\'s Torus past what the engine follows: a setting, a restore, a body, an event, a setting landing in an advance', async () => {
   const {torusMoved} = await controller();
-  for (const operation of ['torus-set', 'torus-restore', 'torus-body', 'torus-receiver', 'm1-advance', 'replace-event', 'set-damping'])
+  for (const operation of ['torus-set', 'torus-restore', 'torus-body', 'm1-advance', 'replace-event', 'set-damping'])
     assert.equal(torusMoved({operation}, {status: 'ok'}), true, operation);
   for (const operation of ['torus-play', 'strike-at', 'torus-singlet', 'strike', 'torus-release', 'torus-native', 'torus-state', 'torus-checkpoint', 'read', 'inspect'])
     assert.equal(torusMoved({operation}, {status: 'ok'}), false, operation);
+  // O-I #849 round 14: the receiver moves only the gains the Torus is heard by, and the owner names each part of a block that reaches
+  // them (QL torus_heard), which the engine reaches over the same samples: it follows the move, so the receiver hands nothing over again.
+  assert.equal(torusMoved({operation: 'torus-receiver'}, {status: 'ok'}), false, 'the engine follows the receiver\'s moves');
   assert.equal(torusMoved({operation: 'advance'}, {status: 'ok'}), false, 'an advance moves only the cursor the engine runs on');
   assert.equal(torusMoved({operation: 'advance'}, {status: 'ok', torus_set_landed: {at_samples_elapsed: '4800'}}), true, 'a setting landed in it');
   assert.equal(torusMoved(undefined, {}), false);

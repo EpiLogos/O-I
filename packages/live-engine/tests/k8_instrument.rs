@@ -784,3 +784,262 @@ fn a_handed_over_torus_leaves_its_notes_to_its_owner() {
         "a Torus not handed over strikes a clip note's prepared act"
     );
 }
+
+// ── Round 14: the owner's moves of the gains the Torus is heard by (O-I #849) ───────────────────────────────────────────
+
+/// A move its owner reached: one gain for each mode of the played field.
+const MOVED: [f64; 2] = [0.5, 3.0];
+
+/// The played field struck by the owner's act at its first sample.
+fn struck_field() -> K8Field {
+    let mut f = played_field();
+    let act: Vec<(usize, (f64, f64))> = OWNER_ACT.iter().map(|(m, z)| (*m, (z[0], z[1]))).collect();
+    f.set_key(9, &act).unwrap();
+    assert!(f.strike_key(9));
+    f
+}
+
+/// `f` alone moved to `gains` at `at` over `frames`, rendered as its owner renders the part of its block that reaches them: one
+/// render of exactly those samples. `total` long.
+fn moved_alone(mut f: K8Field, at: usize, frames: usize, gains: &[f64], total: usize) -> Vec<f32> {
+    let mut out = vec![0f32; total];
+    assert!(f.render(&mut out[..at], false));
+    assert!(f.move_gains(gains, frames as u32));
+    assert!(f.render(&mut out[at..at + frames], false));
+    for chunk in out[at + frames..].chunks_mut(4096) {
+        assert!(f.render(chunk, false));
+    }
+    out
+}
+
+#[test]
+fn a_move_its_owner_reached_is_reached_over_the_owners_samples_across_the_engines_blocks() {
+    let build = || {
+        let mut g = Graph::new(SR, 120.0);
+        g.tracks.push(Track::midi("Torus", handed(1)));
+        g
+    };
+    let (mut core, mut handle) = engine(build()).unwrap();
+    handle
+        .send(EngineEvent::TorusStrike {
+            track: 0,
+            strike: owners_act(1, 0),
+        })
+        .unwrap();
+    let hear = live_engine::TorusHear::split(1, 400, 300, &MOVED).unwrap();
+    assert_eq!(hear.len(), 1, "two gains travel as one move");
+    handle
+        .send(EngineEvent::TorusHear {
+            track: 0,
+            hear: hear[0],
+        })
+        .unwrap();
+    let mut played = Vec::new();
+    let mut block = vec![0f32; 256 * 2];
+    for _ in 0..4 {
+        core.pull_block(&mut block);
+        played.extend(left(&block));
+    }
+    assert_eq!(
+        played,
+        moved_alone(struck_field(), 400, 300, &MOVED, 1024),
+        "reached from the owner's sample over its 300 samples, across the engine's blocks of 256, sample for sample the owner's"
+    );
+    // the defect this mends: a move reached in the node's one-frame render is not the owner's
+    assert_ne!(played, moved_alone(struck_field(), 400, 1, &MOVED, 1024));
+    assert_ne!(played, struck_alone(0, 1024), "the move is heard");
+    let exported = build().render_performance(SR, &handle.performance());
+    assert_eq!(left(&exported), played, "Export renders what was heard");
+}
+
+#[test]
+fn a_move_handed_over_unreached_is_heard_from_where_its_owner_left_it_until_its_length_is_named() {
+    // The owner handed its Torus over mid-move: the input holds the gains the move goes to, `heard_from` the gains it leaves.
+    let mut input = k8_fixture::input(SR);
+    let from: Vec<f64> = input.modes.iter().map(|m| m.audio_gain_per_metre).collect();
+    for (mode, gain) in input.modes.iter_mut().zip(MOVED) {
+        mode.audio_gain_per_metre = gain;
+    }
+    let mut f = K8Field::continue_from(&live_engine::k8::K8Continuation {
+        input,
+        samples_elapsed: 0,
+        driver_remainder: 0,
+        last_unmuted_sample: 0.0,
+        carrier: live_engine::k8::K8Carrier::default(),
+        pending: Vec::new(),
+        heard_from: from,
+    })
+    .unwrap();
+    f.set_law(&law(0.7)).unwrap();
+    let act: Vec<(usize, (f64, f64))> = OWNER_ACT.iter().map(|(m, z)| (*m, (z[0], z[1]))).collect();
+    f.set_key(9, &act).unwrap();
+    assert!(f.strike_key(9));
+    // A frame at a time, as the engine's node renders it; the owner's next block names the move's length at sample 400.
+    let mut out = vec![0f32; 1024];
+    for n in 0..out.len() {
+        if n == 400 {
+            assert!(f.move_gains(&MOVED, 300));
+        }
+        assert!(f.render(&mut out[n..n + 1], false));
+    }
+    assert_eq!(
+        out,
+        moved_alone(struck_field(), 400, 300, &MOVED, 1024),
+        "heard by the gains the move leaves until its length is named, then reached over it, sample for sample the owner's"
+    );
+}
+
+#[test]
+fn a_move_reaches_the_torus_of_the_handover_it_follows() {
+    let build = || {
+        let mut g = Graph::new(SR, 120.0);
+        g.tracks.push(Track::midi(
+            "Torus",
+            Box::new(live_engine::SilentInstrument),
+        ));
+        g
+    };
+    let (mut core, mut handle) = engine(build()).unwrap();
+    let mut played = Vec::new();
+    let mut block = vec![0f32; 256 * 2];
+    core.pull_block(&mut block);
+    played.extend(left(&block));
+    // The owner's act and move after handover 1 reach the audio thread before the Torus they follow: they wait for it.
+    handle
+        .send(EngineEvent::TorusStrike {
+            track: 0,
+            strike: owners_act(1, 0),
+        })
+        .unwrap();
+    let hear = live_engine::TorusHear::split(1, 400, 300, &MOVED).unwrap();
+    handle
+        .send(EngineEvent::TorusHear {
+            track: 0,
+            hear: hear[0],
+        })
+        .unwrap();
+    core.pull_block(&mut block);
+    played.extend(left(&block));
+    assert!(block.iter().all(|v| *v == 0.0));
+    assert!(
+        !handle.install_latest(0, handed(1)).unwrap(),
+        "no hand was on its way"
+    );
+    for _ in 0..6 {
+        core.pull_block(&mut block);
+        played.extend(left(&block));
+    }
+    handle.collect();
+    assert_eq!(handle.installs(), &[(512, 0)]);
+    assert_eq!(&played[..512], &vec![0f32; 512][..]);
+    assert_eq!(
+        &played[512..],
+        &moved_alone(struck_field(), 400, 300, &MOVED, 1536)[..],
+        "the waiting move is reached on the Torus it follows, over its owner's samples"
+    );
+    let exported = build().render_performance_with(
+        SR,
+        &handle.performance(),
+        vec![(512, 0, handed(1) as Box<dyn live_engine::Instrument>)],
+    );
+    assert_eq!(left(&exported), played, "Export renders what was heard");
+}
+
+/// The fixture's field with `modes` modes, each at its own pitch.
+fn wide_field(modes: usize) -> K8Field {
+    let mut input = k8_fixture::input(SR);
+    let base = input.modes[0].clone();
+    input.modes = (0..modes)
+        .map(|i| K8Mode {
+            reference: format!("mode:wide-{i}"),
+            frequency_hz: 200.0 + 37.0 * i as f64,
+            ..base.clone()
+        })
+        .collect();
+    input.samples[0].mode_shapes = vec![[0.0, 0.0, 1.0]; modes];
+    K8Field::new(&input).unwrap()
+}
+
+#[test]
+fn a_move_of_more_modes_than_one_part_carries_is_reached_whole_and_a_broken_one_moves_nothing() {
+    const MODES: usize = 20;
+    let gains: Vec<f64> = (0..MODES).map(|i| 0.25 + 0.1 * i as f64).collect();
+    let parts = live_engine::TorusHear::split(1, 100, 64, &gains).unwrap();
+    assert_eq!(
+        parts
+            .iter()
+            .map(|p| (p.first, p.count, p.total))
+            .collect::<Vec<_>>(),
+        vec![(0, 16, 20), (16, 4, 20)],
+        "twenty gains travel as two parts of one move"
+    );
+    let impulses: Vec<(usize, [f64; 2])> =
+        (0..MODES).map(|i| (i, [0.01, 0.002 * i as f64])).collect();
+    let strikes = live_engine::TorusStrike::split(1, 0, &impulses).unwrap();
+    // The Torus a frame at a time, struck at its first sample and told `hears` before it renders; `told_at` frames rendered first.
+    let play = |hears: &[live_engine::TorusHear], told_at: usize| {
+        let mut torus = K8Instrument::new(wide_field(MODES)).handed_over(1);
+        torus.prepare(SR);
+        let clock = live_engine::Clock::start(SR, 120.0);
+        for s in &strikes {
+            assert!(torus.torus_strike(s, &clock));
+        }
+        let mut io = [0f32; 1];
+        let mut out = Vec::with_capacity(512);
+        for n in 0..512 {
+            if n == told_at {
+                for h in hears {
+                    assert!(torus.torus_hear(h, &clock));
+                }
+            }
+            torus.process(&mut io, &clock);
+            out.push(io[0]);
+        }
+        (out, torus.refused(), torus.late(), torus.hearing())
+    };
+    let alone = || {
+        let mut f = wide_field(MODES);
+        let act: Vec<(usize, (f64, f64))> =
+            impulses.iter().map(|(m, z)| (*m, (z[0], z[1]))).collect();
+        f.set_key(9, &act).unwrap();
+        assert!(f.strike_key(9));
+        f
+    };
+    let (whole, refused, late, waiting) = play(&parts, 0);
+    assert_eq!((refused, late, waiting), (0, 0, 0));
+    assert_eq!(
+        whole,
+        moved_alone(alone(), 100, 64, &gains, 512),
+        "both parts reached as one move at the owner's sample, sample for sample the owner's"
+    );
+    // A move missing a part, or naming another field's modes, moves nothing and is counted refused.
+    let unmoved = play(&[], 0).0;
+    let (broken, refused, _, waiting) = play(&parts[1..], 0);
+    assert_eq!((broken, refused, waiting), (unmoved.clone(), 1, 0));
+    let other = live_engine::TorusHear::split(1, 100, 64, &gains[..2]).unwrap();
+    let (other, refused, _, _) = play(&other, 0);
+    assert_eq!((other, refused), (unmoved, 1));
+    // A move told after its sample passed is reached from where the Torus stands, at once, and counted late.
+    let (behind, refused, late, _) = play(&parts, 200);
+    assert_eq!((refused, late), (0, 1));
+    assert_eq!(behind, moved_alone(alone(), 200, 64, &gains, 512));
+    // A move of another handover is not this Torus's.
+    let mut torus = K8Instrument::new(wide_field(MODES)).handed_over(1);
+    torus.prepare(SR);
+    let elsewhere = live_engine::TorusHear::split(2, 100, 64, &gains).unwrap();
+    assert!(!torus.torus_hear(&elsewhere[0], &live_engine::Clock::start(SR, 120.0)));
+    assert_eq!(torus.hearing(), 0);
+    // Refused in words before it travels: no gain, a gain not finite or past the bound, a length outside 1 to 8192.
+    for (gains, frames) in [
+        (vec![], 64),
+        (vec![f64::NAN], 64),
+        (vec![2e6], 64),
+        (vec![1.0], 0),
+        (vec![1.0], live_engine::TORUS_HEAR_FRAMES + 1),
+    ] {
+        assert!(
+            live_engine::TorusHear::split(1, 0, frames, &gains).is_err(),
+            "{gains:?} over {frames}"
+        );
+    }
+}

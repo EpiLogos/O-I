@@ -142,6 +142,44 @@ pub enum TorusTap {
         at_samples_elapsed: u64,
         impulses: Vec<(String, [f64; 2])>,
     },
+    /// A part of a block the owner under `lease` rendered reached gains a receiver moved (`torus_heard`,
+    /// QL's `TORUS_HEARD_LAW`, round 14): from its sample `at_samples_elapsed` over `frames` samples, to
+    /// the gain each voice is heard by, by `mode_ref`, exactly as the owner names them.
+    Heard {
+        lease: String,
+        at_samples_elapsed: u64,
+        frames: u32,
+        gains: Vec<(String, f64)>,
+    },
+}
+
+/// The parts of an acknowledged block that reached gains a receiver moved, in order (the reply's
+/// `torus_heard`): none when the block names none, and none when one it names cannot be read whole, since
+/// a host that reached the rest would reach them from gains the owner was not heard by.
+fn torus_heard(lease: &str, command: &Value, reply: &Value) -> Vec<TorusTap> {
+    let Some(parts) = reply["torus_heard"]
+        .as_array()
+        .filter(|_| command["operation"] == "advance")
+    else {
+        return Vec::new();
+    };
+    parts
+        .iter()
+        .map(|part| {
+            let gains = part["gains"]
+                .as_array()?
+                .iter()
+                .map(|g| Some((g["mode_ref"].as_str()?.to_owned(), g["gain"].as_f64()?)))
+                .collect::<Option<Vec<_>>>()?;
+            Some(TorusTap::Heard {
+                lease: lease.to_owned(),
+                at_samples_elapsed: cursor(&part["at_samples_elapsed"]).ok()?,
+                frames: u32::try_from(part["frames"].as_u64()?).ok()?,
+                gains,
+            })
+        })
+        .collect::<Option<Vec<_>>>()
+        .unwrap_or_default()
 }
 
 /// The act an acknowledged command landed on the Torus's owner, or none: the receipt's `strike_at` (a key,
@@ -1110,6 +1148,9 @@ impl Manager {
                                 };
                                 // a host that stopped listening misses nothing the frame is answered
                                 if let Some(told) = told {
+                                    let _ = tap.send(told);
+                                }
+                                for told in torus_heard(&owner.lease, &command, &reply) {
                                     let _ = tap.send(told);
                                 }
                             }
@@ -4763,6 +4804,8 @@ for line in sys.stdin:
     /// acknowledged — each act it landed (torus-play, strike-at, torus-singlet, a named strike) with the impulses its
     /// own law gave each mode and the sample it landed at, and each handover by its digest — so the host's engine
     /// strikes the owner's own impulses at the owner's sample and takes the Torus again when it is handed over again.
+    /// Round 14: each part of a block that reached a receiver's gains is tapped by its sample, length and gains, so the
+    /// engine reaches them over the owner's samples; a block naming a part that cannot be read whole taps none of it.
     /// A refused act and a read are not tapped; the frame is answered as before.
     #[cfg(unix)]
     #[test]
@@ -4782,7 +4825,10 @@ print(json.dumps(dict(base,status='ready',last_request_id='0',field=field())),fl
 for line in sys.stdin:
   r=json.loads(line); c=r['command']; op=c['operation']; extra={}; status='ok'
   lands=c.get('at_samples_elapsed',str(state['samples']))
-  if op=='advance': state['samples']+=c['frames']
+  if op=='advance':
+    before=state['samples']; state['samples']+=c['frames']
+    if c['frames']==512: extra['torus_heard']=[{'at_samples_elapsed':str(before),'frames':200,'gains':[{'mode_ref':'voice:a','gain':0.5},{'mode_ref':'voice:b','gain':0.25}]},{'at_samples_elapsed':str(before+200),'frames':312,'gains':[{'mode_ref':'voice:a','gain':0.75},{'mode_ref':'voice:b','gain':0.125}]}]
+    if c['frames']==7: extra['torus_heard']=[{'at_samples_elapsed':str(before),'frames':7,'gains':[{'mode_ref':'voice:a','gain':0.5}]},{'at_samples_elapsed':str(before),'frames':7,'gains':[{'mode_ref':'voice:b'}]}]
   elif op=='torus-native': extra['torus_native']=handed()
   elif op=='torus-play': extra['strike_at']={'at_samples_elapsed':lands,'voices':[{'mode_ref':'voice:a','amplitude':[0.30000000000000004,-3e-05]},{'mode_ref':'voice:b','amplitude':[-0.25,0.0]}]}
   elif op=='strike-at': extra['strike_at']={'at_samples_elapsed':lands,'modes':[{'mode_ref':'voice:a/body/0','amplitude':[0.1,0.2]}]}
@@ -4837,8 +4883,16 @@ for line in sys.stdin:
         exchange(
             json!({"operation":"torus-singlet","codon":5,"amplitude":[0.3,0],"at_samples_elapsed":"1200"}),
         );
+        exchange(json!({"operation":"advance","frames":512,"muted":false}));
+        exchange(json!({"operation":"advance","frames":7,"muted":false}));
         exchange(json!({"operation":"torus-state"}));
         let taps: Vec<TorusTap> = tapped.try_iter().collect();
+        let heard = |at: u64, frames: u32, gains: [f64; 2]| TorusTap::Heard {
+            lease: lease.clone(),
+            at_samples_elapsed: at,
+            frames,
+            gains: vec![("voice:a".into(), gains[0]), ("voice:b".into(), gains[1])],
+        };
         let struck = |at: u64, impulses: &[(&str, [f64; 2])]| TorusTap::Struck {
             lease: lease.clone(),
             at_samples_elapsed: at,
@@ -4852,8 +4906,11 @@ for line in sys.stdin:
                 struck(960, &[("voice:a/body/0", [0.1, 0.2])]),
                 struck(480, &[("voice:a", [0.01, 0.0])]),
                 struck(1200, &[("voice:b", [0.5, 0.5])]),
+                heard(480, 200, [0.5, 0.25]),
+                heard(680, 312, [0.75, 0.125]),
             ],
-            "every landed act, exactly as the owner wrote its impulses, at the sample it landed; a refusal and a read are not tapped"
+            "every landed act, exactly as the owner wrote its impulses, at the sample it landed, and every part that reached \
+             a receiver's gains, by its samples; a refusal, a read and a block naming a part it cannot read whole are not tapped"
         );
         fs::remove_dir_all(dir).unwrap();
     }

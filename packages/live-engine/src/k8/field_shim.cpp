@@ -193,7 +193,11 @@ LeK8Field *le_k8_field_continue(const LeK8Continuation *in, char *err, std::size
             c.pending.push_back(std::move(act));
         }
         c.heard_from.assign(in->heard_from, in->heard_from + in->heard_count);
-        return new LeK8Field(std::move(c));
+        auto *f = new LeK8Field(std::move(c));
+        // A move its owner handed over unreached is reached over the part of its owner's block that reaches it, which
+        // its owner names as it renders it (`le_k8_move_gains`): until then it is heard by the gains it leaves.
+        f->field.await_gain_ramp();
+        return f;
     } catch (const std::exception &e) {
         say(err, err_len, e.what());
     } catch (...) {
@@ -252,6 +256,13 @@ int le_k8_strike_modes(LeK8Field *f, const std::uint16_t *modes, const double *r
         impulses[i] = ql::Complex(re[i], im[i]);
     }
     return f->field.strike_now(index, impulses, n) ? 1 : 0;
+}
+
+// The audio thread: a move of the gains the Torus is heard by that its owner reached over `frames` of its samples (O-I #849
+// round 14; QL `TORUS_HEARD_LAW`), `n` gains in mode order, reached from the cursor over those samples however they are rendered
+// — `ql::ContinuousField::move_gains`, noexcept and allocation-free. 1 when moved; 0 changes nothing.
+int le_k8_move_gains(LeK8Field *f, const double *gains, std::size_t n, std::uint64_t frames) {
+    return f && f->field.move_gains(gains, n, frames) ? 1 : 0;
 }
 
 // The audio thread: Panic stills the body (`ql::ContinuousField::silence`). noexcept and allocation-free.

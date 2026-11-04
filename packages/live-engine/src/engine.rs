@@ -35,11 +35,11 @@
 //! realtime path recorded).
 
 use crate::graph::{
-    Clock, Graph, GraphError, Instrument, RackDevice, TorusAct, TorusStrike, TORUS_ACT_KEYS,
-    TORUS_STRIKE_MODES,
+    Clock, Graph, GraphError, Instrument, RackDevice, TorusAct, TorusHear, TorusStrike,
+    TORUS_ACT_KEYS, TORUS_HEAR_FRAMES, TORUS_HEAR_MODES, TORUS_STRIKE_MODES,
 };
 use crate::ring::{ring, Consumer, Producer};
-use std::sync::atomic::{AtomicPtr, AtomicU64, Ordering};
+use std::sync::atomic::{fence, AtomicPtr, AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::Instant;
 
@@ -71,6 +71,9 @@ pub enum EngineEvent {
     /// One act the Torus's owner landed (O-I #849): its impulses, struck by the part's Torus at the
     /// owner's sample ([`TorusStrike`]).
     TorusStrike { track: usize, strike: TorusStrike },
+    /// One part of its owner's block that reached gains a receiver moved (O-I #849 round 14): reached
+    /// by the part's Torus from the owner's sample over the owner's samples ([`TorusHear`]).
+    TorusHear { track: usize, hear: TorusHear },
     /// Release every held note on every part (manual §21.1 Rules); a Torus is stilled.
     Panic,
     /// A part's, a return's or the Main track's volume (linear gain).
@@ -262,6 +265,23 @@ impl MixerState {
                     Ok(())
                 }
             }),
+            EngineEvent::TorusHear { track: t, hear } => track(t).and_then(|p| {
+                if !p.midi {
+                    Err(format!("'{}' is an audio part: it plays no notes", p.name))
+                } else if hear.count == 0
+                    || usize::from(hear.count) > TORUS_HEAR_MODES
+                    || usize::from(hear.first) + usize::from(hear.count) > usize::from(hear.total)
+                    || hear.frames == 0
+                    || hear.frames > TORUS_HEAR_FRAMES
+                    || hear.gains().iter().any(|g| !g.is_finite() || g.abs() > 1e6)
+                {
+                    Err(format!(
+                        "a move of the Torus's gains carries 1 to {TORUS_HEAR_MODES} of its modes' finite gains, reached over 1 to {TORUS_HEAR_FRAMES} samples"
+                    ))
+                } else {
+                    Ok(())
+                }
+            }),
             EngineEvent::Panic => Ok(()),
             EngineEvent::Volume { part: p, gain: g } => part(p).and_then(|_| gain(g)),
             EngineEvent::Pan { part: p, pan } => part(p).and_then(|_| {
@@ -326,6 +346,7 @@ impl MixerState {
             | EngineEvent::NoteOff { .. }
             | EngineEvent::TorusPlay { .. }
             | EngineEvent::TorusStrike { .. }
+            | EngineEvent::TorusHear { .. }
             | EngineEvent::Panic => {}
         }
     }
@@ -363,6 +384,12 @@ struct Shared {
     /// The device's output latency (callback to playback), ns, as the
     /// realtime stream last reported it (0 until a device reports).
     output_latency_ns: AtomicU64,
+    /// The last block's stamp (O-I #849 round 14): its first frame, its frames and when it was
+    /// pulled (ns since `epoch`), written under `stamp_seq`, odd while the audio thread writes them.
+    stamp_seq: AtomicU64,
+    stamp_frame: AtomicU64,
+    stamp_frames: AtomicU64,
+    stamp_ns: AtomicU64,
     /// The owner's acts for a Torus that never reached one ([`Graph::torus_unplaced`]), as of
     /// the last block.
     torus_unplaced: AtomicU64,
@@ -463,6 +490,15 @@ pub struct EngineHandle {
     racks: Vec<(u64, usize)>,
 }
 
+/// A block as the engine pulled it (O-I #849 round 14): its first frame, its frames, and when it was
+/// pulled, ns in the engine's time ([`EngineHandle::now_ns`]).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct BlockStamp {
+    pub frame: u64,
+    pub frames: u64,
+    pub at_ns: u64,
+}
+
 /// Why the engine refused an event.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Refusal {
@@ -519,6 +555,10 @@ pub fn engine(mut graph: Graph) -> Result<(EngineCore, EngineHandle), GraphError
         waits: Default::default(),
         longest_wait_ns: AtomicU64::new(0),
         output_latency_ns: AtomicU64::new(0),
+        stamp_seq: AtomicU64::new(0),
+        stamp_frame: AtomicU64::new(0),
+        stamp_frames: AtomicU64::new(0),
+        stamp_ns: AtomicU64::new(0),
         torus_unplaced: AtomicU64::new(0),
         hands: Hands::new(),
         racks: Hands::new(),
@@ -558,6 +598,7 @@ impl EngineCore {
         self.take_hand(start);
         self.take_rack(start);
         let now_ns = self.shared.epoch.elapsed().as_nanos() as u64;
+        self.stamp(start, out.len() as u64 / 2, now_ns);
         while let Some(inbound) = self.inbox.pop() {
             self.graph.apply(&inbound.event, &self.clock);
             let wait = now_ns.saturating_sub(inbound.sent_ns);
@@ -604,6 +645,19 @@ impl EngineCore {
             .torus_unplaced
             .store(self.graph.torus_unplaced(), Ordering::Relaxed);
         self.shared.position.store(frame_index, Ordering::Release);
+    }
+
+    /// Stamp the block about to be mixed: its first frame, its frames and when it was pulled, so the
+    /// control side knows the frame playing between blocks ([`EngineHandle::block_stamp`]).
+    fn stamp(&self, frame: u64, frames: u64, at_ns: u64) {
+        let s = &self.shared;
+        let seq = s.stamp_seq.load(Ordering::Relaxed);
+        s.stamp_seq.store(seq.wrapping_add(1), Ordering::Relaxed);
+        fence(Ordering::Release);
+        s.stamp_frame.store(frame, Ordering::Relaxed);
+        s.stamp_frames.store(frames, Ordering::Relaxed);
+        s.stamp_ns.store(at_ns, Ordering::Relaxed);
+        s.stamp_seq.store(seq.wrapping_add(2), Ordering::Release);
     }
 
     /// Take an instrument handed to a part ([`EngineHandle::install`]) at frame `start`, before
@@ -909,6 +963,34 @@ impl EngineHandle {
     /// Frames the engine has mixed.
     pub fn position(&self) -> u64 {
         self.shared.position.load(Ordering::Acquire)
+    }
+
+    /// The stamp of the block the engine pulled last (O-I #849 round 14): its first frame, its frames
+    /// and when it was pulled, in the engine's time ([`EngineHandle::now_ns`]). All zero before the
+    /// first block.
+    pub fn block_stamp(&self) -> BlockStamp {
+        let s = &self.shared;
+        loop {
+            let seq = s.stamp_seq.load(Ordering::Acquire);
+            if seq % 2 == 1 {
+                std::hint::spin_loop();
+                continue;
+            }
+            let stamp = BlockStamp {
+                frame: s.stamp_frame.load(Ordering::Relaxed),
+                frames: s.stamp_frames.load(Ordering::Relaxed),
+                at_ns: s.stamp_ns.load(Ordering::Relaxed),
+            };
+            fence(Ordering::Acquire);
+            if s.stamp_seq.load(Ordering::Relaxed) == seq {
+                return stamp;
+            }
+        }
+    }
+
+    /// The engine's time now: ns since it was made, the time its blocks are stamped in.
+    pub fn now_ns(&self) -> u64 {
+        self.shared.epoch.elapsed().as_nanos() as u64
     }
 
     /// What the engine played so far: every frame it mixed and every event
