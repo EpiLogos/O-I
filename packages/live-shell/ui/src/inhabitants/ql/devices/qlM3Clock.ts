@@ -13,6 +13,8 @@
 //   a new degree is the owner's `advance-clock{steps}` forward by the difference on the double cover, a new cut its `set-aperture`, a new
 //   matrix its `set-matrix{family}` (QL's SetMatrix, carried by m3_reception: the matrix is chosen without turning the form);
 //   rack, rack.part                        the Rack page: M3′'s rack from the map's ledger and the part you choose (qlRack.ts).
+// A singlet (DLW §21.2 "What strikes the Torus"; O-I #771): an applied event that leaves the cell non-dual strikes the Torus with the codon
+// QL names (nativeM3.ts singletOfApplied), through the one stage channel the Live surfaces share; the Torus places it on the ring.
 // Turn, Open, Readout and Reciprocal are the view's own (DesignBinding.local). The seed and the pose map are readings: QL's state names
 // the law in force and offers no operation that sets them. With no identity chosen, no Expression open, or no form
 // opened for them (status 'absent': the Nara instrument's M3 page opens it), every value stands absent and the well says which.
@@ -21,7 +23,7 @@ import {useEffect, useSyncExternalStore} from 'react'
 import {detectTransport, kernelOp, type KernelOpCall} from '../../../../../../../desktop/cradle/src/kernel/bridge'
 import type {KernelOp} from '../../../../../../../desktop/cradle/src/kernel/types'
 import type {NativeDialogueRequest} from '../../../../../../../desktop/cradle/src/nara/dialogueTypes'
-import type {M3Gesture, M3Operation, NativeM3Reading} from '../../../../../../../desktop/cradle/src/nara/nativeM3'
+import {singletOfApplied, type M3Gesture, type M3Operation, type NativeM3Reading} from '../../../../../../../desktop/cradle/src/nara/nativeM3'
 import {currentIdentity, type CurrentIdentity} from '../../../../../../../desktop/cradle/src/nara/identity/current'
 import {useHostedChrome} from '../../../projections/expressionsPaneHost'
 import type {SdkParamRow} from '../../sdk/define'
@@ -31,6 +33,7 @@ import type {DeviceInstance, ParamValue} from '../../../frame/devices/deviceRunt
 import {techneDeviceId, techneFaceDeclaration} from './faces'
 import {qlRackState, rackPage, type QlRackState} from './qlRack'
 import {NARA_CHANNEL_REGISTER} from '../../../agent/worldScope'
+import {commitLiveStage} from '../../../live/torusInstrument'
 
 export const QL_M3_FAMILY = 'quaternal-logic'
 export const QL_M3_FACE = 'm3-clock'
@@ -127,6 +130,9 @@ export async function applyQlM3(operations: readonly M3Operation[]): Promise<voi
   if (ticket !== sequence) return
   if (!answer.ok) { setState({...state, busy: false}); throw new Error(answer.reason) }
   setState({...state, busy: false, reading: answer.reading})
+  // The event is applied whatever the Torus does: without a live instrument nothing sounds, and the form stands as the owner answered.
+  const codon = singletOfApplied(answer.reading)
+  if (codon !== null) void commitLiveStage({command: 'singlet', codon})
 }
 
 export function setQlM3View(view: M3View): void { setState({...state, view: {...state.view, ...view}}) }

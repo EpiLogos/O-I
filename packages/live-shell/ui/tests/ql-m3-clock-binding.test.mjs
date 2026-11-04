@@ -129,3 +129,68 @@ test('Technē\'s chain draws the design on the binding; the manifest admits the 
   for (const view of VIEWS) assert.ok(renderToStaticMarkup(h(HostedDevice, {designed: design, binding: entry.binding, view, nav: {}})).length > 0, view)
   m3.resetQlM3()
 })
+
+// O-I #771 (the owner's ruling of 4 Nov 2026): a singlet strikes the Torus at its codon's place on the ring. The trigger is an applied M3
+// event at m3_reception that leaves the cell non-dual: the event Binding reads (QL-MEF m3_binding.rs binding_event: a form inscribed, a
+// line changed, a matrix changed), never the per-tick form advance. The cell, its non-duality and its singlet are QL's; the clock sends
+// the codon through the one stage channel and the Torus places it.
+const nativeM3 = await import('../../../../desktop/cradle/src/nara/nativeM3.ts')
+const torusInstrument = await import('../src/live/torusInstrument.ts')
+// Hexagram 17 under complementary and under same-quality, as the installed QL answered it (REAL.generation.cells): non-dual, singlets 58 and 10.
+const underMatrix = index => ({...REAL.generation, matrix: REAL.generation.cells[index].matrix, cell: REAL.generation.cells[index]})
+const applied = (operations, after, over = {}) => ({schema: 'ql.m3-receipt/v1', event_ref: 'event:e', subject_ref: 's', status: 'applied',
+  before_generation: after - 1, after_generation: after, command: {operations}, ...over})
+const appliedReading = (generation, operations, after, over = {}) => reading({state: form({identity: {event_ref: 'event:e', profile_generation: after}, generation}),
+  receipts: [applied(operations, after, over)]})
+
+test('the singlet an applied M3 event leaves is QL\'s own: a motion that leaves the cell non-dual names its codon, nothing else does', () => {
+  const {singletOfApplied} = nativeM3
+  assert.equal(singletOfApplied(appliedReading(underMatrix(0), [{operation: 'set-matrix', family: 0}], 8)), 58, 'complementary: GCC')
+  assert.equal(singletOfApplied(appliedReading(underMatrix(2), [{operation: 'apply-matrix', family: 2}], 8)), 10, 'same-quality')
+  for (const operation of [{operation: 'select-form', address: 17}, {operation: 'change-line', line: 2},
+    {operation: 'cast-creases', angles_deg10: [0, 0, 0], velocities_deg10: [0, 0, 0]}])
+    assert.equal(singletOfApplied(appliedReading(underMatrix(0), [{operation: 'set-aperture', aperture: 3}, operation], 8)), 58, operation.operation)
+  assert.equal(singletOfApplied(appliedReading(underMatrix(1), [{operation: 'set-matrix', family: 1}], 8)), null, 'a dual cell is a meson, no singlet')
+  for (const operation of [{operation: 'advance-clock', steps: 5}, {operation: 'set-aperture', aperture: 3}, {operation: 'set-pose', pose: 1},
+    {operation: 'reciprocal-aperture'}, {operation: 'transcribe', rna: true}, {operation: 'spanda-advance', tick12: 3, cycle: 0}])
+    assert.equal(singletOfApplied(appliedReading(underMatrix(0), [operation], 8)), null, `${operation.operation} leaves the cell where it was: no event`)
+  assert.equal(singletOfApplied(appliedReading(underMatrix(0), [{operation: 'set-matrix', family: 0}], 8, {status: 'refused'})), null, 'only an applied receipt')
+  assert.equal(singletOfApplied(appliedReading(underMatrix(0), [{operation: 'set-matrix', family: 0}], 8, {after_generation: 6})), null,
+    'a receipt that did not leave this state is another event')
+  assert.equal(singletOfApplied(reading({state: form({generation: underMatrix(0)}), receipts: []})), null, 'a form read, not an event')
+  assert.equal(singletOfApplied(reading({status: 'absent', state: null, receipts: null})), null)
+  assert.equal(singletOfApplied(null), null)
+})
+
+test('an applied M3 event that leaves the cell non-dual strikes its singlet on the Torus through the one stage channel; any other, nothing', async () => {
+  const sent = []
+  let answerOf = () => ({ok: true})
+  torusInstrument.setLiveInstrumentCommander(command => { sent.push(command); return Promise.resolve(answerOf(command)) })
+  try {
+    let next = reading(), respond = () => answer(next)
+    m3.resetQlM3({call: async () => respond()})
+    await m3.syncQlM3(basis)
+    assert.deepEqual(sent, [], 'reading the form strikes nothing')
+    next = appliedReading(underMatrix(0), [{operation: 'set-matrix', family: 0}], 8)
+    await m3.qlM3Binding(m3.qlM3State()).write([{key: 'law.matrix', value: 'complementary'}])
+    assert.deepEqual(sent, [{command: 'singlet', codon: 58}], 'the codon QL names, and nothing the shell works out')
+    next = appliedReading(underMatrix(1), [{operation: 'set-matrix', family: 1}], 9)
+    await m3.applyQlM3([{operation: 'set-matrix', family: 1}])
+    assert.equal(sent.length, 1, 'a dual cell strikes nothing')
+    next = appliedReading(underMatrix(0), [{operation: 'advance-clock', steps: 5}], 10)
+    await m3.applyQlM3([{operation: 'advance-clock', steps: 5}])
+    assert.equal(sent.length, 1, 'a clock step names no event')
+    // The Torus refusing the singlet (no live instrument, a held one) leaves the M3 event applied: the form is the owner's answer.
+    answerOf = () => ({ok: false, error: 'Open the live instrument first'})
+    next = appliedReading(underMatrix(2), [{operation: 'set-matrix', family: 2}], 11)
+    await m3.applyQlM3([{operation: 'set-matrix', family: 2}])
+    assert.deepEqual(sent.at(-1), {command: 'singlet', codon: 10})
+    assert.equal(m3.qlM3State().reading.state.identity.profile_generation, 11)
+    assert.equal(m3.qlM3State().reason, null)
+    // A refused M3 event strikes nothing.
+    const before = sent.length
+    respond = () => ({error: 'stale generation'})
+    await assert.rejects(m3.applyQlM3([{operation: 'set-matrix', family: 0}]), /stale generation/)
+    assert.equal(sent.length, before)
+  } finally { torusInstrument.setLiveInstrumentCommander(null); m3.resetQlM3() }
+})

@@ -29,6 +29,10 @@ export class InstrumentSession {
  torusSet(edit: Record<string, unknown>, options?: {at_samples_elapsed?: string}): Promise<any>;
  /** Jankó keys strike their moving points on the tuning in force: one strike at points, one generation; receipt as lastTorusPlay. */
  torusPlay(keys: Array<{row: number; column: number}>, options?: {amplitude?: [number, number]; at_samples_elapsed?: string}): Promise<any>;
+ /** A singlet strikes at its codon's place on the ring (O-I #771): the arc the ring reads the codon at (both arcs for a
+  * nonet-collision codon), carried by the turning torus by a key's point law: one strike at points, one generation, no note
+  * counted; receipt as lastTorusSinglet. A codon past 63 is refused before any exchange. */
+ torusSinglet(codon: number, options?: {amplitude?: [number, number]; at_samples_elapsed?: string}): Promise<any>;
  /** Release keys from the count of notes; the body rings on, no native state moves. */
  torusRelease(keys: Array<{row: number; column: number}>): Promise<any>;
  /** The Torus as it rings (`ql.torus-checkpoint/v1`, O-I #855): the body's state, form, forces, comma and seeds at the acknowledged
@@ -52,6 +56,8 @@ export class InstrumentSession {
  readonly lastTorus: any;
  /** The last played Torus act's receipt (ql.torus-play/v1), or null before any. */
  readonly lastTorusPlay: any;
+ /** The last struck singlet's receipt (ql.torus-singlet/v1: the codon, its places and points), or null before any. */
+ readonly lastTorusSinglet: any;
  /** Frozen copy of every admitted owner act and the aggregate advance data plane. */
  journal(): any;
  readonly lastInfluence: any;

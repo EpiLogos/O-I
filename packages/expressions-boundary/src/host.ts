@@ -12,9 +12,9 @@ import {onSharedTimeWindowChange, SHARED_TIME_NUDGE, type DisclosureSessionStore
 /** A stage control that the frame never answers settles as a refusal, never a hang. */
 const STAGE_TIMEOUT_MS = 60000;
 /** The stage commands the owner takes while the frame is concealed: the Live instrument's edits, the Jankó's keys (their strikes and
- * releases, O-I #853), a strike at points, the owner's audio clock, and a Live take's reads (O-I 855): the performance journal (where
- * each note landed), the Torus kept and set again, and a take rendered offline. */
-const CONCEALED_STAGE_COMMANDS: ReadonlySet<StageCommand['command']> = new Set(['instrument', 'janko', 'strike-at', 'audio-clock', 'performance-journal', 'torus', 'torus-sound', 'render-take']);
+ * releases, O-I #853), a strike at points, a singlet the M3 clock's event leaves (O-I #771), the owner's audio clock, and a Live take's
+ * reads (O-I 855): the performance journal (where each note landed), the Torus kept and set again, and a take rendered offline. */
+const CONCEALED_STAGE_COMMANDS: ReadonlySet<StageCommand['command']> = new Set(['instrument', 'janko', 'strike-at', 'singlet', 'audio-clock', 'performance-journal', 'torus', 'torus-sound', 'render-take']);
 /** An Expression open waiting for the frame's readiness, with the settle of its answer. */
 interface PendingExpressionOpen {ref: string; refresh: boolean; lens?: HostedTechneLens; recovery?: RecoveryBinding; settle: (result: StageResult) => void}
 const SUPERSEDED_OPEN = 'A newer open superseded this one before the Expressions application was ready';

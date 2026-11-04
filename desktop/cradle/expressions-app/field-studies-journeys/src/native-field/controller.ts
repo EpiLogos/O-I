@@ -598,6 +598,32 @@ export class NativeFieldController {
    return {made_way:torusKeys((Array.isArray(receipt?.made_way)?receipt.made_way:[]).map((note:any)=>note?.key),0)??[],landed_at_samples_elapsed:landedAt(session,at)};
   });
  }
+ /** A singlet struck on the Torus (QL-MEF `torus-singlet`; DLW §21.2 "What strikes the Torus": "A singlet | Its codon's place on the
+  * ring"; O-I #771): an applied M3 event left the cell non-dual, and its codon strikes at the arc the ring reads it at (both arcs for a
+  * nonet-collision codon), where the turning torus has carried it, now or at `at`. The codon alone is sent: its place and its point are
+  * the owner's (scene_field.rs SINGLET_PLACE_LAW), and the points it struck are what the plate follows, as for a key. No note is
+  * counted. A performance act as torusPlayed is, through the one serial owner. The answer names the sample the act landed at. */
+ torusSinglet(codon:number,amplitude=0.35,at?:string):Promise<{landed_at_samples_elapsed:string}>{
+  const session=this.session;
+  if(!session||!this.scene)return Promise.reject(new Error('Open the live instrument first: a singlet strikes a scene owner'));
+  if(!(typeof codon==='number'&&Number.isInteger(codon)&&codon>=0&&codon<64))return Promise.reject(new Error('a singlet\'s codon is 0 to 63'));
+  if(!Number.isFinite(amplitude)||amplitude<=0||amplitude>1)return Promise.reject(new Error('strike amplitude must be in (0, 1] modal metres'));
+  if(this.status!=='following'||this.suspension)return Promise.reject(new Error('The field is not running: resume it, then play'));
+  return this.serial(async()=>{
+   if(!(await this.waitIdle(session,2000)))throw new Error('native owner busy; the singlet was not sent');
+   if(this.status!=='following'||this.suspension||!this.current(session))throw new Error('instrument held before the singlet was sent');
+   const sent=performance.now();
+   try{await session.torusSinglet(codon,{amplitude:[amplitude,0],...(at===undefined?{}:{at_samples_elapsed:at})});}
+   catch(error){this.refused('singlet',error,session);throw error;}
+   const receipt=session.lastTorusSinglet as any;
+   const points=(Array.isArray(receipt?.points)?receipt.points:[])
+    .filter((point:any)=>[point?.theta,point?.phi].every(angle=>typeof angle==='number'&&Number.isFinite(angle)))
+    .map((point:any)=>({theta:point.theta as number,phi:point.phi as number}));
+   this.refusal=null;this.played={at:Date.now(),strikes:(this.played?.strikes??0)+1,last_ms:performance.now()-sent};
+   this.struck={at:Date.now(),source:'point',refs:this.voiceRefs(),points};this.changed();
+   return {landed_at_samples_elapsed:landedAt(session,at)};
+  });
+ }
  /** Keys let go (QL-MEF `torus-release`): they leave the count of notes, and the body rings on (a released note keeps its own tail,
   * DLW §21.2 Rules), so no native state moves. Through the one serial owner, after the strikes sent before it. */
  torusRelease(keys:{row:number;column:number}[]):Promise<void>{

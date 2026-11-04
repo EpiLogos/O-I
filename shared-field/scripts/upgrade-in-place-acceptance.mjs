@@ -160,6 +160,15 @@ if (!firstWorld.ok && /unknown request kind: world-put/.test(firstWorld.error.me
   data(base, 'guest', { kind: 'star-gather', star_ref: WAITING, world_ref: GUEST_WORLD });
   data(base, 'guest', { kind: 'clearing-open', world_ref: GUEST_WORLD, part_ref: 'page:upgrade-at-star', audience: 'star', star_ref: OPEN, shown: { kind: 'page', label: 'Shown at the open star' } });
   written.push('two worlds, three clearings, three stars, gathered, let-in and waiting gatherings');
+  const QUESTION = `saying:upgrade-${RUN}-question`;
+  const asked = ask(base, null, { kind: 'star-say', saying_ref: QUESTION, star_ref: OPEN, world_ref: OWNER_WORLD, to: { world_ref: GUEST_WORLD, part_ref: 'page:upgrade-at-star' }, what: 'question', words: 'Asked before the upgrade' });
+  if (!asked.ok && /unknown request kind: star-say/.test(asked.error.message)) {
+    skipped.push('what was said at a star (the base module keeps none)');
+  } else {
+    assert.ok(asked.ok, `star-say through the base: ${asked.error?.message}`);
+    data(base, 'guest', { kind: 'star-say', saying_ref: `saying:upgrade-${RUN}-finding`, star_ref: OPEN, world_ref: GUEST_WORLD, to: { saying_ref: QUESTION }, what: 'finding', words: 'Answered before the upgrade' });
+    written.push('a question said at a star and the finding that answers it');
+  }
 }
 
 /* ---------- 2. what each identity read before the upgrade is the manifest ---------- */
@@ -169,8 +178,11 @@ for (const key of ['fields', 'participants', 'projections', 'entries', 'relation
   assert.ok(Array.isArray(before.owner[key]) && before.owner[key].length > 0, `the base wrote and its owner reads ${key} before the upgrade`);
 }
 assert.ok(before.guest.my_contribution_receipts?.length === 2, 'the guest reads both its Contribution receipts before the upgrade');
-if (!skipped.length) for (const key of ['worlds', 'clearings', 'stars', 'gatherings']) {
+if (firstWorld.ok) for (const key of ['worlds', 'clearings', 'stars', 'gatherings']) {
   assert.ok(before.owner[key]?.length > 0 && before.guest[key]?.length > 0, `both identities read ${key} before the upgrade`);
+}
+if (written.includes('a question said at a star and the finding that answers it')) for (const who of ['owner', 'guest']) {
+  assert.equal(before[who].star_sayings?.length, 2, `${who} reads both sayings before the upgrade`);
 }
 writeFileSync(join(work, 'before.json'), `${JSON.stringify(before, null, 2)}\n`);
 

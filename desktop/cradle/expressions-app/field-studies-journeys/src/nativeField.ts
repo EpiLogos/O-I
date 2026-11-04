@@ -14,6 +14,8 @@ type StageProceduralCommand=Extract<StageCommand,{command:'procedural-stage'}>;
 import {createLiveEntry} from './native-field/liveEntry.mjs';
 import {torusPlayReading} from './native-field/torusPlay.mjs';
 import {touchStrike,stageEye,type StageView} from './native-field/surfaceTouch';
+import {onM3Applied} from './kernelExpressions';
+import {singletOfApplied} from '../../../src/nara/nativeM3';
 import {receiverPlace} from '../../src/engine/torusObject';
 import {DEFAULT_DEPTH_CONFIG} from '../../src/engine/fieldDefaults';
 import {WORLD_SCALE} from './nativeParameters';
@@ -564,6 +566,12 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   isBusy:()=>busy||composing||(controller.reading as any).status==='opening',
   fieldLive:()=>!!(engine as any).retainedTopology?.(),
  });
+ /** A singlet (DLW §21.2 "What strikes the Torus": "A singlet | Its codon's place on the ring"; O-I #771): an M3 event applied through
+  * this frame's Nara channel (the M3 page, the Tarot score) that leaves the cell non-dual strikes its codon on the Torus, at the place
+  * the owner gives it (controller.ts torusSinglet). The cell and its singlet are QL's (nativeM3.ts singletOfApplied). While no live
+  * instrument plays, nothing sounds and the line says why, as for a touch. */
+ const unsinglet=onM3Applied(reading=>{const codon=singletOfApplied(reading);if(codon===null)return;
+  controller.torusSinglet(codon).catch(error=>{setText('key',`Singlet ${codon} not played: ${String(error instanceof Error?error.message:error)}`);});});
  /** A touch on the torus (DLW §21.2 "What strikes the Torus": "A touch | The point of the surface you touch"): what the press strikes
   * (surfaceTouch.ts touchStrike, from the stage as the engine is handed it and the engine's own projection), struck through the owner's
   * strike at a point. Answers whether the press was a touch on the torus; a press that is not one is left to the stage. */
@@ -623,5 +631,5 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   settledOn=identity;reopenWhenStill();
  };
  update();
- return {controller,panel,command,stage,touch,openLive,leaveLive,rebind,authoredMoved,hear,dispose:()=>{clearInterval(timer);engine.setTorusVoices?.(null);clearTimeout(reopening);panel.removeEventListener('click',click);panel.removeEventListener('input',range);panel.removeEventListener('pointerdown',pressKey);panel.removeEventListener('focusin',focusKey);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('pagehide',pagehide);panel.remove();domainView.dispose();style.remove();void controller.dispose();}};
+ return {controller,panel,command,stage,touch,openLive,leaveLive,rebind,authoredMoved,hear,dispose:()=>{unsinglet();clearInterval(timer);engine.setTorusVoices?.(null);clearTimeout(reopening);panel.removeEventListener('click',click);panel.removeEventListener('input',range);panel.removeEventListener('pointerdown',pressKey);panel.removeEventListener('focusin',focusKey);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('pagehide',pagehide);panel.remove();domainView.dispose();style.remove();void controller.dispose();}};
 }

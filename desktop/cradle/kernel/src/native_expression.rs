@@ -1288,8 +1288,9 @@ impl Manager {
 /// session (torus-state, torus-set, torus-play, torus-release; O-I #850) are
 /// performance acts on the scene owner, relayed the same way, as are the Torus
 /// kept, set again and a take rendered offline on a second owner of the scene
-/// (torus-checkpoint, torus-restore, torus-render; O-I 855).
-const EXCHANGE_OPERATIONS: [&str; 26] = [
+/// (torus-checkpoint, torus-restore, torus-render; O-I 855), and a singlet
+/// struck at its codon's place on the ring (torus-singlet; O-I #771).
+const EXCHANGE_OPERATIONS: [&str; 27] = [
     "read",
     "inspect",
     "advance",
@@ -1311,6 +1312,7 @@ const EXCHANGE_OPERATIONS: [&str; 26] = [
     "torus-state",
     "torus-set",
     "torus-play",
+    "torus-singlet",
     "torus-release",
     "torus-checkpoint",
     "torus-restore",
@@ -3109,12 +3111,14 @@ for line in sys.stdin: time.sleep(60)
         // session (O-I #850): the controller sends each (playAt, torusSet,
         // torusState), so the exchange relays each by its exact name. So are
         // the Torus kept, set again and a take rendered offline (O-I 855:
-        // torusCheckpoint, torusRestore, renderTake).
+        // torusCheckpoint, torusRestore, renderTake), and a singlet (O-I #771:
+        // torusSinglet).
         for op in [
             "strike-at",
             "torus-state",
             "torus-set",
             "torus-play",
+            "torus-singlet",
             "torus-release",
             "torus-checkpoint",
             "torus-restore",
@@ -3142,6 +3146,8 @@ for line in sys.stdin: time.sleep(60)
             "torus-checkpoints",
             "torus_render",
             "torus_receiver",
+            "torus_singlet",
+            "singlet",
         ] {
             assert!(
                 !exchange_admits(&json!({"command":{"operation":op}})),

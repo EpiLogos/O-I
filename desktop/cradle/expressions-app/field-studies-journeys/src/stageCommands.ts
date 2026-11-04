@@ -7,7 +7,7 @@ import {NATIVE_BINDINGS} from './nativeParameters.js';
 import {effectChainRefusal, readEffectOperands, type EffectValue, type PresentationEffect} from './native-field/effectsLaw.js';
 import {CURVE_TYPES, SWITCH_MODES, TRANSITION_KINDS, WIPE_DIRECTIONS, type CurveType, type SwitchMode, type TransitionKind, type WipeDirection} from '../../src/engine/transitionMath.js';
 import {TIMELINE_CATEGORY_IDS} from './timelineCategoryIds.js';
-export const STAGE_COMMANDS = ['view', 'capture', 'present', 'export', 'import', 'tool', 'engine', 'take', 'tracks', 'automation', 'live', 'instrument', 'janko', 'strike-at', 'audio-clock', 'performance-journal', 'torus', 'torus-sound', 'render-take', 'presentation', 'chrome', 'sound', 'journey', 'canvas', 'timeline', 'procedural-stage'] as const;
+export const STAGE_COMMANDS = ['view', 'capture', 'present', 'export', 'import', 'tool', 'engine', 'take', 'tracks', 'automation', 'live', 'instrument', 'janko', 'strike-at', 'singlet', 'audio-clock', 'performance-journal', 'torus', 'torus-sound', 'render-take', 'presentation', 'chrome', 'sound', 'journey', 'canvas', 'timeline', 'procedural-stage'] as const;
 /** The Ta-Onta procedural stage's own operations on the native field (DLW §21.2, the Torus's Stage page; QL-MEF continuous/host.rs
  * stage_operation): read its state, evaluate a procedure, bind one to the live flow within a budget, unbind it, retire its slots. Each
  * runs the native field's own controller operation (nativeField.ts stage), through the kernel's native_expression exchange. */
@@ -319,6 +319,10 @@ export type StageCommand =
    * on the sampled sheet, theta the tube and phi the ring, each in [0, 2π), struck at one amplitude in (0, 1], at `at_samples_elapsed`
    * as a strike of keys is. */
   | {command: 'strike-at'; points: StageStrikePoint[]; amplitude: number; at_samples_elapsed?: string}
+  /** A singlet (DLW §21.2 "What strikes the Torus": "A singlet | Its codon's place on the ring"; O-I #771): an applied M3 event left the
+   * cell non-dual, and QL's singlet codon (0..63) strikes the Torus at its place on the ring, now (controller.ts torusSinglet; QL-MEF
+   * `torus-singlet`). Only the codon is named: its place and its point are the owner's. */
+  | {command: 'singlet'; codon: number}
   /** The owner's audio clock (O-I #809), read so a player can schedule ahead on it: the answer carries a StageAudioClock. */
   | {command: 'audio-clock'}
   /** The owner's performance journal (QL instrument-session.mjs journal(), `ql.instrument-performance-journal/v1`; O-I 855): every admitted
@@ -755,6 +759,10 @@ export function readStageRequest(raw: unknown): {req: number; command: StageComm
       if (at === null) return null;
       return {req, command: {command: 'strike-at', points: points.map(point => ({theta: point.theta as number, phi: point.phi as number})), amplitude: raw.amplitude, ...at}};
     }
+    case 'singlet':
+      // One codon of the 64, and nothing else: the owner places it (O-I #771).
+      return closed(raw, [...BASE_KEYS, 'codon']) && typeof raw.codon === 'number' && Number.isInteger(raw.codon) && raw.codon >= 0 && raw.codon < 64
+        ? {req, command: {command: 'singlet', codon: raw.codon}} : null;
     case 'audio-clock':
       return closed(raw, [...BASE_KEYS]) ? {req, command: {command: 'audio-clock'}} : null;
     case 'performance-journal':

@@ -307,7 +307,9 @@ test('the World binding asks the field for a star’s acts, and stands each one 
     binding.local.starGathers('Readings of the beasts')
     binding.local.starComes('asked')
     binding.local.starComes('nobody')
-    assert.deepEqual({...store.starHand(), star: undefined, admit: undefined}, {star: undefined, admit: undefined, name: 'The Bestiary', gathers: 'Readings of the beasts', comes: 'asked'}, 'who may come is anyone or asked, nothing else')
+    const {name, gathers, comes} = store.starHand()
+    // REPLACED (round 10, SF06): the hand also holds what to say at a star and the pages turned to, so the star to light is read by its own three keys
+    assert.deepEqual({name, gathers, comes}, {name: 'The Bestiary', gathers: 'Readings of the beasts', comes: 'asked'}, 'who may come is anyone or asked, nothing else')
     binding = atlasDevs.atlasGlobeBinding(YOURS_READING())
     assert.equal(binding.values.starName, 'The Bestiary')
     assert.equal(binding.standing.starLight, undefined)
@@ -375,7 +377,11 @@ test('a star’s day reads beside it: who came, was let in, showed something and
   const v = {...world.defaults, ...world.fixtures['Field, a star chosen']}
   const whole = renderToStaticMarkup(world.whole({v, set() {}, nav: {}, page: 'space', setPage() {}, standing: {}}))
   assert.match(whole, /Star’s day/)
-  assert.match(whole, /mara was let in/)
+  // REPLACED (round 10, SF06): the design's sample day grew by what was said there, and the face opens on its newest page: the line read
+  // is the newest of SF04's, and the older ones are a page back
+  assert.match(whole, /stranger asked to come/)
+  const back = renderToStaticMarkup(world.whole({v: {...v, dayPage: 0}, set() {}, nav: {}, page: 'space', setPage() {}, standing: {}}))
+  assert.match(back, /mara was let in/, 'a page back, who was let in')
 })
 
 test('the chosen star reads in lines that end short of their section, and while the field holds no worlds every act at a star stands dimmed with the field’s words', () => {
@@ -407,4 +413,202 @@ test('with no star chosen, the star’s day stands empty, not as a reading the f
   assert.ok(day, 'the star’s day stands on the face')
   assert.ok(!/data-standing="(unread|awaiting)"/.test(day), `an unchosen star is no missing reading: ${day.slice(0, 160)}`)
   assert.match(day, /Choose a star first/, 'and says what to do')
+})
+
+// ── round 10: what was said to what, and when (SF06) ─────────────────────────────────────────────────────────────────────
+//
+// A star's day reads who is here now, what was brought and what was said to what, each entry naming who and when. A saying is a
+// question, a finding, a correction or a reproduction, said by a world gathered at the star to something shown there or to something
+// said there before; it stays its sayer's until they unsay it, and what it was said to goes back under cloud when it is taken back.
+
+const AT = Date.UTC(2026, 10, 4, 7, 35)
+const micros = ms => String(ms * 1000)
+const SAID = {
+  clearings: [...SNAPSHOT.clearings, c('world:mara', 'page:maras-reading', 'star', 'Mara’s reading of the second plate', 'star:rosarium')],
+  star_saying: {state: 'held'},
+  star_sayings: [
+    {saying_ref: 'saying:q1', star_ref: 'star:rosarium', world_ref: 'world:mara', to_world_ref: 'world:me', to_part_ref: 'page:for-the-circle', to_saying_ref: null,
+      what: 'question', words: 'Where does the circle open?', said_at_micros: micros(AT)},
+    {saying_ref: 'saying:c1', star_ref: 'star:rosarium', world_ref: 'world:me', to_world_ref: 'world:mara', to_part_ref: null, to_saying_ref: null,
+      what: 'correction', words: 'Not the red rose.', said_at_micros: micros(AT + 120_000)},
+    {saying_ref: 'saying:f1', star_ref: 'star:rosarium', world_ref: 'world:me', to_world_ref: null, to_part_ref: null, to_saying_ref: 'saying:q1',
+      what: 'finding', words: 'At the fourth plate.', said_at_micros: micros(AT + 60_000)},
+    {saying_ref: 'saying:r1', star_ref: 'star:rosarium', world_ref: 'world:mara', to_world_ref: null, to_part_ref: null, to_saying_ref: 'saying:gone',
+      what: 'reproduction', words: 'I drew it again.', said_at_micros: micros(AT + 180_000)},
+    {saying_ref: 'saying:x', star_ref: 'star:rosarium', world_ref: 'world:mara', to_world_ref: 'world:me', to_part_ref: 'page:for-the-circle', to_saying_ref: null,
+      what: 'shout', words: 'Hey', said_at_micros: micros(AT)},
+    {saying_ref: 'saying:far', star_ref: 'star:far', world_ref: 'world:stranger', to_world_ref: 'world:stranger', to_part_ref: 'page:elsewhere', to_saying_ref: null,
+      what: 'finding', words: 'Elsewhere.', said_at_micros: micros(AT)},
+  ],
+  star_day: {state: 'held'},
+  star_days: [
+    {star_ref: 'star:rosarium', world_ref: 'world:me', what: 'lit', at_micros: micros(AT - 3 * 86_400_000)},
+    {star_ref: 'star:rosarium', world_ref: 'world:mara', what: 'came', at_micros: micros(AT - 600_000)},
+    {star_ref: 'star:rosarium', world_ref: 'world:mara', what: 'said', kind: 'question', at_micros: micros(AT)},
+    {star_ref: 'star:rosarium', world_ref: 'world:me', what: 'said', kind: 'finding', at_micros: micros(AT + 60_000)},
+    {star_ref: 'star:rosarium', world_ref: 'world:mara', what: 'unsaid', kind: 'question', at_micros: micros(AT + 240_000)},
+  ],
+}
+const saidField = () => {
+  const field = model.heldFieldOf({...SNAPSHOT, ...SAID})
+  assert.equal(field.state, 'read')
+  return field
+}
+const rosariumOf = field => model.fieldScene(field, {aperture: 'federated', viewAs: 'me'}, YOURS).stars.find(star => star.ref === 'star:rosarium')
+
+test('a star reads who is here now and what each world brought there (SF06)', () => {
+  const rosarium = rosariumOf(saidField())
+  assert.deepEqual(rosarium.gathered, ['world:me', 'world:mara'], 'who is here now')
+  assert.deepEqual(rosarium.shown.map(s => [s.who, s.label, s.kind]), [['me', 'For the circle', 'page'], ['mara', 'Mara’s reading of the second plate', 'page']], 'what each brought')
+  assert.equal(rosarium.shown[0].id, model.shownId('world:me', 'page:for-the-circle'))
+  assert.deepEqual(rosariumOf(held()).shown.map(s => s.label), ['For the circle'])
+})
+
+test('what was said at a star reads as who said what to what, each under what it answers, with when (SF06)', () => {
+  const field = saidField()
+  assert.equal(field.sayings.length, 5, 'a saying that is not the contract’s is left out, never mended')
+  const rosarium = rosariumOf(field)
+  assert.deepEqual(rosarium.said.map(s => s.ref), ['saying:q1', 'saying:f1', 'saying:c1', 'saying:r1'], 'each under what it answers, in the order it was said')
+  assert.deepEqual(rosarium.said.map(s => s.depth), [0, 1, 0, 0])
+  assert.deepEqual(rosarium.said.map(s => model.starSayingLine(s)), [
+    'mara asks about For the circle: Where does the circle open?',
+    'me has a finding on mara’s question: At the fourth plate.',
+    'me corrects something mara no longer shows here: Not the red rose.',
+    'mara reproduces something since unsaid: I drew it again.',
+  ])
+  assert.deepEqual(rosarium.said.map(s => s.mine), [false, true, true, false], 'which were said by a world of yours')
+  assert.equal(rosarium.said[0].at, AT)
+  const two = n => String(n).padStart(2, '0'), local = new Date(AT)
+  assert.equal(model.starWhen(AT, AT + 60_000), `${two(local.getHours())}:${two(local.getMinutes())}`, 'said today: the clock')
+  assert.match(model.starWhen(AT, AT + 3 * 86_400_000), /^\d{1,2} Nov$/, 'said another day: the day')
+  // the day names who and when: who said something there, and who unsaid it; never the words
+  assert.deepEqual(rosarium.day.map(entry => model.starDayLine(entry)), ['me lit the star', 'mara came', 'mara asked a question', 'me shared a finding', 'mara unsaid a question'])
+  assert.deepEqual(rosarium.day.map(entry => entry.at), [AT - 3 * 86_400_000, AT - 600_000, AT, AT + 60_000, AT + 240_000], 'each entry says when')
+  assert.ok(!JSON.stringify(rosarium.day).includes('circle open'), 'the day says something was said, never what')
+  // a service that keeps no sayings says so in its words, and the star's day still reads
+  const none = model.heldFieldOf({...SNAPSHOT, ...SAID, star_saying: {state: 'unavailable', detail: 'This field’s service does not keep what is said at a star yet'}})
+  assert.equal(none.sayings, null)
+  assert.match(none.sayWhy, /does not keep what is said/)
+  assert.equal(rosariumOf(none).said, null)
+  assert.equal(rosariumOf(none).day.length, 5)
+})
+
+test('saying something at a star is asked of the field for your own world, and each refusal is words (SF06)', () => {
+  const field = saidField()
+  const ask = act => model.starRequest(field, YOURS, act, AT)
+  const toMara = model.shownId('world:mara', 'page:maras-reading')
+  const made = ask({act: 'say', star: 'star:rosarium', to: toMara, what: 'question', words: '  Which rose?  '})
+  assert.ok('request' in made, JSON.stringify(made))
+  assert.match(made.request.saying_ref, /^saying:[A-Za-z0-9._:-]+$/, 'a new saying is named once')
+  assert.deepEqual({...made.request, saying_ref: undefined}, {kind: 'star-say', saying_ref: undefined, star_ref: 'star:rosarium', world_ref: 'world:me',
+    to: {world_ref: 'world:mara', part_ref: 'page:maras-reading'}, what: 'question', words: 'Which rose?'})
+  const reply = ask({act: 'say', star: 'star:rosarium', to: 'saying:q1', what: 'finding', words: 'At the rose.'})
+  assert.deepEqual(reply.request.to, {saying_ref: 'saying:q1'}, 'a saying may answer a saying')
+  assert.deepEqual(ask({act: 'unsay', star: 'star:rosarium', saying: 'saying:f1'}), {request: {kind: 'star-unsay', saying_ref: 'saying:f1'}})
+  const refusals = {
+    'not here': [ask({act: 'say', star: 'star:far', to: model.shownId('world:stranger', 'page:elsewhere'), what: 'finding', words: 'x'}), /only while it is gathered there/],
+    'to nothing': [ask({act: 'say', star: 'star:rosarium', to: null, what: 'question', words: 'x'}), /Choose what to say it to/],
+    'to what is gone': [ask({act: 'say', star: 'star:rosarium', to: 'saying:gone', what: 'question', words: 'x'}), /no longer shown or said at this star/],
+    'unsaid words': [ask({act: 'say', star: 'star:rosarium', to: toMara, what: 'question', words: '   '}), /Say something first/],
+    'too many words': [ask({act: 'say', star: 'star:rosarium', to: toMara, what: 'question', words: 'x'.repeat(1001)}), /at most 1000 characters/],
+    'not a kind': [ask({act: 'say', star: 'star:rosarium', to: toMara, what: 'shout', words: 'x'}), /a question, a finding, a correction or a reproduction/],
+    'no world': [model.starRequest(field, null, {act: 'say', star: 'star:rosarium', to: toMara, what: 'question', words: 'x'}, 0), /Your world is not in the field/],
+    'not kept': [model.starRequest(model.heldFieldOf({...SNAPSHOT, ...SAID, star_saying: {state: 'unavailable', detail: 'This field’s service does not keep what is said at a star yet'}}), YOURS,
+      {act: 'say', star: 'star:rosarium', to: toMara, what: 'question', words: 'x'}, 0), /does not keep what is said/],
+    'not yours to unsay': [ask({act: 'unsay', star: 'star:rosarium', saying: 'saying:q1'}), /Only the one who said it unsays it/],
+    'nothing to unsay': [ask({act: 'unsay', star: 'star:rosarium', saying: null}), /Choose something your world said/],
+    'a shown thing is not unsaid': [ask({act: 'unsay', star: 'star:rosarium', saying: toMara}), /Choose something your world said/],
+  }
+  for (const [name, [made, words]] of Object.entries(refusals)) {
+    assert.ok('refusal' in made, `${name}: refused`)
+    assert.match(made.refusal, words, name)
+    assert.ok(!/_ref|star-|\bkind\b|`/.test(made.refusal), `${name}: the refusal is words, no field or op names: ${made.refusal}`)
+  }
+  assert.equal(model.starNote({kind: 'star-say'}, {}), 'It is said at the star, under your world’s name.')
+  assert.equal(model.starNote({kind: 'star-unsay'}, {}), 'It is unsaid: it no longer stands at the star.')
+})
+
+test('the World binding says and unsays at a star from the view’s own hand, and stands each act it cannot do dimmed (SF06)', async () => {
+  store.publishField(saidField())
+  store.chooseFieldView({field: true, aperture: 'federated', viewAs: 'me'})
+  store.chooseStarHand({star: 'star:rosarium', admit: null, to: null, what: 'question', words: ''})
+  const asked = []
+  store.bindSystemActs({open: async () => {}, land: async () => 'landed', unland: async () => 'unlanded', fieldAct: async request => { asked.push(request); return 'The field took it.' }})
+  try {
+    let binding = atlasDevs.atlasGlobeBinding(YOURS_READING())
+    assert.match(binding.standing.starSay?.disabled ?? '', /Choose what to say it to/)
+    assert.match(binding.standing.starUnsay?.disabled ?? '', /Choose something your world said/)
+    const toMara = model.shownId('world:mara', 'page:maras-reading')
+    binding.local.fieldSayTo(toMara)
+    binding.local.sayWhat('correction')
+    binding.local.sayWhat('shout')
+    binding.local.sayWords('Not the red rose.')
+    binding = atlasDevs.atlasGlobeBinding(YOURS_READING())
+    assert.equal(binding.values.fieldSayTo, toMara)
+    assert.equal(binding.values.sayWhat, 'correction', 'what is said is a question, a finding, a correction or a reproduction, nothing else')
+    assert.equal(binding.values.sayWords, 'Not the red rose.')
+    assert.equal(binding.standing.starSay, undefined)
+    assert.equal(binding.writes('starSay'), true)
+    await binding.write([{key: 'starSay', value: 1}])
+    const said = asked.pop()
+    assert.deepEqual({...said, saying_ref: undefined}, {kind: 'star-say', saying_ref: undefined, star_ref: 'star:rosarium', world_ref: 'world:me',
+      to: {world_ref: 'world:mara', part_ref: 'page:maras-reading'}, what: 'correction', words: 'Not the red rose.'})
+    assert.equal(store.starHand().words, '', 'what was said is cleared from the hand once said')
+    // Unsay: something your world said, chosen in what was said
+    binding.local.fieldSayTo('saying:q1')
+    binding = atlasDevs.atlasGlobeBinding(YOURS_READING())
+    assert.match(binding.standing.starUnsay?.disabled ?? '', /Only the one who said it unsays it/)
+    assert.equal(binding.writes('starUnsay'), false)
+    binding.local.fieldSayTo('saying:f1')
+    binding = atlasDevs.atlasGlobeBinding(YOURS_READING())
+    assert.equal(binding.standing.starUnsay, undefined)
+    await binding.write([{key: 'starUnsay', value: 2}])
+    assert.deepEqual(asked.pop(), {kind: 'star-unsay', saying_ref: 'saying:f1'})
+    assert.equal(store.starHand().to, null, 'what was unsaid is no longer chosen')
+    // what is no longer at the star is not chosen; choosing another star lets the choice go
+    binding.local.fieldSayTo('saying:gone')
+    assert.equal(atlasDevs.atlasGlobeBinding(YOURS_READING()).values.fieldSayTo, undefined)
+    binding.local.fieldSayTo(toMara)
+    binding.local.fieldStar('star:far')
+    assert.equal(store.starHand().to, null)
+    // the binding hands the face what was said, with the field
+    const handed = JSON.parse(atlasDevs.atlasGlobeBinding(YOURS_READING()).values.field)
+    assert.equal(handed.sayings.length, 5)
+    // the page of the star's day and of what was said there are the view's own, turned back to the newest when another star is chosen
+    binding.local.fieldStar('star:rosarium')
+    binding.local.dayPage(1)
+    binding.local.dayPage(-1)
+    binding.local.saidPage(0)
+    let paged = atlasDevs.atlasGlobeBinding(YOURS_READING())
+    assert.deepEqual([paged.values.dayPage, paged.values.saidPage], [1, 0], 'a page is a whole number from 0')
+    binding.local.fieldStar('star:far')
+    paged = atlasDevs.atlasGlobeBinding(YOURS_READING())
+    assert.deepEqual([paged.values.dayPage, paged.values.saidPage], [undefined, undefined])
+  } finally {
+    store.bindSystemActs(null)
+  }
+})
+
+test('the face reads who is here, what was brought and what was said to what beside the star’s day, and says and unsays there (SF06)', () => {
+  const v = {...world.defaults, ...world.fixtures['Field, a star chosen']}
+  // the Star page: the chosen star whole, beside the globe (the Space page keeps the acts at a star and its day as they were)
+  const whole = renderToStaticMarkup(world.whole({v, set() {}, nav: {}, page: 'star', setPage() {}, standing: {}}))
+  assert.match(whole, /role="tab"[^>]*>Star</, 'the World has a Star page')
+  assert.match(whole, /Star’s day/, 'the star’s day stands on it')
+  for (const label of ['Here now', 'Said here', 'Say']) assert.match(whole, new RegExp(`>${label}<`), `${label} stands on the face`)
+  for (const label of ['To', 'Kind', 'Words']) assert.match(whole, new RegExp(`data-i="${label}[^"]*"`), `${label} stands on the face`)
+  assert.match(whole, />Unsay</)
+  assert.match(whole, /class="dp-row-name[^"]*"[^>]*>mara asks about For the circle: [^<]+</, 'what was said to what is a line')
+  assert.match(whole, /class="dp-row-name[^"]*"[^>]*>teraphim has a finding on mara’s question: [^<]+</, 'an answer names what it answers')
+  assert.match(whole, /class="dp-row-name[^"]*"[^>]*>Mara’s reading of the second plate</, 'what a world brought is a line')
+  assert.match(whole, /class="dp-row-name">mara asked a question</, 'the day names who said something there')
+  assert.match(whole, /class="dp-row-note">(\d\d:\d\d|\d{1,2} [A-Z][a-z]{2})</, 'and when')
+  assert.match(whole, /aria-label="Previous page">/, 'the star’s day pages back to what came before')
+  const unheld = renderToStaticMarkup(world.whole({v: {...world.defaults, ...world.fixtures['Field not held']}, set() {}, nav: {}, page: 'star', setPage() {}, standing: {}}))
+  const cellOf = (label) => unheld.match(new RegExp(`<[^>]*data-i="${label}[^"]*"[^>]*>`))?.[0] ?? ''
+  for (const label of ['To', 'Kind', 'Words', 'Say', 'Unsay']) {
+    const cell = cellOf(label)
+    assert.match(cell, /data-disabled="true"/, `${label} stands dimmed while the field holds no worlds`)
+    assert.match(cell, /does not hold worlds yet/, `${label} says why in the field’s words`)
+  }
 })

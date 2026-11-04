@@ -638,6 +638,28 @@ const starDayBacking = table(
   }
 );
 
+/* What was said at a star (O-I #858, SF06): a question, a finding, a
+ * correction or a reproduction, said by a world gathered there to something
+ * shown at the star or to something said there before. It stays its sayer's,
+ * under their world's name, until they unsay it: it enters no one's world,
+ * and leaving the star does not take it back. When what it was said to is
+ * taken back, the saying stands and names nothing it was said to. A table of
+ * its own, so no existing table changes. */
+const starSayingBacking = table(
+  { name: 'star_saying_backing', public: false },
+  {
+    sayingRef: t.string().primaryKey(),
+    starRef: t.string().index('btree'),
+    worldRef: t.string().index('btree'),
+    toWorldRef: t.string(),
+    toPartRef: t.string(),
+    toSayingRef: t.string(),
+    what: t.string(),
+    words: t.string(),
+    saidAtMicros: t.u64(),
+  }
+);
+
 const spacetimedb = schema({
   sharedFieldBacking,
   fieldOwner,
@@ -675,6 +697,7 @@ const spacetimedb = schema({
   worldClearingBacking,
   worldGatheringBacking,
   starDayBacking,
+  starSayingBacking,
 });
 
 export default spacetimedb;
@@ -3788,9 +3811,99 @@ export const close_star = spacetimedb.reducer(
     for (const clearing of Array.from(ctx.db.worldClearingBacking.starRef.filter(args.starRef)) as any[]) {
       ctx.db.worldClearingBacking.clearingKey.delete(clearing.clearingKey);
     }
-    // the star's day closes with it
+    // the star's day closes with it, and what was said there
     for (const entry of Array.from(ctx.db.starDayBacking.starRef.filter(args.starRef)) as any[]) ctx.db.starDayBacking.rowId.delete(entry.rowId);
+    for (const saying of Array.from(ctx.db.starSayingBacking.starRef.filter(args.starRef)) as any[]) ctx.db.starSayingBacking.sayingRef.delete(saying.sayingRef);
     ctx.db.sharedFieldBacking.rowId.delete(star.rowId);
     ctx.db.fieldOwner.fieldRef.delete(args.starRef);
+  }
+);
+
+/* ---------- what was said to what at a star (O-I #858, SF06) ---------- */
+
+const SAYING_REF_PATTERN = /^saying:[A-Za-z0-9._:-]{1,200}$/;
+const SAYING_KINDS = new Set(['question', 'finding', 'correction', 'reproduction']);
+/** The most one star holds of what was said there: past it, something must be unsaid first (nobody's words are dropped for another's). */
+const STAR_SAYING_LIMIT = 1024;
+
+/* What was said at a star is read where its day is read: by its sayer, and,
+ * while the sayer's world is linked, by the star's lighter and whoever has a
+ * linked world gathered there. A world that only asked reads none of it. */
+function callerCanSeeSaying(ctx: any, saying: any): boolean {
+  if (callerOwnsWorld(ctx, saying.worldRef)) return true;
+  const world = ctx.db.worldBacking.worldRef.find(saying.worldRef);
+  if (!world || !world.linked || !starRow(ctx, saying.starRef)) return false;
+  return isFieldOwner(ctx, saying.starRef) || callerGatheredAt(ctx, saying.starRef);
+}
+
+/** A saying as the caller is served it: what it was said to is named only while the caller can see it. Taken back, it lies under the
+ * cloud with everything else, and the saying names nothing there. */
+function sayingAsSeen(ctx: any, saying: any): any {
+  if (saying.toPartRef === '') return saying;
+  const shown = ctx.db.worldClearingBacking.clearingKey.find(clearingKey(saying.toWorldRef, saying.toPartRef, saying.starRef));
+  return shown && callerCanSeeClearing(ctx, shown) ? saying : { ...saying, toPartRef: '' };
+}
+
+export const star_saying = spacetimedb.view(
+  { name: 'star_saying', public: true },
+  t.array(starSayingBacking.rowType),
+  (ctx) => {
+    const rows: any[] = [];
+    for (const row of ctx.db.starSayingBacking.iter()) if (callerCanSeeSaying(ctx, row)) rows.push(sayingAsSeen(ctx, row));
+    return rows;
+  }
+);
+
+/* Say something at a star: a question, a finding, a correction or a
+ * reproduction, to one thing shown at the star or to one thing said there.
+ * Only a world gathered at the star says anything there, and it says it to
+ * what it can see. The star's day records that it was said and of what
+ * kind, never the words. Said again exactly, it changes nothing. */
+export const say_at_star = spacetimedb.reducer(
+  { sayingRef: t.string(), starRef: t.string(), worldRef: t.string(), toWorldRef: t.string(), toPartRef: t.string(), toSayingRef: t.string(), what: t.string(), words: t.string() },
+  (ctx, args) => {
+    if (!SAYING_REF_PATTERN.test(args.sayingRef)) fail('A saying is named saying:<name>');
+    requireStar(ctx, args.starRef);
+    const world = requireOwnWorld(ctx, args.worldRef);
+    if (!world.linked) fail('Link your world into the field before you say anything at a star');
+    if (!isGathered(ctx, args.starRef, args.worldRef)) fail('Your world says things at a star only while it is gathered there');
+    if (!SAYING_KINDS.has(args.what)) fail('Say a question, a finding, a correction or a reproduction');
+    const words = args.words.trim();
+    if (!words) fail('Say something first');
+    if ([...words].length > 1000) fail('Say it in at most 1000 characters');
+    refuseFieldTimeLeaks([words], 'What is said');
+    const toShown = args.toWorldRef !== '' || args.toPartRef !== '';
+    if (toShown === (args.toSayingRef !== '')) fail('Say it to one thing: something shown at this star, or something said here');
+    if (toShown) {
+      const shown = ctx.db.worldClearingBacking.clearingKey.find(clearingKey(args.toWorldRef, args.toPartRef, args.starRef));
+      if (!shown || !callerCanSeeClearing(ctx, shown)) fail('That is not shown at this star');
+    } else {
+      const said = ctx.db.starSayingBacking.sayingRef.find(args.toSayingRef);
+      if (!said || said.starRef !== args.starRef || !callerCanSeeSaying(ctx, said)) fail('That was not said at this star');
+    }
+    const row = { sayingRef: args.sayingRef, starRef: args.starRef, worldRef: args.worldRef, toWorldRef: args.toWorldRef, toPartRef: args.toPartRef, toSayingRef: args.toSayingRef,
+      what: args.what, words, saidAtMicros: nowMicros(ctx) };
+    const existing = ctx.db.starSayingBacking.sayingRef.find(args.sayingRef);
+    if (existing) {
+      const same = (['starRef', 'worldRef', 'toWorldRef', 'toPartRef', 'toSayingRef', 'what', 'words'] as const).every((key) => existing[key] === row[key]);
+      if (same) return;
+      fail('Something else was said under that name');
+    }
+    if (Array.from(ctx.db.starSayingBacking.starRef.filter(args.starRef)).length >= STAR_SAYING_LIMIT) fail('This star holds as much as one star may: something said here must be unsaid first');
+    ctx.db.starSayingBacking.insert(row);
+    noteStarDay(ctx, args.starRef, args.worldRef, 'said', args.what);
+  }
+);
+
+/* Unsay something said at a star: only its sayer does, at the star or after
+ * leaving it. What answered it stands, under something now unsaid. */
+export const unsay_at_star = spacetimedb.reducer(
+  { sayingRef: t.string() },
+  (ctx, args) => {
+    const said = ctx.db.starSayingBacking.sayingRef.find(args.sayingRef);
+    if (!said) fail('That was not said, or is unsaid already');
+    if (!callerOwnsWorld(ctx, said.worldRef)) fail('Only the one who said it unsays it');
+    ctx.db.starSayingBacking.sayingRef.delete(args.sayingRef);
+    if (starRow(ctx, said.starRef)) noteStarDay(ctx, said.starRef, said.worldRef, 'unsaid', said.what);
   }
 );
