@@ -443,7 +443,12 @@ const READS: [&str; 7] = [
     "score-state",
     "torus-state",
 ];
-const STILL: [&str; 4] = ["stage-retire", "stage-bind", "stage-unbind", "torus-receiver"];
+const STILL: [&str; 4] = [
+    "stage-retire",
+    "stage-bind",
+    "stage-unbind",
+    "torus-receiver",
+];
 
 #[derive(Debug)]
 enum Witnessed {
