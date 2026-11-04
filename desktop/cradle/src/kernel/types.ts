@@ -815,6 +815,8 @@ export type KernelOp =
   | {op:"encounter_session_bench";project:string;space:string;agent_session:string;benched:boolean}
   | {op:"encounter_session_attach";project:string;space:string;agent_session:string}
   | {op:"encounter_session_drag_out";project:string;space:string;agent_session:string;into:string;label?:string|null}
+  | {op:"encounter_session_hot_swap";project:string;space:string;agent_session:string;agent_ref:string}
+  | {op:"encounter_session_decision_helper";project:string;space:string;bound:boolean}
   /** Several sessions' settings read at once (aikit.encounter-session-settings-list/v1), so a view of many tracks asks once. */
   | {op:"encounter_session_settings_list";project:string;agent_sessions:string[]}
   /** Several sessions' served attempts read at once (aikit.encounter-task-attempts-list/v1): for each session, the Factory attempts
@@ -1287,7 +1289,7 @@ export interface FactoryAttemptArtifacts {
 /** A change to one session's settings: `null` returns a field to its default. Task fields bind to the session's bound task. */
 export interface EncounterSessionSettingsRequest {
   /** `name` is the session's own name (O-I #743, its track's Rename); null takes it away. */
-  track?: {telemetry?: boolean | null; solo?: boolean | null; name?: string | null}
+  track?: {telemetry?: boolean | null; solo?: boolean | null; name?: string | null; wait?: number | null; no_answer?: 'hold' | 'deny' | null}
   task?: {task_ref: string; set: Partial<Record<EncounterTaskSettingKey, unknown>>}
   /** A Repeat's takes starting (only on a task launched with Repeat, one set at a time) or ending, by whoever runs them (O-I 795). */
   takes?: {start: {task_ref: string; trace_ref: string}}
@@ -1318,8 +1320,9 @@ export interface EncounterSessionSettingsReading {
   schema: 'aikit.encounter-session-settings/v1'
   agent_session: string
   revision: string | null
-  /** `name`: the session's own name, null when it has none (an AIKit before O-I #743 gives none). */
-  track: {telemetry: boolean; solo: boolean; name?: string | null; set: string[]}
+  /** `name`: the session's own name, null when it has none (an AIKit before O-I #743 gives none). `wait` and `no_answer`: Scope's Wait
+   * (seconds, 900–86400, default 14400) and On no answer (hold · deny, default hold), §19.12; absent from an AIKit before O-I round 860. */
+  track: {telemetry: boolean; solo: boolean; name?: string | null; wait?: number; no_answer?: 'hold' | 'deny'; set: string[]}
   task: null | {
     task_ref: string; name: string; colour: string | null; active: boolean; register: 'plain' | 'warm' | 'terse'
     form: 'technical' | 'narrative' | 'list'; loop: boolean; loop_until: 'done' | 'pass'; loop_cap: number | null
@@ -1345,6 +1348,10 @@ export interface EncounterSessionSettingsReading {
   }
   previous_task: null | {task_ref: string; set: Record<string, unknown>}
   standing: string
+  /** What AIKit's executor did with the session's asks (ai-kit encounter_task_executor.rs asks_reading): the requests held past their Wait,
+   * what the Decision helper did with each it was asked (`answered`, `picked` with `refused`, or `passed`), and its last act. Absent from
+   * an AIKit before O-I round 860. */
+  asks?: {held: {request: string; past_wait_at_unix_ms: number}[]; helper: Record<string, Record<string, unknown>>; last: Record<string, unknown> | null}
 }
 
 /** Where a clip stands on its track: its arrangement index or its session slot's scene. */

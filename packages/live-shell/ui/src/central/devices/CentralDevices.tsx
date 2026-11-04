@@ -89,6 +89,7 @@ import {voiceBodyReadings, type AnswerVoiceState, type VoiceKey} from './answerV
 import {PERSONAL_ANCHOR_ACTION, acceptSourceReturn, personRefOf, rejectSourceReturn} from './sourceReturnAccept'
 import {commentSourceReturn, withReturnComments} from './sourceReturnComment'
 import {useRosterAgents} from '../../owners/readers'
+import {useScopeWaits} from '../../agent/sessionSettings'
 import {bindConversation} from './centralDeviceWrites'
 import {useAgencySessions} from '../../agent/useAgencySessions'
 import {useOptionalContinuity} from '../../continuity/workspace'
@@ -500,7 +501,10 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   const saveRelations = useMemo(() => async (record: Record<string, unknown>, expectedRevision: string) => {
     await centralWrite(transport, WORLD_RELATIONS_SAVE, {scope: 'root', record, expected_revision: expectedRevision})
   }, [transport])
+  // Wait and On no answer (§19.12 Asks): the dialogue's session's own settings in AIKit, which its executor plays at the Wait.
+  const naraWaits = useScopeWaits(transport, nara.state === 'bound' ? nara.session : null, naraProject)
   const scope = useScopeDevice({
+    waits: naraWaits,
     answer: {bound: nara.state === 'bound', session: nara.session},
     horizon: (ground.reading?.sources ?? null) as ChangeHorizon | null, groundError: ground.error,
     document: pages.reads.page?.title ?? null,
@@ -566,7 +570,7 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
     // Approvals is handed no Gateway and stands no default answer: that answer is the Gateway's, never Approvals' (§19.14; ticket 788).
     const binding = approvalsBinding({session: naraTrack, encounter: answerObserved?.reading ?? null, holds, returns: returned,
       returnsAbsent: worldReturns.absent, returnsRefused: worldReturns.refusals, tracks: agency.tracks, nowUnixMs: nowUnixMs || Date.now(),
-      refinements: centralRefinements},
+      refinements: centralRefinements, settings: naraWaits.settings},
       {...(actions ? {permission: (id, decision) => actions.permission(id, decision)} : {}), approve: row => acceptSourceReturn(transport, returnProjectOf(row, approvalsRegister), row, person),
         reject: row => rejectSourceReturn(transport, returnProjectOf(row, approvalsRegister), row),
         ...(refineWrite ? {refine: refineWrite} : {})},
@@ -582,7 +586,7 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
     const requested = withOwnerRequests(commented, {...ownerRequests, nowUnixMs: nowUnixMs || Date.now()}, openNotificationTarget,
       {opened, hold: ids => holdView(APPROVALS_ID, 'opened', openedHold(ids))})
     return requested
-  }, [answerHandle, naraTrack, answerObserved, holds, returned, worldReturns.absent, worldReturns.refusals, agency.tracks, nowUnixMs, transport, person, agentDraft, agentWrite, ownerRequests, approvalsRegister,
+  }, [answerHandle, naraTrack, answerObserved, holds, returned, worldReturns.absent, worldReturns.refusals, agency.tracks, nowUnixMs, transport, person, agentDraft, agentWrite, ownerRequests, approvalsRegister, naraWaits.settings,
     centralRefinements, refineWrite])
   const others = useMemo(() => centralAgentDevices(), [])
   // Docs (§18.5) on the selected world (pageDevices.ts useDocsDevice, pageBindings.ts docsBinding): the world's account on six tiers on

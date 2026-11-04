@@ -500,6 +500,24 @@
       "reason": "Built 4 Nov (O-I #745 with #772, lane BA round 859) with a kernel test (agent_prepared the_chain_list_benches_adds_and_drags_out_a_chain_through_aikit_s_own_operations: AIKit's session-space drag-out asked with the space, the session, the space of its own and its label, its receipts returned, a session the space does not hold refused) and AIKit's own store and core tests of drag out (the new space made, the session attached with its Project contexts and bench, detached from its first space last, both histories kept). No executed native walk through the candidate shell is recorded here for encounter_session_drag_out; retain explicit operation-specific coverage debt until a walk names it."
     },
     {
+      "op": "encounter_session_hot_swap",
+      "native_owner": "kernel/src/agency.rs",
+      "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md \u00a719.15 (Hot-Swap: \"Swaps the chain's agent, or the set, for another from the browser, and keeps the rest of its chain.\"); AIKit aikit-cli session_space_cli.rs (hot_swap_with over aikit-core hot_swap_intents)",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Built 4 Nov (O-I #772, lane BA round 860) with a kernel test (agent_prepared hot_swap_and_the_decision_helper_go_through_aikit_s_own_operations: AIKit's session-space hot-swap asked with the space, the chain's session, the other agent and the Project's cwd, its steps returned, the new session opened on the provider the old one was open on and left unopened where it was not, a session the space does not hold refused) and AIKit's own core and CLI tests of hot-swap (a separately attributed session seated with the chain's bench, track settings and task, the old one detached last; a swap that cannot seat the agent changes nothing; one stopped partway finishes when pressed again). No executed native walk through the candidate shell is recorded here for encounter_session_hot_swap; retain explicit operation-specific coverage debt until a walk names it."
+    },
+    {
+      "op": "encounter_session_decision_helper",
+      "native_owner": "kernel/src/agency.rs",
+      "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md \u00a719.15 (\"One helper answers every agent of the rack. Add one by dragging a Decision helper into the chain list.\"), \u00a719.20; AIKit aikit-core session_space_application.rs (bind-decision-helper, unbind-decision-helper)",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Built 4 Nov (O-I #842, lane BA round 860) with a kernel test (agent_prepared hot_swap_and_the_decision_helper_go_through_aikit_s_own_operations: a Decision helper session seated in the space and named its helper, a second refused while one stands, the helper unbound and then detached) and AIKit's own core and executor tests (one helper per space, cleared when its session leaves; asks put to the helper first, only an allow-once pick taken, the rest left waiting for the person; the helper given no work). No executed native walk through the candidate shell is recorded here for encounter_session_decision_helper; retain explicit operation-specific coverage debt until a walk names it."
+    },
+    {
       "op": "encounter_task_attempts_list",
       "native_owner": "kernel/src/agency.rs",
       "spec_ref": "docs/world-shell/wayfinder/tickets/T-TRACKS-FACTORY-sessions-and-tasks.md State of record (the FT row, moved from PATH \u00a77); AIKit docs/implementation/CAW-TASK-DISPATCH.md (encounter-task-attempts)",

@@ -171,11 +171,13 @@ test('the Agentset rack: a group\'s sessions as its chains, each named by its ag
     await assert.rejects(() => binding.write([{key, value: 1}]), /missing op/)
   }
   // REPLACED (round 859): bench, extract and add were missing ops. AIKit carries each (the kernel's encounter_session_bench, _drag_out and
-  // _attach), so a rack handed no carrier names the one that carries it; Hot-Swap is refused in AIKit's own law (a session keeps its agent).
-  for (const [key, op] of [['bench', 'encounter_session_bench'], ['extract', 'encounter_session_drag_out'], ['add', 'encounter_session_attach']]) {
+  // _attach), so a rack handed no carrier names the one that carries it. REPLACED (round 860): Hot-Swap was refused in AIKit's own law (a
+  // session keeps its agent); AIKit's hot-swap seats the other agent's own session in the chain's place (the kernel's
+  // encounter_session_hot_swap), and a rack handed no carrier names it too.
+  for (const [key, op] of [['bench', 'encounter_session_bench'], ['extract', 'encounter_session_drag_out'], ['add', 'encounter_session_attach'],
+    ['swap', 'encounter_session_hot_swap']]) {
     assert.match(binding.standing[key].disabled, new RegExp(`no carrier to AIKit's .*\\(the kernel's ${op}\\) stands on this chain`), key)
   }
-  assert.match(binding.standing.swap.disabled, /A canonical session must not silently become another Agent/)
   await assert.rejects(() => binding.write([{key: 'swap', value: HELPER.sessionRef}]), {message: own.AGENTSET_REFUSE.swap})
   // The chain list's own keys, one for each member, answer with their control's refusal (§19.15 The members).
   await assert.rejects(() => binding.write([{key: `bench:${HELPER.sessionRef}`, value: true}]), {message: own.AGENTSET_REFUSE.bench})

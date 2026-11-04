@@ -47,7 +47,7 @@ import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
 import type {EncounterReading, NativePermission, PermissionDecision} from '../../../../../../desktop/cradle/src/encounter/client'
 import {describePermission} from '../../../../../../desktop/cradle/src/agent/chat/PermissionCard'
 import type {AgentSessionTrack} from '../agentRunModel'
-import type {SourceReturnEntry} from '../../../../../../desktop/cradle/src/kernel/types'
+import type {EncounterSessionSettingsReading, SourceReturnEntry} from '../../../../../../desktop/cradle/src/kernel/types'
 import {REFINE_WRITES, holdView, refinementAcceptWhy, refinementResult, refinementsOf, viewHolds, type ChainHolds, type Refinement} from './designBindings'
 import type {AikitAnswer} from './aikitPages'
 import {familyFaceDevice} from './mainTrackBindings'
@@ -330,13 +330,16 @@ export function ledgerBinding(input: LedgerInput, ports: LedgerPorts): DesignBin
 
 // ---------------------------------------------------------------------------------------------------------------- Approvals
 
-/** Wait and On no answer, set on the asking agent's Scope (§19.12), which Approvals reads and never sets (§19.14): absent until an owner reports
- * them, each with the reading it waits for. They replaced the configure writes Approvals once refused for them (ticket 804). */
-const notRead = (what: string, op: string, owner: string) => `${what}: no reading reaches it yet — missing op: ${op} (${owner}).`
+/** Wait and On no answer, set on the asking agent's Scope (§19.12), which Approvals reads and never sets (§19.14): the shown session's own
+ * settings in AIKit (`track.wait`, `track.no_answer`), absent until they are handed in, each with the reading it waits for. They replaced the
+ * configure writes Approvals once refused for them (ticket 804), and the missing ops on Hermes' approvals timeout (round 860). */
+const notRead = (what: string, field: string) => `${what}: no reading reaches it yet — AIKit's settings of the shown session are not handed here (its track ${field}, through the kernel's encounter_session_settings).`
 export const APPROVALS_ABSENT = {
-  wait: notRead('The Wait on the asking agent\'s Scope', 'the agent\'s approvals timeout read back (Hermes\' approvals.timeout: harness_agent_control carries approvals, transport, connect and stall-after only)', 'Actuation'),
-  noAnswer: notRead('On no answer on the asking agent\'s Scope', 'a timed-out request\'s outcome read back from the agent\'s harness', 'Actuation'),
+  wait: notRead('The Wait on the asking agent\'s Scope', 'wait'),
+  noAnswer: notRead('On no answer on the asking agent\'s Scope', 'no_answer'),
 } as const
+/** A request AIKit's executor holds past its Wait (ai-kit encounter_task_executor.rs: On no answer Hold leaves it standing for you). */
+export const HELD_PAST_WAIT = 'Held past its Wait: nobody answered, and On no answer holds it for you on Approvals.'
 
 export const APPROVALS_REFUSE = {
   changes: 'Changes: this chain passes no comment hand (Central\'s projectcentral.source.return_comment comments on the waiting return in the words written in the thread: central/devices/sourceReturnComment.ts).',
@@ -391,6 +394,8 @@ export interface ApprovalsInput {
   readonly person?: string | null
   /** AIKit's proposed revisions (`aikit source refine list`, the kernel's aikit_read refinement-list); absent: not read here. */
   readonly refinements?: AikitAnswer | null
+  /** AIKit's settings of the shown session (its Scope's Wait and On no answer, and what its executor did with its asks); null while unread. */
+  readonly settings?: Pick<EncounterSessionSettingsReading, 'track' | 'asks'> | null
 }
 
 /** A proposed revision's id in the queue. */
@@ -419,13 +424,21 @@ function toolOf(request: NativePermission): string | undefined {
 /** The shown session's consent requests as the queue's rows (software-factory__approvals.tsx:15-17): {id (the native request id), kind
  * request, who (the session's agent), text (what it would do: the command or the file), where (the tool), session}. The view says
  * nothing of when a request was made, so no age is given. */
-export function queueRows(requests: readonly NativePermission[], session: AgentSessionTrack | null): Record<string, Value>[] {
+export function queueRows(requests: readonly NativePermission[], session: AgentSessionTrack | null,
+  asks?: {readonly settings?: ApprovalsInput['settings']; readonly nowUnixMs?: number}): Record<string, Value>[] {
+  const read = asks?.settings?.asks, wait = asks?.settings?.track.wait
   return requests.map(request => {
     const said = describePermission(request)
     const tool = toolOf(request)
     const who = session?.agentName ?? session?.agentRef ?? undefined
+    // What AIKit's executor did with it: held past its Wait (its age the Wait and the time since), or the Decision helper's words for it.
+    const held = read?.held.find(item => item.request === request.native_request_id)
+    const helper = read?.helper[request.native_request_id]
+    const helperSaid = typeof helper?.passed === 'string' ? helper.passed : typeof helper?.refused === 'string' ? helper.refused : undefined
+    const age = held && typeof wait === 'number' && asks?.nowUnixMs ? wait + Math.max(0, Math.round((asks.nowUnixMs - held.past_wait_at_unix_ms) / 1000)) : undefined
     return {id: request.native_request_id, kind: 'request', text: said.target ?? said.wants,
-      ...(who ? {who} : {}), ...(tool ? {where: tool} : {}), ...(session ? {session: session.purpose ?? session.sessionRef} : {})}
+      ...(who ? {who} : {}), ...(tool ? {where: tool} : {}), ...(session ? {session: session.purpose ?? session.sessionRef} : {}),
+      ...(age !== undefined ? {age} : {}), ...(held ? {flag: HELD_PAST_WAIT} : helperSaid ? {flag: helperSaid} : {})}
   })
 }
 
@@ -459,7 +472,7 @@ export function approvalsValues(input: ApprovalsInput): Values {
   const view = viewHolds(input.holds, APPROVALS_ID)
   for (const [key, value] of Object.entries(APPROVALS_VIEW)) values[key] = view[key] ?? value
   put(values, 'pick', view.pick)
-  const requests = input.session && input.encounter ? queueRows(pendingPermissions(input.encounter), input.session) : null
+  const requests = input.session && input.encounter ? queueRows(pendingPermissions(input.encounter), input.session, input) : null
   const proposals = input.returns ? proposalRows(input.returns.entries, input.tracks, input.nowUnixMs) : null
   const units = input.units ? unitRows(input.units, input.session, input.nowUnixMs) : null
   const read = refinementsRead(input)
@@ -469,6 +482,10 @@ export function approvalsValues(input: ApprovalsInput): Values {
     values.queue = JSON.stringify(rows)
     values.light = rows.length ? 'lit' : 'dark'
   }
+  // The asking agent's Scope, as AIKit reads the shown session's settings: read here, set there.
+  const track = input.settings?.track
+  if (typeof track?.wait === 'number') values.wait = track.wait
+  if (track?.no_answer === 'hold' || track?.no_answer === 'deny') values.noAnswer = track.no_answer
   return values
 }
 
@@ -506,11 +523,13 @@ function choiceFor(request: NativePermission, answer: 'allowOnce' | 'allowAlways
 
 /** Approvals' binding: each answer to a request through the shown session's encounter, with the harness's own choice; Approve through
  * Central's acceptance (the `approve` port); the view's settings held by the shell; Changes stands disabled with what it lacks; Wait and On
- * no answer are readings of the asking agent's Scope, absent with what they wait for and never written. The answer to a tool call is that
+ * no answer are readings of the asking agent's Scope (AIKit's settings of the shown session), absent until handed in and never written. The answer to a tool call is that
  * Scope's Tool calls, never set here (§19.14). */
 export function approvalsBinding(input: ApprovalsInput, ports: ApprovalsPorts, id: string = APPROVALS_ID): DesignBinding {
   const requests = input.encounter ? pendingPermissions(input.encounter) : []
   const standing: Record<string, Standing> = {...disabled(APPROVALS_ABSENT), ...disabled(APPROVALS_REFUSE)}
+  if (typeof input.settings?.track.wait === 'number') delete standing.wait
+  if (input.settings?.track.no_answer) delete standing.noAnswer
   const verb = !input.session ? 'No session is shown: select one, or pin the Thread to one.' : !input.encounter ? 'The session\'s conversation is not read yet.'
     : verbStanding(input.encounter, 'permission')
   // A unit decision needs no conversation: while one waits, each answer is judged at the press, on the item chosen.

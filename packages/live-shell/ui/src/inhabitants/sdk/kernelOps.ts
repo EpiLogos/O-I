@@ -127,6 +127,8 @@ export const KERNEL_OPS = [
   'encounter_session_bench',
   'encounter_session_attach',
   'encounter_session_drag_out',
+  'encounter_session_hot_swap',
+  'encounter_session_decision_helper',
   'encounter_session_settings_list',
   'encounter_task_attempts_list',
   'receiving',

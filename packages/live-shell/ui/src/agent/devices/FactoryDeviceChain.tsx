@@ -59,7 +59,7 @@ import {openSettings} from '../../settings/host'
 import {chainLaw, slotStanding} from '../../inhabitants/sdk/chains'
 import {openInstrument} from '../../frame/instrumentDoor'
 import {agentAddress} from '../../inhabitants/agentParamAddresses'
-import {useRosterAnswer} from '../../owners/readers'
+import {useRosterAnswer, useSettingsAnswer} from '../../owners/readers'
 import {registerOf, returnProjectOf, ROOT_REGISTER, useWorldReturns} from '../worldScope'
 import {useAgentSessionsOptional} from '../AgentSessionsProvider'
 import {useAgentShell, type AgentDeviceId} from '../AgentShellContext'
@@ -80,7 +80,7 @@ import {
   AGENT_DESIGN, AGENT_P0_ROWS, GATEWAY_DESIGN, LANDING_DESIGN, MEMBER_DESIGN, MEMBER_DEVICE_ID, RACK_DESIGN, SCOPE_DESIGN, SLOT_DESIGN_FACE, agentBinding, designWaits,
   gatewayBinding, memberBinding,
   holdView, memberChains, rackBinding, refiningBinding, scopeBinding, seatedProfile, useChainHolds, viewHolds, type AgentRows, type MemberPorts, type RackUpkeep,
-  type RefiningPorts, callsOf, type CallsDecision,
+  type RefiningPorts, callsOf, callsOnEvery, lastUsageModels, type CallsDecision,
 } from './designBindings'
 import {useOwnerAccepted} from './ownerAccepted'
 import {useSelectedSkillChain} from './skillRackSelection'
@@ -90,7 +90,7 @@ import {observedState, useEncounterSessions} from './EncounterObservers'
 import {FRAMES_ID, mainDevices} from './mainTrackBindings'
 import {askRowsOf, shownSession, threadBinding, threadJson} from './threadBinding'
 import {CAPTURE_PAGE, REFINE_PAGE, SEAT_PAGE, carryPages, composeAgentBinding, withAgentGit} from './oneAgentBinding'
-import {testRefinement} from '../sessionSettings'
+import {testRefinement, useScopeWaits} from '../sessionSettings'
 import {openNotificationTarget, useOwnerRequests} from '../../widgets/railDevices'
 import {openedHold, openedOf, withOwnerRequests} from '../../widgets/railBindings'
 import {useIdentityDevice} from '../../central/devices/agentChainDevices'
@@ -116,7 +116,7 @@ import {currentIdentity} from '../../../../../../desktop/cradle/src/nara/identit
 import {WORKCELL_RACK_ID, chosenWorld, workcellGitReading} from './workcellRackBinding'
 import {AGENT_SLOTS, ON_ITS_TRACK, RACK_CHAIN, chainSlots, factoryPlace, reachOf, type FactorySlot, type RackChainName, type Reach} from './factoryPlaces'
 import {useOwnerOp} from '../../owners/ownerCall'
-import type {AikitWriteRequest, KernelOp} from '../../../../../../desktop/cradle/src/kernel/types'
+import type {AikitWriteRequest, EncounterSessionSettingsReading, KernelOp} from '../../../../../../desktop/cradle/src/kernel/types'
 import {kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import {DECISION_HELPER_ID, decisionHelperBinding, decisionHelperDevice} from './decisionHelperBinding'
 import {captureSkillBinding, type CaptureSkillPorts} from './captureSkillBinding'
@@ -387,12 +387,17 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const ecology = useGatewayEcology(transport, !waits.world && sessionRef != null)
   const calls = useMemo(() => (ecology.status === 'answered' ? callsOf(ecology.value, sessionRef)
     : ecology.status === 'refused' ? {refused: ecology.error ?? 'AIKit refused the gateway\'s ecology.'} : null), [ecology, sessionRef])
+  // One binding at a time: where one refuses, the words say which bindings now answer the new way and what to press next.
   const callsWrite = useMemo(() => (transport.kind === 'unavailable' ? undefined : async (bindings: readonly string[], decision: CallsDecision) => {
-    for (const ruled of bindings) await harnessIngressRule(transport, ruled, 'agent', decision)
+    await callsOnEvery(bindings, decision, (ruled, said) => harnessIngressRule(transport, ruled, 'agent', said))
   }), [transport])
+  // Wait and On no answer (§19.12 Asks): the session's own settings in AIKit, which its executor plays at the Wait; a group's sessions each
+  // keep their own.
+  const scopeWaits = useScopeWaits(transport, track && !track.group ? track.sessionRef : null, rackProject,
+    track?.group ? 'each session of a group keeps its own; choose one of its sessions.' : undefined)
   const scopeDesignBinding = useMemo(() => (waits.world ? null : scopeBinding(chainDeviceId('world'), holds, writeModeRow, write,
-    {toolCalls, toolCallsRow, calls, ...(callsWrite ? {callsWrite} : {})})),
-  [waits.world, holds, writeModeRow, write, toolCalls, toolCallsRow, calls, callsWrite])
+    {toolCalls, toolCallsRow, calls, ...(callsWrite ? {callsWrite} : {}), waits: scopeWaits})),
+  [waits.world, holds, writeModeRow, write, toolCalls, toolCallsRow, calls, callsWrite, scopeWaits])
   // Where the Device side stands (factoryPlaces.ts): a workcell's return track, a session (or a group), or the Main track.
   const groupTrack = track && track.group ? track : null
   // A lone session: its rack's one chain is its own agent (§19.15 "A session of one agent has a rack of that one chain").
@@ -515,23 +520,31 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     agent: oneAgent,
     // Solo (§19.15 the chain list): what you attend to, the one the Session view's mixer solos (the agent shell's, on the book).
     solo: (ref, on) => shell.setSolo(ref, on),
-    // The chain list's Activator, Add a chain and Drag out (§19.15): AIKit's bench, attach and drag out of a chain's session, through the kernel.
+    // The chain list's Activator, Add a chain, Drag out and Hot-Swap, and the Decision helper dropped on it (§19.15): AIKit's bench, attach,
+    // drag out and hot-swap of a chain's session and its Decision helper of the space, through the kernel.
     ...(transport.kind !== 'unavailable' ? {
       bench: input => chainListAct(transport, {op: 'encounter_session_bench', ...input}, input.benched ? 'a chain was benched' : 'a chain\'s bench was lifted'),
       attach: input => chainListAct(transport, {op: 'encounter_session_attach', ...input}, 'a chain joined the rack'),
       dragOut: input => chainListAct(transport, {op: 'encounter_session_drag_out', ...input}, 'a chain was dragged out into a space of its own'),
+      hotSwap: input => chainListAct(transport, {op: 'encounter_session_hot_swap', ...input}, 'a chain\'s agent was hot-swapped'),
+      decisionHelper: input => chainListAct(transport, {op: 'encounter_session_decision_helper', ...input}, input.bound ? 'a Decision helper joined the rack' : 'the Decision helper left the rack'),
     } : {}),
   }), [transport, oneAgent, shell.setSolo])
   // The Decision helper (§19.20, T-AGENCY K5): a device of its own, a chain of the group's Agent rack in place of an Agent, on AIKit's
-  // decision provider and QL's team space — read only while the rack stands on a group. The rack lists it among its chains.
-  const helperStands = sessionRef != null && !!groupTrack
+  // decision provider and QL's team space — read only where the group's space names its helper (AIKit's `decision_helper`, round 860). The
+  // rack lists it among its chains.
+  const helperStands = sessionRef != null && !!groupTrack?.decisionHelper
   const helperReadings = useDecisionHelperReadings(transport, helperStands)
   const helperDevice = useMemo(() => decisionHelperDevice(), [])
   const helperDesignBinding = useMemo(() => decisionHelperBinding({status: helperReadings.status, teamSpace: helperReadings.teamSpace}),
     [helperReadings.status, helperReadings.teamSpace])
+  // Each chain's chip (§19.15 the chain list): the model its session last reported, from Actuation's usage records over every session.
+  const groupUsage = useActuationRead(transport, groupTrack ? {kind: 'usage-list'} : null)
+  const chainModels = useMemo(() => (groupUsage.status === 'answered' ? lastUsageModels(groupUsage.value) : null), [groupUsage])
   const agentsetDesignBinding = useMemo(() => agentsetBinding({group: groupTrack, session: loneTrack, agent: oneAgent?.values ?? null, tracks, models, holds,
-    nowUnixMs: sessions?.nowUnixMs ?? 0, ...(setRef ? {set: groupSet} : {}), ...(helperStands && helperDevice ? {helper: helperDesignBinding.values} : {}), soloed: shell.soloed}, agentsetPorts),
-  [groupTrack, loneTrack, oneAgent, tracks, models, holds, sessions?.nowUnixMs, setRef, groupSet, helperStands, helperDevice, helperDesignBinding, agentsetPorts, shell.soloed])
+    nowUnixMs: sessions?.nowUnixMs ?? 0, ...(setRef ? {set: groupSet} : {}), ...(helperStands && helperDevice ? {helper: helperDesignBinding.values} : {}), soloed: shell.soloed,
+    chainModels}, agentsetPorts),
+  [groupTrack, loneTrack, oneAgent, tracks, models, holds, sessions?.nowUnixMs, setRef, groupSet, helperStands, helperDevice, helperDesignBinding, agentsetPorts, shell.soloed, chainModels])
   // How far each plate of a session's chain reaches (factoryPlaces.ts reachOf): the rack's chains, and the lone session's own inside it.
   const rackChains = useMemo(() => rackChainsOf(agentsetDesignBinding.values.members), [agentsetDesignBinding.values.members])
   const reachHere = (slot: FactorySlot): Reach => (place.kind === 'session' ? reachOf(slot, rackChains, loneTrack?.sessionRef) : ON_ITS_TRACK)
@@ -565,13 +578,17 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const agentDraft = typeof oneAgent?.values.draft === 'string' ? oneAgent.values.draft : null
   const agentWrite = oneAgent?.write
   const ownerRequests = useOwnerRequests(transport)
+  // The asking agent's Scope (§19.12, §19.14): AIKit's settings of the shown session — its Wait and On no answer, and what its executor did
+  // with its asks — read here and set on its Scope.
+  const shownAnswer = useSettingsAnswer(transport, shownTrack?.sessionRef ?? null, shownTrack?.project ?? ROOT_REGISTER).reading
+  const shownSettings = shownAnswer.status === 'answered' ? shownAnswer.value as EncounterSessionSettingsReading | null : null
   const approvalsDesignBinding = useMemo(() => {
     const state = observedState(shownHandle)
     const actions = shownHandle && 'actions' in shownHandle ? shownHandle.actions : undefined
     // Approvals is handed no Gateway: the default answer is the Gateway's own, set on the Gateway (§19.14, §19.2; ticket 788).
     const binding = approvalsBinding({session: shownTrack, encounter: state?.reading ?? null, holds,
       returns: returned, returnsAbsent: approvalsReturns.absent, returnsRefused: approvalsReturns.refusals, tracks, nowUnixMs: sessions?.nowUnixMs ?? Date.now(), units, person,
-      refinements: rackRefinements},
+      refinements: rackRefinements, settings: shownSettings},
       {...(actions ? {permission: (id, decision) => actions.permission(id, decision)} : {}),
         // A skill's proposed revision (§19.7): Accept and Discard through the Refining page's own AIKit verbs.
         ...(refineWrite ? {refine: refineWrite} : {}),
@@ -589,7 +606,7 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     return withOwnerRequests(commented, {...ownerRequests, nowUnixMs: sessions?.nowUnixMs || Date.now()}, openNotificationTarget,
       {opened: openedOf(viewHolds(holds, APPROVALS_ID).opened), hold: ids => holdView(APPROVALS_ID, 'opened', openedHold(ids))})
   }, [shownHandle, shownTrack, holds, returned, approvalsReturns.absent, approvalsReturns.refusals, tracks, sessions?.nowUnixMs, transport, person, units, agentDraft, agentWrite, ownerRequests,
-    rackRefinements, refineWrite])
+    rackRefinements, refineWrite, shownSettings])
 
   // A workcell's devices (§19.23): Git / landing's Seat group (the seat instrument), starting at the selected workcell's seat of the project;
   // and the Remote carrier (Workcell's status). Workcell's instrument stands on no chain: the rail's publisher holds it with its Seats and

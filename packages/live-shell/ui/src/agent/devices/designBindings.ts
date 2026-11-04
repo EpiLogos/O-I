@@ -100,6 +100,87 @@ export const CALLS_REFUSE = {
   decision: (value: string) => `Calls to other agents is Allow, Ask or Deny, not ${value}.`,
 } as const
 
+/** Calls to other agents as the design's words name each rule: what a binding now does with a call from another agent. */
+const CALLS_SAID: Readonly<Record<string, {readonly one: string; readonly many: string; readonly word: string}>> = {
+  allow: {one: 'lets it through', many: 'let it through', word: 'Allow'}, pair: {one: 'asks you', many: 'ask you', word: 'Ask'},
+  deny: {one: 'denies it', many: 'deny it', word: 'Deny'}}
+const listed = (items: readonly string[]) => (items.length <= 1 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items.at(-1)}`)
+/** Set one rule for calls from other agents on every binding of a session, one binding at a time (AIKit keeps a rule per binding: the
+ * kernel's harness_ingress_rule). The bindings are not set as one: where one refuses, the words say which now answer the new way, which
+ * keep the rule they had, and what to press next. */
+export async function callsOnEvery(bindings: readonly string[], decision: CallsDecision,
+  set: (binding: string, decision: CallsDecision) => Promise<unknown>): Promise<void> {
+  for (const [at, binding] of bindings.entries()) {
+    try { await set(binding, decision) } catch (cause) {
+      const done = bindings.slice(0, at), left = bindings.slice(at)
+      const said = CALLS_SAID[decision] ?? {one: `answers ${decision}`, many: `answer ${decision}`, word: decision}
+      const why = cause instanceof Error ? cause.message : String(cause)
+      const stands = done.length ? `${listed(done)} now ${done.length > 1 ? said.many : said.one}` : 'nothing changed'
+      const keep = `${listed(left)} ${left.length > 1 ? 'keep the rule they had' : 'keeps the rule it had'}`
+      throw Error(`Calls to other agents stopped at ${binding}: ${stands}, and ${keep}; ${why.replace(/\.$/, '')}. Choose ${said.word} again to set ${left.length > 1 || done.length ? 'the rest' : 'it'}.`)
+    }
+  }
+}
+
+/** Scope's Wait and On no answer (§19.12 Asks: Wait 15 min–24 h, default 4 h; On no answer Hold or Deny, default Hold): the session's own
+ * settings in AIKit (`track.wait` in seconds, `track.no_answer`; ai-kit encounter_task_settings.rs), written through the kernel's
+ * encounter_session_settings. AIKit's executor plays them: a request nobody answered by its Wait is denied with the harness's own deny, or
+ * held in Approvals past its Wait, as the person chose (ai-kit encounter_task_executor.rs settle_asks). */
+export const WAIT_SECONDS = {min: 900, max: 86_400} as const
+export const NO_ANSWERS: readonly string[] = ['hold', 'deny']
+export const WAIT_REFUSE = {
+  wait: 'Wait: no carrier to AIKit\'s Wait on the session\'s own settings (the kernel\'s encounter_session_settings, track wait) stands on this chain.',
+  noAnswer: 'On no answer: no carrier to AIKit\'s On no answer on the session\'s own settings (the kernel\'s encounter_session_settings, track no_answer) stands on this chain.',
+  unread: (what: string) => `${what}: AIKit has not read the session's settings yet.`,
+  older: (what: string) => `${what}: this AIKit's session settings carry no ${what}, so it is neither read nor set (an AIKit before O-I round 860).`,
+  range: 'Wait is 15 min to 24 h: a whole number of seconds from 900 to 86400.',
+  noAnswerValue: (value: string) => `On no answer is Hold or Deny, not ${value}.`,
+} as const
+/** The session's Wait and On no answer as a Scope is handed them: AIKit's track settings (null while unread), why they are not read (AIKit's
+ * refusal, or where the Scope stands on no one session), and their write. */
+export interface ScopeWaits {
+  readonly track: {readonly wait?: unknown; readonly no_answer?: unknown} | null
+  readonly why?: string
+  readonly write?: (change: {wait?: number; no_answer?: 'hold' | 'deny'}) => Promise<unknown>
+}
+const WAIT_KEYS = {wait: {field: 'wait', what: 'Wait'}, noAnswer: {field: 'no_answer', what: 'On no answer'}} as const
+type WaitKey = keyof typeof WAIT_KEYS
+/** Why Wait or On no answer is not pressable, or null where it writes. */
+function waitWhy(key: WaitKey, waits: ScopeWaits | undefined): string | null {
+  const {field, what} = WAIT_KEYS[key]
+  if (waits?.why) return `${what}: ${waits.why}`
+  if (!waits?.write) return WAIT_REFUSE[key]
+  if (!waits.track) return WAIT_REFUSE.unread(what)
+  return field in waits.track ? null : WAIT_REFUSE.older(what)
+}
+/** Wait and On no answer as AIKit reads them, in Scope's keys. */
+export function waitValues(waits: ScopeWaits | undefined): Record<string, Value> {
+  const values: Record<string, Value> = {}
+  const track = waits?.track
+  if (typeof track?.wait === 'number') values.wait = track.wait
+  if (typeof track?.no_answer === 'string' && NO_ANSWERS.includes(track.no_answer)) values.noAnswer = track.no_answer
+  return values
+}
+/** Each of Wait and On no answer that is not pressable, with why. */
+export function waitStanding(waits: ScopeWaits | undefined): Record<string, Standing> {
+  const standing: Record<string, Standing> = {}
+  for (const key of Object.keys(WAIT_KEYS) as WaitKey[]) { const why = waitWhy(key, waits); if (why) standing[key] = {disabled: why} }
+  return standing
+}
+/** Write Wait or On no answer to the session's own settings, or refuse in the words of what stands in the way. */
+export async function waitWrite(key: WaitKey, value: Value | undefined, waits: ScopeWaits | undefined): Promise<void> {
+  const why = waitWhy(key, waits)
+  if (why) throw Error(why)
+  if (key === 'wait') {
+    const seconds = typeof value === 'number' ? Math.round(value) : NaN
+    if (!(seconds >= WAIT_SECONDS.min && seconds <= WAIT_SECONDS.max)) throw Error(WAIT_REFUSE.range)
+    await waits!.write!({wait: seconds})
+    return
+  }
+  if (typeof value !== 'string' || !NO_ANSWERS.includes(value)) throw Error(WAIT_REFUSE.noAnswerValue(String(value)))
+  await waits!.write!({no_answer: value as 'hold' | 'deny'})
+}
+
 const REFUSE = {
   power: 'Power is a reading: the harness reports whether the agent is on; Actuation exposes no Power write.',
   budget: 'Budget is a reading here: used and cap come from the session\'s task record (encounter_task_read); Actuation exposes no budget write.',
@@ -115,12 +196,11 @@ const REFUSE = {
   prove: missing('Prove', 'the run\'s proof `aikit praxis method prove --method <ref> --proof-json` takes (its Activity, Return, Evidence and verification refs; the member holds no run receipt)', 'AIKit'),
   reach: missing('Reach', 'the scope reach write on the world device\'s apply path (WO-SF2)', 'Software Factory'),
   // Scope's Asks page (§19.12 Asks): Calls to other agents is AIKit's ingress rule for the sender kind agent (CALLS_REFUSE; scopeBinding
-  // writes it where the chain hands in its carrier). Wait and On no answer are the harness's approvals timeout and what a request nobody
-  // answered comes to: Hermes keeps both itself (tools/approval_context.py: approvals.timeout, 300 s unless set; a request that times out
-  // is denied), no owner declares a seam on Hermes' config, and harness_agent_control does not carry them (harnessAgentControl.ts).
+  // writes it where the chain hands in its carrier). Wait and On no answer are the session's own settings in AIKit, which its executor plays
+  // (WAIT_REFUSE; scopeBinding writes them where the chain hands in the session's settings).
   calls: CALLS_REFUSE.uncarried,
-  wait: missing('Wait', 'the agent\'s approvals timeout written for its harness (Hermes\' approvals.timeout, 300 s unless set: neither AIKit nor Actuation declares a seam on Hermes\' config, and harness_agent_control carries approvals, transport, connect and stall-after only)', 'Actuation'),
-  noAnswer: missing('On no answer', 'Hold for a request nobody answered: Hermes denies a request nobody answers when its approvals.timeout runs out, and holds none, so Deny is Hermes\' own and nothing carries Hold', 'Hermes'),
+  wait: WAIT_REFUSE.wait,
+  noAnswer: WAIT_REFUSE.noAnswer,
   place: missing('A place in reach', 'the scope places write (WO-SF2)', 'Software Factory'),
   scope: 'Choose where the composition applies — Home, Project or Session — then Preview.',
   noPlan: 'Nothing is previewed: press Preview, read the change, then Apply.',
@@ -420,6 +500,18 @@ export function lastUsageModelOf(listing: unknown): string | undefined {
     if (model && typeof model.name === 'string' && model.name) return model.name
   }
   return undefined
+}
+
+/** The model each session last reported using, from one listing of Actuation's usage records over every session
+ * (`actuation usage list --json`, actuation.usage-listing/v1): the last record of a session that names a model. Pure. */
+export function lastUsageModels(listing: unknown): ReadonlyMap<string, string> {
+  const models = new Map<string, string>()
+  if (!isObj(listing) || listing.schema !== 'actuation.usage-listing/v1' || !Array.isArray(listing.records)) return models
+  for (const record of listing.records) {
+    const model = isObj(record) && isObj(record.usage) && isObj(record.usage.model) ? record.usage.model : null
+    if (model && typeof model.name === 'string' && model.name && typeof record.agent_session_ref === 'string') models.set(record.agent_session_ref, model.name)
+  }
+  return models
 }
 
 /** The Agent's values: each key from the owner that reports it, or absent. */
@@ -1239,6 +1331,8 @@ export interface ScopeAsks {
    * ecology is unread, its refusal where it refused; and the write that sets one rule on every binding (the kernel's harness_ingress_rule). */
   readonly calls?: CallsReading | {readonly refused: string} | null
   readonly callsWrite?: (bindings: readonly string[], decision: CallsDecision) => Promise<void>
+  /** Wait and On no answer: the session's own settings in AIKit, and their write (ScopeWaits). */
+  readonly waits?: ScopeWaits
 }
 
 /** Calls to other agents as Scope's design names them: Allow, Ask (AIKit's pair: the call waits in Approvals) and Deny. */
@@ -1271,15 +1365,16 @@ const callsWhy = (asks: ScopeAsks): string | null =>
 const callsReadingOf = (asks: ScopeAsks): CallsReading | null => (asks.calls && !('refused' in asks.calls) ? asks.calls : null)
 
 /** Scope's values (§19.12). No owner reports the reach, the write mode, the basis, the places or the receipts (the address table's world
- * rows are readings with no source: agentParamAddresses.ts:93-97), nor Wait or On no answer, so every one is absent; Tool calls is the
- * harness's own reading and Calls to other agents AIKit's rule on the session's bindings where the chain hands them in, and the only other
- * value is a raised reach waiting for your Confirm. */
+ * rows are readings with no source: agentParamAddresses.ts:93-97), so every one is absent; Tool calls is the harness's own reading, Calls to
+ * other agents AIKit's rule on the session's bindings and Wait and On no answer the session's own settings in AIKit, where the chain hands
+ * them in, and the only other value is a raised reach waiting for your Confirm. */
 export function scopeValues(held: ChainHolds, asks: ScopeAsks = {}): Values {
   const values: Record<string, Value> = {}
   if (held.reachPending !== undefined) values.reachPending = held.reachPending
   if (asks.toolCalls !== undefined) values.toolCalls = asks.toolCalls
   const calls = callsReadingOf(asks)
   if (calls?.decision) values.calls = calls.decision
+  Object.assign(values, waitValues(asks.waits))
   return values
 }
 
@@ -1288,13 +1383,16 @@ const TOOL_CALLS_UNCARRIED = 'Tool calls: the Gateway\'s approvals row is not ad
 
 const SCOPE_WRITES = (key: string) => ['reach', 'writeMode', 'toolCalls'].includes(key) || key in REFUSED_WRITES[SCOPE_DESIGN]! || key.startsWith('w:')
 
-/** Scope's refused settings, Tool calls where no row carries it, and Calls to other agents where it is not pressable. */
+/** Scope's refused settings, Tool calls where no row carries it, and Calls to other agents, Wait and On no answer where they are not
+ * pressable. */
 function scopeStanding(asks: ScopeAsks): Record<string, Standing> {
   const standing: Record<string, Standing> = {...disabled(REFUSED_WRITES[SCOPE_DESIGN]!), ...(asks.toolCallsRow?.writePath ? {} : {toolCalls: {disabled: TOOL_CALLS_UNCARRIED}})}
   const why = callsWhy(asks)
   if (why) standing.calls = {disabled: why}
   else delete standing.calls
-  return standing
+  delete standing.wait
+  delete standing.noAnswer
+  return {...standing, ...waitStanding(asks.waits)}
 }
 
 /** A raised reach the view holds: a ring, or none (Cancel's drop). */
@@ -1342,6 +1440,7 @@ export function scopeBinding(id: string, held: ChainHolds, writeModeRow: SdkPara
           await asks.callsWrite!(callsReadingOf(asks)!.bindings, value as CallsDecision)
           continue
         }
+        if (key === 'wait' || key === 'noAnswer') { await waitWrite(key, value, asks.waits); continue }
         const refused = REFUSED_WRITES[SCOPE_DESIGN]![key]
         if (refused) throw Error(refused)
         if (key.startsWith('w:')) throw Error(REFUSE.place)

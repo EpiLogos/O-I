@@ -306,6 +306,15 @@ enum AgentRead {
         into: String,
         label: Option<String>,
     },
+    SessionHotSwap {
+        space: String,
+        agent_session: String,
+        agent_ref: String,
+    },
+    SessionDecisionHelper {
+        space: String,
+        bound: bool,
+    },
     SettingsList {
         agent_sessions: Vec<String>,
     },
@@ -623,6 +632,32 @@ impl PreparedAgent {
                         .session_attach(&cwd, &project_ref, space, agent_session)?,
                 }
             }
+            AgentRead::SessionHotSwap {
+                space,
+                agent_session,
+                agent_ref,
+            } => {
+                let project_ref =
+                    project_ref(&self.client, &self.aikit, &self.reads, project, &cwd)?;
+                KernelOpResult::EncounterOwnerAct {
+                    data: self.aikit.session_hot_swap(
+                        &cwd,
+                        &project_ref,
+                        space,
+                        agent_session,
+                        agent_ref,
+                    )?,
+                }
+            }
+            AgentRead::SessionDecisionHelper { space, bound } => {
+                let project_ref =
+                    project_ref(&self.client, &self.aikit, &self.reads, project, &cwd)?;
+                KernelOpResult::EncounterOwnerAct {
+                    data: self
+                        .aikit
+                        .session_decision_helper(&cwd, &project_ref, space, *bound)?,
+                }
+            }
             AgentRead::SessionDragOut {
                 space,
                 agent_session,
@@ -714,7 +749,8 @@ impl Kernel {
     /// `AgencyRead`, `Encounter`, `EncounterTaskRead`, `EncounterSessionSettings`,
     /// `EncounterTaskConfigure`, `EncounterTaskRemove`, `EncounterTaskCopy`,
     /// `EncounterSessionDetach`, `EncounterSessionBench`,
-    /// `EncounterSessionAttach`, `EncounterSessionDragOut`, `AgentDefinition`,
+    /// `EncounterSessionAttach`, `EncounterSessionDragOut`,
+    /// `EncounterSessionHotSwap`, `EncounterSessionDecisionHelper`, `AgentDefinition`,
     /// `ModelRoster`, `HarnessAgentRead`, `HarnessStatus` and
     /// `ModelCatalogue`, prepared under the kernel lock; every other op is
     /// not an agent read.
@@ -831,6 +867,30 @@ impl Kernel {
                     agent_session: agent_session.clone(),
                     into: into.clone(),
                     label: label.clone(),
+                },
+            ),
+            KernelOp::EncounterSessionHotSwap {
+                project,
+                space,
+                agent_session,
+                agent_ref,
+            } => (
+                Some(project.clone()),
+                AgentRead::SessionHotSwap {
+                    space: space.clone(),
+                    agent_session: agent_session.clone(),
+                    agent_ref: agent_ref.clone(),
+                },
+            ),
+            KernelOp::EncounterSessionDecisionHelper {
+                project,
+                space,
+                bound,
+            } => (
+                Some(project.clone()),
+                AgentRead::SessionDecisionHelper {
+                    space: space.clone(),
+                    bound: *bound,
                 },
             ),
             KernelOp::EncounterSessionSettingsList {
@@ -954,6 +1014,11 @@ elif verb == "agent-session-scope":
                       "project_ref": "control:root", "central_root": cwd, "cwd": cwd}))
 elif verb == "discover" and os.path.exists(log + ".spaces.json"):
     print(open(log + ".spaces.json").read())
+elif verb == "hot-swap":
+    with open(log + ".hot-swap.args", "w") as handle:
+        handle.write(json.dumps(args[4:]))
+    print(json.dumps({"schema": "aikit.session-space-hot-swap/v1", "into": "agent-session/other-1",
+                      "steps": [{"step": "mint"}, {"step": "attach"}, {"step": "detach"}]}))
 elif verb == "drag-out":
     with open(log + ".drag-out.args", "w") as handle:
         handle.write(json.dumps(args[4:]))
@@ -965,6 +1030,11 @@ elif verb == "discover":
                        "agent_sessions": {"agent-session/x": {}}}]))
 elif verb == "encounter":
     request = json.loads(args[args.index("--request-json") + 1])
+    with open(log + ".encounter", "a") as handle:
+        handle.write(json.dumps(request) + "\n")
+    if request.get("action") == "status" and os.path.exists(log + ".status.json"):
+        print(open(log + ".status.json").read())
+        sys.exit(0)
     print(json.dumps({"ok": True, "data": {"agent_session": request.get("agent_session"),
                                            "events": [], "more": False}}))
 elif verb == "encounter-task-read":
@@ -1643,6 +1713,155 @@ else:
         assert!(kernel.apply(drag("agent-session/bo")).is_err());
         assert_eq!(aikit.calls("drag-out"), 1);
         for name in ["applied", "spaces.json", "drag-out.args"] {
+            let _ = std::fs::remove_file(side(name));
+        }
+    }
+
+    #[test]
+    fn hot_swap_and_the_decision_helper_go_through_aikit_s_own_operations() {
+        let owner = crate::tests::FakeOwner::spawn_counter("hot-swap");
+        let aikit = FakeAikit::new("hot-swap");
+        let side = |name: &str| PathBuf::from(format!("{}.{name}", aikit.log.display()));
+        for name in ["applied", "encounter", "status.json"] {
+            let _ = std::fs::remove_file(side(name));
+        }
+        let spaces = |helper: bool| {
+            let mut crew = serde_json::json!({"version": "aikit.session-space-application/v1",
+                "definition": {"id": "session-space/crew", "projects": ["control:root"]},
+                "agent_sessions": {"agent-session/ada": {"purpose": "drafts the essay"}, "agent-session/cy": {},
+                    // The session AIKit seats in ada's place (the fake's hot-swap answer), so its open passes the gate.
+                    "agent-session/other-1": {}}});
+            if helper {
+                crew["agent_sessions"]["agent-session/settle"] =
+                    serde_json::json!({"purpose": "Decision helper"});
+                crew["decision_helper"] =
+                    serde_json::json!({"agent_session": "agent-session/settle"});
+            }
+            std::fs::write(side("spaces.json"), serde_json::json!([crew]).to_string()).unwrap();
+        };
+        spaces(false);
+        let mut kernel = owner.kernel_with_agency(aikit.client());
+
+        // Hot-Swap (manual §19.15): AIKit seats the other agent's own session in the chain's place.
+        let swap = |agent_session: &str| KernelOp::EncounterSessionHotSwap {
+            project: String::new(),
+            space: "session-space/crew".into(),
+            agent_session: agent_session.into(),
+            agent_ref: "agent/other".into(),
+        };
+        let swapped = kernel.apply(swap("agent-session/ada")).unwrap();
+        let KernelOpResult::EncounterOwnerAct { data } = swapped.result else {
+            panic!("the swap's receipts are the outcome");
+        };
+        assert_eq!(data["schema"], "oi.encounter-session-hot-swap/v1");
+        assert_eq!(data["into"], "agent-session/other-1");
+        assert_eq!(data["steps"][2]["step"], "detach");
+        assert!(
+            data["open"]["unopened"]
+                .as_str()
+                .unwrap()
+                .contains("opens when you open it"),
+            "a chain that was not open leaves the new session unopened: {data}"
+        );
+        let asked: Value =
+            serde_json::from_str(&std::fs::read_to_string(side("hot-swap.args")).unwrap()).unwrap();
+        assert_eq!(
+            asked.as_array().unwrap()[..6],
+            serde_json::json!([
+                "--space",
+                "session-space/crew",
+                "--agent-session",
+                "agent-session/ada",
+                "--agent-ref",
+                "agent/other"
+            ])
+            .as_array()
+            .unwrap()[..]
+        );
+        assert_eq!(asked[6], "--project-cwd");
+        // A chain that was open: the new session opens on the same provider.
+        std::fs::write(
+            side("status.json"),
+            serde_json::json!({"ok": true, "data": {"provider": {"id": "hermes-acp"}}}).to_string(),
+        )
+        .unwrap();
+        let swapped = kernel.apply(swap("agent-session/ada")).unwrap();
+        let KernelOpResult::EncounterOwnerAct { data } = swapped.result else {
+            panic!()
+        };
+        assert_eq!(data["open"]["opened"], "hermes-acp");
+        let opened = std::fs::read_to_string(side("encounter")).unwrap();
+        assert!(
+            opened
+                .lines()
+                .filter_map(|line| serde_json::from_str::<Value>(line).ok())
+                .any(|asked| asked["action"] == "open"
+                    && asked["agent_session"] == "agent-session/other-1"
+                    && asked["provider"] == "hermes-acp"),
+            "{opened}"
+        );
+        assert_eq!(
+            kernel.apply(swap("agent-session/bo")).unwrap_err(),
+            "agent-session/bo is not a chain of session-space/crew"
+        );
+
+        // The Decision helper (manual §19.20): a session of the space, named its helper.
+        let helper = |bound: bool| KernelOp::EncounterSessionDecisionHelper {
+            project: String::new(),
+            space: "session-space/crew".into(),
+            bound,
+        };
+        let seated = kernel.apply(helper(true)).unwrap();
+        let KernelOpResult::EncounterOwnerAct { data } = seated.result else {
+            panic!()
+        };
+        assert_eq!(data["schema"], "oi.encounter-session-decision-helper/v1");
+        let session = data["agent_session"].as_str().unwrap().to_owned();
+        assert!(
+            session.starts_with("agent-session/decision-helper-"),
+            "{session}"
+        );
+        let applied: Vec<Value> = std::fs::read_to_string(side("applied"))
+            .unwrap()
+            .lines()
+            .map(|line| serde_json::from_str(line).unwrap())
+            .collect();
+        assert_eq!(applied[0]["intent"]["operation"], "attach-agent-session");
+        assert_eq!(
+            applied[0]["intent"]["attachment"]["purpose"],
+            "Decision helper"
+        );
+        assert_eq!(
+            applied[1]["intent"],
+            serde_json::json!({"operation": "bind-decision-helper",
+            "binding": {"agent_session": session, "provenance": ["dropped on the Agent rack as its Decision helper"]}})
+        );
+        spaces(true);
+        assert_eq!(
+            kernel.apply(helper(true)).unwrap_err(),
+            "One Decision helper answers every agent of session-space/crew, and agent-session/settle already does"
+        );
+        kernel.apply(helper(false)).unwrap();
+        let applied: Vec<Value> = std::fs::read_to_string(side("applied"))
+            .unwrap()
+            .lines()
+            .map(|line| serde_json::from_str(line).unwrap())
+            .collect();
+        assert_eq!(
+            applied[2]["intent"],
+            serde_json::json!({"operation": "unbind-decision-helper"})
+        );
+        assert_eq!(
+            applied[3]["intent"],
+            serde_json::json!({"operation": "detach-agent-session", "agent_session": "agent-session/settle"})
+        );
+        for name in [
+            "applied",
+            "spaces.json",
+            "hot-swap.args",
+            "encounter",
+            "status.json",
+        ] {
             let _ = std::fs::remove_file(side(name));
         }
     }

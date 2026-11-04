@@ -15,6 +15,7 @@
 // is absent, and a change of it refused, in words. Pure: no React, no transport.
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import {heldOf, pageBinding, setHeld, type DesignWiring} from './pageBindings'
+import {WAIT_REFUSE, waitStanding, waitValues, waitWrite, type ScopeWaits} from '../../agent/devices/designBindings'
 
 export const CONTEXT_WORLD_DESIGN = 'central:context-world'
 
@@ -114,6 +115,8 @@ export interface ContextWorldInput {
   readonly relations?: {readonly status: 'reading'} | {readonly status: 'answered'; readonly value: unknown} | {readonly status: 'refused'; readonly error: string}
   /** Save the world's relations record on its revision (WORLD_RELATIONS_SAVE); absent where nothing writes. */
   readonly saveRelations?: (record: Record<string, unknown>, expectedRevision: string) => Promise<void>
+  /** Scope's Wait and On no answer: the dialogue's session's own settings in AIKit, and their write (designBindings.ts ScopeWaits). */
+  readonly waits?: ScopeWaits
 }
 
 const str = (value: unknown): string | undefined => (typeof value === 'string' && value ? value : undefined)
@@ -188,8 +191,9 @@ export function contextWorldBinding(id: string, input: ContextWorldInput): Desig
 // a Central workspace's chain"; lock §0.3.5 "Context & world is Scope"): Context & world's owners draw Scope's design on Central
 // (software-factory:context-write-mode, inhabitants/catalogue/panels/scope.tsx) — the light, the places the agent may read (the packet
 // its turn carries, your world's retrievable sources: each a place on its ring, the shape Scope reads), and the receipts of the
-// session's writes. The Reach, the Writes list, the write mode and the Asks page's Tool calls, Calls to other agents, Wait and On no answer
-// have no owner a kernel op reaches, as before: each absent, and a change of it refused with the operation it lacks. Before it lands, Escalate
+// session's writes. The Reach, the Writes list, the write mode and the Asks page's Tool calls and Calls to other agents have no owner a kernel
+// op reaches, as before: each absent, and a change of it refused with the operation it lacks. Wait and On no answer are the dialogue's
+// session's own settings in AIKit, as on Factory's Scope (designBindings.ts WAIT_REFUSE), where the chain hands them in. Before it lands, Escalate
 // to and the Grants page are Custody's (sessionChainBindings.ts withCustodyAsks). The raised reach is the view's, held until Confirm (Scope's
 // own ask).
 
@@ -204,8 +208,8 @@ export const CENTRAL_SCOPE_REFUSED: Readonly<Record<string, string>> = {
   // The Asks page (manual §19.12 Asks): the dialogue's session stands behind no harness gateway the kernel controls.
   toolCalls: SCOPE_MISSING('Tool calls', 'the harness\'s approvals mode for the dialogue\'s session (harness_agent_control configure {approvals} reaches a gateway\'s harness, and this session has none)', 'Actuation'),
   calls: SCOPE_MISSING('Calls to other agents', 'a rule for calls from other agents on the dialogue\'s session: AIKit keeps one by sender kind on a gateway binding (the kernel\'s harness_ingress_rule), and this session holds no conversation on AIKit\'s gateway', 'AIKit'),
-  wait: SCOPE_MISSING('Wait', 'the agent\'s approvals timeout written for its harness (Hermes\' approvals.timeout, 300 s unless set: neither AIKit nor Actuation declares a seam on Hermes\' config, and harness_agent_control carries approvals, transport, connect and stall-after only)', 'Actuation'),
-  noAnswer: SCOPE_MISSING('On no answer', 'Hold for a request nobody answered: Hermes denies a request nobody answers when its approvals.timeout runs out, and holds none, so Deny is Hermes\' own and nothing carries Hold', 'Hermes'),
+  wait: WAIT_REFUSE.wait,
+  noAnswer: WAIT_REFUSE.noAnswer,
 }
 const NO_PLACE_REQUEST = 'A place in Writes: Central\'s world relations keep the sources a world reads (sources, excluded_sources), not where an agent writes — missing op: the session\'s writable places (write-arm enforcement, WO-SF2, Software Factory).'
 
@@ -258,6 +262,7 @@ export function centralScopeValues(id: string, input: ContextWorldInput): Values
   for (const key of ['light', 'reads', 'receipts', 'reachPending'] as const) if (world[key] !== undefined) values[key] = world[key]!
   // Each source's include or exclude, as Central resolved the world (r:<source ref>).
   if (input.answer.bound && input.effective?.status === 'answered') Object.assign(values, readRequestsOf(input.effective.value))
+  Object.assign(values, waitValues(input.waits))
   return values
 }
 
@@ -272,11 +277,15 @@ function readRequestWhy(input: ContextWorldInput, key: string): string | null {
 }
 
 /** Scope's binding on Central: its readings; a raised reach held until Confirm; a read place's include or exclude saved on the world's
- * relations record at its revision (central.world-relations.save); every other write refused with the op it lacks. */
+ * relations record at its revision (central.world-relations.save); Wait and On no answer on the session's own settings in AIKit; every other
+ * write refused with the op it lacks. */
 export function centralScopeBinding(id: string, input: ContextWorldInput): DesignBinding {
   const values = centralScopeValues(id, input)
   const places = typeof values.reads === 'string' ? (JSON.parse(values.reads) as {id: string}[]) : []
   const standing: Record<string, Standing> = Object.fromEntries(Object.entries(CENTRAL_SCOPE_REFUSED).map(([key, why]) => [key, {disabled: why}]))
+  delete standing.wait
+  delete standing.noAnswer
+  Object.assign(standing, waitStanding(input.waits))
   for (const place of places) {
     standing[`w:${place.id}`] = {disabled: NO_PLACE_REQUEST}
     const why = readRequestWhy(input, `r:${place.id}`)
@@ -298,6 +307,7 @@ export function centralScopeBinding(id: string, input: ContextWorldInput): Desig
           await input.saveRelations!(relationsWith(record, key.slice(2), value), String(record.revision))
           continue
         }
+        if (key === 'wait' || key === 'noAnswer') { await waitWrite(key, value, input.waits); continue }
         if (key === 'reach') setHeld(id, 'reachPending', undefined)
         throw Error(CENTRAL_SCOPE_REFUSED[key] ?? (key.startsWith('w:') ? NO_PLACE_REQUEST : `${key} is a reading: its owner reports it; nothing here changes it.`))
       }

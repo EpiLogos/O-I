@@ -1001,6 +1001,161 @@ impl Client {
             "space": space, "into": into, "receipts": receipts}),
         )
     }
+
+    /// Hot-Swap a chain (manual §19.15 "Swaps the chain's agent, or the set,
+    /// for another from the browser, and keeps the rest of its chain"):
+    /// AIKit's own `session-space hot-swap` seats a new, separately
+    /// attributed session for `agent_ref` in the chain's space with its
+    /// purpose, bench, track settings and task, and detaches the chain's
+    /// session last, each step with its receipt. The provider the chain's
+    /// session ran on is read first, so the new session opens on it; a chain
+    /// that was not open leaves the new session to be opened from its track.
+    pub fn session_hot_swap(
+        &self,
+        cwd: &Path,
+        project_ref: &str,
+        space: &str,
+        agent_session: &str,
+        agent_ref: &str,
+    ) -> Result<Value, String> {
+        let (_, row) = self.project_space(cwd, project_ref, space)?;
+        if row["agent_sessions"].get(agent_session).is_none() {
+            return Err(format!("{agent_session} is not a chain of {space}"));
+        }
+        let provider = self
+            .encounter(
+                cwd,
+                project_ref,
+                &EncounterRequest::Status {
+                    agent_session: agent_session.to_owned(),
+                },
+            )
+            .ok()
+            .and_then(|status| status["provider"]["id"].as_str().map(str::to_owned));
+        let project_cwd = cwd.to_string_lossy();
+        let swap: Value = serde_json::from_str(&self.session_space(
+            cwd,
+            &[
+                "hot-swap",
+                "--space",
+                space,
+                "--agent-session",
+                agent_session,
+                "--agent-ref",
+                agent_ref,
+                "--project-cwd",
+                &project_cwd,
+            ],
+        )?)
+        .map_err(|error| format!("AIKit's hot-swap answer is not JSON: {error}"))?;
+        let into = swap["into"]
+            .as_str()
+            .ok_or("AIKit's hot-swap answer names no new session")?
+            .to_owned();
+        let open = match provider {
+            Some(provider) => match self.encounter(
+                cwd,
+                project_ref,
+                &EncounterRequest::Open {
+                    space: space.to_owned(),
+                    agent_session: into.clone(),
+                    provider: provider.clone(),
+                },
+            ) {
+                Ok(_) => serde_json::json!({"opened": provider}),
+                Err(error) => serde_json::json!({"unopened": format!(
+                    "The swap stands: {into} holds the chain, but it did not open on {provider}: {error}. Open it from its track."
+                )}),
+            },
+            None => serde_json::json!({"unopened": format!(
+                "The swap stands: {into} holds the chain. {agent_session} was not open, so {into} is not either: it opens when you open it from its track."
+            )}),
+        };
+        Ok(
+            serde_json::json!({"schema": "oi.encounter-session-hot-swap/v1", "space": space,
+            "agent_session": agent_session, "agent_ref": agent_ref, "into": into,
+            "steps": swap["steps"], "open": open}),
+        )
+    }
+
+    /// The rack's Decision helper (manual §19.20 "one helper answers every
+    /// agent of the rack"): seated, a session of the space named for it is
+    /// attached and AIKit's `bind-decision-helper` names it the space's
+    /// helper, so the asks of every agent of the space go to it first; taken
+    /// off, `unbind-decision-helper` and that session's detach. A helper
+    /// session seated but not yet named, from a drop that stopped partway, is
+    /// named by the next drop rather than seated again.
+    pub fn session_decision_helper(
+        &self,
+        cwd: &Path,
+        project_ref: &str,
+        space: &str,
+        bound: bool,
+    ) -> Result<Value, String> {
+        const PURPOSE: &str = "Decision helper";
+        const SEATED: &str = "dropped on the Agent rack as its Decision helper";
+        let (_, row) = self.project_space(cwd, project_ref, space)?;
+        let named = row["decision_helper"]["agent_session"]
+            .as_str()
+            .map(str::to_owned);
+        if !bound {
+            let Some(helper) = named else {
+                return Err(format!("{space} names no Decision helper to take off"));
+            };
+            let staged = self.stage_intent(
+                cwd,
+                space,
+                &serde_json::json!({"operation": "unbind-decision-helper"}),
+            )?;
+            self.apply_preview(cwd, &staged)?;
+            let detach =
+                serde_json::json!({"operation": "detach-agent-session", "agent_session": helper});
+            self.stage_intent(cwd, space, &detach)
+                .and_then(|staged| self.apply_preview(cwd, &staged))
+                .map_err(|error| format!(
+                    "The Decision helper is off the rack: {space} names none, so every ask goes to you. Its session {helper} still stands in the space: {error}. Delete its track to take it off."
+                ))?;
+            return Ok(
+                serde_json::json!({"schema": "oi.encounter-session-decision-helper/v1", "space": space,
+                "agent_session": helper, "bound": false}),
+            );
+        }
+        if let Some(helper) = named {
+            return Err(format!(
+                "One Decision helper answers every agent of {space}, and {helper} already does"
+            ));
+        }
+        let waiting = row["agent_sessions"].as_object().and_then(|sessions| {
+            sessions.iter().find_map(|(session, seat)| {
+                seat["provenance"]
+                    .as_array()
+                    .is_some_and(|marks| marks.iter().any(|mark| mark == SEATED))
+                    .then(|| session.clone())
+            })
+        });
+        let session = match waiting {
+            Some(session) => session,
+            None => {
+                let session = format!("agent-session/decision-helper-{}", chat_stamp());
+                let attach = serde_json::json!({"operation": "attach-agent-session", "attachment": {
+                    "agent_session": session, "purpose": PURPOSE, "provenance": [SEATED]}});
+                let staged = self.stage_intent(cwd, space, &attach)?;
+                self.apply_preview(cwd, &staged)?;
+                session
+            }
+        };
+        let bind = serde_json::json!({"operation": "bind-decision-helper", "binding": {
+            "agent_session": session, "provenance": [SEATED]}});
+        self.stage_intent(cwd, space, &bind)
+            .and_then(|staged| self.apply_preview(cwd, &staged))
+            .map_err(|error| format!(
+                "The Decision helper's session {session} stands in {space}, but AIKit did not name it the rack's helper: {error}. Drop the Decision helper on the rack again to finish."
+            ))?;
+        Ok(
+            serde_json::json!({"schema": "oi.encounter-session-decision-helper/v1", "space": space,
+            "agent_session": session, "bound": true}),
+        )
+    }
 }
 
 impl Client {
@@ -2141,13 +2296,13 @@ impl Client {
         command.arg("-C").arg(cwd);
         command.args(args);
         let verb = args.first().copied().unwrap_or("session-space");
-        // `create` and `stage` return write-free previews; `apply` and
-        // `drag-out` write.
+        // `create` and `stage` return write-free previews; `apply`,
+        // `drag-out` and `hot-swap` write.
         let output = output_bounded(
             &mut command,
             SESSION_SPACE_LIMIT,
             verb,
-            matches!(verb, "apply" | "drag-out"),
+            matches!(verb, "apply" | "drag-out" | "hot-swap"),
         )
         .map_err(|error| format!("AIKit SessionSpace is unavailable: {error}"))?;
         if !output.status.success() {

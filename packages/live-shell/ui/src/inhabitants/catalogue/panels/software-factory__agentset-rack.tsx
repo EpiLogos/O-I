@@ -42,7 +42,8 @@
 // The owner is asked to write:  fanOut, depth and handBack (the Hermes delegation block of the harness config; no config.set key carries
 //   it yet); join (Central: central.agent-set.save of the group's set at its next revision, the set read with central.agent-set.read; a
 //   rack that names no set has no join to read or write); model, effort, budget and unmapped (each chain's Agent); bench:<id> and
-//   solo:<id>; and the acts swap (Hot-Swap: the chain's id, its agent to be swapped from the browser), extract (Drag out: the chain's
+//   solo:<id>; and the acts swap (Hot-Swap: the agent dragged from the browser onto the chosen chain's Hot-Swap, as JSON {chain: the
+//   chain's id, agent: what was dropped}; a press with nothing dropped sends the chain's id alone), extract (Drag out: the chain's
 //   id, dropped on an empty track), add (what was dropped under the chain list: an agent, a set or a Decision helper), store (where every
 //   macro stands, kept as a variation), variation (the name of a stored variation to move every macro to) and retry (Factory's
 //   RetryGrant, factory/src/orchestration.rs).
@@ -411,9 +412,20 @@ function Variations({p}: {p: ViewProps}) {
 
 // ---------------------------------------------------------------- the chosen chain's acts
 
+/** Hot-Swap: an agent dragged from the browser onto it takes the chosen chain's place (Live's Hot-Swap swaps from the browser); the rack keeps
+ * the rest of the chain. A press with nothing dropped asks for the drag. */
 const swapAction = (p: ViewProps, chosen: Node | undefined) => {
-  const s = st(p, 'swap')
-  return <Action {...s} label="Hot-Swap" does={SAYS.swap} disabled={s.disabled ?? (!chosen ? 'No chain is chosen.' : undefined)} onPress={chosen ? () => p.set('swap', chosen.id) : undefined} />
+  const s = st(p, 'swap'), why = s.disabled ?? (!chosen ? 'No chain is chosen.' : undefined)
+  return <span className="as-swap" style={{display: 'contents'}} onDragOver={e => { if (chosen && !why) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy' } }}
+    onDrop={e => {
+      if (!chosen || why) return
+      const type = Array.from(e.dataTransfer.types).find(t => t !== 'text/plain') ?? 'text/plain', dropped = e.dataTransfer.getData(type)
+      if (!dropped) return
+      e.preventDefault()
+      p.set('swap', JSON.stringify({chain: chosen.id, agent: dropped}))
+    }}>
+    <Action {...s} label="Hot-Swap" does={SAYS.swap} disabled={why} onPress={chosen ? () => p.set('swap', chosen.id) : undefined} />
+  </span>
 }
 /** Drag out: the chosen chain, dragged onto an empty track, works alone there; the rack asks for it once the track takes the drop. */
 function DragOut({p, chosen}: {p: ViewProps; chosen: Node | undefined}) {

@@ -187,6 +187,36 @@ test('REPLACED (#788) — Approvals reads and sets no default answer (the Gatewa
   bind.resetHolds()
 })
 
+test('Approvals reads the Wait and On no answer of the asking session from AIKit, and marks a request held past its Wait (§19.12, §19.14, round 860)', async () => {
+  bind.resetHolds()
+  const NOW = 1_800_000_000_000
+  // AIKit's settings of the shown session: its track's wait and no_answer, and what its executor did with its asks (asks.held, asks.helper).
+  const settings = {track: {wait: 900, no_answer: 'hold'}, asks: {held: [{request: 'req-7', past_wait_at_unix_ms: NOW - 60_000}], helper: {}, last: null}}
+  const input = {session: SESSION, encounter: encounter([CONSENT]), holds: bind.chainHolds(), settings, nowUnixMs: NOW}
+  const binding = rec.approvalsBinding(input, {})
+  assert.deepEqual([binding.values.wait, binding.values.noAnswer], [900, 'hold'], 'the asking agent\'s Scope, as AIKit reads it')
+  for (const key of ['wait', 'noAnswer']) {
+    assert.equal(binding.standing[key], undefined, `${key}: read`)
+    assert.equal(binding.writes(key), false, `${key}: still never set here (§19.14)`)
+  }
+  const [row] = JSON.parse(binding.values.queue)
+  assert.equal(row.id, 'req-7')
+  assert.equal(row.age, 960, 'it has waited its Wait and a minute more, so it floats past the Wait line')
+  assert.equal(row.flag, rec.HELD_PAST_WAIT)
+  assert.match(rec.HELD_PAST_WAIT, /^Held past its Wait: nobody answered, and On no answer holds it for you/)
+  // What the Decision helper did with a request it did not answer stands as the request's flag, in AIKit's words.
+  const passed = {...settings, asks: {held: [], helper: {'req-7': {passed: 'The decision helper picked none: the request waits for you'}}, last: null}}
+  assert.equal(JSON.parse(rec.approvalsValues({...input, settings: passed}).queue)[0].flag, 'The decision helper picked none: the request waits for you')
+  // REPLACED (round 860): unread, they were missing ops on Hermes' approvals timeout; they wait for AIKit's settings of the shown session now.
+  const unread = rec.approvalsBinding({...input, settings: null}, {})
+  assert.equal(unread.standing.wait.disabled, rec.APPROVALS_ABSENT.wait)
+  assert.match(unread.standing.wait.disabled, /^The Wait on the asking agent's Scope: no reading reaches it yet — AIKit's settings of the shown session/)
+  for (const key of ['wait', 'noAnswer']) assert.doesNotMatch(unread.standing[key].disabled, /missing op|Hermes/, key)
+  // The chain hands Approvals the shown session's settings.
+  assert.match(read('agent/devices/FactoryDeviceChain.tsx'), /settings: shownSettings/)
+  bind.resetHolds()
+})
+
 test('Approvals with nothing to answer: no session shown, no consent verb, or nothing waiting — each said', async () => {
   bind.resetHolds()
   const none = rec.approvalsBinding({session: null, encounter: null, holds: bind.chainHolds()}, {})

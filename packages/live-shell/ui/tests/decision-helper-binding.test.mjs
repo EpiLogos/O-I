@@ -164,7 +164,9 @@ test('code-reading: the helper is published as its own device beside a group\'s 
   assert.doesNotMatch(places, /'decision-helper'/, 'no helper slot')
   assert.doesNotMatch(view, /placed\(DECISION_HELPER_ID/, 'no helper slot on the track\'s chain: it is a chain of the rack')
   assert.doesNotMatch(view, /HELPER_PAGE/, 'the rack carries no Helper page')
-  assert.match(view, /const helperStands = sessionRef != null && !!groupTrack\n/, 'it stands where a group\'s rack does')
+  // REPLACED (round 860): "it stands where a group's rack does" — AIKit's space names its Decision helper now (`decision_helper`,
+  // bind-decision-helper), so it stands on a group's rack only where the space's record names one (agent-rack-842.test.mjs drops one in).
+  assert.match(view, /const helperStands = sessionRef != null && !!groupTrack\?\.decisionHelper\n/, 'it stands where the group\'s space names its helper')
   assert.match(view, /\.\.\.\(helperStands && helperDevice \? \{helper: helperDesignBinding\.values\} : \{\}\)/, 'the rack lists the helper among its members')
   assert.match(view, /\[DECISION_HELPER_ID, helperStands \? helperDevice : null, helperDesignBinding\]/, 'the helper is published on its own binding')
   // REPLACED (O-I #842): `case 'agentset': return placed(AGENTSET_ID, …)` — the rack plate, its head the same placed plate.

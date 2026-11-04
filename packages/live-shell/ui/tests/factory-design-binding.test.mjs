@@ -525,8 +525,10 @@ test('Scope: no owner reports a reach, a write mode, places or receipts, so none
   // REPLACED (round 859): Calls to other agents writes AIKit's ingress rule for agents through the kernel's harness_ingress_rule; a Scope
   // handed no carrier names it (w4-unbound-designs-binding.test.mjs reads and writes it).
   await assert.rejects(() => scope().write([{key: 'calls', value: 'allow'}]), /Calls to other agents: no carrier to AIKit's ingress rule for the sender kind agent \(the kernel's harness_ingress_rule\)/)
-  await assert.rejects(() => scope().write([{key: 'wait', value: 3600}]), /Wait: no owner operation carries it yet — missing op: the agent's approvals timeout/)
-  await assert.rejects(() => scope().write([{key: 'noAnswer', value: 'deny'}]), /On no answer: no owner operation carries it yet/)
+  // REPLACED (round 860): Wait and On no answer are the session's own settings in AIKit (track wait, track no_answer); a Scope handed no
+  // carrier names it (w4-unbound-designs-binding.test.mjs reads and writes them).
+  await assert.rejects(() => scope().write([{key: 'wait', value: 3600}]), {message: bind.WAIT_REFUSE.wait})
+  await assert.rejects(() => scope().write([{key: 'noAnswer', value: 'deny'}]), {message: bind.WAIT_REFUSE.noAnswer})
   await assert.rejects(() => scope().write([{key: 'toolCalls', value: 'session'}]), /Tool calls: the Gateway's approvals row is not adopted on this chain/)
   for (const key of ['src.wiki', 'linkDepth', 'readBudget']) assert.equal(scope().writes(key), false, `${key}: no Knowledge page stands on Scope (§19.9 Sources holds it)`)
   await assert.rejects(() => scope().write([{key: 'w:lantern', value: false}]), /scope places write/)

@@ -1,16 +1,18 @@
 // One agent session's settings on their owner (AIKit `encounter-session-settings`, kernel `encounter_session_settings`): the track's
-// Telemetry and Solo, and its bound task's name, colour, activator, output style, Loop, Launch mode, Then, Quantize, what a Repeat varies
+// Telemetry and Solo, Scope's Wait and On no answer (§19.12), and its bound task's name, colour, activator, output style, Loop, Launch mode, Then, Quantize, what a Repeat varies
 // and envelopes (manual §19.1 Clip view, the Clip and Launch panels and the Envelopes: the Agent's Effort and Scope's Tool calls; the
 // Agent's Autonomy is retired, §19.4, §19.12). The owner keeps them under a revision with their
 // history and states every default, in the manual's words (ai-kit encounter_task_settings.rs: Launch mode trigger · gate · toggle ·
 // repeat, Then next · again · stop, Loop's stop condition done · pass, Repeat's variable and stop when); this module puts its reading on
 // the keys of the designed clip `clip:factory` and a control's change on the owner's request, each word as it is — the owner judges
-// it — and writes it against the revision that stands. Pure, apart from `writeSessionSettings`.
+// it — and writes it against the revision that stands. Pure, apart from `writeSessionSettings`, the acts built on it and `useScopeWaits`.
+import {useMemo} from 'react'
 import type {Value, Values} from '../frame/devices/designed'
 import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
 import type {ActuationComparisonRunRequest, ActuationComparisonTakes, EncounterEnvelopePoint, EncounterSessionSettingsReading,
   EncounterSessionSettingsRequest, EncounterTakeRun, KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
-import {settingsReadingEntry} from '../owners/readers'
+import {settingsReadingEntry, useSettingsAnswer} from '../owners/readers'
+import type {ScopeWaits} from './devices/designBindings'
 import {routeAnswerOf} from './devices/ownerRoutes'
 import type {TaskSetting} from './devices/taskBindings'
 
@@ -217,6 +219,23 @@ export async function writeSessionSettings(transport: KernelTransportStatus, pro
   // Every reader of these settings holds this one entry: the re-read reaches them all.
   await entry.refresh(epoch)
   return result.outcome.data
+}
+
+/** Scope's Wait and On no answer on one session (§19.12 Asks): AIKit's own track settings of it, from the one settings reading every reader
+ * of it holds, written against its revision, with the reading itself (`settings`, for Approvals). `why` stands where the Scope is on no one
+ * session (a group's: each session keeps its own). */
+export function useScopeWaits(transport: KernelTransportStatus, session: string | null, project: string, why?: string):
+  ScopeWaits & {readonly settings: EncounterSessionSettingsReading | null} {
+  const answer = useSettingsAnswer(transport, why ? null : session, project).reading
+  return useMemo(() => {
+    if (why) return {track: null, why, settings: null}
+    if (!session) return {track: null, why: 'no session stands on this chain, so no settings of one are read.', settings: null}
+    const write = transport.kind === 'unavailable' ? undefined
+      : (change: {wait?: number; no_answer?: 'hold' | 'deny'}) => writeSessionSettings(transport, project, session, {track: change})
+    const settings = answer.status === 'answered' ? answer.value as EncounterSessionSettingsReading | null : null
+    const refused = answer.status === 'refused' ? `AIKit did not read the session's settings: ${answer.error ?? 'it refused'}` : undefined
+    return {track: settings?.track ?? null, settings, ...(refused ? {why: refused} : {}), ...(write ? {write} : {})}
+  }, [transport, session, project, why, answer])
 }
 
 // ---------------------------------------------------------------------------------------------------------------- Repeat's takes

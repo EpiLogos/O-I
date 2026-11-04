@@ -213,7 +213,7 @@ test('Group, on chains chosen in the list, asks Central to propose them as an ag
 
 // ---------------------------------------------------------------- the chain list on AIKit's own session-space operations (O-I #745 with #772)
 
-test('each chain-list control with no carrier refuses in the words of the operation that carries it; Hot-Swap in AIKit\'s own law (O-I #772)', async () => {
+test('each chain-list control with no carrier refuses in the words of the operation that carries it (O-I #772)', async () => {
   const R = own.AGENTSET_REFUSE
   // Solo is what you attend to, never what runs (§16.1 "Live's acts, kept as Live keeps them": Solo is never "A limit on what may run";
   // §16.6 Rules). REPLACED (round 858): the rack solos through the shell's attention, the one the Session view's mixer solos
@@ -228,10 +228,12 @@ test('each chain-list control with no carrier refuses in the words of the operat
   assert.equal(R.extract, 'Drag out: no carrier to AIKit\'s drag out of a chain\'s session into a space of its own (the kernel\'s encounter_session_drag_out) stands on this chain.')
   assert.equal(R.add, 'Add a chain: no carrier to AIKit\'s attach of a standing session to this rack\'s space (the kernel\'s encounter_session_attach) stands on this chain.')
   for (const key of ['bench', 'extract', 'add']) assert.doesNotMatch(R[key], /missing op/, key)
-  // Hot-Swap: AIKit's law keeps a session's agent for good (encounter_agency.rs configure_agency, encounter.agent_identity_changed), where
-  // the manual swaps the agent and keeps the rest of the chain; it is refused in AIKit's words, with what a person can do instead.
-  assert.match(R.swap, /^Hot-Swap: AIKit does not let a chain's session become another agent: "A canonical session must not silently become another Agent; create a separately attributed session" \(AIKit\)\./)
-  assert.match(R.swap, /drop the other agent's session into the chain list, then delete this chain's track/)
+  // REPLACED (round 860): Hot-Swap was refused in AIKit's law (a session keeps its agent for good: encounter_agency.rs configure_agency).
+  // AIKit carries it now without breaking that law: `aikit session-space hot-swap` seats a separately attributed session of the other agent
+  // in the chain's place, with the chain's bench, track settings and task, and detaches the old one last (the kernel's
+  // encounter_session_hot_swap). With no carrier handed to the rack, it names the one that carries it.
+  assert.equal(R.swap, 'Hot-Swap: no carrier to AIKit\'s hot-swap of a chain\'s agent in its space (the kernel\'s encounter_session_hot_swap) stands on this chain.')
+  assert.doesNotMatch(R.swap, /missing op|must not silently become another Agent/)
   // Each write refuses in exactly those words, and reaches no owner.
   const sent = []
   const ports = {saveSet: async input => { sent.push(['save', input]) }, propose: async input => { sent.push(['propose', input]) }, agent: agentOf(sent)}
@@ -277,7 +279,8 @@ test('the Activator reads AIKit\'s bench and benches a chain in its space; a sta
   }
   const rack = own.agentsetBinding({group: crew, tracks, holds: bind.chainHolds(), nowUnixMs: NOW, helper: {model: 'glm-5.3-flash'}}, ports)
   for (const control of ['bench', 'extract', 'add']) assert.equal(rack.standing[control], undefined, `${control}: its carrier stands, so it is pressable`)
-  assert.equal(rack.standing.swap.disabled, own.AGENTSET_REFUSE.swap, 'Hot-Swap stays refused in AIKit\'s law')
+  // REPLACED (round 860): Hot-Swap stayed refused in AIKit's law; handed no hot-swap carrier here, it names the one that carries it.
+  assert.equal(rack.standing.swap.disabled, own.AGENTSET_REFUSE.swap, 'no Hot-Swap carrier is handed to this rack')
 
   // The Activator: off benches the chain in its space; on lifts the bench. The session stays in the rack.
   await rack.write([{key: 'bench:agent-session/cairn', value: true}])
@@ -317,7 +320,100 @@ test('the Activator reads AIKit\'s bench and benches a chain in its space; a sta
   assert.deepEqual(calls.splice(0), [
     ['bench', {project: 'O-I', space: 'session-space/desk', agent_session: 'agent-session/bo', benched: true}],
     ['attach', {project: 'O-I', space: 'session-space/desk', agent_session: 'agent-session/cairn'}]])
-  await assert.rejects(() => lone.write([{key: 'add', value: helper.DECISION_HELPER_ID}]), {message: own.CHAIN_LIST_REFUSE.helperAdd})
+  // REPLACED (round 860): a Decision helper dropped on a lone session's rack was refused because AIKit's space named no helper. AIKit names
+  // one now (bind-decision-helper); a lone session's rack has one chain and no agents for a helper to answer.
+  await assert.rejects(() => lone.write([{key: 'add', value: helper.DECISION_HELPER_ID}]), {message: own.CHAIN_LIST_REFUSE.helperLone})
+  bind.resetHolds()
+})
+
+// A Project's crew whose record names its Decision helper (AIKit's `decision_helper` on aikit.session-space-application/v1, round 860).
+const HELPED = [{...SPACES[0], decision_helper: {agent_session: 'agent-session/settle', provenance: ['dropped on the Agent rack as its Decision helper']},
+  agent_sessions: {...SPACES[0].agent_sessions, 'agent-session/settle': {purpose: 'Decision helper'}}}]
+
+test('Hot-Swap seats the agent dropped on it from the browser in the chain\'s place; a Decision helper dropped on the chain list becomes the rack\'s helper (§19.15, round 860)', async () => {
+  bind.resetHolds()
+  const tracks = runModel.buildTracks(agencyRows(SPACES), ROSTER)
+  const crew = tracks.find(item => item.sessionRef === 'session-space/crew')
+  const calls = []
+  const ports = {
+    hotSwap: async input => { calls.push(['hotSwap', input]); return {steps: []} },
+    decisionHelper: async input => { calls.push(['decisionHelper', input]); return {bound: input.bound} },
+    attach: async input => { calls.push(['attach', input]) },
+  }
+  const rack = own.agentsetBinding({group: crew, tracks, holds: bind.chainHolds(), nowUnixMs: NOW}, ports)
+  assert.equal(rack.standing.swap, undefined, 'Hot-Swap: its carrier stands, so it is pressable')
+  // Hot-Swap (Live's: the browser swaps what the chain holds): the agent dragged from the browser onto the chosen chain's Hot-Swap.
+  const wren = drag.encodeChainDrag({family: 'agent', ref: 'agent/wren', label: 'Wren'})
+  const swap = (chain, dropped) => rack.write([{key: 'swap', value: own.hotSwapDrop(chain, dropped)}])
+  await swap('agent-session/kite', wren)
+  assert.deepEqual(calls.splice(0), [['hotSwap', {project: 'O-I', space: 'session-space/crew', agent_session: 'agent-session/kite', agent_ref: 'agent/wren'}]])
+  const S = own.CHAIN_LIST_REFUSE
+  await assert.rejects(() => rack.write([{key: 'swap', value: 'agent-session/kite'}]), {message: S.swapPress}, 'a press with no agent dropped on it')
+  await assert.rejects(() => swap('agent-session/kite', drag.encodeChainDrag({family: 'agent', ref: 'agent/kite', label: 'kite'})), {message: S.swapSame('kite')})
+  await assert.rejects(() => swap('agent-session/kite', drag.encodeChainDrag({family: 'session', ref: 'session-space/desk:agent-session/bo', label: 'Draft'})), {message: S.swapSession})
+  await assert.rejects(() => swap('agent-session/kite', drag.encodeChainDrag({family: 'skillset', ref: 'set/port', label: 'Port'})), {message: S.swapFamily('skillset')})
+  await assert.rejects(() => swap('agent-session/kite', 'a note'), {message: S.swapUnnamed})
+  await assert.rejects(() => swap(helper.DECISION_HELPER_ID, wren), {message: S.swapHelper})
+  await assert.rejects(() => swap('agent-session/bo', wren), {message: S.notChain('Hot-Swap', 'agent-session/bo')})
+  assert.deepEqual(calls, [], 'a refused swap reaches no owner')
+  assert.match(S.swapPress, /^Hot-Swap: drag the other agent from the browser onto Hot-Swap/)
+  assert.match(S.swapSession, /drop it under the chain list/)
+  // A lone session's one chain swaps its agent in the space it stands in.
+  const bo = tracks.find(item => item.sessionRef === 'agent-session/bo')
+  const lone = own.agentsetBinding({group: null, session: bo, tracks, holds: bind.chainHolds(), nowUnixMs: NOW}, ports)
+  await lone.write([{key: 'swap', value: own.hotSwapDrop('agent-session/bo', wren)}])
+  assert.deepEqual(calls.splice(0), [['hotSwap', {project: 'O-I', space: 'session-space/desk', agent_session: 'agent-session/bo', agent_ref: 'agent/wren'}]])
+
+  // The Decision helper: dropped under the chain list of a group's rack, AIKit seats one session of the space as its helper.
+  for (const dropped of [helper.DECISION_HELPER_ID, helper.DECISION_HELPER_DESIGN]) await rack.write([{key: 'add', value: dropped}])
+  assert.deepEqual(calls.splice(0), [['decisionHelper', {project: 'O-I', space: 'session-space/crew', bound: true}], ['decisionHelper', {project: 'O-I', space: 'session-space/crew', bound: true}]])
+  await assert.rejects(() => lone.write([{key: 'add', value: helper.DECISION_HELPER_ID}]), {message: S.helperLone})
+  const bare = own.agentsetBinding({group: crew, tracks, holds: bind.chainHolds(), nowUnixMs: NOW}, {attach: ports.attach})
+  await assert.rejects(() => bare.write([{key: 'add', value: helper.DECISION_HELPER_ID}]), {message: S.helperUncarried})
+  assert.equal('helperAdd' in S, false, 'retired: AIKit\'s space names its Decision helper now')
+  assert.deepEqual(calls, [])
+
+  // The space's record names its helper: the group reads it, the helper's session is no agent's chain, and the rack lists the helper once.
+  const helped = runModel.buildTracks(agencyRows(HELPED), ROSTER)
+  const crewHelped = helped.find(item => item.sessionRef === 'session-space/crew')
+  assert.equal(crewHelped.decisionHelper, 'agent-session/settle', 'the group reads its Decision helper from AIKit\'s record')
+  assert.equal(helped.find(item => item.sessionRef === 'agent-session/settle').decisionHelper, true, 'the helper\'s own track says it is the helper')
+  assert.deepEqual(own.agentsetMembers(crewHelped, helped).map(chain => chain.id), ['agent-session/kite', 'agent-session/cairn'], 'the helper is no agent\'s chain')
+  assert.equal(tracks.find(item => item.sessionRef === 'session-space/crew').decisionHelper, undefined, 'a space that names none has none')
+  const helpedRack = own.agentsetBinding({group: crewHelped, tracks: helped, holds: bind.chainHolds(), nowUnixMs: NOW, helper: {model: 'kev'}}, ports)
+  await assert.rejects(() => helpedRack.write([{key: 'add', value: helper.DECISION_HELPER_ID}]), {message: S.helperStands})
+  await assert.rejects(() => helpedRack.write([{key: 'swap', value: own.hotSwapDrop('agent-session/settle', wren)}]), {message: S.notChain('Hot-Swap', 'agent-session/settle')})
+  // The chain wires both through the kernel, and the helper stands on the rack only where AIKit's record names one.
+  const chainSource = read('agent/devices/FactoryDeviceChain.tsx')
+  assert.match(chainSource, /hotSwap: input => chainListAct\(transport, \{op: 'encounter_session_hot_swap', \.\.\.input\}/)
+  assert.match(chainSource, /decisionHelper: input => chainListAct\(transport, \{op: 'encounter_session_decision_helper', \.\.\.input\}/)
+  assert.match(chainSource, /const helperStands = sessionRef != null && !!groupTrack\?\.decisionHelper/)
+  // The rack's Hot-Swap takes the drop: the browser's agent onto the chosen chain's Hot-Swap.
+  const rackSource = read('inhabitants/catalogue/panels/software-factory__agentset-rack.tsx')
+  assert.match(rackSource, /p\.set\('swap', JSON\.stringify\(\{chain: chosen\.id, agent: dropped\}\)\)/)
+  assert.equal(own.hotSwapDrop('agent-session/kite', wren), JSON.stringify({chain: 'agent-session/kite', agent: wren}), 'the binding reads the design\'s own drop')
+  bind.resetHolds()
+})
+
+test('each chain of a group\'s rack shows as its chip the model its session last reported (Actuation\'s usage records; §19.15 the chain list)', () => {
+  bind.resetHolds()
+  // `actuation usage list --json` over every session (actuation.usage-listing/v1): its records in the order kept, each its session's.
+  const listing = {schema: 'actuation.usage-listing/v1', records: [
+    {agent_session_ref: 'agent-session/kite', usage: {model: {name: 'glm-5.3'}}},
+    {agent_session_ref: 'agent-session/cairn', usage: {model: {name: 'sonnet-5.5'}}},
+    {agent_session_ref: 'agent-session/kite', usage: {model: {name: 'glm-5.3-flash'}}},
+    {agent_session_ref: 'agent-session/kite', usage: {tokens: {input: 3}}},
+    {agent_session_ref: 'agent-session/elsewhere', usage: {model: {name: 'other'}}}]}
+  const models = bind.lastUsageModels(listing)
+  assert.equal(models.get('agent-session/kite'), 'glm-5.3-flash', 'the last record that names a model')
+  assert.equal(models.get('agent-session/cairn'), 'sonnet-5.5')
+  assert.equal(bind.lastUsageModels({schema: 'actuation.stream-listing/v1', records: []}).size, 0, 'another listing names no model')
+  const chains = holds => JSON.parse(own.agentsetValues({group: CREW, tracks: TRACKS, holds, nowUnixMs: NOW, chainModels: models}).members)
+  assert.deepEqual(chains(bind.chainHolds()).map(chain => [chain.id, chain.model]), [['agent-session/kite', 'glm-5.3-flash'], ['agent-session/cairn', 'sonnet-5.5']])
+  const unread = JSON.parse(own.agentsetValues({group: CREW, tracks: TRACKS, holds: bind.chainHolds(), nowUnixMs: NOW}).members)
+  assert.ok(unread.every(chain => !('model' in chain)), 'unread, no chain names a model: never a default')
+  // The chain reads every session's usage once while the rack stands on a group.
+  assert.match(read('agent/devices/FactoryDeviceChain.tsx'), /useActuationRead\(transport, groupTrack \? \{kind: 'usage-list'\} : null\)/)
   bind.resetHolds()
 })
 
@@ -361,12 +457,14 @@ test('the chain draws the rack on every session, the session\'s own chain inside
   assert.match(view, /agentsetBinding\(\{group: groupTrack, session: loneTrack,/, 'the rack on a lone session reads that session')
   assert.match(view, /agent: oneAgent/, 'its macros turn the one agent through the Agent itself')
   // The chain list's carriers (#745 with #772): AIKit's bench, attach and drag out of a chain's session, each through the kernel.
-  for (const [port, op] of [['bench', 'encounter_session_bench'], ['attach', 'encounter_session_attach'], ['dragOut', 'encounter_session_drag_out']]) {
+  for (const [port, op] of [['bench', 'encounter_session_bench'], ['attach', 'encounter_session_attach'], ['dragOut', 'encounter_session_drag_out'],
+    ['hotSwap', 'encounter_session_hot_swap'], ['decisionHelper', 'encounter_session_decision_helper']]) {
     assert.match(view, new RegExp(`${port}: input => chainListAct\\(transport, \\{op: '${op}', \\.\\.\\.input\\}`), port)
   }
   // Scope's Calls to other agents: AIKit's rule for agents, read from the gateway's ecology and set on each binding of the session.
   assert.match(view, /callsOf\(ecology\.value, sessionRef\)/)
-  assert.match(view, /await harnessIngressRule\(transport, ruled, 'agent', decision\)/)
+  // REPLACED (round 860): set one binding at a time inline; now through callsOnEvery, which says which bindings stand changed when one refuses.
+  assert.match(view, /callsOnEvery\(bindings, decision, \(ruled, said\) => harnessIngressRule\(transport, ruled, 'agent', said\)\)/)
   assert.match(view, /data-reaches=\{reach\.reaches\}/, 'each plate says how far it reaches')
   assert.match(view, /case 'remote-carrier': return placed\(CARRIER_ID, cells\.carrier, carrierDesignBinding/)
   assert.doesNotMatch(view, /Agentset/)
