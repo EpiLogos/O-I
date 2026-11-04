@@ -163,11 +163,17 @@ test('under the Torus: its sounds, then each instrument with the sounds made on 
     ['sound', 2, 'Paper bell', 'sound'],
     ['rack', 1, 'Warm rack', 'rack · 1 macro · 2 variations'],
   ])
+  // An instrument plays the first sound made on it, and a rack the sound its Torus opens with: each drag carries that sound.
   assert.deepEqual(rows.map(row => instruments.readTorusKeptDrag(row.payload)), [
-    {kind: 'sound', ref: KEPT(1)}, {kind: 'instrument', ref: 'instrument:fold'}, {kind: 'sound', ref: KEPT(2), instrument_ref: 'instrument:fold'}, {kind: 'rack', ref: 'rack:warm'},
+    {kind: 'sound', ref: KEPT(1)}, {kind: 'instrument', ref: 'instrument:fold', sound: KEPT(2)}, {kind: 'sound', ref: KEPT(2), instrument_ref: 'instrument:fold'},
+    {kind: 'rack', ref: 'rack:warm', sound: KEPT(1)},
   ], 'a sound made on an instrument plays on that instrument')
+  // An instrument with no sound made on it yet, and a rack that opens none, carry no sound.
+  const bare = instruments.torusKeptRows({sounds: [], instruments: [{...keptListing.instruments[0], sounds: []}], racks: [{...keptListing.racks[0], sound: null}]}, '')
+  assert.deepEqual(bare.map(row => instruments.readTorusKeptDrag(row.payload)), [{kind: 'instrument', ref: 'instrument:fold'}, {kind: 'rack', ref: 'rack:warm'}])
   assert.equal(instruments.TORUS_KEPT_MIME, 'application/x-oi-torus-kept')
-  for (const bad of ['', '{}', '{"kind":"sound"}', '{"kind":"preset","ref":"x"}', 'not json']) assert.equal(instruments.readTorusKeptDrag(bad), null, bad)
+  for (const bad of ['', '{}', '{"kind":"sound"}', '{"kind":"preset","ref":"x"}', 'not json', '{"kind":"sound","ref":"x","sound":"y"}',
+    '{"kind":"rack","ref":"x","sound":""}', '{"kind":"instrument","ref":"x","sound":7}', '{"kind":"rack","ref":"x","instrument_ref":"y"}']) assert.equal(instruments.readTorusKeptDrag(bad), null, bad)
   // The search finds a sound by its name, and keeps the instrument it stands under.
   assert.deepEqual(instruments.torusKeptRows(keptListing, 'bell').map(row => row.name), ['Folded sheet', 'Paper bell'])
   assert.deepEqual(instruments.torusKeptRows(keptListing, 'rack').map(row => row.name), ['Warm rack'])

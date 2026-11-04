@@ -70,6 +70,22 @@ impl SoundBody {
             .ok_or("A form's body names the preparation it rings")?;
         Ok(())
     }
+    /// The body a checkpoint (`ql.torus-checkpoint/v1`) says rang when it was taken: the torus when it keeps no
+    /// body, else the form whose preparation it keeps (QL-MEF `torus-body`: `{request, prepared}`).
+    pub fn rung_by(checkpoint: &Value) -> Result<Self, String> {
+        let kept = match checkpoint.get("body") {
+            None | Some(Value::Null) => return Ok(Self::Torus),
+            Some(kept) => kept,
+        };
+        let prepared = kept
+            .get("prepared")
+            .ok_or("A checkpoint's body keeps the preparation it rang")?;
+        let body = Self::Form {
+            prepared: prepared.clone(),
+        };
+        body.validate()?;
+        Ok(body)
+    }
     /// The exact preparation a form body rings, which a stale body is refused by.
     pub fn preparation_ref(&self) -> Option<&str> {
         match self {
@@ -207,6 +223,17 @@ impl TorusSound {
             return Err("A sound's sources are not its checkpoint's".into());
         }
         self.body.validate()?;
+        let rang = SoundBody::rung_by(&self.checkpoint)?;
+        if rang != self.body {
+            let words = match (&rang, &self.body) {
+                (SoundBody::Torus, _) => "its checkpoint rang the torus, not a form",
+                (_, SoundBody::Torus) => "its checkpoint rang a form, not the torus",
+                _ => "its checkpoint rang another body than the form it names",
+            };
+            return Err(format!(
+                "A sound is kept on the body its checkpoint rang: {words}"
+            ));
+        }
         if self.digest()? != self.sound_ref {
             return Err("A sound was altered after it was saved".into());
         }
@@ -572,12 +599,66 @@ mod tests {
         assert!(TorusSound::sealed("A", &checkpoint(0), bad).is_err());
     }
 
+    /// A checkpoint taken while the form `prepared` rang: QL keeps the body as its request and its preparation.
+    fn rung(at: u64, prepared: &Value) -> Value {
+        let mut kept = checkpoint(at);
+        kept["body"] = json!({"request":{"schema":"ql.form-body-request/v1"},"prepared":prepared});
+        kept
+    }
+
+    #[test]
+    fn a_sound_rings_the_body_its_checkpoint_kept_and_no_other() {
+        let body = prepared("ql:form-body:fold");
+        let form = SoundBody::Form {
+            prepared: body.clone(),
+        };
+        // What rang is read from the checkpoint: the torus when it keeps no body, else the form it keeps.
+        assert_eq!(
+            SoundBody::rung_by(&checkpoint(0)).unwrap(),
+            SoundBody::Torus
+        );
+        assert_eq!(SoundBody::rung_by(&rung(0, &body)).unwrap(), form);
+        let mut odd = rung(0, &body);
+        odd["body"] = json!({"request":{}});
+        assert!(SoundBody::rung_by(&odd)
+            .unwrap_err()
+            .contains("preparation"));
+        odd["body"]["prepared"] = json!({"schema":"x"});
+        assert!(SoundBody::rung_by(&odd).is_err());
+        // A sound says the body it rang on: one its checkpoint did not ring is refused in words.
+        let sealed = TorusSound::sealed("Fold", &rung(0, &body), form.clone()).unwrap();
+        assert_eq!(sealed.body, form);
+        assert!(TorusSound::sealed("Fold", &checkpoint(0), form.clone())
+            .unwrap_err()
+            .contains("rang the torus"));
+        assert!(
+            TorusSound::sealed("Torus", &rung(0, &body), SoundBody::Torus)
+                .unwrap_err()
+                .contains("rang a form")
+        );
+        let other = SoundBody::Form {
+            prepared: prepared("ql:form-body:another"),
+        };
+        assert!(TorusSound::sealed("Other", &rung(0, &body), other)
+            .unwrap_err()
+            .contains("another body"));
+        // A form sound whose checkpoint keeps no body opens nothing, even with its digests made good.
+        let mut bodiless = sealed.clone();
+        bodiless.checkpoint.as_object_mut().unwrap().remove("body");
+        bodiless.checkpoint_sha256 = value_sha256(&bodiless.checkpoint).unwrap();
+        bodiless.sources = sources(&bodiless.checkpoint).unwrap();
+        bodiless.sound_ref = bodiless.digest().unwrap();
+        let refused = bodiless.open(&checkpoint(0)).unwrap_err();
+        assert!(refused.contains("rang the torus"), "{refused}");
+        sealed.open(&checkpoint(0)).unwrap();
+    }
+
     #[test]
     fn an_instrument_is_a_form_body_with_the_sounds_made_on_it() {
         let body = prepared("ql:form-body:fold");
         let on_fold = TorusSound::sealed(
             "Fold struck",
-            &checkpoint(0),
+            &rung(0, &body),
             SoundBody::Form {
                 prepared: body.clone(),
             },

@@ -56,8 +56,9 @@ pub enum Request {
         checkpoint_sha256: String,
     },
     /// Save the Torus as it stood at the checkpoint `checkpoint_sha256` its owner gave under the lease, as a
-    /// sound named `name` on its body (O-I #852; kept.rs): the torus, or a form made a body (its owner's
-    /// `ql.physical-body-preparation/v1`). No worker request: the answer is the sealed `oi.torus-sound/v1` a
+    /// sound named `name` on the body that checkpoint rang (O-I #852; kept.rs): the torus, or a form made a
+    /// body (its owner's `ql.physical-body-preparation/v1`). Absent, `body` is read from the checkpoint; given,
+    /// it must be the form the checkpoint rang. No worker request: the answer is the sealed `oi.torus-sound/v1` a
     /// performance keeps (`KeepTorusSound`), or a refusal in words.
     TorusSound {
         lease: String,
@@ -1090,8 +1091,9 @@ impl Manager {
                     return Err("native-expression.foreign_lease".into());
                 }
                 use crate::expression_performance::kept::SoundBody;
+                // Named or not, a sound is kept on the body its checkpoint rang (kept.rs `rung_by`).
                 let body = match body {
-                    None => SoundBody::Torus,
+                    None => SoundBody::rung_by(owner.take.given(&checkpoint_sha256)?)?,
                     Some(prepared) => SoundBody::Form { prepared },
                 };
                 let sound = owner.take.sound(&checkpoint_sha256, &name, body)?;

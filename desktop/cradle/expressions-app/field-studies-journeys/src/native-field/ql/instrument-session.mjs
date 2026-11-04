@@ -61,12 +61,16 @@ const STAGE_ACTS = ['stage-evaluate', 'stage-retire', 'stage-bind', 'stage-unbin
 // torus-set for a later sample (O-I 855) waits and moves nothing; the advance
 // whose block reaches its sample makes it there and names it in its
 // torus_set_landed, a Fundamental made there being that block's one generation.
-// torus-restore (O-I #855) rings the body again from a checkpoint: the event's
-// modes and shape continuations when the event moved, the damping when it
-// moved, and the body's state, so one to four generations, no samples, no PCM.
-// torus-singlet (O-I #771) strikes a codon at its place on the ring: one strike
-// at points, one generation, as torus-play.
-const TORUS_ACTS = ['torus-set', 'torus-play', 'torus-singlet', 'torus-release', 'torus-restore'];
+// torus-restore (O-I #855) rings the body again from a checkpoint: back to the
+// torus first when a form rings and anything moved, the event's modes and shape
+// continuations when the event moved, the damping when it moved, the form it was
+// kept on (O-I #852), and the body's state, so one to six generations, no
+// samples, no PCM. torus-singlet (O-I #771) strikes a codon at its place on the
+// ring: one strike at points, one generation, as torus-play. torus-body (O-I
+// #852) chooses what rings, a form made a body or the torus: one body act, one
+// generation, no samples, no PCM.
+const TORUS_ACTS = ['torus-set', 'torus-play', 'torus-singlet', 'torus-release', 'torus-restore', 'torus-body'];
+const FORM_BODY_REQUEST = 'ql.form-body-request/v1';
 const TORUS_CHECKPOINT = 'ql.torus-checkpoint/v1';
 // The owner's own bounds on one render (ql-mef scene_field.rs TORUS_RENDER_FRAMES_MAX, TORUS_RENDER_ACTS_MAX).
 const TORUS_RENDER = 'ql.torus-render/v1';
@@ -212,7 +216,8 @@ export class InstrumentSession {
       }
       const changing = command.operation === 'set-axis' || command.operation === 'replace' ||
         command.operation === 'set-damping' || command.operation === 'strike' || command.operation === 'strike-at' ||
-        command.operation === 'torus-play' || command.operation === 'torus-singlet';
+        command.operation === 'torus-play' || command.operation === 'torus-singlet' ||
+        command.operation === 'torus-body';
       // A Torus edit moves the owner only when it changes the Fundamental, and only when it is made now.
       const torusSet = command.operation === 'torus-set';
       const fundamental = torusSet && command.edit?.fundamental !== undefined && !waits(command, this.#native.samples_elapsed);
@@ -239,7 +244,7 @@ export class InstrumentSession {
       need((event ? after >= before + minimumEventDelta && after <= before + maximumEventDelta
         : stageEvaluation ? after > before
         : torusSet ? after === before || (fundamental && after === before + 1n)
-        : torusRestore ? after >= before + 1n && after <= before + 4n
+        : torusRestore ? after >= before + 1n && after <= before + 6n
         : after === before + (changing ? 1n : 0n) + landed) &&
         cursor(frame.samples_elapsed) === cursor(this.#native.samples_elapsed) + BigInt(frames) &&
         frame.audio.length === frames, 'host operation and native cursor disagree');
@@ -513,6 +518,15 @@ export class InstrumentSession {
     need(checkpoint && typeof checkpoint === 'object' && !Array.isArray(checkpoint) && checkpoint.schema === TORUS_CHECKPOINT,
       `a Torus restore takes the owner's ${TORUS_CHECKPOINT}`);
     return this.operate({ operation: 'torus-restore', checkpoint: structuredClone(checkpoint) });
+  }
+
+  /** Choose what rings (`torus-body`, O-I #852; DLW manual §21.2 Body): a form made a
+   * body (`ql.form-body-request/v1`, which the owner prepares), or the torus (`null`).
+   * One owner act; the owner refuses in words a body this scene cannot ring. */
+  async torusBody(body) {
+    need(body === null || (body && typeof body === 'object' && !Array.isArray(body) && body.schema === FORM_BODY_REQUEST),
+      `a body is a form's ${FORM_BODY_REQUEST}, or null for the torus`);
+    return this.operate({ operation: 'torus-body', body: body === null ? null : structuredClone(body) });
   }
 
   /** A take rendered offline (`ql.torus-render/v1`, O-I #855): from `checkpoint` on a
