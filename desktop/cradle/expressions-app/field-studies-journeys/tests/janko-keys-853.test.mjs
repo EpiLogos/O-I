@@ -116,7 +116,7 @@ const openController = async ({polyphony = 16} = {}) => {
     acts = []; notes = []; next = 0;
     async request(request) {
       const command = request.request?.command;
-      if (command?.operation !== 'torus-play' && command?.operation !== 'torus-release') return super.request(request);
+      if (!['torus-play', 'torus-release', 'torus-singlet'].includes(command?.operation)) return super.request(request);
       const read = structuredClone(request);
       read.request.command = {operation: 'read'};
       const reply = await super.request(read);
@@ -124,6 +124,19 @@ const openController = async ({polyphony = 16} = {}) => {
       if (this.refuse?.(command)) return {...reply, status: 'refused', error: 'controlled refusal: ' + command.operation};
       if (command.operation === 'torus-release') {
         this.notes = this.notes.filter(note => !command.keys.some(key => keyOf(key) === keyOf(note.key)));
+        return reply;
+      }
+      // The pulse turns 40 steps a second at 48 kHz: an act for a later sample stands where the pulse will have carried it (QL-MEF
+      // scene_field.rs torus_play / torus_singlet: the steps at the act's sample). The owner's points, never the frame's.
+      const turned = command.at_samples_elapsed === undefined ? 0 : Number(command.at_samples_elapsed) / 1200;
+      if (command.operation === 'torus-singlet') {
+        // QL's ring_places: codon 8 is one of the nonet collision's eight, at arcs 9 and 10; codon 5 at arc 6. No note is counted.
+        const places = command.codon === 8 ? [{lens: 0, arc: 9}, {lens: 0, arc: 10}] : [{lens: 0, arc: 6}];
+        this.bump(1n);
+        reply.field = structuredClone(this.frame);
+        reply.field.audio = [];
+        reply.torus_singlet = {schema: 'ql.torus-singlet/v1', codon: command.codon, places,
+          points: places.map(place => ({theta: (0.3 * (place.arc + turned)) % 6, phi: (0.6 * (place.arc + turned)) % 6, arc: place.arc}))};
         return reply;
       }
       // QL m1_prime.rs strike: a key already sounding makes way for its new note; past Polyphony the oldest make way.
@@ -139,7 +152,8 @@ const openController = async ({polyphony = 16} = {}) => {
       reply.field = structuredClone(this.frame);
       reply.field.audio = [];
       reply.torus_play = {schema: 'ql.torus-play/v1', made_way, polyphony,
-        notes: admitted.map(note => ({id: note.id, key: note.key, place: {arc: note.arc}, point: {theta: 0.25 * (note.arc + 1), phi: 0.5 * (note.arc + 1), arc: note.arc}}))};
+        notes: admitted.map(note => ({id: note.id, key: note.key, place: {arc: note.arc},
+          point: {theta: 0.25 * (note.arc + 1) + turned / 100, phi: 0.5 * (note.arc + 1) + turned / 100, arc: note.arc}}))};
       return reply;
     }
   }
@@ -213,4 +227,117 @@ test('the frame runs a strike as the controller\'s torus-play and a release as i
   assert.match(block, /command\.action==='strike'[\s\S]*nativeField\.controller\.torusPlayed\(command\.keys,command\.amplitude,command\.at_samples_elapsed\)/);
   assert.match(block, /made_way/);
   assert.match(block, /command\.action==='release'[\s\S]*nativeField\.controller\.torusRelease\(command\.keys\)/);
+});
+
+// ---------------------------------------------------------------------------------------------------- every strike lands at its point (O-I #771)
+// A touch strikes at the touched point (packages/live-shell/ui/tests/mt2-strike-at-point.test.mjs), a clip's note at its key's point as the
+// clip plays it, a singlet at its codon's place on the ring. The places and the points are QL's (crates/ql-mef/tests/torus_host.rs: a clip's
+// note strikes its key's point at its own sample; a singlet strikes its codon's place where the turning torus has carried it); the frame
+// sends the act and the plate follows the points the owner struck.
+test('a clip\'s note at its sample strikes where the owner places its key there: the point the plate follows is the owner\'s at that sample', async () => {
+  const {c, owner} = await openController();
+  try {
+    const key = {row: 2, column: 44};
+    const {landed_at_samples_elapsed} = await c.torusPlayed([key], 0.4, '48000');
+    assert.deepEqual(owner.acts.at(-1), {operation: 'torus-play', keys: [key], amplitude: [0.4, 0], at_samples_elapsed: '48000'});
+    assert.equal(landed_at_samples_elapsed, '48000');
+    assert.deepEqual(c.reading.instrument.struck.points, [{theta: 0.75 + 40 / 100, phi: 1.5 + 40 / 100}], 'forty steps on, as the owner said');
+    await c.torusPlayed([key], 0.4);
+    assert.deepEqual(c.reading.instrument.struck.points, [{theta: 0.75, phi: 1.5}], 'struck now: where the pulse stands now');
+  } finally { await c.dispose(); }
+});
+
+test('a singlet is one torus-singlet act on the owner: the codon, the amplitude as its metres; the plate follows the points it struck', async () => {
+  const {c, owner} = await openController();
+  try {
+    const answer = await c.torusSinglet(8);
+    assert.deepEqual(owner.acts, [{operation: 'torus-singlet', codon: 8, amplitude: [0.35, 0]}], 'the codon alone: its place is the owner\'s');
+    assert.equal(typeof answer.landed_at_samples_elapsed, 'string');
+    assert.equal(c.reading.instrument.struck.source, 'point');
+    assert.deepEqual(c.reading.instrument.struck.points, [{theta: 0.3 * 9, phi: 0.6 * 9 % 6}, {theta: 0.3 * 10, phi: 0.6 * 10 % 6}],
+      'both arcs of a nonet-collision codon, from the owner\'s receipt');
+    assert.deepEqual(owner.notes, [], 'a singlet is no key: it counts no note');
+    const later = await c.torusSinglet(5, 0.5, '24000');
+    assert.deepEqual(owner.acts.at(-1), {operation: 'torus-singlet', codon: 5, amplitude: [0.5, 0], at_samples_elapsed: '24000'});
+    assert.equal(later.landed_at_samples_elapsed, '24000');
+    assert.deepEqual(c.reading.instrument.struck.points, [{theta: (0.3 * 26) % 6, phi: (0.6 * 26) % 6}]);
+  } finally { await c.dispose(); }
+});
+
+test('a codon past the 64 is refused before the owner is asked, and a singlet the owner refuses leaves what was struck as it was', async () => {
+  const {c, owner} = await openController();
+  try {
+    await c.torusSinglet(5);
+    const struck = structuredClone(c.reading.instrument.struck);
+    for (const codon of [64, -1, 2.5, NaN, '8']) await assert.rejects(c.torusSinglet(codon), /codon is 0 to 63/, String(codon));
+    await assert.rejects(c.torusSinglet(8, 0), /amplitude/);
+    assert.equal(owner.acts.length, 1, 'nothing malformed reached the owner');
+    owner.refuse = command => command.operation === 'torus-singlet';
+    await assert.rejects(c.torusSinglet(8), /controlled refusal/);
+    assert.deepEqual(c.reading.instrument.struck, struck, 'a singlet the owner did not take is not what the torus plays');
+  } finally { await c.dispose(); }
+});
+
+test('the singlet stage command names one codon of the 64, and nothing else', async () => {
+  const {readStageRequest} = await stage();
+  assert.deepEqual(readStageRequest(request({command: 'singlet', codon: 58})), {req: 7, command: {command: 'singlet', codon: 58}});
+  assert.deepEqual(readStageRequest(request({command: 'singlet', codon: 0})).command, {command: 'singlet', codon: 0});
+  for (const body of [{}, {codon: 64}, {codon: -1}, {codon: 2.5}, {codon: '8'}, {codon: 8, amplitude: 0.35}, {codon: 8, at_samples_elapsed: '4800'},
+    {codon: 8, arc: 9}])
+    assert.equal(readStageRequest(request({command: 'singlet', ...body})), null, JSON.stringify(body));
+});
+
+test('the frame runs a singlet as the controller\'s torus-singlet and answers where it landed', async () => {
+  const app = await readFile(new URL('../src/app.ts', import.meta.url), 'utf8');
+  const start = app.indexOf("case 'singlet':");
+  assert.ok(start >= 0);
+  const block = app.slice(start, app.indexOf("case 'audio-clock':", start));
+  assert.match(block, /nativeField\.controller\.torusSinglet\(command\.codon\)/);
+  assert.match(block, /landed_at_samples_elapsed/);
+});
+
+test('an M3 event applied through the frame\'s own Nara channel strikes the singlet it leaves, through the native field', async () => {
+  const field = await readFile(new URL('../src/nativeField.ts', import.meta.url), 'utf8');
+  assert.match(field, /import \{onM3Applied\} from '\.\/kernelExpressions'/);
+  assert.match(field, /import \{singletOfApplied\} from '\.\.\/\.\.\/\.\.\/src\/nara\/nativeM3'/);
+  const own = field.slice(field.indexOf('const unsinglet='), field.indexOf('const touch='));
+  assert.match(own, /onM3Applied\(reading=>\{const codon=singletOfApplied\(reading\);if\(codon===null\)return;/);
+  assert.match(own, /controller\.torusSinglet\(codon\)\.catch\(/);
+  assert.match(field, /dispose:\(\)=>\{unsinglet\(\);/, 'the listener goes with the field');
+});
+
+test('the frame\'s Nara channel announces each applied M3 answer once it lands, and nothing else', async () => {
+  // The hosted frame's channel to the kernel (kernelExpressions.ts), over a simulated host as composite-edits.test.mjs simulates it.
+  const listeners = [], posted = [];
+  let reply = () => ({ok: true, data: {schema: 'oi.m3-reception-context/v1', status: 'available'}});
+  const parent = {postMessage: message => {
+    posted.push(message);
+    if (message.kind === 'oi-kernel-hello') setTimeout(() => deliver({v: 1, kind: 'oi-kernel-channel'}), 0);
+    if (message.kind === 'nara-instrument') setTimeout(() => deliver({v: 1, kind: 'nara-instrument-result', req: message.req, ...reply(message)}), 0);
+  }};
+  const deliver = data => { for (const fn of listeners.slice()) fn({source: parent, data}); };
+  const before = globalThis.window;
+  globalThis.window = {parent, addEventListener: (type, fn) => { if (type === 'message') listeners.push(fn); }, setTimeout, clearTimeout};
+  try {
+    const channel = await bundle(join(journeys, 'src/kernelExpressions.ts'), 'kernel-expressions');
+    channel.installKernelExpressions();
+    await new Promise(resolve => setTimeout(resolve, 0));
+    const heard = [];
+    const off = channel.onM3Applied(reading => heard.push(reading));
+    const basis = {expression_ref: 'expression:e', source: {source_ref: 's', revision: 'r'}};
+    const apply = {operation: 'm3', basis, role: 'nara', request: {operation: 'apply', expected_generation: 7, operations: [{operation: 'set-matrix', family: 0}]}};
+    const answered = await channel.naraInstrumentRequest(apply);
+    assert.deepEqual(heard, [answered], 'the applied answer, as the kernel gave it');
+    await channel.naraInstrumentRequest({...apply, request: {operation: 'read'}});
+    await channel.naraInstrumentRequest({operation: 'current_read', basis, role: 'nara'});
+    assert.equal(heard.length, 1, 'a read is no event');
+    reply = () => ({ok: false, error: 'stale generation'});
+    await assert.rejects(channel.naraInstrumentRequest(apply), /stale generation/);
+    assert.equal(heard.length, 1, 'a refused event is no event');
+    reply = () => ({ok: true, data: {schema: 'oi.m3-reception-context/v1', status: 'available'}});
+    off();
+    await channel.naraInstrumentRequest(apply);
+    assert.equal(heard.length, 1, 'a listener let go hears nothing');
+    assert.ok(posted.some(message => message.kind === 'nara-instrument' && message.request.request.operation === 'apply'));
+  } finally { if (before === undefined) delete globalThis.window; else globalThis.window = before; }
 });

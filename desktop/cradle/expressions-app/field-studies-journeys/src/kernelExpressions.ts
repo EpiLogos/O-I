@@ -114,9 +114,21 @@ export async function readMusicModes():Promise<unknown>{
  return call<unknown>('music-modes',{});
 }
 
+type M3Reading=import('../../../src/nara/nativeM3').NativeM3Reading;
+const m3Applied=new Set<(reading:M3Reading)=>void>();
+/** Hear each M3 event applied through this channel (O-I #771): the answer to an 'm3' apply the kernel took, once it lands, as the kernel
+ * gave it. A read, a refusal or any other request is no event. Returns the listener's release. */
+export function onM3Applied(listener:(reading:M3Reading)=>void):()=>void{
+ m3Applied.add(listener);
+ return ()=>{m3Applied.delete(listener);};
+}
+
 /** Personal readings stay on this session channel, outside Journey data. */
 export function naraInstrumentRequest(request:import('../../../src/nara/instrumentProtocol').NaraInstrumentRequest):Promise<import('../../../src/nara/instrumentProtocol').NaraInstrumentReply>{
- return call('nara-instrument',{request},90000);
+ const asked=call<import('../../../src/nara/instrumentProtocol').NaraInstrumentReply>('nara-instrument',{request},90000);
+ if(request.operation!=='m3'||request.request.operation!=='apply')return asked;
+ // A listener's own failure is its own: the answer still reaches the page that asked.
+ return asked.then(reply=>{for(const listener of [...m3Applied]){try{listener(reply as M3Reading);}catch{}}return reply;});
 }
 
 export interface KernelExpressionListing {expression_ref:string;title:string;revision:number;dirty?:boolean;last_touched_unix?:number;open?:boolean}

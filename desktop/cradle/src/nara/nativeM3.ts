@@ -48,3 +48,20 @@ export interface NativeM3Reading {
  /** QL's generation readings for a read's `generation_at` asks, in the order asked (m3_reception forwards them verbatim). */
  generation_at?:unknown[];
 }
+/** The operations QL's Binding names an event for (ql-mef m3_binding.rs binding_event): a form inscribed, a line changed, a matrix changed.
+ * Every other operation leaves the cell where it was. The per-tick form advance (spanda-advance) is M1's clock, never an event here. */
+const M3_EVENTS=['select-form','cast-creases','change-line','set-matrix','apply-matrix'];
+/** The singlet an applied M3 event leaves (O-I #771, the owner's ruling of 4 Nov 2026): when the owner's last receipt is an applied event
+ * that left this state, and QL's cell of the form's hexagram under its matrix is non-dual, the codon QL names as its singlet; else null.
+ * The cell, its non-duality and its singlet are QL's (`generation.cell`); nothing is worked out here. A read is not an event. */
+export function singletOfApplied(reading:NativeM3Reading|null|undefined):number|null{
+ const state=reading?.status==='available'?reading.state:null;
+ const receipts=reading?.receipts;
+ const last=Array.isArray(receipts)&&receipts.length?receipts[receipts.length-1]:null;
+ if(!state||last?.schema!=='ql.m3-receipt/v1'||last.status!=='applied'||last.after_generation!==state.identity?.profile_generation)return null;
+ const operations=(last.command as {operations?:unknown}|undefined)?.operations;
+ if(!Array.isArray(operations)||!operations.some(op=>M3_EVENTS.includes((op as {operation?:string}|null)?.operation??'')))return null;
+ const cell=(state.generation as {cell?:{non_dual?:unknown;singlet?:{address?:unknown}|null}}|undefined)?.cell;
+ const address=cell?.non_dual===true?cell.singlet?.address:undefined;
+ return typeof address==='number'&&Number.isInteger(address)&&address>=0&&address<64?address:null;
+}

@@ -64,7 +64,9 @@ const STAGE_ACTS = ['stage-evaluate', 'stage-retire', 'stage-bind', 'stage-unbin
 // torus-restore (O-I #855) rings the body again from a checkpoint: the event's
 // modes and shape continuations when the event moved, the damping when it
 // moved, and the body's state, so one to four generations, no samples, no PCM.
-const TORUS_ACTS = ['torus-set', 'torus-play', 'torus-release', 'torus-restore'];
+// torus-singlet (O-I #771) strikes a codon at its place on the ring: one strike
+// at points, one generation, as torus-play.
+const TORUS_ACTS = ['torus-set', 'torus-play', 'torus-singlet', 'torus-release', 'torus-restore'];
 const TORUS_CHECKPOINT = 'ql.torus-checkpoint/v1';
 // The owner's own bounds on one render (ql-mef scene_field.rs TORUS_RENDER_FRAMES_MAX, TORUS_RENDER_ACTS_MAX).
 const TORUS_RENDER = 'ql.torus-render/v1';
@@ -86,7 +88,7 @@ export class InstrumentSession {
   #block; #lookahead; #maxBlocks; #maxBytes; #timeout; #queue = []; #bytes = 0;
   #views = new Set(); #maxViews; #busy = false; #held = false; #uncertain = false;
   #disposed = false; #reason = null; #presented; #timer = null; #running = false;
-  #generation = 0; #coalesced = 0; #influence = null; #stageReceipt = null; #torus = null; #torusPlay = null;
+  #generation = 0; #coalesced = 0; #influence = null; #stageReceipt = null; #torus = null; #torusPlay = null; #torusSinglet = null;
   #acts = []; #advances = { blocks: 0, frames: 0, first_samples_elapsed: null, last_samples_elapsed: null };
 
   constructor({ context, owner, transport, initialReceipt, fieldBinding,
@@ -128,6 +130,8 @@ export class InstrumentSession {
   get lastTorus() { return this.#torus === null ? null : structuredClone(this.#torus); }
   /** The last played Torus act's receipt (ql.torus-play/v1), or null before any. */
   get lastTorusPlay() { return this.#torusPlay === null ? null : structuredClone(this.#torusPlay); }
+  /** The last struck singlet's receipt (ql.torus-singlet/v1: the codon's places and points), or null before any. */
+  get lastTorusSinglet() { return this.#torusSinglet === null ? null : structuredClone(this.#torusSinglet); }
 
   get reading() {
     return { schema: 'ql.instrument-reading/v1', instance_ref: this.#instance,
@@ -208,7 +212,7 @@ export class InstrumentSession {
       }
       const changing = command.operation === 'set-axis' || command.operation === 'replace' ||
         command.operation === 'set-damping' || command.operation === 'strike' || command.operation === 'strike-at' ||
-        command.operation === 'torus-play';
+        command.operation === 'torus-play' || command.operation === 'torus-singlet';
       // A Torus edit moves the owner only when it changes the Fundamental, and only when it is made now.
       const torusSet = command.operation === 'torus-set';
       const fundamental = torusSet && command.edit?.fundamental !== undefined && !waits(command, this.#native.samples_elapsed);
@@ -250,13 +254,15 @@ export class InstrumentSession {
       // A Torus acknowledgement carries the session reading, and a played act its receipt.
       if (reply.torus !== undefined) this.#torus = structuredClone(reply.torus);
       if (reply.torus_play !== undefined) this.#torusPlay = structuredClone(reply.torus_play);
+      if (reply.torus_singlet !== undefined) this.#torusSinglet = structuredClone(reply.torus_singlet);
       // A stage acknowledgement carries the stage's own scoped body: the
       // ql.stage-state/v1 disclosure or the ql.stage-receipt/v1 claim.
       // A score acknowledgement carries the score, its currentness and the
       // field event it was resolved against.
       return { frame, sources: reply.sources, influence: reply.influence, personal: reply.personal, stage: reply.stage,
         score: reply.score, current: reply.current, resolved_event_ref: reply.resolved_event_ref,
-        torus: reply.torus, torus_play: reply.torus_play, strike_at: reply.strike_at, torus_checkpoint: reply.torus_checkpoint,
+        torus: reply.torus, torus_play: reply.torus_play, torus_singlet: reply.torus_singlet, strike_at: reply.strike_at,
+        torus_checkpoint: reply.torus_checkpoint,
         torus_render: reply.torus_render, torus_set_landed: reply.torus_set_landed, torus_receiver: reply.torus_receiver };
     } catch (error) {
       this.#unknown(String(error)); throw error;
@@ -595,6 +601,19 @@ export class InstrumentSession {
       amplitude.every(v => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) <= STRIKE_AT_MAX_METRES),
       `a Torus act's amplitude must be two finite metres within ${STRIKE_AT_MAX_METRES.toFixed(1)}`);
     return this.operate({ operation: 'torus-play', keys: acts, amplitude: [amplitude[0], amplitude[1]],
+      ...this.#landing(at_samples_elapsed) });
+  }
+
+  /** A singlet strikes at its codon's place on the ring (O-I #771, ql-mef scene_field.rs SINGLET_PLACE_LAW): the arc
+   * the ring reads the codon at (both arcs for a nonet-collision codon), carried by the turning torus by the point
+   * law a key's place is, on the voices of the tuning in force: one strike at points, one generation, no note
+   * counted. The receipt (ql.torus-singlet/v1) is kept as lastTorusSinglet. `at_samples_elapsed` as for `strike`. */
+  async torusSinglet(codon, { amplitude = [0.05, 0], at_samples_elapsed } = {}) {
+    need(Number.isInteger(codon) && codon >= 0 && codon < 64, 'a singlet\'s codon is 0 to 63');
+    need(Array.isArray(amplitude) && amplitude.length === 2 &&
+      amplitude.every(v => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) <= STRIKE_AT_MAX_METRES),
+      `a singlet's amplitude must be two finite metres within ${STRIKE_AT_MAX_METRES.toFixed(1)}`);
+    return this.operate({ operation: 'torus-singlet', codon, amplitude: [amplitude[0], amplitude[1]],
       ...this.#landing(at_samples_elapsed) });
   }
 
