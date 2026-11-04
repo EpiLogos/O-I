@@ -4,15 +4,18 @@
 // keeps the one thing that plate alone did: it was the one surface that heard MIDI (live/janko/JankoDevice.tsx `midi`, "One keyboard hears
 // the hardware: the chain's plate"). PartInput is that hearing without a plate: while the instrument stands, a hardware controller's notes
 // reach the torus through the part's one playing path (keyboardLayout.ts livePlayingPath: keys struck and released on the Torus's
-// session, O-I 853), folded through the note devices under the mode in force. It also holds the part's input settings (Layout, Input,
+// session, O-I 853), folded through the note devices under the mode in force; its pitch bends and channel pressures go to the part's
+// instrument in the engine (liveEngine.ts touchInEngine, round 16). It also holds the part's input settings (Layout, Input,
 // Transpose, Velocity, Pressure, Sustain, Repeat touch), Panic, the sustain pedal and MIDI out. The playing surface itself stands under
 // the Torus in its Full (live/TorusOnChain.tsx TorusFull), deaf to MIDI as before; its layout stays the shell's (keyboardLayout.ts). The
 // MIDI state and a refusal stand as one line on the chain, in the chain's waiting idiom.
 import {useEffect, useRef, useState} from 'react'
 import {
-  chooseLiveMidiOut, liveMidiInitial, liveMidiLine, liveMidiOutLine, lostMidiPorts, midiNoteEvent, readLiveMidiOut, subscribeLiveMidi,
-  subscribeLiveMidiControls, useLiveMidiOut, type LiveMidiState,
+  chooseLiveMidiOut, liveMidiInitial, liveMidiLine, liveMidiOutLine, lostMidiPorts, midiExpressionAmount, midiNoteEvent, readLiveMidiOut,
+  subscribeLiveMidi, subscribeLiveMidiControls, subscribeLiveMidiExpression, useLiveMidiOut, type LiveMidiState,
 } from '../native/liveMidi'
+import {refusalWords} from '../../../../../desktop/cradle/src/shared/Refusal'
+import {touchInEngine, type LiveEngineTouch} from './liveEngine'
 import {nativeHost} from '../native/application'
 import {useLiveModeInForce} from '../native/liveModeCatalogue'
 import {runNoteChain} from './noteDevices/noteDevices'
@@ -49,6 +52,10 @@ export function PartInput() {
   const layout = useKeyboardLayout()
   const out = useLiveMidiOut()
   const input = livePlayingPath()
+  // what the part's last pitch bend and channel pressure did not move, each in plain words (null: it moved the part's instrument)
+  const [unmoved, setUnmoved] = useState<Record<LiveEngineTouch, string | null>>({bend: null, pressure: null})
+  const midiOn = useRef(settings.inputs.midi)
+  midiOn.current = settings.inputs.midi
   useEffect(() => { setLivePlayingTransform(classes => transform.current(classes)) })
   useEffect(() => {
     let heard: LiveMidiState = {kind: 'reading'}
@@ -73,6 +80,19 @@ export function PartInput() {
   useEffect(() => subscribeLiveMidiControls({
     onControls: controls => { for (const control of controls) if (control.controller === SUSTAIN_PEDAL) input.pedal(control.value >= 64) },
   }), [input])
+  // Pitch bend and channel pressure reach the part's instrument: the latest of each kind in a batch (the engine passes over the ones
+  // between, as the wheel outruns it); MIDI switched off moves nothing.
+  useEffect(() => subscribeLiveMidiExpression({
+    onExpressions: expressions => {
+      if (!midiOn.current) return
+      for (const kind of ['bend', 'pressure'] as const) {
+        let last = null
+        for (const expression of expressions) if (expression.kind === kind) last = expression
+        if (last) void touchInEngine(kind, midiExpressionAmount(last)).then(said =>
+          setUnmoved(was => ({...was, [kind]: said === null ? null : refusalWords('Not moved:', said)})))
+      }
+    },
+  }), [])
   useEffect(() => { if (nativeHost()) void readLiveMidiOut() }, [])
   const choice = <T extends string>(setting: string, options: readonly {readonly value: T; readonly label: string}[], current: T, pick: (value: T) => void) =>
     <span className="part-input-choice" role="group" data-part-setting={setting}>
@@ -86,6 +106,7 @@ export function PartInput() {
     data-i={`Input|The part's input: pointer, touch, the computer keys and MIDI play the torus through one path, the note devices first. The pointer and the computer keys play from the surface under the Torus in its Full.`}>
     <p className="live-chain-waits" role="status">
       {liveMidiLine(midi)} · {liveMidiOutLine(out)}{refusal !== null ? ` · Not sounded: ${refusal}` : ''}
+      {[unmoved.bend, unmoved.pressure].filter(said => said !== null).map(said => ` · ${said}`).join('')}
     </p>
     <div className="part-input-settings">
       <span className="part-input-row"><span className="part-input-label">Layout</span>

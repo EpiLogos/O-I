@@ -31,8 +31,9 @@ import {commitLiveStage, liveTorusState, subscribeLiveTorus} from './torusInstru
 import {liveJankoWindow} from './janko/jankoLayout'
 import {noteKeys} from './janko/jankoInput'
 
-/** A part as the engine names it: one of the set's parts, one of its returns, or the Main track. */
-export type LiveEnginePart = {track: number} | {return: number} | 'main'
+/** A part as the engine names it: one of the set's parts, one of its returns, one of its groups (a bus, O-I #849 round 16), or the
+ * Main track. */
+export type LiveEnginePart = {track: number} | {return: number} | {group: number} | 'main'
 export type LiveEngineEvent =
   | {kind: 'note_on'; track: number; key: number; velocity: number}
   | {kind: 'note_off'; track: number; key: number}
@@ -44,6 +45,9 @@ export type LiveEngineEvent =
   | {kind: 'solo'; track: number; on: boolean}
   /** An act of the Torus's keys on a part its owner's Torus was handed over to (O-I #849), as its owner's torus-play names it. */
   | {kind: 'torus_play'; track: number; keys: {row: number; column: number}[]; amplitude: [number, number]}
+  /** A part's pitch bend, −1 (down) to 1 (up), and its channel pressure, 0 to 1, to the part's instrument (O-I #853 round 16). */
+  | {kind: 'bend'; track: number; amount: number}
+  | {kind: 'pressure'; track: number; amount: number}
 
 /** The Torus a part holds: the digest it was handed over by, the owner's sample it stood at, and the engine frame it sounds from once
  * the engine has taken it. */
@@ -66,7 +70,7 @@ export interface LiveEngineReading {
   playing: boolean
   /** What the bridge could not host, in its words (an unhosted device, a group, an audio part's clips). */
   warnings: string[]
-  mixer: {tracks: LiveEnginePartMix[]; returns: LiveEnginePartMix[]; main: LiveEnginePartMix}
+  mixer: {tracks: LiveEnginePartMix[]; returns: LiveEnginePartMix[]; groups?: LiveEnginePartMix[]; main: LiveEnginePartMix}
   /** The Torus each part holds (O-I #849); none until its owner hands it over. */
   toruses: LiveEngineTorus[]
   /** The Torus's effects on its part (round 13); null until they go with it. */
@@ -85,12 +89,13 @@ async function op<T>(command: LiveEngineOp, args: Record<string, unknown> = {}):
 }
 
 /** The part the engine hosts for the set's part `index` (the set owner's index: its parts, returns and groups in order, then the Main
- * track), from the set's kinds when the engine bridged it; null for a group, which the engine does not host. */
+ * track), from the set's kinds when the engine bridged it: a group is the engine's bus (O-I #849 round 16). */
 export function enginePartOf(kinds: readonly string[], index: number): LiveEnginePart | null {
   const before = (match: (kind: string) => boolean) => kinds.slice(0, index).filter(match).length
   const kind = kinds[index]
   if (kind === 'master') return 'main'
   if (kind === 'return') return {return: before(k => k === 'return')}
+  if (kind === 'group') return {group: before(k => k === 'group')}
   if (PART_KINDS.has(kind)) return {track: before(k => PART_KINDS.has(k))}
   return null
 }
@@ -106,7 +111,8 @@ export function torusPartOf(kinds: readonly string[]): number | null {
 }
 
 /** The engine's move for one of the set's mixer writes; null where the write changes nothing the engine plays (Arm, Monitor) or the
- * engine has no such move (a return's solo or sends, a group). Volume is linear gain and Pan −1…1, as the set keeps them. */
+ * engine has no such move while it plays (the solo or sends of a return or a group). Volume is linear gain and Pan −1…1, as the set
+ * keeps them. */
 export function engineEventOfMixerWrite(kinds: readonly string[], track: number, control: string, value: unknown): LiveEngineEvent | null {
   const part = enginePartOf(kinds, track)
   if (!part) return null
@@ -313,6 +319,38 @@ export const liveEngine = {
   /** Export Audio: the samples the engine played since Play, to the `.wav` the person chooses in the host's save dialog (the same act
    * as File › Export Audio…); a cancelled dialog is a refusal in the host's words. No path is named from here. */
   exportAudio: (): Promise<LiveEngineExport> => op<LiveEngineExport>('live_engine_export'),
+}
+
+/** A touch of the part's: its pitch bend or its channel pressure. */
+export type LiveEngineTouch = 'bend' | 'pressure'
+const TOUCH_NAME: Record<LiveEngineTouch, string> = {bend: 'pitch bend', pressure: 'channel pressure'}
+/** The amount of each touch waiting to go, the latest only, and what the engine last answered for each (null: it moved the part). */
+const touchWaiting: Partial<Record<LiveEngineTouch, number>> = {}
+const touchAnswer: Record<LiveEngineTouch, string | null> = {bend: null, pressure: null}
+let touchSending: Promise<void> | null = null
+async function sendTouches(track: number): Promise<void> {
+  try {
+    for (let kind = nextTouch(); kind; kind = nextTouch()) {
+      const amount = touchWaiting[kind]!
+      delete touchWaiting[kind]
+      try { await op<LiveEngineReading>('live_engine_send', {event: {kind, track, amount}}); touchAnswer[kind] = null } catch (e) { touchAnswer[kind] = words(e) }
+    }
+  } finally { touchSending = null }
+}
+const nextTouch = (): LiveEngineTouch | undefined => (['bend', 'pressure'] as const).find(kind => touchWaiting[kind] !== undefined)
+/** A pitch bend or channel pressure of the part's (MIDI's, liveMidi.ts midiExpressionAmount) to the instrument the Torus's part holds in
+ * the engine (O-I #853 round 16): it moves it from the next block (graph.rs Instrument bend / pressure). A wheel moves faster than the
+ * host answers, so one touch is in flight at a time and the latest of each kind goes next; none is queued behind it. Answers null once
+ * the engine moved the part, or why it did not, in the engine's words (an instrument that takes no such touch says so); a touch is the
+ * part input's to say, never the transport's refusal. While the engine does not play, the part's instrument is the Torus in the live
+ * instrument, which takes neither, and that is said. */
+export function touchInEngine(kind: LiveEngineTouch, amount: number): Promise<string | null> {
+  if (!state.reading?.playing) return Promise.resolve(`A ${TOUCH_NAME[kind]} moves the part's instrument in the engine while the set plays there: the Torus in the live instrument takes none.`)
+  const track = torusPartOf(state.kinds)
+  if (track === null) return Promise.resolve(`The set has no MIDI part for a ${TOUCH_NAME[kind]} to move.`)
+  touchWaiting[kind] = amount
+  touchSending ??= sendTouches(track)
+  return touchSending.then(() => touchAnswer[kind])
 }
 
 /** One of the set's mixer writes, followed into the engine while it plays that set (nothing otherwise: Play bridges the file). */

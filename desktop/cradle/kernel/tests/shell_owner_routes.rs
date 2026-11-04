@@ -1718,6 +1718,54 @@ fn ql_reads_its_compiled_m_ledger_and_its_coverage() {
     let _ = fs::remove_dir_all(&dir);
 }
 
+/// QL's word on cells of one of its decision instruments (O-I #843: a Factory unit's seven heads are a Vāk-block cell): the cells on
+/// stdin to `ql context-frame team-space check <instrument> -`, QL's check verbatim; another document is not its check, and an
+/// instrument is named.
+#[test]
+fn ql_s_word_on_an_instruments_cells_is_read_through_its_own_verb() {
+    let _held = hold();
+    let dir = scratch("ql-cell-check");
+    let ql = Fake::new(&dir, "ql");
+    let _ql = Bound::set("OI_QL_BIN", &ql.bin);
+    let cells = json!({"schema": "ql.instrument-cells/v1", "cells": [{"key": "drop-capture", "chosen": {"vak-cf": ["CF8"]}}]});
+    let answer = json!({"schema": "ql.instrument-cell-check/v1", "instrument": "vak-block", "cells": [{"key": "drop-capture",
+        "state": "refused", "heads": [], "open": ["vak-cs"], "why": "label `CF8` is not legal for `vak-cf` (context-frame)"}]});
+    ql.answer(&answer);
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "ql_read", "request": {"kind": "instrument-check", "instrument": "vak-block", "request": cells}}),
+        ),
+    );
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-read");
+    assert_eq!(reading(&outcome).1, answer);
+    assert_eq!(
+        ql.asked(),
+        ["context-frame team-space check vak-block - --json"]
+    );
+    assert_eq!(serde_json::from_str::<Value>(&ql.stdin()).unwrap(), cells);
+    ql.forget();
+    ql.answer(&json!({"schema": "ql.vak-team-space/v1"}));
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "ql_read", "request": {"kind": "instrument-check", "instrument": "vak-block", "request": cells}}),
+        ),
+    );
+    assert_eq!(kind(&outcome.unwrap_err()), "incompatible");
+    ql.forget();
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "ql_read", "request": {"kind": "instrument-check", "instrument": " ", "request": cells}}),
+        ),
+    );
+    assert_eq!(kind(&outcome.unwrap_err()), "incompatible");
+    assert!(ql.asked().is_empty(), "nothing asked without an instrument");
+    let _ = fs::remove_dir_all(&dir);
+}
+
 /// The Canvas's Form page's construction chain on its owners (O-I #742): QL's shape binding of a draft, AIKit's dry run of the frame
 /// it makes, its declaration and the change of its roles on the revision read, the Wiki's projection of it for QL, and QL's Technē
 /// reading of that — each through the kernel's routes, with the real owners' answers (built ql and aikit, 29 Oct) as fixtures.
@@ -3565,6 +3613,73 @@ fn aikit_refinements_are_read_and_answered_through_aikits_own_verbs() {
     let (outcome, _) = dispatched(
         no_central(&dir),
         op(json!({"op": "aikit_write", "request": {"kind": "refinement-discard", "member": " "}})),
+    );
+    assert_eq!(kind(&outcome.unwrap_err()), "incompatible");
+    assert!(aikit.asked().is_empty(), "nothing asked without a member");
+    let _ = fs::remove_dir_all(&dir);
+}
+
+/// A revision of a skill Central keeps (O-I 795 round 14): Accept hands it to
+/// Central, and AIKit answers where it waits there rather than a revision of
+/// its own; once the person's Accept in Central has written it, Follow is
+/// AIKit's own verb that picks it up (`aikit source refine follow`), its
+/// receipt naming the member followed.
+#[test]
+fn a_handed_revision_is_carried_and_followed_through_aikits_own_verbs() {
+    let _held = hold();
+    let dir = scratch("aikit-refinement-follow");
+    let aikit = Fake::new(&dir, "aikit");
+    let _bin = Bound::set("OI_AIKIT_BIN", &aikit.bin);
+    aikit.answer(&envelope(json!({"member": "skill/control/alpha", "source": "control",
+        "handed": {"revision_ref": "central:skill-revision:k1", "proposed_digest": "sha256:d1",
+            "scope": "control-user", "name": "alpha", "accept_action": "control.skills.revision.accept"},
+        "user_scope": null})));
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "aikit_write", "request": {"kind": "refinement-accept",
+            "member": "skill/control/alpha"}}),
+        ),
+    );
+    assert_eq!(form, "owner-write");
+    let outcome = outcome.unwrap();
+    assert_eq!(receipts(&outcome)[0]["ref"], "skill/control/alpha");
+    assert_eq!(
+        reading(&outcome).1["handed"]["revision_ref"],
+        "central:skill-revision:k1",
+        "where it waits in Central"
+    );
+
+    aikit.forget();
+    aikit.answer(&envelope(json!({"followed": "skill/control/alpha", "source": "control",
+        "revision_ref": "central:skill-revision:k1", "accepted_digest": "sha256:d1", "revision": "r2",
+        "active_snapshot": "d2", "owner_revision": "tree:2", "rollback_to": "d1", "also_moved": [],
+        "user_scope": null})));
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "aikit_write", "request": {"kind": "refinement-follow",
+            "member": "skill/control/alpha"}}),
+        ),
+    );
+    assert_eq!(form, "owner-write");
+    let outcome = outcome.unwrap();
+    assert_eq!(
+        aikit.asked(),
+        ["source refine follow skill/control/alpha --json"]
+    );
+    assert_eq!(receipts(&outcome)[0]["ref"], "skill/control/alpha");
+    assert_eq!(
+        receipts(&outcome)[0]["revision"],
+        "r2",
+        "the revision now in use"
+    );
+    assert_eq!(reading(&outcome).1["active_snapshot"], "d2");
+
+    aikit.forget();
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(json!({"op": "aikit_write", "request": {"kind": "refinement-follow", "member": ""}})),
     );
     assert_eq!(kind(&outcome.unwrap_err()), "incompatible");
     assert!(aikit.asked().is_empty(), "nothing asked without a member");

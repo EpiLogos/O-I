@@ -22,9 +22,10 @@
 // songClips.ts routineOfSong).
 // Every per-task setting writes through its seam in agent/devices/taskBindings.ts TASK_SEAMS, against the settings' standing
 // revision. The Intent panel (§19.1, the design's D3 panel): its Success conditions are the words the person typed for the task, kept with
-// the task's settings on AIKit (`success`), and Add appends one; its other keys have no reading a kernel route reaches and stand absent,
-// its Intent write refused, each with the operation it waits for (INTENT_ABSENT, INTENT_REFUSED). Of the Launch panel, Compare and the takes a Repeat made
-// stand absent and refused the same way (LAUNCH_ABSENT, LAUNCH_REFUSED). Hand off to is retired: the task is dragged onto another
+// the task's settings on AIKit (`success`), and Add appends one; the intent is the required difference of the task's Run, as Factory reads
+// the Run's Development Field (readDevelopmentField); its other keys have no reading a kernel route reaches and stand absent, its Intent
+// write refused, each with the operation it waits for (INTENT_ABSENT, INTENT_REFUSED). Of the Launch panel, Compare is the takes' own
+// setting on AIKit (`compare`), and the takes a Repeat made stand absent before a set stands (LAUNCH_ABSENT). Hand off to is retired: the task is dragged onto another
 // session's track (§19.1). The score (Notes, Vāk and the Tools, O-I #843) is the song the task's Run performs, as Factory reads it, on
 // the rows of the track's Agent rack — its agents and agent sets — with Allocate, Connect and Thread form written into the song's file
 // by Factory and Fill heads asked of AIKit's decision model (agent/scoreBinding.ts); the log's retrospective readings stand where they
@@ -50,7 +51,8 @@ import type {LayoutState} from '../../../../../desktop/cradle/src/surface/types'
 import {useOptionalContinuity} from '../continuity/workspace'
 import {parseCentralPathRef} from '../central/centralVertical'
 import type {FactoryTake} from './factoryTakes'
-import {lockPlan, planTargetOf, planValuesOf, planWiring, useWavePlan, type PlanPort} from './wavePlan'
+import {lockPlan, planTargetOf, planValuesOf, planWiring, useWavePlan, type PlanPort, type PlanTarget} from './wavePlan'
+import {refusalWords as refusalText} from './devices/ownerRoutes'
 import {rackRowsOf, scorePortOf, scoreValuesOf, scoreWiring, useScore, type ScorePort, type ScoreReading} from './scoreBinding'
 import type {WorldActionReceipt, WorldTrackActions} from '../timeline/worldTrackAdapter'
 import {clipHostId, setViewHold, useViewHoldsVersion, viewHoldsOf} from '../frame/detail/clipBinding'
@@ -163,6 +165,8 @@ export interface FactoryClipInput {
   readonly plan?: PlanPort | null
   /** The song's score as Factory reads it, on the track's Agent rack, and the owners' writes it goes through; null where nothing reads it. */
   readonly score?: ScorePort | null
+  /** The intent: the Development Field of the task's Run, as Factory reads it (readDevelopmentField); null where nothing reads it here. */
+  readonly intent?: IntentReading | null
   /** Each note's task, by the unit's key (unitTasksOf): where a note selected moves Clip view. */
   readonly unitTasks?: ReadonlyMap<string, UnitTask> | null
   /** THE selection's one writer (projections/timelinePaneHost.ts selectTrackItem). */
@@ -325,7 +329,7 @@ function returnedWhy(task: TaskAddress | null, returned: ReturnedPort | null | u
 }
 
 /** The task's readings on the design's keys. A key no owner reports is left out (the design draws "—"). Pure. */
-export function factoryClipValues(track: AgentSessionTrack, task: TaskClip | null, input: Pick<FactoryClipInput, 'tracks' | 'events' | 'colour' | 'settings' | 'constellations' | 'returned' | 'plan' | 'score'>): Values {
+export function factoryClipValues(track: AgentSessionTrack, task: TaskClip | null, input: Pick<FactoryClipInput, 'tracks' | 'events' | 'colour' | 'settings' | 'constellations' | 'returned' | 'plan' | 'score' | 'intent'>): Values {
   const values: Record<string, Value> = {}
   // The task's source, the constellation it was made of, named from the wiki (taskSourceOf).
   Object.assign(values, madeOfValues(taskSourceOf(task ? {sessionRef: track.sessionRef, n: task.n} : null, input.settings ?? null), input.constellations))
@@ -351,9 +355,11 @@ export function factoryClipValues(track: AgentSessionTrack, task: TaskClip | nul
   // attempts are its bound task's, the first on its track.
   const plan = planPortOf(task ? {sessionRef: track.sessionRef, n: task.n} : null, input.plan ?? null)
   if (plan) Object.assign(values, planValuesOf(plan.reading))
+  // The intent: the required difference of the task's Run, in Factory's words (readDevelopmentField); the bound task's, the first.
+  if (task && !intentWhy({sessionRef: track.sessionRef, n: task.n}, input.intent ?? null) && input.intent?.state === 'read') values.intent = input.intent.difference
   // The song's score: its Run's song as Factory reads it, on the track's Agent rack, this task's note lit (agent/scoreBinding.ts).
   const score = scorePortOf(task, input.score ?? null)
-  if (score) Object.assign(values, scoreValuesOf(score.reading, score.rack, score.picks))
+  if (score) Object.assign(values, scoreValuesOf(score.reading, score.rack, score.picks, score.word))
   if (input.events) {
     const log = taskLogOf(track, task, input.events)
     values.log = JSON.stringify(log)
@@ -368,20 +374,22 @@ const SETTING_OF: Readonly<Record<string, TaskSetting>> = {
   name: 'name', colour: 'colour', active: 'active', 'style.register': 'register', 'style.form': 'form', loop: 'loop', 'loop.until': 'loopUntil',
   'loop.cap': 'loopCap', launch: 'launch', then: 'then', quantize: 'quantize', 'repeat.variable': 'repeatVariable', 'repeat.levels': 'repeatLevels',
   'repeat.repeats': 'repeatRepeats', 'repeat.stop': 'repeatStop', 'env.agent.effort': 'effort', 'env.scope.toolCalls': 'toolCalls', 'env.mode': 'envelopeMode',
-  'env.linked': 'envelopeLink', criterion: 'success',
+  'env.linked': 'envelopeLink', criterion: 'success', compare: 'compare',
 }
 
 /** The Intent panel's readings (manual §19.1 "The Intent panel"; clip:factory, D3): what the task is for, its source, its context and
- * constraints. Factory keeps them — the required difference in the Development Field (`factory development field read`), the context and
- * the constraints in the bounded intent of its project-development ledger — and no kernel route reaches either: the kernel's
- * factory_development_read carries project, journey, run, workflow-units, workflow-unit, execution-telemetry and commission-read only.
- * Each key is absent, with the read it waits for. The Success conditions are not among them (O-I 795): "the words stay in the source they
- * come from", and a condition typed in Add comes from the person, so its words are the task's own settings on AIKit (`success`, beside the
- * bound task, as its source and its Repeat are); Factory's bounded intent keeps only refs to conditions (success_condition_refs), never
- * their words. */
+ * constraints. Factory keeps them — the required difference in the Development Field of the task's Run, the context and the constraints
+ * in the bounded intent of its project-development ledger. The intent is read (readDevelopmentField); no kernel route reaches the
+ * ledger: the kernel's factory_development_read carries project, journey, run, workflow-units, workflow-unit, execution-telemetry and
+ * commission-read only. Each of its keys is absent, with the read it waits for. The Success conditions are not among them (O-I 795):
+ * "the words stay in the source they come from", and a condition typed in Add comes from the person, so its words are the task's own
+ * settings on AIKit (`success`, beside the bound task, as its source and its Repeat are); Factory's bounded intent keeps only refs to
+ * conditions (success_condition_refs), never their words. */
 const LEDGER_READ = 'a read of the project-development ledger (bounded intent, success criteria, PraxisCondition) through the kernel (T-COVERAGE §1.2)'
+// REPLACED (O-I 795, round 14): INTENT_ABSENT.intent, "no reading reaches it yet — missing op: `factory development field read` through
+// the kernel (factory_development_read carries no Development Field)": Factory reads a Run's Development Field by the state that holds
+// the Run (`factory development field read --state`, the kernel's factory_owner development-field-read), and the clip reads it.
 export const INTENT_ABSENT: Readonly<Record<string, string>> = {
-  intent: 'The intent: no reading reaches it yet — missing op: `factory development field read` through the kernel (factory_development_read carries no Development Field) (Software Factory).',
   'intent.source': `Where the intent is written: no reading reaches it yet — missing op: ${LEDGER_READ} (Software Factory).`,
   constraints: `The constraints the task keeps: no reading reaches them yet — missing op: ${LEDGER_READ} (Software Factory).`,
   context: `The context the task resolves in: no reading reaches it yet — missing op: ${LEDGER_READ} (Software Factory).`,
@@ -397,17 +405,68 @@ const CRITERIA_UNKEPT = 'The success conditions: this AIKit keeps none for a tas
 /** "The revision cannot change them" (§19.7): while a set of takes runs, its conditions hold, in AIKit's words. */
 const conditionsHeld = (trace: string) => `The takes ${trace} are read against the task's Success conditions as they stood at their first run: a change to them waits until the takes end.`
 
-/** Compare and the takes (manual §19.1 The Launch panel): Loop, the launch mode and what a Repeat varies are the session's settings (AIKit
+/** The takes (manual §19.1 The Launch panel): Loop, the launch mode and what a Repeat varies are the session's settings (AIKit
  * `encounter-session-settings`), and so is the set of takes a Repeat runs (`task.takes`, O-I 795): the takes it made are read once the
- * set ends. Before a set stands, the takes are absent; no owner compares takes, so Compare stands absent and refused with the operation it
- * waits for. */
+ * set ends. Before a set stands, the takes are absent. Compare is the takes' own setting, kept with them on AIKit (`task.compare`). */
 export const LAUNCH_ABSENT: Readonly<Record<string, string>> = {
-  compare: 'Compare: no reading reaches it yet — missing op: no owner compares takes side by side (Software Factory).',
   // REPLACED (O-I 795): "not handed to Clip view — the take lanes read them": a Repeat's set of takes is now the task's settings on AIKit.
   takes: 'The takes a Repeat made: no set of takes stands yet — a Repeat\'s press starts one on AIKit (encounter-session-settings task.takes), its takes made by Actuation\'s comparison run (AIKit).',
 }
-export const LAUNCH_REFUSED: Readonly<Record<string, string>> = {
-  compare: 'Compare: no owner operation carries it yet — missing op: a comparison of takes (Software Factory).',
+// REPLACED (O-I 795 round 14): LAUNCH_ABSENT.compare and LAUNCH_REFUSED.compare, "no owner compares takes side by side" and "missing op: a
+// comparison of takes (Software Factory)": Compare is the takes' own setting (§19.1: None, a second take, or every take of a Repeat), and
+// AIKit keeps it with the task's settings beside its Success conditions (ai-kit encounter_task_settings.rs COMPARES), written through its
+// seam (taskBindings.ts TASK_SEAMS.compare). It draws the takes and moves while they run.
+/** Compare from an AIKit that keeps none for a task. */
+const COMPARE_UNKEPT = 'Compare: this AIKit keeps no Compare for a task\'s takes — missing op: the task settings\' `compare` (AIKit).'
+
+// ---------------------------------------------------------------------------------------------------------------- the intent
+
+/** Factory's reading of a Run's Development Field (factory development_field.rs DEVELOPMENT_FIELD_READING_CONTRACT). */
+export const DEVELOPMENT_FIELD_READING = 'factory.development-field-reading/v1'
+
+/** The intent as read: the required difference of the task's Run, in Factory's words, or why it is not read. */
+export type IntentReading = {readonly state: 'read'; readonly difference: string; readonly target: PlanTarget} | {readonly state: 'absent'; readonly why: string}
+
+export const INTENT_NOT_HERE = 'The intent: not read here — no sessions provider reads the session\'s attempts, which name the Run whose Development Field Factory keeps.'
+export const INTENT_NO_RUN = 'The intent: no attempt of the task names its Run yet, so Factory is asked for no Development Field (the intent is its Run\'s required difference).'
+export const INTENT_READING = 'The intent: Factory is reading the Development Field of the task\'s Run.'
+const INTENT_ONE_TASK = 'The intent: the session\'s owner holds one bound task, whose attempts name the Run; the intent is the first task\'s on the track.'
+
+/** The kernel op as the read calls it. */
+type IntentCall = (op: Record<string, unknown>) => Promise<{error?: string; outcome?: {result: string; data?: unknown} | null}>
+
+/** One read of the Development Field of the task's Run (factory_owner `development-field-read` → `factory development field read --state
+ * <state> <run-ref>`): its required difference, or why there is none in Factory's words — a Run its state does not hold, a Run whose
+ * field was never set. Never throws. */
+export async function readDevelopmentField(call: IntentCall, target: PlanTarget): Promise<IntentReading> {
+  const read = await call({op: 'factory_owner', request: {kind: 'development-field-read', state_path: target.statePath, run_ref: target.runRef}})
+    .catch((cause: unknown) => ({error: cause instanceof Error ? cause.message : String(cause), outcome: null}))
+  if (read.error) return {state: 'absent', why: `The intent: Factory did not read the Run's Development Field: ${refusalText(read.error)}`}
+  const data = read.outcome?.result === 'factory_development_reading' ? read.outcome.data as {contract?: unknown; field?: {requiredDifference?: unknown}} | null : null
+  if (data?.contract !== DEVELOPMENT_FIELD_READING) {
+    return {state: 'absent', why: `The intent: Factory answered no Development Field reading (${DEVELOPMENT_FIELD_READING}): the Factory installed here may predate the field read by its state.`}
+  }
+  const difference = data.field?.requiredDifference
+  return typeof difference === 'string' && difference.trim() ? {state: 'read', difference, target}
+    : {state: 'absent', why: `The intent: the Development Field of ${target.runRef} names no required difference.`}
+}
+
+/** Why the intent is not on the clip, or null where it is read. */
+function intentWhy(task: TaskAddress | null, intent: IntentReading | null): string | null {
+  if (!task) return 'No task is selected: select a task on a session\'s track.'
+  if (task.n !== 1) return INTENT_ONE_TASK
+  if (!intent) return INTENT_NOT_HERE
+  return intent.state === 'absent' ? intent.why : null
+}
+
+/** The intent's key on the wiring: read from Factory, absent with why where it is not. Its write stays refused (INTENT_REFUSED). */
+function withIntent(wiring: ClipWiring, task: TaskAddress | null, intent: IntentReading | null): ClipWiring {
+  const why = intentWhy(task, intent)
+  return {
+    ...wiring,
+    reads: {...wiring.reads, intent: 'Factory\'s Development Field of the task\'s Run (factory development field read, by the state that holds the Run): the required difference, in its words'},
+    absent: why ? {...wiring.absent, intent: why} : wiring.absent,
+  }
 }
 
 // REPLACED (O-I #843): SCORE_ABSENT, SCORE_REFUSED and SCORE_VIEW, which stood the score absent and every score write refused ("no
@@ -439,9 +498,10 @@ export const SOURCE_UNKEPT = 'The task\'s source is not read: the AIKit installe
 
 /** clip:factory's wiring: every key the design draws or sets. `choice` reads the view's holds when a tool is pressed. */
 export function factoryWiring(task: TaskAddress | null, context: TaskSeamContext | null = null, returned: ReturnedPort | null = null,
-  plan: PlanPort | null = null, score: ScorePort | null = null, choice: (key: string) => Value | undefined = () => undefined): ClipWiring {
-  return withScore(withPlan(withReturned(withMadeOf(taskWiring(task, context), taskSourceOf(task, context)), task, returned), planPortOf(task, plan)),
-    scorePortOf(task, score), choice, task && context ? {task, context} : null)
+  plan: PlanPort | null = null, score: ScorePort | null = null, choice: (key: string) => Value | undefined = () => undefined,
+  intent: IntentReading | null = null): ClipWiring {
+  return withScore(withPlan(withReturned(withIntent(withMadeOf(taskWiring(task, context), taskSourceOf(task, context)), task, intent), task, returned),
+    planPortOf(task, plan)), scorePortOf(task, score), choice, task && context ? {task, context} : null)
 }
 
 /** The score's keys on the wiring (agent/scoreBinding.ts scoreWiring): read from Factory, its edits Factory's, Fill heads AIKit's.
@@ -519,10 +579,13 @@ function taskWiring(task: TaskAddress | null, context: TaskSeamContext | null): 
   const why = task ? settingsRefusal(context, task.n) : 'No task is selected: select a task on a session\'s track.'
   const takes = why ? null : context?.settings?.task?.takes ?? null
   const criteriaWhy = why ? `The success conditions: ${why}` : context?.settings?.task?.success === undefined ? CRITERIA_UNKEPT : null
+  // An AIKit that keeps no Compare reads none and would refuse it: Compare stands absent and refused, naming the AIKit it needs.
+  const compareWhy = !why && context?.settings?.task && context.settings.task.compare === undefined ? COMPARE_UNKEPT : null
   for (const [key, setting] of Object.entries(SETTING_OF)) {
     const seam = TASK_SEAMS[setting]
     if (seam.refused) refused[key] = seam.refused
     else if (why || !task || !context) refused[key] = why ?? 'No task is selected: select a task on a session\'s track.'
+    else if (key === 'compare' && compareWhy) refused[key] = compareWhy
     else if (takes?.running && REPEAT_KEYS.has(key)) refused[key] = takesRunning(takes.trace_ref)
     else if (takes?.running && key === 'criterion') refused[key] = conditionsHeld(takes.trace_ref)
     else acts[key] = value => seam.send(task, value, context)
@@ -548,16 +611,17 @@ function taskWiring(task: TaskAddress | null, context: TaskSeamContext | null): 
       log: 'the session\'s temporal events inside the task\'s span',
       elapsed: 'the task\'s start to its last activity, in seconds',
       ...(takes ? {takes: 'the session\'s settings: the Repeat\'s set of takes (task.takes) — the takes it made, read once the set ends'} : {}),
+      compare: 'the session\'s settings: Compare, the takes\' own setting (task.compare) — none · second · every, how a Repeat\'s takes are drawn side by side',
       criteria: 'the session\'s settings: the Success conditions typed for the task (task.success), each without an answer until a run returns one',
     },
-    absent: {...INTENT_ABSENT, ...(criteriaWhy ? {criteria: criteriaWhy} : {}), ...(takes ? {compare: LAUNCH_ABSENT.compare} : LAUNCH_ABSENT)},
+    absent: {...INTENT_ABSENT, ...(criteriaWhy ? {criteria: criteriaWhy} : {}), ...(compareWhy ? {compare: compareWhy} : {}), ...(takes ? {} : LAUNCH_ABSENT)},
     acts,
     view: {
       fold: 'Fold keeps only the lanes of the tools the agent used: how the log shows, not the log',
       event: 'the log row selected in Clip view', 'env.control': 'which of the Agent\'s controls the envelope editor shows',
       'criteria.page': 'the page of success conditions Clip view shows',
     },
-    refused: {...refused, ...INTENT_REFUSED, ...LAUNCH_REFUSED},
+    refused: {...refused, ...INTENT_REFUSED},
   }
 }
 
@@ -572,7 +636,7 @@ export function factoryClipBinding(input: FactoryClipInput): ClipBinding | null 
   // A tool's press reads the choices the view holds at that moment: the note selected, the tool and what it gives or ties.
   const choice = (key: string): Value | undefined => ({...viewDefaults, ...viewHoldsOf(clipHostId('factory', ref))} as Record<string, Value>)[key]
   const binding = clipBinding({mode: 'factory', ref, values: factoryClipValues(track, task, input),
-    wiring: factoryWiring(address, input.settings ?? null, input.returned ?? null, input.plan ?? null, input.score ?? null, choice), placed: input.placed,
+    wiring: factoryWiring(address, input.settings ?? null, input.returned ?? null, input.plan ?? null, input.score ?? null, choice, input.intent ?? null), placed: input.placed,
     viewDefaults})
   const {unitTasks, select} = input
   const view = binding.local
@@ -656,10 +720,12 @@ export function useFactoryClip(): ClipBinding | null {
   }} : null,
   // eslint-disable-next-line react-hooks/exhaustive-deps
   [wave.plan, sessions, sessionRef, JSON.stringify(target), JSON.stringify(transport)])
+  // The intent: the same Run's Development Field, as Factory keeps it beside the state that holds the Run (readDevelopmentField).
+  const intent = useDevelopmentField(transport, target)
   // The song's score: the Run its latest attempt names, read by Factory, on the rows of the track's Agent rack (agent/scoreBinding.ts).
   const chosen = factoryTaskOf(selected.ref, factory.tracks)
   const rack = useMemo(() => rackRowsOf(chosen?.track ?? null, factory.tracks), [chosen?.track, factory.tracks])
-  const scored = useScore(transport, target, rack, sessionRef)
+  const scored = useScore(transport, target, rack, sessionRef, true)
   // Each note's task: the takes of the rack's sessions and of the sessions on the song's rows, each read in its own register.
   const noteSessions = useMemo(() => sessions && sessionRef ? noteSessionsOf(chosen?.track ?? null, factory.tracks, scored.reading).filter(ref => ref !== sessionRef) : [],
     [sessions, sessionRef, chosen?.track, factory.tracks, scored.reading])
@@ -698,7 +764,25 @@ export function useFactoryClip(): ClipBinding | null {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   [files, sessions, sessionRef, JSON.stringify(transport)])
   return factoryClipBinding({ref: selected.ref, tracks: factory.tracks, events: sessions ? sessions.events : null, colour, placed: presentation === 'arrangement', settings,
-    constellations, returned, plan, score: sessions && sessionRef ? scored : null, unitTasks, select: to => timelineReading()?.selectTrackItem(to)})
+    constellations, returned, plan, score: sessions && sessionRef ? scored : null, intent: sessions && sessionRef ? intent : null, unitTasks,
+    select: to => timelineReading()?.selectTrackItem(to)})
+}
+
+/** The task's intent, read once per Run (its latest attempt's) and kept until the next answer, so it never flickers to unread. */
+function useDevelopmentField(transport: KernelTransportStatus, target: PlanTarget | null): IntentReading {
+  const key = target ? JSON.stringify([transport, target.statePath, target.runRef]) : null
+  const [answer, setAnswer] = useState<{key: string; reading: IntentReading} | null>(null)
+  useEffect(() => {
+    if (!key || !target || transport.kind === 'unavailable') return
+    let live = true
+    void readDevelopmentField(op => kernelOp(transport, op as Parameters<typeof kernelOp>[1]) as unknown as ReturnType<IntentCall>, target)
+      .then(reading => { if (live) setAnswer({key, reading}) })
+    return () => { live = false }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key])
+  if (!target) return {state: 'absent', why: INTENT_NO_RUN}
+  if (transport.kind === 'unavailable') return {state: 'absent', why: `The intent: Factory is not reached: ${transport.reason ?? 'the shell has no kernel carrier'}.`}
+  return answer?.key === key ? answer.reading : {state: 'absent', why: INTENT_READING}
 }
 
 // ---------------------------------------------------------------------------------------------------------------- the drop

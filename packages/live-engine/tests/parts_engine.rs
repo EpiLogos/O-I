@@ -1186,3 +1186,782 @@ fn a_hand_over_due_at_a_sample_takes_a_part_without_a_torus_at_once() {
     assert_eq!(handle.installs(), &[(256, 0)]);
     assert_eq!(block[0], 9.0);
 }
+
+/// A tenth of a second of 440 Hz at half scale from each key struck, then silence: a burst for a room to ring
+/// after (O-I #849 round 16).
+#[derive(Debug, Default)]
+struct Burst {
+    left: u32,
+    at: u32,
+}
+
+impl live_engine::Instrument for Burst {
+    fn name(&self) -> &str {
+        "Burst"
+    }
+    fn note_on(&mut self, _key: u8, _velocity: f32, _clock: &Clock) {
+        (self.left, self.at) = (SR / 10, 0);
+    }
+    fn note_off(&mut self, _key: u8, _clock: &Clock) {}
+    fn release_all(&mut self, _clock: &Clock) {}
+    fn process(&mut self, frame_io: &mut [f32], _clock: &Clock) {
+        let v = if self.left > 0 {
+            self.left -= 1;
+            self.at += 1;
+            0.5 * (2.0 * std::f32::consts::PI * 440.0 * self.at as f32 / SR as f32).sin()
+        } else {
+            0.0
+        };
+        frame_io.fill(v);
+    }
+}
+
+/// The Torus's Reverb as the host makes it (live-engine `rack_device`, by the frame's keys).
+fn room(size: f64, decay: f64, damping: f64, predelay: f64, mix: f64) -> live_engine::RackDevice {
+    live_engine::rack_device(
+        "reverb",
+        &[
+            ("size", size),
+            ("decay", decay),
+            ("damping", damping),
+            ("predelay", predelay),
+            ("mix", mix),
+        ],
+    )
+    .unwrap()
+}
+
+/// A burst struck on a part whose rack is `first`, then `again` put there at block `at` while the room rings,
+/// pulled for `blocks` blocks of 256 frames: what was played.
+fn ringing(
+    first: live_engine::RackDevice,
+    again: Option<live_engine::RackDevice>,
+    at: usize,
+    blocks: usize,
+) -> Vec<f32> {
+    let mut g = Graph::new(SR, 120.0);
+    g.tracks
+        .push(Track::midi("Keys", Box::new(Burst::default())));
+    let (mut core, mut handle) = engine(g).unwrap();
+    handle.install_rack(0, vec![first]).unwrap();
+    handle
+        .send(EngineEvent::NoteOn {
+            track: 0,
+            key: 69,
+            velocity: 1.0,
+        })
+        .unwrap();
+    let mut again = again;
+    let mut block = vec![0f32; 256 * 2];
+    let mut played = Vec::new();
+    for b in 0..blocks {
+        if b == at {
+            if let Some(chain) = again.take() {
+                handle.collect();
+                handle.install_rack(0, vec![chain]).unwrap();
+            }
+        }
+        core.pull_block(&mut block);
+        played.extend_from_slice(&block);
+    }
+    played
+}
+
+fn energy(x: &[f32]) -> f64 {
+    x.iter().map(|v| f64::from(*v) * f64::from(*v)).sum()
+}
+
+/// O-I #849 round 16: the Torus's Reverb put again for its dry/wet or its pre-delay keeps its room ringing (only
+/// its size, decay and damping make the room), and one made again for another room rings the last one's tail
+/// out whole: never a cut.
+#[test]
+fn a_room_put_again_while_it_rings_keeps_its_tail_and_one_made_again_rings_the_last_out() {
+    // the burst ends at frame 4800; at block 40 (frame 10240) only the room sounds
+    let (at, blocks) = (40, 120);
+    let swap = at * 256 * 2;
+    let still = ringing(room(50.0, 2.0, 40.0, 20.0, 30.0), None, at, blocks);
+    assert!(
+        energy(&still[swap..swap + 512]) > 1e-6,
+        "the room rings at the block it is put again at"
+    );
+    // its dry/wet moved: the room rings on, heard at the new dry/wet once the move has settled
+    let wetter = ringing(
+        room(50.0, 2.0, 40.0, 20.0, 30.0),
+        Some(room(50.0, 2.0, 40.0, 20.0, 60.0)),
+        at,
+        blocks,
+    );
+    assert_eq!(
+        wetter[..swap],
+        still[..swap],
+        "before it is put again, nothing changed"
+    );
+    assert!(
+        energy(&wetter[swap..swap + 512]) > 0.9 * energy(&still[swap..swap + 512]),
+        "its dry/wet moved, the room's tail went on (it was cut: {} against {})",
+        energy(&wetter[swap..swap + 512]),
+        energy(&still[swap..swap + 512])
+    );
+    let settled = swap + 2 * 9600;
+    for (n, (w, s)) in wetter[settled..].iter().zip(&still[settled..]).enumerate() {
+        assert!(
+            (w - 2.0 * s).abs() <= 1e-5 * s.abs() + 1e-9,
+            "sample {}: at twice the dry/wet the tail is twice as loud ({w} against {s})",
+            settled + n
+        );
+    }
+    // its pre-delay moved: what was in the room rings on, unchanged, while the input is silent
+    let later = ringing(
+        room(50.0, 2.0, 40.0, 20.0, 30.0),
+        Some(room(50.0, 2.0, 40.0, 120.0, 30.0)),
+        at,
+        blocks,
+    );
+    assert_eq!(
+        later, still,
+        "its pre-delay moved over silence, the room rang on as if nothing had moved"
+    );
+    // another room: the last rings its tail out whole, and the new one, given silence, adds none
+    let longer = ringing(
+        room(50.0, 2.0, 40.0, 20.0, 30.0),
+        Some(room(80.0, 6.0, 10.0, 20.0, 30.0)),
+        at,
+        blocks,
+    );
+    assert_eq!(
+        longer, still,
+        "made again for another room over silence, the last room rang its tail out whole"
+    );
+}
+
+/// O-I #849 round 16: a room made again while sound goes into it takes that sound over a crossfade, the last
+/// room taking less and less of it and ringing out, so nothing jumps.
+#[test]
+fn a_room_made_again_while_it_plays_crossfades_its_input_and_the_last_rings_out() {
+    // a burst struck again at block 18 (frame 4608), the room made again two blocks in, while it sounds
+    let played = |again: Option<live_engine::RackDevice>| {
+        let mut g = Graph::new(SR, 120.0);
+        g.tracks
+            .push(Track::midi("Keys", Box::new(Burst::default())));
+        let (mut core, mut handle) = engine(g).unwrap();
+        handle
+            .install_rack(0, vec![room(50.0, 2.0, 40.0, 0.0, 100.0)])
+            .unwrap();
+        let mut again = again;
+        let mut block = vec![0f32; 256 * 2];
+        let mut out = Vec::new();
+        for b in 0..200 {
+            if b == 18 {
+                handle
+                    .send(EngineEvent::NoteOn {
+                        track: 0,
+                        key: 69,
+                        velocity: 1.0,
+                    })
+                    .unwrap();
+            }
+            if b == 20 {
+                if let Some(chain) = again.take() {
+                    handle.collect();
+                    handle.install_rack(0, vec![chain]).unwrap();
+                }
+            }
+            core.pull_block(&mut block);
+            out.extend_from_slice(&block);
+        }
+        out
+    };
+    let still = played(None);
+    let longer = played(Some(room(50.0, 6.0, 40.0, 0.0, 100.0)));
+    let swap = 20 * 256 * 2;
+    assert_eq!(longer[..swap], still[..swap]);
+    // the room was building up under the burst; across the change it sounds on as the room it was, never
+    // falling to a room that starts from nothing (the 5 ms after it, against the room left as it stood)
+    let w = 2 * 240;
+    let (after, stood) = (
+        energy(&longer[swap..swap + w]),
+        energy(&still[swap..swap + w]),
+    );
+    assert!(
+        after >= 0.8 * stood,
+        "the room fell away at the change: {after} after it against {stood} had it stood"
+    );
+    // the new room is heard: by its longer decay, the tail stands louder 0.8 s on
+    let on = swap + 2 * (SR as usize * 4 / 5);
+    assert!(
+        energy(&longer[on..on + 4800]) > 2.0 * energy(&still[on..on + 4800]),
+        "the longer room rings longer"
+    );
+    // nothing clicks: made again for a room of another size and damping, the sound bends no more sharply in
+    // the 10 ms after the change than in the 10 ms before it (its largest second difference, one side)
+    let other = played(Some(room(80.0, 6.0, 10.0, 0.0, 100.0)));
+    let bend = |from: usize, to: usize| {
+        let side: Vec<f32> = other[2 * from..2 * to].iter().step_by(2).copied().collect();
+        side.windows(3)
+            .map(|w| (w[2] - 2.0 * w[1] + w[0]).abs())
+            .fold(0f32, f32::max)
+    };
+    let (before, after) = (
+        bend(20 * 256 - 480, 20 * 256),
+        bend(20 * 256 - 2, 20 * 256 + 480),
+    );
+    assert!(
+        after <= 1.5 * before,
+        "the room's change clicked: it bends by {after} after it against {before} before"
+    );
+}
+
+/// O-I #849 round 16: a device made again while it plays for settings it takes while it plays (put again with
+/// the rest of its chain) sounds exactly as if they had been moved in place: each device follows the one it
+/// replaces (the compressor's detector and gain, the filter's state, the lines' repeats, the room as it rings),
+/// and moves each setting from where it stood.
+#[test]
+fn a_device_made_again_for_settings_it_takes_while_it_plays_sounds_as_if_moved_in_place() {
+    use live_engine::{rack_device, DeviceAt};
+    let moves: [(usize, &'static str, f64); 7] = [
+        (0, "threshold", -40.0),
+        (0, "makeup", 6.0),
+        (1, "Cutoff", 70.0),
+        (2, "DelayLine_TimeL", 0.2),
+        (2, "DryWet", 0.8),
+        (3, "predelay", 120.0),
+        (3, "mix", 70.0),
+    ];
+    let moved = || {
+        vec![
+            rack_device(
+                "dynamics",
+                &[
+                    ("threshold", -40.0),
+                    ("ratio", 4.0),
+                    ("attack", 3.0),
+                    ("release", 250.0),
+                    ("makeup", 6.0),
+                ],
+            )
+            .unwrap(),
+            rack_device(
+                "AutoFilter",
+                &[
+                    ("FilterType", 0.0),
+                    ("Cutoff", 70.0),
+                    ("Resonance", 0.3),
+                    ("Drive", 0.0),
+                ],
+            )
+            .unwrap(),
+            rack_device(
+                "Delay",
+                &[
+                    ("DelayLine_TimeL", 0.2),
+                    ("Feedback", 0.4),
+                    ("Filter_Frequency", 6000.0),
+                    ("DryWet", 0.8),
+                ],
+            )
+            .unwrap(),
+            room(50.0, 1.2, 40.0, 120.0, 70.0),
+        ]
+    };
+    let run = |again: bool| {
+        let mut g = Graph::new(SR, 120.0);
+        g.tracks.push(operator_part(
+            "Keys",
+            &[Note {
+                key: 57,
+                start: 0,
+                length: 40_000,
+                velocity: 100.0,
+            }],
+        ));
+        let (mut core, mut handle) = engine(g).unwrap();
+        handle.install_rack(0, torus_chain()).unwrap();
+        let mut block = vec![0f32; 256 * 2];
+        let mut played = Vec::new();
+        for b in 0..120 {
+            if b == 30 {
+                if again {
+                    handle.collect();
+                    handle.install_rack(0, moved()).unwrap();
+                } else {
+                    for (d, key, value) in moves {
+                        handle
+                            .set(Part::Track(0), DeviceAt::Rack(d), key, value)
+                            .unwrap();
+                    }
+                }
+            }
+            core.pull_block(&mut block);
+            played.extend_from_slice(&block);
+        }
+        handle.collect();
+        assert_eq!(handle.racks().len(), if again { 2 } else { 1 });
+        played
+    };
+    let (in_place, made_again) = (run(false), run(true));
+    let at = 30 * 256 * 2;
+    assert!(
+        energy(&in_place[at..at + 4800]) > 1e-4,
+        "the part sounds through the change"
+    );
+    for (n, (a, b)) in made_again.iter().zip(&in_place).enumerate() {
+        assert_eq!(
+            a.to_bits(),
+            b.to_bits(),
+            "sample {n}: the chain made again sounds as the one moved in place"
+        );
+    }
+}
+
+/// O-I #849 round 16: a room's pre-delay moved while it plays delays what goes in by the new pre-delay, within
+/// the line it was made with: once the move has settled, it sounds as the room made at that pre-delay.
+#[test]
+fn a_rooms_pre_delay_moved_while_it_plays_delays_its_input_as_one_made_at_it() {
+    use live_engine::DeviceAt;
+    let run = |predelay: f64, moved: Option<f64>| {
+        let mut g = Graph::new(SR, 120.0);
+        g.tracks
+            .push(Track::midi("Keys", Box::new(Burst::default())));
+        let (mut core, mut handle) = engine(g).unwrap();
+        handle
+            .install_rack(0, vec![room(50.0, 2.0, 40.0, predelay, 100.0)])
+            .unwrap();
+        let mut block = vec![0f32; 256 * 2];
+        let mut played = Vec::new();
+        for b in 0..120 {
+            if let Some(ms) = moved.filter(|_| b == 5) {
+                handle
+                    .set(Part::Track(0), DeviceAt::Rack(0), "predelay", ms)
+                    .unwrap();
+            }
+            if b == 50 {
+                handle
+                    .send(EngineEvent::NoteOn {
+                        track: 0,
+                        key: 69,
+                        velocity: 1.0,
+                    })
+                    .unwrap();
+            }
+            core.pull_block(&mut block);
+            played.extend_from_slice(&block);
+        }
+        played
+    };
+    let (moved, made) = (run(0.0, Some(100.0)), run(100.0, None));
+    let first = moved.iter().position(|v| *v != 0.0).map(|i| i / 2);
+    assert!(
+        first.is_some_and(|f| f >= 50 * 256 + 4800),
+        "the room sounded before its new pre-delay: from frame {first:?}"
+    );
+    assert!(
+        moved == made,
+        "a pre-delay moved and settled sounds as the room made at it"
+    );
+}
+
+/// The Torus's four effects as the host makes them (live-engine `rack_device`: the frame's Dynamics and Reverb,
+/// Live's Auto Filter and Delay built to the Torus's).
+fn torus_chain() -> Vec<live_engine::RackDevice> {
+    use live_engine::rack_device;
+    vec![
+        rack_device(
+            "dynamics",
+            &[
+                ("threshold", -24.0),
+                ("ratio", 4.0),
+                ("attack", 3.0),
+                ("release", 250.0),
+                ("makeup", 0.0),
+            ],
+        )
+        .unwrap(),
+        rack_device(
+            "AutoFilter",
+            &[
+                ("FilterType", 0.0),
+                ("Cutoff", 100.0),
+                ("Resonance", 0.3),
+                ("Drive", 0.0),
+            ],
+        )
+        .unwrap(),
+        rack_device(
+            "Delay",
+            &[
+                ("DelayLine_TimeL", 0.05),
+                ("Feedback", 0.4),
+                ("Filter_Frequency", 6000.0),
+                ("DryWet", 0.3),
+            ],
+        )
+        .unwrap(),
+        room(50.0, 1.2, 40.0, 10.0, 25.0),
+    ]
+}
+
+/// O-I #849 round 16: a chain device's setting moved while the engine plays (a setting changed in the shell) is
+/// heard from the next block, the part sounding on: no device is made again (and the audio thread allocates
+/// nothing for it, tests/realtime_no_alloc.rs), and Export renders it as played.
+#[test]
+fn a_chain_devices_setting_moved_while_it_plays_is_heard_from_the_next_block_and_exports_as_played()
+{
+    use live_engine::DeviceAt;
+    let build = || {
+        let mut g = Graph::new(SR, 120.0);
+        g.tracks.push(operator_part(
+            "Keys",
+            &[Note {
+                key: 57,
+                start: 0,
+                length: 40_000,
+                velocity: 100.0,
+            }],
+        ));
+        g
+    };
+    let run = |moved: &[(usize, &'static str, f64)]| -> (Vec<f32>, Performance) {
+        let (mut core, mut handle) = engine(build()).unwrap();
+        handle.install_rack(0, torus_chain()).unwrap();
+        let mut block = vec![0f32; 256 * 2];
+        let mut played = Vec::new();
+        for b in 0..60 {
+            if b == 30 {
+                for &(d, key, value) in moved {
+                    handle
+                        .set(Part::Track(0), DeviceAt::Rack(d), key, value)
+                        .unwrap();
+                }
+            }
+            core.pull_block(&mut block);
+            played.extend_from_slice(&block);
+            if b % 7 == 0 {
+                handle.collect();
+            }
+        }
+        handle.collect();
+        assert_eq!(
+            handle.racks(),
+            &[(0, 0)],
+            "the chain was put there once: no device was made again"
+        );
+        (played, handle.performance())
+    };
+    let (still, _) = run(&[]);
+    let at = 30 * 256 * 2;
+    for (d, key, value) in [
+        (0, "threshold", -40.0),
+        (0, "makeup", 6.0),
+        (1, "Cutoff", 70.0),
+        (1, "Drive", 12.0),
+        (2, "DryWet", 0.8),
+        (2, "DelayLine_TimeL", 0.2),
+        (3, "mix", 70.0),
+    ] {
+        let (moved, perf) = run(&[(d, key, value)]);
+        assert_eq!(
+            moved[..at],
+            still[..at],
+            "{key}: before the block that takes it, nothing changed"
+        );
+        assert_ne!(
+            moved[at..at + 512],
+            still[at..at + 512],
+            "{key}: heard from the next block"
+        );
+        let exported =
+            build().render_performance_racked(SR, &perf, Vec::new(), vec![(0, 0, torus_chain())]);
+        assert!(exported == moved, "{key}: Export renders what was played");
+    }
+    // a setting moves as the frame moves an edit, over 15 ms, never in one jump: the room's dry/wet
+    let (moved, _) = run(&[(3, "mix", 70.0)]);
+    let change = |from: usize, frames: usize| {
+        let (a, b) = (at + 2 * from, at + 2 * (from + frames));
+        let d: Vec<f32> = moved[a..b]
+            .iter()
+            .zip(&still[a..b])
+            .map(|(m, s)| m - s)
+            .collect();
+        (energy(&d) / energy(&still[a..b]).max(1e-30)).sqrt()
+    };
+    let (first, settled) = (change(0, 32), change(2400, 32));
+    assert!(
+        first < 0.2 * settled,
+        "the dry/wet moved at once: {first} of the sound changed in its first 32 frames, {settled} once settled"
+    );
+}
+
+/// O-I #849 round 16: what a device does not take while it plays is refused in words, naming what it takes.
+#[test]
+fn a_setting_a_device_does_not_take_while_it_plays_is_refused_in_words() {
+    use live_engine::DeviceAt;
+    let mut g = Graph::new(SR, 120.0);
+    g.tracks.push(operator_part("Keys", &[]));
+    g.tracks.push(constant_part("Tone", 0.25, 100));
+    let (_core, mut handle) = engine(g).unwrap();
+    handle
+        .install_rack(0, vec![room(50.0, 1.2, 40.0, 10.0, 25.0)])
+        .unwrap();
+    let refused = |handle: &mut live_engine::EngineHandle, part, at, key: &str, value| {
+        handle.set(part, at, key, value).unwrap_err().to_string()
+    };
+    let words = refused(&mut handle, Part::Track(0), DeviceAt::Rack(0), "size", 60.0);
+    assert!(
+        words.contains("Reverb takes its predelay, mix while it plays, not its size"),
+        "{words}"
+    );
+    let words = refused(&mut handle, Part::Track(0), DeviceAt::Rack(0), "mix", 140.0);
+    assert!(
+        words.contains("takes its mix within 0 to 100, not 140"),
+        "{words}"
+    );
+    let words = refused(&mut handle, Part::Track(0), DeviceAt::Rack(2), "mix", 50.0);
+    assert!(
+        words.contains("holds 1 device on the rack after its instrument: there is no device 2"),
+        "{words}"
+    );
+    let words = refused(&mut handle, Part::Track(1), DeviceAt::Chain(0), "mix", 50.0);
+    assert!(
+        words.contains("'Tone' holds no device on its chain"),
+        "{words}"
+    );
+    let words = refused(&mut handle, Part::Track(4), DeviceAt::Chain(0), "mix", 50.0);
+    assert!(words.contains("no part 4"), "{words}");
+}
+
+/// O-I #849 round 16: a group track is a bus. What stands in it (a part, or a group in it) sounds through its chain and
+/// its row (gain, then pan) into the group it stands in or the Main track, and its sends feed the returns as a part's;
+/// while something is soloed, a part or group sounds where it or a group it stands in is soloed, and a group passes what
+/// it holds that is; a group switched off silences what stands in it; a group's level moves while it plays, and a group
+/// the set does not hold is refused in words.
+#[test]
+fn a_group_track_is_a_bus_what_stands_in_it_sounds_through_its_chain_and_row() {
+    use live_engine::GroupTrack;
+    let build = || {
+        let mut g = Graph::new(SR, 120.0);
+        let mut a = constant_part("A", 0.25, 4096);
+        a.group = Some(0);
+        let mut b = constant_part("B", 0.125, 4096);
+        b.group = Some(1);
+        b.sends = vec![0.0];
+        let c = constant_part("C", 0.0625, 4096);
+        g.tracks = vec![a, b, c];
+        let mut outer = GroupTrack::new("Outer");
+        outer.gain = 0.5;
+        outer.devices.push(Box::new(GainDevice::new_db(6.0)));
+        let mut inner = GroupTrack::new("Inner");
+        inner.group = Some(0);
+        inner.pan = 0.5;
+        inner.sends = vec![0.5];
+        g.groups = vec![outer, inner];
+        g.returns.push(ReturnTrack::new("A"));
+        g.solo_in_place = true;
+        g
+    };
+    let heard = |g: &mut Graph| {
+        g.prepare();
+        let f = g.mix_frame(&Clock::start(SR, 120.0));
+        (f64::from(f[0]), f64::from(f[1]))
+    };
+    let up = f64::from(10f32.powf(6.0 / 20.0));
+    let near = |got: (f64, f64), want: (f64, f64), what: &str| {
+        assert!(
+            (got.0 - want.0).abs() < 1e-6 && (got.1 - want.1).abs() < 1e-6,
+            "{what}: {got:?}, not {want:?}"
+        );
+    };
+    // B through Inner (half left) into Outer with A, Outer's chain and its half gain; Inner's send to the return
+    let inner = (0.125 * 0.5, 0.125);
+    let outer = ((0.25 + inner.0) * up * 0.5, (0.25 + inner.1) * up * 0.5);
+    let ret = (inner.0 * 0.5, inner.1 * 0.5);
+    near(
+        heard(&mut build()),
+        (0.0625 + outer.0 + ret.0, 0.0625 + outer.1 + ret.1),
+        "every part through its groups",
+    );
+    // B soloed: it sounds through both groups; A and C do not
+    let mut g = build();
+    g.tracks[1].solo = true;
+    near(
+        heard(&mut g),
+        (inner.0 * up * 0.5 + ret.0, inner.1 * up * 0.5 + ret.1),
+        "a soloed part in a group",
+    );
+    // Outer soloed: what stands in it sounds, C does not
+    let mut g = build();
+    g.groups[0].solo = true;
+    near(
+        heard(&mut g),
+        (outer.0 + ret.0, outer.1 + ret.1),
+        "a soloed group",
+    );
+    // C soloed: the groups pass nothing, and their chains sound nothing
+    let mut g = build();
+    g.tracks[2].solo = true;
+    near(
+        heard(&mut g),
+        (0.0625, 0.0625),
+        "a soloed part outside the groups",
+    );
+    // Outer off: nothing in it reaches Main (Inner's send still feeds the return, as B's would)
+    let mut g = build();
+    g.groups[0].active = false;
+    near(
+        heard(&mut g),
+        (0.0625 + ret.0, 0.0625 + ret.1),
+        "a group switched off",
+    );
+    // the group's level moves while it plays
+    let (mut core, mut handle) = engine(build()).unwrap();
+    handle
+        .send(EngineEvent::Volume {
+            part: Part::Group(0),
+            gain: 0.0,
+        })
+        .unwrap();
+    let mut block = vec![0f32; 2];
+    core.pull_block(&mut block);
+    near(
+        (f64::from(block[0]), f64::from(block[1])),
+        (0.0625 + ret.0, 0.0625 + ret.1),
+        "the group's level moved to nothing",
+    );
+    handle.collect();
+    assert_eq!(handle.mixer().groups[0].gain, 0.0);
+    let words = handle
+        .send(EngineEvent::Active {
+            part: Part::Group(2),
+            on: false,
+        })
+        .unwrap_err()
+        .to_string();
+    assert!(
+        words.contains("the set has no group 2 (it has 2)"),
+        "{words}"
+    );
+}
+
+/// O-I #853: a MIDI part's pitch bend reaches its instrument while it plays. The engine's Operator bends every voice it
+/// sounds by MIDI's default range, two semitones each way, from the next block, its phase going on unbroken, and back;
+/// Export renders it as played. What an instrument does not take (Operator's channel pressure), a bend beyond its range
+/// and a bend of an audio part are refused in words.
+#[test]
+fn a_parts_pitch_bend_bends_its_operator_from_the_next_block_and_exports_as_played() {
+    use live_dynamics::operator::goertzel_amp;
+    let build = || {
+        let mut g = Graph::new(SR, 120.0);
+        g.tracks.push(operator_part(
+            "Keys",
+            &[Note {
+                key: 69,
+                start: 0,
+                length: 96_000,
+                velocity: 100.0,
+            }],
+        ));
+        g
+    };
+    let run = |bends: &[(usize, f32)]| {
+        let (mut core, mut handle) = engine(build()).unwrap();
+        let mut block = vec![0f32; 256 * 2];
+        let mut played = Vec::new();
+        for b in 0..300 {
+            for &(at, amount) in bends {
+                if at == b {
+                    handle.send(EngineEvent::Bend { track: 0, amount }).unwrap();
+                }
+            }
+            core.pull_block(&mut block);
+            played.extend(block.iter().step_by(2).copied());
+        }
+        (played, handle.performance())
+    };
+    let (still, _) = run(&[]);
+    let (bent, perf) = run(&[(100, 1.0), (200, 0.0)]);
+    let at = 100 * 256;
+    assert_eq!(
+        bent[..at],
+        still[..at],
+        "before the block that takes it, nothing changed"
+    );
+    let up = 440.0 * 2f64.powf(2.0 / 12.0);
+    let window = |x: &[f32], f: f64, from: usize| {
+        goertzel_amp(
+            x,
+            SR,
+            f,
+            from as f64 / f64::from(SR) + 0.01,
+            from as f64 / f64::from(SR) + 0.5,
+        )
+    };
+    assert!(
+        window(&bent, up, at) > 20.0 * window(&bent, 440.0, at),
+        "bent a whole tone up: {} at {up} Hz against {} at 440",
+        window(&bent, up, at),
+        window(&bent, 440.0, at)
+    );
+    let back = 200 * 256;
+    assert!(
+        window(&bent, 440.0, back) > 20.0 * window(&bent, up, back),
+        "and back to its key"
+    );
+    // its phase goes on: across each bend no sample moves by more than the tone moves in one at its higher pitch
+    let peak = bent[at..].iter().fold(0f32, |m, v| m.max(v.abs()));
+    let step = (2.0 * std::f64::consts::PI * up / f64::from(SR)) as f32 * peak;
+    for edge in [at, back] {
+        let most = bent[edge - 256..edge + 256]
+            .windows(2)
+            .map(|w| (w[1] - w[0]).abs())
+            .fold(0f32, f32::max);
+        assert!(
+            most <= 1.01 * step,
+            "the bend at {edge} jumped: {most} against {step}"
+        );
+    }
+    let exported: Vec<f32> = build()
+        .render_performance(SR, &perf)
+        .iter()
+        .step_by(2)
+        .copied()
+        .collect();
+    assert!(exported == bent, "Export renders the bend as played");
+    // what is not taken, in words
+    let mut g = build();
+    g.tracks.push(constant_part("Tone", 0.25, 100));
+    let (_core, mut handle) = engine(g).unwrap();
+    let refused =
+        |handle: &mut live_engine::EngineHandle, e| handle.send(e).unwrap_err().to_string();
+    let words = refused(
+        &mut handle,
+        EngineEvent::Pressure {
+            track: 0,
+            amount: 0.5,
+        },
+    );
+    assert!(
+        words.contains("'Keys' plays the engine's Operator, which takes no channel pressure: the corpus's surface of Live's Operator routes it nowhere"),
+        "{words}"
+    );
+    let words = refused(
+        &mut handle,
+        EngineEvent::Bend {
+            track: 0,
+            amount: 1.5,
+        },
+    );
+    assert!(
+        words.contains("a pitch bend is −1 (down) to 1 (up), not 1.5"),
+        "{words}"
+    );
+    let words = refused(
+        &mut handle,
+        EngineEvent::Bend {
+            track: 1,
+            amount: 0.5,
+        },
+    );
+    assert!(
+        words.contains("'Tone' is an audio part: it plays no notes"),
+        "{words}"
+    );
+}

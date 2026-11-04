@@ -77,8 +77,8 @@ pub(crate) mod host {
     use live_engine::bridge::bridge_set;
     use live_engine::engine::PartMix;
     use live_engine::{
-        engine, rack_device, BlockStamp, ClipEdge, Due, EngineCore, EngineEvent, EngineHandle,
-        EnginePlayer, Graph, MixerState, Part, RackDevice, TorusAct,
+        engine, rack_device, BlockStamp, ClipEdge, DeviceAt, Due, EngineCore, EngineEvent,
+        EngineHandle, EnginePlayer, Graph, MixerState, Part, RackDevice, TorusAct,
     };
     use live_set::xml::Element;
     use oi_cradle_kernel::native_expression::TorusTap;
@@ -158,13 +158,14 @@ pub(crate) mod host {
         Ok(ms.max(0.0))
     }
 
-    /// A part as an event names it: `{"track": i}`, `{"return": i}` or
-    /// `"main"`.
+    /// A part as an event names it: `{"track": i}`, `{"return": i}`,
+    /// `{"group": i}` (O-I #849 round 16) or `"main"`.
     #[derive(Debug, Clone, Copy, Deserialize)]
     #[serde(rename_all = "snake_case", deny_unknown_fields)]
     pub enum PartIn {
         Track(usize),
         Return(usize),
+        Group(usize),
         Main,
     }
 
@@ -173,6 +174,7 @@ pub(crate) mod host {
             match p {
                 PartIn::Track(i) => Part::Track(i),
                 PartIn::Return(i) => Part::Return(i),
+                PartIn::Group(i) => Part::Group(i),
                 PartIn::Main => Part::Main,
             }
         }
@@ -180,7 +182,7 @@ pub(crate) mod host {
 
     /// One engine event as the UI sends it: `kind` names it (`note_on`,
     /// `note_off`, `panic`, `volume`, `pan`, `send`, `active`, `solo`,
-    /// `torus_play`) and the fields its kind takes sit beside it. A plain
+    /// `torus_play`, `bend`, `pressure`) and the fields its kind takes sit beside it. A plain
     /// struct, not a tagged enum: a tagged enum buffers its fields, and the
     /// buffered numbers of this build's serde_json (arbitrary precision,
     /// enabled by a dependency) arrive as maps — "invalid type: map,
@@ -201,6 +203,8 @@ pub(crate) mod host {
         keys: Option<Vec<KeyIn>>,
         /// A Torus act's velocity: two modal metres, as its owner's `torus-play` takes it.
         amplitude: Option<[f64; 2]>,
+        /// A pitch bend's share of its range (−1 to 1) or a channel pressure (0 to 1), O-I #853.
+        amount: Option<f32>,
     }
 
     /// One of the Torus's keys: its row on the surface and its column.
@@ -245,6 +249,8 @@ pub(crate) mod host {
         Active,
         Solo,
         TorusPlay,
+        Bend,
+        Pressure,
     }
 
     impl EventIn {
@@ -265,6 +271,7 @@ pub(crate) mod host {
                 on,
                 keys,
                 amplitude,
+                amount,
             } = self;
             let name = serde_json::to_value(kind)
                 .ok()
@@ -281,6 +288,14 @@ pub(crate) mod host {
                     key: need(key, &name, "key")?,
                 },
                 EventKind::Panic => EngineEvent::Panic,
+                EventKind::Bend => EngineEvent::Bend {
+                    track: need(track, &name, "track")?,
+                    amount: need(amount, &name, "amount")?,
+                },
+                EventKind::Pressure => EngineEvent::Pressure {
+                    track: need(track, &name, "track")?,
+                    amount: need(amount, &name, "amount")?,
+                },
                 EventKind::Volume => EngineEvent::Volume {
                     part: need(part, &name, "part")?.into(),
                     gain: need(gain, &name, "gain")?,
@@ -356,6 +371,7 @@ pub(crate) mod host {
         json!({
             "tracks": m.tracks.iter().map(part_json).collect::<Vec<_>>(),
             "returns": m.returns.iter().map(part_json).collect::<Vec<_>>(),
+            "groups": m.groups.iter().map(part_json).collect::<Vec<_>>(),
             "main": part_json(&m.main),
         })
     }
@@ -670,9 +686,17 @@ pub(crate) mod host {
                     |s| s,
                 );
                 words.extend(said);
+                // the frame's 95 % is the most Live's Delay holds: 0.95 as its document's float keeps it
+                let feedback = number("feedback")? / 100.0;
+                let (_, most) = live_engine::live_holds("Delay", "Feedback").unwrap_or((0.0, 1.0));
+                let feedback = if feedback > most && feedback as f32 <= most as f32 {
+                    most
+                } else {
+                    feedback
+                };
                 carried.extend([
                     ("DelayLine_TimeL", time),
-                    ("Feedback", number("feedback")? / 100.0),
+                    ("Feedback", feedback),
                     ("Filter_Frequency", number("tone")?),
                     ("DryWet", number("mix")? / 100.0),
                 ]);
@@ -855,9 +879,13 @@ pub(crate) mod host {
         }
 
         /// The Torus's effects as the frame holds them (`effects`, [`torus_chain`]) put on part `track`
-        /// after its Torus: each device made as before keeps its state, and a chain made as the one
-        /// standing there is not put again. Refused in words (and the refusal kept in the reading)
-        /// for what is not the frame's effects, and for a part other than the one they stand on.
+        /// after its Torus: a chain made as the one standing there is not put again; one that differs only
+        /// in settings its devices take while they play moves them in place (O-I #849 round 16:
+        /// [`Opened::moves_in_place`], heard from the next block); otherwise it is put there, each device
+        /// made as before keeping its state and each made again following the one it replaces (a room's
+        /// tail rings out, a line's repeats go on: live-engine `Graph::rack`). Refused in words (and the
+        /// refusal kept in the reading) for what is not the frame's effects, and for a part other than the
+        /// one they stand on.
         pub fn put_effects(&mut self, track: usize, effects: &Value) -> Result<(), String> {
             let put = (|| {
                 if let Some(was) = self.effects.track.filter(|was| *was != track) {
@@ -866,6 +894,22 @@ pub(crate) mod host {
                 let (made, reading) = torus_chain(effects)?;
                 if self.effects.track == Some(track) && self.effects.made == made {
                     self.effects.reading = reading;
+                    return Ok(());
+                }
+                // the same devices in the same order, moved only in settings each takes while it plays: each
+                // moves there, heard from the next block with the part sounding on, and nothing is made again
+                if let Some(moves) = self.moves_in_place(track, &made) {
+                    for (at, key, value) in moves {
+                        self.handle
+                            .set(Part::Track(track), DeviceAt::Rack(at), key, value)
+                            .map_err(|e| e.to_string())?;
+                    }
+                    self.effects = TorusEffects {
+                        track: Some(track),
+                        made,
+                        reading,
+                        refusal: None,
+                    };
                     return Ok(());
                 }
                 let superseded = self
@@ -888,6 +932,47 @@ pub(crate) mod host {
                 self.effects.refusal = Some(words.clone());
             }
             put
+        }
+
+        /// The settings that move the Torus's effects standing on part `track` to `made` in place (O-I #849
+        /// round 16): each (device, key, value) where the same devices stand in the same order and every
+        /// setting that differs is one its device takes while it plays ([`live_engine::Device::settings`]).
+        /// None where a device must be made again for it (another device, another order, a setting that
+        /// makes the device, its room or its kind), and while the last chain put there is still on its way
+        /// (what would be moved is not there yet).
+        fn moves_in_place(
+            &mut self,
+            track: usize,
+            made: &RackMade,
+        ) -> Option<Vec<(usize, &'static str, f64)>> {
+            if self.effects.track != Some(track) {
+                return None;
+            }
+            self.handle.collect();
+            if self.handle.racks().len() != self.racked.len() {
+                return None;
+            }
+            let was = &self.effects.made;
+            let standing = &self.handle.mixer().tracks.get(track)?.rack;
+            if was.len() != made.len() || standing.len() != made.len() {
+                return None;
+            }
+            let mut moves = Vec::new();
+            for (at, ((class_was, from_was), (class, from))) in was.iter().zip(made).enumerate() {
+                if class_was != class || from_was.len() != from.len() {
+                    return None;
+                }
+                for ((key_was, value_was), (key, value)) in from_was.iter().zip(from) {
+                    if key_was != key {
+                        return None;
+                    }
+                    if value_was != value {
+                        let (key, ..) = standing[at].settings.iter().find(|(k, ..)| k == key)?;
+                        moves.push((at, *key, *value));
+                    }
+                }
+            }
+            Some(moves)
         }
 
         /// The part following the Torus's owner, if one is: the lease, the part, the hand-over it holds,
@@ -1986,6 +2071,86 @@ pub(crate) mod host {
             );
         }
 
+        /// O-I #849 round 16: an edit of the Torus's effects that moves only settings their devices take
+        /// while they play moves them in place: nothing is put again (so the room rings on and the
+        /// lines keep their repeats), each setting is heard from the next block, and Export renders it as
+        /// played. One that moves what makes a device (the Filter's kind) puts the chain again. The
+        /// frame's 95 % feedback stands at the most Live's Delay holds, and sounds.
+        #[test]
+        fn a_torus_effect_moved_while_it_plays_moves_in_place_and_exports_as_played() {
+            let chain = ["dynamics", "filter", "delay", "reverb"];
+            let mut most = effects(&["delay"]);
+            most["delay"]["feedback"] = json!(95);
+            let (made, reading) = torus_chain(&most).unwrap();
+            let (_, edge) = live_engine::live_holds("Delay", "Feedback").unwrap();
+            assert_eq!(made[0].1[1], ("Feedback", edge));
+            assert_eq!(reading[0]["sounds"], true, "{}", reading[0]);
+            assert_eq!(reading[0]["words"], Value::Null, "{}", reading[0]);
+            let path = write_set("torus-effects-moved", SET);
+            let mut o = Opened::open(&path).unwrap();
+            let mut core = o.core.take().unwrap();
+            let mut played = pull(&mut core, &[256, 256]);
+            o.put_effects(0, &effects(&chain)).unwrap();
+            played.extend(pull(&mut core, &[256; 20]));
+            let mut edited = effects(&chain);
+            edited["dynamics"]["threshold"] = json!(-30);
+            edited["filter"]["cutoff"] = json!(2000);
+            edited["delay"]["feedback"] = json!(95);
+            edited["delay"]["mix"] = json!(50);
+            edited["reverb"]["predelay"] = json!(80);
+            edited["reverb"]["mix"] = json!(60);
+            o.put_effects(0, &edited).unwrap();
+            played.extend(pull(&mut core, &[256; 20]));
+            o.handle.collect();
+            assert_eq!(o.racked.len(), 1, "nothing was put again");
+            assert_eq!(o.handle.racks(), &[(512, 0)]);
+            let moved: Vec<(&str, f64, u64)> = o
+                .handle
+                .performance()
+                .events
+                .iter()
+                .filter_map(|e| match e.event {
+                    EngineEvent::Set { key, value, .. } => Some((key, value, e.frame)),
+                    _ => None,
+                })
+                .collect();
+            let at = 512 + 256 * 20;
+            assert_eq!(
+                moved,
+                vec![
+                    ("threshold", -30.0, at),
+                    ("Cutoff", live_engine::auto_filter_cutoff(2000.0), at),
+                    ("Feedback", edge, at),
+                    ("DryWet", 0.5, at),
+                    ("predelay", 80.0, at),
+                    ("mix", 60.0, at),
+                ],
+                "each setting moved, at the next block"
+            );
+            let reading = o.reading();
+            assert_eq!(
+                reading["torus_effects"]["chain"][3]["carried"],
+                json!({"DecayTime": 2400.0, "PreDelay": 80.0})
+            );
+            assert_eq!(reading["torus_effects"]["sounding_from_frame"], 512);
+            // the Filter's kind makes the filter: the chain is put again, its devices following
+            edited["filter"]["type"] = json!("highpass");
+            o.put_effects(0, &edited).unwrap();
+            played.extend(pull(&mut core, &[256; 10]));
+            o.handle.collect();
+            assert_eq!(o.handle.racks(), &[(512, 0), (at + 256 * 20, 0)]);
+            let (bytes, _) = o.render_wav().unwrap();
+            let wav = live_engine::wav::read_wav_f32(&bytes).unwrap();
+            assert_eq!(wav.samples.len(), played.len());
+            for (n, (e, p)) in wav.samples.iter().zip(&played).enumerate() {
+                assert_eq!(
+                    e.to_bits(),
+                    p.to_bits(),
+                    "sample {n}: Export is what was played"
+                );
+            }
+        }
+
         #[test]
         fn the_host_plays_the_sets_two_parts_with_their_chains_returns_and_main() {
             let path = write_set("two-parts", SET);
@@ -2073,6 +2238,65 @@ pub(crate) mod host {
                     &kw[n * 2..n * 2 + 2]
                 );
             }
+        }
+
+        /// O-I #853: a MIDI part's pitch bend, as the shell sends what the host decoded, reaches its
+        /// Operator from the next block and Export renders it as played; a channel pressure the engine's
+        /// Operator does not take is refused in its words.
+        #[test]
+        fn a_parts_pitch_bend_reaches_its_operator_and_a_pressure_it_does_not_take_is_refused() {
+            let path = write_set("bend", SET);
+            let mut opened = Opened::open(&path).unwrap();
+            let mut core = opened.core.take().unwrap();
+            let event = |json: &str| {
+                serde_json::from_str::<EventIn>(json).unwrap_or_else(|e| panic!("{json}: {e}"))
+            };
+            opened
+                .send(event(
+                    r#"{"kind":"note_on","track":1,"key":57,"velocity":100}"#,
+                ))
+                .unwrap();
+            let mut played = pull(&mut core, &[512, 512]);
+            opened
+                .send(event(r#"{"kind":"bend","track":1,"amount":-0.5}"#))
+                .unwrap();
+            played.extend(pull(&mut core, &[512, 4096]));
+            let refused = opened
+                .send(event(r#"{"kind":"pressure","track":1,"amount":0.5}"#))
+                .unwrap_err();
+            assert!(
+                refused.contains("plays the engine's Operator, which takes no channel pressure"),
+                "{refused}"
+            );
+            let lacking = event(r#"{"kind":"bend","track":1}"#).event().unwrap_err();
+            assert_eq!(lacking, "a bend event names its amount");
+            let (bytes, exported) = opened.render_wav().unwrap();
+            assert_eq!(exported["events"], 2);
+            let wav = live_engine::wav::read_wav_f32(&bytes).unwrap();
+            assert_eq!(wav.samples.len(), played.len());
+            assert!(
+                wav.samples
+                    .iter()
+                    .zip(&played)
+                    .all(|(e, p)| e.to_bits() == p.to_bits()),
+                "Export is what was played"
+            );
+            let unbent = {
+                let mut o = Opened::open(&path).unwrap();
+                let mut core = o.core.take().unwrap();
+                o.send(event(
+                    r#"{"kind":"note_on","track":1,"key":57,"velocity":100}"#,
+                ))
+                .unwrap();
+                pull(&mut core, &[512, 512, 512, 4096])
+            };
+            let at = 2 * 1024;
+            assert_eq!(played[..at], unbent[..at]);
+            assert_ne!(
+                played[at..],
+                unbent[at..],
+                "the bend is heard from the next block"
+            );
         }
 
         #[test]
@@ -2547,6 +2771,32 @@ pub(crate) mod host {
                 .event()
                 .unwrap_err();
             assert_eq!(lacking, "a volume event names its part");
+            // a group track is the engine's bus (O-I #849 round 16): the set has none, so a move of one is refused
+            let group = serde_json::from_str::<EventIn>(
+                r#"{"kind":"volume","part":{"group":0},"gain":0.5}"#,
+            )
+            .unwrap()
+            .event()
+            .unwrap();
+            assert!(matches!(
+                group,
+                EngineEvent::Volume {
+                    part: Part::Group(0),
+                    gain: 0.5
+                }
+            ));
+            let refused = host
+                .send(
+                    serde_json::from_str::<EventIn>(
+                        r#"{"kind":"active","part":{"group":0},"on":false}"#,
+                    )
+                    .unwrap(),
+                )
+                .unwrap_err();
+            assert!(
+                refused.contains("the set has no group 0 (it has 0)"),
+                "{refused}"
+            );
         }
     }
 }

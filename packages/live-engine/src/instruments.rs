@@ -27,6 +27,8 @@ struct Voice {
     /// Frame past which the release has reached the envelope floor.
     end: u64,
     sounding: bool,
+    /// How far a bend has led its carrier's phase, in radians (O-I #853): 0 while it was never bent.
+    lead: f64,
 }
 
 const IDLE: Voice = Voice {
@@ -35,7 +37,13 @@ const IDLE: Voice = Voice {
     hold_s: f64::INFINITY,
     end: u64::MAX,
     sounding: false,
+    lead: 0.0,
 };
+
+/// ENGINE DECISION (O-I #853): Live's Operator keeps its pitch-bend range where the corpus's surface
+/// of it does not reach (live-dynamics params.rs `OPERATOR`), so the engine bends its voices by MIDI's
+/// default sensitivity, 2 semitones each way (RPN 0's default).
+pub const OPERATOR_BEND_SEMITONES: f64 = 2.0;
 
 /// Operator at its default patch (`live_dynamics::operator`: oscillator A
 /// and its amp envelope, velocity unrouted as the default patch stores
@@ -48,6 +56,8 @@ pub struct OperatorInstrument {
     pub patch: OperatorVoiceA,
     models: Vec<OperatorVoiceA>,
     voices: [Voice; OPERATOR_VOICES],
+    /// The pitch its bend moves every voice by, as a ratio of frequencies (1: unbent).
+    bend: f64,
 }
 
 impl OperatorInstrument {
@@ -62,6 +72,7 @@ impl OperatorInstrument {
             patch,
             models: Vec::new(),
             voices: [IDLE; OPERATOR_VOICES],
+            bend: 1.0,
         }
     }
 
@@ -127,6 +138,7 @@ impl Instrument for OperatorInstrument {
             hold_s: f64::INFINITY,
             end: u64::MAX,
             sounding: true,
+            lead: 0.0,
         };
     }
 
@@ -144,9 +156,26 @@ impl Instrument for OperatorInstrument {
         }
     }
 
+    fn touch(&self) -> crate::graph::Touch {
+        crate::graph::Touch {
+            bend: Ok(()),
+            pressure: Err("takes no channel pressure: the corpus's surface of Live's Operator routes it nowhere"),
+        }
+    }
+
+    /// Every voice sounds `2^(amount × OPERATOR_BEND_SEMITONES / 12)` of its key's pitch from the next
+    /// frame, its phase going on from where it stood.
+    fn bend(&mut self, amount: f32, _clock: &Clock) -> bool {
+        let amount = f64::from(amount.clamp(-1.0, 1.0));
+        self.bend = 2f64.powf(amount * OPERATOR_BEND_SEMITONES / 12.0);
+        true
+    }
+
     fn process(&mut self, frame_io: &mut [f32], clock: &Clock) {
         let mut acc = 0f32;
         if !self.models.is_empty() {
+            // the phase a bent voice gains on its key's each frame, per radian per second of the key
+            let gained = (self.bend - 1.0) / f64::from(self.patch.sample_rate);
             for v in self.voices.iter_mut() {
                 if !v.sounding {
                     continue;
@@ -156,7 +185,11 @@ impl Instrument for OperatorInstrument {
                     continue;
                 }
                 let i = clock.sample.saturating_sub(v.start) as usize;
-                acc += self.models[v.key as usize].sample_at(i, v.hold_s);
+                let model = &self.models[v.key as usize];
+                acc += model.sample_led(i, v.hold_s, v.lead);
+                if gained != 0.0 {
+                    v.lead += 2.0 * std::f64::consts::PI * model.freq_hz * gained;
+                }
             }
         }
         for s in frame_io.iter_mut() {

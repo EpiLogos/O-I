@@ -256,7 +256,13 @@ fn factory_glue() -> Vec<f32> {
 }
 
 /// O-I #849 round 15: Live's own Glue, bridged from its set's document, sounds at what the set stores, and so comes nearer
-/// Live's render of that set than the factory Glue the bridge stood it at before, at every level step on both sides.
+/// Live's render of that set than the factory Glue the bridge stood it at before, at each level step the set gate measures
+/// (`SET_GATE_STEPS`, at or below −12 dBFS in) on both sides.
+///
+/// Round 16 (the Range law): the factory's Range 3 is now heard as a ceiling at 2.8 dB (glue.rs `range_ceiling_db`, the
+/// scaling below Range 10 an OPEN hypothesis), so above those steps the factory Glue meets Live's render nearer than the
+/// set's own does (at −6 dBFS 1.06 against 2.03 dB): the set's Glue's error there is the set gate's open record, below.
+/// Round 15 compared every step; this compares the steps the set gate states.
 #[test]
 fn m1_gate_lives_own_glue_from_its_set_comes_nearer_lives_render_than_the_factory_glue() {
     let Some((engine, (l, r, rate), warnings)) = lives_own_glue() else {
@@ -271,6 +277,7 @@ fn m1_gate_lives_own_glue_from_its_set_comes_nearer_lives_render_than_the_factor
                 side_steps(live, rate)
                     .into_iter()
                     .zip(side_steps(ours, SR))
+                    .take(SET_GATE_STEPS)
                     .map(|(got, pred)| (pred - got).abs())
             })
             .collect()
@@ -294,7 +301,9 @@ fn m1_gate_lives_own_glue_from_its_set_comes_nearer_lives_render_than_the_factor
 /// STATUS: FAILS — the honest record and the acceptance target (cf. live-dynamics tests/golden.rs, the Overdrive and Glue
 /// LAM gates). At Live's own Glue (Threshold −21.9, Range 25, Makeup 5) the engine's step levels are −0.00, −0.18, −0.87
 /// and −1.56 dB from Live's at −30, −24, −18 and −12 dBFS in: the model's static curve is the measured transfer at Range
-/// 30 and Threshold −12, threshold-shifted (glue.rs `MEASURED_ANCHORS_R30_T12`), so its Range does not yet move it. Run
+/// 30 and Threshold −12, threshold-shifted (glue.rs `MEASURED_ANCHORS_R30_T12`). Since round 16 the Range moves it (the
+/// Range law, gated by `m1_gate_the_glues_range_is_heard_as_lives_renders_at_each_range`), but Range 25's ceiling is out of
+/// reach at these steps, so the error is the curve's at this Threshold and Makeup, not the Range's. Run
 /// with `LIVE_RE_CORPUS=<corpus> cargo test --test m1_gate -- --ignored --nocapture`.
 #[test]
 #[ignore]
@@ -313,4 +322,58 @@ fn m1_gate_lives_own_glue_sounds_from_its_set_as_live_renders_it() {
         "the set gate passed the factory Glue"
     );
     assert!(off.is_none(), "M1 set gate FAILED: {}", off.unwrap());
+}
+
+/// Live's renders of its Glue where the Range alone moves (devices/glue-compressor.md, "D1 verdict"): G3 (Threshold −12,
+/// Range 10), G10_CEILING (Threshold −24, Range 10, the ceiling discriminator) and G9 (Threshold −12, Range 60), each at
+/// Ratio 1, Makeup 0, the preset Attack 2 / Release 0, playing the steps signal.
+const RANGE_RENDERS: [(&str, f64, f64); 3] = [
+    ("G3_T-12_R10_v2.aif", -12.0, 10.0),
+    ("G10_CEILING.aif", -24.0, 10.0),
+    ("G9_RANGE60.aif", -12.0, 60.0),
+];
+
+/// O-I #849 round 16: the Glue's Range is heard as Live renders it — a soft ceiling on the gain reduction (glue.rs
+/// `RANGE_CEILING_SHARPNESS`), out of reach at 60 — every level step on both sides within the static tolerance (0.5 dB,
+/// stated before any render was read) of Live's render at that Range. Teeth: before the Range law the engine reduced
+/// G10's deep steps as at Range 30, −12.4 dB against Live's −9.08 at −6 dBFS in.
+#[test]
+fn m1_gate_the_glues_range_is_heard_as_lives_renders_at_each_range() {
+    if !corpus_present() {
+        return;
+    }
+    let mut gated = 0;
+    for (name, threshold_db, range) in RANGE_RENDERS {
+        let Some(path) = corpus::render(name) else {
+            eprintln!("skip: Live's render {name} is not present");
+            continue;
+        };
+        let (l, r) =
+            live_dynamics::audio::read_aiff_i16_channels(&std::fs::read(path).unwrap()).unwrap();
+        let engine = render_set(Box::new(GlueDevice::new(GlueParams {
+            threshold_db,
+            range,
+            ratio: 1.0,
+            makeup_db: 0.0,
+        })));
+        println!("M1 Range gate — {name} (Threshold {threshold_db}, Range {range})");
+        let side =
+            |x: &[f32], s: usize| -> Vec<f32> { x.iter().skip(s).step_by(2).copied().collect() };
+        for (which, live, ours) in [("L", &l, side(&engine, 0)), ("R", &r, side(&engine, 1))] {
+            let heard = side_steps(&live.samples, live.sample_rate);
+            for ((db, _), (got, pred)) in STEPS
+                .iter()
+                .zip(heard.into_iter().zip(side_steps(&ours, SR)))
+            {
+                let d = pred - got;
+                println!("  {which} in_peak {db:>6} dB  render {got:>8.2}  engine {pred:>8.2}  Δ {d:+.3} dB");
+                assert!(
+                    d.abs() <= verify::STATIC_TOLERANCE_DB,
+                    "{name} {which} at the {db} dB step: engine {pred:.2} vs Live's render {got:.2} dB"
+                );
+            }
+        }
+        gated += 1;
+    }
+    println!("  {gated} of {} renders gated", RANGE_RENDERS.len());
 }

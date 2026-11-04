@@ -170,8 +170,11 @@ const isControl = (value: unknown): value is MidiControl => {
     && Number.isInteger(row.value) && (row.value as number) >= 0 && (row.value as number) <= 127
 }
 
-/** Subscribe to the host's control changes. Returns the unsubscribe, which releases the listener: after it, no control reaches the map. */
-export function subscribeLiveMidiControls(options: LiveMidiControlOptions): () => void {
+/** One of the host's batched MIDI events, each row read exactly: a batch the window does not read is refused as `what`, and the named
+ * absence outside the native host. Returns the unsubscribe, which releases the listener, including one that attaches after it. */
+function subscribeBatch<T>(event: string, is: (value: unknown) => value is T, what: string, listening: string,
+  onBatch: (batch: readonly T[]) => void, options: {readonly onRefused?: (reason: string) => void; readonly native?: boolean;
+    readonly listen?: (event: string, handler: (event: {readonly payload: unknown}) => void) => Promise<() => void>}): () => void {
   if (!(options.native ?? nativeHost())) {
     options.onRefused?.(LIVE_MIDI_ABSENT)
     return () => {}
@@ -179,24 +182,74 @@ export function subscribeLiveMidiControls(options: LiveMidiControlOptions): () =
   let live = true
   let stop: (() => void) | null = null
   const listen = options.listen ?? tauriListen
-  listen(MIDI_CC_EVENT, event => {
+  listen(event, heard => {
     if (!live) return
-    if (!Array.isArray(event.payload) || !event.payload.every(isControl)) {
-      options.onRefused?.('the native host sent a control change this device does not read')
+    if (!Array.isArray(heard.payload) || !heard.payload.every(is)) {
+      options.onRefused?.(`the native host sent ${what} this device does not read`)
       return
     }
-    if (event.payload.length > 0) options.onControls(event.payload)
+    if (heard.payload.length > 0) onBatch(heard.payload)
   }).then(released => {
     if (live) stop = released
     else released()
   }, cause => {
-    if (live) options.onRefused?.(`the native host did not answer MIDI control listening: ${cause instanceof Error ? cause.message : String(cause)}`)
+    if (live) options.onRefused?.(`the native host did not answer MIDI ${listening} listening: ${cause instanceof Error ? cause.message : String(cause)}`)
   })
   return () => {
     live = false
     stop?.()
     stop = null
   }
+}
+
+/** Subscribe to the host's control changes. Returns the unsubscribe, which releases the listener: after it, no control reaches the map. */
+export function subscribeLiveMidiControls(options: LiveMidiControlOptions): () => void {
+  return subscribeBatch(MIDI_CC_EVENT, isControl, 'a control change', 'control', options.onControls, options)
+}
+
+// ── pitch bend and channel pressure: the part's instrument's input (O-I #853 round 16) ─────────────────────────────────────────────
+// The host sends each pitch bend and channel pressure as `oi://midi-expression`, a sibling of the notes and the controls (midi.rs
+// decode_expression). The part's input hands each to the part's instrument (live/liveEngine.ts touchInEngine); no note is struck by it.
+
+export const MIDI_EXPRESSION_EVENT = 'oi://midi-expression'
+
+/** A pitch bend (`value` −8192 to 8191, 0 at rest) or a channel pressure (`value` 0 to 127), as the host decoded it. */
+export interface MidiExpression {
+  readonly port: string
+  readonly channel: number
+  readonly kind: 'bend' | 'pressure'
+  readonly value: number
+}
+
+/** The amount the engine takes: a bend −1 (all the way down) to just short of 1 (8191 of 8192 up), a pressure 0 to 1. */
+export function midiExpressionAmount(expression: MidiExpression): number {
+  return expression.kind === 'bend' ? expression.value / 8192 : expression.value / 127
+}
+
+export interface LiveMidiExpressionOptions {
+  /** One batch of bends and pressures, in arrival order. */
+  readonly onExpressions: (expressions: readonly MidiExpression[]) => void
+  /** A named refusal: outside the native host, a payload this window does not read, or a listener that did not attach. */
+  readonly onRefused?: (reason: string) => void
+  /** Whether this window is the native host. Defaults to the host marker. */
+  readonly native?: boolean
+  /** The host's event listener. Defaults to the Tauri event API, loaded only in the native host. */
+  readonly listen?: (event: string, handler: (event: {readonly payload: unknown}) => void) => Promise<() => void>
+}
+
+const isExpression = (value: unknown): value is MidiExpression => {
+  if (typeof value !== 'object' || value === null) return false
+  const row = value as Record<string, unknown>
+  const [least, most] = row.kind === 'bend' ? [-8192, 8191] : row.kind === 'pressure' ? [0, 127] : [1, 0]
+  return typeof row.port === 'string'
+    && Number.isInteger(row.channel) && (row.channel as number) >= 0 && (row.channel as number) <= 15
+    && Number.isInteger(row.value) && (row.value as number) >= least && (row.value as number) <= most
+}
+
+/** Subscribe to the host's pitch bends and channel pressures. Returns the unsubscribe, which releases the listener: after it, none reaches
+ * the part. */
+export function subscribeLiveMidiExpression(options: LiveMidiExpressionOptions): () => void {
+  return subscribeBatch(MIDI_EXPRESSION_EVENT, isExpression, 'a pitch bend or channel pressure', 'bend and pressure', options.onExpressions, options)
 }
 
 // ── MIDI out: what a part plays leaves for a MIDI output (O-I #853) ───────────────────────────────────────────────────────────────

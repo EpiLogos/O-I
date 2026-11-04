@@ -1067,8 +1067,10 @@ export function refinementResult(refinement: Refinement): {rows: ResultRow[]; wh
   return {rows, why: RESULT_WHY.answered(answered.length)}
 }
 
-/** The AIKit acts of a refinement (aikit_write), each on the member chosen. */
-export const REFINE_WRITES: Readonly<Record<'accept' | 'discard', string>> = {accept: 'refinement-accept', discard: 'refinement-discard'}
+/** The AIKit acts of a refinement (aikit_write), each on the member chosen. Follow picks up what the person's Accept wrote in Central:
+ * AIKit syncs the member's source from Central and promotes it, with a receipt (`aikit source refine follow`, O-I 795 round 14). */
+export const REFINE_WRITES: Readonly<Record<'accept' | 'discard' | 'follow', string>> = {accept: 'refinement-accept', discard: 'refinement-discard',
+  follow: 'refinement-follow'}
 
 /** Central's own acts on a revision it keeps, the person's presses (ownerRoutes.ts centralRevisionWrite): the revision as AIKit handed it. */
 export type CentralRevisionHand = (verb: 'accept' | 'discard', handed: HandedRevision) => Promise<unknown>
@@ -1085,6 +1087,12 @@ export function refinementAcceptWhy(refinement: Refinement, hands: {readonly cen
   // AIKit's Accept hands it now (ai-kit skill_sources.rs accept_revision), and Central keeps it beside the skill in use.
   const handed = refinement.owner === CENTRAL_SOURCE ? refinement.handed : null
   if (handed) return hands.central ? null : centralUnwired('accept', refinement, handed)
+  // The person's one Accept hands it, writes it in Central and has AIKit follow (O-I 795 round 14): with no hand to Central, it would stop
+  // half way, so it is not asked.
+  if (refinement.owner === CENTRAL_SOURCE && !hands.central) {
+    return `Accept: Central keeps ${refinement.member}, a Control skill: your Accept hands its revision to Central and writes it there `
+      + '(control.skills.revision.accept), and no hand carries it to Central here.'
+  }
   if (refinement.stale) return `Accept: the revision of ${refinement.member} this was drafted against is no longer in use (its source moved on since); Discard it and propose again.`
   return null
 }
@@ -1095,30 +1103,53 @@ export function refinementDiscardWhy(refinement: Refinement, hands: {readonly ce
   return handed && !hands.central ? centralUnwired('discard', refinement, handed) : null
 }
 
-/** Accept or Discard on one proposed revision, through its owners: AIKit's own verbs (`aikit source refine accept|discard`, an Accept that
- * hands a Control skill's revision to Central), and for one that waits in Central the person's act there first — Accept writes the skill
- * and Discard drops Central's revision; either way AIKit's copy then goes. A revision Central no longer keeps is dropped from AIKit alone.
- * Shared by the Refining page and Approvals. */
+/** Central's words when no proposed revision waits there: it was written (or dropped) already. */
+const NOTHING_WAITS = /no proposed revision of \S+ waits/
+
+/** Accept or Discard on one proposed revision, through its owners: AIKit's own verbs (`aikit source refine accept|discard|follow`) and,
+ * for a Control skill Central keeps, Central's own act on the person's authority. The person's one Accept of a Control skill's revision
+ * is enough (O-I 795 round 14): AIKit's Accept hands it to Central where it is not yet handed (its answer names where it waits), Central's
+ * Accept writes it at the digest reviewed, and AIKit's Follow syncs the member's source from Central and promotes it, with a receipt —
+ * nothing is left for the person to sync or promote. A revision Central already wrote (nothing waits there) is followed, and AIKit judges
+ * whether Central accepted it. Discard on one that waits in Central drops it there first, then AIKit's copy; one Central no longer keeps
+ * is dropped from AIKit alone. Shared by the Refining page and Approvals. */
 export async function answerRefinement(refinement: Refinement, verb: 'accept' | 'discard',
   ports: {readonly write?: RefiningPorts['write']; readonly central?: CentralRevisionHand}): Promise<void> {
   const why = verb === 'accept' ? refinementAcceptWhy(refinement, {central: !!ports.central}) : refinementDiscardWhy(refinement, {central: !!ports.central})
   if (why) throw Error(why)
   if (!ports.write) throw Error(REFINE_NO_CARRIER)
-  const handed = refinement.owner === CENTRAL_SOURCE ? refinement.handed : null
-  if (handed && ports.central) {
-    try {
-      await ports.central(verb, handed)
-    } catch (error) {
-      if (verb === 'accept' || !/no proposed revision of \S+ waits/.test(error instanceof Error ? error.message : String(error))) throw error
+  const member = refinement.member
+  const central = refinement.owner === CENTRAL_SOURCE ? ports.central : undefined
+  let handed = refinement.owner === CENTRAL_SOURCE ? refinement.handed : null
+  if (verb === 'accept' && central) {
+    if (!handed) {
+      // AIKit's answer is its reading ({route, data}): where the revision now waits in Central (`handed`).
+      const answer = await ports.write({kind: REFINE_WRITES.accept, member})
+      handed = handedOf(isObj(answer) && isObj(answer.data) ? answer.data.handed : null)
+      if (!handed) throw Error(`Accept: AIKit did not say where the revision of ${member} waits in Central, so Central's Accept is not asked.`)
     }
-    await ports.write({kind: REFINE_WRITES.discard, member: refinement.member})
+    try {
+      await central('accept', handed)
+    } catch (error) {
+      if (!NOTHING_WAITS.test(error instanceof Error ? error.message : String(error))) throw error
+    }
+    await ports.write({kind: REFINE_WRITES.follow, member})
     return
   }
-  await ports.write({kind: REFINE_WRITES[verb], member: refinement.member})
+  if (handed && central) {
+    try {
+      await central(verb, handed)
+    } catch (error) {
+      if (!NOTHING_WAITS.test(error instanceof Error ? error.message : String(error))) throw error
+    }
+    await ports.write({kind: REFINE_WRITES.discard, member})
+    return
+  }
+  await ports.write({kind: REFINE_WRITES[verb], member})
 }
 
 export interface RefiningPorts {
-  /** AIKit's writes through the kernel (aikit_write). Absent: no carrier stands. */
+  /** AIKit's writes through the kernel (aikit_write), each answering AIKit's reading ({route, data}). Absent: no carrier stands. */
   readonly write?: (request: {kind: string; member: string}) => Promise<unknown>
   /** The session's own Repeat over Skillset (sessionSettings.ts testRefinement). Absent: no session's task stands here. */
   readonly test?: (set: string, member: string) => Promise<{ok: true; note: string} | {ok: false; error: string}>

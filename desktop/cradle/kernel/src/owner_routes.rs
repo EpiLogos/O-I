@@ -289,6 +289,16 @@ pub enum QlRead {
     ShapeBind {
         request: Value,
     },
+    /// QL's word on cells of one of its decision instruments (`ql
+    /// context-frame team-space check <instrument> -`,
+    /// `ql.instrument-cells/v1` on stdin → `ql.instrument-cell-check/v1`;
+    /// O-I #843, a Factory unit's seven heads as a Vāk-block cell): each
+    /// chosen label held to its head and the instrument's constraints, the
+    /// open heads named. Calls no model.
+    InstrumentCheck {
+        instrument: String,
+        request: Value,
+    },
     /// The planets of the day and of the hour at a place (`ql nara hours -`,
     /// `ql.sky-hours/v1`): the request (`ql.sky-day-request/v1`: an instant,
     /// a place, and whether it is the world's declared place or a private
@@ -1029,11 +1039,18 @@ pub enum AikitWrite {
     },
     /// A member's proposed revision kept as its next revision (`aikit source
     /// refine accept <member>`: History's Rollback takes it back) or dropped
-    /// (`aikit source refine discard <member>`; O-I manual §19.7).
+    /// (`aikit source refine discard <member>`; O-I manual §19.7). A member
+    /// Central keeps is not written by AIKit: Accept hands the revision to
+    /// Central, where the person's Accept writes it; Follow (`aikit source
+    /// refine follow <member>`) then syncs and promotes AIKit's source from
+    /// Central, its receipt naming what moved (O-I 795 round 14).
     RefinementAccept {
         member: String,
     },
     RefinementDiscard {
+        member: String,
+    },
+    RefinementFollow {
         member: String,
     },
     /// Fill the open heads of one instrument of QL's team space (O-I #843,
@@ -1139,6 +1156,7 @@ impl AikitWrite {
             | Self::SourceRollback { .. }
             | Self::RefinementAccept { .. }
             | Self::RefinementDiscard { .. }
+            | Self::RefinementFollow { .. }
             | Self::DecideFill { .. } => None,
         }
     }
@@ -2148,6 +2166,27 @@ fn ql_answer(request: &QlRead) -> Result<Reading, Error> {
             "ql.shape-bind/v1",
             READ_LIMIT,
         ),
+        QlRead::InstrumentCheck {
+            instrument,
+            request,
+        } => {
+            let route = "ql context-frame team-space check";
+            if instrument.trim().is_empty() {
+                return Err(incompatible(format!(
+                    "{route} names the instrument it checks"
+                )));
+            }
+            let mut args = words(&["context-frame", "team-space", "check"]);
+            args.push(instrument.into());
+            args.extend(words(&["-", "--json"]));
+            (
+                route,
+                args,
+                Some(request),
+                "ql.instrument-cell-check/v1",
+                READ_LIMIT,
+            )
+        }
         other => return ql_registry_answer(other),
     };
     let mut call = Call::new(ql(), route, args, limit);
@@ -3649,9 +3688,12 @@ fn aikit_written(request: &AikitWrite, cwd: Option<&Path>) -> Result<Written, Er
             args.push(id.into());
             ("aikit source rollback", args)
         }
-        AikitWrite::RefinementAccept { member } | AikitWrite::RefinementDiscard { member } => {
+        AikitWrite::RefinementAccept { member }
+        | AikitWrite::RefinementDiscard { member }
+        | AikitWrite::RefinementFollow { member } => {
             let (verb, route) = match request {
                 AikitWrite::RefinementAccept { .. } => ("accept", "aikit source refine accept"),
+                AikitWrite::RefinementFollow { .. } => ("follow", "aikit source refine follow"),
                 _ => ("discard", "aikit source refine discard"),
             };
             if member.trim().is_empty() {
@@ -3782,9 +3824,22 @@ fn aikit_written(request: &AikitWrite, cwd: Option<&Path>) -> Result<Written, Er
             let reference = named(&data, &["/bypass_id"]);
             (data, reference)
         }
-        // The member answered; Accept names the revision it keeps as the next.
+        // The member answered; Accept names the revision it keeps as the
+        // next, or, for a member Central keeps, where the revision waits there.
         AikitWrite::RefinementAccept { member } => {
-            let data = fields(route, data, &[("revision", Kind::Text)])?;
+            let data = match fields(route, data.clone(), &[("handed", Kind::Record)]) {
+                Ok(handed) => handed,
+                Err(_) => fields(route, data, &[("revision", Kind::Text)])?,
+            };
+            (data, Some(member.clone()))
+        }
+        // Follow names the member it picked up and the snapshot now in use.
+        AikitWrite::RefinementFollow { member } => {
+            let data = fields(
+                route,
+                data,
+                &[("followed", Kind::Text), ("active_snapshot", Kind::Text)],
+            )?;
             (data, Some(member.clone()))
         }
         AikitWrite::RefinementDiscard { member } => {

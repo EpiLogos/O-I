@@ -279,6 +279,10 @@ export type QlReadRequest = {kind:"kernel-m1"|"scene-compose"|"scene-world";requ
    * members:[{subject_ref, position, face:"direct"|"conjugate"}], provenance:{caller_ref, source_ref, standing_ref}}` on stdin; QL
    * answers its grain, shape_ref, the `ql-mef/shape-binding/v1` binding and the generated relation's identity by position. */
   | {kind:"shape-bind";request:unknown}
+  /** `ql context-frame team-space check <instrument> -` (`ql.instrument-cells/v1` on stdin → `ql.instrument-cell-check/v1`, O-I #843):
+   * QL's word on cells of one decision instrument — each cell {key, chosen:{head:[labels]}} answered {key, state admitted|refused,
+   * heads, open, why}: each chosen label held to its head and the instrument's constraints, the open heads named. Calls no model. */
+  | {kind:"instrument-check";instrument:string;request:unknown}
   /** `ql nara hours -` (`ql.sky-hours/v1`): the planets of the day and of the hour at a place, for a `ql.sky-day-request/v1`
    * ({schema, epoch, place:{reference, label, latitude_degrees, longitude_degrees, altitude_metres, timezone},
    * scope:"world-declared"|"observer-private", backend_policy}) on stdin. */
@@ -487,10 +491,12 @@ export type AikitWriteRequest =
   /** `aikit source sync|rollback ID`; `aikit source promote ID [--trust] [--trust-skill C]…`. */
   | {kind:"source-sync"|"source-rollback";id:string}
   | {kind:"source-promote";id:string;trust?:boolean;trust_skills?:string[]}
-  /** `aikit source refine accept|discard MEMBER` (O-I manual §19.7): Accept keeps a member's proposed revision as its next (History's
-   * Rollback takes it back), Discard drops it; answers {member, revision, …} and {discarded, …}. AIKit refuses a Control skill's
-   * (Central keeps its source) and a proposal drafted against a revision no longer in use, in its words. */
-  | {kind:"refinement-accept"|"refinement-discard";member:string}
+  /** `aikit source refine accept|discard|follow MEMBER` (O-I manual §19.7): Accept keeps a member's proposed revision as its next (History's
+   * Rollback takes it back), Discard drops it; answers {member, revision, …} and {discarded, …}. A Control skill's (Central keeps its
+   * source) Accept hands it to Central instead, answering where it waits ({member, handed}); once the person's Accept in Central wrote it,
+   * Follow syncs the member's source from Central and promotes it ({followed, revision, active_snapshot, rollback_to, also_moved, …}).
+   * AIKit refuses a proposal drafted against a revision no longer in use, and a follow of what Central has not accepted, in its words. */
+  | {kind:"refinement-accept"|"refinement-discard"|"refinement-follow";member:string}
   /** `aikit decide invoke --instrument I --request-file - [--agent-session S]` (O-I #843, Factory's Fill heads): the cell's own words and
    * the heads it has chosen (`aikit.instrument-fill-request/v1`) on stdin; answers `aikit.instrument-fill/v1`, the picks as evidence. */
   | {kind:"decide-fill";instrument:string;request:unknown;agent_session?:string|null}
@@ -1314,7 +1320,8 @@ export interface EncounterTakesSet {
   ended: null | {at_unix_ms: number; outcome: 'made' | 'failed' | 'stopped'; takes?: number; root?: string; reason?: string}
 }
 export type EncounterTaskSettingKey = 'name' | 'colour' | 'active' | 'register' | 'form' | 'loop' | 'loop_until' | 'loop_cap' | 'launch' | 'then'
-  | 'quantize' | 'repeat_variable' | 'repeat_levels' | 'repeat_repeats' | 'repeat_stop' | 'envelope_mode' | 'envelope_linked' | 'source' | 'success' | 'effort' | 'tool_calls'
+  | 'quantize' | 'repeat_variable' | 'repeat_levels' | 'repeat_repeats' | 'repeat_stop' | 'envelope_mode' | 'envelope_linked' | 'source' | 'success' | 'compare'
+  | 'effort' | 'tool_calls'
 /** An envelope point: [seconds from the task's start, a level word under Automation or a step −2…+2 under Modulation]. */
 export type EncounterEnvelopePoint = [number, string | number]
 /** The owner's reading: every value as it stands (defaults stated), `set` naming what the person set. Its words are the manual's (§19.1
@@ -1354,6 +1361,9 @@ export interface EncounterSessionSettingsReading {
     /** The Success conditions the person typed for the task (§19.1 The Intent panel's Add), in their words, kept with its settings; a
      * set of takes is read against them as they stood at its first run. Absent from an AIKit before O-I 795 round 13. */
     success?: string[]
+    /** Compare, the takes' own setting (§19.1 The Launch panel; Arrangement view's take settings): none · second · every, default none; it
+     * moves while the takes run. Absent from an AIKit before O-I 795 round 14. */
+    compare?: 'none' | 'second' | 'every'
     /** The Repeat's set of takes that stands; null until one starts. Absent from an AIKit before O-I 795. */
     takes?: EncounterTakesSet | null
     /** The run a Repeat's takes share, in Actuation's own words, or why AIKit has none (EncounterTakeRun). Absent from an AIKit

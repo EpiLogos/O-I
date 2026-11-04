@@ -314,6 +314,49 @@ test('the host\'s note carries when it was received, and the note event keeps it
   assert.equal(event.port, 'Keys')
 })
 
+// ── 3b — pitch bend and channel pressure: the part's instrument's input (O-I #853 round 16) ───────────────────────────────────────
+// The host decodes each pitch bend and channel pressure (midi.rs decode_expression) and sends them as `oi://midi-expression`, a sibling
+// of the notes; the part's input forwards each to the part's instrument in the engine (liveEngine.ts touchInEngine).
+
+test('a pitch bend and a channel pressure arrive from the host as one batch, each read as its amount; a row the window does not read is refused by name', async () => {
+  const handlers = new Map()
+  const listen = async (event, handler) => { handlers.set(event, handler); return () => {} }
+  const batches = [], refused = []
+  const off = midi.subscribeLiveMidiExpression({native: true, listen, onExpressions: batch => batches.push(batch), onRefused: reason => refused.push(reason)})
+  await tick(); await tick()
+  assert.equal(midi.MIDI_EXPRESSION_EVENT, 'oi://midi-expression', 'the host\'s event (midi.rs EXPRESSION_EVENT)')
+  const handler = handlers.get(midi.MIDI_EXPRESSION_EVENT)
+  handler({payload: [{port: 'Keys', channel: 0, kind: 'bend', value: -8192}, {port: 'Keys', channel: 0, kind: 'pressure', value: 127}]})
+  assert.equal(batches.length, 1, 'one task, one batch')
+  assert.deepEqual(batches[0].map(midi.midiExpressionAmount), [-1, 1], 'a bend all the way down is −1; a full pressure is 1')
+  assert.equal(midi.midiExpressionAmount({port: 'Keys', channel: 0, kind: 'bend', value: 0}), 0, 'the wheel at rest bends nothing')
+  assert.equal(midi.midiExpressionAmount({port: 'Keys', channel: 0, kind: 'bend', value: 8191}), 8191 / 8192, 'all the way up is one step short of 1')
+  assert.equal(midi.midiExpressionAmount({port: 'Keys', channel: 0, kind: 'bend', value: 4096}), 0.5)
+  assert.equal(midi.midiExpressionAmount({port: 'Keys', channel: 0, kind: 'pressure', value: 0}), 0)
+  for (const row of [{port: 'Keys', channel: 0, kind: 'bend', value: 8192}, {port: 'Keys', channel: 0, kind: 'pressure', value: 128},
+    {port: 'Keys', channel: 0, kind: 'aftertouch', value: 3}, {port: 'Keys', channel: 16, kind: 'bend', value: 0}]) {
+    handler({payload: [row]})
+  }
+  assert.equal(batches.length, 1, 'nothing the window does not read is passed on')
+  assert.equal(refused.length, 4)
+  assert.match(refused[0], /pitch bend or channel pressure this device does not read/)
+  off()
+  handler({payload: [{port: 'Keys', channel: 0, kind: 'bend', value: 10}]})
+  assert.equal(batches.length, 1, 'after unmount it reaches nothing')
+  const absent = []
+  midi.subscribeLiveMidiExpression({native: false, onExpressions: () => assert.fail('no listener outside the host'), onRefused: reason => absent.push(reason)})()
+  assert.deepEqual(absent, [midi.LIVE_MIDI_ABSENT], 'outside the native host it is the named absence')
+})
+
+test('the part\'s input forwards each pitch bend and channel pressure to the part\'s instrument, and says in words what did not move', () => {
+  const part = readFileSync(new URL('../src/live/KeyboardOnChain.tsx', import.meta.url), 'utf8')
+  assert.match(part, /subscribeLiveMidiExpression\(/, 'the part hears the host\'s bends and pressures')
+  assert.match(part, /touchInEngine\(/, 'and hands each to the part\'s instrument through the engine')
+  assert.match(part, /midiExpressionAmount\(/, 'as its amount')
+  assert.match(part, /settings\.inputs\.midi|inputs\.midi/, 'MIDI switched off moves nothing')
+  assert.match(part, /refusalWords\(/, 'a refusal is a plain line')
+})
+
 // ── 4 — the shell's one path, its settings and the part's input ──────────────────────────────────────────────────────────────────
 
 test('one keyboard, one path: the surface and the part\'s MIDI share the live path, so Panic reaches every note', async () => {

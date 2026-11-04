@@ -45,8 +45,8 @@ const PATH = '/sets/engine.als'
 const summary = {path: PATH, tempo_bpm: 120, scene_count: 1, arrangement_clips: 0,
   tracks: KINDS.map((kind, i) => ({kind, name: `P${i}`, devices: []}))}
 
-test('the set\'s parts are the engine\'s: its parts, its returns and the Main track; a group is not hosted', () => {
-  assert.deepEqual(KINDS.map((_, i) => engine.enginePartOf(KINDS, i)), [{track: 0}, null, {track: 1}, {return: 0}, 'main'])
+test('the set\'s parts are the engine\'s: its parts, its groups, its returns and the Main track', () => {
+  assert.deepEqual(KINDS.map((_, i) => engine.enginePartOf(KINDS, i)), [{track: 0}, {group: 0}, {track: 1}, {return: 0}, 'main'])
   assert.deepEqual(engine.engineEventOfMixerWrite(KINDS, 2, 'activator', false), {kind: 'active', part: {track: 1}, on: false})
   assert.deepEqual(engine.engineEventOfMixerWrite(KINDS, 3, 'activator', true), {kind: 'active', part: {return: 0}, on: true})
   assert.deepEqual(engine.engineEventOfMixerWrite(KINDS, 4, 'activator', false), {kind: 'active', part: 'main', on: false})
@@ -54,12 +54,15 @@ test('the set\'s parts are the engine\'s: its parts, its returns and the Main tr
   assert.equal(engine.engineEventOfMixerWrite(KINDS, 3, 'solo', true), null, 'the engine solos parts, not returns')
   assert.equal(engine.engineEventOfMixerWrite(KINDS, 0, 'arm', true), null, 'Arm changes nothing the engine plays')
   assert.equal(engine.engineEventOfMixerWrite(KINDS, 0, 'monitor', 'in'), null)
-  assert.equal(engine.engineEventOfMixerWrite(KINDS, 1, 'activator', false), null, 'a group is not hosted')
+  // a group track is the engine's bus (O-I #849 round 16): its row follows; the engine solos and sends from parts
+  assert.deepEqual(engine.engineEventOfMixerWrite(KINDS, 1, 'activator', false), {kind: 'active', part: {group: 0}, on: false})
+  assert.equal(engine.engineEventOfMixerWrite(KINDS, 1, 'solo', true), null, 'the engine solos parts, not groups, while it plays')
+  assert.equal(engine.engineEventOfSendWrite(KINDS, 1, 0, 0.5), null, 'the engine moves the sends of parts while it plays')
   assert.deepEqual(engine.engineEventOfSendWrite(KINDS, 2, 0, 0.5), {kind: 'send', track: 1, send: 0, gain: 0.5})
   assert.deepEqual(engine.engineEventOfMixerWrite(KINDS, 2, 'volume', 0.5), {kind: 'volume', part: {track: 1}, gain: 0.5})
   assert.deepEqual(engine.engineEventOfMixerWrite(KINDS, 3, 'volume', 0.7), {kind: 'volume', part: {return: 0}, gain: 0.7})
   assert.deepEqual(engine.engineEventOfMixerWrite(KINDS, 4, 'pan', -0.5), {kind: 'pan', part: 'main', pan: -0.5})
-  assert.equal(engine.engineEventOfMixerWrite(KINDS, 1, 'volume', 0.5), null, 'a group is not hosted')
+  assert.deepEqual(engine.engineEventOfMixerWrite(KINDS, 1, 'volume', 0.5), {kind: 'volume', part: {group: 0}, gain: 0.5})
   assert.equal(engine.engineEventOfMixerWrite(KINDS, 0, 'volume', true), null, 'a volume is a number')
   assert.equal(engine.engineEventOfSendWrite(KINDS, 3, 0, 0.5), null, 'the engine has no return-to-return send')
 })
@@ -76,8 +79,11 @@ test('every event the UI sends is one the host parses: the same fields its own t
   const sent = [engine.engineEventOfMixerWrite(KINDS, 2, 'activator', false), engine.engineEventOfMixerWrite(KINDS, 3, 'activator', false),
     engine.engineEventOfMixerWrite(KINDS, 2, 'solo', true), engine.engineEventOfSendWrite(KINDS, 2, 0, 0.5),
     engine.engineEventOfMixerWrite(KINDS, 0, 'volume', 0.25), engine.engineEventOfMixerWrite(KINDS, 4, 'pan', 0.3),
+    engine.engineEventOfMixerWrite(KINDS, 1, 'volume', 0.5), engine.engineEventOfMixerWrite(KINDS, 1, 'activator', false),
     // A Torus act, as its owner's torus-play names it (O-I #849).
-    {kind: 'torus_play', track: 0, keys: [{row: 2, column: 3}], amplitude: [0.3, 0]}]
+    {kind: 'torus_play', track: 0, keys: [{row: 2, column: 3}], amplitude: [0.3, 0]},
+    // A part's pitch bend and channel pressure (O-I #853 round 16), as the part's input forwards them (touchInEngine).
+    {kind: 'bend', track: 1, amount: -0.5}, {kind: 'pressure', track: 1, amount: 0.5}]
   for (const event of sent) {
     const shape = JSON.stringify([Object.keys(event).sort(), typeof event.part === 'object' ? Object.keys(event.part) : event.part ?? null])
     assert.ok(pinned.has(`${event.kind} ${shape}`), `the host's tests parse a ${event.kind} event shaped ${shape}`)
@@ -101,7 +107,7 @@ test('off the native candidate each engine act refuses, naming its op', async ()
 
 /** A native host standing in: the set owner's ops in the kernel's shape, and the engine as live_engine_host.rs answers — a move sent is
  * queued, and the reading shows it only after a block (here, the next live_engine_mixer read) applied it. */
-const exportArgs = [], torusArgs = [], effectsArgs = []
+const exportArgs = [], torusArgs = [], effectsArgs = [], sentEvents = []
 /** What the host refuses the Torus's effects in, when it does (set by a test). */
 let refuseEffects = null
 /** The Torus's effects as live_engine_host.rs torus_chain stands them: Reverb the engine's own at the frame's Decay, Auto Filter in words. */
@@ -120,6 +126,7 @@ function nativeHost({refuseOpen = null, refuseTorus = null} = {}) {
   exportArgs.length = 0
   torusArgs.length = 0
   effectsArgs.length = 0
+  sentEvents.length = 0
   refuseEffects = null
   const reading = () => structuredClone(applied)
   const apply = event => {
@@ -136,7 +143,10 @@ function nativeHost({refuseOpen = null, refuseTorus = null} = {}) {
       mixer: {tracks: [part('P0'), part('P2')], returns: [part('P3')], main: part('Main')}}; return reading() },
     live_engine_play: () => { applied.playing = true; return reading() },
     live_engine_stop: () => { applied.playing = false; return reading() },
-    live_engine_send: ({event}) => { if (event.kind === 'send' && event.send > 0) throw `track ${event.track} has no send ${event.send}`; queued.push(event); return reading() },
+    live_engine_send: ({event}) => { sentEvents.push(structuredClone(event)); if (event.kind === 'send' && event.send > 0) throw `track ${event.track} has no send ${event.send}`
+      // the Torus's instrument takes no channel pressure (graph.rs Touch::NONE), in the engine's words (engine.rs refusal)
+      if (event.kind === 'pressure') throw `'P0' plays the engine's Torus, which takes no channel pressure`
+      queued.push(event); return reading() },
     live_engine_mixer: () => { for (const event of queued) apply(event); queued = []; applied.position += 512; return reading() },
     // the Torus the kernel kept under the lease, by its digest, onto the part (live_engine_host.rs live_engine_torus → bind_torus)
     live_engine_torus: args => { torusArgs.push(structuredClone(args)); if (refuseTorus) throw refuseTorus
@@ -238,7 +248,7 @@ const frameStage = (answer = command => command.on ? {ok: true, torus_engine: HA
 
 test('the Torus sounds on the set\'s first MIDI part, and no part where the set has none', () => {
   assert.equal(engine.torusPartOf(KINDS), 0)
-  assert.equal(engine.torusPartOf(['audio', 'group', 'midi', 'return', 'master']), 1, 'a group is no part: the second part is the engine\'s 1')
+  assert.equal(engine.torusPartOf(['audio', 'group', 'midi', 'return', 'master']), 1, 'a group is a bus, not a part: the second part is the engine\'s 1')
   assert.equal(engine.torusPartOf(['audio', 'return', 'master']), null)
 })
 
@@ -321,6 +331,39 @@ test('a Torus that cannot be handed over leaves the set playing, says why on Pla
     }
   }
   assert.equal(engine.liveEngineState().torus, null, 'Stop clears it: the next Play hands it over again')
+})
+
+// O-I #853 round 16: a part's pitch bend and channel pressure reach its instrument in the engine (graph.rs Instrument bend / pressure,
+// heard from the next block). A wheel moves faster than the host answers, so one is in flight at a time and the latest of each kind goes
+// next: none is queued behind it. A refusal is the engine's words, said on the part's input, not on the transport. Stopped, the Torus
+// sounds in the live instrument, which takes neither.
+test('a pitch bend reaches the Torus part\'s instrument in the engine, the latest while one is in flight; a refusal is the engine\'s words', async () => {
+  const calls = nativeHost()
+  const {stage} = frameStage()
+  try {
+    const waits = await engine.touchInEngine('bend', 0.5)
+    assert.match(waits, /pitch bend/, 'stopped: said in words')
+    assert.match(waits, /Torus/, 'naming the instrument that takes none')
+    assert.doesNotMatch(waits, /live_engine|_send|torus-engine/, 'no op names')
+    assert.ok(!calls.includes('live_engine_send'), 'nothing plays in the engine: nothing is sent')
+    await engine.liveEngine.play(PATH, undefined, stage)
+    sentEvents.length = 0
+    const answers = [engine.touchInEngine('bend', 0.1), engine.touchInEngine('bend', 0.2), engine.touchInEngine('bend', 0.3)]
+    assert.deepEqual(await Promise.all(answers), [null, null, null], 'each moved the part')
+    assert.deepEqual(sentEvents, [{kind: 'bend', track: 0, amount: 0.1}, {kind: 'bend', track: 0, amount: 0.3}],
+      'one in flight, then the latest: the one between is passed over, never queued')
+    assert.equal(await engine.touchInEngine('pressure', 1), `'P0' plays the engine's Torus, which takes no channel pressure`, 'the engine\'s words')
+    assert.equal(engine.liveEngineState().error, null, 'a touch refused is the part input\'s line, not the transport\'s')
+    assert.equal(await engine.touchInEngine('bend', 0), null, 'a bend after a refused pressure still moves the part')
+    assert.deepEqual(sentEvents.slice(2), [{kind: 'pressure', track: 0, amount: 1}, {kind: 'bend', track: 0, amount: 0}])
+    await engine.liveEngine.stop(stage)
+    const sent = sentEvents.length
+    assert.match(await engine.touchInEngine('pressure', 0.4), /channel pressure/, 'stopped again: in words')
+    assert.equal(sentEvents.length, sent, 'and nothing is sent')
+  } finally {
+    await engine.liveEngine.stop(stage).catch(() => {})
+    delete globalThis.window
+  }
 })
 
 test('the notes the host hands the Torus\'s owner are played through the frame at their samples, at once when the owner passed it', async () => {
@@ -453,6 +496,17 @@ test('a part\'s Volume and Pan stand on its mixer row: the set\'s reading, the e
   // drawn on the row, each a value box over its owner
   const markup = renderToStaticMarkup(createElement(MixerRow, {cells, shown: true, trackId: keys.id, receipt: null, onPress: () => {}}))
   assert.match(markup, /class="mx-lv"[\s\S]*data-mix="volume"[\s\S]*data-mix="pan"/, 'Volume, then Pan, on the row\'s level line')
+})
+
+// A group is the engine's bus (O-I #849 round 16): while the engine plays the set, the group's row reads its bus as the engine applied it.
+test('a group\'s Volume and Pan are its bus\'s as the engine applied it while the engine plays the set; stopped, the set\'s', () => {
+  const set = {...mixSet, tracks: [mixSet.tracks[0], {kind: 'group', name: 'Bus', devices: []}, ...mixSet.tracks.slice(1)]}
+  const document = {...mixDocument, tracks: [mixDocument.tracks[0], row('group', 'Bus', {activator: true, volume: 1, pan: 0}), ...mixDocument.tracks.slice(1)]}
+  const engineReading = {...playing, mixer: {...playing.mixer, groups: [engineMix(0.5, -0.4)]}}
+  const heard = adapter.liveSetTrackAdapter.project({set, document, engine: engineReading}).tracks[1]
+  assert.deepEqual([dB(10 ** (heard.mix.volume / 20)), heard.mix.pan], [-6.02, -0.4], 'the bus as the engine applied it')
+  const stopped = adapter.liveSetTrackAdapter.project({set, document, engine: {...engineReading, playing: false}}).tracks[1]
+  assert.deepEqual([stopped.mix.volume, stopped.mix.pan], [0, 0], 'stopped: the set\'s reading')
 })
 
 // Live's mode tracks (frame/tracks/modeTracks.ts) read the engine as it stands when the pane draws, and the pane draws again when the

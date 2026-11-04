@@ -70,7 +70,13 @@ test('writePath is present exactly where a real owner write exists — known-ref
   // REPLACED (lane BD round 12): every skillset row was a reading; the rack's Refining page (§19.7) answers a proposed revision through
   // AIKit's own verbs (aikit_write refinement-accept · refinement-discard), and its Test is the session's own Repeat over Skillset
   // (encounter_session_settings). Its other parameters are readings.
-  for (const key of ['refine.accept', 'refine.discard']) assert.equal(byKey('skillset', key)?.writePath, 'kernel:aikit_write', key)
+  // REPLACED (O-I 795 round 14): refine.accept's writePath was kernel:aikit_write. The person's Accept of a Control skill's revision is
+  // Central's own act (control.skills.revision.accept through the kernel's invoke_action), AIKit's verbs carrying the hand before it and
+  // the follow after it; the row names that route, and says AIKit's for a member AIKit keeps.
+  assert.equal(byKey('skillset', 'refine.accept')?.writePath, 'kernel:invoke_action')
+  assert.equal(byKey('skillset', 'refine.accept')?.family, 'central')
+  assert.match(byKey('skillset', 'refine.accept')?.disclosure ?? '', /control\.skills\.revision\.accept[\s\S]*refinement-follow[\s\S]*AIKit keeps/)
+  assert.equal(byKey('skillset', 'refine.discard')?.writePath, 'kernel:aikit_write')
   assert.equal(byKey('skillset', 'refine.run')?.writePath, 'kernel:encounter_session_settings')
   for (const key of ['refine.member', 'refine.why', 'refine.revision', 'refine.test', 'refine.result']) {
     assert.equal(byKey('skillset', key)?.writePath, undefined, key)

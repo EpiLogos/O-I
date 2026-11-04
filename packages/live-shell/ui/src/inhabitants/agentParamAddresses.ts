@@ -98,7 +98,13 @@ export const AGENT_SHELL_ADDRESS_TABLE: readonly AgentParamAddress[] = Object.fr
   reading('ai-kit', 'skillset', 'refine.test', 'list', {disclosure: 'Reading only — the takes AIKit\'s take body kept under the proposed revision, beside its Repeat\'s other takes.'}),
   reading('ai-kit', 'skillset', 'refine.result', 'list', {disclosure: 'Met · Not met · Open per condition and level: what each take answered to the task\'s Success conditions, held to its evidence by Actuation.'}),
   agentParamAddress({family: 'ai-kit', deviceInstance: 'skillset', key: 'refine.run', type: 'boolean', writePath: 'kernel:encounter_session_settings'}),
-  agentParamAddress({family: 'ai-kit', deviceInstance: 'skillset', key: 'refine.accept', type: 'boolean', writePath: 'kernel:aikit_write'}),
+  // Accept (O-I 795 round 14): the person's one Accept of a Control skill's revision is Central's own act, which writes it at the digest
+  // reviewed (control.skills.revision.accept through the kernel's invoke_action, on the person's authority); AIKit's verbs carry the
+  // hand before it and the follow after it (aikit_write refinement-accept, refinement-follow). REPLACED: writePath kernel:aikit_write.
+  agentParamAddress({family: 'central', deviceInstance: 'skillset', key: 'refine.accept', type: 'boolean', writePath: 'kernel:invoke_action',
+    disclosure: 'Your Accept of a Control skill\'s revision is Central\'s act, control.skills.revision.accept: AIKit\'s Accept hands it there first '
+      + '(aikit_write refinement-accept) and AIKit follows after it, syncing and promoting its source from Central (refinement-follow); a member '
+      + 'AIKit keeps is kept by AIKit\'s own Accept (aikit_write refinement-accept).'}),
   agentParamAddress({family: 'ai-kit', deviceInstance: 'skillset', key: 'refine.discard', type: 'boolean', writePath: 'kernel:aikit_write'}),
 
   // — Context-world device: central reads + ai-kit route + software-factory receipts —

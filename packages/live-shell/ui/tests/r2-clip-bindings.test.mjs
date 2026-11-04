@@ -143,11 +143,13 @@ test('Factory on Arrangement view\'s ruler: no Launch tab, as in Live', async ()
 
 test('Factory\'s Intent panel: every key absent with the read it waits for, Intent and a new condition refused with the write they lack (§19.1)', async () => {
   const binding = factory.factoryClipBinding({ref: taskRef, tracks: [track], events: null})
-  for (const key of ['intent', 'intent.source', 'constraints', 'context']) {
-    assert.equal(binding.values[key], undefined, `${key}: no reading`)
-    assert.match(factory.INTENT_ABSENT[key], /missing op: /, key)
-  }
-  assert.match(factory.INTENT_ABSENT.intent, /factory development field read/)
+  for (const key of ['intent', 'intent.source', 'constraints', 'context']) assert.equal(binding.values[key], undefined, `${key}: no reading`)
+  for (const key of ['intent.source', 'constraints', 'context']) assert.match(factory.INTENT_ABSENT[key], /missing op: /, key)
+  // REPLACED (O-I 795 round 14): INTENT_ABSENT.intent, "no reading reaches it yet — missing op: `factory development field read` through
+  // the kernel (factory_development_read carries no Development Field)". Factory reads a Run's Development Field by the state that holds
+  // the Run (factory_owner development-field-read); where no Run is read here, the intent says why.
+  assert.equal(factory.INTENT_ABSENT.intent, undefined)
+  assert.equal(factory.factoryWiring({sessionRef: 'ses-214', n: 1}).absent.intent, factory.INTENT_NOT_HERE)
   assert.match(binding.standing.intent.disabled, /factory development field set/, 'Intent stands disabled with its operation')
   await assert.rejects(() => binding.write([{key: 'intent', value: 'x'}]), /factory development field set/)
   // REPLACED (O-I 795, round 13): "a success-condition write on the bounded intent of the project-development ledger". The Success
@@ -155,6 +157,34 @@ test('Factory\'s Intent panel: every key absent with the read it waits for, Inte
   assert.equal(binding.values.criteria, undefined)
   assert.equal(binding.standing.criterion.disabled, SETTINGS_WHY.notHere)
   await assert.rejects(() => binding.write([{key: 'criterion', value: 'x'}]), {message: SETTINGS_WHY.notHere})
+})
+
+// O-I 795 round 14: the Intent is the required difference of the task's Run, as Factory keeps it in the Run's Development Field beside
+// the state that holds the Run (factory development_field_cli.rs `field read --state <state> <run-ref>`, factory.development-field-
+// reading/v1; the kernel's factory_owner development-field-read). The Run is the one the task's latest attempt names (wavePlan.ts
+// planTargetOf). Factory's refusals stand in its words. SCRIPTED: the reading is the REAL contract's shape; no Factory runs here.
+test('Factory\'s Intent panel: the intent is the required difference of the task\'s Run, as Factory reads its Development Field (§19.1)', async () => {
+  const target = {statePath: '/w/factory.json', runRef: 'run:A', unitRef: 'unit:u'}
+  const asked = []
+  const answering = data => async op => { asked.push(op); return {outcome: {result: 'factory_development_reading', data}} }
+  const field = {contract: 'factory.development-field-reading/v1', field: {requiredDifference: 'Every bridge widget has a hand-off fixture', runRef: 'run:A'},
+    satisfiedProof: [], remainingProof: ['D']}
+  const read = await factory.readDevelopmentField(answering(field), target)
+  assert.deepEqual(asked, [{op: 'factory_owner', request: {kind: 'development-field-read', state_path: '/w/factory.json', run_ref: 'run:A'}}])
+  assert.deepEqual(read, {state: 'read', difference: 'Every bridge widget has a hand-off fixture', target})
+  const refused = await factory.readDevelopmentField(async () => ({error: 'no Development Field is set for run:A: the development ledger Factory keeps beside /w/factory.json holds none'}), target)
+  assert.equal(refused.state, 'absent'); assert.match(refused.why, /no Development Field is set for run:A/, 'Factory\'s words')
+  assert.match((await factory.readDevelopmentField(answering({contract: 'factory.other/v1'}), target)).why, /factory\.development-field-reading\/v1/)
+  // On the clip: the intent is read; its write still waits for the field set.
+  const binding = factory.factoryClipBinding({ref: taskRef, tracks: [track], events: null, intent: read})
+  assert.equal(binding.values.intent, 'Every bridge widget has a hand-off fixture')
+  assert.match(binding.standing.intent.disabled, /factory development field set/)
+  const wiring = factory.factoryWiring({sessionRef: 'ses-214', n: 1}, null, null, null, null, undefined, read)
+  assert.equal(wiring.absent.intent, undefined)
+  assert.match(wiring.reads.intent, /factory development field read/)
+  assert.match(factory.factoryWiring({sessionRef: 'ses-214', n: 1}, null, null, null, null, undefined, refused).absent.intent, /no Development Field is set/)
+  assert.match(factory.factoryWiring({sessionRef: 'ses-214', n: 2}, null, null, null, null, undefined, read).absent.intent, /one bound task/)
+  assert.equal(factory.factoryClipBinding({ref: `${trackKey(track)}#task/2`, tracks: [track], events: null, intent: read})?.values.intent, undefined)
 })
 
 test('Factory\'s Intent panel: the Success conditions are the words typed for the task, kept with its settings; Add appends one (§19.1, O-I 795)', async () => {

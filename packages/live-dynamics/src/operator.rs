@@ -321,6 +321,13 @@ impl OperatorVoiceA {
     /// plays the voice sample by sample (the engine's MIDI track) hears
     /// exactly the gated note. Pure: no state, no allocation.
     pub fn sample_at(&self, i: usize, hold_s: f64) -> f32 {
+        self.sample_led(i, hold_s, 0.0)
+    }
+
+    /// [`OperatorVoiceA::sample_at`] with the carrier's phase led by `lead` radians (B's by the same
+    /// lead at its frequency): what a host bending the voice's pitch has accumulated (the engine's
+    /// pitch bend, O-I #853). At a lead of 0 it is `sample_at`, bit for bit.
+    pub fn sample_led(&self, i: usize, hold_s: f64, lead: f64) -> f32 {
         let w = 2.0 * std::f64::consts::PI * self.freq_hz; // rad per second
         let g = self.peak_gain();
         let t = i as f64 / self.sample_rate as f64;
@@ -338,9 +345,10 @@ impl OperatorVoiceA {
                 let beta_peak = b.beta_sustain() / b.envelope.sustain_amp;
                 let b_db = b.envelope.gain_db(t, hold_s);
                 let beta = beta_peak * 10.0f64.powf(b_db / 20.0);
-                (g * env * (w * t + beta * (wb * t).sin()).sin()) as f32
+                let lead_b = lead * (b.freq_hz / self.freq_hz);
+                (g * env * (w * t + lead + beta * (wb * t + lead_b).sin()).sin()) as f32
             }
-            None => (g * env * (w * t).sin()) as f32,
+            None => (g * env * (w * t + lead).sin()) as f32,
         }
     }
 }
