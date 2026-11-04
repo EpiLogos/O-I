@@ -5,7 +5,7 @@
 // the design's keys; a key the owner did not report is left out, never filled in. SETTINGS_WINDOW_WIRING classifies every key the design
 // reads and every press it makes.
 import type {Value} from '../frame/devices/designed'
-import type {ChangeSetDocument, ConfigResolution, ContributionMount, PlanBundle, ScopeAddress, SettingsAdapter} from './adapter'
+import type {ChangeSetDocument, ConfigResolution, ContributionMount, PlanBundle, ScopeAddress, SettingsAdapter, SettingsRequest} from './adapter'
 import {basisChanged, categoryOf, displayValue, draftOwnerChanged, editableValue, isSensitiveSetting, rawValue, settingHelp, settingKey, settingWords, tableRepresentation,
   type Draft, type SettingEntry} from './model'
 import type {HarnessReading} from '../../../../../desktop/cradle/src/configuration/harnessSource'
@@ -284,8 +284,11 @@ export function harnessValues(reading: HarnessReading | null): Record<string, Va
     detection: row.detected ? 'detected' : row.detection, ...(row.detection_reason ? {reason: row.detection_reason} : {}), capability: row.capability,
     ...(row.effect ? {effect: row.effect} : {}), ...(folderOf(row.config_dir) ? {folder: folderOf(row.config_dir)} : {}),
     ...(row.adapter_gap ? {gap: {contract: row.adapter_gap.missing_contract, skill: row.adapter_gap.authoring_skill_ref}} : {})})))
-  if (reading.catalogue.state === 'ok') values.routes = json(reading.catalogue.rows.entries.map(entry => ({model: entry.model, name: entry.name,
-    routes: entry.routes.map(route => ({provider: route.provider, key: route.credential_required}))})))
+  if (reading.catalogue.state === 'ok') {
+    values.routes = json(reading.catalogue.rows.entries.map(entry => ({model: entry.model, name: entry.name,
+      routes: entry.routes.map(route => ({provider: route.provider, key: route.credential_required}))})))
+    values.routesWhy = NO_STANDING
+  }
   return values
 }
 /** A harness's configuration folder, as the owner names it (its first absolute path; HarnessPreferences.tsx's reveal path). */
@@ -304,6 +307,43 @@ export function credentialValues(rows: readonly CredentialRow[] | null, verdicts
     ...(row.verifiedAt ? {verifiedAt: at(row.verifiedAt * 1000)} : {}), ...(verdicts[row.credential] ? {verdict: verdicts[row.credential]} : {})})))
   if (found !== null) values.found = found
   return values
+}
+
+/** Workcell's secrets as the Credentials page draws them (O-I #758), references and presence only: the references `workcell secret list`
+ * records, each with where it is observed (a machine declaration, a connection receipt, a projection record); the projections `workcell
+ * secret projections` holds active (a revoked one is no longer projected), each by its name, its target, the credential reference it
+ * carries, its purpose, scope and who asked for it; and how many credentials `workcell secret scan` finds outside a secret store (a finding
+ * that is only a reference is no material). A reading not taken stays absent: the design says there is none. Pure. */
+export function workcellSecretValues({list, projections, scan}: {readonly list?: unknown; readonly projections?: unknown; readonly scan?: unknown}): Record<string, Value> {
+  const rows = (value: unknown, key: string): Record<string, unknown>[] | null => {
+    const found = rec(value) ? value[key] : undefined
+    return Array.isArray(found) ? found.filter(rec) : null
+  }
+  const strings = (x: unknown): string[] => (Array.isArray(x) ? x.filter((item): item is string => typeof item === 'string') : [])
+  const values: Record<string, Value> = {}
+  const refs = rows(list, 'credentials')
+  if (refs) values.secretRefs = json(refs.flatMap(r => (txt(r.credential_ref) ? [{ref: r.credential_ref, ...(txt(r.scheme) ? {scheme: r.scheme} : {}), usedBy: strings(r.observed_in)}] : [])))
+  const ledger = rows(projections, 'projections')
+  if (ledger) values.projections = json(ledger.filter(r => r.state !== 'revoked').flatMap(r => {
+    const name = txt(r.projection_ref)?.replace(/^secret-projection:/, '')
+    if (!name) return []
+    const to = txt(r.target_workcell_ref) ?? txt(r.target_allocation_ref) ?? txt(r.target_connection_label) ?? txt(r.target_provider_ref)
+    return [{name, ...(to ? {to} : {}), ...(txt(r.credential_ref) ? {credential: r.credential_ref} : {}), ...(txt(r.purpose) ? {purpose: r.purpose} : {}),
+      ...(txt(r.scope) ? {scope: r.scope} : {}), ...(txt(r.requested_by) ? {by: r.requested_by} : {})}]
+  }))
+  const findings = rows(scan, 'findings')
+  if (findings) values.outside = findings.filter(f => f.reference_only !== true).length
+  return values
+}
+
+/** What Workcell's scan found, said on the Info line: each credential outside a store by its name and where it lies, never what it holds. */
+export function scanWords(scan: unknown): string {
+  const findings = (rec(scan) && Array.isArray(scan.findings) ? scan.findings.filter(rec) : []).filter(f => f.reference_only !== true)
+  const refused = rec(scan) && Array.isArray(scan.refusals) ? scan.refusals.length : 0
+  const each = findings.map(f => `${txt(f.key) ?? txt(f.location) ?? 'a credential'}${txt(f.kind) ? ` (${f.kind})` : ''}`)
+  const said = findings.length === 0 ? 'Workcell\'s scan finds no credential outside a secret store.'
+    : `Workcell's scan finds ${findings.length} credential${findings.length === 1 ? '' : 's'} outside a secret store: ${each.join(', ')}. It says where each is, never what it holds.`
+  return refused ? `${said} ${refused} place${refused === 1 ? '' : 's'} could not be scanned.` : said
 }
 
 /** O:I's named profiles (profile_list): each profile, whether it is active, and the settings it keeps with their scope and value (a secret
@@ -911,9 +951,9 @@ export const NO_PRODUCTS = NO('Products and System', 'readProducts')
 export const NO_VISUALS = NO('Opening', 'visualPreferences')
 export const NO_AUTHORING = NO('Making and enabling a routine', 'routineAuthoring')
 export const NO_NAVIGATE = (what: string) => `${what} stands beside its instrument, and this window reaches no other place from here (SettingsAdapter.navigate).`
-export const NO_WORKCELL_SECRETS = 'Workcell\'s secret references, projections and scan (`workcell system --json` keys.references, `workcell secret projections`, `workcell secret scan`): no kernel route reaches them yet (T-COVERAGE §1.2).'
 export const NO_SECURE_FIELD = 'Enter key: a write-only key goes to the native host\'s own secure field, never through the window; no host qualifies that capability here (SettingsAdapter.canEnterCredentialMaterial).'
-export const NO_STANDING = 'A route\'s standing (unproven, observed, usable) is AIKit\'s model field (`aikit model-catalogue show`), which model_catalogue does not carry yet.'
+export const NO_STANDING = 'A route\'s standing (unproven, observed, usable) is not the catalogue\'s: AIKit\'s model catalogue is catalogue identity only, '
+  + 'and a route\'s availability is its composition of a project (`aikit compose --json`), which Settings does not read here.'
 export const NO_SETUP_SOURCE = NO('Setup', 'setup')
 /** Why Setup's AIKit steps stand unread where the host hands Setup no AIKit (SetupSource.aikit). */
 export const NO_SETUP_AIKIT = 'Setup reaches no AIKit here (SetupSource.aikit): Harnesses and skills and Credentials are AIKit\'s.'
@@ -935,7 +975,11 @@ export const SETTINGS_WINDOW_WIRING = {
     providers: 'the configured providers (HarnessSource.read: the encounter providers)', heldDefault: 'the saved chat default (HarnessSource.read)',
     effectiveDefault: 'the provider new chats use, and its rule (harnessSource.ts effectiveChatDefault)', harnesses: 'each harness client (harness_status: aikit client status)',
     routes: 'the catalogue\'s declared routes (model_catalogue)', credentials: 'AIKit\'s credential binding metadata (credential_list), each Verify\'s verdict (credential_verify)',
-    found: 'keys discovery found (credential_discover, presence only)', profiles: 'O:I\'s named profiles (SettingsAdapter.profiles listProfiles)',
+    found: 'keys discovery found (credential_discover, presence only)',
+    secretRefs: 'the credential references Workcell records, each with where it is observed (workcell_read secret-list: `workcell secret list`, workcell.secret-reference-inventory/v1)',
+    projections: 'Workcell\'s projection ledger, the projections it holds active (workcell_read secret-projections: `workcell secret projections`)',
+    outside: 'the credentials Workcell\'s last scan found outside a secret store, by location and presence only (workcell_read secret-scan: `workcell secret scan`)',
+    routesWhy: 'why a route\'s standing stands unread (NO_STANDING: AIKit\'s catalogue is identity only; availability is `aikit compose` of a project)', profiles: 'O:I\'s named profiles (SettingsAdapter.profiles listProfiles)',
     machines: 'Workcell\'s machine declarations (RemoteMachinesSource.readMachines)', connections: 'its connection receipts (RemoteMachinesSource.readConnections)',
     operations: 'the control operations a declaration may expect (RemoteMachinesSource.allowedOperations)', workcell: 'the workcell the machines belong to (RemoteMachinesSource.scope)',
     routines: 'AIKit\'s routines (kernel op routine: list; the chosen one\'s show)', methods: 'the Methods with a verified run (routine: methods)', history: 'each invocation (routine: history)',
@@ -959,7 +1003,8 @@ export const SETTINGS_WINDOW_WIRING = {
     discard: 'every local change dropped (the window\'s own)', returnToWork: 'the work Settings was opened from (the host\'s return)',
     reread: 'the owners read again: config_registry_read, config_resolutions_read and every opened page\'s reading',
     install: 'client_install',
-    reveal: 'settings_reveal', signIn: 'the conversation\'s connection control (SettingsAdapter.navigate)', discover: 'credential_discover', verify: 'credential_verify',
+    reveal: 'settings_reveal', scan: 'Workcell\'s scan for material outside a secret store (workcell_read secret-scan: `workcell secret scan`), said on the Info line',
+    revokeProjection: 'Workcell\'s revocation at the origin (workcell_write revoke-projection: `workcell secret revoke-projection --name`), the ledger read back', signIn: 'the conversation\'s connection control (SettingsAdapter.navigate)', discover: 'credential_discover', verify: 'credential_verify',
     rotate: 'credential_rotate with new.reference', revoke: 'credential_revoke', bind: 'credential_setup with new.credential and new.reference',
     useProfile: 'profile_use_plan, staged as local changes', saveProfile: 'createProfile and saveProfile with your valid local changes', importProfile: 'the system file picker, then createProfile and saveProfile',
     runNow: 'routine run_now on the basis read', disableRoutine: 'routine disable on the basis read', revertTheme: 'theme_revert', removeTheme: 'theme_remove',
@@ -985,14 +1030,12 @@ export const SETTINGS_WINDOW_WIRING = {
     groundFolder: 'the folder you type for a new ground (else the one chosen or read)', groundName: 'the name you give a new ground (else the one native oi reads)',
     birthName: 'your name, kept with your date of birth', birthDate: 'your date of birth, until Keep keeps it',
     credential: 'the key the Credentials step binds (a found key\'s credential)', reference: 'where that key lies in your secure store, which Accept binds it to: a reference, never the key',
-    'new.<field>': 'the open form\'s fields', 'draft:<ref>': 'your local change of a setting, until Review and Apply',
+    'new.<field>': 'the open form\'s fields', 'new.from': 'what opened the new routine (SettingsRequest.newRoutine: a pad\'s Make routine, a song\'s Routine…), forgotten when the form closes', 'draft:<ref>': 'your local change of a setting, until Review and Apply',
   },
   refused: {
-    enterKey: NO_SECURE_FIELD, scan: NO_WORKCELL_SECRETS, revokeProjection: NO_WORKCELL_SECRETS,
+    enterKey: NO_SECURE_FIELD,
   },
-  absent: {
-    secretRefs: NO_WORKCELL_SECRETS, projections: NO_WORKCELL_SECRETS, outside: NO_WORKCELL_SECRETS,
-  },
+  absent: {},
 } as const
 
 /** The design keys the window holds as its own (SETTINGS_WINDOW_WIRING.local), exact. */
@@ -1000,3 +1043,27 @@ export const SETTINGS_LOCAL_KEYS = ['search', 'hit', 'scope', 'focus', 'details'
   'setupStep', 'folder', 'make', 'wiki', 'where', 'credential', 'reference', 'groundFolder', 'groundName', 'birthName', 'birthDate',
   'new.name', 'new.description', 'new.method', 'new.proof', 'new.trigger', 'new.repeat', 'new.schedule', 'new.authority', 'new.profile', 'new.scopes', 'new.grant', 'new.reproof',
   'new.label', 'new.endpoint', 'new.credential', 'new.reference', 'new.note', 'new.expects'] as const
+
+/** A new schedule, prepared by AIKit when you create (the When chooser's own choice; AutomationPreferences.tsx "New schedule…"). */
+export const NEW_SCHEDULE = 'new-schedule'
+/** The new-routine form's keys, what opened it included: Create, Check result and a new opening each start them anew. */
+export const ROUTINE_FORM = ['adding', 'new.from', 'new.name', 'new.description', 'new.method', 'new.proof', 'new.trigger', 'new.repeat', 'new.schedule', 'new.authority',
+  'new.profile', 'new.scopes'] as const
+
+/** What a contextual opening of Automations holds (SettingsRequest page 'automations'), in the request's work context: a routine opened
+ * where it lives is chosen (frame/openWhereItLives.ts); a new routine — a pad's Make routine (§19.22), a song's Routine… (§19.1) — opens
+ * the form on what opened it with the fields it gives: its name, its Method, and a new schedule's Repeat and When where it gives a time.
+ * Every other field of the form starts empty: a form left open before is the one asked for now. A plain opening holds nothing. Pure. */
+export function automationsRequestHolds(request: SettingsRequest): Record<string, Value | undefined> {
+  if (request.page !== 'automations' || (!request.routine && !request.newRoutine)) return {}
+  const held: Record<string, Value | undefined> = {context: request.scope.scope_kind === 'project' ? request.scope.scope_ref ?? '' : '', show: 'routines'}
+  if (request.routine) held.routine = request.routine
+  const fresh = request.newRoutine
+  if (fresh) {
+    const timed = fresh.repeat !== undefined || fresh.schedule !== undefined
+    for (const key of ROUTINE_FORM) held[key] = undefined
+    Object.assign(held, {adding: 'routine', 'new.from': fresh.from, 'new.name': fresh.name, 'new.method': fresh.method,
+      'new.trigger': timed ? NEW_SCHEDULE : undefined, 'new.repeat': timed ? fresh.repeat : undefined, 'new.schedule': timed ? fresh.schedule : undefined})
+  }
+  return held
+}

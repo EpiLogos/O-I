@@ -3,7 +3,8 @@
 // project that keeps each. A press selects one — the browser's own selection, which the Skillset rack's Capture page takes as its "A
 // selected clip" source — and its preview at the foot of the list says what it was made from and where its set stands, with Remake, and
 // Routine… with its schedule (Repeat and when): with the song's note chosen in a task's Clip view, AIKit prepares the schedule and files
-// the take's Method for you to accept (songClips.ts routineOfSong; each run of the routine a take Factory starts). A drag carries the
+// the take's Method for you to accept (songClips.ts routineOfSong; each run of the routine a take Factory starts), and Make routine… opens
+// Settings › Automations on the new routine with that schedule (songRoutineRequest; O-I #758). A drag carries the
 // clip (SONG_CLIP_DRAG) onto a session's track, where it is one unit of that session's song with the thread form canon.
 // A project Factory refused says so in its words; a reading that has not come says it is reading.
 import {useEffect, useReducer, useState} from 'react'
@@ -15,9 +16,11 @@ import {onOwnerChanged} from '../owners/notices'
 import {KindMark} from '../inhabitants/sdk/marks.tsx'
 import {Refusal} from '../../../../../desktop/cradle/src/shared/Refusal.tsx'
 import type {WorldActionReceipt} from '../timeline/worldTrackAdapter'
-import {chosenNoteNow, readSongsThrough, remakeSong, ROUTINE_SONG, routineOfSong, selectSongClip, SONG_CLIP_DRAG, songPayload, songWords, STANDING_WORD,
-  useSongClipFocus, type SongRow, type SongsReading} from './songClips'
+import {chosenNoteNow, readSongsThrough, remakeSong, ROUTINE_SONG, routineOfSong, selectSongClip, SONG_CLIP_DRAG, songPayload, songRoutineRequest, songWords, STANDING_WORD,
+  useSongClipFocus, type SongRoutineReceipt, type SongRow, type SongsReading} from './songClips'
 import {scheduleFromInput, type ScheduleShape} from '../settings/routines'
+import {openSettings} from '../settings/host'
+import type {NewRoutineRequest} from '../settings/adapter'
 
 export interface SongRowsViewProps {
   readonly reading: SongsReading | null
@@ -29,12 +32,14 @@ export interface SongRowsViewProps {
   readonly remade?: WorldActionReceipt | null
   /** Routine…'s press, with the schedule given, and its answer: AIKit's filed Method, or the refusal. */
   readonly onRoutine?: (row: SongRow, shape: ScheduleShape) => void
-  readonly routined?: WorldActionReceipt | null
+  readonly routined?: SongRoutineReceipt | null
+  /** Make routine…'s press: Settings › Automations on the new routine Routine… answered with. */
+  readonly onMakeRoutine?: (row: SongRow, routine: NewRoutineRequest) => void
   readonly previewHost?: HTMLElement | null
 }
 
 /** The songs, grouped by the project that keeps each. Pure of owners: the reading is handed in. */
-export function SongRowsView({reading, query, selected, onSelect, onRemake, remade = null, onRoutine, routined = null, previewHost = null}: SongRowsViewProps) {
+export function SongRowsView({reading, query, selected, onSelect, onRemake, remade = null, onRoutine, routined = null, onMakeRoutine, previewHost = null}: SongRowsViewProps) {
   if (!reading) return <p className="browser-empty" role="status">Reading your songs…</p>
   if (reading.state === 'absent') return <Refusal className="native-error" said="Your songs were not read." error={reading.why} ownWords />
   const needle = query.trim().toLowerCase()
@@ -57,18 +62,18 @@ export function SongRowsView({reading, query, selected, onSelect, onRemake, rema
     {!shown && <p className="browser-empty">{needle ? 'No song matches.' : 'No song is made into a clip yet: File › Export Song… makes the selected task\'s song one.'}</p>}
     {remade?.ok && <p className="browser-empty" role="status">{remade.note}</p>}
     {remade && !remade.ok && <Refusal className="native-error" said="Remake did not make the song again." error={remade.error} />}
-    {previewHost && selected && createPortal(songPreview(selected, onRemake, onRoutine, routined), previewHost)}
+    {previewHost && selected && createPortal(songPreview(selected, onRemake, onRoutine, routined, onMakeRoutine), previewHost)}
   </section>
 }
 
 /** The selected song's preview: what it was made from and where its set stands, Remake, and Routine… with its schedule. Pure of owners. */
 export function songPreview(selected: SongRow, onRemake: (row: SongRow) => void, onRoutine?: (row: SongRow, shape: ScheduleShape) => void,
-  routined: WorldActionReceipt | null = null) {
+  routined: SongRoutineReceipt | null = null, onMakeRoutine?: (row: SongRow, routine: NewRoutineRequest) => void) {
   return <div className="place-preview" role="status" data-song-preview={selected.clipRef ?? selected.name}>
     <p>{songWords(selected)}</p>
     <button type="button" className="mode-browser-row" data-action="remake-song" onClick={() => onRemake(selected)}
       data-i={`Remake|Makes ${selected.name} again from the set it names, as that set now stands. A render is never edited in place.`}>Remake</button>
-    <SongRoutine key={selected.key} row={selected} onRoutine={onRoutine} answer={routined} />
+    <SongRoutine key={selected.key} row={selected} onRoutine={onRoutine} answer={routined} onMakeRoutine={onMakeRoutine} />
   </div>
 }
 
@@ -80,7 +85,8 @@ const REPEATS: readonly {readonly kind: ScheduleShape['kind']; readonly label: s
 
 /** Routine… on the selected song: its schedule (Repeat and when) and the press, which hands the schedule's shape on; a schedule that is
  * no shape is refused in the face's words before anything is asked. */
-function SongRoutine({row, onRoutine, answer}: {row: SongRow; onRoutine?: (row: SongRow, shape: ScheduleShape) => void; answer: WorldActionReceipt | null}) {
+function SongRoutine({row, onRoutine, answer, onMakeRoutine}: {row: SongRow; onRoutine?: (row: SongRow, shape: ScheduleShape) => void; answer: SongRoutineReceipt | null
+  onMakeRoutine?: (row: SongRow, routine: NewRoutineRequest) => void}) {
   const [repeat, setRepeat] = useState<ScheduleShape['kind']>('daily')
   const [when, setWhen] = useState('')
   const [why, setWhy] = useState<string | null>(null)
@@ -96,6 +102,8 @@ function SongRoutine({row, onRoutine, answer}: {row: SongRow; onRoutine?: (row: 
     <button type="button" data-action="song-routine" disabled={!onRoutine} onClick={press} data-i={`Routine…|${ROUTINE_SONG}`}>Routine…</button>
     {why && <Refusal className="native-error" said="Routine… asked nothing." error={why} />}
     {answer?.ok && <p role="status">{answer.note}</p>}
+    {answer?.ok && <button type="button" data-action="song-make-routine" disabled={!onMakeRoutine} onClick={() => onMakeRoutine?.(row, answer.routine)}
+      data-i={`Make routine…|Opens Settings › Automations on a new routine of ${row.name}'s take, with this schedule's Repeat and When. Create it there once the Method is accepted and a run of it is verified.`}>Make routine…</button>}
     {answer && !answer.ok && <Refusal className="native-error" said="Routine… filed no Method." error={answer.error} ownWords />}
   </div>
 }
@@ -110,10 +118,11 @@ export function SongRows({controlled}: {controlled: ControlledBrowser}) {
     : held.status === 'answered' ? held.value : held.status === 'refused' ? {state: 'absent', why: held.error ?? 'Factory did not answer.'} : null
   const selected = useSongClipFocus()
   const [remade, setRemade] = useState<WorldActionReceipt | null>(null)
-  const [routined, setRoutined] = useState<WorldActionReceipt | null>(null)
+  const [routined, setRoutined] = useState<SongRoutineReceipt | null>(null)
   return <SongRowsView reading={reading} query={controlled.query} previewHost={controlled.previewHost} selected={selected} remade={remade}
     routined={routined}
     onSelect={row => { setRemade(null); setRoutined(null); selectSongClip(row) }}
     onRemake={row => { setRemade(null); void remakeSong(transport, row).then(setRemade) }}
-    onRoutine={(row, shape) => { setRoutined(null); void routineOfSong(transport, row, chosenNoteNow(), shape).then(setRoutined) }} />
+    onRoutine={(row, shape) => { setRoutined(null); void routineOfSong(transport, row, chosenNoteNow(), shape).then(setRoutined) }}
+    onMakeRoutine={(row, routine) => openSettings(songRoutineRequest(row, routine))} />
 }

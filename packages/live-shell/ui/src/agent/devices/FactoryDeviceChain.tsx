@@ -314,11 +314,13 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     ? {op: 'factory_owner', request: {kind: 'pads-read', state_path: padsWhere.statePath, project_ref: padsWhere.projectRef}} : null),
   [padsWhere && 'projectRef' in padsWhere ? padsWhere.statePath : null, padsWhere && 'projectRef' in padsWhere ? padsWhere.projectRef : null]) // eslint-disable-line react-hooks/exhaustive-deps
   const padsBank = useOwnerOp(transport, padsBankOp, 'factory_development_reading').reading
-  // Make routine (§19.22 Running alone) opens Settings, Automations on the bank's project, the shell's own act.
+  // Make routine (§19.22 Running alone) opens Settings, Automations on the bank's project, the shell's own act: the new routine's form,
+  // naming the pad that opened it (its name the routine's), its Method and its time chosen there (settings/windowValues.ts automationsRequestHolds).
   const padsPorts = useMemo((): PromptPadsPorts => ({
     ...(transport.kind !== 'unavailable' ? {write: request => factoryOwnerWrite(transport, {kind: 'pads-write', ...request}, '`factory development pads-write`')} : {}),
     makeRoutine: pad => openSettings({requestId: crypto.randomUUID(), page: 'automations', scope: {scope_kind: 'project', scope_ref: pad.project ?? pad.projectRef},
-      returnLabel: `Back to Prompt pads${pad.name ? ` · ${pad.name}` : ''}`}),
+      returnLabel: `Back to Prompt pads${pad.name ? ` · ${pad.name}` : ''}`,
+      newRoutine: {from: `Prompt pads · ${pad.name ?? `pad ${pad.index + 1}`}`, ...(pad.name ? {name: pad.name} : {})}}),
   }), [transport])
   const padsInput = useMemo(() => ({
     located: {status: padsLocated.status, value: padsLocated.value?.data ?? null, error: padsLocated.error},

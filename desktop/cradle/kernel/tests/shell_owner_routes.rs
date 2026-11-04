@@ -1037,6 +1037,104 @@ fn workcell_reads_and_writes_on_its_connections_and_machines() {
     let _ = fs::remove_dir_all(&dir);
 }
 
+/// Settings › Credentials' Workcell secrets (O-I #758): the references
+/// Workcell records, its projection ledger and its scan for material outside
+/// a store are reads (`workcell secret list|projections|scan --json`);
+/// revoking a projection is a write whose receipt stands only where Workcell
+/// says the projection is revoked. References and presence only: no value
+/// travels either way.
+#[test]
+fn workcell_reads_its_secret_references_ledger_and_scan_and_revokes_a_projection() {
+    let _held = hold();
+    let dir = scratch("workcell-secrets");
+    let workcell = Fake::new(&dir, "workcell");
+    let _bin = Bound::set("OI_WORKCELL_BIN", &workcell.bin);
+    let real = fixture("workcell-secrets-2026-11-04.json");
+    for (request, answer, argv) in [
+        (
+            json!({"kind": "secret-list"}),
+            &real["list"],
+            "secret list --json",
+        ),
+        (
+            json!({"kind": "secret-projections"}),
+            &real["projections"],
+            "secret projections --json",
+        ),
+        (
+            json!({"kind": "secret-scan"}),
+            &real["scan"],
+            "secret scan --json",
+        ),
+    ] {
+        workcell.answer(answer);
+        workcell.forget();
+        let (outcome, form) = dispatched(
+            no_central(&dir),
+            op(json!({"op": "workcell_read", "request": request})),
+        );
+        let outcome = outcome.unwrap();
+        assert_eq!(form, "owner-read");
+        assert_eq!(&reading(&outcome).1, answer);
+        assert_eq!(workcell.asked(), [argv]);
+    }
+    // Another schema is named, never carried as the reference inventory.
+    workcell.answer(&json!({"schema": "workcell.secret-exposure-scan/v1", "findings": []}));
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(json!({"op": "workcell_read", "request": {"kind": "secret-list"}})),
+    );
+    assert!(outcome
+        .unwrap_err()
+        .contains("workcell.secret-reference-inventory/v1"));
+
+    // Revoke names the projection; Workcell's revoked answer earns a receipt.
+    workcell.answer(&real["revoke"]);
+    workcell.forget();
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "workcell_write", "request": {"kind": "revoke-projection", "name": "sbx-zai"}}),
+        ),
+    );
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-write");
+    assert_eq!(
+        workcell.asked(),
+        ["secret revoke-projection --name sbx-zai --json"]
+    );
+    let wire = receipts(&outcome);
+    assert_eq!(wire[0]["owner"], "workcell");
+    assert_eq!(wire[0]["ref"], "secret-projection:sbx-zai");
+    // Another projection's answer is named, never carried.
+    workcell.answer(
+        &json!({"ok": true, "projection_ref": "secret-projection:other", "state": "revoked"}),
+    );
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "workcell_write", "request": {"kind": "revoke-projection", "name": "sbx-zai"}}),
+        ),
+    );
+    assert_eq!(kind(&outcome.unwrap_err()), "incompatible");
+    // Workcell's refusal (REAL, on stderr, exit 2) in its words.
+    workcell.refuse(
+        None,
+        &serde_json::to_string(&real["revoke_refusal"]).unwrap(),
+        2,
+    );
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "workcell_write", "request": {"kind": "revoke-projection", "name": "nosuch"}}),
+        ),
+    );
+    assert!(outcome
+        .unwrap_err()
+        .contains("no secret projection `secret-projection:nosuch` exists"));
+    let _ = fs::remove_dir_all(&dir);
+}
+
 #[test]
 fn seat_join_and_release_write_the_register_through_the_instrument_with_the_desks_actor() {
     let _held = hold();

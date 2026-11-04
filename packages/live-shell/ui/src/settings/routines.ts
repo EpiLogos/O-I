@@ -22,6 +22,11 @@ export function scheduleFromInput(kind:ScheduleShape['kind'],raw:string):Schedul
   if(month<1||month>12||day<1||day>days)throw new Error('The timestamp contains an invalid calendar date.')
   return {kind,rfc3339:raw}
 }
+/** The When a schedule was given as (scheduleFromInput's inverse): what the new-schedule form's field takes, so a schedule handed on — a
+ * song's Routine… — is the one the form shows. */
+export function scheduleInputOf(shape:ScheduleShape):string {
+  return shape.kind==='daily'?shape.time:shape.kind==='cron'?shape.expression:shape.kind==='every'?String(shape.interval_ms/1000):shape.rfc3339
+}
 export interface RoutineCreateInput {
   name:string;description:string;method:string;proof:RoutineProof;trigger:RoutineTriggerDocument
   authority:RoutineAuthority;agent_profile:string|null;context_scope:string[]

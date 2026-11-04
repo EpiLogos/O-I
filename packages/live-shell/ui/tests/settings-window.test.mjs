@@ -85,8 +85,16 @@ test('every key the design reads and every press it makes is classified — a re
   assert.ok(presses.length > 40, 'the design\'s presses are read')
   for (const key of presses) assert.ok(placed(key), `press ${key}: classified`)
   for (const key of win.SETTINGS_LOCAL_KEYS) assert.ok(key in w.local || key.startsWith('new.'), `${key} is the window's own`)
-  for (const key of ['enterKey', 'scan', 'revokeProjection']) assert.ok(w.refused[key], `${key}: refused naming its route`)
-  for (const key of ['secretRefs', 'projections', 'outside']) assert.match(w.absent[key], /no kernel route/)
+  assert.match(w.refused.enterKey, /canEnterCredentialMaterial/, 'Enter key… waits for the host to qualify its secure field, and says so')
+  // Workcell's secrets are Workcell's own (O-I #758): read and pressed through its CLI, references and presence only, never refused.
+  for (const [key, route] of [['secretRefs', 'workcell secret list'], ['projections', 'workcell secret projections'], ['outside', 'workcell secret scan']])
+    assert.ok(w.reads[key]?.includes(route) && !(key in w.absent), `${key}: Workcell's ${route}`)
+  for (const [key, route] of [['scan', 'workcell secret scan'], ['revokeProjection', 'workcell secret revoke-projection']])
+    assert.ok(w.writes[key]?.includes(route) && !(key in w.refused), `${key}: Workcell's ${route}`)
+  assert.doesNotMatch(json(w), /no kernel route reaches them/, 'no stale refusal of Workcell\'s secrets')
+  // What opened a new routine is the request's (a pad's Make routine, a song's Routine…), and a route's standing names where AIKit keeps it.
+  assert.match(w.local['new.from'] ?? '', /SettingsRequest\.newRoutine/, 'new.from: what opened the form')
+  assert.match(w.reads.routesWhy ?? '', /aikit compose/, 'a route\'s standing says why it stands unread, in AIKit\'s own terms')
   // Setup (§10.11; #738) is bound: its readings are native oi's adoption (the kernel's `setup` op) and Central's Work, its presses theirs.
   for (const key of ['setup', 'folders', 'setupPlan']) assert.ok(key in w.reads && !(key in w.absent), `${key}: Setup's reading, from its owner`)
   assert.match(w.reads.setup, /kernel op `setup`/)
@@ -291,6 +299,86 @@ test('Automations: a new schedule is prepared in the form, a creation that waits
   // page's own themeDraft and Apply: tests/settings-appearance-review.test.mjs).
   assert.match(drawn({theme: json({saved: 'dark'}), settings: json([{ref: 'oi:presentation:theme', category: 'appearance', owner: 'oi', title: 'Theme', kind: 'choice', writable: true,
     effective: 'dark', options: [{value: 'light', title: 'Light'}, {value: 'dark', title: 'Dark'}]}]), 'draft:oi:presentation:theme': 'light'}, 'appearance'), />Undo</, 'an appearance chosen, not saved, can be dropped')
+})
+
+test('CODE-DERIVED — Automations opened on a new routine (a pad\'s Make routine, a song\'s Routine…): the form opens on what opened it, with the name, the Method and the new schedule\'s Repeat and When it gives; every other field starts empty', () => {
+  const song = {requestId: 'r1', page: 'automations', scope: {scope_kind: 'world', scope_ref: null}, returnLabel: 'Back to Songs · release-check',
+    newRoutine: {from: 'Songs · release-check', name: 'release-check', method: 'skill/personal/method-release-check', repeat: 'daily', schedule: '07:30'}}
+  const holds = win.automationsRequestHolds(song)
+  assert.deepEqual(holds, {context: '', show: 'routines', adding: 'routine', 'new.from': 'Songs · release-check', 'new.name': 'release-check', 'new.description': undefined,
+    'new.method': 'skill/personal/method-release-check', 'new.proof': undefined, 'new.trigger': 'new-schedule', 'new.repeat': 'daily', 'new.schedule': '07:30',
+    'new.authority': undefined, 'new.profile': undefined, 'new.scopes': undefined})
+  const pad = win.automationsRequestHolds({requestId: 'r2', page: 'automations', scope: {scope_kind: 'project', scope_ref: 'O-I'}, newRoutine: {from: 'Prompt pads · Morning checks', name: 'Morning checks'}})
+  assert.deepEqual([pad.context, pad.adding, pad['new.from'], pad['new.name'], pad['new.method'], pad['new.trigger']], ['O-I', 'routine', 'Prompt pads · Morning checks', 'Morning checks', undefined, undefined],
+    'a pad gives no Method and no time: both are chosen in the form, the one place a run is given a time')
+  assert.deepEqual(win.automationsRequestHolds({requestId: 'r3', page: 'automations', scope: {scope_kind: 'project', scope_ref: 'O-I'}, routine: 'r1'}), {context: 'O-I', show: 'routines', routine: 'r1'},
+    'a routine opened where it lives is chosen in its work context, as before')
+  assert.deepEqual(win.automationsRequestHolds({requestId: 'r4', page: 'automations', scope: {scope_kind: 'project', scope_ref: 'O-I'}}), {}, 'a plain opening holds nothing')
+  // Drawn: what opened it, the song's schedule, and the song's Method named with why it is not a verified Method here yet.
+  const shown = Object.fromEntries(Object.entries(holds).filter(([, value]) => value !== undefined))
+  const markup = drawn({...shown, methods: json([{method: 'verify', name: 'verify', text: 'Run the checks.', active: true}])}, 'automations')
+  assert.ok(markup.includes('Songs · release-check'), 'from: what opened the routine')
+  assert.ok(markup.includes(escaped('the song whose take it runs')), 'from says a song opens it as a pad does')
+  assert.match(markup, /<input[^>]*value="07:30"/, 'When, prefilled')
+  assert.match(markup, /<option value="daily" selected="">Daily<\/option>/, 'Repeat, prefilled')
+  assert.match(markup, /<option value="skill\/personal\/method-release-check" disabled="" title="[^"]*Capture page[^"]*" selected="">skill\/personal\/method-release-check<\/option>/,
+    'the song\'s Method stands chosen, with why it is no verified Method here yet')
+  assert.ok(markup.includes('No reading of what this Method may use.') && !markup.includes('Choose a Method first.'), 'a Method chosen whose options are unread says so')
+  // The opening's holds are the window's: SettingsWorkspace takes them from the request, and closing the form forgets what opened it.
+  const workspace = readFileSync(new URL('../src/settings/SettingsWorkspace.tsx', import.meta.url), 'utf8')
+  assert.match(workspace, /automationsRequestHolds\(request\)/)
+  assert.match(workspace, /key === 'adding' && value !== 'routine'[^\n]*'new\.from'/, 'Cancel forgets what opened the form')
+  const pages = readFileSync(new URL('../src/settings/windowPages.ts', import.meta.url), 'utf8')
+  assert.equal((pages.match(/done\(\[\.\.\.ROUTINE_FORM\]\)/g) ?? []).length, 2, 'Create and Check result close the whole form, what opened it included')
+  const chain = readFileSync(new URL('../src/agent/devices/FactoryDeviceChain.tsx', import.meta.url), 'utf8')
+  assert.match(chain, /newRoutine: \{from: `Prompt pads · \$\{pad\.name \?\? `pad \$\{pad\.index \+ 1\}`\}`/, 'a pad\'s Make routine names the pad that opened it')
+})
+
+const WORKCELL_SECRETS = JSON.parse(readFileSync(new URL('../../../../desktop/cradle/kernel/tests/fixtures/owner-routes/workcell-secrets-2026-11-04.json', import.meta.url), 'utf8'))
+
+test('CODE-DERIVED — Credentials\' Workcell secrets are Workcell\'s own readings (REAL): the references it records and where each is used, the projections its ledger holds active, and how many credentials its scan finds outside a store', () => {
+  const wc = WORKCELL_SECRETS
+  const values = win.workcellSecretValues({list: wc.list, projections: wc.projections, scan: wc.scan})
+  assert.deepEqual(JSON.parse(values.secretRefs), [{ref: 'keychain://aikit/zai', scheme: 'keychain', usedBy: ['secret-projection:sbx-zai']},
+    {ref: 'keychain://workcell-connection/omarchy', scheme: 'keychain', usedBy: ['machine:omarchy']}])
+  assert.deepEqual(JSON.parse(values.projections), [{name: 'sbx-zai', to: 'allocation:sbx-1', credential: 'keychain://aikit/zai', purpose: 'provider-dispatch', scope: 'session', by: 'person:frank'}])
+  assert.equal(values.outside, 2)
+  assert.deepEqual(JSON.parse(win.workcellSecretValues({projections: wc.projections_after}).projections), [], 'a revoked projection is no longer projected')
+  assert.deepEqual(win.workcellSecretValues({}), {}, 'an unread ledger stays absent, and the design says there is no reading')
+  assert.doesNotMatch(json(values), /sk-scratch|scratch-value/, 'no value enters the window')
+  const markup = drawn({...values, credentials: json([])}, 'credentials')
+  for (const words of ['keychain://workcell-connection/omarchy', 'machine:omarchy', 'sbx-zai', 'allocation:sbx-1', 'provider-dispatch']) assert.ok(markup.includes(words), words)
+  assert.match(markup, />Revoke</)
+  assert.ok(drawn(win.workcellSecretValues({list: wc.list, projections: wc.projections_after}), 'credentials').includes('Nothing is projected.'))
+})
+
+test('SCRIPTED — Workcell secrets through the window\'s kernel channel: the references and the ledger read, Scan through Workcell\'s own scan, Revoke on the projection pressed and read back; Workcell\'s refusal in its words', async () => {
+  const wc = WORKCELL_SECRETS
+  const asked = []
+  let ledger = wc.projections
+  const adapter = {invoke: async op => {
+    asked.push(op)
+    if (op.op === 'workcell_read') return {outcome: {result: 'owner_route_reading', data: {'secret-list': wc.list, 'secret-projections': ledger, 'secret-scan': wc.scan}[op.request.kind]}}
+    if (op.op === 'workcell_write' && op.request.name === 'sbx-zai') { ledger = wc.projections_after; return {outcome: {result: 'owner_route_reading', data: wc.revoke}} }
+    return {error: wc.revoke_refusal.error.message}
+  }}
+  const secrets = settingsPages.workcellSecrets(adapter)
+  const read = await secrets.read()
+  assert.deepEqual(asked, [{op: 'workcell_read', request: {kind: 'secret-list'}}, {op: 'workcell_read', request: {kind: 'secret-projections'}}], 'the references and the ledger, never a scan unasked')
+  assert.equal(JSON.parse(win.workcellSecretValues(read).projections).length, 1)
+  asked.length = 0
+  const scanned = await secrets.scan()
+  assert.deepEqual(asked, [{op: 'workcell_read', request: {kind: 'secret-scan'}}])
+  assert.equal(win.workcellSecretValues({scan: scanned}).outside, 2)
+  assert.match(win.scanWords(scanned), /^Workcell's scan finds 2 credentials outside a secret store: OPENAI_API_KEY \(environment variable\), export ANTHROPIC_API_KEY \(key\/value auth file\)\. It says where each is, never what it holds\.$/)
+  asked.length = 0
+  assert.match(await secrets.revoke('sbx-zai'), /^Workcell revoked secret-projection:sbx-zai: its target loses it at its next use\.$/)
+  assert.deepEqual(asked, [{op: 'workcell_write', request: {kind: 'revoke-projection', name: 'sbx-zai'}}])
+  assert.deepEqual(JSON.parse(win.workcellSecretValues(await secrets.read()).projections), [], 'read back: nothing is projected')
+  await assert.rejects(secrets.revoke('nosuch'), /no secret projection `secret-projection:nosuch` exists/)
+  await assert.rejects(settingsPages.workcellSecrets({}).read(), /not connected/, 'no kernel channel: said, never an empty ledger')
+  const page = readFileSync(new URL('../src/settings/windowPages.ts', import.meta.url), 'utf8')
+  assert.match(page, /workcellSecrets\(source\)\.read\(\)/, 'the Credentials page reads Workcell\'s secrets when it opens')
 })
 
 test('Search: pages, settings and the settings beside their instruments are found by their words; ↑/↓ move the mark and Enter opens the one marked', () => {

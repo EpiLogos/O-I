@@ -43,15 +43,15 @@
 //               detected or why not, the owner's own effect words, the configuration folder, an adapter gap's missing contract.
 //   routes      [{model, name, routes: [{provider, key, standing?}]}]  the catalogue's declared routes (model_catalogue
 //               declared_routes: provider, credential_required as key); standing (unproven | observed | usable) is AIKit's model
-//               field (`aikit model-catalogue show`), which model_catalogue does not carry yet.
+//               field; routesWhy says why it stands unread (AIKit's catalogue is identity only; availability is `aikit compose`).
 // Credentials:
 //   credentials [{credential, provider, reference?, revoked, verifiedAt?, verdict?}]  AIKit's binding metadata (credential_list:
 //               credential_ref, provider_ref, declared_secret_ref, revoked, last verification; credential_verify's verdict working |
 //               refused | unreachable). No material enters these values.
 //   found       number  candidate keys credential_discover finds on this machine (presence only).
-//   secretRefs  [{ref, scheme, usedBy: [ref]}]  Workcell's recorded references (`workcell system --json` keys.references:
+//   secretRefs  [{ref, scheme, usedBy: [ref]}]  Workcell's recorded references (`workcell secret list`:
 //               workcell.secret-reference-inventory/v1 credential_ref, scheme, observed_in).
-//   projections [{name, to, credential, purpose?, scope?, by?}]  Workcell's projection ledger (`workcell secret projections`).
+//   projections [{name, to, credential, purpose?, scope?, by?}]  Workcell's projection ledger (`workcell secret projections`), the active ones.
 //   outside     number  credentials `workcell secret scan` finds outside a secret store (location and presence only).
 // Profiles:     profiles [{ref, title, active, settings: [{ref, title, scope, value?, secret?}]}]  O:I's named profiles (profile_list,
 //               profile_read).
@@ -77,7 +77,8 @@
 //               chosen trigger); grants and reproofs [{ref, title}] the authorities and verified runs the chosen routine may be enabled
 //               and reproved on; pendingCreation a creation AIKit has not acknowledged yet; contexts [{ref, title}] the work contexts
 //               routines are read in: this AIKit home, or a project (the routine op's `project`); `context` is the chosen one. new.from
-//               names what opened the form (a pad's Make routine, §19.22): this page is the one place a run is given a time.
+//               names what opened the form (a pad's Make routine, §19.22; a song's Routine…, §19.1, which gives its Method and its new
+//               schedule's Repeat and When: SettingsRequest.newRoutine): this page is the one place a run is given a time.
 // Appearance:   theme {saved, revision?, observations?} (presentation_read: light | dark | system, or a library theme's id; its revision and
 //               the renderers' advisory observations); themes [{id, name}] the library; imported [{id, name}]; visualLayer, welcome (the
 //               renderer's retained store). The theme you choose is the row `oi:presentation:theme` among `settings`, a local change
@@ -107,7 +108,8 @@
 //   scene, glyph, material and musical controls stay) · run <product>:<action> (product_action_run): all exist.
 //   enterKey <credential>: a write-only key goes to the native host's own secure field, never through these values; it stands
 //   disabled until the host qualifies its credential capability (SettingsAdapter.canEnterCredentialMaterial).
-//   scan (`workcell secret scan`) · revokeProjection <name> (`workcell secret revoke-projection`): no kernel route.
+//   scan (`workcell secret scan`) · revokeProjection <name> (`workcell secret revoke-projection --name`): the kernel's workcell_read and
+//   workcell_write (owner_routes.rs).
 //   addMachine with new.label, new.endpoint, new.credential, new.expects, new.note (`workcell machine add`) · connect <label>
 //   (`workcell connect --connection`) · disconnect <label> (`workcell connections disconnect`) · removeMachine <label> (`workcell
 //   machine remove`): RemoteMachinesSource over workcell_read and workcell_write.
@@ -636,7 +638,7 @@ function HarnessesPage({p}: {p: ViewProps}) {
           return <tr key={txt(m.model) ?? ''}>
             <td data-i={`${txt(m.name) ?? NONE}|${txt(m.model) ?? ''}`}><b>{txt(m.name) ?? txt(m.model) ?? NONE}</b></td>
             <td>{rs.length ? rs.map(r => `${txt(r.provider) ?? NONE}${r.key === true ? ' · key' : ''}`).join(', ') : NONE}</td>
-            <td data-i="Standing|Each route's standing in AIKit's model field: unproven, observed or usable.">{rs.some(r => txt(r.standing)) ? rs.map(r => txt(r.standing) ?? NONE).join(', ') : NONE}</td>
+            <td data-i={`Standing|Each route's standing: unproven, observed or usable.${strOf(v, 'routesWhy') ? ` ${strOf(v, 'routesWhy')}` : ''}`}>{rs.some(r => txt(r.standing)) ? rs.map(r => txt(r.standing) ?? NONE).join(', ') : NONE}</td>
           </tr>
         })}</tbody>
       </table>}
@@ -827,6 +829,13 @@ const ROUTINE_TONE: Readonly<Record<string, Tone>> = {enabled: 'green', disabled
 const REPEAT: readonly Option<string>[] = [{value: 'daily', label: 'Daily'}, {value: 'every', label: 'Every interval'}, {value: 'once', label: 'Once'}, {value: 'cron', label: 'Advanced: cron'}]
 const REPEAT_FIELD: Readonly<Record<string, readonly [string, string]>> = {daily: ['Time (24-hour)', 'hh:mm'], every: ['Interval (seconds)', 'Seconds'],
   once: ['Timestamp (RFC 3339)', 'YYYY-MM-DDThh:mm:ssZ'], cron: ['Cron expression', 'minute hour day month weekday']}
+/** The Methods a routine is made from: the active ones with a verified run here, and the one the opening gave (a song's take, filed for you
+ * to accept) named with why it is not one of them yet. */
+const NOT_VERIFIED = 'Not a Method with a verified run here yet: accept it on the Capture page, run and verify it, then choose its verified run.'
+function methodChoices(methods: readonly Rec[] | undefined, held: string | undefined): Option<string>[] {
+  const verified = (methods ?? []).flatMap(m => (txt(m.method) && m.active !== false ? [{value: m.method as string, label: txt(m.name) ?? m.method as string}] : []))
+  return held && !verified.some(o => o.value === held) ? [...verified, {value: held, label: held, why: NOT_VERIFIED}] : verified
+}
 function AutomationsPage({p}: {p: ViewProps}) {
   const v = p.v, show = strOf(v, 'show') ?? 'routines', creating = strOf(v, 'adding') === 'routine'
   const routines = list(v, 'routines'), methods = list(v, 'methods'), timers = list(v, 'timers'), history = list(v, 'history')
@@ -850,11 +859,11 @@ function AutomationsPage({p}: {p: ViewProps}) {
         <Radio {...st(p, 'show')} label="Show" does="What the page lists." value={show} options={SHOW_AUTO} onChange={x => p.set('show', x)} />
       </div>
       {creating && <div className="st-form st-form--grid">
-        {has(v, 'new.from') && <Readout label="from" does="What opened this routine: the pad whose prompt it runs. Its time is given here, and nowhere else." value={strOf(v, 'new.from')} />}
+        {has(v, 'new.from') && <Readout label="from" does="What opened this routine: the pad whose prompt it runs, or the song whose take it runs. Its time is given here, and nowhere else." value={strOf(v, 'new.from')} />}
         <TextField label="Name" does="The routine's name." value={strOf(v, 'new.name') ?? ''} onChange={x => p.set('new.name', x)} />
         <TextField label="Purpose" does="Optional: what the routine is for." value={strOf(v, 'new.description') ?? ''} onChange={x => p.set('new.description', x)} />
         <Chooser label="Method" does="An active Method with a verified run in this work context." value={strOf(v, 'new.method') ?? ''}
-          options={(methods ?? []).flatMap(m => (txt(m.method) && m.active !== false ? [{value: m.method as string, label: txt(m.name) ?? m.method as string}] : []))}
+          options={methodChoices(methods, strOf(v, 'new.method'))}
           onChange={x => { p.set('new.method', x); for (const k of ['new.proof', 'new.trigger', 'new.authority', 'new.profile', 'new.scopes']) p.set(k, undefined) }} />
         <Chooser label="Verified run" does="The proof: a successful, verified run of that exact Method revision. If none is listed, run and verify the Method in its working context." value={strOf(v, 'new.proof') ?? ''} options={opts('proofs', 'ref')} onChange={x => p.set('new.proof', x)} />
         <Chooser label="When" does="A schedule Central's time policy admits, a new schedule, or an event its connector admits." value={strOf(v, 'new.trigger') ?? ''}
@@ -870,7 +879,7 @@ function AutomationsPage({p}: {p: ViewProps}) {
         <Chooser label="Agent profile" does="The AIKit profile it composes with, or none." value={strOf(v, 'new.profile') ?? ''} options={[{value: '', label: 'No override'}, ...opts('profiles', 'ref')]} onChange={x => p.set('new.profile', x)} />
         <span className="st-form-wide" aria-label="Context scopes"><span className="st-form-label" data-i="Context scopes|The context scopes the routine composes with.">Scopes</span>
           {opts('scopes', 'ref').length ? opts('scopes', 'ref').map(o => <Toggle key={o.value} label={o.label} does={`Compose with ${o.label}.`} on={scopes.includes(o.value)}
-            onChange={on => p.set('new.scopes', JSON.stringify(on ? [...scopes, o.value] : scopes.filter(x => x !== o.value)))} />) : <span className="st-none">{options ? 'No context scope is offered.' : 'Choose a Method first.'}</span>}</span>
+            onChange={on => p.set('new.scopes', JSON.stringify(on ? [...scopes, o.value] : scopes.filter(x => x !== o.value)))} />) : <span className="st-none">{options ? 'No context scope is offered.' : strOf(v, 'new.method') ? 'No reading of what this Method may use.' : 'Choose a Method first.'}</span>}</span>
         <Action {...st(p, 'createRoutine')} label="Create" does="AIKit checks the Method revision and its verification, and keeps the routine as a Draft. Enabling it is a separate act." onPress={() => p.set('createRoutine', strOf(v, 'new.name') ?? true)} />
         {pending && <Action {...st(p, 'checkCreation')} label="Check result" does="Reads back the creation AIKit has not acknowledged yet. Nothing is sent again." onPress={() => p.set('checkCreation', true)} />}
         <Action label="Cancel" does="Creates nothing. A creation already sent goes on." onPress={() => p.set('adding', undefined)} />

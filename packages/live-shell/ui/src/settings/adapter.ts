@@ -6,7 +6,7 @@ import type { AikitReadRequest, AikitWriteRequest, KernelOp, KernelOutcome, Pres
 import type { SystemCompositionReading } from '../../../../../desktop/cradle/src/workspace/settings/types'
 import type { HarnessSource } from '../../../../../desktop/cradle/src/configuration/harnessSource'
 import type { RemoteMachinesSource } from './machines'
-import type { RoutineAuthoringSource } from './routines'
+import type { RoutineAuthoringSource, ScheduleShape } from './routines'
 import type { AdoptionNative } from '../../../../../desktop/cradle/src/configuration/adoptionController'
 import type { NaraIdentityRequest } from '../../../../../desktop/cradle/src/nara/identity/types'
 
@@ -34,6 +34,16 @@ export interface SettingsSearchTarget {
   scope: ScopeAddress
   destination: SettingsDestination
 }
+/** The new routine a contextual entry opens Automations' form on (manual §19.22: a pad's Make routine; §19.1: a song's Routine…): what
+ * opened it, said on the form, and the fields it gives — a name, a Method, a new schedule's Repeat and When (settings/routines.ts
+ * scheduleFromInput's input) — prefilled and yours to change before Create. Every other field starts empty. */
+export interface NewRoutineRequest {
+  readonly from: string
+  readonly name?: string
+  readonly method?: string
+  readonly repeat?: ScheduleShape['kind']
+  readonly schedule?: string
+}
 export type SettingsRequest = {
   /** Changes on every contextual opening, even when the identity is unchanged. */
   requestId: string
@@ -45,7 +55,9 @@ export type SettingsRequest = {
   /** Setup's Projects step opened for this folder (the browser's Work place: Add folder…, manual §10.11). */
   folder?: string
   /** Automations opened on this routine, in the request's work context (a routine opened where it lives, frame/openWhereItLives.ts). */
-  routine?: string })
+  routine?: string
+  /** Automations opened on a new routine, in the request's work context (windowValues.ts automationsRequestHolds). */
+  newRoutine?: NewRoutineRequest })
 /** The AIKit ops Setup asks (manual §10.11, Harnesses and skills and Credentials): the tools AIKit detects and the providers each reaches
  * (harness_status, harness_auth_describe), the skill roots it discovers, names, holds and would adopt (aikit_read init, collate, tree,
  * adopt-plan), the person's adoption (aikit_write adopt), and the keys it finds, the bindings it keeps and a binding by reference

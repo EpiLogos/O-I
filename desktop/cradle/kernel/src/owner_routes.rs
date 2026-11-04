@@ -468,6 +468,21 @@ pub enum WorkcellRead {
     Checkpoints {
         receipt: PathBuf,
     },
+    /// The credential references Workcell records in its machine
+    /// declarations, connection receipts and projection records (`workcell
+    /// secret list`; `workcell.secret-reference-inventory/v1`): each
+    /// reference, its scheme and where it is observed. References only; no
+    /// secret value is read.
+    SecretList,
+    /// The origin's projection ledger (`workcell secret projections`): each
+    /// projection's credential reference, target, purpose, scope, who asked
+    /// for it and its state. Refs only, never material.
+    SecretProjections,
+    /// Credential material outside a secret provider (`workcell secret
+    /// scan`; `workcell.secret-exposure-scan/v1`): environment variables,
+    /// shell rc files and known auth files, each by location and presence
+    /// only. Reads only.
+    SecretScan,
 }
 
 /// A material demand in Workcell's own flag spelling (`workcell plan`): each
@@ -609,6 +624,13 @@ pub enum WorkcellWrite {
         binding: Option<String>,
         #[serde(default)]
         name: Option<String>,
+    },
+    /// A projection revoked at its origin (`workcell secret
+    /// revoke-projection --name LABEL`): the target loses it at its next use.
+    /// Workcell's answer names the projection and its state; the receipt
+    /// stands only where it says revoked.
+    RevokeProjection {
+        name: String,
     },
 }
 
@@ -2366,6 +2388,12 @@ fn workcell_answer(request: &WorkcellRead) -> Result<Reading, Error> {
             args.extend(words(&["checkpoints", "--json"]));
             ("workcell checkpoints", args)
         }
+        WorkcellRead::SecretList => ("workcell secret list", words(&["secret", "list", "--json"])),
+        WorkcellRead::SecretProjections => (
+            "workcell secret projections",
+            words(&["secret", "projections", "--json"]),
+        ),
+        WorkcellRead::SecretScan => ("workcell secret scan", words(&["secret", "scan", "--json"])),
     };
     let mut call = Call::new(workcell(), route, args, READ_LIMIT);
     if matches!(request, WorkcellRead::Sandboxes { .. }) {
@@ -2428,6 +2456,15 @@ fn workcell_answer(request: &WorkcellRead) -> Result<Reading, Error> {
                 data,
                 &[("checkpoints", Kind::List), ("unreadable", Kind::List)],
             )?
+        }
+        WorkcellRead::SecretList => {
+            let data = schema(route, data, "workcell.secret-reference-inventory/v1")?;
+            fields(route, data, &[("credentials", Kind::List)])?
+        }
+        WorkcellRead::SecretProjections => fields(route, data, &[("projections", Kind::List)])?,
+        WorkcellRead::SecretScan => {
+            let data = schema(route, data, "workcell.secret-exposure-scan/v1")?;
+            fields(route, data, &[("findings", Kind::List)])?
         }
         WorkcellRead::Plan { .. } | WorkcellRead::Doctor => {
             unreachable!("answered by workcell_findings")
@@ -3233,6 +3270,16 @@ fn workcell_world_written(request: &WorkcellWrite) -> Result<Written, Error> {
             push_flag(&mut args, "--name", name.as_deref());
             ("workcell checkpoint", args)
         }
+        WorkcellWrite::RevokeProjection { name } => {
+            if name.trim().is_empty() {
+                return Err(incompatible(
+                    "workcell secret revoke-projection names the projection it revokes".into(),
+                ));
+            }
+            let mut args = words(&["secret", "revoke-projection", "--name"]);
+            args.push(name.into());
+            ("workcell secret revoke-projection", args)
+        }
         _ => unreachable!("answered by workcell_written"),
     };
     args.push("--json".into());
@@ -3293,6 +3340,21 @@ fn workcell_world_written(request: &WorkcellWrite) -> Result<Written, Error> {
             let data = fields(route, data, &[("checkpoint_ref", Kind::Text)])?;
             let reference = named(&data, &["/checkpoint_ref"]);
             (data, reference)
+        }
+        // The projection asked for, as Workcell names it in its ledger; the
+        // receipt stands where Workcell says it is revoked.
+        WorkcellWrite::RevokeProjection { name } => {
+            let data = fields(
+                route,
+                data,
+                &[("projection_ref", Kind::Text), ("state", Kind::Text)],
+            )?;
+            let asked = format!("secret-projection:{name}");
+            if data["projection_ref"].as_str() != Some(asked.as_str()) {
+                return Err(unexpected(route, &format!("the projection {asked}"), &data));
+            }
+            let revoked = data["state"].as_str() == Some("revoked");
+            (data, revoked.then_some(asked))
         }
         _ => unreachable!(),
     };

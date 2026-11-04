@@ -14,7 +14,7 @@ import type { CategoryId, Draft, SettingEntry } from './model'
 import type { DesignBinding, Standing, Value, ValueChange } from '../frame/devices/designed'
 import { HostedDevice, hostState, sayOnInfoLine, setHostPage } from '../frame/devices/deviceHost'
 import { design as windowDesign, searchResults } from '../inhabitants/catalogue/panels/settings__window'
-import { SETTINGS_LOCAL_KEYS, SETTINGS_WINDOW_ID, SETTINGS_WINDOW_WIRING, searchStep, windowCoreValues } from './windowValues'
+import { SETTINGS_LOCAL_KEYS, SETTINGS_WINDOW_ID, SETTINGS_WINDOW_WIRING, automationsRequestHolds, searchStep, windowCoreValues } from './windowValues'
 import { useAppearancePage, useAutomationsPage, useCredentialsPage, useHarnessPage, useMachinesPage, useProductsPage, useProfilesPage, useSetupPage, type Act, type PagePart } from './windowPages'
 import { themeOwned } from './presentationSetting'
 import { chatDefaultOwned } from './chatDefaultSetting'
@@ -135,8 +135,9 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, re
   useEffect(() => {
     if (!request) return
     if(request.page==='setup'){setHostPage(SETTINGS_WINDOW_ID,'setup');if(request.folder){hold('setupStep','projects');hold('folder',request.folder);hold('make',undefined);hold('wiki',undefined);hold('where',undefined)}setPageTick(n=>n+1);setSelected(null);setQuery('');return}
-    // A routine opened where it lives (frame/openWhereItLives.ts): Automations lists the routines of its work context, the routine chosen.
-    if(request.page==='automations'&&request.routine){hold('context',request.scope.scope_kind==='project'?request.scope.scope_ref??'':'');hold('show','routines');hold('routine',request.routine)}
+    // A routine opened where it lives (frame/openWhereItLives.ts): Automations lists the routines of its work context, the routine chosen. A new
+    // routine (a pad's Make routine, a song's Routine…) opens the form on what opened it, with the fields it gives (windowValues.ts).
+    if(request.page==='automations')for(const [key,value] of Object.entries(automationsRequestHolds(request)))hold(key,value)
     if(request.page){setCategory(request.page==='machines'?'execution':'automations');setOperationScope(request.scope);setSelected(null);setQuery('');return}
     if(!entries.length)return
     const entry = entries.find(e => e.spec.setting_ref === request.setting_ref)
@@ -414,7 +415,8 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, re
     for (const o of owned) if (o.noReset) standing[`reset:${ownedRef(o)}`] = { disabled: o.noReset }
     // The window's own keys go to its hands at once, never to an owner: the search, the scope, the open forms, and your local changes.
     const local: Record<string, (value: Value | undefined) => void> = {}
-    for (const key of SETTINGS_LOCAL_KEYS) local[key] = value => { hold(key, value); setPageTick(n => n + 1) }
+    // A form closed (Cancel) forgets what opened it: the next New routine… opens on nothing.
+    for (const key of SETTINGS_LOCAL_KEYS) local[key] = value => { hold(key, value); if (key === 'adding' && value !== 'routine') hold('new.from', undefined); setPageTick(n => n + 1) }
     local.search = value => { setQuery(typeof value === 'string' ? value : ''); hold('hit', undefined); setPageTick(n => n + 1) }
     local.scope = value => {
       const chosen = scopeOf(value)

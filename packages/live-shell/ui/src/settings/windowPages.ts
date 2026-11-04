@@ -19,7 +19,7 @@ import {readTheme, themeLibrary, type ThemeLibrary} from './presentationSetting'
 import {refusalLine, scalarEntries} from '../agent/RefusalCard'
 import {connectionBasis, machineBasis, validateMachine, type MachineConnection, type RemoteMachineDeclaration} from './machines'
 import {authorityAllowsTrigger, eligibleProofs, routineBasis, scheduleFromInput, type RoutineAuthoringOptions, type RoutineAuthoringResult, type ScheduleShape} from './routines'
-import {appearanceValues, automationValues, credentialValues, folderOf, harnessValues, machineValues, NO_AUTHORING, NO_HARNESS, NO_INVOKE, NO_MACHINES, NO_NAVIGATE, NO_PRODUCTS,
+import {appearanceValues, automationValues, credentialValues, NEW_SCHEDULE, ROUTINE_FORM, scanWords, workcellSecretValues, folderOf, harnessValues, machineValues, NO_AUTHORING, NO_HARNESS, NO_INVOKE, NO_MACHINES, NO_NAVIGATE, NO_PRODUCTS,
   NO_PROFILES, NO_SETUP_AIKIT, NO_SETUP_SOURCE, NO_VISUALS, groundBound, productValues, profileValues, SECRET_REFERENCE, setupFolder, setupHarnessClients, setupHarnessProviders,
   setupKeyFindings, setupNamespace, setupSkillRoots, setupValues, systemValues, type CredentialRow, type SetupCredentials, type SetupHarnesses, type SetupMachine, type SetupPreview,
   setupExtensionLine, setupPlacementLine, possessive, type SetupExtension, type SetupLeft, type SetupPlacement, type SetupSnapshot, type SetupWorkFolder, type SetupFounding, type SetupKey, type SetupAgreement, type SetupForm, type CivilTimePreview, type SetupBirth, type SetupCivilTime, type SetupDisclosure, groundNameRefusal, groundParts, groundPath} from './windowValues'
@@ -166,6 +166,24 @@ export function credentialMetadata(value: unknown): CredentialRow[] {
 }
 const CREDENTIAL_FAILED = 'The native owner did not complete this credential operation. Inspect the owner\'s redacted diagnostic.'
 
+/** Workcell's secrets over the adapter's kernel channel (O-I #758; kernel owner_routes.rs WorkcellRead secret-list, secret-projections,
+ * secret-scan and WorkcellWrite revoke-projection): the references and the projection ledger, read together; the scan, only when you press
+ * Scan; a projection revoked by its name, answered in Workcell's words. References and presence only: no value is asked or carried. */
+export function workcellSecrets(adapter: SettingsAdapter) {
+  const ask = async (op: KernelOp): Promise<unknown> => { const answer = await operation(adapter, op, 'owner_route_reading'); return answer.result === 'owner_route_reading' ? answer.data : undefined }
+  return {
+    read: async (): Promise<{list: unknown; projections: unknown}> => {
+      const [list, projections] = await Promise.all([ask({op: 'workcell_read', request: {kind: 'secret-list'}}), ask({op: 'workcell_read', request: {kind: 'secret-projections'}})])
+      return {list, projections}
+    },
+    scan: (): Promise<unknown> => ask({op: 'workcell_read', request: {kind: 'secret-scan'}}),
+    revoke: async (name: string): Promise<string> => {
+      const answer = object(await ask({op: 'workcell_write', request: {kind: 'revoke-projection', name}}))
+      return `Workcell ${word(answer.state) || 'answered for'} ${word(answer.projection_ref) || name}: its target loses it at its next use.`
+    },
+  }
+}
+
 /** Credentials (OwnerPreferences.tsx CredentialPreferences, CredentialConnection): AIKit's binding metadata, Discover, Verify, Rotate, Revoke
  * and a new binding, by reference only. */
 export function useCredentialsPage(adapter: SettingsAdapter, enabled: boolean, held: Held, done: (keys: readonly string[]) => void): PagePart {
@@ -173,9 +191,11 @@ export function useCredentialsPage(adapter: SettingsAdapter, enabled: boolean, h
     const answer = await operation(source, {op: 'credential_list'}, 'credential_reading')
     return credentialMetadata(answer.result === 'credential_reading' ? answer.data : null)
   })
+  const secrets = useRead<{list: unknown; projections: unknown}>(enabled, adapter, !!adapter.invoke, source => workcellSecrets(source).read(), 'workcell-secrets')
   const [found, setFound] = useState<number | null>(null)
+  const [scanned, setScanned] = useState<unknown>(undefined)
   const [verdicts, setVerdicts] = useState<Record<string, string>>({})
-  useEffect(() => { setFound(null); setVerdicts({}) }, [adapter, adapter.ownerEpoch])
+  useEffect(() => { setFound(null); setScanned(undefined); setVerdicts({}) }, [adapter, adapter.ownerEpoch])
   const change = useCallback(async (op: KernelOp, said: string) => {
     try { await operation(adapter, op, 'credential_changed') } catch { throw new Error(CREDENTIAL_FAILED) }
     await read.refresh()
@@ -184,8 +204,20 @@ export function useCredentialsPage(adapter: SettingsAdapter, enabled: boolean, h
   return useMemo(() => {
     const why: Record<string, string> = {}
     if (!adapter.invoke) for (const key of ['discover', 'verify', 'rotate', 'revoke', 'bind']) why[key] = NO_INVOKE('Credentials')
-    return {values: credentialValues(read.value, verdicts, found), why, refused: refusedOn('discover', read.error), reread: read.refresh,
+    if (!adapter.invoke) for (const key of ['scan', 'revokeProjection']) why[key] = NO_INVOKE('Workcell secrets')
+    return {values: {...credentialValues(read.value, verdicts, found), ...workcellSecretValues({...(secrets.value ?? {}), ...(scanned === undefined ? {} : {scan: scanned})})}, why,
+      refused: {...refusedOn('discover', read.error), ...refusedOn('scan', secrets.error)}, reread: async () => { await Promise.all([read.refresh(), secrets.refresh()]) },
       acts: {
+        scan: async () => {
+          const scan = await workcellSecrets(adapter).scan()
+          if (secrets.current(adapter)) setScanned(scan)
+          return scanWords(scan)
+        },
+        revokeProjection: async name => {
+          const said = await workcellSecrets(adapter).revoke(String(name))
+          await secrets.refresh()
+          return said
+        },
         discover: async () => {
           const answer = await operation(adapter, {op: 'credential_discover'}, 'credential_reading').catch(() => { throw new Error('Credential discovery did not complete. Inspect the owner\'s redacted diagnostic.') })
           const findings = answer.result === 'credential_reading' ? (answer.data as {findings?: unknown})?.findings : undefined
@@ -217,7 +249,7 @@ export function useCredentialsPage(adapter: SettingsAdapter, enabled: boolean, h
           return said
         },
       }}
-  }, [adapter, read.value, read.error, read.refresh, verdicts, found, change, held, done, read])
+  }, [adapter, read.value, read.error, read.refresh, verdicts, found, change, held, done, read, secrets, scanned])
 }
 
 // ---------------------------------------------------------------------------------------------------------------- Appearance
@@ -397,7 +429,7 @@ const triggerKey = (value: unknown): string => {
   return typeof row.schedule_ref === 'string' ? row.schedule_ref : typeof row.event_ref === 'string' ? row.event_ref : typeof row.trigger_ref === 'string' ? row.trigger_ref : String(row.kind ?? '')
 }
 /** A new schedule, prepared by AIKit when you create (AutomationPreferences.tsx "New schedule…", ScheduleControl.tsx). */
-export const NEW_SCHEDULE = 'new-schedule'
+export {NEW_SCHEDULE}
 const REPEATS: readonly ScheduleShape['kind'][] = ['daily', 'every', 'once', 'cron']
 const said = (result: RoutineAuthoringResult) => `${result.status === 'pending' ? 'Awaiting acknowledgement' : result.status} · ${result.message}`
 
@@ -516,7 +548,7 @@ export function useAutomationsPage(adapter: SettingsAdapter, enabled: boolean, h
           const result = await authoring.create({name, description: text(held('new.description')), method, proof, trigger: trigger!, authority, agent_profile: profile, context_scope: scopes}, project ?? undefined)
           if (result.status === 'pending') { setPending(result); return said(result) }
           if (result.status !== 'acknowledged') throw new Error(said(result))
-          done(['adding', 'new.name', 'new.description', 'new.method', 'new.proof', 'new.trigger', 'new.repeat', 'new.schedule', 'new.authority', 'new.profile', 'new.scopes'])
+          done([...ROUTINE_FORM])
           await lists.refresh()
           return said(result)
         },
@@ -527,7 +559,7 @@ export function useAutomationsPage(adapter: SettingsAdapter, enabled: boolean, h
           const result = await authoring.readResult(pending, project ?? undefined)
           setPending(result.status === 'pending' ? result : null)
           if (result.status === 'acknowledged') {
-            done(['adding', 'new.name', 'new.description', 'new.method', 'new.proof', 'new.trigger', 'new.repeat', 'new.schedule', 'new.authority', 'new.profile', 'new.scopes'])
+            done([...ROUTINE_FORM])
             await lists.refresh()
           }
           if (result.status === 'refused' || result.status === 'failed') throw new Error(said(result))

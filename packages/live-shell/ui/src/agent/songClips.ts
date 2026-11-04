@@ -45,7 +45,8 @@ import {EDIT_REQUEST, readScore, type ScoreReading} from './scoreBinding'
 import {SETTINGS_WHY, TAKES_WHY, writeSessionSettings} from './sessionSettings'
 import {planTargetOf, type PlanCall, type PlanTarget} from './wavePlan'
 import type {ShownSpan} from '../frame/tracks/tracksDoor'
-import type {ScheduleShape} from '../settings/routines'
+import {scheduleInputOf, type ScheduleShape} from '../settings/routines'
+import type {NewRoutineRequest, SettingsRequest} from '../settings/adapter'
 
 /** Factory's clip of a song, a project's clips, and the kernel's gathering of every disclosed project's. */
 export const SONG_CLIP = 'factory.song-clip/v1'
@@ -331,6 +332,16 @@ const SCHEDULE_WORDS: Readonly<Record<ScheduleShape['kind'], (shape: ScheduleSha
   once: shape => `once at ${(shape as {rfc3339: string}).rfc3339}`,
 }
 
+/** Routine…'s answer: AIKit's filed Method in its words, with the new routine Settings › Automations opens on (Make routine…), or the
+ * refusal. */
+export type SongRoutineReceipt = {readonly ok: true; readonly note: string; readonly routine: NewRoutineRequest} | {readonly ok: false; readonly error: string}
+
+/** Make routine… after Routine…: Settings › Automations opened on the new routine — the song that opened it, its name, the take's Method
+ * and the schedule as you gave it — in your AIKit home's context, where the take's Method is filed and a Routine finds it (AIKit
+ * routine_dispatch.rs CatalogMethodResolver). The way back names the song. */
+export const songRoutineRequest = (row: SongRow, routine: NewRoutineRequest): SettingsRequest => ({requestId: crypto.randomUUID(), page: 'automations',
+  scope: {scope_kind: 'world', scope_ref: null}, returnLabel: `Back to Songs · ${row.name}`, newRoutine: routine})
+
 /** Routine… on a song (manual §19.1 Songs: "It comes round again … by a routine's schedule. The schedule is the routine's, and the song keeps
  * none"): with the song's note chosen in a task's Clip view (a canon unit of the task's Run naming this song), AIKit first prepares the
  * schedule — validated under Central's civil-time policy, its ScheduleRecord named and kept nowhere — and then files the Method of the take
@@ -338,7 +349,7 @@ const SCHEDULE_WORDS: Readonly<Record<ScheduleShape['kind'], (shape: ScheduleSha
  * home, where a Routine's Method is catalogued. It waits in the inbox for you: nothing is accepted, proven or scheduled here. Refused in
  * words before any write where no note is chosen, the note is no song or another song, or AIKit refuses the schedule. */
 export async function routineOfSong(transport: KernelTransportStatus, row: SongRow, note: ChosenNote | null, shape: ScheduleShape,
-  call: PlanCall & TakesCall = carried(transport) as PlanCall & TakesCall): Promise<WorldActionReceipt> {
+  call: PlanCall & TakesCall = carried(transport) as PlanCall & TakesCall): Promise<SongRoutineReceipt> {
   if (!note) return {ok: false, error: routineNoNote(row.name)}
   const song = await songOfNote(transport, note.project, note.session, note.key, call, 'Routine…')
   if (!song) return {ok: false, error: routineNoSong(note.key)}
@@ -364,7 +375,8 @@ export async function routineOfSong(transport: KernelTransportStatus, row: SongR
   if (!candidate) return {ok: false, error: 'AIKit answered no candidate for the Method of the take, so nothing waits on the Capture page.'}
   return {ok: true, note: `AIKit filed the Method of ${row.name}'s take (${candidate}${proposed ? `, as ${proposed}` : ''}): each run of a routine over it is a `
     + `take Factory starts of ${song.unit} in ${song.target.runRef}. It waits for you to accept it on the Capture page. The schedule, ${SCHEDULE_WORDS[shape.kind](shape)}`
-    + `${when}, is prepared and kept nowhere: accept the Method, prove a run of it, then make the routine with this schedule in Settings › Automations.`}
+    + `${when}, is prepared and kept nowhere: accept the Method, prove a run of it, then make the routine with this schedule in Settings › Automations.`,
+    routine: {from: `Songs · ${row.name}`, name: row.name, ...(proposed ? {method: proposed} : {}), repeat: shape.kind, schedule: scheduleInputOf(shape)}}
 }
 
 /** Repeat's takes of a song (manual §19.1 The Launch panel: "each run a take of its own"), through O-I 795's take path: the set starts on

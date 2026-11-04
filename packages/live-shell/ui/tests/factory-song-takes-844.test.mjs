@@ -358,6 +358,18 @@ test('Routine… on a song: with its note chosen in a task\'s Clip view, AIKit p
   assert.match(made.note, /waits for you to accept it on the Capture page/)
   assert.match(made.note, /Settings › Automations/)
   assert.match(made.note, /daily at 07:30/)
+  // Make routine… (O-I #758): the receipt carries the new routine Settings › Automations opens on — what opened it, the song's name, the
+  // take's Method and the schedule's Repeat and When as you gave them (Create prepares it again: AIKit keeps a prepared schedule nowhere).
+  assert.deepEqual(made.routine, {from: 'Songs · release-check', name: 'release-check', method: ROUTINE.capture.proposed_id, repeat: 'daily', schedule: '07:30'})
+  assert.match(renderToStaticMarkup(rows.songPreview(row, noop, noop, made, noop)), /<button[^>]*data-action="song-make-routine"[^>]*>Make routine…<\/button>/)
+  assert.doesNotMatch(renderToStaticMarkup(rows.songPreview(row, noop, noop, null, noop)), /song-make-routine/, 'nothing to make before AIKit files the Method')
+  const opening = songs.songRoutineRequest(row, made.routine)
+  assert.deepEqual({...opening, requestId: typeof opening.requestId}, {requestId: 'string', page: 'automations', scope: {scope_kind: 'world', scope_ref: null},
+    returnLabel: 'Back to Songs · release-check', newRoutine: made.routine}, 'the take\'s Method is your AIKit home\'s, so the routine is made in that context')
+  assert.match(await source('../src/agent/SongRows.tsx'), /openSettings\(songRoutineRequest\(/)
+  const {scheduleFromInput, scheduleInputOf} = await import('../src/settings/routines.ts')
+  for (const [kind, raw] of [['daily', '07:30'], ['every', '3600'], ['every', '1.5'], ['once', '2026-11-05T07:30:00Z'], ['cron', '0 8 * * 1-5']])
+    assert.equal(scheduleInputOf(scheduleFromInput(kind, raw)), raw, `${kind} ${raw}: the When the form takes is the one given`)
   // The preview: Routine… stands enabled beside its schedule (Repeat and when, parsed by Settings' scheduleFromInput at the press).
   const markup = renderToStaticMarkup(rows.songPreview(row, noop, noop))
   assert.match(markup, /data-action="remake-song"/)
