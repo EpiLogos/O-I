@@ -30,7 +30,7 @@
 //! `tests/k8_no_alloc.rs` counts them at zero). Making a field and its law
 //! allocates, off the thread.
 
-use crate::graph::{Clock, Instrument, TorusAct, TORUS_ACT_KEYS};
+use crate::graph::{Clock, Instrument, TorusAct, TorusStrike, TORUS_ACT_KEYS, TORUS_STRIKE_MODES};
 use std::ffi::{c_char, c_int, CString};
 use std::ptr::NonNull;
 
@@ -277,6 +277,13 @@ extern "C" {
         n: usize,
         re: f64,
         im: f64,
+    ) -> c_int;
+    fn le_k8_strike_modes(
+        field: *mut LeK8Field,
+        modes: *const u16,
+        re: *const f64,
+        im: *const f64,
+        n: usize,
     ) -> c_int;
     fn le_k8_silence(field: *mut LeK8Field);
     fn le_k8_amplitude(field: *const LeK8Field, mode: usize, re: *mut f64, im: *mut f64) -> c_int;
@@ -584,6 +591,26 @@ impl K8Field {
         }
     }
 
+    /// Strike an act its owner landed at the cursor ([`TorusStrike`]: the impulses its owner's law gave the modes,
+    /// by mode index), as the owner's field struck it (the audio thread: no allocation). False when the field
+    /// refused it whole (a mode it does not hold, named twice, or an impulse past its bound): nothing moved.
+    pub fn strike_modes(&mut self, act: &TorusStrike) -> bool {
+        let n = usize::from(act.count);
+        if n == 0 || n > TORUS_STRIKE_MODES {
+            return false;
+        }
+        // SAFETY: a live owned field; the three arrays hold `n` ≤ 16 values each.
+        unsafe {
+            le_k8_strike_modes(
+                self.ptr.as_ptr(),
+                act.modes.as_ptr(),
+                act.re.as_ptr(),
+                act.im.as_ptr(),
+                n,
+            ) == 1
+        }
+    }
+
     /// Still the body at the cursor (Panic; `ql::ContinuousField::silence`): every resident
     /// state at rest and the acts waiting for later samples dropped; the voices, gains, clock,
     /// cursor and the Carrier's drive stand. The audio thread: no allocation.
@@ -686,19 +713,36 @@ impl Drop for K8Field {
     }
 }
 
+/// The owner's acts one Torus keeps for later samples of its continuation; past this many an act is
+/// refused and counted ([`K8Instrument::refused`]).
+pub const K8_WAITING: usize = 256;
+
 /// The Torus on a MIDI part: one K8 continuation played key by key (see
 /// the module doc). The field must be made at the graph's sample rate;
 /// at any other rate the node stays silent rather than play at the wrong
 /// speed.
+///
+/// A Torus its owner handed over ([`K8Instrument::handed_over`]) strikes the acts its owner lands
+/// after that handover ([`crate::EngineEvent::TorusStrike`]) at the owner's own sample: one landing at
+/// a sample its continuation has not reached waits for it, and lands before that sample renders, as
+/// the owner's did; one whose sample has passed lands at once and is counted late. A MIDI note
+/// strikes the key the shell's pitch→key law gives it ([`K8Instrument::with_notes`]; O-I #853) at its
+/// velocity over 127, by the Torus's own played-address law; a note it gives no key strikes the act
+/// prepared for it ([`K8Field::set_key`]), if any.
 #[derive(Debug)]
 pub struct K8Instrument {
     field: K8Field,
     one: [f32; 1],
     rate_ok: bool,
-    /// Notes whose key had no act or whose strike the field refused.
+    /// Notes and acts that struck nothing (no key or act, refused, or no room to wait).
     refused: u64,
     /// Frames the field refused to render (silence was played).
     unrendered: u64,
+    handover: Option<u32>,
+    notes: [Option<(u8, u16)>; 128],
+    /// The owner's acts for later samples, by sample (capacity [`K8_WAITING`], made off the audio thread).
+    waiting: Vec<TorusStrike>,
+    late: u64,
 }
 
 impl K8Instrument {
@@ -709,14 +753,33 @@ impl K8Instrument {
             rate_ok: true,
             refused: 0,
             unrendered: 0,
+            handover: None,
+            notes: [None; 128],
+            waiting: Vec::with_capacity(K8_WAITING),
+            late: 0,
         }
+    }
+
+    /// The Torus of the host's `handover`-th handover of its owner's field: the acts its owner lands
+    /// after it are this Torus's to strike.
+    pub fn handed_over(mut self, handover: u32) -> K8Instrument {
+        self.handover = Some(handover);
+        self
+    }
+
+    /// The key (row, column) each MIDI note strikes, by the shell's pitch→key law (O-I #853); `None`
+    /// where the law gives the note no key.
+    pub fn with_notes(mut self, notes: [Option<(u8, u16)>; 128]) -> K8Instrument {
+        self.notes = notes;
+        self
     }
 
     pub fn field(&self) -> &K8Field {
         &self.field
     }
 
-    /// Notes that struck nothing (no act for the key, or refused).
+    /// Notes and owner's acts that struck nothing (no key or act for a note, refused by the field,
+    /// or no room left to wait).
     pub fn refused(&self) -> u64 {
         self.refused
     }
@@ -724,6 +787,24 @@ impl K8Instrument {
     /// Frames the field refused to render.
     pub fn unrendered(&self) -> u64 {
         self.unrendered
+    }
+
+    /// The owner's acts that came after their sample and landed at once.
+    pub fn late(&self) -> u64 {
+        self.late
+    }
+
+    /// The owner's acts waiting for their sample.
+    pub fn waiting(&self) -> usize {
+        self.waiting.len()
+    }
+
+    fn strike(&mut self, act: &TorusStrike) -> bool {
+        let struck = self.field.strike_modes(act);
+        if !struck {
+            self.refused += 1;
+        }
+        struck
     }
 }
 
@@ -736,10 +817,24 @@ impl Instrument for K8Instrument {
         self.rate_ok = sample_rate == self.field.sample_rate();
     }
 
-    fn note_on(&mut self, key: u8, _velocity: f32, _clock: &Clock) {
-        // velocity is unrouted: the act's impulses are the host's, as QL
-        // prepared them
-        if !self.rate_ok || !self.field.strike_key(key) {
+    fn note_on(&mut self, key: u8, velocity: f32, _clock: &Clock) {
+        let struck = self.rate_ok
+            && match self.notes.get(usize::from(key)).copied().flatten() {
+                Some((row, column)) => {
+                    let mut act = TorusAct {
+                        count: 1,
+                        rows: [0; TORUS_ACT_KEYS],
+                        columns: [0; TORUS_ACT_KEYS],
+                        amplitude: [f64::from(velocity) / 127.0, 0.0],
+                    };
+                    act.rows[0] = row;
+                    act.columns[0] = column;
+                    self.field.play_keys(&act)
+                }
+                // no key by the law: the act prepared for the note, as QL prepared it
+                None => self.field.strike_key(key),
+            };
+        if !struck {
             self.refused += 1;
         }
     }
@@ -757,12 +852,50 @@ impl Instrument for K8Instrument {
         struck
     }
 
-    // Panic stills what was struck (QL's silence law); the body's drive stands.
+    fn torus_handover(&self) -> Option<u32> {
+        self.handover
+    }
+
+    fn torus_strike(&mut self, act: &TorusStrike, _clock: &Clock) -> bool {
+        if self.handover != Some(act.handover) {
+            return false;
+        }
+        if !self.rate_ok {
+            self.refused += 1;
+            return false;
+        }
+        let now = self.field.samples_elapsed();
+        if act.at <= now {
+            if act.at < now {
+                self.late += 1;
+            }
+            return self.strike(act);
+        }
+        if self.waiting.len() == self.waiting.capacity() {
+            self.refused += 1;
+            return false;
+        }
+        // after the acts for the same sample that came before it: they land in the order they came
+        let at = self.waiting.partition_point(|w| w.at <= act.at);
+        self.waiting.insert(at, *act);
+        true
+    }
+
+    // Panic stills what was struck (QL's silence law) and drops the acts waiting for later samples;
+    // the body's drive stands.
     fn panic(&mut self, _clock: &Clock) {
         self.field.silence();
+        self.waiting.clear();
     }
 
     fn process(&mut self, frame_io: &mut [f32], _clock: &Clock) {
+        if !self.waiting.is_empty() && self.rate_ok {
+            let now = self.field.samples_elapsed();
+            while self.waiting.first().is_some_and(|w| w.at <= now) {
+                let act = self.waiting.remove(0);
+                self.strike(&act);
+            }
+        }
         let v = if self.rate_ok && self.field.render(&mut self.one, false) {
             self.one[0]
         } else {

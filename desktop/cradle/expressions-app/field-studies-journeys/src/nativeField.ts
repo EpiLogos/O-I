@@ -581,15 +581,16 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
  const unsinglet=onM3Applied(reading=>{const codon=singletOfApplied(reading);if(codon===null)return;
   controller.torusSinglet(codon).catch(error=>{setText('key',`Singlet ${codon} not played: ${String(error instanceof Error?error.message:error)}`);});});
  /** A touch on the torus (DLW §21.2 "What strikes the Torus": "A touch | The point of the surface you touch"): what the press strikes
-  * (surfaceTouch.ts touchStrike, from the stage as the engine is handed it and the engine's own projection), struck through the owner's
-  * strike at a point. Answers whether the press was a touch on the torus; a press that is not one is left to the stage. */
- const touch=(x:number,y:number,view:StageView,pressure?:number):boolean=>{
+  * (surfaceTouch.ts touchStrike, from the stage as the engine is handed it and the engine's own projection), struck through `strike`, the
+  * frame's one stage channel (app.ts stageStrike), as a collision is. Answers whether the press was a touch on the torus; a press that is
+  * not one is left to the stage. */
+ const touch=(x:number,y:number,view:StageView,pressure:number|undefined,strike:(points:SurfacePoint[],amplitude:number)=>Promise<unknown>):boolean=>{
   const projection=(engine.telemetry?.() as any)?.config?.depth?.projection==='perspective'?'perspective':'orthographic';
-  const strike=touchStrike(controller.reading as any,x,y,view,{projection,worldScale:WORLD_SCALE,pressure});
-  if(!strike.point){if(strike.say)setText('key',strike.why);return false;}
-  const {theta,phi}=strike.point,degrees=(angle:number)=>(angle*180/Math.PI).toFixed(1);
+  const touched=touchStrike(controller.reading as any,x,y,view,{projection,worldScale:WORLD_SCALE,pressure});
+  if(!touched.point){if(touched.say)setText('key',touched.why);return false;}
+  const {theta,phi}=touched.point,degrees=(angle:number)=>(angle*180/Math.PI).toFixed(1);
   setText('key',`Touched the torus at θ ${degrees(theta)}°, φ ${degrees(phi)}°: it rings there.`);
-  controller.playAt([strike.point],strike.amplitude).catch(error=>{setText('key',`Not played: ${String(error instanceof Error?error.message:error)}`);});
+  strike([touched.point],touched.amplitude).catch(error=>{setText('key',`Not played: ${String(error instanceof Error?error.message:error)}`);});
   return true;
  };
  /** Collisions strike (DLW §20.2 Field "Collisions strike"; §21.2 "A collision in the field | The point where it happens"): the contacts the

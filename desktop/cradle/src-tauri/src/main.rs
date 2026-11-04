@@ -277,6 +277,7 @@ fn main() {
                 Err(error) => eprintln!("Desktop appearance could not be restored: {error}"),
             }
             let field = kernel.native_field();
+            live_engine_host::follow_torus(app.handle(), &field);
             app.manage(KernelHost(Mutex::new(kernel), field));
             // The window's one SharedField client for its identity (O-I #858),
             // held for the window's life: every transaction it takes — the

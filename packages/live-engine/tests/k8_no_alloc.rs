@@ -1,6 +1,8 @@
 //! The realtime law for the Torus node (O-I #849, feature `k8`): "the realtime path takes no allocation".
-//! A key's strike by QL's played-address law, a prepared key's strike and Panic's silence run on the audio
-//! thread through `ql::ContinuousField::strike_now` and `silence`; a global allocator counts every
+//! A key's strike by QL's played-address law, a prepared key's strike, a MIDI note's key by the pitch→key
+//! table, the owner's acts (waiting for their sample, landing, late, waiting for the Torus they follow and
+//! given to it as it takes the part) and Panic's silence run on the audio thread through
+//! `ql::ContinuousField::strike_now` and `silence`; a global allocator counts every
 //! allocation Rust makes on the armed thread, and (on macOS) the system allocator's own logger every one
 //! the C++ side makes there — QL's field and the shim allocate past Rust's allocator. One test per binary,
 //! so no other test thread allocates while it runs.
@@ -13,7 +15,7 @@ use std::alloc::{GlobalAlloc, Layout, System};
 use std::cell::Cell;
 use std::sync::atomic::{AtomicU64, Ordering};
 
-use live_engine::{engine, EngineEvent, Graph, K8Instrument, TorusAct, Track};
+use live_engine::{engine, EngineEvent, Graph, K8Instrument, TorusAct, TorusStrike, Track};
 
 struct Counting;
 
@@ -135,12 +137,28 @@ fn the_torus_strikes_and_is_stilled_without_allocating() {
             cap_metres: 1.0,
         })
         .unwrap();
+    let mut notes = [None; 128];
+    notes[60] = Some((2u8, 5u16));
     let mut g = Graph::new(SR, 120.0);
-    g.tracks
-        .push(Track::midi("Torus", Box::new(K8Instrument::new(field))));
+    g.tracks.push(Track::midi(
+        "Torus",
+        Box::new(K8Instrument::new(field).handed_over(1).with_notes(notes)),
+    ));
     let (mut core, mut handle) = engine(g).unwrap();
     let mut block = vec![0f32; 256 * 2];
+    let owners = |handover: u32, at: u64| EngineEvent::TorusStrike {
+        track: 0,
+        strike: TorusStrike::split(handover, at, &[(0, [0.01, -0.002]), (1, [-0.003, 0.0])])
+            .unwrap()[0],
+    };
     let events = [
+        owners(1, 400),
+        owners(1, 100),
+        EngineEvent::NoteOn {
+            track: 0,
+            key: 60,
+            velocity: 90.0,
+        },
         EngineEvent::TorusPlay {
             track: 0,
             act: TorusAct::new(&[(0, 2), (3, 7), (5, 11)], [0.35, -0.1]).unwrap(),
@@ -165,6 +183,28 @@ fn the_torus_strikes_and_is_stilled_without_allocating() {
         ARMED.with(|a| a.set(false));
         heard |= block.iter().any(|v| *v != 0.0);
     }
+    // An act after the next handover waits for its Torus, and is given to it as it takes the part.
+    let pull = |core: &mut live_engine::EngineCore, block: &mut [f32]| {
+        ARMED.with(|a| a.set(true));
+        #[cfg(target_os = "macos")]
+        system::arm();
+        core.pull_block(block);
+        #[cfg(target_os = "macos")]
+        system::disarm();
+        ARMED.with(|a| a.set(false));
+    };
+    handle.send(owners(2, 2000)).unwrap();
+    pull(&mut core, &mut block);
+    handle
+        .install_latest(
+            0,
+            Box::new(K8Instrument::new(k8_fixture::field(SR)).handed_over(2)),
+        )
+        .unwrap();
+    pull(&mut core, &mut block);
+    pull(&mut core, &mut block);
+    handle.collect();
+    assert_eq!(handle.installs().len(), 1, "the hand was taken");
     let count = ALLOCATIONS.load(Ordering::Relaxed);
     assert!(heard, "the Torus sounded");
     assert_eq!(count, 0, "the Torus's audio thread allocated {count} times");

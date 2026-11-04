@@ -100,12 +100,13 @@ test('off the native candidate each engine act refuses, naming its op', async ()
 
 /** A native host standing in: the set owner's ops in the kernel's shape, and the engine as live_engine_host.rs answers — a move sent is
  * queued, and the reading shows it only after a block (here, the next live_engine_mixer read) applied it. */
-const exportArgs = []
-function nativeHost({refuseOpen = null} = {}) {
+const exportArgs = [], torusArgs = []
+function nativeHost({refuseOpen = null, refuseTorus = null} = {}) {
   const calls = []
   const part = name => ({name, gain: 1, pan: 0, active: true, solo: false, sends: [0], midi: name === 'P0'})
   let applied = null, queued = []
   exportArgs.length = 0
+  torusArgs.length = 0
   const reading = () => structuredClone(applied)
   const apply = event => {
     const {mixer} = applied
@@ -123,6 +124,11 @@ function nativeHost({refuseOpen = null} = {}) {
     live_engine_stop: () => { applied.playing = false; return reading() },
     live_engine_send: ({event}) => { if (event.kind === 'send' && event.send > 0) throw `track ${event.track} has no send ${event.send}`; queued.push(event); return reading() },
     live_engine_mixer: () => { for (const event of queued) apply(event); queued = []; applied.position += 512; return reading() },
+    // the Torus the kernel kept under the lease, by its digest, onto the part (live_engine_host.rs live_engine_torus → bind_torus)
+    live_engine_torus: args => { torusArgs.push(structuredClone(args)); if (refuseTorus) throw refuseTorus
+      applied.toruses = [{track: args.track, sha256: args.sha256, at_samples_elapsed: '4800', handover: 1, keys_refused: null, sounding_from_frame: null}]
+      applied.torus_follow = {lease: args.lease, track: args.track, sha256: args.sha256, handover: 1, notes: args.notes !== null, struck: 0, missed: 0, handed_again: 0, refusal: null}
+      return reading() },
     // the host chooses the file in its own save dialog: the page names none (live_engine_host.rs live_engine_export)
     live_engine_export: args => { exportArgs.push(args); return {path: '/Users/me/Exports/engine.wav', frames: applied.position, events: 0, complete: true} },
   }
@@ -190,6 +196,82 @@ test('the set\'s mixer writes move the engine while it plays the set, and the UI
     await engine.liveEngine.stop().catch(() => {})
     delete globalThis.window
   }
+})
+
+// The Torus sounds through the engine from the pages (O-I #849 round 12): Play has the frame's owner hand it over (the `torus-engine` stage
+// command; the frame shuts its own sound of it) and puts it on the set's first MIDI part with the key each MIDI note strikes by the one
+// pitch→key law (O-I #853); Stop gives the frame its sound back. The frame's side is field-studies-journeys/tests/janko-keys-853.test.mjs;
+// the host's, bit for bit against the owner, src-tauri torus_native.rs.
+const layout = await import('../src/live/janko/jankoLayout.ts')
+const jankoKeys = await import('../src/live/janko/jankoInput.ts')
+const jankoWindow = JSON.parse(readFileSync(new URL('./fixtures/janko-window-v1.json', import.meta.url), 'utf8'))
+const HANDED = {lease: 'native-expression-7-1-1', sha256: `sha256:${'ab'.repeat(32)}`, generation: '0', at_samples_elapsed: '4800'}
+const frameStage = (answer = command => command.on ? {ok: true, torus_engine: HANDED} : {ok: true}) => {
+  const staged = []
+  return {staged, stage: async command => { staged.push(structuredClone(command)); return answer(command) }}
+}
+
+test('the Torus sounds on the set\'s first MIDI part, and no part where the set has none', () => {
+  assert.equal(engine.torusPartOf(KINDS), 0)
+  assert.equal(engine.torusPartOf(['audio', 'group', 'midi', 'return', 'master']), 1, 'a group is no part: the second part is the engine\'s 1')
+  assert.equal(engine.torusPartOf(['audio', 'return', 'master']), null)
+})
+
+test('each MIDI note strikes the key the one pitch→key law gives it on the surface the owner served, or none', () => {
+  const window = layout.readJankoWindow(jankoWindow).window
+  const notes = jankoKeys.noteKeys(window)
+  assert.equal(notes.length, 128)
+  const keys = jankoKeys.surfaceKeys(window)
+  for (let note = 0; note < 128; note++) assert.deepEqual(notes[note], jankoKeys.keyForNote(keys, note, 0), `note ${note}`)
+  assert.ok(notes.some(key => key !== null), 'the surface gives notes their keys')
+})
+
+test('Play hands the Torus over and the engine takes it onto the first MIDI part with its notes; Stop gives the frame its sound back', async () => {
+  const calls = nativeHost()
+  layout.publishLiveJankoWindow(jankoWindow)
+  const {staged, stage} = frameStage()
+  try {
+    const played = await engine.liveEngine.play(PATH, undefined, stage)
+    assert.deepEqual(calls.filter(c => c.startsWith('live_engine')), ['live_engine_open', 'live_engine_play', 'live_engine_torus'], 'Play starts the set, then the Torus is handed over')
+    assert.deepEqual(staged, [{command: 'torus-engine', on: true}], 'the frame\'s owner hands it over')
+    const [args] = torusArgs
+    assert.deepEqual({lease: args.lease, track: args.track, sha256: args.sha256}, {lease: HANDED.lease, track: 0, sha256: HANDED.sha256},
+      'the lease and digest the frame answered, onto the first MIDI part: never the field itself')
+    assert.deepEqual(args.notes, jankoKeys.noteKeys(layout.readJankoWindow(jankoWindow).window), 'each note\'s key, by the frame\'s own law')
+    assert.equal(played.torus_follow.lease, HANDED.lease, 'the host follows that owner from then on')
+    assert.equal(engine.liveEngineState().torus, null)
+    assert.doesNotMatch(engine.engineTransportBindings(PATH, engine.liveEngineState(), true).play.title, /Torus/)
+    await engine.liveEngine.stop(stage)
+    assert.deepEqual(staged.at(-1), {command: 'torus-engine', on: false}, 'Stop: the frame sounds the Torus again')
+  } finally {
+    await engine.liveEngine.stop(stage).catch(() => {})
+    layout.publishLiveJankoWindow(null)
+    delete globalThis.window
+  }
+})
+
+test('a Torus that cannot be handed over leaves the set playing, says why on Play, and leaves the frame sounding it', async () => {
+  const refusal = 'A Torus setting waits for its sample: the Torus is handed over once it lands'
+  for (const [what, host, answer, words, off] of [
+    ['the owner refuses', {}, command => command.on ? {ok: false, error: refusal} : {ok: true}, refusal, false],
+    ['the engine refuses', {refuseTorus: 'Keys holds no Torus: P0 is an audio part'}, undefined, 'Keys holds no Torus: P0 is an audio part', true],
+  ]) {
+    const calls = nativeHost(host)
+    const {staged, stage} = frameStage(answer)
+    try {
+      const played = await engine.liveEngine.play(PATH, undefined, stage)
+      assert.equal(played.playing, true, `${what}: the set plays on`)
+      assert.equal(engine.liveEngineState().torus, words, what)
+      assert.match(engine.engineTransportBindings(PATH, engine.liveEngineState(), true).play.title,
+        new RegExp(`The Torus sounds in the live instrument, not the engine: ${words.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`), what)
+      assert.equal(staged.some(command => command.on === false), off, `${what}: ${off ? 'the frame takes its sound back' : 'nothing was handed over'}`)
+      assert.equal(calls.includes('live_engine_torus'), off, what)
+    } finally {
+      await engine.liveEngine.stop(stage).catch(() => {})
+      delete globalThis.window
+    }
+  }
+  assert.equal(engine.liveEngineState().torus, null, 'Stop clears it: the next Play hands it over again')
 })
 
 // The mixer row's Volume and Pan (manual §21.1 "The mixer row"; O-I #849): the part's reading is the set's — its owner's, read back

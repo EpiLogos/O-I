@@ -42,8 +42,8 @@ pub use engine::{
     engine, EngineCore, EngineEvent, EngineHandle, MixerState, Part, Performance, Refusal, Stamped,
 };
 pub use graph::{
-    Clock, Device, Graph, GraphError, Instrument, MasterTrack, Note, ReturnTrack, TorusAct, Track,
-    MAX_RETURNS, TORUS_ACT_KEYS,
+    Clock, Device, Graph, GraphError, Instrument, MasterTrack, Note, ReturnTrack, TorusAct,
+    TorusStrike, Track, MAX_RETURNS, TORUS_ACT_KEYS, TORUS_STRIKE_MODES, TORUS_WAITING,
 };
 pub use instruments::{OperatorInstrument, SilentInstrument};
 

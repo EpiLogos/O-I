@@ -34,7 +34,9 @@
 //! candidate can measure — [`EngineHandle::latency`] reads what the
 //! realtime path recorded).
 
-use crate::graph::{Clock, Graph, GraphError, Instrument, TorusAct, TORUS_ACT_KEYS};
+use crate::graph::{
+    Clock, Graph, GraphError, Instrument, TorusAct, TorusStrike, TORUS_ACT_KEYS, TORUS_STRIKE_MODES,
+};
 use crate::ring::{ring, Consumer, Producer};
 use std::sync::atomic::{AtomicPtr, AtomicU64, Ordering};
 use std::sync::Arc;
@@ -65,6 +67,9 @@ pub enum EngineEvent {
     /// One act of the Torus's keys on a MIDI part that plays the Torus (O-I #849): its keys strike
     /// their moving points by QL's played-address law, as one strike.
     TorusPlay { track: usize, act: TorusAct },
+    /// One act the Torus's owner landed (O-I #849): its impulses, struck by the part's Torus at the
+    /// owner's sample ([`TorusStrike`]).
+    TorusStrike { track: usize, strike: TorusStrike },
     /// Release every held note on every part (manual §21.1 Rules); a Torus is stilled.
     Panic,
     /// A part's, a return's or the Main track's volume (linear gain).
@@ -242,6 +247,20 @@ impl MixerState {
                     Ok(())
                 }
             }),
+            EngineEvent::TorusStrike { track: t, strike } => track(t).and_then(|p| {
+                if !p.midi {
+                    Err(format!("'{}' is an audio part: it plays no notes", p.name))
+                } else if strike.count == 0
+                    || usize::from(strike.count) > TORUS_STRIKE_MODES
+                    || strike.impulses().any(|(_, z)| z.iter().any(|v| !v.is_finite()))
+                {
+                    Err(format!(
+                        "an act of the Torus's owner strikes 1 to {TORUS_STRIKE_MODES} modes with finite modal metres"
+                    ))
+                } else {
+                    Ok(())
+                }
+            }),
             EngineEvent::Panic => Ok(()),
             EngineEvent::Volume { part: p, gain: g } => part(p).and_then(|_| gain(g)),
             EngineEvent::Pan { part: p, pan } => part(p).and_then(|_| {
@@ -305,6 +324,7 @@ impl MixerState {
             EngineEvent::NoteOn { .. }
             | EngineEvent::NoteOff { .. }
             | EngineEvent::TorusPlay { .. }
+            | EngineEvent::TorusStrike { .. }
             | EngineEvent::Panic => {}
         }
     }
@@ -527,8 +547,9 @@ impl EngineCore {
     }
 
     /// Take an instrument handed to a part ([`EngineHandle::install`]) at frame `start`, before
-    /// the block's events: swap it onto its part and send the hand back with the instrument it
-    /// replaced. While the last hand has not been taken back, the next waits. No allocation.
+    /// the block's events: swap it onto its part ([`Graph::hand`]: a Torus takes the owner's acts
+    /// that waited for it) and send the hand back with the instrument it replaced. While the last
+    /// hand has not been taken back, the next waits. No allocation.
     fn take_hand(&mut self, start: u64) {
         let hands = &self.shared.hands;
         if !hands.retired.load(Ordering::Acquire).is_null() {
@@ -541,14 +562,8 @@ impl EngineCore {
         // SAFETY: the control side gave up `p` (a `Box::into_raw`) when it stored it, and
         // this thread alone takes `incoming`; it holds `p` until it stores it in `retired`.
         let hand = unsafe { &mut *p };
-        if let Some(slot) = self
-            .graph
-            .tracks
-            .get_mut(hand.track)
-            .and_then(|t| t.instrument.as_mut())
-        {
-            std::mem::swap(slot, &mut hand.instrument);
-        }
+        self.graph
+            .hand(hand.track, &mut hand.instrument, &self.clock);
         hand.frame = start;
         hands.retired.store(p, Ordering::Release);
     }
@@ -641,6 +656,49 @@ impl EngineHandle {
         }));
         hands.incoming.store(hand, Ordering::Release);
         Ok(())
+    }
+
+    /// Hand `instrument` to MIDI part `track` as [`EngineHandle::install`] does, except that a hand
+    /// still on its way is not waited for: this one takes
+    /// its place (the Torus its owner handed over again, after a setting moved it, supersedes the
+    /// last before the engine took it). The hand it took the place of is dropped here, never played;
+    /// answers whether there was one. Refused, in words, for a part that is not there or plays no
+    /// notes.
+    pub fn install_latest(
+        &mut self,
+        track: usize,
+        mut instrument: Box<dyn Instrument>,
+    ) -> Result<bool, Refusal> {
+        let part = self.mixer.tracks.get(track).ok_or_else(|| {
+            Refusal::Invalid(format!(
+                "the set has no part {track} (it has {})",
+                self.mixer.tracks.len()
+            ))
+        })?;
+        if !part.midi {
+            return Err(Refusal::Invalid(format!(
+                "'{}' is an audio part: it plays no notes, so it takes no instrument",
+                part.name
+            )));
+        }
+        instrument.prepare(self.sample_rate);
+        self.collect();
+        let hand = Box::into_raw(Box::new(Hand {
+            track,
+            frame: 0,
+            instrument,
+        }));
+        let was = self.shared.hands.incoming.swap(hand, Ordering::AcqRel);
+        let superseded = !was.is_null();
+        if superseded {
+            // SAFETY: the audio thread never took `was` (it was still in `incoming`, and this side swapped it out), so
+            // this side owns it again; it is freed once, here, off the audio thread.
+            drop(unsafe { Box::from_raw(was) });
+        }
+        // The audio thread may have taken the hand before it between the collect and the swap: take that back now, so
+        // the retired slot is free for this one.
+        self.collect();
+        Ok(superseded)
     }
 
     /// Every instrument the engine took from [`EngineHandle::install`], as (frame, part), in the

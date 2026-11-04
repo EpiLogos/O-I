@@ -80,7 +80,8 @@ const page = async () => {
       import {PointCloudField} from '../../src/engine/PointCloudField';
       import {toNativeConfig} from './nativeBridge';
       import {blankJourney,chakraEntities} from './model';
-      (window as any).__collide={PointCloudField,toNativeConfig,blankJourney,chakraEntities};`},
+      import * as THREE from 'three';
+      (window as any).__collide={PointCloudField,toNativeConfig,blankJourney,chakraEntities,THREE};`},
     loader: {'.woff': 'dataurl', '.woff2': 'dataurl', '.ttf': 'dataurl', '.svg': 'dataurl', '.png': 'dataurl'}});
   const browser = await chromium.launch({headless: true, args: ['--use-gl=angle', `--use-angle=${ANGLE}`, '--enable-unsafe-swiftshader', '--disable-dev-shm-usage']});
   browsers.push(browser);
@@ -218,6 +219,86 @@ test('what the readback costs a frame, in the same WebGL context (the receipt\'s
   assert.equal(cost.counts.lost, 0);
 });
 
+// ── 3D bodies: the depth velocity change the force pass writes is the one the velocity pass takes ─────────────
+
+test('with 3D bodies each particle in contact gains the depth velocity change the force pass wrote, and never its depth position correction', async () => {
+  const {tab} = await opening();
+  const r = await tab.evaluate(() => {
+    const {PointCloudField, toNativeConfig, blankJourney, chakraEntities, THREE} = window.__collide;
+    const canvas = document.createElement('canvas');
+    canvas.width = 640; canvas.height = 480;
+    document.body.appendChild(canvas);
+    const scene = blankJourney().scenes[0];
+    scene.entities = chakraEntities();
+    scene.field.params.count = 16384;
+    scene.engine.pairwiseEnabled = true;
+    // True-3D bodies: the pairwise pass makes full 3D contacts (GPGPUSimulator.step's depthGeometry).
+    scene.engine.volumeEnabled = true;
+    // No speed-squared drag, so what a step adds to a velocity is linear in what it is given (the comparison below).
+    const config = toNativeConfig(scene);
+    config.fluid.quadraticDrag = 0;
+    const field = new PointCloudField(canvas, config, true);
+    for (let i = 0; i < 60; i++) field.advance(1 / 60);
+    // A burst drives pairs into each other, so they close in depth as well as in the plane.
+    field.triggerDisperse(6);
+    for (let i = 0; i < 3; i++) field.advance(1 / 60);
+    const sim = field.simulator, renderer = field.renderer, u = sim.velMaterial.uniforms;
+    const w = sim.texWidth, h = sim.texHeight, n = sim.particleCount;
+    const read = (target, index = 0) => { const b = new Float32Array(w * h * 4); renderer.readRenderTargetPixels(target, 0, 0, w, h, b, undefined, index); return b; };
+    // What the last step's force pass wrote (buffer 0: plane correction and velocity change; buffer 1: depth correction, depth velocity
+    // change, contact) and the velocities its velocity pass made from it.
+    const plane = read(sim.pairForceTarget, 0), depth = read(sim.pairForceTarget, 1), stepped = read(sim.currentVelTarget);
+    // That velocity pass again, on the inputs it ran on (each still in its target until the next step): as it ran, and with one channel
+    // of the force pass's depth buffer taken away.
+    const scratch = new THREE.WebGLRenderTarget(w, h, {type: THREE.FloatType, format: THREE.RGBAFormat, minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, depthBuffer: false});
+    const without = channel => {
+      const bytes = depth.slice();
+      for (let i = channel; i < bytes.length; i += 4) bytes[i] = 0;
+      const texture = new THREE.DataTexture(bytes, w, h, THREE.RGBAFormat, THREE.FloatType);
+      texture.minFilter = texture.magFilter = THREE.NearestFilter;
+      texture.needsUpdate = true;
+      return texture;
+    };
+    const again = zTexture => {
+      const kept = u.uPairwiseForceZTexture.value;
+      if (zTexture) u.uPairwiseForceZTexture.value = zTexture;
+      sim.quadMesh.material = sim.velMaterial;
+      renderer.setRenderTarget(scratch);
+      renderer.render(sim.quadScene, sim.quadCamera);
+      renderer.setRenderTarget(null);
+      u.uPairwiseForceZTexture.value = kept;
+      return read(scratch);
+    };
+    const asRan = again(null), noDepthDv = again(without(1)), noDepthCorr = again(without(0));
+    const axis = u.uCompPlane.value < 0.5 ? 2 : 1;  // depth is z on the picture plane (XY), y on the plate (XZ)
+    const maxDelta = u.uPairMaxDelta.value, maxSpeed = Math.max(10, u.uMaxSpeed.value), viscosity = u.uViscosity.value;
+    let reproduced = 0, closing = 0, gained = 0, worst = 0, corrected = 0, moved = 0;
+    for (let i = 0; i < n; i++) {
+      const o = i * 4;
+      reproduced = Math.max(reproduced, Math.abs(asRan[o] - stepped[o]), Math.abs(asRan[o + 1] - stepped[o + 1]), Math.abs(asRan[o + 2] - stepped[o + 2]));
+      if (depth[o] !== 0) corrected++;
+      for (let c = 0; c < 3; c++) moved = Math.max(moved, Math.abs(asRan[o + c] - noDepthCorr[o + c]));
+      const dvZ = depth[o + 1];
+      if (dvZ === 0) continue;
+      // Within the per-step bound and the speed clamp, the change is linear: vel = (vel + dv / dt · dt) · viscosity.
+      if (Math.hypot(plane[o + 2], dvZ, plane[o + 3]) >= 0.98 * maxDelta || asRan[o + 3] >= 0.98 * maxSpeed || noDepthDv[o + 3] >= 0.98 * maxSpeed) continue;
+      closing++;
+      const got = asRan[o + axis] - noDepthDv[o + axis], wanted = viscosity * dvZ;
+      const off = Math.abs(got - wanted) / (1e-3 + 1e-5 * Math.abs(asRan[o + axis]) + 1e-4 * Math.abs(wanted));
+      if (off <= 1) gained++;
+      worst = Math.max(worst, off);
+    }
+    return {threeD: u.uPairwise3D.value, drag: u.uQuadraticDrag.value, reproduced, closing, gained, worst, corrected, moved};
+  });
+  assert.equal(r.threeD, 1, 'the field runs 3D contacts');
+  assert.equal(r.drag, 0, 'no speed-squared drag, so the change is linear');
+  assert.equal(r.reproduced, 0, 'the velocity pass run again on its inputs makes exactly the step\'s velocities');
+  assert.ok(r.closing >= 16, `pairs close in depth: ${r.closing} particles`);
+  assert.equal(r.gained, r.closing, `each gains the depth velocity change the force pass wrote (${r.gained} of ${r.closing}; worst ${r.worst.toFixed(2)} of its tolerance)`);
+  assert.ok(r.corrected > 0, `the force pass writes depth position corrections too: ${r.corrected} particles`);
+  assert.equal(r.moved, 0, 'the depth position correction moves no velocity (it is the position pass\'s)');
+});
+
 // ── a contact strikes the torus at its point ─────────────────────────────────
 
 const UPM = 120;
@@ -314,11 +395,11 @@ test('a Scene may carry Collisions strike, On or Off; anything else is refused; 
 test('the frame strikes each collision through its one stage channel, and the engine listens only while the scene\'s setting is On', () => {
   const strip = text => text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
   const app = strip(readFileSync(join(src, 'app.ts'), 'utf8')), production = strip(readFileSync(join(src, 'production.ts'), 'utf8'));
-  const collide = app.match(/function collisionStrike\([^)]*\)[^{]*\{([\s\S]*?)\n\}/);
-  assert.ok(collide, 'app.ts holds the collision strike');
+  const collide = app.match(/function stageStrike\([^)]*\)[^{]*\{([\s\S]*?)\n\}/);
+  assert.ok(collide, 'app.ts holds the frame\'s one strike, the collisions\' among them');
   assert.match(collide[1], /readStageRequest\(\{v:1,kind:'host-command',req:[^}]*command:'strike-at'/, 'read as the shell\'s strike-at is read');
   assert.match(collide[1], /runStageCommand\(/, 'run as it runs');
   assert.doesNotMatch(collide[1], /playAt|controller\./, 'never past the channel');
-  assert.match(app, /nativeField\??\.collide\(/, 'each frame hands the engine\'s contacts to the native field');
+  assert.match(app, /nativeField\??\.collide\(engine\.takeContacts\?\.\(\)\?\?null,stageStrike\)/, 'each frame hands the engine\'s contacts to the native field, with the frame\'s one strike');
   assert.match(production, /listenContacts\(frame\.scene\.composition\.collisionsStrike===true\)/);
 });

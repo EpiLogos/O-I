@@ -9,7 +9,7 @@
 // host-owned serial execution thread. Prepare/change topology off the audio
 // callback." `le_k8_field_new`, `le_k8_field_continue`, `le_k8_set_key` and
 // `le_k8_set_law` allocate and run off the audio thread; `le_k8_strike_key`,
-// `le_k8_play_keys`, `le_k8_silence` and `le_k8_render` are the audio
+// `le_k8_play_keys`, `le_k8_strike_modes`, `le_k8_silence` and `le_k8_render` are the audio
 // thread's, and allocate nothing (`ql::ContinuousField::strike_now`,
 // `silence`, `render_audio` and `ql::TorusKeys::play` are noexcept and
 // allocation-free).
@@ -237,6 +237,21 @@ int le_k8_set_law(LeK8Field *f, const LeK8KeyLaw *in, char *err, std::size_t err
 int le_k8_play_keys(LeK8Field *f, const std::uint8_t *rows, const std::uint32_t *columns, std::size_t n, double re,
                     double im) {
     return f && f->law && f->law->play(f->field, rows, columns, n, ql::Complex(re, im)) ? 1 : 0;
+}
+
+// The audio thread: an act the Torus's owner landed (O-I #849), `n` (1..16) impulses in modal metres to prepared modes
+// `modes[i]`, struck at the cursor — `ql::ContinuousField::strike_now`, noexcept and allocation-free. The owner's law made the
+// impulses; this strikes them as the owner's field did, so the two ring alike. 1 when struck; 0 leaves the body as it stood.
+int le_k8_strike_modes(LeK8Field *f, const std::uint16_t *modes, const double *re, const double *im, std::size_t n) {
+    constexpr std::size_t most = 16;
+    if (!f || !modes || !re || !im || n == 0 || n > most) return 0;
+    std::size_t index[most];
+    ql::Complex impulses[most];
+    for (std::size_t i = 0; i < n; ++i) {
+        index[i] = modes[i];
+        impulses[i] = ql::Complex(re[i], im[i]);
+    }
+    return f->field.strike_now(index, impulses, n) ? 1 : 0;
 }
 
 // The audio thread: Panic stills the body (`ql::ContinuousField::silence`). noexcept and allocation-free.

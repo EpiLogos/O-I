@@ -7,7 +7,7 @@ import {NATIVE_BINDINGS} from './nativeParameters.js';
 import {effectChainRefusal, readEffectOperands, type EffectValue, type PresentationEffect} from './native-field/effectsLaw.js';
 import {CURVE_TYPES, SWITCH_MODES, TRANSITION_KINDS, WIPE_DIRECTIONS, type CurveType, type SwitchMode, type TransitionKind, type WipeDirection} from '../../src/engine/transitionMath.js';
 import {TIMELINE_CATEGORY_IDS} from './timelineCategoryIds.js';
-export const STAGE_COMMANDS = ['view', 'capture', 'present', 'export', 'import', 'tool', 'engine', 'take', 'tracks', 'automation', 'live', 'instrument', 'janko', 'strike-at', 'singlet', 'audio-clock', 'performance-journal', 'torus', 'torus-sound', 'render-take', 'presentation', 'chrome', 'sound', 'journey', 'canvas', 'timeline', 'procedural-stage'] as const;
+export const STAGE_COMMANDS = ['view', 'capture', 'present', 'export', 'import', 'tool', 'engine', 'take', 'tracks', 'automation', 'live', 'instrument', 'janko', 'strike-at', 'singlet', 'audio-clock', 'performance-journal', 'torus', 'torus-sound', 'torus-engine', 'render-take', 'presentation', 'chrome', 'sound', 'journey', 'canvas', 'timeline', 'procedural-stage'] as const;
 /** The Ta-Onta procedural stage's own operations on the native field (DLW §21.2, the Torus's Stage page; QL-MEF continuous/host.rs
  * stage_operation): read its state, evaluate a procedure, bind one to the live flow within a budget, unbind it, retire its slots. Each
  * runs the native field's own controller operation (nativeField.ts stage), through the kernel's native_expression exchange. */
@@ -364,6 +364,11 @@ export type StageCommand =
    * scene set to the checkpoint, each act made at its sample (each in [the checkpoint's sample, + frames), in the order of their samples),
    * `frames` of its PCM. The live owner neither moves nor sounds. The answer carries a StageTakeRender. */
   | {command: 'render-take'; checkpoint: StageTorusCheckpoint; acts: StageTakeAct[]; frames: number}
+  /** The Torus heard in the desktop's one engine (O-I #849): on, its owner hands it over (QL-MEF `torus-native`, kept by the kernel under the
+   * field's lease) and the frame's own sound of it is muted, so the part sounds once, through the engine's mixer and Main; the answer carries
+   * the StageTorusEngine the engine is given it by. While on, the owner hands it over again whenever its Torus moves (a setting landed, a
+   * restore, a body chosen, the receiver). Off, the frame sounds it again. */
+  | {command: 'torus-engine'; on: boolean}
   | {command: 'presentation'; chrome: FramePresentation}
   | {command: 'chrome'; id: string; value?: string}
   /** The Expression's own sound (DLW §20.1 the mixer row's Activator and Solo): every object sound of the open Expression silenced or
@@ -596,7 +601,18 @@ export const STAGE_EDIT_AHEAD_SECONDS = 30;
  * kept Torus, its checkpoint; a rendered take, its render; a saved sound, the sound; an opened one, where it rang again from and what has
  * moved since it was saved (O-I #852). */
 export type StageResult = {ok: true; clock?: StageAudioClock; made_way?: StageKey[]; landed_at_samples_elapsed?: string; journal?: StagePerformanceJournal;
-  checkpoint?: StageTorusCheckpoint; render?: StageTakeRender; sound?: StageTorusSound; moved?: StageSoundMove[]} | {ok: false; error: string};
+  checkpoint?: StageTorusCheckpoint; render?: StageTakeRender; sound?: StageTorusSound; moved?: StageSoundMove[]; torus_engine?: StageTorusEngine} | {ok: false; error: string};
+
+/** The Torus its owner handed over for the desktop's one engine (O-I #849): the field's lease the kernel keeps it under, the digest the kernel
+ * relayed in its place (the document never crosses the channel), and the owner's generation and sample it stood at. */
+export interface StageTorusEngine {lease: string; sha256: string; generation: string; at_samples_elapsed: string}
+/** A StageTorusEngine read exactly, or null. */
+export function readStageTorusEngine(raw: unknown): StageTorusEngine | null {
+  if (!plain(raw) || !closed(raw, ['lease', 'sha256', 'generation', 'at_samples_elapsed'])) return null;
+  const {lease, sha256, generation, at_samples_elapsed} = raw;
+  return bounded(lease) && typeof sha256 === 'string' && /^sha256:[0-9a-f]{64}$/.test(sha256) && isStageSampleCursor(generation) && isStageSampleCursor(at_samples_elapsed)
+    ? {lease, sha256, generation, at_samples_elapsed} : null;
+}
 
 const BASE_KEYS = ['v', 'kind', 'command', 'req'] as const;
 const SETTING_KEYS = ['width', 'aspect', 'includeText', 'transparent'] as const;
@@ -795,6 +811,8 @@ export function readStageRequest(raw: unknown): {req: number; command: StageComm
       if (at === null) return null;
       return {req, command: {command: 'strike-at', points, amplitude: raw.amplitude, ...at}};
     }
+    case 'torus-engine':
+      return closed(raw, [...BASE_KEYS, 'on']) && typeof raw.on === 'boolean' ? {req, command: {command: 'torus-engine', on: raw.on}} : null;
     case 'singlet': {
       // One codon of the 64: the owner places it (O-I #771); a take's names its strength and its sample (O-I #855).
       if (!closed(raw, [...BASE_KEYS, 'codon', 'amplitude', 'at_samples_elapsed']) || !isStageCodon(raw.codon)) return null;
@@ -875,7 +893,7 @@ export function stageReplyMessage(req: number, result: StageResult, command?: St
     ...(result.landed_at_samples_elapsed !== undefined ? {landed_at_samples_elapsed: result.landed_at_samples_elapsed} : {}),
     ...(result.journal ? {journal: result.journal} : {}), ...(result.checkpoint ? {checkpoint: result.checkpoint} : {}),
     ...(result.render ? {render: result.render} : {}), ...(result.sound ? {sound: result.sound} : {}),
-    ...(result.moved ? {moved: result.moved} : {})} : {ok: false, error: String(result.error).replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, 512) || 'The application refused the stage command.'};
+    ...(result.moved ? {moved: result.moved} : {}), ...(result.torus_engine ? {torus_engine: result.torus_engine} : {})} : {ok: false, error: String(result.error).replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, 512) || 'The application refused the stage command.'};
   if (command?.command === 'capture') return {v: 1, kind: 'host-capture-result', req, ...outcome};
   return {v: 1, kind: 'host-command-result', ...(command ? {command: command.command} : {}), req, ...outcome};
 }
@@ -925,6 +943,11 @@ export function readStageResult(raw: unknown): ({req: number} & StageResult) | n
     const moved = readStageSoundMoves(raw.moved);
     if (!moved) return null;
     result.moved = moved;
+  }
+  if (raw.torus_engine !== undefined) {
+    const torus_engine = readStageTorusEngine(raw.torus_engine);
+    if (!torus_engine) return null;
+    result.torus_engine = torus_engine;
   }
   return result;
 }

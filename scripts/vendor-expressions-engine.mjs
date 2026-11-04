@@ -466,8 +466,30 @@ async function verify() {
     checked++;
   }
 
+  // Every name a module imports must be one the module it imports exports. A named refresh retains its dependencies, and a kept
+  // upstream module carries no source hash, so a module refreshed from a newer source can import what an older kept one never
+  // exported: 0c8fee533's simulationShaders.ts took M3_TORUS_TUBE from a glyphLibrary.mjs vendored before the name existed, every
+  // specifier resolved, and only the shell's build broke. esbuild links the whole output tree as the shell's bundler does (bare
+  // imports such as three left external) and names each import that has no matching export.
+  const linked = [...resolvable].filter(rel => fs.existsSync(path.join(OUT_ROOT, rel))).sort();
+  try {
+    await esbuild.build({stdin: {contents: linked.map(rel => `import ${JSON.stringify('./' + rel)};`).join('\n'), resolveDir: OUT_ROOT, sourcefile: 'verify-links.mjs', loader: 'js'},
+      absWorkingDir: OUT_ROOT, bundle: true, write: false, treeShaking: false, format: 'esm', platform: 'neutral', logLevel: 'silent',
+      plugins: [{name: 'bare-imports-external', setup(builder) { builder.onResolve({filter: /^[^./]/}, request => ({path: request.path, external: true})); }}]});
+  } catch (err) {
+    for (const failure of err?.errors ?? [{text: String(err)}]) {
+      const importer = failure.location?.file ? path.relative(OUT_ROOT, path.resolve(OUT_ROOT, failure.location.file)).split(path.sep).join('/') : '(the output tree)';
+      const missing = /^No matching export in "([^"]+)" for import "([^"]+)"/.exec(failure.text ?? '');
+      if (!missing) { errors.push(`${importer}: does not link: ${failure.text}`); continue; }
+      const target = path.relative(OUT_ROOT, path.resolve(OUT_ROOT, missing[1])).split(path.sep).join('/'), source = provenance.files[target];
+      errors.push(`${importer}: imports '${missing[2]}' from ${target}, which does not export it; ` + (source
+        ? `refresh it from its native source (--refresh-module ${source})`
+        : `${target} is O:I-owned: export the name there or stop importing it`));
+    }
+  }
+
   console.log(`verify: esbuild ${esbuildWhere}`);
-  console.log(`verify: ${checked}/${known.size} upstream modules + ${overlays.length} O:I overlay parse-checked, all relative .mjs specifiers resolved`);
+  console.log(`verify: ${checked}/${known.size} upstream modules + ${overlays.length} O:I overlay parse-checked, all relative .mjs specifiers resolved, ${linked.length} modules linked by name`);
   if (errors.length) {
     console.error('\nVERIFY FAILURES:');
     for (const e of errors) console.error(`  ${e}`);

@@ -12,7 +12,7 @@ import {conditionReadingOf} from '../instrumentCondition';
 import {TorusObject} from '../../../src/engine/torusObject';
 import {formBodyRequest,FORM_SAMPLES_CONTRACT,type SamplePreparation} from '../../../src/engine/psg-form-sampler';
 import {isStageSampleCursor,stageJournalLanding,STAGE_JOURNAL_ACTS_MAX,STAGE_JOURNAL_BYTES_MAX,STAGE_EDIT_AHEAD_SECONDS,STAGE_RENDER_FRAMES_MAX,STAGE_RENDER_ACTS_MAX,
- readStageTorusCheckpoint,readStageTorusSound,readStageSoundMoves,isStageSoundName,STAGE_TORUS_SOUND_NAME_MAX,type StageAudioClock,type StagePerformanceJournal,type StageKey,
+ readStageTorusCheckpoint,readStageTorusSound,readStageSoundMoves,readStageTorusEngine,isStageSoundName,STAGE_TORUS_SOUND_NAME_MAX,type StageTorusEngine,type StageAudioClock,type StagePerformanceJournal,type StageKey,
  type StageTakeAct,type StageTakeRender,type StageTorusCheckpoint,type StageTorusSound,type StageSoundMove,type StageFormBody} from '../stageCommands';
 import type {FieldScoreBasis,FieldScoreReply} from '../tarotScoreClient';
 export interface NativeRenderer {
@@ -54,6 +54,19 @@ const TORUS_READ_MS=1000;
 type ReceiverPlace=readonly [number,number,number];
 type ReceiverReading={schema:string;context:'world'|'personal';gains:{mode_ref:string;gain:number}[];law:string};
 const RECEIVER_RETRY_MS=1000;
+/** The owner's operations a Torus sounding in the desktop's one engine follows without being handed over again (O-I #849): the reads
+ * (instrument-session.mjs READ_OPERATIONS but the receiver, which moves what is heard), the advance unless a setting landed in it, a
+ * release (no native state moves) and the acts the kernel tells the engine (keys, a touch, a singlet, a named strike). */
+const TORUS_FOLLOWS:ReadonlySet<string>=new Set(['read','inspect','influence','personal','receive-personal','stage-state','score-resolve','score-state',
+ 'torus-state','torus-checkpoint','torus-render','torus-native','advance','torus-play','strike-at','torus-singlet','torus-release','strike']);
+/** Whether an acknowledged operation moved the owner's Torus past what the engine follows: a setting, a restore, a body, the receiver, a
+ * determinant event, or a setting landing inside an advance. */
+export function torusMoved(command:unknown,reply:unknown):boolean{
+ const op=(command as any)?.operation;
+ if(typeof op!=='string')return false;
+ if(op==='advance')return (reply as any)?.torus_set_landed!==undefined&&(reply as any)?.torus_set_landed!==null;
+ return !TORUS_FOLLOWS.has(op);
+}
 const samePlace=(a:ReceiverPlace|null,b:ReceiverPlace|null)=>a===null||b===null?a===b:a[0]===b[0]&&a[1]===b[1]&&a[2]===b[2];
 type Cadence={rate:number;period:number;source:string;timer:ReturnType<typeof setInterval>;started:number;
  beats:number;issued:number;applied:number;skipped:number;suspended:number;inFlight:boolean;lastEventMs?:number;maxEventMs?:number;stopped?:string;stopped_at?:number};
@@ -118,6 +131,12 @@ export class NativeFieldController {
  private receiverOn=false;private wantedAt:ReceiverPlace|null=null;private heardAt:ReceiverPlace|null=null;private hearing:Promise<void>|null=null;
  private heardReply:ReceiverReading|null=null;private receiverRefusal:{why:string;place:ReceiverPlace|null;at:number}|null=null;
  private level:GainNode|null=null;private levelValue:number=PRESENTATION_LEVEL.initial;
+ /** The Torus heard in the desktop's one engine (O-I #849): handed over to it (torus-native, kept by the kernel under the lease), so this
+  * frame's own sound of the torus is shut (`gate`, after the level and its voice tap: the symbols' voices still listen) and the part
+  * sounds once, through the engine's mixer and Main. The engine follows the owner's acts as the kernel tells them; whatever else moves the
+  * owner's Torus (torusMoved) has it handed over again. */
+ private engine:{on:boolean;stale:boolean;handed:StageTorusEngine|null;refusal:string|null;again:boolean}={on:false,stale:false,handed:null,refusal:null,again:false};
+ private gate:GainNode|null=null;
  /** A unity node the symbols' voices listen to (symbolVoices.ts): the torus's sound after the presentation level and before its effects. */
  private tap:GainNode|null=null;
  /** The torus's four effects (manual §21.5): their state outlives an instrument's lifetime, as the level's does; their sound stands
@@ -196,6 +215,9 @@ export class NativeFieldController {
   presentation_mode:!this.projection?'manual':this.projection.scale===this.opened.presentation.units_per_metre?'domain-follow':'manual-presentation-override',
   presentation_units_per_metre:this.projection?.scale??null,
   presentation_level:{value:this.levelValue,...PRESENTATION_LEVEL},
+  // The Torus in the desktop's one engine (O-I #849): whether it sounds there, what it was handed over by, whether the owner's Torus moved
+  // since, the refusal of the last hand-over, and the gain of this frame's own sound of it (0 while the engine sounds it).
+  torus_engine:{on:this.engine.on,handed:this.engine.handed,stale:this.engine.stale,refusal:this.engine.refusal,frame_gain:this.gate?.gain.value??null},
   presentation_effects:this.effects,
   // Where the Torus is heard from: Receiver On or Off, the owner's context and gains, and its refusal; never the place (O-I 856).
   receiver:this.receiverReading(),
@@ -256,7 +278,9 @@ export class NativeFieldController {
   // One presentation gain stage between the native receiver and the device, then the torus's four effects (Filter, Dynamics,
   // Delay, Reverb; each passes its input unchanged while off). The receiver keeps its own gain and clip law; nothing is synthesised here.
   const level=context.createGain();level.gain.value=this.levelValue;
-  const effects=new PresentationEffects(context,context.destination,this.effects);level.connect(effects.input);
+  const effects=new PresentationEffects(context,context.destination,this.effects);
+  // The frame's own sound of the torus passes the engine gate: shut while the desktop's one engine sounds it (torusEngine).
+  const gate=context.createGain();gate.gain.value=this.engine.on?0:1;level.connect(gate);gate.connect(effects.input);this.gate=gate;
   // The voice tap: the symbols' voices (DLW §20.2: "The voice carries part of the torus's sound to where the symbol stands") take their
   // input from this node, in this context. It listens; nothing is synthesised and nothing flows back into the torus's path.
   const tap=context.createGain();level.connect(tap);
@@ -287,6 +311,8 @@ export class NativeFieldController {
      const reply=await this.port.request({operation:'exchange',lease:opened.lease,request});
      // The kernel names each Torus checkpoint it relays (O-I #852); the session passes the checkpoint on without it.
      if(request?.command?.operation==='torus-checkpoint')this.relayed=typeof reply?.torus_checkpoint_sha256==='string'?{sha256:reply.torus_checkpoint_sha256,at:reply.torus_checkpoint?.taken_at_samples}:null;
+     // The Torus the engine sounds is handed over again once anything but an act the engine follows moved it (O-I #849).
+     if(this.engine.on&&reply?.status==='ok'&&torusMoved(request?.command,reply))this.engineMoved();
      return reply;
     },close:()=>{void this.closeOwner(opened).catch(()=>{});}},fieldBinding:this.projection,muted:true});
    this.recovery=this.renderer.onRetainedRecoveryRequired(state=>{this.contextLost=state==='lost';this.hold(`GPU context ${state}; explicit same-state checkpoint recovery or disconnect required`);});
@@ -1138,6 +1164,43 @@ export class NativeFieldController {
  setScale(scale:number){if(!this.projection)throw new Error('native presentation unavailable');this.projection.setScale(scale);this.changed();}
  followDomain(){this.setScale(this.opened?.presentation.units_per_metre);}
  setMuted(muted:boolean){if(!this.session)throw new Error('native audio unavailable');this.session.setMuted(muted);this.muted=muted;this.changed();}
+ /** The Torus heard in the desktop's one engine, or in this frame again (the `torus-engine` stage command; O-I #849). On: through the one
+  * serial owner, the owner hands the Torus over (`torus-native`; the kernel keeps it under the lease and relays its digest) and this frame's
+  * own sound of it is shut, so the part sounds once, through the engine; the answer is what the engine takes it by. While on, whatever moves
+  * the owner's Torus but an act the engine follows has it handed over again. Off: the frame sounds it again; nothing is asked of the owner. */
+ torusEngine(on:boolean):Promise<StageTorusEngine|null>{
+  if(!on){
+   const was=this.engine.on;this.engine={on:false,stale:false,handed:null,refusal:null,again:false};this.gateFrame();
+   if(was)this.changed();return Promise.resolve(null);
+  }
+  const session=this.session;
+  if(!session||!this.scene)return Promise.reject(new Error('Open the live instrument first: its scene owner hands the Torus over'));
+  if(this.status!=='following'||this.suspension)return Promise.reject(new Error('The field is not running: resume it, then play'));
+  return this.serial(async()=>{const handed=await this.handOver(session);this.engine.on=true;this.gateFrame();this.changed();return handed;});
+ }
+ /** The owner hands the Torus over, in the serial owner's turn: what the engine takes it by, read exactly, or the refusal in words. */
+ private async handOver(session:InstrumentSession):Promise<StageTorusEngine>{
+  if(!(await this.waitIdle(session,2000)))throw new Error('native owner busy; the Torus was not handed over');
+  const lease=this.opened?.lease;
+  if(!this.current(session)||typeof lease!=='string')throw new Error('the Torus belongs to a released lifetime');
+  let digest:any;
+  try{digest=await session.torusNative();}
+  catch(error){this.engine.refusal=error instanceof Error?error.message:String(error);this.changed();throw error;}
+  const handed=readStageTorusEngine({lease,sha256:digest?.sha256,generation:digest?.generation,at_samples_elapsed:digest?.at_samples_elapsed});
+  if(!handed)throw new Error('The kernel relayed the Torus handed over without the digest the engine takes it by');
+  this.engine.handed=handed;this.engine.stale=false;this.engine.refusal=null;return handed;
+ }
+ /** Something moved the owner's Torus while the engine sounds it: it is handed over again in the serial owner's next turn (once, however
+  * many moved it before that turn). A refusal (a setting still waiting for its sample) stands in the reading, and the move that lands it
+  * asks again. */
+ private engineMoved(){
+  this.engine.stale=true;const session=this.session;
+  if(!session||this.engine.again)return;
+  this.engine.again=true;this.changed();
+  void this.serial(async()=>{this.engine.again=false;if(this.engine.on&&this.engine.stale)await this.handOver(session);})
+   .then(()=>this.changed(),()=>{this.engine.again=false;this.changed();});
+ }
+ private gateFrame(){const gain=this.gate?.gain;if(gain)gain.value=this.engine.on?0:1;}
  /** The node the symbols' voices listen to, with the audio context it stands in; null while no instrument is open. Two audio contexts cannot
   * share a node, so a voice built on this is built in this context. */
  voiceTap():{context:AudioContext;input:GainNode}|null{return this.tap&&this.context?{context:this.context,input:this.tap}:null;}
@@ -1176,6 +1239,8 @@ export class NativeFieldController {
   const context=this.context;this.context=null;const opened=this.opened;this.opened=null;this.checkpoint=null;this.contextLost=false;
   this.sources=null;this.domain=null;this.openingHold=null;
   this.scene=false;this.influenceReading=null;this.acting=null;this.event=null;this.opening=null;this.sourcesStale=false;this.fundamentalAt=null;this.level=null;this.tap=null;this.effectsGraph?.dispose();this.effectsGraph=null;
+  // The engine keeps sounding what was handed over; this owner hands nothing over again, and a new one sounds here until asked.
+  this.gate=null;this.engine={on:false,stale:false,handed:null,refusal:null,again:false};
   this.stageReading=null;this.stageStale=false;this.stageLast=null;
   this.torus=null;this.torusAt=0;this.torusRefused=null;this.torusObject=new TorusObject();this.pulseTuning=null;
   // A new owner hears in the world's context until it is asked; Receiver itself is the person's and stays (O-I 856).

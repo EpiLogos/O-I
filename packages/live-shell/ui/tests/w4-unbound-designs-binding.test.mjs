@@ -119,6 +119,8 @@ test('Scope\'s Asks on Factory\'s Scope: every key of it classified, each settin
   const binding = carriedScope()
   for (const key of [...ASKS_OWN, ...ASKS_CUSTODY]) assert.equal(classify(binding, key), 'absent', `${key} stands disabled with why`)
   assert.match(binding.standing.calls.disabled, /^Calls to other agents: no owner operation carries it yet — missing op: an ingress rule for the sender kind agent/)
+  // AIKit's ingress policy decides by a sender's own id or its one default, never by kind, and no AIKit verb or kernel op writes it (O-I #772).
+  assert.match(binding.standing.calls.disabled, /GatewayIngressPolicy decides by a sender's own id \(sender_overrides\) or its one default, never by kind, and no write reaches it/)
   assert.match(binding.standing.wait.disabled, /^Wait: no owner operation carries it yet — missing op: the agent's approvals timeout/)
   assert.match(binding.standing.noAnswer.disabled, /^On no answer: no owner operation carries it yet/)
   assert.match(binding.standing.toolCalls.disabled, /^Tool calls: the Gateway's approvals row is not adopted on this chain/)

@@ -2002,8 +2002,9 @@ $('stage').addEventListener('pointerdown',ev=>{if((ev.target as HTMLElement).clo
  if(ev.button!==0&&ev.button!==2)return;
  if(!presenting&&(ev.button===2||tool==='orbit')){pointer.active=false;drag={kind:'camera',id:'',startX:ev.clientX,startY:ev.clientY,startWorld:{x:0,y:0,z:0},positions:new Map(),initialRadius:0,cam:{...camera},layer:null,pan:ev.button===2||ev.shiftKey};$('stage').setPointerCapture(ev.pointerId);ev.preventDefault();return;}
  // DLW §21.2 "A touch | The point of the surface you touch": while the live instrument plays, a press on the torus strikes it at the
- // touched point (nativeField.ts touch). The press keeps what it did before: the interact tool's click still fires.
- if(presenting||!editing){if(ev.button===0)nativeField?.touch(ev.clientX,ev.clientY,{camera,width,height},ev.pointerType==='pen'?ev.pressure:undefined);if(ev.button===0&&tool==='interact'){try{const w=positionAt(ev);pointer={active:true,world:w};firePointerClick(w);}catch{}}return;}
+ // touched point (nativeField.ts touch), through the frame's one stage channel (stageStrike). The press keeps what it did before: the
+ // interact tool's click still fires.
+ if(presenting||!editing){if(ev.button===0)nativeField?.touch(ev.clientX,ev.clientY,{camera,width,height},ev.pointerType==='pen'?ev.pressure:undefined,stageStrike);if(ev.button===0&&tool==='interact'){try{const w=positionAt(ev);pointer={active:true,world:w};firePointerClick(w);}catch{}}return;}
  try{
   if(placementStep){const e=selectedEntity();if(e&&!e.locked&&!blueprintMember(scene(),e.id)){const p=positionAt(ev);changed(()=>{e.sequence.steps[stepIndex].position={x:p.x-e.position.x,y:p.y-e.position.y,z:p.z-e.position.z};},true,'Place keyframe');placementStep=false;inspectorOpen=true;renderAll();}return;}
   if(tool==='interact'){const w=positionAt(ev);pointer={active:true,world:w};firePointerClick(w);return;}
@@ -2084,7 +2085,7 @@ function rebindAroundAct(frame:EngineFrame){
 function tick(now:number){if(sceneEditHeld||researchInstruments?.active()&&!researchPreview){nativeField?.controller.frame(0,true);lastTime=now;rafId=requestAnimationFrame(tick);return;}updatePropertyTake(now);const rawDelta=Math.max(0,Math.min((now-lastTime)/1000,.25));lastTime=now;let delta=!fieldPaused&&!document.hidden&&!libraryOpen?Math.min(rawDelta,.05):0;delta=nativeField?.controller.frame(delta,fieldPaused||document.hidden||libraryOpen)??delta;const previousTime=simTime;if(engine.capabilities.kind!=='production'){delta*=liveOverrides.valueForBind('field.params.timeScale')??scene().field.params.timeScale;simTime+=delta;}
  if(recovery.hidden&&!libraryOpen&&(!fieldPaused||needsFrame||engine.needsRender?.()||pointer.active||recorder.active||transitionDuration>0)&&now-lastStudioRender>=(physisFpsCap?1000/physisFpsCap:0)){try{const frame=frameData(delta);rebindAroundAct(frame);engine.render(frame);needsFrame=false;lastStudioRender=now;}catch(err){nativeField?.controller.hold('native surface render failed: '+String(err));needsFrame=false;if(String(err).toLowerCase().includes('context'))recovery.hidden=false;else error(err);transportUI();}}
  // Collisions strike (DLW §20.2 Field): the contacts the engine read back this frame strike the torus, bound in rate (nativeField.ts collide).
- {const said=nativeField?.collide(engine.takeContacts?.()??null,collisionStrike);if(said)toast(said,6500);}
+ {const said=nativeField?.collide(engine.takeContacts?.()??null,stageStrike);if(said)toast(said,6500);}
  const native=engine.telemetry?.();nativeField?.hear({camera,width,height},native?.config?.depth?.fov);if(native){simTime=native.simTime;delta=simTime-previousTime;document.documentElement.style.setProperty('--paper',native.background);document.documentElement.style.setProperty('--ink',native.palette[0]);$('text-layers').style.opacity=String(.25+.75*native.transition);}
  // A finished property preview holds its recorded end values; the field itself
  // keeps breathing. The playhead runs only while the scene plays, and reaching
@@ -2329,12 +2330,14 @@ function journeyEdge(edit:EdgeEdit){
  if(JSON.stringify(probe.find(v=>v.id===write.sceneId))===JSON.stringify(store.document.scenes.find(v=>v.id===write.sceneId)))return;
  changed(()=>applyTimelineMove(store.document,list=>applyEdgeWrite(list,write)),true,label);
 }
-/** A collision in the field strikes the torus at its point (DLW §20.2 Field "Collisions strike"; §21.2 "A collision in the field | The point
- * where it happens"; nativeField.ts collide): read as the shell's strike-at is read and run as it runs, through the frame's one stage channel. */
-let collisionRequests=0;
-function collisionStrike(points:{theta:number;phi:number}[],amplitude:number){
- const parsed=readStageRequest({v:1,kind:'host-command',req:++collisionRequests,command:'strike-at',points,amplitude});
- if(!parsed)return Promise.reject(new Error('A collision\'s strike is outside the stage vocabulary.'));
+/** Every strike the frame makes itself at points of the torus (DLW §21.2 "What strikes the Torus"): a touch on the stage ("The point of the
+ * surface you touch"; nativeField.ts touch) and a collision in the field ("The point where it happens"; nativeField.ts collide), read as the
+ * shell's strike-at is read and run as it runs, through the frame's one stage channel. Run in the press: the channel reaches the owner's
+ * strike before it awaits anything, so a touch rings when it did when it struck the owner itself. */
+let stageStrikes=0;
+function stageStrike(points:{theta:number;phi:number}[],amplitude:number){
+ const parsed=readStageRequest({v:1,kind:'host-command',req:++stageStrikes,command:'strike-at',points,amplitude});
+ if(!parsed)return Promise.reject(new Error('This strike is outside the stage vocabulary.'));
  return runStageCommand(parsed.command);
 }
 async function runStageCommand(command:StageCommand):Promise<StageResult>{
@@ -2388,6 +2391,12 @@ async function runStageCommand(command:StageCommand):Promise<StageResult>{
    if(!nativeField)throw new Error('This application has no native instrument.');
    if(command.action==='save')return {ok:true,sound:await nativeField.controller.torusSound(command.name)};
    {const {landed_at_samples_elapsed,moved}=await nativeField.controller.openTorusSound(command.sound);announceHostState();return {ok:true,landed_at_samples_elapsed,moved};}
+  case 'torus-engine':
+   // The Torus heard in the desktop's one engine (O-I #849): its owner hands it over and the frame's own sound of it is muted while the
+   // engine sounds it, handed over again whenever the owner's Torus moves (controller.ts torusEngine); off, the frame sounds it again. The
+   // answer carries the lease and digest the engine takes it by, never the field itself.
+   if(!nativeField){if(command.on)throw new Error('This application has no native instrument.');return {ok:true};}
+   {const torus_engine=await nativeField.controller.torusEngine(command.on);return torus_engine?{ok:true,torus_engine}:{ok:true};}
   case 'render-take':
    // A take rendered offline through the M1′ session for Export Audio (O-I 855; controller.ts renderTake): a second owner of the scene set to
    // the take's checkpoint, each act at its sample, its PCM as f32. The live owner neither moves nor sounds, so nothing is announced.

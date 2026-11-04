@@ -117,6 +117,18 @@ pub trait Instrument: std::fmt::Debug + Send {
     fn torus_play(&mut self, _act: &TorusAct, _clock: &Clock) -> bool {
         false
     }
+    /// The handover a Torus was handed over by (its owner's `torus-native`, counted by the host), so
+    /// an act its owner landed after that handover ([`TorusStrike::handover`]) finds it; `None` for
+    /// every other instrument.
+    fn torus_handover(&self) -> Option<u32> {
+        None
+    }
+    /// One act its owner landed ([`EngineEvent::TorusStrike`], O-I #849): the impulses the owner's
+    /// own law gave the modes, struck when the Torus's continuation reaches the owner's sample.
+    /// Answers whether the instrument took it (struck, or waiting for its sample).
+    fn torus_strike(&mut self, _strike: &TorusStrike, _clock: &Clock) -> bool {
+        false
+    }
     /// Panic ([`EngineEvent::Panic`]; manual §21.1 Rules: "Panic releases all notes at once"): by
     /// default every held note is released. The Torus is stilled instead, since a released note of
     /// a struck body rings on (O-I #849).
@@ -175,6 +187,83 @@ impl TorusAct {
             .iter()
             .copied()
             .zip(self.columns[..n].iter().copied())
+    }
+}
+
+/// The most modes one [`TorusStrike`] carries; an owner's act on more travels as several, landing
+/// at the same sample.
+pub const TORUS_STRIKE_MODES: usize = 16;
+
+/// The owner's acts a graph keeps for a Torus not yet on its part (one handed over and still on its
+/// way); past this many, an act is dropped and counted ([`Graph::torus_unplaced`]).
+pub const TORUS_WAITING: usize = 256;
+
+/// One act the Torus's owner landed (O-I #849; manual §21.2 "What strikes the Torus": a key, a touch,
+/// a clip's note, a singlet): the impulses QL's own law gave the resident modes (modal metres, re and
+/// im, by mode index into the continuation the owner handed over), landing at the owner's sample `at`
+/// (its cursor). The engine adds no law of its own: the Torus strikes these impulses when its
+/// continuation reaches `at`, as the owner did, so the two ring sample for sample alike. `handover`
+/// names the handover the act followed; a Torus handed over by a later one holds it already. Plain
+/// data, so it travels to the audio thread in an [`EngineEvent`].
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct TorusStrike {
+    pub handover: u32,
+    pub at: u64,
+    pub count: u8,
+    pub modes: [u16; TORUS_STRIKE_MODES],
+    pub re: [f64; TORUS_STRIKE_MODES],
+    pub im: [f64; TORUS_STRIKE_MODES],
+}
+
+impl TorusStrike {
+    /// The owner's act of `impulses` (mode index, [re, im]) at `at`, as one or more acts of at most
+    /// [`TORUS_STRIKE_MODES`] modes each (off the audio thread: it allocates). Refused in words with
+    /// no impulse, a mode named twice or past 65535, or an impulse that is not finite; whether the
+    /// body can take it is the Torus's own law to judge.
+    pub fn split(
+        handover: u32,
+        at: u64,
+        impulses: &[(usize, [f64; 2])],
+    ) -> Result<Vec<TorusStrike>, String> {
+        if impulses.is_empty() {
+            return Err("an act of the Torus's owner strikes at least one mode".into());
+        }
+        let mut seen = std::collections::BTreeSet::new();
+        for (mode, z) in impulses {
+            if *mode > usize::from(u16::MAX) || !seen.insert(*mode) {
+                return Err(format!(
+                    "an act of the Torus's owner names each mode once, by its index; mode {mode} is not one"
+                ));
+            }
+            if z.iter().any(|v| !v.is_finite()) {
+                return Err("an act of the Torus's owner strikes with finite modal metres".into());
+            }
+        }
+        Ok(impulses
+            .chunks(TORUS_STRIKE_MODES)
+            .map(|part| {
+                let mut act = TorusStrike {
+                    handover,
+                    at,
+                    count: part.len() as u8,
+                    modes: [0; TORUS_STRIKE_MODES],
+                    re: [0.0; TORUS_STRIKE_MODES],
+                    im: [0.0; TORUS_STRIKE_MODES],
+                };
+                for (i, (mode, z)) in part.iter().enumerate() {
+                    act.modes[i] = *mode as u16;
+                    act.re[i] = z[0];
+                    act.im[i] = z[1];
+                }
+                act
+            })
+            .collect())
+    }
+
+    /// The impulses struck, as (mode index, [re, im]).
+    pub fn impulses(&self) -> impl Iterator<Item = (usize, [f64; 2])> + '_ {
+        let n = usize::from(self.count).min(TORUS_STRIKE_MODES);
+        (0..n).map(|i| (usize::from(self.modes[i]), [self.re[i], self.im[i]]))
     }
 }
 
@@ -469,6 +558,10 @@ pub struct Graph {
     /// Live's Solo in Place (`LiveSet/SoloInPlace`; the template stores
     /// true): while a part is soloed, the return tracks still sound.
     pub solo_in_place: bool,
+    /// The owner's acts for a Torus not yet on its part, by part, in the order they came
+    /// ([`Graph::hand`] gives them to it); capacity [`TORUS_WAITING`], made by [`Graph::prepare`].
+    torus_waiting: Vec<(usize, TorusStrike)>,
+    torus_unplaced: u64,
 }
 
 impl Graph {
@@ -481,7 +574,46 @@ impl Graph {
             master: MasterTrack::default(),
             length_frames: None,
             solo_in_place: true,
+            torus_waiting: Vec::new(),
+            torus_unplaced: 0,
         }
+    }
+
+    /// The owner's acts dropped because more waited for their Torus than a graph keeps.
+    pub fn torus_unplaced(&self) -> u64 {
+        self.torus_unplaced
+    }
+
+    /// Put `instrument` on MIDI part `track`, swapping it with the one there (which `instrument` then
+    /// holds), and give a Torus the owner's acts that waited for its handover; acts of an earlier
+    /// handover are dropped, since its continuation holds them already. Answers whether the part
+    /// took it. Allocation-free: the audio thread takes a hand through it, and Export the same.
+    pub fn hand(
+        &mut self,
+        track: usize,
+        instrument: &mut Box<dyn Instrument>,
+        clock: &Clock,
+    ) -> bool {
+        let Some(slot) = self
+            .tracks
+            .get_mut(track)
+            .and_then(|t| t.instrument.as_mut())
+        else {
+            return false;
+        };
+        std::mem::swap(slot, instrument);
+        if let Some(handover) = slot.torus_handover() {
+            self.torus_waiting.retain(|(t, act)| {
+                if *t != track || act.handover > handover {
+                    return true;
+                }
+                if act.handover == handover {
+                    slot.torus_strike(act, clock);
+                }
+                false
+            });
+        }
+        true
     }
 
     /// Live's loader rules the engine relies on: no part has more sends
@@ -509,6 +641,8 @@ impl Graph {
     /// off the audio thread (see [`Device::prepare`]).
     pub fn prepare(&mut self) {
         let sr = self.sample_rate;
+        self.torus_waiting
+            .reserve_exact(TORUS_WAITING.saturating_sub(self.torus_waiting.len()));
         for t in &mut self.tracks {
             if let Some(i) = t.instrument.as_mut() {
                 i.prepare(sr);
@@ -584,14 +718,10 @@ impl Graph {
         let mut events = performance.events.iter().peekable();
         for i in 0..frames {
             clock.sample = i as u64;
-            while let Some((_, track, instrument)) = installs.next_if(|(f, _, _)| *f <= i as u64) {
-                if let Some(slot) = self
-                    .tracks
-                    .get_mut(track)
-                    .and_then(|t| t.instrument.as_mut())
-                {
-                    *slot = instrument;
-                }
+            while let Some((_, track, mut instrument)) =
+                installs.next_if(|(f, _, _)| *f <= i as u64)
+            {
+                self.hand(track, &mut instrument, &clock);
             }
             while let Some(e) = events.next_if(|e| e.frame <= i as u64) {
                 self.apply(&e.event, &clock);
@@ -645,6 +775,29 @@ impl Graph {
                 .get_mut(track)
                 .and_then(|t| t.instrument.as_mut())
                 .is_some_and(|i| i.torus_play(act, clock)),
+            EngineEvent::TorusStrike { track, ref strike } => {
+                let Some(i) = self
+                    .tracks
+                    .get_mut(track)
+                    .and_then(|t| t.instrument.as_mut())
+                else {
+                    return false;
+                };
+                match i.torus_handover() {
+                    Some(h) if h == strike.handover => i.torus_strike(strike, clock),
+                    // a later handover's continuation holds the act already
+                    Some(h) if h > strike.handover => false,
+                    // the Torus it follows is still on its way to the part: the act waits for it
+                    _ if self.torus_waiting.len() < self.torus_waiting.capacity() => {
+                        self.torus_waiting.push((track, *strike));
+                        true
+                    }
+                    _ => {
+                        self.torus_unplaced += 1;
+                        false
+                    }
+                }
+            }
             EngineEvent::Panic => {
                 for t in &mut self.tracks {
                     if let Some(i) = t.instrument.as_mut() {

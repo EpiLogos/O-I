@@ -138,6 +138,14 @@ export function keyForNote(keys: SurfaceKeys, note: number, touchPoint = 0): Sta
   return column >= 0 && column <= COLUMN_MAX ? {row: key.row, column} : null
 }
 
+/** The key each MIDI note 0–127 strikes on the surface `window` holds, by the one pitch→key law (keyForNote at touch-point 0, as a clip's
+ * note with no touch strikes; O-I #853), or null where the law gives a note no key: what the Torus in the desktop's one engine strikes a
+ * MIDI note on its part by (O-I #849), so a note sounds there as it sounds through the frame. Null for a window that is not one surface. */
+export function noteKeys(window: JankoWindow): (StageKey | null)[] | null {
+  const keys = surfaceKeys(window)
+  return keys ? Array.from({length: 128}, (_, note) => keyForNote(keys, note)) : null
+}
+
 /** The touch-point a key of the surface sounds its pitch at (keyForNote's `touchPoint`), or null for a key the window does not hold. */
 export function touchOfKey(keys: SurfaceKeys, key: StageKey): number | null {
   return keys.place.get(`${key.row}/${keys.first + mod(key.column - keys.first, keys.period)}`)?.touchPoint ?? null

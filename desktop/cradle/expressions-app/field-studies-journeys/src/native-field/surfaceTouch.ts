@@ -116,9 +116,12 @@ export function touchedSurface(x:number,y:number,view:StageView,scale:StageScale
 
 /** The live instrument as a touch reads it: the controller's reading (controller.ts `reading`). */
 export interface TouchInstrument {status?:string;instrument?:unknown;presentation_units_per_metre?:number|null;presented_clock?:unknown}
-/** What a press strikes: the touched point and its impulse (undefined: the owner's default strike, controller.ts playAt), or why the
- * press is no touch. `say` is whether the person pressed the playing torus and should be told why it did not ring. */
-export type TouchStrike={point:SurfacePoint;amplitude:number|undefined}|{point:null;why:string;say:boolean};
+/** The strength a mouse or a finger strikes at: the played strike's own default (controller.ts playAt), named here because a touch now
+ * strikes through the frame's stage channel, whose strike-at always names its strength. */
+export const TOUCH_STRENGTH=0.35;
+/** What a press strikes: the touched point and its strength (TOUCH_STRENGTH, or a pen's pressure), or why the press is no touch. `say` is
+ * whether the person pressed the playing torus and should be told why it did not ring. */
+export type TouchStrike={point:SurfacePoint;amplitude:number}|{point:null;why:string;say:boolean};
 
 /** The presentation's units per metre while the live instrument plays (a running field), or null while it does not. */
 function playingUnits(reading:TouchInstrument|null|undefined):number|null {
@@ -142,7 +145,7 @@ export function touchStrike(reading:TouchInstrument|null|undefined,x:number,y:nu
  const touched=touchedSurface(x,y,view,{projection:stage.projection,unitsPerMetre,worldScale:stage.worldScale},shownOf(reading));
  if(!touched.point)return {point:null,why:touched.why,say:stage.projection==='perspective'};
  const pressure=stage.pressure;
- return {point:touched.point,amplitude:typeof pressure==='number'&&pressure>0?Math.min(0.9,Math.max(0.15,pressure*0.9)):undefined};
+ return {point:touched.point,amplitude:typeof pressure==='number'&&pressure>0?Math.min(0.9,Math.max(0.15,pressure*0.9)):TOUCH_STRENGTH};
 }
 
 // ── a collision in the field (DLW §20.2 Field "Collisions strike"; §21.2 "A collision in the field | The point where it happens") ──

@@ -203,7 +203,7 @@ export const CENTRAL_SCOPE_REFUSED: Readonly<Record<string, string>> = {
   writeMode: SCOPE_MISSING('Write mode', 'write-arm enforcement on the session\'s writes (WO-SF2): propose · draft · direct', 'Software Factory'),
   // The Asks page (manual §19.12 Asks): the dialogue's session stands behind no harness gateway the kernel controls.
   toolCalls: SCOPE_MISSING('Tool calls', 'the harness\'s approvals mode for the dialogue\'s session (harness_agent_control configure {approvals} reaches a gateway\'s harness, and this session has none)', 'Actuation'),
-  calls: SCOPE_MISSING('Calls to other agents', 'an ingress rule for the sender kind agent (GatewayIngressDecision has no write for it)', 'AIKit'),
+  calls: SCOPE_MISSING('Calls to other agents', 'an ingress rule for the sender kind agent: AIKit\'s GatewayIngressPolicy decides by a sender\'s own id (sender_overrides) or its one default, never by kind, and no write reaches it', 'AIKit'),
   wait: SCOPE_MISSING('Wait', 'the agent\'s approvals timeout (harness_agent_control carries approvals, transport, connect and stall-after only)', 'Actuation'),
   noAnswer: SCOPE_MISSING('On no answer', 'a timed-out request\'s outcome on the agent\'s harness', 'Actuation'),
 }

@@ -456,6 +456,9 @@ export function withCustodyAsks(scope: DesignBinding, custody: DesignBinding): D
 // The owners' reads the chain list waits on stay where they are (#745): Activator, Hot-Swap, Drag out and adding a chain are AIKit's
 // session-space operations, Join is Central's set. Where none exists the control stands dimmed and names it.
 
+/** What AIKit's SessionSpace can be asked to do (aikit-core session_space_application.rs SessionSpaceMutation), for the chain list's
+ * controls none of them carries. */
+const SPACE_MUTATIONS = 'AIKit\'s session-space mutations (create; bind and unbind a Project context; attach and detach a session, a surface, a working surface, a native reference; focus; bind and unbind the agent set; restore)'
 const DELEGATION = (what: string, key: string) => missing(what, `Hermes' delegation block (${key}) through the kernel: no config.set key carries it`, 'Hermes')
 /** A macro turns one setting of the Agent on every chain (§19.15 Macros); the rack holds each chain's session, never another session's Agent. */
 const MACRO = (what: string) => missing(what, `the ${what} macro turning the Agent's ${what} on every chain: the rack holds each chain's session, and no address of its Agent's ${what}`, 'Software Factory')
@@ -470,12 +473,16 @@ export const AGENTSET_REFUSE = {
   unmapped: missing('Unmap', 'keeping one chain\'s setting apart from its macro, with the rack\'s macros', 'Software Factory'),
   store: missing('Store', 'keeping where every macro stands as a variation of the rack', 'Software Factory'),
   variation: missing('Variations', 'moving every macro to where a stored variation keeps it', 'Software Factory'),
-  // The chain list's controls (§19.15): each acts on a chain's session in its session space, or on what you attend to.
-  bench: missing('Activator', 'benching a chain\'s session in its session space, so it stays in the rack and is given no work', 'AIKit'),
-  solo: missing('Solo', 'attending to one chain alone, so the views, the tiles and the instruments show only it', 'the live shell'),
-  swap: missing('Hot-Swap', 'swapping a chain\'s agent in its session space for another from the browser, the rest of its chain kept', 'AIKit'),
-  extract: missing('Drag out', 'moving a chain\'s session out of its session space onto a track of its own, chain and all', 'AIKit'),
-  add: missing('Add a chain', 'seating an agent, or a Decision helper, dropped into the chain list as a member of the session space', 'AIKit'),
+  // The chain list's controls (§19.15): each acts on a chain's session in its session space, or on what you attend to. Each names the
+  // owner operation it waits for and, where one stands near, why that one is not it (O-I #772).
+  bench: `${missing('Activator', 'benching a chain\'s session in its session space, so it stays in the rack and is given no work', 'AIKit')} ${SPACE_MUTATIONS} hold no bench.`,
+  // Solo is what you attend to, never what runs (§16.1 Live's acts: Solo is never "A limit on what may run"; §16.6 Rules). AIKit's session
+  // Solo, which the Session view's mixer writes (timeline/factoryTrackAdapter.ts FACTORY_SOLO_OP), is a launch gate: AIKit's executor
+  // launches only the soloed sessions of a space while any is soloed (encounter_task_executor.rs, the Solo gate).
+  solo: `${missing('Solo', 'attending to one chain alone, so the views, the tiles and the instruments show only it: an attention the shell holds and its views, tiles and instruments read', 'the live shell')} AIKit's session Solo (encounter_session_settings {track: {solo}}) gates launches to the soloed sessions, a limit on what may run, which Solo never is (§16.1, §16.6), so the rack does not write it.`,
+  swap: `${missing('Hot-Swap', 'swapping a chain\'s agent in its session space for another from the browser, the rest of its chain kept', 'AIKit')} ${SPACE_MUTATIONS} hold no swap of a session's agent.`,
+  extract: `${missing('Drag out', 'moving a chain\'s session out of its session space onto a track of its own, chain and all', 'AIKit')} AIKit's detach-agent-session (the kernel's encounter_session_detach) is a track's Delete: it takes the session off every space of its Project, and no operation seats the same session in a space of its own.`,
+  add: `${missing('Add a chain', 'seating an agent, or a Decision helper, dropped into the chain list as a member of the session space', 'AIKit')} AIKit's attach-agent-session reaches the kernel only inside encounter_provision, which seats a new session in a new space; no operation attaches a session to a space that stands.`,
   // The Devices view (§19.15 "Change a setting there and you change the agent"): each device of a chain answers to its own owner, and the
   // rack holds each chain's session, never the binding of a device of another session's chain.
   dev: missing('Devices', 'changing a device of another session\'s chain from the rack: the rack holds each chain\'s session, and no binding of the devices of its chain', 'Software Factory'),
