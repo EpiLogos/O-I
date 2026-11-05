@@ -115,8 +115,8 @@ gh issue list -R EpiLogos/O-I --state open --label hold:landing --json number,ti
 
 ### Resolving
 
-1. Comment the result on the ticket: what was done and where it landed (commits, PRs, files), the evidence and its channel, each story's grade with the verifier's readback, and the skills the session loaded.
-2. Close the ticket and remove its claim label.
+1. Comment the result on the ticket: what was done and where it landed (commits, PRs, files), the evidence and its channel, each story's grade with the verifier's readback, and the skills the session loaded, on a line of their own that begins `Skills:`.
+2. Close the ticket and remove its claim label. Where AIKit's development entry is composed, the close is checked: it is refused until the session has loaded its ticket type's practice and the skills the map's Notes name, and every name on the `Skills:` line must be one the session loaded (O-I 723).
 3. Add one line under Decisions so far on the map: `- [<ticket title>](<link>) — <one-line gist>`. Other sessions edit the map too, so read the body immediately before writing it, change only your line, and write it back:
    ```sh
    gh issue view 706 -R EpiLogos/O-I --json body --jq .body > map.md
