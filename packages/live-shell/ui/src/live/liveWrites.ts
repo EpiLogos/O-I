@@ -9,7 +9,6 @@ import {detectTransport, kernelOp} from '../../../../../desktop/cradle/src/kerne
 import type {KernelTransportStatus, LiveClipAt, LiveClipReading, LiveCompReading, LiveNote, LiveSetAct, LiveSetActed, LiveTrackMixer} from '../../../../../desktop/cradle/src/kernel/types'
 import {invalidateSet, readSet, subscribeSet} from '../native/application'
 import type {SetSelection} from '../shell/liveSelection'
-import {engineEventOfMixerWrite, engineEventOfSendWrite, followInEngine} from './liveEngine'
 
 /** Where the selection's clip stands: its arrangement index, else its session slot; null when it names neither. */
 /** One note's lanes on the MPE tab (O-I #853): pressure on the tab's 0–127, bend as its force, each point [beat from the note's start,
@@ -152,17 +151,20 @@ export function writeLiveAudioCrop(path: string, track: number, clip: LiveClipAt
 }
 
 /** The set's writers the tracks adapter takes (timeline/liveSetTrackAdapter.ts LiveSetReading), each on the set at `path`. A mixer
- * write or a send lands in the set first; while the engine plays the set it then moves the engine too (live/liveEngine.ts). */
+ * write or a send lands in the set first; while the engine plays the set it then moves the engine too (live/liveEngine.ts, loaded with
+ * the first such write: the window's first load leaves the engine out). */
 export function liveSetWrites(path: string) {
   return {
     mixerWrite: async (track: number, control: LiveMixerControl, value: LiveMixerValue) => {
       const row = await writeLiveMixer(path, track, control, value)
-      await followInEngine(path, kinds => engineEventOfMixerWrite(kinds, track, control, value))
+      const engine = await import('./liveEngine')
+      await engine.followInEngine(path, kinds => engine.engineEventOfMixerWrite(kinds, track, control, value))
       return row
     },
     sendWrite: async (track: number, index: number, value: number) => {
       const row = await writeLiveSend(path, track, index, value)
-      await followInEngine(path, kinds => engineEventOfSendWrite(kinds, track, index, value))
+      const engine = await import('./liveEngine')
+      await engine.followInEngine(path, kinds => engine.engineEventOfSendWrite(kinds, track, index, value))
       return row
     },
     compWrite: (track: number, take: number, range: {start: number; end: number}) => writeLiveComp(path, track, take, range),

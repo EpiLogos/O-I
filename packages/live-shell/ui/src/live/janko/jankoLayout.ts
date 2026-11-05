@@ -114,3 +114,14 @@ export function subscribeLiveJanko(listener: () => void): () => void {
 export function useLiveJankoWindow(): JankoWindowState | null {
   return useSyncExternalStore(subscribeLiveJanko, liveJankoWindow, liveJankoWindow)
 }
+
+/** The computer keyboard plays the twelve pitch classes from a conventional piano row. Presentation only: the owner receives keys. */
+export const COMPUTER_KEY_PITCH: Readonly<Record<string, number>> = Object.freeze({
+  a: 0, w: 1, s: 2, e: 3, d: 4, f: 5, t: 6, g: 7, y: 8, h: 9, u: 10, j: 11,
+})
+
+/** Whether a computer-keyboard event may play a note: the keyboard is armed by focus, the target is not editable text, no modifier is held
+ * (so undo and the other shortcuts keep their meaning), and the key is not a held repeat. */
+export function keyboardGate(input: {armed: boolean; editable: boolean; modifier: boolean; repeat: boolean}): boolean {
+  return input.armed && !input.editable && !input.modifier && !input.repeat
+}

@@ -117,6 +117,9 @@ export const LOADS_LATER = [
   /\/src\/central\/searchLine(Model)?\.tsx?$/,
   // the Graph and source receiver (panels/knowledge.tsx KnowledgeReceiverDoor loads it when a source is first opened)
   /\/src\/panels\/knowledgeReceiver\.tsx$/,
+  // Live's engine and its keyboard (live/liveWrites.ts loads the engine with the first mixer or send write; the map's faces read the
+  // computer keys from live/janko/jankoLayout.ts) and Live's grooves (shell/modeBrowsers.tsx loads them with Live's browser)
+  /\/src\/live\/liveEngine\.ts$/, /\/src\/live\/janko\/jankoInput\.ts$/, /\/src\/frame\/browser\/LiveGroovePool\.tsx$/,
 ]
 
 test('what loads when first entered, placed, shown or opened is not in the first load', async () => {

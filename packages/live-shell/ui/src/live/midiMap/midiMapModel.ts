@@ -8,7 +8,7 @@
 
 import type {StageResult} from '@epilogos/expressions-boundary'
 import type {LiveWriteHow} from '../torusInstrument'
-import {COMPUTER_KEY_PITCH} from '../janko/jankoInput'
+import {COMPUTER_KEY_PITCH} from '../janko/jankoLayout'
 
 export type MapMode = 'off' | 'midi' | 'key'
 
