@@ -702,7 +702,8 @@ test('the candidate records on the part\'s one playing path, prepares a take bef
   assert.match(path, /onNote: played => liveTakeRecorder\.played\(played\),/, 'every note the path plays is told to the recorder')
   const clip = source('live/clipPlayer.ts')
   const owners = clip.slice(clip.indexOf('function candidateOwners('), clip.indexOf('export const liveClipPlayer'))
-  assert.match(owners, /prepare: \(clip, bpm\) => prepareTake\(clip, commitLiveInstrumentEdit, \{stage: commitLiveStage, bpm\}\),/)
+  // REPLACES (O-I #849 round 21): the candidate's prepare took no turn; a row's takes ask the press's one Torus now
+  assert.match(owners, /prepare: \(clip, bpm, turn\) => prepareTake\(clip, commitLiveInstrumentEdit, \{stage: commitLiveStage, bpm\}, turn\),/)
   assert.match(owners, /edit: \(edit, at\) => commitLiveStage\(\{command: 'instrument', edit, \.\.\.\(at === undefined \? \{\} : \{at_samples_elapsed: at\}\)\}\),/,
     'a setting of a take\'s course lands at its sample')
   const record = source('live/liveTake.ts')
@@ -968,6 +969,37 @@ test('a take with its course plays again as it was played: the Torus set as it s
   assert.equal((await take.prepareTake(clip, commit)).exact, undefined, 'with no stage owner it plays as its notes are written')
 })
 
+// O-I #849 round 21, item 2: a row of several takes plays each on its own track's player, and one Torus rings at a time.
+test('a take of a row whose Torus another take of the press holds sets nothing of it: it plays its notes as they were played, on the Torus as that one set it', async () => {
+  const torus = take.torusKept(torusState({level: 0.5}))
+  const carrier = take.torusKept(torusState({level: 0.5, settings: {carrier: 0.5}}))
+  const keeps = {schema: 'oi.live-take/v1', torus, moves: [{beat: 1.0625, torus: carrier}], bpm: 120, resumes: take.TAKE_REPLAYS,
+    notes: [{p: 60, at: 1, len: 0.916667, vel: 127, key: C4, touch: 2, strength: 0.7, source: 'pointer'}], course: COURSE, not_kept: [...take.TAKE_COURSE_NOT_KEPT]}
+  const clip = {...REAL, name: 'Take 2', loop: false, start: 0, end: 4, take: {id: 8, keeps}, notes: [{id: 1, p: 60, at: 1, len: 0.916667, vel: 127, chance: 1, on: true}]}
+  const s = stageOwner(), edits = []
+  const commit = async edit => { edits.push(edit); return {ok: true} }
+  const turn = player.torusTurn()
+  assert.equal(turn.take('Take 1'), null)
+  const held = await take.prepareTake(clip, commit, {stage: s.stage, bpm: 120}, turn)
+  assert.deepEqual([edits, s.sent], [[], []], 'nothing of the Torus is set, and it is not rung again')
+  assert.equal(held.resumes, take.takeTorusHeld('Take 1', 'Take 2'))
+  assert.match(held.resumes, /^Take 1 sets the Torus again in this row, and one Torus rings at a time: Take 2 plays each note at the touch-point it struck/)
+  assert.deepEqual(held.voice(60, 1), {touch: 2, strength: 0.7}, 'each note as it was played')
+  assert.equal(held.exact, undefined, 'its course is not played on another take\'s Torus')
+  assert.equal(held.moves, undefined, 'and it makes none of its moves on it')
+  // the take that asks first holds the Torus for its press, as a launch alone does
+  const first = player.torusTurn()
+  const own = await take.prepareTake(clip, commit, {stage: s.stage, bpm: 120}, first)
+  assert.ok(own.exact, 'the first to ask plays as it was played')
+  assert.equal(first.take('Take 3'), 'Take 2', 'and the Torus is its for the press')
+  // a take that sets nothing of the Torus asks no turn of it
+  const bare = player.torusTurn()
+  await take.prepareTake({...clip, take: {id: 9, keeps: {schema: 'oi.live-take/v1', notes: keeps.notes}}}, commit, {stage: s.stage, bpm: 120}, bare)
+  assert.equal(bare.take('Take 3'), null, 'a take whose Torus was not kept leaves the Torus to the next')
+  const wired = source('live/clipPlayer.ts')
+  assert.match(wired, /prepare: \(clip, bpm, turn\) => prepareTake\(clip, commitLiveInstrumentEdit, \{stage: commitLiveStage, bpm\}, turn\)/)
+})
+
 test('under its course a take\'s owner lanes are its course\'s acts, and only a session-held lane is written again at its beats (O-I 853)', async () => {
   const torus = take.torusKept(torusState({level: 0.5}))
   const carrierLevel = take.torusKept(torusState({level: 0.25}))
@@ -1107,7 +1139,7 @@ test('the take\'s file is 32-bit float WAV at the owner\'s rate, at the level it
 })
 
 // PORT (BA round 868, C27): "exportTake should call layTorusTake after renderTake, so an exported take carries its seal."
-test('Export Audio lays the take under the scene once its course rendered, by the name it began under; unnamed or refused, it is saved and says why', async () => {
+test('Export Audio lays the take under the scene once its course rendered, by the name it began under or else its checkpoint; refused, it is saved and says why', async () => {
   const keeps = {schema: 'oi.live-take/v1', torus: null, bpm: 120, course: {...COURSE, frames: 2000, acts: [], checkpoint_sha256: NAMED}}
   const clip = {...REAL, name: 'Take 1', loop: false, start: 0, end: 4, take: {id: 7, keeps}}
   const run = async (over = {}) => {
@@ -1127,8 +1159,13 @@ test('Export Audio lays the take under the scene once its course rendered, by th
   assert.deepEqual(refused.order.at(-1), ['save', 'Take 1.wav'], 'a take not laid is saved still')
   const thrown = await run({lay: async () => { throw new Error('No Scene is presented') }})
   assert.match(thrown.answer.note, /It was not laid under the scene: No Scene is presented\.$/)
+  // BB round 21: a course the kernel relayed under no name is laid by the checkpoint it keeps, not noted
+  const nameless = await run({clip: {...clip, take: {id: 7, keeps: JSON.parse(JSON.stringify({...keeps, course: {...keeps.course, checkpoint_sha256: undefined}}))}}})
+  assert.equal(nameless.answer.ok, true, nameless.answer.error)
+  assert.deepEqual(nameless.order, ['render-take', ['lay', {checkpoint: CHECKPOINT, id: 7, name: 'Take 1', bpm: 120}], ['save', 'Take 1.wav']],
+    'laid by the checkpoint its course began at, under no name')
+  assert.match(nameless.answer.note, /Take 1 lies under the scene on its take lane, from sample 192000\.$/)
   for (const [over, why] of [
-    [{...keeps, course: {...keeps.course, checkpoint_sha256: undefined}}, /It was not laid under the scene: the kernel relayed the checkpoint it began at under no name, so nothing seals it\.$/],
     [{...keeps, bpm: undefined}, /It was not laid under the scene: it keeps no tempo to lie on\.$/],
   ]) {
     const {order: o, answer: a} = await run({clip: {...clip, take: {id: 7, keeps: JSON.parse(JSON.stringify(over))}}})
@@ -1160,6 +1197,16 @@ test('Export Audio lays the take under the scene once its course rendered, by th
     lay: ({checkpoint_sha256, checkpoint, ...t}) => presets.layTorusTake({checkpoint_sha256, checkpoint, take: {...t, beat: 16}}, forgot)})
   assert.deepEqual(asked.slice(0, 2), [{command: 'torus-take', action: 'seal', checkpoint_sha256: NAMED}, {command: 'torus-take', action: 'seal', checkpoint: CHECKPOINT}])
   assert.match(again.note, /Take 1 lies under the scene on its take lane, from sample 384000\.$/, 'sealed from the checkpoint its course keeps, and laid')
+  // BB round 21: a course under no name is sealed from its checkpoint at once, nothing asked by a name it never had
+  asked.length = 0
+  const unnamed = {...clip, take: {id: 7, keeps: JSON.parse(JSON.stringify({...keeps, course: {...keeps.course, checkpoint_sha256: undefined}}))}}
+  const sealedBare = await take.exportTake(unnamed, {stage: renderOwner().stage, save: async () => {},
+    lay: ({checkpoint_sha256, checkpoint, ...t}) => presets.layTorusTake({checkpoint_sha256, checkpoint, take: {...t, beat: 16}}, sound)})
+  assert.deepEqual(asked, [{command: 'torus-take', action: 'seal', checkpoint: CHECKPOINT},
+    {action: 'record-take', record: take.torusTakeRecord(SEALED, {id: 7, name: 'Take 1', beat: 16, bpm: 120})}])
+  assert.match(sealedBare.note, /Take 1 lies under the scene on its take lane, from sample 384000\.$/)
+  assert.deepEqual(await presets.layTorusTake({take: {id: 7, name: 'Take 1', beat: 0, bpm: 120}}, sound),
+    {ok: false, error: 'The take keeps no checkpoint it began at, under a name or itself, so nothing seals it'}, 'with neither, nothing is asked')
   // the candidate lays it from its arrangement clip's start, or from its own beat 0 in a slot
   const live = source('live/liveTake.ts').slice(source('live/liveTake.ts').indexOf('export async function exportLiveTake('), source('live/liveTake.ts').indexOf('/** A file saved as the page\'s download'))
   assert.match(live, /const beat = 'arrangement' in address\.at \? await arrangementStart\(address\.path, address\.track, address\.at\.arrangement\) : 0/)
@@ -1387,7 +1434,8 @@ test('Live\'s set counts what the hand holds off a take\'s lanes and gives it ba
   assert.equal(liveSetTrackAdapter.project({set: summary, document: null, play}).lanes.held, undefined, 'no standing read: no count')
   const tracks = source('frame/tracks/modeTracks.ts')
   assert.match(tracks, /live: \{subscribe: listener => \{ const engine = subscribeLiveEngine\(listener\), lanes = subscribeLaneStanding\(listener\);/)
-  assert.match(tracks, /void import\('\.\.\/\.\.\/live\/clipPlayer'\)\.then\(\(\{liveClipPlayer\}\) => \{/, 'the player is followed from the pane, never at first load')
+  // REPLACES (O-I #849 round 21): the pane followed the set's one player (liveClipPlayer); it follows every player now, a row's among them
+  assert.match(tracks, /void import\('\.\.\/\.\.\/live\/clipPlayer'\)\.then\(\(\{liveClipActs\}\) => \{/, 'the players are followed from the pane, never at first load')
   assert.match(tracks, /liveTracks\(reading\.set, reading\.document, reading\.colors, undefined, liveEngineState\(\)\.reading, laneStanding\)/)
   assert.match(tracks, /reenable: \(parameter\?: string\) => player\(\)\.then\(acts => acts\.reenable\(parameter\)\)/)
   const clipPlayer = source('live/clipPlayer.ts')

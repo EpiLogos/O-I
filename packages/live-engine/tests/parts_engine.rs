@@ -2486,7 +2486,7 @@ fn a_laid_sample_sounds_from_its_clips_frame_at_its_start_for_its_length_at_its_
     }
 }
 
-/// ENGINE DECISION (as the shell's play mode laid clips before, live-shell `play.rs`): a mono sample sounds on both
+/// ENGINE DECISION (as the shell's play mode laid clips, before it was removed: README, Audition): a mono sample sounds on both
 /// sides of a stereo part at its level; a stereo one on each side of a stereo part, and as the mean of its two sides
 /// on a mono part.
 #[test]
@@ -2660,6 +2660,127 @@ fn the_engine_plays_a_laid_sample_as_export_renders_it_and_finds_its_place_again
         &again[..],
         "taken back, each sample is found in its place again"
     );
+}
+
+/// O-I #849 round 21: an audio part's samples laid again while the engine plays (a clip's sample the set's owner kept
+/// anew, Consolidate's or Crop's) take the part at the next block's first frame: nothing changed before it, a clip
+/// sounding there sounds on from the same place in its new sample, a clip cut shorter falls silent where it now ends,
+/// and Export renders what was played. Laid twice before the engine took them, the later stands; what a part cannot lay
+/// is refused in words, and the part plays on as it was.
+#[test]
+fn a_parts_samples_laid_again_while_it_plays_sound_from_their_block_and_export_as_played() {
+    let (old, new) = (
+        decoded(3_000, 2),
+        decoded(3_000, 2)
+            .iter()
+            .map(|v| -v)
+            .collect::<std::sync::Arc<[f32]>>(),
+    );
+    let build = || {
+        let mut g = Graph::new(SR, 120.0);
+        let mut t = Track::new("Voice", 2);
+        t.set_samples(vec![
+            laid(300, 100, 900, 0.75, &old, 2),
+            laid(1_500, 0, 700, 0.5, &old, 2),
+        ])
+        .unwrap();
+        g.tracks.push(t);
+        g.tracks.push(operator_part("Keys", &[]));
+        g
+    };
+    let again = || {
+        vec![
+            laid(1_500, 0, 300, 0.5, &new, 2),
+            laid(300, 100, 900, 0.75, &new, 2),
+        ]
+    };
+    let run = |lays: &dyn Fn(&mut live_engine::EngineHandle)| {
+        let (mut core, mut handle) = engine(build()).unwrap();
+        let mut played = Vec::new();
+        for b in 0..12 {
+            if b == 4 {
+                lays(&mut handle);
+            }
+            let mut out = vec![0f32; 256 * 2];
+            core.pull_block(&mut out);
+            played.extend_from_slice(&out);
+        }
+        handle.collect();
+        (played, handle.performance(), handle.relaid().to_vec())
+    };
+    let (still, ..) = run(&|_| {});
+    let (played, perf, relaid) = run(&|h| {
+        h.lay(0, vec![laid(300, 0, 10, 1.0, &old, 2)]).unwrap();
+        assert_eq!(h.lay(0, again()), Ok(2));
+    });
+    let at = 4 * 256;
+    assert_eq!(
+        relaid,
+        [(at as u64, 2)],
+        "the later laid at its block's first frame; the first gave way"
+    );
+    assert_eq!(
+        played[..2 * at],
+        still[..2 * at],
+        "before its block, nothing changed"
+    );
+    // the part as it would have played laid so from its start: a laid sample holds no state, so from the block on, the same
+    let fresh = {
+        let mut g = build();
+        g.tracks[0].set_samples(again()).unwrap();
+        g.render_performance(SR, &Performance::silent(12 * 256))
+    };
+    assert_ne!(
+        still[2 * at..2 * 1_200],
+        fresh[2 * at..2 * 1_200],
+        "its new sample sounds otherwise"
+    );
+    assert!(
+        played[2 * at..].iter().zip(&fresh[2 * at..]).all(|(p, f)| p.to_bits() == f.to_bits()),
+        "from its block, a clip sounding there on from the same place in its new sample, and the next from its own"
+    );
+    assert!(
+        still[2 * 1_800] != 0.0 && played[2 * 1_800..2 * 2_200].iter().all(|v| *v == 0.0),
+        "cut shorter, it falls silent where it now ends"
+    );
+    let exported = build().render_performance_relaid(
+        SR,
+        &perf,
+        Vec::new(),
+        Vec::new(),
+        Vec::new(),
+        vec![(at as u64, 0, again())],
+    );
+    assert_eq!(exported.len(), played.len());
+    assert!(
+        exported
+            .iter()
+            .zip(&played)
+            .all(|(e, p)| e.to_bits() == p.to_bits()),
+        "Export lays them again where the engine did, and renders what was played"
+    );
+    assert_ne!(
+        build().render_performance(SR, &perf),
+        played,
+        "without them, Export would not render what was played"
+    );
+
+    let (_, mut handle) = engine(build()).unwrap();
+    let refused = |r: Result<u64, Refusal>| match r {
+        Err(Refusal::Invalid(words)) => words,
+        other => panic!("{other:?}"),
+    };
+    assert_eq!(
+        refused(handle.lay(2, again())),
+        "the set has no part 2 (it has 2)"
+    );
+    assert_eq!(
+        refused(handle.lay(1, again())),
+        "'Keys' is a MIDI part: it plays notes, and a sample is laid on an audio part"
+    );
+    let overlapping = vec![laid(0, 0, 10, 1.0, &new, 2), laid(9, 0, 10, 1.0, &new, 2)];
+    assert!(refused(handle.lay(0, overlapping)).contains("overlap at frame 9"));
+    assert!(handle.relaid().is_empty(), "nothing refused is laid");
 }
 
 /// A WAV of `frames` frames in `channels` channels at `rate`: 16-bit integer when `int16`, else 32-bit float, frame `i`

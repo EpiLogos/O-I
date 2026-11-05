@@ -27,6 +27,10 @@ export interface TransportReading {
   tempoBpm: number | null
   /** The open Live set's path: what Live's Play plays in the engine when no clip is selected. */
   setPath?: string | null
+  /** The open Live set's transport Quantize (its GlobalQuantisation word) and time signature, as its owner reads them; none where it keeps
+   * none Live names (O-I #849 round 21). */
+  quantize?: string | null
+  signature?: import('./document').SetSignature | null
   /** Expressions' native scene transport, when its reading stands. */
   nativeTransport?: NativeCompositionViewSource | null
 }

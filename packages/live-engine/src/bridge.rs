@@ -1495,6 +1495,43 @@ pub struct ClipsAlone {
     pub warnings: Vec<BridgeWarning>,
 }
 
+/// Crop's cut (O-I #849 round 21, DLW build ruling 2026-11-05: "an audio clip's sample is cut to a new file beside the set"):
+/// the stretch `from_seconds`–`to_seconds` of the sample `file` (a WAV or an AIFF, [`crate::wav::read_audio`]) at the file's
+/// own rate and with its own channels, silence where the stretch runs past the file. Refused in words when the file cannot
+/// be read or decoded. The engine reads the file; it writes none.
+pub fn cut_sample(
+    file: &std::path::Path,
+    from_seconds: f64,
+    to_seconds: f64,
+) -> Result<crate::wav::WavAudio, String> {
+    let unread = |e: String| {
+        format!(
+            "The clip's sample {} could not be read: {e}",
+            file.display()
+        )
+    };
+    let bytes = std::fs::read(file).map_err(|e| unread(e.to_string()))?;
+    let audio = crate::wav::read_audio(&bytes).map_err(|e| unread(e.0))?;
+    let channels = audio.channels.max(1);
+    let rate = f64::from(audio.sample_rate);
+    let first = (from_seconds * rate).round() as i64;
+    let count = ((to_seconds - from_seconds) * rate).round().max(0.0) as usize;
+    let frames = (audio.samples.len() / channels) as i64;
+    let mut cut = vec![0.0f32; count * channels];
+    for (at, frame) in cut.chunks_mut(channels).enumerate() {
+        let from = first + at as i64;
+        if (0..frames).contains(&from) {
+            let start = from as usize * channels;
+            frame.copy_from_slice(&audio.samples[start..start + channels]);
+        }
+    }
+    Ok(crate::wav::WavAudio {
+        sample_rate: audio.sample_rate,
+        channels,
+        samples: cut,
+    })
+}
+
 /// Consolidate's render (O-I #743; manual §10.9 "In Arrangement view, Split (⌘E), Consolidate (⌘J)"): the arrangement audio clips
 /// of the set's audio part `track` (the set owner's index: its parts, returns and groups in order) that lie across beats
 /// `from`–`to`, rendered ALONE — none of the part's chain, its mixer row or what it feeds — each laid as the engine lays the

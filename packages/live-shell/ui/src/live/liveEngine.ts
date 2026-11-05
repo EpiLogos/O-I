@@ -238,12 +238,14 @@ async function listenTorusNotes(lease: string, stage: Stage): Promise<void> {
 }
 
 /** The Torus's effects as the frame reports them (its hosted reading's `parameters.effects`, effectsLaw.ts EffectsState), with the
- * frame's level they stand after (`parameters.level`, the presentation gain 0 to 4) where it reports one; or null. */
+ * frame's level they stand after (`parameters.level`, the presentation gain 0 to 4) and its Sound on or off (`parameters.muted`: off, the
+ * engine hears the Torus at no level) where it reports them; or null. */
 function torusEffects(): unknown {
   const torus = liveTorusState()
   const effects = torus?.ok ? torus.parameters?.effects ?? null : null
-  const level = torus?.ok ? torus.parameters?.level : undefined
-  return effects !== null && typeof level === 'number' ? {...effects, level} : effects
+  if (effects === null || !torus?.ok) return effects
+  const level = torus.parameters?.level, muted = torus.parameters?.muted
+  return {...effects, ...(typeof level === 'number' ? {level} : {}), ...(typeof muted === 'boolean' ? {muted} : {})}
 }
 let unfollowEffects: (() => void) | null = null
 let effectsSent: Promise<void> = Promise.resolve()

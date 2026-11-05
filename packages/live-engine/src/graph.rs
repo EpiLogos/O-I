@@ -508,7 +508,7 @@ impl LaidSample {
         let i = (self.from + (frame - self.at)) as usize * self.channels;
         let read = |c: usize| self.pcm.get(i + c).copied().unwrap_or(0.0) * self.gain;
         match (self.channels, out.len()) {
-            // ENGINE DECISION (as the shell's play mode laid clips, live-shell `play.rs`): a mono
+            // ENGINE DECISION (as the shell's play mode laid clips, before it was removed: README, Audition): a mono
             // sample sounds on both sides of a stereo part at its level; a stereo one on a mono part
             // as the mean of its sides
             (1, _) => {
@@ -636,6 +636,48 @@ pub struct Track {
     next_edge: usize,
 }
 
+/// The samples `samples` laid on a part named `name` (`midi`: one that plays notes), in their order on the timeline, as
+/// [`Track::set_samples`] lays them: one of no frames has nothing to sound and is dropped. Refused in words: any on a MIDI
+/// part (it plays notes), two that overlap (a part plays one clip at a time), a buffer of other than one or two channels
+/// or of no whole frames, and a gain that is no number.
+pub fn samples_laid(
+    name: &str,
+    midi: bool,
+    mut samples: Vec<LaidSample>,
+) -> Result<Vec<LaidSample>, String> {
+    samples.retain(|s| s.frames > 0);
+    if midi && !samples.is_empty() {
+        return Err(format!(
+            "'{name}' is a MIDI part: it plays notes, and a sample is laid on an audio part"
+        ));
+    }
+    samples.sort_by_key(|s| s.at);
+    for s in &samples {
+        if s.channels != 1 && s.channels != 2 {
+            return Err(format!(
+                "A sample on '{name}' is laid in one or two channels, not {}",
+                s.channels
+            ));
+        }
+        if !s.pcm.len().is_multiple_of(s.channels) {
+            return Err(format!(
+                "A sample on '{name}' holds no whole frames of its {} channels",
+                s.channels
+            ));
+        }
+        if !s.gain.is_finite() {
+            return Err(format!("A sample on '{name}' has a gain that is no number"));
+        }
+    }
+    if let Some(w) = samples.windows(2).find(|w| w[1].at < w[0].end()) {
+        return Err(format!(
+            "Two samples on '{name}' overlap at frame {}: a part plays one clip at a time",
+            w[1].at
+        ));
+    }
+    Ok(samples)
+}
+
 impl Track {
     pub fn new(name: &str, channels: usize) -> Track {
         assert!(
@@ -728,41 +770,19 @@ impl Track {
     /// is dropped. Refused in words, the part's samples as they were: any on a MIDI part (it plays notes),
     /// two that overlap (a part plays one clip at a time), a buffer of other than one or two channels or
     /// of no whole frames, and a gain that is no number.
-    pub fn set_samples(&mut self, mut samples: Vec<LaidSample>) -> Result<(), String> {
-        let name = &self.name;
-        samples.retain(|s| s.frames > 0);
-        if self.is_midi() && !samples.is_empty() {
-            return Err(format!(
-                "'{name}' is a MIDI part: it plays notes, and a sample is laid on an audio part"
-            ));
-        }
-        samples.sort_by_key(|s| s.at);
-        for s in &samples {
-            if s.channels != 1 && s.channels != 2 {
-                return Err(format!(
-                    "A sample on '{name}' is laid in one or two channels, not {}",
-                    s.channels
-                ));
-            }
-            if !s.pcm.len().is_multiple_of(s.channels) {
-                return Err(format!(
-                    "A sample on '{name}' holds no whole frames of its {} channels",
-                    s.channels
-                ));
-            }
-            if !s.gain.is_finite() {
-                return Err(format!("A sample on '{name}' has a gain that is no number"));
-            }
-        }
-        if let Some(w) = samples.windows(2).find(|w| w[1].at < w[0].end()) {
-            return Err(format!(
-                "Two samples on '{name}' overlap at frame {}: a part plays one clip at a time",
-                w[1].at
-            ));
-        }
-        self.samples = samples;
+    pub fn set_samples(&mut self, samples: Vec<LaidSample>) -> Result<(), String> {
+        self.samples = samples_laid(&self.name, self.is_midi(), samples)?;
         self.next_sample = 0;
         Ok(())
+    }
+
+    /// Lay `samples` on the part's timeline in place of those laid there, at `frame` (O-I #849 round 21: a clip's sample
+    /// the set's owner kept anew while the set plays, [`crate::EngineHandle::lay`]), the part sounding on from that frame
+    /// in what is laid now; those it replaced come back in `samples`, to be dropped off the audio thread. Laid by
+    /// [`samples_laid`] first. Allocation-free.
+    fn lay(&mut self, samples: &mut Vec<LaidSample>, frame: u64) {
+        std::mem::swap(&mut self.samples, samples);
+        self.next_sample = self.samples.partition_point(|s| s.end() <= frame);
     }
 
     /// The samples laid on the part, in their order on the timeline.
@@ -1140,6 +1160,19 @@ impl Graph {
         true
     }
 
+    /// Lay `samples` on audio part `track` in place of those laid there, at `frame` (O-I #849 round 21: a clip's sample
+    /// the set's owner kept anew while the set plays, [`crate::EngineHandle::lay`]): the part sounds on from that frame in
+    /// what is laid now, a clip sounding there from the same place in its new sample; those it replaced come back in
+    /// `samples`, to be dropped off the audio thread. Answers whether the part is there and plays no notes (otherwise
+    /// `samples` comes back as it was). Allocation-free.
+    pub fn lay(&mut self, track: usize, samples: &mut Vec<LaidSample>, frame: u64) -> bool {
+        let Some(t) = self.tracks.get_mut(track).filter(|t| !t.is_midi()) else {
+            return false;
+        };
+        t.lay(samples, frame);
+        true
+    }
+
     /// Live's loader rules the engine relies on: no part has more sends
     /// than the set has return tracks, and there are at most
     /// [`MAX_RETURNS`]. ENGINE DECISION (the loader's words name only the
@@ -1268,8 +1301,39 @@ impl Graph {
         racks: Vec<(u64, usize, Vec<RackDevice>)>,
         remade: Vec<(u64, Part, usize, Box<dyn Device>)>,
     ) -> Vec<f32> {
-        self.rendered(sample_rate, performance, installs, racks, remade, None)
-            .samples
+        self.render_performance_relaid(
+            sample_rate,
+            performance,
+            installs,
+            racks,
+            remade,
+            Vec::new(),
+        )
+    }
+
+    /// [`Graph::render_performance_remade`] with the samples laid on audio parts while the engine played
+    /// ([`crate::EngineHandle::lay`], O-I #849 round 21): each `(frame, track, samples)` is laid on its part at the frame
+    /// the engine laid it there ([`crate::EngineHandle::relaid`]), after that frame's devices made again and before its
+    /// events, as the audio callback does at a block's start.
+    pub fn render_performance_relaid(
+        self,
+        sample_rate: u32,
+        performance: &Performance,
+        installs: Vec<(u64, usize, Box<dyn Instrument>)>,
+        racks: Vec<(u64, usize, Vec<RackDevice>)>,
+        remade: Vec<(u64, Part, usize, Box<dyn Device>)>,
+        relaid: Vec<(u64, usize, Vec<LaidSample>)>,
+    ) -> Vec<f32> {
+        self.rendered(
+            sample_rate,
+            performance,
+            installs,
+            racks,
+            remade,
+            relaid,
+            None,
+        )
+        .samples
     }
 
     /// [`Graph::render_performance_remade`], ringing out past the performance's end as `ring` says (O-I #743 round 20, item 3:
@@ -1292,11 +1356,13 @@ impl Graph {
             installs,
             racks,
             remade,
+            Vec::new(),
             Some(ring),
         )
     }
 
-    /// The render of [`Graph::render_performance_remade`] and [`Graph::render_ringing_out`].
+    /// The render of [`Graph::render_performance_relaid`] and [`Graph::render_ringing_out`].
+    #[allow(clippy::too_many_arguments)]
     fn rendered(
         mut self,
         sample_rate: u32,
@@ -1304,6 +1370,7 @@ impl Graph {
         mut installs: Vec<(u64, usize, Box<dyn Instrument>)>,
         mut racks: Vec<(u64, usize, Vec<RackDevice>)>,
         mut remade: Vec<(u64, Part, usize, Box<dyn Device>)>,
+        mut relaid: Vec<(u64, usize, Vec<LaidSample>)>,
         ring: Option<RingOut>,
     ) -> RungOut {
         self.sample_rate = sample_rate;
@@ -1330,6 +1397,8 @@ impl Graph {
         let mut installs = installs.into_iter().peekable();
         let mut racks = racks.into_iter().peekable();
         let mut remade = remade.into_iter().peekable();
+        relaid.sort_by_key(|(frame, ..)| *frame);
+        let mut relaid = relaid.into_iter().peekable();
         let frames = performance.frames as usize;
         let mut out = vec![0f32; frames * 2];
         let mut clock = Clock::start(sample_rate, self.tempo_bpm);
@@ -1346,6 +1415,16 @@ impl Graph {
             }
             while let Some((_, part, at, mut device)) = remade.next_if(|(f, ..)| *f <= i as u64) {
                 self.make_again(part, at, &mut device);
+            }
+            while let Some((_, track, samples)) = relaid.next_if(|(f, ..)| *f <= i as u64) {
+                // laid in order as the engine lays them (EngineHandle::lay); what it refuses, it never laid
+                let laid = self
+                    .tracks
+                    .get(track)
+                    .and_then(|t| samples_laid(&t.name, t.is_midi(), samples).ok());
+                if let Some(mut samples) = laid {
+                    self.lay(track, &mut samples, i as u64);
+                }
             }
             while let Some(e) = events.next_if(|e| e.frame <= i as u64) {
                 self.apply(&e.event, &clock);

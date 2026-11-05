@@ -231,6 +231,18 @@ Marked in code where they are made; listed here so they are findable:
   note-offs fire before note-ons.
 - **The Torus's note-off and Panic** do nothing: K8 has no release or
   silencing op yet (the body rings down by its own damping).
+- **A take's export rings out** (`Graph::render_ringing_out`, the desktop
+  host's `TAKE_RING_OUT`): past the take's end the render goes on while
+  any frame stands above −96 dBFS (the floor of a 16-bit file), ends once
+  none has for 5 s (longer than the longest Delay between repeats the
+  frame offers, so a silence between repeats does not end it), and stops
+  at 30 s at the most (more than the longest room, 22 s), a tail still
+  sounding there cut and said to be. These are the engine's choice: the
+  corpus attests no tail behaviour of Live's own — its Export renders the
+  Render Start/Length the panel holds, the arrangement's stored length
+  and not the content's (session-model.md, "Export-render provenance";
+  reconstruction-backlog.md, "Render-cycle loop-length fix"), so nothing
+  says how far Live would ring a take out.
 
 ## Realtime output (feature `realtime`)
 
@@ -268,26 +280,18 @@ constraints, stated in the module doc and kept deliberately minimal:
   (block writes are exact 2-sample frames, missing graphs render
   silence).
 
-### Audition recipe (the harness sets, through `live-shell --play`)
+### Audition (the harness sets)
 
-Stale since the shell's server crate dropped its `live-engine`
-dependency: `packages/live-shell/src/play.rs` is no longer compiled (its
-`Cargo.toml` names no `live-engine`), so the recipe below does not run
-today. The engine is auditioned in the desktop candidate
-(`live_engine_open` / `live_engine_play`) and by
-`examples/key_to_sound.rs --device`. Kept for the record:
-
-Run from `packages/live-shell` (there is no workspace manifest above the
-packages, so the package directory is where `-p live-shell` resolves):
-
-```text
-cargo run -p live-shell -- --play <set.als>
-```
-
-The shell bridges the set, loads the arrangement clips (unwarped only in
-phase 1; samples must be 48 kHz float WAV — the harness signals are both),
-plays through the default output device and exits when the arrangement
-ends. Verified against the real device:
+The shell's old `--play` mode (`packages/live-shell/src/play.rs`) was
+removed as dead code on 2026-11-05: it had not been compiled since the
+shell's server crate dropped its `live-engine` dependency, its whole
+work was to open the default output device (which no test may do), and
+what it did — walk a set's unwarped audio clips and lay their samples on
+the bridged graph — is the bridge's own now (`bridge::lay_samples`,
+which also resamples and reads AIFF), played by the desktop host. The
+engine is auditioned in the desktop candidate (`live_engine_open` /
+`live_engine_play`) and by `examples/key_to_sound.rs --device`. What the
+harness sets sound like there:
 
 - `harness/live/steps-1k-gluecompressor.als` — **the canonical audition**.
   1 audio track, tempo 120, clip 0–10.5 beats = **5.25 s**. What you
@@ -299,12 +303,11 @@ ends. Verified against the real device:
 - `harness/live/E8_BARE.als` — **4.00 s**; one impulse click, then the
   Echo bare-line tap train: taps every 0.1875 s (the measured synced hop
   at 120 BPM) alternating L/R, fading −6 dB per hop (FB 0.5), 100% wet.
-- Warp-probe sets (`W1_TONES.als`, `WS1_TONES_2X.als`, …) correctly load
-  nothing in phase 1: the shell prints
-  `'<name>': warped clip skipped (no warp playback in phase 1)` and
-  refuses to start a silent graph — that is the documented behavior, not
-  a failure. A machine with no output device prints the
-  `NoOutputDevice` message and exits 1.
+- Warp-probe sets (`W1_TONES.als`, `WS1_TONES_2X.als`, …) correctly play
+  nothing: the bridge warns that each clip "is warped, and the engine
+  plays unwarped clips first: it is silent" — the documented behaviour,
+  not a failure. A machine with no output device answers the
+  `NoOutputDevice` refusal.
 
 ## Deliberately not here
 
@@ -357,6 +360,6 @@ all three feature sets.
 Realtime (2026-10-08): the cpal output path landed behind the `realtime`
 feature — `pull_block` verified bit-identical to the offline render
 offline (`pull_blocks_reproduce_the_render_exactly`), the handoff/swap
-contract unit-tested, and the shell's `--play` auditioned against the
+contract unit-tested, and the shell's `--play` (since removed) auditioned against the
 real device (steps-1k through Glue, 5.25 s, clean exit; E8_BARE through
 Echo, 4.00 s). Clippy clean with and without the feature.

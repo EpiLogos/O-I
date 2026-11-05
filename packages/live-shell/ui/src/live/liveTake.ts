@@ -41,7 +41,7 @@ import {isStageCheckpointName, isStageSampleCursor, readInstrumentEdit, readStag
 import type {LiveClipAt, LiveClipReading, LiveNote, LiveNoteMpe, LiveSetAct, LiveSetActed} from '../../../../../desktop/cradle/src/kernel/types'
 import type {SlotBinding} from '../frame/transport/slots'
 import type {NoteSource, PlayedNote, PlayedTouch} from './janko/jankoInput'
-import type {ClipMove, ClipPrepared} from './clipPlayer'
+import type {ClipMove, ClipPrepared, ClipTorusTurn} from './clipPlayer'
 import type {LiveTorusState} from './torusInstrument'
 import type {MapValue, MapWriter} from './midiMap/midiMapModel'
 import {mapTargetIdsOfEdit} from './midiMap/midiMapTargets'
@@ -66,6 +66,9 @@ export const TAKE_REPLAYS = 'The take plays again as it was played: the Torus ri
 /** Where a take that keeps its course resumes when it cannot play it (its clip changed, or the Torus did not ring again from its state). */
 export const TAKE_RESUMES_INSTEAD = 'It plays its notes as its clip holds them, each at the touch-point it struck and at its strength, on the Torus set as it '
   + 'stood when the take began, and makes each move again at its beat, within a block of the sound: it resumes from the body as it then rings.'
+/** Where a take of a row resumes when another take of the press holds the one Torus (O-I #849 round 21: one Torus rings at a time). */
+export const takeTorusHeld = (holder: string, name: string): string => `${holder} sets the Torus again in this row, and one Torus rings at a time: `
+  + `${name} plays each note at the touch-point it struck and at its strength, on the Torus as ${holder} set it, and makes none of its moves.`
 /** What a take with its course does not keep: the frame's own sound moves by beat, not by sample. */
 export const TAKE_COURSE_NOT_KEPT = Object.freeze(['the sample each move of the level and effects landed at'] as const)
 /** Said with a take laid with its course. */
@@ -635,8 +638,11 @@ function clipChanged(clip: LiveClipReading, keeps: Plain, bpm: number): string |
  * where it resumes. A take with its course, its clip as it was laid, rings again from the state the Torus rang in when it began (the
  * owner's checkpoint, restored through the frame's stage channel) and answers the course to play at its samples from there (`exact`),
  * with the moves of the frame's own sound by beat. Any other take voices each note as it was played and makes its moves at their beats.
- * A clip no take gave answers null; a take whose Torus was not kept says it plays on the Torus as it now stands. */
-export async function prepareTake(clip: LiveClipReading, commit: (edit: InstrumentEdit) => Promise<StageResult>, play?: TakePlay): Promise<ClipPrepared | null> {
+ * A clip no take gave answers null; a take whose Torus was not kept says it plays on the Torus as it now stands. Of the takes one press
+ * plays (`turn`, a row's launch), the first that would set the Torus again holds it; any other sets nothing of it and makes none of its
+ * moves, and voices each note as it was played on the Torus as that one set it (O-I #849 round 21). */
+export async function prepareTake(clip: LiveClipReading, commit: (edit: InstrumentEdit) => Promise<StageResult>, play?: TakePlay,
+  turn?: ClipTorusTurn): Promise<ClipPrepared | null> {
   const keeps = clip.take?.keeps
   if (!clip.take) return null
   if (!plain(keeps) || keeps.schema !== TAKE_SCHEMA) {
@@ -659,6 +665,8 @@ export async function prepareTake(clip: LiveClipReading, commit: (edit: Instrume
       : clipChanged(clip, keeps, play.bpm)
   const resumes = why ? `${why} ${course === null ? TAKE_RESUMES : TAKE_RESUMES_INSTEAD}` : typeof keeps.resumes === 'string' ? keeps.resumes : course ? TAKE_REPLAYS : TAKE_RESUMES
   if (!kept && !(course && !why)) return {resumes: `The Torus was not kept with this take, so it plays on the Torus as it now stands. ${resumes}`, ...played}
+  const holder = turn?.take(clip.name || `Take ${clip.take.id}`) ?? null
+  if (holder !== null) return {resumes: takeTorusHeld(holder, clip.name || `Take ${clip.take.id}`), ...(voice ? {voice} : {})}
   const {refused} = kept ? await setTorusAgain(kept, commit) : {refused: [] as string[]}
   const told = (words: string) => refused.length ? `${words} The Torus did not take all of it again: ${refused.join('; ')}.` : words
   if (!course || why || !play) return {resumes: told(resumes), ...played}
@@ -811,13 +819,13 @@ export function takeRenderBody(head: {readonly path: string; readonly track: num
  * sound at the level it played at, its rate and the Torus's effects at their frames, rendered through the part as the engine plays it;
  * the WAV's bytes, or thrown in the engine's words); and where the take is laid under the Expression's scene once its course rendered
  * (`lay`: LivePresets layTorusTake, the stage's `torus-take` seal by the name the kernel relayed the take's checkpoint under, or once more
- * from the checkpoint itself where the kernel no longer knows that name, then the Scene's `record-take`; its words, or the owner's refusal in
- * its words). */
+ * from the checkpoint itself where the kernel no longer knows that name, or from the checkpoint at once where it relayed it under none, then
+ * the Scene's `record-take`; its words, or the owner's refusal in its words). */
 export interface TakeExportOwners {
   readonly stage: (command: StageCommand) => Promise<StageResult>
   readonly save: (name: string, bytes: Uint8Array<ArrayBuffer>) => Promise<unknown>
   readonly through?: (take: {readonly rate: number; readonly pcm: Float32Array; readonly effects: readonly TakeEffectsAt[]}) => Promise<Uint8Array<ArrayBuffer>>
-  readonly lay?: (take: {readonly checkpoint_sha256: string; readonly checkpoint: StageTorusCheckpoint; readonly id: number; readonly name: string; readonly bpm: number}) =>
+  readonly lay?: (take: {readonly checkpoint_sha256?: string; readonly checkpoint: StageTorusCheckpoint; readonly id: number; readonly name: string; readonly bpm: number}) =>
     Promise<{readonly ok: true; readonly words: string} | {readonly ok: false; readonly error: string}>
 }
 
@@ -861,14 +869,15 @@ export async function exportTake(clip: LiveClipReading, owners: TakeExportOwners
   return {ok: true, note: `Exported ${clip.name || `Take ${clip.take.id}`} as “${name}”: ${heard}${level}${laid}`}
 }
 
-/** An exported take laid under the scene (TakeExportOwners `lay`), in words: by the name its course keeps for the checkpoint it began at,
- * at the tempo it keeps; or why it was not laid. */
+/** An exported take laid under the scene (TakeExportOwners `lay`), in words: by the name its course keeps for the checkpoint it began at, and
+ * by that checkpoint itself (all it is sealed by where the kernel relayed it under no name: BB round 21), at the tempo it keeps; or why it was
+ * not laid. */
 async function layExported(take: NonNullable<LiveClipReading['take']>, keeps: Plain, course: TakeCourse, name: string, lay: NonNullable<TakeExportOwners['lay']>): Promise<string> {
   const not = (why: string) => `It was not laid under the scene: ${sentence(why)}`
-  if (!course.checkpoint_sha256) return not('the kernel relayed the checkpoint it began at under no name, so nothing seals it')
   const bpm = typeof keeps.bpm === 'number' && Number.isFinite(keeps.bpm) && keeps.bpm > 0 ? keeps.bpm : null
   if (bpm === null) return not('it keeps no tempo to lie on')
-  const answer = await lay({checkpoint_sha256: course.checkpoint_sha256, checkpoint: course.checkpoint, id: take.id, name, bpm}).catch((cause: unknown) => ({ok: false as const, error: said(cause)}))
+  const named = course.checkpoint_sha256 ? {checkpoint_sha256: course.checkpoint_sha256} : {}
+  const answer = await lay({...named, checkpoint: course.checkpoint, id: take.id, name, bpm}).catch((cause: unknown) => ({ok: false as const, error: said(cause)}))
   return answer.ok ? answer.words : not(answer.error)
 }
 

@@ -23,11 +23,22 @@ export interface SetDocument { path: string; tempo: number; scenes: number; trac
   sceneNames?: string[]
   /** The transport's Quantize, the launch quantize of every clip set to Global (packages/live-set model.rs `global_quantize`, Live's
    * GlobalQuantisation): a word of Live's launch quantisation; absent where the set keeps none. */
-  globalQuantize?: string }
+  globalQuantize?: string
+  /** The song's time signature (packages/live-set model.rs `signature_of`): what a bar of the set is; absent where the set keeps none its
+   * owner reads (Live's 4/4 then: DEFAULT_SIGNATURE). */
+  signature?: SetSignature }
+/** A time signature: beats to the bar, and the note a beat is (packages/live-set api.rs SignatureJson). */
+export interface SetSignature { numerator: number; denominator: number }
+/** Live's own signature, where a set keeps none its owner reads. */
+export const DEFAULT_SIGNATURE: SetSignature = {numerator: 4, denominator: 4}
+/** A bar of `signature` in the set's beats (quarter notes: the ruler's, the tempo's and a clip's), and a beat of it (its note). */
+export const barBeats = (signature: SetSignature = DEFAULT_SIGNATURE): number => signature.numerator * 4 / signature.denominator
+export const beatBeats = (signature: SetSignature = DEFAULT_SIGNATURE): number => 4 / signature.denominator
 const object = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value)
 const finite = (value: unknown) => typeof value === 'number' && Number.isFinite(value)
+const signed = (value: unknown) => value === undefined || (object(value) && [value.numerator, value.denominator].every(n => Number.isSafeInteger(n) && Number(n) > 0))
 export function readSetDocument(value: unknown): SetDocument {
-  if (!object(value) || typeof value.path !== 'string' || !value.path || !finite(value.tempo) || !Number.isSafeInteger(value.scenes) || Number(value.scenes) < 0 || !Array.isArray(value.tracks) || value.tracks.some(track => {
+  if (!object(value) || !signed(value.signature) || typeof value.path !== 'string' || !value.path || !finite(value.tempo) || !Number.isSafeInteger(value.scenes) || Number(value.scenes) < 0 || !Array.isArray(value.tracks) || value.tracks.some(track => {
     if (!object(track) || !['audio', 'midi', 'return', 'group', 'master'].includes(String(track.kind)) || typeof track.name !== 'string' || !Array.isArray(track.devices) || !Array.isArray(track.arrangementClips) || !object(track.sessionSlots)) return true
     if (Object.values(track.sessionSlots).some(slot => slot !== null && typeof slot !== 'string')) return true
     if (track.arrangementClips.some(clip => !object(clip) || typeof clip.name !== 'string' || !['audio', 'midi'].includes(String(clip.kind)) || !finite(clip.start) || !finite(clip.end) || Number(clip.end) < Number(clip.start))) return true

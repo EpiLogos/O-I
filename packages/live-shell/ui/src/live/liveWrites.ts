@@ -115,12 +115,13 @@ export function writeLiveSetAct(path: string, act: LiveSetAct): Promise<LiveSetA
   })
 }
 
-/** Insert clip (⇧⌘M, Live's Insert MIDI Clip): an empty MIDI clip one bar long, looped, in the empty slot `scene` of a MIDI part — the
- * clip Live makes (live_clip_create with no notes and no source). Answers the clip as it now stands. */
+/** Insert clip (⇧⌘M, Live's Insert MIDI Clip): an empty MIDI clip one bar long (`beats`, a bar of the set's signature; four where none is
+ * given), looped, in the empty slot `scene` of a MIDI part — the clip Live makes (live_clip_create with no notes and no source). Answers the
+ * clip as it now stands. */
 export const INSERTED_CLIP_BEATS = 4
-export function writeLiveInsertClip(path: string, track: number, scene: number): Promise<LiveClipReading> {
+export function writeLiveInsertClip(path: string, track: number, scene: number, beats = INSERTED_CLIP_BEATS): Promise<LiveClipReading> {
   return onRevision(path, async (expected_revision, transport) => {
-    const answer = await kernelOp(transport, {op: 'live_clip_create', path, expected_revision, track, scene, length: INSERTED_CLIP_BEATS, notes: []})
+    const answer = await kernelOp(transport, {op: 'live_clip_create', path, expected_revision, track, scene, length: beats, notes: []})
     if (answer.error || answer.outcome?.result !== 'live_clip_reading') throw new Error(answer.error ?? 'The set\'s owner did not answer the clip')
     return answer.outcome.reading.clip
   })
@@ -135,6 +136,18 @@ export function writeLiveAudioConsolidate(path: string, track: number, span: {st
     if (transport.kind !== 'tauri') throw new Error('Consolidating audio clips renders them in the engine, which plays in the desktop app: open the set there.')
     const {invoke} = await import('@tauri-apps/api/core')
     return invoke<LiveSetActed>('live_engine_consolidate', {path, expectedRevision: expected_revision, track, from: span.start, to: span.end})
+  })
+}
+
+/** Crop on an audio clip (DLW build ruling 2026-11-05, Live's Crop Clip): the desktop host cuts the stretch of the clip's sample it keeps
+ * (its loop, or its start to its end, or `span` of the ruler over it) from the file it plays, and the kernel's Live owner keeps that cut
+ * beside the set as the sample the cropped clip plays, against the revision read (the host's `live_engine_crop`, live_set_owner.rs
+ * `live_audio_crop`). Answers the act. Refused in words where no desktop host is reached. */
+export function writeLiveAudioCrop(path: string, track: number, clip: LiveClipAt, span: {start: number; end: number} | null): Promise<LiveSetActed> {
+  return onRevision(path, async (expected_revision, transport) => {
+    if (transport.kind !== 'tauri') throw new Error('Cropping an audio clip cuts its sample into a new file beside the set, which the desktop app does: open the set there.')
+    const {invoke} = await import('@tauri-apps/api/core')
+    return invoke<LiveSetActed>('live_engine_crop', {path, expectedRevision: expected_revision, track, clip, from: span?.start ?? null, to: span?.end ?? null})
   })
 }
 
@@ -155,7 +168,8 @@ export function liveSetWrites(path: string) {
     compWrite: (track: number, take: number, range: {start: number; end: number}) => writeLiveComp(path, track, take, range),
     act: (act: LiveSetAct) => writeLiveSetAct(path, act),
     consolidateAudio: (track: number, span: {start: number; end: number}) => writeLiveAudioConsolidate(path, track, span),
-    insertClip: (track: number, scene: number) => writeLiveInsertClip(path, track, scene),
+    cropAudio: (track: number, clip: LiveClipAt, span: {start: number; end: number} | null) => writeLiveAudioCrop(path, track, clip, span),
+    insertClip: (track: number, scene: number, beats?: number) => writeLiveInsertClip(path, track, scene, beats),
     clipInfo: {read: (track: number, clip: LiveClipAt) => readLiveClip(path, track, clip).then(reading => reading.info ?? ''),
       write: (track: number, clip: LiveClipAt, text: string) => writeLiveClip(path, track, clip, {set: {info: text}})},
     // A kept sound played on a part (O-I #852): opened on the Torus, then kept by the part (live/LivePresets.tsx), loaded when it is dropped.
