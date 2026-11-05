@@ -53,7 +53,10 @@ import {parseCentralPathRef} from '../central/centralVertical'
 import type {FactoryTake} from './factoryTakes'
 import {lockPlan, planTargetOf, planValuesOf, planWiring, useWavePlan, type PlanPort, type PlanTarget} from './wavePlan'
 import {refusalWords as refusalText} from './devices/ownerRoutes'
-import {rackRowsOf, scorePortOf, scoreValuesOf, scoreWiring, useScore, type ScorePort, type ScoreReading} from './scoreBinding'
+import {composeAddressOf, rackRowsOf, scorePortOf, scoreValuesOf, scoreWiring, useCompose, useScore, type ComposeWords, type ScorePort,
+  type ScoreReading} from './scoreBinding'
+import {usePopulationAnswer} from './devices/usePopulationAnswer'
+import {useCentralAction} from '../central/devices/useCentralReadings'
 import type {WorldActionReceipt, WorldTrackActions} from '../timeline/worldTrackAdapter'
 import {clipHostId, setViewHold, useViewHoldsVersion, viewHoldsOf} from '../frame/detail/clipBinding'
 import {useSelectedClip} from '../frame/detail/ClipBox'
@@ -359,7 +362,7 @@ export function factoryClipValues(track: AgentSessionTrack, task: TaskClip | nul
   if (task && !intentWhy({sessionRef: track.sessionRef, n: task.n}, input.intent ?? null) && input.intent?.state === 'read') values.intent = input.intent.difference
   // The song's score: its Run's song as Factory reads it, on the track's Agent rack, this task's note lit (agent/scoreBinding.ts).
   const score = scorePortOf(task, input.score ?? null)
-  if (score) Object.assign(values, scoreValuesOf(score.reading, score.rack, score.picks, score.word))
+  if (score) Object.assign(values, scoreValuesOf(score.reading, score.rack, score.picks, score.word, score.compose?.state ?? null))
   if (input.events) {
     const log = taskLogOf(track, task, input.events)
     values.log = JSON.stringify(log)
@@ -725,7 +728,25 @@ export function useFactoryClip(): ClipBinding | null {
   // The song's score: the Run its latest attempt names, read by Factory, on the rows of the track's Agent rack (agent/scoreBinding.ts).
   const chosen = factoryTaskOf(selected.ref, factory.tracks)
   const rack = useMemo(() => rackRowsOf(chosen?.track ?? null, factory.tracks), [chosen?.track, factory.tracks])
-  const scored = useScore(transport, target, rack, sessionRef, true)
+  const scoredOnly = useScore(transport, target, rack, sessionRef, true)
+  // Compose (O-I 844): the session's orchestrator, from Central's agent set its group's space runs and AIKit's population, asked with
+  // the task's Intent and its source; its proposal read in Central's receiving ledger (agent/scoreBinding.ts useCompose).
+  const groupTrack = chosen?.track.parentRef ? factory.tracks.find(item => item.group && item.sessionRef === chosen.track.parentRef) ?? null : null
+  const setRef = groupTrack?.agentSet?.ref ?? null
+  const setInput = useMemo(() => (setRef ? {scope: 'root', ref: setRef} : null), [setRef])
+  const groupSet = useCentralAction(transport, 'central.agent-set.read', setInput)
+  const population = usePopulationAnswer(transport, project)
+  const composeTo = useMemo(() => composeAddressOf(chosen?.track ?? null, factory.tracks, {set: setRef ? groupSet : null, population}),
+    [chosen?.track, factory.tracks, setRef, groupSet, population])
+  const source = taskSourceOf(chosen?.task ? {sessionRef: chosen.track.sessionRef, n: chosen.task.n} : null, settings)
+  const sourceRef = source.made === 'of' ? source.ref : null
+  const words = useMemo((): ComposeWords => {
+    const named = sourceRef ? constellationNamed(constellations, sourceRef) : null
+    return {intent: intent.state === 'read' ? intent.difference : null, intentWhy: intent.state === 'absent' ? intent.why : null,
+      constellation: sourceRef, sources: named?.members.map(member => member.ref) ?? []}
+  }, [intent, sourceRef, constellations])
+  const compose = useCompose(transport, project, composeTo, words, scoredOnly.reading, scoredOnly.edit)
+  const scored = useMemo((): ScorePort => ({...scoredOnly, compose}), [scoredOnly, compose])
   // Each note's task: the takes of the rack's sessions and of the sessions on the song's rows, each read in its own register.
   const noteSessions = useMemo(() => sessions && sessionRef ? noteSessionsOf(chosen?.track ?? null, factory.tracks, scored.reading).filter(ref => ref !== sessionRef) : [],
     [sessions, sessionRef, chosen?.track, factory.tracks, scored.reading])

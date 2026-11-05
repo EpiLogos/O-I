@@ -11,7 +11,7 @@ import {sessionStateLabel,type EncounterSessionHandle} from "../../encounter/ses
 import {EncounterList,type EncounterRow} from "../../encounter/EncounterList";
 import {LOCATION_DRAG_TYPE,SURFACE_DRAG_TYPE} from "../../files/drag";
 import {AgentIdentity,useAgentIdentity,type AgentIdentityReading} from "./AgentIdentity";
-import {ChatTranscript} from "./ChatTranscript";
+import {ChatTranscript,type ReferenceOpener} from "./ChatTranscript";
 import {ChatComposer} from "./ChatComposer";
 import {readModelIntent,writeModelIntent,type ModelIntent} from "./ComposerChips";
 import {chatProvisionTarget} from "./firstSend";
@@ -69,7 +69,7 @@ const suggestionsOf=(project?:string,subject?:{title:string;location?:CentralLoc
   return out.slice(0,3);
 };
 
-export function AgentChat({session,accompanying,project,agentName="World",situating,sessionTitle,choosing,subject,resolveSurface,onMessage,onNewChat,onChoose,onProvision,identity:identityOverride,fixture,variant,tape,onOpenActivity,connectionFacts,onArtifact}:{
+export function AgentChat({session,accompanying,project,agentName="World",situating,sessionTitle,choosing,subject,resolveSurface,onMessage,onNewChat,onChoose,onProvision,identity:identityOverride,fixture,variant,tape,onOpenActivity,connectionFacts,onArtifact,onReference}:{
   session?:EncounterSessionHandle;
   accompanying?:{ref:string;project:string;space:string};
   project?:string;
@@ -110,6 +110,8 @@ export function AgentChat({session,accompanying,project,agentName="World",situat
   connectionFacts?:Partial<ConnectionFacts>;
   /** Open a file the conversation changed (artifact chips, P6). */
   onArtifact?:(path:string)=>void;
+  /** Open what a sent message's reference names (§5: a reference the composer's @ put in place). */
+  onReference?:ReferenceOpener;
 }) {
   const centre=variant==="centre";
   const kernel=useKernel();
@@ -310,7 +312,7 @@ export function AgentChat({session,accompanying,project,agentName="World",situat
       ?<>
         {state.unreachable&&!state.reading
           ?<div className="chat-transcript-host"><p className="chat-unreachable oi-note" data-state="unreachable">The conversation shows here again when agents are reachable.</p></div>
-          :<ChatTranscript reading={state.reading} status={status} error={state.error} agentLabel={agentLabel} onEarlier={actions.earlier} onLatest={actions.latest} paged={state.before!==undefined} onEdit={editTurn} marks={marks}>
+          :<ChatTranscript reading={state.reading} status={status} error={state.error} agentLabel={agentLabel} onEarlier={actions.earlier} onLatest={actions.latest} paged={state.before!==undefined} onEdit={editTurn} marks={marks} onReference={onReference}>
           {answered.map(entry=><p key={entry.id} className="chat-permission-answered oi-note" data-request={entry.id}>{entry.line}</p>)}
           {state.reading?.permissions?.filter(request=>!answered.some(entry=>entry.id===request.native_request_id)).map(request=><PermissionCard key={request.native_request_id} request={request} agentName={agentLabel} disabled={state.pending||!allowed("permission")} onAnswer={(decision,line)=>answer(request.native_request_id,decision,line)}/>)}
         </ChatTranscript>}

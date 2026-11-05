@@ -243,6 +243,17 @@ pub enum OwnerRequest {
         run_ref: String,
         request: Value,
     },
+    /// An edit of the song checked and not written (O-I 844 Compose;
+    /// `factory workflow edit <state> <run-ref> - --check`, the same
+    /// `factory.workflow-edit/v1` on stdin → its receipt with `written`
+    /// false): Factory's admission of a proposal before the person accepts
+    /// it, compare-and-swap and compile as an edit is, the file untouched.
+    /// A read, named in `is_read`, and in the bridge's reading requests.
+    WorkflowEditCheck {
+        state_path: PathBuf,
+        run_ref: String,
+        request: Value,
+    },
     /// Export Song… (O-I #844; `factory workflow export <state> <entry>
     /// [--name] [--rows] [--units]` → `factory.song-clip/v1`): the song in
     /// the file `entry` under the project root, or the rows (tracks) and
@@ -699,6 +710,7 @@ impl OwnerRequest {
             OwnerRequest::Locate { .. }
                 | OwnerRequest::WorkflowInspect { .. }
                 | OwnerRequest::WorkflowScoreRead { .. }
+                | OwnerRequest::WorkflowEditCheck { .. }
                 | OwnerRequest::WorkflowSongsRead { .. }
                 | OwnerRequest::TelemetryStatus { .. }
                 | OwnerRequest::TelemetryInspect { .. }
@@ -2093,6 +2105,20 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
                 &[WORKFLOW_EDIT_RECEIPT],
             )
         }
+        OwnerRequest::WorkflowEditCheck {
+            state_path,
+            run_ref,
+            request,
+        } => {
+            let body = workflow_edit_body(&request)?;
+            expect_contract(
+                owner_call(
+                    &workflow_edit_check_args(&state_path, &run_ref),
+                    Some(&body),
+                )?,
+                &[WORKFLOW_EDIT_RECEIPT],
+            )
+        }
         OwnerRequest::WorkflowExport {
             state_path,
             entry,
@@ -2367,6 +2393,14 @@ pub fn workflow_edit_args(state_path: &Path, run_ref: &str) -> Vec<std::ffi::OsS
         "-".into(),
         "--json".into(),
     ]
+}
+
+/// `factory workflow edit <state> <run-ref> - --check --json`: the edit
+/// admitted or refused, and not written.
+pub fn workflow_edit_check_args(state_path: &Path, run_ref: &str) -> Vec<std::ffi::OsString> {
+    let mut args = workflow_edit_args(state_path, run_ref);
+    args.insert(args.len() - 1, "--check".into());
+    args
 }
 
 /// The edit as Factory reads it: only an edit document travels. Factory
@@ -4864,6 +4898,19 @@ mod run_close_tests {
                 "edits": [{"op": "allocate", "units": ["verify"], "to": {"kind": "agent", "ref": "agent/eros"}}]}}))
         .unwrap();
         assert!(!edit.is_read(), "an edit of the song is a prepared write");
+        // Compose's proposal is admitted by the same verb with --check, and nothing is written: a read.
+        let check: OwnerRequest = serde_json::from_value(serde_json::json!({
+            "kind": "workflow-edit-check", "state_path": "/s.json", "run_ref": "run:A",
+            "request": {"contract": "factory.workflow-edit/v1", "expectedRevision": "blake3:1", "edits": []}}))
+        .unwrap();
+        assert!(
+            check.is_read() && !check.needs_world(),
+            "a check writes nothing"
+        );
+        assert_eq!(
+            strings(workflow_edit_check_args(Path::new("/s.json"), "run:A")),
+            ["workflow", "edit", "/s.json", "run:A", "-", "--check", "--json"]
+        );
         assert_eq!(
             strings(workflow_edit_args(Path::new("/s.json"), "run:A")),
             ["workflow", "edit", "/s.json", "run:A", "-", "--json"]

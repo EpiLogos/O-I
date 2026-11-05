@@ -19,7 +19,7 @@ import {EXPRESSION_COMPOSE_EVENT} from "../expression/summon";
 import {encounter,encounterProvision} from "../encounter/client";
 import {listFiles} from "../files/client";
 import type {SurfaceBinding} from "../surface/types";
-import type {CentralLocation} from "../kernel/types";
+import type {CentralLocation, KernelTransportStatus} from "../kernel/types";
 import {PANEL_INSPECT_EVENT,isPanelInspectDetail,panelInspectKey} from "./planes/panelInspect";
 import {AgentChat} from "./chat/AgentChat";
 import {useAgentIdentity} from "./chat/AgentIdentity";
@@ -107,13 +107,15 @@ export interface AgentLayerProps {
   onBringBack?: (accompanying: AgentAccompanying) => void;
   onOpenSubject?: (subject: AgentSubject) => void;
   resolveSurface?: (id: string) => SurfaceBinding | undefined;
+  /** Open what a sent message's reference names (§5), with the panel's own transport: the frame's opener (the shell's openMessageReference). */
+  onReference?: (reference: {href: string; title: string; transport: KernelTransportStatus}) => Promise<void>;
 }
 
 /** Built-in planes whose bodies the panel owns; stay mounted once visited. */
 const BUILT_IN:Record<string,string>={Chat:"Chat",Activity:"Activity",Agents:"Agents"};
 const KEPT_PLANES=["Chat","Activity","Agents"] as const;
 
-export function AgentLayer({project:projectProp,sourceWorldRef,current,conversation=false,prepareAgents=false,onProvision,onChoose, subject, accompanying, onAccompanying, full, onFull, mode="base", extraPlanes, preferredBodyRef, plane: controlledPlane, onPlane, onError, onOpenConversation, onBringBack, onOpenSubject, resolveSurface}: AgentLayerProps) {
+export function AgentLayer({project:projectProp,sourceWorldRef,current,conversation=false,prepareAgents=false,onProvision,onChoose, subject, accompanying, onAccompanying, full, onFull, mode="base", extraPlanes, preferredBodyRef, plane: controlledPlane, onPlane, onError, onOpenConversation, onBringBack, onOpenSubject, resolveSurface, onReference}: AgentLayerProps) {
   const kernel = useKernel();
   const baseCuration = MODE_CURATION[mode].panel;
   const curation = conversation?{...baseCuration,planes:["Chat","Activity","Agents","context"],extra:["context"],conversationInCentre:false}:baseCuration;
@@ -326,6 +328,7 @@ export function AgentLayer({project:projectProp,sourceWorldRef,current,conversat
             :<AgentChat variant={conversation?"centre":"plane"} session={session} accompanying={accompanying} project={project??accompanying?.project} agentName={agent.name} identity={nativeProfile?{name:agent.name,ref:nativeProfile.ref,description:nativeProfile.purpose,state:"read"}:undefined} situating="" sessionTitle={accompanying?titles[accompanying.ref]:undefined} choosing={choosing}
             subject={{title:subject.title,location:subject.location}} resolveSurface={resolveSurface} onMessage={onError??(message=>console.error(message))}
             tape={tape} onOpenActivity={offered.some(entry=>entry.id==="Activity")?openActivity:undefined} connectionFacts={connectionFacts} onArtifact={path=>void openArtifact(path)}
+            onReference={onReference?reference=>onReference({...reference,transport:kernel.transport}):undefined}
             onNewChat={()=>onAccompanying(undefined)} onChoose={choose}
             onProvision={async provisionProject=>{
               const belongs=captureReceiver();

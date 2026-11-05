@@ -43,9 +43,8 @@ export const EFFORT_LEVELS = ['inherit', 'low', 'medium', 'high', 'max'] as cons
 export const TOOL_CALLS_LEVELS = ['inherit', 'ask', 'session', 'always'] as const
 const MODULATION_ROWS = 5
 
-/** The design's Quantize words to the owner's. */
-const QUANTIZE_TO_OWNER: Readonly<Record<string, string>> = {global: 'global', now: 'now', 'next tool': 'next-tool', 'next turn': 'next-turn'}
-const QUANTIZE_TO_DESIGN: Readonly<Record<string, string>> = Object.fromEntries(Object.entries(QUANTIZE_TO_OWNER).map(([d, o]) => [o, d]))
+// Quantize is read and written in AIKit's words (encounter_task_settings.rs QUANTIZES: global · now · next-tool · next-turn), as every other
+// setting is; the Launch panel's chooser labels them as the manual does (O-I 787: no translation table between the clip and AIKit).
 
 /** Hand off to is retired with Then's handoff on the owner (manual §19.1 The Launch panel: "To hand the work to another session, drag the
  * task onto that session's track"). */
@@ -90,7 +89,7 @@ export function clipValuesOfSettings(reading: EncounterSessionSettingsReading | 
   const modulation = task.envelope_mode === 'modulation'
   const values: Record<string, Value> = {
     name: task.name, active: task.active, 'style.register': task.register, 'style.form': task.form,
-    quantize: QUANTIZE_TO_DESIGN[task.quantize] ?? task.quantize, 'env.mode': task.envelope_mode, 'env.linked': task.envelope_linked,
+    quantize: task.quantize, 'env.mode': task.envelope_mode, 'env.linked': task.envelope_linked,
     'env.agent.effort': JSON.stringify(rowsOfPoints(task.effort, 'effort', modulation)),
     'env.scope.toolCalls': JSON.stringify(rowsOfPoints(task.tool_calls ?? [], 'tool_calls', modulation)),
   }
@@ -188,10 +187,7 @@ export function taskSettingChange(setting: TaskSetting, value: Value, reading: E
       if (written === null) return {refused: 'A success condition is its own words: type one, then press Enter.'}
       return set({success: [...(task.success ?? []), written]})
     }
-    case 'quantize': {
-      const word = text(value)
-      return set({quantize: word === null ? null : QUANTIZE_TO_OWNER[word] ?? word})
-    }
+    case 'quantize': return set({quantize: text(value)})
     case 'envelopeLink': return typeof value === 'boolean' ? set({envelope_linked: value}) : {refused: 'The envelope link is on or off.'}
     case 'envelopeMode': {
       const mode = text(value)

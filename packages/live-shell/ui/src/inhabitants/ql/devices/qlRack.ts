@@ -35,9 +35,9 @@ export const RACK_CARRIED: Readonly<Record<RackInstrument, readonly {readonly de
     {device: null, where: 'It frames the instrument and has no setting.'},
     {device: null, where: null},
     {device: 'quaternal-logic:m-prime-matrices', where: 'The Oscillator layer of the M′ matrices (§22.6).'},
-    {device: 'quaternal-logic:torus', where: 'Pulse mix, Helix balance, Drive, and the context frame.'},
-    {device: 'live:scale-mapping', where: 'Lens and context frame, Scale mapping (§21.3), Exact-ratio tuning (§21.4) and the keyboard.'},
-    {device: 'quaternal-logic:torus', where: 'The surface, the View, and the Body group: Strike, Damping, Modes, Agitation and Body source.'},
+    {device: 'quaternal-logic:torus', where: 'Rate, Carrier, and the context frame.'},
+    {device: 'live:scale-mapping', where: 'Lens and mode, Tuning, Scale mapping (§21.3), Exact-ratio tuning (§21.4) and the keyboard.'},
+    {device: 'quaternal-logic:torus', where: 'The surface, the View, Shape and Comma, and the Body group: Body, Strike, Damping, Modes and Body source. The material comes from the lens in force and M2′\'s tattvas.'},
   ],
   2: [
     {device: null, where: 'It frames the instrument and has no setting.'},

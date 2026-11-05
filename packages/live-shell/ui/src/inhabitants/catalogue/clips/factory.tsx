@@ -313,7 +313,6 @@ const GEN_TOOLS: readonly Option<string>[] = [
   {value: 'compose', label: 'Compose', does: 'Anima composes a score from the task\'s Intent and the spec it is written in: the units, who takes each part, and the order.'},
   {value: 'heads', label: 'Fill heads', does: 'The decision model fills the open heads of the selected units, among the labels Quaternal Logic allows, or leaves them open.'},
 ]
-const NO_COMPOSE = 'Composing a score is Anima\'s act as an agent: no operation proposes a workflow from an intent yet.'
 const NOTHING_OPEN = 'Every head of the unit has its label: nothing is open, so the decision model is not asked.'
 
 function Generate(p: ClipProps) {
@@ -329,18 +328,19 @@ function Generate(p: ClipProps) {
       <Row label="From"><Fact label="From" does="The spec the score is composed from: the Intent panel's From." value={strOf(p.v, 'intent.source')} /></Row>
       <Row label="Rack"><Fact label="Rack" does="The agents and agent sets on the track's rack: the rows the score may give parts to." value={score ? `${score.rows.filter(r => r.rack !== false).length} rows` : undefined} /></Row>
       <Row label="Waves"><ValueBox label="Waves" does="The most waves the score may hold." value={numOf(p.v, 'gen.waves') ?? NaN} def={2} scale={{min: 1, max: 6, step: 1}} format={x => String(x)} onChange={x => p.set('gen.waves', x)} /></Row>
+      <Row label="Asks"><Fact label="Asks" does="Who composes: the Position the session's orchestrator occupies. Its proposal comes to you, and waits here until you accept it." value={strOf(p.v, 'gen.asks') ?? p.standing?.['gen.asks']?.disabled} /></Row>
     </Rows> : <Rows>
       <Row label="Open"><Fact label="Open" does="The heads of the selected unit with no label chosen yet." value={open === undefined ? undefined : `${open} of 7 · ${unit!.key}`} /></Row>
       <Row label="Decides"><Fact label="Decides" does="The decision model that picks, and where it runs." value={strOf(p.v, 'gen.decider')} /></Row>
     </Rows>}
     <Rule />
     <Fields>
-      <Wide><Press p={p} k="gen.press" label="Generate" does="Writes the proposal into the score, dashed, until you accept it." why={p.standing?.['gen.press']?.disabled ?? off ?? (tool === 'compose' ? NO_COMPOSE : open === 0 ? NOTHING_OPEN : undefined)} /></Wide>
+      <Wide><Press p={p} k="gen.press" label="Generate" does="Writes the proposal into the score, dashed, until you accept it." why={p.standing?.['gen.press']?.disabled ?? off ?? (tool === 'compose' ? p.standing?.['gen.asks']?.disabled : open === 0 ? NOTHING_OPEN : undefined)} /></Wide>
       <Press p={p} k="gen.accept" label="Accept" does="Keeps the dashed notes in the score." why={off ?? (proposed ? undefined : 'Nothing proposed waits.')} />
-      <Press p={p} k="gen.discard" label="Discard" does="Drops the dashed notes." why={off ?? (proposed ? undefined : 'Nothing proposed waits.')} />
+      <Press p={p} k="gen.discard" label="Discard" does="Drops the dashed notes, or the ask that waits for them." why={off ?? (proposed || status?.state === 'asked' ? undefined : 'Nothing proposed waits.')} />
     </Fields>
-    <Fact label="Check" does="The engine's word on the proposal: it admits each composition, or refuses it and says why." value={status ? `${status.state === 'refused' ? 'Refused' : 'Admitted'}${status.why ? `: ${status.why}` : ''}` : undefined}
-      tone={status?.state === 'refused' ? 'stall' : status ? 'green' : undefined} />
+    <Fact label="Check" does="The engine's word on the proposal: it admits each composition, or refuses it and says why. While Compose waits for its proposal, it says so." value={status ? `${status.state === 'refused' ? 'Refused' : status.state === 'asked' ? 'Asked' : 'Admitted'}${status.why ? `: ${status.why}` : ''}` : undefined}
+      tone={status?.state === 'refused' ? 'stall' : status?.state === 'asked' ? 'accent' : status ? 'green' : undefined} />
   </>
 }
 
@@ -621,7 +621,7 @@ function LaunchPanel(p: ClipProps) {
     {/* Repeat: what varies between the runs. Once the first run starts these stay; a change starts a new set of takes. */}
     <Fields>
       <Chooser {...p.standing?.quantize} label="Quantize" does="When a launch or a steer lands. Global follows the transport's Quantize." value={choice(p.v, 'quantize')} onChange={x => p.set('quantize', x)}
-        options={[{value: 'global', label: 'Global'}, {value: 'now', label: 'Now'}, {value: 'next tool', label: 'Next tool'}, {value: 'next turn', label: 'Next turn'}]} />
+        options={[{value: 'global', label: 'Global'}, {value: 'now', label: 'Now'}, {value: 'next-tool', label: 'Next tool'}, {value: 'next-turn', label: 'Next turn'}]} />
       <Chooser {...p.standing?.['repeat.variable']} label="Variable" does="With Repeat: the setting that changes from one run to the next." value={choice(p.v, 'repeat.variable')} options={VARIABLES}
         onChange={x => p.set('repeat.variable', x)} disabled={p.standing?.['repeat.variable']?.disabled ?? off} />
       <TextField {...p.standing?.['repeat.levels']} label="Levels" does="With Repeat: the values the variable takes, one to three, separated by commas. Each value is one group of takes."
@@ -804,6 +804,9 @@ export const clip: DesignedClip = {
     'A score proposed from its intent': {score: JSON.stringify(PROPOSED), 'view.tools': 'generate', 'gen.tool': 'compose', 'view.panel': 'intent',
       'gen.status': JSON.stringify({state: 'refused', why: 'drop-capture has no CS'}),
       'score.check': JSON.stringify({state: 'refused', why: 'drop-capture has no CS: a composition holds all seven heads'})},
+    'Compose asked, its proposal not come': {'view.tools': 'generate', 'gen.tool': 'compose', 'view.panel': 'intent',
+      'gen.asks': 'central:position:project:O-I:anima-4 · agent/anima, the orchestrator of anima',
+      'gen.status': JSON.stringify({state: 'asked', why: 'Compose asked central:position:project:O-I:anima-4: no proposal in Central\'s receiving ledger answers it yet.'})},
     'A song inside the score': {'score.open': 'release-check', unit: 'gather', 'view.panel': 'plan'},
     'Its thread forms, highlighted': {'score.highlight': 'CFP1', 'score.fold': 'rack', unit: 'drop-capture'},
   },

@@ -148,6 +148,46 @@ test('the retired controls are gone: Pulse mix, Helix balance, Drive, Agitation,
   resetHost(binding.id)
 })
 
+test('no retired control stands where the Torus is named elsewhere: the Rack\'s map says the manual\'s rows, a clip automates what the Torus takes, the Sky moves what it reports (O-I #850)', async () => {
+  const {RACK_CARRIED} = await import('../src/inhabitants/ql/devices/qlRack.ts')
+  // Manual §21.2 "Where you work it", positions 3 to 5, in its own words.
+  assert.deepEqual(RACK_CARRIED[1].slice(3).map(row => row.where), [
+    'Rate, Carrier, and the context frame.',
+    'Lens and mode, Tuning, Scale mapping (§21.3), Exact-ratio tuning (§21.4) and the keyboard.',
+    'The surface, the View, Shape and Comma, and the Body group: Body, Strike, Damping, Modes and Body source. The material comes from the lens in force and M2′\'s tattvas.'])
+  const words = ['Pulse mix', 'Helix balance', 'Drive', 'Agitation', 'Attack', 'Release']
+  const clip = await readFile(new URL('../src/inhabitants/catalogue/clips/live.tsx', import.meta.url), 'utf8')
+  const torusTargets = /^\s*torus: \[(.*)\],$/m.exec(clip)?.[1] ?? ''
+  assert.deepEqual([...torusTargets.matchAll(/label: '([^']+)'/g)].map(m => m[1]), ['Fundamental', 'Carrier', 'Damping', 'Strike'], 'a clip automates the Torus\'s own settings')
+  for (const word of words) assert.doesNotMatch(torusTargets, new RegExp(`'${word}'`), `clip envelope: no ${word}`)
+  const sky = (await import('../src/inhabitants/catalogue/panels/quaternal-logic__sky.tsx')).design
+  const targets = JSON.parse(sky.defaults.moves).map(move => move.target)
+  for (const target of targets) assert.ok(['Level', 'Scale', 'Carrier', 'Rate', 'Fundamental'].includes(target), `the Sky's moves name a target it reports (skyModulation.ts skyTargets): ${target}`)
+})
+
+test('the lens in force gives the surface its material, as the owner reports it: a lens and its partner show opposite surfaces, and changing the lens leaves the notes alone (O-I #854)', () => {
+  // QL m2_material.rs LensMaterial, as the boundary reads it (protocol.ts readTorusMaterial).
+  const material = (lens, partner, face, valence, colour_rgb, roughness, elasticity) => ({lens, partner, face, position: 2, valence, colour_rgb, roughness, elasticity,
+    particle_affinity: 0.4, tension: 0.5, standing: 'derived', law: 'M2-1′: a lens and its position give the surface; its partner the opposite.'})
+  const day = bound(state(session({material: material('L2', 'L2′', 'day', 1, [0.8, 0.6, 0.2], 0.3, 0.7)}))).binding
+  const night = bound(state(session({material: material('L2′', 'L2', 'night', -1, [0.2, 0.4, 0.8], 0.7, 0.3)}))).binding
+  assert.deepEqual(JSON.parse(day.values.material), {lens: 'L2', partner: 'L2′', face: 'day', valence: 1, colour: [0.8, 0.6, 0.2], grain: 0.3, give: 0.7, affinity: 0.4, tension: 0.5})
+  assert.equal(day.writes('material'), false, 'a reading: the lens in force sets it')
+  const dayM = JSON.parse(day.values.material), nightM = JSON.parse(night.values.material)
+  assert.deepEqual([dayM.valence, nightM.valence], [1, -1], 'a lens and its partner: opposite surfaces')
+  for (const key of Object.keys(day.values)) if (key !== 'material') assert.deepEqual(night.values[key], day.values[key], `${key}: the lens leaves it alone`)
+  const none = bound(state(session({material: {absent: 'No lens is in force: the scene names none.'}}))).binding
+  assert.equal(none.values.material, undefined)
+  assert.equal(none.standing.material.disabled, 'No lens is in force: the scene names none.', 'its absence in the owner\'s words')
+  assert.match(bound().binding.standing.material.disabled, /lens/, 'an owner from before it: absent with its reason')
+  // Drawn beside the lens it comes from, on the Pulse page.
+  setHostPage(day.id, 'field')
+  const whole = renderToStaticMarkup(h(HostedDevice, {designed: torus, binding: day, view: 'whole', nav: {}}))
+  assert.match(whole, /L2 · day/, 'the surface: the lens and its face')
+  assert.match(whole, /grain 30 %, give 70 %/, '… and how it takes the sound')
+  resetHost(day.id)
+})
+
 test('the compact four are Rate, Fundamental, Carrier and Damping, on the device\'s rows and on the design', () => {
   const s = state()
   const device = model.torusDevice(s)

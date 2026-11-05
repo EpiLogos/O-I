@@ -44,7 +44,7 @@ import {aikitWriteOp, ownerRouteWrite} from '../agent/devices/ownerRoutes'
 import {searchProjectOf, searchResultsOf} from './devices/searchBinding'
 import {openPageLink} from './documents/CentralDocumentPane'
 import {openSearchPane} from './searchPane'
-import {closeSearchLine, menuCommands, openKnowledgeAddress, showLineReceipt, type LinePassage, type LineRequest} from './searchLineDoor'
+import {closeSearchLine, menuCommands, openKnowledgeAddress, openReference, referenceTargetOf, showLineReceipt, type LinePassage, type LineRequest} from './searchLineDoor'
 import {actsOf, agentTurnText, documentPathOf, flowEntryHtml, flowEntryText, flowOf, forgetRequestOf, groupsOf, historyOn, jumpOrder, latelyOf, lineModeOf, lineResultsOf,
   pathOf, placeWorldOf, referenceOf, sendPlanOf, unranked, usedWords, type AgentSessionFact, type LineAct, type LineResult, type SendFacts, type SendPlan} from './searchLineModel'
 import './searchLine.css'
@@ -96,6 +96,17 @@ function useLately(transport: KernelTransportStatus, asked: boolean, project: st
 }
 
 /** Where the line stands: at the caret it was asked from (below it, or above it near the window's foot), else over the frame. */
+/** Open a reference a sent message carries (§5: the agent's transcript draws it as a link, cradle chat/ChatTranscript.tsx): AIKit's
+ * address or a Vāk entry through the door's openReference, the Flow's path; any other address as a page link opens (a page of a world,
+ * or the web), with the panel's transport; rejects with what refused. Here, not in the door, so it loads with the line and not the frame. */
+export async function openMessageReference(reference: {href: string; title: string; transport: KernelTransportStatus}): Promise<void> {
+  const target = referenceTargetOf(reference.href)
+  if (target) return openReference(target, reference.title)
+  const link = linkTarget(reference.href)
+  if (link.kind === 'none') throw new Error(link.why)
+  await openPageLink(reference.transport, link)
+}
+
 function placeOf(at: LineRequest['at']): CSSProperties {
   if (!at || typeof window === 'undefined') return {}
   const width = Math.min(560, window.innerWidth - 16)

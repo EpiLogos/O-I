@@ -314,7 +314,8 @@ const bar = (p: ClipProps) => <>
 
 const DEVICES: readonly Option<string>[] = [{value: 'torus', label: 'Torus'}, {value: 'scale', label: 'Scale mapping'}, {value: 'mixer', label: 'Mixer'}]
 const CONTROLS: Readonly<Record<string, readonly (Option<string> & {min: number; max: number; unit: string})[]>> = {
-  torus: [{value: 'pulse', label: 'Pulse mix', min: 0, max: 100, unit: '%'}, {value: 'damping', label: 'Damping', min: 0.1, max: 40, unit: 'Q'}, {value: 'drive', label: 'Drive', min: 0, max: 6, unit: ''}, {value: 'release', label: 'Release', min: 0, max: 30, unit: 's'}],
+  // The Torus's own settings a clip can draw (manual §21.2; Pulse mix, Drive and Release are retired, O-I #850).
+  torus: [{value: 'fundamental', label: 'Fundamental', min: 20, max: 2000, unit: 'Hz'}, {value: 'carrier', label: 'Carrier', min: 0, max: 100, unit: '%'}, {value: 'damping', label: 'Damping', min: 0.1, max: 40, unit: 'Q'}, {value: 'strike', label: 'Strike', min: 0, max: 100, unit: '%'}],
   scale: [{value: 'snap', label: 'Snap', min: 0, max: 3, unit: ''}],
   mixer: [{value: 'volume', label: 'Track Volume', min: -60, max: 6, unit: 'dB'}, {value: 'pan', label: 'Track Panning', min: -50, max: 50, unit: ''}, {value: 'sendA', label: 'A-Reverb', min: -60, max: 0, unit: 'dB'}],
 }

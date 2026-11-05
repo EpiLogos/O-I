@@ -295,7 +295,7 @@ export function harnessValues(reading: HarnessReading | null, logins: HarnessLog
 
 /** One login a harness has of its own, as AIKit's profile declares it (`aikit harness auth <client> --json`: own_login): a runnable one
  * carries the argv it runs; one with no command to run carries only its note, the harness's own words for how it signs in. */
-export interface HarnessLogin {readonly provider: string; readonly command?: readonly string[]; readonly note?: string}
+export interface HarnessLogin {readonly provider: string; readonly command?: readonly string[]; readonly note?: string; readonly check?: readonly string[]}
 /** What AIKit reads of one harness client for Sign in (manual §10.10 Rules): from its client status (harness_status), whether it is on this
  * computer and its credential leg (whether AIKit finds what the client needs to sign in, and if not, why, in AIKit's words); from
  * harness_auth_describe, its logins, or why they could not be read (that client's alone). */
@@ -321,16 +321,27 @@ export function harnessLoginClients(status: unknown): Omit<HarnessLoginClient, '
   })
 }
 /** A harness's declared logins (harness_auth.rs AuthFace own_login). A login whose command cannot run (no argv) is offered by its note only,
- * never as a command. Pure. */
+ * never as a command. A runnable one carries the harness's own logged-in check where AIKit declares one (`status`, its argv), which reads
+ * the result back. Pure. */
 export function harnessLoginsOf(face: unknown): HarnessLogin[] {
   const rows = rec(face) && Array.isArray(face.own_login) ? face.own_login.filter(rec) : []
+  const words = (value: unknown): string[] => (Array.isArray(value) ? value.filter((token): token is string => typeof token === 'string' && token.length > 0) : [])
   return rows.flatMap((row): HarnessLogin[] => {
     const provider = txt(row.provider_ref), note = txt(row.note)
-    const argv = Array.isArray(row.argv) ? row.argv.filter((token): token is string => typeof token === 'string' && token.length > 0) : []
+    const argv = words(row.argv), check = words(row.status)
     if (!provider) return []
-    if (row.runnable === true && argv.length) return [{provider, command: argv, ...(note ? {note} : {})}]
+    if (row.runnable === true && argv.length) return [{provider, command: argv, ...(note ? {note} : {}), ...(check.length ? {check} : {})}]
     return note ? [{provider, note}] : []
   })
+}
+/** What the harness's own logged-in check answered for one provider (`aikit harness auth <client> --check --json`: harness_auth.rs
+ * LoginChecks): signed in or not, or why no answer came. Pure. */
+export function loginCheckOf(data: unknown, provider: string): {signedIn: boolean} | {unread: string} {
+  const rows = rec(data) && Array.isArray(data.checks) ? data.checks.filter(rec) : []
+  const row = rows.find(item => item.provider_ref === provider)
+  if (!row) return {unread: `AIKit ran no check for ${provider}`}
+  if (typeof row.signed_in === 'boolean') return {signedIn: row.signed_in}
+  return {unread: txt(row.unread) ?? 'it gave no answer'}
 }
 /** A provider as one name: `provider:openai`, `ai-kit:credential:openai`, `OpenAI` → openai. */
 const providerName = (ref: string): string => (ref.split(':').pop() ?? ref).trim().toLowerCase()
@@ -364,9 +375,14 @@ function providerSignIn(logins: HarnessLoginReading | null, row: CredentialRow):
     .filter(login => login.command && names.has(providerName(login.provider))).map(login => ({key: loginKey(client.client, login.provider), harness: client.harness, command: commandWords(login.command!)})))
   return offered.length ? {signIn: offered} : {}
 }
-/** The result read back after a login's terminal ended: AIKit's client status read again, in words. Pure. */
-export function loginReadBack(login: {readonly client: string; readonly harness: string; readonly command: readonly string[]}, after: HarnessLoginReading | null, error?: string): string {
+/** The result read back after a login's terminal ended, in words: the harness's own logged-in check where AIKit declares one (`check`,
+ * what it answered), and where it declares none or the check gave no answer, AIKit's client status read again (its credential leg). Pure. */
+export function loginReadBack(login: {readonly client: string; readonly harness: string; readonly command: readonly string[]; readonly check?: readonly string[]},
+  after: HarnessLoginReading | null, error?: string, check?: {signedIn: boolean} | {unread: string}): string {
   const ended = `${commandWords(login.command)} has ended`
+  if (login.check && check && 'signedIn' in check)
+    return check.signedIn ? `${ended}, and ${commandWords(login.check)} says ${login.harness} is signed in.` : `${ended}, but ${commandWords(login.check)} says ${login.harness} is not signed in.`
+  if (login.check && check && 'unread' in check) return `${commandWords(login.check)} did not answer: ${check.unread}. ${loginReadBack({client: login.client, harness: login.harness, command: login.command}, after, error)}`
   if (!after) return `${ended}, but AIKit's client status could not be read again: ${error ?? 'no reading came back'}`
   const client = after.clients.find(item => item.client === login.client)
   if (!client) return `${ended}, but AIKit no longer reports ${login.harness} on this computer.`
@@ -1063,7 +1079,7 @@ export const SETTINGS_WINDOW_WIRING = {
     secretRefs: 'the credential references Workcell records, each with where it is observed (workcell_read secret-list: `workcell secret list`, workcell.secret-reference-inventory/v1)',
     projections: 'Workcell\'s projection ledger, the projections it holds active (workcell_read secret-projections: `workcell secret projections`)',
     outside: 'the credentials Workcell\'s last scan found outside a secret store, by location and presence only (workcell_read secret-scan: `workcell secret scan`)',
-    loginSaid: 'the result read back after a login\'s terminal ended: AIKit\'s client status read again (harness_status: that client\'s credential leg), in words',
+    loginSaid: 'the result read back after a login\'s terminal ended, in words: the harness\'s own logged-in check where AIKit declares one (harness_auth_describe with check: `aikit harness auth <client> --check --json`, what it answered for that provider), and otherwise, or when that check gives no answer, AIKit\'s client status read again (harness_status: that client\'s credential leg)',
     routesWhy: 'why a route\'s standing stands unread (NO_STANDING: AIKit\'s catalogue is identity only; availability is `aikit compose` of a project)', profiles: 'O:I\'s named profiles (SettingsAdapter.profiles listProfiles)',
     machines: 'Workcell\'s machine declarations (RemoteMachinesSource.readMachines)', connections: 'its connection receipts (RemoteMachinesSource.readConnections)',
     operations: 'the control operations a declaration may expect (RemoteMachinesSource.allowedOperations)', workcell: 'the workcell the machines belong to (RemoteMachinesSource.scope)',
@@ -1089,7 +1105,7 @@ export const SETTINGS_WINDOW_WIRING = {
     reread: 'the owners read again: config_registry_read, config_resolutions_read and every opened page\'s reading',
     install: 'client_install',
     reveal: 'settings_reveal', scan: 'Workcell\'s scan for material outside a secret store (workcell_read secret-scan: `workcell secret scan`), said on the Info line',
-    revokeProjection: 'Workcell\'s revocation at the origin (workcell_write revoke-projection: `workcell secret revoke-projection --name`), the ledger read back', signIn: 'the harness\'s own login as AIKit declares it (harness_auth_describe: `aikit harness auth <client> --json`), run in a terminal in the Workbench (LOGIN_TERMINAL_PRESENT, settings/host.ts), and AIKit\'s client status read back when that terminal ends (harness_status)', discover: 'credential_discover', verify: 'credential_verify',
+    revokeProjection: 'Workcell\'s revocation at the origin (workcell_write revoke-projection: `workcell secret revoke-projection --name`), the ledger read back', signIn: 'the harness\'s own login as AIKit declares it (harness_auth_describe: `aikit harness auth <client> --json`), run in a terminal in the Workbench (LOGIN_TERMINAL_PRESENT, settings/host.ts), and the result read back when that terminal ends (the harness\'s own check, harness_auth_describe with check: `--check`, where AIKit declares one; harness_status otherwise)', discover: 'credential_discover', verify: 'credential_verify',
     rotate: 'credential_rotate with new.reference', revoke: 'credential_revoke', bind: 'credential_setup with new.credential and new.reference',
     useProfile: 'profile_use_plan, staged as local changes', saveProfile: 'createProfile and saveProfile with your valid local changes', importProfile: 'the system file picker, then createProfile and saveProfile',
     runNow: 'routine run_now on the basis read', disableRoutine: 'routine disable on the basis read', revertTheme: 'theme_revert', removeTheme: 'theme_remove',

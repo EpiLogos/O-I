@@ -34,6 +34,8 @@ export async function commitLivePerformance(action: PerformanceAction): Promise<
   if (row?.state === 'recalled' && Array.isArray(row.edits) && Array.isArray(row.not_applied)) return reply as PerformanceReply
   if (row?.state === 'sound' && typeof row.sound === 'object' && row.sound !== null) return reply as PerformanceReply
   if (row?.state === 'kept' && typeof row.sound_ref === 'string' && typeof row.name === 'string' && typeof row.unsaved === 'boolean') return reply as PerformanceReply
+  if (row?.state === 'instrument-kept' && typeof row.instrument_ref === 'string' && typeof row.name === 'string' && typeof row.sounds === 'number'
+    && typeof row.unsaved === 'boolean') return reply as PerformanceReply
   return REFUSED('The owner answered the preset request in an unknown shape')
 }
 
@@ -78,8 +80,9 @@ export function subscribeTorusKept(listener: KeptListener): () => void {
 }
 
 /** Save the Torus as it rings as a sound the Scene keeps: the owner keeps a checkpoint and the kernel seals the sound from it by `name`
- * (the stage's `torus-sound` save), then the Scene keeps it (the performance's keep-sound). Settles with the words, or the owner's refusal. */
-export async function saveTorusSound(name: string, owners: LiveSoundOwners = SOUND_OWNERS): Promise<{ok: true; words: string} | {ok: false; error: string}> {
+ * (the stage's `torus-sound` save), then the Scene keeps it (the performance's keep-sound). Settles with the words, the sound kept and
+ * whether it rings on a form's body (as the kernel sealed it: an instrument is kept from such a sound), or the owner's refusal. */
+export async function saveTorusSound(name: string, owners: LiveSoundOwners = SOUND_OWNERS): Promise<{ok: true; words: string; sound_ref: string; form: boolean} | {ok: false; error: string}> {
   const named = name.trim()
   if (!named) return {ok: false, error: 'Name the sound first: the browser lists it by its name.'}
   const sealed = await owners.stage({command: 'torus-sound', action: 'save', name: named})
@@ -89,8 +92,23 @@ export async function saveTorusSound(name: string, owners: LiveSoundOwners = SOU
   if (kept.state === 'refused') return {ok: false, error: kept.reason}
   if (kept.state !== 'kept') return {ok: false, error: 'The Scene answered the keep in another shape'}
   for (const listener of [...keptListeners]) listener(kept.kept)
-  return {ok: true, words: kept.unsaved ? `Saved "${kept.name}" under the Torus. The Scene keeps it until the Expression is saved, then the file does.`
-    : `Saved "${kept.name}" under the Torus.`}
+  const body = sealed.sound.body as {kind?: unknown} | undefined
+  return {ok: true, words: `Saved "${kept.name}" under the Torus.${kept.unsaved ? UNTIL_SAVED : ''}`, sound_ref: kept.sound_ref, form: body?.kind === 'form'}
+}
+const UNTIL_SAVED = ' The Scene keeps it until the Expression is saved, then the file does.'
+
+/** Keep the form's body the kept sound `soundRef` rings on as an instrument named `name` (O-I #852, manual §21.2 Sounds and instruments;
+ * Tips: "make a form the body, make sounds on it, and keep it"): the Scene keeps the body with every sound made on it (the performance's
+ * keep-instrument), and it stands under the Torus with its sounds under it. Settles with the words, or the owner's refusal. */
+export async function keepTorusInstrument(name: string, soundRef: string, owners: LiveSoundOwners = SOUND_OWNERS): Promise<{ok: true; words: string} | {ok: false; error: string}> {
+  const named = name.trim()
+  if (!named) return {ok: false, error: 'Name the instrument first: the browser lists it by its name.'}
+  const kept = await owners.perform({action: 'keep-instrument', name: named, sound_ref: soundRef})
+  if (kept.state === 'refused') return {ok: false, error: kept.reason}
+  if (kept.state !== 'instrument-kept') return {ok: false, error: 'The Scene answered the keep in another shape'}
+  for (const listener of [...keptListeners]) listener(kept.kept)
+  const made = kept.sounds === 1 ? 'the sound' : `the ${kept.sounds} sounds`
+  return {ok: true, words: `Kept "${kept.name}" under the Torus: its body, with ${made} made on it.${kept.unsaved ? UNTIL_SAVED : ''}`}
 }
 
 const movedWords = (name: string, moved: readonly StageSoundMove[]) => moved.length

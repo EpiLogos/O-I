@@ -53,7 +53,26 @@ const contextBlockText=(meta:string,quote:string):string=>`${CONTEXT_MARK}${meta
 
 const copyText=(text:string)=>void navigator.clipboard?.writeText(text).catch(()=>{});
 
-export function ChatTranscript({reading,status,error,agentLabel,onEarlier,onLatest,paged,onEdit,marks,children}:{reading?:EncounterReading;status?:EncounterStatus;error?:string;agentLabel:string;onEarlier:()=>void;onLatest:()=>void;paged:boolean;onEdit?:(text:string)=>void;marks?:TranscriptMarks;children?:ReactNode}) {
+/** A reference the person put in their message with @ (DLW §5: "`@` … in an agent's composer … puts the chosen reference in place"),
+ *  as the composer writes it (the shell's central/searchLineDoor.ts referenceText): `[words](href)`, the words with `[`, `]` and `\`
+ *  escaped, the address with its spaces and brackets encoded. Anything else in brackets is words. */
+export type MessagePiece={kind:"text";text:string}|{kind:"reference";title:string;href:string};
+const REFERENCE=/\[((?:\\[\\[\]]|[^\\[\]])+)\]\(([^\s()]+)\)/g;
+export function referencePieces(text:string):MessagePiece[]{
+  const pieces:MessagePiece[]=[];let at=0;
+  for(const match of text.matchAll(REFERENCE)){
+    const start=match.index??0;
+    if(start>at)pieces.push({kind:"text",text:text.slice(at,start)});
+    pieces.push({kind:"reference",title:match[1].replace(/\\([\\[\]])/g,"$1"),href:match[2].replace(/%20/g," ").replace(/%28/g,"(").replace(/%29/g,")")});
+    at=start+match[0].length;
+  }
+  if(at<text.length)pieces.push({kind:"text",text:text.slice(at)});
+  return pieces;
+}
+/** Opens what a message's reference names (the frame's: the shell's openMessageReference), or rejects with why. */
+export type ReferenceOpener=(reference:{href:string;title:string})=>Promise<void>;
+
+export function ChatTranscript({reading,status,error,agentLabel,onEarlier,onLatest,paged,onEdit,marks,onReference,children}:{reading?:EncounterReading;status?:EncounterStatus;error?:string;agentLabel:string;onEarlier:()=>void;onLatest:()=>void;paged:boolean;onEdit?:(text:string)=>void;marks?:TranscriptMarks;onReference?:ReferenceOpener;children?:ReactNode}) {
   const host=useRef<HTMLDivElement>(null);const following=useRef(true);
   /** Mirrors `following` for rendering: the jump control exists only while
    * the reader has scrolled away from the live edge. */
@@ -88,7 +107,7 @@ export function ChatTranscript({reading,status,error,agentLabel,onEarlier,onLate
       };
       for(const turn of turns){
         const first=turn.blocks[0];
-        if(turn.kind==="user"){flush(`marks-${first.id}`);segment++;out.push(<UserTurn key={first.id} block={first} onEdit={onEdit}/>);continue;}
+        if(turn.kind==="user"){flush(`marks-${first.id}`);segment++;out.push(<UserTurn key={first.id} block={first} onEdit={onEdit} onReference={onReference}/>);continue;}
         if(turn.kind==="assistant"){out.push(<AssistantTurn key={first.id} block={first} label={agentLabel} live={inFlight&&first.id===lastAssistant}/>);continue;}
         if(turn.kind==="error"){
           // A person's Stop can reach the provider as an abort: the owner's
@@ -112,7 +131,8 @@ export function ChatTranscript({reading,status,error,agentLabel,onEarlier,onLate
   </div>;
 }
 
-function UserTurn({block,onEdit}:{block:Block;onEdit?:(text:string)=>void}) {
+function UserTurn({block,onEdit,onReference}:{block:Block;onEdit?:(text:string)=>void;onReference?:ReferenceOpener}) {
+  const [refused,setRefused]=useState<{title:string;error:unknown}|null>(null);
   const items=parseContextItems(block.text);
   let text=block.text;
   for(const item of [...items].reverse())text=text.slice(0,item.start)+text.slice(item.end);
@@ -122,7 +142,12 @@ function UserTurn({block,onEdit}:{block:Block;onEdit?:(text:string)=>void}) {
     <div className="chat-turn-body">
       <div className="chat-bubble">
         {items.length>0&&<div className="chat-attachments" aria-label="Attached context">{items.map((item,index)=><span key={index} className="oi-chip chat-attachment" title={`${item.meta}\n\n${item.quote}`}><Glyph name="attach" size={10}/><span>{item.title}</span></span>)}</div>}
-        {text&&<p>{text}</p>}
+        {text&&<p>{referencePieces(text).map((piece,index)=>piece.kind==="text"?<Fragment key={index}>{piece.text}</Fragment>
+          // A reference opens what it names, through the frame's opener; a frame with none shows its words.
+          :onReference?<button key={index} type="button" className="chat-reference" data-href={piece.href} title={`Open ${piece.title}`}
+            onClick={()=>{setRefused(null);void onReference({href:piece.href,title:piece.title}).catch((error:unknown)=>setRefused({title:piece.title,error}));}}>{piece.title}</button>
+          :<span key={index} className="chat-reference" data-href={piece.href}>{piece.title}</span>)}</p>}
+        {refused&&<Refusal className="chat-reference-refusal" role="status" said={`${refused.title} did not open.`} error={refused.error}/>}
       </div>
       <div className="chat-turn-actions">
         <button className="oi-tool" aria-label="Copy message" title="Copy" onClick={()=>copyText(whole)}><Glyph name="copy" size={12}/></button>

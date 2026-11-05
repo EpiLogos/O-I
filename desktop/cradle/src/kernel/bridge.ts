@@ -124,7 +124,9 @@ const MIXED_OPS: ReadonlySet<string> = new Set(["central", "now", "page", "expre
 const READING_REQUESTS: ReadonlySet<string> = new Set(["index", "find_checkpoint", "source-location", "agent-set", "open-day", "roster", "context", "providers", "census",
   "catalogue", "methods", "plan", "recheck", "document", "inhabitation", "locate", "recognise", "recognize",
   // Factory's readings of one attempt's Return and of the files it names (O-I #759).
-  "attempt-return", "attempt-artifacts"]);
+  "attempt-return", "attempt-artifacts",
+  // Factory's admission of an edit it does not write (`factory workflow edit --check`, O-I 844 Compose).
+  "workflow-edit-check"]);
 /** A verb reads when its first or last word does (`action-list`, `workflow-inspect`, `current-work`, `telemetry-digest`). */
 const READING_WORD = /^(?:read|list|inspect|search|relations|resolve|status|view|show|get|describe|discover|snapshot|history|current|telemetry)$/;
 const readingVerb = (verb: string): boolean => {
