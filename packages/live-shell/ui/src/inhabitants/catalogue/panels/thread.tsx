@@ -16,7 +16,7 @@
 //   An `ask` row is a typed question a member put to a decision helper: `tool` names the helper (its face is an animal), `labels`
 //   the answers it allowed, `out` the answer. The answer is evidence the engine checks; it never stands for what the agent saw.
 //   A message of Messages' conversation may carry `drag`: what it names dragged onto a track (its Communique, the Position it went to and
-//   the work it would become, agent/devices/railTileIds.ts CommuniqueDrag), carried under COMMUNIQUE_DRAG; its owner reads the drop.
+//   its words, agent/devices/railTileIds.ts CommuniqueDrag), carried under COMMUNIQUE_DRAG; its owner reads the drop.
 // - `sessions`: the list the Session chooser offers, as rows of {id, name, short, agent, model, used, cap, parent?, thread?}. A
 //   row's own `thread` is that session's stream: it shows when the session is opened, and under a spawn row set to Inline.
 //
@@ -575,7 +575,7 @@ function ThreadPane({p}: {p: ViewProps}) {
     const mine = it.k === 'you' || it.k === 'steer' || it.k === 'queued', who = it.who ?? (mine ? 'you' : NONE), agent = it.k === 'agent' || it.k === 'proposal' || it.k === 'stall' || it.k === 'ask'
     // A message its owner lets the hand drag onto a track carries what it names there under its own type (O-I ticket 757).
     const drag = it.drag
-    return <div className="th-row" key={it.id} draggable={drag ? true : undefined} data-i={drag ? 'Message|Drag it onto its agent\'s track, and it becomes the work the agent stands on.' : undefined}
+    return <div className="th-row" key={it.id} draggable={drag ? true : undefined} data-i={drag ? 'Message|Drag it onto its agent\'s track, and the agent takes it as a new task.' : undefined}
       onDragStart={drag ? event => { event.dataTransfer.setData(COMMUNIQUE_DRAG, drag); event.dataTransfer.setData('text/plain', it.text); event.dataTransfer.effectAllowed = 'copy' } : undefined}>
       <span className="th-av" data-agent={agent || undefined}>{agent ? <Avatar size={18} /> : who === 'you' ? 'Y' : who.slice(0, 1)}</span>
       <div className="th-body">{named && <span className="th-who" data-agent={agent || undefined}>{who}</span>}{body}</div>

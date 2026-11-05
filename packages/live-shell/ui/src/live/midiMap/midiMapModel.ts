@@ -7,6 +7,7 @@
 // spans decades (the Torus's Rate, one step a year to 40,000 a second) runs on a log curve, equal ratios for equal turns.
 
 import type {StageResult} from '@epilogos/expressions-boundary'
+import type {LiveWriteHow} from '../torusInstrument'
 import {COMPUTER_KEY_PITCH} from '../janko/jankoInput'
 
 export type MapMode = 'off' | 'midi' | 'key'
@@ -33,9 +34,9 @@ export interface ChoiceTarget {
   readonly options: readonly {readonly value: string; readonly label: string}[]
   /** The owner's current option value, or null while the owner states none. */
   readonly current: string | null
-  readonly apply: (value: string) => Promise<StageResult>
-  /** The same write sent by no hand, as a take's lane plays it again (an owner's parameter; a session's has none: no hand moves it). */
-  readonly play?: (value: string) => Promise<StageResult>
+  /** The parameter's own write: the hand's (a mapped control), unless `how` says no hand sent it (a take's lane played again,
+   * writeMapTarget). A session-held value has no hand to tell, and takes it the same either way. */
+  readonly apply: (value: string, how?: LiveWriteHow) => Promise<StageResult>
 }
 
 export interface ToggleTarget {
@@ -45,8 +46,7 @@ export interface ToggleTarget {
   readonly group: string
   readonly writer: MapWriter
   readonly current: boolean | null
-  readonly apply: (value: boolean) => Promise<StageResult>
-  readonly play?: (value: boolean) => Promise<StageResult>
+  readonly apply: (value: boolean, how?: LiveWriteHow) => Promise<StageResult>
 }
 
 /** A range's span. Linear (the default) snaps to `step`; a log curve (min above zero) takes equal ratios for equal turns and keeps four
@@ -66,8 +66,7 @@ export interface RangeTarget {
   readonly writer: MapWriter
   readonly range: MapRange
   readonly current: number | null
-  readonly apply: (value: number) => Promise<StageResult>
-  readonly play?: (value: number) => Promise<StageResult>
+  readonly apply: (value: number, how?: LiveWriteHow) => Promise<StageResult>
 }
 
 /** Whose write a parameter's value goes to: the owner's (an instrument edit the owner accepts), or the session's own hold (a note device the

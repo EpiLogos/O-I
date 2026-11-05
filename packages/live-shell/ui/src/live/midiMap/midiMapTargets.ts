@@ -2,12 +2,13 @@
 // parameters. Each target reads the owner's value now, and writes through the parameter's own write path: the owner's instrument edit
 // (commitLiveInstrumentEdit, the one channel the Live faces share) is an owner write, and the Scale tie is a session-held value (the note-device
 // hold, not the owner), which the target says so. A mapped control is the hand (BY_HAND): a Lens or Frame it moves turns Follow off
-// (DLW build ruling 2026-11-05). A target is only offered while the owner states its value, so a map never binds a
+// (DLW build ruling 2026-11-05). A take's lane played again is the same write sent by no hand, apply(value, NO_HAND) (writeMapTarget;
+// DLW build ruling 2026-11-05, round 866). A target is only offered while the owner states its value, so a map never binds a
 // parameter it cannot read. The Torus's compact macros (DLW §21.2) map as its M1′ session's own edits: Carrier and Fundamental run
 // linearly, Rate on a log curve (one step a year to 40,000 a second spans twelve decades); Damping stands unmapped, saying why.
 
 import type {InstrumentEdit, StageResult} from '@epilogos/expressions-boundary'
-import {BY_HAND, commitLiveInstrumentEdit, liveInstrumentWritable, liveTorusMacroRows, liveTorusState, LIVE_CADENCE_OPTIONS, TORUS_FUNDAMENTAL, TORUS_RATE,
+import {BY_HAND, commitLiveInstrumentEdit, liveInstrumentWritable, liveTorusMacroRows, liveTorusState, LIVE_CADENCE_OPTIONS, NO_HAND, TORUS_FUNDAMENTAL, TORUS_RATE,
   torusSessionEdit, torusSessionOf, type LiveTorusState, type LiveWriteHow, type TorusSettingsEdit} from '../torusInstrument'
 import {noteDeviceChain, setScaleTie} from '../noteDevices/noteDeviceHold'
 import {NOTE_DEVICE_LABEL, TIE_RULES, TIE_RULE_LABEL, type NoteDevice, type TieRule} from '../noteDevices/noteDevices'
@@ -30,9 +31,6 @@ export const MAP_UNMAPPED: Readonly<Record<string, string>> = {
   damping: 'Damping is not mappable yet: the owner keeps the decay rate, not the Q you set, so a control could not be read back until an owner reads Q.',
 }
 
-/** A write no hand sent (torusInstrument.ts LiveWriteHow): a take's lane played again (`play`, writeMapTarget) takes nothing out of what
- * moves it on its own. */
-const AS_PLAYED: LiveWriteHow = Object.freeze({})
 const cadenceEdit = (value: string): InstrumentEdit => ({kind: 'cadence', rate: value === 'hold' ? 'hold' : Number(value) as 1 | 12})
 
 /** The parameters a map can bind, as the owner reads them now and the note devices hold them. */
@@ -44,8 +42,7 @@ export function mapTargets(torus: LiveTorusState | null, chain: readonly NoteDev
       if (row.selected === null) continue
       targets.push({
         kind: 'choice', id: row.macro.id, label: row.macro.label, group: 'What is acting', writer: 'owner',
-        options: row.options, current: row.selected, apply: value => commitLiveInstrumentEdit(row.edit(value), BY_HAND),
-        play: value => commitLiveInstrumentEdit(row.edit(value), AS_PLAYED),
+        options: row.options, current: row.selected, apply: (value, how = BY_HAND) => commitLiveInstrumentEdit(row.edit(value), how),
       })
     }
     const {parameters} = torus
@@ -53,39 +50,35 @@ export function mapTargets(torus: LiveTorusState | null, chain: readonly NoteDev
       targets.push({
         kind: 'choice', id: 'cadence', label: 'Tick cadence', group: 'Play', writer: 'owner',
         options: LIVE_CADENCE_OPTIONS, current: parameters.cadence.playing ? String(parameters.cadence.rate) : 'hold',
-        apply: value => commitLiveInstrumentEdit({kind: 'cadence', rate: value === 'hold' ? 'hold' : Number(value) as 1 | 12}, BY_HAND),
-        play: value => commitLiveInstrumentEdit(cadenceEdit(value), AS_PLAYED),
+        apply: (value, how = BY_HAND) => commitLiveInstrumentEdit(cadenceEdit(value), how),
       })
     }
     targets.push({
       kind: 'toggle', id: 'sound', label: 'Sound', group: 'See and hear', writer: 'owner',
-      current: !parameters.muted, apply: on => commitLiveInstrumentEdit({kind: 'muted', muted: !on}, BY_HAND),
-      play: on => commitLiveInstrumentEdit({kind: 'muted', muted: !on}, AS_PLAYED),
+      current: !parameters.muted, apply: (on, how = BY_HAND) => commitLiveInstrumentEdit({kind: 'muted', muted: !on}, how),
     })
     targets.push({
       kind: 'range', id: 'level', label: 'Level', group: 'See and hear', writer: 'owner', range: LEVEL_RANGE,
-      current: parameters.level, apply: value => commitLiveInstrumentEdit({kind: 'level', value}, BY_HAND),
-      play: value => commitLiveInstrumentEdit({kind: 'level', value}, AS_PLAYED),
+      current: parameters.level, apply: (value, how = BY_HAND) => commitLiveInstrumentEdit({kind: 'level', value}, how),
     })
     if (parameters.scale.unitsPerMetre !== null) {
       targets.push({
         kind: 'range', id: 'scale-units', label: 'Units per metre', group: 'See and hear', writer: 'owner', range: SCALE_RANGE,
-        current: parameters.scale.unitsPerMetre, apply: value => commitLiveInstrumentEdit({kind: 'scale', units_per_metre: value}, BY_HAND),
-        play: value => commitLiveInstrumentEdit({kind: 'scale', units_per_metre: value}, AS_PLAYED),
+        current: parameters.scale.unitsPerMetre, apply: (value, how = BY_HAND) => commitLiveInstrumentEdit({kind: 'scale', units_per_metre: value}, how),
       })
     }
     // The Torus's M1′ session, while the owner states it and takes edits: each value goes as the session's own `torus` edit
     // (torusInstrument.ts torusSessionEdit), refused in the session's words before it leaves.
     const session = torusSessionOf(torus)
     if (session !== null && liveInstrumentWritable(torus)) {
-      const write = (key: string, how: LiveWriteHow = BY_HAND) => (value: number): Promise<StageResult> => {
+      const write = (key: string) => (value: number, how: LiveWriteHow = BY_HAND): Promise<StageResult> => {
         let edit: TorusSettingsEdit
         try { edit = torusSessionEdit(session, {key, value}) } catch (error) { return Promise.resolve({ok: false, error: error instanceof Error ? error.message : String(error)}) }
         return commitLiveInstrumentEdit({kind: 'torus', edit}, how)
       }
-      targets.push({kind: 'range', id: 'rate', label: 'Rate', group: 'Pulse', writer: 'owner', range: RATE_RANGE, current: session.steps_per_second, apply: write('rate'), play: write('rate', AS_PLAYED)})
-      targets.push({kind: 'range', id: 'fundamental', label: 'Fundamental', group: 'Pulse', writer: 'owner', range: FUNDAMENTAL_RANGE, current: session.fundamental_hz, apply: write('fundamental'), play: write('fundamental', AS_PLAYED)})
-      targets.push({kind: 'range', id: 'carrier', label: 'Carrier', group: 'Pulse', writer: 'owner', range: CARRIER_RANGE, current: Math.round(session.settings.carrier * 1000) / 10, apply: write('carrier'), play: write('carrier', AS_PLAYED)})
+      targets.push({kind: 'range', id: 'rate', label: 'Rate', group: 'Pulse', writer: 'owner', range: RATE_RANGE, current: session.steps_per_second, apply: write('rate')})
+      targets.push({kind: 'range', id: 'fundamental', label: 'Fundamental', group: 'Pulse', writer: 'owner', range: FUNDAMENTAL_RANGE, current: session.fundamental_hz, apply: write('fundamental')})
+      targets.push({kind: 'range', id: 'carrier', label: 'Carrier', group: 'Pulse', writer: 'owner', range: CARRIER_RANGE, current: Math.round(session.settings.carrier * 1000) / 10, apply: write('carrier')})
     }
   }
   for (const device of chain) {
@@ -145,8 +138,8 @@ export function writeMapTarget(parameter: string, value: MapValue, targets: read
   if (target.kind === 'range' && (typeof value !== 'number' || !Number.isFinite(value) || value < target.range.min || value > target.range.max))
     return refuse(`${target.label} takes a value from ${target.range.min} to ${target.range.max}.`)
   switch (target.kind) {
-    case 'choice': return (target.play ?? target.apply)(value as string)
-    case 'toggle': return (target.play ?? target.apply)(value as boolean)
-    case 'range': return (target.play ?? target.apply)(value as number)
+    case 'choice': return target.apply(value as string, NO_HAND)
+    case 'toggle': return target.apply(value as boolean, NO_HAND)
+    case 'range': return target.apply(value as number, NO_HAND)
   }
 }

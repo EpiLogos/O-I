@@ -122,7 +122,7 @@ export const MISSING_OPS = {
   git: 'workcell git-seat attach',
   world: 'world scope setter',
   gateway: 'gateway transport attach',
-  /** A slide: the composition is declared at the family door; nothing reorders it. */
+  /** A slide: the order of the agent profile Central keeps; no Central operation writes it yet. */
   order: 'agent-chain order',
 } as const
 
@@ -155,16 +155,18 @@ export const OWNER_BINDINGS: Readonly<Record<OwnerBindingId, OwnerBinding>> = {
 
 /** Who owes each missing op — the family that owns the face the op would
  * admit onto (same map: skillset racks :27, git seat :30, gateway transport
- * :20). `null` where no owner is named: the world face is a
- * Central + AIKit split, and the chain's order is declared at the shell's own
- * family door, not by any product. A null owner is disclosed as unnamed,
- * never guessed. */
+ * :20). The chain's order is Central's, which keeps the agent profile the
+ * chain is (§19.4 "The chain is the profile Central keeps for the agent"; DLW
+ * build ruling 2026-11-05), as the chain's law names it (inhabitants/sdk/
+ * chains.ts AGENT_CHAIN_ORDER). `null` where no owner is named: the world face
+ * is a Central + AIKit split. A null owner is disclosed as unnamed, never
+ * guessed. */
 export const MISSING_OP_OWNERS: Readonly<Record<keyof typeof MISSING_OPS, string | null>> = {
   skillset: 'AIKit',
   git: 'Workcell',
   world: null,
   gateway: 'Actuation',
-  order: null,
+  order: 'Central',
 }
 
 /** The remedy for a missing op, in the ticket's own terms: the owner builds

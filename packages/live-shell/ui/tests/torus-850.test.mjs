@@ -551,8 +551,14 @@ test('the chain hears every accepted move and sends Follow\'s edits without the 
   const section = await readFile(new URL('../src/live/LiveInstrumentSection.tsx', import.meta.url), 'utf8')
   assert.match(section, /commitLiveInstrumentEdit\(edit, BY_HAND\)/, 'the Live instrument section\'s controls are the hand')
   const targets = await readFile(new URL('../src/live/midiMap/midiMapTargets.ts', import.meta.url), 'utf8')
-  assert.match(targets, /apply: value => commitLiveInstrumentEdit\(row\.edit\(value\), BY_HAND\)/, 'a mapped Lens or Frame is the hand')
+  // A target's apply is the hand's unless it is told otherwise (DLW build ruling 2026-11-05, round 866): a lane played again is the same
+  // write sent by no hand, apply(value, NO_HAND), with no twin beside it.
+  assert.match(targets, /apply: \(value, how = BY_HAND\) => commitLiveInstrumentEdit\(row\.edit\(value\), how\)/, 'a mapped Lens or Frame is the hand')
   assert.doesNotMatch(targets, /commitLiveInstrumentEdit\(\{[^)]*\}\)\s*[,}]/, 'every mapped write is the hand\'s')
+  assert.doesNotMatch(targets, /\bplay: /, 'no no-hand twin stands beside a target')
+  assert.match(targets, /case 'range': return target\.apply\(value as number, NO_HAND\)/, 'a lane writes through apply, sent by no hand')
+  assert.match(await readFile(new URL('../src/live/torusInstrument.ts', import.meta.url), 'utf8'), /export const NO_HAND: LiveWriteHow/,
+    'no hand is the channel\'s own word, beside BY_HAND')
 })
 
 // DLW build ruling 2026-11-05: View and Follow are kept with the device in the set (live/liveTake.ts createTorusKeeper, beside the part's

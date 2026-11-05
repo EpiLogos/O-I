@@ -236,27 +236,17 @@ function agentAt(positionRef: string, population: unknown): string | undefined {
   return str(agents.find(item => Array.isArray(item.positions) && item.positions.includes(positionRef))?.agent_ref)
 }
 
-/** The work AIKit reads a Position standing on (`aikit gateway who`: each Position's current_work, the refs Factory's current work
- * resolves to, as `aikit whoami` and Refocus derive them): its work and run where Factory names one, else why not, in words. */
-function workAt(positionRef: string, name: string, population: unknown): {work: string; run?: string} | {why: string} {
-  const row = isObj(population) && Array.isArray(population.positions) ? population.positions.find(item => isObj(item) && item.position_ref === positionRef) : undefined
-  const current = isObj(row) && isObj(row.current_work) ? row.current_work : null
-  const work = current?.outcome === 'one' ? str(current.work_ref) : undefined
-  if (work) { const run = str(current!.run_ref); return {work, ...(run ? {run} : {})} }
-  if (current?.outcome === 'none') return {why: `Factory names no current work for ${name}`}
-  if (current?.outcome === 'ambiguous') return {why: `Factory names more than one current work for ${name}`}
-  return {why: current ? `AIKit could not read ${name}'s current work from Factory` : `AIKit's population names no current work for ${name}`}
-}
-
 /** The drag a message carries onto a track (§19.24 Rules: "To turn one into work, drag it onto the agent's track, and the agent takes it
- * as a task with a receipt"; O-I ticket 757): `aikit gateway delegate` gives the Position the message went to custody of the work it stands on,
- * so the drag names that Position, the agent standing there (the track that may take it) and that work. A record with no ref, with no
- * recipient, or already carried into work (escalated: AIKit refuses a second custody) carries none. Pure. */
+ * as a task with a receipt"; O-I ticket 757, DLW build ruling 2026-11-05): the agent's track makes a new task of it and Messages records the
+ * turning (`aikit gateway delegate`, which gives the Position the message went to custody of that task), so the drag names that Position,
+ * the agent standing there (the track that may take it) and the message's words, the new task's purpose. A record with no ref, no
+ * recipient or no words, or already carried into work (escalated: AIKit refuses a second custody), carries none. Pure. */
 export function communiqueDrag(record: Obj, names: ReadonlyMap<string, string>, population: unknown): CommuniqueDrag | null {
   const communique = str(record.communique_ref), to = str(record.to_position_ref)
-  if (!communique || !to || record.state === 'escalated') return null
+  const concern = typeof record.body === 'string' ? firstLine(record.body) : ''
+  if (!communique || !to || !concern || record.state === 'escalated') return null
   const name = names.get(to) ?? to, agent = agentAt(to, population)
-  return {schema: COMMUNIQUE_DRAG_SCHEMA, communique, to, name, ...(agent ? {agent} : {}), ...workAt(to, name, population)}
+  return {schema: COMMUNIQUE_DRAG_SCHEMA, communique, to, name, ...(agent ? {agent} : {}), concern}
 }
 
 /** The messages that wait across the Positions: the Agency gateway's inbox (§19.10 Inbox, "Read from the gateway"). */

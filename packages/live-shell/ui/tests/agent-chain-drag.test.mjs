@@ -204,13 +204,19 @@ test('each owner binding names its owner and the reading that admits the light',
   assert.match(drag.OWNER_BINDINGS.roster.reading, /agent_definition roster/)
 })
 
-test('the three missing ops from the table each name their owner and remedy, or an unnamed owner', () => {
+test('the three missing ops from the table each name their owner and remedy, or an unnamed owner', async () => {
   assert.equal(drag.MISSING_OP_OWNERS.skillset, 'AIKit')
   assert.equal(drag.MISSING_OP_OWNERS.git, 'Workcell')
-  assert.equal(drag.MISSING_OP_OWNERS.order, null, 'the order is declared at the shell door; no product owner is guessed')
+  // REPLACED (DLW build ruling 2026-11-05: the chain's order is Central's, which keeps the agent profile): the order named no owner, while
+  // the chain's law (inhabitants/sdk/chains.ts) named Central for it; the two agree now.
+  assert.equal(drag.MISSING_OP_OWNERS.order, 'Central', 'Central keeps the agent profile, whose order the chain is')
+  const {CHAIN_LAWS} = await import('../src/inhabitants/sdk/chains.ts')
+  assert.equal(CHAIN_LAWS['factory-session'].op.owner, drag.MISSING_OP_OWNERS.order, 'the chain\'s law names the same owner')
+  assert.equal(CHAIN_LAWS['factory-session'].op.name, drag.MISSING_OPS.order)
   assert.equal(drag.missingOpRemedy('skillset'), 'AIKit builds agent-chain skillset admit on its own seat, or declares it absent')
   assert.equal(drag.missingOpRemedy('git'), 'Workcell builds workcell git-seat attach on its own seat, or declares it absent')
-  assert.match(drag.missingOpRemedy('order'), /no owner is named for agent-chain order yet/)
+  assert.equal(drag.missingOpRemedy('order'), 'Central builds agent-chain order on its own seat, or declares it absent')
+  assert.match(drag.missingOpRemedy('world'), /no owner is named for world scope setter yet/, 'an unnamed owner is still said as unnamed')
   const admit = drag.chainDropDecision(skillset)
   assert.equal(admit.owner, 'AIKit')
   assert.equal(admit.remedy, drag.missingOpRemedy('skillset'))

@@ -32,7 +32,7 @@ export async function load(url,context,next){
 
 globalThis.document = {getElementById: () => null, createElement: () => ({}), head: {appendChild: () => {}}, documentElement: {}}
 const {renderToStaticMarkup} = await import('react-dom/server')
-const {centredOn} = await import('../src/frame/detail/ChainOverview.tsx')
+const {centredOn, wheelAlong, ChainPicture} = await import('../src/frame/detail/ChainOverview.tsx')
 const {design: agentset} = await import('../src/inhabitants/catalogue/panels/software-factory__agentset-rack.tsx')
 const {skills: skillset} = await import('../src/inhabitants/catalogue/panels/skills.tsx')
 const source = path => readFileSync(new URL(`../src/${path}`, import.meta.url), 'utf8')
@@ -78,4 +78,36 @@ test('Device view\'s chain scrolls sideways with no scrollbar of its own: the pi
 test('hiding a rack\'s last view folds the rack, as Live\'s does', () => {
   const kit = source('inhabitants/sdk/panel.tsx')
   assert.match(kit, /last\(part\) && onFold \? onFold\(\)/)
+})
+
+// O-I ticket 748's remainder (DLW build ruling 2026-11-05, round 866): the row itself turns under the wheel, and the picture is the
+// chain's own, scaled, not a block for each device (the shell mockup's #cmini: the chain's own drawing at Live's scale).
+test('the wheel over the chain moves it sideways, as Live\'s Device View does, unless the chain fits, the wheel is already sideways, or it is over a list that scrolls by itself', () => {
+  const chain = {scrollWidth: 3213, clientWidth: 1582}
+  assert.equal(wheelAlong(chain, {deltaX: 0, deltaY: 60}, false), 60, 'an upright wheel moves the chain along')
+  assert.equal(wheelAlong(chain, {deltaX: 0, deltaY: -3, deltaMode: 1}, false), -48, 'a wheel counted in lines moves sixteen pixels a line')
+  assert.equal(wheelAlong(chain, {deltaX: 0, deltaY: 1, deltaMode: 2}, false), 1582, 'a wheel counted in pages moves a view')
+  assert.equal(wheelAlong(chain, {deltaX: 40, deltaY: 5}, false), null, 'a sideways wheel is the row\'s own scroll')
+  assert.equal(wheelAlong(chain, {deltaX: 0, deltaY: 60}, true), null, 'a list that scrolls by itself keeps its wheel')
+  assert.equal(wheelAlong({scrollWidth: 900, clientWidth: 1000}, {deltaX: 0, deltaY: 60}, false), null, 'a chain that fits leaves the wheel alone')
+  const code = source('frame/detail/ChainOverview.tsx')
+  assert.match(code, /addEventListener\('wheel', onRowWheel, \{passive: false\}\)/, 'the row Device view shows takes the wheel, and can keep it from the page')
+  assert.match(code, /removeEventListener\('wheel', onRowWheel\)/, 'a row no longer shown gives the wheel back')
+})
+
+test('the picture is the chain\'s own drawing, scaled: each device\'s title bar, display, sections and controls where they stand, in both directions', () => {
+  const reading = {scrollWidth: 1600, clientWidth: 800, clientHeight: 320, scrollLeft: 0, plates: [
+    {x: 8, y: 8, w: 400, h: 304, depth: 0, name: 'Torus', folded: false, end: false, light: 'lit', parts: [
+      {kind: 'head', x: 8, y: 8, w: 400, h: 20}, {kind: 'display', x: 16, y: 32, w: 200, h: 140}, {kind: 'control', x: 230, y: 40, w: 40, h: 40}]},
+    {x: 414, y: 8, w: 24, h: 304, depth: 0, name: 'Delay', folded: true, end: false, light: 'dark', parts: []}]}
+  const html = renderToStaticMarkup(ChainPicture({reading, room: 160, tall: 32}))
+  const at = kind => [...html.matchAll(new RegExp(`data-part="${kind}"[^>]*style="([^"]*)"`, 'g'))].map(m => m[1])
+  assert.equal(at('head').length, 1)
+  assert.equal(at('display').length, 1)
+  assert.equal(at('control').length, 1)
+  // One scale for both directions, the smaller of the room's along and the overview's height over the row's.
+  const s = Math.min(160 / 1600, 32 / 320)
+  assert.match(at('display')[0], new RegExp(`left:${16 * s}px;top:${32 * s}px;width:${200 * s}px;height:${140 * s}px`))
+  assert.match(html, /data-folded="true"/, 'a folded device stands as its strip')
+  assert.match(html, /aria-label="Torus"|data-name="Torus"/, 'each plate keeps its name for the picture')
 })
