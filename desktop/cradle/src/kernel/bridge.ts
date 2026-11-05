@@ -125,8 +125,9 @@ const READING_REQUESTS: ReadonlySet<string> = new Set(["index", "find_checkpoint
   "catalogue", "methods", "plan", "recheck", "document", "inhabitation", "locate", "recognise", "recognize",
   // Factory's readings of one attempt's Return and of the files it names (O-I #759).
   "attempt-return", "attempt-artifacts",
-  // Factory's admission of an edit it does not write (`factory workflow edit --check`, O-I 844 Compose).
-  "workflow-edit-check"]);
+  // Factory's admission of an edit it does not write (`factory workflow edit --check`, O-I 844 Compose), and its reading of a
+  // project's map through the forge (`factory workflow map`, Compose's units).
+  "workflow-edit-check", "workflow-map"]);
 /** A verb reads when its first or last word does (`action-list`, `workflow-inspect`, `current-work`, `telemetry-digest`). */
 const READING_WORD = /^(?:read|list|inspect|search|relations|resolve|status|view|show|get|describe|discover|snapshot|history|current|telemetry)$/;
 const readingVerb = (verb: string): boolean => {
