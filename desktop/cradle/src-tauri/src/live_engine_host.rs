@@ -913,7 +913,31 @@ pub(crate) mod host {
         /// count among such edits, the part and the frame's effects to put then.
         pub room_waiting: Option<(u64, usize, Value)>,
         pub room_edits: u64,
+        /// Every take frozen on a part while the set plays, and every Unfreeze (O-I #849 round 22, [`Opened::freeze`]):
+        /// the engine's count it was frozen at, the part, and the takes (none: let go), in their order: what Export
+        /// Audio freezes there again.
+        pub refrozen: Vec<(u64, usize, Vec<live_engine::LaidSample>)>,
+        /// The registry of the takes frozen on parts ([`FrozenTake`]), the latest last.
+        pub frozen: Vec<FrozenTake>,
     }
+
+    /// A take frozen on a part (O-I #849 round 22; DLW build ruling 2026-11-05: "A rendered take is a frozen take", as
+    /// Live's Freeze Track does): the engine's count it was frozen at, the set's track it plays on (the set owner's
+    /// index), its name, the engine frame it sounds from and how many it sounds for, and whether it was let go
+    /// (Unfreeze) before its end.
+    #[derive(Debug, Clone, PartialEq)]
+    pub struct FrozenTake {
+        pub id: u64,
+        pub track: usize,
+        pub name: String,
+        pub at: u64,
+        pub frames: u64,
+        pub unfrozen: bool,
+    }
+
+    /// Why a take is not frozen while no Torus the engine follows has sounded: the owner's samples it lands at fall
+    /// at no frame of the engine's yet.
+    pub const FREEZE_UNANCHORED: &str = "The engine follows no Torus it has taken yet, so a frozen take has no frame to sound from: play the set in the engine, then launch the row again";
 
     /// How long the frame's edits pause before its room is made again (presentationEffects.ts
     /// `ROOM_PAUSE_MS`, O-I #849 round 17): the engine makes its room again as the frame does, once
@@ -953,6 +977,8 @@ pub(crate) mod host {
                 samples,
                 samples_said,
                 relaid: Vec::new(),
+                refrozen: Vec::new(),
+                frozen: Vec::new(),
                 racked: Vec::new(),
                 made_again: Vec::new(),
                 room_waiting: None,
@@ -975,20 +1001,71 @@ pub(crate) mod host {
                 "torus_follow": self.follow_reading(),
                 "torus_effects": self.effects_reading(),
                 "latency": self.latency_reading(),
+                "frozen": self.frozen_reading(),
             })
+        }
+
+        /// The takes frozen on parts (O-I #849 round 22): each by its track, its name, the frames it sounds over, and
+        /// whether it sounds now, is still to sound, has ended, or was let go.
+        pub fn frozen_reading(&mut self) -> Value {
+            self.handle.collect();
+            let position = self.handle.position();
+            let taken: Vec<u64> = self.handle.relaid().iter().map(|&(_, id)| id).collect();
+            Value::Array(
+                self.frozen
+                    .iter()
+                    .map(|f| {
+                        let standing = if f.unfrozen {
+                            "unfrozen"
+                        } else if !taken.contains(&f.id) || position < f.at {
+                            "waiting"
+                        } else if position < f.at + f.frames {
+                            "sounding"
+                        } else {
+                            "ended"
+                        };
+                        json!({"track": f.track, "name": f.name, "at": f.at, "frames": f.frames, "standing": standing})
+                    })
+                    .collect(),
+            )
         }
 
         /// The engine's own legs of key-to-sound (O-I #853 round 18), for the page to join with its own
         /// (jankoInput.ts keyToSound): the device block it last filled, the most a key waits for one at the
         /// engine's rate, the longest any event waited, and the device's output latency (callback to playback).
+        /// With them, each of the latest strikes' pair on the host (O-I #849 round 22; DLW build ruling 2026-11-05:
+        /// "a host-side timestamp pair per strike reported through the engine's own readout"; live-engine
+        /// `StrikeTime`): the part, the frame it sounds at, when the host sent it to the engine and when the engine
+        /// mixed that frame, in ms on the host's wall clock (since the epoch, the clock MIDI notes are stamped on as
+        /// the host receives them), and the span between; the device plays it its output latency later.
         fn latency_reading(&self) -> Value {
             let latency = self.handle.latency();
             let ms = |ns: u64| ns as f64 / 1e6;
+            // the engine's time against the wall clock, read together
+            let engine_now = self.handle.now_ns() as f64;
+            let wall_now = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map_or(0.0, |d| d.as_secs_f64() * 1000.0);
+            let wall = |ns: u64| wall_now - (engine_now - ns as f64) / 1e6;
+            let strikes: Vec<Value> = latency
+                .strikes
+                .iter()
+                .map(|s| {
+                    json!({
+                        "track": s.track,
+                        "frame": s.frame,
+                        "sent_at_ms": wall(s.sent_ns),
+                        "sounds_at_ms": wall(s.sounds_ns),
+                        "ms": ms(s.sounds_ns.saturating_sub(s.sent_ns)),
+                    })
+                })
+                .collect();
             json!({
                 "block_frames": latency.block_frames,
                 "block_ms": latency.block_frames as f64 * 1000.0 / f64::from(ENGINE_RATE),
                 "longest_wait_ms": ms(latency.longest_wait_ns),
                 "output_latency_ms": ms(latency.output_latency_ns),
+                "strikes": strikes,
             })
         }
 
@@ -1357,17 +1434,9 @@ pub(crate) mod host {
         /// took the hand-over is handed out (the part did not hold the Torus then).
         pub fn torus_notes(&mut self) -> Option<Value> {
             let bound = self.following.bound.clone()?;
-            self.handle.collect();
             // the engine frame the part took the hand-over it holds at, and the owner's sample it stood
             // at: a clip note waits for it (a MIDI note sent to the part does not)
-            let anchor = self
-                .toruses
-                .iter()
-                .rposition(|t| t.handover == bound.handover)
-                .and_then(|index| {
-                    let &(taken, _) = self.handle.installs().get(index)?;
-                    Some((taken, self.toruses[index].at_samples_elapsed))
-                });
+            let anchor = self.torus_anchor();
             let position = self.handle.position();
             let edges: &[ClipEdge] = match anchor {
                 Some(_) => self.clips.get(bound.track).map_or(&[], Vec::as_slice),
@@ -1680,20 +1749,21 @@ pub(crate) mod host {
                     ))
                 })
                 .collect::<Result<Vec<_>, String>>()?;
-            // Each part's samples laid again, laid again at the frame the engine laid them there.
-            let relaid = self
-                .handle
-                .relaid()
-                .iter()
-                .map(|&(frame, id)| {
-                    let (_, part, samples) = self
-                        .relaid
-                        .iter()
-                        .find(|(laid, ..)| *laid == id)
-                        .ok_or("samples the engine laid again are not kept")?;
-                    Ok((frame, *part, samples.clone()))
-                })
-                .collect::<Result<Vec<_>, String>>()?;
+            // Each part's samples laid again, laid again at the frame the engine laid them there; each take frozen on a
+            // part, and each Unfreeze, frozen there again at its frame (they share the engine's count).
+            let mut relaid = Vec::new();
+            let mut refrozen = Vec::new();
+            for &(frame, id) in self.handle.relaid() {
+                if let Some((_, part, samples)) = self.relaid.iter().find(|(laid, ..)| *laid == id)
+                {
+                    relaid.push((frame, *part, samples.clone()));
+                } else if let Some((_, part, takes)) = self.refrozen.iter().find(|(f, ..)| *f == id)
+                {
+                    refrozen.push((frame, *part, takes.clone()));
+                } else {
+                    return Err("samples the engine laid again are not kept".into());
+                }
+            }
             // Each Torus made again from what was handed over, at the frame the engine took it.
             // Each chain put on a part's rack made again, at the frame the engine put it there.
             let racks = self
@@ -1716,23 +1786,25 @@ pub(crate) mod host {
                         Ok((frame, track, node))
                     })
                     .collect::<Result<Vec<_>, String>>()?;
-                graph.render_performance_relaid(
+                graph.render_performance_frozen(
                     ENGINE_RATE,
                     &performance,
                     toruses,
                     racks,
                     remade,
                     relaid,
+                    refrozen,
                 )
             };
             #[cfg(not(feature = "k8"))]
-            let samples = graph.render_performance_relaid(
+            let samples = graph.render_performance_frozen(
                 ENGINE_RATE,
                 &performance,
                 Vec::new(),
                 racks,
                 remade,
                 relaid,
+                refrozen,
             );
             Ok((
                 wav_f32(&samples, ENGINE_RATE),
@@ -1765,10 +1837,14 @@ pub(crate) mod host {
         pub rate: u32,
         pub pcm: Vec<f32>,
         pub effects: Vec<(u64, Value)>,
+        /// To freeze it (O-I #849 round 22, [`Opened::freeze`]): the owner's sample it lands at, and its name.
+        pub landed: Option<u64>,
+        pub name: Option<String>,
     }
 
     /// A take's sound as the frame sends it (`oi.take-render/v1`): four bytes, little-endian, the length of a JSON
-    /// head `{schema, path, track, rate, effects: [{frame, effects}]}`, the head, then the sound as IEEE-754 binary32
+    /// head `{schema, path, track, rate, effects: [{frame, effects}]}` — and, for a take frozen on its part, `landed` (the
+    /// owner's sample it lands at, as a decimal string) and `name` — the head, then the sound as IEEE-754 binary32
     /// little-endian samples, one channel. Refused in words for anything else.
     pub fn take_render_of(body: &[u8]) -> Result<TakeRender, String> {
         const NOT: &str = "A take is rendered through its part from its sound as the frame sends it (oi.take-render/v1): a head, then its samples";
@@ -1798,7 +1874,17 @@ pub(crate) mod host {
             .iter()
             .map(|e| Ok((count(&e["frame"]).ok_or(NOT)?, e["effects"].clone())))
             .collect::<Result<Vec<_>, String>>()?;
+        let landed = match &head["landed"] {
+            Value::Null => None,
+            v => Some(v.as_str().and_then(|t| t.parse::<u64>().ok()).ok_or(NOT)?),
+        };
+        let name = match &head["name"] {
+            Value::Null => None,
+            v => Some(v.as_str().ok_or(NOT)?.to_string()),
+        };
         Ok(TakeRender {
+            landed,
+            name,
             path: PathBuf::from(path),
             track: track as usize,
             rate: u32::try_from(rate).map_err(|_| NOT)?,
@@ -1855,6 +1941,42 @@ pub(crate) mod host {
         /// another set than the one open, another rate than the engine's, a track that is no MIDI part, and
         /// effects that are not the frame's.
         pub fn render_take_wav(&self, take: &TakeRender) -> Result<(Vec<u8>, Value), String> {
+            let (graph, racks, stood, frames, name) = self.take_graph(take, false)?;
+            let rung = graph.render_ringing_out(
+                ENGINE_RATE,
+                &live_engine::Performance::silent(frames),
+                Vec::new(),
+                racks,
+                Vec::new(),
+                TAKE_RING_OUT,
+            );
+            Ok((
+                wav_f32(&rung.samples, ENGINE_RATE),
+                json!({"frames": frames, "part": name, "effects": stood, "tail": rung.tail, "cut": rung.cut}),
+            ))
+        }
+
+        /// A take's part alone, as [`Opened::render_take_wav`] and [`Opened::freeze`] render it: the set as it opened in the
+        /// engine, the take's sound laid where the Torus stands on its part and the Torus's effects put at their frames, the
+        /// other parts, the returns and the groups silent and the Main track at unity with none of its devices; with
+        /// `chain_only`, the part's own volume and pan at unity and centre too, so what it renders is the part's chain alone,
+        /// as Live's Freeze renders a track (its mixer stays live). Answered with the racks, the effects as they stood, the
+        /// take's frames and the part's name. Refused in words as [`Opened::render_take_wav`] says.
+        #[allow(clippy::type_complexity)]
+        fn take_graph(
+            &self,
+            take: &TakeRender,
+            chain_only: bool,
+        ) -> Result<
+            (
+                Graph,
+                Vec<(u64, usize, Vec<RackDevice>)>,
+                Vec<Value>,
+                u64,
+                String,
+            ),
+            String,
+        > {
             if take.path != self.path {
                 return Err(format!(
                     "The engine has another set open ({}): a take renders through its part in the set it is a take of",
@@ -1897,6 +2019,9 @@ pub(crate) mod host {
                         sample: sample.clone(),
                     }));
                     (t.group, t.solo, t.active) = (None, false, true);
+                    if chain_only {
+                        (t.gain, t.pan) = (1.0, 0.0);
+                    }
                 } else {
                     (t.active, t.solo) = (false, false);
                 }
@@ -1910,18 +2035,94 @@ pub(crate) mod host {
             (graph.master.gain, graph.master.pan) = (1.0, 0.0);
             graph.master.devices.clear();
             let name = graph.tracks[part].name.clone();
-            let rung = graph.render_ringing_out(
+            Ok((graph, racks, stood, frames, name))
+        }
+
+        /// Freeze a take of a row on its part (O-I #849 round 22; DLW build ruling 2026-11-05: "a true Torus per row
+        /// player, through the engine, as Live's Freeze Track does"): one Torus rings at a time, so a row's take that does
+        /// not hold it is rendered — its sound as the Torus's owner rendered it, through the Torus's effects as they moved
+        /// and the part's own chain ([`Opened::take_graph`], its chain alone: "Effects moves are rendered into the take, as
+        /// Freeze renders the whole chain") — and laid on its part from the engine frame its landing sample falls on, the
+        /// part playing it in place of its chain until it ends and through its own volume, pan and sends
+        /// ([`EngineHandle::freeze`]); then the part's chain is heard again, "as a clip returns at its end". The frame of
+        /// the owner's sample is the Torus the engine follows: the frame it took the hand-over at, on by the owner's
+        /// samples since the sample it stood at. A take frozen on the part before gives way to it. Answered with the
+        /// registry's reading. Refused in words for a take with no landing, one that lands before the Torus the engine
+        /// follows, while it follows none it has taken, and as [`Opened::render_take_wav`] refuses.
+        pub fn freeze(&mut self, take: &TakeRender) -> Result<Value, String> {
+            let landed = take
+                .landed
+                .ok_or("A take is frozen on its part from the owner's sample it lands at, and this one names none")?;
+            let (graph, racks, _, frames, _) = self.take_graph(take, true)?;
+            let rendered = graph.render_performance_remade(
                 ENGINE_RATE,
                 &live_engine::Performance::silent(frames),
                 Vec::new(),
                 racks,
                 Vec::new(),
-                TAKE_RING_OUT,
             );
-            Ok((
-                wav_f32(&rung.samples, ENGINE_RATE),
-                json!({"frames": frames, "part": name, "effects": stood, "tail": rung.tail, "cut": rung.cut}),
-            ))
+            let part = self.part_of(take.track)?;
+            let (taken, stood) = self.torus_anchor().ok_or(FREEZE_UNANCHORED)?;
+            let at = taken
+                + landed.checked_sub(stood).ok_or(
+                    "The take lands before the Torus the engine follows stood, so it cannot be frozen there",
+                )?;
+            let name = take.name.clone().unwrap_or_else(|| "The take".into());
+            let takes = vec![live_engine::LaidSample {
+                at,
+                from: 0,
+                frames,
+                gain: 1.0,
+                channels: 2,
+                pcm: rendered.into(),
+            }];
+            let id = self
+                .handle
+                .freeze(part, takes.clone())
+                .map_err(|e| format!("The engine did not freeze {name}: {e}"))?;
+            self.refrozen.push((id, part, takes));
+            for f in self.frozen.iter_mut().filter(|f| f.track == take.track) {
+                f.unfrozen = true;
+            }
+            self.frozen.push(FrozenTake {
+                id,
+                track: take.track,
+                name,
+                at,
+                frames,
+                unfrozen: false,
+            });
+            Ok(self.frozen_reading())
+        }
+
+        /// Unfreeze (O-I #849 round 22; DLW build ruling 2026-11-05: Unfreeze "returns the part to its live Torus"): the
+        /// takes frozen on the set's track `track` are let go from the engine's next block, and the part's chain is heard
+        /// from there. Answered with the registry's reading. Refused in words for a track that is no part.
+        pub fn unfreeze(&mut self, track: usize) -> Result<Value, String> {
+            let part = self.part_of(track)?;
+            let id = self
+                .handle
+                .freeze(part, Vec::new())
+                .map_err(|e| format!("The engine did not let the frozen take go: {e}"))?;
+            self.refrozen.push((id, part, Vec::new()));
+            for f in self.frozen.iter_mut().filter(|f| f.track == track) {
+                f.unfrozen = true;
+            }
+            Ok(self.frozen_reading())
+        }
+
+        /// The engine frame the part following the Torus's owner took the hand-over it holds at, and the owner's sample
+        /// that hand-over stood at; None while it follows none, or the engine has not taken it.
+        pub fn torus_anchor(&mut self) -> Option<(u64, u64)> {
+            let bound = self.following.bound.clone()?;
+            self.handle.collect();
+            self.toruses
+                .iter()
+                .rposition(|t| t.handover == bound.handover)
+                .and_then(|index| {
+                    let &(taken, _) = self.handle.installs().get(index)?;
+                    Some((taken, self.toruses[index].at_samples_elapsed))
+                })
         }
 
         /// The set as the engine was handed it when it opened: bridged again from the document, each part's
@@ -2110,6 +2311,9 @@ pub(crate) mod host {
                             o.racked.clear();
                             o.made_again.clear();
                             o.relaid.clear();
+                            // a new engine holds no frozen take: the row launched again freezes it again
+                            o.refrozen.clear();
+                            o.frozen.clear();
                             core.ok_or("the engine was not made")?
                         }
                     };
@@ -2329,6 +2533,19 @@ pub(crate) mod host {
             self.with(|o| o.render_take_wav(&take)).map(|(wav, _)| wav)
         }
 
+        /// A row's take frozen on its part ([`Opened::freeze`], O-I #849 round 22), from its sound as the frame sends it
+        /// ([`take_render_of`], with the owner's sample it lands at and its name): the registry of frozen takes as it now
+        /// stands. Refused in words when no set is open in the engine.
+        pub fn freeze(&self, body: &[u8]) -> Result<Value, String> {
+            let take = take_render_of(body)?;
+            self.with(|o| o.freeze(&take))
+        }
+
+        /// Unfreeze on the set's track `track` ([`Opened::unfreeze`]): the registry as it now stands.
+        pub fn unfreeze(&self, track: usize) -> Result<Value, String> {
+            self.with(|o| o.unfreeze(track))
+        }
+
         /// Export Audio: `choose` asks the person where the file goes (the
         /// host's save dialog, given the file name it suggests: the set's,
         /// as a .wav) and `write` is the owner that writes it (the kernel's
@@ -2492,6 +2709,137 @@ pub(crate) mod host {
   <MainTrack><DeviceChain><Mixer><Tempo><Manual Value="120" /></Tempo><Volume><Manual Value="1" /></Volume></Mixer>
     <DeviceChain><Devices /></DeviceChain></DeviceChain></MainTrack>
 </LiveSet></Ableton>"#;
+
+        /// O-I #849 round 22 (DLW build ruling 2026-11-05: "a true Torus per row player, through the engine, as Live's Freeze
+        /// Track does"): a row's take that does not hold the Torus is frozen on its own part — its sound through the Torus's
+        /// effects and the part's chain alone (the part's mixer at unity: what Export of the take renders with the part's
+        /// volume at unity and its pan at centre) — from the engine frame its landing falls on (the frame the Torus the
+        /// engine follows was taken at, on by the owner's samples since it stood), in place of the part's chain until it
+        /// ends, through the part's own volume and pan; the registry says it waits, sounds and ends, and Export Audio is
+        /// what was played. Unfreeze lets it go. While the engine follows no Torus it has taken, it is refused in words.
+        #[cfg(not(feature = "k8"))]
+        #[test]
+        fn a_rows_take_is_frozen_on_its_part_from_its_landing_until_it_ends_and_exports_as_played()
+        {
+            // the part the Torus is taken on keeps no note here, so the stand-in for its node changes nothing Export
+            // makes again without it (a host without K8 makes no Torus again)
+            let set = SET.replace(
+                r#"<MidiNoteEvent Time="0" Duration="0.25" Velocity="100" IsEnabled="true" />"#,
+                "",
+            );
+            let path = write_set("freeze", &set);
+            let mut o = Opened::open(&path).unwrap();
+            let mut core = o.core.take().unwrap();
+            let burst: Vec<f32> = (0..4_800)
+                .map(|i| (std::f32::consts::TAU * 330.0 * i as f32 / 48_000.0).sin() * 0.5)
+                .collect();
+            let head = json!({"schema": TAKE_RENDER_SCHEMA, "path": path, "track": 1, "rate": ENGINE_RATE,
+                "effects": [{"frame": 0, "effects": effects(&["delay"])}], "landed": (4_800u64 + 12_000).to_string(), "name": "Bass take"});
+            let take = take_render_of(&take_body(&head, &burst)).unwrap();
+            assert_eq!(
+                (take.landed, take.name.as_deref()),
+                (Some(16_800), Some("Bass take"))
+            );
+            assert_eq!(
+                o.freeze(&take),
+                Err(FREEZE_UNANCHORED.to_string()),
+                "no Torus followed yet"
+            );
+            pull(&mut core, &[128; 50]);
+            o.handle
+                .install(0, Box::new(live_engine::SilentInstrument))
+                .unwrap();
+            o.toruses.push(TorusOnPart {
+                track: 0,
+                sha256: "sha256:t".into(),
+                at_samples_elapsed: 4_800,
+                handover: 1,
+                keys_refused: None,
+            });
+            o.following.bound = Some(Bound {
+                lease: "lease:t".into(),
+                track: 0,
+                sha256: "sha256:t".into(),
+                handover: 1,
+                notes: None,
+            });
+            assert_eq!(
+                o.freeze(&take),
+                Err(FREEZE_UNANCHORED.to_string()),
+                "nor while the engine has not taken it"
+            );
+            let mut played = pull(&mut core, &[128]);
+            o.handle.collect();
+            assert_eq!(o.handle.installs(), &[(6_400, 0)]);
+            let at = 6_400 + 12_000;
+            assert_eq!(
+                o.freeze(&take).unwrap(),
+                json!([{"track": 1, "name": "Bass take", "at": at, "frames": 4_800, "standing": "waiting"}])
+            );
+            // what is frozen is the take's part alone through its chain, at unity and centre: the take's export with the
+            // part's volume at unity and its pan at centre, to the take's end
+            let centred = write_set(
+                "freeze-centred",
+                &set.replace(
+                    r#"<Pan><Manual Value="-0.5" /></Pan><Volume><Manual Value="0.5" /></Volume>"#,
+                    r#"<Pan><Manual Value="0" /></Pan><Volume><Manual Value="1" /></Volume>"#,
+                ),
+            );
+            let unity = Opened::open(&centred).unwrap();
+            let mut as_unity = take_render_of(&take_body(&head, &burst)).unwrap();
+            as_unity.path = centred.clone();
+            let wav = live_engine::wav::read_wav_f32(&unity.render_take_wav(&as_unity).unwrap().0)
+                .unwrap()
+                .samples;
+            let frozen = &o.refrozen[0].2[0];
+            assert_eq!((frozen.at, frozen.frames, frozen.channels), (at, 4_800, 2));
+            assert!(
+                frozen
+                    .pcm
+                    .iter()
+                    .zip(&wav[..2 * 4_800])
+                    .all(|(a, b)| a.to_bits() == b.to_bits())
+                    && frozen.pcm.len() == 2 * 4_800,
+                "the part's chain alone, as Freeze renders it"
+            );
+            played.extend(pull(&mut core, &[128; 50]));
+            assert_eq!(o.frozen_reading()[0]["standing"], "waiting");
+            played.extend(pull(&mut core, &[128; 45]));
+            assert_eq!(o.frozen_reading()[0]["standing"], "sounding");
+            played.extend(pull(&mut core, &[128; 50]));
+            assert_eq!(
+                o.frozen_reading()[0]["standing"],
+                "ended",
+                "past its end, the part's chain again"
+            );
+            let (bytes, _) = o.render_wav().unwrap();
+            let exported = live_engine::wav::read_wav_f32(&bytes).unwrap().samples;
+            assert!(
+                exported[2 * 6_400..]
+                    .iter()
+                    .zip(&played)
+                    .all(|(e, p)| e.to_bits() == p.to_bits()),
+                "Export Audio freezes it where the engine did: what was played"
+            );
+            assert_eq!(
+                o.unfreeze(1).unwrap()[0]["standing"],
+                "unfrozen",
+                "Unfreeze lets it go"
+            );
+            assert_eq!(
+                o.refrozen
+                    .last()
+                    .map(|(_, part, takes)| (*part, takes.len())),
+                Some((1, 0))
+            );
+            assert!(
+                o.unfreeze(5).unwrap_err().contains("no part"),
+                "a track that is no part"
+            );
+            for set in [&path, &centred] {
+                let _ = std::fs::remove_dir_all(set.parent().unwrap());
+            }
+        }
 
         /// O-I #743 round 20, item 3, the engine gaps: a take's Export Audio rings its effects out past the take's end — the
         /// Torus's Delay and Reverb and the part's own Echo — as long as anything of them stands above −96 dBFS, and says how
@@ -4105,10 +4453,52 @@ pub(crate) mod host {
             core.pull_block(&mut block);
             core.report_output_latency(25_000_000);
             let latency = opened.reading()["latency"].clone();
+            // REPLACES the round-18 form without `strikes` (O-I #849 round 22 adds each strike's times; none struck yet).
             assert_eq!(
                 latency,
-                json!({"block_frames": 480, "block_ms": 10.0, "longest_wait_ms": 0.0, "output_latency_ms": 25.0}),
+                json!({"block_frames": 480, "block_ms": 10.0, "longest_wait_ms": 0.0, "output_latency_ms": 25.0, "strikes": []}),
                 "a key waits at worst one block at 48 kHz, then the device's output"
+            );
+            // O-I #849 round 22 (DLW build ruling 2026-11-05: "a host-side timestamp pair per strike reported through the
+            // engine's own readout"): each strike's pair on the host's wall clock (ms since the epoch, the clock the MIDI
+            // notes' receipt is stamped on): when the host sent it to the engine, and when the engine mixed its first frame.
+            let wall = || {
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs_f64()
+                    * 1000.0
+            };
+            let before = wall();
+            opened
+                .send(
+                    serde_json::from_str::<EventIn>(
+                        r#"{"kind":"note_on","track":1,"key":57,"velocity":100}"#,
+                    )
+                    .unwrap(),
+                )
+                .unwrap();
+            core.pull_block(&mut block);
+            let strikes = opened.reading()["latency"]["strikes"].clone();
+            let after = wall();
+            let strikes = strikes.as_array().expect("the strikes, oldest first");
+            assert_eq!(strikes.len(), 1, "{strikes:?}");
+            let strike = &strikes[0];
+            assert_eq!(strike["track"], 1);
+            assert_eq!(
+                strike["frame"], 480,
+                "a note sounds at the first frame of the block that took it"
+            );
+            let sent = strike["sent_at_ms"].as_f64().unwrap();
+            let sounds = strike["sounds_at_ms"].as_f64().unwrap();
+            // the engine's time and the wall clock are read a moment apart: within a millisecond
+            assert!(
+                sent >= before - 1.0 && sent <= sounds && sounds <= after + 1.0,
+                "{before} <= {sent} <= {sounds} <= {after}"
+            );
+            assert!(
+                (strike["ms"].as_f64().unwrap() - (sounds - sent)).abs() < 1e-3,
+                "the pair's span, sent to sounding: {strike}"
             );
         }
 
@@ -4597,6 +4987,54 @@ pub fn live_engine_mixer(
     #[cfg(not(feature = "native_shell"))]
     {
         let _ = (app, webview);
+        Err(EVERYDAY.into())
+    }
+}
+
+/// A row's take frozen on its part (O-I #849 round 22, `LiveEngineHost::freeze`): the take's sound as the frame sends it,
+/// raw (`oi.take-render/v1` with the owner's sample it lands at and its name), rendered through the Torus's effects and the
+/// part's chain and played by the engine on the part from the frame it lands at until it ends; answered with the takes
+/// frozen on the set's parts.
+#[tauri::command]
+pub fn live_engine_freeze(
+    app: tauri::AppHandle,
+    webview: tauri::WebviewWindow,
+    request: tauri::ipc::Request<'_>,
+) -> Result<serde_json::Value, String> {
+    #[cfg(feature = "native_shell")]
+    {
+        admit_candidate_webview(&webview)?;
+        let tauri::ipc::InvokeBody::Raw(body) = request.body() else {
+            return Err(
+                "A take is frozen on its part from its sound sent as bytes (oi.take-render/v1)"
+                    .into(),
+            );
+        };
+        host(&app).freeze(body)
+    }
+    #[cfg(not(feature = "native_shell"))]
+    {
+        let _ = (app, webview, request);
+        Err(EVERYDAY.into())
+    }
+}
+
+/// Unfreeze (O-I #849 round 22, `LiveEngineHost::unfreeze`): the takes frozen on the set's track `track` let go, the part's
+/// chain heard again from the engine's next block; answered with the takes frozen on the set's parts.
+#[tauri::command]
+pub fn live_engine_unfreeze(
+    app: tauri::AppHandle,
+    webview: tauri::WebviewWindow,
+    track: usize,
+) -> Result<serde_json::Value, String> {
+    #[cfg(feature = "native_shell")]
+    {
+        admit_candidate_webview(&webview)?;
+        host(&app).unfreeze(track)
+    }
+    #[cfg(not(feature = "native_shell"))]
+    {
+        let _ = (app, webview, track);
         Err(EVERYDAY.into())
     }
 }

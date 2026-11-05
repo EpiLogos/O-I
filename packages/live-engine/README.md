@@ -243,6 +243,16 @@ Marked in code where they are made; listed here so they are findable:
   and not the content's (session-model.md, "Export-render provenance";
   reconstruction-backlog.md, "Render-cycle loop-length fix"), so nothing
   says how far Live would ring a take out.
+- **Consolidate and Crop write two things no corpus set attests**
+  (live-set `acts.rs`; DLW build ruling 2026-11-05: they stay as they are,
+  warned here, until a corpus set attests them). The sample they keep is
+  named in its `FileRef` by `RelativePathType` 1, the type the corpus keeps
+  for a path from the document's folder; the type Live gives a sample in a
+  saved project's own folder is not attested. Crop keeps its sample in
+  `Samples/Processed/Crop`, named by analogy with the template's
+  `Samples/Processed/Consolidate` and `…/Reverse`: no set here holds a
+  crop. A Live that reads either otherwise may look for the sample
+  elsewhere.
 
 ## Realtime output (feature `realtime`)
 

@@ -5,13 +5,54 @@ import type {UseModeTransport} from '../modeTransports'
 import {PITCH_CLASS_NAMES} from '../../live/modes'
 import {setLiveModeHold, useLiveModeInForce} from '../../native/liveModeCatalogue'
 import {MidiMapHost, MidiMapToggles} from '../../live/midiMap/midiMapControls'
-import {clipAddressOf, SET_QUANTIZE, useLiveClipPlay} from '../../live/clipPlayer'
+import {useState} from 'react'
+import {clipAddressOf, SET_QUANTIZE, SET_QUANTIZE_WORDS, useLiveClipPlay} from '../../live/clipPlayer'
+import {writeLiveSetAct} from '../../live/liveWrites'
+import {refusalWords} from '../../../../../../desktop/cradle/src/shared/Refusal.tsx'
 import {DEFAULT_SIGNATURE} from '../document'
 import {useLiveEngineTransport} from '../../live/liveEngine'
 import {useLiveArm, useLiveRecord} from '../../live/liveTake'
 import {useLiveTorusReading} from '../../live/torusInstrument'
 import {setSelectionOf} from '../liveSelection'
 import {useOptionalContinuity} from '../../continuity/workspace'
+
+const quantizeTitle = (quantize: string | null) => quantize
+  ? `Quantize — the set's launch quantize (Live's GlobalQuantisation): every clip set to Global lands on ${quantize === 'none' ? 'no grid' : `its ${quantize}`}. Choose another to write it in the set.`
+  : 'Quantize — the set\'s launch quantize: the set keeps none Live names, so a clip set to Global lands on the bar, Live\'s own, and there is none here to write.'
+
+/** What the transport says when the set's owner refuses its Quantize: the place's words, the owner's plain words after them
+ * (shared/Refusal.tsx refusalWords; the line is one line in a live region, so it holds no disclosure). */
+export const QUANTIZE_NOT_WRITTEN = 'The set\'s Quantize was not written.'
+
+/** The set's Quantize written as `word` through its owner's act (live_set_act `global_quantize`): written, or the owner's answer as it
+ * came, for the line to say. */
+export async function writeSetQuantize(path: string, word: string, write: typeof writeLiveSetAct = writeLiveSetAct): Promise<{readonly written: true} | {readonly cause: unknown}> {
+  try { await write(path, {kind: 'global_quantize', quantize: word}); return {written: true} }
+  catch (cause) { return {cause} }
+}
+
+/** The transport's Quantize (O-I #849 round 22; DLW build ruling 2026-11-05: "Quantize is written, not only shown: the transport sets the
+ * set's global quantization through live-set's own act"): the set's GlobalQuantisation, chosen among Live's words for it and written by the
+ * set's owner (live_set_act `global_quantize`, live-set acts.rs), the set then read again shows what it keeps. While the write is on its
+ * way the choice stands as asked; a refusal stands beside it in its words, the set's own value shown. A set that keeps none to write
+ * shows Live's bar, disabled. */
+export function LiveQuantize({path, quantize}: {path: string; quantize: string | null}) {
+  const [writing, setWriting] = useState<{word: string} | {cause: unknown} | null>(null)
+  const asked = writing && 'word' in writing ? writing.word : null
+  const write = (word: string) => {
+    setWriting({word})
+    void writeSetQuantize(path, word).then(answer => setWriting('cause' in answer ? {cause: answer.cause} : null))
+  }
+  return <>
+    <select aria-label="Quantize" title={quantizeTitle(quantize)} disabled={!quantize || asked !== null} value={asked ?? quantize ?? SET_QUANTIZE}
+      onChange={event => write(event.target.value)}>
+      {SET_QUANTIZE_WORDS.map(word => <option key={word} value={word}>{word}</option>)}
+    </select>
+    {writing && 'cause' in writing
+      ? <output className="transport-mode-line" role="status" aria-label="Quantize refused" title={refusalWords(QUANTIZE_NOT_WRITTEN, writing.cause)}>{refusalWords(QUANTIZE_NOT_WRITTEN, writing.cause)}</output>
+      : null}
+  </>
+}
 
 export const useLiveTransport: UseModeTransport = ({tempoBpm, setPath = null, quantize = null, signature = null}) => {
   const {reading, hold, refresh, groups, mode, line} = useLiveModeInForce()
@@ -38,11 +79,10 @@ export const useLiveTransport: UseModeTransport = ({tempoBpm, setPath = null, qu
     arm,
     tempo: {readout: {value: tempoBpm?.toFixed(2) ?? '—', title: 'Tempo — the set\'s tempo · document read-only until the editing owner lands'}},
     // The transport's Quantize and the signature are the open set's, as its owner reads them (O-I #849 round 21: model.rs global_quantize,
-    // signature_of); a set that keeps none Live names stands at Live's own, as its launches and its ruler do. Read here; Live writes them.
+    // signature_of); a set that keeps none Live names stands at Live's own, as its launches and its ruler do. The Quantize is written here
+    // (round 22, LiveQuantize); the signature is read, and Live writes it.
     ...(setPath ? {
-      quantize: {readout: {value: quantize ?? SET_QUANTIZE, title: quantize
-        ? `Quantize — the set's launch quantize (Live's GlobalQuantisation): every clip set to Global lands on ${quantize === 'none' ? 'no grid' : `its ${quantize}`}. Read from the set; Live writes it.`
-        : `Quantize — the set's launch quantize: the set keeps none Live names, so a clip set to Global lands on the bar, Live's own. Live writes it.`}},
+      quantize: {control: <LiveQuantize path={setPath} quantize={quantize} />, title: quantizeTitle(quantize)},
       signature: {readout: {value: `${(signature ?? DEFAULT_SIGNATURE).numerator} / ${(signature ?? DEFAULT_SIGNATURE).denominator}`, title: signature
         ? `Signature — the set's time signature: a bar is ${signature.numerator} beats of a 1/${signature.denominator} note, on the ruler and the launch grid. Read from the set; Live writes it.`
         : 'Signature — the set keeps no time signature its owner reads, so a bar is four beats (Live\'s 4/4), on the ruler and the launch grid.'}},

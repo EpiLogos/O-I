@@ -317,10 +317,11 @@ export const readLiveMidiOut = (invoke: MidiOutInvoke = tauriOut) => outRequest(
 /** Connect the output named `port`, or let the connected one go (null). */
 export const chooseLiveMidiOut = (port: string | null, invoke: MidiOutInvoke = tauriOut) => outRequest({kind: 'choose', port}, invoke)
 /** Send what the part plays to the connected output; nothing leaves while no output is connected. An output still connected after a
- * refusal still takes the notes that follow. */
-export function sendLiveMidiOut(messages: readonly MidiOutMessage[], invoke: MidiOutInvoke = tauriOut): void {
+ * refusal still takes the notes that follow. `afterMs` (O-I #853 round 22): a clip's notes are sent one owner lookahead before they
+ * sound, so the host holds them that long before they leave (midi.rs `after_ms`); none, or 0, leaves at once. */
+export function sendLiveMidiOut(messages: readonly MidiOutMessage[], invoke: MidiOutInvoke = tauriOut, afterMs?: number): void {
   if (messages.length === 0 || outState.kind === 'reading' || outState.port === null) return
-  void outRequest({kind: 'send', messages}, invoke)
+  void outRequest({kind: 'send', messages, ...(afterMs !== undefined && afterMs > 0 ? {after_ms: afterMs} : {})}, invoke)
 }
 /** The one MIDI out line: the output connected, none chosen, or the named refusal. */
 export function liveMidiOutLine(state: LiveMidiOutState): string {

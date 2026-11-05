@@ -703,7 +703,8 @@ test('the candidate records on the part\'s one playing path, prepares a take bef
   const clip = source('live/clipPlayer.ts')
   const owners = clip.slice(clip.indexOf('function candidateOwners('), clip.indexOf('export const liveClipPlayer'))
   // REPLACES (O-I #849 round 21): the candidate's prepare took no turn; a row's takes ask the press's one Torus now
-  assert.match(owners, /prepare: \(clip, bpm, turn\) => prepareTake\(clip, commitLiveInstrumentEdit, \{stage: commitLiveStage, bpm\}, turn\),/)
+  // REPLACES (O-I #849 round 22): the prepare without its place; where the engine plays the set, a held take is frozen on the clip's part
+  assert.match(owners, /prepare: \(clip, bpm, turn, address\) => prepareTake\(clip, commitLiveInstrumentEdit,\n\s+\{stage: commitLiveStage, bpm, \.\.\.\(address && engineFreezes\(address\.path\) \? \{frozen: partFreeze\(address\)\} : \{\}\)\}, turn\),/)
   assert.match(owners, /edit: \(edit, at\) => commitLiveStage\(\{command: 'instrument', edit, \.\.\.\(at === undefined \? \{\} : \{at_samples_elapsed: at\}\)\}\),/,
     'a setting of a take\'s course lands at its sample')
   const record = source('live/liveTake.ts')
@@ -969,8 +970,10 @@ test('a take with its course plays again as it was played: the Torus set as it s
   assert.equal((await take.prepareTake(clip, commit)).exact, undefined, 'with no stage owner it plays as its notes are written')
 })
 
-// O-I #849 round 21, item 2: a row of several takes plays each on its own track's player, and one Torus rings at a time.
-test('a take of a row whose Torus another take of the press holds sets nothing of it: it plays its notes as they were played, on the Torus as that one set it', async () => {
+// O-I #849 round 21, item 2: a row of several takes plays each on its own track's player, and one Torus rings at a time. Round 22 (DLW build
+// ruling 2026-11-05): the turn is the first take's until it ends, held in the same words for any launch; a held take whose course can play
+// is frozen on its part where the engine plays its set, and says so where it is not.
+test('a take whose Torus another take holds sets nothing of it: it plays its notes as they were played, on the Torus as that one set it', async () => {
   const torus = take.torusKept(torusState({level: 0.5}))
   const carrier = take.torusKept(torusState({level: 0.5, settings: {carrier: 0.5}}))
   const keeps = {schema: 'oi.live-take/v1', torus, moves: [{beat: 1.0625, torus: carrier}], bpm: 120, resumes: take.TAKE_REPLAYS,
@@ -982,8 +985,10 @@ test('a take of a row whose Torus another take of the press holds sets nothing o
   assert.equal(turn.take('Take 1'), null)
   const held = await take.prepareTake(clip, commit, {stage: s.stage, bpm: 120}, turn)
   assert.deepEqual([edits, s.sent], [[], []], 'nothing of the Torus is set, and it is not rung again')
-  assert.equal(held.resumes, take.takeTorusHeld('Take 1', 'Take 2'))
-  assert.match(held.resumes, /^Take 1 sets the Torus again in this row, and one Torus rings at a time: Take 2 plays each note at the touch-point it struck/)
+  // REPLACES "Take 1 sets the Torus again in this row": the turn is Take 1's until it ends, whichever launch played Take 2 (round 22).
+  assert.equal(held.resumes, `${take.takeTorusHeld('Take 1', 'Take 2')} ${take.TAKE_FREEZES_IN_ENGINE}`, 'no engine plays its set: it is not frozen, and says so')
+  assert.match(held.resumes, /^Take 1 holds the Torus until it ends, and one Torus rings at a time: Take 2 plays each note at the touch-point it struck/)
+  assert.equal(held.frozen, undefined)
   assert.deepEqual(held.voice(60, 1), {touch: 2, strength: 0.7}, 'each note as it was played')
   assert.equal(held.exact, undefined, 'its course is not played on another take\'s Torus')
   assert.equal(held.moves, undefined, 'and it makes none of its moves on it')
@@ -997,8 +1002,11 @@ test('a take of a row whose Torus another take of the press holds sets nothing o
   await take.prepareTake({...clip, take: {id: 9, keeps: {schema: 'oi.live-take/v1', notes: keeps.notes}}}, commit, {stage: s.stage, bpm: 120}, bare)
   assert.equal(bare.take('Take 3'), null, 'a take whose Torus was not kept leaves the Torus to the next')
   const wired = source('live/clipPlayer.ts')
-  assert.match(wired, /prepare: \(clip, bpm, turn\) => prepareTake\(clip, commitLiveInstrumentEdit, \{stage: commitLiveStage, bpm\}, turn\)/)
+  // REPLACES the prepare without its place (round 22): where the engine plays the set, a held take is frozen on the clip's part.
+  assert.match(wired, /prepare: \(clip, bpm, turn, address\) => prepareTake\(clip, commitLiveInstrumentEdit,\n\s+\{stage: commitLiveStage, bpm, \.\.\.\(address && engineFreezes\(address\.path\) \? \{frozen: partFreeze\(address\)\} : \{\}\)\}, turn\)/)
+  assert.match(wired, /return detectTransport\(\)\.kind === 'tauri' && reading\?\.path === path && reading\.playing/)
 })
+
 
 test('under its course a take\'s owner lanes are its course\'s acts, and only a session-held lane is written again at its beats (O-I 853)', async () => {
   const torus = take.torusKept(torusState({level: 0.5}))
@@ -1030,8 +1038,8 @@ test('the clip player plays a take\'s course at its samples from where the Torus
     // The owner's render stands at 902400; one lookahead is 2400 samples: the clip's anchor is 904800.
     clock: async () => ({samples_elapsed: '902400', sample_rate: 48000, lookahead_seconds: 0.05, block_frames: 512}),
     edit: async (edit, at) => { edits.push([edit, at, clock.now()]); return {ok: true} },
-    strike: async (notes, amplitude, at) => { strikes.push([notes, amplitude, at, clock.now()]); return {ok: true} },
-    release: holds => releases.push([holds, clock.now()]),
+    strike: async (notes, amplitude, at, sounds) => { strikes.push([notes, amplitude, at, clock.now(), sounds]); return {ok: true} },
+    release: (holds, sounds) => releases.push([holds, clock.now(), sounds]),
     watch: () => () => {}, now: clock.now, later: clock.later, cancel: clock.cancel, random: () => 0,
   }
   const p = player.createClipPlayer(owners)
@@ -1048,6 +1056,8 @@ test('the clip player plays a take\'s course at its samples from where the Torus
   assert.deepEqual(edits.map(([edit, at]) => [edit, at]), [[{kind: 'torus', edit: {carrier: 0.5}}, '930000']], 'a setting lands at its sample')
   await clock.run(100.88)
   assert.deepEqual(releases.map(([holds]) => holds), [[strikes[0][0][0].hold]], 'a release in its sample\'s turn')
+  // O-I #853 round 22: each is sent one owner lookahead (50 ms) before it sounds, and names the time to its sample for MIDI out.
+  assert.ok(Math.abs(strikes[0][4] - 50) < 1e-6 && Math.abs(releases[0][2] - 50) < 1e-6, `${strikes[0][4]} ${releases[0][2]}`)
   await clock.run(101.46)
   assert.deepEqual(edits.at(-1).slice(0, 2), [{kind: 'level', value: 0.25}, undefined], 'the frame\'s own level moves at its beat, within a block')
   assert.notEqual(p.state().playing, null)
@@ -1062,6 +1072,7 @@ test('the clip player plays a take\'s course at its samples from where the Torus
   assert.equal(strikes.length, 1)
   p.stop()
   assert.deepEqual(releases.at(-1)[0].sort(), strikes[0][0].map(n => n.hold).sort(), 'Stop lets every key of the take go')
+  assert.equal(releases.at(-1)[2], undefined, 'at once')
 })
 
 test('a take\'s keys strike those very keys at their sample on the one playing path, with no surface needed; Panic lets them go', async () => {
@@ -1111,6 +1122,68 @@ test('Export Audio renders a take\'s course in parts, each from the checkpoint t
   assert.match((await take.renderTake(course, renderOwner({skew: 1n}).stage, 1000)).refused, /did not end where the next part begins/)
   assert.match((await take.renderTake(course, renderOwner({refuse: 'The scene holds no Torus'}).stage, 1000)).refused, /The scene holds no Torus/)
   assert.equal((await take.renderTake(COURSE, renderOwner().stage)).pcm.length, 96000, 'a take within 2^24 frames is one part')
+})
+
+// O-I #849 round 22 (DLW build ruling 2026-11-05: "Build it: a true Torus per row player, through the engine, as Live's Freeze Track does.
+// A rendered take is a frozen take"): a held take's course rendered offline by the Torus's owner, at the level it played at, its effects as
+// they moved, sent to its part in the engine as its clip lands; its lanes as its course set the Torus, baked in.
+test('a held take whose course can play is frozen on its part: rendered offline at its level, its effects and settings in its sound, sent as its clip lands', async () => {
+  const torus = take.torusKept(torusState({level: 0.5, effects: {chain: ['filter'], filter: {cutoff: 1000}}}))
+  const keeps = {schema: 'oi.live-take/v1', torus, moves: [], bpm: 120, resumes: take.TAKE_REPLAYS,
+    notes: [{p: 60, at: 1, len: 0.916667, vel: 127, key: C4, touch: 2, strength: 0.7, source: 'pointer'}], course: COURSE, not_kept: [...take.TAKE_COURSE_NOT_KEPT]}
+  const clip = {...REAL, name: 'Take 2', loop: false, start: 0, end: 4, take: {id: 8, keeps}, notes: [{id: 1, p: 60, at: 1, len: 0.916667, vel: 127, chance: 1, on: true}]}
+  const edits = [], commit = async edit => { edits.push(edit); return {ok: true} }
+  const sent = []
+  const part = {freeze: async sound => { sent.push(sound); return null }, unfreeze: async () => { sent.push('unfreeze'); return null }}
+  const heldBy = () => { const turn = player.torusTurn(); turn.take('Take 1'); return turn }
+  const r = renderOwner()
+  const held = await take.prepareTake(clip, commit, {stage: r.stage, bpm: 120, frozen: part}, heldBy())
+  assert.deepEqual(edits, [], 'nothing of the live Torus is set')
+  assert.deepEqual(r.sent.map(c => [c.command, c.checkpoint.taken_at_samples, c.frames, c.acts.length]), [['render-take', T0, 96000, 4]],
+    'its course is rendered offline, every act at its sample: the live Torus neither moves nor sounds')
+  assert.equal(held.resumes, take.takeTorusFrozen('Take 1', 'Take 2'))
+  assert.match(held.resumes, /^Take 1 holds the Torus until it ends, and one Torus rings at a time: Take 2 is frozen on its part, its own Torus rendered with its moves and effects/)
+  assert.deepEqual([held.exact, held.moves], [undefined, undefined], 'it plays no course and makes no move on the live Torus')
+  assert.deepEqual(held.voice(60, 1), {touch: 2, strength: 0.7}, 'unfrozen, each note as it was played')
+  const frozen = held.frozen
+  assert.equal(frozen.words, take.takeFrozen('Take 2'))
+  assert.equal(frozen.seconds, 2, 'its sound is its course: 96000 frames at 48 kHz')
+  assert.deepEqual(frozen.settings, [{beat: 1.25, edit: {kind: 'torus', edit: {carrier: 0.5}}}], 'its Torus\'s settings, at the beats its course made them')
+  assert.equal(frozen.unfrozen, take.takeUnfrozen('Take 1', 'Take 2'))
+  assert.equal(sent.length, 0, 'nothing is sent before its clip lands')
+  assert.equal(await frozen.land(900123n), null, 'the engine took it')
+  const [sound] = sent
+  assert.deepEqual([sound.name, sound.rate, sound.landed, sound.pcm.length], ['Take 2', 48000, 900123n, 96000])
+  assert.deepEqual([sound.pcm[0], sound.pcm[95999]], [0.0625, 0.0625], 'the render (1/8 throughout) at the level the take played at (0.5)')
+  assert.deepEqual(sound.effects, take.takeEffects(keeps, COURSE))
+  assert.deepEqual(sound.effects[0], {frame: 0, effects: {chain: ['filter'], filter: {cutoff: 1000}}}, 'the Torus\'s effects as it began')
+  assert.equal(await frozen.unfreeze(), null)
+  assert.equal(sent[1], 'unfreeze', 'Unfreeze reaches the part')
+  // The engine refuses it: the held words, and why, in its words; thrown, the same.
+  const refusing = {freeze: async () => 'The engine follows no Torus it has taken yet', unfreeze: async () => { throw new Error('No set is open in the engine') }}
+  const refused = await take.prepareTake(clip, commit, {stage: renderOwner().stage, bpm: 120, frozen: refusing}, heldBy())
+  assert.equal(await refused.frozen.land(1n), `${take.takeTorusHeld('Take 1', 'Take 2')} It was not frozen on its part: The engine follows no Torus it has taken yet.`)
+  assert.equal(await refused.frozen.unfreeze(), 'No set is open in the engine')
+  const thrown = await take.prepareTake(clip, commit, {stage: renderOwner().stage, bpm: 120, frozen: {freeze: async () => { throw new Error('The take lands before the Torus') }, unfreeze: part.unfreeze}}, heldBy())
+  assert.match(await thrown.frozen.land(1n), /It was not frozen on its part: The take lands before the Torus\.$/)
+  // Its course not rendered: held, and why; nothing to freeze.
+  const unrendered = await take.prepareTake(clip, commit, {stage: renderOwner({refuse: 'The scene holds no Torus'}).stage, bpm: 120, frozen: part}, heldBy())
+  assert.equal(unrendered.frozen, undefined)
+  assert.equal(unrendered.resumes, `${take.takeTorusHeld('Take 1', 'Take 2')} It was not frozen on its part: The Torus's owner did not render the take: The scene holds no Torus.`)
+  // A course that cannot play (its clip loops) is held, as before, and not rendered.
+  const looping = renderOwner()
+  const loops = await take.prepareTake({...clip, loop: true, position: 0, length: 4}, commit, {stage: looping.stage, bpm: 120, frozen: part}, heldBy())
+  assert.deepEqual([loops.resumes, loops.frozen, looping.sent.length], [take.takeTorusHeld('Take 1', 'Take 2'), undefined, 0])
+  // The sound sent: the head names the sample it lands at, as a decimal, and its name (live_engine_host.rs take_render_of).
+  const body = take.takeRenderBody({path: '/sets/a.als', track: 2, rate: 48000, effects: [], landed: '900123', name: 'Take 2'}, new Float32Array([0.5]))
+  const length = new DataView(body.buffer).getUint32(0, true)
+  assert.deepEqual(JSON.parse(new TextDecoder().decode(body.slice(4, 4 + length))),
+    {schema: take.TAKE_RENDER_SCHEMA, path: '/sets/a.als', track: 2, rate: 48000, effects: [], landed: '900123', name: 'Take 2'})
+  const plainBody = take.takeRenderBody({path: '/sets/a.als', track: 2, rate: 48000, effects: []}, new Float32Array(0))
+  assert.equal('landed' in JSON.parse(new TextDecoder().decode(plainBody.slice(4))), false, 'Export Audio\'s body names no landing')
+  const wired = source('live/liveTake.ts')
+  assert.match(wired, /freeze: take => invoke\('live_engine_freeze', takeRenderBody\(\{path: address\.path, track: address\.track, rate: take\.rate, effects: take\.effects,\n\s+landed: String\(take\.landed\), name: take\.name\}, take\.pcm\)\)/)
+  assert.match(wired, /unfreeze: \(\) => invoke\('live_engine_unfreeze', \{track: address\.track\}\)/)
 })
 
 test('the take\'s file is 32-bit float WAV at the owner\'s rate, at the level it played at with each move of the level at its beat', async () => {

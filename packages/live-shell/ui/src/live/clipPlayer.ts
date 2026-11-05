@@ -70,7 +70,11 @@
 //
 // Ported from: the store with its owners handed in (inhabitants/ql/devices/qlSitting.ts: now, later, cancel, its bell rung through
 // commitLiveStage); the chord as one act (live/janko/jankoInput.ts flush); the clip's markers (packages/live-set/src/edit.rs markers).
-// MIDI out: a clip's notes do not leave as MIDI yet (jankoInput.ts: they are sent one owner lookahead before they sound).
+// MIDI out (O-I #853 round 22; DLW build ruling 2026-11-05: "MIDI out for clip notes (#853), through the host"): each note-on and each
+// end leaves as MIDI when it sounds. It is sent one owner lookahead before, so the player names the time to its sample (the page's clock
+// at the owner's clock read, plus the owner's lookahead, plus its time from the clip's start) and the host holds it until then
+// (jankoInput.ts clipStrike and clipRelease `sounds`, midi.rs `after_ms`); Stop lets go at once, and the host holds each note-off behind
+// its note-on. A take frozen on its part strikes nothing, so nothing of it leaves as MIDI.
 import {useEffect, useSyncExternalStore} from 'react'
 import type {InstrumentEdit, StageAudioClock, StageCommand, StageKey, StageResult, StageTakeAct} from '@epilogos/expressions-boundary'
 import {detectTransport, kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
@@ -82,7 +86,8 @@ import {setSelectionOf} from '../shell/liveSelection'
 import type {ClipHold} from './janko/jankoInput'
 import {livePlayingPath} from './keyboardLayout'
 import {clipAtOf} from './liveWrites'
-import {prepareTake} from './liveTake'
+import {liveEngineState} from './liveEngine'
+import {partFreeze, prepareTake} from './liveTake'
 import {commitLiveInstrumentEdit, commitLiveStage, liveTorusState, subscribeAcceptedLiveWrites, useLiveTorusReading, type LiveTorusState} from './torusInstrument'
 import type {MapValue} from './midiMap/midiMapModel'
 import {mapTargetIdsOfEdit, readMapTargets, writeMapTarget} from './midiMap/midiMapTargets'
@@ -168,8 +173,8 @@ export interface ClipPlayerOwners {
   /** Before a clip a take gave plays: the Torus set again as it stood when the take began (live/liveTake.ts prepareTake, O-I #855),
    * answering where the take resumes from and how each of its notes was played; null for a clip no take gave. `turn`, given, is the
    * one Torus among the takes of one press (a row's launch): a take asks it before it sets the Torus again. Absent, nothing is
-   * prepared. */
-  readonly prepare?: (clip: LiveClipReading, bpm: number, turn?: ClipTorusTurn) => Promise<ClipPrepared | null>
+   * prepared. `address` is where the clip stands, the part a held take is frozen on (O-I #849 round 22). */
+  readonly prepare?: (clip: LiveClipReading, bpm: number, turn?: ClipTorusTurn, address?: ClipAddress) => Promise<ClipPrepared | null>
   /** The torus owner's audio clock, read once per press (readAudioClock); a refusal throws in the owner's words. */
   readonly clock: () => Promise<StageAudioClock>
   /** One instrument edit of a take's move, at the owner's sample `at` where a take's course names one (the `instrument` stage command),
@@ -179,16 +184,18 @@ export interface ClipPlayerOwners {
    * settling with its owner's answer. Absent, no lane is written. */
   readonly set?: (parameter: string, value: MapValue) => Promise<StageResult>
   /** One act of the clip on the part's one playing path (keyboardLayout.ts livePlayingPath, jankoInput.ts clipStrike): its notes' keys
-   * struck at the owner's sample `at`, each held until its hold is let go; settling with the owner's answer. */
-  readonly strike: (notes: readonly ClipHold[], amplitude: number, at: string) => Promise<StageResult>
+   * struck at the owner's sample `at`, each held until its hold is let go; settling with the owner's answer. `sounds`: ms from now until
+   * that sample sounds, when its notes leave as MIDI. */
+  readonly strike: (notes: readonly ClipHold[], amplitude: number, at: string, sounds?: number) => Promise<StageResult>
   /** A touch of a take's course: its points of the surface struck at one strength at the owner's sample `at` (the frame's `strike-at`
    * stage command, as controller.ts playAt strikes a touch); settling with the owner's answer. */
   readonly touch: (points: readonly {theta: number; phi: number}[], amplitude: number, at: string) => Promise<StageResult>
   /** A singlet of a take's course: its codon struck at its strength at the owner's sample `at` (the frame's `singlet` stage command,
    * O-I #771); settling with the owner's answer. */
   readonly singlet: (codon: number, amplitude: number, at: string) => Promise<StageResult>
-  /** The clip lets these notes go: the end of each note's length, or Stop. */
-  readonly release: (holds: readonly string[]) => void
+  /** The clip lets these notes go: the end of each note's length (`sounds`: ms from now until it sounds, when its note-off leaves as
+   * MIDI), or Stop (at once). */
+  readonly release: (holds: readonly string[], sounds?: number) => void
   /** Tell `changed` when the set the clip stands in is read again (a write, Live saving it). Returns the unsubscribe. */
   readonly watch: (address: ClipAddress, changed: () => void) => () => void
   /** The page's clock, in seconds: monotonic. It only paces when a note-on is sent; the note's time is its sample. */
@@ -213,6 +220,23 @@ export interface ClipPrepared {
   readonly moves?: readonly ClipMove[]
   /** A take that plays as it was played: its course, from the sample the Torus rang again from (`landed`). */
   readonly exact?: TakeExact
+  /** A take frozen on its part, its own Torus rendered into its sound (O-I #849 round 22). */
+  readonly frozen?: ClipFrozen
+}
+/** A take frozen on its part (O-I #849 round 22; DLW build ruling 2026-11-05: "A rendered take is a frozen take"): its course rendered with
+ * its Torus's moves and effects, heard through its part from where its clip lands until the take ends, in place of the part's live Torus,
+ * as Live's Freeze Track plays a frozen track. While frozen it strikes no note and makes no move, and its lanes (its `moves` and `settings`,
+ * as they were baked in) carry no Overridden mark. `words` say it is frozen; `seconds`, how long its sound is; `land` freezes it at the
+ * owner's sample its clip lands at, settling null once the engine took it, else in the words the take then plays in on the live Torus;
+ * `unfreeze` returns the part to its live Torus (null, or why not, in words), and the take then says `unfrozen`. */
+export interface ClipFrozen {
+  readonly words: string
+  readonly seconds: number
+  readonly moves: readonly ClipMove[]
+  readonly settings: readonly {readonly beat: number; readonly edit: InstrumentEdit}[]
+  readonly land: (landed: bigint) => Promise<string | null>
+  readonly unfreeze: () => Promise<string | null>
+  readonly unfrozen: string
 }
 /** A take's course to play at its samples (live/liveTake.ts TakeCourse): the owner's sample the Torus rang again from its checkpoint, the
  * take's first sample, its length and rate, its acts at their samples in order, and the note a key of it was played as. */
@@ -249,11 +273,15 @@ export interface ClipPlayState {
 /** The parameters a take's moves and lanes write while it plays (Automated), and those a hand move took off them (Overridden), by map
  * parameter id (midiMap/midiMapTargets.ts). Overridden stands until Re-enable, across a Stop. While a take plays, its clip (`take`) and
  * its lanes, each its own (O-I #743 round 20); and, where it landed on a launch grid, where the clip's own beat 0 stands on the transport
- * (`at`: the grid's beats from where it began), a Session clip's place on the ruler (O-I #849 round 21). */
+ * (`at`: the grid's beats from where it began), a Session clip's place on the ruler (O-I #849 round 21). A frozen take's (O-I #849 round
+ * 22) says so in words (`frozen`): its lanes are baked into its sound, and nothing of them stands Automated. A looping clip's take names its
+ * loop in the clip's own beats (`loop`: its first pass from `start`, then `from` to `to` again): its lanes are drawn again for each pass,
+ * as Live draws a looped clip's envelope (DLW build ruling 2026-11-05). */
 export interface ClipLaneStanding {
   readonly automated: readonly string[]
   readonly overridden: readonly string[]
-  readonly take?: {readonly address: ClipAddress; readonly name: string; readonly at?: number}
+  readonly take?: {readonly address: ClipAddress; readonly name: string; readonly at?: number; readonly frozen?: string
+    readonly loop?: {readonly start: number; readonly from: number; readonly to: number}}
   readonly lanes?: readonly ClipLane[]
 }
 /** One lane of the take that plays: the map parameter it writes, as the surface names it, and its points at their beats in the clip, each
@@ -322,6 +350,8 @@ export interface ClipPlayer {
   stop(): void
   /** Re-enable (O-I #853): give `parameter`, or every overridden one, back to the take's lanes. */
   reenable(parameter?: string): Promise<ClipActAnswer>
+  /** Unfreeze (O-I #849 round 22): the take frozen on the part is let go, and the part plays its notes on its live Torus from here. */
+  unfreeze(): Promise<ClipActAnswer>
 }
 
 const IDLE: ClipPlayState = {playing: null, starting: false, refused: null, missed: 0, fault: null, resumes: null, lanes: NO_LANES}
@@ -343,13 +373,16 @@ export type ClipLanding = (clip: LiveClipReading, timing: Extract<ClipTiming, {a
 /** The launch grid a set's clips land on (clipLaunchActs): where it began on the owner's clock, null while none stands; `began` is told
  * where a clip began, which begins the grid where none stands (a take's course, which no quantize moves and no landing asked for). */
 export interface ClipGrid {readonly origin: () => bigint | null; readonly began: (at: bigint) => void}
-/** Whose the one Torus is among the takes one press plays (a row's launch, O-I #849 round 21): one Torus rings at a time, so the first take
- * to ask sets it again (`take` answers null), and any other is answered the name of the take whose it is. */
-export interface ClipTorusTurn {readonly take: (name: string) => string | null}
-/** A press's turn of the Torus, held by none yet. */
+/** Whose the one Torus is among the takes that play (O-I #849 round 21): one Torus rings at a time, so the first take to ask sets it again
+ * (`take` answers null), and any other is answered the name of the take whose it is. The turn is that take's until it ends (DLW build
+ * ruling 2026-11-05: "The turn belongs to the first take until it ends, and any launch meanwhile is held in the same words, a single
+ * launch included"): its player gives it back (`release`) as the take ends, stops or is launched over. */
+export interface ClipTorusTurn {readonly take: (name: string) => string | null; readonly release?: (name: string) => void}
+/** A turn of the Torus, held by none yet. */
 export function torusTurn(): ClipTorusTurn {
   let holder: string | null = null
-  return {take: name => { if (holder !== null) return holder; holder = name; return null }}
+  return {take: name => { if (holder !== null) return holder; holder = name; return null },
+    release: name => { if (holder === name) holder = null }}
 }
 
 /** A word of Live's launch quantisation (edit.rs QUANTIZE, without Global) as a step of the launch grid, in beats: bars of `bar` beats (the
@@ -408,6 +441,8 @@ interface Run {
   unwatch: () => void
   readonly fire: () => void
   readonly turn: () => void
+  /** The take frozen on its part while it plays frozen (its sound from the clip's start for its `seconds`); null once it is let go. */
+  frozen: ClipFrozen | null
 }
 
 /** A take's course playing: its acts with the time each is due (seconds from the clip's anchor) and the sample it lands at, the frame's
@@ -443,6 +478,9 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
   let press = 0
   const listeners = new Set<() => void>()
   const publish = (next: Partial<ClipPlayState>) => { state = {...state, ...next}; for (const listener of [...listeners]) listener() }
+  /** The turn of the Torus this player's take holds, by the take's name, given back as the take ends (ClipTorusTurn `release`). */
+  let turned: {readonly turn: ClipTorusTurn; readonly name: string} | null = null
+  const letTurnGo = () => { const was = turned; turned = null; was?.turn.release?.(was.name) }
 
   /** The take's lanes (O-I #853): what the hand overrode, which the take no longer writes; the last value each lane reached, for Re-enable;
    * and the hand's watch while a take plays. */
@@ -452,7 +490,7 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
   /** The take that plays and its lanes, while one does. */
   let playingLanes: {readonly take: NonNullable<ClipLaneStanding['take']>; readonly lanes: readonly ClipLane[]} | null = null
   const standing = (automated: readonly string[]) => publish({lanes: {automated: Object.freeze([...automated]), overridden: Object.freeze([...overridden]),
-    ...(playingLanes && automated.length ? playingLanes : {})}})
+    ...(playingLanes && (automated.length || playingLanes.take.frozen !== undefined) ? playingLanes : {})}})
   /** The lanes of a take: each parameter its moves and settings write, in `automated`'s order, with its points at their beats in order. */
   const lanesOf = (automated: readonly string[], moves: readonly ClipMove[], settings: readonly {readonly beat: number; readonly edit: InstrumentEdit}[]): ClipLane[] => {
     const raw = new Map<string, {beat: number; value: unknown}[]>()
@@ -485,11 +523,21 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
       standing(state.lanes.automated)
     }) ?? null
   }
+  /** A frozen take begins (O-I #849 round 22): its lanes stand under its clip as they were baked into its sound, saying so; nothing of them
+   * is Automated, so no hand move overrides them. */
+  const bake = (take: NonNullable<ClipLaneStanding['take']>, frozen: ClipFrozen) => {
+    unhand?.(); unhand = null
+    reached.clear()
+    const baked = [...new Set([...frozen.moves.flatMap(moveParameters), ...frozen.settings.flatMap(({edit}) => mapTargetIdsOfEdit(edit))])]
+    const lanes = lanesOf(baked, frozen.moves, frozen.settings)
+    playingLanes = lanes.length ? {take: Object.freeze({...take, frozen: frozen.words}), lanes: Object.freeze(lanes)} : null
+    standing([])
+  }
   /** The take ends: nothing of it is Automated and its lanes are gone; what the hand overrode stays so. */
   const unautomate = () => {
     unhand?.(); unhand = null
     playingLanes = null
-    if (state.lanes.automated.length) standing([])
+    if (state.lanes.automated.length || state.lanes.take) standing([])
   }
   /** An edit of the take as it still writes it, and what its lane reached kept for Re-enable. */
   const lanesEdit = (edit: InstrumentEdit): InstrumentEdit | null => {
@@ -514,8 +562,10 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
     else r.ends.splice(i, 0, {at, holds: [hold]})
   }
 
-  /** One act, struck to land at its own sample (`seconds` from the clip's start); each note that sounds is held until its own end. */
+  /** One act, struck to land at its own sample (`seconds` from the clip's start); each note that sounds is held until its own end. A take
+   * frozen on its part strikes none: its sound is the engine's. */
   const send = (r: Run, strike: ClipStrike, seconds: number) => {
+    if (r.frozen) return
     const sounding: ClipHold[] = []
     // A take's note strikes the touch-point it was played at, at its own strength; the act's strength is the strongest of its notes.
     let amplitude = r.voice ? 0 : strike.amplitude
@@ -529,16 +579,22 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
     }
     if (sounding.length === 0) return
     const at = String(r.timing.anchor + BigInt(Math.round(seconds * r.timing.rate)))
-    owners.strike(sounding, amplitude, at).then(answer, failed)
+    owners.strike(sounding, amplitude, at, soundsIn(r.origin, r.lead, seconds)).then(answer, failed)
   }
+  /** Ms from now until the moment `seconds` from a clip's start sounds: its anchor stands one owner lookahead past the page's clock at
+   * `origin`. */
+  const soundsIn = (origin: number, lead: number, seconds: number) => (origin + lead + seconds - owners.now()) * 1000
 
-  /** The run ends: no timer, no watch, and every note it holds let go at once. */
+  /** The run ends: no timer, no watch, and every note it holds let go at once; a take frozen on its part that has not ended is let go with
+   * it, as Live stops a frozen clip; and the turn of the Torus its take held is given back. */
   const halt = () => {
     haltCourse()
     unautomate()
     const was = run
     run = null
     if (!was) return
+    if (was.frozen && owners.now() - was.origin < was.frozen.seconds) void was.frozen.unfreeze()
+    was.frozen = null
     if (was.timer !== null) owners.cancel(was.timer)
     was.timer = null
     was.unwatch()
@@ -591,7 +647,11 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
       const strike = strikes[r.index]
       const seconds = strike ? timeOf(r, strike.beat) : Infinity
       const ending = r.ends[0]
-      if (ending && ending.at <= seconds && ending.at <= now + DUE_EARLY_SECONDS) { r.ends.shift(); owners.release(ending.holds); continue }
+      if (ending && ending.at <= seconds && ending.at <= now + DUE_EARLY_SECONDS) {
+        r.ends.shift()
+        owners.release(ending.holds, soundsIn(r.origin, r.lead, ending.at))
+        continue
+      }
       if (!strike || seconds > now + DUE_EARLY_SECONDS) break
       r.index++
       if (now - seconds > r.timing.slack) late += strike.notes.length
@@ -633,8 +693,10 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
     }, cause => { if (r === run) publish({fault: `The clip's edit was not read, so it plays as it was: ${said(cause)}`}) })
   }
 
-  /** A take's course ends: no timer, and every key it holds let go at once. */
+  /** A take's course ends: no timer, and every key it holds let go at once. Whatever of the player's ends here (every halt comes this way),
+   * the turn of the Torus its take held is given back. */
   const haltCourse = () => {
+    letTurnGo()
     const was = course
     course = null
     if (!was) return
@@ -667,7 +729,7 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
       const act = next.act
       if (act.action === 'release') {
         const holds = act.keys.flatMap(key => { const id = `${key.row}/${key.column}`, held = c.holds.get(id) ?? []; c.holds.delete(id); return held })
-        if (holds.length) owners.release(holds)
+        if (holds.length) owners.release(holds, soundsIn(c.origin, c.lead, next.seconds))
       } else if (act.action === 'strike') {
         if (behind) { late += act.keys.length; continue }
         const notes: ClipHold[] = act.keys.map(key => {
@@ -675,7 +737,7 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
           c.holds.set(id, [...(c.holds.get(id) ?? []), hold])
           return {hold, note: c.noteOf?.(key) ?? -1, key}
         })
-        owners.strike(notes, act.amplitude, next.at).then(answer, failed)
+        owners.strike(notes, act.amplitude, next.at, soundsIn(c.origin, c.lead, next.seconds)).then(answer, failed)
       } else if (act.action === 'strike-at') {
         if (behind) { late += 1; continue }
         owners.touch(act.points, act.amplitude, next.at).then(answer, failed)
@@ -724,13 +786,25 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
    * by the delay, where a launch quantize put it). */
   const begin = (address: ClipAddress, bpm: number, plan: Extract<ClipPlan, {ok: true}>, timing: Extract<ClipTiming, {anchor: bigint}>,
     take: ClipPrepared | null, lead: number, delay: number, at: number | undefined) => {
-    const moves = [...(take?.moves ?? [])].filter(moving).sort((a, b) => a.beat - b.beat)
+    // A frozen take makes none of its moves: they are in its sound.
+    const frozen = take?.frozen ?? null
+    const moves = frozen ? [] : [...(take?.moves ?? [])].filter(moving).sort((a, b) => a.beat - b.beat)
     const first = moves.findIndex(move => move.beat >= plan.first.from)
     const r: Run = {address, spb: 60 / bpm, origin: owners.now() + delay, timing, voice: take?.voice ?? null, moves, move: first < 0 ? moves.length : first, lead,
       plan, pass: plan.first, passStart: 0, index: 0, ends: [], timer: null,
-      unwatch: () => {}, fire: () => fire(r), turn: () => turn(r)}
+      unwatch: () => {}, fire: () => fire(r), turn: () => turn(r), frozen}
     run = r
-    automate({address, name: plan.name, ...(at === undefined ? {} : {at})}, moves, [])
+    const playing = {address, name: plan.name, ...(at === undefined ? {} : {at}), ...(plan.again ? {loop: {start: plan.first.from, from: plan.again.from, to: plan.again.to}} : {})}
+    if (frozen) {
+      bake(playing, frozen)
+      // Frozen at the sample its clip lands at; refused, it plays its notes on the live Torus from here, and says so.
+      void frozen.land(timing.anchor).then(words => {
+        if (words === null || r !== run || r.frozen !== frozen) return
+        r.frozen = null
+        unautomate()
+        publish({resumes: words})
+      })
+    } else automate(playing, moves, [])
     r.unwatch = owners.watch(address, () => retake(r))
     publish({starting: false, playing: {address, name: plan.name, bpm}})
     arm(r)
@@ -749,10 +823,16 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
         const plan = clipPlan(clip)
         if (!plan.ok) { publish({starting: false, fault: plan.reason}); return }
         // A take's Torus is set again first; the owner's clock is read last, so the clip's anchor stands on the sound the owner has
-        // rendered as the clip begins.
+        // rendered as the clip begins. The turn of the Torus the take takes is the player's to give back as the take ends.
         let take: ClipPrepared | null = null
+        const ours: ClipTorusTurn | undefined = turn && {take: name => {
+          const holder = turn.take(name)
+          if (holder === null && mine === press) turned = {turn, name}
+          else if (holder === null) turn.release?.(name)
+          return holder
+        }}
         const prepared: Promise<ClipPrepared | null> = owners.prepare
-          ? owners.prepare(clip, bpm, turn).catch((cause: unknown) => ({resumes: `The take's Torus was not set again: ${said(cause)}`}))
+          ? owners.prepare(clip, bpm, ours, address).catch((cause: unknown) => ({resumes: `The take's Torus was not set again: ${said(cause)}`}))
           : Promise.resolve(null)
         return prepared.then(ready => {
           if (mine !== press) return
@@ -764,15 +844,20 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
           if (mine !== press || clock === undefined) return
           const timing = clipTiming(clock)
           const exact = (take as ClipPrepared | null)?.exact
-          // Where the clip's beat `from` stands on the launch grid, in its beats from where the grid began, once it begins at `sample`.
+          // Where the clip's beat `from` stands on the launch grid, in its beats from where the grid began, once it begins at `sample`. The
+          // grid's beat 0 is where its first launch landed: Live's insert marker would stand there instead (LiveSet/Transport/CurrentTime,
+          // LOM Song.current_song_time; corpus racks-session-model.md §3.3), and live-set parses no CurrentTime yet (DLW build ruling
+          // 2026-11-05: "otherwise leave beat 0 at the grid origin and note where it would come from").
           const onGrid = (sample: bigint, from: number) => {
             grid?.began(sample)
             const origin = grid?.origin() ?? null
             return origin === null || !('rate' in timing) ? undefined : Number(sample - origin) / timing.rate * (bpm / 60) - from
           }
-          if ('refused' in timing) publish({starting: false, fault: timing.refused})
+          // A press that does not begin gives back the turn its take took.
+          const fault = (words: string) => { letTurnGo(); publish({starting: false, fault: words}) }
+          if ('refused' in timing) fault(timing.refused)
           else if (exact && exact.sample_rate !== clock.sample_rate)
-            publish({starting: false, fault: `The torus renders at ${clock.sample_rate} Hz, and the take was played at ${exact.sample_rate} Hz.`})
+            fault(`The torus renders at ${clock.sample_rate} Hz, and the take was played at ${exact.sample_rate} Hz.`)
           else if (exact) beginCourse(address, bpm, plan.name, timing, take!, exact, clock.lookahead_seconds, onGrid(BigInt(exact.landed), 0))
           else {
             // Where the launch lands: never sooner than a note can still land at its sample (the owner's slack before the anchor).
@@ -782,7 +867,7 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
             begin(address, bpm, plan, {...timing, anchor}, take, clock.lookahead_seconds, Number(anchor - timing.anchor) / timing.rate,
               onGrid(anchor, plan.first.from))
           }
-        }, cause => { if (mine === press) publish({starting: false, fault: `The torus did not read its audio clock: ${said(cause)}`}) })
+        }, cause => { if (mine === press) { letTurnGo(); publish({starting: false, fault: `The torus did not read its audio clock: ${said(cause)}`}) } })
       }, cause => { if (mine === press) publish({starting: false, fault: `The set's owner did not read the clip: ${said(cause)}`}) })
     },
     stop() {
@@ -809,10 +894,29 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
       if (refused.length) return {ok: false, error: `${named} went back to the take's lanes, and the owner refused the value its lane reached (${refused.join('; ')}).`}
       return {ok: true, note: playing.length ? `${named} plays from the take's lanes again.` : `${named} plays from the take's lanes again when the take plays.`}
     },
+    async unfreeze() {
+      const r = run, frozen = r?.frozen
+      if (!r || !frozen) return {ok: false, error: 'No take plays frozen on this part.'}
+      // The engine lets the take go first; until it has, the part still sounds it, and no note of it strikes the live Torus.
+      const refused = await frozen.unfreeze()
+      if (refused !== null) return {ok: false, error: refused}
+      if (r === run && r.frozen === frozen) {
+        r.frozen = null
+        unautomate()
+        publish({resumes: frozen.unfrozen})
+      }
+      return {ok: true, note: frozen.unfrozen}
+    },
   }
 }
 
 // ── the candidate's player, and Live's transport over it ────────────────────
+
+/** Whether a take of the set at `path` can be frozen on its part: the native candidate's engine plays that set. */
+const engineFreezes = (path: string): boolean => {
+  const reading = liveEngineState().reading
+  return detectTransport().kind === 'tauri' && reading?.path === path && reading.playing
+}
 
 /** The set's owner, the torus's owner and the page's clock. */
 function candidateOwners(): ClipPlayerOwners {
@@ -825,14 +929,16 @@ function candidateOwners(): ClipPlayerOwners {
       if (answer.error || answer.outcome?.result !== 'live_clip_reading') throw new Error(answer.error ?? 'The set\'s owner did not answer the clip')
       return answer.outcome.reading.clip
     },
-    prepare: (clip, bpm, turn) => prepareTake(clip, commitLiveInstrumentEdit, {stage: commitLiveStage, bpm}, turn),
+    // A held take is frozen on its part where the engine plays its set (O-I #849 round 22).
+    prepare: (clip, bpm, turn, address) => prepareTake(clip, commitLiveInstrumentEdit,
+      {stage: commitLiveStage, bpm, ...(address && engineFreezes(address.path) ? {frozen: partFreeze(address)} : {})}, turn),
     clock: () => readAudioClock(commitLiveStage),
     edit: (edit, at) => commitLiveStage({command: 'instrument', edit, ...(at === undefined ? {} : {at_samples_elapsed: at})}),
     set: writeMapTarget,
-    strike: (notes, amplitude, at) => livePlayingPath().clipStrike(notes, amplitude, at),
+    strike: (notes, amplitude, at, sounds) => livePlayingPath().clipStrike(notes, amplitude, at, sounds),
     touch: (points, amplitude, at) => commitLiveStage({command: 'strike-at', points: [...points], amplitude, at_samples_elapsed: at}),
     singlet: (codon, amplitude, at) => commitLiveStage({command: 'singlet', codon, amplitude, at_samples_elapsed: at}),
-    release: holds => livePlayingPath().clipRelease(holds),
+    release: (holds, sounds) => livePlayingPath().clipRelease(holds, sounds),
     watch: (address, changed) => subscribeSet(address.path, changed),
     now: () => performance.now() / 1000,
     later: (run, ms) => setTimeout(run, ms),
@@ -928,6 +1034,8 @@ export interface ClipLaunchActs {
   /** Re-enable (O-I #853): an overridden parameter, or every one, back to the take's lanes: on every player that holds it off its take's
    * lanes (O-I #849 round 21), in the set's own player's words where none or one does. */
   reenable(parameter?: string): Promise<ClipActAnswer>
+  /** Unfreeze (O-I #849 round 22): the take frozen on `track` of the set at `path` let go, the part's live Torus heard again. */
+  unfreeze(path: string, track: number): Promise<ClipActAnswer>
   /** The lanes' standing over every player, one reading while none moves (O-I #849 round 21). */
   lanes(): ClipLanesStanding
   /** Hear every player, a row's players made later among them. Returns the unsubscribe. */
@@ -938,6 +1046,9 @@ export interface ClipLaunchActs {
 const LAUNCH_ANSWER_MS = 4000
 /** The launch quantize of a set that keeps none: the bar, as the corpus's one set keeps it (racks-session-model.md §3.3, GlobalQuantisation 4). */
 export const SET_QUANTIZE = '1 bar'
+/** The words of the set's own Quantize, in Live's GlobalQuantisation order (packages/live-set edit.rs QUANTIZE after its Global, a clip's). */
+export const SET_QUANTIZE_WORDS: readonly string[] = Object.freeze(['none', '8 bars', '4 bars', '2 bars', '1 bar', '1/2', '1/2t', '1/4', '1/4t', '1/8',
+  '1/8t', '1/16', '1/16t', '1/32'])
 
 const listed = (names: readonly string[]) => names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`
 
@@ -969,6 +1080,9 @@ export function clipLaunchActs(player: ClipPlayer, torus: () => LiveTorusState |
   /** The launch grid's origin on the owner's clock: where the first launch landed while nothing played. */
   let origin: bigint | null = null
   const grid: ClipGrid = {origin: () => origin, began: at => { if (origin === null) origin = at }}
+  /** One Torus rings at a time: the first take to set it again holds it until it ends, whichever launch played it (DLW build ruling
+   * 2026-11-05), and every take launched meanwhile is held, a row's or one launched alone. */
+  const turn = torusTurn()
   /** The set's own player, then a row's by track. */
   const players = () => [player, ...[...rows.entries()].sort(([a], [b]) => a - b).map(([, row]) => row)]
   const listeners = new Set<() => void>()
@@ -1018,7 +1132,7 @@ export function clipLaunchActs(player: ClipPlayer, torus: () => LiveTorusState |
       if (why) return Promise.resolve({ok: false, error: why})
       if (!sounding()) origin = null
       rows.get(address.track)?.stop()
-      return played(player, address, () => player.play(address, bpm, landing(bpm, quantize, bar), grid))
+      return played(player, address, () => player.play(address, bpm, landing(bpm, quantize, bar), grid, turn))
     },
     async launchRow(path, row, bpm, slots, quantize, bar) {
       const named = `Row ${row + 1}`
@@ -1035,8 +1149,6 @@ export function clipLaunchActs(player: ClipPlayer, torus: () => LiveTorusState |
       // What the row holds on a track takes its place there; its empty slot's stop stops it.
       for (const slot of slots) stopTrack(path, slot.track)
       const together = {earliest: null as bigint | null}
-      // One Torus rings at a time: the row's first take to set it again holds it for the press, and the others are told whose it is.
-      const turn = torusTurn()
       const answers = await Promise.all(midi.map(slot => {
         const own = rowOf(slot.track, rowPlayer)
         const address: ClipAddress = {path, track: slot.track, at: {slot: row}}
@@ -1068,6 +1180,11 @@ export function clipLaunchActs(player: ClipPlayer, torus: () => LiveTorusState |
       const answers = await Promise.all(holding.map(each => each.reenable(parameter)))
       const errors = answers.flatMap(answer => answer.ok ? [] : [answer.error]), notes = answers.flatMap(answer => answer.ok ? [answer.note] : [])
       return errors.length ? {ok: false, error: [...new Set(errors)].join(' ')} : {ok: true, note: [...new Set(notes)].join(' ')}
+    },
+    async unfreeze(path, track) {
+      const own = (each: ClipPlayer) => { const at = each.state().playing?.address; return at?.path === path && at.track === track }
+      const playing = players().find(own)
+      return playing ? playing.unfreeze() : {ok: false, error: 'No take plays frozen on this part.'}
     },
     lanes,
     subscribe: listener => { listeners.add(listener); return () => { listeners.delete(listener) } },

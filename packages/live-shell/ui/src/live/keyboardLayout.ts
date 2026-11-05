@@ -86,7 +86,7 @@ export function livePlayingPath(): JankoInput {
     send: command => commitLiveStage(command),
     settings: keyboardSettings,
     transform: pitchClasses => live?.transform ? live.transform(pitchClasses) : pitchClasses,
-    midiOut: messages => sendLiveMidiOut(messages),
+    midiOut: (messages, afterMs) => sendLiveMidiOut(messages, undefined, afterMs),
     onResult: result => { if (live) publish({held: live.state.held, refusal: result.ok ? null : result.error}) },
     onHeld: held => { if (live) publish({held, refusal: live.state.refusal}) },
     onNote: played => liveTakeRecorder.played(played),

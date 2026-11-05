@@ -483,6 +483,22 @@ fn an_owners_act_lands_at_the_sample_its_owner_landed_it() {
     );
     let exported = build().render_performance(SR, &handle.performance());
     assert_eq!(left(&exported), played, "Export renders what was heard");
+    // O-I #849 round 22: the act's key-to-sound inside the host. The block from frame 256 took it, and its first frame was
+    // mixed 44 frames into that block, at the owner's sample.
+    let strikes = handle.latency().strikes;
+    assert_eq!(strikes.len(), 1);
+    let strike = strikes[0];
+    assert_eq!(
+        (strike.track, strike.frame),
+        (0, 300),
+        "it sounds at the owner's sample"
+    );
+    assert_eq!(
+        strike.sounds_ns - strike.applied_ns,
+        44 * 1_000_000_000 / u64::from(SR),
+        "44 frames after the block that took it was pulled"
+    );
+    assert!(strike.sent_ns <= strike.applied_ns);
 }
 
 #[test]

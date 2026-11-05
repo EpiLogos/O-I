@@ -19,7 +19,6 @@ import {AgentShellBrowser, AGENT_BROWSER_CATEGORIES} from '../agent/AgentShellBr
 import {Icon} from '../inhabitants/sdk/Icon'
 import type {IconName} from '../inhabitants/sdk/icons'
 import {InstrumentsSection} from '../frame/InstrumentsSection'
-import {LiveGroovePool} from '../frame/browser/LiveGroovePool'
 import {useWorkbenchOpeners} from '../native/workbenchDoor'
 import {ConstellationRows} from '../frame/browser/ConstellationRows'
 import {CONSTELLATIONS} from '../frame/browser/constellationFocus'
@@ -35,6 +34,8 @@ const WorldBrowser = loadWhenDrawn<{controlled?: ControlledBrowser}>('Expression
 const PlaceRows = loadWhenDrawn<{controlled: ControlledBrowser}>('The places', () => import('../frame/browser/PlaceRows').then(module => module.PlaceRows))
 // Factory's songs made into clips load when Songs is first shown (agent/SongRows.tsx, O-I #844).
 const SongRows = loadWhenDrawn<{controlled: ControlledBrowser}>('Your songs', () => import('../agent/SongRows').then(module => module.SongRows))
+// Live's grooves load with Live's browser: the pool reaches the Live engine and its keyboard, which the window's first load leaves out.
+const LiveGroovePool = loadWhenDrawn<{path: string | null}>('The grooves', () => import('../frame/browser/LiveGroovePool').then(module => module.LiveGroovePool))
 
 /** What the bodies read from the App: Live's panel context, the ground subject the browser selects, the agency reading. */
 export interface BrowserReading {

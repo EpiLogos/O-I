@@ -1509,6 +1509,7 @@ export type LiveSetAct =
   | {kind: 'track_insert'; after?: number | null}
   | {kind: 'scene_insert'; after?: number | null}
   | {kind: 'scene_rename'; scene: number; name: string}
+  | {kind: 'global_quantize'; quantize: string}
   | {kind: 'scene_duplicate'; scene: number}
   | {kind: 'scene_delete'; scene: number}
   | {kind: 'track_colour'; track: number; colour: number}

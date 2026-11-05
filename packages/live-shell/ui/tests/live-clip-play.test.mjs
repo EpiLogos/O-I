@@ -249,6 +249,42 @@ test('Play anchors the clip one owner lookahead past its rendered sound and stri
   assert.equal(clock.pending(), 0, 'no timer is left behind')
 })
 
+test('a clip\'s notes leave as MIDI when they sound: each note-on and each end held for the time to its sample; Stop lets go at once (O-I #853 round 22)', async () => {
+  const clock = controlledClock(), out = []
+  const path = keys.createJankoInput({window: () => windowState, send: async () => ({ok: true}),
+    midiOut: (messages, after) => out.push({at: clock.now(), after, messages})})
+  const p = player.createClipPlayer({read: async () => REAL, clock: async () => CLOCK,
+    strike: (notes, amplitude, at, sounds) => path.clipStrike(notes, amplitude, at, sounds), release: (holds, sounds) => path.clipRelease(holds, sounds),
+    watch: () => () => {}, now: clock.now, later: clock.later, cancel: clock.cancel, random: () => 0})
+  const pressed = clock.now()
+  p.play(ADDRESS, REAL_BPM)
+  await clock.settle()
+  await clock.run(pressed + 600)
+  await clock.settle()
+  const acts = actsOf(REAL)
+  assert.equal(out.length, acts.length, 'every note-on and every end leaves')
+  acts.forEach((act, i) => {
+    assert.ok(Math.abs(out[i].after - 500) < 1e-6, `act ${i} is held the owner's lookahead, until its sample sounds (${out[i].after})`)
+    assert.deepEqual(out[i].messages, act.kind === 'strike'
+      ? act.notes.map(note => ({kind: 'on', channel: 0, note: note.p, velocity: note.vel}))
+      : act.notes.map(note => ({kind: 'off', channel: 0, note: note.p, velocity: 0})), `${act.kind} ${i}, as written`)
+  })
+  // A wake that comes late shortens the hold by as much: the note still leaves when its sample sounds.
+  out.length = 0
+  const again = clock.now(), beat = 60 / REAL_BPM
+  p.play(ADDRESS, REAL_BPM)
+  await clock.settle()
+  await clock.run(again + (realNoteOns[1].at - REAL.start) * beat + 1e-6, 0.1)
+  assert.ok(out.length >= 2)
+  assert.ok(Math.abs(out.at(-1).after - 400) < 1e-6, `woken 0.1 s late, it is held 0.4 s (${out.at(-1).after})`)
+  const struck = out.filter(sent => sent.messages[0].kind === 'on').length, ended = out.filter(sent => sent.messages[0].kind === 'off').length
+  p.stop()
+  await clock.settle()
+  const stopped = out.filter(sent => sent.messages[0].kind === 'off').slice(ended)
+  assert.equal(stopped.flatMap(sent => sent.messages).length, struck - ended, 'Stop lets every note it holds go')
+  assert.ok(stopped.every(sent => sent.after === undefined), 'at once: the host holds each behind its note-on')
+})
+
 test('Stop ends it: nothing more strikes, everything the clip holds is let go at once, and no timer is left', async () => {
   // REPLACES "Stop ends it: nothing more strikes, and no timer is left": Stop now also releases what the clip holds, as Panic does.
   const {p, clock, sent, watchers, path} = harness()
@@ -614,8 +650,9 @@ test('Live\'s transport binds Play and Stop through the clip player, over THE se
 test('the candidate\'s clip plays on the part\'s one playing path: its notes struck and let go through livePlayingPath', () => {
   const source = readFileSync(new URL('../src/live/clipPlayer.ts', import.meta.url), 'utf8')
   const owners = source.slice(source.indexOf('function candidateOwners('), source.indexOf('export const liveClipPlayer'))
-  assert.match(owners, /strike: \(notes, amplitude, at\) => livePlayingPath\(\)\.clipStrike\(notes, amplitude, at\)/)
-  assert.match(owners, /release: holds => livePlayingPath\(\)\.clipRelease\(holds\)/)
+  // REPLACES the round-21 wiring without `sounds`: the time to each sample travels with it, for MIDI out (O-I #853 round 22).
+  assert.match(owners, /strike: \(notes, amplitude, at, sounds\) => livePlayingPath\(\)\.clipStrike\(notes, amplitude, at, sounds\)/)
+  assert.match(owners, /release: \(holds, sounds\) => livePlayingPath\(\)\.clipRelease\(holds, sounds\)/)
   assert.doesNotMatch(source, /action: 'play'/, 'the clip strikes no pitch-class act')
 })
 
@@ -804,7 +841,7 @@ const takeRow = () => {
   const ownersOf = () => ({
     read: async address => clips[address.track],
     prepare: async (clip, bpm, turn) => {
-      turns.push([clip.name, turn])
+      turns.push([clip.name, turn?.take(clip.name)])
       return {resumes: 'Resumes.', moves: [{beat: 1, edits: [], sets: [{parameter: clip.name === 'Keys' ? 'lens' : 'frame', value: 4}]},
         {beat: 3, edits: [], sets: [{parameter: 'carrier', value: clip.name === 'Keys' ? 0.2 : 0.4}, {parameter: clip.name === 'Keys' ? 'lens' : 'frame', value: 6}]}]}
     },
@@ -817,19 +854,31 @@ const takeRow = () => {
   return {clock, hands, turns, acts}
 }
 
-test('a row\'s takes ask one turn of the Torus: the first to ask holds it, any other is told whose it is; a launch alone asks none', async () => {
+// REPLACES "a row's takes ask one turn of the Torus: … a launch alone asks none" (a turn of each press): DLW build ruling 2026-11-05, "The
+// turn belongs to the first take until it ends, and any launch meanwhile is held in the same words, a single launch included".
+test('one turn of the Torus across every launch: the first take to ask holds it until it ends, and any launch meanwhile is held, one launched alone too', async () => {
   const turn = player.torusTurn()
   assert.equal(turn.take('Keys'), null, 'the first take to ask sets the Torus again')
   assert.equal(turn.take('Pads'), 'Keys', 'the next is told whose it is')
   assert.equal(turn.take('Keys'), 'Keys')
+  turn.release('Pads')
+  assert.equal(turn.take('Pads'), 'Keys', 'only the take that holds it gives it back')
+  turn.release('Keys')
+  assert.equal(turn.take('Pads'), null, 'given back, the next take to ask holds it')
   const {clock, turns, acts} = takeRow()
+  const asked = () => turns.splice(0)
   await settled(clock, acts.launchRow('/sets/a.als', 0, 120, ROW.slice(0, 2), '1 bar'))
-  assert.deepEqual(turns.map(([name]) => name).sort(), ['Keys', 'Pads'])
-  assert.ok(turns[0][1] && turns[0][1] === turns[1][1], 'both of the row\'s takes ask the one turn of its press')
+  assert.deepEqual(asked(), [['Keys', null], ['Pads', 'Keys']], 'the row\'s first take holds the Torus, and the other is told whose it is')
+  await settled(clock, acts.launch({path: '/sets/a.als', track: 1, at: {slot: 0}}, 120, '1 bar'))
+  assert.deepEqual(asked(), [['Pads', 'Keys']], 'a clip launched alone while Keys plays is held in the same words')
   await settled(clock, acts.launchRow('/sets/a.als', 0, 120, ROW.slice(0, 2), '1 bar'))
-  assert.ok(turns[2][1] && turns[2][1] !== turns[0][1], 'a press of its own: a turn of its own')
+  assert.deepEqual(asked(), [['Keys', null], ['Pads', 'Keys']], 'launched over, Keys gave its turn back as it stopped, and holds it again')
+  acts.stop('/sets/a.als', 0, 'Keys')
+  await settled(clock, acts.launch({path: '/sets/a.als', track: 1, at: {slot: 0}}, 120, '1 bar'))
+  assert.deepEqual(asked(), [['Pads', null]], 'Keys stopped: its turn is given back, and a clip launched alone holds it')
+  await settled(clock, clock.run(clock.now() + 10))
   await settled(clock, acts.launch({path: '/sets/a.als', track: 0, at: {slot: 0}}, 120, '1 bar'))
-  assert.equal(turns[4][1], undefined, 'a clip launched alone has the Torus to itself')
+  assert.deepEqual(asked(), [['Keys', null]], 'Pads played to its end: its turn is the next take\'s')
 })
 
 test('every player\'s take lanes are followed: a row\'s takes stand with the set\'s own player\'s, and Re-enable reaches each', async () => {
@@ -869,6 +918,118 @@ test('every player\'s take lanes are followed: a row\'s takes stand with the set
   const face = readFileSync(new URL('../src/live/TorusOnChain.tsx', import.meta.url), 'utf8')
   assert.match(face, /const laneReading = \(\): ClipLaneStanding => liveClipActs\.lanes\(\)/)
   assert.match(face, /useSyncExternalStore\(liveClipActs\.subscribe, laneReading, laneReading\)/)
+})
+
+// O-I #849 round 22 (DLW build ruling 2026-11-05): "A rendered take is a frozen take. Its Torus parameters are baked in and carry no
+// Overridden mark. Touching one says the take is frozen, in words, and offers Unfreeze, which returns the part to its live Torus. The part
+// plays the rendered sample until the take ends, then returns to its live Torus, as a clip returns at its end." The engine's freeze is a
+// double here (`land`, `unfreeze`); live/liveTake.ts prepareTake makes the real one, and the host's test plays it.
+const FROZEN_SLOT = {path: '/sets/a.als', track: 1, at: {slot: 0}}
+const frozenHarness = ({refuse = null} = {}) => {
+  const clock = controlledClock()
+  const sent = [], landed = [], unfrozen = [], edits = [], sets = [], hands = []
+  const path = keys.createJankoInput({window: () => windowState, send: async command => { sent.push({at: clock.now(), command: structuredClone(command)}); return {ok: true} }})
+  const frozen = {words: 'Pads is frozen.', seconds: 3, moves: [{beat: 1, edits: [], sets: [{parameter: 'frame', value: 4}]}],
+    settings: [{beat: 2, edit: {kind: 'torus', edit: {carrier: 0.5}}}], unfrozen: 'Pads is unfrozen.',
+    land: async at => { landed.push(at); return refuse }, unfreeze: async () => { unfrozen.push(clock.now()); return null }}
+  const p = player.createClipPlayer({read: async () => short('Pads', 'global', 67), prepare: async () => ({resumes: 'Keys holds the Torus; Pads is frozen.', frozen}),
+    clock: async () => CLOCK, edit: async edit => { edits.push(edit); return {ok: true} }, set: async (id, value) => { sets.push([id, value]); return {ok: true} },
+    hand: moved => { hands.push(moved); return () => { hands.splice(hands.indexOf(moved), 1) } },
+    strike: (notes, amplitude, at) => path.clipStrike(notes, amplitude, at), release: holds => path.clipRelease(holds),
+    watch: () => () => {}, now: clock.now, later: clock.later, cancel: clock.cancel, random: () => 0})
+  return {clock, sent, landed, unfrozen, edits, sets, hands, p}
+}
+
+test('a frozen take strikes nothing and makes no move: its sound is the engine\'s from where its clip lands, and its lanes say so, held by no hand', async () => {
+  const {clock, sent, landed, unfrozen, edits, sets, hands, p} = frozenHarness()
+  p.play(FROZEN_SLOT, 120)
+  await settled(clock)
+  assert.deepEqual(landed, [BigInt(ANCHOR)], 'frozen on its part at the sample its clip lands at')
+  assert.equal(p.state().resumes, 'Keys holds the Torus; Pads is frozen.')
+  const lanes = p.state().lanes
+  assert.deepEqual(lanes.automated, [], 'nothing of it stands Automated: its lanes are in its sound')
+  assert.deepEqual(lanes.take, {address: FROZEN_SLOT, name: 'Pads', frozen: 'Pads is frozen.'})
+  assert.deepEqual(lanes.lanes.map(lane => [lane.parameter, lane.points.map(point => point.beat)]), [['frame', [1]], ['carrier', [2]]],
+    'its lanes as they were baked in: its moves\' and its course\'s settings of the Torus')
+  assert.equal(hands.length, 0, 'no hand move can take a frozen lane off')
+  await settled(clock, clock.run(clock.now() + 3.9))
+  assert.deepEqual([strikes(sent).length, edits.length, sets.length], [0, 0, 0], 'it strikes no note on the live Torus and makes none of its moves')
+  await settled(clock, clock.run(clock.now() + 1))
+  assert.equal(p.state().playing, null, 'its clip ends at its end')
+  assert.deepEqual(unfrozen, [], 'played past its sound\'s end, nothing is let go: the engine has done with it')
+  assert.equal(p.state().lanes.take, undefined, 'and its lanes go')
+})
+
+test('Unfreeze plays the rest of a frozen take on the live Torus; Stop lets it go; one the engine refused plays there from its start, in its words', async () => {
+  const a = frozenHarness()
+  const acts = player.clipLaunchActs(a.p, () => following)
+  assert.equal((await settled(a.clock, acts.launch(FROZEN_SLOT, 120, 'none'))).ok, true)
+  await settled(a.clock, a.clock.run(a.clock.now() + 1))
+  assert.deepEqual(await acts.unfreeze('/sets/a.als', 0), {ok: false, error: 'No take plays frozen on this part.'}, 'another part holds none')
+  assert.deepEqual(await acts.unfreeze('/sets/a.als', 1), {ok: true, note: 'Pads is unfrozen.'})
+  assert.equal(a.unfrozen.length, 1, 'the engine lets it go')
+  assert.equal(a.p.state().resumes, 'Pads is unfrozen.')
+  assert.equal(a.p.state().lanes.take, undefined, 'its frozen lanes go with it')
+  await settled(a.clock, a.clock.run(a.clock.now() + 3.5))
+  assert.deepEqual(strikeSamples(a.sent), [BigInt(ANCHOR + 96000)], 'the note at beat 4 strikes the live Torus; the one at beat 0 was the engine\'s')
+  assert.deepEqual(await a.p.unfreeze(), {ok: false, error: 'No take plays frozen on this part.'})
+  // Stop while it sounds lets it go, as Live stops a frozen clip.
+  const b = frozenHarness()
+  b.p.play(FROZEN_SLOT, 120)
+  await settled(b.clock, b.clock.run(b.clock.now() + 1))
+  b.p.stop()
+  assert.equal(b.unfrozen.length, 1, 'stopped while its sound plays, the engine lets it go')
+  // The engine refused it: it plays its notes on the live Torus from its start, in the words it was refused in, and has no frozen lanes.
+  const c = frozenHarness({refuse: 'Keys holds the Torus. It was not frozen on its part: The engine follows no Torus it has taken yet.'})
+  c.p.play(FROZEN_SLOT, 120)
+  await settled(c.clock)
+  assert.equal(c.p.state().resumes, 'Keys holds the Torus. It was not frozen on its part: The engine follows no Torus it has taken yet.')
+  assert.equal(c.p.state().lanes.take, undefined)
+  await settled(c.clock, c.clock.run(c.clock.now() + 4.5))
+  assert.deepEqual(strikeSamples(c.sent), [BigInt(ANCHOR), BigInt(ANCHOR + 96000)], 'both its notes strike the live Torus')
+  assert.deepEqual(c.unfrozen, [], 'nothing frozen to let go')
+})
+
+test('Live\'s set lays a frozen take\'s lanes under its clip with no Overridden mark, saying so, with Unfreeze; a looping slot take\'s are drawn for each pass', async () => {
+  const {liveSetTrackAdapter} = await import('../src/timeline/liveSetTrackAdapter.ts')
+  const {automationPoints, LOOP_PASSES_DRAWN} = await import('../src/frame/tracks/trackLanes.ts')
+  const summary = {path: '/sets/a.als', scene_count: 1, tempo_bpm: 120,
+    tracks: [{kind: 'midi', name: 'Keys', devices: []}, {kind: 'midi', name: 'Pads', devices: []}, {kind: 'master', name: 'Main', devices: []}]}
+  const unfreezes = []
+  const play = {launch: async () => ({ok: true, note: ''}), stop: () => ({ok: true, note: ''}), stopAll: () => ({ok: true, note: ''}),
+    reenable: async () => ({ok: true, note: ''}), unfreeze: async track => { unfreezes.push(track); return {ok: true, note: 'Pads is unfrozen.'} }}
+  const carrier = {parameter: 'carrier', label: 'Carrier', points: [{beat: 2, value: 1}]}
+  const lanes = {automated: ['carrier'], overridden: ['carrier'], takes: [
+    {take: {address: {path: '/sets/a.als', track: 0, at: {slot: 0}}, name: 'Keys', at: 0}, lanes: [carrier]},
+    {take: {address: FROZEN_SLOT, name: 'Pads', at: 0, frozen: 'Pads is frozen.'}, lanes: [carrier]}]}
+  const set = liveSetTrackAdapter.project({set: summary, document: null, play, lanes})
+  assert.deepEqual(set.lanes.automation.map(lane => [lane.device, lane.overridden, lane.frozen ?? null]), [['Keys', true, null], ['Pads', false, 'Pads is frozen.']],
+    'the hand holds Carrier off Keys\'s lane; Pads\'s is baked into its sound, and carries no Overridden mark')
+  const frozen = set.lanes.automation[1]
+  assert.deepEqual(await set.actions.unfreeze.run(frozen.id), {ok: true, note: 'Pads is unfrozen.'})
+  assert.deepEqual(unfreezes, [1], 'Unfreeze reaches the part the lane\'s clip is on')
+  assert.match((await set.actions.unfreeze.run('als:/sets/a.als#track/1/auto/0')).error, /no take froze/)
+  assert.match(set.actions.unfreeze.op, /live_engine_unfreeze \{track\}/)
+  // A looping slot take (edit.rs markers: start 6, loop 4 to 8) plays, publishing its loop; its lanes are drawn for each pass of the loop.
+  const clock = controlledClock()
+  const moves = [{beat: 5, edits: [], sets: [{parameter: 'frame', value: 4}]}, {beat: 7, edits: [], sets: [{parameter: 'frame', value: 6}]}]
+  const p = player.createClipPlayer({read: async () => looped(), prepare: async () => ({resumes: 'Resumes.', moves}), clock: async () => CLOCK,
+    set: async () => ({ok: true}), strike: async () => ({ok: true}), release: () => {}, watch: () => () => {}, now: clock.now, later: clock.later,
+    cancel: clock.cancel, random: () => 0})
+  p.play(FROZEN_SLOT, 120, undefined, {origin: () => BigInt(ANCHOR), began: () => {}})
+  await settled(clock)
+  const playing = p.state().lanes
+  assert.deepEqual(playing.take, {address: FROZEN_SLOT, name: 'Riff', at: -6, loop: {start: 6, from: 4, to: 8}}, 'its start marker landed on the grid\'s first beat')
+  const [looping] = liveSetTrackAdapter.project({set: summary, document: null, play, lanes: playing}).lanes.automation
+  assert.deepEqual(looping.loop, {start: 6, from: 4, to: 8})
+  assert.deepEqual(automationPoints(looping, () => undefined, 10).map(point => point.at), [1, 3, 5, 7, 9],
+    'the first pass from its start marker (beat 7 only), then the loop again (beats 5 and 7) for each pass, to the ruler\'s end')
+  assert.deepEqual(automationPoints(looping, () => undefined).map(point => point.at), [-1, 1], 'no ruler\'s end given: its points once, as before')
+  assert.equal(automationPoints(looping, () => undefined, 1e9).length, 1 + 2 * LOOP_PASSES_DRAWN, 'at most so many passes drawn')
+  const [arranged] = liveSetTrackAdapter.project({set: summary, document: null, play,
+    lanes: {...playing, take: {...playing.take, address: {path: '/sets/a.als', track: 1, at: {arrangement: 0}}}}}).lanes.automation
+  assert.equal(arranged.loop, undefined, 'an arrangement clip\'s lanes stand under the clip where it lies')
+  p.stop()
 })
 
 test('a row stops a track where its empty slot keeps the stop button, and leaves one whose slot has it removed', async () => {

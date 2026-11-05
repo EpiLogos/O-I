@@ -195,6 +195,47 @@ test('more than 32 notes at once are struck as acts of 32 at the one sample; a r
   assert.deepEqual(bare.sent, [], 'nothing reaches the owner without a key to strike')
 })
 
+// ── a clip's notes leave as MIDI when they sound (O-I #853 round 22; DLW build ruling 2026-11-05: "MIDI out for clip notes (#853),
+// through the host. Tests use a double and never open a MIDI or audio device") ─────────────────────────────────────────────────────
+
+test('a clip\'s notes leave as MIDI when they sound: each note-on and each end held by the host for the time to its sample', async () => {
+  const o = owner(), out = []
+  const p = path(o, {transpose: 7}, {midiOut: (messages, after) => out.push([messages, after])})
+  await p.clipStrike([{hold: 'a', note: 60}, {hold: 'b', note: 64}], 100 / 127, '504000', 80)
+  assert.deepEqual(out, [[[{kind: 'on', channel: 0, note: 60, velocity: 100}, {kind: 'on', channel: 0, note: 64, velocity: 100}], 80]],
+    'one act, its notes as written (Transpose leaves a clip\'s notes as they are), held until they sound')
+  p.clipRelease(['a'], 120)
+  await tick()
+  assert.deepEqual(out.at(-1), [[{kind: 'off', channel: 0, note: 60, velocity: 0}], 120], 'its end leaves when it sounds')
+  // Stop lets go at once: the host holds the off behind its note-on, so it never leaves ahead of it (midi.rs).
+  p.clipRelease(['b'])
+  await tick()
+  assert.deepEqual(out.at(-1), [[{kind: 'off', channel: 0, note: 64, velocity: 0}], undefined])
+  // A key a press holds is struck again by the clip, and leaves again; its end waits for the last that holds it.
+  p.down(midiNote(67)); await tick()
+  assert.deepEqual(out.at(-1), [[{kind: 'on', channel: 0, note: 74, velocity: 100}], undefined], 'the press plays as it always has: at once')
+  await p.clipStrike([{hold: 'c', note: 74}], 0.5, '600000', 40)
+  assert.deepEqual(out.at(-1), [[{kind: 'on', channel: 0, note: 74, velocity: 64}], 40])
+  p.clipRelease(['c'], 60); await tick()
+  assert.equal(out.length, 5, 'the press still holds it: no off')
+  // Panic lets every note go at once.
+  await p.clipStrike([{hold: 'd', note: 48}], 1, '700000', 30)
+  p.panic(); await tick()
+  assert.deepEqual(out.at(-1), [[{kind: 'all-off', channel: 0}], undefined])
+})
+
+test('what is not a clip\'s note sounding at its sample does not leave as MIDI: a strike that names no time, a bell, a take\'s key with no number', async () => {
+  const o = owner(), out = []
+  const p = path(o, {}, {midiOut: (messages, after) => out.push([messages, after])})
+  await p.clipStrike([{hold: 'a', note: 60}], 1, '1000')
+  p.clipRelease(['a']); await tick()
+  await p.ring(4, 0.5); await tick()
+  await p.clipStrike([{hold: 'b', note: -1, key: G4}], 1, '2000', 50)
+  p.clipRelease(['b'], 70); await tick()
+  assert.deepEqual(out, [], 'nothing names when it sounds, or what note it is')
+  assert.equal(strikes(o.sent).length, 3, 'each still strikes the Torus')
+})
+
 // ── MIDI out: the picker never shows an output the host let go (O-I #853 OPEN 1) ─────────────────────────────────────────────────
 
 /** The host's `midi_out` as midi.rs answers it: `held` is the output it holds now; `send` answers a send (a throw is its refusal). */
@@ -227,6 +268,19 @@ test('a send the host refuses because its output went away leaves the picker on 
   midi.sendLiveMidiOut(ON, h.invoke)
   await tick()
   assert.equal(h.calls.length, before, 'nothing is sent to an output the host let go')
+})
+
+test('a send held until its notes sound names how long the host holds it; one at once names none', async () => {
+  const requests = []
+  const invoke = async (_command, {request}) => { requests.push(request); return {ports: ['Synth'], port: 'Synth'} }
+  await midi.chooseLiveMidiOut('Synth', invoke)
+  midi.sendLiveMidiOut(ON, invoke, 42.5)
+  midi.sendLiveMidiOut(ON, invoke)
+  midi.sendLiveMidiOut(ON, invoke, 0)
+  for (let i = 0; i < 5; i++) await tick()
+  assert.deepEqual(requests.slice(1), [{kind: 'send', messages: ON, after_ms: 42.5}, {kind: 'send', messages: ON}, {kind: 'send', messages: ON}])
+  const layout = readFileSync(new URL('../src/live/keyboardLayout.ts', import.meta.url), 'utf8')
+  assert.match(layout, /midiOut: \(messages, afterMs\) => sendLiveMidiOut\(messages, undefined, afterMs\)/, 'the part\'s one path sends through the host')
 })
 
 test('a batch the host refuses with its output still connected keeps the output chosen, and the next notes still leave', async () => {

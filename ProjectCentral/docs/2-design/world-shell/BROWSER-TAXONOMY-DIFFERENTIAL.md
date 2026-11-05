@@ -184,6 +184,7 @@ Each bullet is tagged. "No honest equivalent" means the verdict is ABSENT in eve
 ### 4.2 Sounds
 - **No honest equivalent in any of the four modes.**
 - **EVIDENCE:** the object sound device is `[gated]`: it waits on native engine and hosting acceptance (`NS/EXPRESSIONS-FEATURE-MAP.md:55`).
+- **EVIDENCE (since #849):** the native engine it waits on stands: `live-engine` is the one engine every Live part sounds in, hosted by the candidate (`packages/live-engine/src/engine.rs`, `desktop/cradle/src-tauri/src/live_engine_host.rs`). No object sound device is built on it, so the row stays ABSENT.
 - **EVIDENCE:** the live engine's audio devices are Glue, Echo and Reverb, not a sound library (`SHELLBP:40-41`). In audio mode the Sounds category is empty (`LS/BrowserPane.tsx:25`).
 
 ### 4.3 Drums
@@ -214,6 +215,7 @@ Each bullet is tagged. "No honest equivalent" means the verdict is ABSENT in eve
 - **No honest equivalent in any of the four modes, and this is the most important absence.**
 - **EVIDENCE:** `SCOPE:121` places M1 as an instrument device in Live's device chain. `SCOPE:254-256` (decision D-H) leaves the host open: external instrument, Max for Live or RNBO, or both. No host is decided, so the slot cannot be filled honestly.
 - **EVIDENCE:** `SHELLBP:77-82` puts Operator and Wavetable voice models at M6, and says MIDI tracks are blocked on RE-lane voice models.
+- **EVIDENCE (since #849):** MIDI tracks are no longer blocked: a MIDI part plays its instrument in `live-engine`, Operator's default patch held to Live's renders (`packages/live-engine/tests/midi_gate.rs`), and the Torus plays as an instrument node in the same engine (`packages/live-engine/src/k8.rs`). The Max for Live host question (D-H) is unchanged.
 - **EVIDENCE:** the Expressions device families are the M4 body's own parameter devices. Filing them under Max for Live would be wrong; they belong under Audio Effects or Devices (see 4.5).
 - **EVIDENCE:** Technè and Central are coupled views (`SCOPE:125`). Factory is arrangements, takes and automation (`SCOPE:126`).
 

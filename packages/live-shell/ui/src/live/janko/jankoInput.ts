@@ -16,7 +16,9 @@
 //                   struck by each, released with the last of them. Polyphony, the notes that make way and Panic count the clip's notes
 //                   with the keys'.
 // Nothing here synthesises a sound, places a point or counts voices: the owner does. What a part plays also leaves as MIDI (midiOut); a
-// clip's notes do not yet, as they are sent one owner lookahead before they sound.
+// clip's notes leave when they sound (O-I #853 round 22): they are sent one owner lookahead before, so the clip names how long until its
+// sample sounds (clipStrike's and clipRelease's `sounds`) and the host holds each message that long (midi.rs `after_ms`). A strike that
+// names no time (a bell), and a key that names no note, leave nothing.
 import type {StageCommand, StageKey, StageResult} from '@epilogos/expressions-boundary'
 import {liveJankoWindow, type JankoKey, type JankoWindow, type JankoWindowState} from './jankoLayout'
 
@@ -102,16 +104,8 @@ export function strikeAmplitude(event: Pick<NoteEvent, 'source' | 'pressure' | '
   return JANKO_DEFAULT_AMPLITUDE
 }
 
-/** The computer keyboard plays the twelve pitch classes from a conventional piano row. Presentation only: the owner receives keys. */
-export const COMPUTER_KEY_PITCH: Readonly<Record<string, number>> = Object.freeze({
-  a: 0, w: 1, s: 2, e: 3, d: 4, f: 5, t: 6, g: 7, y: 8, h: 9, u: 10, j: 11,
-})
-
-/** Whether a computer-keyboard event may play a note: the keyboard is armed by focus, the target is not editable text, no modifier is held
- * (so undo and the other shortcuts keep their meaning), and the key is not a held repeat. */
-export function keyboardGate(input: {armed: boolean; editable: boolean; modifier: boolean; repeat: boolean}): boolean {
-  return input.armed && !input.editable && !input.modifier && !input.repeat
-}
+// The computer keys' row and their gate are the layout's (jankoLayout.ts): the map's faces read them without the keyboard's engine.
+export {COMPUTER_KEY_PITCH, keyboardGate} from './jankoLayout'
 
 // ── the keys of the surface ────────────────────────────────────────────────────────────────────────────────────────────────────
 // The owner's window is one period of the surface: six rows by six columns, every pitch class at each of its touch-points once. The
@@ -183,8 +177,9 @@ export type MidiOutMessage =
   | {readonly kind: 'all-off'; readonly channel: number}
 
 /** One strike's timing, for the key-to-sound measurement: when the first note of the act was pressed (the page's clock), when its act
- * was sent and when the owner answered (ms on the same clock), and for MIDI the host's leg, from its receipt of the note to the page
- * (ms on the wall clock both share). */
+ * was sent and when the owner answered (ms on the same clock), for MIDI the host's leg, from its receipt of the note to the page (ms on
+ * the wall clock both share), and when its act was sent on that wall clock (`sentAt`, O-I #849 round 22: the clock of the engine's
+ * pairs). */
 export interface KeyLatency {
   readonly sources: readonly NoteSource[]
   readonly keys: number
@@ -193,30 +188,59 @@ export interface KeyLatency {
   readonly ownerMs: number | null
   readonly hostMs: number | null
   readonly ok: boolean
+  readonly sentAt?: number
 }
 const LATENCY_KEPT = 64
 
-/** The engine's own legs of key-to-sound, as its host reads them (live_engine_host.rs reading `latency`, O-I #853 round 18). */
+/** One strike's pair on the host (live_engine_host.rs latency `strikes`, O-I #849 round 22): the part and the frame it sounds at, when
+ * the host sent it to the engine and when the engine mixed that frame (ms on the host's wall clock), and the span between. */
+export interface EngineStrike {
+  readonly track: number
+  readonly frame: number
+  readonly sent_at_ms: number
+  readonly sounds_at_ms: number
+  readonly ms: number
+}
+/** The engine's own legs of key-to-sound, as its host reads them (live_engine_host.rs reading `latency`, O-I #853 round 18), with the
+ * latest strikes' pairs, oldest first (round 22). */
 export interface EngineLatency {
   readonly block_frames: number
   readonly block_ms: number
   readonly longest_wait_ms: number
   readonly output_latency_ms: number
+  readonly strikes?: readonly EngineStrike[]
 }
-/** One strike's key-to-sound, joined from the parts that exist: each part with its ms, their sum, and the parts not measured, in words. */
+/** One strike's key-to-sound, joined from the parts that exist: each part with its ms, their sum, the parts not measured, in words, and
+ * the engine's pair it was joined with, where one was. */
 export interface KeyToSound {
   readonly ms: number
   readonly parts: readonly (readonly [string, number])[]
   readonly unmeasured: readonly string[]
+  readonly engine?: EngineStrike
 }
+/** How far the page's wall clock and the host's are read apart: a pair this much outside the owner's strike is still its own. */
+const PAIR_SLACK_MS = 1
 /** Join one strike's timing with the engine's legs while the engine plays the Torus (`engine`; null: the owner sounds it itself): the
  * host's leg (MIDI), the page's queue, the owner's strike, then the engine's block at worst and the device's output. What is not measured
  * is named: the controller's leg to the host for MIDI, and the owner's lead over the engine (or, alone, the owner's own sound). Null for a
- * strike the owner refused: it sounded nothing. Pure. */
+ * strike the owner refused: it sounded nothing. Pure.
+ *
+ * Where the engine names the pair of a strike the host sent it while the owner struck this act (from its send to its answer, on the wall
+ * clock), that is this act's sound (O-I #849 round 22): the page's leg to the engine and the engine's to its sound are measured, and the
+ * owner's lead over the engine is no longer unmeasured; the first such pair is joined, and named. */
 export function keyToSound(strike: KeyLatency, engine: EngineLatency | null): KeyToSound | null {
   if (!strike.ok || strike.ownerMs === null) return null
   const parts: [string, number][] = []
   if (strike.hostMs !== null) parts.push(['the host to the page', strike.hostMs])
+  const sentAt = strike.sentAt, ownerMs = strike.ownerMs
+  const pair = engine && sentAt !== undefined
+    ? engine.strikes?.find(e => e.sent_at_ms >= sentAt - PAIR_SLACK_MS && e.sent_at_ms <= sentAt + ownerMs + PAIR_SLACK_MS) : undefined
+  if (engine && pair) {
+    parts.push(['the page\'s queue', strike.queuedMs], ['the page to the engine', Math.max(0, pair.sent_at_ms - sentAt!)],
+      ['the engine, to its sound', pair.ms], ['the device\'s output', engine.output_latency_ms])
+    return {ms: Math.round(parts.reduce((sum, [, ms]) => sum + ms, 0) * 100) / 100, parts,
+      unmeasured: strike.hostMs !== null ? ['the controller to the host'] : [], engine: pair}
+  }
   parts.push(['the page\'s queue', strike.queuedMs], ['the owner\'s strike', strike.ownerMs])
   if (engine) parts.push(['the engine\'s block, at worst', engine.block_ms], ['the device\'s output', engine.output_latency_ms])
   const unmeasured = [...(strike.hostMs !== null ? ['the controller to the host'] : []),
@@ -249,8 +273,8 @@ export interface JankoInputOptions {
   readonly window?: () => JankoWindowState | null
   /** The part's input settings. Defaults to the manual's. */
   readonly settings?: () => KeyboardSettings
-  /** What the part plays, as MIDI, in the order it is played. */
-  readonly midiOut?: (messages: readonly MidiOutMessage[]) => void
+  /** What the part plays, as MIDI, in the order it is played: at once, or `afterMs` from now, when a clip's note sounds. */
+  readonly midiOut?: (messages: readonly MidiOutMessage[], afterMs?: number) => void
   /** The page's monotonic clock and the wall clock (both in ms), for the measurement hook. */
   readonly now?: () => number
   readonly wallNow?: () => number
@@ -302,11 +326,13 @@ export interface JankoInput {
   latency(): readonly KeyLatency[]
   /** A clip's note-ons, one act at one strength, landing at the owner's sample `at` (DLW §21.2 "A note in a clip | Its key's point, as
    * the clip plays"). Each note strikes the key a MIDI note of its number strikes and is held by its hold until clipRelease; a key a press
-   * or the clip already sounds is struck again and held by both. Settles with the owner's answer, or the refusal when there is no surface. */
-  clipStrike(notes: readonly ClipHold[], amplitude: number, at: string): Promise<StageResult>
+   * or the clip already sounds is struck again and held by both. Settles with the owner's answer, or the refusal when there is no surface.
+   * `sounds`: ms from now until the sample sounds; each note of a MIDI number then leaves as MIDI that long from now (O-I #853 round 22). */
+  clipStrike(notes: readonly ClipHold[], amplitude: number, at: string, sounds?: number): Promise<StageResult>
   /** The clip lets these holds go (a note's length ended, or Stop): each note sounds on only while a press or another hold keeps it. A hold
-   * whose note made way, or that Panic let go, is owed nothing. */
-  clipRelease(holds: readonly string[]): void
+   * whose note made way, or that Panic let go, is owed nothing. `sounds`: ms from now until the end sounds, when its note-off leaves; none
+   * (Stop) leaves at once, and the host holds it behind its note-on. */
+  clipRelease(holds: readonly string[], sounds?: number): void
   /** A touch of the hand on the notes it holds (O-I #853; DLW §21.2 The keyboard: "Velocity and pressure set how hard each point is
    * struck"; §21.4 Rules: "Pressure or bend on a held note moves the sound. It does not change the tuning"): `kind`'s `amount` (pressure
    * 0 to 1; bend −1 to 1, its force either way from rest) on the notes the presses of `source` hold (of `press` alone, where named, as a
@@ -370,7 +396,10 @@ export function createJankoInput(options: JankoInputOptions): JankoInput {
 
   const heldClasses = () => [...new Set([...presses.values()].map(press => press.pitchClass))].sort((a, b) => a - b)
   const changed = () => { options.onHeld?.(heldClasses()); options.onChange?.() }
-  const out = (messages: MidiOutMessage[]) => { if (messages.length > 0) options.midiOut?.(messages) }
+  const out = (messages: MidiOutMessage[], afterMs?: number) => { if (messages.length > 0) options.midiOut?.(messages, afterMs) }
+  const velocityOf = (amplitude: number) => Math.max(1, Math.min(127, Math.round(amplitude * 127)))
+  /** A note of a MIDI number, which can leave as MIDI. */
+  const numbered = (note: Note) => note.note >= 0 && note.note <= 127
   const sustaining = () => settings().sustain || pedalDown
   const schedule = () => { if (!flushing) { flushing = true; queueMicrotask(flush) } }
   /** The note sounding on `key`, whoever holds it: the owner counts one note a key. */
@@ -394,19 +423,20 @@ export function createJankoInput(options: JankoInputOptions): JankoInput {
     note.act = act.seq
     note.played = true
     options.onNote?.({kind: 'on', id: note.id, note: note.note, key: note.key, touch, amplitude, source, at: now()})
-    if (note.note >= 0 && note.note <= 127) {
-      out([{kind: 'on', channel: OUT_CHANNEL, note: note.note, velocity: Math.max(1, Math.min(127, Math.round(amplitude * 127)))}])
+    if (numbered(note)) {
+      out([{kind: 'on', channel: OUT_CHANNEL, note: note.note, velocity: velocityOf(amplitude)}])
       note.out = true
     }
     schedule()
   }
-  const release = (note: Note) => {
+  /** Let the note go at the owner; its note-off leaves at once, or `afterMs` from now when a clip's end sounds then. */
+  const release = (note: Note, afterMs?: number) => {
     gone(note)
     const last = queue.at(-1)
     const act = last?.kind === 'release' && last.keys.size < MAX_KEYS ? last : {kind: 'release' as const, keys: new Map<string, StageKey>()}
     if (act !== last) queue.push(act)
     act.keys.set(keyId(note.key), note.key)
-    if (note.out) out([{kind: 'off', channel: OUT_CHANNEL, note: note.note, velocity: 0}])
+    if (note.out) out([{kind: 'off', channel: OUT_CHANNEL, note: note.note, velocity: 0}], afterMs)
     schedule()
   }
   /** The owner named notes that made way: they no longer sound, so they are let go here too (no release is owed for them). A key this
@@ -452,9 +482,10 @@ export function createJankoInput(options: JankoInputOptions): JankoInput {
         }, cause => answered(failed(cause)))
         continue
       }
-      const sentAt = now()
+      const sentAt = now(), sentWall = wallNow()
       const timed = (ok: boolean) => {
-        timings.push({sources: [...act.sources], keys: keys.length, pressedAt: act.pressedAt, queuedMs: sentAt - act.pressedAt, ownerMs: now() - sentAt, hostMs: act.hostMs, ok})
+        timings.push({sources: [...act.sources], keys: keys.length, pressedAt: act.pressedAt, queuedMs: sentAt - act.pressedAt, ownerMs: now() - sentAt, hostMs: act.hostMs, ok,
+          sentAt: sentWall})
         if (timings.length > LATENCY_KEPT) timings.splice(0, timings.length - LATENCY_KEPT)
       }
       void options.send({command: 'janko', action: 'strike', keys, amplitude: act.amplitude}).then(result => {
@@ -465,8 +496,9 @@ export function createJankoInput(options: JankoInputOptions): JankoInput {
     }
   }
 
-  /** Notes struck and held by their holds, in acts of their own at the sample `at` (none: the owner's own cursor). */
-  function holdStrike(clipNotes: readonly ClipHold[], amplitude: number, at: string | undefined): Promise<StageResult> {
+  /** Notes struck and held by their holds, in acts of their own at the sample `at` (none: the owner's own cursor); each of a MIDI number
+   * leaves as MIDI `sounds` ms from now, when its sample sounds (none: nothing leaves). */
+  function holdStrike(clipNotes: readonly ClipHold[], amplitude: number, at: string | undefined, sounds?: number): Promise<StageResult> {
     const state = windowOf()
     const keys = state?.ok ? surfaceKeys(state.window) : null
     // A key of its own needs no window: only a note the path must find a key for does.
@@ -491,6 +523,11 @@ export function createJankoInput(options: JankoInputOptions): JankoInput {
       if (!struck.includes(target)) struck.push(target)
     }
     if (struck.length === 0) return Promise.resolve({ok: true})
+    if (sounds !== undefined && Number.isFinite(sounds)) {
+      const leaving = struck.filter(numbered)
+      out(leaving.map(note => ({kind: 'on' as const, channel: OUT_CHANNEL, note: note.note, velocity: velocityOf(amplitude)})), Math.max(0, sounds))
+      for (const note of leaving) note.out = true
+    }
     let waiting = Math.ceil(struck.length / MAX_KEYS)
     let first: StageResult | null = null
     const answer = new Promise<StageResult>(resolve => {
@@ -510,15 +547,19 @@ export function createJankoInput(options: JankoInputOptions): JankoInput {
     options.onChange?.()
     return answer
   }
-  /** The holds let go: each note sounds on only while a press or another hold keeps it. */
-  function holdRelease(gone: readonly string[]): void {
+  /** The holds let go: each note sounds on only while a press or another hold keeps it; a note-off leaves `sounds` ms from now (none: at
+   * once). */
+  function holdRelease(gone: readonly string[], sounds?: number): void {
     let moved = false
     for (const hold of gone) {
       const id = holds.get(hold)
       holds.delete(hold)
       const note = id === undefined ? undefined : notes.get(id)
       if (!note || !note.clips.delete(hold)) continue
-      if (unheld(note) && !(note.lifted !== null && sustaining())) { release(note); moved = true }
+      if (unheld(note) && !(note.lifted !== null && sustaining())) {
+        release(note, sounds !== undefined && Number.isFinite(sounds) ? Math.max(0, sounds) : undefined)
+        moved = true
+      }
     }
     if (moved) options.onChange?.()
   }
@@ -634,7 +675,7 @@ export function createJankoInput(options: JankoInputOptions): JankoInput {
       schedule()
       return true
     },
-    clipStrike: (clipNotes, amplitude, at) => holdStrike(clipNotes, amplitude, at),
+    clipStrike: (clipNotes, amplitude, at, sounds) => holdStrike(clipNotes, amplitude, at, sounds),
     clipRelease: holdRelease,
     ring(pitchClass, amplitude) {
       if (!Number.isInteger(pitchClass) || pitchClass < 0 || pitchClass > 11) return Promise.resolve({ok: false, error: NO_BELL_NOTE})

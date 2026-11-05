@@ -327,6 +327,33 @@ test('key-to-sound is joined from the parts that exist, each named, and the part
   assert.match(part, /keyToSoundLine\(/, 'and the part\'s input reports the last strike\'s')
 })
 
+test('with the engine\'s pair for the strike the host sent it, key-to-sound is measured to the engine\'s sound, no longer bounded (O-I #849 round 22)', async () => {
+  // DLW build ruling 2026-11-05: "Key-to-sound latency on the candidate: build the measurement the walk will read, a host-side timestamp
+  // pair per strike reported through the engine's own readout" (live_engine_host.rs latency `strikes`).
+  const strike = {sources: ['midi'], keys: 1, pressedAt: 1000, queuedMs: 0.5, ownerMs: 7, hostMs: 12, ok: true, sentAt: 50_000}
+  const pair = {track: 1, frame: 4800, sent_at_ms: 50_003, sounds_at_ms: 50_014.5, ms: 11.5}
+  const engine = {block_frames: 480, block_ms: 10, longest_wait_ms: 3, output_latency_ms: 25,
+    strikes: [{...pair, sent_at_ms: 49_990, sounds_at_ms: 50_001, ms: 11}, pair, {...pair, sent_at_ms: 50_020, sounds_at_ms: 50_030, ms: 10}]}
+  const joined = input.keyToSound(strike, engine)
+  assert.deepEqual(joined.parts, [['the host to the page', 12], ['the page\'s queue', 0.5], ['the page to the engine', 3],
+    ['the engine, to its sound', 11.5], ['the device\'s output', 25]], 'the host sent it to the engine while the owner struck it')
+  assert.equal(joined.ms, 52)
+  assert.deepEqual(joined.unmeasured, ['the controller to the host'])
+  assert.deepEqual(joined.engine, pair, 'with the host\'s pair it was joined with')
+  assert.match(input.keyToSoundLine(joined), /^Key to sound: 52 ms \(the host to the page 12 · the page's queue 0\.5 · the page to the engine 3 · the engine, to its sound 11\.5 · the device's output 25\); not measured: the controller to the host\.$/)
+  // A pair the host sent outside the owner's strike is another strike's: none is joined, and the bound stands.
+  const bounded = input.keyToSound(strike, {...engine, strikes: [{...pair, sent_at_ms: 50_009}]})
+  assert.deepEqual(bounded, input.keyToSound(strike, {block_frames: 480, block_ms: 10, longest_wait_ms: 3, output_latency_ms: 25}))
+  assert.equal(bounded.engine, undefined)
+  // The path keeps when each act was sent, on the wall clock the host's pairs are on.
+  let clock = 1000
+  const o = owner()
+  const p = input.createJankoInput({send: async command => { clock += 7; return o.send(command) }, window: () => windowState, now: () => clock, wallNow: () => 50_000})
+  p.down({kind: 'down', pitchClass: 0, source: 'keyboard'})
+  await tick()
+  assert.equal(p.latency()[0].sentAt, 50_000)
+})
+
 test('the host\'s note carries when it was received, and the note event keeps it for the measurement', () => {
   const event = midi.midiNoteEvent({port: 'Keys', channel: 0, note: 60, velocity: 100, on: true, received_ms: 1700000000123.5})
   assert.equal(event.receivedAt, 1700000000123.5)

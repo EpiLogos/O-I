@@ -622,6 +622,10 @@ pub struct Track {
     /// overlapping, and the first that has not ended by the last frame mixed.
     samples: Vec<LaidSample>,
     next_sample: usize,
+    /// The takes frozen on it ([`Track::freeze`], O-I #849 round 22), in order, none overlapping, and the first that has
+    /// not ended by the last frame mixed: while one sounds, it is what the part's chain makes.
+    frozen: Vec<LaidSample>,
+    next_frozen: usize,
     /// The instrument of a MIDI track; `None` on an audio track.
     pub instrument: Option<Box<dyn Instrument>>,
     /// The devices after the instrument on its rack's chain ([`RackDevice`]), before the part's own
@@ -696,6 +700,8 @@ impl Track {
             source: Vec::new(),
             samples: Vec::new(),
             next_sample: 0,
+            frozen: Vec::new(),
+            next_frozen: 0,
             instrument: None,
             rack: Vec::new(),
             group: None,
@@ -788,6 +794,44 @@ impl Track {
     /// The samples laid on the part, in their order on the timeline.
     pub fn samples(&self) -> &[LaidSample] {
         &self.samples
+    }
+
+    /// Freeze takes on the part in place of those frozen there, at `frame` (O-I #849 round 22; DLW build ruling 2026-11-05:
+    /// "A rendered take is a frozen take", as Live's Freeze Track does): each is the part's chain as the take made it,
+    /// rendered — its instrument, the Torus's effects as they moved and the part's own devices — and while one sounds the part
+    /// makes it in place of what its chain makes; past its end the part's chain is heard again, as a clip returns at its
+    /// end. Its volume, pan, sends and group stay the part's, as a frozen track's mixer does. Laid by [`samples_laid`] first,
+    /// as on an audio part; those it replaced come back in `frozen`, to be dropped off the audio thread. Allocation-free.
+    pub fn freeze(&mut self, frozen: &mut Vec<LaidSample>, frame: u64) {
+        std::mem::swap(&mut self.frozen, frozen);
+        self.next_frozen = self.frozen.partition_point(|s| s.end() <= frame);
+    }
+
+    /// The takes frozen on the part, in their order on the timeline.
+    pub fn frozen(&self) -> &[LaidSample] {
+        &self.frozen
+    }
+
+    /// Where a take frozen on the part sounds at `frame`, put it in `out` (the part's channels) in place of what its chain
+    /// made; elsewhere `out` is left as the chain made it. Allocation-free, as [`Track::sample_into`] finds its sample.
+    fn frozen_into(&mut self, frame: u64, out: &mut [f32]) {
+        if self.frozen.is_empty() {
+            return;
+        }
+        if self.next_frozen > 0 && self.frozen[self.next_frozen - 1].end() > frame {
+            self.next_frozen = self.frozen.partition_point(|s| s.end() <= frame);
+        }
+        while self
+            .frozen
+            .get(self.next_frozen)
+            .is_some_and(|s| s.end() <= frame)
+        {
+            self.next_frozen += 1;
+        }
+        if let Some(s) = self.frozen.get(self.next_frozen).filter(|s| s.at <= frame) {
+            out.iter_mut().for_each(|o| *o = 0.0);
+            s.sound_into(frame, out);
+        }
     }
 
     /// Add the laid sample that sounds at `frame` (if one does) into `out` (the part's channels).
@@ -1173,6 +1217,17 @@ impl Graph {
         true
     }
 
+    /// Freeze `frozen` on part `track` in place of the takes frozen there, at `frame` ([`Track::freeze`], O-I #849 round
+    /// 22; [`crate::EngineHandle::freeze`]); those it replaced come back in `frozen`. Answers whether the part is there
+    /// (otherwise `frozen` comes back as it was). Allocation-free.
+    pub fn freeze(&mut self, track: usize, frozen: &mut Vec<LaidSample>, frame: u64) -> bool {
+        let Some(t) = self.tracks.get_mut(track) else {
+            return false;
+        };
+        t.freeze(frozen, frame);
+        true
+    }
+
     /// Live's loader rules the engine relies on: no part has more sends
     /// than the set has return tracks, and there are at most
     /// [`MAX_RETURNS`]. ENGINE DECISION (the loader's words name only the
@@ -1324,6 +1379,32 @@ impl Graph {
         remade: Vec<(u64, Part, usize, Box<dyn Device>)>,
         relaid: Vec<(u64, usize, Vec<LaidSample>)>,
     ) -> Vec<f32> {
+        self.render_performance_frozen(
+            sample_rate,
+            performance,
+            installs,
+            racks,
+            remade,
+            relaid,
+            Vec::new(),
+        )
+    }
+
+    /// [`Graph::render_performance_relaid`] with the takes frozen on parts while the engine played
+    /// ([`crate::EngineHandle::freeze`], O-I #849 round 22): each `(frame, track, frozen)` is frozen on its part at the
+    /// frame the engine froze it there ([`crate::EngineHandle::relaid`]), after that frame's samples laid again and before
+    /// its events, as the audio callback does at a block's start.
+    #[allow(clippy::too_many_arguments)]
+    pub fn render_performance_frozen(
+        self,
+        sample_rate: u32,
+        performance: &Performance,
+        installs: Vec<(u64, usize, Box<dyn Instrument>)>,
+        racks: Vec<(u64, usize, Vec<RackDevice>)>,
+        remade: Vec<(u64, Part, usize, Box<dyn Device>)>,
+        relaid: Vec<(u64, usize, Vec<LaidSample>)>,
+        frozen: Vec<(u64, usize, Vec<LaidSample>)>,
+    ) -> Vec<f32> {
         self.rendered(
             sample_rate,
             performance,
@@ -1331,6 +1412,7 @@ impl Graph {
             racks,
             remade,
             relaid,
+            frozen,
             None,
         )
         .samples
@@ -1357,6 +1439,7 @@ impl Graph {
             racks,
             remade,
             Vec::new(),
+            Vec::new(),
             Some(ring),
         )
     }
@@ -1371,6 +1454,7 @@ impl Graph {
         mut racks: Vec<(u64, usize, Vec<RackDevice>)>,
         mut remade: Vec<(u64, Part, usize, Box<dyn Device>)>,
         mut relaid: Vec<(u64, usize, Vec<LaidSample>)>,
+        mut frozen: Vec<(u64, usize, Vec<LaidSample>)>,
         ring: Option<RingOut>,
     ) -> RungOut {
         self.sample_rate = sample_rate;
@@ -1399,6 +1483,8 @@ impl Graph {
         let mut remade = remade.into_iter().peekable();
         relaid.sort_by_key(|(frame, ..)| *frame);
         let mut relaid = relaid.into_iter().peekable();
+        frozen.sort_by_key(|(frame, ..)| *frame);
+        let mut frozen = frozen.into_iter().peekable();
         let frames = performance.frames as usize;
         let mut out = vec![0f32; frames * 2];
         let mut clock = Clock::start(sample_rate, self.tempo_bpm);
@@ -1424,6 +1510,16 @@ impl Graph {
                     .and_then(|t| samples_laid(&t.name, t.is_midi(), samples).ok());
                 if let Some(mut samples) = laid {
                     self.lay(track, &mut samples, i as u64);
+                }
+            }
+            while let Some((_, track, takes)) = frozen.next_if(|(f, ..)| *f <= i as u64) {
+                // frozen in order as the engine freezes them (EngineHandle::freeze); what it refuses, it never froze
+                let made = self
+                    .tracks
+                    .get(track)
+                    .and_then(|t| samples_laid(&t.name, false, takes).ok());
+                if let Some(mut takes) = made {
+                    self.freeze(track, &mut takes, i as u64);
                 }
             }
             while let Some(e) = events.next_if(|e| e.frame <= i as u64) {
@@ -1720,6 +1816,9 @@ impl Graph {
             for d in track.devices.iter_mut() {
                 d.process(&mut frame[..channels], clock);
             }
+            // a take frozen on the part sounds in place of its chain while it lasts (O-I #849 round 22); the chain runs
+            // under it, so a tail resumes past it where it would have been
+            track.frozen_into(clock.sample, &mut frame[..channels]);
             // the chain runs whether or not the part is heard (a tail
             // resumes where it would have been)
             if !track.active || (soloing && !track.solo && !soloed_from(&self.groups, track.group))

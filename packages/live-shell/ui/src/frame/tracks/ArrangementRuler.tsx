@@ -480,17 +480,26 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
       </div>,
       ...under.takes.map(take => takeLane(take, colourOf(track))),
       ...under.automation.map(lane => {
-        const points = automationPoints(lane, clipId => placed.find(p => p.clip.id === clipId)?.start)
+        const points = automationPoints(lane, clipId => placed.find(p => p.clip.id === clipId)?.start, range.end)
         const line = points.map(point => `${percentOf(point.at, range).toFixed(3)},${(100 - Math.min(1, Math.max(0, point.value)) * 100).toFixed(3)}`).join(' ')
-        const reenable = set.actions?.reenable
-        const key = `reenable:${lane.id}`
-        return <div key={`auto:${lane.id}`} className="tl-lane tl-auto" data-automation={lane.id} data-overridden={lane.overridden ? 'true' : undefined} style={colourOf(track)}>
-          <span className="tl-head tl-auto-head" title={`${lane.device} / ${lane.parameter}${lane.range ? ` · ${lane.range.min} – ${lane.range.max}` : ''}${lane.modulatedBy ? ` · moved by ${lane.modulatedBy}` : ''}${points.length ? ` · ${points.length} points` : ' · no points on this ruler'}`}>
-            <span className="tl-lane-name">{lane.device} / {lane.parameter}</span>
+        const reenable = set.actions?.reenable, unfreeze = set.actions?.unfreeze
+        const key = `reenable:${lane.id}`, frozenKey = `frozen:${lane.id}`, unfreezeKey = `unfreeze:${lane.id}`
+        const frozen = lane.frozen
+        const receiptOf = (at: string) => receipt?.key === at ? (receipt.ok ? 'ok' : 'refused') : undefined
+        return <div key={`auto:${lane.id}`} className="tl-lane tl-auto" data-automation={lane.id} data-overridden={lane.overridden ? 'true' : undefined} data-frozen={frozen ? 'true' : undefined} style={colourOf(track)}>
+          <span className="tl-head tl-auto-head" title={`${lane.device} / ${lane.parameter}${lane.range ? ` · ${lane.range.min} – ${lane.range.max}` : ''}${lane.modulatedBy ? ` · moved by ${lane.modulatedBy}` : ''}${points.length ? ` · ${points.length} points` : ' · no points on this ruler'}${frozen ? ` · ${frozen}` : ''}`}>
+            {/* A frozen take's lane (O-I #849 round 22): touched, it says the take is frozen, in words, and Unfreeze stands beside it. */}
+            {frozen
+              ? <button type="button" className="tl-lane-name tl-frozen" data-receipt={receiptOf(frozenKey)} title={frozen}
+                onClick={() => onPress(frozenKey, `${lane.device} / ${lane.parameter}`, () => ({ok: true, note: frozen}))}>{lane.device} / {lane.parameter}</button>
+              : <span className="tl-lane-name">{lane.device} / {lane.parameter}</span>}
             {lane.modulatedBy && <small className="tl-mod">{lane.modulatedBy}</small>}
-            {lane.overridden && <button type="button" className="tl-reenable lit" disabled={!reenable} data-receipt={receipt?.key === key ? (receipt.ok ? 'ok' : 'refused') : undefined}
+            {lane.overridden && <button type="button" className="tl-reenable lit" disabled={!reenable} data-receipt={receiptOf(key)}
               title={reenable ? `Re-enable: give ${lane.parameter} back to its lane (${reenable.op})` : 'Re-enable: the owner gives no op that gives the value back'}
               onClick={() => { if (reenable) onPress(key, `Re-enable ${lane.parameter}`, () => reenable.run(lane.id)) }}>Re-enable</button>}
+            {frozen && <button type="button" className="tl-reenable lit" disabled={!unfreeze} data-receipt={receiptOf(unfreezeKey)}
+              title={unfreeze ? `Unfreeze: ${lane.device}'s part plays its live Torus again (${unfreeze.op})` : 'Unfreeze: the owner gives no op that lets the frozen take go'}
+              onClick={() => { if (unfreeze) onPress(unfreezeKey, `Unfreeze ${lane.device}`, () => unfreeze.run(lane.id)) }}>Unfreeze</button>}
           </span>
           <div className="tl-body">
             {lane.modulatedBy && !points.length && <span className="tl-mod-band" aria-hidden="true" />}
