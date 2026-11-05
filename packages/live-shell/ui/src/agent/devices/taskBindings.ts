@@ -9,7 +9,9 @@
 // unit: Factory names the units a task stands on (factory_owner attempt-task-units), so Retry reads them and retries the task's unit
 // (retryTask), and Stop after asks the unit its current attempt stands on to stop (stopAfterTask); Launch starts the unit Factory names
 // for the task (its custody of the work, else the one unit its attempts stand on) on the model AIKit realises on the task's session
-// (launchTask: aikit_write realise, then factory_owner attempt-launch, O-I 842 round 23). The per-task
+// (launchTask: aikit_write realise, then factory_owner attempt-launch, O-I 842 round 23), pressed where the task stands: its clip's ▶
+// in the Session grid and the Agent rack's Launch (agent/factoryTaskActs.ts launchSessionTask; the Tasks device's own launch port is
+// retired, O-I 804 round 24). The per-task
 // settings (Mode, Then, Effort, Autonomy, Register, Form here; every setting of the Clip view through TASK_SEAMS) are the
 // session's settings on their owner, AIKit's `encounter-session-settings` (kernel encounter_session_settings, agent/sessionSettings.ts),
 // written against the revision that stands. The task's log is not read: the temporal stream names the session, not the task's
@@ -62,8 +64,11 @@ const put = (values: Record<string, Value>, key: string, value: Value | null | u
 // that carries it, O-I ticket 842 rounds 21 to 23; launchTask). harness_agent_control addresses the whole bound harness, never one task.
 // REPLACED (BD r23): "Launch: Software Factory has no way yet to start a unit from its owners' readings": Factory starts one (round 21) and
 // AIKit realises the session's own model for it (round 22), so Launch stands with its carrier and names it without one.
+// REPLACED (BD r24, O-I 804): "Launch: no carrier to AIKit's realisation and Factory's attempt-launch stands here". No screen has drawn the
+// Tasks device since ticket 725, so its launch port (TasksPorts.launch) was never pressed: it is retired, and Launch names where a task is
+// launched, its clip's ▶ in the Session grid and the Agent rack's Launch, both launchTask (agent/factoryTaskActs.ts launchSessionTask).
 export const TASKS_REFUSE: Readonly<Record<string, string>> = {
-  launch: 'Launch: no carrier to AIKit\'s realisation and Factory\'s attempt-launch stands here, so the task\'s unit cannot be started (AIKit, Software Factory).',
+  launch: 'Launch: a task launches where it stands: its clip\'s ▶ in the Session grid, or the Agent rack\'s Launch on its chain, each starting the unit Software Factory names for it on the model AIKit realises (launchTask). The Tasks device starts none.',
   retry: 'Retry: no carrier to Factory\'s attempt-task-units and attempt-retry stands here, so the task\'s unit cannot be read or retried (Software Factory).',
   stopAfter: 'Stop after: no carrier to Factory\'s attempt-task-units and attempt-request-cancellation stands here, so the task\'s unit cannot be read or stopped (Software Factory).',
 }
@@ -109,29 +114,32 @@ export async function retryTask(owner: (request: FactoryOwnerRequest) => Promise
   throw Error(answer?.status === 'uncertain' ? `Factory did not answer and may have run: ${words} Read the Run again before retrying.` : words)
 }
 
+/** Why a Stop after stops nothing because no attempt of the task is current (a task Factory runs no attempt of). */
+export const STOP_NONE_CURRENT = (taskRef: string) => `Stop after: no attempt of ${taskRef} is current on any unit (\`factory attempt units\`), so there is nothing to stop.`
+
 /** The one unit a task's Stop after addresses: the unit the task's current attempt stands on (its `currentAttemptRef`, which Factory names
  * only where the current attempt is the task's); or the refusal in words — none current is nothing to stop, and Factory stops one unit at a
  * time, so a task current on several says which they are. Pure. */
 export function stopTargetOf(units: readonly FactoryTaskUnit[], taskRef: string): FactoryTaskUnit | {refused: string} {
   const current = units.filter(unit => unit.currentAttemptRef)
   if (current.length === 1) return current[0]!
-  if (!current.length) return {refused: `Stop after: no attempt of ${taskRef} is current on any unit (\`factory attempt units\`), so there is nothing to stop.`}
+  if (!current.length) return {refused: STOP_NONE_CURRENT(taskRef)}
   const named = current.map(unit => `${unit.runRef} · ${unit.workflowUnitRef}`)
   return {refused: `Stop after: ${taskRef} stands current on ${named.length} units (${named.join(', ')}); Factory stops one unit at a time, so stop the one you mean from the Run map.`}
 }
 
 /** A task's Stop after through Factory: the units it stands on read (factory_owner attempt-task-units), then the unit its current attempt
  * stands on asked to stop (attempt-request-cancellation; kernel factory_retry.rs, the answer an oi.factory-attempt-cancellation/v1). It stops
- * no process: Factory's lifecycle takes the request. Cancel-requested or already-requested stands; refused or uncertain is thrown in
- * Factory's words (or the driver's, named as such). `owner` is the kernel's factory_owner (ownerRoutes.ts factoryOwnerWrite). */
-export async function stopAfterTask(owner: (request: FactoryOwnerRequest) => Promise<unknown>, statePath: string, taskRef: string): Promise<void> {
+ * no process: Factory's lifecycle takes the request. Cancel-requested or already-requested stands, answering the unit asked; refused or uncertain
+ * is thrown in Factory's words (or the driver's, named as such). `owner` is the kernel's factory_owner (ownerRoutes.ts factoryOwnerWrite). */
+export async function stopAfterTask(owner: (request: FactoryOwnerRequest) => Promise<unknown>, statePath: string, taskRef: string): Promise<FactoryTaskUnit> {
   const units = taskUnitsOf(await owner({kind: 'attempt-task-units', state_path: statePath, task_ref: taskRef}))
   if (!units) throw Error(`Stop after: \`factory attempt units\` answered something other than its units of ${taskRef}.`)
   const target = stopTargetOf(units, taskRef)
   if ('refused' in target) throw Error(target.refused)
   const answer = await owner({kind: 'attempt-request-cancellation', state_path: statePath, run_ref: target.runRef, workflow_unit_ref: target.workflowUnitRef}) as
     Partial<FactoryAttemptCancellation> | null
-  if (answer?.status === 'cancel-requested' || answer?.status === 'already-requested') return
+  if (answer?.status === 'cancel-requested' || answer?.status === 'already-requested') return target
   if ((answer?.status === 'refused' || answer?.status === 'uncertain') && typeof answer.refusal?.message === 'string') throw Error(answer.refusal.message)
   throw Error(`Stop after: Factory answered without its cancellation of ${target.runRef} · ${target.workflowUnitRef}.`)
 }
@@ -375,8 +383,6 @@ export interface TasksPorts {
   readonly retry?: (sessionRef: string) => Promise<void>
   /** Stop after: the session's bound task's current unit asked to stop through Factory (stopAfterTask). Absent: no carrier stands. */
   readonly stopAfter?: (sessionRef: string) => Promise<void>
-  /** Launch: the session's bound task's unit started through AIKit and Factory (launchTask). Absent: no carrier stands. */
-  readonly launch?: (sessionRef: string) => Promise<unknown>
 }
 
 export function tasksBinding(input: TasksInput, agent: Pick<DesignBinding, 'write'> | null, ports: TasksPorts): DesignBinding {
@@ -384,8 +390,7 @@ export function tasksBinding(input: TasksInput, agent: Pick<DesignBinding, 'writ
   return {
     id: TASKS_ID,
     values: tasksValues(input),
-    standing: {...disabled(Object.fromEntries(Object.entries(TASKS_REFUSE).filter(([key]) => !(key === 'retry' && ports.retry) && !(key === 'stopAfter' && ports.stopAfter)
-      && !(key === 'launch' && ports.launch)))), ...(settingsWhy ? Object.fromEntries(TASKS_DEVICE_SETTINGS.map(key => [key, {disabled: settingsWhy}])) : {})},
+    standing: {...disabled(Object.fromEntries(Object.entries(TASKS_REFUSE).filter(([key]) => !(key === 'retry' && ports.retry) && !(key === 'stopAfter' && ports.stopAfter)))), ...(settingsWhy ? Object.fromEntries(TASKS_DEVICE_SETTINGS.map(key => [key, {disabled: settingsWhy}])) : {})},
     local: {task: value => { const n = typeof value === 'number' ? value : Number(value); if (Number.isSafeInteger(n) && n >= 1) ports.selectTask(n) }},
     writes: key => key === 'quantize' || key === 'newTask' || key in TASKS_REFUSE || isDeviceSetting(key),
     write: async (changes: readonly ValueChange[]) => {
@@ -415,11 +420,6 @@ export function tasksBinding(input: TasksInput, agent: Pick<DesignBinding, 'writ
         if (key === 'retry' && ports.retry) {
           if (!input.session) throw Error('Retry: no session is selected, so no task is named to retry.')
           await ports.retry(input.session.sessionRef)
-          continue
-        }
-        if (key === 'launch' && ports.launch) {
-          if (!input.session) throw Error('Launch: no session is selected, so no task is named to start.')
-          await ports.launch(input.session.sessionRef)
           continue
         }
         if (key === 'stopAfter' && ports.stopAfter) {

@@ -386,10 +386,13 @@ test('(BD r23) Launch stands on the chosen chain\'s task row: its carrier starts
   assert.match(face, /can = !!chosen && chosen\.state !== 'working'/, 'it lights while the chain is not at work')
   assert.match(face, /label="Launched"/)
   // The chain wires the carrier: the chosen chain's bound task, AIKit's model reading and catalogue, the realisation and Factory's launch.
+  // REPLACED (BD r24, O-I 804): the rack built launchTask's ports inline. They are the one task Launch now (agent/factoryTaskActs.ts
+  // launchSessionTask), which the Session grid's ▶ on a Factory task presses too.
   const view = read('agent/devices/FactoryDeviceChain.tsx')
-  assert.match(view, /launchTask\(\{\s*owner: request => factoryOwnerWrite\(transport, request, `factory_owner \$\{request\.kind\}`\),/)
-  assert.match(view, /realise: request => ownerRouteWrite\(transport, aikitWriteOp\(request\), ROUTE_WORDS\.realise\)\.then\(answer => answer\.data\)/)
-  assert.match(view, /taskRef: await boundTaskOf\(transport, project, agent_session, 'Launch'\)/)
+  assert.match(view, /return launchSessionTask\(transport, \{statePath: custodyState, taskRef: await boundTaskOf\(transport, project, agent_session, 'Launch'\), session: agent_session, project\}\)/)
+  const acts = read('agent/factoryTaskActs.ts')
+  assert.match(acts, /launchTask\(\{\s*owner: request => factoryOwnerWrite\(transport, request, `factory_owner \$\{request\.kind\}`\),/)
+  assert.match(acts, /realise: request => ownerRouteWrite\(transport, aikitWriteOp\(request\), ROUTE_WORDS\.realise\)\.then\(answer => answer\.data\)/)
   bind.resetHolds()
 })
 

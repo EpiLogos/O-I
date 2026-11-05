@@ -2175,6 +2175,23 @@ impl Kernel {
         }
     }
 
+    /// This kernel with every cache it holds keeping its readings for at
+    /// least a test's `read_cache::HELD_TTL`: a test that asserts a repeat
+    /// is served from what was retained is then independent of how loaded
+    /// the machine is, the readings' own TTLs unchanged (O-I 795 round 24).
+    #[cfg(test)]
+    pub(crate) fn holding_ttls(mut self) -> Self {
+        self.reads.hold_ttls();
+        self.graph_reads.hold_ttls();
+        for cache in [&self.temporal_reads, &self.agent_reads] {
+            cache
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner())
+                .hold_ttls();
+        }
+        self
+    }
+
     /// A ground bind re-based every path a retained reading was read under:
     /// every cache, and every read in flight, is withdrawn.
     pub(crate) fn ground_changed(&mut self) {
@@ -5467,6 +5484,14 @@ else:
         /// share a counter. The log path is baked into a tiny wrapper so
         /// the count never rides a process environment tests race on.
         pub(crate) fn spawn_counter(test: &str) -> Self {
+            Self::spawn_counter_after(test, None)
+        }
+        /// The same stand-in answering each ask `delay` late: an owner slower
+        /// than a reading's time-to-live, as a loaded machine runs one.
+        pub(crate) fn spawn_slow_counter(test: &str, delay: std::time::Duration) -> Self {
+            Self::spawn_counter_after(test, Some(delay))
+        }
+        fn spawn_counter_after(test: &str, delay: Option<std::time::Duration>) -> Self {
             use std::os::unix::fs::PermissionsExt;
             let stem = format!("oi-cradle-{}-{test}", std::process::id());
             let script = std::env::temp_dir().join(format!("{stem}.py"));
@@ -5476,7 +5501,10 @@ else:
             std::fs::write(
                 &wrapper,
                 format!(
-                    "#!/bin/sh\nFAKE_OWNER_LOG={} exec python3 {} \"$@\"\n",
+                    "#!/bin/sh\n{}FAKE_OWNER_LOG={} exec python3 {} \"$@\"\n",
+                    delay
+                        .map(|delay| format!("sleep {:.3}\n", delay.as_secs_f64()))
+                        .unwrap_or_default(),
                     log.display(),
                     script.display()
                 ),
@@ -5490,19 +5518,26 @@ else:
                 log,
             }
         }
+        /// A kernel over this stand-in, its caches holding every reading
+        /// for a test's `read_cache::HELD_TTL` (`Kernel::holding_ttls`): a
+        /// repeat a test expects served from what was retained is served
+        /// however loaded the machine is (O-I 795 round 24).
         pub(crate) fn kernel(&self) -> Kernel {
             Kernel::new(CentralClient::with(
                 self.executable.clone(),
                 None,
                 "test".into(),
             ))
+            .holding_ttls()
         }
-        /// This Central stand-in beside a given AIKit owner.
+        /// This Central stand-in beside a given AIKit owner, held as
+        /// `kernel` holds it.
         pub(crate) fn kernel_with_agency(&self, agency: agency::Client) -> Kernel {
             Kernel::with_agency(
                 CentralClient::with(self.executable.clone(), None, "test".into()),
                 agency,
             )
+            .holding_ttls()
         }
         /// How many times the named action reached the owner executable.
         pub(crate) fn spawns(&self, action: &str) -> usize {
@@ -5554,6 +5589,32 @@ else:
             owner.spawns("central.files.list"),
             2,
             "the explicit fresh read re-asks the owner"
+        );
+    }
+
+    /// The same repeats from an owner slower than the listing's time-to-live
+    /// (as a loaded machine runs one): the cache's TTL is the test's to hold,
+    /// never the machine's pace (O-I 795 round 24, the load flake of C41).
+    #[cfg(unix)]
+    #[test]
+    fn a_slow_owner_still_answers_repeated_directory_reads_once() {
+        let owner = FakeOwner::spawn_slow_counter(
+            "directory-cache-slow",
+            read_cache::DIR_TTL + std::time::Duration::from_millis(300),
+        );
+        let mut kernel = owner.kernel();
+        for _ in 0..3 {
+            kernel
+                .apply(KernelOp::FilesList {
+                    path: "Work/proj".into(),
+                    fresh: None,
+                })
+                .unwrap();
+        }
+        assert_eq!(
+            owner.spawns("central.files.list"),
+            1,
+            "repeats inside the TTL are one owner read, however slowly it answers"
         );
     }
 
@@ -5641,6 +5702,27 @@ else:
                 .count(),
             1,
             "reads change no kernel state and emit nothing"
+        );
+    }
+
+    /// The same browses with a stall longer than the World's time-to-live
+    /// between them, as a loaded machine stalls a test's thread. The World's
+    /// reading is stamped when it arrives (`world_map` retains it without a
+    /// ticket), so a slow owner spends none of its time; a stall between the
+    /// asks does, and only the test's held TTL keeps the repeat one owner
+    /// read (O-I 795 round 24, the load flake of C41).
+    #[cfg(unix)]
+    #[test]
+    fn a_stalled_ask_still_finds_the_world_browse_retained() {
+        let owner = FakeOwner::spawn_counter("world-cache-stalled");
+        let mut kernel = owner.kernel();
+        kernel.apply(KernelOp::WorldBrowse { fresh: None }).unwrap();
+        std::thread::sleep(read_cache::WORLD_TTL + std::time::Duration::from_millis(300));
+        kernel.apply(KernelOp::WorldBrowse { fresh: None }).unwrap();
+        assert_eq!(
+            owner.spawns("central.world"),
+            1,
+            "repeat browses inside the TTL are one owner read, however long the machine stalls between them"
         );
     }
 
