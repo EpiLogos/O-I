@@ -13,6 +13,11 @@
 //! clip's notes are sent one owner lookahead before they sound, so each send may name how long after the host takes it its messages
 //! leave (`after_ms`, round 22): the host holds them until then (the `oi-midi-out` thread), and no message leaves before one sent earlier
 //! that it follows — of its key, or, for all notes off, of its channel — so a note-off never leaves ahead of its note-on.
+//!
+//! The hold counts from the page's send, not the host's receipt (O-I #849 round 23): a held send names when the page sent it on the
+//! machine's one wall clock (`sent_at_ms`), the host stamps its own receipt on that clock as the command arrives, before it waits for the
+//! output, and holds the batch for what remains of `after_ms` once the way there is taken off; a way longer than the hold sends it at
+//! once, and a page's time read after the host's receipt took none of it.
 
 use std::sync::mpsc::{self, Receiver, Sender};
 use std::sync::{Arc, Condvar, Mutex};
@@ -287,12 +292,16 @@ pub enum OutRequest {
     Read,
     /// Connect the named output, or let the connected one go (`null`).
     Choose { port: Option<String> },
-    /// Send these messages, in order, to the connected output: at once, or `after_ms` after the host takes them (round 22: a clip's
-    /// notes leave when they sound), up to [`OUT_HOLD_MAX_MS`].
+    /// Send these messages, in order, to the connected output: at once, or `after_ms` after the page sent them (round 22: a clip's
+    /// notes leave when they sound; round 23: counted from `sent_at_ms` where it is named), up to [`OUT_HOLD_MAX_MS`].
     Send {
         messages: Vec<OutMessage>,
         #[serde(default)]
         after_ms: Option<f64>,
+        /// When the page sent it, on the machine's wall clock (ms since the epoch): the hold counts from then, the host stamping its own
+        /// receipt beside it (round 23).
+        #[serde(default)]
+        sent_at_ms: Option<f64>,
     },
 }
 
@@ -357,16 +366,39 @@ impl<B: OutBackend> MidiOut<B> {
         }
     }
 
+    /// The request as the host takes it now (the tests' plain form; the command stamps its receipt itself).
+    #[cfg(test)]
     pub fn handle(&mut self, request: OutRequest) -> Result<OutState, String> {
-        self.handle_at(request, Instant::now())
+        self.handle_taken(request, Instant::now(), wall_ms())
     }
 
-    /// The request as the host takes it at `now`.
+    /// The request as the host takes it at `now` (the tests' form for a hold).
+    #[cfg(test)]
     pub fn handle_at(&mut self, request: OutRequest, now: Instant) -> Result<OutState, String> {
+        self.handle_taken(request, now, wall_ms())
+    }
+
+    /// The request as the host takes it at `now`, `wall_ms` on the machine's wall clock: a held send counts its hold from when the page
+    /// sent it (`sent_at_ms`, round 23), less the way there, never below none.
+    pub fn handle_taken(
+        &mut self,
+        request: OutRequest,
+        now: Instant,
+        wall_ms: f64,
+    ) -> Result<OutState, String> {
         match request {
             OutRequest::Read => self.read(),
             OutRequest::Choose { port } => self.choose(port),
-            OutRequest::Send { messages, after_ms } => self.send(&messages, after_ms, now),
+            OutRequest::Send {
+                messages,
+                after_ms,
+                sent_at_ms,
+            } => {
+                let way = sent_at_ms
+                    .filter(|sent| sent.is_finite())
+                    .map_or(0.0, |sent| (wall_ms - sent).max(0.0));
+                self.send(&messages, after_ms, way, now)
+            }
         }
     }
 
@@ -436,14 +468,15 @@ impl<B: OutBackend> MidiOut<B> {
         Ok(self.state())
     }
 
-    /// Send a batch in order, at once or `after_ms` after `now`. A batch with any message MIDI cannot carry, or held past
-    /// [`OUT_HOLD_MAX_MS`], is refused whole, before a byte leaves; an output that refuses a message is let go and named. A message
-    /// leaves no earlier than any held one it follows (of its key, or of its channel where either is all notes off): it is held until
-    /// just after it.
+    /// Send a batch in order, at once or `after_ms` after the page sent it, `way` ms of which went before the host took it at `now`. A
+    /// batch with any message MIDI cannot carry, or held past [`OUT_HOLD_MAX_MS`] as sent, is refused whole, before a byte leaves; an
+    /// output that refuses a message is let go and named. A message leaves no earlier than any held one it follows (of its key, or of its
+    /// channel where either is all notes off): it is held until just after it.
     fn send(
         &mut self,
         messages: &[OutMessage],
         after_ms: Option<f64>,
+        way: f64,
         now: Instant,
     ) -> Result<OutState, String> {
         if let Some(words) = self.lost.take() {
@@ -460,7 +493,7 @@ impl<B: OutBackend> MidiOut<B> {
             ));
         }
         let encoded = messages.iter().map(encode).collect::<Result<Vec<_>, _>>()?;
-        let at = now + Duration::from_secs_f64(after / 1000.0);
+        let at = now + Duration::from_secs_f64((after - way).max(0.0) / 1000.0);
         for (message, bytes) in messages.iter().zip(encoded) {
             let (channel, note) = key_of(message);
             let follows = self
@@ -505,6 +538,8 @@ pub struct MidiOutHost(Arc<(Mutex<MidiOut<backend::Outputs>>, Condvar)>);
 /// leave in the order it made them; a send held for later wakes the thread that sends it.
 #[tauri::command]
 pub fn midi_out(app: AppHandle, request: OutRequest) -> Result<OutState, String> {
+    // The host's receipt, on its monotonic clock and on the wall clock the page names its send by, before it waits for the output.
+    let (taken, taken_wall) = (Instant::now(), wall_ms());
     let host = app
         .try_state::<MidiOutHost>()
         .ok_or_else(|| "MIDI output has not started in this host".to_owned())?;
@@ -512,7 +547,7 @@ pub fn midi_out(app: AppHandle, request: OutRequest) -> Result<OutState, String>
     let mut out = out
         .lock()
         .map_err(|_| "MIDI output stopped after an earlier failure".to_owned())?;
-    let answer = out.handle(request);
+    let answer = out.handle_taken(request, taken, taken_wall);
     wake.notify_one();
     answer
 }
@@ -1281,6 +1316,64 @@ mod tests {
         )
         .unwrap();
         out
+    }
+
+    // O-I #849 round 23 (DLW build ruling 2026-11-05: "Correct the page-to-host skew for `after_ms` … Pick the one the host can prove in a
+    // test"): the page names when it sent a held batch on the machine's wall clock, and the host stamps its own receipt beside it, so a
+    // hold counts from the page's send, not from the host's receipt.
+    #[test]
+    fn a_hold_counts_from_when_the_page_sent_it_the_host_stamping_its_own_receipt_beside_the_pages()
+    {
+        let base = Instant::now();
+        let ms = |n: u64| base + Duration::from_millis(n);
+        let mut out = chosen(base);
+        let on = serde_json::json!([{"kind": "on", "channel": 0, "note": 60, "velocity": 100}]);
+        let off = serde_json::json!([{"kind": "off", "channel": 0, "note": 60, "velocity": 0}]);
+        // Sent at the page's 1,000 ms and taken at the host's 1,030 ms of the one wall clock: 30 ms went on the way, so 20 of the 50 remain.
+        out.handle_taken(
+            request(serde_json::json!({"kind": "send", "after_ms": 50.0, "sent_at_ms": 1_000.0, "messages": on})),
+            base,
+            1_030.0,
+        )
+        .unwrap();
+        assert_eq!(out.due(ms(19)), Some(ms(20)), "held the 20 ms that remain");
+        assert!(
+            sent_bytes(&out).is_empty(),
+            "nothing leaves before its time"
+        );
+        assert_eq!(out.due(ms(20)), None);
+        assert_eq!(sent_bytes(&out), vec![vec![0x90, 60, 100]]);
+        // Longer on the way than it was to be held: it leaves as it is taken.
+        out.handle_taken(
+            request(serde_json::json!({"kind": "send", "after_ms": 50.0, "sent_at_ms": 1_000.0, "messages": off})),
+            ms(30),
+            1_080.0,
+        )
+        .unwrap();
+        assert_eq!(sent_bytes(&out).len(), 2, "already due: it leaves at once");
+        // A page's time read after the host's receipt spent no time on the way: the whole hold, never more.
+        out.handle_taken(
+            request(serde_json::json!({"kind": "send", "after_ms": 40.0, "sent_at_ms": 2_000.0, "messages": on})),
+            ms(40),
+            1_990.0,
+        )
+        .unwrap();
+        assert_eq!(
+            out.due(ms(40)),
+            Some(ms(80)),
+            "the hold as sent, from the receipt"
+        );
+        assert_eq!(out.due(ms(80)), None);
+        // No time of sending: held its `after_ms` from the host's receipt, as before.
+        out.handle_taken(
+            request(serde_json::json!({"kind": "send", "after_ms": 25.0, "messages": off})),
+            ms(100),
+            5_000.0,
+        )
+        .unwrap();
+        assert_eq!(out.due(ms(100)), Some(ms(125)));
+        assert_eq!(out.due(ms(125)), None);
+        assert_eq!(sent_bytes(&out).len(), 4);
     }
 
     #[test]

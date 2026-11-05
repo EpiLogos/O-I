@@ -9,13 +9,13 @@ import {useEffect, type MouseEvent, type ReactNode} from 'react'
 import {slotDataI, slotMeaning} from '../../shell/modeGrammar'
 import {nativeHost} from '../../native/application'
 import {LIVE_MIDI_ABSENT, subscribeLiveMidiControls} from '../../native/liveMidi'
-import {keyboardGate} from '../janko/jankoLayout'
+import {keyboardGate, typingTarget} from '../janko/jankoLayout'
 import {MAP_UNMAPPED, readMapTargets, mapTargetIdsOfEdit} from './midiMapTargets'
 import {createMapRouter} from './midiMapRouter'
-import {applyMapValue, controlsReach, type MapMode, type MapWriter} from './midiMapModel'
+import {TOGGLE_THRESHOLDS, applyMapValue, controlsReach, sourceLabel, type MapBinding, type MapMode, type MapTarget, type MapWriter} from './midiMapModel'
 import {
   bindArmed, clickMapTarget, leaveMapMode, mappingChip, midiMapState, onBindingChanged, pressMapKey, removeArmedMapping, setMapMode,
-  setMapNotice, setMapRefusal, useMidiMap,
+  setMappingSpan, setMapNotice, setMapRefusal, useMidiMap,
 } from './midiMapHold'
 import {subscribeAcceptedLiveWrites, subscribeLiveTorus} from '../torusInstrument'
 import type {AutomatedMove} from '../liveTake'
@@ -84,7 +84,46 @@ export function MidiMapToggles() {
       data-i={slotDataI(midiMeaning)} title={`${midiMeaning.label} — ${midiMeaning.fn}. ${map.mode === 'midi' ? 'Click or Escape leaves MIDI map mode.' : 'Click to map hardware controls; Escape leaves.'}`}
       onClick={() => setMapMode(map.mode === 'midi' ? 'off' : 'midi')}>MIDI</button>
     {map.mode !== 'off' && <output className="midi-map-line" role="status" data-midi-map-mode={map.mode} title={line}>{line}</output>}
+    {map.mode !== 'off' && map.bindings.length > 0 && <MidiMapBrowser bindings={map.bindings} targets={readMapTargets()}/>}
   </>
+}
+
+/** The mapping browser (O-I #853 round 23), as Live shows one in map mode: each mapping's control, its parameter, and the Min and Max its
+ * control runs across (Live's MidiControllerRange), set here: a range's in its own units and step, a choice's as two of its options. A
+ * toggle takes Live's on/off thresholds, which it says. Stateless: each change goes to the hold (setMappingSpan); a field half typed (no
+ * number yet) sets nothing. */
+export function MidiMapBrowser({bindings, targets}: {bindings: readonly MapBinding[]; targets: readonly MapTarget[]}) {
+  const rows = bindings.flatMap(binding => {
+    const target = targets.find(candidate => candidate.id === binding.target)
+    return target ? [{binding, target}] : []
+  })
+  const set = (target: MapTarget, binding: MapBinding, end: 'min' | 'max', raw: string) => {
+    if (target.kind === 'toggle' || raw.trim() === '') return
+    const value = Number(raw)
+    if (!Number.isFinite(value)) return
+    const whole = target.kind === 'choice' ? {min: 0, max: target.options.length - 1} : {min: target.range.min, max: target.range.max}
+    setMappingSpan(target.id, {...(binding.span ?? whole), [end]: value}, targets)
+  }
+  const end = (target: MapTarget, binding: MapBinding, which: 'min' | 'max') => {
+    const label = `${target.label} ${which === 'min' ? 'Min' : 'Max'}`
+    if (target.kind === 'choice') {
+      const index = binding.span?.[which] ?? (which === 'min' ? 0 : target.options.length - 1)
+      return <select aria-label={label} value={index} onChange={event => set(target, binding, which, event.currentTarget.value)}>
+        {target.options.map((option, at) => <option key={option.value} value={at}>{option.label}</option>)}
+      </select>
+    }
+    if (target.kind !== 'range') return null
+    const value = binding.span?.[which] ?? target.range[which]
+    return <input type="number" aria-label={label} min={target.range.min} max={target.range.max} step={target.range.curve === 'log' || !(target.range.step > 0) ? 'any' : target.range.step}
+      key={`${target.id}:${which}:${value}`} defaultValue={value} onChange={event => set(target, binding, which, event.currentTarget.value)}/>
+  }
+  return <table className="midi-map-browser" aria-label="Mappings">
+    <thead><tr><th>Control</th><th>Parameter</th><th>Min</th><th>Max</th></tr></thead>
+    <tbody>{rows.map(({binding, target}) => <tr key={target.id} data-midi-mapping={target.id}>
+      <td>{sourceLabel(binding.source)}</td><td>{target.label}</td>
+      {target.kind === 'toggle' ? <td colSpan={2}>{TOGGLE_THRESHOLDS}</td> : <><td>{end(target, binding, 'min')}</td><td>{end(target, binding, 'max')}</td></>}
+    </tr>)}</tbody>
+  </table>
 }
 
 /** A mappable parameter's frame. Outside map mode it shows its marker and the owner's refusal; in map mode it shows the overlay and takes the
@@ -116,11 +155,6 @@ export function MidiMapTarget({id, writer = 'owner', children}: {id: string; wri
       {refusal !== null && <small className="midi-map-refusal" role="alert" data-midi-refusal={id}>{`Refused by the owner: ${refusal}`}</small>}
     </div>
   )
-}
-
-const isEditable = (target: EventTarget | null): boolean => {
-  const element = target as HTMLElement | null
-  return !!element && (element.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(element.tagName))
 }
 
 /** Where a computer key goes: `leave` the map mode (Escape), `remove` the armed parameter's mapping (Delete, Backspace), `press` a key into
@@ -155,7 +189,7 @@ export function MidiMapHost() {
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       const route = mapKeyRoute({
-        key: event.key, editable: isEditable(event.target), modifier: event.ctrlKey || event.metaKey || event.altKey, repeat: event.repeat,
+        key: event.key, editable: typingTarget(event.target), modifier: event.ctrlKey || event.metaKey || event.altKey, repeat: event.repeat,
         live: liveSurfaceFocused(document.activeElement),
       }, midiMapState().mode)
       if (route === 'ignore') return

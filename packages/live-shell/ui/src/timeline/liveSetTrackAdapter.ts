@@ -293,8 +293,8 @@ export const liveSetTrackAdapter: WorldTrackAdapter<LiveSetReading> = {
     // where the hand holds it, so each has its own Re-enable. A slot's clip has no place on the ruler, so its take's lanes stand where the
     // clip landed on the transport as it plays (O-I #849 round 21: the launch grid's beats, clipPlayer.ts ClipLaneStanding `at`).
     // Every player's take that plays, a row's among them (O-I #849 round 21: clipPlayer.ts liveClipActs `lanes`), each under its own clip.
-    // A frozen take's lanes say so, and carry no Overridden mark (O-I #849 round 22); a looping slot clip's are drawn again for each pass
-    // (DLW build ruling 2026-11-05).
+    // A frozen take's lanes say so, and carry no Overridden mark (O-I #849 round 22); a looping clip's are drawn again for each pass
+    // (DLW build ruling 2026-11-05), a slot clip's and, from its start marker where it lies, an arrangement clip's (O-I #849 round 23).
     const playing = !standing ? [] : 'takes' in standing ? standing.takes : standing.take && standing.lanes ? [{take: standing.take, lanes: standing.lanes}] : []
     const held = standing?.overridden ?? []
     for (const {take, lanes: own} of playing) {
@@ -302,7 +302,7 @@ export const liveSetTrackAdapter: WorldTrackAdapter<LiveSetReading> = {
       const slot = 'slot' in take.address.at
       const clipId = `${trackRef(take.address.track)}/${'slot' in take.address.at ? `slot/${take.address.at.slot}` : `clip/${take.address.at.arrangement}`}`
       const landed = slot && take.at !== undefined && Number.isFinite(take.at) ? {clipAt: take.at} : {}
-      const loop = slot && take.loop && take.loop.to > take.loop.from ? {loop: {start: take.loop.start, from: take.loop.from, to: take.loop.to}} : {}
+      const loop = take.loop && take.loop.to > take.loop.from ? {loop: {start: take.loop.start, from: take.loop.from, to: take.loop.to}} : {}
       for (const lane of own) automation.push({id: `${clipId}${TAKE_LANE}${lane.parameter}`, trackId: trackRef(take.address.track), device: take.name,
         parameter: lane.label, clipId, ...landed, ...loop, points: lane.points.map(point => ({at: point.beat, value: point.value})),
         ...(take.frozen !== undefined ? {overridden: false, frozen: take.frozen} : {overridden: held.includes(lane.parameter)})})

@@ -318,6 +318,21 @@ test('a frozen take\'s lane carries no Overridden mark: touched, it says the tak
   assert.match(css, /\.tl-lane\.tl-auto\[data-frozen\] \.tl-auto-line polyline \{ stroke: var\(--text-faint\); stroke-dasharray: 3 2 \}/, 'its line drawn as baked')
 })
 
+// O-I #849 round 23 (DLW build ruling 2026-11-05: "Repeat a looping clip's lanes in Arrangement too"). FIXTURE: the clip player's lane
+// standing for a looping take played from Arrangement view, as live/clipPlayer.ts publishes it, through Live's own adapter.
+test('a looping arrangement clip\'s take lane is drawn again for each pass of its loop, from the clip\'s start to its end on the ruler', () => {
+  const play = {launch: async () => ({ok: true, note: ''}), stop: () => ({ok: true, note: ''}), stopAll: () => ({ok: true, note: ''}), reenable: async () => ({ok: true, note: ''})}
+  const summary = {path: '/sets/a.als', tempo_bpm: 120, scene_count: 1, arrangement_clips: 1,
+    tracks: [{kind: 'midi', name: 'Keys', devices: []}, {kind: 'midi', name: 'Pads', devices: []}, {kind: 'master', name: 'Main', devices: []}]}
+  const document = {path: '/sets/a.als', tempo: 120, scenes: 1, tracks: [{kind: 'midi', name: 'Keys', devices: [], arrangementClips: [], sessionSlots: {}},
+    {kind: 'midi', name: 'Pads', devices: [], arrangementClips: [{name: 'Riff', kind: 'midi', start: 16, end: 24}], sessionSlots: {}}, {kind: 'master', name: 'Main', devices: [], arrangementClips: [], sessionSlots: {}}]}
+  const standing = {automated: ['frame'], overridden: [], take: {address: {path: '/sets/a.als', track: 1, at: {arrangement: 0}}, name: 'Riff', loop: {start: 6, from: 4, to: 8}},
+    lanes: [{parameter: 'frame', label: 'Frame', points: [{beat: 5, value: 0.4}, {beat: 7, value: 0.6}]}]}
+  const ruler = arrangement(liveSetTrackAdapter.project({set: summary, document, play, lanes: standing}))
+  assert.match(ruler, /data-automation="als:\/sets\/a\.als#track\/1\/clip\/0#lane\/frame"[^>]*><span class="tl-head tl-auto-head" title="Riff \/ Frame · 4 points">/,
+    'beat 7 at the clip\'s start, then the loop\'s 5 and 7 a pass on, and again: four, none past the clip\'s end')
+})
+
 test('Expressions: a scene launches, Stop All pauses and Back to Arrangement plays the saved sequence, each through the presented composition', async () => {
   const sent = []
   const {expressionsControls} = await import('../src/frame/tracks/modeTracks.ts')

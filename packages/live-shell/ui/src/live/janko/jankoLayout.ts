@@ -125,3 +125,9 @@ export const COMPUTER_KEY_PITCH: Readonly<Record<string, number>> = Object.freez
 export function keyboardGate(input: {armed: boolean; editable: boolean; modifier: boolean; repeat: boolean}): boolean {
   return input.armed && !input.editable && !input.modifier && !input.repeat
 }
+
+/** Whether a key event's target is editable text, where typing never plays: an input, a text area, a select, or editable content. */
+export function typingTarget(target: unknown): boolean {
+  const element = target as {readonly isContentEditable?: boolean; readonly tagName?: string} | null
+  return !!element && (!!element.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(element.tagName ?? ''))
+}

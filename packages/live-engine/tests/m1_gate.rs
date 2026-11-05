@@ -295,9 +295,10 @@ fn factory_glue() -> Vec<f32> {
 /// (`SET_GATE_STEPS`, at or below −12 dBFS in) on both sides.
 ///
 /// Round 16 (the Range law): the factory's Range 3 is now heard as a ceiling at 2.8 dB (glue.rs `range_ceiling_db`, the
-/// scaling below Range 10 an OPEN hypothesis), so above those steps the factory Glue meets Live's render nearer than the
-/// set's own does (at −6 dBFS 1.06 against 2.03 dB): the set's Glue's error there is the set gate's open record, below.
-/// Round 15 compared every step; this compares the steps the set gate states.
+/// scaling below Range 10 an OPEN hypothesis), so above those steps the factory Glue met Live's render nearer than the
+/// set's own did (at −6 dBFS 1.06 against 2.03 dB) while the set's Glue sounded Attack 2's curve; at the Attack 5 the set
+/// stores (round 23) it is 0.03 dB there (the set gate, below). Round 15 compared every step; this compares the steps the
+/// set gate states.
 #[test]
 fn m1_gate_lives_own_glue_from_its_set_comes_nearer_lives_render_than_the_factory_glue() {
     let Some((engine, (l, r, rate), warnings)) = lives_own_glue() else {
@@ -333,15 +334,13 @@ fn m1_gate_lives_own_glue_from_its_set_comes_nearer_lives_render_than_the_factor
 /// the render meets Glue's soft clip, which the model has not (glue.rs: MU10's deviation is the soft clip). Teeth: the
 /// factory Glue fails it.
 ///
-/// STATUS: FAILS — the honest record and the acceptance target (cf. live-dynamics tests/golden.rs, the Overdrive and Glue
-/// LAM gates). At Live's own Glue (Threshold −21.9, Range 25, Makeup 5) the engine's step levels are −0.00, −0.18, −0.87
-/// and −1.56 dB from Live's at −30, −24, −18 and −12 dBFS in: the model's static curve is the measured transfer at Range
-/// 30 and Threshold −12, threshold-shifted (glue.rs `MEASURED_ANCHORS_R30_T12`). Since round 16 the Range moves it (the
-/// Range law, gated by `m1_gate_the_glues_range_is_heard_as_lives_renders_at_each_range`), but Range 25's ceiling is out of
-/// reach at these steps, so the error is the curve's at this Threshold and Makeup, not the Range's. Run
-/// with `LIVE_RE_CORPUS=<corpus> cargo test --test m1_gate -- --ignored --nocapture`.
+/// STATUS: PASSES since round 23 (DLW build ruling 2026-11-05). Until then it failed — −0.00, −0.18, −0.87 and −1.56 dB
+/// from Live's at −30, −24, −18 and −12 dBFS in — and the error was ours, not the record's: Live's set stores Attack 5, and
+/// the engine sounded the curve measured at Attack 2 (glue.rs `MEASURED_ANCHORS_R30_T12`), which the Attack moves (D6).
+/// The bridge now takes the stored Attack, and at Attack 5 the engine sounds Live's render at Attack 5
+/// (`MEASURED_ANCHORS_ATTACK5_R60_T12`, `LAM_T24_A5_R60`): −0.00, −0.12, −0.14 and −0.05 dB at those steps. Teeth: the
+/// factory Glue fails it, and so does this Glue at Attack 2. Skips where `LIVE_RE_CORPUS` names no corpus.
 #[test]
-#[ignore]
 fn m1_gate_lives_own_glue_sounds_from_its_set_as_live_renders_it() {
     let Some((engine, (l, r, rate), warnings)) = lives_own_glue() else {
         return;
@@ -355,6 +354,16 @@ fn m1_gate_lives_own_glue_sounds_from_its_set_as_live_renders_it() {
     assert!(
         set_gate((&l, &r), rate, &factory_glue()).1.is_some(),
         "the set gate passed the factory Glue"
+    );
+    let at_attack_2 = render_set(Box::new(GlueDevice::new(GlueParams {
+        threshold_db: -21.9047623,
+        range: 25.0,
+        ratio: 1.0,
+        makeup_db: 5.0,
+    })));
+    assert!(
+        set_gate((&l, &r), rate, &at_attack_2).1.is_some(),
+        "the set gate passed the set's Glue at the preset's Attack 2"
     );
     assert!(off.is_none(), "M1 set gate FAILED: {}", off.unwrap());
 }

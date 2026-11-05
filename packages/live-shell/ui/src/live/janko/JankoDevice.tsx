@@ -17,7 +17,7 @@ import {useLiveModeInForce} from '../../native/liveModeCatalogue'
 import {pitchMask} from '../modes'
 import {runNoteChain} from '../noteDevices/noteDevices'
 import {useNoteDeviceChain} from '../noteDevices/noteDeviceHold'
-import {COMPUTER_KEY_PITCH, keyboardGate, type NoteEvent, type PlayingPress} from './jankoInput'
+import {computerKeyNote, lostDevicePress, pointerNote, pointerSource as sourceOf, surfacePress, typingTarget} from './jankoInput'
 import {livePlayingPath, setLivePlayingTransform, useLivePlaying} from '../keyboardLayout'
 import './janko.css'
 
@@ -25,14 +25,6 @@ export type JankoLayout = 'janko' | 'piano'
 
 /** With no note device the act sounds as it was struck. */
 const NO_NOTE_DEVICES = (pitchClasses: readonly number[]): readonly number[] => pitchClasses
-
-/** The presses a surface holds: the pointer's, touch's and the computer keys'. A controller's notes are its device's. */
-const surfacePress = (press: PlayingPress) => press.source !== 'midi'
-
-const editable = (target: EventTarget | null): boolean => {
-  const element = target as HTMLElement | null
-  return !!element && (element.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(element.tagName))
-}
 
 /** On the chain the keyboard is a plate of the device runtime (live/KeyboardOnChain.tsx): the plate holds its layout and its
  * name, so the surface stands bare in the plate's picture, and the hint and placement note move to the surface's own hover. */
@@ -94,7 +86,7 @@ export function JankoDeviceView({windowState, initialLayout = 'janko', modeMask 
       // A device lost releases the notes it held.
       const lost = lostMidiPorts(heard, state)
       heard = state
-      if (lost.length) input.releaseWhere(press => press.source === 'midi' && lost.includes(press.port ?? ''))
+      if (lost.length) input.releaseWhere(lostDevicePress(lost))
       setMidi(state)
     },
     onNotes: notes => {
@@ -106,28 +98,32 @@ export function JankoDeviceView({windowState, initialLayout = 'janko', modeMask 
     },
     })
   }, [input, hears])
-  // `id` is the press's own identity (a pointer id), so two touch-points of one class release independently. A Jankó key goes with its
-  // note, so the note sounds at that key's own touch-point; where the press landed on the key is its strength under Pointer height.
-  const press = (pitchClass: number, source: NoteEvent['source'], pressure?: number | null, id?: string, key?: JankoKey, height?: number | null) =>
-    input.down({kind: 'down', pitchClass, source, pressure, press: id, height, ...(key ? {key: {row: key.row, column: key.column}} : {})})
-  const release = (pitchClass: number, source: NoteEvent['source'], id?: string) => input.up({kind: 'up', pitchClass, source, press: id})
-  const pointerSource = (event: PointerEvent<HTMLButtonElement>): NoteEvent['source'] => event.pointerType === 'touch' ? 'touch' : 'pointer'
-  const pen = (event: PointerEvent<HTMLButtonElement>) => event.pointerType === 'pen' ? event.pressure : null
+  // Each source's note is its own adapter's (jankoInput.ts pointerNote, computerKeyNote; liveMidi.ts midiNoteEvent), so every way of
+  // playing reaches the one path alike (O-I #853 round 23). A pointer's press carries its own identity (its pointer id), so two
+  // touch-points of one class let go independently; a Jankó key goes with its note, so the note sounds at that key's own touch-point, and
+  // where the press landed on the key is its strength under Pointer height.
   const heightOn = (event: PointerEvent<HTMLButtonElement>) => {
     const box = event.currentTarget.getBoundingClientRect()
     return box.height > 0 ? Math.max(0, Math.min(1, (event.clientY - box.top) / box.height)) : null
   }
+  const pointerOf = (event: PointerEvent<HTMLButtonElement>, height: number | null = null) =>
+    ({pointerType: event.pointerType, pointerId: event.pointerId, pressure: event.pressure, height})
+  const press = (pitchClass: number, event: PointerEvent<HTMLButtonElement>, key?: JankoKey) =>
+    input.down(pointerNote('down', pitchClass, pointerOf(event, heightOn(event)), key))
+  const release = (pitchClass: number, event: PointerEvent<HTMLButtonElement>) => input.up(pointerNote('up', pitchClass, pointerOf(event)))
+  const pointerSource = (event: PointerEvent<HTMLButtonElement>) => sourceOf(event.pointerType)
+  const pen = (event: PointerEvent<HTMLButtonElement>) => event.pointerType === 'pen' ? event.pressure : null
+  const computerKeyOf = (event: KeyboardEvent<HTMLDivElement>) => ({key: event.key, repeat: event.repeat, modifier: event.ctrlKey || event.metaKey || event.altKey})
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    const pitchClass = COMPUTER_KEY_PITCH[event.key.toLowerCase()]
-    if (pitchClass === undefined) return
-    if (!keyboardGate({armed, editable: editable(event.target), modifier: event.ctrlKey || event.metaKey || event.altKey, repeat: event.repeat})) return
+    const note = computerKeyNote('down', computerKeyOf(event), {armed, editable: typingTarget(event.target)})
+    if (!note) return
     event.preventDefault()
-    press(pitchClass, 'keyboard')
+    input.down(note)
   }
   const onKeyUp = (event: KeyboardEvent<HTMLDivElement>) => {
-    const pitchClass = COMPUTER_KEY_PITCH[event.key.toLowerCase()]
-    if (pitchClass !== undefined && armed) release(pitchClass, 'keyboard')
+    const note = computerKeyNote('up', computerKeyOf(event), {armed, editable: typingTarget(event.target)})
+    if (note) input.up(note)
   }
 
   const keyButton = (pitchClass: number, label: string, detail: string, key?: JankoKey, black = false) => (
@@ -135,12 +131,15 @@ export function JankoDeviceView({windowState, initialLayout = 'janko', modeMask 
       aria-label={`${label}, ${detail}${modeMask ? (modeMask[pitchClass] ? ', in the mode' : ', outside the mode') : ''}`} aria-pressed={held.includes(pitchClass)}
       data-janko-in-mode={modeMask ? (modeMask[pitchClass] ? 'yes' : 'no') : undefined}
       data-janko-pitch-class={pitchClass} data-janko-row={key?.row} data-janko-column={key?.column} data-janko-touch-point={key?.touchPoint}
-      onPointerDown={event => { press(pitchClass, pointerSource(event), pen(event), `pointer-${event.pointerId}`, key, heightOn(event)) }}
+      onPointerDown={event => { press(pitchClass, event, key) }}
       onPointerMove={event => { if (event.buttons !== 0 && pen(event) !== null) input.touch('pressure', event.pressure, pointerSource(event), `pointer-${event.pointerId}`) }}
-      onPointerUp={event => release(pitchClass, pointerSource(event), `pointer-${event.pointerId}`)}
-      onPointerLeave={event => release(pitchClass, pointerSource(event), `pointer-${event.pointerId}`)}
-      onPointerCancel={event => release(pitchClass, pointerSource(event), `pointer-${event.pointerId}`)}
-      onClick={event => { if (event.detail === 0) { press(pitchClass, 'pointer', null, undefined, key); release(pitchClass, 'pointer') } }}>
+      onPointerUp={event => release(pitchClass, event)}
+      onPointerLeave={event => release(pitchClass, event)}
+      onPointerCancel={event => release(pitchClass, event)}
+      onClick={event => {
+        // A key pressed from the keyboard's own activation (Space or Enter on a focused key) strikes and lets go at once.
+        if (event.detail === 0) { input.down({kind: 'down', pitchClass, source: 'pointer', pressure: null, ...(key ? {key: {row: key.row, column: key.column}} : {})}); input.up({kind: 'up', pitchClass, source: 'pointer'}) }
+      }}>
       {label}
     </button>
   )

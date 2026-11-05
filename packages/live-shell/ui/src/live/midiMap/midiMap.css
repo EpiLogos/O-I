@@ -23,3 +23,8 @@
 
 .midi-map-toggle[aria-pressed="true"] { color: var(--midi-map); border-color: var(--midi-map-line); }
 .midi-map-line { max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--midi-map); background: var(--bg-0); padding: 2px 6px; font-size: 10px; }
+/* The mapping browser (O-I #853 round 23): each mapping's control, parameter, and the Min and Max its control runs across. */
+.midi-map-browser { border-collapse: collapse; font-size: 10px; color: var(--text-dim); background: var(--bg-0); }
+.midi-map-browser th { text-align: left; font-weight: 500; color: var(--midi-map); padding: 1px 6px; }
+.midi-map-browser td { padding: 1px 6px; white-space: nowrap; }
+.midi-map-browser input, .midi-map-browser select { width: 8ch; font: inherit; color: var(--text); background: var(--bg-1); border: 1px solid var(--midi-map-line); border-radius: 3px; }

@@ -25,7 +25,7 @@ use crate::devices::{
 use crate::engine::Part;
 use crate::graph::{Clock, Graph, GroupTrack, Note, RackDevice, ReturnTrack, Track, MAX_GROUPS};
 use crate::instruments::OperatorInstrument;
-use live_dynamics::glue::GlueParams;
+use live_dynamics::glue::{self, GlueParams};
 use live_dynamics::reverb::ReverbParams;
 use live_set::model::{SetSummary, TrackKind};
 use live_set::xml::Element;
@@ -288,7 +288,16 @@ fn as_stored(el: &Element) -> Option<(Box<dyn crate::graph::Device>, Vec<String>
                 p.ratio = nearer;
             }
             p.makeup_db = s.take("Makeup").unwrap_or(p.makeup_db);
-            Box::new(GlueDevice::new(p))
+            // the Attack moves the steady-state curve, and Live's renders stand at Attack 2 and 5 (O-I #849 round 23,
+            // glue.rs `measured_attack_of`)
+            let attack = s.take("Attack").unwrap_or(glue::ANCHORS_ATTACK);
+            let sounds = glue::measured_attack_of(attack);
+            if attack != glue::ANCHORS_ATTACK && attack != glue::ATTACK5 {
+                s.strays.push(format!(
+                    "Live's GlueCompressor was rendered at its Attack 2 and 5 only, and the set stores {attack}: the engine sounds the curve of Attack {sounds}"
+                ));
+            }
+            Box::new(GlueDevice::new(p).with_stored_attack(attack))
         }
         "Echo" => {
             let mut p = ECHO_FACTORY;
@@ -2202,6 +2211,49 @@ mod tests {
         assert_eq!(
             words,
             ["Live's GlueCompressor stores its Ratio as one of its three curves, 0, 1 and 2, and the set stores 1.5: the engine sounds curve 2"]
+        );
+    }
+
+    /// O-I #849 round 23 (DLW build ruling 2026-11-05: the m1 Glue record's −18 dB step): a Glue sounds at the Attack its set
+    /// stores (Live's own Glue stores 5; the preset 2), its steady-state curve the one measured at the nearer Attack Live was rendered
+    /// at (glue.rs `static_gain_change_db_at`); one rendered at neither is named, in words.
+    #[test]
+    fn a_glue_sounds_at_the_attack_its_set_stores_and_one_rendered_at_no_attack_is_named() {
+        let root = set_of(&format!(
+            r#"<GlueCompressor Id="1">{}{}{}{}</GlueCompressor><GlueCompressor Id="2">{}{}{}{}</GlueCompressor>"#,
+            m("Threshold", "-21.9047623"),
+            m("Range", "25"),
+            m("Makeup", "5"),
+            m("Attack", "5"),
+            m("Threshold", "-21.9047623"),
+            m("Range", "25"),
+            m("Makeup", "5"),
+            m("Attack", "4"),
+        ));
+        let mut r = bridge_set(&root, 48_000).unwrap();
+        let p = GlueParams {
+            threshold_db: -21.9047623,
+            range: 25.0,
+            ratio: 1.0,
+            makeup_db: 5.0,
+        };
+        let chain = &mut r.graph.tracks[0].devices;
+        assert!(sound_alike(
+            chain[0].as_mut(),
+            &mut GlueDevice::new(p.clone()).with_stored_attack(5.0)
+        ));
+        assert!(
+            !sound_alike(chain[0].as_mut(), &mut GlueDevice::new(p.clone())),
+            "and not at the preset's Attack 2"
+        );
+        assert!(sound_alike(
+            chain[1].as_mut(),
+            &mut GlueDevice::new(p).with_stored_attack(5.0)
+        ));
+        let words: Vec<&str> = r.warnings.iter().map(|w| w.message.as_str()).collect();
+        assert_eq!(
+            words,
+            ["Live's GlueCompressor was rendered at its Attack 2 and 5 only, and the set stores 4: the engine sounds the curve of Attack 5"]
         );
     }
 

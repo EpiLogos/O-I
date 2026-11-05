@@ -270,15 +270,22 @@ test('a send the host refuses because its output went away leaves the picker on 
   assert.equal(h.calls.length, before, 'nothing is sent to an output the host let go')
 })
 
-test('a send held until its notes sound names how long the host holds it; one at once names none', async () => {
+// REPLACES the round-22 form, which named only `after_ms`: a held send also names when the page sent it on the machine's wall clock, so
+// the host counts the hold from then (O-I #849 round 23; midi.rs `sent_at_ms`, the host stamping its own receipt beside it).
+test('a send held until its notes sound names how long the host holds it and when the page sent it; one at once names neither', async () => {
   const requests = []
   const invoke = async (_command, {request}) => { requests.push(request); return {ports: ['Synth'], port: 'Synth'} }
   await midi.chooseLiveMidiOut('Synth', invoke)
-  midi.sendLiveMidiOut(ON, invoke, 42.5)
-  midi.sendLiveMidiOut(ON, invoke)
-  midi.sendLiveMidiOut(ON, invoke, 0)
+  let wall = 1_700_000_000_000
+  const clock = () => wall
+  midi.sendLiveMidiOut(ON, invoke, 42.5, clock)
+  wall += 7
+  midi.sendLiveMidiOut(ON, invoke, 10, clock)
+  midi.sendLiveMidiOut(ON, invoke, undefined, clock)
+  midi.sendLiveMidiOut(ON, invoke, 0, clock)
   for (let i = 0; i < 5; i++) await tick()
-  assert.deepEqual(requests.slice(1), [{kind: 'send', messages: ON, after_ms: 42.5}, {kind: 'send', messages: ON}, {kind: 'send', messages: ON}])
+  assert.deepEqual(requests.slice(1), [{kind: 'send', messages: ON, after_ms: 42.5, sent_at_ms: 1_700_000_000_000},
+    {kind: 'send', messages: ON, after_ms: 10, sent_at_ms: 1_700_000_000_007}, {kind: 'send', messages: ON}, {kind: 'send', messages: ON}])
   const layout = readFileSync(new URL('../src/live/keyboardLayout.ts', import.meta.url), 'utf8')
   assert.match(layout, /midiOut: \(messages, afterMs\) => sendLiveMidiOut\(messages, undefined, afterMs\)/, 'the part\'s one path sends through the host')
 })

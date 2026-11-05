@@ -20,7 +20,7 @@
 // sample sounds (clipStrike's and clipRelease's `sounds`) and the host holds each message that long (midi.rs `after_ms`). A strike that
 // names no time (a bell), and a key that names no note, leave nothing.
 import type {StageCommand, StageKey, StageResult} from '@epilogos/expressions-boundary'
-import {liveJankoWindow, type JankoKey, type JankoWindow, type JankoWindowState} from './jankoLayout'
+import {COMPUTER_KEY_PITCH, keyboardGate, liveJankoWindow, type JankoKey, type JankoWindow, type JankoWindowState} from './jankoLayout'
 
 export type NoteSource = 'pointer' | 'touch' | 'keyboard' | 'midi'
 export interface NoteEvent {
@@ -105,7 +105,42 @@ export function strikeAmplitude(event: Pick<NoteEvent, 'source' | 'pressure' | '
 }
 
 // The computer keys' row and their gate are the layout's (jankoLayout.ts): the map's faces read them without the keyboard's engine.
-export {COMPUTER_KEY_PITCH, keyboardGate} from './jankoLayout'
+export {COMPUTER_KEY_PITCH, keyboardGate, typingTarget} from './jankoLayout'
+
+// ── the sources (O-I #853 round 23) ────────────────────────────────────────────────────────────────────────────────────────────
+// What each way of playing gives the one path, as the keyboard device (JankoDevice.tsx) reads it from the event it hears; MIDI's is the
+// host's note (liveMidi.ts midiNoteEvent). Every source plays the same keys by the same rules: the tests drive each rule through each.
+
+/** A pointer's press on a key of the surface as the device reads it from its PointerEvent: its kind ('mouse', 'pen', 'touch'), its own id,
+ * its pressure, and where on the key it landed (0 at the key's far edge to 1 at its near edge; null where the key has no height). */
+export interface SurfacePointer {readonly pointerType: string; readonly pointerId: number; readonly pressure: number; readonly height?: number | null}
+/** A finger is touch; a mouse and a pen are the pointer. */
+export const pointerSource = (pointerType: string): NoteSource => pointerType === 'touch' ? 'touch' : 'pointer'
+/** The note a pointer or a touch plays on a key of the surface: its source by the pointer's kind, the pointer's own identity (so two
+ * touch-points of one pitch let go independently), a pen's pressure (a mouse and a finger carry none), and, as it goes down, the key and
+ * where on it the press landed. */
+export function pointerNote(kind: 'down' | 'up', pitchClass: number, pointer: SurfacePointer, key?: {readonly row: number; readonly column: number}): NoteEvent {
+  const source = pointerSource(pointer.pointerType), press = `pointer-${pointer.pointerId}`
+  if (kind === 'up') return {kind, pitchClass, source, press}
+  return {kind, pitchClass, source, pressure: pointer.pointerType === 'pen' ? pointer.pressure : null, press, height: pointer.height ?? null,
+    ...(key ? {key: {row: key.row, column: key.column}} : {})}
+}
+/** A computer key's event as the device reads it: the key's name, whether it is a held repeat, whether a modifier is held. */
+export interface ComputerKey {readonly key: string; readonly repeat: boolean; readonly modifier: boolean}
+/** The note a computer key plays, or null where it plays none: a key off the row (COMPUTER_KEY_PITCH), or, going down, one the gate holds
+ * back (keyboardGate: the keyboard not armed by its focus, typing in a field, a modifier held, a held repeat). Lifted, it lets its note go
+ * only while the keyboard is armed. */
+export function computerKeyNote(kind: 'down' | 'up', key: ComputerKey, at: {readonly armed: boolean; readonly editable: boolean}): NoteEvent | null {
+  const pitchClass = COMPUTER_KEY_PITCH[key.key.toLowerCase()]
+  if (pitchClass === undefined) return null
+  const plays = kind === 'up' ? at.armed : keyboardGate({armed: at.armed, editable: at.editable, modifier: key.modifier, repeat: key.repeat})
+  return plays ? {kind, pitchClass, source: 'keyboard'} : null
+}
+/** The presses a surface holds, which its keyboard or the window losing focus lets go: the pointer's, touch's and the computer keys'. A
+ * controller's notes are its device's: a hardware key plays whatever holds focus. */
+export const surfacePress = (press: PlayingPress): boolean => press.source !== 'midi'
+/** The presses of the MIDI devices lost (liveMidi.ts lostMidiPorts), which losing them lets go. */
+export const lostDevicePress = (ports: readonly string[]) => (press: PlayingPress): boolean => press.source === 'midi' && ports.includes(press.port ?? '')
 
 // ── the keys of the surface ────────────────────────────────────────────────────────────────────────────────────────────────────
 // The owner's window is one period of the surface: six rows by six columns, every pitch class at each of its touch-points once. The
@@ -189,6 +224,8 @@ export interface KeyLatency {
   readonly hostMs: number | null
   readonly ok: boolean
   readonly sentAt?: number
+  /** When the host received the act's earliest MIDI note, on its wall clock (O-I #853 round 23): a hardware key's first leg. */
+  readonly receivedAt?: number
 }
 const LATENCY_KEPT = 64
 
@@ -221,7 +258,9 @@ export interface KeyToSound {
 /** How far the page's wall clock and the host's are read apart: a pair this much outside the owner's strike is still its own. */
 const PAIR_SLACK_MS = 1
 /** Join one strike's timing with the engine's legs while the engine plays the Torus (`engine`; null: the owner sounds it itself): the
- * host's leg (MIDI), the page's queue, the owner's strike, then the engine's block at worst and the device's output. What is not measured
+ * host's leg (MIDI), the page's queue, the owner's strike, then the engine's block at worst and the device's output. A hardware key joined
+ * with its pair is read on the host's clock from the host's receipt of its note (`receivedAt`, round 23): to the engine, the engine to its
+ * sound, then the device's output. What is not measured
  * is named: the controller's leg to the host for MIDI, and the owner's lead over the engine (or, alone, the owner's own sound). Null for a
  * strike the owner refused: it sounded nothing. Pure.
  *
@@ -231,10 +270,17 @@ const PAIR_SLACK_MS = 1
 export function keyToSound(strike: KeyLatency, engine: EngineLatency | null): KeyToSound | null {
   if (!strike.ok || strike.ownerMs === null) return null
   const parts: [string, number][] = []
-  if (strike.hostMs !== null) parts.push(['the host to the page', strike.hostMs])
   const sentAt = strike.sentAt, ownerMs = strike.ownerMs
   const pair = engine && sentAt !== undefined
     ? engine.strikes?.find(e => e.sent_at_ms >= sentAt - PAIR_SLACK_MS && e.sent_at_ms <= sentAt + ownerMs + PAIR_SLACK_MS) : undefined
+  // A hardware key (O-I #853 round 23): read as the engine's pairs are, on the host's own clock, from its receipt of the note.
+  const receivedAt = strike.receivedAt
+  if (engine && pair && receivedAt !== undefined) {
+    const legs: [string, number][] = [['MIDI in, from the host\'s receipt to the engine', Math.max(0, pair.sent_at_ms - receivedAt)],
+      ['the engine, to its sound', pair.ms], ['the device\'s output', engine.output_latency_ms]]
+    return {ms: Math.round(legs.reduce((sum, [, ms]) => sum + ms, 0) * 100) / 100, parts: legs, unmeasured: ['the controller to the host'], engine: pair}
+  }
+  if (strike.hostMs !== null) parts.push(['the host to the page', strike.hostMs])
   if (engine && pair) {
     parts.push(['the page\'s queue', strike.queuedMs], ['the page to the engine', Math.max(0, pair.sent_at_ms - sentAt!)],
       ['the engine, to its sound', pair.ms], ['the device\'s output', engine.output_latency_ms])
@@ -357,7 +403,7 @@ interface Note {
   played: boolean
 }
 type Act =
-  | {kind: 'strike'; seq: number; keys: Map<string, StageKey>; amplitude: number; sources: Set<NoteSource>; pressedAt: number; hostMs: number | null
+  | {kind: 'strike'; seq: number; keys: Map<string, StageKey>; amplitude: number; sources: Set<NoteSource>; pressedAt: number; hostMs: number | null; receivedAt: number | null
     /** A clip's act (or a bell's): the owner's sample it lands at (a bell's, none: the owner's own cursor), and its answer to the clip.
      * Never merged with a press's act. */
     clip: {readonly at: string | undefined; readonly settle: (result: StageResult) => void} | null
@@ -411,15 +457,16 @@ export function createJankoInput(options: JankoInputOptions): JankoInput {
   }
   const unheld = (note: Note) => note.presses.size === 0 && note.clips.size === 0
 
-  const strike = (note: Note, amplitude: number, source: NoteSource, hostMs: number | null, touch: number) => {
+  const strike = (note: Note, amplitude: number, source: NoteSource, hostMs: number | null, receivedAt: number | null, touch: number) => {
     const last = queue.at(-1)
     const act = last?.kind === 'strike' && last.clip === null && !last.touch && !last.keys.has(keyId(note.key)) && last.keys.size < MAX_KEYS ? last
-      : {kind: 'strike' as const, seq: ++seq, keys: new Map<string, StageKey>(), amplitude, sources: new Set<NoteSource>(), pressedAt: now(), hostMs, clip: null}
+      : {kind: 'strike' as const, seq: ++seq, keys: new Map<string, StageKey>(), amplitude, sources: new Set<NoteSource>(), pressedAt: now(), hostMs, receivedAt, clip: null}
     if (act !== last) queue.push(act)
     act.keys.set(keyId(note.key), note.key)
     act.amplitude = Math.max(act.amplitude, amplitude)
     act.sources.add(source)
     if (hostMs !== null) act.hostMs = Math.max(act.hostMs ?? 0, hostMs)
+    if (receivedAt !== null) act.receivedAt = Math.min(act.receivedAt ?? receivedAt, receivedAt)
     note.act = act.seq
     note.played = true
     options.onNote?.({kind: 'on', id: note.id, note: note.note, key: note.key, touch, amplitude, source, at: now()})
@@ -485,7 +532,7 @@ export function createJankoInput(options: JankoInputOptions): JankoInput {
       const sentAt = now(), sentWall = wallNow()
       const timed = (ok: boolean) => {
         timings.push({sources: [...act.sources], keys: keys.length, pressedAt: act.pressedAt, queuedMs: sentAt - act.pressedAt, ownerMs: now() - sentAt, hostMs: act.hostMs, ok,
-          sentAt: sentWall})
+          sentAt: sentWall, ...(act.receivedAt !== null ? {receivedAt: act.receivedAt} : {})})
         if (timings.length > LATENCY_KEPT) timings.splice(0, timings.length - LATENCY_KEPT)
       }
       void options.send({command: 'janko', action: 'strike', keys, amplitude: act.amplitude}).then(result => {
@@ -538,7 +585,7 @@ export function createJankoInput(options: JankoInputOptions): JankoInput {
       }
       for (let from = 0; from < struck.length; from += MAX_KEYS) {
         const act = {kind: 'strike' as const, seq: ++seq, keys: new Map<string, StageKey>(), amplitude, sources: new Set<NoteSource>(), pressedAt: now(),
-          hostMs: null, clip: {at, settle}}
+          hostMs: null, receivedAt: null, clip: {at, settle}}
         for (const note of struck.slice(from, from + MAX_KEYS)) { act.keys.set(keyId(note.key), note.key); note.act = act.seq }
         queue.push(act)
       }
@@ -579,7 +626,8 @@ export function createJankoInput(options: JankoInputOptions): JankoInput {
       const base = (Number.isSafeInteger(event.note) ? event.note! : SURFACE_NOTE + (pressed?.pitchClass ?? event.pitchClass)) + set.transpose
       const classes = options.transform ? [...new Set(options.transform([mod(base, 12)]))] : [mod(base, 12)]
       const amplitude = strikeAmplitude(event, set.velocity)
-      const hostMs = event.source === 'midi' && typeof event.receivedAt === 'number' && Number.isFinite(event.receivedAt) ? Math.max(0, wallNow() - event.receivedAt) : null
+      const receivedAt = event.source === 'midi' && typeof event.receivedAt === 'number' && Number.isFinite(event.receivedAt) ? event.receivedAt : null
+      const hostMs = receivedAt !== null ? Math.max(0, wallNow() - receivedAt) : null
       const held: string[] = []
       for (const pc of classes) {
         if (!Number.isInteger(pc) || pc < 0 || pc > 11) continue
@@ -598,7 +646,7 @@ export function createJankoInput(options: JankoInputOptions): JankoInput {
         struck.presses = new Set([id])
         struck.lifted = null
         notes.set(struck.id, struck)
-        strike(struck, amplitude, event.source, hostMs, touchOfKey(keys, struck.key) ?? 0)
+        strike(struck, amplitude, event.source, hostMs, receivedAt, touchOfKey(keys, struck.key) ?? 0)
       }
       presses.set(id, {id, source: event.source, port: event.port ?? null, pitchClass: event.pitchClass, notes: held})
       changed()
@@ -668,7 +716,7 @@ export function createJankoInput(options: JankoInputOptions): JankoInput {
       if (rise <= 0 || (kind === 'pressure' && !settings().pressure)) return false
       for (let from = 0; from < touched.length; from += MAX_KEYS) {
         const act = {kind: 'strike' as const, seq: ++seq, keys: new Map<string, StageKey>(), amplitude: TOUCH_LAW * rise, sources: new Set([source]),
-          pressedAt: now(), hostMs: null, clip: null, touch: true as const}
+          pressedAt: now(), hostMs: null, receivedAt: null, clip: null, touch: true as const}
         for (const note of touched.slice(from, from + MAX_KEYS)) act.keys.set(keyId(note.key), note.key)
         queue.push(act)
       }

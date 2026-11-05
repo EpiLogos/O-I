@@ -5,6 +5,14 @@
 // Choices (lens 0–11, context frame 1–7, and the other owner options) take the 0–127 range evenly: each option owns an equal slice of
 // it. Toggles are on from 64. Ranges (level, scale units) run linearly across 0–127, snapped to the control's own step; a range that
 // spans decades (the Torus's Rate, one step a year to 40,000 a second) runs on a log curve, equal ratios for equal turns.
+//
+// Live's own mapping model is the decode (O-I #853 round 23; DLW build ruling 2026-11-05: "Use Live's own mapping model as the decode in
+// docs/research describes it"): every parameter stores a `MidiControllerRange` {Min, Max} in its own units, which "documents the
+// control-surface mapping range" (session-model.md §6), and every on/off parameter its `MidiCCOnOffThresholds` {Min 64, Max 127}
+// (evidence/devices/Simpler/default.xml). A mapping's control runs from its Min at 0 to its Max at 127 on the parameter's own scale (its
+// step, its curve), the whole span where the mapping names none; a choice runs over its options by index, as an enum's range is its
+// indexes (Glue's Attack, 0 to 6); a Min above its Max turns the control round. A toggle is on within Live's thresholds. How 0–127 falls
+// on an enum's indexes the corpus does not say: the equal slices stand.
 
 import type {StageResult} from '@epilogos/expressions-boundary'
 import type {LiveWriteHow} from '../torusInstrument'
@@ -20,7 +28,17 @@ export type MapSource =
 export interface MapBinding {
   readonly target: string
   readonly source: MapSource
+  /** The mapping's own range (Live's MidiControllerRange): a range's two values in its units, a choice's two options by index. Absent:
+   * the parameter's whole span. A toggle has none: it takes Live's on/off thresholds (MIDI_CC_ON_OFF). */
+  readonly span?: MapSpan
 }
+
+/** A mapping's own range: the value its control gives at 0 (`min`) and at 127 (`max`); a min above its max turns the control round. */
+export interface MapSpan {readonly min: number; readonly max: number}
+/** Live's on/off thresholds, as it stores them for every on/off parameter (MidiCCOnOffThresholds): a toggle is on from 64 to 127. */
+export const MIDI_CC_ON_OFF: MapSpan = Object.freeze({min: 64, max: 127})
+/** A toggle's mapping, in words. */
+export const TOGGLE_THRESHOLDS = `on from ${MIDI_CC_ON_OFF.min} to ${MIDI_CC_ON_OFF.max}, as Live's on/off thresholds stand`
 
 /** A value a parameter takes: a choice's option value, a toggle's state, or a range's number. */
 export type MapValue = string | boolean | number
@@ -84,31 +102,60 @@ export function choiceIndex(value: number, count: number): number {
 }
 
 /** A range's value for a control value: linear across the range, snapped to its step, or on a log curve, equal ratios for equal turns
- * to four significant figures; never past its ends, and 0 and 127 its very ends. */
-export function rangeValue(value: number, range: MapRange): number {
+ * to four significant figures; never past its ends, and 0 and 127 its very ends. A mapping's own range (`span`) is run across instead,
+ * still on the range's own step from its least and its own curve, never past the span's ends. */
+export function rangeValue(value: number, range: MapRange, span?: MapSpan): number {
+  const from = span?.min ?? range.min, to = span?.max ?? range.max
+  const least = Math.min(from, to), most = Math.max(from, to)
+  const turn = clamp(value, 0, 127) / 127
   if (range.curve === 'log') {
-    const turn = clamp(value, 0, 127) / 127
-    if (turn === 0) return range.min
-    if (turn === 1) return range.max
-    return clamp(Number((range.min * (range.max / range.min) ** turn).toPrecision(4)), range.min, range.max)
+    if (turn === 0) return from
+    if (turn === 1) return to
+    return clamp(Number((from * (to / from) ** turn).toPrecision(4)), least, most)
   }
-  const raw = range.min + ((range.max - range.min) * clamp(value, 0, 127)) / 127
-  const snapped = Math.min(range.max, range.min + Math.round((raw - range.min) / range.step) * range.step)
+  const raw = from + (to - from) * turn
+  const snapped = clamp(range.min + Math.round((raw - range.min) / range.step) * range.step, least, most)
   return Number(snapped.toFixed(6))
 }
 
-/** A toggle's state for a control value: on from 64. */
+/** A toggle's state for a control value: on within Live's thresholds, from 64 to 127. */
 export function toggleValue(value: number): boolean {
-  return clamp(value, 0, 127) >= 64
+  const at = clamp(value, 0, 127)
+  return at >= MIDI_CC_ON_OFF.min && at <= MIDI_CC_ON_OFF.max
 }
 
-/** The value a control change moves a parameter to. */
-export function controlValue(target: MapTarget, value: number): MapValue {
+/** The value a control change moves a parameter to, across the mapping's own range where it has one. */
+export function controlValue(target: MapTarget, value: number, span?: MapSpan): MapValue {
   switch (target.kind) {
-    case 'choice': return target.options[choiceIndex(value, target.options.length)].value
+    case 'choice': {
+      const from = span?.min ?? 0, to = span?.max ?? target.options.length - 1
+      const step = choiceIndex(value, Math.abs(to - from) + 1)
+      return target.options[from <= to ? from + step : from - step].value
+    }
     case 'toggle': return toggleValue(value)
-    case 'range': return rangeValue(value, target.range)
+    case 'range': return rangeValue(value, target.range, span)
   }
+}
+
+/** A mapping's range as its parameter holds it: a range's within its span, a choice's whole options within its own; refused in words for
+ * a toggle (Live's thresholds stand) and for a Min or Max that is no number. */
+export function mapSpanOf(target: MapTarget, span: MapSpan): {readonly ok: true; readonly span: MapSpan} | {readonly ok: false; readonly reason: string} {
+  if (target.kind === 'toggle') return {ok: false, reason: `${target.label} is a toggle: it turns ${TOGGLE_THRESHOLDS}.`}
+  if (!Number.isFinite(span.min) || !Number.isFinite(span.max)) return {ok: false, reason: `A mapping's Min and Max are numbers: ${target.label} keeps its range.`}
+  if (target.kind === 'choice') {
+    const last = target.options.length - 1
+    return {ok: true, span: {min: clamp(Math.round(span.min), 0, last), max: clamp(Math.round(span.max), 0, last)}}
+  }
+  return {ok: true, span: {min: clamp(span.min, target.range.min, target.range.max), max: clamp(span.max, target.range.min, target.range.max)}}
+}
+
+/** A mapping's Min and Max in its parameter's words: a range's values, a choice's options; its whole span where it names none. */
+export function mapSpanWords(target: Exclude<MapTarget, ToggleTarget>, span: MapSpan | undefined): [string, string] {
+  if (target.kind === 'choice') {
+    const label = (index: number) => target.options[index]?.label ?? String(index)
+    return [label(span?.min ?? 0), label(span?.max ?? target.options.length - 1)]
+  }
+  return [String(span?.min ?? target.range.min), String(span?.max ?? target.range.max)]
 }
 
 /** Whether a key can step a parameter: a choice steps, a toggle flips. A range takes a control, not a key. */
@@ -148,7 +195,18 @@ export function sameSource(a: MapSource, b: MapSource): boolean {
 export function planBinding(bindings: readonly MapBinding[], targetId: string, source: MapSource): {readonly bindings: MapBinding[]; readonly moved: string | null} {
   const movedFrom = bindings.find(binding => binding.target !== targetId && sameSource(binding.source, source))?.target ?? null
   const kept = bindings.filter(binding => binding.target !== targetId && !sameSource(binding.source, source))
-  return {bindings: [...kept, {target: targetId, source}], moved: movedFrom}
+  // The mapping's range stands on its parameter, as Live keeps MidiControllerRange on it: a new control for the parameter keeps it.
+  const span = bindings.find(binding => binding.target === targetId)?.span
+  return {bindings: [...kept, {target: targetId, source, ...(span ? {span} : {})}], moved: movedFrom}
+}
+
+/** The bindings with a parameter's mapping range set (null: its whole span again). */
+export function spanBinding(bindings: readonly MapBinding[], targetId: string, span: MapSpan | null): MapBinding[] {
+  return bindings.map(binding => {
+    if (binding.target !== targetId) return binding
+    const {span: _was, ...rest} = binding
+    return span ? {...rest, span} : rest
+  })
 }
 
 /** The bindings without a parameter's binding. */

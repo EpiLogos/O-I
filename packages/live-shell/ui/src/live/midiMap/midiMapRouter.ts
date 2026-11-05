@@ -117,7 +117,7 @@ export function createMapRouter(deps: MapRouterDeps): MapRouter {
           const target = targets.find(candidate => candidate.id === binding.target)
           if (!target) continue
           // The latest value wins: a knob moved three times in one frame is one owner edit.
-          pending.set(target.id, controlValue(target, control.value))
+          pending.set(target.id, controlValue(target, control.value, binding.span))
         }
       }
       if (pending.size > 0 && !scheduled) {

@@ -990,6 +990,122 @@ test('Unfreeze plays the rest of a frozen take on the live Torus; Stop lets it g
   assert.deepEqual(c.unfrozen, [], 'nothing frozen to let go')
 })
 
+// O-I #849 round 23 (DLW build ruling 2026-11-05: "Lay a frozen take sample-aligned to its holder's course, not on the grid"): the take
+// that holds the Torus rings its course from the sample the Torus rang again from, which is no step of the launch grid; a take frozen while
+// it holds lands on that course, so the two sound sample for sample as they were played.
+test('the take that holds the Torus says where its course rang from, or that it plays none; given back, it says none', async () => {
+  const turn = player.torusTurn()
+  assert.equal(turn.take('Keys'), null, 'Keys holds it')
+  const waiting = turn.rung()
+  turn.ring('Pads', 1n)
+  turn.ring('Keys', 494000n)
+  assert.equal(await waiting, 494000n, 'only its holder says where its course rang from')
+  assert.equal(await turn.rung(), 494000n, 'and says so to a take that asks after')
+  turn.release('Keys')
+  assert.equal(await turn.rung(), null, 'given back, no course holds it')
+  assert.equal(turn.take('Bass'), null)
+  const plain = turn.rung()
+  turn.ring('Bass', null)
+  assert.equal(await plain, null, 'a holder that plays no course says so')
+  const stopped = player.torusTurn()
+  stopped.take('Keys')
+  const asked = stopped.rung()
+  stopped.release('Keys')
+  assert.equal(await asked, null, 'a holder that ends before its course rings says none')
+})
+
+test('a take frozen while another holds the Torus lands on the holder\'s course, not on the launch grid: with it, from its first sample, or a whole step on', async () => {
+  const clock = controlledClock()
+  let samples = 480000n
+  const clips = {0: short('Keys', 'global', 60), 1: short('Pads', 'global', 67), 3: short('Bass', 'global', 48)}
+  const landed = []
+  // Keys holds the Torus and rings its course from 30000 samples before its own anchor, past the owner's slack (15808), as a frozen
+  // take's sound may begin: the engine plays it from where it then stands. Pads, held, is frozen on its part.
+  const exact = () => ({landed: String(samples + 24000n - 30000n), from: '1000', frames: 4 * 48000, sample_rate: 48000, acts: []})
+  const ownersOf = track => ({
+    read: async address => clips[address.track],
+    // Bass is a plain clip, no take, so it takes no turn of the Torus (liveTake.ts prepareTake takes one only for a take).
+    prepare: async (clip, _bpm, turn) => {
+      if (track === 3) return null
+      const holder = turn?.take(clip.name) ?? null
+      if (track === 0 && holder === null) return {resumes: 'Keys rings its course.', exact: exact()}
+      if (track === 1 && holder !== null) return {resumes: `${holder} holds the Torus; Pads is frozen.`, frozen: {words: 'Pads is frozen.', seconds: 4,
+        moves: [], settings: [], unfrozen: 'Pads is unfrozen.', land: async at => { landed.push(at); return null }, unfreeze: async () => null}}
+      return null
+    },
+    clock: async () => ({...CLOCK, samples_elapsed: String(samples)}),
+    strike: async () => ({ok: true}), release: () => {}, watch: () => () => {}, now: clock.now, later: clock.later, cancel: clock.cancel, random: () => 0,
+  })
+  const single = player.createClipPlayer(ownersOf(3))
+  const acts = player.clipLaunchActs(single, () => ({ok: true, value: {standing: 'following'}, parameters: {torus: {}}}), track => player.createClipPlayer(ownersOf(track)))
+  // Bass begins the launch grid at 504000; Keys's course then rings from 494000, which is no step of it.
+  assert.equal((await settled(clock, acts.launch({path: '/sets/a.als', track: 3, at: {slot: 0}}, 120, '1 bar'))).ok, true)
+  samples += 20000n
+  const ROW2 = [{track: 0, name: 'Keys', kind: 'midi'}, {track: 1, name: 'Pads', kind: 'midi'}]
+  assert.equal((await settled(clock, acts.launchRow('/sets/a.als', 0, 120, ROW2, '1 bar'))).ok, true)
+  assert.deepEqual(landed, [494000n], 'launched with its holder it starts with it, at the course\'s first sample: not on the grid (600000), nor its own earliest (524000)')
+  // Launched alone a while later (its earliest 694000), it lands on the next bar of the holder's course (782000), not of the grid (696000).
+  samples += 170000n
+  const pads = acts.launchRow('/sets/a.als', 1, 120, [{track: 1, name: 'Pads', kind: 'midi'}], '1 bar')
+  assert.equal((await settled(clock, pads)).ok, true)
+  assert.deepEqual(landed, [494000n, 494000n + 3n * 96000n], 'three bars of the holder\'s course on')
+})
+
+test('a take that holds the Torus and plays no course says so as it begins, and one frozen with it lands on the launch grid', async () => {
+  const clock = controlledClock()
+  let samples = 480000n
+  const clips = {0: short('Keys', 'global', 60), 1: short('Pads', 'global', 67), 3: short('Bass', 'global', 48)}
+  const landed = []
+  const ownersOf = track => ({
+    read: async address => clips[address.track],
+    prepare: async (clip, _bpm, turn) => {
+      if (track === 3) return null
+      const holder = turn?.take(clip.name) ?? null
+      // Keys holds the Torus, and its course cannot play: it voices its notes as played, on no course.
+      if (track === 0 && holder === null) return {resumes: 'Keys plays its notes on no course.', voice: () => ({touch: 0, strength: 1})}
+      if (track === 1 && holder !== null) return {resumes: `${holder} holds the Torus; Pads is frozen.`, frozen: {words: 'Pads is frozen.', seconds: 4,
+        moves: [], settings: [], unfrozen: 'Pads is unfrozen.', land: async at => { landed.push(at); return null }, unfreeze: async () => null}}
+      return null
+    },
+    clock: async () => ({...CLOCK, samples_elapsed: String(samples)}),
+    strike: async () => ({ok: true}), release: () => {}, watch: () => () => {}, now: clock.now, later: clock.later, cancel: clock.cancel, random: () => 0,
+  })
+  const acts = player.clipLaunchActs(player.createClipPlayer(ownersOf(3)), () => ({ok: true, value: {standing: 'following'}, parameters: {torus: {}}}),
+    track => player.createClipPlayer(ownersOf(track)))
+  // Bass begins the launch grid at 504000; the row's earliest is then 524000.
+  assert.equal((await settled(clock, acts.launch({path: '/sets/a.als', track: 3, at: {slot: 0}}, 120, '1 bar'))).ok, true)
+  samples += 20000n
+  const ROW2 = [{track: 0, name: 'Keys', kind: 'midi'}, {track: 1, name: 'Pads', kind: 'midi'}]
+  assert.equal((await settled(clock, acts.launchRow('/sets/a.als', 0, 120, ROW2, '1 bar'))).ok, true)
+  assert.deepEqual(landed, [600000n], 'no course to land on: the launch grid\'s next bar, as Keys begins')
+})
+
+// O-I #849 round 23 (DLW build ruling 2026-11-05: "A frozen take sends the MIDI its notes played, as Freeze in Live still sends"): frozen,
+// it strikes nothing on the live Torus, and each of its notes still leaves as MIDI when it sounds, at the strength it was played.
+test('a frozen take\'s notes leave as MIDI as they sound, each at its strength and until its end, though it strikes nothing; Stop lets them go at once', async () => {
+  const clock = controlledClock()
+  const sent = [], midi = []
+  const path = keys.createJankoInput({window: () => windowState, send: async command => { sent.push({at: clock.now(), command: structuredClone(command)}); return {ok: true} }})
+  const frozen = {words: 'Pads is frozen.', seconds: 4, moves: [], settings: [], unfrozen: 'Pads is unfrozen.', land: async () => null, unfreeze: async () => null}
+  const p = player.createClipPlayer({read: async () => short('Pads', 'global', 67),
+    prepare: async () => ({resumes: 'Pads is frozen.', frozen, voice: (note, beat) => ({touch: 0, strength: note === 67 ? 0.5 : 0.25})}),
+    clock: async () => CLOCK, strike: (notes, amplitude, at) => path.clipStrike(notes, amplitude, at), release: holds => path.clipRelease(holds),
+    midi: (messages, afterMs) => midi.push({at: clock.now(), messages: structuredClone(messages), afterMs}),
+    watch: () => () => {}, now: clock.now, later: clock.later, cancel: clock.cancel, random: () => 1})
+  p.play(FROZEN_SLOT, 120)
+  await settled(clock)
+  await settled(clock, clock.run(clock.now() + 2.4))
+  assert.equal(strikes(sent).length, 0, 'it strikes nothing on the live Torus')
+  assert.deepEqual(midi.map(m => m.messages), [[{kind: 'on', channel: 0, note: 67, velocity: 64}], [{kind: 'off', channel: 0, note: 67, velocity: 0}],
+    [{kind: 'on', channel: 0, note: 71, velocity: 32}]], 'its first note and its end, then its second, each at the strength it was played')
+  for (const m of midi) assert.ok(m.afterMs > 0 && m.afterMs <= 500, 'each held by the host until its sample sounds')
+  const first = midi[0], end = midi[1]
+  assert.ok(Math.abs((end.at + end.afterMs / 1000) - (first.at + first.afterMs / 1000) - 0.5) < 1e-6, 'its end sounds a beat after its start')
+  p.stop()
+  assert.deepEqual(midi.at(-1), {at: clock.now(), messages: [{kind: 'off', channel: 0, note: 71, velocity: 0}], afterMs: undefined}, 'Stop lets its held note go at once')
+  assert.equal(strikes(sent).length + releases(sent).length, 0, 'and nothing of it reached the playing path')
+})
+
 test('Live\'s set lays a frozen take\'s lanes under its clip with no Overridden mark, saying so, with Unfreeze; a looping slot take\'s are drawn for each pass', async () => {
   const {liveSetTrackAdapter} = await import('../src/timeline/liveSetTrackAdapter.ts')
   const {automationPoints, LOOP_PASSES_DRAWN} = await import('../src/frame/tracks/trackLanes.ts')
@@ -1026,9 +1142,16 @@ test('Live\'s set lays a frozen take\'s lanes under its clip with no Overridden 
     'the first pass from its start marker (beat 7 only), then the loop again (beats 5 and 7) for each pass, to the ruler\'s end')
   assert.deepEqual(automationPoints(looping, () => undefined).map(point => point.at), [-1, 1], 'no ruler\'s end given: its points once, as before')
   assert.equal(automationPoints(looping, () => undefined, 1e9).length, 1 + 2 * LOOP_PASSES_DRAWN, 'at most so many passes drawn')
+  // REPLACES (O-I #849 round 23; DLW build ruling 2026-11-05: "Repeat a looping clip's lanes in Arrangement too"): round 22's "an
+  // arrangement clip's lanes stand under the clip where it lies", its loop undrawn. An arrangement clip lies on the ruler from its start
+  // marker: here at 16 to 24, so beat 7 of the clip stands at 17, then the loop's 5 and 7 again each 4 beats on, cut at the clip's end.
   const [arranged] = liveSetTrackAdapter.project({set: summary, document: null, play,
     lanes: {...playing, take: {...playing.take, address: {path: '/sets/a.als', track: 1, at: {arrangement: 0}}}}}).lanes.automation
-  assert.equal(arranged.loop, undefined, 'an arrangement clip\'s lanes stand under the clip where it lies')
+  assert.deepEqual(arranged.loop, {start: 6, from: 4, to: 8}, 'an arrangement clip\'s lanes carry its loop as a slot clip\'s do')
+  assert.deepEqual(automationPoints(arranged, () => 16, 100, () => 24).map(point => point.at), [17, 19, 21, 23],
+    'its first pass from its start marker at the clip\'s start, then each pass of the loop, none past the clip\'s end')
+  assert.deepEqual(automationPoints(arranged, () => 16, 30).map(point => point.at), [17, 19, 21, 23, 25, 27, 29], 'no end of its own: to the ruler\'s')
+  assert.deepEqual(automationPoints(arranged, () => 16).map(point => point.at), [15, 17], 'no ruler\'s end given: its points once, from its start marker')
   p.stop()
 })
 

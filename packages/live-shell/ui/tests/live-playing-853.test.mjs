@@ -97,6 +97,139 @@ test('pointer, touch, the computer keys and MIDI strike the same key of the surf
   assert.deepEqual(o.notes, [], 'nothing is left sounding in the owner\'s count')
 })
 
+// ── 1b — every source, every rule (O-I #853 round 23) ─────────────────────────────────────────────────────────────────────────────
+// DLW build ruling 2026-11-05 (#853 Done-when): "Pointer, touch, the computer keys and MIDI input play the same keys. Each test drives the
+// same key path through each source", with §21.1/§21.2's behaviour for each: a chord, a note held under Sustain, a repeated touch on two
+// keys of one pitch, a note past Polyphony; Panic and a lost focus release every note; typing in a field never plays. Each source's note
+// is made by the device's own adapter (jankoInput.ts pointerNote and computerKeyNote, liveMidi.ts midiNoteEvent), as JankoDevice.tsx
+// makes it from the event it hears, and every rule is the same path's for each.
+const LETTER = Object.fromEntries(Object.entries(input.COMPUTER_KEY_PITCH).map(([letter, pc]) => [pc, letter]))
+/** The surface key of each pitch class the rules play (the fixture's window), and C's second touch-point. */
+const KEY_OF = {0: {row: 0, column: 0}, 4: {row: 0, column: 2}, 7: {row: 1, column: 3}}, C_SECOND = {row: 2, column: 5}
+const ARMED = {armed: true, editable: false}
+const pointerOf = pointerType => ({
+  down: (pc, finger = pc, key = KEY_OF[pc]) => input.pointerNote('down', pc, {pointerType, pointerId: finger, pressure: 0.5, height: 0.5}, key),
+  up: (pc, finger = pc) => input.pointerNote('up', pc, {pointerType, pointerId: finger, pressure: 0, height: null}),
+})
+const SOURCES = {
+  pointer: pointerOf('mouse'),
+  touch: pointerOf('touch'),
+  keyboard: {
+    down: pc => input.computerKeyNote('down', {key: LETTER[pc], repeat: false, modifier: false}, ARMED),
+    up: pc => input.computerKeyNote('up', {key: LETTER[pc], repeat: false, modifier: false}, ARMED),
+  },
+  midi: {
+    down: (pc, channel = 0) => midi.midiNoteEvent({port: 'Keys', channel, note: 60 + pc, velocity: 100, on: true}),
+    up: (pc, channel = 0) => midi.midiNoteEvent({port: 'Keys', channel, note: 60 + pc, velocity: 0, on: false}),
+  },
+}
+/** A second press of C on a key of its own, as each source has one: another finger on C's second touch-point; for the computer keys, the
+ * pointer on that key beside the key A; for MIDI, the note on a second channel, as a controller sends each touch of one pitch. */
+const SECOND_C = {
+  pointer: {down: () => SOURCES.pointer.down(0, 9, C_SECOND), up: () => SOURCES.pointer.up(0, 9)},
+  touch: {down: () => SOURCES.touch.down(0, 9, C_SECOND), up: () => SOURCES.touch.up(0, 9)},
+  keyboard: {down: () => SOURCES.pointer.down(0, 9, C_SECOND), up: () => SOURCES.pointer.up(0, 9)},
+  midi: {down: () => SOURCES.midi.down(0, 1), up: () => SOURCES.midi.up(0, 1)},
+}
+
+for (const [source, play] of Object.entries(SOURCES)) {
+  test(`${source}: a chord is one strike of its keys and its release one act; under Sustain a lifted note sounds on until Sustain ends`, async () => {
+    const o = owner()
+    let sustain = false
+    const p = input.createJankoInput({send: o.send, window: () => windowState, settings: () => ({...input.KEYBOARD_SETTINGS_DEFAULT, sustain})})
+    for (const pc of [0, 4, 7]) p.down(play.down(pc))
+    await tick()
+    assert.deepEqual(keysOf(o.sent, 'strike'), [[C4, E4, G4]], 'one chord, one act, on the same keys whatever plays it')
+    assert.ok([0, 4, 7].every(pc => p.down !== undefined && play.down(pc).source === source), 'each note is its own source\'s')
+    for (const pc of [0, 4, 7]) p.up(play.up(pc))
+    await tick()
+    assert.deepEqual(keysOf(o.sent, 'release'), [[C4, E4, G4]], 'one release act')
+    sustain = true
+    p.down(play.down(4)); await tick()
+    p.up(play.up(4)); await tick()
+    assert.deepEqual(keysOf(o.sent, 'release').length, 1, 'a lifted note under Sustain is not let go')
+    assert.deepEqual(p.sounding(), [E4], 'it sounds on')
+    sustain = false
+    p.refresh(); await tick()
+    assert.deepEqual(keysOf(o.sent, 'release').at(-1), [E4], 'Sustain off lets it go')
+    assert.deepEqual(o.notes, [])
+  })
+
+  test(`${source}: a repeated touch on two keys of one pitch holds one note, let go with the last; past Polyphony the oldest makes way`, async () => {
+    const o = owner({polyphony: 2})
+    const p = path(o, {repeatTouch: 'one-note'})
+    p.down(play.down(0)); p.down(SECOND_C[source].down()); await tick()
+    assert.deepEqual(keysOf(o.sent, 'strike'), [[C4]], 'one note for one pitch')
+    p.up(play.up(0)); await tick()
+    assert.deepEqual(keysOf(o.sent, 'release'), [], 'the other key still holds it')
+    p.up(SECOND_C[source].up()); await tick()
+    assert.deepEqual(keysOf(o.sent, 'release'), [[C4]], 'let go with the last of them')
+    for (const pc of [0, 4, 7]) { p.down(play.down(pc)); await tick() }
+    assert.deepEqual(p.sounding(), [E4, G4], 'past Polyphony the first made way')
+    p.up(play.up(0)); await tick()
+    assert.deepEqual(keysOf(o.sent, 'release').length, 1, 'and the path owes it no release')
+    p.down(play.down(0)); await tick()
+    assert.deepEqual(keysOf(o.sent, 'strike').at(-1), [C4], 'pressed again, it is a new note')
+  })
+
+  test(`${source}: Panic releases every note it holds at once, and a lost focus (or, for MIDI, its lost device) releases them too`, async () => {
+    const o = owner()
+    const p = path(o, {sustain: true})
+    p.down(play.down(0)); p.down(play.down(4)); await tick()
+    p.up(play.up(0)); await tick()
+    p.panic(); await tick()
+    assert.deepEqual(keysOf(o.sent, 'release'), [[C4, E4]], 'held and sustained, in one act')
+    assert.deepEqual(p.sounding(), [])
+    p.down(play.down(0)); p.down(play.down(7)); await tick()
+    p.up(play.up(7)); await tick()
+    // The device's own rules (JankoDevice.tsx): its keyboard or the window losing focus lets go of what the surface holds; a controller's
+    // notes are its device's, let go when the device is lost (liveMidi.ts lostMidiPorts), as a hardware key plays whatever holds focus.
+    const lost = source === 'midi'
+      ? input.lostDevicePress(midi.lostMidiPorts({kind: 'ports', ports: ['Keys', 'Pads'], refusal: null}, {kind: 'ports', ports: ['Pads'], refusal: null}))
+      : input.surfacePress
+    p.releaseWhere(lost); await tick()
+    assert.deepEqual(keysOf(o.sent, 'release').at(-1), [C4, G4], 'every note it held, the held and the sustained')
+    assert.deepEqual(p.sounding(), [])
+    p.down(play.down(4)); await tick()
+    p.releaseWhere(source === 'midi' ? input.surfacePress : input.lostDevicePress(['Keys'])); await tick()
+    assert.deepEqual(p.sounding(), [E4], 'the other loss leaves its notes')
+  })
+}
+
+test('midi: a lost device lets go of its own notes only, and another device\'s sound on', async () => {
+  const o = owner()
+  const p = path(o, {})
+  p.down(midi.midiNoteEvent({port: 'Keys', channel: 0, note: 60, velocity: 100, on: true}))
+  p.down(midi.midiNoteEvent({port: 'Pads', channel: 0, note: 64, velocity: 100, on: true})); await tick()
+  assert.deepEqual(p.sounding(), [C4, E4])
+  p.releaseWhere(input.lostDevicePress(midi.lostMidiPorts({kind: 'ports', ports: ['Keys', 'Pads'], refusal: null}, {kind: 'ports', ports: ['Pads'], refusal: null})))
+  await tick()
+  assert.deepEqual(p.sounding(), [E4], 'Keys was lost: its C is let go, and the Pads\' E sounds on')
+})
+
+test('the computer keys never play while typing in a field, with a modifier, as a held repeat, or unarmed; MIDI and the pointer need no focus', async () => {
+  const o = owner()
+  const p = path(o)
+  const at = key => ({key, repeat: false, modifier: false})
+  for (const tag of ['INPUT', 'TEXTAREA', 'SELECT']) assert.equal(input.typingTarget({tagName: tag}), true, `${tag} is typing`)
+  assert.equal(input.typingTarget({tagName: 'DIV', isContentEditable: true}), true, 'editable content is typing')
+  assert.equal(input.typingTarget({tagName: 'DIV', isContentEditable: false}), false)
+  assert.equal(input.typingTarget(null), false)
+  assert.equal(input.computerKeyNote('down', at('a'), {armed: true, editable: input.typingTarget({tagName: 'INPUT'})}), null, 'typing in a field plays nothing')
+  assert.equal(input.computerKeyNote('down', {key: 'a', repeat: false, modifier: true}, ARMED), null, 'a shortcut keeps its meaning')
+  assert.equal(input.computerKeyNote('down', {key: 'a', repeat: true, modifier: false}, ARMED), null, 'a held repeat is no new note')
+  assert.equal(input.computerKeyNote('down', at('a'), {armed: false, editable: false}), null, 'unarmed, the keyboard plays nothing')
+  assert.equal(input.computerKeyNote('down', at('q'), ARMED), null, 'a key off the row plays nothing')
+  assert.equal(input.computerKeyNote('up', at('a'), {armed: false, editable: false}), null, 'and lets nothing go unarmed')
+  assert.deepEqual(input.computerKeyNote('down', at('A'), ARMED), {kind: 'down', pitchClass: 0, source: 'keyboard'}, 'either case of the key')
+  assert.deepEqual(input.pointerNote('down', 0, {pointerType: 'pen', pointerId: 3, pressure: 0.7, height: 0.25}, KEY_OF[0]),
+    {kind: 'down', pitchClass: 0, source: 'pointer', pressure: 0.7, press: 'pointer-3', height: 0.25, key: KEY_OF[0]}, 'a pen carries its pressure')
+  assert.equal(input.pointerNote('down', 0, {pointerType: 'mouse', pointerId: 1, pressure: 0.5, height: null}).pressure, null, 'a mouse carries none')
+  assert.equal(input.pointerSource('touch'), 'touch')
+  assert.equal(input.pointerSource('pen'), 'pointer')
+  assert.equal(o.sent.length, 0, 'nothing reached the Torus')
+})
+
 test('a MIDI note an octave up is another key, a period on: two notes, each let go by its own key', async () => {
   const o = owner()
   const p = path(o)
@@ -352,6 +485,34 @@ test('with the engine\'s pair for the strike the host sent it, key-to-sound is m
   p.down({kind: 'down', pitchClass: 0, source: 'keyboard'})
   await tick()
   assert.equal(p.latency()[0].sentAt, 50_000)
+})
+
+// O-I #853 round 23 (DLW build ruling 2026-11-05: "The hardware-key latency path is reported the same way `latency.strikes` is, with MIDI-in
+// receive time as its first leg"): a hardware key's strike keeps when the host received its note (the act's earliest), and joined with
+// the engine's pair it is read on the host's own wall clock from that receipt: to the engine, then the engine to its sound, then the device.
+test('a hardware key\'s key-to-sound runs on the host\'s clock from its MIDI-in receipt, as the strikes\' pairs do: receipt, engine, sound', async () => {
+  const pair = {track: 1, frame: 4800, sent_at_ms: 50_003, sounds_at_ms: 50_014.5, ms: 11.5}
+  const engine = {block_frames: 480, block_ms: 10, longest_wait_ms: 3, output_latency_ms: 25, strikes: [pair]}
+  const strike = {sources: ['midi'], keys: 1, pressedAt: 1000, queuedMs: 0.5, ownerMs: 7, hostMs: 12, ok: true, sentAt: 50_000, receivedAt: 49_988}
+  const joined = input.keyToSound(strike, engine)
+  assert.deepEqual(joined.parts, [['MIDI in, from the host\'s receipt to the engine', 15], ['the engine, to its sound', 11.5], ['the device\'s output', 25]],
+    'its first leg the host\'s receipt of the note to its strike reaching the engine, both on the host\'s clock')
+  assert.equal(joined.ms, 51.5)
+  assert.deepEqual(joined.unmeasured, ['the controller to the host'])
+  assert.deepEqual(joined.engine, pair)
+  assert.equal(input.keyToSoundLine(joined), 'Key to sound: 51.5 ms (MIDI in, from the host\'s receipt to the engine 15 · the engine, to its sound 11.5 · the device\'s output 25); not measured: the controller to the host.')
+  assert.deepEqual(input.keyToSound({...strike, receivedAt: undefined}, engine).parts.map(([part]) => part)[0], 'the host to the page', 'no receipt: the page\'s legs, as before')
+  assert.deepEqual(input.keyToSound(strike, {...engine, strikes: []}).parts[0], ['the host to the page', 12], 'no pair: bounded, as before')
+  // The path keeps the receipt of the act's earliest note: a chord of two notes the host received 3 ms apart.
+  const o = owner()
+  const p = input.createJankoInput({send: o.send, window: () => windowState, wallNow: () => 50_000})
+  p.down(midi.midiNoteEvent({port: 'Keys', channel: 0, note: 64, velocity: 100, on: true, received_ms: 49_991}))
+  p.down(midi.midiNoteEvent({port: 'Keys', channel: 0, note: 60, velocity: 100, on: true, received_ms: 49_988}))
+  await tick()
+  assert.equal(p.latency()[0].receivedAt, 49_988)
+  assert.equal(p.latency()[0].hostMs, 12)
+  p.down({kind: 'down', pitchClass: 7, source: 'pointer', key: {row: 1, column: 3}, press: 'pointer-1'}); await tick()
+  assert.equal(p.latency()[1].receivedAt, undefined, 'a key of the surface was received by no host')
 })
 
 test('the host\'s note carries when it was received, and the note event keeps it for the measurement', () => {
