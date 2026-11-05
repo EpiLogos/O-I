@@ -520,6 +520,11 @@ export type AikitWriteRequest =
   /** `aikit decide invoke --instrument I --request-file - [--agent-session S]` (O-I #843, Factory's Fill heads): the cell's own words and
    * the heads it has chosen (`aikit.instrument-fill-request/v1`) on stdin; answers `aikit.instrument-fill/v1`, the picks as evidence. */
   | {kind:"decide-fill";instrument:string;request:unknown;agent_session?:string|null}
+  /** `aikit compose --session S --realise --model M [--provider P]` (O-I #842, Launch's first reading): AIKit reads the session's own
+   * Agency, the SessionSpace that holds it and its owner, and opens the model on it; answers {agency_admission, composition_scope,
+   * resident_target, realisation}, the realisation (aikit.model-realisation/v2) being what `attempt-launch` carries verbatim. AIKit refuses
+   * a session no space holds, one on the bench, or one with no Agency binding, in its own words. */
+  | {kind:"realise";agent_session:string;model:string;provider?:string|null;project?:string|null}
   /** `aikit knowledge forget destination|route|project RESOURCE` or `forget all`: answers `{forgot, preserved}`. `here` (O-I #741) forgets
    * RESOURCE in one world only — `project`'s, or your world's without one — asked in that world's ground. */
   | {kind:"knowledge-forget";scope:"destination"|"route"|"project"|"here"|"all";resource?:string|null;project?:string|null};

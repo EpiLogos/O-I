@@ -236,7 +236,7 @@ test('Promote sends the lines to Factory as one workflow edit at the byte revisi
   assert.equal(heldFor(CANVAS_DESIGN)[flow.DRAWN], undefined, 'admitted: nothing waits')
   const said = flow.flowSaidState()
   assert.equal(said.check, 'admitted')
-  assert.match(said.why, /Factory admits the line you drew into the song's file at blake3:0078afb4/)
+  assert.ok(said.why.includes(`Factory admits the line you drew into the song's file at ${SCORE.allocate.revision}`), said.why)
   assert.match(said.why, /The Run performs the edition it was commissioned with/)
   // The score read again (REAL: Factory's score after that edit): the line stands solid, Mythos taking eros-verify.
   const after = await bindingOf({...port, score: {...port.score, reading: SCORE.score_allocated}}, said)

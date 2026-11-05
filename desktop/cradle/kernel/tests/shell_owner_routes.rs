@@ -2066,7 +2066,7 @@ fn ql_registry_vak_techne_and_operator_reads_carry_qls_answers() {
     // goes on stdin, QL's breakdown comes back verbatim (REAL words: `ql vak
     // unit-steps - --json` built from the round-21 QL patch, 5 Nov 2026).
     let unit = json!({"contract": "ql.vak-unit-steps/v1", "unit": "eros-verify",
-        "heads": {"CFP": "CFP2", "CS": "CS5", "direction": "returning"}});
+        "heads": {"CFP": "CFP2", "CS": "CS5", "direction": "returning-inquiry"}});
     let broken = json!({"contract": "ql.vak-unit-steps/v1", "unit": "eros-verify",
         "open": ["CPF", "CT", "CP", "CF"], "walk": ["4.5", "4.0"],
         "compose": [{"head": "CFP", "step": {"op": "cfp-form", "form": "chain"},
@@ -4968,6 +4968,67 @@ fn a_units_launch_is_a_factory_write_refused_while_factory_admits_no_desktop_lau
         "nothing is read or launched past the admission"
     );
     assert!(outcome.receipts.is_empty(), "a refusal moves nothing");
+    let _ = fs::remove_dir_all(&dir);
+}
+
+/// Launch's first reading (O-I #842): AIKit's model realisation on the session that carries the unit, asked as
+/// `aikit compose --session S --realise --model M [--provider P]`. The desk names the session and the model; AIKit reads
+/// the session's own Agency, space and owner. The answer is AIKit's realisation (aikit.model-realisation/v2, DERIVED
+/// from ai-kit model_resident.rs `realise`), the reading `attempt-launch` carries verbatim.
+#[test]
+fn a_launch_asks_aikit_to_realise_the_session_and_carries_its_realisation() {
+    let _held = hold();
+    let dir = scratch("aikit-realise");
+    let aikit = Fake::new(&dir, "aikit");
+    let _bin = Bound::set("OI_AIKIT_BIN", &aikit.bin);
+    let realisation = json!({"schema": "aikit.model-realisation/v2", "model_ref": "model:controlled-caw",
+        "selected": true, "executed": false, "resident": {"selected": true, "executed": false},
+        "standing": "native catalogue/authority/credential/model-observed resident; send an addressed turn for actual inference and result evidence"});
+    aikit.answer(&envelope(json!({
+        "agency_admission": {"agent_ref": "agent:root", "agency_ref": "agency:root"},
+        "composition_scope": {"kind": "session-own-agency", "ambient_components_claimed": false},
+        "resident_target": {"space": "session-space/root", "agent_session": "agent-session/root", "socket": "/s/owner.sock"},
+        "realisation": realisation.clone()})));
+    let realise = |model: &str| {
+        op(
+            json!({"op": "aikit_write", "request": {"kind": "realise", "agent_session": "agent-session/root",
+            "model": model, "provider": "provider:controlled-native"}}),
+        )
+    };
+    let (outcome, form) = dispatched(no_central(&dir), realise("model:controlled-caw"));
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-write");
+    assert_eq!(
+        aikit.asked(),
+        ["compose --session agent-session/root --realise --model model:controlled-caw --provider provider:controlled-native --json"]
+    );
+    assert_eq!(reading(&outcome).1["realisation"], realisation);
+    assert_eq!(receipts(&outcome)[0]["ref"], "agent-session/root");
+    // A composition that carries no realisation is not one.
+    aikit.forget();
+    aikit.answer(&envelope(
+        json!({"composition_scope": {"kind": "session-own-agency"}}),
+    ));
+    let (outcome, _) = dispatched(no_central(&dir), realise("model:controlled-caw"));
+    assert_eq!(kind(&outcome.unwrap_err()), "incompatible");
+    // AIKit's own refusal of a session it cannot place, in its words.
+    aikit.refuse(
+        Some(
+            &json!({"ok": false, "schema": 1, "error": {"code": "encounter.agency_unbound",
+            "message": "agent-session/root has no Agency binding: it was never admitted as an Agent's session, so it has no Agency of its own to realise a model on"}}),
+        ),
+        "",
+        1,
+    );
+    let (outcome, _) = dispatched(no_central(&dir), realise("model:controlled-caw"));
+    let error = outcome.unwrap_err();
+    assert_eq!(kind(&error), "owner-refused-or-failed");
+    assert!(error.contains("has no Agency binding"), "{error}");
+    // No model, nothing asked.
+    aikit.forget();
+    let (outcome, _) = dispatched(no_central(&dir), realise(" "));
+    assert_eq!(kind(&outcome.unwrap_err()), "incompatible");
+    assert!(aikit.asked().is_empty());
     let _ = fs::remove_dir_all(&dir);
 }
 

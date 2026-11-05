@@ -315,6 +315,85 @@ test('QL\'s word on each unit: its seven heads checked as a Vāk-block cell by Q
   assert.equal(JSON.parse(binding.values['score.check']).state, 'refused')
 })
 
+// Round 22 (DLW build ruling 2026-11-05, "Direction labels. QL law wins"): QL's law spells a unit's direction forward-synthesis or
+// returning-inquiry (the Vāk block's `vak-direction`, ql-mef vak_profile.rs InquiryDirection), and every carrier writes it so. O-I passes
+// Factory's heads to QL verbatim (vakCellsOf), so each label it passes must be one QL's Vāk block holds. REAL: the Vāk-block instrument
+// (`ql context-frame team-space --json`, the installed QL a2aa0a7 and the env-2 seat's build at 7bb2535 answering byte-identically,
+// 5 Nov 2026) and Factory's score (its _source). Red on the score Factory wrote before round 22, whose directions were `forward` and
+// `returning`: QL's check refused those cells.
+test('every label O-I passes QL verbatim is a label of QL\'s Vāk block: a unit\'s direction is forward-synthesis or returning-inquiry', () => {
+  const held = new Map(REAL.vak_block.heads.map(head => [head.id, head.labels.map(label => label.id)]))
+  assert.deepEqual(held.get('vak-direction'), ['forward-synthesis', 'returning-inquiry'], 'QL\'s law spells the two directions')
+  const cells = score.vakCellsOf(read(REAL.score), null)
+  assert.equal(cells.length, REAL.score.units.length)
+  for (const cell of cells) for (const [head, labels] of Object.entries(cell.chosen)) for (const label of labels) {
+    assert.ok(held.get(head)?.includes(label), `${cell.key}: ${head} \`${label}\` is no label of QL's Vāk block (${(held.get(head) ?? []).join(', ')})`)
+  }
+  assert.deepEqual(new Set(cells.flatMap(cell => cell.chosen['vak-direction'] ?? [])), new Set(['forward-synthesis', 'returning-inquiry']))
+})
+
+// Round 22 (DLW build ruling 2026-11-05: "the Clip's Vāk tab reads vak-unit-steps"): Vāk reads QL's breakdown of the selected unit's
+// heads (`ql vak unit-steps -`, ql.vak-unit-steps/v1, the kernel's ql_read `vak-unit-steps`): what each chosen label means in the Vāk
+// block, the labels an open head may take, the composition steps the heads fix and the walk they give, and what a composition takes that
+// a unit does not carry. REAL: QL's breakdown of eros-verify's heads and its refusal of an unknown frame (`ql vak unit-steps <unit>
+// --json`, built from the env-2 seat at 7bb2535 with the round-22 patch, 5 Nov 2026). SCRIPTED: the kernel port. DERIVED: a unit with
+// six heads removed.
+test('Vāk reads QL\'s breakdown of the selected unit\'s heads: each label\'s meaning, an open head\'s labels and the steps they compose, or QL\'s refusal', async () => {
+  resetViewHolds()
+  const reading = read(REAL.score)
+  const rack = score.rackRowsOf(eros, TRACKS)
+  assert.equal(score.stepsUnitOf(reading, null), 'eros-verify', 'with no note held, this task\'s own unit')
+  assert.equal(score.stepsUnitOf(reading, 'mythos-debug'), 'mythos-debug', 'the note the view holds')
+  assert.equal(score.stepsUnitOf(reading, 'no-such-unit'), 'eros-verify', 'a note the song does not hold is not asked about')
+  const request = score.unitStepsRequestOf(reading, 'eros-verify')
+  assert.deepEqual(request, {contract: 'ql.vak-unit-steps/v1', unit: 'eros-verify', heads: unitOf(REAL.score, 'eros-verify').heads}, 'Factory\'s heads, verbatim')
+  assert.deepEqual(request.heads, REAL.unit_steps.heads.map(head => [head.head, head.label]).reduce((all, [head, label]) => ({...all, [head]: label}), {}),
+    'the heads QL broke down are the score\'s')
+  const bare = structuredClone(REAL.score)
+  unitOf(bare, 'eros-verify').heads = {CFP: 'CFP2'}
+  assert.deepEqual(score.unitStepsRequestOf(read(bare), 'eros-verify').heads, {CFP: 'CFP2'}, 'an open head is absent')
+  assert.equal(score.unitStepsRequestOf(reading, 'no-such-unit'), null)
+  const asked = []
+  const answering = data => async op => { asked.push(op); return {outcome: {result: 'owner_route_reading', route: 'ql vak unit-steps', data}} }
+  const steps = await score.readUnitSteps(answering(REAL.unit_steps), request)
+  assert.deepEqual(asked, [{op: 'ql_read', request: {kind: 'vak-unit-steps', request}}])
+  assert.equal(writesOwner(asked[0]), false, 'a read')
+  const drawn = JSON.parse(score.scoreValuesOf(reading, rack, null, null, null, steps)['vak.steps'])
+  assert.equal(drawn.unit, 'eros-verify')
+  assert.deepEqual(drawn.heads.find(head => head.head === 'direction'),
+    {head: 'direction', state: 'chosen', label: 'returning-inquiry', meaning: 'Retrospective: the pass back through the pairs'})
+  assert.deepEqual(drawn.compose.map(step => step.step), ['cfp-form chain', 'cs-select ground-through-operation returning-inquiry'])
+  assert.deepEqual(drawn.compose.map(step => step.hops), [0, 3])
+  assert.deepEqual(drawn.walk, ['4.5', '4.4', '4.3'])
+  assert.deepEqual(drawn.needs, ['context', 'oikonomia', 'basis'])
+  // QL's refusal stands in its words; an older QL answers no breakdown.
+  const refused = await score.readUnitSteps(async () => ({error: REAL.unit_steps_refused}), {...request, heads: {...request.heads, CF: 'CF8'}})
+  assert.equal(refused.state, 'absent')
+  assert.match(refused.why, /^QL did not break down eros-verify's heads: .*CF `CF8`: unknown context frame CF8/)
+  assert.match((await score.readUnitSteps(answering({contract: 'ql.vak-composition/v1'}), request)).why, /may predate `ql vak unit-steps`/)
+  assert.deepEqual(JSON.parse(score.scoreValuesOf(reading, rack, null, null, null, refused)['vak.steps']), {unit: 'eros-verify', state: 'absent', why: refused.why})
+  // The wiring: read where the port carries it, and said absent where nothing asks QL.
+  assert.match(score.scoreWiring({...port(reading).port, steps}, () => undefined).reads['vak.steps'], /ql vak unit-steps/)
+  assert.equal(score.scoreWiring(port(reading).port, () => undefined).absent['vak.steps'], score.STEPS_UNASKED)
+  assert.equal(score.scoreWiring(null, () => undefined).absent['vak.steps'], score.SCORE_NOT_HERE)
+  // On the clip: Vāk draws QL's meaning of each head and the steps under the lanes; a refusal stands there in QL's words.
+  setViewHold(HOLD, 'unit', 'eros-verify')
+  const design = await loadClip('factory')
+  const vak = design.editor.find(tab => tab.id === 'vak')
+  const draw = scorePort => { const binding = bindingOf(scorePort)
+    return renderToStaticMarkup(createElement(vak.draw, {v: binding.values, set: noop, standing: binding.standing, size: 'detail', room: {w: 900, h: 360}})) }
+  const markup = draw({...port(reading).port, steps})
+  for (const words of ['QL composes', 'CFP: cfp-form chain (ql.cprime-oikonomia/v1:cfp2:chained-c-thread)', '4.5 → 4.4 → 4.3', 'context, oikonomia, basis',
+    'QL: Retrospective: the pass back through the pairs', 'QL: dialogue with the person']) assert.ok(markup.includes(words), words)
+  assert.match(draw({...port(reading).port, steps: refused}), /unknown context frame CF8/)
+  // A breakdown of another unit than the one shown is not drawn on it.
+  assert.ok(!draw({...port(reading).port, steps: {...steps, unit: 'mythos-debug'}}).includes('QL composes'))
+  // An open head: QL names the labels its Vāk block holds for it.
+  const opened = await score.readUnitSteps(answering({...REAL.unit_steps, open: ['CS'], heads: REAL.unit_steps.heads.map(head => head.head === 'CS'
+    ? {head: 'CS', field: 'sequence', state: 'open', label: null, instrumentHead: 'vak-cs', labels: ['CS0', 'CS1', 'CS2', 'CS3', 'CS4', 'CS5']} : head)}), request)
+  assert.match(draw({...port(reading).port, steps: opened}), /QL(&#x27;|')s Vāk block holds CS0 · CS1 · CS2 · CS3 · CS4 · CS5/)
+})
+
 test('Sample draws the task\'s log from the session\'s events, the retrospective readings where they were found; Warp lays it on the note; the tools change no log', async () => {
   resetViewHolds()
   const events = [
@@ -601,13 +680,13 @@ test('Compose from a map asks for one unit per ticket, keyed as the map keys it 
   assert.match(plain.body, /No map gives this song its units \(EpiLogos\/O-I#844 carries no wayfinder:map label: it is not a map\): compose them from the Intent\./)
   assert.equal(JSON.parse(plain.body.match(/```json\n([\s\S]*?)\n```/)[1]).map, null)
   // Anima's answer: one unit per ticket, written whole; the second's composition gives heads QL checks, under their own cell.
-  const composition = {participation: 'dialogical', content: 'CT2', position: '4.2', frame: 'CF3', thread: 'CFP2', sequence: 'CS2', direction: 'returning'}
+  const composition = {participation: 'dialogical', content: 'CT2', position: '4.2', frame: 'CF3', thread: 'CFP2', sequence: 'CS2', direction: 'returning-inquiry'}
   const fromMap = {contract: 'factory.workflow-edit/v1', expectedRevision: REV, edits: [{op: 'unit', unit: wholeUnit('issue-842', [])},
     {op: 'unit', unit: wholeUnit('issue-843', ['issue-842'], {composition})}, {op: 'heads', unit: 'issue-843', heads: {CS: 'CS3'}}]}
   const reading = read(REAL.score)
   const cells = score.composedCellsOf(reading, fromMap)
   assert.deepEqual(cells.map(cell => cell.key), ['issue-843#composed'], 'a unit with no composition gives no heads')
-  assert.deepEqual(cells[0].chosen, {'vak-cpf': ['dialogical'], 'vak-ct': ['CT2'], 'vak-cp': ['4.2'], 'vak-cf': ['CF3'], 'vak-cfp': ['CFP2'], 'vak-cs': ['CS3'], 'vak-direction': ['returning']},
+  assert.deepEqual(cells[0].chosen, {'vak-cpf': ['dialogical'], 'vak-ct': ['CT2'], 'vak-cp': ['4.2'], 'vak-cf': ['CF3'], 'vak-cfp': ['CFP2'], 'vak-cs': ['CS3'], 'vak-direction': ['returning-inquiry']},
     'its composition\'s heads, a later heads edit over them')
   const ok = owners()
   const word = await score.judgeProposal(ok.call, reading, fromMap)
@@ -620,7 +699,7 @@ test('Compose from a map asks for one unit per ticket, keyed as the map keys it 
   const added = drawn.units.filter(unit => unit.key.startsWith('issue-'))
   assert.deepEqual(added.map(unit => [unit.key, unit.row, unit.deps, unit.proposed]), [['issue-842', 'agent/anima-techne-helper', [], true],
     ['issue-843', 'agent/anima-techne-helper', ['issue-842'], true]])
-  assert.deepEqual(added[1].heads, {CPF: 'dialogical', CT: 'CT2', CP: '4.2', CF: 'CF3', CFP: 'CFP2', CS: 'CS2', direction: 'returning'})
+  assert.deepEqual(added[1].heads, {CPF: 'dialogical', CT: 'CT2', CP: '4.2', CF: 'CF3', CFP: 'CFP2', CS: 'CS2', direction: 'returning-inquiry'})
   assert.deepEqual(added[1].picks, {CS: 'CS3'})
   assert.equal(added[0].concern, 'The ticket issue-842 is built')
   assert.deepEqual(added[0].success, ['issue-842\'s Done when'])
@@ -652,7 +731,7 @@ test('Anima\'s answer is the proposal Central\'s ledger holds from that Position
   assert.equal(notEdit.state, 'refused')
   assert.match(notEdit.why, /Anima's proposal \(central:return:project:O-I:compose-3\) holds no factory\.workflow-edit\/v1, so it is not taken/)
   const stale = owners({rows: [first], readings: {[first.return_ref]: ledgerReading(first, ASK, proposalBody({...PROPOSAL, expectedRevision: 'blake3:old'}))}})
-  assert.match((await score.composeAnswerOf(stale.call, ASKED)).why, /is against revision blake3:old, and the song was asked at blake3:c19482/)
+  assert.ok((await score.composeAnswerOf(stale.call, ASKED)).why.includes(`is against revision blake3:old, and the song was asked at ${REV}`))
   // The ledger not answering is Central's words.
   await assert.rejects(score.composeAnswerOf(async () => ({error: 'central.receiving_unavailable: the receiving owner store is locked'}), ASKED),
     /Central's receiving ledger did not answer the list of what it received: central\.receiving_unavailable/)

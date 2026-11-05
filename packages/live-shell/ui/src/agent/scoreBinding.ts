@@ -18,6 +18,10 @@
 //     ql_read `instrument-check`): each chosen label held to its head and the instrument's constraints, an open head an abstention it
 //     names. One unit refused refuses the score (`score.check`), in QL's words. A proposal's picks, with the unit's heads, are a cell of
 //     their own: QL's word on it is the engine's word on the proposal (`gen.status`).
+//   - The Vāk tab reads QL's breakdown of the selected unit's heads (`ql vak unit-steps -`, ql.vak-unit-steps/v1, the kernel's ql_read
+//     `vak-unit-steps`; DLW build ruling 2026-11-05): what each chosen label means in the Vāk block, the labels an open head may take,
+//     and the composition steps the heads fix (CFP's `cfp-form`, CS with its direction a `cs-select` and the walk it gives), with what a
+//     composition still takes that a unit does not carry (its context, oikonomia and basis). QL's refusal stands there in its words.
 //   - Compose (a song from the task's Intent, O-I 844) is Anima's act, under its own tenure, through its team (lead rulings, round 15).
 //     The press sends one Communique to the session's orchestrator Position (`gateway_write send`, `aikit gateway send`) carrying the
 //     Intent, the clip's Constellation and its sources, the song's identity and where the answer goes, and the desk keeps that
@@ -187,6 +191,65 @@ export async function readQlWord(call: PlanCall, cells: readonly VakCell[]): Pro
   return {state: 'read', cells: words}
 }
 
+/** QL's breakdown of one unit's heads (ql-cli vak_composition.rs unit_steps), the ask and the answer under one contract. */
+export const UNIT_STEPS = 'ql.vak-unit-steps/v1'
+const QL_STEPS = '`ql vak unit-steps`'
+/** QL's breakdown of the selected unit's heads: each head's meaning, the labels an open head may take, the composition steps the heads
+ * fix and the walk they give; or why there is none, in QL's words. */
+export type UnitSteps = {readonly state: 'read'; readonly unit: string; readonly reading: Record<string, unknown>}
+  | {readonly state: 'absent'; readonly unit: string | null; readonly why: string}
+
+/** The unit QL breaks down: the note the view holds, where the song has it; else this task's own; else the song's first. Pure. */
+export function stepsUnitOf(score: ScoreReading | null, held: string | null): string | null {
+  if (score?.state !== 'read') return null
+  const units = unitsOf(score.reading)
+  const key = (unit: Record<string, unknown> | undefined) => (unit ? text(unit.key) : null)
+  return key(units.find(unit => unit.key === held)) ?? key(units.find(unit => unit.unitRef === score.target.unitRef)) ?? key(units[0])
+}
+
+/** The ask for one unit's breakdown: the unit's heads in Factory's spelling, an open head absent. Null where the song holds no such
+ * unit. Pure. */
+export function unitStepsRequestOf(score: ScoreReading | null, unit: string | null): Record<string, unknown> | null {
+  if (score?.state !== 'read' || !unit) return null
+  const found = unitsOf(score.reading).find(item => item.key === unit)
+  if (!found) return null
+  const given = object(found.heads) ?? {}, heads: Record<string, string> = {}
+  for (const [head] of HEADS) { const label = text(given[head]); if (label) heads[head] = label }
+  return {contract: UNIT_STEPS, unit, heads}
+}
+
+/** One breakdown of a unit's heads by QL through the kernel (ql_read `vak-unit-steps`): QL's reading, or its refusal in its words. */
+export async function readUnitSteps(call: PlanCall, request: Record<string, unknown>): Promise<UnitSteps> {
+  const unit = String(request.unit)
+  const read = await call({op: 'ql_read', request: {kind: 'vak-unit-steps', request}})
+  if (read.error) return {state: 'absent', unit, why: `QL did not break down ${unit}'s heads: ${refusalWords(read.error)}`}
+  const data = object(read.outcome?.result === 'owner_route_reading' ? read.outcome.data : null)
+  if (data?.contract !== UNIT_STEPS || data.unit !== unit) {
+    return {state: 'absent', unit, why: `QL answered no breakdown of ${unit}'s heads (${UNIT_STEPS}): the QL installed here may predate ${QL_STEPS}.`}
+  }
+  return {state: 'read', unit, reading: data}
+}
+
+/** The breakdown as the Vāk tab draws it (clips/factory.tsx Vak): per head QL's meaning of its label, or the labels it may take while
+ * open; the composition steps the heads fix, in QL's words; the walk; what a composition still takes; or QL's refusal. Pure. */
+export function stepsValueOf(steps: UnitSteps): Record<string, unknown> {
+  if (steps.state === 'absent') return {unit: steps.unit, state: 'absent', why: steps.why}
+  const reading = steps.reading
+  const heads = list(reading.heads).map(object).flatMap(head => {
+    const id = text(head?.head)
+    if (!id || !head) return []
+    return [{head: id, state: head.state === 'chosen' ? 'chosen' : 'open', ...(text(head.label) ? {label: text(head.label)} : {}),
+      ...(text(head.meaning) ? {meaning: text(head.meaning)} : {}), ...(texts(head.labels).length ? {labels: texts(head.labels)} : {})}]
+  })
+  const compose = list(reading.compose).map(object).flatMap(step => {
+    const head = text(step?.head), op = object(step?.step)
+    if (!head || !op) return []
+    const words = [text(op.op), text(op.form), text(op.profile), text(op.direction)].filter((word): word is string => word !== null)
+    return [{head, step: words.join(' '), ...(text(step?.marker) ? {marker: text(step?.marker)} : {}), hops: list(step?.hops).length}]
+  })
+  return {unit: steps.unit, state: 'read', heads, compose, walk: texts(reading.walk), needs: texts(reading.needs), standing: text(reading.standing)}
+}
+
 /** QL's word on the score's own units: refused if it refuses one, in its words. Pure. */
 function qlWordOn(units: readonly Record<string, unknown>[], word: QlWord | null | undefined): {refused: boolean; why: string} {
   if (!word) return {refused: false, why: QL_WORD_UNASKED}
@@ -246,10 +309,10 @@ function canonOf(unit: Record<string, unknown>, depth: number): Record<string, u
 }
 
 /** The score as the design draws it (clips/factory.tsx Score): rows, units, joins and waves in Factory's words, the held picks on their
- * unit; `unit.own` this task's unit; `score.check` the engine's word, Factory's and QL's; `gen.status` QL's word on the proposal. Empty
- * where nothing is read. Pure. */
+ * unit; `unit.own` this task's unit; `score.check` the engine's word, Factory's and QL's; `gen.status` QL's word on the proposal;
+ * `vak.steps` QL's breakdown of the selected unit's heads. Empty where nothing is read. Pure. */
 export function scoreValuesOf(score: ScoreReading | null, rack: readonly RackRow[], picks: HeldPicks | null, word?: QlWord | null,
-  compose?: ComposeState | null): Record<string, Value> {
+  compose?: ComposeState | null, steps?: UnitSteps | null): Record<string, Value> {
   if (score?.state !== 'read') return {}
   const {reading, target} = score
   const units = list(reading.units).map(object).filter((unit): unit is Record<string, unknown> => unit !== null)
@@ -291,6 +354,7 @@ export function scoreValuesOf(score: ScoreReading | null, rack: readonly RackRow
   if (composing) values['gen.status'] = JSON.stringify(composing)
   const asks = compose ? composeAsksOf(compose) : null
   if (asks) values['gen.asks'] = asks
+  if (steps) values['vak.steps'] = JSON.stringify(stepsValueOf(steps))
   return values
 }
 
@@ -343,6 +407,8 @@ export interface ScorePort {
   readonly drop: () => void
   /** Compose: Anima's proposal for the song, asked, read in Central's ledger, judged by QL and Factory; none where nothing composes. */
   readonly compose?: ComposePort | null
+  /** QL's breakdown of the selected unit's heads (`ql vak unit-steps`), the Vāk tab's; none where nothing asks QL for it. */
+  readonly steps?: UnitSteps | null
 }
 
 /** The score's settings the view holds: the chosen note, how the rows fold and highlight, the song opened inside a note, Warp, and the
@@ -373,7 +439,8 @@ function proposalWhy(port: ScorePort): string | null {
   return word.cells.has(`${held.unit}${PROPOSED}`) ? null : `The engine's word on the proposal: QL gave no word on ${held.unit}'s picks (Quaternal Logic).`
 }
 const NO_BRANCH = 'A song branches only by allocation: Transform gives units a thread form, an agent or agent set, or a unit to wait on, never a condition.'
-const SCORE_KEYS = ['score', 'unit.own', 'score.check'] as const
+const SCORE_KEYS = ['score', 'unit.own', 'score.check', 'vak.steps'] as const
+export const STEPS_UNASKED = `QL's breakdown of the selected unit's heads is not read here: nothing carries the unit's heads to QL (${QL_STEPS}).`
 const SCORE_WRITES = ['score', 'tr.press', 'gen.press', 'gen.accept', 'gen.discard'] as const
 
 /** Why the score is not on the clip, or null when it is. */
@@ -500,12 +567,13 @@ export function scoreWiring(port: ScorePort | null, choice: (key: string) => Val
       score: 'Factory\'s score of the song the task\'s Run performs (factory workflow score): its units with their compositions, who does each, its joins and waves, on the rows of the track\'s Agent rack — its agents and agent sets — then those the song names that the rack does not hold',
       'unit.own': 'the unit the task\'s latest attempt names, as Factory keys it',
       'score.check': `Factory's check of the song's file (factory workflow check), whether the Run performs it, and QL's word on each unit's composition, its seven heads a Vāk-block cell (${QL_CHECK})`,
+      ...(port.steps ? {'vak.steps': `QL's breakdown of the selected unit's heads (${QL_STEPS}): what each chosen label means in the Vāk block, the labels an open head may take, and the composition steps the heads fix`} : {}),
       ...(status ? {} : {'gen.status': composing
         ? 'Compose\'s word: its ask to the session\'s orchestrator, the proposal Central\'s receiving ledger holds in answer, and QL\'s check of the heads it gives and Factory\'s admission of it (factory workflow edit --check)'
         : `QL's word on the proposal: the unit's heads with the decision model's picks, checked as a Vāk-block cell (${QL_CHECK})`}),
       ...(compose && compose.state.state !== 'unaddressed' ? {'gen.asks': 'where Compose asks: the Position the session\'s orchestrator occupies (aikit gateway who), from Central\'s agent set'} : {}),
     },
-    absent: {...(status ? {'gen.status': status} : {}),
+    absent: {...(status ? {'gen.status': status} : {}), ...(port.steps ? {} : {'vak.steps': STEPS_UNASKED}),
       ...(!compose ? {'gen.asks': COMPOSE_NOT_HERE} : compose.state.state === 'unaddressed' ? {'gen.asks': compose.state.why} : {})},
     acts,
     view: SCORE_VIEW,
@@ -964,4 +1032,26 @@ export function useScore(transport: KernelTransportStatus, target: PlanTarget | 
   }),
   // eslint-disable-next-line react-hooks/exhaustive-deps
   [reading, picks, key, rackKey, agentSession, word])
+}
+
+/** QL's breakdown of the selected unit's heads (the Vāk tab's), asked again whenever the unit or its heads change: `held` is the note the
+ * view holds, and with none this task's own. None where the song holds no unit. */
+export function useUnitSteps(transport: KernelTransportStatus, score: ScoreReading, held: string | null): UnitSteps | null {
+  const unit = stepsUnitOf(score, held)
+  const request = unitStepsRequestOf(score, unit)
+  const key = request ? JSON.stringify([transport, request]) : null
+  const [said, setSaid] = useState<{key: string; steps: UnitSteps} | null>(null)
+  useEffect(() => {
+    if (!key || !request || transport.kind === 'unavailable') return
+    let live = true
+    void readUnitSteps(carried(transport), request).then(steps => { if (live) setSaid({key, steps}) })
+    return () => { live = false }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key])
+  const reason = transport.kind === 'unavailable' ? transport.reason ?? 'the shell has no kernel carrier' : null
+  return useMemo((): UnitSteps | null => !request ? null
+    : reason !== null ? {state: 'absent', unit, why: `QL is not reached: ${reason}.`}
+      : said?.key === key ? said.steps : {state: 'absent', unit, why: `QL is breaking down ${unit}'s heads (${QL_STEPS}).`},
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [key, reason, said])
 }
