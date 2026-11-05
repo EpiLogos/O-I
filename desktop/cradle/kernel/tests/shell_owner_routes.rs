@@ -1746,7 +1746,7 @@ fn ql_s_word_on_an_instruments_cells_is_read_through_its_own_verb() {
     );
     assert_eq!(serde_json::from_str::<Value>(&ql.stdin()).unwrap(), cells);
     ql.forget();
-    ql.answer(&json!({"schema": "ql.vak-team-space/v1"}));
+    ql.answer(&json!({"schema": "ql.vak-team-space/v2"}));
     let (outcome, _) = dispatched(
         no_central(&dir),
         op(
@@ -2023,6 +2023,45 @@ fn ql_registry_vak_techne_and_operator_reads_carry_qls_answers() {
     );
     assert!(outcome.unwrap_err().contains("ql: invalid Vāk ref `NOPE`"));
     assert_eq!(ql.asked().last().unwrap(), "vak context NOPE 1 --json");
+    // A composition through full C′ Vāk (O-I #843): the request goes on
+    // stdin and QL's answer comes back verbatim (REAL words: `ql vak compose
+    // /dev/stdin --json` at 8c8ad0f, 5 Nov 2026).
+    let composition = json!({"contract": "ql.vak-composition/v1", "steps": []});
+    let composed = json!({"contract": "ql.vak-composition/v1", "results": [],
+        "sourceRevision": "daa660cbc1b8c5da83828698665a753852cb0287"});
+    ql.answer(&composed);
+    ql.forget();
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(json!({"op": "ql_read", "request": {"kind": "vak-compose", "request": composition}})),
+    );
+    assert_eq!(form, "owner-read");
+    assert_eq!(reading(&outcome.unwrap()).1, composed, "verbatim");
+    assert_eq!(ql.asked(), ["vak compose /dev/stdin --json"]);
+    assert_eq!(
+        serde_json::from_str::<Value>(&ql.stdin()).unwrap(),
+        composition,
+        "the composition goes on stdin"
+    );
+    // An answer under another contract is named, and QL's refusal of a step
+    // is carried in its words.
+    ql.answer(&real["vak_locate"]["answer"]);
+    let compose =
+        || op(json!({"op": "ql_read", "request": {"kind": "vak-compose", "request": composition}}));
+    assert_eq!(
+        kind(&dispatched(no_central(&dir), compose()).0.unwrap_err()),
+        "incompatible"
+    );
+    ql.refuse(
+        None,
+        "ql: step 0 (nope): unknown QL composition operation nope",
+        2,
+    );
+    let refused = dispatched(no_central(&dir), compose()).0.unwrap_err();
+    assert!(
+        refused.contains("unknown QL composition operation nope"),
+        "{refused}"
+    );
     let _ = fs::remove_dir_all(&dir);
 }
 
@@ -2281,6 +2320,140 @@ fn prompt_pads_read_the_bank_and_a_write_presents_the_persons_grant() {
         let wire = receipts(&outcome);
         assert_eq!(wire[0]["action"], format!("development {kind}"));
         assert_eq!(wire[0]["ref"], subject);
+    }
+    // An Agent rack's macros (O-I 842, `factory.rack-macros/v1`): read by the project and the
+    // session space; a turn, unmap or recall is the person's, on the grant the host's token holds.
+    factory.answer(
+        &json!({"schema": "factory.rack-macros-reading/v1", "project_ref": "project:demo",
+        "space_ref": "session-space/demo", "revision": "absent",
+        "macros": {"model": null, "effort": null, "budget": null},
+        "unmapped": {"model": [], "effort": [], "budget": []}, "variations": [],
+        "automatic_agent_or_model_invocation": false}),
+    );
+    factory.forget();
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "factory_owner", "request": {"kind": "rack-macros-read",
+            "state_path": state, "project_ref": "project:demo", "space_ref": "session-space/demo"}}),
+        ),
+    );
+    assert_eq!(form, "owner-read");
+    outcome.unwrap();
+    assert_eq!(
+        factory.asked(),
+        [format!(
+            "development rack-macros {} project:demo session-space/demo --json",
+            state.display()
+        )]
+    );
+    for (extra, sent_value) in [
+        (
+            json!({"act": "turn", "macro": "budget", "value": 40}),
+            Some(json!(40)),
+        ),
+        (json!({"act": "turn", "macro": "model"}), Some(Value::Null)),
+        (
+            json!({"act": "unmap", "macro": "effort", "chain": "agent-session/b"}),
+            None,
+        ),
+        (json!({"act": "recall", "variation": "Night"}), None),
+    ] {
+        let mut request = json!({"kind": "rack-macros-write", "state_path": state,
+            "project_ref": "project:demo", "space_ref": "session-space/demo",
+            "expected_revision": "absent"});
+        for (key, value) in extra.as_object().unwrap() {
+            request[key] = value.clone();
+        }
+        factory.answer(&json!({"schema": "factory.rack-macros-write/v1", "project_ref": "project:demo",
+            "space_ref": "session-space/demo", "act": extra["act"], "revision": "blake3:ee", "changed": true,
+            "automatic_agent_or_model_invocation": false}));
+        factory.forget();
+        let (outcome, form) = dispatched(
+            no_central(&dir),
+            op(json!({"op": "factory_owner", "request": request})),
+        );
+        let outcome = outcome.unwrap();
+        assert_eq!(form, "owner-write");
+        assert_eq!(
+            factory.asked(),
+            [format!(
+                "development rack-macros-write {} - --json",
+                state.display()
+            )]
+        );
+        let sent: Value = serde_json::from_str(&factory.stdin()).unwrap();
+        assert_eq!(sent["caller"]["callerRef"], "oi:desk-rack-macros");
+        assert_eq!(
+            sent["authority"]["capabilityRef"],
+            "capability/factory/operate-rack-macros"
+        );
+        assert_eq!(
+            sent["authority"]["authorityRef"],
+            "central:native-action-authority#central:source:control:root:Control/user/identity"
+        );
+        assert_eq!(sent["act"], extra["act"]);
+        assert_eq!(sent.get("value").cloned(), sent_value, "{extra}");
+        for key in ["macro", "chain", "variation"] {
+            assert_eq!(
+                sent.get(key),
+                extra.get(key),
+                "{key} goes as the desk gave it"
+            );
+        }
+        let wire = receipts(&outcome);
+        assert_eq!(wire[0]["action"], "development rack-macros-write");
+        assert_eq!(
+            wire[0]["ref"],
+            "project:demo#rack-macros:session-space/demo"
+        );
+    }
+    // Hand back (manual §19.4): a person's hold on what the agent holds, taken and given back on the same grant; no custody state moves.
+    for (act, extra) in [
+        (
+            "take",
+            json!({"subject_ref": "file:Work/demo/draft.md", "expected_revision": 2}),
+        ),
+        ("give-back", json!({})),
+    ] {
+        let mut request = json!({"kind": "custody-hold", "state_path": state, "custody_ref": "factory:custody:demo",
+            "act": act, "reason": "I edited the draft"});
+        for (key, value) in extra.as_object().unwrap() {
+            request[key] = value.clone();
+        }
+        factory.answer(
+            &json!({"schema": "factory.work-custody-receipt/v1", "result": "applied",
+            "custody": {"custody_ref": "factory:custody:demo", "revision": 2}}),
+        );
+        factory.forget();
+        let (outcome, form) = dispatched(
+            no_central(&dir),
+            op(json!({"op": "factory_owner", "request": request})),
+        );
+        let outcome = outcome.unwrap();
+        assert_eq!(form, "owner-write");
+        assert_eq!(
+            factory.asked(),
+            [format!(
+                "development custody hold {} --request - --json",
+                state.display()
+            )]
+        );
+        let sent: Value = serde_json::from_str(&factory.stdin()).unwrap();
+        assert_eq!(sent["act"], act);
+        assert_eq!(sent["caller"]["projectionKind"], "desktop-human");
+        assert_eq!(
+            sent["authority"]["capabilityRef"],
+            "capability/factory/hold-custody"
+        );
+        assert_eq!(sent.get("subject_ref"), extra.get("subject_ref"));
+        assert_eq!(
+            sent.get("expected_revision"),
+            extra.get("expected_revision")
+        );
+        let wire = receipts(&outcome);
+        assert_eq!(wire[0]["action"], "development custody hold");
+        assert_eq!(wire[0]["ref"], "factory:custody:demo");
     }
     let _ = fs::remove_dir_all(&dir);
 }
@@ -4625,6 +4798,60 @@ fn a_units_retry_is_a_factory_write_refused_while_factory_admits_no_desktop_retr
             dir.join("state").display()
         )],
         "the admission is asked for the Run's state, and nothing is read or acted on past it"
+    );
+    assert!(outcome.receipts.is_empty(), "a refusal moves nothing");
+    let _ = fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn a_units_stop_after_is_a_factory_write_refused_while_factory_admits_no_desktop_cancellation() {
+    let _held = hold();
+    let dir = scratch("factory-cancel");
+    let factory = Fake::new(&dir, "factory");
+    let _bin = Bound::set("OI_FACTORY_BIN", &factory.bin);
+    // The installed Factory's admission before round 20 (factory attempt_admission.rs at 4243956): receiving and retry only.
+    factory.answer(&json!({
+        "contract": "factory.attempt-admission/v1", "nativeOwner": "factory",
+        "capabilityRef": "capability/factory/operate-attempt",
+        "desktopCaller": {"callerRef": "oi:desktop", "lineage": ["oi:desktop"], "projectionKind": "desktop-human"},
+        "actions": [{"actionRef": "attempt-receiving", "actorKind": "human",
+            "contract": "factory.attempt-receiving-action/v1", "nativeAction": "central.receiving.submit",
+            "scopeRef": "project:Factory"},
+            {"actionRef": "attempt-retry", "actorKind": "human", "contract": "factory.attempt-action/v1",
+            "operation": "retry", "nativeAction": "factory.attempt.retry", "scopeRef": "project:Factory"}],
+    }));
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "factory_owner", "request": {"kind": "attempt-request-cancellation",
+            "state_path": dir.join("state").display().to_string(), "run_ref": "run:one",
+            "workflow_unit_ref": "unit:inspect-source"}}),
+        ),
+    );
+    let outcome = outcome.unwrap();
+    assert_eq!(
+        form, "owner-write",
+        "a cancellation request is the person's write"
+    );
+    let KernelOpResult::FactoryDevelopmentReading { data } = &outcome.result else {
+        panic!("not Factory's document: {:?}", outcome.result)
+    };
+    assert_eq!(data["contract"], "oi.factory-attempt-cancellation/v1");
+    assert_eq!(data["status"], "refused");
+    assert_eq!(data["refusal"]["step"], "admission");
+    assert!(
+        data["refusal"]["message"].as_str().unwrap().contains(
+            "names no attempt-request-cancellation action, only attempt-receiving, attempt-retry"
+        ),
+        "{data}"
+    );
+    assert_eq!(
+        factory.asked(),
+        [format!(
+            "attempt admission {} --json",
+            dir.join("state").display()
+        )],
+        "nothing is read or acted on past the admission"
     );
     assert!(outcome.receipts.is_empty(), "a refusal moves nothing");
     let _ = fs::remove_dir_all(&dir);

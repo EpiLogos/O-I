@@ -172,9 +172,17 @@ test('the Agentset rack: a group\'s sessions as its chains, each named by its ag
   assert.equal('device' in binding.local, false, 'no device of the chain is chosen: the Devices view shows them all')
   // REPLACED (BD r19; DLW build ruling 2026-11-05): `dev` was a missing op. A device of another session's chain is changed by a message to that
   // session through Messages' delegate, so a rack handed no carrier names that carrier (the last test).
-  for (const key of ['fanOut', 'depth', 'handBack', 'returnCap', 'budget', 'unmapped', 'store', 'variation', 'solo']) {
+  for (const key of ['fanOut', 'depth', 'handBack', 'returnCap', 'solo']) {
     assert.match(binding.standing[key].disabled, /missing op/, key)
     await assert.rejects(() => binding.write([{key, value: 1}]), /missing op/)
+  }
+  // REPLACED (BD r20; DLW build ruling 2026-11-05): Budget, Unmap, Store and Variations were missing ops. Each chain's task Budget is
+  // AIKit's (encounter_task_read, then encounter_task_budget) and where the macros stand is Software Factory's (factory.rack-macros/v1,
+  // the kernel's factory_owner rack-macros-read and rack-macros-write), so a rack handed no carrier names the one that carries it.
+  for (const key of ['budget', 'unmapped', 'store', 'variation']) {
+    assert.equal(binding.standing[key].disabled, own.AGENTSET_REFUSE[key], key)
+    assert.doesNotMatch(binding.standing[key].disabled, /missing op/, key)
+    await assert.rejects(() => binding.write([{key, value: 1}]), error => error.message === own.AGENTSET_REFUSE[key], key)
   }
   // REPLACED (round 861): a group's Model and Effort were missing ops; each chain's session carries its own (AIKit's model select), so a
   // rack handed no carrier names that one.

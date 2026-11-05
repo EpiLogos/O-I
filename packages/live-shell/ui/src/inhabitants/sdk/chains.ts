@@ -161,6 +161,33 @@ export function macroTurns(chains: readonly RackNode[], macro: RackMacro, value:
   })
 }
 
+/** Where one rack's macros stand, as Software Factory keeps them (factory.rack-macros/v1; its reading, factory.rack-macros-reading/v1, and a
+ * write's receipt, factory.rack-macros-write/v1, carry the same): where each macro stands, the chains each leaves alone, the rack's
+ * variations, and the revision a write is made on. */
+export interface RackMacrosReading {
+  readonly revision: string
+  readonly macros: Readonly<Partial<Record<RackMacro, string | number | null>>>
+  readonly unmapped: RackUnmapped
+  readonly variations: readonly {readonly name: string; readonly values: Readonly<Partial<Record<RackMacro, string | number | null>>>}[]
+}
+const macroValueOf = (value: unknown): string | number | null => (typeof value === 'string' || typeof value === 'number' ? value : null)
+const macrosOfObject = (raw: unknown): Partial<Record<RackMacro, string | number | null>> => {
+  const object = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw as Record<string, unknown> : {}
+  return Object.fromEntries(RACK_MACROS.flatMap(macro => (macro in object ? [[macro, macroValueOf(object[macro])]] : [])))
+}
+/** Factory's reading of a rack's macros, or a write's receipt, as a rack holds it; null where it is neither. Pure. */
+export function rackMacrosReadingOf(data: unknown): RackMacrosReading | null {
+  const d = data && typeof data === 'object' ? data as Record<string, unknown> : null
+  if (!d || (d.schema !== 'factory.rack-macros-reading/v1' && d.schema !== 'factory.rack-macros-write/v1') || typeof d.revision !== 'string') return null
+  const apart = d.unmapped && typeof d.unmapped === 'object' && !Array.isArray(d.unmapped) ? d.unmapped as Record<string, unknown> : {}
+  const unmapped: RackUnmapped = Object.fromEntries(RACK_MACROS.map(macro => [macro, Array.isArray(apart[macro]) ? (apart[macro] as unknown[]).filter((id): id is string => typeof id === 'string') : []]))
+  const variations = Array.isArray(d.variations) ? d.variations.flatMap(item => {
+    const v = item && typeof item === 'object' ? item as {name?: unknown; values?: unknown} : null
+    return v && typeof v.name === 'string' && v.name ? [{name: v.name, values: macrosOfObject(v.values)}] : []
+  }) : []
+  return {revision: d.revision, macros: macrosOfObject(d.macros), unmapped, variations}
+}
+
 /** A chain's setting turned by hand comes off the macro that turned it (the hand takes it, as a modulator lets go of what the hand takes,
  * §16.1): the macro leaves it alone from then on. Pure. */
 export function offByHand(unmapped: RackUnmapped, macro: RackMacro, chain: string): RackUnmapped {

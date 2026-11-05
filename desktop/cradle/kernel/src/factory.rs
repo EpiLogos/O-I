@@ -506,6 +506,21 @@ pub enum OwnerRequest {
         #[serde(default)]
         authority_grant: Option<String>,
     },
+    /// Stop after: the person asks a unit's current attempt to stop —
+    /// Factory's own attempt operation `request-cancellation`
+    /// (`factory attempt action <state> -`), admitted from a desktop as its
+    /// `attempt-request-cancellation` action under its own native action,
+    /// with the grant resolved by the host as a retry's is. The desk names
+    /// only the Run and the unit; the attempt is the unit's current one in
+    /// Factory's attempt reading. It stops no process: Factory's lifecycle
+    /// accepts the request or records the termination (factory_retry.rs).
+    AttemptRequestCancellation {
+        state_path: PathBuf,
+        run_ref: String,
+        workflow_unit_ref: String,
+        #[serde(default)]
+        authority_grant: Option<String>,
+    },
     /// `factory attempt decision submit <state> -` with the retained
     /// `RequestUnitDecision` Action document, carried verbatim (lane W3,
     /// T-COVERAGE §1.2): Factory submits the unit's question to Central's
@@ -566,6 +581,24 @@ pub enum OwnerRequest {
         run_ref: Option<String>,
         #[serde(default)]
         state: Option<String>,
+    },
+    /// A person's hold on what an agent holds, taken or given back (`factory
+    /// development custody hold <state> --request -` →
+    /// `factory.work-custody-receipt/v1`; manual §19.4 Hand back: "When you
+    /// edit something the agent holds, the agent does not overwrite your
+    /// edit. Hand back stays lit until you press it"). `act` is `take` or
+    /// `give-back`; the light is the custody listing's `hand_back`. The
+    /// person's act, admitted on the human grant the host's token holds, as a
+    /// pad's write is; it changes no custody state.
+    CustodyHold {
+        state_path: PathBuf,
+        custody_ref: String,
+        act: String,
+        reason: String,
+        #[serde(default)]
+        subject_ref: Option<String>,
+        #[serde(default)]
+        expected_revision: Option<u64>,
     },
     /// A project's bank of sixteen prompt pads (`factory development pads
     /// <state> <project-ref>` → `factory.prompt-pads-reading/v1`, manual
@@ -634,6 +667,41 @@ pub enum OwnerRequest {
     /// A run's end recorded (`factory development pads-record <state> -` →
     /// `factory.prompt-pads-record/v1`): done, stalled, stopped or refused.
     PadsRecord { state_path: PathBuf, request: Value },
+    /// Where an Agent rack's macros stand (`factory development rack-macros
+    /// <state> <project-ref> <space-ref>` → `factory.rack-macros-reading/v1`;
+    /// manual §19.15, O-I 842): where Model, Effort and Budget stand, the
+    /// chains each leaves alone, and the rack's variations, keyed by the
+    /// project and the session space whose sessions are the rack's chains.
+    RackMacrosRead {
+        state_path: PathBuf,
+        project_ref: String,
+        space_ref: String,
+    },
+    /// One act on a rack's macros (`factory development rack-macros-write
+    /// <state> -` → `factory.rack-macros-write/v1`) on the rack's revision as
+    /// read: `turn {macro, value}`, `map`/`unmap {macro, chain}`, `store
+    /// {variation, values}` or `recall {variation}`. A recall answers the
+    /// values; each chain is turned through its own owner, never here. The
+    /// person's act, admitted on the human grant the host's token holds, as a
+    /// pad's write is.
+    RackMacrosWrite {
+        state_path: PathBuf,
+        project_ref: String,
+        space_ref: String,
+        expected_revision: String,
+        act: String,
+        #[serde(default, rename = "macro", skip_serializing_if = "Option::is_none")]
+        macro_name: Option<String>,
+        /// A turn's value; absent or null, the macro stands nowhere.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        value: Option<Value>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        chain: Option<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        variation: Option<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        values: Option<Value>,
+    },
     /// A project's Factory placement, made where none stands, so Factory keeps
     /// its runs and pads (`factory project setup-central <root> <project-id>
     /// <root>/ProjectCentral/project.json` → `factory.project-location/v1`):
@@ -779,6 +847,7 @@ impl OwnerRequest {
                 | OwnerRequest::PadsRead { .. }
                 | OwnerRequest::PadsDue { .. }
                 | OwnerRequest::PadsPresets { .. }
+                | OwnerRequest::RackMacrosRead { .. }
                 | OwnerRequest::CustodyList { .. }
                 | OwnerRequest::TaskActivityRead { .. }
                 | OwnerRequest::WaveRead { .. }
@@ -1941,7 +2010,29 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
                 &state_path,
                 &run_ref,
                 &workflow_unit_ref,
-                retry::RetryAuthority {
+                retry::AttemptAuthority {
+                    grant: authority_grant,
+                    token: host_native_token(),
+                    contract: contract.as_deref(),
+                    now_unix_seconds: now_unix_seconds(),
+                },
+            ))
+        }
+        OwnerRequest::AttemptRequestCancellation {
+            state_path,
+            run_ref,
+            workflow_unit_ref,
+            authority_grant,
+        } => {
+            let contract = authority_contract_for(&state_path);
+            let mut call =
+                |args: &[std::ffi::OsString], input: Option<&[u8]>| owner_call(args, input);
+            Ok(retry::attempt_request_cancellation(
+                &mut call,
+                &state_path,
+                &run_ref,
+                &workflow_unit_ref,
+                retry::AttemptAuthority {
                     grant: authority_grant,
                     token: host_native_token(),
                     contract: contract.as_deref(),
@@ -2105,6 +2196,75 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
             state_path,
             request,
         } => pads_write_call("pads-record", &state_path, &request, PADS_RUN_RECORD),
+        OwnerRequest::RackMacrosRead {
+            state_path,
+            project_ref,
+            space_ref,
+        } => expect_contract(
+            owner_call(
+                &[
+                    "development".into(),
+                    "rack-macros".into(),
+                    path_arg(&state_path),
+                    project_ref.into(),
+                    space_ref.into(),
+                    "--json".into(),
+                ],
+                None,
+            )?,
+            &[RACK_MACROS_READING],
+        ),
+        OwnerRequest::RackMacrosWrite {
+            state_path,
+            project_ref,
+            space_ref,
+            expected_revision,
+            act,
+            macro_name,
+            value,
+            chain,
+            variation,
+            values,
+        } => {
+            let grant = person_grant(&state_path, RACK_BY_PERSON)?;
+            let mut request = serde_json::json!({
+                "project_ref": project_ref,
+                "space_ref": space_ref,
+                "expected_revision": expected_revision,
+                "caller": {"callerRef": DESK_RACK_CALLER, "projectionKind": "desktop-human",
+                           "lineage": [DESK_RACK_CALLER]},
+                "authority": {"authorityRef": grant, "nativeOwner": "factory",
+                              "capabilityRef": RACK_MACROS_CAPABILITY_REF,
+                              "capabilityGranted": true, "actionAuthorised": true},
+            });
+            // A turn always names its value (null: the macro stands nowhere);
+            // every other field goes as the desk gave it, and Factory refuses
+            // one the act does not take.
+            if act == "turn" {
+                request["value"] = value.unwrap_or(Value::Null);
+            } else if let Some(value) = value {
+                request["value"] = value;
+            }
+            for (key, field) in [
+                ("macro", macro_name),
+                ("chain", chain),
+                ("variation", variation),
+            ] {
+                if let Some(field) = field {
+                    request[key] = Value::String(field);
+                }
+            }
+            if let Some(values) = values {
+                request["values"] = values;
+            }
+            request["act"] = Value::String(act);
+            pads_write_call(
+                "rack-macros-write",
+                &state_path,
+                &request,
+                RACK_MACROS_RECEIPT,
+            )
+        }
         OwnerRequest::ProjectSetup { project } => {
             let world = world.ok_or_else(|| {
                 incompatible("Central's world reading is required to place a Factory project")
@@ -2192,6 +2352,41 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
             )?,
             &[CUSTODY_RECEIPT],
         ),
+        OwnerRequest::CustodyHold {
+            state_path,
+            custody_ref,
+            act,
+            reason,
+            subject_ref,
+            expected_revision,
+        } => {
+            let grant = person_grant(&state_path, HOLD_BY_PERSON)?;
+            let mut request = serde_json::json!({
+                "custody_ref": custody_ref, "act": act, "reason": reason,
+                "caller": {"callerRef": DESK_CUSTODY_CALLER, "projectionKind": "desktop-human",
+                           "lineage": [DESK_CUSTODY_CALLER]},
+                "authority": {"authorityRef": grant, "nativeOwner": "factory",
+                              "capabilityRef": HOLD_CAPABILITY_REF,
+                              "capabilityGranted": true, "actionAuthorised": true},
+            });
+            if let Some(subject_ref) = subject_ref {
+                request["subject_ref"] = Value::String(subject_ref);
+            }
+            if let Some(expected_revision) = expected_revision {
+                request["expected_revision"] = Value::from(expected_revision);
+            }
+            let body = serde_json::to_vec(&request).map_err(|e| incompatible(e.to_string()))?;
+            let args: Vec<std::ffi::OsString> = vec![
+                "development".into(),
+                "custody".into(),
+                "hold".into(),
+                path_arg(&state_path),
+                "--request".into(),
+                "-".into(),
+                "--json".into(),
+            ];
+            expect_contract(owner_call(&args, Some(&body))?, &[CUSTODY_RECEIPT])
+        }
         OwnerRequest::TaskActivityRead {
             state_path,
             request,
@@ -2348,6 +2543,16 @@ pub const PADS_PRESET_RECEIPT: &str = "factory.prompt-pads-preset-write/v1";
 /// The capability a pad's writer presents (Factory `PADS_CAPABILITY_REF`).
 const PADS_CAPABILITY_REF: &str = "capability/factory/operate-prompt-pads";
 const DESK_PADS_CALLER: &str = "oi:desk-prompt-pads";
+/// Factory's rack macros documents (Factory `rack_macros.rs`).
+pub const RACK_MACROS_READING: &str = "factory.rack-macros-reading/v1";
+pub const RACK_MACROS_RECEIPT: &str = "factory.rack-macros-write/v1";
+/// The capability a rack's macros writer presents (Factory
+/// `RACK_MACROS_CAPABILITY_REF`).
+const RACK_MACROS_CAPABILITY_REF: &str = "capability/factory/operate-rack-macros";
+const DESK_RACK_CALLER: &str = "oi:desk-rack-macros";
+/// The capability a person's hold on custody presents (Factory `HOLD_CAPABILITY_REF`).
+const HOLD_CAPABILITY_REF: &str = "capability/factory/hold-custody";
+const DESK_CUSTODY_CALLER: &str = "oi:desk-custody-hold";
 
 /// The human grant the host's own token holds in Central's native action
 /// authority contract (the one found above the Factory state, or under
@@ -2381,6 +2586,8 @@ fn person_grant(state_path: &Path, what: &str) -> Result<String, Error> {
 
 const PAD_BY_PERSON: &str = "A pad is written by the person";
 const PLAN_BY_PERSON: &str = "A Run's plan is set by the person";
+const RACK_BY_PERSON: &str = "A rack's macros are turned by the person";
+const HOLD_BY_PERSON: &str = "What an agent holds is taken and given back by the person";
 
 /// `pads_grant` over the host's token and its Central root, as read.
 #[cfg(test)]
@@ -2413,8 +2620,8 @@ fn person_grant_from(
     })
 }
 
-/// One pad verb that records (`pads-write`, `pads-run`, `pads-record`), its
-/// document on stdin, carried verbatim.
+/// One pad verb that records (`pads-write`, `pads-run`, `pads-record`), or a
+/// rack's macros write, its document on stdin, carried verbatim.
 fn pads_write_call(
     verb: &str,
     state_path: &Path,

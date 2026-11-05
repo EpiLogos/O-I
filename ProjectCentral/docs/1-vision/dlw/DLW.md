@@ -13451,11 +13451,13 @@ The same looking-into starts without your words when a task closes. The close re
 
 ### 25.3 Six powers
 
-Ta-Onta gives an agent six powers, and in order they are the life of one act:
+Ta-Onta gives an agent six powers, and together they are the life of one act:
 the agent enters, keeps what it works on in its form, finds what it can use,
-holds the act's times together, composes the act, and returns it. Each power
-stands where you meet it in Live's own containers, and each reaches through to
-the product that owns its work, so the agent never keeps a second copy of
+holds the act's times together, composes the act, and returns it. The powers
+take part at once. Their order is how one act lives, not a queue of calls, and
+no call is compulsory: a small act may need only one power. Each power stands
+where you meet it in Live's own containers, and each reaches through to the
+product that owns its work, so the agent never keeps a second copy of
 anything.
 
 | Power | Organ | What it does | Where you meet it | Its owners |
@@ -13463,9 +13465,9 @@ anything.
 | Enter | Khora, S0′ | Enters a world and picks up where it left off: the project, the subject, the sources, the session and the machine. | Opening the set, and seating the agent on its track | Central, AIKit, Actuation, Workcell, Quaternal Logic |
 | Form | Hen, S1′ | Keeps each thing in its form: sources, wiki pages, constellations, typed relations, templates and tasks. | The clip and its source | Central, AIKit, Quaternal Logic, Factory |
 | Find | Pleroma, S2′ | Finds what can be used: knowledge, models, skills, methods, tools and instruments. | The browser | AIKit, and every product's actions |
-| Time | Chronos, S3′ | Holds the times of the act together: the day, the session, the sky, the clock and the run. | The clock and the ruler | Central, Quaternal Logic, Factory, AIKit |
-| Compose | Anima, S4′ | Composes the act: who takes part, what each does, in what order, toward what return. | The score and the session | Quaternal Logic, Factory, Actuation, AIKit, Workcell |
-| Return | Aletheia, S5′ | Says what happened, sets it against what was meant, and brings back what was learned. | Takes, comping and the commit | Central, AIKit, Factory, Quaternal Logic, Actuation |
+| Time | Chronos, S3′ | Holds the times of the act together without owning them: the Day and the NOW, which are Central's, the session, the sky, the clock and the run. | The clock and the ruler | Central, Quaternal Logic, Factory, AIKit |
+| Compose | Anima, S4′ | Composes the act through the full C′ Vāk, who takes part, what each does, in what order, toward what return, and performs it through the owners' own operations. | The score and the session | Quaternal Logic, Factory, Actuation, AIKit, Workcell |
+| Return | Aletheia, S5′ | Says what happened, sets it against what was meant, and prepares what was learned for your Recognition. It lands and saves nothing itself; the owner keeps what you accept. | Takes, comping and the commit | Central, AIKit, Factory, Quaternal Logic, Actuation |
 
 A power is the same power in every mode. What it meets changes.
 
@@ -13474,9 +13476,9 @@ A power is the same power in every mode. What it meets changes.
 | Enter | Opens the Day and the world you work in | Seats the agent on its session | Opens the subject and its readings | Opens the Expression at its scene | Opens the set |
 | Form | Keeps each page to its template | Keeps each task with its receipts | Gives a board its form (§17.4) | Ties each figure to what it shows | Ties each clip to its source |
 | Find | Searches with @ | Racks skills and routes knowledge | Reads the wiki and the graph | Finds premade scenes and material first | Finds devices, sounds and grooves |
-| Time | Keeps the day and its close | Keeps the run and its needle | Keeps the ruler, from deep time to now | Steps the scene | Keeps the tempo and the clock |
+| Time | Reads the Day and its close from Central | Reads the run and its needle | Reads the ruler, from deep time to now | Reads where the scene stands | Reads the tempo and the clock |
 | Compose | Answers into the page | Scores the song and runs it | Lays out walks and palaces | Composes the scene | Writes clips and automation |
-| Return | Files what the day taught | Lands the work with its checks | Saves what was built and reads it back | Saves what it made as material to reuse | Keeps the take |
+| Return | Returns what the day taught to the NOW | Offers the work with its checks for landing | Offers what was built back to its owner | Offers what it made as material to reuse | Offers the take for comping |
 
 The teams in §19.4 carry Compose and Return, and they work as a pair. Anima
 leads an Expression's act and Aletheia a Technē act; neither acts alone. Each
@@ -13499,10 +13501,10 @@ four forms as every other practice.
 
 | Form | In the agent world |
 |---|---|
-| Methodology | The agent world: how to find your bearings in it, which power applies when, and where each return goes. It is loaded before work in any mode. |
+| Methodology | The agent world: how to find your bearings in it, which power applies when, and where each return goes. It is there for work in any mode; an act one owner answers needs none of it. |
 | Method | One for each power, from claim to return: Enter, Form, Find, Time, Compose and Return. |
 | Skill | The steps the Methods call: the coordinate frame of an act, retrieval, giving a board its form, keeping an act's continuity, composing a scene, the gates, and returning an act. |
-| Skillset | Ta-Onta. It holds the Methodology, and one set for each power with its Method and skills. |
+| Skillset | Ta-Onta, kept by Quaternal Logic. It holds the Methodology, and one set for each power with its Method and skills. |
 
 A person, an agent and a program reach each operation by the same name,
 through the product that owns it. An operation that does not exist yet says
@@ -13510,10 +13512,11 @@ so, and nothing stands in for it.
 
 The practice comes as a Pack, under Packs in the browser (§10.3): the
 Methodology and the six Methods, the agents of both teams, each saved on its
-chain in an Agent rack, and the songs they run. A Method is a song that
-earned its name (§19.1).
+chain in an Agent rack, and the songs they run. A Method is a song you have
+recognised by name (§19.1); running a song again, however often, does not make
+it one.
 
-Each of the six products has a guardian among your agents: the agent that keeps the practice which operates that product. It is the product's own agent, under the name it already has, never made again from a list. A finding from real work becomes a proposal to its practice, and the practice changes only when you accept the proposal, after it has worked again on a fresh task. Rejected proposals and older revisions are kept. One success never changes the practice by itself, and only a lesson that holds for every product goes up to the practice of the whole suite.
+Each of the six products has a guardian among your agents: the agent that keeps the practice which operates that product. It is the product's own agent, under the name it already has, never made again from a list. A finding from real work becomes a proposal to its practice, and the practice changes only when you accept the proposal, after it has worked again on a fresh task. Rejected proposals and older revisions are kept. Neither one success nor repetition changes the practice by itself, and only a lesson that holds for every product goes up to the practice of the whole suite.
 
 **Stories:** RK11, RW08, RW09
 

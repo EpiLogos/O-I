@@ -24,16 +24,26 @@
 //! unit, the attempt it replaces and the revision read, so the same press
 //! twice is the same document. Every refusal of the owner comes back in its
 //! own words; the driver refuses on its own only before any move, and says so.
+//!
+//! Stop after is the same press's other side (O-I #842 round 20): Factory's
+//! own `request-cancellation` of the unit's current attempt, admitted as
+//! `attempt-request-cancellation` under its own native action, with the same
+//! admission, grant and attempt reading. It asks; it stops no process:
+//! Factory's lifecycle accepts it or records the process's termination.
 use super::*;
 
 pub const CONTRACT: &str = "oi.factory-attempt-retry/v1";
 /// The admission's action for a retry, and the contract it must name.
 const ACTION_REF: &str = "attempt-retry";
+pub const CANCELLATION_CONTRACT: &str = "oi.factory-attempt-cancellation/v1";
+/// The admission's action for a cancellation request.
+const CANCEL_ACTION_REF: &str = "attempt-request-cancellation";
 
-/// The host's native action authority for one retry: the grant ref it holds
-/// (else the principal its token belongs to), the token, the contract the
-/// grant resolves against and the reading clock.
-pub struct RetryAuthority<'a> {
+/// The host's native action authority for one press on a unit (a retry or a
+/// cancellation request): the grant ref it holds (else the principal its
+/// token belongs to), the token, the contract the grant resolves against and
+/// the reading clock.
+pub struct AttemptAuthority<'a> {
     pub grant: Option<String>,
     pub token: Option<AuthorityToken>,
     /// `None` when no Central contract is found above the Factory state.
@@ -59,20 +69,20 @@ fn text(value: &Value) -> Option<String> {
         .map(str::to_owned)
 }
 
-/// Factory's admission of a retry, or the reason it admits none — the
-/// actions it does name, in its own refs.
-fn admitted(reading: &Value) -> Result<Admitted, String> {
+/// Factory's admission of one action (`action_ref`, said as `what`), or the
+/// reason it admits none — the actions it does name, in its own refs.
+fn admitted(reading: &Value, action_ref: &str, what: &str) -> Result<Admitted, String> {
     let actions = reading["actions"].as_array().cloned().unwrap_or_default();
     let Some(action) = actions
         .iter()
-        .find(|action| action["actionRef"] == ACTION_REF)
+        .find(|action| action["actionRef"] == action_ref)
     else {
         let named: Vec<String> = actions
             .iter()
             .filter_map(|a| text(&a["actionRef"]))
             .collect();
         return Err(format!(
-            "Factory admits no retry from a desktop caller: its attempt admission (factory attempt admission) names no {ACTION_REF} action{}.",
+            "Factory admits no {what} from a desktop caller: its attempt admission (factory attempt admission) names no {action_ref} action{}.",
             if named.is_empty() {
                 String::new()
             } else {
@@ -82,7 +92,7 @@ fn admitted(reading: &Value) -> Result<Admitted, String> {
     };
     if action["contract"] != ATTEMPT_ACTION_CONTRACT {
         return Err(format!(
-            "Factory's {ACTION_REF} action names another contract than {ATTEMPT_ACTION_CONTRACT}."
+            "Factory's {action_ref} action names another contract than {ATTEMPT_ACTION_CONTRACT}."
         ));
     }
     let caller = &reading["desktopCaller"];
@@ -97,7 +107,7 @@ fn admitted(reading: &Value) -> Result<Admitted, String> {
         );
     }
     let field = |value: &Value, what: &str| {
-        text(value).ok_or_else(|| format!("Factory's {ACTION_REF} admission names no {what}."))
+        text(value).ok_or_else(|| format!("Factory's {action_ref} admission names no {what}."))
     };
     Ok(Admitted {
         caller: caller.clone(),
@@ -107,6 +117,74 @@ fn admitted(reading: &Value) -> Result<Admitted, String> {
         scope: field(&action["scopeRef"], "scope")?,
         actor_kind: field(&action["actorKind"], "actor kind")?,
     })
+}
+
+/// Whether Factory admits `action_ref` from a desktop for this Run's state
+/// (the scope is the project the Run stands in), and what the grant must
+/// carry. Every refusal here is the owner's, at its admission.
+fn admission_for(
+    call: &mut OwnerCall<'_>,
+    state_path: &Path,
+    action_ref: &str,
+    what: &str,
+) -> Result<Admitted, String> {
+    let disclosure = match call(
+        &[
+            "attempt".into(),
+            "admission".into(),
+            path_arg(state_path),
+            "--json".into(),
+        ],
+        None,
+    ) {
+        Ok(reading) if reading["contract"] == receiving::ADMISSION_CONTRACT => reading,
+        Ok(_) => {
+            return Err(format!(
+                "Factory answered an unexpected admission reading where {} was asked for.",
+                receiving::ADMISSION_CONTRACT
+            ))
+        }
+        Err(error) => return Err(error.message),
+    };
+    admitted(&disclosure, action_ref, what)
+}
+
+/// The grant the host holds for the admitted action, resolved in the native
+/// process against Central's contract with the host's own token; or the
+/// driver's refusal. It comes before any other owner call: no grant, no move.
+fn granted(authority: &AttemptAuthority<'_>, expected: &Admitted) -> Result<String, String> {
+    let contract = read_authority_contract(authority.contract)?;
+    let grant = match authority
+        .grant
+        .clone()
+        .filter(|grant| !grant.trim().is_empty())
+    {
+        Some(grant) => grant,
+        None => authority
+            .token
+            .as_ref()
+            .and_then(|token| grant_held_by(&contract, token, &expected.actor_kind))
+            .ok_or_else(|| {
+                format!(
+                    "No native action authority grant names the host: no {} principal in the contract holds the host's token (Control/user/native-action-authority.json).",
+                    expected.actor_kind
+                )
+            })?,
+    };
+    match grant_refusal(
+        &contract,
+        &grant,
+        authority.token.as_ref(),
+        authority.now_unix_seconds,
+        &Wanted {
+            action: &expected.native_action,
+            scope: &expected.scope,
+            actor_kind: Some(&expected.actor_kind),
+        },
+    ) {
+        Some(reason) => Err(reason),
+        None => Ok(grant),
+    }
 }
 
 /// The unit's current attempt, as Factory's reading names it: the attempt of
@@ -159,7 +237,7 @@ pub(super) fn attempt_retry(
     state_path: &Path,
     run_ref: &str,
     unit: &str,
-    authority: RetryAuthority<'_>,
+    authority: AttemptAuthority<'_>,
 ) -> Value {
     let envelope = |status: &str, changed: bool, extra: Value| {
         let mut document = serde_json::json!({
@@ -195,76 +273,14 @@ pub(super) fn attempt_retry(
             "A retry names the exact Run and the exact unit.".into(),
         );
     }
-    // Whether Factory admits a desktop's retry, and what the grant must carry,
-    // for this Run's state: the scope is the project the Run stands in.
-    let disclosure = match call(
-        &[
-            "attempt".into(),
-            "admission".into(),
-            path_arg(state_path),
-            "--json".into(),
-        ],
-        None,
-    ) {
-        Ok(reading) if reading["contract"] == receiving::ADMISSION_CONTRACT => reading,
-        Ok(_) => {
-            return refused(
-                "owner",
-                Some("admission"),
-                format!(
-                    "Factory answered an unexpected admission reading where {} was asked for.",
-                    receiving::ADMISSION_CONTRACT
-                ),
-            )
-        }
-        Err(error) => return refused("owner", Some("admission"), error.message),
-    };
-    let expected = match admitted(&disclosure) {
+    let expected = match admission_for(call, state_path, ACTION_REF, "retry") {
         Ok(expected) => expected,
         Err(reason) => return refused("owner", Some("admission"), reason),
     };
-    // The grant gate comes before any other owner call: no grant, no move.
-    let contract = match read_authority_contract(authority.contract) {
-        Ok(contract) => contract,
+    let grant = match granted(&authority, &expected) {
+        Ok(grant) => grant,
         Err(reason) => return refused("driver", None, reason),
     };
-    let grant = match authority
-        .grant
-        .clone()
-        .filter(|grant| !grant.trim().is_empty())
-    {
-        Some(grant) => grant,
-        None => match authority
-            .token
-            .as_ref()
-            .and_then(|token| grant_held_by(&contract, token, &expected.actor_kind))
-        {
-            Some(grant) => grant,
-            None => {
-                return refused(
-                    "driver",
-                    None,
-                    format!(
-                        "No native action authority grant names the host: no {} principal in the contract holds the host's token (Control/user/native-action-authority.json).",
-                        expected.actor_kind
-                    ),
-                )
-            }
-        },
-    };
-    if let Some(reason) = grant_refusal(
-        &contract,
-        &grant,
-        authority.token.as_ref(),
-        authority.now_unix_seconds,
-        &Wanted {
-            action: &expected.native_action,
-            scope: &expected.scope,
-            actor_kind: Some(&expected.actor_kind),
-        },
-    ) {
-        return refused("driver", None, reason);
-    }
     let attempts = match read_owner(call, ["attempt", "read"], state_path, run_ref) {
         Ok(attempts) => attempts,
         Err(error) => return refused("owner", Some("attempt"), error.message),
@@ -359,6 +375,124 @@ pub(super) fn attempt_retry(
     }
 }
 
+/// Stop after: ask one unit's current attempt to stop. Returns the
+/// cancellation document: `cancel-requested` (Factory moved the unit's leg to
+/// cancel-requested), `already-requested` (Factory answered an earlier
+/// application of the same document), `uncertain` (the owner may have run and
+/// did not answer) or `refused`, with the owner's own words, or the driver's
+/// own named as such. It stops no process: Factory's lifecycle does.
+pub(super) fn attempt_request_cancellation(
+    call: &mut OwnerCall<'_>,
+    state_path: &Path,
+    run_ref: &str,
+    unit: &str,
+    authority: AttemptAuthority<'_>,
+) -> Value {
+    let envelope = |status: &str, changed: bool, extra: Value| {
+        let mut document = serde_json::json!({
+            "contract": CANCELLATION_CONTRACT,
+            "runRef": run_ref,
+            "workflowUnitRef": unit,
+            "status": status,
+            "changed": changed,
+            "attemptRef": null,
+            "authorityRef": null,
+            "receipt": null,
+            "refusal": null,
+        });
+        if let (Some(into), Some(from)) = (document.as_object_mut(), extra.as_object()) {
+            for (key, value) in from {
+                into.insert(key.clone(), value.clone());
+            }
+        }
+        document
+    };
+    let refused = |source: &str, step: Option<&str>, message: String| {
+        envelope(
+            "refused",
+            false,
+            serde_json::json!({"refusal": refusal(source, step, message)}),
+        )
+    };
+    if run_ref.trim().is_empty() || unit.trim().is_empty() {
+        return refused(
+            "driver",
+            None,
+            "A cancellation request names the exact Run and the exact unit.".into(),
+        );
+    }
+    let expected = match admission_for(call, state_path, CANCEL_ACTION_REF, "cancellation request")
+    {
+        Ok(expected) => expected,
+        Err(reason) => return refused("owner", Some("admission"), reason),
+    };
+    let grant = match granted(&authority, &expected) {
+        Ok(grant) => grant,
+        Err(reason) => return refused("driver", None, reason),
+    };
+    let attempts = match read_owner(call, ["attempt", "read"], state_path, run_ref) {
+        Ok(attempts) => attempts,
+        Err(error) => return refused("owner", Some("attempt"), error.message),
+    };
+    let Some(revision) = attempts["revision"].as_u64() else {
+        return refused(
+            "owner",
+            Some("attempt"),
+            "Factory's attempt reading names no state revision.".into(),
+        );
+    };
+    let attempt_ref = match current(&attempts, unit) {
+        Ok((attempt, _)) => text(&attempt["attemptRef"]).unwrap_or_default(),
+        Err(reason) => return refused("driver", Some("attempt"), reason),
+    };
+    let suffix = suffix(run_ref, unit, &attempt_ref, revision);
+    let body = serde_json::json!({
+        "contract": ATTEMPT_ACTION_CONTRACT,
+        "projectionRef": format!("projection:desk-cancel:{suffix}"),
+        "caller": expected.caller,
+        "runRef": run_ref,
+        "expectedRevision": revision,
+        "authority": {
+            "authorityRef": grant,
+            "nativeOwner": expected.native_owner,
+            "capabilityRef": expected.capability_ref,
+            "capabilityGranted": true,
+            "actionAuthorised": true,
+        },
+        // Factory's own spelling (attempt_runtime.rs
+        // FactoryAttemptOperation::RequestCancellation), its field snake_case.
+        "operation": {"operation": "request-cancellation", "attempt_ref": attempt_ref},
+    });
+    let refs = serde_json::json!({"attemptRef": attempt_ref, "authorityRef": grant});
+    match action_call(call, state_path, &body) {
+        Ok(receipt) => {
+            let applied = step_status(&receipt, revision) == "applied";
+            let mut extra = refs;
+            extra["receipt"] = receipt;
+            envelope(
+                if applied {
+                    "cancel-requested"
+                } else {
+                    "already-requested"
+                },
+                applied,
+                extra,
+            )
+        }
+        Err(error) => {
+            let uncertain = matches!(error.kind.as_str(), "timeout" | "process-error");
+            let mut extra = refs;
+            extra["refusal"] = serde_json::json!({"source": "owner", "step": "request-cancellation",
+                "message": error.message, "operationMayHaveRun": uncertain});
+            envelope(
+                if uncertain { "uncertain" } else { "refused" },
+                uncertain,
+                extra,
+            )
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -368,6 +502,7 @@ mod tests {
     const NOW: u64 = 1_800_000_000;
     const UNIT: &str = "unit:inspect-source";
     const RETRY_ACTION: &str = "factory.attempt.retry";
+    const CANCEL_ACTION: &str = "factory.attempt.request-cancellation";
 
     fn contract(actions: &[&str]) -> Value {
         serde_json::json!({
@@ -448,6 +583,29 @@ mod tests {
         action: Result<Value, Error>,
         calls: &'a std::cell::RefCell<Vec<(Vec<String>, Option<Value>)>>,
     ) -> impl FnMut(&[std::ffi::OsString], Option<&[u8]>) -> Result<Value, Error> + 'a {
+        owner_admitting(admission(with_retry), action, calls)
+    }
+
+    /// Factory's admission as the owner now answers it (factory
+    /// attempt_admission.rs `reading_for`): receiving, retry and the
+    /// cancellation request.
+    fn admission_with_cancellation() -> Value {
+        let mut reading = admission(true);
+        reading["actions"]
+            .as_array_mut()
+            .unwrap()
+            .push(serde_json::json!({
+            "actionRef": "attempt-request-cancellation", "contract": "factory.attempt-action/v1",
+            "operation": "request-cancellation", "nativeAction": CANCEL_ACTION,
+            "scopeRef": "project:Factory", "actorKind": "human"}));
+        reading
+    }
+
+    fn owner_admitting<'a>(
+        admission: Value,
+        action: Result<Value, Error>,
+        calls: &'a std::cell::RefCell<Vec<(Vec<String>, Option<Value>)>>,
+    ) -> impl FnMut(&[std::ffi::OsString], Option<&[u8]>) -> Result<Value, Error> + 'a {
         let mut action = Some(action);
         move |args, input| {
             let words: Vec<String> = args
@@ -459,7 +617,7 @@ mod tests {
                 input.map(|bytes| serde_json::from_slice(bytes).unwrap()),
             ));
             match (words[0].as_str(), words[1].as_str()) {
-                ("attempt", "admission") => Ok(admission(with_retry)),
+                ("attempt", "admission") => Ok(admission.clone()),
                 ("attempt", "read") => Ok(attempts()),
                 ("attempt", "action") => action.take().expect("one action"),
                 other => panic!("unexpected owner call {other:?}"),
@@ -467,8 +625,8 @@ mod tests {
         }
     }
 
-    fn authority(contract: &TempContract) -> RetryAuthority<'_> {
-        RetryAuthority {
+    fn authority(contract: &TempContract) -> AttemptAuthority<'_> {
+        AttemptAuthority {
             grant: None,
             token: AuthorityToken::for_test(TOKEN),
             contract: Some(&contract.0),
@@ -693,5 +851,136 @@ mod tests {
             "{answer}"
         );
         assert_eq!(calls.len(), 1, "nothing but the admission was read");
+    }
+
+    #[test]
+    fn a_stop_after_factory_does_not_admit_is_refused_before_any_move_naming_what_it_admits() {
+        let contract = TempContract::new("cancel-unadmitted", &contract(&[CANCEL_ACTION]));
+        let calls = std::cell::RefCell::new(Vec::new());
+        let mut call = owner(true, Ok(Value::Null), &calls);
+        let answer = attempt_request_cancellation(
+            &mut call,
+            Path::new("/s"),
+            "run:one",
+            UNIT,
+            authority(&contract),
+        );
+        assert_eq!(answer["contract"], CANCELLATION_CONTRACT);
+        assert_eq!(answer["status"], "refused");
+        assert_eq!(answer["refusal"]["step"], "admission");
+        let words = answer["refusal"]["message"].as_str().unwrap();
+        assert!(
+            words.starts_with("Factory admits no cancellation request from a desktop caller")
+                && words.contains(
+                    "no attempt-request-cancellation action, only attempt-receiving, attempt-retry"
+                ),
+            "{words}"
+        );
+        assert_eq!(calls.borrow().len(), 1, "only the admission was read");
+    }
+
+    #[test]
+    fn an_admitted_granted_stop_after_asks_factory_to_cancel_the_units_current_attempt() {
+        // A grant that holds the retry and not the cancellation request reaches nothing.
+        let retry_only = TempContract::new("cancel-ungranted", &contract(&[RETRY_ACTION]));
+        let calls = std::cell::RefCell::new(Vec::new());
+        let mut call = owner_admitting(admission_with_cancellation(), Ok(Value::Null), &calls);
+        let answer = attempt_request_cancellation(
+            &mut call,
+            Path::new("/s"),
+            "run:one",
+            UNIT,
+            authority(&retry_only),
+        );
+        assert_eq!(answer["status"], "refused");
+        assert!(
+            answer["refusal"]["message"]
+                .as_str()
+                .unwrap()
+                .contains("does not list factory.attempt.request-cancellation"),
+            "{answer}"
+        );
+        assert_eq!(calls.borrow().len(), 1, "no attempt was read or acted on");
+
+        let contract = TempContract::new("cancel-granted", &contract(&[CANCEL_ACTION]));
+        let calls = std::cell::RefCell::new(Vec::new());
+        let receipt = serde_json::json!({"contract": "factory.attempt-action/v1", "previousRevision": 7,
+            "nextRevision": 8, "operation": "request-cancellation", "attemptRefs": ["attempt:first"]});
+        let mut call = owner_admitting(admission_with_cancellation(), Ok(receipt.clone()), &calls);
+        let answer = attempt_request_cancellation(
+            &mut call,
+            Path::new("/s"),
+            "run:one",
+            UNIT,
+            authority(&contract),
+        );
+        assert_eq!(answer["status"], "cancel-requested", "{answer}");
+        assert_eq!(answer["changed"], true);
+        assert_eq!(
+            answer["attemptRef"], "attempt:first",
+            "the leg's current attempt"
+        );
+        assert_eq!(answer["receipt"], receipt);
+        assert_eq!(
+            answer["authorityRef"],
+            format!("central:native-action-authority#{HUMAN}")
+        );
+        let calls = calls.borrow();
+        let (words, body) = calls.last().unwrap();
+        assert_eq!(words, &["attempt", "action", "/s", "-", "--json"]);
+        let body = body.as_ref().unwrap();
+        assert_eq!(body["expectedRevision"], 7);
+        assert_eq!(body["caller"]["callerRef"], "oi:desktop");
+        assert_eq!(
+            body["operation"],
+            serde_json::json!({"operation": "request-cancellation", "attempt_ref": "attempt:first"})
+        );
+        assert!(body["projectionRef"]
+            .as_str()
+            .unwrap()
+            .starts_with("projection:desk-cancel:"));
+    }
+
+    #[test]
+    fn factorys_refusal_of_a_cancellation_request_comes_back_in_its_words() {
+        let contract = TempContract::new("cancel-refused", &contract(&[CANCEL_ACTION]));
+        let calls = std::cell::RefCell::new(Vec::new());
+        let words = "factory: Factory attempt error: Orchestration(InvalidTransition { from: Failed, to: CancelRequested })";
+        let mut call = owner_admitting(
+            admission_with_cancellation(),
+            Err(Error {
+                kind: "owner-refused-or-failed".into(),
+                message: words.into(),
+                operation_may_have_run: true,
+            }),
+            &calls,
+        );
+        let answer = attempt_request_cancellation(
+            &mut call,
+            Path::new("/s"),
+            "run:one",
+            UNIT,
+            authority(&contract),
+        );
+        assert_eq!(answer["status"], "refused");
+        assert_eq!(answer["changed"], false);
+        assert_eq!(answer["refusal"]["source"], "owner");
+        assert_eq!(answer["refusal"]["step"], "request-cancellation");
+        assert_eq!(answer["refusal"]["message"], words);
+        // A unit with no leg is named before anything is asked of the action.
+        let calls = std::cell::RefCell::new(Vec::new());
+        let mut call = owner_admitting(admission_with_cancellation(), Ok(Value::Null), &calls);
+        let answer = attempt_request_cancellation(
+            &mut call,
+            Path::new("/s"),
+            "run:one",
+            "unit:other",
+            authority(&contract),
+        );
+        assert!(answer["refusal"]["message"]
+            .as_str()
+            .unwrap()
+            .contains("no leg for unit:other"));
+        assert!(calls.borrow().iter().all(|(words, _)| words[1] != "action"));
     }
 }

@@ -455,6 +455,15 @@
       "reason": "Built 29 Oct (O-I #743) with a kernel test (agent_prepared a_task_s_removal_and_copy_and_a_session_s_detach_reach_the_owner_for_an_attached_session_only: the task and revision verbatim, the attachment gate, the receipt check, the owner's refusal in its words), AIKit's own tests of encounter-task-remove, and a shell test of Factory's Delete. No executed native walk through the candidate shell is recorded here for encounter_task_remove; retain explicit operation-specific coverage debt until a walk names it."
     },
     {
+      "op": "encounter_task_budget",
+      "native_owner": "kernel/src/agency.rs",
+      "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md \u00a719.4 (the Agent's Budget macro) and \u00a719.15 (a group's Budget); AIKit encounter_task.rs (encounter-task-budget, disclosed as the task reading's turns)",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Built 5 Nov (O-I #743, DLW build ruling 2026-11-05: AIKit owns a chain's Budget) with a kernel test (agent_prepared a_task_s_budget_reaches_the_owner_as_the_person_s_for_an_attached_session_only: the turns and both revisions verbatim, sent as the person's, the attachment gate, the receipt check, the owner's refusal in its words) and AIKit's own tests of encounter-task-budget and its launch gate. No executed native walk through the candidate shell is recorded here for encounter_task_budget; retain explicit operation-specific coverage debt until a walk names it."
+    },
+    {
       "op": "encounter_task_copy",
       "native_owner": "kernel/src/agency.rs",
       "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md \u00a710.9 (a clip's Copy and Paste) and \u00a719.1; AIKit encounter_task.rs (encounter-task-copy, made through encounter-task-configure)",
@@ -498,6 +507,15 @@
       "scenarios": [],
       "owner_lane": "A/native verification",
       "reason": "Built 4 Nov (O-I #745 with #772, lane BA round 859) with a kernel test (agent_prepared the_chain_list_benches_adds_and_drags_out_a_chain_through_aikit_s_own_operations: AIKit's session-space drag-out asked with the space, the session, the space of its own and its label, its receipts returned, a session the space does not hold refused) and AIKit's own store and core tests of drag out (the new space made, the session attached with its Project contexts and bench, detached from its first space last, both histories kept). No executed native walk through the candidate shell is recorded here for encounter_session_drag_out; retain explicit operation-specific coverage debt until a walk names it."
+    },
+    {
+      "op": "encounter_session_group",
+      "native_owner": "kernel/src/agency.rs",
+      "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md \u00a719.15 (\"To make a set, select agents' chains and choose Group: they become one chain that holds an Agent rack of them.\"); AIKit aikit-store session_space_application.rs (SessionSpaceApplicationStore::group over aikit-core group_intents)",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "Built 5 Nov (O-I #842, lane BD round 20) with a kernel test (agent_prepared the_chain_list_benches_adds_and_drags_out_a_chain_through_aikit_s_own_operations: AIKit's session-space group asked with the space, each grouped session, the set's own space and its label, its receipts returned; a session the space does not hold, and a Group naming no chain, refused before AIKit is asked) and AIKit's own core, store and CLI tests of Group (the set's space made with the rack's Project contexts, each session seated with its bench, the set held as one chain of the rack, the sessions detached from the rack last; one stopped partway finishes when pressed again). No executed native walk through the candidate shell is recorded here for encounter_session_group; retain explicit operation-specific coverage debt until a walk names it."
     },
     {
       "op": "encounter_session_hot_swap",
@@ -634,7 +652,7 @@
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
-      "reason": "Kernel-direct for attempt-retry (lane K0): src/factory_retry.rs against a scripted Factory (admission, attempt read, attempt action) and tests/shell_owner_routes.rs; Factory admits a desktop retry once it reads its admission for the Run's state (Factory dlw/740-run-scope; until installed, the installed Factory admits none). Kernel-direct for project-setup (O-I #740 lane D): src/factory.rs project_setup_args builds Factory's own `project setup-central` from Central's world reading and the project's manifest; a headless walk-bridge run pressed it through Setup's Projects Accept on a scratch world, with no native window. Kernel-direct for wave-read and wave-act (lane AH, O-I #741): src/factory.rs carries Factory's own `development wave read|act`; the person's act presents the human grant the host's own token holds and refuses a desk-named caller, authority or schema before Factory is asked; a headless walk-bridge run against Factory dlw/741-openrig-planning read a Run's plan, locked a P0 plan as the person, and carried Factory's refusal of a P2 lock whose research round had not returned, with no native window. No directly attributable executed native walk is recorded here for factory_owner; retain explicit operation-specific coverage debt until its owner supplies a receipt."
+      "reason": "Kernel-direct for attempt-retry (lane K0): src/factory_retry.rs against a scripted Factory (admission, attempt read, attempt action) and tests/shell_owner_routes.rs; kernel-direct for attempt-request-cancellation (Stop after, lane BD round 20): the same file against the same scripted Factory, which must admit the attempt-request-cancellation action (Factory 4243956 admits none, and its round 20 patch admits it under factory.attempt.request-cancellation); Factory admits a desktop retry once it reads its admission for the Run's state (Factory dlw/740-run-scope; until installed, the installed Factory admits none). Kernel-direct for project-setup (O-I #740 lane D): src/factory.rs project_setup_args builds Factory's own `project setup-central` from Central's world reading and the project's manifest; a headless walk-bridge run pressed it through Setup's Projects Accept on a scratch world, with no native window. Kernel-direct for wave-read and wave-act (lane AH, O-I #741): src/factory.rs carries Factory's own `development wave read|act`; the person's act presents the human grant the host's own token holds and refuses a desk-named caller, authority or schema before Factory is asked; a headless walk-bridge run against Factory dlw/741-openrig-planning read a Run's plan, locked a P0 plan as the person, and carried Factory's refusal of a P2 lock whose research round had not returned, with no native window. No directly attributable executed native walk is recorded here for factory_owner; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
       "op": "file_bytes",

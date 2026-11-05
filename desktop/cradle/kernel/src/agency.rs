@@ -738,7 +738,7 @@ impl Client {
 
 impl Client {
     /// Run one of the encounter's task acts (`encounter-task-remove`,
-    /// `encounter-task-copy`) on the owner and read its receipt, which must
+    /// `encounter-task-budget`, `encounter-task-copy`) on the owner and read its receipt, which must
     /// carry `schema` and name `agent_session`. Central's root travels as
     /// task creation carries it, since a copy is made through it.
     fn task_act(
@@ -814,6 +814,50 @@ impl Client {
                 expected_revision,
             ],
             "aikit.encounter-task-removal/v1",
+            agent_session,
+        )
+    }
+
+    /// Set or clear a session's task Budget through the owner's
+    /// `encounter-task-budget` (`aikit.encounter-task-budget/v1`): the turns
+    /// allowed (`None` clears it), against the task's revision and the
+    /// Budget's own. The person sets it, so it goes as theirs (`--by
+    /// human`). The session must be attached to one of the Project's spaces.
+    #[allow(clippy::too_many_arguments)]
+    pub fn task_budget(
+        &self,
+        cwd: &Path,
+        project_ref: &str,
+        agent_session: &str,
+        task_ref: &str,
+        turns: Option<u64>,
+        expected_revision: &str,
+        expected_budget_revision: Option<&str>,
+    ) -> Result<Value, String> {
+        self.require_attached(cwd, project_ref, agent_session)?;
+        let turns = turns.map(|turns| turns.to_string());
+        let mut args = vec![
+            "--agent-session",
+            agent_session,
+            "--task-ref",
+            task_ref,
+            "--expected-revision",
+            expected_revision,
+            "--by",
+            "human",
+        ];
+        if let Some(revision) = expected_budget_revision {
+            args.extend(["--expected-budget-revision", revision]);
+        }
+        match turns.as_deref() {
+            Some(turns) => args.extend(["--turns", turns]),
+            None => args.push("--clear"),
+        }
+        self.task_act(
+            cwd,
+            "encounter-task-budget",
+            &args,
+            "aikit.encounter-task-budget/v1",
             agent_session,
         )
     }
@@ -1008,6 +1052,48 @@ impl Client {
             .map_err(|error| format!("AIKit's drag-out answer is not JSON: {error}"))?;
         Ok(
             serde_json::json!({"schema": "oi.encounter-session-drag-out/v1", "agent_session": agent_session,
+            "space": space, "into": into, "receipts": receipts}),
+        )
+    }
+
+    /// Group chains of a rack into a set (manual §19.15 "select agents'
+    /// chains and choose Group: they become one chain that holds an Agent
+    /// rack of them"): AIKit's own `session-space group` makes `into`, the
+    /// set's own space in the same Project, seats every session there with
+    /// its Project contexts and its bench, holds `into` as one chain of
+    /// `space`, and detaches the sessions from `space` last; each step is
+    /// AIKit's stage and apply, with each space's history kept.
+    pub fn session_group(
+        &self,
+        cwd: &Path,
+        project_ref: &str,
+        space: &str,
+        agent_sessions: &[String],
+        into: &str,
+        label: Option<&str>,
+    ) -> Result<Value, String> {
+        let (_, row) = self.project_space(cwd, project_ref, space)?;
+        if agent_sessions.is_empty() {
+            return Err(format!("Group names no chain of {space} to make a set of"));
+        }
+        if let Some(stranger) = agent_sessions
+            .iter()
+            .find(|session| row["agent_sessions"].get(session.as_str()).is_none())
+        {
+            return Err(format!("{stranger} is not a chain of {space}"));
+        }
+        let mut args = vec!["group", "--space", space];
+        for session in agent_sessions {
+            args.extend(["--agent-session", session.as_str()]);
+        }
+        args.extend(["--into", into]);
+        if let Some(label) = label {
+            args.extend(["--label", label]);
+        }
+        let receipts: Value = serde_json::from_str(&self.session_space(cwd, &args)?)
+            .map_err(|error| format!("AIKit's group answer is not JSON: {error}"))?;
+        Ok(
+            serde_json::json!({"schema": "oi.encounter-session-group/v1", "agent_sessions": agent_sessions,
             "space": space, "into": into, "receipts": receipts}),
         )
     }
@@ -2390,12 +2476,12 @@ impl Client {
         command.args(args);
         let verb = args.first().copied().unwrap_or("session-space");
         // `create` and `stage` return write-free previews; `apply`,
-        // `drag-out` and `hot-swap` write.
+        // `drag-out`, `group` and `hot-swap` write.
         let output = output_bounded(
             &mut command,
             SESSION_SPACE_LIMIT,
             verb,
-            matches!(verb, "apply" | "drag-out" | "hot-swap"),
+            matches!(verb, "apply" | "drag-out" | "group" | "hot-swap"),
         )
         .map_err(|error| format!("AIKit SessionSpace is unavailable: {error}"))?;
         if !output.status.success() {

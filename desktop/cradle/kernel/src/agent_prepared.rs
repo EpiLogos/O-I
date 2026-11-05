@@ -276,6 +276,14 @@ enum AgentRead {
         task_ref: String,
         expected_revision: String,
     },
+    /// The owner's task Budget (`encounter-task-budget`): a write.
+    TaskBudget {
+        agent_session: String,
+        task_ref: String,
+        turns: Option<u64>,
+        expected_revision: String,
+        expected_budget_revision: Option<String>,
+    },
     /// The owner's task copy onto a session holding none
     /// (`encounter-task-copy`): a write.
     TaskCopy {
@@ -303,6 +311,12 @@ enum AgentRead {
     SessionDragOut {
         space: String,
         agent_session: String,
+        into: String,
+        label: Option<String>,
+    },
+    SessionGroup {
+        space: String,
+        agent_sessions: Vec<String>,
         into: String,
         label: Option<String>,
     },
@@ -577,6 +591,27 @@ impl PreparedAgent {
                     )?,
                 }
             }
+            AgentRead::TaskBudget {
+                agent_session,
+                task_ref,
+                turns,
+                expected_revision,
+                expected_budget_revision,
+            } => {
+                let project_ref =
+                    project_ref(&self.client, &self.aikit, &self.reads, project, &cwd)?;
+                KernelOpResult::EncounterOwnerAct {
+                    data: self.aikit.task_budget(
+                        &cwd,
+                        &project_ref,
+                        agent_session,
+                        task_ref,
+                        *turns,
+                        expected_revision,
+                        expected_budget_revision.as_deref(),
+                    )?,
+                }
+            }
             AgentRead::TaskCopy {
                 agent_session,
                 from_session,
@@ -677,6 +712,25 @@ impl PreparedAgent {
                     )?,
                 }
             }
+            AgentRead::SessionGroup {
+                space,
+                agent_sessions,
+                into,
+                label,
+            } => {
+                let project_ref =
+                    project_ref(&self.client, &self.aikit, &self.reads, project, &cwd)?;
+                KernelOpResult::EncounterOwnerAct {
+                    data: self.aikit.session_group(
+                        &cwd,
+                        &project_ref,
+                        space,
+                        agent_sessions,
+                        into,
+                        label.as_deref(),
+                    )?,
+                }
+            }
             AgentRead::SettingsList { agent_sessions } => {
                 let project_ref =
                     project_ref(&self.client, &self.aikit, &self.reads, project, &cwd)?;
@@ -747,10 +801,10 @@ impl PreparedAgent {
 
 impl Kernel {
     /// `AgencyRead`, `Encounter`, `EncounterTaskRead`, `EncounterSessionSettings`,
-    /// `EncounterTaskConfigure`, `EncounterTaskRemove`, `EncounterTaskCopy`,
+    /// `EncounterTaskConfigure`, `EncounterTaskRemove`, `EncounterTaskBudget`, `EncounterTaskCopy`,
     /// `EncounterSessionDetach`, `EncounterSessionBench`,
     /// `EncounterSessionAttach`, `EncounterSessionDragOut`,
-    /// `EncounterSessionHotSwap`, `EncounterSessionDecisionHelper`, `AgentDefinition`,
+    /// `EncounterSessionGroup`, `EncounterSessionHotSwap`, `EncounterSessionDecisionHelper`, `AgentDefinition`,
     /// `ModelRoster`, `HarnessAgentRead`, `HarnessStatus` and
     /// `ModelCatalogue`, prepared under the kernel lock; every other op is
     /// not an agent read.
@@ -806,6 +860,23 @@ impl Kernel {
                     agent_session: agent_session.clone(),
                     task_ref: task_ref.clone(),
                     expected_revision: expected_revision.clone(),
+                },
+            ),
+            KernelOp::EncounterTaskBudget {
+                project,
+                agent_session,
+                task_ref,
+                turns,
+                expected_revision,
+                expected_budget_revision,
+            } => (
+                Some(project.clone()),
+                AgentRead::TaskBudget {
+                    agent_session: agent_session.clone(),
+                    task_ref: task_ref.clone(),
+                    turns: *turns,
+                    expected_revision: expected_revision.clone(),
+                    expected_budget_revision: expected_budget_revision.clone(),
                 },
             ),
             KernelOp::EncounterTaskCopy {
@@ -865,6 +936,21 @@ impl Kernel {
                 AgentRead::SessionDragOut {
                     space: space.clone(),
                     agent_session: agent_session.clone(),
+                    into: into.clone(),
+                    label: label.clone(),
+                },
+            ),
+            KernelOp::EncounterSessionGroup {
+                project,
+                space,
+                agent_sessions,
+                into,
+                label,
+            } => (
+                Some(project.clone()),
+                AgentRead::SessionGroup {
+                    space: space.clone(),
+                    agent_sessions: agent_sessions.clone(),
                     into: into.clone(),
                     label: label.clone(),
                 },
@@ -1023,6 +1109,11 @@ elif verb == "drag-out":
     with open(log + ".drag-out.args", "w") as handle:
         handle.write(json.dumps(args[4:]))
     print(json.dumps([{"sequence": 1, "space": args[args.index("--into") + 1]}]))
+elif verb == "group":
+    with open(log + ".group.args", "w") as handle:
+        handle.write(json.dumps(args[4:]))
+    print(json.dumps([{"sequence": 0, "space": args[args.index("--into") + 1]},
+                      {"sequence": 5, "space": args[args.index("--space") + 1]}]))
 elif verb == "discover":
     project = args[args.index("--project") + 1]
     print(json.dumps([{"version": "aikit.session-space-application/v1",
@@ -1075,6 +1166,19 @@ elif verb in ("encounter-task-remove", "encounter-task-copy"):
     schema = "aikit.encounter-task-removal/v1" if verb == "encounter-task-remove" else "aikit.encounter-task-copy/v1"
     print(json.dumps({"schema": schema, "agent_session": flag("--agent-session"), "task_ref": flag("--task-ref"),
                       "expected": flag("--expected-revision"), "from_session": flag("--from-session")}))
+elif verb == "encounter-task-budget":
+    flag = lambda name: args[args.index(name) + 1] if name in args else None
+    with open(log + ".task-budget.argv.json", "w") as handle:
+        handle.write(json.dumps(args))
+    kept = log + "." + verb + ".json"
+    if os.path.exists(kept):
+        sys.stderr.write(open(kept).read())
+        sys.exit(2)
+    cap = None if "--clear" in args else int(flag("--turns"))
+    print(json.dumps({"schema": "aikit.encounter-task-budget/v1", "agent_session": flag("--agent-session"),
+                      "task_ref": flag("--task-ref"), "task_revision": flag("--expected-revision"),
+                      "outcome": "cleared" if cap is None else "set",
+                      "turns": {"cap": cap, "used": None, "revision": "task-budget/new"}}))
 elif verb == "stage":
     flag = lambda name: args[args.index(name) + 1] if name in args else None
     intent = json.loads(open(flag("--intent-json")[1:]).read())
@@ -1495,6 +1599,97 @@ else:
         let _ = std::fs::remove_file(&kept);
     }
 
+    /// A chain's Budget (O-I #743; DLW build ruling 2026-11-05: AIKit owns it) reaches AIKit for a session attached to the Project
+    /// only: the turns, the task and both revisions travel verbatim, always as the person's (`--by human`), a clear as `--clear`;
+    /// the receipt comes back as AIKit wrote it, AIKit's refusal in its own words.
+    #[test]
+    fn a_task_s_budget_reaches_the_owner_as_the_person_s_for_an_attached_session_only() {
+        let owner = crate::tests::FakeOwner::spawn_counter("task-budget");
+        let aikit = FakeAikit::new("task-budget");
+        let mut kernel = owner.kernel_with_agency(aikit.client());
+        let budget = |agent_session: &str, turns: Option<u64>, budget: Option<&str>| {
+            KernelOp::EncounterTaskBudget {
+                project: String::new(),
+                agent_session: agent_session.into(),
+                task_ref: "task:fixtures".into(),
+                turns,
+                expected_revision: "task-binding/1".into(),
+                expected_budget_revision: budget.map(Into::into),
+            }
+        };
+        let set = kernel
+            .apply(budget("agent-session/x", Some(12), None))
+            .unwrap();
+        let KernelOpResult::EncounterOwnerAct { data } = set.result else {
+            panic!("AIKit's receipt is the outcome");
+        };
+        assert_eq!(data["schema"], "aikit.encounter-task-budget/v1");
+        assert_eq!(data["turns"]["cap"], 12);
+        let argv = || -> Vec<String> {
+            serde_json::from_str(
+                &std::fs::read_to_string(format!("{}.task-budget.argv.json", aikit.log.display()))
+                    .unwrap(),
+            )
+            .unwrap()
+        };
+        let sent = argv();
+        let after = |flag: &str| {
+            sent.iter()
+                .position(|arg| arg == flag)
+                .map(|at| sent[at + 1].clone())
+        };
+        assert_eq!(after("--agent-session").as_deref(), Some("agent-session/x"));
+        assert_eq!(after("--task-ref").as_deref(), Some("task:fixtures"));
+        assert_eq!(
+            after("--expected-revision").as_deref(),
+            Some("task-binding/1")
+        );
+        assert_eq!(
+            after("--by").as_deref(),
+            Some("human"),
+            "the press is the person's"
+        );
+        assert_eq!(after("--turns").as_deref(), Some("12"));
+        assert!(!sent.contains(&"--expected-budget-revision".to_string()));
+        let cleared = kernel
+            .apply(budget("agent-session/x", None, Some("task-budget/1")))
+            .unwrap();
+        assert!(
+            matches!(cleared.result, KernelOpResult::EncounterOwnerAct { ref data } if data["outcome"] == "cleared")
+        );
+        let sent = argv();
+        assert!(sent.contains(&"--clear".to_string()) && !sent.contains(&"--turns".to_string()));
+        let at = sent
+            .iter()
+            .position(|arg| arg == "--expected-budget-revision")
+            .unwrap();
+        assert_eq!(sent[at + 1], "task-budget/1");
+        assert!(kernel
+            .apply(budget("agent-session/elsewhere", Some(3), None))
+            .is_err());
+        assert_eq!(
+            aikit.calls("encounter-task-budget"),
+            2,
+            "another Project's session never reaches the owner"
+        );
+        let kept = PathBuf::from(format!(
+            "{}.encounter-task-budget.json",
+            aikit.log.display()
+        ));
+        std::fs::write(
+            &kept,
+            "Task Budget revision conflict; read the task's Budget again and set it from there",
+        )
+        .unwrap();
+        assert_eq!(
+            kernel
+                .apply(budget("agent-session/x", Some(3), None))
+                .unwrap_err(),
+            "Task Budget revision conflict; read the task's Budget again and set it from there"
+        );
+        let _ = std::fs::remove_file(&kept);
+    }
+
     /// A task's Delete and Paste and a session's Remove from the set (O-I #743) reach AIKit for a session attached to the Project
     /// only: the task named and the revision read travel verbatim, the receipt comes back as AIKit wrote it, AIKit's refusal in its
     /// own words; a session leaves the set through the SessionSpace's own `detach-agent-session`, staged and applied on the space
@@ -1712,7 +1907,57 @@ else:
         );
         assert!(kernel.apply(drag("agent-session/bo")).is_err());
         assert_eq!(aikit.calls("drag-out"), 1);
-        for name in ["applied", "spaces.json", "drag-out.args"] {
+
+        // Group (manual §19.15 "select agents' chains and choose Group: they become one chain that holds an Agent rack of them").
+        let group = |sessions: &[&str]| KernelOp::EncounterSessionGroup {
+            project: String::new(),
+            space: "session-space/crew".into(),
+            agent_sessions: sessions.iter().map(|s| (*s).to_owned()).collect(),
+            into: "session-space/crew-set-1a2b".into(),
+            label: Some("pair".into()),
+        };
+        let grouped = kernel
+            .apply(group(&["agent-session/ada", "agent-session/cy"]))
+            .unwrap();
+        let KernelOpResult::EncounterOwnerAct { data } = grouped.result else {
+            panic!("the group's receipts are the outcome");
+        };
+        assert_eq!(data["schema"], "oi.encounter-session-group/v1");
+        assert_eq!(data["into"], "session-space/crew-set-1a2b");
+        assert_eq!(data["receipts"][1]["space"], "session-space/crew");
+        let asked: Value =
+            serde_json::from_str(&std::fs::read_to_string(side("group.args")).unwrap()).unwrap();
+        assert_eq!(
+            asked,
+            serde_json::json!([
+                "--space",
+                "session-space/crew",
+                "--agent-session",
+                "agent-session/ada",
+                "--agent-session",
+                "agent-session/cy",
+                "--into",
+                "session-space/crew-set-1a2b",
+                "--label",
+                "pair"
+            ])
+        );
+        assert_eq!(
+            kernel
+                .apply(group(&["agent-session/ada", "agent-session/bo"]))
+                .unwrap_err(),
+            "agent-session/bo is not a chain of session-space/crew"
+        );
+        assert_eq!(
+            kernel.apply(group(&[])).unwrap_err(),
+            "Group names no chain of session-space/crew to make a set of"
+        );
+        assert_eq!(
+            aikit.calls("group"),
+            1,
+            "a refused Group reaches no owner write"
+        );
+        for name in ["applied", "spaces.json", "drag-out.args", "group.args"] {
             let _ = std::fs::remove_file(side(name));
         }
     }

@@ -314,7 +314,11 @@ export type QlReadRequest = {kind:"kernel-m1"|"scene-compose"|"scene-world";requ
   /** `ql vak locate <ref>` ({vakRef, name, symbol, primaryDesignation, standing, sourceLine}), `ql vak context <ref> [depth]`
    * (`ql.vak-context/v1`: centre, depth, entries, relations). */
   | {kind:"vak-locate";vak_ref:string}
-  | {kind:"vak-context";vak_ref:string;depth?:number};
+  | {kind:"vak-context";vak_ref:string;depth?:number}
+  /** `ql vak compose /dev/stdin` (O-I #843): one `ql.vak-composition/v1` request `{contract, steps:[{op, …}]}` on stdin, answered
+   * `{contract:"ql.vak-composition/v1", sourceRevision, results:[{op, result}]}` in step order; a Factory unit's heads in the Clip's
+   * Vāk tab are QL's word. It stores nothing; a step QL cannot compose is refused in QL's words. */
+  | {kind:"vak-compose";request:unknown};
 /** `workcell machine list` answers `{machines:[{label, endpoint, credential_ref?, operations, note?}], control_operations:[…]}`: the
  * declarations and, since Workcell#118, the fourteen operations the control plane serves (what a declaration may allow). */
 export type WorkcellReadRequest = {kind:"connections-list"} | {kind:"connections-show";label:string} | {kind:"machine-list"}
@@ -825,6 +829,10 @@ export type KernelOp =
   /** A session's task taken off it (AIKit `encounter-task-remove`, aikit.encounter-task-removal/v1; O-I #743, a Factory clip's Delete):
    * the task named and the revision read. Result `encounter_owner_act`. */
   | {op:"encounter_task_remove";project:string;agent_session:string;task_ref:string;expected_revision:string}
+  /** A session's task Budget set or cleared (AIKit `encounter-task-budget`, aikit.encounter-task-budget/v1; O-I #743, a chain's Budget,
+   * DLW build ruling 2026-11-05): the turns allowed (absent or null clears it), against the task's revision and the Budget's own
+   * (the task reading's `turns.revision`, absent while none was written). Sent as the person's. Result `encounter_owner_act`. */
+  | {op:"encounter_task_budget";project:string;agent_session:string;task_ref:string;turns?:number|null;expected_revision:string;expected_budget_revision?:string|null}
   /** A session's task copied onto another that holds none (AIKit `encounter-task-copy`, aikit.encounter-task-copy/v1; O-I #743, a
    * Factory clip's Paste): AIKit makes it from the receiving session's standing. Result `encounter_owner_act`. */
   | {op:"encounter_task_copy";project:string;agent_session:string;from_session:string;task_ref?:string}
@@ -837,6 +845,10 @@ export type KernelOp =
   | {op:"encounter_session_bench";project:string;space:string;agent_session:string;benched:boolean}
   | {op:"encounter_session_attach";project:string;space:string;agent_session:string}
   | {op:"encounter_session_drag_out";project:string;space:string;agent_session:string;into:string;label?:string|null}
+  /** Group (O-I manual §19.15 "select agents' chains and choose Group: they become one chain that holds an Agent rack of them"): the
+   * sessions are seated in `into`, the set's own space, `space` holds `into` as one chain, and the sessions leave `space` last
+   * (`session-space group`). */
+  | {op:"encounter_session_group";project:string;space:string;agent_sessions:string[];into:string;label?:string|null}
   | {op:"encounter_session_hot_swap";project:string;space:string;agent_session:string;agent_ref:string}
   | {op:"encounter_session_decision_helper";project:string;space:string;bound:boolean}
   /** Several sessions' settings read at once (aikit.encounter-session-settings-list/v1), so a view of many tracks asks once. */
@@ -897,7 +909,7 @@ export type KernelOp =
    * machine-level; asks no model. */
   | {op:"decision_status"}
   /** The team space (`oi ql context-frame team-space --json`, kernel
-   * `team_space.rs`): QL-MEF's `ql.vak-team-space/v1` verbatim — the
+   * `team_space.rs`): QL-MEF's `ql.vak-team-space/v2` verbatim — the
    * instruments the Decision helper may be asked. Pull read, machine-level. */
   | {op:"team_space"}
   /** The desktop-held default provider for NEW chats (kernel
@@ -1310,9 +1322,19 @@ export type FactoryPadsPresetsRequest = {kind:"pads-presets";state_path:string}
 export type FactoryPadsPresetSaveRequest = {kind:"pads-preset-save";state_path:string;project_ref:string;name:string;expected_revision:string}
 export type FactoryPadsPresetRecallRequest = {kind:"pads-preset-recall";state_path:string;project_ref:string;name:string;expected_revision:string;preset_revision:string}
 export type FactoryAttemptTaskUnitsRequest = {kind:"attempt-task-units";state_path:string;task_ref:string}
-/** Every `factory_owner` request: the four above by their shapes, and the kernel's other kinds by name. */
+/** Stop after (kernel/src/factory_retry.rs, O-I #842): `attempt-request-cancellation` asks a unit's current attempt to stop through
+ * Factory's own `request-cancellation`, admitted as its `attempt-request-cancellation` action and granted on the person's grant as a
+ * retry is; the desk names the Run and the unit. It stops no process: Factory's lifecycle accepts the request. */
+export type FactoryAttemptRequestCancellationRequest = {kind:"attempt-request-cancellation";state_path:string;run_ref:string;workflow_unit_ref:string}
+/** The kernel's answer to a cancellation request: Factory's receipt, or its refusal (or the driver's, named as such) in its words. */
+export interface FactoryAttemptCancellation {
+  contract:"oi.factory-attempt-cancellation/v1"; runRef:string; workflowUnitRef:string
+  status:"cancel-requested"|"already-requested"|"uncertain"|"refused"; changed:boolean; attemptRef:string|null; authorityRef:string|null
+  receipt:unknown; refusal:{source:string;step:string|null;message:string;operationMayHaveRun?:boolean}|null
+}
+/** Every `factory_owner` request: the five above by their shapes, and the kernel's other kinds by name. */
 export type FactoryOwnerRequest = FactoryPadsPresetsRequest | FactoryPadsPresetSaveRequest | FactoryPadsPresetRecallRequest | FactoryAttemptTaskUnitsRequest
-  | {kind:string;[field:string]:unknown}
+  | FactoryAttemptRequestCancellationRequest | {kind:string;[field:string]:unknown}
 /** One unit a task's attempts stand on (factory.attempt-task-units-reading/v1 `units`): its Run, the unit, the unit's current attempt and
  * its leg's status where the current attempt is the task's, how many of the task's attempts it holds, the Run's revision, and whether the
  * Run requires the unit. */

@@ -731,6 +731,25 @@ pub enum KernelOp {
         task_ref: String,
         expected_revision: String,
     },
+    /// Set or clear the turns a session's task may take, its Budget,
+    /// through the owner's `encounter-task-budget`
+    /// (`aikit.encounter-task-budget/v1`; O-I #743, a chain's Budget, DLW
+    /// build ruling 2026-11-05: AIKit owns it): against the task's revision
+    /// and the Budget's own, read from the task reading's `turns`. The
+    /// person sets it, so the kernel sends it as theirs (`--by human`);
+    /// AIKit's receipt or refusal passes through verbatim. The session must
+    /// be attached to one of the Project's spaces.
+    EncounterTaskBudget {
+        project: String,
+        agent_session: String,
+        task_ref: String,
+        /// The turns allowed; `None` clears the Budget.
+        #[serde(default)]
+        turns: Option<u64>,
+        expected_revision: String,
+        #[serde(default)]
+        expected_budget_revision: Option<String>,
+    },
     /// Copy one session's task onto another that holds none, through the
     /// owner's `encounter-task-copy` (`aikit.encounter-task-copy/v1`; manual
     /// §10.9, a clip's Paste in Factory): AIKit makes the copy from the
@@ -779,6 +798,20 @@ pub enum KernelOp {
         project: String,
         space: String,
         agent_session: String,
+        into: String,
+        #[serde(default)]
+        label: Option<String>,
+    },
+    /// Group chains of the Agent rack into a set (manual §19.15 "select
+    /// agents' chains and choose Group: they become one chain that holds an
+    /// Agent rack of them"): AIKit's `session-space group` seats the sessions
+    /// in `into`, the set's own space in the same Project, with their Project
+    /// contexts and benches, holds `into` as one chain of `space`, and
+    /// detaches the sessions from `space` last.
+    EncounterSessionGroup {
+        project: String,
+        space: String,
+        agent_sessions: Vec<String>,
         into: String,
         #[serde(default)]
         label: Option<String>,
@@ -1053,7 +1086,7 @@ pub enum KernelOp {
     /// verbatim. Pull read, machine-level; asks no model.
     DecisionStatus,
     /// The team space (`oi ql context-frame team-space --json`): QL-MEF's
-    /// `ql.vak-team-space/v1` verbatim — the instruments the Decision helper
+    /// `ql.vak-team-space/v2` verbatim — the instruments the Decision helper
     /// may be asked, with their heads and labels. Pull read, machine-level.
     TeamSpace,
     /// The desktop-held default provider for NEW chats
@@ -1760,12 +1793,14 @@ pub enum KernelOpResult {
     EncounterTaskAttemptsListReading {
         data: serde_json::Value,
     },
-    /// An encounter act's receipt: a task removed or copied, a session
+    /// An encounter act's receipt: a task removed, copied or given a
+    /// Budget (`EncounterTaskBudget`), a session
     /// taken off the set, benched, added to a rack or dragged out of one
     /// (`EncounterTaskRemove`, `EncounterTaskCopy`, `EncounterSessionDetach`,
     /// `EncounterSessionBench`, `EncounterSessionAttach`,
-    /// `EncounterSessionDragOut`, `EncounterSessionHotSwap`,
-    /// `EncounterSessionDecisionHelper`), its schema naming which.
+    /// `EncounterSessionDragOut`, `EncounterSessionGroup`,
+    /// `EncounterSessionHotSwap`, `EncounterSessionDecisionHelper`), its
+    /// schema naming which.
     EncounterOwnerAct {
         data: serde_json::Value,
     },
@@ -3732,11 +3767,13 @@ impl Kernel {
             | KernelOp::EncounterSessionSettings { .. }
             | KernelOp::EncounterTaskConfigure { .. }
             | KernelOp::EncounterTaskRemove { .. }
+            | KernelOp::EncounterTaskBudget { .. }
             | KernelOp::EncounterTaskCopy { .. }
             | KernelOp::EncounterSessionDetach { .. }
             | KernelOp::EncounterSessionBench { .. }
             | KernelOp::EncounterSessionAttach { .. }
             | KernelOp::EncounterSessionDragOut { .. }
+            | KernelOp::EncounterSessionGroup { .. }
             | KernelOp::EncounterSessionHotSwap { .. }
             | KernelOp::EncounterSessionDecisionHelper { .. }
             | KernelOp::EncounterSessionSettingsList { .. }

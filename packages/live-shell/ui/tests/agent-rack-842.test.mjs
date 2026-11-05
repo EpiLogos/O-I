@@ -189,8 +189,11 @@ test('the macros turn the one agent through its own Agent; what the Agent does n
   }
   assert.equal(own.AGENTSET_REFUSE.model, 'Model: no carrier to AIKit\'s model select of each chain\'s session (its encounter\'s model-read and model-select, through the kernel) stands on this rack.')
   assert.equal(own.AGENTSET_REFUSE.effort, 'Effort: no carrier to AIKit\'s model select of each chain\'s session (its encounter\'s model-read and model-select, through the kernel) stands on this rack.')
-  assert.match(crew.standing.budget.disabled, /missing op/)
-  await assert.rejects(() => crew.write([{key: 'budget', value: 20}]), /missing op/)
+  // REPLACED (round 20): a group's Budget was a missing op. Each chain's task carries its own Budget in AIKit (the kernel's
+  // encounter_task_read, then encounter_task_budget; DLW build ruling 2026-11-05), so with no carrier handed to the rack it names that one.
+  assert.equal(crew.standing.budget.disabled, own.AGENTSET_REFUSE.budget)
+  assert.doesNotMatch(crew.standing.budget.disabled, /missing op/)
+  await assert.rejects(() => crew.write([{key: 'budget', value: 20}]), error => error.message === own.AGENTSET_REFUSE.budget)
   assert.equal(sent.length, 1, 'no member\'s macro reached the session\'s own Agent')
 })
 
@@ -225,7 +228,8 @@ test('a group\'s Model and Effort macros turn every agent of the rack, each thro
   assert.equal(crew.values.model, 'sonnet')
   assert.equal(crew.values.effort, 'medium')
   for (const key of ['model', 'effort']) assert.equal(crew.standing[key], undefined, `${key} turns on a group`)
-  assert.match(crew.standing.budget.disabled, /missing op/, 'Budget has no owner of a session\'s budget yet')
+  // REPLACED (round 20): "Budget has no owner of a session's budget yet". Each chain's task Budget is AIKit's; unhanded, it names its carrier.
+  assert.equal(crew.standing.budget.disabled, own.AGENTSET_REFUSE.budget, 'Budget names the carrier of each chain\'s task Budget')
   // Model: each session is read for its native session, then selected, the effort left as the harness holds it.
   await crew.write([{key: 'model', value: 'opus'}])
   assert.deepEqual(calls.filter(c => c[0] === 'select').map(c => c[2]), [
@@ -264,7 +268,8 @@ test('a group\'s Model and Effort macros turn every agent of the rack, each thro
   const chainSource = read('agent/devices/FactoryDeviceChain.tsx'), acts = read('agent/factoryTaskActs.ts')
   assert.match(chainSource, /sessionModel: \{read: \(\{project, agent_session\}\) => sessionModelRead\(transport, project, agent_session\), select: \(\{project, request\}\) => sessionModelSelect\(transport, project, request\)\}/)
   assert.match(chainSource, /const chainModelReadings = useChainModelReadings\(transport, macroChains\)/)
-  assert.match(chainSource, /chainModels, chainModelReadings\}, agentsetPorts\)/)
+  // The rack is handed Factory's readings of its macros beside its chains' models (round 20).
+  assert.match(chainSource, /chainModels, chainModelReadings, rackMacros: rackMacros\.readings\}, agentsetPorts\)/)
   assert.match(acts, /encounter<unknown>\(transport, project, \{action: 'model-read', agent_session: session\}\)/)
   assert.match(acts, /return readNativeModel\(value, session, native\)/)
   assert.doesNotMatch(read('agent/devices/sessionChainBindings.ts'), /shell\.setEffort\(/)
@@ -340,7 +345,8 @@ test('Group, on chains chosen in the list, asks Central to propose them as an ag
   bind.resetHolds()
   const calls = []
   const ports = {
-    propose: async input => { calls.push(['propose', input]); return {record: {schema: 'central.agent-set/v1', ref: input.ref, revision: 'r1', members: input.members}} },
+    // Central's record keeps the person's words as its proposal's reason (central.agent-set/v1 `proposal.reason`).
+    propose: async input => { calls.push(['propose', input]); return {record: {schema: 'central.agent-set/v1', ref: input.ref, revision: 'r1', members: input.members, proposal: {reason: input.reason}}} },
     saveSet: async input => { calls.push(['save', input]); return {} },
     suffix: () => 'r7x',
   }
@@ -352,9 +358,13 @@ test('Group, on chains chosen in the list, asks Central to propose them as an ag
     members: [{kind: 'agent', agent_ref: 'agent/kite'}, {kind: 'agent', agent_ref: 'agent/cairn'}], reason: 'Check the port'}])
   const held = own.agentsetBinding({group: CREW, tracks: TRACKS, holds: bind.chainHolds()}, ports)
   assert.deepEqual(JSON.parse(held.values['new.proposal']).members, [KITE.sessionRef, CAIRN.sessionRef], 'the proposal stands on the card, its chains by their faces')
-  await held.write([{key: 'new.accept', value: true}])
+  // REPLACED (round 20): Accept saved Central's record and the chains stayed chains of their own. Accept now saves it, then AIKit makes the
+  // chosen chains one chain of this rack, in the set's own space (`aikit session-space group`, the kernel's encounter_session_group); with
+  // no carrier to that handed to the rack, Central keeps the set and Accept says the chains stay their own.
+  await assert.rejects(() => held.write([{key: 'new.accept', value: true}]), error => error.message === own.GROUP_REFUSE.noGroup('agent-set:check-the-port-r7x'))
   assert.deepEqual(calls[1], ['save', {scope: 'root', record: {schema: 'central.agent-set/v1', ref: 'agent-set:check-the-port-r7x', revision: 'r1',
-    members: [{kind: 'agent', agent_ref: 'agent/kite'}, {kind: 'agent', agent_ref: 'agent/cairn'}]}, expected_revision: 'r1'}])
+    members: [{kind: 'agent', agent_ref: 'agent/kite'}, {kind: 'agent', agent_ref: 'agent/cairn'}], proposal: {reason: 'Check the port'}}, expected_revision: 'r1'}])
+  assert.equal(JSON.parse(bind.viewHolds(bind.chainHolds(), own.AGENTSET_ID)['new.proposal']).saved, true, 'the card holds the set as saved')
   // REPLACED (round 868): Discard was a missing op and Central's propose took no type. Central carries both now (central.agent-set.remove
   // with CAS; propose's `type`): with no remover handed to the rack, Discard names the act that carries it; Type is the card's own field.
   assert.equal(held.standing['new.discard'].disabled, own.GROUP_REFUSE.noRemover)
@@ -362,6 +372,19 @@ test('Group, on chains chosen in the list, asks Central to propose them as an ag
   assert.match(own.GROUP_REFUSE.noRemover, /central\.agent-set\.remove/)
   assert.equal(held.standing['new.type'], undefined, 'Central\'s propose takes a type')
   assert.ok(held.local['new.type'], 'the Type is the hand\'s until Group')
+  // Accept again, with AIKit's group handed: Central's record is not saved twice; the chosen chains go into the set's own space, named for
+  // what the set is for, and the card lets go. A group AIKit refuses comes back in its words, the set kept.
+  let refuseGroup = 'AIKit: agent-session/cairn is not in session-space/crew'
+  const grouping = {...ports, group: async input => { calls.push(['group', input]); if (refuseGroup) throw Error(refuseGroup); return {} }}
+  const again = own.agentsetBinding({group: CREW, tracks: TRACKS, holds: bind.chainHolds()}, grouping)
+  await assert.rejects(() => again.write([{key: 'new.accept', value: true}]),
+    error => error.message === own.GROUP_REFUSE.ungrouped('agent-set:check-the-port-r7x', refuseGroup))
+  refuseGroup = null
+  await again.write([{key: 'new.accept', value: true}])
+  assert.deepEqual(calls.slice(2).map(c => c[0]), ['group', 'group'], 'Central\'s record was saved once')
+  assert.deepEqual(calls[3], ['group', {project: '', space: 'session-space/crew', agent_sessions: [KITE.sessionRef, CAIRN.sessionRef],
+    into: 'session-space/check-the-port-r7x', label: 'Check the port'}])
+  assert.equal(bind.viewHolds(bind.chainHolds(), own.AGENTSET_ID)['new.proposal'], undefined, 'the card let go')
   // A chain whose session seats no agent cannot be proposed as a member.
   const unseated = own.agentsetBinding({group: CREW, tracks: TRACKS.map(item => (item === CAIRN ? {...item, agentRef: null} : item)), holds: bind.chainHolds()}, ports)
   await assert.rejects(() => unseated.write([{key: 'new.make', value: JSON.stringify({for: 'Check', chains: [KITE.sessionRef, CAIRN.sessionRef]})}]), /seats no agent/)
@@ -706,4 +729,109 @@ test('Group: the chains taken in with + make the set; with fewer than two Group 
   const card = words(hosted(null, fixture('Making a set'))[2])
   assert.match(card, /What the set is for/)
   assert.doesNotMatch(card, /What the team is for|Keeps the team/)
+})
+
+// ---------------------------------------------------------------- nested sets, Budget and Factory's rack macros (O-I #842 round 20)
+
+// The desk's record holds the crew as a chain (AIKit's `set_chains`, made by `aikit session-space group`), beside bo's own session.
+const NESTED_SPACES = [SPACES[0], {...SPACES[1], set_chains: {'session-space/crew': {space: 'session-space/crew', purpose: 'Check the port', provenance: {action: 'group'}}}}]
+// Factory's reading of one rack's macros (factory.rack-macros-reading/v1), and the receipt of a write on it.
+const macrosReading = (revision, over = {}) => ({schema: 'factory.rack-macros-reading/v1', revision, macros: {model: null, effort: null, budget: null},
+  unmapped: {model: [], effort: [], budget: []}, variations: [], ...over})
+const answered = reading => ({status: 'answered', reading: chains.rackMacrosReadingOf(reading)})
+
+test('a set held as a chain holds its own nested rack, read from AIKit\'s set_chains on the space\'s record; a cycle is not entered again', () => {
+  bind.resetHolds()
+  const tracks = runModel.buildTracks(agencyRows(NESTED_SPACES), ROSTER)
+  const desk = tracks.find(item => item.sessionRef === 'session-space/desk')
+  assert.deepEqual(desk.setChains, [{space: 'session-space/crew', purpose: 'Check the port'}], 'the track reads the sets its space holds')
+  assert.equal(tracks.find(item => item.sessionRef === 'session-space/crew').setChains, undefined, 'a space that holds no set names none')
+  assert.deepEqual(own.rackSpaces(desk, tracks), ['session-space/desk', 'session-space/crew'], 'Factory keeps each rack\'s macros by its space')
+  assert.deepEqual(own.agentChainSessions(desk, tracks).map(at => at.session), ['agent-session/bo', 'agent-session/kite', 'agent-session/cairn'],
+    'every agent the rack reaches, the set\'s with its own')
+  const values = own.agentsetValues({group: desk, tracks, holds: bind.chainHolds(), nowUnixMs: NOW})
+  const members = JSON.parse(values.members)
+  assert.deepEqual(members.map(member => member.id), ['agent-session/bo', 'session-space/crew'])
+  assert.deepEqual([members[1].name, members[1].chain], ['Check the port', [{device: own.AGENTSET_DESIGN, name: 'Agent rack'}]], 'the set is a chain holding a rack')
+  const nested = JSON.parse(values[own.memberDeviceKey('session-space/crew', own.AGENTSET_DESIGN)])
+  assert.deepEqual(JSON.parse(nested.members).map(member => member.id), ['agent-session/kite', 'agent-session/cairn'])
+  assert.equal(nested.crew, 'Port crew')
+  assert.equal(nested['bench:agent-session/kite'], true, 'the nested rack reads its own space\'s bench')
+  // A record that holds the desk inside the crew again is not walked twice.
+  const looped = tracks.map(item => (item.sessionRef === 'session-space/crew' ? {...item, setChains: [{space: 'session-space/desk', purpose: null}]} : item))
+  assert.deepEqual(own.agentChainSessions(desk, looped).map(at => at.session), ['agent-session/bo', 'agent-session/kite', 'agent-session/cairn'])
+  assert.deepEqual(own.rackSpaces(desk, looped), ['session-space/desk', 'session-space/crew'])
+})
+
+test('Budget turns each chain\'s task in AIKit, past the chains Factory says each rack leaves alone; Unmap, Store and a variation are Factory\'s rack macros', async () => {
+  bind.resetHolds()
+  const tracks = runModel.buildTracks(agencyRows(NESTED_SPACES), ROSTER)
+  const desk = tracks.find(item => item.sessionRef === 'session-space/desk')
+  const calls = []
+  let untasked = null
+  const taskBudget = {
+    read: async ({project, agent_session}) => {
+      calls.push(['task', project, agent_session])
+      const name = agent_session.split('/')[1]
+      return agent_session === untasked ? {revision: 't0', request: {central: {}}} : {revision: `t-${name}`, request: {central: {task_ref: `task:${name}`}}, turns: {cap: 12, used: 3, revision: 'b1'}}
+    },
+    write: async request => { calls.push(['budget', request]); return {} },
+  }
+  let revision = 3
+  const rackMacros = async input => {
+    calls.push(['macros', input])
+    revision += 1
+    return {...macrosReading(String(revision), input.act === 'recall' ? {macros: {model: null, effort: null, budget: 30}} : {}), schema: 'factory.rack-macros-write/v1'}
+  }
+  // The desk's macros stand at Budget 12 with one variation kept; the crew's rack leaves cairn's Budget alone.
+  const kept = new Map([['session-space/desk', answered(macrosReading('3', {macros: {model: null, effort: null, budget: 12}, variations: [{name: 'Long', values: {budget: 30}}]}))],
+    ['session-space/crew', answered(macrosReading('5', {unmapped: {model: [], effort: [], budget: ['agent-session/cairn']}}))]])
+  const input = {group: desk, tracks, holds: bind.chainHolds(), rackMacros: kept}
+  // With no carriers handed, each names its own.
+  const bare = own.agentsetBinding(input, {})
+  for (const key of ['budget', 'unmapped', 'store', 'variation']) assert.equal(bare.standing[key].disabled, own.AGENTSET_REFUSE[key], key)
+  assert.match(own.AGENTSET_REFUSE.unmapped, /factory_owner rack-macros-write/)
+  const rack = own.agentsetBinding(input, {taskBudget, rackMacros})
+  for (const key of ['budget', 'unmapped', 'store', 'variation']) assert.equal(rack.standing[key], undefined, `${key} turns`)
+  assert.equal(rack.values.budget, 12, 'a group\'s Budget stands where Factory keeps it')
+  assert.deepEqual(JSON.parse(rack.values.variations), [{name: 'Long', budget: 30}])
+  // Budget: every chain's task read before any is written, each at its task's revision and its Budget's; cairn is left alone by the crew's rack.
+  await rack.write([{key: 'budget', value: 20}])
+  assert.deepEqual(calls.filter(c => c[0] === 'task').map(c => c[2]), ['agent-session/bo', 'agent-session/kite'])
+  assert.deepEqual(calls.filter(c => c[0] === 'budget').map(c => c[1]), [
+    {project: 'O-I', agent_session: 'agent-session/bo', task_ref: 'task:bo', turns: 20, expected_revision: 't-bo', expected_budget_revision: 'b1'},
+    {project: 'O-I', agent_session: 'agent-session/kite', task_ref: 'task:kite', turns: 20, expected_revision: 't-kite', expected_budget_revision: 'b1'}])
+  assert.deepEqual(calls.at(-1), ['macros', {space_ref: 'session-space/desk', expected_revision: '3', act: 'turn', macro: 'budget', value: 20}],
+    'then Factory keeps where the macro stands, on the rack\'s revision')
+  // Unmap takes a chain off a macro, on the revision the last act gave.
+  calls.length = 0
+  await rack.write([{key: 'unmapped', value: JSON.stringify({budget: ['agent-session/bo']})}])
+  assert.deepEqual(calls, [['macros', {space_ref: 'session-space/desk', expected_revision: '4', act: 'unmap', macro: 'budget', chain: 'agent-session/bo'}]])
+  // Store keeps where every macro stands as the rack's next variation.
+  calls.length = 0
+  await rack.write([{key: 'store', value: true}])
+  assert.deepEqual(calls, [['macros', {space_ref: 'session-space/desk', expected_revision: '5', act: 'store', variation: 'Variation 2', values: {model: null, effort: null, budget: 12}}]])
+  assert.equal(bind.viewHolds(bind.chainHolds(), own.AGENTSET_ID).variation, 'Variation 2')
+  // A variation: Factory moves every macro there, and each turns every chain it reaches through its own owner; nothing is kept twice.
+  calls.length = 0
+  await rack.write([{key: 'variation', value: 'Long'}])
+  assert.deepEqual(calls[0], ['macros', {space_ref: 'session-space/desk', expected_revision: '6', act: 'recall', variation: 'Long'}])
+  assert.deepEqual(calls.filter(c => c[0] === 'budget').map(c => [c[1].agent_session, c[1].turns]), [['agent-session/bo', 30], ['agent-session/kite', 30]])
+  assert.equal(calls.filter(c => c[0] === 'macros').length, 1)
+  // A chain with no task turns none; a nested rack Factory has not answered leaves the turn unknown, so none is turned.
+  calls.length = 0
+  untasked = 'agent-session/kite'
+  await assert.rejects(() => rack.write([{key: 'budget', value: 8}]), error => error.message === 'Budget: kite has no task bound, so no Budget can be set on it, and no chain was turned.')
+  assert.deepEqual(calls.filter(c => c[0] !== 'task'), [], 'nothing was written')
+  const unread = own.agentsetBinding({...input, rackMacros: new Map([['session-space/desk', kept.get('session-space/desk')]])}, {taskBudget, rackMacros})
+  await assert.rejects(() => unread.write([{key: 'budget', value: 8}]),
+    error => error.message === 'Budget: Software Factory has not said which chains session-space/crew\'s macros leave alone (its reading has not come yet), so no chain was turned.')
+  // The chain hands the rack each carrier: AIKit's task read and Budget, Factory's rack macros, AIKit's group.
+  const chainSource = read('agent/devices/FactoryDeviceChain.tsx'), acts = read('agent/factoryTaskActs.ts')
+  assert.match(chainSource, /taskBudget: \{read: \(\{project, agent_session\}\) => chainTaskRead\(transport, project, agent_session\)/)
+  assert.match(chainSource, /kind: 'rack-macros-write'/)
+  assert.match(chainSource, /chainListAct\(transport, \{op: 'encounter_session_group', \.\.\.input\}/)
+  assert.match(acts, /act\(transport, \{op: 'encounter_task_budget', \.\.\.input\}\)/)
+  assert.match(acts, /kind: 'rack-macros-read'/)
+  bind.resetHolds()
 })

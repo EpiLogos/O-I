@@ -1,7 +1,7 @@
 // The Decision helper's two owner reads (T-AGENCY K5; kernel ops decision_status and team_space), each held once for the window in the
 // shared owner readings (owners/ownerReading.ts), as workcellReads.ts holds lane K1's:
 //   - `decision_status` → aikit.decision-status/v1, AIKit's decision provider (`aikit decide status`; asks no model);
-//   - `team_space` → ql.vak-team-space/v1, Quaternal Logic's team space (`ql context-frame team-space`).
+//   - `team_space` → ql.vak-team-space/v2, Quaternal Logic's team space (`ql context-frame team-space`).
 // Both are machine-level. They are read when the helper stands on a chain (a group's), drawn last-first when it comes back, and
 // re-read on the spine's epoch. A refusal is the owner's words, carried as the reading's error.
 import {scopesOf} from '../../owners/ownerCall'

@@ -11,7 +11,10 @@
 //   agency.rs session_detach).
 // After each act the readings it moved are asked again: the session's task and settings, and the agency's sessions.
 // A group's Model and Effort macros (§19.15) read and select each chain's session's model through AIKit's encounter model-read and
-// model-select (the cradle's route: encounter/nativeModel.ts), and the rack reads every chain again once one is selected.
+// model-select (the cradle's route: encounter/nativeModel.ts), and the rack reads every chain again once one is selected. Its Budget
+// reads each chain's task (encounter_task_read) and sets the task's Budget through AIKit's encounter-task-budget (encounter_task_budget,
+// O-I #743). Where each rack's macros stand is Software Factory's (factory_owner rack-macros-read, O-I #842), read for the rack and every
+// set it holds, and read again after each write to them.
 import {useEffect, useMemo, useState} from 'react'
 import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
 import {encounter} from '../../../../../desktop/cradle/src/encounter/client'
@@ -25,7 +28,8 @@ import {useAgencySessions} from './useAgencySessions'
 import {projectOfSession} from './worldScope'
 import {newTaskRef} from './clipBinding'
 import {writeSessionSettings} from './sessionSettings'
-import type {ChainModelReading, SessionModelSelect} from './devices/sessionChainBindings'
+import type {ChainModelReading, RackMacrosAnswer, SessionModelSelect, TaskBudgetWrite} from './devices/sessionChainBindings'
+import {rackMacrosReadingOf} from '../inhabitants/sdk/chains'
 
 const text = (cause: unknown) => cause instanceof Error ? cause.message : String(cause)
 
@@ -52,7 +56,7 @@ async function act(transport: KernelTransportStatus, op: KernelOp): Promise<Reco
  * in its words; either way the agency readers are told, so the rack reads the spaces again. */
 export async function chainListAct(transport: KernelTransportStatus,
   op: Extract<KernelOp, {op: 'encounter_session_bench' | 'encounter_session_attach' | 'encounter_session_drag_out' | 'encounter_session_hot_swap'
-    | 'encounter_session_decision_helper' | 'encounter_session_detach'}>, cause: string): Promise<Record<string, unknown>> {
+    | 'encounter_session_decision_helper' | 'encounter_session_detach' | 'encounter_session_group'}>, cause: string): Promise<Record<string, unknown>> {
   try { return await act(transport, op) } finally {
     tellOwnerChanged({topic: 'agency', cause, ...('agent_session' in op ? {agentSession: op.agent_session} : {})})
   }
@@ -174,4 +178,42 @@ export function withTaskActs(use: UseModeTracks): UseModeTracks {
       : factoryTaskActs(transport, projectOf, session => own.get(session)?.track.name?.trim() || null), [transport, projectOf, own])
     return useMemo(() => answer && !('waiting' in answer) && acts ? withFactoryTaskActs(answer, agency.tracks, acts) : answer, [answer, acts, agency.tracks])
   }
+}
+
+/** A chain's task as AIKit reads it now (encounter_task_read: the record, its revision, and `turns`, the Budget's own), or AIKit's refusal. */
+export async function chainTaskRead(transport: KernelTransportStatus, project: string, session: string): Promise<unknown> {
+  const read = await readTaskOf(transport, project, session)()
+  if ('error' in read) throw new Error(read.error)
+  return read.value
+}
+
+/** A chain's task Budget set through AIKit (encounter_task_budget), the person's; its receipt or AIKit's refusal; the chain's task is read again. */
+export async function chainTaskBudget(transport: KernelTransportStatus, input: TaskBudgetWrite): Promise<Record<string, unknown>> {
+  try { return await act(transport, {op: 'encounter_task_budget', ...input}) } finally {
+    readAgain(transport, input.project, [input.agent_session], 'a chain\'s Budget was set')
+  }
+}
+
+/** Where each rack's macros stand, Software Factory's reading (factory_owner rack-macros-read), by the rack's session space, for the rack and
+ * every set it holds, in Factory's state for the project; read again when `refresh` is called (after each write to them) and when the
+ * agency readers are told something moved. Null while none is asked (no Factory state is located). */
+export function useRackMacrosReadings(transport: KernelTransportStatus, where: {statePath: string; projectRef: string} | null,
+  spaces: readonly string[] | null): {readings: ReadonlyMap<string, RackMacrosAnswer> | null; refresh: () => void} {
+  const key = where && spaces?.length ? JSON.stringify([where.statePath, where.projectRef, ...spaces]) : null
+  const [readings, setReadings] = useState<ReadonlyMap<string, RackMacrosAnswer> | null>(null)
+  const [asked, ask] = useState(0)
+  useEffect(() => onOwnerChanged('agency', () => ask(n => n + 1)), [])
+  useEffect(() => {
+    if (!where || !spaces?.length || transport.kind === 'unavailable') { setReadings(null); return }
+    let live = true
+    setReadings(previous => previous ?? new Map(spaces.map(space => [space, {status: 'reading'} as const])))
+    void Promise.all(spaces.map(async (space): Promise<[string, RackMacrosAnswer]> => {
+      const call = await kernelOp(transport, {op: 'factory_owner', request: {kind: 'rack-macros-read', state_path: where.statePath, project_ref: where.projectRef, space_ref: space}})
+      const reading = call.error || call.outcome?.result !== 'factory_development_reading' ? null : rackMacrosReadingOf(call.outcome.data)
+      return [space, reading ? {status: 'answered', reading} : {status: 'refused', error: call.error ?? 'Software Factory answered without the rack\'s macros.'}]
+    })).then(rows => { if (live) setReadings(new Map(rows)) })
+    return () => { live = false }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `key` names the racks
+  }, [transport, key, asked])
+  return {readings: key ? readings : null, refresh: () => ask(n => n + 1)}
 }

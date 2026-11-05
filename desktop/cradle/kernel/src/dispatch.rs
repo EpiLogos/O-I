@@ -1658,10 +1658,12 @@ else:
         credential_setup credential_verify day_read decide decision_status dictation_probe
         dictation_transcribe encounter encounter_join encounter_provision
         encounter_session_attach encounter_session_bench encounter_session_decision_helper
-        encounter_session_detach encounter_session_drag_out encounter_session_hot_swap
+        encounter_session_detach encounter_session_drag_out encounter_session_group
+        encounter_session_hot_swap
         encounter_session_settings encounter_session_settings_list
-        encounter_task_attempts_list encounter_task_configure encounter_task_copy
-        encounter_task_read encounter_task_remove expression_recovery factory_attempt_read
+        encounter_task_attempts_list encounter_task_budget encounter_task_configure
+        encounter_task_copy encounter_task_read encounter_task_remove expression_recovery
+        factory_attempt_read
         factory_attempt_task_list_read factory_attempt_task_read factory_build_snapshot
         factory_development_read factory_owner file_bytes file_last_reading file_operation
         file_read file_resolve files_list flow_changed_since flow_participant_provision
