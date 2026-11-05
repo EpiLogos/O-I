@@ -494,6 +494,14 @@ test('(r869) Order: the sets move through Central\'s agent-profile.chain-order w
   host.resetHost()
 })
 
+test('(r870) the manual writes down several sets and their order: §19.7\'s Sets row, as the rack draws and moves them', () => {
+  const manual = readFileSync(new URL('../../../../ProjectCentral/docs/1-vision/dlw/DLW.md', import.meta.url), 'utf8')
+  const rack = manual.slice(manual.indexOf('### 19.7'), manual.indexOf('### 19.8'))
+  assert.ok(rack.length > 0, '§19.7 stands')
+  assert.match(rack, /^\| Sets \| The sets the agent carries, in order \| The order Central keeps \| An agent can carry several sets\. The rack draws every one, each with its members, in the order Central keeps for the agent; select a set in the list and move it to change the order\. One set has no order to change\. \|$/m,
+    'the row stands in the rack\'s Parameters, beside Set')
+})
+
 test('Preview, then Apply: the composition is held until previewed, the plane plans it, and only Apply carries exactly that plan', async () => {
   bind.resetHolds()
   const plans = [], applied = []

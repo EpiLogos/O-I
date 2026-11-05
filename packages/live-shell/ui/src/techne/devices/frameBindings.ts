@@ -583,7 +583,8 @@ export function canvasBinding(frame: FrameReadings, held: Readonly<Record<string
     if (said.result === 'refused') { values.refusal = said.why; delete standing.refusal } else values.promoteWhy = said.why
   } else if (selected) values.promote = 'ready'
   // DLW build ruling 2026-11-05 (the Promote dim): Promote dims where the act would be refused today, its tip the refusal's words through
-  // refusalWords, as every other dimmed control's. The face's own dims (no line, a line the owner recorded) stand behind this one.
+  // refusalWords, as every other dimmed control's. The face's own dim (no line) stands behind this one; a line the owner recorded is
+  // no dim, since a second promote is not refused (round 870).
   const refused = why ? null : selected ? promoteRefusal(frame, selected, promoter) : promoter ? null : NO_PROMOTER
   if (refused) standing.promote = {disabled: refusalWords(PROMOTE_REFUSED, refused)}
   for (const key of ['light', 'save', 'items', 'lines', 'frames', 'label', 'direction'] as const) if (!(key in values) && !(key in standing)) standing[key] = {disabled: canvasAbsent(frame, key)}

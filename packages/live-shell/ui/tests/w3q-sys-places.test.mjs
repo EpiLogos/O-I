@@ -1099,3 +1099,13 @@ test('19k · the draw takes the level of detail: its dust folds into halos with 
   const pin = JSON.parse(await readFile(new URL('../src/projections/atlas/PORT-PIN.json', import.meta.url), 'utf8'))
   assert.match(pin.adapted['graph/view.ts'], /level of detail/, 'the adaptation names it')
 })
+
+test('19l · (r870) the manual\'s graph view writes the level of detail down, and its Source names where the bounds were measured', async () => {
+  const manual = readFileSync(new URL('../../../../ProjectCentral/docs/1-vision/dlw/DLW.md', import.meta.url), 'utf8')
+  const world = manual.slice(manual.indexOf('### 17.2'), manual.indexOf('### 17.3'))
+  const graph = world.slice(world.indexOf('#### The graph view'))
+  assert.match(graph, /A large graph draws by level of detail\. Past about 2,000 nodes or 4,000 ties in view, each node's dust folds into its halo with the count until you zoom in, and the ties of dust show only around the node you hover or select\./)
+  assert.match(graph, /Nothing is hidden without its count, and the controls above thin the graph further\./)
+  assert.deepEqual([graphView.GRAPH_DETAIL.nodes, graphView.GRAPH_DETAIL.edges], [2000, 4000], 'the numbers are the draw\'s own')
+  assert.match(world, /^\*\*Source:\*\*.*the graph side's draw at scale \(ProjectCentral\/docs\/5-evidence\/world-shell\/PROJECTION-SCALE-2026-10-28\.md:177-181\)/m)
+})

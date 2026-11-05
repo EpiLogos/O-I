@@ -24,6 +24,7 @@ import {startAgentVoice, stopAgentVoice} from '../../agent/useAgentVoice'
 import {useHarnessBinding} from '../../agent/useHarnessBinding'
 import {useShellSetterBridge} from '../../agent/shellSetterBridge'
 import {useOwnerAccepted} from '../../agent/devices/ownerAccepted'
+import {handBackSlot, useHandBack} from '../../agent/devices/sessionCustody'
 import type {TransportBindings, TransportSlotId} from '../../frame/transport/slots'
 import {shellSetter, type DispatchReceipt} from '../../inhabitants/sdk/shellSetters'
 import type {ModeTransportReadouts} from '../ModeTransportBar'
@@ -61,6 +62,9 @@ export const useFactoryTransport: UseModeTransport = ({readouts}) => {
   const tracks = useAgentSessionsOptional()?.tracks ?? []
   const track = tracks.find(item => trackKey(item) === provided?.selectedTrackId) ?? tracks[0]
   const metrics = useAgentMetrics(transport, track?.sessionRef ?? null)
+  // Re-enable is Hand back, as Live's Re-enable Automation is (DLW build ruling 2026-11-05): the selected session's custody listing lights
+  // it and its press gives back through Factory's custody hold (agent/devices/sessionCustody.ts), never the shell's own flag.
+  const handBack = useHandBack(transport, track)
   const {binding} = useHarnessBinding(transport)
   // A light or a value is the owner's reading (R2 objection 7): what the harness accepted, never the shell's own flag.
   const accepted = useOwnerAccepted(binding)
@@ -165,7 +169,10 @@ export const useFactoryTransport: UseModeTransport = ({readouts}) => {
     record: {press: () => void toggleVoice(), lit: shell.voiceArmed, title: noted(TIPS.voice, shell.voiceNote)},           // :154
     overdub: {press: toggleSteer, lit: accepted.input === undefined ? undefined : accepted.input === 'steer', title: noted(TIPS.steer, notes.overdub)}, // :155
     arm: {press: toggleWriteArm, title: noted(TIPS.writeArm, notes.arm)},                                                  // :156 — no owner reading, so no light
-    're-enable': {press: () => shell.setHandBackLit(false), lit: shell.handBackLit, title: TIPS.handBack},                 // :157
+    're-enable': (() => {                                                                                                   // :157
+      const slot = handBackSlot(handBack, line => note('re-enable', line))
+      return {...(slot.press ? {press: slot.press} : {}), ...(slot.lit === undefined ? {} : {lit: slot.lit}), title: noted(slot.why ? `${TIPS.handBack} ${slot.why}` : TIPS.handBack, notes['re-enable'])}
+    })(),
     capture: {press: toggleCapture, lit: shell.capturing, title: noted(TIPS.capture, shell.captureNote)},                  // :158
     loop: {press: () => shell.setLoopOn(!shell.loopOn), lit: shell.loopOn, title: TIPS.loop},                              // :159
     // The old bar's spend meter (:163) is the only load reading it had; the manual's Load (context fill) has none here.

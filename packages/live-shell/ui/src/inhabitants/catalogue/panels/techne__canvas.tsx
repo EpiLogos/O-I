@@ -783,10 +783,13 @@ const kind = (p: ViewProps) => <Radio {...st(p, 'lineKind')} label="Line kind" d
 const lineLabel = (p: ViewProps) => <TextField {...st(p, 'label')} wide label="Line label" does="Writes a label at the middle of the selected line. Empty: no label." value={strOf(p.v, 'label') ?? ''} placeholder="none" onChange={x => p.set('label', x)} />
 const sideFrom = (p: ViewProps) => <Chooser {...st(p, 'fromSide')} label="From" does="Binds the start of the selected line to a side of its card. Auto picks the facing side." value={strOf(p.v, 'fromSide') ?? ''} options={SIDES} onChange={x => p.set('fromSide', x)} />
 const sideTo = (p: ViewProps) => <Chooser {...st(p, 'toSide')} label="To" does="Binds the end of the selected line to a side of its card. Auto picks the facing side." value={strOf(p.v, 'toSide') ?? ''} options={SIDES} onChange={x => p.set('toSide', x)} />
+const PROMOTE_DOES = 'Sends the selected line to the owner of its relation. The owner may accept, change or refuse it.'
+// Promote dims only where the act would be refused (DLW build ruling 2026-11-05): a line the owner recorded may be promoted again, as a
+// second proposal the owner does not refuse, so it stays ready, and the control says what the owner recorded.
 const promote = (p: ViewProps) => {
-  const state = strOf(p.v, 'promote'), s = st(p, 'promote'), n = linesOf(p.v)?.length
-  return <Action {...s} label="Promote" does="Sends the selected line to the owner of its relation. The owner may accept, change or refuse it."
-    disabled={s.disabled ?? (state === 'recorded' ? strOf(p.v, 'promoteWhy') ?? 'The owner has recorded this relation.' : n === undefined ? 'No reading of the lines.' : n > 0 ? undefined : 'There is no line to promote.')}
+  const state = strOf(p.v, 'promote'), s = st(p, 'promote'), n = linesOf(p.v)?.length, why = strOf(p.v, 'promoteWhy')
+  return <Action {...s} label="Promote" does={state === 'recorded' && why ? `${PROMOTE_DOES} The owner recorded the last: ${why}` : PROMOTE_DOES}
+    disabled={s.disabled ?? (n === undefined ? 'No reading of the lines.' : n > 0 ? undefined : 'There is no line to promote.')}
     refused={s.refused ?? (state === 'refused' ? strOf(p.v, 'refusal') ?? 'The owner gave no reason.' : undefined)}
     onPress={() => p.set('promote', true)} />
 }

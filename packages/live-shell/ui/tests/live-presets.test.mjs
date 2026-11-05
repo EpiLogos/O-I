@@ -312,7 +312,7 @@ test('a seal refused for a checkpoint name the kernel no longer knows is asked o
   const NAMED = 'sha256:' + 'b'.repeat(64)
   const CHECKPOINT = {schema: 'ql.torus-checkpoint/v1', taken_at_samples: '48000', sample_rate: 48000, event: {ref: 'e'}}
   const TAKE = {schema: 'oi.torus-take/v1', take_ref: 'sha256:' + 'c'.repeat(64), sample_rate: 48000, seal: 'hmac-sha256:seal'}
-  const unknown = sha => `No Torus checkpoint ${sha} was given under this lease: a take is sealed from the checkpoint its owner gave as it began, while that owner is open`
+  const unknown = sha => `No Torus checkpoint ${sha} was given under this lease: a take is sealed from the checkpoint its owner gave as it began, named under that owner's lease or given whole`
   const take = {id: 3, name: 'Take 3', beat: 4, bpm: 120}
   let asked = []
   const perform = async action => { asked.push(action); return {state: 'take-recorded', take_ref: TAKE.take_ref, lane_ref: 'take-lane:torus/3', at_sample: '96000', unsaved: false} }

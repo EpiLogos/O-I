@@ -182,8 +182,9 @@ export function runBinding(input: RunInput, ports: RunPorts): DesignBinding {
 // it") is Factory's custody hold (factory_owner custody-hold: `factory development custody hold <state> --request -`, act take or
 // give-back, answering factory.work-custody-receipt/v1; BD round 20): a person's hold on an open record, kept on it as `person_hold`, which
 // changes no custody state. The light is the listing's `hand_back` {lit, held}, over what this session's agent holds; a held record reads
-// edited, by the person who holds it. Hand back gives back each hold on what the agent holds, at the record's revision as read; `take`
-// takes one where you edit it. Both are the person's own press, re-checked at the press.
+// edited, by the person who holds it. Hand back gives back each hold on what the agent holds, at the record's revision as read, as the
+// person's own press, re-checked at the press. The take has no button (DLW build ruling 2026-11-05): a person's edit of what the agent
+// holds takes the hold first, in the edit path itself (holdBeforeEdit; the Clip view's task settings, agent/clipBinding.ts).
 /** Who may change a custody record's settings after assignment: the owner's ruling to make (lane W8, 3a). */
 export const CUSTODY_SETTINGS_RULING = 'Changing it after assignment waits for the owner\'s ruling on who may: `custody update` admits only the holding occupant, and Factory names no person authority for custody.'
 const custodySetting = (what: string, flag: string) => `${what}: set when Factory assigns custody (\`factory development custody assign ${flag}\`); Factory's custody list is not read here for this session (\`factory development custody list\`, the kernel's factory_owner custody-list), so whether its work is assigned is not known.`
@@ -216,7 +217,6 @@ export const CUSTODY_REFUSE = {
 export const CUSTODY_HOLD_WHY = {
   noHandBack: 'Factory\'s custody list answers no hand_back, so it keeps no hold of yours (a Factory before its custody hold: `factory development custody hold`)',
   dark: 'Hand back: nothing you edited is held by this session\'s agent.',
-  notHeld: (ref: string) => `Take: ${ref} is not held by this session's agent, so there is no hold of it to take.`,
   personMoved: (what: string) => `${what}: the current person is no longer the one this page was drawn for; nothing was sent to Factory.`,
 } as const
 /** What the agent holds, where no custody is handed to the binding: the list is read on the session's own chain (FactoryDeviceChain.tsx). */
@@ -349,10 +349,37 @@ export function handBackOf(listing: unknown): {lit: boolean; held: string[]} | n
 }
 
 /** The open records of the listing the session's agent holds (its Position's). */
-const agentOpen = (custody: CustodyRead | undefined): Record<string, unknown>[] => {
+const agentOpen = (custody: CustodyRead | null | undefined): Record<string, unknown>[] => {
   const open = custody?.listing?.status === 'answered' ? openCustody(custody.listing.value) : null
   const position = custody?.agentPosition
   return open && position ? open.filter(row => row.position_ref === position && typeof row.custody_ref === 'string' && typeof row.work_ref === 'string') : []
+}
+
+/** Why an edit of what the agent holds is not written: the hold it takes first cannot be taken (holdBeforeEdit). */
+export const EDIT_HOLD_WHY = {
+  noHandBack: 'Factory\'s custody list answers no hand_back, so no hold of yours can be taken first (a Factory before its custody hold: `factory development custody hold`)',
+  noState: CUSTODY_SETTING_WHY.noState,
+  noPerson: 'no person is current (the Nara identity names none), and a hold is a person\'s',
+  noCarrier: CUSTODY_SETTING_WHY.noCarrier,
+} as const
+
+/** A person's edit of a record the agent holds takes the hold first, in the edit path itself (§19.4: "When you edit something the agent
+ * holds, the agent does not overwrite your edit"; DLW build ruling 2026-11-05, no separate Take button). The record is the open one this
+ * session's agent holds over the session's work (its bound task). The hold is Factory's custody hold (take), naming what was edited
+ * (`subject`) at the record's revision as read, and the edit is written after it; when it cannot be taken, the edit is refused in those
+ * words and nothing is written. A record a person holds already, work no open record of this agent's names, and a listing not read ask
+ * nothing: the edit is written as before. */
+export async function holdBeforeEdit(custody: CustodyRead | null | undefined, person: string | null | undefined, hold: CustodyPorts['hold'],
+  subject: string): Promise<void> {
+  const work = custody?.work
+  const row = work ? agentOpen(custody).find(record => record.work_ref === work) : undefined
+  if (!custody || !row || (row.person_hold && typeof row.person_hold === 'object')) return
+  const named = typeof person === 'string' && person.trim() ? person : null
+  const why = !handBackOf(custody.listing!.value) ? EDIT_HOLD_WHY.noHandBack : !custody.statePath ? EDIT_HOLD_WHY.noState
+    : !named ? EDIT_HOLD_WHY.noPerson : !hold ? EDIT_HOLD_WHY.noCarrier : null
+  if (why) throw Error(`Your edit: the agent holds this task's work (${String(row.custody_ref)}), and ${why}; nothing was written, so the agent does not overwrite it.`)
+  await hold!({kind: 'custody-hold', state_path: custody.statePath!, custody_ref: row.custody_ref as string, act: 'take',
+    reason: `${named} edited what the agent holds, from the desk.`, subject_ref: subject, ...(typeof row.revision === 'number' ? {expected_revision: row.revision} : {})})
 }
 
 /** Custody's values: the Agent's light, the grants, and Factory's custody of the session's work. Write mode is Scope's reading, and none is
@@ -431,7 +458,7 @@ export function custodyBinding(input: CustodyInput, scope: Pick<DesignBinding, '
   if (handBackWhy) standing.handBack = {disabled: handBackWhy}
   else delete standing.handBack
   /** One hold taken or given back, as the person's own press, at the record's revision as read. */
-  const sendHold = async (what: string, row: Record<string, unknown>, act: 'take' | 'give-back', reason: string) => {
+  const sendHold = async (what: string, row: Record<string, unknown>, act: 'give-back', reason: string) => {
     if (ports.personNow && ports.personNow() !== person) throw Error(CUSTODY_HOLD_WHY.personMoved(what))
     await ports.hold!({kind: 'custody-hold', state_path: custody!.statePath!, custody_ref: row.custody_ref as string, act, reason,
       ...(typeof row.revision === 'number' ? {expected_revision: row.revision} : {})})
@@ -442,14 +469,6 @@ export function custodyBinding(input: CustodyInput, scope: Pick<DesignBinding, '
     const held = agentOpen(custody!).filter(row => hand!.held.includes(row.custody_ref as string))
     if (!hand!.lit || !held.length) throw Error(CUSTODY_HOLD_WHY.dark)
     for (const row of held) await sendHold('Hand back', row, 'give-back', `${person} gave back what they edited, from the desk.`)
-  }
-  /** Take: a hold on one record this agent holds, where you edit it. */
-  const take = async (value: Value | undefined) => {
-    const why = holdWhy('Take')
-    if (why) throw Error(why)
-    const row = agentOpen(custody!).find(record => record.custody_ref === value)
-    if (!row) throw Error(CUSTODY_HOLD_WHY.notHeld(String(value)))
-    await sendHold('Take', row, 'take', `${person} edited what the agent holds, from the desk.`)
   }
   const assigned = open && custody?.work ? open.find(row => row.work_ref === custody.work) : undefined
   /** Why one setting cannot be written now, in words; null when the person's press may assign it. */
@@ -495,7 +514,7 @@ export function custodyBinding(input: CustodyInput, scope: Pick<DesignBinding, '
     values,
     standing,
     local: Object.fromEntries(CUSTODY_GRANT_SETTINGS.map(key => [key, (value: Value | undefined) => holdView(CUSTODY_ID, key, value)])),
-    writes: key => key === 'writeMode' || key in CUSTODY_REFUSE || key === 'issue' || key === 'revoke' || key === 'take',
+    writes: key => key === 'writeMode' || key in CUSTODY_REFUSE || key === 'issue' || key === 'revoke',
     write: async changes => {
       for (const {key, value} of changes) {
         if (key === 'writeMode') {
@@ -506,7 +525,6 @@ export function custodyBinding(input: CustodyInput, scope: Pick<DesignBinding, '
         if (key === 'revoke') { await revoke(value); continue }
         if (key === 'gate' || key === 'escalate') { await assign(key, value); continue }
         if (key === 'handBack') { await handBack(); continue }
-        if (key === 'take') { await take(value); continue }
         // Issue: the desk composes no authority record, whoever the value names as its issuer.
         if (key === 'issue') throw Error(CUSTODY_GRANTS_REFUSE.issue)
         throw Error(CUSTODY_REFUSE[key as keyof typeof CUSTODY_REFUSE] ?? reading(key))
@@ -605,6 +623,9 @@ export const AGENTSET_REFUSE = {
   // units a task stands on (factory_owner attempt-task-units, O-I ticket 772): the chosen chain's task's units read, then its unit retried
   // (taskBindings.ts retryTask).
   retry: 'Retry: no carrier to Factory\'s attempt-task-units and attempt-retry stands on this rack, so the chosen chain\'s task cannot be read or retried (Software Factory).',
+  // Stop after (§19.4; round 870) stands beside Retry: Factory's request-cancellation of the unit the chosen chain's task's current attempt
+  // stands on (factory_owner attempt-request-cancellation, O-I ticket 842; taskBindings.ts stopAfterTask).
+  stopAfter: 'Stop after: no carrier to Factory\'s attempt-task-units and attempt-request-cancellation stands on this rack, so the chosen chain\'s task cannot be read or stopped (Software Factory).',
 } as const
 /** What the chain list refuses with its carriers standing: a press on what is no chain of the rack, the Decision helper where it has nothing
  * to do (it answers every agent of a group's rack and is given no work), a drop that names no standing session (AIKit attaches a session
@@ -631,6 +652,7 @@ export const CHAIN_LIST_REFUSE = {
   helperUnnamed: 'Delete: no Decision helper stands on this rack: AIKit\'s record of its space names none, so there is none to take off.',
   noneChosen: (control: string) => `${control}: choose a chain in the list first.`,
   helperRetry: 'Retry: the Decision helper answers the agents of the rack and is given no task of its own, so there is nothing of it to retry.',
+  helperStop: 'Stop after: the Decision helper answers the agents of the rack and is given no task of its own, so there is nothing of it to stop.',
   devChange: 'Devices: the change names no setting and value (a JSON object of the device\'s settings), so no message was sent.',
   devUnseated: (name: string) => `Devices: ${name}'s session seats no agent, so no Position takes a message for it.`,
 } as const
@@ -716,6 +738,8 @@ export interface AgentRackPorts {
   readonly removeSet?: (input: {scope: 'root'; ref: string; expected_revision: string}) => Promise<unknown>
   /** Retry: the chosen chain's session's task through Factory (its units read, its unit retried: taskBindings.ts retryTask). */
   readonly retry?: (input: {project: string; agent_session: string}) => Promise<unknown>
+  /** Stop after: the chosen chain's session's task through Factory (its units read, its current unit asked to stop: taskBindings.ts stopAfterTask). */
+  readonly stopAfter?: (input: {project: string; agent_session: string}) => Promise<unknown>
   /** A device of another session's chain changed: the words go to that session as a message through Messages' delegate. */
   readonly ask?: (input: {project: string; agent_session: string; agent_ref: string; device: string; change: Readonly<Record<string, unknown>>; words: string}) => Promise<unknown>
   readonly agent?: DesignBinding | null
@@ -1151,7 +1175,7 @@ const proposalOf = (held: unknown): Proposal | null => {
  * Budget turn its one agent through the Agent itself, and its Model, as a group's Model and Effort, through each chain's session's model
  * select; Join reads and writes Central's agent set the group runs; Make and Accept propose and save a set through Central; the Activator,
  * Add a chain, Drag out, Hot-Swap, Delete and the Decision helper act through AIKit's session-space operations; every
- * delegation setting, device of another session's chain and Retry stands disabled with what it lacks. */
+ * delegation setting, device of another session's chain, Retry and Stop after stands disabled with what it lacks. */
 export function agentsetBinding(input: AgentRackInput, ports?: AgentRackPorts): DesignBinding {
   const standing: Record<string, Standing> = disabled(AGENTSET_REFUSE)
   for (const macro of RACK_MACROS) { const why = macroStanding(macro, input, ports); if (why) standing[macro] = why; else delete standing[macro] }
@@ -1165,6 +1189,7 @@ export function agentsetBinding(input: AgentRackInput, ports?: AgentRackPorts): 
   if (ports?.detach) delete standing.delete
   if (ports?.rackMacros && input.rackMacros) for (const key of ['unmapped', 'store', 'variation'] as const) delete standing[key]
   if (ports?.retry) delete standing.retry
+  if (ports?.stopAfter) delete standing.stopAfter
   if (ports?.ask) delete standing.dev
   if (!ports?.removeSet) standing['new.discard'] = {disabled: GROUP_REFUSE.noRemover}
   const writable = join === null || join.refused !== undefined
@@ -1448,6 +1473,16 @@ export function agentsetBinding(input: AgentRackInput, ports?: AgentRackPorts): 
     if (!chain) throw Error(CHAIN_LIST_REFUSE.notChain('Retry', id))
     await ports.retry({project: chain.project ?? ROOT_REGISTER, agent_session: chain.sessionRef})
   }
+  /** Stop after: the chosen chain's task, through Factory (its units read, the unit its current attempt stands on asked to stop). */
+  const stopAfter = async () => {
+    if (!ports?.stopAfter) throw Error(AGENTSET_REFUSE.stopAfter)
+    const id = pressed().member
+    if (typeof id !== 'string' || !id) throw Error(CHAIN_LIST_REFUSE.noneChosen('Stop after'))
+    if (id === DECISION_HELPER_ID) throw Error(CHAIN_LIST_REFUSE.helperStop)
+    const chain = chainOf(id)
+    if (!chain) throw Error(CHAIN_LIST_REFUSE.notChain('Stop after', id))
+    await ports.stopAfter({project: chain.project ?? ROOT_REGISTER, agent_session: chain.sessionRef})
+  }
   /** A device of another session's chain (`dev:<chain>@<device>`): the change goes to that session as a message (Messages' delegate), in
    * words its agent reads; nothing of that chain's binding is written from here. */
   const askChain = async (key: string, value: Value | undefined) => {
@@ -1507,6 +1542,7 @@ export function agentsetBinding(input: AgentRackInput, ports?: AgentRackPorts): 
         if (key === 'new.accept') { await accept(); continue }
         if (key === 'new.discard') { await discard(); continue }
         if (key === 'retry') { await retry(); continue }
+        if (key === 'stopAfter') { await stopAfter(); continue }
         if (key.startsWith('dev:')) { await askChain(key, value); continue }
         if (key === 'unmapped') { await unmap(value); continue }
         if (key === 'store') { await store(); continue }

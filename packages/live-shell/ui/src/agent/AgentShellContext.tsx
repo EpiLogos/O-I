@@ -55,8 +55,6 @@ export interface AgentShellState {
   setSteer: (v: boolean) => void
   writeArm: boolean
   setWriteArm: (v: boolean) => void
-  handBackLit: boolean
-  setHandBackLit: (v: boolean) => void
   loopOn: boolean
   setLoopOn: (v: boolean) => void
   quantize: AgentQuantize
@@ -136,7 +134,6 @@ export function AgentShellProvider({children, frameRef}: {children: ReactNode; f
   const [follow, setFollow] = useState(true)
   const [steer, setSteer] = useState(true)
   const [writeArm, setWriteArm] = useState(false)
-  const [handBackLit, setHandBackLit] = useState(false)
   const [loopOn, setLoopOn] = useState(false)
   const [quantize, setQuantize] = useState<AgentQuantize>('next tool')
   const [tokenScope, setTokenScope] = useState<AgentTokenScope>('session')
@@ -164,7 +161,6 @@ export function AgentShellProvider({children, frameRef}: {children: ReactNode; f
     follow, setFollow,
     steer, setSteer,
     writeArm, setWriteArm,
-    handBackLit, setHandBackLit,
     loopOn, setLoopOn,
     quantize,
     setQuantize,
@@ -182,7 +178,7 @@ export function AgentShellProvider({children, frameRef}: {children: ReactNode; f
     telemetryOn,
     toggleTelemetry: trackId => setTelemetryOn(current => ({...current, [trackId]: !(current[trackId] !== false)})),
     statusInfo,
-  }), [centreView, selectedTrackId, worldSelection, unbooked, soloed, setSolo, threadTrackId, openTiles, effort, heartbeat, follow, steer, writeArm, handBackLit, loopOn, quantize, tokenScope, voiceArmed, capturing, tapNote, voiceNote, captureNote, captureLog, expandedDevice, telemetryOn, statusInfo])
+  }), [centreView, selectedTrackId, worldSelection, unbooked, soloed, setSolo, threadTrackId, openTiles, effort, heartbeat, follow, steer, writeArm, loopOn, quantize, tokenScope, voiceArmed, capturing, tapNote, voiceNote, captureNote, captureLog, expandedDevice, telemetryOn, statusInfo])
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

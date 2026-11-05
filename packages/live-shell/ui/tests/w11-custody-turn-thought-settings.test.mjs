@@ -156,10 +156,15 @@ test('4 · the chain names the Position the session\'s agent holds from AIKit\'s
   const occupied = REAL.population.positions.filter(row => row.occupancy?.state === 'occupied')
   assert.ok(occupied.some(row => row.occupancy.agent_ref === 'agent/factory-guardian' && row.position_ref === AGENT_POSITION), 'the agent\'s Position, as AIKit places it')
   const chain = read('agent/devices/FactoryDeviceChain.tsx')
-  assert.match(chain, /\{op: 'factory_owner', request: \{kind: 'custody-list', state_path: custodyState\}\}/)
+  // REPLACED (round 870): the custody list's op and the Position's look-up stood in the chain (`state_path: custodyState`, `heldBy(track?.agentRef)`);
+  // they are the session's custody (sessionCustody.ts), which the chain, the Clip view and the transport read alike, with the session's agent.
+  const custody = read('agent/devices/sessionCustody.ts')
+  assert.match(custody, /\(\{op: 'factory_owner', request: \{kind: 'custody-list', state_path: statePath\}\}\)/)
+  assert.match(custody, /agentPosition: heldBy\(agentRef\), work:/)
+  assert.match(chain, /\{sessionRef, project: rackProject, agentRef: track\?\.agentRef \?\? null\}/, 'the chain\'s session and its agent')
   assert.match(chain, /assign: request => factoryOwnerWrite\(transport, request, '`factory development custody assign`'\)/)
-  assert.match(chain, /agentPosition: heldBy\(track\?\.agentRef\), work:/)
   assert.doesNotMatch(chain, /personPosition/, 'no Position is the person\'s: custody sits on the Agent')
+  assert.doesNotMatch(custody, /personPosition/)
   assert.doesNotMatch(read('agent/devices/sessionChainBindings.ts'), /personPosition/)
 })
 

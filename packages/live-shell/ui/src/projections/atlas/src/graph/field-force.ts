@@ -5,8 +5,8 @@
 // one the whole set used to make. An occurrence sits a few units from its form, where the far field is the form's: it
 // moves with its form in it, and is pushed apart from it by the form's own strength. The near field among the dust is
 // the cluster force's: an occurrence repels the other occurrences of its own form, pair by pair up to CLUSTER_PAIRWISE_MAX
-// members, and through a quadtree of the form above that (PROJECTION-SCALE-2026-10-28: the pairs cost the sum of each form's
-// members squared, 15.4 ms a tick at 2,104 and 204 ms at 8,416).
+// members, and through a quadtree of the form above that (the pairs cost the sum of each form's members squared: measured in
+// O:I's World graph, 15.4 ms a tick at 2,104 occurrences and 204 ms at 8,416).
 import { quadtree, type QuadtreeInternalNode, type QuadtreeLeaf } from 'd3-quadtree';
 
 export interface FieldBody {
@@ -214,7 +214,7 @@ export function forceField<N extends FieldBody>(): FieldForce<N> {
   return force;
 }
 
-/** The most members a form's dust repels pair by pair; above it the form's near field is Barnes–Hut (O-I #742). */
+/** The most members a form's dust repels pair by pair; above it the form's near field is Barnes–Hut. */
 export const CLUSTER_PAIRWISE_MAX = 1000;
 
 /**

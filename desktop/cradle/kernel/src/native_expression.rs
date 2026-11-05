@@ -126,10 +126,25 @@ fn kernel_name(kind: &str) -> Result<String, String> {
 #[derive(Debug, Default)]
 pub struct Manager {
     active: Option<Owner>,
+    /// What the owners before this one were sent and answered, kept past their close so a take recorded
+    /// before an owner restarts still seals after it (DLW build ruling 2026-11-05; O-I #855): the last
+    /// [`MAX_RETIRED_WITNESSES`], newest last.
+    retired: std::collections::VecDeque<Retired>,
     sequence: u64,
     composed: u64,
     /// Where what the Torus's owner does is told to the native host that sounds it ([`TorusTap`]).
     tap: Option<mpsc::Sender<TorusTap>>,
+}
+
+/// How many closed owners' take witnesses the kernel keeps: the owner before this one, and the one before it.
+const MAX_RETIRED_WITNESSES: usize = 2;
+
+/// A closed owner's take witness, under the lease and identity it was played under.
+#[derive(Debug)]
+struct Retired {
+    lease: String,
+    identity: Value,
+    take: crate::expression_performance::torus::TakeWitness,
 }
 
 /// What the Torus's owner did that a native host sounding the Torus in its own engine follows (O-I #849),
@@ -333,8 +348,8 @@ struct Owner {
     last_request_id: u64,
     // One bounded field/ACK witness, never a trace or private source cache.
     observation: Result<Value, String>,
-    /// What this owner was sent and answered that a Torus take is sealed from (O-I #855): bounded, gone
-    /// with the owner.
+    /// What this owner was sent and answered that a Torus take is sealed from (O-I #855): bounded, and
+    /// kept past the owner's close (`Manager::retire`).
     take: crate::expression_performance::torus::TakeWitness,
     /// The Torus this owner handed over last (`torus-native`, O-I #849), by its `value_sha256`: the
     /// native host takes it from here (`Field::torus_native`); the frame is relayed only its digest.
@@ -1166,7 +1181,7 @@ impl Manager {
                             .err()
                             .unwrap_or_else(|| "native acknowledgement standing unknown".into());
                         let diagnostics = owner.diagnostic();
-                        self.active.take(); // Drop closes the pipe/child; NEVER replay a write.
+                        self.retire(); // Drop closes the pipe/child; NEVER replay a write.
                         Err(format!(
                             "native-expression.unknown: {reason}; {diagnostics}"
                         ))
@@ -1213,7 +1228,7 @@ impl Manager {
                     return Err("native-expression.stale_observation".into());
                 }
                 if owner.child.try_wait().map_err(|e| e.to_string())?.is_some() {
-                    self.active.take();
+                    self.retire();
                     return Err("native-expression.unavailable: observed host has exited".into());
                 }
                 let observed_at = SystemTime::now()
@@ -1262,16 +1277,36 @@ impl Manager {
                 if lease != owner.lease {
                     return Err("native-expression.foreign_lease".into());
                 }
-                let checkpoint_sha256 = match (checkpoint_sha256, checkpoint) {
-                    (Some(sha256), None) => sha256,
+                let take = match (checkpoint_sha256, checkpoint) {
+                    // A name the kernel relayed stands under its own lease.
+                    (Some(sha256), None) => {
+                        owner.take.seal(&sha256, &owner.lease, &owner.identity)?
+                    }
+                    // A checkpoint given as its owner gave it is hashed and found in the kept journal, which outlives
+                    // the owner (DLW build ruling 2026-11-05): under this lease, else under an owner closed before
+                    // it, and the take keeps the lease it was played under.
                     (None, Some(checkpoint)) => {
-                        crate::expression_performance::torus::value_sha256(&checkpoint)?
+                        let sha256 =
+                            crate::expression_performance::torus::value_sha256(&checkpoint)?;
+                        let before = if owner.take.keeps(&sha256) {
+                            None
+                        } else {
+                            self.retired
+                                .iter()
+                                .rev()
+                                .find(|retired| retired.take.keeps(&sha256))
+                        };
+                        match before {
+                            Some(retired) => {
+                                retired
+                                    .take
+                                    .seal(&sha256, &retired.lease, &retired.identity)?
+                            }
+                            None => owner.take.seal(&sha256, &owner.lease, &owner.identity)?,
+                        }
                     }
                     _ => return Err("A take is sealed from one checkpoint: name it by the sha256 the kernel relayed it under, or give it as its owner gave it".into()),
                 };
-                let take = owner
-                    .take
-                    .seal(&checkpoint_sha256, &owner.lease, &owner.identity)?;
                 serde_json::to_value(take).map_err(|e| e.to_string())
             }
             Request::TorusSound {
@@ -1317,7 +1352,7 @@ impl Manager {
                         return Err("native-expression.foreign_lease".into());
                     }
                 }
-                self.active.take();
+                self.retire();
                 Ok(json!({"schema":"oi.native-expression-closed/v1","lease":lease,"closed":true}))
             }
         }
@@ -2676,6 +2711,20 @@ fn composed_worker_binding(content: &str, source: &Value) -> Result<String, Stri
 }
 
 impl Manager {
+    /// The active owner closed, its take witness kept under its lease (bounded: the oldest goes first).
+    fn retire(&mut self) {
+        if let Some(mut owner) = self.active.take() {
+            if self.retired.len() == MAX_RETIRED_WITNESSES {
+                self.retired.pop_front();
+            }
+            self.retired.push_back(Retired {
+                lease: owner.lease.clone(),
+                identity: owner.identity.clone(),
+                take: std::mem::take(&mut owner.take),
+            });
+        }
+    }
+
     fn busy(&self) -> Result<(), String> {
         if self.active.is_some() {
             return Err(
@@ -4568,13 +4617,12 @@ for line in sys.stdin:
         fs::remove_dir_all(dir).unwrap();
     }
 
+    /// A Torus owner for a take's tests: it advances, gives a checkpoint where it stands, and renders a take
+    /// from a checkpoint or on from where its last render ended (O-I #855).
     #[cfg(unix)]
-    #[test]
-    fn a_torus_take_is_sealed_from_what_the_owner_was_sent_under_the_lease() {
-        use crate::expression_performance::torus::value_sha256;
+    fn torus_take_host(name: &str) -> (PathBuf, PathBuf) {
         use std::os::unix::fs::PermissionsExt;
-        let dir =
-            std::env::temp_dir().join(format!("native-torus-take-test-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("{name}-{}", std::process::id()));
         fs::create_dir_all(&dir).unwrap();
         let script = dir.join("host.py");
         fs::write(&script, r#"#!/usr/bin/env python3
@@ -4596,6 +4644,14 @@ for line in sys.stdin:
 "#).unwrap();
         fs::set_permissions(&script, fs::Permissions::from_mode(0o700)).unwrap();
         crate::test_stub::settle_stub(&script);
+        (dir, script)
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_torus_take_is_sealed_from_what_the_owner_was_sent_under_the_lease() {
+        use crate::expression_performance::torus::value_sha256;
+        let (dir, script) = torus_take_host("native-torus-take-test");
         let _env = EnvGuard::set(&[
             ("OI_QL_FIELD_HOST_BIN", Some(script.as_os_str())),
             ("OI_QL_FIELD_WORKER_BIN", Some(script.as_os_str())),
@@ -4758,6 +4814,164 @@ for line in sys.stdin:
         assert!(seal(&mut manager, &lease)
             .unwrap_err()
             .contains("no active owner"));
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    /// The kept journal outlives its owner (DLW build ruling 2026-11-05; O-I #855): a take recorded before the
+    /// owner restarts still seals after it, from its checkpoint as the frame carries it, which the kernel hashes
+    /// and finds in the journal the closed owner kept. The take keeps the lease it was played under. A name the
+    /// kernel relayed stands only under its own lease, and a checkpoint no owner gave is refused as before.
+    #[cfg(unix)]
+    #[test]
+    fn a_take_recorded_before_its_owner_restarts_seals_after_it_from_its_checkpoint() {
+        use crate::expression_performance::torus::value_sha256;
+        let (dir, script) = torus_take_host("native-torus-restart-test");
+        let _env = EnvGuard::set(&[
+            ("OI_QL_FIELD_HOST_BIN", Some(script.as_os_str())),
+            ("OI_QL_FIELD_WORKER_BIN", Some(script.as_os_str())),
+        ]);
+        let binding = json!({"schema":"oi.native-expression-binding/v1","host":{"instance_ref":"test:instance"},"presentation":{"units_per_metre":1,"slots_a":[0],"slots_b":[0]}}).to_string();
+        let client = CentralClient::with("/nonexistent".into(), None, String::new());
+        let exchange = |manager: &mut Manager, lease: &str, id: u64, command: Value| {
+            manager
+                .apply(
+                    &client,
+                    Request::Exchange {
+                        lease: lease.to_owned(),
+                        request: json!({"schema":"ql.field-host-request/v1","instance_ref":"test:instance",
+                            "event_ref":"test:event","subject_ref":"test:subject","request_id":id.to_string(),"command":command}),
+                    },
+                )
+                .unwrap()
+        };
+        let take = |manager: &mut Manager, request: Value| {
+            manager.apply(&client, serde_json::from_value(request).unwrap())
+        };
+        // The take is recorded under the first owner: its checkpoint, a strike and its release, its render.
+        let mut manager = Manager::default();
+        let first = manager.open(&binding, Value::Null).unwrap()["lease"]
+            .as_str()
+            .unwrap()
+            .to_owned();
+        exchange(
+            &mut manager,
+            &first,
+            1,
+            json!({"operation":"advance","frames":9600}),
+        );
+        let kept = exchange(
+            &mut manager,
+            &first,
+            2,
+            json!({"operation":"torus-checkpoint"}),
+        )["torus_checkpoint"]
+            .clone();
+        let sha = value_sha256(&kept).unwrap();
+        let key = json!([{"row":2,"column":3}]);
+        exchange(
+            &mut manager,
+            &first,
+            3,
+            json!({"operation":"torus-play","keys":key,"amplitude":[0.3,0],"at_samples_elapsed":"12000"}),
+        );
+        exchange(
+            &mut manager,
+            &first,
+            4,
+            json!({"operation":"advance","frames":4800}),
+        );
+        exchange(
+            &mut manager,
+            &first,
+            5,
+            json!({"operation":"torus-release","keys":key}),
+        );
+        exchange(
+            &mut manager,
+            &first,
+            6,
+            json!({"operation":"advance","frames":9600}),
+        );
+        let acts = json!([
+            {"action":"strike","at_samples_elapsed":"12000","keys":key,"amplitude":[0.3,0]},
+            {"action":"release","at_samples_elapsed":"14400","keys":key}]);
+        exchange(
+            &mut manager,
+            &first,
+            7,
+            json!({"operation":"torus-render","checkpoint":kept,"acts":acts,"frames":14400}),
+        );
+        // The owner restarts: closed, and a new one opened under a new lease.
+        manager
+            .apply(
+                &client,
+                Request::Close {
+                    lease: first.clone(),
+                },
+            )
+            .unwrap();
+        let second = manager.open(&binding, Value::Null).unwrap()["lease"]
+            .as_str()
+            .unwrap()
+            .to_owned();
+        assert_ne!(second, first);
+        exchange(
+            &mut manager,
+            &second,
+            1,
+            json!({"operation":"advance","frames":480}),
+        );
+        // Sealed after the restart from the checkpoint itself, under the lease the frame now holds.
+        let sealed = take(
+            &mut manager,
+            json!({"operation":"torus_take","lease":second,"checkpoint":kept}),
+        )
+        .unwrap();
+        assert_eq!(sealed["schema"], "oi.torus-take/v1");
+        assert_eq!(
+            sealed["lease"], first,
+            "a take keeps the lease it was played under"
+        );
+        assert_eq!(sealed["checkpoint_sha256"], sha);
+        assert_eq!(sealed["from_samples"], "9600");
+        assert_eq!(sealed["frames"], "14400");
+        let mut kept_acts = acts.clone();
+        kept_acts[0]["amplitude"] = json!([0.3, 0.0]);
+        assert_eq!(sealed["acts"], kept_acts);
+        let verified: crate::expression_performance::torus::TorusTake =
+            serde_json::from_value(sealed.clone()).unwrap();
+        verified.verify_seal().unwrap();
+        // A name stands only under the lease it was relayed under; the lease the frame holds is still the owner's.
+        let named = take(
+            &mut manager,
+            json!({"operation":"torus_take","lease":second,"checkpoint_sha256":sha}),
+        )
+        .unwrap_err();
+        assert!(named.contains("was given under this lease"), "{named}");
+        assert!(take(
+            &mut manager,
+            json!({"operation":"torus_take","lease":first,"checkpoint":kept}),
+        )
+        .unwrap_err()
+        .contains("foreign_lease"));
+        let mut never_given = kept.clone();
+        never_given["damping_per_second"] = json!(0.25);
+        let unknown = take(
+            &mut manager,
+            json!({"operation":"torus_take","lease":second,"checkpoint":never_given}),
+        )
+        .unwrap_err();
+        assert!(unknown.contains("was given under this lease"), "{unknown}");
+        // Sealed again, it is the same take.
+        let again = take(
+            &mut manager,
+            json!({"operation":"torus_take","lease":second,"checkpoint":kept}),
+        )
+        .unwrap();
+        assert_eq!(
+            again["take_ref"], sealed["take_ref"],
+            "one take, sealed again"
+        );
         fs::remove_dir_all(dir).unwrap();
     }
 

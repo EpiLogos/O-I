@@ -103,13 +103,14 @@ import {actionAnswerOf, centralActionOp} from '../../central/devices/centralActi
 import {useAtSearch} from '../../central/searchPane'
 import {useModelCatalogue} from './useModelCatalogue'
 import {useAttemptTakes} from '../../owners/attemptTakes'
-import {readTaskOf, useTaskAnswer, useWorkcellAnswer} from '../../owners/readers'
+import {readTaskOf, useWorkcellAnswer} from '../../owners/readers'
 import {usePopulationAnswer} from './usePopulationAnswer'
+import {factoryLocateOp, useSessionCustody} from './sessionCustody'
 import {
   AGENTSET_DESIGN, AGENTSET_ID, agentChainSessions, agentsetBinding, chainProfileOf, custodyBinding, orderRequest, profileHeadActs, rackSpaces, replaceRequest,
   sessionDevices, withCustodyAsks, type AgentRackPorts, type CustodyPorts,
 } from './sessionChainBindings'
-import {retryTask} from './taskBindings'
+import {retryTask, stopAfterTask} from './taskBindings'
 import {communiqueRefOf} from './messagesBinding'
 import {APPROVALS_DESIGN, APPROVALS_ID, approvalsBinding, receiptDevices} from './receiptBindings'
 import {CARRIER_DESIGN, CARRIER_ID, carrierBinding, connectionLabels, gitBinding, planRunOf, runDemandOf, seatBinding, workcellDevices, type SeatPorts} from './workcellBindings'
@@ -197,7 +198,8 @@ const NO_INPUT: Readonly<Record<string, unknown>> = Object.freeze({})
  * stands on the armed track's chain, for its Capture page (§19.11). */
 const captureInboxOp = (register: string | null): KernelOp => ({op: 'aikit_read' as const, request: {kind: 'inbox' as const, project: register}})
 /** Where Factory keeps a register's project (factory_owner locate; no project names the root), for the Prompt pads' bank. */
-const padsLocateOp = (register: string | null): KernelOp => ({op: 'factory_owner' as const, request: register === null ? {kind: 'locate'} : {kind: 'locate', project: register}})
+/** Factory's locate of the rack's register: one op with the session's custody (sessionCustody.ts), so one reading answers both. */
+const padsLocateOp = factoryLocateOp
 /** Actuation's authority list (lane W3 round 3's actuation_read {authority-list}), read while a session's chain stands (Custody's Grants). */
 const AUTHORITY_LIST: KernelOp = Object.freeze({op: 'actuation_read' as const, request: {kind: 'authority-list' as const}})
 
@@ -500,24 +502,15 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   // Factory's custody of the session's work (W11): the project's Factory state (located for the pads), its custody list, the Position the
   // session's agent holds (AIKit's population: Custody sits on the Agent, §19.4), and the session's bound task as its work.
   const custodyState = padsWhere && 'projectRef' in padsWhere ? padsWhere.statePath : null
-  const custodyList = useOwnerOp(transport, custodyState && sessionRef != null ? {op: 'factory_owner', request: {kind: 'custody-list', state_path: custodyState}} : null,
-    'factory_development_reading')
-  const custodyListing = custodyList.reading
-  const refreshCustody = custodyList.refresh
-  // Hand back (§19.4; BD r20): Factory's custody hold, the person's, and the custody list read again after it (its hand_back is the light).
-  const custodyHoldPorts = useMemo((): CustodyPorts => (transport.kind !== 'unavailable'
-    ? {...custodyPorts, hold: request => factoryOwnerWrite(transport, request, '`factory development custody hold`').finally(refreshCustody)} : custodyPorts),
-  [transport, custodyPorts, refreshCustody])
+  // The session's custody (sessionCustody.ts): the same readings the Clip view's edits take their hold through and the transport's
+  // Re-enable gives back through. Hand back (§19.4; BD r20) is Factory's custody hold, the person's, and the custody list is read again
+  // after it (its hand_back is the light).
+  const custodyAt = useMemo(() => (sessionRef != null ? {sessionRef, project: rackProject, agentRef: track?.agentRef ?? null} : null), [sessionRef, rackProject, track?.agentRef])
+  const sessionCustody = useSessionCustody(transport, custodyAt)
+  const custodyHoldPorts = useMemo((): CustodyPorts => (sessionCustody.hold ? {...custodyPorts, hold: sessionCustody.hold} : custodyPorts),
+    [custodyPorts, sessionCustody.hold])
   const custodyPopulation = usePopulationAnswer(transport, register)
-  const sessionTask = useTaskAnswer(transport, sessionRef, rackProject).reading
-  const custodyRead = useMemo(() => {
-    const positions = custodyPopulation.status === 'answered' && custodyPopulation.value && typeof custodyPopulation.value === 'object'
-      && Array.isArray((custodyPopulation.value as {positions?: unknown}).positions) ? (custodyPopulation.value as {positions: {position_ref?: unknown; occupancy?: {agent_ref?: unknown}}[]}).positions : []
-    const heldBy = (ref: string | null | undefined) => (ref ? positions.find(row => row.occupancy?.agent_ref === ref && typeof row.position_ref === 'string')?.position_ref as string | undefined ?? null : null)
-    const central = (sessionTask.value as {request?: {central?: {task_ref?: unknown}}} | null | undefined)?.request?.central
-    return {statePath: custodyState, listing: custodyState ? {status: custodyListing.status, value: custodyListing.value?.data ?? null, error: custodyListing.error ? refusalWords(custodyListing.error) : null} : null,
-      agentPosition: heldBy(track?.agentRef), work: typeof central?.task_ref === 'string' && central.task_ref.trim() ? central.task_ref : null}
-  }, [custodyState, custodyListing, custodyPopulation, sessionTask, track?.agentRef])
+  const custodyRead = sessionCustody.read ?? undefined
   const custodyDesignBinding = useMemo(() => custodyBinding({sessionRef, agent: agentDesignBinding?.values ?? {}, holds, grants, person: currentPerson,
     custody: custodyRead}, scopeDesignBinding, custodyHoldPorts), [sessionRef, agentDesignBinding, scopeDesignBinding, holds, grants, currentPerson, custodyRead, custodyHoldPorts])
   const identityDesignBinding = useIdentityDevice(transport, track?.agentRef ?? null, FACTORY_IDENTITY_ID)
@@ -601,6 +594,12 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
       retry: async ({project, agent_session}) => {
         if (!custodyState) throw Error('Retry: Factory keeps no state for this project here (`factory development locate`), so no unit of the task is read.')
         await retryTask(request => factoryOwnerWrite(transport, request, `factory_owner ${request.kind}`), custodyState, await boundTaskOf(transport, project, agent_session, 'Retry'))
+      },
+      // Stop after, beside Retry (§19.4; round 870): the chosen chain's bound task, the unit its current attempt stands on asked to stop
+      // (taskBindings.ts stopAfterTask, factory_owner attempt-request-cancellation).
+      stopAfter: async ({project, agent_session}) => {
+        if (!custodyState) throw Error('Stop after: Factory keeps no state for this project here (`factory development locate`), so no unit of the task is read.')
+        await stopAfterTask(request => factoryOwnerWrite(transport, request, `factory_owner ${request.kind}`), custodyState, await boundTaskOf(transport, project, agent_session, 'Stop after'))
       },
       // A device of another session's chain (DLW build ruling 2026-11-05): a message to that session's agent's Position (AIKit's gateway send),
       // turned into work on its task by Messages' own route, the one a message dropped on a track takes (`aikit gateway delegate`, O-I ticket
