@@ -202,6 +202,17 @@ const SETTLE_RADIANS = 0.3;
 const VOICE_PULL = 1.4;
 const VOICE_REACH_TUBES = 0.6;
 const VOICE_LIFT_TUBES = 0.25;
+const TORUS_VIEWS = ["surface", "wire", "both"];
+const isTorusView = (value) => typeof value === "string" && TORUS_VIEWS.includes(value);
+const WIRE_MERIDIANS = 28;
+const WIRE_PARALLELS = 11;
+function viewAngles(view, phi, theta, index) {
+  if (view === "surface" || view === "both" && index % 2 === 0) return [phi, theta];
+  const meridians = TAU / WIRE_MERIDIANS, parallels = TAU / WIRE_PARALLELS;
+  const meridian = Math.round(phi / meridians) * meridians, parallel = Math.round(theta / parallels) * parallels;
+  const toMeridian = Math.abs(phi - meridian) * (TORUS_MAJOR + TORUS_MINOR * Math.cos(theta)), toParallel = Math.abs(theta - parallel) * TORUS_MINOR;
+  return toMeridian <= toParallel ? [meridian, theta] : [phi, parallel];
+}
 function amplitudesOf(frame, modeRefs) {
   const a = frame?.amplitudes_metres;
   if (!Array.isArray(a) || !modeRefs || a.length !== modeRefs.length) return null;
@@ -233,7 +244,7 @@ function blendAt(state, phi, theta, offset, mpu, out, at) {
   out[at + 1] = s * x + c * y;
   out[at + 2] = z;
 }
-const presentsAsIs = (state, level) => state.morph.from === "torus" && state.morph.to === "torus" && level <= 0;
+const presentsAsIs = (state, level) => state.morph.from === "torus" && state.morph.to === "torus" && level <= 0 && (state.view ?? "surface") === "surface";
 function ringingLevel(body, amplitudes) {
   if (!amplitudes) return 0;
   let energy = 0;
@@ -277,6 +288,7 @@ function presentSamples(positions, body, amplitudes, state, out) {
         theta -= gt * k;
       }
     }
+    [phi, theta] = viewAngles(state.view ?? "surface", phi, theta, i);
     blendAt(state, phi, theta, at.offset, mpu, result, i * 3);
   }
   return result;
@@ -370,6 +382,7 @@ class TorusObject {
   amplitudes = null;
   steps = null;
   figure = null;
+  view = "surface";
   out;
   /** The body from the owner's influence reading, and the order of its resident modes (the sources' m2.resonator.modes). */
   setBody(influence, modeRefs) {
@@ -393,6 +406,12 @@ class TorusObject {
     this.flat = on;
     return changed;
   }
+  /** The View you keep (DLW §21.2): how the stage draws the samples. Says whether it changed; a View the pane does not draw is none. */
+  setView(view) {
+    if (!isTorusView(view) || view === this.view) return false;
+    this.view = view;
+    return true;
+  }
   /** The frame as the object shows it (metres, three per sample, in the frame's order), or null when it is shown as the owner gives it:
    * the torus, no passage, a quiet body, or a frame that is not this scene's body. */
   present(frame) {
@@ -406,7 +425,7 @@ class TorusObject {
     this.figure = figureAt(this.session, this.steps);
     const shape = this.flat ? "plate" : this.figure ?? "torus";
     const morph = this.steps === null ? this.morph.snap(shape) : this.morph.at(shape, this.steps);
-    const state = { morph, angle: clockAngle(frame?.clock, body.attachment) };
+    const state = { morph, angle: clockAngle(frame?.clock, body.attachment), view: this.view };
     this.shown = state;
     const targets = Array.isArray(frame?.targets) ? frame.targets : [];
     if (presentsAsIs(state, ringingLevel(body, this.amplitudes)) || body.samples === null || targets.length !== body.samples) return null;
@@ -425,10 +444,11 @@ class TorusObject {
   /** What the object is now, for the frame's reading and the plate's roles. */
   reading() {
     const body = this.body, shown = this.shown;
-    if (!body) return { schema: "oi.torus-object/v1", standing: "unread", reason: "The owner states no voices and boundaries for the torus yet.", amplitudes: null };
+    if (!body) return { schema: "oi.torus-object/v1", standing: "unread", reason: "The owner states no voices and boundaries for the torus yet.", amplitudes: null, view: this.view };
     return {
       schema: "oi.torus-object/v1",
       standing: "read",
+      view: this.view,
       shape: { law: this.figure, shown: shown?.morph ?? null, steps: this.steps, flat: this.flat },
       layers: ["bimba", "pratibimba"],
       voices: body.voices.map((v) => {
@@ -452,11 +472,14 @@ export {
   TORUS_FIGURES,
   TORUS_MAJOR,
   TORUS_MINOR,
+  TORUS_VIEWS,
   TorusMorph,
   TorusObject,
   VOICE_LIFT_TUBES,
   VOICE_PULL,
   VOICE_REACH_TUBES,
+  WIRE_MERIDIANS,
+  WIRE_PARALLELS,
   amplitudesOf,
   bodyOf,
   boundaryLines,
@@ -468,6 +491,7 @@ export {
   helixIndex,
   helixPlace,
   isTorusFigure,
+  isTorusView,
   passageDrive,
   plateDisplacement,
   presentSamples,
@@ -482,5 +506,6 @@ export {
   stepsAt,
   torusCandidates,
   torusCoordinates,
+  viewAngles,
   voicePoints
 };

@@ -133,30 +133,34 @@ test('the open agent\'s conversation from the Gateway journal: its Communiques a
   bind.resetHolds()
 })
 
-test('(#757) each message of the conversation carries its drag onto a track: the Communique, the Position it went to and its agent, and the work AIKit reads that Position standing on', async () => {
+test('(#757) each message of the conversation carries its drag onto a track: the Communique, the Position it went to and its agent, and the words the task it becomes is for', async () => {
   bind.resetHolds()
   const ids = await import('../src/agent/devices/railTileIds.ts')
   const ROOT = 'central:position:project:O-I:oi-root-agency'
   const names = new Map([[GUARDIAN, 'Central Product Guardian'], [ROOT, 'O:I Root Agency']])
-  // The real journal: two records the Guardian sent to the Root Agency, whose Position is vacant (its agent placed there) and whose current
-  // work AIKit could not read from Factory. The drag names who it went to and why it has no work to become.
+  // The real journal: two records the Guardian sent to the Root Agency, whose Position is vacant (its agent placed there). REPLACED (DLW
+  // build ruling 2026-11-05: a dropped message becomes a new task): the drag named the work AIKit read that Position standing on, or why it
+  // had none; the drop makes the work now, so the drag names the message's words instead, the purpose of the task it becomes.
   const real = msg.conversationRows(REAL.conversation, names, REAL.population)
   assert.equal(real.length, 2)
-  assert.deepEqual(JSON.parse(real[0].drag), {schema: ids.COMMUNIQUE_DRAG_SCHEMA, communique: 'aikit:communique:01m3csbdf5q56fhh0hx6wsq5qv', to: ROOT,
-    name: 'O:I Root Agency', agent: 'agent/oi-field-guardian', why: 'AIKit could not read O:I Root Agency\'s current work from Factory'})
-  // A Position AIKit reads standing on one work: the drag carries that work and its run, the refs `aikit gateway who` derives.
+  const first = JSON.parse(real[0].drag)
+  assert.deepEqual(Object.keys(first).sort(), ['agent', 'communique', 'concern', 'name', 'schema', 'to'])
+  assert.deepEqual({...first, concern: undefined}, {schema: ids.COMMUNIQUE_DRAG_SCHEMA, communique: 'aikit:communique:01m3csbdf5q56fhh0hx6wsq5qv', to: ROOT,
+    name: 'O:I Root Agency', agent: 'agent/oi-field-guardian', concern: undefined})
+  assert.match(first.concern, /^Packet V verifier finding, urgent for the landing/, 'the message\'s first line')
+  assert.ok(first.concern.length <= 160, 'clipped as a list row is')
+  // A Position AIKit reads standing on work changes nothing the drag says: the drop makes its own.
   const working = {...REAL.population, positions: REAL.population.positions.map(row => row.position_ref === ROOT
     ? {...row, current_work: {outcome: 'one', work_ref: 'work:dlw/757', run_ref: 'run:4', custody_ref: null, candidates: 1}} : row)}
-  const one = JSON.parse(msg.conversationRows(REAL.conversation, names, working)[1].drag)
-  assert.deepEqual([one.communique, one.work, one.run, one.why], ['aikit:communique:01m3d29sdm0wamhkw7scy38ahj', 'work:dlw/757', 'run:4', undefined])
-  const none = {...REAL.population, positions: REAL.population.positions.map(row => row.position_ref === ROOT ? {...row, current_work: {outcome: 'none'}} : row)}
-  assert.equal(JSON.parse(msg.conversationRows(REAL.conversation, names, none)[0].drag).why, 'Factory names no current work for O:I Root Agency')
-  const many = {...REAL.population, positions: REAL.population.positions.map(row => row.position_ref === ROOT ? {...row, current_work: {outcome: 'ambiguous'}} : row)}
-  assert.equal(JSON.parse(msg.conversationRows(REAL.conversation, names, many)[0].drag).why, 'Factory names more than one current work for O:I Root Agency')
+  assert.equal(msg.conversationRows(REAL.conversation, names, working)[1].drag, real[1].drag)
   // A record that already crossed into work carries no drag (AIKit refuses a second custody), nor does one the journal gives no ref.
   const escalated = msg.conversationRows({...REAL.conversation, communiques: REAL.conversation.communiques.map(record => ({...record, state: 'escalated'}))}, names, REAL.population)
   assert.equal(escalated.some(row => 'drag' in row), false)
   assert.equal('drag' in msg.conversationRows({position_ref: GUARDIAN, communiques: [{body: 'hello', from_position_ref: ROOT, to_position_ref: GUARDIAN}]}, names, REAL.population)[0], false)
+  // The parse takes back what the drag names, and nothing that is not a dragged message.
+  assert.deepEqual(ids.communiqueDragOf(real[0].drag), first)
+  assert.equal(ids.communiqueDragOf(JSON.stringify({...first, concern: ' '})), null, 'a message with no words makes no task')
+  assert.equal(ids.communiqueDragOf('central:constellation:x'), null)
   // The open agent's thread carries them, and the Thread draws each such message as a row the hand can drag.
   const binding = msg.messagesBinding({population: answered(REAL.population), gateway: ANSWERED, conversation, holds: bind.chainHolds()})
   binding.local.open(GUARDIAN)
@@ -164,7 +168,8 @@ test('(#757) each message of the conversation carries its drag onto a track: the
   assert.ok(JSON.parse(opened.values.agents).find(agent => agent.id === GUARDIAN).thread.every(row => JSON.parse(row.drag).to === ROOT))
   const pane = draw(opened, 'full')
   assert.equal(pane.match(/class="th-row" draggable="true"/g)?.length, 2, 'each message drags')
-  assert.match(pane, /data-i="Message\|Drag it onto its agent&#x27;s track, and it becomes the work the agent stands on\."/)
+  // REPLACED (DLW build ruling 2026-11-05): "it becomes the work the agent stands on" — it becomes a new task now.
+  assert.match(pane, /data-i="Message\|Drag it onto its agent&#x27;s track, and the agent takes it as a new task\."/)
   const source = readFileSync(new URL('../src/inhabitants/catalogue/panels/thread.tsx', import.meta.url), 'utf8')
   assert.match(source, /event\.dataTransfer\.setData\(COMMUNIQUE_DRAG, drag\)/, 'the drag carries the message under its own type')
   bind.resetHolds()

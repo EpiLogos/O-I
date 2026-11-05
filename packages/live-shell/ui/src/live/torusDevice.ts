@@ -521,7 +521,8 @@ export function torusSession(state: LiveTorusState | null, commit: (edit: Instru
 // Tattva takes it from the tattva of the M2 condition through its element fibre, by M2's body constants (QL's table), and holds it while
 // the tattva sets it. Damping is a Q factor, written through the stage channel's damping edit (stageCommands.ts InstrumentEdit), which the
 // frame lowers to the scene's decay rate (nativeField.ts lowerQDamping). The owner keeps that rate, not the Q, so the Q you set is the
-// hand's. Strike has no QL scene term: it stays dimmed and says so, with what the fibre would set. (Agitation is the plate's, §20.14.)
+// hand's. Strike is the owner's M1′ session setting (QL m1_prime.rs Settings.strike), written as its torus edit; an owner whose session
+// states none keeps it dimmed and says so, with what the fibre would set. (Agitation is the plate's, §20.14.)
 
 export const TORUS_BODY_SOURCE = 'body.source'
 /** The body source the hand holds: Declared until Tattva is chosen (manual §21.2 default). */

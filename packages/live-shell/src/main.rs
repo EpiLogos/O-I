@@ -140,10 +140,12 @@ struct DeviceParamsQ {
     path: String,
     track: String,
     device: String,
+    /// The device's place on the track's chain (DLW build ruling 2026-11-05); absent, the first of its name.
+    at: Option<usize>,
 }
 
 async fn device_params(Query(q): Query<DeviceParamsQ>) -> Json<serde_json::Value> {
-    match api::device_params_json(&q.path, &q.track, &q.device) {
+    match api::device_params_json(&q.path, &q.track, &q.device, q.at) {
         Ok(value) => Json(value),
         Err(error) => Json(serde_json::json!({ "error": error })),
     }
@@ -155,6 +157,9 @@ struct DeviceParamEdit {
     path: String,
     track: String,
     device_name: String,
+    /// The device's place on the track's chain (DLW build ruling 2026-11-05); absent, the first of its name.
+    #[serde(default)]
+    at: Option<usize>,
     param_id: String,
     value: serde_json::Value,
 }
@@ -164,6 +169,7 @@ async fn device_param(Json(body): Json<DeviceParamEdit>) -> Json<serde_json::Val
         &body.path,
         &body.track,
         &body.device_name,
+        body.at,
         &body.param_id,
         &body.value,
     ) {

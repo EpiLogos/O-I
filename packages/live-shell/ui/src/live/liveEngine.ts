@@ -31,7 +31,7 @@ import type {SlotBinding} from '../frame/transport/slots'
 import type {StageCommand, StageResult} from '@epilogos/expressions-boundary'
 import {commitLiveStage, liveTorusState, subscribeLiveTorus} from './torusInstrument'
 import {liveJankoWindow} from './janko/jankoLayout'
-import {noteKeys} from './janko/jankoInput'
+import {noteKeys, type EngineLatency} from './janko/jankoInput'
 
 /** A part as the engine names it: one of the set's parts, one of its returns, one of its groups (a bus, O-I #849 round 16), or the
  * Main track. */
@@ -55,7 +55,7 @@ export type LiveEngineEvent =
   | {kind: 'pressure'; track: number; amount: number}
   /** One of the set's devices made again in the engine from what the set now stores (O-I #849 round 17): the track the set's owner names
    * it on ("Master" the Main track) and its element name; the device the owner writes, the first of that name there. */
-  | {kind: 'device'; track_name: string; device: string}
+  | {kind: 'device'; track_name: string; device: string; at?: number}
 
 /** The Torus a part holds: the digest it was handed over by, the owner's sample it stood at, and the engine frame it sounds from once
  * the engine has taken it. */
@@ -83,6 +83,8 @@ export interface LiveEngineReading {
   toruses: LiveEngineTorus[]
   /** The Torus's effects on its part (round 13); null until they go with it. */
   torus_effects?: LiveEngineTorusEffects | null
+  /** The engine's own legs of key-to-sound (O-I #853 round 18): its last device block and the device's output latency. */
+  latency?: EngineLatency
 }
 export interface LiveEngineExport {path: string; frames: number; events: number; complete: boolean}
 
@@ -372,14 +374,20 @@ export async function followInEngine(path: string, event: (kinds: readonly strin
 }
 
 /** A setting of one of the set's devices the set's owner wrote (live/SetDeviceOnChain.tsx, panels/devices/api.ts postDeviceParam: the
- * first device of `device`'s element name on the track named `track`), followed into the engine while it plays that set (O-I #849 round
- * 17): the engine makes the device again from what the set now stores, heard from the next block and sounding on from where it stood
- * (live_engine_host.rs Opened::make_again). A refusal is the engine's, in its words; the set keeps what was written. */
-export const engineEventOfDeviceWrite = (track: string, device: string): LiveEngineEvent => ({kind: 'device', track_name: track, device})
-export const followDeviceInEngine = (path: string, track: string, device: string): Promise<void> =>
-  followInEngine(path, () => engineEventOfDeviceWrite(track, device))
+ * device of `device`'s element name at its place `at` on the chain of the track named `track`, the instrument counted, or the first of that
+ * name when no place is named — DLW build ruling 2026-11-05: so the second of two devices of one name is itself), followed into the engine
+ * while it plays that set (O-I #849 round 17): the engine makes the device again from what the set now stores, heard from the next block
+ * and sounding on from where it stood (live_engine_host.rs Opened::make_again). A refusal is the engine's, in its words; the set keeps
+ * what was written. */
+export const engineEventOfDeviceWrite = (track: string, device: string, at?: number): LiveEngineEvent =>
+  at === undefined ? {kind: 'device', track_name: track, device} : {kind: 'device', track_name: track, device, at}
+export const followDeviceInEngine = (path: string, track: string, device: string, at?: number): Promise<void> =>
+  followInEngine(path, () => engineEventOfDeviceWrite(track, device, at))
 
 export const liveEngineState = (): EngineState => state
+/** The engine's legs of key-to-sound while it plays (a key's sound is then the engine's; jankoInput.ts keyToSound joins them to each
+ * strike's timing); null while it does not. keyboardLayout.ts reads them: the path loads after the first frame, the engine with it. */
+export const liveEngineLatency = (): EngineLatency | null => state.reading?.playing && state.reading.latency ? state.reading.latency : null
 export function subscribeLiveEngine(listener: () => void): () => void {
   listeners.add(listener)
   return () => { listeners.delete(listener) }

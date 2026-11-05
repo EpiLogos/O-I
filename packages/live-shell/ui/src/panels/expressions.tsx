@@ -36,6 +36,8 @@ import {publishHostedChrome, publishHostedExpressions, useFramePlacement} from '
 import {followFrame} from '../projections/framePlacement'
 import {registerExpressionsPaneHost} from '../projections/expressionsPane'
 import {liveTorusFromHost, publishLiveTorusState, setLiveInstrumentCommander} from '../live/torusInstrument'
+import {TORUS_DESIGN_ID, torusViewOf} from '../live/torusDevice'
+import {useHeld} from '../techne/devices/designDevices'
 import {setLivePerformanceChannel} from '../live/LivePresets'
 import {expressionsBindingOf, holdExpressionsBinding, unplaceExpressionsBinding} from '../native/expressionsBinding'
 import {NARA_CHANNEL_REGISTER} from '../agent/worldScope'
@@ -106,6 +108,7 @@ export function ExpressionsPanel() {
   const [fault, setFault] = useState<string | null>(null)
   const [hostFault, setHostFault] = useState<string | null>(null)
   const [surfaceFault, setSurfaceFault] = useState<string | null>(null)
+  const [viewFault, setViewFault] = useState<string | null>(null)
   const [stage, setStage] = useState<HostedAppState | null>(null)
   // File › Export › Picture…'s choices, while they stand (O-I #747).
   const [picture, setPicture] = useState(false)
@@ -116,6 +119,19 @@ export function ExpressionsPanel() {
   }
   // The Live instrument's writes reach the owner only through this mounted stage channel (torusInstrument.ts commitLiveInstrumentEdit).
   useEffect(() => {setLiveInstrumentCommander(command => stageRun(command)); return () => setLiveInstrumentCommander(null)}, [])
+  // The View you keep on the Torus (DLW manual §21.2 View: "What the pane draws") is drawn on the native stage as the pane draws it (DLW
+  // build ruling 2026-11-05): sent once the stage announces its instrument, and again each time you choose another. The stage's refusal
+  // stands with the frame's other faults, in its words.
+  const torusView = torusViewOf({view: useHeld(TORUS_DESIGN_ID, 'view') ?? 'surface'})
+  const instrumentUp = stage?.instrument !== undefined
+  useEffect(() => {
+    if (!instrumentUp || !host.current) return
+    let live = true
+    stageRun({command: 'instrument', edit: {kind: 'view', view: torusView}}).then(
+      result => { if (live) setViewFault(result.ok ? null : `The stage does not draw the Torus's View: ${result.error ?? 'it refused it'}`) },
+      (cause: unknown) => { if (live) setViewFault(`The stage does not draw the Torus's View: ${cause instanceof Error ? cause.message : String(cause)}`) })
+    return () => { live = false }
+  }, [torusView, instrumentUp])
   // The presets' owner path (T-LIVE-TORUS-INSTRUMENT leg 6): one performance action on the presented Scene, through the host.
   useEffect(() => {setLivePerformanceChannel(action => host.current ? host.current.performance(action) : Promise.reject(new Error('No Expressions application is mounted'))); return () => setLivePerformanceChannel(null)}, [])
   // The shell's transport and Clip Takes tab reach the frame only through this link (native/frameTakes.ts).
@@ -485,8 +501,8 @@ export function ExpressionsPanel() {
   // The pane body reads the frame only while the frame reports ready (T-EXPRESSIONS-PANE-LEASE): a status that is not ready clears it.
   useEffect(() => {if (status !== 'Expressions') publishHostedExpressions(null)}, [status])
   // The frame's chrome is published by value: a Factory pane that holds the frame shows the same toolbar and faults beside its header.
-  useEffect(() => {publishHostedChrome({state: stage, run: host.current ? stageRun : null, faults: [hostFault, surfaceFault, fault].filter((text): text is string => !!text),
-    reopen: !host.current && !starting.current ? () => retry(value => value + 1) : null})}, [stage, hostFault, surfaceFault, fault, attempt])
+  useEffect(() => {publishHostedChrome({state: stage, run: host.current ? stageRun : null, faults: [hostFault, surfaceFault, viewFault, fault].filter((text): text is string => !!text),
+    reopen: !host.current && !starting.current ? () => retry(value => value + 1) : null})}, [stage, hostFault, surfaceFault, viewFault, fault, attempt])
   useEffect(() => () => publishHostedChrome(null), [])
   // The last export as the native host received it (studioExports.ts), said on the status bar where the export was asked from: the
   // Stage plate's Capture line it stood on moved with Export to the File menu (O-I #747).

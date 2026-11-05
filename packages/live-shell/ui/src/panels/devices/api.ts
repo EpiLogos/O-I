@@ -78,10 +78,13 @@ export function deviceDescriptors(): Promise<DescriptorMap> {
   return descriptorsPromise
 }
 
+/** The stored values of the device `device` on `track`: at its place `at` on the track's chain, the instrument counted, when named (DLW
+ * build ruling 2026-11-05: the second of two devices of one name reads its own), the first of that name otherwise. */
 export function fetchDeviceParams(
   path: string,
   track: string,
   device: string,
+  at?: number,
 ): Promise<Record<string, ParamValueJson>> {
   const toMap = (params: ParamValueJson[]) => {
     const map: Record<string, ParamValueJson> = {}
@@ -90,11 +93,11 @@ export function fetchDeviceParams(
   }
   const transport = kernelTransport()
   if (transport) {
-    return kernelOp(transport, {op: 'live_device_params_read', path, track, device}).then(answer =>
+    return kernelOp(transport, {op: 'live_device_params_read', path, track, device, ...(at === undefined ? {} : {at})}).then(answer =>
       toMap((kernelReading(answer, 'live_device_params_reading').reading as {params: ParamValueJson[]}).params),
     )
   }
-  const q = `path=${encodeURIComponent(path)}&track=${encodeURIComponent(track)}&device=${encodeURIComponent(device)}`
+  const q = `path=${encodeURIComponent(path)}&track=${encodeURIComponent(track)}&device=${encodeURIComponent(device)}${at === undefined ? '' : `&at=${at}`}`
   return fetch(`/api/document/device-params?${q}`).then(async (res) => {
     const body = await res.json()
     if (body && typeof body === 'object' && 'error' in body) return unwrapError(body)
@@ -102,13 +105,15 @@ export function fetchDeviceParams(
   })
 }
 
-/** Set one parameter; resolves to the persisted stored value. */
+/** Set one parameter of the device at its place `at` on the track's chain when named (else the first of its name); resolves to the
+ * persisted stored value. */
 export function postDeviceParam(
   path: string,
   track: string,
   deviceName: string,
   paramId: string,
   value: number | boolean,
+  at?: number,
 ): Promise<ParamValueJson> {
   const transport = kernelTransport()
   if (transport) {
@@ -117,6 +122,7 @@ export function postDeviceParam(
       path,
       track,
       device_name: deviceName,
+      ...(at === undefined ? {} : {at}),
       param_id: paramId,
       value,
     }).then(
@@ -130,6 +136,7 @@ export function postDeviceParam(
       path,
       track,
       deviceName,
+      ...(at === undefined ? {} : {at}),
       paramId,
       value,
     }),

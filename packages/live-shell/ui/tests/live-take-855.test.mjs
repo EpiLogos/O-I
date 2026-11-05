@@ -175,6 +175,39 @@ test('a move of the Torus during the take is kept with its beat; a reading that 
   assert.deepEqual(act.keeps.moves, [{beat: 2, torus: moved}], 'one move, at beat 2 at 60 BPM')
 })
 
+test('Record keeps the hand\'s touches on each note it recorded, laid as the note\'s MPE lanes in beats from its start (O-I #853)', async () => {
+  // DLW §21.1 Clip view, the MPE tab: "Pressure from the playing surface records here"; §21.2 Rules: "A recorded performance keeps
+  // what it needs to be played on: the notes with their expression".
+  let t = 0
+  const recorder = take.createTakeRecorder()
+  const o = owner()
+  const path = keys.createJankoInput({send: o.send, window: () => windowState, now: () => t, onNote: note => recorder.played(note), onTouch: touch => recorder.touched(touch)})
+  path.down({kind: 'down', source: 'midi', pitchClass: 0, velocity: 1}); await tick()
+  path.touch('pressure', 0.3, 'midi')
+  recorder.start({path: '/s.als', track: 0, part: 'A', bpm: 120, start: 0, torus: null, mode: null}, 250)
+  t = 500
+  path.down({kind: 'down', source: 'midi', pitchClass: 4, velocity: 1}); await tick()
+  t = 750
+  path.touch('pressure', 0.6, 'midi')
+  t = 1000
+  path.touch('bend', -0.25, 'midi')
+  path.touch('pressure', 0.2, 'midi')
+  t = 1500
+  path.up({kind: 'up', source: 'midi', pitchClass: 4})
+  t = 1750
+  path.touch('pressure', 0.9, 'midi')
+  const done = recorder.stop(2000)
+  assert.deepEqual(done.notes.map(n => [n.note, n.touches]), [[64, {pressure: [[750, 0.6], [1000, 0.2]], bend: [[1000, -0.25]]}]],
+    'a note held before the take is not in it; a touch after a note ends is not on it; a fall is kept as the hand played it')
+  const act = take.takeRecordAct(done, 'Take 3')
+  assert.deepEqual(act.notes, [{p: 64, at: 0.5, len: 2, vel: 127, mpe: {pressure: [[0.5, 0.6], [1, 0.2]], bend: [[1, -0.25]]}}],
+    'in beats from the note\'s start at 120 BPM, each lane as played')
+  recorder.start({path: '/s.als', track: 0, part: 'A', bpm: 120, start: 0, torus: null, mode: null}, 0)
+  recorder.played({kind: 'on', id: 'p', note: 60, key: C4, touch: 0, amplitude: 1, source: 'pointer', at: 100})
+  assert.equal(take.takeRecordAct(recorder.stop(1000), 'Take 4').notes[0].mpe, undefined, 'an untouched note lays no MPE')
+  assert.match(source('live/keyboardLayout.ts'), /onTouch: touch => liveTakeRecorder\.touched\(touch\)/, 'the live path tells Record its touches')
+})
+
 test('a take with nothing played is not laid, and says so', () => {
   const recorder = take.createTakeRecorder()
   recorder.start({path: '/s.als', track: 0, part: 'A', bpm: 120, start: 0, torus: null, mode: null}, 0)
@@ -393,6 +426,139 @@ test('the clip player makes a take\'s move as its beat is rendered, one owner lo
   await tick()
   assert.equal(p.state().resumes, 'Resumes. The Torus refused a move of the take: The scene holds the lens')
   assert.equal(p.state().playing, null, 'the take played to its end')
+})
+
+// ── Arm: a mapped control's moves as the take's automation lanes (O-I 853, round 18) ─────────────────────────────────────────────
+// DLW §21.2 Transport, "Arm | Records your parameter moves as automation lanes"; §16.8, "Arm, then move any parameter of any device, and
+// the move is recorded as an automation lane on that track".
+
+const move = (parameter, value, before, at, writer = 'owner', label = parameter) => ({parameter, label, writer, value, before, at})
+
+test('under Arm a take records each mapped move as a point of its parameter\'s lane, from where it stood; disarmed, or no take, none', () => {
+  const recorder = take.createTakeRecorder()
+  const heard = []
+  const off = recorder.subscribeArm(() => heard.push(recorder.armed()))
+  recorder.automated(move('level', 0.7, 0.5, 100))
+  recorder.start({path: '/s.als', track: 0, part: 'A', bpm: 60, start: 0, torus: null, mode: null}, 1000)
+  recorder.automated(move('level', 0.7, 0.5, 1500))
+  assert.equal(recorder.armed(), false)
+  recorder.arm(true)
+  recorder.arm(true)
+  assert.deepEqual(heard, [true], 'Arm is told once, when it changes')
+  recorder.automated(move('level', 0.6, 0.5, 900))
+  recorder.automated(move('level', 0.75, 0.5, 2000))
+  recorder.automated(move('level', 1, 0.75, 2500))
+  recorder.automated(move('note-device:s1:tie', 'up', 'nearest', 1000, 'session', 'Scale tie'))
+  recorder.played({kind: 'on', id: 'p', note: 60, key: C4, touch: 0, amplitude: 1, source: 'pointer', at: 1200})
+  const done = recorder.stop(4000)
+  assert.deepEqual(done.automation, [
+    {parameter: 'level', label: 'level', writer: 'owner', points: [[1000, 0.5], [2000, 0.75], [2500, 1]], cut: false},
+    {parameter: 'note-device:s1:tie', label: 'Scale tie', writer: 'session', points: [[1000, 'up']], cut: false},
+  ], 'a lane begins where its parameter stood as the take began; a move at the take\'s first moment is its first point; one before the take is no point')
+  const act = take.takeRecordAct(done, 'Take 1')
+  assert.deepEqual(act.keeps.automation, [
+    {parameter: 'level', label: 'level', writer: 'owner', points: [[0, 0.5], [1, 0.75], [1.5, 1]]},
+    {parameter: 'note-device:s1:tie', label: 'Scale tie', writer: 'session', points: [[0, 'up']]},
+  ], 'kept with the take in beats from its start (60 BPM)')
+  recorder.arm(false)
+  off()
+  recorder.start({path: '/s.als', track: 0, part: 'A', bpm: 60, start: 0, torus: null, mode: null}, 0)
+  recorder.automated(move('level', 0.7, 0.5, 500))
+  recorder.played({kind: 'on', id: 'p', note: 60, key: C4, touch: 0, amplitude: 1, source: 'pointer', at: 100})
+  const unarmed = recorder.stop(1000)
+  assert.deepEqual(unarmed.automation, [], 'disarmed, a take records no lane')
+  assert.equal(take.takeRecordAct(unarmed, 'Take 2').keeps.automation, undefined, 'and keeps none')
+  recorder.arm(true)
+  assert.deepEqual(heard, [true, false], 'told as it changed; nothing once unsubscribed')
+})
+
+test('a lane keeps at most its 4,096 points and says it was cut; a take keeps at most 64 lanes; a point past the take\'s end is not laid', () => {
+  const recorder = take.createTakeRecorder()
+  recorder.arm(true)
+  recorder.start({path: '/s.als', track: 0, part: 'A', bpm: 60, start: 0, torus: null, mode: null}, 0)
+  for (let i = 0; i <= take.LANE_POINTS_MAX; i += 1) recorder.automated(move('rate', i, null, i))
+  for (let i = 0; i < take.TAKE_LANES_MAX + 2; i += 1) recorder.automated(move(`p${i}`, 1, null, 10))
+  recorder.played({kind: 'on', id: 'p', note: 60, key: C4, touch: 0, amplitude: 1, source: 'pointer', at: 0})
+  const done = recorder.stop(100)
+  assert.equal(done.automation.length, take.TAKE_LANES_MAX)
+  assert.equal(done.automation[0].points.length, take.LANE_POINTS_MAX, 'the most a lane keeps, from the take\'s first moment (no point before)')
+  assert.equal(done.automation[0].cut, true)
+  const laid = take.takeRecordAct({...done, automation: [{parameter: 'rate', label: 'Rate', writer: 'owner', points: [[0, 1], [3999, 2], [4001, 3]], cut: false}],
+    stoppedAt: 3000}, 'Take 1')
+  assert.equal(laid.length, 4, 'one bar at 60 BPM')
+  assert.deepEqual(laid.keeps.automation[0].points, [[0, 1], [3.999, 2]], 'a point past the take\'s end is not laid')
+  assert.deepEqual(take.takeRecordAct({...done, automation: [done.automation[0]]}, 'Take 2').keeps.automation[0].cut, true, 'a cut lane says so')
+})
+
+test('a take\'s lanes are read exact: a lane any part of which is not one is left out', () => {
+  const good = {parameter: 'cadence', label: 'Tick cadence', writer: 'owner', points: [[0, 'hold'], [1, '12'], [1, '1']]}
+  assert.deepEqual(take.takeAutomationOf([good]), [good])
+  assert.deepEqual(take.takeAutomationOf([{...good, cut: true}])[0].cut, true)
+  for (const bad of [{...good, parameter: ''}, {...good, writer: 'agent'}, {...good, label: 3}, {...good, points: []}, {...good, points: [[1, 'a'], [0, 'b']]},
+    {...good, points: [[0, null]]}, {...good, points: [[Number.NaN, 1]]}, {...good, points: [[0, 1, 2]]}, {...good, points: [[0, Infinity]]}, null, 'lane'])
+    assert.deepEqual(take.takeAutomationOf([bad]), [], JSON.stringify(bad))
+  assert.deepEqual(take.takeAutomationOf(null), [])
+  assert.deepEqual(take.takeAutomationOf({lanes: [good]}), [])
+})
+
+test('a take\'s lane plays again at its beats through its parameter\'s own write, unless the take makes it again itself', async () => {
+  const start = take.torusKept(torusState())
+  const lanes = [
+    {parameter: 'level', label: 'Level', writer: 'owner', points: [[0, 0.5], [1, 0.8]]},
+    {parameter: 'cadence', label: 'Tick cadence', writer: 'owner', points: [[0.5, '12']]},
+    {parameter: 'note-device:s1:tie', label: 'Scale tie', writer: 'session', points: [[2, 'up']]},
+  ]
+  const tuned = take.torusKept(torusState({settings: {tuning: 'logic'}}))
+  const prepared = await take.prepareTake({...REAL, take: {id: 4, keeps: {schema: 'oi.live-take/v1', torus: start, moves: [{beat: 1, torus: tuned}], automation: lanes}}},
+    async () => ({ok: true}))
+  assert.deepEqual(prepared.moves, [
+    {beat: 0.5, edits: [], sets: [{parameter: 'cadence', value: '12'}]},
+    {beat: 1, edits: [tuned.edits[0]]},
+    {beat: 2, edits: [], sets: [{parameter: 'note-device:s1:tie', value: 'up'}]},
+  ], 'the Level is the Torus\'s moves\' (the Torus as it stood after each); the Cadence, which no move sets, and the session\'s tie play from their lanes')
+  assert.deepEqual(take.takeLaneMoves(lanes, lane => lane.writer === 'owner'), [{beat: 2, edits: [], sets: [{parameter: 'note-device:s1:tie', value: 'up'}]}],
+    'under a course every owner write is one of the course\'s acts: only a session lane is written again')
+  assert.deepEqual(take.takeLaneMoves([{...lanes[1], writer: 'nobody'}], () => false), [], 'a lane not read exact plays nothing')
+})
+
+test('the clip player writes a lane\'s point at its beat through the parameter\'s write, and says a refused one', async () => {
+  const clock = controlledClock()
+  const sets = []
+  const clip = {...REAL, name: 'Take 2', loop: false, start: 0, end: 4, take: {id: 2, keeps: {}}, notes: [{id: 1, p: 60, at: 0, len: 1, vel: 100, chance: 1, on: true}]}
+  const p = player.createClipPlayer({
+    read: async () => clip,
+    prepare: async () => ({resumes: 'Resumes.', moves: [{beat: 2, edits: [], sets: [{parameter: 'gone', value: 1}]}, {beat: 1, edits: [], sets: [{parameter: 'cadence', value: '12'}]}]}),
+    clock: async () => ({samples_elapsed: '480000', sample_rate: 48000, lookahead_seconds: 0.5, block_frames: 8192}),
+    set: async (parameter, value) => { sets.push([clock.now(), parameter, value]); return parameter === 'gone' ? {ok: false, error: 'gone is not on the surface now, so its lane moves nothing.'} : {ok: true} },
+    strike: async () => ({ok: true}), release: () => {}, watch: () => () => {}, now: clock.now, later: clock.later, cancel: clock.cancel, random: () => 0,
+  })
+  p.play({path: '/s.als', track: 1, at: {arrangement: 0}}, 60)
+  await tick(); await tick(); await tick()
+  const origin = clock.now()
+  await clock.run(origin + 1.4)
+  assert.deepEqual(sets, [], 'not before its beat is rendered')
+  await clock.run(origin + 5)
+  assert.deepEqual(sets.map(([at, parameter, value]) => [at - origin, parameter, value]), [[1.5, 'cadence', '12'], [2.5, 'gone', 1]], 'a move with only a lane\'s point is a move')
+  await tick()
+  assert.equal(p.state().resumes, 'Resumes. A lane of the take was not written again: gone is not on the surface now, so its lane moves nothing.')
+})
+
+test('Arm is Live\'s transport toggle over the candidate\'s recorder, and the map tells Record each mapped move', () => {
+  const armed = [], off = take.armBinding(false, () => armed.push('flip'))
+  assert.equal(off.lit, false)
+  assert.equal(off.title, `${take.ARM_DOES} Press to arm, then Record and move a mapped control.`)
+  off.press()
+  assert.deepEqual(armed, ['flip'])
+  const on = take.armBinding(true, () => {})
+  assert.equal(on.lit, true)
+  assert.match(on.title, /Armed: press to disarm\.$/)
+  assert.match(take.ARM_DOES, /^Arm — records your parameter moves as automation lanes/)
+  assert.match(source('shell/transports/useLiveTransport.tsx'), /const arm = useLiveArm\(\)[\s\S]*record,\n    arm,/, 'the slot is bound in Live\'s transport')
+  assert.match(source('live/liveTake.ts'), /return armBinding\(armed, \(\) => liveTakeRecorder\.arm\(!liveTakeRecorder\.armed\(\)\)\)/)
+  assert.match(source('live/liveTake.ts'), /onMapMove\(move => liveTakeRecorder\.automated\(move\)\)/, 'Record hears the map\'s moves')
+  assert.match(source('live/midiMap/midiMapControls.tsx'),
+    /moved: \(target, value, before\) => hearMove\?\.\(\{parameter: target\.id, label: target\.label, writer: target\.writer, value, before, at: performance\.now\(\)\}\)/)
+  assert.match(source('live/clipPlayer.ts'), /set: writeMapTarget,/, 'a lane is written again through the parameter\'s own write')
 })
 
 test('a clip\'s note strikes the touch-point its hold names on the one playing path, else its first', async () => {
@@ -751,6 +917,20 @@ test('a take with its course plays again as it was played: the Torus set as it s
   assert.equal(none.exact, undefined)
   assert.match(none.resumes, /keeps no course of the Torus: replace-event moved the scene at sample 505000\./)
   assert.equal((await take.prepareTake(clip, commit)).exact, undefined, 'with no stage owner it plays as its notes are written')
+})
+
+test('under its course a take\'s owner lanes are its course\'s acts, and only a session-held lane is written again at its beats (O-I 853)', async () => {
+  const torus = take.torusKept(torusState({level: 0.5}))
+  const carrierLevel = take.torusKept(torusState({level: 0.25}))
+  const automation = [{parameter: 'cadence', label: 'Tick cadence', writer: 'owner', points: [[0.5, '12']]},
+    {parameter: 'note-device:s1:tie', label: 'Scale tie', writer: 'session', points: [[1, 'up'], [3, 'down']]}]
+  const keeps = {schema: 'oi.live-take/v1', torus, moves: [{beat: 2, torus: carrierLevel}], bpm: 120, resumes: take.TAKE_REPLAYS, automation,
+    notes: [{p: 60, at: 1, len: 0.916667, vel: 127, key: C4, touch: 0, strength: 1, source: 'pointer'}], course: COURSE, not_kept: [...take.TAKE_COURSE_NOT_KEPT]}
+  const clip = {...REAL, name: 'Take 1', loop: false, start: 0, end: 4, take: {id: 7, keeps}, notes: [{id: 1, p: 60, at: 1, len: 0.916667, vel: 127, chance: 1, on: true}]}
+  const prepared = await take.prepareTake(clip, async () => ({ok: true}), {stage: stageOwner().stage, bpm: 120})
+  assert.ok(prepared.exact, 'it plays as it was played')
+  assert.deepEqual(prepared.moves, [{beat: 1, edits: [], sets: [{parameter: 'note-device:s1:tie', value: 'up'}]}, {beat: 2, edits: [{kind: 'level', value: 0.25}]},
+    {beat: 3, edits: [], sets: [{parameter: 'note-device:s1:tie', value: 'down'}]}], 'the frame\'s own sound and the session\'s tie by beat; the Cadence is the course\'s')
 })
 
 test('the clip player plays a take\'s course at its samples from where the Torus rang again; an act behind the render is missed; Stop lets its keys go', async () => {

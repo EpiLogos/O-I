@@ -20,30 +20,29 @@ export const COMMUNIQUE_DRAG = 'application/x-oi-communique'
 export const COMMUNIQUE_DRAG_SCHEMA = 'oi.communique-drag/v1'
 
 /** What a dragged message names: its Communique, the Position it went to by its ref and its name, the agent standing there (its
- * occupant, else the agent AIKit's population places there), and the work AIKit reads that Position standing on (`aikit gateway who`
- * current_work, outcome one: work_ref and run_ref) — or, where there is none, why in words. */
+ * occupant, else the agent AIKit's population places there), and its words — the first line, the purpose of the new task it becomes
+ * (DLW build ruling 2026-11-05: §19.24 "the agent takes it as a task with a receipt"). */
 export interface CommuniqueDrag {
   readonly schema: typeof COMMUNIQUE_DRAG_SCHEMA
   readonly communique: string
   readonly to: string
   readonly name: string
   readonly agent?: string
-  readonly work?: string
-  readonly run?: string
-  readonly why?: string
+  readonly concern: string
 }
 
 const word = (value: unknown): string | undefined => (typeof value === 'string' && value.trim() ? value : undefined)
 
-/** A dragged message from the drag's payload, or null when the payload is not one (a constellation's ref, a song's clip). Pure. */
+/** A dragged message from the drag's payload, or null when the payload is not one (a constellation's ref, a song's clip) or names no
+ * words to make its task of. Pure. */
 export function communiqueDragOf(payload: string): CommuniqueDrag | null {
   if (!payload.trim().startsWith('{')) return null
   let raw: unknown
   try { raw = JSON.parse(payload) } catch { return null }
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null
   const drag = raw as Record<string, unknown>
-  const communique = word(drag.communique), to = word(drag.to), name = word(drag.name)
-  if (drag.schema !== COMMUNIQUE_DRAG_SCHEMA || !communique || !to || !name) return null
-  const agent = word(drag.agent), work = word(drag.work), run = word(drag.run), why = word(drag.why)
-  return {schema: COMMUNIQUE_DRAG_SCHEMA, communique, to, name, ...(agent ? {agent} : {}), ...(work ? {work} : {}), ...(work && run ? {run} : {}), ...(!work && why ? {why} : {})}
+  const communique = word(drag.communique), to = word(drag.to), name = word(drag.name), concern = word(drag.concern)
+  if (drag.schema !== COMMUNIQUE_DRAG_SCHEMA || !communique || !to || !name || !concern) return null
+  const agent = word(drag.agent)
+  return {schema: COMMUNIQUE_DRAG_SCHEMA, communique, to, name, ...(agent ? {agent} : {}), concern}
 }

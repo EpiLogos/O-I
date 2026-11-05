@@ -7,8 +7,9 @@
 // sent at once, from the newest value the owner has (its last accepted write, unless the owner's reading has since moved).
 //
 // A refused write is named on its parameter and clears what was sent, so the next control at the same value tries again. A refusal is
-// named only while its parameter is mapped; an accepted write clears it. Pure of the store: the reads, the write and the refusal record are
-// injected (midiMapControls.tsx wires the live ones).
+// named only while its parameter is mapped; an accepted write clears it. An accepted write is told as a move of its parameter, with the
+// value it stood at before (`moved`: under Arm, a take records it as a point of the parameter's automation lane, live/liveTake.ts; O-I
+// 853). Pure of the store: the reads, the write and the refusal record are injected (midiMapControls.tsx wires the live ones).
 
 import type {StageResult} from '@epilogos/expressions-boundary'
 import {controlValue, controlsReach, keyStepValue, routeCc, routeKey, type MapBinding, type MapMode, type MapTarget, type MapValue} from './midiMapModel'
@@ -29,6 +30,8 @@ export interface MapRouterDeps {
   readonly apply: (target: MapTarget, value: MapValue) => Promise<StageResult>
   /** A parameter's refusal (the owner's reason), or null when its write was accepted or it is no longer mapped. */
   readonly refusal: (targetId: string, error: string | null) => void
+  /** A mapped write its owner accepted: the parameter, the value written, and the value it stood at as the write was sent (null: unread). */
+  readonly moved?: (target: MapTarget, value: MapValue, before: MapValue | null) => void
   /** Runs `run` at the next frame. Defaults to requestAnimationFrame, or a timer where there is none. */
   readonly schedule?: (run: () => void) => void
 }
@@ -65,6 +68,7 @@ export function createMapRouter(deps: MapRouterDeps): MapRouter {
   const readingOf = (id: string): MapValue | null => deps.targets().find(candidate => candidate.id === id)?.current ?? null
 
   const send = (target: MapTarget, value: MapValue): void => {
+    const before = target.current
     sent.set(target.id, value)
     inFlight.add(target.id)
     const settle = (result: StageResult | null, cause?: unknown) => {
@@ -72,6 +76,7 @@ export function createMapRouter(deps: MapRouterDeps): MapRouter {
       if (result !== null && result.ok) {
         accepted.set(target.id, {value, reading: readingOf(target.id)})
         deps.refusal(target.id, null)
+        deps.moved?.(target, value, before)
         return
       }
       sent.delete(target.id)

@@ -287,41 +287,84 @@ test('the hook reads the one agency store and only the owner\'s control path; wi
   assert.doesNotMatch(adapter, /^import .*from '(react|[^']*kernel[^']*|[^']*harnessAgentControl[^']*)'/m, 'the adapter is pure: the owner call is handed in')
 })
 
-test('(#757) a message dragged from Messages onto its agent\'s track crosses into the work the agent stands on: the tracks take the drag, and the drop writes Messages\' delegate {communique, work, reason}', async () => {
-  const {factoryTrackSet} = await import('../src/frame/tracks/useFactoryTracks.ts')
+test('(#757) a message dragged from Messages onto its agent\'s track becomes a new task made of it, and Messages records the turning into that task: the tracks take the drag, the task maker makes the task, its receipt is read back, then the drop writes Messages\' delegate {communique, work, reason}', async () => {
+  // REPLACED (DLW build ruling 2026-11-05, §19.24 "the agent takes it as a task with a receipt"): the drop crossed into the work AIKit read
+  // the recipient standing on, and a recipient with no current work was refused; the drop makes the work now, as a new task of the message.
+  const {factoryTrackSet, DELEGATE_WORDS} = await import('../src/frame/tracks/useFactoryTracks.ts')
   const {publishDevice} = await import('../src/frame/devices/deviceDoor.ts')
   const ids = await import('../src/agent/devices/railTileIds.ts')
   const {SONG_CLIP_DRAG} = await import('../src/agent/songClips.ts')
   const tracks = agencyTracks()
   const fizz = tracks.find(track => track.agentRef === 'agent:fizz' && !track.group), tester = tracks.find(track => track.agentRef === 'agent:tester')
-  const set = factoryTrackSet({columns: [], tracks: tracks.map(track => ({id: model.trackKey(track), name: track.sessionRef})), clips: []}, null, null, {kind: 'bridge', url: 'x'}, tracks)
+  const group = tracks.find(track => track.group)
+  // AIKit behind the bridge (FIXTURE): the session's settings, and its task creation, which binds the new task to the session — its ref,
+  // its name the request's purpose, its source the request's — or refuses in AIKit's words.
+  const sent = [], tasks = new Map()
+  let refuseTask = null
+  const ok = (result, data) => ({json: async () => ({ok: true, outcome: {result, data}})})
+  const fetch = async (_url, init) => {
+    const body = JSON.parse(init.body)
+    sent.push(body)
+    if (body.op === 'encounter_session_settings' && !body.request) return ok('encounter_session_settings_reading',
+      {schema: 'aikit.encounter-session-settings/v1', agent_session: body.agent_session, revision: 'session-settings/01', task: tasks.get(body.agent_session) ?? null, previous_task: null})
+    if (body.op === 'encounter_task_configure') {
+      if (refuseTask) return {json: async () => ({ok: false, error: refuseTask})}
+      tasks.set(body.agent_session, {task_ref: body.request.task_ref, name: body.request.purpose, source: body.request.source, colour: null, active: true})
+      return ok('encounter_task_reading', {schema: 'aikit.encounter-task/v1', revision: 'task-binding/01JNEW', ready: true, request: body.request})
+    }
+    return {json: async () => ({ok: false, error: `the fixture kernel answers no ${body.op}`})}
+  }
+  const made = () => sent.filter(body => body.op === 'encounter_task_configure')
+  const real = globalThis.fetch
+  globalThis.fetch = fetch
+  const set = factoryTrackSet({columns: [], tracks: tracks.map(track => ({id: model.trackKey(track), name: track.sessionRef})), clips: []}, null, null,
+    {kind: 'bridge', url: 'http://kernel.test'}, tracks)
   const maker = set.actions.makeClip
   assert.deepEqual(maker.alsoAccepts, [SONG_CLIP_DRAG, ids.COMMUNIQUE_DRAG], 'a song\'s clip, then a message, beside a constellation')
-  assert.match(maker.op, /A message: AIKit gateway delegate, through Messages/)
+  assert.match(maker.op, /A message: AIKit encounter-task-configure makes a new task of it on the track's session, then AIKit gateway delegate, through Messages, records the turning/)
   const drag = (over = {}) => JSON.stringify({schema: ids.COMMUNIQUE_DRAG_SCHEMA, communique: 'aikit:communique:7', to: 'central:position:project:O-I:fizz', name: 'Fizz',
-    agent: 'agent:fizz', work: 'work:dlw/757', run: 'run:4', ...over})
-  // Messages is not on the door: the drop has nothing to write through, and says so.
-  assert.match((await maker.run(model.trackKey(fizz), drag())).error, /Messages is not on the rail/)
+    agent: 'agent:fizz', concern: 'Run the tests next.', ...over})
   const written = []
-  let refuse = null
-  publishDevice(ids.MESSAGES_ID, {device: {id: ids.MESSAGES_ID, family: 'ai-kit', face: {id: 'messages'}}, binding: {id: ids.MESSAGES_ID, values: {},
-    write: async changes => { if (refuse) throw new Error(refuse); written.push(...changes) }}})
+  let refuseDelegate = null
   try {
+    // Messages is not on the door: the turning could not be recorded, so no task is made.
+    assert.equal((await maker.run(model.trackKey(fizz), drag())).error, DELEGATE_WORDS.noMessages)
+    assert.equal(made().length, 0)
+    publishDevice(ids.MESSAGES_ID, {device: {id: ids.MESSAGES_ID, family: 'ai-kit', face: {id: 'messages'}}, binding: {id: ids.MESSAGES_ID, values: {},
+      write: async changes => { if (refuseDelegate) throw new Error(refuseDelegate); written.push(...changes) }}})
     const receipt = await maker.run(model.trackKey(fizz), drag())
     assert.equal(receipt.ok, true, receipt.error)
-    assert.match(receipt.note, /^Fizz takes the message as its work: AIKit delegated it into Factory's custody of work:dlw\/757\.$/)
-    assert.deepEqual(written.map(change => [change.key, JSON.parse(change.value)]), [['delegate', {communique: 'aikit:communique:7', work: 'work:dlw/757', run: 'run:4',
-      reason: 'You dragged this message onto Fizz\'s track: it becomes the work Fizz stands on.'}]], 'Messages\' own delegate, the three AIKit takes and the run')
-    // Factory gives custody to the Position the message went to, so another agent's track refuses it rather than mislead.
-    assert.match((await maker.run(model.trackKey(tester), drag())).error, /^The message went to Fizz: drop it on Fizz's track, whose work it becomes\.$/)
-    assert.match((await maker.run(model.trackKey(fizz), drag({agent: undefined}))).error, /^No agent stands at Fizz now, so no track is its\.$/)
-    assert.match((await maker.run(model.trackKey(fizz), drag({work: undefined, run: undefined, why: 'Factory names no current work for Fizz'}))).error,
-      /^Factory names no current work for Fizz: a message becomes the work its agent stands on, so there is none to give it now\.$/)
-    assert.match((await maker.run(tracks.find(track => track.group) ? model.trackKey(tracks.find(track => track.group)) : 'elsewhere', drag())).error, /Only a session's track takes a message/)
-    refuse = 'Factory refused the custody (custody.conflict): the work is held.'
-    assert.equal((await maker.run(model.trackKey(fizz), drag())).error, refuse, 'AIKit\'s words through Messages')
-    assert.equal(written.length, 1, 'no refused drop wrote')
+    // The task maker's own new task (agent/clipBinding.ts makeNewTaskOf): the message's words its purpose, the Communique its source.
+    assert.equal(made().length, 1)
+    const [{agent_session, request}] = made()
+    assert.equal(agent_session, 'sess-lead', 'on the session of the track it landed on')
+    assert.match(request.task_ref, /^task:run-the-tests-next-[0-9a-z]+$/)
+    assert.deepEqual(request, {purpose: 'Run the tests next.', source: 'aikit:communique:7', task_ref: request.task_ref})
+    // Its receipt read back from AIKit, then the turning recorded through Messages' own delegate, the new task its work.
+    const at = sent.indexOf(made()[0])
+    assert.ok(sent.slice(at + 1).some(body => body.op === 'encounter_session_settings' && !body.request), 'the task is read back after it is made')
+    assert.deepEqual(written.map(change => [change.key, JSON.parse(change.value)]), [['delegate', {communique: 'aikit:communique:7', work: request.task_ref,
+      reason: 'You dragged this message onto Fizz\'s track, and Fizz takes it as a new task.'}]], 'Messages\' own delegate, the three AIKit takes')
+    assert.equal(receipt.note, `Fizz takes the message as a new task (${request.task_ref}), and AIKit reads its source as the message; Messages recorded the turning.`)
+    // Factory gives custody to the Position the message went to, so another agent's track refuses it, as does a Position with no agent and a
+    // drop that is not on a session's track: nothing is made.
+    assert.equal((await maker.run(model.trackKey(tester), drag())).error, DELEGATE_WORDS.another('Fizz'))
+    assert.equal((await maker.run(model.trackKey(fizz), drag({agent: undefined}))).error, DELEGATE_WORDS.noAgent('Fizz'))
+    assert.equal((await maker.run(model.trackKey(group), drag())).error, DELEGATE_WORDS.noSession)
+    assert.equal(made().length, 1, 'no refused drop made a task')
+    // AIKit refuses the task: its words, and nothing recorded.
+    refuseTask = 'Current Agency does not authorise this task, authority or participant'
+    const refused = await maker.run(model.trackKey(fizz), drag())
+    assert.equal(refused.ok, false)
+    assert.ok(refused.error.endsWith(refuseTask), refused.error)
+    assert.equal(written.length, 1)
+    refuseTask = null
+    // Messages refuses the turning: the task stands, and the receipt says the turning was not recorded, in AIKit's words.
+    refuseDelegate = 'Factory refused the custody (custody.conflict): the work is held.'
+    const unrecorded = await maker.run(model.trackKey(fizz), drag({communique: 'aikit:communique:8'}))
+    assert.equal(unrecorded.ok, false)
+    assert.match(unrecorded.error, /^Fizz has the message as a new task \(task:run-the-tests-next-[0-9a-z]+\), but the turning was not recorded: Factory refused the custody \(custody\.conflict\): the work is held\.$/)
     // Anything else is the task maker's, as before: a constellation's ref it does not hold is refused in its words.
     assert.match((await maker.run(model.trackKey(fizz), 'central:constellation:nope')).error, /no constellation the wiki's reading holds/)
-  } finally { publishDevice(ids.MESSAGES_ID, null) }
+  } finally { publishDevice(ids.MESSAGES_ID, null); globalThis.fetch = real }
 })

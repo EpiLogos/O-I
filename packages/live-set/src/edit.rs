@@ -1858,6 +1858,24 @@ pub(crate) fn with_source(path: &str, track: &Element, at: ClipAt, mut reading: 
                 }
             }
         };
+        // Each note's MPE as its take keeps it (O-I #853, acts.rs note_mpe), on the note of its NoteId and pitch.
+        if let (Some(rows), Some(Value::Array(notes))) =
+            (taken["keeps"]["mpe"].as_array(), fields.get_mut("notes"))
+        {
+            for note in notes.iter_mut() {
+                let row = rows
+                    .iter()
+                    .find(|row| row["id"] == note["id"] && row["p"] == note["p"]);
+                if let Some(Value::Object(row)) = row {
+                    let lanes: serde_json::Map<String, Value> = row
+                        .iter()
+                        .filter(|(lane, _)| *lane == "pressure" || *lane == "bend")
+                        .map(|(lane, points)| (lane.clone(), points.clone()))
+                        .collect();
+                    note["mpe"] = Value::Object(lanes);
+                }
+            }
+        }
         fields.insert("take".into(), taken);
     }
     reading

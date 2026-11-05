@@ -5,8 +5,9 @@
 // surface and a note from a controller are notes of the same part, so Sustain holds them alike and Panic releases them all.
 import {useSyncExternalStore} from 'react'
 import type {KeyboardLayoutName} from './liveChainDevices'
-import {createJankoInput, KEYBOARD_SETTINGS_DEFAULT, KEYBOARD_TRANSPOSE, type JankoInput, type KeyboardSettings} from './janko/jankoInput'
+import {createJankoInput, KEYBOARD_SETTINGS_DEFAULT, KEYBOARD_TRANSPOSE, keyToSound, type EngineLatency, type JankoInput, type KeyboardSettings} from './janko/jankoInput'
 import {commitLiveStage} from './torusInstrument'
+import {liveEngineLatency} from './liveEngine'
 import {liveTakeRecorder} from './liveTake'
 import {sendLiveMidiOut} from '../native/liveMidi'
 
@@ -55,6 +56,11 @@ export function useKeyboardSettings(): KeyboardSettings {
   return useSyncExternalStore(subscribeSettings, keyboardSettings, keyboardSettings)
 }
 
+// ── key-to-sound (O-I #853 round 18) ───────────────────────────────────────────────────────────────────────────────────────────
+
+/** The engine's legs of key-to-sound while it plays the Torus (live/liveEngine.ts liveEngineLatency); none while it does not. */
+export const engineLatency = (): EngineLatency | null => liveEngineLatency()
+
 // ── the one playing path ───────────────────────────────────────────────────────────────────────────────────────────────────────
 
 /** What the surfaces draw of the path: the pitch classes held down, and the owner's last refusal (null after an act it took). */
@@ -84,11 +90,14 @@ export function livePlayingPath(): JankoInput {
     onResult: result => { if (live) publish({held: live.state.held, refusal: result.ok ? null : result.error}) },
     onHeld: held => { if (live) publish({held, refusal: live.state.refusal}) },
     onNote: played => liveTakeRecorder.played(played),
+    onTouch: touch => liveTakeRecorder.touched(touch),
   })
   live = {input, state: IDLE, transform: null}
   if (typeof window !== 'undefined' && typeof globalThis === 'object') {
-    // The measurement hook (O-I #853): the last strikes' timing, read from the inspector as `__oiKeyLatency()`.
-    (globalThis as {__oiKeyLatency?: () => unknown}).__oiKeyLatency = () => input.latency()
+    // The measurement hook (O-I #853): the last strikes' timing, read from the inspector as `__oiKeyLatency()`, and each joined with the
+    // engine's legs while it plays (round 18) as `__oiKeyToSound()`.
+    (globalThis as {__oiKeyLatency?: () => unknown}).__oiKeyLatency = () => input.latency();
+    (globalThis as {__oiKeyToSound?: () => unknown}).__oiKeyToSound = () => input.latency().map(strike => keyToSound(strike, engineLatency()))
   }
   return input
 }

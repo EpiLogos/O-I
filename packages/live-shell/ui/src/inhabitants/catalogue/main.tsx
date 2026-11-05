@@ -20,7 +20,7 @@ import {DESIGNED, DESIGNED_IDS, loadDesign, type DesignedDevice} from './panels'
 import type {Value} from './panels/design'
 import {flippedOf, popoutOf} from './panels/popout'
 import {PlaceContext} from '../sdk/panel'
-import {ChainOverview} from '../../frame/detail/ChainOverview'
+import {ChainOverview, useChainWheel} from '../../frame/detail/ChainOverview'
 import {ClipGallery} from './clips/gallery'
 import './catalogue.css'
 import './panels/panels.css'
@@ -132,10 +132,12 @@ function GalleryMember({id}: {id: string}) {
 }
 const galleryMember = (id: string) => <GalleryMember key={id} id={id} />
 
-/** A chain as Device view draws it: one row that scrolls sideways when the devices run longer than the room, and at its foot, where
- * the status bar carries it, the chain in miniature with the box over what the row shows (frame/detail/ChainOverview.tsx). */
+/** A chain as Device view draws it: one row that scrolls sideways when the devices run longer than the room, and turns under the
+ * wheel, and at its foot, where the status bar carries it, the chain in miniature with the box over what the row shows
+ * (frame/detail/ChainOverview.tsx). */
 function ChainRow({width, children}: {width?: number; children: ReactNode}) {
   const [row, setRow] = useState<HTMLDivElement | null>(null)
+  useChainWheel(row)
   return <div className="cat-chain" style={width ? {width} : undefined}>
     <div className="cat-chain-row" ref={setRow}>{children}</div>
     <div className="cat-chain-foot"><span>Device</span><ChainOverview row={row} width={240} /></div>

@@ -2189,8 +2189,9 @@ devices beside it. Hide all three and the rack folds to that strip.
 A chain runs left to right as far as its devices go, and a rack's devices
 stand inside it on the chain, so a rack with its devices showing makes the
 chain longer, as in Live. When the chain is longer than Device view, it
-scrolls sideways: swipe, or drag in the picture of the chain beside the
-Device switch, whose box marks the part on screen (§10.1). Fold a device, or
+scrolls sideways: swipe, turn the wheel over it, or drag in the picture of
+the chain beside the Device switch, whose box marks the part on screen
+(§10.1). Fold a device, or
 hide a rack's views, to give the others the room.
 
 The expanded view is a band as wide as the detail area, between Clip view and
@@ -8613,6 +8614,7 @@ settings and the Gateway's mark across its head (§19.2).
 3. To read the whole conversation, press ▦ on the tile.
 4. To make an agent, group its devices on a track (§19.4); to make a set, group agents' chains in an Agent rack (§19.15).
 5. To put the agent to work, drag its face onto a track.
+6. To turn a message into work, drag it onto its agent's track. The agent takes it as a new task, made of the message, and the message stands as turned into that task.
 
 #### Rules
 - One agent has one conversation, the same in every mode and in its Agent device.

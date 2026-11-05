@@ -7,7 +7,7 @@ import {setLiveModeHold, useLiveModeInForce} from '../../native/liveModeCatalogu
 import {MidiMapHost, MidiMapToggles} from '../../live/midiMap/midiMapControls'
 import {clipAddressOf, useLiveClipPlay} from '../../live/clipPlayer'
 import {useLiveEngineTransport} from '../../live/liveEngine'
-import {useLiveRecord} from '../../live/liveTake'
+import {useLiveArm, useLiveRecord} from '../../live/liveTake'
 import {useLiveTorusReading} from '../../live/torusInstrument'
 import {setSelectionOf} from '../liveSelection'
 import {useOptionalContinuity} from '../../continuity/workspace'
@@ -27,10 +27,14 @@ export const useLiveTransport: UseModeTransport = ({tempoBpm, setPath = null}) =
   const torus = useLiveTorusReading()
   const record = useLiveRecord({setPath, track: setSelectionOf(selection, setPath ?? undefined)?.track ?? null, bpm: tempoBpm, torus,
     mode: ready ? {root: hold.root, scale: hold.key} : null})
+  // Arm (§21.2 Transport, "Arm | Records your parameter moves as automation lanes"; O-I 853): while a take records, each move of a mapped
+  // control lies on its parameter's lane.
+  const arm = useLiveArm()
   const playStop = clipAddressOf(selection) ? clip : engine
   return {
     ...playStop,
     record,
+    arm,
     tempo: {readout: {value: tempoBpm?.toFixed(2) ?? '—', title: 'Tempo — the set\'s tempo · document read-only until the editing owner lands'}},
     root: {control: <select aria-label="Root note" title={`Root — the mode in force's root. ${line}`} disabled={!ready}
       value={ready ? String(hold.root) : ''} onChange={event => setLiveModeHold({root: Number(event.target.value)})}>

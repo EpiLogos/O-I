@@ -427,6 +427,10 @@ export type AikitReadRequest =
    * outcome:"answered"|"unanswered", answered_by?, answers?:{id:{type, choice?|noul?|score?, probabilities?, confidence?}}, failure?}`,
    * kept by AIKit against the session that asked the decision helper. The Agent's thread draws them as Ask rows. */
   | {kind:"decision-asks";agent_session:string}
+  /** `aikit praxis activity --session S` (O-I 745): `aikit.praxis-session/v1` `{session, record, standing:"open"|"closed"|"unrecorded",
+   * ticket, activity (aikit.praxis-activity/v1, null when unrecorded), reason}`: what one session loaded, invoked and relied on, from its
+   * development-entry record. The Skillset rack's Loaded, Invoked and Relied-on rungs. */
+  | {kind:"praxis-activity";session:string}
   /** `aikit work continuity closeout verify [--project P] [--since UNIX_SECONDS] [--run RUN_REF]`: `{clauses, project, verified}`. An
    * unverified close-out exits 1 with its verdict; it is still the reading. */
   | {kind:"closeout-verify";project?:string|null;since?:number|null;run?:string|null}
@@ -717,10 +721,10 @@ export type KernelOp =
   | {op:"live_set_read";path:string}
   // Every live-dynamics device parameter table, keyed by document element name.
   | {op:"live_device_descriptors"}
-  // One device's stored parameter values on one track.
-  | {op:"live_device_params_read";path:string;track:string;device:string}
+  // One device's stored parameter values on one track; `at` its place on the track's chain, the instrument counted (else the first of its name).
+  | {op:"live_device_params_read";path:string;track:string;device:string;at?:number}
   // Validate one stored parameter against its table's extent and write the set back in place; refusals name the law.
-  | {op:"live_device_param_write";path:string;track:string;device_name:string;param_id:string;value:unknown}
+  | {op:"live_device_param_write";path:string;track:string;device_name:string;at?:number;param_id:string;value:unknown}
   // One clip read whole (markers, launch, follow actions, scale, notes, envelopes) with the set's revision; track by its place in the document.
   | {op:"live_clip_read";path:string;track:number;clip:LiveClipAt}
   // Change a clip's settings (the design's words) and/or a MIDI clip's notes against the set's revision; refusals name Live's values.
@@ -1381,7 +1385,10 @@ export interface EncounterSessionSettingsReading {
 /** Where a clip stands on its track: its arrangement index or its session slot's scene. */
 export type LiveClipAt = {arrangement: number} | {slot: number}
 /** One note of a MIDI clip: MIDI pitch, place and length in beats, velocity 1–127, chance 0–1. */
-export interface LiveNote {id?: number; p: number; at: number; len: number; vel?: number; chance?: number; on?: boolean}
+/** A note's own expression (DLW §21.1 Clip view, the MPE tab: "Pressure from the playing surface records here"; O-I #853), as the hand
+ * played it: each lane's points [beat from the note's start, amount], in order — pressure 0 to 1, bend −1 to 1 of its range. */
+export interface LiveNoteMpe {pressure?: [number, number][]; bend?: [number, number][]}
+export interface LiveNote {id?: number; p: number; at: number; len: number; vel?: number; chance?: number; on?: boolean; mpe?: LiveNoteMpe}
 /** A clip whole, in the design's words (packages/live-set/src/edit.rs clip_reading). A value the document lacks is null. */
 export interface LiveClipReading {
   kind: 'midi' | 'audio'; name: string; colourIndex: number | null; active: boolean | null

@@ -307,32 +307,63 @@ fn find_track_mut<'a>(
     })
 }
 
-/// The first device of a track's chain carrying the element name
-/// (`DeviceChain/DeviceChain/Devices` — the summary's own walk).
-fn find_device<'a>(
-    track: &'a crate::xml::Element,
-    device: &str,
-) -> Option<&'a crate::xml::Element> {
-    track
-        .child("DeviceChain")?
-        .child("DeviceChain")?
-        .child("Devices")?
-        .children
-        .iter()
-        .find(|d| d.name == device)
+/// The device standing at `place` on `track`'s chain, a place [`device_place`] found there.
+fn device_at(track: &crate::xml::Element, place: usize) -> &crate::xml::Element {
+    &track
+        .child("DeviceChain")
+        .and_then(|d| d.child("DeviceChain"))
+        .and_then(|d| d.child("Devices"))
+        .expect("a place device_place found")
+        .children[place]
 }
 
-fn find_device_mut<'a>(
-    track: &'a mut crate::xml::Element,
+fn device_at_mut(track: &mut crate::xml::Element, place: usize) -> &mut crate::xml::Element {
+    &mut track
+        .child_mut("DeviceChain")
+        .and_then(|d| d.child_mut("DeviceChain"))
+        .and_then(|d| d.child_mut("Devices"))
+        .expect("a place device_place found")
+        .children[place]
+}
+
+/// The place on `track`'s chain (its `DeviceChain/DeviceChain/Devices`, the instrument counted) of the device `device`
+/// a read or a write edits: `at` when the caller names it (DLW build ruling 2026-11-05, O-I #849: so the second of two
+/// devices of one name edits itself), which must hold a device of that name; the first of that name otherwise.
+fn device_place(
+    track: &crate::xml::Element,
+    track_name: &str,
     device: &str,
-) -> Option<&'a mut crate::xml::Element> {
-    track
-        .child_mut("DeviceChain")?
-        .child_mut("DeviceChain")?
-        .child_mut("Devices")?
-        .children
-        .iter_mut()
-        .find(|d| d.name == device)
+    at: Option<usize>,
+) -> Result<usize, String> {
+    let devices = track
+        .child("DeviceChain")
+        .and_then(|d| d.child("DeviceChain"))
+        .and_then(|d| d.child("Devices"))
+        .map(|d| &d.children[..])
+        .unwrap_or(&[]);
+    let a = |name: &str| {
+        let article = if name.starts_with(['A', 'E', 'I', 'O', 'U']) {
+            "an"
+        } else {
+            "a"
+        };
+        format!("{article} {name}")
+    };
+    match at {
+        Some(at) => match devices.get(at) {
+            None => Err(format!("\"{track_name}\" holds no device at place {at}")),
+            Some(d) if d.name != device => Err(format!(
+                "the device at place {at} on \"{track_name}\" is {}, not {}",
+                a(&d.name),
+                a(device)
+            )),
+            Some(_) => Ok(at),
+        },
+        None => devices
+            .iter()
+            .position(|d| d.name == device)
+            .ok_or_else(|| format!("no {device} device on track \"{track_name}\"")),
+    }
 }
 
 /// Resolve a table id — an XML path like `SideChain/OnOff` or
@@ -383,6 +414,7 @@ pub fn device_params_json(
     path: &str,
     track_name: &str,
     device: &str,
+    at: Option<usize>,
 ) -> Result<serde_json::Value, String> {
     let table = live_dynamics::params::table(device)
         .ok_or_else(|| format!("no parameter table for device element \"{device}\""))?;
@@ -390,8 +422,7 @@ pub fn device_params_json(
     let root = crate::open_gz(&bytes).map_err(|e| e.to_string())?;
     let track = find_track(&root, track_name)
         .ok_or_else(|| format!("no track named \"{track_name}\" in the document"))?;
-    let element = find_device(track, device)
-        .ok_or_else(|| format!("no {device} device on track \"{track_name}\""))?;
+    let element = device_at(track, device_place(track, track_name, device, at)?);
     let mut params = Vec::new();
     for desc in table {
         let Some(param) = resolve_path(element, desc.id) else {
@@ -417,6 +448,7 @@ pub fn device_param_set(
     path: &str,
     track_name: &str,
     device: &str,
+    at: Option<usize>,
     param_id: &str,
     value: &serde_json::Value,
 ) -> Result<serde_json::Value, String> {
@@ -464,8 +496,8 @@ pub fn device_param_set(
     {
         let track = find_track_mut(&mut root, track_name)
             .ok_or_else(|| format!("no track named \"{track_name}\" in the document"))?;
-        let element = find_device_mut(track, device)
-            .ok_or_else(|| format!("no {device} device on track \"{track_name}\""))?;
+        let place = device_place(track, track_name, device, at)?;
+        let element = device_at_mut(track, place);
         let param = resolve_path_mut(element, param_id).ok_or_else(|| {
             format!("the set carries no \"{param_id}\" element under {device} on \"{track_name}\"")
         })?;
@@ -478,7 +510,11 @@ pub fn device_param_set(
     replace_file_atomically(std::path::Path::new(path), &out)?;
     // The persisted reading, from the set's own element (range unchanged).
     let range = find_track(&root, track_name)
-        .and_then(|track| find_device(track, device))
+        .and_then(|track| {
+            device_place(track, track_name, device, at)
+                .ok()
+                .map(|place| device_at(track, place))
+        })
         .and_then(|element| resolve_path(element, param_id))
         .and_then(|param| param.child("MidiControllerRange"));
     Ok(serde_json::json!({
@@ -586,6 +622,99 @@ mod tests {
         std::fs::remove_file(&path).unwrap();
         assert!(set_json(path.to_str().unwrap()).is_err());
         std::fs::remove_dir(&directory).unwrap();
+    }
+
+    /// DLW build ruling 2026-11-05 (O-I #849): a device's setting is read and written at the device's place on its chain,
+    /// so the second of two devices of one name edits itself, not the first; a place that holds another device is refused
+    /// in words, and a write that names no place keeps the first of that name.
+    #[test]
+    fn the_second_of_two_glues_on_one_chain_is_read_and_written_at_its_own_place() {
+        let directory =
+            std::env::temp_dir().join(format!("set-api-two-glues-{}", std::process::id()));
+        std::fs::create_dir_all(&directory).unwrap();
+        let path = directory.join("two-glues.als");
+        let glue = |id: u32| {
+            format!(
+                r#"<GlueCompressor Id="{id}"><Threshold><LomId Value="0" /><Manual Value="-40" /><MidiControllerRange><Min Value="-40" /><Max Value="0" /></MidiControllerRange></Threshold></GlueCompressor>"#
+            )
+        };
+        let root = crate::xml::parse(&format!(
+            r#"<Ableton><LiveSet><MainTrack><DeviceChain><Mixer><Tempo><Manual Value="120" /></Tempo></Mixer></DeviceChain></MainTrack><Tracks><MidiTrack Id="1"><Name><EffectiveName Value="Bass" /></Name><DeviceChain><DeviceChain><Devices><Operator Id="9" />{}{}</Devices></DeviceChain></DeviceChain></MidiTrack></Tracks><Scenes><Scene /></Scenes></LiveSet></Ableton>"#,
+            glue(10),
+            glue(12)
+        ))
+        .unwrap();
+        std::fs::write(&path, crate::write_gz(&root).unwrap()).unwrap();
+        let path = path.to_str().unwrap();
+        let threshold = |at: Option<usize>| {
+            device_params_json(path, "Bass", "GlueCompressor", at).unwrap()["params"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|p| p["id"] == "Threshold")
+                .map(|p| p["value"].clone())
+                .unwrap()
+        };
+        let written = device_param_set(
+            path,
+            "Bass",
+            "GlueCompressor",
+            Some(2),
+            "Threshold",
+            &serde_json::json!(-12.0),
+        )
+        .unwrap();
+        assert_eq!(written["param"]["value"], "-12", "{written}");
+        assert_eq!(
+            threshold(Some(2)),
+            "-12",
+            "the second Glue holds what was written to it"
+        );
+        assert_eq!(threshold(Some(1)), "-40", "the first Glue is untouched");
+        assert_eq!(
+            threshold(None),
+            "-40",
+            "named without its place, the first of the name is read"
+        );
+        // the first written without a place, as before
+        device_param_set(
+            path,
+            "Bass",
+            "GlueCompressor",
+            None,
+            "Threshold",
+            &serde_json::json!(-20.0),
+        )
+        .unwrap();
+        assert_eq!(
+            (threshold(Some(1)), threshold(Some(2))),
+            ("-20".into(), "-12".into())
+        );
+        for (at, words) in [
+            (
+                0,
+                "the device at place 0 on \"Bass\" is an Operator, not a GlueCompressor",
+            ),
+            (3, "\"Bass\" holds no device at place 3"),
+        ] {
+            assert_eq!(
+                device_param_set(
+                    path,
+                    "Bass",
+                    "GlueCompressor",
+                    Some(at),
+                    "Threshold",
+                    &serde_json::json!(-6.0)
+                )
+                .unwrap_err(),
+                words
+            );
+            assert_eq!(
+                device_params_json(path, "Bass", "GlueCompressor", Some(at)).unwrap_err(),
+                words
+            );
+        }
+        std::fs::remove_dir_all(&directory).unwrap();
     }
 
     #[test]

@@ -210,6 +210,9 @@ pub(crate) mod host {
         /// track), and its element name.
         track_name: Option<String>,
         device: Option<String>,
+        /// Its place on that track's chain, the instrument counted, as the set's owner writes it (DLW build ruling
+        /// 2026-11-05: the second of two devices of one name is itself); absent, the first of that name.
+        at: Option<usize>,
     }
 
     /// One of the Torus's keys: its row on the surface and its column.
@@ -906,6 +909,21 @@ pub(crate) mod host {
                 "torus_unplaced": self.handle.torus_unplaced(),
                 "torus_follow": self.follow_reading(),
                 "torus_effects": self.effects_reading(),
+                "latency": self.latency_reading(),
+            })
+        }
+
+        /// The engine's own legs of key-to-sound (O-I #853 round 18), for the page to join with its own
+        /// (jankoInput.ts keyToSound): the device block it last filled, the most a key waits for one at the
+        /// engine's rate, the longest any event waited, and the device's output latency (callback to playback).
+        fn latency_reading(&self) -> Value {
+            let latency = self.handle.latency();
+            let ms = |ns: u64| ns as f64 / 1e6;
+            json!({
+                "block_frames": latency.block_frames,
+                "block_ms": latency.block_frames as f64 * 1000.0 / f64::from(ENGINE_RATE),
+                "longest_wait_ms": ms(latency.longest_wait_ns),
+                "output_latency_ms": ms(latency.output_latency_ns),
             })
         }
 
@@ -1141,7 +1159,7 @@ pub(crate) mod host {
                 let (Some(track), Some(device)) = (&event.track_name, &event.device) else {
                     return Err("a device event names its track_name and its device".into());
                 };
-                self.make_again(track, device)?;
+                self.make_again(track, device, event.at)?;
                 return Ok(self.reading());
             }
             let event = event.event()?;
@@ -1183,14 +1201,20 @@ pub(crate) mod host {
 
         /// The set's device `device` on its track `track` made again in the engine from what the set now stores (O-I #849
         /// round 17: a setting of it the frame wrote through the set's owner, followed while the set plays): the set read
-        /// again, the device the owner writes (the first of its name on the first track of that name, "Master" the Main
-        /// track) made as Play makes it (live-engine `bridge::set_device`) and put in its place from the next block, one of
+        /// again, the device the owner writes (at its place `at` on the chain of the first track of that name, "Master"
+        /// the Main track; the first of its name when no place is named, DLW build ruling 2026-11-05) made as Play makes
+        /// it (live-engine `bridge::set_device`) and put in its place from the next block, one of
         /// the same kind sounding on from where the last stood (`EngineHandle::make_again`); kept to make again for Export
         /// Audio, and the reading's warnings read again from the set. Refused in words for a track or a device the set
         /// does not have, and for a part's instrument (made when the set is played).
-        pub fn make_again(&mut self, track: &str, device: &str) -> Result<(), String> {
+        pub fn make_again(
+            &mut self,
+            track: &str,
+            device: &str,
+            at: Option<usize>,
+        ) -> Result<(), String> {
             let document = set_document(&self.path)?;
-            let made = live_engine::bridge::set_device(&document, track, device)?;
+            let made = live_engine::bridge::set_device(&document, track, device, at)?;
             let id = self
                 .handle
                 .make_again(made.part, made.at, made.device)
@@ -2648,6 +2672,7 @@ pub(crate) mod host {
                 path.to_str().unwrap(),
                 "Bass",
                 "GlueCompressor",
+                None,
                 "Threshold",
                 &json!(-12.0),
             )
@@ -2718,6 +2743,64 @@ pub(crate) mod host {
             for p in [path, still_path] {
                 std::fs::remove_dir_all(p.parent().unwrap()).unwrap();
             }
+        }
+
+        /// DLW build ruling 2026-11-05 (O-I #849): the second of two Glues on one chain, written by the set's owner at its
+        /// place and followed by a device event naming that place, is made again itself; the first sounds on as it was.
+        #[test]
+        fn the_second_of_two_glues_edited_while_it_plays_is_made_again_at_its_own_place() {
+            let glue = |id: u32| {
+                format!(
+                    r#"<GlueCompressor Id="{id}"><Threshold><LomId Value="0" /><Manual Value="-40" /></Threshold>
+                  <Range><LomId Value="0" /><Manual Value="30" /></Range></GlueCompressor>"#
+                )
+            };
+            let xml = SET.replace(
+                r#"<GlueCompressor Id="10" />"#,
+                &format!("{}{}", glue(10), glue(12)),
+            );
+            let path = write_set("two-glues", &xml);
+            let mut opened = Opened::open(&path).unwrap();
+            let mut core = opened.core.take().unwrap();
+            pull(&mut core, &[512, 4096]);
+            live_set::api::device_param_set(
+                path.to_str().unwrap(),
+                "Bass",
+                "GlueCompressor",
+                Some(2),
+                "Threshold",
+                &json!(-12.0),
+            )
+            .unwrap();
+            let event = r#"{"kind":"device","track_name":"Bass","device":"GlueCompressor","at":2}"#;
+            opened
+                .send(serde_json::from_str::<EventIn>(event).unwrap())
+                .unwrap();
+            pull(&mut core, &[512]);
+            let (_, _, at, element) = opened.made_again.last().unwrap();
+            assert_eq!(
+                (*at, element.attr("Id")),
+                (1, Some("12")),
+                "the second Glue, past the instrument"
+            );
+            let threshold = element
+                .find("Threshold")
+                .and_then(|t| t.child("Manual"))
+                .and_then(|m| m.attr("Value"));
+            assert_eq!(threshold, Some("-12"), "made from what was written to it");
+            let refused = opened
+                .send(
+                    serde_json::from_str::<EventIn>(
+                        r#"{"kind":"device","track_name":"Bass","device":"GlueCompressor","at":0}"#,
+                    )
+                    .unwrap(),
+                )
+                .unwrap_err();
+            assert_eq!(
+                refused,
+                "the device at place 0 on 'Bass' is an Operator, not a GlueCompressor"
+            );
+            std::fs::remove_dir_all(path.parent().unwrap()).unwrap();
         }
 
         #[test]
@@ -2981,6 +3064,26 @@ pub(crate) mod host {
                 .hand_torus(0, "sha256:none", &json!({}), Takes::Instead(Due::Now))
                 .unwrap_err();
             assert!(refused.contains("built without QL's K8 node"), "{refused}");
+        }
+
+        /// The engine's own legs of key-to-sound (O-I #853 round 18), in the reading for the page to join
+        /// with its own (jankoInput.ts keyToSound): the device block it last filled and how long a key at
+        /// worst waits for one at the engine's rate, the longest any event waited, and the device's output
+        /// latency (callback to playback) as the stream reports it.
+        #[test]
+        fn the_reading_names_the_engines_legs_of_key_to_sound() {
+            let path = write_set("key-to-sound", SET);
+            let mut opened = Opened::open(&path).unwrap();
+            let mut core = opened.core.take().unwrap();
+            let mut block = vec![0.0f32; 2 * 480];
+            core.pull_block(&mut block);
+            core.report_output_latency(25_000_000);
+            let latency = opened.reading()["latency"].clone();
+            assert_eq!(
+                latency,
+                json!({"block_frames": 480, "block_ms": 10.0, "longest_wait_ms": 0.0, "output_latency_ms": 25.0}),
+                "a key waits at worst one block at 48 kHz, then the device's output"
+            );
         }
 
         /// The frame names when it will play the sample its owner handed the Torus over at, as a time

@@ -844,12 +844,18 @@ pub struct SetDevice {
 }
 
 /// The device `device` of the set's track `track` (O-I #849 round 17: a device the set's owner wrote a setting of, followed
-/// while the set plays): the one the owner writes, the first of that element name on the chain of the first track of that
-/// name ("Master" the Main track, `live_set::api` `find_device`), made as Play makes it ([`bridge_set`]) and placed as the
-/// engine holds it: a part's, a return's or a group's by its index among them, its place on the chain past a MIDI part's
-/// instrument (its first Operator, which stands on no chain). Refused in words for a track or a device the set does not
-/// have, and for a part's instrument.
-pub fn set_device(root: &Element, track: &str, device: &str) -> Result<SetDevice, String> {
+/// while the set plays): the one the owner writes, on the chain of the first track of that name ("Master" the Main track,
+/// `live_set::api` `device_place`) at its place `at` on that chain, the instrument counted (DLW build ruling 2026-11-05: so
+/// the second of two devices of one name is itself), or the first of that element name when no place is named; made as
+/// Play makes it ([`bridge_set`]) and placed as the engine holds it: a part's, a return's or a group's by its index among
+/// them, its place on the chain past a MIDI part's instrument (its first Operator, which stands on no chain). Refused in
+/// words for a track, a device or a place the set does not have, a place holding another device, and a part's instrument.
+pub fn set_device(
+    root: &Element,
+    track: &str,
+    device: &str,
+    at: Option<usize>,
+) -> Result<SetDevice, String> {
     let ls = root
         .find("LiveSet")
         .ok_or("the set document holds no LiveSet")?;
@@ -876,10 +882,35 @@ pub fn set_device(root: &Element, track: &str, device: &str) -> Result<SetDevice
         found.ok_or_else(|| format!("the set has no track named '{track}'"))?
     };
     let devices = devices_of(tr);
-    let place = devices
-        .iter()
-        .position(|d| d.name == device)
-        .ok_or_else(|| format!("'{track}' holds no {device} on its chain"))?;
+    let a = |name: &str| {
+        let article = if name.starts_with(['A', 'E', 'I', 'O', 'U']) {
+            "an"
+        } else {
+            "a"
+        };
+        format!("{article} {name}")
+    };
+    let place = match at {
+        Some(at) => match devices.get(at) {
+            None => {
+                return Err(format!(
+                    "'{track}' holds no device at place {at} on its chain"
+                ))
+            }
+            Some(d) if d.name != device => {
+                return Err(format!(
+                    "the device at place {at} on '{track}' is {}, not {}",
+                    a(&d.name),
+                    a(device)
+                ))
+            }
+            Some(_) => at,
+        },
+        None => devices
+            .iter()
+            .position(|d| d.name == device)
+            .ok_or_else(|| format!("'{track}' holds no {device} on its chain"))?,
+    };
     let instrument = (tr.name == "MidiTrack")
         .then(|| devices.iter().position(|d| d.name == "Operator"))
         .flatten();
@@ -1654,7 +1685,7 @@ mod tests {
             track("MidiTrack", 12, "Keys", &glue(13, "-3")),
         ))
         .unwrap();
-        let made = |track: &str, device: &str| set_device(&root, track, device);
+        let made = |track: &str, device: &str| set_device(&root, track, device, None);
         let placed = |track: &str, device: &str| {
             let d = made(track, device).unwrap_or_else(|e| panic!("{track} {device}: {e}"));
             (d.part, d.at, d.device.name().to_string())
@@ -1704,6 +1735,27 @@ mod tests {
             ("Drums", "Echo", "'Drums' holds no Echo on its chain"),
         ] {
             assert_eq!(made(track, device).err().as_deref(), Some(words), "{track} {device}");
+        }
+        // DLW build ruling 2026-11-05: named at its place on the chain (the instrument counted, as the set's owner
+        // writes it), the second of two Glues is itself, made at what it stores and placed past the instrument
+        let at = |device: &str, at: usize| set_device(&root, "Keys", device, Some(at));
+        let mut second = at("GlueCompressor", 3).unwrap();
+        assert_eq!((second.part, second.at), (Part::Track(1), 2));
+        assert_eq!(second.element.attr("Id"), Some("9"));
+        assert!(sound_alike(second.device.as_mut(), &mut stored(-6.0)));
+        let first = at("GlueCompressor", 2).unwrap();
+        assert_eq!((first.at, first.element.attr("Id")), (1, Some("8")));
+        assert_eq!(
+            at("Echo", 0).unwrap().at,
+            0,
+            "before the instrument, its place is its own"
+        );
+        for (device, place, words) in [
+            ("GlueCompressor", 1, "the device at place 1 on 'Keys' is an Operator, not a GlueCompressor"),
+            ("Operator", 1, "the Operator on 'Keys' is its instrument, which the engine makes when the set is played: the edit is heard from the next Play"),
+            ("GlueCompressor", 7, "'Keys' holds no device at place 7 on its chain"),
+        ] {
+            assert_eq!(at(device, place).err().as_deref(), Some(words), "{device} at {place}");
         }
     }
 

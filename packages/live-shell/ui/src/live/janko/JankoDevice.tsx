@@ -136,6 +136,7 @@ export function JankoDeviceView({windowState, initialLayout = 'janko', modeMask 
       data-janko-in-mode={modeMask ? (modeMask[pitchClass] ? 'yes' : 'no') : undefined}
       data-janko-pitch-class={pitchClass} data-janko-row={key?.row} data-janko-column={key?.column} data-janko-touch-point={key?.touchPoint}
       onPointerDown={event => { press(pitchClass, pointerSource(event), pen(event), `pointer-${event.pointerId}`, key, heightOn(event)) }}
+      onPointerMove={event => { if (event.buttons !== 0 && pen(event) !== null) input.touch('pressure', event.pressure, pointerSource(event), `pointer-${event.pointerId}`) }}
       onPointerUp={event => release(pitchClass, pointerSource(event), `pointer-${event.pointerId}`)}
       onPointerLeave={event => release(pitchClass, pointerSource(event), `pointer-${event.pointerId}`)}
       onPointerCancel={event => release(pitchClass, pointerSource(event), `pointer-${event.pointerId}`)}

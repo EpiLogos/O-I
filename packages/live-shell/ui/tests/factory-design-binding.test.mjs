@@ -385,6 +385,23 @@ test('the rack holds what the seated agent carries, each member in its kind with
   assert.equal(by['skill/aikit/wiki-inhabitation'].says, "Inhabit a project wiki — generate the agent's living cognition around a project.", 'the form\'s prefix is the mark, not the text')
   assert.equal(by['skill/central/docs-methodology'].rev, '91151e4', 'the revision in use, as AIKit names it')
   assert.ok(members.every(m => m.rungs.slice(5).every(rung => rung === null)), 'carried is not loaded, and loaded is not used: nothing infers upward')
+  // The seated session's record (`aikit praxis activity --session`, aikit.praxis-session/v1; O-I 745): loaded and invoked, yes or no,
+  // while it works; relied on once its ticket's close named it.
+  const practice = (standing, activity) => ({schema: 'aikit.praxis-session/v1', session: 'agent-session/s1', record: 'claude:s1', standing,
+    ticket: 'EpiLogos/O-I#745', activity, reason: null})
+  const rungsOf = activity => Object.fromEntries(bind.rackMembers(rackInput({activity})).map(m => [m.id, m.rungs]))
+  const working = rungsOf(practice('open', {schema: 'aikit.praxis-activity/v1', loaded: ['skill/central/documentation-standing',
+    'skill/central/docs-methodology'], invoked: ['skill/central/docs-methodology'], relied_upon: []}))
+  assert.deepEqual(working['skill/central/docs-methodology'].slice(3, 8), [null, null, true, true, null],
+    'loaded and invoked from the session\'s own tool events; relied on not observed before the close; selected and projected stay hollow')
+  assert.deepEqual(working['skill/central/documentation-standing'].slice(5, 8), [true, false, null])
+  assert.deepEqual(working['skill/ql/ql-foundations'].slice(5, 8), [false, false, null], 'recorded and not loaded: no, not hollow')
+  const closed = rungsOf(practice('closed', {schema: 'aikit.praxis-activity/v1', loaded: ['skill/central/docs-methodology'], invoked: [],
+    relied_upon: ['skill/central/docs-methodology']}))
+  assert.deepEqual(closed['skill/central/docs-methodology'].slice(5, 8), [true, false, true], 'the close named what it relied on')
+  assert.deepEqual(closed['skill/central/documentation-standing'].slice(5, 8), [false, false, false])
+  const unrecorded = rungsOf({schema: 'aikit.praxis-session/v1', session: 'agent-session/s1', record: null, standing: 'unrecorded', activity: null})
+  assert.ok(Object.values(unrecorded).every(rungs => rungs.slice(5).every(rung => rung === null)), 'no record of the session: hollow, not no')
   const uncatalogued = bind.rackMembers(rackInput({skills: {rows: []}}))
   assert.deepEqual(uncatalogued[0].rungs.slice(0, 3), [true, false, true], 'a member the catalogue does not list is carried but not catalogued')
   assert.equal(bind.rackMembers(rackInput({profile: null})), null, 'no seated agent: no members, not the design\'s documentation set')

@@ -97,11 +97,12 @@ export interface LiveWriteHow {
 }
 /** A write the hand sent. */
 export const BY_HAND: LiveWriteHow = Object.freeze({hand: true})
-const BY_NONE: LiveWriteHow = Object.freeze({})
+/** A write no hand sent: Follow, a take's lane played again, a recall, a planet's modulation. */
+export const NO_HAND: LiveWriteHow = Object.freeze({})
 
 /** Send one stage command to the owner through the mounted frame: the one host-command channel the Live surfaces share. Settles with the
  * owner's answer; a refusal (no frame, a concealed frame, the owner's own reason) comes back named, never thrown into the control. */
-export function commitLiveStage(command: StageCommand, how: LiveWriteHow = BY_NONE): Promise<StageResult> {
+export function commitLiveStage(command: StageCommand, how: LiveWriteHow = NO_HAND): Promise<StageResult> {
   if (commander === null) return Promise.resolve({ok: false, error: 'No Expressions application is mounted for the live instrument'})
   // A synchronous refusal (no mounted frame, or a concealed one) settles as a named result, never a throw into the control.
   return new Promise<StageResult>(resolve => resolve(commander!(command)))
@@ -124,7 +125,7 @@ export function subscribeAcceptedLiveWrites(listener: AcceptedWriteListener): ()
 
 /** Send one instrument edit to the owner through the frame (BY_HAND when the hand sent it). Settles with the owner's answer; a refusal
  * carries the owner's reason. */
-export function commitLiveInstrumentEdit(edit: InstrumentEdit, how: LiveWriteHow = BY_NONE): Promise<StageResult> {
+export function commitLiveInstrumentEdit(edit: InstrumentEdit, how: LiveWriteHow = NO_HAND): Promise<StageResult> {
   return commitLiveStage({command: 'instrument', edit}, how)
 }
 

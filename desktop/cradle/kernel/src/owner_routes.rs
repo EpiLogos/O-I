@@ -769,6 +769,15 @@ pub enum AikitRead {
     DecisionAsks {
         agent_session: String,
     },
+    /// The practice one session loaded, invoked and relied on, read from its
+    /// development-entry record (`aikit praxis activity --session S`,
+    /// `aikit.praxis-session/v1`; O-I 745): the Skillset rack's Loaded,
+    /// Invoked and Relied-on rungs. `standing` is open while the session
+    /// works, closed once its ticket's close named what it relied on, and
+    /// unrecorded where AIKit keeps no entry for it.
+    PraxisActivity {
+        session: String,
+    },
     /// Whether a close-out left the objects it claims (`aikit work
     /// continuity closeout verify [--project P] [--since N] [--run R]`): each
     /// clause read back from its carrier. An unverified close-out is AIKit's
@@ -1120,6 +1129,7 @@ impl AikitRead {
             | Self::RefinementList
             | Self::FlowThoughts { .. }
             | Self::DecisionAsks { .. }
+            | Self::PraxisActivity { .. }
             | Self::Collate { .. }
             | Self::Init
             | Self::HarnessDisclose
@@ -2681,6 +2691,12 @@ pub(crate) fn aikit_read_args(request: &AikitRead) -> (&'static str, Vec<OsStrin
             args.push("--json".into());
             ("aikit decide asks", args)
         }
+        AikitRead::PraxisActivity { session } => {
+            let mut args = words(&["praxis", "activity"]);
+            push_flag(&mut args, "--session", Some(session.as_str()));
+            args.push("--json".into());
+            ("aikit praxis activity", args)
+        }
         AikitRead::FlowThoughts { flow_ref, limit } => {
             let mut args = words(&["flow", "thoughts"]);
             args.push(flow_ref.into());
@@ -2892,6 +2908,21 @@ fn aikit_read_answer(request: &AikitRead, cwd: Option<&Path>) -> Result<Reading,
                 ));
             }
             fields(route, data, &[("asks", Kind::List)])?
+        }
+        AikitRead::PraxisActivity { session } => {
+            let standing = data.get("standing").and_then(Value::as_str);
+            if data.get("schema").and_then(Value::as_str) != Some("aikit.praxis-session/v1")
+                || data.get("session").and_then(Value::as_str) != Some(session.as_str())
+                || !matches!(standing, Some("open" | "closed" | "unrecorded"))
+                || (standing != Some("unrecorded") && !data["activity"].is_object())
+            {
+                return Err(unexpected(
+                    route,
+                    &format!("aikit.praxis-session/v1 for {session}"),
+                    &data,
+                ));
+            }
+            data
         }
         AikitRead::Unused => fields(route, data, &[("unused", Kind::List)])?,
         AikitRead::History { view, .. } => match view {

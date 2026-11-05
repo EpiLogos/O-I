@@ -1,6 +1,6 @@
 // The MIDI and Key map's session hold (T-LIVE-MIDI leg 2). Held for the session in this module, as the mode hold and the note-device hold
 // are: never in browser storage, and never in the set document. The set document has no owner write for mappings, so nothing here is
-// persisted with the set, and recording a mapped move as automation waits on the arrangement's automation owner.
+// persisted with the set. A mapped move is recorded as automation by the take under Arm (live/liveTake.ts, O-I 853).
 //
 // The hold owns the mode, the armed parameter, the bindings, each parameter's last owner refusal, and one notice line. Actions take the
 // parameters the owner reads now (`targets`), so a click or a control is judged against what is on the surface.

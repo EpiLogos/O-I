@@ -4829,3 +4829,59 @@ fn aikit_reads_the_asks_kept_against_the_session_that_asked() {
     assert!(outcome.unwrap_err().contains("unrecognized subcommand"));
     let _ = fs::remove_dir_all(&dir);
 }
+
+#[test]
+fn aikit_reads_the_practice_a_session_loaded_invoked_and_relied_on() {
+    let _held = hold();
+    let dir = scratch("praxis-activity");
+    let aikit = Fake::new(&dir, "aikit");
+    let _bin = Bound::set("OI_AIKIT_BIN", &aikit.bin);
+    // REAL (5 Nov, O-I 745): `aikit praxis activity --session agent-session/direct-probe745 --json` from AIKit built at this
+    // round, against a scratch home whose development-entry record of that launch loaded two skills and invoked one.
+    let open: Value = serde_json::from_str(r#"{"context":{"context_id":"ctx_01M6MR4HNRFYJQP41HKSHF8G4F","project_root":null,"session_id":null},"data":{"activity":{"activity_refs":["aikit:development-entry:claude:probe-745"],"evidence_refs":[],"invoked":["skill/aikit/wiki-inhabitation"],"loaded":["skill/aikit/knowledge-navigation","skill/aikit/wiki-inhabitation"],"relied_upon":[],"return_destinations":[],"schema":"aikit.praxis-activity/v1","succeeded":[],"verified":[]},"reason":null,"record":"claude:probe-745","schema":"aikit.praxis-session/v1","session":"agent-session/direct-probe745","standing":"open","ticket":null},"ok":true,"schema":1,"warnings":[]}"#).unwrap();
+    aikit.answer(&open);
+    let asked = json!({"op": "aikit_read", "request": {"kind": "praxis-activity",
+        "session": "agent-session/direct-probe745"}});
+    let (outcome, form) = dispatched(no_central(&dir), op(asked.clone()));
+    assert_eq!(form, "owner-read");
+    let (route, data, _) = reading(&outcome.unwrap());
+    assert_eq!(route, "aikit praxis activity");
+    assert_eq!(data, open["data"]);
+    assert_eq!(data["standing"], "open");
+    assert_eq!(
+        data["activity"]["invoked"],
+        json!(["skill/aikit/wiki-inhabitation"])
+    );
+    assert_eq!(
+        aikit.asked(),
+        ["praxis activity --session agent-session/direct-probe745 --json"]
+    );
+    // REAL: a launch AIKit keeps no record of is unrecorded, not an empty practice.
+    aikit.forget();
+    let unrecorded: Value = serde_json::from_str(r#"{"context":{"context_id":"ctx_01M6MR3RF9V50N81S1WKHSFWJ8","project_root":null,"session_id":null},"data":{"activity":null,"reason":"no development entry is kept for this session","record":null,"schema":"aikit.praxis-session/v1","session":"agent-session/direct-nobody","standing":"unrecorded","ticket":null},"ok":true,"schema":1,"warnings":[]}"#).unwrap();
+    aikit.answer(&unrecorded);
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "aikit_read", "request": {"kind": "praxis-activity",
+            "session": "agent-session/direct-nobody"}}),
+        ),
+    );
+    let (_, data, _) = reading(&outcome.unwrap());
+    assert_eq!(data["standing"], "unrecorded");
+    assert_eq!(data["activity"], Value::Null);
+    // An answer for another session than the one asked about is not this session's.
+    aikit.forget();
+    aikit.answer(&open);
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "aikit_read", "request": {"kind": "praxis-activity",
+            "session": "agent-session/another"}}),
+        ),
+    );
+    assert!(outcome
+        .unwrap_err()
+        .contains("aikit.praxis-session/v1 for agent-session/another"));
+    let _ = fs::remove_dir_all(&dir);
+}

@@ -2,16 +2,17 @@
 // parameters. Each target reads the owner's value now, and writes through the parameter's own write path: the owner's instrument edit
 // (commitLiveInstrumentEdit, the one channel the Live faces share) is an owner write, and the Scale tie is a session-held value (the note-device
 // hold, not the owner), which the target says so. A mapped control is the hand (BY_HAND): a Lens or Frame it moves turns Follow off
-// (DLW build ruling 2026-11-05). A target is only offered while the owner states its value, so a map never binds a
+// (DLW build ruling 2026-11-05). A take's lane played again is the same write sent by no hand, apply(value, NO_HAND) (writeMapTarget;
+// DLW build ruling 2026-11-05, round 866). A target is only offered while the owner states its value, so a map never binds a
 // parameter it cannot read. The Torus's compact macros (DLW §21.2) map as its M1′ session's own edits: Carrier and Fundamental run
 // linearly, Rate on a log curve (one step a year to 40,000 a second spans twelve decades); Damping stands unmapped, saying why.
 
 import type {InstrumentEdit, StageResult} from '@epilogos/expressions-boundary'
-import {BY_HAND, commitLiveInstrumentEdit, liveInstrumentWritable, liveTorusMacroRows, liveTorusState, LIVE_CADENCE_OPTIONS, TORUS_FUNDAMENTAL, TORUS_RATE,
-  torusSessionEdit, torusSessionOf, type LiveTorusState, type TorusSettingsEdit} from '../torusInstrument'
+import {BY_HAND, commitLiveInstrumentEdit, liveInstrumentWritable, liveTorusMacroRows, liveTorusState, LIVE_CADENCE_OPTIONS, NO_HAND, TORUS_FUNDAMENTAL, TORUS_RATE,
+  torusSessionEdit, torusSessionOf, type LiveTorusState, type LiveWriteHow, type TorusSettingsEdit} from '../torusInstrument'
 import {noteDeviceChain, setScaleTie} from '../noteDevices/noteDeviceHold'
 import {NOTE_DEVICE_LABEL, TIE_RULES, TIE_RULE_LABEL, type NoteDevice, type TieRule} from '../noteDevices/noteDevices'
-import type {MapTarget} from './midiMapModel'
+import type {MapTarget, MapValue} from './midiMapModel'
 
 /** The Level slider's range, as the Instruments section draws it (STAGE_INSTRUMENT_LEVEL). */
 const LEVEL_RANGE = {min: 0, max: 4, step: 0.05} as const
@@ -30,6 +31,8 @@ export const MAP_UNMAPPED: Readonly<Record<string, string>> = {
   damping: 'Damping is not mappable yet: the owner keeps the decay rate, not the Q you set, so a control could not be read back until an owner reads Q.',
 }
 
+const cadenceEdit = (value: string): InstrumentEdit => ({kind: 'cadence', rate: value === 'hold' ? 'hold' : Number(value) as 1 | 12})
+
 /** The parameters a map can bind, as the owner reads them now and the note devices hold them. */
 export function mapTargets(torus: LiveTorusState | null, chain: readonly NoteDevice[]): MapTarget[] {
   const targets: MapTarget[] = []
@@ -39,7 +42,7 @@ export function mapTargets(torus: LiveTorusState | null, chain: readonly NoteDev
       if (row.selected === null) continue
       targets.push({
         kind: 'choice', id: row.macro.id, label: row.macro.label, group: 'What is acting', writer: 'owner',
-        options: row.options, current: row.selected, apply: value => commitLiveInstrumentEdit(row.edit(value), BY_HAND),
+        options: row.options, current: row.selected, apply: (value, how = BY_HAND) => commitLiveInstrumentEdit(row.edit(value), how),
       })
     }
     const {parameters} = torus
@@ -47,31 +50,31 @@ export function mapTargets(torus: LiveTorusState | null, chain: readonly NoteDev
       targets.push({
         kind: 'choice', id: 'cadence', label: 'Tick cadence', group: 'Play', writer: 'owner',
         options: LIVE_CADENCE_OPTIONS, current: parameters.cadence.playing ? String(parameters.cadence.rate) : 'hold',
-        apply: value => commitLiveInstrumentEdit({kind: 'cadence', rate: value === 'hold' ? 'hold' : Number(value) as 1 | 12}, BY_HAND),
+        apply: (value, how = BY_HAND) => commitLiveInstrumentEdit(cadenceEdit(value), how),
       })
     }
     targets.push({
       kind: 'toggle', id: 'sound', label: 'Sound', group: 'See and hear', writer: 'owner',
-      current: !parameters.muted, apply: on => commitLiveInstrumentEdit({kind: 'muted', muted: !on}, BY_HAND),
+      current: !parameters.muted, apply: (on, how = BY_HAND) => commitLiveInstrumentEdit({kind: 'muted', muted: !on}, how),
     })
     targets.push({
       kind: 'range', id: 'level', label: 'Level', group: 'See and hear', writer: 'owner', range: LEVEL_RANGE,
-      current: parameters.level, apply: value => commitLiveInstrumentEdit({kind: 'level', value}, BY_HAND),
+      current: parameters.level, apply: (value, how = BY_HAND) => commitLiveInstrumentEdit({kind: 'level', value}, how),
     })
     if (parameters.scale.unitsPerMetre !== null) {
       targets.push({
         kind: 'range', id: 'scale-units', label: 'Units per metre', group: 'See and hear', writer: 'owner', range: SCALE_RANGE,
-        current: parameters.scale.unitsPerMetre, apply: value => commitLiveInstrumentEdit({kind: 'scale', units_per_metre: value}, BY_HAND),
+        current: parameters.scale.unitsPerMetre, apply: (value, how = BY_HAND) => commitLiveInstrumentEdit({kind: 'scale', units_per_metre: value}, how),
       })
     }
     // The Torus's M1′ session, while the owner states it and takes edits: each value goes as the session's own `torus` edit
     // (torusInstrument.ts torusSessionEdit), refused in the session's words before it leaves.
     const session = torusSessionOf(torus)
     if (session !== null && liveInstrumentWritable(torus)) {
-      const write = (key: string) => (value: number): Promise<StageResult> => {
+      const write = (key: string) => (value: number, how: LiveWriteHow = BY_HAND): Promise<StageResult> => {
         let edit: TorusSettingsEdit
         try { edit = torusSessionEdit(session, {key, value}) } catch (error) { return Promise.resolve({ok: false, error: error instanceof Error ? error.message : String(error)}) }
-        return commitLiveInstrumentEdit({kind: 'torus', edit}, BY_HAND)
+        return commitLiveInstrumentEdit({kind: 'torus', edit}, how)
       }
       targets.push({kind: 'range', id: 'rate', label: 'Rate', group: 'Pulse', writer: 'owner', range: RATE_RANGE, current: session.steps_per_second, apply: write('rate')})
       targets.push({kind: 'range', id: 'fundamental', label: 'Fundamental', group: 'Pulse', writer: 'owner', range: FUNDAMENTAL_RANGE, current: session.fundamental_hz, apply: write('fundamental')})
@@ -112,12 +115,31 @@ export function mapTargetIdsOfEdit(edit: InstrumentEdit): readonly string[] {
     // The Torus's session: the macros its edit moved (O-I #850).
     case 'torus': return (['rate', 'fundamental', 'carrier'] as const).filter(key => edit.edit[key] !== undefined)
     // The torus's effects and its body's Damping (O-I #745) are not map targets yet: an accepted edit of them clears no map refusal. Nor is
-    // Receiver, where the torus is heard from (O-I 856), nor the body chosen on the Body page (O-I #852).
-    case 'effect': case 'effect-chain': case 'damping': case 'receiver': case 'body': return []
+    // Receiver, where the torus is heard from (O-I 856), nor the body chosen on the Body page (O-I #852), nor the View the stage draws it
+    // in (DLW build ruling 2026-11-05).
+    case 'effect': case 'effect-chain': case 'damping': case 'receiver': case 'body': case 'view': return []
   }
 }
 
 /** The parameters as the live hold reads them now. */
 export function readMapTargets(): MapTarget[] {
   return mapTargets(liveTorusState(), noteDeviceChain())
+}
+
+/** One value into a parameter's own write, as a take's automation lane writes it again (live/clipPlayer.ts `set`, O-I 853), sent by no
+ * hand: refused in words when the parameter is not on the surface now or the value is not one of its values. Pure of the store but for
+ * the targets. */
+export function writeMapTarget(parameter: string, value: MapValue, targets: readonly MapTarget[] = readMapTargets()): Promise<StageResult> {
+  const target = targets.find(candidate => candidate.id === parameter)
+  const refuse = (error: string) => Promise.resolve<StageResult>({ok: false, error})
+  if (!target) return refuse(`${parameter} is not on the surface now, so its lane moves nothing.`)
+  if (target.kind === 'choice' && !target.options.some(option => option.value === value)) return refuse(`${target.label} has no choice ${JSON.stringify(value)}.`)
+  if (target.kind === 'toggle' && typeof value !== 'boolean') return refuse(`${target.label} is on or off.`)
+  if (target.kind === 'range' && (typeof value !== 'number' || !Number.isFinite(value) || value < target.range.min || value > target.range.max))
+    return refuse(`${target.label} takes a value from ${target.range.min} to ${target.range.max}.`)
+  switch (target.kind) {
+    case 'choice': return target.apply(value as string, NO_HAND)
+    case 'toggle': return target.apply(value as boolean, NO_HAND)
+    case 'range': return target.apply(value as number, NO_HAND)
+  }
 }

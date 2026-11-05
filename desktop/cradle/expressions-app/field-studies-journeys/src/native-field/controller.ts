@@ -9,7 +9,7 @@ import {editEffectChain,editEffects,initialEffects,type EffectValue,type Effects
 import {PresentationEffects} from './presentationEffects';
 import {voiceModeRef} from './torusPlay.mjs';
 import {conditionReadingOf} from '../instrumentCondition';
-import {TorusObject} from '../../../src/engine/torusObject';
+import {TorusObject,type TorusView} from '../../../src/engine/torusObject';
 import {formBodyRequest,FORM_SAMPLES_CONTRACT,type SamplePreparation} from '../../../src/engine/psg-form-sampler';
 import {isStageSampleCursor,stageJournalLanding,STAGE_JOURNAL_ACTS_MAX,STAGE_JOURNAL_BYTES_MAX,STAGE_EDIT_AHEAD_SECONDS,STAGE_RENDER_FRAMES_MAX,STAGE_RENDER_ACTS_MAX,
  readStageTorusCheckpoint,readStageTorusSound,readStageSoundMoves,readStageTorusEngine,isStageSoundName,STAGE_TORUS_SOUND_NAME_MAX,type StageTorusEngine,type StageAudioClock,type StagePerformanceJournal,type StageKey,
@@ -115,6 +115,8 @@ export class NativeFieldController {
  /** The Torus as an object of the scene (src/engine/torusObject.ts; DLW §21.2 "The Torus in the pane", O-I 851): it presents each
   * admitted frame on the shape the owner's figure law names, and offers the voices that sound as force points. One per lifetime. */
  private torusObject=new TorusObject();
+ /** The View you keep (DLW §21.2, as the pane draws it): yours, so each Torus object this field makes draws it (setView). */
+ private view:TorusView='surface';
  /** While the plate studies the modes under Manual, Focus or Automation the pulse is tuned to the drive (§20.14); the torus's own
   * rate is kept to give back. */
  private pulseTuning:{hz:number;before:unknown}|null=null;
@@ -314,7 +316,7 @@ export class NativeFieldController {
    if(opened.schema!=='oi.native-expression-open/v1'||opened.receipt?.field?.sample_rate!==sampleRate)throw new Error('native open receipt/sample rate mismatch');
    const stage=this.renderer.retainedTargetPort();
    this.projection=new NativeProjection(stage,opened.receipt.field,opened.presentation);
-   this.torusObject=new TorusObject();this.torusObject.setSampleRate(sampleRate);this.projection.setPresenter(this.torusObject);
+   this.torusObject=new TorusObject();this.torusObject.setView(this.view);this.torusObject.setSampleRate(sampleRate);this.projection.setPresenter(this.torusObject);
    this.renderer.setNativeDomain(true);
    this.session=new InstrumentSession({...this.playback,context:this.stage(context),owner:this.renderer,initialReceipt:opened.receipt,
     transport:{request:async(request:any)=>{
@@ -965,6 +967,8 @@ export class NativeFieldController {
  }
  /** The plate laid flat (§20.14: the torus's modes laid flat) while the scene's Resonance studies them. */
  layFlat(on:boolean){if(this.torusObject.layFlat(on)){this.projection?.refresh();this.changed();}}
+ /** How the stage draws the Torus (DLW §21.2 View): Surface, Wire or Both, as the pane draws it; the current frame is drawn again. */
+ setView(view:TorusView){this.view=view;if(this.torusObject.setView(view)){this.projection?.refresh();this.changed();}}
  /** The torus's voices that sound now, as the engine's force points (presentation units). */
  torusVoicePoints(){return this.projection?this.torusObject.voicePoints(this.projection.scale):[];}
  /** The facts the Tarot score stands on, read from this scene: the field's
@@ -1313,7 +1317,7 @@ export class NativeFieldController {
   // The engine keeps sounding what was handed over; this owner hands nothing over again, and a new one sounds here until asked.
   this.gate=null;this.engine={on:false,stale:false,handed:null,refusal:null,again:false};
   this.stageReading=null;this.stageStale=false;this.stageLast=null;
-  this.torus=null;this.torusAt=0;this.torusRefused=null;this.torusObject=new TorusObject();this.pulseTuning=null;
+  this.torus=null;this.torusAt=0;this.torusRefused=null;this.torusObject=new TorusObject();this.torusObject.setView(this.view);this.pulseTuning=null;
   // A new owner hears in the world's context until it is asked; Receiver itself is the person's and stays (O-I 856).
   this.wantedAt=null;this.heardAt=null;this.heardShared=null;this.heardReply=null;this.receiverRefusal=null;this.hearing=null;
   this.admitting=null;this.suspension=null;this.restoring=null;
