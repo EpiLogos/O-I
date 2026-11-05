@@ -472,6 +472,71 @@ pub struct Note {
     pub velocity: f32,
 }
 
+/// One sample laid on an audio part's timeline: the engine's sample-playback source (DLW build ruling
+/// 2026-11-05: "one sample-playback source in live-engine. It is a decoded buffer laid at its clip's
+/// beats, unwarped first"). Unwarped, it plays at the buffer's own rate (session-model.md §5,
+/// "Unwarped playback (`IsWarped=false`) plays the sample at original rate"), so the host lays only a
+/// buffer at the graph's rate ([`crate::bridge::lay_samples`]). Laid by [`Track::set_samples`].
+#[derive(Clone, PartialEq)]
+pub struct LaidSample {
+    /// The first frame of the timeline it sounds on (its clip's start).
+    pub at: u64,
+    /// The frame of the buffer it plays from (its clip's start marker).
+    pub from: u64,
+    /// Frames it sounds for (its clip's length); read past the buffer's end, silence.
+    pub frames: u64,
+    /// Its clip gain, linear (`SampleVolume`: devices/echo.md, "clip gain SampleVolume=0.5 (−6.02 dB)").
+    pub gain: f32,
+    /// The buffer's channel count (1 or 2).
+    pub channels: usize,
+    /// The decoded buffer, interleaved; shared, so the clips of one file and Export Audio hold one copy.
+    pub pcm: std::sync::Arc<[f32]>,
+}
+
+impl LaidSample {
+    /// The first frame after it.
+    pub fn end(&self) -> u64 {
+        self.at.saturating_add(self.frames)
+    }
+
+    /// Add what it sounds at `frame` of the timeline into `out` (a part's one or two channels); nothing
+    /// outside its frames.
+    pub fn sound_into(&self, frame: u64, out: &mut [f32]) {
+        if frame < self.at || frame >= self.end() {
+            return;
+        }
+        let i = (self.from + (frame - self.at)) as usize * self.channels;
+        let read = |c: usize| self.pcm.get(i + c).copied().unwrap_or(0.0) * self.gain;
+        match (self.channels, out.len()) {
+            // ENGINE DECISION (as the shell's play mode laid clips, live-shell `play.rs`): a mono
+            // sample sounds on both sides of a stereo part at its level; a stereo one on a mono part
+            // as the mean of its sides
+            (1, _) => {
+                let v = read(0);
+                out.iter_mut().for_each(|o| *o += v);
+            }
+            (_, 1) => out[0] += (read(0) + read(1)) * 0.5,
+            _ => {
+                out[0] += read(0);
+                out[1] += read(1);
+            }
+        }
+    }
+}
+
+impl std::fmt::Debug for LaidSample {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("LaidSample")
+            .field("at", &self.at)
+            .field("from", &self.from)
+            .field("frames", &self.frames)
+            .field("gain", &self.gain)
+            .field("channels", &self.channels)
+            .field("pcm_frames", &(self.pcm.len() / self.channels.max(1)))
+            .finish()
+    }
+}
+
 /// One device of the chain an instrument's owner puts after it on its part (O-I #849 round 13: the
 /// Torus's effects, as Live's devices on the chain of the Instrument Rack the Torus is placed as —
 /// live-set `rack_place`): the engine's device, and what it was made from in its maker's words, so
@@ -532,8 +597,12 @@ pub struct Track {
     pub sends: Vec<f64>,
     /// Ordered device chain (session-model.md §3, `DeviceChain/Devices`).
     pub devices: Vec<Box<dyn Device>>,
-    /// Interleaved source audio (audio tracks). Silence when empty.
+    /// Interleaved source audio (audio tracks), played from frame 0. Silence when empty.
     pub source: Vec<f32>,
+    /// The samples laid on its timeline ([`LaidSample`], [`Track::set_samples`]), in order, none
+    /// overlapping, and the first that has not ended by the last frame mixed.
+    samples: Vec<LaidSample>,
+    next_sample: usize,
     /// The instrument of a MIDI track; `None` on an audio track.
     pub instrument: Option<Box<dyn Instrument>>,
     /// The devices after the instrument on its rack's chain ([`RackDevice`]), before the part's own
@@ -564,6 +633,8 @@ impl Track {
             sends: Vec::new(),
             devices: Vec::new(),
             source: Vec::new(),
+            samples: Vec::new(),
+            next_sample: 0,
             instrument: None,
             rack: Vec::new(),
             group: None,
@@ -633,11 +704,81 @@ impl Track {
             .collect()
     }
 
+    /// Lay `samples` on the part's timeline (replacing any): the audio part's clips, each sounding from
+    /// its frame. They are laid in their order on the timeline; one of no frames has nothing to sound and
+    /// is dropped. Refused in words, the part's samples as they were: any on a MIDI part (it plays notes),
+    /// two that overlap (a part plays one clip at a time), a buffer of other than one or two channels or
+    /// of no whole frames, and a gain that is no number.
+    pub fn set_samples(&mut self, mut samples: Vec<LaidSample>) -> Result<(), String> {
+        let name = &self.name;
+        samples.retain(|s| s.frames > 0);
+        if self.is_midi() && !samples.is_empty() {
+            return Err(format!(
+                "'{name}' is a MIDI part: it plays notes, and a sample is laid on an audio part"
+            ));
+        }
+        samples.sort_by_key(|s| s.at);
+        for s in &samples {
+            if s.channels != 1 && s.channels != 2 {
+                return Err(format!(
+                    "A sample on '{name}' is laid in one or two channels, not {}",
+                    s.channels
+                ));
+            }
+            if !s.pcm.len().is_multiple_of(s.channels) {
+                return Err(format!(
+                    "A sample on '{name}' holds no whole frames of its {} channels",
+                    s.channels
+                ));
+            }
+            if !s.gain.is_finite() {
+                return Err(format!("A sample on '{name}' has a gain that is no number"));
+            }
+        }
+        if let Some(w) = samples.windows(2).find(|w| w[1].at < w[0].end()) {
+            return Err(format!(
+                "Two samples on '{name}' overlap at frame {}: a part plays one clip at a time",
+                w[1].at
+            ));
+        }
+        self.samples = samples;
+        self.next_sample = 0;
+        Ok(())
+    }
+
+    /// The samples laid on the part, in their order on the timeline.
+    pub fn samples(&self) -> &[LaidSample] {
+        &self.samples
+    }
+
+    /// Add the laid sample that sounds at `frame` (if one does) into `out` (the part's channels).
+    /// Allocation-free: the sample is found from the last one played, and found again by halving when
+    /// the timeline was taken back.
+    fn sample_into(&mut self, frame: u64, out: &mut [f32]) {
+        if self.samples.is_empty() {
+            return;
+        }
+        if self.next_sample > 0 && self.samples[self.next_sample - 1].end() > frame {
+            self.next_sample = self.samples.partition_point(|s| s.end() <= frame);
+        }
+        while self
+            .samples
+            .get(self.next_sample)
+            .is_some_and(|s| s.end() <= frame)
+        {
+            self.next_sample += 1;
+        }
+        if let Some(s) = self.samples.get(self.next_sample) {
+            s.sound_into(frame, out);
+        }
+    }
+
     fn frames(&self) -> u64 {
         // channels is 1 or 2 by construction (Track::new asserts)
         let source = (self.source.len() / self.channels) as u64;
         let notes = self.edges.last().map(|(f, _)| *f).unwrap_or(0);
-        source.max(notes)
+        let samples = self.samples.last().map_or(0, LaidSample::end);
+        source.max(notes).max(samples)
     }
 
     /// Fire the clip edges that fall on `clock.sample` (and any the clock
@@ -1392,7 +1533,7 @@ impl Graph {
         for track in &mut self.tracks {
             // the head of the chain makes the frame in the track's own
             // channel count: the instrument (MIDI), else the source (audio;
-            // silence past the buffer end)
+            // silence past the buffer end) and the laid sample sounding there
             let mut frame = [0f32; 2];
             let channels = track.channels;
             track.fire_edges(clock);
@@ -1409,6 +1550,7 @@ impl Graph {
                         .copied()
                         .unwrap_or(0.0);
                 }
+                track.sample_into(clock.sample, &mut frame[..channels]);
             }
             for d in track.devices.iter_mut() {
                 d.process(&mut frame[..channels], clock);

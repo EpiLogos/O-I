@@ -68,9 +68,13 @@
 //!
 //! Events are refused in the engine's words when the set has nothing they
 //! name. A mixer reading is what the engine APPLIED, never what was asked.
-//! Audio parts play no clip audio yet: the bridge leaves their sources empty
-//! and this host loads no samples — each such part is named in the
-//! reading's `warnings`.
+//! An audio part plays its arrangement clips on the engine's sample-playback
+//! source (DLW build ruling 2026-11-05: "a decoded buffer laid at its clip's
+//! beats, unwarped first"): the host lays each clip's sample from beside the
+//! set when it opens it (live-engine `lay_samples`), and Export Audio renders
+//! the samples laid then. A clip it does not play — warped, its sample
+//! nowhere or unread, or at another rate — is named in the reading's
+//! `warnings`.
 
 #[cfg(feature = "native_shell")]
 pub(crate) mod host {
@@ -367,12 +371,9 @@ pub(crate) mod host {
         live_set::open_als(path).map_err(|e| format!("{}: {e:?}", path.display()))
     }
 
-    /// The set bridged into the engine's graph at [`ENGINE_RATE`], with the
-    /// bridge's warnings and the audio parts that play no clip audio.
-    pub fn bridged(root: &Element) -> Result<(Graph, Vec<String>), String> {
-        let bridged = bridge_set(root, ENGINE_RATE).ok_or("No LiveSet in native document")?;
-        let mut warnings: Vec<String> = bridged
-            .warnings
+    /// The bridge's warnings in the reading's words.
+    fn said(warnings: &[live_engine::BridgeWarning]) -> Vec<String> {
+        warnings
             .iter()
             .map(|w| {
                 if w.device.is_empty() {
@@ -381,13 +382,33 @@ pub(crate) mod host {
                     format!("{} · {}: {}", w.track, w.device, w.message)
                 }
             })
-            .collect();
-        for t in bridged.graph.tracks.iter().filter(|t| !t.is_midi()) {
-            warnings.push(format!(
-                "{}: an audio part plays no clip audio yet (the host loads no samples)",
-                t.name
-            ));
-        }
+            .collect()
+    }
+
+    /// The set bridged into the engine's graph at [`ENGINE_RATE`], with the bridge's warnings, its audio
+    /// clips not laid (the host lays them: [`laid`]).
+    pub fn bridged_only(root: &Element) -> Result<live_engine::BridgeResult, String> {
+        bridge_set(root, ENGINE_RATE).ok_or_else(|| "No LiveSet in native document".to_string())
+    }
+
+    /// The samples the set's audio clips want, laid on `graph`'s parts from beside the set at `set`
+    /// (live-engine `lay_samples`), with the words for each clip it does not play.
+    pub fn laid(
+        graph: &mut Graph,
+        samples: &[live_engine::bridge::ClipSample],
+        set: &Path,
+    ) -> Vec<String> {
+        said(&live_engine::bridge::lay_samples(graph, samples, set))
+    }
+
+    /// The set at `set` bridged into the engine's graph at [`ENGINE_RATE`], its audio clips laid from
+    /// their samples ([`laid`]), with the bridge's warnings and the words for each clip it does not play:
+    /// the set as the host opens it, for the tests that render it whole.
+    #[cfg(test)]
+    pub fn bridged(root: &Element, set: &Path) -> Result<(Graph, Vec<String>), String> {
+        let mut bridged = bridged_only(root)?;
+        let mut warnings = said(&bridged.warnings);
+        warnings.extend(laid(&mut bridged.graph, &bridged.samples, set));
         Ok((bridged.graph, warnings))
     }
 
@@ -848,6 +869,11 @@ pub(crate) mod host {
         /// The Torus's effects on its part, and every chain put on a part's rack and taken or on its
         /// way, in the order put (the n-th is the engine's n-th: one that gave way is not kept).
         pub effects: TorusEffects,
+        /// Each part's samples as the engine was handed them when the set opened ([`laid`]): what Export
+        /// Audio lays again (the files beside the set may have changed since), and the words for each clip
+        /// not laid, which the reading's warnings keep when they are read again from the set.
+        pub samples: Vec<Vec<live_engine::LaidSample>>,
+        pub samples_said: Vec<String>,
         pub racked: Vec<(usize, RackMade)>,
         /// Every set's device made again on a chain (O-I #849 round 17, [`Opened::make_again`]): the engine's count it was
         /// made at, its part, its place, and the element it was made from.
@@ -873,8 +899,13 @@ pub(crate) mod host {
     impl Opened {
         pub fn open(path: &Path) -> Result<Opened, String> {
             let document = set_document(path)?;
-            let (graph, warnings) = bridged(&document)?;
+            let mut bridged = bridged_only(&document)?;
+            let samples_said = laid(&mut bridged.graph, &bridged.samples, path);
+            let graph = bridged.graph;
+            let mut warnings = said(&bridged.warnings);
+            warnings.extend(samples_said.iter().cloned());
             let clips = graph.tracks.iter().map(|t| t.clip_edges()).collect();
+            let samples = graph.tracks.iter().map(|t| t.samples().to_vec()).collect();
             let (core, handle) = engine(graph).map_err(|e| e.to_string())?;
             Ok(Opened {
                 path: path.to_path_buf(),
@@ -888,6 +919,8 @@ pub(crate) mod host {
                 following: Following::default(),
                 clips,
                 effects: TorusEffects::default(),
+                samples,
+                samples_said,
                 racked: Vec::new(),
                 made_again: Vec::new(),
                 room_waiting: None,
@@ -1220,7 +1253,8 @@ pub(crate) mod host {
                 .make_again(made.part, made.at, made.device)
                 .map_err(|e| e.to_string())?;
             self.made_again.push((id, made.part, made.at, made.element));
-            self.warnings = bridged(&document)?.1;
+            self.warnings = said(&bridged_only(&document)?.warnings);
+            self.warnings.extend(self.samples_said.iter().cloned());
             Ok(())
         }
 
@@ -1537,7 +1571,7 @@ pub(crate) mod host {
         /// made while it played reached the engine as an event.
         pub fn render_wav(&mut self) -> Result<(Vec<u8>, Value), String> {
             let performance = self.handle.performance();
-            let (graph, _) = bridged(&self.document)?;
+            let graph = self.graph_as_opened()?;
             // Each device made again on a chain, made again from what it was made from, at the frame the engine put it there.
             let remade = self
                 .handle
@@ -1593,6 +1627,185 @@ pub(crate) mod host {
                 wav_f32(&samples, ENGINE_RATE),
                 json!({"frames": performance.frames, "events": performance.events.len(), "complete": performance.complete}),
             ))
+        }
+    }
+
+    /// What names a take's sound sent to be rendered through its part ([`take_render_of`]).
+    pub const TAKE_RENDER_SCHEMA: &str = "oi.take-render/v1";
+
+    /// A take's sound sent to be rendered through its part (O-I #855): the set it is a take of and its track it was
+    /// played on (the set owner's index), the rate its owner rendered it at, its sound (one channel), and the Torus's
+    /// effects as the frame held them at each frame from the take's start, the first at its start.
+    #[derive(Debug, PartialEq)]
+    pub struct TakeRender {
+        pub path: PathBuf,
+        pub track: usize,
+        pub rate: u32,
+        pub pcm: Vec<f32>,
+        pub effects: Vec<(u64, Value)>,
+    }
+
+    /// A take's sound as the frame sends it (`oi.take-render/v1`): four bytes, little-endian, the length of a JSON
+    /// head `{schema, path, track, rate, effects: [{frame, effects}]}`, the head, then the sound as IEEE-754 binary32
+    /// little-endian samples, one channel. Refused in words for anything else.
+    pub fn take_render_of(body: &[u8]) -> Result<TakeRender, String> {
+        const NOT: &str = "A take is rendered through its part from its sound as the frame sends it (oi.take-render/v1): a head, then its samples";
+        let n = body
+            .get(..4)
+            .map(|b| u32::from_le_bytes([b[0], b[1], b[2], b[3]]) as usize)
+            .ok_or(NOT)?;
+        let head: Value = body
+            .get(4..4 + n)
+            .and_then(|h| serde_json::from_slice(h).ok())
+            .ok_or(NOT)?;
+        let pcm = &body[4 + n..];
+        if head["schema"] != TAKE_RENDER_SCHEMA || !pcm.len().is_multiple_of(4) {
+            return Err(NOT.into());
+        }
+        let count = |v: &Value| v.as_u64();
+        let (Some(path), Some(track), Some(rate)) = (
+            head["path"].as_str(),
+            count(&head["track"]),
+            count(&head["rate"]),
+        ) else {
+            return Err(NOT.into());
+        };
+        let effects = head["effects"]
+            .as_array()
+            .ok_or(NOT)?
+            .iter()
+            .map(|e| Ok((count(&e["frame"]).ok_or(NOT)?, e["effects"].clone())))
+            .collect::<Result<Vec<_>, String>>()?;
+        Ok(TakeRender {
+            path: PathBuf::from(path),
+            track: track as usize,
+            rate: u32::try_from(rate).map_err(|_| NOT)?,
+            pcm: pcm
+                .as_chunks::<4>()
+                .0
+                .iter()
+                .map(|c| f32::from_le_bytes(*c))
+                .collect(),
+            effects,
+        })
+    }
+
+    impl Opened {
+        /// The part the set's track `index` is in the engine (`index` the set owner's: its parts, returns and
+        /// groups in order, then the Main track), counted among its parts; refused in words for one that is
+        /// not a part.
+        pub fn part_of(&self, index: usize) -> Result<usize, String> {
+            let tracks: Vec<&Element> = self
+                .document
+                .find("LiveSet")
+                .and_then(|ls| ls.child("Tracks"))
+                .map(|t| {
+                    t.children
+                        .iter()
+                        .filter(|t| {
+                            matches!(
+                                t.name.as_str(),
+                                "AudioTrack" | "MidiTrack" | "ReturnTrack" | "GroupTrack"
+                            )
+                        })
+                        .collect()
+                })
+                .unwrap_or_default();
+            let is_part = |t: &Element| matches!(t.name.as_str(), "AudioTrack" | "MidiTrack");
+            match tracks.get(index) {
+                Some(t) if is_part(t) => Ok(tracks[..index].iter().filter(|t| is_part(t)).count()),
+                _ => Err(format!(
+                    "The set's track {index} is no part of the set's: a take is played on a part"
+                )),
+            }
+        }
+
+        /// Export Audio of a take through its part (O-I #855; DLW build ruling 2026-11-05: the sample-playback
+        /// source "unblocks #855's export through the part's effects"; manual §21.2, "What Export Audio renders is
+        /// what you heard, sample for sample"): the take's sound as the Torus's owner rendered it laid where the
+        /// Torus stands on its part (live-engine `SampleInstrument`), through the part's rack — the Torus's effects
+        /// as the frame held them, each put at its frame as the engine puts them while it plays (`torus_chain`,
+        /// live-engine `Graph::rack`) — its own chain and its volume and pan, as the set opened in the engine;
+        /// the part alone, as its own track renders: not its sends, its group, the returns or the Main track.
+        /// Answered as a 32-bit float stereo WAV of the take's frames, with what it holds. Refused in words for
+        /// another set than the one open, another rate than the engine's, a track that is no MIDI part, and
+        /// effects that are not the frame's.
+        pub fn render_take_wav(&self, take: &TakeRender) -> Result<(Vec<u8>, Value), String> {
+            if take.path != self.path {
+                return Err(format!(
+                    "The engine has another set open ({}): a take renders through its part in the set it is a take of",
+                    self.path.display()
+                ));
+            }
+            if take.rate != ENGINE_RATE {
+                return Err(format!(
+                    "The take was rendered at {} Hz and the engine runs at {ENGINE_RATE} Hz: it does not resample",
+                    take.rate
+                ));
+            }
+            let part = self.part_of(take.track)?;
+            let mut graph = self.graph_as_opened()?;
+            if !graph.tracks[part].is_midi() {
+                return Err(format!(
+                    "'{}' is an audio part: a take of the Torus is played on a MIDI part",
+                    graph.tracks[part].name
+                ));
+            }
+            let mut racks = Vec::new();
+            let mut stood = Vec::new();
+            for (frame, effects) in &take.effects {
+                let (made, reading) = torus_chain(effects)?;
+                racks.push((*frame, part, rack_of(&made)?));
+                stood.push(json!({"frame": frame, "effects": reading}));
+            }
+            let frames = take.pcm.len() as u64;
+            let sample = live_engine::LaidSample {
+                at: 0,
+                from: 0,
+                frames,
+                gain: 1.0,
+                channels: 1,
+                pcm: take.pcm.as_slice().into(),
+            };
+            for (i, t) in graph.tracks.iter_mut().enumerate() {
+                if i == part {
+                    t.instrument = Some(Box::new(live_engine::SampleInstrument {
+                        sample: sample.clone(),
+                    }));
+                    (t.group, t.solo, t.active) = (None, false, true);
+                } else {
+                    (t.active, t.solo) = (false, false);
+                }
+            }
+            for g in graph.groups.iter_mut() {
+                g.solo = false;
+            }
+            for r in graph.returns.iter_mut() {
+                r.active = false;
+            }
+            (graph.master.gain, graph.master.pan) = (1.0, 0.0);
+            graph.master.devices.clear();
+            let name = graph.tracks[part].name.clone();
+            let samples = graph.render_performance_racked(
+                ENGINE_RATE,
+                &live_engine::Performance::silent(frames),
+                Vec::new(),
+                racks,
+            );
+            Ok((
+                wav_f32(&samples, ENGINE_RATE),
+                json!({"frames": frames, "part": name, "effects": stood}),
+            ))
+        }
+
+        /// The set as the engine was handed it when it opened: bridged again from the document, each part's
+        /// samples laid again as they were laid then (never read again from beside the set).
+        pub fn graph_as_opened(&self) -> Result<Graph, String> {
+            let mut graph = bridged_only(&self.document)?.graph;
+            for (track, samples) in graph.tracks.iter_mut().zip(&self.samples) {
+                track.set_samples(samples.clone())?;
+            }
+            Ok(graph)
         }
     }
 
@@ -1678,10 +1891,14 @@ pub(crate) mod host {
                                 handle,
                                 core,
                                 clips,
+                                samples,
+                                samples_said,
                                 ..
                             } = Opened::open(&o.path)?;
                             (o.document, o.warnings, o.handle, o.clips) =
                                 (document, warnings, handle, clips);
+                            // the new engine was handed the samples beside the set now: Export lays those
+                            (o.samples, o.samples_said) = (samples, samples_said);
                             // a new engine holds no Torus, follows no owner and holds none of its
                             // effects: the owner hands it over again, its effects with it
                             o.toruses.clear();
@@ -1900,6 +2117,14 @@ pub(crate) mod host {
             }
         }
 
+        /// Export Audio of a take through its part ([`Opened::render_take_wav`]), from its sound as the frame
+        /// sends it ([`take_render_of`]): the WAV's bytes, for the frame to save. Refused in words when no set is
+        /// open in the engine.
+        pub fn render_take(&self, body: &[u8]) -> Result<Vec<u8>, String> {
+            let take = take_render_of(body)?;
+            self.with(|o| o.render_take_wav(&take)).map(|(wav, _)| wav)
+        }
+
         /// Export Audio: `choose` asks the person where the file goes (the
         /// host's save dialog, given the file name it suggests: the set's,
         /// as a .wav) and `write` is the owner that writes it (the kernel's
@@ -2027,6 +2252,137 @@ pub(crate) mod host {
                 "delay": {"on": true, "sync": true, "division": "1/8", "time": 250, "feedback": 35, "tone": 6000, "mix": 25, "tempo": 120},
                 "reverb": {"on": true, "size": 50, "decay": 2.4, "damping": 40, "predelay": 20, "mix": 22},
                 "resonator": {"on": true, "division": 300, "root": 0, "decay": 1, "tilt": 0, "span": 2, "mix": 50, "gain": 0}})
+        }
+
+        /// A take's sound as the frame sends it (`oi.take-render/v1`): `head`, then `pcm`.
+        fn take_body(head: &Value, pcm: &[f32]) -> Vec<u8> {
+            let head = serde_json::to_vec(head).unwrap();
+            let mut body = (head.len() as u32).to_le_bytes().to_vec();
+            body.extend_from_slice(&head);
+            body.extend(pcm.iter().flat_map(|x| x.to_le_bytes()));
+            body
+        }
+
+        /// A set of one MIDI part (Keys: Operator, then Echo on its own chain, at 0.8) and an audio part, no returns,
+        /// the Main track at unity: what plays is Keys' own track.
+        const ONE_PART_SET: &str = r#"<?xml version="1.0" encoding="UTF-8"?>
+<Ableton MajorVersion="5"><LiveSet>
+  <Tracks>
+    <MidiTrack Id="1"><Name><EffectiveName Value="Keys" /></Name>
+      <DeviceChain>
+        <Mixer><Volume><Manual Value="0.8" /></Volume></Mixer>
+        <MainSequencer><ClipTimeable><ArrangerAutomation><Events>
+          <MidiClip Id="2" Time="0"><CurrentStart Value="0" /><CurrentEnd Value="2" />
+            <Loop><LoopStart Value="0" /><LoopEnd Value="2" /><StartRelative Value="0" /><LoopOn Value="false" /></Loop>
+            <Notes><KeyTracks><KeyTrack Id="3"><MidiKey Value="69" /><Notes>
+              <MidiNoteEvent Time="0" Duration="0.25" Velocity="100" IsEnabled="true" />
+              <MidiNoteEvent Time="0.5" Duration="0.25" Velocity="90" IsEnabled="true" />
+            </Notes></KeyTrack></KeyTracks></Notes>
+          </MidiClip>
+        </Events></ArrangerAutomation></ClipTimeable></MainSequencer>
+        <DeviceChain><Devices><Operator Id="4" /><Echo Id="5" /></Devices></DeviceChain>
+      </DeviceChain>
+    </MidiTrack>
+    <AudioTrack Id="6"><Name><EffectiveName Value="Vox" /></Name><DeviceChain><Mixer /></DeviceChain></AudioTrack>
+  </Tracks>
+  <MainTrack><DeviceChain><Mixer><Tempo><Manual Value="120" /></Tempo><Volume><Manual Value="1" /></Volume></Mixer>
+    <DeviceChain><Devices /></DeviceChain></DeviceChain></MainTrack>
+</LiveSet></Ableton>"#;
+
+        /// O-I #855, Export Audio of a take through its part (DLW build ruling 2026-11-05): the take's sound as its owner
+        /// rendered it, sent as the frame sends it, renders through its part's rack (the Torus's effects, put at the frame
+        /// the engine put them), its chain and its row as the engine played the part, bit for bit; another rate, an audio
+        /// part, a track that is no part and a body that is not one are refused in words.
+        #[test]
+        fn a_take_renders_through_its_parts_effects_as_the_engine_played_the_part() {
+            let path = write_set("take-render", ONE_PART_SET);
+            let mut o = Opened::open(&path).unwrap();
+            let mut core = o.core.take().unwrap();
+            let mut played = pull(&mut core, &[512, 256]);
+            o.put_effects(0, &effects(&["filter", "delay"])).unwrap();
+            played.extend(pull(&mut core, &[1_024, 4_096, 2_048, 8_192, 8_192]));
+            o.handle.collect();
+            assert_eq!(o.handle.racks(), &[(768, 0)]);
+            let frames = played.len() / 2;
+            // the take's sound: the part's instrument alone, as its owner renders it
+            let mut alone = bridged_only(&o.document).unwrap().graph;
+            alone.tracks[0].devices.clear();
+            alone.tracks[0].gain = 1.0;
+            let pcm: Vec<f32> = alone
+                .render_performance(ENGINE_RATE, &Performance::silent(frames as u64))
+                .chunks(2)
+                .map(|f| f[0])
+                .collect();
+            let head = json!({"schema": TAKE_RENDER_SCHEMA, "path": path, "track": 0, "rate": ENGINE_RATE,
+                "effects": [{"frame": 768, "effects": effects(&["filter", "delay"])}]});
+            let take = take_render_of(&take_body(&head, &pcm)).unwrap();
+            let (bytes, said) = o.render_take_wav(&take).unwrap();
+            let exported = live_engine::wav::read_wav_f32(&bytes).unwrap().samples;
+            assert_eq!(exported.len(), played.len());
+            assert!(
+                exported
+                    .iter()
+                    .zip(&played)
+                    .all(|(e, p)| e.to_bits() == p.to_bits()),
+                "the take renders through its part's effects as the engine played the part"
+            );
+            assert_eq!(
+                (said["frames"].as_u64(), said["part"].as_str()),
+                (Some(frames as u64), Some("Keys"))
+            );
+            assert_eq!(said["effects"][0]["effects"][0]["device"], "AutoFilter");
+            let without = take_render_of(&take_body(&json!({"schema": TAKE_RENDER_SCHEMA, "path": path, "track": 0, "rate": ENGINE_RATE, "effects": []}), &pcm)).unwrap();
+            assert_ne!(
+                o.render_take_wav(&without).unwrap().0,
+                bytes,
+                "the Torus's effects are heard"
+            );
+            // refused in words
+            let refused = |head: Value| {
+                take_render_of(&take_body(&head, &pcm))
+                    .and_then(|t| o.render_take_wav(&t).map(|_| ()))
+                    .unwrap_err()
+            };
+            let words = refused(
+                json!({"schema": TAKE_RENDER_SCHEMA, "path": path, "track": 0, "rate": 44_100, "effects": []}),
+            );
+            assert!(
+                words.contains("44100 Hz") && words.contains("does not resample"),
+                "{words}"
+            );
+            let words = refused(
+                json!({"schema": TAKE_RENDER_SCHEMA, "path": path, "track": 1, "rate": ENGINE_RATE, "effects": []}),
+            );
+            assert!(words.contains("'Vox' is an audio part"), "{words}");
+            let words = refused(
+                json!({"schema": TAKE_RENDER_SCHEMA, "path": path, "track": 2, "rate": ENGINE_RATE, "effects": []}),
+            );
+            assert!(words.contains("track 2 is no part"), "{words}");
+            let words = refused(
+                json!({"schema": "x", "path": path, "track": 0, "rate": ENGINE_RATE, "effects": []}),
+            );
+            assert!(words.contains("oi.take-render/v1"), "{words}");
+            let words = refused(
+                json!({"schema": TAKE_RENDER_SCHEMA, "path": path, "track": 0, "rate": ENGINE_RATE, "effects": [{"frame": 0, "effects": {"chain": 3}}]}),
+            );
+            assert!(words.contains("effectsLaw.ts"), "{words}");
+            let words = refused(
+                json!({"schema": TAKE_RENDER_SCHEMA, "path": "/elsewhere/Other.als", "track": 0, "rate": ENGINE_RATE, "effects": []}),
+            );
+            assert!(words.contains("another set open"), "{words}");
+            let words = refused(
+                json!({"schema": TAKE_RENDER_SCHEMA, "track": 0, "rate": ENGINE_RATE, "effects": []}),
+            );
+            assert!(
+                words.contains("oi.take-render/v1"),
+                "a head that names no set: {words}"
+            );
+            let host = LiveEngineHost::default();
+            assert!(host
+                .render_take(&take_body(&head, &pcm))
+                .unwrap_err()
+                .contains("No set is open"));
+            let _ = std::fs::remove_dir_all(path.parent().unwrap());
         }
 
         /// O-I #849 round 17: the room is made again as the frame makes its own (presentationEffects.ts `#roomFor`): the
@@ -2355,7 +2711,7 @@ pub(crate) mod host {
                 );
             }
             // and the chain is heard: the set alone renders otherwise
-            let (graph, _) = bridged(&o.document).unwrap();
+            let graph = o.graph_as_opened().unwrap();
             assert_ne!(
                 graph.render_performance(ENGINE_RATE, &o.handle.performance()),
                 played,
@@ -2454,7 +2810,7 @@ pub(crate) mod host {
             let mut core = opened.core.take().unwrap();
             let played = pull(&mut core, &BLOCKS);
             // what the host plays is the engine's render of the document
-            let (graph, _) = bridged(&set_document(&path).unwrap()).unwrap();
+            let (graph, _) = bridged(&set_document(&path).unwrap(), &path).unwrap();
             let frames = played.len() as u64 / 2;
             let rendered = graph.render_performance(ENGINE_RATE, &Performance::silent(frames));
             assert!(
@@ -2464,7 +2820,7 @@ pub(crate) mod host {
             // two parts at once: each alone, summed, is the whole (no part
             // reaches the other)
             let alone = |keep: usize| {
-                let (mut g, _) = bridged(&set_document(&path).unwrap()).unwrap();
+                let (mut g, _) = bridged(&set_document(&path).unwrap(), &path).unwrap();
                 g.tracks[1 - keep].active = false;
                 g.render_performance(ENGINE_RATE, &Performance::silent(frames))
             };
@@ -2481,6 +2837,81 @@ pub(crate) mod host {
                 (l + (f[0] as f64).powi(2), r + (f[1] as f64).powi(2))
             });
             assert!(l > r * 2.0, "Bass panned left: L {l} R {r}");
+        }
+
+        /// A set of one audio part ("Vox", at half volume) with an unwarped clip of `Samples/Recorded/vox.wav` at beat
+        /// 0.25 for 0.1 beats from 0.02 s into its sample, and a warped clip after it.
+        const AUDIO_SET: &str = r#"<?xml version="1.0" encoding="UTF-8"?>
+<Ableton MajorVersion="5"><LiveSet>
+  <Tracks>
+    <AudioTrack Id="1"><Name><EffectiveName Value="Vox" /></Name>
+      <DeviceChain><Mixer><Volume><Manual Value="0.5" /></Volume></Mixer>
+        <MainSequencer><Sample><ArrangerAutomation><Events>
+          <AudioClip Id="2" Time="0.25"><CurrentStart Value="0.25" /><CurrentEnd Value="0.35" />
+            <Loop><LoopStart Value="0.02" /><LoopEnd Value="0.07" /><StartRelative Value="0" /><LoopOn Value="false" /></Loop>
+            <Name Value="Vox" /><IsWarped Value="false" /><SampleVolume Value="1" />
+            <SampleRef><FileRef><RelativePathType Value="3" /><RelativePath Value="Samples/Recorded/vox.wav" /><Path Value="" /></FileRef></SampleRef>
+          </AudioClip>
+          <AudioClip Id="3" Time="1"><CurrentStart Value="1" /><CurrentEnd Value="2" />
+            <Name Value="Stretched" /><IsWarped Value="true" />
+            <SampleRef><FileRef><RelativePath Value="Samples/Recorded/vox.wav" /></FileRef></SampleRef>
+          </AudioClip>
+        </Events></ArrangerAutomation></Sample></MainSequencer>
+        <DeviceChain><Devices /></DeviceChain>
+      </DeviceChain>
+    </AudioTrack>
+  </Tracks>
+  <MainTrack><DeviceChain><Mixer><Tempo><Manual Value="120" /></Tempo><Volume><Manual Value="1" /></Volume></Mixer>
+    <DeviceChain><Devices /></DeviceChain></DeviceChain></MainTrack>
+</LiveSet></Ableton>"#;
+
+        /// Item 5 on the sample-playback source (DLW build ruling 2026-11-05): the host lays an audio part's unwarped
+        /// clip from its sample beside the set, so the part plays it at its clip's frame, from its start marker, through
+        /// its row; a warped clip is named silent in the reading's warnings; and Export Audio renders what was played,
+        /// bit for bit, though the file beside the set changed after the set opened.
+        #[test]
+        fn an_audio_parts_clip_plays_its_sample_from_beside_the_set_and_exports_as_played() {
+            let path = write_set("audio-clip", AUDIO_SET);
+            let folder = path.parent().unwrap().join("Samples/Recorded");
+            std::fs::create_dir_all(&folder).unwrap();
+            let sample: Vec<f32> = (0..2 * 4_800)
+                .map(|i| ((i % 480) as f32 / 480.0 - 0.5) * 0.4)
+                .collect();
+            std::fs::write(folder.join("vox.wav"), wav_f32(&sample, ENGINE_RATE)).unwrap();
+            let mut opened = Opened::open(&path).unwrap();
+            assert_eq!(
+                opened.warnings,
+                ["Vox: its clip 'Stretched' is warped, and the engine plays unwarped clips first: it is silent"]
+            );
+            assert_eq!(opened.reading()["warnings"][0], opened.warnings[0].as_str());
+            let mut core = opened.core.take().unwrap();
+            let played = pull(&mut core, &[1_024, 4_096, 512, 3_000]);
+            for (f, frame) in played.chunks(2).enumerate() {
+                for (c, got) in frame.iter().enumerate() {
+                    let want = if (6_000..8_400).contains(&f) {
+                        (sample[(960 + f - 6_000) * 2 + c] as f64 * 0.5) as f32
+                    } else {
+                        0.0
+                    };
+                    assert_eq!(got.to_bits(), want.to_bits(), "frame {f} side {c}");
+                }
+            }
+            std::fs::write(
+                folder.join("vox.wav"),
+                wav_f32(&vec![0.9; 9_600], ENGINE_RATE),
+            )
+            .unwrap();
+            let (bytes, _) = opened.render_wav().unwrap();
+            let exported = live_engine::wav::read_wav_f32(&bytes).unwrap().samples;
+            assert_eq!(exported.len(), played.len());
+            assert!(
+                exported
+                    .iter()
+                    .zip(&played)
+                    .all(|(e, p)| e.to_bits() == p.to_bits()),
+                "Export is what was played"
+            );
+            let _ = std::fs::remove_dir_all(path.parent().unwrap());
         }
 
         #[test]
@@ -2508,14 +2939,14 @@ pub(crate) mod host {
             // applied to its dry chain, sample for sample
             let frames = w.len() as u64 / 2;
             let keys_alone = |path: &Path| {
-                let (mut g, _) = bridged(&set_document(path).unwrap()).unwrap();
+                let (mut g, _) = bridged(&set_document(path).unwrap(), path).unwrap();
                 g.tracks[1].active = false;
                 g.returns[0].active = false;
                 g.master.gain = 1.0;
                 g.render_performance(ENGINE_RATE, &Performance::silent(frames))
             };
             let (kw, kd) = (keys_alone(&wet_path), keys_alone(&dry_path));
-            let (mut g, _) = bridged(&set_document(&wet_path).unwrap()).unwrap();
+            let (mut g, _) = bridged(&set_document(&wet_path).unwrap(), &wet_path).unwrap();
             let mut echo = g.tracks[0].devices.remove(0);
             assert_eq!(echo.name(), "Echo");
             echo.prepare(ENGINE_RATE, 2);
@@ -3571,6 +4002,30 @@ pub fn live_engine_mixer(
     #[cfg(not(feature = "native_shell"))]
     {
         let _ = (app, webview);
+        Err(EVERYDAY.into())
+    }
+}
+
+/// Export Audio of a take through its part (O-I #855, `LiveEngineHost::render_take`): the take's sound as the
+/// frame sends it, raw (`oi.take-render/v1`), rendered through its part's effects in the set open in the engine,
+/// answered raw as the WAV's bytes, which the frame saves.
+#[tauri::command]
+pub fn live_engine_render_take(
+    app: tauri::AppHandle,
+    webview: tauri::WebviewWindow,
+    request: tauri::ipc::Request<'_>,
+) -> Result<tauri::ipc::Response, String> {
+    #[cfg(feature = "native_shell")]
+    {
+        admit_candidate_webview(&webview)?;
+        let tauri::ipc::InvokeBody::Raw(body) = request.body() else {
+            return Err("A take is rendered through its part from its sound sent as bytes (oi.take-render/v1)".into());
+        };
+        Ok(tauri::ipc::Response::new(host(&app).render_take(body)?))
+    }
+    #[cfg(not(feature = "native_shell"))]
+    {
+        let _ = (app, webview, request);
         Err(EVERYDAY.into())
     }
 }

@@ -111,6 +111,130 @@ impl Device for BypassDevice {
     fn process(&mut self, _frame_io: &mut [f32], _clock: &Clock) {}
 }
 
+/// Where Live's Utility takes its two channels from (its `ChannelMode`, as the factory presets store it: live-dynamics
+/// params.rs STEREO_GAIN, "ChannelMode stored 0 in `Left`, 1 in `Mono`/`Mid Only`/`Sides Only`/`Wide Stereo`, 2 in
+/// `Right`"): the left channel on both sides, both as they come, or the right on both.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum UtilityChannels {
+    Left,
+    Stereo,
+    Right,
+}
+
+/// Live's Utility (document element `StereoGain`; O-I #849 item 5) by the laws its clean-room surfaces give: its
+/// Channel Mode takes the channels ([`UtilityChannels`]), each Phase Invert turns its channel over, its Gain is the
+/// linear amplitude the set stores (params.rs STEREO_GAIN: "`Gain` stores linear amplitude 0..56.2341309"), and Mute
+/// silences it. ENGINE DECISIONS (no clean-room source orders them; each is linear, so only the channel mode and an
+/// invert can disagree): the channel mode first, then the inverts on the channels it gives; on a mono part its one
+/// channel is its left. Its Width, Balance, Mid/Side, Mono, Bass Mono and DC laws are not attested by any clean-room
+/// source (devices/utility-derivation.md §4: "do not build on either until pinned"): the bridge says so for a set
+/// that stores them off their defaults ([`crate::bridge`]).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct UtilityDevice {
+    pub gain: f32,
+    pub mute: bool,
+    pub invert: [bool; 2],
+    pub channels: UtilityChannels,
+}
+
+impl Device for UtilityDevice {
+    fn name(&self) -> &str {
+        "StereoGain"
+    }
+    fn process(&mut self, frame_io: &mut [f32], _clock: &Clock) {
+        if self.mute {
+            frame_io.fill(0.0);
+            return;
+        }
+        if let [l, r] = frame_io {
+            match self.channels {
+                UtilityChannels::Left => *r = *l,
+                UtilityChannels::Right => *l = *r,
+                UtilityChannels::Stereo => {}
+            }
+        }
+        for (x, invert) in frame_io.iter_mut().zip(self.invert) {
+            let turned = if invert { -*x } else { *x };
+            *x = turned * self.gain;
+        }
+    }
+}
+
+/// One chain of Live's Audio Effect Rack (devices/racks-session-model.md §1.3, an `AudioEffectBranch`): its name, its
+/// devices in order, and its chain mixer (§2.2 `AudioBranchMixerDevice`): its volume (linear, as a track's) and pan,
+/// and whether it sounds (its Speaker on, and soloed where another chain is).
+#[derive(Debug)]
+pub struct RackChain {
+    pub name: String,
+    pub devices: Vec<Box<dyn Device>>,
+    pub gain: f64,
+    pub pan: f64,
+    pub sounds: bool,
+}
+
+/// Live's Audio Effect Rack (document element `AudioEffectGroupDevice`; O-I #849 item 5, a rack's own chains): its
+/// input heard on each chain that sounds, through that chain's devices, at its volume and pan (a part's pan law,
+/// [`crate::graph::pan_weights`]: ENGINE DECISION, the chain mixer as the track mixer, §2.2), summed. A rack of no
+/// chains is silent. Allocation-free: a frame is at most two channels.
+#[derive(Debug)]
+pub struct AudioEffectRack {
+    pub chains: Vec<RackChain>,
+}
+
+impl AudioEffectRack {
+    /// Each chain's devices take what still sounds in the chain of the same place in `was`, device by device of
+    /// one kind, by `take`.
+    fn carry(&mut self, was: &mut dyn Device, take: fn(&mut dyn Device, &mut dyn Device)) {
+        let Some(was) = was.as_any_mut().downcast_mut::<AudioEffectRack>() else {
+            return;
+        };
+        for (now, then) in self.chains.iter_mut().zip(was.chains.iter_mut()) {
+            for (d, w) in now.devices.iter_mut().zip(then.devices.iter_mut()) {
+                if d.name() == w.name() {
+                    take(d.as_mut(), w.as_mut());
+                }
+            }
+        }
+    }
+}
+
+impl Device for AudioEffectRack {
+    fn name(&self) -> &str {
+        "AudioEffectGroupDevice"
+    }
+    fn prepare(&mut self, sample_rate: u32, channels: usize) {
+        for d in self.chains.iter_mut().flat_map(|c| c.devices.iter_mut()) {
+            d.prepare(sample_rate, channels);
+        }
+    }
+    fn process(&mut self, frame_io: &mut [f32], clock: &Clock) {
+        let n = frame_io.len().min(2);
+        let mut dry = [0f32; 2];
+        dry[..n].copy_from_slice(&frame_io[..n]);
+        let mut sum = [0f32; 2];
+        for chain in self.chains.iter_mut().filter(|c| c.sounds) {
+            let mut wet = dry;
+            for d in chain.devices.iter_mut() {
+                d.process(&mut wet[..n], clock);
+            }
+            let (lw, rw) = if n == 2 {
+                crate::graph::pan_weights(chain.pan)
+            } else {
+                (1.0, 1.0)
+            };
+            sum[0] += (f64::from(wet[0]) * chain.gain * lw) as f32;
+            sum[1] += (f64::from(wet[1]) * chain.gain * rw) as f32;
+        }
+        frame_io[..n].copy_from_slice(&sum[..n]);
+    }
+    fn follow(&mut self, was: &mut dyn Device) {
+        self.carry(was, |d, w| d.follow(w));
+    }
+    fn made_again_from(&mut self, was: &mut dyn Device) {
+        self.carry(was, |d, w| d.made_again_from(w));
+    }
+}
+
 /// Glue Compressor — static-curve path through `live_dynamics::glue`.
 ///
 /// Signal path per frame:

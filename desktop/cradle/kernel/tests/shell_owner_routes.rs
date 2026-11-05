@@ -2026,6 +2026,58 @@ fn ql_registry_vak_techne_and_operator_reads_carry_qls_answers() {
     let _ = fs::remove_dir_all(&dir);
 }
 
+/// Where a task stands (O-I #772): `factory attempt units` names each Run
+/// and unit the task's attempts stand on; the kernel reads it outside the
+/// lock, moves nothing, and carries Factory's reading verbatim.
+#[test]
+fn a_tasks_units_are_factorys_reading_carried_verbatim() {
+    let _held = hold();
+    let dir = scratch("task-units");
+    let factory = Fake::new(&dir, "factory");
+    let _bin = Bound::set("OI_FACTORY_BIN", &factory.bin);
+    let state = dir.join("Work/Demo/.factory/development-state.json");
+    fs::create_dir_all(state.parent().unwrap()).unwrap();
+    // The reading's shape as Factory's own test reads it back
+    // (factory/tests/attempt_task_read.rs, after a retry).
+    let reading = json!({"contract": "factory.attempt-task-units-reading/v1",
+        "projectRef": "project:01ARZ3NDEKTSV4RRFFQ69G5FAW", "taskRef": "task:readback", "runsRead": 1,
+        "units": [{"runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FBD", "workflowUnitRef": "workflow-unit:inspect-source",
+            "currentAttemptRef": "attempt:a-new", "status": "dispatched", "attempts": 2, "runRevision": 1, "required": true}],
+        "totalUnits": 1});
+    factory.answer(&reading);
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "factory_owner", "request": {"kind": "attempt-task-units", "state_path": state,
+            "task_ref": "task:readback"}}),
+        ),
+    );
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-read");
+    assert!(outcome.receipts.is_empty());
+    let KernelOpResult::FactoryDevelopmentReading { data } = &outcome.result else {
+        panic!("{:?}", outcome.result)
+    };
+    assert_eq!(*data, reading, "Factory's reading, verbatim");
+    assert_eq!(
+        factory.asked(),
+        [format!(
+            "attempt units {} task:readback --json",
+            state.display()
+        )]
+    );
+    // Another contract is refused, not carried.
+    factory.answer(&json!({"contract": "factory.attempt-task-reading/v1"}));
+    let (refused, _) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "factory_owner", "request": {"kind": "attempt-task-units", "state_path": state,
+            "task_ref": "task:readback"}}),
+        ),
+    );
+    assert!(refused.is_err(), "{refused:?}");
+}
+
 #[test]
 fn prompt_pads_read_the_bank_and_a_write_presents_the_persons_grant() {
     let _held = hold();
@@ -2166,6 +2218,70 @@ fn prompt_pads_read_the_bank_and_a_write_presents_the_persons_grant() {
         [format!("development pads-run {} - --json", state.display())]
     );
     assert_eq!(receipts(&outcome)[0]["ref"], "factory:pad-run:demo:3:1");
+    // The pads' presets (O-I 743): read as a reading; Save as preset and Hot-swap's recall are the
+    // person's writes, carried with the grant the host's token holds, as a pad's write is.
+    factory.answer(
+        &json!({"schema": "factory.prompt-pads-presets/v1", "presets": [],
+        "automatic_agent_or_model_invocation": false}),
+    );
+    factory.forget();
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "factory_owner", "request": {"kind": "pads-presets", "state_path": state}}),
+        ),
+    );
+    assert_eq!(form, "owner-read");
+    outcome.unwrap();
+    assert_eq!(
+        factory.asked(),
+        [format!(
+            "development pads-presets {} --json",
+            state.display()
+        )]
+    );
+    for (kind, extra, subject) in [
+        (
+            "pads-preset-save",
+            json!({"name": "Morning", "expected_revision": "absent"}),
+            "factory#pads-presets",
+        ),
+        (
+            "pads-preset-recall",
+            json!({"name": "Morning", "expected_revision": "blake3:aa", "preset_revision": "blake3:cc"}),
+            "project:demo#pads",
+        ),
+    ] {
+        let mut request = json!({"kind": kind, "state_path": state, "project_ref": "project:demo"});
+        for (key, value) in extra.as_object().unwrap() {
+            request[key] = value.clone();
+        }
+        factory.answer(
+            &json!({"schema": "factory.prompt-pads-preset-write/v1", "name": "Morning",
+            "project_ref": "project:demo", "revision": "blake3:dd", "changed": true}),
+        );
+        factory.forget();
+        let (outcome, form) = dispatched(
+            no_central(&dir),
+            op(json!({"op": "factory_owner", "request": request})),
+        );
+        let outcome = outcome.unwrap();
+        assert_eq!(form, "owner-write");
+        assert_eq!(
+            factory.asked(),
+            [format!("development {kind} {} - --json", state.display())]
+        );
+        let sent: Value = serde_json::from_str(&factory.stdin()).unwrap();
+        assert_eq!(sent["caller"]["projectionKind"], "desktop-human");
+        assert_eq!(
+            sent["authority"]["authorityRef"],
+            "central:native-action-authority#central:source:control:root:Control/user/identity"
+        );
+        assert_eq!(sent["name"], "Morning");
+        let wire = receipts(&outcome);
+        assert_eq!(wire[0]["action"], format!("development {kind}"));
+        assert_eq!(wire[0]["ref"], subject);
+    }
     let _ = fs::remove_dir_all(&dir);
 }
 

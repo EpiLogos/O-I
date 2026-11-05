@@ -527,3 +527,187 @@ fn a_takes_notes_keep_their_mpe_beside_the_set_and_read_back_on_the_clips_notes(
         assert_eq!(refused, Err(why.to_string()), "{mpe}");
     }
 }
+
+/// O-I #855 (DLW build ruling 2026-11-05: "the take's course in a project media store. Store it by path and sha256,
+/// outside git, as §10.3 says … The set's record keeps the reference, and its 256 KiB inline cap retires for the
+/// course"): a take's course is written in the project's media beside the set under its sha256, kept out of git there,
+/// and the record keeps its reference; the take reads back with its course, from that file. A course past the 256 KiB
+/// a take's other keeps may weigh is kept; the other keeps are still bounded. A course changed in the media since, or a
+/// reference to a path outside the media, reads back with no course and the words for why.
+#[test]
+fn a_takes_course_is_kept_in_the_projects_media_by_its_sha256_and_read_back_with_the_take() {
+    use live_set::sources::{COURSE_SUFFIX, MEDIA_DIR};
+    let (dir, path) = set_file();
+    let acts: Vec<Value> = (0..4_000)
+        .map(|i| json!({"sample": i * 64, "act": {"keys": [{"row": 0, "column": i % 90}], "amplitude": 0.5}}))
+        .collect();
+    let course = json!({"checkpoint": {"schema": "ql.torus-checkpoint/v1", "seeds": [1, 2, 3]}, "acts": acts, "frames": 256_000});
+    assert!(
+        serde_json::to_vec(&course).unwrap().len() > 256 * 1024,
+        "the course is past the inline cap"
+    );
+    let mut with_course = keeps();
+    with_course["course"] = course.clone();
+    let made = run(
+        &path,
+        take(
+            json!([{"p": 60, "at": 0, "len": 1, "vel": 100}]),
+            Some(with_course.clone()),
+        ),
+    )
+    .unwrap();
+    assert!(made.get("keepsRefused").is_none(), "{made}");
+    let record: Value = serde_json::from_str(
+        &std::fs::read_to_string(record_path(std::path::Path::new(&path))).unwrap(),
+    )
+    .unwrap();
+    let row = &record["takes"][0]["keeps"];
+    assert!(
+        row.get("course").is_none(),
+        "the record keeps no course inline: {row}"
+    );
+    let media = &row["course_media"];
+    let bytes = serde_json::to_vec(&course).unwrap();
+    use sha2::{Digest, Sha256};
+    let hex: String = Sha256::digest(&bytes)
+        .iter()
+        .map(|b| format!("{b:02x}"))
+        .collect();
+    assert_eq!(
+        *media,
+        json!({"path": format!("{MEDIA_DIR}/{hex}{COURSE_SUFFIX}"), "sha256": format!("sha256:{hex}"), "bytes": bytes.len()})
+    );
+    let file = dir.0.join(MEDIA_DIR).join(format!("{hex}{COURSE_SUFFIX}"));
+    assert_eq!(
+        std::fs::read(&file).unwrap(),
+        bytes,
+        "the course is kept under its sha256"
+    );
+    let ignore = std::fs::read_to_string(dir.0.join(MEDIA_DIR).join(".gitignore")).unwrap();
+    assert!(
+        ignore.lines().any(|l| l == format!("*{COURSE_SUFFIX}")),
+        "kept out of git: {ignore}"
+    );
+    let mut read_back = keeps_of(std::path::Path::new(&path), "12", 1)
+        .unwrap()
+        .unwrap();
+    assert_eq!(
+        read_back["course"], course,
+        "the take reads back with its course"
+    );
+    assert_eq!(read_back["course_media"], *media);
+    read_back.as_object_mut().unwrap().remove("course_media");
+    assert_eq!(read_back, with_course, "and with all it kept");
+    let laid = clip_json(&path, 0, ClipAt::Arrangement(1)).unwrap();
+    assert_eq!(
+        laid["clip"]["take"]["keeps"]["course"], course,
+        "the clip's reading carries it"
+    );
+
+    // the other keeps are still bounded; a course past its own bound is refused
+    let mut heavy = keeps();
+    heavy["pad"] = json!("x".repeat(300 * 1024));
+    let refused = run(&path, take(json!([]), Some(heavy))).unwrap_err();
+    assert!(refused.contains("256 KiB"), "{refused}");
+    let mut vast = keeps();
+    vast["course"] = json!({"pad": "x".repeat(17 * 1024 * 1024)});
+    let refused = run(&path, take(json!([]), Some(vast))).unwrap_err();
+    assert!(
+        refused.contains("course is kept as one object of at most 16 MiB"),
+        "{refused}"
+    );
+
+    // changed since, or a path outside the media: no course, in words
+    std::fs::write(&file, b"{\"acts\": []}").unwrap();
+    let changed = keeps_of(std::path::Path::new(&path), "12", 1)
+        .unwrap()
+        .unwrap();
+    assert_eq!(changed["course"], Value::Null);
+    assert!(
+        changed["course_refused"]
+            .as_str()
+            .unwrap()
+            .contains("it was changed since"),
+        "{changed}"
+    );
+    let mut row = record.clone();
+    row["takes"][0]["keeps"]["course_media"]["path"] = json!("../set.als");
+    std::fs::write(record_path(std::path::Path::new(&path)), row.to_string()).unwrap();
+    let outside = keeps_of(std::path::Path::new(&path), "12", 1)
+        .unwrap()
+        .unwrap();
+    assert!(
+        outside["course_refused"]
+            .as_str()
+            .unwrap()
+            .contains("is not one in the project's media"),
+        "{outside}"
+    );
+}
+
+/// O-I #743: Record into a slot (Live: an armed track's empty slots are record buttons) lays the pass in that slot as a clip of its own,
+/// in Insert MIDI Clip's shape and looped over its length, carrying the set's next TakeId so what it keeps stands by it as any take's;
+/// no take lane is made and the Arrangement is untouched. A held slot, a row the set lacks and an audio part are refused in words.
+#[test]
+fn a_pass_recorded_into_an_empty_slot_stands_in_the_slot_with_its_take_and_what_it_keeps() {
+    let (_dir, path) = set_file();
+    let slot_take = |track: usize, scene: usize| -> SetAct {
+        serde_json::from_value(json!({"kind": "take_record", "track": track, "start": 0, "length": 4, "name": "Take 1",
+            "notes": [{"p": 60, "at": 0, "len": 1, "vel": 100}, {"p": 64, "at": 2, "len": 1, "vel": 80}],
+            "keeps": keeps(), "scene": scene}))
+        .unwrap()
+    };
+    let made = run(&path, slot_take(0, 0)).unwrap();
+    assert_eq!(made["act"], "take_record");
+    assert_eq!(
+        made["done"],
+        "Recorded Take 1 on Keys into the slot in row 1: 2 notes."
+    );
+    assert_eq!(made["at"], json!({"track": 0, "slot": 0, "take": 1}));
+    assert!(made.get("keepsRefused").is_none(), "{made}");
+    let track = track_json(&path, 0);
+    assert_eq!(
+        track["takeLanes"].as_array().map_or(0, Vec::len),
+        0,
+        "a slot's pass makes no take lane: take lanes are the Arrangement's"
+    );
+    assert_eq!(
+        track["arrangementClips"].as_array().map(Vec::len),
+        Some(1),
+        "the Arrangement keeps only its Verse"
+    );
+    let laid = clip_json(&path, 0, ClipAt::Slot(0)).unwrap();
+    assert_eq!(laid["clip"]["name"], "Take 1");
+    let played: Vec<(i64, f64)> = laid["clip"]["notes"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|n| (n["p"].as_i64().unwrap(), n["at"].as_f64().unwrap()))
+        .collect();
+    assert_eq!(
+        played,
+        vec![(60, 0.0), (64, 2.0)],
+        "the notes as played, in the clip's own time"
+    );
+    assert_eq!(
+        laid["clip"]["take"],
+        json!({"id": 1, "keeps": keeps()}),
+        "the slot's clip carries its take and what it keeps"
+    );
+    assert_eq!(
+        keeps_of(std::path::Path::new(&path), "12", 1).unwrap(),
+        Some(keeps())
+    );
+    assert_eq!(
+        run(&path, slot_take(0, 0)).unwrap_err(),
+        "The slot in row 1 of Keys holds a clip: Live records into an empty slot"
+    );
+    assert_eq!(
+        run(&path, slot_take(0, 3)).unwrap_err(),
+        "the set has no row 4"
+    );
+    assert_eq!(
+        run(&path, slot_take(1, 0)).unwrap_err(),
+        "Live records notes on a MIDI part, and this track is not one"
+    );
+}

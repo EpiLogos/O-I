@@ -24,7 +24,9 @@
 // (takeCourse), so each note lies at the sample it landed at. A take played again with its clip as it was laid sets the Torus as it
 // stood, rings it again from the checkpoint (`torus` restore) and lands each act at its own sample after that (ClipPrepared `exact`,
 // live/clipPlayer.ts); Export Audio on the take's clip renders the course offline (`render-take`), part after part, each part from the
-// checkpoint the last one ended at (renderTake, exportTake). A take whose course cannot be kept (an act that moved the scene, an owner
+// checkpoint the last one ended at (renderTake, exportTake), and in the native candidate renders that sound through its part in the one
+// engine: the Torus's effects as they moved, the part's own chain, its volume and pan (`live_engine_render_take`, O-I #855). A take whose
+// course cannot be kept (an act that moved the scene, an owner
 // that kept no state of it) says why, plays as before from the body as it then rings (TAKE_RESUMES), and is not exported.
 //
 // Arm (O-I 853, round 18; §21.2 Transport, "Arm | Records your parameter moves as automation lanes"; §16.8, "Arm, then move any parameter
@@ -69,8 +71,10 @@ export const TAKE_COURSE_NOT_KEPT = Object.freeze(['the sample each move of the 
 /** Said with a take laid with its course. */
 export const TAKE_EXPORTS = 'Export Audio on its clip renders it as it was played, sample for sample.'
 const noCourse = (why: string) => `This take keeps no course of the Torus, so Export Audio cannot render it: ${sentence(why)}`
-/** The most a set keeps beside one take (packages/live-set sources.rs KEEP_BYTES_MAX): a course past it is not kept. */
-const KEEP_BYTES_MAX = 256 * 1024
+/** The most a take's course may weigh (packages/live-set sources.rs COURSE_BYTES_MAX): the set's owner keeps it in the project's media
+ * under its sha256, the set's record keeping its reference (DLW build ruling 2026-11-05: "the take's course in a project media store …
+ * its 256 KiB inline cap retires for the course"). A course past it is not kept. */
+const COURSE_BYTES_MAX = 16 * 1024 * 1024
 
 // ── the Torus, kept ────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -165,6 +169,9 @@ export interface TakeContext {
   readonly start: number
   readonly torus: TorusKept | null
   readonly mode: {readonly root: number; readonly scale: string | null} | null
+  /** The row whose empty slot the take is recorded into (O-I #743, Record into a slot): laid there from the clip's own beat 0, not in
+   * the Arrangement; absent, the take lies in the Arrangement from `start`. */
+  readonly scene?: number
 }
 
 /** One note played during the take: its number, the key and touch-point it struck, its strength and source, and when it was struck and
@@ -502,9 +509,9 @@ export function takeRecordAct(take: RecordedTake, name: string, landing?: TakeLa
   const without = (why: string) => ({...base, course: null, course_refused: why, resumes: TAKE_RESUMES, not_kept: [...TAKE_NOT_KEPT]})
   let keeps: Record<string, unknown> = course ? {...base, course: course.course, resumes: TAKE_REPLAYS, not_kept: [...TAKE_COURSE_NOT_KEPT]}
     : without(landing && 'refused' in landing ? landing.refused : NO_STAGE)
-  const bytes = new TextEncoder().encode(JSON.stringify(keeps)).length
-  if (course && bytes > KEEP_BYTES_MAX) keeps = without(`its course takes ${Math.ceil(bytes / 1024)} KiB beside the take, past the 256 KiB the set keeps beside one`)
-  return {kind: 'take_record', track: context.track, start: context.start, length, name, notes, keeps}
+  const bytes = course ? new TextEncoder().encode(JSON.stringify(course.course)).length : 0
+  if (course && bytes > COURSE_BYTES_MAX) keeps = without(`its course takes ${Math.ceil(bytes / 1024 / 1024)} MiB, past the 16 MiB the project's media keeps of one`)
+  return {kind: 'take_record', track: context.track, start: context.start, length, name, notes, keeps, ...(context.scene === undefined ? {} : {scene: context.scene})}
 }
 const velocityOf = (amplitude: number) => Math.max(1, Math.min(127, Math.round(amplitude * 127)))
 /** The lanes Arm recorded, as the take keeps them: each point in beats from the take's start, those past its length left out; none when
@@ -741,16 +748,73 @@ export function takeWav(pcm: Float32Array, rate: number): Uint8Array<ArrayBuffer
   return bytes
 }
 
-/** What Export Audio reaches: the frame's stage channel, and where the file is saved (a download, which the native host lands in
- * Downloads and says where, studioExports.ts). */
+/** The Torus's effects at one frame of a take's sound (effectsLaw.ts EffectsState, as the frame's reading reports them and the engine
+ * puts them after the Torus, live_engine_host.rs torus_chain). */
+export interface TakeEffectsAt {
+  readonly frame: number
+  readonly effects: Readonly<Plain>
+}
+
+/** The Torus's effects as the take played through them: as they stood when it began (frame 0), then as each move of them left them, at
+ * the frame its beat lands at in the owner's render (the frame moves them by beat, within a block of the sound: TAKE_COURSE_NOT_KEPT).
+ * None when the take kept no effects of the Torus; a move past the take's end is not in it. Pure. */
+export function takeEffects(keeps: Plain, course: TakeCourse): TakeEffectsAt[] {
+  const kept = torusKeptOf(keeps.torus)
+  const fold = (state: Plain | null, edits: readonly InstrumentEdit[]): Plain | null => {
+    let next = state
+    for (const edit of edits) {
+      if (edit.kind === 'effect-chain') next = {...next, chain: [...edit.chain]}
+      else if (edit.kind === 'effect') { const was = next?.[edit.effect]; next = {...next, [edit.effect]: {...(plain(was) ? was : {}), [edit.key]: edit.value}} }
+    }
+    return next
+  }
+  const start = kept ? fold(null, kept.edits) : null
+  if (!start) return []
+  const stood: TakeEffectsAt[] = [{frame: 0, effects: start}]
+  const bpm = typeof keeps.bpm === 'number' && keeps.bpm > 0 ? keeps.bpm : null
+  let now = start
+  if (bpm !== null) for (const move of takeMoves(kept, keeps.moves)) {
+    const next = fold(now, move.edits)
+    const frame = Math.round(move.beat * (60 / bpm) * course.sample_rate)
+    if (next === now || frame >= course.frames) continue
+    now = next!
+    if (stood.at(-1)!.frame === frame) stood[stood.length - 1] = {frame, effects: now}
+    else stood.push({frame, effects: now})
+  }
+  return stood
+}
+
+/** What names a take's sound sent to its part in the engine (live_engine_host.rs TAKE_RENDER_SCHEMA). */
+export const TAKE_RENDER_SCHEMA = 'oi.take-render/v1'
+/** A take's sound as the engine's host reads it (live_engine_host.rs `take_render_of`): four bytes, little-endian, the length of a JSON
+ * head naming the set, its track (the set owner's index), the rate and the Torus's effects at their frames; the head; then the sound as
+ * IEEE-754 binary32 little-endian samples, one channel. Pure. */
+export function takeRenderBody(head: {readonly path: string; readonly track: number; readonly rate: number; readonly effects: readonly TakeEffectsAt[]},
+  pcm: Float32Array): Uint8Array<ArrayBuffer> {
+  const json = new TextEncoder().encode(JSON.stringify({schema: TAKE_RENDER_SCHEMA, path: head.path, track: head.track, rate: head.rate, effects: head.effects}))
+  const bytes = new Uint8Array(new ArrayBuffer(4 + json.length + pcm.length * 4))
+  const view = new DataView(bytes.buffer)
+  view.setUint32(0, json.length, true)
+  bytes.set(json, 4)
+  for (let i = 0; i < pcm.length; i++) view.setFloat32(4 + json.length + i * 4, pcm[i]!, true)
+  return bytes
+}
+
+/** What Export Audio reaches: the frame's stage channel, where the file is saved (a download, which the native host lands in
+ * Downloads and says where, studioExports.ts), and, in the native candidate, the take's part in the one engine (`through`: the take's
+ * sound at the level it played at, its rate and the Torus's effects at their frames, rendered through the part as the engine plays it;
+ * the WAV's bytes, or thrown in the engine's words). */
 export interface TakeExportOwners {
   readonly stage: (command: StageCommand) => Promise<StageResult>
   readonly save: (name: string, bytes: Uint8Array<ArrayBuffer>) => Promise<unknown>
+  readonly through?: (take: {readonly rate: number; readonly pcm: Float32Array; readonly effects: readonly TakeEffectsAt[]}) => Promise<Uint8Array<ArrayBuffer>>
 }
 
 /** Export Audio of a take's clip (manual §21.2, "What Export Audio renders is what you heard, sample for sample"): its course rendered by
- * the Torus's owner, at the level the take played at, written as WAV and saved; answered in words. A clip no take gave, or a take that
- * keeps no course, is refused in words. The frame's effects are its own sound after the Torus and are not in the render: said. */
+ * the Torus's owner, at the level the take played at; through its part where the engine reaches it (`through`: the Torus's effects as
+ * they moved, the part's own chain, its volume and pan, as the engine plays the part), else the Torus alone, written as WAV; saved, and
+ * answered in words. A clip no take gave, or a take that keeps no course, is refused in words. A take that does not render through its
+ * part is saved as the Torus alone, and says why and that the frame's effects are not in it. */
 export async function exportTake(clip: LiveClipReading, owners: TakeExportOwners): Promise<{readonly ok: true; readonly note: string} | {readonly ok: false; readonly error: string}> {
   const named = clip.name || 'This clip'
   if (!clip.take) return {ok: false, error: `${named} is not a take: Export Audio renders a take Record laid, as it was played.`}
@@ -767,22 +831,60 @@ export async function exportTake(clip: LiveClipReading, owners: TakeExportOwners
     for (let n = step.at; n < end; n++) pcm[n] = pcm[n]! * step.gain
   }
   const name = `${(clip.name || `Take ${clip.take.id}`).replace(/[\\/:*?"<>|]/g, '-')}.wav`
-  try { await owners.save(name, takeWav(pcm, rendered.sample_rate)) } catch (cause) { return {ok: false, error: `${name} was not saved: ${sentence(said(cause))}`} }
   const chain = torusKeptOf(keeps.torus)?.edits.find(edit => edit.kind === 'effect-chain')
-  const effects = chain && chain.kind === 'effect-chain' && chain.chain.length ? ` The frame's effects (${chain.chain.join(', ')}) are not in the file: they are its own sound, after the Torus.` : ''
+  const chained = chain && chain.kind === 'effect-chain' && chain.chain.length ? chain.chain.join(', ') : null
+  let file: Uint8Array<ArrayBuffer> | null = null, missed = ''
+  if (owners.through) {
+    try { file = await owners.through({rate: rendered.sample_rate, pcm, effects: takeEffects(keeps, course)}) }
+    catch (cause) { missed = ` It did not render through its part: ${sentence(said(cause))}` }
+  }
+  try { await owners.save(name, file ?? takeWav(pcm, rendered.sample_rate)) } catch (cause) { return {ok: false, error: `${name} was not saved: ${sentence(said(cause))}`} }
   const level = kept ? '' : ' The Torus was not kept with this take, so the file is at the owner\'s own level.'
-  return {ok: true, note: `Exported ${clip.name || `Take ${clip.take.id}`} as “${name}”: ${(pcm.length / rendered.sample_rate).toFixed(2)} s of the Torus at ${rendered.sample_rate} Hz, as the take played it.${effects}${level}`}
+  const seconds = `${(pcm.length / rendered.sample_rate).toFixed(2)} s`
+  const heard = file
+    ? `${seconds} of the Torus through its part, as the engine plays it: ${chained ? `the Torus's effects (${chained}) as they moved, ` : ''}the part's own chain, its volume and pan.`
+    : `${seconds} of the Torus at ${rendered.sample_rate} Hz, as the take played it.${missed}${chained ? ` The frame's effects (${chained}) are not in the file: they are its own sound, after the Torus.` : ''}`
+  return {ok: true, note: `Exported ${clip.name || `Take ${clip.take.id}`} as “${name}”: ${heard}${level}`}
 }
 
 /** The candidate's Export Audio of the take at `at` on `track` of the set at `path`: the clip read whole from the set's owner (kernel
- * live_clip_read), rendered through the frame's stage channel, saved as a download. */
+ * live_clip_read), rendered through the frame's stage channel and, in the native candidate, through its part in the one engine
+ * (`live_engine_render_take`; the set bridged into the engine, with no sound, when the engine holds none), saved as a download. */
 export async function exportLiveTake(address: {readonly path: string; readonly track: number; readonly at: LiveClipAt}): Promise<{readonly ok: true; readonly note: string} | {readonly ok: false; readonly error: string}> {
   const [{detectTransport, kernelOp}, torus] = await Promise.all([import('../../../../../desktop/cradle/src/kernel/bridge'), import('./torusInstrument')])
   const transport = detectTransport()
   if (transport.kind === 'unavailable') return {ok: false, error: transport.reason}
   const answer = await kernelOp(transport, {op: 'live_clip_read', path: address.path, track: address.track, clip: address.at})
   if (answer.error || answer.outcome?.result !== 'live_clip_reading') return {ok: false, error: answer.error ?? 'The set\'s owner did not answer the clip'}
-  return exportTake(answer.outcome.reading.clip, {stage: torus.commitLiveStage, save: download})
+  return exportTake(answer.outcome.reading.clip, {stage: torus.commitLiveStage, save: download,
+    ...(transport.kind === 'tauri' ? {through: take => renderThroughPart(address, take)} : {})})
+}
+
+/** A take's sound rendered through its part in the one engine (live_engine_host.rs `live_engine_render_take`): the set it is a take of
+ * bridged into the engine, with no sound, when the engine holds no set (`live_engine_open`); the body sent raw, the WAV's bytes back. */
+async function renderThroughPart(address: {readonly path: string; readonly track: number}, take: Parameters<NonNullable<TakeExportOwners['through']>>[0]):
+  Promise<Uint8Array<ArrayBuffer>> {
+  const {invoke} = await import('@tauri-apps/api/core')
+  const holds = await invoke<{path: string}>('live_engine_mixer').then(() => true, () => false)
+  if (!holds) await invoke('live_engine_open', {path: address.path})
+  const wav = await invoke<ArrayBuffer>('live_engine_render_take', takeRenderBody({path: address.path, track: address.track, rate: take.rate, effects: take.effects}, take.pcm))
+  return new Uint8Array(wav)
+}
+
+/** A Live take laid under an Expression's scene (O-I #855, "A Live part placed under an Expression's scenes sounds on its ruler"): the
+ * kernel's `record_torus_take` (expression_performance.rs RecordTorusTake) of the take the kernel sealed from what the Torus's owner was
+ * sent (native-expression `torus_take`, `oi.torus-take/v1`; the seal admits it, never this record), on the take lane of the Live take
+ * (`take-lane:torus/<TakeId>`), from the sample of the scene's transport its clip's beat lands at under the set's tempo, at that tempo.
+ * Refused in words for a take the kernel did not seal, or a beat or tempo that is none. Pure. */
+export function torusTakeRecord(sealed: unknown, take: {readonly id: number; readonly name: string; readonly beat: number; readonly bpm: number}):
+  {readonly operation: 'record_torus_take'; readonly take: Plain; readonly lane: Plain; readonly at_sample: string; readonly micros_per_quarter: number} | {readonly refused: string} {
+  if (!plain(sealed) || sealed.schema !== 'oi.torus-take/v1' || typeof sealed.seal !== 'string' || !Number.isSafeInteger(sealed.sample_rate))
+    return {refused: 'A take lies under a scene only as the kernel sealed it from what the Torus\'s owner was sent (native-expression torus_take).'}
+  if (!Number.isFinite(take.beat) || take.beat < 0 || !Number.isFinite(take.bpm) || take.bpm <= 0)
+    return {refused: `${take.name || `Take ${take.id}`} lies at no beat of a tempo, so it has no place under the scene.`}
+  const at = Math.round(take.beat * (60 / take.bpm) * (sealed.sample_rate as number))
+  return {operation: 'record_torus_take', take: sealed, lane: {layer_ref: `take-lane:torus/${take.id}`, title: take.name || `Take ${take.id}`, enabled: true, solo: false},
+    at_sample: String(at), micros_per_quarter: Math.round(60_000_000 / take.bpm)}
 }
 
 /** A file saved as the page's download: the native host lands it in Downloads and says where (`oi:native-download`). */
@@ -845,18 +947,24 @@ export function recordBinding(input: RecordInput): SlotBinding {
   const {state} = input
   const words = [state.said, input.opened].filter((text): text is string => typeof text === 'string' && text.length > 0).join(' ')
   const tell = (text: string) => words ? `${text} ${words}` : text
-  if (state.recording) return {press: input.stop, lit: true, title: tell(`Record — recording what you play on ${state.recording.part}; press again to lay the take.`)}
+  if (state.recording) return {press: input.stop, lit: true, title: tell(`Record — recording what you play on ${state.recording.part}${intoSlot(state.recording)}; press again to lay the take.`)}
   if (state.busy) return {lit: false, refused: tell('The set is laying the take…')}
-  const why = !input.setPath ? 'Open a set: Record records what you play on one of its parts.'
+  const why = recordRefusal(input)
+  if (why) return {lit: false, refused: tell(why)}
+  return {press: input.start, lit: false, title: tell(`Record — records what you play on ${input.part!.name} into Arrangement view as a take.`)}
+}
+
+/** Why Record cannot begin a take on the part, in words; null when it can. Pure. */
+export function recordRefusal(input: Pick<RecordInput, 'setPath' | 'part' | 'bpm' | 'torus'>): string | null {
+  return !input.setPath ? 'Open a set: Record records what you play on one of its parts.'
     : !input.part ? 'Select a MIDI part of the set: Record records what you play on it.'
       : input.part.kind !== 'midi' ? `${input.part.name} is not a MIDI part: Record records notes on a MIDI part.`
         : input.bpm === null || !(input.bpm > 0) ? 'The set discloses no tempo, so a take has no beats to lie on.'
           : input.torus === null ? 'The torus is not open, so there is nothing to record. Open it in Live.'
             : !input.torus.ok ? `The torus is refused: ${input.torus.fault}`
               : input.torus.value.standing !== 'following' ? `The torus is ${input.torus.value.standing}: resume it, then record.` : null
-  if (why) return {lit: false, refused: tell(why)}
-  return {press: input.start, lit: false, title: tell(`Record — records what you play on ${input.part!.name} into Arrangement view as a take.`)}
 }
+const intoSlot = (context: TakeContext) => context.scene === undefined ? '' : ` into the slot in row ${context.scene + 1}`
 
 /** The part of a set's document at `track`, or null when there is none. Pure. */
 export function chosenPartOf(document: unknown, track: number | null): ChosenPart | null {
@@ -922,8 +1030,9 @@ export function createLiveRecord(recorder: TakeRecorder, owners: RecordOwners) {
   return {
     state: () => state,
     subscribe(listener: () => void) { listeners.add(listener); return () => { listeners.delete(listener) } },
-    /** Begin a take on `track` of the set at `path`, at `bpm` in `mode`: from the first bar after what its main lane holds. */
-    async start(path: string, track: number, bpm: number, mode: TakeContext['mode']): Promise<void> {
+    /** Begin a take on `track` of the set at `path`, at `bpm` in `mode`: from the first bar after what its main lane holds; or, with
+     * `scene`, into that row's empty slot (O-I #743), from the clip's own beat 0. */
+    async start(path: string, track: number, bpm: number, mode: TakeContext['mode'], scene?: number): Promise<void> {
       if (state.recording || state.busy) return
       publish({busy: true})
       try {
@@ -932,7 +1041,8 @@ export function createLiveRecord(recorder: TakeRecorder, owners: RecordOwners) {
         if (!part || part.kind !== 'midi') throw new Error('the part chosen is not a MIDI part of the set')
         const lane = (document as {tracks: Plain[]}).tracks[track]!.arrangement_clips
         const clips = Array.isArray(lane) ? lane.filter(plain).map(clip => ({end: Number(clip.end)})) : []
-        const context: TakeContext = {path, track, part: part.name, bpm, start: takeStartOf(clips), torus: torusKept(owners.torus()), mode}
+        const context: TakeContext = {path, track, part: part.name, bpm, start: scene === undefined ? takeStartOf(clips) : 0,
+          torus: torusKept(owners.torus()), mode, ...(scene === undefined ? {} : {scene})}
         // The Torus as it rings as the take begins, then the take: its first beat stands on the owner's sample.
         begun = owners.stage ? await checkpointOf(owners.stage) : null
         recorder.start(context, owners.now())
@@ -942,15 +1052,15 @@ export function createLiveRecord(recorder: TakeRecorder, owners: RecordOwners) {
         publish({busy: false, said: `No take was begun: ${sentence(said(cause))}`})
       }
     },
-    /** End the take and lay it in the set; the part keeps the Torus as it then stands. */
-    async stop(): Promise<void> {
+    /** End the take and lay it in the set; the part keeps the Torus as it then stands. Answers whether it was laid, and what was said. */
+    async stop(): Promise<{readonly laid: boolean; readonly said: string | null}> {
       const take = recorder.stop(owners.now())
       unwatch?.(); unwatch = null
-      if (!take) return
+      if (!take) return {laid: false, said: state.said}
       publish({recording: null, busy: true})
       const name = `Take ${++takes}`
       const nothing = takeRecordAct(take, name)
-      if ('refused' in nothing) { publish({busy: false, said: nothing.refused}); return }
+      if ('refused' in nothing) { publish({busy: false, said: nothing.refused}); return {laid: false, said: nothing.refused} }
       const from = begun
       begun = null
       const landing = owners.stage && from ? await landingOf(owners.stage, from, take.context.bpm, takeLength(take)) : undefined
@@ -960,8 +1070,10 @@ export function createLiveRecord(recorder: TakeRecorder, owners: RecordOwners) {
         const laid = await owners.act(take.context.path, act)
         const kept = await owners.keepTorus(take.context.path, take.context.track)
         publish({busy: false, said: [laid.done, laid.keepsRefused, kept, exported].filter(Boolean).map(text => sentence(text!)).join(' ')})
+        return {laid: true, said: state.said}
       } catch (cause) {
         publish({busy: false, said: `The take was not laid: ${sentence(said(cause))}`})
+        return {laid: false, said: state.said}
       }
     },
   }
@@ -1121,6 +1233,8 @@ const openedListeners = new Set<() => void>()
 const hearOpened = (words: string | null) => { if (words === opened) return; opened = words; for (const listener of [...openedListeners]) listener() }
 
 let candidate: {record: LiveRecord; keeper: TorusKeeper} | null = null
+/** The mode the transport holds in force (useLiveRecord), which Record into a slot records in. */
+let transportMode: TakeContext['mode'] = null
 /** Record's store and the Torus's keeper in the candidate, made at first use (their owners are loaded then: the set's and the Torus's). */
 export async function liveRecord(): Promise<{readonly record: LiveRecord; readonly keeper: TorusKeeper}> {
   if (candidate) return candidate
@@ -1172,6 +1286,8 @@ export function useLiveRecord(input: {readonly setPath: string | null; readonly 
   const state = useSyncExternalStore(subscribeShown, () => shown, () => NO_RECORD)
   const words = useSyncExternalStore(subscribeShown, () => opened, () => null)
   const {setPath, track, bpm, torus, mode} = input
+  // Record into a slot (recordIntoSlot) records in the mode the transport holds in force.
+  useEffect(() => { transportMode = mode })
   const [part, setPart] = useState<ChosenPart | null>(null)
   useEffect(() => {
     if (!setPath) { setPart(null); void liveRecord().then(({keeper}) => keeper.close()); return }
@@ -1187,4 +1303,36 @@ export function useLiveRecord(input: {readonly setPath: string | null; readonly 
   return recordBinding({setPath, part, bpm, torus, state, opened: words,
     start: () => { if (setPath && part && bpm) void liveRecord().then(({record}) => record.start(setPath, part.track, bpm, mode)) },
     stop: () => { void liveRecord().then(({record}) => record.stop()) }})
+}
+
+/** Where Record into a slot is pressed (O-I #743): the set, the part and the row whose empty slot records, and the set's tempo. */
+export interface SlotRecordAt {readonly path: string; readonly track: number; readonly scene: number; readonly bpm: number | null; readonly part: ChosenPart | null}
+
+/** Record into a slot, pressed (O-I #743; Live: an armed track's empty slots are record buttons): a take begins on the part, to be laid in
+ * that row's empty slot (acts.rs TakeRecord `scene`); pressed again on the slot it records into, the take is laid there. Refused in
+ * Record's own words while a take cannot begin, and while one records elsewhere. */
+export async function slotRecordPress(record: LiveRecord, at: SlotRecordAt, torus: LiveTorusState | null, mode: TakeContext['mode']):
+  Promise<{readonly ok: true; readonly note: string} | {readonly ok: false; readonly error: string}> {
+  const state = record.state(), recording = state.recording
+  if (recording) {
+    if (recording.path === at.path && recording.track === at.track && recording.scene === at.scene) {
+      const ended = await record.stop()
+      const words = ended.said ?? 'The take was laid.'
+      return ended.laid ? {ok: true, note: words} : {ok: false, error: words}
+    }
+    return {ok: false, error: `A take records on ${recording.part}${intoSlot(recording)}: lay it first, with the button it records from.`}
+  }
+  if (state.busy) return {ok: false, error: 'The set is laying the take…'}
+  const why = recordRefusal({setPath: at.path, part: at.part, bpm: at.bpm, torus})
+  if (why) return {ok: false, error: why}
+  await record.start(at.path, at.track, at.bpm!, mode, at.scene)
+  const begun = record.state().recording
+  return begun ? {ok: true, note: `Recording what you play on ${begun.part}${intoSlot(begun)}: press its button again to lay the take.`}
+    : {ok: false, error: record.state().said ?? 'No take was begun.'}
+}
+
+/** Record into a slot in the candidate: on its Record, with the Torus as it stands and the mode the transport holds in force. */
+export async function recordIntoSlot(at: SlotRecordAt): Promise<{readonly ok: true; readonly note: string} | {readonly ok: false; readonly error: string}> {
+  const [{record}, torus] = await Promise.all([liveRecord(), import('./torusInstrument')])
+  return slotRecordPress(record, at, torus.liveTorusState(), transportMode)
 }

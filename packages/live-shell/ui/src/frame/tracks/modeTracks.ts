@@ -27,6 +27,7 @@ import type {KernelTransportStatus, LiveClipAt} from '../../../../../../desktop/
 import {liveSetTrackAdapter} from '../../timeline/liveSetTrackAdapter'
 import {liveSetWrites} from '../../live/liveWrites'
 import {liveEngineState, subscribeLiveEngine, type LiveEngineReading} from '../../live/liveEngine'
+import type {ClipLaneStanding} from '../../live/clipPlayer'
 import {frameSoundReading, readStudioArm, setExpressionMuted, setExpressionSolo} from '../../native/frameSound'
 import {expressionsTrackAdapter} from '../../timeline/expressionsTrackAdapter'
 import {FACTORY_WAITING} from '../../timeline/factoryTrackAdapter'
@@ -197,7 +198,7 @@ export const MODE_TRACKS: Readonly<Record<SurfMode, UseModeTracks>> = {
   // A constellation dropped on a part makes Live's clip of it (live/constellationClip.ts liveClipMaker, O-I #768). A plain read, no
   // hook: the engine's reading is read as it stands when the pane draws (Volume and Pan as the engine applied them, O-I #849), and the
   // pane draws again whenever it moves (MODE_REDRAWS).
-  live: reading => reading.set ? liveTracks(reading.set, reading.document, reading.colors, undefined, liveEngineState().reading) : null,
+  live: reading => reading.set ? liveTracks(reading.set, reading.document, reading.colors, undefined, liveEngineState().reading, laneStanding) : null,
   base: worldCut(useCentralTracks),
   // A session's and its task's own acts on AIKit (O-I #743: Delete, Paste, Insert, a session's Rename and Delete), over the carrier.
   factory: worldCut(withTaskActs(useFactoryTracks)),
@@ -209,22 +210,58 @@ export const MODE_TRACKS: Readonly<Record<SurfMode, UseModeTracks>> = {
  * snapshot (a mode with none draws on the published reading alone). */
 export interface ModeRedraw {subscribe(listener: () => void): () => void; snapshot(): unknown}
 export const MODE_REDRAWS: Readonly<Partial<Record<SurfMode, ModeRedraw>>> = {
-  // Live's engine: while it plays the set, its reading moves with every applied block (live/liveEngine.ts).
-  live: {subscribe: subscribeLiveEngine, snapshot: liveEngineState},
+  // Live's engine: while it plays the set, its reading moves with every applied block (live/liveEngine.ts); and the take's lanes as the
+  // clip player plays them (O-I #853), each override and Re-enable.
+  live: {subscribe: listener => { const engine = subscribeLiveEngine(listener), lanes = subscribeLaneStanding(listener); return () => { engine(); lanes() } },
+    snapshot: liveRedrawn},
+}
+
+/** The clip player's lane standing (O-I #853), as the pane last heard it: followed from the pane's first subscription, never at first load
+ * (the player loads with Live's transport, O-I #740). */
+let laneStanding: ClipLaneStanding | null = null
+const laneListeners = new Set<() => void>()
+let laneFollowed = false
+function subscribeLaneStanding(listener: () => void): () => void {
+  laneListeners.add(listener)
+  if (!laneFollowed) {
+    laneFollowed = true
+    void import('../../live/clipPlayer').then(({liveClipPlayer}) => {
+      const follow = () => {
+        const lanes = liveClipPlayer.state().lanes
+        if (lanes === laneStanding) return
+        laneStanding = lanes
+        for (const heard of [...laneListeners]) heard()
+      }
+      liveClipPlayer.subscribe(follow)
+      follow()
+    })
+  }
+  return () => { laneListeners.delete(listener) }
+}
+/** What Live's pane draws on: the engine's state and the lanes' standing, one snapshot while neither moves. */
+let redrawn: {readonly engine: ReturnType<typeof liveEngineState>; readonly lanes: ClipLaneStanding | null} | null = null
+function liveRedrawn() {
+  const engine = liveEngineState()
+  if (!redrawn || redrawn.engine !== engine || redrawn.lanes !== laneStanding) redrawn = {engine, lanes: laneStanding}
+  return redrawn
 }
 
 /** Live's tracks: the open set's parts, its writes and its acts (O-I #743), Launch and Stop on the torus, Live's clip of a
  * constellation dropped on a part, and — while the engine plays this set — Volume and Pan as the engine applied them. Pure. */
 export function liveTracks(set: SetSummary, document: SetDocument | null, colors?: readonly string[], maker = liveClipMaker(set.path),
-  engine: LiveEngineReading | null = null): WorldTrackSet {
+  engine: LiveEngineReading | null = null, lanes: ClipLaneStanding | null = null): WorldTrackSet {
   // The clip player loads with Live's transport (O-I #740: a mode's code is not the first load), so its acts reach it when pressed.
   const player = () => import('../../live/clipPlayer').then(module => module.liveClipActs)
   const play = {launch: (track: number, at: LiveClipAt) => player().then(acts => acts.launch({path: set.path, track, at}, set.tempo_bpm)),
     stop: (track: number) => player().then(acts => acts.stop(set.path, track, set.tracks[track]?.name ?? 'the track')),
-    stopAll: () => player().then(acts => acts.stopAll())}
+    stopAll: () => player().then(acts => acts.stopAll()),
+    reenable: (parameter?: string) => player().then(acts => acts.reenable(parameter))}
   // Export Audio of a take Record laid (O-I #855 round 6d): its course rendered by the Torus's owner, loaded when pressed.
   const exportTake = (track: number, at: LiveClipAt) => import('../../live/liveTake').then(module => module.exportLiveTake({path: set.path, track, at}))
-  const tracks = liveSetTrackAdapter.project({set, document, colors, ...liveSetWrites(set.path), play, exportTake, engine})
+  // Record into a slot (O-I #743): a take on the armed part's Record, laid in the slot; loaded when pressed.
+  const record = (track: number, scene: number) => import('../../live/liveTake').then(module => module.recordIntoSlot({path: set.path, track, scene,
+    bpm: set.tempo_bpm, part: set.tracks[track] ? {track, name: set.tracks[track]!.name, kind: set.tracks[track]!.kind} : null}))
+  const tracks = liveSetTrackAdapter.project({set, document, colors, ...liveSetWrites(set.path), play, exportTake, engine, record, lanes})
   return maker ? withClipMaker(tracks, maker) : tracks
 }
 

@@ -124,7 +124,10 @@ test('a touch on the stage names the surface point drawn under it, at any turn o
   assert.ok(exact > 200, `most drawn points are their own front surface and read back exactly (${exact})`)
 })
 
-test('a press off the torus is no touch, and a perspective stage is refused in words, not guessed', async () => {
+// REPLACED (O-I #771, round 19): a perspective stage was refused in words ("a touch strikes the torus only on the flat (orthographic)
+// stage"); it now names the point the engine's perspective eye draws under the pointer (the next test), and only a stage whose lens the
+// frame was not handed is refused, and told.
+test('a press off the torus is no touch, and a perspective stage whose lens the frame was not handed is refused in words, not guessed', async () => {
   const {touchedSurface} = await touch()
   const {project} = await stage()
   const view = camera({})
@@ -135,8 +138,46 @@ test('a press off the torus is no touch, and a perspective stage is refused in w
   const rim = project(toStage([R + 1, 0, 0]), view, SIZE.width, SIZE.height)
   const perspective = touchedSurface(rim.x - 5, rim.y, {camera: view, ...SIZE}, {projection: 'perspective', ...SCALE})
   assert.equal(perspective.point, null)
-  assert.match(perspective.why, /perspective/)
+  assert.match(perspective.why, /perspective, and the frame was not handed the engine's field of view/)
+  assert.equal(perspective.say, true)
   assert.throws(() => touchedSurface(rim.x, rim.y, {camera: view, ...SIZE}, {projection: 'orthographic', unitsPerMetre: 0, worldScale: 400}), /units per metre/)
+})
+
+test('a touch on a perspective stage names the surface point the engine\'s perspective eye draws under it (O-I #771)', async () => {
+  const {touchedSurface, torusPoint} = await touch()
+  const {basis, stageScale} = await stage()
+  const THREE = await import(pathToFileURL(join(frame, 'node_modules/three/build/three.module.js')).href)
+  // the engine's perspective camera as PointCloudField setHostView stands it, at the engine's aspect (applyProjection)
+  const drawnBy = (view, fov) => {
+    const {a, b} = basis(view), s = stageScale(SIZE.width, SIZE.height) * view.zoom / SCALE.worldScale
+    const cam = new THREE.PerspectiveCamera(fov, SIZE.width / SIZE.height, 0.1, 20000)
+    const right = new THREE.Vector3(...a), up = new THREE.Vector3(...b), normal = new THREE.Vector3().crossVectors(right, up).normalize()
+    cam.position.copy(normal).multiplyScalar((SIZE.height / s * 0.5) / Math.tan(fov * Math.PI / 360))
+    cam.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(right, up, normal))
+    cam.updateProjectionMatrix(); cam.updateMatrixWorld(true)
+    return p => {
+      const v = new THREE.Vector3(...p.map(x => x * SCALE.unitsPerMetre)).project(cam)
+      return {x: (v.x + 1) / 2 * SIZE.width, y: (1 - v.y) / 2 * SIZE.height, eye: cam.position.clone().divideScalar(SCALE.unitsPerMetre)}
+    }
+  }
+  let exact = 0, all = 0
+  for (const [view, fov] of [[camera({}), 38], [camera({yaw: 0.7, pitch: -0.4, panX: 40, panY: -25}), 60], [camera({yaw: -2.1, pitch: 1.2, zoom: 1.6}), 20]]) {
+    const draw = drawnBy(view, fov)
+    for (let i = 0; i < 8; i++) for (let j = 0; j < 12; j++) {
+      const theta = (i + 0.5) * TAU / 8, phi = (j + 0.25) * TAU / 12, drawn = torusPoint(theta, phi), pixel = draw(drawn)
+      const touched = touchedSurface(pixel.x, pixel.y, {camera: view, ...SIZE}, {projection: 'perspective', fovDegrees: fov, ...SCALE})
+      assert.ok(touched.point, `a point the perspective stage draws is a point a touch can reach (${theta}, ${phi}, fov ${fov})`)
+      onSheet(touched.point, 'touched')
+      const back = draw(torusPoint(touched.point.theta, touched.point.phi))
+      assert.ok(Math.hypot(back.x - pixel.x, back.y - pixel.y) < 1e-3, `the touched point is drawn under the pointer (${back.x - pixel.x}, ${back.y - pixel.y})`)
+      const far = p => Math.hypot(p[0] - pixel.eye.x, p[1] - pixel.eye.y, p[2] - pixel.eye.z)
+      const at = torusPoint(touched.point.theta, touched.point.phi)
+      assert.ok(far(at) <= far(drawn) + 1e-6, 'the touched point is the surface nearest the eye, never one behind it')
+      all++
+      if (Math.abs(far(at) - far(drawn)) < 1e-6) { angleNear(touched.point.theta, theta, 1e-5, 'theta'); angleNear(touched.point.phi, phi, 1e-5, 'phi'); exact++ }
+    }
+  }
+  assert.ok(exact > all / 3, `the drawn points of the front surface read back exactly (${exact} of ${all})`)
 })
 
 // ---------------------------------------------------------------------------------------------------- the owner: the point passed to strikeAt
@@ -227,9 +268,14 @@ test('a press is a touch only while the instrument plays; pen pressure strikes a
     assert.equal(touchStrike(c.reading, rim.x, rim.y, at, {...flat, pressure: 1}).amplitude, 0.9, 'held to 0.9 at the heaviest')
     const centre = project({x: 0, y: 0, z: 0}, view, SIZE.width, SIZE.height)
     assert.equal(touchStrike(c.reading, centre.x, centre.y, at, flat).say, false, 'a press through the hole is not a touch, and nothing is said')
-    const perspective = touchStrike(c.reading, rim.x, rim.y, at, {...flat, projection: 'perspective'})
-    assert.equal(perspective.point, null)
-    assert.equal(perspective.say, true, 'a press on the playing torus under perspective is told why it did not ring')
+    // REPLACED (O-I #771, round 19): a perspective press was always refused and told; now it strikes where the engine's eye draws, and
+    // only a perspective stage whose lens the frame was not handed is told why it did not ring.
+    const lensless = touchStrike(c.reading, rim.x, rim.y, at, {...flat, projection: 'perspective'})
+    assert.equal(lensless.point, null)
+    assert.equal(lensless.say, true, 'a press on the playing torus under a perspective the frame cannot read is told why it did not ring')
+    const centred = {x: SIZE.width / 2 + 200, y: SIZE.height / 2}
+    assert.ok(touchStrike(c.reading, centred.x, centred.y, at, {...flat, projection: 'perspective', fovDegrees: 38}).point, 'a perspective press on the torus strikes it')
+    assert.equal(touchStrike(c.reading, SIZE.width / 2, SIZE.height / 2, at, {...flat, projection: 'perspective', fovDegrees: 38}).say, false, 'through the hole in perspective: nothing is said')
     c.hold('test')
     assert.equal(touchStrike(c.reading, rim.x, rim.y, at, flat).point, null, 'a held field takes no touch')
   } finally { await c.dispose() }
@@ -244,7 +290,9 @@ test('the frame wires the touch: the stage press hands its pixel, the stage and 
   assert.match(press, /if\(presenting\|\|!editing\)\{if\(ev\.button===0\)nativeField\?\.touch\(ev\.clientX,ev\.clientY,\{camera,width,height\},ev\.pointerType==='pen'\?ev\.pressure:undefined,stageStrike\)/, 'a play-state press on the stage is offered to the torus first, with the frame\'s one strike')
   assert.ok(press.indexOf('nativeField?.touch(') > press.indexOf("tool==='orbit'"), 'an orbit or pan drag never strikes: the camera takes it before the torus is offered the press')
   const body = nativeField.slice(nativeField.indexOf('const touch=('), nativeField.indexOf('const openLive='))
-  assert.match(body, /const touched=touchStrike\(controller\.reading as any,x,y,view,\{projection,worldScale:WORLD_SCALE,pressure\}\)/)
+  assert.match(body, /const touched=touchStrike\(controller\.reading as any,x,y,view,\{projection,worldScale:WORLD_SCALE,fovDegrees,pressure\}\)/)
+  assert.match(body, /const fovDegrees=Math\.max\(4,Math\.min\(120,typeof depth\?\.fov==='number'&&Number\.isFinite\(depth\.fov\)\?depth\.fov:DEFAULT_DEPTH_CONFIG\.fov\)\)/,
+    'the touch reads the engine\'s own lens, held as the engine holds it (PointCloudField applyProjection)')
   assert.match(body, /strike\(\[touched\.point\],touched\.amplitude\)/, 'the touch strikes through the strike it is handed')
   assert.doesNotMatch(body, /playAt|controller\.torus/, 'never past the channel')
   assert.doesNotMatch(nativeField, /controller\.playAt\(/, 'nothing in the native field strikes at points past the channel')

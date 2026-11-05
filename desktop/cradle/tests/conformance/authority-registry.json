@@ -325,6 +325,12 @@
       "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md §21.1 (Rules: every part sounds in one engine; Export Audio renders what you heard), O-I #849; docs/cradle/02-ARCHITECTURE.md §5/§12"
     },
     {
+      "command": "live_engine_host::live_engine_render_take",
+      "classification": "presentation-lease",
+      "rationale": "Export Audio of a take through its part (O-I #855): the take's sound as the Torus's owner rendered it, sent raw by the page (oi.take-render/v1: a head naming the set's track, its rate and the Torus's effects at each frame, then its samples), laid where the Torus stands on its part in the set open in the engine (live-engine SampleInstrument) and rendered offline through the part's rack (the Torus's effects, each put at its frame as the engine puts them), its chain and its volume and pan, the part alone; answered raw as a 32-bit float WAV's bytes, which the page saves. Refused in words for another rate than the engine's, a track that is no MIDI part, effects that are not the frame's and while no set is open in the engine. It decides and writes nothing. Candidate webviews only.",
+      "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md §21.1 (Rules: every part sounds in one engine; Export Audio renders what you heard) and §21.2 (What Export Audio renders is what you heard, sample for sample), O-I #855; docs/cradle/02-ARCHITECTURE.md §5/§12"
+    },
+    {
       "command": "midi::midi_out",
       "classification": "presentation-lease",
       "rationale": "The part's MIDI output (midi.rs over midir): lists the system's MIDI outputs, connects the one the person chooses and sends the notes the part's playing path plays to it, refused in words when none is chosen or a message is not MIDI. It decides and writes nothing; what is played is the shell's playing path and the Torus's owner. Candidate webviews only.",

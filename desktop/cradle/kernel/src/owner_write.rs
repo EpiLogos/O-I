@@ -1043,6 +1043,8 @@ fn factory_action(request: &factory::OwnerRequest) -> &'static str {
         factory::OwnerRequest::CustodyAssign { .. } => "development custody assign",
         factory::OwnerRequest::CustodyUpdate { .. } => "development custody update",
         factory::OwnerRequest::PadsWrite { .. } => "development pads-write",
+        factory::OwnerRequest::PadsPresetSave { .. } => "development pads-preset-save",
+        factory::OwnerRequest::PadsPresetRecall { .. } => "development pads-preset-recall",
         factory::OwnerRequest::PadsRun { .. } => "development pads-run",
         factory::OwnerRequest::PadsRecord { .. } => "development pads-record",
         factory::OwnerRequest::WaveAct { .. } => "development wave act",
@@ -1075,7 +1077,10 @@ fn factory_ref(request: &factory::OwnerRequest, data: &Value) -> String {
         }
         // A pad's bank or record moved: the run its answer names, else the
         // project's bank.
-        OwnerRequest::PadsWrite { project_ref, .. } => format!("{project_ref}#pads"),
+        OwnerRequest::PadsWrite { project_ref, .. }
+        | OwnerRequest::PadsPresetRecall { project_ref, .. } => format!("{project_ref}#pads"),
+        // A preset moved: the presets stand beside every project's bank.
+        OwnerRequest::PadsPresetSave { .. } => "factory#pads-presets".into(),
         OwnerRequest::PadsRun { .. } | OwnerRequest::PadsRecord { .. } => {
             answer_ref(data, &["run_ref"])
                 .or_else(|| data["run"]["run_ref"].as_str().map(str::to_owned))

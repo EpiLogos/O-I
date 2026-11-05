@@ -372,6 +372,15 @@ pub enum OwnerRequest {
         run_ref: String,
         attempt_ref: String,
     },
+    /// `factory attempt units <state> <task-ref>` →
+    /// `factory.attempt-task-units-reading/v1` (O-I #772): each Run and
+    /// workflow unit a task's attempts stand on, with the unit's current
+    /// attempt, so a task clip's or a chain's Retry, Launch and Stop after
+    /// can address the unit Factory knows. Carried verbatim.
+    AttemptTaskUnits {
+        state_path: PathBuf,
+        task_ref: String,
+    },
     /// `factory attempt artifacts <state> <run-ref> <attempt-ref>` →
     /// `factory.attempt-artifact-reading/v1` (O-I #759): each ref the
     /// attempt's Return names, resolved by Factory to its file in the
@@ -590,6 +599,33 @@ pub enum OwnerRequest {
         expected_revision: String,
         pad: Value,
     },
+    /// The presets of the pads, as the browser shows them under the device
+    /// (`factory development pads-presets <state>` →
+    /// `factory.prompt-pads-presets/v1`; O-I 743).
+    PadsPresets { state_path: PathBuf },
+    /// A project's bank saved as a named preset (the head's Save as preset,
+    /// manual §16.4; `factory development pads-preset-save <state> -` →
+    /// `factory.prompt-pads-preset-write/v1`), on the preset's revision as
+    /// read, `absent` for a new name. The person's act, admitted on the human
+    /// grant the host's token holds, as a pad's write is.
+    PadsPresetSave {
+        state_path: PathBuf,
+        project_ref: String,
+        name: String,
+        expected_revision: String,
+    },
+    /// A preset recalled into a project's bank whole, in place of what stood
+    /// there (the head's Hot-swap for the pads: the browser's preset is its
+    /// target; `factory development pads-preset-recall <state> -` →
+    /// `factory.prompt-pads-preset-write/v1`), on the bank's revision as read
+    /// and the preset's as chosen. The person's act, as a pad's write is.
+    PadsPresetRecall {
+        state_path: PathBuf,
+        project_ref: String,
+        name: String,
+        expected_revision: String,
+        preset_revision: String,
+    },
     /// A run's begin recorded (`factory development pads-run <state> -` →
     /// `factory.prompt-pads-run/v1`), the request carried verbatim:
     /// `{project_ref, index, trigger: press|schedule, occurrence_ref?,
@@ -733,6 +769,7 @@ impl OwnerRequest {
                 | OwnerRequest::TelemetryLookback { .. }
                 | OwnerRequest::TelemetryDay { .. }
                 | OwnerRequest::AttemptReturn { .. }
+                | OwnerRequest::AttemptTaskUnits { .. }
                 | OwnerRequest::AttemptArtifacts { .. }
                 | OwnerRequest::ActionList { .. }
                 | OwnerRequest::Inhabitation { .. }
@@ -741,6 +778,7 @@ impl OwnerRequest {
                 | OwnerRequest::AttemptDecisionRead { .. }
                 | OwnerRequest::PadsRead { .. }
                 | OwnerRequest::PadsDue { .. }
+                | OwnerRequest::PadsPresets { .. }
                 | OwnerRequest::CustodyList { .. }
                 | OwnerRequest::TaskActivityRead { .. }
                 | OwnerRequest::WaveRead { .. }
@@ -1687,6 +1725,22 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
                 ))
             }
         }
+        OwnerRequest::AttemptTaskUnits {
+            state_path,
+            task_ref,
+        } => expect_contract(
+            owner_call(
+                &[
+                    "attempt".into(),
+                    "units".into(),
+                    path_arg(&state_path),
+                    task_ref.into(),
+                    "--json".into(),
+                ],
+                None,
+            )?,
+            &[ATTEMPT_TASK_UNITS_READING],
+        ),
         OwnerRequest::AttemptArtifacts {
             state_path,
             run_ref,
@@ -1993,6 +2047,56 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
             });
             pads_write_call("pads-write", &state_path, &request, PADS_WRITE_RECEIPT)
         }
+        OwnerRequest::PadsPresets { state_path } => expect_contract(
+            owner_call(
+                &[
+                    "development".into(),
+                    "pads-presets".into(),
+                    path_arg(&state_path),
+                    "--json".into(),
+                ],
+                None,
+            )?,
+            &[PADS_PRESETS_READING],
+        ),
+        OwnerRequest::PadsPresetSave {
+            state_path,
+            project_ref,
+            name,
+            expected_revision,
+        } => {
+            let grant = pads_grant(&state_path)?;
+            let mut request = pads_person(&grant);
+            request["project_ref"] = serde_json::json!(project_ref);
+            request["name"] = serde_json::json!(name);
+            request["expected_revision"] = serde_json::json!(expected_revision);
+            pads_write_call(
+                "pads-preset-save",
+                &state_path,
+                &request,
+                PADS_PRESET_RECEIPT,
+            )
+        }
+        OwnerRequest::PadsPresetRecall {
+            state_path,
+            project_ref,
+            name,
+            expected_revision,
+            preset_revision,
+        } => {
+            let grant = pads_grant(&state_path)?;
+            let mut request = pads_person(&grant);
+            request["project_ref"] = serde_json::json!(project_ref);
+            request["name"] = serde_json::json!(name);
+            request["expected_revision"] = serde_json::json!(expected_revision);
+            request["preset_revision"] = serde_json::json!(preset_revision);
+            pads_write_call(
+                "pads-preset-recall",
+                &state_path,
+                &request,
+                PADS_PRESET_RECEIPT,
+            )
+        }
         OwnerRequest::PadsRun {
             state_path,
             request,
@@ -2237,6 +2341,10 @@ pub const PADS_DUE: &str = "factory.prompt-pads-due/v1";
 pub const PADS_WRITE_RECEIPT: &str = "factory.prompt-pads-write/v1";
 pub const PADS_RUN_BEGIN: &str = "factory.prompt-pads-run/v1";
 pub const PADS_RUN_RECORD: &str = "factory.prompt-pads-record/v1";
+/// Where a task stands in Factory: its Runs and units (`factory attempt units`).
+pub const ATTEMPT_TASK_UNITS_READING: &str = "factory.attempt-task-units-reading/v1";
+pub const PADS_PRESETS_READING: &str = "factory.prompt-pads-presets/v1";
+pub const PADS_PRESET_RECEIPT: &str = "factory.prompt-pads-preset-write/v1";
 /// The capability a pad's writer presents (Factory `PADS_CAPABILITY_REF`).
 const PADS_CAPABILITY_REF: &str = "capability/factory/operate-prompt-pads";
 const DESK_PADS_CALLER: &str = "oi:desk-prompt-pads";
@@ -2245,6 +2353,17 @@ const DESK_PADS_CALLER: &str = "oi:desk-prompt-pads";
 /// authority contract (the one found above the Factory state, or under
 /// `OI_CENTRAL_ROOT`): the authority a pad's write presents. The desk never
 /// names it; with no such grant the write is refused before Factory is asked.
+/// The desk's caller and the person's authority, as a pad's write carries them.
+fn pads_person(grant: &str) -> Value {
+    serde_json::json!({
+        "caller": {"callerRef": DESK_PADS_CALLER, "projectionKind": "desktop-human",
+                   "lineage": [DESK_PADS_CALLER]},
+        "authority": {"authorityRef": grant, "nativeOwner": "factory",
+                      "capabilityRef": PADS_CAPABILITY_REF,
+                      "capabilityGranted": true, "actionAuthorised": true},
+    })
+}
+
 fn pads_grant(state_path: &Path) -> Result<String, Error> {
     person_grant(state_path, PAD_BY_PERSON)
 }

@@ -31,6 +31,18 @@
 //! Both are kept as the shell gave them (`checked_keep`: an object, bounded),
 //! never read into a sound here: the Torus's owner is the instrument.
 //!
+//! A take's course (the checkpoint the Torus rang from and every act it was
+//! sent, what Export Audio renders it again from) is source material, and it
+//! is large: it is kept in the project's media, not in the record (DLW build
+//! ruling 2026-11-05: "the take's course in a project media store. Store it by
+//! path and sha256, outside git, as §10.3 says"; DLW §10.3: "The set refers to
+//! its media by paths inside the project, and large media is held by its
+//! content hash, out of git"). [`keep_course`] writes it under its sha256 in
+//! [`MEDIA_DIR`] beside the set, kept out of git there, and the take's row
+//! keeps its reference (`course_media`: path, sha256, bytes); the take's keeps
+//! read back with the course from that file, checked against its sha256, or
+//! with the words for why it could not be.
+//!
 //! The record's first schema, `oi.dlw-set/v1`, held the clips' sources only:
 //! it reads as this one with no parts and no takes, and is written as this
 //! one at its next write.
@@ -50,6 +62,17 @@ const ROWS_MAX: usize = 4096;
 pub const KEEP_BYTES_MAX: usize = 256 * 1024;
 /// How deep a kept value may nest.
 const KEEP_DEPTH_MAX: usize = 32;
+/// Where in the project a take's course is kept, from the set's own folder (the project the set is kept in:
+/// live_set_owner `set_from_template`, `Work/<project>/<name>.als`): where Live keeps a project's recordings.
+pub const MEDIA_DIR: &str = "Samples/Recorded";
+/// What names a course in the media: its sha256, hex, then this.
+pub const COURSE_SUFFIX: &str = ".torus-course.json";
+/// The most a take's course may weigh, as JSON text: its checkpoint (at most 1 MiB, the kernel's
+/// MAX_CHECKPOINT_BYTES) and its acts (at most 16 384, the frame's STAGE_RENDER_ACTS_MAX), with room.
+pub const COURSE_BYTES_MAX: usize = 16 * 1024 * 1024;
+/// What keeps the media's courses out of git, written into [`MEDIA_DIR`] where it holds none yet.
+const MEDIA_IGNORE: &str =
+    "# A take's course, held by its content hash out of git (DLW §10.3)\n*.torus-course.json\n";
 
 /// The record, whole: its clips' sources, its parts' Torus and its takes' keeps.
 #[derive(Debug, Default, PartialEq)]
@@ -182,6 +205,98 @@ pub fn checked_keep<'a>(value: &'a Value, what: &str) -> Result<&'a Value, Strin
     Ok(value)
 }
 
+/// A take's keeps as the record holds them: its course apart (none when it keeps none), its other keeps
+/// `checked_keep`, and its course at most [`COURSE_BYTES_MAX`] of JSON, nested as deep as a keep may.
+pub fn checked_take_keeps(keeps: &Value) -> Result<(), String> {
+    let mut rest = keeps.clone();
+    let course = rest.as_object_mut().and_then(|k| k.remove("course"));
+    checked_keep(&rest, "A take's keeps")?;
+    match course {
+        None | Some(Value::Null) => Ok(()),
+        Some(course) => checked_course(&course).map(|_| ()),
+    }
+}
+
+/// A course as JSON text, refused in words past [`COURSE_BYTES_MAX`] or not an object.
+fn checked_course(course: &Value) -> Result<Vec<u8>, String> {
+    let bytes = serde_json::to_vec(course).map_err(|e| e.to_string())?;
+    if !course.is_object() || bytes.len() > COURSE_BYTES_MAX {
+        return Err(format!(
+            "A take's course is kept as one object of at most {} MiB",
+            COURSE_BYTES_MAX / (1024 * 1024)
+        ));
+    }
+    Ok(bytes)
+}
+
+/// Keep `course` in the project's media beside the set at `set` ([`MEDIA_DIR`]): its JSON text written once under its
+/// sha256 (a course kept before stands as it is), the folder kept out of git where it was not yet; answered with its
+/// reference, `{path, sha256, bytes}`, the path from the set's folder.
+pub fn keep_course(set: &Path, course: &Value) -> Result<Value, String> {
+    use sha2::{Digest, Sha256};
+    let bytes = checked_course(course)?;
+    let hex: String = Sha256::digest(&bytes)
+        .iter()
+        .map(|b| format!("{b:02x}"))
+        .collect();
+    let folder = set.parent().ok_or("the set has no parent directory")?;
+    let media = folder.join(MEDIA_DIR);
+    std::fs::create_dir_all(&media)
+        .map_err(|e| format!("The project's media could not be made: {e}"))?;
+    let ignore = media.join(".gitignore");
+    if !ignore.exists() {
+        write_atomically(&ignore, MEDIA_IGNORE.as_bytes())?;
+    }
+    let name = format!("{hex}{COURSE_SUFFIX}");
+    let file = media.join(&name);
+    if std::fs::read(&file).ok().as_deref() != Some(bytes.as_slice()) {
+        write_atomically(&file, &bytes)?;
+    }
+    Ok(
+        json!({"path": format!("{MEDIA_DIR}/{name}"), "sha256": format!("sha256:{hex}"), "bytes": bytes.len()}),
+    )
+}
+
+/// The course the reference `media` names, read from the project's media beside the set at `set`: refused in words
+/// for a path that is not one inside the project's media, a file that is not there, and one whose sha256 is not the
+/// reference's (it was changed since it was kept).
+pub fn course_of(set: &Path, media: &Value) -> Result<Value, String> {
+    use sha2::{Digest, Sha256};
+    let (Some(path), Some(sha256)) = (
+        media.get("path").and_then(Value::as_str),
+        media.get("sha256").and_then(Value::as_str),
+    ) else {
+        return Err("its course's reference names no path and sha256".into());
+    };
+    let inside = path
+        .strip_prefix(MEDIA_DIR)
+        .and_then(|name| name.strip_prefix('/'))
+        .is_some_and(|name| {
+            name.ends_with(COURSE_SUFFIX)
+                && !name.contains('/')
+                && !name.contains('\\')
+                && !name.starts_with('.')
+        });
+    if !inside {
+        return Err(format!(
+            "its course's path {path} is not one in the project's media ({MEDIA_DIR})"
+        ));
+    }
+    let folder = set.parent().ok_or("the set has no parent directory")?;
+    let bytes = std::fs::read(folder.join(path))
+        .map_err(|e| format!("its course {path} could not be read beside the set: {e}"))?;
+    let hex: String = Sha256::digest(&bytes)
+        .iter()
+        .map(|b| format!("{b:02x}"))
+        .collect();
+    if sha256 != format!("sha256:{hex}") {
+        return Err(format!(
+            "its course {path} is not the course it kept: it was changed since"
+        ));
+    }
+    serde_json::from_slice(&bytes).map_err(|e| format!("its course {path} is not JSON: {e}"))
+}
+
 /// The Torus the part whose track `Id` is `track_id` keeps, or none.
 pub fn torus_of(set: &Path, track_id: &str) -> Result<Option<Value>, String> {
     Ok(read(set)?
@@ -210,22 +325,47 @@ pub fn set_torus(set: &Path, track_id: &str, torus: Option<&Value>) -> Result<()
 }
 
 /// What the take `take` (its `TakeId`) on the track whose `Id` is `track_id`
-/// keeps beyond its notes, or none.
+/// keeps beyond its notes, or none: its course read back from the project's
+/// media ([`course_of`]) where it keeps one there, or, where that cannot be,
+/// none, with the words for why (`course_refused`).
 pub fn keeps_of(set: &Path, track_id: &str, take: u64) -> Result<Option<Value>, String> {
-    Ok(read(set)?
+    let keeps = read(set)?
         .takes
         .into_iter()
         .find(|row| {
             row.get("track").and_then(Value::as_str) == Some(track_id)
                 && row.get("take").and_then(Value::as_u64) == Some(take)
         })
-        .and_then(|row| row.get("keeps").cloned()))
+        .and_then(|row| row.get("keeps").cloned());
+    Ok(keeps.map(|mut keeps| {
+        if let Some(media) = keeps.get("course_media").cloned() {
+            match course_of(set, &media) {
+                Ok(course) => keeps["course"] = course,
+                Err(why) => {
+                    keeps["course"] = Value::Null;
+                    keeps["course_refused"] = json!(why);
+                }
+            }
+        }
+        keeps
+    }))
 }
 
 /// Keep `keeps` for the take `take` on the track whose `Id` is `track_id`,
-/// replacing the record whole and atomically.
+/// replacing the record whole and atomically: its course, where it keeps one,
+/// in the project's media ([`keep_course`]), the record keeping its reference
+/// (`course_media`).
 pub fn set_keeps(set: &Path, track_id: &str, take: u64, keeps: &Value) -> Result<(), String> {
-    checked_keep(keeps, "A take's keeps")?;
+    checked_take_keeps(keeps)?;
+    let mut keeps = keeps.clone();
+    if let Some(course) = keeps
+        .as_object_mut()
+        .and_then(|k| k.remove("course"))
+        .filter(|c| !c.is_null())
+    {
+        keeps["course_media"] = keep_course(set, &course)?;
+    }
+    let keeps = &keeps;
     let mut record = read(set)?;
     record.takes.retain(|row| {
         !(row.get("track").and_then(Value::as_str) == Some(track_id)

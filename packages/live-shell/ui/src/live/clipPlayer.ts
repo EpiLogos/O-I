@@ -37,6 +37,12 @@
 //               the take is made again at its beat: an instrument edit takes no sample, so it is sent as its beat's sound is rendered,
 //               one owner lookahead after the note-ons of that beat are sent, and lands within a block of it (a move in the pass's last
 //               lookahead is made at the pass's end). Play says from which state the take resumes.
+//   its lanes   what a take's moves and lanes write stands Automated while the take plays (O-I #853; Live: a parameter its lane
+//               plays is automated). A hand move of one of them (an instrument edit sent BY_HAND, torusInstrument.ts) overrides its lane:
+//               the take writes it no more, as Live leaves an overridden parameter where the hand put it, and it stays Overridden, across
+//               a Stop and the next play, until Re-enable gives it back; Re-enable while the take plays writes the value its lane last
+//               reached (sent by no hand), else it plays its lane from the take's next point. A session-held value (the Scale tie) is
+//               no instrument edit, so its hand moves are not heard here.
 //   its course  a take with its course (O-I #855 round 6d), its clip as it was laid, plays as it was played: the Torus rings again from the
 //               state it rang in as the take began (prepareTake restores the owner's checkpoint, which lands at the owner's sample R),
 //               and each act of the course lands at R + (its sample − the take's first sample): the keys it struck, at its strength (the
@@ -61,9 +67,9 @@ import type {ClipHold} from './janko/jankoInput'
 import {livePlayingPath} from './keyboardLayout'
 import {clipAtOf} from './liveWrites'
 import {prepareTake} from './liveTake'
-import {commitLiveInstrumentEdit, commitLiveStage, liveTorusState, useLiveTorusReading, type LiveTorusState} from './torusInstrument'
+import {commitLiveInstrumentEdit, commitLiveStage, liveTorusState, subscribeAcceptedLiveWrites, useLiveTorusReading, type LiveTorusState} from './torusInstrument'
 import type {MapValue} from './midiMap/midiMapModel'
-import {writeMapTarget} from './midiMap/midiMapTargets'
+import {mapTargetIdsOfEdit, writeMapTarget} from './midiMap/midiMapTargets'
 
 /** A timer may wake a hair before its moment; a strike due within this many seconds is sent at that wake. */
 const DUE_EARLY_SECONDS = 0.002
@@ -173,6 +179,9 @@ export interface ClipPlayerOwners {
   readonly cancel: (handle: unknown) => void
   /** A draw in [0, 1), for a note's chance. */
   readonly random: () => number
+  /** Tell `moved` the map parameters each hand move writes (an instrument edit the owner took, sent BY_HAND). Returns the unsubscribe.
+   * Absent, no lane is overridden. */
+  readonly hand?: (moved: (parameters: readonly string[]) => void) => () => void
 }
 
 /** A take prepared to play again: where it resumes from, in words; how a note of it was played (the touch-point it struck and its exact
@@ -213,6 +222,24 @@ export interface ClipPlayState {
   readonly fault: string | null
   /** A take's words on the state it resumes from, as it was prepared to play; null for a clip no take gave. */
   readonly resumes: string | null
+  /** The standing of the take's lanes (O-I #853): what its moves and lanes write while it plays, and what the hand overrode. */
+  readonly lanes: ClipLaneStanding
+}
+
+/** The parameters a take's moves and lanes write while it plays (Automated), and those a hand move took off them (Overridden), by map
+ * parameter id (midiMap/midiMapTargets.ts). Overridden stands until Re-enable, across a Stop. */
+export interface ClipLaneStanding {readonly automated: readonly string[]; readonly overridden: readonly string[]}
+const NO_LANES: ClipLaneStanding = Object.freeze({automated: Object.freeze([]), overridden: Object.freeze([])}) as ClipLaneStanding
+/** The map parameters a move writes. Pure. */
+export const moveParameters = (move: ClipMove): string[] => [...move.edits.flatMap(edit => mapTargetIdsOfEdit(edit)), ...(move.sets ?? []).map(set => set.parameter)]
+/** An edit as the take still writes it, with what the hand overrode taken out: a Torus session edit loses its overridden macros, any
+ * other edit stands or falls whole; null when nothing of it is the take's to write. Pure. */
+export function unheldEdit(edit: InstrumentEdit, overridden: ReadonlySet<string>): InstrumentEdit | null {
+  const ids = mapTargetIdsOfEdit(edit)
+  if (!ids.some(id => overridden.has(id))) return edit
+  if (edit.kind !== 'torus') return null
+  const kept = Object.fromEntries(Object.entries(edit.edit).filter(([key]) => !overridden.has(key)))
+  return Object.keys(kept).length ? {kind: 'torus', edit: kept as typeof edit.edit} : null
 }
 
 export interface ClipPlayer {
@@ -222,9 +249,11 @@ export interface ClipPlayer {
   play(address: ClipAddress, bpm: number): void
   /** Stop: nothing more strikes, and every note the clip holds is let go at once; what was struck rings out on the torus. */
   stop(): void
+  /** Re-enable (O-I #853): give `parameter`, or every overridden one, back to the take's lanes. */
+  reenable(parameter?: string): Promise<ClipActAnswer>
 }
 
-const IDLE: ClipPlayState = {playing: null, starting: false, refused: null, missed: 0, fault: null, resumes: null}
+const IDLE: ClipPlayState = {playing: null, starting: false, refused: null, missed: 0, fault: null, resumes: null, lanes: NO_LANES}
 const said = (cause: unknown) => cause instanceof Error ? cause.message : String(cause)
 
 /** Where a press stands on the owner's audio clock: the sample the clip's start lands at (one owner lookahead past the sound it has
@@ -307,6 +336,38 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
   const listeners = new Set<() => void>()
   const publish = (next: Partial<ClipPlayState>) => { state = {...state, ...next}; for (const listener of [...listeners]) listener() }
 
+  /** The take's lanes (O-I #853): what the hand overrode, which the take no longer writes; the last value each lane reached, for Re-enable;
+   * and the hand's watch while a take plays. */
+  const overridden = new Set<string>()
+  const reached = new Map<string, {readonly edit?: InstrumentEdit; readonly value?: MapValue}>()
+  let unhand: (() => void) | null = null
+  const standing = (automated: readonly string[]) => publish({lanes: {automated: Object.freeze([...automated]), overridden: Object.freeze([...overridden])}})
+  /** A take begins: what its moves and lanes write stands Automated, and a hand move of one of those overrides it. */
+  const automate = (moves: readonly ClipMove[], settings: readonly InstrumentEdit[]) => {
+    unhand?.()
+    reached.clear()
+    const automated = [...new Set([...moves.flatMap(moveParameters), ...settings.flatMap(edit => mapTargetIdsOfEdit(edit))])]
+    standing(automated)
+    if (!automated.length) { unhand = null; return }
+    unhand = owners.hand?.(moved => {
+      const taken = moved.filter(id => automated.includes(id) && !overridden.has(id))
+      if (!taken.length) return
+      for (const id of taken) overridden.add(id)
+      standing(state.lanes.automated)
+    }) ?? null
+  }
+  /** The take ends: nothing of it is Automated; what the hand overrode stays so. */
+  const unautomate = () => {
+    unhand?.(); unhand = null
+    if (state.lanes.automated.length) standing([])
+  }
+  /** An edit of the take as it still writes it, and what its lane reached kept for Re-enable. */
+  const lanesEdit = (edit: InstrumentEdit): InstrumentEdit | null => {
+    if (edit.kind === 'torus') for (const [key, value] of Object.entries(edit.edit)) reached.set(key, {edit: {kind: 'torus', edit: {[key]: value} as typeof edit.edit}})
+    else for (const id of mapTargetIdsOfEdit(edit)) reached.set(id, {edit})
+    return unheldEdit(edit, overridden)
+  }
+
   const answer = (result: StageResult) => { if (!result.ok && result.error !== state.refused) publish({refused: result.error}) }
   const failed = (cause: unknown) => answer({ok: false, error: said(cause)})
   const missed = (count: number) => { if (count > 0) publish({missed: state.missed + count}) }
@@ -344,6 +405,7 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
   /** The run ends: no timer, no watch, and every note it holds let go at once. */
   const halt = () => {
     haltCourse()
+    unautomate()
     const was = run
     run = null
     if (!was) return
@@ -362,12 +424,16 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
   const makeMove = (move: ClipMove) => {
     const mine = press
     const told = (words: string) => { if (mine === press && !state.resumes?.includes(words)) publish({resumes: state.resumes ? `${state.resumes} ${words}` : words}) }
-    for (const edit of move.edits) {
+    for (const made of move.edits) {
+      const edit = lanesEdit(made)
+      if (!edit) continue
       void owners.edit?.(edit).catch(cause => ({ok: false as const, error: said(cause)})).then(result => {
         if (!result.ok) told(`The Torus refused a move of the take: ${result.error}`)
       })
     }
     for (const point of move.sets ?? []) {
+      reached.set(point.parameter, {value: point.value})
+      if (overridden.has(point.parameter)) continue
       void owners.set?.(point.parameter, point.value).catch(cause => ({ok: false as const, error: said(cause)})).then(result => {
         if (!result.ok) told(`A lane of the take was not written again: ${result.error}`)
       })
@@ -487,9 +553,11 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
         if (behind) { late += 1; continue }
         owners.singlet(act.codon, act.amplitude, next.at).then(answer, failed)
       } else {
+        const edit = lanesEdit({kind: 'torus', edit: act.edit})
+        if (!edit) continue
         if (behind) tellOnce(LATE_SETTING)
         const mine = press
-        void owners.edit?.({kind: 'torus', edit: act.edit}, behind ? undefined : next.at).catch((cause: unknown) => ({ok: false as const, error: said(cause)})).then(result => {
+        void owners.edit?.(edit, behind ? undefined : next.at).catch((cause: unknown) => ({ok: false as const, error: said(cause)})).then(result => {
           if (mine === press && !result.ok) tellOnce(`The Torus refused a setting of the take: ${result.error}`)
         })
       }
@@ -499,6 +567,7 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
     if (c.index >= c.acts.length && now + DUE_EARLY_SECONDS >= c.end) {
       for (let move = c.moves[c.move]; move; move = c.moves[c.move]) { c.move++; makeMove(move) }
       haltCourse()
+      unautomate()
       publish({playing: null})
       return
     }
@@ -515,6 +584,7 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
     const c: Course = {address, origin: owners.now(), timing, spb: 60 / bpm, lead, acts, index: 0, moves, move: 0, start, end: start + exact.frames / exact.sample_rate,
       holds: new Map(), noteOf: exact.noteOf, timer: null, fire: () => fireCourse(c)}
     course = c
+    automate(moves, exact.acts.flatMap((act): InstrumentEdit[] => act.action === 'set' ? [{kind: 'torus', edit: act.edit}] : []))
     publish({starting: false, playing: {address, name, bpm}})
     armCourse(c)
   }
@@ -527,6 +597,7 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
       plan, pass: plan.first, passStart: 0, index: 0, ends: [], timer: null,
       unwatch: () => {}, fire: () => fire(r), turn: () => turn(r)}
     run = r
+    automate(moves, [])
     r.unwatch = owners.watch(address, () => retake(r))
     publish({starting: false, playing: {address, name: plan.name, bpm}})
     arm(r)
@@ -573,6 +644,25 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
       halt()
       if (state.playing !== null || state.starting) publish({playing: null, starting: false})
     },
+    async reenable(parameter) {
+      const given = parameter === undefined ? [...overridden] : overridden.has(parameter) ? [parameter] : []
+      if (!given.length) return parameter === undefined ? {ok: true, note: 'Nothing is held off a take\'s lane.'}
+        : {ok: false, error: `${parameter} is not held off a take's lane.`}
+      for (const id of given) overridden.delete(id)
+      standing(state.lanes.automated)
+      const playing = given.filter(id => state.lanes.automated.includes(id))
+      const refused: string[] = []
+      // While its take plays, each goes back to the value its lane last reached, sent by no hand; else it plays its lane from the next point.
+      for (const id of playing) {
+        const last = reached.get(id)
+        const written = last?.edit ? owners.edit?.(last.edit) : last?.value !== undefined ? owners.set?.(id, last.value) : undefined
+        const result = written ? await written.catch((cause: unknown) => ({ok: false as const, error: said(cause)})) : {ok: true as const}
+        if (!result.ok) refused.push(`${id}: ${result.error}`)
+      }
+      const named = given.join(', ')
+      if (refused.length) return {ok: false, error: `${named} went back to the take's lanes, and the owner refused the value its lane reached (${refused.join('; ')}).`}
+      return {ok: true, note: playing.length ? `${named} plays from the take's lanes again.` : `${named} plays from the take's lanes again when the take plays.`}
+    },
   }
 }
 
@@ -602,6 +692,7 @@ function candidateOwners(): ClipPlayerOwners {
     later: (run, ms) => setTimeout(run, ms),
     cancel: handle => clearTimeout(handle as ReturnType<typeof setTimeout>),
     random: () => Math.random(),
+    hand: moved => subscribeAcceptedLiveWrites((command, how) => { if (how.hand && command.command === 'instrument') moved(mapTargetIdsOfEdit(command.edit)) }),
   }
 }
 
@@ -671,6 +762,8 @@ export interface ClipLaunchActs {
   launch(address: ClipAddress, bpm: number): Promise<ClipActAnswer>
   stop(path: string, track: number, named: string): ClipActAnswer
   stopAll(): ClipActAnswer
+  /** Re-enable (O-I #853): an overridden parameter, or every one, back to the take's lanes. */
+  reenable(parameter?: string): Promise<ClipActAnswer>
 }
 
 /** How long Launch waits for the set's owner to read the clip before it answers that it is reading it. */
@@ -711,6 +804,7 @@ export function clipLaunchActs(player: ClipPlayer, torus: () => LiveTorusState |
       player.stop()
       return {ok: true, note: 'Every clip stops; what was struck rings out on the torus.'}
     },
+    reenable: parameter => player.reenable(parameter),
   }
 }
 

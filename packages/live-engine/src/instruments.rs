@@ -215,6 +215,29 @@ impl Instrument for SilentInstrument {
     }
 }
 
+/// A part's instrument that sounds one laid sample whatever it is played (O-I #855, Export Audio of a
+/// take through its part: DLW build ruling 2026-11-05, "one sample-playback source in live-engine … it
+/// unblocks #855's export through the part's effects"): the take's sound as the Torus's owner rendered it,
+/// standing where the Torus stood on its part, so it passes the part's rack (the Torus's effects), its
+/// chain and its row as the Torus did. Its notes are in its sound: it takes no key.
+#[derive(Debug)]
+pub struct SampleInstrument {
+    pub sample: crate::graph::LaidSample,
+}
+
+impl Instrument for SampleInstrument {
+    fn name(&self) -> &str {
+        "Sample"
+    }
+    fn note_on(&mut self, _key: u8, _velocity: f32, _clock: &Clock) {}
+    fn note_off(&mut self, _key: u8, _clock: &Clock) {}
+    fn release_all(&mut self, _clock: &Clock) {}
+    fn process(&mut self, frame_io: &mut [f32], clock: &Clock) {
+        frame_io.fill(0.0);
+        self.sample.sound_into(clock.sample, frame_io);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

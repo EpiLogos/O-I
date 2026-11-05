@@ -13,8 +13,8 @@ use live_engine::bridge::bridge_set;
 use live_engine::devices::{EchoDevice, EchoParams, GainDevice, GlueDevice};
 use live_engine::graph::pan_weights;
 use live_engine::{
-    engine, Clock, Device, EngineEvent, Graph, GraphError, Note, OperatorInstrument, Part,
-    Performance, Refusal, ReturnTrack, Track,
+    engine, Clock, Device, EngineEvent, Graph, GraphError, LaidSample, Note, OperatorInstrument,
+    Part, Performance, Refusal, ReturnTrack, Track,
 };
 
 const SR: u32 = 48_000;
@@ -2428,4 +2428,862 @@ fn a_device_made_again_sounds_on_from_where_the_one_it_replaces_stood() {
         moved[2 * at..] == still[2 * at..],
         "the last room rang its tail out whole, as if never made again"
     );
+}
+
+/// A decoded sample of `frames` frames in `channels` channels: frame `i` of channel `c` is `(i + 1) / 1000` plus a
+/// tenth for the second channel, so every sample read from it is its own.
+fn decoded(frames: usize, channels: usize) -> std::sync::Arc<[f32]> {
+    (0..frames)
+        .flat_map(|i| (0..channels).map(move |c| (i + 1) as f32 / 1000.0 + c as f32 / 10.0))
+        .collect()
+}
+
+fn laid(
+    at: u64,
+    from: u64,
+    frames: u64,
+    gain: f32,
+    pcm: &std::sync::Arc<[f32]>,
+    channels: usize,
+) -> LaidSample {
+    LaidSample {
+        at,
+        from,
+        frames,
+        gain,
+        channels,
+        pcm: std::sync::Arc::clone(pcm),
+    }
+}
+
+/// The sample-playback source (DLW build ruling 2026-11-05: "one sample-playback source in live-engine. It is a
+/// decoded buffer laid at its clip's beats, unwarped first"): a sample laid on an audio part sounds from its clip's
+/// frame, from the frame of the buffer its clip starts at, for its clip's length, at its clip gain; silence before and
+/// after it, and the part is as long as the sample's end.
+#[test]
+fn a_laid_sample_sounds_from_its_clips_frame_at_its_start_for_its_length_at_its_gain() {
+    let pcm = decoded(1_000, 1);
+    let mut voice = Track::new("Voice", 1);
+    voice
+        .set_samples(vec![laid(100, 10, 50, 0.5, &pcm, 1)])
+        .unwrap();
+    let mut g = Graph::new(SR, 120.0);
+    g.tracks.push(voice);
+    assert_eq!(g.frames(), 150, "the part is as long as its sample's end");
+    let out = g.render(SR);
+    assert_eq!(out.len(), 300);
+    for (f, frame) in out.chunks(2).enumerate() {
+        let want = if (100..150).contains(&f) {
+            pcm[10 + f - 100] * 0.5
+        } else {
+            0.0
+        };
+        assert_eq!(
+            (frame[0].to_bits(), frame[1].to_bits()),
+            (want.to_bits(), want.to_bits()),
+            "frame {f}"
+        );
+    }
+}
+
+/// ENGINE DECISION (as the shell's play mode laid clips before, live-shell `play.rs`): a mono sample sounds on both
+/// sides of a stereo part at its level; a stereo one on each side of a stereo part, and as the mean of its two sides
+/// on a mono part.
+#[test]
+fn a_mono_sample_sounds_on_both_sides_of_a_stereo_part_and_a_stereo_one_on_each() {
+    let (mono, stereo) = (decoded(64, 1), decoded(64, 2));
+    let render = |part_channels: usize, pcm: &std::sync::Arc<[f32]>, channels: usize| {
+        let mut t = Track::new("Voice", part_channels);
+        t.set_samples(vec![laid(0, 0, 64, 1.0, pcm, channels)])
+            .unwrap();
+        let mut g = Graph::new(SR, 120.0);
+        g.tracks.push(t);
+        g.render(SR)
+    };
+    let out = render(2, &mono, 1);
+    assert!(out
+        .chunks(2)
+        .enumerate()
+        .all(|(f, x)| x[0] == mono[f] && x[1] == mono[f]));
+    let out = render(2, &stereo, 2);
+    assert!(out
+        .chunks(2)
+        .enumerate()
+        .all(|(f, x)| x[0] == stereo[2 * f] && x[1] == stereo[2 * f + 1]));
+    let out = render(1, &stereo, 2);
+    assert!(out.chunks(2).enumerate().all(|(f, x)| {
+        let mean = (stereo[2 * f] + stereo[2 * f + 1]) * 0.5;
+        x[0] == mean && x[1] == mean
+    }));
+}
+
+/// Samples laid on one part play in turn, whatever order they are laid in, each from its own place in its own buffer;
+/// two that overlap are refused in words (a part plays one clip at a time), and so is a buffer of no whole frames, a
+/// channel count that is not one or two, a gain that is no number, and any sample on a MIDI part. A sample of no
+/// frames has nothing to sound and is dropped (so laying nothing on a MIDI part is no refusal). What was laid before a
+/// refusal stands.
+#[test]
+fn samples_on_one_part_play_in_turn_and_what_cannot_be_laid_is_refused_in_words() {
+    let (a, b) = (decoded(100, 1), decoded(100, 2));
+    let mut t = Track::new("Voice", 1);
+    t.set_samples(vec![
+        laid(40, 0, 20, 1.0, &b, 2),
+        laid(0, 5, 10, 1.0, &a, 1),
+        laid(20, 0, 0, 1.0, &a, 1),
+    ])
+    .unwrap();
+    assert_eq!(t.samples().len(), 2, "the sample of no frames is dropped");
+    assert_eq!(
+        (t.samples()[0].at, t.samples()[1].at),
+        (0, 40),
+        "laid in their order"
+    );
+    let mut g = Graph::new(SR, 120.0);
+    g.tracks.push(t);
+    let out = g.render(SR);
+    assert_eq!(out.len(), 120);
+    let at = |f: usize| out[2 * f];
+    assert_eq!(at(0), a[5]);
+    assert_eq!(at(9), a[14]);
+    assert_eq!(at(10), 0.0);
+    assert_eq!(at(39), 0.0);
+    assert_eq!(at(40), (b[0] + b[1]) * 0.5);
+    assert_eq!(at(59), (b[38] + b[39]) * 0.5);
+
+    let mut t = Track::new("Voice", 2);
+    t.set_samples(vec![laid(0, 0, 10, 1.0, &a, 1)]).unwrap();
+    let words = t
+        .set_samples(vec![laid(0, 0, 10, 1.0, &a, 1), laid(9, 0, 10, 1.0, &a, 1)])
+        .unwrap_err();
+    assert!(
+        words.contains("'Voice'") && words.contains("overlap at frame 9"),
+        "{words}"
+    );
+    assert_eq!(t.samples().len(), 1, "what was laid before stands");
+    let odd: std::sync::Arc<[f32]> = vec![0.1f32; 3].into();
+    let words = t
+        .set_samples(vec![laid(0, 0, 1, 1.0, &odd, 2)])
+        .unwrap_err();
+    assert!(words.contains("whole frames"), "{words}");
+    let words = t.set_samples(vec![laid(0, 0, 1, 1.0, &a, 3)]).unwrap_err();
+    assert!(words.contains("one or two channels"), "{words}");
+    let words = t
+        .set_samples(vec![laid(0, 0, 1, f32::NAN, &a, 1)])
+        .unwrap_err();
+    assert!(words.contains("gain"), "{words}");
+    let mut keys = operator_part("Keys", &[]);
+    let words = keys
+        .set_samples(vec![laid(0, 0, 1, 1.0, &a, 1)])
+        .unwrap_err();
+    assert!(words.contains("'Keys' is a MIDI part"), "{words}");
+    keys.set_samples(vec![laid(0, 0, 0, 1.0, &a, 1)])
+        .expect("laying nothing on a MIDI part is no refusal");
+}
+
+/// A laid sample is the head of its part's chain, as a source is: it passes the part's devices, then its mixer row,
+/// and a sample read past the end of its buffer is silence. It sums with the part's source, which plays as before.
+#[test]
+fn a_laid_sample_passes_its_parts_chain_and_row_and_sums_with_its_source() {
+    let pcm = decoded(8, 1);
+    let mut t = Track::new("Voice", 1);
+    t.source = vec![0.25; 4];
+    t.set_samples(vec![laid(2, 4, 6, 2.0, &pcm, 1)]).unwrap();
+    t.devices.push(Box::new(GainDevice::new_linear(0.5)));
+    t.gain = 0.5;
+    let mut g = Graph::new(SR, 120.0);
+    g.tracks.push(t);
+    let out = left(&g.render(SR));
+    assert_eq!(out.len(), 8);
+    for (f, got) in out.iter().enumerate() {
+        let src = if f < 4 { 0.25 } else { 0.0 };
+        let s = if f >= 2 && 4 + (f - 2) < 8 {
+            pcm[4 + f - 2] * 2.0
+        } else {
+            0.0
+        };
+        let want = (src + s) * 0.5 * 0.5;
+        assert!((got - want).abs() < 1e-6, "frame {f}: {got} against {want}");
+    }
+}
+
+/// The engine plays a laid sample as Export Audio renders it, bit for bit, whatever the blocks; and a frame mixed again
+/// after the timeline was taken back (the sample's place found again) is the frame it mixed before.
+#[test]
+fn the_engine_plays_a_laid_sample_as_export_renders_it_and_finds_its_place_again() {
+    let pcm = decoded(3_000, 2);
+    let build = || {
+        let mut g = Graph::new(SR, 120.0);
+        let mut t = Track::new("Voice", 2);
+        t.set_samples(vec![
+            laid(300, 100, 900, 0.75, &pcm, 2),
+            laid(1_500, 0, 700, 0.5, &pcm, 2),
+        ])
+        .unwrap();
+        g.tracks.push(t);
+        g.tracks.push(constant_part("Tone", 0.125, 2_400));
+        g
+    };
+    let (mut core, mut handle) = engine(build()).unwrap();
+    let mut played = Vec::new();
+    for n in [128usize, 61, 1, 512, 7, 333, 1_024, 3, 900] {
+        let mut out = vec![0f32; n * 2];
+        core.pull_block(&mut out);
+        played.extend_from_slice(&out);
+    }
+    handle.collect();
+    let perf = handle.performance();
+    assert!(perf.complete);
+    let exported = build().render_performance(SR, &perf);
+    assert_eq!(exported.len(), played.len());
+    assert!(
+        exported
+            .iter()
+            .zip(&played)
+            .all(|(e, p)| e.to_bits() == p.to_bits()),
+        "Export Audio renders the laid samples the engine played"
+    );
+    assert!(
+        played[2 * 300..2 * 1_200].iter().any(|x| *x != 0.125),
+        "the sample was heard"
+    );
+
+    let mut g = build();
+    let mut clock = Clock::start(SR, 120.0);
+    let mut mix = |g: &mut Graph, f: u64| {
+        clock.sample = f;
+        g.mix_frame(&clock)
+    };
+    let first: Vec<[f32; 2]> = (0..2_400).map(|f| mix(&mut g, f)).collect();
+    let again: Vec<[f32; 2]> = (250..2_400).map(|f| mix(&mut g, f)).collect();
+    assert_eq!(
+        &first[250..],
+        &again[..],
+        "taken back, each sample is found in its place again"
+    );
+}
+
+/// A WAV of `frames` frames in `channels` channels at `rate`: 16-bit integer when `int16`, else 32-bit float, frame `i`
+/// of channel `c` at `(i % 1000) / 2000` less a quarter for the second channel (16-bit: as that value rounds to it).
+fn wav_file(frames: usize, channels: u16, rate: u32, int16: bool) -> Vec<u8> {
+    let value = |i: usize, c: u16| (i % 1000) as f32 / 2000.0 - f32::from(c) * 0.25;
+    let mut data = Vec::new();
+    for i in 0..frames {
+        for c in 0..channels {
+            if int16 {
+                data.extend_from_slice(&((value(i, c) * 32_768.0) as i16).to_le_bytes());
+            } else {
+                data.extend_from_slice(&value(i, c).to_le_bytes());
+            }
+        }
+    }
+    let (tag, bits) = if int16 { (1u16, 16u16) } else { (3, 32) };
+    let mut out = b"RIFF".to_vec();
+    out.extend_from_slice(&(36 + data.len() as u32).to_le_bytes());
+    out.extend_from_slice(b"WAVEfmt ");
+    out.extend_from_slice(&16u32.to_le_bytes());
+    out.extend_from_slice(&tag.to_le_bytes());
+    out.extend_from_slice(&channels.to_le_bytes());
+    out.extend_from_slice(&rate.to_le_bytes());
+    out.extend_from_slice(&(rate * u32::from(channels * bits / 8)).to_le_bytes());
+    out.extend_from_slice(&(channels * bits / 8).to_le_bytes());
+    out.extend_from_slice(&bits.to_le_bytes());
+    out.extend_from_slice(b"data");
+    out.extend_from_slice(&(data.len() as u32).to_le_bytes());
+    out.extend_from_slice(&data);
+    out
+}
+
+/// An arrangement audio clip as a set stores it.
+fn audio_clip(
+    name: &str,
+    time: f64,
+    span: f64,
+    loop_start: f64,
+    warped: bool,
+    relative: &str,
+    path: &str,
+) -> String {
+    format!(
+        r#"<AudioClip Id="0" Time="{time}"><CurrentStart Value="{time}" /><CurrentEnd Value="{end}" />
+          <Loop><LoopStart Value="{loop_start}" /><LoopEnd Value="9" /><StartRelative Value="0" /><LoopOn Value="false" /></Loop>
+          <Name Value="{name}" /><IsWarped Value="{warped}" /><SampleVolume Value="0.5" /><PitchCoarse Value="0" />
+          <SampleRef><FileRef><RelativePathType Value="3" /><RelativePath Value="{relative}" /><Path Value="{path}" /></FileRef></SampleRef>
+        </AudioClip>"#,
+        end = time + span,
+    )
+}
+
+/// Item 5's audio clips on the sample-playback source (DLW build ruling 2026-11-05): a set's unwarped arrangement audio clips
+/// are laid on their part from their samples — a file beside the set by its relative path (16-bit integer, mono), else
+/// where the set stored it (32-bit float, stereo), each decoded once — at their clip's beats, from their start marker (in
+/// seconds), at their clip gain, and play through the part's row as the set renders. A warped clip, one whose sample is
+/// nowhere, and one at another rate than the engine's are silent, each named in words; a disabled clip is skipped.
+#[test]
+fn a_sets_unwarped_audio_clips_are_laid_from_their_samples_and_what_is_not_played_is_said() {
+    let dir = std::path::Path::new(env!("CARGO_TARGET_TMPDIR"))
+        .join(format!("laid-samples-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(dir.join("Samples/Recorded")).unwrap();
+    std::fs::create_dir_all(dir.join("elsewhere")).unwrap();
+    std::fs::write(
+        dir.join("Samples/Recorded/voice.wav"),
+        wav_file(4_800, 1, SR, true),
+    )
+    .unwrap();
+    let elsewhere = dir.join("elsewhere/room.wav");
+    std::fs::write(&elsewhere, wav_file(2_000, 2, SR, false)).unwrap();
+    std::fs::write(dir.join("slow.wav"), wav_file(100, 1, 44_100, false)).unwrap();
+    let clips = [
+        audio_clip(
+            "Voice",
+            0.0,
+            0.1,
+            0.01,
+            false,
+            "Samples/Recorded/voice.wav",
+            "/nowhere/voice.wav",
+        ),
+        audio_clip(
+            "Room",
+            0.5,
+            0.05,
+            0.0,
+            false,
+            "",
+            elsewhere.to_str().unwrap(),
+        ),
+        audio_clip(
+            "Stretched",
+            1.0,
+            0.5,
+            0.0,
+            true,
+            "Samples/Recorded/voice.wav",
+            "",
+        ),
+        audio_clip("Gone", 2.0, 0.5, 0.0, false, "Samples/gone.wav", ""),
+        audio_clip("Slow", 3.0, 0.5, 0.0, false, "slow.wav", ""),
+        audio_clip("Off", 4.0, 0.5, 0.0, false, "slow.wav", "")
+            .replace("<Name ", "<Disabled Value=\"true\" /><Name "),
+    ]
+    .concat();
+    let set = format!(
+        r#"<Ableton MajorVersion="5"><LiveSet><Tracks>
+        <AudioTrack Id="6"><Name><EffectiveName Value="Vox" /></Name><DeviceChain>
+          <Mixer><Volume><Manual Value="0.5" /></Volume></Mixer>
+          <MainSequencer><Sample><ArrangerAutomation><Events>{clips}</Events></ArrangerAutomation></Sample></MainSequencer>
+        </DeviceChain></AudioTrack></Tracks>
+        <MainTrack><DeviceChain><Mixer><Tempo><Manual Value="120" /></Tempo></Mixer></DeviceChain></MainTrack>
+        </LiveSet></Ableton>"#
+    );
+    let root = live_set::xml::parse(&set).unwrap();
+    let mut r = bridge_set(&root, SR).unwrap();
+    assert_eq!(
+        r.samples
+            .iter()
+            .map(|s| s.clip.as_str())
+            .collect::<Vec<_>>(),
+        ["Voice", "Room", "Gone", "Slow"]
+    );
+    let said = |w: &[live_engine::BridgeWarning]| {
+        w.iter()
+            .map(|w| format!("{}: {}", w.track, w.message))
+            .collect::<Vec<_>>()
+    };
+    assert_eq!(
+        said(&r.warnings),
+        ["Vox: its clip 'Stretched' is warped, and the engine plays unwarped clips first: it is silent"]
+    );
+    let words = said(&live_engine::bridge::lay_samples(
+        &mut r.graph,
+        &r.samples,
+        &dir.join("Song.als"),
+    ));
+    assert_eq!(words.len(), 2, "{words:?}");
+    assert!(words[0].starts_with("Vox: its clip 'Gone' plays Samples/gone.wav, which is neither beside the set nor where the set stored it"), "{words:?}");
+    assert!(
+        words[1].contains("its clip 'Slow' plays")
+            && words[1].contains(
+                "at 44100 Hz, and the engine runs at 48000 Hz and does not resample: it is silent"
+            ),
+        "{words:?}"
+    );
+    let laid = r.graph.tracks[0].samples();
+    assert_eq!(
+        laid.iter()
+            .map(|s| (s.at, s.from, s.frames, s.gain, s.channels))
+            .collect::<Vec<_>>(),
+        [(0, 480, 2_400, 0.5, 1), (12_000, 0, 1_200, 0.5, 2)]
+    );
+    let out = r.graph.render(SR);
+    assert_eq!(
+        out.len(),
+        2 * 13_200,
+        "the part ends with its last laid clip"
+    );
+    let voice = |i: usize| ((i % 1000) as f32 / 2000.0 * 32_768.0) as i16 as f32 / 32_768.0;
+    let row = |x: f32| (x as f64 * 0.5) as f32;
+    assert_eq!(
+        (out[0], out[1]),
+        (row(voice(480) * 0.5), row(voice(480) * 0.5))
+    );
+    assert_eq!(out[2 * 2_399], row(voice(480 + 2_399) * 0.5));
+    assert_eq!((out[2 * 2_400], out[2 * 11_999]), (0.0, 0.0));
+    let room = |i: usize, c: u16| (i % 1000) as f32 / 2000.0 - f32::from(c) * 0.25;
+    assert_eq!(
+        (out[2 * 12_100], out[2 * 12_100 + 1]),
+        (row(room(100, 0) * 0.5), row(room(100, 1) * 0.5))
+    );
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+/// O-I #855, Export Audio of a take through its part (DLW build ruling 2026-11-05: the sample-playback source "unblocks
+/// #855's export through the part's effects"): the take's sound as its instrument's owner rendered it, laid as the part's
+/// instrument (`SampleInstrument`), passes the part's rack (the Torus's effects, put while it played, at the frame the
+/// engine put them), its chain and its row as the instrument did when the engine played it, bit for bit. Its notes are in
+/// its sound: the sample takes no key.
+#[test]
+fn a_takes_sound_laid_as_its_parts_instrument_exports_through_its_effects_as_the_engine_played_it()
+{
+    use live_engine::{Instrument, SampleInstrument};
+    let notes = [
+        Note {
+            key: 60,
+            start: 200,
+            length: 4_000,
+            velocity: 100.0,
+        },
+        Note {
+            key: 67,
+            start: 3_000,
+            length: 3_000,
+            velocity: 80.0,
+        },
+    ];
+    let rack = || {
+        vec![live_engine::rack_device(
+            "AutoFilter",
+            &[
+                ("FilterType", 0.0),
+                ("Cutoff", 90.0),
+                ("Resonance", 0.4),
+                ("Drive", 0.0),
+            ],
+        )
+        .unwrap()]
+    };
+    let part = |instrument: Box<dyn Instrument>| {
+        let mut t = Track::midi("Torus", instrument);
+        t.devices.push(Box::new(GainDevice::new_linear(0.8)));
+        (t.gain, t.pan) = (0.7, 0.2);
+        t
+    };
+    let mut g = Graph::new(SR, 120.0);
+    let mut torus = part(Box::new(OperatorInstrument::default_patch(SR)));
+    torus.set_notes(&notes);
+    g.tracks.push(torus);
+    let (mut core, mut handle) = engine(g).unwrap();
+    let mut played = Vec::new();
+    for (i, n) in [512usize, 256, 1_024, 333, 2_048, 4_096]
+        .into_iter()
+        .enumerate()
+    {
+        if i == 2 {
+            handle.install_rack(0, rack()).unwrap();
+        }
+        let mut out = vec![0f32; n * 2];
+        core.pull_block(&mut out);
+        played.extend_from_slice(&out);
+    }
+    handle.collect();
+    let frames = played.len() / 2;
+    let put = handle.racks().to_vec();
+    assert_eq!(put, [(768, 0)], "the rack was put at the third block");
+
+    let mut alone = Graph::new(SR, 120.0);
+    let mut torus = Track::midi("Torus", Box::new(OperatorInstrument::default_patch(SR)));
+    torus.set_notes(&notes);
+    alone.tracks.push(torus);
+    let pcm: std::sync::Arc<[f32]> =
+        left(&alone.render_performance(SR, &Performance::silent(frames as u64))).into();
+    assert!(pcm.iter().any(|x| *x != 0.0), "the take sounds");
+
+    let mut g = Graph::new(SR, 120.0);
+    let take = SampleInstrument {
+        sample: laid(0, 0, frames as u64, 1.0, &pcm, 1),
+    };
+    g.tracks.push(part(Box::new(take)));
+    g.tracks[0].set_notes(&notes);
+    let racks = put
+        .iter()
+        .map(|&(frame, track)| (frame, track, rack()))
+        .collect();
+    let exported =
+        g.render_performance_racked(SR, &Performance::silent(frames as u64), Vec::new(), racks);
+    assert_eq!(exported.len(), played.len());
+    assert!(
+        exported
+            .iter()
+            .zip(&played)
+            .all(|(e, p)| e.to_bits() == p.to_bits()),
+        "the take exports through its part's effects as the engine played it"
+    );
+    let mut bare = Graph::new(SR, 120.0);
+    bare.tracks.push(part(Box::new(SampleInstrument {
+        sample: laid(0, 0, frames as u64, 1.0, &pcm, 1),
+    })));
+    assert!(
+        bare.render_performance(SR, &Performance::silent(frames as u64)) != played,
+        "the rack is heard"
+    );
+}
+
+/// A stereo part sounding `l` and `r` throughout, through `devices`, at unity and centre: its render.
+fn through(l: f32, r: f32, frames: usize, devices: Vec<Box<dyn Device>>) -> Vec<f32> {
+    let mut t = Track::new("P", 2);
+    t.source = [l, r].repeat(frames);
+    t.devices = devices;
+    let mut g = Graph::new(SR, 120.0);
+    g.tracks.push(t);
+    g.length_frames = Some(frames as u64);
+    g.render(SR)
+}
+
+/// Item 5, Utility's laws (Live's `StereoGain`), as its clean-room surfaces give them: its Gain is the linear amplitude
+/// it stores (live-dynamics params.rs STEREO_GAIN, "Gain stores linear amplitude 0..56.2341309"), Mute silences it,
+/// each Phase Invert turns its channel over, and its Channel Mode plays the left channel on both sides (stored 0, the
+/// factory "Left"), both as they come (1) or the right on both (2: "Right").
+#[test]
+fn utility_sounds_its_gain_mute_phase_and_channel_mode_by_the_laws_its_surfaces_give() {
+    use live_engine::devices::{UtilityChannels, UtilityDevice};
+    let utility = |gain: f32,
+                   mute: bool,
+                   invert: [bool; 2],
+                   channels: UtilityChannels|
+     -> Vec<Box<dyn Device>> {
+        vec![Box::new(UtilityDevice {
+            gain,
+            mute,
+            invert,
+            channels,
+        })]
+    };
+    let first = |out: Vec<f32>| (out[0], out[1]);
+    let stereo = UtilityChannels::Stereo;
+    assert_eq!(
+        first(through(
+            0.5,
+            0.25,
+            8,
+            utility(1.0, false, [false; 2], stereo)
+        )),
+        (0.5, 0.25),
+        "at its factory settings it passes the sound"
+    );
+    assert_eq!(
+        first(through(
+            0.5,
+            0.25,
+            8,
+            utility(2.0, false, [false; 2], stereo)
+        )),
+        (1.0, 0.5),
+        "its Gain is the amplitude it stores"
+    );
+    assert_eq!(
+        first(through(
+            0.5,
+            0.25,
+            8,
+            utility(2.0, true, [false; 2], stereo)
+        )),
+        (0.0, 0.0),
+        "Mute silences it"
+    );
+    assert_eq!(
+        first(through(
+            0.5,
+            0.25,
+            8,
+            utility(1.0, false, [true, false], stereo)
+        )),
+        (-0.5, 0.25)
+    );
+    assert_eq!(
+        first(through(
+            0.5,
+            0.25,
+            8,
+            utility(1.0, false, [false, true], stereo)
+        )),
+        (0.5, -0.25)
+    );
+    assert_eq!(
+        first(through(
+            0.5,
+            0.25,
+            8,
+            utility(1.0, false, [false; 2], UtilityChannels::Left)
+        )),
+        (0.5, 0.5)
+    );
+    assert_eq!(
+        first(through(
+            0.5,
+            0.25,
+            8,
+            utility(1.0, false, [false; 2], UtilityChannels::Right)
+        )),
+        (0.25, 0.25)
+    );
+    // on a mono part its one channel is its left
+    let mut t = constant_part("M", 0.5, 8);
+    t.devices = utility(0.5, false, [true, false], stereo);
+    let mut g = Graph::new(SR, 120.0);
+    g.tracks.push(t);
+    g.length_frames = Some(8);
+    assert_eq!(first(g.render(SR)), (-0.25, -0.25));
+}
+
+/// Item 5, a rack's own chains (devices/racks-session-model.md §1.3, §2.2): Live's Audio Effect Rack hears its input on
+/// each of its chains, each through its own devices, at its chain mixer's volume and pan (the part's pan law,
+/// `pan_weights`), and sums them; a chain that does not sound (its Speaker off, or another soloed) adds nothing. Made
+/// again for an edit, each of its devices takes what still sounds in the device it replaces.
+#[test]
+fn an_audio_effect_rack_sums_its_chains_each_through_its_devices_at_its_volume_and_pan() {
+    use live_engine::devices::{AudioEffectRack, RackChain, UtilityChannels, UtilityDevice};
+    let gain = |g: f32| -> Box<dyn Device> {
+        Box::new(UtilityDevice {
+            gain: g,
+            mute: false,
+            invert: [false; 2],
+            channels: UtilityChannels::Stereo,
+        })
+    };
+    let chain =
+        |name: &str, devices: Vec<Box<dyn Device>>, gain: f64, pan: f64, sounds: bool| RackChain {
+            name: name.into(),
+            devices,
+            gain,
+            pan,
+            sounds,
+        };
+    let rack = |chains: Vec<RackChain>| -> Vec<Box<dyn Device>> {
+        vec![Box::new(AudioEffectRack { chains })]
+    };
+    let out = through(
+        0.5,
+        0.25,
+        8,
+        rack(vec![
+            chain("A", vec![gain(2.0)], 1.0, 0.0, true),
+            chain("B", vec![], 0.5, 0.0, true),
+        ]),
+    );
+    assert_eq!(
+        (out[0], out[1]),
+        (1.0 + 0.25, 0.5 + 0.125),
+        "each chain through its devices at its volume, summed"
+    );
+    let (lw, rw) = pan_weights(0.5);
+    let out = through(
+        0.5,
+        0.25,
+        8,
+        rack(vec![
+            chain("A", vec![], 1.0, 0.5, true),
+            chain("Off", vec![gain(4.0)], 1.0, 0.0, false),
+        ]),
+    );
+    assert_eq!(
+        (out[0], out[1]),
+        ((0.5 * lw) as f32, (0.25 * rw) as f32),
+        "at its pan; a chain that does not sound adds nothing"
+    );
+    assert_eq!(
+        through(0.5, 0.25, 8, rack(Vec::new()))[..2],
+        [0.0, 0.0],
+        "a rack of no chains is silent, as Live's is"
+    );
+    // a delay on a chain rings on when the rack is made again
+    let echoing = || {
+        let mut d = EchoDevice::new(EchoParams {
+            delay_time_s: 0.001,
+            feedback: 0.5,
+            dry_wet: 1.0,
+        });
+        d.prepare(SR, 2);
+        Box::new(d) as Box<dyn Device>
+    };
+    let clock = Clock {
+        sample: 0,
+        sample_rate: SR,
+        tempo_bpm: 120.0,
+    };
+    let mut was = AudioEffectRack {
+        chains: vec![chain("A", vec![echoing()], 1.0, 0.0, true)],
+    };
+    let mut frame = [0.5f32, 0.5];
+    was.process(&mut frame, &clock);
+    let mut silent = [0.0f32, 0.0];
+    for _ in 0..47 {
+        was.process(&mut silent, &clock);
+        silent = [0.0, 0.0];
+    }
+    let mut again = AudioEffectRack {
+        chains: vec![chain("A", vec![echoing()], 1.0, 0.0, true)],
+    };
+    again.made_again_from(&mut was);
+    let mut heard = [0.0f32, 0.0];
+    again.process(&mut heard, &clock);
+    assert!(
+        heard[0] != 0.0,
+        "its delay's repeats go on through the change"
+    );
+}
+
+/// One chain of an Audio Effect Rack as a set stores it (devices/racks-session-model.md §1.3, §2.2).
+fn rack_chain(
+    name: &str,
+    devices: &str,
+    zone: [u8; 4],
+    soloed: bool,
+    speaker: bool,
+    volume: f64,
+) -> String {
+    format!(
+        r#"<AudioEffectBranch Id="0"><Name><EffectiveName Value="{name}" /></Name>
+          <DeviceChain><AudioToAudioDeviceChain Id="0"><Devices>{devices}</Devices></AudioToAudioDeviceChain></DeviceChain>
+          <BranchSelectorRange><Min Value="{}" /><Max Value="{}" /><CrossfadeMin Value="{}" /><CrossfadeMax Value="{}" /></BranchSelectorRange>
+          <IsSoloed Value="{soloed}" />
+          <MixerDevice><Speaker><Manual Value="{speaker}" /></Speaker><Volume><Manual Value="{volume}" /></Volume><Panorama><Manual Value="0" /></Panorama></MixerDevice>
+        </AudioEffectBranch>"#,
+        zone[0], zone[1], zone[2], zone[3]
+    )
+}
+
+/// Item 5 from the set: a part's Audio Effect Rack is made from what the set stores, each chain with its devices (a Utility at
+/// the Gain, Channel Mode and Phase Invert it stores), at its chain mixer's volume, sounding while its Speaker is on, it or no
+/// chain is soloed, and the Chain Selector stands in its zone; what the engine does not sound as stored is said: a Utility's
+/// Width off 100%, a chain fading where the selector stands, the rack's return chains.
+#[test]
+fn a_sets_audio_effect_rack_and_utility_sound_as_the_set_stores_them_and_what_does_not_is_said() {
+    let dir = std::path::Path::new(env!("CARGO_TARGET_TMPDIR"))
+        .join(format!("rack-chains-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(dir.join("room.wav"), wav_file(2_000, 2, SR, false)).unwrap();
+    let utility = |settings: &str| {
+        format!(r#"<StereoGain Id="2"><On><Manual Value="true" /></On>{settings}</StereoGain>"#)
+    };
+    let m = |id: &str, v: &str| format!("<{id}><Manual Value=\"{v}\" /></{id}>");
+    let chains = [
+        rack_chain(
+            "Loud",
+            &utility(&(m("Gain", "2") + &m("ChannelMode", "0") + &m("StereoWidth", "1"))),
+            [0, 127, 0, 127],
+            false,
+            true,
+            0.5,
+        ),
+        rack_chain(
+            "Off",
+            &utility(&m("Gain", "4")),
+            [0, 127, 0, 127],
+            false,
+            false,
+            1.0,
+        ),
+        rack_chain(
+            "Out of zone",
+            &utility(&m("Gain", "4")),
+            [64, 127, 64, 127],
+            false,
+            true,
+            1.0,
+        ),
+        rack_chain(
+            "Wide",
+            &utility(&m("StereoWidth", "2")),
+            [0, 127, 0, 127],
+            false,
+            true,
+            0.25,
+        ),
+        rack_chain("Fading", "", [0, 127, 0, 0], false, true, 0.125),
+    ]
+    .concat();
+    let set = |chains: &str| {
+        format!(
+            r#"<Ableton MajorVersion="5"><LiveSet><Tracks>
+            <AudioTrack Id="6"><Name><EffectiveName Value="Bus" /></Name><DeviceChain>
+              <Mixer><Volume><Manual Value="1" /></Volume></Mixer>
+              <MainSequencer><Sample><ArrangerAutomation><Events>{clip}</Events></ArrangerAutomation></Sample></MainSequencer>
+              <DeviceChain><Devices>
+                <AudioEffectGroupDevice Id="1"><On><Manual Value="true" /></On><ChainSelector><Manual Value="10" /></ChainSelector>
+                  <Branches>{chains}</Branches><ReturnBranches><ReturnBranch Id="0" /></ReturnBranches></AudioEffectGroupDevice>
+                {after}
+              </Devices></DeviceChain>
+            </DeviceChain></AudioTrack></Tracks>
+            <MainTrack><DeviceChain><Mixer><Tempo><Manual Value="120" /></Tempo></Mixer></DeviceChain></MainTrack>
+            </LiveSet></Ableton>"#,
+            clip = audio_clip("Room", 0.0, 0.05, 0.0, false, "room.wav", "")
+                .replace("SampleVolume Value=\"0.5\"", "SampleVolume Value=\"1\""),
+            after = utility(&m("PhaseInvertR", "true")),
+        )
+    };
+    let render = |chains: &str| {
+        let root = live_set::xml::parse(&set(chains)).unwrap();
+        let mut r = bridge_set(&root, SR).unwrap();
+        assert!(
+            live_engine::bridge::lay_samples(&mut r.graph, &r.samples, &dir.join("Song.als"))
+                .is_empty()
+        );
+        let words: Vec<String> = r
+            .warnings
+            .iter()
+            .map(|w| format!("{}: {}: {}", w.track, w.device, w.message))
+            .collect();
+        (r.graph.render(SR), words)
+    };
+    let (out, words) = render(&chains);
+    assert_eq!(
+        words,
+        [
+            "Bus: AudioEffectGroupDevice: its return chains do not sound in the engine yet, nor what its chains send them",
+            "Bus: StereoGain: on the Audio Effect Rack's chain 'Wide', the engine's model does not take its StereoWidth yet: they sound as the model's own",
+            "Bus: AudioEffectGroupDevice: its chain 'Fading' fades where the Chain Selector stands (10), by a curve no clean-room source gives: the engine plays it at full",
+        ]
+    );
+    let (l, r) = (0.05f32, -0.2f32); // the sample at frame 100, left and right
+    let near = |a: f32, b: f32| (a - b).abs() < 1e-6;
+    assert!(
+        near(out[200], 2.0 * l * 0.5 + l * 0.25 + l * 0.125),
+        "Loud plays its left on both sides at twice, at half; Wide and Fading at theirs: {}",
+        out[200]
+    );
+    assert!(
+        near(out[201], -(2.0 * l * 0.5 + r * 0.25 + r * 0.125)),
+        "and the Utility after the rack turns the right over: {}",
+        out[201]
+    );
+    // a chain soloed: only it sounds
+    let wide = |soloed: bool| {
+        rack_chain(
+            "Wide",
+            &utility(&m("StereoWidth", "2")),
+            [0, 127, 0, 127],
+            soloed,
+            true,
+            0.25,
+        )
+    };
+    let (out, _) = render(&chains.replace(&wide(false), &wide(true)));
+    assert!(
+        near(out[200], l * 0.25) && near(out[201], -(r * 0.25)),
+        "{} {}",
+        out[200],
+        out[201]
+    );
+    let _ = std::fs::remove_dir_all(&dir);
 }

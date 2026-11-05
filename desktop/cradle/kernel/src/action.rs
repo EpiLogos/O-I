@@ -79,7 +79,7 @@ pub fn central_action(action: &str) -> bool {
 /// A Control skill's revision that waits in Central (`control.skills.revision.accept` · `discard`, O-I 795): Central writes it as the
 /// skill in use on the person's Accept, and drops it on the person's Discard, admitting each on that authority only (ctrl
 /// control_skills.rs). Proposing one (`control.skills.revision.propose`, AIKit's hand) carries no token.
-pub const PERSON_ACTS: [&str; 34] = [
+pub const PERSON_ACTS: [&str; 35] = [
     "central.now.lifecycle",
     "central.day.settings.write",
     "central.day.move.record",
@@ -93,6 +93,7 @@ pub const PERSON_ACTS: [&str; 34] = [
     "agent-profile.remove",
     "central.agent-set.propose",
     "central.agent-set.save",
+    "central.agent-set.remove",
     "central.world-relations.save",
     "central.document.mutate",
     "projectcentral.init",
@@ -534,6 +535,12 @@ mod tests {
         }
         // Setup's Projects step brings a folder that stands elsewhere into Work (O-I #738): the copy is the person's Accept.
         assert!(person_act("work.bring"), "work.bring is the person's press");
+        // A group's Discard (O-I #772, manual §19.15): removing a set of agents is the person's press, as making and keeping one is.
+        assert!(
+            person_act("central.agent-set.remove"),
+            "central.agent-set.remove is the person's press"
+        );
+        assert!(!person_act("central.agent-set.read"));
         // A world named from its track (O-I #743): Central admits the name on the person's authority only.
         assert!(
             person_act("central.world.name"),
