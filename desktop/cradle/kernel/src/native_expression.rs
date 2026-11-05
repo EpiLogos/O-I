@@ -170,6 +170,69 @@ pub enum TorusTap {
         frames: u32,
         gains: Vec<(String, f64)>,
     },
+    /// The owner under `lease` voiced notes under Logic on the torus (`torus-play`'s `ql.note-voices/v1` receipt; QL-MEF
+    /// #287 packet A; O-I #850 round 24) at its sample `at_samples_elapsed`: each note by its id, and each of its voices
+    /// by the mode it is like (`mode_ref`), its frequency and its impulse in modal metres; and the notes that made way
+    /// for them, by id, exactly as its receipt names them.
+    Voiced {
+        lease: String,
+        at_samples_elapsed: u64,
+        notes: VoicedNotes,
+        made_way: Vec<u64>,
+    },
+}
+
+/// The notes an owner voiced ([`TorusTap::Voiced`]): each note's id, and its voices, each by the mode it is like
+/// (`mode_ref`), its frequency and its impulse `[re, im]`.
+pub type VoicedNotes = Vec<(u64, Vec<(String, f64, [f64; 2])>)>;
+
+/// QL's receipt of the notes a `torus-play` voiced under Logic on the torus (QL-MEF #287 packet A).
+const NOTE_VOICES_RECEIPT: &str = "ql.note-voices/v1";
+
+/// A note's id as a receipt names it: a whole number, or its decimal.
+fn note_id(value: &Value) -> Option<u64> {
+    value
+        .as_u64()
+        .or_else(|| value.as_str().and_then(|s| s.parse().ok()))
+}
+
+/// The notes a `ql.note-voices/v1` receipt says its owner voiced, or none when any part of it cannot be read whole: a
+/// host that voiced the rest would ring notes the owner's field does not.
+fn torus_voiced(lease: &str, receipt: &Value) -> Option<TorusTap> {
+    let notes = receipt["notes"]
+        .as_array()?
+        .iter()
+        .map(|note| {
+            let voices = note["voices"]
+                .as_array()?
+                .iter()
+                .map(|voice| {
+                    let z = voice["amplitude"].as_array().filter(|z| z.len() == 2)?;
+                    Some((
+                        voice["like"].as_str()?.to_owned(),
+                        voice["frequency_hz"].as_f64()?,
+                        [z[0].as_f64()?, z[1].as_f64()?],
+                    ))
+                })
+                .collect::<Option<Vec<_>>>()?;
+            Some((note_id(&note["id"])?, voices))
+        })
+        .collect::<Option<Vec<_>>>()?;
+    let made_way = match receipt.get("made_way") {
+        Some(ids) => ids
+            .as_array()?
+            .iter()
+            .map(note_id)
+            .collect::<Option<Vec<_>>>()?,
+        None => Vec::new(),
+    };
+    let at_samples_elapsed = cursor(&receipt["at_samples_elapsed"]).ok()?;
+    (!notes.is_empty()).then(|| TorusTap::Voiced {
+        lease: lease.to_owned(),
+        at_samples_elapsed,
+        notes,
+        made_way,
+    })
 }
 
 /// The parts of an acknowledged block that reached gains a receiver moved, in order (the reply's
@@ -220,6 +283,9 @@ fn torus_struck(lease: &str, command: &Value, reply: &Value) -> Option<TorusTap>
     let (at, impulses) = match command["operation"].as_str()? {
         "torus-play" | "strike-at" | "torus-singlet" => {
             let receipt = &reply["strike_at"];
+            if receipt["schema"] == NOTE_VOICES_RECEIPT {
+                return torus_voiced(lease, receipt);
+            }
             let impulses = if receipt["voices"].is_array() {
                 pairs(&receipt["voices"])?
             } else {
@@ -5093,6 +5159,8 @@ for line in sys.stdin:
     /// strikes the owner's own impulses at the owner's sample and takes the Torus again when it is handed over again.
     /// Round 14: each part of a block that reached a receiver's gains is tapped by its sample, length and gains, so the
     /// engine reaches them over the owner's samples; a block naming a part that cannot be read whole taps none of it.
+    /// Round 24 (O-I #850): under Logic on the torus a key is a note its owner voices (`ql.note-voices/v1`), tapped as the
+    /// notes it voiced, each by its id and eight voices, and the notes that made way, at the sample it landed at.
     /// A refused act and a read are not tapped; the frame is answered as before.
     #[cfg(unix)]
     #[test]
@@ -5117,6 +5185,7 @@ for line in sys.stdin:
     if c['frames']==512: extra['torus_heard']=[{'at_samples_elapsed':str(before),'frames':200,'gains':[{'mode_ref':'voice:a','gain':0.5},{'mode_ref':'voice:b','gain':0.25}]},{'at_samples_elapsed':str(before+200),'frames':312,'gains':[{'mode_ref':'voice:a','gain':0.75},{'mode_ref':'voice:b','gain':0.125}]}]
     if c['frames']==7: extra['torus_heard']=[{'at_samples_elapsed':str(before),'frames':7,'gains':[{'mode_ref':'voice:a','gain':0.5}]},{'at_samples_elapsed':str(before),'frames':7,'gains':[{'mode_ref':'voice:b'}]}]
   elif op=='torus-native': extra['torus_native']=handed()
+  elif op=='torus-play' and c['keys'][0]['row']==4: extra['strike_at']={'schema':'ql.note-voices/v1','at_samples_elapsed':lands,'made_way':[3],'notes':[{'id':7,'voices':[{'like':'voice:a','frequency_hz':440.0+k,'m':1,'n':1,'coupling':0.5,'amplitude':[0.01*k,-0.002]} for k in range(8)]}]}
   elif op=='torus-play': extra['strike_at']={'at_samples_elapsed':lands,'voices':[{'mode_ref':'voice:a','amplitude':[0.30000000000000004,-3e-05]},{'mode_ref':'voice:b','amplitude':[-0.25,0.0]}]}
   elif op=='strike-at': extra['strike_at']={'at_samples_elapsed':lands,'modes':[{'mode_ref':'voice:a/body/0','amplitude':[0.1,0.2]}]}
   elif op=='torus-singlet':
@@ -5162,6 +5231,10 @@ for line in sys.stdin:
         exchange(
             json!({"operation":"strike-at","points":[{"theta":0.1,"phi":0.2,"amplitude":[0.3,0]}],"at_samples_elapsed":"960"}),
         );
+        // O-I #850 round 24: under Logic on the torus a key is a note its owner voices, each its own eight voices.
+        exchange(
+            json!({"operation":"torus-play","keys":[{"row":4,"column":0}],"amplitude":[0.3,0],"at_samples_elapsed":"1000"}),
+        );
         let refused = exchange(json!({"operation":"torus-singlet","codon":99,"amplitude":[0.3,0]}));
         assert_eq!(refused["status"], "refused");
         exchange(
@@ -5191,6 +5264,17 @@ for line in sys.stdin:
                 TorusTap::HandedOver { lease: lease.clone(), sha256 },
                 struck(480, &[("voice:a", [0.30000000000000004, -3e-05]), ("voice:b", [-0.25, 0.0])]),
                 struck(960, &[("voice:a/body/0", [0.1, 0.2])]),
+                TorusTap::Voiced {
+                    lease: lease.clone(),
+                    at_samples_elapsed: 1000,
+                    notes: vec![(
+                        7,
+                        (0..8)
+                            .map(|k| ("voice:a".to_owned(), 440.0 + f64::from(k), [0.01 * f64::from(k), -0.002]))
+                            .collect()
+                    )],
+                    made_way: vec![3],
+                },
                 struck(480, &[("voice:a", [0.01, 0.0])]),
                 struck(1200, &[("voice:b", [0.5, 0.5])]),
                 heard(480, 200, [0.5, 0.25]),

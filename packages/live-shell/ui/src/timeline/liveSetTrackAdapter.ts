@@ -302,9 +302,10 @@ export const liveSetTrackAdapter: WorldTrackAdapter<LiveSetReading> = {
       const slot = 'slot' in take.address.at
       const clipId = `${trackRef(take.address.track)}/${'slot' in take.address.at ? `slot/${take.address.at.slot}` : `clip/${take.address.at.arrangement}`}`
       const landed = slot && take.at !== undefined && Number.isFinite(take.at) ? {clipAt: take.at} : {}
-      const loop = take.loop && take.loop.to > take.loop.from ? {loop: {start: take.loop.start, from: take.loop.from, to: take.loop.to}} : {}
+      const marker = take.loop && take.loop.to > take.loop.from ? {loop: {start: take.loop.start, from: take.loop.from, to: take.loop.to}}
+        : take.start !== undefined && Number.isFinite(take.start) ? {start: take.start} : {}
       for (const lane of own) automation.push({id: `${clipId}${TAKE_LANE}${lane.parameter}`, trackId: trackRef(take.address.track), device: take.name,
-        parameter: lane.label, clipId, ...landed, ...loop, points: lane.points.map(point => ({at: point.beat, value: point.value})),
+        parameter: lane.label, clipId, ...landed, ...marker, points: lane.points.map(point => ({at: point.beat, value: point.value})),
         ...(take.frozen !== undefined ? {overridden: false, frozen: take.frozen} : {overridden: held.includes(lane.parameter)})})
     }
     const absent: Record<string, string> = {events: LIVE_LANES_ABSENT.events}

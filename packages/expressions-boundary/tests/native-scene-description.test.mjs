@@ -65,3 +65,34 @@ test('the scenes reading qualifies its description: text of at most 5000 charact
   delete older.description;
   assert.equal(isNativeScenesReading(older, BASIS), true, 'an older reading without a description still qualifies');
 });
+
+// O-I #855 round 24 (DLW build ruling 2026-11-05: "Project `take-lane:torus/*` into the Expressions track adapter"): the Torus takes a
+// Scene's performance lays under it, as the kernel keeps them (expression_performance/torus.rs TorusTakeRecord: the take whole, the layer of
+// its lane, the sample of the performance's transport it lies at; expression_performance.rs Layer and Counter, a canonical decimal).
+test('the scenes reading carries the Torus takes a Scene\'s performance lays under it, each on its take lane, qualified whole', () => {
+  const view = seed();
+  const take = (ref, frames, rate = 48000) => ({schema: 'oi.torus-take/v1', take_ref: ref, sample_rate: rate, frames})
+  const lane = (ref, title, enabled = true) => ({layer_ref: ref, title, enabled, solo: false})
+  view.document.scenes[0].performance = {sample_rate: 48000,
+    layers: [lane('take-lane:torus/3', 'Take 3'), lane('note-lane:keys', 'Keys'), lane('take-lane:torus/4', 'Take 4', false)],
+    torus_takes: [{take: take('sha256:' + '1'.repeat(64), '144000'), layer: 0, at_sample: '96000'},
+      {take: take('sha256:' + '2'.repeat(64), '48000'), layer: 1, at_sample: '0'},
+      {take: take('sha256:' + '3'.repeat(64), '48000'), layer: 2, at_sample: '096000'},
+      {take: take('sha256:' + '4'.repeat(64), '24000', 24000), layer: 2, at_sample: '480000'}]}
+  const reading = projectNativeScenes(clone(view.journey), view);
+  assert.deepEqual(reading.scenes[0].torus_takes, [
+    {lane_ref: 'take-lane:torus/3', title: 'Take 3', enabled: true, solo: false, take_ref: 'sha256:' + '1'.repeat(64), at_sample: '96000', frames: '144000',
+      sample_rate: 48000, at_seconds: 2, seconds: 3},
+    {lane_ref: 'take-lane:torus/4', title: 'Take 4', enabled: false, solo: false, take_ref: 'sha256:' + '4'.repeat(64), at_sample: '480000', frames: '24000',
+      sample_rate: 24000, at_seconds: 10, seconds: 1}],
+    'a lane that is no Torus take lane, and a sample written as no counter, lay none; the transport runs at the performance\'s rate, a take\'s length at its own');
+  assert.equal(isNativeScenesReading(reading, BASIS), true);
+  const tampered = (edit) => { const copy = structuredClone(reading); edit(copy.scenes[0].torus_takes[0]); return isNativeScenesReading(copy, BASIS) }
+  assert.equal(tampered(row => { row.seconds = 4 }), false, 'its length is its frames at its rate');
+  assert.equal(tampered(row => { row.lane_ref = 'note-lane:keys' }), false, 'on a Torus take lane');
+  assert.equal(tampered(row => { row.at_sample = 96000 }), false, 'its sample a counter as the kernel writes one');
+  assert.equal(tampered(row => { row.sample_rate = 1 }), false);
+  assert.equal(isNativeScenesReading({...reading, scenes: [{...reading.scenes[0], torus_takes: []}]}, BASIS), false, 'none is written as absent');
+  delete view.document.scenes[0].performance;
+  assert.equal('torus_takes' in projectNativeScenes(clone(view.journey), view).scenes[0], false, 'a Scene with no performance lays none');
+});

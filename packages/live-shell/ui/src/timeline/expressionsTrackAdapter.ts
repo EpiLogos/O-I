@@ -14,6 +14,9 @@
 //   names sits in a trailing `unstopped` column. Without stops, one column per
 //   scene position.
 // - transport.takes: each scene's captured takes, targeting the scene.
+// - lanes.takes: the Torus takes that lie under a scene (O-I #855; manual §21.1, "Record a part and each pass lies as a take lane under
+//   its track"), each its take lane under its Expression's audio side, from the second of the scene it lies at for its length: where
+//   the scene lies on the ruler (worldTrackAdapter.ts rowOffsets) plus the take's own seconds in it.
 //
 // Takes are transport material: never a clock, never a track.
 // The inside of one scene is projected by expressionsSequenceEditor.ts.
@@ -40,7 +43,10 @@ import type {
   WorldTrackColumn,
   WorldTrackSet,
   WorldTrackTake,
+  WorldTakeLane,
+  TrackLaneKind,
 } from './worldTrackAdapter';
+import {rowOffsets} from './worldTrackAdapter';
 
 export interface ExpressionsWorkReading {
   expressions: {
@@ -53,7 +59,10 @@ export interface ExpressionsWorkReading {
       /** How the scene stands, from the owner's playback reading (R3). */
       status?: ClipStatus; note?: string;
       /** How far the playing scene has got, from the owner's playback reading: its elapsed seconds and the length it plays (W4). */
-      progress?: {elapsed: number; expected: number}}[];
+      progress?: {elapsed: number; expected: number};
+      /** The Torus takes that lie under the scene, as its performance keeps them (expressions-boundary scenes.ts sceneTorusTakes): each by
+       * its lane, from its second of the scene for its length in seconds. */
+      torusTakes?: {lane: string; name: string; at: number; seconds: number}[]}[];
   }[];
   // Live's scene rows: each stop stands one or more scenes at once.
   stops?: {id: string; name: string; scenes: {expressionId: string; sceneId: string}[]}[];
@@ -170,6 +179,7 @@ export function projectExpressionsWork(reading: ExpressionsWorkReading): WorldTr
   const tracks: WorldTrack[] = [];
   const clips: WorldTrackClip[] = [];
   const takes: WorldTrackTake[] = [];
+  const laid: {key: string; trackId: string; columnId: string; start: number; takes: NonNullable<ExpressionsWorkReading['expressions'][number]['scenes'][number]['torusTakes']>}[] = [];
 
   for (const expression of reading.expressions) {
     const groupId = expressionGroupId(expression.id);
@@ -198,10 +208,22 @@ export function projectExpressionsWork(reading: ExpressionsWorkReading): WorldTr
       for (const take of scene.takes ?? []) {
         takes.push({id: `${key}:${take.id}`, target: key, name: take.name});
       }
+      if (scene.torusTakes?.length) laid.push({key, trackId: audioLaneId(expression.id), columnId, start, takes: scene.torusTakes});
       cursor.set(columnId, end);
     });
   }
 
+  // Each Torus take on its own take lane, where its scene lies on the ruler and its seconds into the scene.
+  const {offsets} = rowOffsets(columns, clips);
+  const takeLanes: WorldTakeLane[] = laid.flatMap(({key, trackId, columnId, start, takes: own}) => own.map((take) => {
+    requireDuration(take.at, `Take ${take.lane} start`);
+    const from = (offsets.get(columnId) ?? 0) + start + take.at;
+    return {id: `${key}#${take.lane}`, trackId, name: take.name,
+      spans: [{start: from, end: from + requireDuration(take.seconds, `Take ${take.lane} length`), label: take.name}]};
+  }));
+  // Where Torus takes lie, the take lanes are not absent (the Studio's own captured takes still have no lane: EXPRESSIONS_LANES_ABSENT.takes).
+  const absentTakes: Partial<Record<TrackLaneKind, string>> = {...EXPRESSIONS_LANES_ABSENT};
+  if (takeLanes.length) delete absentTakes.takes;
   const automation: WorldAutomationLane[] = (reading.automation ?? []).flatMap(scene => scene.lanes.map(lane => ({
     id: `${sceneKey(scene.expressionId, scene.sceneId)}#lane/${lane.id}`, trackId: visualLaneId(scene.expressionId),
     clipId: `${sceneKey(scene.expressionId, scene.sceneId)}:visual`, device: lane.device, parameter: lane.parameter, points: lane.points,
@@ -218,7 +240,8 @@ export function projectExpressionsWork(reading: ExpressionsWorkReading): WorldTr
   const set: WorldTrackSet = {columns, tracks, clips, transport: {takes},
     mixer: {...(sound ? EXPRESSIONS_MIXER_SOUNDED : EXPRESSIONS_MIXER), ...(arm ? {arm: {meaning: EXPRESSIONS_MIXER.arm!.meaning, grain: 'the Studio arm: one arm for the open Expression'}} : {})},
     main: {name: 'Main', chain: [], ...(reading.differs !== undefined ? {differs: reading.differs} : {})},
-    lanes: {automation, absent: {...EXPRESSIONS_LANES_ABSENT, ...(reading.automation ? {} : {automation: 'The presented scene\'s reading is not published to this pane, so its lanes are unread.'})},
+    lanes: {automation, ...(takeLanes.length ? {takes: takeLanes} : {}),
+      absent: {...absentTakes, ...(reading.automation ? {} : {automation: 'The presented scene\'s reading is not published to this pane, so its lanes are unread.'})},
       ...(reading.held !== undefined ? {held: reading.held} : {})}};
   // The saved sequence loops whole: from its start to the end of what the Arrangement lays (worldTrackAdapter.ts `loop` with no end).
   if (reading.loop === true) set.loop = {start: 0};

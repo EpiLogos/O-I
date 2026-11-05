@@ -52,9 +52,10 @@ pub use engine::{
 };
 pub use graph::{
     ClipEdge, Clock, Device, Graph, GraphError, GroupTrack, Instrument, LaidSample, MasterTrack,
-    Note, RackDevice, ReturnTrack, RingOut, RungOut, TorusAct, TorusHear, TorusStrike, Touch,
-    Track, MAX_GROUPS, MAX_RETURNS, TORUS_ACT_KEYS, TORUS_HEAR_FRAMES, TORUS_HEAR_MODES,
-    TORUS_STRIKE_MODES, TORUS_WAITING,
+    Note, RackDevice, ReturnTrack, RingOut, RungOut, TorusAct, TorusHear, TorusStrike, TorusVoice,
+    TorusVoiceNote, Touch, Track, VoicedNote, MAX_GROUPS, MAX_RETURNS, TORUS_ACT_KEYS,
+    TORUS_HEAR_FRAMES, TORUS_HEAR_MODES, TORUS_NOTE_VOICES, TORUS_STRIKE_MODES,
+    TORUS_VOICE_MADE_WAY, TORUS_VOICE_NOTES, TORUS_VOICE_PART_MADE_WAY, TORUS_WAITING,
 };
 pub use instruments::{OperatorInstrument, SampleInstrument, SilentInstrument};
 

@@ -281,6 +281,40 @@ test('an automation lane names its device and its parameter: an armed take\'s re
   assert.doesNotMatch(off, /data-automation=/)
 })
 
+// O-I #855 round 24 (DLW build ruling 2026-11-05: "Project `take-lane:torus/*` into the Expressions track adapter and the sequence editor";
+// manual §20.1: "Takes lie as take lanes under the Expression's track in Arrangement view", and in the Sequence tab "The scene's sound lies
+// beneath it"). FIXTURE: the scenes inventory's rows as expressions-boundary scenes.ts sceneTorusTakes reads a Scene's performance.
+test('a Torus take under a scene lies as a take lane under its Expression\'s sound, from its second of the scene where the scene lies on the ruler', async () => {
+  const {placeClips} = await import('../src/frame/tracks/ArrangementRuler.tsx')
+  const {sceneSequenceAsTracks} = await import('../src/timeline/expressionsSequenceEditor.ts')
+  const take = {lane_ref: 'take-lane:torus/3', title: 'Take 3', enabled: true, solo: false, take_ref: 'sha256:' + '1'.repeat(64), at_sample: '96000', frames: '144000',
+    sample_rate: 48000, at_seconds: 2, seconds: 3}
+  const row = (ref, title, duration, extra = {}) => ({scene_ref: ref, title, native_title: title, working: {duration, transition: 0}, snapshot: {duration: null},
+    material: {available: true, reason: null}, ...extra})
+  const content = {basis: {expression_ref: 'expression:w', scene_ref: 's1'}, playback: null,
+    scenes: {scenes: [row('s1', 'Opening', 8), row('s2', 'Second', 12, {torus_takes: [take]})]}}
+  const set = nativeTracks(content, 'Work')
+  assert.deepEqual(set.lanes.takes, [{id: 'scene:expression:w:s2#take-lane:torus/3', trackId: 'expression:expression:w:audio', name: 'Take 3',
+    spans: [{start: 10, end: 13, label: 'Take 3'}]}], 'two seconds into the second scene, which lies from 8 s, for its three seconds')
+  const second = placeClips(set).placed.find(p => p.clip.id === 'scene:expression:w:s2:audio')
+  assert.equal(second.start + take.at_seconds, set.lanes.takes[0].spans[0].start, 'the lane lies where the ruler lays its scene')
+  assert.equal(set.lanes.absent.takes, undefined, 'a take lane lies: the lanes are not absent')
+  assert.match(arrangement(set), /data-take="scene:expression:w:s2#take-lane:torus\/3"[^>]*><span class="tl-head tl-take-head" title="Take 3 · a take/)
+  const none = nativeTracks({...content, scenes: {scenes: [row('s1', 'Opening', 8)]}}, 'Work')
+  assert.equal(none.lanes.takes, undefined)
+  assert.equal(typeof none.lanes.absent.takes, 'string', 'no take lies: why the lanes are absent is still said')
+  // The sequence editor: the scene's sound beneath its roll, the take on its lane in the scene's own seconds where the scene's column lies.
+  const reading = {scenes: [{id: 's1', name: 'Opening', duration: 8}, {id: 's2', name: 'Second', duration: 12}], presentedSceneId: 's2',
+    presented: {entities: [{id: 'g', name: 'Glyph', sequence: [{id: 'a', hold: 4, transition: 0}]}], automationLanes: [], propertyTracks: [],
+      torusTakes: [{lane: take.lane_ref, name: take.title, at: take.at_seconds, seconds: take.seconds}]}}
+  const roll = sceneSequenceAsTracks(reading)
+  assert.deepEqual(roll.tracks.at(-1), {id: 'sound:s2', name: 'Sound', kind: 'sound', lane: 'audio'})
+  assert.deepEqual(roll.lanes.takes, [{id: 's2#take-lane:torus/3', trackId: 'sound:s2', name: 'Take 3', spans: [{start: 3, end: 6, label: 'Take 3'}]}],
+    'the first column is a step wide (it holds none), so the presented scene lies from 1 and its take from 3')
+  assert.equal(placeClips(roll).placed.find(p => p.clip.id === 'clip:g:a').start + take.at_seconds, roll.lanes.takes[0].spans[0].start)
+  assert.equal(sceneSequenceAsTracks({...reading, presented: {...reading.presented, torusTakes: undefined}}).lanes, undefined, 'no take: no sound lane')
+})
+
 // O-I #849 round 22 (DLW build ruling 2026-11-05): "Its Torus parameters are baked in and carry no Overridden mark. Touching one says the
 // take is frozen, in words, and offers Unfreeze, which returns the part to its live Torus." FIXTURE: the clip players' lane standing as
 // live/clipPlayer.ts publishes a frozen take's, through Live's own adapter.

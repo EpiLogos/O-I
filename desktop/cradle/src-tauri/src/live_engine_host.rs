@@ -845,6 +845,44 @@ pub(crate) mod host {
 
     /// An owner's move as the kernel tells it: the gain each voice is heard by, by `mode_ref`.
     pub type Gains = Vec<(String, f64)>;
+    /// The notes an owner voiced under Logic (the kernel's `TorusTap::Voiced`): each note's id, and its voices by the mode
+    /// each is like, its frequency and its impulse.
+    pub type Voiced = oi_cradle_kernel::native_expression::VoicedNotes;
+
+    /// The parts the engine carries `notes` its owner voiced at `at` in (O-I #850 round 24; live-engine `TorusVoice`): each
+    /// voice's mode by the index `mode` finds for the reference its owner named (the continuation it handed over), each note
+    /// its eight voices. Refused in words for a mode the Torus does not have or a note that is not eight voices; nothing is
+    /// sent then, since a part that voiced the rest would ring notes its owner's field does not.
+    #[cfg(any(feature = "k8", test))]
+    pub fn voiced_parts(
+        mode: impl Fn(&str) -> Option<usize>,
+        handover: u32,
+        at: u64,
+        notes: &Voiced,
+        made_way: &[u64],
+    ) -> Result<Vec<live_engine::TorusVoice>, String> {
+        let notes = notes
+            .iter()
+            .map(|(id, voices)| {
+                if voices.len() != live_engine::TORUS_NOTE_VOICES {
+                    return Err(format!(
+                        "A note the Torus's owner voiced has {} voices, and a note voices {}: the notes were not voiced",
+                        voices.len(),
+                        live_engine::TORUS_NOTE_VOICES
+                    ));
+                }
+                let mut eight = [(0, 0.0, [0.0; 2]); live_engine::TORUS_NOTE_VOICES];
+                for (slot, (reference, hz, z)) in eight.iter_mut().zip(voices) {
+                    let like = mode(reference).ok_or_else(|| {
+                        format!("The Torus handed over has no mode {reference}: the notes were not voiced")
+                    })?;
+                    *slot = (like, *hz, *z);
+                }
+                Ok((*id, eight))
+            })
+            .collect::<Result<Vec<_>, String>>()?;
+        live_engine::TorusVoice::split(handover, at, &notes, made_way)
+    }
 
     /// What the Torus's owner did that its part follows: an act it landed at a sample, or a move of the
     /// gains it is heard by that it reached over `frames` samples from one.
@@ -852,6 +890,7 @@ pub(crate) mod host {
     pub enum Told {
         Struck(u64, Impulses),
         Heard(u64, u32, Gains),
+        Voiced(u64, Voiced, Vec<u64>),
     }
 
     /// The most acts and moves the host keeps of an owner's last hand-over before a part is bound to it;
@@ -1704,6 +1743,50 @@ pub(crate) mod host {
             }
         }
 
+        /// The notes its owner voiced under Logic, voiced on the part's Torus of the hand-over it follows at the owner's
+        /// sample (O-I #850 round 24): counted as an act struck, or missed with its words.
+        fn follow_voice(&mut self, bound: &Bound, at: u64, notes: &Voiced, made_way: &[u64]) {
+            match self.voice_owner(bound.track, bound.handover, at, notes, made_way) {
+                Ok(()) => self.following.struck += 1,
+                Err(words) => {
+                    self.following.missed += 1;
+                    self.following.refusal = Some(words);
+                }
+            }
+        }
+
+        /// The notes its owner voiced, sent to the part's Torus of the hand-over they follow ([`voiced_parts`]).
+        pub fn voice_owner(
+            &mut self,
+            track: usize,
+            handover: u32,
+            at: u64,
+            notes: &Voiced,
+            made_way: &[u64],
+        ) -> Result<(), String> {
+            #[cfg(feature = "k8")]
+            {
+                let torus = self
+                    .toruses
+                    .iter()
+                    .rev()
+                    .find(|t| t.track == track && t.handover == handover)
+                    .ok_or("The Torus these notes follow gave way before the engine took it")?;
+                let parts = voiced_parts(|r| torus.handed.mode(r), handover, at, notes, made_way)?;
+                for voice in parts {
+                    self.handle
+                        .send(EngineEvent::TorusVoice { track, voice })
+                        .map_err(|e| e.to_string())?;
+                }
+                Ok(())
+            }
+            #[cfg(not(feature = "k8"))]
+            {
+                let _ = (track, handover, at, notes, made_way);
+                Err(WITHOUT_K8.into())
+            }
+        }
+
         fn follow_move(&mut self, bound: &Bound, at: u64, frames: u32, gains: &[(String, f64)]) {
             match self.hear_owner(bound.track, bound.handover, at, frames, gains) {
                 Ok(()) => self.following.heard += 1,
@@ -1718,6 +1801,7 @@ pub(crate) mod host {
             match told {
                 Told::Struck(at, impulses) => self.follow_act(bound, *at, impulses),
                 Told::Heard(at, frames, gains) => self.follow_move(bound, *at, *frames, gains),
+                Told::Voiced(at, notes, made_way) => self.follow_voice(bound, *at, notes, made_way),
             }
         }
 
@@ -2498,6 +2582,17 @@ pub(crate) mod host {
                     &mut open,
                     &lease,
                     Told::Heard(at_samples_elapsed, frames, gains),
+                ),
+                TorusTap::Voiced {
+                    lease,
+                    at_samples_elapsed,
+                    notes,
+                    made_way,
+                } => Self::told(
+                    &mut follow,
+                    &mut open,
+                    &lease,
+                    Told::Voiced(at_samples_elapsed, notes, made_way),
                 ),
             }
         }
@@ -4438,6 +4533,124 @@ pub(crate) mod host {
                 .hand_torus(0, "sha256:none", &json!({}), Takes::Instead(Due::Now))
                 .unwrap_err();
             assert!(refused.contains("built without QL's K8 node"), "{refused}");
+            let voiced = opened.voice_owner(0, 1, 0, &Vec::new(), &[]).unwrap_err();
+            assert!(voiced.contains("built without QL's K8 node"), "{voiced}");
+        }
+
+        /// O-I #850 round 24 (DLW build ruling 2026-11-05: the frame→engine tap under Logic): the notes the owner voiced travel
+        /// to the engine as the parts of one act at its sample, each voice by the index of the mode it is like in the Torus
+        /// handed over, each note its eight voices; a mode the Torus does not have, or a note that is not eight voices, is
+        /// refused in words and nothing travels.
+        #[test]
+        fn the_notes_its_owner_voiced_travel_by_the_modes_of_the_torus_handed_over() {
+            let modes = ["scene:logic/0", "scene:logic/1"];
+            let mode = |r: &str| modes.iter().position(|m| *m == r);
+            let note = |id: u64, like: &str| {
+                let voices = (0..8)
+                    .map(|k| {
+                        (
+                            like.to_owned(),
+                            300.0 + f64::from(k),
+                            [0.01, -0.002 * f64::from(k)],
+                        )
+                    })
+                    .collect::<Vec<_>>();
+                (id, voices)
+            };
+            let parts = voiced_parts(
+                mode,
+                3,
+                960,
+                &vec![note(7, "scene:logic/1"), note(9, "scene:logic/0")],
+                &[2],
+            )
+            .unwrap();
+            assert_eq!(parts.len(), 2, "a part for each note");
+            assert!(parts
+                .iter()
+                .all(|p| (p.handover, p.at, p.parts) == (3, 960, 2)));
+            let seven = parts[0].note.unwrap();
+            assert_eq!(
+                (
+                    seven.id,
+                    seven.like,
+                    seven.frequency_hz[7],
+                    seven.re[7],
+                    seven.im[7]
+                ),
+                (7, [1; 8], 307.0, 0.01, -0.002 * 7.0),
+                "each voice by its mode's index, its frequency and its impulse"
+            );
+            assert_eq!(parts[1].note.map(|n| (n.id, n.like)), Some((9, [0; 8])));
+            assert_eq!(parts[0].made_way(), &[2]);
+            assert_eq!(
+                voiced_parts(mode, 3, 960, &vec![note(7, "scene:sky/0")], &[]).unwrap_err(),
+                "The Torus handed over has no mode scene:sky/0: the notes were not voiced"
+            );
+            let mut seven_voices = note(7, "scene:logic/0");
+            seven_voices.1.pop();
+            assert_eq!(
+                voiced_parts(mode, 3, 960, &vec![seven_voices], &[]).unwrap_err(),
+                "A note the Torus's owner voiced has 7 voices, and a note voices 8: the notes were not voiced"
+            );
+        }
+
+        /// O-I #850 round 24: the kernel's tap of notes voiced under Logic reaches the part that follows its owner, as an act struck
+        /// does: followed on the bound part of the hand-over it follows (here no Torus stands on the part, so it is missed, in
+        /// words), and kept with the acts since that hand-over for a part bound later.
+        #[test]
+        fn the_notes_its_owner_voiced_are_followed_on_the_bound_part_and_kept_since_the_hand_over()
+        {
+            let path = write_set("voiced", SET);
+            let mut o = Opened::open(&path).unwrap();
+            o.following.bound = Some(Bound {
+                lease: "lease:v".into(),
+                track: 0,
+                sha256: "sha256:v".into(),
+                handover: 1,
+                notes: None,
+            });
+            let host = LiveEngineHost::default();
+            *host.0.lock().unwrap() = Some(o);
+            let kept = |_: &str, _: &str| -> Result<Value, String> {
+                panic!("the hand-over it follows is the bound part's own")
+            };
+            host.tapped(
+                TorusTap::HandedOver {
+                    lease: "lease:v".into(),
+                    sha256: "sha256:v".into(),
+                },
+                kept,
+            );
+            let notes: Voiced =
+                vec![(7, vec![("scene:logic/0".to_owned(), 440.0, [0.01, 0.0]); 8])];
+            host.tapped(
+                TorusTap::Voiced {
+                    lease: "lease:v".into(),
+                    at_samples_elapsed: 960,
+                    notes: notes.clone(),
+                    made_way: vec![3],
+                },
+                kept,
+            );
+            {
+                let open = host.0.lock().unwrap();
+                let following = &open.as_ref().unwrap().following;
+                assert_eq!(
+                    (following.struck, following.missed),
+                    (0, 1),
+                    "followed on the bound part: no Torus stands there to voice"
+                );
+                assert!(following.refusal.is_some(), "missed in words");
+            }
+            let follow = host.1.lock().unwrap();
+            assert_eq!(
+                follow.since.as_ref().unwrap().acts,
+                vec![Told::Voiced(960, notes, vec![3])],
+                "kept since the hand-over"
+            );
+            drop(follow);
+            std::fs::remove_dir_all(path.parent().unwrap()).unwrap();
         }
 
         /// The engine's own legs of key-to-sound (O-I #853 round 18), in the reading for the page to join

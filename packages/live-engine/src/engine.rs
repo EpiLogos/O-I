@@ -37,7 +37,8 @@
 
 use crate::graph::{
     Clock, Device, Graph, GraphError, Instrument, RackDevice, TorusAct, TorusHear, TorusStrike,
-    TORUS_ACT_KEYS, TORUS_HEAR_FRAMES, TORUS_HEAR_MODES, TORUS_STRIKE_MODES,
+    TorusVoice, TORUS_ACT_KEYS, TORUS_HEAR_FRAMES, TORUS_HEAR_MODES, TORUS_STRIKE_MODES,
+    TORUS_VOICE_PART_MADE_WAY,
 };
 use crate::ring::{ring, Consumer, Producer};
 use std::sync::atomic::{fence, AtomicPtr, AtomicU64, Ordering};
@@ -83,6 +84,9 @@ pub enum EngineEvent {
     /// One part of its owner's block that reached gains a receiver moved (O-I #849 round 14): reached
     /// by the part's Torus from the owner's sample over the owner's samples ([`TorusHear`]).
     TorusHear { track: usize, hear: TorusHear },
+    /// One part of the notes the Torus's owner voiced under Logic (O-I #850 round 24): voiced by the part's Torus at the
+    /// owner's sample once the act's every part has come ([`TorusVoice`]).
+    TorusVoice { track: usize, voice: TorusVoice },
     /// Release every held note on every part (manual §21.1 Rules); a Torus is stilled.
     Panic,
     /// A part's, a return's or the Main track's volume (linear gain).
@@ -501,6 +505,22 @@ impl MixerState {
                     Ok(())
                 }
             }),
+            EngineEvent::TorusVoice { track: t, voice } => track(t).and_then(|p| {
+                let finite = voice.note.is_none_or(|n| {
+                    n.frequency_hz.iter().chain(&n.re).chain(&n.im).all(|v| v.is_finite())
+                });
+                if !p.midi {
+                    Err(format!("'{}' is an audio part: it plays no notes", p.name))
+                } else if voice.parts == 0
+                    || voice.part >= voice.parts
+                    || usize::from(voice.made) > TORUS_VOICE_PART_MADE_WAY
+                    || !finite
+                {
+                    Err("a part of an act the Torus's owner voiced is one of its parts, with finite voices".into())
+                } else {
+                    Ok(())
+                }
+            }),
             EngineEvent::Panic => Ok(()),
             EngineEvent::Volume { part: p, gain: g } => part(p).and_then(|_| gain(g)),
             EngineEvent::Pan { part: p, pan } => part(p).and_then(|_| {
@@ -579,6 +599,7 @@ impl MixerState {
             | EngineEvent::TorusPlay { .. }
             | EngineEvent::TorusStrike { .. }
             | EngineEvent::TorusHear { .. }
+            | EngineEvent::TorusVoice { .. }
             | EngineEvent::Panic
             | EngineEvent::Set { .. } => {}
         }
@@ -933,6 +954,15 @@ impl EngineCore {
                             .graph
                             .torus_cursor(track)
                             .map_or(0, |cursor| strike.at.saturating_sub(cursor)),
+                )),
+                // a voiced act's first part stands for the act: it sounds at the owner's sample as a strike does
+                EngineEvent::TorusVoice { track, ref voice } if voice.part == 0 => Some((
+                    track,
+                    start
+                        + self
+                            .graph
+                            .torus_cursor(track)
+                            .map_or(0, |cursor| voice.at.saturating_sub(cursor)),
                 )),
                 _ => None,
             };

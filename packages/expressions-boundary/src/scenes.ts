@@ -2,6 +2,7 @@ import type {Journey, Scene} from '../../../desktop/cradle/expressions-app/field
 import type {KernelConversion, OccurrenceBinding} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/kernelDocumentBridge';
 import {sceneSaveState} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/sceneWorkflow';
 import {expressionTiming} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/propertyTracks';
+import {sceneCounter, SCENE_TORUS_TAKES_MAX, takeRate as rate, TORUS_TAKE_LANE} from './scenesValidation';
 
 /** Supplied by the retained app's transport owner. This module never advances,
  * seeks or converts a clock, and simulation time is not sequence time. */
@@ -37,6 +38,37 @@ export interface NativeSceneReading {
   members: NativeSceneMemberReading[];
   membership: {complete: boolean; page: number | null; page_count: number | null;
     unloaded_refs: string[]; unbound_local_entity_ids: string[]; reason: string | null};
+  /** The Torus takes that lie under the Scene (O-I #855), as its performance keeps them. Absent: it keeps none. */
+  torus_takes?: NativeSceneTorusTake[];
+}
+
+/** A Torus take that lies under a Scene (O-I #855; kernel expression_performance/torus.rs TorusTakeRecord): its take lane as the
+ * Scene's performance keeps it (`take-lane:torus/<TakeId>`, with its title, Activator and Solo), the take by its ref, and where it lies:
+ * from the sample of the performance's transport it lies at, for its frames at the take's sample rate, each also in the Scene's own
+ * seconds (the performance's transport runs at its sample rate). */
+export interface NativeSceneTorusTake {
+  lane_ref: string; title: string; enabled: boolean; solo: boolean; take_ref: string;
+  at_sample: string; frames: string; sample_rate: number; at_seconds: number; seconds: number;
+}
+const record = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
+
+/** The Torus takes a Scene's performance lays under it, in the order it keeps them: each on its take lane (the layer it names). A record
+ * whose lane is no Torus take lane, or whose take, lane or sample is not whole, is none. Pure. */
+export function sceneTorusTakes(performance: unknown): NativeSceneTorusTake[] {
+  if (!record(performance) || !Array.isArray(performance.torus_takes) || !Array.isArray(performance.layers)) return [];
+  const layers: unknown[] = performance.layers;
+  return performance.torus_takes.slice(0, SCENE_TORUS_TAKES_MAX).flatMap((row): NativeSceneTorusTake[] => {
+    if (!record(row) || !record(row.take) || !Number.isSafeInteger(row.layer)) return [];
+    const take = row.take, lane = layers[row.layer as number];
+    const at = sceneCounter(row.at_sample), frames = sceneCounter(take.frames);
+    const transport = rate(performance.sample_rate) ? performance.sample_rate : take.sample_rate;
+    if (!record(lane) || typeof lane.layer_ref !== 'string' || !lane.layer_ref.startsWith(TORUS_TAKE_LANE) || typeof lane.title !== 'string'
+      || typeof lane.enabled !== 'boolean' || typeof lane.solo !== 'boolean' || typeof take.take_ref !== 'string' || !take.take_ref
+      || at === null || frames === null || !rate(take.sample_rate) || !rate(transport)) return [];
+    return [{lane_ref: lane.layer_ref, title: lane.title, enabled: lane.enabled, solo: lane.solo, take_ref: take.take_ref,
+      at_sample: String(at), frames: String(frames), sample_rate: take.sample_rate, at_seconds: Number(at) / transport,
+      seconds: Number(frames) / take.sample_rate}];
+  });
 }
 
 export type NativeSceneTimingReading =
@@ -112,6 +144,7 @@ export function projectNativeScenes(journey: Journey, view: KernelConversion): N
     const membershipMatches = !!binding && sameRefs(binding.member_refs, native.entity_refs);
     const complete = !!local && membershipMatches && unloadedRefs.length === 0 && unboundEntities.length === 0;
     const saved = local && journey.savedScenes?.[local.id];
+    const takes = sceneTorusTakes(native.performance);
     return {scene_ref: native.scene_ref, local_scene_id: captured?.id ?? null, native_title: native.title,
       title: local?.name ?? native.title, working: available ? {duration: local!.duration, transition: local!.transition} : null,
       snapshot: {availability: !available ? 'unavailable' : saved ? 'present' : 'absent',
@@ -123,7 +156,8 @@ export function projectNativeScenes(journey: Journey, view: KernelConversion): N
       membership: {complete, page: binding?.page ?? null, page_count: binding?.page_count ?? null,
         unloaded_refs: unloadedRefs, unbound_local_entity_ids: unboundEntities,
         reason: complete ? null : !membershipMatches ? 'Native membership correspondence is not loaded or disagrees' :
-          !local ? 'The working Scene is not loaded' : unboundEntities.length ? 'Local objects have no captured native identity' : 'Some native occurrences are not loaded'}};
+          !local ? 'The working Scene is not loaded' : unboundEntities.length ? 'Local objects have no captured native identity' : 'Some native occurrences are not loaded'},
+      ...(takes.length ? {torus_takes: takes} : {})};
   });
   const orderComplete = unbound.length === 0 && workingOrder.length === nativeOrder.length &&
     new Set(workingOrder).size === nativeOrder.length && nativeOrder.every(ref => workingOrder.includes(ref));
