@@ -18,7 +18,7 @@ export function modulationOwnerPort(owner:Owner){
    if(!scene||!lane||!automationTarget(scene,lane.target))throw Error('The native modulation target is no longer admitted.');
    const keys=Object.keys(values);if(!keys.length||keys.some(key=>!(rangeKeys.has(key)||!lane.syncWith&&sourceKeys.has(key))))throw Error('This edit must name disclosed source or target controls. Following targets retain their group source.');
    Object.assign(lane,clone(values));validateJourney(next);
-   owner.change(()=>{owner.store.document=next;});await receiver.save();
+   owner.change('Edit modulation',()=>{owner.store.document=next;});await receiver.save();
    const reading=receiver.read();if(reading.basis.expression_ref!==basis.expression_ref||reading.basis.scene_ref!==basis.scene_ref)throw Error('The native save completed on another presentation; the captured input remains available.');
    return {ok:true,reading};
   }catch(error){let reading;try{reading=receiver.read();}catch{/* no replacement reading */}return {ok:false,error:error instanceof Error?error.message:String(error),reading};}

@@ -143,12 +143,13 @@ jobs:
           if git grep -lnE '^(<<<<<<<|>>>>>>>|=======$)' -- '*.mjs' '*.ts' '*.tsx'; then
             echo "::error::unresolved conflict markers in executable source"; exit 1
           fi
-      - name: Type-check the three TypeScript roots (candidate, shared engine, hosted frame)
+      - name: Type-check the four TypeScript roots (candidate, shared engine, hosted frame, instrument editors)
         if: always()
         run: |
           (cd packages/live-shell/ui && npx tsc --noEmit -p tsconfig.json)
           (cd desktop/cradle && npx tsc --noEmit)
           (cd desktop/cradle/expressions-app && npm run lint)
+          (cd packages/instrument-editors && node ../../desktop/cradle/node_modules/typescript/bin/tsc -p tsconfig.json)
       - name: Candidate shell suite
         if: always()
         working-directory: packages/live-shell/ui

@@ -6,7 +6,7 @@ export type {EditorCheckpoint,EditorTarget,EditorConstraints,EditorDepth,EditorP
 export {GraphEditor} from './graph/GraphEditor';
 export type {GraphEditorProps} from './graph/GraphEditor';
 export {CanvasEditor} from './canvas/CanvasEditor';
-export {TimelineEditor,PlacesEditor} from './research/ResearchEditor';
+export {TimelineEditor} from './research/ResearchEditor';
 export type {ResearchEditorProps,ResearchEditorView,ResearchEvidenceContext} from './research/ResearchEditor';
 export {JourneyEditor} from './journey/JourneyEditor';
 export type {JourneyEditorHost,JourneyEditorProps,JourneyBasis} from './journey/JourneyEditor';

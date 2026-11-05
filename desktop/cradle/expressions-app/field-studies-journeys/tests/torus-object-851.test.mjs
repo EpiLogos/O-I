@@ -326,6 +326,38 @@ test('a chord lights its voices as force points on their helices, and each lets 
   assert.deepEqual(torus.voicePoints(120), [], 'a body that has fallen quiet lets the particles go');
 });
 
+test('a chord the bank voices lights the voices its notes are like, and the picture is moved by every ringing voice the sound rings', async () => {
+  const {TorusObject, amplitudesOf} = await object();
+  // The owner's bank as its frame carries it (QL-MEF #287): each note's eight voices, each like a resident voice, by its own state;
+  // a note that made way still fading in its slot. The targets are drawn by the residents and every ringing voice alike.
+  const lane = (levels, id) => levels.map((level, k) => ({mode_ref: `scene:logic/${k}`, frequency_hz: 300 + 40 * k + 7 * id, amplitude: [level * 0.08 * Math.cos(k + id), level * 0.08 * Math.sin(k + id)]}));
+  const still = () => lane(Array(8).fill(0), 0);
+  const bank = [
+    {slot: 0, held: true, id: '4', order: '2', voices: lane([1, 0, 0, 0, 0.5, 0, 0, 0], 4), fading: still()},
+    {slot: 1, held: true, id: '5', order: '3', voices: lane([0.25, 0, 0, 0, 0, 0, 0, 0], 5), fading: still()},
+    {slot: 2, held: false, id: '1', order: '1', voices: still(), fading: lane([0, 0, 0, 0.3, 0, 0, 0, 0], 1)}];
+  const summed = quiet().map((a, k) => bank.reduce((sum, slot) => [...slot.voices, ...slot.fading].filter(v => v.mode_ref === `scene:logic/${k}`)
+    .reduce(([re, im], v) => [re + v.amplitude[0], im + v.amplitude[1]], sum), a));
+  const frame = {...nativeFrame({amplitudes: summed, generation: '2', samples: '96'}), amplitudes_metres: quiet(), bank, bank_order: '3'};
+  const amplitudes = amplitudesOf(frame, modeRefs());
+  modeRefs().forEach((ref, k) => { near(amplitudes.get(ref)[0], summed[k][0], 1e-15, ref); near(amplitudes.get(ref)[1], summed[k][1], 1e-15, ref); });
+  const torus = new TorusObject(); torus.setBody(influence(), modeRefs());
+  assert.ok(torus.present(frame), 'a body the bank rings is presented through the object, not as a quiet torus');
+  assert.deepEqual(torus.voicePoints(120).map(p => p.mode_ref), ['scene:logic/0', 'scene:logic/3', 'scene:logic/4'],
+    'the voices the sounding notes are like, the fading note\'s among them, and no other');
+  const body = torus.reading();
+  assert.deepEqual(body.amplitudes.map(a => [a.re, a.im]), summed, 'the object reads the body the sound rings');
+  // What sounds is each ringing voice at its own pitch: the notes' own, never the pitch of the resident voice a note's voice is like.
+  assert.deepEqual(body.sounding_hz, [300 + 7 * 4, 300 + 7 * 5, 300 + 160 + 7 * 4, 300 + 120 + 7 * 1].sort((x, y) => x - y));
+  const {torusPlayReading} = await play();
+  const reading = {status: 'following', instrument: {acting: {voices: octet(), sky: {kind: 'none'}}, struck: {refs: ['scene:logic/5']},
+    influence: influence(), torus: session(), torus_object: body}};
+  assert.deepEqual(torusPlayReading(reading).torus.tonesHz, body.sounding_hz, 'under Torus the plate is driven at the pitches that sound');
+  torus.present({...frame, bank: bank.map(slot => ({...slot, voices: still(), fading: still()})), targets: nativeFrame({amplitudes: quiet()}).targets});
+  assert.deepEqual(torus.voicePoints(120), [], 'a bank rung out lets the particles go');
+  assert.deepEqual(torus.reading().sounding_hz, []);
+});
+
 test('while the body rings its particles settle towards the still lines of the four, and stand where they are when it is quiet', async () => {
   const {TorusObject, torusCoordinates, chi} = await object();
   const torus = new TorusObject(); torus.setBody(influence(), modeRefs());

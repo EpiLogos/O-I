@@ -376,13 +376,35 @@ export function viewAngles(view: TorusView, phi: number, theta: number, index: n
   return toMeridian <= toParallel ? [meridian, theta] : [phi, parallel];
 }
 
-/** The native amplitudes ([re, im] metres) by mode ref, from a frame and the order of the owner's resident modes. */
+/** The native amplitudes ([re, im] metres) by mode ref, from a frame and the order of the owner's resident modes. Each voice of the
+ * owner's bank (QL-MEF #287: a note's eight, and a note's that made way, still fading) adds its own state to the resident voice it is
+ * like, as the owner draws the body (continuous_field.hpp write_targets): the picture is moved by every voice the sound rings. */
 export function amplitudesOf(frame: any, modeRefs: readonly string[] | null): Map<string, [number, number]> | null {
   const a = frame?.amplitudes_metres;
   if (!Array.isArray(a) || !modeRefs || a.length !== modeRefs.length) return null;
   const map = new Map<string, [number, number]>();
   modeRefs.forEach((ref, i) => { const v = a[i]; if (Array.isArray(v) && Number.isFinite(v[0]) && Number.isFinite(v[1])) map.set(ref, [v[0], v[1]]); });
+  for (const slot of Array.isArray(frame.bank) ? frame.bank : [])
+    for (const voice of [...(Array.isArray(slot?.voices) ? slot.voices : []), ...(Array.isArray(slot?.fading) ? slot.fading : [])]) {
+      const at = map.get(voice?.mode_ref), z = voice?.amplitude;
+      if (at && Array.isArray(z) && Number.isFinite(z[0]) && Number.isFinite(z[1])) { at[0] += z[0]; at[1] += z[1]; }
+    }
   return map;
+}
+
+/** The pitches that sound now (Hz, rising): each resident voice that rings above a thousandth of the strike (as voicePoints lets go),
+ * at its own pitch, and each ringing voice of the owner's bank at its own frequency, never the pitch of the voice it is like. */
+export function soundingOf(frame: any, body: TorusBody, modeRefs: readonly string[] | null): number[] | null {
+  const a = frame?.amplitudes_metres;
+  if (!Array.isArray(a) || !modeRefs || a.length !== modeRefs.length) return null;
+  const pitch = new Map(body.voices.map(v => [v.mode_ref, v.frequency_hz]));
+  const sounds = (z: any) => Array.isArray(z) && Number.isFinite(z[0]) && Number.isFinite(z[1]) && Math.hypot(z[0], z[1]) / body.strikeMetres >= 1e-3;
+  const tones: number[] = [];
+  modeRefs.forEach((ref, i) => { const hz = pitch.get(ref); if (hz !== undefined && sounds(a[i])) tones.push(hz); });
+  for (const slot of Array.isArray(frame.bank) ? frame.bank : [])
+    for (const voice of [...(Array.isArray(slot?.voices) ? slot.voices : []), ...(Array.isArray(slot?.fading) ? slot.fading : [])])
+      if (pitch.has(voice?.mode_ref) && Number.isFinite(voice.frequency_hz) && voice.frequency_hz > 0 && sounds(voice.amplitude)) tones.push(voice.frequency_hz);
+  return tones.sort((x, y) => x - y);
 }
 
 function blendAt(state: PresentState, phi: number, theta: number, offset: number, mpu: number, out: Float32Array | number[], at: number) {
@@ -553,6 +575,7 @@ export class TorusObject {
   private morph = new TorusMorph();
   private shown: PresentState | null = null;
   private amplitudes: Map<string, [number, number]> | null = null;
+  private sounding: number[] | null = null;
   private steps: number | null = null;
   private figure: TorusFigure | null = null;
   private sequenced: SceneShapes | null = null;
@@ -579,7 +602,8 @@ export class TorusObject {
   present(frame: any): Float32Array | null {
     this.amplitudes = amplitudesOf(frame, this.modeRefs);
     const body = this.body;
-    if (!body) { this.shown = null; return null; }
+    if (!body) { this.shown = null; this.sounding = null; return null; }
+    this.sounding = soundingOf(frame, body, this.modeRefs);
     this.steps = stepsAt(this.session, Number(frame?.samples_elapsed), this.sampleRate);
     // Under Sequence the scene's own shapes set the figure, and the passage keeps the sequence's own timing (DLW §21.2), not the pulse's.
     const sequenced = this.sequenced = this.session?.settings?.shape === 'sequence' ? this.sceneShapes() : null;
@@ -616,6 +640,8 @@ export class TorusObject {
       voices: body.voices.map(v => { const a = this.amplitudes?.get(v.mode_ref); return {mode_ref: v.mode_ref, level: a ? Math.min(1, Math.hypot(a[0], a[1]) / body.strikeMetres) : 0, place: helixPlace(v.helix, v.longitude_radians)}; }),
       boundaries: boundaryLines(body),
       amplitudes: this.amplitudes ? body.voices.map(v => { const a = this.amplitudes!.get(v.mode_ref) ?? [0, 0]; return {mode_ref: v.mode_ref, re: a[0], im: a[1]}; }) : null,
+      // The pitches sounding now, the bank's notes at their own (soundingOf): what the plate is driven at under Torus.
+      sounding_hz: this.sounding,
       law: 'DLW §21.2 The Torus in the pane: shapes from QL\'s figure law, the passage on the pulse, the voices as force points while they sound, the particles drawn towards the four boundaries\' still lines while the body rings (declared presentation: SETTLE_RADIANS, VOICE_PULL)'};
   }
 }

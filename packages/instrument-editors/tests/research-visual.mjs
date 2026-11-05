@@ -13,7 +13,7 @@ const size=async(width,height)=>page.locator('.editor-workbench').evaluate((elem
 const result={expression_ref:fixture.expression_ref,scene_ref:fixture.scene_ref,surfaces,errors,native_acceptance:{move:false,material:false},source_boundary:[],unverified:['Native fullscreen/popout','Undisclosed Wiki source facets are not fabricated']};
 try{
  await page.goto('http://127.0.0.1:4298/?bridge='+encodeURIComponent(bridge),{waitUntil:'domcontentloaded'});
- for(const name of ['Canvas','Timeline','Places']){
+ for(const name of ['Canvas','Timeline']){
   await page.getByRole('button',{name,exact:true}).click();
   const frame=page.locator('.instrument-frame').filter({has:page.getByRole('region',{name:name+' editor',exact:true,includeHidden:true})});
   await frame.waitFor({timeout:30000});await size(520,430);
@@ -44,7 +44,7 @@ try{
  assert.deepEqual(sourceBefore,sourceReadback.document,'Receiver uses the exact native fork acknowledgement.');
  assert.equal(sourceReadback.source_standing.relations.state,'unavailable');
  assert.ok(sourceReadback.document.provenance.some(row=>row.availability==='available'&&row.ref==='wiki:'+sourceReadback.source_standing.wiki_basis.path&&row.revision===sourceReadback.source_standing.wiki_basis.revision));
- for(const name of ['Canvas','Timeline','Places']){
+ for(const name of ['Canvas','Timeline']){
   await page.getByRole('button',{name,exact:true}).click();
   const frame=page.locator('.instrument-frame:visible').filter({has:page.getByRole('region',{name:name+' editor',exact:true,includeHidden:true})});
   await frame.waitFor();await size(620,460);

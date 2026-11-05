@@ -269,6 +269,10 @@ fn law(strike: f64) -> live_engine::k8::K8KeyLaw {
         steps_per_second: 2.0,
         sample_rate: SR,
         cap_metres: 1.0,
+        cells: Vec::new(),
+        polyphony: 0,
+        notes: Vec::new(),
+        next_note: 0,
     }
 }
 
@@ -293,6 +297,8 @@ fn a_handed_over_field_continues_sample_for_sample() {
         carrier: live_engine::k8::K8Carrier::default(),
         pending: Vec::new(),
         heard_from: Vec::new(),
+        bank: Vec::new(),
+        bank_order: 0,
     };
     let mut made = played_field();
     let mut continued = K8Field::continue_from(&at_rest()).unwrap();
@@ -308,6 +314,7 @@ fn a_handed_over_field_continues_sample_for_sample() {
     waiting.pending.push(live_engine::k8::K8Pending {
         at_samples_elapsed: 300,
         impulses: vec![(1, (0.02, -0.01))],
+        ..Default::default()
     });
     let mut handed = K8Field::continue_from(&waiting).unwrap();
     let mut struck = K8Field::new(&k8_fixture::input(SR)).unwrap();
@@ -329,10 +336,191 @@ fn a_handed_over_field_continues_sample_for_sample() {
     behind.pending.push(live_engine::k8::K8Pending {
         at_samples_elapsed: 0,
         impulses: vec![(0, (0.01, 0.0))],
+        ..Default::default()
     });
     assert!(K8Field::continue_from(&behind)
         .unwrap_err()
         .contains("after its cursor"));
+}
+
+/// The law with each arc's cell (QL-MEF #287 packet A, as QL's `torus-native` hands it over under Logic on the torus): arc
+/// `a`'s eight voices stand 31 Hz apart from 400 + 40·a Hz, each like mode `k % 2`, under Polyphony `polyphony`.
+fn cell_law(polyphony: u32) -> live_engine::k8::K8KeyLaw {
+    let cells = (0..12)
+        .map(|arc| {
+            let mut cell = [live_engine::k8::K8CellVoice::default(); live_engine::k8::NOTE_VOICES];
+            for (k, voice) in cell.iter_mut().enumerate() {
+                *voice = live_engine::k8::K8CellVoice {
+                    like: k % 2,
+                    frequency_hz: 400.0 + 40.0 * arc as f64 + 31.0 * k as f64,
+                    longitude_radians: 0.3 * k as f64,
+                    weight: 1.0,
+                    phase_radians: 0.2,
+                    m: (k % 4 + 1) as u32,
+                    n: (k % 3 + 1) as u32,
+                };
+            }
+            cell
+        })
+        .collect();
+    live_engine::k8::K8KeyLaw {
+        cells,
+        polyphony,
+        ..law(1.0)
+    }
+}
+
+/// The power at `hz` of a 48 kHz signal (Goertzel over a Hann window).
+fn power_at(x: &[f32], hz: f64) -> f64 {
+    let w = 2.0 * std::f64::consts::PI * hz / f64::from(SR);
+    let c = 2.0 * w.cos();
+    let (mut s1, mut s2) = (0.0f64, 0.0f64);
+    let last = (x.len() - 1) as f64;
+    for (i, v) in x.iter().enumerate() {
+        let hann = 0.5 - 0.5 * (2.0 * std::f64::consts::PI * i as f64 / last).cos();
+        let s = hann * f64::from(*v) + c * s1 - s2;
+        s2 = s1;
+        s1 = s;
+    }
+    s1 * s1 + s2 * s2 - c * s1 * s2
+}
+
+/// A frequency sounds when it stands as a peak: far above the spectrum 2% to either side.
+fn peaks(x: &[f32], hz: f64) -> bool {
+    let p = power_at(x, hz);
+    p > 20.0 * power_at(x, hz * 0.98) && p > 20.0 * power_at(x, hz * 1.02)
+}
+
+#[test]
+fn a_chord_voices_each_keys_own_cell_and_counts_notes_as_the_owner() {
+    // QL-MEF #287 packet A; DLW manual §21.2 Rules: "Each note strikes its own eight voices. Polyphony counts notes." The
+    // host's law voices each key's note in the native bank: the cell of the arc its moving point struck, its own eight voices.
+    let mut f = K8Field::new(&k8_fixture::input(SR)).unwrap();
+    let law = cell_law(2);
+    f.set_law(&law).unwrap();
+    let chord = [(0u8, 2u16), (3, 1)];
+    assert!(f.play_keys(&act(&chord, [0.3, 0.0])));
+    let bank = f.bank();
+    assert_eq!(bank.len(), 2);
+    assert!(bank.iter().all(|slot| slot.held));
+    let cells: Vec<usize> = bank
+        .iter()
+        .map(|slot| {
+            law.cells
+                .iter()
+                .position(|cell| cell[0].frequency_hz == slot.voices[0].frequency_hz)
+                .unwrap()
+        })
+        .collect();
+    assert_ne!(cells[0], cells[1], "two keys on two arcs: two cells");
+    for (slot, arc) in bank.iter().zip(&cells) {
+        for (voice, cell) in slot.voices.iter().zip(&law.cells[*arc]) {
+            assert_eq!(
+                (voice.like, voice.frequency_hz),
+                (cell.like, cell.frequency_hz)
+            );
+        }
+    }
+    let mut pcm = vec![0f32; 24_000];
+    for chunk in pcm.chunks_mut(4096) {
+        assert!(f.render(chunk, false));
+    }
+    for arc in &cells {
+        let heard = law.cells[*arc]
+            .iter()
+            .filter(|v| peaks(&pcm, v.frequency_hz))
+            .count();
+        assert!(
+            heard >= 4,
+            "the note on arc {arc} sounds its own voices: {heard} of 8"
+        );
+    }
+    // Polyphony 2: a third key's note makes the oldest make way; its voices fade and its slot is free.
+    let first = bank.iter().min_by_key(|slot| slot.order).unwrap().id;
+    assert!(f.play_keys(&act(&[(5, 4)], [0.3, 0.0])));
+    let held: Vec<u64> = f.bank().iter().filter(|s| s.held).map(|s| s.id).collect();
+    assert_eq!(held.len(), 2);
+    assert!(!held.contains(&first), "the oldest note made way: {held:?}");
+    // A key struck again makes way for itself, and a released key only leaves the count: the body rings on.
+    assert!(f.play_keys(&act(&[(5, 4)], [0.3, 0.0])));
+    assert_eq!(f.bank().iter().filter(|s| s.held).count(), 2);
+    let before = f.bank();
+    f.release_keys(&[5], &[4]);
+    assert_eq!(f.bank(), before, "a release moves nothing in the body");
+    // Voiced as its owner voiced them: the same notes, and those that made way, on a field the owner's acts follow.
+    let mut followed = K8Field::new(&k8_fixture::input(SR)).unwrap();
+    let mut owner = K8Field::new(&k8_fixture::input(SR)).unwrap();
+    owner.set_law(&cell_law(8)).unwrap();
+    assert!(owner.play_keys(&act(&chord, [0.3, 0.0])));
+    let notes: Vec<live_engine::k8::K8Note> = owner
+        .bank()
+        .iter()
+        .map(|slot| live_engine::k8::K8Note {
+            id: slot.id,
+            voices: slot.voices.map(|v| live_engine::k8::K8NoteVoice {
+                like: v.like,
+                frequency_hz: v.frequency_hz,
+                impulse: v.state,
+            }),
+        })
+        .collect();
+    assert!(followed.voice_notes(&notes, &[]));
+    let (mut a, mut b) = (vec![0f32; 4096], vec![0f32; 4096]);
+    assert!(owner.render(&mut a, false) && followed.render(&mut b, false));
+    assert!(a.iter().any(|v| *v != 0.0));
+    assert_eq!(a, b, "the notes the owner voiced ring alike");
+    assert!(
+        !followed.voice_notes(&notes, &[]),
+        "a note already held is refused whole"
+    );
+}
+
+#[test]
+fn a_handed_over_bank_and_its_waiting_notes_continue_sample_for_sample() {
+    // QL-MEF #287 with O-I 855: the notes as they ring, and a note waiting for its sample, go with the continuation.
+    let mut owner = K8Field::new(&k8_fixture::input(SR)).unwrap();
+    owner.set_law(&cell_law(8)).unwrap();
+    assert!(owner.play_keys(&act(&[(0, 2), (3, 1)], [0.3, 0.0])));
+    let mut rung = vec![0f32; 700];
+    assert!(owner.render(&mut rung, false));
+    let bank = owner.bank();
+    let waiting = live_engine::k8::K8Note {
+        id: 40,
+        voices: [live_engine::k8::K8NoteVoice {
+            like: 1,
+            frequency_hz: 1234.5,
+            impulse: (0.01, 0.0),
+        }; live_engine::k8::NOTE_VOICES],
+    };
+    let handed = live_engine::k8::K8Continuation {
+        input: k8_fixture::input(SR),
+        samples_elapsed: 0,
+        driver_remainder: 0,
+        last_unmuted_sample: 0.0,
+        carrier: live_engine::k8::K8Carrier::default(),
+        pending: vec![live_engine::k8::K8Pending {
+            at_samples_elapsed: 300,
+            notes: vec![waiting],
+            made_way: vec![bank[0].id],
+            ..Default::default()
+        }],
+        heard_from: Vec::new(),
+        bank: bank.clone(),
+        bank_order: bank.iter().map(|s| s.order).max().unwrap(),
+    };
+    let mut continued = K8Field::continue_from(&handed).unwrap();
+    assert_eq!(continued.bank(), bank, "the bank as it was handed over");
+    let mut out = vec![0f32; 2048];
+    assert!(continued.render(&mut out, false));
+    let after = continued.bank();
+    assert!(
+        after.iter().any(|s| s.held && s.id == 40),
+        "the waiting note was voiced at its sample"
+    );
+    assert!(
+        !after.iter().any(|s| s.held && s.id == bank[0].id),
+        "the note it named made way"
+    );
 }
 
 #[test]
@@ -884,6 +1072,8 @@ fn a_move_handed_over_unreached_is_heard_from_where_its_owner_left_it_until_its_
         carrier: live_engine::k8::K8Carrier::default(),
         pending: Vec::new(),
         heard_from: from,
+        bank: Vec::new(),
+        bank_order: 0,
     })
     .unwrap();
     f.set_law(&law(0.7)).unwrap();

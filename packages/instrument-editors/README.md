@@ -1,7 +1,8 @@
 # Native instrument editors
 
-Bound compact and full editors for Project / Graph, Canvas, Timeline, Journey,
-Places and Palace, plus the unclaimed Modulation editor. The package adopts the
+Bound compact and full editors for Project / Graph, Canvas, Timeline and
+Journey, plus the unclaimed Modulation editor (Places and Palace retired with
+their frame lenses: both live in the Archetypal-Earth atlas). The package adopts the
 current O:I editor and native owners. It does not own the Browser, rack, Clip
 engine, field renderer, workspace store or window runtime.
 
