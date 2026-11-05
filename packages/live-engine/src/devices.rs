@@ -25,6 +25,11 @@ use live_dynamics::reverb::{self, ReverbParams};
 /// AudioParam set while it sounds moves by setTargetAtTime over 15 ms).
 const SMOOTH_S: f64 = 0.015;
 
+/// Frames of a crossfade or a fade at `rate` ([`SMOOTH_S`]).
+fn fade_frames_at(rate: u32) -> usize {
+    ((SMOOTH_S * f64::from(rate)).round() as usize).max(1)
+}
+
 /// A setting moving to where it was set, as the frame moves an edited one (O-I #849 round 16;
 /// presentationEffects.ts `#param`): Web Audio's setTargetAtTime as its specification approaches the target,
 /// the AudioParam's float stepping toward it by 1 − e^(−1/(15 ms × rate)) a frame (a setting read once a
@@ -178,6 +183,19 @@ impl Device for GlueDevice {
         "GlueCompressor"
     }
 
+    /// Made again for an edit (O-I #849 round 17): its follower moves on from the gain change it stood at, toward
+    /// the new settings' curve at its ballistics, rather than from none.
+    fn made_again_from(&mut self, was: &mut dyn Device) {
+        let Some(was) = was.as_any_mut().downcast_mut::<GlueDevice>() else {
+            return;
+        };
+        if was.block_frames != self.block_frames {
+            return;
+        }
+        (self.gain_db, self.block_peak, self.pos_in_block) =
+            (was.gain_db, was.block_peak, was.pos_in_block);
+    }
+
     fn process(&mut self, frame_io: &mut [f32], clock: &Clock) {
         let peak = frame_io.iter().fold(0f32, |m, v| m.max(v.abs()));
         self.block_peak = self.block_peak.max(peak);
@@ -271,6 +289,10 @@ pub struct EchoDevice {
 /// Engine tap-train cap (see type doc).
 const ECHO_MAX_TAPS: usize = 256;
 
+/// The most of its line, in seconds, an Echo made again for an edit copies from the one it replaces when their lines
+/// differ in length ([`EchoDevice`]'s `follow`).
+pub const ECHO_FOLLOW_S: f64 = 4.0;
+
 impl EchoDevice {
     pub fn new(params: EchoParams) -> EchoDevice {
         EchoDevice {
@@ -314,6 +336,31 @@ impl Device for EchoDevice {
 
     fn prepare(&mut self, sample_rate: u32, _channels: usize) {
         self.ensure_init(sample_rate);
+    }
+
+    /// Made again for an edit (O-I #849 round 17): its line goes on with the input it held, so the repeats of what was
+    /// played before ring on at the new hop and feedback. ENGINE DECISION (Live's own move of an edited Echo is
+    /// unmeasured): a line of the same length is taken whole; otherwise the newest [`ECHO_FOLLOW_S`] of it, or as much
+    /// as both lines hold, is copied (a bounded copy on the audio thread), and what is older is let go.
+    fn made_again_from(&mut self, was: &mut dyn Device) {
+        let Some(was) = was.as_any_mut().downcast_mut::<EchoDevice>() else {
+            return;
+        };
+        let Some(rate) = self.init_sr.filter(|rate| was.init_sr == Some(*rate)) else {
+            return;
+        };
+        let (n_was, n) = (was.hist.len(), self.hist.len());
+        if n_was == n {
+            std::mem::swap(&mut self.hist, &mut was.hist);
+            self.pos = was.pos;
+            return;
+        }
+        let keep = n_was.min(n).min((ECHO_FOLLOW_S * f64::from(rate)) as usize);
+        // the frame written k frames ago stands k before where the next is written
+        for k in 1..=keep {
+            self.hist[n - k] = was.hist[(was.pos + n_was - k) % n_was];
+        }
+        self.pos = 0;
     }
 
     fn process(&mut self, frame_io: &mut [f32], clock: &Clock) {
@@ -396,6 +443,8 @@ pub struct ReverbDevice {
     /// Convolve by partitions rather than the scatter (the realtime path).
     by_partitions: bool,
     conv: Option<Partitioned>,
+    /// Convolving by partitions, the rooms it was made again from, ringing out (O-I #849 round 17).
+    ringing: RingingOut,
 }
 
 impl ReverbDevice {
@@ -409,6 +458,7 @@ impl ReverbDevice {
             init_sr: None,
             by_partitions: false,
             conv: None,
+            ringing: RingingOut::default(),
         }
     }
 
@@ -435,6 +485,7 @@ impl ReverbDevice {
         if self.by_partitions {
             self.conv = Some(Partitioned::new(&self.ir, PARTITION, channels));
             self.tails = Vec::new();
+            self.ringing = RingingOut::at(fade_frames_at(sample_rate));
         } else {
             self.tails = vec![vec![0.0; self.ir.len()]; channels];
         }
@@ -756,6 +807,17 @@ impl Device for CompressorDevice {
     fn prepare(&mut self, sample_rate: u32, _channels: usize) {
         if self.model.as_ref().map(|m| m.sample_rate) != Some(sample_rate) {
             self.model = Some(CompressorModel::new(self.params, sample_rate));
+        }
+    }
+
+    /// Made again for an edit (O-I #849 round 17): its detector moves on from where it stood and its look-ahead goes
+    /// on with what it holds ([`CompressorModel::carry_from`]).
+    fn made_again_from(&mut self, was: &mut dyn Device) {
+        let Some(was) = was.as_any_mut().downcast_mut::<CompressorDevice>() else {
+            return;
+        };
+        if let (Some(model), Some(was)) = (self.model.as_mut(), was.model.as_mut()) {
+            model.carry_from(was);
         }
     }
 
@@ -1646,15 +1708,48 @@ impl Device for ReverbDevice {
         self.ensure_init(sample_rate, channels);
     }
 
+    /// Made again for an edit (O-I #849 round 17), convolving by partitions: the same response rings on as it was;
+    /// another takes the input over a 15 ms crossfade while the last room rings its tail out whole, as the Torus's
+    /// room does ([`RoomDevice`]). The scatter (the gates' path) starts afresh.
+    fn made_again_from(&mut self, was: &mut dyn Device) {
+        let Some(was) = was.as_any_mut().downcast_mut::<ReverbDevice>() else {
+            return;
+        };
+        let channels = |d: &ReverbDevice| d.conv.as_ref().map(|c| c.channels.len());
+        if !self.by_partitions
+            || self.init_sr.is_none()
+            || was.init_sr != self.init_sr
+            || channels(self).is_none()
+            || channels(was) != channels(self)
+        {
+            return;
+        }
+        if was.params.decay_ms == self.params.decay_ms {
+            std::mem::swap(&mut self.conv, &mut was.conv);
+            std::mem::swap(&mut self.ringing, &mut was.ringing);
+            return;
+        }
+        self.ringing.take(&mut was.ringing, &mut was.conv);
+    }
+
     fn process(&mut self, frame_io: &mut [f32], clock: &Clock) {
         self.ensure_init(clock.sample_rate, frame_io.len());
         let m = self.mix.clamp(0.0, 1.0) as f32;
         let dry = 1.0 - m;
         if let Some(conv) = self.conv.as_mut() {
+            let (taking, share) = self.ringing.share();
+            let fades = self.ringing.fades();
             for (ch, v) in frame_io.iter_mut().enumerate() {
                 let x = *v;
-                *v = x * dry + conv.step(ch, x) * m;
+                let mut wet = if taking {
+                    conv.step(ch, x * share)
+                } else {
+                    conv.step(ch, x)
+                };
+                self.ringing.add(ch, &mut wet, x, (taking, share), &fades);
+                *v = x * dry + wet * m;
             }
+            self.ringing.advance(taking);
             return;
         }
         let len = self.ir.len();
@@ -1797,7 +1892,8 @@ pub const ROOM_SETTINGS: [(&str, f64, f64); 2] = [TORUS_REVERB_LAW[3], TORUS_REV
 /// While it plays (round 16) it takes its pre-delay and dry/wet ([`ROOM_SETTINGS`]) as the frame takes an edit, the delay's time
 /// and the two gains each moving over 15 ms, its room ringing on; the pre-delay's line holds the longest pre-delay the frame's
 /// does. Made again for another room ([`Device::follow`]), it takes the last one's input over a 15 ms crossfade, and the last
-/// room rings its tail out whole; a room before that, still ringing, fades out over 15 ms.
+/// room rings its tail out whole; a room before that, still ringing, fades out over 15 ms, and one still fading when the
+/// room is made again fades on where it was (round 17), up to [`ROOM_FADING`] of them.
 #[derive(Debug, Clone)]
 pub struct RoomDevice {
     pub params: RoomParams,
@@ -1810,16 +1906,117 @@ pub struct RoomDevice {
     dry: Glide,
     wet: Glide,
     by_frame: f32,
+    /// The rooms it was made again from, ringing out.
+    ringing: RingingOut,
+}
+
+/// The most rooms a Reverb fades out at once (O-I #849 round 17): made again faster than a room fades (15 ms), the one
+/// with the least left to fade gives way to a later one.
+pub const ROOM_FADING: usize = 4;
+
+/// What a convolving room made again still rings of the rooms before it (O-I #849 rounds 16 and 17, the Torus's Reverb
+/// and a set's): the room it was made again from, taking the input less and less over a crossfade, then ringing its
+/// tail out whole; and the rooms before that, still ringing or fading when it was made, each fading out over the same
+/// frames, up to [`ROOM_FADING`] of them.
+#[derive(Debug, Clone, Default)]
+struct RingingOut {
     /// Frames of a crossfade or a fade (15 ms at the rate).
     fade_frames: usize,
-    /// The room it was made again from, ringing out, and the frames it rings for yet; the frames this
-    /// room has taken its input over since.
+    /// The room it was made again from, and the frames it rings for yet; the frames the new room has taken its
+    /// input over since.
     last: Option<Partitioned>,
     last_left: usize,
     taking: usize,
-    /// A room before that, still ringing when this one was made, fading out, and the frames it fades for yet.
-    fading: Option<Partitioned>,
-    fading_left: usize,
+    /// The rooms before that, each fading out, and the frames each fades for yet.
+    fading: [Option<Partitioned>; ROOM_FADING],
+    fading_left: [usize; ROOM_FADING],
+}
+
+impl RingingOut {
+    /// Nothing ringing, at a crossfade of `fade_frames`.
+    fn at(fade_frames: usize) -> RingingOut {
+        RingingOut {
+            fade_frames,
+            taking: fade_frames,
+            ..RingingOut::default()
+        }
+    }
+
+    /// Made again in the place of a room of another response, whose own room was `was_room` and whose rooms before it
+    /// were `was`: each one still fading fades on where it was, and the room before that one's, while it still rings,
+    /// fades out (round 17: none is dropped while a place is free; with none free, the nearest to its end gives way);
+    /// `was_room` takes the input less and less over the crossfade, then rings out.
+    fn take(&mut self, was: &mut RingingOut, was_room: &mut Option<Partitioned>) {
+        for slot in 0..ROOM_FADING {
+            if was.fading_left[slot] > 0 {
+                std::mem::swap(&mut self.fading[slot], &mut was.fading[slot]);
+                self.fading_left[slot] = was.fading_left[slot];
+            }
+        }
+        if was.last_left > 0 {
+            let slot = (0..ROOM_FADING)
+                .min_by_key(|&s| self.fading_left[s])
+                .unwrap_or(0);
+            std::mem::swap(&mut self.fading[slot], &mut was.last);
+            self.fading_left[slot] = self.fade_frames;
+        }
+        std::mem::swap(&mut self.last, was_room);
+        self.last_left = self
+            .last
+            .as_ref()
+            .map_or(0, |last| last.frames() + self.fade_frames);
+        self.taking = 0;
+    }
+
+    /// Whether the new room still takes the last one's input, and its share of it for this frame, linearly to all of it.
+    fn share(&self) -> (bool, f32) {
+        (
+            self.taking < self.fade_frames,
+            (self.taking + 1) as f32 / self.fade_frames as f32,
+        )
+    }
+
+    /// Each fading room's level for this frame.
+    fn fades(&self) -> [f32; ROOM_FADING] {
+        self.fading_left
+            .map(|left| left as f32 / self.fade_frames.max(1) as f32)
+    }
+
+    /// Add to `room`, channel `ch`'s sound of the new room, what the rooms before it ring for the frame: the last one
+    /// taking `input` at the share the new room leaves it, the fading ones nothing, each at its fade.
+    fn add(
+        &mut self,
+        ch: usize,
+        room: &mut f32,
+        input: f32,
+        (taking, share): (bool, f32),
+        fades: &[f32; ROOM_FADING],
+    ) {
+        if self.last_left > 0 {
+            if let Some(last) = self.last.as_mut() {
+                let into = if taking { input * (1.0 - share) } else { 0.0 };
+                *room += last.step(ch, into);
+            }
+        }
+        for ((fading, left), fade) in self.fading.iter_mut().zip(self.fading_left).zip(fades) {
+            if left > 0 {
+                if let Some(fading) = fading.as_mut() {
+                    *room += fading.step(ch, 0.0) * fade;
+                }
+            }
+        }
+    }
+
+    /// One frame on.
+    fn advance(&mut self, taking: bool) {
+        if taking {
+            self.taking += 1;
+        }
+        self.last_left = self.last_left.saturating_sub(1);
+        for left in self.fading_left.iter_mut() {
+            *left = left.saturating_sub(1);
+        }
+    }
 }
 
 impl RoomDevice {
@@ -1835,12 +2032,7 @@ impl RoomDevice {
             dry: Glide::at((1.0 - wet) as f32),
             wet: Glide::at(wet as f32),
             by_frame: 1.0,
-            fade_frames: 0,
-            last: None,
-            last_left: 0,
-            taking: 0,
-            fading: None,
-            fading_left: 0,
+            ringing: RingingOut::default(),
         }
     }
 
@@ -1897,24 +2089,10 @@ impl Device for RoomDevice {
         self.wet.now = was.wet.now;
         if self.same_room(&was.params) {
             std::mem::swap(&mut self.conv, &mut was.conv);
-            std::mem::swap(&mut self.last, &mut was.last);
-            std::mem::swap(&mut self.fading, &mut was.fading);
-            (self.last_left, self.taking, self.fading_left) =
-                (was.last_left, was.taking, was.fading_left);
+            std::mem::swap(&mut self.ringing, &mut was.ringing);
             return;
         }
-        // the room before the last, while it still rings, fades out (one still fading then stops here)
-        if was.last_left > 0 {
-            std::mem::swap(&mut self.fading, &mut was.last);
-            self.fading_left = self.fade_frames;
-        }
-        // the last room takes the input less and less over the crossfade, then rings out
-        std::mem::swap(&mut self.last, &mut was.conv);
-        self.last_left = self
-            .last
-            .as_ref()
-            .map_or(0, |last| last.frames() + self.fade_frames);
-        self.taking = 0;
+        self.ringing.take(&mut was.ringing, &mut was.conv);
     }
 
     fn prepare(&mut self, sample_rate: u32, _channels: usize) {
@@ -1941,9 +2119,7 @@ impl Device for RoomDevice {
         let longest = ROOM_MAX_PREDELAY_S * f64::from(sample_rate);
         self.pre = (0..2).map(|_| Line::new(longest)).collect();
         self.by_frame = glide_by(sample_rate, 1.0);
-        self.fade_frames = ((SMOOTH_S * f64::from(sample_rate)).round() as usize).max(1);
-        (self.last, self.last_left, self.taking) = (None, 0, self.fade_frames);
-        (self.fading, self.fading_left) = (None, 0);
+        self.ringing = RingingOut::at(fade_frames_at(sample_rate));
         self.rate = sample_rate;
     }
 
@@ -1958,9 +2134,8 @@ impl Device for RoomDevice {
         }
         let (dry, wet) = (self.dry.step(by), self.wet.step(by));
         // while it takes the last room's input, its share of it, linearly to all of it
-        let taking = self.taking < self.fade_frames;
-        let share = (self.taking + 1) as f32 / self.fade_frames as f32;
-        let fade = self.fading_left as f32 / self.fade_frames.max(1) as f32;
+        let (taking, share) = self.ringing.share();
+        let fades = self.ringing.fades();
         for (ch, (v, line)) in frame_io.iter_mut().zip(self.pre.iter_mut()).enumerate() {
             let x = *v;
             line.write(x);
@@ -1971,24 +2146,11 @@ impl Device for RoomDevice {
             } else {
                 conv.step(ch, delayed)
             };
-            if self.last_left > 0 {
-                if let Some(last) = self.last.as_mut() {
-                    let into = if taking { delayed * (1.0 - share) } else { 0.0 };
-                    room += last.step(ch, into);
-                }
-            }
-            if self.fading_left > 0 {
-                if let Some(fading) = self.fading.as_mut() {
-                    room += fading.step(ch, 0.0) * fade;
-                }
-            }
+            self.ringing
+                .add(ch, &mut room, delayed, (taking, share), &fades);
             *v = x * dry + room * wet;
         }
-        if taking {
-            self.taking += 1;
-        }
-        self.last_left = self.last_left.saturating_sub(1);
-        self.fading_left = self.fading_left.saturating_sub(1);
+        self.ringing.advance(taking);
     }
 }
 

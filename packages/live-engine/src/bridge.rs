@@ -19,6 +19,7 @@ use crate::devices::{
     EchoDevice, EchoParams, FilterDevice, FilterKind, FilterParams, GlueDevice, ReverbDevice,
     RoomDevice, RoomParams,
 };
+use crate::engine::Part;
 use crate::graph::{Clock, Graph, GroupTrack, Note, RackDevice, ReturnTrack, Track, MAX_GROUPS};
 use crate::instruments::OperatorInstrument;
 use live_dynamics::glue::GlueParams;
@@ -245,6 +246,15 @@ fn as_stored(el: &Element) -> Option<(Box<dyn crate::graph::Device>, Vec<String>
             p.threshold_db = s.take("Threshold").unwrap_or(p.threshold_db);
             p.range = s.take("Range").unwrap_or(p.range);
             p.ratio = s.take("Ratio").unwrap_or(p.ratio);
+            // Live's Ratio is a menu of three curves (O-I #849 round 17, glue.rs `measured_curve_of`)
+            if ![0.0, 1.0, 2.0].contains(&p.ratio) {
+                let nearer = p.ratio.round().clamp(0.0, 2.0);
+                s.strays.push(format!(
+                    "Live's GlueCompressor stores its Ratio as one of its three curves, 0, 1 and 2, and the set stores {}: the engine sounds curve {nearer}",
+                    p.ratio
+                ));
+                p.ratio = nearer;
+            }
             p.makeup_db = s.take("Makeup").unwrap_or(p.makeup_db);
             Box::new(GlueDevice::new(p))
         }
@@ -630,6 +640,35 @@ fn value_attr(e: Option<&Element>) -> Option<&str> {
     e.and_then(|e| e.attr("Value"))
 }
 
+/// The group a part or a group sounds into as the set routes its output (`DeviceChain/AudioOutputRouting/Target`, O-I
+/// #849 round 17), from the group it stands in (`group`, by its `TrackGroupId`): `AudioOut/GroupTrack`, Live's routing of
+/// one in a group, or none stated, into that group; `AudioOut/Main` (`AudioOut/Master` in older sets) straight to the
+/// Main track, though it stands in a group. ENGINE DECISION (the engine has no other output): any other target sounds
+/// where Live's default would put it, named in words by Live's own name for it (`UpperDisplayString`).
+fn routed_into(tr: &Element, group: Option<usize>, words: &mut Vec<String>) -> Option<usize> {
+    let routing = tr
+        .child("DeviceChain")
+        .and_then(|d| d.child("AudioOutputRouting"));
+    match value_attr(routing.and_then(|r| r.child("Target"))) {
+        None | Some("AudioOut/GroupTrack") => group,
+        Some("AudioOut/Main" | "AudioOut/Master") => None,
+        Some(target) => {
+            let named = value_attr(routing.and_then(|r| r.child("UpperDisplayString")))
+                .filter(|n| !n.is_empty())
+                .unwrap_or(target);
+            words.push(format!(
+                "its output goes to {named}, which the engine does not route: it sounds to {}",
+                if group.is_some() {
+                    "its group"
+                } else {
+                    "the Main track"
+                }
+            ));
+            group
+        }
+    }
+}
+
 fn beats(e: &Element, name: &str) -> Option<f64> {
     value_attr(e.child(name)).and_then(|v| v.parse().ok())
 }
@@ -793,6 +832,76 @@ fn chain_device(
     }
 }
 
+/// A device of the set as the engine makes it again for an edit (O-I #849 round 17, [`set_device`]).
+pub struct SetDevice {
+    /// The part it stands on, and its place on that part's own chain.
+    pub part: Part,
+    pub at: usize,
+    /// The device, made as Play makes it from what the set now stores ([`chain_device`]).
+    pub device: Box<dyn crate::graph::Device>,
+    /// The device element it was made from, to make it again (Export Audio, [`set_device_made`]).
+    pub element: Element,
+}
+
+/// The device `device` of the set's track `track` (O-I #849 round 17: a device the set's owner wrote a setting of, followed
+/// while the set plays): the one the owner writes, the first of that element name on the chain of the first track of that
+/// name ("Master" the Main track, `live_set::api` `find_device`), made as Play makes it ([`bridge_set`]) and placed as the
+/// engine holds it: a part's, a return's or a group's by its index among them, its place on the chain past a MIDI part's
+/// instrument (its first Operator, which stands on no chain). Refused in words for a track or a device the set does not
+/// have, and for a part's instrument.
+pub fn set_device(root: &Element, track: &str, device: &str) -> Result<SetDevice, String> {
+    let ls = root
+        .find("LiveSet")
+        .ok_or("the set document holds no LiveSet")?;
+    let (part, tr) = if track == "Master" {
+        let main = ls.child("MainTrack").ok_or("the set has no Main track")?;
+        (Part::Main, main)
+    } else {
+        let (mut parts, mut returns, mut groups) = (0, 0, 0);
+        let mut found = None;
+        for tr in ls.child("Tracks").map(|t| &t.children[..]).unwrap_or(&[]) {
+            let named = tr.find("EffectiveName").and_then(|n| n.attr("Value")) == Some(track);
+            let (count, part): (&mut usize, fn(usize) -> Part) = match tr.name.as_str() {
+                "AudioTrack" | "MidiTrack" => (&mut parts, Part::Track),
+                "ReturnTrack" => (&mut returns, Part::Return),
+                "GroupTrack" => (&mut groups, Part::Group),
+                _ => continue,
+            };
+            if named {
+                found = Some((part(*count), tr));
+                break;
+            }
+            *count += 1;
+        }
+        found.ok_or_else(|| format!("the set has no track named '{track}'"))?
+    };
+    let devices = devices_of(tr);
+    let place = devices
+        .iter()
+        .position(|d| d.name == device)
+        .ok_or_else(|| format!("'{track}' holds no {device} on its chain"))?;
+    let instrument = (tr.name == "MidiTrack")
+        .then(|| devices.iter().position(|d| d.name == "Operator"))
+        .flatten();
+    if instrument == Some(place) {
+        return Err(format!(
+            "the {device} on '{track}' is its instrument, which the engine makes when the set is played: the edit is heard from the next Play"
+        ));
+    }
+    let at = place - usize::from(instrument.is_some_and(|i| i < place));
+    Ok(SetDevice {
+        part,
+        at,
+        device: set_device_made(devices[place]),
+        element: devices[place].clone(),
+    })
+}
+
+/// A device element made as Play makes it ([`chain_device`]), its warnings left to the bridge's reading of the set.
+pub fn set_device_made(el: &Element) -> Box<dyn crate::graph::Device> {
+    chain_device(el, "", &mut Vec::new())
+}
+
 /// Bridge a parsed set document (`<Ableton>`) into a graph at
 /// `sample_rate`: every part with its mixer row (volume, pan, activator,
 /// solo, sends), MIDI parts with their instrument and arrangement notes,
@@ -805,9 +914,9 @@ fn chain_device(
 /// (the host fills them). A group track is a bus (O-I #849 round 16,
 /// [`GroupTrack`]): with its chain, mixer row and sends, it takes the sound
 /// of each part and group whose `TrackGroupId` names its `Id`, and sounds
-/// into the group it stands in or the Main track. ENGINE DECISION (no set in
-/// the corpus routes a grouped part elsewhere): a part in a group sounds
-/// through it, as Live routes one by default; its output routing is not read.
+/// into the group it stands in or the Main track, as the set routes each
+/// one's output (round 17, [`routed_into`]: a part or a group routed to the
+/// Main track skips the group it stands in).
 pub fn bridge_set(root: &Element, sample_rate: u32) -> Option<BridgeResult> {
     let ls = root.find("LiveSet")?;
     let tempo_bpm = num(ls.child("MainTrack").and_then(|m| m.find("Tempo"))).unwrap_or(120.0);
@@ -870,7 +979,13 @@ pub fn bridge_set(root: &Element, sample_rate: u32) -> Option<BridgeResult> {
                     track.active = active;
                     track.solo = solo;
                     track.sends = sends;
-                    track.group = group_of(tr);
+                    let mut words = Vec::new();
+                    track.group = routed_into(tr, group_of(tr), &mut words);
+                    warnings.extend(words.into_iter().map(|message| BridgeWarning {
+                        track: name.clone(),
+                        device: String::new(),
+                        message,
+                    }));
                     graph.tracks.push(track);
                 }
                 "ReturnTrack" => {
@@ -894,7 +1009,8 @@ pub fn bridge_set(root: &Element, sample_rate: u32) -> Option<BridgeResult> {
                     group.solo = solo;
                     group.sends = sends;
                     let at = graph.groups.len();
-                    group.group = group_of(tr);
+                    let mut words = Vec::new();
+                    group.group = routed_into(tr, group_of(tr), &mut words);
                     let mut warn = |message: String| {
                         warnings.push(BridgeWarning {
                             track: name.clone(),
@@ -902,6 +1018,7 @@ pub fn bridge_set(root: &Element, sample_rate: u32) -> Option<BridgeResult> {
                             message,
                         })
                     };
+                    words.into_iter().for_each(&mut warn);
                     if group.group.is_some_and(|up| up >= at) {
                         warn("group track: it stands in a group after it in the set, so it sounds to the Main track".into());
                     }
@@ -1459,6 +1576,194 @@ mod tests {
         assert_eq!(
             words,
             [("First", "group track: it stands in a group after it in the set, so it sounds to the Main track")]
+        );
+    }
+
+    /// O-I #849 round 17: a Glue stored at Ratio 0 or 2 sounds that Ratio's own curve (glue.rs `measured_curve_of`), not
+    /// Ratio 1's; one stored between Live's three curves sounds the nearer, in words.
+    #[test]
+    fn a_glue_stored_at_another_ratio_sounds_its_curve_and_one_between_curves_is_named() {
+        let root = set_of(&format!(
+            r#"<GlueCompressor Id="1">{}{}{}</GlueCompressor><GlueCompressor Id="2">{}{}{}</GlueCompressor>"#,
+            m("Threshold", "-12"),
+            m("Range", "30"),
+            m("Ratio", "0"),
+            m("Threshold", "-12"),
+            m("Range", "30"),
+            m("Ratio", "1.5"),
+        ));
+        let mut r = bridge_set(&root, 48_000).unwrap();
+        let at = |ratio: f64| GlueParams {
+            threshold_db: -12.0,
+            range: 30.0,
+            ratio,
+            makeup_db: 0.0,
+        };
+        let chain = &mut r.graph.tracks[0].devices;
+        assert!(sound_alike(
+            chain[0].as_mut(),
+            &mut GlueDevice::new(at(0.0))
+        ));
+        assert!(
+            !sound_alike(chain[0].as_mut(), &mut GlueDevice::new(at(1.0))),
+            "and not as Ratio 1"
+        );
+        assert!(sound_alike(
+            chain[1].as_mut(),
+            &mut GlueDevice::new(at(2.0))
+        ));
+        let words: Vec<&str> = r.warnings.iter().map(|w| w.message.as_str()).collect();
+        assert_eq!(
+            words,
+            ["Live's GlueCompressor stores its Ratio as one of its three curves, 0, 1 and 2, and the set stores 1.5: the engine sounds curve 2"]
+        );
+    }
+
+    /// O-I #849 round 17: the device a set's owner wrote a setting of is found as the owner finds it (the first of its
+    /// name on the first track of that name, "Master" the Main track), made as Play makes it from what the set stores, and
+    /// placed as the engine holds it: a part's, a return's or a group's by its index among them, past a MIDI part's
+    /// instrument. A part's instrument, and what the set does not have, is refused in words.
+    #[test]
+    fn a_device_the_sets_owner_wrote_is_made_as_play_makes_it_and_placed_as_the_engine_holds_it() {
+        let track = |kind: &str, id: u32, name: &str, devices: &str| {
+            format!(
+                r#"<{kind} Id="{id}"><Name><EffectiveName Value="{name}" /></Name>
+                  <DeviceChain><Mixer /><DeviceChain><Devices>{devices}</Devices></DeviceChain></DeviceChain></{kind}>"#
+            )
+        };
+        let glue = |id: u32, threshold: &str| {
+            format!(
+                r#"<GlueCompressor Id="{id}">{}{}</GlueCompressor>"#,
+                m("Threshold", threshold),
+                m("Range", "30")
+            )
+        };
+        let root = xml::parse(&format!(
+            r#"<Ableton MajorVersion="5"><LiveSet><Tracks>{}{}{}{}{}</Tracks>
+              <MainTrack><DeviceChain><Mixer /><DeviceChain><Devices><Compressor2 Id="40" /></Devices></DeviceChain></DeviceChain></MainTrack>
+            </LiveSet></Ableton>"#,
+            track("AudioTrack", 1, "Drums", &glue(2, "-20")),
+            track("GroupTrack", 3, "Bus", &format!(r#"<Reverb Id="4">{}</Reverb>"#, m("On", "false"))),
+            track(
+                "MidiTrack",
+                5,
+                "Keys",
+                &format!(r#"<Echo Id="6" /><Operator Id="7" />{}{}"#, glue(8, "-24"), glue(9, "-6"))
+            ),
+            track("ReturnTrack", 10, "A-Echo", r#"<Echo Id="11" />"#),
+            track("MidiTrack", 12, "Keys", &glue(13, "-3")),
+        ))
+        .unwrap();
+        let made = |track: &str, device: &str| set_device(&root, track, device);
+        let placed = |track: &str, device: &str| {
+            let d = made(track, device).unwrap_or_else(|e| panic!("{track} {device}: {e}"));
+            (d.part, d.at, d.device.name().to_string())
+        };
+        assert_eq!(
+            placed("Drums", "GlueCompressor"),
+            (Part::Track(0), 0, "GlueCompressor".into())
+        );
+        assert_eq!(
+            placed("Bus", "Reverb"),
+            (Part::Group(0), 0, "Bypass".into()),
+            "stored off, it passes its sound through"
+        );
+        assert_eq!(placed("Keys", "Echo"), (Part::Track(1), 0, "Echo".into()));
+        assert_eq!(
+            placed("Keys", "GlueCompressor"),
+            (Part::Track(1), 1, "GlueCompressor".into()),
+            "past the instrument, the first of its name on the first track of its name"
+        );
+        assert_eq!(
+            placed("A-Echo", "Echo"),
+            (Part::Return(0), 0, "Echo".into())
+        );
+        assert_eq!(
+            placed("Master", "Compressor2"),
+            (Part::Main, 0, "Compressor2".into())
+        );
+        // made at what the set stores: the Keys Glue's −24 dB threshold, and not the second one's −6
+        let mut keys = made("Keys", "GlueCompressor").unwrap();
+        let stored = |threshold_db: f64| {
+            GlueDevice::new(GlueParams {
+                threshold_db,
+                range: 30.0,
+                ..GLUE_FACTORY
+            })
+        };
+        assert!(sound_alike(keys.device.as_mut(), &mut stored(-24.0)));
+        assert!(!sound_alike(keys.device.as_mut(), &mut stored(-6.0)));
+        assert_eq!(
+            keys.element.attr("Id"),
+            Some("8"),
+            "the element it was made from, to make again"
+        );
+        for (track, device, words) in [
+            ("Keys", "Operator", "the Operator on 'Keys' is its instrument, which the engine makes when the set is played: the edit is heard from the next Play"),
+            ("Pads", "Echo", "the set has no track named 'Pads'"),
+            ("Drums", "Echo", "'Drums' holds no Echo on its chain"),
+        ] {
+            assert_eq!(made(track, device).err().as_deref(), Some(words), "{track} {device}");
+        }
+    }
+
+    /// O-I #849 round 17: each part's and group's output is read as the set routes it. One routed to its group sounds
+    /// into it; one routed to the Main track skips the group it stands in; one routed elsewhere sounds where Live's
+    /// default would put it, named in words by Live's own name for where it goes.
+    #[test]
+    fn a_parts_and_a_groups_output_routing_is_read() {
+        let track = |kind: &str, id: u32, name: &str, group: i32, target: &str, shown: &str| {
+            format!(
+                r#"<{kind} Id="{id}"><Name><EffectiveName Value="{name}" /></Name><TrackGroupId Value="{group}" />
+                  <DeviceChain><AudioOutputRouting><Target Value="{target}" /><UpperDisplayString Value="{shown}" />
+                  <LowerDisplayString Value="" /></AudioOutputRouting><Mixer /></DeviceChain></{kind}>"#
+            )
+        };
+        let root = xml::parse(&format!(
+            r#"<Ableton MajorVersion="5"><LiveSet><Tracks>{}{}{}{}{}</Tracks></LiveSet></Ableton>"#,
+            track("GroupTrack", 20, "Bus", -1, "AudioOut/Main", "Main"),
+            track("GroupTrack", 21, "Inner", 20, "AudioOut/Main", "Main"),
+            track("AudioTrack", 22, "Kick", 21, "AudioOut/GroupTrack", "Group"),
+            track("MidiTrack", 23, "Keys", 20, "AudioOut/Master", "Master"),
+            track(
+                "AudioTrack",
+                24,
+                "Ext",
+                20,
+                "AudioOut/External/S2",
+                "Ext. Out"
+            ),
+        ))
+        .unwrap();
+        let r = bridge_set(&root, 48_000).unwrap();
+        let g = &r.graph;
+        assert_eq!(
+            g.groups
+                .iter()
+                .map(|x| (x.name.as_str(), x.group))
+                .collect::<Vec<_>>(),
+            [("Bus", None), ("Inner", None)],
+            "a group routed to the Main track skips the group it stands in"
+        );
+        assert_eq!(
+            g.tracks
+                .iter()
+                .map(|t| (t.name.as_str(), t.group))
+                .collect::<Vec<_>>(),
+            [("Kick", Some(1)), ("Keys", None), ("Ext", Some(0))]
+        );
+        let words: Vec<(&str, &str)> = r
+            .warnings
+            .iter()
+            .filter(|w| !w.message.contains("MIDI part with no instrument"))
+            .map(|w| (w.track.as_str(), w.message.as_str()))
+            .collect();
+        assert_eq!(
+            words,
+            [(
+                "Ext",
+                "its output goes to Ext. Out, which the engine does not route: it sounds to its group"
+            )]
         );
     }
 

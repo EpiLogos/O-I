@@ -54,10 +54,11 @@ test('the set\'s parts are the engine\'s: its parts, its groups, its returns and
   assert.equal(engine.engineEventOfMixerWrite(KINDS, 3, 'solo', true), null, 'the engine solos parts, not returns')
   assert.equal(engine.engineEventOfMixerWrite(KINDS, 0, 'arm', true), null, 'Arm changes nothing the engine plays')
   assert.equal(engine.engineEventOfMixerWrite(KINDS, 0, 'monitor', 'in'), null)
-  // a group track is the engine's bus (O-I #849 round 16): its row follows; the engine solos and sends from parts
+  // a group track is the engine's bus (O-I #849 round 16): its row follows, and its solo and sends while it plays (round 17)
   assert.deepEqual(engine.engineEventOfMixerWrite(KINDS, 1, 'activator', false), {kind: 'active', part: {group: 0}, on: false})
-  assert.equal(engine.engineEventOfMixerWrite(KINDS, 1, 'solo', true), null, 'the engine solos parts, not groups, while it plays')
-  assert.equal(engine.engineEventOfSendWrite(KINDS, 1, 0, 0.5), null, 'the engine moves the sends of parts while it plays')
+  assert.deepEqual(engine.engineEventOfMixerWrite(KINDS, 1, 'solo', true), {kind: 'solo', part: {group: 0}, on: true})
+  assert.deepEqual(engine.engineEventOfSendWrite(KINDS, 1, 0, 0.5), {kind: 'send', part: {group: 0}, send: 0, gain: 0.5})
+  assert.equal(engine.engineEventOfSendWrite(KINDS, 3, 0, 0.5), null, 'a return sends nothing')
   assert.deepEqual(engine.engineEventOfSendWrite(KINDS, 2, 0, 0.5), {kind: 'send', track: 1, send: 0, gain: 0.5})
   assert.deepEqual(engine.engineEventOfMixerWrite(KINDS, 2, 'volume', 0.5), {kind: 'volume', part: {track: 1}, gain: 0.5})
   assert.deepEqual(engine.engineEventOfMixerWrite(KINDS, 3, 'volume', 0.7), {kind: 'volume', part: {return: 0}, gain: 0.7})
@@ -72,7 +73,7 @@ test('every event the UI sends is one the host parses: the same fields its own t
   const pinned = new Map()
   for (const [, json] of hostSource.matchAll(/r#"(\{"kind":[^#]*\})"#/g)) {
     const event = JSON.parse(json)
-    if (json.includes('"bus"') || json.includes('"fader"') || !('part' in event || 'track' in event || event.kind === 'panic')) continue
+    if (json.includes('"bus"') || json.includes('"fader"') || !('part' in event || 'track' in event || event.kind === 'panic' || event.kind === 'device')) continue
     const shape = JSON.stringify([Object.keys(event).sort(), typeof event.part === 'object' ? Object.keys(event.part) : event.part ?? null])
     pinned.set(`${event.kind} ${shape}`, true)
   }
@@ -83,7 +84,9 @@ test('every event the UI sends is one the host parses: the same fields its own t
     // A Torus act, as its owner's torus-play names it (O-I #849).
     {kind: 'torus_play', track: 0, keys: [{row: 2, column: 3}], amplitude: [0.3, 0]},
     // A part's pitch bend and channel pressure (O-I #853 round 16), as the part's input forwards them (touchInEngine).
-    {kind: 'bend', track: 1, amount: -0.5}, {kind: 'pressure', track: 1, amount: 0.5}]
+    {kind: 'bend', track: 1, amount: -0.5}, {kind: 'pressure', track: 1, amount: 0.5},
+    // A set's device made again from what the set now stores (O-I #849 round 17), as its device face follows a write (followDeviceInEngine).
+    engine.engineEventOfDeviceWrite('P0', 'GlueCompressor')]
   for (const event of sent) {
     const shape = JSON.stringify([Object.keys(event).sort(), typeof event.part === 'object' ? Object.keys(event.part) : event.part ?? null])
     assert.ok(pinned.has(`${event.kind} ${shape}`), `the host's tests parse a ${event.kind} event shaped ${shape}`)
@@ -110,6 +113,8 @@ test('off the native candidate each engine act refuses, naming its op', async ()
 const exportArgs = [], torusArgs = [], effectsArgs = [], sentEvents = []
 /** What the host refuses the Torus's effects in, when it does (set by a test). */
 let refuseEffects = null
+/** What the host refuses a device made again in, when it does (set by a test; O-I #849 round 17). */
+let refuseDevice = null
 /** The Torus's effects as live_engine_host.rs torus_chain stands them: Reverb the engine's own at the frame's Decay, Auto Filter in words. */
 const hostEffects = (effects, track) => ({track, sounding_from_frame: 512, refusal: null, chain: effects.chain.map(effect => effect === 'reverb'
   ? {effect, device: 'Reverb', on: true, sounds: true, carried: {DecayTime: effects.reverb.decay * 1000}, words: null}
@@ -146,6 +151,7 @@ function nativeHost({refuseOpen = null, refuseTorus = null} = {}) {
     live_engine_send: ({event}) => { sentEvents.push(structuredClone(event)); if (event.kind === 'send' && event.send > 0) throw `track ${event.track} has no send ${event.send}`
       // the Torus's instrument takes no channel pressure (graph.rs Touch::NONE), in the engine's words (engine.rs refusal)
       if (event.kind === 'pressure') throw `'P0' plays the engine's Torus, which takes no channel pressure`
+      if (event.kind === 'device' && refuseDevice) throw refuseDevice
       queued.push(event); return reading() },
     live_engine_mixer: () => { for (const event of queued) apply(event); queued = []; applied.position += 512; return reading() },
     // the Torus the kernel kept under the lease, by its digest, onto the part (live_engine_host.rs live_engine_torus → bind_torus)
@@ -230,6 +236,42 @@ test('the set\'s mixer writes move the engine while it plays the set, and the UI
     // a failure above must not leave the reading's poll running
     await engine.liveEngine.stop().catch(() => {})
     delete globalThis.window
+  }
+})
+
+// O-I #849 round 17: a setting of one of the set's devices, written through the set's owner by its device face, is followed into the
+// engine while it plays that set: the device made again there from what the set now stores (live_engine_host.rs Opened::make_again). Not
+// playing, the write is the set's alone; refused, the engine's words stand, the set keeping what was written.
+test('a set device\'s setting written while the engine plays the set makes the device again there; stopped, the write is the set\'s', async () => {
+  const calls = nativeHost()
+  try {
+    await engine.followDeviceInEngine(PATH, 'P2', 'GlueCompressor')
+    assert.ok(!calls.some(c => c === 'live_engine_send'), 'no engine is playing the set: nothing is sent to it')
+    await engine.liveEngine.play(PATH)
+    calls.length = 0
+    await engine.followDeviceInEngine(PATH, 'P2', 'GlueCompressor')
+    await engine.followDeviceInEngine('/sets/other.als', 'P2', 'GlueCompressor')
+    assert.deepEqual(calls, ['live_engine_send'], 'the set the engine plays, once; another set is not followed')
+    assert.deepEqual(sentEvents.at(-1), {kind: 'device', track_name: 'P2', device: 'GlueCompressor'})
+    refuseDevice = 'the Operator on \'P0\' is its instrument, which the engine makes when the set is played: the edit is heard from the next Play'
+    await assert.rejects(engine.followDeviceInEngine(PATH, 'P0', 'Operator'),
+      /^Error: The set keeps it; the engine refused it: the Operator on 'P0' is its instrument, which the engine makes when the set is played: the edit is heard from the next Play$/)
+    await engine.liveEngine.stop()
+    calls.length = 0
+    await engine.followDeviceInEngine(PATH, 'P2', 'GlueCompressor')
+    assert.ok(!calls.includes('live_engine_send'), 'stopped: the write is the set\'s alone')
+  } finally {
+    refuseDevice = null
+    await engine.liveEngine.stop().catch(() => {})
+    delete globalThis.window
+  }
+  // the device face follows the owner's write: the persisted value shown first, then the engine moved
+  const face = readFileSync(new URL('../src/live/SetDeviceOnChain.tsx', import.meta.url), 'utf8')
+  assert.match(face, /const persisted = await postDeviceParam\(set\.path, track, elementName, paramId, value\)\n\s*setStored\([^\n]*\n[^\n]*\n\s*await followDeviceInEngine\(set\.path, track, elementName\)/)
+  // and so do the panel faces that write the same stored values: once the owner persisted it, the engine's refusal on the control
+  for (const file of ['panels/devices/DevicePanel.tsx', 'panels/devices-pro/kit.tsx']) {
+    const source = readFileSync(new URL(`../src/${file}`, import.meta.url), 'utf8')
+    assert.match(source, /setStatus\(\(s\) => \(\{ \.\.\.s, \[paramId\]: 'saved' \}\)\)\n(\s*\/\/[^\n]*\n)*\s*(import\('\.\.\/\.\.\/live\/liveEngine'\)\.then\(engine => engine\.)?followDeviceInEngine\(set\.path, track, elementName\)\)?\.catch\(/, `${file} follows its write into the engine`)
   }
 })
 

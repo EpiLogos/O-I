@@ -88,6 +88,16 @@ fn the_audio_thread_pull_allocates_nothing() {
     bass.sends = vec![0.0];
     let mut tone = Track::new("Tone", 1);
     tone.source = (0..20_000).map(|i| (i as f32 * 0.01).sin() * 0.3).collect();
+    // O-I #849 round 17: a mono part's room and compressor, which are made again below
+    tone.devices
+        .push(Box::new(live_engine::ReverbDevice::partitioned(
+            live_dynamics::reverb::ReverbParams { decay_ms: 1200.0 },
+            1.0,
+        )));
+    tone.devices
+        .push(Box::new(live_engine::CompressorDevice::new(
+            live_dynamics::compressor::DEFAULTS,
+        )));
     g.tracks.extend([keys, bass, tone]);
     // O-I #849 round 16: the tone stands in a group, a bus with its own chain and send
     g.tracks[2].group = Some(0);
@@ -136,11 +146,14 @@ fn the_audio_thread_pull_allocates_nothing() {
             pan: -0.3,
         },
         EngineEvent::Send {
-            track: 1,
+            part: Part::Track(1),
             send: 0,
             gain: 0.6,
         },
-        EngineEvent::Solo { track: 0, on: true },
+        EngineEvent::Solo {
+            part: Part::Track(0),
+            on: true,
+        },
         EngineEvent::Active {
             part: Part::Return(0),
             on: false,
@@ -247,6 +260,59 @@ fn the_audio_thread_pull_allocates_nothing() {
         handle.collect();
     }
     assert_eq!(handle.racks().len(), 3, "every chain was put there");
+    // O-I #849 round 17: a set's devices made again for edits take their places on the audio thread without
+    // allocating, each carrying on what sounds in the one it replaces (an echo's line taken whole or copied, a room
+    // ringing the last out, a compressor's detector and look-ahead, a glue's follower); what each replaced goes back
+    // to the control side to be dropped there.
+    let echo = |feedback: f64, dry_wet: f64, delay_time_s: f64| -> Box<dyn live_engine::Device> {
+        Box::new(EchoDevice::new(EchoParams {
+            delay_time_s,
+            feedback,
+            dry_wet,
+        }))
+    };
+    let glue = |threshold_db: f64| -> Box<dyn live_engine::Device> {
+        Box::new(GlueDevice::new(GlueParams {
+            threshold_db,
+            range: 30.0,
+            ratio: 1.0,
+            makeup_db: 1.0,
+        }))
+    };
+    let mut compressor = live_dynamics::compressor::DEFAULTS;
+    compressor.gain = 4.0;
+    let made: Vec<(Part, usize, Box<dyn live_engine::Device>)> = vec![
+        (Part::Track(0), 0, echo(0.5, 0.8, 0.05)),
+        (Part::Track(0), 0, echo(0.7, 0.8, 0.05)),
+        (Part::Track(1), 0, glue(-24.0)),
+        (
+            Part::Track(2),
+            0,
+            Box::new(live_engine::ReverbDevice::partitioned(
+                live_dynamics::reverb::ReverbParams { decay_ms: 2400.0 },
+                1.0,
+            )),
+        ),
+        (
+            Part::Track(2),
+            1,
+            Box::new(live_engine::CompressorDevice::new(compressor)),
+        ),
+        (Part::Group(0), 0, glue(-12.0)),
+        (Part::Return(0), 0, echo(0.3, 1.0, 0.03)),
+        (Part::Main, 0, glue(-6.0)),
+    ];
+    let many = made.len();
+    for (part, at, device) in made {
+        handle.make_again(part, at, device).unwrap();
+        pull(&mut core);
+        handle.collect();
+    }
+    assert_eq!(
+        handle.remade().len(),
+        many,
+        "every device made again stands"
+    );
     let count = ALLOCATIONS.load(Ordering::Relaxed);
     assert!(heard, "the set sounded");
     assert_eq!(

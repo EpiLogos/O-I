@@ -99,6 +99,14 @@ pub trait Device: std::fmt::Debug + Send + AsAny {
     /// back in `was`, to be dropped off the audio thread. On the audio thread, so allocation-free.
     /// By default nothing is taken: a device with no state to carry starts afresh.
     fn follow(&mut self, _was: &mut dyn Device) {}
+    /// Stand in the place of `was`, the device of its kind this one replaces when a set's device is made again for an
+    /// edit (O-I #849 round 17, [`Graph::make_again`]): what still sounds in it sounds on, as [`Device::follow`] carries
+    /// it, and a device whose settings' state an edit changes carries more (a compressor's detector, a line's repeats).
+    /// A chain the engine puts again ([`Graph::rack`]) keeps [`Device::follow`]'s rule. On the audio thread, so
+    /// allocation-free. By default as [`Device::follow`].
+    fn made_again_from(&mut self, was: &mut dyn Device) {
+        self.follow(was)
+    }
     // `Send` is a supertrait because a Graph is mixed on the realtime
     // callback (realtime.rs): cpal's stream closure is a `Send` bound, so
     // `Box<dyn Device>` must be Send. Every device is plain DSP state
@@ -948,6 +956,28 @@ impl Graph {
         true
     }
 
+    /// Put `device` in the place of the device standing at `at` on `part`'s own chain (O-I #849 round 17: a set's
+    /// device made again for an edit, [`crate::EngineHandle::make_again`]): one of the same kind carries on what still
+    /// sounds in the one it replaces ([`Device::made_again_from`]), and what stood there comes back in `device`, to be dropped
+    /// off the audio thread. Answers whether a device stood there (otherwise `device` comes back as it was).
+    /// Allocation-free.
+    pub fn make_again(&mut self, part: Part, at: usize, device: &mut Box<dyn Device>) -> bool {
+        let chain = match part {
+            Part::Track(i) => self.tracks.get_mut(i).map(|t| &mut t.devices),
+            Part::Return(i) => self.returns.get_mut(i).map(|r| &mut r.devices),
+            Part::Group(i) => self.groups.get_mut(i).map(|g| &mut g.devices),
+            Part::Main => Some(&mut self.master.devices),
+        };
+        let Some(standing) = chain.and_then(|c| c.get_mut(at)) else {
+            return false;
+        };
+        if standing.name() == device.name() {
+            device.made_again_from(standing.as_mut());
+        }
+        std::mem::swap(standing, device);
+        true
+    }
+
     /// Live's loader rules the engine relies on: no part has more sends
     /// than the set has return tracks, and there are at most
     /// [`MAX_RETURNS`]. ENGINE DECISION (the loader's words name only the
@@ -1055,11 +1085,26 @@ impl Graph {
     /// its part at the frame the engine put it there ([`crate::EngineHandle::racks`]), after that
     /// frame's instrument and before its events, as the audio callback does at a block's start.
     pub fn render_performance_racked(
+        self,
+        sample_rate: u32,
+        performance: &Performance,
+        installs: Vec<(u64, usize, Box<dyn Instrument>)>,
+        racks: Vec<(u64, usize, Vec<RackDevice>)>,
+    ) -> Vec<f32> {
+        self.render_performance_remade(sample_rate, performance, installs, racks, Vec::new())
+    }
+
+    /// [`Graph::render_performance_racked`] with the devices made again on chains while the engine played
+    /// ([`crate::EngineHandle::make_again`], O-I #849 round 17): each `(frame, part, at, device)` takes its place at
+    /// the frame the engine put it there ([`crate::EngineHandle::remade`]), after that frame's rack and before its
+    /// events, as the audio callback does at a block's start.
+    pub fn render_performance_remade(
         mut self,
         sample_rate: u32,
         performance: &Performance,
         mut installs: Vec<(u64, usize, Box<dyn Instrument>)>,
         mut racks: Vec<(u64, usize, Vec<RackDevice>)>,
+        mut remade: Vec<(u64, Part, usize, Box<dyn Device>)>,
     ) -> Vec<f32> {
         self.sample_rate = sample_rate;
         self.prepare();
@@ -1074,8 +1119,17 @@ impl Graph {
                 d.device.prepare(sample_rate, channels);
             }
         }
+        remade.sort_by_key(|(frame, ..)| *frame);
+        for (_, part, _, device) in &mut remade {
+            let channels = match *part {
+                Part::Track(i) => self.tracks.get(i).map_or(2, |t| t.channels),
+                _ => 2,
+            };
+            device.prepare(sample_rate, channels);
+        }
         let mut installs = installs.into_iter().peekable();
         let mut racks = racks.into_iter().peekable();
+        let mut remade = remade.into_iter().peekable();
         let frames = performance.frames as usize;
         let mut out = vec![0f32; frames * 2];
         let mut clock = Clock::start(sample_rate, self.tempo_bpm);
@@ -1089,6 +1143,9 @@ impl Graph {
             }
             while let Some((_, track, mut chain)) = racks.next_if(|(f, _, _)| *f <= i as u64) {
                 self.rack(track, &mut chain);
+            }
+            while let Some((_, part, at, mut device)) = remade.next_if(|(f, ..)| *f <= i as u64) {
+                self.make_again(part, at, &mut device);
             }
             while let Some(e) = events.next_if(|e| e.frame <= i as u64) {
                 self.apply(&e.event, &clock);
@@ -1227,21 +1284,24 @@ impl Graph {
                     }
                 }
             }
-            EngineEvent::Send { track, send, gain } => self
-                .tracks
-                .get_mut(track)
-                .and_then(|t| t.sends.get_mut(send))
-                .map(|s| *s = gain)
-                .is_some(),
+            EngineEvent::Send { part, send, gain } => match part {
+                Part::Track(i) => self.tracks.get_mut(i).and_then(|t| t.sends.get_mut(send)),
+                Part::Group(i) => self.groups.get_mut(i).and_then(|g| g.sends.get_mut(send)),
+                Part::Return(_) | Part::Main => None,
+            }
+            .map(|s| *s = gain)
+            .is_some(),
             EngineEvent::Active { part, on } => match part {
                 Part::Track(i) => self.tracks.get_mut(i).map(|t| t.active = on).is_some(),
                 Part::Return(i) => self.returns.get_mut(i).map(|r| r.active = on).is_some(),
                 Part::Group(i) => self.groups.get_mut(i).map(|g| g.active = on).is_some(),
                 Part::Main => false,
             },
-            EngineEvent::Solo { track, on } => {
-                self.tracks.get_mut(track).map(|t| t.solo = on).is_some()
-            }
+            EngineEvent::Solo { part, on } => match part {
+                Part::Track(i) => self.tracks.get_mut(i).map(|t| t.solo = on).is_some(),
+                Part::Group(i) => self.groups.get_mut(i).map(|g| g.solo = on).is_some(),
+                Part::Return(_) | Part::Main => false,
+            },
             EngineEvent::Set {
                 part,
                 device,
