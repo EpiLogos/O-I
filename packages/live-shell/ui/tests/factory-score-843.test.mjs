@@ -588,7 +588,9 @@ test('Compose from a map asks for one unit per ticket, keyed as the map keys it 
   const words = {...WORDS, from: MAP_REF}
   const {body} = score.composeAskOf(ADDRESS, words, REAL.score, TARGET, 'O-I', {state: 'read', reading: MAP})
   assert.match(body, /From: github:EpiLogos\/O-I:issue:706/)
-  assert.match(body, /The song answers to the map github:EpiLogos\/O-I:issue:706 \(\[MAP\] The DLW: built from the manual, walked from four worlds\): give each of its 2 open tickets one unit with `unit`, keyed as the map keys it \(issue-842, issue-843\) and waiting on the tickets that block it \(blockedBy\)\./)
+  // The prose names how many tickets and waves; the keys stand only in the JSON block, so a 46-ticket map reads in a paragraph.
+  assert.match(body, /The song answers to the map github:EpiLogos\/O-I:issue:706 \(\[MAP\] The DLW: built from the manual, walked from four worlds\): give each of its 2 open tickets one unit with `unit`, in its 2 waves \(1 and 1 tickets\), keyed as the map keys it and waiting on the tickets that block it \(blockedBy\); the tickets, their keys and their waves stand in the JSON block below\./)
+  assert.ok(!body.split('```json')[0].includes('issue-842'), 'no key in the prose')
   assert.match(body, /Read each ticket: its Question is what the unit is for, its Context the unit's sources, its Done when the unit's success conditions, its Writes what the unit may change, and its claim the row the unit stands on\./)
   assert.match(body, /A blocker outside the map \(waitsOutside\) is no unit of this song, so no unit waits on it\./)
   const ask = JSON.parse(body.match(/```json\n([\s\S]*?)\n```/)[1])

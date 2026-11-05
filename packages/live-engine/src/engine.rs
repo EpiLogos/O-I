@@ -35,7 +35,7 @@
 //! realtime path recorded).
 
 use crate::graph::{
-    Clock, Graph, GraphError, Instrument, RackDevice, TorusAct, TorusHear, TorusStrike,
+    Clock, Device, Graph, GraphError, Instrument, RackDevice, TorusAct, TorusHear, TorusStrike,
     TORUS_ACT_KEYS, TORUS_HEAR_FRAMES, TORUS_HEAR_MODES, TORUS_STRIKE_MODES,
 };
 use crate::ring::{ring, Consumer, Producer};
@@ -88,16 +88,14 @@ pub enum EngineEvent {
     Volume { part: Part, gain: f64 },
     /// A part's, a return's or the Main track's pan (−1…+1).
     Pan { part: Part, pan: f64 },
-    /// One send of a part to a return (linear gain).
-    Send {
-        track: usize,
-        send: usize,
-        gain: f64,
-    },
+    /// One send of a part or a group to a return (linear gain); a group's is followed while it plays
+    /// (O-I #849 round 17). A return and the Main track send nothing.
+    Send { part: Part, send: usize, gain: f64 },
     /// A part's or a return's activator.
     Active { part: Part, on: bool },
-    /// A part's solo.
-    Solo { track: usize, on: bool },
+    /// A part's or a group's solo (a group's, round 17: what stands in it is heard, as a soloed part
+    /// is). A return and the Main track have none.
+    Solo { part: Part, on: bool },
     /// One setting of a device on a part's chain, while it plays (O-I #849 round 16): one of the
     /// settings the device takes so ([`crate::Device::settings`], by its maker's `key`), moving from
     /// the next block to `value` as its maker moves an edited one. The part's sound goes on.
@@ -174,6 +172,9 @@ pub struct PartMix {
     pub sends: Vec<f64>,
     /// A MIDI part (plays notes).
     pub midi: bool,
+    /// The channels its chain runs at (O-I #849 round 17: what a device made again for it is prepared for): a part's
+    /// own, 2 for a return, a group and the Main track.
+    pub channels: usize,
     /// The devices of its own chain, and of the rack after its instrument as last put there, as
     /// the control side knows them (O-I #849 round 16): what a [`EngineEvent::Set`] can move.
     pub chain: Vec<DeviceFace>,
@@ -208,6 +209,7 @@ impl MixerState {
                     solo: t.solo,
                     sends: t.sends.clone(),
                     midi: t.is_midi(),
+                    channels: t.channels,
                     chain: t
                         .devices
                         .iter()
@@ -235,6 +237,7 @@ impl MixerState {
                     solo: false,
                     sends: Vec::new(),
                     midi: false,
+                    channels: 2,
                     chain: r
                         .devices
                         .iter()
@@ -255,6 +258,7 @@ impl MixerState {
                     solo: g.solo,
                     sends: g.sends.clone(),
                     midi: false,
+                    channels: 2,
                     chain: g
                         .devices
                         .iter()
@@ -272,6 +276,7 @@ impl MixerState {
                 solo: false,
                 sends: Vec::new(),
                 midi: false,
+                channels: 2,
                 chain: graph
                     .master
                     .devices
@@ -354,6 +359,27 @@ impl MixerState {
                         .join(", ")
                 ),
             })
+    }
+
+    /// The part or group that `part` names, which has a solo and sends (O-I #849 round 17); a return
+    /// and the Main track have neither, in words.
+    fn sender(&self, part: Part) -> Result<&PartMix, String> {
+        match part {
+            Part::Track(i) => self
+                .tracks
+                .get(i)
+                .ok_or_else(|| format!("the set has no part {i} (it has {})", self.tracks.len())),
+            Part::Group(i) => self
+                .groups
+                .get(i)
+                .ok_or_else(|| format!("the set has no group {i} (it has {})", self.groups.len())),
+            Part::Return(i) => Err(format!(
+                "return {i} has no solo and no sends: a part or a group has them"
+            )),
+            Part::Main => {
+                Err("the Main track has no solo and no sends: a part or a group has them".into())
+            }
+        }
     }
 
     /// Why `event` cannot be applied to this mixer, in words; `None` when
@@ -483,7 +509,7 @@ impl MixerState {
                     Err(format!("a pan is −1 (left) to 1 (right), not {pan}"))
                 }
             }),
-            EngineEvent::Send { track: t, send, gain: g } => track(t).and_then(|p| {
+            EngineEvent::Send { part: p, send, gain: g } => self.sender(p).and_then(|p| {
                 if send >= p.sends.len() {
                     Err(format!("'{}' has {} sends: there is no send {send}", p.name, p.sends.len()))
                 } else {
@@ -497,7 +523,7 @@ impl MixerState {
                     part(p)
                 }
             }
-            EngineEvent::Solo { track: t, .. } => track(t).map(|_| ()),
+            EngineEvent::Solo { part: p, .. } => self.sender(p).map(|_| ()),
             EngineEvent::Set {
                 part: p,
                 device,
@@ -530,12 +556,8 @@ impl MixerState {
                     p.pan = pan;
                 }
             }
-            EngineEvent::Send { track, send, gain } => {
-                if let Some(s) = self
-                    .tracks
-                    .get_mut(track)
-                    .and_then(|t| t.sends.get_mut(send))
-                {
+            EngineEvent::Send { part, send, gain } => {
+                if let Some(s) = self.part(part).and_then(|p| p.sends.get_mut(send)) {
                     *s = gain;
                 }
             }
@@ -544,9 +566,9 @@ impl MixerState {
                     p.active = on;
                 }
             }
-            EngineEvent::Solo { track, on } => {
-                if let Some(t) = self.tracks.get_mut(track) {
-                    t.solo = on;
+            EngineEvent::Solo { part, on } => {
+                if let Some(p) = self.part(part) {
+                    p.solo = on;
                 }
             }
             EngineEvent::NoteOn { .. }
@@ -607,6 +629,8 @@ struct Shared {
     hands: Hands<Hand>,
     /// A chain on its way to a part's rack, and the one it replaced on its way back.
     racks: Hands<RackHand>,
+    /// Devices made again on their way to their chains, and those they replaced on their way back.
+    remade: Hands<RemadeHand>,
 }
 
 /// An instrument handed to a MIDI part while the engine plays (O-I #849: the Torus its owner hands
@@ -628,6 +652,24 @@ struct RackHand {
     frame: u64,
     taken: bool,
     chain: Vec<RackDevice>,
+}
+
+/// Devices made again for chains while the engine plays (O-I #849 round 17: a set's device edited), made and prepared
+/// off the audio thread. The audio thread puts each in its place at a block's first frame ([`Graph::make_again`]) and
+/// sends this back holding the devices they replaced, so nothing is dropped there.
+struct RemadeHand {
+    frame: u64,
+    devices: Vec<Remade>,
+}
+
+/// One device made again: the count it was made at, its part and its place on the part's chain, and whether the
+/// device it replaced was there.
+struct Remade {
+    id: u64,
+    part: Part,
+    at: usize,
+    device: Box<dyn Device>,
+    taken: bool,
 }
 
 /// When an instrument handed to a part takes it (O-I #849 round 13).
@@ -698,6 +740,10 @@ pub struct EngineHandle {
     installs: Vec<(u64, usize)>,
     /// Every chain the engine put on a part's rack: (frame, part), in the order put.
     racks: Vec<(u64, usize)>,
+    /// Every device the engine made again on a chain: (frame, the count it was made at), in the order put; and how
+    /// many were made.
+    remade: Vec<(u64, u64)>,
+    made: u64,
 }
 
 /// A block as the engine pulled it (O-I #849 round 14): its first frame, its frames, and when it was
@@ -772,6 +818,7 @@ pub fn engine(mut graph: Graph) -> Result<(EngineCore, EngineHandle), GraphError
         torus_unplaced: AtomicU64::new(0),
         hands: Hands::new(),
         racks: Hands::new(),
+        remade: Hands::new(),
     });
     let clock = Clock::start(graph.sample_rate, graph.tempo_bpm);
     let sample_rate = graph.sample_rate;
@@ -792,6 +839,8 @@ pub fn engine(mut graph: Graph) -> Result<(EngineCore, EngineHandle), GraphError
         sample_rate,
         installs: Vec::new(),
         racks: Vec::new(),
+        remade: Vec::new(),
+        made: 0,
     };
     Ok((core, handle))
 }
@@ -807,6 +856,7 @@ impl EngineCore {
         self.clock.sample = start;
         self.take_hand(start);
         self.take_rack(start);
+        self.take_remade(start);
         let now_ns = self.shared.epoch.elapsed().as_nanos() as u64;
         self.stamp(start, out.len() as u64 / 2, now_ns);
         while let Some(inbound) = self.inbox.pop() {
@@ -935,6 +985,28 @@ impl EngineCore {
         racks.retired.store(p, Ordering::Release);
     }
 
+    /// Take the devices made again for chains ([`EngineHandle::make_again`]) at frame `start`, after the block's rack
+    /// and before its events: put each in its place ([`Graph::make_again`]) and send the hand back with the devices
+    /// they replaced. While the last has not been taken back, the next waits. No allocation.
+    fn take_remade(&mut self, start: u64) {
+        let remade = &self.shared.remade;
+        if !remade.retired.load(Ordering::Acquire).is_null() {
+            return;
+        }
+        let p = remade.incoming.swap(std::ptr::null_mut(), Ordering::AcqRel);
+        if p.is_null() {
+            return;
+        }
+        // SAFETY: as for `take_rack`: the control side gave up `p` when it stored it, and this thread alone takes
+        // `incoming`; it holds `p` until it stores it in `retired`.
+        let hand = unsafe { &mut *p };
+        for made in hand.devices.iter_mut() {
+            made.taken = self.graph.make_again(made.part, made.at, &mut made.device);
+        }
+        hand.frame = start;
+        remade.retired.store(p, Ordering::Release);
+    }
+
     /// The realtime stream's report of the device's output latency.
     pub fn report_output_latency(&self, ns: u64) {
         self.shared.output_latency_ns.store(ns, Ordering::Relaxed);
@@ -1010,6 +1082,22 @@ impl EngineHandle {
             if hand.taken {
                 self.racks.push((hand.frame, hand.track));
             }
+        }
+        let p = self
+            .shared
+            .remade
+            .retired
+            .swap(std::ptr::null_mut(), Ordering::AcqRel);
+        if !p.is_null() {
+            // SAFETY: as above: dropping it drops the devices they replaced, here.
+            let hand = unsafe { Box::from_raw(p) };
+            let frame = hand.frame;
+            self.remade.extend(
+                hand.devices
+                    .iter()
+                    .filter(|made| made.taken)
+                    .map(|made| (frame, made.id)),
+            );
         }
         let mut n = 0;
         while let Some(stamped) = self.heard.pop() {
@@ -1175,6 +1263,70 @@ impl EngineHandle {
         }
         self.collect();
         Ok(superseded)
+    }
+
+    /// Put `device`, made again for the device standing at `at` on `part`'s own chain, in its place while the engine
+    /// plays (O-I #849 round 17: a set's device edited, made from what the set now stores): prepared here at the
+    /// engine's rate and the part's channels, it takes its place at the next block's first frame, one of the same kind
+    /// carrying on what still sounds in the one it replaces ([`crate::Device::made_again_from`]: a room's tail rings out, an echo's
+    /// repeats go on, a compressor's gain moves on from where it stood), and the device it replaced comes back to be
+    /// dropped on this side ([`EngineHandle::collect`]). One made again for the same place before the engine took the
+    /// last gives way to this one, and is never put there; those for other places wait with it. Answers the count it
+    /// was made at, which [`EngineHandle::remade`] names it by once it stands. Refused, in words, for a part that is not
+    /// there or no device standing at `at`.
+    pub fn make_again(
+        &mut self,
+        part: Part,
+        at: usize,
+        mut device: Box<dyn Device>,
+    ) -> Result<u64, Refusal> {
+        self.mixer
+            .device(part, DeviceAt::Chain(at))
+            .map_err(Refusal::Invalid)?;
+        let channels = self.mixer.part(part).map_or(2, |p| p.channels);
+        device.prepare(self.sample_rate, channels);
+        let face = DeviceFace::of(device.as_ref());
+        if let Some(standing) = self.mixer.part(part).and_then(|p| p.chain.get_mut(at)) {
+            *standing = face;
+        }
+        self.collect();
+        self.made += 1;
+        let made = Remade {
+            id: self.made,
+            part,
+            at,
+            device,
+            taken: false,
+        };
+        let waiting = self
+            .shared
+            .remade
+            .incoming
+            .swap(std::ptr::null_mut(), Ordering::AcqRel);
+        let mut devices = if waiting.is_null() {
+            Vec::new()
+        } else {
+            // SAFETY: the audio thread never took `waiting` (it was still in `incoming`, and this side swapped it out),
+            // so this side owns it again; what it held for another place goes on with this one.
+            let waiting = unsafe { Box::from_raw(waiting) };
+            waiting
+                .devices
+                .into_iter()
+                .filter(|d| (d.part, d.at) != (part, at))
+                .collect()
+        };
+        devices.push(made);
+        let hand = Box::into_raw(Box::new(RemadeHand { frame: 0, devices }));
+        self.shared.remade.incoming.store(hand, Ordering::Release);
+        self.collect();
+        Ok(self.made)
+    }
+
+    /// Every device the engine made again on a chain from [`EngineHandle::make_again`], as (frame, the count it was
+    /// made at), in the order put (call [`EngineHandle::collect`] first to read the latest): what Export Audio puts
+    /// there again ([`Graph::render_performance_remade`]).
+    pub fn remade(&self) -> &[(u64, u64)] {
+        &self.remade
     }
 
     /// Every chain the engine put on a part's rack from [`EngineHandle::install_rack`], as (frame,

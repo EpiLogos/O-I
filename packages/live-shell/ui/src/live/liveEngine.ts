@@ -2,7 +2,8 @@
 // live_engine_host.rs over packages/live-engine); these are its owner ops, and nothing here keeps a mixer of its own:
 //   live_engine_open {path}    bridge the set into the engine (no sound)
 //   live_engine_play / _stop   start / stop the engine on the default output
-//   live_engine_send {event}   a note, a Torus act, Panic, or a mixer move — applied at the next audio block
+//   live_engine_send {event}   a note, a Torus act, Panic, or a mixer move — applied at the next audio block — or one of the set's devices
+//                              made again from what the set now stores (a setting of it written through the set's owner, followed)
 //   live_engine_torus          the Torus its owner handed over (QL's torus-native, kept by the kernel under the field's lease; named
 //                              here only by its digest) sounds on a MIDI part, continuing the owner's field from the sample it stood at;
 //                              the host follows the owner from then on: each act it lands, and each time it is handed over again; the
@@ -19,7 +20,8 @@
 //   live_engine_export         Export Audio: the samples the engine played, rendered offline, as a 32-bit float WAV, to the file
 //                              the person chooses in the host's own save dialog (the webview never names the path)
 // The set's own mixer writes (live/liveWrites.ts liveSetWrites: Activator, Solo, Volume, Pan, a send) land in the .als through the set's owner and,
-// while the engine plays that set, follow into it as the same move, so what you hear moves without the set being bridged again; Play
+// while the engine plays that set, follow into it as the same move, so what you hear moves without the set being bridged again (a device's
+// setting the same way, its device made again: live/SetDeviceOnChain.tsx followDeviceInEngine); Play
 // bridges the file as it then stands. The engine runs in the native candidate only; elsewhere each act refuses, naming its op.
 import {useEffect, useSyncExternalStore} from 'react'
 import {detectTransport, tauriInvoke} from '../../../../../desktop/cradle/src/kernel/bridge'
@@ -41,13 +43,19 @@ export type LiveEngineEvent =
   | {kind: 'volume'; part: LiveEnginePart; gain: number}
   | {kind: 'pan'; part: LiveEnginePart; pan: number}
   | {kind: 'send'; track: number; send: number; gain: number}
+  /** A group's send or solo, followed while it plays (O-I #849 round 17); a part's names it by `track` or as its `part`. */
+  | {kind: 'send'; part: {track: number} | {group: number}; send: number; gain: number}
   | {kind: 'active'; part: LiveEnginePart; on: boolean}
   | {kind: 'solo'; track: number; on: boolean}
+  | {kind: 'solo'; part: {track: number} | {group: number}; on: boolean}
   /** An act of the Torus's keys on a part its owner's Torus was handed over to (O-I #849), as its owner's torus-play names it. */
   | {kind: 'torus_play'; track: number; keys: {row: number; column: number}[]; amplitude: [number, number]}
   /** A part's pitch bend, −1 (down) to 1 (up), and its channel pressure, 0 to 1, to the part's instrument (O-I #853 round 16). */
   | {kind: 'bend'; track: number; amount: number}
   | {kind: 'pressure'; track: number; amount: number}
+  /** One of the set's devices made again in the engine from what the set now stores (O-I #849 round 17): the track the set's owner names
+   * it on ("Master" the Main track) and its element name; the device the owner writes, the first of that name there. */
+  | {kind: 'device'; track_name: string; device: string}
 
 /** The Torus a part holds: the digest it was handed over by, the owner's sample it stood at, and the engine frame it sounds from once
  * the engine has taken it. */
@@ -111,8 +119,8 @@ export function torusPartOf(kinds: readonly string[]): number | null {
 }
 
 /** The engine's move for one of the set's mixer writes; null where the write changes nothing the engine plays (Arm, Monitor) or the
- * engine has no such move while it plays (the solo or sends of a return or a group). Volume is linear gain and Pan −1…1, as the set
- * keeps them. */
+ * engine has no such move (the solo or sends of a return, which has none). A group's solo and sends are its bus's (O-I #849 round 17).
+ * Volume is linear gain and Pan −1…1, as the set keeps them. */
 export function engineEventOfMixerWrite(kinds: readonly string[], track: number, control: string, value: unknown): LiveEngineEvent | null {
   const part = enginePartOf(kinds, track)
   if (!part) return null
@@ -124,12 +132,14 @@ export function engineEventOfMixerWrite(kinds: readonly string[], track: number,
   if (typeof value !== 'boolean') return null
   if (control === 'activator') return {kind: 'active', part, on: value}
   if (control === 'solo' && typeof part === 'object' && 'track' in part) return {kind: 'solo', track: part.track, on: value}
+  if (control === 'solo' && typeof part === 'object' && 'group' in part) return {kind: 'solo', part, on: value}
   return null
 }
 
 export function engineEventOfSendWrite(kinds: readonly string[], track: number, index: number, gain: number): LiveEngineEvent | null {
   const part = enginePartOf(kinds, track)
-  return part && typeof part === 'object' && 'track' in part ? {kind: 'send', track: part.track, send: index, gain} : null
+  if (part && typeof part === 'object' && 'track' in part) return {kind: 'send', track: part.track, send: index, gain}
+  return part && typeof part === 'object' && 'group' in part ? {kind: 'send', part, send: index, gain} : null
 }
 
 export interface EngineState {
@@ -360,6 +370,14 @@ export async function followInEngine(path: string, event: (kinds: readonly strin
   if (!move) return
   try { await liveEngine.send(move) } catch (e) { throw new Error(`The set keeps it; the engine refused it: ${words(e)}`) }
 }
+
+/** A setting of one of the set's devices the set's owner wrote (live/SetDeviceOnChain.tsx, panels/devices/api.ts postDeviceParam: the
+ * first device of `device`'s element name on the track named `track`), followed into the engine while it plays that set (O-I #849 round
+ * 17): the engine makes the device again from what the set now stores, heard from the next block and sounding on from where it stood
+ * (live_engine_host.rs Opened::make_again). A refusal is the engine's, in its words; the set keeps what was written. */
+export const engineEventOfDeviceWrite = (track: string, device: string): LiveEngineEvent => ({kind: 'device', track_name: track, device})
+export const followDeviceInEngine = (path: string, track: string, device: string): Promise<void> =>
+  followInEngine(path, () => engineEventOfDeviceWrite(track, device))
 
 export const liveEngineState = (): EngineState => state
 export function subscribeLiveEngine(listener: () => void): () => void {

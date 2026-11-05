@@ -154,7 +154,7 @@ const keptListing = {
     {sound_ref: KEPT(2), name: 'Paper bell', body: 'form', body_ref: 'ql:form-body:fold', sample_rate: 48000}]}],
   racks: [{rack_ref: 'rack:warm', name: 'Warm rack', sound: KEPT(1), chain: [{device_ref: 'arp', role: 'note', state: {}},
     {device_ref: 'reverb', role: 'effect', state: {on: true, decay: 2.4, predelay: 20, mix: 22}}],
-    macros: [{name: 'Bloom', value: 0.5, targets: [{device_ref: 'torus', parameter: 'damping'}]}], variations: [{name: 'Open', values: [1]}, {name: 'Closed', values: [0]}]}],
+    macros: [{name: 'Bloom', value: 0.5, targets: [{device_ref: 'torus', parameter: 'damping', min: 0.1, max: 40}]}], variations: [{name: 'Open', values: [1]}, {name: 'Closed', values: [0]}]}],
 }
 // O-I #852 round 9: a rack's drag carries what its drop places on a part (Live's Instrument Rack): its name, chain, macros and variations;
 // round 10: each chain device with the settings it kept.
@@ -186,6 +186,9 @@ test('under the Torus: its sounds, then each instrument with the sounds made on 
     drag({chain: [{device_ref: 'reverb', role: 'effect'}]}), drag({chain: [{device_ref: 'reverb', role: 'effect', state: {decay: {s: 2.4}}}]}),
     drag({chain: [{device_ref: 'reverb', role: 'effect', state: [2.4]}]}), drag({chain: [{device_ref: 'reverb', role: 'effect', state: {decay: 2.4}, extra: 1}]}),
     drag({macros: [{name: 'Bloom', value: 0.5, targets: [{device_ref: 'torus'}]}]}), drag({variations: [{name: 'Open', values: []}]}),
+    // Each target carries the range its macro turns it over (DLW build ruling, 4 November): none without it, none with a range that is no number.
+    drag({macros: [{name: 'Bloom', value: 0.5, targets: [{device_ref: 'torus', parameter: 'damping'}]}]}),
+    drag({macros: [{name: 'Bloom', value: 0.5, targets: [{device_ref: 'torus', parameter: 'damping', min: 0.1, max: '40'}]}]}),
     drag({macros: Array.from({length: 17}, (_, i) => ({name: `M${i}`, value: 0, targets: []})), variations: []})])
     assert.equal(instruments.readTorusKeptDrag(bad), null, bad.slice(0, 90))
   // The search finds a sound by its name, and keeps the instrument it stands under.

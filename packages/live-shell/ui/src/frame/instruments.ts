@@ -81,7 +81,7 @@ export function parseInstrumentPayload(payload: string): {kind: string; lens?: H
 export const TORUS_KEPT_MIME = 'application/x-oi-torus-kept'
 export type TorusKeptKind = 'sound' | 'instrument' | 'rack'
 /** What a rack's drop places on the part (O-I #852 round 9: Live's Instrument Rack, packages/live-set/src/acts.rs `rack_place`): its name,
- * its chain's devices, its macros with where each stands and what it turns, and its variations, as the Scene keeps them. */
+ * its chain's devices, its macros with where each stands and what it turns over which range, and its variations, as the Scene keeps them. */
 export interface TorusRackPlacing {readonly name: string; readonly chain: KeptRackSummary['chain']; readonly macros: KeptRackSummary['macros']
   readonly variations: KeptRackSummary['variations']}
 /** What a part is given to play: the sound, the instrument or the rack by its reference; a sound made on an instrument names it too. An
@@ -139,7 +139,8 @@ export function torusKeptRows(kept: TorusKeptSummary | null | undefined, query: 
 /** Live's rack: sixteen macros (racks-session-model.md §1.7); a kept rack's bounds beside them (kernel kept.rs). */
 const RACK_MACROS = 16, RACK_VARIATIONS = 128, RACK_DEVICES = 64, MACRO_TARGETS = 32
 const text = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0 && value.length <= 512 && !/[\u0000-\u001f\u007f]/.test(value)
-const share = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1
+const finite = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value)
+const share = (value: unknown): value is number => finite(value) && value >= 0 && value <= 1
 /** A kept device's settings as the boundary lists them (performanceBasis.ts `keptSettings`): a flat record of at most 32, each a finite number,
  * a switch or a word. */
 const settings = (value: unknown): boolean => !!value && typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length <= 32
@@ -155,7 +156,8 @@ function readRackPlacing(raw: unknown): TorusRackPlacing | null {
   if (!chain.every(row => exact(row, ['device_ref', 'role', 'state']) && text(row.device_ref) && (row.role === 'note' || row.role === 'effect')
     && settings(row.state))) return null
   if (!macros.every(row => exact(row, ['name', 'value', 'targets']) && text(row.name) && share(row.value) && Array.isArray(row.targets)
-    && row.targets.length <= MACRO_TARGETS && row.targets.every(target => exact(target, ['device_ref', 'parameter']) && text(target.device_ref) && text(target.parameter)))) return null
+    && row.targets.length <= MACRO_TARGETS && row.targets.every(target => exact(target, ['device_ref', 'parameter', 'min', 'max']) && text(target.device_ref) && text(target.parameter)
+      && finite(target.min) && finite(target.max)))) return null
   if (!variations.every(row => exact(row, ['name', 'values']) && text(row.name) && Array.isArray(row.values) && row.values.length === macros.length
     && row.values.every(share))) return null
   return {name: raw.name, chain, macros, variations} as TorusRackPlacing

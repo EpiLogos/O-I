@@ -75,6 +75,46 @@ pub const RANGE_CEILING_PER_DB: f64 = 0.932;
 /// The Range the measured anchors were rendered at: they carry its ceiling.
 pub const ANCHORS_RANGE: f64 = 30.0;
 
+/// The measured curve at stored Ratio 0 (O-I #849 round 17), at Range 60, where the ceiling is all but out of reach
+/// (D1c ≡ D1a, Range 30, at every step), in the frame of [`MEASURED_ANCHORS_R30_T12`] (sine peak in at Threshold −12):
+/// D1c_R0_R60 from −30 to 0 dBFS in, then DF1_R0 (Threshold −24, Range 60) moved by its threshold for +6 to +12 —
+/// devices/glue-compressor.md "D1b" and "D1-final", whose two renders agree to the last 0.01 dB at every level they
+/// share. A curve family, not an n:1 ratio: its knee is wider than 18 dB.
+pub const MEASURED_ANCHORS_RATIO0_R60_T12: &[(f64, f64)] = &[
+    (-30.0, -0.33),
+    (-24.0, -0.92),
+    (-18.0, -2.17),
+    (-12.0, -4.16),
+    (-6.0, -6.81),
+    (-3.0, -8.35),
+    (0.0, -10.01),
+    (6.0, -13.66),
+    (9.0, -15.60),
+    (12.0, -17.43),
+];
+/// The measured curve at stored Ratio 2 (round 17), likewise: D1f_R2_R60 (≡ D1e and G8 at Range 30), exactly unity to
+/// the threshold, then DF2_R2 (Threshold −24, Range 60) moved by its threshold for +6 to +12.
+pub const MEASURED_ANCHORS_RATIO2_R60_T12: &[(f64, f64)] = &[
+    (-12.0, 0.0),
+    (-6.0, -2.04),
+    (-3.0, -4.68),
+    (0.0, -7.34),
+    (6.0, -12.72),
+    (9.0, -15.43),
+    (12.0, -18.15),
+];
+
+/// The measured curve a stored Ratio selects (O-I #849 round 17: Live's Ratio is a menu of three curve families, 0, 1
+/// and 2, params.rs) and the Range it was rendered at, whose ceiling it carries. ENGINE DECISION (Live stores only the
+/// three): a stored value between them takes the nearer, within 0 to 2.
+pub fn measured_curve_of(ratio: f64) -> (&'static [(f64, f64)], f64) {
+    match ratio.round().clamp(0.0, 2.0) as u8 {
+        0 => (MEASURED_ANCHORS_RATIO0_R60_T12, 60.0),
+        2 => (MEASURED_ANCHORS_RATIO2_R60_T12, 60.0),
+        _ => (MEASURED_ANCHORS_R30_T12, ANCHORS_RANGE),
+    }
+}
+
 /// The soft ceiling (dB of reduction) a stored Range sets; none below 0.
 pub fn range_ceiling_db(range: f64) -> f64 {
     RANGE_CEILING_PER_DB * range.max(0.0)
@@ -107,12 +147,14 @@ pub fn unceiled_reduction_db(ceiled_db: f64, ceiling_db: f64) -> f64 {
 }
 
 /// Static gain applied (dB, negative = reduction) for a sine at
-/// `input_peak_db`: the measured curve (`MEASURED_ANCHORS_R30_T12`, moved
-/// with the threshold) taken out of its Range-30 ceiling and put under the
-/// Range's (the Range law above). At Range 30 it is the measured curve.
+/// `input_peak_db`: the measured curve of the stored Ratio
+/// ([`measured_curve_of`], moved with the threshold) taken out of the
+/// ceiling of the Range it was rendered at and put under the Range's (the
+/// Range law above). At that Range it is the measured curve.
 pub fn static_gain_change_db(input_peak_db: f64, p: &GlueParams) -> f64 {
-    let measured = -measured_curve_db(input_peak_db, p);
-    let unceiled = unceiled_reduction_db(measured, range_ceiling_db(ANCHORS_RANGE));
+    let (anchors, rendered_at) = measured_curve_of(p.ratio);
+    let measured = -measured_curve_db(input_peak_db, p, anchors);
+    let unceiled = unceiled_reduction_db(measured, range_ceiling_db(rendered_at));
     -ceiled_reduction_db(unceiled, range_ceiling_db(p.range))
 }
 
@@ -121,12 +163,19 @@ pub fn static_gain_change_db(input_peak_db: f64, p: &GlueParams) -> f64 {
 /// with the threshold (hypothesis: the curve shape is threshold-invariant —
 /// confidence: low, unverified across thresholds until the G2/G4 renders
 /// are folded in).
-fn measured_curve_db(input_peak_db: f64, p: &GlueParams) -> f64 {
+///
+/// ENGINE DECISION (round 17; no render is quieter than −30 dBFS): a curve
+/// still reducing at its quietest anchor (stored Ratio 0's knee) goes on at
+/// its first segment's slope until it reaches nothing, 3.4 dB lower.
+fn measured_curve_db(input_peak_db: f64, p: &GlueParams, anchors: &[(f64, f64)]) -> f64 {
     let shift = p.threshold_db - (-12.0);
     let x = input_peak_db - shift;
-    let anchors = MEASURED_ANCHORS_R30_T12;
     if x <= anchors[0].0 {
-        return 0.0;
+        let ((x1, y1), (x2, y2)) = (anchors[0], anchors[1]);
+        if y1 == 0.0 {
+            return 0.0;
+        }
+        return (y1 + (x - x1) * (y2 - y1) / (x2 - x1)).min(0.0);
     }
     if x >= anchors[anchors.len() - 1].0 {
         // extrapolate with the endpoint slope (≈ −0.77 dB/dB near 0 dBFS)
@@ -262,6 +311,65 @@ mod tests {
                 "at Range 30 the measured curve stands: {model} vs {measured} at {input} dB"
             );
         }
+    }
+
+    /// O-I #849 round 17: a stored Ratio of 0 or 2 is its own curve, as Live's renders measure it at every step
+    /// (devices/glue-compressor.md D1b and D1-final), stated before the curves were taken: the Range-30, -60 and -10
+    /// renders at Threshold −12 and the deep Range-60 renders at Threshold −24, each within 0.2 dB. Teeth: heard as
+    /// Ratio 1, stored 0 reduces 8.12 dB at 0 dBFS in against Live's 10.01.
+    #[test]
+    fn a_stored_ratio_of_0_or_2_is_heard_as_its_own_curve() {
+        let at = |threshold_db: f64, range: f64, ratio: f64| GlueParams {
+            threshold_db,
+            range,
+            ratio,
+            makeup_db: 0.0,
+        };
+        let r0 = [-0.33, -0.92, -2.17, -4.16, -6.81, -8.35, -10.01];
+        let r2 = [0.0, 0.0, 0.0, 0.0, -2.04, -4.68, -7.34];
+        for (name, params, measured) in [
+            ("D1a_R0_R30", at(-12.0, 30.0, 0.0), r0),
+            ("D1c_R0_R60", at(-12.0, 60.0, 0.0), r0),
+            (
+                "D1b_R0_R10",
+                at(-12.0, 10.0, 0.0),
+                [-0.33, -0.92, -2.17, -4.12, -6.48, -7.64, -8.58],
+            ),
+            (
+                "DF1_R0",
+                at(-24.0, 60.0, 0.0),
+                [-2.17, -4.16, -6.81, -10.01, -13.66, -15.60, -17.43],
+            ),
+            ("D1e_R2_R30", at(-12.0, 30.0, 2.0), r2),
+            ("D1f_R2_R60", at(-12.0, 60.0, 2.0), r2),
+            (
+                "D1d_R2_R10",
+                at(-12.0, 10.0, 2.0),
+                [0.0, 0.0, 0.0, 0.0, -2.04, -4.65, -7.16],
+            ),
+            (
+                "DF2_R2",
+                at(-24.0, 60.0, 2.0),
+                [0.0, 0.0, -2.04, -7.34, -12.72, -15.43, -18.15],
+            ),
+        ] {
+            for (db, gr) in STEPS_DB.iter().zip(measured) {
+                let model = static_gain_change_db(*db, &params);
+                assert!(
+                    (model - gr).abs() <= 0.2,
+                    "{name} at {db} dB peak: the model reduces {model:.3} dB, the render {gr:.2} dB"
+                );
+            }
+        }
+        // stored Ratio 0's knee goes on below its quietest render to nothing, never past it
+        let quiet = |db: f64| static_gain_change_db(db, &at(-12.0, 60.0, 0.0));
+        assert!(quiet(-31.0) < 0.0 && quiet(-31.0) > quiet(-30.0));
+        assert_eq!(quiet(-40.0), 0.0);
+        // a stored value between the three takes the nearer
+        assert_eq!(
+            static_gain_change_db(0.0, &at(-12.0, 30.0, 1.6)),
+            static_gain_change_db(0.0, &at(-12.0, 30.0, 2.0))
+        );
     }
 
     /// O-I #849 round 16: the law holds at every Ratio the corpus rendered at Range 10, acting on that Ratio's own

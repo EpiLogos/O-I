@@ -20,7 +20,8 @@ import {DeviceView} from '../frame/devices/DeviceView'
 import {publishDevice, selectDevice} from '../frame/devices/deviceDoor'
 import {DEVICE_PANE_KIND} from '../frame/devices/devicePane'
 import {openInstrument} from '../frame/instrumentDoor'
-import {followSetTempoOnTorus, torusTempoEdit, TORUS_DESIGN_ID, TORUS_DEVICE, TORUS_DEVICE_ID, torusBodyEdits, torusBodySourceOf, torusDesignBinding, torusDevice, torusFigure, torusTone, torusSessionOf, type TorusFigureSize} from './torusDevice'
+import {followSetTempoOnTorus, torusTempoEdit, TORUS_DESIGN_ID, TORUS_DEVICE, TORUS_DEVICE_ID, torusBodyEdits, torusBodySourceOf, torusDesignBinding, torusDevice, torusFigure, torusTone, torusSessionOf,
+  torusFollowed, torusFollowEdits, torusViewOf, TORUS_FOLLOW, type TorusFigureSize, type TorusFollow, type TorusView} from './torusDevice'
 import {commitLiveInstrumentEdit, LIVE_TORUS_ABSENT_REASON, liveInstrumentWritable, useLiveTorusReading, type LiveTorusState} from './torusInstrument'
 import {JankoDevice} from './janko/JankoDevice'
 import {useKeyboardLayout} from './keyboardLayout'
@@ -31,21 +32,30 @@ import type {DeviceInstance} from '../frame/devices/deviceRuntime'
 import {useQlRack} from '../inhabitants/ql/devices/qlRack'
 import {useHolds} from '../techne/devices/designDevices'
 import {useBodyTable, useCoordinateName} from '../inhabitants/ql/devices/qlCoordinateName'
+import {useLiveModeInForce} from '../native/liveModeCatalogue'
+import {clipAtOf, useLiveClipWhole} from './liveWrites'
+import type {SetSelection} from '../shell/liveSelection'
 
 // Colour is the tokens' alone: the near side takes the instrument's accent when it is at work, the far side is fainter.
 const STROKE = {lit: 'var(--accent)', rising: 'var(--text-dim)', unlit: 'var(--text-faint)'} as const
 
 /** The device's picture at a size: the torus outline, with the owner's standing under it where there is room to read it. A
- * refused reading draws the outline unlit and says the refusal in the owner's words. */
-export function TorusPicture({state, size = 'compact'}: {state: LiveTorusState; size?: TorusFigureSize}) {
+ * refused reading draws the outline unlit and says the refusal in the owner's words. The View you keep (manual §21.2) draws it: the
+ * surface's body over its far side, the wire alone, or the wire over the body. */
+export function TorusPicture({state, size = 'compact', view = 'surface'}: {state: LiveTorusState; size?: TorusFigureSize; view?: TorusView}) {
   const figure = useMemo(() => torusFigure(size), [size])
   const tone = torusTone(state)
   const standing = state.ok ? state.value.standing : 'refused'
   const {x, y, width, height} = figure.view
+  // The surface: its silhouette filled, faint, edged in the standing's tone. Under Surface it lies over the far side; under Both, under it.
+  const body = view === 'wire' ? null : <path d={figure.outline} data-torus-body="" style={{fill: STROKE[tone], fillOpacity: tone === 'lit' ? 0.16 : 0.1,
+    stroke: STROKE[tone], strokeOpacity: 0.5}} strokeWidth={0.8} vectorEffect="non-scaling-stroke" />
   return <div className="torus-picture" data-live-torus={standing} data-torus-size={size} style={{width: '100%', height: '100%'}}>
     <svg role="img" aria-label={`M1 torus, ${standing}`} viewBox={`${x} ${y} ${width} ${height}`} preserveAspectRatio="xMidYMid meet"
-      style={{flex: '1 1 auto', minHeight: 0, width: '100%'}} fill="none" strokeLinecap="round" data-torus-tone={tone}>
+      style={{flex: '1 1 auto', minHeight: 0, width: '100%'}} fill="none" strokeLinecap="round" data-torus-tone={tone} data-torus-view={view}>
+      {view === 'both' && body}
       <path d={figure.back} data-torus-side="far" style={{stroke: STROKE[tone], strokeOpacity: tone === 'lit' ? 0.3 : 0.18}} strokeWidth={0.8} vectorEffect="non-scaling-stroke" />
+      {view === 'surface' && body}
       <path d={figure.front} data-torus-side="near" style={{stroke: STROKE[tone]}} strokeWidth={1} vectorEffect="non-scaling-stroke" />
     </svg>
     {state.ok
@@ -60,9 +70,11 @@ export function TorusPicture({state, size = 'compact'}: {state: LiveTorusState; 
 export function TorusFull() {
   const state = useLiveTorusReading()
   const layout = useKeyboardLayout()
+  // The pane draws the View you keep on the device (manual §21.2 View: "What the pane draws").
+  const view = torusViewOf(useHolds()[TORUS_DESIGN_ID])
   return <div className="torus-full" data-torus-full={state === null ? 'absent' : state.ok ? state.value.standing : 'refused'}>
     <div className="torus-full-ring">
-      {state === null ? <p className="torus-full-absent">{LIVE_TORUS_ABSENT_REASON}</p> : <TorusPicture state={state} size="full" />}
+      {state === null ? <p className="torus-full-absent">{LIVE_TORUS_ABSENT_REASON}</p> : <TorusPicture state={state} size="full" view={view} />}
     </div>
     <div className="torus-full-keys"><JankoDevice plate layout={layout} midi={false} /></div>
   </div>
@@ -79,7 +91,7 @@ export const torusMapWrap = (row: SdkParamRow, control: ReactNode): ReactNode =>
  * (qlRack.ts, its Rack page). The stage is
  * read from the hosted chrome as a dependency of the binding, so a stage disclosure redraws the Stage page when it comes, not with the
  * torus's next change (torusDevice.ts torusStageValues). */
-export function useTorusChainBinding(state: LiveTorusState | null, device: DeviceInstance) {
+export function useTorusChainBinding(state: LiveTorusState | null, device: DeviceInstance, follow: TorusFollow | null = null) {
   const plan = useSkyModulationPlan()
   const chrome = useHostedChrome()
   const stage = chrome?.state?.instrumentStage ?? null
@@ -112,15 +124,37 @@ export function useTorusChainBinding(state: LiveTorusState | null, device: Devic
       }
     })().catch(() => { followed.current = '' })
   }, [state, condition, table, held])
-  return useMemo(() => torusDesignBinding(state, device, skyHeldTorusKeys(plan, skyTargets(state)), stage, rack, run, held ?? {}, condition, tattvaName, table),
-    [state, device, plan, stage, rack, run, held, condition, tattvaName, table])
+  // Under Follow (manual §21.2 Lens and mode) the owner's lens and frame are kept on the clip's mode, or the set's: the owner's own lens
+  // and context-frame edits, once per target, so a refused one is not sent again until the mode, the clip or the owner's reading moves.
+  const followedMode = useRef('')
+  useEffect(() => {
+    const edits = (held ?? {})[TORUS_FOLLOW] !== false ? torusFollowEdits(state, follow) : []
+    if (!edits.length) { followedMode.current = ''; return }
+    const target = JSON.stringify(edits)
+    if (target === followedMode.current) return
+    followedMode.current = target
+    void (async () => {
+      for (const edit of edits) if (!(await commitLiveInstrumentEdit(edit)).ok) return
+    })().catch(() => { /* named on the owner's reading */ })
+  }, [state, follow, held])
+  return useMemo(() => torusDesignBinding(state, device, skyHeldTorusKeys(plan, skyTargets(state)), stage, rack, run, held ?? {}, condition, tattvaName, table,
+    undefined, undefined, follow),
+    [state, device, plan, stage, rack, run, held, condition, tattvaName, table, follow])
 }
 
 /** The torus on the chain. `tempoBpm` is the set's tempo (the transport's reading): the owner's session is kept on it, so a tempo
- * change moves the pulse under Sync (DLW §21.2 Rate), as the Delay's is kept on it (designBindings/TorusEffectsOnChain.tsx). */
-export function TorusOnChain({state, tempoBpm = null}: {state: LiveTorusState; tempoBpm?: number | null}) {
+ * change moves the pulse under Sync (DLW §21.2 Rate), as the Delay's is kept on it (designBindings/TorusEffectsOnChain.tsx).
+ * `selection` names the clip you select, which the Torus plays (§21.2 Views: "In Clip view, the Torus plays the notes of the clip that
+ * you select"), in the set at `setPath`: Follow reads its own mode from the set's owner, and the set's mode in force when it has none. */
+export function TorusOnChain({state, tempoBpm = null, selection = null, setPath = null}: {state: LiveTorusState; tempoBpm?: number | null;
+  selection?: SetSelection | null; setPath?: string | null}) {
   const device = useMemo(() => torusDevice(state), [state])
-  const binding = useTorusChainBinding(state, device)
+  const at = selection ? clipAtOf(selection) : null
+  const clip = useLiveClipWhole(at ? setPath : null, at && selection ? selection.track : null, at).clip
+  const {mode} = useLiveModeInForce()
+  const follow = useMemo(() => torusFollowed(clip, mode), [clip, mode])
+  const binding = useTorusChainBinding(state, device, follow)
+  const view = torusViewOf(useHolds()[TORUS_DESIGN_ID])
   // Once per tempo: a refused one is not sent again until the set's tempo or the owner's moves (the owner's refusal stands on its
   // reading), and an accepted one reads back equal, so nothing more is sent.
   const followedTempo = useRef<number | null>(null)
@@ -132,11 +166,11 @@ export function TorusOnChain({state, tempoBpm = null}: {state: LiveTorusState; t
     followSetTempoOnTorus(state, tempoBpm).catch(() => { /* named on the owner's reading */ })
   }, [state, tempoBpm])
   useEffect(() => {
-    publishDevice(TORUS_DEVICE_ID, {device, binding, picture: size => <TorusPicture state={state} size={size} />, full: {draw: () => <TorusFull />}})
-  }, [device, binding, state])
+    publishDevice(TORUS_DEVICE_ID, {device, binding, picture: size => <TorusPicture state={state} size={size} view={view} />, full: {draw: () => <TorusFull />}})
+  }, [device, binding, state, view])
   useEffect(() => () => publishDevice(TORUS_DEVICE_ID, null), [])
   return <div className="chain-side" data-chain-instrument={TORUS_DEVICE_ID} data-live-torus={state.ok ? state.value.standing : 'refused'}>
-    <DeviceView device={device} binding={binding} size="compact" picture={<TorusPicture state={state} size="compact" />} actions={[
+    <DeviceView device={device} binding={binding} size="compact" picture={<TorusPicture state={state} size="compact" view={view} />} actions={[
       {icon: 'detail', label: 'Show every setting in the pool', onPress: () => selectDevice(TORUS_DEVICE_ID)},
       {icon: 'pane', label: 'Open the torus full size in a pane', onPress: () => openInstrument(DEVICE_PANE_KIND, undefined, {ref: TORUS_DEVICE_ID, title: TORUS_DEVICE.title})},
     ]} wrapRow={torusMapWrap} />

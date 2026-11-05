@@ -351,7 +351,7 @@ test('a kept sound dropped on the empty track plays on a new part: the part inse
     {device_ref: 'reverb', role: 'effect', state: {on: true, size: 50, decay: 2.4, damping: 40, predelay: 20, mix: 22}},
     {device_ref: 'dynamics', role: 'effect', state: {on: false, threshold: -12, ratio: 4, attack: 1, release: 100, makeup: 2}},
     {device_ref: 'resonator', role: 'effect', state: {on: true, division: 300}}, {device_ref: 'echo', role: 'effect', state: {feedback: 0.4}}],
-    macros: [{name: 'Bloom', value: 0.5, targets: [{device_ref: 'torus', parameter: 'damping'}]}], variations: [{name: 'Open', values: [1]}, {name: 'Closed', values: [0]}]}
+    macros: [{name: 'Bloom', value: 0.5, targets: [{device_ref: 'torus', parameter: 'damping', min: 0.1, max: 40}]}], variations: [{name: 'Open', values: [1]}, {name: 'Closed', values: [0]}]}
   const rack = await seat.run(JSON.stringify({kind: 'rack', ref: 'rack:warm', sound: SOUND, rack: placing}))
   assert.deepEqual(calls, [{kind: 'track_insert', after: null},
     {kind: 'rack_place', track: 3, name: 'Warm rack', macros: [{name: 'Bloom', value: 0.5}], variations: [{name: 'Open', values: [1]}, {name: 'Closed', values: [0]}],

@@ -377,3 +377,60 @@ fn m1_gate_the_glues_range_is_heard_as_lives_renders_at_each_range() {
     }
     println!("  {gated} of {} renders gated", RANGE_RENDERS.len());
 }
+
+/// The Ratio renders (devices/glue-compressor.md D1b and D1-final): name, Threshold, Range, stored Ratio.
+const RATIO_RENDERS: [(&str, f64, f64, f64); 8] = [
+    ("D1a_R0_R30.aif", -12.0, 30.0, 0.0),
+    ("D1b_R0_R10.aif", -12.0, 10.0, 0.0),
+    ("D1c_R0_R60.aif", -12.0, 60.0, 0.0),
+    ("DF1_R0.aif", -24.0, 60.0, 0.0),
+    ("D1d_R2_R10.aif", -12.0, 10.0, 2.0),
+    ("D1e_R2_R30.aif", -12.0, 30.0, 2.0),
+    ("D1f_R2_R60.aif", -12.0, 60.0, 2.0),
+    ("DF2_R2.aif", -24.0, 60.0, 2.0),
+];
+
+/// O-I #849 round 17: a stored Glue Ratio of 0 or 2 is heard as Live renders it — its own curve (glue.rs
+/// `measured_curve_of`), under the Range's ceiling — every level step on both sides within the static tolerance (0.5 dB,
+/// stated before any render was read) of Live's render at that Ratio, Range and Threshold. Teeth: heard as Ratio 1,
+/// stored 0 reduced 8.12 dB at 0 dBFS in against Live's 10.01, stored 2 at −6 dBFS in 3.91 against 2.04.
+#[test]
+fn m1_gate_a_stored_ratio_of_0_or_2_is_heard_as_lives_renders() {
+    if !corpus_present() {
+        return;
+    }
+    let mut gated = 0;
+    for (name, threshold_db, range, ratio) in RATIO_RENDERS {
+        let Some(path) = corpus::render(name) else {
+            eprintln!("skip: Live's render {name} is not present");
+            continue;
+        };
+        let (l, r) =
+            live_dynamics::audio::read_aiff_i16_channels(&std::fs::read(path).unwrap()).unwrap();
+        let engine = render_set(Box::new(GlueDevice::new(GlueParams {
+            threshold_db,
+            range,
+            ratio,
+            makeup_db: 0.0,
+        })));
+        println!("M1 Ratio gate — {name} (Threshold {threshold_db}, Range {range}, Ratio {ratio})");
+        let side =
+            |x: &[f32], s: usize| -> Vec<f32> { x.iter().skip(s).step_by(2).copied().collect() };
+        for (which, live, ours) in [("L", &l, side(&engine, 0)), ("R", &r, side(&engine, 1))] {
+            let heard = side_steps(&live.samples, live.sample_rate);
+            for ((db, _), (got, pred)) in STEPS
+                .iter()
+                .zip(heard.into_iter().zip(side_steps(&ours, SR)))
+            {
+                let d = pred - got;
+                println!("  {which} in_peak {db:>6} dB  render {got:>8.2}  engine {pred:>8.2}  Δ {d:+.3} dB");
+                assert!(
+                    d.abs() <= verify::STATIC_TOLERANCE_DB,
+                    "{name} {which} at the {db} dB step: engine {pred:.2} vs Live's render {got:.2} dB"
+                );
+            }
+        }
+        gated += 1;
+    }
+    println!("  {gated} of {} renders gated", RATIO_RENDERS.len());
+}

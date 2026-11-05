@@ -13,7 +13,7 @@ import {readWikiSceneTechne, resolveSceneConstellation} from '../../../desktop/c
 import {relateSceneConstellation} from '../../../desktop/cradle/src/techne/sceneConstellationRelation';
 import {ensureWikiNativeExpression, publishWikiNativeRegisters, selectedWikiNativeRegister, selectWikiNativeRegister, wikiNativeRegisters} from '../../../desktop/cradle/src/techne/wikiNativeExpression';
 import {assertReading, boundedText, decideFrameAction, object, readFrameActionRequest, type ChannelContext, type ExpressionsOwners} from './protocol.ts';
-import {instrumentToKeep, keepInstrumentChange, keepSoundChange, keptInstrumentReply, keptSoundRecord, keptSoundReply, listPerformance, readFramePerformanceRequest, recallPerformanceBasis,
+import {instrumentToKeep, keepInstrumentChange, keepRackChange, keepSoundChange, keptInstrumentReply, keptRackReply, keptSoundRecord, keptSoundReply, listPerformance, rackToKeep, readFramePerformanceRequest, recallPerformanceBasis,
   refusePerformanceSave} from './performanceBasis.ts';
 
 /** Who keeps a sound in the Scene: the person, through the Expressions application's own surfaces (as nativeMaterials.ts edits). */
@@ -142,6 +142,17 @@ export function createCradleOwners(transport: KernelTransportStatus, options: Cr
       if (edited?.state === 'revision_conflict') return {state: 'refused', reason: 'The Expression changed since it was read: nothing was kept. Keep the instrument again on what stands.', missing: []};
       const kept = edited?.document?.scenes?.find(row => row.scene_ref === request.scene_ref);
       return keptInstrumentReply(kept?.performance, keeping.instrument, edited.dirty === true);
+    }
+    // The rack the Torus's rack face holds, kept under its name by one edit of the Scene's performance (DLW build ruling, 4 November).
+    if (request.action === 'keep-rack') {
+      const racking = rackToKeep(scene.performance, request.name, request.rack);
+      if ('reason' in racking) return {state: 'refused', reason: racking.reason, missing: []};
+      if (typeof document.revision !== 'number') throw Error('The native Expression reads with no revision to edit');
+      const edited = await data({op: 'expression', request: {operation: 'edit', expression_ref: request.expression_ref, expected_revision: document.revision, actor: PERFORMANCE_ACTOR,
+        changes: [keepRackChange(request.scene_ref, racking.rack)]}} as KernelOp, 'expression', context) as {state?: unknown; dirty?: unknown; document?: typeof document};
+      if (edited?.state === 'revision_conflict') return {state: 'refused', reason: 'The Expression changed since it was read: nothing was kept. Keep the rack again on what stands.', missing: []};
+      const kept = edited?.document?.scenes?.find(row => row.scene_ref === request.scene_ref);
+      return keptRackReply(kept?.performance, racking.rack, edited.dirty === true);
     }
     return recallPerformanceBasis(bases, request.basis_ref);
   };

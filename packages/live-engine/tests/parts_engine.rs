@@ -528,7 +528,7 @@ fn export_renders_the_samples_the_engine_played() {
                 send(
                     &mut handle,
                     EngineEvent::Send {
-                        track: 1,
+                        part: Part::Track(1),
                         send: 0,
                         gain: 0.7,
                     },
@@ -550,7 +550,13 @@ fn export_renders_the_samples_the_engine_played() {
                 },
             ),
             7 => send(&mut handle, EngineEvent::NoteOff { track: 1, key: 36 }),
-            8 => send(&mut handle, EngineEvent::Solo { track: 1, on: true }),
+            8 => send(
+                &mut handle,
+                EngineEvent::Solo {
+                    part: Part::Track(1),
+                    on: true,
+                },
+            ),
             9 => send(
                 &mut handle,
                 EngineEvent::Volume {
@@ -568,7 +574,7 @@ fn export_renders_the_samples_the_engine_played() {
             11 => send(
                 &mut handle,
                 EngineEvent::Solo {
-                    track: 1,
+                    part: Part::Track(1),
                     on: false,
                 },
             ),
@@ -630,7 +636,7 @@ fn the_engine_refuses_what_the_set_does_not_have_in_words() {
     }))
     .contains("no part 9"));
     assert!(invalid(handle.send(EngineEvent::Send {
-        track: 0,
+        part: Part::Track(0),
         send: 3,
         gain: 0.5
     }))
@@ -1334,6 +1340,55 @@ fn a_room_put_again_while_it_rings_keeps_its_tail_and_one_made_again_rings_the_l
     );
 }
 
+/// O-I #849 round 17: a room two rebuilds back that is still fading is kept, fading on where it was, not dropped. The
+/// burst rings room A; over silence it is made again for B, the next block for C (A, still ringing then, begins its
+/// 15 ms fade), and the block after for D while A still fades: D adds nothing to silence, so what is played is what
+/// stopping at C plays, sample for sample. Teeth: dropped, A's fade is cut to nothing at D, 464 frames early.
+#[test]
+fn a_room_two_rebuilds_back_still_fading_fades_on_where_it_was() {
+    let rebuilt = |rooms: &[(f64, f64, f64)]| {
+        let mut g = Graph::new(SR, 120.0);
+        g.tracks
+            .push(Track::midi("Keys", Box::new(Burst::default())));
+        let (mut core, mut handle) = engine(g).unwrap();
+        handle
+            .install_rack(0, vec![room(50.0, 2.0, 40.0, 0.0, 100.0)])
+            .unwrap();
+        handle
+            .send(EngineEvent::NoteOn {
+                track: 0,
+                key: 69,
+                velocity: 1.0,
+            })
+            .unwrap();
+        let mut rooms = rooms.iter();
+        let mut block = vec![0f32; 256 * 2];
+        let mut played = Vec::new();
+        for b in 0..60 {
+            if b >= 40 {
+                if let Some(&(size, decay, damping)) = rooms.next() {
+                    handle.collect();
+                    handle
+                        .install_rack(0, vec![room(size, decay, damping, 0.0, 100.0)])
+                        .unwrap();
+                }
+            }
+            core.pull_block(&mut block);
+            played.extend_from_slice(&block);
+        }
+        played
+    };
+    let (b, c, d) = ((80.0, 6.0, 10.0), (20.0, 1.0, 70.0), (60.0, 3.0, 30.0));
+    let at_c = rebuilt(&[b, c]);
+    let at_d = rebuilt(&[b, c, d]);
+    let from_d = 42 * 256 * 2;
+    assert!(
+        energy(&at_c[from_d..from_d + 2 * 464]) > 1e-9,
+        "room A still fades when D is made"
+    );
+    assert_eq!(at_d, at_c, "A fades on where it was when D is made");
+}
+
 /// O-I #849 round 16: a room made again while sound goes into it takes that sound over a crossfade, the last
 /// room taking less and less of it and ringing out, so nothing jumps.
 #[test]
@@ -1841,6 +1896,119 @@ fn a_group_track_is_a_bus_what_stands_in_it_sounds_through_its_chain_and_row() {
     );
 }
 
+/// O-I #849 round 17: a group's solo and its sends are followed while it plays, as a part's are. Outer soloed from
+/// the next block, what stands in it sounds and C does not; Inner's send moved to nothing, the return hears nothing
+/// of it; Outer's solo off, every part sounds again; Export renders it as played. A solo or a send of a return or
+/// the Main track, and a send a group does not have, are refused in words.
+#[test]
+fn a_groups_solo_and_sends_are_followed_while_it_plays_and_export_as_played() {
+    use live_engine::GroupTrack;
+    let build = || {
+        let mut g = Graph::new(SR, 120.0);
+        let mut a = constant_part("A", 0.25, 4096);
+        a.group = Some(0);
+        let mut b = constant_part("B", 0.125, 4096);
+        b.group = Some(1);
+        let c = constant_part("C", 0.0625, 4096);
+        g.tracks = vec![a, b, c];
+        let mut outer = GroupTrack::new("Outer");
+        outer.gain = 0.5;
+        let mut inner = GroupTrack::new("Inner");
+        inner.group = Some(0);
+        inner.sends = vec![0.5];
+        g.groups = vec![outer, inner];
+        g.returns.push(ReturnTrack::new("A"));
+        g.solo_in_place = true;
+        g
+    };
+    let (mut core, mut handle) = engine(build()).unwrap();
+    let mut played = Vec::new();
+    let block = |core: &mut live_engine::EngineCore, played: &mut Vec<f32>| {
+        let mut out = vec![0f32; 2];
+        core.pull_block(&mut out);
+        played.extend_from_slice(&out);
+        (f64::from(out[0]), f64::from(out[1]))
+    };
+    let near = |got: (f64, f64), want: f64, what: &str| {
+        assert!(
+            (got.0 - want).abs() < 1e-6 && (got.1 - want).abs() < 1e-6,
+            "{what}: {got:?}, not {want}"
+        );
+    };
+    let (outer, ret) = ((0.25 + 0.125) * 0.5, 0.125 * 0.5);
+    near(
+        block(&mut core, &mut played),
+        0.0625 + outer + ret,
+        "every part",
+    );
+    handle
+        .send(EngineEvent::Solo {
+            part: Part::Group(0),
+            on: true,
+        })
+        .unwrap();
+    near(block(&mut core, &mut played), outer + ret, "Outer soloed");
+    handle
+        .send(EngineEvent::Send {
+            part: Part::Group(1),
+            send: 0,
+            gain: 0.0,
+        })
+        .unwrap();
+    near(block(&mut core, &mut played), outer, "Inner sends nothing");
+    handle
+        .send(EngineEvent::Solo {
+            part: Part::Group(0),
+            on: false,
+        })
+        .unwrap();
+    near(
+        block(&mut core, &mut played),
+        0.0625 + outer,
+        "Outer's solo off",
+    );
+    handle.collect();
+    assert!(!handle.mixer().groups[0].solo);
+    assert_eq!(handle.mixer().groups[1].sends, vec![0.0]);
+    let exported = build().render_performance(SR, &handle.performance());
+    assert_eq!(&exported[..played.len()], &played[..], "exported as played");
+    for (event, words) in [
+        (
+            EngineEvent::Solo {
+                part: Part::Return(0),
+                on: true,
+            },
+            "return 0 has no solo and no sends",
+        ),
+        (
+            EngineEvent::Send {
+                part: Part::Main,
+                send: 0,
+                gain: 0.5,
+            },
+            "the Main track has no solo and no sends",
+        ),
+        (
+            EngineEvent::Send {
+                part: Part::Group(1),
+                send: 2,
+                gain: 0.5,
+            },
+            "'Inner' has 1 sends: there is no send 2",
+        ),
+        (
+            EngineEvent::Solo {
+                part: Part::Group(5),
+                on: true,
+            },
+            "the set has no group 5 (it has 2)",
+        ),
+    ] {
+        let refused = handle.send(event).unwrap_err().to_string();
+        assert!(refused.contains(words), "{refused}");
+    }
+}
+
 /// O-I #853: a MIDI part's pitch bend reaches its instrument while it plays. The engine's Operator bends every voice it
 /// sounds by MIDI's default range, two semitones each way, from the next block, its phase going on unbroken, and back;
 /// Export renders it as played. What an instrument does not take (Operator's channel pressure), a bend beyond its range
@@ -1963,5 +2131,298 @@ fn a_parts_pitch_bend_bends_its_operator_from_the_next_block_and_exports_as_play
     assert!(
         words.contains("'Tone' is an audio part: it plays no notes"),
         "{words}"
+    );
+}
+
+/// A mono part of `frames` samples of a 220 Hz sine at `amp`, through `chain`.
+fn sine_part(amp: f32, frames: usize, chain: Vec<Box<dyn Device>>) -> Track {
+    let mut t = Track::new("Drums", 1);
+    let w = 2.0 * std::f32::consts::PI * 220.0 / SR as f32;
+    t.source = (0..frames).map(|i| amp * (w * i as f32).sin()).collect();
+    t.devices = chain;
+    t
+}
+
+/// A mono part of `frames` samples, a 64-frame burst at its start and silence after it, through `chain`.
+fn burst_part(frames: usize, chain: Vec<Box<dyn Device>>) -> Track {
+    let mut t = Track::new("Drums", 1);
+    t.source = (0..frames)
+        .map(|i| if i < 64 { 0.5 } else { 0.0 })
+        .collect();
+    t.devices = chain;
+    t
+}
+
+type MadeAgain = Vec<(Part, usize, Box<dyn Device>)>;
+/// What a run played, its performance, and the devices it made again as (frame, count).
+type Played = (Vec<f32>, Performance, Vec<(u64, u64)>);
+/// A device of one kind made at a setting.
+type MadeAt<'a> = &'a dyn Fn(f64) -> Box<dyn Device>;
+
+/// `build`'s graph played 256 frames a block for `blocks`, the devices `made` makes again put there at block
+/// `at_block`: what it played, its performance, and the devices it made again as (frame, count).
+fn made_again_run(
+    build: &dyn Fn() -> Graph,
+    made: &dyn Fn() -> MadeAgain,
+    at_block: usize,
+    blocks: usize,
+) -> Played {
+    let (mut core, mut handle) = engine(build()).unwrap();
+    let mut block = vec![0f32; 256 * 2];
+    let mut played = Vec::new();
+    for b in 0..blocks {
+        if b == at_block {
+            for (part, at, device) in made() {
+                handle.make_again(part, at, device).unwrap();
+            }
+        }
+        core.pull_block(&mut block);
+        played.extend_from_slice(&block);
+        if b % 5 == 0 {
+            handle.collect();
+        }
+    }
+    handle.collect();
+    (played, handle.performance(), handle.remade().to_vec())
+}
+
+fn glue(threshold_db: f64, makeup_db: f64) -> Box<dyn Device> {
+    Box::new(GlueDevice::new(GlueParams {
+        threshold_db,
+        range: 30.0,
+        ratio: 1.0,
+        makeup_db,
+    }))
+}
+
+fn echo(feedback: f64, dry_wet: f64) -> Box<dyn Device> {
+    Box::new(EchoDevice::new(EchoParams {
+        delay_time_s: 0.05,
+        feedback,
+        dry_wet,
+    }))
+}
+
+fn reverb(decay_ms: f64) -> Box<dyn Device> {
+    Box::new(live_engine::ReverbDevice::partitioned(
+        live_dynamics::reverb::ReverbParams { decay_ms },
+        1.0,
+    ))
+}
+
+/// O-I #849 round 17: a set's device edited while it plays is made again from what the set now stores and takes its
+/// place on its part's chain (or the Main track's) at the next block's first frame: heard from that block, nothing
+/// changed before it, and Export renders what was played. What is not there is refused in words.
+#[test]
+fn a_chain_device_made_again_while_it_plays_is_heard_from_its_block_and_exports_as_played() {
+    let frames = 60 * 256;
+    let build = || {
+        let mut g = Graph::new(SR, 120.0);
+        g.tracks.push(sine_part(
+            0.9,
+            frames,
+            vec![glue(-30.0, 0.0), echo(0.5, 0.5), reverb(1200.0)],
+        ));
+        g.master.devices.push(glue(-20.0, 0.0));
+        g
+    };
+    let made = || -> MadeAgain {
+        vec![
+            (Part::Track(0), 0, glue(-30.0, 1.0)),
+            (Part::Track(0), 1, echo(0.5, 0.8)),
+            (Part::Track(0), 2, reverb(2400.0)),
+            (Part::Main, 0, glue(-10.0, 0.0)),
+        ]
+    };
+    let (still, ..) = made_again_run(&build, &Vec::new, 30, 60);
+    let (played, perf, remade) = made_again_run(&build, &made, 30, 60);
+    let at = 30 * 256;
+    assert_eq!(
+        remade,
+        [
+            (at as u64, 1),
+            (at as u64, 2),
+            (at as u64, 3),
+            (at as u64, 4)
+        ],
+        "each taken at its block's first frame"
+    );
+    assert_eq!(
+        played[..2 * at],
+        still[..2 * at],
+        "before its block, nothing changed"
+    );
+    assert_ne!(
+        played[2 * at..2 * at + 512],
+        still[2 * at..2 * at + 512],
+        "heard from its block"
+    );
+    let exported = build().render_performance_remade(
+        SR,
+        &perf,
+        Vec::new(),
+        Vec::new(),
+        made()
+            .into_iter()
+            .map(|(part, place, device)| (at as u64, part, place, device))
+            .collect(),
+    );
+    assert_eq!(exported.len(), played.len());
+    for (n, (e, p)) in exported.iter().zip(&played).enumerate() {
+        assert_eq!(
+            e.to_bits(),
+            p.to_bits(),
+            "sample {n}: Export is what was played"
+        );
+    }
+    assert_ne!(
+        build().render_performance(SR, &perf),
+        played,
+        "without the devices made again, Export would not render what was played"
+    );
+    let (_, mut handle) = engine(build()).unwrap();
+    for (part, place, words) in [
+        (
+            Part::Track(0),
+            3,
+            "'Drums' holds 3 devices on its chain: there is no device 3",
+        ),
+        (Part::Track(4), 0, "the set has no part 4 (it has 1)"),
+        (Part::Return(0), 0, "the set has no return 0 (it has 0)"),
+        (Part::Group(1), 0, "the set has no group 1 (it has 0)"),
+    ] {
+        assert_eq!(
+            handle.make_again(part, place, glue(-30.0, 0.0)),
+            Err(Refusal::Invalid(words.into())),
+            "{part:?} {place}"
+        );
+    }
+}
+
+/// O-I #849 round 17: one made again for a place before the engine took the last gives way to it; those for other places
+/// wait with it, and both stand.
+#[test]
+fn a_device_made_again_twice_before_its_block_stands_as_the_later_and_another_waits_with_it() {
+    let build = || {
+        let mut g = Graph::new(SR, 120.0);
+        g.tracks
+            .push(sine_part(0.9, 20 * 256, vec![glue(-30.0, 0.0)]));
+        g.master.devices.push(glue(-20.0, 0.0));
+        g
+    };
+    let made = || -> MadeAgain {
+        vec![
+            (Part::Track(0), 0, glue(-30.0, 1.0)),
+            (Part::Main, 0, glue(-10.0, 0.0)),
+            (Part::Track(0), 0, glue(-30.0, 2.0)),
+        ]
+    };
+    let (played, perf, remade) = made_again_run(&build, &made, 10, 20);
+    let at = 10 * 256u64;
+    assert_eq!(
+        remade,
+        [(at, 2), (at, 3)],
+        "the first gave way; Main's waited with the later"
+    );
+    let exported = build().render_performance_remade(
+        SR,
+        &perf,
+        Vec::new(),
+        Vec::new(),
+        vec![
+            (at, Part::Main, 0, glue(-10.0, 0.0)),
+            (at, Part::Track(0), 0, glue(-30.0, 2.0)),
+        ],
+    );
+    assert!(exported == played, "it sounds as the later alone");
+}
+
+/// O-I #849 round 17: a device made again for an edit sounds on from where the one it replaces stood: a Glue's and a
+/// Compressor's gain move on from the reduction they stood at (so a makeup edit moves the sound by the makeup alone), an
+/// Echo's repeats of what was played before ring on at its new settings, and a Reverb's room rings its tail out.
+#[test]
+fn a_device_made_again_sounds_on_from_where_the_one_it_replaces_stood() {
+    let at = 30 * 256;
+    let one_db = 10f64.powf(1.0 / 20.0);
+    // the ratio of the moved part's left side to the still one's over `window` frames from the edit
+    let ratio = |moved: &[f32], still: &[f32], window: std::ops::Range<usize>| -> f64 {
+        let side = |x: &[f32]| -> f64 {
+            window
+                .clone()
+                .map(|i| f64::from(x[2 * (at + i)]).powi(2))
+                .sum::<f64>()
+        };
+        (side(moved) / side(still)).sqrt()
+    };
+    let compressor = |gain: f64| -> Box<dyn Device> {
+        let mut p = live_dynamics::compressor::DEFAULTS;
+        p.gain = gain;
+        Box::new(live_engine::CompressorDevice::new(p))
+    };
+    let gains: [(&str, MadeAt); 2] = [
+        ("Glue", &|db| glue(-30.0, db)),
+        ("Compressor", &|db| compressor(3.0 + db)),
+    ];
+    for (name, made_at) in gains {
+        let build = || {
+            let mut g = Graph::new(SR, 120.0);
+            g.tracks.push(sine_part(0.9, 60 * 256, vec![made_at(0.0)]));
+            g
+        };
+        let (still, ..) = made_again_run(&build, &Vec::new, 30, 60);
+        let made = || vec![(Part::Track(0), 0, made_at(1.0))];
+        let (moved, ..) = made_again_run(&build, &made, 30, 60);
+        let r = ratio(&moved, &still, 0..512);
+        assert!(
+            (r - one_db).abs() < 0.005 * one_db,
+            "{name}: made again with 1 dB more makeup, its sound moved by {r} (1 dB is {one_db}): its gain started afresh"
+        );
+    }
+    // an Echo's line: of the same length (another dry/wet) taken whole, of another (another feedback) copied
+    let burst = |made_at: &'static dyn Fn() -> Box<dyn Device>| {
+        move || {
+            let mut g = Graph::new(SR, 120.0);
+            g.tracks.push(burst_part(60 * 256, vec![made_at()]));
+            g
+        }
+    };
+    let (still, ..) = made_again_run(&burst(&|| echo(0.5, 0.5)), &Vec::new, 30, 60);
+    let hop = 2400;
+    for (feedback, dry_wet, want) in [(0.5, 0.8, 0.8 / 0.5), (0.7, 0.5, 0.49 / 0.25)] {
+        let made = move || vec![(Part::Track(0), 0, echo(feedback, dry_wet))];
+        let (moved, ..) = made_again_run(&burst(&|| echo(0.5, 0.5)), &made, 30, 60);
+        // the burst's fourth repeat (4 hops on, its right side) and its fifth (its left), after the edit
+        for (tap, side) in [(4usize, 1usize), (5, 0)] {
+            let from = tap * hop;
+            let level = |x: &[f32]| -> f64 {
+                (from..from + 64)
+                    .map(|i| f64::from(x[2 * i + side]).powi(2))
+                    .sum::<f64>()
+                    .sqrt()
+            };
+            let want = if tap == 5 && feedback == 0.7 {
+                0.343 / 0.125
+            } else {
+                want
+            };
+            let r = level(&moved) / level(&still);
+            assert!(
+                (r - want).abs() < 1e-3 * want,
+                "Echo made again at feedback {feedback} and dry/wet {dry_wet}: repeat {tap} came out at {r} of the still one's, not {want}: its line started empty"
+            );
+        }
+    }
+    // a Reverb's room: the burst's tail rings on after the edit, the new room hearing the silence after it
+    let (still, ..) = made_again_run(&burst(&|| reverb(1200.0)), &Vec::new, 30, 60);
+    let made = || vec![(Part::Track(0), 0, reverb(2400.0))];
+    let (moved, ..) = made_again_run(&burst(&|| reverb(1200.0)), &made, 30, 60);
+    let tail = energy(&still[2 * at..2 * (at + 4096)]);
+    assert!(
+        tail > 1e-6,
+        "the burst's tail still rings at the edit: {tail}"
+    );
+    assert!(
+        moved[2 * at..] == still[2 * at..],
+        "the last room rang its tail out whole, as if never made again"
     );
 }

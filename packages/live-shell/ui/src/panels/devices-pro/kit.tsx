@@ -14,6 +14,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import type { SetSummary } from '../../shell/useSet'
+import { followDeviceInEngine } from '../../live/liveEngine'
 import {
   deviceDescriptors,
   fetchDeviceParams,
@@ -166,6 +167,13 @@ export function useDeviceEdit(
             if (sendSeq.current[paramId] !== seq) return // a newer edit superseded it
             setValues((v) => ({ ...v, [paramId]: res.value }))
             setStatus((s) => ({ ...s, [paramId]: 'saved' }))
+            // while the engine plays the set, the device is made again there from what the set now stores (O-I #849 round 17);
+            // the set keeps the value, and the engine's refusal stands on the control
+            followDeviceInEngine(set.path, track, elementName).catch((e: unknown) => {
+              if (sendSeq.current[paramId] !== seq) return
+              setStatus((s) => ({ ...s, [paramId]: 'error' }))
+              setStatusMsg((m) => ({ ...m, [paramId]: e instanceof Error ? e.message : String(e) }))
+            })
           },
           (e: unknown) => {
             if (sendSeq.current[paramId] !== seq) return

@@ -30,6 +30,8 @@ const FACES = ['Ground', 'Definition', 'Operation', 'Pattern', 'Context', 'Synth
 const AT: Record<number, [number, number]> = {2: [1, 0], 4: [0, 1], 0: [1, 1], 1: [2, 1], 5: [3, 1], 3: [1, 2]}
 const SOURCES = [['src_central', 'Central'], ['src_factory', 'Factory'], ['src_expressions', 'Expr.'], ['src_techne', 'Technē'], ['src_live', 'Live']] as const
 /** A bound of the day, as Central reports it: a clock time; below zero, no Day opens by itself. Absent: "—". */
+/** A bound's standing while no owner reports it, so its readout says why; a bound that is read stands plain (O-I 772). */
+const unreadWhy = (p: ViewProps, key: string) => (has(p.v, key) ? {} : st(p, key))
 const bound = (v: ViewProps['v'], key: string) => { const x = numOf(v, key); return x === undefined ? undefined : x < 0 ? 'Off' : clock(x) }
 
 /** The five moves, in the order the faces read (manual §18.2 Moves). `face` is the face the move fills; `press` the key its pad
@@ -170,8 +172,8 @@ function Whole({p}: {p: ViewProps}) {
     <Band>
       {/* The day's bounds are Central's readings: no hours are set on the Day (§18.2). */}
       <Section label="Bounds" width={92}>
-        <Readout label="opens tomorrow" does="When tomorrow's Day opens beside today's, as Central keeps it. Off: no Day opens by itself." value={bound(p.v, 'rollover')} />
-        <Readout label="closes" does="When tomorrow becomes today and today closes: Central's civil day. The close routine runs by itself then." value={bound(p.v, 'dayStart')} />
+        <Readout {...unreadWhy(p, 'rollover')} label="opens tomorrow" does="When tomorrow's Day opens beside today's, as Central keeps it. Off: no Day opens by itself." value={bound(p.v, 'rollover')} />
+        <Readout {...unreadWhy(p, 'dayStart')} label="closes" does="When tomorrow becomes today and today closes: Central's civil day. The close routine runs by itself then." value={bound(p.v, 'dayStart')} />
       </Section>
       <Section label="Faces" cols={2} width={150}>
         <Dial label="Face" does="Turns the die to this face." value={numOf(p.v, 'face') ?? NaN} def={0} scale={{min: 0, max: 5, step: 1}} format={f => FACES[f]!} onChange={x => p.set('face', x)} />

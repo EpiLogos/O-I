@@ -91,8 +91,7 @@ export const HYGIENE_WIRING: DesignWiring = {
 
 export const IMPACT_WIRING: DesignWiring = {
   design: IMPACT_DESIGN,
-  keys: ['light', 'pin', 'depth', 'relation', 'show:references', 'show:links', 'show:sessions', 'closed', 'subject', 'nodes', 'edges', 'references', 'sessions', 'refusal:graph',
-    'meaning', 'meaningRead'],
+  keys: ['light', 'pin', 'depth', 'relation', 'show:references', 'show:links', 'show:sessions', 'closed', 'subject', 'nodes', 'edges', 'references', 'sessions', 'refusal:graph'],
   reads: {
     light: 'the neighbourhood stands: lit when a leg answered, dark when every leg refused', subject: 'the browser\'s selected folder, note or Day (or the pinned one)',
     nodes: 'the graph owner\'s one-hop cut of the subject (op graph; centralImpactModel.ts projectNeighbourhood)', edges: 'the same cut\'s edges, direct and indirect',
@@ -105,9 +104,10 @@ export const IMPACT_WIRING: DesignWiring = {
     relation: 'which kind of link the device lists', 'show:references': 'which lists the device draws', 'show:links': 'which lists the device draws',
     'show:sessions': 'which lists the device draws', closed: 'whether closed sessions are listed (Open only by default)',
   },
-  // The Meaning page (D-package; manual §18.6): AIKit's project reflection, read by `aikit knowledge frame <subject>`, has no kernel op.
-  refused: {meaningRead: 'Read now (Meaning): missing op — `aikit knowledge frame <subject>` (aikit.project-reflection/v1) has no kernel route; the kernel\'s knowledge requests are status, search, resolve, read, relations, explain, history and use (T-COVERAGE §1.2).'},
-  absent: {meaning: 'Meaning: missing op — AIKit\'s project reflection (`aikit knowledge frame <subject>`, aikit.project-reflection/v1) has no kernel route yet (T-COVERAGE §1.2); nothing reads whether the code still says what the product means.'},
+  // No Meaning page here: Meaning is Docs' (manual §18.6), read through the project's reflection laws (pageBindings.ts, the kernel's
+  // reflection-laws and reflection-verify routes), so this wiring names none (O-I 772).
+  refused: {},
+  absent: {},
 }
 
 /** Which of the census's rings a source was read for (the design's own RING_OP). */

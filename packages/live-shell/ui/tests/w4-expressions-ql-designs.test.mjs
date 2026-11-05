@@ -667,9 +667,11 @@ test('(d) the Binding skin and the M′ matrices are admitted where §22 and §1
 test('the Torus on Live\'s chain reads the stage the frame announces as a dependency of its binding, so a disclosure redraws the Stage page when it comes', () => {
   const source = read('live/TorusOnChain.tsx')
   assert.match(source, /const stage = chrome\?\.state\?\.instrumentStage \?\? null\n\s*const run = chrome\?\.run \?\? null\n\s*const rack = useQlRack\(1\)/)
-  assert.match(source, /return useMemo\(\(\) => torusDesignBinding\(state, device, skyHeldTorusKeys\(plan, skyTargets\(state\)\), stage, rack, run, held \?\? \{\}, condition, tattvaName, table\),\n\s*\[state, device, plan, stage, rack, run, held, condition, tattvaName, table\]\)/,
-    'the stage, the frame\'s runner, M1′\'s rack, the Stage page\'s holds, the announced condition with its map name and M2\'s body constants are dependencies of the binding')
-  assert.match(source, /const binding = useTorusChainBinding\(state, device\)/)
+  // REPLACED (lane BA, round 864, #850 Lens and mode Follow): the clip's or the set's mode the Torus follows is the binding's last
+  // argument and a dependency beside the rest, and the chain hands it in.
+  assert.match(source, /return useMemo\(\(\) => torusDesignBinding\(state, device, skyHeldTorusKeys\(plan, skyTargets\(state\)\), stage, rack, run, held \?\? \{\}, condition, tattvaName, table,\n\s*undefined, undefined, follow\),\n\s*\[state, device, plan, stage, rack, run, held, condition, tattvaName, table, follow\]\)/,
+    'the stage, the frame\'s runner, M1′\'s rack, the Stage page\'s holds, the announced condition with its map name, M2\'s body constants and the mode it follows are dependencies of the binding')
+  assert.match(source, /const binding = useTorusChainBinding\(state, device, follow\)/)
   const stage = slots => readFrameStage({subject: 'ql:subject:live', generation: 7, stale: false, slots, bindings: []})
   const device = torusDevice.torusDevice(null)
   let seen = null

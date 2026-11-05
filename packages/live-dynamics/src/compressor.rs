@@ -637,6 +637,19 @@ impl CompressorModel {
         }
     }
 
+    /// Take `was`'s running state as it stands (O-I #849 round 17: a Compressor made again for an edit sounds on from
+    /// where it stood): its two detector stages, its last reduction, and its look-ahead ring with where it writes next
+    /// (the ring's capacity is the rate's alone, so one at the same rate holds as many slots). At another rate nothing
+    /// is taken. Allocation-free.
+    pub fn carry_from(&mut self, was: &mut CompressorModel) {
+        if was.sample_rate != self.sample_rate || was.ring_cap != self.ring_cap {
+            return;
+        }
+        (self.stage1, self.stage2, self.reduction) = (was.stage1, was.stage2, was.reduction);
+        std::mem::swap(&mut self.ring, &mut was.ring);
+        self.ring_write = was.ring_write;
+    }
+
     /// Process one sample pair. Sidechain input aliasing: ExtInOn=false
     /// aliases the sidechain pointers to the main inputs [H, §4] — the only
     /// captured topology (`bool=false`) — so the detector reads the main

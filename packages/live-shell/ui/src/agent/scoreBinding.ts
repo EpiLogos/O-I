@@ -613,12 +613,15 @@ export async function readComposeMap(call: PlanCall, from: string | null | undef
   return {state: 'read', reading: data}
 }
 
-/** The ask's words for a map: one unit per open ticket, keyed and ordered as the map gives them, its parts the ticket's. Pure. */
+/** The ask's words for a map: one unit per open ticket, keyed and ordered as the map gives them, its parts the ticket's. The prose names
+ * how many tickets and waves; the keys stand only in the ask's JSON block, so a map of any size reads in a paragraph. Pure. */
 function mapWordsOf(map: ComposeMap | null): string[] {
   if (map?.state !== 'read') return map ? [`No map gives this song its units (${map.why}): compose them from the Intent.`, ''] : []
   const head = object(map.reading.map) ?? {}
-  const keys = list(map.reading.units).map(object).map(unit => text(unit?.key)).filter((key): key is string => !!key)
-  return [`The song answers to the map ${text(head.ticket) ?? '—'} (${text(head.title) ?? 'untitled'}): give each of its ${keys.length} open ticket${keys.length === 1 ? '' : 's'} one unit with \`unit\`, keyed as the map keys it (${keys.join(', ')}) and waiting on the tickets that block it (blockedBy).`,
+  const tickets = list(map.reading.units).length
+  const sizes = list(map.reading.waves).map(wave => list(object(wave)?.units).length)
+  const each = sizes.length > 1 ? `${sizes.slice(0, -1).join(', ')} and ${sizes[sizes.length - 1]}` : String(sizes[0] ?? 0)
+  return [`The song answers to the map ${text(head.ticket) ?? '—'} (${text(head.title) ?? 'untitled'}): give each of its ${tickets} open ticket${tickets === 1 ? '' : 's'} one unit with \`unit\`, in its ${sizes.length} wave${sizes.length === 1 ? '' : 's'} (${each} ticket${sizes.length === 1 && sizes[0] === 1 ? '' : 's'}), keyed as the map keys it and waiting on the tickets that block it (blockedBy); the tickets, their keys and their waves stand in the JSON block below.`,
     'Read each ticket: its Question is what the unit is for, its Context the unit\'s sources, its Done when the unit\'s success conditions, its Writes what the unit may change, and its claim the row the unit stands on.',
     'A blocker outside the map (waitsOutside) is no unit of this song, so no unit waits on it.', '']
 }

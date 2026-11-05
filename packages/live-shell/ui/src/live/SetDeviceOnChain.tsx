@@ -12,6 +12,7 @@ import {deviceDescriptors, fetchDeviceParams, postDeviceParam, type ParamDescJso
 import {displayDeviceName, type SetParameter} from '../shell/document'
 import type {SetSummary} from '../shell/useSet'
 import {trackDeviceFaceTitle} from './liveChain'
+import {followDeviceInEngine} from './liveEngine'
 import {setDeviceFaced, setDeviceId, setDeviceReading} from './liveChainDevices'
 import {usePublishedDevice} from './usePublishedDevice'
 import {SetDevicePicture, setValueMarks} from './SetDevicePicture'
@@ -50,6 +51,8 @@ function useFacedDevice(set: SetSummary, track: string, elementName: string, fac
   const write = useCallback(async (paramId: string, value: number | boolean) => {
     const persisted = await postDeviceParam(set.path, track, elementName, paramId, value)
     setStored(previous => ({...previous, values: {...previous.values, [paramId]: persisted.value}}))
+    // while the engine plays the set, the device is made again there from what the set now stores (O-I 849, round 17)
+    await followDeviceInEngine(set.path, track, elementName)
   }, [set.path, track, elementName])
   return {descriptors: table?.rows ?? null, stored: stored.values, fault: table?.fault ?? stored.fault, write}
 }

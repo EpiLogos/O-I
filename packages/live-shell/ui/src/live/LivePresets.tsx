@@ -7,7 +7,7 @@
 import {useEffect, useState} from 'react'
 import {registerPanel} from '../shell/panels'
 import type {InstrumentEdit, PerformanceAction, PerformanceBasisSummary, PerformanceReply, StageCommand, StageResult, StageSoundMove, StageTorusSound,
-  TorusKeptSummary} from '@epilogos/expressions-boundary'
+  TorusKeptSummary, TorusRackDraft} from '@epilogos/expressions-boundary'
 import type {WorldActionReceipt} from '../timeline/worldTrackAdapter'
 import {commitLiveInstrumentEdit, commitLiveStage} from './torusInstrument'
 import './liveInstrumentSection.css'
@@ -36,6 +36,8 @@ export async function commitLivePerformance(action: PerformanceAction): Promise<
   if (row?.state === 'kept' && typeof row.sound_ref === 'string' && typeof row.name === 'string' && typeof row.unsaved === 'boolean') return reply as PerformanceReply
   if (row?.state === 'instrument-kept' && typeof row.instrument_ref === 'string' && typeof row.name === 'string' && typeof row.sounds === 'number'
     && typeof row.unsaved === 'boolean') return reply as PerformanceReply
+  if (row?.state === 'rack-kept' && typeof row.rack_ref === 'string' && typeof row.name === 'string' && typeof row.macros === 'number'
+    && typeof row.variations === 'number' && typeof row.unsaved === 'boolean') return reply as PerformanceReply
   return REFUSED('The owner answered the preset request in an unknown shape')
 }
 
@@ -109,6 +111,26 @@ export async function keepTorusInstrument(name: string, soundRef: string, owners
   for (const listener of [...keptListeners]) listener(kept.kept)
   const made = kept.sounds === 1 ? 'the sound' : `the ${kept.sounds} sounds`
   return {ok: true, words: `Kept "${kept.name}" under the Torus: its body, with ${made} made on it.${kept.unsaved ? UNTIL_SAVED : ''}`}
+}
+
+const counted = (n: number, one: string) => `${n} ${one}${n === 1 ? '' : 's'}`
+/** Keep the rack the Torus's rack face holds under `name` (DLW build ruling, 4 November; manual §21.2 Sounds and instruments: "A rack | The
+ * Torus with its note devices and effects, its macros and their variations"): the Torus as it rings is saved as the sound the rack opens
+ * with (saveTorusSound, under the rack's name), then the Scene keeps the rack, its chain, its macros each with its range, and its
+ * variations (the performance's keep-rack); it stands in the browser as a rack, and its drop places it on a part. Settles with the words,
+ * or the owners' refusal; a Torus that could not be saved keeps no rack. */
+export async function keepTorusRack(name: string, face: Omit<TorusRackDraft, 'sound'>, owners: LiveSoundOwners = SOUND_OWNERS): Promise<{ok: true; words: string} | {ok: false; error: string}> {
+  const named = name.trim()
+  if (!named) return {ok: false, error: 'Name the rack first: the browser lists it by its name.'}
+  const saved = await saveTorusSound(named, owners)
+  if (!saved.ok) return saved
+  const kept = await owners.perform({action: 'keep-rack', name: named, rack: {sound: saved.sound_ref, ...face}})
+  if (kept.state === 'refused') return {ok: false, error: kept.reason}
+  if (kept.state !== 'rack-kept') return {ok: false, error: 'The Scene answered the keep in another shape'}
+  for (const listener of [...keptListeners]) listener(kept.kept)
+  const notes = face.chain.filter(device => device.role === 'note').length, effects = face.chain.length - notes
+  const chain = face.chain.length ? `${[notes ? counted(notes, 'note device') : '', effects ? counted(effects, 'effect') : ''].filter(Boolean).join(' and ')} on its chain` : 'nothing else on its chain'
+  return {ok: true, words: `Kept "${kept.name}" in the browser as a rack: the Torus as it rings, ${chain}, ${counted(kept.macros, 'macro')} and ${counted(kept.variations, 'variation')}.${kept.unsaved ? UNTIL_SAVED : ''}`}
 }
 
 const movedWords = (name: string, moved: readonly StageSoundMove[]) => moved.length

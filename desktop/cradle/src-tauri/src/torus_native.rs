@@ -1234,6 +1234,163 @@ mod tests {
         std::fs::remove_dir_all(dir).unwrap();
     }
 
+    /// O-I #856 end to end (QL-MEF #289 packet N), on QL's real companions: where you stand sets what you hear in the
+    /// engine, in each receiving context. A place shared under a reference is heard from that place and answered with
+    /// its reference; one's own place is heard from it and never answered; returning to a context resumes it where it
+    /// stood; the world's is every voice's declared gain. Each move is reached
+    /// in the engine over the owner's next block, Main is the owner's own sound sample for sample, and the kernel
+    /// relays every form of the act unchanged. No audio device is opened.
+    #[test]
+    #[ignore = "requires QL's real companions (OI_QL_BIN, OI_QL_SKY_BIN, OI_QL_FIELD_HOST_BIN, OI_QL_FIELD_WORKER_BIN) and QL_MEF_PREFIX"]
+    fn each_receiving_context_is_heard_in_the_engine_from_where_it_stands_and_a_return_resumes_it()
+    {
+        use crate::live_engine_host::host::LiveEngineHost;
+        let client =
+            oi_cradle_kernel::CentralClient::with("/nonexistent".into(), None, String::new());
+        let field = oi_cradle_kernel::Kernel::new(client).native_field();
+        let (tap, tapped) = std::sync::mpsc::channel();
+        field.set_torus_tap(tap).unwrap();
+        let opened = field
+            .apply(Request::Compose {
+                request: json!({"texture":[8,8],"units_per_metre":120,"sky":"none"}),
+            })
+            .unwrap();
+        let lease = opened["lease"].as_str().unwrap().to_owned();
+        let mut current = opened["receipt"].clone();
+        let mut exchange = |command: Value| {
+            let id: u64 = current["last_request_id"]
+                .as_str()
+                .unwrap()
+                .parse()
+                .unwrap();
+            let reply = field
+                .apply(Request::Exchange {
+                    lease: lease.clone(),
+                    request: json!({"schema":"ql.field-host-request/v1",
+                        "instance_ref":current["instance_ref"],
+                        "event_ref":current["field"]["event_ref"],
+                        "subject_ref":current["field"]["subject_ref"],
+                        "request_id":(id + 1).to_string(),
+                        "expected_generation":current["field"]["generation"],
+                        "expected_samples_elapsed":current["field"]["samples_elapsed"],
+                        "command":command}),
+                })
+                .unwrap();
+            assert_eq!(reply["status"], "ok", "{reply}");
+            current = reply.clone();
+            reply
+        };
+        let kept = |lease: &str, sha256: &str| field.torus_native(lease, sha256);
+        let follow = |host: &LiveEngineHost| {
+            for told in tapped.try_iter() {
+                host.tapped(told, kept);
+            }
+        };
+        let heard = |block: &Value| -> Vec<(u64, u64)> {
+            block["torus_heard"]
+                .as_array()
+                .map(|parts| {
+                    parts
+                        .iter()
+                        .map(|p| {
+                            (
+                                p["at_samples_elapsed"].as_str().unwrap().parse().unwrap(),
+                                p["frames"].as_u64().unwrap(),
+                            )
+                        })
+                        .collect()
+                })
+                .unwrap_or_default()
+        };
+
+        let dir = std::env::temp_dir().join(format!("oi-torus-contexts-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("torus.als");
+        let root = live_set::xml::parse(SET).unwrap();
+        std::fs::write(&path, live_set::write_gz(&root).unwrap()).unwrap();
+        let host = LiveEngineHost::default();
+        host.open(&path).unwrap();
+        let mut core = host
+            .0
+            .lock()
+            .unwrap()
+            .as_mut()
+            .unwrap()
+            .core
+            .take()
+            .unwrap();
+
+        exchange(json!({"operation":"advance","frames":4800,"muted":false}));
+        let sha256 = exchange(json!({"operation":"torus-native"}))["torus_native"]["sha256"]
+            .as_str()
+            .unwrap()
+            .to_owned();
+        let document = field.torus_native(&lease, &sha256).unwrap();
+        host.bind_torus(&lease, 0, &sha256, &document, None, None, None, kept)
+            .unwrap();
+        exchange(
+            json!({"operation":"torus-play","keys":[{"row":2,"column":3},{"row":4,"column":1}],"amplitude":[0.3,0]}),
+        );
+        follow(&host);
+        let mut owner = Vec::new();
+        let mut at = 4800;
+        // each move asked, then the owner's next block: the move is reached in the engine over all of it
+        let mut moved = |command: Value| -> Value {
+            let answer = exchange(command)["torus_receiver"].clone();
+            let block = exchange(json!({"operation":"advance","frames":512,"muted":false}));
+            assert_eq!(
+                heard(&block),
+                vec![(at, 512)],
+                "{answer}: {}",
+                block["torus_heard"]
+            );
+            owner.extend(owner_sound(&block, 512));
+            follow(&host);
+            at += 512;
+            answer
+        };
+        let shared = moved(json!({"operation":"torus-receiver",
+            "receiver":{"at_metres":[0.0,3.5,-0.2],"shared":"shared-field:circle-7"}}));
+        assert_eq!(shared["context"], "shared", "{shared}");
+        assert_eq!(shared["shared"], "shared-field:circle-7");
+        assert_eq!(shared["at_metres"], json!([0.0, 3.5, -0.2]));
+        let own =
+            moved(json!({"operation":"torus-receiver","receiver":{"at_metres":[2.5,0.0,0.3]}}));
+        assert_eq!(own["context"], "personal", "{own}");
+        assert!(
+            own.get("at_metres").is_none() && own.get("shared").is_none(),
+            "{own}"
+        );
+        assert_ne!(
+            own["gains"], shared["gains"],
+            "where you stand sets what you hear"
+        );
+        // the body turns by its clock, so a context resumed is heard from where it stood as the body now turns
+        let back = moved(json!({"operation":"torus-receiver","context":"shared"}));
+        assert_eq!(
+            [&back["context"], &back["shared"], &back["at_metres"]],
+            [&shared["context"], &shared["shared"], &shared["at_metres"]],
+            "the shared context resumed where it stood"
+        );
+        let back = moved(json!({"operation":"torus-receiver","context":"personal"}));
+        assert_eq!(back["context"], "personal", "{back}");
+        assert!(
+            back.get("at_metres").is_none(),
+            "one's own resumed, never answered: {back}"
+        );
+        let world = moved(json!({"operation":"torus-receiver","context":"world"}));
+        assert_eq!(world["context"], "world");
+        let main = pull(&mut core, 512 * 5);
+        same(
+            &main,
+            &owner,
+            "each context heard in the engine as its owner sounds it",
+        );
+        let reading = host.mixer().unwrap();
+        assert_eq!(reading["torus_follow"]["missed"], 0, "{reading}");
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
     /// The Torus part with a clip (120 bpm, a beat 24000 frames): key 60 at 3000, 62 at 6000 (velocity 80), and 60 with 64
     /// at 12000.
     const CLIPPED: &str = r#"<?xml version="1.0" encoding="UTF-8"?>

@@ -243,7 +243,7 @@ test('the Torus steps to the set\'s tempo: the transport\'s Tempo reaches the ow
   resetHost(binding.id)
   // The chain hands the Torus the set's tempo, as it hands the Delay its own.
   const chain = await readFile(new URL('../src/live/LiveDeviceChain.tsx', import.meta.url), 'utf8')
-  assert.match(chain, /<TorusOnChain state=\{torus\} tempoBpm=\{ctx\.set\?\.tempo_bpm \?\? null\} \/>/)
+  assert.match(chain, /<TorusOnChain state=\{torus\} tempoBpm=\{ctx\.set\?\.tempo_bpm \?\? null\}[^>]*\/>/)
 })
 
 test('the Carrier\'s words follow the owner\'s drive: under the pulse, 0 % is silence until struck, a beat at rhythm rates, a note at pitch rates', () => {
@@ -279,4 +279,225 @@ test('the Tuning says why the maqām is absent before it is chosen, in the owner
   assert.match(renderToStaticMarkup(h(HostedDevice, {designed: torus, binding: held, view: 'whole', nav: {}})), /The voices sound the M2 condition&#x27;s maqām, Kirdan\./)
   resetHost(held.id)
   assert.equal(bound().binding.values['tuning.maqam'], undefined, 'an owner that names no maqām: nothing to say')
+})
+
+test('the manual names the Torus by its own controls wherever it shows it: the device reference and the two scales say §21.2\'s macros, its one handle and what the Sky moves (DLW build ruling, 4 November)', async () => {
+  const manual = await readFile(new URL('../../../../ProjectCentral/docs/1-vision/dlw/DLW.md', import.meta.url), 'utf8')
+  // The device reference (§16) shows the Torus under "#### Torus", up to the next heading of any depth; the two scales under "#### Two scales".
+  const passage = heading => { const at = manual.indexOf(`\n#### ${heading}\n`); assert.ok(at >= 0, heading); const rest = manual.slice(at + 1); return rest.slice(0, rest.search(/\n#{2,4} /)) }
+  const reference = passage('Torus'), scales = passage('Two scales')
+  for (const word of ['Pulse mix', 'Helix balance', 'Drive', 'Agitation', 'Attack', 'Release', 'handle 2', 'Envelope']) {
+    assert.doesNotMatch(reference, new RegExp(word), `the device reference: no ${word}`)
+    assert.doesNotMatch(scales, new RegExp(word), `the two scales: no ${word}`)
+  }
+  // §21.2 Compact: Rate, Fundamental, Carrier and Damping; the one handle on the picture is the Rate's (torus.tsx TorusPicture).
+  const compact = /^\| Compact \| (.*) \|$/m.exec(reference)?.[1] ?? ''
+  assert.match(compact, /Macros: Rate, Fundamental, Carrier, Damping\./)
+  assert.match(compact, /Handle 1 on the pulse line/)
+  const whole = /^\| Whole \| (.*) \|$/m.exec(reference)?.[1] ?? ''
+  for (const group of ['Pulse', 'Mode and tuning', 'Shape', 'Body', 'Notes and output', 'Stage', 'Rack']) assert.match(whole, new RegExp(group), `the whole view: ${group}`)
+  // What the Sky moves is what it reports (skyModulation.ts skyTargets, asserted above): the arc stands on one of those.
+  assert.match(reference, /Carrier carries a modulation arc: the sky moves it\./)
+  // §16.15's six reference devices say what the Torus shows: its one handle, no envelope display.
+  const shows = /^\| Torus \| Instrument \| (.*) \| Wavetable \|$/m.exec(manual)?.[1] ?? ''
+  assert.match(shows, /A handle on the picture\./)
+  assert.doesNotMatch(shows, /[Ee]nvelope/)
+})
+
+// ── the rack face (DLW build ruling, 4 November: "Keep rack: build it. Give the Torus a rack face with macros (each with its range) and
+// variations, and a keep-rack action through the kernel's rack keep"; manual §21.2 Sounds and instruments: "A rack | The Torus with its
+// note devices and effects, its macros and their variations"). The macros start as the compact four, each turning its parameter over a
+// range you set; a variation keeps where every macro stands; Keep rack keeps the Torus, its chain, its macros and its variations.
+
+const EFFECTS = {chain: ['delay'], filter: {on: false, cutoff: 1200}, dynamics: {on: false}, delay: {on: true, time: 375, feedback: 40, mix: 25}, reverb: {on: false}}
+const withEffects = (effects = EFFECTS) => { const s = state(); return {...s, parameters: {...s.parameters, effects}} }
+
+test('the rack face reads the Torus\'s chain from the owner, and holds its macros, the macro you choose and its variations in your hand', () => {
+  holds.resetHolds()
+  const {binding} = bound(withEffects())
+  assert.deepEqual(JSON.parse(binding.values.chain), [{device_ref: 'delay', role: 'effect', state: {on: true, time: 375, feedback: 40, mix: 25}}],
+    'the effects on the chain, in the order they sound, each with the settings the owner keeps')
+  assert.equal(binding.writes('chain'), false)
+  assert.match(binding.standing.chain.disabled, /owner/)
+  assert.deepEqual(JSON.parse(bound(withEffects({...EFFECTS, chain: []})).binding.values.chain), [], 'nothing on the chain: the Torus alone')
+  assert.equal(bound().binding.values.chain, undefined, 'an owner that reports no effects: no chain is invented')
+  for (const key of ['macros', 'macro', 'variations']) assert.equal(typeof binding.local[key], 'function', `${key}: held in the shell`)
+  binding.local.variations(JSON.stringify([{name: 'Variation 1', values: [0, 0, 0, 0]}]))
+  assert.deepEqual(JSON.parse(bound(withEffects()).binding.values.variations), [{name: 'Variation 1', values: [0, 0, 0, 0]}])
+  holds.resetHolds()
+})
+
+test('a macro turns its parameter over its range: at 0 the range\'s start, at 1 its end; where it stands is read from the parameter', async () => {
+  const face = await import(src('inhabitants/catalogue/panels/torus.tsx'))
+  const four = face.torusMacros({})
+  assert.deepEqual(four.map(m => [m.name, m.parameter, m.min, m.max]), [['Rate', 'rate', 0.5, 20], ['Fundamental', 'fundamental', 20, 2000], ['Carrier', 'carrier', 0, 100],
+    ['Damping', 'damping', 0.1, 40]], 'the compact four, each over its range')
+  const carrier = four[2]
+  assert.equal(face.macroAt({carrier: 25}, carrier), 0.25)
+  assert.equal(face.macroAt({carrier: 250}, carrier), 1, 'past the range: the macro stands at its end')
+  assert.equal(face.macroAt({}, carrier), undefined, 'no reading: the macro does not say where it stands')
+  assert.equal(face.macroTurn(carrier, 0.5), 50)
+  assert.equal(face.macroTurn({...carrier, min: 80, max: 20}, 0.25), 65, 'a range may run downward')
+  const v = {rate: 2.5, fundamental: 130.81, carrier: 25, damping: 4.5, chain: JSON.stringify([{device_ref: 'delay', role: 'effect', state: {on: true}}]),
+    variations: JSON.stringify([{name: 'Variation 1', values: [1, 0, 0.5, 0]}])}
+  const draft = face.torusRackDraft(v)
+  assert.deepEqual(draft.chain, [{device_ref: 'delay', role: 'effect', state: {on: true}}])
+  assert.deepEqual(draft.macros.map(m => [m.name, Number(m.value.toFixed(4)), m.targets]), [
+    ['Rate', 0.1026, [{device_ref: 'torus', parameter: 'rate', min: 0.5, max: 20}]], ['Fundamental', 0.056, [{device_ref: 'torus', parameter: 'fundamental', min: 20, max: 2000}]],
+    ['Carrier', 0.25, [{device_ref: 'torus', parameter: 'carrier', min: 0, max: 100}]], ['Damping', 0.1103, [{device_ref: 'torus', parameter: 'damping', min: 0.1, max: 40}]]])
+  assert.deepEqual(draft.variations, [{name: 'Variation 1', values: [1, 0, 0.5, 0]}])
+  assert.match(face.torusRackDraft({...v, carrier: undefined}).reason, /^Carrier has no reading/, 'a macro that cannot say where it stands keeps no rack')
+  assert.match(face.torusRackDraft({...v, chain: undefined}).reason, /chain/, 'no reading of the chain keeps no rack')
+  assert.match(face.torusRackDraft({...v, variations: JSON.stringify([{name: 'Short', values: [1]}])}).reason, /Short/, 'a variation short of a value for every macro')
+})
+
+test('the Macros page draws each macro with its range, the macro you choose to set, the variations and Keep rack, on the owner\'s readings', () => {
+  holds.resetHolds()
+  const {binding} = bound(withEffects())
+  setHostPage(binding.id, 'macros')
+  const whole = renderToStaticMarkup(h(HostedDevice, {designed: torus, binding, view: 'whole', nav: {}}))
+  const sections = [...whole.matchAll(/class="dp-sec-label">([^<]+)</g)].map(m => m[1])
+  for (const group of ['Macros', 'Range', 'Variations', 'Keep rack']) assert.ok(sections.includes(group), `${group} (${sections})`)
+  for (const name of ['Rate', 'Fundamental', 'Carrier', 'Damping']) assert.match(whole, new RegExp(`aria-label="${name}"`), `${name}: a macro`)
+  assert.match(whole, /Turns the Torus&#x27;s carrier from 0 to 100\./, 'a macro says the range it turns its parameter over')
+  assert.match(whole, /Delay/, 'the chain it keeps, by its effects')
+  assert.match(whole, /data-i="Keep rack\|/, 'Keep rack, saying what it keeps or why it waits')
+  assert.doesNotMatch(whole, /\bNaN\b|undefined|data-device-fault/)
+  resetHost(binding.id)
+  holds.resetHolds()
+})
+
+// ── View, kept (lead's ruling of 4 November: "#850 View kept"; manual §21.2 "View | Surface · Wire · Both, and Receiver On · Off |
+// Surface · Off | What the pane draws"). View is the pane's own way of drawing, so the hand keeps it, as it keeps Body source; it reads
+// back, and the pane draws the torus as a surface, as its wire, or both. Receiver stays the owner's.
+
+const onChain = await import(src('live/TorusOnChain.tsx'))
+
+test('View is kept in your hand: Surface until you choose, read back as you set it, and never sent to the owner (O-I #850)', () => {
+  holds.resetHolds()
+  assert.equal(model.TORUS_ABSENT.view, undefined, 'View is no longer a reading nobody keeps')
+  const {binding, sent} = bound()
+  assert.equal(binding.values.view, 'surface', 'Surface is the default (§21.2)')
+  assert.equal(binding.standing.view, undefined, 'and it takes a change')
+  assert.equal(typeof binding.local.view, 'function', 'the hand keeps it')
+  binding.local.view('wire')
+  assert.equal(bound().binding.values.view, 'wire', 'it reads back as you set it')
+  binding.local.view('sideways')
+  assert.equal(bound().binding.values.view, 'surface', 'a value View does not take draws the default')
+  assert.deepEqual(sent, [], 'nothing reaches the owner')
+  holds.resetHolds()
+})
+
+test('the pane draws the View: the surface hides the far side under the body, the wire is the lines alone, both draws the lines over the body', () => {
+  const figure = model.torusFigure('full')
+  assert.match(figure.outline, /^M[-\d. L]+Z$/, 'the silhouette is one closed path')
+  const numbers = figure.outline.match(/-?\d+(?:\.\d+)?/g).map(Number), {x, y, width, height} = figure.view
+  for (let i = 0; i < numbers.length; i += 2) assert.ok(numbers[i] >= x && numbers[i] <= x + width && numbers[i + 1] >= y && numbers[i + 1] <= y + height, 'inside the picture')
+  const live = {ok: true, value: state().value, determinants: state().determinants, parameters: state().parameters}
+  const order = view => [...renderToStaticMarkup(h(onChain.TorusPicture, {state: live, size: 'full', view})).matchAll(/data-torus-(side="far"|side="near"|body)/g)].map(m => m[1])
+  assert.deepEqual(order('surface'), ['side="far"', 'body', 'side="near"'], 'Surface: the far side shows faintly through the body')
+  assert.deepEqual(order('wire'), ['side="far"', 'side="near"'], 'Wire: the lines alone')
+  assert.deepEqual(order('both'), ['body', 'side="far"', 'side="near"'], 'Both: the lines over the body')
+  assert.match(renderToStaticMarkup(h(onChain.TorusPicture, {state: live, size: 'compact'})), /data-torus-view="surface"/, 'unchosen, the picture is the surface')
+  // The design's own picture draws it the same way, from the View the binding reads back.
+  holds.resetHolds()
+  const draws = view => { holds.hold(model.TORUS_DESIGN_ID, 'view', view); const {binding} = bound(); setHostPage(binding.id, 'field')
+    const markup = renderToStaticMarkup(h(HostedDevice, {designed: torus, binding, view: 'whole', nav: {}})); resetHost(binding.id); return markup }
+  assert.match(draws('surface'), /data-torus-view="surface"[^]*data-torus-body/)
+  assert.doesNotMatch(draws('wire'), /data-torus-body/)
+  assert.match(draws('both'), /data-torus-view="both"[^]*data-torus-body/)
+  holds.resetHolds()
+})
+
+// ── Lens and mode, Follow (lead's ruling of 4 November: "read the clip's mode for the Torus part"; manual §21.2 "Lens and mode | Follow
+// · a lens and a mode | Follow | The lens and mode the Torus reads. Follow takes the clip's mode, or the set's when the clip has none").
+// QL's own spellings: a mode is a context frame (QL-MEF music.rs ModeKind::context_frame, Ionian CF1 … Locrian CF7); the catalogue
+// names a lens by its code and a frame by "CF1"…"CF7" (ql-cli music_command.rs `lens`, `context_frame`); the owner's edits take
+// `lens12` 0…11 (LensId::ALL) and `context_frame` 1…7 (m1_engine.rs). A clip carries its own mode when Live's scale is on for it
+// (live-set edit.rs "scale" = IsInKey, "mode").
+
+const modes = await import(src('live/modes.ts'))
+const lensRow = (lens, mode, cf) => ({kind: 'lens-cf', key: `chromatic/${lens}/${mode}`, label: `${mode} on ${lens}, chromatic basis`, lens, anchorBasis: 'chromatic',
+  contextFrame: cf, mode, pitches: [0, 2, 3, 5, 7, 8, 10], tuning: null, provenance: {owner: 'ql-mef', symbol: 'mode_tonic_landscape', revision: 't'}})
+const AEOLIAN_L3P = lensRow("L3'", 'aeolian', 'CF6')
+const RAST = {kind: 'source', key: 'maqam/rast', label: 'Rast', family: 'maqam', pitches: null,
+  tuning: {unit: 'quarter-tone', steps: [4, 3, 3, 4, 4, 3, 3], fromRoot: [0, 4, 7, 10, 14, 18, 21, 24], cents: [0, 200, 350, 500, 700, 900, 1050, 1200]},
+  provenance: {owner: 'ql-mef', symbol: 'maqam_pitches', revision: 't'}}
+const setMode = scale => modes.resolveModeInForce([scale], {key: scale.key, root: 0})
+const NONE_CHOSEN = modes.resolveModeInForce([AEOLIAN_L3P], null)
+
+test('Follow takes the clip\'s mode, or the set\'s when the clip has none, in QL\'s own lens and frame', () => {
+  const clip = model.torusFollowed({scale: true, mode: 'dorian'}, setMode(AEOLIAN_L3P))
+  assert.equal(clip.from, 'clip')
+  assert.equal(clip.context_frame, 2, 'Dorian is CF2 (music.rs ModeKind::context_frame)')
+  assert.equal(clip.lens12, 7, 'on the set\'s lens, L3′ (LensId::ALL index 7)')
+  assert.match(clip.words, /the clip's mode, Dorian \(CF2\), on the set's lens L3′/)
+  const set = model.torusFollowed({scale: false, mode: 'dorian'}, setMode(AEOLIAN_L3P))
+  assert.deepEqual([set.from, set.lens12, set.context_frame], ['set', 7, 6], 'a clip whose scale is off carries no mode: the set\'s Aeolian on L3′ (CF6)')
+  assert.match(set.words, /the set's mode, Aeolian on L3′ \(CF6\)/)
+  assert.deepEqual([model.torusFollowed(null, setMode(AEOLIAN_L3P)).from, model.torusFollowed({scale: true, mode: null}, setMode(AEOLIAN_L3P)).from], ['set', 'set'],
+    'no clip, or a clip whose scale Live names outside the seven: the set\'s')
+  const alone = model.torusFollowed({scale: true, mode: 'locrian'}, NONE_CHOSEN)
+  assert.deepEqual([alone.from, alone.lens12, alone.context_frame], ['clip', null, 7], 'the clip\'s Locrian with no lens in force: the lens stands as it is')
+  assert.match(alone.words, /the set names no lens, so the lens stands as it is/)
+  assert.match(model.torusFollowed(null, NONE_CHOSEN).reason, /^The clip carries no mode of its own, and the set has none in force/)
+  assert.match(model.torusFollowed(null, setMode(RAST)).reason, /Rast.*names no lens or frame/, 'a maqām in force names no lens or frame')
+  assert.equal(model.torusFollowed(null, setMode(lensRow('L0', 'ionian', 'CF1'))).lens12, 0)
+  assert.equal(model.torusFollowed(null, setMode(lensRow("L5'", 'locrian', 'CF7'))).lens12, 11)
+})
+
+test('Follow moves the owner only where it differs, through its own lens and context-frame edits, and only while it takes edits', () => {
+  const followed = model.torusFollowed({scale: true, mode: 'dorian'}, setMode(AEOLIAN_L3P))
+  assert.deepEqual(model.torusFollowEdits(state(), followed), [{kind: 'lens', lens12: 7}, {kind: 'context-frame', context_frame: 2}])
+  const there = {...state(), determinants: {...state().determinants, lens: {lens12: 7, label: 'L3′'}, contextFrame: 2}}
+  assert.deepEqual(model.torusFollowEdits(there, followed), [], 'the owner already reads it: nothing is sent')
+  assert.deepEqual(model.torusFollowEdits(state(), model.torusFollowed({scale: true, mode: 'locrian'}, NONE_CHOSEN)), [], 'L5′ CF7 already: the lens stands, the frame is there')
+  assert.deepEqual(model.torusFollowEdits(state(session(), 'manual'), followed), [], 'an owner that takes no edits now is sent none')
+  assert.deepEqual(model.torusFollowEdits(state(), model.torusFollowed(null, NONE_CHOSEN)), [], 'nothing to follow sends nothing')
+})
+
+function followBound(follow, s = state()) {
+  return model.torusDesignBinding(s, undefined, {}, null, undefined, null, holds.heldFor(model.TORUS_DESIGN_ID), null, null, null, async () => ({ok: true}), undefined, follow)
+}
+
+test('the binding: Follow is on until you turn it off, the Lens and Frame say what it takes, and off they are yours to choose', () => {
+  holds.resetHolds()
+  const followed = model.torusFollowed({scale: true, mode: 'dorian'}, setMode(AEOLIAN_L3P))
+  const on = followBound(followed)
+  assert.equal(on.values['mode.follow'], true, 'Follow is the default (§21.2)')
+  assert.equal(on.values['mode.followed'], 'Clip: Dorian, L3′')
+  assert.equal(typeof on.local['mode.follow'], 'function', 'the hand keeps Follow')
+  for (const key of ['lens', 'context-frame']) {
+    assert.equal(on.writes(key), false, `${key}: Follow sets it`)
+    assert.match(on.standing[key].disabled, /^Follow takes the clip's mode, Dorian \(CF2\), on the set's lens L3′\. Turn Follow off to choose a lens and a mode\.$/)
+  }
+  const nothing = followBound(model.torusFollowed(null, NONE_CHOSEN))
+  assert.equal(nothing.values['mode.followed'], undefined)
+  assert.match(nothing.standing['mode.followed'].disabled, /^The clip carries no mode of its own/)
+  on.local['mode.follow'](false)
+  const off = followBound(followed)
+  assert.equal(off.values['mode.follow'], false)
+  for (const key of ['lens', 'context-frame']) assert.equal(off.writes(key), true, `${key}: yours to choose`)
+  assert.match(off.standing['mode.followed'].disabled, /Follow is off/)
+  holds.resetHolds()
+  const host = model.torusDesignBinding(state())
+  assert.match(host.standing['mode.follow'].disabled, /no clip or set/i, 'a host that reads no clip and no set says Follow has nothing to read')
+  assert.equal(host.writes('lens'), true, 'and the lens stays yours, as before')
+})
+
+test('the Mode and tuning group draws Follow beside the Lens and Frame, and the chain reads the selected clip and the set\'s mode for it', async () => {
+  holds.resetHolds()
+  const binding = followBound(model.torusFollowed({scale: true, mode: 'dorian'}, setMode(AEOLIAN_L3P)))
+  setHostPage(binding.id, 'field')
+  const whole = renderToStaticMarkup(h(HostedDevice, {designed: torus, binding, view: 'whole', nav: {}}))
+  assert.match(whole, /data-i="Follow\|On — Follow takes the clip&#x27;s mode, or the set&#x27;s when the clip has none\."/)
+  assert.match(whole, /Clip: Dorian, L3′/)
+  assert.doesNotMatch(whole, /\bNaN\b|undefined|data-device-fault/)
+  resetHost(binding.id)
+  const chain = await readFile(new URL('../src/live/TorusOnChain.tsx', import.meta.url), 'utf8')
+  assert.match(chain, /useLiveClipWhole\(/, 'the selected clip, from the set\'s owner')
+  assert.match(chain, /useLiveModeInForce\(\)/, 'the set\'s mode in force')
+  assert.match(chain, /torusFollowEdits\(/, 'and the edits Follow names')
+  const host = await readFile(new URL('../src/live/LiveDeviceChain.tsx', import.meta.url), 'utf8')
+  assert.match(host, /<TorusOnChain [^>]*selection=\{selection\}/, 'the chain hands the Torus the clip you select')
 })

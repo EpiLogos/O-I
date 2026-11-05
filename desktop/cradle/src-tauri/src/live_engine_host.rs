@@ -13,7 +13,7 @@
 //! | `live_engine_open {path}` | bridge the set and make its engine (nothing sounds yet); answers the mixer reading |
 //! | `live_engine_play` | the engine plays on the default output from where it stands |
 //! | `live_engine_stop` | the output stops; the engine and what it played are kept |
-//! | `live_engine_send {event}` | one note, Torus act, Panic or mixer move, applied at the next block; answers the mixer reading |
+//! | `live_engine_send {event}` | one note, Torus act, Panic or mixer move, applied at the next block, or a set's device made again from what the set now stores (`device`: an edit of it followed); answers the mixer reading |
 //! | `live_engine_torus {lease, track, sha256, notes?, effects?}` | the Torus its owner handed over (kept by the kernel under the field's lease) sounds on the part, which follows that owner from then on, through its effects |
 //! | `live_engine_torus_effects {effects}` | the Torus's effects as the frame now holds them, on the part following its owner |
 //! | `live_engine_mixer` | the mixer as the engine applied it |
@@ -86,7 +86,7 @@ pub(crate) mod host {
     use serde_json::{json, Value};
     use std::collections::BTreeMap;
     use std::path::{Path, PathBuf};
-    use std::sync::Mutex;
+    use std::sync::{Arc, Mutex};
 
     /// The rate the engine runs and the output opens at (the harness
     /// signals' and the Torus's rate; there is no resampling).
@@ -182,7 +182,8 @@ pub(crate) mod host {
 
     /// One engine event as the UI sends it: `kind` names it (`note_on`,
     /// `note_off`, `panic`, `volume`, `pan`, `send`, `active`, `solo`,
-    /// `torus_play`, `bend`, `pressure`) and the fields its kind takes sit beside it. A plain
+    /// `torus_play`, `bend`, `pressure`, and `device`: a set's device made
+    /// again, [`Opened::make_again`]) and the fields its kind takes sit beside it. A plain
     /// struct, not a tagged enum: a tagged enum buffers its fields, and the
     /// buffered numbers of this build's serde_json (arbitrary precision,
     /// enabled by a dependency) arrive as maps — "invalid type: map,
@@ -205,6 +206,10 @@ pub(crate) mod host {
         amplitude: Option<[f64; 2]>,
         /// A pitch bend's share of its range (−1 to 1) or a channel pressure (0 to 1), O-I #853.
         amount: Option<f32>,
+        /// A device made again (O-I #849 round 17): the track the set's owner names it on ("Master" the Main
+        /// track), and its element name.
+        track_name: Option<String>,
+        device: Option<String>,
     }
 
     /// One of the Torus's keys: its row on the surface and its column.
@@ -251,6 +256,7 @@ pub(crate) mod host {
         TorusPlay,
         Bend,
         Pressure,
+        Device,
     }
 
     impl EventIn {
@@ -258,6 +264,20 @@ pub(crate) mod host {
         pub fn event(self) -> Result<EngineEvent, String> {
             fn need<T>(v: Option<T>, kind: &str, field: &str) -> Result<T, String> {
                 v.ok_or_else(|| format!("a {kind} event names its {field}"))
+            }
+            // a send or a solo names a part by its `track`, or a part or a group as its `part` (O-I #849 round 17)
+            fn sender(
+                track: Option<usize>,
+                part: Option<PartIn>,
+                kind: &str,
+            ) -> Result<Part, String> {
+                match (track, part) {
+                    (Some(track), None) => Ok(Part::Track(track)),
+                    (None, Some(part)) => Ok(part.into()),
+                    _ => Err(format!(
+                        "a {kind} event names its track, or a part or a group as its part: one of them"
+                    )),
+                }
             }
             let Self {
                 kind,
@@ -272,6 +292,7 @@ pub(crate) mod host {
                 keys,
                 amplitude,
                 amount,
+                ..
             } = self;
             let name = serde_json::to_value(kind)
                 .ok()
@@ -305,7 +326,7 @@ pub(crate) mod host {
                     pan: need(pan, &name, "pan")?,
                 },
                 EventKind::Send => EngineEvent::Send {
-                    track: need(track, &name, "track")?,
+                    part: sender(track, part, &name)?,
                     send: need(send, &name, "send")?,
                     gain: need(gain, &name, "gain")?,
                 },
@@ -314,9 +335,13 @@ pub(crate) mod host {
                     on: need(on, &name, "on")?,
                 },
                 EventKind::Solo => EngineEvent::Solo {
-                    track: need(track, &name, "track")?,
+                    part: sender(track, part, &name)?,
                     on: need(on, &name, "on")?,
                 },
+                EventKind::Device => return Err(
+                    "a device event makes a set's device again from the set: it is no engine event"
+                        .into(),
+                ),
                 EventKind::TorusPlay => {
                     let keys: Vec<(u8, u16)> = need(keys, &name, "keys")?
                         .iter()
@@ -821,6 +846,25 @@ pub(crate) mod host {
         /// way, in the order put (the n-th is the engine's n-th: one that gave way is not kept).
         pub effects: TorusEffects,
         pub racked: Vec<(usize, RackMade)>,
+        /// Every set's device made again on a chain (O-I #849 round 17, [`Opened::make_again`]): the engine's count it was
+        /// made at, its part, its place, and the element it was made from.
+        pub made_again: Vec<(u64, Part, usize, Element)>,
+        /// The room made again while one stands, waiting for the edits to pause ([`ROOM_PAUSE`]): its
+        /// count among such edits, the part and the frame's effects to put then.
+        pub room_waiting: Option<(u64, usize, Value)>,
+        pub room_edits: u64,
+    }
+
+    /// How long the frame's edits pause before its room is made again (presentationEffects.ts
+    /// `ROOM_PAUSE_MS`, O-I #849 round 17): the engine makes its room again as the frame does, once
+    /// they have paused that long, the first at once.
+    pub const ROOM_PAUSE: std::time::Duration = std::time::Duration::from_millis(60);
+
+    /// The settings that make a room (`size`, `decay`, `damping` of the made Reverb), where a chain has one.
+    fn room_of(made: &RackMade) -> Option<[f64; 3]> {
+        let (_, from) = made.iter().find(|(class, _)| *class == "reverb")?;
+        let at = |key: &str| from.iter().find(|(k, _)| *k == key).map(|(_, v)| *v);
+        Some([at("size")?, at("decay")?, at("damping")?])
     }
 
     impl Opened {
@@ -842,6 +886,9 @@ pub(crate) mod host {
                 clips,
                 effects: TorusEffects::default(),
                 racked: Vec::new(),
+                made_again: Vec::new(),
+                room_waiting: None,
+                room_edits: 0,
             })
         }
 
@@ -875,6 +922,7 @@ pub(crate) mod host {
                 "chain": e.reading,
                 "sounding_from_frame": (racks.len() == self.racked.len()).then(|| racks.last().map(|(frame, _)| *frame)).flatten(),
                 "refusal": e.refusal,
+                "room_waiting": self.room_waiting.is_some(),
             })
         }
 
@@ -932,6 +980,55 @@ pub(crate) mod host {
                 self.effects.refusal = Some(words.clone());
             }
             put
+        }
+
+        /// The Torus's effects put as the frame makes its room (O-I #849 round 17, presentationEffects.ts
+        /// `#roomFor`): where a room stands on the part and these make another, what else they move is put at
+        /// once, the room standing, and the room itself waits for the edits to pause ([`ROOM_PAUSE`]); each
+        /// such edit takes the last one's place. Answers the edit's count while its room waits, which
+        /// [`Opened::put_waiting_room`] puts once they have paused. Refused in words as [`Opened::put_effects`].
+        pub fn put_effects_paced(
+            &mut self,
+            track: usize,
+            effects: &Value,
+        ) -> Result<Option<u64>, String> {
+            let Ok((made, _)) = torus_chain(effects) else {
+                // refused, in its words, as any put is
+                return self.put_effects(track, effects).map(|()| None);
+            };
+            let standing = (self.effects.track == Some(track))
+                .then(|| room_of(&self.effects.made))
+                .flatten();
+            let (Some(stood), Some(room)) = (standing, room_of(&made)) else {
+                self.room_waiting = None;
+                return self.put_effects(track, effects).map(|()| None);
+            };
+            if stood == room {
+                self.room_waiting = None;
+                return self.put_effects(track, effects).map(|()| None);
+            }
+            let mut now = effects.clone();
+            for (key, value) in ["size", "decay", "damping"].into_iter().zip(stood) {
+                now["reverb"][key] = json!(value);
+            }
+            self.put_effects(track, &now)?;
+            self.room_edits += 1;
+            self.room_waiting = Some((self.room_edits, track, effects.clone()));
+            Ok(Some(self.room_edits))
+        }
+
+        /// The room waiting since edit `edit` ([`Opened::put_effects_paced`]), put now that the edits have
+        /// paused: nothing when a later edit took its place. Refused in words as [`Opened::put_effects`].
+        pub fn put_waiting_room(&mut self, edit: u64) -> Result<(), String> {
+            match self.room_waiting.take() {
+                Some((waiting, track, effects)) if waiting == edit => {
+                    self.put_effects(track, &effects)
+                }
+                later => {
+                    self.room_waiting = later;
+                    Ok(())
+                }
+            }
         }
 
         /// The settings that move the Torus's effects standing on part `track` to `made` in place (O-I #849
@@ -1040,6 +1137,13 @@ pub(crate) mod host {
         }
 
         pub fn send(&mut self, event: EventIn) -> Result<Value, String> {
+            if let EventKind::Device = event.kind {
+                let (Some(track), Some(device)) = (&event.track_name, &event.device) else {
+                    return Err("a device event names its track_name and its device".into());
+                };
+                self.make_again(track, device)?;
+                return Ok(self.reading());
+            }
             let event = event.event()?;
             // A MIDI note on the part the Torus's owner is followed on is the owner's to play: it is
             // handed over at once (torus_notes) and sounds as the owner's act.
@@ -1075,6 +1179,25 @@ pub(crate) mod host {
             }
             self.handle.send(event).map_err(|e| e.to_string())?;
             Ok(self.reading())
+        }
+
+        /// The set's device `device` on its track `track` made again in the engine from what the set now stores (O-I #849
+        /// round 17: a setting of it the frame wrote through the set's owner, followed while the set plays): the set read
+        /// again, the device the owner writes (the first of its name on the first track of that name, "Master" the Main
+        /// track) made as Play makes it (live-engine `bridge::set_device`) and put in its place from the next block, one of
+        /// the same kind sounding on from where the last stood (`EngineHandle::make_again`); kept to make again for Export
+        /// Audio, and the reading's warnings read again from the set. Refused in words for a track or a device the set
+        /// does not have, and for a part's instrument (made when the set is played).
+        pub fn make_again(&mut self, track: &str, device: &str) -> Result<(), String> {
+            let document = set_document(&self.path)?;
+            let made = live_engine::bridge::set_device(&document, track, device)?;
+            let id = self
+                .handle
+                .make_again(made.part, made.at, made.device)
+                .map_err(|e| e.to_string())?;
+            self.made_again.push((id, made.part, made.at, made.element));
+            self.warnings = bridged(&document)?.1;
+            Ok(())
         }
 
         /// The notes due on the part following the Torus's owner, as the owner's acts to play
@@ -1391,6 +1514,25 @@ pub(crate) mod host {
         pub fn render_wav(&mut self) -> Result<(Vec<u8>, Value), String> {
             let performance = self.handle.performance();
             let (graph, _) = bridged(&self.document)?;
+            // Each device made again on a chain, made again from what it was made from, at the frame the engine put it there.
+            let remade = self
+                .handle
+                .remade()
+                .iter()
+                .map(|&(frame, id)| {
+                    let (_, part, at, element) = self
+                        .made_again
+                        .iter()
+                        .find(|(made, ..)| *made == id)
+                        .ok_or("a device the engine made again is not kept")?;
+                    Ok((
+                        frame,
+                        *part,
+                        *at,
+                        live_engine::bridge::set_device_made(element),
+                    ))
+                })
+                .collect::<Result<Vec<_>, String>>()?;
             // Each Torus made again from what was handed over, at the frame the engine took it.
             // Each chain put on a part's rack made again, at the frame the engine put it there.
             let racks = self
@@ -1413,11 +1555,16 @@ pub(crate) mod host {
                         Ok((frame, track, node))
                     })
                     .collect::<Result<Vec<_>, String>>()?;
-                graph.render_performance_racked(ENGINE_RATE, &performance, toruses, racks)
+                graph.render_performance_remade(ENGINE_RATE, &performance, toruses, racks, remade)
             };
             #[cfg(not(feature = "k8"))]
-            let samples =
-                graph.render_performance_racked(ENGINE_RATE, &performance, Vec::new(), racks);
+            let samples = graph.render_performance_remade(
+                ENGINE_RATE,
+                &performance,
+                Vec::new(),
+                racks,
+                remade,
+            );
             Ok((
                 wav_f32(&samples, ENGINE_RATE),
                 json!({"frames": performance.frames, "events": performance.events.len(), "complete": performance.complete}),
@@ -1455,7 +1602,7 @@ pub(crate) mod host {
     /// The host's state: at most one open set, and what the Torus's owner told it. The follow lock is
     /// taken before the set's, and the kernel's field lock is taken only under them, never around them.
     #[derive(Default)]
-    pub struct LiveEngineHost(pub Mutex<Option<Opened>>, pub Mutex<Follow>);
+    pub struct LiveEngineHost(pub Arc<Mutex<Option<Opened>>>, pub Mutex<Follow>);
 
     impl LiveEngineHost {
         fn with<T>(&self, act: impl FnOnce(&mut Opened) -> Result<T, String>) -> Result<T, String> {
@@ -1517,6 +1664,7 @@ pub(crate) mod host {
                             o.following = Following::default();
                             o.effects = TorusEffects::default();
                             o.racked.clear();
+                            o.made_again.clear();
                             core.ok_or("the engine was not made")?
                         }
                     };
@@ -1615,15 +1763,30 @@ pub(crate) mod host {
         }
 
         /// `live_engine_torus_effects`: the Torus's effects as the frame now holds them, put on the part
-        /// following its owner ([`Opened::put_effects`]). Refused in words while no part follows it.
+        /// following its owner, its room made again once the edits pause as the frame's is
+        /// ([`Opened::put_effects_paced`], [`ROOM_PAUSE`]: the reading says a room waits). Refused in
+        /// words while no part follows it.
         pub fn torus_effects(&self, effects: &Value) -> Result<Value, String> {
-            self.with(|o| {
+            let (reading, waiting) = self.with(|o| {
                 let track = o.following.bound.as_ref().map(|b| b.track).ok_or(
                     "No part sounds the Torus here: Play hands it over, and its effects go with it",
                 )?;
-                o.put_effects(track, effects)?;
-                Ok(o.reading())
-            })
+                let waiting = o.put_effects_paced(track, effects)?;
+                Ok((o.reading(), waiting))
+            })?;
+            if let Some(edit) = waiting {
+                let open = Arc::clone(&self.0);
+                std::thread::spawn(move || {
+                    std::thread::sleep(ROOM_PAUSE);
+                    if let Ok(mut open) = open.lock() {
+                        if let Some(o) = open.as_mut() {
+                            // a refusal stands in the reading (put_effects keeps it)
+                            let _ = o.put_waiting_room(edit);
+                        }
+                    }
+                });
+            }
+            Ok(reading)
         }
 
         /// What the Torus's owner told the host (the kernel's tap), followed into the engine: a hand-over
@@ -1840,6 +2003,111 @@ pub(crate) mod host {
                 "delay": {"on": true, "sync": true, "division": "1/8", "time": 250, "feedback": 35, "tone": 6000, "mix": 25, "tempo": 120},
                 "reverb": {"on": true, "size": 50, "decay": 2.4, "damping": 40, "predelay": 20, "mix": 22},
                 "resonator": {"on": true, "division": 300, "root": 0, "decay": 1, "tilt": 0, "span": 2, "mix": 50, "gain": 0}})
+        }
+
+        /// O-I #849 round 17: the room is made again as the frame makes its own (presentationEffects.ts `#roomFor`): the
+        /// first at once; one made again while a room stands waits for the edits to pause, each edit taking the last one's
+        /// place and what else it moves put at once, the room standing; once they pause the last edit's room is put, from
+        /// the block that takes it; an edit back to the standing room waits for nothing and lets the waiting one go.
+        #[test]
+        fn a_room_made_again_waits_for_the_edits_to_pause_as_the_frames_does() {
+            let path = write_set("room-pause", SET);
+            let mut o = Opened::open(&path).unwrap();
+            let mut core = o.core.take().unwrap();
+            pull(&mut core, &[256]);
+            assert_eq!(
+                o.put_effects_paced(0, &effects(&["reverb"])).unwrap(),
+                None,
+                "the first room at once"
+            );
+            pull(&mut core, &[256]);
+            let mut edited = effects(&["reverb"]);
+            edited["reverb"]["decay"] = json!(1.2);
+            let first = o.put_effects_paced(0, &edited).unwrap();
+            assert!(first.is_some(), "a room made again waits");
+            edited["reverb"]["decay"] = json!(3.0);
+            edited["reverb"]["mix"] = json!(40);
+            let second = o.put_effects_paced(0, &edited).unwrap();
+            assert!(second > first, "the next edit takes its place");
+            pull(&mut core, &[256]);
+            o.handle.collect();
+            assert_eq!(o.reading()["torus_effects"]["room_waiting"], true);
+            assert_eq!(
+                o.handle.racks(),
+                &[(256, 0)],
+                "no room made while the edits go on"
+            );
+            assert_eq!(room_of(&o.effects.made), Some([50.0, 2.4, 40.0]));
+            let mix = |o: &Opened| {
+                o.effects.made[0]
+                    .1
+                    .iter()
+                    .find(|(k, _)| *k == "mix")
+                    .map(|(_, v)| *v)
+            };
+            assert_eq!(
+                mix(&o),
+                Some(40.0),
+                "the mix moved at once, the room standing"
+            );
+            o.put_waiting_room(first.unwrap()).unwrap();
+            assert_eq!(
+                room_of(&o.effects.made),
+                Some([50.0, 2.4, 40.0]),
+                "a later edit took its place"
+            );
+            o.put_waiting_room(second.unwrap()).unwrap();
+            pull(&mut core, &[256]);
+            o.handle.collect();
+            assert_eq!(o.handle.racks(), &[(256, 0), (768, 0)]);
+            assert_eq!(room_of(&o.effects.made), Some([50.0, 3.0, 40.0]));
+            assert_eq!(o.reading()["torus_effects"]["room_waiting"], false);
+            edited["reverb"]["decay"] = json!(1.0);
+            let waiting = o.put_effects_paced(0, &edited).unwrap().unwrap();
+            edited["reverb"]["decay"] = json!(3.0);
+            assert_eq!(o.put_effects_paced(0, &edited).unwrap(), None);
+            o.put_waiting_room(waiting).unwrap();
+            assert_eq!(
+                room_of(&o.effects.made),
+                Some([50.0, 3.0, 40.0]),
+                "an edit back to the standing room let the waiting one go"
+            );
+            // through the host, the room waiting is put once the edits have paused
+            let host = LiveEngineHost::default();
+            o.following.bound = Some(Bound {
+                lease: "lease".into(),
+                track: 0,
+                sha256: "sha".into(),
+                handover: 1,
+                notes: None,
+            });
+            *host.0.lock().unwrap() = Some(o);
+            edited["reverb"]["decay"] = json!(0.8);
+            let reading = host.torus_effects(&edited).unwrap();
+            assert_eq!(reading["torus_effects"]["room_waiting"], true);
+            let paused = std::time::Instant::now();
+            while host
+                .0
+                .lock()
+                .unwrap()
+                .as_ref()
+                .unwrap()
+                .room_waiting
+                .is_some()
+            {
+                assert!(
+                    paused.elapsed() < std::time::Duration::from_secs(10),
+                    "the waiting room was never put"
+                );
+                std::thread::sleep(std::time::Duration::from_millis(5));
+            }
+            assert!(
+                paused.elapsed() >= ROOM_PAUSE,
+                "put once the edits paused, not before"
+            );
+            let o = host.0.lock().unwrap().take().unwrap();
+            assert_eq!(room_of(&o.effects.made), Some([50.0, 0.8, 40.0]));
+            std::fs::remove_dir_all(path.parent().unwrap()).unwrap();
         }
 
         /// The Torus's effects stand after it on its part (rounds 13 to 15): the frame's chain in its
@@ -2297,6 +2565,159 @@ pub(crate) mod host {
                 unbent[at..],
                 "the bend is heard from the next block"
             );
+        }
+
+        /// [`SET`] with a group track, Bus (a send of 0.25 to the return), that Keys stands in.
+        fn grouped() -> String {
+            SET.replace(
+                r#"<MidiTrack Id="1"><Name><EffectiveName Value="Keys" /></Name>"#,
+                r#"<GroupTrack Id="20"><Name><EffectiveName Value="Bus" /></Name>
+      <DeviceChain><Mixer><Sends><TrackSendHolder Id="0"><Send><Manual Value="0.25" /></Send></TrackSendHolder></Sends>
+        <Volume><Manual Value="1" /></Volume></Mixer><DeviceChain><Devices /></DeviceChain></DeviceChain>
+    </GroupTrack>
+    <MidiTrack Id="1"><Name><EffectiveName Value="Keys" /></Name><TrackGroupId Value="20" />"#,
+            )
+        }
+
+        /// O-I #849 round 17: a group's solo and its sends follow while it plays, named as the group's part; a send or a
+        /// solo naming both a track and a part, or a return's, is refused in words.
+        #[test]
+        fn a_groups_solo_and_sends_follow_while_it_plays() {
+            let path = write_set("group-follow", &grouped());
+            let mut opened = Opened::open(&path).unwrap();
+            let mut core = opened.core.take().unwrap();
+            let event = |json: &str| {
+                serde_json::from_str::<EventIn>(json).unwrap_or_else(|e| panic!("{json}: {e}"))
+            };
+            assert_eq!(opened.reading()["mixer"]["groups"][0]["sends"][0], 0.25);
+            opened
+                .send(event(r#"{"kind":"solo","part":{"group":0},"on":true}"#))
+                .unwrap();
+            opened
+                .send(event(
+                    r#"{"kind":"send","part":{"group":0},"send":0,"gain":0.125}"#,
+                ))
+                .unwrap();
+            pull(&mut core, &[512]);
+            let applied = opened.reading();
+            assert_eq!(applied["mixer"]["groups"][0]["solo"], true, "{applied}");
+            assert_eq!(applied["mixer"]["groups"][0]["sends"][0], 0.125);
+            let both = opened
+                .send(event(
+                    r#"{"kind":"solo","track":0,"part":{"group":0},"on":true}"#,
+                ))
+                .unwrap_err();
+            assert!(
+                both.contains("names its track, or a part or a group as its part"),
+                "{both}"
+            );
+            let ret = opened
+                .send(event(
+                    r#"{"kind":"send","part":{"return":0},"send":0,"gain":0.5}"#,
+                ))
+                .unwrap_err();
+            assert!(ret.contains("return 0 has no solo and no sends"), "{ret}");
+            std::fs::remove_dir_all(path.parent().unwrap()).unwrap();
+        }
+
+        /// O-I #849 round 17: a device's setting the set's owner wrote while the set plays is followed: the device is
+        /// made again from what the set now stores and heard from the next block, what it does not take named in the
+        /// reading's warnings, and Export Audio renders what was played. A part's instrument, a device the set does not
+        /// have, and a device event that names neither, are refused in words.
+        #[test]
+        fn a_sets_device_edited_while_it_plays_is_made_again_in_the_engine_and_exports_as_played() {
+            let xml = SET.replace(
+                r#"<GlueCompressor Id="10" />"#,
+                r#"<GlueCompressor Id="10"><Threshold><LomId Value="0" /><Manual Value="-40" /></Threshold>
+                  <Range><LomId Value="0" /><Manual Value="30" /></Range></GlueCompressor>"#,
+            );
+            let path = write_set("device-follow", &xml);
+            let still_path = write_set("device-still", &xml);
+            let event = |json: &str| {
+                serde_json::from_str::<EventIn>(json).unwrap_or_else(|e| panic!("{json}: {e}"))
+            };
+            let mut opened = Opened::open(&path).unwrap();
+            let mut core = opened.core.take().unwrap();
+            let mut still = Opened::open(&still_path).unwrap();
+            let mut still_core = still.core.take().unwrap();
+            let blocks = [512, 4096, 4096];
+            let mut played = pull(&mut core, &blocks);
+            let heard = pull(&mut still_core, &blocks);
+            // the owner writes the Bass Glue's threshold, as the frame's device face does (kernel live_device_param_write)
+            live_set::api::device_param_set(
+                path.to_str().unwrap(),
+                "Bass",
+                "GlueCompressor",
+                "Threshold",
+                &json!(-12.0),
+            )
+            .unwrap();
+            let device = r#"{"kind":"device","track_name":"Bass","device":"GlueCompressor"}"#;
+            opened.send(event(device)).unwrap();
+            let after = [512, 8192, 8192];
+            let moved = pull(&mut core, &after);
+            let unmoved = pull(&mut still_core, &after);
+            played.extend_from_slice(&moved);
+            assert_eq!(
+                played[..heard.len()],
+                heard[..],
+                "before its block, nothing changed"
+            );
+            assert_ne!(
+                moved, unmoved,
+                "the Glue made at the threshold written is heard"
+            );
+            let reading = opened.reading();
+            assert!(reading["warnings"].is_array(), "{reading}");
+            // made at a value its model does not take, the words say so
+            let stray = xml.replace(
+                r#"<Manual Value="-40" /></Threshold>"#,
+                r#"<Manual Value="10" /></Threshold>"#,
+            );
+            std::fs::write(
+                &path,
+                live_set::write_gz(&live_set::xml::parse(&stray).unwrap()).unwrap(),
+            )
+            .unwrap();
+            opened.send(event(device)).unwrap();
+            played.extend(pull(&mut core, &[4096]));
+            let warned = opened.reading()["warnings"].to_string();
+            assert!(
+                warned.contains("Bass · GlueCompressor: Live's GlueCompressor holds its Threshold within -40 to 0, and the set stores 10: the engine keeps its own"),
+                "{warned}"
+            );
+            opened.handle.collect();
+            assert_eq!(opened.handle.remade().len(), 2, "each edit made it again");
+            let (bytes, exported) = opened.render_wav().unwrap();
+            assert_eq!(exported["complete"], true);
+            let wav = live_engine::wav::read_wav_f32(&bytes).unwrap();
+            assert_eq!(wav.samples.len(), played.len());
+            for (n, (e, p)) in wav.samples.iter().zip(&played).enumerate() {
+                assert_eq!(
+                    e.to_bits(),
+                    p.to_bits(),
+                    "sample {n}: Export Audio is what the host played"
+                );
+            }
+            for (json, words) in [
+                (
+                    r#"{"kind":"device","track_name":"Keys","device":"Operator"}"#,
+                    "the Operator on 'Keys' is its instrument, which the engine makes when the set is played: the edit is heard from the next Play",
+                ),
+                (
+                    r#"{"kind":"device","track_name":"Pads","device":"Echo"}"#,
+                    "the set has no track named 'Pads'",
+                ),
+                (
+                    r#"{"kind":"device","track_name":"Bass"}"#,
+                    "a device event names its track_name and its device",
+                ),
+            ] {
+                assert_eq!(opened.send(event(json)).unwrap_err(), words, "{json}");
+            }
+            for p in [path, still_path] {
+                std::fs::remove_dir_all(p.parent().unwrap()).unwrap();
+            }
         }
 
         #[test]

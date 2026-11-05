@@ -2915,7 +2915,7 @@ does, in the line under the views.
 | Device | Kind | It shows | Live's nearest |
 |---|---|---|---|
 | Day | Instrument | A display that you click. Pages that are two things at once: today's Day and tomorrow's. Macros of four kinds. | Hybrid Reverb |
-| Torus | Instrument | A picture drawn by the law that it plays. Handles on the picture. An envelope display. A modulation arc and an automation dot. | Wavetable |
+| Torus | Instrument | A picture drawn by the law that it plays. A handle on the picture. Pages for its groups and its rack. A modulation arc and an automation dot. | Wavetable |
 | Physics | Effect | A law drawn as a diagram with a two-way handle. Pages for a long set of parameters. Macros on the widget. | Auto Filter, Corpus |
 | Skillset rack | Rack | The chain list as the picture. Each member's kind mark and evidence. Your request beside the owner's answer. Preview, then apply. | Audio Effect Rack |
 | Skill, Method, Methodology | Effect | One device with three faces, one for each form. A Method's path as its display. A review that you confirm. | Simpler, whose panel changes with its mode |
@@ -2949,19 +2949,19 @@ device. Close now is an action, because it runs once.
 device: quaternal-logic:torus
 width: 1500
 height: 1400
-caption: The Torus. Drag handle 1 along the line to mix the pulses; drag handle 2 out from the ring to drive the body.
+caption: The Torus. Drag handle 1 along the line to set how fast the pulse steps round the ring.
 ```
 
 | View | Holds | Why |
 |---|---|---|
-| Folded | Torus, the level, the notes that sound. | |
-| Compact | The torus: the ring, the surface wave and the two helices. Handle 1 on the pulse line, handle 2 on the wave's crest. Macros: Pulse mix, Damping, Drive, Release. | You hear what you see: the wave is the sound's pattern. |
-| Whole | Band one: the torus, Pulses, Output. Band two: Body, the Envelope display with its two squares, Voices and View. | Two displays, as Wavetable has its oscillator and its envelope. |
+| Folded | Torus, the level, the band of its pulse and the notes that sound. | |
+| Compact | The torus: the ring, the surface wave and the two helices. Handle 1 on the pulse line sets the Rate, with the band edges marked. Macros: Rate, Fundamental, Carrier, Damping. | You hear what you see: the wave is the sound's pattern. |
+| Whole | Five pages. Pulse: the torus and Pulse, then Mode and tuning, and Shape. Body: Body and Save and keep, then Notes and output. Stage. Rack: M1′'s parts, 0 to 5. Macros: the macros, each with its range, the variations, and Keep rack. | Every parameter of §21.2 in its seven groups, two bands to a page, and the rack it keeps. |
 | Full | The torus at pane size and the Jankó keyboard under it. A sounding note lights its key and its point on the ring. | The pane is the instrument that you play. |
 | Pop-out | The torus and the keyboard filling the screen, with the controls in one row under them. | The window to perform from. |
 | Widget | The small torus and a level meter. | |
 
-Drive carries a modulation arc: the sky moves it. Level carries an automation
+Carrier carries a modulation arc: the sky moves it. Level carries an automation
 dot.
 
 #### Physics
@@ -3140,7 +3140,9 @@ working parts and the two that frame them.
 The same two readings run through every instrument. Four and two is its rack
 and its frame: positions 1 to 4 working, 0 and 5 framing. Three and three is
 its first three positions going out and its last three coming back. On the
-Torus, Pulse mix sets the balance of the two.
+Torus the two are set against each other: they give the fourth, the fifth and
+the whole tone it builds every interval from, and on each helix four places
+sound and two hold still (§21.2).
 
 **Stories:** LQ08–LQ11, XA12
 

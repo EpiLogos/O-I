@@ -160,6 +160,11 @@ function figureAt(session, steps) {
   return isTorusFigure(byBand) ? byBand : isTorusFigure(session.figure) ? session.figure : null;
 }
 const PASSAGE_STEPS = 0.5;
+function passageDrive(since, steps) {
+  const turn = pulseTurnings(steps), sheet = turn.phi - wrap(turn.theta) / 2;
+  const u = Math.min(1, Math.max(0, steps - since) / PASSAGE_STEPS);
+  return computeMorphDrive({ driveShape: "sine", interference: "product", driveDepth: 1 }, -Math.PI / 2 + Math.PI * u + sheet, sheet);
+}
 class TorusMorph {
   from = "torus";
   to = "torus";
@@ -177,9 +182,8 @@ class TorusMorph {
   }
   progress(steps) {
     if (this.since === null || this.from === this.to) return 1;
-    const ring = pulseTurnings(Math.max(0, steps - this.since)).theta, across = pulseTurnings(PASSAGE_STEPS).theta;
-    if (ring >= across) return 1;
-    return computeMorphDrive({ driveShape: "sine", interference: "toroidalOnly", driveDepth: 1 }, -Math.PI / 2 + Math.PI * (ring / across), 0).progress;
+    if (steps - this.since >= PASSAGE_STEPS) return 1;
+    return passageDrive(this.since, steps).progress;
   }
   /** A change read where the pulse is not known stands at once, with no passage. */
   snap(shape) {
@@ -464,6 +468,7 @@ export {
   helixIndex,
   helixPlace,
   isTorusFigure,
+  passageDrive,
   plateDisplacement,
   presentSamples,
   presentsAsIs,

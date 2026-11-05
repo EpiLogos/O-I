@@ -25,11 +25,12 @@ export function readPresetName(value: unknown): string | null {
 }
 
 /** The Scene's performance actions: list its presets and what it keeps on the Torus; save a preset (refused by name); recall a preset; read
- * a kept sound back whole by its ref, to open it; keep a sound the kernel sealed; and keep, by `name`, the form's body a kept sound rings
- * on as an instrument with the sounds made on it (O-I #852). */
+ * a kept sound back whole by its ref, to open it; keep a sound the kernel sealed; keep, by `name`, the form's body a kept sound rings
+ * on as an instrument with the sounds made on it (O-I #852); and keep, by `name`, the rack the Torus's rack face holds (DLW build ruling,
+ * 4 November). */
 export type PerformanceAction = {action: 'list'} | {action: 'save'; name: string} | {action: 'recall'; basis_ref: string}
   | {action: 'sound'; sound_ref: string} | {action: 'keep-sound'; sound: Readonly<Record<string, unknown>>}
-  | {action: 'keep-instrument'; name: string; sound_ref: string};
+  | {action: 'keep-instrument'; name: string; sound_ref: string} | {action: 'keep-rack'; name: string; rack: TorusRackDraft};
 export type FramePerformanceRequest = PerformanceAction & {operation: 'performance'; expression_ref: string; scene_ref: string};
 
 /** A frame or host performance request, exact in shape, or null. Every key is closed to its action. */
@@ -57,6 +58,10 @@ export function readFramePerformanceRequest(raw: unknown): FramePerformanceReque
   if (raw.action === 'keep-instrument') {
     return closed(raw, [...common, 'name', 'sound_ref']) && keptName(raw.name) && typeof raw.sound_ref === 'string' && DIGEST.test(raw.sound_ref)
       ? {...base, action: 'keep-instrument', name: raw.name, sound_ref: raw.sound_ref} : null;
+  }
+  if (raw.action === 'keep-rack') {
+    const rack = closed(raw, [...common, 'name', 'rack']) && keptName(raw.name) ? readRackDraft(raw.rack) : null;
+    return rack ? {...base, action: 'keep-rack', name: raw.name as string, rack} : null;
   }
   return null;
 }
@@ -86,8 +91,11 @@ export interface KeptRackDevice {readonly device_ref: string; readonly role: 'no
   /** The settings the device kept, each by its own name (an effect's are its law's, native-field/effectsLaw.ts): its drop carries them
    * onto Live's device where the corpus pins the setting (O-I #852 round 10). */
   readonly state: Readonly<Record<string, number | boolean | string>>}
-/** One macro of a kept rack: its name, where it stands (0 to 1), and the parameters it turns (a device of the chain's, or the Torus's). */
-export interface KeptRackMacro {readonly name: string; readonly value: number; readonly targets: readonly {readonly device_ref: string; readonly parameter: string}[]}
+/** One parameter a macro turns (a device of the chain's, or the Torus's), over its range: the macro at 0 sets `min`, at 1 `max` (kernel
+ * kept.rs MacroTarget). */
+export interface KeptMacroTarget {readonly device_ref: string; readonly parameter: string; readonly min: number; readonly max: number}
+/** One macro of a kept rack: its name, where it stands (0 to 1), and the parameters it turns, each over its range. */
+export interface KeptRackMacro {readonly name: string; readonly value: number; readonly targets: readonly KeptMacroTarget[]}
 /** One variation of a kept rack: its name, and a value for every macro, in macro order. */
 export interface KeptRackVariation {readonly name: string; readonly values: readonly number[]}
 /** A rack the Scene keeps (`oi.torus-rack/v1`): the Torus with its chain, its macros and their variations, as its drop places them on a
@@ -107,6 +115,9 @@ export type PerformanceReply =
   | {readonly state: 'kept'; readonly sound_ref: string; readonly name: string; readonly unsaved: boolean; readonly kept: TorusKeptSummary | null}
   /** An instrument the Scene now keeps, with how many sounds stand under it, and all it keeps on the Torus then (O-I #852). */
   | {readonly state: 'instrument-kept'; readonly instrument_ref: string; readonly name: string; readonly sounds: number; readonly unsaved: boolean
+    readonly kept: TorusKeptSummary | null}
+  /** A rack the Scene now keeps, with how many macros and variations it holds, and all it keeps on the Torus then (DLW build ruling, 4 November). */
+  | {readonly state: 'rack-kept'; readonly rack_ref: string; readonly name: string; readonly macros: number; readonly variations: number; readonly unsaved: boolean
     readonly kept: TorusKeptSummary | null};
 
 /** The bases the kernel reports for a Scene: each digest and identity exactly as the kernel holds it. A malformed record is not listed. */
@@ -133,7 +144,8 @@ function keptSound(raw: unknown): KeptSoundSummary | null {
   return body_ref === null ? null : {sound_ref: raw.sound_ref, name: raw.name, body: 'form', body_ref, sample_rate: raw.sample_rate};
 }
 
-const share = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1;
+const finite = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
+const share = (value: unknown): value is number => finite(value) && value >= 0 && value <= 1;
 /** The most settings a kept device's state is read with (the Torus's effects keep at most nine, native-field/effectsLaw.ts). */
 const KEPT_DEVICE_SETTINGS = 32;
 /** A kept device's state as a flat record of settings, each a finite number, a switch or a word; null where it is anything else. */
@@ -160,7 +172,8 @@ function keptRackRows(raw: Record<string, unknown>): Pick<KeptRackSummary, 'chai
   const macros: KeptRackMacro[] = [];
   for (const row of raw.macros) {
     if (!object(row) || !keptName(row.name) || !share(row.value) || !Array.isArray(row.targets)) return null;
-    const targets = row.targets.map(target => object(target) && refText(target.device_ref) && refText(target.parameter) ? {device_ref: target.device_ref, parameter: target.parameter} : null);
+    const targets = row.targets.map(target => object(target) && refText(target.device_ref) && refText(target.parameter) && finite(target.min) && finite(target.max)
+      ? {device_ref: target.device_ref, parameter: target.parameter, min: target.min, max: target.max} : null);
     if (targets.includes(null)) return null;
     macros.push({name: row.name, value: row.value, targets: targets as KeptRackMacro['targets']});
   }
@@ -248,6 +261,51 @@ export function keptInstrumentReply(performance: unknown, instrument: TorusInstr
   const row = kept?.instruments.find(item => item.instrument_ref === instrument.instrument_ref);
   return row ? {state: 'instrument-kept', instrument_ref: row.instrument_ref, name: row.name, sounds: row.sounds.length, unsaved, kept}
     : {state: 'refused', reason: `The Scene did not keep "${instrument.name}".`, missing: []};
+}
+
+/** What the Torus's rack face holds to keep as a rack (DLW build ruling, 4 November): the sound its Torus opens with, when it opens one; its
+ * chain, its macros each with its range, and its variations, as kept.rs KeptRack holds them. */
+export interface TorusRackDraft {readonly sound?: string; readonly chain: readonly KeptRackDevice[]; readonly macros: readonly KeptRackMacro[]
+  readonly variations: readonly KeptRackVariation[]}
+/** A kept rack's bounds (kernel kept.rs MAX_RACK_DEVICES, MAX_MACROS, MAX_MACRO_TARGETS, MAX_VARIATIONS). */
+const RACK_BOUNDS = {devices: 64, macros: 16, targets: 32, variations: 128} as const;
+/** A rack draft, exact in shape and within the rack's bounds, or null. What it turns and opens is the kernel's to judge. */
+function readRackDraft(raw: unknown): TorusRackDraft | null {
+  if (!object(raw) || !closed(raw, ['sound', 'chain', 'macros', 'variations'])) return null;
+  if (raw.sound !== undefined && (typeof raw.sound !== 'string' || !DIGEST.test(raw.sound))) return null;
+  if (!Array.isArray(raw.chain) || raw.chain.length > RACK_BOUNDS.devices || !Array.isArray(raw.macros) || raw.macros.length > RACK_BOUNDS.macros
+    || !Array.isArray(raw.variations) || raw.variations.length > RACK_BOUNDS.variations) return null;
+  if (!raw.chain.every(row => object(row) && closed(row, ['device_ref', 'role', 'state'])) || !raw.variations.every(row => object(row) && closed(row, ['name', 'values']))
+    || !raw.macros.every(row => object(row) && closed(row, ['name', 'value', 'targets']) && Array.isArray(row.targets) && row.targets.length <= RACK_BOUNDS.targets
+      && row.targets.every(target => object(target) && closed(target, ['device_ref', 'parameter', 'min', 'max'])))) return null;
+  const rows = keptRackRows(raw);
+  return rows ? {...(raw.sound === undefined ? {} : {sound: raw.sound}), ...rows} : null;
+}
+/** A rack as the kernel keeps one (kernel kept.rs `KeptRack`, `oi.torus-rack/v1`). */
+export interface TorusRackRecord extends TorusRackDraft {readonly schema: 'oi.torus-rack/v1'; readonly rack_ref: string; readonly name: string}
+/** The rack the face holds, kept under its name (manual §21.2: "A rack | The Torus with its note devices and effects, its macros and their
+ * variations"): its ref is its name, so keeping it again by name replaces it, as a preset saved again under its name. A sound the Scene does
+ * not keep opens none, said by why. Pure. */
+export function rackToKeep(performance: unknown, name: string, draft: TorusRackDraft): {rack: TorusRackRecord} | {reason: string} {
+  if (draft.sound !== undefined) {
+    const sounds = list(object(performance) && object(performance.torus_kept) ? performance.torus_kept.sounds : undefined);
+    if (!sounds.some(raw => keptSound(raw)?.sound_ref === draft.sound)) return {reason: `The Scene keeps no sound ${draft.sound} for the rack to open.`};
+  }
+  return {rack: {schema: 'oi.torus-rack/v1', rack_ref: `rack:torus/${name.trim()}`, name, ...draft}};
+}
+/** The one edit that keeps a rack in the Scene's performance (the performance's `keep_torus_rack`): the kernel keeps it, or replaces the
+ * one it keeps under the same ref, and refuses in its words a macro that turns a device off the rack's chain or a variation short of a
+ * value for every macro. */
+export function keepRackChange(sceneRef: string, rack: TorusRackRecord) {
+  return {change: 'scene_performance_edit', scene_ref: sceneRef, operations: [{operation: 'keep_torus_rack', rack}]};
+}
+/** What the Scene keeps once the rack's edit is made: the rack by its ref and name, how many macros and variations it holds, with all the
+ * Scene keeps on the Torus; refused in words where the Scene does not keep it. */
+export function keptRackReply(performance: unknown, rack: TorusRackRecord, unsaved: boolean): PerformanceReply {
+  const kept = listPerformance(performance).kept ?? null;
+  const row = kept?.racks.find(item => item.rack_ref === rack.rack_ref);
+  return row ? {state: 'rack-kept', rack_ref: row.rack_ref, name: row.name, macros: row.macros.length, variations: row.variations.length, unsaved, kept}
+    : {state: 'refused', reason: `The Scene did not keep "${rack.name}".`, missing: []};
 }
 
 /** A sound the Scene keeps, whole, by its ref: what opens it (the kernel opens it against the Torus as it stands). */
