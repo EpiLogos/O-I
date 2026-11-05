@@ -698,6 +698,47 @@ impl crate::Kernel {
             serde_json::json!({"schema": "oi.live-audio-export/v1", "path": path, "set": set, "bytes": wav.len()}),
         ))
     }
+
+    /// Consolidate on an audio part (O-I #743; manual §10.9 "In Arrangement view, Split (⌘E), Consolidate (⌘J)"): the
+    /// native host renders the part's clips alone across beats `from`–`to` (live-engine `render_clips_alone`) and hands
+    /// this owner the WAV; the owner keeps it beside the set and lays the clip that plays it, against the set's revision
+    /// and under the write gate, as it makes every act on the set (live-set `consolidate_audio`), and records the sample it
+    /// kept. Only a set the shell has read is written; a refusal writes and records nothing.
+    pub fn live_audio_consolidate(
+        &mut self,
+        set: &str,
+        expected_revision: &str,
+        track: usize,
+        from: f64,
+        to: f64,
+        wav: &[u8],
+    ) -> Result<(crate::events::KernelEventReceipt, serde_json::Value), String> {
+        native_document(set)?;
+        admitted_for_write(set)?;
+        let reading = {
+            let _gate = WRITE_GATE
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+            live_set::acts::consolidate_audio(set, expected_revision, track, from, to, wav)?
+        };
+        let native = std::path::Path::new(set);
+        let kept = reading["sample"]["path"]
+            .as_str()
+            .and_then(|sample| native.parent().map(|folder| folder.join(sample)))
+            .map_or_else(
+                || set.to_owned(),
+                |file| file.to_string_lossy().into_owned(),
+            );
+        let set_name = native
+            .file_name()
+            .map(|n| n.to_string_lossy().into_owned())
+            .unwrap_or_default();
+        let receipt = self.log.record(crate::events::KernelEvent::FileChanged {
+            path: kept,
+            summary: format!("Consolidate kept a sample of {set_name}'s clips beside it."),
+        });
+        Ok((receipt, reading))
+    }
 }
 
 /// Admit one native `.als` document path, as the host's live_shell_read does.
@@ -1394,6 +1435,94 @@ mod tests {
             0,
             "and records nothing"
         );
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// Consolidate on an audio part (O-I #743): the host's render of the clips alone is kept beside a set the shell has read,
+    /// the clip that plays it laid against the set's revision, and the sample's writing recorded; a set not read, or one that
+    /// changed since, is refused with nothing written or recorded.
+    #[test]
+    fn consolidate_keeps_the_engines_render_beside_a_read_set_and_records_it() {
+        let dir =
+            std::env::temp_dir().join(format!("live-set-owner-{}-consolidate", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let set = dir.join("Song.als");
+        let xml = r#"<Ableton MajorVersion="5" MinorVersion="12.0_12049"><LiveSet><Tracks>
+<AudioTrack Id="8"><Name><EffectiveName Value="Vox"/><UserName Value=""/></Name><DeviceChain><MainSequencer><ClipSlotList/><Sample><ArrangerAutomation><Events>
+<AudioClip Id="0" Time="0"><CurrentStart Value="0"/><CurrentEnd Value="2"/><Loop><LoopStart Value="0"/><LoopEnd Value="1"/><StartRelative Value="0"/><LoopOn Value="false"/></Loop><Name Value="Room"/><IsWarped Value="false"/><SampleVolume Value="1"/><SampleRef><FileRef><RelativePath Value="room.wav"/></FileRef></SampleRef></AudioClip>
+</Events></ArrangerAutomation></Sample></MainSequencer><DeviceChain><Devices/></DeviceChain></DeviceChain></AudioTrack>
+</Tracks><MainTrack><DeviceChain><Mixer><Tempo><Manual Value="120"/></Tempo></Mixer></DeviceChain></MainTrack><Scenes><Scene Id="0"><Name Value=""/></Scene></Scenes></LiveSet></Ableton>"#;
+        std::fs::write(
+            &set,
+            live_set::write_gz(&live_set::xml::parse(xml).unwrap()).unwrap(),
+        )
+        .unwrap();
+        let path = set.to_str().unwrap();
+        // one second of stereo 32-bit float at 8 kHz: beats 0 to 2 at 120 BPM
+        let frames = 8_000usize;
+        let mut wav = b"RIFF".to_vec();
+        wav.extend_from_slice(&(36 + frames as u32 * 8).to_le_bytes());
+        wav.extend_from_slice(b"WAVEfmt ");
+        for word in [
+            16u32.to_le_bytes().as_slice(),
+            &3u16.to_le_bytes(),
+            &2u16.to_le_bytes(),
+            &8_000u32.to_le_bytes(),
+            &64_000u32.to_le_bytes(),
+            &8u16.to_le_bytes(),
+            &32u16.to_le_bytes(),
+            b"data",
+            &(frames as u32 * 8).to_le_bytes(),
+        ] {
+            wav.extend_from_slice(word);
+        }
+        wav.resize(wav.len() + frames * 8, 0);
+        let revision = || {
+            live_set::edit::clip_json(path, 0, live_set::edit::ClipAt::Arrangement(0)).unwrap()
+                ["revision"]
+                .as_str()
+                .unwrap()
+                .to_string()
+        };
+        let mut kernel = crate::Kernel::new(crate::CentralClient::discover());
+        let unread = kernel
+            .live_audio_consolidate(path, &revision(), 0, 0.0, 2.0, &wav)
+            .unwrap_err();
+        assert!(
+            unread.contains("Read this Live set before writing to it"),
+            "{unread}"
+        );
+        execute(&KernelOp::LiveSetRead {
+            path: path.to_owned(),
+        })
+        .unwrap()
+        .unwrap();
+        let stale = kernel
+            .live_audio_consolidate(path, "sha256:older", 0, 0.0, 2.0, &wav)
+            .unwrap_err();
+        assert!(stale.contains("changed since it was read"), "{stale}");
+        assert!(!dir.join("Samples").exists(), "a refusal writes nothing");
+        let (receipt, reading) = kernel
+            .live_audio_consolidate(path, &revision(), 0, 0.0, 2.0, &wav)
+            .unwrap();
+        let kept = dir.join(reading["sample"]["path"].as_str().unwrap());
+        assert_eq!(
+            std::fs::read(&kept).unwrap(),
+            wav,
+            "the render is kept beside the set, whole"
+        );
+        assert!(
+            reading["done"].as_str().unwrap().starts_with(
+                "Consolidated 1 audio clip between beat 0 and beat 2 into one, 1 second of sound"
+            ),
+            "{reading}"
+        );
+        assert!(
+            matches!(&receipt.envelope.event, crate::events::KernelEvent::FileChanged { path, summary }
+            if *path == kept.to_string_lossy() && summary == "Consolidate kept a sample of Song.als's clips beside it.")
+        );
+        assert_eq!(kernel.event_log().since(receipt.seq + 1).len(), 0);
         let _ = std::fs::remove_dir_all(&dir);
     }
 

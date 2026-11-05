@@ -58,7 +58,8 @@ function liveSet({refuse = null} = {}) {
       write: (track, at, text) => { calls.push({info: [track, at, text]}); return Promise.resolve({}) }},
     play: {launch: (track, at) => { calls.push({launch: [track, at]}); return Promise.resolve({ok: true, note: 'Swell plays on the torus.'}) },
       stop: track => { calls.push({stop: track}); return {ok: true, note: 'Swell stops.'} },
-      stopAll: () => { calls.push({stopAll: true}); return {ok: true, note: 'Nothing plays now.'} }}})
+      stopAll: () => { calls.push({stopAll: true}); return {ok: true, note: 'Nothing plays now.'} },
+      launchRow: (row, slots) => { calls.push({launchRow: [row, slots]}); return Promise.resolve({ok: true, note: 'Row 1 plays on the torus: Swell.'}) }}})
   return {set: {...set, actions: {...set.actions, owner: 'kernel · live-set, the open set\'s owner'}}, calls}
 }
 const context = (extra = {}) => ({view: 'session', binding: null, press: (_key, _what, run) => run(), rename: () => {}, writeClip: async () => ({ok: true}), ...extra})
@@ -183,7 +184,8 @@ test('in Live a track\'s and a row\'s acts stand enabled where its owner takes t
   assert.match(byId(items, 'delete').why, /missing op: track\.remove/)
   const row = acts.objectMenu({kind: 'row', id: 'scene:1', name: '2'}, set, context())
   for (const id of ['insert', 'rename', 'duplicate', 'delete', 'stop-all']) assert.ok(!byId(row, id).disabled, `${id} is enabled`)
-  assert.match(byId(row, 'launch').why, /missing op: row\.launch/)
+  // REPLACES "assert.match(byId(row, 'launch').why, /missing op: row\.launch/)": a row launches where the set hands in its player (O-I #743).
+  assert.equal(byId(row, 'launch').disabled, undefined, 'a row\'s Launch is enabled')
 })
 
 test('a dimmed act says why on the status bar: its entry takes the pointer, carries its reason in data-i, and is never a disabled control', async () => {
@@ -276,12 +278,63 @@ test('Split stands where the insert marker is inside the clip, Consolidate where
   assert.deepEqual(calls.at(-1), {kind: 'tracks_group', tracks: [3]})
 })
 
-test('row launch, record here and track delete stay dimmed in Live, each naming what it waits for', () => {
+// REPLACES "row launch, record here and track delete stay dimmed in Live, each naming what it waits for": a row launches (O-I #743).
+test('record here and track delete stay dimmed in Live, each naming what it waits for; a row\'s Launch, where no player is handed in, waits for none', () => {
   const {set} = grouped()
   const armed = {...set, tracks: set.tracks.map((t, i) => i === 2 ? {...t, mix: {...t.mix, arm: true}} : t)}
-  assert.match(byId(acts.objectMenu({kind: 'row', id: 'scene:0', name: '1'}, set, context()), 'launch').why, /row\.launch .* It waits for a player of every clip of a row at once/)
+  const row = byId(acts.objectMenu({kind: 'row', id: 'scene:0', name: '1'}, set, context()), 'launch')
+  assert.equal(row.disabled, true)
+  assert.match(row.why, /missing op: row\.launch \(kernel · live-set, the open set's owner\)\.$/, 'the set read with no player names the op, and no build it waits for')
   assert.match(byId(acts.objectMenu(slot(2, 0, 'Bass'), armed, context()), 'record').why, /slot\.record .* It waits for a recording path/)
   assert.match(byId(acts.objectMenu({kind: 'track', id: ref(3), name: 'Drums'}, set, context()), 'delete').why, /track\.remove .* It waits for the decode of how Live re-routes/)
+})
+
+// O-I #743: a row's Launch is Live's scene launch, on a player of each part (live/clipPlayer.ts launchRow). A row launches only what is in
+// it (§21.1): each part's clip in the row, and the stop of each empty slot that keeps one; a slot whose stop the set removed is not of it.
+test('a row\'s Launch hands the clip player what the row holds on each part: its clips by kind, and the empty slots that keep their stop', async () => {
+  const {set, calls} = liveSet()
+  const item = byId(acts.objectMenu({kind: 'row', id: 'scene:1', name: 'Dawn'}, set, context()), 'launch')
+  assert.equal(item.disabled, undefined, item.why)
+  assert.match(set.actions.launchStop.op, /launchRow/)
+  calls.length = 0
+  await item.onSelect()
+  assert.deepEqual(calls, [{launchRow: [1, [{track: 1, kind: 'stop'}, {track: 2, kind: 'stop'}]]}],
+    'Estuary\'s slot in Dawn has its stop removed, so the row leaves it; Market hall and Tide pad stop; the Main track has no slot')
+  calls.length = 0
+  await set.actions.launchStop.run('scene:0')
+  assert.deepEqual(calls, [{launchRow: [0, [{track: 0, kind: 'stop'}, {track: 1, kind: 'stop'}, {track: 2, name: 'Swell', kind: 'midi'}]]}])
+  assert.match((await set.actions.launchStop.run('scene:9')).error, /not a row of this set/)
+  const unread = liveSetTrackAdapter.project({set: summary, document: null, play: {launch: async () => ({ok: true, note: ''}), stop: () => ({ok: true, note: ''}),
+    stopAll: () => ({ok: true, note: ''}), launchRow: async () => { throw new Error('not reached') }}})
+  assert.deepEqual(await unread.actions.launchStop.run('scene:0'), {ok: false, error: 'The set\'s slots are not read yet, so the row has nothing to launch.'})
+})
+
+// O-I #743: Consolidate on an audio part — the engine renders its clips alone across the stretch and the set's owner keeps the sample
+// beside the set as the clip that plays it (live/liveWrites.ts writeLiveAudioConsolidate, the host's live_engine_consolidate).
+test('an audio part\'s Consolidate is the engine\'s render of its clips kept beside the set, answered in the owner\'s words', async () => {
+  const calls = []
+  const summary2 = {...summary, tracks: [...summary.tracks.slice(0, 3), {kind: 'audio', name: 'Drums', devices: []}, summary.tracks[3]]}
+  const document2 = {...document, tracks: [...document.tracks.slice(0, 3), track('audio', 'Drums', {trackId: '8', arrangementClips: [{name: 'Break', kind: 'audio', start: 0, end: 4}]}), document.tracks[3]]}
+  const project = consolidateAudio => liveSetTrackAdapter.project({set: summary2, document: document2, act: async a => { calls.push(a); return {act: a.kind, done: 'ok', at: null, revision: 'r'} },
+    consolidateAudio})
+  const set = project((track, span) => { calls.push({consolidateAudio: [track, span]}); return Promise.resolve({act: 'clips_consolidate',
+    done: 'Consolidated 1 audio clip between beat 0 and beat 4 into one, 2 seconds of sound written beside the set as Samples/Processed/Consolidate/Break [0123456789abcdef].wav.',
+    at: {track: 3, arrangement: 0}, revision: 'r2', unplayed: ['Drums: its clip \'Fill\' is warped, and the engine plays unwarped clips first: it is silent']}) })
+  const drums = {kind: 'clip', id: `${ref(3)}/clip/0`, trackId: ref(3), name: 'Break'}
+  const item = byId(acts.objectMenu(drums, set, context({view: 'arrangement', span: {start: 0, end: 4}})), 'consolidate')
+  assert.equal(item.disabled, undefined, item.why)
+  const answer = await set.actions.consolidateClips.run(ref(3), {start: 0, end: 4})
+  assert.deepEqual(calls, [{consolidateAudio: [3, {start: 0, end: 4}]}], 'the engine\'s render, not the set\'s typed act')
+  assert.deepEqual(answer, {ok: true, note: 'Consolidated 1 audio clip between beat 0 and beat 4 into one, 2 seconds of sound written beside the set as Samples/Processed/Consolidate/Break [0123456789abcdef].wav. Drums: its clip \'Fill\' is warped, and the engine plays unwarped clips first: it is silent'})
+  const refused = await project(() => Promise.reject(new Error('No clip of Drums sounds between beat 8 and beat 9 in the engine'))).actions.consolidateClips.run(ref(3), {start: 8, end: 9})
+  assert.deepEqual(refused, {ok: false, error: 'No clip of Drums sounds between beat 8 and beat 9 in the engine'})
+  assert.match(byId(acts.objectMenu(drums, project(undefined), context({view: 'arrangement', span: {start: 0, end: 4}})), 'consolidate').why, /render/,
+    'a set read with no engine handed in still waits for its render')
+  const {readFile} = await import('node:fs/promises')
+  const writes = await readFile(new URL('../src/live/liveWrites.ts', import.meta.url), 'utf8')
+  assert.match(writes, /invoke<LiveSetActed>\('live_engine_consolidate', \{path, expectedRevision: expected_revision, track, from: span\.start, to: span\.end\}\)/,
+    'the host renders and the kernel\'s owner keeps, against the revision read')
+  assert.match(writes, /consolidateAudio: \(track: number, span: \{start: number; end: number\}\) => writeLiveAudioConsolidate\(path, track, span\)/)
 })
 
 test('the Arrangement draws its time selection over the marks and through the lanes', async () => {

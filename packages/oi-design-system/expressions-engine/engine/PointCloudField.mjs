@@ -666,7 +666,7 @@ class PointCloudField {
     this.particleMaterial.depthTest = occlude;
     this.particleMaterial.depthWrite = occlude;
     u.uPerspective.value = persp ? 1 : 0;
-    u.uCameraDistance.value = this.orbitDistance();
+    u.uCameraDistance.value = persp && this.hostEyeDistance !== null ? this.hostEyeDistance : this.orbitDistance();
     u.uViewHeight.value = viewH;
     u.uSizeAttenuation.value = Math.max(0, depth.sizeAttenuation ?? 0);
     u.uSizeAttenuationCurve.value = Math.max(0.01, depth.sizeAttenuationCurve ?? 1);
@@ -1162,6 +1162,8 @@ class PointCloudField {
   getEvaluation() {
     return { config: this.evaluatedConfig ?? this.config, live: this.liveAutomation };
   }
+  /** How far from the scene's origin the hosted perspective eye stands (setHostView); null until a host hands its view. */
+  hostEyeDistance = null;
   /** Host projection is exact, including off-centre framing and edge-on workplanes. */
   setHostView(view) {
     const { width, height, originX, originY, pixelsPerUnit: s } = view;
@@ -1184,9 +1186,11 @@ class PointCloudField {
     this.orthoCamera.updateProjectionMatrix();
     const fov = this.perspCamera.fov * Math.PI / 180;
     const distance = height / Math.max(1e-4, s) * 0.5 / Math.max(1e-4, Math.tan(fov / 2));
+    this.hostEyeDistance = distance;
     this.perspCamera.near = 0.1;
     this.perspCamera.far = 2e4;
     this.perspCamera.zoom = 1;
+    this.perspCamera.setViewOffset(Math.max(1, width), Math.max(1, height), width / 2 - originX, height / 2 - originY, Math.max(1, width), Math.max(1, height));
     this.perspCamera.updateProjectionMatrix();
     const planar = this.cameraProjection !== "perspective";
     const eyeDistance = planar ? 5e3 : distance;

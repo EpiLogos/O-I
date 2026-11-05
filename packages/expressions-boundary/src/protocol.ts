@@ -42,7 +42,7 @@ export {STUDIO_SECTIONS, isStudioSection, studioPlacement, type StudioSection} f
 import {isStudioSection, type StudioSection} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/studioSections.ts';
 /** The stage-control vocabulary (view, capture, present, export, import, tool, engine): one closed list for host, frame and shell. */
 export {STAGE_COMMANDS, STAGE_VIEW_ACTIONS, STAGE_CAPTURE_WIDTHS, STAGE_CAPTURE_ASPECTS, STAGE_EXPORT_FORMATS, STAGE_TOOLS, STAGE_TOOL_READINGS, STAGE_ENGINE_ACTIONS, STAGE_TAKE_MODES, STAGE_TRACK_ACTIONS, stageOneOf, stageRefusal,
-  readStageRequest, stageRequestMessage, stageReplyMessage, readStageResult, readStageAudioClock, isStageSampleCursor, readStageJournal, stageJournalLanding, STAGE_JOURNAL_ACTS_MAX, STAGE_JOURNAL_BYTES_MAX, readStageTorusCheckpoint, STAGE_TORUS_CHECKPOINT_BYTES_MAX, STAGE_RENDER_FRAMES_MAX, STAGE_RENDER_ACTS_MAX, STAGE_INSTRUMENT_TIMED_KINDS, STAGE_EDIT_AHEAD_SECONDS, STAGE_JANKO_KEYS_MAX, readInstrumentEdit, STAGE_INSTRUMENT_CADENCES, STAGE_INSTRUMENT_LEVEL, STAGE_INSTRUMENT_SCALE_MAX, FRAME_PRESENTATIONS, FRAME_CHROME_HOMES, FRAME_CHROME_KINDS, FRAME_CHROME_LIMITS, readFrameChrome, type FramePresentation, type FrameChromeHome, type FrameChromeKind, type FrameChromeControl, type FrameChromeOption, type FrameChromeReading,
+  readStageRequest, stageRequestMessage, stageReplyMessage, readStageResult, readStageAudioClock, isStageSampleCursor, readStageJournal, stageJournalLanding, STAGE_JOURNAL_ACTS_MAX, STAGE_JOURNAL_BYTES_MAX, readStageTorusCheckpoint, isStageCheckpointName, STAGE_TORUS_CHECKPOINT_BYTES_MAX, STAGE_RENDER_FRAMES_MAX, STAGE_RENDER_ACTS_MAX, STAGE_INSTRUMENT_TIMED_KINDS, STAGE_EDIT_AHEAD_SECONDS, STAGE_JANKO_KEYS_MAX, readInstrumentEdit, STAGE_INSTRUMENT_CADENCES, STAGE_INSTRUMENT_LEVEL, STAGE_INSTRUMENT_SCALE_MAX, FRAME_PRESENTATIONS, FRAME_CHROME_HOMES, FRAME_CHROME_KINDS, FRAME_CHROME_LIMITS, readFrameChrome, type FramePresentation, type FrameChromeHome, type FrameChromeKind, type FrameChromeControl, type FrameChromeOption, type FrameChromeReading,
   type StageCommand, type StageCommandName, type StageResult, type StageAudioClock, type StageJournalAct, type StagePerformanceJournal, type StageTorusCheckpoint, type StageTorusSound, type StageSoundMove, type StageTakeAct, type StageTakeRender, type StageKey, type StageViewAction, type StageCaptureSettings, type StageCaptureWidth, type StageCaptureAspect, type StageExportFormat, type StageTakeMode, type StageTrackAction,
   type StageTool, type StageToolReading, type StageEngineAction, type InstrumentEdit,
 } from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageCommands.ts';
@@ -118,11 +118,24 @@ export function readHostedTorus(raw: unknown): HostedTorusSession | string {
   // What rings (O-I #852): an owner from before it names none, and then the session carries none; one named is read exact.
   const body = raw.body === undefined ? undefined : readTorusBody(raw.body);
   if (typeof body === 'string') return `body: ${body}`;
+  // Under Sequence (O-I 851): the scene's shapes for the torus, exact; a frame that announces none carries none.
+  const sequence = raw.sequence === undefined ? undefined : readTorusSequence(raw.sequence, t.shape);
+  if (typeof sequence === 'string') return `sequence: ${sequence}`;
   return {settings: {rate, fundamental, carrier: t.carrier, shape: t.shape, tuning: t.tuning, polyphony: t.polyphony, tempo_bpm: t.tempo_bpm,
     ...(t.strike !== undefined ? {strike: t.strike as number} : {})},
     steps_per_second: raw.steps_per_second, band: raw.band, fundamental_hz: raw.fundamental_hz, map_hz: raw.map_hz, figure: raw.figure as HostedTorusSession['figure'],
     comma_cents: raw.comma_cents, notes: raw.notes, resident_tunings: [...raw.resident_tunings] as HostedTorusSession['resident_tunings'], carrier_drive: raw.carrier_drive,
-    ...(maqam ? {maqam} : {}), ...(material ? {material} : {}), ...(classes ? {classes} : {}), ...(body ? {body} : {})};
+    ...(maqam ? {maqam} : {}), ...(material ? {material} : {}), ...(classes ? {classes} : {}), ...(body ? {body} : {}), ...(sequence ? {sequence} : {})};
+}
+
+/** The scene's shapes for the torus under Sequence (O-I 851; instrumentAnnouncement.mjs `sequence`), exact: the figure they set now, the shape
+ * it stands on and the one it moves to, and the progress 0..1 between them. Under another Shape the figure is QL's, so one is refused there. */
+function readTorusSequence(raw: unknown, shape: unknown): NonNullable<HostedTorusSession['sequence']> | string {
+  const figure = (v: unknown): v is NonNullable<HostedTorusSession['figure']> => typeof v === 'string' && (TORUS_FIGURES as readonly string[]).includes(v);
+  if (shape !== 'sequence') return 'expected none: under another Shape the figure is QL\'s';
+  if (!object(raw) || !figure(raw.figure) || !figure(raw.from) || !figure(raw.to) || typeof raw.progress !== 'number' || !Number.isFinite(raw.progress)
+    || raw.progress < 0 || raw.progress > 1) return 'expected the figure the scene\'s shapes set, the two shapes and the progress 0..1 between them';
+  return {figure: raw.figure, from: raw.from, to: raw.to, progress: raw.progress};
 }
 
 /** The most modes of a form's body each voice rings (QL-MEF form_instrument/body.rs MAX_BODY_MODES). */

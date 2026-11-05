@@ -1064,3 +1064,38 @@ test('19h · the World graph\'s near field takes the far field\'s theta', async 
   const view = await readFile(new URL('../src/projections/atlas/src/graph/view.ts', import.meta.url), 'utf8')
   assert.match(view, /\.force\('charge', forceField<VNode>\(\)\.parent\(this\.parentOf\)\.strength\(fns\.charge\)\.theta\(FIELD_THETA\)\.distanceMax\(fns\.reach\)\)\n\s*\.force\('cluster', forceCluster<VNode>\(\)\.group\(this\.parentOf\)\.strength\(fns\.charge\)\.theta\(FIELD_THETA\)\.distanceMax\(fns\.reach\)\)/)
 })
+
+// Round 869 (DLW build ruling 2026-11-05; PROJECTION-SCALE-2026-10-28 "Draw", O-I #742): the World graph draws by level of detail. Past about
+// 2,000 drawn nodes or 4,000 drawn ties the Canvas 2D draw passes about 10 ms at DPR 2, so it thins: below a zoom of 1.5 each form's dust is
+// drawn as the form's halo with its count, and the ties of dust stand only for the hovered or the selected neighbourhood. The manual's own
+// controls (the graph view: "Choose which occurrences show as dust around a node … which tiers of node show") thin it further, by your choice.
+const graphView = await import('../src/projections/atlas/src/graph/view.ts')
+test('19i · the World graph thins past about 2,000 drawn nodes or 4,000 drawn ties, and folds its dust into halos below a zoom of 1.5', () => {
+  assert.deepEqual(graphView.GRAPH_DETAIL, {nodes: 2000, edges: 4000, dustK: 1.5})
+  assert.deepEqual(graphView.graphDetail(2000, 4000, 0.8), {thin: false, dustAsHalo: false}, 'at the bound: every point and tie is drawn')
+  assert.deepEqual(graphView.graphDetail(2001, 10, 0.8), {thin: true, dustAsHalo: true})
+  assert.deepEqual(graphView.graphDetail(10, 4001, 0.8), {thin: true, dustAsHalo: true})
+  assert.deepEqual(graphView.graphDetail(3000, 9000, 1.5), {thin: true, dustAsHalo: false}, 'close enough: the dust is drawn as points again, its ties still thinned')
+})
+
+test('19j · a thinned field folds each form\'s dust into the form with its count and reach; the neighbourhood of the hand and the selection stays points', () => {
+  const form = {id: 0, sx: 100, sy: 100}, other = {id: 1, sx: 400, sy: 100}
+  const dust = [{id: 2, sx: 103, sy: 104, p: form}, {id: 3, sx: 100, sy: 90, p: form}, {id: 4, sx: 410, sy: 100, p: other}, {id: 5, sx: 50, sy: 50, p: null},
+    {id: 6, sx: 99, sy: 99, p: form}]
+  const {folds, points} = graphView.foldDust(dust, v => v.p, new Set([6]))
+  assert.deepEqual([...folds].map(([f, fold]) => [f.id, fold.count, fold.reach]), [[0, 2, Math.sqrt((25 + 100) / 2)], [1, 1, 10]],
+    'each form carries how many of its dust it folds, and how far they lie (the root mean square of their distance)')
+  assert.deepEqual(points.map(v => v.id), [5, 6], 'a dust with no form on stage, and one in the hand\'s or the selection\'s neighbourhood, stay points')
+})
+
+test('19k · the draw takes the level of detail: its dust folds into halos with a count, and the ties of dust stand only near the hand or the selection', async () => {
+  const {readFile} = await import('node:fs/promises')
+  const view = await readFile(new URL('../src/projections/atlas/src/graph/view.ts', import.meta.url), 'utf8')
+  assert.match(view, /const detail = graphDetail\(stage\.length, this\.edgesOnStage\(\), k\)/)
+  assert.match(view, /this\.drawEdges\(ctx, k, kEff, local, hov, centres\)/)
+  assert.match(view, /if \(centres && \(a\.g\.kind === 'occurrence' \|\| b\.g\.kind === 'occurrence'\) && !centres\.has\(a\.id\) && !centres\.has\(b\.id\)\) continue/)
+  assert.match(view, /foldDust\(placedDust, this\.formOnStage, this\.neighbourhoodOf\(centres\)\)/, 'into its form only while the form is drawn')
+  assert.match(view, /ctx\.fillText\(String\(fold\.count\)/, 'each folded form shows its count')
+  const pin = JSON.parse(await readFile(new URL('../src/projections/atlas/PORT-PIN.json', import.meta.url), 'utf8'))
+  assert.match(pin.adapted['graph/view.ts'], /level of detail/, 'the adaptation names it')
+})

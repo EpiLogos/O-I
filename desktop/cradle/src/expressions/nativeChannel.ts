@@ -43,7 +43,8 @@ export function relayNativeChannel(frame: HTMLIFrameElement, transport:KernelTra
         if(reading.byte_len>32*1024*1024)throw new Error('binding source exceeds 32 MiB');
         respond({ok:true,data:{path,location:reading.location,revision:reading.revision,content:reading.content}});return;
       }
-      if(!request || !['open','compose','prepare_world','exchange','observe','torus_sound','torus_sound_open','close'].includes(request.operation))throw new Error('unsupported native-expression operation');
+      // A take is sealed under the lease as a sound is (O-I #855, kernel native_expression.rs `torus_take`).
+      if(!request || !['open','compose','prepare_world','exchange','observe','torus_sound','torus_sound_open','torus_take','close'].includes(request.operation))throw new Error('unsupported native-expression operation');
       // Preparation returns an admitted owner world without opening a driver.
       // It neither acquires nor releases this frame's existing lease.
       if(request.operation==='prepare_world'){

@@ -26,7 +26,8 @@ import {rackStateOf, runStateOfSession} from './runFaces'
 import {familyFaceDevice} from './mainTrackBindings'
 import {sessionRowsOf} from './threadBinding'
 import {DECISION_HELPER_DESIGN, DECISION_HELPER_ID} from './decisionHelperBinding'
-import {macroTurns, RACK_MACROS, type RackMacro, type RackNode} from '../../inhabitants/sdk/chains'
+import {macroTurns, rackMacrosReadingOf, RACK_MACROS, type MacroTurn, type RackMacro, type RackMacrosReading, type RackNode} from '../../inhabitants/sdk/chains'
+export {rackMacrosReadingOf, type RackMacrosReading} from '../../inhabitants/sdk/chains'
 import {trackKey} from '../agentRunModel'
 import {decodeChainDrag} from '../agentChainDrag'
 import {ROOT_REGISTER} from '../worldScope'
@@ -177,8 +178,12 @@ export function runBinding(input: RunInput, ports: RunPorts): DesignBinding {
 // Position is the one the session's agent holds, the work its bound task, and the reason says who set what from the desk. A session whose
 // agent holds no Position refuses naming that. Once the work is assigned, changing a setting waits for the owner's ruling, said verbatim
 // (CUSTODY_SETTINGS_RULING).
-/** What Factory's custody commands carry, for a refusal that names what they do not. */
-const CUSTODY_CARRIES = 'Factory\'s custody assign and update (factory_owner) carry a Position, its work, a reason, the custody state — in-progress, blocked, released, completed or handed-off — and a Position to hand off to'
+// Hand back (§19.4, "When you edit something the agent holds, the agent does not overwrite your edit. Hand back stays lit until you press
+// it") is Factory's custody hold (factory_owner custody-hold: `factory development custody hold <state> --request -`, act take or
+// give-back, answering factory.work-custody-receipt/v1; BD round 20): a person's hold on an open record, kept on it as `person_hold`, which
+// changes no custody state. The light is the listing's `hand_back` {lit, held}, over what this session's agent holds; a held record reads
+// edited, by the person who holds it. Hand back gives back each hold on what the agent holds, at the record's revision as read; `take`
+// takes one where you edit it. Both are the person's own press, re-checked at the press.
 /** Who may change a custody record's settings after assignment: the owner's ruling to make (lane W8, 3a). */
 export const CUSTODY_SETTINGS_RULING = 'Changing it after assignment waits for the owner\'s ruling on who may: `custody update` admits only the holding occupant, and Factory names no person authority for custody.'
 const custodySetting = (what: string, flag: string) => `${what}: set when Factory assigns custody (\`factory development custody assign ${flag}\`); Factory's custody list is not read here for this session (\`factory development custody list\`, the kernel's factory_owner custody-list), so whether its work is assigned is not known.`
@@ -204,9 +209,15 @@ export const CUSTODY_REFUSE = {
   autonomy: AGENT_AUTONOMY_RETIRED,
   gate: custodySetting('Review gate', '--review-gate diffs|approvals|both'),
   escalate: custodySetting('Escalate to', '--escalate-to'),
-  // The custody refs of what the session holds are read (the kernel's factory_owner custody-list); giving control back waits on Factory's
-  // custody hold of what you edited (BD r19): none of the custody states is giving control back.
-  handBack: missing('Hand back', `Factory's custody hold: a custody state for giving back what you edited among what the agent holds (${CUSTODY_CARRIES}; giving control back is none of these states)`, 'Software Factory'),
+  // Giving back what you edited is Factory's custody hold (factory_owner custody-hold, BD r20), over the custody list read on the chain.
+  handBack: 'Hand back: Factory\'s custody list (the kernel\'s factory_owner custody-list) is read on the session\'s own chain, where Custody stands on its Agent, and what you edited is given back from there (factory_owner custody-hold).',
+} as const
+/** Why a hold cannot be taken or given back now (Factory's custody hold, BD r20). */
+export const CUSTODY_HOLD_WHY = {
+  noHandBack: 'Factory\'s custody list answers no hand_back, so it keeps no hold of yours (a Factory before its custody hold: `factory development custody hold`)',
+  dark: 'Hand back: nothing you edited is held by this session\'s agent.',
+  notHeld: (ref: string) => `Take: ${ref} is not held by this session's agent, so there is no hold of it to take.`,
+  personMoved: (what: string) => `${what}: the current person is no longer the one this page was drawn for; nothing was sent to Factory.`,
 } as const
 /** What the agent holds, where no custody is handed to the binding: the list is read on the session's own chain (FactoryDeviceChain.tsx). */
 export const CUSTODY_HELD_ELSEWHERE = 'What the agent holds: Factory\'s custody list (the kernel\'s factory_owner custody-list) is read on the session\'s own chain, where Custody stands on its Agent.'
@@ -214,7 +225,7 @@ export const CUSTODY_HELD_ELSEWHERE = 'What the agent holds: Factory\'s custody 
 const unread = (what: string, op: string, owner: string) => `${what}: no reading reaches it yet — missing op: ${op} (${owner}).`
 export const CUSTODY_ABSENT = {
   people: unread('The people the agent may ask', 'a list of escalation contacts (no owner holds one)', 'Software Factory'),
-  handBackLit: unread('The hand-back light', 'a reading of what you edited among the agent\'s held items (Factory\'s custody states name no edit)', 'Software Factory'),
+  handBackLit: 'The hand-back light: Factory\'s custody list (its hand_back) is read on the session\'s own chain, where Custody stands on its Agent.',
 } as const
 
 // The Grants page (lanes W7, W8; D7, software-factory__agent-custody.tsx `grants`, `holder`, `worlds`, `readAt`): Actuation's governing
@@ -279,9 +290,18 @@ export interface CustodyPorts {
   readonly revoke?: (authoritySourceRef: string, reason: string | undefined) => Promise<unknown>
   /** Factory's custody assignment (factory_owner custody-assign) with one setting. Absent: no carrier stands. */
   readonly assign?: (request: {kind: 'custody-assign'; state_path: string; position_ref: string; work_ref: string; reason: string} & Partial<Record<'review_gate' | 'escalate_to', string>>) => Promise<unknown>
+  /** Factory's custody hold (factory_owner custody-hold): the person's hold on what the agent holds, taken or given back. Absent: no carrier stands. */
+  readonly hold?: (request: CustodyHoldRequest) => Promise<unknown>
   /** Who is current at the moment of the press (`currentIdentity()` read again): Revoke goes only when it is still the person the page
    * was drawn for. Absent: the person drawn stands. */
   readonly personNow?: () => string | null
+}
+
+/** Factory's custody hold request (kernel factory.rs OwnerRequest::CustodyHold): the record, the act, why, what was edited on a take, and the
+ * record's revision as read. */
+export type CustodyHoldRequest = {
+  readonly kind: 'custody-hold'; readonly state_path: string; readonly custody_ref: string; readonly act: 'take' | 'give-back'; readonly reason: string
+  readonly subject_ref?: string; readonly expected_revision?: number
 }
 
 /** The next grant's settings and the revocation's reason: the hand's own holds (agent-custody.tsx:23-24). */
@@ -320,6 +340,21 @@ export function openCustody(listing: unknown): Record<string, unknown>[] | null 
   return doc.custody.filter((row): row is Record<string, unknown> => !!row && typeof row === 'object' && OPEN_CUSTODY.includes(String((row as Record<string, unknown>).state)))
 }
 
+/** The listing's hand-back light (factory.work-custody-listing/v1 `hand_back`: lit while a person's hold stands on an open record it lists,
+ * `held` naming those records); null where the listing carries none. Pure. */
+export function handBackOf(listing: unknown): {lit: boolean; held: string[]} | null {
+  const hand = listing && typeof listing === 'object' && !Array.isArray(listing) ? (listing as Record<string, unknown>).hand_back : null
+  if (!hand || typeof hand !== 'object' || Array.isArray(hand) || typeof (hand as {lit?: unknown}).lit !== 'boolean' || !Array.isArray((hand as {held?: unknown}).held)) return null
+  return {lit: (hand as {lit: boolean}).lit, held: (hand as {held: unknown[]}).held.filter((ref): ref is string => typeof ref === 'string')}
+}
+
+/** The open records of the listing the session's agent holds (its Position's). */
+const agentOpen = (custody: CustodyRead | undefined): Record<string, unknown>[] => {
+  const open = custody?.listing?.status === 'answered' ? openCustody(custody.listing.value) : null
+  const position = custody?.agentPosition
+  return open && position ? open.filter(row => row.position_ref === position && typeof row.custody_ref === 'string' && typeof row.work_ref === 'string') : []
+}
+
 /** Custody's values: the Agent's light, the grants, and Factory's custody of the session's work. Write mode is Scope's reading, and none is
  * reported (designBindings.ts scopeValues); the gate, the contact, the people, the held items and the hand-back light have no owner
  * reading (the transport's Re-enable light is the shell's own flag, never set by an owner). */
@@ -336,10 +371,17 @@ export function custodyValues(input: CustodyInput): Values {
   put(values, 'light', input.agent.light)
   const open = input.custody?.listing?.status === 'answered' ? openCustody(input.custody.listing.value) : null
   if (open) {
-    // What the session's agent holds: the open records of its Position, each a piece of work in its custody state.
-    const position = input.custody!.agentPosition
-    values.held = JSON.stringify(position ? open.filter(row => row.position_ref === position).flatMap(row => (typeof row.custody_ref === 'string' && typeof row.work_ref === 'string'
-      ? [{id: row.custody_ref, name: row.work_ref, kind: 'work', state: row.state}] : [])) : [])
+    // What the session's agent holds: the open records of its Position, each a piece of work in its custody state; one you hold reads
+    // edited, by you (Factory's person_hold).
+    const mine = agentOpen(input.custody)
+    values.held = JSON.stringify(mine.map(row => {
+      const hold = row.person_hold && typeof row.person_hold === 'object' ? row.person_hold as {held_by?: unknown} : null
+      return hold ? {id: row.custody_ref, name: row.work_ref, kind: 'work', state: 'edited', ...(typeof hold.held_by === 'string' ? {by: hold.held_by} : {})}
+        : {id: row.custody_ref, name: row.work_ref, kind: 'work', state: row.state}
+    }))
+    // The hand-back light: the listing's, over what this agent holds.
+    const hand = handBackOf(input.custody!.listing!.value)
+    if (hand) values.handBackLit = hand.lit && mine.some(row => hand.held.includes(row.custody_ref as string))
     // The session's work, where it is assigned: its record's settings are Factory's own.
     const record = input.custody!.work ? open.find(row => row.work_ref === input.custody!.work) : undefined
     if (record) for (const [key, {field}] of Object.entries(CUSTODY_SETTING_FIELDS)) put(values, key, typeof record[field] === 'string' ? record[field] as string : undefined)
@@ -372,6 +414,43 @@ export function custodyBinding(input: CustodyInput, scope: Pick<DesignBinding, '
         : !open ? '`factory development custody list` answered something other than its listing.' : null
   if ('held' in values) delete standing.held
   else standing.held = {disabled: listingWhy ?? CUSTODY_HELD_ELSEWHERE}
+  // Hand back (Factory's custody hold): its light from the listing, and the press the person's own.
+  const hand = open ? handBackOf(listing!.value) : null
+  if ('handBackLit' in values) delete standing.handBackLit
+  else if (custody) standing.handBackLit = {disabled: listingWhy ?? `The hand-back light: ${CUSTODY_HOLD_WHY.noHandBack}.`}
+  const holdWhy = (what: string): string | null => {
+    if (!custody) return CUSTODY_REFUSE.handBack
+    if (listingWhy) return `${what}: ${listingWhy}`
+    if (!hand) return `${what}: ${CUSTODY_HOLD_WHY.noHandBack}.`
+    if (!custody.statePath) return `${what}: ${CUSTODY_SETTING_WHY.noState}.`
+    if (!person) return `${what}: ${CUSTODY_SETTING_WHY.noPerson}.`
+    if (!ports.hold) return `${what}: ${CUSTODY_SETTING_WHY.noCarrier}.`
+    return null
+  }
+  const handBackWhy = holdWhy('Hand back')
+  if (handBackWhy) standing.handBack = {disabled: handBackWhy}
+  else delete standing.handBack
+  /** One hold taken or given back, as the person's own press, at the record's revision as read. */
+  const sendHold = async (what: string, row: Record<string, unknown>, act: 'take' | 'give-back', reason: string) => {
+    if (ports.personNow && ports.personNow() !== person) throw Error(CUSTODY_HOLD_WHY.personMoved(what))
+    await ports.hold!({kind: 'custody-hold', state_path: custody!.statePath!, custody_ref: row.custody_ref as string, act, reason,
+      ...(typeof row.revision === 'number' ? {expected_revision: row.revision} : {})})
+  }
+  /** Hand back: each hold the listing names on what this agent holds, given back. */
+  const handBack = async () => {
+    if (handBackWhy) throw Error(handBackWhy)
+    const held = agentOpen(custody!).filter(row => hand!.held.includes(row.custody_ref as string))
+    if (!hand!.lit || !held.length) throw Error(CUSTODY_HOLD_WHY.dark)
+    for (const row of held) await sendHold('Hand back', row, 'give-back', `${person} gave back what they edited, from the desk.`)
+  }
+  /** Take: a hold on one record this agent holds, where you edit it. */
+  const take = async (value: Value | undefined) => {
+    const why = holdWhy('Take')
+    if (why) throw Error(why)
+    const row = agentOpen(custody!).find(record => record.custody_ref === value)
+    if (!row) throw Error(CUSTODY_HOLD_WHY.notHeld(String(value)))
+    await sendHold('Take', row, 'take', `${person} edited what the agent holds, from the desk.`)
+  }
   const assigned = open && custody?.work ? open.find(row => row.work_ref === custody.work) : undefined
   /** Why one setting cannot be written now, in words; null when the person's press may assign it. */
   const settingWhy = (key: keyof typeof CUSTODY_SETTING_FIELDS): string | null => {
@@ -416,7 +495,7 @@ export function custodyBinding(input: CustodyInput, scope: Pick<DesignBinding, '
     values,
     standing,
     local: Object.fromEntries(CUSTODY_GRANT_SETTINGS.map(key => [key, (value: Value | undefined) => holdView(CUSTODY_ID, key, value)])),
-    writes: key => key === 'writeMode' || key in CUSTODY_REFUSE || key === 'issue' || key === 'revoke',
+    writes: key => key === 'writeMode' || key in CUSTODY_REFUSE || key === 'issue' || key === 'revoke' || key === 'take',
     write: async changes => {
       for (const {key, value} of changes) {
         if (key === 'writeMode') {
@@ -426,6 +505,8 @@ export function custodyBinding(input: CustodyInput, scope: Pick<DesignBinding, '
         }
         if (key === 'revoke') { await revoke(value); continue }
         if (key === 'gate' || key === 'escalate') { await assign(key, value); continue }
+        if (key === 'handBack') { await handBack(); continue }
+        if (key === 'take') { await take(value); continue }
         // Issue: the desk composes no authority record, whoever the value names as its issuer.
         if (key === 'issue') throw Error(CUSTODY_GRANTS_REFUSE.issue)
         throw Error(CUSTODY_REFUSE[key as keyof typeof CUSTODY_REFUSE] ?? reading(key))
@@ -474,11 +555,15 @@ export function withCustodyAsks(scope: DesignBinding, custody: DesignBinding): D
 // settings and task, the old one detached last, so a session still never becomes another agent), and a Decision helper dropped under the
 // chain list becomes the space's helper (bind-decision-helper; encounter_session_decision_helper). A group's Model and Effort macros turn
 // each agent chain's own session through AIKit's model select of that session (the encounter's model-read and model-select, the cradle's
-// route: encounter/nativeModel.ts), never the focused harness's Effort (shell.setEffort). Join is Central's set. Where no carrier stands
-// the control stands dimmed and names it.
+// route: encounter/nativeModel.ts), never the focused harness's Effort (shell.setEffort). Its Budget macro turns each agent chain's task
+// Budget through AIKit (encounter_task_read, then encounter_task_budget against the task's revision and the Budget's own; O-I #743, DLW
+// build ruling 2026-11-05). A set held as a chain (AIKit's `set_chains` on the space's record, made by Group: `aikit session-space group`)
+// holds a nested rack of its own space's chains, and a macro reaches into it (inhabitants/sdk/chains.ts macroTurns). Where each macro
+// stands, the chains each leaves alone, and the rack's variations are Software Factory's (factory.rack-macros/v1, read and written through
+// the kernel's factory_owner rack-macros-read and rack-macros-write on the rack's revision, keyed by the project and the rack's space):
+// Unmap and a setting turned by hand take a chain off a macro, Store keeps where every macro stands, and a variation moves every macro
+// there, each chain turned through its own owner. Join is Central's set. Where no carrier stands the control stands dimmed and names it.
 const DELEGATION = (what: string, key: string) => missing(what, `Hermes' delegation block (${key}) through the kernel: no config.set key carries it`, 'Hermes')
-/** A macro turns one setting of the Agent on every chain (§19.15 Macros); the rack holds each chain's session, never another session's Agent. */
-const MACRO = (what: string) => missing(what, `the ${what} macro turning the Agent's ${what} on every chain: the rack holds each chain's session, and no address of its Agent's ${what}`, 'Software Factory')
 /** A group's Model and Effort turn each chain's own session, through AIKit's model select of that session (the encounter's model-read, then
  * model-select, bound to the native session the read names: desktop/cradle/src/encounter/nativeModel.ts, the cradle's own route). */
 const SESSION_MACRO = (what: string) => `${what}: no carrier to AIKit's model select of each chain's session (its encounter's model-read and model-select, through the kernel) stands on this rack.`
@@ -489,10 +574,12 @@ export const AGENTSET_REFUSE = {
   returnCap: DELEGATION('Summary cap', 'delegation.max_summary_chars'),
   model: SESSION_MACRO('Model'),
   effort: SESSION_MACRO('Effort'),
-  budget: MACRO('Budget'),
-  unmapped: missing('Unmap', 'keeping one chain\'s setting apart from its macro, with the rack\'s macros', 'Software Factory'),
-  store: missing('Store', 'keeping where every macro stands as a variation of the rack', 'Software Factory'),
-  variation: missing('Variations', 'moving every macro to where a stored variation keeps it', 'Software Factory'),
+  // A group's Budget turns each agent chain's task Budget, AIKit's (O-I #743; DLW build ruling 2026-11-05).
+  budget: 'Budget: no carrier to AIKit\'s Budget of each chain\'s task (the kernel\'s encounter_task_read, then encounter_task_budget against the task\'s revision and the Budget\'s own) stands on this rack.',
+  // Where the macros stand is Software Factory's (factory.rack-macros/v1).
+  unmapped: 'Unmap: no carrier to Software Factory\'s rack macros (the kernel\'s factory_owner rack-macros-write, map and unmap, on the rack\'s revision) stands on this rack.',
+  store: 'Store: no carrier to Software Factory\'s rack macros (the kernel\'s factory_owner rack-macros-write, store, on the rack\'s revision) stands on this rack.',
+  variation: 'Variations: no carrier to Software Factory\'s rack macros (the kernel\'s factory_owner rack-macros-write, recall, on the rack\'s revision) stands on this rack.',
   // The chain list's controls (§19.15): each acts on a chain's session in its session space, or on what you attend to. With no carrier
   // handed to the rack, each names the operation that carries it (O-I #772, #745).
   bench: 'Activator: no carrier to AIKit\'s bench of a chain\'s session in its space (the kernel\'s encounter_session_bench) stands on this chain.',
@@ -593,15 +680,21 @@ const JOIN_UNSAVED = (ref: string) => `Central's set ${ref} names no join: none 
 // Group (§19.15 "Making a rack and a set": "select agents' chains and choose Group … Central proposes the set, and you accept it as you
 // accept an agent"): the chains you choose (`grouping`, the hand's) open the card with them (`new.chains`); Make asks Central to propose them as
 // a set of agents — central.agent-set.propose {scope root, ref, revision r1, members [{kind agent, agent_ref}], reason: what it is for}, the
-// person's own act (desktop/cradle/kernel/src/action.rs PERSON_ACTS), as Messages' group does (messagesBinding.ts make), with the set's type
-// (a pattern's id, Central PR 318); Accept saves Central's record at its revision (central.agent-set.save); Discard removes the proposal at the
-// revision Central wrote (central.agent-set.remove {scope, ref, expected_revision}, among PERSON_ACTS since C26 6311e404c).
+// person's own act (desktop/cradle/kernel/src/action.rs PERSON_ACTS), as Messages' group does (messagesBinding.ts make), with the set's Type
+// (the pattern that sets how its agents answer together: central.agent-set.propose `type`, kept with the set as its join is); Accept saves
+// Central's record at its revision (central.agent-set.save), then AIKit makes the chosen chains one chain of the rack (`aikit session-space
+// group`, the kernel's encounter_session_group): their sessions are seated in the set's own space, named for the set, which the rack's space
+// holds as one chain, and they leave the rack's space last. A group that stopped is finished by the next Accept, Central's set already kept.
+// Discard removes the proposal at the revision Central wrote (central.agent-set.remove {scope, ref, expected_revision}, among PERSON_ACTS
+// since C26 6311e404c).
 export const GROUP_REFUSE = {
   few: 'Group: choose at least two chains to make a set of them.',
   purpose: 'Say what the set is for first.',
   noCarrier: 'Group: no carrier to Central\'s central.agent-set.propose stands on this chain.',
   noProposal: 'Nothing is proposed yet: choose the chains, say what the set is for and press Make.',
   unseated: (name: string) => `${name}: its session seats no agent, so Central cannot hold it in a set.`,
+  ungrouped: (ref: string, why: string) => `Central keeps the set ${ref}, and AIKit did not make its chains one chain of this rack: ${why}. Press Accept again to group them.`,
+  noGroup: (ref: string) => `Central keeps the set ${ref}; no carrier to AIKit's group of its chains (the kernel's encounter_session_group) stands on this rack, so they stay chains of their own. Press Accept again once it stands.`,
   /** A type Central would refuse: a pattern's id is a lowercase word (ctrl world.rs validate_set_type). */
   badType: (type: string) => `Type: a set's type is a pattern's id — a lowercase word of at most 64 letters, digits or -, letters first — not "${type}".`,
   noRemover: 'Discard: no carrier to Central\'s central.agent-set.remove stands on this chain.',
@@ -647,7 +740,43 @@ export interface AgentRackPorts {
     readonly read: (input: {project: string; agent_session: string}) => Promise<NativeModelReading>
     readonly select: (input: {project: string; request: SessionModelSelect}) => Promise<unknown>
   }
+  /** The Budget macro: each chain's task as AIKit reads it (encounter_task_read: the task's ref and revision, and `turns`, the Budget's own
+   * revision), and the Budget set against both (encounter_task_budget), the person's. */
+  readonly taskBudget?: {
+    readonly read: (input: {project: string; agent_session: string}) => Promise<unknown>
+    readonly write: (input: TaskBudgetWrite) => Promise<unknown>
+  }
+  /** Where the rack's macros stand, Software Factory's (factory_owner rack-macros-write on the rack's revision, the person's): its answer is
+   * the receipt (factory.rack-macros-write/v1). */
+  readonly rackMacros?: (input: RackMacrosWrite) => Promise<unknown>
+  /** Group: AIKit seats the chosen chains' sessions in the set's own space (`into`), which the rack's space holds as one chain. */
+  readonly group?: (input: {project: string; space: string; agent_sessions: string[]; into: string; label: string}) => Promise<unknown>
 }
+
+/** One Budget set on one chain's task (the kernel's encounter_task_budget): the turns it allows, against the task's revision and the Budget's. */
+export interface TaskBudgetWrite {
+  readonly project: string
+  readonly agent_session: string
+  readonly task_ref: string
+  readonly turns: number
+  readonly expected_revision: string
+  readonly expected_budget_revision: string | null
+}
+/** One act on a rack's macros (Factory's rack-macros-write): turn {macro, value}, map or unmap {macro, chain}, store {variation, values}, recall
+ * {variation}, on the revision the rack was read at. */
+export interface RackMacrosWrite {
+  readonly space_ref: string
+  readonly expected_revision: string
+  readonly act: 'turn' | 'map' | 'unmap' | 'store' | 'recall'
+  readonly macro?: RackMacro
+  readonly value?: Value | null
+  readonly chain?: string
+  readonly variation?: string
+  readonly values?: Readonly<Record<RackMacro, Value | null>>
+}
+/** A rack's macros as the window holds them: Factory's reading, or why there is none. */
+export type RackMacrosAnswer = {readonly status: 'answered'; readonly reading: RackMacrosReading} | {readonly status: 'reading'} | {readonly status: 'refused'; readonly error: string}
+const macroValue = (value: unknown): Value | null => (typeof value === 'string' || typeof value === 'number' ? value : null)
 
 /** AIKit's model select of one session: the model, and the reasoning effort, the harness is asked for. */
 export type SessionModelSelect = Extract<NativeModelRequest, {action: 'model-select'}>
@@ -684,6 +813,9 @@ export interface AgentRackInput {
   /** Each agent chain's session's model as its harness reports it (AIKit's encounter model-read), by session: where a group's Model and
    * Effort macros stand, and the models its Model macro offers. */
   readonly chainModelReadings?: ReadonlyMap<string, ChainModelReading> | null
+  /** Where each rack's macros stand, Software Factory's reading, by the rack's session space: this rack's and each set's it holds. Absent:
+   * no Factory store is located for the rack, and none keeps a chain apart from its macros. */
+  readonly rackMacros?: ReadonlyMap<string, RackMacrosAnswer> | null
   readonly holds: ChainHolds
 }
 
@@ -708,11 +840,37 @@ function sessionChain(track: AgentSessionTrack, nowUnixMs: number, models?: Read
 export function agentsetMembers(group: AgentSessionTrack, tracks: readonly AgentSessionTrack[], nowUnixMs = 0, models?: ReadonlyMap<string, string> | null): Record<string, Value>[] {
   return tracks.filter(track => isAgentChain(track, group)).map(track => sessionChain(track, nowUnixMs, models))
 }
-/** The sessions of a group's agent chains, each in its own register: what a group's Model and Effort macros read (AIKit's model-read). */
+/** The sessions of a group's agent chains, each in its own register, the agents of every set it holds with them: what a group's Model and
+ * Effort macros read (AIKit's model-read). */
 export function agentChainSessions(group: AgentSessionTrack | null, tracks: readonly AgentSessionTrack[] | null, lone?: AgentSessionTrack | null): {project: string; session: string}[] | null {
   if (!group?.group && lone && !lone.group) return [{project: lone.project ?? ROOT_REGISTER, session: lone.sessionRef}]
   if (!group?.group || !tracks) return null
-  return tracks.filter(track => isAgentChain(track, group)).map(track => ({project: track.project ?? ROOT_REGISTER, session: track.sessionRef}))
+  return rackAgents(group, tracks).map(track => ({project: track.project ?? ROOT_REGISTER, session: track.sessionRef}))
+}
+/** The session spaces whose macros a rack reads (Factory keeps each rack's by its space): the rack's own, then each set's it holds, nested. */
+export function rackSpaces(group: AgentSessionTrack | null, tracks: readonly AgentSessionTrack[] | null, lone?: AgentSessionTrack | null): string[] | null {
+  if (!group?.group && lone && !lone.group) return [lone.spaceRef]
+  if (!group?.group) return null
+  const out: string[] = [group.spaceRef]
+  const walk = (at: AgentSessionTrack) => {
+    for (const chain of setChainsOf(at, tracks ?? [])) {
+      if (out.includes(chain.space)) continue
+      out.push(chain.space)
+      if (chain.track) walk(chain.track)
+    }
+  }
+  walk(group)
+  return out
+}
+/** The agent sets a group's space holds as chains (AIKit's `set_chains`), each with its own group track where the agency reading placed one. */
+function setChainsOf(group: AgentSessionTrack, tracks: readonly AgentSessionTrack[]): {space: string; purpose: string | null; track: AgentSessionTrack | null}[] {
+  return (group.setChains ?? []).map(chain => ({...chain, track: tracks.find(track => track.group && track.sessionRef === chain.space) ?? null}))
+}
+/** Every agent's session a group's rack reaches: its own agents, then each set's, nested as the sets are; a set already above (a cycle in
+ * the records) is not entered again. Pure. */
+function rackAgents(group: AgentSessionTrack, tracks: readonly AgentSessionTrack[], seen: ReadonlySet<string> = new Set([group.sessionRef])): AgentSessionTrack[] {
+  return [...tracks.filter(track => isAgentChain(track, group)),
+    ...setChainsOf(group, tracks).flatMap(chain => (chain.track && !seen.has(chain.space) ? rackAgents(chain.track, tracks, new Set([...seen, chain.space])) : []))]
 }
 /** A session of the group's space that is an agent's chain: the space's Decision helper is listed once, as the helper (helperMember). */
 const isAgentChain = (track: AgentSessionTrack, group: AgentSessionTrack | null | undefined): boolean =>
@@ -733,20 +891,96 @@ const MACRO_WORD: Readonly<Record<RackMacro, string>> = {model: 'Model', effort:
 
 /** The lone session whose own agent is the rack's one chain, when the selection is no group. */
 const loneOf = (input: AgentRackInput): AgentSessionTrack | null => (!input.group?.group && input.session && !input.session.group ? input.session : null)
+/** The rack's own session space, whose sessions are its chains: a group's, or the lone session's own. */
+const rackSpaceOf = (input: AgentRackInput): string | null => loneOf(input)?.spaceRef ?? (input.group?.group ? input.group.spaceRef : null)
+/** Where one rack's macros stand, where Factory answered it. */
+const macrosAt = (input: AgentRackInput, space: string | null): RackMacrosReading | null => {
+  const answer = space ? input.rackMacros?.get(space) : undefined
+  return answer?.status === 'answered' ? answer.reading : null
+}
 
-/** The rack's chains as its macros see them (inhabitants/sdk/chains.ts RackNode). */
+/** A group's chains as its macros see them: its agents, and each set it holds, with the set's own chains and the chains its own macros leave
+ * alone (Factory's reading of the set's rack). A set already above is not entered again. */
+function groupNodes(group: AgentSessionTrack, input: AgentRackInput, seen: ReadonlySet<string>): RackNode[] {
+  const tracks = input.tracks ?? []
+  return [...agentsetMembers(group, tracks).map((chain): RackNode => ({id: String(chain.id), kind: 'agent'})),
+    ...setChainsOf(group, tracks).flatMap((chain): RackNode[] => {
+      if (seen.has(chain.space)) return []
+      const unmapped = macrosAt(input, chain.space)?.unmapped
+      return [{id: chain.space, kind: 'set', chains: chain.track ? groupNodes(chain.track, input, new Set([...seen, chain.space])) : [], ...(unmapped ? {unmapped} : {})}]
+    })]
+}
+
+/** The rack's chains as its macros see them (inhabitants/sdk/chains.ts RackNode): a lone session's one agent; a group's agents, the sets it
+ * holds with theirs, and its Decision helper. */
 function rackNodes(input: AgentRackInput): RackNode[] {
   const lone = loneOf(input)
   if (lone) return [{id: lone.sessionRef, kind: 'agent'}]
   const group = input.group
   if (!group?.group || !input.tracks) return []
-  return [...agentsetMembers(group, input.tracks).map((chain): RackNode => ({id: String(chain.id), kind: 'agent'})),
-    ...(input.helper ? [{id: DECISION_HELPER_ID, kind: 'helper' as const}] : [])]
+  return [...groupNodes(group, input, new Set([group.sessionRef])), ...(input.helper ? [{id: DECISION_HELPER_ID, kind: 'helper' as const}] : [])]
 }
 
-/** The rack's values: its chains (a group's sessions and the Decision helper, where one stands; a lone session's own agent, its devices
- * beside the rack), the chain you chose, the models to choose from, the macros where the one agent stands, the card's holds. The
- * delegation settings are Hermes', and none is read. */
+/** Where a turn of one macro reaches (chains.ts macroTurns), past the chains this rack's macro and each set's leave alone; or why it cannot
+ * be known: Factory keeps what each rack leaves alone, and a rack whose reading has not come leaves the turn unknown, so none is turned. */
+function reachOf(input: AgentRackInput, macro: RackMacro, value: Value): MacroTurn[] {
+  const word = MACRO_WORD[macro], nodes = rackNodes(input), space = rackSpaceOf(input)
+  if (input.rackMacros) {
+    const sets = (list: readonly RackNode[]): string[] => list.flatMap(node => (node.kind === 'set' ? [node.id, ...sets(node.chains ?? [])] : []))
+    for (const at of [...(space ? [space] : []), ...sets(nodes)]) {
+      const answer = input.rackMacros.get(at)
+      if (answer?.status === 'answered') continue
+      const why = answer?.status === 'refused' ? answer.error : 'its reading has not come yet'
+      throw Error(`${word}: Software Factory has not said which chains ${at === space ? 'this rack' : at}'s macros leave alone (${why.replace(/\.$/, '')}), so no chain was turned.`)
+    }
+  }
+  return macroTurns(nodes, macro, value, macrosAt(input, space)?.unmapped ?? {})
+}
+
+/** The design's variations (software-factory__agentset-rack.tsx `variations`: {name, model?, effort?, budget?}) from Factory's reading. */
+const variationsOf = (reading: RackMacrosReading): Record<string, Value>[] =>
+  reading.variations.map(v => {
+    const out: Record<string, Value> = {name: v.name}
+    for (const macro of RACK_MACROS) put(out, macro, v.values[macro])
+    return out
+  })
+
+/** The sets a group's space holds, each as a chain of its rack (§19.15 "An agent set is a chain that holds a nested Agent rack"): named for
+ * what it is for, holding the nested rack, lit while one of its agents works; and the nested rack's values on the set's own key
+ * (`dev:<set>@software-factory:agentset-rack`): its chains, its macros where its agents stand, and what Factory keeps of them. A set the
+ * agency reading has not placed holds a rack unread. Pure. */
+function nestedRacks(group: AgentSessionTrack, input: AgentRackInput, seen: ReadonlySet<string>): {members: Record<string, Value>[]; values: Record<string, Value>} {
+  const tracks = input.tracks ?? [], members: Record<string, Value>[] = [], values: Record<string, Value> = {}
+  for (const chain of setChainsOf(group, tracks)) {
+    if (seen.has(chain.space)) continue
+    const rack: Record<string, Value> = {}
+    let working = false
+    if (chain.track) {
+      const inner = nestedRacks(chain.track, input, new Set([...seen, chain.space]))
+      const agents = agentsetMembers(chain.track, tracks, input.nowUnixMs ?? 0, input.chainModels)
+      working = [...agents, ...inner.members].some(member => member.state === 'working')
+      rack.members = JSON.stringify([...agents, ...inner.members])
+      rack.light = working ? 'lit' : 'dark'
+      put(rack, 'crew', chain.track.agentSet?.ref ?? chain.track.spaceLabel ?? chain.purpose)
+      Object.assign(rack, inner.values, groupMacroValues(rackAgents(chain.track, tracks, new Set([...seen, chain.space])), input.chainModelReadings))
+      for (const track of tracks) if (isAgentChain(track, chain.track)) rack[`bench:${track.sessionRef}`] = track.benched === true
+    }
+    const kept = macrosAt(input, chain.space)
+    if (kept) {
+      rack.unmapped = JSON.stringify(kept.unmapped)
+      rack.variations = JSON.stringify(variationsOf(kept))
+      if (typeof kept.macros.budget === 'number') rack.budget = kept.macros.budget
+    }
+    members.push({id: chain.space, name: chain.purpose ?? chain.track?.spaceLabel ?? chain.space, ...(chain.purpose ? {goal: chain.purpose} : {}),
+      ...(working ? {state: 'working'} : {}), chain: [{device: AGENTSET_DESIGN, name: 'Agent rack'}]} as unknown as Record<string, Value>)
+    values[memberDeviceKey(chain.space, AGENTSET_DESIGN)] = JSON.stringify(rack)
+  }
+  return {members, values}
+}
+
+/** The rack's values: its chains (a group's sessions, the sets it holds with their nested racks, and the Decision helper, where one stands;
+ * a lone session's own agent, its devices beside the rack), the chain you chose, the models to choose from, the macros where the agents
+ * stand, what Factory keeps of them, the card's holds. The delegation settings are Hermes', and none is read. */
 export function agentsetValues(input: AgentRackInput): Values {
   const values: Record<string, Value> = {}
   const view = viewHolds(input.holds, AGENTSET_ID)
@@ -769,8 +1003,10 @@ export function agentsetValues(input: AgentRackInput): Values {
     // The crew is the agent set's ref in Central (the design's `crew`) where the space names the set it runs; else the space's own label.
     put(values, 'crew', group.agentSet?.ref ?? group.spaceLabel ?? group.purpose)
     if (input.tracks) {
-      const members = agentsetMembers(group, input.tracks, input.nowUnixMs ?? 0, input.chainModels)
+      const nested = nestedRacks(group, input, new Set([group.sessionRef]))
+      const members = [...agentsetMembers(group, input.tracks, input.nowUnixMs ?? 0, input.chainModels), ...nested.members]
       values.members = JSON.stringify(input.helper ? [...members, helperMember(input.helper)] : members)
+      Object.assign(values, nested.values)
       values.light = members.some(member => member.state === 'working') ? 'lit' : 'dark'
       const soloed = input.soloed
       for (const track of input.tracks) {
@@ -781,8 +1017,17 @@ export function agentsetValues(input: AgentRackInput): Values {
       }
     }
     if (input.helper) values[memberDeviceKey(DECISION_HELPER_ID, DECISION_HELPER_DESIGN)] = JSON.stringify(input.helper)
-    if (input.tracks) Object.assign(values, groupMacroValues(input.tracks.filter(track => isAgentChain(track, group)), input.chainModelReadings))
+    if (input.tracks) Object.assign(values, groupMacroValues(rackAgents(group, input.tracks), input.chainModelReadings))
   }
+  // What Factory keeps of the rack's macros: the chains each leaves alone, its variations, and the Budget where the person last turned it
+  // (each chain's task holds its own, so a group's Budget stands where it was turned).
+  const kept = macrosAt(input, rackSpaceOf(input))
+  if (kept) {
+    values.unmapped = JSON.stringify(kept.unmapped)
+    values.variations = JSON.stringify(variationsOf(kept))
+    if (!lone && typeof kept.macros.budget === 'number') values.budget = kept.macros.budget
+  }
+  put(values, 'variation', view.variation)
   put(values, 'member', view.member)
   for (const key of CARD_LOCAL) put(values, key, view[key])
   // A lone session's Model macro offers the models its harness offers where AIKit read them; unread, AIKit's catalogue, as its Agent does.
@@ -876,12 +1121,14 @@ function confirmSelect(receipt: unknown, request: SessionModelSelect, name: stri
 }
 
 /** Why a macro cannot turn, or null where it turns: on a group, Model and Effort turn each chain's session through AIKit's model select
- * where its carrier stands, and Budget names the operation each chain waits for; on a lone session, Model turns the same way, and Effort and
- * Budget stand on the Agent's own word for the setting it does not write. */
+ * and Budget each chain's task Budget through AIKit, where their carriers stand; on a lone session, Model and Budget turn the same way,
+ * and Effort, and Budget with no task carrier, stand on the Agent's own word for the setting it does not write. */
 function macroStanding(macro: RackMacro, input: AgentRackInput, ports: AgentRackPorts | undefined): Standing | null {
-  if (!loneOf(input)) return macro !== 'budget' && ports?.sessionModel ? null : {disabled: AGENTSET_REFUSE[macro]}
-  // A lone session's Model takes the path a group's chains take: the session's own model select (the Agent writes no Model).
+  if (!loneOf(input)) return (macro === 'budget' ? ports?.taskBudget : ports?.sessionModel) ? null : {disabled: AGENTSET_REFUSE[macro]}
+  // A lone session's Model takes the path a group's chains take: the session's own model select (the Agent writes no Model); its Budget
+  // the session's task Budget, where that carrier stands.
   if (macro === 'model') return ports?.sessionModel ? null : {disabled: AGENTSET_REFUSE.model}
+  if (macro === 'budget' && ports?.taskBudget) return null
   const agent = ports?.agent, key = AGENT_KEY[macro], word = MACRO_WORD[macro]
   if (!agent) return {disabled: `${word}: the session's Agent is not bound on this chain, so the macro reaches no agent.`}
   const own = agent.standing?.[key]?.disabled
@@ -891,7 +1138,7 @@ function macroStanding(macro: RackMacro, input: AgentRackInput, ports: AgentRack
 }
 
 /** The proposal the card stands on (the hand's hold after Make): its ref, its chains, and Central's record at its revision. */
-interface Proposal {readonly ref: string; readonly name: string; readonly members: readonly string[]; readonly revision: string; readonly record: Record<string, unknown>}
+interface Proposal {readonly ref: string; readonly name: string; readonly members: readonly string[]; readonly revision: string; readonly record: Record<string, unknown>; readonly saved?: boolean}
 const proposalOf = (held: unknown): Proposal | null => {
   if (typeof held !== 'string') return null
   try {
@@ -916,6 +1163,7 @@ export function agentsetBinding(input: AgentRackInput, ports?: AgentRackPorts): 
   if (ports?.attach) delete standing.add
   if (ports?.hotSwap) delete standing.swap
   if (ports?.detach) delete standing.delete
+  if (ports?.rackMacros && input.rackMacros) for (const key of ['unmapped', 'store', 'variation'] as const) delete standing[key]
   if (ports?.retry) delete standing.retry
   if (ports?.ask) delete standing.dev
   if (!ports?.removeSet) standing['new.discard'] = {disabled: GROUP_REFUSE.noRemover}
@@ -925,15 +1173,110 @@ export function agentsetBinding(input: AgentRackInput, ports?: AgentRackPorts): 
   const pressed = () => viewHolds(chainHolds(), AGENTSET_ID)
   const clearCard = () => { for (const key of CARD_LOCAL) holdView(AGENTSET_ID, key, undefined) }
 
-  /** A macro's turn: every chain it reaches (inhabitants/sdk/chains.ts macroTurns), each through its own owner. */
-  const turn = async (macro: RackMacro, value: Value | undefined) => {
+  /** A macro's turn: every chain it reaches (inhabitants/sdk/chains.ts macroTurns: into each set it holds, past what each rack leaves
+   * alone), each through its own owner; then Factory keeps where the macro stands, where the rack's store stands (`keep` false on a
+   * recall, which moved it there already). */
+  const turn = async (macro: RackMacro, value: Value | undefined, keep = true) => {
     const why = macroStanding(macro, input, ports)
     if (why?.disabled) throw Error(why.disabled)
     if (value === undefined) throw Error(`${MACRO_WORD[macro]}: the macro was turned to no value.`)
-    if ((!lone && macro !== 'budget') || (lone && macro === 'model')) { await turnSessions(macro as 'model' | 'effort', value); return }
-    for (const reached of macroTurns(rackNodes(input), macro, value)) {
-      if (lone && reached.chain === lone.sessionRef && ports?.agent?.write) await ports.agent.write([{key: AGENT_KEY[macro], value}])
-      else throw Error(AGENTSET_REFUSE[macro])
+    if (macro === 'budget' && ports?.taskBudget) await turnBudget(value)
+    else if ((!lone && macro !== 'budget') || (lone && macro === 'model')) await turnSessions(macro as 'model' | 'effort', value)
+    else {
+      for (const reached of reachOf(input, macro, value)) {
+        if (lone && reached.chain === lone.sessionRef && ports?.agent?.write) await ports.agent.write([{key: AGENT_KEY[macro], value}])
+        else throw Error(AGENTSET_REFUSE[macro])
+      }
+    }
+    if (keep && ports?.rackMacros && input.rackMacros) {
+      try { await keepMacros({act: 'turn', macro, value}) } catch (error) {
+        throw Error(`${MACRO_WORD[macro]} turned every chain it reaches, and Software Factory did not keep where the macro stands: ${said(error)}.`)
+      }
+    }
+  }
+  /** One act on Factory's rack macros, on the revision the rack was read at (or the one the last act here gave). */
+  let macrosRevision: string | null = macrosAt(input, rackSpaceOf(input))?.revision ?? null
+  const keepMacros = async (act: Omit<RackMacrosWrite, 'space_ref' | 'expected_revision'>): Promise<RackMacrosReading> => {
+    const space = rackSpaceOf(input)
+    const refuse = act.act === 'store' ? AGENTSET_REFUSE.store : act.act === 'recall' ? AGENTSET_REFUSE.variation : AGENTSET_REFUSE.unmapped
+    if (!ports?.rackMacros || !input.rackMacros || !space) throw Error(refuse)
+    const answer = input.rackMacros.get(space)
+    if (answer?.status !== 'answered' || macrosRevision === null) {
+      throw Error(`Software Factory has not said where this rack's macros stand (${answer?.status === 'refused' ? answer.error.replace(/\.$/, '') : 'its reading has not come yet'}).`)
+    }
+    const receipt = rackMacrosReadingOf(await ports.rackMacros({space_ref: space, expected_revision: macrosRevision, ...act}))
+    if (!receipt) throw Error('Software Factory answered the rack\'s macros without its receipt.')
+    macrosRevision = receipt.revision
+    return receipt
+  }
+  /** Unmap (and a setting turned by hand, chains.ts offByHand): each chain the asked list takes off a macro, or gives back to it. */
+  const unmap = async (value: Value | undefined) => {
+    if (!ports?.rackMacros || !input.rackMacros) throw Error(AGENTSET_REFUSE.unmapped)
+    let asked: unknown
+    try { asked = typeof value === 'string' ? JSON.parse(value) : null } catch { asked = null }
+    const lists = Array.isArray(asked) ? {model: asked} : asked && typeof asked === 'object' ? asked as Record<string, unknown> : null
+    if (!lists) throw Error('Unmap: the chains each macro leaves alone were not named.')
+    const now = macrosAt(input, rackSpaceOf(input))?.unmapped ?? {}
+    for (const macro of RACK_MACROS) {
+      if (!(macro in lists)) continue
+      const want = Array.isArray(lists[macro]) ? (lists[macro] as unknown[]).filter((id): id is string => typeof id === 'string') : []
+      const held = now[macro] ?? []
+      for (const chain of want.filter(id => !held.includes(id))) await keepMacros({act: 'unmap', macro, chain})
+      for (const chain of held.filter(id => !want.includes(id))) await keepMacros({act: 'map', macro, chain})
+    }
+  }
+  /** Store: where every macro stands now, kept as the rack's next variation. */
+  const store = async () => {
+    if (!ports?.rackMacros || !input.rackMacros) throw Error(AGENTSET_REFUSE.store)
+    const now = agentsetValues(input), kept = macrosAt(input, rackSpaceOf(input))
+    const names = new Set(kept?.variations.map(v => v.name) ?? [])
+    let n = names.size + 1
+    while (names.has(`Variation ${n}`)) n += 1
+    const values = Object.fromEntries(RACK_MACROS.map(macro => [macro, macroValue(now[macro])])) as Record<RackMacro, Value | null>
+    await keepMacros({act: 'store', variation: `Variation ${n}`, values})
+    holdView(AGENTSET_ID, 'variation', `Variation ${n}`)
+  }
+  /** A variation: Factory moves every macro to where it keeps them, and each macro turns every chain it reaches through its own owner. */
+  const recall = async (value: Value | undefined) => {
+    if (!ports?.rackMacros || !input.rackMacros) throw Error(AGENTSET_REFUSE.variation)
+    if (typeof value !== 'string' || !value) throw Error('Variations: no variation was named.')
+    const receipt = await keepMacros({act: 'recall', variation: value})
+    holdView(AGENTSET_ID, 'variation', value)
+    const turned: string[] = []
+    for (const macro of RACK_MACROS) {
+      const to = receipt.macros[macro]
+      if (to === null || to === undefined) continue
+      try { await turn(macro, to, false) } catch (error) {
+        throw Error(`${value}: Software Factory moved every macro there, ${turned.length ? `${listed(turned)} turned every chain, ` : ''}and ${MACRO_WORD[macro]} stopped: ${said(error)}.`)
+      }
+      turned.push(MACRO_WORD[macro])
+    }
+  }
+  /** The Budget: every agent chain the macro reaches, each through its own task's Budget in AIKit. Every chain's task is read before any is
+   * written, so a chain with no task turns none; a write that stops partway says what stands and what to press next. */
+  const turnBudget = async (value: Value) => {
+    const port = ports!.taskBudget!
+    if (typeof value !== 'number' || !Number.isInteger(value) || value < 1) throw Error('Budget: the macro was turned to no whole number of turns.')
+    const chains = reachOf(input, 'budget', value).flatMap(reached => { const chain = reached.kind === 'agent' ? reachedChain(reached.chain) : null; return chain ? [chain] : [] })
+    const planned: {name: string; request: TaskBudgetWrite}[] = []
+    for (const chain of chains) {
+      const name = chain.agentName ?? chain.purpose ?? chain.sessionRef, project = chain.project ?? ROOT_REGISTER
+      let record: {revision?: unknown; request?: {central?: {task_ref?: unknown}}; turns?: {revision?: unknown}} | null
+      try { record = await port.read({project, agent_session: chain.sessionRef}) as typeof record } catch (error) {
+        throw Error(`Budget: AIKit did not read ${name}'s task (${said(error)}), so no chain was turned.`)
+      }
+      const task = record?.request?.central?.task_ref
+      if (!record || typeof task !== 'string' || typeof record.revision !== 'string') throw Error(`Budget: ${name} has no task bound, so no Budget can be set on it, and no chain was turned.`)
+      planned.push({name, request: {project, agent_session: chain.sessionRef, task_ref: task, turns: value, expected_revision: record.revision,
+        expected_budget_revision: typeof record.turns?.revision === 'string' ? record.turns.revision : null}})
+    }
+    const done: string[] = []
+    for (const [at, step] of planned.entries()) {
+      try { await port.write(step.request) } catch (error) {
+        const left = planned.slice(at).map(p => p.name)
+        throw Error(`Budget stopped at ${step.name}: ${done.length ? `${listed(done)} now ${done.length > 1 ? 'allow' : 'allows'} ${value} turns` : 'nothing changed'}, and ${listed(left)} ${left.length > 1 ? 'keep the Budget they had' : 'keeps the Budget it had'}; ${said(error)}. Turn Budget again to set the rest.`)
+      }
+      done.push(step.name)
     }
   }
   /** A group's Model or Effort: every agent chain the macro reaches, each through its own session's model select in AIKit. Every chain is
@@ -943,7 +1286,7 @@ export function agentsetBinding(input: AgentRackInput, ports?: AgentRackPorts): 
     const port = ports?.sessionModel, word = MACRO_WORD[macro]
     if (!port) throw Error(AGENTSET_REFUSE[macro])
     if (typeof value !== 'string' || !value) throw Error(`${word}: the macro was turned to no ${macro === 'model' ? 'model' : 'Effort'}.`)
-    const chains = macroTurns(rackNodes(input), macro, value).flatMap(reached => { const chain = reached.kind === 'agent' ? chainOf(reached.chain) : null; return chain ? [chain] : [] })
+    const chains = reachOf(input, macro, value).flatMap(reached => { const chain = reached.kind === 'agent' ? reachedChain(reached.chain) : null; return chain ? [chain] : [] })
     const planned: {name: string; project: string; request: SessionModelSelect; label: string}[] = []
     for (const chain of chains) {
       const name = chain.agentName ?? chain.purpose ?? chain.sessionRef, project = chain.project ?? ROOT_REGISTER
@@ -980,6 +1323,10 @@ export function agentsetBinding(input: AgentRackInput, ports?: AgentRackPorts): 
   /** A chain of this rack by its id: the lone session's own, or an agent's session of the group's space. */
   function chainOf(id: string): AgentSessionTrack | null {
     return lone && lone.sessionRef === id ? lone : tracks.find(track => track.sessionRef === id && isAgentChain(track, input.group)) ?? null
+  }
+  /** An agent a macro reaches: a chain of this rack, or an agent of a set it holds. */
+  function reachedChain(id: string): AgentSessionTrack | null {
+    return chainOf(id) ?? (input.group?.group ? rackAgents(input.group, tracks).find(track => track.sessionRef === id) ?? null : null)
   }
   /** The Activator: off benches the chain's session in its space (it stays in the rack and is given no work); on lifts the bench. */
   const bench = async (id: string, value: Value | undefined) => {
@@ -1122,8 +1469,25 @@ export function agentsetBinding(input: AgentRackInput, ports?: AgentRackPorts): 
   const accept = async () => {
     const proposal = proposalOf(pressed()['new.proposal'])
     if (!proposal) throw Error(GROUP_REFUSE.noProposal)
-    if (!ports?.saveSet) throw Error('Accept: no carrier to Central\'s central.agent-set.save stands on this chain.')
-    await ports.saveSet({scope: 'root', record: proposal.record, expected_revision: proposal.revision})
+    if (!proposal.saved) {
+      if (!ports?.saveSet) throw Error('Accept: no carrier to Central\'s central.agent-set.save stands on this chain.')
+      await ports.saveSet({scope: 'root', record: proposal.record, expected_revision: proposal.revision})
+      holdView(AGENTSET_ID, 'new.proposal', JSON.stringify({...proposal, saved: true}))
+    }
+    // AIKit makes the chosen chains one chain of this rack, in the set's own space, named for the set (so a stopped group is finished by
+    // the next press, into the same space).
+    const rack = input.group?.group ? input.group : null
+    const chosen = proposal.members.filter(id => chainOf(id))
+    if (!rack || chosen.length < 2) { clearCard(); return }
+    if (!ports?.group) throw Error(GROUP_REFUSE.noGroup(proposal.ref))
+    const into = `session-space/${proposal.ref.replace(/^agent-set:/, '').replace(/[^a-z0-9-]+/g, '-')}`
+    // The set's space is named for what the set is for: the words Central's record keeps of the proposal (central.agent-set/v1
+    // `proposal.reason`), else the set's own name.
+    const reason = (proposal.record.proposal as {reason?: unknown} | undefined)?.reason
+    try { await ports.group({project: rack.project ?? ROOT_REGISTER, space: rack.spaceRef, agent_sessions: chosen, into,
+      label: typeof reason === 'string' && reason.trim() ? reason.trim() : proposal.name}) } catch (error) {
+      throw Error(GROUP_REFUSE.ungrouped(proposal.ref, said(error)))
+    }
     clearCard()
   }
 
@@ -1144,6 +1508,9 @@ export function agentsetBinding(input: AgentRackInput, ports?: AgentRackPorts): 
         if (key === 'new.discard') { await discard(); continue }
         if (key === 'retry') { await retry(); continue }
         if (key.startsWith('dev:')) { await askChain(key, value); continue }
+        if (key === 'unmapped') { await unmap(value); continue }
+        if (key === 'store') { await store(); continue }
+        if (key === 'variation') { await recall(value); continue }
         if (key.startsWith('solo:')) { solo(key.slice('solo:'.length), value); continue }
         if (key.startsWith('bench:')) { await bench(key.slice('bench:'.length), value); continue }
         if (key === 'extract') { await dragOut(value); continue }
@@ -1205,6 +1572,10 @@ export function replaceRequest(profile: ChainProfile, dropped: string): ProfileR
   if (profile.skillSetRefs.includes(dropped)) return {refused: PROFILE_REFUSE.swapSame(dropped)}
   return {action: PROFILE_ACTS.replace, input: {...profileInput(profile), replace: carried, with: dropped}}
 }
+/** The order of the SkillSets the agent carries, moved on the Skillset rack (round 869): every ref the profile carries, in the new order.
+ * Central refuses an order that does not hold each of them once, in its own words. Pure. */
+export const orderRequest = (profile: ChainProfile, refs: readonly string[]): ProfileRequest =>
+  ({action: PROFILE_ACTS.order, input: {...profileInput(profile), skill_set_refs: [...refs]}})
 
 /** The head acts the agent's profile carries: the Agent's Rename (it asks the name, the one standing first), and the Skillset rack's
  * Hot-swap, which a drop from the browser carries (the press says so). `act` is Central's invoke_action; absent, no carrier stands. */

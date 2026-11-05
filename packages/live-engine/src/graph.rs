@@ -537,6 +537,25 @@ impl std::fmt::Debug for LaidSample {
     }
 }
 
+/// How a render rings out past its performance's end ([`Graph::render_ringing_out`]): `floor`, linear, the level a frame
+/// must stand above on either side to be heard; `hold`, the frames nothing may stand above it for the tail to have ended
+/// (longer than any silence between an effect's repeats); `most`, the frames past the end it renders at the most.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct RingOut {
+    pub floor: f32,
+    pub hold: u64,
+    pub most: u64,
+}
+
+/// A render rung out ([`Graph::render_ringing_out`]): its samples (stereo, interleaved), the frames of them past the
+/// performance's end, and whether it stopped at the most while its tail still sounded.
+#[derive(Debug, Clone, PartialEq)]
+pub struct RungOut {
+    pub samples: Vec<f32>,
+    pub tail: u64,
+    pub cut: bool,
+}
+
 /// One device of the chain an instrument's owner puts after it on its part (O-I #849 round 13: the
 /// Torus's effects, as Live's devices on the chain of the Instrument Rack the Torus is placed as —
 /// live-set `rack_place`): the engine's device, and what it was made from in its maker's words, so
@@ -1242,13 +1261,51 @@ impl Graph {
     /// the frame the engine put it there ([`crate::EngineHandle::remade`]), after that frame's rack and before its
     /// events, as the audio callback does at a block's start.
     pub fn render_performance_remade(
+        self,
+        sample_rate: u32,
+        performance: &Performance,
+        installs: Vec<(u64, usize, Box<dyn Instrument>)>,
+        racks: Vec<(u64, usize, Vec<RackDevice>)>,
+        remade: Vec<(u64, Part, usize, Box<dyn Device>)>,
+    ) -> Vec<f32> {
+        self.rendered(sample_rate, performance, installs, racks, remade, None)
+            .samples
+    }
+
+    /// [`Graph::render_performance_remade`], ringing out past the performance's end as `ring` says (O-I #743 round 20, item 3:
+    /// effect tails rendered past a take's end): to its last frame exactly as the render that stops there, then on, frame by
+    /// frame and with nothing more applied, while its parts' effects still sound — until no frame has stood above `ring`'s
+    /// floor for its hold, or for its most, whichever comes first; what was rendered after the last frame above the floor is
+    /// dropped. Answered with how many frames past the end it kept, and whether it stopped at the most while still sounding.
+    pub fn render_ringing_out(
+        self,
+        sample_rate: u32,
+        performance: &Performance,
+        installs: Vec<(u64, usize, Box<dyn Instrument>)>,
+        racks: Vec<(u64, usize, Vec<RackDevice>)>,
+        remade: Vec<(u64, Part, usize, Box<dyn Device>)>,
+        ring: RingOut,
+    ) -> RungOut {
+        self.rendered(
+            sample_rate,
+            performance,
+            installs,
+            racks,
+            remade,
+            Some(ring),
+        )
+    }
+
+    /// The render of [`Graph::render_performance_remade`] and [`Graph::render_ringing_out`].
+    fn rendered(
         mut self,
         sample_rate: u32,
         performance: &Performance,
         mut installs: Vec<(u64, usize, Box<dyn Instrument>)>,
         mut racks: Vec<(u64, usize, Vec<RackDevice>)>,
         mut remade: Vec<(u64, Part, usize, Box<dyn Device>)>,
-    ) -> Vec<f32> {
+        ring: Option<RingOut>,
+    ) -> RungOut {
         self.sample_rate = sample_rate;
         self.prepare();
         installs.sort_by_key(|(frame, _, _)| *frame);
@@ -1297,7 +1354,36 @@ impl Graph {
             out[i * 2] = frame[0];
             out[i * 2 + 1] = frame[1];
         }
-        out
+        let Some(ring) = ring else {
+            return RungOut {
+                samples: out,
+                tail: 0,
+                cut: false,
+            };
+        };
+        let end = frames as u64;
+        let (mut kept, mut cut) = (end, false);
+        for i in end.. {
+            if i - kept >= ring.hold {
+                break;
+            }
+            if i - end >= ring.most {
+                cut = true;
+                break;
+            }
+            clock.sample = i;
+            let frame = self.mix_frame(&clock);
+            out.extend_from_slice(&frame);
+            if frame.iter().any(|v| v.abs() > ring.floor) {
+                kept = i + 1;
+            }
+        }
+        out.truncate(kept as usize * 2);
+        RungOut {
+            samples: out,
+            tail: kept - end,
+            cut,
+        }
     }
 
     /// Apply one engine event at `clock` (the frame it lands on): a note

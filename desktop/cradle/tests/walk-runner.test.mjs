@@ -124,3 +124,41 @@ test("the real runner registry validates and reports an unknown scenario cleanly
     assert.match(String(error.stderr), /unknown scenario `__definitely_not_a_scenario__`/);
   }
 });
+
+// The cleanup sweep (O-I ticket 869): a walk that goes takes its workflow steps with it. Every walk a workflow runs is a
+// file in this tree, and every walk-evidence directory a workflow keeps is one a walk in this tree writes (or the step
+// names it itself). A step for a walk that is gone runs nothing and keeps nothing, so it reads as proof that is not there.
+test("every walk a workflow runs, and every walk evidence it keeps, belongs to a walk in the tree", async () => {
+  const { readdirSync, readFileSync, existsSync, statSync } = await import("node:fs");
+  const repo = join(cradleRoot, "..", "..");
+  const workflows = join(repo, ".github", "workflows");
+  const texts = [];
+  const gather = dir => {
+    for (const name of readdirSync(dir)) {
+      if (name === "node_modules" || name === "artifacts") continue;
+      const path = join(dir, name);
+      if (statSync(path).isDirectory()) gather(path);
+      else if (/\.(mjs|js|ts|tsx|py|sh)$/.test(name)) texts.push(readFileSync(path, "utf8"));
+    }
+  };
+  gather(join(cradleRoot, "tests"));
+  gather(join(cradleRoot, "walk"));
+  const faults = [];
+  for (const file of readdirSync(workflows).filter(name => name.endsWith(".yml"))) {
+    const text = readFileSync(join(workflows, file), "utf8");
+    const dirs = [...text.matchAll(/working-directory:\s*(\S+)/g)].map(m => m[1]);
+    const outside = dirs.some(dir => !existsSync(join(repo, dir)));
+    for (const [, path] of text.matchAll(/(?:^|\s)(?:node|python3)\s+((?:tests|walk)\/[\w./-]+\.(?:mjs|py))/gm)) {
+      const found = [repo, ...dirs.map(dir => join(repo, dir)), cradleRoot, join(repo, "packages/live-shell/ui")].some(base => existsSync(join(base, path)));
+      if (!found && !outside) faults.push(`${file} runs ${path}, which is not in the tree`);
+    }
+    for (const line of text.split("\n")) {
+      for (const [, name] of line.matchAll(/(?:tests|walk)\/artifacts\/([\w.-]+)/g)) {
+        if (/=\S*artifacts\//.test(line)) continue;
+        const written = texts.some(source => new RegExp(`['"/]${name.replace(/[.]/g, "\\.")}['"/]`).test(source));
+        if (!written) faults.push(`${file} keeps artifacts/${name}, which no walk in the tree writes`);
+      }
+    }
+  }
+  assert.deepEqual(faults, []);
+});

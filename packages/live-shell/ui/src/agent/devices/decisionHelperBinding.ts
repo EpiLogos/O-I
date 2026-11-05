@@ -3,7 +3,7 @@
 //   Provider, model, place, state, independence, price: AIKit's decision provider (`aikit decide status`, kernel op decision_status,
 //     aikit.decision-status/v1): `mode` → Provider, `selected_model` → the model, `decision_model.base` → its base, `placement` →
 //     where it runs, `install.state` → loaded or not (the light), `independent_of_acting_models`, `limits.tariff` → no price here.
-//   Instruments: the team space (`ql context-frame team-space`, kernel op team_space, ql.vak-team-space/v1): each instrument's organ,
+//   Instruments: the team space (`ql context-frame team-space`, kernel op team_space, ql.vak-team-space/v2): each instrument's organ,
 //     the rows it is asked at (`cells`), the labels of its head — or, with several heads, the heads' fields — and whether only the
 //     person answers it (`answerable_by: person-only`, the collaboration gate).
 // What no owner reports is absent (a key with no reading is unknown, manual §16.11): the question asked last and its answer, the run's
@@ -71,7 +71,7 @@ export function teamInstruments(teamSpace: unknown): Record<string, unknown>[] |
 export interface DecisionHelperInput {
   /** AIKit's `aikit.decision-status/v1`, or null while unread or refused. */
   readonly status: unknown
-  /** QL's `ql.vak-team-space/v1`, or null while unread or refused. */
+  /** QL's `ql.vak-team-space/v2`, or null while unread or refused. */
   readonly teamSpace: unknown
 }
 

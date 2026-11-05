@@ -2716,8 +2716,10 @@ fn audio_clip(
 /// Item 5's audio clips on the sample-playback source (DLW build ruling 2026-11-05): a set's unwarped arrangement audio clips
 /// are laid on their part from their samples — a file beside the set by its relative path (16-bit integer, mono), else
 /// where the set stored it (32-bit float, stereo), each decoded once — at their clip's beats, from their start marker (in
-/// seconds), at their clip gain, and play through the part's row as the set renders. A warped clip, one whose sample is
-/// nowhere, and one at another rate than the engine's are silent, each named in words; a disabled clip is skipped.
+/// seconds), at their clip gain, and play through the part's row as the set renders. A warped clip and one whose sample is
+/// nowhere are silent, each named in words; a disabled clip is skipped. REPLACES (O-I #743 round 20, item 3, the engine
+/// gaps): a clip at another rate than the engine's was silent and said so; it is laid now, resampled to the engine's rate
+/// when it is decoded (`an_aiff_clip_at_another_rate_is_laid_resampled_and_plays_the_exact_sine_at_the_engines_rate`).
 #[test]
 fn a_sets_unwarped_audio_clips_are_laid_from_their_samples_and_what_is_not_played_is_said() {
     let dir = std::path::Path::new(env!("CARGO_TARGET_TMPDIR"))
@@ -2799,26 +2801,28 @@ fn a_sets_unwarped_audio_clips_are_laid_from_their_samples_and_what_is_not_playe
         &r.samples,
         &dir.join("Song.als"),
     ));
-    assert_eq!(words.len(), 2, "{words:?}");
+    assert_eq!(words.len(), 1, "{words:?}");
     assert!(words[0].starts_with("Vox: its clip 'Gone' plays Samples/gone.wav, which is neither beside the set nor where the set stored it"), "{words:?}");
-    assert!(
-        words[1].contains("its clip 'Slow' plays")
-            && words[1].contains(
-                "at 44100 Hz, and the engine runs at 48000 Hz and does not resample: it is silent"
-            ),
-        "{words:?}"
-    );
     let laid = r.graph.tracks[0].samples();
     assert_eq!(
         laid.iter()
             .map(|s| (s.at, s.from, s.frames, s.gain, s.channels))
             .collect::<Vec<_>>(),
-        [(0, 480, 2_400, 0.5, 1), (12_000, 0, 1_200, 0.5, 2)]
+        [
+            (0, 480, 2_400, 0.5, 1),
+            (12_000, 0, 1_200, 0.5, 2),
+            (72_000, 0, 12_000, 0.5, 1)
+        ]
+    );
+    assert_eq!(
+        laid[2].pcm.len(),
+        109,
+        "slow.wav's 100 frames at 44.1 kHz, at the engine's 48 kHz"
     );
     let out = r.graph.render(SR);
     assert_eq!(
         out.len(),
-        2 * 13_200,
+        2 * 84_000,
         "the part ends with its last laid clip"
     );
     let voice = |i: usize| ((i % 1000) as f32 / 2000.0 * 32_768.0) as i16 as f32 / 32_768.0;
@@ -2834,6 +2838,254 @@ fn a_sets_unwarped_audio_clips_are_laid_from_their_samples_and_what_is_not_playe
         (out[2 * 12_100], out[2 * 12_100 + 1]),
         (row(room(100, 0) * 0.5), row(room(100, 1) * 0.5))
     );
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+/// A 16-bit stereo AIFF of `pcm` (interleaved), as Live renders one, at 44.1 kHz (the 80-bit extended float `COMM` stores).
+fn aiff_at_44k1(pcm: &[f32]) -> Vec<u8> {
+    let data: Vec<u8> = pcm
+        .iter()
+        .flat_map(|v| ((v * 32_768.0).round() as i16).to_be_bytes())
+        .collect();
+    let mut comm = 2u16.to_be_bytes().to_vec();
+    comm.extend_from_slice(&(pcm.len() as u32 / 2).to_be_bytes());
+    comm.extend_from_slice(&16u16.to_be_bytes());
+    comm.extend_from_slice(&[0x40, 0x0E, 0xAC, 0x44, 0, 0, 0, 0, 0, 0]);
+    let mut body = b"AIFFCOMM".to_vec();
+    body.extend_from_slice(&(comm.len() as u32).to_be_bytes());
+    body.extend_from_slice(&comm);
+    body.extend_from_slice(b"SSND");
+    body.extend_from_slice(&(8 + data.len() as u32).to_be_bytes());
+    body.extend_from_slice(&[0; 8]);
+    body.extend_from_slice(&data);
+    let mut out = b"FORM".to_vec();
+    out.extend_from_slice(&(body.len() as u32).to_be_bytes());
+    out.extend_from_slice(&body);
+    out
+}
+
+/// O-I #743 round 20, item 3, the engine gaps: a clip whose sample is an AIFF (as Live renders and consolidates to, 16-bit
+/// stereo, big-endian) at 44.1 kHz, on an engine at 48 kHz, is laid resampled to the engine's rate when it is decoded and
+/// plays at its own pitch and length through its part's row — measured against the exact sine at the engine's rate, not by
+/// ear: within −88 dB, 16-bit's own floor being −92 dB of it. Its first and last 10 ms, where the resampling kernel reaches
+/// into the silence about the file, are not measured.
+#[test]
+fn an_aiff_clip_at_another_rate_is_laid_resampled_and_plays_the_exact_sine_at_the_engines_rate() {
+    let dir = std::path::Path::new(env!("CARGO_TARGET_TMPDIR"))
+        .join(format!("laid-aiff-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(dir.join("Samples/Processed/Consolidate")).unwrap();
+    let tone =
+        |i: usize, rate: f64| (std::f64::consts::TAU * 1_000.0 * i as f64 / rate).sin() * 0.5;
+    let pcm: Vec<f32> = (0..44_100)
+        .flat_map(|i| [tone(i, 44_100.0) as f32, -tone(i, 44_100.0) as f32])
+        .collect();
+    std::fs::write(
+        dir.join("Samples/Processed/Consolidate/tone.aif"),
+        aiff_at_44k1(&pcm),
+    )
+    .unwrap();
+    let clip = audio_clip(
+        "Tone",
+        0.0,
+        2.0,
+        0.0,
+        false,
+        "Samples/Processed/Consolidate/tone.aif",
+        "",
+    );
+    let set = format!(
+        r#"<Ableton MajorVersion="5"><LiveSet><Tracks>
+        <AudioTrack Id="6"><Name><EffectiveName Value="Bounce" /></Name><DeviceChain>
+          <Mixer><Volume><Manual Value="0.5" /></Volume></Mixer>
+          <MainSequencer><Sample><ArrangerAutomation><Events>{clip}</Events></ArrangerAutomation></Sample></MainSequencer>
+        </DeviceChain></AudioTrack></Tracks>
+        <MainTrack><DeviceChain><Mixer><Tempo><Manual Value="120" /></Tempo></Mixer></DeviceChain></MainTrack>
+        </LiveSet></Ableton>"#
+    );
+    let root = live_set::xml::parse(&set).unwrap();
+    let mut r = bridge_set(&root, SR).unwrap();
+    let words = live_engine::bridge::lay_samples(&mut r.graph, &r.samples, &dir.join("Song.als"));
+    assert!(words.is_empty(), "{words:?}");
+    let laid = r.graph.tracks[0].samples();
+    assert_eq!(
+        laid.iter()
+            .map(|s| (s.at, s.from, s.frames, s.gain, s.channels, s.pcm.len()))
+            .collect::<Vec<_>>(),
+        [(0, 0, 48_000, 0.5, 2, 2 * 48_000)],
+        "one second of sound at the engine's rate"
+    );
+    let out = r.graph.render(SR);
+    assert_eq!(out.len(), 2 * 48_000, "as long as its sound");
+    let (mut error, mut signal) = (0.0f64, 0.0f64);
+    for i in 480..48_000 - 480 {
+        let exact = tone(i, 48_000.0) * 0.5 * 0.5;
+        error +=
+            (f64::from(out[2 * i]) - exact).powi(2) + (f64::from(out[2 * i + 1]) + exact).powi(2);
+        signal += 2.0 * exact * exact;
+    }
+    let level = 20.0 * (error / signal).sqrt().log10();
+    assert!(level < -88.0, "{level:.1} dB from the exact sine");
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+/// A stereo 32-bit float WAV of `pcm` (interleaved) at `rate`.
+fn float_wav_of(pcm: &[f32], rate: u32) -> Vec<u8> {
+    let data: Vec<u8> = pcm.iter().flat_map(|v| v.to_le_bytes()).collect();
+    let mut out = b"RIFF".to_vec();
+    out.extend_from_slice(&(36 + data.len() as u32).to_le_bytes());
+    out.extend_from_slice(b"WAVEfmt ");
+    out.extend_from_slice(&16u32.to_le_bytes());
+    out.extend_from_slice(&3u16.to_le_bytes());
+    out.extend_from_slice(&2u16.to_le_bytes());
+    out.extend_from_slice(&rate.to_le_bytes());
+    out.extend_from_slice(&(rate * 8).to_le_bytes());
+    out.extend_from_slice(&8u16.to_le_bytes());
+    out.extend_from_slice(&32u16.to_le_bytes());
+    out.extend_from_slice(b"data");
+    out.extend_from_slice(&(data.len() as u32).to_le_bytes());
+    out.extend_from_slice(&data);
+    out
+}
+
+/// O-I #743, Consolidate on an audio part (manual §10.9 "In Arrangement view, Split (⌘E), Consolidate (⌘J)"): the engine renders
+/// the part's clips alone across the stretch — each laid as it lays them to play the set, at its clip gain, and none of the part's
+/// chain or mixer — and the set's owner keeps that render beside the set as the one clip that plays it. Played again, the set
+/// sounds in the stretch sample for sample as it did, through the part's own row. A clip the engine does not play is said; one
+/// outside the stretch is not spoken of.
+#[test]
+fn consolidate_renders_an_audio_parts_clips_alone_and_the_clip_made_of_it_plays_what_they_played() {
+    let dir = std::path::Path::new(env!("CARGO_TARGET_TMPDIR"))
+        .join(format!("consolidate-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(dir.join("Samples/Recorded")).unwrap();
+    std::fs::write(
+        dir.join("Samples/Recorded/voice.wav"),
+        wav_file(48_000, 1, SR, true),
+    )
+    .unwrap();
+    std::fs::write(dir.join("room.wav"), wav_file(30_000, 2, SR, false)).unwrap();
+    let clips = [
+        audio_clip(
+            "Voice",
+            0.0,
+            1.0,
+            0.1,
+            false,
+            "Samples/Recorded/voice.wav",
+            "",
+        ),
+        audio_clip("Room", 1.5, 1.0, 0.0, false, "room.wav", ""),
+        audio_clip("Stretched", 3.0, 0.5, 0.0, true, "room.wav", ""),
+        audio_clip("Far", 10.0, 0.5, 0.0, true, "room.wav", ""),
+    ]
+    .concat();
+    let xml = format!(
+        r#"<Ableton MajorVersion="5"><LiveSet><Tracks>
+        <AudioTrack Id="6"><Name><EffectiveName Value="Vox" /></Name><DeviceChain>
+          <Mixer><Volume><Manual Value="0.5" /></Volume></Mixer>
+          <MainSequencer><Sample><ArrangerAutomation><Events>{clips}</Events></ArrangerAutomation></Sample></MainSequencer>
+        </DeviceChain></AudioTrack></Tracks>
+        <MainTrack><DeviceChain><Mixer><Tempo><Manual Value="120" /></Tempo></Mixer></DeviceChain></MainTrack>
+        <Scenes /></LiveSet></Ableton>"#
+    );
+    let set = dir.join("Song.als");
+    let root = live_set::xml::parse(&xml).unwrap();
+    std::fs::write(&set, live_set::write_gz(&root).unwrap()).unwrap();
+    let alone = live_engine::bridge::render_clips_alone(&root, &set, 0, 0.5, 3.5, SR).unwrap();
+    assert_eq!(
+        (alone.frames, alone.sample_rate, alone.pcm.len()),
+        (72_000, SR, 144_000),
+        "beats 0.5 to 3.5 at 120 BPM, in stereo"
+    );
+    assert_eq!(alone.clips, 2, "Voice and Room sound in it");
+    let words: Vec<String> = alone
+        .warnings
+        .iter()
+        .map(|w| format!("{}: {}", w.track, w.message))
+        .collect();
+    assert_eq!(words, ["Vox: its clip 'Stretched' is warped, and the engine plays unwarped clips first: it is silent"]);
+    // Voice from its start marker (0.1 s in), at its clip gain and no more: the part's row (Volume 0.5) is not in the render.
+    let voice = |i: usize| ((i % 1000) as f32 / 2000.0 * 32_768.0) as i16 as f32 / 32_768.0;
+    let room = |i: usize, c: usize| (i % 1000) as f32 / 2000.0 - c as f32 * 0.25;
+    let at = |frame: usize| {
+        (
+            alone.pcm[2 * (frame - 12_000)],
+            alone.pcm[2 * (frame - 12_000) + 1],
+        )
+    };
+    assert_eq!(
+        at(12_000),
+        (voice(4_800 + 12_000) * 0.5, voice(4_800 + 12_000) * 0.5)
+    );
+    assert_eq!(at(30_000), (0.0, 0.0), "between the clips, silence");
+    assert_eq!(at(36_000 + 7), (room(7, 0) * 0.5, room(7, 1) * 0.5));
+    assert_eq!(at(83_999), (0.0, 0.0));
+    // Consolidated: the render kept beside the set, and the set played again sounds in the stretch as it did.
+    let path = set.to_str().unwrap();
+    let revision = live_set::edit::clip_json(path, 0, live_set::edit::ClipAt::Arrangement(0))
+        .unwrap()["revision"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    let made = live_set::acts::consolidate_audio(
+        path,
+        &revision,
+        0,
+        0.5,
+        3.5,
+        &float_wav_of(&alone.pcm, SR),
+    )
+    .unwrap();
+    assert!(
+        made["done"].as_str().unwrap().starts_with(
+            "Consolidated 3 audio clips between beat 0.5 and beat 3.5 into one, 1.5 seconds"
+        ),
+        "{made}"
+    );
+    let play = |root: &live_set::xml::Element| {
+        let mut r = bridge_set(root, SR).unwrap();
+        let words = live_engine::bridge::lay_samples(&mut r.graph, &r.samples, &set);
+        (r.graph.render(SR), words)
+    };
+    let (mut before, _) = play(&root);
+    let again = live_set::open_als(&set).unwrap();
+    let (after, words) = play(&again);
+    assert_eq!(
+        after.len(),
+        2 * 84_000,
+        "the part ends with the consolidated clip now"
+    );
+    before.resize(after.len(), 0.0); // it ended with Room, the warped clips after it silent
+    assert!(
+        words.is_empty(),
+        "the consolidated sample is found beside the set and read: {words:?}"
+    );
+    assert_eq!(
+        &after[2 * 12_000..2 * 84_000],
+        &before[2 * 12_000..2 * 84_000],
+        "the stretch sounds sample for sample as it did"
+    );
+    assert_eq!(
+        &after[..2 * 12_000],
+        &before[..2 * 12_000],
+        "and what stands before it is untouched"
+    );
+    // Refused in words: a part that is no audio part, a stretch where no clip of it sounds.
+    for (track, from, to, words) in [
+        (
+            0,
+            20.0,
+            24.0,
+            "No clip of Vox sounds between beat 20 and beat 24",
+        ),
+        (3, 0.0, 1.0, "has no track 4"),
+        (0, 2.0, 2.0, "end after its start"),
+    ] {
+        let refused =
+            live_engine::bridge::render_clips_alone(&again, &set, track, from, to, SR).unwrap_err();
+        assert!(refused.contains(words), "{refused}");
+    }
     let _ = std::fs::remove_dir_all(&dir);
 }
 
@@ -2936,6 +3188,160 @@ fn a_takes_sound_laid_as_its_parts_instrument_exports_through_its_effects_as_the
         bare.render_performance(SR, &Performance::silent(frames as u64)) != played,
         "the rack is heard"
     );
+}
+
+/// O-I #743 round 20, item 3, the engine gaps: a render rings its parts' effects out past its performance's end
+/// (`Graph::render_ringing_out`) — to its end exactly as the render that stops there, then on, frame by frame, while
+/// anything stands above the floor, ending on the last frame that does once nothing has for the hold, so nothing above
+/// the floor follows it; at the most it goes on for, it stops and says its tail was cut. A part with nothing to ring
+/// adds nothing past the end.
+#[test]
+fn a_render_rings_its_effects_out_past_its_end_and_ends_where_they_fall_under_the_floor() {
+    use live_engine::{RingOut, SampleInstrument};
+    let pcm: std::sync::Arc<[f32]> = (0..2_400)
+        .map(|i| (i as f32 * 0.05).sin() * 0.5)
+        .collect::<Vec<_>>()
+        .into();
+    let graph = |feedback: Option<f64>| {
+        let mut g = Graph::new(SR, 120.0);
+        let mut t = Track::midi(
+            "Take",
+            Box::new(SampleInstrument {
+                sample: laid(0, 0, 2_400, 1.0, &pcm, 1),
+            }),
+        );
+        if let Some(feedback) = feedback {
+            t.devices.push(Box::new(EchoDevice::new(EchoParams {
+                delay_time_s: 0.1,
+                feedback,
+                dry_wet: 0.5,
+            })));
+        }
+        g.tracks.push(t);
+        g
+    };
+    let same = |a: &[f32], b: &[f32]| {
+        a.len() == b.len() && a.iter().zip(b).all(|(x, y)| x.to_bits() == y.to_bits())
+    };
+    let frames = 4_800u64;
+    let ring = RingOut {
+        floor: 10f32.powf(-96.0 / 20.0),
+        hold: u64::from(SR),
+        most: 30 * u64::from(SR),
+    };
+    let stopped = graph(Some(0.5)).render_performance(SR, &Performance::silent(frames));
+    let rung = graph(Some(0.5)).render_ringing_out(
+        SR,
+        &Performance::silent(frames),
+        Vec::new(),
+        Vec::new(),
+        Vec::new(),
+        ring,
+    );
+    assert!(rung.tail > 0 && !rung.cut, "{:?}", (rung.tail, rung.cut));
+    assert_eq!(rung.samples.len() as u64, 2 * (frames + rung.tail));
+    assert!(
+        same(&rung.samples[..stopped.len()], &stopped),
+        "to its end as the render that stops there"
+    );
+    let end = &rung.samples[rung.samples.len() - 2..];
+    assert!(
+        end.iter().any(|v| v.abs() > ring.floor),
+        "it ends on the last frame above the floor"
+    );
+    let on = graph(Some(0.5))
+        .render_performance(SR, &Performance::silent(frames + rung.tail + ring.hold));
+    assert!(same(&on[..rung.samples.len()], &rung.samples));
+    assert!(
+        on[rung.samples.len()..]
+            .iter()
+            .all(|v| v.abs() <= ring.floor),
+        "nothing above the floor follows it"
+    );
+    let cut = graph(Some(0.98)).render_ringing_out(
+        SR,
+        &Performance::silent(frames),
+        Vec::new(),
+        Vec::new(),
+        Vec::new(),
+        RingOut {
+            most: 9_600,
+            ..ring
+        },
+    );
+    assert!(
+        cut.cut && cut.tail > 0 && cut.tail <= 9_600,
+        "{:?}",
+        (cut.tail, cut.cut)
+    );
+    let dry = graph(None).render_ringing_out(
+        SR,
+        &Performance::silent(frames),
+        Vec::new(),
+        Vec::new(),
+        Vec::new(),
+        ring,
+    );
+    assert_eq!((dry.tail, dry.cut), (0, false));
+    assert!(same(
+        &dry.samples,
+        &graph(None).render_performance(SR, &Performance::silent(frames))
+    ));
+}
+
+/// O-I #743 round 20, item 3, the engine gaps: the engine hears the frame's level (controller.ts `PRESENTATION_LEVEL`, 0 to 4,
+/// "presentation gain after the native PCM") as the frame does — the Torus's sound times it, exactly, where it stands before
+/// the effects (controller.ts `stage`: they "stand after the level"); moved while it plays, it goes to where it was set as
+/// the frame's gain goes there, Web Audio's setTargetAtTime at 20 ms (controller.ts `setLevel`), a step each frame (the gain
+/// is an a-rate param), measured against that curve; made again, it goes on from where the one it replaces stood. A level
+/// outside the frame's, and one not given, are refused in words.
+#[test]
+fn the_frames_level_is_heard_as_the_frame_sets_it_and_moves_as_its_gain_moves() {
+    let clock = Clock::start(SR, 120.0);
+    let mut level = live_engine::rack_device("level", &[("level", 2.0)]).unwrap();
+    assert_eq!(level.made_from, "level level=2");
+    assert_eq!(level.device.settings(), &[("level", 0.0, 4.0)]);
+    level.device.prepare(SR, 2);
+    let mut io = [0.25f32, -0.5];
+    level.device.process(&mut io, &clock);
+    assert_eq!(io, [0.5, -1.0], "the sound times the level, exactly");
+    level.device.set(0, 0.5);
+    let tau = 0.02 * f64::from(SR);
+    let mut worst = 0.0f64;
+    for n in 1..=2_400 {
+        let mut io = [1.0f32, -1.0];
+        level.device.process(&mut io, &clock);
+        let exact = 0.5 + 1.5 * (-(n as f64) / tau).exp();
+        worst = worst
+            .max((f64::from(io[0]) - exact).abs())
+            .max((f64::from(-io[1]) - exact).abs());
+    }
+    assert!(worst < 1e-5, "setTargetAtTime at 20 ms: {worst:e} at worst");
+    let mut again = live_engine::rack_device("level", &[("level", 0.5)]).unwrap();
+    again.device.prepare(SR, 2);
+    again.device.made_again_from(level.device.as_mut());
+    let (mut a, mut b) = ([1.0f32, 1.0], [1.0f32, 1.0]);
+    level.device.process(&mut a, &clock);
+    again.device.process(&mut b, &clock);
+    assert_eq!(
+        a, b,
+        "made again, it goes on from where the one it replaces stood"
+    );
+    for _ in 0..48_000 {
+        level.device.process(&mut [0.0, 0.0], &clock);
+    }
+    let mut io = [1.0f32, 1.0];
+    level.device.process(&mut io, &clock);
+    assert_eq!(io, [0.5, 0.5], "and stands at the level set");
+    for (carried, said) in [
+        (&[("level", 4.5)][..], "0 to 4"),
+        (&[("level", -0.1)][..], "0 to 4"),
+        (&[][..], "no level"),
+        (&[("level", 1.0), ("gain", 1.0)][..], "gain"),
+    ] {
+        let words = live_engine::rack_device("level", carried).unwrap_err();
+        assert!(words.contains(said), "{words}");
+    }
 }
 
 /// A stereo part sounding `l` and `r` throughout, through `devices`, at unity and centre: its render.

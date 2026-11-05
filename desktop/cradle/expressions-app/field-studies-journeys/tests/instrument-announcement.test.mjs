@@ -109,6 +109,24 @@ test('the Torus session carries what rings as the owner names it: the torus, or 
 
 // O-I 856: where the Torus is heard from is announced as the controller reads it — Receiver On or Off, the owner's context and its refusal —
 // and never the place, nor the gains the owner hears each voice by.
+// O-I ticket 851 (round 869; DLW manual §21.2 "Sequence follows the shapes you set in the scene"): under Sequence QL names no figure, and the
+// torus object reads the scene's own shapes (torusObject.ts sceneShapesOf). The announcement carries what it shows beside QL's session: the
+// figure the scene's shapes set now, the two shapes and the progress between them. Under any other Shape, or with no torus in the scene, none.
+test('under Sequence the Torus session carries the figure the scene\'s shapes set, as the torus object reads them; under any other Shape none', () => {
+  const settings = {tuning: 'logic', shape: 'sequence'};
+  const torus = {settings, steps_per_second: 2.5, band: 'rhythm', fundamental_hz: 130.81, map_hz: 130.81, figure: null, comma_cents: 0,
+    notes: [], resident_tunings: ['logic'], carrier: {drive: 'unbuilt'}};
+  const object = sequence => ({schema: 'oi.torus-object/v1', standing: 'shown', shape: {law: 'spiral', shown: null, steps: 4, flat: false, sequence}});
+  const announced = (t, torus_object) => announceInstrument(controllerReading({instrument: {...controllerReading().instrument, torus: t, torus_object}})).parameters.torus;
+  assert.deepEqual(announced(torus, object({entity_id: 'torus-1', from: 'torus', to: 'spiral', progress: 0.6})).sequence,
+    {figure: 'spiral', from: 'torus', to: 'spiral', progress: 0.6}, 'the figure shown, the shapes either side and how far between');
+  assert.equal(announced(torus, object({entity_id: 'torus-1', from: 'torus', to: 'spiral', progress: 0.6})).figure, null, 'QL\'s own figure stays its own: none');
+  assert.equal('sequence' in announced(torus, object(null)), false, 'no torus in the scene: no sequence is announced');
+  assert.equal('sequence' in announced(torus, undefined), false, 'no torus object read: none');
+  assert.equal('sequence' in announced({...torus, figure: 'torus', settings: {...settings, shape: 'auto'}}, object({entity_id: 'torus-1', from: 'torus', to: 'spiral', progress: 0.6})), false,
+    'under Auto the figure is QL\'s');
+});
+
 test('Receiver is announced as On or Off, the owner\'s context and its refusal: never a place', () => {
   const heard = controllerReading({receiver: {on: true, context: 'personal', gains: [{mode_ref: 'scene:logic/0', gain: 0.25}], law: 'the law', refusal: null}});
   assert.deepEqual(announceInstrument(heard).parameters.receiver, {on: true, context: 'personal', refusal: null});

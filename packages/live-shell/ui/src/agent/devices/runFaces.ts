@@ -1,5 +1,5 @@
 // The run state a session's agent stands in, and the run its stage plays, from what the owners report (lane W5; manual §19.4 "its posture
-// is the agent's state", §25.6; face-rig CREATURE-SPEC.md 25). The creatures of the Agent, the Agentset rack, Messages and the Agents tile
+// is the agent's state", §25.6; face-rig CREATURE-SPEC.md 25). The creatures of the Agent, the Agent rack, Messages and the Agents tile
 // take their posture from it; the stage plays the kernel's own run events. Nothing here scripts a run: "No action without an event".
 //
 // The readings, each the shell's own of its owner:
@@ -87,7 +87,7 @@ export function runStateOfSession(track: SessionRun, thread: readonly ThreadRow[
   return task.state === 'running' ? 'acting' : null
 }
 
-/** The Agentset rack's member state (software-factory__agentset-rack.tsx State) for a run state: thinking, acting, waiting and producing
+/** The Agent rack's member state (software-factory__agentset-rack.tsx State) for a run state: thinking, acting, waiting and producing
  * are Working; queued is Idle; the rest are themselves. */
 export function rackStateOf(run: RunState | null): 'working' | 'idle' | 'stalled' | 'done' | 'failed' | undefined {
   if (run === null) return undefined

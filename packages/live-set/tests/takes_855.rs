@@ -61,6 +61,9 @@ impl Drop for SetFile {
     }
 }
 fn set_file() -> (SetFile, String) {
+    set_file_of(SET)
+}
+fn set_file_of(xml: &str) -> (SetFile, String) {
     use std::sync::atomic::{AtomicUsize, Ordering};
     static NEXT: AtomicUsize = AtomicUsize::new(0);
     let dir = std::env::temp_dir().join(format!(
@@ -70,7 +73,7 @@ fn set_file() -> (SetFile, String) {
     ));
     std::fs::create_dir_all(&dir).unwrap();
     let path = dir.join("set.als");
-    let root = live_set::xml::parse(SET).unwrap();
+    let root = live_set::xml::parse(xml).unwrap();
     std::fs::write(&path, live_set::write_gz(&root).unwrap()).unwrap();
     (SetFile(dir), path.to_str().unwrap().to_string())
 }
@@ -646,22 +649,54 @@ fn a_takes_course_is_kept_in_the_projects_media_by_its_sha256_and_read_back_with
 }
 
 /// O-I #743: Record into a slot (Live: an armed track's empty slots are record buttons) lays the pass in that slot as a clip of its own,
-/// in Insert MIDI Clip's shape and looped over its length, carrying the set's next TakeId so what it keeps stands by it as any take's;
-/// no take lane is made and the Arrangement is untouched. A held slot, a row the set lacks and an audio part are refused in words.
+/// in Insert MIDI Clip's shape, with no Time (session-model.md §7) and its loop off as Live's own takes carry it, carrying the set's next
+/// TakeId so what it keeps stands by it as any take's; no take lane is made and the Arrangement is untouched. A part that is not armed,
+/// a held slot, a row the set lacks and an audio part are refused in words.
 #[test]
 fn a_pass_recorded_into_an_empty_slot_stands_in_the_slot_with_its_take_and_what_it_keeps() {
-    let (_dir, path) = set_file();
+    let (_unarmed, unarmed) = set_file();
+    let (_dir, path) = set_file_of(&SET.replacen(
+        r#"<Recorder><IsArmed Value="false"/>"#,
+        r#"<Recorder><IsArmed Value="true"/>"#,
+        1,
+    ));
     let slot_take = |track: usize, scene: usize| -> SetAct {
         serde_json::from_value(json!({"kind": "take_record", "track": track, "start": 0, "length": 4, "name": "Take 1",
             "notes": [{"p": 60, "at": 0, "len": 1, "vel": 100}, {"p": 64, "at": 2, "len": 1, "vel": 80}],
             "keeps": keeps(), "scene": scene}))
         .unwrap()
     };
+    assert_eq!(
+        run(&unarmed, slot_take(0, 0)).unwrap_err(),
+        "Keys is not armed: Live records into a slot of an armed part, so arm it first",
+        "the owner checks Arm, not only the frame"
+    );
     let made = run(&path, slot_take(0, 0)).unwrap();
     assert_eq!(made["act"], "take_record");
     assert_eq!(
         made["done"],
         "Recorded Take 1 on Keys into the slot in row 1: 2 notes."
+    );
+    // The clip as the document now keeps it: in the slot's Value, with no Time and its loop off.
+    let document = live_set::open_als(std::path::Path::new(&path)).unwrap();
+    let text = live_set::xml::serialize(&document);
+    let slot = text
+        .split("<ClipSlotList>")
+        .nth(1)
+        .and_then(|list| list.split("</ClipSlotList>").next())
+        .unwrap();
+    let clip_tag = slot
+        .split("<MidiClip ")
+        .nth(1)
+        .and_then(|tag| tag.split('>').next())
+        .unwrap();
+    assert_eq!(
+        clip_tag, r#"Id="0""#,
+        "a session-slot clip carries no Time: {slot}"
+    );
+    assert!(
+        slot.contains(r#"<LoopOn Value="false"#),
+        "its loop off, as Live's takes: {slot}"
     );
     assert_eq!(made["at"], json!({"track": 0, "slot": 0, "take": 1}));
     assert!(made.get("keepsRefused").is_none(), "{made}");

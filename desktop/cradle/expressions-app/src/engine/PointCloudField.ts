@@ -797,7 +797,9 @@ export class PointCloudField {
     this.particleMaterial.depthTest = occlude;
     this.particleMaterial.depthWrite = occlude;
     u.uPerspective.value = persp ? 1 : 0;
-    u.uCameraDistance.value = this.orbitDistance();
+    // Hosted, the perspective eye stands where the host's view puts it (setHostView), not on the orbit: the law is anchored there, so a
+    // mark on the workplane keeps the size the flat stage draws it at, at every zoom.
+    u.uCameraDistance.value = persp && this.hostEyeDistance !== null ? this.hostEyeDistance : this.orbitDistance();
     u.uViewHeight.value = viewH;
     u.uSizeAttenuation.value = Math.max(0, depth.sizeAttenuation ?? 0);
     u.uSizeAttenuationCurve.value = Math.max(0.01, depth.sizeAttenuationCurve ?? 1);
@@ -1375,6 +1377,8 @@ export class PointCloudField {
   private evaluatedConfig: PointCloudConfig | null = null;
   public getEvaluation() { return { config: this.evaluatedConfig ?? this.config, live: this.liveAutomation }; }
 
+  /** How far from the scene's origin the hosted perspective eye stands (setHostView); null until a host hands its view. */
+  private hostEyeDistance: number | null = null;
   /** Host projection is exact, including off-centre framing and edge-on workplanes. */
   public setHostView(view: { width: number; height: number; pixelRatio: number; originX: number; originY: number; pixelsPerUnit: number; right: number[]; up: number[] }) {
     const {width, height, originX, originY, pixelsPerUnit: s} = view;
@@ -1395,9 +1399,16 @@ export class PointCloudField {
     // honour that scale at the workplane by choosing the eye distance that makes
     // the frustum cover the same pixel pitch — the two projections then frame
     // identically at z = 0 and diverge only in convergence, which is the point.
+    // The frame is the host's: the stage's own aspect (setViewOffset sets it from
+    // the full frame), and the frustum shifted off its axis so the scene's origin
+    // falls on the host's origin (its stage centre and pan), as the flat camera's
+    // bounds put it; the eye stays on the normal through the scene's origin, and
+    // the lens converges on that origin's pixel.
     const fov = (this.perspCamera.fov * Math.PI) / 180;
     const distance = (height / Math.max(0.0001, s) * 0.5) / Math.max(0.0001, Math.tan(fov / 2));
+    this.hostEyeDistance = distance;
     this.perspCamera.near = 0.1; this.perspCamera.far = 20000; this.perspCamera.zoom = 1;
+    this.perspCamera.setViewOffset(Math.max(1, width), Math.max(1, height), width / 2 - originX, height / 2 - originY, Math.max(1, width), Math.max(1, height));
     this.perspCamera.updateProjectionMatrix();
 
     const planar = this.cameraProjection !== 'perspective';

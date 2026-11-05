@@ -525,6 +525,69 @@ test('Receiver On stands the listener at the engine\'s eye in metres: along righ
   assert.match(production, /pixelsPerUnit:stageScale\(this\.width,this\.height\)\*frame\.camera\.zoom\/WORLD_SCALE,right:a,up:b\}/);
 });
 
+// The engine's two lenses on the frame's stage (PointCloudField setHostView, handed its view as production.ts hands it): "the two
+// projections then frame identically at z = 0 and diverge only in convergence". The flat camera frames the workplane about the host's
+// origin (the stage centre and pan); the perspective camera must too, at the stage's own aspect, its eye still on right × up through the
+// scene's origin (where Receiver On stands, receiverPlace), and its depth law anchored at that eye. The engine itself is bundled and
+// stood on real cameras; only its GPU (renderer, material) is a stand-in that records what it is handed.
+test('the engine\'s perspective camera frames the workplane as the stage draws it, at the stage centre and pan, from its eye', async () => {
+  const {PointCloudField} = await bundle(join(engine, 'PointCloudField.ts'), 'field-host');
+  const {DEFAULT_DEPTH_CONFIG} = await bundle(join(engine, 'fieldDefaults.ts'), 'field-defaults');
+  const {basis, project, stageCentre, stageScale} = await bundle(join(journeys, 'src/camera.ts'), 'camera-851');
+  const {receiverPlace} = await object();
+  const {stageEye} = await bundle(join(journeys, 'src/native-field/surfaceTouch.ts'), 'touch-856');
+  const THREE = await import(pathToFileURL(join(journeys, '../node_modules/three/build/three.module.js')).href);
+  const WORLD = 400;
+  const camera = patch => ({mode: '3d', yaw: 0, pitch: 0, zoom: 1, panX: 0, panY: 0, plane: 'XY', depth: 0, grid: false, snap: false, ...patch});
+  // A field stood as the hosted frame stands it, last sized 300 × 150 (a fresh canvas), before the stage hands it its view.
+  const hosted = (projection, fov) => {
+    const field = Object.create(PointCloudField.prototype), uniforms = {};
+    field.renderer = {size: [300, 150], ratio: 1, getSize(v) { return v.set(...this.size); }, setSize(w, h) { this.size = [w, h]; },
+      setPixelRatio(r) { this.ratio = r; }, getPixelRatio() { return this.ratio; }};
+    field.orthoCamera = new THREE.OrthographicCamera(-150, 150, 75, -75, -3000, 4000);
+    field.perspCamera = new THREE.PerspectiveCamera(fov, 2, 1, 100000);
+    field.cameraProjection = projection;
+    field.config = {depth: {...DEFAULT_DEPTH_CONFIG, projection, fov}};
+    field.particleMaterial = {uniforms: new Proxy(uniforms, {get: (all, key) => (all[key] ??= {value: {set() {}}})})};
+    return {field, uniforms};
+  };
+  const stand = (field, view) => {
+    const {width, height, camera: c} = view, {a, b} = basis(c), o = stageCentre(width, height);
+    field.setHostView({width, height, pixelRatio: 1, originX: o.x + c.panX, originY: o.y + c.panY, pixelsPerUnit: stageScale(width, height) * c.zoom / WORLD, right: a, up: b});
+    const lens = field.cameraProjection === 'perspective' ? field.perspCamera : field.orthoCamera;
+    lens.updateMatrixWorld(true);
+    return p => { const v = new THREE.Vector3(...p).project(lens); return {x: (v.x + 1) / 2 * width, y: (1 - v.y) / 2 * height}; };
+  };
+  const views = [{width: 1280, height: 800, camera: camera({})}, {width: 1280, height: 800, camera: camera({yaw: 0.7, pitch: -0.4, panX: 40, panY: -25})},
+    {width: 600, height: 900, camera: camera({yaw: -2.1, pitch: 1.2, zoom: 1.6, panX: -60, panY: 30})}];
+  for (const view of views) for (const fov of [38, 60, 20]) {
+    const {a, b} = basis(view.camera), label = `${view.width}×${view.height} ${JSON.stringify(view.camera)} fov ${fov}`;
+    const {field, uniforms} = hosted('perspective', fov), drawn = stand(field, view), flat = stand(hosted('orthographic', fov).field, view);
+    // The workplane through the scene's origin, in engine units: where the perspective camera draws it is where the stage draws it.
+    for (const [u, v] of [[0, 0], [0.4, 0.25], [-0.6, 0.1], [0.2, -0.5], [-0.3, -0.3]]) {
+      const p = [0, 1, 2].map(i => (u * a[i] + v * b[i]) * WORLD), stage = project({x: p[0] / WORLD, y: p[1] / WORLD, z: p[2] / WORLD}, view.camera, view.width, view.height);
+      const persp = drawn(p), ortho = flat(p);
+      near(persp.x, stage.x, 1e-6, `${label}: across, perspective at the workplane`); near(persp.y, stage.y, 1e-6, `${label}: up, perspective at the workplane`);
+      near(ortho.x, stage.x, 1e-6, `${label}: across, flat`); near(ortho.y, stage.y, 1e-6, `${label}: up, flat`);
+    }
+    // The eye is the receiver's place: on right × up through the scene's origin, as far as frames the stage's pixel pitch.
+    const eye = receiverPlace(stageEye(view, fov, WORLD), 1);
+    [0, 1, 2].forEach(i => near(field.perspCamera.position.getComponent(i), eye[i], 1e-6, `${label}: the eye, axis ${i}`));
+    // Off the workplane the lens converges on the scene's origin where the stage draws it: halfway to the eye, a point is drawn twice as far
+    // from the origin's pixel as the stage draws its foot on the workplane.
+    const origin = drawn([0, 0, 0]), foot = [0, 1, 2].map(i => (0.3 * a[i] - 0.2 * b[i]) * WORLD), footAt = drawn(foot);
+    const lifted = drawn(foot.map((x, i) => x + eye[i] / 2));
+    near(lifted.x - origin.x, 2 * (footAt.x - origin.x), 1e-6, `${label}: convergence across`); near(lifted.y - origin.y, 2 * (footAt.y - origin.y), 1e-6, `${label}: convergence up`);
+    // The depth law (particleShaders.ts: size × (uCameraDistance / view depth), the aerial fade about uCameraDistance) is anchored at the eye,
+    // so a mark on the workplane is the size the flat stage draws it at every zoom.
+    near(uniforms.uCameraDistance.value, Math.hypot(...eye), 1e-6, `${label}: the depth law's anchor is the eye`);
+  }
+  // Drawn flat, the depth law keeps the orbit radius it has always had (the flat camera's 5000 units is how far back it draws).
+  const {field, uniforms} = hosted('orthographic', 38);
+  stand(field, views[1]);
+  assert.equal(uniforms.uCameraDistance.value, DEFAULT_DEPTH_CONFIG.distance);
+});
+
 // O-I 856: the instrument edit, the controller and the frame. Receiver is an instrument edit of the owner's receiving context, made now and
 // never at a sample; the controller asks the owner (QL-MEF `torus-receiver`) where the Torus is heard from. Off, a camera move asks nothing;
 // On, the place goes to the owner when it moves, one ask at a time and then the latest; the act itself asks now and answers in the owner's

@@ -72,7 +72,7 @@ import {
 import {agentDataI} from '../agentFidelity'
 import {fireWritePath} from '../agentNativeDispatch'
 import {harnessAgentControl, harnessIngressRule} from '../harnessAgentControl'
-import {chainListAct, sessionModelRead, sessionModelSelect, useChainModelReadings} from '../factoryTaskActs'
+import {chainListAct, chainTaskBudget, chainTaskRead, sessionModelRead, sessionModelSelect, useChainModelReadings, useRackMacrosReadings} from '../factoryTaskActs'
 import {RefusalCard, safeJson} from '../RefusalCard'
 import {CHAIN_DEVICE_IDS, agentChainDevices, chainDeviceId, gatewayDisclosed, rackMemberDevice, type ChainWrite} from './agentChainDevices'
 import {chainPicture, type PictureContext} from './AgentDevicePictures'
@@ -106,8 +106,8 @@ import {useAttemptTakes} from '../../owners/attemptTakes'
 import {readTaskOf, useTaskAnswer, useWorkcellAnswer} from '../../owners/readers'
 import {usePopulationAnswer} from './usePopulationAnswer'
 import {
-  AGENTSET_DESIGN, AGENTSET_ID, agentChainSessions, agentsetBinding, chainProfileOf, custodyBinding, profileHeadActs, replaceRequest, sessionDevices, withCustodyAsks,
-  type AgentRackPorts, type CustodyPorts,
+  AGENTSET_DESIGN, AGENTSET_ID, agentChainSessions, agentsetBinding, chainProfileOf, custodyBinding, orderRequest, profileHeadActs, rackSpaces, replaceRequest,
+  sessionDevices, withCustodyAsks, type AgentRackPorts, type CustodyPorts,
 } from './sessionChainBindings'
 import {retryTask} from './taskBindings'
 import {communiqueRefOf} from './messagesBinding'
@@ -399,8 +399,10 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const upkeepProcedure = useAikitRead(transport, rackOn && chosenProcedure ? {kind: 'procedure-diff', procedure: chosenProcedure} : null)
   const upkeep = useMemo((): RackUpkeep => ({unused: upkeepUnused, sources: upkeepSources, collate: upkeepCollate, bypasses: upkeepBypasses, procedures: upkeepProcedures,
     ...(adoptRoot ? {adoption: upkeepAdoption} : {}), ...(chosenProcedure ? {procedure: upkeepProcedure} : {}),
-    ...(transport.kind !== 'unavailable' ? {write: request => ownerRouteWrite(transport, aikitWriteOp(request as AikitWriteRequest), `\`aikit ${request.kind.replace('-', ' ')}\``)} : {})}),
-  [upkeepUnused, upkeepSources, upkeepCollate, upkeepBypasses, upkeepProcedures, upkeepAdoption, adoptRoot, upkeepProcedure, chosenProcedure, transport])
+    ...(transport.kind !== 'unavailable' ? {write: request => ownerRouteWrite(transport, aikitWriteOp(request as AikitWriteRequest), `\`aikit ${request.kind.replace('-', ' ')}\``)} : {}),
+    // The order of the SkillSets the agent carries (round 869): Central's agent-profile.chain-order at the profile's revision as read.
+    ...(chainProfile && profileAct ? {reorder: async (refs: readonly string[]) => { const asked = orderRequest(chainProfile, refs); await profileAct(asked.action, asked.input) }} : {})}),
+  [upkeepUnused, upkeepSources, upkeepCollate, upkeepBypasses, upkeepProcedures, upkeepAdoption, adoptRoot, upkeepProcedure, chosenProcedure, transport, chainProfile, profileAct])
   const rackDesignBinding = useMemo(() => (rackOn ? rackBinding(chainDeviceId('skillset'), {profile, ...rackReading, holds}, ports, {project: rackProject, sessionRef}, upkeep) : null),
     [rackOn, profile, rackReading, holds, ports, sessionRef, upkeep, rackProject])
   // The member: the rack's chosen chain, one device inside the rack (§19.7).
@@ -498,8 +500,14 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   // Factory's custody of the session's work (W11): the project's Factory state (located for the pads), its custody list, the Position the
   // session's agent holds (AIKit's population: Custody sits on the Agent, §19.4), and the session's bound task as its work.
   const custodyState = padsWhere && 'projectRef' in padsWhere ? padsWhere.statePath : null
-  const custodyListing = useOwnerOp(transport, custodyState && sessionRef != null ? {op: 'factory_owner', request: {kind: 'custody-list', state_path: custodyState}} : null,
-    'factory_development_reading').reading
+  const custodyList = useOwnerOp(transport, custodyState && sessionRef != null ? {op: 'factory_owner', request: {kind: 'custody-list', state_path: custodyState}} : null,
+    'factory_development_reading')
+  const custodyListing = custodyList.reading
+  const refreshCustody = custodyList.refresh
+  // Hand back (§19.4; BD r20): Factory's custody hold, the person's, and the custody list read again after it (its hand_back is the light).
+  const custodyHoldPorts = useMemo((): CustodyPorts => (transport.kind !== 'unavailable'
+    ? {...custodyPorts, hold: request => factoryOwnerWrite(transport, request, '`factory development custody hold`').finally(refreshCustody)} : custodyPorts),
+  [transport, custodyPorts, refreshCustody])
   const custodyPopulation = usePopulationAnswer(transport, register)
   const sessionTask = useTaskAnswer(transport, sessionRef, rackProject).reading
   const custodyRead = useMemo(() => {
@@ -511,7 +519,7 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
       agentPosition: heldBy(track?.agentRef), work: typeof central?.task_ref === 'string' && central.task_ref.trim() ? central.task_ref : null}
   }, [custodyState, custodyListing, custodyPopulation, sessionTask, track?.agentRef])
   const custodyDesignBinding = useMemo(() => custodyBinding({sessionRef, agent: agentDesignBinding?.values ?? {}, holds, grants, person: currentPerson,
-    custody: custodyRead}, scopeDesignBinding, custodyPorts), [sessionRef, agentDesignBinding, scopeDesignBinding, holds, grants, currentPerson, custodyRead, custodyPorts])
+    custody: custodyRead}, scopeDesignBinding, custodyHoldPorts), [sessionRef, agentDesignBinding, scopeDesignBinding, holds, grants, currentPerson, custodyRead, custodyHoldPorts])
   const identityDesignBinding = useIdentityDevice(transport, track?.agentRef ?? null, FACTORY_IDENTITY_ID)
   // The Context page's Git row: the session's own repository, and Diff to Files' Diff page (§19.4 Context; §23.2).
   const oneAgent = useMemo(() => (agentDesignBinding ? withAgentGit(composeAgentBinding(agentDesignBinding, {custody: custodyDesignBinding, identity: identityDesignBinding, thread: threadDesignBinding}),
@@ -552,8 +560,16 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const setRef = groupTrack?.agentSet?.ref ?? null
   const setInput = useMemo(() => (setRef ? {scope: 'root', ref: setRef} : null), [setRef])
   const groupSet = useCentralAction(transport, 'central.agent-set.read', setInput)
+  // Where the rack's macros stand, and each set's it holds (§19.15 Macros, O-I ticket 842): Software Factory's, in the project's Factory state
+  // (located for the pads), read again after each write.
+  const macrosWhere = useMemo(() => (padsWhere && 'projectRef' in padsWhere ? {statePath: padsWhere.statePath, projectRef: padsWhere.projectRef} : null),
+    [padsWhere && 'projectRef' in padsWhere ? padsWhere.statePath : null, padsWhere && 'projectRef' in padsWhere ? padsWhere.projectRef : null]) // eslint-disable-line react-hooks/exhaustive-deps
+  const macroSpaces = useMemo(() => rackSpaces(groupTrack, tracks, loneTrack), [groupTrack, tracks, loneTrack])
+  const rackMacros = useRackMacrosReadings(transport, macrosWhere, macroSpaces)
+  const refreshMacros = rackMacros.refresh
   // Group (§19.15 "Making a rack and a set"): Central proposes the chosen chains as a set and Accept saves its record, each the person's
-  // own act (as Messages' group does: AgentRailDevices.tsx centralAct). On a lone session the macros turn the one agent through the Agent itself.
+  // own act (as Messages' group does: AgentRailDevices.tsx centralAct), and AIKit makes them one chain of the rack holding a rack of them.
+  // On a lone session the macros turn the one agent through the Agent itself.
   const agentsetPorts = useMemo((): AgentRackPorts => ({
     saveSet: input => setAct(transport, 'central.agent-set.save', input),
     propose: input => setAct(transport, 'central.agent-set.propose', input),
@@ -574,6 +590,13 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
       detach: input => chainListAct(transport, {op: 'encounter_session_detach', ...input}, 'a chain was deleted from the rack'),
       // A group's Model and Effort macros: each chain's session's model select in AIKit (the encounter's model-read, then model-select).
       sessionModel: {read: ({project, agent_session}) => sessionModelRead(transport, project, agent_session), select: ({project, request}) => sessionModelSelect(transport, project, request)},
+      // The Budget macro: each chain's task Budget in AIKit (encounter_task_read, then encounter_task_budget).
+      taskBudget: {read: ({project, agent_session}) => chainTaskRead(transport, project, agent_session), write: input => chainTaskBudget(transport, input)},
+      // Group: AIKit seats the chosen chains in the set's own space, held by the rack's as one chain.
+      group: input => chainListAct(transport, {op: 'encounter_session_group', ...input}, 'chains were grouped into a set'),
+      // Unmap, Store, the variations and where each macro stands: Factory's rack macros, the person's, on the rack's revision.
+      ...(macrosWhere ? {rackMacros: input => factoryOwnerWrite(transport, {kind: 'rack-macros-write', state_path: macrosWhere.statePath, project_ref: macrosWhere.projectRef, ...input},
+        '`factory development rack-macros-write`').finally(refreshMacros)} : {}),
       // Retry: the chosen chain's bound task (AIKit's task record), its units read in Factory and its unit retried (taskBindings.ts retryTask).
       retry: async ({project, agent_session}) => {
         if (!custodyState) throw Error('Retry: Factory keeps no state for this project here (`factory development locate`), so no unit of the task is read.')
@@ -594,7 +617,7 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
           reason: `Asked from the Agent rack: a change of ${device} on this session's chain.`}), ROUTE_WORDS.delegate)
       },
     } : {}),
-  }), [transport, oneAgent, shell.setSolo, custodyState, custodyPopulation])
+  }), [transport, oneAgent, shell.setSolo, macrosWhere, refreshMacros, custodyState, custodyPopulation])
   // The Decision helper (§19.20, T-AGENCY K5): a device of its own, a chain of the group's Agent rack in place of an Agent, on AIKit's
   // decision provider and QL's team space — read only where the group's space names its helper (AIKit's `decision_helper`, round 860). The
   // rack lists it among its chains.
@@ -612,9 +635,9 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const chainModelReadings = useChainModelReadings(transport, macroChains)
   const agentsetDesignBinding = useMemo(() => agentsetBinding({group: groupTrack, session: loneTrack, agent: oneAgent?.values ?? null, tracks, models, holds,
     nowUnixMs: sessions?.nowUnixMs ?? 0, ...(setRef ? {set: groupSet} : {}), ...(helperStands && helperDevice ? {helper: helperDesignBinding.values} : {}), soloed: shell.soloed,
-    chainModels, chainModelReadings}, agentsetPorts),
+    chainModels, chainModelReadings, rackMacros: rackMacros.readings}, agentsetPorts),
   [groupTrack, loneTrack, oneAgent, tracks, models, holds, sessions?.nowUnixMs, setRef, groupSet, helperStands, helperDevice, helperDesignBinding, agentsetPorts, shell.soloed, chainModels,
-    chainModelReadings])
+    chainModelReadings, rackMacros.readings])
   // How far each plate of a session's chain reaches (factoryPlaces.ts reachOf): the rack's chains, and the lone session's own inside it.
   const rackChains = useMemo(() => rackChainsOf(agentsetDesignBinding.values.members), [agentsetDesignBinding.values.members])
   const reachHere = (slot: FactorySlot): Reach => (place.kind === 'session' ? reachOf(slot, rackChains, loneTrack?.sessionRef) : ON_ITS_TRACK)

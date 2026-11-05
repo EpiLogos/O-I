@@ -425,6 +425,75 @@ test('the rack\'s values are the owners\' — none of skills.tsx\'s defaults (ce
   assert.equal(bind.rackValues(rackInput())['req:skill/ql/ql-foundations'], undefined, 'the plane not read: your request is unknown, not on')
 })
 
+// Round 869 (DLW build ruling 2026-11-05): the rack draws every SkillSet the agent carries, in the order Central keeps on its profile, not only
+// the first, and each member stands under the set that holds it. The order is Central's (agent-profile.chain-order, Central PR 318).
+const DOCS_SET = {child_refs: [], children: [], complete: true, description: '', members: 2, name: 'docs-methodology', patterns: [],
+  projected: ['skill/central/docs-methodology', 'skill/central/diagram-authoring'], provenance: 'composed', revision: 'b3:5d0c', semantic_ref: null,
+  summary: 'sets/docs-methodology — 2 members, 2 projected', withheld: []}
+const twoSets = (over = {}) => rackInput({profile: {...PROFILE, skill_set_refs: ['docs-methodology', 'sets/suite-foundations']},
+  sets: {'suite-foundations': SET_SHOW, 'docs-methodology': DOCS_SET}, ...over})
+
+test('(r869) the rack draws every SkillSet the agent carries, in the profile\'s order, each member under the set that holds it', () => {
+  bind.resetHolds()
+  const values = bind.rackValues(twoSets())
+  assert.deepEqual(JSON.parse(values.carried), [{name: 'docs-methodology', members: 2, revision: 'b3:5d0c'}, {name: 'suite-foundations', members: 5}],
+    'every set, in the order Central keeps on the profile, with what AIKit says of each (suite-foundations names no revision)')
+  assert.equal(values.set, 'docs-methodology', 'the set on the chain is the first the profile carries: Hot-swap and Export act on it')
+  assert.equal(values.revision, 'b3:5d0c', 'and its revision')
+  assert.deepEqual(JSON.parse(values.members).map(m => [m.id, m.set ?? null]), [
+    ['skill/central/docs-methodology', 'docs-methodology'], ['skill/central/diagram-authoring', 'docs-methodology'],
+    ['skill/central/documentation-standing', 'suite-foundations'], ['skill/central/projectcentral-ontology', 'suite-foundations'], ['skill/ql/ql-foundations', 'suite-foundations'],
+    ['skill/aikit/knowledge-navigation', 'suite-foundations'], ['skill/aikit/wiki-inhabitation', 'suite-foundations'],
+  ], 'each set\'s members as AIKit replies, set by set in the profile\'s order; one the profile also names directly stands under its set')
+  const stray = JSON.parse(bind.rackValues(rackInput({profile: {...PROFILE, skill_refs: ['skill/central/stray']}})).members).at(-1)
+  assert.deepEqual([stray.id, stray.set], ['skill/central/stray', undefined], 'a member the profile names directly stands under no set')
+  // A set AIKit refused, or has not answered: it stands in its place, with AIKit's words or with nothing read.
+  const refused = bind.rackValues(twoSets({sets: {'suite-foundations': SET_SHOW}, refused: {'set:docs-methodology': 'AIKit knows no set docs-methodology.'}}))
+  assert.deepEqual(JSON.parse(refused.carried), [{name: 'docs-methodology', why: 'AIKit knows no set docs-methodology.'}, {name: 'suite-foundations', members: 5}])
+  assert.deepEqual(JSON.parse(bind.rackValues(twoSets({sets: {}})).carried), [{name: 'docs-methodology'}, {name: 'suite-foundations'}], 'unread: the names alone')
+  assert.equal(bind.rackValues(rackInput({profile: {...PROFILE, skill_set_refs: []}})).carried, undefined, 'no set carried: none drawn')
+  noDefaultPassed(rackDesign, values, ['marks', 'compose', 'light'])
+})
+
+test('(r869) Order: the sets move through Central\'s agent-profile.chain-order with every ref the profile carries; without it the rack names that act', async () => {
+  bind.resetHolds()
+  host.resetHost()
+  const place = {project: 'O-I', sessionRef: 's'}
+  const asked = []
+  const rack = (upkeep = {reorder: async refs => { asked.push(refs) }}, input = twoSets()) => bind.rackBinding('factory:skillset', input, null, place, upkeep)
+  assert.equal(rack().writes('order'), true)
+  assert.equal(rack().standing.order, undefined, 'two sets and Central\'s act to hand: the order stands to be changed')
+  await rack().write([{key: 'order', value: JSON.stringify(['suite-foundations', 'docs-methodology'])}])
+  assert.deepEqual(asked, [['sets/suite-foundations', 'docs-methodology']], 'the refs exactly as the profile carries them, in the new order')
+  for (const value of [JSON.stringify(['suite-foundations']), JSON.stringify(['suite-foundations', 'night']), JSON.stringify(['suite-foundations', 'suite-foundations']), 'not json']) {
+    await assert.rejects(() => rack().write([{key: 'order', value}]), {message: bind.RACK_ORDER_REFUSE.each}, value)
+  }
+  assert.equal(asked.length, 1, 'nothing reaches Central that is not every set once')
+  assert.equal(rack({}).standing.order.disabled, bind.RACK_ORDER_REFUSE.noCarrier, 'no carrier: the act named, the order left as Central returns it')
+  assert.match(bind.RACK_ORDER_REFUSE.noCarrier, /agent-profile\.chain-order/)
+  await assert.rejects(() => rack({}).write([{key: 'order', value: JSON.stringify(['suite-foundations', 'docs-methodology'])}]), {message: bind.RACK_ORDER_REFUSE.noCarrier})
+  assert.equal(rack(undefined, rackInput()).standing.order.disabled, bind.RACK_ORDER_REFUSE.one, 'one set: no order to change')
+  assert.equal(rack(undefined, rackInput({profile: null})).standing.order.disabled, bind.RACK_ORDER_REFUSE.unread)
+  // The face draws every set in order: the Sets list on the Set page with the selected set's moves, the title naming the others, the
+  // members set by set, and the full page one section a set.
+  const at = (markup, ...words) => words.map(word => markup.indexOf(word))
+  const [folded, compact, whole, full] = hosted(rackDesign, rack())
+  assert.match(whole, /Sets · 2/)
+  const [first, second] = at(whole, 'data-id="docs-methodology"', 'data-id="suite-foundations"')
+  assert.ok(first > 0 && second > first, 'the sets in the profile\'s order')
+  assert.match(whole, /aria-label="Move docs-methodology later"/, 'the selected set moves')
+  assert.match(folded, /docs-methodology \+1/)
+  assert.match(compact, /docs-methodology \+1/)
+  const [one, two, three] = at(compact, 'skill/central/diagram-authoring', 'skill/aikit/wiki-inhabitation', 'skill/ql/ql-foundations')
+  assert.ok(one > 0 && two > one && three > two, 'the members set by set in the profile\'s order, and by kind within each (§19.7: methodologies first)')
+  const [head1, head2] = at(full, '<h3>docs-methodology', '<h3>suite-foundations')
+  assert.ok(head1 > 0 && head2 > head1, 'the full page: one section a set, in order')
+  const held = hosted(rackDesign, rack({}))[2]
+  assert.doesNotMatch(held, /aria-label="Move docs-methodology later"/, 'no carrier: no move is offered')
+  assert.ok(held.includes(escaped(bind.RACK_ORDER_REFUSE.noCarrier)), 'and the list says which act would set the order')
+  host.resetHost()
+})
+
 test('Preview, then Apply: the composition is held until previewed, the plane plans it, and only Apply carries exactly that plan', async () => {
   bind.resetHolds()
   const plans = [], applied = []

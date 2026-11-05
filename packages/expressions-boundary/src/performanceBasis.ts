@@ -5,7 +5,7 @@
 // This module holds only what the boundary may do with that record: validate the frame's request, summarise the bases the kernel reads back,
 // refuse a save by name where the native readings are absent, and turn a recalled basis into instrument edits (or name what cannot be
 // applied). It never seals or hashes a basis: every digest here is the kernel's own, read back from its inspected document.
-import {readInstrumentEdit, type InstrumentEdit} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageCommands.ts';
+import {readInstrumentEdit, STAGE_TORUS_TAKE_BYTES_MAX, type InstrumentEdit} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageCommands.ts';
 
 export const PERFORMANCE_BASIS_SCHEMA = 'oi.expression-performance-basis/v1';
 /** The native readings a PerformanceBasis needs from its producer (kernel validate_content). The frame holds none of them today. */
@@ -97,9 +97,8 @@ export interface TorusTakeRecordEdit {
   readonly at_sample: string
   readonly micros_per_quarter: number
 }
-/** The most a sealed take carries across the boundary: its checkpoint and the acts beside it (the stage's bound, 4 MiB). */
-const TAKE_BYTES_MAX = 4 * 1024 * 1024;
-/** A take record exact in shape, its take the kernel's `oi.torus-take/v1` within its bound, or null. */
+/** A take record exact in shape, its take the kernel's `oi.torus-take/v1` within its bound (the stage's STAGE_TORUS_TAKE_BYTES_MAX, the
+ * kernel's own bound on what crosses to it), or null. */
 function readTakeRecord(raw: unknown): TorusTakeRecordEdit | null {
   if (!object(raw) || !closed(raw, ['operation', 'take', 'lane', 'at_sample', 'micros_per_quarter']) || raw.operation !== 'record_torus_take') return null;
   const take = raw.take, lane = raw.lane;
@@ -110,7 +109,7 @@ function readTakeRecord(raw: unknown): TorusTakeRecordEdit | null {
   if (!Number.isSafeInteger(raw.micros_per_quarter) || (raw.micros_per_quarter as number) < 1 || (raw.micros_per_quarter as number) > 0xffffffff) return null;
   let bytes: number;
   try { bytes = new TextEncoder().encode(JSON.stringify(take)).length; } catch { return null; }
-  return bytes <= TAKE_BYTES_MAX ? raw as unknown as TorusTakeRecordEdit : null;
+  return bytes <= STAGE_TORUS_TAKE_BYTES_MAX ? raw as unknown as TorusTakeRecordEdit : null;
 }
 
 export interface PerformanceBasisSummary {readonly basis_ref: string; readonly event_ref: string; readonly m1_coordinate: string}

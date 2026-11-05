@@ -6,9 +6,9 @@
  * The frame names the point only from its own drawing of the stage. The engine is handed a view (production.ts setHostView: the
  * stage centre and pan as the origin, stageScale × zoom pixels per stage unit, camera.ts `basis` as right and up, the eye along
  * right × up). Drawn flat (orthographic), the pixel under the pointer is a ray along −(right × up). Drawn in perspective (O-I #771), the
- * engine stands its eye on right × up at the distance that frames that pixel pitch at the workplane under its field of view, looking
- * back at the scene's origin through the middle of the stage (PointCloudField setHostView, torusObject.ts receiverPlace), so the pixel
- * is the ray from that eye through its place on the workplane. That ray, carried into metres, meets QL's torus at its first surface. The body vibrates along its normal (QL scene_field.rs `surface`), which keeps a point's angles, so the rest torus
+ * engine stands its eye on right × up through the scene's origin at the distance that frames that pixel pitch at the workplane under its
+ * field of view, its frustum shifted off its axis so the workplane is framed about the stage centre and pan as the flat stage frames it
+ * (PointCloudField setHostView, torusObject.ts receiverPlace), so the pixel is the ray from that eye through its place on the workplane. That ray, carried into metres, meets QL's torus at its first surface. The body vibrates along its normal (QL scene_field.rs `surface`), which keeps a point's angles, so the rest torus
  * names the point the person sees. Pure: no DOM, no engine, no owner. */
 import {basis,stageCentre,stageScale,type Camera} from '../camera';
 import {clockAngle,receiverPlace,shapeNearest,shapeRayHit,type HostEye,type PresentState} from '../../../src/engine/torusObject';
@@ -97,21 +97,20 @@ export function touchedSurface(x:number,y:number,view:StageView,scale:StageScale
  if(!(pixels>0))return {point:null,why:'The stage has no size yet.'};
  const metres=scale.worldScale/scale.unitsPerMetre;
  const toward:Vec3=[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+ // camera.ts `unproject` and `project`: the pixel's place on the workplane across the stage in stage units, then in metres. Both of the
+ // engine's lenses frame the workplane so (PointCloudField setHostView), about the stage centre and pan.
+ const across=(x-o.x-camera.panX)/pixels,up=-(y-o.y-camera.panY)/pixels;
+ const plane:Vec3=[0,1,2].map(i=>(across*a[i]+up*b[i])*metres) as Vec3;
  let origin:Vec3,direction:Vec3;
  if(scale.projection==='perspective'){
-  // The engine's perspective eye (PointCloudField setHostView): on right × up, framing the stage's pixel pitch at the workplane under its
-  // field of view, its view through the middle of the stage, which neither the stage centre nor the pan moves.
+  // The engine's perspective eye (PointCloudField setHostView): on right × up through the scene's origin, at the distance that frames the
+  // stage's pixel pitch at the workplane under its field of view, its frustum shifted off its axis onto the stage centre and pan.
   const fov=scale.fovDegrees;
   if(typeof fov!=='number'||!Number.isFinite(fov))return {point:null,why:'The stage is drawn in perspective, and the frame was not handed the engine\'s field of view: the point under the pointer cannot be named.',say:true};
   const eye=receiverPlace(stageEye(view,fov,scale.worldScale),scale.unitsPerMetre);
   if(!eye)return {point:null,why:'The stage has no size yet.'};
-  const across=(x-width/2)/pixels,up=-(y-height/2)/pixels;
-  const plane:Vec3=[0,1,2].map(i=>(across*a[i]+up*b[i])*metres) as Vec3;
   origin=eye;direction=[0,1,2].map(i=>plane[i]-eye[i]) as Vec3;
  }else{
-  // camera.ts `unproject` and `project`: the pixel's place across the stage in stage units, then in metres.
-  const across=(x-o.x-camera.panX)/pixels,up=-(y-o.y-camera.panY)/pixels;
-  const plane:Vec3=[0,1,2].map(i=>(across*a[i]+up*b[i])*metres) as Vec3;
   // The eye stands along right × up (setHostView), so the ray starts beyond the torus on that side and looks back along −(right × up).
   origin=[0,1,2].map(i=>plane[i]+toward[i]*2*BOUND) as Vec3;direction=[-toward[0],-toward[1],-toward[2]];
  }

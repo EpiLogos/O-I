@@ -1,4 +1,4 @@
-//! The team space (QL-MEF `ql.vak-team-space/v1`, read with `ql
+//! The team space (QL-MEF `ql.vak-team-space/v2`, read with `ql
 //! context-frame team-space` through the suite route `oi ql`): the typed
 //! questions each team may put to the Decision helper (manual §19.20) — each
 //! instrument's heads with their labels, cardinality and ambiguity policy —
@@ -13,7 +13,7 @@ use std::time::Duration;
 use serde_json::Value;
 
 /// The contract the reading must carry.
-pub(crate) const CONTRACT: &str = "ql.vak-team-space/v1";
+pub(crate) const CONTRACT: &str = "ql.vak-team-space/v2";
 /// How long the owner may take to answer.
 const LIMIT: Duration = Duration::from_secs(20);
 
@@ -107,7 +107,7 @@ mod tests {
     #[test]
     fn the_team_space_is_read_through_the_suite_route_verbatim() {
         let dir = scratch("verbatim");
-        let answer = r#"{"contract":"ql.vak-team-space/v1","instruments":[{"id":"gate-reading","heads":[]}],"rules":[]}"#;
+        let answer = r#"{"contract":"ql.vak-team-space/v2","instruments":[{"id":"gate-reading","heads":[]}],"rules":[]}"#;
         let oi = fake_oi(&dir, answer);
         let reading = settled(|| read_with(&oi)).expect("the fake answers");
         assert_eq!(reading["instruments"][0]["id"], "gate-reading");
@@ -127,7 +127,7 @@ mod tests {
         let refused = settled(|| read_with(&other)).expect_err("another contract");
         assert!(refused.contains(CONTRACT), "{refused}");
         let dir = scratch("bare");
-        let bare = fake_oi(&dir, r#"{"contract":"ql.vak-team-space/v1"}"#);
+        let bare = fake_oi(&dir, r#"{"contract":"ql.vak-team-space/v2"}"#);
         let refused = settled(|| read_with(&bare)).expect_err("no instruments");
         assert!(refused.contains("no instruments"), "{refused}");
     }

@@ -31,6 +31,36 @@ import { forceCluster, forceField, type FieldForce } from './field-force';
 /** The Barnes–Hut criterion of the far field among the forms, and of the near field inside a form above a thousand members. */
 const FIELD_THETA = 0.95;
 
+/** Level of detail (PROJECTION-SCALE-2026-10-28 "Draw"; O-I #742): past about 2,000 drawn nodes or 4,000 drawn ties the Canvas 2D draw passes
+ * about 10 ms at DPR 2, so the field thins; below a zoom of 1.5 each form's dust is drawn as the form's halo with its count. */
+export const GRAPH_DETAIL = Object.freeze({ nodes: 2000, edges: 4000, dustK: 1.5 });
+/** How the draw thins what is on stage at a zoom: whether it thins at all (the ties of dust stand only for the hovered or the selected
+ * neighbourhood), and whether the dust folds into its forms. Pure. */
+export function graphDetail(nodes: number, edges: number, k: number): { thin: boolean; dustAsHalo: boolean } {
+  const thin = nodes > GRAPH_DETAIL.nodes || edges > GRAPH_DETAIL.edges;
+  return { thin, dustAsHalo: thin && k < GRAPH_DETAIL.dustK };
+}
+/** One form's folded dust: how many it carries, and how far they lie from it on screen (the root mean square of their distance). */
+export interface DustFold { count: number; reach: number }
+/** The dust a thinned field folds into its forms, and the dust that stays points: one with no form on stage, and one the neighbourhood of
+ * the hand or the selection keeps. Pure. */
+export function foldDust<V extends { id: number; sx: number; sy: number }>(dust: readonly V[], formOf: (v: V) => V | null, keep: ReadonlySet<number>):
+  { folds: Map<V, DustFold>; points: V[] } {
+  const sums = new Map<V, { count: number; d2: number }>();
+  const points: V[] = [];
+  for (const v of dust) {
+    const form = keep.has(v.id) ? null : formOf(v);
+    if (!form) { points.push(v); continue; }
+    const sum = sums.get(form) ?? { count: 0, d2: 0 };
+    sum.count++;
+    sum.d2 += (v.sx - form.sx) ** 2 + (v.sy - form.sy) ** 2;
+    sums.set(form, sum);
+  }
+  const folds = new Map<V, DustFold>();
+  for (const [form, sum] of sums) folds.set(form, { count: sum.count, reach: Math.sqrt(sum.d2 / sum.count) });
+  return { folds, points };
+}
+
 // outside the local lens the field recedes to a whisper that is still clickable
 const GHOST_VIS = 0.05;
 // a cursor that has stopped for this long (frame seconds) is when the layout re-reads who is live
@@ -837,6 +867,34 @@ export class GraphView {
     const fi = this.g.byKey.get(`f:${this.model.occ[v.g.occIdx].familyId}`);
     return fi !== undefined && this.active.has(fi) ? this.nodes[fi] : null;
   };
+  /** The form an occurrence belongs to, when it is drawn on screen: what a thinned field folds the occurrence's dust into. */
+  private formOnStage = (v: VNode): VNode | null => {
+    const form = this.parentOf(v);
+    return form && form.on && form.vis >= 0.2 ? form : null;
+  };
+
+  /** The ties with an end on stage: what the draw would draw, for its level of detail. */
+  private edgesOnStage(): number {
+    let n = 0;
+    for (const ek of this.activeEdges) {
+      const e = this.g.edges[ek];
+      if (this.nodes[e.s].on || this.nodes[e.t].on) n++;
+    }
+    return n;
+  }
+  /** The hovered and the selected node: the centres a thinned field keeps the ties of dust for. */
+  private centresOf(hov: VNode | null): Set<number> {
+    const centres = new Set<number>();
+    if (hov) centres.add(hov.id);
+    if (this.selected >= 0) centres.add(this.selected);
+    return centres;
+  }
+  /** The centres and their neighbours: the dust a thinned field keeps as points. */
+  private neighbourhoodOf(centres: ReadonlySet<number> | null): Set<number> {
+    const near = new Set<number>(centres ?? []);
+    for (const id of centres ?? []) for (const nb of this.g.adj[id]) near.add(nb);
+    return near;
+  }
 
   private applyForces() {
     const fns = this.forceFns();
@@ -1669,9 +1727,13 @@ export class GraphView {
       if (v.on) stage.push(v);
     }
     const hov = this.hover >= 0 ? this.nodes[this.hover] : null;
+    // level of detail (PROJECTION-SCALE-2026-10-28 "Draw"): past about 2,000 drawn nodes or 4,000 drawn ties the field thins, its ties of
+    // dust drawn only for the hovered or the selected neighbourhood, and far out its dust folds into its forms
+    const detail = graphDetail(stage.length, this.edgesOnStage(), k);
+    const centres = detail.thin ? this.centresOf(hov) : null;
 
     if (!local && this.g.bodyIds.length && this.sky.source) this.drawSkyRing(ctx, k);
-    this.drawEdges(ctx, k, kEff, local, hov);
+    this.drawEdges(ctx, k, kEff, local, hov, centres);
 
     // halos, additive: the soft light of each presence, stamped from one sprite per colour
     ctx.globalCompositeOperation = 'lighter';
@@ -1692,12 +1754,20 @@ export class GraphView {
     const dust = new Map<string, { trip: string; a: number; pts: number[] }>();
     const hollow: VNode[] = [];
     let sel: VNode | null = null;
+    const placedDust: VNode[] = [];
     for (const v of stage) {
       if (v.g.kind !== 'occurrence') continue;
       const a = v.vis * (0.28 + 0.72 * v.hl) * v.live * dustK;
       if (a < 0.015) continue;
       if (!v.g.placed) { hollow.push(v); continue; }
       if (v.id === this.selected) { sel = v; continue; }
+      placedDust.push(v);
+    }
+    // a thinned field far out: each form's dust is drawn as the form's halo with its count; the neighbourhood of the hand and the selection
+    // stays points
+    const folded = detail.dustAsHalo ? foldDust(placedDust, this.formOnStage, this.neighbourhoodOf(centres)) : null;
+    for (const v of folded ? folded.points : placedDust) {
+      const a = v.vis * (0.28 + 0.72 * v.hl) * v.live * dustK;
       const fa = Math.round((0.62 + 0.3 * (v.hl > 0.9 ? 1 : 0)) * a * 24) / 24;
       if (fa < 0.015) continue;
       const bk = `${v.rgb}|${fa}`;
@@ -1716,6 +1786,17 @@ export class GraphView {
         else { ctx.moveTo(p[i] + r, p[i + 1]); ctx.arc(p[i], p[i + 1], r, 0, Math.PI * 2); }
       }
       ctx.fill();
+    }
+    if (folded) {
+      // the folded dust: its form's own light, as wide as the dust lies
+      ctx.globalCompositeOperation = 'lighter';
+      for (const [form, fold] of folded.folds) {
+        const rad = Math.max(form.sr * 3, fold.reach * 1.25);
+        ctx.globalAlpha = Math.min(0.5, 0.12 + 0.06 * Math.log2(1 + fold.count)) * form.vis * form.live;
+        ctx.drawImage(this.halo(form.glow), form.sx - rad, form.sy - rad, rad * 2, rad * 2);
+      }
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = 'source-over';
     }
     if (sel) {
       const a = sel.vis * (0.28 + 0.72 * sel.hl) * sel.live * dustK;
@@ -1810,6 +1891,17 @@ export class GraphView {
       }
     }
 
+    // each folded form's count beside it: how much dust it carries now
+    if (folded) {
+      ctx.font = `500 10px ${SERIF}`;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      for (const [form, fold] of folded.folds) {
+        ctx.fillStyle = rgba(form.rgb, 0.78 * form.vis);
+        ctx.fillText(String(fold.count), form.sx + form.sr + 4, form.sy + form.sr + 6);
+      }
+    }
+
     // the subject and the selection: a thin ring of attention
     const ring = (v: VNode | undefined, extra: number, a: number) => {
       if (!v || !v.on || v.vis < 0.2) return;
@@ -1848,7 +1940,7 @@ export class GraphView {
     ctx.restore();
   }
 
-  private drawEdges(ctx: CanvasRenderingContext2D, k: number, kEff: number, local: boolean, hov: VNode | null) {
+  private drawEdges(ctx: CanvasRenderingContext2D, k: number, kEff: number, local: boolean, hov: VNode | null, centres: ReadonlySet<number> | null = null) {
     const g = this.g;
     const buckets = new Map<string, { st: EdgeStyle; trip: string; a: number; segs: number[] }>();
     const hot: GEdge[] = [];
@@ -1865,6 +1957,8 @@ export class GraphView {
       const b = this.nodes[e.t];
       if (!a.on && !b.on) continue;
       if (a.vis < 0.02 || b.vis < 0.02) continue;
+      // a thinned field draws the ties of dust only for the hovered or the selected neighbourhood
+      if (centres && (a.g.kind === 'occurrence' || b.g.kind === 'occurrence') && !centres.has(a.id) && !centres.has(b.id)) continue;
       let gate = 1;
       if (e.kind === 'instance' || e.kind === 'co') gate = fine;
       else if (e.kind === 'parallel') gate = parFine;

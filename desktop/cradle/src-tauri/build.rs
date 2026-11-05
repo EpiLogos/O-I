@@ -19,6 +19,7 @@ fn main() {
             "live_engine_mixer",
             "live_engine_export",
             "live_engine_render_take",
+            "live_engine_consolidate",
             "midi_out",
             "expression_walk_observation",
             "terminal_attach",

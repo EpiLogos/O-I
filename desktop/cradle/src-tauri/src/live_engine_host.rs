@@ -15,7 +15,7 @@
 //! | `live_engine_stop` | the output stops; the engine and what it played are kept |
 //! | `live_engine_send {event}` | one note, Torus act, Panic or mixer move, applied at the next block, or a set's device made again from what the set now stores (`device`: an edit of it followed); answers the mixer reading |
 //! | `live_engine_torus {lease, track, sha256, notes?, effects?}` | the Torus its owner handed over (kept by the kernel under the field's lease) sounds on the part, which follows that owner from then on, through its effects |
-//! | `live_engine_torus_effects {effects}` | the Torus's effects as the frame now holds them, on the part following its owner |
+//! | `live_engine_torus_effects {effects}` | the Torus's effects as the frame now holds them, and its level before them, on the part following its owner |
 //! | `live_engine_mixer` | the mixer as the engine applied it |
 //! | `live_engine_export` | Export Audio: what the engine played, rendered offline, as a 32-bit float WAV, into the file the person chooses in the host's own save dialog |
 //!
@@ -567,8 +567,11 @@ pub(crate) mod host {
     ///
     /// A setting over or under what Live's device holds stands at its nearer edge, and where the engine
     /// sounds it through Live's model, so it sounds there, in words. An effect off passes the sound as
-    /// it came, so it stands nowhere. With it, how the engine stands each effect, in words where it does
-    /// not sound as the frame's. Refused in words for what is not the frame's effects.
+    /// it came, so it stands nowhere. The frame's level, where its effects carry it (`level`, the frame's
+    /// presentation gain 0 to 4: O-I #743 round 20), stands first, before them, as in the frame
+    /// (controller.ts `stage`: the effects "stand after the level"), as live-engine's `level`. With it,
+    /// how the engine stands each effect, in words where it does not sound as the frame's. Refused in
+    /// words for what is not the frame's effects, and for a level outside the frame's.
     pub fn torus_chain(effects: &Value) -> Result<(RackMade, Value), String> {
         const NOT: &str = "The Torus's effects are its chain and each effect's settings, as the frame reports them (effectsLaw.ts)";
         let chain = effects.get("chain").and_then(Value::as_array).ok_or(NOT)?;
@@ -580,6 +583,17 @@ pub(crate) mod host {
             if chain[..at].iter().any(|e| e.as_str() == Some(effect)) {
                 return Err(format!("{NOT}: {effect} stands on the chain twice"));
             }
+        }
+        if let Some(level) = effects.get("level") {
+            let level = level
+                .as_f64()
+                .filter(|v| (0.0..=4.0).contains(v))
+                .ok_or_else(|| {
+                    format!(
+                        "{NOT}: its level is the frame's presentation gain, 0 to 4, not {level}"
+                    )
+                })?;
+            made.push(("level", vec![("level", level)]));
         }
         for effect in chain {
             let effect = effect.as_str().ok_or(NOT)?;
@@ -961,7 +975,8 @@ pub(crate) mod host {
         }
 
         /// The Torus's effects on its part: the part, each effect on the frame's chain as the engine
-        /// stands it, the frame the engine put the chain there from, and the last refusal.
+        /// stands it, the frame's level it hears before them (none where the frame sent none), the frame
+        /// the engine put the chain there from, and the last refusal.
         fn effects_reading(&self) -> Value {
             let e = &self.effects;
             if e.track.is_none() && e.refusal.is_none() {
@@ -971,6 +986,7 @@ pub(crate) mod host {
             json!({
                 "track": e.track,
                 "chain": e.reading,
+                "level": e.made.iter().find(|(class, _)| *class == "level").map(|(_, from)| from[0].1),
                 "sounding_from_frame": (racks.len() == self.racked.len()).then(|| racks.last().map(|(frame, _)| *frame)).flatten(),
                 "refusal": e.refusal,
                 "room_waiting": self.room_waiting.is_some(),
@@ -1633,6 +1649,17 @@ pub(crate) mod host {
     /// What names a take's sound sent to be rendered through its part ([`take_render_of`]).
     pub const TAKE_RENDER_SCHEMA: &str = "oi.take-render/v1";
 
+    /// How a take's export rings its effects out past its end (O-I #743 round 20, item 3) — ENGINE DECISION: while a
+    /// frame stands above −96 dBFS, the floor of a 16-bit file; ended once none has for 5 s, longer than the frame's
+    /// longest Delay between repeats (4 s unsynced, effectsLaw.ts `time`; a synced whole note at 48 bpm and above),
+    /// so a silence between repeats does not end it; at the most 30 s past the end, more than the frame's longest
+    /// room (22 s, devices.rs `ROOM_MAX_S`), a tail still sounding there cut, and said to be.
+    pub const TAKE_RING_OUT: live_engine::RingOut = live_engine::RingOut {
+        floor: 1.584_893_2e-5,
+        hold: 5 * ENGINE_RATE as u64,
+        most: 30 * ENGINE_RATE as u64,
+    };
+
     /// A take's sound sent to be rendered through its part (O-I #855): the set it is a take of and its track it was
     /// played on (the set owner's index), the rate its owner rendered it at, its sound (one channel), and the Torus's
     /// effects as the frame held them at each frame from the take's start, the first at its start.
@@ -1727,7 +1754,9 @@ pub(crate) mod host {
         /// as the frame held them, each put at its frame as the engine puts them while it plays (`torus_chain`,
         /// live-engine `Graph::rack`) — its own chain and its volume and pan, as the set opened in the engine;
         /// the part alone, as its own track renders: not its sends, its group, the returns or the Main track.
-        /// Answered as a 32-bit float stereo WAV of the take's frames, with what it holds. Refused in words for
+        /// Its effects ring out past the take's end ([`TAKE_RING_OUT`], live-engine `Graph::render_ringing_out`), as
+        /// they rang on while it played. Answered as a 32-bit float stereo WAV of the take's frames and its tail, with
+        /// what it holds: the take's frames, the tail's, and whether the tail was cut at the most. Refused in words for
         /// another set than the one open, another rate than the engine's, a track that is no MIDI part, and
         /// effects that are not the frame's.
         pub fn render_take_wav(&self, take: &TakeRender) -> Result<(Vec<u8>, Value), String> {
@@ -1786,15 +1815,17 @@ pub(crate) mod host {
             (graph.master.gain, graph.master.pan) = (1.0, 0.0);
             graph.master.devices.clear();
             let name = graph.tracks[part].name.clone();
-            let samples = graph.render_performance_racked(
+            let rung = graph.render_ringing_out(
                 ENGINE_RATE,
                 &live_engine::Performance::silent(frames),
                 Vec::new(),
                 racks,
+                Vec::new(),
+                TAKE_RING_OUT,
             );
             Ok((
-                wav_f32(&samples, ENGINE_RATE),
-                json!({"frames": frames, "part": name, "effects": stood}),
+                wav_f32(&rung.samples, ENGINE_RATE),
+                json!({"frames": frames, "part": name, "effects": stood, "tail": rung.tail, "cut": rung.cut}),
             ))
         }
 
@@ -1835,6 +1866,28 @@ pub(crate) mod host {
     /// dialog without choosing a file.
     pub const EXPORT_CANCELLED: &str =
         "Export Audio was cancelled: no file was chosen, so nothing was written.";
+
+    /// Consolidate on an audio part (O-I #743): the set at `path` as its owner reads it now, the audio part `track`'s clips
+    /// across beats `from`–`to` rendered alone at [`ENGINE_RATE`] (live-engine `render_clips_alone`: none of the part's
+    /// chain or row), handed to `keep` as a 32-bit float WAV's bytes (the kernel's Live owner keeps it beside the set and
+    /// lays the clip that plays it: `live_audio_consolidate`); its answer carries, in `unplayed`, the words for each clip of
+    /// the stretch the engine did not play. The engine need not hold the set.
+    pub fn consolidate(
+        path: &Path,
+        track: usize,
+        from: f64,
+        to: f64,
+        keep: impl FnOnce(&[u8]) -> Result<Value, String>,
+    ) -> Result<Value, String> {
+        let root = set_document(path)?;
+        let alone =
+            live_engine::bridge::render_clips_alone(&root, path, track, from, to, ENGINE_RATE)?;
+        let mut kept = keep(&wav_f32(&alone.pcm, ENGINE_RATE))?;
+        if let Value::Object(fields) = &mut kept {
+            fields.insert("unplayed".into(), json!(said(&alone.warnings)));
+        }
+        Ok(kept)
+    }
 
     /// The host's state: at most one open set, and what the Torus's owner told it. The follow lock is
     /// taken before the set's, and the kernel's field lock is taken only under them, never around them.
@@ -2289,6 +2342,63 @@ pub(crate) mod host {
     <DeviceChain><Devices /></DeviceChain></DeviceChain></MainTrack>
 </LiveSet></Ableton>"#;
 
+        /// O-I #743 round 20, item 3, the engine gaps: a take's Export Audio rings its effects out past the take's end — the
+        /// Torus's Delay and Reverb and the part's own Echo — as long as anything of them stands above −96 dBFS, and says how
+        /// many frames it rang for and that it was not cut. To the take's end it is the export of the take alone; what
+        /// follows its tail is silence under that floor (the same take, with as much silence again after it, renders the
+        /// tail bit for bit and nothing above the floor after it).
+        #[test]
+        fn a_takes_export_rings_its_effects_out_past_its_end_and_says_how_long() {
+            let path = write_set("take-tail", ONE_PART_SET);
+            let o = Opened::open(&path).unwrap();
+            let burst: Vec<f32> = (0..4_800)
+                .map(|i| (std::f32::consts::TAU * 440.0 * i as f32 / 48_000.0).sin() * 0.5)
+                .collect();
+            let head = json!({"schema": TAKE_RENDER_SCHEMA, "path": path, "track": 0, "rate": ENGINE_RATE,
+                "effects": [{"frame": 0, "effects": effects(&["delay", "reverb"])}]});
+            let take = take_render_of(&take_body(&head, &burst)).unwrap();
+            let (bytes, said) = o.render_take_wav(&take).unwrap();
+            let exported = live_engine::wav::read_wav_f32(&bytes).unwrap().samples;
+            let tail = said["tail"].as_u64().unwrap() as usize;
+            assert!(
+                tail > ENGINE_RATE as usize / 2,
+                "it rings past the take's end: {tail} frames"
+            );
+            assert_eq!(
+                (said["frames"].as_u64(), said["cut"].as_bool()),
+                (Some(4_800), Some(false))
+            );
+            assert_eq!(exported.len(), 2 * (4_800 + tail));
+            let floor = 10f32.powf(-96.0 / 20.0);
+            assert!(
+                exported[exported.len() - 2..]
+                    .iter()
+                    .any(|v| v.abs() > floor),
+                "it ends on the last frame heard"
+            );
+            let mut padded = burst.clone();
+            padded.resize(4_800 + tail + 5 * ENGINE_RATE as usize, 0.0);
+            let longer = take_render_of(&take_body(&head, &padded)).unwrap();
+            let (bytes, said) = o.render_take_wav(&longer).unwrap();
+            let on = live_engine::wav::read_wav_f32(&bytes).unwrap().samples;
+            assert_eq!(
+                said["tail"].as_u64(),
+                Some(0),
+                "nothing heard past its own end"
+            );
+            assert!(
+                on[..exported.len()]
+                    .iter()
+                    .zip(&exported)
+                    .all(|(a, b)| a.to_bits() == b.to_bits()),
+                "the tail as the take with silence after it renders it"
+            );
+            assert!(
+                on[exported.len()..].iter().all(|v| v.abs() <= floor),
+                "and nothing above the floor after it"
+            );
+        }
+
         /// O-I #855, Export Audio of a take through its part (DLW build ruling 2026-11-05): the take's sound as its owner
         /// rendered it, sent as the frame sends it, renders through its part's rack (the Torus's effects, put at the frame
         /// the engine put them), its chain and its row as the engine played the part, bit for bit; another rate, an audio
@@ -2318,9 +2428,13 @@ pub(crate) mod host {
             let take = take_render_of(&take_body(&head, &pcm)).unwrap();
             let (bytes, said) = o.render_take_wav(&take).unwrap();
             let exported = live_engine::wav::read_wav_f32(&bytes).unwrap().samples;
-            assert_eq!(exported.len(), played.len());
+            // REPLACES (O-I #743 round 20, item 3): the export was the take's frames alone; its effects now ring out past
+            // its end (`a_takes_export_rings_its_effects_out_past_its_end_and_says_how_long`), so the take's own frames are
+            // compared, and the tail is the frames past them
+            let tail = said["tail"].as_u64().unwrap() as usize;
+            assert_eq!(exported.len(), played.len() + 2 * tail);
             assert!(
-                exported
+                exported[..played.len()]
                     .iter()
                     .zip(&played)
                     .all(|(e, p)| e.to_bits() == p.to_bits()),
@@ -2799,6 +2913,69 @@ pub(crate) mod host {
             }
         }
 
+        /// O-I #743 round 20, item 3, the engine gaps: the engine hears the frame's level. The effects the frame reports carry
+        /// it (`level`, the frame's presentation gain 0 to 4) and it stands first on the Torus's chain, before the effects, as
+        /// in the frame (controller.ts `stage`); moved while it plays it moves in place, heard from the next block, and Export
+        /// renders it as played; the engine's reading says the level it hears. One outside the frame's 0 to 4 is refused in
+        /// words; effects that carry none put no level, as before.
+        #[test]
+        fn the_frames_level_stands_before_the_toruss_effects_and_moves_in_place() {
+            let mut with = effects(&["delay"]);
+            with["level"] = json!(2);
+            let (made, reading) = torus_chain(&with).unwrap();
+            assert_eq!(made[0], ("level", vec![("level", 2.0)]));
+            assert_eq!(made[1].0, "Delay");
+            assert_eq!(
+                reading.as_array().unwrap().len(),
+                1,
+                "the chain's reading is its effects'"
+            );
+            let (made, _) = torus_chain(&effects(&["delay"])).unwrap();
+            assert_eq!(made.len(), 1, "no level carried, none put");
+            with["level"] = json!(5);
+            let words = torus_chain(&with).unwrap_err();
+            assert!(words.contains("0 to 4"), "{words}");
+            let path = write_set("torus-level", SET);
+            let mut o = Opened::open(&path).unwrap();
+            let mut core = o.core.take().unwrap();
+            let mut played = pull(&mut core, &[256, 256]);
+            let mut chain = effects(&["filter", "delay"]);
+            chain["level"] = json!(1);
+            o.put_effects(0, &chain).unwrap();
+            played.extend(pull(&mut core, &[256; 20]));
+            chain["level"] = json!(2.5);
+            o.put_effects(0, &chain).unwrap();
+            played.extend(pull(&mut core, &[256; 20]));
+            o.handle.collect();
+            assert_eq!(o.racked.len(), 1, "nothing was put again");
+            let moved: Vec<(&str, f64, u64)> = o
+                .handle
+                .performance()
+                .events
+                .iter()
+                .filter_map(|e| match e.event {
+                    EngineEvent::Set { key, value, .. } => Some((key, value, e.frame)),
+                    _ => None,
+                })
+                .collect();
+            assert_eq!(
+                moved,
+                vec![("level", 2.5, 512 + 256 * 20)],
+                "the level moved, at the next block"
+            );
+            assert_eq!(o.reading()["torus_effects"]["level"], 2.5);
+            let (bytes, _) = o.render_wav().unwrap();
+            let wav = live_engine::wav::read_wav_f32(&bytes).unwrap();
+            assert_eq!(wav.samples.len(), played.len());
+            assert!(
+                wav.samples
+                    .iter()
+                    .zip(&played)
+                    .all(|(e, p)| e.to_bits() == p.to_bits()),
+                "Export is what was played"
+            );
+        }
+
         #[test]
         fn the_host_plays_the_sets_two_parts_with_their_chains_returns_and_main() {
             let path = write_set("two-parts", SET);
@@ -2864,6 +3041,43 @@ pub(crate) mod host {
   <MainTrack><DeviceChain><Mixer><Tempo><Manual Value="120" /></Tempo><Volume><Manual Value="1" /></Volume></Mixer>
     <DeviceChain><Devices /></DeviceChain></DeviceChain></MainTrack>
 </LiveSet></Ableton>"#;
+
+        /// Consolidate on an audio part (O-I #743): the host renders the part's clips alone across the stretch, from
+        /// the set as it stands and with no engine open, and hands the kernel's owner that render as a WAV; what it did
+        /// not play of the stretch's clips comes back in the answer's words.
+        #[test]
+        fn consolidate_hands_the_owner_the_parts_clips_rendered_alone_as_a_wav() {
+            let path = write_set("consolidate", AUDIO_SET);
+            let folder = path.parent().unwrap().join("Samples/Recorded");
+            std::fs::create_dir_all(&folder).unwrap();
+            let sample: Vec<f32> = (0..2 * 4_800)
+                .map(|i| ((i % 480) as f32 / 480.0 - 0.5) * 0.4)
+                .collect();
+            std::fs::write(folder.join("vox.wav"), wav_f32(&sample, ENGINE_RATE)).unwrap();
+            let mut handed = Vec::new();
+            let answer = consolidate(&path, 0, 0.0, 2.0, |wav| {
+                handed = wav.to_vec();
+                Ok(json!({"done": "kept"}))
+            })
+            .unwrap();
+            assert_eq!(answer["unplayed"], json!(["Vox: its clip 'Stretched' is warped, and the engine plays unwarped clips first: it is silent"]));
+            let wav = live_engine::wav::read_wav(&handed).unwrap();
+            assert_eq!(
+                (wav.channels, wav.sample_rate, wav.samples.len()),
+                (2, ENGINE_RATE, 2 * 48_000),
+                "two beats at 120 BPM"
+            );
+            // Vox from its start marker (0.02 s in) at beat 0.25, at its clip gain: the part's half volume is not in it.
+            assert_eq!(wav.samples[2 * 6_000].to_bits(), sample[2 * 960].to_bits());
+            assert_eq!(wav.samples[2 * 8_400], 0.0, "and silence after its clip");
+            let refused =
+                consolidate(&path, 0, 4.0, 6.0, |_| unreachable!("nothing to keep")).unwrap_err();
+            assert!(
+                refused.contains("No clip of Vox sounds between beat 4 and beat 6"),
+                "{refused}"
+            );
+            let _ = std::fs::remove_dir_all(path.parent().unwrap());
+        }
 
         /// Item 5 on the sample-playback source (DLW build ruling 2026-11-05): the host lays an audio part's unwarped
         /// clip from its sample beside the set, so the part plays it at its clip's frame, from its start marker, through
@@ -4026,6 +4240,46 @@ pub fn live_engine_render_take(
     #[cfg(not(feature = "native_shell"))]
     {
         let _ = (app, webview, request);
+        Err(EVERYDAY.into())
+    }
+}
+
+/// Consolidate on an audio part (O-I #743): the host renders the part's clips
+/// alone across the stretch and the kernel's Live owner keeps the render beside
+/// the set as the clip that plays it, against the set's revision, its receipt
+/// sent on the kernel's event topic.
+#[tauri::command]
+pub async fn live_engine_consolidate(
+    app: tauri::AppHandle,
+    webview: tauri::WebviewWindow,
+    path: String,
+    expected_revision: String,
+    track: usize,
+    from: f64,
+    to: f64,
+) -> Result<serde_json::Value, String> {
+    #[cfg(feature = "native_shell")]
+    {
+        use tauri::{Emitter, Manager};
+        admit_candidate_webview(&webview)?;
+        tauri::async_runtime::spawn_blocking(move || {
+            host::consolidate(std::path::Path::new(&path), track, from, to, |wav| {
+                let kernel = app.state::<crate::KernelHost>();
+                let (receipt, reading) = kernel
+                    .0
+                    .lock()
+                    .map_err(|_| "kernel lock unavailable".to_owned())?
+                    .live_audio_consolidate(&path, &expected_revision, track, from, to, wav)?;
+                let _ = app.emit(oi_cradle_kernel::events::KERNEL_EVENT_TOPIC, &receipt);
+                Ok(reading)
+            })
+        })
+        .await
+        .map_err(|e| e.to_string())?
+    }
+    #[cfg(not(feature = "native_shell"))]
+    {
+        let _ = (app, webview, path, expected_revision, track, from, to);
         Err(EVERYDAY.into())
     }
 }

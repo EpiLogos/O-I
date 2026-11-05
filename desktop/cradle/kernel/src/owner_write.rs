@@ -1039,14 +1039,19 @@ fn factory_action(request: &factory::OwnerRequest) -> &'static str {
         factory::OwnerRequest::RunClose { .. } => "run close",
         factory::OwnerRequest::AttemptReceiving { .. } => "attempt receiving",
         factory::OwnerRequest::AttemptRetry { .. } => "attempt action retry",
+        factory::OwnerRequest::AttemptRequestCancellation { .. } => {
+            "attempt action request-cancellation"
+        }
         factory::OwnerRequest::AttemptDecisionSubmit { .. } => "attempt decision submit",
         factory::OwnerRequest::CustodyAssign { .. } => "development custody assign",
         factory::OwnerRequest::CustodyUpdate { .. } => "development custody update",
+        factory::OwnerRequest::CustodyHold { .. } => "development custody hold",
         factory::OwnerRequest::PadsWrite { .. } => "development pads-write",
         factory::OwnerRequest::PadsPresetSave { .. } => "development pads-preset-save",
         factory::OwnerRequest::PadsPresetRecall { .. } => "development pads-preset-recall",
         factory::OwnerRequest::PadsRun { .. } => "development pads-run",
         factory::OwnerRequest::PadsRecord { .. } => "development pads-record",
+        factory::OwnerRequest::RackMacrosWrite { .. } => "development rack-macros-write",
         factory::OwnerRequest::WaveAct { .. } => "development wave act",
         factory::OwnerRequest::WorkflowEdit { .. } => "workflow edit",
         factory::OwnerRequest::WorkflowExport { .. } => "workflow export",
@@ -1064,7 +1069,8 @@ fn factory_ref(request: &factory::OwnerRequest, data: &Value) -> String {
         OwnerRequest::ActionInvoke { run_ref, .. }
         | OwnerRequest::RunClose { run_ref, .. }
         | OwnerRequest::AttemptReceiving { run_ref, .. }
-        | OwnerRequest::AttemptRetry { run_ref, .. } => run_ref.clone(),
+        | OwnerRequest::AttemptRetry { run_ref, .. }
+        | OwnerRequest::AttemptRequestCancellation { run_ref, .. } => run_ref.clone(),
         OwnerRequest::Recognise {
             journey_ref,
             state_path,
@@ -1087,9 +1093,16 @@ fn factory_ref(request: &factory::OwnerRequest, data: &Value) -> String {
                 .or_else(|| answer_ref(data, &["project_ref"]))
                 .unwrap_or_else(|| FACTORY.into())
         }
+        // A rack's macros moved: the rack of that project's session space.
+        OwnerRequest::RackMacrosWrite {
+            project_ref,
+            space_ref,
+            ..
+        } => format!("{project_ref}#rack-macros:{space_ref}"),
         // A custody record moved: the custody the owner's receipt names.
         OwnerRequest::CustodyAssign { state_path, .. }
-        | OwnerRequest::CustodyUpdate { state_path, .. } => data["custody"]["custody_ref"]
+        | OwnerRequest::CustodyUpdate { state_path, .. }
+        | OwnerRequest::CustodyHold { state_path, .. } => data["custody"]["custody_ref"]
             .as_str()
             .filter(|reference| !reference.trim().is_empty())
             .map(str::to_owned)

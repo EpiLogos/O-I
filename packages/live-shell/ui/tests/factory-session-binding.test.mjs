@@ -134,8 +134,10 @@ test('Custody reads the Agent\'s light, shares Scope\'s Write mode (the same wri
   assert.deepEqual(calls, [['writeMode', 'direct']], 'through Scope\'s own write')
   // REPLACED (lane W11): the settings have their routes (custody-list, CustodyAssign); with no custody read handed in they say so
   // (w11-custody-turn-thought-settings.test.mjs writes them).
-  assert.match(binding.standing.handBack.disabled, /missing op/)
-  await assert.rejects(() => binding.write([{key: 'handBack', value: true}]), /missing op/)
+  // REPLACED (BD r20 PORT, round 869): Hand back is Factory's custody hold (factory_owner custody-hold); with no custody read handed in it
+  // says where the list is read, and asks nothing.
+  assert.match(binding.standing.handBack.disabled, /^Hand back: Factory's custody list \(the kernel's factory_owner custody-list\) is read on the session's own chain/)
+  await assert.rejects(() => binding.write([{key: 'handBack', value: true}]), /^Error: Hand back: Factory's custody list/)
   for (const key of ['gate', 'escalate']) {
     assert.match(binding.standing[key].disabled, /custody list is not read here for this session/, key)
     await assert.rejects(() => binding.write([{key, value: 'auto'}]), /custody list is not read here for this session/)
@@ -172,9 +174,17 @@ test('the Agentset rack: a group\'s sessions as its chains, each named by its ag
   assert.equal('device' in binding.local, false, 'no device of the chain is chosen: the Devices view shows them all')
   // REPLACED (BD r19; DLW build ruling 2026-11-05): `dev` was a missing op. A device of another session's chain is changed by a message to that
   // session through Messages' delegate, so a rack handed no carrier names that carrier (the last test).
-  for (const key of ['fanOut', 'depth', 'handBack', 'returnCap', 'budget', 'unmapped', 'store', 'variation', 'solo']) {
+  for (const key of ['fanOut', 'depth', 'handBack', 'returnCap', 'solo']) {
     assert.match(binding.standing[key].disabled, /missing op/, key)
     await assert.rejects(() => binding.write([{key, value: 1}]), /missing op/)
+  }
+  // REPLACED (BD r20; DLW build ruling 2026-11-05): Budget, Unmap, Store and Variations were missing ops. Each chain's task Budget is
+  // AIKit's (encounter_task_read, then encounter_task_budget) and where the macros stand is Software Factory's (factory.rack-macros/v1,
+  // the kernel's factory_owner rack-macros-read and rack-macros-write), so a rack handed no carrier names the one that carries it.
+  for (const key of ['budget', 'unmapped', 'store', 'variation']) {
+    assert.equal(binding.standing[key].disabled, own.AGENTSET_REFUSE[key], key)
+    assert.doesNotMatch(binding.standing[key].disabled, /missing op/, key)
+    await assert.rejects(() => binding.write([{key, value: 1}]), error => error.message === own.AGENTSET_REFUSE[key], key)
   }
   // REPLACED (round 861): a group's Model and Effort were missing ops; each chain's session carries its own (AIKit's model select), so a
   // rack handed no carrier names that one.
@@ -256,8 +266,8 @@ test('the chain places them where the manual does: Custody on the one Agent, the
   assert.match(view, /\.\.\.\(helperStands && helperDevice \? \{helper: helperDesignBinding\.values\} : \{\}\)/, 'the rack lists the Decision helper among its chains')
   assert.match(view, /const place = factoryPlace\(\{sessionRef, group: !!groupTrack, workcell\}\)/)
   // REPLACED (lane W8): Custody takes the hand's holds, Actuation's authority list and the current person (the Grants page), and its
-  // Revoke port; Scope still stands in its row.
-  assert.match(view, /custodyBinding\(\{sessionRef, agent: agentDesignBinding\?\.values \?\? \{\}, holds, grants, person: currentPerson,\s*custody: custodyRead\}, scopeDesignBinding, custodyPorts\)/, 'Custody and Scope, one row; no task record word as the retired Autonomy')
+  // Revoke port; Scope still stands in its row. REPLACED (BD r20 PORT, round 869): its ports carry Factory's custody hold as well (Hand back).
+  assert.match(view, /custodyBinding\(\{sessionRef, agent: agentDesignBinding\?\.values \?\? \{\}, holds, grants, person: currentPerson,\s*custody: custodyRead\}, scopeDesignBinding, custodyHoldPorts\)/, 'Custody and Scope, one row; no task record word as the retired Autonomy')
   assert.match(view, /const currentPerson = currentIdentity\(\)\?\.reading\.person_ref \?\? null/, 'the person is the current identity, never a value the desk composes')
   assert.doesNotMatch(read('agent/devices/sessionChainBindings.ts'), /\.defaults\[|\.fixtures|catalogue\/panels\//, 'the bindings read no design default or fixture')
 })
@@ -325,12 +335,17 @@ test('(BD r19, Central #318) the chain is the agent\'s profile: Rename on the Ag
     input: {scope: 'root', profile_ref: 'agent-profile:kite', expected_revision: 'p3', replace: 'sets/core', with: 'sets/night'}})
   assert.deepEqual(own.replaceRequest(profile, 'sets/review'), {refused: own.PROFILE_REFUSE.swapSame('sets/review')})
   assert.deepEqual(own.replaceRequest({...profile, skillSetRefs: []}, 'sets/night'), {refused: own.PROFILE_REFUSE.swapNone})
+  // The order of what it carries (round 869): Central's agent-profile.chain-order, every ref the profile carries in the new order, at its revision.
+  assert.deepEqual(own.orderRequest(profile, ['sets/review', 'sets/core']), {action: 'agent-profile.chain-order',
+    input: {scope: 'root', profile_ref: 'agent-profile:kite', expected_revision: 'p3', skill_set_refs: ['sets/review', 'sets/core']}})
   assert.equal(own.profileHeadActs(null).agent.rename.refused, own.PROFILE_REFUSE.unread('Rename'))
   assert.equal(own.profileHeadActs(profile).agent.rename.refused, own.PROFILE_REFUSE.noCarrier('Rename'))
   // Factory's chain publishes them, and carries the rack's Discard, Retry and a device of another chain to their owners.
   const chain = read('agent/devices/FactoryDeviceChain.tsx')
   assert.match(chain, /slot\.id === 'agent' \? \{acts: profileActs\.agent\} : slot\.id === 'skillset' \? \{acts: profileActs\.skillset\}/)
   assert.match(chain, /active\.drag\.family === 'skillset' && target\.kind === 'card' && target\.id === 'skillset'/, 'a SkillSet dropped on the rack hot-swaps')
+  assert.match(chain, /reorder: async \(refs: readonly string\[\]\) => \{ const asked = orderRequest\(chainProfile, refs\); await profileAct\(asked\.action, asked\.input\) \}/,
+    'the rack\'s Sets move through Central\'s chain-order')
   assert.match(chain, /removeSet: input => setAct\(transport, 'central\.agent-set\.remove', input\)/)
   assert.match(chain, /await retryTask\(request => factoryOwnerWrite\(transport, request/)
   // Another chain's device: a message sent to its agent's Position, then delegated into its task, both through AIKit's gateway (Messages' own
@@ -339,4 +354,59 @@ test('(BD r19, Central #318) the chain is the agent\'s profile: Rename on the Ag
   assert.match(chain, /gatewayWriteOp\(\{kind: 'delegate', \.\.\.scope, communique, work,/)
   assert.doesNotMatch(chain, /publishedDevice\(MESSAGES_ID\)/)
   assert.match(chain, /acts: padsActs/, 'the pads\' head carries Save as preset and Hot-swap')
+})
+
+// BD round 20 PORT (round 869): Hand back is Factory's custody hold. A person takes a hold on what an agent holds when they edit it, and gives it
+// back with Hand back (factory_owner {kind: 'custody-hold', state_path, custody_ref, act: take | give-back, reason, subject_ref?,
+// expected_revision?}); the light is the custody listing's hand_back {lit, held} (Factory work_custody.rs HandBackReading). FAKE: the listing
+// in Factory's own shape (factory.work-custody-listing/v1) and a recording port; never a real hold.
+test('(BD r20) Hand back: the light is the custody listing\'s hand_back, a held record you edited reads edited, and the press gives back each hold the agent\'s work carries at its revision', async () => {
+  const record = (ref, position, work, state, revision, hold) => ({schema: 'factory.work-custody/v1', custody_ref: ref, position_ref: position, work_ref: work, state,
+    assigned_at_unix_ms: 1, reason: 'assigned', revision, updated_at_unix_ms: 2, transitions: [],
+    ...(hold ? {person_hold: {held_by: 'person:frank', authority_ref: 'grant:frank', subject_ref: 'file:notes.md', reason: 'edited', taken_at_unix_ms: 3}} : {})})
+  const LISTING = {schema: 'factory.work-custody-listing/v1', project_ref: 'project:o-i', filter: {}, count: 3, custody: [
+    record('custody:1', 'position:lead', 'central:task:t1', 'in-progress', 3, true), record('custody:2', 'position:lead', 'central:task:t2', 'blocked', 5, false),
+    record('custody:3', 'position:other', 'central:task:t3', 'in-progress', 1, true)], hand_back: {lit: true, held: ['custody:1', 'custody:3']}}
+  const custody = (value = LISTING) => ({statePath: '/state', listing: {status: 'answered', value, error: null}, agentPosition: 'position:lead', work: 'central:task:t1'})
+  const asked = []
+  const hold = async request => { asked.push(request); return {schema: 'factory.work-custody-receipt/v1', result: 'applied'} }
+  const binding = own.custodyBinding({sessionRef: LEAD.sessionRef, agent: {light: 'lit'}, person: 'person:frank', custody: custody()}, null, {hold})
+  assert.equal(binding.values.handBackLit, true, 'lit: a hold stands on what the agent holds')
+  assert.deepEqual(JSON.parse(binding.values.held), [{id: 'custody:1', name: 'central:task:t1', kind: 'work', state: 'edited', by: 'person:frank'},
+    {id: 'custody:2', name: 'central:task:t2', kind: 'work', state: 'blocked'}], 'what you edited reads edited, by you; another Position\'s is not this agent\'s')
+  for (const key of ['handBack', 'handBackLit']) assert.equal(binding.standing[key], undefined, key)
+  await binding.write([{key: 'handBack', value: true}])
+  assert.deepEqual(asked, [{kind: 'custody-hold', state_path: '/state', custody_ref: 'custody:1', act: 'give-back',
+    reason: 'person:frank gave back what they edited, from the desk.', expected_revision: 3}], 'each hold on what this agent holds, at its revision as read')
+  // The edit's side: taking a hold on a record the agent holds.
+  asked.length = 0
+  await binding.write([{key: 'take', value: 'custody:2'}])
+  assert.deepEqual(asked, [{kind: 'custody-hold', state_path: '/state', custody_ref: 'custody:2', act: 'take',
+    reason: 'person:frank edited what the agent holds, from the desk.', expected_revision: 5}])
+  await assert.rejects(() => binding.write([{key: 'take', value: 'custody:3'}]), /^Error: Take: custody:3 is not held by this session's agent/)
+  // Dark: nothing you edited is held, so the press asks nothing.
+  const dark = own.custodyBinding({sessionRef: LEAD.sessionRef, agent: {}, person: 'person:frank', custody: custody({...LISTING, hand_back: {lit: false, held: []}})}, null, {hold})
+  assert.equal(dark.values.handBackLit, false)
+  asked.length = 0
+  await assert.rejects(() => dark.write([{key: 'handBack', value: true}]), /^Error: Hand back: nothing you edited is held by this session's agent\.$/)
+  assert.equal(asked.length, 0)
+  // Lit for another agent's hold only: this agent's light stays dark.
+  assert.equal(own.custodyValues({sessionRef: LEAD.sessionRef, agent: {}, custody: custody({...LISTING, hand_back: {lit: true, held: ['custody:3']}})}).handBackLit, false)
+  // A Factory before round 20 answers no hand_back: the light names that, and Hand back asks nothing.
+  const older = own.custodyBinding({sessionRef: LEAD.sessionRef, agent: {}, person: 'person:frank', custody: custody({...LISTING, hand_back: undefined})}, null, {hold})
+  assert.equal(older.values.handBackLit, undefined)
+  assert.match(older.standing.handBackLit.disabled, /Factory's custody list answers no hand_back/)
+  assert.match(older.standing.handBack.disabled, /^Hand back: Factory's custody list answers no hand_back/)
+  // No carrier, no person: each says so before Factory is asked.
+  assert.match(own.custodyBinding({sessionRef: LEAD.sessionRef, agent: {}, person: 'person:frank', custody: custody()}, null, {}).standing.handBack.disabled,
+    /^Hand back: the kernel carrier is unavailable here, so Factory cannot be asked\.$/)
+  assert.match(own.custodyBinding({sessionRef: LEAD.sessionRef, agent: {}, custody: custody()}, null, {hold}).standing.handBack.disabled,
+    /^Hand back: only the person sets it from here, and no person is current/)
+  // Factory's refusal stands in its words.
+  const refusing = own.custodyBinding({sessionRef: LEAD.sessionRef, agent: {}, person: 'person:frank', custody: custody()}, null,
+    {hold: async () => { throw Error('custody custody:1 is already held by person:ada since 3') }})
+  await assert.rejects(() => refusing.write([{key: 'handBack', value: true}]), {message: 'custody custody:1 is already held by person:ada since 3'})
+  // The chain sends it through the kernel's factory_owner and reads the custody list again after it.
+  const chain = readFileSync(new URL('../src/agent/devices/FactoryDeviceChain.tsx', import.meta.url), 'utf8')
+  assert.match(chain, /hold: request => factoryOwnerWrite\(transport, request, '`factory development custody hold`'\)\.finally\(refreshCustody\)/)
 })

@@ -2214,7 +2214,13 @@ fn played_notes(clip: &Element, from: f64, to: f64) -> Vec<Value> {
     out
 }
 
-fn clips_consolidate(root: &mut Element, track: usize, from: f64, to: f64) -> Result<Done, String> {
+fn clips_consolidate(
+    root: &mut Element,
+    track: usize,
+    from: f64,
+    to: f64,
+    sample: Option<&Consolidated>,
+) -> Result<Done, String> {
     if !(from.is_finite() && to.is_finite() && to > from) {
         return Err("Consolidate takes a stretch of the ruler: its end after its start".into());
     }
@@ -2225,10 +2231,17 @@ fn clips_consolidate(root: &mut Element, track: usize, from: f64, to: f64) -> Re
         ));
     }
     let part = track_at(root, track)?;
-    match part.name.as_str() {
-        "MidiTrack" => {}
-        "AudioTrack" => {
-            return Err("Consolidating audio clips writes a new sample of what plays: a render of the part, which nothing here carries".into())
+    match (part.name.as_str(), sample) {
+        ("MidiTrack", None) => {}
+        ("MidiTrack", Some(_)) => {
+            return Err(format!(
+                "{} is a MIDI part: its clips are joined as notes, and a sample is an audio part's",
+                track_name(part)
+            ))
+        }
+        ("AudioTrack", Some(sample)) => return audio_consolidate(root, track, from, to, sample),
+        ("AudioTrack", None) => {
+            return Err("Consolidating audio clips writes a new sample of what they play: the engine renders it (live_engine_consolidate), and the set keeps it beside itself".into())
         }
         _ => return Err("Consolidate joins the clips of an audio or MIDI part".into()),
     }
@@ -2298,6 +2311,349 @@ fn clips_consolidate(root: &mut Element, track: usize, from: f64, to: f64) -> Re
             copied: Vec::new(),
         },
     })
+}
+
+/// Where Live keeps a consolidated sample, from the set's own folder (the template's consolidated clips: their `RelativePath`
+/// `Samples/Processed/Consolidate/<name> [<when>].aif`).
+pub const CONSOLIDATE_DIR: &str = "Samples/Processed/Consolidate";
+/// What keeps the consolidated samples out of git, written into [`CONSOLIDATE_DIR`] where it holds none yet.
+const CONSOLIDATE_IGNORE: &str =
+    "# Consolidated samples, held by their content hash out of git (DLW §10.3)\n*.wav\n";
+/// The longest a consolidated sample may weigh: an hour of stereo 32-bit float at 48 kHz, with room.
+pub const CONSOLIDATED_BYTES_MAX: usize = 1536 * 1024 * 1024;
+
+/// A sample consolidated from an audio part's clips, kept beside the set: where (from the set's folder, and whole), how many
+/// bytes, its frames and rate, and when it was written (seconds since 1970).
+pub(crate) struct Consolidated {
+    relative: String,
+    path: String,
+    bytes: usize,
+    frames: u64,
+    rate: u32,
+    written: u64,
+}
+
+/// A WAV file's channels, rate and frames, read from its `fmt ` and `data` chunks; refused in words for what is not one.
+fn wav_shape(wav: &[u8]) -> Result<(u16, u32, u64), String> {
+    let refused = || "What the engine rendered is not a WAV file".to_string();
+    if wav.len() < 12 || &wav[..4] != b"RIFF" || &wav[8..12] != b"WAVE" {
+        return Err(refused());
+    }
+    let (mut at, mut format, mut data) = (12usize, None, None);
+    while at + 8 <= wav.len() {
+        let size =
+            u32::from_le_bytes([wav[at + 4], wav[at + 5], wav[at + 6], wav[at + 7]]) as usize;
+        let body = at + 8;
+        let end = body
+            .checked_add(size)
+            .filter(|end| *end <= wav.len())
+            .ok_or_else(refused)?;
+        match &wav[at..at + 4] {
+            b"fmt " if size >= 16 => {
+                let word = |i: usize| u16::from_le_bytes([wav[body + i], wav[body + i + 1]]);
+                let rate = u32::from_le_bytes([
+                    wav[body + 4],
+                    wav[body + 5],
+                    wav[body + 6],
+                    wav[body + 7],
+                ]);
+                format = Some((word(2), rate, word(12)));
+            }
+            b"data" => data = Some(size),
+            _ => {}
+        }
+        at = end + (size & 1);
+    }
+    let ((channels, rate, block), Some(data)) = (format.ok_or_else(refused)?, data) else {
+        return Err(refused());
+    };
+    if channels == 0 || rate == 0 || block == 0 {
+        return Err(refused());
+    }
+    Ok((channels, rate, (data / usize::from(block)) as u64))
+}
+
+/// Consolidate on an audio part (O-I #743; manual §10.9 "In Arrangement view, Split (⌘E), Consolidate (⌘J)"): the clips of
+/// part `track` across beats `from`–`to` give way to one AudioClip there (as `lay_over` lays any clip over others) that plays
+/// `sample`, what they played in the stretch as the engine rendered them alone (live-engine `render_clips_alone`). The clip is
+/// the first clip's own, made to play the whole sample once from its first frame: unwarped (session-model.md §5: "Unwarped
+/// playback (`IsWarped=false`) plays the sample at original rate"), its markers in seconds (`marker_scale`), at unity gain and
+/// pitch, with no fade and no clip envelope (what those did is in the sample), and Live's own pair of warp markers at the set's
+/// tempo. Its `SampleRef` is in the template's shape: the `FileRef` by its path from the set's folder (`RelativePathType` 1, the
+/// type the corpus keeps for a path from the document's folder) and whole, `Type` 2, its size, `OriginalCrc` 0 (no decode says
+/// how Live computes it), then `LastModDate`, `SourceContext`, `SampleUsageHint`, `DefaultDuration` (frames) and
+/// `DefaultSampleRate`.
+fn audio_consolidate(
+    root: &mut Element,
+    track: usize,
+    from: f64,
+    to: f64,
+    sample: &Consolidated,
+) -> Result<Done, String> {
+    let part = track_at(root, track)?;
+    let lane: Vec<Element> = edit::main_lane(part)
+        .into_iter()
+        .filter(|clip| clip.name == "AudioClip")
+        .filter(|clip| {
+            let (s, e) = (
+                edit::num(clip, "CurrentStart").unwrap_or(0.0),
+                edit::num(clip, "CurrentEnd").unwrap_or(0.0),
+            );
+            e > from && s < to
+        })
+        .cloned()
+        .collect();
+    let Some(first) = lane.first() else {
+        return Err(format!(
+            "No audio clip lies between beat {} and beat {} on this part",
+            number_text(from),
+            number_text(to)
+        ));
+    };
+    let Some(bpm) = edit::steady_tempo(root).filter(|bpm| *bpm > 0.0) else {
+        return Err("The set's tempo moves, so a sample of the stretch has no one length in beats: an unwarped clip keeps its markers in seconds".into());
+    };
+    let seconds = sample.frames as f64 / f64::from(sample.rate);
+    let stretch = (to - from) * 60.0 / bpm;
+    if (sample.frames as f64 - stretch * f64::from(sample.rate)).abs() > 1.0 {
+        return Err(format!(
+            "The sample runs {} seconds, and the stretch {} seconds at the set's tempo: it is not a sample of the stretch",
+            number_text((seconds * 1000.0).round() / 1000.0),
+            number_text((stretch * 1000.0).round() / 1000.0)
+        ));
+    }
+    let id = track_id(part)?;
+    let mut made = first.clone();
+    made.set_attr("Time", &number_text(from));
+    set_value(&mut made, "CurrentStart", &number_text(from))?;
+    set_value(&mut made, "CurrentEnd", &number_text(to))?;
+    let length = number_text(seconds);
+    let lp = made
+        .child_mut("Loop")
+        .ok_or("the clip carries no loop markers in the document")?;
+    for (marker, value) in [
+        ("LoopStart", "0"),
+        ("LoopEnd", length.as_str()),
+        ("StartRelative", "0"),
+        ("LoopOn", "false"),
+        ("OutMarker", length.as_str()),
+        ("HiddenLoopStart", "0"),
+        ("HiddenLoopEnd", length.as_str()),
+    ] {
+        if let Some(element) = lp.child_mut(marker) {
+            element.set_attr("Value", value);
+        }
+    }
+    for (child, value) in [
+        ("IsWarped", "false"),
+        ("SampleVolume", "1"),
+        ("PitchCoarse", "0"),
+        ("PitchFine", "0"),
+        ("Disabled", "false"),
+    ] {
+        if let Some(element) = made.child_mut(child) {
+            element.set_attr("Value", value);
+        }
+    }
+    if let Some(fades) = made.child_mut("Fades") {
+        for fade in ["FadeInLength", "FadeOutLength"] {
+            if let Some(element) = fades.child_mut(fade) {
+                element.set_attr("Value", "0");
+            }
+        }
+    }
+    if let Some(envelopes) = made
+        .child_mut("Envelopes")
+        .and_then(|e| e.child_mut("Envelopes"))
+    {
+        envelopes.children.clear();
+    }
+    if let Some(markers) = made.child_mut("WarpMarkers") {
+        let marker = |id: &str, sec: f64, beat: f64| {
+            let mut m = Element::new("WarpMarker");
+            m.set_attr("Id", id);
+            m.set_attr("SecTime", &number_text(sec));
+            m.set_attr("BeatTime", &number_text(beat));
+            m
+        };
+        markers.children = vec![
+            marker("0", 0.0, 0.0),
+            marker("1", 0.03125 * 60.0 / bpm, 0.03125),
+        ];
+    }
+    let valued = |name: &str, value: &str| {
+        let mut e = Element::new(name);
+        e.set_attr("Value", value);
+        e
+    };
+    let mut file = Element::new("FileRef");
+    file.children = vec![
+        valued("RelativePathType", "1"),
+        valued("RelativePath", &sample.relative),
+        valued("Path", &sample.path),
+        valued("Type", "2"),
+        valued("LivePackName", ""),
+        valued("LivePackId", ""),
+        valued("OriginalFileSize", &sample.bytes.to_string()),
+        valued("OriginalCrc", "0"),
+    ];
+    let mut reference = Element::new("SampleRef");
+    reference.children = vec![
+        file,
+        valued("LastModDate", &sample.written.to_string()),
+        Element::new("SourceContext"),
+        valued("SampleUsageHint", "0"),
+        valued("DefaultDuration", &sample.frames.to_string()),
+        valued("DefaultSampleRate", &sample.rate.to_string()),
+    ];
+    match made.children.iter_mut().find(|c| c.name == "SampleRef") {
+        Some(standing) => *standing = reference,
+        None => made.children.push(reference),
+    }
+    let was = lane_ids(part);
+    let target = listed_mut(root, track)?;
+    edit::lay_over(target, "Sample", from, to, Some(bpm), vec![made])?;
+    let now = lane_ids(target);
+    let new = now.iter().position(|i| !was.contains(i));
+    Ok(Done {
+        words: format!(
+            "Consolidated {} audio clip{} between beat {} and beat {} into one, {} second{} of sound written beside the set as {}.",
+            lane.len(),
+            if lane.len() == 1 { "" } else { "s" },
+            number_text(from),
+            number_text(to),
+            number_text((seconds * 1000.0).round() / 1000.0),
+            if seconds == 1.0 { "" } else { "s" },
+            sample.relative
+        ),
+        at: new.map(|j| json!({"track": track, "arrangement": j})),
+        places: Places::Lane {
+            track: id,
+            before: was,
+            after: now,
+            dropped: None,
+            copied: Vec::new(),
+        },
+    })
+}
+
+/// Consolidate on audio part `track` of the set at `path` (see [`audio_consolidate`]), against its revision: `wav`, what its
+/// clips play across beats `from`–`to` rendered alone by the engine, a WAV file's bytes, is kept beside the set under
+/// [`CONSOLIDATE_DIR`] by its content (`<first clip's name> [<its sha256's first 16 hex>].wav`: the same render is one file, and
+/// a [`CONSOLIDATE_IGNORE`] keeps them out of git, DLW §10.3 "large media is held by its content hash, out of git"), then the
+/// clip that plays it laid. Answered as any act, with the sample (`path`, `sha256`, `bytes`, `frames`, `rate`); refused in words,
+/// with no sample left behind, for a render that is not a WAV of the stretch, a part that is not an audio part, a stretch with no
+/// clip, and a set that changed since it was read.
+pub fn consolidate_audio(
+    path: &str,
+    expected_revision: &str,
+    track: usize,
+    from: f64,
+    to: f64,
+    wav: &[u8],
+) -> Result<Value, String> {
+    use sha2::{Digest, Sha256};
+    if !(from.is_finite() && to.is_finite() && to > from) {
+        return Err("Consolidate takes a stretch of the ruler: its end after its start".into());
+    }
+    if wav.len() > CONSOLIDATED_BYTES_MAX {
+        return Err(format!(
+            "A consolidated sample is at most {} MiB",
+            CONSOLIDATED_BYTES_MAX / (1024 * 1024)
+        ));
+    }
+    let (_channels, rate, frames) = wav_shape(wav)?;
+    let (_, root) = edit::open(path)?;
+    let part = track_at(&root, track)?;
+    let named = edit::main_lane(part)
+        .into_iter()
+        .filter(|clip| clip.name == "AudioClip")
+        .find(|clip| {
+            edit::num(clip, "CurrentEnd").unwrap_or(0.0) > from
+                && edit::num(clip, "CurrentStart").unwrap_or(0.0) < to
+        })
+        .and_then(|clip| value_of(clip, "Name"))
+        .filter(|name| !name.is_empty())
+        .unwrap_or("Consolidated")
+        .replace(['/', ':', '\\'], "-");
+    let hex: String = Sha256::digest(wav)
+        .iter()
+        .map(|b| format!("{b:02x}"))
+        .collect();
+    let set = std::path::Path::new(path);
+    let folder = set.parent().ok_or("the set has no parent directory")?;
+    let relative = format!("{CONSOLIDATE_DIR}/{named} [{}].wav", &hex[..16]);
+    let file = folder.join(&relative);
+    let kept = std::fs::read(&file).ok();
+    if kept.as_deref().is_some_and(|kept| kept != wav) {
+        return Err(format!(
+            "{relative} beside the set holds another sound: nothing was consolidated"
+        ));
+    }
+    let consolidated = Consolidated {
+        relative: relative.clone(),
+        path: file.to_string_lossy().into_owned(),
+        bytes: wav.len(),
+        frames,
+        rate,
+        written: std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map_or(0, |d| d.as_secs()),
+    };
+    // The sample is written once the act is made in the document, and the document once the sample is written: a refusal on
+    // either side leaves neither.
+    let written = std::cell::Cell::new(false);
+    let answered = acted(
+        path,
+        expected_revision,
+        &SetAct::ClipsConsolidate { track, from, to },
+        Some(&consolidated),
+        &|| {
+            if kept.is_some() {
+                return Ok(());
+            }
+            let dir = folder.join(CONSOLIDATE_DIR);
+            std::fs::create_dir_all(&dir)
+                .map_err(|e| format!("The consolidated sample's folder could not be made: {e}"))?;
+            let ignore = dir.join(".gitignore");
+            if !ignore.exists() {
+                staged_write(&ignore, CONSOLIDATE_IGNORE.as_bytes())?;
+            }
+            staged_write(&file, wav)?;
+            written.set(true);
+            Ok(())
+        },
+    );
+    match answered {
+        Ok(mut answer) => {
+            answer["sample"] = json!({"path": relative, "sha256": format!("sha256:{hex}"), "bytes": wav.len(), "frames": frames, "rate": rate});
+            Ok(answer)
+        }
+        Err(why) => {
+            if written.get() {
+                let _ = std::fs::remove_file(&file);
+            }
+            Err(why)
+        }
+    }
+}
+
+/// Write `bytes` to `path` through a file beside it, renamed into place.
+fn staged_write(path: &std::path::Path, bytes: &[u8]) -> Result<(), String> {
+    let name = path
+        .file_name()
+        .map(|n| n.to_string_lossy().into_owned())
+        .unwrap_or_default();
+    let staged = path.with_file_name(format!(".{name}.{}.tmp", std::process::id()));
+    std::fs::write(&staged, bytes)
+        .and_then(|()| std::fs::rename(&staged, path))
+        .map_err(|e| {
+            let _ = std::fs::remove_file(&staged);
+            format!(
+                "{} could not be written beside the set: {e}",
+                path.display()
+            )
+        })
 }
 
 /// The set's next `TakeId`: one past the highest any clip of the set carries
@@ -2560,8 +2916,11 @@ fn take_id_of(made: &mut Element, take: u64) {
     }
 }
 
-/// A pass recorded into the empty slot in row `scene` of a MIDI part (O-I #743): the take's clip `made` (Insert MIDI Clip's shape, looped
-/// over its length as that lays one) stands in the slot under its name, carrying `take`; nothing else of the part moves.
+/// A pass recorded into the empty slot in row `scene` of an armed MIDI part (O-I #743; Live: an armed track's empty slots are record
+/// buttons, so the part's `Recorder/IsArmed` must stand true): the take's clip `made` (Insert MIDI Clip's shape) stands in the slot
+/// under its name, carrying `take`, with no `Time` — a session-slot clip carries none (session-model.md §7: the anchoring attribute is
+/// "absent on session-slot clips") — and its loop off, as Live's own takes carry it, the one loop state a recorded pass is attested in
+/// (take lanes, `take_record`). Nothing else of the part moves.
 fn slot_take(
     root: &mut Element,
     track: usize,
@@ -2572,9 +2931,25 @@ fn slot_take(
     notes: usize,
 ) -> Result<Done, String> {
     let scenes = scene_count(root);
-    let part_name = track_name(track_at(root, track)?);
+    let part = track_at(root, track)?;
+    let part_name = track_name(part);
+    let armed = part
+        .child("DeviceChain")
+        .and_then(|chain| chain.child("MainSequencer"))
+        .and_then(|sequencer| sequencer.child("Recorder"))
+        .and_then(|recorder| edit::flag(recorder, "IsArmed"))
+        == Some(true);
+    if !armed {
+        return Err(format!(
+            "{part_name} is not armed: Live records into a slot of an armed part, so arm it first"
+        ));
+    }
     if made.child("Name").is_some() {
         set_value(&mut made, "Name", name)?;
+    }
+    made.attrs.retain(|(attr, _)| attr != "Time");
+    if let Some(looped) = made.child_mut("Loop") {
+        set_value(looped, "LoopOn", "false")?;
     }
     take_id_of(&mut made, take);
     let slot = slot_mut(listed_mut(root, track)?, scene, scenes)?;
@@ -2714,6 +3089,18 @@ fn new_places(places: &Places, track: &str, at: ClipAt) -> Vec<(String, ClipAt)>
 /// `{act, done, at, revision}` (`at`: where it left what it made), with
 /// `sourceRefused` when the DLW's record beside the set could not follow.
 pub fn act(path: &str, expected_revision: &str, act: &SetAct) -> Result<Value, String> {
+    acted(path, expected_revision, act, None, &|| Ok(()))
+}
+
+/// [`act`], with an audio part's consolidated sample where the act is its Consolidate (`consolidate_audio`), and `before` run
+/// once the act is made and before the document is written (a refusal from it leaves the document as it stood).
+fn acted(
+    path: &str,
+    expected_revision: &str,
+    act: &SetAct,
+    sample: Option<&Consolidated>,
+    before: &dyn Fn() -> Result<(), String>,
+) -> Result<Value, String> {
     if let SetAct::TorusKeep { track, torus } = act {
         return torus_keep(path, expected_revision, *track, torus.as_ref());
     }
@@ -2751,7 +3138,7 @@ pub fn act(path: &str, expected_revision: &str, act: &SetAct) -> Result<Value, S
             SetAct::TracksGroup { tracks } => tracks_group(root, tracks)?,
             SetAct::ClipSplit { track, clip, at } => clip_split(root, *track, *clip, *at)?,
             SetAct::ClipsConsolidate { track, from, to } => {
-                clips_consolidate(root, *track, *from, *to)?
+                clips_consolidate(root, *track, *from, *to, sample)?
             }
             SetAct::TakeRecord {
                 track,
@@ -2776,7 +3163,7 @@ pub fn act(path: &str, expected_revision: &str, act: &SetAct) -> Result<Value, S
             } => rack_place(root, *track, name, macros, variations, chain)?,
             SetAct::TorusKeep { .. } => unreachable!("kept above, the set unwritten"),
         });
-        Ok(())
+        before()
     })?;
     let done = done.ok_or("the act was not made")?;
     let name = serde_json::to_value(act)
@@ -3326,6 +3713,41 @@ mod tests {
                 ("Verse".into(), 4.0, 8.0),
                 ("Chorus".into(), 8.0, 10.0)
             ]
+        );
+    }
+
+    // O-I #743, Record into a slot: a take's clip made in its part's own shape stands at Time 0, as an arrangement clip does (edit.rs
+    // blank_clip); laid in a slot it carries no Time (session-model.md §7: the anchoring attribute is "absent on session-slot clips"),
+    // and its loop is off, as Live's own takes carry it.
+    #[test]
+    fn a_take_laid_in_a_slot_carries_no_time_though_the_shape_it_was_made_in_did() {
+        let armed = SET.replacen(
+            "</ClipSlotList>",
+            r#"</ClipSlotList><Recorder><IsArmed Value="true"/></Recorder>"#,
+            1,
+        );
+        let mut root = crate::xml::parse(&armed).unwrap();
+        let mut made = crafted_clip(None, 4.0);
+        made.set_attr("Time", "0");
+        let done = slot_take(&mut root, 0, 1, made, 9, "Take 9", 1).unwrap();
+        assert!(
+            done.words.contains("into the slot in row 2"),
+            "{}",
+            done.words
+        );
+        let scenes = scene_count(&root);
+        let slot = slot_mut(listed_mut(&mut root, 0).unwrap(), 1, scenes).unwrap();
+        let clip = &slot_value(slot).unwrap().children[0];
+        assert_eq!(
+            clip.attr("Time"),
+            None,
+            "a session-slot clip carries no Time"
+        );
+        assert_eq!(
+            clip.child("Loop")
+                .and_then(|looped| value_of(looped, "LoopOn")),
+            Some("false"),
+            "its loop off, as Live's takes"
         );
     }
 
@@ -4596,5 +5018,287 @@ mod tests {
             refused.contains("render"),
             "an audio part's consolidate waits for a render: {refused}"
         );
+    }
+
+    /// An audio part in Live 12's shape (the template's AudioClip: its loop markers in seconds while unwarped, its fades, warp
+    /// markers and SampleRef), two clips on its lane at 120 BPM: Room 0–4 and Answer 4–8.
+    const AUDIO_LANE: &str = r#"<?xml version="1.0" encoding="UTF-8"?>
+<Ableton MajorVersion="5" MinorVersion="12.0_12049"><LiveSet><Tracks>
+<AudioTrack Id="8"><Name><EffectiveName Value="Vox"/><UserName Value=""/></Name><Color Value="26"/><TrackGroupId Value="-1"/>
+<DeviceChain><MainSequencer><ClipSlotList/><Sample><ArrangerAutomation><Events>
+<AudioClip Id="0" Time="0"><CurrentStart Value="0"/><CurrentEnd Value="4"/><Loop><LoopStart Value="0"/><LoopEnd Value="2"/><StartRelative Value="0"/><LoopOn Value="false"/><OutMarker Value="2"/><HiddenLoopStart Value="0"/><HiddenLoopEnd Value="2"/></Loop><Name Value="Room"/><Annotation Value=""/><Color Value="3"/><Envelopes><Envelopes><ClipEnvelope Id="0"><EnvelopeTarget><PointeeId Value="1500"/></EnvelopeTarget><Automation><Events/></Automation></ClipEnvelope></Envelopes></Envelopes><Disabled Value="false"/><IsWarped Value="false"/><Fades><FadeInLength Value="0.01"/><FadeOutLength Value="0"/></Fades><PitchCoarse Value="0"/><PitchFine Value="0"/><SampleVolume Value="0.5"/><WarpMarkers><WarpMarker Id="0" SecTime="0" BeatTime="0"/><WarpMarker Id="1" SecTime="0.015625" BeatTime="0.03125"/></WarpMarkers><TakeId Value="1"/><SampleRef><FileRef><RelativePathType Value="1"/><RelativePath Value="room.wav"/><Path Value=""/><Type Value="2"/><LivePackName Value=""/><LivePackId Value=""/><OriginalFileSize Value="0"/><OriginalCrc Value="0"/></FileRef><LastModDate Value="0"/><SourceContext/><SampleUsageHint Value="0"/><DefaultDuration Value="96000"/><DefaultSampleRate Value="48000"/></SampleRef></AudioClip>
+<AudioClip Id="1" Time="4"><CurrentStart Value="4"/><CurrentEnd Value="8"/><Loop><LoopStart Value="1"/><LoopEnd Value="3"/><StartRelative Value="0"/><LoopOn Value="false"/><OutMarker Value="3"/><HiddenLoopStart Value="1"/><HiddenLoopEnd Value="3"/></Loop><Name Value="Answer"/><Annotation Value=""/><Color Value="4"/><Envelopes><Envelopes/></Envelopes><Disabled Value="false"/><IsWarped Value="false"/><Fades><FadeInLength Value="0"/><FadeOutLength Value="0"/></Fades><PitchCoarse Value="0"/><PitchFine Value="0"/><SampleVolume Value="1"/><WarpMarkers><WarpMarker Id="0" SecTime="0" BeatTime="0"/><WarpMarker Id="1" SecTime="0.015625" BeatTime="0.03125"/></WarpMarkers><TakeId Value="2"/><SampleRef><FileRef><RelativePathType Value="1"/><RelativePath Value="answer.wav"/><Path Value=""/><Type Value="2"/><LivePackName Value=""/><LivePackId Value=""/><OriginalFileSize Value="0"/><OriginalCrc Value="0"/></FileRef><LastModDate Value="0"/><SourceContext/><SampleUsageHint Value="0"/><DefaultDuration Value="144000"/><DefaultSampleRate Value="48000"/></SampleRef></AudioClip>
+</Events></ArrangerAutomation></Sample></MainSequencer><DeviceChain><Devices/></DeviceChain></DeviceChain></AudioTrack>
+</Tracks><MainTrack><DeviceChain><Mixer><Tempo><Manual Value="120"/></Tempo></Mixer></DeviceChain></MainTrack><Scenes><Scene Id="0"><Name Value=""/></Scene></Scenes></LiveSet></Ableton>"#;
+
+    /// A 32-bit float WAV of `frames` stereo frames at `rate`, frame `i` at `i / frames` on the left and its negative on the right.
+    fn float_wav(frames: usize, rate: u32) -> Vec<u8> {
+        let mut data = Vec::with_capacity(frames * 8);
+        for i in 0..frames {
+            let v = i as f32 / frames as f32;
+            data.extend_from_slice(&v.to_le_bytes());
+            data.extend_from_slice(&(-v).to_le_bytes());
+        }
+        let mut out = b"RIFF".to_vec();
+        out.extend_from_slice(&(36 + data.len() as u32).to_le_bytes());
+        out.extend_from_slice(b"WAVEfmt ");
+        out.extend_from_slice(&16u32.to_le_bytes());
+        out.extend_from_slice(&3u16.to_le_bytes());
+        out.extend_from_slice(&2u16.to_le_bytes());
+        out.extend_from_slice(&rate.to_le_bytes());
+        out.extend_from_slice(&(rate * 8).to_le_bytes());
+        out.extend_from_slice(&8u16.to_le_bytes());
+        out.extend_from_slice(&32u16.to_le_bytes());
+        out.extend_from_slice(b"data");
+        out.extend_from_slice(&(data.len() as u32).to_le_bytes());
+        out.extend_from_slice(&data);
+        out
+    }
+
+    // O-I #743: Consolidate on an audio part (manual §10.9 "In Arrangement view, Split (⌘E), Consolidate (⌘J)"): what its clips play in
+    // the stretch, rendered alone by the engine, kept beside the set where Live keeps a consolidated sample, and one AudioClip laid
+    // over the stretch that plays it, its SampleRef in the shape session-model.md §5 and the template attest.
+    #[test]
+    fn consolidate_writes_one_sample_of_what_an_audio_part_plays_beside_the_set_and_lays_the_clip_that_plays_it(
+    ) {
+        let (dir, path) = set_file(AUDIO_LANE);
+        let wav = float_wav(144_000, 48_000);
+        let made = consolidate_audio(&path, &standing(&path), 0, 1.0, 7.0, &wav).unwrap();
+        let sha: String = {
+            use sha2::{Digest, Sha256};
+            Sha256::digest(&wav)
+                .iter()
+                .map(|b| format!("{b:02x}"))
+                .collect()
+        };
+        let relative = format!("Samples/Processed/Consolidate/Room [{}].wav", &sha[..16]);
+        assert_eq!(
+            made["done"],
+            json!(format!("Consolidated 2 audio clips between beat 1 and beat 7 into one, 3 seconds of sound written beside the set as {relative}."))
+        );
+        assert_eq!(made["at"], json!({"track": 0, "arrangement": 1}));
+        assert_eq!(
+            made["sample"],
+            json!({"path": relative, "sha256": format!("sha256:{sha}"), "bytes": wav.len(), "frames": 144_000, "rate": 48_000})
+        );
+        assert_eq!(
+            std::fs::read(dir.0.join(&relative)).unwrap(),
+            wav,
+            "the sample is kept beside the set as rendered"
+        );
+        assert_eq!(
+            std::fs::read_to_string(dir.0.join("Samples/Processed/Consolidate/.gitignore"))
+                .unwrap(),
+            "# Consolidated samples, held by their content hash out of git (DLW §10.3)\n*.wav\n"
+        );
+        assert_eq!(
+            lane_of(&path),
+            vec![
+                ("Room".into(), 0.0, 1.0),
+                ("Room".into(), 1.0, 7.0),
+                ("Answer".into(), 7.0, 8.0)
+            ],
+            "the clips under the stretch give way to it, as a MIDI part's do"
+        );
+        let (root, _) = reread(&path);
+        let lane = crate::edit::main_lane(crate::edit::track_at(&root, 0).unwrap());
+        let clip = lane[1];
+        assert_eq!(
+            (clip.name.as_str(), clip.attr("Time")),
+            ("AudioClip", Some("1"))
+        );
+        let lp = clip.child("Loop").unwrap();
+        let markers: Vec<_> = [
+            "LoopStart",
+            "LoopEnd",
+            "StartRelative",
+            "LoopOn",
+            "OutMarker",
+            "HiddenLoopStart",
+            "HiddenLoopEnd",
+        ]
+        .iter()
+        .map(|m| value_of(lp, m).unwrap())
+        .collect();
+        assert_eq!(
+            markers,
+            ["0", "3", "0", "false", "3", "0", "3"],
+            "unwarped, its markers in seconds: the whole sample, once"
+        );
+        for (child, want) in [
+            ("IsWarped", "false"),
+            ("SampleVolume", "1"),
+            ("PitchCoarse", "0"),
+            ("PitchFine", "0"),
+            ("Disabled", "false"),
+            ("Name", "Room"),
+        ] {
+            assert_eq!(value_of(clip, child), Some(want), "{child}");
+        }
+        let fades = clip.child("Fades").unwrap();
+        assert_eq!(
+            (
+                value_of(fades, "FadeInLength"),
+                value_of(fades, "FadeOutLength")
+            ),
+            (Some("0"), Some("0")),
+            "what the clips' fades did is in the sample"
+        );
+        assert!(
+            clip.child("Envelopes")
+                .unwrap()
+                .child("Envelopes")
+                .unwrap()
+                .children
+                .is_empty(),
+            "nor does a clip envelope of the clips move it"
+        );
+        let warp: Vec<_> = clip
+            .child("WarpMarkers")
+            .unwrap()
+            .children
+            .iter()
+            .map(|m| {
+                (
+                    m.attr("Id").unwrap(),
+                    m.attr("SecTime").unwrap(),
+                    m.attr("BeatTime").unwrap(),
+                )
+            })
+            .collect();
+        assert_eq!(
+            warp,
+            [("0", "0", "0"), ("1", "0.015625", "0.03125")],
+            "Live's own pair at the set's tempo"
+        );
+        let sample = clip.child("SampleRef").unwrap();
+        let file = sample.child("FileRef").unwrap();
+        let folder = std::path::Path::new(&path).parent().unwrap();
+        let stored: Vec<_> = [
+            "RelativePathType",
+            "RelativePath",
+            "Path",
+            "Type",
+            "LivePackName",
+            "LivePackId",
+            "OriginalFileSize",
+            "OriginalCrc",
+        ]
+        .iter()
+        .map(|f| value_of(file, f).unwrap().to_string())
+        .collect();
+        assert_eq!(
+            stored,
+            [
+                "1".to_string(),
+                relative.clone(),
+                folder.join(&relative).to_string_lossy().into_owned(),
+                "2".into(),
+                String::new(),
+                String::new(),
+                wav.len().to_string(),
+                "0".into()
+            ]
+        );
+        assert_eq!(
+            sample
+                .children
+                .iter()
+                .map(|c| c.name.as_str())
+                .collect::<Vec<_>>(),
+            [
+                "FileRef",
+                "LastModDate",
+                "SourceContext",
+                "SampleUsageHint",
+                "DefaultDuration",
+                "DefaultSampleRate"
+            ]
+        );
+        assert_eq!(
+            (
+                value_of(sample, "DefaultDuration"),
+                value_of(sample, "DefaultSampleRate")
+            ),
+            (Some("144000"), Some("48000"))
+        );
+        assert!(
+            crate::edit::num(sample, "LastModDate").unwrap() > 1.7e9,
+            "the sample's own time, in seconds"
+        );
+        // The same render consolidated again keeps the one file; what is not a sample of the stretch is refused, and nothing written.
+        let again = consolidate_audio(&path, &standing(&path), 0, 1.0, 7.0, &wav).unwrap();
+        assert_eq!(again["sample"]["path"], json!(relative));
+        let kept = std::fs::read_dir(dir.0.join("Samples/Processed/Consolidate"))
+            .unwrap()
+            .count();
+        assert_eq!(kept, 2, "the sample and its .gitignore");
+        for (bytes, from, to, words) in [
+            (b"not a wav".to_vec(), 1.0, 7.0, "is not a WAV file"),
+            (
+                float_wav(96_000, 48_000),
+                1.0,
+                7.0,
+                "runs 2 seconds, and the stretch 3 seconds at the set's tempo",
+            ),
+            (
+                wav.clone(),
+                20.0,
+                26.0,
+                "No audio clip lies between beat 20 and beat 26",
+            ),
+            (wav.clone(), 1.0, 1.0, "end after its start"),
+        ] {
+            let refused =
+                consolidate_audio(&path, &standing(&path), 0, from, to, &bytes).unwrap_err();
+            assert!(refused.contains(words), "{refused}");
+        }
+        assert_eq!(
+            std::fs::read_dir(dir.0.join("Samples/Processed/Consolidate"))
+                .unwrap()
+                .count(),
+            2,
+            "a refused one writes no sample"
+        );
+        let mut other = wav.clone();
+        let last = other.len() - 1;
+        other[last] ^= 1;
+        let stale = consolidate_audio(&path, "sha256:stale", 0, 1.0, 7.0, &other).unwrap_err();
+        assert!(stale.contains("changed since it was read"), "{stale}");
+        assert_eq!(
+            std::fs::read_dir(dir.0.join("Samples/Processed/Consolidate"))
+                .unwrap()
+                .count(),
+            2,
+            "nor does one on a set that changed"
+        );
+        // A file of the render's own name beside the set that holds another sound is not written over, and nothing is consolidated.
+        std::fs::write(dir.0.join(&relative), b"another sound").unwrap();
+        let before = standing(&path);
+        let held = consolidate_audio(&path, &before, 0, 1.0, 7.0, &wav).unwrap_err();
+        assert!(
+            held.contains("beside the set holds another sound: nothing was consolidated"),
+            "{held}"
+        );
+        assert_eq!(
+            std::fs::read(dir.0.join(&relative)).unwrap(),
+            b"another sound",
+            "the file beside the set stands as it was"
+        );
+        assert_eq!(standing(&path), before, "and the set as it was");
+        let (_midi_dir, midi) = set_file(LANE);
+        let refused = consolidate_audio(&midi, &standing(&midi), 0, 1.0, 7.0, &wav).unwrap_err();
+        assert!(refused.contains("is a MIDI part"), "{refused}");
+        // The act without a render still says where an audio part's consolidate is made.
+        let refused = run(
+            &path,
+            SetAct::ClipsConsolidate {
+                track: 0,
+                from: 1.0,
+                to: 7.0,
+            },
+        )
+        .unwrap_err();
+        assert!(refused.contains("the engine renders it"), "{refused}");
     }
 }

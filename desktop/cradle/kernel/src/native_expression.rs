@@ -49,14 +49,18 @@ pub enum Request {
     Close {
         lease: String,
     },
-    /// Seal the Torus take that began at the checkpoint the owner gave whose `value_sha256` is
-    /// `checkpoint_sha256` (O-I #855): the acts this owner was sent that landed within the take's render,
-    /// the checkpoint, and the sha256 of the render's PCM, all as this kernel relayed them under the lease.
-    /// No worker request: the answer is the sealed `oi.torus-take/v1` a performance admits, or a refusal in
-    /// words where the take cannot be sealed.
+    /// Seal the Torus take that began at a checkpoint the owner gave (O-I #855): named by the
+    /// `checkpoint_sha256` the kernel relayed it under, or given whole as `checkpoint`, as the take's course
+    /// keeps it (the kernel names it, `value_sha256`; the frame cannot): the acts this owner was sent that
+    /// landed within the take's render, the checkpoint, and the sha256 of the render's PCM, all as this kernel
+    /// relayed them under the lease. No worker request: the answer is the sealed `oi.torus-take/v1` a
+    /// performance admits, or a refusal in words where the take cannot be sealed.
     TorusTake {
         lease: String,
-        checkpoint_sha256: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        checkpoint_sha256: Option<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        checkpoint: Option<Value>,
     },
     /// Save the Torus as it stood at the checkpoint `checkpoint_sha256` its owner gave under the lease, as a
     /// sound named `name` on the body that checkpoint rang (O-I #852; kept.rs): the torus, or a form made a
@@ -1249,6 +1253,7 @@ impl Manager {
             Request::TorusTake {
                 lease,
                 checkpoint_sha256,
+                checkpoint,
             } => {
                 let owner = self
                     .active
@@ -1257,6 +1262,13 @@ impl Manager {
                 if lease != owner.lease {
                     return Err("native-expression.foreign_lease".into());
                 }
+                let checkpoint_sha256 = match (checkpoint_sha256, checkpoint) {
+                    (Some(sha256), None) => sha256,
+                    (None, Some(checkpoint)) => {
+                        crate::expression_performance::torus::value_sha256(&checkpoint)?
+                    }
+                    _ => return Err("A take is sealed from one checkpoint: name it by the sha256 the kernel relayed it under, or give it as its owner gave it".into()),
+                };
                 let take = owner
                     .take
                     .seal(&checkpoint_sha256, &owner.lease, &owner.identity)?;
@@ -4570,7 +4582,7 @@ import json,sys
 base={'schema':'ql.field-host-receipt/v1','available':True,'instance_ref':'test:instance'}
 state={'samples':0,'end':0}
 def field(): return {'event_ref':'test:event','subject_ref':'test:subject','generation':'0','samples_elapsed':str(state['samples']),'sample_rate':48000,'audio':[]}
-def kept(at): return {'schema':'ql.torus-checkpoint/v1','taken_at_samples':str(at),'sample_rate':48000,'event':{'m2':{},'m3':{},'m3_commands':[]},'seeds':{'tick12':7},'shape_ref':'shape:torus/1','damping_per_second':0.5,'voices':['scene:logic/0'],'amplitudes':[[0.001,0.0]],'session':{'settings':{'tuning':'logic','tempo_bpm':120.0}},'law':'kept'}
+def kept(at): return {'schema':'ql.torus-checkpoint/v1','taken_at_samples':str(at),'sample_rate':48000,'event':{'m2':{},'m3':{},'m3_commands':[]},'seeds':{'tick12':7},'shape_ref':'shape:torus/1','damping_per_second':0.5,'voices':['scene:logic/0'],'amplitudes':[[0.001,-0.0]],'session':{'settings':{'tuning':'logic','tempo_bpm':120.0}},'law':'kept'}
 print(json.dumps(dict(base,status='ready',last_request_id='0',field=field())),flush=True)
 for line in sys.stdin:
   r=json.loads(line); c=r['command']; op=c['operation']; extra={}
@@ -4670,8 +4682,69 @@ for line in sys.stdin:
             format!("sha256:{:x}", pcm.finalize())
         );
         assert_eq!(take["render"]["parts"], "2");
+        // The take is sealed as well from the checkpoint itself, as the take's course carries it through the frame (JSON as a frame
+        // writes it: no negative zero, and every number as JavaScript prints it): the kernel names it, since the frame cannot.
+        fn as_a_frame_carries(value: &Value) -> Value {
+            match value {
+                Value::Number(n) => serde_json::from_str(&ryu_js(n.as_f64().unwrap())).unwrap(),
+                Value::Array(items) => Value::Array(items.iter().map(as_a_frame_carries).collect()),
+                Value::Object(entries) => Value::Object(
+                    entries
+                        .iter()
+                        .map(|(k, v)| (k.clone(), as_a_frame_carries(v)))
+                        .collect(),
+                ),
+                other => other.clone(),
+            }
+        }
+        fn ryu_js(n: f64) -> String {
+            if n == 0.0 {
+                "0".into()
+            } else if n.fract() == 0.0 && n.abs() < 1e21 {
+                format!("{n:.0}")
+            } else {
+                n.to_string()
+            }
+        }
+        let carried = as_a_frame_carries(&kept);
+        assert_ne!(
+            serde_json::to_string(&carried).unwrap(),
+            serde_json::to_string(&kept).unwrap(),
+            "the frame's copy is written otherwise"
+        );
+        let by_value = |manager: &mut Manager, request: Value| {
+            manager.apply(
+                &CentralClient::with("/nonexistent".into(), None, String::new()),
+                serde_json::from_value(request).unwrap(),
+            )
+        };
+        let again = by_value(
+            &mut manager,
+            json!({"operation":"torus_take","lease":lease,"checkpoint":carried}),
+        )
+        .unwrap();
+        assert_eq!(
+            again["take_ref"], take["take_ref"],
+            "one take, however its checkpoint is named"
+        );
+        let mut never_given = carried.clone();
+        never_given["damping_per_second"] = json!(0.25);
+        let unknown = by_value(
+            &mut manager,
+            json!({"operation":"torus_take","lease":lease,"checkpoint":never_given}),
+        )
+        .unwrap_err();
+        assert!(unknown.contains("was given under this lease"), "{unknown}");
+        for neither_or_both in [
+            json!({"operation":"torus_take","lease":lease}),
+            json!({"operation":"torus_take","lease":lease,"checkpoint":carried,"checkpoint_sha256":sha}),
+        ] {
+            let refused = by_value(&mut manager, neither_or_both).unwrap_err();
+            assert_eq!(refused, "A take is sealed from one checkpoint: name it by the sha256 the kernel relayed it under, or give it as its owner gave it");
+        }
+        // The take as a frame carries it back (its checkpoints with no negative zero) is the take the kernel sealed.
         let sealed: crate::expression_performance::torus::TorusTake =
-            serde_json::from_value(take).unwrap();
+            serde_json::from_value(as_a_frame_carries(&take)).unwrap();
         sealed.verify_seal().unwrap();
         // The witness is the owner's: a closed owner seals nothing.
         manager

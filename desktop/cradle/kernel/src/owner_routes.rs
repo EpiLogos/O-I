@@ -359,6 +359,14 @@ pub enum QlRead {
         #[serde(default)]
         depth: Option<u8>,
     },
+    /// The engine's composition of one act through full C′ Vāk (`ql vak
+    /// compose`, `ql.vak-composition/v1` on stdin and back): each step's
+    /// result in order, so a Factory unit's heads in the Clip's Vāk tab are
+    /// QL's word (O-I #843). It stores nothing; a step QL cannot compose is
+    /// refused in QL's words.
+    VakCompose {
+        request: Value,
+    },
 }
 
 /// What a QL reading must carry to be the one asked for.
@@ -2292,6 +2300,12 @@ fn ql_registry_answer(request: &QlRead) -> Result<Reading, Error> {
                 QlCheck::Contract("ql.vak-context/v1"),
             )
         }
+        QlRead::VakCompose { request } => (
+            "ql vak compose",
+            words(&["vak", "compose", "/dev/stdin", "--json"]),
+            Some(request),
+            QlCheck::Contract("ql.vak-composition/v1"),
+        ),
         _ => unreachable!("the M-engine, scene and ledger reads are answered by ql_answer"),
     };
     let mut call = Call::new(ql(), route, args, READ_LIMIT);

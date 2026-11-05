@@ -21,6 +21,7 @@ import type {FrameChromeControl, FrameChromeReading, HostedAppState} from '@epil
 import type {StageRun} from '../../components/expressions/studio/StudioStage'
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import {CANVAS_DESIGN, JOURNEY_DESIGN, TIMELINE_DESIGN, disabled, handsFor, missing, put, refusal} from './designDevices'
+import {refusalWords} from '../../../../../../desktop/cradle/src/shared/Refusal.tsx'
 
 /** What the shell holds of the frame now. */
 export interface FrameReadings {
@@ -407,15 +408,29 @@ const promoted = (next: Promotion | null) => { promotion = next; for (const list
 export const resetPromotion = (): void => promoted(null)
 /** A relation type the next line takes, and the way it runs: an echo runs both ways, the others one way. */
 const RELATION_TYPES: readonly string[] = ['echo', 'influence', 'cause', 'transform']
-const NO_PROMOTER = 'Promote: the relation\'s owner is not reached from this window.'
+const NO_PROMOTER = 'The relation\'s owner is not reached from this window.'
+const NO_SCENE = 'The Canvas presents no native Scene now: open the constellation\'s Expression on the Canvas, then promote a line of it.'
+/** The relate act's own words for a line that joins an occurrence to itself (desktop/cradle/src/techne/sceneConstellationRelation.ts). */
+const ONE_MEMBER = 'A relationship needs two different members.'
+/** What Promote's dimmed tip says first (DLW build ruling 2026-11-05, the Promote dim); the refusal's words follow (refusalWords). */
+const PROMOTE_REFUSED = 'Promote is refused.'
+/** Why the act would be refused now, before the owner is asked: no owner reached from this window (opening a Scene would not help), no
+ * Scene presented, or a line with one member. Null when only the owner can say (it may accept, change or refuse the line; a line promoted
+ * again is a second proposal, which it does not refuse). */
+function promoteRefusal(frame: FrameReadings, line: {readonly from: string; readonly to: string}, promoter: CanvasPromoter | null): string | null {
+  if (!promoter) return NO_PROMOTER
+  if (!frame.state?.nativeScene) return NO_SCENE
+  if (line.from === line.to) return ONE_MEMBER
+  return null
+}
 
 async function promote(frame: FrameReadings, held: Readonly<Record<string, Value>>, promoter: CanvasPromoter | null): Promise<void> {
   const board = frame.state?.research?.canvas, scene = frame.state?.nativeScene
   const line = board?.lines.find(candidate => candidate.id === board.selectedLine) ?? board?.lines[0]
   if (!line) throw Error(board ? 'The board holds no line to promote.' : unmounted(frame) ?? NOT_PRESENTED_BOARD)
   const refuse = (why: string): never => { promoted({line: line.id, result: 'refused', why}); throw Error(why) }
-  if (!scene) refuse('The Canvas presents no native Scene now: open the constellation\'s Expression on the Canvas, then promote a line of it.')
-  if (!promoter) refuse(NO_PROMOTER)
+  const why = promoteRefusal(frame, line, promoter)
+  if (why) refuse(why)
   const relation = typeof held.relation === 'string' && RELATION_TYPES.includes(held.relation) ? held.relation : 'echo'
   try {
     const receipt = await promoter!.relate({operation: 'relate', expression_ref: scene!.expression_ref, revision: scene!.revision, scene_ref: scene!.scene_ref,
@@ -567,7 +582,10 @@ export function canvasBinding(frame: FrameReadings, held: Readonly<Record<string
     values.promote = said.result
     if (said.result === 'refused') { values.refusal = said.why; delete standing.refusal } else values.promoteWhy = said.why
   } else if (selected) values.promote = 'ready'
-  if (!promoter) standing.promote = {disabled: NO_PROMOTER}
+  // DLW build ruling 2026-11-05 (the Promote dim): Promote dims where the act would be refused today, its tip the refusal's words through
+  // refusalWords, as every other dimmed control's. The face's own dims (no line, a line the owner recorded) stand behind this one.
+  const refused = why ? null : selected ? promoteRefusal(frame, selected, promoter) : promoter ? null : NO_PROMOTER
+  if (refused) standing.promote = {disabled: refusalWords(PROMOTE_REFUSED, refused)}
   for (const key of ['light', 'save', 'items', 'lines', 'frames', 'label', 'direction'] as const) if (!(key in values) && !(key in standing)) standing[key] = {disabled: canvasAbsent(frame, key)}
   return {
     id: CANVAS_ID,

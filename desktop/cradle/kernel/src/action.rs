@@ -60,7 +60,8 @@ pub fn central_action(action: &str) -> bool {
 
 /// The person's own presses that reach Central as Actions (T-COVERAGE §1.1): closing a NOW; the Day's settings, its moves'
 /// records, its rollover and its close-out carry; accepting and denying a returned source; making, keeping and removing an agent and a
-/// group; a world's relations; a document's own edit; a workspace's Accept (init, adopt, migrate) and its Docs' Ensure and Relate
+/// group, and naming an agent, hot-swapping what its chain carries and ordering it (`agent-profile.rename`, `.chain-replace`,
+/// `.chain-order`: the chain is the profile Central keeps for the agent, manual §19.4; DLW build ruling 2026-11-05); a world's relations; a document's own edit; a workspace's Accept (init, adopt, migrate) and its Docs' Ensure and Relate
 /// (manual §18.1 Ground, "accept it there"; §18.5 Docs), its UX and EX relations — Central's `projectcentral.docs.*` ids (its
 /// first `projectcentral.self.*` ids still answer there as deprecated aliases; the kernel presses the docs ids); the Machine's
 /// Apply, Adopt and Recover; Ground hygiene's
@@ -71,7 +72,8 @@ pub fn central_action(action: &str) -> bool {
 /// person's Accept, as the workspace's init, adopt and migrate are.
 /// A world named from its track (`central.world.name`, O-I #743: a world's Rename reaches the world itself, in the browser too) is the
 /// person's press, and Central admits it only on that authority. So is a world's declared place (`central.world.place`, O-I #745: where
-/// the Sky counts the world's hours when its Observer is Shared, manual §22.1).
+/// the Sky counts the world's hours when its Observer is Shared, manual §22.1), and its chain's order (`central.world.chain-order`,
+/// O-I #743: Scope and Docs moved after the packet and the agent, manual §16.2).
 /// Approvals' Deny on a returned source (`projectcentral.source.return_reject`) is the person's alone (manual §19.14, "Deny is always
 /// yours"), and Central admits it only on that authority (ctrl source_return.rs, O-I #805). Approvals' Changes
 /// (`projectcentral.source.return_comment`) is not among these: Central keeps a comment's declared `commented_by_ref` and reads no
@@ -79,7 +81,7 @@ pub fn central_action(action: &str) -> bool {
 /// A Control skill's revision that waits in Central (`control.skills.revision.accept` · `discard`, O-I 795): Central writes it as the
 /// skill in use on the person's Accept, and drops it on the person's Discard, admitting each on that authority only (ctrl
 /// control_skills.rs). Proposing one (`control.skills.revision.propose`, AIKit's hand) carries no token.
-pub const PERSON_ACTS: [&str; 35] = [
+pub const PERSON_ACTS: [&str; 39] = [
     "central.now.lifecycle",
     "central.day.settings.write",
     "central.day.move.record",
@@ -91,6 +93,9 @@ pub const PERSON_ACTS: [&str; 35] = [
     "agent-profile.accept",
     "agent-profile.save",
     "agent-profile.remove",
+    "agent-profile.rename",
+    "agent-profile.chain-replace",
+    "agent-profile.chain-order",
     "central.agent-set.propose",
     "central.agent-set.save",
     "central.agent-set.remove",
@@ -113,6 +118,7 @@ pub const PERSON_ACTS: [&str; 35] = [
     "projectcentral.ground.apply",
     "central.world.name",
     "central.world.place",
+    "central.world.chain-order",
     "control.skills.revision.accept",
     "control.skills.revision.discard",
 ];
@@ -541,6 +547,17 @@ mod tests {
             "central.agent-set.remove is the person's press"
         );
         assert!(!person_act("central.agent-set.read"));
+        // Naming an agent, hot-swapping what its chain carries and ordering it (manual §19.4 "The chain is the profile Central keeps for
+        // the agent"; DLW build ruling 2026-11-05) are the person's presses, as making and keeping the agent is; reading it carries nothing.
+        for id in [
+            "agent-profile.rename",
+            "agent-profile.chain-replace",
+            "agent-profile.chain-order",
+        ] {
+            assert!(central_action(id), "{id} is Central's");
+            assert!(person_act(id), "{id} is the person's press");
+        }
+        assert!(!person_act("agent-profile.read"));
         // A world named from its track (O-I #743): Central admits the name on the person's authority only.
         assert!(
             person_act("central.world.name"),
@@ -550,6 +567,11 @@ mod tests {
         assert!(
             person_act("central.world.place"),
             "central.world.place is the person's press"
+        );
+        // A world's chain order (O-I #743): Central admits it on the person's authority only.
+        assert!(
+            person_act("central.world.chain-order"),
+            "central.world.chain-order is the person's press"
         );
         // A Control skill's revision that waits in Central (O-I 795): Central writes it on the person's Accept, and drops it on the
         // person's Discard, admitting each on that authority only (ctrl control_skills.rs). Proposing one carries nothing.

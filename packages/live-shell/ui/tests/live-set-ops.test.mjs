@@ -225,9 +225,10 @@ test('the writes go through the set\'s owner on its revision: the send, the comp
   await assert.rejects(grooves.writeLiveGroove('/s.als', 1, 'base', '1/8t'), out)
   await assert.rejects(grooves.writeLiveGlobalGroove('/s.als', 120), out)
   const set = writes.liveSetWrites('/s.als')
-  assert.deepEqual(Object.keys(set).sort(), ['act', 'clipInfo', 'compWrite', 'insertClip', 'mixerWrite', 'openSound', 'sendWrite'],
-    'O-I #743: the acts on the set\'s objects, Insert clip and the info text; O-I #852: a kept sound opened on a part (live/LivePresets.tsx playKeptSoundOn)')
+  assert.deepEqual(Object.keys(set).sort(), ['act', 'clipInfo', 'compWrite', 'consolidateAudio', 'insertClip', 'mixerWrite', 'openSound', 'sendWrite'],
+    'O-I #743: the acts on the set\'s objects, Insert clip, the info text and an audio part\'s Consolidate (the engine\'s render); O-I #852: a kept sound opened on a part (live/LivePresets.tsx playKeptSoundOn)')
   assert.equal(typeof set.openSound, 'function')
+  await assert.rejects(set.consolidateAudio(0, {start: 0, end: 4}), out)
   await assert.rejects(set.compWrite(0, 1, {start: 0, end: 1}), out)
   await assert.rejects(set.act({kind: 'scene_insert', after: 0}), out)
   await assert.rejects(set.insertClip(2, 0), out)

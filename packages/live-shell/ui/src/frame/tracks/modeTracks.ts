@@ -27,7 +27,7 @@ import type {KernelTransportStatus, LiveClipAt} from '../../../../../../desktop/
 import {liveSetTrackAdapter} from '../../timeline/liveSetTrackAdapter'
 import {liveSetWrites} from '../../live/liveWrites'
 import {liveEngineState, subscribeLiveEngine, type LiveEngineReading} from '../../live/liveEngine'
-import type {ClipLaneStanding} from '../../live/clipPlayer'
+import type {ClipLaneStanding, RowSlot} from '../../live/clipPlayer'
 import {frameSoundReading, readStudioArm, setExpressionMuted, setExpressionSolo} from '../../native/frameSound'
 import {expressionsTrackAdapter} from '../../timeline/expressionsTrackAdapter'
 import {FACTORY_WAITING} from '../../timeline/factoryTrackAdapter'
@@ -252,7 +252,10 @@ export function liveTracks(set: SetSummary, document: SetDocument | null, colors
   engine: LiveEngineReading | null = null, lanes: ClipLaneStanding | null = null): WorldTrackSet {
   // The clip player loads with Live's transport (O-I #740: a mode's code is not the first load), so its acts reach it when pressed.
   const player = () => import('../../live/clipPlayer').then(module => module.liveClipActs)
-  const play = {launch: (track: number, at: LiveClipAt) => player().then(acts => acts.launch({path: set.path, track, at}, set.tempo_bpm)),
+  // A launch lands on its clip's quantize, Global the set's (the transport's Quantize, model.rs global_quantize).
+  const quantize = document?.globalQuantize ?? null
+  const play = {launch: (track: number, at: LiveClipAt) => player().then(acts => acts.launch({path: set.path, track, at}, set.tempo_bpm, quantize)),
+    launchRow: (row: number, slots: readonly RowSlot[]) => player().then(acts => acts.launchRow(set.path, row, set.tempo_bpm, slots, quantize)),
     stop: (track: number) => player().then(acts => acts.stop(set.path, track, set.tracks[track]?.name ?? 'the track')),
     stopAll: () => player().then(acts => acts.stopAll()),
     reenable: (parameter?: string) => player().then(acts => acts.reenable(parameter))}

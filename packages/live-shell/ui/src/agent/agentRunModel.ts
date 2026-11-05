@@ -91,6 +91,10 @@ export interface AgentSessionTrack {
   /** On a group track: the session its SessionSpace names its Decision helper (AIKit's `decision_helper` on the space's record, §19.15,
    * §19.20), which answers every agent's asks first. On that session's own track: true. Absent where the space names none. */
   decisionHelper?: string | true
+  /** On a group track: the agent sets its SessionSpace holds as chains (AIKit's `set_chains` on the space's record, §19.15 "An agent set
+   * is a chain that holds a nested Agent rack"; `aikit session-space group`): each the set's own space, whose sessions are the set's
+   * chains, and what the set is for. Absent where the space holds none. */
+  setChains?: {space: string; purpose: string | null}[]
 }
 
 /** One row of an `agency_read` reading (desktop/cradle agencyTypes.ts:117). */
@@ -366,6 +370,19 @@ function decisionHelperOf(rows: readonly AgencyRowLike[]): string | undefined {
   return undefined
 }
 
+/** The agent sets a space's record holds as chains (AIKit's `set_chains`, keyed by each set's own space), from the first row that carries
+ * any, in the record's order. */
+function setChainsOf(rows: readonly AgencyRowLike[]): {space: string; purpose: string | null}[] | undefined {
+  for (const row of rows) {
+    const held = row.raw && typeof row.raw === 'object' ? (row.raw as {set_chains?: unknown}).set_chains : undefined
+    if (!held || typeof held !== 'object' || Array.isArray(held)) continue
+    const chains = Object.entries(held as Record<string, {space?: unknown; purpose?: unknown}>).flatMap(([key, chain]) =>
+      (chain && typeof chain === 'object' && chain.space === key && key ? [{space: key, purpose: typeof chain.purpose === 'string' && chain.purpose ? chain.purpose : null}] : []))
+    if (chains.length) return chains
+  }
+  return undefined
+}
+
 /** Whether a space's record benches a session (AIKit's `benched`, the session refs the space gives no work). */
 function benchedIn(row: AgencyRowLike): boolean {
   const benched = row.raw && typeof row.raw === 'object' ? (row.raw as {benched?: unknown}).benched : undefined
@@ -400,6 +417,7 @@ export function buildTracks(
     const memberRefs = space.rows.map(row => row.sessionRef)
     const agentSet = agentSetOf(space.rows)
     const helper = decisionHelperOf(space.rows)
+    const setChains = setChainsOf(space.rows)
     tracks.push({
       sessionRef: spaceRef,
       purpose: space.label,
@@ -420,6 +438,7 @@ export function buildTracks(
       ...(typeof space.rows[0]?.project === 'string' ? {project: space.rows[0].project} : {}),
       ...(agentSet ? {agentSet} : {}),
       ...(helper ? {decisionHelper: helper} : {}),
+      ...(setChains ? {setChains} : {}),
     })
     for (const row of space.rows) {
       const agentRef = typeof row.agentRef === 'string' && row.agentRef ? row.agentRef : null

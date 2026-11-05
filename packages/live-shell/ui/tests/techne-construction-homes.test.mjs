@@ -90,6 +90,29 @@ test('Promote\'s refusal comes back in the owner\'s words and stands on the line
   assert.match(frameB.canvasBinding(canvasFrame(), {}, null).standing.promote.disabled, /not reached/)
 })
 
+// DLW build ruling 2026-11-05 (the Promote dim): Promote dims where the act would be refused today, and the dimmed control's tip carries
+// the refusal's words through refusalWords (desktop/cradle/src/shared/Refusal.tsx), as every other dimmed control's. A line the owner may
+// take stays ready: promoting a line again records a second proposal, which the owner does not refuse.
+test('(r869) Promote dims where the act would be refused today, its tip the refusal\'s words; a line the owner may take stays ready', async () => {
+  frameB.resetPromotion()
+  const promoter = {relate: async () => ({relation_ref: 'wiki:relation:new', frame_revision: 4})}
+  assert.equal(frameB.canvasBinding(canvasFrame(), {}, promoter).standing.promote, undefined, 'a line between two occurrences of the Scene stays ready')
+  assert.equal(frameB.canvasBinding(canvasFrame(null), {}, promoter).standing.promote?.disabled,
+    'Promote is refused. The Canvas presents no native Scene now: open the constellation\'s Expression on the Canvas, then promote a line of it.')
+  assert.equal(frameB.canvasBinding(canvasFrame(), {}, null).standing.promote?.disabled, 'Promote is refused. The relation\'s owner is not reached from this window.')
+  const looped = {...canvasFrame(), state: {...canvasFrame().state, research: {canvas: {...BOARD, lines: [{id: 'line:2', from: 'entity:a', to: 'entity:a'}], selectedLine: 'line:2'}}}}
+  const loop = frameB.canvasBinding(looped, {}, promoter)
+  assert.equal(loop.standing.promote?.disabled, 'Promote is refused. A relationship needs two different members.', 'the owner\'s own words (sceneConstellationRelation.ts)')
+  // Pressed regardless (a key, a map), the act refuses in the same words, and the owner is never asked.
+  let asked = 0
+  await assert.rejects(frameB.canvasBinding(looped, {}, {relate: async () => { asked++; return {relation_ref: 'x', frame_revision: 1} }}).write([{key: 'promote', value: true}]), /^Error: A relationship needs two different members\.$/)
+  assert.equal(asked, 0)
+  frameB.resetPromotion()
+  const {readFile} = await import('node:fs/promises')
+  const source = await readFile(new URL('../src/techne/devices/frameBindings.ts', import.meta.url), 'utf8')
+  assert.match(source, /standing\.promote = \{disabled: refusalWords\(PROMOTE_REFUSED, refused\)\}/, 'the tip through refusalWords')
+})
+
 // ---------------------------------------------------------------------------------------------------------------- the browser's menus
 
 const SPACE = {ref: 'wiki:node:s', title: 'The inquiry', kind: 'space', space: 'central:wiki:s', register: 'central', registerTitle: 'Central', members: [{ref: 'wiki:node:a', title: 'A', position: null, face: null}]}

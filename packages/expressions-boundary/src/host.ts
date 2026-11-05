@@ -316,7 +316,8 @@ export class ExpressionsHost {
       this.seen.add(key);
       if (!this.options.owners.native) throw Error('No native Expressions owner is attached');
       const request = data.request;
-      if (!object(request) || !['source', 'open', 'compose', 'prepare_world', 'exchange', 'observe', 'torus_sound', 'torus_sound_open', 'close'].includes(String(request.operation))) throw Error('Unsupported native-expression operation');
+      // A take is sealed under the lease as a sound is (O-I #855, kernel native_expression.rs `torus_take`).
+      if (!object(request) || !['source', 'open', 'compose', 'prepare_world', 'exchange', 'observe', 'torus_sound', 'torus_sound_open', 'torus_take', 'close'].includes(String(request.operation))) throw Error('Unsupported native-expression operation');
       if (request.operation === 'open' || request.operation === 'compose') {
         if (this.nativeLease || this.nativeOpening) throw Error('This frame already owns or is opening a native driver');
         this.nativeOpening = true;

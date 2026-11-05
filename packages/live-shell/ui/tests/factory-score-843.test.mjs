@@ -200,7 +200,7 @@ test('Connect makes the unit wait on another and Thread form sets its form, thro
 
 // AIKit's fill reading, shaped as ai-kit decide_instrument.rs writes it (SCRIPTED: no decision model answered it).
 const FILL = {schema: 'aikit.instrument-fill/v1', instrument: {id: 'vak-block', organ: 'S4′ Anima', kind: 'vak-block', source: 'ql:skill:vak-evaluate'},
-  team_space: 'ql.vak-team-space/v1', subject: {key: 'eros-verify'}, chosen: {}, open: ['vak-cpf', 'vak-ct', 'vak-cp', 'vak-cf', 'vak-cfp', 'vak-cs', 'vak-direction'],
+  team_space: 'ql.vak-team-space/v2', subject: {key: 'eros-verify'}, chosen: {}, open: ['vak-cpf', 'vak-ct', 'vak-cp', 'vak-cf', 'vak-cfp', 'vak-cs', 'vak-direction'],
   rules: [], standing: 'evidence', engine: 'QL admits or refuses the block (`ql vak compose`); the owner of the composition checks it when it is accepted.',
   invocation_ref: 'invocation:01', calls: 1, outcome: 'completed', answered_by: 'kev-latest',
   picks: {'vak-cs': {field: 'sequence', label: 'CS3', confidence: 0.7}, 'vak-direction': {field: 'direction', label: 'returning-inquiry', confidence: 0.6},
@@ -295,7 +295,7 @@ test('QL\'s word on each unit: its seven heads checked as a Vāk-block cell by Q
   const absent = await score.readQlWord(async () => ({error: 'unknown Context-Frame operation `check`'}), cells)
   assert.equal(absent.state, 'absent')
   assert.match(JSON.parse(score.scoreValuesOf(reading, rack, null, absent)['score.check']).why, /QL's word on each unit is not read: QL did not check[\s\S]*unknown Context-Frame operation/)
-  assert.match((await score.readQlWord(answering({schema: 'ql.vak-team-space/v1'}), cells)).why, /ql\.instrument-cell-check\/v1/)
+  assert.match((await score.readQlWord(answering({schema: 'ql.vak-team-space/v2'}), cells)).why, /ql\.instrument-cell-check\/v1/)
   // The proposal: the unit's heads with the decision model's picks, a cell of its own; QL's word on it is the engine's word on the proposal.
   const bare = structuredClone(REAL.score)
   Object.assign(unitOf(bare, 'eros-verify'), {heads: null, composition: null})

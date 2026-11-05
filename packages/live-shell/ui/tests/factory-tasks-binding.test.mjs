@@ -101,13 +101,22 @@ test('Tasks writes the owners\' way: the timing through the Agent, a new task th
     assert.equal(binding.standing[key].disabled, tasks.TASKS_REFUSE[key], key)
     await assert.rejects(() => binding.write([{key, value: true}]), {message: tasks.TASKS_REFUSE[key]})
   }
-  for (const key of ['launch', 'stopAfter']) assert.match(tasks.TASKS_REFUSE[key], /factory_owner attempt-task-units names the task's units.*no kernel route/, key)
+  // REPLACED (BD r20 PORT, round 869): Stop after has its kernel route (factory_owner attempt-request-cancellation) and stands with its
+  // carrier as Retry does; Launch waits on Software Factory itself, which has no way yet to start a unit from its owners' readings.
+  assert.match(tasks.TASKS_REFUSE.launch, /^Launch: Software Factory has no way yet to start a unit from its owners' readings/)
+  assert.doesNotMatch(tasks.TASKS_REFUSE.launch, /kernel route/)
+  assert.match(tasks.TASKS_REFUSE.stopAfter, /no carrier to Factory's attempt-task-units and attempt-request-cancellation stands here/)
   assert.match(tasks.TASKS_REFUSE.retry, /no carrier to Factory's attempt-task-units and attempt-retry stands here/)
-  const retried = []
-  const carried = tasks.tasksBinding(input(), null, {selectTask() {}, queue: async () => {}, retry: async session => { retried.push(session) }})
+  const retried = [], stopped = []
+  const carried = tasks.tasksBinding(input(), null, {selectTask() {}, queue: async () => {}, retry: async session => { retried.push(session) },
+    stopAfter: async session => { stopped.push(session) }})
   assert.equal(carried.standing.retry, undefined, 'Retry stands with its carrier')
+  assert.equal(carried.standing.stopAfter, undefined, 'Stop after stands with its carrier')
+  assert.equal(carried.standing.launch.disabled, tasks.TASKS_REFUSE.launch, 'Launch waits on Software Factory')
   await carried.write([{key: 'retry', value: true}])
+  await carried.write([{key: 'stopAfter', value: true}])
   assert.deepEqual(retried, [input().session.sessionRef])
+  assert.deepEqual(stopped, [input().session.sessionRef])
   // The per-task settings are the session's settings on their owner (factory-session-settings.test.mjs): not read here, they say so.
   for (const key of ['mode', 'then', 'to', 'effort', 'toolCalls', 'register', 'form']) assert.equal(binding.standing[key].disabled, 'The session\'s settings are not read here.', key)
   assert.equal(calls.length, 3, 'no refusal dispatched anything')
@@ -164,4 +173,36 @@ test('(BD r19) a task\'s Retry: Factory\'s units of the task read (attempt-task-
   await assert.rejects(() => tasks.retryTask(owner({'attempt-task-units': UNITS, 'attempt-retry': {status: 'refused', refusal: {message: 'The unit has no retry grant.'}}}), '/state', 'central:task:t1'),
     {message: 'The unit has no retry grant.'})
   await assert.rejects(() => tasks.retryTask(owner({}), '/state', 'central:task:t1'), /answered something other than its units/)
+})
+
+// BD round 20 PORT (round 869): Stop after through Factory (kernel factory_retry.rs attempt_request_cancellation): the task's units read as
+// Retry reads them (attempt-task-units), the unit whose current attempt is the task's taken, and its cancellation asked
+// (attempt-request-cancellation). The answer is the kernel's oi.factory-attempt-cancellation/v1 (types.ts FactoryAttemptCancellation).
+test('(BD r20) a task\'s Stop after: its units read, the unit its current attempt stands on asked to stop; refused or uncertain, Factory\'s words', async () => {
+  const UNITS = {contract: 'factory.attempt-task-units-reading/v1', projectRef: 'project:o-i', taskRef: 'central:task:t1', runsRead: 2, totalUnits: 2, units: [
+    {runRef: 'run:r1', workflowUnitRef: 'unit:build', currentAttemptRef: null, status: null, attempts: 1, runRevision: 4, required: true},
+    {runRef: 'run:r2', workflowUnitRef: 'unit:check', currentAttemptRef: 'attempt:b1', status: 'running', attempts: 1, runRevision: 7, required: true}]}
+  const answer = (status, message) => ({contract: 'oi.factory-attempt-cancellation/v1', runRef: 'run:r2', workflowUnitRef: 'unit:check', status,
+    changed: status === 'cancel-requested', attemptRef: 'attempt:b1', authorityRef: null, receipt: null, refusal: message ? {source: 'factory', step: 'admission', message} : null})
+  const asked = []
+  const owner = answers => async request => { asked.push(request); return answers[request.kind] }
+  await tasks.stopAfterTask(owner({'attempt-task-units': UNITS, 'attempt-request-cancellation': answer('cancel-requested')}), '/state', 'central:task:t1')
+  assert.deepEqual(asked, [{kind: 'attempt-task-units', state_path: '/state', task_ref: 'central:task:t1'},
+    {kind: 'attempt-request-cancellation', state_path: '/state', run_ref: 'run:r2', workflow_unit_ref: 'unit:check'}], 'the unit the task\'s current attempt stands on')
+  await tasks.stopAfterTask(owner({'attempt-task-units': UNITS, 'attempt-request-cancellation': answer('already-requested')}), '/state', 'central:task:t1')
+  // Refused or uncertain: Factory's words (until the round-20 Factory is installed, the kernel's refusal of the action it does not name).
+  const REFUSED = 'Factory names no attempt-request-cancellation action, only attempt-receiving, attempt-retry'
+  await assert.rejects(() => tasks.stopAfterTask(owner({'attempt-task-units': UNITS, 'attempt-request-cancellation': answer('refused', REFUSED)}), '/state', 'central:task:t1'), {message: REFUSED})
+  await assert.rejects(() => tasks.stopAfterTask(owner({'attempt-task-units': UNITS, 'attempt-request-cancellation': answer('uncertain', 'Factory did not answer in time')}), '/state', 'central:task:t1'),
+    {message: 'Factory did not answer in time'})
+  await assert.rejects(() => tasks.stopAfterTask(owner({'attempt-task-units': UNITS, 'attempt-request-cancellation': {status: 'stopped'}}), '/state', 'central:task:t1'),
+    /^Error: Stop after: Factory answered without its cancellation of run:r2 · unit:check\.$/)
+  // No current attempt of the task, or several: nothing is asked to stop, and the press says which.
+  asked.length = 0
+  const idle = {...UNITS, units: UNITS.units.map(unit => ({...unit, currentAttemptRef: null}))}
+  await assert.rejects(() => tasks.stopAfterTask(owner({'attempt-task-units': idle}), '/state', 'central:task:t1'), /^Error: Stop after: no attempt of central:task:t1 is current on any unit/)
+  const both = {...UNITS, units: UNITS.units.map(unit => ({...unit, currentAttemptRef: `attempt:${unit.workflowUnitRef}`}))}
+  await assert.rejects(() => tasks.stopAfterTask(owner({'attempt-task-units': both}), '/state', 'central:task:t1'), /stands current on 2 units \(run:r1 · unit:build, run:r2 · unit:check\).*Run map/)
+  await assert.rejects(() => tasks.stopAfterTask(owner({}), '/state', 'central:task:t1'), /^Error: Stop after: `factory attempt units` answered something other than its units/)
+  assert.equal(asked.filter(request => request.kind === 'attempt-request-cancellation').length, 0, 'nothing was asked to stop')
 })

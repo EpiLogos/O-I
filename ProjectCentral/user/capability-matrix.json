@@ -4338,7 +4338,7 @@
           },
           {
             "id": "FM04",
-            "label": "[Lived-in] I drag the Agentset rack onto a lead's track, or press New on its head, to make a group.",
+            "label": "[Lived-in] I drag the Agent rack onto a lead's track, or press New on its head, to make a group.",
             "source_ref": "docs/experience/STORIES.md#FM04"
           },
           {
@@ -4348,7 +4348,7 @@
           },
           {
             "id": "FX01",
-            "label": "[Lived-in] I drag an agentset onto the lead's track and select the group header, to see the team.",
+            "label": "[Lived-in] I drag an agent set onto the lead's track and select the group header, to see the team.",
             "source_ref": "docs/experience/STORIES.md#FX01"
           },
           {
@@ -4403,7 +4403,7 @@
           },
           {
             "id": "FD01",
-            "label": "[Lived-in] I drag an agent of type Settle onto a team's Agentset rack, to add a decision helper.",
+            "label": "[Lived-in] I drag an agent of type Settle onto a team's Agent rack, to add a decision helper.",
             "source_ref": "docs/experience/STORIES.md#FD01"
           },
           {

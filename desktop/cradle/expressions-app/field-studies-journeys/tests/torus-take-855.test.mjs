@@ -20,6 +20,7 @@ import {mkdtempSync, rmSync} from 'node:fs';
 import {readFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
+import {isDeepStrictEqual} from 'node:util';
 import {fileURLToPath, pathToFileURL} from 'node:url';
 
 const require = createRequire(import.meta.url);
@@ -189,8 +190,12 @@ const openController = async ({prepare} = {}) => {
       if (request.operation === 'torus_take') {
         this.takeCalls.push(structuredClone(request));
         if (request.lease !== 'controlled:scene-lease') throw new Error('native-expression.foreign_lease');
-        if (!this.given.has(request.checkpoint_sha256)) throw new Error(`No Torus checkpoint ${request.checkpoint_sha256} was given under this lease`);
-        return this.takeAnswer ?? sealedTake({checkpoint: this.given.get(request.checkpoint_sha256), checkpoint_sha256: request.checkpoint_sha256});
+        // named, or given whole and named by the kernel (native_expression.rs TorusTake: its value_sha256), never both
+        if ((request.checkpoint_sha256 === undefined) === (request.checkpoint === undefined)) throw new Error('A take is sealed from one checkpoint');
+        const named = request.checkpoint === undefined ? request.checkpoint_sha256
+          : [...this.given].find(([, kept]) => isDeepStrictEqual(kept, request.checkpoint))?.[0] ?? 'sha256:unkept';
+        if (!this.given.has(named)) throw new Error(`No Torus checkpoint ${named} was given under this lease`);
+        return this.takeAnswer ?? sealedTake({checkpoint: this.given.get(named), checkpoint_sha256: named});
       }
       const command = request.request?.command;
       // A Torus setting for a later sample waits for it and moves nothing (QL scene_field.rs torus_set_when); the block that reaches its
@@ -593,7 +598,17 @@ test('a take is sealed by the name of the checkpoint it began at, and the kernel
   assert.deepEqual(readStageRequest(request({command: 'torus-take', action: 'seal', checkpoint_sha256: named})).command, {command: 'torus-take', action: 'seal', checkpoint_sha256: named});
   for (const bad of [undefined, '', 'checkpoint', 7, 'sha256:' + 'x'.repeat(600), 'sha256:a\nb'])
     assert.equal(readStageRequest(request({command: 'torus-take', action: 'seal', checkpoint_sha256: bad})), null, String(bad).slice(0, 40));
-  assert.equal(readStageRequest(request({command: 'torus-take', action: 'seal', checkpoint_sha256: named, checkpoint: checkpoint()})), null, 'no other operand: the kernel seals what it relayed');
+  assert.equal(readStageRequest(request({command: 'torus-take', action: 'seal', checkpoint_sha256: named, checkpoint: checkpoint()})), null, 'one checkpoint: named or given, never both');
+  // BB round 20: or given whole, as the take's course keeps it, the kernel naming it (native_expression.rs TorusTake `checkpoint`), so a
+  // seal the kernel refused by a name it no longer knows is asked again from the checkpoint itself
+  const given = checkpoint();
+  assert.deepEqual(readStageRequest(request({command: 'torus-take', action: 'seal', checkpoint: given})).command, {command: 'torus-take', action: 'seal', checkpoint: given});
+  for (const bad of [{...given, schema: 'ql.torus-sound/v1'}, {...given, taken_at_samples: 48000}, {...given, sample_rate: 7}, 'checkpoint', null,
+    {...given, pad: 'x'.repeat(1024 * 1024)}])
+    assert.equal(readStageRequest(request({command: 'torus-take', action: 'seal', checkpoint: bad})), null, JSON.stringify(bad)?.slice(0, 60));
+  assert.equal(readStageRequest(request({command: 'torus-take', action: 'seal'})), null, 'sealed from no checkpoint, it is refused');
+  assert.equal(readStageRequest(request({command: 'torus-take', action: 'seal', checkpoint: given, name: 'x'})), null, 'and nothing else');
+  assert.deepEqual(readStageResult(stageReplyMessage(9, {ok: true, take: sealedTake()}, {command: 'torus-take', action: 'seal', checkpoint: given})), {req: 9, ok: true, take: sealedTake()});
   assert.equal(readStageRequest(request({command: 'torus-take', action: 'record', checkpoint_sha256: named})), null, 'sealing is its one act');
   const take = sealedTake();
   assert.deepEqual(readStageResult(stageReplyMessage(7, {ok: true, take}, {command: 'torus-take', action: 'seal', checkpoint_sha256: named})), {req: 7, ok: true, take});
@@ -604,6 +619,23 @@ test('a take is sealed by the name of the checkpoint it began at, and the kernel
   assert.deepEqual(readStageResult(stageReplyMessage(8, {ok: true, checkpoint: kept, checkpoint_sha256: named}, {command: 'torus', action: 'checkpoint'})),
     {req: 8, ok: true, checkpoint: kept, checkpoint_sha256: named}, 'the checkpoint a take begins at answers with the name the kernel relayed it under');
   assert.equal(readStageResult({...answer, command: 'torus', checkpoint: kept, checkpoint_sha256: 4}), null);
+});
+
+// BB round 20: the take's bound is its owner's, the kernel's bound on what crosses to it (native_expression.rs MAX_REQUEST, 32 MiB), which the
+// kernel gives no reading of; the frame keeps it in one place, cited to that constant, and the boundary reads it there.
+test('a sealed take is read within the kernel\'s bound on what crosses to it, kept in one place and cited to the kernel\'s constant', async () => {
+  const {readStageTorusTake, STAGE_TORUS_TAKE_BYTES_MAX} = await stage();
+  assert.equal(STAGE_TORUS_TAKE_BYTES_MAX, 32 * 1024 * 1024);
+  const padded = n => sealedTake({acts: ['x'.repeat(n)]});
+  assert.ok(readStageTorusTake(padded(5 * 1024 * 1024)), 'a take past 4 MiB reads');
+  assert.equal(readStageTorusTake(padded(STAGE_TORUS_TAKE_BYTES_MAX)), null, 'one past the kernel\'s bound does not');
+  const kernel = await readFile(join(journeys, '../../kernel/src/native_expression.rs'), 'utf8');
+  assert.match(kernel, /^const MAX_REQUEST: usize = 32 \* 1024 \* 1024;$/m, 'the kernel\'s constant, which no reading exposes');
+  const source = await readFile(join(journeys, 'src/stageCommands.ts'), 'utf8');
+  assert.match(source, /native_expression\.rs MAX_REQUEST[^\n]*\n[^\n]*\nexport const STAGE_TORUS_TAKE_BYTES_MAX = 32 \* 1024 \* 1024;/, 'cited where it is kept');
+  const basis = await readFile(join(journeys, '../../../../packages/expressions-boundary/src/performanceBasis.ts'), 'utf8');
+  assert.match(basis, /import \{[^}]*STAGE_TORUS_TAKE_BYTES_MAX[^}]*\} from '[^']*field-studies-journeys\/src\/stageCommands\.ts';/, 'the boundary reads the one bound');
+  assert.doesNotMatch(basis, /4 \* 1024 \* 1024|[^_]TAKE_BYTES_MAX = /, 'and keeps none of its own');
 });
 
 test('the controller seals a take through the kernel by the checkpoint it began at, under its lease, and names a checkpoint it kept (O-I #855)', async () => {
@@ -622,6 +654,14 @@ test('the controller seals a take through the kernel by the checkpoint it began 
     await assert.rejects(c.torusTake(named), /oi\.torus-take\/v1/);
     await assert.rejects(c.torusTake(''), /names the checkpoint/);
     assert.equal(owner.takeCalls.length, 2, 'refused before the kernel');
+    // BB round 20: given the checkpoint itself, the kernel names it and seals the take that began there
+    owner.takeAnswer = undefined;
+    const whole = await c.torusTake(kept);
+    assert.deepEqual(owner.takeCalls.at(-1), {operation: 'torus_take', lease: 'controlled:scene-lease', checkpoint: kept}, 'sent whole, with no name beside it');
+    assert.equal(whole.checkpoint_sha256, named, 'the kernel names it as it relayed it');
+    await assert.rejects(c.torusTake(checkpoint('96000')), /No Torus checkpoint sha256:unkept was given under this lease/, 'a checkpoint it did not keep is refused in the kernel\'s words');
+    await assert.rejects(c.torusTake({...kept, schema: 'ql.torus-sound/v1'}), /checkpoint it began at/);
+    assert.equal(owner.takeCalls.length, 4, 'a checkpoint that is not one is refused before the kernel');
   } finally { await c.dispose(); }
 });
 
@@ -629,7 +669,7 @@ test('the frame seals a take through its native field, and the checkpoint a take
   const app = await readFile(join(journeys, 'src/app.ts'), 'utf8');
   assert.ok(app.includes("case 'torus-take':"), 'the frame runs the seal');
   const take = app.slice(app.indexOf("case 'torus-take':"), app.indexOf("case 'torus-engine':"));
-  assert.match(take, /return \{ok:true,take:await nativeField\.controller\.torusTake\(command\.checkpoint_sha256\)\};/, 'sealing is a read');
+  assert.match(take, /return \{ok:true,take:await nativeField\.controller\.torusTake\('checkpoint' in command\?command\.checkpoint:command\.checkpoint_sha256\)\};/, 'sealing is a read, by the name or the checkpoint itself');
   const torus = app.slice(app.indexOf("case 'torus':"), app.indexOf("case 'torus-sound':"));
   assert.match(torus, /checkpointName\(checkpoint\)/, 'the checkpoint a take begins at carries the name it was relayed under');
   const host = await readFile(join(journeys, '../../../../packages/expressions-boundary/src/host.ts'), 'utf8');

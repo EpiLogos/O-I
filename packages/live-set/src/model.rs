@@ -152,6 +152,9 @@ pub struct SetDocument {
     pub tempo_bpm: f64,
     pub tracks: Vec<TrackDetail>,
     pub scene_count: usize,
+    /// The transport's Quantize (`LiveSet/GlobalQuantisation`), as a word of Live's launch quantisation
+    /// (`edit::QUANTIZE` without its leading Global); none where the set keeps none Live names.
+    pub global_quantize: Option<String>,
 }
 
 impl SetDocument {
@@ -204,10 +207,18 @@ impl SetDocument {
                 session_slots: Vec::new(),
             });
         }
+        // The clip's launch quantisation leads with Global; the set's own runs from None (racks-session-model.md §3.3).
+        let global_quantize = ls
+            .child("GlobalQuantisation")
+            .and_then(|q| q.attr("Value"))
+            .and_then(|v| v.parse::<usize>().ok())
+            .and_then(|v| crate::edit::QUANTIZE.get(v + 1))
+            .map(|word| (*word).to_string());
         Some(SetDocument {
             tempo_bpm,
             tracks,
             scene_count,
+            global_quantize,
         })
     }
 }
@@ -345,6 +356,27 @@ fn count_arrangement_clips(track: &Element) -> usize {
 
 #[cfg(test)]
 mod tests {
+    /// The transport's Quantize, the launch quantize of every clip set to Global (DLW manual §21.1): `LiveSet/GlobalQuantisation`, a
+    /// value element on LiveSet (devices/racks-session-model.md §3.3), in Live's launch-quantisation order without the clip's own
+    /// leading Global (the one set in the corpus keeps 4: 1 bar, Live's default).
+    #[test]
+    fn the_sets_global_quantisation_is_the_transports_quantize() {
+        let at = |value: &str| {
+            let src = format!(
+                r#"<Ableton><LiveSet><GlobalQuantisation Value="{value}" /><Tracks /><Scenes /></LiveSet></Ableton>"#
+            );
+            SetDocument::of(&xml::parse(&src).unwrap())
+                .unwrap()
+                .global_quantize
+        };
+        assert_eq!(at("4").as_deref(), Some("1 bar"));
+        assert_eq!(at("0").as_deref(), Some("none"));
+        assert_eq!(at("1").as_deref(), Some("8 bars"));
+        assert_eq!(at("13").as_deref(), Some("1/32"));
+        assert_eq!(at("14"), None, "past Live's list: none read");
+        assert_eq!(at("x"), None);
+    }
+
     use super::*;
     use crate::xml;
 
@@ -436,6 +468,10 @@ mod tests {
         assert_eq!(d.tempo_bpm, 120.0);
         assert_eq!(d.scene_count, 2);
         assert_eq!(d.tracks.len(), 3);
+        assert_eq!(
+            d.global_quantize, None,
+            "a set that keeps no GlobalQuantisation names none"
+        );
 
         // arrangement clips: MainSequencer lanes only — the take-lane comp
         // clip and the FreezeSequencer copy are not the arrangement

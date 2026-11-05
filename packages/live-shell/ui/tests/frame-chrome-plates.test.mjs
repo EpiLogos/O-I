@@ -189,6 +189,10 @@ test('the Guide is Help › Expressions Guide, the field\'s own Guide pressed; A
   const model = await source('../src/components/expressions/studio/studioModel.ts')
   assert.match(model, /workspace\/a:quick-guide — Help › Expressions Guide/)
   assert.match(model, /scene\/l:Acts — the Acts device/)
+  // DLW build ruling 2026-11-05: "A change that adds a device names the entries it retires" (manual §16.17), so §20.15 names them.
+  const manual = await source('../../../../ProjectCentral/docs/1-vision/dlw/DLW.md')
+  const entry = manual.slice(manual.indexOf('### 20.15 Acts'), manual.indexOf('#### Pages', manual.indexOf('### 20.15 Acts')))
+  assert.match(entry, /It retires three entries: the panel that opened over the field[^;]*; the Acts key that stood in the Studio's pane[^;]*; and the Acts that stood in Device view only while it was open\./)
 })
 
 // REPLACED (UI/UX lane phase 3, owner 20 Oct; manual §20.1): the frame's own controls no longer return in a pane at full size — that UI

@@ -222,8 +222,8 @@
     },
     "engine/PointCloudField.mjs": {
       "source": "desktop/cradle/expressions-app/src/engine/PointCloudField.ts",
-      "source_sha256": "357a465115842a1fad41514bcc1d7924312c1061f7ff3293fb50cfe0a675bc85",
-      "output_sha256": "a189f3eab2ad991368b72f1e5d280d9ef6539a0b1f997dc1dd66d94b64599112",
+      "source_sha256": "f885a14df628b96a8a4768913f0084ead3513063d2e6234024dc3f3efe4555e5",
+      "output_sha256": "2baebcc2b9619f291ce4f560502e0f00c16c081a21ec29e8779e5e87f000a8fe",
       "compiler": "esbuild@0.21.5",
       "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
     },

@@ -190,6 +190,55 @@ test('a kept Torus sound is saved and opened under the frame\'s own lease, and u
   assert.match(results.find(d => d.req === 4).error, /lease does not belong/);
 });
 
+test('a Torus take is sealed under the frame\'s own lease, by its checkpoint\'s name or the checkpoint itself, and under no other (O-I #855)', async t => {
+  const operations = [];
+  const a = aperture(t, {channels: {}, native: async request => {
+    operations.push(request);
+    if (request.operation === 'open') return {schema: 'oi.native-expression-open/v1', lease: 'lease:one'};
+    return {schema: 'oi.torus-take/v1', take_ref: 'sha256:take'};
+  }});
+  const epoch = (await a.messages()).find(d => d.schema === NATIVE_CHANNEL && d.kind === 'available').epoch;
+  const native = (req, request) => a.deliver({schema: NATIVE_CHANNEL, epoch, kind: 'request', req, request});
+  const checkpoint = {schema: 'ql.torus-checkpoint/v1', taken_at_samples: '9600', sample_rate: 48000};
+  await native(1, {operation: 'open', path: 'Control/work.json'});
+  await native(2, {operation: 'torus_take', lease: 'lease:one', checkpoint_sha256: 'sha256:kept'});
+  await native(3, {operation: 'torus_take', lease: 'lease:one', checkpoint});
+  await native(4, {operation: 'torus_take', lease: 'lease:foreign', checkpoint});
+  assert.deepEqual(operations.map(r => r.operation), ['open', 'torus_take', 'torus_take']);
+  assert.deepEqual(operations[2], {operation: 'torus_take', lease: 'lease:one', checkpoint}, 'the checkpoint goes to the kernel whole');
+  const results = (await a.messages()).filter(d => d.schema === NATIVE_CHANNEL && d.kind === 'result');
+  assert.deepEqual(results.find(d => d.req === 2).data, {schema: 'oi.torus-take/v1', take_ref: 'sha256:take'});
+  assert.equal(results.find(d => d.req === 3).ok, true);
+  assert.match(results.find(d => d.req === 4).error, /lease does not belong/);
+});
+
+test('the cradle\'s own relay seals a Torus take under the frame\'s lease as the host does, and under no other (O-I #855)', async t => {
+  const {relayNativeChannel} = await import('../../../desktop/cradle/src/expressions/nativeChannel.ts');
+  const saved = {window: globalThis.window, IntersectionObserver: globalThis.IntersectionObserver};
+  const posted = [], calls = [];
+  globalThis.window = new EventTarget();
+  globalThis.IntersectionObserver = class {observe() {} disconnect() {}};
+  const frame = new EventTarget();
+  frame.contentWindow = {postMessage: data => posted.push(data)};
+  const dispose = relayNativeChannel(frame, {kind: 'bridge', url: 'http://127.0.0.1:1'}, async request => {
+    calls.push(request);
+    return request.operation === 'open' ? {schema: 'oi.native-expression-open/v1', lease: 'lease:one'} : {schema: 'oi.torus-take/v1'};
+  });
+  t.after(() => {dispose(); globalThis.window = saved.window; globalThis.IntersectionObserver = saved.IntersectionObserver;});
+  const epoch = posted.find(d => d.kind === 'available').epoch;
+  const send = async (req, request) => {
+    const event = Object.assign(new Event('message'), {source: frame.contentWindow, data: {schema: NATIVE_CHANNEL, epoch, kind: 'request', req, request}});
+    globalThis.window.dispatchEvent(event);
+    for (let i = 0; i < 20 && !posted.some(d => d.kind === 'result' && d.req === req); i++) await new Promise(resolve => setTimeout(resolve, 1));
+    return posted.find(d => d.kind === 'result' && d.req === req);
+  };
+  assert.equal((await send(1, {operation: 'open', path: 'Control/work.json', expected_revision: 'r'})).ok, true);
+  const checkpoint = {schema: 'ql.torus-checkpoint/v1', taken_at_samples: '9600', sample_rate: 48000};
+  assert.deepEqual((await send(2, {operation: 'torus_take', lease: 'lease:one', checkpoint})).data, {schema: 'oi.torus-take/v1'});
+  assert.match((await send(3, {operation: 'torus_take', lease: 'lease:foreign', checkpoint})).error, /lease does not belong/);
+  assert.deepEqual(calls.map(r => r.operation), ['open', 'torus_take']);
+});
+
 test('a native lease that opens after reload is closed and never adopted by the new frame', async t => {
   let finish;
   const closed = [];

@@ -154,6 +154,27 @@ test('the guide text is the app own text: each quick-guide paragraph and About p
   assert.ok(appExpressions.includes('A field to inhabit.') && appExpressions.includes('A space to compose.'))
 })
 
+// Round 869 (DLW build ruling 2026-11-05): Help › Expressions Guide speaks the DLW manual as it stands (§20.1 Expressions: tracks and clips;
+// "Read how the field is used | The Help menu's Expressions Guide"): the Expression a track and its scenes clips, Clip view, the Studio in Device
+// view with the Acts device after it, Session and Arrangement views, Present and Export. The setup-and-scene words of the retired editor go.
+test('(r869) the Expressions Guide is the manual\'s §20.1: its title, its steps in the manual\'s words, and none of the retired editor\'s', () => {
+  assert.match(shellApp, /<h2 id="guide-title">Expressions Guide<\/h2>/)
+  assert.deepEqual(CMD.QUICK_GUIDE.map(item => item.heading),
+    ['Start an Expression', 'Shape a scene in Clip view', 'Play the Studio in Device view', 'Launch scenes and keep takes', 'Show and export the field'])
+  const said = CMD.QUICK_GUIDE.map(item => item.text).join(' ')
+  for (const words of ['Each Expression is a track, and its scenes are its clips.', 'Clip view opens its sequence', 'The Expression tab', 'The Sequence tab',
+    'Device view holds the Studio', 'Material, Motion, Body and Nara', '+ Parameter', 'the Acts device', 'Session view', 'a row of the Main track is a stop',
+    'Arrangement view', 'Capture', 'Present, in the View menu', 'Export, in the File menu']) assert.ok(said.includes(words), words)
+  assert.equal(CMD.QUICK_GUIDE_STANDING, 'Sound and picture are two sides of one state. Edit one and the other follows.')
+  const guide = shellApp.slice(shellApp.indexOf('<dialog id="guide-dialog"'), shellApp.indexOf('</dialog>', shellApp.indexOf('<dialog id="guide-dialog"')))
+  assert.ok(guide.includes('Press Enter to keep a change'), 'the manual\'s keeping rule')
+  const markup = renderToStaticMarkup(createElement(GUIDE.NativeExpressionGuide, {onClose: () => {}}))
+  for (const text of [guide, said, CMD.QUICK_GUIDE_STANDING, markup]) {
+    assert.doesNotMatch(text, /Make a setup|Shape the setup|Save &(amp;)? make next|framed image icon|toolbelt on the right|commit\/save native|Browser draft ≠/,
+      'none of the retired editor\'s setup words')
+  }
+})
+
 test('every shortcut in the guide is bound by the handler it names', async () => {
   // The retired Expressions bar held three of these; they stand in the one bar's bindings and with Save (the guide's `source`
   // column still names the retired file until nativeExpressionCommands.ts is updated: see the ticket's PROPOSE).

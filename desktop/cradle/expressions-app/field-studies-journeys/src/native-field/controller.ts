@@ -889,13 +889,16 @@ export class NativeFieldController {
   * kernel relayed unnamed. A take is sealed by the name of the checkpoint it began at. */
  checkpointName(checkpoint:unknown):string|null{return checkpoint&&typeof checkpoint==='object'?this.named.get(checkpoint)??null:null;}
  /** A take sealed to lie under a scene (O-I #855; kernel native-expression `torus_take`, native_expression.rs TorusTake): the kernel seals what
-  * this owner was sent from the checkpoint the take BEGAN at, named `checkpoint_sha256` as the kernel relayed it, under this lease. No fresh
-  * checkpoint is taken: a take is sealed from where it began, not from where the Torus stands now. Resolves with the sealed `oi.torus-take/v1`. */
- async torusTake(checkpoint_sha256:string):Promise<StageTorusTake>{
-  if(!isStageCheckpointName(checkpoint_sha256))throw new Error('A take is sealed by the name the kernel relayed the checkpoint it began at under: this names the checkpoint by nothing the kernel relayed');
+  * this owner was sent from the checkpoint the take BEGAN at, named as the kernel relayed it, or given whole as the take's course keeps it
+  * (the kernel names it, `value_sha256`), under this lease. No fresh checkpoint is taken: a take is sealed from where it began, not from
+  * where the Torus stands now. Resolves with the sealed `oi.torus-take/v1`. */
+ async torusTake(checkpoint:string|StageTorusCheckpoint):Promise<StageTorusTake>{
+  const given=typeof checkpoint==='string'?null:readStageTorusCheckpoint(checkpoint);
+  if(typeof checkpoint==='string'&&!isStageCheckpointName(checkpoint))throw new Error('A take is sealed by the name the kernel relayed the checkpoint it began at under: this names the checkpoint by nothing the kernel relayed');
+  if(typeof checkpoint!=='string'&&!given)throw new Error('A take is sealed from the checkpoint it began at: this is no ql.torus-checkpoint/v1 the stage can carry');
   const lease=this.opened?.lease;
   if(typeof lease!=='string')throw new Error('Open the live instrument first: a take is sealed under the lease it was played in');
-  const take=readStageTorusTake(await this.port.request({operation:'torus_take',lease,checkpoint_sha256}));
+  const take=readStageTorusTake(await this.port.request(given?{operation:'torus_take',lease,checkpoint:given}:{operation:'torus_take',lease,checkpoint_sha256:checkpoint}));
   if(!take)throw new Error('The kernel answered the seal with no oi.torus-take/v1 the stage can carry');
   return take;
  }

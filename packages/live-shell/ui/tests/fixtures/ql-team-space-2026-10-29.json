@@ -1,7 +1,7 @@
 {
- "source": "`ql context-frame team-space --json` from the installed quaternal-logic (ql 0.1.0, e08d9c6a1154, QL-MEF main) on workcell:mac, 29 Oct 2026; the answer's contract, organs, rows and depth as it gave them (its gates, path, instruments, thread forms, rules and sources, which the Team cell does not read, are left out)",
+ "source": "`ql context-frame team-space --json` from Quaternal Logic at QL-MEF 8c8ad0f with the O-I 754 rename (contract ql.vak-team-space/v2: each row's prospective and retrospective questions), built in the env-2 QL-MEF seat on workcell:mac, 5 Nov 2026; it first stood here as the installed quaternal-logic's v1 answer of 29 Oct. The answer's contract, organs, rows and depth as it gave them (its gates, path, instruments, thread forms, rules and sources, which the Team cell does not read, are left out)",
  "answer": {
-  "contract": "ql.vak-team-space/v1",
+  "contract": "ql.vak-team-space/v2",
   "organs": [
    {
     "organ": "S4′ Anima",
@@ -34,8 +34,8 @@
       "joins_into": null
      }
     ],
-    "day": null,
-    "night": [
+    "prospective": null,
+    "retrospective": [
      {
       "position": "4.0",
       "prime": "P0′",
@@ -69,11 +69,11 @@
       "joins_into": null
      }
     ],
-    "day": {
+    "prospective": {
      "position": "4.1",
      "question": "What must be true?"
     },
-    "night": [],
+    "retrospective": [],
     "gate": null,
     "instruments": [
      "stack-traverse",
@@ -97,11 +97,11 @@
       "joins_into": null
      }
     ],
-    "day": {
+    "prospective": {
      "position": "4.2",
      "question": "What is being done?"
     },
-    "night": [
+    "retrospective": [
      {
       "position": "4.1",
       "prime": "P1′",
@@ -141,11 +141,11 @@
       "joins_into": null
      }
     ],
-    "day": {
+    "prospective": {
      "position": "4.3",
      "question": "What shape does it take?"
     },
-    "night": [
+    "retrospective": [
      {
       "position": "4.3",
       "prime": "P3′",
@@ -179,8 +179,8 @@
       "joins_into": null
      }
     ],
-    "day": null,
-    "night": [
+    "prospective": null,
+    "retrospective": [
      {
       "position": "4.4",
       "prime": "P4′",
@@ -213,11 +213,11 @@
       "joins_into": "CF5"
      }
     ],
-    "day": {
+    "prospective": {
      "position": "4.4",
      "question": "Where and when in the larger frame?"
     },
-    "night": [],
+    "retrospective": [],
     "gate": 4,
     "instruments": [
      "gate-4",
@@ -249,11 +249,11 @@
       "joins_into": null
      }
     ],
-    "day": {
+    "prospective": {
      "position": "4.5",
      "question": "What was produced?"
     },
-    "night": [
+    "retrospective": [
      {
       "position": "4.5",
       "prime": "P5′",
@@ -339,7 +339,8 @@
     "anima": "Anima_5 = M5 × S4′",
     "aletheia": "Aletheia_5 = M5 × S5′",
     "native_operations": [
-     "logos.return"
+     "logos.return",
+     "vak.compose"
     ],
     "proving_position": "central:position:project:O-I:aletheia-5"
    }

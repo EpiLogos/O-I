@@ -503,6 +503,33 @@ test('the Torus\'s effects go with it into the engine, follow each change the fr
   }
 })
 
+// O-I #743 round 20, item 3, the engine gaps: the engine hears the frame's level. The level the frame reports (its reading's
+// `parameters.level`, the presentation gain 0 to 4) goes with the Torus's effects into the engine, where it stands before them as in
+// the frame (live_engine_host.rs torus_chain), and a move of it follows as a change of the effects does.
+test('the frame\'s level goes with the Torus\'s effects into the engine and follows each move of it', async () => {
+  nativeHost()
+  const torus = await import('../src/live/torusInstrument.ts')
+  const reported = (effects, level) =>
+    torus.publishLiveTorusState({ok: true, value: {standing: 'following'}, determinants: null, parameters: {effects, level}})
+  const effects = {chain: ['reverb'], reverb: {on: true, size: 50, decay: 2.4, damping: 40, predelay: 20, mix: 22}}
+  const {stage} = frameStage()
+  reported(effects, 2)
+  try {
+    await engine.liveEngine.play(PATH, undefined, stage)
+    assert.deepEqual(torusArgs[0].effects, {...effects, level: 2}, 'the level goes with the effects')
+    reported(effects, 0.5)
+    await engine.torusEffectsSettled()
+    assert.deepEqual(effectsArgs, [{effects: {...effects, level: 0.5}}], 'a move of the level follows into the engine')
+    reported(effects, 0.5)
+    await engine.torusEffectsSettled()
+    assert.equal(effectsArgs.length, 1, 'a level that did not move sends nothing')
+  } finally {
+    await engine.liveEngine.stop(stage).catch(() => {})
+    torus.publishLiveTorusState(null)
+    delete globalThis.window
+  }
+})
+
 // The mixer row's Volume and Pan (manual §21.1 "The mixer row"; O-I #849): the part's reading is the set's — its owner's, read back
 // from the file — and, while the engine plays the set, the engine's applied mixer; a move is written through the set's owner.
 const adapter = await import('../src/timeline/liveSetTrackAdapter.ts')

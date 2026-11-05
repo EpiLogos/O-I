@@ -6,8 +6,8 @@
 
 import {useEffect, useState} from 'react'
 import {registerPanel} from '../shell/panels'
-import type {InstrumentEdit, PerformanceAction, PerformanceBasisSummary, PerformanceReply, StageCommand, StageResult, StageSoundMove, StageTorusSound,
-  TorusKeptSummary, TorusRackDraft, TorusTakeRecordEdit} from '@epilogos/expressions-boundary'
+import type {InstrumentEdit, PerformanceAction, PerformanceBasisSummary, PerformanceReply, StageCommand, StageResult, StageSoundMove, StageTorusCheckpoint,
+  StageTorusSound, TorusKeptSummary, TorusRackDraft, TorusTakeRecordEdit} from '@epilogos/expressions-boundary'
 import type {WorldActionReceipt} from '../timeline/worldTrackAdapter'
 import {commitLiveInstrumentEdit, commitLiveStage} from './torusInstrument'
 import './liveInstrumentSection.css'
@@ -100,15 +100,21 @@ export async function saveTorusSound(name: string, owners: LiveSoundOwners = SOU
   return {ok: true, words: `Saved "${kept.name}" under the Torus.${kept.unsaved ? UNTIL_SAVED : ''}`, sound_ref: kept.sound_ref, form: body?.kind === 'form'}
 }
 const UNTIL_SAVED = ' The Scene keeps it until the Expression is saved, then the file does.'
+/** The kernel's refusal of a seal by a checkpoint name it does not know (kernel expression_performance/torus.rs TakeWitness::seal). */
+const UNKNOWN_CHECKPOINT = /No Torus checkpoint \S+ was given under this lease/
 
 /** Lay a Live take under the Expression's scene (O-I #855, "A Live part placed under an Expression's scenes sounds on its ruler"), once it
  * was rendered through the relay: the kernel seals what the Torus's owner was sent from the checkpoint the take BEGAN at, by the name the
  * kernel relayed that checkpoint under (the stage's `torus-take` seal; the `torus` checkpoint a take begins at answers with it), the record
  * is built from the seal (liveTake.ts torusTakeRecord, loaded when asked), and the Scene lays it by one edit of its performance (the
- * performance's `record-take`, the kernel's `record_torus_take`). Settles with the words, or the owner's refusal in its words. */
-export async function layTorusTake(input: {readonly checkpoint_sha256: string; readonly take: {readonly id: number; readonly name: string; readonly beat: number; readonly bpm: number}},
+ * performance's `record-take`, the kernel's `record_torus_take`). Where the kernel no longer knows that name (after a restart) it refuses the
+ * seal in its words; given the checkpoint the take's course keeps (`checkpoint`), the seal is asked once more from the checkpoint itself,
+ * which the kernel names (native_expression.rs TorusTake), and a second refusal stands. Settles with the words, or the owner's refusal. */
+export async function layTorusTake(input: {readonly checkpoint_sha256: string; readonly checkpoint?: StageTorusCheckpoint;
+  readonly take: {readonly id: number; readonly name: string; readonly beat: number; readonly bpm: number}},
   owners: LiveSoundOwners = SOUND_OWNERS): Promise<{ok: true; words: string} | {ok: false; error: string}> {
-  const sealed = await owners.stage({command: 'torus-take', action: 'seal', checkpoint_sha256: input.checkpoint_sha256})
+  let sealed = await owners.stage({command: 'torus-take', action: 'seal', checkpoint_sha256: input.checkpoint_sha256})
+  if (!sealed.ok && input.checkpoint && UNKNOWN_CHECKPOINT.test(sealed.error)) sealed = await owners.stage({command: 'torus-take', action: 'seal', checkpoint: input.checkpoint})
   if (!sealed.ok) return {ok: false, error: sealed.error}
   if (!sealed.take) return {ok: false, error: 'The owner answered the seal with no take'}
   const {torusTakeRecord} = await import('./liveTake')

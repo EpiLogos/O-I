@@ -21,6 +21,8 @@ export interface Member {
   readonly withheld?: {readonly why: string; readonly fix?: 'review'}
   /** For a child set: how many members it carries. */
   readonly holds?: number
+  /** The carried set that holds it, by name; absent for a member the agent's profile names directly. */
+  readonly set?: string
 }
 
 const L = (...r: (0 | 1 | null)[]): Rung[] => r.map(x => (x === null ? null : x === 1))

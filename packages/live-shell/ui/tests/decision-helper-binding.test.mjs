@@ -54,7 +54,7 @@ const STATUS = {schema: 'aikit.decision-status/v1', action_ref: 'action/model/de
   decision_model: {artifact: 'jaredpalmer/kev-0.8b', base: 'Qwen/Qwen3.5-0.8B-Base', family: 'kev', license: 'Apache-2.0'},
   limits: {max_attempts: 2, timeout_ms: 120000, tariff: 'none — a local/self-hosted endpoint has no price source; none is invented'}}
 const label = (id, description = id) => ({id, description, owner_ref: 'ql:mef:test', owner_revision: 'v1'})
-const TEAM = {contract: 'ql.vak-team-space/v1', instruments: [
+const TEAM = {contract: 'ql.vak-team-space/v2', instruments: [
   {id: 'vak-block', organ: 'S4′ Anima', kind: 'vak-block', answerable_by: 'model-or-person', cells: ['CF5'], seats: ['agent/anima'], heads: [
     {id: 'vak-cpf', field: 'participation', ambiguity_policy: 'abstain', cardinality: {min: 0, max: 1}, labels: [label('dialogical'), label('authorised-undertaking')]},
     {id: 'vak-direction', field: 'direction', ambiguity_policy: 'preserve-candidates', cardinality: {min: 0, max: 2}, labels: [label('ascending'), label('descending')]}]},

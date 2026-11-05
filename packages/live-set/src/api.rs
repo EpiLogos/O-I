@@ -148,6 +148,9 @@ pub struct DocumentJson {
     pub tempo: f64,
     pub tracks: Vec<TrackDocumentJson>,
     pub scenes: usize,
+    /// The transport's Quantize, the launch quantize of every clip set to Global (DLW manual §21.1).
+    #[serde(rename = "globalQuantize", skip_serializing_if = "Option::is_none")]
+    pub global_quantize: Option<String>,
 }
 
 /// The API contract: a parsed document → the deep view /api/document serves.
@@ -157,6 +160,7 @@ pub fn document_json(path: &str, root: &crate::xml::Element) -> Option<DocumentJ
         path: path.to_string(),
         tempo: d.tempo_bpm,
         scenes: d.scene_count,
+        global_quantize: d.global_quantize,
         tracks: d
             .tracks
             .into_iter()

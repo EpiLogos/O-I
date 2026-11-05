@@ -60,6 +60,18 @@ test('the frame\'s announced Torus session is read exact, and a malformed one is
   ]) assert.match(readHostedParameters(parameters({torus: session(over)})), fault, JSON.stringify(over));
 });
 
+// O-I ticket 851 (round 869): under Sequence the frame announces the figure the scene's shapes set, the two shapes and the progress between
+// them (instrumentAnnouncement.mjs `sequence`), read exact; one malformed, or one announced under another Shape, is refused by name.
+test('the scene\'s shapes under Sequence cross exact beside the owner\'s session; a malformed one, or one under another Shape, is refused by name', () => {
+  const under = {settings: {...session().settings, shape: 'sequence', rate: {mode: 'sync', note: {numerator: 1, denominator: 4}}}, figure: null};
+  const sequence = {figure: 'spiral', from: 'torus', to: 'spiral', progress: 0.6};
+  assert.deepEqual(readHostedParameters(parameters({torus: session({...under, sequence})})).torus.sequence, sequence);
+  assert.equal('sequence' in readHostedParameters(parameters({torus: session(under)})).torus, false, 'a frame that announces none carries none');
+  for (const bad of [{...sequence, figure: 'circle'}, {...sequence, from: 'ring'}, {...sequence, progress: 1.5}, {...sequence, progress: -0.1}, {figure: 'spiral'}, 'spiral'])
+    assert.match(readHostedParameters(parameters({torus: session({...under, sequence: bad})})), /parameters\.torus\.sequence/, JSON.stringify(bad));
+  assert.match(readHostedParameters(parameters({torus: session({sequence})})), /parameters\.torus\.sequence/, 'under Auto the figure is QL\'s: a sequence is refused');
+});
+
 // O-I #854 (DLW manual §21.2 Body: "Strike | 0 to 100 % | 70 % | How strongly velocity excites the body"): QL's M1′ session holds Strike
 // as a share 0..1, so the Body group's Strike crosses as the same closed `torus` edit, and the announced session carries it.
 test('Strike crosses as a share of velocity: the edit as given, the announced session exact, an owner from before it stating none', () => {

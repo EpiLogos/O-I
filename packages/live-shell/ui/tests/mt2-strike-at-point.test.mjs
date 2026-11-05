@@ -145,27 +145,38 @@ test('a press off the torus is no touch, and a perspective stage whose lens the 
 
 test('a touch on a perspective stage names the surface point the engine\'s perspective eye draws under it (O-I #771)', async () => {
   const {touchedSurface, torusPoint} = await touch()
-  const {basis, stageScale} = await stage()
+  const {basis, stageCentre, stageScale} = await stage()
+  const {PointCloudField} = await bundle(join(frame, 'src/engine/PointCloudField.ts'), 'field')
   const THREE = await import(pathToFileURL(join(frame, 'node_modules/three/build/three.module.js')).href)
-  // the engine's perspective camera as PointCloudField setHostView stands it, at the engine's aspect (applyProjection)
-  const drawnBy = (view, fov) => {
-    const {a, b} = basis(view), s = stageScale(SIZE.width, SIZE.height) * view.zoom / SCALE.worldScale
-    const cam = new THREE.PerspectiveCamera(fov, SIZE.width / SIZE.height, 0.1, 20000)
-    const right = new THREE.Vector3(...a), up = new THREE.Vector3(...b), normal = new THREE.Vector3().crossVectors(right, up).normalize()
-    cam.position.copy(normal).multiplyScalar((SIZE.height / s * 0.5) / Math.tan(fov * Math.PI / 360))
-    cam.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(right, up, normal))
-    cam.updateProjectionMatrix(); cam.updateMatrixWorld(true)
+  // REPLACED (round 20): drawnBy stood a copy of the engine's perspective camera, centred on the stage and deaf to the stage centre and
+  // pan as the engine then was, so the touch was held to that copy. The camera is now stood by the engine's own PointCloudField
+  // setHostView, handed its view as production.ts hands it (on real cameras; only the GPU is a stand-in), and the stages include a
+  // pan and a narrow stage, whose centre stands higher (camera.ts stageCentre).
+  const drawnBy = (view, fov, size) => {
+    const field = Object.create(PointCloudField.prototype)
+    field.renderer = {size: [300, 150], getSize(v) { return v.set(...this.size) }, setSize(w, h) { this.size = [w, h] }, setPixelRatio() {}, getPixelRatio: () => 1}
+    field.orthoCamera = new THREE.OrthographicCamera(-150, 150, 75, -75, -3000, 4000)
+    field.perspCamera = new THREE.PerspectiveCamera(fov, 2, 1, 100000)
+    field.cameraProjection = 'perspective'
+    field.config = {depth: {projection: 'perspective', fov, distance: 800}}
+    field.particleMaterial = {uniforms: new Proxy({}, {get: (all, key) => (all[key] ??= {value: {set() {}}})})}
+    const {a, b} = basis(view), o = stageCentre(size.width, size.height)
+    field.setHostView({...size, pixelRatio: 1, originX: o.x + view.panX, originY: o.y + view.panY,
+      pixelsPerUnit: stageScale(size.width, size.height) * view.zoom / SCALE.worldScale, right: a, up: b})
+    const cam = field.perspCamera
+    cam.updateMatrixWorld(true)
     return p => {
       const v = new THREE.Vector3(...p.map(x => x * SCALE.unitsPerMetre)).project(cam)
-      return {x: (v.x + 1) / 2 * SIZE.width, y: (1 - v.y) / 2 * SIZE.height, eye: cam.position.clone().divideScalar(SCALE.unitsPerMetre)}
+      return {x: (v.x + 1) / 2 * size.width, y: (1 - v.y) / 2 * size.height, eye: cam.position.clone().divideScalar(SCALE.unitsPerMetre)}
     }
   }
   let exact = 0, all = 0
-  for (const [view, fov] of [[camera({}), 38], [camera({yaw: 0.7, pitch: -0.4, panX: 40, panY: -25}), 60], [camera({yaw: -2.1, pitch: 1.2, zoom: 1.6}), 20]]) {
-    const draw = drawnBy(view, fov)
+  for (const [view, fov, size] of [[camera({}), 38, SIZE], [camera({yaw: 0.7, pitch: -0.4, panX: 40, panY: -25}), 60, SIZE],
+    [camera({yaw: -2.1, pitch: 1.2, zoom: 1.6}), 20, SIZE], [camera({yaw: 0.3, pitch: 0.5, zoom: 1.2, panX: -70, panY: 45}), 38, {width: 600, height: 900}]]) {
+    const draw = drawnBy(view, fov, size)
     for (let i = 0; i < 8; i++) for (let j = 0; j < 12; j++) {
       const theta = (i + 0.5) * TAU / 8, phi = (j + 0.25) * TAU / 12, drawn = torusPoint(theta, phi), pixel = draw(drawn)
-      const touched = touchedSurface(pixel.x, pixel.y, {camera: view, ...SIZE}, {projection: 'perspective', fovDegrees: fov, ...SCALE})
+      const touched = touchedSurface(pixel.x, pixel.y, {camera: view, ...size}, {projection: 'perspective', fovDegrees: fov, ...SCALE})
       assert.ok(touched.point, `a point the perspective stage draws is a point a touch can reach (${theta}, ${phi}, fov ${fov})`)
       onSheet(touched.point, 'touched')
       const back = draw(torusPoint(touched.point.theta, touched.point.phi))

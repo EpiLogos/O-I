@@ -304,3 +304,35 @@ test('a take is sealed from the checkpoint it began at, built into its record an
     () => presets.commitLivePerformance({action: 'record-take', record: torusTakeRecord(TAKE, take)}))
   assert.equal(reply.state, 'take-recorded', 'the owner\'s answer to a laid take is read in its own shape')
 })
+
+// BB round 20: where the kernel no longer knows the name a take's checkpoint was relayed under (after a restart), the seal is refused in its
+// words; the kernel also seals from the checkpoint given whole (native_expression.rs TorusTake `checkpoint`, named by its value_sha256), so the
+// lay sends the checkpoint the take's course keeps and seals once more, and lays what that seal answers. Once: a second refusal stands.
+test('a seal refused for a checkpoint name the kernel no longer knows is asked once more with the checkpoint itself, then laid', async () => {
+  const NAMED = 'sha256:' + 'b'.repeat(64)
+  const CHECKPOINT = {schema: 'ql.torus-checkpoint/v1', taken_at_samples: '48000', sample_rate: 48000, event: {ref: 'e'}}
+  const TAKE = {schema: 'oi.torus-take/v1', take_ref: 'sha256:' + 'c'.repeat(64), sample_rate: 48000, seal: 'hmac-sha256:seal'}
+  const unknown = sha => `No Torus checkpoint ${sha} was given under this lease: a take is sealed from the checkpoint its owner gave as it began, while that owner is open`
+  const take = {id: 3, name: 'Take 3', beat: 4, bpm: 120}
+  let asked = []
+  const perform = async action => { asked.push(action); return {state: 'take-recorded', take_ref: TAKE.take_ref, lane_ref: 'take-lane:torus/3', at_sample: '96000', unsaved: false} }
+  const forgets = async command => { asked.push(command); return command.checkpoint ? {ok: true, take: TAKE} : {ok: false, error: unknown(command.checkpoint_sha256)} }
+  const {torusTakeRecord} = await import('../src/live/liveTake.ts')
+  const laid = await presets.layTorusTake({checkpoint_sha256: NAMED, checkpoint: CHECKPOINT, take}, {stage: forgets, perform})
+  assert.deepEqual(asked, [{command: 'torus-take', action: 'seal', checkpoint_sha256: NAMED}, {command: 'torus-take', action: 'seal', checkpoint: CHECKPOINT},
+    {action: 'record-take', record: torusTakeRecord(TAKE, take)}], 'refused by its name, sealed from the checkpoint itself, then laid')
+  assert.deepEqual(laid, {ok: true, words: 'Take 3 lies under the scene on its take lane, from sample 96000.'})
+  asked = []
+  const never = async command => { asked.push(command); return {ok: false, error: unknown(command.checkpoint ? 'sha256:' + 'd'.repeat(64) : command.checkpoint_sha256)} }
+  assert.deepEqual(await presets.layTorusTake({checkpoint_sha256: NAMED, checkpoint: CHECKPOINT, take}, {stage: never, perform}),
+    {ok: false, error: unknown('sha256:' + 'd'.repeat(64))}, 'the second refusal stands, in the kernel\'s words')
+  assert.equal(asked.length, 2, 'asked once more, never again; nothing laid')
+  asked = []
+  assert.deepEqual(await presets.layTorusTake({checkpoint_sha256: NAMED, checkpoint: CHECKPOINT, take},
+    {stage: async command => { asked.push(command); return {ok: false, error: 'The take from sample 48000 has not been rendered'} }, perform}),
+    {ok: false, error: 'The take from sample 48000 has not been rendered'})
+  assert.equal(asked.length, 1, 'any other refusal is not asked again')
+  asked = []
+  assert.deepEqual(await presets.layTorusTake({checkpoint_sha256: NAMED, take}, {stage: forgets, perform}), {ok: false, error: unknown(NAMED)})
+  assert.equal(asked.length, 1, 'a lay given no checkpoint has nothing to send again')
+})

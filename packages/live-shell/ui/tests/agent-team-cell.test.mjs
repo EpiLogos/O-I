@@ -4,12 +4,12 @@ import {register} from 'node:module'
 import {readFileSync} from 'node:fs'
 
 // The Agent's Team cell (DLW §19.4; O-I #684 `team.space`, `team.row`, `team.question`, `team.depth`): where the agent stands in Anima or
-// Aletheia, read from Quaternal Logic's team space (`ql context-frame team-space`, `ql.vak-team-space/v1`, the kernel's team_space) for the
-// agent the session names. A Voice of Anima stands in its frame's row and is asked that row's Day question (else the Night′ question it
-// answers); a member of Aletheia is asked the Night′ question it answers in each row it sits in; an organ's lead stands at the depth of its
+// Aletheia, read from Quaternal Logic's team space (`ql context-frame team-space`, `ql.vak-team-space/v2`, the kernel's team_space) for the
+// agent the session names. A Voice of Anima stands in its frame's row and is asked that row's prospective question (else the retrospective
+// question it answers); a member of Aletheia is asked the retrospective question it answers in each row it sits in; an organ's lead stands at the depth of its
 // organ's proving Position. Nothing is drawn that the team space does not say.
 // Channels:
-// - REAL (tests/fixtures/ql-team-space-2026-10-29.json): the installed quaternal-logic's team space, 29 Oct.
+// - REAL (tests/fixtures/ql-team-space-2026-10-29.json): Quaternal Logic's team space, read 29 Oct and again from the v2 build, 5 Nov.
 // - SCRIPTED: the Agent's binding the cell joins (a stand-in with the Agent's own keys).
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
 register(`data:text/javascript,${encodeURIComponent(`
@@ -41,7 +41,7 @@ globalThis.document ??= {getElementById: () => null, createElement: () => ({styl
 const team = await import('../src/agent/devices/teamCell.ts')
 const SPACE = JSON.parse(readFileSync(new URL('./fixtures/ql-team-space-2026-10-29.json', import.meta.url), 'utf8')).answer
 
-test('a Voice of Anima stands in its frame\'s row and is asked its Day question; Nous, who has none, the Night′ question it answers', () => {
+test('a Voice of Anima stands in its frame\'s row and is asked its prospective question; Nous, who has none, the retrospective question it answers', () => {
   const eros = team.teamCellOf({space: SPACE}, 'agent/anima-eros')
   assert.deepEqual(eros.values, {'team.space': 'Anima', 'team.row': 'CF3', 'team.question': '4.2 What is being done?'})
   assert.match(eros.standing['team.depth'], /no reading here names the Position/)
@@ -49,7 +49,7 @@ test('a Voice of Anima stands in its frame\'s row and is asked its Day question;
   assert.deepEqual([nous.values['team.row'], nous.values['team.question']], ['CF1', '4.0 What don\'t we know?'])
 })
 
-test('a member of Aletheia is asked the Night′ question it answers in each row it sits in, and one who answers none says so', () => {
+test('a member of Aletheia is asked the retrospective question it answers in each row it sits in, and one who answers none says so', () => {
   const moirai = team.teamCellOf({space: SPACE}, 'agent/aletheia-moirai')
   assert.deepEqual(moirai.values, {'team.space': 'Aletheia', 'team.row': 'CF3, CF5, CF7',
     'team.question': '4.1 What evidence exists? · 4.4 What sources inform? · 4.5 What crystallises?'})
