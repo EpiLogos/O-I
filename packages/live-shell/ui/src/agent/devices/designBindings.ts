@@ -539,6 +539,8 @@ export interface RackInput {
   readonly capabilities: unknown
   /** `ai-kit:resolution:resolution.profiles` resolved at the composition's scope. */
   readonly profiles: unknown
+  /** The seated session's practice (`aikit praxis activity --session`, aikit.praxis-session/v1), absent while not read. */
+  readonly activity?: unknown
   readonly holds: ChainHolds
 }
 
@@ -579,13 +581,28 @@ function catalogue(skills: unknown): Map<string, CatalogueRow> {
   return out
 }
 
+/** What the seated session did with its practice, as AIKit's development entry keeps it (aikit.praxis-session/v1, O-I 745): what it
+ * loaded and invoked from its own tool events, and — once its ticket's close named them — what it relied on. Null where AIKit keeps
+ * no record of the session (unrecorded) or was not read. */
+interface SessionPractice {readonly loaded: ReadonlySet<string>; readonly invoked: ReadonlySet<string>; readonly relied: ReadonlySet<string> | null}
+function sessionPractice(reading: unknown): SessionPractice | null {
+  if (!isObj(reading) || reading.schema !== 'aikit.praxis-session/v1' || !isObj(reading.activity)) return null
+  if (reading.standing !== 'open' && reading.standing !== 'closed') return null
+  const activity = reading.activity
+  return {loaded: new Set(strings(activity.loaded)), invoked: new Set(strings(activity.invoked)),
+    relied: reading.standing === 'closed' ? new Set(strings(activity.relied_upon)) : null}
+}
+
 /** One member, from what the owners report of it. The ladder lights only what was observed: carried (a set or the profile holds
- * it), catalogued (AIKit's catalogue lists it), available (it projects here, or AIKit withholds it with a reason). Selected,
- * projected into a harness, loaded, invoked, relied on, succeeded and verified are AIKit's operative evidence (`aikit praxis
- * disclose`), which no kernel operation reaches yet, so they stay hollow — not observed, never inferred upward. */
-function member(ref: string, row: CatalogueRow | undefined, available: boolean | null, withheld: string | null): Member {
+ * it), catalogued (AIKit's catalogue lists it), available (it projects here, or AIKit withholds it with a reason), and from the
+ * seated session's record (`aikit praxis activity`): loaded and invoked, yes or no, while the session is recorded; relied on once
+ * its close named what it relied on. Selected, projected into a harness, succeeded and verified no kernel operation reports, so
+ * they stay hollow — not observed, never inferred upward. */
+function member(ref: string, row: CatalogueRow | undefined, available: boolean | null, withheld: string | null, practice: SessionPractice | null = null): Member {
   const form = row ? formOf(row.description) : 'skill'
-  const rungs: Rung[] = [true, row ? true : false, available, null, null, null, null, null, null, null]
+  const rungs: Rung[] = [true, row ? true : false, available, null, null,
+    practice ? practice.loaded.has(ref) : null, practice ? practice.invoked.has(ref) : null, practice?.relied ? practice.relied.has(ref) : null,
+    null, null]
   const prefix = FORM_PREFIX.find(([p]) => row?.description.startsWith(p))?.[0]
   return {
     id: ref,
@@ -600,9 +617,10 @@ function member(ref: string, row: CatalogueRow | undefined, available: boolean |
 
 /** The repertoire the seated agent carries: every set's members as AIKit replies (projected, or withheld with its reason), each
  * child set by reference, and the skills the profile names directly. Null when nothing is read yet. */
-export function rackMembers(input: Pick<RackInput, 'profile' | 'sets' | 'setList' | 'skills'>): Member[] | null {
+export function rackMembers(input: Pick<RackInput, 'profile' | 'sets' | 'setList' | 'skills' | 'activity'>): Member[] | null {
   if (!input.profile) return null
   const rows = catalogue(input.skills)
+  const practice = sessionPractice(input.activity)
   const out = new Map<string, Member>()
   const sizes = new Map<string, number>()
   if (isObj(input.setList) && Array.isArray(input.setList.sets)) {
@@ -611,10 +629,10 @@ export function rackMembers(input: Pick<RackInput, 'profile' | 'sets' | 'setList
   for (const ref of strings(input.profile.skill_set_refs)) {
     const reply = input.sets[setName(ref)]
     if (!isObj(reply)) continue
-    for (const cap of strings(reply.projected)) if (!out.has(cap)) out.set(cap, member(cap, rows.get(cap), true, null))
+    for (const cap of strings(reply.projected)) if (!out.has(cap)) out.set(cap, member(cap, rows.get(cap), true, null, practice))
     for (const held of Array.isArray(reply.withheld) ? reply.withheld : []) {
       if (!isObj(held) || typeof held.capability !== 'string') continue
-      out.set(held.capability, member(held.capability, rows.get(held.capability), false, typeof held.reason === 'string' ? held.reason : 'Withheld.'))
+      out.set(held.capability, member(held.capability, rows.get(held.capability), false, typeof held.reason === 'string' ? held.reason : 'Withheld.', practice))
     }
     for (const child of strings(reply.child_refs)) {
       const name = setName(child)
@@ -625,7 +643,7 @@ export function rackMembers(input: Pick<RackInput, 'profile' | 'sets' | 'setList
   for (const ref of strings(input.profile.skill_refs)) {
     if (out.has(ref)) continue
     const row = rows.get(ref)
-    out.set(ref, member(ref, row, row ? row.eligible : null, row && row.eligible === false ? row.reason ?? 'Not eligible here.' : null))
+    out.set(ref, member(ref, row, row ? row.eligible : null, row && row.eligible === false ? row.reason ?? 'Not eligible here.' : null, practice))
   }
   return [...out.values()]
 }

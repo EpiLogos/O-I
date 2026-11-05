@@ -6,7 +6,10 @@
 //   agent_definition {skills}         — `aikit session-space -C <cwd> agent-session-skills`: rows[{ref, name, description,
 //                                       revision, eligible, reason_code, source}] (agency.rs:333-380 direct_agent);
 //   config_resolutions_read           — `oi config resolve --request-file - --json` (configuration.rs:516-596): one
-//                                       oi.config-resolution/v1 per pair, {desired?, native{active, declared, effective}}.
+//                                       oi.config-resolution/v1 per pair, {desired?, native{active, declared, effective}};
+//   aikit_read {praxis-activity}      — `aikit praxis activity --session <session> --json` (O-I 745): aikit.praxis-session/v1
+//                                       {standing open|closed|unrecorded, record, ticket, activity{loaded, invoked, relied_upon}},
+//                                       the seated session's practice from its development-entry record.
 // The writes: config_plan_reviewed (`oi config plan`, configuration.rs:690-727: owner plans, nothing moves) and
 // config_apply_reviewed (`oi config apply`, :742-780: the admitted ChangeSet, verified by re-read, receipts back).
 //
@@ -29,11 +32,13 @@ export interface RackReading {
   readonly skills: unknown
   readonly capabilities: unknown
   readonly profiles: unknown
+  /** The seated session's practice (aikit.praxis-session/v1), null with no session or while not read. */
+  readonly activity: unknown
   /** The owners' refusals, by what was read. */
   readonly refused: Readonly<Record<string, string>>
 }
 
-const NONE: RackReading = {sets: {}, setList: null, skills: null, capabilities: null, profiles: null, refused: {}}
+const NONE: RackReading = {sets: {}, setList: null, skills: null, capabilities: null, profiles: null, activity: null, refused: {}}
 
 async function definition(transport: KernelTransportStatus, project: string, request: {action: 'skillsets' | 'skills'} | {action: 'skillset'; name: string}): Promise<{value?: unknown; error?: string}> {
   const result = await kernelRead(transport, {op: 'agent_definition', project: registerOf(project), request})
@@ -64,6 +69,10 @@ export function useRackReading(transport: KernelTransportStatus, profile: {reado
       const skills = await definition(transport, project, {action: 'skills'})
       if (list.error) refused.setList = list.error
       if (skills.error) refused.skills = skills.error
+      // What the session did with its practice moves with every tool call: read each time, never kept.
+      const practice = sessionRef ? await kernelRead(transport, {op: 'aikit_read', request: {kind: 'praxis-activity', session: sessionRef}}) : null
+      const activity = practice && !practice.error && practice.outcome?.result === 'owner_route_reading' ? practice.outcome.data : null
+      if (practice && activity == null) refused.activity = practice.error ?? 'AIKit did not answer the session\'s practice'
       const resolved = await kernelRead(transport, {op: 'config_resolutions_read', pairs: [
         {setting_ref: 'ai-kit:skills:skills.capabilities', scope: pairScope},
         {setting_ref: 'ai-kit:resolution:resolution.profiles', scope: pairScope},
@@ -71,10 +80,10 @@ export function useRackReading(transport: KernelTransportStatus, profile: {reado
       const rows = !resolved.error && resolved.outcome?.result === 'config_resolutions' ? resolved.outcome.resolutions : null
       if (!rows) refused.plane = resolved.error ?? 'The configuration plane did not resolve the rack\'s settings'
       const row = (index: number) => (rows && isObj(rows[index]) && (rows[index] as Obj).schema === 'oi.config-resolution/v1' ? rows[index] : null)
-      if (live) setReading({sets: shown, setList: list.value ?? null, skills: skills.value ?? null, capabilities: row(0), profiles: row(1), refused})
+      if (live) setReading({sets: shown, setList: list.value ?? null, skills: skills.value ?? null, capabilities: row(0), profiles: row(1), activity, refused})
     })()
     return () => { live = false }
-  }, [transport, sets, pairScope, enabled, epoch, project])
+  }, [transport, sets, pairScope, enabled, epoch, project, sessionRef])
   return reading
 }
 

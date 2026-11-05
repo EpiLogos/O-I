@@ -128,13 +128,9 @@ test('Runs draws the Journey of the Run it shows (the Journey view); unread, ref
   assert.equal(none.standing.journey.disabled, tasks.RUNS_JOURNEY_NONE)
   assert.equal(tasks.runsBinding(null, bind.chainHolds()).standing.journey.disabled, tasks.RUNS_JOURNEY_UNREAD)
   // REPLACED (#725): drawn on Runs' Journey view — Runs was retired (§16.1); the Run map draws the Journey a Run belongs to (§19.25), so the
-  // same reading (the Commission's purpose, the status, each Run's lifecycle) is drawn there, on the real Commission, never its sample. The
-  // chain does not hand the Run map this reading yet (runMapBinding.ts holds `journey` absent): the drawing is of Runs' own reading, laid on
-  // the Run map's binding.
-  const own = runMap.runMapBinding(bind.chainHolds())
-  const standing = {...own.standing}
-  delete standing.journey
-  const journeyed = {...own, values: {...own.values, journey: tasks.runsBinding('s', bind.chainHolds(), {takes: [TAKE], choose: async () => ({}), journey: {status: 'answered', value: chain, error: null}}).values.journey}, standing}
+  // same reading (the Commission's purpose, the status, each Run's lifecycle) is drawn there, on the real Commission, never its sample.
+  // Since O-I 844 the Run map is handed the chain itself (runMapBinding's `read`; drawn on the Run map's own binding, below).
+  const journeyed = runMap.runMapBinding(bind.chainHolds(), {statePath: STATE, runRef: RUN, units: {}}, {}, {status: 'answered', value: chain, error: null})
   const drawn = hosted(runMapDesign, journeyed)
   for (const [view, markup] of drawn) {
     assert.doesNotMatch(markup, /\bNaN\b|undefined/, `${view}: no absent key drawn as text`)
@@ -144,12 +140,50 @@ test('Runs draws the Journey of the Run it shows (the Journey view); unread, ref
   bind.resetHolds()
 })
 
-test('REPLACED (ticket 772) — the chain hands no Runs device a Journey: Runs is no device; the Journey\'s reader stays', () => {
+test('REPLACED (ticket 772, then O-I 844) — the chain hands no Runs device a Journey; the Run map is the Journey\'s consumer', () => {
   // Was "the chain hands Runs the Journey of the Run it shows, read from the take's state and ref". The Runs device answered null since
   // ticket 725 (§19.1: a run's attempts are the track's takes; how the work came to the run is the Run map's Journey, §19.25), so the
-  // Journey it was handed was drawn nowhere; ticket 772 removed the dead wiring. The Journey's reader (runJourney.ts) and runsBinding's
-  // drawing of it (above) stay for the place that draws them.
+  // Journey it was handed was drawn nowhere; ticket 772 removed the dead wiring. O-I 844 gives the Journey's reader its consumer: "Run
+  // map shows the run of the selected work" (§19.25 To use, 1), the Run the shown session's newest take names.
   const view = read('agent/devices/FactoryDeviceChain.tsx')
-  assert.doesNotMatch(view, /useRunJourney|runsDesignBinding/, 'no Runs binding is wired on the chain')
+  assert.doesNotMatch(view, /runsDesignBinding/, 'no Runs binding is wired on the chain')
+  assert.match(view, /useRunJourney\(transport, mapTake\?\.statePath \?\? null, mapTake\?\.runRef \?\? null\)/, 'the Run of the shown session\'s newest take is read')
+  assert.match(view, /placed\(RUN_MAP_ID, runMapDev, runMapDesignBinding,/, 'and the Run map draws it')
   assert.match(read('agent/devices/runJourney.ts'), /op: 'factory_development_read', state_path: statePath, read, subject/)
+})
+
+test('the Run map draws the Run of the selected work across its Journey (O-I 844): the run, its map, its place among the Journey\'s Runs, its Return and your Recognition', () => {
+  bind.resetHolds()
+  const NEXT = 'run:01M4BK6JT0NEXT0000000000000'
+  const run = {statePath: STATE, runRef: RUN, units: {}}
+  // REAL: the run reading and its Journey (one Run, no Return yet).
+  const real = runMap.runMapBinding(bind.chainHolds(), run, {}, {status: 'answered', value: {run: REAL.run, journey: REAL.journey, runs: {[RUN]: {value: REAL.run}}}, error: null})
+  assert.deepEqual(JSON.parse(real.values.run), {ref: RUN, lifecycle: 'seeded', revision: 2})
+  assert.equal(real.values.light, 'dark', 'a seeded Run is not at work')
+  assert.equal(JSON.parse(real.values.nodes).length, Object.keys(REAL.run.runMap.nodes).length, 'every node of Factory\'s map, none of the shell\'s')
+  assert.deepEqual(JSON.parse(real.values.edges), REAL.run.runMap.edges.map(({from, to, relation}) => ({from, to, relation})))
+  assert.deepEqual(JSON.parse(real.values.journey), {ref: JOURNEY, purpose: REAL.journey.commission.purpose, status: 'active', runs: [{ref: RUN, lifecycle: 'seeded'}]})
+  for (const key of ['run', 'nodes', 'edges', 'journey', 'light', 'recognition']) assert.equal(real.standing[key], undefined, `${key} is read`)
+  assert.equal(real.standing.ret.disabled, runMap.NO_RETURN, 'no Return yet: absent, saying so')
+  assert.match(real.standing.recognise.disabled, /given in Approvals/, 'Recognise stands in Approvals')
+  // FAKE, in the journey reading's own shape: this Run continued by another, its Return recognised.
+  const journey = {...REAL.journey, runRefs: [RUN, NEXT],
+    returns: [{return_ref: 'return:first', run_refs: [RUN], summary: 'first pass'}],
+    recognitions: [{recognition_ref: 'recognition:first', subject_ref: 'return:first'}]}
+  const next = {...REAL.run, runRef: NEXT, lifecycle: 'active'}
+  const across = runMap.runMapBinding(bind.chainHolds(), run, {}, {status: 'answered', value: {run: REAL.run, journey, runs: {[RUN]: {value: REAL.run}, [NEXT]: {value: next}}}, error: null})
+  assert.deepEqual(JSON.parse(across.values.journey).runs, [{ref: RUN, lifecycle: 'seeded', recognised: true}, {ref: NEXT, lifecycle: 'active'}])
+  assert.deepEqual(JSON.parse(across.values.ret), {ref: 'return:first', summary: 'first pass'})
+  assert.deepEqual(JSON.parse(across.values.recognition), {ref: 'recognition:first'})
+  const markup = hosted(runMapDesign, across).map(([, html]) => html).join('\n')
+  assert.match(markup, /1 of 2/, 'this run\'s place in the journey')
+  assert.doesNotMatch(markup, /\bNaN\b|undefined|data-device-fault/)
+  // Reading, refused, or no Journey: each absent in its own words.
+  const reading = runMap.runMapBinding(bind.chainHolds(), run, {}, {status: 'reading', value: null, error: null})
+  assert.match(reading.standing.journey.disabled, /Factory has not answered yet/)
+  const refused = runMap.runMapBinding(bind.chainHolds(), run, {}, {status: 'refused', value: null, error: 'factory: NotFound("run")'})
+  assert.match(refused.standing.run.disabled, /NotFound/)
+  const alone = runMap.runMapBinding(bind.chainHolds(), run, {}, {status: 'answered', value: {run: {...REAL.run, owningJourneyRefs: []}, journey: null, runs: {}}, error: null})
+  assert.equal(alone.standing.journey.disabled, runMap.NO_JOURNEY)
+  bind.resetHolds()
 })

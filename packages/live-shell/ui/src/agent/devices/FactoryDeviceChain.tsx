@@ -122,6 +122,7 @@ import {DECISION_HELPER_ID, decisionHelperBinding, decisionHelperDevice} from '.
 import {captureSkillBinding, type CaptureSkillPorts} from './captureSkillBinding'
 import {useSongClipFocus} from '../songClips'
 import {RUN_MAP_DESIGN, RUN_MAP_ID, runMapBinding, runMapDevice} from './runMapBinding'
+import {useRunJourney} from './runJourney'
 import {PROMPT_PADS_DESIGN, PROMPT_PADS_ID, padsLocation, promptPadsBinding, promptPadsDevice, type PromptPadsPorts} from './promptPadsBinding'
 import {useDecisionHelperReadings} from './decisionHelperReads'
 import {useTeamSpace, withTeamCell} from './teamCell'
@@ -329,7 +330,7 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     located: {status: padsLocated.status, value: padsLocated.value?.data ?? null, error: padsLocated.error},
     ...(padsBankOp ? {bank: {status: padsBank.status, value: padsBank.value?.data ?? null, error: padsBank.error}} : {}), holds,
   }), [padsLocated, padsBank, padsBankOp, holds])
-  const mainBindings = useMemo(() => ({runMap: runMapBinding(holds), pads: promptPadsBinding(padsInput, padsPorts)}), [holds, padsInput, padsPorts])
+  const mainBindings = useMemo(() => ({pads: promptPadsBinding(padsInput, padsPorts)}), [padsInput, padsPorts])
   // The Run map and the Prompt pads (§19.25, §19.22, lane W7): bound, standing where Software Factory's family admits their faces.
   const runMapDev = useMemo(() => runMapDevice(), [])
   const padsDev = useMemo(() => promptPadsDevice(), [])
@@ -577,6 +578,27 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
       .map(take => ({statePath: take.statePath, runRef: take.runRef}))
   }, [shownTakesAll, shownTrack])
   const unitsRead = useUnitDecisions(transport, unitRuns)
+  // The Run map's Run (§19.25 To use, 1: "Run map shows the run of the selected work"): the Run the shown session's newest take names,
+  // read with its Journey and the Journey's Runs — the work across runs, whichever sessions ran them (runJourney.ts; O-I 844).
+  const mapTake = useMemo(() => {
+    const takes = shownTakesAll && shownTrack ? shownTakesAll.of(shownTrack.sessionRef) ?? [] : []
+    return takes.reduce<(typeof takes)[number] | null>((newest, take) => (!newest || (take.startUnixMs ?? 0) >= (newest.startUnixMs ?? 0) ? take : newest), null)
+  }, [shownTakesAll, shownTrack])
+  const mapChain = useRunJourney(transport, mapTake?.statePath ?? null, mapTake?.runRef ?? null)
+  const runMapDesignBinding = useMemo(() => {
+    if (!mapTake) return runMapBinding(holds)
+    const value = mapChain.status === 'answered' ? mapChain.value ?? null : null
+    const map = value && typeof value.run === 'object' && value.run ? (value.run as {runMap?: {nodes?: unknown}}).runMap : undefined
+    const nodes = map && map.nodes && typeof map.nodes === 'object' ? Object.values(map.nodes as Record<string, unknown>) : []
+    // Each work node's workflow unit (the run reading's semanticRef), which Retry names to Factory.
+    const units = Object.fromEntries(nodes.flatMap(node => {
+      const row = node as {id?: unknown; semanticRef?: unknown}
+      return typeof row.id === 'string' && typeof row.semanticRef === 'string' ? [[row.id, row.semanticRef]] : []
+    }))
+    return runMapBinding(holds, {statePath: mapTake.statePath, runRef: mapTake.runRef, units},
+      transport.kind !== 'unavailable' ? {owner: request => factoryOwnerWrite(transport, request, '`factory attempt retry`')} : {},
+      {status: mapChain.status, value, error: mapChain.error})
+  }, [holds, mapTake, mapChain, transport])
   const units = unitsRead.status === 'answered' ? unitsRead.value : null
   // Approve (W2): the person who accepts is the principal Central's personal anchor names; it is asked only while a proposal or a unit
   // decision waits (only the unit's resolver answers one).
@@ -663,7 +685,7 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     if (memberDevice && memberDesignBinding) publishDevice(memberDevice.id, {device: memberDevice, binding: memberDesignBinding})
     else publishDevice(MEMBER_DEVICE_ID, null)
   }, [chain, bindings, memberDevice, memberDesignBinding, main.frames]) // the pictures read the reading `chain` is built from
-  useEffect(() => { publishDevice(RUN_MAP_ID, runMapDev ? {device: runMapDev, binding: mainBindings.runMap} : null) }, [runMapDev, mainBindings])
+  useEffect(() => { publishDevice(RUN_MAP_ID, runMapDev ? {device: runMapDev, binding: runMapDesignBinding} : null) }, [runMapDev, runMapDesignBinding])
   useEffect(() => { publishDevice(PROMPT_PADS_ID, padsDev ? {device: padsDev, binding: mainBindings.pads} : null) }, [padsDev, mainBindings])
   useEffect(() => {
     const own = [[AGENTSET_ID, ownDevices.agentset, agentsetDesignBinding], [DECISION_HELPER_ID, helperStands ? helperDevice : null, helperDesignBinding],
@@ -887,7 +909,7 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
       case 'agentset': return rackPlate()
       // The Main track (§16.2, §19.1): the Run map, then Approvals, where every proposal waits (§19.14), then the Prompt pads.
       case 'approvals': return placed(APPROVALS_ID, receipts.approvals, approvalsDesignBinding, designsReceipts.approvals ? APPROVALS_DESIGN : undefined, 'Approvals', {attrs: {'data-main-slot': 'approvals'}})
-      case 'run-map': return placed(RUN_MAP_ID, runMapDev, mainBindings.runMap, designsMain.runMap ? RUN_MAP_DESIGN : undefined, 'the Run map', {attrs: {'data-main-slot': 'run-map'}})
+      case 'run-map': return placed(RUN_MAP_ID, runMapDev, runMapDesignBinding, designsMain.runMap ? RUN_MAP_DESIGN : undefined, 'the Run map', {attrs: {'data-main-slot': 'run-map'}})
       case 'prompt-pads': return placed(PROMPT_PADS_ID, padsDev, mainBindings.pads, designsMain.pads ? PROMPT_PADS_DESIGN : undefined, 'the Prompt pads', {attrs: {'data-main-slot': 'prompt-pads'}})
       // The road in (§16.2 "Connections keep the same order"; §19.18): the Remote carrier names the machine the work runs on — on a
       // workcell's chain, and on a session's before the rack, where it reaches every chain.

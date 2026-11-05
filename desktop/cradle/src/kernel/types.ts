@@ -427,6 +427,10 @@ export type AikitReadRequest =
    * outcome:"answered"|"unanswered", answered_by?, answers?:{id:{type, choice?|noul?|score?, probabilities?, confidence?}}, failure?}`,
    * kept by AIKit against the session that asked the decision helper. The Agent's thread draws them as Ask rows. */
   | {kind:"decision-asks";agent_session:string}
+  /** `aikit praxis activity --session S` (O-I 745): `aikit.praxis-session/v1` `{session, record, standing:"open"|"closed"|"unrecorded",
+   * ticket, activity (aikit.praxis-activity/v1, null when unrecorded), reason}`: what one session loaded, invoked and relied on, from its
+   * development-entry record. The Skillset rack's Loaded, Invoked and Relied-on rungs. */
+  | {kind:"praxis-activity";session:string}
   /** `aikit work continuity closeout verify [--project P] [--since UNIX_SECONDS] [--run RUN_REF]`: `{clauses, project, verified}`. An
    * unverified close-out exits 1 with its verdict; it is still the reading. */
   | {kind:"closeout-verify";project?:string|null;since?:number|null;run?:string|null}
