@@ -41,7 +41,7 @@ import {isStageCheckpointName, isStageSampleCursor, readInstrumentEdit, readStag
 import type {LiveClipAt, LiveClipReading, LiveNote, LiveNoteMpe, LiveSetAct, LiveSetActed} from '../../../../../desktop/cradle/src/kernel/types'
 import type {SlotBinding} from '../frame/transport/slots'
 import type {NoteSource, PlayedNote, PlayedTouch} from './janko/jankoInput'
-import type {ClipMove, ClipPrepared, ClipTorusTurn} from './clipPlayer'
+import type {ClipFrozen, ClipMove, ClipPrepared, ClipTorusTurn} from './clipPlayer'
 import type {LiveTorusState} from './torusInstrument'
 import type {MapValue, MapWriter} from './midiMap/midiMapModel'
 import {mapTargetIdsOfEdit} from './midiMap/midiMapTargets'
@@ -66,9 +66,23 @@ export const TAKE_REPLAYS = 'The take plays again as it was played: the Torus ri
 /** Where a take that keeps its course resumes when it cannot play it (its clip changed, or the Torus did not ring again from its state). */
 export const TAKE_RESUMES_INSTEAD = 'It plays its notes as its clip holds them, each at the touch-point it struck and at its strength, on the Torus set as it '
   + 'stood when the take began, and makes each move again at its beat, within a block of the sound: it resumes from the body as it then rings.'
-/** Where a take of a row resumes when another take of the press holds the one Torus (O-I #849 round 21: one Torus rings at a time). */
-export const takeTorusHeld = (holder: string, name: string): string => `${holder} sets the Torus again in this row, and one Torus rings at a time: `
+/** Where a take resumes when another take holds the one Torus (O-I #849 round 21: one Torus rings at a time; DLW build ruling 2026-11-05:
+ * the turn is the first take's until it ends, "and any launch meanwhile is held in the same words, a single launch included"). */
+export const takeTorusHeld = (holder: string, name: string): string => `${holder} holds the Torus until it ends, and one Torus rings at a time: `
   + `${name} plays each note at the touch-point it struck and at its strength, on the Torus as ${holder} set it, and makes none of its moves.`
+/** A held take frozen on its part (O-I #849 round 22; DLW build ruling 2026-11-05: "A rendered take is a frozen take"), as Live's Freeze
+ * Track: its own Torus rendered with its moves and effects, heard through its part until it ends, then the part's live Torus again. */
+export const takeTorusFrozen = (holder: string, name: string): string => `${holder} holds the Torus until it ends, and one Torus rings at a time: `
+  + `${name} is frozen on its part, its own Torus rendered with its moves and effects and heard through the part until it ends; then the part plays its live Torus again.`
+/** What a frozen take's lanes say when touched: its Torus is baked into its sound, and Unfreeze returns the part to its live Torus. */
+export const takeFrozen = (name: string): string => `${name} is frozen: its Torus is rendered into its sound, so its parameters do not move. Unfreeze returns the part to its live Torus.`
+/** What a take says once Unfreeze let it go: the rest of its notes on the live Torus. */
+export const takeUnfrozen = (holder: string, name: string): string => `${name} is unfrozen: its part plays its live Torus again, and the rest of its notes `
+  + `play there at the touch-point each struck and at its strength, on the Torus as ${holder} set it.`
+/** A held take is frozen only where its sound reaches the engine that plays its set. */
+export const TAKE_FREEZES_IN_ENGINE = 'It is frozen on its part, as its own Torus, only while the engine plays the set.'
+/** Why a held take was not frozen on its part, in its owner's words. */
+const notFrozen = (why: string) => `It was not frozen on its part: ${sentence(why)}`
 /** What a take with its course does not keep: the frame's own sound moves by beat, not by sample. */
 export const TAKE_COURSE_NOT_KEPT = Object.freeze(['the sample each move of the level and effects landed at'] as const)
 /** Said with a take laid with its course. */
@@ -607,10 +621,21 @@ export function takeVoice(keeps: unknown): ClipPrepared['voice'] | undefined {
 }
 
 /** What a take's clip plays through beside the instrument command: the frame's stage channel (the Torus rung again from the take's state)
- * and the set's tempo. */
+ * and the set's tempo; and, where the engine plays the set, its part's freeze (`frozen`, O-I #849 round 22). */
 export interface TakePlay {
   readonly stage: (command: StageCommand) => Promise<StageResult>
   readonly bpm: number
+  readonly frozen?: TakeFreeze
+}
+
+/** A take's part in the engine that plays its set, frozen and let go (O-I #849 round 22; live_engine_host.rs `live_engine_freeze`,
+ * `live_engine_unfreeze`): `freeze` sends the take's sound (its course as the Torus's owner rendered it, at the level it played at), its
+ * rate and the Torus's effects at their frames, to sound through the part from the owner's sample it lands at until it ends; `unfreeze`
+ * lets it go, the part's live Torus heard again. Each settles null once the engine took it, else in the engine's words. */
+export interface TakeFreeze {
+  readonly freeze: (take: {readonly name: string; readonly rate: number; readonly pcm: Float32Array; readonly effects: readonly TakeEffectsAt[]; readonly landed: bigint}) =>
+    Promise<string | null>
+  readonly unfreeze: () => Promise<string | null>
 }
 
 /** The edits the frame makes on its own sound: they move by beat in a take played as it was played, and are not in its render. */
@@ -638,9 +663,11 @@ function clipChanged(clip: LiveClipReading, keeps: Plain, bpm: number): string |
  * where it resumes. A take with its course, its clip as it was laid, rings again from the state the Torus rang in when it began (the
  * owner's checkpoint, restored through the frame's stage channel) and answers the course to play at its samples from there (`exact`),
  * with the moves of the frame's own sound by beat. Any other take voices each note as it was played and makes its moves at their beats.
- * A clip no take gave answers null; a take whose Torus was not kept says it plays on the Torus as it now stands. Of the takes one press
- * plays (`turn`, a row's launch), the first that would set the Torus again holds it; any other sets nothing of it and makes none of its
- * moves, and voices each note as it was played on the Torus as that one set it (O-I #849 round 21). */
+ * A clip no take gave answers null; a take whose Torus was not kept says it plays on the Torus as it now stands. Of the takes that play
+ * (`turn`), the first that would set the Torus again holds it until it ends; any other sets nothing of it (O-I #849 round 21). Where its
+ * course can play and the engine plays its set (`play.frozen`), it is rendered offline and frozen on its part, its own Torus with its moves
+ * and effects (O-I #849 round 22: frozenTake); else it makes none of its moves and voices each note as it was played on the Torus as that
+ * one set it, and says why it was not frozen. */
 export async function prepareTake(clip: LiveClipReading, commit: (edit: InstrumentEdit) => Promise<StageResult>, play?: TakePlay,
   turn?: ClipTorusTurn): Promise<ClipPrepared | null> {
   const keeps = clip.take?.keeps
@@ -665,8 +692,19 @@ export async function prepareTake(clip: LiveClipReading, commit: (edit: Instrume
       : clipChanged(clip, keeps, play.bpm)
   const resumes = why ? `${why} ${course === null ? TAKE_RESUMES : TAKE_RESUMES_INSTEAD}` : typeof keeps.resumes === 'string' ? keeps.resumes : course ? TAKE_REPLAYS : TAKE_RESUMES
   if (!kept && !(course && !why)) return {resumes: `The Torus was not kept with this take, so it plays on the Torus as it now stands. ${resumes}`, ...played}
-  const holder = turn?.take(clip.name || `Take ${clip.take.id}`) ?? null
-  if (holder !== null) return {resumes: takeTorusHeld(holder, clip.name || `Take ${clip.take.id}`), ...(voice ? {voice} : {})}
+  // The frame's own sound moves by beat; the Torus's moves are its course's acts, and so is every owner write of a lane: a session-held
+  // lane plays again at its beats.
+  const frameMoves = () => inTime(takeMoves(kept, keeps.moves).map(move => ({beat: move.beat, edits: move.edits.filter(edit => FRAME_SOUND_KINDS.has(edit.kind))}))
+    .filter(move => move.edits.length > 0), takeLaneMoves(keeps.automation, lane => lane.writer === 'owner'))
+  const named = clip.name || `Take ${clip.take.id}`
+  const holder = turn?.take(named) ?? null
+  if (holder !== null) {
+    const held = takeTorusHeld(holder, named), voiced = voice ? {voice} : {}
+    if (!course || why || !play) return {resumes: held, ...voiced}
+    if (!play.frozen) return {resumes: `${held} ${TAKE_FREEZES_IN_ENGINE}`, ...voiced}
+    const frozen = await frozenTake(keeps, course, play, play.frozen, {holder, named, moves: frameMoves()})
+    return 'refused' in frozen ? {resumes: `${held} ${notFrozen(frozen.refused)}`, ...voiced} : {resumes: takeTorusFrozen(holder, named), ...voiced, frozen}
+  }
   const {refused} = kept ? await setTorusAgain(kept, commit) : {refused: [] as string[]}
   const told = (words: string) => refused.length ? `${words} The Torus did not take all of it again: ${refused.join('; ')}.` : words
   if (!course || why || !play) return {resumes: told(resumes), ...played}
@@ -676,17 +714,57 @@ export async function prepareTake(clip: LiveClipReading, commit: (edit: Instrume
     const words = restored.ok ? 'its owner named no sample it rings again from' : restored.error
     return {resumes: told(`The Torus did not ring again from the take's state: ${sentence(words)} ${TAKE_RESUMES_INSTEAD}`), ...played}
   }
-  // The frame's own sound moves by beat; the Torus's moves are its course's acts, and so is every owner write of a lane: a session-held
-  // lane plays again at its beats.
-  const frameMoves = inTime(takeMoves(kept, keeps.moves).map(move => ({beat: move.beat, edits: move.edits.filter(edit => FRAME_SOUND_KINDS.has(edit.kind))}))
-    .filter(move => move.edits.length > 0), takeLaneMoves(keeps.automation, lane => lane.writer === 'owner'))
+  const framed = frameMoves()
   const numbers = new Map<string, number>()
   for (const note of Array.isArray(keeps.notes) ? keeps.notes : []) {
     if (plain(note) && Number.isSafeInteger(note.p) && plain(note.key)) numbers.set(`${note.key.row}/${note.key.column}`, note.p as number)
   }
-  return {resumes: told(resumes), ...(frameMoves.length ? {moves: frameMoves} : {}),
+  return {resumes: told(resumes), ...(framed.length ? {moves: framed} : {}),
     exact: {landed: restored.landed_at_samples_elapsed!, from: course.from_samples_elapsed, frames: course.frames, sample_rate: course.sample_rate, acts: course.acts,
       noteOf: key => numbers.get(keyOf(key)) ?? null}}
+}
+
+/** A held take frozen on its part (O-I #849 round 22; DLW build ruling 2026-11-05: "Build it: a true Torus per row player, through the
+ * engine, as Live's Freeze Track does"): its course rendered offline by the Torus's owner (renderTake: the live Torus neither moves nor
+ * sounds), at the level it played at, its effects as they moved (takeEffects), sent to its part as it lands. Its lanes are its course's
+ * settings of the Torus and the frame's moves, baked in. Or why it was not rendered, in words. */
+async function frozenTake(keeps: Plain, course: TakeCourse, play: TakePlay, part: TakeFreeze,
+  {holder, named, moves}: {readonly holder: string; readonly named: string; readonly moves: readonly ClipMove[]}): Promise<ClipFrozen | {readonly refused: string}> {
+  const rendered = await renderTake(course, play.stage)
+  if ('refused' in rendered) return rendered
+  const pcm = leveled(rendered.pcm, takeLevels(keeps, course).steps)
+  const effects = takeEffects(keeps, course)
+  const spb = 60 / play.bpm
+  const settings = course.acts.flatMap(act => act.action === 'set'
+    ? [{beat: Number(BigInt(act.at_samples_elapsed) - BigInt(course.from_samples_elapsed)) / course.sample_rate / spb, edit: {kind: 'torus', edit: act.edit} as InstrumentEdit}] : [])
+  const held = takeTorusHeld(holder, named)
+  return {words: takeFrozen(named), seconds: course.frames / course.sample_rate, moves, settings, unfrozen: takeUnfrozen(holder, named),
+    land: landed => part.freeze({name: named, rate: rendered.sample_rate, pcm, effects, landed})
+      .catch((cause: unknown) => said(cause)).then(refused => refused === null ? null : `${held} ${notFrozen(refused)}`),
+    unfreeze: () => part.unfreeze().catch((cause: unknown) => said(cause))}
+}
+
+/** The take's sound at the level it played at: each gain step over the samples from its frame to the next. In place. */
+function leveled(pcm: Float32Array, steps: readonly {readonly at: number; readonly gain: number}[]): Float32Array {
+  for (const [i, step] of steps.entries()) {
+    const end = steps[i + 1]?.at ?? pcm.length
+    for (let n = step.at; n < end; n++) pcm[n] = pcm[n]! * step.gain
+  }
+  return pcm
+}
+
+/** The candidate's freeze of the part `track` of the set at `path` in the one engine (live_engine_host.rs `live_engine_freeze`, the take's
+ * sound sent raw as `oi.take-render/v1` with the sample it lands at and its name; `live_engine_unfreeze`). */
+export function partFreeze(address: {readonly path: string; readonly track: number}): TakeFreeze {
+  const invoke = async (command: string, args: Uint8Array<ArrayBuffer> | Record<string, unknown>) => {
+    const core = await import('@tauri-apps/api/core')
+    try { await core.invoke(command, args); return null } catch (cause) { return said(cause) }
+  }
+  return {
+    freeze: take => invoke('live_engine_freeze', takeRenderBody({path: address.path, track: address.track, rate: take.rate, effects: take.effects,
+      landed: String(take.landed), name: take.name}, take.pcm)),
+    unfreeze: () => invoke('live_engine_unfreeze', {track: address.track}),
+  }
 }
 
 /** A take's moves as the clip player makes them again: at each move's beat, the edits that took the Torus there from where it stood. A
@@ -801,11 +879,13 @@ export function takeEffects(keeps: Plain, course: TakeCourse): TakeEffectsAt[] {
 /** What names a take's sound sent to its part in the engine (live_engine_host.rs TAKE_RENDER_SCHEMA). */
 export const TAKE_RENDER_SCHEMA = 'oi.take-render/v1'
 /** A take's sound as the engine's host reads it (live_engine_host.rs `take_render_of`): four bytes, little-endian, the length of a JSON
- * head naming the set, its track (the set owner's index), the rate and the Torus's effects at their frames; the head; then the sound as
- * IEEE-754 binary32 little-endian samples, one channel. Pure. */
-export function takeRenderBody(head: {readonly path: string; readonly track: number; readonly rate: number; readonly effects: readonly TakeEffectsAt[]},
-  pcm: Float32Array): Uint8Array<ArrayBuffer> {
-  const json = new TextEncoder().encode(JSON.stringify({schema: TAKE_RENDER_SCHEMA, path: head.path, track: head.track, rate: head.rate, effects: head.effects}))
+ * head naming the set, its track (the set owner's index), the rate and the Torus's effects at their frames, and for a take frozen on its
+ * part the owner's sample it lands at (a decimal string) and its name; the head; then the sound as IEEE-754 binary32 little-endian
+ * samples, one channel. Pure. */
+export function takeRenderBody(head: {readonly path: string; readonly track: number; readonly rate: number; readonly effects: readonly TakeEffectsAt[]
+  readonly landed?: string; readonly name?: string}, pcm: Float32Array): Uint8Array<ArrayBuffer> {
+  const frozen = head.landed === undefined ? {} : {landed: head.landed, ...(head.name === undefined ? {} : {name: head.name})}
+  const json = new TextEncoder().encode(JSON.stringify({schema: TAKE_RENDER_SCHEMA, path: head.path, track: head.track, rate: head.rate, effects: head.effects, ...frozen}))
   const bytes = new Uint8Array(new ArrayBuffer(4 + json.length + pcm.length * 4))
   const view = new DataView(bytes.buffer)
   view.setUint32(0, json.length, true)
@@ -847,11 +927,7 @@ export async function exportTake(clip: LiveClipReading, owners: TakeExportOwners
   if ('refused' in rendered) return {ok: false, error: rendered.refused}
   const laid = owners.lay ? ` ${await layExported(clip.take, keeps, course, clip.name || `Take ${clip.take.id}`, owners.lay)}` : ''
   const {steps, kept} = takeLevels(keeps, course)
-  const pcm = rendered.pcm
-  for (const [i, step] of steps.entries()) {
-    const end = steps[i + 1]?.at ?? pcm.length
-    for (let n = step.at; n < end; n++) pcm[n] = pcm[n]! * step.gain
-  }
+  const pcm = leveled(rendered.pcm, steps)
   const name = `${(clip.name || `Take ${clip.take.id}`).replace(/[\\/:*?"<>|]/g, '-')}.wav`
   const chain = torusKeptOf(keeps.torus)?.edits.find(edit => edit.kind === 'effect-chain')
   const chained = chain && chain.kind === 'effect-chain' && chain.chain.length ? chain.chain.join(', ') : null

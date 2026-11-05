@@ -9,11 +9,14 @@
 //! carries `received_ms`, the wall clock when the host heard it, so the shell can measure host-to-page time (O-I #853).
 //!
 //! MIDI out (O-I #853): the `midi_out` command lists the system's MIDI outputs, connects the one the person chooses, and sends the notes
-//! the part's playing path plays to it. The shell decides what is sent; this side only encodes and delivers, and refuses in words.
+//! the part's playing path plays to it. The shell decides what is sent; this side only encodes and delivers, and refuses in words. A
+//! clip's notes are sent one owner lookahead before they sound, so each send may name how long after the host takes it its messages
+//! leave (`after_ms`, round 22): the host holds them until then (the `oi-midi-out` thread), and no message leaves before one sent earlier
+//! that it follows — of its key, or, for all notes off, of its channel — so a note-off never leaves ahead of its note-on.
 
 use std::sync::mpsc::{self, Receiver, Sender};
-use std::sync::{Arc, Mutex};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::sync::{Arc, Condvar, Mutex};
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Manager};
@@ -284,8 +287,34 @@ pub enum OutRequest {
     Read,
     /// Connect the named output, or let the connected one go (`null`).
     Choose { port: Option<String> },
-    /// Send these messages, in order, to the connected output.
-    Send { messages: Vec<OutMessage> },
+    /// Send these messages, in order, to the connected output: at once, or `after_ms` after the host takes them (round 22: a clip's
+    /// notes leave when they sound), up to [`OUT_HOLD_MAX_MS`].
+    Send {
+        messages: Vec<OutMessage>,
+        #[serde(default)]
+        after_ms: Option<f64>,
+    },
+}
+
+/// The longest the host holds a message before it leaves (ms): a clip's notes are sent a lookahead ahead, well within it.
+pub const OUT_HOLD_MAX_MS: f64 = 10_000.0;
+
+/// A message held until its time: its bytes, and its channel and key (none: all notes off, which follows its whole channel).
+struct Held {
+    due: Instant,
+    bytes: [u8; 3],
+    channel: u8,
+    note: Option<u8>,
+}
+
+/// The channel and key a message is of (none: every key of its channel).
+fn key_of(message: &OutMessage) -> (u8, Option<u8>) {
+    match *message {
+        OutMessage::On { channel, note, .. } | OutMessage::Off { channel, note, .. } => {
+            (channel, Some(note))
+        }
+        OutMessage::AllOff { channel } => (channel, None),
+    }
 }
 
 /// The host's answer: the outputs the system offered at the last read, and the one connected.
@@ -307,11 +336,14 @@ pub trait OutBackend {
     fn send(&mut self, bytes: &[u8]) -> Result<(), String>;
 }
 
-/// The MIDI output: the outputs last read, and the one the person chose.
+/// The MIDI output: the outputs last read, the one the person chose, the messages held until their time (in the order they leave),
+/// and why the output was let go while they waited, said at the next send.
 pub struct MidiOut<B> {
     backend: B,
     ports: Vec<String>,
     port: Option<String>,
+    held: Vec<Held>,
+    lost: Option<String>,
 }
 
 impl<B: OutBackend> MidiOut<B> {
@@ -320,15 +352,39 @@ impl<B: OutBackend> MidiOut<B> {
             backend,
             ports: Vec::new(),
             port: None,
+            held: Vec::new(),
+            lost: None,
         }
     }
 
     pub fn handle(&mut self, request: OutRequest) -> Result<OutState, String> {
+        self.handle_at(request, Instant::now())
+    }
+
+    /// The request as the host takes it at `now`.
+    pub fn handle_at(&mut self, request: OutRequest, now: Instant) -> Result<OutState, String> {
         match request {
             OutRequest::Read => self.read(),
             OutRequest::Choose { port } => self.choose(port),
-            OutRequest::Send { messages } => self.send(&messages),
+            OutRequest::Send { messages, after_ms } => self.send(&messages, after_ms, now),
         }
+    }
+
+    /// Send every held message whose time has come by `now`, in order: the time the next leaves, if any waits. An output that refuses one
+    /// is let go with every message that waited, and named at the next send.
+    pub fn due(&mut self, now: Instant) -> Option<Instant> {
+        let ready = self.held.partition_point(|held| held.due <= now);
+        for held in self.held.drain(..ready).collect::<Vec<_>>() {
+            if let Err(error) = self.backend.send(&held.bytes) {
+                let port = self.port.clone().unwrap_or_default();
+                self.let_go();
+                self.lost = Some(format!(
+                    "The MIDI output {port} went away ({error}) while notes waited to leave, so it is no longer connected"
+                ));
+                return None;
+            }
+        }
+        self.held.first().map(|held| held.due)
     }
 
     fn state(&self) -> OutState {
@@ -338,9 +394,11 @@ impl<B: OutBackend> MidiOut<B> {
         }
     }
 
+    /// Let the output go, and every message that waited for it.
     fn let_go(&mut self) {
         self.backend.disconnect();
         self.port = None;
+        self.held.clear();
     }
 
     /// Read the system's outputs. A connected output the system no longer offers is let go.
@@ -357,6 +415,7 @@ impl<B: OutBackend> MidiOut<B> {
     }
 
     fn choose(&mut self, port: Option<String>) -> Result<OutState, String> {
+        self.lost = None;
         self.read()?;
         let Some(name) = port else {
             self.let_go();
@@ -377,49 +436,121 @@ impl<B: OutBackend> MidiOut<B> {
         Ok(self.state())
     }
 
-    /// Send a batch in order. A batch with any message MIDI cannot carry is refused whole, before a byte leaves; an output that
-    /// refuses a message is let go and named.
-    fn send(&mut self, messages: &[OutMessage]) -> Result<OutState, String> {
+    /// Send a batch in order, at once or `after_ms` after `now`. A batch with any message MIDI cannot carry, or held past
+    /// [`OUT_HOLD_MAX_MS`], is refused whole, before a byte leaves; an output that refuses a message is let go and named. A message
+    /// leaves no earlier than any held one it follows (of its key, or of its channel where either is all notes off): it is held until
+    /// just after it.
+    fn send(
+        &mut self,
+        messages: &[OutMessage],
+        after_ms: Option<f64>,
+        now: Instant,
+    ) -> Result<OutState, String> {
+        if let Some(words) = self.lost.take() {
+            return Err(words);
+        }
         let Some(port) = self.port.clone() else {
             return Err("No MIDI output is chosen, so nothing was sent".to_owned());
         };
+        let after = after_ms.unwrap_or(0.0);
+        if !(0.0..=OUT_HOLD_MAX_MS).contains(&after) {
+            return Err(format!(
+                "A MIDI message is held at most {} seconds before it leaves, so one {after} ms ahead was not sent",
+                OUT_HOLD_MAX_MS / 1000.0
+            ));
+        }
         let encoded = messages.iter().map(encode).collect::<Result<Vec<_>, _>>()?;
-        for bytes in &encoded {
-            if let Err(error) = self.backend.send(bytes) {
-                self.let_go();
-                return Err(format!(
-                    "The MIDI output {port} went away ({error}), so it is no longer connected"
-                ));
+        let at = now + Duration::from_secs_f64(after / 1000.0);
+        for (message, bytes) in messages.iter().zip(encoded) {
+            let (channel, note) = key_of(message);
+            let follows = self
+                .held
+                .iter()
+                .filter(|held| {
+                    held.channel == channel
+                        && (held.note.is_none() || note.is_none() || held.note == note)
+                })
+                .map(|held| held.due)
+                .max();
+            let due = follows.map_or(at, |last| last.max(at));
+            if follows.is_none() && due <= now {
+                if let Err(error) = self.backend.send(&bytes) {
+                    self.let_go();
+                    return Err(format!(
+                        "The MIDI output {port} went away ({error}), so it is no longer connected"
+                    ));
+                }
+                continue;
             }
+            // after every message held for the same time: they leave in the order they were sent
+            let place = self.held.partition_point(|held| held.due <= due);
+            self.held.insert(
+                place,
+                Held {
+                    due,
+                    bytes,
+                    channel,
+                    note,
+                },
+            );
         }
         Ok(self.state())
     }
 }
 
-/// The host's MIDI output, held for the `midi_out` command.
-pub struct MidiOutHost(Mutex<MidiOut<backend::Outputs>>);
+/// The host's MIDI output, held for the `midi_out` command, and the wake of the thread that sends what is held when its time comes.
+pub struct MidiOutHost(Arc<(Mutex<MidiOut<backend::Outputs>>, Condvar)>);
 
 /// The shell's MIDI output (O-I #853): read the outputs, choose one, or send what a part plays. Synchronous, so the sends of one window
-/// leave in the order it made them.
+/// leave in the order it made them; a send held for later wakes the thread that sends it.
 #[tauri::command]
 pub fn midi_out(app: AppHandle, request: OutRequest) -> Result<OutState, String> {
     let host = app
         .try_state::<MidiOutHost>()
         .ok_or_else(|| "MIDI output has not started in this host".to_owned())?;
-    let mut out = host
-        .0
+    let (out, wake) = &*host.0;
+    let mut out = out
         .lock()
         .map_err(|_| "MIDI output stopped after an earlier failure".to_owned())?;
-    out.handle(request)
+    let answer = out.handle(request);
+    wake.notify_one();
+    answer
+}
+
+/// The `oi-midi-out` thread: sends each held message when its time comes, sleeping until the next or a new send.
+fn deliver(shared: Arc<(Mutex<MidiOut<backend::Outputs>>, Condvar)>) {
+    let (out, wake) = &*shared;
+    let Ok(mut out) = out.lock() else { return };
+    loop {
+        let now = Instant::now();
+        out = match out.due(now) {
+            Some(next) => match wake.wait_timeout(out, next.saturating_duration_since(now)) {
+                Ok((out, _)) => out,
+                Err(_) => return,
+            },
+            None => match wake.wait(out) {
+                Ok(out) => out,
+                Err(_) => return,
+            },
+        };
+    }
 }
 
 /// Start the MIDI listener: the forwarder that emits the notes, and the scanner that follows the system's ports. The MIDI output is
 /// held from here too; it opens nothing until the shell asks.
 pub fn start(app: &AppHandle) {
     app.manage(MidiHost::default());
-    app.manage(MidiOutHost(Mutex::new(MidiOut::new(
-        backend::Outputs::default(),
-    ))));
+    let out = Arc::new((
+        Mutex::new(MidiOut::new(backend::Outputs::default())),
+        Condvar::new(),
+    ));
+    app.manage(MidiOutHost(Arc::clone(&out)));
+    if let Err(error) = std::thread::Builder::new()
+        .name("oi-midi-out".into())
+        .spawn(move || deliver(out))
+    {
+        eprintln!("MIDI output sender unavailable, so notes sent ahead will not leave: {error}");
+    }
     let (tx, rx) = mpsc::channel::<Heard>();
     let forwarder = app.clone();
     if let Err(error) = std::thread::Builder::new()
@@ -1129,6 +1260,197 @@ mod tests {
             "{refusal}"
         );
         assert_eq!(out.port, None, "an output that refused is let go");
+    }
+
+    // ── O-I #853 round 22: a clip's notes leave as MIDI when they sound (DLW build ruling 2026-11-05: "MIDI out for clip notes
+    // (#853), through the host. Tests use a double and never open a MIDI or audio device") ──────────────────────────────────
+
+    fn sent_bytes(out: &MidiOut<FakeOutputs>) -> Vec<Vec<u8>> {
+        out.backend
+            .sent
+            .iter()
+            .map(|(_, bytes)| bytes.clone())
+            .collect()
+    }
+
+    fn chosen(base: Instant) -> MidiOut<FakeOutputs> {
+        let mut out = outputs(&["Synth", "Other"]);
+        out.handle_at(
+            request(serde_json::json!({"kind": "choose", "port": "Synth"})),
+            base,
+        )
+        .unwrap();
+        out
+    }
+
+    #[test]
+    fn a_message_sent_ahead_leaves_when_its_time_comes_and_none_leaves_before_one_it_follows() {
+        let base = Instant::now();
+        let ms = |n: u64| base + Duration::from_millis(n);
+        let mut out = chosen(base);
+        // A clip's note-on, sent one lookahead before it sounds: it waits for its time.
+        out.handle_at(
+            request(
+                serde_json::json!({"kind": "send", "after_ms": 50.0, "messages": [
+                    {"kind": "on", "channel": 0, "note": 60, "velocity": 100},
+                ]}),
+            ),
+            base,
+        )
+        .unwrap();
+        assert!(
+            sent_bytes(&out).is_empty(),
+            "nothing leaves before its time"
+        );
+        assert_eq!(out.due(ms(49)), Some(ms(50)), "it waits until 50 ms");
+        assert!(sent_bytes(&out).is_empty());
+        // A note-off of its key asked for at once leaves after it, never before; a note of another key leaves at once.
+        out.handle_at(
+            request(serde_json::json!({"kind": "send", "messages": [
+                {"kind": "off", "channel": 0, "note": 60, "velocity": 0},
+                {"kind": "on", "channel": 0, "note": 62, "velocity": 90},
+            ]})),
+            ms(10),
+        )
+        .unwrap();
+        assert_eq!(
+            sent_bytes(&out),
+            vec![vec![0x90, 62, 90]],
+            "another key leaves at once"
+        );
+        // All notes off waits for every message of its channel that waits; another channel's message does not.
+        out.handle_at(
+            request(serde_json::json!({"kind": "send", "messages": [
+                {"kind": "all-off", "channel": 0},
+                {"kind": "on", "channel": 1, "note": 60, "velocity": 80},
+            ]})),
+            ms(20),
+        )
+        .unwrap();
+        assert_eq!(sent_bytes(&out).len(), 2, "channel 2's note leaves at once");
+        assert_eq!(out.due(ms(50)), None, "nothing waits after its time");
+        assert_eq!(
+            sent_bytes(&out),
+            vec![
+                vec![0x90, 62, 90],
+                vec![0x91, 60, 80],
+                vec![0x90, 60, 100],
+                vec![0x80, 60, 0],
+                vec![0xB0, 123, 0],
+            ],
+            "the note-on at its time, then the off that follows it, then all notes off"
+        );
+        // A note-on asked for at once while its key's off waits leaves after that off.
+        out.handle_at(
+            request(
+                serde_json::json!({"kind": "send", "after_ms": 30, "messages": [
+                    {"kind": "off", "channel": 0, "note": 64, "velocity": 0},
+                ]}),
+            ),
+            ms(60),
+        )
+        .unwrap();
+        out.handle_at(
+            request(serde_json::json!({"kind": "send", "messages": [
+                {"kind": "on", "channel": 0, "note": 64, "velocity": 70},
+            ]})),
+            ms(61),
+        )
+        .unwrap();
+        assert_eq!(sent_bytes(&out).len(), 5, "the on waits for its key's off");
+        assert_eq!(out.due(ms(90)), None);
+        assert_eq!(
+            sent_bytes(&out)[5..].to_vec(),
+            vec![vec![0x80, 64, 0], vec![0x90, 64, 70]]
+        );
+    }
+
+    #[test]
+    fn a_hold_past_its_bound_or_below_zero_is_refused_whole_and_a_held_batch_still_refuses_off_the_wire(
+    ) {
+        let base = Instant::now();
+        let mut out = chosen(base);
+        for after in [-1.0, OUT_HOLD_MAX_MS + 1.0] {
+            let refusal = out
+                .handle_at(
+                    request(
+                        serde_json::json!({"kind": "send", "after_ms": after, "messages": [
+                            {"kind": "on", "channel": 0, "note": 60, "velocity": 100},
+                        ]}),
+                    ),
+                    base,
+                )
+                .expect_err("refused");
+            assert!(refusal.contains("held"), "{refusal}");
+        }
+        out.handle_at(
+            request(
+                serde_json::json!({"kind": "send", "after_ms": 5, "messages": [
+                    {"kind": "on", "channel": 0, "note": 60, "velocity": 100},
+                    {"kind": "on", "channel": 0, "note": 200, "velocity": 100},
+                ]}),
+            ),
+            base,
+        )
+        .expect_err("off the wire");
+        assert_eq!(
+            out.due(base + Duration::from_secs(20)),
+            None,
+            "nothing waits"
+        );
+        assert!(sent_bytes(&out).is_empty(), "nothing was sent");
+    }
+
+    #[test]
+    fn an_output_that_goes_away_while_notes_wait_is_let_go_named_at_the_next_send_and_a_new_choice_drops_what_waited(
+    ) {
+        let base = Instant::now();
+        let ms = |n: u64| base + Duration::from_millis(n);
+        let mut out = chosen(base);
+        let ahead = |out: &mut MidiOut<FakeOutputs>, at: Instant| {
+            out.handle_at(
+                request(
+                    serde_json::json!({"kind": "send", "after_ms": 20, "messages": [
+                        {"kind": "on", "channel": 0, "note": 60, "velocity": 100},
+                        {"kind": "on", "channel": 0, "note": 64, "velocity": 100},
+                    ]}),
+                ),
+                at,
+            )
+        };
+        ahead(&mut out, base).unwrap();
+        out.backend.refuse_send = true;
+        assert_eq!(
+            out.due(ms(20)),
+            None,
+            "an output that went away keeps nothing waiting"
+        );
+        assert_eq!(out.port, None, "and is let go");
+        out.backend.refuse_send = false;
+        let refusal = out
+            .handle_at(request(serde_json::json!({"kind": "send", "messages": [{"kind": "all-off", "channel": 0}]})), ms(21))
+            .expect_err("named");
+        assert!(
+            refusal.contains("Synth") && refusal.contains("went away"),
+            "{refusal}"
+        );
+        // Chosen again: a choice of another output drops what waited for the last one.
+        out.handle_at(
+            request(serde_json::json!({"kind": "choose", "port": "Synth"})),
+            ms(22),
+        )
+        .unwrap();
+        ahead(&mut out, ms(22)).unwrap();
+        out.handle_at(
+            request(serde_json::json!({"kind": "choose", "port": "Other"})),
+            ms(23),
+        )
+        .unwrap();
+        assert_eq!(out.due(ms(60)), None);
+        assert!(
+            sent_bytes(&out).is_empty(),
+            "nothing that waited for Synth went to Other"
+        );
     }
 
     #[test]

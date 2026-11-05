@@ -281,6 +281,43 @@ test('an automation lane names its device and its parameter: an armed take\'s re
   assert.doesNotMatch(off, /data-automation=/)
 })
 
+// O-I #849 round 22 (DLW build ruling 2026-11-05): "Its Torus parameters are baked in and carry no Overridden mark. Touching one says the
+// take is frozen, in words, and offers Unfreeze, which returns the part to its live Torus." FIXTURE: the clip players' lane standing as
+// live/clipPlayer.ts publishes a frozen take's, through Live's own adapter.
+test('a frozen take\'s lane carries no Overridden mark: touched, it says the take is frozen, in words, and Unfreeze beside it lets the take go', async () => {
+  const unfrozen = []
+  const play = {launch: async () => ({ok: true, note: ''}), stop: () => ({ok: true, note: ''}), stopAll: () => ({ok: true, note: ''}), reenable: async () => ({ok: true, note: ''}),
+    unfreeze: async track => { unfrozen.push(track); return {ok: true, note: 'Pads is unfrozen.'} }}
+  const summary = {path: '/sets/a.als', tempo_bpm: 120, scene_count: 1, arrangement_clips: 0,
+    tracks: [{kind: 'midi', name: 'Keys', devices: []}, {kind: 'midi', name: 'Pads', devices: []}, {kind: 'master', name: 'Main', devices: []}]}
+  const words = 'Pads is frozen: its Torus is rendered into its sound, so its parameters do not move. Unfreeze returns the part to its live Torus.'
+  const standing = {automated: [], overridden: ['carrier'], take: {address: {path: '/sets/a.als', track: 1, at: {slot: 0}}, name: 'Pads', at: 0, frozen: words},
+    lanes: [{parameter: 'carrier', label: 'Carrier', points: [{beat: 0, value: 0}, {beat: 2, value: 1}]}]}
+  const set = liveSetTrackAdapter.project({set: summary, document: null, play, lanes: standing})
+  const ruler = arrangement(set)
+  assert.match(ruler, /data-automation="als:\/sets\/a\.als#track\/1\/slot\/0#lane\/carrier" data-frozen="true"/)
+  assert.doesNotMatch(ruler, /data-overridden="true"/, 'the hand holds Carrier off another take\'s lane; this one is baked in, never Overridden')
+  assert.match(ruler, new RegExp(`<button type="button" class="tl-lane-name tl-frozen" title="${words.replace(/[.]/g, '\\.')}">Pads / Carrier</button>`))
+  assert.match(ruler, /<button type="button" class="tl-reenable lit" title="Unfreeze: Pads&#x27;s part plays its live Torus again \(the clip player \(live\/clipPlayer\.ts unfreeze\): live_engine_unfreeze \{track\}[^"]*\)">Unfreeze<\/button>/)
+  const presses = []
+  const tree = ArrangementRulerView({set, selection: SELECT, view: RULER_VIEW, receipt: null, onPress: (key, what, run) => presses.push({key, what, run}), onDismiss: noop,
+    lanes: {shown: lanes.DEFAULT_LANES, onShown: noop, take: null, onTake: noop, opened: null, onOpened: noop}})
+  const [name] = find(tree, node => node.props?.className === 'tl-lane-name tl-frozen')
+  name.props.onClick()
+  const [unfreeze] = find(tree, node => node.type === 'button' && node.props?.children === 'Unfreeze')
+  unfreeze.props.onClick()
+  const lane = 'als:/sets/a.als#track/1/slot/0#lane/carrier'
+  assert.deepEqual(presses.map(p => [p.key, p.what]), [[`frozen:${lane}`, 'Pads / Carrier'], [`unfreeze:${lane}`, 'Unfreeze Pads']])
+  assert.deepEqual(await answerOf(presses[0].run), {ok: true, text: words}, 'touched, it says the take is frozen, in words')
+  assert.deepEqual(await answerOf(presses[1].run), {ok: true, text: 'Pads is unfrozen.'})
+  assert.deepEqual(unfrozen, [1], 'Unfreeze reaches the part its clip is on')
+  // Handed no Unfreeze, the button stands disabled and says so.
+  assert.match(arrangement(liveSetTrackAdapter.project({set: summary, document: null, play: {...play, unfreeze: undefined}, lanes: standing})),
+    /class="tl-reenable lit" disabled="" title="Unfreeze: the owner gives no op that lets the frozen take go">Unfreeze<\/button>/)
+  const css = await readFile(new URL('../src/frame/tracks/tracks.css', import.meta.url), 'utf8')
+  assert.match(css, /\.tl-lane\.tl-auto\[data-frozen\] \.tl-auto-line polyline \{ stroke: var\(--text-faint\); stroke-dasharray: 3 2 \}/, 'its line drawn as baked')
+})
+
 test('Expressions: a scene launches, Stop All pauses and Back to Arrangement plays the saved sequence, each through the presented composition', async () => {
   const sent = []
   const {expressionsControls} = await import('../src/frame/tracks/modeTracks.ts')

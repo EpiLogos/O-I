@@ -79,14 +79,48 @@ test('the Live transport\'s Quantize and signature are the open set\'s', () => {
     toggleBrowser: () => {}, toggleDetail: () => {}, toggleDock: () => {}, ...extra,
   }))
   const face = (markup, slot) => markup.match(new RegExp(`<output[^>]*data-slot="${slot}"[^>]*>([^<]*)</output>`))?.[1]
+  // REPLACES (O-I #849 round 22, DLW build ruling 2026-11-05 "Quantize is written, not only shown"): face(read, 'quantize') === '1/4', the
+  // set's Quantize as a readout. It is the transport's own choice now, showing the set's value.
+  const quantizeOf = markup => {
+    const select = markup.match(/<span class="transport-slot" data-slot="quantize"[^>]*><select aria-label="Quantize"([^>]*)>(.*?)<\/select>/s)
+    return select && {disabled: /disabled=""/.test(select[1]), chosen: select[2].match(/<option value="([^"]*)" selected="">/)?.[1],
+      words: [...select[2].matchAll(/<option value="([^"]*)"/g)].map(m => m[1])}
+  }
   const read = render({setPath: '/sets/a.als', quantize: '1/4', signature: {numerator: 3, denominator: 4}})
-  assert.equal(face(read, 'quantize'), '1/4')
+  assert.deepEqual(quantizeOf(read), {disabled: false, chosen: '1/4', words: ['none', '8 bars', '4 bars', '2 bars', '1 bar', '1/2', '1/2t', '1/4',
+    '1/4t', '1/8', '1/8t', '1/16', '1/16t', '1/32']})
   assert.equal(face(read, 'signature'), '3 / 4')
-  assert.match(read, /data-slot="quantize"[^>]*title="Quantize — the set&#x27;s launch quantize/)
+  assert.match(read, /data-slot="quantize"[^>]*title="Quantize — the set&#x27;s launch quantize[^"]*Choose another to write it in the set\."/)
   const kept = render({setPath: '/sets/a.als', quantize: null, signature: null})
-  assert.equal(face(kept, 'quantize'), '1 bar', 'a set that keeps none: Live\'s bar')
+  assert.deepEqual(quantizeOf(kept)?.chosen, '1 bar', 'a set that keeps none: Live\'s bar')
+  assert.equal(quantizeOf(kept)?.disabled, true, 'and none to write')
   assert.equal(face(kept, 'signature'), '4 / 4')
   const none = liveTransport()
   assert.equal(face(none, 'signature'), '— / —', 'no set open: Live\'s empty face')
   assert.doesNotMatch(none, /<output[^>]*data-slot="quantize"/)
+  assert.equal(quantizeOf(none), null, 'no set open: nothing to write')
+})
+
+// O-I #849 round 22 (DLW build ruling 2026-11-05: "the transport sets the set's global quantization through live-set's own act"): a choice
+// is written by the set's owner as `global_quantize` (live-set acts.rs), and a refusal comes back in its words.
+test('the transport writes the set\'s Quantize through the set\'s own act, and says a refusal in its words', async () => {
+  const {writeSetQuantize, QUANTIZE_NOT_WRITTEN} = await import('../src/shell/transports/useLiveTransport.tsx')
+  const {refusalWords} = await import('../../../../desktop/cradle/src/shared/Refusal.tsx')
+  const {SET_QUANTIZE_WORDS} = await import('../src/live/clipPlayer.ts')
+  const asked = []
+  assert.deepEqual(await writeSetQuantize('/sets/a.als', '1/16', async (path, act) => { asked.push([path, act]); return {act: 'global_quantize'} }), {written: true})
+  assert.deepEqual(asked, [['/sets/a.als', {kind: 'global_quantize', quantize: '1/16'}]])
+  const refused = await writeSetQuantize('/sets/a.als', '1/16', async () => { throw new Error('The set keeps no transport Quantize to set') })
+  assert.equal(refused.cause.message, 'The set keeps no transport Quantize to set', 'the owner\'s answer, as it came')
+  assert.equal(refusalWords(QUANTIZE_NOT_WRITTEN, refused.cause), 'The set\'s Quantize was not written. The set keeps no transport Quantize to set.')
+  const {readFile} = await import('node:fs/promises')
+  const source = await readFile(new URL('../src/shell/transports/useLiveTransport.tsx', import.meta.url), 'utf8')
+  assert.match(source, /onChange=\{event => write\(event\.target\.value\)\}/)
+  assert.match(source, /void writeSetQuantize\(path, word\)/)
+  // The line says it through shared/Refusal.tsx: the place's words, then the owner's plain words; the raw answer never stands open.
+  assert.match(source, /title=\{refusalWords\(QUANTIZE_NOT_WRITTEN, writing\.cause\)\}>\{refusalWords\(QUANTIZE_NOT_WRITTEN, writing\.cause\)\}<\/output>/)
+  // The words are the set's own, Live's GlobalQuantisation order: live-set edit.rs QUANTIZE after its Global.
+  const rust = await readFile(new URL('../../../live-set/src/edit.rs', import.meta.url), 'utf8')
+  const live = rust.match(/pub const QUANTIZE: &\[&str\] = &\[([^\]]*)\]/)[1].match(/"([^"]*)"/g).map(w => w.slice(1, -1))
+  assert.deepEqual([...SET_QUANTIZE_WORDS], live.slice(1))
 })

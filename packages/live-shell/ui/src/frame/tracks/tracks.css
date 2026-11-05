@@ -287,6 +287,9 @@ button.tl-stop:hover { border-color: var(--accent); color: var(--accent) }
 .tl-auto-line polyline { fill: none; stroke: var(--rec); stroke-width: 1.5 }
 .tl-mod-band { position: absolute; inset: 6px 0; background: repeating-linear-gradient(90deg, color-mix(in srgb, var(--rec) 22%, transparent) 0 6px, transparent 6px 12px); pointer-events: none }
 .tl-lane.tl-auto .tl-reenable { margin-left: auto; height: 13px; font-size: 8px }
+/* A frozen take's lane (Live's Freeze Track; round 22 of O-I 849): its line drawn as baked, its name a press that says so. */
+.tl-lane.tl-auto[data-frozen] .tl-auto-line polyline { stroke: var(--text-faint); stroke-dasharray: 3 2 }
+.tl-auto-head .tl-frozen { padding: 0; background: none; border: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; overflow: hidden; text-overflow: ellipsis }
 /* An event lane (Factory): each event a tick; the open one is marked, and opens beside the ruler. */
 .tl-lane.tl-events { height: 18px; background: var(--bg-2) }
 .tl-event { position: absolute; top: 3px; bottom: 3px; width: 3px; margin-left: -1px; padding: 0; background: var(--tc); border: 0; opacity: .85 }

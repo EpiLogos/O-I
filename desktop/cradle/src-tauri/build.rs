@@ -21,6 +21,8 @@ fn main() {
             "live_engine_render_take",
             "live_engine_consolidate",
             "live_engine_crop",
+            "live_engine_freeze",
+            "live_engine_unfreeze",
             "midi_out",
             "expression_walk_observation",
             "terminal_attach",

@@ -261,7 +261,8 @@ export function liveTracks(set: SetSummary, document: SetDocument | null, colors
     launchRow: (row: number, slots: readonly RowSlot[]) => player().then(acts => acts.launchRow(set.path, row, set.tempo_bpm, slots, quantize, bar)),
     stop: (track: number) => player().then(acts => acts.stop(set.path, track, set.tracks[track]?.name ?? 'the track')),
     stopAll: () => player().then(acts => acts.stopAll()),
-    reenable: (parameter?: string) => player().then(acts => acts.reenable(parameter))}
+    reenable: (parameter?: string) => player().then(acts => acts.reenable(parameter)),
+    unfreeze: (track: number) => player().then(acts => acts.unfreeze(set.path, track))}
   // Export Audio of a take Record laid (O-I #855 round 6d): its course rendered by the Torus's owner, loaded when pressed.
   const exportTake = (track: number, at: LiveClipAt) => import('../../live/liveTake').then(module => module.exportLiveTake({path: set.path, track, at}))
   // Record into a slot (O-I #743): a take on the armed part's Record, laid in the slot; loaded when pressed.

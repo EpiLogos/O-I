@@ -101,6 +101,10 @@ pub enum SetAct {
     /// Consolidate (⌘J): what a MIDI part's arrangement clips play between
     /// the beats `from` and `to` of the ruler, made one clip there.
     ClipsConsolidate { track: usize, from: f64, to: f64 },
+    /// The transport's Quantize (O-I #849 round 22, DLW build ruling 2026-11-05: "the transport sets the set's global
+    /// quantization through live-set's own act"): `LiveSet/GlobalQuantisation`, the launch quantize of every clip set to Global,
+    /// one of Live's words for it (`edit::QUANTIZE` after its Global: none, the bars, the note values).
+    GlobalQuantize { quantize: String },
     /// Crop (⇧⌘J; Live's Crop Clip, the Live Object Model's `Clip.crop`, lom/LOM-INVENTORY.md): the clip keeps only its loop,
     /// or its start to its end where it does not loop — and, in Arrangement view with a stretch of the ruler selected over it
     /// (`from`–`to`, in beats), only that stretch first (DLW build ruling 2026-11-05: "the clip keeps only its loop or
@@ -1770,6 +1774,37 @@ fn scene_insert(root: &mut Element, after: Option<usize>) -> Result<Done, String
             dropped: None,
             copied: None,
         },
+    })
+}
+
+/// The transport's Quantize set to `word` ([`SetAct::GlobalQuantize`]): `LiveSet/GlobalQuantisation`'s `Value`, Live's index
+/// of it among the set's own (`edit::QUANTIZE` without its leading Global, as model.rs reads it). Refused in words for Global (a
+/// clip's, never the set's), a word Live does not name, and a set that keeps no `GlobalQuantisation` to set.
+fn global_quantize(root: &mut Element, word: &str) -> Result<Done, String> {
+    let own = &edit::QUANTIZE[1..];
+    let index = own
+        .iter()
+        .position(|w| w.eq_ignore_ascii_case(word.trim()))
+        .ok_or_else(|| format!("The set's Quantize takes one of {}", own.join(", ")))?;
+    let quantisation = root
+        .find_mut("LiveSet")
+        .and_then(|ls| ls.child_mut("GlobalQuantisation"))
+        .ok_or("The set keeps no transport Quantize to set")?;
+    let was = quantisation
+        .attr("Value")
+        .and_then(|v| v.parse::<usize>().ok())
+        .and_then(|v| own.get(v))
+        .copied();
+    quantisation.set_attr("Value", &index.to_string());
+    let now = own[index];
+    Ok(Done {
+        words: match was {
+            Some(w) if w == now => format!("The set's Quantize stays {now}."),
+            Some(w) => format!("Set the set's Quantize from {w} to {now}."),
+            None => format!("Set the set's Quantize to {now}."),
+        },
+        at: Some(json!({"quantize": now})),
+        places: Places::None,
     })
 }
 
@@ -3517,6 +3552,7 @@ fn acted(
             SetAct::TrackInsert { after } => track_insert(root, *after)?,
             SetAct::SceneInsert { after } => scene_insert(root, *after)?,
             SetAct::SceneRename { scene, name } => scene_rename(root, *scene, name)?,
+            SetAct::GlobalQuantize { quantize } => global_quantize(root, quantize)?,
             SetAct::SceneDuplicate { scene } => scene_duplicate(root, *scene)?,
             SetAct::SceneDelete { scene } => scene_delete(root, *scene)?,
             SetAct::TrackColour { track, colour } => track_colour(root, *track, *colour)?,
@@ -3730,6 +3766,75 @@ mod tests {
     }
     fn slots(document: &SetDocument, track: usize) -> Vec<Option<String>> {
         document.tracks[track].session_slots.clone()
+    }
+
+    #[test]
+    fn the_transport_sets_the_sets_quantize_through_its_own_act_and_refuses_what_live_does_not_name(
+    ) {
+        let with = TIDE.replace("<LiveSet>", r#"<LiveSet><GlobalQuantisation Value="4" />"#);
+        let (_dir, path) = set_file(&with);
+        assert_eq!(reread(&path).1.global_quantize.as_deref(), Some("1 bar"));
+        let set = run(
+            &path,
+            SetAct::GlobalQuantize {
+                quantize: "1/16".into(),
+            },
+        )
+        .unwrap();
+        assert_eq!(set["act"], "global_quantize");
+        assert_eq!(set["done"], "Set the set's Quantize from 1 bar to 1/16.");
+        assert_eq!(set["at"], json!({"quantize": "1/16"}));
+        let (root, document) = reread(&path);
+        assert_eq!(document.global_quantize.as_deref(), Some("1/16"));
+        assert_eq!(
+            root.find("GlobalQuantisation")
+                .and_then(|q| q.attr("Value")),
+            Some("11"),
+            "Live's index among the set's own words"
+        );
+        run(
+            &path,
+            SetAct::GlobalQuantize {
+                quantize: "None".into(),
+            },
+        )
+        .unwrap();
+        assert_eq!(reread(&path).1.global_quantize.as_deref(), Some("none"));
+        for word in ["global", "3 bars", ""] {
+            let before = standing(&path);
+            let refused = run(
+                &path,
+                SetAct::GlobalQuantize {
+                    quantize: word.into(),
+                },
+            )
+            .unwrap_err();
+            assert!(
+                refused.starts_with("The set's Quantize takes one of none, 8 bars"),
+                "{word}: {refused}"
+            );
+            assert_eq!(standing(&path), before, "{word}: the set stands as it was");
+        }
+        let (_bare, bare) = set_file(TIDE);
+        assert_eq!(
+            run(
+                &bare,
+                SetAct::GlobalQuantize {
+                    quantize: "1 bar".into()
+                }
+            )
+            .unwrap_err(),
+            "The set keeps no transport Quantize to set"
+        );
+        let carried: SetAct =
+            serde_json::from_value(json!({"kind": "global_quantize", "quantize": "2 bars"}))
+                .unwrap();
+        assert_eq!(
+            carried,
+            SetAct::GlobalQuantize {
+                quantize: "2 bars".into()
+            }
+        );
     }
     fn list_ids(list: &Element) -> Vec<String> {
         list.children

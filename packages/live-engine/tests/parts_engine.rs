@@ -491,6 +491,85 @@ fn a_key_sounds_at_the_first_frame_of_the_block_that_takes_it() {
     );
 }
 
+/// O-I #849 round 22 (DLW build ruling 2026-11-05: "Key-to-sound latency on the candidate: build the measurement the walk will
+/// read, a host-side timestamp pair per strike reported through the engine's own readout"): each strike the engine took keeps
+/// when it was sent, when the block that took it was pulled and when its first frame was mixed; nothing else is a strike, and
+/// the latest are kept.
+#[test]
+fn each_strike_keeps_when_it_was_sent_and_when_its_first_frame_was_mixed() {
+    let mut g = Graph::new(SR, 120.0);
+    g.tracks.push(operator_part("Keys", &[]));
+    let (mut core, mut handle) = engine(g).unwrap();
+    let mut block = vec![0f32; 256 * 2];
+    core.pull_block(&mut block);
+    let before = handle.now_ns();
+    handle
+        .send(EngineEvent::NoteOn {
+            track: 0,
+            key: 69,
+            velocity: 1.0,
+        })
+        .unwrap();
+    handle
+        .send(EngineEvent::Volume {
+            part: live_engine::Part::Track(0),
+            gain: 0.5,
+        })
+        .unwrap();
+    core.pull_block(&mut block);
+    let stamp = handle.block_stamp();
+    assert!(
+        handle.latency().strikes.is_empty(),
+        "what the engine took is read once collected"
+    );
+    handle.collect();
+    let strikes = handle.latency().strikes;
+    assert_eq!(strikes.len(), 1, "a volume is no strike");
+    let strike = strikes[0];
+    assert_eq!(strike.track, 0);
+    assert!(
+        strike.sent_ns >= before && strike.sent_ns <= stamp.at_ns,
+        "sent before the block that took it"
+    );
+    assert_eq!(
+        strike.applied_ns, stamp.at_ns,
+        "taken by the block pulled then"
+    );
+    assert_eq!(
+        (strike.frame, strike.sounds_ns),
+        (256, stamp.at_ns),
+        "a note sounds at the first frame of the block that takes it"
+    );
+    // The latest are kept, oldest first.
+    for key in 0..(live_engine::engine::STRIKES_KEPT as u8 + 5) {
+        handle
+            .send(EngineEvent::NoteOn {
+                track: 0,
+                key: 40 + key,
+                velocity: 0.5,
+            })
+            .unwrap();
+        core.pull_block(&mut block);
+    }
+    handle.collect();
+    let strikes = handle.latency().strikes;
+    assert_eq!(strikes.len(), live_engine::engine::STRIKES_KEPT);
+    assert_eq!(
+        strikes.last().unwrap().frame,
+        handle.position() - 256,
+        "the last strike is the last block's"
+    );
+    assert!(
+        strikes.windows(2).all(|w| w[0].frame < w[1].frame),
+        "oldest first"
+    );
+    assert_eq!(
+        strikes[0].frame,
+        handle.position() - 256 * live_engine::engine::STRIKES_KEPT as u64,
+        "the first kept is the oldest of the latest, one block a strike: the older ones went"
+    );
+}
+
 #[test]
 fn export_renders_the_samples_the_engine_played() {
     let (mut core, mut handle) = engine(two_part_set()).unwrap();
@@ -2781,6 +2860,134 @@ fn a_parts_samples_laid_again_while_it_plays_sound_from_their_block_and_export_a
     let overlapping = vec![laid(0, 0, 10, 1.0, &new, 2), laid(9, 0, 10, 1.0, &new, 2)];
     assert!(refused(handle.lay(0, overlapping)).contains("overlap at frame 9"));
     assert!(handle.relaid().is_empty(), "nothing refused is laid");
+}
+
+/// O-I #849 round 22 (DLW build ruling 2026-11-05: "A rendered take is a frozen take", as Live's Freeze Track does): a take
+/// frozen on a part while the engine plays sounds in place of the part's chain over its frames, through the part's own
+/// volume and pan; before it and past its end the part's chain is heard as it would have been (it ran under it), as a clip
+/// returns at its end. Unfreeze lets it go from the next block. Export renders what was played. What cannot be frozen is
+/// refused in words, and nothing is frozen.
+#[test]
+fn a_take_frozen_on_a_part_sounds_in_place_of_its_chain_until_it_ends_and_exports_as_played() {
+    let take = decoded(600, 2);
+    let build = || {
+        let mut g = Graph::new(SR, 120.0);
+        g.tracks.push(constant_part("Bed", 0.125, 12 * 256));
+        let mut keys = operator_part(
+            "Keys",
+            &[Note {
+                key: 57,
+                start: 64,
+                length: 2_400,
+                velocity: 1.0,
+            }],
+        );
+        (keys.gain, keys.pan) = (0.5, 0.3);
+        g.tracks.push(keys);
+        g
+    };
+    let frozen = || vec![laid(1_300, 0, 600, 1.0, &take, 2)];
+    let run = |acts: &dyn Fn(usize, &mut live_engine::EngineHandle)| {
+        let (mut core, mut handle) = engine(build()).unwrap();
+        let mut played = Vec::new();
+        for b in 0..12 {
+            acts(b, &mut handle);
+            let mut out = vec![0f32; 256 * 2];
+            core.pull_block(&mut out);
+            played.extend_from_slice(&out);
+        }
+        handle.collect();
+        (played, handle.performance(), handle.relaid().to_vec())
+    };
+    let (still, ..) = run(&|_, _| {});
+    let (played, perf, relaid) = run(&|b, h| {
+        if b == 4 {
+            assert_eq!(h.freeze(1, frozen()), Ok(1));
+        }
+    });
+    let at = 4 * 256;
+    assert_eq!(
+        relaid,
+        [(at as u64, 1)],
+        "frozen at its block's first frame"
+    );
+    let same = |a: &[f32], b: &[f32]| a.iter().zip(b).all(|(x, y)| x.to_bits() == y.to_bits());
+    assert!(
+        same(&played[..2 * 1_300], &still[..2 * 1_300]),
+        "before the take, the part's chain"
+    );
+    assert!(
+        same(&played[2 * 1_900..], &still[2 * 1_900..]),
+        "past its end, the chain again, as it would have been"
+    );
+    let (lw, rw) = pan_weights(0.3);
+    for i in 1_300..1_900 {
+        let (l, r) = (take[(i - 1_300) * 2], take[(i - 1_300) * 2 + 1]);
+        let want = [0.125 + l as f64 * 0.5 * lw, 0.125 + r as f64 * 0.5 * rw];
+        for (c, w) in want.iter().enumerate() {
+            assert!(
+                (f64::from(played[i * 2 + c]) - w).abs() < 1e-6,
+                "frame {i}: the take through the part's own volume and pan"
+            );
+        }
+    }
+    assert!(
+        (1_300..1_900).any(|i| still[i * 2] != played[i * 2]),
+        "the part's chain sounded otherwise there"
+    );
+    let exported = build().render_performance_frozen(
+        SR,
+        &perf,
+        Vec::new(),
+        Vec::new(),
+        Vec::new(),
+        Vec::new(),
+        vec![(at as u64, 1, frozen())],
+    );
+    assert!(
+        same(&exported, &played) && exported.len() == played.len(),
+        "Export freezes it where the engine did"
+    );
+    // Unfreeze: the take let go from the next block, the chain heard from there
+    let (thawed, perf, relaid) = run(&|b, h| match b {
+        4 => assert_eq!(h.freeze(1, frozen()), Ok(1)),
+        6 => assert_eq!(h.freeze(1, Vec::new()), Ok(2)),
+        _ => {}
+    });
+    assert_eq!(relaid, [(at as u64, 1), (6 * 256, 2)]);
+    assert!(
+        same(&thawed[..2 * 6 * 256], &played[..2 * 6 * 256]),
+        "frozen until Unfreeze"
+    );
+    assert!(
+        same(&thawed[2 * 6 * 256..], &still[2 * 6 * 256..]),
+        "the part's chain from Unfreeze's block"
+    );
+    let exported = build().render_performance_frozen(
+        SR,
+        &perf,
+        Vec::new(),
+        Vec::new(),
+        Vec::new(),
+        Vec::new(),
+        vec![(at as u64, 1, frozen()), (6 * 256, 1, Vec::new())],
+    );
+    assert!(
+        same(&exported, &thawed),
+        "Export lets it go where the engine did"
+    );
+    let (_, mut handle) = engine(build()).unwrap();
+    let refused = |r: Result<u64, Refusal>| match r {
+        Err(Refusal::Invalid(words)) => words,
+        other => panic!("{other:?}"),
+    };
+    assert_eq!(
+        refused(handle.freeze(2, frozen())),
+        "the set has no part 2 (it has 2)"
+    );
+    let overlapping = vec![laid(0, 0, 10, 1.0, &take, 2), laid(9, 0, 10, 1.0, &take, 2)];
+    assert!(refused(handle.freeze(1, overlapping)).contains("overlap at frame 9"));
+    assert!(handle.relaid().is_empty(), "nothing refused is frozen");
 }
 
 /// A WAV of `frames` frames in `channels` channels at `rate`: 16-bit integer when `int16`, else 32-bit float, frame `i`

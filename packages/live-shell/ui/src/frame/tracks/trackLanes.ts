@@ -124,12 +124,26 @@ export function lanesUnder(set: WorldTrackSet, trackId: string, shown: LanesShow
 export const laneCount = (set: WorldTrackSet, kind: TrackLaneKind): number => (set.lanes?.[kind] ?? []).length
 
 /** An automation lane's breakpoints on the ruler: its own `at`s, or — when it rides a clip — offset by where that clip stands, or, for a
- * clip with no place of its own on the ruler, where it landed as it plays (`clipAt`). A lane on a clip that has neither has none. */
-export function automationPoints(lane: WorldAutomationLane, clipStart: (clipId: string) => number | undefined): {at: number; value: number}[] {
+ * clip with no place of its own on the ruler, where it landed as it plays (`clipAt`). A lane on a clip that has neither has none. A lane
+ * of a looping clip (`loop`) is drawn again for each pass of its loop, to `until` on the ruler. */
+export function automationPoints(lane: WorldAutomationLane, clipStart: (clipId: string) => number | undefined, until?: number): {at: number; value: number}[] {
   if (lane.clipId === undefined) return lane.points.map(point => ({at: point.at, value: point.value}))
   const base = clipStart(lane.clipId) ?? lane.clipAt
-  return base === undefined ? [] : lane.points.map(point => ({at: base + point.at, value: point.value}))
+  if (base === undefined) return []
+  const once = lane.points.map(point => ({at: base + point.at, value: point.value}))
+  const loop = lane.loop
+  if (!loop || !(loop.to > loop.from) || until === undefined) return once
+  // A looping clip's lane, as Live draws a looped clip's envelope (DLW build ruling 2026-11-05): its points from its start to the loop's
+  // end, then the loop's own again for each pass, until `until` on the ruler (at most LOOP_PASSES_DRAWN passes).
+  const length = loop.to - loop.from
+  const drawn = once.filter(point => point.at - base >= loop.start && point.at - base < loop.to)
+  const inLoop = lane.points.filter(point => point.at >= loop.from && point.at < loop.to)
+  for (let pass = 1; inLoop.length && pass <= LOOP_PASSES_DRAWN && base + loop.to + (pass - 1) * length < until; pass++)
+    for (const point of inLoop) drawn.push({at: base + point.at + pass * length, value: point.value})
+  return drawn
 }
+/** The most passes of a looping clip's lane one ruler draws. */
+export const LOOP_PASSES_DRAWN = 256
 
 /** A selected stretch of a take, ordered and held inside the take's own spans; null when it is empty or touches none of them. */
 export function compRange(lane: WorldTakeLane, from: number, to: number): {start: number; end: number} | null {

@@ -109,6 +109,12 @@ export interface WorldAutomationLane {
   modulatedBy?: string;
   /** Held off its lane by hand, as the owner reports: Re-enable gives it back (`actions.reenable`). */
   overridden?: boolean;
+  /** A frozen take's lane (O-I #849 round 22), in words: its value is baked into the take's sound, so it carries no Overridden mark;
+   * touched, it says so and offers Unfreeze (`actions.unfreeze`). */
+  frozen?: string;
+  /** Its clip's loop, in the clip's own time (DLW build ruling 2026-11-05: "A slot take's lanes repeat for each loop pass, as Live draws
+   * a looped clip's envelope"): its points from its start to the loop's end, then the loop's own again for each pass. */
+  loop?: {start: number; from: number; to: number};
 }
 /** A take lane: one take, laid on the ruler as Live's take lanes are. */
 export interface WorldTakeLane {
@@ -223,6 +229,8 @@ export interface WorldTrackActions {
   audition?: {op: string; run(trackId: string, takeId: string): unknown};
   /** Give overridden parameters back to their lanes (Re-enable); a lane's id when one lane is meant. */
   reenable?: {op: string; run(laneId?: string): unknown};
+  /** Unfreeze the take a frozen lane is of (O-I #849 round 22): its part plays its live Torus again. */
+  unfreeze?: {op: string; run(laneId: string): unknown};
   /** The object acts (manual §10.9, frame/menu/objectActions.ts), each the owner op it runs; one absent here stands disabled in the
    * object's menu and names the operation it waits for. A clip's own name, colour and activator are written by its Clip view. */
   renameTrack?: {op: string; run(trackId: string, name: string): unknown};

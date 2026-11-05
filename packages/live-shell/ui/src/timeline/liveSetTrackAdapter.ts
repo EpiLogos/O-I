@@ -99,7 +99,9 @@ export interface LiveSetReading {
     /** A row's Launch (O-I #743): what row `row` holds on each part, its clips and the empty slots whose stop it keeps. */
     launchRow?(row: number, slots: readonly RowSlot[]): Promise<WorldActionReceipt>
     /** Re-enable (live/clipPlayer.ts, O-I #853): an overridden parameter, or every one, back to the take's lanes. */
-    reenable?(parameter?: string): Promise<WorldActionReceipt>}
+    reenable?(parameter?: string): Promise<WorldActionReceipt>
+    /** Unfreeze (live/clipPlayer.ts, O-I #849 round 22): the take frozen on part `track` let go, the part's live Torus heard again. */
+    unfreeze?(track: number): Promise<WorldActionReceipt>}
   /** The standing of the take's lanes as the clip player plays them (O-I #853): what the hand overrode, which Re-enable counts. */
   lanes?: ClipLaneStanding | ClipLanesStanding | null
   /** Export Audio of a take Record laid (live/liveTake.ts exportLiveTake, O-I #855): its course rendered by the Torus's owner, saved as WAV. */
@@ -145,6 +147,8 @@ export const LIVE_INFO_OP = 'live_clip_write {path, track, clip, set: {info}} �
 export const LIVE_RECORD_SLOT_OP = `Record into the slot (live/liveTake.ts recordIntoSlot): a take of what you play on the part, then ${LIVE_ACT_OP('take_record')} with its row — the pass laid in the empty slot, its take kept beside the set`
 /** Re-enable (O-I #853): what the hand moved off a take's lanes, given back to them. */
 export const LIVE_REENABLE_OP = 'the clip player (live/clipPlayer.ts reenable): each parameter the hand moved off a take\'s lanes plays from them again, at the value its lane reached'
+/** Unfreeze (O-I #849 round 22): the take frozen on its part let go, the part's live Torus heard again. */
+export const LIVE_UNFREEZE_OP = 'the clip player (live/clipPlayer.ts unfreeze): live_engine_unfreeze {track} — the take frozen on the part let go from the engine\'s next block, and its notes on the live Torus from there'
 export const LIVE_PLAY_OP = 'the clip player (live/clipPlayer.ts): the clip read from the set\'s owner, its notes struck on the torus at the set\'s tempo'
 /** A row's Launch (O-I #743): Live's scene launch, on a player of each part. */
 export const LIVE_ROW_LAUNCH_OP = 'the clip player (live/clipPlayer.ts launchRow): every MIDI clip of the row read from the set\'s owner and played together on the torus, a player of each part, each landing on its launch quantize'
@@ -289,6 +293,8 @@ export const liveSetTrackAdapter: WorldTrackAdapter<LiveSetReading> = {
     // where the hand holds it, so each has its own Re-enable. A slot's clip has no place on the ruler, so its take's lanes stand where the
     // clip landed on the transport as it plays (O-I #849 round 21: the launch grid's beats, clipPlayer.ts ClipLaneStanding `at`).
     // Every player's take that plays, a row's among them (O-I #849 round 21: clipPlayer.ts liveClipActs `lanes`), each under its own clip.
+    // A frozen take's lanes say so, and carry no Overridden mark (O-I #849 round 22); a looping slot clip's are drawn again for each pass
+    // (DLW build ruling 2026-11-05).
     const playing = !standing ? [] : 'takes' in standing ? standing.takes : standing.take && standing.lanes ? [{take: standing.take, lanes: standing.lanes}] : []
     const held = standing?.overridden ?? []
     for (const {take, lanes: own} of playing) {
@@ -296,8 +302,10 @@ export const liveSetTrackAdapter: WorldTrackAdapter<LiveSetReading> = {
       const slot = 'slot' in take.address.at
       const clipId = `${trackRef(take.address.track)}/${'slot' in take.address.at ? `slot/${take.address.at.slot}` : `clip/${take.address.at.arrangement}`}`
       const landed = slot && take.at !== undefined && Number.isFinite(take.at) ? {clipAt: take.at} : {}
+      const loop = slot && take.loop && take.loop.to > take.loop.from ? {loop: {start: take.loop.start, from: take.loop.from, to: take.loop.to}} : {}
       for (const lane of own) automation.push({id: `${clipId}${TAKE_LANE}${lane.parameter}`, trackId: trackRef(take.address.track), device: take.name,
-        parameter: lane.label, clipId, ...landed, points: lane.points.map(point => ({at: point.beat, value: point.value})), overridden: held.includes(lane.parameter)})
+        parameter: lane.label, clipId, ...landed, ...loop, points: lane.points.map(point => ({at: point.beat, value: point.value})),
+        ...(take.frozen !== undefined ? {overridden: false, frozen: take.frozen} : {overridden: held.includes(lane.parameter)})})
     }
     const absent: Record<string, string> = {events: LIVE_LANES_ABSENT.events}
     if (!read) Object.assign(absent, LIVE_LANES_ABSENT)
@@ -733,6 +741,12 @@ function liveObjectActs(set: SetSummary, act: LiveSetReading['act'], insertClip:
     if (reenable) actions.reenable = {op: LIVE_REENABLE_OP, run: laneId => laneId === undefined ? reenable()
       : laneId.includes(TAKE_LANE) ? reenable(laneId.slice(laneId.indexOf(TAKE_LANE) + TAKE_LANE.length))
       : refused(`${laneId} is a lane of the set's own automation, which no hand here overrides: Re-enable gives back what a take's lanes play.`)}
+    const unfreeze = play.unfreeze
+    if (unfreeze) actions.unfreeze = {op: LIVE_UNFREEZE_OP, run: laneId => {
+      if (!laneId.includes(TAKE_LANE)) return refused(`${laneId} is a lane of the set's own automation, which no take froze: Unfreeze lets go of a take frozen on its part.`)
+      const place = clipOf(laneId.slice(0, laneId.indexOf(TAKE_LANE)))
+      return typeof place === 'string' ? refused(place) : unfreeze(place.track)
+    }}
   }
   // Record into a slot (O-I #743): an armed MIDI part's empty slot begins a take on the part, and ends it there, laid in the slot.
   if (record) actions.recordSlot = {op: LIVE_RECORD_SLOT_OP, run: (trackId, columnId) => {

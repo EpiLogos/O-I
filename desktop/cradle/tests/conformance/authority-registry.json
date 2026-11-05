@@ -343,6 +343,18 @@
       "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md §10.9 (Clip: In Arrangement view, Split, Consolidate and Crop); Live Object Model Clip.crop (docs/research/ableton-live-12.0.25/lom/LOM-INVENTORY.md); docs/cradle/02-ARCHITECTURE.md §5/§12"
     },
     {
+      "command": "live_engine_host::live_engine_freeze",
+      "classification": "presentation-lease",
+      "rationale": "A row's take frozen on its part (O-I #849 round 22; DLW build ruling 2026-11-05: a true Torus per row player, through the engine, as Live's Freeze Track does): the take's sound as the Torus's owner rendered it, sent raw by the page (oi.take-render/v1 with the owner's sample it lands at and its name), rendered offline through the Torus's effects as they moved and the part's own chain (its mixer at unity: Freeze renders the chain), and laid on the part in the engine from the frame its landing falls on, playing in place of the part's chain until it ends, through the part's own volume, pan and sends; the host keeps the registry of the takes it froze, which Export Audio freezes again. Refused in words for a take with no landing, while the engine follows no Torus it has taken, for another rate than the engine's, a track that is no MIDI part, and while no set is open in the engine. It writes nothing. Candidate webviews only.",
+      "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md §21.1 (Rules: every part sounds in one engine; Export Audio renders what you heard), O-I #849; docs/cradle/02-ARCHITECTURE.md §5/§12"
+    },
+    {
+      "command": "live_engine_host::live_engine_unfreeze",
+      "classification": "presentation-lease",
+      "rationale": "Unfreeze (O-I #849 round 22; DLW build ruling 2026-11-05: Unfreeze returns the part to its live Torus): the takes the host froze on the part are let go from the engine's next block, and the part's chain is heard again; answered with the registry of frozen takes. Refused in words for a track that is no part and while no set is open in the engine. It writes nothing. Candidate webviews only.",
+      "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md §21.1 (Rules: every part sounds in one engine), O-I #849; docs/cradle/02-ARCHITECTURE.md §5/§12"
+    },
+    {
       "command": "midi::midi_out",
       "classification": "presentation-lease",
       "rationale": "The part's MIDI output (midi.rs over midir): lists the system's MIDI outputs, connects the one the person chooses and sends the notes the part's playing path plays to it, refused in words when none is chosen or a message is not MIDI. It decides and writes nothing; what is played is the shell's playing path and the Torus's owner. Candidate webviews only.",

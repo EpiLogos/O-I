@@ -32,7 +32,8 @@
 //! first frame, so a key sounds within one device block of the callback
 //! that takes it (plus the device's own output latency, which only the
 //! candidate can measure — [`EngineHandle::latency`] reads what the
-//! realtime path recorded).
+//! realtime path recorded, each strike's own times among it:
+//! [`StrikeTime`]).
 
 use crate::graph::{
     Clock, Device, Graph, GraphError, Instrument, RackDevice, TorusAct, TorusHear, TorusStrike,
@@ -599,6 +600,27 @@ pub const LATENCY_BUCKETS_NS: [u64; 8] = [
     500_000, 1_000_000, 2_000_000, 3_000_000, 6_000_000, 12_000_000, 25_000_000, 50_000_000,
 ];
 
+/// One strike's key-to-sound inside the host (O-I #849 round 22; DLW build ruling 2026-11-05: "a host-side timestamp pair per
+/// strike reported through the engine's own readout"): the part it struck, when the control side sent it
+/// ([`EngineHandle::send`]), when the audio thread pulled the block that took it, and when the engine mixed its first frame
+/// (`frame`): that block's first frame for a note or an act of the Torus's keys, the owner's sample for an act of the Torus's
+/// owner, which waits in the part's Torus until its continuation reaches it (as the Torus stands when it takes it; a late act
+/// strikes at once). Ns in the engine's time ([`EngineHandle::now_ns`]); the frame's mixing time is the block's pull plus its
+/// frames at the engine's rate, and the device plays it its output latency later ([`LatencyReading::output_latency_ns`]).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct StrikeTime {
+    pub track: usize,
+    pub sent_ns: u64,
+    pub applied_ns: u64,
+    pub sounds_ns: u64,
+    pub frame: u64,
+}
+
+/// The strikes [`LatencyReading::strikes`] keeps: the latest.
+pub const STRIKES_KEPT: usize = 32;
+/// The strikes the audio thread can hand back between two collects; more are not kept.
+const STRIKE_RING: usize = 256;
+
 /// What the audio thread publishes for the control side to read.
 struct Shared {
     /// Frames mixed so far.
@@ -682,11 +704,13 @@ struct LaidHand {
     lays: Vec<Lay>,
 }
 
-/// The samples laid again on one part: the count they were laid at, the part, and whether it took them.
+/// The samples laid again on one part: the count they were laid at, the part, whether they are takes frozen on it
+/// ([`EngineHandle::freeze`], O-I #849 round 22) rather than its clips' samples, and whether it took them.
 struct Lay {
     id: u64,
     track: usize,
     samples: Vec<crate::graph::LaidSample>,
+    frozen: bool,
     taken: bool,
 }
 
@@ -740,6 +764,8 @@ pub struct EngineCore {
     clock: Clock,
     inbox: Consumer<Inbound>,
     heard: Producer<Stamped>,
+    /// Each strike's times ([`StrikeTime`]), handed back.
+    struck: Producer<StrikeTime>,
     shared: Arc<Shared>,
     /// A hand taken and not yet due, with the frame it is due at ([`Due`]).
     held: Option<(Box<Hand>, u64)>,
@@ -750,6 +776,9 @@ pub struct EngineCore {
 pub struct EngineHandle {
     outbox: Producer<Inbound>,
     heard: Consumer<Stamped>,
+    struck: Consumer<StrikeTime>,
+    /// The latest strikes' times, oldest first ([`STRIKES_KEPT`]).
+    strikes: std::collections::VecDeque<StrikeTime>,
     shared: Arc<Shared>,
     record: Vec<Stamped>,
     mixer: MixerState,
@@ -809,6 +838,8 @@ pub struct LatencyReading {
     pub longest_wait_ns: u64,
     /// The device's reported output latency (callback to playback), ns.
     pub output_latency_ns: u64,
+    /// The latest strikes' times as of the last collect ([`EngineHandle::collect`]), oldest first.
+    pub strikes: Vec<StrikeTime>,
 }
 
 /// Capacity of each ring: events per block are few (a chord, a fader
@@ -825,6 +856,7 @@ pub fn engine(mut graph: Graph) -> Result<(EngineCore, EngineHandle), GraphError
     let mixer = MixerState::of(&graph);
     let (outbox, inbox) = ring(RING_CAPACITY);
     let (heard_tx, heard_rx) = ring(RING_CAPACITY);
+    let (struck_tx, struck_rx) = ring(STRIKE_RING);
     let shared = Arc::new(Shared {
         position: AtomicU64::new(0),
         lost: AtomicU64::new(0),
@@ -850,12 +882,15 @@ pub fn engine(mut graph: Graph) -> Result<(EngineCore, EngineHandle), GraphError
         clock,
         inbox,
         heard: heard_tx,
+        struck: struck_tx,
         shared: Arc::clone(&shared),
         held: None,
     };
     let handle = EngineHandle {
         outbox,
         heard: heard_rx,
+        struck: struck_rx,
+        strikes: std::collections::VecDeque::with_capacity(STRIKES_KEPT),
         shared,
         record: Vec::new(),
         mixer,
@@ -886,7 +921,34 @@ impl EngineCore {
         let now_ns = self.shared.epoch.elapsed().as_nanos() as u64;
         self.stamp(start, out.len() as u64 / 2, now_ns);
         while let Some(inbound) = self.inbox.pop() {
+            // A strike's first frame: the block's, or an owner's act's sample as the part's Torus stands (read before the act).
+            let struck = match inbound.event {
+                EngineEvent::NoteOn { track, .. } | EngineEvent::TorusPlay { track, .. } => {
+                    Some((track, start))
+                }
+                EngineEvent::TorusStrike { track, ref strike } => Some((
+                    track,
+                    start
+                        + self
+                            .graph
+                            .torus_cursor(track)
+                            .map_or(0, |cursor| strike.at.saturating_sub(cursor)),
+                )),
+                _ => None,
+            };
             self.graph.apply(&inbound.event, &self.clock);
+            if let Some((track, frame)) = struck {
+                let ahead = (frame - start).saturating_mul(1_000_000_000)
+                    / u64::from(self.graph.sample_rate.max(1));
+                // a full ring keeps the strikes it holds: the readout keeps only the latest anyway
+                let _ = self.struck.push(StrikeTime {
+                    track,
+                    sent_ns: inbound.sent_ns,
+                    applied_ns: now_ns,
+                    sounds_ns: now_ns.saturating_add(ahead),
+                    frame,
+                });
+            }
             let wait = now_ns.saturating_sub(inbound.sent_ns);
             let k = LATENCY_BUCKETS_NS
                 .iter()
@@ -1049,7 +1111,11 @@ impl EngineCore {
         // `incoming`; it holds `p` until it stores it in `retired`.
         let hand = unsafe { &mut *p };
         for lay in hand.lays.iter_mut() {
-            lay.taken = self.graph.lay(lay.track, &mut lay.samples, start);
+            lay.taken = if lay.frozen {
+                self.graph.freeze(lay.track, &mut lay.samples, start)
+            } else {
+                self.graph.lay(lay.track, &mut lay.samples, start)
+            };
         }
         hand.frame = start;
         laid.retired.store(p, Ordering::Release);
@@ -1162,6 +1228,12 @@ impl EngineHandle {
                     .filter(|lay| lay.taken)
                     .map(|lay| (frame, lay.id)),
             );
+        }
+        while let Some(strike) = self.struck.pop() {
+            if self.strikes.len() == STRIKES_KEPT {
+                self.strikes.pop_front();
+            }
+            self.strikes.push_back(strike);
         }
         let mut n = 0;
         while let Some(stamped) = self.heard.pop() {
@@ -1413,12 +1485,48 @@ impl EngineHandle {
         }
         let samples =
             crate::graph::samples_laid(&part.name, false, samples).map_err(Refusal::Invalid)?;
+        Ok(self.hand_lay(track, samples, false))
+    }
+
+    /// Freeze `takes` on part `track` in place of the takes frozen there while the engine plays (O-I #849 round 22; DLW build
+    /// ruling 2026-11-05: "A rendered take is a frozen take", as Live's Freeze Track does): each the part's chain as a take
+    /// made it, rendered off the audio thread, sounding in place of the part's chain over its frames and through the part's
+    /// mixer; past its end the part's chain is heard again ([`crate::Track::freeze`]). None: the part's frozen takes are
+    /// let go (Unfreeze), and its chain is heard from the next block. Laid in order here ([`crate::graph::samples_laid`]),
+    /// they take the part at the next block's first frame and come back to be dropped here as [`EngineHandle::lay`]'s do,
+    /// with which they share the count they are named by in [`EngineHandle::relaid`]. Takes frozen on the same part before
+    /// the engine took the last give way to these. Refused, in words, for a part that is not there and takes it cannot lay.
+    pub fn freeze(
+        &mut self,
+        track: usize,
+        takes: Vec<crate::graph::LaidSample>,
+    ) -> Result<u64, Refusal> {
+        let part = self.mixer.tracks.get(track).ok_or_else(|| {
+            Refusal::Invalid(format!(
+                "the set has no part {track} (it has {})",
+                self.mixer.tracks.len()
+            ))
+        })?;
+        let takes =
+            crate::graph::samples_laid(&part.name, false, takes).map_err(Refusal::Invalid)?;
+        Ok(self.hand_lay(track, takes, true))
+    }
+
+    /// Hand `samples` to the audio thread to lay (or freeze) on `track`, those waiting for the same part and kind giving
+    /// way: the count they are laid at.
+    fn hand_lay(
+        &mut self,
+        track: usize,
+        samples: Vec<crate::graph::LaidSample>,
+        frozen: bool,
+    ) -> u64 {
         self.collect();
         self.lays += 1;
         let lay = Lay {
             id: self.lays,
             track,
             samples,
+            frozen,
             taken: false,
         };
         let waiting = self
@@ -1435,14 +1543,14 @@ impl EngineHandle {
             waiting
                 .lays
                 .into_iter()
-                .filter(|l| l.track != track)
+                .filter(|l| l.track != track || l.frozen != frozen)
                 .collect()
         };
         lays.push(lay);
         let hand = Box::into_raw(Box::new(LaidHand { frame: 0, lays }));
         self.shared.laid.incoming.store(hand, Ordering::Release);
         self.collect();
-        Ok(self.lays)
+        self.lays
     }
 
     /// Every part's samples the engine laid again from [`EngineHandle::lay`], as (frame, the count they were laid at),
@@ -1548,6 +1656,7 @@ impl EngineHandle {
                 .collect(),
             longest_wait_ns: self.shared.longest_wait_ns.load(Ordering::Relaxed),
             output_latency_ns: self.shared.output_latency_ns.load(Ordering::Relaxed),
+            strikes: self.strikes.iter().copied().collect(),
         }
     }
 }
