@@ -88,6 +88,20 @@ fn the_audio_thread_pull_allocates_nothing() {
     bass.sends = vec![0.0];
     let mut tone = Track::new("Tone", 1);
     tone.source = (0..20_000).map(|i| (i as f32 * 0.01).sin() * 0.3).collect();
+    // the sample-playback source (DLW build ruling 2026-11-05): two clips of one stereo buffer laid on it
+    let pcm: std::sync::Arc<[f32]> = (0..24_000)
+        .map(|i| (i as f32 * 0.003).cos() * 0.2)
+        .collect();
+    let clip = |at: u64, from: u64, frames: u64| live_engine::LaidSample {
+        at,
+        from,
+        frames,
+        gain: 0.8,
+        channels: 2,
+        pcm: std::sync::Arc::clone(&pcm),
+    };
+    tone.set_samples(vec![clip(1_000, 0, 6_000), clip(9_000, 3_000, 9_000)])
+        .unwrap();
     // O-I #849 round 17: a mono part's room and compressor, which are made again below
     tone.devices
         .push(Box::new(live_engine::ReverbDevice::partitioned(

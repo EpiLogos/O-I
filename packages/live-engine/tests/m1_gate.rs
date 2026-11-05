@@ -244,6 +244,41 @@ fn lives_own_glue() -> Option<(Vec<f32>, LivesRender, Vec<String>)> {
     ))
 }
 
+/// The sample-playback source (DLW build ruling 2026-11-05: "a decoded buffer laid at its clip's beats, unwarped first"):
+/// the set's own unwarped clip of the steps signal, laid from the sample its document names (`lay_samples`), sounds
+/// through its part's Glue bit for bit as the harness signal handed to the part as its source does — the gates above hand
+/// the part the signal; this lays the set's own clip.
+#[test]
+fn m1_gate_the_sets_own_clip_laid_from_its_sample_sounds_as_the_signal_handed_to_its_part() {
+    let set = corpus::path(LIVES_GLUE_SET);
+    if !set.exists() || !corpus_present() {
+        eprintln!("skip: Live's default Glue set is not present ({LIVES_GLUE_SET})");
+        return;
+    }
+    let root = live_set::open_als(&set).unwrap_or_else(|e| panic!("{}: {e:?}", set.display()));
+    let mut laid = live_engine::bridge::bridge_set(&root, SR).expect("a Live set");
+    assert_eq!(laid.samples.len(), 1, "one clip: {:?}", laid.samples);
+    let words = live_engine::bridge::lay_samples(&mut laid.graph, &laid.samples, &set);
+    assert!(words.is_empty(), "{words:?}");
+    let signal = load_signal();
+    let clip = &laid.graph.tracks[0].samples()[0];
+    assert_eq!(
+        (clip.at, clip.from, clip.frames, clip.channels),
+        (0, 0, (signal.samples.len() / 2) as u64, 2),
+        "the clip spans the signal from its first frame"
+    );
+    let mut handed = live_engine::bridge::bridge_set(&root, SR).expect("a Live set");
+    handed.graph.tracks[0].source = signal.samples;
+    let (laid, handed) = (laid.graph.render(SR), handed.graph.render(SR));
+    assert_eq!(laid.len(), handed.len());
+    assert!(
+        laid.iter()
+            .zip(&handed)
+            .all(|(a, b)| a.to_bits() == b.to_bits()),
+        "the laid clip sounds as the signal handed to its part"
+    );
+}
+
 /// The Glue the bridge stood every set's Glue at before O-I #849 round 15, whatever the set stored (`known_device`'s
 /// factory values: Threshold −40, Range 3, Ratio 1, Makeup 0), on the same part.
 fn factory_glue() -> Vec<f32> {

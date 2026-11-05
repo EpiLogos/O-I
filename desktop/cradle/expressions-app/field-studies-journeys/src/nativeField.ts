@@ -596,8 +596,10 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   * frame's one stage channel (app.ts stageStrike), as a collision is. Answers whether the press was a touch on the torus; a press that is
   * not one is left to the stage. */
  const touch=(x:number,y:number,view:StageView,pressure:number|undefined,strike:(points:SurfacePoint[],amplitude:number)=>Promise<unknown>):boolean=>{
-  const projection=(engine.telemetry?.() as any)?.config?.depth?.projection==='perspective'?'perspective':'orthographic';
-  const touched=touchStrike(controller.reading as any,x,y,view,{projection,worldScale:WORLD_SCALE,pressure});
+  const depth=(engine.telemetry?.() as any)?.config?.depth,projection=depth?.projection==='perspective'?'perspective':'orthographic';
+  // the engine's lens as it draws it (PointCloudField: its depth fov, held to 4..120°), for a perspective stage (O-I #771)
+  const fovDegrees=Math.max(4,Math.min(120,typeof depth?.fov==='number'&&Number.isFinite(depth.fov)?depth.fov:DEFAULT_DEPTH_CONFIG.fov));
+  const touched=touchStrike(controller.reading as any,x,y,view,{projection,worldScale:WORLD_SCALE,fovDegrees,pressure});
   if(!touched.point){if(touched.say)setText('key',touched.why);return false;}
   const {theta,phi}=touched.point,degrees=(angle:number)=>(angle*180/Math.PI).toFixed(1);
   setText('key',`Touched the torus at θ ${degrees(theta)}°, φ ${degrees(phi)}°: it rings there.`);

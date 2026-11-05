@@ -11,13 +11,15 @@
 //! stores for it, a device stored off passes its sound through as Live's
 //! does, and what the set stores that a model does not take is named in a
 //! warning. UNKNOWN device element names instantiate `BypassDevice` and
-//! produce a warning. Sources are not loaded here: the host fills
-//! `Track::source` (arrangement clip playback is M5 warp territory).
+//! produce a warning. Samples are not read here: `bridge_set` names the
+//! sample each arrangement audio clip wants ([`ClipSample`]) and the host
+//! lays them with [`lay_samples`], unwarped clips first (warp playback is M5
+//! territory).
 
 use crate::devices::{
-    BypassDevice, CompressorDevice, DelayDevice, DelayParams, DynamicsDevice, DynamicsParams,
-    EchoDevice, EchoParams, FilterDevice, FilterKind, FilterParams, GlueDevice, ReverbDevice,
-    RoomDevice, RoomParams,
+    AudioEffectRack, BypassDevice, CompressorDevice, DelayDevice, DelayParams, DynamicsDevice,
+    DynamicsParams, EchoDevice, EchoParams, FilterDevice, FilterKind, FilterParams, GlueDevice,
+    RackChain, ReverbDevice, RoomDevice, RoomParams, UtilityChannels, UtilityDevice,
 };
 use crate::engine::Part;
 use crate::graph::{Clock, Graph, GroupTrack, Note, RackDevice, ReturnTrack, Track, MAX_GROUPS};
@@ -41,6 +43,35 @@ pub struct BridgeWarning {
 pub struct BridgeResult {
     pub graph: Graph,
     pub warnings: Vec<BridgeWarning>,
+    /// The sample each arrangement audio clip it plays wants laid ([`bridge_set`]): the host reads
+    /// and lays them ([`lay_samples`]). Empty from a summary.
+    pub samples: Vec<ClipSample>,
+}
+
+/// One arrangement audio clip of a part as the set stores it (`MainSequencer/Sample/ArrangerAutomation/
+/// Events/AudioClip`, session-model.md §3 and §5), on the engine's timeline: the sample it plays, where
+/// it sounds and from where in its sample, ready to be laid ([`lay_samples`], DLW build ruling 2026-11-05:
+/// "one sample-playback source in live-engine. It is a decoded buffer laid at its clip's beats, unwarped
+/// first").
+#[derive(Debug, Clone, PartialEq)]
+pub struct ClipSample {
+    /// The part, by its index among the graph's tracks.
+    pub track: usize,
+    /// The clip's name, for the words.
+    pub clip: String,
+    /// `SampleRef/FileRef/RelativePath`, where the set stores one: read from the set's folder.
+    pub relative: Option<String>,
+    /// `SampleRef/FileRef/Path`, where the set stores one: the file where it stood when the set was saved.
+    pub path: Option<String>,
+    /// The frame it sounds from (its `Time`, in beats on the clock).
+    pub at: u64,
+    /// The frames it sounds for (`CurrentEnd − CurrentStart` beats).
+    pub frames: u64,
+    /// Where in its sample it plays from, in seconds (`Loop/LoopStart`: an unwarped clip keeps its markers
+    /// in seconds, live-set `marker_scale`).
+    pub from_seconds: f64,
+    /// Its clip gain, linear (`SampleVolume`).
+    pub gain: f32,
 }
 
 // devices/glue-compressor.md, "Preset stored values (unpinned)":
@@ -323,9 +354,143 @@ fn as_stored(el: &Element) -> Option<(Box<dyn crate::graph::Device>, Vec<String>
             menu("SideChainEq/Mode", &mut p.side_chain_eq.mode);
             Box::new(CompressorDevice::new(p))
         }
+        "StereoGain" => {
+            let gain = s.take("Gain").unwrap_or(1.0) as f32;
+            let mut on = |id: &'static str| s.take(id).is_some_and(|v| v != 0.0);
+            let (mute, invert) = (on("Mute"), [on("PhaseInvertL"), on("PhaseInvertR")]);
+            let channels = match s.take("ChannelMode").map(|v| v.round() as i64) {
+                Some(0) => UtilityChannels::Left,
+                Some(2) => UtilityChannels::Right,
+                _ => UtilityChannels::Stereo,
+            };
+            if channels != UtilityChannels::Stereo && invert.contains(&true) {
+                s.strays.push("no clean-room source orders Live's Utility's Channel Mode and Phase Invert: the engine turns over the channels its mode gives".into());
+            }
+            // what sounds as stored at these: its laws are not attested (devices/utility-derivation.md §4), and at them each
+            // leaves the sound as it is; what one of them gates goes with it
+            for (id, leaves, gates) in UTILITY_AS_STORED {
+                if stored(el, id).is_none_or(|v| v == leaves) {
+                    s.taken.push(id);
+                    s.taken.extend_from_slice(gates);
+                }
+            }
+            Box::new(UtilityDevice {
+                gain,
+                mute,
+                invert,
+                channels,
+            })
+        }
         _ => return None,
     };
     Some((device, s.words()))
+}
+
+/// Live's Utility's settings whose laws no clean-room source attests (devices/utility-derivation.md §4), each with the
+/// value at which it leaves the sound as it is (its width at 100%, its balance centred, each switch off) and the settings
+/// it gates: at those it sounds as the set stores it, and off them the bridge says the engine does not take it.
+const UTILITY_AS_STORED: [(&str, f64, &[&str]); 7] = [
+    ("StereoWidth", 1.0, &[]),
+    ("MidSideBalanceOn", 0.0, &["MidSideBalance"]),
+    ("Mono", 0.0, &[]),
+    ("BassMono", 0.0, &["BassMonoAudition", "BassMonoFrequency"]),
+    ("Balance", 0.0, &[]),
+    ("DcFilter", 0.0, &[]),
+    ("LegacyMode", 0.0, &["LegacyGain"]),
+];
+
+/// Live's Audio Effect Rack as the set stores it (O-I #849 item 5, a rack's own chains; devices/racks-session-model.md):
+/// each chain (§1.3 `Branches/AudioEffectBranch`) with its devices made as a part's are ([`chain_device`]; what one does
+/// not take said on its chain), at its chain mixer's Volume and Panorama (§2.2), sounding when its Speaker is on, when no
+/// other chain is soloed or it is, and when the Chain Selector (§1.5, `ChainSelector`) stands within its zone
+/// (`BranchSelectorRange` Min to Max). A chain whose zone fades where the selector stands is played at full and said
+/// (§7: "ChainSelector crossfade curve" is not attested); the rack's return chains are said, and do not sound.
+fn audio_effect_rack(
+    el: &Element,
+    track: &str,
+    warnings: &mut Vec<BridgeWarning>,
+) -> AudioEffectRack {
+    let said = |warnings: &mut Vec<BridgeWarning>, message: String| {
+        warnings.push(BridgeWarning {
+            track: track.to_string(),
+            device: el.name.clone(),
+            message,
+        })
+    };
+    let on = |e: Option<&Element>| value_attr(e) == Some("true");
+    let int = |e: &Element, id: &str| value_attr(e.child(id)).and_then(|v| v.parse::<f64>().ok());
+    let selector = stored(el, "ChainSelector").unwrap_or(0.0);
+    let branches: Vec<&Element> = el
+        .child("Branches")
+        .map(|b| {
+            b.children
+                .iter()
+                .filter(|c| c.name == "AudioEffectBranch")
+                .collect()
+        })
+        .unwrap_or_default();
+    if el
+        .child("ReturnBranches")
+        .is_some_and(|r| !r.children.is_empty())
+    {
+        said(
+            warnings,
+            "its return chains do not sound in the engine yet, nor what its chains send them"
+                .into(),
+        );
+    }
+    let soloing = branches.iter().any(|b| on(b.child("IsSoloed")));
+    let mut chains = Vec::new();
+    for (i, b) in branches.iter().enumerate() {
+        let name = b
+            .find("EffectiveName")
+            .and_then(|n| n.attr("Value"))
+            .filter(|n| !n.is_empty())
+            .map_or_else(|| format!("{}", i + 1), str::to_string);
+        let mixer = b.child("MixerDevice");
+        let speaker = mixer.and_then(|m| stored(m, "Speaker")) != Some(0.0);
+        let gain = mixer.and_then(|m| stored(m, "Volume")).unwrap_or(1.0);
+        let pan = mixer.and_then(|m| stored(m, "Panorama")).unwrap_or(0.0);
+        let zone = b.child("BranchSelectorRange");
+        let range = |id: &str| zone.and_then(|z| int(z, id));
+        let (min, max) = (range("Min").unwrap_or(0.0), range("Max").unwrap_or(127.0));
+        let within = (min..=max).contains(&selector);
+        let (fade_min, fade_max) = (
+            range("CrossfadeMin").unwrap_or(min),
+            range("CrossfadeMax").unwrap_or(max),
+        );
+        let fades = |from: f64, to: f64| from < to && selector > from && selector < to;
+        // it rises across Min to CrossfadeMin and falls across CrossfadeMax to Max (§1.5: the zones tile the selector, each
+        // chain's band overlapping its neighbour's)
+        if within && (fades(min, fade_min) || fades(fade_max, max)) {
+            said(warnings, format!(
+                "its chain '{name}' fades where the Chain Selector stands ({selector}), by a curve no clean-room source gives: the engine plays it at full"
+            ));
+        }
+        let at = warnings.len();
+        let devices: Vec<Box<dyn crate::graph::Device>> = b
+            .child("DeviceChain")
+            .and_then(|c| c.child("AudioToAudioDeviceChain"))
+            .and_then(|c| c.child("Devices"))
+            .map(|ds| {
+                ds.children
+                    .iter()
+                    .map(|d| chain_device(d, track, warnings))
+                    .collect()
+            })
+            .unwrap_or_default();
+        for w in &mut warnings[at..] {
+            w.message = format!("on the Audio Effect Rack's chain '{name}', {}", w.message);
+        }
+        chains.push(RackChain {
+            name,
+            devices,
+            gain,
+            pan,
+            sounds: speaker && (!soloing || on(b.child("IsSoloed"))) && within,
+        });
+    }
+    AudioEffectRack { chains }
 }
 
 /// Live's Auto Filter's FilterType as the engine's model reads it, against the Torus's Filter's kinds:
@@ -621,7 +786,11 @@ pub fn bridge(summary: &SetSummary, sample_rate: u32) -> BridgeResult {
             }),
         }
     }
-    BridgeResult { graph, warnings }
+    BridgeResult {
+        graph,
+        warnings,
+        samples: Vec::new(),
+    }
 }
 
 // ---------------------------------------------------------------- the set
@@ -820,6 +989,9 @@ fn chain_device(
     if stored(el, "On") == Some(0.0) {
         return Box::new(BypassDevice);
     }
+    if el.name == "AudioEffectGroupDevice" {
+        return Box::new(audio_effect_rack(el, track, warnings));
+    }
     match as_stored(el) {
         Some((device, words)) => {
             words.into_iter().for_each(&mut warn);
@@ -941,8 +1113,9 @@ pub fn set_device_made(el: &Element) -> Box<dyn crate::graph::Device> {
 /// A MIDI part's first `Operator` is its instrument, at the patch the set
 /// stores for it as the engine's model takes it (O-I #849 round 16,
 /// `operator_of`, as each effect's stored settings, `chain_device`); a MIDI part with no instrument the engine
-/// models stays silent, with a warning. Audio parts keep empty sources
-/// (the host fills them). A group track is a bus (O-I #849 round 16,
+/// models stays silent, with a warning. An audio part's arrangement clips
+/// are named in [`BridgeResult::samples`], each the sample it wants laid
+/// ([`arrangement_samples`]; the host lays them, [`lay_samples`]). A group track is a bus (O-I #849 round 16,
 /// [`GroupTrack`]): with its chain, mixer row and sends, it takes the sound
 /// of each part and group whose `TrackGroupId` names its `Id`, and sounds
 /// into the group it stands in or the Main track, as the set routes each
@@ -954,6 +1127,7 @@ pub fn bridge_set(root: &Element, sample_rate: u32) -> Option<BridgeResult> {
     let mut graph = Graph::new(sample_rate, tempo_bpm);
     let clock = Clock::start(sample_rate, tempo_bpm);
     let mut warnings = Vec::new();
+    let mut samples = Vec::new();
     // each group track's `Id`, in the set's order: its index among the graph's groups
     let group_ids: Vec<&str> = ls
         .child("Tracks")
@@ -1004,6 +1178,14 @@ pub fn bridge_set(root: &Element, sample_rate: u32) -> Option<BridgeResult> {
                             track.instrument = Some(Box::new(crate::instruments::SilentInstrument));
                         }
                         track.set_notes(&arrangement_notes(tr, &clock));
+                    } else {
+                        samples.extend(arrangement_samples(
+                            tr,
+                            graph.tracks.len(),
+                            &clock,
+                            &name,
+                            &mut warnings,
+                        ));
                     }
                     track.gain = gain;
                     track.pan = pan;
@@ -1083,7 +1265,200 @@ pub fn bridge_set(root: &Element, sample_rate: u32) -> Option<BridgeResult> {
             graph.master.devices.push(dev);
         }
     }
-    Some(BridgeResult { graph, warnings })
+    Some(BridgeResult {
+        graph,
+        warnings,
+        samples,
+    })
+}
+
+/// The arrangement audio clips of the part `track` (its element `tr`, named `name`), each as the sample
+/// it wants laid ([`ClipSample`]), on `clock`'s timeline. A disabled clip is skipped, as its notes are. The
+/// engine plays an unwarped clip at its sample's own rate (session-model.md §5); a warped clip is silent,
+/// and what the engine does not play of a clip it plays is named, each in a warning: its loop (it plays
+/// once), its transposition and its fades.
+fn arrangement_samples(
+    tr: &Element,
+    track: usize,
+    clock: &Clock,
+    name: &str,
+    warnings: &mut Vec<BridgeWarning>,
+) -> Vec<ClipSample> {
+    let mut samples = Vec::new();
+    let Some(events) = tr
+        .child("DeviceChain")
+        .and_then(|d| d.child("MainSequencer"))
+        .and_then(|s| s.child("Sample"))
+        .and_then(|s| s.child("ArrangerAutomation"))
+        .and_then(|a| a.child("Events"))
+    else {
+        return samples;
+    };
+    for clip in events.children_named("AudioClip") {
+        if value_attr(clip.child("Disabled")) == Some("true") {
+            continue;
+        }
+        let named = value_attr(clip.child("Name"))
+            .filter(|n| !n.is_empty())
+            .unwrap_or("an audio clip")
+            .to_string();
+        let mut warn = |message: String| {
+            warnings.push(BridgeWarning {
+                track: name.to_string(),
+                device: String::new(),
+                message: format!("its clip '{named}' {message}"),
+            })
+        };
+        if value_attr(clip.child("IsWarped")) == Some("true") {
+            warn("is warped, and the engine plays unwarped clips first: it is silent".into());
+            continue;
+        }
+        let file = clip.child("SampleRef").and_then(|r| r.child("FileRef"));
+        let stored = |field: &str| {
+            value_attr(file.and_then(|f| f.child(field)))
+                .filter(|v| !v.is_empty())
+                .map(str::to_string)
+        };
+        let (relative, path) = (stored("RelativePath"), stored("Path"));
+        if relative.is_none() && path.is_none() {
+            warn("names no sample file: it is silent".into());
+            continue;
+        }
+        let lp = clip.child("Loop");
+        if lp.and_then(|l| value_attr(l.child("LoopOn"))) == Some("true") {
+            warn("loops, and the engine plays an unwarped clip once".into());
+        }
+        let pitched = ["PitchCoarse", "PitchFine"]
+            .iter()
+            .any(|p| beats(clip, p).is_some_and(|v| v != 0.0));
+        if pitched {
+            warn("is transposed, and the engine plays it at its sample's own pitch".into());
+        }
+        let fades = clip.child("Fades");
+        if ["FadeInLength", "FadeOutLength"]
+            .iter()
+            .any(|f| fades.and_then(|x| beats(x, f)).is_some_and(|v| v != 0.0))
+        {
+            warn("fades in or out, and the engine plays it without its fades".into());
+        }
+        let anchor = clip
+            .attr("Time")
+            .and_then(|v| v.parse::<f64>().ok())
+            .unwrap_or(0.0);
+        let span =
+            beats(clip, "CurrentEnd").unwrap_or(0.0) - beats(clip, "CurrentStart").unwrap_or(0.0);
+        let at = clock.frame_of_beat(anchor);
+        samples.push(ClipSample {
+            track,
+            clip: named.clone(),
+            relative,
+            path,
+            at,
+            frames: clock
+                .frame_of_beat(anchor + span.max(0.0))
+                .saturating_sub(at),
+            from_seconds: lp
+                .and_then(|l| beats(l, "LoopStart"))
+                .unwrap_or(0.0)
+                .max(0.0),
+            gain: beats(clip, "SampleVolume").unwrap_or(1.0) as f32,
+        });
+    }
+    samples
+}
+
+/// Lay the samples the set's audio clips want ([`BridgeResult::samples`]) on `graph`'s parts, from the set
+/// at `set`: each clip's file read beside the set first (its `RelativePath` from the set's folder), else
+/// where the set stored it (its `Path`) — ENGINE DECISION: the set's own folder is the project the clip's
+/// relative path is read from; decoded once for all the clips that play it ([`crate::wav::read_wav`]),
+/// and laid from its start marker at its own rate (session-model.md §5: unwarped, "the sample at original
+/// rate"). A clip whose sample is not found, cannot be read, or stands at another rate than the engine
+/// runs at (it does not resample) is silent; each says so in a warning, as does a part whose clips
+/// could not be laid. Returns the warnings.
+pub fn lay_samples(
+    graph: &mut Graph,
+    samples: &[ClipSample],
+    set: &std::path::Path,
+) -> Vec<BridgeWarning> {
+    use std::collections::BTreeMap;
+    use std::path::PathBuf;
+    use std::sync::Arc;
+    let folder = set.parent().unwrap_or(std::path::Path::new(""));
+    let rate = graph.sample_rate;
+    /// A sample decoded once for every clip that plays it: its samples, channels and rate, or why not.
+    type Decoded = Result<(Arc<[f32]>, usize, u32), String>;
+    let mut decoded: BTreeMap<PathBuf, Decoded> = BTreeMap::new();
+    let mut laid: BTreeMap<usize, Vec<crate::graph::LaidSample>> = BTreeMap::new();
+    let mut warnings = Vec::new();
+    for want in samples {
+        let Some(track) = graph.tracks.get(want.track) else {
+            continue;
+        };
+        let mut warn = |message: String| {
+            warnings.push(BridgeWarning {
+                track: track.name.clone(),
+                device: String::new(),
+                message: format!("its clip '{}' {message}", want.clip),
+            })
+        };
+        let file = want
+            .relative
+            .iter()
+            .map(|r| folder.join(r))
+            .chain(want.path.iter().map(PathBuf::from))
+            .find(|p| p.is_file());
+        let Some(file) = file else {
+            let named = want.relative.as_ref().or(want.path.as_ref()).cloned();
+            warn(format!(
+                "plays {}, which is neither beside the set nor where the set stored it: it is silent",
+                named.unwrap_or_default()
+            ));
+            continue;
+        };
+        let read = decoded.entry(file.clone()).or_insert_with(|| {
+            let bytes = std::fs::read(&file).map_err(|e| e.to_string())?;
+            let wav = crate::wav::read_wav(&bytes).map_err(|e| e.0)?;
+            Ok((wav.samples.into(), wav.channels, wav.sample_rate))
+        });
+        let (pcm, channels, at_rate) = match read {
+            Ok(read) => read.clone(),
+            Err(e) => {
+                warn(format!(
+                    "plays {}, which the engine cannot read ({e}): it is silent",
+                    file.display()
+                ));
+                continue;
+            }
+        };
+        if at_rate != rate {
+            warn(format!(
+                "plays {} at {at_rate} Hz, and the engine runs at {rate} Hz and does not resample: it is silent",
+                file.display()
+            ));
+            continue;
+        }
+        laid.entry(want.track)
+            .or_default()
+            .push(crate::graph::LaidSample {
+                at: want.at,
+                from: (want.from_seconds * f64::from(rate)).round() as u64,
+                frames: want.frames,
+                gain: want.gain,
+                channels,
+                pcm,
+            });
+    }
+    for (at, samples) in laid {
+        let track = &mut graph.tracks[at];
+        if let Err(words) = track.set_samples(samples) {
+            warnings.push(BridgeWarning {
+                track: track.name.clone(),
+                device: String::new(),
+                message: format!("its clips are silent: {words}"),
+            });
+        }
+    }
+    warnings
 }
 
 #[cfg(test)]

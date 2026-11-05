@@ -18,6 +18,7 @@ fn main() {
             "live_engine_torus_effects",
             "live_engine_mixer",
             "live_engine_export",
+            "live_engine_render_take",
             "midi_out",
             "expression_walk_observation",
             "terminal_attach",

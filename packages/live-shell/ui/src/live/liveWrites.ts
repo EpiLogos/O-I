@@ -12,6 +12,30 @@ import type {SetSelection} from '../shell/liveSelection'
 import {engineEventOfMixerWrite, engineEventOfSendWrite, followInEngine} from './liveEngine'
 
 /** Where the selection's clip stands: its arrangement index, else its session slot; null when it names neither. */
+/** One note's lanes on the MPE tab (O-I #853): pressure on the tab's 0–127, bend as its force, each point [beat from the note's start,
+ * amount]. */
+export interface LiveClipMpeLanes {readonly pressure?: readonly (readonly [number, number])[]; readonly bend?: readonly (readonly [number, number])[]}
+/** Why the MPE tab draws no slide: nothing records one. */
+export const LIVE_MPE_NO_SLIDE = 'The playing surface records pressure and bend into a held note, not slide.'
+/** Why the bend lane is a force, not semitones: nothing clean-room gives the bend a pitch range, and a bend moves the sound, not the
+ * tuning (DLW §21.4 Rules). */
+export const LIVE_MPE_BEND_FORCE = 'Bend is kept as the hand\'s force along the key, −1 down to 1 up: no clean-room source gives it a range in semitones.'
+/** The MPE tab's reading of a clip read whole (O-I #853; DLW §21.1, the MPE tab: each note's own expression): each note's lanes as the set
+ * keeps them beside it (packages/live-set acts.rs note_mpe, by the note's NoteId), keyed by that id as the tab's `mpe` value is — its
+ * pressure scaled from the kept 0–1 to the tab's 0–127, its bend kept as the force it was played with (LIVE_MPE_BEND_FORCE) — and why
+ * the tab has nothing to draw, or null. Pure. */
+export function liveClipMpe(notes: readonly LiveNote[] | undefined): {readonly mpe: Readonly<Record<string, LiveClipMpeLanes>>; readonly absent: string | null} {
+  const finite = (point: readonly unknown[]): point is [number, number] => point.length === 2 && point.every(n => typeof n === 'number' && Number.isFinite(n))
+  const mpe: Record<string, LiveClipMpeLanes> = {}
+  for (const note of notes ?? []) {
+    if (note.id === undefined || !note.mpe) continue
+    const pressure = (note.mpe.pressure ?? []).filter(finite).map(([at, amount]) => [at, Math.round(Math.max(0, Math.min(1, amount)) * 127)] as const)
+    const bend = (note.mpe.bend ?? []).filter(finite).map(([at, amount]) => [at, Math.max(-1, Math.min(1, amount))] as const)
+    if (pressure.length || bend.length) mpe[String(note.id)] = {...(pressure.length ? {pressure} : {}), ...(bend.length ? {bend} : {})}
+  }
+  return {mpe, absent: Object.keys(mpe).length ? null : 'No note of this clip carries expression: press or bend a held note while Record records to keep some.'}
+}
+
 export function clipAtOf(selection: SetSelection): LiveClipAt | null {
   if (selection.clip !== undefined) return {arrangement: selection.clip}
   return selection.scene === null ? null : {slot: selection.scene}

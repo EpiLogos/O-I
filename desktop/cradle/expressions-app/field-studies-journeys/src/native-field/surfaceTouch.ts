@@ -3,13 +3,15 @@
  * `strike-at`, InstrumentSession.strikeAt): theta the poloidal (tube) angle and phi the toroidal (ring) angle, each on the sampled sheet
  * [0, 2π).
  *
- * The frame names the point only from its own drawing of the stage. The engine is handed an orthographic view (production.ts
- * setHostView: the stage centre and pan as the origin, stageScale × zoom pixels per stage unit, camera.ts `basis` as right and up, the
- * eye along right × up), so the pixel under the pointer is a ray along −(right × up). That ray, carried into metres, meets QL's torus at
- * its first surface. The body vibrates along its normal (QL scene_field.rs `surface`), which keeps a point's angles, so the rest torus
+ * The frame names the point only from its own drawing of the stage. The engine is handed a view (production.ts setHostView: the
+ * stage centre and pan as the origin, stageScale × zoom pixels per stage unit, camera.ts `basis` as right and up, the eye along
+ * right × up). Drawn flat (orthographic), the pixel under the pointer is a ray along −(right × up). Drawn in perspective (O-I #771), the
+ * engine stands its eye on right × up at the distance that frames that pixel pitch at the workplane under its field of view, looking
+ * back at the scene's origin through the middle of the stage (PointCloudField setHostView, torusObject.ts receiverPlace), so the pixel
+ * is the ray from that eye through its place on the workplane. That ray, carried into metres, meets QL's torus at its first surface. The body vibrates along its normal (QL scene_field.rs `surface`), which keeps a point's angles, so the rest torus
  * names the point the person sees. Pure: no DOM, no engine, no owner. */
 import {basis,stageCentre,stageScale,type Camera} from '../camera';
-import {clockAngle,shapeNearest,shapeRayHit,type HostEye,type PresentState} from '../../../src/engine/torusObject';
+import {clockAngle,receiverPlace,shapeNearest,shapeRayHit,type HostEye,type PresentState} from '../../../src/engine/torusObject';
 import {PAIRWISE_MAX_PARTICLES,type ContactStanding,type FieldContact} from '../../../src/engine/pairwiseSchedule';
 
 /** QL's M1 torus (QL-MEF crates/ql-mef/src/m1.rs `torus`, coordinate #1-5-1; the shell's live/torusInstrument.ts LIVE_TORUS_TOPOLOGY):
@@ -22,9 +24,11 @@ export type Vec3=[number,number,number];
 export interface SurfacePoint {theta:number;phi:number}
 /** The stage a touch lands on: the frame's camera and the stage's size in pixels. */
 export interface StageView {camera:Camera;width:number;height:number}
-/** How the stage is drawn: the engine's projection, the owner's presentation scale and the frame's engine units per stage unit. */
-export interface StageScale {projection:'orthographic'|'perspective';unitsPerMetre:number;worldScale:number}
-export type TouchReading={point:SurfacePoint;at:Vec3}|{point:null;why:string};
+/** How the stage is drawn: the engine's projection, the owner's presentation scale, the frame's engine units per stage unit and, drawn in
+ * perspective, the engine's field of view in degrees (its depth config). */
+export interface StageScale {projection:'orthographic'|'perspective';unitsPerMetre:number;worldScale:number;fovDegrees?:number}
+/** The point a press names, or why it names none; `say` when the person pressed a stage the frame cannot read (no point of it is exact). */
+export type TouchReading={point:SurfacePoint;at:Vec3}|{point:null;why:string;say?:boolean};
 /** The view the stage hands the engine (production.ts setHostView) from the frame's camera: the stage's height, stageScale × zoom pixels per
  * stage unit over the engine units per stage unit, camera.ts `basis` as right and up, and the engine's field of view in degrees. Where the
  * Torus is heard from with Receiver On stands at this view's eye (engine torusObject.ts receiverPlace; O-I 856). Pure. */
@@ -89,26 +93,38 @@ export function rayHit(origin:Vec3,direction:Vec3):{t:number;point:Vec3}|null {
 export function touchedSurface(x:number,y:number,view:StageView,scale:StageScale,shown:PresentState|null=null):TouchReading {
  if(!Number.isFinite(scale.unitsPerMetre)||scale.unitsPerMetre<=0||!Number.isFinite(scale.worldScale)||scale.worldScale<=0)
   throw new Error('a touch needs the presentation\'s units per metre and the stage\'s engine units per stage unit');
- // The engine's perspective eye frames the stage by its own field of view (PointCloudField setHostView), not by the frame's
- // projection, so the frame cannot name the touched point exactly there. It refuses rather than guess.
- if(scale.projection==='perspective')return {point:null,why:'The stage is drawn in perspective; a touch strikes the torus only on the flat (orthographic) stage, where the point under the pointer is exact.'};
  const {camera,width,height}=view,{a,b}=basis(camera),o=stageCentre(width,height),pixels=stageScale(width,height)*camera.zoom;
  if(!(pixels>0))return {point:null,why:'The stage has no size yet.'};
- // camera.ts `unproject` and `project`: the pixel's place across the stage in stage units, then in metres.
- const across=(x-o.x-camera.panX)/pixels,up=-(y-o.y-camera.panY)/pixels,metres=scale.worldScale/scale.unitsPerMetre;
+ const metres=scale.worldScale/scale.unitsPerMetre;
  const toward:Vec3=[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
- const plane:Vec3=[0,1,2].map(i=>(across*a[i]+up*b[i])*metres) as Vec3;
- // The eye stands along right × up (setHostView), so the ray starts beyond the torus on that side and looks back along −(right × up).
- const origin:Vec3=[0,1,2].map(i=>plane[i]+toward[i]*2*BOUND) as Vec3;
+ let origin:Vec3,direction:Vec3;
+ if(scale.projection==='perspective'){
+  // The engine's perspective eye (PointCloudField setHostView): on right × up, framing the stage's pixel pitch at the workplane under its
+  // field of view, its view through the middle of the stage, which neither the stage centre nor the pan moves.
+  const fov=scale.fovDegrees;
+  if(typeof fov!=='number'||!Number.isFinite(fov))return {point:null,why:'The stage is drawn in perspective, and the frame was not handed the engine\'s field of view: the point under the pointer cannot be named.',say:true};
+  const eye=receiverPlace(stageEye(view,fov,scale.worldScale),scale.unitsPerMetre);
+  if(!eye)return {point:null,why:'The stage has no size yet.'};
+  const across=(x-width/2)/pixels,up=-(y-height/2)/pixels;
+  const plane:Vec3=[0,1,2].map(i=>(across*a[i]+up*b[i])*metres) as Vec3;
+  origin=eye;direction=[0,1,2].map(i=>plane[i]-eye[i]) as Vec3;
+ }else{
+  // camera.ts `unproject` and `project`: the pixel's place across the stage in stage units, then in metres.
+  const across=(x-o.x-camera.panX)/pixels,up=-(y-o.y-camera.panY)/pixels;
+  const plane:Vec3=[0,1,2].map(i=>(across*a[i]+up*b[i])*metres) as Vec3;
+  // The eye stands along right × up (setHostView), so the ray starts beyond the torus on that side and looks back along −(right × up).
+  origin=[0,1,2].map(i=>plane[i]+toward[i]*2*BOUND) as Vec3;direction=[-toward[0],-toward[1],-toward[2]];
+ }
  // The torus object may stand on another of its shapes, or laid flat (O-I 851): the press finds the sample of the shape shown under it,
  // by the body's own angles, so it strikes the body where the person sees it.
  if(shown&&!(shown.morph.from==='torus'&&shown.morph.to==='torus')){
-  const found=shapeRayHit(origin,[-toward[0],-toward[1],-toward[2]],shown,1);
+  const found=shapeRayHit(origin,direction,shown,1);
   if(!found)return {point:null,why:'No surface of the torus is under the pointer.'};
-  const at:Vec3=[0,1,2].map(i=>origin[i]-toward[i]*found.t) as Vec3;
+  const length=Math.hypot(...direction);
+  const at:Vec3=[0,1,2].map(i=>origin[i]+direction[i]/length*found.t) as Vec3;
   return {point:{theta:onSheet(found.theta),phi:onSheet(found.phi)},at};
  }
- const hit=rayHit(origin,[-toward[0],-toward[1],-toward[2]]);
+ const hit=rayHit(origin,direction);
  const point=hit?surfaceAngles(hit.point):null;
  if(!hit||!point)return {point:null,why:'No surface of the torus is under the pointer.'};
  return {point,at:hit.point};
@@ -139,11 +155,12 @@ function shownOf(reading:TouchInstrument):PresentState|null {
  * only a running field takes a key; a press while no instrument plays, or off the torus, is no touch and the stage keeps it. Pen
  * pressure strikes as it does on the Jankó keys (nativeField.ts pressKey: 0.9 × pressure, held to 0.15–0.9). */
 export function touchStrike(reading:TouchInstrument|null|undefined,x:number,y:number,view:StageView,
- stage:{projection:StageScale['projection'];worldScale:number;pressure?:number}):TouchStrike {
+ stage:{projection:StageScale['projection'];worldScale:number;fovDegrees?:number;pressure?:number}):TouchStrike {
  const unitsPerMetre=playingUnits(reading);
  if(!reading||unitsPerMetre===null)return {point:null,why:'The live instrument is not playing.',say:false};
- const touched=touchedSurface(x,y,view,{projection:stage.projection,unitsPerMetre,worldScale:stage.worldScale},shownOf(reading));
- if(!touched.point)return {point:null,why:touched.why,say:stage.projection==='perspective'};
+ const touched=touchedSurface(x,y,view,{projection:stage.projection,unitsPerMetre,worldScale:stage.worldScale,
+  ...(stage.fovDegrees===undefined?{}:{fovDegrees:stage.fovDegrees})},shownOf(reading));
+ if(!touched.point)return {point:null,why:touched.why,say:touched.say===true};
  const pressure=stage.pressure;
  return {point:touched.point,amplitude:typeof pressure==='number'&&pressure>0?Math.min(0.9,Math.max(0.15,pressure*0.9)):TOUCH_STRENGTH};
 }

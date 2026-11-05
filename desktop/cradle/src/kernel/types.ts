@@ -1443,7 +1443,9 @@ export type LiveSetAct =
   | {kind: 'clip_split'; track: number; clip: LiveClipAt; at: number}
   | {kind: 'clips_consolidate'; track: number; from: number; to: number}
   /** A recorded pass (O-I #855): its notes as a take lane under the part and laid in its main lane; what it keeps beside the set. */
-  | {kind: 'take_record'; track: number; start: number; length: number; name: string; notes: LiveNote[]; keeps?: Record<string, unknown> | null}
+  | {kind: 'take_record'; track: number; start: number; length: number; name: string; notes: LiveNote[]; keeps?: Record<string, unknown> | null
+    /** The row whose empty slot the pass was recorded into (O-I #743): laid there, not in the Arrangement (acts.rs TakeRecord `scene`). */
+    scene?: number}
   /** The part's Torus as it stands, kept beside the set (null: none); the set's document is not written. */
   | {kind: 'torus_keep'; track: number; torus: Record<string, unknown> | null}
   /** A kept rack placed on a MIDI part with nothing on its chain (O-I #852): Live's Instrument Rack under its name, its one chain, its

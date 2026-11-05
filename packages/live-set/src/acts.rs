@@ -107,7 +107,15 @@ pub enum SetAct {
     /// `length` beats from the ruler's beat `start`, in a new take lane of the
     /// part and laid in its main lane there, both carrying the set's next
     /// `TakeId`. What the take keeps beyond its notes (`keeps`, the shell's
-    /// own: live/liveTake.ts) stands beside the set by that `TakeId`.
+    /// own: live/liveTake.ts) stands beside the set by that `TakeId`. With
+    /// `scene`, the pass was recorded into that row's empty slot of an armed
+    /// part (O-I #743; Live: "an armed track's empty slots are record
+    /// buttons"): the clip stands in the slot, in the shape Insert MIDI Clip
+    /// lays there (`edit::clip_create`), with no take lane — a take lane is
+    /// the Arrangement's (session-model.md §7: session clips live in
+    /// `MainSequencer/ClipSlotList`) — and carries the next `TakeId` (a clip
+    /// field, session-model.md §5) so what it keeps stands by it as any
+    /// take's; `start` is then the clip's own beat 0.
     TakeRecord {
         track: usize,
         start: f64,
@@ -116,6 +124,8 @@ pub enum SetAct {
         notes: Vec<Value>,
         #[serde(default)]
         keeps: Option<Value>,
+        #[serde(default)]
+        scene: Option<usize>,
     },
     /// The part's Torus as it stands, kept beside the set (none: it keeps
     /// none). Live's document has no place for it, so the `.als` is not
@@ -2421,6 +2431,7 @@ fn take_record(
     length: f64,
     name: &str,
     notes: &[Value],
+    scene: Option<usize>,
 ) -> Result<(Done, u64, Vec<Value>), String> {
     if !(start.is_finite() && start >= 0.0) {
         return Err("A take lies on the ruler from beat 0".into());
@@ -2471,6 +2482,11 @@ fn take_record(
         .and_then(|donor| edit::blank_clip(&reference, &donor, colour.as_deref(), length).ok())
         .unwrap_or_else(|| crafted_clip(colour.as_deref(), length));
     edit::apply_notes(&mut made, &named)?;
+    let take = next_take_id(&reference);
+    if let Some(scene) = scene {
+        return slot_take(root, track, scene, made, take, name, notes.len())
+            .map(|done| (done, take, mpe));
+    }
     set_value(&mut made, "CurrentStart", &number_text(start))?;
     set_value(&mut made, "CurrentEnd", &number_text(start + length))?;
     made.set_attr("Time", &number_text(start));
@@ -2481,13 +2497,7 @@ fn take_record(
     if let Some(looped) = made.child_mut("Loop") {
         set_value(looped, "LoopOn", "false")?;
     }
-    let take = next_take_id(&reference);
-    match made.child_mut("TakeId") {
-        Some(field) => field.set_attr("Value", &take.to_string()),
-        None => made
-            .children
-            .push(value_element("TakeId", &take.to_string())),
-    }
+    take_id_of(&mut made, take);
     let tempo = edit::steady_tempo(root);
     let was = lane_ids(part);
     let target = listed_mut(root, track)?;
@@ -2538,6 +2548,52 @@ fn take_record(
         take,
         mpe,
     ))
+}
+
+/// The clip a take made carries the take's `TakeId`.
+fn take_id_of(made: &mut Element, take: u64) {
+    match made.child_mut("TakeId") {
+        Some(field) => field.set_attr("Value", &take.to_string()),
+        None => made
+            .children
+            .push(value_element("TakeId", &take.to_string())),
+    }
+}
+
+/// A pass recorded into the empty slot in row `scene` of a MIDI part (O-I #743): the take's clip `made` (Insert MIDI Clip's shape, looped
+/// over its length as that lays one) stands in the slot under its name, carrying `take`; nothing else of the part moves.
+fn slot_take(
+    root: &mut Element,
+    track: usize,
+    scene: usize,
+    mut made: Element,
+    take: u64,
+    name: &str,
+    notes: usize,
+) -> Result<Done, String> {
+    let scenes = scene_count(root);
+    let part_name = track_name(track_at(root, track)?);
+    if made.child("Name").is_some() {
+        set_value(&mut made, "Name", name)?;
+    }
+    take_id_of(&mut made, take);
+    let slot = slot_mut(listed_mut(root, track)?, scene, scenes)?;
+    if held(slot) {
+        return Err(format!(
+            "The slot in row {} of {part_name} holds a clip: Live records into an empty slot",
+            scene + 1
+        ));
+    }
+    slot_value(slot)?.children = vec![made];
+    Ok(Done {
+        words: format!(
+            "Recorded {name} on {part_name} into the slot in row {}: {notes} note{}.",
+            scene + 1,
+            if notes == 1 { "" } else { "s" }
+        ),
+        at: Some(json!({"track": track, "slot": scene, "take": take})),
+        places: Places::None,
+    })
 }
 
 /// Keep the part's Torus beside the set (none: it keeps none). The set is
@@ -2665,7 +2721,7 @@ pub fn act(path: &str, expected_revision: &str, act: &SetAct) -> Result<Value, S
         keeps: Some(keeps), ..
     } = act
     {
-        crate::sources::checked_keep(keeps, "A take's keeps")?;
+        crate::sources::checked_take_keeps(keeps)?;
     }
     let mut take = None;
     let mut done = None;
@@ -2703,9 +2759,11 @@ pub fn act(path: &str, expected_revision: &str, act: &SetAct) -> Result<Value, S
                 length,
                 name,
                 notes,
+                scene,
                 ..
             } => {
-                let (done, id, mpe) = take_record(root, *track, *start, *length, name, notes)?;
+                let (done, id, mpe) =
+                    take_record(root, *track, *start, *length, name, notes, *scene)?;
                 take = Some((*track, id, mpe));
                 done
             }

@@ -50,12 +50,12 @@ pub use engine::{
     MixerState, Part, Performance, Refusal, Stamped, HAND_HOLD_MAX,
 };
 pub use graph::{
-    ClipEdge, Clock, Device, Graph, GraphError, GroupTrack, Instrument, MasterTrack, Note,
-    RackDevice, ReturnTrack, TorusAct, TorusHear, TorusStrike, Touch, Track, MAX_GROUPS,
+    ClipEdge, Clock, Device, Graph, GraphError, GroupTrack, Instrument, LaidSample, MasterTrack,
+    Note, RackDevice, ReturnTrack, TorusAct, TorusHear, TorusStrike, Touch, Track, MAX_GROUPS,
     MAX_RETURNS, TORUS_ACT_KEYS, TORUS_HEAR_FRAMES, TORUS_HEAR_MODES, TORUS_STRIKE_MODES,
     TORUS_WAITING,
 };
-pub use instruments::{OperatorInstrument, SilentInstrument};
+pub use instruments::{OperatorInstrument, SampleInstrument, SilentInstrument};
 
 #[cfg(feature = "k8")]
 pub use k8::{K8Continuation, K8Counts, K8Field, K8Input, K8Instrument, K8KeyLaw};
