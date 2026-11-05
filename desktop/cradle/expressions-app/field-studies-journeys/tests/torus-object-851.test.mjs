@@ -495,6 +495,12 @@ test('Receiver On or Off is an instrument edit that names nothing but on: never 
     assert.equal(readInstrumentEdit(bad), null, JSON.stringify(bad));
   assert.equal(readStageRequest(request({command: 'instrument', edit: {kind: 'receiver', on: true}, at_samples_elapsed: '48000'})), null,
     'where the Torus is heard from is set now, for the owner\'s next block, not at a sample');
+  // O-I #856: On under a reference shares where you stand; a context alone returns to it. Neither names a place, nor lands at a sample.
+  assert.deepEqual(readInstrumentEdit({kind: 'receiver', on: true, shared: 'room-7'}), {kind: 'receiver', on: true, shared: 'room-7'});
+  for (const context of ['world', 'personal', 'shared'])
+    assert.deepEqual(readStageRequest(request({command: 'instrument', edit: {kind: 'receiver', context}})).command, {command: 'instrument', edit: {kind: 'receiver', context}});
+  assert.equal(readStageRequest(request({command: 'instrument', edit: {kind: 'receiver', context: 'shared'}, at_samples_elapsed: '48000'})), null);
+  assert.equal(readInstrumentEdit({kind: 'receiver', on: true, shared: 'room-7', at_metres: [0, 0, 3]}), null);
 });
 
 const openHearing = async () => {
@@ -514,8 +520,17 @@ const openHearing = async () => {
       read.request.command = {operation: 'read'};
       const reply = await super.request(read);
       if (this.refuseReceiver) return {...reply, status: 'refused', error: this.refuseReceiver};
-      return {...reply, torus_receiver: {schema: 'ql.torus-receiver/v1', context: command.receiver ? 'personal' : 'world',
-        gains: [{mode_ref: 'scene:logic/0', gain: command.receiver ? 0.25 : 1}], law: 'controlled'}};
+      // QL-MEF #383 (f16812eb) set_receiver: a place under a `shared` reference is the shared context, disclosed with its reference; a
+      // `context` alone returns to where it last stood, refused in QL's words when never entered; a malformed reference is refused in QL's words.
+      let at = command.receiver?.at_metres ?? null, shared = command.receiver?.shared ?? null;
+      if (command.context === 'personal') { if (!this.personalAt) return {...reply, status: 'refused', error: 'the listener\'s own receiving context has not been entered: stand somewhere first'}; at = this.personalAt; }
+      if (command.context === 'shared') { if (!this.sharedAt) return {...reply, status: 'refused', error: 'no shared receiving context has been entered: share a place first'}; [shared, at] = this.sharedAt; }
+      if (shared !== null && (!shared.length || shared.length > 128 || /\s/.test(shared)))
+        return {...reply, status: 'refused', error: 'a shared receiving context is named by a reference of 1 to 128 characters with no space'};
+      if (at && shared !== null) this.sharedAt = [shared, at]; else if (at) this.personalAt = at;
+      const context = at === null ? 'world' : shared === null ? 'personal' : 'shared';
+      return {...reply, torus_receiver: {schema: 'ql.torus-receiver/v1', context, gains: [{mode_ref: 'scene:logic/0', gain: at ? 0.25 : 1}], law: 'controlled',
+        ...(context === 'shared' ? {shared, at_metres: at} : {})}};
     }
   }
   const texture = () => new THREE.DataTexture(new Float32Array(16), 2, 2, THREE.RGBAFormat, THREE.FloatType);
@@ -598,11 +613,51 @@ test('Receiver On refused by the owner says so in its words and stays Off; while
   } finally { await c.dispose(); }
 });
 
+// O-I #856 (QL-MEF #383, f16812eb): Shared shares where you stand under a reference, which QL judges in its words; a moved camera is
+// asked under the same reference; On alone is where you stand again; Return names a context and sends no place, and the owner resumes it
+// where it last stood this session, or refuses in its words a context never entered.
+test('Receiver Shared: asked from where you stand under the reference, refused in QL\'s words when malformed; Return goes back to a context', async () => {
+  const {owner, c} = await openHearing();
+  try {
+    await assert.rejects(c.returnReceiver('personal'), /^Error: the listener's own receiving context has not been entered: stand somewhere first$/);
+    assert.deepEqual([c.reading.receiver.on, c.reading.receiver.context], [false, 'world'], 'a context never entered is not returned to');
+    await assert.rejects(c.setReceiver(true, [0, 0, 10], 'room 7'), /^Error: a shared receiving context is named by a reference of 1 to 128 characters with no space$/);
+    assert.deepEqual([c.reading.receiver.on, c.reading.receiver.context, c.reading.receiver.refusal],
+      [false, 'world', 'a shared receiving context is named by a reference of 1 to 128 characters with no space'], 'refused: the choice stands as it was');
+    const shared = await c.setReceiver(true, [0, 0, 10], 'room-7');
+    assert.deepEqual(owner.receiverCalls.at(-1), {operation: 'torus-receiver', receiver: {at_metres: [0, 0, 10], shared: 'room-7'}});
+    assert.deepEqual([shared.context, shared.shared], ['shared', 'room-7']);
+    assert.deepEqual(c.reading.receiver, {on: true, context: 'shared', shared: 'room-7', gains: [{mode_ref: 'scene:logic/0', gain: 0.25}], law: 'controlled', refusal: null});
+    await c.hear([0, 4, 10]);
+    assert.deepEqual(owner.receiverCalls.at(-1), {operation: 'torus-receiver', receiver: {at_metres: [0, 4, 10], shared: 'room-7'}}, 'a moved camera, under the same reference');
+    await c.setReceiver(true, [0, 4, 10]);
+    assert.deepEqual(owner.receiverCalls.at(-1), {operation: 'torus-receiver', receiver: {at_metres: [0, 4, 10]}}, 'On alone: where you stand, shared under nothing');
+    assert.deepEqual([c.reading.receiver.context, 'shared' in c.reading.receiver], ['personal', false]);
+    const back = await c.returnReceiver('shared');
+    assert.deepEqual(owner.receiverCalls.at(-1), {operation: 'torus-receiver', context: 'shared'}, 'Return names the context and sends no place');
+    assert.deepEqual([back.context, back.shared], ['shared', 'room-7']);
+    assert.deepEqual([c.reading.receiver.on, c.reading.receiver.context, c.reading.receiver.shared], [true, 'shared', 'room-7']);
+    const asked = owner.receiverCalls.length;
+    await c.hear([0, 4, 10]);
+    assert.equal(owner.receiverCalls.length, asked, 'a camera that has not moved since asks nothing');
+    await c.returnReceiver('world');
+    assert.deepEqual([c.reading.receiver.on, c.reading.receiver.context], [false, 'world']);
+    await c.hear([5, 5, 5]);
+    assert.equal(owner.receiverCalls.length, asked + 1, 'in the world\'s context the camera asks nothing');
+    await c.returnReceiver('personal');
+    assert.deepEqual(owner.receiverCalls.at(-1), {operation: 'torus-receiver', context: 'personal'});
+    assert.deepEqual([c.reading.receiver.on, c.reading.receiver.context, 'shared' in c.reading.receiver], [true, 'personal', false]);
+    assert.doesNotMatch(JSON.stringify(c.reading.receiver), /at_metres|0,4,10/, 'the reading names the context and the reference, never the place');
+  } finally { await c.dispose(); }
+});
+
 test('the frame asks the owner where you stand each frame while Receiver is On, and the act turns it On or Off from the camera now', () => {
   const field = readFileSync(join(journeys, 'src/nativeField.ts'), 'utf8');
   const command = field.slice(field.indexOf('const command=async(edit:InstrumentEdit'), field.indexOf('const liveEntry='));
   const receiver = command.slice(command.indexOf("if(edit.kind==='receiver')"), command.indexOf("if(at!==undefined)throw new Error('This edit is made"));
-  assert.match(receiver, /await controller\.setReceiver\(edit\.on,heardPlace\(\)\);update\(\);return \{\};/, 'the act asks the owner now, from where the camera stands');
+  // REPLACED (lane BA, round 865, O-I #856): the act carries the reference to share where you stand under, and a context alone returns to it.
+  assert.match(receiver, /if\('context' in edit\)\{await controller\.returnReceiver\(edit\.context\);update\(\);return \{\};\}/, 'Return goes back to a context, naming no place');
+  assert.match(receiver, /await controller\.setReceiver\(edit\.on,heardPlace\(\),edit\.shared\);update\(\);return \{\};/, 'the act asks the owner now, from where the camera stands, under its reference');
   assert.match(receiver, /if\(at!==undefined\)throw new Error\('Where the Torus is heard from is set now/, 'and lands at no sample');
   const hearing = field.slice(field.indexOf('const hear=(view:StageView'), field.indexOf('const openLive='));
   assert.match(hearing, /if\(!controller\.receiving\)return;/, 'Off, a camera move asks nothing');

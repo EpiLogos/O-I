@@ -68,11 +68,26 @@ type Plain = Record<string, unknown>
 const plain = (value: unknown): value is Plain => !!value && typeof value === 'object' && !Array.isArray(value)
 
 /** The Torus as its owner announced it: what the instrument command sets again (`edits`, each the command's own), and what it read as it
- * stood, which nothing sets (`stood`). */
+ * stood, which nothing sets (`stood`); with the set, the device's own View and Follow (`device`). */
 export interface TorusKept {
   readonly schema: typeof TORUS_KEPT_SCHEMA
   readonly edits: readonly InstrumentEdit[]
   readonly stood: Readonly<Plain>
+  readonly device?: TorusDeviceKept
+}
+
+/** The Views the Torus device draws (live/torusDevice.ts TORUS_VIEWS). */
+export const TORUS_KEPT_VIEWS = Object.freeze(['surface', 'wire', 'both'] as const)
+/** The Torus device's own settings, which no owner keeps and the hand holds (techne/devices/designDevices.ts): its View and whether it
+ * Follows. The set keeps them with the device, beside its part's Torus, so they survive a restart (DLW build ruling 2026-11-05). */
+export interface TorusDeviceKept {
+  readonly view: (typeof TORUS_KEPT_VIEWS)[number]
+  readonly follow: boolean
+}
+/** A device's View and Follow read back from the set, or null when they are not the device's. Pure. */
+export function torusDeviceKeptOf(raw: unknown): TorusDeviceKept | null {
+  return plain(raw) && (TORUS_KEPT_VIEWS as readonly unknown[]).includes(raw.view) && typeof raw.follow === 'boolean'
+    ? {view: raw.view as TorusDeviceKept['view'], follow: raw.follow} : null
 }
 
 /** The Torus as it stands now, kept; null while its owner announces no session (no frame, or a refusal). Pure. */
@@ -98,12 +113,19 @@ export function torusKept(state: LiveTorusState | null): TorusKept | null {
 /** Whether two kept Tori set the Torus alike (what they read as they stood aside). Pure. */
 export const sameTorusEdits = (a: TorusKept | null, b: TorusKept | null): boolean => JSON.stringify(a?.edits ?? null) === JSON.stringify(b?.edits ?? null)
 
-/** A kept Torus read back from the set: each edit through the instrument command's own reader, or null when it is no kept Torus. Pure. */
+/** A kept Torus read back from the set: each edit through the instrument command's own reader, or null when it is no kept Torus; the
+ * device's View and Follow with it when they are the device's. Pure. */
 export function torusKeptOf(raw: unknown): TorusKept | null {
   if (!plain(raw) || raw.schema !== TORUS_KEPT_SCHEMA || !Array.isArray(raw.edits) || !plain(raw.stood)) return null
   const edits = raw.edits.map(readInstrumentEdit)
-  return edits.every(edit => edit !== null) ? {schema: TORUS_KEPT_SCHEMA, edits: edits as InstrumentEdit[], stood: raw.stood} : null
+  if (!edits.every(edit => edit !== null)) return null
+  const device = torusDeviceKeptOf(raw.device)
+  return {schema: TORUS_KEPT_SCHEMA, edits: edits as InstrumentEdit[], stood: raw.stood, ...(device ? {device} : {})}
 }
+
+/** Whether two kept Tori are kept alike with the set: they set the Torus alike, and the device's View and Follow are alike. Pure. */
+const sameKept = (a: TorusKept | null, b: TorusKept | null): boolean =>
+  sameTorusEdits(a, b) && JSON.stringify(a?.device ?? null) === JSON.stringify(b?.device ?? null)
 
 /** The edits that move the Torus from one kept state to the next: each edit of `next` that `previous` did not make alike. Pure. */
 export function torusMoveEdits(previous: TorusKept | null, next: TorusKept): InstrumentEdit[] {
@@ -817,13 +839,21 @@ export function torusHomeOf(document: unknown, home: number | null, chosen: numb
   return first < 0 ? null : first
 }
 
-/** What keeps the Torus with the set: the set's owner and the Torus's, and the page's timers. */
+/** What keeps the Torus with the set: the set's owner and the Torus's, the hand that holds the device's View and Follow, and the page's
+ * timers. */
 export interface TorusKeeperOwners {
   readonly readSet: (path: string) => Promise<{readonly document: unknown}>
   readonly act: (path: string, act: LiveSetAct) => Promise<LiveSetActed>
   readonly torus: () => LiveTorusState | null
   readonly subscribeTorus: (listener: () => void) => () => void
   readonly commit: (edit: InstrumentEdit) => Promise<StageResult>
+  /** The device's View and Follow as the hand holds them, held again when a set opens with them, and heard as they change; none where
+   * no Torus device stands. */
+  readonly device?: {
+    readonly read: () => TorusDeviceKept
+    readonly hold: (kept: TorusDeviceKept) => void
+    readonly subscribe: (listener: () => void) => () => void
+  }
   readonly later: (run: () => void, ms: number) => unknown
   readonly cancel: (handle: unknown) => void
 }
@@ -836,13 +866,19 @@ const writable = (state: LiveTorusState | null) => state !== null && state.ok &&
 /** The Torus kept with the open set (manual §21.2, "A saved sound keeps every parameter … It opens with the same sound"). When a set
  * opens, the Torus is set again as its part keeps it, once the Torus can take edits; only then is it kept, so the sound a set opens
  * with is never overwritten by the one that stood before it. From then on each change to what sets the Torus is kept with the set's
- * MIDI part (torusHomeOf) once it rests. `tell` hears what was done, in words. */
+ * MIDI part (torusHomeOf) once it rests. The device's View and Follow are kept with it, and a set that kept them opens with them, held
+ * again at once, before the Torus can take edits (they are the hand's, not the owner's). `tell` hears what was done, in words. */
 export function createTorusKeeper(owners: TorusKeeperOwners, tell: (words: string | null) => void) {
   type Open = {path: string; chosen: number | null; home: number | null; last: TorusKept | null; keeping: boolean; unwatch: (() => void) | null; timer: unknown; closed: boolean}
   let open: Open | null = null
+  /** The Torus as it stands now, with the device's View and Follow as the hand holds them. */
+  const keptNow = (): TorusKept | null => {
+    const kept = torusKept(owners.torus())
+    return kept && owners.device ? {...kept, device: owners.device.read()} : kept
+  }
 
   const keepOn = async (here: Open, track: number | null): Promise<string | null> => {
-    const kept = torusKept(owners.torus())
+    const kept = keptNow()
     if (!kept) return 'The Torus is not open, so the part keeps no Torus.'
     const {document} = await owners.readSet(here.path)
     const target = torusHomeOf(document, track ?? here.home, here.chosen)
@@ -857,7 +893,7 @@ export function createTorusKeeper(owners: TorusKeeperOwners, tell: (words: strin
     if (here.timer !== null) owners.cancel(here.timer)
     here.timer = owners.later(() => {
       here.timer = null
-      if (here.closed || sameTorusEdits(torusKept(owners.torus()), here.last)) return
+      if (here.closed || sameKept(keptNow(), here.last)) return
       keepOn(here, null).then(refused => { if (refused && !here.closed) tell(refused) },
         cause => { if (!here.closed) tell(`The set did not keep the Torus: ${sentence(said(cause))}`) })
     }, TORUS_KEEP_REST_MS)
@@ -865,8 +901,10 @@ export function createTorusKeeper(owners: TorusKeeperOwners, tell: (words: strin
   const keepFromNow = (here: Open) => {
     if (here.closed) return
     here.keeping = true
-    here.last ??= torusKept(owners.torus())
-    here.unwatch = owners.subscribeTorus(() => rest(here))
+    here.last ??= keptNow()
+    const torus = owners.subscribeTorus(() => rest(here))
+    const device = owners.device?.subscribe(() => rest(here))
+    here.unwatch = () => { torus(); device?.() }
   }
   const close = () => {
     if (!open) return
@@ -889,6 +927,7 @@ export function createTorusKeeper(owners: TorusKeeperOwners, tell: (words: strin
         const found = keptTorusOf(document, chosen)
         if (!found) { keepFromNow(here); return }
         here.home = found.track
+        if (found.torus.device) owners.device?.hold(found.torus.device)
         const apply = () => {
           if (here.closed || !writable(owners.torus())) return false
           here.unwatch?.(); here.unwatch = null
@@ -928,7 +967,8 @@ let candidate: {record: LiveRecord; keeper: TorusKeeper} | null = null
 /** Record's store and the Torus's keeper in the candidate, made at first use (their owners are loaded then: the set's and the Torus's). */
 export async function liveRecord(): Promise<{readonly record: LiveRecord; readonly keeper: TorusKeeper}> {
   if (candidate) return candidate
-  const [{readSet}, {writeLiveSetAct}, torus] = await Promise.all([import('../native/application'), import('./liveWrites'), import('./torusInstrument')])
+  const [{readSet}, {writeLiveSetAct}, torus, device, holds] = await Promise.all([import('../native/application'), import('./liveWrites'),
+    import('./torusInstrument'), import('./torusDevice'), import('../techne/devices/designDevices')])
   if (candidate) return candidate
   const keeper = createTorusKeeper({
     readSet: path => readSet(path),
@@ -936,6 +976,7 @@ export async function liveRecord(): Promise<{readonly record: LiveRecord; readon
     torus: torus.liveTorusState,
     subscribeTorus: torus.subscribeLiveTorus,
     commit: torus.commitLiveInstrumentEdit,
+    device: {read: () => device.torusDeviceHeld(), hold: device.holdTorusDevice, subscribe: holds.subscribeHolds},
     later: (run, ms) => setTimeout(run, ms),
     cancel: handle => clearTimeout(handle as ReturnType<typeof setTimeout>),
   }, hearOpened)

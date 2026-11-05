@@ -20,9 +20,9 @@ import {DeviceView} from '../frame/devices/DeviceView'
 import {publishDevice, selectDevice} from '../frame/devices/deviceDoor'
 import {DEVICE_PANE_KIND} from '../frame/devices/devicePane'
 import {openInstrument} from '../frame/instrumentDoor'
-import {followSetTempoOnTorus, torusTempoEdit, TORUS_DESIGN_ID, TORUS_DEVICE, TORUS_DEVICE_ID, torusBodyEdits, torusBodySourceOf, torusDesignBinding, torusDevice, torusFigure, torusTone, torusSessionOf,
-  torusFollowed, torusFollowEdits, torusViewOf, TORUS_FOLLOW, type TorusFigureSize, type TorusFollow, type TorusView} from './torusDevice'
-import {commitLiveInstrumentEdit, LIVE_TORUS_ABSENT_REASON, liveInstrumentWritable, useLiveTorusReading, type LiveTorusState} from './torusInstrument'
+import {followSetTempoOnTorus, torusTempoEdit, TORUS_DESIGN_ID, TORUS_HEAD_ACTS, TORUS_DEVICE, TORUS_DEVICE_ID, torusBodyEdits, torusBodySourceOf, torusDesignBinding, torusDevice, torusFigure, torusTone, torusSessionOf,
+  torusFollowed, torusFollowEdits, torusFollowMoved, torusViewOf, TORUS_FOLLOW, type TorusFigureSize, type TorusFollow, type TorusView} from './torusDevice'
+import {commitLiveInstrumentEdit, LIVE_TORUS_ABSENT_REASON, liveInstrumentWritable, subscribeAcceptedLiveWrites, useLiveTorusReading, type LiveTorusState} from './torusInstrument'
 import {JankoDevice} from './janko/JankoDevice'
 import {useKeyboardLayout} from './keyboardLayout'
 import {MidiMapTarget} from './midiMap/midiMapControls'
@@ -125,14 +125,18 @@ export function useTorusChainBinding(state: LiveTorusState | null, device: Devic
     })().catch(() => { followed.current = '' })
   }, [state, condition, table, held])
   // Under Follow (manual §21.2 Lens and mode) the owner's lens and frame are kept on the clip's mode, or the set's: the owner's own lens
-  // and context-frame edits, once per target, so a refused one is not sent again until the mode, the clip or the owner's reading moves.
+  // and context-frame edits, once per mode followed, so a refused one is not sent again until the mode or the clip moves, and an owner
+  // that moves under a hand is not moved back. A Lens or Frame moved by hand or by a mapped control turns Follow off (torusFollowMoved,
+  // DLW build ruling 2026-11-05); Follow's own edits go without the hand, so they do not.
+  useEffect(() => subscribeAcceptedLiveWrites(torusFollowMoved), [])
   const followedMode = useRef('')
   useEffect(() => {
-    const edits = (held ?? {})[TORUS_FOLLOW] !== false ? torusFollowEdits(state, follow) : []
-    if (!edits.length) { followedMode.current = ''; return }
-    const target = JSON.stringify(edits)
-    if (target === followedMode.current) return
+    const on = (held ?? {})[TORUS_FOLLOW] !== false
+    const target = on && follow?.from ? JSON.stringify([follow.lens12, follow.context_frame]) : ''
+    if (!target) { followedMode.current = ''; return }
+    if (target === followedMode.current || !liveInstrumentWritable(state)) return
     followedMode.current = target
+    const edits = torusFollowEdits(state, follow)
     void (async () => {
       for (const edit of edits) if (!(await commitLiveInstrumentEdit(edit)).ok) return
     })().catch(() => { /* named on the owner's reading */ })
@@ -166,7 +170,7 @@ export function TorusOnChain({state, tempoBpm = null, selection = null, setPath 
     followSetTempoOnTorus(state, tempoBpm).catch(() => { /* named on the owner's reading */ })
   }, [state, tempoBpm])
   useEffect(() => {
-    publishDevice(TORUS_DEVICE_ID, {device, binding, picture: size => <TorusPicture state={state} size={size} view={view} />, full: {draw: () => <TorusFull />}})
+    publishDevice(TORUS_DEVICE_ID, {device, binding, picture: size => <TorusPicture state={state} size={size} view={view} />, acts: TORUS_HEAD_ACTS, full: {draw: () => <TorusFull />}})
   }, [device, binding, state, view])
   useEffect(() => () => publishDevice(TORUS_DEVICE_ID, null), [])
   return <div className="chain-side" data-chain-instrument={TORUS_DEVICE_ID} data-live-torus={state.ok ? state.value.standing : 'refused'}>

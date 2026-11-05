@@ -10,7 +10,8 @@ export interface InstrumentAnnouncement {
     /** The Torus's M1′ session (QL `torus-state`, O-I #850), the owner's values; absent until the owner has been read. */
     torus?: {settings: Record<string, unknown>; steps_per_second: number; band: string; fundamental_hz: number; map_hz: number; figure: string | null;
       comma_cents: number; notes: number; resident_tunings: string[]; carrier_drive: string};
-    /** Where the Torus is heard from (O-I 856): Receiver On or Off, the owner's context and its refusal; never the place. */
-    receiver?: {on: boolean; context: 'world' | 'personal'; refusal: string | null}};
+    /** Where the Torus is heard from (O-I 856): Receiver On or Off, the owner's context and its refusal; a shared place's reference (O-I
+     * #856); never the place. */
+    receiver?: {on: boolean; context: 'world' | 'personal' | 'shared'; shared?: string; refusal: string | null}};
 }
 export function announceInstrument(reading: unknown): InstrumentAnnouncement | undefined;

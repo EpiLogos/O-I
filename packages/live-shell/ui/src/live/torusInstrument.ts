@@ -89,32 +89,43 @@ export function setLiveInstrumentCommander(next: LiveInstrumentCommander | null)
   commander = next
 }
 
+/** How a write was sent: by the hand (a device's own control, the Live instrument section, a mapped control or key), or by none (Follow,
+ * a take played again, a sound or rack recalled, a set opening with its Torus, a planet's modulation). A hand move takes a control out
+ * of what moves it on its own, as in Live (DLW build ruling 2026-11-05: a hand-moved or mapped Lens or Frame turns Follow off). */
+export interface LiveWriteHow {
+  readonly hand?: boolean
+}
+/** A write the hand sent. */
+export const BY_HAND: LiveWriteHow = Object.freeze({hand: true})
+const BY_NONE: LiveWriteHow = Object.freeze({})
+
 /** Send one stage command to the owner through the mounted frame: the one host-command channel the Live surfaces share. Settles with the
  * owner's answer; a refusal (no frame, a concealed frame, the owner's own reason) comes back named, never thrown into the control. */
-export function commitLiveStage(command: StageCommand): Promise<StageResult> {
+export function commitLiveStage(command: StageCommand, how: LiveWriteHow = BY_NONE): Promise<StageResult> {
   if (commander === null) return Promise.resolve({ok: false, error: 'No Expressions application is mounted for the live instrument'})
   // A synchronous refusal (no mounted frame, or a concealed one) settles as a named result, never a throw into the control.
   return new Promise<StageResult>(resolve => resolve(commander!(command)))
     .catch((cause: unknown) => ({ok: false as const, error: cause instanceof Error ? cause.message : String(cause)}))
     .then(result => {
-      if (result.ok) for (const listener of [...acceptedWriteListeners]) listener(command)
+      if (result.ok) for (const listener of [...acceptedWriteListeners]) listener(command, how)
       return result
     })
 }
 
-type AcceptedWriteListener = (command: StageCommand) => void
+type AcceptedWriteListener = (command: StageCommand, how: LiveWriteHow) => void
 const acceptedWriteListeners = new Set<AcceptedWriteListener>()
 
-/** Subscribe to the stage commands the owner accepted through the one channel (commitLiveStage). A refused command is not announced: a
- * listener learns only of a write the owner has taken. Returns the unsubscribe. */
+/** Subscribe to the stage commands the owner accepted through the one channel (commitLiveStage), each with how it was sent. A refused
+ * command is not announced: a listener learns only of a write the owner has taken. Returns the unsubscribe. */
 export function subscribeAcceptedLiveWrites(listener: AcceptedWriteListener): () => void {
   acceptedWriteListeners.add(listener)
   return () => { acceptedWriteListeners.delete(listener) }
 }
 
-/** Send one instrument edit to the owner through the frame. Settles with the owner's answer; a refusal carries the owner's reason. */
-export function commitLiveInstrumentEdit(edit: InstrumentEdit): Promise<StageResult> {
-  return commitLiveStage({command: 'instrument', edit})
+/** Send one instrument edit to the owner through the frame (BY_HAND when the hand sent it). Settles with the owner's answer; a refusal
+ * carries the owner's reason. */
+export function commitLiveInstrumentEdit(edit: InstrumentEdit, how: LiveWriteHow = BY_NONE): Promise<StageResult> {
+  return commitLiveStage({command: 'instrument', edit}, how)
 }
 
 /** Whether the owner's instrument is in a state to take edits: a following or held session. Any other state refuses by name at the owner. */

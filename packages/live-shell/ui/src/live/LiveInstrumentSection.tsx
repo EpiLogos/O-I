@@ -7,7 +7,7 @@ import {Fragment, useState, type ReactElement} from 'react'
 import {registerPanel, type PanelContext} from '../shell/panels'
 import type {InstrumentEdit} from '@epilogos/expressions-boundary'
 import {
-  commitLiveInstrumentEdit, LIVE_CADENCE_OPTIONS, liveInstrumentWritable, liveTorusMacroRows, useLiveTorusReading, type LiveTorusState,
+  BY_HAND, commitLiveInstrumentEdit, LIVE_CADENCE_OPTIONS, liveInstrumentWritable, liveTorusMacroRows, useLiveTorusReading, type LiveTorusState,
 } from './torusInstrument'
 import {legacyGeneratorPanels} from './liveChain'
 import {MidiMapTarget} from './midiMap/midiMapControls'
@@ -40,7 +40,8 @@ export function LiveInstrumentSectionView({state}: {state: LiveTorusState | null
   const rows = liveTorusMacroRows(state)
   const write = (edit: InstrumentEdit) => {
     setRefusal(null)
-    void commitLiveInstrumentEdit(edit).then(result => { if (!result.ok) setRefusal(result.error) })
+    // The section's controls are the hand: a Lens or Frame moved here turns Follow off (DLW build ruling 2026-11-05).
+    void commitLiveInstrumentEdit(edit, BY_HAND).then(result => { if (!result.ok) setRefusal(result.error) })
   }
   const cadence = parameters.cadence
   const cadenceValue = cadence?.playing ? String(cadence.rate) : 'hold'

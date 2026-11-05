@@ -1,12 +1,13 @@
 // The parameters a map can bind (T-LIVE-MIDI leg 2): the instrument's determinants, cadence, sound, level and scale, and the note devices'
 // parameters. Each target reads the owner's value now, and writes through the parameter's own write path: the owner's instrument edit
 // (commitLiveInstrumentEdit, the one channel the Live faces share) is an owner write, and the Scale tie is a session-held value (the note-device
-// hold, not the owner), which the target says so. A target is only offered while the owner states its value, so a map never binds a
+// hold, not the owner), which the target says so. A mapped control is the hand (BY_HAND): a Lens or Frame it moves turns Follow off
+// (DLW build ruling 2026-11-05). A target is only offered while the owner states its value, so a map never binds a
 // parameter it cannot read. The Torus's compact macros (DLW §21.2) map as its M1′ session's own edits: Carrier and Fundamental run
 // linearly, Rate on a log curve (one step a year to 40,000 a second spans twelve decades); Damping stands unmapped, saying why.
 
 import type {InstrumentEdit, StageResult} from '@epilogos/expressions-boundary'
-import {commitLiveInstrumentEdit, liveInstrumentWritable, liveTorusMacroRows, liveTorusState, LIVE_CADENCE_OPTIONS, TORUS_FUNDAMENTAL, TORUS_RATE,
+import {BY_HAND, commitLiveInstrumentEdit, liveInstrumentWritable, liveTorusMacroRows, liveTorusState, LIVE_CADENCE_OPTIONS, TORUS_FUNDAMENTAL, TORUS_RATE,
   torusSessionEdit, torusSessionOf, type LiveTorusState, type TorusSettingsEdit} from '../torusInstrument'
 import {noteDeviceChain, setScaleTie} from '../noteDevices/noteDeviceHold'
 import {NOTE_DEVICE_LABEL, TIE_RULES, TIE_RULE_LABEL, type NoteDevice, type TieRule} from '../noteDevices/noteDevices'
@@ -38,7 +39,7 @@ export function mapTargets(torus: LiveTorusState | null, chain: readonly NoteDev
       if (row.selected === null) continue
       targets.push({
         kind: 'choice', id: row.macro.id, label: row.macro.label, group: 'What is acting', writer: 'owner',
-        options: row.options, current: row.selected, apply: value => commitLiveInstrumentEdit(row.edit(value)),
+        options: row.options, current: row.selected, apply: value => commitLiveInstrumentEdit(row.edit(value), BY_HAND),
       })
     }
     const {parameters} = torus
@@ -46,21 +47,21 @@ export function mapTargets(torus: LiveTorusState | null, chain: readonly NoteDev
       targets.push({
         kind: 'choice', id: 'cadence', label: 'Tick cadence', group: 'Play', writer: 'owner',
         options: LIVE_CADENCE_OPTIONS, current: parameters.cadence.playing ? String(parameters.cadence.rate) : 'hold',
-        apply: value => commitLiveInstrumentEdit({kind: 'cadence', rate: value === 'hold' ? 'hold' : Number(value) as 1 | 12}),
+        apply: value => commitLiveInstrumentEdit({kind: 'cadence', rate: value === 'hold' ? 'hold' : Number(value) as 1 | 12}, BY_HAND),
       })
     }
     targets.push({
       kind: 'toggle', id: 'sound', label: 'Sound', group: 'See and hear', writer: 'owner',
-      current: !parameters.muted, apply: on => commitLiveInstrumentEdit({kind: 'muted', muted: !on}),
+      current: !parameters.muted, apply: on => commitLiveInstrumentEdit({kind: 'muted', muted: !on}, BY_HAND),
     })
     targets.push({
       kind: 'range', id: 'level', label: 'Level', group: 'See and hear', writer: 'owner', range: LEVEL_RANGE,
-      current: parameters.level, apply: value => commitLiveInstrumentEdit({kind: 'level', value}),
+      current: parameters.level, apply: value => commitLiveInstrumentEdit({kind: 'level', value}, BY_HAND),
     })
     if (parameters.scale.unitsPerMetre !== null) {
       targets.push({
         kind: 'range', id: 'scale-units', label: 'Units per metre', group: 'See and hear', writer: 'owner', range: SCALE_RANGE,
-        current: parameters.scale.unitsPerMetre, apply: value => commitLiveInstrumentEdit({kind: 'scale', units_per_metre: value}),
+        current: parameters.scale.unitsPerMetre, apply: value => commitLiveInstrumentEdit({kind: 'scale', units_per_metre: value}, BY_HAND),
       })
     }
     // The Torus's M1′ session, while the owner states it and takes edits: each value goes as the session's own `torus` edit
@@ -70,7 +71,7 @@ export function mapTargets(torus: LiveTorusState | null, chain: readonly NoteDev
       const write = (key: string) => (value: number): Promise<StageResult> => {
         let edit: TorusSettingsEdit
         try { edit = torusSessionEdit(session, {key, value}) } catch (error) { return Promise.resolve({ok: false, error: error instanceof Error ? error.message : String(error)}) }
-        return commitLiveInstrumentEdit({kind: 'torus', edit})
+        return commitLiveInstrumentEdit({kind: 'torus', edit}, BY_HAND)
       }
       targets.push({kind: 'range', id: 'rate', label: 'Rate', group: 'Pulse', writer: 'owner', range: RATE_RANGE, current: session.steps_per_second, apply: write('rate')})
       targets.push({kind: 'range', id: 'fundamental', label: 'Fundamental', group: 'Pulse', writer: 'owner', range: FUNDAMENTAL_RANGE, current: session.fundamental_hz, apply: write('fundamental')})

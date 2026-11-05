@@ -72,6 +72,8 @@ export const handsFor = (id: string, keys: readonly string[]): Record<string, (v
   Object.fromEntries(keys.map(key => [key, (value: Value | undefined) => hold(id, key, value)]))
 
 const subscribe = (listener: () => void) => { listeners.add(listener); return () => { listeners.delete(listener) } }
+/** Hear each change to a hold (the set's Torus keeper keeps the Torus device's View and Follow as they change). Returns the unsubscribe. */
+export const subscribeHolds: (listener: () => void) => () => void = subscribe
 /** Re-render when a hold changes. */
 export function useHolds(): Holds {
   return useSyncExternalStore(subscribe, () => holds, () => holds)

@@ -190,6 +190,35 @@ test('Receiver is the owner\'s: On or Off as the frame announces it, written thr
   } finally { instrument.setLiveInstrumentCommander(null); resetHost(model.TORUS_DEVICE_ID) }
 })
 
+// O-I #856 (QL-MEF #383; manual §21.2 Receiver): Shared shares where you stand under a reference, and Return goes back to a context where it
+// last stood. Both are the owner's, through the one stage channel; the reference reads back while the place is shared, and a reference the
+// owner does not admit is refused in its words.
+test('Receiver Shared and Return are the owner\'s: a reference or a context through the one stage channel, the reference read back, a refusal in QL\'s words', async () => {
+  const announced = receiver => state('following', parameters({receiver}))
+  const shared = model.torusDesignBinding(announced({on: true, context: 'shared', shared: 'room-7', refusal: null}))
+  assert.deepEqual([shared.values.receiver, shared.values['receiver.shared']], [true, 'room-7'], 'the place is shared under its reference')
+  for (const key of ['receiver.shared', 'receiver.return']) assert.equal(shared.writes(key), true, key)
+  const personal = model.torusDesignBinding(announced({on: true, context: 'personal', refusal: null}))
+  assert.equal(personal.values['receiver.shared'], '', 'where you stand is shared under no reference')
+  const none = model.torusDesignBinding(state())
+  for (const key of ['receiver.shared', 'receiver.return']) {
+    assert.equal(none.writes(key), false, key)
+    assert.match(none.standing[key].disabled, /announces no receiver/, key)
+  }
+  const refused = model.torusDesignBinding(announced({on: false, context: 'world', refusal: 'no shared receiving context has been entered: share a place first'}))
+  assert.deepEqual(refused.standing['receiver.return'], {refused: 'no shared receiving context has been entered: share a place first'}, 'the owner\'s refusal stands on the act it refused too')
+  const sent = []
+  const r = model.torusReceiver(announced({on: false, context: 'world', refusal: null}), async edit => { sent.push(edit); return {ok: true} })
+  await r.write({key: 'receiver.shared', value: 'room-7'})
+  await r.write({key: 'receiver.return', value: 'personal'})
+  assert.deepEqual(sent, [{kind: 'receiver', on: true, shared: 'room-7'}, {kind: 'receiver', context: 'personal'}])
+  await assert.rejects(r.write({key: 'receiver.return', value: 'mine'}), /^Error: Return goes back to the world's, to where you stood, or to the shared place\.$/)
+  await assert.rejects(r.write({key: 'receiver.shared', value: 7}), /^Error: A shared place is named by its reference, as text\.$/)
+  const words = 'a shared receiving context is named by a reference of 1 to 128 characters with no space'
+  await assert.rejects(model.torusReceiver(announced({on: true, context: 'personal', refusal: null}), async () => ({ok: false, error: words})).write({key: 'receiver.shared', value: 'room 7'}),
+    new RegExp(`^Error: ${words}$`), 'the owner judges the reference, in its words')
+})
+
 test('the design draws its five views on the owner\'s reading: the bare ring naming what is missing, the level, nothing invented', () => {
   const binding = model.torusDesignBinding(state())
   resetHost(binding.id)
@@ -454,11 +483,15 @@ test('the Body page saves the Torus as a sound by its name, through its owners',
     const sec = bands[0].slice(bands[0].indexOf('class="dp-sec-body"'), bands[0].indexOf('class="dp-sec-label">Save and keep'))
     assert.deepEqual([...sec.matchAll(/class="dp-cell [^"]*"[^>]*?data-i="([^|"]+)\|/g)].map(match => match[1]), ['Body', 'Strike', 'Damping', 'Modes', 'form', 'Source', 'tattva'],
       'what rings, how it is struck and damped, its modes and the form that rings, then where they come from')
-    // Notes and output lays its ten controls in two rows of five, so the page's second band is no taller than the Pulse page's.
+    // REPLACED (lane BA, round 865, O-I #856): Receiver takes Shared and Return beside it, so it stands in its own section after Notes and
+    // output, in two rows of two, and Notes and output lays its nine controls in two rows of five: the band is no taller than the Pulse page's.
     assert.match(bands[1], /^><div class="dp-sec" data-grow="true" style="width:280px"><div class="dp-sec-label">Notes and output<\/div><div class="dp-sec-body" style="grid-template-columns:repeat\(5, minmax\(0, 1fr\)\)">/)
-    const notes = bands[1].slice(bands[1].indexOf('class="dp-sec-body"'))
+    const notes = bands[1].slice(bands[1].indexOf('class="dp-sec-body"'), bands[1].indexOf('class="dp-sec-label">Receiver<'))
     assert.deepEqual([...notes.matchAll(/data-i="([^|"]+)\|/g)].map(match => match[1]),
-      ['Polyphony', 'notes', 'Pan', 'View', 'Receiver', 'Sound', 'Cadence', 'Scale', 'Level', 'standing'], 'two rows of five')
+      ['Polyphony', 'notes', 'Pan', 'View', 'Sound', 'Cadence', 'Scale', 'Level', 'standing'], 'two rows of five')
+    const receiver = bands[1].slice(bands[1].indexOf('class="dp-sec-label">Receiver<'))
+    assert.match(receiver, /^class="dp-sec-label">Receiver<\/div><div class="dp-sec-body" style="grid-template-columns:repeat\(2, minmax\(0, 1fr\)\)">/)
+    assert.deepEqual([...receiver.matchAll(/data-i="([^|"]+)\|/g)].map(match => match[1]), ['Receiver', 'Return', 'Shared'], 'On or Off and Return, then the reference across both')
   })
   const source = await readFile(new URL('../src/inhabitants/catalogue/panels/torus.tsx', import.meta.url), 'utf8')
   assert.match(source, /import\('\.\.\/\.\.\/\.\.\/live\/LivePresets'\)\.then\(presets => presets\.saveTorusSound\(name\)\)/, 'the save goes through the presets\' owner route, loaded when pressed')

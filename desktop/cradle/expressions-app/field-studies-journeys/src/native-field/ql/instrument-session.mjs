@@ -673,18 +673,37 @@ export class InstrumentSession {
     } finally { this.#busy = false; this.#torusNative = null; }
   }
 
-  /** Where the Torus is heard from (`ql.torus-receiver/v1`, O-I 856): `place`, [x, y, z] metres in the frame the
-   * targets are drawn in, is the listener's own context; `null` is the world's, every voice by the declared gain.
+  /** Where the Torus is heard from (`ql.torus-receiver/v1`, O-I 856, QL-MEF #289 packet N): `place`, [x, y, z] metres
+   * in the frame the targets are drawn in, is the listener's own context; with `shared`, a reference the place is
+   * shared under, it is an explicitly shared context; `null` is the world's, every voice by the declared gain.
    * A receiving setting: the body, its clock and its generation stand, there is nothing to present, and it is
    * never journaled, so a take and its render are the world's. The answer says the context and the gain each
-   * voice is heard by, never the place. */
-  async torusReceiver(place) {
+   * voice is heard by, never the listener's own place; a shared place comes back with its reference. The owner
+   * judges the reference's form and refuses one it does not admit in its own words. */
+  async torusReceiver(place, { shared } = {}) {
     need(place === null || Array.isArray(place) && place.length === 3 && place.every(v => typeof v === 'number' &&
       Number.isFinite(v) && Math.abs(v) <= TORUS_RECEIVER_METRES_MAX),
     `a receiver stands at three finite metres within ${TORUS_RECEIVER_METRES_MAX} of the scene's origin, or is null for the world's context`);
+    need(shared === undefined || place !== null && typeof shared === 'string',
+      'a shared receiving context stands at a place and is named by a reference');
+    const receiver = place === null ? null : { at_metres: [place[0], place[1], place[2]] };
+    if (shared !== undefined) receiver.shared = shared;
+    return this.#receiving({ operation: 'torus-receiver', receiver });
+  }
+
+  /** Returns to a receiving context (`ql.torus-receiver/v1`, QL-MEF #289 packet N): `world`, or `personal` /
+   * `shared`, which the owner resumes where that context last stood this session. The place is never sent
+   * again; the owner refuses in words a context that was never entered. A receiving setting, as above. */
+  async torusReceiverReturn(context) {
+    need(context === 'world' || context === 'personal' || context === 'shared',
+      'a receiver returns to the world\'s, the personal or the shared context');
+    return this.#receiving({ operation: 'torus-receiver', context });
+  }
+
+  async #receiving(command) {
     need(!this.#busy && !this.#held, 'the receiver requires an idle admitted owner'); this.#busy = true;
     try {
-      const reply = await this.#exchange({ operation: 'torus-receiver', receiver: place === null ? null : { at_metres: [place[0], place[1], place[2]] } });
+      const reply = await this.#exchange(command);
       need(!reply.refused, String(reply.error));
       need(reply.torus_receiver?.schema === TORUS_RECEIVER, 'the owner answered with no receiver reading');
       return structuredClone(reply.torus_receiver);

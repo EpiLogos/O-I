@@ -1,3 +1,13 @@
+/** Where the Torus is heard from, as the owner reads it (`ql.torus-receiver/v1`): the context, the gain each voice is heard by and the law;
+ * a shared place with its reference and where it stands, the listener's own place never. */
+export interface TorusReceiverReading {
+ schema: 'ql.torus-receiver/v1';
+ context: 'world' | 'personal' | 'shared';
+ gains: Array<{mode_ref: string; gain: number}>;
+ law: string;
+ shared?: string;
+ at_metres?: [number, number, number];
+}
 export class InstrumentSession {
  constructor(options: any);
  readonly reading: any;
@@ -53,11 +63,15 @@ export class InstrumentSession {
    | {action: 'singlet'; at_samples_elapsed: string; codon: number; amplitude: [number, number]}
    | {action: 'release'; at_samples_elapsed: string; keys: Array<{row: number; column: number}>}
    | {action: 'set'; at_samples_elapsed: string; edit: object}>}): Promise<any>;
- /** Where the Torus is heard from (`ql.torus-receiver/v1`, O-I 856): a place, [x, y, z] metres in the frame the targets are drawn in,
-  * is the listener's own context; null is the world's. A receiving setting: the body, its clock and its generation stand, nothing is
-  * presented, and it is never journaled. Answers the context and each voice's gain, never the place. */
- torusReceiver(place: readonly [number, number, number] | null): Promise<{schema: 'ql.torus-receiver/v1'; context: 'world' | 'personal';
-  gains: Array<{mode_ref: string; gain: number}>; law: string}>;
+ /** Where the Torus is heard from (`ql.torus-receiver/v1`, O-I 856, QL-MEF #289 packet N): a place, [x, y, z] metres in the frame the
+  * targets are drawn in, is the listener's own context; with `shared`, a reference the place is shared under, an explicitly shared one;
+  * null is the world's. A receiving setting: the body, its clock and its generation stand, nothing is presented, and it is never
+  * journaled. Answers the context and each voice's gain, never the listener's own place; a shared place comes back with its reference.
+  * The owner judges the reference's form and refuses one it does not admit in its own words. */
+ torusReceiver(place: readonly [number, number, number] | null, options?: {shared?: string}): Promise<TorusReceiverReading>;
+ /** Returns to a receiving context (`ql.torus-receiver/v1`, QL-MEF #289 packet N): `world`, or `personal` / `shared`, resumed where it
+  * last stood this session. The place is never sent again; the owner refuses in words a context that was never entered. */
+ torusReceiverReturn(context: 'world' | 'personal' | 'shared'): Promise<TorusReceiverReading>;
  /** The Torus handed over to a native audio host (`ql.torus-native/v1`, O-I #849): the continuation and the played-address law as they
   * stand at the acknowledged sample. A read: nothing moves, and it is never journaled. Through O:I's kernel the answer is the digest the
   * kernel relays in the document's place (`sha256`, `generation`, `at_samples_elapsed`); the kernel keeps the document under the lease. */

@@ -150,3 +150,22 @@ test('Receiver crosses exact: On or Off, the owner\'s context and its refusal, n
   const message = stageRequestMessage(3, {command: 'instrument', edit: {kind: 'receiver', on: true}});
   assert.deepEqual(readStageRequest(structuredClone(message)), {req: 3, command: {command: 'instrument', edit: {kind: 'receiver', on: true}}});
 });
+
+// O-I #856 (QL-MEF #383, f16812eb; QL-MEF #289 packet N): a third context is explicitly shared, the place you stand shared under a named
+// reference, and so disclosed with it; a context is returned to by name, where it last stood. The frame announces the shared reference and
+// never a place; the shell sends a reference, which the owner judges in its own words, or a context to return to.
+test('a shared Receiver crosses with its reference and never a place; the shell sends a reference to share under or a context to return to', () => {
+  const shared = {on: true, context: 'shared', shared: 'room-7', refusal: null};
+  assert.deepEqual(readHostedParameters(parameters({receiver: shared})).receiver, shared);
+  for (const [bad, words] of [[{on: true, context: 'shared', refusal: null}, /^parameters\.receiver\.shared: expected the reference the place is shared under/],
+    [{on: true, context: 'personal', shared: 'room-7', refusal: null}, /^parameters\.receiver\.shared: only a shared place is announced with a reference/],
+    [{...shared, shared: 7}, /^parameters\.receiver\.shared: expected the reference/], [{...shared, at_metres: [0, 0, 3]}, /^parameters\.receiver\.at_metres: not announced/]])
+    assert.match(readHostedParameters(parameters({receiver: bad})), words, JSON.stringify(bad));
+  assert.deepEqual(readInstrumentEdit({kind: 'receiver', on: true, shared: 'room-7'}), {kind: 'receiver', on: true, shared: 'room-7'});
+  assert.deepEqual(readInstrumentEdit({kind: 'receiver', on: true, shared: 'room 7'}), {kind: 'receiver', on: true, shared: 'room 7'},
+    'the owner judges a reference\'s form, and refuses one it does not admit in its own words');
+  for (const context of ['world', 'personal', 'shared']) assert.deepEqual(readInstrumentEdit({kind: 'receiver', context}), {kind: 'receiver', context});
+  for (const bad of [{kind: 'receiver', on: false, shared: 'room-7'}, {kind: 'receiver', on: true, shared: 7}, {kind: 'receiver', context: 'mine'},
+    {kind: 'receiver', on: true, context: 'world'}, {kind: 'receiver', on: true, shared: 'x'.repeat(4097)}, {kind: 'receiver', context: 'shared', shared: 'room-7'}])
+    assert.equal(readInstrumentEdit(bad), null, JSON.stringify(bad).slice(0, 80));
+});

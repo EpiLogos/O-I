@@ -67,7 +67,7 @@ import {familyFaceDevice, gatewayAnswer} from './mainTrackBindings'
 import type {WorkcellAnswer} from './workcellBindings'
 import type {RunState} from '../../inhabitants/catalogue/faces/agency'
 import {messagesStateOf} from './runFaces'
-import {MESSAGES_ID} from './railTileIds'
+import {COMMUNIQUE_DRAG_SCHEMA, MESSAGES_ID, type CommuniqueDrag} from './railTileIds'
 
 type Obj = Record<string, unknown>
 const isObj = (value: unknown): value is Obj => !!value && typeof value === 'object' && !Array.isArray(value)
@@ -211,8 +211,9 @@ export function positionRefs(population: unknown): string[] {
 
 /** The open agent's conversation (useConversationAnswer.ts: the Communiques to and from its Position) as the Thread's rows
  * (thread.tsx:12-17): what its Position sent is the agent's, by its name; what another Position sent stands under that
- * Position's name. No Position stands for you, so no row is yours. The journal's order is kept. */
-export function conversationRows(conversation: unknown, names: ReadonlyMap<string, string>): Record<string, string>[] | null {
+ * Position's name. No Position stands for you, so no row is yours. The journal's order is kept. Each record AIKit has not yet carried
+ * into work (its state is not `escalated`) carries its drag onto a track (O-I ticket 757, communiqueDrag), read against the population. */
+export function conversationRows(conversation: unknown, names: ReadonlyMap<string, string>, population?: unknown): Record<string, string>[] | null {
   if (!isObj(conversation) || !str(conversation.position_ref) || !Array.isArray(conversation.communiques)) return null
   const self = String(conversation.position_ref)
   return conversation.communiques.flatMap((record): Record<string, string>[] => {
@@ -220,8 +221,42 @@ export function conversationRows(conversation: unknown, names: ReadonlyMap<strin
     if (!isObj(record) || typeof body !== 'string') return []
     const from = str(record.from_position_ref)
     const who = from ? names.get(from) ?? from : undefined
-    return [{...(who ? {who} : {}), kind: from === self ? 'agent' : 'text', text: body}]
+    const drag = communiqueDrag(record, names, population)
+    return [{...(who ? {who} : {}), kind: from === self ? 'agent' : 'text', text: body, ...(drag ? {drag: JSON.stringify(drag)} : {})}]
   })
+}
+
+/** The agent standing at a Position: its occupant, else the agent the population places there (as messagesAgents reads it). */
+function agentAt(positionRef: string, population: unknown): string | undefined {
+  if (!isObj(population) || !Array.isArray(population.positions)) return undefined
+  const row = population.positions.find(item => isObj(item) && item.position_ref === positionRef)
+  const occupant = isObj(row) && isObj(row.occupancy) ? str(row.occupancy.agent_ref) : undefined
+  if (occupant) return occupant
+  const agents = Array.isArray(population.agents) ? population.agents.filter(isObj) : []
+  return str(agents.find(item => Array.isArray(item.positions) && item.positions.includes(positionRef))?.agent_ref)
+}
+
+/** The work AIKit reads a Position standing on (`aikit gateway who`: each Position's current_work, the refs Factory's current work
+ * resolves to, as `aikit whoami` and Refocus derive them): its work and run where Factory names one, else why not, in words. */
+function workAt(positionRef: string, name: string, population: unknown): {work: string; run?: string} | {why: string} {
+  const row = isObj(population) && Array.isArray(population.positions) ? population.positions.find(item => isObj(item) && item.position_ref === positionRef) : undefined
+  const current = isObj(row) && isObj(row.current_work) ? row.current_work : null
+  const work = current?.outcome === 'one' ? str(current.work_ref) : undefined
+  if (work) { const run = str(current!.run_ref); return {work, ...(run ? {run} : {})} }
+  if (current?.outcome === 'none') return {why: `Factory names no current work for ${name}`}
+  if (current?.outcome === 'ambiguous') return {why: `Factory names more than one current work for ${name}`}
+  return {why: current ? `AIKit could not read ${name}'s current work from Factory` : `AIKit's population names no current work for ${name}`}
+}
+
+/** The drag a message carries onto a track (§19.24 Rules: "To turn one into work, drag it onto the agent's track, and the agent takes it
+ * as a task with a receipt"; O-I ticket 757): `aikit gateway delegate` gives the Position the message went to custody of the work it stands on,
+ * so the drag names that Position, the agent standing there (the track that may take it) and that work. A record with no ref, with no
+ * recipient, or already carried into work (escalated: AIKit refuses a second custody) carries none. Pure. */
+export function communiqueDrag(record: Obj, names: ReadonlyMap<string, string>, population: unknown): CommuniqueDrag | null {
+  const communique = str(record.communique_ref), to = str(record.to_position_ref)
+  if (!communique || !to || record.state === 'escalated') return null
+  const name = names.get(to) ?? to, agent = agentAt(to, population)
+  return {schema: COMMUNIQUE_DRAG_SCHEMA, communique, to, name, ...(agent ? {agent} : {}), ...workAt(to, name, population)}
 }
 
 /** The messages that wait across the Positions: the Agency gateway's inbox (§19.10 Inbox, "Read from the gateway"). */
@@ -406,7 +441,7 @@ export function messagesValues(input: MessagesInput): Values {
     if (sent.ref && heard?.ref === sent.ref && heard.status === 'answered' && isObj(heard.value) && typeof heard.value.heard === 'boolean') values['conv.heard'] = heard.value.heard
   }
   const said = open && input.conversation?.status === 'answered' && isObj(input.conversation.value) && input.conversation.value.position_ref === open
-    ? conversationRows(input.conversation.value, new Map((agents ?? []).map(agent => [String(agent.id), String(agent.name)]))) : null
+    ? conversationRows(input.conversation.value, new Map((agents ?? []).map(agent => [String(agent.id), String(agent.name)])), known) : null
   if (agents) values.agents = JSON.stringify(said ? agents.map(agent => agent.id !== open ? agent
     : {...agent, thread: said, ...(said.length ? {last: firstLine(said[said.length - 1]!.text!)} : {})}) : agents)
   // The Agency gateway's mark: Ready when it answered the read (it carried it, whatever the harness said), Refused when it did not.

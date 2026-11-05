@@ -512,9 +512,9 @@ export interface HostedInstrumentParameters {
    * announces none. */
   readonly torus?: HostedTorusSession;
   /** Where the Torus is heard from (DLW manual §21.2 View: "Receiver On makes your camera the place where the torus is heard"; O-I 856):
-   * Receiver On or Off, the context the owner hears in (the world's, or the listener's own) and its refusal in its words. The place is the
-   * listener's own and is never announced. Absent from a frame that announces none. */
-  readonly receiver?: {readonly on: boolean; readonly context: "world" | "personal"; readonly refusal: string | null};
+   * Receiver On or Off, the context the owner hears in (the world's, the listener's own, or a place shared under a reference, with the
+   * reference: O-I #856) and its refusal in its words. The place is never announced. Absent from a frame that announces none. */
+  readonly receiver?: {readonly on: boolean; readonly context: "world" | "personal" | "shared"; readonly shared?: string; readonly refusal: string | null};
 }
 
 export type HostedTorusTuning = "logic" | "maqam" | "sky";

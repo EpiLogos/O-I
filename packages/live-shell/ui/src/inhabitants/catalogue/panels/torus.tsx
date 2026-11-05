@@ -151,6 +151,20 @@ function Janko({w, y, sounding}: {w: number; y: number; sounding: readonly numbe
 // The light reads the owner alone; hollow while it has not said.
 const light = (v: V, owner?: V) => (strOf(owner ?? v, 'light') ?? 'unknown') as LightState
 const VIEWS = [{value: 'surface', label: 'Surface'}, {value: 'wire', label: 'Wire'}, {value: 'both', label: 'Both'}] as const
+/** The contexts Return goes back to, as each last stood (manual §21.2 Receiver; QL-MEF #289 packet N, O-I #856). */
+const RECEIVER_RETURNS = [
+  {value: 'world', label: 'World', does: 'The world\'s: every voice heard at its own level, wherever the camera stands.'},
+  {value: 'personal', label: 'Where you stood', does: 'Where you last stood, heard as your own.'},
+  {value: 'shared', label: 'Shared', does: 'The place you last shared, under its reference.'},
+]
+/** Where the torus is heard from (manual §21.2 Receiver; O-I 856 and #856): Receiver On or Off, Return to a context, and the reference
+ * where you stand is shared under, which the owner judges and refuses in its words. */
+const receiverControls = (p: ViewProps) => <>
+  <Toggle {...st(p, 'receiver')} label="Receiver" does="Your camera becomes the place where the torus is heard." on={on(p.v, 'receiver')} unknown={boolOf(p.v, 'receiver') === undefined} onChange={x => p.set('receiver', x)} />
+  <Chooser {...st(p, 'receiver.return')} label="Return" does="Where the torus is heard from now. Choose another to go back to it as it last stood." value={strOf(p.v, 'receiver.return') ?? ''} options={RECEIVER_RETURNS} onChange={x => p.set('receiver.return', x)} />
+  {span2(<TextField {...st(p, 'receiver.shared')} label="Shared" does="Share where you stand under a reference of 1 to 128 characters with no space. The place is shown with it."
+    value={strOf(p.v, 'receiver.shared') ?? ''} placeholder="A reference" wide onChange={x => p.set('receiver.shared', x)} />)}
+</>
 const BODY_SOURCES = [{value: 'declared', label: 'Declared', does: 'The body keeps the values you set.'},
   {value: 'tattva', label: 'Tattva', does: "The tattva of the M2 condition sets Strike and Damping through its element fibre."}] as const
 const BODIES = [{value: 'torus', label: 'The torus', does: 'The torus rings.'}, {value: 'form', label: 'A form', does: 'A form of the Expression rings.'}] as const
@@ -185,9 +199,10 @@ const CADENCES = asOptions(LIVE_CADENCE_OPTIONS)
 const M3 = [{value: 'DNA', label: 'DNA', does: 'Transcribe the M3 clock as DNA.'}, {value: 'RNA', label: 'RNA', does: 'Transcribe the M3 clock as RNA.'}]
 
 /** The field's determinants: lens, context frame, harmonic basis, M3 transcription. These are the field's real, mappable controls. Follow
- * (manual §21.2 Lens and mode) comes first: on, the Lens and Frame are the clip's mode, or the set's, and say so; off, they are yours. */
+ * (manual §21.2 Lens and mode) comes first: on, the Lens and Frame are the clip's mode, or the set's, and say so; a Lens or Frame moved by
+ * hand or by a mapped control turns it off, and the readout says why (DLW build ruling 2026-11-05); off, they are yours. */
 const determinants = (p: ViewProps) => <>
-  <Toggle {...st(p, 'mode.follow')} label="Follow" does="Follow takes the clip's mode, or the set's when the clip has none." on={on(p.v, 'mode.follow')}
+  <Toggle {...st(p, 'mode.follow')} label="Follow" does="Follow takes the clip's mode, or the set's when the clip has none. A Lens or Frame you move turns it off." on={on(p.v, 'mode.follow')}
     unknown={boolOf(p.v, 'mode.follow') === undefined} onChange={x => p.set('mode.follow', x)} />
   <Readout label="follows" does={st(p, 'mode.followed').disabled ?? 'The lens and mode Follow takes now.'} value={strOf(p.v, 'mode.followed')} tone="accent" />
   <Chooser {...st(p, 'lens')} label="Lens" does="The lens the field reads through, L0 to L5′." value={strOf(p.v, 'lens') ?? ''} options={LENSES} onChange={x => p.set('lens', x)} />
@@ -574,7 +589,7 @@ export const torus: DesignedDevice = {
     // The Torus's M1′ session (QL's torus-state), as a scene opens it: Free at 2.5 steps a second, a rhythm; the map's 1:1; no carrier.
     'rate.mode': 'free', rate: 2.5, tempo: 120, band: 'Rhythm', 'fundamental.source': 'map', fundamental: 130.81, carrier: 0, 'carrier.drive': 'pulse',
     shape: 'auto', figure: 'figure-eight', comma: 0, tuning: 'logic', 'tuning.resident': JSON.stringify(['logic', 'sky']), polyphony: 16, notes: 3,
-    body: 'torus', strike: 70, damping: 4.5, modes: 8, level: -6, pan: 0, view: 'surface', receiver: false, meter: -14,
+    body: 'torus', strike: 70, damping: 4.5, modes: 8, level: -6, pan: 0, view: 'surface', receiver: false, 'receiver.shared': '', 'receiver.return': 'world', meter: -14,
     // The field's own controls, as the binding reads them (labels of the owner's choices).
     lens: 'L0', 'context-frame': 'CF1', 'harmonic-basis': 'B1', 'm3-transcription': 'DNA', sound: true, cadence: 'Hold', scale: 100, standing: 'following',
     // Follow (manual §21.2 default): the set's Ionian on L0, which is CF1.
@@ -607,6 +622,8 @@ export const torus: DesignedDevice = {
     // Sync, a quarter note at 120 BPM: two steps a second; the sky's voices.
     'Sync, a quarter note': {'rate.mode': 'sync', 'rate.note': '1/4', rate: 2, tuning: 'sky', carrier: 25},
     'Sequence: the scene sets the shapes': {shape: 'sequence', figure: undefined},
+    // Where you stand, shared under a reference (O-I #856): Receiver On, the shared place's reference, and Return reading Shared.
+    'Shared under a reference': {receiver: true, 'receiver.shared': 'room-7', 'receiver.return': 'shared'},
     'Lens and mode chosen, the wire drawn': {'mode.follow': false, 'mode.followed': undefined, lens: 'L3′', 'context-frame': 'CF2', view: 'wire'},
     'Tattva without a fibre': {'body.source': 'tattva', 'tattva.name': 'Akasha', 'tattva.fibre': undefined},
     // The condition's maqām with no Bimba spelling: the owner's words for its absence (QL scene_field.rs maqam_reading).
@@ -618,8 +635,8 @@ export const torus: DesignedDevice = {
       'stage.bindings': JSON.stringify([{procedure: 'ta-onta:stage:cli-bound', trigger: 'm1-advance', evaluations: 16, max: 16, standing: 'exhausted'}])},
     'No readings': Object.fromEntries(['stage.slots', 'stage.bindings', 'stage.procedures', 'stage.procedure', 'stage.budget', 'stage.last', 'stage.why', 'rack', 'rack.part', 'chain', 'variations', 'light',
       'rate.mode', 'rate', 'rate.note', 'tempo', 'band', 'fundamental.source', 'fundamental', 'carrier', 'carrier.drive', 'shape', 'figure', 'comma', 'tuning', 'tuning.resident', 'tuning.maqam', 'polyphony', 'notes',
-      'body', 'body.form', 'strike', 'damping', 'modes', 'level', 'pan', 'view', 'receiver', 'meter', 'material', 'mode.follow', 'mode.followed', 'lens', 'context-frame', 'harmonic-basis', 'm3-transcription', 'sound', 'cadence', 'scale', 'standing', 'sounding', 'body.source', 'tattva.name', 'tattva.fibre', 'tattva.standing'].map(k => [k, undefined])),
-    'As the field reports it': {strike: undefined, damping: undefined, modes: undefined, pan: undefined, view: undefined, receiver: undefined, meter: undefined},
+      'body', 'body.form', 'strike', 'damping', 'modes', 'level', 'pan', 'view', 'receiver', 'receiver.shared', 'receiver.return', 'meter', 'material', 'mode.follow', 'mode.followed', 'lens', 'context-frame', 'harmonic-basis', 'm3-transcription', 'sound', 'cadence', 'scale', 'standing', 'sounding', 'body.source', 'tattva.name', 'tattva.fibre', 'tattva.standing'].map(k => [k, undefined])),
+    'As the field reports it': {strike: undefined, damping: undefined, modes: undefined, pan: undefined, view: undefined, receiver: undefined, 'receiver.shared': undefined, 'receiver.return': undefined, meter: undefined},
   },
 
   folded: p => <Folded title="Torus" light={light(p.v, p.owner)} readings={[has(p.v, 'level') ? db(num(p.v, 'level')) : NONE, shown(p.v, 'band'), `${shown(p.v, 'notes')} notes`]} onUnfold={p.nav.unfold} />,
@@ -657,16 +674,17 @@ export const torus: DesignedDevice = {
       {/* Beside the body, so the page keeps the two bands every page of the device stands in (O-I #852). */}
       <Section label="Save and keep" cols={2}><SaveSound /></Section>
     </Band>
-    {/* Five columns: its ten controls stand in two rows, so this band is no taller than the Pulse page's. */}
+    {/* Five columns: its nine controls stand in two rows, so this band is no taller than the Pulse page's; Receiver stands beside it in two
+        rows of two, its Shared reference across both (O-I #856). */}
     <Band>
       <Section label="Notes and output" cols={5} grow>
         <ValueBox {...st(p, 'polyphony')} label="Polyphony" does="How many notes sound at once, each with its own eight voices. The oldest note makes way for a new one." value={numOf(p.v, 'polyphony') ?? NaN} def={16} scale={{min: 1, max: 32, step: 1}} format={x => `${Math.round(x)}`} onChange={x => p.set('polyphony', Math.round(x))} />
         <Readout label="notes" does="Notes that sound now, as the owner counts them." value={numOf(p.v, 'notes')} tone="accent" />
         <Dial {...st(p, 'pan')} label="Pan" does="The place of the sound, left to right." value={num(p.v, 'pan')} def={0} scale={{min: -1, max: 1}} format={x => (Math.abs(x) < .005 ? 'C' : `${Math.round(Math.abs(x) * 50)}${x < 0 ? 'L' : 'R'}`)} bipolar onChange={x => p.set('pan', x)} />
         <Radio {...st(p, 'view')} label="View" does="What the pane draws." value={strOf(p.v, 'view') ?? ''} options={VIEWS} stack onChange={x => p.set('view', x)} />
-        <Toggle {...st(p, 'receiver')} label="Receiver" does="Your camera becomes the place where the torus is heard." on={on(p.v, 'receiver')} unknown={boolOf(p.v, 'receiver') === undefined} onChange={x => p.set('receiver', x)} />
         {seeAndHear(p)}
       </Section>
+      <Section label="Receiver" cols={2}>{receiverControls(p)}</Section>
     </Band>
     </>}
   </Panel>,
