@@ -222,7 +222,7 @@ pub(crate) fn clip_at(track: &Element, at: ClipAt) -> Result<&Element, String> {
     }
 }
 
-fn clip_at_mut(track: &mut Element, at: ClipAt) -> Result<&mut Element, String> {
+pub(crate) fn clip_at_mut(track: &mut Element, at: ClipAt) -> Result<&mut Element, String> {
     let sequencer = track
         .child_mut("DeviceChain")
         .and_then(|dc| dc.child_mut("MainSequencer"))
@@ -1485,6 +1485,191 @@ pub(crate) fn crop(clip: &mut Element, from: f64, to: f64, scale: f64) -> Result
     set_value(clip, "CurrentEnd", &number_text(to))?;
     clip.set_attr("Time", &number_text(from));
     Ok(())
+}
+
+/// The region Crop keeps of a clip (Live's Crop Clip, ⇧⌘J; DLW build ruling 2026-11-05: "the clip keeps only its loop or
+/// selection"), in its markers' own units ([`marker_scale`]): its loop brace when it loops, else its start to its end. Refused in
+/// words for a clip with no region to keep.
+pub(crate) fn crop_region(clip: &Element) -> Result<(f64, f64), String> {
+    let lp = clip
+        .child("Loop")
+        .ok_or("the clip carries no loop markers in the document")?;
+    let (from, to) = (
+        num(lp, "LoopStart").ok_or("the clip carries no LoopStart in the document")?,
+        num(lp, "LoopEnd").ok_or("the clip carries no LoopEnd in the document")?,
+    );
+    if !(from.is_finite() && to.is_finite() && to > from) {
+        return Err("The clip keeps no stretch of its own to crop to: its end stands at or before its start".into());
+    }
+    Ok((from, to))
+}
+
+/// Crop a clip to its region ([`crop_region`]) in place, its place on the ruler kept: the region becomes the clip's whole, its
+/// markers from 0 to the region's length (each moved by the region's offset and held within it, so a looped clip's start keeps
+/// its place in the loop, wrapped into it and an unlooped one's hidden loop brace stands where it stood, or over the whole where it stood outside);
+/// each note that starts in the region kept by its id, moved by the offset and cut at the region's end, the rest gone; each
+/// clip envelope's events moved by the same offset in beats (`scale` marker units a beat) and held to the region ([`crop_events`]).
+/// Answered with the region's offset and length, in marker units.
+pub(crate) fn crop_to_region(clip: &mut Element, scale: f64) -> Result<(f64, f64), String> {
+    let (from, to) = crop_region(clip)?;
+    let span = to - from;
+    let held = |v: f64| (v - from).clamp(0.0, span);
+    let lp = clip
+        .child_mut("Loop")
+        .ok_or("the clip carries no loop markers in the document")?;
+    for name in [
+        "LoopStart",
+        "LoopEnd",
+        "OutMarker",
+        "HiddenLoopStart",
+        "HiddenLoopEnd",
+    ] {
+        if let Some(v) = num(lp, name) {
+            set_value(lp, name, &number_text(held(v)))?;
+        }
+    }
+    if let Some(v) = num(lp, "StartRelative") {
+        set_value(
+            lp,
+            "StartRelative",
+            &number_text(v.max(0.0).rem_euclid(span)),
+        )?;
+    }
+    if let (Some(a), Some(b)) = (num(lp, "HiddenLoopStart"), num(lp, "HiddenLoopEnd")) {
+        if b <= a {
+            set_value(lp, "HiddenLoopStart", "0")?;
+            set_value(lp, "HiddenLoopEnd", &number_text(span))?;
+        }
+    }
+    if clip.name == "MidiClip" {
+        let kept: Vec<Value> = notes_json(clip)
+            .into_iter()
+            .filter_map(|mut note| {
+                let at = note["at"].as_f64()?;
+                if at < from || at >= to {
+                    return None;
+                }
+                let len = note["len"].as_f64().unwrap_or(0.0).min(to - at);
+                note["at"] = json!(at - from);
+                note["len"] = json!(len);
+                Some(note)
+            })
+            .collect();
+        apply_notes(clip, &kept)?;
+    }
+    let (offset, end) = (from / scale, span / scale);
+    if let Some(list) = clip
+        .child_mut("Envelopes")
+        .and_then(|e| e.child_mut("Envelopes"))
+    {
+        for envelope in &mut list.children {
+            if let Some(events) = envelope
+                .child_mut("Automation")
+                .and_then(|a| a.child_mut("Events"))
+            {
+                crop_events(events, offset, end);
+            }
+        }
+    }
+    Ok((from, span))
+}
+
+/// Live's first event of an envelope (`Time="-63072000"`, the template's every envelope): the value before any other, never moved.
+const ENVELOPE_FIRST: f64 = -63_072_000.0;
+
+/// An envelope's events (`FloatEvent`, `BoolEvent`, `EnumEvent`: `Id`, `Time` in beats, `Value`) held to a cropped clip's region
+/// (`offset` to `offset + end`, in beats): each moved back by `offset`, those outside gone. Where one stood before the region an
+/// event at its start keeps the value it starts at, and where one stood past it an event at its end keeps the value it ends at —
+/// a float's as the envelope runs between its two events there (a straight line, as Live draws one), a switch's or a choice's as
+/// the last before it set — each a new `Id` past the list's highest. Live's first event stands as it is.
+pub(crate) fn crop_events(events: &mut Element, offset: f64, end: f64) {
+    let time = |e: &Element| e.attr("Time").and_then(|t| t.parse::<f64>().ok());
+    let value = |e: &Element| e.attr("Value").map(str::to_string);
+    let mut next = events
+        .children
+        .iter()
+        .filter_map(|e| e.attr("Id").and_then(|i| i.parse::<i64>().ok()))
+        .max()
+        .map_or(0, |id| id + 1);
+    let (mut first, mut kept) = (Vec::new(), Vec::new());
+    let mut before: Option<(f64, Element)> = None;
+    let mut after: Option<(f64, Element)> = None;
+    for event in std::mem::take(&mut events.children) {
+        let Some(t) = time(&event) else {
+            kept.push(event);
+            continue;
+        };
+        if t <= ENVELOPE_FIRST {
+            first.push(event);
+            continue;
+        }
+        let moved = t - offset;
+        if moved < 0.0 {
+            if before.as_ref().is_none_or(|(b, _)| moved >= *b) {
+                before = Some((moved, event));
+            }
+        } else if moved > end {
+            if after.as_ref().is_none_or(|(a, _)| moved < *a) {
+                after = Some((moved, event));
+            }
+        } else {
+            let mut event = event;
+            event.set_attr("Time", &number_text(moved));
+            kept.push(event);
+        }
+    }
+    let at = |e: &Element| time(e).unwrap_or(0.0);
+    let float = |e: &Element| e.attr("Value").and_then(|v| v.parse::<f64>().ok());
+    let between = |a: &(f64, Element), b: &(f64, Element), x: f64| -> Option<String> {
+        if a.1.name != "FloatEvent" {
+            return value(&a.1);
+        }
+        let (va, vb) = (float(&a.1)?, float(&b.1)?);
+        let share = if b.0 > a.0 {
+            (x - a.0) / (b.0 - a.0)
+        } else {
+            0.0
+        };
+        Some(number_text(va + (vb - va) * share))
+    };
+    let mut made = |like: &Element, x: f64, v: String| {
+        let mut e = Element::new(&like.name);
+        e.set_attr("Id", &next.to_string());
+        e.set_attr("Time", &number_text(x));
+        e.set_attr("Value", &v);
+        next += 1;
+        e
+    };
+    let mut out = first;
+    // The value the region starts at, where an event before it set one.
+    let mut opening = None;
+    if let Some(b) = &before {
+        if kept.first().is_none_or(|e| at(e) > 0.0) {
+            let onward = kept
+                .first()
+                .map(|e| (at(e), e.clone()))
+                .or_else(|| after.clone());
+            let v = match &onward {
+                Some(n) => between(b, n, 0.0),
+                None => value(&b.1),
+            };
+            if let Some(v) = v {
+                let e = made(&b.1, 0.0, v);
+                opening = Some((0.0, e.clone()));
+                out.push(e);
+            }
+        }
+    }
+    let closing = kept.last().map(|e| (at(e), e.clone())).or(opening);
+    out.extend(kept);
+    if let Some(a) = &after {
+        if closing.as_ref().is_none_or(|(t, _)| *t < end) {
+            if let Some(v) = closing.as_ref().and_then(|l| between(l, a, end)) {
+                out.push(made(&a.1, end, v));
+            }
+        }
+    }
+    events.children = out;
 }
 
 /// Copy the stretch `[from, to]` of take lane `lane` into the track's main

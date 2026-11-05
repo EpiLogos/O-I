@@ -337,6 +337,12 @@
       "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md §21.1 (Rules: every part sounds in one engine); Live 12 manual §10.9 (Consolidate), O-I #743; docs/cradle/02-ARCHITECTURE.md §5/§12"
     },
     {
+      "command": "live_engine_host::live_engine_crop",
+      "classification": "presentation-lease",
+      "rationale": "Crop on an audio clip (Live's Crop Clip, DLW build ruling 2026-11-05): the host cuts the stretch of the clip's sample its owner names (live-set crop_source: the clip's loop, or its start to its end, or the ruler's selection over it) from the file the clip plays, at the file's own rate and channels, and hands the WAV's bytes to the kernel's Live owner, which keeps the cut beside the set and crops the clip to play it (Kernel::live_audio_crop: a set the shell has read, against the set's revision and under the write gate, as every act on the set; live-set crop_audio), records its file_changed receipt and is answered with the clip and the sample. Refused in words for a MIDI clip, a clip with no sample file or region, and a set the shell has not read. The host writes no file. Candidate webviews only.",
+      "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md §10.9 (Clip: In Arrangement view, Split, Consolidate and Crop); Live Object Model Clip.crop (docs/research/ableton-live-12.0.25/lom/LOM-INVENTORY.md); docs/cradle/02-ARCHITECTURE.md §5/§12"
+    },
+    {
       "command": "midi::midi_out",
       "classification": "presentation-lease",
       "rationale": "The part's MIDI output (midi.rs over midir): lists the system's MIDI outputs, connects the one the person chooses and sends the notes the part's playing path plays to it, refused in words when none is chosen or a message is not MIDI. It decides and writes nothing; what is played is the shell's playing path and the Torus's owner. Candidate webviews only.",

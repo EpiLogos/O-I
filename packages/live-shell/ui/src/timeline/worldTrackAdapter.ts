@@ -100,6 +100,9 @@ export interface WorldAutomationLane {
   /** Its breakpoints, value 0–1 of `range`: in the ruler's units, or — with `clipId` — in that clip's own time from its start. */
   points: readonly {at: number; value: number}[];
   clipId?: string;
+  /** Where its clip's own time begins on the ruler when the clip has no place of its own there: a Session clip's, where it landed on the
+   * transport as it plays. */
+  clipAt?: number;
   /** The value's range, as the owner gives it. */
   range?: {min: number; max: number};
   /** What moves it, when it is modulated (§14: nothing moves without a visible cause). */
@@ -255,6 +258,9 @@ export interface WorldTrackActions {
   /** Consolidate (⌘J, Arrangement view): what a track's clips play over a stretch of the ruler (the pane's time selection), made one
    * clip. `refuses` says, for a track, why its owner cannot take it (an audio part's consolidate is a render). */
   consolidateClips?: {op: string; run(trackId: string, span: {start: number; end: number}): unknown; refuses?(trackId: string): string | undefined};
+  /** Crop (⇧⌘J, Arrangement view; Live's Crop Clip): the clip keeps only its loop, or its start to its end — or the stretch of the ruler
+   * selected over it (`span`, the pane's time selection) first. */
+  cropClip?: {op: string; run(clipId: string, span?: {start: number; end: number} | null): unknown};
   /** What an act no owner op carries waits for, by the op its menu names ('row.launch', 'clip.crop' …), in the owner's words: said
    * after the missing op on the status bar. */
   waiting?: Readonly<Record<string, string>>;

@@ -151,6 +151,16 @@ pub struct DocumentJson {
     /// The transport's Quantize, the launch quantize of every clip set to Global (DLW manual §21.1).
     #[serde(rename = "globalQuantize", skip_serializing_if = "Option::is_none")]
     pub global_quantize: Option<String>,
+    /// The song's time signature (model.rs `signature_of`): what a bar of the set is; absent where the set keeps none its owner reads.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub signature: Option<SignatureJson>,
+}
+
+/// A time signature: beats to the bar, and the note a beat is.
+#[derive(Serialize, Debug, PartialEq)]
+pub struct SignatureJson {
+    pub numerator: u32,
+    pub denominator: u32,
 }
 
 /// The API contract: a parsed document → the deep view /api/document serves.
@@ -161,6 +171,10 @@ pub fn document_json(path: &str, root: &crate::xml::Element) -> Option<DocumentJ
         tempo: d.tempo_bpm,
         scenes: d.scene_count,
         global_quantize: d.global_quantize,
+        signature: d.signature.map(|(numerator, denominator)| SignatureJson {
+            numerator,
+            denominator,
+        }),
         tracks: d
             .tracks
             .into_iter()
@@ -777,6 +791,20 @@ mod tests {
         let j = document_json("/tmp/x.als", &doc).unwrap();
         assert_eq!(j.tempo, 131.0);
         assert_eq!(j.scenes, 2);
+        assert!(
+            j.signature.is_none(),
+            "the set keeps no signature its owner reads"
+        );
+        let signed = crate::xml::parse(
+            r#"<Ableton><LiveSet><MainTrack><DeviceChain><Mixer><TimeSignature><Manual Value="302" /></TimeSignature></Mixer></DeviceChain></MainTrack><Tracks /><Scenes /></LiveSet></Ableton>"#,
+        )
+        .unwrap();
+        assert_eq!(
+            serde_json::to_value(document_json("/tmp/y.als", &signed).unwrap()).unwrap()
+                ["signature"],
+            serde_json::json!({"numerator": 6, "denominator": 8}),
+            "the song's time signature, as the frame reads a bar"
+        );
         assert_eq!(j.tracks.len(), 2);
 
         let stim = &j.tracks[0];

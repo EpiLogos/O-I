@@ -530,6 +530,33 @@ test('the frame\'s level goes with the Torus\'s effects into the engine and foll
   }
 })
 
+// DLW build ruling 2026-11-05, round 21 item 3: the frame's Sound off reaches the engine. The frame's `parameters.muted` (its Sound on
+// and off) goes with the Torus's effects into the engine, as its level does, and a turn of it follows; the engine silences the part's
+// Torus by it (live_engine_host.rs torus_chain), so muting the frame mutes what the engine plays of the Torus.
+test('the frame\'s Sound off goes with the Torus\'s effects into the engine and follows each turn of it', async () => {
+  nativeHost()
+  const torus = await import('../src/live/torusInstrument.ts')
+  const reported = (effects, level, muted) =>
+    torus.publishLiveTorusState({ok: true, value: {standing: 'following'}, determinants: null, parameters: {effects, level, muted}})
+  const effects = {chain: ['reverb'], reverb: {on: true, size: 50, decay: 2.4, damping: 40, predelay: 20, mix: 22}}
+  const {stage} = frameStage()
+  reported(effects, 2, false)
+  try {
+    await engine.liveEngine.play(PATH, undefined, stage)
+    assert.deepEqual(torusArgs[0].effects, {...effects, level: 2, muted: false}, 'the frame\'s sound on goes with the effects')
+    reported(effects, 2, true)
+    await engine.torusEffectsSettled()
+    assert.deepEqual(effectsArgs, [{effects: {...effects, level: 2, muted: true}}], 'Sound off follows into the engine')
+    reported(effects, 2, true)
+    await engine.torusEffectsSettled()
+    assert.equal(effectsArgs.length, 1, 'a sound that did not turn sends nothing')
+  } finally {
+    await engine.liveEngine.stop(stage).catch(() => {})
+    torus.publishLiveTorusState(null)
+    delete globalThis.window
+  }
+})
+
 // The mixer row's Volume and Pan (manual §21.1 "The mixer row"; O-I #849): the part's reading is the set's — its owner's, read back
 // from the file — and, while the engine plays the set, the engine's applied mixer; a move is written through the set's owner.
 const adapter = await import('../src/timeline/liveSetTrackAdapter.ts')

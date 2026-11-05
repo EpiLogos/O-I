@@ -155,6 +155,18 @@ pub struct SetDocument {
     /// The transport's Quantize (`LiveSet/GlobalQuantisation`), as a word of Live's launch quantisation
     /// (`edit::QUANTIZE` without its leading Global); none where the set keeps none Live names.
     pub global_quantize: Option<String>,
+    /// The song's time signature as (numerator, denominator) ([`signature_of`]); none where the set keeps none its owner reads.
+    pub signature: Option<(u32, u32)>,
+}
+
+/// A time signature from its code as a set stores it (`MainTrack/…/Mixer/TimeSignature/Manual`, a scene's `TimeSignatureId`): the corpus
+/// holds one value, 201 = 4/4 (devices/racks-session-model.md §3.3, "encoding open"); the code is read as numerator − 1 + 99 ×
+/// log2(denominator), the one reading that gives 201 for 4/4 over Live's numerators 1–99 and its denominators 1, 2, 4, 8 and 16.
+/// None for a code that is not one of them.
+pub fn signature_of(code: &str) -> Option<(u32, u32)> {
+    let code: u32 = code.parse().ok()?;
+    let (numerator, power) = (code % 99 + 1, code / 99);
+    (power <= 4).then(|| (numerator, 1 << power))
 }
 
 impl SetDocument {
@@ -214,11 +226,20 @@ impl SetDocument {
             .and_then(|v| v.parse::<usize>().ok())
             .and_then(|v| crate::edit::QUANTIZE.get(v + 1))
             .map(|word| (*word).to_string());
+        // The song's signature: the Main track's mixer, beside its tempo (racks-session-model.md §3.3).
+        let signature = ls
+            .find("MainTrack")
+            .and_then(|mt| mt.find("Mixer"))
+            .and_then(|m| m.child("TimeSignature"))
+            .and_then(|t| t.child("Manual"))
+            .and_then(|m| m.attr("Value"))
+            .and_then(signature_of);
         Some(SetDocument {
             tempo_bpm,
             tracks,
             scene_count,
             global_quantize,
+            signature,
         })
     }
 }
@@ -356,6 +377,37 @@ fn count_arrangement_clips(track: &Element) -> usize {
 
 #[cfg(test)]
 mod tests {
+    /// The song's time signature (O-I #849 round 21: a bar is read from it, not taken as four beats): `MainTrack/…/Mixer/TimeSignature/
+    /// Manual`, a code (devices/racks-session-model.md §3.3: 201 = 4/4, the one value the corpus holds); read as numerator − 1 + 99 ×
+    /// log2(denominator), Live's numerators 1–99 over its denominators 1–16. A code outside them is no signature.
+    #[test]
+    fn the_songs_time_signature_is_read_from_its_main_tracks_code() {
+        let at = |value: &str| {
+            let src = format!(
+                r#"<Ableton><LiveSet><MainTrack><DeviceChain><Mixer><Tempo><Manual Value="120" /></Tempo><TimeSignature><LomId Value="0" /><Manual Value="{value}" /></TimeSignature></Mixer></DeviceChain></MainTrack><Tracks /><Scenes /></LiveSet></Ableton>"#
+            );
+            SetDocument::of(&xml::parse(&src).unwrap())
+                .unwrap()
+                .signature
+        };
+        assert_eq!(at("201"), Some((4, 4)), "the corpus's one value");
+        assert_eq!(at("200"), Some((3, 4)));
+        assert_eq!(at("302"), Some((6, 8)));
+        assert_eq!(at("204"), Some((7, 4)));
+        assert_eq!(at("0"), Some((1, 1)));
+        assert_eq!(at("494"), Some((99, 16)));
+        for none in ["495", "-1", "x", "201.5"] {
+            assert_eq!(at(none), None, "{none}");
+        }
+        let unsigned = r#"<Ableton><LiveSet><Tracks /><Scenes /></LiveSet></Ableton>"#;
+        assert_eq!(
+            SetDocument::of(&xml::parse(unsigned).unwrap())
+                .unwrap()
+                .signature,
+            None
+        );
+    }
+
     /// The transport's Quantize, the launch quantize of every clip set to Global (DLW manual §21.1): `LiveSet/GlobalQuantisation`, a
     /// value element on LiveSet (devices/racks-session-model.md §3.3), in Live's launch-quantisation order without the clip's own
     /// leading Global (the one set in the corpus keeps 4: 1 bar, Live's default).

@@ -149,7 +149,11 @@ function clipMenu(target: Extract<ObjectTarget, {kind: 'clip'}>, set: WorldTrack
       : act('consolidate', 'Consolidate', '⌘J', joins, 'clip.consolidate', a,
         () => press(`consolidate:${target.trackId}`, `Consolidate ${set.tracks.find(t => t.id === target.trackId)?.name ?? 'the track'}`,
           () => joins!.run(target.trackId, span!)), undefined, readOnly))
-    items.push(act('crop', 'Crop', '⇧⌘J', undefined, 'clip.crop', a, () => {}, undefined, readOnly))
+    // Crop keeps only the clip's loop, or its start to its end — or the time selection, where one lies over the clip.
+    const crop = readOnly ? undefined : a?.cropClip
+    const over = span && placed?.end !== undefined && span.end > placed.start && span.start < placed.end ? span : null
+    items.push(act('crop', 'Crop', '⇧⌘J', crop, 'clip.crop', a,
+      () => press(`crop:${target.id}`, `Crop ${named}`, () => crop!.run(target.id, over)), undefined, readOnly))
     // Export Audio (manual §21.2): a take Record laid, rendered as it was played; listed where the set carries it.
     const exportTake = a?.exportTake
     if (exportTake) items.push(act('export-audio', 'Export Audio', undefined, exportTake, 'clip.export', a,

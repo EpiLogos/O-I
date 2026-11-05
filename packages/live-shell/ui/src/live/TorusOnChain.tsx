@@ -22,7 +22,7 @@ import {DEVICE_PANE_KIND} from '../frame/devices/devicePane'
 import {openInstrument} from '../frame/instrumentDoor'
 import {followSetTempoOnTorus, torusTempoEdit, TORUS_DESIGN_ID, TORUS_HEAD_ACTS, TORUS_DEVICE, TORUS_DEVICE_ID, torusBodyEdits, torusBodySourceOf, torusDesignBinding, torusDevice, torusFigure, torusTone, torusSessionOf,
   torusFollowed, torusFollowEdits, torusFollowMoved, torusLaneStanding, torusViewOf, TORUS_FOLLOW, type TorusFigureSize, type TorusFollow, type TorusView} from './torusDevice'
-import {liveClipActs, liveClipPlayer, type ClipLaneStanding} from './clipPlayer'
+import {liveClipActs, type ClipLaneStanding} from './clipPlayer'
 import {refusalWords} from '../../../../../desktop/cradle/src/shared/Refusal.tsx'
 import {commitLiveInstrumentEdit, LIVE_TORUS_ABSENT_REASON, liveInstrumentWritable, subscribeAcceptedLiveWrites, useLiveTorusReading, type LiveTorusState} from './torusInstrument'
 import {JankoDevice} from './janko/JankoDevice'
@@ -89,8 +89,8 @@ const mapId = (key: string) => (key === 'scale' ? 'scale-units' : key)
  * and the design's kit controls are wrapped with it by their value keys. */
 export const torusMapWrap = (row: SdkParamRow, control: ReactNode): ReactNode => <MidiMapTarget id={mapId(row.key)}>{control}</MidiMapTarget>
 
-/** The take's lanes as the clip player publishes them (O-I ticket 853). */
-const laneReading = (): ClipLaneStanding => liveClipPlayer.state().lanes
+/** The take's lanes as the clip players publish them (O-I ticket 853): every player of the set's, a row's among them (O-I ticket 849, round 21). */
+const laneReading = (): ClipLaneStanding => liveClipActs.lanes()
 const NOT_REENABLED = 'The value did not go back to the take\'s lanes.'
 
 /** The binding the chain draws the Torus on: the owner's readings, the Sky's held keys, the stage the frame announced and M1′'s rack
@@ -149,7 +149,7 @@ export function useTorusChainBinding(state: LiveTorusState | null, device: Devic
   }, [state, follow, held])
   // A take's lanes on the face (O-I ticket 853; DLW build ruling 2026-11-05): what a playing take writes stands Automated, what you moved off
   // its lane Overridden with Re-enable on the control. A Re-enable the owner refused stands on that control until the lanes next change.
-  const lanes = useSyncExternalStore(liveClipPlayer.subscribe, laneReading, laneReading)
+  const lanes = useSyncExternalStore(liveClipActs.subscribe, laneReading, laneReading)
   const [laneRefused, setLaneRefused] = useState<{lanes: ClipLaneStanding; words: Record<string, string>} | null>(null)
   const reenable = useCallback((id: string) => {
     const refuse = (words: string) => setLaneRefused({lanes: laneReading(), words: {[id]: words}})

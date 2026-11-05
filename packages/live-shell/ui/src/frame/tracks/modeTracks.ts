@@ -18,7 +18,7 @@ import {readFrameTakeLink, type FrameTakeLink} from '../../native/frameTakes'
 import {STAGE_AUTOMATION_RESUME} from '../../native/stageCommands'
 import {sceneDuration} from '../../components/nativeScenePlayback'
 import type {ExpressionsControls, ExpressionsWorkReading} from '../../timeline/expressionsTrackAdapter'
-import type {SetDocument} from '../../shell/document'
+import {barBeats, type SetDocument} from '../../shell/document'
 import type {SetSummary} from '../../shell/useSet'
 import type {NativeExpressionsContent} from '../../shell/nativeContent'
 import type {WorldTimelineView} from '../../projections/useWorldTemporalReading'
@@ -27,7 +27,7 @@ import type {KernelTransportStatus, LiveClipAt} from '../../../../../../desktop/
 import {liveSetTrackAdapter} from '../../timeline/liveSetTrackAdapter'
 import {liveSetWrites} from '../../live/liveWrites'
 import {liveEngineState, subscribeLiveEngine, type LiveEngineReading} from '../../live/liveEngine'
-import type {ClipLaneStanding, RowSlot} from '../../live/clipPlayer'
+import type {ClipLaneStanding, ClipLanesStanding, RowSlot} from '../../live/clipPlayer'
 import {frameSoundReading, readStudioArm, setExpressionMuted, setExpressionSolo} from '../../native/frameSound'
 import {expressionsTrackAdapter} from '../../timeline/expressionsTrackAdapter'
 import {FACTORY_WAITING} from '../../timeline/factoryTrackAdapter'
@@ -216,30 +216,31 @@ export const MODE_REDRAWS: Readonly<Partial<Record<SurfMode, ModeRedraw>>> = {
     snapshot: liveRedrawn},
 }
 
-/** The clip player's lane standing (O-I #853), as the pane last heard it: followed from the pane's first subscription, never at first load
- * (the player loads with Live's transport, O-I #740). */
-let laneStanding: ClipLaneStanding | null = null
+/** The lanes' standing over every clip player of the set (O-I #853; a row's players too, O-I #849 round 21: live/clipPlayer.ts
+ * liveClipActs `lanes`), as the pane last heard it: followed from the pane's first subscription, never at first load (the player loads with
+ * Live's transport, O-I #740). */
+let laneStanding: ClipLanesStanding | null = null
 const laneListeners = new Set<() => void>()
 let laneFollowed = false
 function subscribeLaneStanding(listener: () => void): () => void {
   laneListeners.add(listener)
   if (!laneFollowed) {
     laneFollowed = true
-    void import('../../live/clipPlayer').then(({liveClipPlayer}) => {
+    void import('../../live/clipPlayer').then(({liveClipActs}) => {
       const follow = () => {
-        const lanes = liveClipPlayer.state().lanes
+        const lanes = liveClipActs.lanes()
         if (lanes === laneStanding) return
         laneStanding = lanes
         for (const heard of [...laneListeners]) heard()
       }
-      liveClipPlayer.subscribe(follow)
+      liveClipActs.subscribe(follow)
       follow()
     })
   }
   return () => { laneListeners.delete(listener) }
 }
 /** What Live's pane draws on: the engine's state and the lanes' standing, one snapshot while neither moves. */
-let redrawn: {readonly engine: ReturnType<typeof liveEngineState>; readonly lanes: ClipLaneStanding | null} | null = null
+let redrawn: {readonly engine: ReturnType<typeof liveEngineState>; readonly lanes: ClipLanesStanding | null} | null = null
 function liveRedrawn() {
   const engine = liveEngineState()
   if (!redrawn || redrawn.engine !== engine || redrawn.lanes !== laneStanding) redrawn = {engine, lanes: laneStanding}
@@ -249,13 +250,15 @@ function liveRedrawn() {
 /** Live's tracks: the open set's parts, its writes and its acts (O-I #743), Launch and Stop on the torus, Live's clip of a
  * constellation dropped on a part, and — while the engine plays this set — Volume and Pan as the engine applied them. Pure. */
 export function liveTracks(set: SetSummary, document: SetDocument | null, colors?: readonly string[], maker = liveClipMaker(set.path),
-  engine: LiveEngineReading | null = null, lanes: ClipLaneStanding | null = null): WorldTrackSet {
+  engine: LiveEngineReading | null = null, lanes: ClipLaneStanding | ClipLanesStanding | null = null): WorldTrackSet {
   // The clip player loads with Live's transport (O-I #740: a mode's code is not the first load), so its acts reach it when pressed.
   const player = () => import('../../live/clipPlayer').then(module => module.liveClipActs)
-  // A launch lands on its clip's quantize, Global the set's (the transport's Quantize, model.rs global_quantize).
+  // A launch lands on its clip's quantize, Global the set's (the transport's Quantize, model.rs global_quantize); its bars are the set's
+  // (O-I #849 round 21: its time signature, model.rs signature_of).
   const quantize = document?.globalQuantize ?? null
-  const play = {launch: (track: number, at: LiveClipAt) => player().then(acts => acts.launch({path: set.path, track, at}, set.tempo_bpm, quantize)),
-    launchRow: (row: number, slots: readonly RowSlot[]) => player().then(acts => acts.launchRow(set.path, row, set.tempo_bpm, slots, quantize)),
+  const bar = barBeats(document?.signature)
+  const play = {launch: (track: number, at: LiveClipAt) => player().then(acts => acts.launch({path: set.path, track, at}, set.tempo_bpm, quantize, bar)),
+    launchRow: (row: number, slots: readonly RowSlot[]) => player().then(acts => acts.launchRow(set.path, row, set.tempo_bpm, slots, quantize, bar)),
     stop: (track: number) => player().then(acts => acts.stop(set.path, track, set.tracks[track]?.name ?? 'the track')),
     stopAll: () => player().then(acts => acts.stopAll()),
     reenable: (parameter?: string) => player().then(acts => acts.reenable(parameter))}

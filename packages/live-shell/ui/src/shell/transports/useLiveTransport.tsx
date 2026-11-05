@@ -5,14 +5,15 @@ import type {UseModeTransport} from '../modeTransports'
 import {PITCH_CLASS_NAMES} from '../../live/modes'
 import {setLiveModeHold, useLiveModeInForce} from '../../native/liveModeCatalogue'
 import {MidiMapHost, MidiMapToggles} from '../../live/midiMap/midiMapControls'
-import {clipAddressOf, useLiveClipPlay} from '../../live/clipPlayer'
+import {clipAddressOf, SET_QUANTIZE, useLiveClipPlay} from '../../live/clipPlayer'
+import {DEFAULT_SIGNATURE} from '../document'
 import {useLiveEngineTransport} from '../../live/liveEngine'
 import {useLiveArm, useLiveRecord} from '../../live/liveTake'
 import {useLiveTorusReading} from '../../live/torusInstrument'
 import {setSelectionOf} from '../liveSelection'
 import {useOptionalContinuity} from '../../continuity/workspace'
 
-export const useLiveTransport: UseModeTransport = ({tempoBpm, setPath = null}) => {
+export const useLiveTransport: UseModeTransport = ({tempoBpm, setPath = null, quantize = null, signature = null}) => {
   const {reading, hold, refresh, groups, mode, line} = useLiveModeInForce()
   const ready = reading.state === 'ready'
   const choice = mode.state === 'in-force' ? mode.selection : null
@@ -36,6 +37,16 @@ export const useLiveTransport: UseModeTransport = ({tempoBpm, setPath = null}) =
     record,
     arm,
     tempo: {readout: {value: tempoBpm?.toFixed(2) ?? '—', title: 'Tempo — the set\'s tempo · document read-only until the editing owner lands'}},
+    // The transport's Quantize and the signature are the open set's, as its owner reads them (O-I #849 round 21: model.rs global_quantize,
+    // signature_of); a set that keeps none Live names stands at Live's own, as its launches and its ruler do. Read here; Live writes them.
+    ...(setPath ? {
+      quantize: {readout: {value: quantize ?? SET_QUANTIZE, title: quantize
+        ? `Quantize — the set's launch quantize (Live's GlobalQuantisation): every clip set to Global lands on ${quantize === 'none' ? 'no grid' : `its ${quantize}`}. Read from the set; Live writes it.`
+        : `Quantize — the set's launch quantize: the set keeps none Live names, so a clip set to Global lands on the bar, Live's own. Live writes it.`}},
+      signature: {readout: {value: `${(signature ?? DEFAULT_SIGNATURE).numerator} / ${(signature ?? DEFAULT_SIGNATURE).denominator}`, title: signature
+        ? `Signature — the set's time signature: a bar is ${signature.numerator} beats of a 1/${signature.denominator} note, on the ruler and the launch grid. Read from the set; Live writes it.`
+        : 'Signature — the set keeps no time signature its owner reads, so a bar is four beats (Live\'s 4/4), on the ruler and the launch grid.'}},
+    } : {}),
     root: {control: <select aria-label="Root note" title={`Root — the mode in force's root. ${line}`} disabled={!ready}
       value={ready ? String(hold.root) : ''} onChange={event => setLiveModeHold({root: Number(event.target.value)})}>
       {ready ? PITCH_CLASS_NAMES.map((name, pitch) => <option key={pitch} value={pitch}>{name}</option>) : <option>—</option>}

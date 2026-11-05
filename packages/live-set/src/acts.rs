@@ -101,6 +101,18 @@ pub enum SetAct {
     /// Consolidate (⌘J): what a MIDI part's arrangement clips play between
     /// the beats `from` and `to` of the ruler, made one clip there.
     ClipsConsolidate { track: usize, from: f64, to: f64 },
+    /// Crop (⇧⌘J; Live's Crop Clip, the Live Object Model's `Clip.crop`, lom/LOM-INVENTORY.md): the clip keeps only its loop,
+    /// or its start to its end where it does not loop — and, in Arrangement view with a stretch of the ruler selected over it
+    /// (`from`–`to`, in beats), only that stretch first (DLW build ruling 2026-11-05: "the clip keeps only its loop or
+    /// selection"). An audio clip keeps it as a new sample beside the set ([`crop_audio`]).
+    ClipCrop {
+        track: usize,
+        clip: ClipAt,
+        #[serde(default)]
+        from: Option<f64>,
+        #[serde(default)]
+        to: Option<f64>,
+    },
     /// A recorded pass (O-I #855; DLW §21.1 "Record a part and each pass lies
     /// as a take lane under its track"): the notes played (`{p, at, len,
     /// vel}`, each `at` a beat of the take's own time) made one MIDI clip of
@@ -2328,9 +2340,30 @@ pub(crate) struct Consolidated {
     relative: String,
     path: String,
     bytes: usize,
+    crc: u16,
     frames: u64,
     rate: u32,
     written: u64,
+}
+
+/// Live's `OriginalCrc` of a sample file: CRC-16/UMTS (polynomial 0x8005, from 0, neither reflected nor inverted) over its first
+/// 16 KiB, the whole of a shorter file. Decoded from the documents: each `OriginalCrc` the template "Piano and voices mastering"
+/// keeps beside a sample on this machine is that sum of the file it names (evidence/sets/template-piano-voices-mastering.xml:228252,
+/// `Samples/Imported/piano2.mp3`, 33450; the other two imported takes and the Consolidate renders alike); no other 16-bit sum of
+/// a prefix, a suffix or the whole file matches them all.
+pub fn original_crc(bytes: &[u8]) -> u16 {
+    let mut crc: u16 = 0;
+    for byte in bytes.iter().take(16 * 1024) {
+        crc ^= u16::from(*byte) << 8;
+        for _ in 0..8 {
+            crc = if crc & 0x8000 != 0 {
+                (crc << 1) ^ 0x8005
+            } else {
+                crc << 1
+            };
+        }
+    }
+    crc
 }
 
 /// A WAV file's channels, rate and frames, read from its `fmt ` and `data` chunks; refused in words for what is not one.
@@ -2373,16 +2406,56 @@ fn wav_shape(wav: &[u8]) -> Result<(u16, u32, u64), String> {
     Ok((channels, rate, (data / usize::from(block)) as u64))
 }
 
+/// The `SampleRef` of a sample kept beside the set, in the template's shape: the `FileRef` by its path from the set's folder
+/// (`RelativePathType` 1, the type the corpus keeps for a path from the document's folder, evidence/sets/rack-chunky-shine.xml:2904
+/// and template-piano-voices-mastering.xml:237230; Live's own project type is not attested) and whole, `Type` 2, its size and
+/// Live's `OriginalCrc` of it ([`original_crc`]), then `LastModDate`, `SourceContext`, `SampleUsageHint`, `DefaultDuration`
+/// (frames) and `DefaultSampleRate`.
+fn sample_ref(sample: &Consolidated) -> Element {
+    let valued = |name: &str, value: &str| {
+        let mut e = Element::new(name);
+        e.set_attr("Value", value);
+        e
+    };
+    let mut file = Element::new("FileRef");
+    file.children = vec![
+        valued("RelativePathType", "1"),
+        valued("RelativePath", &sample.relative),
+        valued("Path", &sample.path),
+        valued("Type", "2"),
+        valued("LivePackName", ""),
+        valued("LivePackId", ""),
+        valued("OriginalFileSize", &sample.bytes.to_string()),
+        valued("OriginalCrc", &sample.crc.to_string()),
+    ];
+    let mut reference = Element::new("SampleRef");
+    reference.children = vec![
+        file,
+        valued("LastModDate", &sample.written.to_string()),
+        Element::new("SourceContext"),
+        valued("SampleUsageHint", "0"),
+        valued("DefaultDuration", &sample.frames.to_string()),
+        valued("DefaultSampleRate", &sample.rate.to_string()),
+    ];
+    reference
+}
+
+/// An audio clip made to play `sample` ([`sample_ref`]), in place of the `SampleRef` it carried.
+fn set_sample(clip: &mut Element, sample: &Consolidated) {
+    let reference = sample_ref(sample);
+    match clip.children.iter_mut().find(|c| c.name == "SampleRef") {
+        Some(standing) => *standing = reference,
+        None => clip.children.push(reference),
+    }
+}
+
 /// Consolidate on an audio part (O-I #743; manual §10.9 "In Arrangement view, Split (⌘E), Consolidate (⌘J)"): the clips of
 /// part `track` across beats `from`–`to` give way to one AudioClip there (as `lay_over` lays any clip over others) that plays
 /// `sample`, what they played in the stretch as the engine rendered them alone (live-engine `render_clips_alone`). The clip is
 /// the first clip's own, made to play the whole sample once from its first frame: unwarped (session-model.md §5: "Unwarped
 /// playback (`IsWarped=false`) plays the sample at original rate"), its markers in seconds (`marker_scale`), at unity gain and
 /// pitch, with no fade and no clip envelope (what those did is in the sample), and Live's own pair of warp markers at the set's
-/// tempo. Its `SampleRef` is in the template's shape: the `FileRef` by its path from the set's folder (`RelativePathType` 1, the
-/// type the corpus keeps for a path from the document's folder) and whole, `Type` 2, its size, `OriginalCrc` 0 (no decode says
-/// how Live computes it), then `LastModDate`, `SourceContext`, `SampleUsageHint`, `DefaultDuration` (frames) and
-/// `DefaultSampleRate`.
+/// tempo. Its `SampleRef` is in the template's shape ([`sample_ref`]).
 fn audio_consolidate(
     root: &mut Element,
     track: usize,
@@ -2481,35 +2554,7 @@ fn audio_consolidate(
             marker("1", 0.03125 * 60.0 / bpm, 0.03125),
         ];
     }
-    let valued = |name: &str, value: &str| {
-        let mut e = Element::new(name);
-        e.set_attr("Value", value);
-        e
-    };
-    let mut file = Element::new("FileRef");
-    file.children = vec![
-        valued("RelativePathType", "1"),
-        valued("RelativePath", &sample.relative),
-        valued("Path", &sample.path),
-        valued("Type", "2"),
-        valued("LivePackName", ""),
-        valued("LivePackId", ""),
-        valued("OriginalFileSize", &sample.bytes.to_string()),
-        valued("OriginalCrc", "0"),
-    ];
-    let mut reference = Element::new("SampleRef");
-    reference.children = vec![
-        file,
-        valued("LastModDate", &sample.written.to_string()),
-        Element::new("SourceContext"),
-        valued("SampleUsageHint", "0"),
-        valued("DefaultDuration", &sample.frames.to_string()),
-        valued("DefaultSampleRate", &sample.rate.to_string()),
-    ];
-    match made.children.iter_mut().find(|c| c.name == "SampleRef") {
-        Some(standing) => *standing = reference,
-        None => made.children.push(reference),
-    }
+    set_sample(&mut made, sample);
     let was = lane_ids(part);
     let target = listed_mut(root, track)?;
     edit::lay_over(target, "Sample", from, to, Some(bpm), vec![made])?;
@@ -2552,7 +2597,6 @@ pub fn consolidate_audio(
     to: f64,
     wav: &[u8],
 ) -> Result<Value, String> {
-    use sha2::{Digest, Sha256};
     if !(from.is_finite() && to.is_finite() && to > from) {
         return Err("Consolidate takes a stretch of the ruler: its end after its start".into());
     }
@@ -2562,7 +2606,7 @@ pub fn consolidate_audio(
             CONSOLIDATED_BYTES_MAX / (1024 * 1024)
         ));
     }
-    let (_channels, rate, frames) = wav_shape(wav)?;
+    wav_shape(wav)?;
     let (_, root) = edit::open(path)?;
     let part = track_at(&root, track)?;
     let named = edit::main_lane(part)
@@ -2576,54 +2620,85 @@ pub fn consolidate_audio(
         .filter(|name| !name.is_empty())
         .unwrap_or("Consolidated")
         .replace(['/', ':', '\\'], "-");
+    keep_sample(
+        path,
+        expected_revision,
+        &SetAct::ClipsConsolidate { track, from, to },
+        Kept {
+            dir: CONSOLIDATE_DIR,
+            ignore: CONSOLIDATE_IGNORE,
+            named: &named,
+            refused: "nothing was consolidated",
+        },
+        wav,
+    )
+}
+
+/// Where a sample an act keeps beside the set goes ([`keep_sample`]): its folder from the set's, the `.gitignore` written there,
+/// the file's name before its hash, and the words a refusal ends in.
+struct Kept<'a> {
+    dir: &'a str,
+    ignore: &'a str,
+    named: &'a str,
+    refused: &'a str,
+}
+
+/// Keep `wav`, a WAV file's bytes, beside the set at `path` under `kept.dir` by its content (`<name> [<its sha256's first 16
+/// hex>].wav`: the same sound is one file, and `kept.ignore` keeps them out of git, DLW §10.3 "large media is held by its content
+/// hash, out of git"), and make `act` with it against the set's revision: the sample is written once the act is made in the
+/// document, and the document once the sample is written, so a refusal on either side leaves neither. Answered as the act, with
+/// the sample (`path`, `sha256`, `bytes`, `frames`, `rate`); refused for a name that holds another sound.
+fn keep_sample(
+    path: &str,
+    expected_revision: &str,
+    act: &SetAct,
+    kept: Kept,
+    wav: &[u8],
+) -> Result<Value, String> {
+    use sha2::{Digest, Sha256};
+    let (_channels, rate, frames) = wav_shape(wav)?;
     let hex: String = Sha256::digest(wav)
         .iter()
         .map(|b| format!("{b:02x}"))
         .collect();
     let set = std::path::Path::new(path);
     let folder = set.parent().ok_or("the set has no parent directory")?;
-    let relative = format!("{CONSOLIDATE_DIR}/{named} [{}].wav", &hex[..16]);
+    let relative = format!("{}/{} [{}].wav", kept.dir, kept.named, &hex[..16]);
     let file = folder.join(&relative);
-    let kept = std::fs::read(&file).ok();
-    if kept.as_deref().is_some_and(|kept| kept != wav) {
+    let standing = std::fs::read(&file).ok();
+    if standing.as_deref().is_some_and(|standing| standing != wav) {
         return Err(format!(
-            "{relative} beside the set holds another sound: nothing was consolidated"
+            "{relative} beside the set holds another sound: {}",
+            kept.refused
         ));
     }
-    let consolidated = Consolidated {
+    let sample = Consolidated {
         relative: relative.clone(),
         path: file.to_string_lossy().into_owned(),
         bytes: wav.len(),
+        crc: original_crc(wav),
         frames,
         rate,
         written: std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .map_or(0, |d| d.as_secs()),
     };
-    // The sample is written once the act is made in the document, and the document once the sample is written: a refusal on
-    // either side leaves neither.
     let written = std::cell::Cell::new(false);
-    let answered = acted(
-        path,
-        expected_revision,
-        &SetAct::ClipsConsolidate { track, from, to },
-        Some(&consolidated),
-        &|| {
-            if kept.is_some() {
-                return Ok(());
-            }
-            let dir = folder.join(CONSOLIDATE_DIR);
-            std::fs::create_dir_all(&dir)
-                .map_err(|e| format!("The consolidated sample's folder could not be made: {e}"))?;
-            let ignore = dir.join(".gitignore");
-            if !ignore.exists() {
-                staged_write(&ignore, CONSOLIDATE_IGNORE.as_bytes())?;
-            }
-            staged_write(&file, wav)?;
-            written.set(true);
-            Ok(())
-        },
-    );
+    let answered = acted(path, expected_revision, act, Some(&sample), &|| {
+        if standing.is_some() {
+            return Ok(());
+        }
+        let dir = folder.join(kept.dir);
+        std::fs::create_dir_all(&dir)
+            .map_err(|e| format!("The sample's folder beside the set could not be made: {e}"))?;
+        let ignore = dir.join(".gitignore");
+        if !ignore.exists() {
+            staged_write(&ignore, kept.ignore.as_bytes())?;
+        }
+        staged_write(&file, wav)?;
+        written.set(true);
+        Ok(())
+    });
     match answered {
         Ok(mut answer) => {
             answer["sample"] = json!({"path": relative, "sha256": format!("sha256:{hex}"), "bytes": wav.len(), "frames": frames, "rate": rate});
@@ -2636,6 +2711,316 @@ pub fn consolidate_audio(
             Err(why)
         }
     }
+}
+
+/// Where Live keeps a cropped sample, from the set's own folder: beside [`CONSOLIDATE_DIR`] in Live's processed folders (the
+/// template keeps `Samples/Processed/Consolidate` and `Samples/Processed/Reverse`; no set here holds a crop, so the folder is
+/// named as those are).
+pub const CROP_DIR: &str = "Samples/Processed/Crop";
+/// What keeps the cropped samples out of git, written into [`CROP_DIR`] where it holds none yet.
+const CROP_IGNORE: &str =
+    "# Cropped samples, held by their content hash out of git (DLW §10.3)\n*.wav\n";
+
+/// The ruler's stretch an act names by `from` and `to`: both or neither.
+pub fn span_of(from: Option<f64>, to: Option<f64>) -> Result<Option<(f64, f64)>, String> {
+    match (from, to) {
+        (None, None) => Ok(None),
+        (Some(from), Some(to)) if from.is_finite() && to.is_finite() && to > from => {
+            Ok(Some((from, to)))
+        }
+        _ => Err("A selection is a stretch of the ruler: its start, and its end after it".into()),
+    }
+}
+
+/// An audio clip's warp markers (`SecTime`, `BeatTime`), in order along the file, each a step further on both.
+fn warp_points(clip: &Element) -> Vec<(f64, f64)> {
+    let mut points: Vec<(f64, f64)> = clip
+        .child("WarpMarkers")
+        .map(|m| {
+            m.children
+                .iter()
+                .filter_map(|w| {
+                    let at = |name: &str| w.attr(name).and_then(|v| v.parse::<f64>().ok());
+                    Some((at("SecTime")?, at("BeatTime")?))
+                })
+                .collect()
+        })
+        .unwrap_or_default();
+    points.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(std::cmp::Ordering::Equal));
+    points.dedup_by(|b, a| b.0 <= a.0 || b.1 <= a.1);
+    points
+}
+
+/// Where `x` falls along `points` (each `(x, y)`, rising on both), read off the straight line between the two markers it lies
+/// between — before the first or past the last, the line of the nearest two runs on (devices/warp-probe.md: a segment's tempo is
+/// the ratio of its two markers).
+fn along(points: &[(f64, f64)], x: f64) -> f64 {
+    let at = points
+        .windows(2)
+        .position(|w| x < w[1].0)
+        .unwrap_or(points.len().saturating_sub(2));
+    let (a, b) = (points[at], points[at + 1]);
+    a.1 + (x - a.0) * (b.1 - a.1) / (b.0 - a.0)
+}
+
+/// A clip as Crop leaves it, and for an audio clip the stretch of its sample it keeps, in seconds of the file (`from`, `to`).
+struct Cropped {
+    clip: Element,
+    named: String,
+    looped: bool,
+    beats: f64,
+    seconds: Option<(f64, f64)>,
+}
+
+/// Crop's clip ([`SetAct::ClipCrop`]), made from clip `at` of part `track` and not yet laid: with `span`, first cut to the
+/// stretch of the ruler it shares with it (`edit::crop`, as Split cuts), then cropped to its region (`edit::crop_to_region`: its
+/// loop, else its start to its end; its notes, markers and clip envelopes held to it). An audio clip's region is a stretch of its
+/// sample: its markers' own seconds unwarped, else read off its warp markers, which are moved with it — those inside the region
+/// kept, one at each end where the region cuts between two, so the cropped sample keeps its tempo.
+fn cropped(
+    root: &Element,
+    track: usize,
+    at: ClipAt,
+    span: Option<(f64, f64)>,
+) -> Result<Cropped, String> {
+    let part = track_at(root, track)?;
+    let mut clip = clip_at(part, at)?.clone();
+    let named = value_of(&clip, "Name")
+        .filter(|n| !n.is_empty())
+        .unwrap_or("the clip")
+        .to_string();
+    let scale = edit::marker_scale(&clip, edit::steady_tempo(root))?;
+    if let Some((from, to)) = span {
+        if matches!(at, ClipAt::Slot(_)) {
+            return Err(
+                "A clip is cropped to a selection in Arrangement view, where it lies on the ruler"
+                    .into(),
+            );
+        }
+        let (start, end) = (
+            edit::num(&clip, "CurrentStart").ok_or("the clip carries no place in the document")?,
+            edit::num(&clip, "CurrentEnd").ok_or("the clip carries no place in the document")?,
+        );
+        let (from, to) = (from.max(start), to.min(end));
+        if to <= from {
+            return Err(format!(
+                "The selection holds none of {named}: select a stretch of the ruler over it, between beat {} and beat {}",
+                number_text(start),
+                number_text(end)
+            ));
+        }
+        edit::crop(&mut clip, from, to, scale)?;
+    }
+    let looped = clip.child("Loop").and_then(|lp| edit::flag(lp, "LoopOn")) == Some(true);
+    let audio = clip.name == "AudioClip";
+    let warped = audio && edit::flag(&clip, "IsWarped") != Some(false);
+    let points = warp_points(&clip);
+    let (from, length) = edit::crop_to_region(&mut clip, scale)?;
+    let seconds = if !audio {
+        None
+    } else if warped {
+        if points.len() < 2 {
+            return Err(format!(
+                "{named} is warped and holds fewer than two warp markers: nothing says which stretch of its sample its beats play"
+            ));
+        }
+        let flipped: Vec<(f64, f64)> = points.iter().map(|(s, b)| (*b, *s)).collect();
+        Some((along(&flipped, from), along(&flipped, from + length)))
+    } else {
+        Some((from, from + length))
+    };
+    if let Some((s0, s1)) = seconds {
+        if points.len() >= 2 {
+            let (b0, b1) = (along(&points, s0), along(&points, s1));
+            let mut moved = vec![(0.0, 0.0)];
+            moved.extend(
+                points
+                    .iter()
+                    .filter(|(s, _)| *s > s0 && *s < s1)
+                    .map(|(s, b)| (s - s0, b - b0)),
+            );
+            moved.push((s1 - s0, b1 - b0));
+            if let Some(markers) = clip.child_mut("WarpMarkers") {
+                markers.children = moved
+                    .iter()
+                    .enumerate()
+                    .map(|(id, (sec, beat))| {
+                        let mut m = Element::new("WarpMarker");
+                        m.set_attr("Id", &id.to_string());
+                        m.set_attr("SecTime", &number_text(*sec));
+                        m.set_attr("BeatTime", &number_text(*beat));
+                        m
+                    })
+                    .collect();
+            }
+        }
+    }
+    Ok(Cropped {
+        clip,
+        named,
+        looped,
+        beats: length / scale,
+        seconds,
+    })
+}
+
+/// Crop (⇧⌘J, see [`SetAct::ClipCrop`]) on clip `at` of part `track`, in place: a MIDI clip as [`cropped`] makes it; an audio
+/// clip only with `sample`, the stretch of its sample it keeps as the host cut it ([`crop_audio`]), which it then plays.
+fn clip_crop(
+    root: &mut Element,
+    track: usize,
+    at: ClipAt,
+    span: Option<(f64, f64)>,
+    sample: Option<&Consolidated>,
+) -> Result<Done, String> {
+    let Cropped {
+        mut clip,
+        named,
+        looped,
+        beats,
+        seconds,
+    } = cropped(root, track, at, span)?;
+    let kept = match (seconds, sample) {
+        (None, None) => {
+            let notes = edit::notes_json(&clip).len();
+            format!(", {notes} note{} kept", if notes == 1 { "" } else { "s" })
+        }
+        (None, Some(_)) => {
+            return Err(format!(
+                "{named} is a MIDI clip: it is cropped as notes, and a sample is an audio clip's"
+            ))
+        }
+        (Some(_), None) => {
+            return Err("Cropping an audio clip writes a new sample of what it keeps: the host cuts it from the clip's own (live_engine_crop), and the set keeps it beside itself".into())
+        }
+        (Some((s0, s1)), Some(sample)) => {
+            let want = (s1 - s0) * f64::from(sample.rate);
+            if (sample.frames as f64 - want).abs() > 1.0 {
+                return Err(format!(
+                    "The sample runs {} frames, and the stretch {named} keeps {} frames of its own: it is not a cut of the clip",
+                    sample.frames,
+                    number_text(want.round())
+                ));
+            }
+            set_sample(&mut clip, sample);
+            format!(
+                ", {} second{} of sound written beside the set as {}",
+                number_text(((s1 - s0) * 1000.0).round() / 1000.0),
+                if s1 - s0 == 1.0 { "" } else { "s" },
+                sample.relative
+            )
+        }
+    };
+    let what = match (span, looped) {
+        (_, true) => "its loop",
+        (Some(_), false) => "the selection",
+        (None, false) => "its start and end",
+    };
+    let part = edit::track_at_mut(root, track)?;
+    *edit::clip_at_mut(part, at)? = clip;
+    let place = match at {
+        ClipAt::Arrangement(j) => json!({"track": track, "arrangement": j}),
+        ClipAt::Slot(scene) => json!({"track": track, "slot": scene}),
+    };
+    Ok(Done {
+        words: format!(
+            "Cropped {named} to {what}: {} beat{}{kept}.",
+            number_text(beats),
+            if beats == 1.0 { "" } else { "s" }
+        ),
+        at: Some(place),
+        places: Places::None,
+    })
+}
+
+/// What Crop cuts from an audio clip's sample ([`crop_source`]): the file the clip plays (its `RelativePath` from the set's
+/// folder where one is there, else its `Path`: live-engine `lay_samples`' rule) and the stretch of it, in seconds.
+#[derive(Debug, Clone, PartialEq)]
+pub struct CropSource {
+    pub file: std::path::PathBuf,
+    pub from_seconds: f64,
+    pub to_seconds: f64,
+}
+
+/// Where the host cuts Crop's sample from, for clip `at` of audio part `track` of the set at `path`, cropped to `span` of the
+/// ruler or to its region ([`cropped`]); refused in words for a MIDI clip and for one that names no sample file.
+pub fn crop_source(
+    path: &str,
+    track: usize,
+    at: ClipAt,
+    span: Option<(f64, f64)>,
+) -> Result<CropSource, String> {
+    let (_, root) = edit::open(path)?;
+    let original = clip_at(track_at(&root, track)?, at)?;
+    let file = original.child("SampleRef").and_then(|r| r.child("FileRef"));
+    let stored = |field: &str| {
+        file.and_then(|f| value_of(f, field))
+            .filter(|v| !v.is_empty())
+            .map(str::to_string)
+    };
+    let Cropped { named, seconds, .. } = cropped(&root, track, at, span)?;
+    let Some((from_seconds, to_seconds)) = seconds else {
+        return Err(format!(
+            "{named} is a MIDI clip: Crop keeps its notes, and cuts no sample"
+        ));
+    };
+    let folder = std::path::Path::new(path)
+        .parent()
+        .ok_or("the set has no parent directory")?;
+    let beside = stored("RelativePath")
+        .map(|relative| folder.join(relative))
+        .filter(|file| file.is_file());
+    let file = beside
+        .or_else(|| stored("Path").map(std::path::PathBuf::from))
+        .ok_or_else(|| format!("{named} names no sample file: there is no sound to crop"))?;
+    Ok(CropSource {
+        file,
+        from_seconds,
+        to_seconds,
+    })
+}
+
+/// Crop on audio clip `at` of part `track` of the set at `path` ([`SetAct::ClipCrop`], to `span` of the ruler or its region),
+/// against its revision: `wav`, the stretch of its sample the host cut ([`crop_source`]), a WAV file's bytes, is kept beside the
+/// set under [`CROP_DIR`] by its content (`<clip's name> [<its sha256's first 16 hex>].wav`, as Consolidate keeps one), and the
+/// clip cropped to play it. Answered as any act, with the sample; refused in words, with no sample left behind, for a cut that is
+/// not one of the clip's stretch, a clip that is not an audio clip, and a set that changed since it was read.
+pub fn crop_audio(
+    path: &str,
+    expected_revision: &str,
+    track: usize,
+    at: ClipAt,
+    span: Option<(f64, f64)>,
+    wav: &[u8],
+) -> Result<Value, String> {
+    if wav.len() > CONSOLIDATED_BYTES_MAX {
+        return Err(format!(
+            "A cropped sample is at most {} MiB",
+            CONSOLIDATED_BYTES_MAX / (1024 * 1024)
+        ));
+    }
+    let (_, root) = edit::open(path)?;
+    let named = value_of(clip_at(track_at(&root, track)?, at)?, "Name")
+        .filter(|name| !name.is_empty())
+        .unwrap_or("Cropped")
+        .replace(['/', ':', '\\'], "-");
+    keep_sample(
+        path,
+        expected_revision,
+        &SetAct::ClipCrop {
+            track,
+            clip: at,
+            from: span.map(|s| s.0),
+            to: span.map(|s| s.1),
+        },
+        Kept {
+            dir: CROP_DIR,
+            ignore: CROP_IGNORE,
+            named: &named,
+            refused: "nothing was cropped",
+        },
+        wav,
+    )
 }
 
 /// Write `bytes` to `path` through a file beside it, renamed into place.
@@ -3140,6 +3525,12 @@ fn acted(
             SetAct::ClipsConsolidate { track, from, to } => {
                 clips_consolidate(root, *track, *from, *to, sample)?
             }
+            SetAct::ClipCrop {
+                track,
+                clip,
+                from,
+                to,
+            } => clip_crop(root, *track, *clip, span_of(*from, *to)?, sample)?,
             SetAct::TakeRecord {
                 track,
                 start,
@@ -5197,7 +5588,8 @@ mod tests {
                 String::new(),
                 String::new(),
                 wav.len().to_string(),
-                "0".into()
+                // Live's OriginalCrc of the file (CRC-16/UMTS over its first 16 KiB), reckoned apart from the code under test.
+                "44560".into()
             ]
         );
         assert_eq!(
@@ -5300,5 +5692,393 @@ mod tests {
         )
         .unwrap_err();
         assert!(refused.contains("the engine renders it"), "{refused}");
+    }
+
+    // Live's OriginalCrc (CRC-16/UMTS over a file's first 16 KiB): the catalogue's check value, and only the first 16 KiB count.
+    #[test]
+    fn original_crc_is_crc_16_umts_over_a_files_first_16_kib() {
+        assert_eq!(
+            original_crc(b"123456789"),
+            0xFEE8,
+            "CRC-16/UMTS's check value"
+        );
+        assert_eq!(original_crc(b""), 0);
+        let mut long = vec![7u8; 20_000];
+        let whole = original_crc(&long);
+        long[16_384] = 8;
+        assert_eq!(
+            original_crc(&long),
+            whole,
+            "a byte past 16 KiB does not count"
+        );
+        long[16_383] = 8;
+        assert_ne!(
+            original_crc(&long),
+            whole,
+            "the last byte of the first 16 KiB does"
+        );
+    }
+
+    /// A MIDI part and an audio part at 120 BPM for Crop. Verse (0–8) loops 2–6, its start 1 into the loop and its end at 8, with a
+    /// note before the loop, two in it (the second running past its end) and one at its end, and a clip envelope with Live's first
+    /// event and three more (one before the loop, one in it, one past it). Chorus (10–14) does not loop: it starts at 1 and ends at
+    /// 5, its hidden loop 0–2. On the audio part, Room (0–2) unwarped, playing 0.5–1.5 seconds of room.wav, and Swing (4–8) warped,
+    /// looping beats 2–6 over three warp markers (4 beats in the first 2 seconds, 3 in the next one).
+    const CROP_SET: &str = r#"<?xml version="1.0" encoding="UTF-8"?>
+<Ableton MajorVersion="5" MinorVersion="12.0_12049"><LiveSet><Tracks>
+<MidiTrack Id="12"><Name><EffectiveName Value="Keys"/><UserName Value=""/></Name><Color Value="26"/><TrackGroupId Value="-1"/>
+<DeviceChain><MainSequencer><ClipSlotList>
+<ClipSlot Id="0"><LomId Value="0"/><ClipSlot><Value><MidiClip Id="0"><CurrentStart Value="0"/><CurrentEnd Value="4"/><Loop><LoopStart Value="1"/><LoopEnd Value="3"/><StartRelative Value="0"/><LoopOn Value="false"/><OutMarker Value="3"/><HiddenLoopStart Value="0"/><HiddenLoopEnd Value="4"/></Loop><Name Value="Riff"/><Notes><KeyTracks><KeyTrack Id="0"><Notes><MidiNoteEvent Time="0" Duration="1" Velocity="100" OffVelocity="64" IsEnabled="true" NoteId="1"/><MidiNoteEvent Time="2" Duration="1" Velocity="100" OffVelocity="64" IsEnabled="true" NoteId="2"/></Notes><MidiKey Value="60"/></KeyTrack></KeyTracks><NoteIdGenerator><NextId Value="3"/></NoteIdGenerator></Notes></MidiClip></Value></ClipSlot><HasStop Value="true"/><NeedRefreeze Value="true"/></ClipSlot>
+</ClipSlotList>
+<ClipTimeable><ArrangerAutomation><Events>
+<MidiClip Id="0" Time="0"><CurrentStart Value="0"/><CurrentEnd Value="8"/><Loop><LoopStart Value="2"/><LoopEnd Value="6"/><StartRelative Value="1"/><LoopOn Value="true"/><OutMarker Value="8"/><HiddenLoopStart Value="0"/><HiddenLoopEnd Value="8"/></Loop><Name Value="Verse"/><Envelopes><Envelopes><ClipEnvelope Id="0"><EnvelopeTarget><PointeeId Value="1500"/></EnvelopeTarget><Automation><Events><FloatEvent Id="0" Time="-63072000" Value="0"/><FloatEvent Id="1" Time="1" Value="0.2"/><FloatEvent Id="2" Time="3" Value="0.6"/><FloatEvent Id="3" Time="7" Value="1"/></Events></Automation></ClipEnvelope></Envelopes></Envelopes><Notes><KeyTracks><KeyTrack Id="0"><Notes><MidiNoteEvent Time="0" Duration="1" Velocity="100" OffVelocity="64" IsEnabled="true" NoteId="1"/><MidiNoteEvent Time="2" Duration="1" Velocity="90" OffVelocity="64" IsEnabled="true" NoteId="2"/><MidiNoteEvent Time="5.5" Duration="1" Velocity="80" OffVelocity="64" IsEnabled="true" NoteId="3"/><MidiNoteEvent Time="6" Duration="1" Velocity="70" OffVelocity="64" IsEnabled="true" NoteId="4"/></Notes><MidiKey Value="60"/></KeyTrack></KeyTracks><NoteIdGenerator><NextId Value="5"/></NoteIdGenerator></Notes></MidiClip>
+<MidiClip Id="1" Time="10"><CurrentStart Value="10"/><CurrentEnd Value="14"/><Loop><LoopStart Value="1"/><LoopEnd Value="5"/><StartRelative Value="0"/><LoopOn Value="false"/><OutMarker Value="5"/><HiddenLoopStart Value="0"/><HiddenLoopEnd Value="2"/></Loop><Name Value="Chorus"/><Notes><KeyTracks><KeyTrack Id="0"><Notes><MidiNoteEvent Time="1" Duration="1" Velocity="100" OffVelocity="64" IsEnabled="true" NoteId="1"/><MidiNoteEvent Time="3" Duration="1" Velocity="100" OffVelocity="64" IsEnabled="true" NoteId="2"/><MidiNoteEvent Time="4.5" Duration="1" Velocity="100" OffVelocity="64" IsEnabled="true" NoteId="3"/></Notes><MidiKey Value="62"/></KeyTrack></KeyTracks><NoteIdGenerator><NextId Value="4"/></NoteIdGenerator></Notes></MidiClip>
+</Events></ArrangerAutomation></ClipTimeable></MainSequencer><DeviceChain><Devices/></DeviceChain></DeviceChain></MidiTrack>
+<AudioTrack Id="8"><Name><EffectiveName Value="Vox"/><UserName Value=""/></Name><Color Value="26"/><TrackGroupId Value="-1"/>
+<DeviceChain><MainSequencer><ClipSlotList/><Sample><ArrangerAutomation><Events>
+<AudioClip Id="0" Time="0"><CurrentStart Value="0"/><CurrentEnd Value="2"/><Loop><LoopStart Value="0.5"/><LoopEnd Value="1.5"/><StartRelative Value="0"/><LoopOn Value="false"/><OutMarker Value="1.5"/><HiddenLoopStart Value="0"/><HiddenLoopEnd Value="2"/></Loop><Name Value="Room"/><Envelopes><Envelopes/></Envelopes><Disabled Value="false"/><IsWarped Value="false"/><Fades><FadeInLength Value="0.01"/><FadeOutLength Value="0"/></Fades><SampleVolume Value="0.5"/><WarpMarkers><WarpMarker Id="0" SecTime="0" BeatTime="0"/><WarpMarker Id="1" SecTime="0.015625" BeatTime="0.03125"/></WarpMarkers><SampleRef><FileRef><RelativePathType Value="1"/><RelativePath Value="room.wav"/><Path Value="/nowhere/room.wav"/><Type Value="2"/><LivePackName Value=""/><LivePackId Value=""/><OriginalFileSize Value="0"/><OriginalCrc Value="0"/></FileRef><LastModDate Value="0"/><SourceContext/><SampleUsageHint Value="0"/><DefaultDuration Value="96000"/><DefaultSampleRate Value="48000"/></SampleRef></AudioClip>
+<AudioClip Id="1" Time="4"><CurrentStart Value="4"/><CurrentEnd Value="8"/><Loop><LoopStart Value="2"/><LoopEnd Value="6"/><StartRelative Value="0"/><LoopOn Value="true"/><OutMarker Value="6"/><HiddenLoopStart Value="0"/><HiddenLoopEnd Value="7"/></Loop><Name Value="Swing"/><Envelopes><Envelopes/></Envelopes><Disabled Value="false"/><IsWarped Value="true"/><SampleVolume Value="1"/><WarpMarkers><WarpMarker Id="0" SecTime="0" BeatTime="0"/><WarpMarker Id="1" SecTime="2" BeatTime="4"/><WarpMarker Id="2" SecTime="3" BeatTime="7"/></WarpMarkers><SampleRef><FileRef><RelativePathType Value="1"/><RelativePath Value="swing.wav"/><Path Value=""/><Type Value="2"/><LivePackName Value=""/><LivePackId Value=""/><OriginalFileSize Value="0"/><OriginalCrc Value="0"/></FileRef><LastModDate Value="0"/><SourceContext/><SampleUsageHint Value="0"/><DefaultDuration Value="144000"/><DefaultSampleRate Value="48000"/></SampleRef></AudioClip>
+</Events></ArrangerAutomation></Sample></MainSequencer><DeviceChain><Devices/></DeviceChain></DeviceChain></AudioTrack>
+</Tracks><MainTrack><DeviceChain><Mixer><Tempo><Manual Value="120"/></Tempo></Mixer></DeviceChain></MainTrack><Scenes><Scene Id="0"><Name Value=""/></Scene></Scenes></LiveSet></Ableton>"#;
+
+    fn loop_of(clip: &Element) -> Vec<String> {
+        let lp = clip.child("Loop").unwrap();
+        [
+            "LoopStart",
+            "LoopEnd",
+            "StartRelative",
+            "LoopOn",
+            "OutMarker",
+            "HiddenLoopStart",
+            "HiddenLoopEnd",
+        ]
+        .iter()
+        .map(|m| value_of(lp, m).unwrap().to_string())
+        .collect()
+    }
+    fn notes_of(clip: &Element) -> Vec<(i64, f64, f64)> {
+        crate::edit::notes_json(clip)
+            .iter()
+            .map(|n| {
+                (
+                    n["id"].as_i64().unwrap(),
+                    n["at"].as_f64().unwrap(),
+                    n["len"].as_f64().unwrap(),
+                )
+            })
+            .collect()
+    }
+    fn arranged(path: &str, track: usize, j: usize) -> Element {
+        let (root, _) = reread(path);
+        crate::edit::clip_at(
+            crate::edit::track_at(&root, track).unwrap(),
+            ClipAt::Arrangement(j),
+        )
+        .unwrap()
+        .clone()
+    }
+    fn crop(track: usize, clip: ClipAt, span: Option<(f64, f64)>) -> SetAct {
+        SetAct::ClipCrop {
+            track,
+            clip,
+            from: span.map(|s| s.0),
+            to: span.map(|s| s.1),
+        }
+    }
+
+    // DLW build ruling 2026-11-05 (Crop, ⇧⌘J; Live's Crop Clip, `Clip.crop`): a looped MIDI clip keeps only its loop — its markers
+    // from 0, its start kept in the loop, its notes in the loop by their ids (one cut at the loop's end), and its clip envelope held
+    // to the loop, the value it starts and ends at kept — standing where it stood on the ruler.
+    #[test]
+    fn crop_keeps_only_a_looped_midi_clips_loop_its_notes_and_envelope_held_to_it() {
+        let (_dir, path) = set_file(CROP_SET);
+        let done = run(&path, crop(0, ClipAt::Arrangement(0), None)).unwrap();
+        assert_eq!(done["act"], json!("clip_crop"));
+        assert_eq!(
+            done["done"],
+            json!("Cropped Verse to its loop: 4 beats, 2 notes kept.")
+        );
+        assert_eq!(done["at"], json!({"track": 0, "arrangement": 0}));
+        let clip = arranged(&path, 0, 0);
+        assert_eq!(loop_of(&clip), ["0", "4", "1", "true", "4", "0", "4"]);
+        assert_eq!(
+            (
+                value_of(&clip, "CurrentStart"),
+                value_of(&clip, "CurrentEnd"),
+                clip.attr("Time")
+            ),
+            (Some("0"), Some("8"), Some("0")),
+            "its place on the ruler stands"
+        );
+        assert_eq!(notes_of(&clip), [(2, 0.0, 1.0), (3, 3.5, 0.5)]);
+        let events: Vec<(String, String, String, String)> = clip
+            .find("ClipEnvelope")
+            .unwrap()
+            .find("Events")
+            .unwrap()
+            .children
+            .iter()
+            .map(|e| {
+                (
+                    e.name.clone(),
+                    e.attr("Id").unwrap().to_string(),
+                    e.attr("Time").unwrap().to_string(),
+                    e.attr("Value").unwrap().to_string(),
+                )
+            })
+            .collect();
+        let event = |id: &str, time: &str, value: &str| {
+            (
+                "FloatEvent".to_string(),
+                id.to_string(),
+                time.to_string(),
+                value.to_string(),
+            )
+        };
+        assert_eq!(
+            events,
+            [
+                event("0", "-63072000", "0"),
+                event("4", "0", "0.4"),
+                event("2", "1", "0.6"),
+                event("5", "4", "0.9"),
+            ],
+            "Live's first event stands; the line from 0.2 at beat -1 to 0.6 at 1 starts at 0.4, and from 0.6 at 1 to 1 at 5 ends at 0.9"
+        );
+    }
+
+    // An unlooped clip keeps its start to its end; with a selection of the ruler over it, only the selection (cut there as Split
+    // cuts), its hidden loop brace held within what it keeps.
+    #[test]
+    fn crop_keeps_an_unlooped_clips_start_to_end_or_the_selection_over_it() {
+        let (_dir, path) = set_file(CROP_SET);
+        let done = run(&path, crop(0, ClipAt::Arrangement(1), None)).unwrap();
+        assert_eq!(
+            done["done"],
+            json!("Cropped Chorus to its start and end: 4 beats, 3 notes kept.")
+        );
+        let clip = arranged(&path, 0, 1);
+        assert_eq!(loop_of(&clip), ["0", "4", "0", "false", "4", "0", "1"]);
+        assert_eq!(
+            notes_of(&clip),
+            [(1, 0.0, 1.0), (2, 2.0, 1.0), (3, 3.5, 0.5)]
+        );
+        let (_dir, path) = set_file(CROP_SET);
+        let done = run(&path, crop(0, ClipAt::Arrangement(1), Some((11.0, 13.0)))).unwrap();
+        assert_eq!(
+            done["done"],
+            json!("Cropped Chorus to the selection: 2 beats, 1 note kept.")
+        );
+        let clip = arranged(&path, 0, 1);
+        assert_eq!(
+            loop_of(&clip),
+            ["0", "2", "0", "false", "2", "0", "2"],
+            "a hidden brace left with nothing of its own covers what the clip keeps"
+        );
+        assert_eq!(
+            (
+                value_of(&clip, "CurrentStart"),
+                value_of(&clip, "CurrentEnd"),
+                clip.attr("Time")
+            ),
+            (Some("11"), Some("13"), Some("11"))
+        );
+        assert_eq!(
+            notes_of(&clip),
+            [(2, 1.0, 1.0)],
+            "the note at beat 12 of the ruler stays there"
+        );
+        // A session clip is cropped too, with no selection: it has no ruler.
+        let done = run(&path, crop(0, ClipAt::Slot(0), None)).unwrap();
+        assert_eq!(
+            done["done"],
+            json!("Cropped Riff to its start and end: 2 beats, 1 note kept.")
+        );
+        assert_eq!(done["at"], json!({"track": 0, "slot": 0}));
+        for (act, words) in [
+            (
+                crop(0, ClipAt::Slot(0), Some((0.0, 1.0))),
+                "cropped to a selection in Arrangement view",
+            ),
+            (
+                crop(0, ClipAt::Arrangement(1), Some((20.0, 22.0))),
+                "The selection holds none of Chorus: select a stretch of the ruler over it, between beat 11 and beat 13",
+            ),
+            (
+                SetAct::ClipCrop {
+                    track: 0,
+                    clip: ClipAt::Arrangement(1),
+                    from: Some(11.0),
+                    to: None,
+                },
+                "A selection is a stretch of the ruler",
+            ),
+        ] {
+            let before = standing(&path);
+            let refused = run(&path, act).unwrap_err();
+            assert!(refused.contains(words), "{refused}");
+            assert_eq!(standing(&path), before);
+        }
+    }
+
+    // An audio clip's crop is a new sample: the act alone is refused with where it is made, the host is told which stretch of
+    // which file to cut, and the cut is kept beside the set as Consolidate keeps one, the clip made to play it.
+    #[test]
+    fn crop_cuts_an_audio_clips_stretch_of_its_sample_and_the_clip_plays_the_cut_kept_beside_the_set(
+    ) {
+        let (dir, path) = set_file(CROP_SET);
+        let before = standing(&path);
+        let refused = run(&path, crop(1, ClipAt::Arrangement(0), None)).unwrap_err();
+        assert!(refused.contains("(live_engine_crop)"), "{refused}");
+        assert_eq!(standing(&path), before);
+        assert_eq!(
+            crop_source(&path, 1, ClipAt::Arrangement(0), None).unwrap(),
+            CropSource {
+                file: "/nowhere/room.wav".into(),
+                from_seconds: 0.5,
+                to_seconds: 1.5
+            },
+            "no room.wav beside the set: the file where the set stored it"
+        );
+        std::fs::write(dir.0.join("room.wav"), b"the room").unwrap();
+        assert_eq!(
+            crop_source(&path, 1, ClipAt::Arrangement(0), None)
+                .unwrap()
+                .file,
+            dir.0.join("room.wav"),
+            "beside the set first, as the engine reads it"
+        );
+        let midi = crop_source(&path, 0, ClipAt::Arrangement(0), None).unwrap_err();
+        assert!(midi.contains("is a MIDI clip"), "{midi}");
+        let short = float_wav(47_000, 48_000);
+        let refused =
+            crop_audio(&path, &before, 1, ClipAt::Arrangement(0), None, &short).unwrap_err();
+        assert!(refused.contains("it is not a cut of the clip"), "{refused}");
+        assert!(
+            !dir.0.join(CROP_DIR).exists(),
+            "a refused cut leaves no sample behind"
+        );
+        let wav = float_wav(48_000, 48_000);
+        let done = crop_audio(&path, &before, 1, ClipAt::Arrangement(0), None, &wav).unwrap();
+        let sha: String = {
+            use sha2::{Digest, Sha256};
+            Sha256::digest(&wav)
+                .iter()
+                .map(|b| format!("{b:02x}"))
+                .collect()
+        };
+        let relative = format!("Samples/Processed/Crop/Room [{}].wav", &sha[..16]);
+        assert_eq!(
+            done["done"],
+            json!(format!("Cropped Room to its start and end: 2 beats, 1 second of sound written beside the set as {relative}."))
+        );
+        assert_eq!(std::fs::read(dir.0.join(&relative)).unwrap(), wav);
+        assert_eq!(
+            std::fs::read_to_string(dir.0.join("Samples/Processed/Crop/.gitignore")).unwrap(),
+            "# Cropped samples, held by their content hash out of git (DLW §10.3)\n*.wav\n"
+        );
+        let clip = arranged(&path, 1, 0);
+        assert_eq!(
+            loop_of(&clip),
+            ["0", "1", "0", "false", "1", "0", "1"],
+            "its markers in seconds of the cut"
+        );
+        let file = clip.find("FileRef").unwrap();
+        assert_eq!(
+            [
+                "RelativePathType",
+                "RelativePath",
+                "OriginalFileSize",
+                "OriginalCrc"
+            ]
+            .map(|f| value_of(file, f).unwrap().to_string()),
+            [
+                "1".to_string(),
+                relative.clone(),
+                wav.len().to_string(),
+                "36499".into()
+            ]
+        );
+        assert_eq!(
+            value_of(clip.child("SampleRef").unwrap(), "DefaultDuration"),
+            Some("48000")
+        );
+        let warp: Vec<(String, String)> = clip
+            .child("WarpMarkers")
+            .unwrap()
+            .children
+            .iter()
+            .map(|m| {
+                (
+                    m.attr("SecTime").unwrap().to_string(),
+                    m.attr("BeatTime").unwrap().to_string(),
+                )
+            })
+            .collect();
+        assert_eq!(
+            warp,
+            [("0".to_string(), "0".to_string()), ("1".into(), "2".into())],
+            "its warp markers moved with it"
+        );
+        let nowhere = crop_source(&path, 1, ClipAt::Arrangement(1), None).unwrap_err();
+        assert_eq!(
+            nowhere,
+            "Swing names no sample file: there is no sound to crop"
+        );
+        std::fs::write(dir.0.join("swing.wav"), b"the swing").unwrap();
+        let swing = crop_source(&path, 1, ClipAt::Arrangement(1), None).unwrap();
+        assert_eq!(
+            (swing.from_seconds, (swing.to_seconds * 1e9).round() / 1e9),
+            (1.0, 2.666_666_667),
+            "a warped clip's beats 2–6 read off its warp markers: 1 second in, 2 more beats at 180 BPM past the second marker"
+        );
+        let cut = float_wav(80_000, 48_000);
+        let done = crop_audio(
+            &path,
+            &standing(&path),
+            1,
+            ClipAt::Arrangement(1),
+            None,
+            &cut,
+        )
+        .unwrap();
+        assert!(
+            done["done"]
+                .as_str()
+                .unwrap()
+                .starts_with("Cropped Swing to its loop: 4 beats, 1.667 seconds of sound"),
+            "{}",
+            done["done"]
+        );
+        let clip = arranged(&path, 1, 1);
+        assert_eq!(loop_of(&clip), ["0", "4", "0", "true", "4", "0", "4"]);
+        let warp: Vec<(f64, f64)> = clip
+            .child("WarpMarkers")
+            .unwrap()
+            .children
+            .iter()
+            .map(|m| {
+                let at = |n: &str| (m.attr(n).unwrap().parse::<f64>().unwrap() * 1e6).round() / 1e6;
+                (at("SecTime"), at("BeatTime"))
+            })
+            .collect();
+        assert_eq!(
+            warp,
+            [(0.0, 0.0), (1.0, 2.0), (1.666_667, 4.0)],
+            "the marker inside the loop kept, one at each end: the cut keeps the clip's tempo"
+        );
+        let midi = crop_audio(
+            &path,
+            &standing(&path),
+            0,
+            ClipAt::Arrangement(0),
+            None,
+            &cut,
+        )
+        .unwrap_err();
+        assert!(
+            midi.contains("is a MIDI clip: it is cropped as notes"),
+            "{midi}"
+        );
     }
 }

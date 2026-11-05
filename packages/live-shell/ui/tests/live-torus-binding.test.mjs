@@ -550,7 +550,8 @@ test('Re-enable is the overridden control\'s own: pressed, it gives the value ba
 
 test('code reading: the chain reads the clip player\'s lanes into the binding, and a refused Re-enable is said plainly', async () => {
   const source = await readFile(new URL('../src/live/TorusOnChain.tsx', import.meta.url), 'utf8')
-  assert.match(source, /useSyncExternalStore\(liveClipPlayer\.subscribe, laneReading, laneReading\)/, 'the lanes as the player publishes them')
+  // REPLACES (O-I #849 round 21): the lanes were the set's one player's (liveClipPlayer); they are every player's now, a row's among them
+  assert.match(source, /useSyncExternalStore\(liveClipActs\.subscribe, laneReading, laneReading\)/, 'the lanes as the players publish them')
   assert.match(source, /liveClipActs\.reenable\(id\)\.then\(answer =>[^]*refusalWords\(NOT_REENABLED, answer\.error\)[^]*\(cause: unknown\) =>[^]*refusalWords\(NOT_REENABLED, cause\)/)
   assert.match(source, /torusLaneStanding\(lanes, reenable, laneRefused\?\.lanes === lanes \? laneRefused\.words : undefined\)/, 'a refusal stands until the lanes next change')
   assert.doesNotMatch(source, /String\(cause\)/)

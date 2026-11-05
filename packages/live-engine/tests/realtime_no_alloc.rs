@@ -327,6 +327,21 @@ fn the_audio_thread_pull_allocates_nothing() {
         many,
         "every device made again stands"
     );
+    // O-I #849 round 21: an audio part's samples laid again while it plays (a clip's sample its owner kept anew) take the
+    // part on the audio thread without allocating; those they replaced go back to the control side to be dropped there.
+    for lays in [
+        vec![clip(1_000, 0, 3_000), clip(5_000, 2_000, 4_000)],
+        vec![clip(9_000, 3_000, 9_000)],
+    ] {
+        handle.lay(2, lays).unwrap();
+        pull(&mut core);
+        handle.collect();
+    }
+    assert_eq!(
+        handle.relaid().len(),
+        2,
+        "every part's samples laid again stand"
+    );
     let count = ALLOCATIONS.load(Ordering::Relaxed);
     assert!(heard, "the set sounded");
     assert_eq!(

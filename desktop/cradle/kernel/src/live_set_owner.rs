@@ -739,6 +739,47 @@ impl crate::Kernel {
         });
         Ok((receipt, reading))
     }
+
+    /// Crop on an audio clip (DLW build ruling 2026-11-05: Live's Crop Clip, "an audio clip's sample is cut to a new file beside
+    /// the set, the way Consolidate keeps one"): the native host cuts the stretch of the clip's sample it keeps (live-set
+    /// `crop_source`) and hands this owner the WAV; the owner keeps it beside the set and crops the clip to play it, against the
+    /// set's revision and under the write gate, as it makes every act on the set (live-set `crop_audio`), and records the sample
+    /// it kept. Only a set the shell has read is written; a refusal writes and records nothing.
+    pub fn live_audio_crop(
+        &mut self,
+        set: &str,
+        expected_revision: &str,
+        track: usize,
+        clip: live_set::edit::ClipAt,
+        span: Option<(f64, f64)>,
+        wav: &[u8],
+    ) -> Result<(crate::events::KernelEventReceipt, serde_json::Value), String> {
+        native_document(set)?;
+        admitted_for_write(set)?;
+        let reading = {
+            let _gate = WRITE_GATE
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner());
+            live_set::acts::crop_audio(set, expected_revision, track, clip, span, wav)?
+        };
+        let native = std::path::Path::new(set);
+        let kept = reading["sample"]["path"]
+            .as_str()
+            .and_then(|sample| native.parent().map(|folder| folder.join(sample)))
+            .map_or_else(
+                || set.to_owned(),
+                |file| file.to_string_lossy().into_owned(),
+            );
+        let set_name = native
+            .file_name()
+            .map(|n| n.to_string_lossy().into_owned())
+            .unwrap_or_default();
+        let receipt = self.log.record(crate::events::KernelEvent::FileChanged {
+            path: kept,
+            summary: format!("Crop kept a cut of a clip's sample of {set_name} beside it."),
+        });
+        Ok((receipt, reading))
+    }
 }
 
 /// Admit one native `.als` document path, as the host's live_shell_read does.
@@ -1521,6 +1562,99 @@ mod tests {
         assert!(
             matches!(&receipt.envelope.event, crate::events::KernelEvent::FileChanged { path, summary }
             if *path == kept.to_string_lossy() && summary == "Consolidate kept a sample of Song.als's clips beside it.")
+        );
+        assert_eq!(kernel.event_log().since(receipt.seq + 1).len(), 0);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// Crop on an audio clip (DLW build ruling 2026-11-05): the host's cut of the clip's sample is kept beside a set the shell has
+    /// read and the clip cropped to play it, against the set's revision, and the sample's writing recorded; a set not read, or one
+    /// that changed since, is refused with nothing written or recorded.
+    #[test]
+    fn crop_keeps_the_hosts_cut_beside_a_read_set_and_records_it() {
+        let dir = std::env::temp_dir().join(format!("live-set-owner-{}-crop", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let set = dir.join("Song.als");
+        let xml = r#"<Ableton MajorVersion="5" MinorVersion="12.0_12049"><LiveSet><Tracks>
+<AudioTrack Id="8"><Name><EffectiveName Value="Vox"/><UserName Value=""/></Name><DeviceChain><MainSequencer><ClipSlotList/><Sample><ArrangerAutomation><Events>
+<AudioClip Id="0" Time="0"><CurrentStart Value="0"/><CurrentEnd Value="2"/><Loop><LoopStart Value="0.5"/><LoopEnd Value="1.5"/><StartRelative Value="0"/><LoopOn Value="false"/></Loop><Name Value="Room"/><IsWarped Value="false"/><SampleVolume Value="1"/><SampleRef><FileRef><RelativePath Value="room.wav"/></FileRef></SampleRef></AudioClip>
+</Events></ArrangerAutomation></Sample></MainSequencer><DeviceChain><Devices/></DeviceChain></DeviceChain></AudioTrack>
+</Tracks><MainTrack><DeviceChain><Mixer><Tempo><Manual Value="120"/></Tempo></Mixer></DeviceChain></MainTrack><Scenes><Scene Id="0"><Name Value=""/></Scene></Scenes></LiveSet></Ableton>"#;
+        std::fs::write(
+            &set,
+            live_set::write_gz(&live_set::xml::parse(xml).unwrap()).unwrap(),
+        )
+        .unwrap();
+        let path = set.to_str().unwrap();
+        // one second of mono 32-bit float at 8 kHz: the clip's 0.5–1.5 seconds
+        let frames = 8_000usize;
+        let mut wav = b"RIFF".to_vec();
+        wav.extend_from_slice(&(36 + frames as u32 * 4).to_le_bytes());
+        wav.extend_from_slice(b"WAVEfmt ");
+        for word in [
+            16u32.to_le_bytes().as_slice(),
+            &3u16.to_le_bytes(),
+            &1u16.to_le_bytes(),
+            &8_000u32.to_le_bytes(),
+            &32_000u32.to_le_bytes(),
+            &4u16.to_le_bytes(),
+            &32u16.to_le_bytes(),
+            b"data",
+            &(frames as u32 * 4).to_le_bytes(),
+        ] {
+            wav.extend_from_slice(word);
+        }
+        wav.resize(wav.len() + frames * 4, 0);
+        let at = live_set::edit::ClipAt::Arrangement(0);
+        let revision = || {
+            live_set::edit::clip_json(path, 0, at).unwrap()["revision"]
+                .as_str()
+                .unwrap()
+                .to_string()
+        };
+        let mut kernel = crate::Kernel::new(crate::CentralClient::discover());
+        let unread = kernel
+            .live_audio_crop(path, &revision(), 0, at, None, &wav)
+            .unwrap_err();
+        assert!(
+            unread.contains("Read this Live set before writing to it"),
+            "{unread}"
+        );
+        execute(&KernelOp::LiveSetRead {
+            path: path.to_owned(),
+        })
+        .unwrap()
+        .unwrap();
+        let stale = kernel
+            .live_audio_crop(path, "sha256:older", 0, at, None, &wav)
+            .unwrap_err();
+        assert!(stale.contains("changed since it was read"), "{stale}");
+        assert!(!dir.join("Samples").exists(), "a refusal writes nothing");
+        let (receipt, reading) = kernel
+            .live_audio_crop(path, &revision(), 0, at, None, &wav)
+            .unwrap();
+        let kept = dir.join(reading["sample"]["path"].as_str().unwrap());
+        assert!(
+            kept.starts_with(dir.join("Samples/Processed/Crop")),
+            "{}",
+            kept.display()
+        );
+        assert_eq!(
+            std::fs::read(&kept).unwrap(),
+            wav,
+            "the cut is kept beside the set, whole"
+        );
+        assert!(
+            reading["done"]
+                .as_str()
+                .unwrap()
+                .starts_with("Cropped Room to its start and end: 2 beats, 1 second of sound"),
+            "{reading}"
+        );
+        assert!(
+            matches!(&receipt.envelope.event, crate::events::KernelEvent::FileChanged { path, summary }
+            if *path == kept.to_string_lossy() && summary == "Crop kept a cut of a clip's sample of Song.als beside it.")
         );
         assert_eq!(kernel.event_log().since(receipt.seq + 1).len(), 0);
         let _ = std::fs::remove_dir_all(&dir);

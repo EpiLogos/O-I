@@ -1490,6 +1490,9 @@ export type LiveSetAct =
   | {kind: 'tracks_group'; tracks: number[]}
   | {kind: 'clip_split'; track: number; clip: LiveClipAt; at: number}
   | {kind: 'clips_consolidate'; track: number; from: number; to: number}
+  /** Crop (⇧⌘J; Live's Crop Clip): the clip keeps only its loop, or its start to its end — or, with `from`–`to`, the ruler's selection
+   * over it first. An audio clip's crop is a new sample beside the set, cut by the host (live_engine_crop); the act alone refuses it. */
+  | {kind: 'clip_crop'; track: number; clip: LiveClipAt; from?: number; to?: number}
   /** A recorded pass (O-I #855): its notes as a take lane under the part and laid in its main lane; what it keeps beside the set. */
   | {kind: 'take_record'; track: number; start: number; length: number; name: string; notes: LiveNote[]; keeps?: Record<string, unknown> | null
     /** The row whose empty slot the pass was recorded into (O-I #743): laid there, not in the Arrangement (acts.rs TakeRecord `scene`). */
@@ -1508,7 +1511,10 @@ export interface LiveSetActed {act: LiveSetAct['kind']; done: string; at: {track
   revision: string; sourceRefused?: string; keepsRefused?: string
   /** An audio part's Consolidate (O-I #743, live-set acts.rs consolidate_audio): the sample kept beside the set, from its folder, by its
    * sha256; and, from the engine's render, the words for each clip of the stretch it did not play. */
-  sample?: {path: string; sha256: string; bytes: number; frames: number; rate: number}; unplayed?: string[]}
+  sample?: {path: string; sha256: string; bytes: number; frames: number; rate: number}; unplayed?: string[]
+  /** What the engine playing the set did of a sample kept anew, Consolidate's or Crop's (O-I #849 round 21, the host's lay_again): the
+   * parts it lays again from the next block, or the words it refused in. */
+  engine?: {laid: string[]} | {refused: string}}
 /** One groove of the set's pool: Base is Live's Grid ("1/4" … "1/32", triplets "1/8t", "1/16t"); the amounts are 0–100. */
 export interface LiveGroove {id: number | null; name: string; base: string | null; quantize: number | null; timing: number | null; random: number | null; velocity: number | null}
 /** The set's Groove Pool and its Global Amount (with the range Live keeps beside it). */

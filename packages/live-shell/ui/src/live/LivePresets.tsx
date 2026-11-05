@@ -109,12 +109,16 @@ const UNKNOWN_CHECKPOINT = /No Torus checkpoint \S+ was given under this lease/
  * is built from the seal (liveTake.ts torusTakeRecord, loaded when asked), and the Scene lays it by one edit of its performance (the
  * performance's `record-take`, the kernel's `record_torus_take`). Where the kernel no longer knows that name (after a restart) it refuses the
  * seal in its words; given the checkpoint the take's course keeps (`checkpoint`), the seal is asked once more from the checkpoint itself,
- * which the kernel names (native_expression.rs TorusTake), and a second refusal stands. Settles with the words, or the owner's refusal. */
-export async function layTorusTake(input: {readonly checkpoint_sha256: string; readonly checkpoint?: StageTorusCheckpoint;
+ * which the kernel names (native_expression.rs TorusTake), and a second refusal stands. A take whose checkpoint the kernel relayed under no
+ * name is sealed from that checkpoint at once (BB round 21). Settles with the words, or the owner's refusal. */
+export async function layTorusTake(input: {readonly checkpoint_sha256?: string; readonly checkpoint?: StageTorusCheckpoint;
   readonly take: {readonly id: number; readonly name: string; readonly beat: number; readonly bpm: number}},
   owners: LiveSoundOwners = SOUND_OWNERS): Promise<{ok: true; words: string} | {ok: false; error: string}> {
-  let sealed = await owners.stage({command: 'torus-take', action: 'seal', checkpoint_sha256: input.checkpoint_sha256})
-  if (!sealed.ok && input.checkpoint && UNKNOWN_CHECKPOINT.test(sealed.error)) sealed = await owners.stage({command: 'torus-take', action: 'seal', checkpoint: input.checkpoint})
+  const {checkpoint_sha256: named, checkpoint} = input
+  // by the name the kernel relayed the checkpoint under; where it relayed it under none, by the checkpoint itself at once (BB round 21)
+  if (!named && !checkpoint) return {ok: false, error: 'The take keeps no checkpoint it began at, under a name or itself, so nothing seals it'}
+  let sealed = await owners.stage(named ? {command: 'torus-take', action: 'seal', checkpoint_sha256: named} : {command: 'torus-take', action: 'seal', checkpoint: checkpoint!})
+  if (!sealed.ok && named && checkpoint && UNKNOWN_CHECKPOINT.test(sealed.error)) sealed = await owners.stage({command: 'torus-take', action: 'seal', checkpoint})
   if (!sealed.ok) return {ok: false, error: sealed.error}
   if (!sealed.take) return {ok: false, error: 'The owner answered the seal with no take'}
   const {torusTakeRecord} = await import('./liveTake')

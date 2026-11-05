@@ -45,7 +45,10 @@
 //               Scale tie, held by the note-device chain, not the owner) overrides its lane as any other does (DLW build ruling
 //               2026-11-05: "Hand moves of session-held values (the Scale tie and the rest) are heard as overrides, like any other";
 //               liveHandMoves). While the take plays, each lane stands as its own under the take's clip (O-I #743 round 20): the
-//               parameter it writes, its points at their beats in the clip, so each has its own Overridden mark and Re-enable.
+//               parameter it writes, its points at their beats in the clip, so each has its own Overridden mark and Re-enable. A
+//               slot's clip has no place on the Arrangement's ruler, so where it landed on the launch grid is its take's (`at`, the
+//               grid's beats from where it began; O-I #849 round 21). Every player's take is followed, a row's among them (the set's
+//               acts' `lanes`), and Re-enable reaches each player that holds the parameter off its take's lanes.
 //   its course  a take with its course (O-I #855 round 6d), its clip as it was laid, plays as it was played: the Torus rings again from the
 //               state it rang in as the take began (prepareTake restores the owner's checkpoint, which lands at the owner's sample R),
 //               and each act of the course lands at R + (its sample − the take's first sample): the keys it struck, at its strength (the
@@ -61,7 +64,9 @@
 //               played, and a launch lands on its first step at or after the earliest it can (the clip's anchor), its notes struck and
 //               paced from there. A row's launch plays every MIDI clip of the row at once on its own track's player (Live's scene
 //               launch); its clips land together where one quantize is theirs. A take's course lands where its Torus rang again, so no
-//               quantize moves it. The set's signature is not read, so a bar is four beats.
+//               quantize moves it, and begins the grid where none stands. One Torus rings at a time: of a row's takes, the first to set
+//               it again holds it for the press (torusTurn), and the others play their notes as played on it as that one set it. A
+//               bar is the set's, read from its time signature (O-I #849 round 21; four beats where it keeps none).
 //
 // Ported from: the store with its owners handed in (inhabitants/ql/devices/qlSitting.ts: now, later, cancel, its bell rung through
 // commitLiveStage); the chord as one act (live/janko/jankoInput.ts flush); the clip's markers (packages/live-set/src/edit.rs markers).
@@ -161,9 +166,10 @@ export interface ClipPlayerOwners {
   /** The clip whole, from the set's owner; a refusal throws in the owner's words. */
   readonly read: (address: ClipAddress) => Promise<LiveClipReading>
   /** Before a clip a take gave plays: the Torus set again as it stood when the take began (live/liveTake.ts prepareTake, O-I #855),
-   * answering where the take resumes from and how each of its notes was played; null for a clip no take gave. Absent, nothing is
+   * answering where the take resumes from and how each of its notes was played; null for a clip no take gave. `turn`, given, is the
+   * one Torus among the takes of one press (a row's launch): a take asks it before it sets the Torus again. Absent, nothing is
    * prepared. */
-  readonly prepare?: (clip: LiveClipReading, bpm: number) => Promise<ClipPrepared | null>
+  readonly prepare?: (clip: LiveClipReading, bpm: number, turn?: ClipTorusTurn) => Promise<ClipPrepared | null>
   /** The torus owner's audio clock, read once per press (readAudioClock); a refusal throws in the owner's words. */
   readonly clock: () => Promise<StageAudioClock>
   /** One instrument edit of a take's move, at the owner's sample `at` where a take's course names one (the `instrument` stage command),
@@ -242,16 +248,22 @@ export interface ClipPlayState {
 
 /** The parameters a take's moves and lanes write while it plays (Automated), and those a hand move took off them (Overridden), by map
  * parameter id (midiMap/midiMapTargets.ts). Overridden stands until Re-enable, across a Stop. While a take plays, its clip (`take`) and
- * its lanes, each its own (O-I #743 round 20). */
+ * its lanes, each its own (O-I #743 round 20); and, where it landed on a launch grid, where the clip's own beat 0 stands on the transport
+ * (`at`: the grid's beats from where it began), a Session clip's place on the ruler (O-I #849 round 21). */
 export interface ClipLaneStanding {
   readonly automated: readonly string[]
   readonly overridden: readonly string[]
-  readonly take?: {readonly address: ClipAddress; readonly name: string}
+  readonly take?: {readonly address: ClipAddress; readonly name: string; readonly at?: number}
   readonly lanes?: readonly ClipLane[]
 }
 /** One lane of the take that plays: the map parameter it writes, as the surface names it, and its points at their beats in the clip, each
  * value within the lane's own span (laneValues), in the order it writes them. */
 export interface ClipLane {readonly parameter: string; readonly label: string; readonly points: readonly {readonly beat: number; readonly value: number}[]}
+/** A take that plays on one of the set's players, and its lanes. */
+export interface ClipTakeLanes {readonly take: NonNullable<ClipLaneStanding['take']>; readonly lanes: readonly ClipLane[]}
+/** The lanes' standing over every player of the set (clipLaunchActs `lanes`, O-I #849 round 21): what any take that plays writes, what the
+ * hand holds off any take's lanes, and each take that plays with its lanes, the set's own player's first, then a row's by track. */
+export interface ClipLanesStanding extends ClipLaneStanding {readonly takes: readonly ClipTakeLanes[]}
 
 /** A value a lane writes as a number, where it is one: a number, on (1) or off (0), or the one number a setting holds (a Rate's steps a
  * second); else null. */
@@ -302,8 +314,10 @@ export interface ClipPlayer {
   state(): ClipPlayState
   subscribe(listener: () => void): () => void
   /** Play the clip at `address` from its start marker at `bpm`; a clip already playing starts again. `land`, given, says where on the
-   * owner's clock the clip lands (a launch quantize): the earliest it can, its anchor, or later; a take's course is not moved. */
-  play(address: ClipAddress, bpm: number, land?: ClipLanding): void
+   * owner's clock the clip lands (a launch quantize): the earliest it can, its anchor, or later; a take's course is not moved. `grid`,
+   * given, is the launch grid it lands on, from which the take's lanes have their place on the transport; `turn`, the one Torus among
+   * the takes of its press. */
+  play(address: ClipAddress, bpm: number, land?: ClipLanding, grid?: ClipGrid, turn?: ClipTorusTurn): void
   /** Stop: nothing more strikes, and every note the clip holds is let go at once; what was struck rings out on the torus. */
   stop(): void
   /** Re-enable (O-I #853): give `parameter`, or every overridden one, back to the take's lanes. */
@@ -326,14 +340,25 @@ export function clipTiming(clock: StageAudioClock): ClipTiming {
 
 /** Where a launch lands on the owner's clock, given the clip read and the earliest it can land (its timing's anchor). */
 export type ClipLanding = (clip: LiveClipReading, timing: Extract<ClipTiming, {anchor: bigint}>) => bigint
+/** The launch grid a set's clips land on (clipLaunchActs): where it began on the owner's clock, null while none stands; `began` is told
+ * where a clip began, which begins the grid where none stands (a take's course, which no quantize moves and no landing asked for). */
+export interface ClipGrid {readonly origin: () => bigint | null; readonly began: (at: bigint) => void}
+/** Whose the one Torus is among the takes one press plays (a row's launch, O-I #849 round 21): one Torus rings at a time, so the first take
+ * to ask sets it again (`take` answers null), and any other is answered the name of the take whose it is. */
+export interface ClipTorusTurn {readonly take: (name: string) => string | null}
+/** A press's turn of the Torus, held by none yet. */
+export function torusTurn(): ClipTorusTurn {
+  let holder: string | null = null
+  return {take: name => { if (holder !== null) return holder; holder = name; return null }}
+}
 
-/** A word of Live's launch quantisation (edit.rs QUANTIZE, without Global) as a step of the launch grid, in beats: bars of four beats (the
- * set's signature is not read), a note value of a whole note of four beats, a triplet two thirds of it; null for None (no step: a
- * launch lands as soon as it can); undefined for a word that is none of them. Pure. */
-export function quantumBeats(word: string): number | null | undefined {
+/** A word of Live's launch quantisation (edit.rs QUANTIZE, without Global) as a step of the launch grid, in beats: bars of `bar` beats (the
+ * set's, read from its time signature: shell/document.ts barBeats; four where it keeps none), a note value of a whole note of four beats,
+ * a triplet two thirds of it; null for None (no step: a launch lands as soon as it can); undefined for a word that is none of them. Pure. */
+export function quantumBeats(word: string, bar = 4): number | null | undefined {
   if (word === 'none') return null
   const bars = /^(1|2|4|8) bars?$/.exec(word)
-  if (bars) return Number(bars[1]) * 4
+  if (bars) return Number(bars[1]) * bar
   const note = /^1\/(2|4|8|16|32)(t?)$/.exec(word)
   if (!note || (note[2] && note[1] === '32')) return undefined
   return (4 / Number(note[1])) * (note[2] ? 2 / 3 : 1)
@@ -425,7 +450,7 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
   const reached = new Map<string, {readonly edit?: InstrumentEdit; readonly value?: MapValue}>()
   let unhand: (() => void) | null = null
   /** The take that plays and its lanes, while one does. */
-  let playingLanes: {readonly take: {readonly address: ClipAddress; readonly name: string}; readonly lanes: readonly ClipLane[]} | null = null
+  let playingLanes: {readonly take: NonNullable<ClipLaneStanding['take']>; readonly lanes: readonly ClipLane[]} | null = null
   const standing = (automated: readonly string[]) => publish({lanes: {automated: Object.freeze([...automated]), overridden: Object.freeze([...overridden]),
     ...(playingLanes && automated.length ? playingLanes : {})}})
   /** The lanes of a take: each parameter its moves and settings write, in `automated`'s order, with its points at their beats in order. */
@@ -444,7 +469,7 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
   }
   /** A take begins: what its moves and lanes write stands Automated, each lane its own under the take's clip, and a hand move of one of
    * those overrides it. */
-  const automate = (take: {readonly address: ClipAddress; readonly name: string}, moves: readonly ClipMove[],
+  const automate = (take: NonNullable<ClipLaneStanding['take']>, moves: readonly ClipMove[],
     settings: readonly {readonly beat: number; readonly edit: InstrumentEdit}[]) => {
     unhand?.()
     reached.clear()
@@ -680,7 +705,7 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
   }
   /** A take's course begins: each act at R + (its sample − the take's first), R the sample the Torus rang again from. */
   const beginCourse = (address: ClipAddress, bpm: number, name: string, timing: Extract<ClipTiming, {anchor: bigint}>, take: ClipPrepared, exact: TakeExact,
-    lead: number) => {
+    lead: number, at: number | undefined) => {
     const shift = BigInt(exact.landed) - BigInt(exact.from)
     const seconds = (sample: bigint) => Number(sample - timing.anchor) / timing.rate
     const acts = exact.acts.map(act => { const at = BigInt(act.at_samples_elapsed) + shift; return {seconds: seconds(at), at: String(at), act} })
@@ -689,7 +714,7 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
     const c: Course = {address, origin: owners.now(), timing, spb: 60 / bpm, lead, acts, index: 0, moves, move: 0, start, end: start + exact.frames / exact.sample_rate,
       holds: new Map(), noteOf: exact.noteOf, timer: null, fire: () => fireCourse(c)}
     course = c
-    automate({address, name}, moves, exact.acts.flatMap(act => act.action === 'set'
+    automate({address, name, ...(at === undefined ? {} : {at})}, moves, exact.acts.flatMap(act => act.action === 'set'
       ? [{beat: Number(BigInt(act.at_samples_elapsed) - BigInt(exact.from)) / exact.sample_rate / c.spb, edit: {kind: 'torus', edit: act.edit} as InstrumentEdit}] : []))
     publish({starting: false, playing: {address, name, bpm}})
     armCourse(c)
@@ -698,14 +723,14 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
   /** A clip begins: `delay` seconds after now on the page's clock its start lands at `timing.anchor` (later than the earliest it could
    * by the delay, where a launch quantize put it). */
   const begin = (address: ClipAddress, bpm: number, plan: Extract<ClipPlan, {ok: true}>, timing: Extract<ClipTiming, {anchor: bigint}>,
-    take: ClipPrepared | null, lead: number, delay: number) => {
+    take: ClipPrepared | null, lead: number, delay: number, at: number | undefined) => {
     const moves = [...(take?.moves ?? [])].filter(moving).sort((a, b) => a.beat - b.beat)
     const first = moves.findIndex(move => move.beat >= plan.first.from)
     const r: Run = {address, spb: 60 / bpm, origin: owners.now() + delay, timing, voice: take?.voice ?? null, moves, move: first < 0 ? moves.length : first, lead,
       plan, pass: plan.first, passStart: 0, index: 0, ends: [], timer: null,
       unwatch: () => {}, fire: () => fire(r), turn: () => turn(r)}
     run = r
-    automate({address, name: plan.name}, moves, [])
+    automate({address, name: plan.name, ...(at === undefined ? {} : {at})}, moves, [])
     r.unwatch = owners.watch(address, () => retake(r))
     publish({starting: false, playing: {address, name: plan.name, bpm}})
     arm(r)
@@ -714,7 +739,7 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
   return {
     state: () => state,
     subscribe: listener => { listeners.add(listener); return () => { listeners.delete(listener) } },
-    play(address, bpm, land) {
+    play(address, bpm, land, grid, turn) {
       halt()
       const mine = ++press
       if (!finite(bpm) || bpm <= 0) { publish({...IDLE, fault: 'The set discloses no tempo, so the clip has no time to play in.'}); return }
@@ -727,7 +752,7 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
         // rendered as the clip begins.
         let take: ClipPrepared | null = null
         const prepared: Promise<ClipPrepared | null> = owners.prepare
-          ? owners.prepare(clip, bpm).catch((cause: unknown) => ({resumes: `The take's Torus was not set again: ${said(cause)}`}))
+          ? owners.prepare(clip, bpm, turn).catch((cause: unknown) => ({resumes: `The take's Torus was not set again: ${said(cause)}`}))
           : Promise.resolve(null)
         return prepared.then(ready => {
           if (mine !== press) return
@@ -739,16 +764,23 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
           if (mine !== press || clock === undefined) return
           const timing = clipTiming(clock)
           const exact = (take as ClipPrepared | null)?.exact
+          // Where the clip's beat `from` stands on the launch grid, in its beats from where the grid began, once it begins at `sample`.
+          const onGrid = (sample: bigint, from: number) => {
+            grid?.began(sample)
+            const origin = grid?.origin() ?? null
+            return origin === null || !('rate' in timing) ? undefined : Number(sample - origin) / timing.rate * (bpm / 60) - from
+          }
           if ('refused' in timing) publish({starting: false, fault: timing.refused})
           else if (exact && exact.sample_rate !== clock.sample_rate)
             publish({starting: false, fault: `The torus renders at ${clock.sample_rate} Hz, and the take was played at ${exact.sample_rate} Hz.`})
-          else if (exact) beginCourse(address, bpm, plan.name, timing, take!, exact, clock.lookahead_seconds)
+          else if (exact) beginCourse(address, bpm, plan.name, timing, take!, exact, clock.lookahead_seconds, onGrid(BigInt(exact.landed), 0))
           else {
             // Where the launch lands: never sooner than a note can still land at its sample (the owner's slack before the anchor).
             const landed = land ? land(clip, timing) : timing.anchor
             const soonest = timing.anchor - BigInt(Math.floor(timing.slack * timing.rate))
             const anchor = landed >= soonest ? landed : timing.anchor
-            begin(address, bpm, plan, {...timing, anchor}, take, clock.lookahead_seconds, Number(anchor - timing.anchor) / timing.rate)
+            begin(address, bpm, plan, {...timing, anchor}, take, clock.lookahead_seconds, Number(anchor - timing.anchor) / timing.rate,
+              onGrid(anchor, plan.first.from))
           }
         }, cause => { if (mine === press) publish({starting: false, fault: `The torus did not read its audio clock: ${said(cause)}`}) })
       }, cause => { if (mine === press) publish({starting: false, fault: `The set's owner did not read the clip: ${said(cause)}`}) })
@@ -793,7 +825,7 @@ function candidateOwners(): ClipPlayerOwners {
       if (answer.error || answer.outcome?.result !== 'live_clip_reading') throw new Error(answer.error ?? 'The set\'s owner did not answer the clip')
       return answer.outcome.reading.clip
     },
-    prepare: (clip, bpm) => prepareTake(clip, commitLiveInstrumentEdit, {stage: commitLiveStage, bpm}),
+    prepare: (clip, bpm, turn) => prepareTake(clip, commitLiveInstrumentEdit, {stage: commitLiveStage, bpm}, turn),
     clock: () => readAudioClock(commitLiveStage),
     edit: (edit, at) => commitLiveStage({command: 'instrument', edit, ...(at === undefined ? {} : {at_samples_elapsed: at})}),
     set: writeMapTarget,
@@ -887,28 +919,36 @@ export type RowSlot = {readonly track: number; readonly name: string; readonly k
  * #743). Each launch lands on the launch grid where its quantize says (`quantize`: the set's, for a clip set to Global). Stop the track
  * stops the clip that plays where it stands on that track; Stop all stops whatever plays. */
 export interface ClipLaunchActs {
-  launch(address: ClipAddress, bpm: number, quantize?: string | null): Promise<ClipActAnswer>
+  /** `bar`: the set's bar in beats (shell/document.ts barBeats), what a quantize of bars counts; four where it is not given. */
+  launch(address: ClipAddress, bpm: number, quantize?: string | null, bar?: number): Promise<ClipActAnswer>
   /** Launch row `row` (0-based) of the set at `path`: what it holds on each track. */
-  launchRow(path: string, row: number, bpm: number, slots: readonly RowSlot[], quantize?: string | null): Promise<ClipActAnswer>
+  launchRow(path: string, row: number, bpm: number, slots: readonly RowSlot[], quantize?: string | null, bar?: number): Promise<ClipActAnswer>
   stop(path: string, track: number, named: string): ClipActAnswer
   stopAll(): ClipActAnswer
-  /** Re-enable (O-I #853): an overridden parameter, or every one, back to the take's lanes. */
+  /** Re-enable (O-I #853): an overridden parameter, or every one, back to the take's lanes: on every player that holds it off its take's
+   * lanes (O-I #849 round 21), in the set's own player's words where none or one does. */
   reenable(parameter?: string): Promise<ClipActAnswer>
+  /** The lanes' standing over every player, one reading while none moves (O-I #849 round 21). */
+  lanes(): ClipLanesStanding
+  /** Hear every player, a row's players made later among them. Returns the unsubscribe. */
+  subscribe(listener: () => void): () => void
 }
 
 /** How long Launch waits for the set's owner to read the clip before it answers that it is reading it. */
 const LAUNCH_ANSWER_MS = 4000
 /** The launch quantize of a set that keeps none: the bar, as the corpus's one set keeps it (racks-session-model.md §3.3, GlobalQuantisation 4). */
-const SET_QUANTIZE = '1 bar'
+export const SET_QUANTIZE = '1 bar'
 
 const listed = (names: readonly string[]) => names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`
 
 /** The answer of a player's Play of the clip at `address`: once the owner has read it, in the player's words; that it is reading it, if
- * the owner takes longer than LAUNCH_ANSWER_MS. */
+ * the owner takes longer than LAUNCH_ANSWER_MS. Heard from once the press is made: what the player says as it lets go of what played
+ * before (a take's lanes ending) is not the press's answer. */
 function played(player: ClipPlayer, address: ClipAddress, start: () => void): Promise<ClipActAnswer> {
   const same = (a: ClipAddress, b: ClipAddress) => a.path === b.path && a.track === b.track && JSON.stringify(a.at) === JSON.stringify(b.at)
   return new Promise(resolve => {
     let settled = false
+    let off = () => {}
     const finish = (answer: ClipActAnswer) => { if (settled) return; settled = true; off(); clearTimeout(timer); resolve(answer) }
     const settle = () => {
       const state = player.state()
@@ -916,9 +956,9 @@ function played(player: ClipPlayer, address: ClipAddress, start: () => void): Pr
       if (state.playing && same(state.playing.address, address)) finish({ok: true, note: `${state.playing.name || 'The clip'} plays on the torus.`})
       else finish({ok: false, error: state.fault ?? 'The clip did not play.'})
     }
-    const off = player.subscribe(settle)
     const timer = setTimeout(() => finish({ok: true, note: 'Reading the clip from the set…'}), LAUNCH_ANSWER_MS)
     start()
+    if (!settled) off = player.subscribe(settle)
     settle()
   })
 }
@@ -928,12 +968,36 @@ export function clipLaunchActs(player: ClipPlayer, torus: () => LiveTorusState |
   const rows = new Map<number, ClipPlayer>()
   /** The launch grid's origin on the owner's clock: where the first launch landed while nothing played. */
   let origin: bigint | null = null
-  const players = () => [player, ...rows.values()]
+  const grid: ClipGrid = {origin: () => origin, began: at => { if (origin === null) origin = at }}
+  /** The set's own player, then a row's by track. */
+  const players = () => [player, ...[...rows.entries()].sort(([a], [b]) => a - b).map(([, row]) => row)]
+  const listeners = new Set<() => void>()
+  const heard = () => { for (const listener of [...listeners]) listener() }
+  player.subscribe(heard)
+  /** The track's row player, made once and heard from then on. */
+  const rowOf = (track: number, made: (track: number) => ClipPlayer) => {
+    const known = rows.get(track)
+    if (known) return known
+    const own = made(track)
+    rows.set(track, own)
+    own.subscribe(heard)
+    return own
+  }
+  let lanesRead: {readonly from: readonly ClipLaneStanding[]; readonly value: ClipLanesStanding} | null = null
+  const lanes = (): ClipLanesStanding => {
+    const from = players().map(each => each.state().lanes)
+    if (lanesRead && lanesRead.from.length === from.length && lanesRead.from.every((standing, i) => standing === from[i])) return lanesRead.value
+    const value: ClipLanesStanding = Object.freeze({automated: Object.freeze([...new Set(from.flatMap(standing => standing.automated))]),
+      overridden: Object.freeze([...new Set(from.flatMap(standing => standing.overridden))]),
+      takes: Object.freeze(from.flatMap(standing => standing.take && standing.lanes ? [Object.freeze({take: standing.take, lanes: standing.lanes})] : []))})
+    lanesRead = {from, value}
+    return value
+  }
   const sounding = () => players().some(p => { const state = p.state(); return state.playing !== null || state.starting })
   /** Where a launch lands: on its clip's own quantize, Global the set's; a row's clips at one earliest, where each could land by then. */
-  const landing = (bpm: number, quantize: string | null | undefined, row?: {earliest: bigint | null}): ClipLanding => (clip, timing) => {
-    const own = quantumBeats(clip.quantize ?? 'global')
-    const beats = own !== undefined ? own : quantumBeats(quantize ?? SET_QUANTIZE) ?? null
+  const landing = (bpm: number, quantize: string | null | undefined, bar: number | undefined, row?: {earliest: bigint | null}): ClipLanding => (clip, timing) => {
+    const own = quantumBeats(clip.quantize ?? 'global', bar)
+    const beats = own !== undefined ? own : quantumBeats(quantize ?? SET_QUANTIZE, bar) ?? null
     let earliest = timing.anchor
     if (row) {
       if (row.earliest === null) row.earliest = earliest
@@ -949,14 +1013,14 @@ export function clipLaunchActs(player: ClipPlayer, torus: () => LiveTorusState |
     rows.get(track)?.stop()
   }
   return {
-    launch(address, bpm, quantize) {
+    launch(address, bpm, quantize, bar) {
       const why = !(bpm > 0) ? NO_TEMPO : torusRefusal(torus())
       if (why) return Promise.resolve({ok: false, error: why})
       if (!sounding()) origin = null
       rows.get(address.track)?.stop()
-      return played(player, address, () => player.play(address, bpm, landing(bpm, quantize)))
+      return played(player, address, () => player.play(address, bpm, landing(bpm, quantize, bar), grid))
     },
-    async launchRow(path, row, bpm, slots, quantize) {
+    async launchRow(path, row, bpm, slots, quantize, bar) {
       const named = `Row ${row + 1}`
       const why = !(bpm > 0) ? NO_TEMPO : torusRefusal(torus())
       if (why) return {ok: false, error: why}
@@ -971,11 +1035,12 @@ export function clipLaunchActs(player: ClipPlayer, torus: () => LiveTorusState |
       // What the row holds on a track takes its place there; its empty slot's stop stops it.
       for (const slot of slots) stopTrack(path, slot.track)
       const together = {earliest: null as bigint | null}
+      // One Torus rings at a time: the row's first take to set it again holds it for the press, and the others are told whose it is.
+      const turn = torusTurn()
       const answers = await Promise.all(midi.map(slot => {
-        const own = rows.get(slot.track) ?? rowPlayer(slot.track)
-        rows.set(slot.track, own)
+        const own = rowOf(slot.track, rowPlayer)
         const address: ClipAddress = {path, track: slot.track, at: {slot: row}}
-        return played(own, address, () => own.play(address, bpm, landing(bpm, quantize, together)))
+        return played(own, address, () => own.play(address, bpm, landing(bpm, quantize, bar, together), grid, turn))
       }))
       const playing = midi.filter((_, i) => answers[i]!.ok).map(slot => slot.name || 'a clip')
       const refused = midi.flatMap((slot, i) => { const answer = answers[i]!; return answer.ok ? [] : [`${slot.name || 'A clip'}: ${answer.error}`] })
@@ -997,7 +1062,15 @@ export function clipLaunchActs(player: ClipPlayer, torus: () => LiveTorusState |
       for (const each of players()) each.stop()
       return {ok: true, note: 'Every clip stops; what was struck rings out on the torus.'}
     },
-    reenable: parameter => player.reenable(parameter),
+    async reenable(parameter) {
+      const holding = players().filter(each => { const held = each.state().lanes.overridden; return parameter === undefined ? held.length > 0 : held.includes(parameter) })
+      if (holding.length < 2) return (holding[0] ?? player).reenable(parameter)
+      const answers = await Promise.all(holding.map(each => each.reenable(parameter)))
+      const errors = answers.flatMap(answer => answer.ok ? [] : [answer.error]), notes = answers.flatMap(answer => answer.ok ? [answer.note] : [])
+      return errors.length ? {ok: false, error: [...new Set(errors)].join(' ')} : {ok: true, note: [...new Set(notes)].join(' ')}
+    },
+    lanes,
+    subscribe: listener => { listeners.add(listener); return () => { listeners.delete(listener) } },
   }
 }
 

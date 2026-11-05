@@ -264,13 +264,20 @@ test('Split stands where the insert marker is inside the clip, Consolidate where
   let items = acts.objectMenu(clip, set, arrangement())
   assert.match(byId(items, 'split').why, /Set the insert marker inside Line/)
   assert.match(byId(items, 'consolidate').why, /Select a stretch of the ruler/)
-  assert.match(byId(items, 'crop').why, /missing op: clip\.crop .* It waits for the decode of what Live's Crop Clip keeps/)
+  // Crop is the set's own act (DLW build ruling 2026-11-05): with no selection over the clip, it keeps the clip's loop or its start to its end.
+  assert.equal(byId(items, 'crop').disabled, undefined, byId(items, 'crop').why)
+  byId(items, 'crop').onSelect('crop')
+  assert.deepEqual(calls.at(-1), {kind: 'clip_crop', track: 2, clip: {arrangement: 0}})
+  byId(acts.objectMenu(clip, set, arrangement({span: {start: 9, end: 12}})), 'crop').onSelect('crop')
+  assert.deepEqual(calls.at(-1), {kind: 'clip_crop', track: 2, clip: {arrangement: 0}}, 'a selection off the clip is not its to keep')
   items = acts.objectMenu(clip, set, arrangement({marker: 8}))
   assert.equal(byId(items, 'split').disabled, true, 'a marker at the clip\'s end is not inside it')
   items = acts.objectMenu(clip, set, arrangement({marker: 3, span: {start: 1, end: 5}}))
   byId(items, 'split').onSelect('split')
   byId(items, 'consolidate').onSelect('consolidate')
-  assert.deepEqual(calls.slice(-2), [{kind: 'clip_split', track: 2, clip: {arrangement: 0}, at: 3}, {kind: 'clips_consolidate', track: 2, from: 1, to: 5}])
+  byId(items, 'crop').onSelect('crop')
+  assert.deepEqual(calls.slice(-3), [{kind: 'clip_split', track: 2, clip: {arrangement: 0}, at: 3}, {kind: 'clips_consolidate', track: 2, from: 1, to: 5},
+    {kind: 'clip_crop', track: 2, clip: {arrangement: 0}, from: 1, to: 5}], 'Crop keeps the selection over the clip')
   const drums = {kind: 'clip', id: `${ref(3)}/clip/0`, trackId: ref(3), name: 'Break'}
   assert.match(byId(acts.objectMenu(drums, set, arrangement({span: {start: 0, end: 4}})), 'consolidate').why, /render/)
   const track = acts.objectMenu({kind: 'track', id: ref(3), name: 'Drums'}, set, context())
@@ -330,11 +337,74 @@ test('an audio part\'s Consolidate is the engine\'s render of its clips kept bes
   assert.deepEqual(refused, {ok: false, error: 'No clip of Drums sounds between beat 8 and beat 9 in the engine'})
   assert.match(byId(acts.objectMenu(drums, project(undefined), context({view: 'arrangement', span: {start: 0, end: 4}})), 'consolidate').why, /render/,
     'a set read with no engine handed in still waits for its render')
+  // O-I #849 round 21: the engine playing the set lays the consolidated sample from the next block; refused, its words follow the owner's
+  const stale = 'The set\'s parts are not those the engine opened: Stop, then Play, to hear it as it now stands'
+  const kept = engine => project(() => Promise.resolve({act: 'clips_consolidate', done: 'Consolidated 1 audio clip.', at: null, revision: 'r3', engine}))
+    .actions.consolidateClips.run(ref(3), {start: 0, end: 4})
+  assert.deepEqual(await kept({refused: stale}), {ok: true, note: `Consolidated 1 audio clip. ${stale}`})
+  assert.deepEqual(await kept({laid: ['Drums']}), {ok: true, note: 'Consolidated 1 audio clip.'}, 'laid again, the sound says it')
   const {readFile} = await import('node:fs/promises')
   const writes = await readFile(new URL('../src/live/liveWrites.ts', import.meta.url), 'utf8')
   assert.match(writes, /invoke<LiveSetActed>\('live_engine_consolidate', \{path, expectedRevision: expected_revision, track, from: span\.start, to: span\.end\}\)/,
     'the host renders and the kernel\'s owner keeps, against the revision read')
   assert.match(writes, /consolidateAudio: \(track: number, span: \{start: number; end: number\}\) => writeLiveAudioConsolidate\(path, track, span\)/)
+})
+
+// DLW build ruling 2026-11-05: Crop on an audio clip is a new sample — the host cuts the stretch of the clip's sample it keeps and the set's
+// owner keeps the cut beside the set (live/liveWrites.ts writeLiveAudioCrop, the host's live_engine_crop); with no host handed in, it waits.
+test('an audio clip\'s Crop is the host\'s cut of its sample kept beside the set; a MIDI clip\'s is the set\'s own act', async () => {
+  const calls = []
+  const summary2 = {...summary, tracks: [...summary.tracks.slice(0, 3), {kind: 'audio', name: 'Drums', devices: []}, summary.tracks[3]]}
+  const document2 = {...document, tracks: [...document.tracks.slice(0, 3), track('audio', 'Drums', {trackId: '8', arrangementClips: [{name: 'Break', kind: 'audio', start: 0, end: 4}]}), document.tracks[3]]}
+  const project = cropAudio => liveSetTrackAdapter.project({set: summary2, document: document2, act: async a => { calls.push(a); return {act: a.kind, done: 'Cropped Ebb to its loop: 4 beats, 0 notes kept.', at: null, revision: 'r'} },
+    cropAudio})
+  const set = project((track, clip, span) => { calls.push({cropAudio: [track, clip, span]}); return Promise.resolve({act: 'clip_crop',
+    done: 'Cropped Break to the selection: 2 beats, 1 second of sound written beside the set as Samples/Processed/Crop/Break [0123456789abcdef].wav.',
+    at: {track: 3, arrangement: 0}, revision: 'r2'}) })
+  const drums = {kind: 'clip', id: `${ref(3)}/clip/0`, trackId: ref(3), name: 'Break'}
+  set.clips.find(c => c.id === drums.id).at = {start: 0, end: 4}
+  const item = byId(acts.objectMenu(drums, set, context({view: 'arrangement', span: {start: 1, end: 3}})), 'crop')
+  assert.equal(item.disabled, undefined, item.why)
+  const answer = await set.actions.cropClip.run(drums.id, {start: 1, end: 3})
+  assert.deepEqual(calls, [{cropAudio: [3, {arrangement: 0}, {start: 1, end: 3}]}], 'the host\'s cut, not the set\'s typed act')
+  assert.deepEqual(answer, {ok: true, note: 'Cropped Break to the selection: 2 beats, 1 second of sound written beside the set as Samples/Processed/Crop/Break [0123456789abcdef].wav.'})
+  await set.actions.cropClip.run(`${ref(2)}/clip/0`, null)
+  assert.deepEqual(calls.at(-1), {kind: 'clip_crop', track: 2, clip: {arrangement: 0}}, 'a MIDI clip is cropped by the set\'s own act')
+  const refused = await project(() => Promise.reject(new Error('Break names no sample file: there is no sound to crop'))).actions.cropClip.run(drums.id, null)
+  assert.deepEqual(refused, {ok: false, error: 'Break names no sample file: there is no sound to crop'})
+  // O-I #849 round 21: the engine playing the set lays the cut from the next block; refused, its words follow the owner's
+  const stale = 'The set\'s parts are not those the engine opened: Stop, then Play, to hear it as it now stands'
+  const kept = engine => project(() => Promise.resolve({act: 'clip_crop', done: 'Cropped Break to its start and end: 4 beats.', at: null, revision: 'r3', engine}))
+    .actions.cropClip.run(drums.id, null)
+  assert.deepEqual(await kept({refused: stale}), {ok: true, note: `Cropped Break to its start and end: 4 beats. ${stale}`})
+  assert.deepEqual(await kept({laid: ['Drums']}), {ok: true, note: 'Cropped Break to its start and end: 4 beats.'}, 'laid again, the sound says it')
+  const waits = await project(undefined).actions.cropClip.run(drums.id, null)
+  assert.match(waits.error, /Cropping an audio clip writes a new sample of what it keeps: the desktop host cuts it/, 'a set read with no host handed in says so')
+  const {readFile} = await import('node:fs/promises')
+  const writes = await readFile(new URL('../src/live/liveWrites.ts', import.meta.url), 'utf8')
+  assert.match(writes, /invoke<LiveSetActed>\('live_engine_crop', \{path, expectedRevision: expected_revision, track, clip, from: span\?\.start \?\? null, to: span\?\.end \?\? null\}\)/)
+  assert.match(writes, /cropAudio: \(track: number, clip: LiveClipAt, span: \{start: number; end: number\} \| null\) => writeLiveAudioCrop\(path, track, clip, span\)/)
+})
+
+// O-I #849 round 21: a bar is the set's, read from its time signature, not four beats: the ruler counts bar.beat by it (a beat is the
+// signature's note), and Insert clip makes an empty clip one bar of it long.
+test('the ruler counts bars and beats by the set\'s time signature, and Insert clip makes a clip one bar of it long', async () => {
+  const lengths = []
+  const project = signature => liveSetTrackAdapter.project({set: summary, document: {...document, ...(signature ? {signature} : {})},
+    act: async a => ({act: a.kind, done: 'ok', at: null, revision: 'r'}),
+    insertClip: (track, scene, beats) => { lengths.push(beats); return Promise.resolve({name: ''}) }})
+  const label = signature => at => project(signature).ruler.label(at)
+  assert.deepEqual([0, 3, 4, 7.5].map(label(undefined)), ['1.1', '1.4', '2.1', '2.4'], 'no signature read: Live\'s 4/4')
+  assert.deepEqual([0, 2, 3, 5.99].map(label({numerator: 3, denominator: 4})), ['1.1', '1.3', '2.1', '2.3'])
+  assert.deepEqual([0, 0.5, 1.5, 3, 4.5].map(label({numerator: 6, denominator: 8})), ['1.1', '1.2', '1.4', '2.1', '2.4'], 'a beat of 6/8 is an eighth')
+  assert.deepEqual([0.3, 0.6, 2.1].map(label({numerator: 7, denominator: 8})), ['1.1', '1.2', '1.5'])
+  await project({numerator: 3, denominator: 4}).actions.insertClip.run(ref(2), 'scene:1')
+  await project(undefined).actions.insertClip.run(ref(2), 'scene:1')
+  assert.deepEqual(lengths, [3, 4], 'one bar of the set')
+  const {readFile} = await import('node:fs/promises')
+  const writes = await readFile(new URL('../src/live/liveWrites.ts', import.meta.url), 'utf8')
+  assert.match(writes, /insertClip: \(track: number, scene: number, beats\?: number\) => writeLiveInsertClip\(path, track, scene, beats\)/)
+  assert.match(writes, /length: beats, notes: \[\]/, 'the kernel makes the clip as long as the bar asked')
 })
 
 test('the Arrangement draws its time selection over the marks and through the lanes', async () => {

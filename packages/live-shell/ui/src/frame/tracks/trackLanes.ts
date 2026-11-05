@@ -123,11 +123,11 @@ export function lanesUnder(set: WorldTrackSet, trackId: string, shown: LanesShow
 /** How many lanes of a kind the set holds, for the Lanes setting's readout. */
 export const laneCount = (set: WorldTrackSet, kind: TrackLaneKind): number => (set.lanes?.[kind] ?? []).length
 
-/** An automation lane's breakpoints on the ruler: its own `at`s, or — when it rides a clip — offset by where that clip stands. A lane
- * on a clip that has no place on the ruler has none. */
+/** An automation lane's breakpoints on the ruler: its own `at`s, or — when it rides a clip — offset by where that clip stands, or, for a
+ * clip with no place of its own on the ruler, where it landed as it plays (`clipAt`). A lane on a clip that has neither has none. */
 export function automationPoints(lane: WorldAutomationLane, clipStart: (clipId: string) => number | undefined): {at: number; value: number}[] {
   if (lane.clipId === undefined) return lane.points.map(point => ({at: point.at, value: point.value}))
-  const base = clipStart(lane.clipId)
+  const base = clipStart(lane.clipId) ?? lane.clipAt
   return base === undefined ? [] : lane.points.map(point => ({at: base + point.at, value: point.value}))
 }
 

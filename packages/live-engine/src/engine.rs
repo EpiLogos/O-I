@@ -631,6 +631,8 @@ struct Shared {
     racks: Hands<RackHand>,
     /// Devices made again on their way to their chains, and those they replaced on their way back.
     remade: Hands<RemadeHand>,
+    /// Samples laid again on their way to their parts, and those they replaced on their way back.
+    laid: Hands<LaidHand>,
 }
 
 /// An instrument handed to a MIDI part while the engine plays (O-I #849: the Torus its owner hands
@@ -669,6 +671,22 @@ struct Remade {
     part: Part,
     at: usize,
     device: Box<dyn Device>,
+    taken: bool,
+}
+
+/// Samples laid again on audio parts while the engine plays (O-I #849 round 21: a clip's sample the set's owner kept anew,
+/// Consolidate's or Crop's), laid in order off the audio thread. The audio thread lays each on its part at a block's first
+/// frame ([`Graph::lay`]) and sends this back holding the samples they replaced, so nothing is dropped there.
+struct LaidHand {
+    frame: u64,
+    lays: Vec<Lay>,
+}
+
+/// The samples laid again on one part: the count they were laid at, the part, and whether it took them.
+struct Lay {
+    id: u64,
+    track: usize,
+    samples: Vec<crate::graph::LaidSample>,
     taken: bool,
 }
 
@@ -744,6 +762,10 @@ pub struct EngineHandle {
     /// many were made.
     remade: Vec<(u64, u64)>,
     made: u64,
+    /// Every part's samples the engine laid again: (frame, the count they were laid at), in the order laid; and how
+    /// many were laid.
+    relaid: Vec<(u64, u64)>,
+    lays: u64,
 }
 
 /// A block as the engine pulled it (O-I #849 round 14): its first frame, its frames, and when it was
@@ -819,6 +841,7 @@ pub fn engine(mut graph: Graph) -> Result<(EngineCore, EngineHandle), GraphError
         hands: Hands::new(),
         racks: Hands::new(),
         remade: Hands::new(),
+        laid: Hands::new(),
     });
     let clock = Clock::start(graph.sample_rate, graph.tempo_bpm);
     let sample_rate = graph.sample_rate;
@@ -841,6 +864,8 @@ pub fn engine(mut graph: Graph) -> Result<(EngineCore, EngineHandle), GraphError
         racks: Vec::new(),
         remade: Vec::new(),
         made: 0,
+        relaid: Vec::new(),
+        lays: 0,
     };
     Ok((core, handle))
 }
@@ -857,6 +882,7 @@ impl EngineCore {
         self.take_hand(start);
         self.take_rack(start);
         self.take_remade(start);
+        self.take_laid(start);
         let now_ns = self.shared.epoch.elapsed().as_nanos() as u64;
         self.stamp(start, out.len() as u64 / 2, now_ns);
         while let Some(inbound) = self.inbox.pop() {
@@ -1007,6 +1033,28 @@ impl EngineCore {
         remade.retired.store(p, Ordering::Release);
     }
 
+    /// Take the samples laid again on parts ([`EngineHandle::lay`]) at frame `start`, after the block's devices made again
+    /// and before its events: lay each on its part ([`Graph::lay`]) and send the hand back with the samples they replaced.
+    /// While the last has not been taken back, the next waits. No allocation.
+    fn take_laid(&mut self, start: u64) {
+        let laid = &self.shared.laid;
+        if !laid.retired.load(Ordering::Acquire).is_null() {
+            return;
+        }
+        let p = laid.incoming.swap(std::ptr::null_mut(), Ordering::AcqRel);
+        if p.is_null() {
+            return;
+        }
+        // SAFETY: as for `take_rack`: the control side gave up `p` when it stored it, and this thread alone takes
+        // `incoming`; it holds `p` until it stores it in `retired`.
+        let hand = unsafe { &mut *p };
+        for lay in hand.lays.iter_mut() {
+            lay.taken = self.graph.lay(lay.track, &mut lay.samples, start);
+        }
+        hand.frame = start;
+        laid.retired.store(p, Ordering::Release);
+    }
+
     /// The realtime stream's report of the device's output latency.
     pub fn report_output_latency(&self, ns: u64) {
         self.shared.output_latency_ns.store(ns, Ordering::Relaxed);
@@ -1097,6 +1145,22 @@ impl EngineHandle {
                     .iter()
                     .filter(|made| made.taken)
                     .map(|made| (frame, made.id)),
+            );
+        }
+        let p = self
+            .shared
+            .laid
+            .retired
+            .swap(std::ptr::null_mut(), Ordering::AcqRel);
+        if !p.is_null() {
+            // SAFETY: as above: dropping it drops the samples they replaced, here.
+            let hand = unsafe { Box::from_raw(p) };
+            let frame = hand.frame;
+            self.relaid.extend(
+                hand.lays
+                    .iter()
+                    .filter(|lay| lay.taken)
+                    .map(|lay| (frame, lay.id)),
             );
         }
         let mut n = 0;
@@ -1320,6 +1384,72 @@ impl EngineHandle {
         self.shared.remade.incoming.store(hand, Ordering::Release);
         self.collect();
         Ok(self.made)
+    }
+
+    /// Lay `samples` on audio part `track` in place of those laid there while the engine plays (O-I #849 round 21: a
+    /// clip's sample the set's owner kept anew, Consolidate's or Crop's, laid again from the set as it now stands): laid in
+    /// order here ([`crate::graph::samples_laid`]), they take the part at the next block's first frame, a clip sounding
+    /// there from the same place in its new sample, and those they replaced come back to be dropped on this side
+    /// ([`EngineHandle::collect`]). Samples laid again for the same part before the engine took the last give way to
+    /// these, and are never laid; those for other parts wait with them. Answers the count they were laid at, which
+    /// [`EngineHandle::relaid`] names them by once laid. Refused, in words, for a part that is not there or plays notes,
+    /// and for samples the part cannot lay.
+    pub fn lay(
+        &mut self,
+        track: usize,
+        samples: Vec<crate::graph::LaidSample>,
+    ) -> Result<u64, Refusal> {
+        let part = self.mixer.tracks.get(track).ok_or_else(|| {
+            Refusal::Invalid(format!(
+                "the set has no part {track} (it has {})",
+                self.mixer.tracks.len()
+            ))
+        })?;
+        if part.midi {
+            return Err(Refusal::Invalid(format!(
+                "'{}' is a MIDI part: it plays notes, and a sample is laid on an audio part",
+                part.name
+            )));
+        }
+        let samples =
+            crate::graph::samples_laid(&part.name, false, samples).map_err(Refusal::Invalid)?;
+        self.collect();
+        self.lays += 1;
+        let lay = Lay {
+            id: self.lays,
+            track,
+            samples,
+            taken: false,
+        };
+        let waiting = self
+            .shared
+            .laid
+            .incoming
+            .swap(std::ptr::null_mut(), Ordering::AcqRel);
+        let mut lays = if waiting.is_null() {
+            Vec::new()
+        } else {
+            // SAFETY: the audio thread never took `waiting` (it was still in `incoming`, and this side swapped it out),
+            // so this side owns it again; what it held for another part goes on with this one.
+            let waiting = unsafe { Box::from_raw(waiting) };
+            waiting
+                .lays
+                .into_iter()
+                .filter(|l| l.track != track)
+                .collect()
+        };
+        lays.push(lay);
+        let hand = Box::into_raw(Box::new(LaidHand { frame: 0, lays }));
+        self.shared.laid.incoming.store(hand, Ordering::Release);
+        self.collect();
+        Ok(self.lays)
+    }
+
+    /// Every part's samples the engine laid again from [`EngineHandle::lay`], as (frame, the count they were laid at),
+    /// in the order laid (call [`EngineHandle::collect`] first to read the latest): what Export Audio lays there again
+    /// ([`Graph::render_performance_relaid`]).
+    pub fn relaid(&self) -> &[(u64, u64)] {
+        &self.relaid
     }
 
     /// Every device the engine made again on a chain from [`EngineHandle::make_again`], as (frame, the count it was

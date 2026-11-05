@@ -69,3 +69,24 @@ test('the key slot and the set transport keep their established controls', () =>
   assert.match(markup, /data-slot="quantize"/, 'the quantize slot stands in its place')
   assert.match(markup, /data-i="Key\|/, 'the key slot keeps its data-i meaning')
 })
+
+// O-I #849 round 21: the transport's Quantize and its signature are the set's (model.rs global_quantize and signature_of), read from it;
+// a set that keeps none Live names stands at Live's own (1 bar, 4/4), as its launches and its ruler do; with no set open, Live's empty faces.
+test('the Live transport\'s Quantize and signature are the open set\'s', () => {
+  const render = extra => renderToStaticMarkup(TransportBar({
+    tempoBpm: 120, name: 'Set', mode: 'live', setView: () => {}, chooseMode: () => {}, presentedView: 'session',
+    centerPanels: [], activeCenter: null, openCenter: () => {}, browser: true, detail: true, dock: true,
+    toggleBrowser: () => {}, toggleDetail: () => {}, toggleDock: () => {}, ...extra,
+  }))
+  const face = (markup, slot) => markup.match(new RegExp(`<output[^>]*data-slot="${slot}"[^>]*>([^<]*)</output>`))?.[1]
+  const read = render({setPath: '/sets/a.als', quantize: '1/4', signature: {numerator: 3, denominator: 4}})
+  assert.equal(face(read, 'quantize'), '1/4')
+  assert.equal(face(read, 'signature'), '3 / 4')
+  assert.match(read, /data-slot="quantize"[^>]*title="Quantize — the set&#x27;s launch quantize/)
+  const kept = render({setPath: '/sets/a.als', quantize: null, signature: null})
+  assert.equal(face(kept, 'quantize'), '1 bar', 'a set that keeps none: Live\'s bar')
+  assert.equal(face(kept, 'signature'), '4 / 4')
+  const none = liveTransport()
+  assert.equal(face(none, 'signature'), '— / —', 'no set open: Live\'s empty face')
+  assert.doesNotMatch(none, /<output[^>]*data-slot="quantize"/)
+})

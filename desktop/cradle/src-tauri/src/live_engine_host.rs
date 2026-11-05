@@ -569,9 +569,11 @@ pub(crate) mod host {
     /// sounds it through Live's model, so it sounds there, in words. An effect off passes the sound as
     /// it came, so it stands nowhere. The frame's level, where its effects carry it (`level`, the frame's
     /// presentation gain 0 to 4: O-I #743 round 20), stands first, before them, as in the frame
-    /// (controller.ts `stage`: the effects "stand after the level"), as live-engine's `level`. With it,
-    /// how the engine stands each effect, in words where it does not sound as the frame's. Refused in
-    /// words for what is not the frame's effects, and for a level outside the frame's.
+    /// (controller.ts `stage`: the effects "stand after the level"), as live-engine's `level`; while the
+    /// frame's Sound is off (`muted`, round 21) that level is 0, and with Sound on and no level named, 1.
+    /// With it, how the engine stands each effect, in words where it does not sound as the frame's.
+    /// Refused in words for what is not the frame's effects, for a level outside the frame's, and for a
+    /// sound neither on nor off.
     pub fn torus_chain(effects: &Value) -> Result<(RackMade, Value), String> {
         const NOT: &str = "The Torus's effects are its chain and each effect's settings, as the frame reports them (effectsLaw.ts)";
         let chain = effects.get("chain").and_then(Value::as_array).ok_or(NOT)?;
@@ -584,16 +586,28 @@ pub(crate) mod host {
                 return Err(format!("{NOT}: {effect} stands on the chain twice"));
             }
         }
-        if let Some(level) = effects.get("level") {
-            let level = level
-                .as_f64()
-                .filter(|v| (0.0..=4.0).contains(v))
-                .ok_or_else(|| {
-                    format!(
-                        "{NOT}: its level is the frame's presentation gain, 0 to 4, not {level}"
-                    )
-                })?;
-            made.push(("level", vec![("level", level)]));
+        let level = match effects.get("level") {
+            None => None,
+            Some(level) => Some(level.as_f64().filter(|v| (0.0..=4.0).contains(v)).ok_or_else(
+                || format!("{NOT}: its level is the frame's presentation gain, 0 to 4, not {level}"),
+            )?),
+        };
+        // the frame's Sound off (`muted`, round 21): the Torus heard at no level, its own again when it is on
+        let muted = match effects.get("muted") {
+            None => None,
+            Some(muted) => Some(
+                muted
+                    .as_bool()
+                    .ok_or_else(|| format!("{NOT}: its sound is on or off, not {muted}"))?,
+            ),
+        };
+        if level.is_some() || muted.is_some() {
+            let heard = if muted == Some(true) {
+                0.0
+            } else {
+                level.unwrap_or(1.0)
+            };
+            made.push(("level", vec![("level", heard)]));
         }
         for effect in chain {
             let effect = effect.as_str().ok_or(NOT)?;
@@ -888,6 +902,9 @@ pub(crate) mod host {
         /// not laid, which the reading's warnings keep when they are read again from the set.
         pub samples: Vec<Vec<live_engine::LaidSample>>,
         pub samples_said: Vec<String>,
+        /// Every part's samples laid again while the set plays (O-I #849 round 21, [`Opened::lay_again`]): the engine's
+        /// count they were laid at, the part, and the samples, laid in their order: what Export Audio lays there again.
+        pub relaid: Vec<(u64, usize, Vec<live_engine::LaidSample>)>,
         pub racked: Vec<(usize, RackMade)>,
         /// Every set's device made again on a chain (O-I #849 round 17, [`Opened::make_again`]): the engine's count it was
         /// made at, its part, its place, and the element it was made from.
@@ -935,6 +952,7 @@ pub(crate) mod host {
                 effects: TorusEffects::default(),
                 samples,
                 samples_said,
+                relaid: Vec::new(),
                 racked: Vec::new(),
                 made_again: Vec::new(),
                 room_waiting: None,
@@ -975,7 +993,8 @@ pub(crate) mod host {
         }
 
         /// The Torus's effects on its part: the part, each effect on the frame's chain as the engine
-        /// stands it, the frame's level it hears before them (none where the frame sent none), the frame
+        /// stands it, the frame's level it hears before them (0 while the frame's Sound is off; none where
+        /// the frame sent neither), the frame
         /// the engine put the chain there from, and the last refusal.
         fn effects_reading(&self) -> Value {
             let e = &self.effects;
@@ -1272,6 +1291,60 @@ pub(crate) mod host {
             self.warnings = said(&bridged_only(&document)?.warnings);
             self.warnings.extend(self.samples_said.iter().cloned());
             Ok(())
+        }
+
+        /// Each audio part's samples laid again in the engine from the set as it now stands (O-I #849 round 21: a clip's
+        /// sample its owner kept anew while the set plays, Consolidate's or Crop's, which the engine never had open): the
+        /// set read again and its audio clips laid from beside it ([`laid`]), and each part whose samples are not those the
+        /// engine plays handed them (`EngineHandle::lay`), sounding from the next block from the same place in each clip
+        /// and kept to lay again for Export Audio; the reading's warnings read again from the set. Answers the names of
+        /// the parts laid again. Refused in words while the set's parts are not those the engine opened (a part added,
+        /// removed or moved: Play opens it again as it stands).
+        pub fn lay_again(&mut self) -> Result<Vec<String>, String> {
+            let document = set_document(&self.path)?;
+            let mut bridged = bridged_only(&document)?;
+            let samples_said = laid(&mut bridged.graph, &bridged.samples, &self.path);
+            let opened: Vec<(&str, bool)> = self
+                .handle
+                .mixer()
+                .tracks
+                .iter()
+                .map(|p| (p.name.as_str(), p.midi))
+                .collect();
+            let standing: Vec<(&str, bool)> = bridged
+                .graph
+                .tracks
+                .iter()
+                .map(|t| (t.name.as_str(), t.is_midi()))
+                .collect();
+            if standing != opened {
+                return Err("The set's parts are not those the engine opened: Stop, then Play, to hear it as it now stands".into());
+            }
+            let mut moved = Vec::new();
+            for (part, track) in bridged.graph.tracks.iter().enumerate() {
+                if track.is_midi() {
+                    continue;
+                }
+                let standing = self
+                    .relaid
+                    .iter()
+                    .rev()
+                    .find(|(_, p, _)| *p == part)
+                    .map_or(&self.samples[part], |(.., samples)| samples);
+                if standing.as_slice() == track.samples() {
+                    continue;
+                }
+                let id = self
+                    .handle
+                    .lay(part, track.samples().to_vec())
+                    .map_err(|e| e.to_string())?;
+                self.relaid.push((id, part, track.samples().to_vec()));
+                moved.push(track.name.clone());
+            }
+            self.samples_said = samples_said;
+            self.warnings = said(&bridged.warnings);
+            self.warnings.extend(self.samples_said.iter().cloned());
+            Ok(moved)
         }
 
         /// The notes due on the part following the Torus's owner, as the owner's acts to play
@@ -1607,6 +1680,20 @@ pub(crate) mod host {
                     ))
                 })
                 .collect::<Result<Vec<_>, String>>()?;
+            // Each part's samples laid again, laid again at the frame the engine laid them there.
+            let relaid = self
+                .handle
+                .relaid()
+                .iter()
+                .map(|&(frame, id)| {
+                    let (_, part, samples) = self
+                        .relaid
+                        .iter()
+                        .find(|(laid, ..)| *laid == id)
+                        .ok_or("samples the engine laid again are not kept")?;
+                    Ok((frame, *part, samples.clone()))
+                })
+                .collect::<Result<Vec<_>, String>>()?;
             // Each Torus made again from what was handed over, at the frame the engine took it.
             // Each chain put on a part's rack made again, at the frame the engine put it there.
             let racks = self
@@ -1629,15 +1716,23 @@ pub(crate) mod host {
                         Ok((frame, track, node))
                     })
                     .collect::<Result<Vec<_>, String>>()?;
-                graph.render_performance_remade(ENGINE_RATE, &performance, toruses, racks, remade)
+                graph.render_performance_relaid(
+                    ENGINE_RATE,
+                    &performance,
+                    toruses,
+                    racks,
+                    remade,
+                    relaid,
+                )
             };
             #[cfg(not(feature = "k8"))]
-            let samples = graph.render_performance_remade(
+            let samples = graph.render_performance_relaid(
                 ENGINE_RATE,
                 &performance,
                 Vec::new(),
                 racks,
                 remade,
+                relaid,
             );
             Ok((
                 wav_f32(&samples, ENGINE_RATE),
@@ -1842,17 +1937,23 @@ pub(crate) mod host {
 
     /// A 32-bit IEEE float stereo WAV (format tag 3), as bytes.
     pub fn wav_f32(interleaved: &[f32], sample_rate: u32) -> Vec<u8> {
+        wav_f32_of(interleaved, sample_rate, 2)
+    }
+
+    /// A 32-bit IEEE float WAV (format tag 3) of `channels` interleaved channels, as bytes.
+    pub fn wav_f32_of(interleaved: &[f32], sample_rate: u32, channels: u16) -> Vec<u8> {
         let data = (interleaved.len() * 4) as u32;
+        let block = 4 * channels;
         let mut bytes = Vec::with_capacity(44 + data as usize);
         bytes.extend_from_slice(b"RIFF");
         bytes.extend_from_slice(&(36 + data).to_le_bytes());
         bytes.extend_from_slice(b"WAVEfmt ");
         bytes.extend_from_slice(&16u32.to_le_bytes());
         bytes.extend_from_slice(&3u16.to_le_bytes());
-        bytes.extend_from_slice(&2u16.to_le_bytes());
+        bytes.extend_from_slice(&channels.to_le_bytes());
         bytes.extend_from_slice(&sample_rate.to_le_bytes());
-        bytes.extend_from_slice(&(sample_rate * 8).to_le_bytes());
-        bytes.extend_from_slice(&8u16.to_le_bytes());
+        bytes.extend_from_slice(&(sample_rate * u32::from(block)).to_le_bytes());
+        bytes.extend_from_slice(&block.to_le_bytes());
         bytes.extend_from_slice(&32u16.to_le_bytes());
         bytes.extend_from_slice(b"data");
         bytes.extend_from_slice(&data.to_le_bytes());
@@ -1889,6 +1990,27 @@ pub(crate) mod host {
         Ok(kept)
     }
 
+    /// Crop on an audio clip (DLW build ruling 2026-11-05: "an audio clip's sample is cut to a new file beside the set, the way
+    /// Consolidate keeps one"): the stretch of the clip's sample its owner names (live-set `crop_source`: its loop or its start
+    /// to its end, or the selection's), cut by the engine from the file the clip plays (live-engine `cut_sample`: a WAV or an
+    /// AIFF, at the file's own rate and with its own channels, silence where the stretch runs past the file), handed to `keep` as a 32-bit
+    /// float WAV's bytes (the kernel's Live owner keeps it beside the set and crops the clip to play it: `live_audio_crop`).
+    /// The engine need not hold the set; the host writes no file.
+    pub fn crop(
+        path: &Path,
+        track: usize,
+        clip: live_set::edit::ClipAt,
+        span: Option<(f64, f64)>,
+        keep: impl FnOnce(&[u8]) -> Result<Value, String>,
+    ) -> Result<Value, String> {
+        let source = live_set::acts::crop_source(&path.to_string_lossy(), track, clip, span)?;
+        let cut =
+            live_engine::bridge::cut_sample(&source.file, source.from_seconds, source.to_seconds)?;
+        let channels = u16::try_from(cut.channels)
+            .map_err(|_| "The clip's sample has more channels than a WAV holds".to_string())?;
+        keep(&wav_f32_of(&cut.samples, cut.sample_rate, channels))
+    }
+
     /// The host's state: at most one open set, and what the Torus's owner told it. The follow lock is
     /// taken before the set's, and the kernel's field lock is taken only under them, never around them.
     #[derive(Default)]
@@ -1917,6 +2039,34 @@ pub(crate) mod host {
         ) -> Result<Value, String> {
             admit(&path.to_string_lossy())?;
             self.open(path)
+        }
+
+        /// After the set's owner kept a clip's sample anew beside the set at `path` (Consolidate's or Crop's, O-I #849 round
+        /// 21): the engine holding that set lays its parts' samples again from the set as it now stands
+        /// ([`Opened::lay_again`]), answered as the parts laid again, or the words it was refused in; None while the engine
+        /// holds no such set. A stopped engine is handed them too, and never takes them: Play opens the set again as it
+        /// stands.
+        pub fn lay_again(&self, path: &Path) -> Result<Option<Value>, String> {
+            let mut open = self
+                .0
+                .lock()
+                .map_err(|_| "the engine host is poisoned".to_string())?;
+            let Some(o) = open.as_mut().filter(|o| o.path == path) else {
+                return Ok(None);
+            };
+            Ok(Some(match o.lay_again() {
+                Ok(parts) => json!({"laid": parts}),
+                Err(words) => json!({"refused": words}),
+            }))
+        }
+
+        /// The answer of an owner's act that kept a clip's sample anew beside the set at `path`, with what the engine
+        /// did of it as `engine` ([`LiveEngineHost::lay_again`]); the answer as it was while the engine holds no such set.
+        pub fn kept_and_laid(&self, path: &Path, mut kept: Value) -> Result<Value, String> {
+            if let (Some(engine), Value::Object(fields)) = (self.lay_again(path)?, &mut kept) {
+                fields.insert("engine".into(), engine);
+            }
+            Ok(kept)
         }
 
         pub fn open(&self, path: &Path) -> Result<Value, String> {
@@ -1959,6 +2109,7 @@ pub(crate) mod host {
                             o.effects = TorusEffects::default();
                             o.racked.clear();
                             o.made_again.clear();
+                            o.relaid.clear();
                             core.ok_or("the engine was not made")?
                         }
                     };
@@ -2913,6 +3064,87 @@ pub(crate) mod host {
             }
         }
 
+        /// DLW build ruling 2026-11-05, round 21 item 3: the frame's Sound off reaches the engine. The effects the frame
+        /// reports carry it (`muted`, the frame's Sound on and off) and the engine hears the Torus through the level that
+        /// stands first on its chain at 0 while it is off, at the frame's level again when it is on (1 where the frame names
+        /// none); a turn of it moves that level in place, from the next block, and Export renders it as played. Anything but on
+        /// or off is refused in words.
+        #[test]
+        fn the_frames_sound_off_silences_the_toruss_part_through_its_level_in_place() {
+            let mut with = effects(&["delay"]);
+            with["level"] = json!(2);
+            with["muted"] = json!(true);
+            let (made, _) = torus_chain(&with).unwrap();
+            assert_eq!(made[0], ("level", vec![("level", 0.0)]), "off: silent");
+            with["muted"] = json!(false);
+            assert_eq!(
+                torus_chain(&with).unwrap().0[0],
+                ("level", vec![("level", 2.0)])
+            );
+            let mut bare = effects(&["delay"]);
+            bare["muted"] = json!(false);
+            assert_eq!(
+                torus_chain(&bare).unwrap().0[0],
+                ("level", vec![("level", 1.0)]),
+                "on with no level named: unity"
+            );
+            bare["muted"] = json!(true);
+            assert_eq!(
+                torus_chain(&bare).unwrap().0[0],
+                ("level", vec![("level", 0.0)])
+            );
+            bare["muted"] = json!("off");
+            let words = torus_chain(&bare).unwrap_err();
+            assert!(words.contains("its sound is on or off"), "{words}");
+            let path = write_set("torus-muted", SET);
+            let mut o = Opened::open(&path).unwrap();
+            let mut core = o.core.take().unwrap();
+            let mut played = pull(&mut core, &[256, 256]);
+            let mut chain = effects(&["filter", "delay"]);
+            chain["level"] = json!(1.5);
+            chain["muted"] = json!(false);
+            o.put_effects(0, &chain).unwrap();
+            played.extend(pull(&mut core, &[256; 20]));
+            chain["muted"] = json!(true);
+            o.put_effects(0, &chain).unwrap();
+            played.extend(pull(&mut core, &[256; 20]));
+            chain["muted"] = json!(false);
+            o.put_effects(0, &chain).unwrap();
+            played.extend(pull(&mut core, &[256; 4]));
+            o.handle.collect();
+            assert_eq!(o.racked.len(), 1, "nothing was put again");
+            let moved: Vec<(&str, f64, u64)> = o
+                .handle
+                .performance()
+                .events
+                .iter()
+                .filter_map(|e| match e.event {
+                    EngineEvent::Set { key, value, .. } => Some((key, value, e.frame)),
+                    _ => None,
+                })
+                .collect();
+            assert_eq!(
+                moved,
+                vec![
+                    ("level", 0.0, 512 + 256 * 20),
+                    ("level", 1.5, 512 + 256 * 40)
+                ],
+                "off, then on again, each at the next block"
+            );
+            assert_eq!(o.reading()["torus_effects"]["level"], 1.5);
+            let (bytes, _) = o.render_wav().unwrap();
+            let wav = live_engine::wav::read_wav_f32(&bytes).unwrap();
+            assert_eq!(wav.samples.len(), played.len());
+            assert!(
+                wav.samples
+                    .iter()
+                    .zip(&played)
+                    .all(|(a, b)| a.to_bits() == b.to_bits()),
+                "Export renders the turns as played"
+            );
+            let _ = std::fs::remove_dir_all(path.parent().unwrap());
+        }
+
         /// O-I #743 round 20, item 3, the engine gaps: the engine hears the frame's level. The effects the frame reports carry
         /// it (`level`, the frame's presentation gain 0 to 4) and it stands first on the Torus's chain, before the effects, as
         /// in the frame (controller.ts `stage`); moved while it plays it moves in place, heard from the next block, and Export
@@ -3077,6 +3309,155 @@ pub(crate) mod host {
                 "{refused}"
             );
             let _ = std::fs::remove_dir_all(path.parent().unwrap());
+        }
+
+        /// Crop on an audio clip (DLW build ruling 2026-11-05): the host cuts the stretch of the clip's sample its owner
+        /// names from the file beside the set, at the file's own rate and channels, silence past its end, and hands the
+        /// kernel's owner the cut as a WAV; a clip with no sound to cut is refused in its owner's words.
+        #[test]
+        fn crop_hands_the_owner_the_clips_stretch_of_its_sample_cut_from_the_file() {
+            let path = write_set("crop", AUDIO_SET);
+            let folder = path.parent().unwrap().join("Samples/Recorded");
+            std::fs::create_dir_all(&folder).unwrap();
+            let sample: Vec<f32> = (0..2 * 4_800).map(|i| i as f32 / 9_600.0).collect();
+            std::fs::write(folder.join("vox.wav"), wav_f32(&sample, ENGINE_RATE)).unwrap();
+            let at = live_set::edit::ClipAt::Arrangement(0);
+            let mut handed = Vec::new();
+            let answer = crop(&path, 0, at, None, |wav| {
+                handed = wav.to_vec();
+                Ok(json!({"done": "kept"}))
+            })
+            .unwrap();
+            assert_eq!(answer, json!({"done": "kept"}));
+            let wav = live_engine::wav::read_wav(&handed).unwrap();
+            assert_eq!(
+                (wav.channels, wav.sample_rate, wav.samples.len()),
+                (2, ENGINE_RATE, 2 * 2_400),
+                "Vox's 0.02–0.07 seconds"
+            );
+            assert_eq!(
+                wav.samples[0].to_bits(),
+                sample[2 * 960].to_bits(),
+                "from its start marker"
+            );
+            assert_eq!(
+                wav.samples[2 * 2_400 - 1].to_bits(),
+                sample[2 * 3_360 - 1].to_bits(),
+                "to its end"
+            );
+            // A mono file shorter than the stretch: one channel, and silence where the file runs out.
+            let mono: Vec<f32> = (0..2_000).map(|i| (i + 1) as f32).collect();
+            std::fs::write(folder.join("vox.wav"), wav_f32_of(&mono, ENGINE_RATE, 1)).unwrap();
+            let mut handed = Vec::new();
+            crop(&path, 0, at, None, |wav| {
+                handed = wav.to_vec();
+                Ok(json!({}))
+            })
+            .unwrap();
+            let wav = live_engine::wav::read_wav(&handed).unwrap();
+            assert_eq!((wav.channels, wav.samples.len()), (1, 2_400));
+            assert_eq!(wav.samples[0], 961.0);
+            assert_eq!(wav.samples[1_039], 2_000.0, "the file's last frame");
+            assert_eq!(wav.samples[1_040], 0.0, "and silence after it");
+            let refused = crop(
+                &path,
+                0,
+                live_set::edit::ClipAt::Arrangement(1),
+                None,
+                |_| unreachable!("nothing to keep"),
+            )
+            .unwrap_err();
+            assert!(refused.contains("loop markers"), "{refused}");
+            let _ = std::fs::remove_dir_all(path.parent().unwrap());
+        }
+
+        /// O-I #849 round 21: a clip's sample its owner kept anew while the set plays (here Crop's, over a selection of
+        /// Vox) is laid in the engine from the next block, from the set as it now stands: what the cut keeps sounds as it
+        /// did, the rest of the clip falls silent where the cropped clip now ends, and Export Audio renders what was
+        /// played. The engine holding another set is handed nothing; while the set's parts are not those it opened, it
+        /// is refused in words.
+        #[test]
+        fn a_sample_kept_anew_while_the_set_plays_is_laid_from_the_next_block_and_exports_as_played(
+        ) {
+            use sha2::Digest;
+            let path = write_set("lay-again", AUDIO_SET);
+            let folder = path.parent().unwrap().join("Samples/Recorded");
+            std::fs::create_dir_all(&folder).unwrap();
+            let sample: Vec<f32> = (0..2 * 4_800).map(|i| i as f32 / 9_600.0 + 0.125).collect();
+            std::fs::write(folder.join("vox.wav"), wav_f32(&sample, ENGINE_RATE)).unwrap();
+            let still = {
+                let (g, _) = bridged(&set_document(&path).unwrap(), &path).unwrap();
+                g.render_performance(ENGINE_RATE, &Performance::silent(3 * 4_096))
+            };
+            let host = LiveEngineHost::default();
+            host.open(&path).unwrap();
+            let mut core = host
+                .0
+                .lock()
+                .unwrap()
+                .as_mut()
+                .unwrap()
+                .core
+                .take()
+                .unwrap();
+            let mut played = pull(&mut core, &[4_096]);
+            let revision = format!(
+                "sha256:{:x}",
+                sha2::Sha256::digest(std::fs::read(&path).unwrap())
+            );
+            let (at, span) = (live_set::edit::ClipAt::Arrangement(0), Some((0.25, 0.3)));
+            let kept = crop(&path, 0, at, span, |wav| {
+                live_set::acts::crop_audio(&path.to_string_lossy(), &revision, 0, at, span, wav)
+            })
+            .unwrap();
+            assert_eq!(
+                host.kept_and_laid(&path, kept).unwrap()["engine"],
+                json!({"laid": ["Vox"]})
+            );
+            played.extend(pull(&mut core, &[4_096, 4_096]));
+            // Vox at beat 0.25 (frame 6 000) for 0.1 beats; cropped to 0.05, it ends at frame 7 200
+            assert!(
+                played[..2 * 7_200]
+                    .iter()
+                    .zip(&still)
+                    .all(|(p, s)| p.to_bits() == s.to_bits()),
+                "what the cut keeps sounds as it did"
+            );
+            assert!(
+                still[2 * 7_200..2 * 8_400].iter().all(|v| *v != 0.0)
+                    && played[2 * 7_200..2 * 8_400].iter().all(|v| *v == 0.0),
+                "the rest of the clip falls silent where the cropped clip now ends"
+            );
+            let (bytes, _) = host
+                .0
+                .lock()
+                .unwrap()
+                .as_mut()
+                .unwrap()
+                .render_wav()
+                .unwrap();
+            let wav = live_engine::wav::read_wav_f32(&bytes).unwrap();
+            assert!(
+                wav.samples == played,
+                "Export Audio is what the engine played"
+            );
+            let other = write_set("lay-again-other", AUDIO_SET);
+            assert_eq!(
+                host.lay_again(&other).unwrap(),
+                None,
+                "the engine holds another set"
+            );
+            let renamed = live_set::xml::parse(&AUDIO_SET.replace("\"Vox\"", "\"Voice\"")).unwrap();
+            std::fs::write(&path, live_set::write_gz(&renamed).unwrap()).unwrap();
+            assert_eq!(
+                host.lay_again(&path).unwrap(),
+                Some(
+                    json!({"refused": "The set's parts are not those the engine opened: Stop, then Play, to hear it as it now stands"})
+                )
+            );
+            for set in [&path, &other] {
+                let _ = std::fs::remove_dir_all(set.parent().unwrap());
+            }
         }
 
         /// Item 5 on the sample-playback source (DLW build ruling 2026-11-05): the host lays an audio part's unwarped
@@ -4263,7 +4644,8 @@ pub async fn live_engine_consolidate(
         use tauri::{Emitter, Manager};
         admit_candidate_webview(&webview)?;
         tauri::async_runtime::spawn_blocking(move || {
-            host::consolidate(std::path::Path::new(&path), track, from, to, |wav| {
+            let set = std::path::Path::new(&path);
+            let kept = host::consolidate(set, track, from, to, |wav| {
                 let kernel = app.state::<crate::KernelHost>();
                 let (receipt, reading) = kernel
                     .0
@@ -4272,7 +4654,9 @@ pub async fn live_engine_consolidate(
                     .live_audio_consolidate(&path, &expected_revision, track, from, to, wav)?;
                 let _ = app.emit(oi_cradle_kernel::events::KERNEL_EVENT_TOPIC, &receipt);
                 Ok(reading)
-            })
+            })?;
+            // the engine playing the set lays the consolidated sample from the next block
+            host(&app).kept_and_laid(set, kept)
         })
         .await
         .map_err(|e| e.to_string())?
@@ -4280,6 +4664,53 @@ pub async fn live_engine_consolidate(
     #[cfg(not(feature = "native_shell"))]
     {
         let _ = (app, webview, path, expected_revision, track, from, to);
+        Err(EVERYDAY.into())
+    }
+}
+
+/// Crop on an audio clip (DLW build ruling 2026-11-05): the host cuts the
+/// stretch of the clip's sample it keeps and the kernel's Live owner keeps the
+/// cut beside the set as the sample the cropped clip plays, against the set's
+/// revision, its receipt sent on the kernel's event topic.
+#[tauri::command]
+#[allow(clippy::too_many_arguments)]
+pub async fn live_engine_crop(
+    app: tauri::AppHandle,
+    webview: tauri::WebviewWindow,
+    path: String,
+    expected_revision: String,
+    track: usize,
+    clip: serde_json::Value,
+    from: Option<f64>,
+    to: Option<f64>,
+) -> Result<serde_json::Value, String> {
+    #[cfg(feature = "native_shell")]
+    {
+        use tauri::{Emitter, Manager};
+        admit_candidate_webview(&webview)?;
+        let at = live_set::edit::ClipAt::of(&clip)?;
+        let span = live_set::acts::span_of(from, to)?;
+        tauri::async_runtime::spawn_blocking(move || {
+            let set = std::path::Path::new(&path);
+            let kept = host::crop(set, track, at, span, |wav| {
+                let kernel = app.state::<crate::KernelHost>();
+                let (receipt, reading) = kernel
+                    .0
+                    .lock()
+                    .map_err(|_| "kernel lock unavailable".to_owned())?
+                    .live_audio_crop(&path, &expected_revision, track, at, span, wav)?;
+                let _ = app.emit(oi_cradle_kernel::events::KERNEL_EVENT_TOPIC, &receipt);
+                Ok(reading)
+            })?;
+            // the engine playing the set lays the cropped sample from the next block
+            host(&app).kept_and_laid(set, kept)
+        })
+        .await
+        .map_err(|e| e.to_string())?
+    }
+    #[cfg(not(feature = "native_shell"))]
+    {
+        let _ = (app, webview, path, expected_revision, track, clip, from, to);
         Err(EVERYDAY.into())
     }
 }

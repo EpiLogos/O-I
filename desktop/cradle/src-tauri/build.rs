@@ -20,6 +20,7 @@ fn main() {
             "live_engine_export",
             "live_engine_render_take",
             "live_engine_consolidate",
+            "live_engine_crop",
             "midi_out",
             "expression_walk_observation",
             "terminal_attach",
