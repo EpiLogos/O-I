@@ -175,3 +175,28 @@ test('the frame says when its cut presents the instrument — an announced instr
   assert.equal(readHostedState(base())?.presentsInstrument, undefined, 'absent is valid: a frame that has not said draws nothing of its own');
   assert.equal(readHostedState(base({presentsInstrument: 'yes'})), null, 'a non-boolean refuses the reading, like every flag here');
 });
+
+// O-I 854 (DLW §21.2 To use the Torus, step 6: "Set Tuning to Sky. The voices take the planets of your sky"): the host hands the frame the
+// sky the Sky shows, as the owner's `ql.sky-snapshot/v1`, so the Torus's session stands on it. It rides the channel as the world lens rides
+// the cut: posted when it changes, and again whenever the frame is announced to (a reload asks it again). None hands no sky.
+test('the host hands the frame the Sky\'s sky as host-sky, again on every announcement; none is null, and a malformed sky is refused before posting', async t => {
+  const wire = messageWire();
+  const frame = new EventTarget();
+  frame.src = `${origin}/__application/expressions/index.html`;
+  frame.contentWindow = {postMessage(data, targetOrigin) {assert.equal(targetOrigin, origin); wire.port1.postMessage(data);}};
+  frame.closest = () => null;
+  const host = new ExpressionsHost(frame, {bindingId: 'center:world', owners: {channels: {}}, messageTarget: new EventTarget(), handshakeTimeoutMs: 1000, mode: 'live'});
+  t.after(() => {host.dispose(); wire.dispose();});
+  const dated = {schema: 'ql.sky-snapshot/v1', snapshot_ref: 'sky:controlled-2026-09-28', epoch_utc: '2026-09-28T12:00:00Z', bodies: []};
+  assert.equal((await wire.observe()).some(d => d.kind === 'host-sky'), false, 'no sky is handed before the host is given one');
+  host.setSky(dated);
+  host.setSky(null);
+  assert.throws(() => host.setSky({...dated, schema: 'ql.sky-request/v1'}), /^Error: The Sky's sky is not one ql\.sky-snapshot\/v1 owner reading with its ref$/);
+  assert.throws(() => host.setSky({...dated, snapshot_ref: ''}), /^Error: The Sky's sky is not one ql\.sky-snapshot\/v1 owner reading with its ref$/);
+  host.setSky(dated);
+  frame.dispatchEvent(new Event('load'));
+  const skies = (await wire.observe()).filter(d => d.kind === 'host-sky');
+  assert.deepEqual(skies, [
+    {v: CHANNEL_VERSION, kind: 'host-sky', sky: dated}, {v: CHANNEL_VERSION, kind: 'host-sky', sky: null}, {v: CHANNEL_VERSION, kind: 'host-sky', sky: dated},
+    {v: CHANNEL_VERSION, kind: 'host-sky', sky: dated}], 'each change is posted, and the frame is handed it again when it loads');
+});

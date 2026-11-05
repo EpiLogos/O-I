@@ -4,8 +4,8 @@
 .st-scope circle[data-fill="true"] { fill: var(--dp-value); }
 
 /* The pages and the work's acts stand closer together, so the name keeps its room in the pool's 400. */
-.st-studio > .dp-head > .dp-pages { margin-left: 4px; }
-.st-studio > .dp-head > .dp-head-acts { margin-left: 2px; }
+.st-studio > .dp-head > .dp-pages, .st-studio > .dp-rack-head > .dp-head > .dp-pages { margin-left: 4px; }
+.st-studio > .dp-head > .dp-head-acts, .st-studio > .dp-rack-head > .dp-head > .dp-head-acts { margin-left: 2px; }
 
 /* Two controls side by side across the width of their section. */
 .st-pair { display: flex; gap: 4px; align-self: stretch; justify-self: stretch; }

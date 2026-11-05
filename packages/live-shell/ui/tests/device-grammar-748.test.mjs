@@ -11,7 +11,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {register} from 'node:module'
-import {readdirSync} from 'node:fs'
+import {readdirSync, readFileSync} from 'node:fs'
 
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
 const boundary = new URL('packages/expressions-boundary/src/', new URL('../../../../', import.meta.url)).href
@@ -310,4 +310,50 @@ test('Prompt pads read Factory\'s schedule as the pad\'s own reading (↻ and it
   assert.match(binding.standing.press.disabled, /missing op/)
   // No Settings window handed in: Make routine stands closed and says so.
   assert.match(promptPadsBinding({located, bank: {status: 'answered', value: bank, error: null}, holds: {views: {}}}, {}).standing.makeRoutine.disabled, /Settings/)
+})
+
+// O-I ticket 748's remainder (DLW build ruling 2026-11-05, round 867): a rack stands on the chain as Live's does and as the shell mockup
+// draws it (world-shell-mockup.html `.rack`): its head — the title bar over the macros and the chain list only, with the column of view
+// buttons on the left under it — then the chosen chain's devices at full height, their title bars level with the rack's, then a narrow
+// end bracket. Hide the macros and the chain list and the head stands as a strip with its name turned on its side.
+test('a rack on the chain stands as Live\'s: its head, the chosen chain\'s devices after it at full height, the end bracket; hiding its macros and chain list leaves the head a named strip', () => {
+  const RACK_PARTS = ['macros', 'chains', 'devices']
+  const plateOf = tree => find(tree, n => n.tag === 'section' && n.attrs?.['data-rack'] === 'true')
+  const kidsOf = n => (n?.kids ?? []).filter(k => k.tag !== '#text')
+  const marksIn = n => all(n, x => x.attrs?.['data-rack-mark'] !== undefined).map(x => x.attrs['data-rack-mark'])
+  let racks = 0
+  for (const [id, d] of Object.entries(designs)) {
+    if (d.kind !== 'rack' || !(d.views ?? []).includes('compact')) continue
+    racks += 1
+    const plate = plateOf(draw(d.compact(props(d, {frame: 'chain'}))))
+    assert.ok(plate, `${id}: the rack's plate on the chain`)
+    const kids = kidsOf(plate), head = kids[0]
+    assert.ok(has(head, 'dp-rack-head'), `${id}: the head stands first`)
+    const [bar, inside] = kidsOf(head)
+    assert.ok(has(bar, 'dp-head'), `${id}: the title bar spans the head only`)
+    assert.deepEqual(marksIn(bar), [], `${id}: the view buttons are not in the title bar`)
+    assert.ok(has(kidsOf(inside)[0], 'dp-rack-col'), `${id}: the column of view buttons stands on the left, under the title bar`)
+    assert.deepEqual(marksIn(kidsOf(inside)[0]), RACK_PARTS, `${id}: the column holds Live's three view buttons`)
+    assert.equal(all(head, n => n.attrs?.['data-rack-part'] === 'devices').length, 0, `${id}: no device of the chosen chain stands inside the head`)
+    assert.ok(has(kids.at(-1), 'dp-rack-end'), `${id}: the end bracket closes the rack`)
+    const devs = kids.find(k => has(k, 'dp-rack-devs'))
+    if (id === 'software-factory:agentset-rack') {
+      assert.ok(devs && find(devs, n => n.attrs?.['data-rack-part'] === 'devices'), `${id}: the chosen chain's devices stand after the head`)
+      assert.ok(kids.indexOf(devs) === 1, `${id}: between the head and the end bracket`)
+    }
+    // Hide the macros and the chain list: the head is a strip, its name turned on its side, its view buttons still on it.
+    const stripped = plateOf(draw(d.compact(props(d, {frame: 'chain'})), {rackShown: {macros: false, chains: false, devices: true}, onRackShow() {}}))
+    const strip = kidsOf(stripped)[0]
+    assert.ok(has(strip, 'dp-rack-strip'), `${id}: the head stands as a strip`)
+    assert.ok(find(strip, n => has(n, 'dp-activator')), `${id}: the strip keeps the activator`)
+    assert.deepEqual(marksIn(strip), RACK_PARTS, `${id}: and the view buttons`)
+    assert.ok(text(find(strip, n => has(n, 'dp-rack-strip-name')) ?? {kids: []}).trim().length > 0, `${id}: and the rack's name`)
+    assert.equal(all(stripped, n => n.attrs?.['data-rack-part'] === 'macros' || n.attrs?.['data-rack-part'] === 'chains').length, 0, `${id}: the hidden parts leave`)
+    assert.ok(has(kidsOf(stripped).at(-1), 'dp-rack-end'), `${id}: the bracket still closes it`)
+  }
+  assert.ok(racks >= 3, `the racks on the chain: ${racks}`)
+  // Each rack fills the chain's height: the devices beside its head keep the chain's body, not the head's body less a title bar.
+  const css = readFileSync(new URL('../src/inhabitants/sdk/panel.css', import.meta.url), 'utf8')
+  assert.match(css, /\.dp\[data-rack="true"\]\[data-view="compact"\] \{[^}]*flex-direction: row/, 'the rack lays its head, devices and bracket in a row')
+  assert.match(css, /\.dp-rack-strip-name \{[^}]*writing-mode: vertical-rl/, 'the strip\'s name reads upward')
 })

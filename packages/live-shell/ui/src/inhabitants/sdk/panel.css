@@ -286,6 +286,23 @@
 .dp-rack-marks { display: inline-flex; align-items: center; gap: 1px; }
 .dp-rack-mark[aria-pressed="true"] { color: var(--accent, #ffbe00); }
 
+/* A rack on the chain, as Live's (panel.tsx RackOnChain; DLW build ruling 2026-11-05; the shell mockup's .rack): the head (the title bar
+   over the macros and the chain list, the column of view buttons on the left under it), then the chosen chain's devices at full
+   height with their title bars level with the rack's, then a narrow end bracket. The plate itself draws no frame: each part does. */
+.dp[data-rack="true"][data-view="compact"] { flex-direction: row; align-items: stretch; background: none; border: 0; }
+.dp-rack-head { flex: none; display: flex; flex-direction: column; background: var(--dp-face); border: 1px solid var(--line, #24262a); }
+.dp-rack-in { flex: none; display: flex; height: var(--dp-body); }
+.dp-rack-in > .dp-body { height: var(--dp-body); flex-direction: row; }
+.dp-rack-col { flex: none; width: 18px; flex-direction: column; justify-content: flex-start; gap: 4px; padding: 5px 0; background: var(--dp-head); border-right: 1px solid var(--line, #24262a); }
+.dp-rack-devs { flex: none; display: flex; align-items: stretch; }
+/* The chosen chain's devices keep the chain's height: the section gives them the whole of it, a title bar and a body. */
+.dp[data-rack="true"] > .dp-rack-devs > .dp-sec[data-rack-part="devices"] { padding: 0; border-left: 0; --as-room: calc(var(--dp-body) + var(--dp-head-h) + 2px); }
+.dp-rack-end { flex: none; width: 7px; background: var(--dp-head); border: 1px solid var(--line, #24262a); border-left: 0; }
+/* The head as a strip, its macros and chain list hidden: the activator, the view buttons and the name read upward, as a folded device's. */
+.dp-rack-strip { flex: none; width: 22px; display: flex; flex-direction: column; align-items: center; gap: 6px; padding-top: 5px; background: var(--dp-head); border: 1px solid var(--line, #24262a); }
+.dp-rack-strip > .dp-rack-col { width: auto; padding: 0; background: none; border-right: 0; }
+.dp-rack-strip-name { margin-top: auto; padding-bottom: 6px; writing-mode: vertical-rl; transform: rotate(180deg); white-space: nowrap; font-size: 11px; color: var(--text); overflow: hidden; }
+
 /* Expanded above the chain (the wide frame), the band that holds the picture stands first, and in each band the section that holds it
    (manual §16.9 "The display stands in a section of its own, at the left"; §16.12 "A rack's picture is its chain list"). A design writes
    its picture first; this keeps the order where a band written for the pool puts it later. */

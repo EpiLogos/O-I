@@ -11139,6 +11139,7 @@ The widget shows the small live torus with a level meter. Click the torus to ope
 #### Rules
 
 - The torus is the only generator. The sky, the tuning and the mode tune and move it. They do not make sound.
+- The Torus stands on the sky the Sky shows. Set the Sky to a date, or to your own place, and the Torus opens again on that sky. Tap the Sky back to now and the Torus opens again on its own sky: the saved occasion's, or the sky of now.
 - The four boundaries make no sound. They shape the figure and are never a voice.
 - The pulse runs without a break through every band. Crossing a band changes how it is heard and drawn, never where it is.
 - The comma only grows while the Torus is open.

@@ -39,7 +39,7 @@
 // carries the control's id); show, pane (each carries the device's family: show it whole in the pool, open it full in a pane).
 // A key the owner does not report is absent. The picture then names the missing reading and every control draws "—".
 import {useRef, useState, type ReactNode} from 'react'
-import {Action, Band, Dial, Display, Folded, Handle, PanelHead, RackBody, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, fromUnit, toUnit, useRack,
+import {Action, Band, Dial, Display, Folded, Handle, PanelHead, RackBody, RackOnChain, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, fromUnit, toUnit, useRack,
   type LightState, type Option, type RowItem, type Scale, type Standing, NoReading} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, has, json, numOf, st, strOf, type DesignedDevice, type Values, type ViewProps} from './design'
 import './expressions__studio.css'
@@ -253,6 +253,11 @@ function Work({p}: {p: ViewProps}) {
 function Plate({p, view, pages, children}: {p: ViewProps; view: 'compact' | 'whole'; pages?: {id: string; label: string}[]; children: ReactNode}) {
   // A rack: its head shows or hides its macros, its chain list and the devices of the chosen chain, as Live's rack head does (§16.4).
   const rack = useRack()
+  // On the chain it stands as Live's rack (the kit's RackOnChain): its view buttons in the column under the title bar, and its bracket.
+  if (view === 'compact') return <RackOnChain title="Studio" className="st-studio" light={lightOf(p)} lightWhy={LIGHT_WHY} shown={rack.shown} onShow={rack.onShow}
+    onFold={p.nav.fold} onSelect={p.nav.select}
+    bar={<PanelHead title="Studio" light={lightOf(p)} lightWhy={LIGHT_WHY} onFold={p.nav.fold} onFull={p.nav.full} acts={<Work p={p} />}
+      hint="The rack for every scene of the Expression: your chosen controls as its macros, the field devices as its chains." />}>{children}</RackOnChain>
   return <section className="dp st-studio" data-view={view} data-rack="true" aria-label="Studio" onPointerDownCapture={p.nav.select}>
     <PanelHead title="Studio" light={lightOf(p)} lightWhy={LIGHT_WHY} onFold={p.nav.fold} onFull={p.nav.full} acts={<Work p={p} />} rack={rack}
       pages={pages} page={p.page} onPage={p.setPage} hint="The rack for every scene of the Expression: your chosen controls as its macros, the field devices as its chains." />

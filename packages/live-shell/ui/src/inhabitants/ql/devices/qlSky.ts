@@ -375,6 +375,16 @@ export function resetQlSky(next: {call?: KernelCall} = {}): void {
 
 const subscribe = (listener: () => void) => { listeners.add(listener); return () => { listeners.delete(listener) } }
 
+/** The sky the Torus's session stands on, as the Sky hands it (O-I ticket 854; DLW §21.2 To use the Torus, step 6: "Set Tuning to Sky.
+ * The voices take the planets of your sky"): the owner's `ql.sky-snapshot/v1` verbatim for the reading the Sky shows, when that answers a
+ * chosen date or your own place's view; null while it shows the shared sky of now (the session opens on the dated sky now, as it always
+ * has) or has no sky. A reading stands for the ask it answers, so a newer ask still being read hands the sky still shown. Pure. */
+export function skyForTheField(sky: QlSkyState): Readonly<Record<string, unknown>> | null {
+  const reading = sky.reading, asked = sky.answered
+  if (!reading?.ok || !asked || !reading.sky.snapshot) return null
+  return asked.now && sky.view.observer !== 'private' ? null : reading.sky.snapshot
+}
+
 /** The Sky's store as a reader that asks nothing (Scale mapping reads the hour the Sky counts; the Sky's own views ask for the sky). */
 export function useQlSkyState(): QlSkyState {
   return useSyncExternalStore(subscribe, qlSkyState, qlSkyState)

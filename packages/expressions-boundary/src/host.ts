@@ -64,6 +64,8 @@ export class ExpressionsHost {
   private readonly recovery: RecoveryAdmission;
   private mode: HostedAppMode;
   private world?: string;
+  /** The sky the Sky shows, for the Torus's session to stand on (O-I ticket 854); undefined until the host is given one. */
+  private sky?: Readonly<Record<string, unknown>> | null;
   private epoch = 0;
   private alive = true;
   private ready = false;
@@ -121,6 +123,7 @@ export class ExpressionsHost {
       this.post({v: CHANNEL_VERSION, kind: 'oi-kernel-channel', channel: 'kernel-expression'});
     }
     this.post({v: CHANNEL_VERSION, kind: 'host-mode', mode: this.mode, ...(this.world ? {world: this.world} : {})});
+    if (this.sky !== undefined) this.post({v: CHANNEL_VERSION, kind: 'host-sky', sky: this.sky});
     this.post({schema: NATIVE_CHANNEL, epoch: this.nativeEpoch, kind: 'available', available: !!this.options.owners.native,
       reason: this.options.owners.native ? null : this.options.owners.unavailableReason ?? 'No native Expressions owner is attached'});
     this.post({schema: NATIVE_CHANNEL, epoch: this.nativeEpoch, kind: 'visibility', visible: this.presented()});
@@ -366,6 +369,17 @@ export class ExpressionsHost {
     this.mode = mode;
     this.world = world;
     this.post({v: CHANNEL_VERSION, kind: 'host-mode', mode, ...(world ? {world} : {})});
+  }
+  /** Hand the frame the sky the Sky shows (O-I ticket 854; DLW §21.2 To use the Torus, step 6: "Set Tuning to Sky. The voices take the
+   * planets of your sky"): the owner's `ql.sky-snapshot/v1`, or null for none (the shared sky of now). It rides as the world lens rides
+   * the cut: posted now, and again whenever the frame is announced to. The frame's field stands on it (nativeField.ts sky). A sky that is
+   * not one snapshot with its ref is refused here, before posting. */
+  setSky(sky: Readonly<Record<string, unknown>> | null) {
+    if (!this.alive) throw Error('The hosted application was disposed');
+    if (sky !== null && (!object(sky) || sky.schema !== 'ql.sky-snapshot/v1' || !boundedText(sky.snapshot_ref, 512)))
+      throw Error("The Sky's sky is not one ql.sky-snapshot/v1 owner reading with its ref");
+    this.sky = sky;
+    this.post({v: CHANNEL_VERSION, kind: 'host-sky', sky});
   }
   setPresented() {
     this.post({schema: NATIVE_CHANNEL, epoch: this.nativeEpoch, kind: 'visibility', visible: this.presented()});

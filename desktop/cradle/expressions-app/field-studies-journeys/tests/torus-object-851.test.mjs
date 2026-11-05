@@ -663,7 +663,7 @@ test('the frame asks the owner where you stand each frame while Receiver is On, 
   assert.match(hearing, /if\(!controller\.receiving\)return;/, 'Off, a camera move asks nothing');
   assert.match(hearing, /if\(now-heardWhen<RECEIVER_FRAME_MS\)return;/, 'at most ten times a second');
   assert.match(field, /receiverPlace\(stageEye\(heardView\.view,heardView\.fov,WORLD_SCALE\),scale\)/, 'the engine\'s eye in the owner\'s metres');
-  assert.match(field, /return \{controller,panel,command,stage,touch,openLive,leaveLive,rebind,authoredMoved,hear,dispose:/);
+  assert.match(field, /return \{controller,panel,command,stage,touch,openLive,leaveLive,rebind,authoredMoved,hear,sky,dispose:/);
   const app = readFileSync(join(journeys, 'src/app.ts'), 'utf8');
   const tick = app.slice(app.indexOf('function tick(now:number)'), app.indexOf('function tick(now:number)') + 4000);
   assert.match(tick, /const native=engine\.telemetry\?\.\(\);nativeField\?\.hear\(\{camera,width,height\},native\?\.config\?\.depth\?\.fov\);/,
@@ -743,7 +743,72 @@ test('the frame sends the View you keep to the stage once it announces its instr
   assert.match(effect, /if \(!instrumentUp \|\| !host\.current\) return/, 'nothing is sent before the stage announces its instrument');
   assert.match(effect, /stageRun\(\{command: 'instrument', edit: \{kind: 'view', view: torusView\}\}\)/, 'through the mounted stage channel');
   assert.match(effect, /setViewFault\(result\.ok \? null : `The stage does not draw the Torus's View: /, 'a refusal is named, in the stage\'s words');
-  assert.match(panel, /faults: \[hostFault, surfaceFault, viewFault, fault\]/, 'and stands with the frame\'s other faults');
+  assert.match(panel, /faults: \[hostFault, surfaceFault, viewFault, skyFault, fault\]/, 'and stands with the frame\'s other faults');
   const holds = readFileSync(new URL('../../../../../packages/live-shell/ui/src/techne/devices/designDevices.ts', import.meta.url), 'utf8');
   assert.match(holds, /export function useHeld\(id: string, key: string\): Value \| undefined \{\n\s*return useSyncExternalStore\(subscribe, \(\) => holds\[id\]\?\.\[key\], \(\) => holds\[id\]\?\.\[key\]\)/);
+});
+
+// O-I 854 (DLW §21.2 To use the Torus, step 6: "Set Tuning to Sky. The voices take the planets of your sky"): the sky the Sky device shows is
+// the sky the Torus's session stands on. The Sky hands the frame its owner's `ql.sky-snapshot/v1` (the host's `host-sky`); every opening of
+// the field composes on that exact snapshot, as a saved occasion's does, and an open field standing on another sky is bound again around
+// the act (nativeField.ts rebind), named. With none handed (the shared sky of now) the field opens as it always has.
+const SKY_854 = {schema: 'ql.sky-snapshot/v1', snapshot_ref: 'sky:controlled-2026-09-28', epoch_utc: '2026-09-28T12:00:00Z', epoch_unix_ms: 1790582400000,
+  bodies: [{body: 'Sun', native_planet_id: 0, longitude_degrees: 185.2}]};
+
+test('the field reads the sky it is handed as one bounded ql.sky-snapshot/v1, or none; anything else is refused in words', async () => {
+  const {readHandedSky} = await bundle(join(journeys, 'src/native-field/controller.ts'), 'controller-854');
+  assert.equal(readHandedSky(null), null);
+  assert.equal(readHandedSky(undefined), null);
+  const read = readHandedSky(SKY_854);
+  assert.deepEqual(read, SKY_854, 'the owner\'s snapshot, verbatim');
+  assert.notEqual(read, SKY_854, 'kept as the field\'s own copy');
+  for (const bad of [{...SKY_854, schema: 'ql.sky-request/v1'}, {...SKY_854, snapshot_ref: ''}, [SKY_854], 'sky:controlled', {...SKY_854, pad: 'x'.repeat(1024 * 1024)}])
+    assert.throws(() => readHandedSky(bad, 'The sky the Sky hands'), /^Error: The sky the Sky hands is not one bounded ql\.sky-snapshot\/v1 owner reading$/);
+});
+
+test('a handed sky binds the open field again only when it stands on another: the same sky asks nothing, and none brings its own opening back', async () => {
+  const {skyRebinds} = await bundle(join(journeys, 'src/native-field/controller.ts'), 'controller-854');
+  // standing: the sky the open field stands on; before: the sky handed before; next: the sky handed now (refs, null for none)
+  assert.equal(skyRebinds('sky:now', null, 'sky:dated'), true, 'a dated sky the field does not stand on');
+  assert.equal(skyRebinds('sky:dated', null, 'sky:dated'), false, 'the field already stands on it');
+  assert.equal(skyRebinds('sky:dated', 'sky:dated', 'sky:dated'), false, 'nothing moved');
+  assert.equal(skyRebinds('sky:dated', 'sky:dated', 'sky:other'), true, 'another date');
+  assert.equal(skyRebinds('sky:dated', 'sky:dated', null), true, 'back to now: the field leaves the sky the Sky handed');
+  assert.equal(skyRebinds('sky:occasion', 'sky:dated', null), false, 'back to now while the field stands on its own sky: nothing');
+  assert.equal(skyRebinds(null, null, 'sky:dated'), true, 'a field open on no sky');
+});
+
+test('the controller opens on the sky it is handed exactly, the kernel asked for no other', async () => {
+  const {ControlledAudio, ControlledSceneOwner} = await import(new URL('../../../tests/native-expression-fixture.mjs', import.meta.url));
+  const THREE = await import('three');
+  const {NativeFieldController} = await bundle(join(journeys, 'src/native-field/controller.ts'), 'controller-854');
+  const texture = () => new THREE.DataTexture(new Float32Array(16), 2, 2, THREE.RGBAFormat, THREE.FloatType);
+  const port = {texWidth: 2, texHeight: 2, particleCount: 4, targetA: texture(), targetB: texture(), setTargetTextures() {}};
+  const renderer = {retainedTopology: () => ({tex_width: 2, tex_height: 2, particle_count: 4, slot_count: 4}), retainedTargetPort: () => port, setNativeDomain() {},
+    releaseRetainedField() {}, onRetainedRecoveryRequired: () => () => {}, checkpointRetainedField() { return {receipt: {}}; }, restoreRetainedField() {}};
+  const owner = new ControlledSceneOwner(), audio = new ControlledAudio(), c = new NativeFieldController(owner, renderer, () => audio);
+  try {
+    await c.compose({skySnapshot: SKY_854});
+    const composed = owner.calls.find(call => call.operation === 'compose');
+    assert.deepEqual(composed.request.sky_snapshot, SKY_854, 'the snapshot the Sky shows, as it shows it');
+    assert.equal('sky' in composed.request, false, 'no fresh sky is asked of the kernel');
+  } finally { await c.dispose(); }
+  await assert.rejects(new NativeFieldController(new ControlledSceneOwner(), renderer, () => new ControlledAudio()).compose({skySnapshot: {...SKY_854, snapshot_ref: 7}}),
+    /^Error: The sky to open on is not one bounded ql\.sky-snapshot\/v1 owner reading$/);
+});
+
+test('the frame takes the Sky\'s sky from its host: every opening composes on it, and an open field on another sky is bound again, named', () => {
+  const field = readFileSync(join(journeys, 'src/nativeField.ts'), 'utf8');
+  assert.match(field, /const primaryOpen=\(\)=>\{if\(handed\)\{const sky=handed;return openWith\(\(\)=>controller\.compose\(\{skySnapshot:sky\}\),'sky'\);\}const retained=hooks\.retainedOccasion\?\.\(\);/,
+    'the handed sky comes first, before the saved occasion and the sky of now');
+  // The Sky's sky is the view's own: the app keeps it as no occasion, so the composition's own sky comes back when the Sky returns to now.
+  assert.match(readFileSync(join(journeys, 'src/app.ts'), 'utf8'), /onComposed:mode=>\{\n  if\(mode==='none'\|\|mode==='sky'\)return;/, 'an opening on the Sky\'s sky keeps no occasion');
+  const own = field.slice(field.indexOf('const sky=(raw:unknown)'), field.indexOf('const authoredMoved='));
+  assert.match(own, /next=readHandedSky\(raw,'The sky the Sky hands'\);/, 'read as one bounded snapshot');
+  assert.match(own, /if\(!skyRebinds\(controller\.occasionSky\?\.snapshot_ref\?\?null,before,next\?\.snapshot_ref\?\?null\)\)return null;/, 'bound again only for another sky');
+  assert.match(own, /return rebind\(next\?`The Sky stands at \$\{skyWhen\(next\)\}`:'The Sky is back on the sky of now'\);/, 'around the act, named');
+  assert.match(field, /return \{controller,panel,command,stage,touch,openLive,leaveLive,rebind,authoredMoved,hear,sky,dispose:/);
+  const app = readFileSync(join(journeys, 'src/app.ts'), 'utf8');
+  assert.match(app, /if\(d&&d\.v===1&&d\.kind==='host-sky'\)\{const said=nativeField\?\.sky\(\(d as \{sky\?:unknown\}\)\.sky\);if\(said\)toast\(said,6500\);return;\}/,
+    'the host\'s sky reaches the field, and what it did is said');
 });
