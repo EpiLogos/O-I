@@ -20,8 +20,9 @@
 //   scope, depth, direction, shared, text, kinds, relations, ghosts (unresolved), orphans (isolated), mode (context), labels,
 //   arrows, zoom, groups (emphasis)   the open graph's view state (GraphFilters), kinds and relations as the design lists them
 //   reading      the kernel graph op's answer (oi.cradle.graph-reading/v1), whole: the open surface's, else the root register's
-//   budget       the max_nodes the read is asked with: the open surface reads at graphProgress.ts's own 4096 and its handle takes no
-//                bound; with none open, the hand's bound on the root read
+//   budget       the Budget (DLW §17.3: 8–4096 nodes, 64 by default): while a graph is open, its own view state (filters.ts budget; the
+//                pane draws and simulates what budgetGraph keeps and says how many more it hides), written as the panel's own filter
+//                change (O-I ticket 742); with none open, the hand's bound on the root read
 //   aperture.*   QL's living-wiki plan (livingPlan.ts: `ql wiki living-plan` through the kernel's ql_read wiki-living-plan): the request is
 //                the view's own (mode, positions, context, full, budget), the admitted and omitted positions, the depth and the refraction
 //                QL's answer, or its refusal in its words
@@ -33,6 +34,7 @@ import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../fr
 import type {KnowledgeGraphSurface} from '../../../../../../desktop/cradle/src/knowledge/knowledgeGraphHandle'
 import type {GraphReading} from '../../../../../../desktop/cradle/src/knowledge/graph'
 import type {EmphasisGroup} from '../../../../../../desktop/cradle/src/knowledge/graphEmphasis'
+import {GRAPH_BUDGET} from '../../../../../../desktop/cradle/src/knowledge/filters'
 import {GRAPH_DESIGN, disabled, handsFor, missing, put, refusal} from './designDevices'
 import {APERTURE_READINGS, APERTURE_REQUEST, livingPlanState, livingPlanValues, livingPlanWhy, type LivingPlanState} from './livingPlan'
 import {projectSessions, type DirectoryEntryRow, type ImpactSessionTouch, type ImpactSubject, type NowListRow} from '../../inhabitants/centralImpactModel'
@@ -49,7 +51,8 @@ export const NOT_LOCAL = 'Depth applies in a local view; the scope is the availa
 export function surfaceRead(surface: KnowledgeGraphSurface): GraphRead {
   return {status: surface.loading ? 'reading' : 'answered', reading: surface.reading ?? null, error: null, pending: surface.loading ? ['loading'] : [], nodes: GRAPH_READ_NODES}
 }
-const SURFACE_BOUND = missing('Budget', 'a node bound on the open graph\'s read (KnowledgeSurface.tsx reads at graphProgress.ts\'s own 4096; its handle takes none)', 'the knowledge graph')
+/** A Budget the open graph does not take, in words. */
+export const BUDGET_RANGE = `Budget takes a whole number of nodes from ${GRAPH_BUDGET.min} to ${GRAPH_BUDGET.max}.`
 
 /** No key of the graph is refused now: the Aperture page is QL's plan (livingPlan.ts). */
 export const GRAPH_REFUSE = {} as const
@@ -137,7 +140,7 @@ const groupOf = (group: EmphasisGroup) => ({id: group.id, label: group.label, co
 export function graphValues(surface: KnowledgeGraphSurface | null, read: GraphRead | null, held: Readonly<Record<string, Value>> = {}): Values {
   const values: Record<string, Value> = {}
   values.light = surface ? 'lit' : 'dark'
-  put(values, 'budget', surface ? GRAPH_READ_NODES : held.budget ?? read?.nodes)
+  put(values, 'budget', surface ? surface.filters.budget ?? GRAPH_BUDGET.initial : held.budget ?? read?.nodes)
   // Sessions (§17.3): Open only by default, the hand's own.
   put(values, 'reach.closed', held['reach.closed'] ?? false)
   if (read?.reading) values.reading = JSON.stringify(read.reading)
@@ -195,7 +198,12 @@ export async function graphWrite(surface: KnowledgeGraphSurface | null, changes:
       surface.setMinimap(value === true)
       continue
     }
-    if (key === 'budget') throw Error(SURFACE_BOUND)
+    if (key === 'budget') {
+      const budget = Number(value)
+      if (typeof value !== 'number' || !Number.isInteger(budget) || budget < GRAPH_BUDGET.min || budget > GRAPH_BUDGET.max) throw Error(BUDGET_RANGE)
+      writes.patch(surface, {budget})
+      continue
+    }
     const group = /^g:(.+)$/.exec(key)
     if (group) {
       const groups = surface.filters.emphasis
@@ -230,7 +238,6 @@ export function graphBinding(surface: KnowledgeGraphSurface | null, read: GraphR
   if (!surface) for (const key of VIEW_KEYS) standing[key] = {disabled: NOT_OPEN}
   else {
     if (surface.filters.scope !== 'local') standing.depth = {disabled: NOT_LOCAL}
-    standing.budget = {disabled: SURFACE_BOUND}
   }
   const values: Record<string, Value> = {...graphValues(surface, read, held), ...livingPlanValues(plan), ...reachValues(reach)}
   for (const key of APERTURE_REQUEST) if (held[key] !== undefined) values[key] = held[key]!
@@ -243,8 +250,9 @@ export function graphBinding(surface: KnowledgeGraphSurface | null, read: GraphR
     values,
     standing,
     ...(waiting.length ? {waiting} : {}),
-    local: handsFor(GRAPH_ID, GRAPH_LOCAL),
-    writes: key => key in GRAPH_REFUSE || key in GRAPH_SETTERS || (HANDLE_KEYS as readonly string[]).includes(key) || key.startsWith('g:'),
+    // With a graph open the Budget is the graph's own (its view state), not the hand's.
+    local: handsFor(GRAPH_ID, surface ? GRAPH_LOCAL.filter(key => key !== 'budget') : GRAPH_LOCAL),
+    writes: key => key in GRAPH_REFUSE || key in GRAPH_SETTERS || (HANDLE_KEYS as readonly string[]).includes(key) || key.startsWith('g:') || (key === 'budget' && !!surface),
     write: changes => graphWrite(surface, changes, writes),
   }
 }

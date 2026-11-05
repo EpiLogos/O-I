@@ -29,7 +29,7 @@ import {liveClipOf, type LiveClipReading} from './LiveClip'
 import type {ModeInForce} from './modes'
 import type {LiveClipAt, LiveClipReading as LiveClipWholeReading, LiveSend} from '../../../../../desktop/cradle/src/kernel/types'
 import {liveColour, liveColourIndex} from './livePalette'
-import {clipAtOf, useLiveClipWhole, writeLiveClip} from './liveWrites'
+import {clipAtOf, liveClipMpe, useLiveClipWhole, writeLiveClip} from './liveWrites'
 import * as tools from './liveClipTools'
 
 /** The seven modes the design's Scale chooser names (clips/live.tsx MODES). */
@@ -65,6 +65,8 @@ export function liveClipValues(clip: LiveClipReading, mode: ModeInForce, colour:
   put('linked', whole.linked); put('multiplier', whole.multiplier)
   put('launch', whole.launch); put('legato', whole.legato); put('quantize', whole.quantize); put('launchVelocity', whole.launchVelocity)
   if (whole.notes) values.notes = JSON.stringify(whole.notes.map(n => ({id: String(n.id), p: n.p, at: n.at, len: n.len, vel: n.vel, chance: n.chance})))
+  // The MPE tab: each note's expression as the set keeps it beside the note, by the note's id as `notes` names it (O-I #853).
+  if (whole.notes) values.mpe = JSON.stringify(liveClipMpe(whole.notes).mpe)
   for (const [key, mixer] of Object.entries({...MIXER_ENVELOPES, ...sendEnvelopes(sends)})) {
     const env = whole.envelopes.find(e => e.device === 'Mixer' && e.parameter === mixer.parameter)
     if (env) values[key] = JSON.stringify(env.points.map(([at, v]) => [at, mixer.toDesign(v)]))
@@ -110,6 +112,7 @@ const VIEW: Readonly<Record<string, string>> = {
   grid: 'the editor\'s grid', lane: 'which lane stands under the notes, velocity or chance', fold: 'Fold: only the rows that hold notes',
   foldScale: 'Fold to Scale: only the clip\'s mode', highlight: 'Highlight Scale: tints the mode\'s rows', note: 'the note selected in the editor',
   'mpe.slide': 'whether the MPE tab shows the slide lane', 'mpe.pressure': 'whether the MPE tab shows the pressure lane',
+  'mpe.bend': 'whether the MPE tab shows the bend lane',
   'env.device': 'the envelope editor\'s Device chooser', 'env.control': 'the envelope editor\'s Control chooser',
   // The tools' own settings: what the next press applies, as Live keeps them in Clip view until you press (cap 02–06).
   interval: 'Add Interval\'s interval', stretch: 'Stretch\'s factor', setGrid: 'Set Length\'s grid', humanize: 'Humanize\'s amount',
@@ -243,13 +246,14 @@ function clipWiring(address: LiveClipAddress | null, whole: LiveClipWholeReading
     reads: {
       name: 'the clip\'s name (the set\'s owner)', colour: 'the clip\'s own colour, its palette index in Live\'s palette (the set\'s owner); until read whole, its track\'s colour (the tracks pane)',
       'set.root': 'the set\'s mode in force: its root (the kernel\'s mode catalogue)', 'set.mode': 'the set\'s mode in force: its lens mode, where it is one of the seven',
-      notes: 'the clip\'s notes (the set\'s owner)', 'env.mixer.*': 'the clip\'s own Volume, Pan and Send envelopes (the set\'s owner)',
+      notes: 'the clip\'s notes (the set\'s owner)',
+      mpe: 'each note\'s pressure and bend as the set keeps them beside the note (the set\'s owner; live/liveWrites.ts liveClipMpe)', 'env.mixer.*': 'the clip\'s own Volume, Pan and Send envelopes (the set\'s owner)',
       ...Object.fromEntries(SETTINGS.map(key => [key, 'the clip\'s own setting (the set\'s owner, packages/live-set/src/edit.rs)'])),
     },
     acts,
     view: VIEW,
     refused,
-    absent: {mpe: 'no note expression is read', playhead: 'the transport\'s playhead is not read into Clip view'},
+    absent: {playhead: 'the transport\'s playhead is not read into Clip view'},
   }
 }
 

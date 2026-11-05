@@ -277,3 +277,30 @@ test('Keep rack: the Torus saved as the sound it opens with, then the rack the f
       {ok: false, error: refused.reason})
   } finally { stop() }
 })
+
+// ── a Torus take laid under the Scene (O-I #855, BB's round-19 steps) ──────────────────────────────────────────────────────────────
+// Once a take was rendered through the relay, the frame asks the kernel to seal it from the checkpoint it BEGAN at (the stage's
+// `torus-take` seal, by the name the kernel relayed that checkpoint under), builds the record (liveTake.ts torusTakeRecord) and the Scene
+// lays it by one edit of its performance (the boundary's `record-take`, kernel `record_torus_take`).
+test('a take is sealed from the checkpoint it began at, built into its record and laid under the Scene; each refusal in words', async () => {
+  const NAMED = 'sha256:' + 'b'.repeat(64)
+  const TAKE = {schema: 'oi.torus-take/v1', take_ref: 'sha256:' + 'c'.repeat(64), sample_rate: 48000, seal: 'hmac-sha256:seal'}
+  const asked = []
+  const stage = async command => { asked.push(command); return {ok: true, take: TAKE} }
+  const perform = async action => { asked.push(action); return {state: 'take-recorded', take_ref: TAKE.take_ref, lane_ref: 'take-lane:torus/3', at_sample: '96000', unsaved: true} }
+  const take = {id: 3, name: 'Take 3', beat: 4, bpm: 120}
+  const laid = await presets.layTorusTake({checkpoint_sha256: NAMED, take}, {stage, perform})
+  const {torusTakeRecord} = await import('../src/live/liveTake.ts')
+  assert.deepEqual(asked, [{command: 'torus-take', action: 'seal', checkpoint_sha256: NAMED}, {action: 'record-take', record: torusTakeRecord(TAKE, take)}],
+    'sealed by the name of the checkpoint it began at, then laid by the record its builder makes')
+  assert.deepEqual(laid, {ok: true, words: 'Take 3 lies under the scene on its take lane, from sample 96000. The Scene keeps it until the Expression is saved, then the file does.'})
+  assert.deepEqual(await presets.layTorusTake({checkpoint_sha256: NAMED, take}, {stage: async () => ({ok: false, error: 'No render of this take was relayed'}), perform}),
+    {ok: false, error: 'No render of this take was relayed'}, 'the kernel\'s refusal of the seal, in its words')
+  assert.deepEqual(await presets.layTorusTake({checkpoint_sha256: NAMED, take}, {stage: async () => ({ok: true}), perform}), {ok: false, error: 'The owner answered the seal with no take'})
+  assert.deepEqual(await presets.layTorusTake({checkpoint_sha256: NAMED, take: {...take, bpm: 0}}, {stage, perform}).then(r => r.ok), false, 'a take on no tempo lies nowhere')
+  assert.deepEqual(await presets.layTorusTake({checkpoint_sha256: NAMED, take}, {stage, perform: async () => ({state: 'refused', reason: 'This take was not sealed by this kernel', missing: []})}),
+    {ok: false, error: 'This take was not sealed by this kernel'})
+  const reply = await withChannel(async () => ({state: 'take-recorded', take_ref: TAKE.take_ref, lane_ref: 'take-lane:torus/3', at_sample: '96000', unsaved: false}),
+    () => presets.commitLivePerformance({action: 'record-take', record: torusTakeRecord(TAKE, take)}))
+  assert.equal(reply.state, 'take-recorded', 'the owner\'s answer to a laid take is read in its own shape')
+})

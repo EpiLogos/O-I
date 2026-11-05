@@ -32,7 +32,7 @@
 import {useState} from 'react'
 import {Action, Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, toUnit, fromUnit, type LightState, type RowItem, NoReading, unreadRows} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, has, json, numOf, st, strOf, type DesignedDevice, type Value, type ViewProps} from './design'
-import {defaultGraphFilters, filterGraph, type FilteredGraph, type GraphFilters} from '../../../../../../../desktop/cradle/src/knowledge/filters'
+import {boundBudget, budgetGraph, defaultGraphFilters, filterGraph, type FilteredGraph, type GraphFilters} from '../../../../../../../desktop/cradle/src/knowledge/filters'
 import {graphNodeCaption, isUnresolvedGraphNode, projectUnresolvedGraph, unresolvedGraphAssociations} from '../../../../../../../desktop/cradle/src/knowledge/graphNavigation'
 import {emphasizeGraph, type EmphasisGroup} from '../../../../../../../desktop/cradle/src/knowledge/graphEmphasis'
 import {GRAPH_ZOOM_LIMITS} from '../../../../../../../desktop/cradle/src/knowledge/camera'
@@ -56,8 +56,10 @@ interface Model {
   readonly associations: readonly Association[]
   readonly neighbours: ReadonlyMap<string, ReadonlySet<string>>
   readonly layouts: Map<string, Map<string, Place>>
-  readonly results: Map<string, FilteredGraph>
+  readonly results: Map<string, Kept>
 }
+/** What the filters keep of what the Budget keeps, and how many notes the Budget leaves out of all the reading holds. */
+type Kept = FilteredGraph & {readonly beyond: number; readonly total: number}
 
 const isText = (x: unknown): x is string => typeof x === 'string'
 const isRecord = (x: unknown): x is Record<string, unknown> => typeof x === 'object' && x !== null && !Array.isArray(x)
@@ -144,17 +146,21 @@ function filtersOf(v: V): GraphFilters {
     arrows: boolOf(v, 'arrows') ?? f.arrows, shared: boolOf(v, 'shared') ?? f.shared}
 }
 
-interface Reading {readonly model: Model; readonly result: FilteredGraph}
-/** The reading and what the filters keep of it, or undefined when there is no reading. */
+interface Reading {readonly model: Model; readonly result: Kept}
+/** The reading and what the filters keep of it, or undefined when there is no reading. The Budget bounds it first, as the open graph bounds
+ * its own (the cradle's budgetGraph, O-I #742): the notes nearest the one you hold, then the most connected. */
 function readingOf(v: V): Reading | undefined {
   const model = modelOf(v)
   if (!model) return undefined
   const f = filtersOf(v), focus = selectedOf(v) || undefined, floor = STANDING_RANK[strOf(v, 'floor') ?? 'all'] ?? 0
-  const key = JSON.stringify([f.text, f.scope, f.depth, f.direction, f.kinds, f.relations, f.isolated, f.unresolved, f.context, focus, floor])
+  const budget = finite(numOf(v, 'budget'))
+  const key = JSON.stringify([f.text, f.scope, f.depth, f.direction, f.kinds, f.relations, f.isolated, f.unresolved, f.context, focus, floor, budget ?? null])
   let result = model.results.get(key)
   if (!result) {
+    const bounded = budget === undefined ? null : budgetGraph(model.reading, boundBudget(Math.round(budget)), focus)
+    const total = bounded?.total ?? new Set(model.reading.nodes.map(n => n.ref)).size
     // Standing floor: a relation that carries a standing below the floor is hidden; a relation that carries none stands.
-    const kept = filterGraph(model.reading, f, focus)
+    const kept = {...filterGraph(bounded?.reading ?? model.reading, f, focus), beyond: bounded?.beyond ?? 0, total}
     result = floor ? {...kept, edges: kept.edges.filter(e => e.standing === undefined || (STANDING_RANK[e.standing] ?? 0) >= floor)} : kept
     model.results.set(key, result)
     if (model.results.size > 12) model.results.delete(model.results.keys().next().value!)
@@ -692,7 +698,7 @@ const askPosition = (p: ViewProps) => (id: string, on: boolean) => {
 
 function KnowledgeWhole({p}: {p: ViewProps}) {
   const [group, setGroup] = useState(0), [reachPage, setReachPage] = useState(0)
-  const read = readingOf(p.v), c = read?.result.counts, budget = finite(numOf(p.v, 'budget')), bounded = c !== undefined && budget !== undefined && c.admitted > budget
+  const read = readingOf(p.v), c = read?.result.counts, budget = finite(numOf(p.v, 'budget')), bounded = (read?.result.beyond ?? 0) > 0
   return <Panel title="Knowledge graph" view="whole" light={light(p)} onFold={p.nav.fold} onFull={p.nav.full}
     pages={[{id: 'reach', label: 'Reach'}, {id: 'filters', label: 'Filters'}, {id: 'display', label: 'Display'}, {id: 'aperture', label: 'Aperture'}]} page={p.page} onPage={p.setPage}>
     <Band>
@@ -761,9 +767,10 @@ function KnowledgeWhole({p}: {p: ViewProps}) {
         </Section>
       </> : <>
         <Section label="Reading" cols={2} width={118}>
-          <Readout big label="shown" does="Nodes the graph shows, of all the reading holds." value={c ? `${c.displayed}/${c.admitted}` : undefined} tone="value" />
+          <Readout big label="shown" does="Nodes the graph shows, of all the reading holds." value={c && read ? `${c.displayed}/${read.result.total}` : undefined} tone="value" />
           <Readout label="hidden" does="Nodes the scope and the filters keep out of view. They are not unrelated." value={c?.hidden} />
-          <Readout label="bounded" does="Yes when the reading holds more nodes than the budget." value={c && budget !== undefined ? (bounded ? 'yes' : 'no') : undefined} tone={bounded ? 'accent' : undefined} />
+          <Readout label="bounded" does={bounded ? `Yes: the reading holds more nodes than the budget, and ${read!.result.beyond} more are hidden. Raise the Budget to show them.` : 'Yes when the reading holds more nodes than the budget.'}
+            value={c && budget !== undefined ? (bounded ? 'yes' : 'no') : undefined} tone={bounded ? 'accent' : undefined} />
           <Readout label="ghosts" does="Links that have no target." value={read?.result.nodes.filter(isUnresolvedGraphNode).length} tone="accent" />
         </Section>
         <Section grow><Rows label={reachTitle(p.v)} does="What a change to the subject would reach: links first, direct links at the top, then the references, then the sessions. Each names its source."

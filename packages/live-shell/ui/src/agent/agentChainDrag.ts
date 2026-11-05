@@ -122,9 +122,13 @@ export const MISSING_OPS = {
   git: 'workcell git-seat attach',
   world: 'world scope setter',
   gateway: 'gateway transport attach',
-  /** A slide: the order of the agent profile Central keeps; no Central operation writes it yet. */
-  order: 'agent-chain order',
 } as const
+
+/** A slide on a session's chain (BD r19: Central PR 318): the order of what the agent carries is Central's agent-profile.chain-order, on the
+ * profile it keeps, the SkillSets inside the Skillset rack; the rack's own place between the Agent rack and the Agent is the chain's meaning
+ * (inhabitants/sdk/chains.ts CHAIN_LAWS['factory-session']). */
+export const CHAIN_ORDER_OP = 'agent-profile.chain-order'
+export const SLIDE_PLACE = `the Skillset rack stands between the Agent rack and the Agent, which keep their places; the order of the SkillSets inside it is Central's (${CHAIN_ORDER_OP})`
 
 // ---- Owners: who each binding waits on, and who owes each missing op -------
 
@@ -155,10 +159,9 @@ export const OWNER_BINDINGS: Readonly<Record<OwnerBindingId, OwnerBinding>> = {
 
 /** Who owes each missing op — the family that owns the face the op would
  * admit onto (same map: skillset racks :27, git seat :30, gateway transport
- * :20). The chain's order is Central's, which keeps the agent profile the
- * chain is (§19.4 "The chain is the profile Central keeps for the agent"; DLW
- * build ruling 2026-11-05), as the chain's law names it (inhabitants/sdk/
- * chains.ts AGENT_CHAIN_ORDER). `null` where no owner is named: the world face
+ * :20). The chain's order is no longer missing: Central writes it on the
+ * agent profile the chain is (CHAIN_ORDER_OP; §19.4 "The chain is the profile
+ * Central keeps for the agent"). `null` where no owner is named: the world face
  * is a Central + AIKit split. A null owner is disclosed as unnamed, never
  * guessed. */
 export const MISSING_OP_OWNERS: Readonly<Record<keyof typeof MISSING_OPS, string | null>> = {
@@ -166,7 +169,6 @@ export const MISSING_OP_OWNERS: Readonly<Record<keyof typeof MISSING_OPS, string
   git: 'Workcell',
   world: null,
   gateway: 'Actuation',
-  order: 'Central',
 }
 
 /** The remedy for a missing op, in the ticket's own terms: the owner builds
@@ -255,7 +257,7 @@ export function chainDropDecision(drag: AgentChainDrag): ChainDropDecision {
  * the decision does not make. */
 export function dropZoneLine(active: ActiveChainDrag): string {
   if (active.kind === 'reorder') {
-    return `Slide «${active.reorder.title}» — release refuses: the composition is declared (missing op: ${MISSING_OPS.order})`
+    return `Slide «${active.reorder.title}» — release refuses: ${SLIDE_PLACE}`
   }
   const decision = chainDropDecision(active.drag)
   if (decision.kind === 'operation') {

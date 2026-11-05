@@ -82,8 +82,11 @@ test('the aperture table: two drops dispatch declared operations, two refuse by 
   assert.match(seatGit.because, /workcell_status_read/, 'the refusal names the reading that exists and the op that does not')
 })
 
-test('the slide refuses with the named missing op — no order operation exists', () => {
-  assert.equal(drag.MISSING_OPS.order, 'agent-chain order')
+test('the slide refuses with the rack\'s fixed place; the order inside it is Central\'s agent-profile.chain-order', () => {
+  // REPLACED (BD r19, Central #318): the slide named the missing op "agent-chain order". Central writes the order of what the agent carries
+  // (agent-profile.chain-order), so it is no missing op; the Skillset rack's own place on the chain is fixed.
+  assert.equal('order' in drag.MISSING_OPS, false)
+  assert.equal(drag.CHAIN_ORDER_OP, 'agent-profile.chain-order')
   // The model exposes no operation that reorders: the only order in the module
   // is the declared CHAIN_SLOTS constant (the family door's composition).
   assert.equal(typeof drag.setActiveChainDrag, 'function')
@@ -100,7 +103,8 @@ test('the zone names what is held — operations promised, refusals admitted', (
   assert.match(line({kind: 'chain-item', drag: skillset}), /missing op: agent-chain skillset admit/)
   assert.match(line({kind: 'chain-item', drag: git}), /missing op: workcell git-seat attach/)
   assert.match(line({kind: 'reorder', reorder: {id: 'gateway', title: 'Gateway · hermes'}}), /refuses/)
-  assert.match(line({kind: 'reorder', reorder: {id: 'gateway', title: 'Gateway · hermes'}}), /agent-chain order/)
+  // REPLACED (BD r19): the reorder line named "agent-chain order"; it names Central's agent-profile.chain-order and the rack's fixed place.
+  assert.match(line({kind: 'reorder', reorder: {id: 'gateway', title: 'Gateway · hermes'}}), /agent-profile\.chain-order/)
 })
 
 test('the slide’s gap follows the same midpoint rule as the parent rack', () => {
@@ -167,7 +171,8 @@ test('the drop dispatches through the declared owners; refusals render as the la
   assert.match(chain, /harnessAgentControl\(transport, binding, decision\.operation\.control\)/, 'the agent seat dispatches harness_agent_control')
   assert.match(chain, /shell\.setSelectedTrackId\(active\.drag\.ref\)/, 'the session drop rides the run model’s selection')
   assert.match(chain, /missing op \$\{decision\.missingOp\}/, 'the refusal card names the exact missing op')
-  assert.match(chain, /MISSING_OPS\.order/, 'the slide refusal names the missing order op')
+  // REPLACED (BD r19): the slide refusal named MISSING_OPS.order; it says the rack's place and Central's order op (SLIDE_PLACE).
+  assert.match(chain, /SLIDE_PLACE/, 'the slide refusal says the rack\'s place and Central\'s order op')
   assert.match(chain, /<RefusalCard/, 'refusals render through the landed disclosure card')
   assert.match(chain, /onDismiss=\{\(\) => setNote\(null\)\}/)
   assert.match(chain, /agent-transport-note/, 'receipts render as the styled note, never a JSON dump')
@@ -209,13 +214,13 @@ test('the three missing ops from the table each name their owner and remedy, or 
   assert.equal(drag.MISSING_OP_OWNERS.git, 'Workcell')
   // REPLACED (DLW build ruling 2026-11-05: the chain's order is Central's, which keeps the agent profile): the order named no owner, while
   // the chain's law (inhabitants/sdk/chains.ts) named Central for it; the two agree now.
-  assert.equal(drag.MISSING_OP_OWNERS.order, 'Central', 'Central keeps the agent profile, whose order the chain is')
+  // REPLACED (BD r19, Central #318): the order is no missing op; the chain's law names Central's own operation for it, standing.
+  assert.equal('order' in drag.MISSING_OP_OWNERS, false, 'Central built the order: it owes nothing here')
   const {CHAIN_LAWS} = await import('../src/inhabitants/sdk/chains.ts')
-  assert.equal(CHAIN_LAWS['factory-session'].op.owner, drag.MISSING_OP_OWNERS.order, 'the chain\'s law names the same owner')
-  assert.equal(CHAIN_LAWS['factory-session'].op.name, drag.MISSING_OPS.order)
+  assert.equal(CHAIN_LAWS['factory-session'].op.owner, 'Central', 'the chain\'s law names Central, which keeps the agent profile')
+  assert.equal(CHAIN_LAWS['factory-session'].op.name, drag.CHAIN_ORDER_OP)
   assert.equal(drag.missingOpRemedy('skillset'), 'AIKit builds agent-chain skillset admit on its own seat, or declares it absent')
   assert.equal(drag.missingOpRemedy('git'), 'Workcell builds workcell git-seat attach on its own seat, or declares it absent')
-  assert.equal(drag.missingOpRemedy('order'), 'Central builds agent-chain order on its own seat, or declares it absent')
   assert.match(drag.missingOpRemedy('world'), /no owner is named for world scope setter yet/, 'an unnamed owner is still said as unnamed')
   const admit = drag.chainDropDecision(skillset)
   assert.equal(admit.owner, 'AIKit')
@@ -250,7 +255,8 @@ test('the chain earns every lamp from a reading and names who an unlit lamp wait
   assert.match(pictures, /Waiting on/, 'and the skillset picture names who it waits on')
   assert.doesNotMatch(chain, /'unadmitted'/, 'no bare unadmitted wall')
   assert.match(chain, /owner \$\{decision\.owner \?\? 'not named'\}; remedy: \$\{decision\.remedy\}/, 'the drop refusal names owner and remedy')
-  assert.match(chain, /remedy: \$\{missingOpRemedy\('order'\)\}/, 'the slide refusal names the order op’s remedy')
+  // REPLACED (BD r19, Central PR 318): the slide refusal named the order op's remedy; Central built the order, so no remedy is owed.
+  assert.doesNotMatch(chain, /missingOpRemedy\('order'\)/, 'no remedy is asked of an op that stands')
 })
 
 test('the browser names the owner that actually refused: Central for the roster, not the AIKit rack', async () => {

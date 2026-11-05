@@ -568,8 +568,8 @@
     },
     "engine/torusObject.mjs": {
       "source": "desktop/cradle/expressions-app/src/engine/torusObject.ts",
-      "source_sha256": "fdc213800f26aac1314f1cf7afb94d88899895e24aff722abab11fc344e2d6cb",
-      "output_sha256": "14ed8811ad9455617ad95335ea392c6161feb2fad71373661086765db8cf784c",
+      "source_sha256": "9813b761b0ad465dfb4834242bd61ca607940c6e5316248cf135ac3d7eaebd29",
+      "output_sha256": "cf2692de42e08a1b36b35a56af8b67916f64f03e58c6a743ccab6605e4582271",
       "compiler": "esbuild@0.21.5",
       "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
     },

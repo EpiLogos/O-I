@@ -459,9 +459,11 @@ export function HostedDevice({designed, fallback, binding, view: asked, nav: giv
     event.stopPropagation()
     setMenu({x: event.clientX, y: event.clientY, subject: name, items: headMenu({onChain: !!chain && folds, folded: state.folded, acts})})
   }
-  const invoke = (id: HeadMenuItem['id']) => {
-    if (id === 'fold') (state.folded ? nav.unfold : nav.fold)?.()
-    else acts?.[id]?.()
+  const invoke = (id: HeadMenuItem['id'], answer?: string): void | Promise<unknown> => {
+    if (id === 'fold') { (state.folded ? nav.unfold : nav.fold)?.(); return }
+    const entry = acts?.[id]
+    if (typeof entry === 'function') entry()
+    else if (entry && 'run' in entry && answer !== undefined) return entry.run(answer)
   }
   return <div ref={root} className={`${className ?? ''}${view === 'folded' ? ' device--folded' : ''}`} style={style} {...data} data-device-view={view}
     data-device-fault={shown} data-i={shown ? `${name}|${shown}` : undefined} onContextMenu={openMenu}

@@ -464,8 +464,17 @@ test('the Knowledge graph on the open graph (its handle: view state, its own rea
   const v = binding.values
   assert.deepEqual([v.light, v.selected, v.scope, v.depth, v.direction, v.ghosts, v.orphans, v.mode, v.labels, v.zoom, v.minimap], ['lit', 'wiki:node:identity', 'local', 2, 'both', true, true, 'structure', 'automatic', 1.5, true])
   assert.deepEqual(JSON.parse(v.reading).nodes.map(node => node.ref), REAL.outcome.reading.nodes.map(node => node.ref), 'the open surface\'s own reading, whole')
-  assert.equal(v.budget, 4096, 'the surface reads at graphProgress\'s own bound')
-  assert.match(binding.standing.budget.disabled, /missing op: a node bound on the open graph/)
+  // REPLACED (lane BA, round 868, O-I #742; PROJECTION-SCALE-2026-10-28): the open graph had no node bound and its Budget stood refused as
+  // a missing op. The Budget is the open graph's own (8–4096, 64 until set; DLW §17.3), written as the panel's own filter change.
+  assert.equal(v.budget, 64, 'the open graph\'s Budget, 64 until you set it')
+  assert.equal(binding.standing.budget, undefined, 'the Budget is the open graph\'s to change')
+  assert.equal(binding.writes('budget'), true)
+  assert.equal(binding.local.budget, undefined, 'with a graph open the Budget is the graph\'s, not the hand\'s')
+  await binding.write([{key: 'budget', value: 512}])
+  assert.deepEqual(sent.at(-1), ['patch', {budget: 512}], 'the panel\'s own filter change')
+  sent.length = 0
+  for (const value of [4, 5000, 12.5, 'many']) await assert.rejects(() => binding.write([{key: 'budget', value}]), /Budget takes a whole number of nodes from 8 to 4096/, String(value))
+  assert.equal(sent.length, 0, 'nothing out of range is sent')
   assert.deepEqual(JSON.parse(v.groups)[0], {id: 'g1', label: 'Sources', color: '#88aa66', text: '', kinds: ['file'], tags: [], enabled: true})
   for (const key of ['aperture.mode', 'aperture.admitted', 'aperture.depth']) assert.equal(v[key], undefined, `${key}: no reading`)
   await binding.write([{key: 'scope', value: 'field'}, {key: 'depth', value: 3}, {key: 'kinds', value: 'wiki-node|file'}, {key: 'orphans', value: false}, {key: 'mode', value: 'matches'}, {key: 'zoom', value: 2}])
@@ -487,6 +496,7 @@ test('the Knowledge graph on the open graph (its handle: view state, its own rea
   assert.equal(field.standing.depth.disabled, graphB.NOT_LOCAL)
   await assert.rejects(() => field.write([{key: 'depth', value: 2}]), /local view/)
   const closed = graphB.graphBinding(null, answered, writes)
+  assert.equal(typeof closed.local.budget, 'function', 'with no graph open the Budget is the hand\'s bound on the root read')
   // REPLACED (#772): the hand's own Sessions (reach.closed, Open only by default) stands too, as Budget does (knowledge-graph-reach.test.mjs).
   assert.deepEqual(Object.keys(closed.values).sort(), ['budget', 'light', 'reach.closed', 'reading'], 'with no graph open: the root register\'s reading, the light and the hand\'s own')
   assert.equal(closed.values.light, 'dark')
@@ -989,4 +999,22 @@ test('the chain hands the Palace its world: the palaces to Enter, the Earth\'s p
   const source = readFileSync(new URL('../src/techne/devices/techneDesigns.ts', import.meta.url), 'utf8')
   assert.match(source, /palaceBinding\(palace, heldFor\(PALACE_DESIGN\), SESSION_ACTS, palaceWorld\)/, 'the Palace binding is handed its world')
   assert.match(source, /places: suite\.places/, 'the doors are the Earth\'s places')
+})
+
+// O-I #742 (PROJECTION-SCALE-2026-10-28): the device draws what the pane draws. The Budget keeps the notes nearest the one you hold, then
+// the most connected (the cradle's budgetGraph), and the whole view says how many it shows of all the reading holds, and that it is bounded.
+test('the Knowledge graph\'s device keeps to the open graph\'s Budget and says when it hides more', () => {
+  const nodes = Array.from({length: 20}, (_, i) => ({ref: `wiki:node:n${i}`, label: `Note ${i}`, kind: 'wiki-node', native_owner: 'central', provenance: {source: 'authored'}, actions: []}))
+  const edges = nodes.slice(1).map((n, i) => ({from_ref: nodes[i].ref, to_ref: n.ref, relation: 'wiki-link', provenance: {source: 'authored'}}))
+  const reading = {schema: 'oi.cradle.graph-reading/v1', nodes, edges, formations: [], inputs: {}, counts: {nodes: 20, edges: 19}}
+  const surface = fakeSurface({scope: 'field', budget: 8}, {reading, selected: 'wiki:node:n0'})
+  const binding = graphB.graphBinding(surface, graphB.surfaceRead(surface), {setter: async () => {}, patch: () => {}})
+  assert.equal(binding.values.budget, 8)
+  const whole = renderToStaticMarkup(createElement(host.HostedDevice, {designed: DESIGNS.graph, binding, view: 'whole', nav: {}}))
+  assert.match(whole, /data-i="shown\|8\/20 /, 'eight shown of the twenty the reading holds')
+  assert.match(whole, /data-i="bounded\|yes /)
+  const wide = graphB.graphBinding(fakeSurface({scope: 'field', budget: 64}, {reading, selected: 'wiki:node:n0'}), graphB.surfaceRead(surface), {setter: async () => {}, patch: () => {}})
+  const all = renderToStaticMarkup(createElement(host.HostedDevice, {designed: DESIGNS.graph, binding: wide, view: 'whole', nav: {}}))
+  assert.match(all, /data-i="shown\|20\/20 /)
+  assert.match(all, /data-i="bounded\|no /)
 })

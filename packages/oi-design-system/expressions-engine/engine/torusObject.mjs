@@ -159,6 +159,20 @@ function figureAt(session, steps) {
   const byBand = law.by_band?.[session.band ?? ""];
   return isTorusFigure(byBand) ? byBand : isTorusFigure(session.figure) ? session.figure : null;
 }
+function sceneShapesOf(telemetry) {
+  const entities = telemetry?.config?.entities;
+  if (!Array.isArray(entities)) return null;
+  const torus = entities.find((e) => e?.kind === "formation" && e.enabled !== false && e.shape?.kind === "torus");
+  if (!torus || typeof torus.id !== "string") return null;
+  const own = isTorusFigure(torus.shape.figure) ? torus.shape.figure : "torus";
+  const links = Array.isArray(torus.sequence?.links) && torus.sequence.links.length ? torus.sequence.links : [{ shape: torus.shape }];
+  const figureOf = (link) => link?.shape?.kind === "torus" && isTorusFigure(link.shape.figure) ? link.shape.figure : own;
+  const at = Array.isArray(telemetry.sequences) ? telemetry.sequences.find((s) => s?.entityId === torus.id) : null;
+  const index = (value, fallback) => Number.isInteger(value) && value >= 0 && value < links.length ? value : fallback;
+  const from = index(at?.linkIndex, 0), to = index(at?.nextIndex, from);
+  const progress = at?.phase === "transition" && Number.isFinite(at.progress) ? Math.min(1, Math.max(0, at.progress)) : 0;
+  return { entity_id: torus.id, from: figureOf(links[from]), to: figureOf(links[to]), progress };
+}
 const PASSAGE_STEPS = 0.5;
 function passageDrive(since, steps) {
   const turn = pulseTurnings(steps), sheet = turn.phi - wrap(turn.theta) / 2;
@@ -372,6 +386,10 @@ function torusCandidates(figure, lon = 128, lat = 64) {
   return out;
 }
 class TorusObject {
+  /** Where the scene's own shapes are read under Sequence (sceneShapesOf over the engine's telemetry); none, the torus keeps its own. */
+  constructor(sceneShapes = () => null) {
+    this.sceneShapes = sceneShapes;
+  }
   body = null;
   modeRefs = null;
   session = null;
@@ -382,6 +400,7 @@ class TorusObject {
   amplitudes = null;
   steps = null;
   figure = null;
+  sequenced = null;
   view = "surface";
   out;
   /** The body from the owner's influence reading, and the order of its resident modes (the sources' m2.resonator.modes). */
@@ -422,9 +441,12 @@ class TorusObject {
       return null;
     }
     this.steps = stepsAt(this.session, Number(frame?.samples_elapsed), this.sampleRate);
-    this.figure = figureAt(this.session, this.steps);
+    const sequenced = this.sequenced = this.session?.settings?.shape === "sequence" ? this.sceneShapes() : null;
+    this.figure = sequenced ? sequenced.progress < 0.5 ? sequenced.from : sequenced.to : figureAt(this.session, this.steps);
     const shape = this.flat ? "plate" : this.figure ?? "torus";
-    const morph = this.steps === null ? this.morph.snap(shape) : this.morph.at(shape, this.steps);
+    const passing = !this.flat && sequenced && sequenced.from !== sequenced.to && sequenced.progress > 0;
+    const held = this.steps === null || sequenced ? this.morph.snap(shape) : this.morph.at(shape, this.steps);
+    const morph = passing ? { from: sequenced.from, to: sequenced.to, progress: sequenced.progress, since: null } : held;
     const state = { morph, angle: clockAngle(frame?.clock, body.attachment), view: this.view };
     this.shown = state;
     const targets = Array.isArray(frame?.targets) ? frame.targets : [];
@@ -449,7 +471,14 @@ class TorusObject {
       schema: "oi.torus-object/v1",
       standing: "read",
       view: this.view,
-      shape: { law: this.figure, shown: shown?.morph ?? null, steps: this.steps, flat: this.flat },
+      shape: {
+        law: this.figure,
+        shown: shown?.morph ?? null,
+        steps: this.steps,
+        flat: this.flat,
+        // Under Sequence: the scene's torus and where its shapes stand, or null while the scene holds none.
+        ...this.session?.settings?.shape === "sequence" ? { sequence: this.sequenced } : {}
+      },
       layers: ["bimba", "pratibimba"],
       voices: body.voices.map((v) => {
         const a = this.amplitudes?.get(v.mode_ref);
@@ -499,6 +528,7 @@ export {
   readRoles,
   receiverPlace,
   ringingLevel,
+  sceneShapesOf,
   shapeNearest,
   shapeNormal,
   shapePoint,

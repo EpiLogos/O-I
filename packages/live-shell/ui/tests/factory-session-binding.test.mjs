@@ -170,7 +170,9 @@ test('the Agentset rack: a group\'s sessions as its chains, each named by its ag
   const held = own.agentsetValues({group: GROUP, tracks: TRACKS, holds: bind.chainHolds()})
   assert.equal(held.member, HELPER.sessionRef, 'the chosen member is the view\'s')
   assert.equal('device' in binding.local, false, 'no device of the chain is chosen: the Devices view shows them all')
-  for (const key of ['fanOut', 'depth', 'handBack', 'returnCap', 'budget', 'unmapped', 'store', 'variation', 'solo', 'dev']) {
+  // REPLACED (BD r19; DLW build ruling 2026-11-05): `dev` was a missing op. A device of another session's chain is changed by a message to that
+  // session through Messages' delegate, so a rack handed no carrier names that carrier (the last test).
+  for (const key of ['fanOut', 'depth', 'handBack', 'returnCap', 'budget', 'unmapped', 'store', 'variation', 'solo']) {
     assert.match(binding.standing[key].disabled, /missing op/, key)
     await assert.rejects(() => binding.write([{key, value: 1}]), /missing op/)
   }
@@ -192,11 +194,13 @@ test('the Agentset rack: a group\'s sessions as its chains, each named by its ag
   // The chain list's own keys, one for each member, answer with their control's refusal (§19.15 The members).
   await assert.rejects(() => binding.write([{key: `bench:${HELPER.sessionRef}`, value: true}]), {message: own.AGENTSET_REFUSE.bench})
   await assert.rejects(() => binding.write([{key: `solo:${HELPER.sessionRef}`, value: true}]), {message: own.AGENTSET_REFUSE.solo})
-  // A device of a member's chain in the Devices view ("Change a setting there and you change the member") answers on its own key, refused.
-  await assert.rejects(() => binding.write([{key: own.memberDeviceKey(HELPER.sessionRef, 'actuation:harness-model'), value: '{"effort":"max"}'}]), {message: own.AGENTSET_REFUSE.dev})
   // REPLACED (lane K0): Factory's retry is routed (factory_owner attempt-retry), and the rack holds no Run or unit for a member.
-  assert.match(binding.standing.retry.disabled, /factory_owner attempt-retry.*no reading here names the Run or the workflow unit/)
+  // REPLACED (BD r19, C26 6311e404c): Factory names a task's units (factory_owner attempt-task-units), so the rack's Retry reads them and
+  // retries the chosen chain's unit; a rack handed no carrier says so.
+  assert.match(binding.standing.retry.disabled, /no carrier to Factory's attempt-task-units and attempt-retry stands on this rack/)
   await assert.rejects(() => binding.write([{key: 'retry', value: 1}]), {message: own.AGENTSET_REFUSE.retry})
+  await assert.rejects(() => binding.write([{key: own.memberDeviceKey(HELPER.sessionRef, 'actuation:harness-model'), value: '{"effort":"max"}'}]), {message: own.AGENTSET_REFUSE.dev})
+  assert.match(own.AGENTSET_REFUSE.dev, /a message to that session through Messages' delegate/)
   bind.resetHolds()
 })
 
@@ -256,4 +260,83 @@ test('the chain places them where the manual does: Custody on the one Agent, the
   assert.match(view, /custodyBinding\(\{sessionRef, agent: agentDesignBinding\?\.values \?\? \{\}, holds, grants, person: currentPerson,\s*custody: custodyRead\}, scopeDesignBinding, custodyPorts\)/, 'Custody and Scope, one row; no task record word as the retired Autonomy')
   assert.match(view, /const currentPerson = currentIdentity\(\)\?\.reading\.person_ref \?\? null/, 'the person is the current identity, never a value the desk composes')
   assert.doesNotMatch(read('agent/devices/sessionChainBindings.ts'), /\.defaults\[|\.fixtures|catalogue\/panels\//, 'the bindings read no design default or fixture')
+})
+
+test('(BD r19) the Group card carries its type, Discard removes the proposal, Retry reads the task\'s units and retries its unit, and another chain\'s device goes to its session as a message', async () => {
+  bind.resetHolds()
+  const calls = []
+  const ports = {
+    propose: async input => { calls.push(['propose', input]); return {record: {schema: 'central.agent-set/v1', agent_set_ref: input.ref, revision: 'r1', ...(input.type ? {type: input.type} : {})}} },
+    removeSet: async input => { calls.push(['remove', input]); return {ref: input.ref} },
+    retry: async input => { calls.push(['retry', input]); return {status: 'retried'} },
+    ask: async input => { calls.push(['ask', input]); return {communique: 'communique:c1'} },
+    suffix: () => 'x1',
+  }
+  const L = {...LEAD, agentRef: 'agent/aletheia'}, H = {...HELPER, agentRef: 'agent/anima'}
+  const tracks = [GROUP, L, H, IDLE, OTHER]
+  const rack = () => own.agentsetBinding({group: GROUP, tracks, holds: bind.chainHolds()}, ports)
+  // Type: the card's own hold, a pattern's id; Central's propose takes it (Central #318).
+  assert.equal(rack().standing['new.type'], undefined, 'Type stands')
+  assert.equal(typeof rack().local['new.type'], 'function', 'the hand holds the type')
+  assert.equal('type' in own.GROUP_REFUSE, false)
+  await assert.rejects(() => rack().write([{key: 'new.make', value: JSON.stringify({for: 'Check the release', chains: [L.sessionRef, H.sessionRef], type: 'Quorum!'})}]),
+    {message: own.GROUP_REFUSE.badType('Quorum!')})
+  assert.equal(calls.length, 0, 'a malformed type asks Central nothing')
+  await rack().write([{key: 'new.make', value: JSON.stringify({for: 'Check the release', chains: [L.sessionRef, H.sessionRef], type: 'quorum'})}])
+  assert.deepEqual(calls.at(-1), ['propose', {scope: 'root', ref: 'agent-set:check-the-release-x1', revision: 'r1',
+    members: [{kind: 'agent', agent_ref: 'agent/aletheia'}, {kind: 'agent', agent_ref: 'agent/anima'}], reason: 'Check the release', type: 'quorum'}])
+  // Discard: Central's central.agent-set.remove of the ref it proposed, at the revision its record names; the card lets it go.
+  assert.equal(rack().standing['new.discard'], undefined, 'Discard stands')
+  assert.equal('discard' in own.GROUP_REFUSE, false)
+  await rack().write([{key: 'new.discard', value: true}])
+  assert.deepEqual(calls.at(-1), ['remove', {scope: 'root', ref: 'agent-set:check-the-release-x1', expected_revision: 'r1'}])
+  assert.equal(bind.viewHolds(bind.chainHolds(), own.AGENTSET_ID)['new.proposal'], undefined, 'the card lets the proposal go')
+  await assert.rejects(() => rack().write([{key: 'new.discard', value: true}]), {message: own.GROUP_REFUSE.noProposal})
+  // Retry: the chosen chain's session, whose task's units Factory names; the carrier reads them and retries the unit (taskBindings.ts retryTask).
+  assert.equal(rack().standing.retry, undefined, 'Retry stands with its carrier')
+  await assert.rejects(() => rack().write([{key: 'retry', value: true}]), {message: own.CHAIN_LIST_REFUSE.noneChosen('Retry')})
+  rack().local.member(H.sessionRef)
+  await rack().write([{key: 'retry', value: true}])
+  assert.deepEqual(calls.at(-1), ['retry', {project: H.project ?? '', agent_session: H.sessionRef}])
+  // A device of another session's chain: a message to that session (Messages' delegate), never a write of its binding.
+  assert.equal(rack().standing.dev, undefined, 'the Devices view stands with its carrier')
+  await rack().write([{key: own.memberDeviceKey(H.sessionRef, 'actuation:harness-model'), value: '{"effort":"max"}'}])
+  const [kind, asked] = calls.at(-1)
+  assert.equal(kind, 'ask')
+  assert.deepEqual([asked.agent_session, asked.agent_ref, asked.device], [H.sessionRef, 'agent/anima', 'actuation:harness-model'])
+  assert.match(asked.words, /Effort to max/, 'the message says the change in words')
+  await assert.rejects(() => rack().write([{key: own.memberDeviceKey(IDLE.sessionRef, 'actuation:harness-model'), value: '{"effort":"max"}'}]), /seats no agent/)
+  await assert.rejects(() => rack().write([{key: own.memberDeviceKey(H.sessionRef, 'actuation:harness-model'), value: 'not json'}]), {message: own.CHAIN_LIST_REFUSE.devChange})
+  bind.resetHolds()
+})
+
+test('(BD r19, Central #318) the chain is the agent\'s profile: Rename on the Agent\'s head and a SkillSet dropped on the rack write it at its revision', async () => {
+  const PROFILE = {profile_ref: 'agent-profile:kite', revision: 'p3', agent_ref: 'agent/kite', name: 'Kite', skill_set_refs: ['sets/core', 'sets/review']}
+  const profile = own.chainProfileOf(PROFILE)
+  assert.deepEqual(profile, {profileRef: 'agent-profile:kite', revision: 'p3', name: 'Kite', skillSetRefs: ['sets/core', 'sets/review']})
+  assert.equal(own.chainProfileOf({agent_ref: 'agent/kite'}), null, 'no ref or revision: nothing to write at')
+  const acts = []
+  const heads = own.profileHeadActs(profile, async (action, input) => { acts.push([action, input]); return {state: 'saved'} })
+  assert.deepEqual([heads.agent.rename.ask, heads.agent.rename.value], ['name', 'Kite'], 'Rename asks the name, the one standing first')
+  await heads.agent.rename.run('Keeper')
+  assert.deepEqual(acts.at(-1), ['agent-profile.rename', {scope: 'root', profile_ref: 'agent-profile:kite', expected_revision: 'p3', name: 'Keeper'}])
+  assert.equal(heads.skillset['hot-swap'].refused, own.PROFILE_REFUSE.swapPress('sets/core'), 'the rack\'s Hot-swap is a drop from the browser, and says so')
+  assert.deepEqual(own.replaceRequest(profile, 'sets/night'), {action: 'agent-profile.chain-replace',
+    input: {scope: 'root', profile_ref: 'agent-profile:kite', expected_revision: 'p3', replace: 'sets/core', with: 'sets/night'}})
+  assert.deepEqual(own.replaceRequest(profile, 'sets/review'), {refused: own.PROFILE_REFUSE.swapSame('sets/review')})
+  assert.deepEqual(own.replaceRequest({...profile, skillSetRefs: []}, 'sets/night'), {refused: own.PROFILE_REFUSE.swapNone})
+  assert.equal(own.profileHeadActs(null).agent.rename.refused, own.PROFILE_REFUSE.unread('Rename'))
+  assert.equal(own.profileHeadActs(profile).agent.rename.refused, own.PROFILE_REFUSE.noCarrier('Rename'))
+  // Factory's chain publishes them, and carries the rack's Discard, Retry and a device of another chain to their owners.
+  const chain = read('agent/devices/FactoryDeviceChain.tsx')
+  assert.match(chain, /slot\.id === 'agent' \? \{acts: profileActs\.agent\} : slot\.id === 'skillset' \? \{acts: profileActs\.skillset\}/)
+  assert.match(chain, /active\.drag\.family === 'skillset' && target\.kind === 'card' && target\.id === 'skillset'/, 'a SkillSet dropped on the rack hot-swaps')
+  assert.match(chain, /removeSet: input => setAct\(transport, 'central\.agent-set\.remove', input\)/)
+  assert.match(chain, /await retryTask\(request => factoryOwnerWrite\(transport, request/)
+  // Another chain's device: a message sent to its agent's Position, then delegated into its task, both through AIKit's gateway (Messages' own
+  // route); the chain never reaches the rail's Messages device for it (tests/agent-rail-devices.test.mjs "one publisher").
+  assert.match(chain, /gatewayWriteOp\(\{kind: 'send', \.\.\.scope, to: position, body: words\}\), ROUTE_WORDS\.send\)/)
+  assert.match(chain, /gatewayWriteOp\(\{kind: 'delegate', \.\.\.scope, communique, work,/)
+  assert.doesNotMatch(chain, /publishedDevice\(MESSAGES_ID\)/)
+  assert.match(chain, /acts: padsActs/, 'the pads\' head carries Save as preset and Hot-swap')
 })

@@ -32,6 +32,9 @@
 //   17 "Every world you start lands as a place on your planet."                   NOT MET: a world lands only when the person presses Land (SystemReadings.tsx:61 landWorld; systemModel.ts:195)
 //   18 "Every walk you take wears a path between places."                         MET on the Earth (placesModel.ts:151-166 routeRows; globe/arcs.ts); NOT MET on your body (routeRows counts Earth places only);
 //      a route's line through its stops in order, on your body and the Earth: MET since O-I #746 (18c)
+//   19 The scale (O-I #746's last comment, from PROJECTION-SCALE-2026-10-28.md, O-I #773): the locations on a body and its routes adopt the
+//      globe's thresholds: each drawn up to 6,000 located in the pane, one mark per sphere cell with its count above that, and picking through
+//      the cell index. NOT MET when the audit was made: every location was a mark of its own and the routes ran through every stop (19a–19e)
 //
 // Channels: scripted. The tools, models and stores are the shell's own code in memory; the owners are recording stubs; the overlay runs in a
 // minimal DOM of this file's own with the orbits stubbed and bodyDisc spied by a module shim (as w3q-sys-wiring.test.mjs). Not covered here:
@@ -852,4 +855,212 @@ test('18d · a followed route on the Earth draws once: the route\'s line, not al
   binding.dispose()
   handle.engine.arcs.buildChronology(dirs, [0.1, 0.2, 0.3, 0.4], [1, 1, 1])
   assert.deepEqual(built.at(-1), round(dirs), 'released with the overlay, the arcs build their chronology as the port does')
+})
+
+// ── 19 · The scale: locations and routes adopt the globe's thresholds ─────────────────────────────────────────────────────────
+
+// NOT MET when the audit was made (systemOverlay.ts syncPlaces: one mark for every location, each placed every frame; routeDirs through every
+// stop). The rule (PROJECTION-SCALE-2026-10-28.md "World globe (§17.2)", carried to O-I #746): each presence drawn up to 6,000 located in the
+// pane; above that one presence per occupied sphere cell, carrying its count, the index built once per change and never per frame; members
+// return inside a cell once its drawn area admits them; picking reads the same index. A cell never makes an approximate place look exact, and
+// a mythic place keeps its look.
+const {dirFromLatLon: dirOf} = await import('../src/projections/atlas/src/data/geo.ts')
+const seeded = (seed = 7) => () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648
+/** A projector looking at lat 0, lon 0 from outside: east to the right, north up; `R` px for one body radius, so a larger R is a closer view. */
+const facingProjector = (R, w = 800, h = 600) => (dir, screen) => { screen.x = w / 2 - dir[2] * R; screen.y = h / 2 - dir[1] * R; screen.facing = dir[0] }
+
+test('19a · the locations stand in a sphere cell index: each in one cell, a mythic one apart, cells of about equal area; a pick reads only the cells it meets and finds what reading every one finds', () => {
+  const {cellIndex, pickNear, CELL_DEG} = locations
+  assert.equal(typeof CELL_DEG, 'number', 'the cell size is named')
+  const rnd = seeded()
+  const points = Array.from({length: 3000}, (_, i) => ({lat: (Math.asin(2 * rnd() - 1) * 180) / Math.PI, lon: rnd() * 360 - 180, mythic: i % 7 === 0}))
+  const index = cellIndex(points)
+  assert.equal(index.cells.reduce((n, cell) => n + cell.members.length, 0), points.length, 'every location stands in one cell')
+  for (const cell of index.cells) {
+    assert.ok(cell.members.every(member => !!points[member].mythic === cell.mythic), 'a cell holds one look: a mythic place is never counted into a factual one')
+    assert.ok(cell.members.every(member => points[member].lat >= cell.lat - cell.spanLat / 2 - 1e-9 && points[member].lat <= cell.lat + cell.spanLat / 2 + 1e-9), 'each member inside its cell\'s band')
+    assert.ok(cell.members.every(member => index.of[member] === index.cells.indexOf(cell)), 'and the index says which cell each is in')
+  }
+  const equator = index.cells.find(cell => Math.abs(cell.lat) < CELL_DEG), polar = index.cells.find(cell => Math.abs(cell.lat) > 80)
+  assert.ok(polar.spanLon > equator.spanLon, 'a cell near a pole spans more longitude than one at the equator, so the cells hold about equal areas')
+  const maxRad = (2 * Math.PI) / 180
+  const linear = dir => {
+    let best = -1, bestDot = Math.cos(maxRad)
+    points.forEach((point, i) => { const d = dirOf(point.lat, point.lon); const dot = d[0] * dir[0] + d[1] * dir[1] + d[2] * dir[2]; if (dot >= bestDot) { bestDot = dot; best = i } })
+    return best
+  }
+  let found = 0
+  for (let k = 0; k < 300; k++) {
+    const dir = dirOf((Math.asin(2 * rnd() - 1) * 180) / Math.PI, rnd() * 360 - 180)
+    const picked = pickNear(index, points, dir, maxRad)
+    assert.equal(picked, linear(dir), 'the pick through the index finds the nearest within reach, as a scan of every location does')
+    if (picked >= 0) found++
+  }
+  assert.ok(found > 10, `the picks found locations (${found}), so the sameness says something`)
+  assert.equal(pickNear(index, points, dirOf(89.9, 179.9), maxRad), linear(dirOf(89.9, 179.9)), 'across the pole and the dateline too')
+})
+
+test('19b · up to 6,000 located in the pane each is drawn; above that one mark stands for each cell, with its count, until the cell is drawn large enough to admit its members', () => {
+  const {cellIndex, shownCells, PRESENCE_LIMIT, MARK_PX} = locations
+  assert.equal(PRESENCE_LIMIT, 6000, 'the globe\'s threshold: 6,000 located in the pane')
+  assert.equal(typeof MARK_PX, 'number', 'the room one mark needs is named')
+  const pane = {w: 800, h: 600}
+  const rnd = seeded(11)
+  const few = cellIndex(Array.from({length: 6000}, () => ({lat: rnd() * 40 - 20, lon: rnd() * 40 - 20})))
+  const under = shownCells(few, facingProjector(300), pane)
+  assert.equal(under.inPane, 6000)
+  assert.equal(under.aggregated, false, '6,000 in the pane are each drawn')
+  assert.ok(under.open.every(Boolean))
+  const many = cellIndex(Array.from({length: 6001}, () => ({lat: rnd() * 40 - 20, lon: rnd() * 40 - 20})))
+  const over = shownCells(many, facingProjector(300), pane)
+  assert.equal(over.aggregated, true, 'one more, and the cells stand for them')
+  assert.ok(over.open.every(open => !open), 'at the Body scale no cell is drawn large enough to admit its members')
+  // the same rule at a lower limit, so the admission is seen with few points: a cell drawn large admits its members, a small one does not
+  const near = cellIndex([...Array.from({length: 20}, () => ({lat: 4 + rnd(), lon: 4 + rnd()})), ...Array.from({length: 20}, () => ({lat: -14 + rnd(), lon: -24 + rnd()}))])
+  const far = shownCells(near, facingProjector(300), pane, 10)
+  assert.deepEqual([far.aggregated, far.open.filter(Boolean).length], [true, 0], 'the body whole: both cells counted, neither opened')
+  const close = shownCells(near, facingProjector(2000), pane, 10)
+  const opened = near.cells.map((cell, i) => [cell.lat > 0, close.open[i]])
+  assert.deepEqual(opened.find(([north]) => north), [true, true], 'come close over the northern cell and it admits its members, each drawn')
+  assert.equal(close.inPane, 20, 'only what is in the pane is counted: the other cell is out of it')
+  const behind = shownCells(near, (dir, screen) => { facingProjector(300)(dir, screen); screen.facing = -dir[0] }, pane, 10)
+  assert.equal(behind.inPane, 0, 'a cell on the far side of the body is not in the pane')
+})
+
+test('19c · above the threshold your body draws one mark per cell, with its count and the look of an approximate place; a mythic cell keeps its look; a press flies to the cell, where its members return', async () => {
+  const places = []
+  for (let i = 0; i < 6500; i++) places.push(onYourBody(`wiki:place:p${i}`, -40 + (i % 100) * 0.8, -80 + Math.floor(i / 100) * 2.4, {name: `p${i}`, ...(i % 13 === 0 ? {relation: 'MYTH_LOCATED_AT'} : {})}))
+  const harness = await bodyWithPlaces(RECORD, places)
+  const flights = []
+  harness.handle.engine.rig = {flyTo: (...args) => flights.push(args)}
+  harness.frame()
+  const cells = harness.parent.all().filter(node => node.tagName === 'button' && /\bsys-cell\b/.test(node.className))
+  assert.equal(marks(harness.parent).filter(mark => mark.parentElement?.style.visibility !== 'hidden').length, 0, '6,500 in the pane: no location is drawn one by one')
+  assert.ok(cells.length > 10 && cells.length < 400, `one mark for each occupied cell (${cells.length})`)
+  const counts = cells.map(cell => Number(/^(\d+)/.exec(cell.words())?.[1] ?? NaN))
+  assert.equal(counts.reduce((a, b) => a + b, 0), 6500, 'each carries its count, and the counts say every location')
+  assert.ok(cells.every(cell => cell.getAttribute('data-marker') !== 'solid'), 'a cell never looks exact')
+  assert.ok(cells.every(cell => /halo|outline/.test(cell.getAttribute('data-marker') ?? '')), 'it has the look of an approximate place')
+  const mythic = cells.filter(cell => /\bis-mythic\b/.test(cell.className))
+  assert.ok(mythic.length > 0 && mythic.every(cell => /mythic/.test(cell.getAttribute('aria-label'))), 'the mythic places stand in cells of their own, with the mythic look')
+  assert.match(cells[0].getAttribute('aria-label'), /\d+ locations/, 'its label counts them')
+  const press = cells[0].listeners.click?.[0]
+  assert.equal(typeof press, 'function', 'a cell is pressed')
+  press()
+  assert.equal(flights.length, 1, 'the press flies to the cell')
+  const [lat, lon, dist] = flights[0]
+  assert.ok(Number.isFinite(lat) && Number.isFinite(lon) && dist <= host.framingDistance('region'), 'to its place, framed at the Region scale at least, where its members are drawn at their names')
+  // under the threshold, every location is its own mark, as before
+  const small = await bodyWithPlaces(RECORD, places.slice(0, 50))
+  small.frame()
+  assert.equal(marks(small.parent).length, 50, 'fifty locations: fifty marks')
+  assert.equal(small.parent.all().filter(node => /\bsys-cell\b/.test(node.className)).length, 0, 'and no cell stands for them')
+})
+
+test('19d · a route above the threshold runs through its stops\' cells: a stop in an open cell at its own point, one in a closed cell at the cell, a run of stops in one cell one point', () => {
+  const {cellIndex, routeThroughCells} = locations
+  const stops = [{lat: 1, lon: 1}, {lat: 30.5, lon: 40.5}, {lat: 31, lon: 41}, {lat: 60, lon: 100}]
+  const index = cellIndex(stops)
+  const closed = index.cells.map(() => false)
+  const through = routeThroughCells(stops, index, closed)
+  assert.equal(through.length, 3, 'the two stops in one closed cell are one point of the line')
+  const cellOfSecond = index.cells[index.of[1]]
+  assert.deepEqual(through[1], {lat: cellOfSecond.at.lat, lon: cellOfSecond.at.lon}, 'drawn where the cell\'s mark stands')
+  assert.deepEqual(routeThroughCells(stops, index, index.cells.map(() => true)), stops, 'every cell open: every stop at its own point, in order')
+  assert.deepEqual(routeThroughCells([{lat: 30.5, lon: 40.5}, {lat: 31, lon: 41}], cellIndex([{lat: 30.5, lon: 40.5}, {lat: 31, lon: 41}]), [false]), [], 'a route inside one closed cell draws no line: the cell\'s count holds it')
+})
+
+test('19e · the overlay\'s routes adopt it: above 6,000 stops a route\'s line runs through the cells; the per-frame work reads the cells, not every location', async () => {
+  const plato = 'wiki:node:plato'
+  const stops = Array.from({length: 6100}, (_, i) => place(`wiki:place:s${i}`, {relation: 'TRAVELLED_TO', subject_ref: plato, sequence: i + 1, lat: -40 + (i % 61) * 1.3, lon: -60 + Math.floor(i / 61) * 1.2}))
+  standing.publishSuiteStanding({...standing.IDLE_STANDING, phase: 'ready', places: stops})
+  let projected = 0
+  const earth = overlayHarness({record: null, project: (dir, screen) => { projected++; screen.x = 400 - dir[2] * 300; screen.y = 300 - dir[1] * 300; screen.facing = dir[0] }})
+  earth.frame()
+  const [line] = earth.parent.all().filter(node => node.tagName === 'path' && /\bsys-route\b/.test(node.className))
+  assert.ok(line, 'the route is drawn')
+  const points = (line.getAttribute('d') ?? '').split(/[ML]/).filter(Boolean).length
+  assert.ok(points > 2 && points < 6100, `through its cells, not every stop (${points} points)`)
+  projected = 0
+  earth.frame()
+  assert.ok(projected < 6100, `a frame at rest projects the cells and the cell route, not each stop (${projected})`)
+})
+
+// O-I #742, the World graph side's done-when from PROJECTION-SCALE-2026-10-28 (#773): a tick costs as the sum of each form's members squared
+// (the cluster force's all-pairs near field: 0.8 ms at 526 members, 15.4 ms at 2,104, 204 ms at 8,416). Up to about a thousand members a
+// form's dust repels pair by pair, exactly; above that the near field inside the form is Barnes–Hut, a quadtree per form at the theta the
+// far field uses, so a form's tick grows as n log n.
+const fieldForce = await import('../src/projections/atlas/src/graph/field-force.ts')
+const formOf = (count, spread = 400) => {
+  const form = {x: 0, y: 0, vx: 0, vy: 0, index: 0}
+  const dust = Array.from({length: count}, (_, i) => {
+    const a = i * 2.399963, r = Math.sqrt((i + 0.5) / count) * spread
+    return {x: Math.cos(a) * r, y: Math.sin(a) * r, vx: 0, vy: 0, index: i + 1}
+  })
+  return [form, ...dust]
+}
+/** One tick's CPU time once the code is warm: the median of five, the velocities put back each time. */
+const warmTick = (force, nodes) => {
+  const kept = nodes.map(n => [n.vx, n.vy]), times = []
+  for (let k = 0; k < 7; k++) {
+    const start = process.cpuUsage(); force(1); const used = process.cpuUsage(start)
+    times.push((used.user + used.system) / 1000)
+  }
+  nodes.forEach((n, i) => { n.vx = kept[i][0]; n.vy = kept[i][1] })
+  return times.slice(2).sort((a, b) => a - b)[2]
+}
+const clusterTick = (nodes, theta) => {
+  for (const v of nodes) { v.vx = 0; v.vy = 0 }
+  const force = fieldForce.forceCluster().group(v => (v.index === 0 ? null : nodes[0])).strength(() => -13)
+  if (theta !== undefined) force.theta(theta)
+  force.initialize(nodes)
+  force(1)
+  const v = nodes.map(n => [n.vx, n.vy])
+  return {ms: warmTick(force, nodes), v}
+}
+const exactPush = nodes => {
+  const v = nodes.map(() => [0, 0])
+  for (let i = 1; i < nodes.length; i++) for (let j = i + 1; j < nodes.length; j++) {
+    const a = nodes[i], b = nodes[j], x = b.x - a.x, y = b.y - a.y, l = x * x + y * y
+    v[i][0] += x * -13 / l; v[i][1] += y * -13 / l; v[j][0] -= x * -13 / l; v[j][1] -= y * -13 / l
+  }
+  return v
+}
+
+test('19f · a form of up to a thousand members repels its dust pair by pair, exactly', () => {
+  assert.equal(fieldForce.CLUSTER_PAIRWISE_MAX, 1000)
+  const nodes = formOf(1000)
+  const {v} = clusterTick(nodes)
+  const exact = exactPush(nodes)
+  for (let i = 1; i < nodes.length; i++) {
+    assert.ok(Math.abs(v[i][0] - exact[i][0]) < 1e-9 && Math.abs(v[i][1] - exact[i][1]) < 1e-9, `member ${i}: the pairwise law`)
+  }
+})
+
+test('19g · above a thousand members the near field is Barnes–Hut: the same push within a few per cent, at a fraction of the pairs\' cost', () => {
+  const nodes = formOf(6000, 800)
+  const {v, ms} = clusterTick(nodes, 0.95)
+  const exact = exactPush(nodes)
+  let err = 0, norm = 0
+  for (let i = 1; i < nodes.length; i++) {
+    err += (v[i][0] - exact[i][0]) ** 2 + (v[i][1] - exact[i][1]) ** 2
+    norm += exact[i][0] ** 2 + exact[i][1] ** 2
+  }
+  assert.ok(Math.sqrt(err / norm) < 0.05, `relative error ${Math.sqrt(err / norm)}`)
+  // The pairs' cost, measured the same way on the same form with the threshold out of reach.
+  const pairs = (() => {
+    const copy = formOf(6000, 800)
+    for (const n of copy) { n.vx = 0; n.vy = 0 }
+    const force = fieldForce.forceCluster().group(n => (n.index === 0 ? null : copy[0])).strength(() => -13).pairwiseMax(Infinity)
+    force.initialize(copy)
+    return warmTick(force, copy)
+  })()
+  console.info(`near field: Barnes–Hut ${ms.toFixed(1)} ms, pairs ${pairs.toFixed(1)} ms`)
+  assert.ok(ms * 2.5 < pairs, `Barnes–Hut ${ms.toFixed(1)} ms against the pairs' ${pairs.toFixed(1)} ms`)
+})
+
+test('19h · the World graph\'s near field takes the far field\'s theta', async () => {
+  const {readFile} = await import('node:fs/promises')
+  const view = await readFile(new URL('../src/projections/atlas/src/graph/view.ts', import.meta.url), 'utf8')
+  assert.match(view, /\.force\('charge', forceField<VNode>\(\)\.parent\(this\.parentOf\)\.strength\(fns\.charge\)\.theta\(FIELD_THETA\)\.distanceMax\(fns\.reach\)\)\n\s*\.force\('cluster', forceCluster<VNode>\(\)\.group\(this\.parentOf\)\.strength\(fns\.charge\)\.theta\(FIELD_THETA\)\.distanceMax\(fns\.reach\)\)/)
 })

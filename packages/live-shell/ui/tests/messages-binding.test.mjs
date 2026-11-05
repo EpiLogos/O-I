@@ -302,7 +302,7 @@ test('Make, Change, Accept and Discard: Central\'s own acts carried with the per
   bind.resetHolds()
 })
 
-test('a group: central.agent-set.propose with its members\' agents, accepted by saving Central\'s record; its Discard has no person\'s route', async () => {
+test('a group: central.agent-set.propose with its members\' agents, accepted by saving Central\'s record; its Discard removes Central\'s proposal at its revision', async () => {
   bind.resetHolds()
   const central = centralStandIn()
   const input = {population: answered(REAL.population), gateway: ANSWERED, project: 'O-I', holds: bind.chainHolds()}
@@ -315,12 +315,22 @@ test('a group: central.agent-set.propose with its members\' agents, accepted by 
     members: [{kind: 'agent', agent_ref: 'agent/central-guardian'}, {kind: 'agent', agent_ref: 'agent/factory-guardian'}], reason: 'Guards the product'}])
   const held = msg.messagesBinding({...input, holds: bind.chainHolds()}, {act: central.act})
   assert.deepEqual(JSON.parse(held.values.proposal), {purpose: 'Guards the product', revision: 'r1'}, 'the card turns to Central\'s record')
-  assert.equal(held.standing.discard.disabled, msg.MESSAGES_REFUSE.groupDiscard)
-  await assert.rejects(() => held.write([{key: 'discard', value: true}]), /central\.agent-set\.remove/)
+  // REPLACED (BD r19, C26 6311e404c): a group's Discard had no person's route. central.agent-set.remove is among the kernel's PERSON_ACTS
+  // now (desktop/cradle/kernel/src/action.rs), so Discard removes Central's proposal at the revision Central wrote, and the card lets it go.
+  assert.equal(held.standing.discard, undefined, 'Discard stands for a group as for an agent')
+  assert.equal('groupDiscard' in msg.MESSAGES_REFUSE, false, 'no refusal of it is kept')
   await held.write([{key: 'accept', value: 'r1'}])
   const [saved, body] = central.acts.at(-1)
   assert.equal(saved, 'central.agent-set.save')
   assert.deepEqual([body.expected_revision, body.record.agent_set_ref, body.record.members.length], ['r1', 'agent-set:guards-the-product-a1b2c3d4', 2])
+  // A second proposal, discarded: Central's central.agent-set.remove of the ref it proposed, at the revision its record names.
+  const next = msg.messagesBinding({...input, holds: bind.chainHolds()}, {act: central.act, page: () => 'new-group', suffix: () => 'e5f6a7b8'})
+  next.local['new.members']('central:position:project:O-I:central-guardian central:position:project:O-I:factory-guardian')
+  await msg.messagesBinding({...input, holds: bind.chainHolds()}, {act: central.act, page: () => 'new-group', suffix: () => 'e5f6a7b8'}).write([{key: 'make', value: 'Reads the release'}])
+  await msg.messagesBinding({...input, holds: bind.chainHolds()}, {act: central.act}).write([{key: 'discard', value: true}])
+  assert.deepEqual(central.acts.at(-1), ['central.agent-set.remove', {scope: 'root', ref: 'agent-set:reads-the-release-e5f6a7b8', expected_revision: 'r1'}])
+  assert.equal(msg.madeOf(bind.viewHolds(bind.chainHolds(), msg.MESSAGES_ID).made), null, 'the card lets the proposal go')
+  assert.equal(msg.PERSON_ACTS.removeSet, 'central.agent-set.remove')
   bind.resetHolds()
 })
 

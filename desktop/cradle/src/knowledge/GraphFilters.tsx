@@ -3,10 +3,10 @@ import {GraphViewDetails} from './GraphViewDetails';
 import type {GraphReading} from './graph';
 import type {Camera} from './camera';
 import {isUnresolvedGraphNode} from './graphNavigation';
-import {captureSavedGraphView, defaultGraphFilters, type GraphFilters as FilterState, type FilteredGraph, type SavedGraphView} from './filters';
+import {boundBudget, captureSavedGraphView, defaultGraphFilters, GRAPH_BUDGET, type BudgetedGraph, type GraphFilters as FilterState, type FilteredGraph, type SavedGraphView} from './filters';
 
-type Props = {reading: GraphReading; filters: FilterState; result: FilteredGraph; selected?: string; camera: Camera; onChange: (filters: FilterState) => void; saved: SavedGraphView[]; onSave: (views: SavedGraphView[]) => void; onApply: (view: SavedGraphView) => void};
-export function GraphFilters({reading, filters, result, selected, camera, onChange, saved, onSave, onApply}: Props) {
+type Props = {reading: GraphReading; filters: FilterState; result: FilteredGraph; bounded?: Pick<BudgetedGraph, 'shown' | 'total' | 'beyond'>; selected?: string; camera: Camera; onChange: (filters: FilterState) => void; saved: SavedGraphView[]; onSave: (views: SavedGraphView[]) => void; onApply: (view: SavedGraphView) => void};
+export function GraphFilters({reading, filters, result, bounded, selected, camera, onChange, saved, onSave, onApply}: Props) {
   const [name, setName] = useState('');
   const change = (patch: Partial<FilterState>) => onChange({...filters, ...patch});
   const toggle = (key: 'kinds' | 'relations' | 'families' | 'tags', value: string) => change({[key]: filters[key].includes(value) ? filters[key].filter(item => item !== value) : [...filters[key], value]});
@@ -23,6 +23,7 @@ export function GraphFilters({reading, filters, result, selected, camera, onChan
       <div className="knowledge-filter-row">
         <label>Scope<select aria-label="Graph scope" value={filters.scope} onChange={event => change({scope: event.target.value as FilterState['scope']})}><option value="field">Available field</option><option value="local">Selected subject</option></select></label>
         <label>Depth<input aria-label="Graph depth" type="number" min={0} max={8} value={filters.depth} disabled={filters.scope !== 'local'} onChange={event => change({depth: Math.max(0,Math.min(8,Number(event.target.value)))})}/></label>
+        <label title="The most subjects that show: those nearest the selection first, then the most connected. The graph says when it hides more.">Budget<input aria-label="Graph budget" type="number" min={GRAPH_BUDGET.min} max={GRAPH_BUDGET.max} value={filters.budget} onChange={event => change({budget: boundBudget(Math.round(Number(event.target.value)))})}/></label>
       </div>
       {filters.scope === 'local' && !selected && <p role="status">Select a subject to explore its local graph.</p>}
       <label className="knowledge-filter-check"><input type="checkbox" checked={filters.shared} onChange={event=>change({shared:event.target.checked})}/>Include my available Shared Field</label>
@@ -54,6 +55,7 @@ export function GraphFilters({reading, filters, result, selected, camera, onChan
     {!!filters.emphasis?.length&&<div className="knowledge-emphasis-legend" aria-label="Graph emphasis legend">{filters.emphasis.filter(group=>group.enabled).map(group=><span key={group.id}><i style={{backgroundColor:group.color}} aria-hidden="true"/>{group.label}</span>)}</div>}
     {result.collapsedFormations.length>0&&<p className="knowledge-filter-summary">{result.collapsedFormations.length} folded wholes · {result.collapsedSubjects.size} subjects and {result.foldedEdges} incident connections hidden by folding. Membership is unchanged.</p>}
     {result.partialFormations.length > 0 && <p className="knowledge-filter-summary">{result.partialFormations.length} partially displayed {result.partialFormations.length === 1 ? 'constellation' : 'constellations'}; membership is unchanged.</p>}
+    {bounded && bounded.beyond > 0 && <p className="knowledge-filter-summary" role="status">The Budget shows {bounded.shown} of {bounded.total} subjects: {bounded.beyond} more {bounded.beyond === 1 ? 'is' : 'are'} hidden, the farthest from the selection and the least connected. Raise the Budget to show them.</p>}
     {reading.truncated && <p className="knowledge-filter-summary">This is a bounded reading, not the complete source field.</p>}
   </div>;
 }

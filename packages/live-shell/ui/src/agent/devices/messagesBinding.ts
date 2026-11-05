@@ -53,8 +53,8 @@
 //   Accept   agent-profile.accept {profile_ref, expected_revision, expected_content_digest}: the exact revision and digest Central reviewed;
 //   Discard  agent-profile.remove {profile_ref, expected_revision};
 //   a group  central.agent-set.propose {ref, revision r1, members [{kind agent, agent_ref}], reason: your words}, accepted by
-//            central.agent-set.save of Central's own record at its revision; its Discard (central.agent-set.remove) carries no person's
-//            authority, so it stands disabled with that reason.
+//            central.agent-set.save of Central's own record at its revision; its Discard is central.agent-set.remove {scope, ref,
+//            expected_revision} at the revision Central wrote, the person's own act (PERSON_ACTS since C26 6311e404c).
 // Every refusal is its owner's own words. The list's settings, the agent you open, the composer's draft, the conversation's filters, the
 // card's fields and the proposal the card is on are the shell's own holds. Pure, apart from the view holds (designBindings.ts holdView); the
 // acts go through the ports the publisher gives (AgentRailDevices.tsx: the kernel's invoke_action for Central's, gateway_write for AIKit's).
@@ -102,7 +102,6 @@ export const MESSAGES_REFUSE = {
   types: unread('The agent types to choose from', 'a type on Central\'s agent profile (agent-profile.express takes none; the six families are the face rig\'s ontology, held by no owner)', 'Central'),
   skillsets: unread('The skillsets it may carry', 'AIKit\'s sets for the card through the kernel', 'AIKit'),
   worlds: unread('The worlds it may work in', 'the World refs AIKit\'s population names (`aikit gateway who`: local_world_ref, project_world_ref) — not read yet', 'AIKit'),
-  groupDiscard: missing('Discard a group', 'central.agent-set.remove carried with the person\'s authority (desktop/cradle/kernel/src/action.rs PERSON_ACTS names only propose and save)', 'Central'),
   noProposal: 'Nothing is proposed yet: say what it is for and press Make.',
   noCarrier: 'The kernel carrier is unavailable here, so Central cannot be asked.',
   noWorld: 'Choose where it works first: no World is read (AIKit\'s population names none).',
@@ -112,7 +111,7 @@ export const MESSAGES_REFUSE = {
 
 /** The person's own Central acts Messages carries (desktop/cradle/kernel/src/action.rs PERSON_ACTS), and the review it reads. */
 export const PERSON_ACTS = {express: 'agent-profile.express', review: 'agent-profile.review', accept: 'agent-profile.accept', save: 'agent-profile.save',
-  remove: 'agent-profile.remove', propose: 'central.agent-set.propose', saveSet: 'central.agent-set.save'} as const
+  remove: 'agent-profile.remove', propose: 'central.agent-set.propose', saveSet: 'central.agent-set.save', removeSet: 'central.agent-set.remove'} as const
 
 /** What each key no owner reports waits for. */
 export const MESSAGES_ABSENT: Readonly<Record<string, string>> = {
@@ -482,7 +481,6 @@ export function messagesBinding(input: MessagesInput, ports: MessagesPorts = {})
   else {
     if (!made) for (const key of ['accept', 'discard']) standing[key] = {disabled: MESSAGES_REFUSE.noProposal}
     else if (reviewWhy) standing.accept = {disabled: reviewWhy}
-    if (made?.kind === 'group') standing.discard = {disabled: MESSAGES_REFUSE.groupDiscard}
   }
   if (!('proposal' in values) && made && !view.editing) standing.proposal = {disabled: reviewWhy ?? MESSAGES_REFUSE.noProposal}
   // Send: to the open agent's Position, while a carrier stands; a drop onto a track names its own Communique, so only the carrier gates it.
@@ -563,7 +561,11 @@ export function messagesBinding(input: MessagesInput, ports: MessagesPorts = {})
     if (!ports.act) throw Error(MESSAGES_REFUSE.noCarrier)
     const made = madeOf(pressed().made)
     if (!made) throw Error(MESSAGES_REFUSE.noProposal)
-    if (made.kind === 'group') throw Error(MESSAGES_REFUSE.groupDiscard)
+    if (made.kind === 'group') {
+      await act(PERSON_ACTS.removeSet, {...scopeInput(made), ref: made.ref, expected_revision: made.revision})
+      hold(null)
+      return
+    }
     const reviewed = input.review?.status === 'answered' && isObj(input.review.value) && isObj(input.review.value.profile) ? input.review.value.profile : null
     await act(PERSON_ACTS.remove, {...scopeInput(made), profile_ref: made.ref, expected_revision: String(reviewed?.revision ?? made.revision)})
     hold(null)

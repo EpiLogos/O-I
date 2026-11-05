@@ -14,14 +14,16 @@
 // chain's wrap reaches a design's kit controls by their value keys (DeviceView.tsx useHosting → deviceHost.tsx → sdk/panel.tsx
 // ControlWrapContext) as it reaches the generic plate's rows (torusMapWrap); a place that wraps the whole frames the determinants and
 // its See and hear by the ids the instrument section uses (midiMap/midiMapTargets.ts), so a mapping made by id still holds.
-import {useEffect, useMemo, useRef, type ReactNode} from 'react'
+import {useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode} from 'react'
 import type {SdkParamRow} from '../inhabitants/sdk/define'
 import {DeviceView} from '../frame/devices/DeviceView'
 import {publishDevice, selectDevice} from '../frame/devices/deviceDoor'
 import {DEVICE_PANE_KIND} from '../frame/devices/devicePane'
 import {openInstrument} from '../frame/instrumentDoor'
 import {followSetTempoOnTorus, torusTempoEdit, TORUS_DESIGN_ID, TORUS_HEAD_ACTS, TORUS_DEVICE, TORUS_DEVICE_ID, torusBodyEdits, torusBodySourceOf, torusDesignBinding, torusDevice, torusFigure, torusTone, torusSessionOf,
-  torusFollowed, torusFollowEdits, torusFollowMoved, torusViewOf, TORUS_FOLLOW, type TorusFigureSize, type TorusFollow, type TorusView} from './torusDevice'
+  torusFollowed, torusFollowEdits, torusFollowMoved, torusLaneStanding, torusViewOf, TORUS_FOLLOW, type TorusFigureSize, type TorusFollow, type TorusView} from './torusDevice'
+import {liveClipActs, liveClipPlayer, type ClipLaneStanding} from './clipPlayer'
+import {refusalWords} from '../../../../../desktop/cradle/src/shared/Refusal.tsx'
 import {commitLiveInstrumentEdit, LIVE_TORUS_ABSENT_REASON, liveInstrumentWritable, subscribeAcceptedLiveWrites, useLiveTorusReading, type LiveTorusState} from './torusInstrument'
 import {JankoDevice} from './janko/JankoDevice'
 import {useKeyboardLayout} from './keyboardLayout'
@@ -87,6 +89,10 @@ const mapId = (key: string) => (key === 'scale' ? 'scale-units' : key)
  * and the design's kit controls are wrapped with it by their value keys. */
 export const torusMapWrap = (row: SdkParamRow, control: ReactNode): ReactNode => <MidiMapTarget id={mapId(row.key)}>{control}</MidiMapTarget>
 
+/** The take's lanes as the clip player publishes them (O-I ticket 853). */
+const laneReading = (): ClipLaneStanding => liveClipPlayer.state().lanes
+const NOT_REENABLED = 'The value did not go back to the take\'s lanes.'
+
 /** The binding the chain draws the Torus on: the owner's readings, the Sky's held keys, the stage the frame announced and M1′'s rack
  * (qlRack.ts, its Rack page). The stage is
  * read from the hosted chrome as a dependency of the binding, so a stage disclosure redraws the Stage page when it comes, not with the
@@ -141,9 +147,19 @@ export function useTorusChainBinding(state: LiveTorusState | null, device: Devic
       for (const edit of edits) if (!(await commitLiveInstrumentEdit(edit)).ok) return
     })().catch(() => { /* named on the owner's reading */ })
   }, [state, follow, held])
+  // A take's lanes on the face (O-I ticket 853; DLW build ruling 2026-11-05): what a playing take writes stands Automated, what you moved off
+  // its lane Overridden with Re-enable on the control. A Re-enable the owner refused stands on that control until the lanes next change.
+  const lanes = useSyncExternalStore(liveClipPlayer.subscribe, laneReading, laneReading)
+  const [laneRefused, setLaneRefused] = useState<{lanes: ClipLaneStanding; words: Record<string, string>} | null>(null)
+  const reenable = useCallback((id: string) => {
+    const refuse = (words: string) => setLaneRefused({lanes: laneReading(), words: {[id]: words}})
+    liveClipActs.reenable(id).then(answer => { if (!answer.ok) refuse(refusalWords(NOT_REENABLED, answer.error)) },
+      (cause: unknown) => refuse(refusalWords(NOT_REENABLED, cause)))
+  }, [])
+  const laneStanding = useMemo(() => torusLaneStanding(lanes, reenable, laneRefused?.lanes === lanes ? laneRefused.words : undefined), [lanes, reenable, laneRefused])
   return useMemo(() => torusDesignBinding(state, device, skyHeldTorusKeys(plan, skyTargets(state)), stage, rack, run, held ?? {}, condition, tattvaName, table,
-    undefined, undefined, follow),
-    [state, device, plan, stage, rack, run, held, condition, tattvaName, table, follow])
+    undefined, undefined, follow, laneStanding),
+    [state, device, plan, stage, rack, run, held, condition, tattvaName, table, follow, laneStanding])
 }
 
 /** The torus on the chain. `tempoBpm` is the set's tempo (the transport's reading): the owner's session is kept on it, so a tempo

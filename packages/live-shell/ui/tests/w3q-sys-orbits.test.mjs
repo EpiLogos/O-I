@@ -212,6 +212,26 @@ test('the newest six artefacts of a world ride and no more; the cap counts only 
   assert.deepEqual(one, two, 'artefacts made in the same instant are chosen by their ref, so the same six ride however the list is ordered')
 })
 
+// O-I #746 (the outer ring adopts the globe's thresholds, PROJECTION-SCALE-2026-10-28.md): the ring draws its newest six one by one (the owner's
+// minimum, far under the globe's 6,000), and what lies past them is counted and said, never dropped in silence (manual §17.2: "What lies just
+// past the edge of your view is counted and offered").
+test('what an agent made past the newest six is counted on its world, per world, only what is in the window', () => {
+  const W = windowMs()
+  const nine = Array.from({length: 9}, (_, i) => made(`n${i}`, (i + 1) * 10 * MIN))
+  const [own, oi] = model.systemOf(inputOf({artifacts: [...nine, made('old', W + HOUR), made('o0', 5 * MIN, {project: 'O-I', ref: sourceRef('o0', 'project:O-I')})]}))
+  assert.equal(ringOf(own, 'outer').length, 6)
+  assert.equal(own.beyond, 3, 'three more made in the window ride no ring, and are counted')
+  assert.equal(oi.beyond, 0, 'a world with six or fewer has none past its ring')
+  const [none] = model.systemOf(inputOf())
+  assert.equal(none.beyond, 0)
+  const overlaySource = readFileSync(new URL('../src/projections/atlas/system/systemOverlay.ts', import.meta.url), 'utf8')
+  assert.match(overlaySource, /beyondWords\(/, 'the overlay says the count in the world\'s words')
+  const {beyondWords} = model
+  assert.equal(beyondWords(0), '', 'nothing past the ring says nothing')
+  assert.match(beyondWords(3), /^3 more made in the Day ride no ring/, 'the count, in words')
+  assert.match(beyondWords(1), /^1 more made in the Day rides no ring/)
+})
+
 test('an artefact keeps its place on the ring under reorder, under the removal of a neighbour, and when a newer one pushes the oldest off', () => {
   const six = ['a', 'b', 'c', 'd', 'e', 'f'].map((name, i) => made(name, (i + 1) * HOUR))
   const phases = list => Object.fromEntries(ringOf(model.systemOf(inputOf({artifacts: list}))[0], 'outer').map(s => [s.name, s.phase]))

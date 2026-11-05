@@ -20,6 +20,10 @@
 // And on the ground, on whichever body the globe draws (your body, or the Earth): each route there (system/bodyLocations.ts routesOn: a subject's
 // TRAVELLED_TO stops on that body), one line through its stops in the route's order, along the great circle from each to the next (O-I #746).
 // Screen-space and DOM, as PlanetOrbits is: it reads the sky layer's drawn disc each frame, so it follows the planet exactly.
+// The scale (O-I #746, from PROJECTION-SCALE-2026-10-28.md): the locations and the routes adopt the globe's thresholds. Up to PRESENCE_LIMIT of
+// them each is drawn; above it the cells of their sphere cell index stand for them, one mark a cell with its count, drawn as a region is, and a
+// cell drawn large enough admits its members at their names (bodyLocations.ts shownCells); a press on a cell flies to it, at the Region scale.
+// The index is built when what is drawn changes, never in a frame; a frame reads the cells, and the members of the cells it opens.
 import {PlanetOrbits, type OrbitAt, type OrbitDisc, type OrbitKey, type Satellite} from '../src/sky/orbits'
 import {bodyDisc, shoreOf, type BodyLook, type WorldBodyRecord} from '../src/globe/body'
 import {el} from '../src/ui/dom'
@@ -31,8 +35,9 @@ import {subscribeWorldBody, worldBodyState} from '../body/worldBody'
 import {subscribeSuiteStanding, suiteStanding} from '../provider/suiteStanding'
 import {systemActs, systemReading, subscribeSystem} from './systemStore'
 import {occasionMs, occasionStep, shownWindow, subscribeWindow} from './bodyDraw'
-import type {SystemBody} from './systemModel'
-import {anchorsOf, chronologyBesideRoutes, routesOn, yourBodyRef, yourLocations, type Anchor, type BodyLocation, type DrawnRoute} from './bodyLocations'
+import {beyondWords, type SystemBody} from './systemModel'
+import {anchorsOf, cellIndex, chronologyBesideRoutes, PRESENCE_LIMIT, routesOn, routeThroughCells, shownCells, yourBodyRef, yourLocations, type Anchor, type BodyLocation, type CellIndex, type CellProjector, type DrawnRoute, type SphereCell} from './bodyLocations'
+import {framingDistance} from '../places/placesHost'
 import {subjectOccurrences} from '../src/data/model'
 import {precisionMarker} from '../../../../../../../desktop/cradle/src/techne/m0m5/place/project'
 import './systemOverlay.css'
@@ -210,11 +215,49 @@ export function bindSystemOverlay({handle, said, press, follow}: {handle: AtlasH
     dom = {root, svg, ring, yourAxis, yours: new PlanetOrbits(parent, () => {}, {home: false, className: 'po-sys'}), yourRings: {structure: '', sats: []}, places}
     return dom
   }
-  let placeMarks: {drawn: DrawnLocation; node: HTMLElement; dir: [number, number, number]}[] = []
+  type PlaceMark = {drawn: DrawnLocation; node: HTMLElement; dir: [number, number, number]}
+  let placeMarks: PlaceMark[] = []
+  // [O-I #746] above PRESENCE_LIMIT: the cells of the drawn locations, each cell's mark, and the marks of its members once it first opens
+  let placeCells: {index: CellIndex; drawn: DrawnLocation[]; anchors: Anchor[]; marks: {node: HTMLElement; members: PlaceMark[] | null}[]} | null = null
   let placesKey = ''
+  let placesBody: WorldBodyRecord | null | undefined
+  const placeMark = (drawn: DrawnLocation, anchors: readonly Anchor[], places: HTMLElement): PlaceMark => {
+    const {location} = drawn
+    const words = markWords(drawn)
+    const anchor = anchors.find(entry => entry.location === location.id)
+    // the mark is a wrapper placed at the location's point; its press and its anchor line are two buttons beside each other, so neither holds the other
+    const node = el('div', {class: 'sys-mark'}, [
+      el('button', {
+        type: 'button',
+        class: `sys-place${drawn.shore ? ' is-shore' : ''}${location.locus === 'myth-episode' ? ' is-mythic' : ''}${location.written === false ? ' is-unwritten' : ''}`,
+        'aria-label': words.label, 'data-marker': location.precision ? precisionMarker(location.precision).kind : undefined,
+        onclick: () => press?.(location),
+      }, [el('span', {class: 'sys-place-dot'}), el('span', {class: 'sys-place-name', text: words.text})]),
+      // the anchor line: a dashed stub to the real place on Earth, named; a press follows it there
+      anchor && el('button', {type: 'button', class: 'sys-anchor', title: `${location.name} is anchored to ${anchor.to.name} on Earth: follow the line there`,
+        'aria-label': `${location.name}: follow its anchor to ${anchor.to.name} on Earth`, onclick: () => follow?.(anchor)},
+      [el('span', {class: 'sys-anchor-line'}), el('span', {text: `Earth · ${anchor.to.name}`})]),
+    ])
+    places.append(node)
+    return {drawn, node, dir: dirFromLatLon(drawn.lat, drawn.lon) as [number, number, number]}
+  }
+  /** [O-I #746] A cell's mark: its count, drawn as a region is (never as an exact point), mythic where its members are; a press flies to it. */
+  const cellMark = (cell: SphereCell, places: HTMLElement): HTMLElement => {
+    const count = cell.members.length
+    const words = `${count} ${count === 1 ? 'location' : 'locations'}`
+    const label = `${words}${cell.mythic ? ', mythic places,' : ''} ${count === 1 ? 'stands' : 'stand'} in this part of the body: come closer and each is drawn at its name`
+    const node = el('div', {class: 'sys-mark'}, [el('button', {
+      type: 'button', class: `sys-cell${cell.mythic ? ' is-mythic' : ''}`, 'data-marker': 'outline', 'aria-label': label, title: label,
+      onclick: () => handle.engine.rig?.flyTo(cell.at.lat, cell.at.lon, framingDistance('region')),
+    }, [el('span', {class: 'sys-place-dot'}), el('span', {class: 'sys-place-name', text: words})])])
+    node.style.visibility = 'hidden'
+    places.append(node)
+    return node
+  }
   const syncPlaces = () => {
     // the marks are those of YOUR body: a globe drawing another world's body (you entered it) has none of yours on it
     const drawn = handle.engine.body
+    placesBody = drawn
     const record = drawn && drawn.body_ref === yourBodyRef(worldBodyState()) ? drawn : null
     const standing = suiteStanding(), system = systemReading()
     const read = record ? yourLocations(worldBodyState(), standing.places, standing.phase === 'ready', system.state === 'read' ? system.bodies : null, shownWindow()) : null
@@ -225,36 +268,36 @@ export function bindSystemOverlay({handle, said, press, follow}: {handle: AtlasH
     placesKey = key
     for (const mark of placeMarks) mark.node.remove()
     placeMarks = []
+    for (const cell of placeCells?.marks ?? []) { cell.node.remove(); for (const mark of cell.members ?? []) mark.node.remove() }
+    placeCells = null
     if (!record || !rows.length) return
     const {places} = ensureDom()
-    placeMarks = drawnLocations(record, rows).map(drawn => {
-      const {location} = drawn
-      const words = markWords(drawn)
-      const anchor = anchors.find(entry => entry.location === location.id)
-      // the mark is a wrapper placed at the location's point; its press and its anchor line are two buttons beside each other, so neither holds the other
-      const node = el('div', {class: 'sys-mark'}, [
-        el('button', {
-          type: 'button',
-          class: `sys-place${drawn.shore ? ' is-shore' : ''}${location.locus === 'myth-episode' ? ' is-mythic' : ''}${location.written === false ? ' is-unwritten' : ''}`,
-          'aria-label': words.label, 'data-marker': location.precision ? precisionMarker(location.precision).kind : undefined,
-          onclick: () => press?.(location),
-        }, [el('span', {class: 'sys-place-dot'}), el('span', {class: 'sys-place-name', text: words.text})]),
-        // the anchor line: a dashed stub to the real place on Earth, named; a press follows it there
-        anchor && el('button', {type: 'button', class: 'sys-anchor', title: `${location.name} is anchored to ${anchor.to.name} on Earth: follow the line there`,
-          'aria-label': `${location.name}: follow its anchor to ${anchor.to.name} on Earth`, onclick: () => follow?.(anchor)},
-        [el('span', {class: 'sys-anchor-line'}), el('span', {text: `Earth · ${anchor.to.name}`})]),
-      ])
-      places.append(node)
-      return {drawn, node, dir: dirFromLatLon(drawn.lat, drawn.lon) as [number, number, number]}
-    })
+    const all = drawnLocations(record, rows)
+    if (all.length <= PRESENCE_LIMIT) { placeMarks = all.map(drawn => placeMark(drawn, anchors, places)); return }
+    const index = cellIndex(all.map(drawn => ({lat: drawn.lat, lon: drawn.lon, mythic: drawn.location.locus === 'myth-episode'})))
+    placeCells = {index, drawn: all, anchors, marks: index.cells.map(cell => ({node: cellMark(cell, places), members: null}))}
   }
   const offBody = subscribeWorldBody(syncPlaces)
   const offStanding = subscribeSuiteStanding(syncPlaces)
   // [O-I #746] the routes on the body the globe draws: read again when the places, the window or the drawn body move, drawn each frame
-  let routeLines: {readonly path: SVGPathElement; readonly dirs: readonly [number, number, number][]}[] = []
+  let routeLines: {readonly path: SVGPathElement; dirs: readonly [number, number, number][]; readonly stops: readonly {readonly lat: number; readonly lon: number}[]}[] = []
+  // [O-I #746] above PRESENCE_LIMIT stops: their cells, and the cells last open (the lines run through these until a frame opens others)
+  let routeCells: {index: CellIndex; open: string} | null = null
   let routesSvg: SVGSVGElement | null = null
   let routesBody: string | null | undefined
   let routesKey = ''
+  /** [O-I #746] Each route's line through its stops' cells, as `open` leaves them (bodyLocations.ts routeThroughCells). */
+  const throughCells = (open: readonly boolean[]) => {
+    if (!routeCells) return
+    const {index} = routeCells
+    let first = 0
+    for (const line of routeLines) {
+      line.dirs = routeDirs(routeThroughCells(line.stops, {cells: index.cells, of: index.of.slice(first, first + line.stops.length)}, open))
+      first += line.stops.length
+    }
+    routeCells.open = open.map(shown => (shown ? '1' : '0')).join('')
+  }
+  const projector: CellProjector = (dir, out) => { handle.engine.project(dir as [number, number, number], out as ScreenPoint, 1.002) }
   const syncRoutes = () => {
     routesBody = handle.engine.body ? handle.engine.body.body_ref : null
     const standing = suiteStanding()
@@ -264,6 +307,7 @@ export function bindSystemOverlay({handle, said, press, follow}: {handle: AtlasH
     routesKey = key
     for (const line of routeLines) line.path.remove()
     routeLines = []
+    routeCells = null
     if (!routes.length) return
     if (!routesSvg) {
       routesSvg = document.createElementNS(SVG, 'svg')
@@ -279,8 +323,14 @@ export function bindSystemOverlay({handle, said, press, follow}: {handle: AtlasH
       path.setAttribute('class', 'sys-route')
       path.setAttribute('data-subject', route.subject_ref)
       svg.append(path)
-      return {path, dirs: routeDirs(route.stops.map(stop => (record ? shoreOf(record, stop.lat, stop.lon) : stop)))}
+      const stops = route.stops.map(stop => (record ? shoreOf(record, stop.lat, stop.lon) : stop))
+      return {path, stops, dirs: routeDirs(stops)}
     })
+    const all = routeLines.flatMap(line => line.stops)
+    if (all.length > PRESENCE_LIMIT) {
+      routeCells = {index: cellIndex(all), open: ''}
+      throughCells(routeCells.index.cells.map(() => false))
+    }
   }
   const offRouteStanding = subscribeSuiteStanding(syncRoutes)
   const offRouteWindow = subscribeWindow(syncRoutes)
@@ -334,6 +384,8 @@ export function bindSystemOverlay({handle, said, press, follow}: {handle: AtlasH
     const occasion = occasionStep(occasionMs(shownWindow()))
     const own = bodies.find(body => body.yours)
     setRings(yours, yourRings, own ? own.key : null, own, open)
+    const yoursBeyond = own ? beyondWords(own.beyond) : ''
+    root.setAttribute('aria-label', `Your system: the worlds of today’s set${yoursBeyond ? `; around your planet, ${yoursBeyond}` : ''}`)
     if (own) yours.root.style.setProperty('--core-rgb', rgbOf(own.colour.core))
     const others = bodies.filter(body => !body.yours)
     for (const mark of marks) if (!others.some(body => body.key === mark.key)) { mark.root.remove(); mark.axis.remove(); mark.orbits.destroy() }
@@ -354,7 +406,8 @@ export function bindSystemOverlay({handle, said, press, follow}: {handle: AtlasH
       mark.name.textContent = body.world.name
       mark.root.dataset.state = body.state
       mark.root.style.setProperty('--core-rgb', rgbOf(body.colour.core))
-      mark.root.setAttribute('aria-label', `${body.world.name}: ${body.standing}${body.landing ? `; it lands on your planet at ${body.landing.lat.toFixed(1)}, ${body.landing.lon.toFixed(1)}` : body.unlanded ? `; ${body.unlanded}` : ''}`)
+      const beyond = beyondWords(body.beyond)
+      mark.root.setAttribute('aria-label', `${body.world.name}: ${body.standing}${body.landing ? `; it lands on your planet at ${body.landing.lat.toFixed(1)}, ${body.landing.lon.toFixed(1)}` : body.unlanded ? `; ${body.unlanded}` : ''}${beyond ? `; ${beyond}` : ''}`)
       mark.root.title = mark.root.getAttribute('aria-label') ?? ''
       setRings(mark.orbits, mark.rings, body.key, body, open)
       mark.orbits.root.style.setProperty('--core-rgb', rgbOf(body.colour.core))
@@ -369,13 +422,18 @@ export function bindSystemOverlay({handle, said, press, follow}: {handle: AtlasH
 
   handle.engine.onFrame(dt => {
     if (!live) return
-    // the locations on your body stand at the Body and Region scales, on the body the globe draws (the Earth draws its own places)
-    syncPlaces()
+    // the locations on your body stand at the Body and Region scales, on the body the globe draws (the Earth draws its own places); read again
+    // when the body drawn changes, and otherwise when their readings do (the subscriptions above), never each frame
+    if (handle.engine.body !== placesBody) syncPlaces()
     // the routes on the ground of the body drawn, each through its stops' points in order; a stop on the far side breaks the line there
     if ((handle.engine.body ? handle.engine.body.body_ref : null) !== routesBody) syncRoutes()
     if (routesSvg) {
       const ground = !handle.ctl.state.sky && !handle.ctl.state.graph
       routesSvg.setAttribute('visibility', ground ? 'visible' : 'hidden')
+      if (ground && routeCells) {
+        const open = shownCells(routeCells.index, projector, hostSize(routesSvg)).open
+        if (open.map(shown => (shown ? '1' : '0')).join('') !== routeCells.open) throughCells(open)
+      }
       if (ground) {
         for (const line of routeLines) {
           let joined = false
@@ -392,14 +450,30 @@ export function bindSystemOverlay({handle, said, press, follow}: {handle: AtlasH
     }
     if (!dom) return
     const {root, ring, yourAxis, yours, places} = dom
-    const onBody = !handle.ctl.state.sky && !handle.ctl.state.graph && !!handle.engine.body && placeMarks.length > 0
+    const onBody = !handle.ctl.state.sky && !handle.ctl.state.graph && !!handle.engine.body && (placeMarks.length > 0 || !!placeCells)
     places.hidden = !onBody
     if (onBody) {
-      for (const mark of placeMarks) {
-        handle.engine.project(mark.dir, screen, 1.002)
+      const stand = (node: HTMLElement, dir: readonly [number, number, number]) => {
+        handle.engine.project(dir as [number, number, number], screen, 1.002)
         const shown = screen.facing > 0.02
-        mark.node.style.visibility = shown ? 'visible' : 'hidden'
-        if (shown) mark.node.style.transform = `translate(${Math.round(screen.x)}px, ${Math.round(screen.y)}px)`
+        node.style.visibility = shown ? 'visible' : 'hidden'
+        if (shown) node.style.transform = `translate(${Math.round(screen.x)}px, ${Math.round(screen.y)}px)`
+      }
+      for (const mark of placeMarks) stand(mark.node, mark.dir)
+      if (placeCells) {
+        const cells = placeCells
+        const {open} = shownCells(cells.index, projector, hostSize(places))
+        cells.index.cells.forEach((cell, i) => {
+          const held = cells.marks[i]!
+          if (open[i]) {
+            held.node.style.visibility = 'hidden'
+            held.members ??= cell.members.map(member => placeMark(cells.drawn[member]!, cells.anchors, places))
+            for (const mark of held.members) stand(mark.node, mark.dir)
+          } else {
+            for (const mark of held.members ?? []) mark.node.style.visibility = 'hidden'
+            stand(held.node, cell.dir)
+          }
+        })
       }
     }
     const layer = handle.engine.sky ?? null

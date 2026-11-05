@@ -355,8 +355,13 @@ test('Group, on chains chosen in the list, asks Central to propose them as an ag
   await held.write([{key: 'new.accept', value: true}])
   assert.deepEqual(calls[1], ['save', {scope: 'root', record: {schema: 'central.agent-set/v1', ref: 'agent-set:check-the-port-r7x', revision: 'r1',
     members: [{kind: 'agent', agent_ref: 'agent/kite'}, {kind: 'agent', agent_ref: 'agent/cairn'}]}, expected_revision: 'r1'}])
-  await assert.rejects(() => held.write([{key: 'new.discard', value: true}]), /central\.agent-set\.remove/)
-  assert.match(held.standing['new.type'].disabled, /missing op/, 'Central\'s propose takes no type')
+  // REPLACED (round 868): Discard was a missing op and Central's propose took no type. Central carries both now (central.agent-set.remove
+  // with CAS; propose's `type`): with no remover handed to the rack, Discard names the act that carries it; Type is the card's own field.
+  assert.equal(held.standing['new.discard'].disabled, own.GROUP_REFUSE.noRemover)
+  await assert.rejects(() => held.write([{key: 'new.discard', value: true}]), error => error.message === own.GROUP_REFUSE.noRemover)
+  assert.match(own.GROUP_REFUSE.noRemover, /central\.agent-set\.remove/)
+  assert.equal(held.standing['new.type'], undefined, 'Central\'s propose takes a type')
+  assert.ok(held.local['new.type'], 'the Type is the hand\'s until Group')
   // A chain whose session seats no agent cannot be proposed as a member.
   const unseated = own.agentsetBinding({group: CREW, tracks: TRACKS.map(item => (item === CAIRN ? {...item, agentRef: null} : item)), holds: bind.chainHolds()}, ports)
   await assert.rejects(() => unseated.write([{key: 'new.make', value: JSON.stringify({for: 'Check', chains: [KITE.sessionRef, CAIRN.sessionRef]})}]), /seats no agent/)

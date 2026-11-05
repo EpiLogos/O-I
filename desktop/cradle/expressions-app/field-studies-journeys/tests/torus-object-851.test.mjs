@@ -143,6 +143,53 @@ test('the figure law the reading carries names the shape between reads, the trit
   assert.equal(stepsAt(session({pulse: {steps: 4}, samples_elapsed: '48000'}), 0, 48000), 4, 'never back');
 });
 
+// DLW build ruling 2026-11-05 (controller.ts for O-I 851's Sequence shape): "Sequence follows the shapes you set in the scene" (§21.2 The
+// shapes of the Torus), "in the order and timing you set under Sequence" (The Torus in the pane).
+test('under Sequence the scene\'s own torus sets the shape, and its passage keeps the sequence\'s own timing', async () => {
+  const {sceneShapesOf, TorusObject} = await object();
+  const torusEntity = {id: 'e-torus', kind: 'formation', enabled: true, shape: {kind: 'torus', figure: 'spiral'}, sequence: {links: [
+    {id: 'a', shape: {kind: 'torus', figure: 'torus'}}, {id: 'b', shape: {kind: 'torus', figure: 'klein-bottle'}}, {id: 'c', shape: {kind: 'glyph', text: 'O'}}]}};
+  const glyph = {id: 'e-glyph', kind: 'formation', enabled: true, shape: {kind: 'glyph', text: 'A'}, sequence: {links: []}};
+  const telemetry = at => ({config: {entities: [glyph, torusEntity]}, sequences: [{entityId: 'e-glyph', linkIndex: 0, nextIndex: 0, progress: 0, phase: 'hold'}, at]});
+  const at = (linkIndex, nextIndex, progress, phase) => ({entityId: 'e-torus', linkIndex, nextIndex, progress, phase, linkCount: 3});
+  assert.deepEqual(sceneShapesOf(telemetry(at(0, 1, 0.4, 'hold'))), {entity_id: 'e-torus', from: 'torus', to: 'klein-bottle', progress: 0}, 'a hold holds its shape');
+  assert.equal(sceneShapesOf(telemetry(at(0, 1, 0.4, 'transition'))).progress, 0.4, 'a change runs on the sequence\'s own progress');
+  assert.equal(sceneShapesOf(telemetry(at(2, 0, 0, 'hold'))).from, 'spiral', 'a state that is no torus shape keeps the torus\'s own');
+  assert.equal(sceneShapesOf(telemetry(at(9, 9, 0, 'hold'))).from, 'torus', 'a state the sequence has not is its first');
+  assert.equal(sceneShapesOf({config: {entities: [{...torusEntity, enabled: false}, glyph]}}), null, 'a torus switched off is none');
+  assert.equal(sceneShapesOf({config: {entities: [glyph]}}), null, 'a scene without a torus names none');
+  assert.equal(sceneShapesOf(null), null);
+  let now = at(0, 1, 0, 'hold');
+  const torus = new TorusObject(() => sceneShapesOf(telemetry(now)));
+  torus.setBody(influence(), modeRefs()); torus.setSession(session({settings: {shape: 'sequence'}, figure: null}));
+  torus.present(nativeFrame({amplitudes: quiet()}));
+  assert.equal(torus.reading().shape.law, 'torus', 'the state the scene\'s torus stands on');
+  now = at(0, 1, 0.75, 'transition');
+  torus.present(nativeFrame({amplitudes: quiet(), generation: '2', samples: '48000'}));
+  assert.deepEqual(torus.reading().shape.shown, {from: 'torus', to: 'klein-bottle', progress: 0.75, since: null}, 'the passage on the sequence\'s progress');
+  assert.equal(torus.reading().shape.law, 'klein-bottle');
+  assert.equal(torus.reading().shape.sequence.entity_id, 'e-torus', 'the reading names the scene\'s torus');
+  // Under Auto the scene's shapes are not read; under Sequence without a torus in the scene, the torus keeps its own shape.
+  let asked = 0;
+  const auto = new TorusObject(() => { asked++; return sceneShapesOf(telemetry(now)); });
+  auto.setBody(influence(), modeRefs()); auto.setSession(session());
+  auto.present(nativeFrame({amplitudes: quiet()}));
+  assert.equal(asked, 0, 'Auto follows the pulse alone');
+  const none = new TorusObject(() => null);
+  none.setBody(influence(), modeRefs()); none.setSession(session({settings: {shape: 'sequence'}, figure: null}));
+  none.present(nativeFrame({amplitudes: quiet()}));
+  assert.equal(none.reading().shape.law, null);
+  assert.equal(none.reading().shape.sequence, null, 'Sequence with no torus in the scene says so');
+  assert.equal(none.state().morph.to, 'torus');
+  // The controller reads the scene from the engine that draws it (production.ts telemetry: the composition's sequences and the config).
+  const controller = readFileSync(join(journeys, 'src/native-field/controller.ts'), 'utf8');
+  assert.equal(controller.split('new TorusObject(()=>this.sceneShapes())').length - 1, 3, 'every torus object of the controller reads the scene');
+  assert.match(controller, /private sceneShapes\(\)\{return sceneShapesOf\(this\.renderer\.telemetry\?\.\(\)\?\?null\);\}/);
+  const production = readFileSync(join(journeys, 'src/production.ts'), 'utf8');
+  assert.match(production, /const t=this\.engine\.getCompositionTelemetry\(\)[^\n]*cfg=this\.engine\.getEvaluation\(\)\.config/);
+  assert.match(production, /return \{\.\.\.t,drive,params,config:cfg,/);
+});
+
 test('the morph runs on the pulse: a change of shape begins on the step it is read at and passes in half a step, on the morph signal', async () => {
   const {TorusMorph, PASSAGE_STEPS} = await object();
   const {pulseTurnings} = await signal();
@@ -730,9 +777,10 @@ test('the View is an instrument edit that names nothing but the view, made on th
   const view = command.slice(command.indexOf("if(edit.kind==='view')"), command.indexOf("if(edit.kind==='body')"));
   assert.match(view, /if\(at!==undefined\)throw new Error\('The View is how the stage draws the Torus/, 'it lands at no sample of the owner');
   assert.match(view, /controller\.setView\(edit\.view\);update\(\);return \{\};/, 'the stage draws it at once');
-  // the controller keeps it: each Torus object it makes (opened, released) draws the View you keep
+  // the controller keeps it: each Torus object it makes (opened, released) draws the View you keep. REPLACED (round 868, DLW build ruling
+  // 2026-11-05): each is made on the scene's own shapes, which Sequence follows (test 'under Sequence the scene's own torus sets the shape').
   const controller = readFileSync(join(journeys, 'src/native-field/controller.ts'), 'utf8');
-  assert.equal(controller.match(/this\.torusObject=new TorusObject\(\);this\.torusObject\.setView\(this\.view\);/g)?.length, 2);
+  assert.equal(controller.match(/this\.torusObject=new TorusObject\(\(\)=>this\.sceneShapes\(\)\);this\.torusObject\.setView\(this\.view\);/g)?.length, 2);
   assert.match(controller, /setView\(view:TorusView\)\{this\.view=view;if\(this\.torusObject\.setView\(view\)\)\{this\.projection\?\.refresh\(\);this\.changed\(\);\}\}/);
 });
 

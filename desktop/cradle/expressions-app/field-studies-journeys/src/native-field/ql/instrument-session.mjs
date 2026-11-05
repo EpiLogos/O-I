@@ -95,7 +95,7 @@ export class InstrumentSession {
   #block; #lookahead; #maxBlocks; #maxBytes; #timeout; #queue = []; #bytes = 0;
   #views = new Set(); #maxViews; #busy = false; #held = false; #uncertain = false;
   #disposed = false; #reason = null; #presented; #timer = null; #running = false;
-  #generation = 0; #coalesced = 0; #influence = null; #stageReceipt = null; #torus = null; #torusPlay = null; #torusSinglet = null;
+  #generation = 0; #coalesced = 0; #influence = null; #stageReceipt = null; #torus = null; #torusPlay = null; #torusSinglet = null; #strikeAt = null;
   #acts = []; #advances = { blocks: 0, frames: 0, first_samples_elapsed: null, last_samples_elapsed: null };
   #torusNative = null;
 
@@ -140,6 +140,9 @@ export class InstrumentSession {
   get lastTorusPlay() { return this.#torusPlay === null ? null : structuredClone(this.#torusPlay); }
   /** The last struck singlet's receipt (ql.torus-singlet/v1: the codon's places and points), or null before any. */
   get lastTorusSinglet() { return this.#torusSinglet === null ? null : structuredClone(this.#torusSinglet); }
+  /** The last strike at points' receipt (ql.strike-at/v1: the points and each voice's coupling at them; O-I #771), as a strike at
+   * points, a played Torus act or a singlet carried it, or null before any. */
+  get lastStrikeAt() { return this.#strikeAt === null ? null : structuredClone(this.#strikeAt); }
 
   get reading() {
     return { schema: 'ql.instrument-reading/v1', instance_ref: this.#instance,
@@ -266,6 +269,7 @@ export class InstrumentSession {
       if (reply.torus !== undefined) this.#torus = structuredClone(reply.torus);
       if (reply.torus_play !== undefined) this.#torusPlay = structuredClone(reply.torus_play);
       if (reply.torus_singlet !== undefined) this.#torusSinglet = structuredClone(reply.torus_singlet);
+      if (reply.strike_at !== undefined) this.#strikeAt = structuredClone(reply.strike_at);
       // A stage acknowledgement carries the stage's own scoped body: the
       // ql.stage-state/v1 disclosure or the ql.stage-receipt/v1 claim.
       // A score acknowledgement carries the score, its currentness and the
@@ -472,7 +476,7 @@ export class InstrumentSession {
    * toroidal (large) circle, each in [0, 2*pi) - with an impulse in modal
    * metres; the native owner's scene body excites every standing voice by that
    * impulse times the voice's own shape at the point (QL-MEF `strike-at`, the
-   * receipt `ql.strike-at/v1` names the points and each voice's coupling). A
+   * receipt `ql.strike-at/v1` names the points and each voice's coupling, kept as lastStrikeAt). A
    * chord is several points in one act: one generation. Serialized with data
    * delivery like every other owner operation; the reply's end-of-block targets
    * present the struck body, so sound and visible displacement share the

@@ -82,6 +82,9 @@ export class InstrumentSession {
  readonly lastTorusPlay: any;
  /** The last struck singlet's receipt (ql.torus-singlet/v1: the codon, its places and points), or null before any. */
  readonly lastTorusSinglet: any;
+ /** The last strike at points' receipt (ql.strike-at/v1: the points and each voice's coupling at them; O-I ticket 771), as a strike at points,
+  * a played Torus act or a singlet carried it, or null before any (QL-MEF 384, 8c8ad0f). */
+ readonly lastStrikeAt: {schema: 'ql.strike-at/v1'; [field: string]: unknown} | null;
  /** Frozen copy of every admitted owner act and the aggregate advance data plane. */
  journal(): any;
  readonly lastInfluence: any;

@@ -195,6 +195,11 @@ pub fn install(app: &AppHandle, arrangements: &[Arrangement], active: &str) -> t
         .text("region.left", "Show / Hide Central")
         .text("region.right", "Show / Hide Agent");
     let window = window.build()?;
+    // Help (manual §10.9; §20.1 "Read how the field is used — the Help menu's Expressions Guide"): the field's own Guide, which the mode
+    // that stands answers (frame/menu/commandDoor.ts; StudioStage.tsx menuStageCommands).
+    let help = SubmenuBuilder::new(app, "Help")
+        .item(&item("help.expressions-guide", "Expressions Guide", None)?)
+        .build()?;
     app.set_menu(
         MenuBuilder::new(app)
             .items(&[
@@ -205,6 +210,7 @@ pub fn install(app: &AppHandle, arrangements: &[Arrangement], active: &str) -> t
                 &view,
                 &workspace,
                 &window,
+                &help,
             ])
             .build()?,
     )?;
@@ -224,9 +230,9 @@ pub fn is_native(id: &str) -> bool {
     id.starts_with("world.") || id == EXPORT_AUDIO
 }
 
-/// Whether a menu item is one of the shell's commands (File, Edit, Create, View, Settings), routed as `oi:command`.
+/// Whether a menu item is one of the shell's commands (File, Edit, Create, View, Help, Settings), routed as `oi:command`.
 pub fn is_command(id: &str) -> bool {
-    ["edit.", "create.", "view.", "file.", "app."]
+    ["edit.", "create.", "view.", "file.", "app.", "help."]
         .iter()
         .any(|prefix| id.starts_with(prefix))
 }
@@ -286,6 +292,7 @@ mod tests {
             "file.export.html",
             "file.export.native",
             "file.export.song",
+            "help.expressions-guide",
         ] {
             assert!(is_command(id), "{id} is routed as oi:command");
         }

@@ -194,9 +194,14 @@ test('5 · Custody and the Decision helper: Factory\'s custody and unit-decision
   // CustodyAssign that carries none yet, and the owner's ruling on changing them after assignment (w9-approvals-ledger-sets.test.mjs).
   assert.match(custody.standing.handBack.disabled, /Factory's custody assign and update \(factory_owner\) carry a Position, its work, a reason, the custody state — in-progress, blocked, released, completed or handed-off — and a Position to hand off to/)
   for (const key of ['gate', 'escalate']) assert.match(custody.standing[key].disabled, /`factory development custody assign --/, key)
-  assert.match(custody.standing.handBack.disabled, /`factory development custody list` has no kernel route/)
+  // REPLACED (BD r19, C26 6311e404c): Hand back said `factory development custody list` had no kernel route. The kernel's CustodyList is
+  // routed (factory_owner custody-list); Hand back waits on Factory's custody hold for what you edited, and names that.
+  assert.doesNotMatch(custody.standing.handBack.disabled, /no kernel route/)
+  assert.match(custody.standing.handBack.disabled, /missing op: Factory's custody hold/)
   // REPLACED (lane W11): what the agent holds is Factory's custody list, not read here with no custody handed in.
-  assert.match(custody.standing.held.disabled, /custody list is not read here/)
+  // REPLACED (BD r19): CUSTODY_ABSENT.held is gone; with no custody handed in, held names where the list is read (the session's chain).
+  assert.equal('held' in session.CUSTODY_ABSENT, false)
+  assert.match(custody.standing.held.disabled, /custody list \(the kernel's factory_owner custody-list\) is read on the session's own chain/)
   for (const key of ['people', 'handBackLit']) assert.match(custody.standing[key].disabled, /no reading reaches it yet — missing op:/, key)
   const decision = helper.decisionHelperBinding({status: null, teamSpace: null, holds: bind.chainHolds()})
   for (const key of ['when', 'deadline']) assert.match(decision.standing[key].disabled, /Factory's attempt decision \(factory_owner attempt-decision-submit and -read\) puts a unit's question to you through Central's receiving field/, key)

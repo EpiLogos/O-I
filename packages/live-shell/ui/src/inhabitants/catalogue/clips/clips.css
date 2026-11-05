@@ -142,6 +142,9 @@
 /* The lane under the lanes (velocity, a sound), and the editor's foot (Live's Velocity · Randomize · Ramp row, cap 01). */
 .clv-under { flex: none; border-top: 1px solid var(--line, #24262a); background: var(--bg-1, #33363b); display: flex; flex-direction: column; }
 .clv-stems { display: block; flex: none; }
+/* The MPE tab: a lane nothing records stands dim (its Info line says why); Bend's centre line is no force. */
+.clv-stems[data-dim="true"] { opacity: .4; }
+.clv-mpe-centre { stroke: var(--line-strong, #4a4e54); stroke-width: 1; stroke-dasharray: 2 3; }
 .clv-stem line { stroke: var(--sel, #7ec3e6); stroke-width: 1; }
 .clv-stem circle { fill: var(--bg-1, #33363b); stroke: var(--sel, #7ec3e6); stroke-width: 1.2; }
 .clv-stem-len { stroke-opacity: .55; }

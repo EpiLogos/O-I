@@ -17,6 +17,9 @@ export const MENU_COMMANDS = {
   'file.export.html': 'Export Living HTML', 'file.export.native': 'Export Native Configuration',
   // Factory's (manual §19.1 Songs, O-I #844): the selected task's song made one clip; Factory's Clip view answers it (agent/clipBinding.ts).
   'file.export.song': 'Export Song…',
+  // Help (manual §10.9, §20.1 "Read how the field is used — the Help menu's Expressions Guide"; O-I #747): the field's own Guide, which
+  // Expressions answers through the frame's one runner (StudioStage.tsx menuStageCommands).
+  'help.expressions-guide': 'Expressions Guide',
 } as const
 export type MenuCommand = keyof typeof MENU_COMMANDS
 

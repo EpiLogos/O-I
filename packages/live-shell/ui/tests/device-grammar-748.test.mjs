@@ -180,7 +180,10 @@ test('chain order: every mode\'s chain has one law; where the manual fixes the o
   // (§19.4 "The chain is the profile Central keeps for the agent").
   const session = chainLaw('factory-session')
   assert.match(chainMove(session, session.slots, 'world', -1).refused, /keeps its order/)
-  assert.match(chainMove(session, session.slots, 'skillset', 1).refused, /missing op: agent-chain order \(Central\)/)
+  // REPLACED (BD r19, Central #318): the order waited on "agent-chain order (Central)". Central writes it (agent-profile.chain-order), so the
+  // law's op stands; the Skillset rack itself still cannot pass the Agent, which keeps its place.
+  assert.deepEqual(session.op, {name: 'agent-profile.chain-order', owner: 'Central', stands: true})
+  assert.match(chainMove(session, session.slots, 'skillset', 1).refused, /skillset cannot move past agent/)
   assert.equal(slotStanding(world, 'packet').moves, false)
   // Live: an effect moves through the instrument's own effect-chain edit; nothing moves past the torus.
   const live = chainLaw('live-part')

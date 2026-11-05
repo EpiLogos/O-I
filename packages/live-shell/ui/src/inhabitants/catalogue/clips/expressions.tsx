@@ -45,6 +45,8 @@ const objVal = (v: V, page: string, key: string): number | string | boolean | un
 }
 const objNum = (v: V, page: string, key: string) => { const x = objVal(v, page, key); return typeof x === 'number' ? x : NaN }
 const objStr = (v: V, page: string, key: string) => { const x = objVal(v, page, key); return typeof x === 'string' ? x : '' }
+/** The torus's shapes, in the manual's words (§21.2 The shapes of the Torus; field-studies-journeys inspector.ts torusFigureOptions). */
+const TORUS_FIGURE_OPTIONS: Option<string>[] = [{value: 'torus', label: 'Torus'}, {value: 'figure-eight', label: 'Figure-eight'}, {value: 'spiral', label: 'Spiral'}, {value: 'klein-bottle', label: 'Klein bottle'}]
 const objBool = (v: V, page: string, key: string) => objVal(v, page, key) === true
 
 // ---------------------------------------------------------------- panel one
@@ -78,18 +80,18 @@ function ClipPanel(p: ClipProps) {
   </Rows>
 }
 
-/** The scene's view of the field (manual §20.1 The Clip panel: "View — Kept · Not kept — Not kept — Keep holds the view of the field you
- * have now with the scene, and the scene opens on it. Restore returns to it after you orbit away"). Keep is an edit, so a locked scene
- * refuses it; Restore waits for a kept view. */
+/** The scene's view of the field (manual §20.1 The Clip panel: "View — Kept · Default framing — Default framing — Keep holds the view of
+ * the field you have now with the scene, and the scene opens on it. Restore returns to it after you orbit away"). Keep is an edit, so a
+ * locked scene refuses it; Restore waits for a kept view. */
 function ViewOf({p, why}: {p: ClipProps; why?: string}) {
   const view = strOf(p.v, 'view')
   return <>
-    <span className="clv-tag" data-i={`View|${view === undefined ? 'No reading of the scene\'s view yet.' : view === 'kept' ? 'The scene keeps a view of the field, and opens on it.' : 'The scene keeps no view of its own.'}`}>
-      {view === undefined ? '—' : view === 'kept' ? 'Kept' : 'Not kept'}</span>
+    <span className="clv-tag" data-i={`View|${view === undefined ? 'No reading of the scene\'s view yet.' : view === 'kept' ? 'The scene keeps a view of the field, and opens on it.' : 'The scene opens on the default framing.'}`}>
+      {view === undefined ? '—' : view === 'kept' ? 'Kept' : 'Default framing'}</span>
     <Action label="Keep" does="Holds the view of the field you have now with the scene, and the scene opens on it." onPress={() => p.set('view.keep', Date.now())}
       disabled={why ?? (view === undefined ? 'No reading of the scene\'s view yet.' : undefined)} />
     <Action label="Restore" does="Returns to the view the scene keeps, after you orbit away." onPress={() => p.set('view.restore', Date.now())}
-      disabled={view === 'kept' ? undefined : 'The scene keeps no view yet: Keep one first.'} />
+      disabled={view === 'kept' ? undefined : view === 'default' ? 'The scene opens on the default framing: Fit returns to it.' : 'No reading of the scene\'s view yet.'} />
     <Action label="Fit" does="Returns the camera to its default framing, facing the plane. The scene's kept view stays as it is." onPress={() => p.set('view.fit', Date.now())}
       disabled={view === undefined ? 'No reading of the scene\'s view yet.' : undefined} />
   </>
@@ -375,6 +377,11 @@ function ExpressionTab(p: ClipProps) {
           <Toggle label="Enabled" does="An off symbol takes no particles and stays in the scene." on={objBool(p.v, 'formation', 'enabled')} onChange={x => setObj(p, 'formation', 'enabled', x)} disabled={why} />
           <Toggle label="Locked" does="A locked symbol refuses edits." on={objBool(p.v, 'formation', 'locked')} onChange={x => setObj(p, 'formation', 'locked', x)} />
           <div style={{gridColumn: 'span 2', width: '100%'}}><Said>Shape: {objStr(p.v, 'formation', 'shape') || '—'}. Change it in the glyph editor.</Said></div>
+          {/* A torus's state names one of its shapes (O-I 851; manual §21.2): each state of its sequence its own. */}
+          {objStr(p.v, 'formation', 'figure') !== '' && <div style={{gridColumn: 'span 2', width: '100%'}}>
+            <Chooser label="Figure" does="The shape the torus takes in the state it stands on. Each state of its sequence takes its own, and the torus moves through them in turn."
+              value={objStr(p.v, 'formation', 'figure')} onChange={x => setObj(p, 'formation', 'figure', x)} disabled={why}
+              options={TORUS_FIGURE_OPTIONS} /></div>}
         </Section>
       </>}
       {page === 'force' && <>

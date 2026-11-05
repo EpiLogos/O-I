@@ -224,6 +224,9 @@ function useScalar(s: Scale, value: number, def: number | undefined, onChange?: 
 export interface Standing {
   /** The value plays from an automation lane (a red mark); `overridden` when you moved it off the lane (a hollow mark). */
   readonly automated?: boolean | 'overridden'
+  /** Overridden: give the value back to its automation lane (Live's Re-enable Automation, one parameter). The control offers it only
+   * while you hold the value off the lane. */
+  readonly onReenable?: () => void
   /** Who else holds the value (an agent, the sky): the control rings in the stall colour and offers the value back. */
   readonly heldBy?: string
   readonly onHandBack?: () => void
@@ -357,6 +360,8 @@ function Cell({kind, label, does, value, standing, className, style, unknown, fl
     {st.movedBy && flash > 0 && <b key={flash} className="dp-by">{st.movedBy}</b>}
     {st.heldBy && <button type="button" className="dp-handback" aria-label={`Give ${label ?? 'this value'} back to ${st.heldBy}`}
       data-i={said('Hand back', `Give this value back to ${st.heldBy}.`)} onClick={st.onHandBack} disabled={!st.onHandBack}>{st.heldBy}</button>}
+    {st.automated === 'overridden' && st.onReenable && <button type="button" className="dp-reenable" aria-label={`Give ${label ?? 'this value'} back to its automation lane`}
+      data-i={said('Re-enable', 'Give this value back to its automation lane: the lane plays it again.')} onClick={st.onReenable}>Re-enable</button>}
   </div>
   // The place's wrap, where the host named this control's key (ControlWrapContext); otherwise the cell as it is.
   const wrap = useContext(ControlWrapContext)
@@ -790,7 +795,8 @@ export function Pad({w, h, label, does, x, y}: {readonly w: number; readonly h: 
   // Merged standing: the cell rings for either side; the status bar speaks for both.
   const held = x.heldBy ?? y.heldBy, by = x.movedBy ?? y.movedBy
   const standing: Standing = {
-    ...(x.automated || y.automated ? {automated: x.automated ?? y.automated} : {}), ...(held ? {heldBy: held, onHandBack: () => { x.onHandBack?.(); y.onHandBack?.() }} : {}),
+    ...(x.automated || y.automated ? {automated: x.automated ?? y.automated} : {}),
+    ...(x.onReenable || y.onReenable ? {onReenable: () => { x.onReenable?.(); y.onReenable?.() }} : {}), ...(held ? {heldBy: held, onHandBack: () => { x.onHandBack?.(); y.onHandBack?.() }} : {}),
     ...(x.pending || y.pending ? {pending: true} : {}), ...(x.disabled && y.disabled ? {disabled: x.disabled} : {}), ...(x.refused || y.refused ? {refused: x.refused ?? y.refused} : {}),
     ...(x.modulatedBy || y.modulatedBy ? {modulatedBy: x.modulatedBy ?? y.modulatedBy} : {}), ...(x.waiting || y.waiting ? {waiting: true} : {}), ...(by ? {movedBy: by} : {}),
     ...(x.valueKey ?? y.valueKey ? {valueKey: x.valueKey ?? y.valueKey} : {}),

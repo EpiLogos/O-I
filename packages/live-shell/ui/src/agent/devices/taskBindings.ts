@@ -6,7 +6,8 @@
 // task THE selection names (`<track>#task/<n>`, timeline/factoryTrackAdapter.ts parseFactoryTaskRef). Launch quantize is the
 // transport's Quantize — the Agent's interrupt timing (one binding feeds both). A new task goes the Agent's own way (its declared
 // new-task row, kernel:harness_agent_control configure {prompt}). Launch, Retry and Stop after are Software Factory's acts on a Run's
-// unit (TASKS_REFUSE), and a task clip names neither, so they stand disabled with that reason. The per-task
+// unit: Factory names the units a task stands on (factory_owner attempt-task-units), so Retry reads them and retries the task's unit
+// (retryTask); Launch and Stop after have no kernel route to that unit's start-serial or request-cancellation (TASKS_REFUSE). The per-task
 // settings (Mode, Then, Effort, Autonomy, Register, Form here; every setting of the Clip view through TASK_SEAMS) are the
 // session's settings on their owner, AIKit's `encounter-session-settings` (kernel encounter_session_settings, agent/sessionSettings.ts),
 // written against the revision that stands. The task's log is not read: the temporal stream names the session, not the task's
@@ -24,7 +25,7 @@ import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../fr
 import type {AgentSessionTrack} from '../agentRunModel'
 import {holdView, viewHolds, type ChainHolds} from './designBindings'
 import {sessionRowsOf} from './threadBinding'
-import type {EncounterSessionSettingsReading, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
+import type {EncounterSessionSettingsReading, FactoryOwnerRequest, FactoryTaskUnit, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import type {FactoryTake, TakeState} from '../factoryTakes'
 import {journeyOf, type RunJourneyRead} from './runJourney'
 import {NO_RUN, collectedOf} from './workcellMaterial'
@@ -40,7 +41,6 @@ export const RUNS_ID = 'factory:runs'
 // (§16.1, §19.1). Their ids stay as the keys their view holds are kept under (RUNS_ID's `viewHolds`), and nothing publishes them (ticket 804);
 // their bindings stay for the tests that read the owners through them.
 
-const missing = (what: string, op: string, owner: string) => `${what}: no owner operation carries it yet — missing op: ${op} (${owner}).`
 const disabled = (reasons: Readonly<Record<string, string>>): Record<string, Standing> =>
   Object.fromEntries(Object.entries(reasons).map(([key, why]) => [key, {disabled: why}]))
 const put = (values: Record<string, Value>, key: string, value: Value | null | undefined) => {
@@ -51,15 +51,56 @@ const put = (values: Record<string, Value>, key: string, value: Value | null | u
 
 // A task's lifecycle is Software Factory's (lane K0; Factory README: an attempt Action owns start, retry, cancel and Return, and a retry
 // is a new attempt record): Factory starts, retries and cancels the attempt of a Run's workflow unit (`factory attempt action`, operations
-// start-serial, retry, request-cancellation), not a clip of a session. A task clip names no Run and no unit, so none of the three can be
-// addressed from here: Retry has its route (factory_owner attempt-retry, the Run map's Retry) and waits on the clip's Run and unit; Launch
-// and Stop after have no kernel route to Factory's start-serial or request-cancellation at all. harness_agent_control addresses the whole
-// bound harness, never one task.
-const NO_TASK_UNIT = 'a task clip names no Factory Run and no workflow unit (the session\'s attempts stand on Runs, and a unit is retried from the Run map)'
+// start-serial, retry, request-cancellation), not a clip of a session. Factory names the units a task stands on (`factory attempt units`,
+// the kernel's factory_owner attempt-task-units, O-I ticket 772), so Retry reads them for the session's bound task and retries its unit
+// (factory_owner attempt-retry, as the Run map's Retry); Launch and Stop after have no kernel route to Factory's start-serial or
+// request-cancellation of that unit. harness_agent_control addresses the whole bound harness, never one task.
+const UNITS_NAMED = 'factory_owner attempt-task-units names the task\'s units'
 export const TASKS_REFUSE: Readonly<Record<string, string>> = {
-  launch: missing('Launch', `a kernel route to Factory's attempt start-serial for one task's unit — ${NO_TASK_UNIT}`, 'Software Factory'),
-  retry: `Retry: Factory retries a unit of a Run (factory_owner attempt-retry, the Run map's Retry), and ${NO_TASK_UNIT} (Software Factory).`,
-  stopAfter: missing('Stop after', `a kernel route to Factory's attempt request-cancellation for one task's unit — ${NO_TASK_UNIT}`, 'Software Factory'),
+  launch: `Launch: ${UNITS_NAMED}, and no kernel route carries Factory's attempt start-serial of one (Software Factory).`,
+  retry: 'Retry: no carrier to Factory\'s attempt-task-units and attempt-retry stands here, so the task\'s unit cannot be read or retried (Software Factory).',
+  stopAfter: `Stop after: ${UNITS_NAMED}, and no kernel route carries Factory's attempt request-cancellation of one (Software Factory).`,
+}
+
+/** Factory's units of a task (factory.attempt-task-units-reading/v1 `units`), or null when the answer is not that reading. Pure. */
+export function taskUnitsOf(reading: unknown): FactoryTaskUnit[] | null {
+  const doc = reading && typeof reading === 'object' && !Array.isArray(reading) ? reading as Record<string, unknown> : null
+  if (!doc || doc.contract !== 'factory.attempt-task-units-reading/v1' || !Array.isArray(doc.units)) return null
+  return doc.units.flatMap(row => {
+    const unit = row && typeof row === 'object' ? row as Record<string, unknown> : null
+    if (!unit || typeof unit.runRef !== 'string' || typeof unit.workflowUnitRef !== 'string') return []
+    return [{runRef: unit.runRef, workflowUnitRef: unit.workflowUnitRef, currentAttemptRef: typeof unit.currentAttemptRef === 'string' ? unit.currentAttemptRef : null,
+      status: typeof unit.status === 'string' ? unit.status : null, attempts: typeof unit.attempts === 'number' ? unit.attempts : 0, runRevision: unit.runRevision,
+      required: unit.required === true}]
+  })
+}
+
+/** The one unit a task's Retry addresses: the failed one where one of its current attempts failed, else its one current unit, else its one
+ * unit; or the refusal in words — Factory retries one unit at a time, so a task on several says which they are. Pure. */
+export function retryTargetOf(units: readonly FactoryTaskUnit[], taskRef: string): FactoryTaskUnit | {refused: string} {
+  if (!units.length) return {refused: `Retry: Factory retains no attempt of ${taskRef} on any Run (\`factory attempt units\`), so there is no unit to retry.`}
+  const current = units.filter(unit => unit.currentAttemptRef)
+  const failed = current.filter(unit => unit.status === 'failed')
+  const pick = failed.length === 1 ? failed[0] : current.length === 1 ? current[0] : units.length === 1 ? units[0] : undefined
+  if (pick) return pick
+  const named = (failed.length ? failed : current.length ? current : units).map(unit => `${unit.runRef} · ${unit.workflowUnitRef}`)
+  return {refused: `Retry: ${taskRef} stands on ${named.length} units (${named.join(', ')}); Factory retries one unit at a time, so retry the one you mean from the Run map.`}
+}
+
+/** A task's Retry through Factory: the units it stands on read (factory_owner attempt-task-units), then its unit retried (attempt-retry,
+ * under the unit's retry grant). Factory's answer stands when it retried; its refusal, or the driver's own named as such, is thrown in its
+ * words. `owner` is the kernel's factory_owner (ownerRoutes.ts factoryOwnerWrite). */
+export async function retryTask(owner: (request: FactoryOwnerRequest) => Promise<unknown>, statePath: string, taskRef: string): Promise<void> {
+  const reading = await owner({kind: 'attempt-task-units', state_path: statePath, task_ref: taskRef})
+  const units = taskUnitsOf(reading)
+  if (!units) throw Error(`Retry: \`factory attempt units\` answered something other than its units of ${taskRef}.`)
+  const target = retryTargetOf(units, taskRef)
+  if ('refused' in target) throw Error(target.refused)
+  const answer = await owner({kind: 'attempt-retry', state_path: statePath, run_ref: target.runRef, workflow_unit_ref: target.workflowUnitRef}) as
+    {status?: unknown; refusal?: {message?: unknown} | null} | null
+  if (answer?.status === 'retried' || answer?.status === 'already-retried') return
+  const words = typeof answer?.refusal?.message === 'string' ? answer.refusal.message : 'Factory answered no retry.'
+  throw Error(answer?.status === 'uncertain' ? `Factory did not answer and may have run: ${words} Read the Run again before retrying.` : words)
 }
 
 /** Where the session's settings are written: the transport and register its owner is reached through, and the reading the
@@ -186,6 +227,8 @@ export interface TasksPorts {
   readonly selectTask: (n: number) => void
   /** Queue a new task the Agent's own way (its new-task row); rejects with the owner's refusal. */
   readonly queue: (text: string) => Promise<void>
+  /** Retry the session's bound task through Factory (retryTask: its units read, its unit retried). Absent: no carrier stands. */
+  readonly retry?: (sessionRef: string) => Promise<void>
 }
 
 export function tasksBinding(input: TasksInput, agent: Pick<DesignBinding, 'write'> | null, ports: TasksPorts): DesignBinding {
@@ -193,7 +236,7 @@ export function tasksBinding(input: TasksInput, agent: Pick<DesignBinding, 'writ
   return {
     id: TASKS_ID,
     values: tasksValues(input),
-    standing: {...disabled(TASKS_REFUSE), ...(settingsWhy ? Object.fromEntries(TASKS_DEVICE_SETTINGS.map(key => [key, {disabled: settingsWhy}])) : {})},
+    standing: {...disabled(ports.retry ? Object.fromEntries(Object.entries(TASKS_REFUSE).filter(([key]) => key !== 'retry')) : TASKS_REFUSE), ...(settingsWhy ? Object.fromEntries(TASKS_DEVICE_SETTINGS.map(key => [key, {disabled: settingsWhy}])) : {})},
     local: {task: value => { const n = typeof value === 'number' ? value : Number(value); if (Number.isSafeInteger(n) && n >= 1) ports.selectTask(n) }},
     writes: key => key === 'quantize' || key === 'newTask' || key in TASKS_REFUSE || isDeviceSetting(key),
     write: async (changes: readonly ValueChange[]) => {
@@ -217,6 +260,11 @@ export function tasksBinding(input: TasksInput, agent: Pick<DesignBinding, 'writ
           const made = tasksDeviceChange(key, value, context.settings)
           if ('refused' in made) throw Error(made.refused)
           await writeSessionSettings(context.transport, context.project, input.session.sessionRef, made.change)
+          continue
+        }
+        if (key === 'retry' && ports.retry) {
+          if (!input.session) throw Error('Retry: no session is selected, so no task is named to retry.')
+          await ports.retry(input.session.sessionRef)
           continue
         }
         throw Error(TASKS_REFUSE[key] ?? `${key} is a reading: its owner reports it; nothing here changes it.`)

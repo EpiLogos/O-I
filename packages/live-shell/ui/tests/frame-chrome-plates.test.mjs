@@ -150,9 +150,10 @@ test('the Studio stands only what no Expressions device carries; each carried co
   const relays = {lens: 'expressions', controls: ['rail/a:tool-interact', 'rail/a:tool-pin', 'rail/a:tool-formation', 'rail/a:tool-text', 'workspace/a:library',
     'workspace/a:modes', 'workspace/a:quick-guide', 'scene/a:previous', 'scene/a:timeline', 'scene/a:next', 'scene/a:play-journey', 'scene/a:open-timeline', 'scene/l:Acts']
     .map(id => control(id, id.startsWith('scene') ? 'scene' : 'tools', id))}
-  // O-I #747 round three: the Stage's last frame relays take the homes the manual gives them; what has none stays, PROPOSEd.
-  assert.deepEqual(controlsAt(relays, ['tools', 'scene', 'side'], STUDIO_CARRIED).map(item => item.id), ['workspace/a:quick-guide', 'scene/l:Acts'],
-    'only the Guide and Acts, which the manual gives no home, stand on the Stage')
+  // O-I #747 round three: the Stage's last frame relays take the homes the manual gives them. DLW build ruling 2026-11-05: the last two
+  // have them now (§20.1 Where everything is): the Guide is the Help menu's Expressions Guide, Acts the Acts device after the Studio.
+  assert.deepEqual(controlsAt(relays, ['tools', 'scene', 'side'], STUDIO_CARRIED).map(item => item.id), [],
+    'no relay of the frame stands on the Stage: each is at its home')
   const model = await source('../src/components/expressions/studio/studioModel.ts')
   for (const id of STUDIO_CARRIED) assert.ok(model.includes(id), `${id} is named with its carrier`)
   const studio2 = await source('../src/components/expressions/studio/ExpressionsStudio.tsx')
@@ -160,6 +161,34 @@ test('the Studio stands only what no Expressions device carries; each carried co
   // toolbelt's curation and + Parameter on its design (studioBinding.ts `controls`, `add`); the frame's Nara control is its `on:nara`.
   assert.match(studio2, /studioBinding\(\{reading, chains, nara\}/, 'the Studio\'s macros are your chosen controls')
   assert.match(studio2, /controlsAt\(frame\.reading, 'nara'\)/, 'the frame\'s own Nara control')
+})
+
+// DLW build ruling 2026-11-05 (O-I #747): "Read how the field is used — the Help menu's Expressions Guide"; "Give a scene's objects roles,
+// keep reusable material, and play acts — the Acts device, in Device view after the Studio" (manual §20.1, §20.15).
+test('the Guide is Help › Expressions Guide, the field\'s own Guide pressed; Acts is a device after the Studio, standing while a frame is hosted', async () => {
+  const {MENU_COMMANDS} = await import('../src/frame/menu/commandDoor.ts')
+  const {menuStageCommands} = await import('../src/components/expressions/studio/StudioStage.tsx')
+  const editors = await import('../src/components/devices/summonedEditors.tsx')
+  assert.equal(MENU_COMMANDS['help.expressions-guide'], 'Expressions Guide')
+  assert.deepEqual(menuStageCommands('help.expressions-guide', null), [{command: 'chrome', id: 'workspace/a:quick-guide'}], 'the field\'s own Guide, through its one runner')
+  const acts = editors.SUMMONED_EDITORS.find(editor => editor.id === 'expressions:acts')
+  assert.equal(acts.entry, 'scene/l:Acts', 'the Acts device opens the frame\'s own Acts')
+  assert.equal(editors.ACTS_EDITOR, acts)
+  assert.deepEqual(editors.SUMMONED_EDITORS.filter(editor => editor.stands).map(editor => editor.id), ['expressions:library', 'expressions:acts'],
+    'while a frame is hosted the Library and Acts stand on the door, open or not; Nara and Find while open')
+  const hook = await source('../src/components/devices/summonedEditors.tsx')
+  assert.match(hook, /for \(const editor of always\) publishDevice\(editor\.id, hosted \? \{device: editorDevice\(editor\)\} : null\)/)
+  assert.match(hook, /if \(!editor\.stands\) publishDevice\(editor\.id, null\)/, 'closing Acts gives the pool back and leaves the device standing')
+  const reading = {lens: 'expressions', controls: [control('scene/l:Acts', 'scene', 'Acts', {title: 'Roles, reusable material and act playback'}), control('acts/l:Roles', 'acts', 'Roles')]}
+  assert.deepEqual(editors.editorControls(acts, reading).map(item => item.id), ['scene/l:Acts', 'acts/l:Roles'], 'its own Open first, then the frame\'s Acts controls')
+  assert.deepEqual(editors.editorControls(acts, {lens: 'expressions', controls: [reading.controls[0]]}).map(item => item.id), ['scene/l:Acts'], 'closed, its Open alone')
+  const studio = await source('../src/components/expressions/studio/ExpressionsStudio.tsx')
+  const head = studio.indexOf('data-device={STUDIO_DEVICE_ID}'), after = studio.indexOf('data-device={ACTS_EDITOR.id}')
+  assert.ok(head > 0 && after > head, 'the Acts device stands in Device view after the Studio')
+  assert.match(studio, /<DeviceView device=\{editorDevice\(ACTS_EDITOR\)\} size="compact"/)
+  const model = await source('../src/components/expressions/studio/studioModel.ts')
+  assert.match(model, /workspace\/a:quick-guide — Help › Expressions Guide/)
+  assert.match(model, /scene\/l:Acts — the Acts device/)
 })
 
 // REPLACED (UI/UX lane phase 3, owner 20 Oct; manual §20.1): the frame's own controls no longer return in a pane at full size — that UI

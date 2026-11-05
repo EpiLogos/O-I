@@ -689,7 +689,7 @@
     {
       "id": null,
       "label": "Solo",
-      "function": "Only soloed sessions may run.",
+      "function": "You attend to the soloed sessions alone: the views, the tiles and the instruments show only them. The others keep running.",
       "hook": "data-i"
     },
     {

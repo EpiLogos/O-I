@@ -9,10 +9,10 @@ import {editEffectChain,editEffects,initialEffects,type EffectValue,type Effects
 import {PresentationEffects} from './presentationEffects';
 import {voiceModeRef} from './torusPlay.mjs';
 import {conditionReadingOf} from '../instrumentCondition';
-import {TorusObject,type TorusView} from '../../../src/engine/torusObject';
+import {TorusObject,sceneShapesOf,type TorusView} from '../../../src/engine/torusObject';
 import {formBodyRequest,FORM_SAMPLES_CONTRACT,type SamplePreparation} from '../../../src/engine/psg-form-sampler';
 import {isStageSampleCursor,stageJournalLanding,STAGE_JOURNAL_ACTS_MAX,STAGE_JOURNAL_BYTES_MAX,STAGE_EDIT_AHEAD_SECONDS,STAGE_RENDER_FRAMES_MAX,STAGE_RENDER_ACTS_MAX,
- readStageTorusCheckpoint,readStageTorusSound,readStageSoundMoves,readStageTorusEngine,isStageSoundName,STAGE_TORUS_SOUND_NAME_MAX,type StageTorusEngine,type StageAudioClock,type StagePerformanceJournal,type StageKey,
+ readStageTorusCheckpoint,readStageTorusSound,readStageTorusTake,isStageCheckpointName,type StageTorusTake,readStageSoundMoves,readStageTorusEngine,isStageSoundName,STAGE_TORUS_SOUND_NAME_MAX,type StageTorusEngine,type StageAudioClock,type StagePerformanceJournal,type StageKey,
  type StageTakeAct,type StageTakeRender,type StageTorusCheckpoint,type StageTorusSound,type StageSoundMove,type StageFormBody} from '../stageCommands';
 import type {FieldScoreBasis,FieldScoreReply} from '../tarotScoreClient';
 export interface NativeRenderer {
@@ -21,6 +21,9 @@ export interface NativeRenderer {
  onRetainedRecoveryRequired(listener:(state:'lost'|'restored')=>void):()=>void;
  checkpointRetainedField(binding:any):any;restoreRetainedField(binding:any,checkpoint:any):void;
  setNativeDomain(active:boolean):void;
+ /** The engine's own telemetry (production.ts telemetry: its composition's sequences and the config it draws). Under Shape Sequence the
+  * torus reads the scene's own shapes from it (DLW §21.2; torusObject.ts sceneShapesOf). */
+ telemetry?():unknown;
 }
 export interface NativePlaybackPolicy {blockFrames:number;leadSeconds:number;lookaheadSeconds:number;}
 export const EMBEDDED_NATIVE_PLAYBACK:Readonly<NativePlaybackPolicy>=Object.freeze({blockFrames:8192,leadSeconds:.5,lookaheadSeconds:.5});
@@ -137,7 +140,7 @@ export class NativeFieldController {
  private relayed:{sha256:string;at:unknown}|null=null;private named=new WeakMap<object,string>();
  /** The Torus as an object of the scene (src/engine/torusObject.ts; DLW §21.2 "The Torus in the pane", O-I 851): it presents each
   * admitted frame on the shape the owner's figure law names, and offers the voices that sound as force points. One per lifetime. */
- private torusObject=new TorusObject();
+ private torusObject=new TorusObject(()=>this.sceneShapes());
  /** The View you keep (DLW §21.2, as the pane draws it): yours, so each Torus object this field makes draws it (setView). */
  private view:TorusView='surface';
  /** While the plate studies the modes under Manual, Focus or Automation the pulse is tuned to the drive (§20.14); the torus's own
@@ -338,7 +341,7 @@ export class NativeFieldController {
    if(opened.schema!=='oi.native-expression-open/v1'||opened.receipt?.field?.sample_rate!==sampleRate)throw new Error('native open receipt/sample rate mismatch');
    const stage=this.renderer.retainedTargetPort();
    this.projection=new NativeProjection(stage,opened.receipt.field,opened.presentation);
-   this.torusObject=new TorusObject();this.torusObject.setView(this.view);this.torusObject.setSampleRate(sampleRate);this.projection.setPresenter(this.torusObject);
+   this.torusObject=new TorusObject(()=>this.sceneShapes());this.torusObject.setView(this.view);this.torusObject.setSampleRate(sampleRate);this.projection.setPresenter(this.torusObject);
    this.renderer.setNativeDomain(true);
    this.session=new InstrumentSession({...this.playback,context:this.stage(context),owner:this.renderer,initialReceipt:opened.receipt,
     transport:{request:async(request:any)=>{
@@ -882,6 +885,20 @@ export class NativeFieldController {
   if(!sound)throw new Error('The kernel answered the sound with no oi.torus-sound/v1 the stage can carry');
   return sound;
  }
+ /** The name the kernel relayed a checkpoint this controller kept under (its `value_sha256`; O-I #855), or null for one it did not keep or the
+  * kernel relayed unnamed. A take is sealed by the name of the checkpoint it began at. */
+ checkpointName(checkpoint:unknown):string|null{return checkpoint&&typeof checkpoint==='object'?this.named.get(checkpoint)??null:null;}
+ /** A take sealed to lie under a scene (O-I #855; kernel native-expression `torus_take`, native_expression.rs TorusTake): the kernel seals what
+  * this owner was sent from the checkpoint the take BEGAN at, named `checkpoint_sha256` as the kernel relayed it, under this lease. No fresh
+  * checkpoint is taken: a take is sealed from where it began, not from where the Torus stands now. Resolves with the sealed `oi.torus-take/v1`. */
+ async torusTake(checkpoint_sha256:string):Promise<StageTorusTake>{
+  if(!isStageCheckpointName(checkpoint_sha256))throw new Error('A take is sealed by the name the kernel relayed the checkpoint it began at under: this names the checkpoint by nothing the kernel relayed');
+  const lease=this.opened?.lease;
+  if(typeof lease!=='string')throw new Error('Open the live instrument first: a take is sealed under the lease it was played in');
+  const take=readStageTorusTake(await this.port.request({operation:'torus_take',lease,checkpoint_sha256}));
+  if(!take)throw new Error('The kernel answered the seal with no oi.torus-take/v1 the stage can carry');
+  return take;
+ }
  /** A kept sound opened (kernel `torus_sound_open`, `oi.torus-sound-opening/v1`): against a fresh checkpoint of the Torus as it stands now,
   * the kernel answers the owner's restore, which is the sound as saved, and what has moved since; the owner restores it as torusRestore
   * does. Resolves with the sample it rings again from and what has moved. */
@@ -993,6 +1010,9 @@ export class NativeFieldController {
  setView(view:TorusView){this.view=view;if(this.torusObject.setView(view)){this.projection?.refresh();this.changed();}}
  /** The torus's voices that sound now, as the engine's force points (presentation units). */
  torusVoicePoints(){return this.projection?this.torusObject.voicePoints(this.projection.scale):[];}
+ /** The scene's own shapes for the torus now (O-I 851; DLW §21.2 "Sequence follows the shapes you set in the scene"): read from the
+  * engine that draws the scene, only while Shape is Sequence. */
+ private sceneShapes(){return sceneShapesOf(this.renderer.telemetry?.()??null);}
  /** The facts the Tarot score stands on, read from this scene: the field's
   * own subject and event, the M3 clock position of the last complete source
   * read, and the admitted `ql.sky-snapshot/v1` the event carries (null when it
@@ -1339,7 +1359,7 @@ export class NativeFieldController {
   // The engine keeps sounding what was handed over; this owner hands nothing over again, and a new one sounds here until asked.
   this.gate=null;this.engine={on:false,stale:false,handed:null,refusal:null,again:false};
   this.stageReading=null;this.stageStale=false;this.stageLast=null;
-  this.torus=null;this.torusAt=0;this.torusRefused=null;this.torusObject=new TorusObject();this.torusObject.setView(this.view);this.pulseTuning=null;
+  this.torus=null;this.torusAt=0;this.torusRefused=null;this.torusObject=new TorusObject(()=>this.sceneShapes());this.torusObject.setView(this.view);this.pulseTuning=null;
   // A new owner hears in the world's context until it is asked; Receiver itself is the person's and stays (O-I 856).
   this.wantedAt=null;this.heardAt=null;this.heardShared=null;this.heardReply=null;this.receiverRefusal=null;this.hearing=null;
   this.admitting=null;this.suspension=null;this.restoring=null;

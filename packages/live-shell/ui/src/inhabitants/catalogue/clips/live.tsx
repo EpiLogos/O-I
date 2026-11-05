@@ -5,12 +5,13 @@
 // Scale tints it (cap 10–12). Pressure from the surface records into the MPE tab (cap 19, 20).
 //
 // The owner's material, all on value keys: `notes` (JSON rows {id, p, at, len, vel, chance?}; p is the MIDI pitch, at and len in
-// beats), `mpe` (JSON {<note id>: {pressure: [[t, 0–127]…], slide: [[t, 0–127]…], bend: [[t, semitones]…]}}), and each
-// envelope's breakpoints on `env.<device>.<control>` (JSON [[beat, value]…]).
+// beats), `mpe` (JSON {<note id>: {pressure: [[t, 0–127]…], slide: [[t, 0–127]…], bend: [[t, −1–1]…]}}; a bend is the hand's force along
+// the key, never a pitch), and each envelope's breakpoints on `env.<device>.<control>` (JSON [[beat, value]…]).
 import {Chooser, Dial, Radio, Toggle, ValueBox, type Option} from '../../sdk/panel'
 import {has, numOf, strOf} from '../panels/design'
 import {Caption, EnvelopeEditor, Fields, LaneGrid, GrooveOf, GrooveReading, GrooveSwap, MadeOf, grooved, Pair, PlaceField, Press, Row, Rows, Rule, Said, StemLane, Wide, choice, flag, place, read, span, write, type Block, type Lane, type Point} from './clipKit'
 import type {ClipProps, DesignedClip} from './design'
+import {LIVE_MPE_BEND_FORCE, LIVE_MPE_NO_SLIDE} from '../../../live/liveWrites'
 
 // ---------------------------------------------------------------- the clip's mode
 
@@ -98,31 +99,55 @@ function Notes({p, mpe}: {p: ClipProps; mpe?: boolean}) {
     underH={mpe ? mpeH : 40 + 20} />
 }
 
-/** The MPE tab's lanes (cap 19, 20): slide and pressure for each note, as the surface recorded them. */
+type MpeLane = 'slide' | 'pressure' | 'bend'
+/** The MPE tab's lanes, top to bottom, with what each draws. */
+const MPE_LANES: readonly {readonly id: MpeLane; readonly label: string; readonly does: string}[] = [
+  {id: 'slide', label: 'Slide', does: 'Each note\'s slide, the movement along the key.'},
+  {id: 'pressure', label: 'Pressure', does: 'Each note\'s pressure, from the playing surface while the key is held.'},
+  {id: 'bend', label: 'Bend', does: LIVE_MPE_BEND_FORCE},
+]
+
+/** The MPE tab's lanes (cap 19, 20): slide, pressure and bend for each note, as the surface recorded them. Pressure stands on 0–127. Bend
+ * is the hand's force along the key, −1 down to 1 up about a centre line, never a pitch (LIVE_MPE_BEND_FORCE). Slide, which the playing
+ * surface does not record, is drawn dim saying so while no note carries one (LIVE_MPE_NO_SLIDE). */
 function Expression({p, notes, from, to, h}: {p: ClipProps; notes: readonly Note[]; from: number; to: number; h: number}) {
-  const per = read<Record<string, {pressure?: Point[]; slide?: Point[]}>>(p.v, 'mpe', {})
-  const lanes = (['slide', 'pressure'] as const).filter(which => (which === 'slide' ? p.v['mpe.slide'] : p.v['mpe.pressure']) !== false)
+  const per = read<Record<string, Partial<Record<MpeLane, Point[]>>>>(p.v, 'mpe', {})
+  const lanes = MPE_LANES.filter(lane => p.v[`mpe.${lane.id}`] !== false)
   const laneH = Math.max(24, Math.floor((h - 20) / Math.max(1, lanes.length)))
   const keyW = 56, inner = p.room.w - keyW, x = (t: number) => keyW + (t - from) / (to - from) * inner
+  const top = 5, bottom = laneH - 3, mid = (top + bottom) / 2
+  const y = (which: MpeLane, val: number) => which === 'bend' ? mid - Math.max(-1, Math.min(1, val)) * (bottom - top) / 2 : bottom - val / 127 * (bottom - top)
+  const carried = (which: MpeLane) => notes.some(note => (per[note.id]?.[which] ?? []).length > 0)
   return <>
-    {lanes.map(which => <svg key={which} width={p.room.w} height={laneH} viewBox={`0 0 ${p.room.w} ${laneH}`} className="clv-stems"
-      data-i={`${which === 'slide' ? 'Slide' : 'Pressure'}|${which === 'slide' ? 'Each note\'s slide, the movement along the key.' : 'Each note\'s pressure, from the playing surface while the key is held.'}`}>
-      <rect x={0} y={0} width={keyW} height={laneH} className="clv-key" data-key="gutter" />
-      <text x={4} y={11} className="clv-axis">{which === 'slide' ? 'Slide' : 'Pressure'}</text>
-      <text x={keyW - 4} y={22} className="clv-axis" textAnchor="end">127</text>
-      <text x={keyW - 4} y={laneH - 3} className="clv-axis" textAnchor="end">0</text>
-      <line x1={keyW} x2={p.room.w} y1={laneH - 0.5} y2={laneH - 0.5} className="clv-bar" />
-      {notes.map(note => {
-        const pts = per[note.id]?.[which] ?? []
-        if (!pts.length) return null
-        const d = pts.map(([t, val], i) => `${i ? 'L' : 'M'}${x(note.at + t).toFixed(1)} ${(laneH - 3 - val / 127 * (laneH - 8)).toFixed(1)}`).join(' ')
-        return <path key={note.id} d={d} className="clv-env-line" data-tone={note.id === strOf(p.v, 'note') ? 'rec' : 'value'} />
-      })}
-    </svg>)}
+    {lanes.map(({id: which, label, does}) => {
+      const dim = which === 'slide' && !carried('slide')
+      return <svg key={which} width={p.room.w} height={laneH} viewBox={`0 0 ${p.room.w} ${laneH}`} className="clv-stems" data-lane={which}
+        data-dim={dim ? 'true' : undefined} data-i={`${label}|${dim ? LIVE_MPE_NO_SLIDE : does}`}>
+        <rect x={0} y={0} width={keyW} height={laneH} className="clv-key" data-key="gutter" />
+        <text x={4} y={11} className="clv-axis">{label}</text>
+        {which === 'bend' ? <>
+          <text x={keyW - 4} y={top + 6} className="clv-axis" textAnchor="end">1</text>
+          <text x={keyW - 4} y={mid + 3} className="clv-axis" textAnchor="end">0</text>
+          <text x={keyW - 4} y={bottom} className="clv-axis" textAnchor="end">−1</text>
+          <line className="clv-mpe-centre" x1={keyW} x2={p.room.w} y1={y('bend', 0).toFixed(1)} y2={y('bend', 0).toFixed(1)} />
+        </> : <>
+          <text x={keyW - 4} y={22} className="clv-axis" textAnchor="end">127</text>
+          <text x={keyW - 4} y={laneH - 3} className="clv-axis" textAnchor="end">0</text>
+        </>}
+        <line x1={keyW} x2={p.room.w} y1={laneH - 0.5} y2={laneH - 0.5} className="clv-bar" />
+        {notes.map(note => {
+          const pts = per[note.id]?.[which] ?? []
+          if (!pts.length) return null
+          const d = pts.map(([t, val], i) => `${i ? 'L' : 'M'}${x(note.at + t).toFixed(1)} ${y(which, val).toFixed(1)}`).join(' ')
+          return <path key={note.id} d={d} className="clv-env-line" data-tone={note.id === strOf(p.v, 'note') ? 'rec' : 'value'} />
+        })}
+      </svg>
+    })}
     <div className="clv-foot">
       <Toggle label="Slide" does="Shows the slide lane." on={p.v['mpe.slide'] !== false} onChange={x => p.set('mpe.slide', x)} />
       <Toggle label="Pressure" does="Shows the pressure lane. Pressure from the playing surface records here." on={p.v['mpe.pressure'] !== false} onChange={x => p.set('mpe.pressure', x)} />
-      <Said>Pitch bend is drawn on each note in the roll.</Said>
+      <Toggle label="Bend" does="Shows the bend lane. Bend from the playing surface records here, as the hand's force along the key." on={p.v['mpe.bend'] !== false} onChange={x => p.set('mpe.bend', x)} />
+      <Said>Bend is the hand's force, −1 to 1, not a pitch.</Said>
     </div>
   </>
 }
@@ -361,9 +386,9 @@ const CHORDS = [
   {id: 'c7', p: 53, at: 4, len: 4, vel: 95}, {id: 'c8', p: 57, at: 4, len: 4, vel: 85}, {id: 'c9', p: 60, at: 4, len: 4, vel: 85}, {id: 'c10', p: 64, at: 4, len: 4, vel: 70},
 ]
 const MPE = {
-  c2: {pressure: [[0, 20], [0.4, 80], [1.2, 110], [2, 40]], slide: [[0, 64], [1, 70], [2, 90]]},
+  c2: {pressure: [[0, 20], [0.4, 80], [1.2, 110], [2, 40]], slide: [[0, 64], [1, 70], [2, 90]], bend: [[0, 0], [0.6, 0.35], [1.4, -0.2], [2, 0]]},
   c5: {pressure: [[0, 30], [1, 90], [2, 50]], slide: [[0, 64], [2, 64]]},
-  c8: {pressure: [[0, 10], [1, 60], [2.5, 120], [4, 30]], slide: [[0, 50], [2, 80], [4, 64]]},
+  c8: {pressure: [[0, 10], [1, 60], [2.5, 120], [4, 30]], slide: [[0, 50], [2, 80], [4, 64]], bend: [[0, 0], [2, -0.5], [4, 0.1]]},
 }
 
 export const clip: DesignedClip = {
@@ -403,7 +428,7 @@ export const clip: DesignedClip = {
   editor: [
     {id: 'notes', label: 'Notes', does: 'The piano roll: the notes on the playing surface\'s rows, and their velocity or chance.', draw: p => <Notes p={p} />, bar},
     {id: 'envelopes', label: 'Envelopes', does: 'Moves a parameter of the part\'s chain or its mixer over the clip\'s own time.', draw: Envelopes},
-    {id: 'mpe', label: 'MPE', does: 'Each note\'s own expression: its slide and its pressure.', draw: p => <Notes p={p} mpe />, bar},
+    {id: 'mpe', label: 'MPE', does: 'Each note\'s own expression: its slide, its pressure and its bend.', draw: p => <Notes p={p} mpe />, bar},
   ],
   corner,
 }

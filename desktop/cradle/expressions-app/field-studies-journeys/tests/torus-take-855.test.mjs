@@ -46,6 +46,11 @@ const checkpoint = (at = '48000', extra = {}) => ({schema: 'ql.torus-checkpoint/
   event: {m1: {lens12: 11}}, seeds: {tick12: 7}, shape_ref: 'shape:one', damping_per_second: 0.35, voices: ['scene:logic/0'],
   amplitudes: [[0.25, -0.5]], session: {steps: 12.5, notes: []}, law: 'kept', ...extra});
 const keys = [{row: 2, column: 3}];
+/** A take as the kernel seals one (kernel expression_performance/torus.rs TorusTake, `oi.torus-take/v1`): its digest, the checkpoint it began
+ * at by the name the kernel relayed it under, what was made and the kernel's seal. */
+const sealedTake = (extra = {}) => ({schema: 'oi.torus-take/v1', take_ref: 'sha256:take', lease: 'controlled:scene-lease', sample_rate: 48000,
+  from_samples: '48000', frames: '48000', checkpoint: checkpoint(), checkpoint_sha256: 'sha256:checkpoint/48000/0', acts: [], render: {}, readings: [],
+  law: 'kept', seal: 'hmac-sha256:seal', ...extra});
 /** A sound as the kernel seals one (kernel expression_performance/kept.rs TorusSound, `oi.torus-sound/v1`). */
 const sound = (extra = {}) => ({schema: 'oi.torus-sound/v1', sound_ref: 'sha256:sound', name: 'Low bell', sample_rate: 48000, checkpoint: checkpoint(),
   checkpoint_sha256: 'sha256:kept', body: {kind: 'torus'}, sources: [], law: 'kept', seal: 'hmac-sha256:seal', ...extra});
@@ -148,7 +153,7 @@ const openController = async ({prepare} = {}) => {
   const THREE = await import('three');
   const {NativeFieldController} = await controller();
   class TorusOwner extends ControlledSceneOwner {
-    renders = 0; renderCalls = []; torusCalls = []; waiting = []; soundCalls = []; moved = []; unlabelled = false; given = new Map();
+    renders = 0; renderCalls = []; torusCalls = []; waiting = []; soundCalls = []; moved = []; unlabelled = false; given = new Map(); takeCalls = []; takeAnswer = null;
     // What rings (O-I #852, QL scene_field.rs set_body): the torus until a form is chosen. The scene's M2 condition and M3 form as the
     // owner discloses them on inspect (current.m2.condition.source_path; current.m3.form.angles_deg10), and its session's Strike.
     body = null; condition = {tattva_coordinate: '#2-2-2-5-5', material_fibre: 'earth'}; angles = [0, 600, -300];
@@ -178,6 +183,14 @@ const openController = async ({prepare} = {}) => {
         const kept = this.given.get(request.checkpoint_sha256);
         if (!kept) throw new Error(`No Torus checkpoint ${request.checkpoint_sha256} was given under this lease`);
         return sound({name: request.name, checkpoint: kept, checkpoint_sha256: request.checkpoint_sha256});
+      }
+      // The kernel's seal of a take (O-I #855, native_expression.rs torus_take): what its owner was sent from the checkpoint it relayed under
+      // that name; no worker request, no fresh checkpoint.
+      if (request.operation === 'torus_take') {
+        this.takeCalls.push(structuredClone(request));
+        if (request.lease !== 'controlled:scene-lease') throw new Error('native-expression.foreign_lease');
+        if (!this.given.has(request.checkpoint_sha256)) throw new Error(`No Torus checkpoint ${request.checkpoint_sha256} was given under this lease`);
+        return this.takeAnswer ?? sealedTake({checkpoint: this.given.get(request.checkpoint_sha256), checkpoint_sha256: request.checkpoint_sha256});
       }
       const command = request.request?.command;
       // A Torus setting for a later sample waits for it and moves nothing (QL scene_field.rs torus_set_when); the block that reaches its
@@ -388,7 +401,8 @@ test('a determinant at a sample waits for the owner\'s sound to reach it; its an
 test('the frame keeps and sets the Torus, renders a take and makes an edit at its sample through its native field', async () => {
   const app = await readFile(join(journeys, 'src/app.ts'), 'utf8');
   const torus = app.slice(app.indexOf("case 'torus':"), app.indexOf("case 'render-take':"));
-  assert.match(torus, /if\(command\.action==='checkpoint'\)return \{ok:true,checkpoint:await nativeField\.controller\.torusCheckpoint\(\)\};/);
+  assert.match(torus, /if\(command\.action==='checkpoint'\)\{const checkpoint=await nativeField\.controller\.torusCheckpoint\(\),checkpoint_sha256=nativeField\.controller\.checkpointName\(checkpoint\);\s+return checkpoint_sha256\?\{ok:true,checkpoint,checkpoint_sha256\}:\{ok:true,checkpoint\};\}/,
+    'keeping is a read, answered with the name the kernel relayed the checkpoint under when it named it (O-I #855)');
   assert.match(torus, /await nativeField\.controller\.torusRestore\(command\.checkpoint\);announceHostState\(\);return \{ok:true,landed_at_samples_elapsed\}/);
   const render = app.slice(app.indexOf("case 'render-take':"), app.indexOf("case 'instrument':"));
   assert.match(render, /return \{ok:true,render:await nativeField\.controller\.renderTake\(command\.checkpoint,command\.acts,command\.frames\)\};/);
@@ -566,4 +580,58 @@ test('the frame chooses the body through its native field at the owner\'s cursor
   assert.ok(body.length > 0, 'the frame runs the body edit');
   assert.match(body, /if\(at!==undefined\)throw new Error\('A body is chosen at the owner\\'s cursor/);
   assert.match(body, /const landed=await controller\.torusBody\(edit\.body\);update\(\);return \{landed_at_samples_elapsed:landed\};/);
+});
+
+// ---------------------------------------------------------------------------------------------------- a take sealed to lie under a scene
+// O-I #855 (BB's steps, round 19): a Live take lies under an Expression's scene only as the kernel sealed it from what the Torus's owner was
+// sent (native_expression.rs `torus_take`), from the checkpoint the take BEGAN at, never a fresh one. The kernel names each checkpoint it
+// relays (`torus_checkpoint_sha256`) and the frame cannot reproduce that digest, so the checkpoint a take begins at answers with its name.
+test('a take is sealed by the name of the checkpoint it began at, and the kernel\'s seal answers across the channel (O-I #855)', async () => {
+  const {readStageRequest, readStageResult, stageReplyMessage, STAGE_COMMANDS} = await stage();
+  assert.ok(STAGE_COMMANDS.includes('torus-take'));
+  const named = 'sha256:checkpoint/48000/0';
+  assert.deepEqual(readStageRequest(request({command: 'torus-take', action: 'seal', checkpoint_sha256: named})).command, {command: 'torus-take', action: 'seal', checkpoint_sha256: named});
+  for (const bad of [undefined, '', 'checkpoint', 7, 'sha256:' + 'x'.repeat(600), 'sha256:a\nb'])
+    assert.equal(readStageRequest(request({command: 'torus-take', action: 'seal', checkpoint_sha256: bad})), null, String(bad).slice(0, 40));
+  assert.equal(readStageRequest(request({command: 'torus-take', action: 'seal', checkpoint_sha256: named, checkpoint: checkpoint()})), null, 'no other operand: the kernel seals what it relayed');
+  assert.equal(readStageRequest(request({command: 'torus-take', action: 'record', checkpoint_sha256: named})), null, 'sealing is its one act');
+  const take = sealedTake();
+  assert.deepEqual(readStageResult(stageReplyMessage(7, {ok: true, take}, {command: 'torus-take', action: 'seal', checkpoint_sha256: named})), {req: 7, ok: true, take});
+  const answer = {v: 1, kind: 'host-command-result', command: 'torus-take', req: 7, ok: true};
+  for (const [why, bad] of [['another schema', {...take, schema: 'oi.torus-sound/v1'}], ['no seal', {...take, seal: 3}], ['no rate', {...take, sample_rate: 'x'}]])
+    assert.equal(readStageResult({...answer, take: bad}), null, why);
+  const kept = checkpoint();
+  assert.deepEqual(readStageResult(stageReplyMessage(8, {ok: true, checkpoint: kept, checkpoint_sha256: named}, {command: 'torus', action: 'checkpoint'})),
+    {req: 8, ok: true, checkpoint: kept, checkpoint_sha256: named}, 'the checkpoint a take begins at answers with the name the kernel relayed it under');
+  assert.equal(readStageResult({...answer, command: 'torus', checkpoint: kept, checkpoint_sha256: 4}), null);
+});
+
+test('the controller seals a take through the kernel by the checkpoint it began at, under its lease, and names a checkpoint it kept (O-I #855)', async () => {
+  const {owner, c} = await openController();
+  try {
+    const kept = await c.torusCheckpoint();
+    const [named] = owner.given.keys();
+    assert.equal(c.checkpointName(kept), named, 'the name the kernel relayed the checkpoint under');
+    assert.equal(c.checkpointName(checkpoint()), null, 'a checkpoint it did not keep has no name');
+    const sealed = await c.torusTake(named);
+    assert.deepEqual(owner.takeCalls, [{operation: 'torus_take', lease: 'controlled:scene-lease', checkpoint_sha256: named}], 'the kernel seals the take that began there');
+    assert.equal(sent(owner, 'torus-checkpoint').length, 1, 'no fresh checkpoint is taken to seal it');
+    assert.equal(sealed.schema, 'oi.torus-take/v1');
+    assert.equal(sealed.checkpoint_sha256, named);
+    owner.takeAnswer = {schema: 'oi.torus-sound/v1'};
+    await assert.rejects(c.torusTake(named), /oi\.torus-take\/v1/);
+    await assert.rejects(c.torusTake(''), /names the checkpoint/);
+    assert.equal(owner.takeCalls.length, 2, 'refused before the kernel');
+  } finally { await c.dispose(); }
+});
+
+test('the frame seals a take through its native field, and the checkpoint a take begins at answers with its name (O-I #855)', async () => {
+  const app = await readFile(join(journeys, 'src/app.ts'), 'utf8');
+  assert.ok(app.includes("case 'torus-take':"), 'the frame runs the seal');
+  const take = app.slice(app.indexOf("case 'torus-take':"), app.indexOf("case 'torus-engine':"));
+  assert.match(take, /return \{ok:true,take:await nativeField\.controller\.torusTake\(command\.checkpoint_sha256\)\};/, 'sealing is a read');
+  const torus = app.slice(app.indexOf("case 'torus':"), app.indexOf("case 'torus-sound':"));
+  assert.match(torus, /checkpointName\(checkpoint\)/, 'the checkpoint a take begins at carries the name it was relayed under');
+  const host = await readFile(join(journeys, '../../../../packages/expressions-boundary/src/host.ts'), 'utf8');
+  assert.match(host, /CONCEALED_STAGE_COMMANDS[^\n]*'torus-take'/, 'concealed from the hosted page, as every Torus read is');
 });
