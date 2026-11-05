@@ -34,6 +34,8 @@ export interface ChoiceTarget {
   /** The owner's current option value, or null while the owner states none. */
   readonly current: string | null
   readonly apply: (value: string) => Promise<StageResult>
+  /** The same write sent by no hand, as a take's lane plays it again (an owner's parameter; a session's has none: no hand moves it). */
+  readonly play?: (value: string) => Promise<StageResult>
 }
 
 export interface ToggleTarget {
@@ -44,6 +46,7 @@ export interface ToggleTarget {
   readonly writer: MapWriter
   readonly current: boolean | null
   readonly apply: (value: boolean) => Promise<StageResult>
+  readonly play?: (value: boolean) => Promise<StageResult>
 }
 
 /** A range's span. Linear (the default) snaps to `step`; a log curve (min above zero) takes equal ratios for equal turns and keeps four
@@ -64,6 +67,7 @@ export interface RangeTarget {
   readonly range: MapRange
   readonly current: number | null
   readonly apply: (value: number) => Promise<StageResult>
+  readonly play?: (value: number) => Promise<StageResult>
 }
 
 /** Whose write a parameter's value goes to: the owner's (an instrument edit the owner accepts), or the session's own hold (a note device the

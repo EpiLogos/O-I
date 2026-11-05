@@ -327,7 +327,32 @@ export const VOICE_REACH_TUBES = 0.6;
 /** How far off the surface a voice stands, in tubes, so that it draws the surface out towards it. */
 export const VOICE_LIFT_TUBES = 0.25;
 
-export interface PresentState {morph: MorphState; angle: number}
+export interface PresentState {morph: MorphState; angle: number; view?: TorusView}
+
+// ---------------------------------------------------------------------------------------------------------------------- the View
+// DLW manual §21.2 View "Surface · Wire · Both … What the pane draws", drawn on the native stage as the pane draws it (DLW build ruling
+// 2026-11-05): the pane's Full draws the body's silhouette under Surface, the wire of its meridians and parallels under Wire, and the wire
+// over the body under Both (live-shell live/TorusOnChain.tsx TorusPicture; live/torusDevice.ts torusFigure). The stage draws with its
+// samples, so Surface keeps each on the body at its own angles; Wire carries each along the nearer of the two lines of the wire that cross
+// at it (its meridian or its parallel, by the arc to each on the body) onto that line; Both keeps every other sample on the body and draws
+// the rest on the wire. STAGE DECISION (the pane's lines are strokes, the stage's are samples): the wire is the pane's Full wire, its
+// meridians and parallels at live-shell torusDevice.ts TORUS_FIGURE_DETAIL.full; the ringing's displacement along the normal stays.
+
+export const TORUS_VIEWS = ['surface', 'wire', 'both'] as const;
+export type TorusView = (typeof TORUS_VIEWS)[number];
+export const isTorusView = (value: unknown): value is TorusView => typeof value === 'string' && (TORUS_VIEWS as readonly string[]).includes(value);
+/** The pane's Full wire (live-shell torusDevice.ts TORUS_FIGURE_DETAIL.full): its meridians (φ held) and its parallels (θ held). */
+export const WIRE_MERIDIANS = 28;
+export const WIRE_PARALLELS = 11;
+
+/** The angles sample `index` is drawn at under `view`: its own on the body, or on the nearer line of the wire through it. */
+export function viewAngles(view: TorusView, phi: number, theta: number, index: number): [number, number] {
+  if (view === 'surface' || (view === 'both' && index % 2 === 0)) return [phi, theta];
+  const meridians = TAU / WIRE_MERIDIANS, parallels = TAU / WIRE_PARALLELS;
+  const meridian = Math.round(phi / meridians) * meridians, parallel = Math.round(theta / parallels) * parallels;
+  const toMeridian = Math.abs(phi - meridian) * (TORUS_MAJOR + TORUS_MINOR * Math.cos(theta)), toParallel = Math.abs(theta - parallel) * TORUS_MINOR;
+  return toMeridian <= toParallel ? [meridian, theta] : [phi, parallel];
+}
 
 /** The native amplitudes ([re, im] metres) by mode ref, from a frame and the order of the owner's resident modes. */
 export function amplitudesOf(frame: any, modeRefs: readonly string[] | null): Map<string, [number, number]> | null {
@@ -356,7 +381,8 @@ function blendAt(state: PresentState, phi: number, theta: number, offset: number
 }
 
 /** Whether a state shows the native body exactly as it stands: the torus, no passage running, and no ringing to settle. */
-export const presentsAsIs = (state: PresentState, level: number) => state.morph.from === 'torus' && state.morph.to === 'torus' && level <= 0;
+export const presentsAsIs = (state: PresentState, level: number) =>
+  state.morph.from === 'torus' && state.morph.to === 'torus' && level <= 0 && (state.view ?? 'surface') === 'surface';
 
 /** The ringing level of the body: the root of its voices' summed squared amplitudes, over the strike, at most 1. */
 export function ringingLevel(body: TorusBody, amplitudes: ReadonlyMap<string, readonly [number, number]> | null): number {
@@ -399,6 +425,7 @@ export function presentSamples(positions: ArrayLike<number>, body: TorusBody, am
         phi -= gp * k; theta -= gt * k;
       }
     }
+    [phi, theta] = viewAngles(state.view ?? 'surface', phi, theta, i);
     blendAt(state, phi, theta, at.offset, mpu, result, i * 3);
   }
   return result;
@@ -504,6 +531,7 @@ export class TorusObject {
   private amplitudes: Map<string, [number, number]> | null = null;
   private steps: number | null = null;
   private figure: TorusFigure | null = null;
+  private view: TorusView = 'surface';
   private out: Float32Array | undefined;
 
   /** The body from the owner's influence reading, and the order of its resident modes (the sources' m2.resonator.modes). */
@@ -518,6 +546,8 @@ export class TorusObject {
   setSampleRate(rate: number) { if (rate > 0) this.sampleRate = rate; }
   /** The plate laid flat (§20.14: the same modes laid flat), while the scene's Resonance studies them. Says whether it changed. */
   layFlat(on: boolean): boolean { const changed = on !== this.flat; this.flat = on; return changed; }
+  /** The View you keep (DLW §21.2): how the stage draws the samples. Says whether it changed; a View the pane does not draw is none. */
+  setView(view: TorusView): boolean { if (!isTorusView(view) || view === this.view) return false; this.view = view; return true; }
 
   /** The frame as the object shows it (metres, three per sample, in the frame's order), or null when it is shown as the owner gives it:
    * the torus, no passage, a quiet body, or a frame that is not this scene's body. */
@@ -529,7 +559,7 @@ export class TorusObject {
     this.figure = figureAt(this.session, this.steps);
     const shape: TorusShape = this.flat ? 'plate' : this.figure ?? 'torus';
     const morph = this.steps === null ? this.morph.snap(shape) : this.morph.at(shape, this.steps);
-    const state: PresentState = {morph, angle: clockAngle(frame?.clock, body.attachment)};
+    const state: PresentState = {morph, angle: clockAngle(frame?.clock, body.attachment), view: this.view};
     this.shown = state;
     const targets = Array.isArray(frame?.targets) ? frame.targets : [];
     if (presentsAsIs(state, ringingLevel(body, this.amplitudes)) || body.samples === null || targets.length !== body.samples) return null;
@@ -548,8 +578,8 @@ export class TorusObject {
   /** What the object is now, for the frame's reading and the plate's roles. */
   reading() {
     const body = this.body, shown = this.shown;
-    if (!body) return {schema: 'oi.torus-object/v1', standing: 'unread' as const, reason: 'The owner states no voices and boundaries for the torus yet.', amplitudes: null};
-    return {schema: 'oi.torus-object/v1', standing: 'read' as const,
+    if (!body) return {schema: 'oi.torus-object/v1', standing: 'unread' as const, reason: 'The owner states no voices and boundaries for the torus yet.', amplitudes: null, view: this.view};
+    return {schema: 'oi.torus-object/v1', standing: 'read' as const, view: this.view,
       shape: {law: this.figure, shown: shown?.morph ?? null, steps: this.steps, flat: this.flat},
       layers: ['bimba', 'pratibimba'],
       voices: body.voices.map(v => { const a = this.amplitudes?.get(v.mode_ref); return {mode_ref: v.mode_ref, level: a ? Math.min(1, Math.hypot(a[0], a[1]) / body.strikeMetres) : 0, place: helixPlace(v.helix, v.longitude_radians)}; }),

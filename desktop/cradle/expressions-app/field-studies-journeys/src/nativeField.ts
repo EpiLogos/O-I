@@ -549,6 +549,11 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
    if('context' in edit){await controller.returnReceiver(edit.context);update();return {};}
    await controller.setReceiver(edit.on,heardPlace(),edit.shared);update();return {};
   }
+  if(edit.kind==='view'){
+   // How the stage draws the Torus (DLW §21.2 View, as the pane draws it): the frame's own drawing (controller.ts setView), at once.
+   if(at!==undefined)throw new Error('The View is how the stage draws the Torus, at once: it lands at no sample of the owner.');
+   controller.setView(edit.view);update();return {};
+  }
   if(edit.kind==='body'){
    // What rings (O-I #852, DLW §21.2 Body): the scene's own M3 form made a body, or the torus given back (controller.ts torusBody). The owner
    // prepares it, rings it from rest at its cursor and answers in its words; nothing is chosen ahead of the owner's sound.

@@ -36,6 +36,7 @@ export async function load(u, c, n) {
 
 const engine = await import('../src/live/liveEngine.ts')
 const writes = await import('../src/live/liveWrites.ts')
+const devices = await import('../src/panels/devices/api.ts')
 const hostSource = readFileSync(new URL('../../../../desktop/cradle/src-tauri/src/live_engine_host.rs', import.meta.url), 'utf8')
 
 // The set as its owner lists it: a MIDI part, a group, an audio part, a return, the Main track (live-set edit.rs tracks: Tracks in
@@ -115,6 +116,7 @@ const exportArgs = [], torusArgs = [], effectsArgs = [], sentEvents = []
 let refuseEffects = null
 /** What the host refuses a device made again in, when it does (set by a test; O-I #849 round 17). */
 let refuseDevice = null
+const deviceOps = []
 /** The Torus's effects as live_engine_host.rs torus_chain stands them: Reverb the engine's own at the frame's Decay, Auto Filter in words. */
 const hostEffects = (effects, track) => ({track, sounding_from_frame: 512, refusal: null, chain: effects.chain.map(effect => effect === 'reverb'
   ? {effect, device: 'Reverb', on: true, sounds: true, carried: {DecayTime: effects.reverb.decay * 1000}, words: null}
@@ -124,7 +126,7 @@ const hostListeners = new Map()
 const emitHost = (event, payload) => Promise.all([...hostListeners.values()].filter(l => l.event === event).map(l => l.handler({event, id: 0, payload})))
 const listening = event => [...hostListeners.values()].filter(l => l.event === event).length
 
-function nativeHost({refuseOpen = null, refuseTorus = null} = {}) {
+function nativeHost({refuseOpen = null, refuseTorus = null, latency = null} = {}) {
   const calls = []
   const part = name => ({name, gain: 1, pan: 0, active: true, solo: false, sends: [0], midi: name === 'P0'})
   let applied = null, queued = []
@@ -145,7 +147,7 @@ function nativeHost({refuseOpen = null, refuseTorus = null} = {}) {
   }
   const engineOp = {
     live_engine_open: ({path}) => { if (refuseOpen?.(path)) throw refuseOpen(path); applied = {path, sample_rate: 48000, position: 0, playing: false, warnings: ['P1: a group is not hosted'],
-      mixer: {tracks: [part('P0'), part('P2')], returns: [part('P3')], main: part('Main')}}; return reading() },
+      mixer: {tracks: [part('P0'), part('P2')], returns: [part('P3')], main: part('Main')}, ...(latency ? {latency} : {})}; return reading() },
     live_engine_play: () => { applied.playing = true; return reading() },
     live_engine_stop: () => { applied.playing = false; return reading() },
     live_engine_send: ({event}) => { sentEvents.push(structuredClone(event)); if (event.kind === 'send' && event.send > 0) throw `track ${event.track} has no send ${event.send}`
@@ -170,6 +172,9 @@ function nativeHost({refuseOpen = null, refuseTorus = null} = {}) {
     if (op.op === 'live_set_read' && op.path === '/sets/unreadable.als') throw 'The set owner cannot read /sets/unreadable.als: no such file.'
     if (op.op === 'live_set_read') return {result: 'live_set_reading', reading: {summary: {...summary, path: op.path}, document: {path: op.path, tracks: []}, revision: `sha256:${'0'.repeat(64)}`}}
     if (op.op === 'live_track_mixer_write') return {result: 'live_track_mixer_reading', reading: {mixer: {activator: op.control === 'activator' ? op.value : true}}}
+    // a device's stored setting, read and written by the set's owner at its place on the chain (live_set_owner.rs)
+    if (op.op === 'live_device_param_write') { deviceOps.push(structuredClone(op)); return {result: 'live_device_param_written', reading: {param: {id: op.param_id, value: String(op.value)}}} }
+    if (op.op === 'live_device_params_read') { deviceOps.push(structuredClone(op)); return {result: 'live_device_params_reading', reading: {params: [{id: 'Threshold', value: '-40'}]}} }
     throw new Error(`unexpected kernel op ${op.op}`)
   }
   // the host's events, as Tauri's event plugin carries them (@tauri-apps/api/event listen / unlisten)
@@ -256,10 +261,21 @@ test('a set device\'s setting written while the engine plays the set makes the d
     refuseDevice = 'the Operator on \'P0\' is its instrument, which the engine makes when the set is played: the edit is heard from the next Play'
     await assert.rejects(engine.followDeviceInEngine(PATH, 'P0', 'Operator'),
       /^Error: The set keeps it; the engine refused it: the Operator on 'P0' is its instrument, which the engine makes when the set is played: the edit is heard from the next Play$/)
+    // DLW build ruling 2026-11-05: the device's place on its chain goes with it, so the second of two Glues is made again itself
+    refuseDevice = null
+    await engine.followDeviceInEngine(PATH, 'P2', 'GlueCompressor', 2)
+    assert.deepEqual(sentEvents.at(-1), {kind: 'device', track_name: 'P2', device: 'GlueCompressor', at: 2})
+    assert.deepEqual(engine.engineEventOfDeviceWrite('P2', 'GlueCompressor', 0), {kind: 'device', track_name: 'P2', device: 'GlueCompressor', at: 0})
     await engine.liveEngine.stop()
     calls.length = 0
     await engine.followDeviceInEngine(PATH, 'P2', 'GlueCompressor')
     assert.ok(!calls.includes('live_engine_send'), 'stopped: the write is the set\'s alone')
+    // and the set's owner reads and writes it there
+    deviceOps.length = 0
+    await devices.postDeviceParam(PATH, 'P2', 'GlueCompressor', 'Threshold', -12, 2)
+    await devices.fetchDeviceParams(PATH, 'P2', 'GlueCompressor', 2)
+    await devices.postDeviceParam(PATH, 'P2', 'GlueCompressor', 'Threshold', -12)
+    assert.deepEqual(deviceOps.map(op => [op.op, op.at]), [['live_device_param_write', 2], ['live_device_params_read', 2], ['live_device_param_write', undefined]])
   } finally {
     refuseDevice = null
     await engine.liveEngine.stop().catch(() => {})
@@ -267,7 +283,9 @@ test('a set device\'s setting written while the engine plays the set makes the d
   }
   // the device face follows the owner's write: the persisted value shown first, then the engine moved
   const face = readFileSync(new URL('../src/live/SetDeviceOnChain.tsx', import.meta.url), 'utf8')
-  assert.match(face, /const persisted = await postDeviceParam\(set\.path, track, elementName, paramId, value\)\n\s*setStored\([^\n]*\n[^\n]*\n\s*await followDeviceInEngine\(set\.path, track, elementName\)/)
+  assert.match(face, /const persisted = await postDeviceParam\(set\.path, track, elementName, paramId, value, index\)\n\s*setStored\([^\n]*\n[^\n]*\n\s*await followDeviceInEngine\(set\.path, track, elementName, index\)/)
+  assert.match(face, /fetchDeviceParams\(set\.path, track, elementName, index\)/, 'the face reads the stored values of the device at its own place')
+  assert.match(face, /useFacedDevice\(set, track, elementName, index, /, 'the chain face is the device at its place on the chain')
   // and so do the panel faces that write the same stored values: once the owner persisted it, the engine's refusal on the control
   for (const file of ['panels/devices/DevicePanel.tsx', 'panels/devices-pro/kit.tsx']) {
     const source = readFileSync(new URL(`../src/${file}`, import.meta.url), 'utf8')
@@ -574,6 +592,36 @@ test('the Live mode\'s tracks read the engine as it stands, and the pane draws a
     await engine.liveEngine.stop().catch(() => {})
     delete globalThis.window
   }
+})
+
+// Key-to-sound (O-I 853, round 18): while the engine plays, a key's sound is the engine's, and its legs (its block and the device's
+// output, as the host reads them: live_engine_host.rs latency_reading) join each strike's timing (keyboardLayout.ts engineLatency).
+test('the engine\'s legs of key-to-sound are its reading\'s while it plays, and none while it stands or names none', async () => {
+  const legs = {block_frames: 480, block_ms: 10, longest_wait_ms: 2.5, output_latency_ms: 25}
+  nativeHost({latency: legs})
+  try {
+    assert.equal(engine.liveEngineLatency(), null, 'nothing open: no legs')
+    await engine.liveEngine.play(PATH)
+    assert.deepEqual(engine.liveEngineLatency(), legs, 'playing: the host\'s legs, as it read them')
+    await engine.liveEngine.stop()
+    assert.equal(engine.liveEngineLatency(), null, 'stopped: the owner sounds the Torus itself, and the engine\'s legs are not its')
+  } finally {
+    await engine.liveEngine.stop().catch(() => {})
+    delete globalThis.window
+  }
+  nativeHost()
+  try {
+    await engine.liveEngine.play(PATH)
+    assert.equal(engine.liveEngineLatency(), null, 'a host that names no legs adds none')
+  } finally {
+    await engine.liveEngine.stop().catch(() => {})
+    delete globalThis.window
+  }
+  // The path reads them from the engine (it loads after the first frame; the engine does not import it, so the frame's first load does
+  // not carry the path: tests/first-load-budget.test.mjs).
+  const layout = readFileSync(new URL('../src/live/keyboardLayout.ts', import.meta.url), 'utf8')
+  assert.match(layout, /export const engineLatency = \(\): EngineLatency \| null => liveEngineLatency\(\)/)
+  assert.doesNotMatch(readFileSync(new URL('../src/live/liveEngine.ts', import.meta.url), 'utf8'), /from '\.\/keyboardLayout'/)
 })
 
 // Live's transport (shell/transports/useLiveTransport.tsx): with a clip selected, Play and Stop are the clip player's on the torus

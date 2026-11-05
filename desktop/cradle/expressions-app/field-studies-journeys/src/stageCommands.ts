@@ -269,6 +269,9 @@ export type InstrumentEdit =
   | {kind: 'receiver'; context: (typeof STAGE_RECEIVER_CONTEXTS)[number]}
   /** What rings (DLW manual §21.2 Body; QL-MEF `torus-body`, O-I #852): a form, or the torus (null). Chosen at the owner's cursor. */
   | {kind: 'body'; body: StageFormBody | null}
+  /** How the stage draws the Torus (DLW manual §21.2 View, DLW build ruling 2026-11-05): as the pane draws it, Surface, Wire or Both. The
+   * frame's own drawing, which no owner keeps: it lands at no sample. */
+  | {kind: 'view'; view: 'surface' | 'wire' | 'both'}
   | {kind: 'effect'; effect: PresentationEffect; key: string; value: EffectValue}
   | {kind: 'effect-chain'; chain: PresentationEffect[]};
 /** A closed, validated instrument edit, or null. Every operand is exact: a determinant outside the owner's range is refused here. */
@@ -301,6 +304,7 @@ export function readInstrumentEdit(raw: unknown): InstrumentEdit | null {
       if (!('shared' in raw)) return {kind: 'receiver', on: raw.on};
       return raw.on && typeof raw.shared === 'string' && raw.shared.length <= STAGE_RECEIVER_SHARED_MAX ? {kind: 'receiver', on: true, shared: raw.shared} : null;
     }
+    case 'view': return closed(raw, ['kind', 'view']) && (raw.view === 'surface' || raw.view === 'wire' || raw.view === 'both') ? {kind: 'view', view: raw.view} : null;
     case 'body': {
       if (!closed(raw, ['kind', 'body'])) return null;
       if (raw.body === null) return {kind: 'body', body: null};

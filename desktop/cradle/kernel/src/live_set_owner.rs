@@ -100,8 +100,9 @@ pub fn execute(op: &KernelOp) -> Option<Result<KernelOpResult, String>> {
             path,
             track,
             device,
+            at,
         } => native_document(path).and_then(|()| {
-            let reading = live_set::api::device_params_json(path, track, device)?;
+            let reading = live_set::api::device_params_json(path, track, device, *at)?;
             remember_read(path);
             Ok(KernelOpResult::LiveDeviceParamsReading { reading })
         }),
@@ -109,6 +110,7 @@ pub fn execute(op: &KernelOp) -> Option<Result<KernelOpResult, String>> {
             path,
             track,
             device_name,
+            at,
             param_id,
             value,
         } => native_document(path)
@@ -117,7 +119,7 @@ pub fn execute(op: &KernelOp) -> Option<Result<KernelOpResult, String>> {
                 let _gate = WRITE_GATE
                     .lock()
                     .unwrap_or_else(|poisoned| poisoned.into_inner());
-                live_set::api::device_param_set(path, track, device_name, param_id, value)
+                live_set::api::device_param_set(path, track, device_name, *at, param_id, value)
                     .map(|reading| KernelOpResult::LiveDeviceParamWritten { reading })
             }),
         KernelOp::LiveClipRead { path, track, clip } => native_document(path).and_then(|()| {
@@ -731,6 +733,7 @@ mod tests {
             path: path.into(),
             track: "Master".into(),
             device: "Compressor2".into(),
+            at: None,
         };
         match execute(&op) {
             Some(Ok(KernelOpResult::LiveDeviceParamsReading { reading })) => reading,
@@ -747,6 +750,7 @@ mod tests {
             path: path.into(),
             track: "Master".into(),
             device_name: "Compressor2".into(),
+            at: None,
             param_id: param_id.into(),
             value,
         };
@@ -781,6 +785,61 @@ mod tests {
             descriptors.as_object().unwrap().len(),
             live_dynamics::params::table_keys().len()
         );
+    }
+
+    /// DLW build ruling 2026-11-05 (O-I #849): the second of two devices of one name is read and written at its own
+    /// place on the chain; the first keeps what it stored.
+    #[test]
+    fn the_second_of_two_devices_of_one_name_is_read_and_written_at_its_place() {
+        let path = std::env::temp_dir()
+            .join(format!(
+                "live-set-owner-{}-two-compressors.als",
+                std::process::id()
+            ))
+            .to_string_lossy()
+            .into_owned();
+        let two = FIXTURE.replace(
+            "</Compressor2></Devices>",
+            r#"</Compressor2><Compressor2 Id="91"><Threshold><Manual Value="0.5" /><MidiControllerRange><Min Value="0" /><Max Value="2" /></MidiControllerRange></Threshold></Compressor2></Devices>"#,
+        );
+        std::fs::write(
+            &path,
+            live_set::write_gz(&live_set::xml::parse(&two).unwrap()).unwrap(),
+        )
+        .unwrap();
+        let threshold = |at: usize| {
+            let op = KernelOp::LiveDeviceParamsRead {
+                path: path.clone(),
+                track: "Master".into(),
+                device: "Compressor2".into(),
+                at: Some(at),
+            };
+            let Some(Ok(KernelOpResult::LiveDeviceParamsReading { reading })) = execute(&op) else {
+                panic!("params reading expected");
+            };
+            reading["params"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|row| row["id"] == "Threshold")
+                .unwrap()["value"]
+                .clone()
+        };
+        assert_eq!(threshold(1), "0.5");
+        let op = KernelOp::LiveDeviceParamWrite {
+            path: path.clone(),
+            track: "Master".into(),
+            device_name: "Compressor2".into(),
+            at: Some(1),
+            param_id: "Threshold".into(),
+            value: json!(0.25),
+        };
+        assert!(matches!(
+            execute(&op),
+            Some(Ok(KernelOpResult::LiveDeviceParamWritten { .. }))
+        ));
+        assert_eq!((threshold(0), threshold(1)), (json!("0.5"), json!("0.25")));
+        std::fs::remove_file(path).unwrap();
     }
 
     #[test]
@@ -910,6 +969,24 @@ mod tests {
         }))
         .unwrap();
         assert!(matches!(read, KernelOp::LiveDeviceParamsRead { .. }));
+        // a device's place on its chain (DLW build ruling 2026-11-05)
+        let placed: KernelOp = serde_json::from_value(json!({
+            "op": "live_device_param_write", "path": "/a.als", "track": "Master",
+            "device_name": "Compressor2", "at": 1, "param_id": "Threshold", "value": 0.5
+        }))
+        .unwrap();
+        assert!(matches!(
+            placed,
+            KernelOp::LiveDeviceParamWrite { at: Some(1), .. }
+        ));
+        let placed: KernelOp = serde_json::from_value(json!({
+            "op": "live_device_params_read", "path": "/a.als", "track": "Master", "device": "Compressor2", "at": 1
+        }))
+        .unwrap();
+        assert!(matches!(
+            placed,
+            KernelOp::LiveDeviceParamsRead { at: Some(1), .. }
+        ));
         let set: KernelOp =
             serde_json::from_value(json!({"op": "live_set_read", "path": "/a.als"})).unwrap();
         assert!(matches!(set, KernelOp::LiveSetRead { .. }));
@@ -941,6 +1018,7 @@ mod tests {
             path: "/etc/hosts".into(),
             track: "Master".into(),
             device_name: "Compressor2".into(),
+            at: None,
             param_id: "Threshold".into(),
             value: json!(0.5),
         });

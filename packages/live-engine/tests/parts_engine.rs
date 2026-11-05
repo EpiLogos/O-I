@@ -1015,13 +1015,16 @@ fn a_chain_after_a_parts_instrument_sounds_keeps_its_unchanged_devices_and_expor
         played,
         "put there again unchanged, the echo rang on as if it had never been put again"
     );
-    assert_ne!(
+    // REPLACED (DLW build ruling 2026-11-05): round 16 asserted here that an echo made from something else starts with
+    // an empty line. An edited device now has one rule, on a rack's chain as on a set's (`Device::made_again_from`):
+    // the echo made from something else goes on from the line the last one held, so Export with it is what was played.
+    assert_eq!(
         export(vec![
             (256, 0, vec![echo("Echo")]),
             (768, 0, vec![echo("Echo, again")])
         ]),
         played,
-        "an echo made from something else starts with an empty line"
+        "an echo made from something else goes on from the line the last one held"
     );
     assert_ne!(
         build().render_performance(SR, &perf),

@@ -463,3 +463,67 @@ fn a_record_of_the_first_schema_keeps_its_clips_sources_and_is_written_as_the_se
         "a record of another schema is refused, never read as empty: {refused}"
     );
 }
+
+#[test]
+fn a_takes_notes_keep_their_mpe_beside_the_set_and_read_back_on_the_clips_notes() {
+    // O-I #853 (DLW §21.1 Clip view, the MPE tab: "Pressure from the playing surface records here"; §21.2 Rules: "A recorded
+    // performance keeps what it needs to be played on: the notes with their expression"). Live's own per-note event lists have
+    // no clean-room shape yet (session-model.md §7 attests only the empty `<PerNoteEventStore><EventLists /></PerNoteEventStore>`),
+    // so the set keeps each note's lanes in the DLW's record, by the note's own NoteId, and reads them back on that note.
+    let (_dir, path) = set_file();
+    let notes = json!([
+        {"p": 60, "at": 0, "len": 1, "vel": 100, "mpe": {"pressure": [[0, 0.2], [0.5, 0.7]], "bend": [[0.5, -0.25]]}},
+        {"p": 64, "at": 1.5, "len": 0.5, "vel": 64}
+    ]);
+    run(&path, take(notes, Some(keeps()))).unwrap();
+    let laid = clip_json(&path, 0, ClipAt::Arrangement(1)).unwrap();
+    let read = laid["clip"]["notes"].as_array().unwrap();
+    assert_eq!(
+        read[0]["mpe"],
+        json!({"pressure": [[0.0, 0.2], [0.5, 0.7]], "bend": [[0.5, -0.25]]}),
+        "the note reads back with its lanes"
+    );
+    assert!(read[1].get("mpe").is_none(), "an untouched note has none");
+    let kept = keeps_of(std::path::Path::new(&path), "12", 1)
+        .unwrap()
+        .unwrap();
+    assert_eq!(kept["schema"], "oi.live-take/v1", "the shell's keeps stand");
+    assert_eq!(
+        kept["mpe"],
+        json!([{"id": read[0]["id"], "p": 60, "pressure": [[0.0, 0.2], [0.5, 0.7]], "bend": [[0.5, -0.25]]}]),
+        "kept by the note's NoteId"
+    );
+    // A take with no keeps of the shell's still keeps its notes' MPE.
+    let again = run(
+        &path,
+        serde_json::from_value(
+            json!({"kind": "take_record", "track": 0, "start": 12, "length": 1, "name": "Take 2",
+            "notes": [{"p": 67, "at": 0, "len": 1, "mpe": {"pressure": [[0.25, 1]]}}]}),
+        )
+        .unwrap(),
+    )
+    .unwrap();
+    let j = again["at"]["arrangement"].as_u64().unwrap() as usize;
+    let laid = clip_json(&path, 0, ClipAt::Arrangement(j)).unwrap();
+    assert_eq!(
+        laid["clip"]["notes"][0]["mpe"],
+        json!({"pressure": [[0.25, 1.0]]})
+    );
+    // Lanes the note cannot hold are refused in words, and nothing is laid.
+    for (mpe, why) in [
+        (json!({"slide": [[0, 0.5]]}), "A note's MPE lanes are its pressure and its bend"),
+        (json!({"pressure": [[2, 0.5]]}), "Each point of a note's pressure lane is a beat within the note and an amount from 0 to 1"),
+        (json!({"pressure": [[0, 1.5]]}), "Each point of a note's pressure lane is a beat within the note and an amount from 0 to 1"),
+        (json!({"bend": [[0, -2]]}), "Each point of a note's bend lane is a beat within the note and an amount from -1 to 1"),
+        (json!({"bend": [[0.5, 0], [0.25, 0]]}), "A note's bend lane runs in time, at most 4096 points"),
+        (json!({"bend": "up"}), "A note's bend lane runs in time, at most 4096 points"),
+    ] {
+        let refused = run(
+            &path,
+            serde_json::from_value(json!({"kind": "take_record", "track": 0, "start": 16, "length": 1, "name": "Take 3",
+                "notes": [{"p": 60, "at": 0, "len": 1, "mpe": mpe}]}))
+            .unwrap(),
+        );
+        assert_eq!(refused, Err(why.to_string()), "{mpe}");
+    }
+}

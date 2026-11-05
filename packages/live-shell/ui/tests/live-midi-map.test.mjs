@@ -496,6 +496,51 @@ test('a mapped value that has not changed sends nothing: a knob that holds still
   assert.deepEqual(sent, [2, 4])
 })
 
+test('an accepted mapped write is told as a move of its parameter, with the value it stood at; a refused one is not (O-I 853)', async () => {
+  const frame = clock()
+  const moved = []
+  let refuse = false
+  const map = router.createMapRouter({
+    read: () => ({mode: 'off', bindings: [{target: 'level', source: CC_SOURCE(7)}]}),
+    targets: () => targets.mapTargets(okState(), []),
+    apply: async () => refuse ? {ok: false, error: 'The owner holds the level'} : {ok: true},
+    refusal: () => {},
+    moved: (target, value, before) => moved.push([target.id, target.writer, value, before]),
+    schedule: frame.schedule,
+  })
+  const before = targets.mapTargets(okState(), []).find(t => t.id === 'level').current
+  map.control([CC(7, 64)])
+  frame.frame()
+  await tick()
+  assert.deepEqual(moved, [['level', 'owner', 2, before]], 'the move, from where the owner read it as the write was sent')
+  refuse = true
+  map.control([CC(7, 127)])
+  frame.frame()
+  await tick()
+  assert.equal(moved.length, 1, 'a refused write moved nothing')
+})
+
+test('a lane\'s value goes through its parameter\'s own write, refused in words when it is not one of the parameter\'s values', async () => {
+  const sent = session()
+  const hows = []
+  const off = torus.subscribeAcceptedLiveWrites((_command, how) => hows.push(how.hand === true))
+  const list = targets.readMapTargets()
+  assert.deepEqual(await targets.writeMapTarget('level', 2, list), {ok: true})
+  assert.deepEqual(sent.at(-1), {command: 'instrument', edit: {kind: 'level', value: 2}}, 'the Level\'s own owner edit')
+  const lens = list.find(t => t.id === 'lens')
+  assert.deepEqual(await targets.writeMapTarget('lens', lens.options[0].value, list), {ok: true})
+  assert.deepEqual(await model.applyMapValue(list.find(t => t.id === 'level'), 3), {ok: true})
+  off()
+  assert.deepEqual(hows, [false, false, true], 'a lane played again is no hand\'s write (a Lens it moves leaves Follow on); a mapped control\'s is the hand\'s')
+  sent.splice(-2)
+  assert.deepEqual(await targets.writeMapTarget('level', 9, list), {ok: false, error: 'Level takes a value from 0 to 4.'})
+  assert.deepEqual(await targets.writeMapTarget('sound', 1, list), {ok: false, error: 'Sound is on or off.'})
+  assert.deepEqual(await targets.writeMapTarget('cadence', 'often', list), {ok: false, error: 'Tick cadence has no choice "often".'})
+  assert.deepEqual(await targets.writeMapTarget('gone', 1, list), {ok: false, error: 'gone is not on the surface now, so its lane moves nothing.'})
+  assert.equal(sent.length, 1, 'nothing refused reached the owner')
+  teardown()
+})
+
 test('in a map mode, control changes move nothing: the input arms and binds, and the value is left as it was', async () => {
   const sent = []
   const frame = clock()
@@ -598,7 +643,9 @@ test('the transport\'s Key and MIDI slots are real toggles with the grammar\'s m
   const on = renderToStaticMarkup(createElement(controls.MidiMapToggles))
   assert.match(on, /aria-label="MIDI mapping"[^>]*aria-pressed="true"/)
   assert.match(on, /Held for this session only: the set document has no owner write for mappings/)
-  assert.match(on, /automation owner/)
+  // REPLACED (DLW build ruling 2026-11-05, O-I 853 round 18): was /automation owner/, the line saying recording a mapping as automation
+  // waited on an owner. Under Arm a take now records a mapped move on its parameter's lane (live/liveTake.ts), and the line says how.
+  assert.match(on, /Arm, then Record: each move of a mapped control lies on its parameter(?:'|&#x27;)s lane in the take\./)
   teardown()
 })
 

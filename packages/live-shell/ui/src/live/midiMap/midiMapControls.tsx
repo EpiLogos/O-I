@@ -18,7 +18,15 @@ import {
   setMapNotice, setMapRefusal, useMidiMap,
 } from './midiMapHold'
 import {subscribeAcceptedLiveWrites, subscribeLiveTorus} from '../torusInstrument'
+import type {AutomatedMove} from '../liveTake'
 import './midiMap.css'
+
+/** Who hears an accepted mapped write as a move: Record's recorder (live/liveTake.ts, which loads with Live's transport and the playing
+ * path; this module loads with the first frame, so it does not import it). */
+let hearMove: ((move: AutomatedMove) => void) | null = null
+export function onMapMove(listener: ((move: AutomatedMove) => void) | null): void {
+  hearMove = listener
+}
 
 /** The one router of the session: control changes and keys, outside map mode, reach the parameters' writes through it. */
 export const liveMapRouter = createMapRouter({
@@ -29,6 +37,9 @@ export const liveMapRouter = createMapRouter({
   targets: readMapTargets,
   apply: applyMapValue,
   refusal: setMapRefusal,
+  // Under Arm, a take records the move as a point of its parameter's lane (live/liveTake.ts; DLW §21.2 Transport, "Arm | Records your
+  // parameter moves as automation lanes").
+  moved: (target, value, before) => hearMove?.({parameter: target.id, label: target.label, writer: target.writer, value, before, at: performance.now()}),
 })
 
 // A rebound or removed parameter starts afresh: its last value is not held against its next control.
@@ -51,7 +62,7 @@ export function liveSurfaceFocused(element: Element | null): boolean {
 }
 
 /** The line the map shows in map mode: the mode's instruction or the last act, then where the mappings live. */
-const PERSISTENCE = 'Held for this session only: the set document has no owner write for mappings, and recording them as automation waits on the arrangement\'s automation owner.'
+const PERSISTENCE = 'Held for this session only: the set document has no owner write for mappings. Arm, then Record: each move of a mapped control lies on its parameter\'s lane in the take.'
 
 function mapLine(notice: string | null, absent: boolean): string {
   const head = absent ? LIVE_MIDI_ABSENT : notice ?? ''

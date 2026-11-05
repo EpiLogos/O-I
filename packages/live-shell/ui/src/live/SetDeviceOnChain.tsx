@@ -25,9 +25,10 @@ interface FacedReading {
   write: (paramId: string, value: number | boolean) => Promise<void>
 }
 
-/** DevicePanel's reads and its write, for one device on one track (its `boundTrack`): nothing is read for a device the shell
- * has no table for. */
-function useFacedDevice(set: SetSummary, track: string, elementName: string, faced: boolean): FacedReading {
+/** DevicePanel's reads and its write, for one device on one track (its `boundTrack`) at its place `index` on that track's chain
+ * (DLW build ruling 2026-11-05: the second of two devices of one name reads and writes its own): nothing is read for a device the
+ * shell has no table for. */
+function useFacedDevice(set: SetSummary, track: string, elementName: string, index: number, faced: boolean): FacedReading {
   const [table, setTable] = useState<{rows: readonly ParamDescJson[] | null; fault: string | null} | null>(null)
   const [stored, setStored] = useState<{values: Record<string, string>; fault: string | null}>({values: {}, fault: null})
   const load = useRef(0)
@@ -43,17 +44,17 @@ function useFacedDevice(set: SetSummary, track: string, elementName: string, fac
   useEffect(() => {
     if (!table?.rows) { setStored({values: {}, fault: null}); return }
     const id = ++load.current
-    fetchDeviceParams(set.path, track, elementName).then(
+    fetchDeviceParams(set.path, track, elementName, index).then(
       map => { if (load.current === id) setStored({values: Object.fromEntries(Object.entries(map).map(([key, param]) => [key, param.value])), fault: null}) },
       (cause: unknown) => { if (load.current === id) setStored({values: {}, fault: `The stored values could not be read: ${cause instanceof Error ? cause.message : String(cause)}`}) },
     )
-  }, [table, set.path, track, elementName])
+  }, [table, set.path, track, elementName, index])
   const write = useCallback(async (paramId: string, value: number | boolean) => {
-    const persisted = await postDeviceParam(set.path, track, elementName, paramId, value)
+    const persisted = await postDeviceParam(set.path, track, elementName, paramId, value, index)
     setStored(previous => ({...previous, values: {...previous.values, [paramId]: persisted.value}}))
     // while the engine plays the set, the device is made again there from what the set now stores (O-I 849, round 17)
-    await followDeviceInEngine(set.path, track, elementName)
-  }, [set.path, track, elementName])
+    await followDeviceInEngine(set.path, track, elementName, index)
+  }, [set.path, track, elementName, index])
   return {descriptors: table?.rows ?? null, stored: stored.values, fault: table?.fault ?? stored.fault, write}
 }
 
@@ -62,7 +63,7 @@ export function SetDeviceOnChain({set, track, trackIndex, index, elementName, pa
 }) {
   const faceTitle = trackDeviceFaceTitle(elementName)
   const title = faceTitle ?? displayDeviceName(elementName)
-  const faced = useFacedDevice(set, track, elementName, faceTitle !== undefined)
+  const faced = useFacedDevice(set, track, elementName, index, faceTitle !== undefined)
   const id = setDeviceId(trackIndex, index)
   const device = useMemo(() => faced.descriptors
     ? setDeviceFaced({id, elementName, title, descriptors: faced.descriptors, stored: faced.stored, fault: faced.fault, write: faced.write})

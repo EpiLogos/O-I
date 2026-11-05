@@ -19,10 +19,23 @@
 //! at the frame the engine applies it. What QL says of the rest (its
 //! `release` and `silence` laws): a key's release moves no native state —
 //! the body rings on with its own damping, so `note_off` and `release_all`
-//! do nothing; Panic stills what was struck (`ql::ContinuousField::silence`,
+//! strike nothing (they only let the key go from the hand); Panic stills what was struck (`ql::ContinuousField::silence`,
 //! [`Instrument::panic`]). A MIDI note on the part strikes the act prepared
 //! for its key ([`K8Field::set_key`]); QL gives no law from a MIDI pitch to
 //! a Jankó key, so a part with none prepared strikes nothing for a note.
+//!
+//! The hand's touch on the keys it holds (O-I #853; DLW §21.2 The keyboard:
+//! "Velocity and pressure set how hard each point is struck"; §21.4 Rules:
+//! "Pressure or bend on a held note moves the sound. It does not change the
+//! tuning"): a channel pressure (0 to 1) or a pitch bend (its force either
+//! way from rest) is a force on the held points. A rise of it strikes each
+//! held key's own act again by the rise ([`K8Field::strike_key_by`]), a full
+//! push from rest as hard as its note struck; a fall lets go, and the body
+//! rings on. The modes keep their frequencies: nothing retunes. A Torus its
+//! owner handed over holds no note of its own, so a touch strikes nothing
+//! there: its owner strikes the rise on the keys its keyboard holds (the
+//! shell's playing path, `jankoInput.ts` touch), and that act lands as the
+//! owner's.
 //!
 //! Realtime: striking, silencing and `render_audio` run on the audio
 //! thread, the field's "one host-owned serial execution thread", and
@@ -327,6 +340,22 @@ pub const MAX_RENDER_FRAMES: usize = 8192;
 /// One K8 continuation, owned (dropping it frees the field).
 pub struct K8Field {
     ptr: NonNull<LeK8Field>,
+    /// Each key's prepared act as a touch strikes it again ([`K8Field::strike_key_by`]), kept here as it was prepared.
+    keys: Box<[KeyAct; 128]>,
+}
+
+/// A key's prepared act (O-I #853): its modes and their impulses (re, im), at most
+/// [`TORUS_STRIKE_MODES`]; none (`count` 0) for a key with no act, or one too wide for a touch.
+#[derive(Debug, Clone, Copy, Default)]
+struct KeyAct {
+    count: u8,
+    modes: [u16; TORUS_STRIKE_MODES],
+    re: [f64; TORUS_STRIKE_MODES],
+    im: [f64; TORUS_STRIKE_MODES],
+}
+
+fn no_keys() -> Box<[KeyAct; 128]> {
+    Box::new([KeyAct::default(); 128])
 }
 
 // SAFETY: the field has no thread affinity, only the rule that one thread
@@ -472,7 +501,10 @@ impl K8Field {
         // (NUL-terminated) into `err`.
         let ptr = unsafe { le_k8_field_new(&input.raw, err.as_mut_ptr().cast(), err.len()) };
         NonNull::new(ptr)
-            .map(|ptr| K8Field { ptr })
+            .map(|ptr| K8Field {
+                ptr,
+                keys: no_keys(),
+            })
             .ok_or_else(|| text(&err))
     }
 
@@ -530,7 +562,10 @@ impl K8Field {
         // writes at most `err.len()` bytes (NUL-terminated) into `err`.
         let ptr = unsafe { le_k8_field_continue(&raw, err.as_mut_ptr().cast(), err.len()) };
         NonNull::new(ptr)
-            .map(|ptr| K8Field { ptr })
+            .map(|ptr| K8Field {
+                ptr,
+                keys: no_keys(),
+            })
             .ok_or_else(|| text(&err))
     }
 
@@ -691,10 +726,55 @@ impl K8Field {
                 err.len(),
             )
         };
-        if ok == 1 {
-            Ok(())
-        } else {
-            Err(text(&err))
+        if ok != 1 {
+            return Err(text(&err));
+        }
+        let mut kept = KeyAct::default();
+        if act.len() <= TORUS_STRIKE_MODES {
+            for (i, (mode, (re, im))) in act.iter().enumerate() {
+                let Ok(mode) = u16::try_from(*mode) else {
+                    kept.count = 0;
+                    break;
+                };
+                (kept.modes[i], kept.re[i], kept.im[i]) = (mode, *re, *im);
+                kept.count += 1;
+            }
+        }
+        if let Some(slot) = self.keys.get_mut(usize::from(key)) {
+            *slot = kept;
+        }
+        Ok(())
+    }
+
+    /// Strike `key`'s prepared act again at `by` of its impulses (0 < `by` ≤ 1) at the cursor (O-I #853: a rise of
+    /// the hand's force on a held key; the audio thread: no allocation). False when the key has no act, its act
+    /// strikes more than [`TORUS_STRIKE_MODES`] modes, `by` is outside its range, or the field refused it: nothing
+    /// moved.
+    pub fn strike_key_by(&mut self, key: u8, by: f64) -> bool {
+        let Some(act) = self.keys.get(usize::from(key)) else {
+            return false;
+        };
+        let n = usize::from(act.count);
+        if n == 0 || !(by > 0.0 && by <= 1.0) {
+            return false;
+        }
+        let (mut re, mut im) = ([0f64; TORUS_STRIKE_MODES], [0f64; TORUS_STRIKE_MODES]);
+        for ((r, i), (are, aim)) in re
+            .iter_mut()
+            .zip(im.iter_mut())
+            .zip(act.re.iter().zip(&act.im))
+        {
+            (*r, *i) = (are * by, aim * by);
+        }
+        // SAFETY: a live owned field; the three arrays hold `n` ≤ 16 values each, read during the call only.
+        unsafe {
+            le_k8_strike_modes(
+                self.ptr.as_ptr(),
+                act.modes.as_ptr(),
+                re.as_ptr(),
+                im.as_ptr(),
+                n,
+            ) == 1
         }
     }
 
@@ -774,6 +854,10 @@ pub struct K8Instrument {
     hearing: Vec<TorusHear>,
     /// One gain per mode: where a move's parts are gathered as it is reached (made off the audio thread).
     gains: Vec<f64>,
+    /// The keys its notes hold (O-I #853): what a touch strikes again. A Torus handed over holds none.
+    held: [bool; 128],
+    /// The hand's force of each touch as it last stood (0: the bend's, either way; 1: the pressure's).
+    force: [f32; 2],
 }
 
 /// A Torus node's counts as its host reads them while it plays (O-I #849 round 13): the audio
@@ -806,6 +890,8 @@ impl K8Instrument {
             waiting: Vec::with_capacity(K8_WAITING),
             hearing: Vec::with_capacity(K8_WAITING),
             gains: vec![0.0; modes],
+            held: [false; 128],
+            force: [0.0; 2],
         }
     }
 
@@ -887,6 +973,23 @@ impl K8Instrument {
         }
     }
 
+    /// A touch of the hand (see the module doc): `which` force now stands at `force` (0 to 1); a rise strikes each key
+    /// its notes hold again by the rise, each that strikes nothing counted refused. Taken whatever it strikes.
+    fn touched(&mut self, which: usize, force: f32) -> bool {
+        let force = force.clamp(0.0, 1.0);
+        let rise = force - self.force[which];
+        self.force[which] = force;
+        if rise <= 0.0 || !self.rate_ok {
+            return true;
+        }
+        for key in 0..128u8 {
+            if self.held[usize::from(key)] && !self.field.strike_key_by(key, f64::from(rise)) {
+                K8Counts::add(&self.counts.refused);
+            }
+        }
+        true
+    }
+
     fn strike(&mut self, act: &TorusStrike) -> bool {
         let struck = self.field.strike_modes(act);
         if !struck {
@@ -916,12 +1019,37 @@ impl Instrument for K8Instrument {
         if !self.rate_ok || !self.field.strike_key(key) {
             K8Counts::add(&self.counts.refused);
         }
+        if let Some(held) = self.held.get_mut(usize::from(key)) {
+            *held = true;
+        }
     }
 
-    fn note_off(&mut self, _key: u8, _clock: &Clock) {}
+    // A released note of the struck body rings on with its own damping (QL's release law): it is only no longer held.
+    fn note_off(&mut self, key: u8, _clock: &Clock) {
+        if let Some(held) = self.held.get_mut(usize::from(key)) {
+            *held = false;
+        }
+    }
 
-    // A released note of the struck body rings on with its own damping (QL's release law).
-    fn release_all(&mut self, _clock: &Clock) {}
+    fn release_all(&mut self, _clock: &Clock) {
+        self.held = [false; 128];
+    }
+
+    fn touch(&self) -> crate::graph::Touch {
+        crate::graph::Touch {
+            bend: Ok(()),
+            pressure: Ok(()),
+        }
+    }
+
+    // A bend is a force along the held keys, either way from rest (see the module doc).
+    fn bend(&mut self, amount: f32, _clock: &Clock) -> bool {
+        self.touched(0, amount.abs())
+    }
+
+    fn pressure(&mut self, amount: f32, _clock: &Clock) -> bool {
+        self.touched(1, amount)
+    }
 
     fn torus_play(&mut self, act: &TorusAct, _clock: &Clock) -> bool {
         let struck = self.rate_ok && self.field.play_keys(act);
@@ -979,11 +1107,12 @@ impl Instrument for K8Instrument {
         true
     }
 
-    // Panic stills what was struck (QL's silence law) and drops the acts waiting for later samples;
+    // Panic stills what was struck (QL's silence law), lets every held key go and drops the acts waiting for later samples;
     // the body's drive and the gains it is heard by stand, and so do the moves its owner reached.
     fn panic(&mut self, _clock: &Clock) {
         self.field.silence();
         self.waiting.clear();
+        self.held = [false; 128];
     }
 
     fn process(&mut self, frame_io: &mut [f32], _clock: &Clock) {

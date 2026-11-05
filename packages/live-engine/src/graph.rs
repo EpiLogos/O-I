@@ -94,16 +94,17 @@ pub trait Device: std::fmt::Debug + Send + AsAny {
     /// allocation-free.
     fn set(&mut self, _at: usize, _value: f64) {}
     /// Stand in the place of `was`, the device of its kind this one replaces on a chain (O-I #849
-    /// round 16, [`Graph::rack`]): take what still sounds in it, so the sound goes on through the
+    /// round 16; [`Device::made_again_from`] by default): take what still sounds in it, so the sound goes on through the
     /// change (a room's tail rings out, a line's repeats go on). What this one gives up for it goes
     /// back in `was`, to be dropped off the audio thread. On the audio thread, so allocation-free.
     /// By default nothing is taken: a device with no state to carry starts afresh.
     fn follow(&mut self, _was: &mut dyn Device) {}
-    /// Stand in the place of `was`, the device of its kind this one replaces when a set's device is made again for an
-    /// edit (O-I #849 round 17, [`Graph::make_again`]): what still sounds in it sounds on, as [`Device::follow`] carries
+    /// Stand in the place of `was`, the device of its kind this one replaces when a device is made again for an edit
+    /// (O-I #849 round 17, [`Graph::make_again`], [`Graph::rack`]): what still sounds in it sounds on, as [`Device::follow`] carries
     /// it, and a device whose settings' state an edit changes carries more (a compressor's detector, a line's repeats).
-    /// A chain the engine puts again ([`Graph::rack`]) keeps [`Device::follow`]'s rule. On the audio thread, so
-    /// allocation-free. By default as [`Device::follow`].
+    /// A device on a chain the engine puts again ([`Graph::rack`]) is made again by the same rule (DLW build ruling
+    /// 2026-11-05: an edited device has one rule). On the audio thread, so allocation-free. By default as
+    /// [`Device::follow`].
     fn made_again_from(&mut self, was: &mut dyn Device) {
         self.follow(was)
     }
@@ -916,8 +917,9 @@ impl Graph {
 
     /// Put `chain` after the instrument of part `track` ([`RackDevice`]): a device made from what one
     /// standing there was made from takes that one's place, state and all; any other of a kind that
-    /// stands there follows the first of that kind not taken ([`Device::follow`], O-I #849 round 16:
-    /// a room made again rings the last one's tail out, a line made again keeps its repeats); and what
+    /// stands there is made again from the first of that kind not taken ([`Device::made_again_from`],
+    /// O-I #849 round 16, one rule with a set's device since DLW build ruling 2026-11-05: a room made
+    /// again rings the last one's tail out, a line made again keeps its repeats); and what
     /// stood there comes back in `chain`, to be dropped off the audio thread. Answers whether the part
     /// is there and plays notes (otherwise `chain` comes back as it was). Allocation-free; past the
     /// 64th device of a chain, a device starts afresh.
@@ -948,7 +950,7 @@ impl Graph {
             if let Some(o) = (0..standing)
                 .find(|&o| taken & 1 << o == 0 && t.rack[o].device.name() == new.device.name())
             {
-                new.device.follow(t.rack[o].device.as_mut());
+                new.device.made_again_from(t.rack[o].device.as_mut());
                 taken |= 1 << o;
             }
         }

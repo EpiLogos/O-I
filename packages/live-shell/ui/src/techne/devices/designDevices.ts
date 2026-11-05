@@ -79,6 +79,11 @@ export function useHolds(): Holds {
   return useSyncExternalStore(subscribe, () => holds, () => holds)
 }
 
+/** Re-render only when one of a device's holds changes (a surface that follows one key, not every device's). */
+export function useHeld(id: string, key: string): Value | undefined {
+  return useSyncExternalStore(subscribe, () => holds[id]?.[key], () => holds[id]?.[key])
+}
+
 /** For the tests: forget every hold. */
 export function resetHolds(): void {
   holds = {}

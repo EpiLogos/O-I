@@ -62,6 +62,8 @@ import {livePlayingPath} from './keyboardLayout'
 import {clipAtOf} from './liveWrites'
 import {prepareTake} from './liveTake'
 import {commitLiveInstrumentEdit, commitLiveStage, liveTorusState, useLiveTorusReading, type LiveTorusState} from './torusInstrument'
+import type {MapValue} from './midiMap/midiMapModel'
+import {writeMapTarget} from './midiMap/midiMapTargets'
 
 /** A timer may wake a hair before its moment; a strike due within this many seconds is sent at that wake. */
 const DUE_EARLY_SECONDS = 0.002
@@ -149,6 +151,9 @@ export interface ClipPlayerOwners {
   /** One instrument edit of a take's move, at the owner's sample `at` where a take's course names one (the `instrument` stage command),
    * settling with the owner's answer. Absent, no move is made. */
   readonly edit?: (edit: InstrumentEdit, at?: string) => Promise<StageResult>
+  /** One point of a take's automation lane, through its parameter's own write (midiMap/midiMapTargets.ts writeMapTarget, O-I 853),
+   * settling with its owner's answer. Absent, no lane is written. */
+  readonly set?: (parameter: string, value: MapValue) => Promise<StageResult>
   /** One act of the clip on the part's one playing path (keyboardLayout.ts livePlayingPath, jankoInput.ts clipStrike): its notes' keys
    * struck at the owner's sample `at`, each held until its hold is let go; settling with the owner's answer. */
   readonly strike: (notes: readonly ClipHold[], amplitude: number, at: string) => Promise<StageResult>
@@ -190,7 +195,10 @@ export interface TakeExact {
   readonly acts: readonly StageTakeAct[]
   readonly noteOf?: (key: StageKey) => number | null
 }
-export interface ClipMove {readonly beat: number; readonly edits: readonly InstrumentEdit[]}
+/** A take's move at its beat: the instrument edits that took the Torus there, and the points of its lanes written there (`sets`). */
+export interface ClipMove {readonly beat: number; readonly edits: readonly InstrumentEdit[]; readonly sets?: readonly {readonly parameter: string; readonly value: MapValue}[]}
+/** A move that moves something. */
+const moving = (move: ClipMove) => finite(move.beat) && (move.edits.length > 0 || (move.sets?.length ?? 0) > 0)
 
 export interface ClipPlayState {
   /** The clip that plays: where it stands, its name and the tempo it plays at; null while none plays. */
@@ -353,11 +361,15 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
    * even when the take has played to its end before the owner answers (a later press or Stop leaves it unsaid). */
   const makeMove = (move: ClipMove) => {
     const mine = press
+    const told = (words: string) => { if (mine === press && !state.resumes?.includes(words)) publish({resumes: state.resumes ? `${state.resumes} ${words}` : words}) }
     for (const edit of move.edits) {
       void owners.edit?.(edit).catch(cause => ({ok: false as const, error: said(cause)})).then(result => {
-        if (mine !== press || result.ok) return
-        const words = `The Torus refused a move of the take: ${result.error}`
-        if (!state.resumes?.includes(words)) publish({resumes: state.resumes ? `${state.resumes} ${words}` : words})
+        if (!result.ok) told(`The Torus refused a move of the take: ${result.error}`)
+      })
+    }
+    for (const point of move.sets ?? []) {
+      void owners.set?.(point.parameter, point.value).catch(cause => ({ok: false as const, error: said(cause)})).then(result => {
+        if (!result.ok) told(`A lane of the take was not written again: ${result.error}`)
       })
     }
   }
@@ -498,7 +510,7 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
     const shift = BigInt(exact.landed) - BigInt(exact.from)
     const seconds = (sample: bigint) => Number(sample - timing.anchor) / timing.rate
     const acts = exact.acts.map(act => { const at = BigInt(act.at_samples_elapsed) + shift; return {seconds: seconds(at), at: String(at), act} })
-    const moves = [...(take.moves ?? [])].filter(move => finite(move.beat) && move.edits.length > 0).sort((a, b) => a.beat - b.beat)
+    const moves = [...(take.moves ?? [])].filter(moving).sort((a, b) => a.beat - b.beat)
     const start = seconds(BigInt(exact.landed))
     const c: Course = {address, origin: owners.now(), timing, spb: 60 / bpm, lead, acts, index: 0, moves, move: 0, start, end: start + exact.frames / exact.sample_rate,
       holds: new Map(), noteOf: exact.noteOf, timer: null, fire: () => fireCourse(c)}
@@ -509,7 +521,7 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
 
   const begin = (address: ClipAddress, bpm: number, plan: Extract<ClipPlan, {ok: true}>, timing: Extract<ClipTiming, {anchor: bigint}>,
     take: ClipPrepared | null, lead: number) => {
-    const moves = [...(take?.moves ?? [])].filter(move => finite(move.beat) && move.edits.length > 0).sort((a, b) => a.beat - b.beat)
+    const moves = [...(take?.moves ?? [])].filter(moving).sort((a, b) => a.beat - b.beat)
     const first = moves.findIndex(move => move.beat >= plan.first.from)
     const r: Run = {address, spb: 60 / bpm, origin: owners.now(), timing, voice: take?.voice ?? null, moves, move: first < 0 ? moves.length : first, lead,
       plan, pass: plan.first, passStart: 0, index: 0, ends: [], timer: null,
@@ -580,6 +592,7 @@ function candidateOwners(): ClipPlayerOwners {
     prepare: (clip, bpm) => prepareTake(clip, commitLiveInstrumentEdit, {stage: commitLiveStage, bpm}),
     clock: () => readAudioClock(commitLiveStage),
     edit: (edit, at) => commitLiveStage({command: 'instrument', edit, ...(at === undefined ? {} : {at_samples_elapsed: at})}),
+    set: writeMapTarget,
     strike: (notes, amplitude, at) => livePlayingPath().clipStrike(notes, amplitude, at),
     touch: (points, amplitude, at) => commitLiveStage({command: 'strike-at', points: [...points], amplitude, at_samples_elapsed: at}),
     singlet: (codon, amplitude, at) => commitLiveStage({command: 'singlet', codon, amplitude, at_samples_elapsed: at}),

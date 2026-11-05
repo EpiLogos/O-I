@@ -61,15 +61,32 @@ export interface KeyboardSettings {
   readonly velocity: KeyboardVelocity
   readonly sustain: boolean
   readonly repeatTouch: KeyboardRepeatTouch
+  /** Pressure (DLW §21.1 The input): "Lets pressure on a held key move the sound. Pressure records into the clip's MPE tab." */
+  readonly pressure: boolean
 }
-/** The manual's defaults: every input On, no Transpose, Velocity from Pointer height, Sustain Off, Repeat touch One note. */
+/** The manual's defaults: every input On, no Transpose, Velocity from Pointer height, Sustain Off, Repeat touch One note, Pressure On. */
 export const KEYBOARD_SETTINGS_DEFAULT: KeyboardSettings = Object.freeze({
   inputs: Object.freeze({pointer: true, keys: true, midi: true}), transpose: 0, velocity: 'pointer-height', sustain: false, repeatTouch: 'one-note',
+  pressure: true,
 })
 
 const unit = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && value > 0 && value <= 1
 /** The Studio's own pressure law: 0.9 × pressure, clamped to 0.15–0.9. */
 const pressureLaw = (pressure: number) => Math.min(0.9, Math.max(0.15, pressure * 0.9))
+/** A touch's strike: the pressure law's 0.9 × the rise of the hand's force, with no floor, since a small rise is a small strike. */
+export const TOUCH_LAW = 0.9
+
+/** A touch of the hand on the notes it holds (O-I #853): its pressure into them (0 to 1) or its pitch bend along them (−1 down to 1 up). */
+export type KeyboardTouch = 'bend' | 'pressure'
+/** A touch the part's playing made (O-I #855: Record keeps it on each note it touched, live/liveTake.ts): its kind and amount, its
+ * source, the notes it touched (their PlayedNote ids) and when (the page's clock, ms). Told whether or not it struck. */
+export interface PlayedTouch {
+  readonly kind: KeyboardTouch
+  readonly amount: number
+  readonly source: NoteSource
+  readonly ids: readonly string[]
+  readonly at: number
+}
 
 /** A note's strength, inside the owner's (0, 1] bound, from where Velocity says it comes. Fixed: every note at the owner's default.
  * MIDI: the note-on velocity over 127, which is the controller's own strength. Pointer height: where the press landed on its key,
@@ -179,6 +196,38 @@ export interface KeyLatency {
 }
 const LATENCY_KEPT = 64
 
+/** The engine's own legs of key-to-sound, as its host reads them (live_engine_host.rs reading `latency`, O-I #853 round 18). */
+export interface EngineLatency {
+  readonly block_frames: number
+  readonly block_ms: number
+  readonly longest_wait_ms: number
+  readonly output_latency_ms: number
+}
+/** One strike's key-to-sound, joined from the parts that exist: each part with its ms, their sum, and the parts not measured, in words. */
+export interface KeyToSound {
+  readonly ms: number
+  readonly parts: readonly (readonly [string, number])[]
+  readonly unmeasured: readonly string[]
+}
+/** Join one strike's timing with the engine's legs while the engine plays the Torus (`engine`; null: the owner sounds it itself): the
+ * host's leg (MIDI), the page's queue, the owner's strike, then the engine's block at worst and the device's output. What is not measured
+ * is named: the controller's leg to the host for MIDI, and the owner's lead over the engine (or, alone, the owner's own sound). Null for a
+ * strike the owner refused: it sounded nothing. Pure. */
+export function keyToSound(strike: KeyLatency, engine: EngineLatency | null): KeyToSound | null {
+  if (!strike.ok || strike.ownerMs === null) return null
+  const parts: [string, number][] = []
+  if (strike.hostMs !== null) parts.push(['the host to the page', strike.hostMs])
+  parts.push(['the page\'s queue', strike.queuedMs], ['the owner\'s strike', strike.ownerMs])
+  if (engine) parts.push(['the engine\'s block, at worst', engine.block_ms], ['the device\'s output', engine.output_latency_ms])
+  const unmeasured = [...(strike.hostMs !== null ? ['the controller to the host'] : []),
+    engine ? 'the owner\'s lead over the engine, which renders behind it' : 'the owner\'s own sound after its strike']
+  return {ms: Math.round(parts.reduce((sum, [, ms]) => sum + ms, 0) * 100) / 100, parts, unmeasured}
+}
+const msText = (ms: number) => String(Math.round(ms * 100) / 100)
+/** The joined measurement as one plain line. */
+export const keyToSoundLine = (joined: KeyToSound) =>
+  `Key to sound: ${msText(joined.ms)} ms (${joined.parts.map(([part, ms]) => `${part} ${msText(ms)}`).join(' · ')}); not measured: ${joined.unmeasured.join(', ')}.`
+
 // ── the path ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 /** Said when no surface is there to play: the owner has not served its window (or refused it), so a note has no key. */
@@ -208,6 +257,8 @@ export interface JankoInputOptions {
   /** Each note the part's playing strikes and lets go, as it happens (O-I #855: Record keeps them, live/liveTake.ts). A clip's notes and a
    * bell are not played by hand and are not told. */
   readonly onNote?: (played: PlayedNote) => void
+  /** Each touch of the hand on the notes it holds, as it happens (O-I #853: Record keeps it on the notes it touched). */
+  readonly onTouch?: (touch: PlayedTouch) => void
 }
 
 /** A note the part's playing struck (`on`: its number, its key and the touch-point it sounds at, its strength and source) or that ended
@@ -256,6 +307,13 @@ export interface JankoInput {
   /** The clip lets these holds go (a note's length ended, or Stop): each note sounds on only while a press or another hold keeps it. A hold
    * whose note made way, or that Panic let go, is owed nothing. */
   clipRelease(holds: readonly string[]): void
+  /** A touch of the hand on the notes it holds (O-I #853; DLW §21.2 The keyboard: "Velocity and pressure set how hard each point is
+   * struck"; §21.4 Rules: "Pressure or bend on a held note moves the sound. It does not change the tuning"): `kind`'s `amount` (pressure
+   * 0 to 1; bend −1 to 1, its force either way from rest) on the notes the presses of `source` hold (of `press` alone, where named, as a
+   * pen's pressure is its own press's). A rise of the hand's force strikes those keys again, as one act, by TOUCH_LAW × the rise; a fall
+   * lets go, and the body rings on. No note begins or ends, and no key moves: the tuning stays. Pressure Off moves nothing by pressure.
+   * Answers whether it struck. Told (onTouch) whenever it touched a note. */
+  touch(kind: KeyboardTouch, amount: number, source: NoteSource, press?: string): boolean
   /** A bell (the QL sitting's, inhabitants/ql/devices/qlSitting.ts): one note of `pitchClass` in the octave from middle C, struck at the
    * owner's own cursor and let go at once, so it rings out on the body and keeps no place among the notes Polyphony counts. A key a press
    * holds is struck again and sounds on under the press. Settles with the strike's answer, or the refusal in words. */
@@ -276,7 +334,9 @@ type Act =
   | {kind: 'strike'; seq: number; keys: Map<string, StageKey>; amplitude: number; sources: Set<NoteSource>; pressedAt: number; hostMs: number | null
     /** A clip's act (or a bell's): the owner's sample it lands at (a bell's, none: the owner's own cursor), and its answer to the clip.
      * Never merged with a press's act. */
-    clip: {readonly at: string | undefined; readonly settle: (result: StageResult) => void} | null}
+    clip: {readonly at: string | undefined; readonly settle: (result: StageResult) => void} | null
+    /** A touch's act: held keys struck again by a rise of the hand's force, never merged with a note's, and not timed as a key's. */
+    touch?: true}
   | {kind: 'release'; keys: Map<string, StageKey>}
 
 const keyId = (key: StageKey) => `${key.row}/${key.column}`
@@ -300,6 +360,8 @@ export function createJankoInput(options: JankoInputOptions): JankoInput {
   /** The clip's holds, each to the note it keeps. */
   const holds = new Map<string, string>()
   const timings: KeyLatency[] = []
+  /** The hand's force of each touch, by kind and its source (or press): where its next rise is measured from. */
+  const forces = new Map<string, number>()
   let pedalDown = false
   let seq = 0
   let queue: Act[] = []
@@ -322,7 +384,7 @@ export function createJankoInput(options: JankoInputOptions): JankoInput {
 
   const strike = (note: Note, amplitude: number, source: NoteSource, hostMs: number | null, touch: number) => {
     const last = queue.at(-1)
-    const act = last?.kind === 'strike' && last.clip === null && !last.keys.has(keyId(note.key)) && last.keys.size < MAX_KEYS ? last
+    const act = last?.kind === 'strike' && last.clip === null && !last.touch && !last.keys.has(keyId(note.key)) && last.keys.size < MAX_KEYS ? last
       : {kind: 'strike' as const, seq: ++seq, keys: new Map<string, StageKey>(), amplitude, sources: new Set<NoteSource>(), pressedAt: now(), hostMs, clip: null}
     if (act !== last) queue.push(act)
     act.keys.set(keyId(note.key), note.key)
@@ -381,6 +443,13 @@ export function createJankoInput(options: JankoInputOptions): JankoInput {
           answered(result)
           clip.settle(result)
         }, cause => { const result = failed(cause); answered(result); clip.settle(result) })
+        continue
+      }
+      if (act.touch) {
+        void options.send({command: 'janko', action: 'strike', keys, amplitude: act.amplitude}).then(result => {
+          if (result.ok && result.made_way?.length) madeWay(act, result.made_way)
+          if (!result.ok) answered(result)
+        }, cause => answered(failed(cause)))
         continue
       }
       const sentAt = now()
@@ -498,6 +567,7 @@ export function createJankoInput(options: JankoInputOptions): JankoInput {
       const press = presses.get(id)
       if (!press) return
       presses.delete(id)
+      for (const kind of ['bend', 'pressure']) forces.delete(`${kind}|${id}`)
       for (const identity of press.notes) {
         const note = notes.get(identity)
         if (!note) continue
@@ -544,6 +614,26 @@ export function createJankoInput(options: JankoInputOptions): JankoInput {
       changed()
     },
     latency: () => [...timings],
+    touch(kind, amount, source, press) {
+      const range = kind === 'bend' ? amount >= -1 && amount <= 1 : amount >= 0 && amount <= 1
+      if ((kind !== 'bend' && kind !== 'pressure') || !Number.isFinite(amount) || !range) return false
+      const by = press === undefined ? null : `${source}:${press}`
+      const at = `${kind}|${by ?? source}`
+      const force = Math.abs(amount), rise = force - (forces.get(at) ?? 0)
+      forces.set(at, force)
+      const touched = [...notes.values()].filter(note => [...note.presses].some(id => by === null ? presses.get(id)?.source === source : id === by))
+      if (touched.length === 0) return false
+      options.onTouch?.({kind, amount, source, ids: touched.map(note => note.id), at: now()})
+      if (rise <= 0 || (kind === 'pressure' && !settings().pressure)) return false
+      for (let from = 0; from < touched.length; from += MAX_KEYS) {
+        const act = {kind: 'strike' as const, seq: ++seq, keys: new Map<string, StageKey>(), amplitude: TOUCH_LAW * rise, sources: new Set([source]),
+          pressedAt: now(), hostMs: null, clip: null, touch: true as const}
+        for (const note of touched.slice(from, from + MAX_KEYS)) act.keys.set(keyId(note.key), note.key)
+        queue.push(act)
+      }
+      schedule()
+      return true
+    },
     clipStrike: (clipNotes, amplitude, at) => holdStrike(clipNotes, amplitude, at),
     clipRelease: holdRelease,
     ring(pitchClass, amplitude) {

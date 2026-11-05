@@ -307,6 +307,26 @@ test('each strike\'s timing is kept for the key-to-sound measurement: queued, th
   assert.deepEqual(first.sources, ['midi'])
 })
 
+test('key-to-sound is joined from the parts that exist, each named, and the part not measured is said in words (round 18)', () => {
+  const strike = {sources: ['midi'], keys: 1, pressedAt: 1000, queuedMs: 0.5, ownerMs: 7, hostMs: 12, ok: true}
+  const engine = {block_frames: 480, block_ms: 10, longest_wait_ms: 3, output_latency_ms: 25}
+  const joined = input.keyToSound(strike, engine)
+  assert.deepEqual(joined.parts, [['the host to the page', 12], ['the page\'s queue', 0.5], ['the owner\'s strike', 7],
+    ['the engine\'s block, at worst', 10], ['the device\'s output', 25]])
+  assert.equal(joined.ms, 54.5, 'the sum of the parts that exist')
+  assert.deepEqual(joined.unmeasured, ['the controller to the host', 'the owner\'s lead over the engine, which renders behind it'])
+  assert.match(input.keyToSoundLine(joined), /^Key to sound: 54\.5 ms \(the host to the page 12 · the page's queue 0\.5 · the owner's strike 7 · the engine's block, at worst 10 · the device's output 25\); not measured: the controller to the host, the owner's lead over the engine, which renders behind it\.$/)
+  // While the engine does not play, the owner sounds the Torus itself: its own output is not measured here.
+  const alone = input.keyToSound({...strike, sources: ['pointer'], hostMs: null}, null)
+  assert.deepEqual(alone.parts, [['the page\'s queue', 0.5], ['the owner\'s strike', 7]])
+  assert.deepEqual(alone.unmeasured, ['the owner\'s own sound after its strike'])
+  assert.equal(input.keyToSound({...strike, ok: false, ownerMs: null}, engine), null, 'a strike the owner refused sounded nothing')
+  const layout = readFileSync(new URL('../src/live/keyboardLayout.ts', import.meta.url), 'utf8')
+  assert.match(layout, /__oiKeyToSound = \(\) => input\.latency\(\)\.map\(strike => keyToSound\(strike, engineLatency\(\)\)\)/, 'the inspector reads the joined measurement')
+  const part = readFileSync(new URL('../src/live/KeyboardOnChain.tsx', import.meta.url), 'utf8')
+  assert.match(part, /keyToSoundLine\(/, 'and the part\'s input reports the last strike\'s')
+})
+
 test('the host\'s note carries when it was received, and the note event keeps it for the measurement', () => {
   const event = midi.midiNoteEvent({port: 'Keys', channel: 0, note: 60, velocity: 100, on: true, received_ms: 1700000000123.5})
   assert.equal(event.receivedAt, 1700000000123.5)
@@ -395,15 +415,19 @@ test('the settings are the shell\'s, at the manual\'s defaults; Transpose holds 
   } finally { keyboard.setKeyboardSettings(input.KEYBOARD_SETTINGS_DEFAULT); torus.setLiveInstrumentCommander(null); janko.publishLiveJankoWindow(null) }
 })
 
-test('the part\'s input draws its settings and Panic; Pressure stands dimmed and says in words what it waits for', () => {
+// REPLACED (DLW build ruling 2026-11-05, #853 MPE): round 16 asserted here that Pressure stood dimmed, waiting for the Torus to take
+// a held note's pressure and for the clip to keep it. The playing path now takes it (a rise strikes the held keys again by the rise)
+// and Record keeps it on each note, so Pressure is a setting of the path like Sustain.
+test('the part\'s input draws its settings and Panic; Pressure is a setting of the path, On by default, in the manual\'s words', () => {
   const html = renderToStaticMarkup(createElement(partInput.PartInput))
   assert.match(html, /data-part-input=/)
   for (const label of ['Jankó', 'Piano', 'Pointer and touch', 'Computer keys', 'MIDI', 'Transpose', 'Pointer height', 'Pressure', 'Fixed', 'Sustain', 'One note', 'Each key', 'Panic'])
     assert.ok(html.includes(label), label)
   const pressure = html.match(/<button[^>]*data-part-setting="pressure"[^>]*>/)?.[0] ?? ''
-  assert.match(pressure, /disabled=""/, 'Pressure is not offered until its owner takes it')
-  assert.match(pressure, /title="[^"]*waits/, 'and says what it waits for')
-  assert.doesNotMatch(pressure, /torus-|_read|stage command/, 'in words, no op names')
+  assert.doesNotMatch(pressure, /disabled/, 'Pressure is offered')
+  assert.match(pressure, /aria-pressed="true"/, 'On by default (DLW §21.1 The input)')
+  assert.match(html, /title="Lets pressure on a held key move the sound\. Pressure records into the clip&#x27;s MPE tab\."/)
+  assert.equal(input.KEYBOARD_SETTINGS_DEFAULT.pressure, true)
   assert.doesNotMatch(html, /data-device-size=|data-janko-layout=/, 'no plate, and no keyboard surface on the chain')
 })
 
@@ -420,4 +444,76 @@ test('the surface plays through the live path: a key carries its row and column 
   assert.match(part, /livePlayingPath\(\)/)
   assert.match(part, /subscribeLiveMidiControls\(/, 'the part hears the sustain pedal')
   assert.match(part, /releaseWhere\(press => press\.source === 'midi' && /, 'a lost device lets its notes go')
+})
+
+// ── 5 — the hand's touch on the notes it holds (round 18) ────────────────────────────────────────────────────────────────────────
+
+test('a rise of the hand\'s pressure or bend on the keys it holds strikes them again by the rise; a fall lets go; no note begins or ends', async () => {
+  const o = owner(), touches = []
+  const p = path(o, {}, {onTouch: touch => touches.push(touch)})
+  p.down(midi.midiNoteEvent({port: 'Keys', channel: 0, note: 60, velocity: 127, on: true}))
+  p.down(midi.midiNoteEvent({port: 'Keys', channel: 0, note: 64, velocity: 127, on: true})); await tick()
+  o.sent.length = 0
+  const strike = amplitude => ({command: 'janko', action: 'strike', keys: [C4, E4], amplitude})
+  assert.equal(p.touch('pressure', 0.5, 'midi'), true, 'pressure 0 → 0.5 strikes')
+  await tick()
+  assert.deepEqual(o.sent, [strike(input.TOUCH_LAW * 0.5)], 'the held keys, as one act, by the pressure law\'s 0.9 × the rise')
+  assert.equal(p.touch('pressure', 0.25, 'midi'), false, 'a fall strikes nothing: the body rings on')
+  assert.equal(p.touch('pressure', 0.75, 'midi'), true); await tick()
+  assert.deepEqual(o.sent.at(-1), strike(input.TOUCH_LAW * 0.5), 'the next rise is measured from where the hand let go to')
+  assert.equal(p.touch('bend', -0.5, 'midi'), true, 'a bend from rest is a force along the key, either way'); await tick()
+  assert.deepEqual(o.sent.at(-1), strike(input.TOUCH_LAW * 0.5))
+  assert.equal(p.touch('bend', 0, 'midi'), false, 'back to rest lets go')
+  assert.equal(p.touch('pressure', 1, 'pointer'), false, 'another source\'s touch moves no note MIDI holds')
+  for (const bad of [Number.NaN, 2, -0.1]) assert.equal(p.touch('pressure', bad, 'midi'), false, String(bad))
+  assert.equal(p.touch('bend', 1.5, 'midi'), false)
+  await tick()
+  assert.equal(o.sent.length, 3, 'three rises, three acts')
+  assert.ok(o.sent.every(c => c.action === 'strike' && c.keys.length === 2), 'no release, and no key moved: the tuning stays')
+  assert.deepEqual(p.sounding(), [C4, E4], 'the notes are still the hand\'s, held')
+  assert.equal(p.latency().length, 1, 'the chord\'s one act is timed; a touch is not a key\'s strike for the key-to-sound measurement')
+  assert.deepEqual(touches.map(t => [t.kind, t.amount, t.source, t.ids]),
+    [['pressure', 0.5, 'midi', ['note:60', 'note:64']], ['pressure', 0.25, 'midi', ['note:60', 'note:64']], ['pressure', 0.75, 'midi', ['note:60', 'note:64']],
+      ['bend', -0.5, 'midi', ['note:60', 'note:64']], ['bend', 0, 'midi', ['note:60', 'note:64']]], 'each touch of a held note is told, struck or not')
+  p.up(midi.midiNoteEvent({port: 'Keys', channel: 0, note: 60, velocity: 0, on: false}))
+  p.up(midi.midiNoteEvent({port: 'Keys', channel: 0, note: 64, velocity: 0, on: false})); await tick()
+  assert.deepEqual(o.sent.at(-1), {command: 'janko', action: 'release', keys: [C4, E4]}, 'and they are let go as they were held')
+  assert.equal(p.touch('pressure', 1, 'midi'), false, 'with nothing held a touch touches nothing')
+})
+
+test('a key struck in the moment of a touch is its own strike: never folded into the touch, and timed as a key\'s', async () => {
+  const o = owner()
+  const p = path(o)
+  p.down(midi.midiNoteEvent({port: 'Keys', channel: 0, note: 60, velocity: 127, on: true})); await tick()
+  o.sent.length = 0
+  assert.equal(p.latency().length, 1)
+  assert.equal(p.touch('pressure', 0.5, 'midi'), true)
+  p.down(midi.midiNoteEvent({port: 'Keys', channel: 0, note: 64, velocity: 127, on: true})); await tick()
+  assert.deepEqual(o.sent, [{command: 'janko', action: 'strike', keys: [C4], amplitude: input.TOUCH_LAW * 0.5},
+    {command: 'janko', action: 'strike', keys: [E4], amplitude: 1}], 'the touch strikes the held key by the rise; the new key at its velocity')
+  assert.equal(p.latency().length, 2, 'the new key\'s strike is timed; the touch is not')
+})
+
+test('a pen\'s pressure is its own press\'s; Pressure Off moves nothing by pressure, and bend still moves', async () => {
+  const o = owner()
+  const p = path(o)
+  p.down({kind: 'down', pitchClass: 0, source: 'pointer', key: {row: 0, column: 0}, press: 'pointer-1', pressure: 0.2})
+  p.down({kind: 'down', pitchClass: 4, source: 'pointer', key: {row: 0, column: 2}, press: 'pointer-2', pressure: 0.2}); await tick()
+  o.sent.length = 0
+  assert.equal(p.touch('pressure', 0.6, 'pointer', 'pointer-2'), true); await tick()
+  assert.deepEqual(o.sent, [{command: 'janko', action: 'strike', keys: [E4], amplitude: input.TOUCH_LAW * 0.6}], 'only the key the pen presses')
+  const off = owner()
+  const q = path(off, {pressure: false})
+  q.down(midi.midiNoteEvent({port: 'Keys', channel: 0, note: 60, velocity: 127, on: true})); await tick()
+  off.sent.length = 0
+  assert.equal(q.touch('pressure', 1, 'midi'), false, 'Pressure Off')
+  assert.equal(q.touch('bend', 1, 'midi'), true, 'bend is not Pressure'); await tick()
+  assert.deepEqual(off.sent.map(c => c.amplitude), [input.TOUCH_LAW])
+  const surface = readFileSync(new URL('../src/live/janko/JankoDevice.tsx', import.meta.url), 'utf8')
+  assert.match(surface, /onPointerMove=\{event => \{ if \(event\.buttons !== 0 && pen\(event\) !== null\) input\.touch\('pressure', event\.pressure, pointerSource\(event\), `pointer-\$\{event\.pointerId\}`\) \}\}/,
+    'a pen pressed on a key touches that press')
+  const part = readFileSync(new URL('../src/live/KeyboardOnChain.tsx', import.meta.url), 'utf8')
+  assert.match(part, /for \(const expression of expressions\) input\.touch\(expression\.kind, midiExpressionAmount\(expression\), 'midi'\)/,
+    'MIDI\'s bends and pressures touch the notes MIDI holds, each as it came')
+  assert.match(part, /toggle\('pressure', 'Pressure', settings\.pressure, \(\) => setKeyboardSettings\(\{pressure: !settings\.pressure\}\)\)/)
 })

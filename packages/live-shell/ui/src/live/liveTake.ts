@@ -26,14 +26,24 @@
 // live/clipPlayer.ts); Export Audio on the take's clip renders the course offline (`render-take`), part after part, each part from the
 // checkpoint the last one ended at (renderTake, exportTake). A take whose course cannot be kept (an act that moved the scene, an owner
 // that kept no state of it) says why, plays as before from the body as it then rings (TAKE_RESUMES), and is not exported.
+//
+// Arm (O-I 853, round 18; §21.2 Transport, "Arm | Records your parameter moves as automation lanes"; §16.8, "Arm, then move any parameter
+// of any device, and the move is recorded as an automation lane on that track"): while Arm is on and a take records, each move of a mapped
+// control (midiMap/midiMapRouter.ts `moved`, a write its owner accepted) is a point of its parameter's lane, from the value it stood at
+// before. The take keeps its lanes beside the set (`automation`), and a lane plays again at its beats through its parameter's own write
+// (prepareTake, takeLaneMoves), unless the take already makes it again: under its course every owner write is one of the course's acts,
+// and otherwise a parameter the Torus's moves set is theirs.
 import {useEffect, useState, useSyncExternalStore} from 'react'
 import {isStageSampleCursor, readInstrumentEdit, readStageTorusCheckpoint, stageJournalLanding, STAGE_JANKO_KEYS_MAX, STAGE_RENDER_FRAMES_MAX, type InstrumentEdit,
   type StageCommand, type StageKey, type StagePerformanceJournal, type StageResult, type StageTakeAct, type StageTorusCheckpoint} from '@epilogos/expressions-boundary'
-import type {LiveClipAt, LiveClipReading, LiveNote, LiveSetAct, LiveSetActed} from '../../../../../desktop/cradle/src/kernel/types'
+import type {LiveClipAt, LiveClipReading, LiveNote, LiveNoteMpe, LiveSetAct, LiveSetActed} from '../../../../../desktop/cradle/src/kernel/types'
 import type {SlotBinding} from '../frame/transport/slots'
-import type {NoteSource, PlayedNote} from './janko/jankoInput'
+import type {NoteSource, PlayedNote, PlayedTouch} from './janko/jankoInput'
 import type {ClipMove, ClipPrepared} from './clipPlayer'
 import type {LiveTorusState} from './torusInstrument'
+import type {MapValue, MapWriter} from './midiMap/midiMapModel'
+import {mapTargetIdsOfEdit} from './midiMap/midiMapTargets'
+import {onMapMove} from './midiMap/midiMapControls'
 
 export const TAKE_SCHEMA = 'oi.live-take/v1'
 export const TORUS_KEPT_SCHEMA = 'oi.live-torus/v1'
@@ -167,6 +177,8 @@ export interface RecordedNote {
   readonly source: NoteSource | null
   readonly on: number
   off: number | null
+  /** The hand's touches on it while it sounded (O-I #853, jankoInput onTouch): each lane's [page ms, amount], in order. */
+  readonly touches: {readonly pressure: [number, number][]; readonly bend: [number, number][]}
 }
 
 export interface RecordedTake {
@@ -176,25 +188,61 @@ export interface RecordedTake {
   readonly notes: readonly RecordedNote[]
   /** The Torus after each move its owner took during the take (page ms). */
   readonly moves: readonly {readonly at: number; readonly torus: TorusKept}[]
+  /** The lanes Arm recorded (O-I 853): each mapped parameter's moves during the take. */
+  readonly automation?: readonly RecordedLane[]
 }
+
+/** A mapped control's move, as the map's router wrote it (midiMap/midiMapRouter.ts `moved`): the parameter, its label and who writes it,
+ * the value its write was accepted at, the value it stood at before (null when unread), and when (page ms). */
+export interface AutomatedMove {
+  readonly parameter: string
+  readonly label: string
+  readonly writer: MapWriter
+  readonly value: MapValue
+  readonly before: MapValue | null
+  readonly at: number
+}
+/** A parameter's lane as a take recorded it: its points [page ms, value] in order, and whether moves past the most a lane keeps were cut. */
+export interface RecordedLane {
+  readonly parameter: string
+  readonly label: string
+  readonly writer: MapWriter
+  readonly points: [number, MapValue][]
+  cut: boolean
+}
+/** The most points one lane keeps (as a note's MPE lane and a clip envelope keep at most 4,096). */
+export const LANE_POINTS_MAX = 4096
+/** The most lanes one take keeps. */
+export const TAKE_LANES_MAX = 64
 
 export interface TakeRecorder {
   /** Begin a take at the page's `at` (ms). A take already recording is replaced. */
   start(context: TakeContext, at: number): void
   /** A note the path played (jankoInput onNote). */
   played(note: PlayedNote): void
+  /** A touch of the hand on notes it holds (jankoInput onTouch): kept on each note it touched that this take recorded. */
+  touched(touch: PlayedTouch): void
   /** The Torus's owner announced its state: a change to what sets it is a move, kept with its time. */
   moved(torus: TorusKept | null, at: number): void
+  /** A mapped control's move its owner accepted: while Arm is on and a take records, a point of its parameter's lane. */
+  automated(move: AutomatedMove): void
+  /** Arm (§21.2 Transport): on, a take records the moves of mapped controls as automation lanes. */
+  arm(on: boolean): void
+  armed(): boolean
+  subscribeArm(listener: () => void): () => void
   /** End the take at `at`: every note still held ends there. Null when none records. */
   stop(at: number): RecordedTake | null
   recording(): TakeContext | null
 }
 
 export function createTakeRecorder(): TakeRecorder {
-  let take: {context: TakeContext; startedAt: number; notes: RecordedNote[]; open: Map<string, RecordedNote>; moves: {at: number; torus: TorusKept}[]; last: TorusKept | null} | null = null
+  let take: {context: TakeContext; startedAt: number; notes: RecordedNote[]; open: Map<string, RecordedNote>; moves: {at: number; torus: TorusKept}[]; last: TorusKept | null
+    lanes: Map<string, RecordedLane>} | null = null
+  let armed = false
+  const armListeners = new Set<() => void>()
   return {
     start(context, at) {
-      take = {context, startedAt: at, notes: [], open: new Map(), moves: [], last: context.torus}
+      take = {context, startedAt: at, notes: [], open: new Map(), moves: [], last: context.torus, lanes: new Map()}
     },
     played(event) {
       if (!take || event.at < take.startedAt) return
@@ -202,9 +250,13 @@ export function createTakeRecorder(): TakeRecorder {
       if (open) { open.off = event.at; take.open.delete(event.id) }
       if (event.kind === 'off') return
       const note: RecordedNote = {note: event.note, key: {row: event.key.row, column: event.key.column}, touch: event.touch, amplitude: event.amplitude,
-        source: event.source, on: event.at, off: null}
+        source: event.source, on: event.at, off: null, touches: {pressure: [], bend: []}}
       take.notes.push(note)
       take.open.set(event.id, note)
+    },
+    touched(touch) {
+      if (!take || touch.at < take.startedAt) return
+      for (const id of touch.ids) take.open.get(id)?.touches[touch.kind].push([touch.at, touch.amount])
     },
     moved(torus, at) {
       // A move is a change to what sets the Torus; its readings change as it plays (the comma it gathers) and are not moves.
@@ -212,12 +264,33 @@ export function createTakeRecorder(): TakeRecorder {
       take.last = torus
       take.moves.push({at, torus})
     },
+    automated(move) {
+      if (!take || !armed || move.at < take.startedAt) return
+      let lane = take.lanes.get(move.parameter)
+      if (!lane) {
+        if (take.lanes.size >= TAKE_LANES_MAX) return
+        lane = {parameter: move.parameter, label: move.label, writer: move.writer, points: [], cut: false}
+        // The lane begins where the parameter stood as the take began, unless the move is the take's first moment.
+        if (move.before !== null && move.at > take.startedAt) lane.points.push([take.startedAt, move.before])
+        take.lanes.set(move.parameter, lane)
+      }
+      if (lane.points.length < LANE_POINTS_MAX) lane.points.push([move.at, move.value])
+      else lane.cut = true
+    },
+    arm(on) {
+      if (on === armed) return
+      armed = on
+      for (const listener of [...armListeners]) listener()
+    },
+    armed: () => armed,
+    subscribeArm(listener) { armListeners.add(listener); return () => { armListeners.delete(listener) } },
     stop(at) {
       if (!take) return null
       const done = take
       take = null
       for (const note of done.open.values()) note.off = at
-      return {context: done.context, startedAt: done.startedAt, stoppedAt: Math.max(at, done.startedAt), notes: done.notes, moves: done.moves}
+      return {context: done.context, startedAt: done.startedAt, stoppedAt: Math.max(at, done.startedAt), notes: done.notes, moves: done.moves,
+        automation: [...done.lanes.values()]}
     },
     recording: () => take?.context ?? null,
   }
@@ -401,12 +474,18 @@ export function takeRecordAct(take: RecordedTake, name: string, landing?: TakeLa
     const len = off !== undefined ? beatOf(off - on) : beatsOf((note.off ?? stoppedAt) - note.on, context.bpm)
     return {p: note.note, at, len: round(Math.max(0, Math.min(length - at, len))), vel: velocityOf(note.amplitude)}
   }
-  const notes: LiveNote[] = played.map(note => {
+  const laid: LiveNote[] = played.map(note => {
     const sampled = landed(note)
     if (sampled) return sampled
     const at = round(beatsOf(note.on - startedAt, context.bpm))
     const len = round(Math.max(0, Math.min(length - at, beatsOf((note.off ?? stoppedAt) - note.on, context.bpm))))
     return {p: note.note, at, len, vel: velocityOf(note.amplitude)}
+  })
+  // Each note's expression as the hand played it (DLW §21.1 the MPE tab; §21.2 Rules: "A recorded performance keeps … the notes with
+  // their expression"), in beats from the note's start, within its length.
+  const notes: LiveNote[] = laid.map((note, i) => {
+    const mpe = takeMpe(played[i]!, note.len, context.bpm)
+    return mpe ? {...note, mpe} : note
   })
   const base = {
     schema: TAKE_SCHEMA,
@@ -416,6 +495,7 @@ export function takeRecordAct(take: RecordedTake, name: string, landing?: TakeLa
       strength: note.amplitude, source: note.source})),
     torus: context.torus,
     moves: take.moves.map(move => ({beat: round(beatsOf(move.at - startedAt, context.bpm)), torus: move.torus})),
+    ...takeAutomation(take, length),
     mode: context.mode,
     bpm: context.bpm,
   }
@@ -427,6 +507,64 @@ export function takeRecordAct(take: RecordedTake, name: string, landing?: TakeLa
   return {kind: 'take_record', track: context.track, start: context.start, length, name, notes, keeps}
 }
 const velocityOf = (amplitude: number) => Math.max(1, Math.min(127, Math.round(amplitude * 127)))
+/** The lanes Arm recorded, as the take keeps them: each point in beats from the take's start, those past its length left out; none when
+ * Arm recorded nothing. */
+function takeAutomation(take: RecordedTake, length: number): {automation?: TakeLane[]} {
+  const lanes = (take.automation ?? []).map((lane): TakeLane => ({parameter: lane.parameter, label: lane.label, writer: lane.writer,
+    points: lane.points.map(([at, value]): [number, MapValue] => [round(beatsOf(at - take.startedAt, take.context.bpm)), value])
+      .filter(([beat]) => beat >= 0 && beat <= length), ...(lane.cut ? {cut: true} : {})})).filter(lane => lane.points.length > 0)
+  return lanes.length ? {automation: lanes} : {}
+}
+
+/** A lane as a take keeps it (`automation`): its parameter, label and writer, its points [beat in the take, value] in time, and `cut` when
+ * moves past the most a lane keeps were not kept. */
+export interface TakeLane {
+  readonly parameter: string
+  readonly label: string
+  readonly writer: MapWriter
+  readonly points: readonly (readonly [number, MapValue])[]
+  readonly cut?: true
+}
+
+/** The lanes a take keeps, read exact: a lane any of whose parts is not one is left out. Pure. */
+export function takeAutomationOf(raw: unknown): TakeLane[] {
+  const isValue = (value: unknown): value is MapValue => typeof value === 'string' || typeof value === 'boolean' || (typeof value === 'number' && Number.isFinite(value))
+  const lanes: TakeLane[] = []
+  for (const lane of Array.isArray(raw) ? raw.slice(0, TAKE_LANES_MAX) : []) {
+    if (!plain(lane) || typeof lane.parameter !== 'string' || !lane.parameter || lane.parameter.length > 128 || typeof lane.label !== 'string'
+      || (lane.writer !== 'owner' && lane.writer !== 'session') || !Array.isArray(lane.points) || lane.points.length === 0 || lane.points.length > LANE_POINTS_MAX) continue
+    let last = 0
+    const points = lane.points.map(point => {
+      if (!Array.isArray(point) || point.length !== 2 || typeof point[0] !== 'number' || !Number.isFinite(point[0]) || point[0] < last || !isValue(point[1])) return null
+      last = point[0]
+      return [point[0], point[1]] as const
+    })
+    if (points.some(point => point === null)) continue
+    lanes.push({parameter: lane.parameter, label: lane.label, writer: lane.writer, points: points as (readonly [number, MapValue])[], ...(lane.cut === true ? {cut: true} : {})})
+  }
+  return lanes
+}
+
+/** A take's lanes as the clip player writes them again: each point at its beat, through its parameter's own write (ClipMove `sets`). A
+ * lane the take already makes again (`theirs`) is left out. In time order. Pure. */
+export function takeLaneMoves(raw: unknown, theirs: (lane: TakeLane) => boolean): ClipMove[] {
+  const moves: ClipMove[] = []
+  for (const lane of takeAutomationOf(raw)) {
+    if (theirs(lane)) continue
+    for (const [beat, value] of lane.points) moves.push({beat, edits: [], sets: [{parameter: lane.parameter, value}]})
+  }
+  return moves.sort((a, b) => a.beat - b.beat)
+}
+/** A take's moves and its lanes' moves, in time order (a move before a lane's at one beat). Pure. */
+const inTime = (moves: readonly ClipMove[], lanes: readonly ClipMove[]): ClipMove[] => [...moves, ...lanes].sort((a, b) => a.beat - b.beat)
+/** A note's touches as its MPE lanes: each point in beats from the note's start, those past its length left out; none when untouched. */
+function takeMpe(note: RecordedNote, len: number, bpm: number): LiveNoteMpe | null {
+  const lane = (points: readonly [number, number][]) => points.map(([at, amount]): [number, number] => [round(beatsOf(at - note.on, bpm)), amount])
+    .filter(([beat]) => beat >= 0 && beat <= len)
+  const pressure = lane(note.touches.pressure), bend = lane(note.touches.bend)
+  if (pressure.length === 0 && bend.length === 0) return null
+  return {...(pressure.length ? {pressure} : {}), ...(bend.length ? {bend} : {})}
+}
 
 /** The beat a new take lies from: the first bar after everything the part's main lane holds. Pure. */
 export function takeStartOf(clips: readonly {readonly end: number}[]): number {
@@ -495,7 +633,9 @@ export async function prepareTake(clip: LiveClipReading, commit: (edit: Instrume
   }
   const voice = takeVoice(keeps)
   const kept = torusKeptOf(keeps.torus)
-  const moves = takeMoves(kept, keeps.moves)
+  // A parameter the Torus's moves set (the Torus as it stood after each) is theirs; any other lane plays again at its beats.
+  const setByMoves = new Set((kept?.edits ?? []).flatMap(edit => mapTargetIdsOfEdit(edit)))
+  const moves = inTime(takeMoves(kept, keeps.moves), takeLaneMoves(keeps.automation, lane => lane.writer === 'owner' && setByMoves.has(lane.parameter)))
   const played = {...(voice ? {voice} : {}), ...(moves.length ? {moves} : {})}
   // A take from before courses says what it said; one with a course that cannot play says why, and resumes from the body as it then rings.
   const course = 'course' in keeps ? takeCourseOf(keeps.course) : undefined
@@ -515,8 +655,10 @@ export async function prepareTake(clip: LiveClipReading, commit: (edit: Instrume
     const words = restored.ok ? 'its owner named no sample it rings again from' : restored.error
     return {resumes: told(`The Torus did not ring again from the take's state: ${sentence(words)} ${TAKE_RESUMES_INSTEAD}`), ...played}
   }
-  // The frame's own sound moves by beat; the Torus's moves are its course's acts.
-  const frameMoves = moves.map(move => ({beat: move.beat, edits: move.edits.filter(edit => FRAME_SOUND_KINDS.has(edit.kind))})).filter(move => move.edits.length > 0)
+  // The frame's own sound moves by beat; the Torus's moves are its course's acts, and so is every owner write of a lane: a session-held
+  // lane plays again at its beats.
+  const frameMoves = inTime(takeMoves(kept, keeps.moves).map(move => ({beat: move.beat, edits: move.edits.filter(edit => FRAME_SOUND_KINDS.has(edit.kind))}))
+    .filter(move => move.edits.length > 0), takeLaneMoves(keeps.automation, lane => lane.writer === 'owner'))
   const numbers = new Map<string, number>()
   for (const note of Array.isArray(keeps.notes) ? keeps.notes : []) {
     if (plain(note) && Number.isSafeInteger(note.p) && plain(note.key)) numbers.set(`${note.key.row}/${note.key.column}`, note.p as number)
@@ -681,6 +823,20 @@ export interface RecordInput {
   readonly opened?: string | null
   readonly start: () => void
   readonly stop: () => void
+}
+
+/** What Arm does, in the manual's words (§21.2 Transport). */
+export const ARM_DOES = 'Arm — records your parameter moves as automation lanes: while a take records, each move of a mapped control lies on its parameter\'s lane.'
+
+/** Live's Arm: a toggle, lit while on. Pure. */
+export function armBinding(armed: boolean, flip: () => void): SlotBinding {
+  return {press: flip, lit: armed, title: `${ARM_DOES} ${armed ? 'Armed: press to disarm.' : 'Press to arm, then Record and move a mapped control.'}`}
+}
+
+/** Live's Arm for the transport, over the candidate's recorder. */
+export function useLiveArm(): SlotBinding {
+  const armed = useSyncExternalStore(liveTakeRecorder.subscribeArm, liveTakeRecorder.armed, () => false)
+  return armBinding(armed, () => liveTakeRecorder.arm(!liveTakeRecorder.armed()))
 }
 
 /** Live's Record over the Torus: refused in words until a set, a MIDI part of it, a tempo and a following Torus stand; lit while a take
@@ -956,8 +1112,9 @@ export type TorusKeeper = ReturnType<typeof createTorusKeeper>
 
 // ── the candidate's ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
-/** The recorder the part's one playing path tells its notes to (live/keyboardLayout.ts livePlayingPath). */
+/** The recorder the part's one playing path tells its notes to (live/keyboardLayout.ts livePlayingPath), and the map its mapped moves. */
 export const liveTakeRecorder: TakeRecorder = createTakeRecorder()
+onMapMove(move => liveTakeRecorder.automated(move))
 
 let opened: string | null = null
 const openedListeners = new Set<() => void>()

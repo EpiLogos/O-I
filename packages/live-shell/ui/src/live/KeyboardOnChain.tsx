@@ -4,8 +4,9 @@
 // keeps the one thing that plate alone did: it was the one surface that heard MIDI (live/janko/JankoDevice.tsx `midi`, "One keyboard hears
 // the hardware: the chain's plate"). PartInput is that hearing without a plate: while the instrument stands, a hardware controller's notes
 // reach the torus through the part's one playing path (keyboardLayout.ts livePlayingPath: keys struck and released on the Torus's
-// session, O-I 853), folded through the note devices under the mode in force; its pitch bends and channel pressures go to the part's
-// instrument in the engine (liveEngine.ts touchInEngine, round 16). It also holds the part's input settings (Layout, Input,
+// session, O-I 853), folded through the note devices under the mode in force; its pitch bends and channel pressures touch the notes
+// it holds on the same path (jankoInput.ts touch, round 18: a rise strikes them again by the rise), and go to the part's instrument in
+// the engine as before (liveEngine.ts touchInEngine, round 16). It also holds the part's input settings (Layout, Input,
 // Transpose, Velocity, Pressure, Sustain, Repeat touch), Panic, the sustain pedal and MIDI out. The playing surface itself stands under
 // the Torus in its Full (live/TorusOnChain.tsx TorusFull), deaf to MIDI as before; its layout stays the shell's (keyboardLayout.ts). The
 // MIDI state and a refusal stand as one line on the chain, in the chain's waiting idiom.
@@ -20,17 +21,17 @@ import {nativeHost} from '../native/application'
 import {useLiveModeInForce} from '../native/liveModeCatalogue'
 import {runNoteChain} from './noteDevices/noteDevices'
 import {useNoteDeviceChain} from './noteDevices/noteDeviceHold'
-import {KEYBOARD_TRANSPOSE, type KeyboardRepeatTouch, type KeyboardVelocity} from './janko/jankoInput'
+import {KEYBOARD_TRANSPOSE, keyToSound, keyToSoundLine, type KeyboardRepeatTouch, type KeyboardVelocity} from './janko/jankoInput'
 import {
-  livePlayingPath, panicLivePlaying, setKeyboardLayout, setKeyboardSettings, setLivePlayingTransform, useKeyboardLayout,
+  engineLatency, livePlayingPath, panicLivePlaying, setKeyboardLayout, setKeyboardSettings, setLivePlayingTransform, useKeyboardLayout,
   useKeyboardSettings, useLivePlaying,
 } from './keyboardLayout'
 import './janko/janko.css'
 
 /** The sustain pedal: MIDI controller 64, down from 64. */
 const SUSTAIN_PEDAL = 64
-/** Pressure on a held key moving the sound, and its lane in the clip's MPE tab, wait on owners not built yet: said in words. */
-const PRESSURE_WAITS = 'Pressure on a held key moves the sound once the Torus takes the pressure of a note it is sounding, and records once the clip keeps an MPE lane: it waits for both.'
+/** What Pressure does, in the manual's words (DLW §21.1 The input). */
+const PRESSURE_DOES = 'Lets pressure on a held key move the sound. Pressure records into the clip\'s MPE tab.'
 
 const VELOCITY: readonly {readonly value: KeyboardVelocity; readonly label: string}[] = [
   {value: 'pointer-height', label: 'Pointer height'}, {value: 'pressure', label: 'Pressure'}, {value: 'fixed', label: 'Fixed'},
@@ -80,11 +81,13 @@ export function PartInput() {
   useEffect(() => subscribeLiveMidiControls({
     onControls: controls => { for (const control of controls) if (control.controller === SUSTAIN_PEDAL) input.pedal(control.value >= 64) },
   }), [input])
-  // Pitch bend and channel pressure reach the part's instrument: the latest of each kind in a batch (the engine passes over the ones
+  // Pitch bend and channel pressure touch the notes MIDI holds, each as it came (a rise strikes them again by the rise, so none is
+  // passed over), and reach the part's instrument in the engine, the latest of each kind in a batch (the engine passes over the ones
   // between, as the wheel outruns it); MIDI switched off moves nothing.
   useEffect(() => subscribeLiveMidiExpression({
     onExpressions: expressions => {
       if (!midiOn.current) return
+      for (const expression of expressions) input.touch(expression.kind, midiExpressionAmount(expression), 'midi')
       for (const kind of ['bend', 'pressure'] as const) {
         let last = null
         for (const expression of expressions) if (expression.kind === kind) last = expression
@@ -92,7 +95,7 @@ export function PartInput() {
           setUnmoved(was => ({...was, [kind]: said === null ? null : refusalWords('Not moved:', said)})))
       }
     },
-  }), [])
+  }), [input])
   useEffect(() => { if (nativeHost()) void readLiveMidiOut() }, [])
   const choice = <T extends string>(setting: string, options: readonly {readonly value: T; readonly label: string}[], current: T, pick: (value: T) => void) =>
     <span className="part-input-choice" role="group" data-part-setting={setting}>
@@ -108,6 +111,9 @@ export function PartInput() {
       {liveMidiLine(midi)} · {liveMidiOutLine(out)}{refusal !== null ? ` · Not sounded: ${refusal}` : ''}
       {[unmoved.bend, unmoved.pressure].filter(said => said !== null).map(said => ` · ${said}`).join('')}
     </p>
+    {/* The last strike's key-to-sound, joined from the parts that exist (O-I 853, round 18). */}
+    {(() => { const last = input.latency().at(-1); const joined = last ? keyToSound(last, engineLatency()) : null
+      return joined ? <p className="live-chain-waits" data-part-key-to-sound="">{keyToSoundLine(joined)}</p> : null })()}
     <div className="part-input-settings">
       <span className="part-input-row"><span className="part-input-label">Layout</span>
         {choice('layout', [{value: 'janko', label: 'Jankó'}, {value: 'piano', label: 'Piano'}] as const, layout, setKeyboardLayout)}</span>
@@ -124,7 +130,7 @@ export function PartInput() {
       <span className="part-input-row"><span className="part-input-label">Velocity</span>
         {choice('velocity', VELOCITY, settings.velocity, velocity => setKeyboardSettings({velocity}))}</span>
       <span className="part-input-row">
-        <button type="button" data-part-setting="pressure" disabled title={PRESSURE_WAITS}>Pressure</button>
+        <span title={PRESSURE_DOES}>{toggle('pressure', 'Pressure', settings.pressure, () => setKeyboardSettings({pressure: !settings.pressure}))}</span>
         {toggle('sustain', 'Sustain', settings.sustain, () => setKeyboardSettings({sustain: !settings.sustain}))}</span>
       <span className="part-input-row"><span className="part-input-label">Repeat touch</span>
         {choice('repeat-touch', REPEAT, settings.repeatTouch, repeatTouch => setKeyboardSettings({repeatTouch}))}</span>

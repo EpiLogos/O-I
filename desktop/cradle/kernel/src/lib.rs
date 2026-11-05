@@ -1257,6 +1257,10 @@ pub enum KernelOp {
         path: String,
         track: String,
         device: String,
+        /// The device's place on the track's chain, the instrument counted (DLW build ruling 2026-11-05, O-I #849):
+        /// the second of two devices of one name is read at its own. Absent, the first of that name.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        at: Option<usize>,
     },
     /// Validate one stored parameter against its table's extent and write the
     /// set back in place (the 8787 seam's `POST /api/document/device-param`).
@@ -1265,6 +1269,10 @@ pub enum KernelOp {
         path: String,
         track: String,
         device_name: String,
+        /// The device's place on the track's chain, the instrument counted (DLW build ruling 2026-11-05, O-I #849):
+        /// the second of two devices of one name is written at its own. Absent, the first of that name.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        at: Option<usize>,
         param_id: String,
         value: serde_json::Value,
     },

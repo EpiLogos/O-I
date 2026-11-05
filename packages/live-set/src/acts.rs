@@ -2357,6 +2357,63 @@ fn take_lanes_mut(track: &mut Element) -> &mut Element {
     outer.child_mut("TakeLanes").expect("made above")
 }
 
+/// The most points one lane of a note's MPE holds.
+const MPE_POINTS_MAX: usize = 4096;
+
+/// A take's note's own expression (O-I #853; DLW §21.1 Clip view, the MPE tab: "Pressure from the playing surface records
+/// here"): its pressure lane (0 to 1) and its bend lane (−1 to 1 of its range), each points [beat from the note's start, amount]
+/// in time within the note; none when it carries none. Live's own per-note event lists have no clean-room shape yet
+/// (session-model.md §7 attests only the empty `<PerNoteEventStore><EventLists /></PerNoteEventStore>`), so the set keeps them
+/// in the DLW's record beside it, by the note's NoteId, with what the take keeps (sources.rs `takes`).
+fn note_mpe(note: &Value) -> Result<Option<serde_json::Map<String, Value>>, String> {
+    let Some(mpe) = note.get("mpe").filter(|m| !m.is_null()) else {
+        return Ok(None);
+    };
+    let lanes = mpe
+        .as_object()
+        .filter(|m| m.keys().all(|k| k == "pressure" || k == "bend"))
+        .ok_or("A note's MPE lanes are its pressure and its bend")?;
+    let len = note.get("len").and_then(Value::as_f64).unwrap_or(0.0);
+    let mut kept = serde_json::Map::new();
+    for (lane, low) in [("pressure", 0.0), ("bend", -1.0)] {
+        let Some(points) = lanes.get(lane) else {
+            continue;
+        };
+        let ordered =
+            || format!("A note's {lane} lane runs in time, at most {MPE_POINTS_MAX} points");
+        let points = points
+            .as_array()
+            .filter(|p| p.len() <= MPE_POINTS_MAX)
+            .ok_or_else(ordered)?;
+        let mut last = f64::NEG_INFINITY;
+        let mut out = Vec::with_capacity(points.len());
+        for point in points {
+            let pair = point
+                .as_array()
+                .filter(|p| p.len() == 2)
+                .and_then(|p| Some((p[0].as_f64()?, p[1].as_f64()?)));
+            let Some((beat, amount)) =
+                pair.filter(|(b, a)| *b >= 0.0 && *b <= len + 1e-9 && (low..=1.0).contains(a))
+            else {
+                return Err(format!(
+                    "Each point of a note's {lane} lane is a beat within the note and an amount from {} to 1",
+                    number_text(low)
+                ));
+            };
+            if beat < last {
+                return Err(ordered());
+            }
+            last = beat;
+            out.push(json!([beat, amount]));
+        }
+        kept.insert(lane.into(), Value::Array(out));
+    }
+    Ok((!kept.is_empty()).then_some(kept))
+}
+
+/// Lay a take: its clip in a take lane and over the main lane, its notes each named by its NoteId (the clip is new, so its
+/// notes' order), and each note's MPE as the record keeps it ([`note_mpe`]: `{id, p, pressure?, bend?}`, none for a note with
+/// none).
 fn take_record(
     root: &mut Element,
     track: usize,
@@ -2364,7 +2421,7 @@ fn take_record(
     length: f64,
     name: &str,
     notes: &[Value],
-) -> Result<(Done, u64), String> {
+) -> Result<(Done, u64, Vec<Value>), String> {
     if !(start.is_finite() && start >= 0.0) {
         return Err("A take lies on the ruler from beat 0".into());
     }
@@ -2384,6 +2441,22 @@ fn take_record(
             return Err("Each note of a take lies within the take".into());
         }
     }
+    let mut mpe = Vec::new();
+    let mut named = Vec::with_capacity(notes.len());
+    for (i, note) in notes.iter().enumerate() {
+        let lanes = note_mpe(note)?;
+        let mut note = note.clone();
+        if let Some(fields) = note.as_object_mut() {
+            fields.remove("mpe");
+            fields.insert("id".into(), json!(i + 1));
+        }
+        if let Some(mut lanes) = lanes {
+            lanes.insert("id".into(), json!(i + 1));
+            lanes.insert("p".into(), note["p"].clone());
+            mpe.push(Value::Object(lanes));
+        }
+        named.push(note);
+    }
     let part = track_at(root, track)?;
     if part.name != "MidiTrack" {
         return Err("Live records notes on a MIDI part, and this track is not one".into());
@@ -2397,7 +2470,7 @@ fn take_record(
     let mut made = edit::shape_donor(&reference, track)
         .and_then(|donor| edit::blank_clip(&reference, &donor, colour.as_deref(), length).ok())
         .unwrap_or_else(|| crafted_clip(colour.as_deref(), length));
-    edit::apply_notes(&mut made, notes)?;
+    edit::apply_notes(&mut made, &named)?;
     set_value(&mut made, "CurrentStart", &number_text(start))?;
     set_value(&mut made, "CurrentEnd", &number_text(start + length))?;
     made.set_attr("Time", &number_text(start));
@@ -2463,6 +2536,7 @@ fn take_record(
             },
         },
         take,
+        mpe,
     ))
 }
 
@@ -2631,8 +2705,8 @@ pub fn act(path: &str, expected_revision: &str, act: &SetAct) -> Result<Value, S
                 notes,
                 ..
             } => {
-                let (done, id) = take_record(root, *track, *start, *length, name, notes)?;
-                take = Some((*track, id));
+                let (done, id, mpe) = take_record(root, *track, *start, *length, name, notes)?;
+                take = Some((*track, id, mpe));
                 done
             }
             SetAct::RackPlace {
@@ -2662,17 +2736,24 @@ pub fn act(path: &str, expected_revision: &str, act: &SetAct) -> Result<Value, S
             ));
         }
     }
-    if let (
-        SetAct::TakeRecord {
-            keeps: Some(keeps), ..
-        },
-        Some((track, id)),
-    ) = (act, take)
-    {
+    // What the take keeps beyond its notes, and its notes' MPE by their NoteIds (O-I #853), beside the set.
+    let kept = match (act, take) {
+        (SetAct::TakeRecord { keeps, .. }, Some((track, id, mpe)))
+            if keeps.is_some() || !mpe.is_empty() =>
+        {
+            let mut kept = keeps.clone().unwrap_or_else(|| json!({}));
+            if !mpe.is_empty() {
+                kept["mpe"] = Value::Array(mpe);
+            }
+            Some((track, id, kept))
+        }
+        _ => None,
+    };
+    if let Some((track, id, keeps)) = kept {
         let kept = crate::edit::track_at(&_root, track)
             .and_then(track_id)
             .and_then(|track| {
-                crate::sources::set_keeps(std::path::Path::new(path), &track, id, keeps)
+                crate::sources::set_keeps(std::path::Path::new(path), &track, id, &keeps)
             });
         if let Err(why) = kept {
             answer["keepsRefused"] = json!(format!(

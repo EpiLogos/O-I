@@ -1043,3 +1043,123 @@ fn a_move_of_more_modes_than_one_part_carries_is_reached_whole_and_a_broken_one_
         );
     }
 }
+
+// ── Round 18: the hand's touch on the keys it holds (O-I #853) ──────────────────────────────────────────────────────────
+
+#[test]
+fn a_rise_of_pressure_or_bend_on_a_held_key_strikes_its_act_again_by_the_rise_and_keeps_the_tuning()
+{
+    // DLW §21.2 The keyboard: "Velocity and pressure set how hard each point is struck"; §21.4 Rules: "Pressure or bend on a
+    // held note moves the sound. It does not change the tuning." A rise of the hand's force strikes the key's own act again by
+    // the rise (a full push from rest as hard as its note struck), on the same modes; a fall lets go and the body rings on.
+    let mut g = Graph::new(SR, 120.0);
+    g.tracks.push(torus_part("Torus"));
+    let (mut core, mut handle) = engine(g).unwrap();
+    let touch = handle.mixer().tracks[0].instrument.clone();
+    assert_eq!(
+        touch.map(|(name, touch)| (name, touch.bend, touch.pressure)),
+        Some(("Torus".to_string(), Ok(()), Ok(()))),
+        "the Torus takes both"
+    );
+    let mut played = Vec::new();
+    let mut pull = |core: &mut live_engine::EngineCore| {
+        let mut block = vec![0f32; 256 * 2];
+        core.pull_block(&mut block);
+        played.extend(left(&block));
+    };
+    handle
+        .send(EngineEvent::NoteOn {
+            track: 0,
+            key: 60,
+            velocity: 1.0,
+        })
+        .unwrap();
+    pull(&mut core);
+    handle
+        .send(EngineEvent::Pressure {
+            track: 0,
+            amount: 0.5,
+        })
+        .unwrap();
+    pull(&mut core);
+    handle
+        .send(EngineEvent::Pressure {
+            track: 0,
+            amount: 0.2,
+        })
+        .unwrap();
+    pull(&mut core);
+    handle
+        .send(EngineEvent::Bend {
+            track: 0,
+            amount: -0.5,
+        })
+        .unwrap();
+    pull(&mut core);
+    handle
+        .send(EngineEvent::NoteOff { track: 0, key: 60 })
+        .unwrap();
+    handle
+        .send(EngineEvent::Pressure {
+            track: 0,
+            amount: 1.0,
+        })
+        .unwrap();
+    pull(&mut core);
+    // The field alone: key 60's act (mode 0 at 0.05 m) at 0, half of it at 256 (pressure 0 → 0.5), nothing at 512 (a fall),
+    // half again at 768 (a bend of −0.5 from rest), nothing at 1024 (no key held).
+    let mut f = k8_fixture::field(SR);
+    f.set_key(61, &[(0, (0.025, 0.0))]).unwrap();
+    let mut want = vec![0f32; 1280];
+    assert!(f.strike_key(60));
+    for (from, strike) in [
+        (0, false),
+        (256, true),
+        (512, false),
+        (768, true),
+        (1024, false),
+    ] {
+        if strike {
+            assert!(f.strike_key(61));
+        }
+        assert!(f.render(&mut want[from..from + 256], false));
+    }
+    assert_eq!(
+        played, want,
+        "each rise strikes the held key's act by the rise, on its own modes"
+    );
+}
+
+#[test]
+fn a_touch_on_a_torus_its_owner_handed_over_strikes_nothing_of_its_own() {
+    // Its notes are its owner's (the keyboard strikes them through the owner), so it holds none: the owner strikes the rise
+    // on the keys its keyboard holds, and that act lands here as the owner's (EngineEvent::TorusStrike).
+    let mut g = Graph::new(SR, 120.0);
+    g.tracks.push(Track::midi(
+        "Torus",
+        Box::new(K8Instrument::new(k8_fixture::field(SR)).handed_over(1)),
+    ));
+    let (mut core, mut handle) = engine(g).unwrap();
+    for event in [
+        EngineEvent::NoteOn {
+            track: 0,
+            key: 60,
+            velocity: 1.0,
+        },
+        EngineEvent::Pressure {
+            track: 0,
+            amount: 1.0,
+        },
+        EngineEvent::Bend {
+            track: 0,
+            amount: 1.0,
+        },
+    ] {
+        handle.send(event).unwrap();
+    }
+    let mut block = vec![0f32; 256 * 2];
+    core.pull_block(&mut block);
+    let mut want = vec![0f32; 256];
+    assert!(k8_fixture::field(SR).render(&mut want, false));
+    assert_eq!(left(&block), want, "nothing struck here");
+}

@@ -669,3 +669,81 @@ test('the frame asks the owner where you stand each frame while Receiver is On, 
   assert.match(tick, /const native=engine\.telemetry\?\.\(\);nativeField\?\.hear\(\{camera,width,height\},native\?\.config\?\.depth\?\.fov\);/,
     'each frame hands the field the camera the engine was just given and the engine\'s field of view');
 });
+
+// ------------------------------------------------------------------------------------------------------------------ the View
+// DLW manual §21.2 View "Surface · Wire · Both … What the pane draws", drawn on the native stage as the pane draws it (DLW build ruling
+// 2026-11-05): the pane's Full draws the body's silhouette under Surface, its wire of meridians and parallels under Wire, and the wire over
+// the body under Both (live-shell live/TorusOnChain.tsx TorusPicture, live/torusDevice.ts torusFigure at TORUS_FIGURE_DETAIL.full).
+
+const onWire = (W, {phi, theta}) => {
+  // the samples are drawn in single precision (Float32Array): a line is met within its rounding
+  const line = (angle, count) => { const step = TAU / count, k = Math.round(angle / step); return Math.abs(angle - k * step) < 1e-5; };
+  return line(phi, W.WIRE_MERIDIANS) || line(theta, W.WIRE_PARALLELS);
+};
+
+test('the View draws the samples as the pane draws the torus: on the body, on its wire, or every other one on each', async () => {
+  const W = await object();
+  const pane = readFileSync(new URL('../../../../../packages/live-shell/ui/src/live/torusDevice.ts', import.meta.url), 'utf8');
+  const full = pane.match(/full: \{meridians: (\d+), parallels: (\d+)\}/);
+  assert.deepEqual([W.WIRE_MERIDIANS, W.WIRE_PARALLELS], [Number(full[1]), Number(full[2])], 'the stage\'s wire is the pane\'s Full wire');
+  assert.deepEqual([...W.TORUS_VIEWS], ['surface', 'wire', 'both']);
+  const frame = nativeFrame({amplitudes: quiet()}), torus = new W.TorusObject();
+  torus.setBody(influence(), modeRefs()); torus.setSession(session({band: 'pitch', figure: 'torus'}));
+  assert.equal(torus.present(frame), null, 'Surface, a quiet torus: the frame as the owner gives it');
+  assert.equal(torus.reading().view, 'surface');
+  assert.equal(torus.setView('wire'), true, 'a new View is a change');
+  assert.equal(torus.setView('wire'), false, 'the same View again is none');
+  const wire = torus.present(frame);
+  assert.ok(wire, 'Wire: the samples are drawn, never shown as they stand');
+  const own = i => W.torusCoordinates(frame.targets[i].position, 1);
+  for (let i = 0; i < frame.targets.length; i++) {
+    const drawn = W.torusCoordinates([wire[i * 3], wire[i * 3 + 1], wire[i * 3 + 2]], 1);
+    assert.ok(onWire(W, drawn), `sample ${i} stands on a meridian or a parallel of the wire`);
+    const at = own(i), moved = Math.abs(Math.atan2(Math.sin(drawn.phi - at.phi), Math.cos(drawn.phi - at.phi))) > 1e-5;
+    assert.ok(!moved || Math.abs(drawn.theta - at.theta) < 1e-5, `sample ${i} moves along one line only, to the nearer`);
+  }
+  torus.setView('both');
+  const both = torus.present(frame);
+  for (let i = 0; i < frame.targets.length; i++) {
+    const drawn = W.torusCoordinates([both[i * 3], both[i * 3 + 1], both[i * 3 + 2]], 1), at = own(i);
+    if (i % 2 === 0) { near(drawn.phi, at.phi, 1e-6, `sample ${i} φ on the body`); near(drawn.theta, at.theta, 1e-6, `sample ${i} θ on the body`); }
+    else assert.ok(onWire(W, drawn), `sample ${i} on the wire`);
+  }
+  assert.equal(torus.reading().view, 'both');
+  torus.setView('surface');
+  assert.equal(torus.present(frame), null, 'Surface again: the frame as the owner gives it');
+  assert.equal(torus.setView('bars'), false, 'a View the pane does not draw is no View');
+  assert.equal(torus.reading().view, 'surface');
+});
+
+test('the View is an instrument edit that names nothing but the view, made on the frame\'s own drawing at no sample', async () => {
+  const {readStageRequest, readInstrumentEdit} = await stageVocabulary();
+  const request = command => ({v: 1, kind: 'host-command', req: 7, ...command});
+  for (const view of ['surface', 'wire', 'both']) {
+    assert.deepEqual(readInstrumentEdit({kind: 'view', view}), {kind: 'view', view});
+    assert.deepEqual(readStageRequest(request({command: 'instrument', edit: {kind: 'view', view}})).command, {command: 'instrument', edit: {kind: 'view', view}});
+  }
+  for (const bad of [{kind: 'view'}, {kind: 'view', view: 'bars'}, {kind: 'view', view: 1}, {kind: 'view', view: 'wire', at: 0}])
+    assert.equal(readInstrumentEdit(bad), null, JSON.stringify(bad));
+  const field = readFileSync(join(journeys, 'src/nativeField.ts'), 'utf8');
+  const command = field.slice(field.indexOf('const command=async(edit:InstrumentEdit'), field.indexOf('const liveEntry='));
+  const view = command.slice(command.indexOf("if(edit.kind==='view')"), command.indexOf("if(edit.kind==='body')"));
+  assert.match(view, /if\(at!==undefined\)throw new Error\('The View is how the stage draws the Torus/, 'it lands at no sample of the owner');
+  assert.match(view, /controller\.setView\(edit\.view\);update\(\);return \{\};/, 'the stage draws it at once');
+  // the controller keeps it: each Torus object it makes (opened, released) draws the View you keep
+  const controller = readFileSync(join(journeys, 'src/native-field/controller.ts'), 'utf8');
+  assert.equal(controller.match(/this\.torusObject=new TorusObject\(\);this\.torusObject\.setView\(this\.view\);/g)?.length, 2);
+  assert.match(controller, /setView\(view:TorusView\)\{this\.view=view;if\(this\.torusObject\.setView\(view\)\)\{this\.projection\?\.refresh\(\);this\.changed\(\);\}\}/);
+});
+
+test('the frame sends the View you keep to the stage once it announces its instrument, and again each time you choose another', () => {
+  const panel = readFileSync(new URL('../../../../../packages/live-shell/ui/src/panels/expressions.tsx', import.meta.url), 'utf8');
+  assert.match(panel, /const torusView = torusViewOf\(\{view: useHeld\(TORUS_DESIGN_ID, 'view'\) \?\? 'surface'\}\)/, 'the View the hand holds on the Torus, read by its own key');
+  const effect = panel.slice(panel.indexOf('const instrumentUp = stage?.instrument !== undefined'), panel.indexOf('}, [torusView, instrumentUp])'));
+  assert.match(effect, /if \(!instrumentUp \|\| !host\.current\) return/, 'nothing is sent before the stage announces its instrument');
+  assert.match(effect, /stageRun\(\{command: 'instrument', edit: \{kind: 'view', view: torusView\}\}\)/, 'through the mounted stage channel');
+  assert.match(effect, /setViewFault\(result\.ok \? null : `The stage does not draw the Torus's View: /, 'a refusal is named, in the stage\'s words');
+  assert.match(panel, /faults: \[hostFault, surfaceFault, viewFault, fault\]/, 'and stands with the frame\'s other faults');
+  const holds = readFileSync(new URL('../../../../../packages/live-shell/ui/src/techne/devices/designDevices.ts', import.meta.url), 'utf8');
+  assert.match(holds, /export function useHeld\(id: string, key: string\): Value \| undefined \{\n\s*return useSyncExternalStore\(subscribe, \(\) => holds\[id\]\?\.\[key\], \(\) => holds\[id\]\?\.\[key\]\)/);
+});
