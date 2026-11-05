@@ -320,6 +320,40 @@ test('(BD r19) the Group card carries its type, Discard removes the proposal, Re
   bind.resetHolds()
 })
 
+// Round 870 (DLW build ruling 2026-11-05): Stop after's face sits beside Retry on the chain's task row, as Live keeps a Clip Stop button in
+// every track's slots (§19.4). Its carrier asks Software Factory to stop the chosen chain's task's current attempt (taskBindings.ts
+// stopAfterTask, factory_owner attempt-request-cancellation); it lights while the chain is at work.
+test('(r870) Stop after stands beside Retry on the chosen chain: its carrier stops the task\'s current attempt, drawn and written down', async () => {
+  bind.resetHolds()
+  const calls = []
+  const L = {...LEAD, agentRef: 'agent/aletheia'}, H = {...HELPER, agentRef: 'agent/anima'}
+  const tracks = [GROUP, L, H, IDLE, OTHER]
+  const rack = ports => own.agentsetBinding({group: GROUP, tracks, holds: bind.chainHolds()}, ports)
+  assert.equal(rack({}).standing.stopAfter?.disabled, own.AGENTSET_REFUSE.stopAfter, 'no carrier: dark, saying why')
+  assert.match(own.AGENTSET_REFUSE.stopAfter, /^Stop after: no carrier to Factory's attempt-task-units and attempt-request-cancellation stands on this rack/)
+  const ports = {stopAfter: async input => { calls.push(['stopAfter', input]); return {status: 'cancel-requested'} }}
+  assert.equal(rack(ports).standing.stopAfter, undefined, 'Stop after stands with its carrier')
+  await assert.rejects(() => rack(ports).write([{key: 'stopAfter', value: true}]), {message: own.CHAIN_LIST_REFUSE.noneChosen('Stop after')})
+  rack(ports).local.member('factory:decision-helper')
+  await assert.rejects(() => rack(ports).write([{key: 'stopAfter', value: true}]), {message: own.CHAIN_LIST_REFUSE.helperStop})
+  rack(ports).local.member(H.sessionRef)
+  await rack(ports).write([{key: 'stopAfter', value: true}])
+  assert.deepEqual(calls.at(-1), ['stopAfter', {project: H.project ?? '', agent_session: H.sessionRef}])
+  // The face: Stop after beside Retry in the selected chain's row, lit while the chain works.
+  const face = read('inhabitants/catalogue/panels/software-factory__agentset-rack.tsx')
+  assert.match(face, /\{retryAction\(p, chosen\)\}\n\s*\{stopAfterAction\(p, chosen\)\}/, 'beside Retry')
+  assert.match(face, /label="Stop after" does=\{SAYS\.stopAfter\}/)
+  assert.match(face, /can = chosen\?\.state === 'working'/, 'it lights while the chain is at work')
+  // The chain wires the carrier: the chosen chain's bound task, its current unit asked to stop.
+  const view = read('agent/devices/FactoryDeviceChain.tsx')
+  assert.match(view, /await stopAfterTask\(request => factoryOwnerWrite\(transport, request, `factory_owner \$\{request\.kind\}`\), custodyState, await boundTaskOf\(transport, project, agent_session, 'Stop after'\)\)/)
+  // The manual's line (§19.4 Rules).
+  const manual = readFileSync(new URL('../../../../ProjectCentral/docs/1-vision/dlw/DLW.md', import.meta.url), 'utf8')
+  const agent = manual.slice(manual.indexOf('### 19.4 Agent'), manual.indexOf('### 19.5 Experiment'))
+  assert.match(agent, /- Stop after stands beside Retry on the chain's task row, as Live keeps a\s+Clip Stop button in every track's slots\./)
+  bind.resetHolds()
+})
+
 test('(BD r19, Central #318) the chain is the agent\'s profile: Rename on the Agent\'s head and a SkillSet dropped on the rack write it at its revision', async () => {
   const PROFILE = {profile_ref: 'agent-profile:kite', revision: 'p3', agent_ref: 'agent/kite', name: 'Kite', skill_set_refs: ['sets/core', 'sets/review']}
   const profile = own.chainProfileOf(PROFILE)
@@ -378,12 +412,9 @@ test('(BD r20) Hand back: the light is the custody listing\'s hand_back, a held 
   await binding.write([{key: 'handBack', value: true}])
   assert.deepEqual(asked, [{kind: 'custody-hold', state_path: '/state', custody_ref: 'custody:1', act: 'give-back',
     reason: 'person:frank gave back what they edited, from the desk.', expected_revision: 3}], 'each hold on what this agent holds, at its revision as read')
-  // The edit's side: taking a hold on a record the agent holds.
-  asked.length = 0
-  await binding.write([{key: 'take', value: 'custody:2'}])
-  assert.deepEqual(asked, [{kind: 'custody-hold', state_path: '/state', custody_ref: 'custody:2', act: 'take',
-    reason: 'person:frank edited what the agent holds, from the desk.', expected_revision: 5}])
-  await assert.rejects(() => binding.write([{key: 'take', value: 'custody:3'}]), /^Error: Take: custody:3 is not held by this session's agent/)
+  // REPLACED (round 870; DLW build ruling 2026-11-05, "No separate Take button"): the edit's side was a `take` write key on Custody, sent
+  // with the record's ref (custody:2, its revision 5); the take is now the edit path's own first step (holdBeforeEdit, below).
+  assert.equal(binding.writes('take'), false, 'Custody writes no take of its own')
   // Dark: nothing you edited is held, so the press asks nothing.
   const dark = own.custodyBinding({sessionRef: LEAD.sessionRef, agent: {}, person: 'person:frank', custody: custody({...LISTING, hand_back: {lit: false, held: []}})}, null, {hold})
   assert.equal(dark.values.handBackLit, false)
@@ -407,6 +438,54 @@ test('(BD r20) Hand back: the light is the custody listing\'s hand_back, a held 
     {hold: async () => { throw Error('custody custody:1 is already held by person:ada since 3') }})
   await assert.rejects(() => refusing.write([{key: 'handBack', value: true}]), {message: 'custody custody:1 is already held by person:ada since 3'})
   // The chain sends it through the kernel's factory_owner and reads the custody list again after it.
-  const chain = readFileSync(new URL('../src/agent/devices/FactoryDeviceChain.tsx', import.meta.url), 'utf8')
-  assert.match(chain, /hold: request => factoryOwnerWrite\(transport, request, '`factory development custody hold`'\)\.finally\(refreshCustody\)/)
+  // REPLACED (round 870): the port stood in FactoryDeviceChain.tsx (`.finally(refreshCustody)`); it is the session's custody's, shared with
+  // the Clip view and the transport (sessionCustody.ts), and the chain takes it from there.
+  const custodyModule = read('agent/devices/sessionCustody.ts')
+  assert.match(custodyModule, /request => factoryOwnerWrite\(transport, request, '`factory development custody hold`'\)\.finally\(refresh\)/)
+  assert.match(read('agent/devices/FactoryDeviceChain.tsx'), /hold: sessionCustody\.hold/)
+})
+
+// Round 870 (DLW build ruling 2026-11-05; §19.4 "When you edit something the agent holds, the agent does not overwrite your edit"): a
+// person's edit of a record the agent holds takes the hold first, in the edit path itself; there is no separate Take button. FAKE: the
+// listing in Factory's own shape and a recording port.
+test('(r870) Take: an edit of what the agent holds takes Factory\'s hold first, naming what was edited at the record\'s revision; a hold that cannot be taken writes nothing', async () => {
+  const record = (ref, position, work, state, revision, hold) => ({schema: 'factory.work-custody/v1', custody_ref: ref, position_ref: position, work_ref: work, state,
+    assigned_at_unix_ms: 1, reason: 'assigned', revision, updated_at_unix_ms: 2, transitions: [],
+    ...(hold ? {person_hold: {held_by: 'person:frank', authority_ref: 'grant:frank', subject_ref: 'file:notes.md', reason: 'edited', taken_at_unix_ms: 3}} : {})})
+  const LISTING = {schema: 'factory.work-custody-listing/v1', project_ref: 'project:o-i', filter: {}, count: 3, custody: [
+    record('custody:1', 'position:lead', 'central:task:t1', 'in-progress', 3, false), record('custody:2', 'position:lead', 'central:task:t2', 'blocked', 5, true),
+    record('custody:3', 'position:other', 'central:task:t3', 'in-progress', 1, false)], hand_back: {lit: true, held: ['custody:2']}}
+  const custody = (over = {}) => ({statePath: '/state', listing: {status: 'answered', value: LISTING, error: null}, agentPosition: 'position:lead', work: 'central:task:t1', ...over})
+  const asked = []
+  const hold = async request => { asked.push(request); return {schema: 'factory.work-custody-receipt/v1', result: 'applied'} }
+  await own.holdBeforeEdit(custody(), 'person:frank', hold, 'agent-session/fx-aletheia/settings/name')
+  assert.deepEqual(asked, [{kind: 'custody-hold', state_path: '/state', custody_ref: 'custody:1', act: 'take', reason: 'person:frank edited what the agent holds, from the desk.',
+    subject_ref: 'agent-session/fx-aletheia/settings/name', expected_revision: 3}], 'the session\'s work is the agent\'s record: its hold is taken, with what was edited')
+  asked.length = 0
+  for (const over of [{work: 'central:task:t2'}, {work: 'central:task:t3'}, {work: 'central:task:none'}, {work: null}, {agentPosition: null},
+    {listing: {status: 'reading', value: null, error: null}}, {listing: {status: 'refused', value: null, error: 'Factory refused'}}, {listing: null}]) {
+    await own.holdBeforeEdit(custody(over), 'person:frank', hold, 's/settings/name')
+  }
+  await own.holdBeforeEdit(null, 'person:frank', hold, 's/settings/name')
+  assert.equal(asked.length, 0, 'a record a person holds already, another Position\'s, work no record names, and a listing not read ask nothing: the edit is written as before')
+  // What cannot be taken refuses the edit in words, and nothing is sent.
+  const refusal = /^Error: Your edit: the agent holds this task's work \(custody:1\), and (.+); nothing was written, so the agent does not overwrite it\.$/
+  await assert.rejects(() => own.holdBeforeEdit(custody({listing: {status: 'answered', value: {...LISTING, hand_back: undefined}, error: null}}), 'person:frank', hold, 's'),
+    err => refusal.test(String(err)) && String(err).includes(own.EDIT_HOLD_WHY.noHandBack))
+  await assert.rejects(() => own.holdBeforeEdit(custody({statePath: null}), 'person:frank', hold, 's'), err => String(err).includes(own.EDIT_HOLD_WHY.noState))
+  await assert.rejects(() => own.holdBeforeEdit(custody(), null, hold, 's'), err => refusal.test(String(err)) && String(err).includes(own.EDIT_HOLD_WHY.noPerson))
+  await assert.rejects(() => own.holdBeforeEdit(custody(), 'person:frank', undefined, 's'), err => String(err).includes(own.EDIT_HOLD_WHY.noCarrier))
+  assert.equal(asked.length, 0)
+  // Factory's refusal of the take stands in its words, and the edit is not written after it.
+  await assert.rejects(() => own.holdBeforeEdit(custody(), 'person:frank', async () => { throw Error('custody custody:1 is already held by person:ada since 3') }, 's'),
+    {message: 'custody custody:1 is already held by person:ada since 3'})
+  // The paths that write a task's settings take it first: the Clip view's seams, the Tasks device's settings and Loop's song.
+  const tasks = read('agent/devices/taskBindings.ts')
+  assert.equal(tasks.match(/await context\.holdFirst\?\.\(settingSubject\([^)]*\)\)\n\s*await writeSessionSettings\(/g)?.length, 2, 'the seams and the Tasks device: the hold, then the write')
+  const clips = read('agent/clipBinding.ts')
+  assert.match(clips, /await seat\.context\.holdFirst\?\.\(settingSubject\(seat\.task\.sessionRef, 'loop'\)\)\n\s*await writeSessionSettings\(/)
+  assert.match(clips, /const \{holdFirst\} = useSessionCustody\(transport, custodyAt\)/)
+  assert.match(clips, /refused: answer\.reading\.error, holdFirst\}/)
+  // The custody it reads is the chain's own reading (one key for the three views).
+  assert.match(read('agent/devices/FactoryDeviceChain.tsx'), /const sessionCustody = useSessionCustody\(transport, custodyAt\)/)
 })

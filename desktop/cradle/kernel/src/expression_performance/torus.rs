@@ -565,7 +565,8 @@ struct Render {
 
 /// What the kernel relayed to one owner, held to seal a take from: each act at the sample it landed at,
 /// each Torus checkpoint the owner gave, each render's parts and the sha256 of their PCM. Bounded; held
-/// with the owner and gone when it closes.
+/// with the owner, and kept a while after it closes so a take recorded before a restart still seals
+/// (native_expression.rs `Manager::retire`).
 #[derive(Debug, Default)]
 pub(crate) struct TakeWitness {
     journal: VecDeque<(u64, Witnessed)>,
@@ -777,6 +778,13 @@ impl TakeWitness {
         super::kept::TorusSound::sealed(name, self.given(checkpoint_sha256)?, body)
     }
 
+    /// Whether this owner gave the Torus checkpoint `checkpoint_sha256` and it is still kept.
+    pub(crate) fn keeps(&self, checkpoint_sha256: &str) -> bool {
+        self.kept
+            .iter()
+            .any(|kept| kept.sha256 == checkpoint_sha256)
+    }
+
     /// The Torus checkpoint `checkpoint_sha256` this owner gave under the lease, or a refusal in words.
     pub(crate) fn given(&self, checkpoint_sha256: &str) -> Result<&Value, String> {
         self.kept
@@ -801,7 +809,7 @@ impl TakeWitness {
             .iter()
             .rev()
             .find(|kept| kept.sha256 == checkpoint_sha256)
-            .ok_or_else(|| format!("No Torus checkpoint {checkpoint_sha256} was given under this lease: a take is sealed from the checkpoint its owner gave as it began, while that owner is open"))?;
+            .ok_or_else(|| format!("No Torus checkpoint {checkpoint_sha256} was given under this lease: a take is sealed from the checkpoint its owner gave as it began, named under that owner's lease or given whole"))?;
         let render = self
             .renders
             .iter()

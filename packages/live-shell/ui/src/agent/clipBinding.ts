@@ -67,7 +67,8 @@ import {readSettingsOf, settingsReadingEntry, taskReadingEntry, useSettingsAnswe
 import {useAgentSessionsOptional} from './AgentSessionsProvider'
 import {projectOfSession, ROOT_REGISTER} from './worldScope'
 import {eventsForSession, trackKey, type AgentSessionTrack, type TaskClip, type TemporalEventLike} from './agentRunModel'
-import {TASK_SEAMS, type TaskAddress, type TaskSeamContext, type TaskSetting} from './devices/taskBindings'
+import {TASK_SEAMS, settingSubject, type TaskAddress, type TaskSeamContext, type TaskSetting} from './devices/taskBindings'
+import {useSessionCustody} from './devices/sessionCustody'
 import {MENU_ACT} from '../native/openStudio'
 import {sayOnInfoLine} from '../frame/devices/deviceHost'
 import {canonNoteOf, dropSong, exportSong, loopSongChange, publishChosenNote, SONG_CLIP_DRAG, songOfPayload, unitsInSpan, type ChosenNote,
@@ -537,6 +538,7 @@ function withScore(wiring: ClipWiring, score: ScorePort | null, choice: (key: st
     if (!change) return loop(value)
     if ('refused' in change) throw new Error(change.refused)
     if (seat.task.n !== 1) throw new Error(SETTINGS_WHY.oneTask)
+    await seat.context.holdFirst?.(settingSubject(seat.task.sessionRef, 'loop'))
     await writeSessionSettings(seat.context.transport, seat.context.project, seat.task.sessionRef, change.change)
   }
   return {
@@ -715,12 +717,18 @@ export function useFactoryClip(): ClipBinding | null {
   useViewHoldsVersion()
   const trackId = selected.ref ? parseFactoryTaskRef(selected.ref)?.trackId ?? selected.ref : null
   const colour = selected.set?.tracks.find(item => item.id === trackId)?.color ?? selected.track?.color ?? null
-  const sessionRef = factoryTaskOf(selected.ref, factory.tracks)?.track.sessionRef ?? null
+  const sessionTrack = factoryTaskOf(selected.ref, factory.tracks)?.track ?? null
+  const sessionRef = sessionTrack?.sessionRef ?? null
   const transport = sessions?.transport ?? UNAVAILABLE
   const project = sessionProjectOf(sessions?.rows, sessionRef)
   const answer = useSettingsAnswer(transport, sessions ? sessionRef : null, project)
+  // An edit of what the agent holds takes the hold first, in the edit path itself (§19.4: "the agent does not overwrite your edit"; DLW
+  // build ruling 2026-11-05): the session's custody, the same reading its chain's Custody draws (devices/sessionCustody.ts).
+  const agentRef = sessionTrack?.agentRef ?? null
+  const custodyAt = useMemo(() => (sessions && sessionRef ? {sessionRef, project, agentRef} : null), [sessions != null, sessionRef, project, agentRef]) // eslint-disable-line react-hooks/exhaustive-deps
+  const {holdFirst} = useSessionCustody(transport, custodyAt)
   const settings: TaskSeamContext | null = sessions && sessionRef
-    ? {transport, project, settings: answer.reading.status === 'answered' ? answer.reading.value : null, refused: answer.reading.error} : null
+    ? {transport, project, settings: answer.reading.status === 'answered' ? answer.reading.value : null, refused: answer.reading.error, holdFirst} : null
   const constellations = useConstellations().rows
   // What the task's attempts returned: the session's takes (AIKit says which attempts its bound task serves, Factory what each is),
   // each returned one's Return read through Factory, and a file opened beside you through Central's file route.

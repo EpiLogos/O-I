@@ -146,3 +146,21 @@ test('the Launch panel\'s Quantize carries AIKit\'s words as its values and the 
     assert.match(chooser, new RegExp(`<option value="${quantize}" selected="">${labels[quantize]}</option>`), `${quantize} reads as ${labels[quantize]}`)
   }
 })
+
+// Round 870 (DLW build ruling 2026-11-05; §19.4 "When you edit something the agent holds, the agent does not overwrite your edit"): the
+// Clip view's edit of a task's setting takes the agent's hold first, in its own path (TaskSeamContext.holdFirst, sessionCustody.ts), and a
+// hold that cannot be taken writes nothing. SCRIPTED: a recording holdFirst; no carrier stands, so the write itself is refused after it.
+test('(r870) an edit of a task\'s setting takes the hold first, then writes; a refused hold writes nothing', async () => {
+  const steps = []
+  const context = holdFirst => ({transport: {kind: 'unavailable', reason: 'test'}, project: 'O-I', settings: readingOf(taskOf()), holdFirst})
+  const taking = factory.factoryWiring({sessionRef: 'ses-214', n: 1}, context(async subject => { steps.push(subject) }))
+  // The hold is taken; then the write goes, and is refused here only because no reading is held for it (no carrier in this test).
+  await assert.rejects(() => taking.acts.name('Correlate'), /The session's settings are not read yet/)
+  assert.deepEqual(steps, ['ses-214/settings/name'], 'the hold first, naming the setting edited')
+  const held = factory.factoryWiring({sessionRef: 'ses-214', n: 1}, context(async () => { throw Error('Your edit: the agent holds this task\'s work (custody:1), and no person is current') }))
+  await assert.rejects(() => held.acts.launch('gate'), /^Error: Your edit: the agent holds this task's work/, 'the hold\'s refusal, never the write\'s')
+  // A setting the owner refuses before any hold is asked: nothing is held for an edit that is not made.
+  steps.length = 0
+  await assert.rejects(() => taking.acts.active('yes'), /The clip activator is on or off/)
+  assert.deepEqual(steps, [], 'no hold for an edit refused by its own words')
+})

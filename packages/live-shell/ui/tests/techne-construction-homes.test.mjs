@@ -113,6 +113,20 @@ test('(r869) Promote dims where the act would be refused today, its tip the refu
   assert.match(source, /standing\.promote = \{disabled: refusalWords\(PROMOTE_REFUSED, refused\)\}/, 'the tip through refusalWords')
 })
 
+// Round 870 (DLW build ruling 2026-11-05): Promote dims only where the act would be refused. A second promote is not refused (the owner
+// records a second proposal), so a line the owner recorded keeps Promote ready, and the control says what the owner recorded.
+test('(r870) a line the owner recorded keeps Promote ready: the face dims nothing the owner would not refuse', async () => {
+  const {readFile} = await import('node:fs/promises')
+  const face = await readFile(new URL('../src/inhabitants/catalogue/panels/techne__canvas.tsx', import.meta.url), 'utf8')
+  const promote = face.slice(face.indexOf('const promote = (p: ViewProps)'), face.indexOf('/** The numbers beside the picture'))
+  assert.ok(promote.length > 100, 'the face\'s Promote')
+  assert.doesNotMatch(promote, /state === 'recorded' \?/, 'no dim for a line the owner recorded')
+  assert.doesNotMatch(promote, /The owner has recorded this relation/)
+  assert.match(promote, /state === 'recorded' && why \? `\$\{PROMOTE_DOES\} The owner recorded the last: \$\{why\}` : PROMOTE_DOES/, 'what the owner recorded, said on the control')
+  const binding = await readFile(new URL('../src/techne/devices/frameBindings.ts', import.meta.url), 'utf8')
+  assert.doesNotMatch(binding, /a line the owner recorded\) stand behind/)
+})
+
 // ---------------------------------------------------------------------------------------------------------------- the browser's menus
 
 const SPACE = {ref: 'wiki:node:s', title: 'The inquiry', kind: 'space', space: 'central:wiki:s', register: 'central', registerTitle: 'Central', members: [{ref: 'wiki:node:a', title: 'A', position: null, face: null}]}

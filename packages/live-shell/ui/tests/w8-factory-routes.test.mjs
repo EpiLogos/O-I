@@ -276,7 +276,10 @@ test('7 · Prompt pads: pads-write carries the slot, the bank revision read and 
   const view = read('agent/devices/FactoryDeviceChain.tsx')
   assert.match(view, /\{write: request => factoryOwnerWrite\(transport, \{kind: 'pads-write', \.\.\.request\}, '`factory development pads-write`'\)\}/)
   // REPLACED (O-I #740 lane B): PADS_LOCATE of RACK_PROJECT ('O-I'); the chain's register located, no project naming the root (factory.rs locate).
-  assert.match(view, /const padsLocateOp = \(register: string \| null\): KernelOp => \(\{op: 'factory_owner' as const, request: register === null \? \{kind: 'locate'\} : \{kind: 'locate', project: register\}\}\)/)
+  // REPLACED (round 870): the locate op was the chain's own; it is the session's custody's (sessionCustody.ts factoryLocateOp), one op, so
+  // the pads and Custody are answered by one reading.
+  assert.match(read('agent/devices/sessionCustody.ts'), /export const factoryLocateOp = \(register: string \| null\): KernelOp => \(\{op: 'factory_owner' as const, request: register === null \? \{kind: 'locate'\} : \{kind: 'locate', project: register\}\}\)/)
+  assert.match(view, /const padsLocateOp = factoryLocateOp/)
   assert.match(view, /const padsLocate = useMemo\(\(\) => padsLocateOp\(register\), \[register\]\)/)
   assert.doesNotMatch(view, /pads-run|pads-record/, 'no begin or end is recorded for a run that never started')
   bind.resetHolds()

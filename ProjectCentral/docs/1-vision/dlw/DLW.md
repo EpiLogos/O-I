@@ -3547,6 +3547,8 @@ Turn the World to its graph side and the same material lays out by connection. E
 
 The graph view has its own controls. Set how many hops it reaches, how far nodes spread and how strongly they pull together. Choose which occurrences show as dust around a node. Choose which ties show: from a source, inferred, or from a site. Choose whether nodes hold to their sky anchors, and which tiers of node show. Fit brings the whole graph into the pane. Choose Space to return to the body. The graph's settings are kept with the set, as every pane's are.
 
+A large graph draws by level of detail. Past about 2,000 nodes or 4,000 ties in view, each node's dust folds into its halo with the count until you zoom in, and the ties of dust show only around the node you hover or select. Nothing is hidden without its count, and the controls above thin the graph further.
+
 #### Parameters
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
@@ -3679,7 +3681,7 @@ The widget shows your planet, small, with its phase and today's sky. Click it to
 - To find a place in a source, select the place in Place scale and open its source.
 - To keep a view for a walk, press Capture.
 
-**Source:** MapLibre GL JS (Google Earth, Cesium and QGIS surveyed); Archetypal Earth (ported as code)
+**Source:** MapLibre GL JS (Google Earth, Cesium and QGIS surveyed); Archetypal Earth (ported as code); the graph side's draw at scale (ProjectCentral/docs/5-evidence/world-shell/PROJECTION-SCALE-2026-10-28.md:177-181)
 
 **Stories:** SH01, WV15, WO01–WO07, TW01–TW12, TY01–TY11, TO01–TO18, SF01–SF14
 
@@ -6758,6 +6760,10 @@ value that an agent moved shows that agent's name.
   record.
 - A stopped needle means a stall. The track lights Retry, and the stall card
   names what the last tool waits for.
+- Stop after stands beside Retry on the chain's task row, as Live keeps a
+  Clip Stop button in every track's slots. It lights while the task's attempt
+  runs, and asks Software Factory to stop it where it stands; the attempt
+  stays as a take.
 - The face moves only for something the run did. A queued, stalled or settled
   agent holds still, and the face breathes only while check-ins arrive.
 - The stage never goes back and never predicts the end. Progress on it only
@@ -6874,6 +6880,7 @@ difference as a finding on the task.
 | Parameter | Values | Default | What it does |
 |---|---|---|---|
 | Set | A set, by its name | The set on the chain | Chooses the repertoire. Drag a set from the browser to replace it. |
+| Sets | The sets the agent carries, in order | The order Central keeps | An agent can carry several sets. The rack draws every one, each with its members, in the order Central keeps for the agent; select a set in the list and move it to change the order. One set has no order to change. |
 | Member | On · Off, one for each chain | On | The chain's activator: your request to use the member, through the profile in use. On grants no trust and loads nothing. |
 | Applies to | Home · Project · Session | Project | Where the composition applies: every session on this machine, every session in this project, or this session only. |
 | Profile | A governance profile | Baseline | The profile that the composition applies under. |

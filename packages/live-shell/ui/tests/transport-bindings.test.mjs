@@ -81,7 +81,10 @@ test('Factory binds the old bar\'s working controls to the slots §10.5 names, a
   for (const id of ['link', 'punch-in', 'punch-out', 'loop-length', 'draw', 'keys', 'key-map', 'midi-map', 'rate']) assert.equal(bindings[id], undefined, `${id} stays unbound`)
   const markup = draw(bindings)
   for (const id of ['link', 'punch-in', 'punch-out', 'draw', 'keys', 'key-map', 'midi-map']) assert.ok(!enabled(markup, id), `${id} is drawn waiting`)
-  for (const id of ['tap', 'play', 'stop', 'record', 'overdub', 'arm', 're-enable', 'capture', 'loop', 'follow', 'metro', 'quantize', 'key']) assert.ok(enabled(markup, id), `${id} is pressable`)
+  for (const id of ['tap', 'play', 'stop', 'record', 'overdub', 'arm', 'capture', 'loop', 'follow', 'metro', 'quantize', 'key']) assert.ok(enabled(markup, id), `${id} is pressable`)
+  // REPLACED (round 870; DLW build ruling 2026-11-05): Re-enable was pressable from mount (the shell's own flag, set dark by the press); it
+  // is Hand back over the selected session's custody, pressable only while what you edited is held, as Live's Re-enable Automation is.
+  assert.ok(!enabled(markup, 're-enable'), 're-enable waits: no session is selected, so nothing an agent holds is read')
   assert.deepEqual([...markup.matchAll(/data-slot="([^"]+)"/g)].map(m => m[1]).filter((id, i, all) => all.indexOf(id) === i), [...TRANSPORT_SLOT_IDS], 'the same 28 slots, in order')
 })
 
@@ -90,7 +93,8 @@ test('Factory\'s lights are readings: none from a shell flag the owner has not a
   const markup = draw(bindings)
   // Heartbeat, steer and write arm have no owner reading until the harness accepts a value (R2 objection 7): no light. Follow
   // is the frame's own view (keep views with the agents); capture, voice, hand back and routine are the shell's own acts.
-  assert.deepEqual(['metro', 'overdub', 'follow', 'arm', 'capture', 'record', 're-enable', 'loop'].map(id => light(markup, id)), [null, null, 'on', null, 'off', 'off', 'off', 'off'])
+  // REPLACED (round 870): Re-enable's light was the shell's flag, off from mount; it is the custody listing's hand_back, and none while unread.
+  assert.deepEqual(['metro', 'overdub', 'follow', 'arm', 'capture', 'record', 're-enable', 'loop'].map(id => light(markup, id)), [null, null, 'on', null, 'off', 'off', null, 'off'])
   // Run was lit from mount on the old bar (a `useState(true)` no owner had answered); here no light shows until the harness answers.
   assert.equal(light(markup, 'play'), null, 'no Run light without an answer')
   assert.equal(light(markup, 'stop'), null, 'the old bar never lit Stop')
@@ -148,7 +152,49 @@ test('Factory\'s effort, heartbeat, interrupt timing, steer and write arm go thr
 test('Factory\'s shell-state presses are the shell\'s own functions', () => {
   const {bindings, shell} = factory()
   assert.equal(bindings.key.press, shell.cycleTokenScope, 'the token scope cycles through the shell')
-  assert.ok(shell && bindings.follow.press && bindings.loop.press && bindings['re-enable'].press && bindings.capture.press && bindings.tap.press && bindings.record.press)
+  assert.ok(shell && bindings.follow.press && bindings.loop.press && bindings.capture.press && bindings.tap.press && bindings.record.press)
+  // REPLACED (round 870): Re-enable was a shell-state press (`shell.setHandBackLit(false)`); it is Hand back, Factory's (below).
+  assert.equal('handBackLit' in shell, false, 'the shell keeps no hand-back flag')
+})
+
+// Round 870 (DLW build ruling 2026-11-05): the transport's Re-enable is Hand back, as Live's Re-enable Automation is. It reads and gives back
+// through the custody listing (factory.work-custody-listing/v1 hand_back over what the selected session's agent holds), not the shell's own
+// flag. FAKE: the listing in Factory's own shape and a recording hold port.
+test('(r870) Re-enable is Hand back: lit from the custody listing, pressed only while lit, giving back through Factory\'s custody hold', async () => {
+  const {custodyBinding} = await import('../src/agent/devices/sessionChainBindings.ts')
+  const {handBackSlot, HAND_BACK_NO_SESSION} = await import('../src/agent/devices/sessionCustody.ts')
+  const record = (ref, revision, hold) => ({schema: 'factory.work-custody/v1', custody_ref: ref, position_ref: 'position:lead', work_ref: `central:task:${ref}`, state: 'in-progress',
+    assigned_at_unix_ms: 1, reason: 'assigned', revision, updated_at_unix_ms: 2, transitions: [],
+    ...(hold ? {person_hold: {held_by: 'person:frank', authority_ref: 'grant:frank', subject_ref: 'ses/settings/name', reason: 'edited', taken_at_unix_ms: 3}} : {})})
+  const listing = hand_back => ({schema: 'factory.work-custody-listing/v1', project_ref: 'project:o-i', filter: {}, count: 2, custody: [record('c1', 4, true), record('c2', 1, false)],
+    ...(hand_back ? {hand_back} : {})})
+  const asked = [], said = []
+  const custody = (value, ports = {hold: async request => { asked.push(request) }}) => custodyBinding({sessionRef: 'ses', agent: {}, person: 'person:frank',
+    custody: {statePath: '/state', listing: {status: 'answered', value, error: null}, agentPosition: 'position:lead', work: 'central:task:c2'}}, null, ports)
+  const lit = handBackSlot(custody(listing({lit: true, held: ['c1']})), line => said.push(line))
+  assert.equal(lit.lit, true, 'lit: what you edited is held by the agent')
+  lit.press(); await settle()
+  assert.deepEqual(asked, [{kind: 'custody-hold', state_path: '/state', custody_ref: 'c1', act: 'give-back', reason: 'person:frank gave back what they edited, from the desk.', expected_revision: 4}])
+  assert.deepEqual(said, ['↳ Given back: the agent may take it up again.'])
+  const dark = handBackSlot(custody(listing({lit: false, held: []})), () => {})
+  assert.deepEqual([dark.lit, dark.press], [false, undefined], 'dark: nothing to give back, nothing pressed')
+  const older = handBackSlot(custody(listing(undefined)), () => {})
+  assert.deepEqual([older.lit, older.press], [undefined, undefined], 'a Factory with no hand_back: no light, and it says why')
+  assert.match(older.why, /answers no hand_back/)
+  const unread = handBackSlot(custodyBinding({sessionRef: 'ses', agent: {}, person: 'person:frank', custody: {statePath: '/state', listing: {status: 'reading', value: null, error: null},
+    agentPosition: 'position:lead', work: null}}, null, {}), () => {})
+  assert.deepEqual([unread.lit, unread.press], [undefined, undefined], 'unread: no light')
+  assert.deepEqual(handBackSlot(null, () => {}), {why: HAND_BACK_NO_SESSION}, 'no session: nothing read')
+  // Factory's refusal stands under the slot in its words.
+  said.length = 0
+  handBackSlot(custody(listing({lit: true, held: ['c1']}), {hold: async () => { throw Error('custody c1 was given back already') }}), line => said.push(line)).press(); await settle()
+  assert.deepEqual(said, ['↳ Refused — custody c1 was given back already'])
+  // The bar draws it from the session's custody, never from a shell flag.
+  const code = await source('shell/transports/useFactoryTransport.tsx')
+  assert.match(code, /const handBack = useHandBack\(transport, track\)/)
+  assert.match(code, /const slot = handBackSlot\(handBack, line => note\('re-enable', line\)\)/)
+  assert.doesNotMatch(code, /handBackLit/)
+  assert.doesNotMatch(await source('agent/AgentShellContext.tsx'), /handBackLit/)
 })
 
 test('Factory with no agent shell shows only the frame\'s readouts and presses nothing', () => {

@@ -140,7 +140,13 @@ export interface TaskSeamContext {
   readonly settings: EncounterSessionSettingsReading | null
   /** The owner's refusal of the read, in its words, when it refused. */
   readonly refused?: string | null
+  /** The hold an edit of what the agent holds takes first (§19.4; sessionChainBindings.ts holdBeforeEdit), with what is edited; it rejects,
+   * in words, where the hold cannot be taken, and nothing is written. Absent: no custody is read here, and the edit is written as before. */
+  readonly holdFirst?: (subject: string) => Promise<void>
 }
+
+/** What an edit of a task's setting names as edited, on the hold it takes first: the session's setting. */
+export const settingSubject = (sessionRef: string, setting: string): string => `${sessionRef}/settings/${setting}`
 
 // ---------------------------------------------------------------------------------------------------------------- one task's own ops
 
@@ -170,6 +176,8 @@ const settingSeam = (setting: TaskSetting): TaskSeam => ({
     if (task.n !== 1) throw new Error(SETTINGS_WHY.oneTask)
     const made = taskSettingChange(setting, value, context.settings)
     if ('refused' in made) throw new Error(made.refused)
+    // An edit of what the agent holds takes the hold first, in this path (§19.4; DLW build ruling 2026-11-05).
+    await context.holdFirst?.(settingSubject(task.sessionRef, setting))
     await writeSessionSettings(context.transport, context.project, task.sessionRef, made.change)
   },
 })
@@ -290,6 +298,7 @@ export function tasksBinding(input: TasksInput, agent: Pick<DesignBinding, 'writ
           if (why || !context) throw Error(why ?? SETTINGS_WHY.notHere)
           const made = tasksDeviceChange(key, value, context.settings)
           if ('refused' in made) throw Error(made.refused)
+          await context.holdFirst?.(settingSubject(input.session.sessionRef, key))
           await writeSessionSettings(context.transport, context.project, input.session.sessionRef, made.change)
           continue
         }

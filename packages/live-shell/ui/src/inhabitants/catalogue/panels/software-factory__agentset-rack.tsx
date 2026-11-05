@@ -47,8 +47,9 @@
 //   id, dropped on an empty track), add (what was dropped under the chain list: an agent, a set or a Decision helper), delete (⌫ on the chosen
 //   chain in the chain list, as Live deletes a chain: the chain's id; its session leaves the space as its own session track's Delete takes
 //   it off, §10.9, and the Decision helper leaves with its session), store (where every
-//   macro stands, kept as a variation), variation (the name of a stored variation to move every macro to) and retry (Factory's
-//   RetryGrant, factory/src/orchestration.rs).
+//   macro stands, kept as a variation), variation (the name of a stored variation to move every macro to), retry (Factory's
+//   RetryGrant, factory/src/orchestration.rs) and stopAfter (beside Retry, as Live keeps a Clip Stop button in every track's slots:
+//   Factory's request-cancellation of the chosen chain's task's current attempt; §19.4).
 // The crew's face (manual §19.15, §25.6): a pattern whose Count is Pair, Crew or Swarm is several whole creatures in one pane, each agent
 // in the posture of its own state (faces/CrewFace.tsx). `pattern` is the pattern the crew works as: the Type of its lead, read; `type` on a chain
 // names the pattern of that chain when it differs from the crew's (a lead that sets a goal and agents that decide the detail).
@@ -138,6 +139,7 @@ const SAYS = {
   swap: 'Swaps the chosen chain\'s agent, or the set, for another from the browser, and keeps the rest of its chain.',
   extract: 'Drag the chosen chain out onto an empty track and it works there alone, chain and all.',
   retry: 'Run the chosen chain\'s task again, when it is stalled or failed.',
+  stopAfter: 'Asks Software Factory to stop the chosen chain\'s task where its current attempt stands, as a clip\'s Stop button stops its track. The attempt stays as a take.',
   open: 'Open the rack full in a pane.',
   group: 'Makes one chain of the chains you chose, holding an Agent rack of them: Central proposes the set, and you accept it as you accept an agent.',
 }
@@ -454,6 +456,12 @@ const mapAction = (p: ViewProps, chosen: Node | undefined) => {
   return <Action {...s} label={apart ? 'Map' : 'Unmap'} does={apart ? 'Maps the chain\'s Model to the Model macro again.' : 'Unmaps the chain\'s Model from the Model macro: it keeps its own.'}
     disabled={s.disabled ?? (!chosen ? 'No chain is chosen.' : !agent ? 'The chain holds no Agent: a Decision helper has no Model to map.' : !unmapped ? 'No reading of the mapping.' : undefined)}
     onPress={chosen && all && unmapped ? () => p.set('unmapped', JSON.stringify(apart ? {...all, model: unmapped.filter(id => id !== chosen.id)} : offByHand(all, 'model', chosen.id))) : undefined} />
+}
+/** Stop after, beside Retry: lit while the chosen chain is at work on a task (§19.4). */
+const stopAfterAction = (p: ViewProps, chosen: Node | undefined) => {
+  const s = st(p, 'stopAfter'), can = chosen?.state === 'working'
+  return <Action {...s} label="Stop after" does={SAYS.stopAfter} disabled={s.disabled ?? (!chosen ? 'No chain is chosen.' : can ? undefined : 'The chain is not at work on a task.')}
+    onPress={can ? () => p.set('stopAfter', true) : undefined} />
 }
 const retryAction = (p: ViewProps, chosen: Node | undefined) => {
   const s = st(p, 'retry'), can = chosen?.state === 'stalled' || chosen?.state === 'failed'
@@ -895,6 +903,7 @@ export const design: DesignedDevice = {
           <DragOut p={p} chosen={chosen} />
           {mapAction(p, chosen)}
           {retryAction(p, chosen)}
+          {stopAfterAction(p, chosen)}
           {openAction(p, chosen)}
         </Section>
       </Band>

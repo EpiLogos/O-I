@@ -3,7 +3,9 @@
 // The atlas port (src/projections/atlas/src) is Archetypal-Earth's src/ copied verbatim at one pinned AE commit,
 // then adapted at the host seam (lock §8.4). `PORT-PIN.json` beside the port records the commit, the sha-256 of
 // every AE src module at that commit, which port modules are host-adapted (and why), which AE modules are host-only
-// (excluded, and why), and the port-new modules. Three modes:
+// (excluded, and why), and the port-new modules. A module AE has moved on since the pin, taken at a later commit of
+// its own while the rest of the port stays (round 870: graph/field-force.ts at 022d9ac), is under `pinnedAt` with that
+// commit and why, and its hash is AE's at that commit. Three modes:
 //
 //   node scripts/atlas-port-pin.mjs --check     CI-safe: every port module equals its pinned AE bytes, or is a
 //                                               recorded adaptation, or is recorded port-new; every pinned module
@@ -58,6 +60,9 @@ function aeHashes(commit) {
   return out
 }
 
+/** The AE commit a module is pinned at: its own under `pinnedAt`, else the pin's. */
+export const commitOf = (pin, path) => pin.pinnedAt?.[path]?.commit ?? pin.commit
+
 /** The CI-safe check: faults, and the list of modules that differ from the pin (each must be recorded). */
 export async function checkPort(pin, port) {
   const faults = []
@@ -68,18 +73,18 @@ export async function checkPort(pin, port) {
   for (const [path, hash] of Object.entries(port)) {
     const pinned = pin.ae[path]
     if (pinned === undefined) {
-      if (!portNew.has(path)) faults.push(`${path}: not in AE @ ${pin.commit} and not recorded port-new`)
+      if (!portNew.has(path)) faults.push(`${path}: not in AE @ ${commitOf(pin, path)} and not recorded port-new`)
       continue
     }
     if (pinned === hash) {
-      if (adapted.has(path)) faults.push(`${path}: recorded as adapted but equals AE @ ${pin.commit} — drop the record`)
+      if (adapted.has(path)) faults.push(`${path}: recorded as adapted but equals AE @ ${commitOf(pin, path)} — drop the record`)
       continue
     }
     differing.push(path)
-    if (!adapted.has(path)) faults.push(`${path}: differs from AE @ ${pin.commit} and is not a recorded host adaptation`)
+    if (!adapted.has(path)) faults.push(`${path}: differs from AE @ ${commitOf(pin, path)} and is not a recorded host adaptation`)
   }
   for (const path of Object.keys(pin.ae)) {
-    if (!(path in port) && !hostOnly.has(path)) faults.push(`${path}: in AE @ ${pin.commit} but missing from the port and not recorded host-only`)
+    if (!(path in port) && !hostOnly.has(path)) faults.push(`${path}: in AE @ ${commitOf(pin, path)} but missing from the port and not recorded host-only`)
   }
   for (const path of adapted) if (!(path in port)) faults.push(`${path}: recorded as adapted but absent from the port`)
   return {faults, differing}
@@ -91,7 +96,8 @@ async function main() {
   if (mode === '--check') {
     if (!pin) { console.error(`no pin at ${PIN_PATH}`); process.exit(1) }
     const {faults, differing} = await checkPort(pin, await portHashes())
-    console.log(`atlas port pinned at AE ${pin.commit}: ${Object.keys(pin.ae).length} AE modules; ${differing.length} host-adapted; ${Object.keys(pin.portNew).length} port-new; ${Object.keys(pin.hostOnly).length} host-only`)
+    const own = Object.entries(pin.pinnedAt ?? {})
+    console.log(`atlas port pinned at AE ${pin.commit}: ${Object.keys(pin.ae).length} AE modules; ${differing.length} host-adapted; ${Object.keys(pin.portNew).length} port-new; ${Object.keys(pin.hostOnly).length} host-only${own.length ? `; ${own.map(([path, at]) => `${path} at ${at.commit.slice(0, 7)}`).join(', ')}` : ''}`)
     for (const path of differing) console.log(`  adapted  ${path} — ${pin.adapted[path] ?? '(unrecorded)'}`)
     for (const fault of faults) console.error(`FAULT ${fault}`)
     process.exit(faults.length ? 1 : 0)
@@ -101,12 +107,21 @@ async function main() {
     const commit = process.argv[3] ?? pin.commit
     const full = aeGit('rev-parse', commit).toString('utf8').trim()
     const ae = aeHashes(full)
+    // A module pinned at its own commit keeps it until the new pin holds that commit; then it stands with the rest.
+    const pinnedAt = {}
+    for (const [path, at] of Object.entries(pin.pinnedAt ?? {})) {
+      let held = false
+      try { aeGit('merge-base', '--is-ancestor', at.commit, full); held = true } catch { held = false }
+      if (held) continue
+      pinnedAt[path] = at
+      ae[path] = sha(aeGit('show', `${at.commit}:src/${path}`))
+    }
     const port = await portHashes()
     const adapted = {}
     for (const [path, hash] of Object.entries(port)) {
       if (ae[path] !== undefined && ae[path] !== hash) adapted[path] = pin.adapted[path] ?? 'UNRECORDED — write the reason'
     }
-    const next = {...pin, commit: full, ae, adapted}
+    const next = {...pin, commit: full, ...(Object.keys(pinnedAt).length ? {pinnedAt} : {pinnedAt: undefined}), ae, adapted}
     await writeFile(PIN_PATH, JSON.stringify(next, null, 2) + '\n')
     console.log(`pin recorded at AE ${full}: ${Object.keys(ae).length} modules, ${Object.keys(adapted).length} adapted`)
     return
@@ -116,8 +131,9 @@ async function main() {
     const head = aeGit('rev-parse', 'HEAD').toString('utf8').trim()
     const now = aeHashes(head)
     const changed = []
+    // A module pinned at its own commit drifts from there (its hash is AE's at that commit).
     for (const path of new Set([...Object.keys(pin.ae), ...Object.keys(now)])) {
-      if (pin.ae[path] !== now[path]) changed.push(`${pin.ae[path] === undefined ? 'added  ' : now[path] === undefined ? 'removed' : 'changed'} ${path}`)
+      if (pin.ae[path] !== now[path]) changed.push(pin.pinnedAt?.[path] ? `changed ${path} (since its own pin ${pin.pinnedAt[path].commit.slice(0, 7)})` : `${pin.ae[path] === undefined ? 'added  ' : now[path] === undefined ? 'removed' : 'changed'} ${path}`)
     }
     console.log(`AE drift since the pin ${pin.commit.slice(0, 7)} → HEAD ${head.slice(0, 7)}: ${changed.length} module(s)`)
     for (const line of changed.sort()) console.log(`  ${line}`)
