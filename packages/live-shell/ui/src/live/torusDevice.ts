@@ -22,6 +22,7 @@ import {handsFor, heldFor, hold as holdDesign} from '../techne/devices/designDev
 import type {StageRun} from '../components/expressions/studio/StudioStage'
 import {bodyTable, coordinateNames, NO_CONDITION, tattvaBody, tattvaKeys, type BodySource, type BodyTable, type CoordinateName} from '../inhabitants/ql/devices/qlCoordinateName'
 import {refusalWords} from '../../../../../desktop/cradle/src/shared/Refusal.tsx'
+import type {ModeInForce} from './modes'
 
 // The session's law (its ranges and its `torus` edit) is torusInstrument.ts's, so the MIDI map reaches it without this device's faces.
 export {torusSessionOf, TORUS_RATE, TORUS_FUNDAMENTAL, TORUS_POLYPHONY, TORUS_TEMPO, TORUS_TUNINGS, TORUS_SHAPES, TORUS_TUNING_WORD, TORUS_SHAPE_WORD, TORUS_BAND_WORD, TORUS_NOTE_LENGTHS, torusSessionEdit, type TorusSession, type TorusSettingsEdit}
@@ -150,6 +151,21 @@ const STAGE_ABSENT: Readonly<Record<string, string>> = {
 export const TORUS_STAGE_ACTS: Readonly<Record<string, 'evaluate' | 'bind' | 'unbind' | 'retire'>> = {'stage.evaluate': 'evaluate', 'stage.bind': 'bind', 'stage.unbind': 'unbind', 'stage.retire': 'retire'}
 /** The view's own: the procedure you choose and a binding's budget (DesignBinding.local, held in the shell). */
 export const TORUS_STAGE_LOCAL = ['stage.procedure', 'stage.budget'] as const
+/** The rack face's own (DLW build ruling, 4 November: macros each with its range, and variations): its macros, the macro you choose to set,
+ * and its variations (DesignBinding.local, held in the shell until Keep rack keeps them in the Scene). */
+export const TORUS_RACK_LOCAL = ['macros', 'macro', 'variations'] as const
+const RACK_CHAIN_READ = 'A reading: the effects on the Torus\'s chain, in the order they sound, each with the settings the owner keeps. Keep rack keeps them.'
+const RACK_CHAIN_NONE = 'The owner reports no effects on the Torus\'s chain, so a rack has no chain to keep.'
+/** The Torus's chain as a rack keeps it (manual §21.2: "The Torus with its note devices and effects"): the effects the owner keeps after
+ * the Torus, in the order they sound, each with its settings (a flat record of numbers, switches and words); none where the owner reports
+ * no effects. */
+export function torusRackChain(state: LiveTorusState | null): {device_ref: string; role: 'effect'; state: Record<string, number | boolean | string>}[] | undefined {
+  const effects = state?.ok ? state.parameters?.effects : undefined
+  if (!effects) return undefined
+  const settings = effects as unknown as Readonly<Record<string, Readonly<Record<string, unknown>> | undefined>>
+  return effects.chain.map(effect => ({device_ref: effect, role: 'effect' as const, state: Object.fromEntries(Object.entries(settings[effect] ?? {})
+    .filter((entry): entry is [string, number | boolean | string] => typeof entry[1] === 'boolean' || typeof entry[1] === 'string' || (typeof entry[1] === 'number' && Number.isFinite(entry[1]))))}))
+}
 /** The stage the frame announced, as the Torus design reads it (torus.tsx `stage.slots`, `stage.bindings`, `stage.procedures`,
  * `stage.last`, `stage.why`), with the procedure and budget the view holds. */
 export function torusStageValues(stage: FrameStageReading | null | undefined, held: Readonly<Record<string, Value>> = {}): Record<string, Value> {
@@ -187,10 +203,13 @@ export const TORUS_ABSENT: Readonly<Record<string, string>> = {
   // body, body.form and modes: what rings, the owner's (its Torus session's `body`; QL-MEF `torus-body`, O-I 852), chosen through the stage
   // channel's body edit while the instrument follows or is held (torusBody); absent with their reason until the owner names it.
   pan: `No pan: ${NO_FIELD_PARAMETER}.`,
-  view: 'Surface, wire or both is a way of drawing the pane: no owner keeps it.',
   // material: the surface the lens in force gives the sound (QL m2_material.rs LensMaterial, the owner's Torus session `material`, O-I 854).
   material: 'No material here: the owner\'s Torus session names none for the lens in force, so the surface\'s colour, grain and give are not read.',
   meter: 'The owner reports no level meter: its audio receipt carries the presentation gain and its block counts, not a level.',
+  // chain: the effects on the Torus's chain, the rack face's reading of the owner's effects (torusRackChain), absent until it reports them.
+  chain: RACK_CHAIN_NONE,
+  // mode.followed: the lens and mode Follow takes (torusFollowed), read where the host reads the clip and the set's mode (TorusOnChain.tsx).
+  'mode.followed': 'No clip or set reading reaches the Torus in this host, so Follow has nothing to read: the lens and mode are the ones you choose.',
   sounding: 'No key is lit from the owner here: the keyboard strikes each key through QL\'s torus-play, which counts it as a note at its moving point, and the sounding notes stand in Notes (each key and the arc it struck); this picture lights pitch classes, which that reading does not name.',
   // body.source: the hand's choice over M2's body constants (QL's table, `ql kernel body-constants`; qlCoordinateName.ts BodyTable), written
   // as the body's Damping through the stage channel (torusBody); absent with its reason until the table is read and the owner takes edits.
@@ -204,6 +223,100 @@ export const TORUS_ABSENT: Readonly<Record<string, string>> = {
 }
 
 const NOT_WRITABLE = 'The owner takes edits only while the instrument follows or is held.'
+
+// ── View (manual §21.2 "View | Surface · Wire · Both, and Receiver On · Off | Surface · Off | What the pane draws") ─────────────────
+// Surface, wire or both is a way of drawing the pane, which no owner keeps: the hand keeps it (techne/devices/designDevices.ts holds),
+// as it keeps Body source, so it reads back as you set it and the pane draws it (TorusOnChain.tsx TorusPicture, the design's picture).
+// Receiver is the owner's (torusReceiver).
+
+export const TORUS_VIEWS = ['surface', 'wire', 'both'] as const
+export type TorusView = (typeof TORUS_VIEWS)[number]
+/** The View the hand holds: Surface until another is chosen (manual §21.2 default). */
+export const torusViewOf = (held: Readonly<Record<string, Value>> | undefined): TorusView =>
+  (TORUS_VIEWS as readonly unknown[]).includes(held?.view) ? held!.view as TorusView : 'surface'
+
+// ── Lens and mode: Follow (manual §21.2 "Lens and mode | Follow · a lens and a mode | Follow | The lens and mode the Torus reads. Follow
+// takes the clip's mode, or the set's when the clip has none") ─────────────────────────────────────────────────────────────────────
+// QL's own spellings, read from its source: a mode is a context frame (QL-MEF crates/ql-mef/src/music.rs ModeKind::context_frame,
+// Ionian CF1 … Locrian CF7); the mode catalogue names a lens by its code ("L0" … "L5'") and a frame by its code ("CF1" … "CF7")
+// (crates/ql-cli/src/music_command.rs `lens`, `context_frame`; context_frame.rs ContextFrameId::code; lens.rs LensId::code); the owner's
+// edits take `lens12`, the lens's place in LensId::ALL (0 … 11), and `context_frame` 1 … 7 (m1_engine.rs: ContextFrameId::ALL[cf - 1]).
+// A clip carries its own mode when Live's scale is on for it (live-set edit.rs "scale" = IsInKey, "The clip's own mode"; "mode" is one
+// of the seven, or none when Live names another scale). A clip's mode names no lens, so it takes the set's when one is in force.
+
+/** The seven modes in QL's order (music.rs ModeKind::ALL): the n-th is CFn. */
+export const TORUS_FOLLOW_MODES = ['ionian', 'dorian', 'phrygian', 'lydian', 'mixolydian', 'aeolian', 'locrian'] as const
+export const TORUS_FOLLOW = 'mode.follow'
+export const TORUS_FOLLOWED = 'mode.followed'
+/** What Follow takes: the lens (or none, where nothing names one) and the frame, from the clip or the set, in words; or why nothing. */
+export type TorusFollow =
+  | {readonly from: 'clip' | 'set'; readonly lens12: number | null; readonly context_frame: number; readonly words: string; readonly short: string}
+  | {readonly from: null; readonly reason: string}
+/** The clip's own mode, as the set's owner reads the clip (kernel LiveClipReading `scale`, `mode`). */
+export interface TorusClipMode {readonly scale: boolean | null; readonly mode: string | null}
+
+const lensLabel = (lens12: number) => `L${lens12 >> 1}${lens12 & 1 ? '′' : ''}`
+const modeWord = (mode: string) => mode.charAt(0).toUpperCase() + mode.slice(1)
+/** A catalogue lens code ("L3'", or the shell's "L3′") as its place in LensId::ALL, or null. */
+function lens12Of(code: string | undefined): number | null {
+  const match = typeof code === 'string' ? /^L([0-5])(['′]?)$/.exec(code) : null
+  return match ? Number(match[1]) * 2 + (match[2] ? 1 : 0) : null
+}
+/** A mode's frame (music.rs ModeKind::context_frame), or null for a name outside the seven. */
+function frameOfMode(mode: string | null | undefined): number | null {
+  const index = (TORUS_FOLLOW_MODES as readonly (string | null | undefined)[]).indexOf(mode)
+  return index < 0 ? null : index + 1
+}
+
+/** What Follow takes now: the clip's own mode on the set's lens, else the set's lens and mode. Pure. */
+export function torusFollowed(clip: TorusClipMode | null, set: ModeInForce): TorusFollow {
+  const scale = set.state === 'in-force' ? set.selection.scale : null
+  const lensMode = scale?.kind === 'lens-cf' ? scale : null
+  const setLens = lens12Of(lensMode?.lens)
+  const clipFrame = clip?.scale === true ? frameOfMode(clip.mode) : null
+  if (clipFrame !== null) {
+    const mode = modeWord(clip!.mode!)
+    return setLens !== null
+      ? {from: 'clip', lens12: setLens, context_frame: clipFrame, words: `the clip's mode, ${mode} (CF${clipFrame}), on the set's lens ${lensLabel(setLens)}`, short: `Clip: ${mode}, ${lensLabel(setLens)}`}
+      : {from: 'clip', lens12: null, context_frame: clipFrame, words: `the clip's mode, ${mode} (CF${clipFrame}); the set names no lens, so the lens stands as it is`, short: `Clip: ${mode}`}
+  }
+  if (lensMode && setLens !== null) {
+    const coded = /^CF([1-7])$/.exec(lensMode.contextFrame ?? '')
+    const frame = coded ? Number(coded[1]) : frameOfMode(lensMode.mode)
+    if (frame !== null) {
+      const mode = modeWord(lensMode.mode)
+      return {from: 'set', lens12: setLens, context_frame: frame, words: `the set's mode, ${mode} on ${lensLabel(setLens)} (CF${frame})`, short: `Set: ${mode}, ${lensLabel(setLens)}`}
+    }
+  }
+  if (scale && scale.kind === 'source') return {from: null, reason: `The clip carries no mode of its own, and the set's mode in force is ${scale.label}, a ${scale.family} scale, which names no lens or frame: the lens and mode stand as they are.`}
+  if (scale) return {from: null, reason: `The clip carries no mode of its own, and the set's mode in force, ${scale.label}, names no lens or frame QL reads: the lens and mode stand as they are.`}
+  return {from: null, reason: `The clip carries no mode of its own, and the set has none in force (${set.line.replace(/\.$/, '')}).`}
+}
+
+/** The owner's edits that bring its lens and frame to what Follow takes, only where they differ and only while it takes edits. Pure. */
+export function torusFollowEdits(state: LiveTorusState | null, follow: TorusFollow | null): InstrumentEdit[] {
+  if (!follow || follow.from === null || state === null || !state.ok || !liveInstrumentWritable(state)) return []
+  const d = state.determinants ?? null
+  const edits: InstrumentEdit[] = []
+  if (follow.lens12 !== null && d?.lens.lens12 !== follow.lens12) edits.push({kind: 'lens', lens12: follow.lens12})
+  if (d?.contextFrame !== follow.context_frame) edits.push({kind: 'context-frame', context_frame: follow.context_frame})
+  return edits
+}
+const FOLLOWED_KEYS: ReadonlySet<string> = new Set(['lens', 'context-frame'])
+const NO_FOLLOW = TORUS_ABSENT['mode.followed']!
+const FOLLOW_OFF = 'Follow is off: the lens and mode are the ones you choose.'
+/** Follow on the binding: whether it is on (the hand's, on until you turn it off), what it takes, and the Lens and Frame it sets. */
+function torusFollowKeys(follow: TorusFollow | null, held: Readonly<Record<string, Value>>): {values: Record<string, Value>; standing: Record<string, Standing>; sets: boolean} {
+  if (follow === null) return {values: {}, standing: {[TORUS_FOLLOW]: {disabled: NO_FOLLOW}, [TORUS_FOLLOWED]: {disabled: NO_FOLLOW}}, sets: false}
+  const on = held[TORUS_FOLLOW] !== false
+  if (!on) return {values: {[TORUS_FOLLOW]: false}, standing: {[TORUS_FOLLOWED]: {disabled: FOLLOW_OFF}}, sets: false}
+  const said = follow.from === null ? follow.reason : `Follow takes ${follow.words}.`
+  const standing: Record<string, Standing> = {}
+  for (const key of FOLLOWED_KEYS) standing[key] = {disabled: `${said} Turn Follow off to choose a lens and a mode.`}
+  if (follow.from === null) standing[TORUS_FOLLOWED] = {disabled: follow.reason}
+  else standing[TORUS_FOLLOWED] = {disabled: `The lens and mode Follow takes: ${follow.words}.`}
+  return {values: {[TORUS_FOLLOW]: true, ...(follow.from === null ? {} : {[TORUS_FOLLOWED]: follow.short})}, standing, sets: true}
+}
 
 // ── Receiver (manual §21.2 View: "Receiver On makes your camera the place where the torus is heard"; Rules: "A camera move does not
 // change the sound, unless Receiver is On") ─────────────────────────────────────────────────────────────────────────────────────────
@@ -555,7 +668,8 @@ export function torusDesignBinding(state: LiveTorusState | null, device: DeviceI
   condition: FrameInstrumentCondition | null | undefined = hostedChrome()?.state?.instrumentCondition ?? null,
   tattvaName: CoordinateName | null = condition?.tattva_ref ? coordinateNames().get(condition.tattva_ref) ?? null : null,
   table: BodyTable | null = bodyTable(), commit: (edit: InstrumentEdit) => Promise<{ok: boolean; error?: string}> = commitLiveInstrumentEdit,
-  keep: (key: string, value: Value) => void = (key, value) => holdDesign(TORUS_DESIGN_ID, key, value)): DesignBinding {
+  keep: (key: string, value: Value) => void = (key, value) => holdDesign(TORUS_DESIGN_ID, key, value),
+  follow: TorusFollow | null = null): DesignBinding {
   const standing: Record<string, Standing> = {}
   for (const key of TORUS_KEYS) {
     const why = writeStanding(state, key)
@@ -586,7 +700,19 @@ export function torusDesignBinding(state: LiveTorusState | null, device: DeviceI
   // Receiver: where the torus is heard from, the owner's own context, written as the stage channel's receiver edit.
   const receiver = torusReceiver(state, commit)
   Object.assign(standing, receiver.standing)
-  const local: Record<string, (value: Value | undefined) => void> = {...page.local, ...handsFor(TORUS_DESIGN_ID, TORUS_STAGE_LOCAL)}
+  // The rack face: the chain from the owner's effects, read; the macros, the macro chosen and the variations in your hand.
+  const chain = torusRackChain(state)
+  standing.chain = {disabled: chain ? RACK_CHAIN_READ : RACK_CHAIN_NONE}
+  const rackValues: Record<string, Value> = chain ? {chain: JSON.stringify(chain)} : {}
+  for (const key of TORUS_RACK_LOCAL) if (held[key] !== undefined) rackValues[key] = held[key]!
+  // View, the pane's own way of drawing, and Follow, both in your hand; under Follow the Lens and Frame are what it takes.
+  rackValues.view = torusViewOf(held)
+  const followKeys = torusFollowKeys(follow, held)
+  Object.assign(standing, followKeys.standing)
+  Object.assign(rackValues, followKeys.values)
+  const followed = (key: string) => followKeys.sets && FOLLOWED_KEYS.has(key)
+  const local: Record<string, (value: Value | undefined) => void> = {...page.local, ...handsFor(TORUS_DESIGN_ID, TORUS_STAGE_LOCAL), ...handsFor(TORUS_DESIGN_ID, TORUS_RACK_LOCAL),
+    ...handsFor(TORUS_DESIGN_ID, ['view', TORUS_FOLLOW])}
   const submit = device.submit
   const stageAct = async (change: ValueChange) => {
     if (!run) throw new Error(NO_STAGE_FRAME)
@@ -595,9 +721,9 @@ export function torusDesignBinding(state: LiveTorusState | null, device: DeviceI
   }
   return {
     id: device.id,
-    values: {...torusDesignValues(state), ...session.values, ...receiver.values, ...torusStageValues(stage, held), ...page.values, ...tattva.values},
+    values: {...torusDesignValues(state), ...session.values, ...receiver.values, ...torusStageValues(stage, held), ...page.values, ...tattva.values, ...rackValues},
     writes: key => (key in TORUS_STAGE_ACTS ? acting : body.writes.has(key) || session.writes.has(key) || receiver.writes.has(key)
-      || (key !== 'rack' && key !== 'receiver' && !BODY_KEYS.has(key) && !TORUS_SESSION_KEYS.has(key) && writeStanding(state, key) === null)),
+      || (key !== 'rack' && key !== 'receiver' && !BODY_KEYS.has(key) && !TORUS_SESSION_KEYS.has(key) && !followed(key) && writeStanding(state, key) === null)),
     standing,
     local,
     ...(page.waiting ? {waiting: ['rack']} : {}),
@@ -636,6 +762,8 @@ export interface TorusFigure {
   /** The outline's near side and far side, as SVG path data. */
   front: string
   back: string
+  /** The surface's silhouette, one closed path: where the outward normal turns edge-on to the viewer on the outer side of the tube. */
+  outline: string
   /** The viewBox that holds the whole outline, in the embedding's own units. */
   view: {x: number; y: number; width: number; height: number}
 }
@@ -673,10 +801,17 @@ export function torusFigure(size: TorusFigureSize, topology: Pick<typeof LIVE_TO
   }
   for (let index = 0; index < meridians; index++) { const theta2 = TAU * index / meridians; curve(t => point(TAU * t, theta2)) }
   for (let index = 0; index < parallels; index++) { const theta1 = TAU * index / parallels; curve(t => point(theta1, TAU * t)) }
+  // The silhouette: the normal is edge-on where cos θ1 sin θ2 sin α + sin θ1 cos α = 0, so on the tube's outer side θ1 = atan(−sin θ2 tan α).
+  let outline = ''
+  for (let step = 0; step < STEPS * 2; step++) {
+    const theta2 = TAU * step / (STEPS * 2), at = point(Math.atan(-Math.sin(theta2) * Math.tan(TILT)), theta2)
+    outline += `${step ? 'L' : 'M'}${round(at.x)} ${round(at.y)}`
+  }
+  outline += 'Z'
   // the outline's extent: the ring's reach across, and its reach down once tilted (at θ2 = 90°, y' = R cos α + r cos(θ1 + α))
   const across = R + r, down = R * cos + r
   const pad = 0.15
-  return {front, back, view: {x: round(-across - pad), y: round(-down - pad), width: round(2 * (across + pad)), height: round(2 * (down + pad))}}
+  return {front, back, outline, view: {x: round(-across - pad), y: round(-down - pad), width: round(2 * (across + pad)), height: round(2 * (down + pad))}}
 }
 
 /** How strongly the owner's standing lights the outline: following and held are the instrument at work, opening is on its way,

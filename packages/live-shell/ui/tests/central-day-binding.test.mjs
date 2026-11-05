@@ -341,6 +341,34 @@ function hosting(facts, values, run, extra = {}) {
   try { return run(entry, binding) } finally { door.publishDevice(ID, null); door.selectDevice(null); host.resetHost(ID) }
 }
 
+// O-I 772, the Day's bounds: each bound reads its owner's value or says why not. Closes is the civil-time policy's day boundary
+// (central.time.policy); Opens tomorrow is Central's Day settings' Rollover, else the policy's automatic rollover.
+test('the Day\'s bounds: a bound no owner reports draws why, in the owner\'s words, and a bound that is read draws no reason', () => {
+  const refused = groundOf({state: 'ready', action: 'central.day.read', data: DAY_16}, {state: 'failed', action: 'central.time.policy', error: {message: 'the civil-time policy is not valid JSON'}})
+  const facts = factsOf(refused)
+  const values = bind.dayValuesOf(facts, null)
+  assert.equal(values.dayStart, undefined, 'no boundary while the policy is refused')
+  assert.match(bind.DAY_ABSENT.dayStart, /civil-time policy.*central\.time\.policy/, 'Closes is named absent with its reason')
+  const binding = bind.dayDesignBinding(ID, facts, values, {turn: async () => {}, openToday: async () => {}})
+  assert.match(binding.standing.dayStart?.disabled ?? '', /Central refused its civil-time policy: the civil-time policy is not valid JSON/, 'in the owner\'s words')
+  assert.equal(binding.writes('dayStart'), false, 'still a reading: nothing here writes the boundary')
+  const unanswered = bind.dayFactsOf({ground: null, groundError: null, selected: null})
+  assert.equal(bind.dayDesignBinding(ID, unanswered, {}, {turn: async () => {}, openToday: async () => {}}).standing.dayStart?.disabled, bind.DAY_ABSENT.dayStart, 'nothing answered yet')
+  const read = factsOf(READY)
+  assert.equal(bind.dayDesignBinding(ID, read, bind.dayValuesOf(read, null), {turn: async () => {}, openToday: async () => {}}).standing.dayStart, undefined, 'a boundary that is read has no reason')
+  hosting(facts, values, () => {
+    door.selectDevice(ID)
+    const whole = html(createElement(WholeBand))
+    assert.match(whole, /data-i="closes\|[^"]*Central refused its civil-time policy: the civil-time policy is not valid JSON[^"]*"[^>]*data-disabled="true"/, 'Closes draws the reason')
+    assert.match(whole, /data-i="opens tomorrow\|[^"]*Central&#x27;s Day settings have not answered[^"]*"[^>]*data-disabled="true"/, 'Opens tomorrow draws the settings\' reason while neither owner reports it')
+  })
+  hosting(read, bind.dayValuesOf(read, null), () => {
+    door.selectDevice(ID)
+    const whole = html(createElement(WholeBand))
+    assert.doesNotMatch(whole, /data-i="(closes|opens tomorrow)\|[^"]*"[^>]*data-disabled="true"/, 'read bounds stand plain')
+  })
+})
+
 test('the Day draws its catalogue design on the chain, in the pool, on the rail and folded — on the stale ground\'s own values', () => {
   const facts = factsOf(STALE)
   hosting(facts, bind.dayValuesOf(facts, null), (entry, binding) => {

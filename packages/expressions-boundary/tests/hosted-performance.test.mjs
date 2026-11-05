@@ -169,11 +169,13 @@ test('the listing carries what the Scene keeps on the Torus: sounds on the torus
   // onto Live's device where the corpus pins the setting; a state that is not a flat record of settings is not what it says.
   assert.deepEqual(listed.kept.racks, [{rack_ref: 'rack:warm', name: 'Warm rack', sound: KEPT_DIGEST(1),
     chain: [{device_ref: 'arpeggiator', role: 'note', state: {}}, {device_ref: 'reverb', role: 'effect', state: {on: true, decay: 2.4, predelay: 20, mix: 22}}],
-    macros: [{name: 'Bloom', value: 0.5, targets: [{device_ref: 'torus', parameter: 'damping'}]}],
-    variations: [{name: 'Open', values: [1]}, {name: 'Closed', values: [0]}]}]);
+    macros: [{name: 'Bloom', value: 0.5, targets: [{device_ref: 'torus', parameter: 'damping', min: 0, max: 1}]}],
+    variations: [{name: 'Open', values: [1]}, {name: 'Closed', values: [0]}]}], 'each macro with the range it turns its parameter over (DLW build ruling, 4 November)');
   const rack = keptOnScene().racks[0];
   for (const bad of [{...rack, chain: [{device_ref: 'arpeggiator', role: 'send', state: {}}]}, {...rack, macros: [{name: 'Bloom', value: 2, targets: []}]},
     {...rack, variations: [{name: 'Open', values: []}]}, {...rack, macros: [{name: 'Bloom', value: 0.5, targets: [{device_ref: 'torus'}]}]}, {...rack, chain: 'arpeggiator'},
+    {...rack, macros: [{name: 'Bloom', value: 0.5, targets: [{device_ref: 'torus', parameter: 'damping'}]}]},
+    {...rack, macros: [{name: 'Bloom', value: 0.5, targets: [{device_ref: 'torus', parameter: 'damping', min: 0, max: Number.NaN}]}]},
     {...rack, chain: [{device_ref: 'reverb', role: 'effect'}]}, {...rack, chain: [{device_ref: 'reverb', role: 'effect', state: {decay: {s: 2.4}}}]},
     {...rack, chain: [{device_ref: 'reverb', role: 'effect', state: {decay: Number.NaN}}]}, {...rack, chain: [{device_ref: 'reverb', role: 'effect', state: [2.4]}]}])
     assert.equal(listPerformance({bases: [], torus_kept: {racks: [bad]}}).kept, undefined, JSON.stringify(bad).slice(0, 80));
@@ -264,4 +266,52 @@ test("the owner keeps an instrument by the kernel's own edit of the inspected re
   assert.match(source, /const keeping = instrumentToKeep\(scene\.performance, request\.name, request\.sound_ref\);\s+if \('reason' in keeping\) return \{state: 'refused', reason: keeping\.reason, missing: \[\]\};/);
   assert.match(source, /operation: 'edit', expression_ref: request\.expression_ref, expected_revision: document\.revision, actor: PERFORMANCE_ACTOR,\s+changes: \[keepInstrumentChange\(request\.scene_ref, keeping\.instrument\)\]/);
   assert.match(source, /return keptInstrumentReply\(kept\?\.performance, keeping\.instrument, edited\.dirty === true\);/);
+});
+
+// ── 7 — a rack kept (DLW build ruling, 4 November: "Keep rack: build it"; manual §21.2 Sounds and instruments: "A rack | The Torus with its
+// note devices and effects, its macros and their variations"). The Torus's rack face asks for it by name, with the sound its Torus opens
+// with, its chain, its macros each with its range, and its variations; the Scene keeps it by one edit of its performance (the kernel's
+// `keep_torus_rack`, kept.rs KeptRack), and keeping it again by the same name replaces it.
+
+const rackDraft = () => ({sound: KEPT_DIGEST(1), chain: [{device_ref: 'delay', role: 'effect', state: {on: true, time: 375, feedback: 40, mix: 25}}],
+  macros: [{name: 'Rate', value: 0.25, targets: [{device_ref: 'torus', parameter: 'rate', min: 0.5, max: 20}]},
+    {name: 'Damping', value: 0.5, targets: [{device_ref: 'torus', parameter: 'damping', min: 0.1, max: 40}]}],
+  variations: [{name: 'Variation 1', values: [0.25, 0.5]}, {name: 'Variation 2', values: [1, 0]}]});
+
+test('a rack is asked for by its name and the rack its face holds; the action reads only its own keys, and the rack is exact', () => {
+  const ask = {operation: 'performance', action: 'keep-rack', name: 'Breath rack', rack: rackDraft(), ...refs};
+  assert.deepEqual(readFramePerformanceRequest(ask), ask);
+  const {sound, ...unsounded} = rackDraft();
+  assert.deepEqual(readFramePerformanceRequest({...ask, rack: unsounded}).rack, unsounded, 'a rack that opens no sound');
+  const draft = rackDraft();
+  for (const bad of [{name: ''}, {name: 'x'.repeat(121)}, {rack: undefined}, {rack: []}, {extra: 1}, {rack: {...draft, extra: 1}}, {rack: {...draft, sound: 'sound'}},
+    {rack: {...draft, chain: [{device_ref: 'delay', role: 'send', state: {}}]}}, {rack: {...draft, macros: [{name: 'Rate', value: 2, targets: []}]}},
+    {rack: {...draft, macros: [{name: 'Rate', value: 0.5, targets: [{device_ref: 'torus', parameter: 'rate'}]}], variations: []}},
+    {rack: {...draft, variations: [{name: 'Variation 1', values: [0.5]}]}},
+    {rack: {...draft, macros: Array.from({length: 17}, (_, i) => ({name: `M${i}`, value: 0, targets: []})), variations: []}}])
+    assert.equal(readFramePerformanceRequest({...ask, ...bad}), null, JSON.stringify(bad).slice(0, 90));
+});
+
+test('the rack kept is the one its face holds under its name, opening a sound the Scene keeps; keeping it again by name replaces it', async () => {
+  const {rackToKeep, keepRackChange, keptRackReply, listPerformance} = await import('../src/performanceBasis.ts');
+  const scene = {bases: [], torus_kept: {sounds: keptOnScene().sounds}};
+  const rack = {schema: 'oi.torus-rack/v1', rack_ref: 'rack:torus/Breath rack', name: 'Breath rack', ...rackDraft()};
+  assert.deepEqual(rackToKeep(scene, 'Breath rack', rackDraft()), {rack}, 'its ref is its name: keeping it again by name replaces it');
+  const {sound, ...unsounded} = rackDraft();
+  assert.deepEqual(rackToKeep(scene, 'Bare', unsounded), {rack: {schema: 'oi.torus-rack/v1', rack_ref: 'rack:torus/Bare', name: 'Bare', ...unsounded}});
+  assert.deepEqual(rackToKeep(scene, 'Breath rack', {...rackDraft(), sound: KEPT_DIGEST(8)}), {reason: 'The Scene keeps no sound ' + KEPT_DIGEST(8) + ' for the rack to open.'});
+  assert.deepEqual(keepRackChange('scene:one', rack), {change: 'scene_performance_edit', scene_ref: 'scene:one', operations: [{operation: 'keep_torus_rack', rack}]},
+    'the kernel keeps it, or replaces the one kept under its ref');
+  const after = {bases: [], torus_kept: {sounds: keptOnScene().sounds, racks: [rack]}};
+  assert.deepEqual(keptRackReply(after, rack, true), {state: 'rack-kept', rack_ref: rack.rack_ref, name: 'Breath rack', macros: 2, variations: 2, unsaved: true,
+    kept: listPerformance(after).kept});
+  assert.deepEqual(listPerformance(after).kept.racks[0].macros[0].targets, [{device_ref: 'torus', parameter: 'rate', min: 0.5, max: 20}], 'the listing reads its ranges back');
+  assert.deepEqual(keptRackReply(scene, rack, false), {state: 'refused', reason: 'The Scene did not keep "Breath rack".', missing: []});
+});
+
+test("the owner keeps a rack by the kernel's own edit of the inspected revision, and refuses one it cannot make before any edit", async () => {
+  const source = await readFile(new URL('../src/cradle.ts', import.meta.url), 'utf8');
+  assert.match(source, /const racking = rackToKeep\(scene\.performance, request\.name, request\.rack\);\s+if \('reason' in racking\) return \{state: 'refused', reason: racking\.reason, missing: \[\]\};/);
+  assert.match(source, /operation: 'edit', expression_ref: request\.expression_ref, expected_revision: document\.revision, actor: PERFORMANCE_ACTOR,\s+changes: \[keepRackChange\(request\.scene_ref, racking\.rack\)\]/);
+  assert.match(source, /return keptRackReply\(kept\?\.performance, racking\.rack, edited\.dirty === true\);/);
 });

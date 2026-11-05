@@ -817,4 +817,124 @@ mod tests {
         extra["instrument"]["kind"] = json!("form");
         assert!(serde_json::from_value::<super::super::PerformanceOperation>(extra).is_err());
     }
+
+    /// The full edit (DLW build ruling, 4 November: "a kernel test runs the full edit, keeping a rack and an
+    /// instrument with sealed sounds, not only the wire shape"): an Expression's Scene keeps two sounds this
+    /// kernel sealed, an instrument and a rack through the kernel's own `scene_performance_edit`, each
+    /// operation exactly as the Expressions boundary writes it (performanceBasis.ts keepSoundChange,
+    /// keepInstrumentChange, keepRackChange). The document reads them back whole with each macro's range,
+    /// a rack kept again by its ref replaces it, and a rack the kernel refuses leaves the Scene as it stood.
+    #[test]
+    fn a_scene_keeps_sealed_sounds_an_instrument_and_a_rack_by_the_full_edit() {
+        use crate::expression::Application;
+        let client = crate::CentralClient::with("/nonexistent/oi".into(), None, String::new());
+        let mut app = Application::default();
+        let decode = |v: Value| serde_json::from_value::<crate::expression::Request>(v).unwrap();
+        app.apply(&client, decode(json!({"operation":"create","expression_ref":"expression:kept","title":"Kept","actor":"human:test"})))
+            .unwrap();
+        let edit = |revision: u64, operations: Value| {
+            decode(
+                json!({"operation":"edit","expression_ref":"expression:kept","expected_revision":revision,"actor":"human:test",
+                "changes":[{"change":"scene_performance_edit","scene_ref":"expression:kept:scene:main","operations":operations}]}),
+            )
+        };
+        let revision = |app: &Application| app.document("expression:kept").unwrap().revision;
+        let performance = |app: &Application| {
+            app.document("expression:kept").unwrap().scenes[0]
+                .performance
+                .clone()
+                .unwrap()
+        };
+
+        let body = prepared("ql:form-body:fold");
+        let on_torus = TorusSound::sealed("Breath rack", &checkpoint(0), SoundBody::Torus).unwrap();
+        let on_fold = TorusSound::sealed(
+            "Fold struck",
+            &rung(48, &body),
+            SoundBody::Form {
+                prepared: body.clone(),
+            },
+        )
+        .unwrap();
+        let instrument = json!({"schema":INSTRUMENT_SCHEMA,"instrument_ref":"instrument:ql:form-body:fold",
+            "name":"Folded sheet","body":body,"sounds":[on_fold.sound_ref]});
+        let rack = |variation: f64, sound: &str, turns: &str| {
+            json!({"schema":RACK_SCHEMA,"rack_ref":"rack:torus/Breath rack","name":"Breath rack","sound":sound,
+                "chain":[{"device_ref":"delay","role":"effect","state":{"on":true,"time":375,"feedback":40,"mix":25}}],
+                "macros":[{"name":"Rate","value":0.25,"targets":[{"device_ref":"torus","parameter":"rate","min":0.5,"max":20}]},
+                    {"name":"Space","value":0.5,"targets":[{"device_ref":turns,"parameter":"feedback","min":0,"max":90}]}],
+                "variations":[{"name":"Variation 1","values":[0.25,0.5]},{"name":"Variation 2","values":[variation,0]}]})
+        };
+        app.apply(
+            &client,
+            edit(
+                revision(&app),
+                json!([{"operation":"keep_torus_sound","sound":on_torus},
+                    {"operation":"keep_torus_sound","sound":on_fold},
+                    {"operation":"keep_torus_instrument","instrument":instrument},
+                    {"operation":"keep_torus_rack","rack":rack(1.0, &on_torus.sound_ref, "delay")}]),
+            ),
+        )
+        .unwrap();
+        let kept = performance(&app);
+        kept.validate().unwrap();
+        let held = &kept.torus_kept;
+        assert_eq!(
+            held.sounds
+                .iter()
+                .map(|sound| sound.sound_ref.as_str())
+                .collect::<Vec<_>>(),
+            vec![on_torus.sound_ref.as_str(), on_fold.sound_ref.as_str()]
+        );
+        held.sounds[0].verify_seal().unwrap();
+        assert_eq!(held.instruments[0].sounds, vec![on_fold.sound_ref.clone()]);
+        let breath = &held.racks[0];
+        assert_eq!(breath.sound.as_deref(), Some(on_torus.sound_ref.as_str()));
+        assert_eq!(breath.chain[0].device_ref, "delay");
+        let ranges: Vec<(f64, f64)> = breath
+            .macros
+            .iter()
+            .map(|item| (item.targets[0].min.value(), item.targets[0].max.value()))
+            .collect();
+        assert_eq!(ranges, vec![(0.5, 20.0), (0.0, 90.0)]);
+        assert_eq!(breath.variations[1].values[0].value(), 1.0);
+        // The kept performance reads back whole from its bytes.
+        let bytes = serde_json::to_string(&kept).unwrap();
+        assert_eq!(
+            serde_json::from_str::<super::super::Performance>(&bytes).unwrap(),
+            kept
+        );
+
+        // Kept again by its ref, the rack is replaced, not added.
+        app.apply(
+            &client,
+            edit(
+                revision(&app),
+                json!([{"operation":"keep_torus_rack","rack":rack(0.75, &on_torus.sound_ref, "delay")}]),
+            ),
+        )
+        .unwrap();
+        let replaced = performance(&app).torus_kept;
+        assert_eq!(replaced.racks.len(), 1);
+        assert_eq!(replaced.racks[0].variations[1].values[0].value(), 0.75);
+
+        // A rack the kernel refuses changes nothing: a macro off its chain, a sound the Scene does not keep.
+        let before = revision(&app);
+        let off = app
+            .apply(
+                &client,
+                edit(before, json!([{"operation":"keep_torus_rack","rack":rack(0.5, &on_torus.sound_ref, "echo")}])),
+            )
+            .unwrap_err();
+        assert!(off.contains("not on the rack's chain"), "{off}");
+        let orphan = app
+            .apply(
+                &client,
+                edit(before, json!([{"operation":"keep_torus_rack","rack":rack(0.5, "sha256:gone", "delay")}])),
+            )
+            .unwrap_err();
+        assert!(orphan.contains("does not keep"), "{orphan}");
+        assert_eq!(revision(&app), before);
+        assert_eq!(performance(&app).torus_kept, replaced);
+    }
 }

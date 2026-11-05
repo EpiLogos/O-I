@@ -1324,9 +1324,11 @@ const DEFAULTS = {
   effectiveDefault: dump({provider: 'anthropic', rule: 'first-configured'}),
   harnesses: dump([
     {client: 'claude-code', harness: 'Claude Code', installed: true, detection: 'detected', capability: 'agent', effect: 'Restart Claude to read new settings.', folder: '~/.claude',
-      signInNote: 'Claude Code signs in inside itself: run claude and type /login.'},
+      signIn: [{key: 'claude-code|provider:anthropic', provider: 'anthropic', command: 'claude auth login'}], loginNow: 'AIKit finds what claude-code needs to sign in.'},
     {client: 'codex', harness: 'Codex', installed: true, detection: 'detected', capability: 'agent', effect: 'Next session only.', folder: '~/.codex',
       signIn: [{key: 'codex|provider:openai', provider: 'openai', command: 'codex login'}], loginNow: 'AIKit finds what codex needs to sign in.'},
+    {client: 'gemini', harness: 'Gemini CLI', installed: true, detection: 'detected', capability: 'agent', effect: 'Next session only.', folder: '~/.gemini',
+      signInNote: 'Login with Google (OAuth) is Gemini CLI\'s default auth; the API key delivers only when credential:gemini is bound'},
     {client: 'pi', harness: 'pi', installed: true, detection: 'detected', capability: 'agent', folder: '~/.pi'},
     {client: 'hermes', harness: 'Hermes', installed: true, detection: 'stale', reason: 'The gateway answered once and then went quiet.', capability: 'gateway', gap: {contract: 'No session-settings contract for Hermes yet.', skill: 'aikit:harness-adapter-authoring'}},
     {client: 'opencode', harness: 'OpenCode', installed: false, detection: 'absent', reason: 'Not on PATH.', capability: 'agent'},
@@ -1339,7 +1341,8 @@ const DEFAULTS = {
     {model: 'qwen3.5-0.8b', name: 'Qwen3.5 0.8B', routes: [{provider: 'ollama', key: false, standing: 'observed'}]},
   ]),
   credentials: dump([
-    {credential: 'ai-kit:credential:anthropic', provider: 'Anthropic', reference: 'keychain://aikit/anthropic', revoked: false, verdict: 'working', verifiedAt: '21 Oct 09:12'},
+    {credential: 'ai-kit:credential:anthropic', provider: 'Anthropic', reference: 'keychain://aikit/anthropic', revoked: false, verdict: 'working', verifiedAt: '21 Oct 09:12',
+      signIn: [{key: 'claude-code|provider:anthropic', harness: 'claude-code', command: 'claude auth login'}]},
     {credential: 'ai-kit:credential:openai', provider: 'OpenAI', reference: 'keychain://aikit/openai', revoked: false, signIn: [{key: 'codex|provider:openai', harness: 'codex', command: 'codex login'}]},
     {credential: 'ai-kit:credential:zai', provider: 'z.ai', reference: 'keychain://aikit/zai-coding', revoked: false, verdict: 'refused', verifiedAt: '20 Oct 22:40'},
   ]),

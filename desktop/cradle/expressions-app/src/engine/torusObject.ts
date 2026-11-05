@@ -11,14 +11,14 @@
  *   Points      its eight voices, each at its own place on its helix, pulling the particles while it sounds (|A_k| over the strike) and
  *               letting them go as it fades.
  *   A morph     the passage from one shape to the next, timed by the pulse (morphSignal.pulseTurnings): it starts on the step the law
- *               changes on and runs for half a step, carried by the engine's one morph law (computeMorphDrive).
+ *               changes on and runs for half a step, carried by the engine's one morph law on the ring's turning and the tube's (passageDrive).
  *   Boundaries  the four: the lines where the particles settle. While the body rings each sample is drawn down the body's own energy
  *               Σ|A_k|²χ_k² towards the nodal lines its voices' m and n (from the four) leave still, and it returns as the body falls quiet.
  *
  * A sample keeps its identity: its angles come from its own native place (the exact inverse below), and its displacement is the
  * native displacement, carried to the same angles of the shape shown. Nothing here integrates, samples or makes up a position.
  */
-import {computeMorphDrive, pulseTurnings} from './morphSignal';
+import {computeMorphDrive, pulseTurnings, type MorphDriveState} from './morphSignal';
 
 export const TORUS_MAJOR = 16 / 9;
 export const TORUS_MINOR = 1;
@@ -266,13 +266,30 @@ export function figureAt(session: TorusSessionReading | null, steps: number | nu
 
 // -------------------------------------------------------------------------------------------------------------------- the morph
 
-/** How long a passage from one shape to the next runs, in pulse steps (half a step: a twelfth of the tube's turning). */
+/** How long a passage from one shape to the next runs, in pulse steps: half a step, 30° of the 720° cover, one tick of the M3 clock
+ * (ruling D5: one tick = 30°; QL phase.rs: one pulse step is two of its ticks). The ring turns a twelfth in it, the tube a twenty-fourth. */
 export const PASSAGE_STEPS = 0.5;
 export interface MorphState {from: TorusShape; to: TorusShape; progress: number; since: number | null}
 
+/** The passage's drive at a count of steps, for a passage begun at `since`: the engine's morph law on the pulse's two turnings.
+ *
+ * The pulse has one turning, its place on the 720° cover (QL m1_prime.rs Pulse: cover = steps·60° mod 720°). Round the ring it is the
+ * cover mod 360°; round the tube it is half the cover (janko.rs point). So the tube's turning is the ring's own half plus the half-turn of
+ * the sheet the pulse stands on, the helix law θ = φ/2 + hπ: h = 0 on the first 360° (bimba), 1 on the second (pratibimba), as QL's M3
+ * clock counts its layer (ql-core m3_clock.rs) and QL-MEF #281 keeps the two helices as one double cover with its 720°/4π return. That
+ * half-turn is the morph's φ: the tube's turning less the ring's own half. On the pratibimba the address is kept and the phase flips
+ * (ql-law, DR-FLIP-1), so the drive's phase turns by the same π. Of the engine's laws only the product of the two (computeMorphDrive
+ * 'product') then still carries a passage from 0 to 1 on both sheets; θ alone would run it backwards there, and sum or beat would hold
+ * it half way. Across a passage the drive runs half a cycle of the sine, from the old shape to the new. */
+export function passageDrive(since: number, steps: number): MorphDriveState {
+  const turn = pulseTurnings(steps), sheet = turn.phi - wrap(turn.theta) / 2;
+  const u = Math.min(1, Math.max(0, steps - since) / PASSAGE_STEPS);
+  return computeMorphDrive({driveShape: 'sine', interference: 'product', driveDepth: 1} as any, -Math.PI / 2 + Math.PI * u + sheet, sheet);
+}
+
 /** The passage between shapes, carried by the pulse. A change of shape begins a passage on the step it is read at; a change while one
- * runs starts the next from the nearer of the two. The passage's progress is the engine's morph signal (computeMorphDrive) on the
- * ring's turning since the change, half a cycle across the passage. */
+ * runs starts the next from the nearer of the two. The passage's progress is the engine's morph signal on the pulse's two turnings
+ * (passageDrive). */
 export class TorusMorph {
   private from: TorusShape = 'torus'; private to: TorusShape = 'torus'; private since: number | null = null; private last = 0;
   at(shape: TorusShape, steps: number): MorphState {
@@ -286,9 +303,8 @@ export class TorusMorph {
   }
   private progress(steps: number): number {
     if (this.since === null || this.from === this.to) return 1;
-    const ring = pulseTurnings(Math.max(0, steps - this.since)).theta, across = pulseTurnings(PASSAGE_STEPS).theta;
-    if (ring >= across) return 1;
-    return computeMorphDrive({driveShape: 'sine', interference: 'toroidalOnly', driveDepth: 1} as any, -Math.PI / 2 + Math.PI * (ring / across), 0).progress;
+    if (steps - this.since >= PASSAGE_STEPS) return 1;
+    return passageDrive(this.since, steps).progress;
   }
   /** A change read where the pulse is not known stands at once, with no passage. */
   snap(shape: TorusShape): MorphState {

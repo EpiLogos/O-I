@@ -31,7 +31,7 @@ export function LiveDeviceChain({ctx, document, selection}: {ctx: PanelContext; 
     {!instrument && track && line}
     {instrument && <PartInput />}
     {instrument && <NoteDeviceChain />}
-    {instrument && <TorusOnChain state={torus} tempoBpm={ctx.set?.tempo_bpm ?? null} />}
+    {instrument && <TorusOnChain state={torus} tempoBpm={ctx.set?.tempo_bpm ?? null} selection={selection} setPath={ctx.set?.path ?? null} />}
     {instrument && <TorusEffectsOnChain state={torus} tempoBpm={ctx.set?.tempo_bpm ?? null} />}
     {track && ctx.set && track.devices.map((name, index) =>
       <SetDeviceOnChain key={`${ctx.set!.path}#${selection.track}/${index}/${name}`} set={ctx.set!} track={track.name} trackIndex={selection.track}

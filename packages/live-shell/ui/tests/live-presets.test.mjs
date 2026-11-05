@@ -138,7 +138,10 @@ test('the owner\'s answers to a kept sound and to a keep are read in their own s
   const instrument = await withChannel(async () => ({state: 'instrument-kept', instrument_ref: 'instrument:ql:form-body:fold', name: 'Folded sheet', sounds: 2,
     unsaved: false, kept: KEPT}), () => presets.commitLivePerformance({action: 'keep-instrument', name: 'Folded sheet', sound_ref: SOUND_REF}))
   assert.equal(instrument.state, 'instrument-kept')
-  for (const odd of [{state: 'sound'}, {state: 'kept', name: 'Low bell'}, {state: 'instrument-kept', name: 'Folded sheet', sounds: '2'}])
+  const rack = await withChannel(async () => ({state: 'rack-kept', rack_ref: 'rack:torus/Breath', name: 'Breath', macros: 4, variations: 1, unsaved: false, kept: KEPT}),
+    () => presets.commitLivePerformance({action: 'keep-rack', name: 'Breath', rack: {chain: [], macros: [], variations: []}}))
+  assert.equal(rack.state, 'rack-kept')
+  for (const odd of [{state: 'sound'}, {state: 'kept', name: 'Low bell'}, {state: 'instrument-kept', name: 'Folded sheet', sounds: '2'}, {state: 'rack-kept', name: 'Breath', macros: 4}])
     assert.match((await withChannel(async () => odd, () => presets.commitLivePerformance({action: 'sound', sound_ref: SOUND_REF}))).reason, /unknown shape/)
 })
 
@@ -240,4 +243,37 @@ test('a saved sound says whether it rings on a form, from the sound the kernel s
   const saved = await presets.saveTorusSound('Low bell', {stage: async () => ({ok: true, sound: onForm}),
     perform: async () => ({state: 'kept', sound_ref: SOUND_REF, name: 'Low bell', unsaved: false, kept: KEPT})})
   assert.deepEqual(saved, {ok: true, words: 'Saved "Low bell" under the Torus.', sound_ref: SOUND_REF, form: true})
+})
+
+// DLW build ruling, 4 November ("Keep rack: build it"; manual §21.2 Sounds and instruments: "A rack | The Torus with its note devices and effects,
+// its macros and their variations"): Keep rack saves the Torus as it rings as the sound the rack opens with, then the Scene keeps the rack
+// the face holds, under its name; the browser hears what the Scene keeps then.
+test('Keep rack: the Torus saved as the sound it opens with, then the rack the face holds kept under its name, and the browser hears it', async () => {
+  const asked = [], heard = []
+  const face = {chain: [{device_ref: 'delay', role: 'effect', state: {on: true, time: 375}}],
+    macros: [{name: 'Rate', value: 0.25, targets: [{device_ref: 'torus', parameter: 'rate', min: 0.5, max: 20}]}], variations: [{name: 'Variation 1', values: [0.25]}]}
+  const RACKED = {...KEPT, racks: [{rack_ref: 'rack:torus/Breath rack', name: 'Breath rack', sound: SOUND_REF, ...face}]}
+  const stage = async command => { asked.push(command); return {ok: true, sound: SEALED} }
+  const perform = async action => {
+    asked.push(action)
+    return action.action === 'keep-sound' ? {state: 'kept', sound_ref: SOUND_REF, name: 'Breath rack', unsaved: true, kept: KEPT}
+      : {state: 'rack-kept', rack_ref: 'rack:torus/Breath rack', name: 'Breath rack', macros: 1, variations: 1, unsaved: true, kept: RACKED}
+  }
+  const stop = presets.subscribeTorusKept(kept => heard.push(kept))
+  try {
+    const kept = await presets.keepTorusRack(' Breath rack ', face, {stage, perform})
+    assert.deepEqual(asked, [{command: 'torus-sound', action: 'save', name: 'Breath rack'}, {action: 'keep-sound', sound: SEALED},
+      {action: 'keep-rack', name: 'Breath rack', rack: {sound: SOUND_REF, ...face}}], 'the Torus as it rings, sealed and kept, then the rack opening it')
+    assert.deepEqual(kept, {ok: true, words: 'Kept "Breath rack" in the browser as a rack: the Torus as it rings, 1 effect on its chain, 1 macro and 1 variation. The Scene keeps it until the Expression is saved, then the file does.'})
+    assert.deepEqual(heard.at(-1), RACKED, 'the browser lists the rack')
+    asked.length = 0
+    assert.deepEqual(await presets.keepTorusRack('', face, {stage, perform}), {ok: false, error: 'Name the rack first: the browser lists it by its name.'})
+    assert.deepEqual(asked, [], 'refused before any owner')
+    assert.deepEqual(await presets.keepTorusRack('Breath rack', face, {stage: async () => ({ok: false, error: 'Open the live instrument first'}), perform}),
+      {ok: false, error: 'Open the live instrument first'})
+    assert.equal(asked.some(row => row.action === 'keep-rack'), false, 'a Torus that was not saved keeps no rack')
+    const refused = {state: 'refused', reason: 'Macro Space turns feedback of echo, which is not on the rack\'s chain', missing: []}
+    assert.deepEqual(await presets.keepTorusRack('Breath rack', face, {stage, perform: async action => action.action === 'keep-sound' ? perform(action) : refused}),
+      {ok: false, error: refused.reason})
+  } finally { stop() }
 })

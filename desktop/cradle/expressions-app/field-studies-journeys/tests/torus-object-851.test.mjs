@@ -160,6 +160,43 @@ test('the morph runs on the pulse: a change of shape begins on the step it is re
   assert.deepEqual([turned.from, turned.to], ['klein-bottle', 'torus'], 'a change in a passage starts from the nearer shape');
 });
 
+// The morph's φ, derived (O-I 864 ruling on 851). The pulse has one turning, its place on the 720° cover (QL m1_prime.rs Pulse
+// cover_degrees = steps·60 mod 720): round the ring it is the cover mod 360°, round the tube half the cover (janko.rs point). So the
+// tube's turning is the ring's own half plus the half-turn of the sheet the pulse stands on, the helix law θ = φ/2 + hπ: bimba on the
+// first 360°, pratibimba on the second (ql-core M3Clock layer; QL-MEF #281: the two helices are one double cover, "Preserve the 720°/4π
+// return"). On the pratibimba the address is kept and the phase flips (ql-law DR-FLIP-1): the drive's phase and the tube's both turn by
+// π there. Of the engine's four laws only the product of the two keeps a passage arriving on both sheets, and its drive returns in 720°.
+test('the morph\'s φ is the pulse\'s sheet: on the pratibimba the drive\'s phase and the tube\'s both flip, and their product arrives', async () => {
+  const {TorusMorph, passageDrive} = await object();
+  const {computeMorphDrive, pulseTurnings} = await signal();
+  const sheetOf = steps => Math.cos(passageDrive(steps, steps).phi);
+  near(sheetOf(4), 1, 1e-12, 'step 4 is on the bimba sheet'); near(sheetOf(7), -1, 1e-12, 'step 7 on the pratibimba');
+  near(sheetOf(13), 1, 1e-12, 'and step 13 on the bimba again: the cover returns in twelve steps');
+  for (const steps of [0.3, 4, 6, 7.4, 11.9, 12, 18.5]) {
+    const turn = pulseTurnings(steps), d = passageDrive(steps, steps);
+    near(Math.cos(d.phi), Math.cos(turn.phi - (((turn.theta % TAU) + TAU) % TAU) / 2), 1e-9, `φ is the tube's turning less the ring's own half at ${steps}`);
+  }
+  // A passage on the pratibimba runs as one on the bimba does.
+  const morph = new TorusMorph();
+  morph.at('torus', 6.5);
+  assert.equal(morph.at('spiral', 7).progress, 0, 'the passage starts on the step it is read at');
+  near(morph.at('spiral', 7.25).progress, 0.5, 1e-12, 'half way at a quarter step');
+  assert.equal(morph.at('spiral', 7.5).progress, 1);
+  // The flip is load-bearing: the same phases under the ring's law alone run the passage backwards.
+  const at = passageDrive(7, 7);
+  near(computeMorphDrive({driveShape: 'sine', interference: 'product', driveDepth: 1}, at.theta, at.phi).progress, 0, 1e-12);
+  near(computeMorphDrive({driveShape: 'sine', interference: 'toroidalOnly', driveDepth: 1}, at.theta, at.phi).progress, 1, 1e-12, 'θ alone, flipped, runs it backwards');
+  // A passage across the sheet's seam (step 6, 360° of the cover) never turns back.
+  const seam = new TorusMorph();
+  seam.at('torus', 5); seam.at('plate', 5.75);
+  let last = -1;
+  for (let s = 5.75; s <= 6.25 + 1e-9; s += 0.01) {
+    const p = seam.at('plate', s).progress;
+    assert.ok(p >= last - 1e-12, `the passage over the seam runs on at ${s.toFixed(2)}: ${p} after ${last}`); last = p;
+  }
+  assert.equal(last, 1);
+});
+
 // --------------------------------------------------------------------------------------------------------------- the 8 + 4 roles
 
 test('under Torus the plate takes a, b, the amplitude and the phase from the eight, and m, n and the edge from the four', async () => {

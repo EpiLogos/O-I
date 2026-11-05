@@ -104,7 +104,11 @@ export const DAY_ABSENT: Readonly<Record<string, string>> = {
   c5: 'Synthesis is free text on face 5: the owner counts none.',
   closeout: NO_CLOSEOUT,
   patternPoints: PATTERN_POINTS_UNREAD,
+  dayStart: 'Closes: Central\'s civil-time policy has not answered (central.time.policy), so no day boundary is read.',
 }
+
+/** The bounds the Day reads and never writes: the policy's day boundary (§18.2 "no hours are set on the Day"). */
+const BOUND_READINGS: ReadonlySet<string> = new Set(['dayStart'])
 
 /** The design's controls no write reaches from here, closed with their reason: Verify (AIKit's close-out read has no kernel route). */
 export const DAY_STANDING: Readonly<Record<string, Standing>> = {
@@ -121,6 +125,8 @@ export function dayStanding(facts: DayFacts, own: DayOwnReadings | null): Record
   const standing: Record<string, Standing> = {...DAY_STANDING}
   if (!settingsRevisionOf(own)) for (const key of DAY_SETTINGS_KEYS) standing[key] = {disabled: SETTINGS_UNREAD(SETTING_NAME(key), own)}
   if (facts.standing?.state !== 'ready') for (const move of DAY_MOVES) if (move !== 'close') standing[`run_${move}`] = {disabled: NO_DAY_FOR_MOVES(move)}
+  // Closes, while the policy gives no boundary: why, in Central's words where it refused (O-I 772).
+  if (facts.boundary === null) standing.dayStart = {disabled: facts.boundaryRefusal ?? DAY_ABSENT.dayStart!}
   return standing
 }
 
@@ -387,6 +393,8 @@ export interface DayFacts {
   /** The civil-time policy: minutes after civil midnight the day turns at, and whether rollover is automatic. */
   readonly boundary: number | null
   readonly automaticRollover: boolean | null
+  /** Why the policy gives no boundary, in Central's words where it refused (null while it answers, or has not). */
+  readonly boundaryRefusal?: string | null
   /** Tomorrow's Day as Central names it beside today's (central.day-reading/v1 `tomorrow`, set by central.day.rollover): its civil date. */
   readonly tomorrow?: string | null
 }
@@ -404,20 +412,23 @@ export function dayFactsOf({ground, groundError, selected}: DayFactsInput): DayF
   const time = ground?.time.state === 'ready' ? ground.time.data ?? null : null
   const boundary = time && Number.isInteger(time.policy.day_boundary_minutes) ? time.policy.day_boundary_minutes : null
   const automaticRollover = time ? time.policy.automatic_day_rollover === true : null
+  const policy = ground?.time
+  const boundaryRefusal = boundary !== null || !policy || policy.state === 'ready' ? null
+    : `Closes: Central refused its civil-time policy: ${policy.error?.message ?? `it answered ${policy.state}`} (central.time.policy).`
   const canOpenToday = canEnsureDay(ground)
   if (selected) {
     const standing = selected.standing
     return {civilDate: standing?.civilDate ?? null, standing, refusal: refusalOf(standing, null, null), canOpenToday, canClose: false,
-      aperture: standing?.state === 'ready' ? selected.aperture : null, boundary, automaticRollover}
+      aperture: standing?.state === 'ready' ? selected.aperture : null, boundary, automaticRollover, boundaryRefusal}
   }
-  if (!ground) return {civilDate: null, standing: null, refusal: groundError ? `Central's ground did not answer: ${groundError}` : null, canOpenToday: false, canClose: false, aperture: null, boundary, automaticRollover}
+  if (!ground) return {civilDate: null, standing: null, refusal: groundError ? `Central's ground did not answer: ${groundError}` : null, canOpenToday: false, canClose: false, aperture: null, boundary, automaticRollover, boundaryRefusal}
   const current = currentDayOf(ground)
   const civilDate = time?.civil_date ?? current.pointer
   // Tomorrow's Day, where Central names one after the Day shown (a stale name, on or before today, is no tomorrow).
   const named = (ground.day.data as {tomorrow?: {civil_date?: unknown} | null} | null | undefined)?.tomorrow?.civil_date
   const tomorrow = typeof named === 'string' && civilDate && named > civilDate ? named : null
   return {civilDate, standing: current.standing, refusal: refusalOf(current.standing, current.pointer, time?.civil_date ?? null), canOpenToday,
-    canClose: canCloseDay(ground), aperture: current.aperture, boundary, automaticRollover, tomorrow}
+    canClose: canCloseDay(ground), aperture: current.aperture, boundary, automaticRollover, boundaryRefusal, tomorrow}
 }
 
 function refusalOf(standing: DayDocumentStanding | null, pointer: string | null, today: string | null): string | null {
@@ -486,7 +497,7 @@ export function dayDesignBinding(id: string, facts: DayFacts, values: Readonly<R
     values,
     standing,
     // A control closed for now still goes to `write`, so its refusal says why.
-    writes: key => DAY_WRITES.has(key) || !!standing[key]?.disabled,
+    writes: key => DAY_WRITES.has(key) || (!!standing[key]?.disabled && !BOUND_READINGS.has(key)),
     write: async (changes: readonly ValueChange[]) => {
       for (const change of changes) {
         if (change.key === 'face') {

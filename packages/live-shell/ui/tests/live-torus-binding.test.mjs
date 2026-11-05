@@ -104,10 +104,15 @@ test('a key the owner does not take is disabled with its reason; while the instr
   const live = model.torusDesignBinding(state())
   // Damping is the body's Q, taken through the stage channel's damping edit (O-I #745 lane N; ql-745-torus-body.test.mjs).
   for (const key of ['level', 'sound', 'cadence', 'scale', 'lens', 'context-frame', 'harmonic-basis', 'm3-transcription', 'damping']) assert.equal(live.writes(key), true, `${key} is the owner's to change`)
-  for (const key of ['pan', 'meter', 'view']) {
+  for (const key of ['pan', 'meter']) {
     assert.equal(live.writes(key), false, `${key} has no owner`)
     assert.equal(live.standing[key].disabled, model.TORUS_ABSENT[key])
   }
+  // REPLACED (lead's ruling of 4 November, "#850 View kept"): View had no owner and stood absent. It is the pane's own way of drawing,
+  // so the hand keeps it, Surface until you choose (manual §21.2), and it never reaches the owner (torus-850.test.mjs).
+  assert.equal(live.writes('view'), false, 'view: no owner takes it')
+  assert.equal(typeof live.local.view, 'function', 'view: the hand keeps it')
+  assert.equal(live.values.view, 'surface')
   // O-I #852: Modes is a form's count, the owner's once it names a form (ql-745-torus-body.test.mjs); here no session names what rings.
   assert.equal(live.writes('modes'), false)
   assert.match(live.standing.modes.disabled, /torus-state/)
