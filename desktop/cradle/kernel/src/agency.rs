@@ -736,6 +736,17 @@ impl Client {
     }
 }
 
+/// The set Group makes (`aikit session-space group --into`): its own space,
+/// what it is for, and the Central agent set its chains were accepted as,
+/// with that set's revision, where one was accepted.
+#[derive(Clone, Copy, Debug)]
+pub struct GroupInto<'a> {
+    pub space: &'a str,
+    pub label: Option<&'a str>,
+    pub agent_set: Option<&'a str>,
+    pub agent_set_revision: Option<&'a str>,
+}
+
 impl Client {
     /// Run one of the encounter's task acts (`encounter-task-remove`,
     /// `encounter-task-budget`, `encounter-task-copy`) on the owner and read its receipt, which must
@@ -1062,16 +1073,24 @@ impl Client {
     /// set's own space in the same Project, seats every session there with
     /// its Project contexts and its bench, holds `into` as one chain of
     /// `space`, and detaches the sessions from `space` last; each step is
-    /// AIKit's stage and apply, with each space's history kept.
+    /// AIKit's stage and apply, with each space's history kept. The set's
+    /// space is tied to the Central agent set the chains were accepted as
+    /// where `into` names one (`--agent-set`), so the set held as a chain
+    /// reads its own Join.
     pub fn session_group(
         &self,
         cwd: &Path,
         project_ref: &str,
         space: &str,
         agent_sessions: &[String],
-        into: &str,
-        label: Option<&str>,
+        into: &GroupInto<'_>,
     ) -> Result<Value, String> {
+        let GroupInto {
+            space: into,
+            label,
+            agent_set,
+            agent_set_revision,
+        } = *into;
         let (_, row) = self.project_space(cwd, project_ref, space)?;
         if agent_sessions.is_empty() {
             return Err(format!("Group names no chain of {space} to make a set of"));
@@ -1089,6 +1108,12 @@ impl Client {
         args.extend(["--into", into]);
         if let Some(label) = label {
             args.extend(["--label", label]);
+        }
+        if let Some(agent_set) = agent_set {
+            args.extend(["--agent-set", agent_set]);
+            if let Some(revision) = agent_set_revision {
+                args.extend(["--agent-set-revision", revision]);
+            }
         }
         let receipts: Value = serde_json::from_str(&self.session_space(cwd, &args)?)
             .map_err(|error| format!("AIKit's group answer is not JSON: {error}"))?;

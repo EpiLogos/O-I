@@ -127,9 +127,21 @@ export interface AgencySessionRow {
   raw: unknown;
 }
 
+/** A space the reading names that holds no session of its own but holds
+ * sets as chains (AIKit's `set_chains`: a rack whose every chain was
+ * grouped, O-I #842 round 21). It is no session, so it is no row; its rack's
+ * track reads the space from it. */
+export interface AgencySpaceRow {
+  spaceRef: string;
+  spaceLabel?: string;
+  raw: unknown;
+}
+
 export interface AgencyReading {
   harnessDisclosure?: unknown;
   projectRef: string;
   rows: AgencySessionRow[];
+  /** The spaces that hold sets and no session (absent: none). */
+  heldSpaces?: AgencySpaceRow[];
   observedAtUnixMs?: number;
 }

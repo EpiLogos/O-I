@@ -12,8 +12,8 @@
 // The stage plays `stage`, the session's run as the kernel's temporal events recorded it (face-rig.recorded-run/v1, the binding's
 // runFaces.ts stageRecordingOf): "The stage draws what the run's events say and nothing else" (manual §19.4 The stage). Where no run event
 // names the session, the stage says so; it never makes a run up from the thread.
-// In Anima or Aletheia the agent stands in a team space (QL `ql context-frame team-space`, `ql.vak-team-space/v1`): Team cell reads
-// its row (a context frame), the question that row asks of it by day or by night, and its depth (one of the six M domains), on
+// In Anima or Aletheia the agent stands in a team space (QL `ql context-frame team-space`, `ql.vak-team-space/v2`): Team cell reads
+// its row (a context frame), the question that row asks of it in the prospective or the retrospective pass, and its depth (one of the six M domains), on
 // team.space ('Anima' | 'Aletheia', or 'none' when the agent is in no team), team.row, team.question and team.depth.
 // What entered the agent's context on each turn, and what was held back, is AIKit's instrument's Context page (§19.26, ai-kit__ai-kit.tsx);
 // how the agent speaks is Voice's, after it on its chain (§19.21, actuation__voice.tsx).
@@ -335,7 +335,7 @@ function teamRows(v: V): RowItem[] | undefined {
 }
 
 /** Load a type's preset (manual §19.4 Type): the shell holds the type with the agent, and the Agent writes the settings of its own that the
- * pattern names. The settings of the other devices (Scope, the task's Launch, the Agentset rack, the Agency gateway) are written by their own owners. */
+ * pattern names. The settings of the other devices (Scope, the task's Launch, the Agent rack, the Agency gateway) are written by their own owners. */
 function loadType(p: ViewProps, pattern: string) {
   const idv = identityOf(p).v, ref = strOf(idv, 'agent')
   if (ref !== undefined) p.set('id.types', withType(idv, ref, pattern))
@@ -550,7 +550,7 @@ export const design: DesignedDevice = {
     'You edited a held file': prefixed('custody.', custody.fixtures?.['You edited a file'] ?? {}, CUSTODY_SHARED),
     'A proposed agent': {agent: 'Anima', ...prefixed('id.', identity.fixtures?.['A proposed team lead'] ?? {}, IDENTITY_SHARED)},
     'No type': prefixed('id.', identity.fixtures?.['No type'] ?? {}, IDENTITY_SHARED),
-    // `ql context-frame team-space` on main (61c0e16): Eros holds CF3 in Anima; by day the row asks 4.2.
+    // `ql context-frame team-space` on main (61c0e16): Eros holds CF3 in Anima; in the prospective pass the row asks 4.2.
     'In a team': {agent: 'Eros', ...prefixed('id.', identity.fixtures?.['A team member'] ?? {}, IDENTITY_SHARED), 'team.space': 'Anima', 'team.row': 'CF3', 'team.question': '4.2 What is being done?', 'team.depth': 'M3 Journey', thread: TEAM_THREAD, 'thread.thread': TEAM_THREAD,
       'thread.session': 'journey', 'thread.selected': 'journey', 'thread.sessions': JSON.stringify([{id: 'journey', name: 'Where the October journey stands', short: 'journey', agent: 'Eros', model: 'claude-sonnet-4.6', used: 7, cap: 12, thread: JSON.parse(TEAM_THREAD)}])},
     Benched: {light: 'dark', age: -1, thread: sampleThread({})},

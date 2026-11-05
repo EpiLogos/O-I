@@ -1042,6 +1042,7 @@ fn factory_action(request: &factory::OwnerRequest) -> &'static str {
         factory::OwnerRequest::AttemptRequestCancellation { .. } => {
             "attempt action request-cancellation"
         }
+        factory::OwnerRequest::AttemptLaunch { .. } => "attempt launch",
         factory::OwnerRequest::AttemptDecisionSubmit { .. } => "attempt decision submit",
         factory::OwnerRequest::CustodyAssign { .. } => "development custody assign",
         factory::OwnerRequest::CustodyUpdate { .. } => "development custody update",
@@ -1070,7 +1071,8 @@ fn factory_ref(request: &factory::OwnerRequest, data: &Value) -> String {
         | OwnerRequest::RunClose { run_ref, .. }
         | OwnerRequest::AttemptReceiving { run_ref, .. }
         | OwnerRequest::AttemptRetry { run_ref, .. }
-        | OwnerRequest::AttemptRequestCancellation { run_ref, .. } => run_ref.clone(),
+        | OwnerRequest::AttemptRequestCancellation { run_ref, .. }
+        | OwnerRequest::AttemptLaunch { run_ref, .. } => run_ref.clone(),
         OwnerRequest::Recognise {
             journey_ref,
             state_path,

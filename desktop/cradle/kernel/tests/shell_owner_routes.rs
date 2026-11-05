@@ -2062,6 +2062,65 @@ fn ql_registry_vak_techne_and_operator_reads_carry_qls_answers() {
         refused.contains("unknown QL composition operation nope"),
         "{refused}"
     );
+    // A unit's heads broken down into the composition (round 21): the unit
+    // goes on stdin, QL's breakdown comes back verbatim (REAL words: `ql vak
+    // unit-steps - --json` built from the round-21 QL patch, 5 Nov 2026).
+    let unit = json!({"contract": "ql.vak-unit-steps/v1", "unit": "eros-verify",
+        "heads": {"CFP": "CFP2", "CS": "CS5", "direction": "returning"}});
+    let broken = json!({"contract": "ql.vak-unit-steps/v1", "unit": "eros-verify",
+        "open": ["CPF", "CT", "CP", "CF"], "walk": ["4.5", "4.0"],
+        "compose": [{"head": "CFP", "step": {"op": "cfp-form", "form": "chain"},
+            "marker": "ql.cprime-oikonomia/v1:cfp2:chained-c-thread"}],
+        "needs": ["context", "oikonomia", "basis"]});
+    ql.answer(&broken);
+    ql.forget();
+    let steps =
+        || op(json!({"op": "ql_read", "request": {"kind": "vak-unit-steps", "request": unit}}));
+    let (outcome, form) = dispatched(no_central(&dir), steps());
+    assert_eq!(form, "owner-read");
+    assert_eq!(reading(&outcome.unwrap()).1, broken, "verbatim");
+    assert_eq!(ql.asked(), ["vak unit-steps - --json"]);
+    assert_eq!(serde_json::from_str::<Value>(&ql.stdin()).unwrap(), unit);
+    ql.refuse(
+        None,
+        "ql: CT `CT9`: unknown variant `CT9`, expected one of `CT0`, `CT1`, `CT2`, `CT3`, `CT4`, `CT4b'`, `CT5`",
+        2,
+    );
+    let refused = dispatched(no_central(&dir), steps()).0.unwrap_err();
+    assert!(refused.contains("CT `CT9`: unknown variant"), "{refused}");
+    ql.answer(&composed);
+    assert_eq!(
+        kind(&dispatched(no_central(&dir), steps()).0.unwrap_err()),
+        "incompatible",
+        "a composition is not a unit's breakdown"
+    );
+    // A consumed T/T′ thought read by QL: Factory's receipt with its chosen
+    // meanings on stdin, QL's reading back (REAL refusal words, same build).
+    let consumed = json!({"schema": "ql.vak-thought-consumption-projection/v1"});
+    let thought = json!({"contract": "ql.vak-thought-consumption/v1", "runRef": "run:1",
+        "interpretations": [{"thoughtId": "thought-local", "meaning": "T2′", "inventoryRef": "thought:T2′"}]});
+    ql.answer(&thought);
+    ql.forget();
+    let consume = || {
+        op(
+            json!({"op": "ql_read", "request": {"kind": "vak-thought-consumption", "request": consumed}}),
+        )
+    };
+    let (outcome, form) = dispatched(no_central(&dir), consume());
+    assert_eq!(form, "owner-read");
+    assert_eq!(reading(&outcome.unwrap()).1, thought, "verbatim");
+    assert_eq!(ql.asked(), ["vak thought-consumption - --json"]);
+    assert_eq!(
+        serde_json::from_str::<Value>(&ql.stdin()).unwrap(),
+        consumed
+    );
+    ql.refuse(
+        None,
+        "ql: the request is not a `ql.vak-thought-consumption-projection/v1`: missing field `receipt` at line 1 column 53",
+        2,
+    );
+    let refused = dispatched(no_central(&dir), consume()).0.unwrap_err();
+    assert!(refused.contains("missing field `receipt`"), "{refused}");
     let _ = fs::remove_dir_all(&dir);
 }
 
@@ -4852,6 +4911,61 @@ fn a_units_stop_after_is_a_factory_write_refused_while_factory_admits_no_desktop
             dir.join("state").display()
         )],
         "nothing is read or acted on past the admission"
+    );
+    assert!(outcome.receipts.is_empty(), "a refusal moves nothing");
+    let _ = fs::remove_dir_all(&dir);
+}
+
+#[test]
+fn a_units_launch_is_a_factory_write_refused_while_factory_admits_no_desktop_launch() {
+    let _held = hold();
+    let dir = scratch("factory-launch");
+    let factory = Fake::new(&dir, "factory");
+    let _bin = Bound::set("OI_FACTORY_BIN", &factory.bin);
+    // The installed Factory's admission after round 20 (factory f36c65e): receiving, retry and the cancellation request.
+    factory.answer(&json!({
+        "contract": "factory.attempt-admission/v1", "nativeOwner": "factory",
+        "capabilityRef": "capability/factory/operate-attempt",
+        "desktopCaller": {"callerRef": "oi:desktop", "lineage": ["oi:desktop"], "projectionKind": "desktop-human"},
+        "actions": [{"actionRef": "attempt-receiving", "actorKind": "human",
+            "contract": "factory.attempt-receiving-action/v1", "nativeAction": "central.receiving.submit",
+            "scopeRef": "project:Factory"},
+            {"actionRef": "attempt-retry", "actorKind": "human", "contract": "factory.attempt-action/v1",
+            "operation": "retry", "nativeAction": "factory.attempt.retry", "scopeRef": "project:Factory"},
+            {"actionRef": "attempt-request-cancellation", "actorKind": "human", "contract": "factory.attempt-action/v1",
+            "operation": "request-cancellation", "nativeAction": "factory.attempt.request-cancellation",
+            "scopeRef": "project:Factory"}],
+    }));
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "factory_owner", "request": {"kind": "attempt-launch",
+            "state_path": dir.join("state").display().to_string(), "run_ref": "run:one",
+            "workflow_unit_ref": "unit:inspect-source", "task_ref": "task:inspect",
+            "aikit_realisation": {"schema": "aikit.model-realisation/v2", "selected": true}}}),
+        ),
+    );
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-write", "a launch is the person's write");
+    let KernelOpResult::FactoryDevelopmentReading { data } = &outcome.result else {
+        panic!("not Factory's document: {:?}", outcome.result)
+    };
+    assert_eq!(data["contract"], "oi.factory-attempt-launch/v1");
+    assert_eq!(data["status"], "refused");
+    assert_eq!(data["refusal"]["step"], "admission");
+    assert!(
+        data["refusal"]["message"].as_str().unwrap().contains(
+            "names no attempt-launch action, only attempt-receiving, attempt-retry, attempt-request-cancellation"
+        ),
+        "{data}"
+    );
+    assert_eq!(
+        factory.asked(),
+        [format!(
+            "attempt admission {} --json",
+            dir.join("state").display()
+        )],
+        "nothing is read or launched past the admission"
     );
     assert!(outcome.receipts.is_empty(), "a refusal moves nothing");
     let _ = fs::remove_dir_all(&dir);

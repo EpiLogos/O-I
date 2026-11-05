@@ -97,6 +97,15 @@ export interface AgentSessionTrack {
   setChains?: {space: string; purpose: string | null}[]
 }
 
+/** A space an `agency_read` reading names that holds sets and no session (desktop/cradle agencyTypes.ts AgencySpaceRow; agent/worldScope.ts
+ * WorldSpaceRow): a rack whose every chain was grouped. */
+export interface AgencySpaceLike {
+  spaceRef: string
+  spaceLabel?: string | null
+  raw?: unknown
+  project?: string
+}
+
 /** One row of an `agency_read` reading (desktop/cradle agencyTypes.ts:117). */
 export interface AgencyRowLike {
   spaceRef: string
@@ -391,12 +400,14 @@ function benchedIn(row: AgencyRowLike): boolean {
 
 /** Build the session tracks from an `agency_read` row set. Each space becomes
  * one group track (the closest disclosed thing to a lead); its sessions are
- * members at depth 1. Roster entries name the agent and carry acceptance.
- * Tasks and needles are readings the caller enriches with. */
+ * members at depth 1. A space the reading names that holds sets and no
+ * session (`opts.spaces`) becomes one group track with no member of its own.
+ * Roster entries name the agent and carry acceptance. Tasks and needles are
+ * readings the caller enriches with. */
 export function buildTracks(
   rows: readonly AgencyRowLike[],
   roster: Map<string, RosterEntry>,
-  _opts?: {nowUnixMs?: number},
+  opts?: {nowUnixMs?: number; spaces?: readonly AgencySpaceLike[]},
 ): AgentSessionTrack[] {
   const bySpace = new Map<string, {label: string | null; rows: AgencyRowLike[]}>()
   for (const row of rows) {
@@ -411,10 +422,20 @@ export function buildTracks(
     }
     space.rows.push(row)
   }
+  // A rack whose every chain was grouped holds sets and no session (O-I #842 round 21): its space is no row's, so it stands from the
+  // reading's own disclosure of it, a group track with no session of its own whose chains are the sets its record holds.
+  const held = new Set<string>()
+  for (const space of opts?.spaces ?? []) {
+    if (!space || typeof space.spaceRef !== 'string' || !space.spaceRef || bySpace.has(space.spaceRef)) continue
+    held.add(space.spaceRef)
+    bySpace.set(space.spaceRef, {label: typeof space.spaceLabel === 'string' && space.spaceLabel ? space.spaceLabel : null,
+      rows: [{spaceRef: space.spaceRef, spaceLabel: space.spaceLabel, sessionRef: '', raw: space.raw, ...(typeof space.project === 'string' ? {project: space.project} : {})}]})
+  }
 
   const tracks: AgentSessionTrack[] = []
   for (const [spaceRef, space] of bySpace) {
-    const memberRefs = space.rows.map(row => row.sessionRef)
+    const sessionRows = held.has(spaceRef) ? [] : space.rows
+    const memberRefs = sessionRows.map(row => row.sessionRef)
     const agentSet = agentSetOf(space.rows)
     const helper = decisionHelperOf(space.rows)
     const setChains = setChainsOf(space.rows)
@@ -440,7 +461,7 @@ export function buildTracks(
       ...(helper ? {decisionHelper: helper} : {}),
       ...(setChains ? {setChains} : {}),
     })
-    for (const row of space.rows) {
+    for (const row of sessionRows) {
       const agentRef = typeof row.agentRef === 'string' && row.agentRef ? row.agentRef : null
       const entry = agentRef ? roster.get(agentRef) : undefined
       tracks.push({

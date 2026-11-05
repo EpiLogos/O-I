@@ -147,7 +147,8 @@ function AgentSessionsSource({children}: {children: ReactNode}) {
 
   const axis = useMemo(() => sharedAxis(events, nowUnixMs), [events, nowUnixMs])
 
-  const read = useMemo(() => buildTracks(rows, roster, {nowUnixMs}).map(track => {
+  const heldSpaces = agency.spaces
+  const read = useMemo(() => buildTracks(rows, roster, {nowUnixMs, spaces: heldSpaces}).map(track => {
     if (track.group) return track
     const taskReading = readings[track.sessionRef] ?? null
     return {
@@ -156,7 +157,7 @@ function AgentSessionsSource({children}: {children: ReactNode}) {
       needle: needleFor(events, track.sessionRef, axis),
       budget: budgetFromReading(taskReading),
     }
-  }), [rows, roster, readings, events, nowUnixMs, axis])
+  }), [rows, heldSpaces, roster, readings, events, nowUnixMs, axis])
   // How each task stands is Factory's reading of the owners' evidence (taskActivity.ts): AIKit's status of the session, its check-ins
   // and Factory's custody of the task. The tasks and needles above carry positions and spans; their state is Factory's alone.
   const activity = useTaskActivity(transport, read, events, projectOf, nowUnixMs)

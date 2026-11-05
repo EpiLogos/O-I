@@ -98,7 +98,7 @@ import {PERSONAL_ANCHOR_ACTION, acceptSourceReturn, personRefOf, rejectSourceRet
 import {commentSourceReturn, withReturnComments} from '../../central/devices/sourceReturnComment'
 import {receiving} from '../../../../../../desktop/cradle/src/receiving/client'
 import {useUnitDecisions, waitingDecisions} from './unitDecisions'
-import {useCentralAction} from '../../central/devices/useCentralReadings'
+import {useAgentSetReadings, useCentralAction} from '../../central/devices/useCentralReadings'
 import {actionAnswerOf, centralActionOp} from '../../central/devices/centralActions'
 import {useAtSearch} from '../../central/searchPane'
 import {useModelCatalogue} from './useModelCatalogue'
@@ -558,6 +558,12 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const macrosWhere = useMemo(() => (padsWhere && 'projectRef' in padsWhere ? {statePath: padsWhere.statePath, projectRef: padsWhere.projectRef} : null),
     [padsWhere && 'projectRef' in padsWhere ? padsWhere.statePath : null, padsWhere && 'projectRef' in padsWhere ? padsWhere.projectRef : null]) // eslint-disable-line react-hooks/exhaustive-deps
   const macroSpaces = useMemo(() => rackSpaces(groupTrack, tracks, loneTrack), [groupTrack, tracks, loneTrack])
+  // Each set the rack holds as a chain reads its own Join from the Central set its space is tied to (§19.15 Join, the agent rack's round 21).
+  const nestedSetRefs = useMemo(() => (macroSpaces ?? []).filter(space => space !== groupTrack?.spaceRef).flatMap(space => {
+    const ref = tracks?.find(track => track.group && track.sessionRef === space)?.agentSet?.ref
+    return ref ? [ref] : []
+  }), [macroSpaces, tracks, groupTrack])
+  const nestedSets = useAgentSetReadings(transport, nestedSetRefs)
   const rackMacros = useRackMacrosReadings(transport, macrosWhere, macroSpaces)
   const refreshMacros = rackMacros.refresh
   // Group (§19.15 "Making a rack and a set"): Central proposes the chosen chains as a set and Accept saves its record, each the person's
@@ -633,10 +639,10 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const macroChains = useMemo(() => agentChainSessions(groupTrack, tracks, loneTrack), [groupTrack, tracks, loneTrack])
   const chainModelReadings = useChainModelReadings(transport, macroChains)
   const agentsetDesignBinding = useMemo(() => agentsetBinding({group: groupTrack, session: loneTrack, agent: oneAgent?.values ?? null, tracks, models, holds,
-    nowUnixMs: sessions?.nowUnixMs ?? 0, ...(setRef ? {set: groupSet} : {}), ...(helperStands && helperDevice ? {helper: helperDesignBinding.values} : {}), soloed: shell.soloed,
-    chainModels, chainModelReadings, rackMacros: rackMacros.readings}, agentsetPorts),
+    nowUnixMs: sessions?.nowUnixMs ?? 0, ...(setRef ? {set: groupSet} : {}), nestedSets, ...(helperStands && helperDevice ? {helper: helperDesignBinding.values} : {}),
+    soloed: shell.soloed, chainModels, chainModelReadings, rackMacros: rackMacros.readings}, agentsetPorts),
   [groupTrack, loneTrack, oneAgent, tracks, models, holds, sessions?.nowUnixMs, setRef, groupSet, helperStands, helperDevice, helperDesignBinding, agentsetPorts, shell.soloed, chainModels,
-    chainModelReadings, rackMacros.readings])
+    chainModelReadings, rackMacros.readings, nestedSets])
   // How far each plate of a session's chain reaches (factoryPlaces.ts reachOf): the rack's chains, and the lone session's own inside it.
   const rackChains = useMemo(() => rackChainsOf(agentsetDesignBinding.values.members), [agentsetDesignBinding.values.members])
   const reachHere = (slot: FactorySlot): Reach => (place.kind === 'session' ? reachOf(slot, rackChains, loneTrack?.sessionRef) : ON_ITS_TRACK)

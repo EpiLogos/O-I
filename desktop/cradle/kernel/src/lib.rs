@@ -807,7 +807,9 @@ pub enum KernelOp {
     /// Agent rack of them"): AIKit's `session-space group` seats the sessions
     /// in `into`, the set's own space in the same Project, with their Project
     /// contexts and benches, holds `into` as one chain of `space`, and
-    /// detaches the sessions from `space` last.
+    /// detaches the sessions from `space` last. `agent_set` (with its
+    /// `agent_set_revision`) ties `into` to the Central agent set the chains
+    /// were accepted as, so the set held as a chain reads its own Join.
     EncounterSessionGroup {
         project: String,
         space: String,
@@ -815,6 +817,10 @@ pub enum KernelOp {
         into: String,
         #[serde(default)]
         label: Option<String>,
+        #[serde(default)]
+        agent_set: Option<String>,
+        #[serde(default)]
+        agent_set_revision: Option<String>,
     },
     /// Hot-Swap a chain of the Agent rack (manual §19.15 "Swaps the chain's
     /// agent ... and keeps the rest of its chain"): AIKit's `session-space

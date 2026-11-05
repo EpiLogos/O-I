@@ -13,7 +13,7 @@
  */
 import { kernelRead } from "../kernel/bridge";
 import type { KernelTransportStatus } from "../kernel/types";
-import type { AgencyReading, AgencySessionRow, AgentDraft, GuardianRecord, SetupProposalRecord } from "./agencyTypes";
+import type { AgencyReading, AgencySessionRow, AgencySpaceRow, AgentDraft, GuardianRecord, SetupProposalRecord } from "./agencyTypes";
 
 // ---------------------------------------------------------------------------
 // the real reading: agency_read
@@ -28,16 +28,30 @@ export async function readAgency(transport: KernelTransportStatus, project: stri
     return { error: result.error ?? "AIKit SessionSpace reading unavailable" };
   }
   const outcome = result.outcome;
+  const { rows, heldSpaces } = agencyRowsOf(outcome.spaces);
+  return { reading: { projectRef: outcome.project_ref, harnessDisclosure: outcome.harness_disclosure, rows, ...(heldSpaces.length ? { heldSpaces } : {}), observedAtUnixMs: outcome.observed_at_unix_ms } };
+}
+
+/** The rows of AIKit's spaces: one per session each space holds; and the
+ * spaces that hold no session but hold sets as chains (AIKit's `set_chains`,
+ * a rack whose every chain was grouped), so its track still stands. Pure. */
+export function agencyRowsOf(spaces: readonly unknown[]): { rows: AgencySessionRow[]; heldSpaces: AgencySpaceRow[] } {
   const rows: AgencySessionRow[] = [];
-  for (const raw of outcome.spaces) {
-    const space = raw as { definition?: { id?: string }; label?: string; agent_sessions?: Record<string, { purpose?: string; agent_ref?: string }> };
+  const heldSpaces: AgencySpaceRow[] = [];
+  for (const raw of spaces) {
+    const space = raw as { definition?: { id?: string }; label?: string; agent_sessions?: Record<string, { purpose?: string; agent_ref?: string }>; set_chains?: unknown };
     const spaceRef = space?.definition?.id;
-    if (!spaceRef || !space.agent_sessions) continue;
-    for (const [sessionRef, attachment] of Object.entries(space.agent_sessions)) {
+    if (!spaceRef) continue;
+    const sessions = space.agent_sessions ? Object.entries(space.agent_sessions) : [];
+    for (const [sessionRef, attachment] of sessions) {
       rows.push({ spaceRef, spaceLabel: space.label, sessionRef, purpose: attachment?.purpose, agentRef: typeof attachment?.agent_ref === "string" ? attachment.agent_ref : undefined, raw });
     }
+    const held = space.set_chains;
+    if (!sessions.length && held && typeof held === "object" && !Array.isArray(held) && Object.keys(held).length) {
+      heldSpaces.push({ spaceRef, spaceLabel: space.label, raw });
+    }
   }
-  return { reading: { projectRef: outcome.project_ref, harnessDisclosure: outcome.harness_disclosure, rows, observedAtUnixMs: outcome.observed_at_unix_ms } };
+  return { rows, heldSpaces };
 }
 
 // ---------------------------------------------------------------------------

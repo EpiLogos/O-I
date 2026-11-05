@@ -30,6 +30,16 @@
 //! `attempt-request-cancellation` under its own native action, with the same
 //! admission, grant and attempt reading. It asks; it stops no process:
 //! Factory's lifecycle accepts it or records the process's termination.
+//!
+//! Launch (O-I #842 round 21, DLW build ruling 2026-11-05) starts a unit:
+//! Factory's own `factory attempt launch <state> -` assembles the
+//! `start-serial` from the owners' readings, admitted as `attempt-launch`
+//! under its own native action with the same admission and grant. The desk
+//! carries those readings verbatim (AIKit's realisation on the session that
+//! carries the unit, and AIKit's praxis and Central's placement where the
+//! unit names them); Factory reads each one and refuses a missing one in
+//! that owner's words. The driver adds only the attempt and projection refs,
+//! derived from the Run, the unit, the task and the revision read.
 use super::*;
 
 pub const CONTRACT: &str = "oi.factory-attempt-retry/v1";
@@ -38,6 +48,11 @@ const ACTION_REF: &str = "attempt-retry";
 pub const CANCELLATION_CONTRACT: &str = "oi.factory-attempt-cancellation/v1";
 /// The admission's action for a cancellation request.
 const CANCEL_ACTION_REF: &str = "attempt-request-cancellation";
+pub const LAUNCH_CONTRACT: &str = "oi.factory-attempt-launch/v1";
+/// The admission's action for a launch, and the request contract it names
+/// (Factory's attempt_application.rs `FACTORY_ATTEMPT_LAUNCH`).
+const LAUNCH_ACTION_REF: &str = "attempt-launch";
+const FACTORY_LAUNCH_CONTRACT: &str = "factory.attempt-launch/v1";
 
 /// The host's native action authority for one press on a unit (a retry or a
 /// cancellation request): the grant ref it holds (else the principal its
@@ -69,9 +84,15 @@ fn text(value: &Value) -> Option<String> {
         .map(str::to_owned)
 }
 
-/// Factory's admission of one action (`action_ref`, said as `what`), or the
-/// reason it admits none — the actions it does name, in its own refs.
-fn admitted(reading: &Value, action_ref: &str, what: &str) -> Result<Admitted, String> {
+/// Factory's admission of one action (`action_ref`, said as `what`, whose
+/// request is `contract`), or the reason it admits none — the actions it does
+/// name, in its own refs.
+fn admitted(
+    reading: &Value,
+    action_ref: &str,
+    what: &str,
+    contract: &str,
+) -> Result<Admitted, String> {
     let actions = reading["actions"].as_array().cloned().unwrap_or_default();
     let Some(action) = actions
         .iter()
@@ -90,9 +111,9 @@ fn admitted(reading: &Value, action_ref: &str, what: &str) -> Result<Admitted, S
             }
         ));
     };
-    if action["contract"] != ATTEMPT_ACTION_CONTRACT {
+    if action["contract"] != contract {
         return Err(format!(
-            "Factory's {action_ref} action names another contract than {ATTEMPT_ACTION_CONTRACT}."
+            "Factory's {action_ref} action names another contract than {contract}."
         ));
     }
     let caller = &reading["desktopCaller"];
@@ -127,6 +148,7 @@ fn admission_for(
     state_path: &Path,
     action_ref: &str,
     what: &str,
+    contract: &str,
 ) -> Result<Admitted, String> {
     let disclosure = match call(
         &[
@@ -146,7 +168,7 @@ fn admission_for(
         }
         Err(error) => return Err(error.message),
     };
-    admitted(&disclosure, action_ref, what)
+    admitted(&disclosure, action_ref, what, contract)
 }
 
 /// The grant the host holds for the admitted action, resolved in the native
@@ -273,7 +295,13 @@ pub(super) fn attempt_retry(
             "A retry names the exact Run and the exact unit.".into(),
         );
     }
-    let expected = match admission_for(call, state_path, ACTION_REF, "retry") {
+    let expected = match admission_for(
+        call,
+        state_path,
+        ACTION_REF,
+        "retry",
+        ATTEMPT_ACTION_CONTRACT,
+    ) {
         Ok(expected) => expected,
         Err(reason) => return refused("owner", Some("admission"), reason),
     };
@@ -421,8 +449,13 @@ pub(super) fn attempt_request_cancellation(
             "A cancellation request names the exact Run and the exact unit.".into(),
         );
     }
-    let expected = match admission_for(call, state_path, CANCEL_ACTION_REF, "cancellation request")
-    {
+    let expected = match admission_for(
+        call,
+        state_path,
+        CANCEL_ACTION_REF,
+        "cancellation request",
+        ATTEMPT_ACTION_CONTRACT,
+    ) {
         Ok(expected) => expected,
         Err(reason) => return refused("owner", Some("admission"), reason),
     };
@@ -483,6 +516,178 @@ pub(super) fn attempt_request_cancellation(
             let uncertain = matches!(error.kind.as_str(), "timeout" | "process-error");
             let mut extra = refs;
             extra["refusal"] = serde_json::json!({"source": "owner", "step": "request-cancellation",
+                "message": error.message, "operationMayHaveRun": uncertain});
+            envelope(
+                if uncertain { "uncertain" } else { "refused" },
+                uncertain,
+                extra,
+            )
+        }
+    }
+}
+
+/// The owners' readings a launch carries, verbatim: the task the unit's
+/// attempt serves, AIKit's model realisation on the session that carries the
+/// unit (`aikit compose --realise`, `aikit.model-realisation/v2`, whose
+/// explicit selection receipt names the route, harness and session), and,
+/// where the unit names them, AIKit's NOW-preparation praxis receipt with the
+/// prepared NOW context it was resolved against and Central's placement.
+#[derive(Clone, Debug, Default)]
+pub struct LaunchReadings {
+    pub task_ref: String,
+    pub aikit_realisation: Value,
+    pub praxis_receipt: Option<Value>,
+    pub now_context_ref: Option<String>,
+    pub placement: Option<Value>,
+}
+
+/// One launch through the owner: Factory's own `attempt launch`, the request
+/// carried verbatim, answered with its attempt action receipt.
+fn launch_call(call: &mut OwnerCall<'_>, state_path: &Path, body: &Value) -> Result<Value, Error> {
+    let bytes = serde_json::to_vec(body).map_err(|e| incompatible(e.to_string()))?;
+    let args: Vec<std::ffi::OsString> = vec![
+        "attempt".into(),
+        "launch".into(),
+        path_arg(state_path),
+        "-".into(),
+        "--json".into(),
+    ];
+    let receipt = call(&args, Some(&bytes))?;
+    if receipt["contract"] != ATTEMPT_ACTION_CONTRACT {
+        return Err(incompatible(
+            "Factory answered an unexpected attempt launch receipt",
+        ));
+    }
+    Ok(receipt)
+}
+
+/// Launch one unit. Returns the launch document: `launched` (Factory started
+/// the unit's attempt), `already-launched` (Factory answered an earlier
+/// application of the same document), `uncertain` (the owner may have run and
+/// did not answer) or `refused`, with the owner's own words, or the driver's
+/// own named as such. A refusal moves nothing.
+pub(super) fn attempt_launch(
+    call: &mut OwnerCall<'_>,
+    state_path: &Path,
+    run_ref: &str,
+    unit: &str,
+    readings: LaunchReadings,
+    authority: AttemptAuthority<'_>,
+) -> Value {
+    let envelope = |status: &str, changed: bool, extra: Value| {
+        let mut document = serde_json::json!({
+            "contract": LAUNCH_CONTRACT,
+            "runRef": run_ref,
+            "workflowUnitRef": unit,
+            "status": status,
+            "changed": changed,
+            "attemptRef": null,
+            "taskRef": null,
+            "authorityRef": null,
+            "receipt": null,
+            "refusal": null,
+        });
+        if let (Some(into), Some(from)) = (document.as_object_mut(), extra.as_object()) {
+            for (key, value) in from {
+                into.insert(key.clone(), value.clone());
+            }
+        }
+        document
+    };
+    let refused = |source: &str, step: Option<&str>, message: String| {
+        envelope(
+            "refused",
+            false,
+            serde_json::json!({"refusal": refusal(source, step, message)}),
+        )
+    };
+    if run_ref.trim().is_empty() || unit.trim().is_empty() || readings.task_ref.trim().is_empty() {
+        return refused(
+            "driver",
+            None,
+            "A launch names the exact Run, the exact unit and the task its attempt serves.".into(),
+        );
+    }
+    let expected = match admission_for(
+        call,
+        state_path,
+        LAUNCH_ACTION_REF,
+        "launch",
+        FACTORY_LAUNCH_CONTRACT,
+    ) {
+        Ok(expected) => expected,
+        Err(reason) => return refused("owner", Some("admission"), reason),
+    };
+    let grant = match granted(&authority, &expected) {
+        Ok(grant) => grant,
+        Err(reason) => return refused("driver", None, reason),
+    };
+    let attempts = match read_owner(call, ["attempt", "read"], state_path, run_ref) {
+        Ok(attempts) => attempts,
+        Err(error) => return refused("owner", Some("attempt"), error.message),
+    };
+    let Some(revision) = attempts["revision"].as_u64() else {
+        return refused(
+            "owner",
+            Some("attempt"),
+            "Factory's attempt reading names no state revision.".into(),
+        );
+    };
+    let task_ref = readings.task_ref.trim().to_owned();
+    let suffix = suffix(run_ref, unit, &task_ref, revision);
+    let attempt_ref = format!("attempt:desk-launch:{suffix}");
+    let mut body = serde_json::json!({
+        "contract": FACTORY_LAUNCH_CONTRACT,
+        "projectionRef": format!("projection:desk-launch:{suffix}"),
+        "caller": expected.caller,
+        "runRef": run_ref,
+        "expectedRevision": revision,
+        "authority": {
+            "authorityRef": grant,
+            "nativeOwner": expected.native_owner,
+            "capabilityRef": expected.capability_ref,
+            "capabilityGranted": true,
+            "actionAuthorised": true,
+        },
+        "workflowUnitRef": unit,
+        "attemptRef": attempt_ref,
+        "taskRef": task_ref,
+        // AIKit's reading, whole: Factory verifies its explicit selection
+        // against its own basis digests and refuses in AIKit's terms.
+        "aikitRealisation": readings.aikit_realisation,
+    });
+    // The readings a unit may not need are absent, never null: Factory names
+    // the one its unit's law needs and does not have.
+    for (key, value) in [
+        ("praxisReceipt", readings.praxis_receipt),
+        ("nowContextRef", readings.now_context_ref.map(Value::from)),
+        ("placement", readings.placement),
+    ] {
+        if let Some(value) = value.filter(|value| !value.is_null()) {
+            body[key] = value;
+        }
+    }
+    let refs =
+        serde_json::json!({"attemptRef": attempt_ref, "taskRef": task_ref, "authorityRef": grant});
+    match launch_call(call, state_path, &body) {
+        Ok(receipt) => {
+            let applied = step_status(&receipt, revision) == "applied";
+            let mut extra = refs;
+            extra["receipt"] = receipt;
+            envelope(
+                if applied {
+                    "launched"
+                } else {
+                    "already-launched"
+                },
+                applied,
+                extra,
+            )
+        }
+        Err(error) => {
+            let uncertain = matches!(error.kind.as_str(), "timeout" | "process-error");
+            let mut extra = refs;
+            extra["refusal"] = serde_json::json!({"source": "owner", "step": "launch",
                 "message": error.message, "operationMayHaveRun": uncertain});
             envelope(
                 if uncertain { "uncertain" } else { "refused" },
@@ -619,7 +824,7 @@ mod tests {
             match (words[0].as_str(), words[1].as_str()) {
                 ("attempt", "admission") => Ok(admission.clone()),
                 ("attempt", "read") => Ok(attempts()),
-                ("attempt", "action") => action.take().expect("one action"),
+                ("attempt", "action") | ("attempt", "launch") => action.take().expect("one action"),
                 other => panic!("unexpected owner call {other:?}"),
             }
         }
@@ -982,5 +1187,256 @@ mod tests {
             .unwrap()
             .contains("no leg for unit:other"));
         assert!(calls.borrow().iter().all(|(words, _)| words[1] != "action"));
+    }
+
+    const LAUNCH_ACTION: &str = "factory.attempt.launch";
+
+    /// Factory's admission as the owner answers it from round 21 (factory
+    /// attempt_admission.rs `reading_for`): receiving, retry, the
+    /// cancellation request and the launch, whose request is Factory's own
+    /// `factory.attempt-launch/v1`.
+    fn admission_with_launch() -> Value {
+        let mut reading = admission_with_cancellation();
+        reading["actions"]
+            .as_array_mut()
+            .unwrap()
+            .push(serde_json::json!({
+            "actionRef": "attempt-launch", "contract": "factory.attempt-launch/v1",
+            "command": "factory attempt launch <state> -", "operation": "start-serial",
+            "nativeAction": LAUNCH_ACTION, "scopeRef": "project:Factory", "actorKind": "human"}));
+        reading
+    }
+
+    /// AIKit's realisation as `aikit compose --realise --model` answers it:
+    /// the explicit selection receipt rides it whole.
+    fn realisation() -> Value {
+        serde_json::json!({"schema": "aikit.model-realisation/v2", "selected": true, "executed": false,
+            "factory_selection": {"roster_version": "aikit.model-roster/v1", "model_ref": "model:pi",
+                "ranking_policy": "EXPLICIT_PIN", "basis": {"route_ref": "route:pi"}}})
+    }
+
+    fn readings() -> LaunchReadings {
+        LaunchReadings {
+            task_ref: "task:inspect".into(),
+            aikit_realisation: realisation(),
+            praxis_receipt: None,
+            now_context_ref: Some("now:present".into()),
+            placement: None,
+        }
+    }
+
+    #[test]
+    fn a_launch_factory_does_not_admit_or_the_host_does_not_hold_is_refused_before_any_move() {
+        let cancel_only = TempContract::new("launch-ungranted", &contract(&[CANCEL_ACTION]));
+        let contract = TempContract::new("launch-unadmitted", &contract(&[LAUNCH_ACTION]));
+        let calls = std::cell::RefCell::new(Vec::new());
+        let mut call = owner_admitting(admission_with_cancellation(), Ok(Value::Null), &calls);
+        let answer = attempt_launch(
+            &mut call,
+            Path::new("/s"),
+            "run:one",
+            UNIT,
+            readings(),
+            authority(&contract),
+        );
+        assert_eq!(answer["contract"], LAUNCH_CONTRACT);
+        assert_eq!(answer["status"], "refused");
+        assert_eq!(answer["refusal"]["step"], "admission");
+        let words = answer["refusal"]["message"].as_str().unwrap();
+        assert!(
+            words.starts_with("Factory admits no launch from a desktop caller")
+                && words.contains("no attempt-launch action"),
+            "{words}"
+        );
+        assert_eq!(calls.borrow().len(), 1, "only the admission was read");
+
+        // A launch admitted under another contract than Factory's own request is not this route's.
+        let mut elsewhere = admission_with_launch();
+        elsewhere["actions"]
+            .as_array_mut()
+            .unwrap()
+            .last_mut()
+            .unwrap()["contract"] = "factory.attempt-action/v1".into();
+        let calls = std::cell::RefCell::new(Vec::new());
+        let mut call = owner_admitting(elsewhere, Ok(Value::Null), &calls);
+        let answer = attempt_launch(
+            &mut call,
+            Path::new("/s"),
+            "run:one",
+            UNIT,
+            readings(),
+            authority(&contract),
+        );
+        assert!(
+            answer["refusal"]["message"]
+                .as_str()
+                .unwrap()
+                .contains("names another contract than factory.attempt-launch/v1"),
+            "{answer}"
+        );
+
+        // A grant that holds the cancellation and not the launch reaches nothing.
+        let calls = std::cell::RefCell::new(Vec::new());
+        let mut call = owner_admitting(admission_with_launch(), Ok(Value::Null), &calls);
+        let answer = attempt_launch(
+            &mut call,
+            Path::new("/s"),
+            "run:one",
+            UNIT,
+            readings(),
+            authority(&cancel_only),
+        );
+        assert_eq!(answer["status"], "refused");
+        assert_eq!(answer["refusal"]["source"], "driver");
+        assert!(
+            answer["refusal"]["message"]
+                .as_str()
+                .unwrap()
+                .contains("does not list factory.attempt.launch"),
+            "{answer}"
+        );
+        assert_eq!(calls.borrow().len(), 1, "no attempt was read or launched");
+
+        // No task, no launch: the driver names it before asking anyone.
+        let calls = std::cell::RefCell::new(Vec::new());
+        let mut call = owner_admitting(admission_with_launch(), Ok(Value::Null), &calls);
+        let answer = attempt_launch(
+            &mut call,
+            Path::new("/s"),
+            "run:one",
+            UNIT,
+            LaunchReadings {
+                task_ref: " ".into(),
+                ..readings()
+            },
+            authority(&contract),
+        );
+        assert_eq!(answer["refusal"]["source"], "driver");
+        assert!(calls.borrow().is_empty());
+    }
+
+    #[test]
+    fn an_admitted_granted_launch_carries_the_owners_readings_verbatim_to_factory_s_own_launch() {
+        let contract = TempContract::new("launch-granted", &contract(&[LAUNCH_ACTION]));
+        let calls = std::cell::RefCell::new(Vec::new());
+        let receipt = serde_json::json!({"contract": "factory.attempt-action/v1", "previousRevision": 7,
+            "nextRevision": 8, "operation": "start-serial"});
+        let mut call = owner_admitting(admission_with_launch(), Ok(receipt.clone()), &calls);
+        let answer = attempt_launch(
+            &mut call,
+            Path::new("/s"),
+            "run:one",
+            UNIT,
+            readings(),
+            authority(&contract),
+        );
+        assert_eq!(answer["status"], "launched", "{answer}");
+        assert_eq!(answer["changed"], true);
+        assert_eq!(answer["receipt"], receipt);
+        assert_eq!(answer["taskRef"], "task:inspect");
+        assert_eq!(
+            answer["authorityRef"],
+            format!("central:native-action-authority#{HUMAN}")
+        );
+        let attempt_ref = answer["attemptRef"].as_str().unwrap().to_owned();
+        assert!(attempt_ref.starts_with("attempt:desk-launch:"));
+        let calls = calls.borrow();
+        let (words, body) = calls.last().unwrap();
+        assert_eq!(words, &["attempt", "launch", "/s", "-", "--json"]);
+        let body = body.as_ref().unwrap();
+        assert_eq!(body["contract"], "factory.attempt-launch/v1");
+        assert_eq!(body["expectedRevision"], 7);
+        assert_eq!(body["caller"]["callerRef"], "oi:desktop");
+        assert_eq!(body["workflowUnitRef"], UNIT);
+        assert_eq!(body["attemptRef"], attempt_ref);
+        assert_eq!(body["taskRef"], "task:inspect");
+        assert_eq!(
+            body["aikitRealisation"],
+            realisation(),
+            "AIKit's reading, whole"
+        );
+        assert_eq!(body["nowContextRef"], "now:present");
+        let fields = body.as_object().unwrap();
+        assert!(
+            !fields.contains_key("praxisReceipt") && !fields.contains_key("placement"),
+            "a reading the desk does not hold is absent, for Factory to name: {body}"
+        );
+        assert_eq!(
+            body["authority"]["capabilityRef"],
+            "capability/factory/operate-attempt"
+        );
+
+        // The same press at the same revision is the same document; Factory's
+        // answer from its stored receipt is an earlier launch.
+        let again = std::cell::RefCell::new(Vec::new());
+        let earlier = serde_json::json!({"contract": "factory.attempt-action/v1", "previousRevision": 6,
+            "nextRevision": 7, "operation": "start-serial"});
+        let mut call = owner_admitting(admission_with_launch(), Ok(earlier), &again);
+        let answer = attempt_launch(
+            &mut call,
+            Path::new("/s"),
+            "run:one",
+            UNIT,
+            readings(),
+            authority(&contract),
+        );
+        assert_eq!(answer["status"], "already-launched");
+        assert_eq!(answer["attemptRef"], attempt_ref);
+        assert_eq!(again.borrow().last().unwrap().1.as_ref(), Some(body));
+    }
+
+    #[test]
+    fn factorys_refusal_of_a_launch_comes_back_in_its_words_naming_the_owner_whose_reading_is_missing(
+    ) {
+        let contract = TempContract::new("launch-refused", &contract(&[LAUNCH_ACTION]));
+        let calls = std::cell::RefCell::new(Vec::new());
+        let words = "factory: Factory attempt error: InvalidDisposition(\"AIKit's roster chose model:pi and issued no explicit selection receipt: a unit starts only on AIKit's explicit selection, whose basis names the route, harness and session that carry it (aikit compose --realise --model <ref>)\")";
+        let mut call = owner_admitting(
+            admission_with_launch(),
+            Err(Error {
+                kind: "owner-refused-or-failed".into(),
+                message: words.into(),
+                operation_may_have_run: true,
+            }),
+            &calls,
+        );
+        let answer = attempt_launch(
+            &mut call,
+            Path::new("/s"),
+            "run:one",
+            UNIT,
+            LaunchReadings {
+                aikit_realisation: serde_json::json!({"schema": "aikit.model-realisation/v2",
+                    "selected": true, "resolution": {"selected": {"model": "model:pi"}}}),
+                ..readings()
+            },
+            authority(&contract),
+        );
+        assert_eq!(answer["status"], "refused");
+        assert_eq!(answer["changed"], false);
+        assert_eq!(answer["refusal"]["source"], "owner");
+        assert_eq!(answer["refusal"]["step"], "launch");
+        assert_eq!(answer["refusal"]["message"], words);
+        // A stopped owner may have run: the press is uncertain, not refused.
+        let calls = std::cell::RefCell::new(Vec::new());
+        let mut call = owner_admitting(
+            admission_with_launch(),
+            Err(Error {
+                kind: "timeout".into(),
+                message: "factory did not answer".into(),
+                operation_may_have_run: true,
+            }),
+            &calls,
+        );
+        let answer = attempt_launch(
+            &mut call,
+            Path::new("/s"),
+            "run:one",
+            UNIT,
+            readings(),
+            authority(&contract),
+        );
+        assert_eq!(answer["status"], "uncertain");
+        assert_eq!(answer["refusal"]["operationMayHaveRun"], true);
     }
 }

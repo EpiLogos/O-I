@@ -318,7 +318,16 @@ export type QlReadRequest = {kind:"kernel-m1"|"scene-compose"|"scene-world";requ
   /** `ql vak compose /dev/stdin` (O-I #843): one `ql.vak-composition/v1` request `{contract, steps:[{op, …}]}` on stdin, answered
    * `{contract:"ql.vak-composition/v1", sourceRevision, results:[{op, result}]}` in step order; a Factory unit's heads in the Clip's
    * Vāk tab are QL's word. It stores nothing; a step QL cannot compose is refused in QL's words. */
-  | {kind:"vak-compose";request:unknown};
+  | {kind:"vak-compose";request:unknown}
+  /** `ql vak unit-steps -` (round 21): one Factory unit's heads `{contract:"ql.vak-unit-steps/v1", unit, heads:{CPF?, CT?, CP?, CF?,
+   * CFP?, CS?, direction?}}` (Factory's spelling, an open head absent) on stdin; QL's breakdown under the same contract: `heads` (each
+   * head's state, label, Vāk-block label and meaning, or the labels an open head may take), `open`, `compose` (the `cfp-form` and
+   * `cs-select` steps the heads fix, with the walk's hops), `walk` and `needs`. A label that is not QL's is refused in QL's words. */
+  | {kind:"vak-unit-steps";request:unknown}
+  /** `ql vak thought-consumption -` (round 21): Factory's `factory.run-thought-consumption/v1` receipt with each thought's chosen
+   * meaning (`ql.vak-thought-consumption-projection/v1`) on stdin; QL's `ql.vak-thought-consumption/v1` reading of the consumed T/T′
+   * thought, its Recognition candidates proposals for AIKit. It stores nothing. */
+  | {kind:"vak-thought-consumption";request:unknown};
 /** `workcell machine list` answers `{machines:[{label, endpoint, credential_ref?, operations, note?}], control_operations:[…]}`: the
  * declarations and, since Workcell#118, the fourteen operations the control plane serves (what a declaration may allow). */
 export type WorkcellReadRequest = {kind:"connections-list"} | {kind:"connections-show";label:string} | {kind:"machine-list"}
@@ -848,7 +857,9 @@ export type KernelOp =
   /** Group (O-I manual §19.15 "select agents' chains and choose Group: they become one chain that holds an Agent rack of them"): the
    * sessions are seated in `into`, the set's own space, `space` holds `into` as one chain, and the sessions leave `space` last
    * (`session-space group`). */
-  | {op:"encounter_session_group";project:string;space:string;agent_sessions:string[];into:string;label?:string|null}
+  | {op:"encounter_session_group";project:string;space:string;agent_sessions:string[];into:string;label?:string|null
+    /** The Central agent set the chains were accepted as, and its revision: AIKit ties the set's space to it, so its Join reads. */
+    agent_set?:string|null;agent_set_revision?:string|null}
   | {op:"encounter_session_hot_swap";project:string;space:string;agent_session:string;agent_ref:string}
   | {op:"encounter_session_decision_helper";project:string;space:string;bound:boolean}
   /** Several sessions' settings read at once (aikit.encounter-session-settings-list/v1), so a view of many tracks asks once. */
@@ -1332,9 +1343,23 @@ export interface FactoryAttemptCancellation {
   status:"cancel-requested"|"already-requested"|"uncertain"|"refused"; changed:boolean; attemptRef:string|null; authorityRef:string|null
   receipt:unknown; refusal:{source:string;step:string|null;message:string;operationMayHaveRun?:boolean}|null
 }
-/** Every `factory_owner` request: the five above by their shapes, and the kernel's other kinds by name. */
+/** Launch (kernel/src/factory_retry.rs, O-I #842 round 21): `attempt-launch` starts a unit through Factory's own `factory attempt launch
+ * <state> -` (factory.attempt-launch/v1), which assembles its start-serial from the owners' readings; admitted as Factory's `attempt-launch`
+ * action and granted on the person's grant as a retry is. The desk names the Run, the unit and the task, and carries the readings verbatim:
+ * AIKit's model realisation on the session that carries the unit (`aikit compose --realise --model`, aikit.model-realisation/v2, whose
+ * explicit selection names the route, harness and session), and AIKit's praxis receipt with its NOW context and Central's placement where
+ * the unit names them. Factory refuses a missing reading in that owner's words. */
+export type FactoryAttemptLaunchRequest = {kind:"attempt-launch";state_path:string;run_ref:string;workflow_unit_ref:string;task_ref:string
+  aikit_realisation:unknown;praxis_receipt?:unknown;now_context_ref?:string;placement?:unknown}
+/** The kernel's answer to a launch: Factory's receipt for the started attempt, or its refusal (or the driver's, named as such) in its words. */
+export interface FactoryAttemptLaunch {
+  contract:"oi.factory-attempt-launch/v1"; runRef:string; workflowUnitRef:string
+  status:"launched"|"already-launched"|"uncertain"|"refused"; changed:boolean; attemptRef:string|null; taskRef:string|null; authorityRef:string|null
+  receipt:unknown; refusal:{source:string;step:string|null;message:string;operationMayHaveRun?:boolean}|null
+}
+/** Every `factory_owner` request: the six above by their shapes, and the kernel's other kinds by name. */
 export type FactoryOwnerRequest = FactoryPadsPresetsRequest | FactoryPadsPresetSaveRequest | FactoryPadsPresetRecallRequest | FactoryAttemptTaskUnitsRequest
-  | FactoryAttemptRequestCancellationRequest | {kind:string;[field:string]:unknown}
+  | FactoryAttemptRequestCancellationRequest | FactoryAttemptLaunchRequest | {kind:string;[field:string]:unknown}
 /** One unit a task's attempts stand on (factory.attempt-task-units-reading/v1 `units`): its Run, the unit, the unit's current attempt and
  * its leg's status where the current attempt is the task's, how many of the task's attempts it holds, the Run's revision, and whether the
  * Run requires the unit. */

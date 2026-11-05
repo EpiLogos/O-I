@@ -521,6 +521,33 @@ pub enum OwnerRequest {
         #[serde(default)]
         authority_grant: Option<String>,
     },
+    /// Launch: the person starts a unit — Factory's own `factory attempt
+    /// launch <state> -` (`factory.attempt-launch/v1`, O-I #842 round 21),
+    /// which assembles the unit's `start-serial` from the owners' readings,
+    /// admitted from a desktop as its `attempt-launch` action under its own
+    /// native action, with the grant resolved by the host as a retry's is.
+    /// The desk names the Run, the unit and the task, and carries the owners'
+    /// readings verbatim: AIKit's model realisation on the session that
+    /// carries the unit (`aikit compose --realise`), and AIKit's praxis
+    /// receipt with the NOW context it was resolved against and Central's
+    /// placement where the unit names them. Factory reads each one and
+    /// refuses a missing one in that owner's words (factory_retry.rs).
+    AttemptLaunch {
+        state_path: PathBuf,
+        run_ref: String,
+        workflow_unit_ref: String,
+        task_ref: String,
+        #[serde(default)]
+        aikit_realisation: Value,
+        #[serde(default)]
+        praxis_receipt: Option<Value>,
+        #[serde(default)]
+        now_context_ref: Option<String>,
+        #[serde(default)]
+        placement: Option<Value>,
+        #[serde(default)]
+        authority_grant: Option<String>,
+    },
     /// `factory attempt decision submit <state> -` with the retained
     /// `RequestUnitDecision` Action document, carried verbatim (lane W3,
     /// T-COVERAGE §1.2): Factory submits the unit's question to Central's
@@ -2032,6 +2059,40 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
                 &state_path,
                 &run_ref,
                 &workflow_unit_ref,
+                retry::AttemptAuthority {
+                    grant: authority_grant,
+                    token: host_native_token(),
+                    contract: contract.as_deref(),
+                    now_unix_seconds: now_unix_seconds(),
+                },
+            ))
+        }
+        OwnerRequest::AttemptLaunch {
+            state_path,
+            run_ref,
+            workflow_unit_ref,
+            task_ref,
+            aikit_realisation,
+            praxis_receipt,
+            now_context_ref,
+            placement,
+            authority_grant,
+        } => {
+            let contract = authority_contract_for(&state_path);
+            let mut call =
+                |args: &[std::ffi::OsString], input: Option<&[u8]>| owner_call(args, input);
+            Ok(retry::attempt_launch(
+                &mut call,
+                &state_path,
+                &run_ref,
+                &workflow_unit_ref,
+                retry::LaunchReadings {
+                    task_ref,
+                    aikit_realisation,
+                    praxis_receipt,
+                    now_context_ref,
+                    placement,
+                },
                 retry::AttemptAuthority {
                     grant: authority_grant,
                     token: host_native_token(),

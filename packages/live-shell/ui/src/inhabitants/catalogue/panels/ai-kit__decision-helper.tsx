@@ -1,5 +1,5 @@
 // Decision helper (manual §19.20, ai-kit:decision-helper): the small model a team's members put typed questions to, when the rules
-// leave a choice open among labels the owner allows. An instrument: it stands as a chain of the team's Agentset rack, with the Decision
+// leave a choice open among labels the owner allows. An instrument: it stands as a chain of the team's Agent rack, with the Decision
 // helper where an agent's chain has its Agent, and one helper answers every member (software-factory__agentset-rack.tsx). Live's
 // nearest: an instrument on a chain of an Instrument Rack, held by Scale to the notes the scale allows. The owners:
 //   Provider, model, place, state: AIKit's decision provider (`aikit decide status`, aikit.decision-status/v1: selected_model,

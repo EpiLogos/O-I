@@ -774,7 +774,7 @@ export interface AgentRackPorts {
    * the receipt (factory.rack-macros-write/v1). */
   readonly rackMacros?: (input: RackMacrosWrite) => Promise<unknown>
   /** Group: AIKit seats the chosen chains' sessions in the set's own space (`into`), which the rack's space holds as one chain. */
-  readonly group?: (input: {project: string; space: string; agent_sessions: string[]; into: string; label: string}) => Promise<unknown>
+  readonly group?: (input: {project: string; space: string; agent_sessions: string[]; into: string; label: string; agent_set: string; agent_set_revision: string}) => Promise<unknown>
 }
 
 /** One Budget set on one chain's task (the kernel's encounter_task_budget): the turns it allows, against the task's revision and the Budget's. */
@@ -823,6 +823,8 @@ export interface AgentRackInput {
   readonly agent?: Values | null
   /** Central's answer to central.agent-set.read for the set the group's space names (group.agentSet); absent while not asked. */
   readonly set?: ActionAnswer | null
+  /** Central's answers for the sets the rack's nested sets are tied to (each set's space's agentSet), by set ref: each nested rack's Join. */
+  readonly nestedSets?: ReadonlyMap<string, ActionAnswer> | null
   readonly tracks: readonly AgentSessionTrack[] | null
   /** The models AIKit's catalogue names (kernel model_catalogue), for the Model macro. */
   readonly models?: readonly string[] | null
@@ -986,6 +988,9 @@ function nestedRacks(group: AgentSessionTrack, input: AgentRackInput, seen: Read
       rack.members = JSON.stringify([...agents, ...inner.members])
       rack.light = working ? 'lit' : 'dark'
       put(rack, 'crew', chain.track.agentSet?.ref ?? chain.track.spaceLabel ?? chain.purpose)
+      // The set's own Join, from the Central set its space is tied to (§19.15 Join "belongs to the set of agents").
+      const join = setRecordFrom(chain.track.agentSet?.ref, input.nestedSets?.get(chain.track.agentSet?.ref ?? ''))?.join
+      if (typeof join === 'string' && (JOINS as readonly string[]).includes(join)) rack.join = join
       Object.assign(rack, inner.values, groupMacroValues(rackAgents(chain.track, tracks, new Set([...seen, chain.space])), input.chainModelReadings))
       for (const track of tracks) if (isAgentChain(track, chain.track)) rack[`bench:${track.sessionRef}`] = track.benched === true
     }
@@ -1064,11 +1069,14 @@ export function agentsetValues(input: AgentRackInput): Values {
 
 /** Central's record of the group's set, when Central answered it for the set the space names. */
 function setRecordOf(input: AgentRackInput): Record<string, any> | null {
-  const tie = input.group?.agentSet, answer = input.set
-  if (!tie || answer?.status !== 'answered') return null
+  return setRecordFrom(input.group?.agentSet?.ref, input.set)
+}
+/** Central's record of the set `ref`, from its answer, when the answer is that set's. */
+function setRecordFrom(ref: string | undefined, answer: ActionAnswer | null | undefined): Record<string, any> | null {
+  if (!ref || answer?.status !== 'answered') return null
   const value = answer.value as {ref?: unknown; revision?: unknown; record?: unknown} | null
   const record = value && typeof value.record === 'object' && value.record !== null ? value.record as Record<string, any> : null
-  return record && record.ref === tie.ref ? record : null
+  return record && record.ref === ref ? record : null
 }
 
 /** Why the rack's Join is not drawn or not pressable, or null where it reads and writes. */
@@ -1162,7 +1170,9 @@ function macroStanding(macro: RackMacro, input: AgentRackInput, ports: AgentRack
 }
 
 /** The proposal the card stands on (the hand's hold after Make): its ref, its chains, and Central's record at its revision. */
-interface Proposal {readonly ref: string; readonly name: string; readonly members: readonly string[]; readonly revision: string; readonly record: Record<string, unknown>; readonly saved?: boolean}
+interface Proposal {readonly ref: string; readonly name: string; readonly members: readonly string[]; readonly revision: string; readonly record: Record<string, unknown>; readonly saved?: boolean
+  /** The revision Central saved the set at (its save receipt's `revision`), which the set's space is tied to. */
+  readonly savedRevision?: string}
 const proposalOf = (held: unknown): Proposal | null => {
   if (typeof held !== 'string') return null
   try {
@@ -1501,13 +1511,44 @@ export function agentsetBinding(input: AgentRackInput, ports?: AgentRackPorts): 
     const words = `From the Agent rack: set ${said.join(', ')} on ${device} in your chain.`
     await ports.ask({project: chain.project ?? ROOT_REGISTER, agent_session: chain.sessionRef, agent_ref: chain.agentRef, device, change, words})
   }
+  /** A nested set's own Join, changed in its Agent rack (`dev:<set>@<rack>`, its whole object): saved with the Central set its space is tied
+   * to, at that set's next revision, as the rack's own Join is. False for any other change, which goes where a device's change goes. */
+  const nestedJoin = async (key: string, value: Value | undefined): Promise<boolean> => {
+    const at = key.indexOf('@')
+    const space = key.slice('dev:'.length, at < 0 ? undefined : at)
+    if (at < 0 || key.slice(at + 1) !== AGENTSET_DESIGN || !input.group?.group) return false
+    const set = tracks.find(track => track.group && track.sessionRef === space)
+    if (!set || space === input.group.sessionRef || !(rackSpaces(input.group, tracks) ?? []).includes(space)) return false
+    let next: Record<string, unknown> | null = null
+    try { const parsed = typeof value === 'string' ? JSON.parse(value) as unknown : null; next = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed as Record<string, unknown> : null }
+    catch { next = null }
+    const was = (() => { try { return JSON.parse(String(agentsetValues(input)[memberDeviceKey(space, AGENTSET_DESIGN)] ?? '{}')) as Record<string, unknown> } catch { return {} } })()
+    const changed = next ? [...new Set([...Object.keys(next), ...Object.keys(was)])].filter(k => JSON.stringify(next![k]) !== JSON.stringify(was[k])) : []
+    if (changed.length !== 1 || changed[0] !== 'join') return false
+    const joined = next!.join
+    if (typeof joined !== 'string' || !(JOINS as readonly string[]).includes(joined)) throw Error(`Join is none, all, first, quorum or weighted, not ${String(joined)}.`)
+    const tie = set.agentSet
+    if (!tie) throw Error(JOIN_UNTIED)
+    const answer = input.nestedSets?.get(tie.ref)
+    if (!answer || answer.status === 'reading') throw Error(JOIN_READING(tie.ref))
+    if (answer.status === 'refused') throw Error(`Join: ${answer.error}`)
+    const record = setRecordFrom(tie.ref, answer)
+    if (!record) throw Error(`Join: Central answered another set than ${tie.ref}.`)
+    if (!ports?.saveSet) throw Error('Join: no carrier to Central\'s central.agent-set.save stands on this chain.')
+    const revision = String(record.revision)
+    await ports.saveSet({scope: 'root', record: {...record, join: joined, revision: nextSetRevision(revision)}, expected_revision: revision})
+    return true
+  }
   const accept = async () => {
     const proposal = proposalOf(pressed()['new.proposal'])
     if (!proposal) throw Error(GROUP_REFUSE.noProposal)
+    let savedRevision = proposal.savedRevision ?? (typeof proposal.record.revision === 'string' ? proposal.record.revision : proposal.revision)
     if (!proposal.saved) {
       if (!ports?.saveSet) throw Error('Accept: no carrier to Central\'s central.agent-set.save stands on this chain.')
-      await ports.saveSet({scope: 'root', record: proposal.record, expected_revision: proposal.revision})
-      holdView(AGENTSET_ID, 'new.proposal', JSON.stringify({...proposal, saved: true}))
+      const receipt = await ports.saveSet({scope: 'root', record: proposal.record, expected_revision: proposal.revision})
+      const kept = receipt && typeof receipt === 'object' ? (receipt as {revision?: unknown}).revision : undefined
+      if (typeof kept === 'string' && kept) savedRevision = kept
+      holdView(AGENTSET_ID, 'new.proposal', JSON.stringify({...proposal, saved: true, savedRevision}))
     }
     // AIKit makes the chosen chains one chain of this rack, in the set's own space, named for the set (so a stopped group is finished by
     // the next press, into the same space).
@@ -1519,8 +1560,9 @@ export function agentsetBinding(input: AgentRackInput, ports?: AgentRackPorts): 
     // The set's space is named for what the set is for: the words Central's record keeps of the proposal (central.agent-set/v1
     // `proposal.reason`), else the set's own name.
     const reason = (proposal.record.proposal as {reason?: unknown} | undefined)?.reason
+    // The set's space is tied to the set Central keeps (§19.15 Join "belongs to the set of agents"), so the set held as a chain reads its own Join.
     try { await ports.group({project: rack.project ?? ROOT_REGISTER, space: rack.spaceRef, agent_sessions: chosen, into,
-      label: typeof reason === 'string' && reason.trim() ? reason.trim() : proposal.name}) } catch (error) {
+      label: typeof reason === 'string' && reason.trim() ? reason.trim() : proposal.name, agent_set: proposal.ref, agent_set_revision: savedRevision}) } catch (error) {
       throw Error(GROUP_REFUSE.ungrouped(proposal.ref, said(error)))
     }
     clearCard()
@@ -1542,6 +1584,7 @@ export function agentsetBinding(input: AgentRackInput, ports?: AgentRackPorts): 
         if (key === 'new.accept') { await accept(); continue }
         if (key === 'new.discard') { await discard(); continue }
         if (key === 'retry') { await retry(); continue }
+        if (key.startsWith('dev:') && await nestedJoin(key, value)) continue
         if (key === 'stopAfter') { await stopAfter(); continue }
         if (key.startsWith('dev:')) { await askChain(key, value); continue }
         if (key === 'unmapped') { await unmap(value); continue }
