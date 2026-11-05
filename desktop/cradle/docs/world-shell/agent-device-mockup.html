@@ -489,7 +489,7 @@ function renderSession(){
         <div class="mixlow">
           ${t.ret?'':`<div class="sends">${knob('sa','A',t.sa||0,'',t.sa?'var(--bumble)':'var(--bg-3)').replace('data-info="A|"','data-info="Send A · Review|How much of this track\'s work passes through the Review return (Bumble). Full: every write is reviewed. Zero: none."')}</div>`}
           <div class="btns"><span class="tact ${t.agent||t.ret?'':'off'}" data-info="Activator|Live's track activator. Off: the agent on this track is benched — it keeps its acts and memory but runs nothing.">${t.ret?(t.id==='review'?'A':'B'):tracks.indexOf(t)+1}</span>
-            <span class="sbtn solo" data-info="Solo|Only soloed tracks' agents may run; everyone else holds at the next quantize point. For when you want one agent alone in the work.">S</span>
+            <span class="sbtn solo" data-info="Solo|You attend to the soloed tracks alone: you see and hear only them, in the views and the instruments. The others keep running.">S</span>
             ${t.ret?'':`<span class="sbtn arm ${t.arm?'on':''}" data-arm="${t.id}" data-info="Arm|The armed track is who you're talking to. The ● in the transport records your voice into a new act here; composer input goes here too. Several tracks can be armed (⌘-click) to address a team.">●</span>`}</div>
           <div class="fader" data-info="Budget fader · activity meter|Fader: the share of the session budget this track may spend. Meter: live activity (tokens per second) of its agent.">
             <div class="mtr"><i style="height:${t.meter*100}%;${t.meter>0?'':'display:none'}"></i></div>

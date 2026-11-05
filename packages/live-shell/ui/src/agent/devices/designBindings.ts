@@ -541,6 +541,8 @@ export interface RackInput {
   readonly profiles: unknown
   /** The seated session's practice (`aikit praxis activity --session`, aikit.praxis-session/v1), absent while not read. */
   readonly activity?: unknown
+  /** What AIKit refused of the reading, by part (useRackReading.ts: `set:<name>` for a carried set it would not show). */
+  readonly refused?: Readonly<Record<string, string>>
   readonly holds: ChainHolds
 }
 
@@ -629,15 +631,17 @@ export function rackMembers(input: Pick<RackInput, 'profile' | 'sets' | 'setList
   for (const ref of strings(input.profile.skill_set_refs)) {
     const reply = input.sets[setName(ref)]
     if (!isObj(reply)) continue
-    for (const cap of strings(reply.projected)) if (!out.has(cap)) out.set(cap, member(cap, rows.get(cap), true, null, practice))
+    // Each member stands under the set that holds it (round 869), set by set in the profile's order.
+    const set = setName(ref)
+    for (const cap of strings(reply.projected)) if (!out.has(cap)) out.set(cap, {...member(cap, rows.get(cap), true, null, practice), set})
     for (const held of Array.isArray(reply.withheld) ? reply.withheld : []) {
       if (!isObj(held) || typeof held.capability !== 'string') continue
-      out.set(held.capability, member(held.capability, rows.get(held.capability), false, typeof held.reason === 'string' ? held.reason : 'Withheld.', practice))
+      out.set(held.capability, {...member(held.capability, rows.get(held.capability), false, typeof held.reason === 'string' ? held.reason : 'Withheld.', practice), set})
     }
     for (const child of strings(reply.child_refs)) {
       const name = setName(child)
       out.set(child, {id: child, name, form: 'skillset', rev: '', says: '', rungs: [true, sizes.has(name), null, null, null, null, null, null, null, null],
-        ...(sizes.has(name) ? {holds: sizes.get(name)!} : {})})
+        ...(sizes.has(name) ? {holds: sizes.get(name)!} : {}), set})
     }
   }
   for (const ref of strings(input.profile.skill_refs)) {
@@ -665,6 +669,18 @@ function profileOf(profiles: unknown): string | undefined {
   return first(desired) ?? first(effective)
 }
 
+/** One SkillSet the agent carries, as the rack draws it: its name, and what AIKit says of it (how many members, its revision), or
+ * AIKit's words for why it would not show it. */
+export interface CarriedSet {readonly name: string; readonly members?: number; readonly revision?: string; readonly why?: string}
+/** Every SkillSet the agent carries, in the order Central keeps on its profile (round 869): the rack draws each, not only the first. Pure. */
+function carriedSets(input: Pick<RackInput, 'sets' | 'refused'>, refs: readonly string[]): CarriedSet[] {
+  return refs.map(ref => {
+    const name = setName(ref), reply = input.sets[name], why = input.refused?.[`set:${name}`]
+    if (!isObj(reply)) return {name, ...(why ? {why} : {})}
+    return {name, ...(typeof reply.members === 'number' ? {members: reply.members} : {}), ...(typeof reply.revision === 'string' ? {revision: reply.revision} : {})}
+  })
+}
+
 const composeState = (held: ChainHolds): 'previewed' | 'changed' | 'applied' =>
   held.compose.plan ? 'previewed' : Object.keys(held.compose.requests).length || held.compose.profile !== undefined ? 'changed' : 'applied'
 
@@ -683,6 +699,7 @@ export function rackValues(input: RackInput): Values {
     put(values, 'set', setName(sets[0]!))
     const reply = input.sets[setName(sets[0]!)]
     if (isObj(reply) && typeof reply.revision === 'string') put(values, 'revision', reply.revision)
+    values.carried = JSON.stringify(carriedSets(input, sets))
   }
   put(values, 'scope', input.holds.compose.scope)
   put(values, 'profile', input.holds.compose.profile ?? profileOf(input.profiles))
@@ -796,7 +813,18 @@ export interface RackUpkeep {
   readonly procedure?: AikitAnswer
   /** AIKit's writes through the kernel (aikit_write). Absent: no carrier stands. */
   readonly write?: (request: {kind: string; [field: string]: unknown}) => Promise<unknown>
+  /** Central's agent-profile.chain-order on the seated agent's profile: every SkillSet ref it carries, in the new order (Central PR 318).
+   * Absent: no carrier stands, or no profile is read to write at. */
+  readonly reorder?: (skillSetRefs: readonly string[]) => Promise<unknown>
 }
+
+/** Why the order of the sets cannot change now, in words that name Central's act (round 869). */
+export const RACK_ORDER_REFUSE = {
+  unread: 'Order: no profile of this session\'s agent is read here, so no SkillSet stands on the chain to order.',
+  one: 'Order: the agent carries one SkillSet, so there is no order to change. Central keeps the order of two or more (agent-profile.chain-order).',
+  noCarrier: 'Order: the kernel carrier is unavailable here, so Central cannot be asked (agent-profile.chain-order). The sets stand in the order Central returns.',
+  each: 'Order: a new order holds every SkillSet the agent carries, each once.',
+} as const
 
 /** AIKit's plan (settings/aikitAdoption.ts, the reading Setup adopts by) as the design reads it ({root, namespace, digest, items}): the root
  * chosen the plan was read for, the review digest Apply presses (`aikit adopt --expect-digest` confirms it; the Procedure's own `digest` is
@@ -811,7 +839,7 @@ export function adoptionOf(plan: AikitAdoptionPlan, root: string): Record<string
  * bypassReason), and Export's directory (outDir, the absolute --out of `aikit set package export`). */
 export const RACK_UPKEEP_SETTINGS: readonly string[] = ['unusedOnly', 'source', 'adoptRoot', 'namespace', 'procedure', 'bypassScope', 'bypassReason', 'outDir']
 
-const RACK_WRITES = (key: string) => key.startsWith('req:') || ['scope', 'profile', 'compose', 'target', 'exported', 'set', 'members', 'adoptPreview'].includes(key)
+const RACK_WRITES = (key: string) => key.startsWith('req:') || ['scope', 'profile', 'compose', 'target', 'exported', 'set', 'members', 'adoptPreview', 'order'].includes(key)
   || key in RACK_UPKEEP_REFUSE || key in RACK_UPKEEP_WRITES
 
 export interface RackPlace {readonly project: string; readonly sessionRef: string | null}
@@ -852,6 +880,21 @@ export function rackBinding(id: string, input: RackInput, ports: ComposePorts | 
   const exportWhy = !upkeep.write ? noCarrier : typeof values.set !== 'string' ? 'Export: no set stands on the chain to package.'
     : !outDir.startsWith('/') ? REFUSE.export : null
   if (exportWhy) standing.exported = {disabled: exportWhy}
+  // Order: the sets the agent carries, moved through Central's chain-order with every ref as the profile carries it (round 869).
+  const carriedRefs = input.profile ? strings(input.profile.skill_set_refs) : []
+  const orderWhy = !input.profile ? RACK_ORDER_REFUSE.unread : carriedRefs.length < 2 ? RACK_ORDER_REFUSE.one : !upkeep.reorder ? RACK_ORDER_REFUSE.noCarrier : null
+  if (orderWhy) standing.order = {disabled: orderWhy}
+  /** The refs in the order the names give, each the profile's own ref, or the words for why not. */
+  const orderRefs = (value: Value | undefined): string[] => {
+    let names: unknown
+    try { names = typeof value === 'string' ? JSON.parse(value) : null } catch { names = null }
+    const given = Array.isArray(names) ? names.filter((name): name is string => typeof name === 'string') : []
+    const refs = given.map(name => carriedRefs.find(ref => setName(ref) === name))
+    if (!Array.isArray(names) || given.length !== names.length || refs.length !== carriedRefs.length || new Set(refs).size !== refs.length || refs.some(ref => !ref)) {
+      throw Error(RACK_ORDER_REFUSE.each)
+    }
+    return refs as string[]
+  }
   if (!upkeep.write) for (const key of Object.keys(RACK_UPKEEP_WRITES)) standing[key] = {disabled: noCarrier}
   else {
     if (!sources) for (const key of ['sync', 'promote', 'rollback']) standing[key] = {disabled: standing.sources?.disabled ?? 'No source is read.'}
@@ -926,6 +969,11 @@ export function rackBinding(id: string, input: RackInput, ports: ComposePorts | 
             break
           }
           case 'set': throw Error(REFUSE.set)
+          case 'order': {
+            if (orderWhy) throw Error(orderWhy)
+            await upkeep.reorder!(orderRefs(change.value))
+            break
+          }
           default: throw Error(RACK_UPKEEP_REFUSE[change.key] ?? REFUSE.reading(change.key))
         }
       }

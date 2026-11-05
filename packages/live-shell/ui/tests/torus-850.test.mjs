@@ -81,6 +81,24 @@ test('every §21.2 setting stands on the owner\'s session: the rate with its ban
   for (const key of ['band', 'comma', 'figure', 'notes', 'carrier.drive', 'tuning.resident', 'tempo']) assert.equal(binding.writes(key), false, `${key}: a reading`)
 })
 
+// O-I ticket 851 (round 869; DLW manual §21.2 "Sequence follows the shapes you set in the scene"): under Sequence the Figure readout reads the
+// figure the scene's shapes set, as the frame announces it; with no torus in the scene it names what would set one.
+test('under Sequence the Figure readout is the figure the scene\'s shapes set; with none in the scene it says how to give them', () => {
+  const under = (over = {}) => bound(state(session({steps_per_second: 2, figure: null, ...over}, {rate: {mode: 'sync', note: {numerator: 1, denominator: 4}}, shape: 'sequence'}))).binding
+  const shaped = under({sequence: {figure: 'spiral', from: 'torus', to: 'spiral', progress: 0.6}})
+  assert.equal(shaped.values.figure, 'spiral', 'the figure the scene\'s shapes set now')
+  assert.equal(shaped.standing.figure.disabled, model.TORUS_FIGURE_WORDS.sequence)
+  assert.match(model.TORUS_FIGURE_WORDS.sequence, /scene's own shapes set it/)
+  assert.equal(shaped.writes('figure'), false, 'a reading')
+  const none = under()
+  assert.equal(none.values.figure, undefined)
+  assert.equal(none.standing.figure.disabled, model.TORUS_FIGURE_WORDS.unsequenced)
+  assert.match(model.TORUS_FIGURE_WORDS.unsequenced, /give its shapes a sequence/)
+  assert.doesNotMatch(model.TORUS_FIGURE_WORDS.unsequenced, /QL names none/)
+  const face = renderToStaticMarkup(h(HostedDevice, {designed: torus, binding: shaped, view: 'whole', nav: {}}))
+  assert.match(face, />Spiral</, 'the face reads it as a figure word')
+})
+
 test('each change reaches the owner\'s torus edit through the one stage channel, in QL\'s own form', async () => {
   holds.resetHolds()
   const moves = [

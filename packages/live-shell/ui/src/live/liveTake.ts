@@ -810,13 +810,14 @@ export function takeRenderBody(head: {readonly path: string; readonly track: num
  * Downloads and says where, studioExports.ts), and, in the native candidate, the take's part in the one engine (`through`: the take's
  * sound at the level it played at, its rate and the Torus's effects at their frames, rendered through the part as the engine plays it;
  * the WAV's bytes, or thrown in the engine's words); and where the take is laid under the Expression's scene once its course rendered
- * (`lay`: LivePresets layTorusTake, the stage's `torus-take` seal by the name the kernel relayed the take's checkpoint under, then the
- * Scene's `record-take`; its words, or the owner's refusal in its words). */
+ * (`lay`: LivePresets layTorusTake, the stage's `torus-take` seal by the name the kernel relayed the take's checkpoint under, or once more
+ * from the checkpoint itself where the kernel no longer knows that name, then the Scene's `record-take`; its words, or the owner's refusal in
+ * its words). */
 export interface TakeExportOwners {
   readonly stage: (command: StageCommand) => Promise<StageResult>
   readonly save: (name: string, bytes: Uint8Array<ArrayBuffer>) => Promise<unknown>
   readonly through?: (take: {readonly rate: number; readonly pcm: Float32Array; readonly effects: readonly TakeEffectsAt[]}) => Promise<Uint8Array<ArrayBuffer>>
-  readonly lay?: (take: {readonly checkpoint_sha256: string; readonly id: number; readonly name: string; readonly bpm: number}) =>
+  readonly lay?: (take: {readonly checkpoint_sha256: string; readonly checkpoint: StageTorusCheckpoint; readonly id: number; readonly name: string; readonly bpm: number}) =>
     Promise<{readonly ok: true; readonly words: string} | {readonly ok: false; readonly error: string}>
 }
 
@@ -867,7 +868,7 @@ async function layExported(take: NonNullable<LiveClipReading['take']>, keeps: Pl
   if (!course.checkpoint_sha256) return not('the kernel relayed the checkpoint it began at under no name, so nothing seals it')
   const bpm = typeof keeps.bpm === 'number' && Number.isFinite(keeps.bpm) && keeps.bpm > 0 ? keeps.bpm : null
   if (bpm === null) return not('it keeps no tempo to lie on')
-  const answer = await lay({checkpoint_sha256: course.checkpoint_sha256, id: take.id, name, bpm}).catch((cause: unknown) => ({ok: false as const, error: said(cause)}))
+  const answer = await lay({checkpoint_sha256: course.checkpoint_sha256, checkpoint: course.checkpoint, id: take.id, name, bpm}).catch((cause: unknown) => ({ok: false as const, error: said(cause)}))
   return answer.ok ? answer.words : not(answer.error)
 }
 
@@ -882,10 +883,10 @@ export async function exportLiveTake(address: {readonly path: string; readonly t
   if (transport.kind === 'unavailable') return {ok: false, error: transport.reason}
   const answer = await kernelOp(transport, {op: 'live_clip_read', path: address.path, track: address.track, clip: address.at})
   if (answer.error || answer.outcome?.result !== 'live_clip_reading') return {ok: false, error: answer.error ?? 'The set\'s owner did not answer the clip'}
-  const lay: NonNullable<TakeExportOwners['lay']> = async ({checkpoint_sha256, ...take}) => {
+  const lay: NonNullable<TakeExportOwners['lay']> = async ({checkpoint_sha256, checkpoint, ...take}) => {
     const beat = 'arrangement' in address.at ? await arrangementStart(address.path, address.track, address.at.arrangement) : 0
     if (beat === null) return {ok: false, error: 'its clip lies at no beat of the arrangement'}
-    return presets.layTorusTake({checkpoint_sha256, take: {...take, beat}})
+    return presets.layTorusTake({checkpoint_sha256, checkpoint, take: {...take, beat}})
   }
   return exportTake(answer.outcome.reading.clip, {stage: torus.commitLiveStage, save: download, lay,
     ...(transport.kind === 'tauri' ? {through: take => renderThroughPart(address, take)} : {})})

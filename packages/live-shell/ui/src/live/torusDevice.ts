@@ -453,6 +453,13 @@ const TORUS_SESSION_READINGS: Readonly<Record<string, string>> = {
   'tuning.maqam': 'A reading: the M2 condition\'s maqām, and the owner\'s words for why the scene holds no voices of it.',
 }
 
+/** The Figure readout's words under Sequence, where QL names no figure (O-I issue 851; DLW manual §21.2 "Sequence follows the shapes you set
+ * in the scene"): the figure the scene's shapes set, as the frame announces it, or what would set one. */
+export const TORUS_FIGURE_WORDS = {
+  sequence: 'A reading: the figure the torus shows. Shape is Sequence, so the scene\'s own shapes set it, in the order and timing you give them in the scene.',
+  unsequenced: 'Shape is Sequence, and the scene holds no torus whose shapes set the figure: place the Torus in the scene, then give its shapes a sequence, as you do any symbol\'s.',
+} as const
+
 /** The design's values from the owner's session. Only what the owner reports. Pure. */
 export function torusSessionValues(session: TorusSession): Record<string, Value> {
   const t = session.settings
@@ -464,7 +471,9 @@ export function torusSessionValues(session: TorusSession): Record<string, Value>
     polyphony: t.polyphony, notes: session.notes,
   }
   if (t.rate.mode === 'sync') values['rate.note'] = `${t.rate.note.numerator}/${t.rate.note.denominator}`
+  // The figure: QL's own, or under Sequence the one the scene's shapes set, as the frame's torus object shows it (O-I issue 851).
   if (session.figure !== null) values.figure = session.figure
+  else if (session.sequence) values.figure = session.sequence.figure
   // The maqām the owner names (O-I 855): its name, and its words for the absence while the scene holds none of its voices.
   if (session.maqam) values['tuning.maqam'] = JSON.stringify({name: session.maqam.name, absent: session.maqam.absent})
   // The surface the lens in force gives the sound (manual §21.2 "The body": its colour, its grain, how far it gives; a lens and its partner
@@ -505,7 +514,7 @@ export function torusSession(state: LiveTorusState | null, commit: (edit: Instru
   const why = state === null ? 'No owner reading stands in this host.' : state.ok && !liveInstrumentWritable(state) ? NOT_WRITABLE : !session ? `${NO_SESSION}.` : null
   for (const key of TORUS_SESSION_KEYS) if (why) standing[key] = {disabled: why}; else writes.add(key)
   for (const [key, reading] of Object.entries(TORUS_SESSION_READINGS)) standing[key] = {disabled: session ? reading : why ?? reading}
-  if (session && session.figure === null) standing.figure = {disabled: 'Shape is Sequence: the scene\'s own shapes set the figure (O-I issue 851), and QL names none here.'}
+  if (session && session.figure === null) standing.figure = {disabled: session.sequence ? TORUS_FIGURE_WORDS.sequence : TORUS_FIGURE_WORDS.unsequenced}
   // The lens's material: a reading the lens in force sets, or the owner's words for why there is none.
   if (session?.material) standing.material = {disabled: 'absent' in session.material ? session.material.absent
     : 'A reading: the surface the lens in force gives the sound. Changing the lens changes it and leaves the notes alone.'}

@@ -178,8 +178,12 @@ export function runBinding(input: RunInput, ports: RunPorts): DesignBinding {
 // Position is the one the session's agent holds, the work its bound task, and the reason says who set what from the desk. A session whose
 // agent holds no Position refuses naming that. Once the work is assigned, changing a setting waits for the owner's ruling, said verbatim
 // (CUSTODY_SETTINGS_RULING).
-/** What Factory's custody commands carry, for a refusal that names what they do not. */
-const CUSTODY_CARRIES = 'Factory\'s custody assign and update (factory_owner) carry a Position, its work, a reason, the custody state — in-progress, blocked, released, completed or handed-off — and a Position to hand off to'
+// Hand back (§19.4, "When you edit something the agent holds, the agent does not overwrite your edit. Hand back stays lit until you press
+// it") is Factory's custody hold (factory_owner custody-hold: `factory development custody hold <state> --request -`, act take or
+// give-back, answering factory.work-custody-receipt/v1; BD round 20): a person's hold on an open record, kept on it as `person_hold`, which
+// changes no custody state. The light is the listing's `hand_back` {lit, held}, over what this session's agent holds; a held record reads
+// edited, by the person who holds it. Hand back gives back each hold on what the agent holds, at the record's revision as read; `take`
+// takes one where you edit it. Both are the person's own press, re-checked at the press.
 /** Who may change a custody record's settings after assignment: the owner's ruling to make (lane W8, 3a). */
 export const CUSTODY_SETTINGS_RULING = 'Changing it after assignment waits for the owner\'s ruling on who may: `custody update` admits only the holding occupant, and Factory names no person authority for custody.'
 const custodySetting = (what: string, flag: string) => `${what}: set when Factory assigns custody (\`factory development custody assign ${flag}\`); Factory's custody list is not read here for this session (\`factory development custody list\`, the kernel's factory_owner custody-list), so whether its work is assigned is not known.`
@@ -205,9 +209,15 @@ export const CUSTODY_REFUSE = {
   autonomy: AGENT_AUTONOMY_RETIRED,
   gate: custodySetting('Review gate', '--review-gate diffs|approvals|both'),
   escalate: custodySetting('Escalate to', '--escalate-to'),
-  // The custody refs of what the session holds are read (the kernel's factory_owner custody-list); giving control back waits on Factory's
-  // custody hold of what you edited (BD r19): none of the custody states is giving control back.
-  handBack: missing('Hand back', `Factory's custody hold: a custody state for giving back what you edited among what the agent holds (${CUSTODY_CARRIES}; giving control back is none of these states)`, 'Software Factory'),
+  // Giving back what you edited is Factory's custody hold (factory_owner custody-hold, BD r20), over the custody list read on the chain.
+  handBack: 'Hand back: Factory\'s custody list (the kernel\'s factory_owner custody-list) is read on the session\'s own chain, where Custody stands on its Agent, and what you edited is given back from there (factory_owner custody-hold).',
+} as const
+/** Why a hold cannot be taken or given back now (Factory's custody hold, BD r20). */
+export const CUSTODY_HOLD_WHY = {
+  noHandBack: 'Factory\'s custody list answers no hand_back, so it keeps no hold of yours (a Factory before its custody hold: `factory development custody hold`)',
+  dark: 'Hand back: nothing you edited is held by this session\'s agent.',
+  notHeld: (ref: string) => `Take: ${ref} is not held by this session's agent, so there is no hold of it to take.`,
+  personMoved: (what: string) => `${what}: the current person is no longer the one this page was drawn for; nothing was sent to Factory.`,
 } as const
 /** What the agent holds, where no custody is handed to the binding: the list is read on the session's own chain (FactoryDeviceChain.tsx). */
 export const CUSTODY_HELD_ELSEWHERE = 'What the agent holds: Factory\'s custody list (the kernel\'s factory_owner custody-list) is read on the session\'s own chain, where Custody stands on its Agent.'
@@ -215,7 +225,7 @@ export const CUSTODY_HELD_ELSEWHERE = 'What the agent holds: Factory\'s custody 
 const unread = (what: string, op: string, owner: string) => `${what}: no reading reaches it yet — missing op: ${op} (${owner}).`
 export const CUSTODY_ABSENT = {
   people: unread('The people the agent may ask', 'a list of escalation contacts (no owner holds one)', 'Software Factory'),
-  handBackLit: unread('The hand-back light', 'a reading of what you edited among the agent\'s held items (Factory\'s custody states name no edit)', 'Software Factory'),
+  handBackLit: 'The hand-back light: Factory\'s custody list (its hand_back) is read on the session\'s own chain, where Custody stands on its Agent.',
 } as const
 
 // The Grants page (lanes W7, W8; D7, software-factory__agent-custody.tsx `grants`, `holder`, `worlds`, `readAt`): Actuation's governing
@@ -280,9 +290,18 @@ export interface CustodyPorts {
   readonly revoke?: (authoritySourceRef: string, reason: string | undefined) => Promise<unknown>
   /** Factory's custody assignment (factory_owner custody-assign) with one setting. Absent: no carrier stands. */
   readonly assign?: (request: {kind: 'custody-assign'; state_path: string; position_ref: string; work_ref: string; reason: string} & Partial<Record<'review_gate' | 'escalate_to', string>>) => Promise<unknown>
+  /** Factory's custody hold (factory_owner custody-hold): the person's hold on what the agent holds, taken or given back. Absent: no carrier stands. */
+  readonly hold?: (request: CustodyHoldRequest) => Promise<unknown>
   /** Who is current at the moment of the press (`currentIdentity()` read again): Revoke goes only when it is still the person the page
    * was drawn for. Absent: the person drawn stands. */
   readonly personNow?: () => string | null
+}
+
+/** Factory's custody hold request (kernel factory.rs OwnerRequest::CustodyHold): the record, the act, why, what was edited on a take, and the
+ * record's revision as read. */
+export type CustodyHoldRequest = {
+  readonly kind: 'custody-hold'; readonly state_path: string; readonly custody_ref: string; readonly act: 'take' | 'give-back'; readonly reason: string
+  readonly subject_ref?: string; readonly expected_revision?: number
 }
 
 /** The next grant's settings and the revocation's reason: the hand's own holds (agent-custody.tsx:23-24). */
@@ -321,6 +340,21 @@ export function openCustody(listing: unknown): Record<string, unknown>[] | null 
   return doc.custody.filter((row): row is Record<string, unknown> => !!row && typeof row === 'object' && OPEN_CUSTODY.includes(String((row as Record<string, unknown>).state)))
 }
 
+/** The listing's hand-back light (factory.work-custody-listing/v1 `hand_back`: lit while a person's hold stands on an open record it lists,
+ * `held` naming those records); null where the listing carries none. Pure. */
+export function handBackOf(listing: unknown): {lit: boolean; held: string[]} | null {
+  const hand = listing && typeof listing === 'object' && !Array.isArray(listing) ? (listing as Record<string, unknown>).hand_back : null
+  if (!hand || typeof hand !== 'object' || Array.isArray(hand) || typeof (hand as {lit?: unknown}).lit !== 'boolean' || !Array.isArray((hand as {held?: unknown}).held)) return null
+  return {lit: (hand as {lit: boolean}).lit, held: (hand as {held: unknown[]}).held.filter((ref): ref is string => typeof ref === 'string')}
+}
+
+/** The open records of the listing the session's agent holds (its Position's). */
+const agentOpen = (custody: CustodyRead | undefined): Record<string, unknown>[] => {
+  const open = custody?.listing?.status === 'answered' ? openCustody(custody.listing.value) : null
+  const position = custody?.agentPosition
+  return open && position ? open.filter(row => row.position_ref === position && typeof row.custody_ref === 'string' && typeof row.work_ref === 'string') : []
+}
+
 /** Custody's values: the Agent's light, the grants, and Factory's custody of the session's work. Write mode is Scope's reading, and none is
  * reported (designBindings.ts scopeValues); the gate, the contact, the people, the held items and the hand-back light have no owner
  * reading (the transport's Re-enable light is the shell's own flag, never set by an owner). */
@@ -337,10 +371,17 @@ export function custodyValues(input: CustodyInput): Values {
   put(values, 'light', input.agent.light)
   const open = input.custody?.listing?.status === 'answered' ? openCustody(input.custody.listing.value) : null
   if (open) {
-    // What the session's agent holds: the open records of its Position, each a piece of work in its custody state.
-    const position = input.custody!.agentPosition
-    values.held = JSON.stringify(position ? open.filter(row => row.position_ref === position).flatMap(row => (typeof row.custody_ref === 'string' && typeof row.work_ref === 'string'
-      ? [{id: row.custody_ref, name: row.work_ref, kind: 'work', state: row.state}] : [])) : [])
+    // What the session's agent holds: the open records of its Position, each a piece of work in its custody state; one you hold reads
+    // edited, by you (Factory's person_hold).
+    const mine = agentOpen(input.custody)
+    values.held = JSON.stringify(mine.map(row => {
+      const hold = row.person_hold && typeof row.person_hold === 'object' ? row.person_hold as {held_by?: unknown} : null
+      return hold ? {id: row.custody_ref, name: row.work_ref, kind: 'work', state: 'edited', ...(typeof hold.held_by === 'string' ? {by: hold.held_by} : {})}
+        : {id: row.custody_ref, name: row.work_ref, kind: 'work', state: row.state}
+    }))
+    // The hand-back light: the listing's, over what this agent holds.
+    const hand = handBackOf(input.custody!.listing!.value)
+    if (hand) values.handBackLit = hand.lit && mine.some(row => hand.held.includes(row.custody_ref as string))
     // The session's work, where it is assigned: its record's settings are Factory's own.
     const record = input.custody!.work ? open.find(row => row.work_ref === input.custody!.work) : undefined
     if (record) for (const [key, {field}] of Object.entries(CUSTODY_SETTING_FIELDS)) put(values, key, typeof record[field] === 'string' ? record[field] as string : undefined)
@@ -373,6 +414,43 @@ export function custodyBinding(input: CustodyInput, scope: Pick<DesignBinding, '
         : !open ? '`factory development custody list` answered something other than its listing.' : null
   if ('held' in values) delete standing.held
   else standing.held = {disabled: listingWhy ?? CUSTODY_HELD_ELSEWHERE}
+  // Hand back (Factory's custody hold): its light from the listing, and the press the person's own.
+  const hand = open ? handBackOf(listing!.value) : null
+  if ('handBackLit' in values) delete standing.handBackLit
+  else if (custody) standing.handBackLit = {disabled: listingWhy ?? `The hand-back light: ${CUSTODY_HOLD_WHY.noHandBack}.`}
+  const holdWhy = (what: string): string | null => {
+    if (!custody) return CUSTODY_REFUSE.handBack
+    if (listingWhy) return `${what}: ${listingWhy}`
+    if (!hand) return `${what}: ${CUSTODY_HOLD_WHY.noHandBack}.`
+    if (!custody.statePath) return `${what}: ${CUSTODY_SETTING_WHY.noState}.`
+    if (!person) return `${what}: ${CUSTODY_SETTING_WHY.noPerson}.`
+    if (!ports.hold) return `${what}: ${CUSTODY_SETTING_WHY.noCarrier}.`
+    return null
+  }
+  const handBackWhy = holdWhy('Hand back')
+  if (handBackWhy) standing.handBack = {disabled: handBackWhy}
+  else delete standing.handBack
+  /** One hold taken or given back, as the person's own press, at the record's revision as read. */
+  const sendHold = async (what: string, row: Record<string, unknown>, act: 'take' | 'give-back', reason: string) => {
+    if (ports.personNow && ports.personNow() !== person) throw Error(CUSTODY_HOLD_WHY.personMoved(what))
+    await ports.hold!({kind: 'custody-hold', state_path: custody!.statePath!, custody_ref: row.custody_ref as string, act, reason,
+      ...(typeof row.revision === 'number' ? {expected_revision: row.revision} : {})})
+  }
+  /** Hand back: each hold the listing names on what this agent holds, given back. */
+  const handBack = async () => {
+    if (handBackWhy) throw Error(handBackWhy)
+    const held = agentOpen(custody!).filter(row => hand!.held.includes(row.custody_ref as string))
+    if (!hand!.lit || !held.length) throw Error(CUSTODY_HOLD_WHY.dark)
+    for (const row of held) await sendHold('Hand back', row, 'give-back', `${person} gave back what they edited, from the desk.`)
+  }
+  /** Take: a hold on one record this agent holds, where you edit it. */
+  const take = async (value: Value | undefined) => {
+    const why = holdWhy('Take')
+    if (why) throw Error(why)
+    const row = agentOpen(custody!).find(record => record.custody_ref === value)
+    if (!row) throw Error(CUSTODY_HOLD_WHY.notHeld(String(value)))
+    await sendHold('Take', row, 'take', `${person} edited what the agent holds, from the desk.`)
+  }
   const assigned = open && custody?.work ? open.find(row => row.work_ref === custody.work) : undefined
   /** Why one setting cannot be written now, in words; null when the person's press may assign it. */
   const settingWhy = (key: keyof typeof CUSTODY_SETTING_FIELDS): string | null => {
@@ -417,7 +495,7 @@ export function custodyBinding(input: CustodyInput, scope: Pick<DesignBinding, '
     values,
     standing,
     local: Object.fromEntries(CUSTODY_GRANT_SETTINGS.map(key => [key, (value: Value | undefined) => holdView(CUSTODY_ID, key, value)])),
-    writes: key => key === 'writeMode' || key in CUSTODY_REFUSE || key === 'issue' || key === 'revoke',
+    writes: key => key === 'writeMode' || key in CUSTODY_REFUSE || key === 'issue' || key === 'revoke' || key === 'take',
     write: async changes => {
       for (const {key, value} of changes) {
         if (key === 'writeMode') {
@@ -427,6 +505,8 @@ export function custodyBinding(input: CustodyInput, scope: Pick<DesignBinding, '
         }
         if (key === 'revoke') { await revoke(value); continue }
         if (key === 'gate' || key === 'escalate') { await assign(key, value); continue }
+        if (key === 'handBack') { await handBack(); continue }
+        if (key === 'take') { await take(value); continue }
         // Issue: the desk composes no authority record, whoever the value names as its issuer.
         if (key === 'issue') throw Error(CUSTODY_GRANTS_REFUSE.issue)
         throw Error(CUSTODY_REFUSE[key as keyof typeof CUSTODY_REFUSE] ?? reading(key))
@@ -1492,6 +1572,10 @@ export function replaceRequest(profile: ChainProfile, dropped: string): ProfileR
   if (profile.skillSetRefs.includes(dropped)) return {refused: PROFILE_REFUSE.swapSame(dropped)}
   return {action: PROFILE_ACTS.replace, input: {...profileInput(profile), replace: carried, with: dropped}}
 }
+/** The order of the SkillSets the agent carries, moved on the Skillset rack (round 869): every ref the profile carries, in the new order.
+ * Central refuses an order that does not hold each of them once, in its own words. Pure. */
+export const orderRequest = (profile: ChainProfile, refs: readonly string[]): ProfileRequest =>
+  ({action: PROFILE_ACTS.order, input: {...profileInput(profile), skill_set_refs: [...refs]}})
 
 /** The head acts the agent's profile carries: the Agent's Rename (it asks the name, the one standing first), and the Skillset rack's
  * Hot-swap, which a drop from the browser carries (the press says so). `act` is Central's invoke_action; absent, no carrier stands. */

@@ -219,6 +219,11 @@ test('the tiles, the instrument and the rack read the one attention the agent sh
   assert.doesNotMatch(tip, /may run/, 'never a limit on what may run')
   const mockup = readFileSync(new URL('../../../../desktop/cradle/docs/world-shell/agent-shell-mockup.html', import.meta.url), 'utf8')
   assert.ok(mockup.includes(`data-i="Solo|${tip}"`), 'the mockup line the tip is pinned to says the same')
+  // Round 869 (DLW build ruling 2026-11-05): the agent device mockup's Solo says §16.1 word for word, never a limit on what may run.
+  const device = readFileSync(new URL('../../../../desktop/cradle/docs/world-shell/agent-device-mockup.html', import.meta.url), 'utf8')
+  assert.ok(device.includes('data-info="Solo|You attend to the soloed tracks alone: you see and hear only them, in the views and the instruments. The others keep running."'),
+    'agent-device-mockup.html: Solo in §16.1\'s words')
+  assert.doesNotMatch(device, /Solo\|[^"]*(may run|holds at the next quantize point)/, 'agent-device-mockup.html: no Solo that limits what runs (the Activator decides that)')
   const tile = read('agent/AgentDockTileBody.tsx'), panel = read('components/NativeContextPanel.tsx')
   assert.match(tile, /attendedKeys\(sessions\?\.tracks \?\? \[\], shell\?\.soloed \?\? NONE_SOLOED\)/, 'the tiles read what you attend to over the same tracks')
   assert.match(tile, /<NativeContextPanel project=\{project\} attends=\{attends\} \/>/)

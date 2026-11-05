@@ -384,6 +384,9 @@ export type StageCommand =
    * Torus's owner was sent from the checkpoint the take BEGAN at, by the name it relayed that checkpoint under (`checkpoint_sha256`, which
    * the frame cannot reproduce: the `torus` checkpoint answers with it), never from a fresh one. A read; the answer carries the sealed take. */
   | {command: 'torus-take'; action: 'seal'; checkpoint_sha256: string}
+  /** The same seal from the checkpoint given whole, as the take's course keeps it: the kernel names it (`value_sha256`) and seals the take that
+   * began there, so a seal it refused by a name it no longer knows is asked again from the checkpoint itself (native_expression.rs TorusTake). */
+  | {command: 'torus-take'; action: 'seal'; checkpoint: StageTorusCheckpoint}
   /** A take rendered offline through the M1′ session for Export Audio (QL-MEF `torus-render`, `ql.torus-render/v1`): a second owner of the same
    * scene set to the checkpoint, each act made at its sample (each in [the checkpoint's sample, + frames), in the order of their samples),
    * `frames` of its PCM. The live owner neither moves nor sounds. The answer carries a StageTakeRender. */
@@ -517,8 +520,10 @@ export interface StageTorusSound {schema: 'oi.torus-sound/v1'; sound_ref: string
 /** A take the kernel sealed (kernel expression_performance/torus.rs TorusTake, `oi.torus-take/v1`; O-I #855): its digest, the checkpoint it
  * began at, what its owner was sent, the render's digest and the kernel's seal. The frame carries it whole; the kernel judges it. */
 export interface StageTorusTake {schema: 'oi.torus-take/v1'; seal: string; sample_rate: number; [kernel: string]: unknown}
-/** The most bytes a sealed take takes on the channel: its checkpoint and the acts beside it. */
-export const STAGE_TORUS_TAKE_BYTES_MAX = 4 * STAGE_TORUS_CHECKPOINT_BYTES_MAX;
+/** The most bytes a sealed take takes on the channel and across the boundary: its owner's bound on what crosses to it, the kernel's
+ * native_expression.rs MAX_REQUEST (32 MiB), which the kernel gives no reading of; kept here alone, and read by the boundary
+ * (expressions-boundary performanceBasis.ts). */
+export const STAGE_TORUS_TAKE_BYTES_MAX = 32 * 1024 * 1024;
 /** The name the kernel relays a checkpoint under (native_expression.rs `labelled`: `sha256:` and the value's digest), bounded and control-free. */
 export const isStageCheckpointName = (value: unknown): value is string => typeof value === 'string' && value.length > 7 && value.length <= 128 &&
   value.startsWith('sha256:') && !/[\s\u0000-\u001f\u007f-\u009f]/.test(value);
@@ -885,10 +890,14 @@ export function readStageRequest(raw: unknown): {req: number; command: StageComm
       const sound = closed(raw, [...BASE_KEYS, 'action', 'sound']) ? readStageTorusSound(raw.sound) : null;
       return sound ? {req, command: {command: 'torus-sound', action: 'open', sound}} : null;
     }
-    case 'torus-take':
-      // A take sealed by the name of the checkpoint it began at, and nothing else (O-I #855).
-      return raw.action === 'seal' && closed(raw, [...BASE_KEYS, 'action', 'checkpoint_sha256']) && isStageCheckpointName(raw.checkpoint_sha256)
+    case 'torus-take': {
+      // A take sealed from the checkpoint it began at, by its name or given whole, one of the two and nothing else (O-I #855).
+      if (raw.action !== 'seal' || !closed(raw, [...BASE_KEYS, 'action', 'checkpoint_sha256', 'checkpoint'])) return null;
+      if (raw.checkpoint === undefined) return isStageCheckpointName(raw.checkpoint_sha256)
         ? {req, command: {command: 'torus-take', action: 'seal', checkpoint_sha256: raw.checkpoint_sha256}} : null;
+      const checkpoint = raw.checkpoint_sha256 === undefined ? readStageTorusCheckpoint(raw.checkpoint) : null;
+      return checkpoint ? {req, command: {command: 'torus-take', action: 'seal', checkpoint}} : null;
+    }
     case 'render-take': {
       // A take rendered offline (O-I 855): every act within the take and in the order of its samples, or the whole take is refused.
       if (!closed(raw, [...BASE_KEYS, 'checkpoint', 'acts', 'frames'])) return null;

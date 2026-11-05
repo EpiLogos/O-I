@@ -120,7 +120,8 @@ test('the Agent\'s composed binding carries custody.*, id.* and thread.* from th
   // REPLACED (lane W9): Review gate and Escalate to name what an assignment from here lacks (Factory's record and the kernel carry them).
   // REPLACED (lane W11): Review gate and Escalate to say Factory's custody list is not read here (no custody handed in).
   for (const key of ['custody.gate', 'custody.escalate']) assert.match(agent.standing[key].disabled, /custody list is not read here/, key)
-  assert.match(agent.standing['custody.handBack'].disabled, /missing op:/)
+  // REPLACED (BD r20 PORT, round 869): Hand back is Factory's custody hold; with no custody read handed in it says where the list is read.
+  assert.match(agent.standing['custody.handBack'].disabled, /^Hand back: Factory's custody list \(the kernel's factory_owner custody-list\) is read on the session's own chain/)
   // Identity: the roster and whose card, under id.*; the light is the Agent's.
   assert.equal(v['id.agent'], 'agent/flint')
   assert.match(String(v['id.roster']), /"name":"Flint"/)

@@ -163,7 +163,7 @@ const refreshed = (ports: OpenPorts): Promise<string | null> =>
   ports.refresh().then(() => null, cause => `The works list could not be refreshed: ${failure(cause)}`);
 /** A work made by New's one route (the frame's nativeWorking.ts makeWork: made, then saved into the works home `ports.parent`), then the
  * open door, then the works list read again. A refused file save does not take the work back: the owner holds a committed native
- * Expression (the frame keeps a native commit and a saved file as separate acts, QUICK_GUIDE_STANDING), so the work opens and the row
+ * Expression (the frame keeps a native commit and a saved file as separate acts, ABOUT.kept), so the work opens and the row
  * carries the owner's refusal. A refused create or edit stops before the open, naming a work the owner may already hold. */
 async function openMade(ports: OpenPorts, channel: ExpressionChannel, made: {journey: Journey} | {title: string}): Promise<OpenOutcome> {
   try {
@@ -197,14 +197,16 @@ export async function newExpression(ports: OpenPorts, title: string): Promise<Op
   return openMade(ports, channel, {title});
 }
 
-/** Shell help copy. The quick guide is the app's own text (field-studies-journeys/src/shell.ts, the guide dialog). */
+/** Shell help copy. The quick guide is the app's own text (field-studies-journeys/src/shell.ts, the guide dialog): Help › Expressions Guide,
+ * in the DLW manual's words (§20.1 Expressions: tracks and clips; round 869). */
 export const QUICK_GUIDE: readonly {heading: string; text: string}[] = [
-  {heading: 'Shape the setup', text: 'Place a formation. Edit its glyph sequence on the left. Use the framed image icon at top right to create image or ASCII states. Pin useful controls to the expression’s shared toolbelt on the right.'},
-  {heading: 'Save a scene', text: 'Open Scenes, give this setup a name, then Save scene. This fixes a saved version of its settings, formations and camera. Later edits remain a draft until you save again.'},
-  {heading: 'Make the next scene', text: 'Save & make next copies this setup. Tweak the copy; your previous saved scene stays intact. In Formation sequence, “Add state to earlier scene” folds a refined object back into a sequence. Set duration and the incoming transition, then save.'},
-  {heading: 'Play and keep the expression', text: 'Play saved scenes in order. Glyph sequences run inside each scene. The library keeps browser drafts in this browser; a saved Scene is not yet a committed native Expression. Export JSON or living HTML for a portable copy; commit/save native separately when hosted.'},
+  {heading: 'Start an Expression', text: 'Each Expression is a track, and its scenes are its clips. Start one in the browser, from nothing or from a composition: the library and its starters. Name and describe it on its track’s head.'},
+  {heading: 'Shape a scene in Clip view', text: 'Select a scene and Clip view opens its sequence, each symbol in its own lane and the scene’s sound beneath it. The Expression tab shapes one symbol: its formation, force, voice and meaning. The Sequence tab sets the scene’s symbols step by step, and Envelopes move parameters over the scene by themselves.'},
+  {heading: 'Play the Studio in Device view', text: 'Device view holds the Studio: the controls you chose to play, as its macros, the same in every scene, and its four chains, Material, Motion, Body and Nara. + Parameter on the Studio chooses a control to play. After the Studio stands the Acts device, for the parts a scene’s objects play.'},
+  {heading: 'Launch scenes and keep takes', text: 'Launch, layer and stop scenes in Session view: a row of the Main track is a stop. Arm the Expression and press Play to record a take. Takes lie under its track in Arrangement view, where you lay scenes in order. Capture in the transport keeps your last gestures as a new scene.'},
+  {heading: 'Show and export the field', text: 'Present, in the View menu, gives the field the whole screen; Esc brings the window back. Export, in the File menu, writes a picture, a film or the Expression itself to a file.'},
 ];
-export const QUICK_GUIDE_STANDING = 'Browser draft ≠ saved Scene ≠ committed native Expression ≠ saved native file ≠ publication.';
+export const QUICK_GUIDE_STANDING = 'Sound and picture are two sides of one state. Edit one and the other follows.';
 
 /** The shortcuts the shell binds, each with the handler that binds it. */
 export const BOUND_SHORTCUTS: readonly {keys: string; action: string; source: string}[] = [

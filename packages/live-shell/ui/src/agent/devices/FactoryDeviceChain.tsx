@@ -106,8 +106,8 @@ import {useAttemptTakes} from '../../owners/attemptTakes'
 import {readTaskOf, useTaskAnswer, useWorkcellAnswer} from '../../owners/readers'
 import {usePopulationAnswer} from './usePopulationAnswer'
 import {
-  AGENTSET_DESIGN, AGENTSET_ID, agentChainSessions, agentsetBinding, chainProfileOf, custodyBinding, profileHeadActs, rackSpaces, replaceRequest, sessionDevices,
-  withCustodyAsks, type AgentRackPorts, type CustodyPorts,
+  AGENTSET_DESIGN, AGENTSET_ID, agentChainSessions, agentsetBinding, chainProfileOf, custodyBinding, orderRequest, profileHeadActs, rackSpaces, replaceRequest,
+  sessionDevices, withCustodyAsks, type AgentRackPorts, type CustodyPorts,
 } from './sessionChainBindings'
 import {retryTask} from './taskBindings'
 import {communiqueRefOf} from './messagesBinding'
@@ -399,8 +399,10 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const upkeepProcedure = useAikitRead(transport, rackOn && chosenProcedure ? {kind: 'procedure-diff', procedure: chosenProcedure} : null)
   const upkeep = useMemo((): RackUpkeep => ({unused: upkeepUnused, sources: upkeepSources, collate: upkeepCollate, bypasses: upkeepBypasses, procedures: upkeepProcedures,
     ...(adoptRoot ? {adoption: upkeepAdoption} : {}), ...(chosenProcedure ? {procedure: upkeepProcedure} : {}),
-    ...(transport.kind !== 'unavailable' ? {write: request => ownerRouteWrite(transport, aikitWriteOp(request as AikitWriteRequest), `\`aikit ${request.kind.replace('-', ' ')}\``)} : {})}),
-  [upkeepUnused, upkeepSources, upkeepCollate, upkeepBypasses, upkeepProcedures, upkeepAdoption, adoptRoot, upkeepProcedure, chosenProcedure, transport])
+    ...(transport.kind !== 'unavailable' ? {write: request => ownerRouteWrite(transport, aikitWriteOp(request as AikitWriteRequest), `\`aikit ${request.kind.replace('-', ' ')}\``)} : {}),
+    // The order of the SkillSets the agent carries (round 869): Central's agent-profile.chain-order at the profile's revision as read.
+    ...(chainProfile && profileAct ? {reorder: async (refs: readonly string[]) => { const asked = orderRequest(chainProfile, refs); await profileAct(asked.action, asked.input) }} : {})}),
+  [upkeepUnused, upkeepSources, upkeepCollate, upkeepBypasses, upkeepProcedures, upkeepAdoption, adoptRoot, upkeepProcedure, chosenProcedure, transport, chainProfile, profileAct])
   const rackDesignBinding = useMemo(() => (rackOn ? rackBinding(chainDeviceId('skillset'), {profile, ...rackReading, holds}, ports, {project: rackProject, sessionRef}, upkeep) : null),
     [rackOn, profile, rackReading, holds, ports, sessionRef, upkeep, rackProject])
   // The member: the rack's chosen chain, one device inside the rack (§19.7).
@@ -498,8 +500,14 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   // Factory's custody of the session's work (W11): the project's Factory state (located for the pads), its custody list, the Position the
   // session's agent holds (AIKit's population: Custody sits on the Agent, §19.4), and the session's bound task as its work.
   const custodyState = padsWhere && 'projectRef' in padsWhere ? padsWhere.statePath : null
-  const custodyListing = useOwnerOp(transport, custodyState && sessionRef != null ? {op: 'factory_owner', request: {kind: 'custody-list', state_path: custodyState}} : null,
-    'factory_development_reading').reading
+  const custodyList = useOwnerOp(transport, custodyState && sessionRef != null ? {op: 'factory_owner', request: {kind: 'custody-list', state_path: custodyState}} : null,
+    'factory_development_reading')
+  const custodyListing = custodyList.reading
+  const refreshCustody = custodyList.refresh
+  // Hand back (§19.4; BD r20): Factory's custody hold, the person's, and the custody list read again after it (its hand_back is the light).
+  const custodyHoldPorts = useMemo((): CustodyPorts => (transport.kind !== 'unavailable'
+    ? {...custodyPorts, hold: request => factoryOwnerWrite(transport, request, '`factory development custody hold`').finally(refreshCustody)} : custodyPorts),
+  [transport, custodyPorts, refreshCustody])
   const custodyPopulation = usePopulationAnswer(transport, register)
   const sessionTask = useTaskAnswer(transport, sessionRef, rackProject).reading
   const custodyRead = useMemo(() => {
@@ -511,7 +519,7 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
       agentPosition: heldBy(track?.agentRef), work: typeof central?.task_ref === 'string' && central.task_ref.trim() ? central.task_ref : null}
   }, [custodyState, custodyListing, custodyPopulation, sessionTask, track?.agentRef])
   const custodyDesignBinding = useMemo(() => custodyBinding({sessionRef, agent: agentDesignBinding?.values ?? {}, holds, grants, person: currentPerson,
-    custody: custodyRead}, scopeDesignBinding, custodyPorts), [sessionRef, agentDesignBinding, scopeDesignBinding, holds, grants, currentPerson, custodyRead, custodyPorts])
+    custody: custodyRead}, scopeDesignBinding, custodyHoldPorts), [sessionRef, agentDesignBinding, scopeDesignBinding, holds, grants, currentPerson, custodyRead, custodyHoldPorts])
   const identityDesignBinding = useIdentityDevice(transport, track?.agentRef ?? null, FACTORY_IDENTITY_ID)
   // The Context page's Git row: the session's own repository, and Diff to Files' Diff page (§19.4 Context; §23.2).
   const oneAgent = useMemo(() => (agentDesignBinding ? withAgentGit(composeAgentBinding(agentDesignBinding, {custody: custodyDesignBinding, identity: identityDesignBinding, thread: threadDesignBinding}),

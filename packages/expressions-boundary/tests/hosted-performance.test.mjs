@@ -333,6 +333,11 @@ test('a take is recorded under the Scene by the record the frame built from the 
     {...record, lane: {...record.lane, extra: 1}}, {...record, extra: 1}])
     assert.equal(readFramePerformanceRequest({operation: 'performance', action: 'record-take', record: bad, ...refs}), null, JSON.stringify(bad)?.slice(0, 80));
   assert.equal(readFramePerformanceRequest({operation: 'performance', action: 'record-take', record, name: 'x', ...refs}), null, 'no other operand');
+  // BB round 20: the take's bound is the kernel's (native_expression.rs MAX_REQUEST, 32 MiB; stageCommands.ts STAGE_TORUS_TAKE_BYTES_MAX)
+  const long = takeRecord({take: sealedTake({acts: ['x'.repeat(5 * 1024 * 1024)]})});
+  assert.equal(readFramePerformanceRequest({operation: 'performance', action: 'record-take', record: long, ...refs})?.record, long, 'a take past 4 MiB crosses');
+  assert.equal(readFramePerformanceRequest({operation: 'performance', action: 'record-take', record: takeRecord({take: sealedTake({acts: ['x'.repeat(32 * 1024 * 1024)]})}), ...refs}), null,
+    'one past the kernel\'s bound does not');
 });
 
 test('the Scene lays the take by one edit of its performance, and answers where it lies; a take it does not lay is refused in words', async () => {

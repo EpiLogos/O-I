@@ -118,11 +118,24 @@ export function readHostedTorus(raw: unknown): HostedTorusSession | string {
   // What rings (O-I #852): an owner from before it names none, and then the session carries none; one named is read exact.
   const body = raw.body === undefined ? undefined : readTorusBody(raw.body);
   if (typeof body === 'string') return `body: ${body}`;
+  // Under Sequence (O-I 851): the scene's shapes for the torus, exact; a frame that announces none carries none.
+  const sequence = raw.sequence === undefined ? undefined : readTorusSequence(raw.sequence, t.shape);
+  if (typeof sequence === 'string') return `sequence: ${sequence}`;
   return {settings: {rate, fundamental, carrier: t.carrier, shape: t.shape, tuning: t.tuning, polyphony: t.polyphony, tempo_bpm: t.tempo_bpm,
     ...(t.strike !== undefined ? {strike: t.strike as number} : {})},
     steps_per_second: raw.steps_per_second, band: raw.band, fundamental_hz: raw.fundamental_hz, map_hz: raw.map_hz, figure: raw.figure as HostedTorusSession['figure'],
     comma_cents: raw.comma_cents, notes: raw.notes, resident_tunings: [...raw.resident_tunings] as HostedTorusSession['resident_tunings'], carrier_drive: raw.carrier_drive,
-    ...(maqam ? {maqam} : {}), ...(material ? {material} : {}), ...(classes ? {classes} : {}), ...(body ? {body} : {})};
+    ...(maqam ? {maqam} : {}), ...(material ? {material} : {}), ...(classes ? {classes} : {}), ...(body ? {body} : {}), ...(sequence ? {sequence} : {})};
+}
+
+/** The scene's shapes for the torus under Sequence (O-I 851; instrumentAnnouncement.mjs `sequence`), exact: the figure they set now, the shape
+ * it stands on and the one it moves to, and the progress 0..1 between them. Under another Shape the figure is QL's, so one is refused there. */
+function readTorusSequence(raw: unknown, shape: unknown): NonNullable<HostedTorusSession['sequence']> | string {
+  const figure = (v: unknown): v is NonNullable<HostedTorusSession['figure']> => typeof v === 'string' && (TORUS_FIGURES as readonly string[]).includes(v);
+  if (shape !== 'sequence') return 'expected none: under another Shape the figure is QL\'s';
+  if (!object(raw) || !figure(raw.figure) || !figure(raw.from) || !figure(raw.to) || typeof raw.progress !== 'number' || !Number.isFinite(raw.progress)
+    || raw.progress < 0 || raw.progress > 1) return 'expected the figure the scene\'s shapes set, the two shapes and the progress 0..1 between them';
+  return {figure: raw.figure, from: raw.from, to: raw.to, progress: raw.progress};
 }
 
 /** The most modes of a form's body each voice rings (QL-MEF form_instrument/body.rs MAX_BODY_MODES). */

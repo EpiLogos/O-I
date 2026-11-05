@@ -8,7 +8,8 @@
  *  - determinants: the scene's acting M1 state (scene.ts SceneActing: lens, context frame, harmonic source, M3 transcription);
  *  - the Torus's M1′ session (parameters.torus): QL's own `torus-state` reading as the controller last took it (O-I #850), its notes
  *    counted and its Carrier's drive named in the owner's word, with the maqām, the lens's material and the twelve classes it names
- *    beside them (O-I #855); absent until the owner has been read;
+ *    beside them (O-I #855); absent until the owner has been read. Under Sequence, where QL names no figure, the figure the scene's own
+ *    shapes set as the torus object reads them (torusObject.ts sceneShapesOf; O-I 851): the figure shown, the two shapes, the progress;
  *  - where the Torus is heard from (parameters.receiver): Receiver On or Off, the owner's context and its refusal, and a shared place's
  *    reference, never the place (O-I 856).
  *
@@ -59,7 +60,7 @@ export function announceInstrument(reading) {
       refusal: instrument?.refusal ? `${instrument.refusal.operation}: ${instrument.refusal.reason}` : null,
       // The torus's four effects (native-field/effectsLaw.ts), as the controller keeps them; a reading without them announces none.
       ...(reading.presentation_effects ? {effects: reading.presentation_effects} : {}),
-      ...(instrument?.torus ? {torus: torusSession(instrument.torus)} : {}),
+      ...(instrument?.torus ? {torus: torusSession(instrument.torus, instrument.torus_object)} : {}),
       // Where the Torus is heard from (O-I 856): Receiver On or Off, the owner's context and its refusal in its words; a place shared under a
       // reference with its reference, as QL discloses it. The place is never announced.
       ...(reading.receiver ? {receiver: receiverOf(reading.receiver)} : {}),
@@ -75,7 +76,8 @@ function receiverOf(receiver) {
 }
 
 /** The owner's session (ql.m1-prime-session/v1) as the frame announces it: the owner's own values, the notes as their count. */
-function torusSession(torus) {
+function torusSession(torus, object) {
+  const sequence = sceneSequence(torus, object);
   return {
     settings: torus.settings, steps_per_second: torus.steps_per_second, band: torus.band, fundamental_hz: torus.fundamental_hz, map_hz: torus.map_hz,
     figure: torus.figure ?? null, comma_cents: torus.comma_cents, notes: Array.isArray(torus.notes) ? torus.notes.length : torus.notes,
@@ -87,7 +89,18 @@ function torusSession(torus) {
     // the material it made it of, its modes a voice and the voices that ring it. The prepared modes and lattice stay with the owner; a body it
     // does not name is not announced.
     ...(bodyOf(torus.body) ? {body: bodyOf(torus.body)} : {}),
+    // Under Sequence (O-I 851; DLW §21.2 "Sequence follows the shapes you set in the scene"): the figure the scene's shapes set, as the torus
+    // object shows it, the shape it stands on and the one it moves to, and the progress between them. None under another Shape.
+    ...(sequence ? {sequence} : {}),
   };
+}
+
+/** The scene's shapes for the torus, as the torus object reads them under Sequence (torusObject.ts reading: shape.law and shape.sequence),
+ * or null under another Shape or with no torus in the scene. */
+function sceneSequence(torus, object) {
+  const shape = object?.shape, at = shape?.sequence;
+  if (torus?.settings?.shape !== 'sequence' || !at || typeof at !== 'object' || typeof shape.law !== 'string') return null;
+  return {figure: shape.law, from: at.from, to: at.to, progress: at.progress};
 }
 
 /** What rings, as the owner's torus reading names it, or null where it names none the frame can carry. */

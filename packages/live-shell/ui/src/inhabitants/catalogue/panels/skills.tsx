@@ -10,6 +10,9 @@
 //
 // Value keys beyond the set's own (members, sets, profiles). The owners report, never written from here:
 //   unused      string[]                 members AIKit has catalogued and never seen used (`aikit unused --json`: unused[].capability)
+//   carried     {name, members?, revision?, why?}[]   every SkillSet the agent carries, in the order Central keeps on its profile; each
+//               member names the set that holds it (`set`). The rack draws every set, not only the first (round 869). Order writes
+//               a new order of their names, Central's agent-profile.chain-order; the sets stand as Central returns them.
 // Settings the shell holds: unusedOnly (the Unused filter). A key the owner has not reported is absent: the views draw "—" and the well
 // names what is missing.
 //
@@ -43,8 +46,18 @@ const SCOPES = [{value: 'home', label: 'Home', does: 'Every session on this mach
 // The mark set is the person's choice for the whole shell (Settings), not the owner's: the blade until they choose.
 const marks = (v: V) => (strOf(v, 'marks') ?? 'blade') as WoodSet
 const requested = (v: V, m: Member) => v[`req:${m.id}`] !== false
-/** The set's members as AIKit reads them (the binding's `members`), methodologies first. */
-const members = (v: V): Member[] => json<Member[]>(v, 'members', []).filter(m => m && typeof m.id === 'string' && Array.isArray(m.rungs)).sort((a, b) => ORDER.indexOf(a.form) - ORDER.indexOf(b.form))
+/** One SkillSet the agent carries, as the owners report it (the binding's `carried`). */
+interface Carried {readonly name: string; readonly members?: number; readonly revision?: string; readonly why?: string}
+/** Every SkillSet the agent carries, in the order Central keeps on its profile. */
+const carried = (v: V): Carried[] => json<Carried[]>(v, 'carried', []).filter(c => c && typeof c.name === 'string')
+/** Where a member's set stands among those carried; one the profile names directly stands after them all. */
+const setRank = (sets: readonly Carried[], m: Member) => { const at = m.set === undefined ? -1 : sets.findIndex(c => c.name === m.set); return at < 0 ? sets.length : at }
+/** The set's members as AIKit reads them (the binding's `members`), set by set in the profile's order, methodologies first in each. */
+const members = (v: V): Member[] => {
+  const sets = carried(v)
+  return json<Member[]>(v, 'members', []).filter(m => m && typeof m.id === 'string' && Array.isArray(m.rungs))
+    .sort((a, b) => setRank(sets, a) - setRank(sets, b) || ORDER.indexOf(a.form) - ORDER.indexOf(b.form))
+}
 /** How many members reach a rung; absent when the owner has not reported the members. */
 const reach = (v: V, rung: number) => (has(v, 'members') ? reaching(effective(v), rung) : undefined)
 const options = (v: V, key: string) => json<string[]>(v, key, []).filter(x => typeof x === 'string').map(x => ({value: x, label: x}))
@@ -58,9 +71,11 @@ function chains(v: V): RowItem[] {
   const unused = unusedOf(v)
   const shown = filtering(v) ? members(v).filter(m => unused!.has(m.id)) : members(v)
   if (filtering(v) && !shown.length) return [{id: 'none', name: 'Every member has been used', light: 'lit', tone: 'green'}]
+  const several = carried(v).length > 1
   return shown.map(m => {
     const want = requested(v, m), state = markState(m, want)
     return {id: m.id, name: m.form === 'skillset' ? `${m.name} · ${m.holds}` : m.name, request: want,
+      ...(several ? {does: m.set ? `${FORM_NAME[m.form]} in ${m.set}.` : `${FORM_NAME[m.form]} the agent's profile names directly.`} : {}),
       light: (state === 'whole' ? 'lit' : 'dark') as LightState, why: want ? m.withheld?.why : 'Turned off: your request, through the profile.',
       mark: <WoodMark kind={m.form} size={14} state={state} set={marks(v)} title={FORM_NAME[m.form]} />,
       meter: <Ladder rungs={want ? m.rungs : m.rungs.map((r, i) => (i < 2 ? r : false))} labels={RUNGS} label={m.name} />, note: unused?.has(m.id) ? 'unused' : m.rev}
@@ -109,6 +124,26 @@ function UnusedFilter({p}: {p: ViewProps}) {
       on={now === true} unknown={now === undefined} onChange={x => p.set('unusedOnly', x)} disabled={st(p, 'unusedOnly').disabled ?? (unused === undefined ? 'No reading of what has been used.' : undefined)} />
     <Readout label="never used" does="Members of this set that AIKit has catalogued and never seen used." value={count} tone={count ? 'accent' : undefined} />
   </>
+}
+
+/** The sets the agent carries, in the order Central keeps on its profile (round 869). Select one and move it: the move asks Central's
+ * agent-profile.chain-order, and the list stands in the order Central returns. */
+function SetList({p}: {p: ViewProps}) {
+  const sets = carried(p.v)
+  const [chosen, setChosen] = useState<string | undefined>(undefined)
+  const [page, setPage] = useState(0)
+  const why = st(p, 'order').disabled
+  const selected = chosen !== undefined && sets.some(c => c.name === chosen) ? chosen : sets[0]?.name
+  const move = (id: string, by: -1 | 1) => {
+    const names = sets.map(c => c.name), i = names.indexOf(id)
+    if (i < 0 || i + by < 0 || i + by >= names.length) return
+    ;[names[i], names[i + by]] = [names[i + by]!, names[i]!]
+    p.set('order', JSON.stringify(names))
+  }
+  return <Rows label={`Sets · ${sets.length}`} does={why ?? 'The sets the agent carries, in the order Central keeps. Select a set, then move it.'}
+    items={sets.map(c => ({id: c.name, name: c.name, light: (c.why ? 'dark' : c.members === undefined ? 'unknown' : 'lit') as LightState,
+      ...(c.why ? {why: c.why} : {}), ...(c.members !== undefined ? {note: String(c.members)} : {})}))}
+    selected={selected} onSelect={setChosen} onMove={why ? undefined : move} size={Math.min(4, sets.length)} page={page} onPage={setPage} />
 }
 
 /** The set by kind: each kind's mark and how many members it has. */
@@ -308,9 +343,10 @@ function SetBands({p}: {p: ViewProps}) {
     {wideFrame(p) && members}
     <Band>
       <Section label="Set" width={136} part="macros">
-        <Chooser {...st(p, 'set')} does="The set in the rack. Drag a set from the browser to replace it." value={strOf(p.v, 'set') ?? ''}
-          options={options(p.v, 'sets')}
-          onChange={x => { p.set('set', x); p.set('compose', 'changed') }} />
+        {carried(p.v).length > 1 ? <SetList p={p} />
+          : <Chooser {...st(p, 'set')} does="The set in the rack. Drag a set from the browser to replace it." value={strOf(p.v, 'set') ?? ''}
+            options={options(p.v, 'sets')}
+            onChange={x => { p.set('set', x); p.set('compose', 'changed') }} />}
         <KindCounts v={p.v} size={18} />
         <div className="ref-pair">
           <Readout label="revision" does="A digest over the revisions of every member." value={strOf(p.v, 'revision')} copy={strOf(p.v, 'revision')} />
@@ -329,7 +365,7 @@ function SetBands({p}: {p: ViewProps}) {
 
 function SkillsWhole({p}: {p: ViewProps}) {
   const page = pageOf(p)
-  return <Panel title={strOf(p.v, 'set') ?? 'Skillset rack'} mark={headMark(p.v)} view="whole" rack light={light(p.v, p.owner)} onFold={p.nav.fold} onFull={p.nav.full}
+  return <Panel title={strOf(p.v, 'set') === undefined ? 'Skillset rack' : titled(p.v, strOf(p.v, 'set')!)} mark={headMark(p.v)} view="whole" rack light={light(p.v, p.owner)} onFold={p.nav.fold} onFull={p.nav.full}
     pages={PAGES.map(x => ({id: x.id, label: x.label, light: pageLight(p.v, x.id)}))} page={page} onPage={p.setPage}>
     {page === 'capture' ? <CaptureBands p={captureOf(p)} /> : page === 'refine' ? <RefineBands p={refineOf(p)} /> : <SetBands p={p} />}
   </Panel>
@@ -339,14 +375,36 @@ function SkillsWhole({p}: {p: ViewProps}) {
 // The full rack is the set as a page, grouped by kind (manual §19.7 Full); the controls stay in Device view, below the pane.
 
 function SetDoc({v}: {v: V}) {
-  const unused = unusedOf(v)
+  const sets = carried(v)
+  // Several sets: one section a set, in the order Central keeps on the profile, then what the profile names directly (round 869).
+  if (sets.length > 1) {
+    const own = members(v).filter(m => setRank(sets, m) === sets.length)
+    return <>
+      <p className="ref-doc-lead">{sets.length} sets · {has(v, 'members') ? members(v).length : NONE} members · applied at {strOf(v, 'scope') ?? NONE} scope</p>
+      {!has(v, 'members') && <p className="ref-doc-lead">No reading of the members.</p>}
+      {sets.map(c => <section key={c.name} className="ref-doc-set">
+        <h3>{c.name} <small>{c.revision ?? NONE} · {c.members ?? NONE} members</small></h3>
+        {c.why && <p className="ref-doc-lead">{c.why}</p>}
+        <SetKinds v={v} of={m => m.set === c.name} />
+      </section>)}
+      {own.length > 0 && <section className="ref-doc-set"><h3>Named by the profile <small>{own.length} members</small></h3><SetKinds v={v} of={m => setRank(sets, m) === sets.length} /></section>}
+    </>
+  }
   return <>
     <h3>{strOf(v, 'set') ?? NONE} <small>{strOf(v, 'revision') ?? NONE} · {has(v, 'members') ? members(v).length : NONE} members · applied at {strOf(v, 'scope') ?? NONE} scope</small></h3>
     {!has(v, 'members') && <p className="ref-doc-lead">No reading of the members.</p>}
+    <SetKinds v={v} of={() => true} />
+  </>
+}
+
+/** A set's members grouped by kind, each with its mark, revision, evidence, state and what it is for. */
+function SetKinds({v, of}: {v: V; of: (m: Member) => boolean}) {
+  const unused = unusedOf(v)
+  return <>
     {ORDER.map(form => <section key={form} className="ref-doc-kind">
       <h4><WoodMark kind={form} size={24} set={marks(v)} /> {FORM_NAME[form]}s</h4>
       <ol className="ref-doc-list">
-        {members(v).filter(m => m.form === form && (!filtering(v) || unused!.has(m.id))).map(m => {
+        {members(v).filter(m => m.form === form && of(m) && (!filtering(v) || unused!.has(m.id))).map(m => {
           const want = requested(v, m), state = markState(m, want)
           return <li key={m.id} data-dim={state !== 'whole' ? 'true' : undefined}>
             <WoodMark kind={m.form} size={14} state={state} set={marks(v)} />
@@ -371,9 +429,15 @@ const REFINE_SAMPLE = {
   resultWhy: 'Open: no take has run under the proposed revision yet. Press Test to run the task\'s own Repeat over Skillset.',
 }
 
+/** The gallery's second set: the members of the documentation sample that Central's core-development set holds. */
+const CORE_DEVELOPMENT: ReadonlySet<string> = new Set(['product-development', 'ui-development', 'architecture-development', 'evidence-led-repair', 'reverse-recovery',
+  'experimental-development', 'verification'])
+
 // The light reads the owner alone; hollow while it has not said.
 const light = (v: V, owner?: V) => (strOf(owner ?? v, 'light') ?? 'unknown') as LightState
-const short = (v: V) => { const set = strOf(v, 'set'); return set === undefined ? NONE : set.split(':')[1] ?? set }
+/** The set on the chain, and how many more the agent carries beside it. */
+const titled = (v: V, name: string) => { const more = carried(v).length - 1; return more > 0 ? `${name} +${more}` : name }
+const short = (v: V) => { const set = strOf(v, 'set'); return set === undefined ? NONE : titled(v, set.split(':')[1] ?? set) }
 const headMark = (v: V) => <WoodMark kind="skillset" size={14} set={marks(v)} title="Skillset" />
 
 export const skills: DesignedDevice = {
@@ -395,6 +459,9 @@ export const skills: DesignedDevice = {
     ...prefixed('refine.', REFINE_SAMPLE)},
   fixtures: {'The blade': {marks: 'blade'}, 'The pen': {marks: 'pen'},
     'Unused only': {unusedOnly: true},
+    // Two sets on the chain, in the order Central keeps on the agent's profile: each member under its own.
+    'Two sets': {carried: JSON.stringify([{name: 'central:documentation', members: 12, revision: 'b3:9f2c41'}, {name: 'central:core-development', members: 7}]),
+      members: JSON.stringify(DOCUMENTATION.map(m => ({...m, set: CORE_DEVELOPMENT.has(m.id) ? 'central:core-development' : 'central:documentation'})))},
     'Capturing, held for a secret': {'capture.recording': true, ...prefixed('capture.', captureSkill.fixtures?.Held ?? {})},
     // REPLACED (O-I 795, round 13): "Open: the takes ran, but no take answered a Success condition". Each take answers the task's own.
     'A refinement tested': prefixed('refine.', {...REFINE_SAMPLE, test: JSON.stringify([{trace: 'takes:own:1:trial:0', level: 'proposed'}, {trace: 'takes:own:1:trial:1', level: 'in use'}]),

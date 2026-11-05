@@ -554,6 +554,17 @@ export interface HostedTorusSession {
   readonly classes?: HostedTorusClasses;
   /** What rings, when the owner names it (QL-MEF scene_field.rs `body`, `torus-body`; O-I #852). */
   readonly body?: HostedTorusBody;
+  /** Under Sequence, where QL names no figure: the figure the scene's own shapes set, as the frame's torus object shows it, the shape it
+   * stands on and the one it moves to, and the progress between them (instrumentAnnouncement.mjs `sequence`; O-I 851). */
+  readonly sequence?: HostedTorusSequence;
+}
+
+/** The scene's shapes for the torus under Sequence (DLW manual §21.2 "Sequence follows the shapes you set in the scene"). */
+export interface HostedTorusSequence {
+  readonly figure: HostedTorusFigure;
+  readonly from: HostedTorusFigure;
+  readonly to: HostedTorusFigure;
+  readonly progress: number;
 }
 
 /** What rings (DLW manual §21.2 Body: "It is the torus unless you choose a form"): the torus, or a form with the form it was made from

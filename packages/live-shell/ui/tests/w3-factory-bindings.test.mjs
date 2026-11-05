@@ -185,24 +185,26 @@ test('4 · the Experiment: its comparison readings read the records a run made, 
 
 test('5 · Custody and the Decision helper: Factory\'s custody and unit-decision commands carry none of their settings, and each refusal says what they do carry', () => {
   const custody = session.custodyBinding({sessionRef: 's', agent: {light: 'lit'}}, null)
-  assert.match(custody.standing.handBack.disabled, /no owner operation carries it yet — missing op:/)
+  // REPLACED (BD r20 PORT, round 869): Hand back is Factory's custody hold (factory_owner custody-hold); with no custody read handed in it
+  // names where the list is read (factory-session-binding.test.mjs writes it).
+  assert.match(custody.standing.handBack.disabled, /^Hand back: Factory's custody list \(the kernel's factory_owner custody-list\) is read on the session's own chain/)
   // REPLACED (lane W11): with no custody read handed in, each says Factory's custody list is not read here.
   for (const key of ['gate', 'escalate']) assert.match(custody.standing[key].disabled, /custody list is not read here/, key)
   // REPLACED (O-I 787): the Agent's Autonomy is retired (§19.4, §19.12); Custody names what took its place instead of a custody flag.
   assert.equal(custody.standing.autonomy.disabled, session.AGENT_AUTONOMY_RETIRED)
   // REPLACED (lane W9): Factory's custody record carries Autonomy, Review gate and Escalate to since Factory PR 288; each names the kernel's
   // CustodyAssign that carries none yet, and the owner's ruling on changing them after assignment (w9-approvals-ledger-sets.test.mjs).
-  assert.match(custody.standing.handBack.disabled, /Factory's custody assign and update \(factory_owner\) carry a Position, its work, a reason, the custody state — in-progress, blocked, released, completed or handed-off — and a Position to hand off to/)
   for (const key of ['gate', 'escalate']) assert.match(custody.standing[key].disabled, /`factory development custody assign --/, key)
   // REPLACED (BD r19, C26 6311e404c): Hand back said `factory development custody list` had no kernel route. The kernel's CustodyList is
   // routed (factory_owner custody-list); Hand back waits on Factory's custody hold for what you edited, and names that.
-  assert.doesNotMatch(custody.standing.handBack.disabled, /no kernel route/)
-  assert.match(custody.standing.handBack.disabled, /missing op: Factory's custody hold/)
+  assert.doesNotMatch(custody.standing.handBack.disabled, /no kernel route|missing op/)
   // REPLACED (lane W11): what the agent holds is Factory's custody list, not read here with no custody handed in.
   // REPLACED (BD r19): CUSTODY_ABSENT.held is gone; with no custody handed in, held names where the list is read (the session's chain).
   assert.equal('held' in session.CUSTODY_ABSENT, false)
   assert.match(custody.standing.held.disabled, /custody list \(the kernel's factory_owner custody-list\) is read on the session's own chain/)
-  for (const key of ['people', 'handBackLit']) assert.match(custody.standing[key].disabled, /no reading reaches it yet — missing op:/, key)
+  assert.match(custody.standing.people.disabled, /no reading reaches it yet — missing op:/)
+  // REPLACED (BD r20 PORT): the light is the custody listing's hand_back, read on the session's own chain.
+  assert.match(custody.standing.handBackLit.disabled, /^The hand-back light: Factory's custody list \(its hand_back\) is read on the session's own chain/)
   const decision = helper.decisionHelperBinding({status: null, teamSpace: null, holds: bind.chainHolds()})
   for (const key of ['when', 'deadline']) assert.match(decision.standing[key].disabled, /Factory's attempt decision \(factory_owner attempt-decision-submit and -read\) puts a unit's question to you through Central's receiving field/, key)
 })

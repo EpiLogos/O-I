@@ -1119,8 +1119,8 @@ test('Export Audio lays the take under the scene once its course rendered, by th
   }
   const {order, answer} = await run()
   assert.equal(answer.ok, true, answer.error)
-  assert.deepEqual(order, ['render-take', ['lay', {checkpoint_sha256: NAMED, id: 7, name: 'Take 1', bpm: 120}], ['save', 'Take 1.wav']],
-    'laid once its course rendered through the relay, by the name of the checkpoint it began at, at its tempo; then saved')
+  assert.deepEqual(order, ['render-take', ['lay', {checkpoint_sha256: NAMED, checkpoint: CHECKPOINT, id: 7, name: 'Take 1', bpm: 120}], ['save', 'Take 1.wav']],
+    'laid once its course rendered through the relay, by the name of the checkpoint it began at and the checkpoint itself (BB round 20), at its tempo; then saved')
   assert.match(answer.note, /as the take played it\. The Torus was not kept with this take, so the file is at the owner's own level\. Take 1 lies under the scene on its take lane, from sample 192000\.$/)
   const refused = await run({lay: async () => ({ok: false, error: 'This take is already kept in the performance'})})
   assert.match(refused.answer.note, /own level\. It was not laid under the scene: This take is already kept in the performance\.$/, 'the owner\'s refusal, in its words')
@@ -1148,14 +1148,23 @@ test('Export Audio lays the take under the scene once its course rendered, by th
   const sound = {stage: async command => { asked.push(command); return {ok: true, take: SEALED} },
     perform: async action => { asked.push(action); return {state: 'take-recorded', take_ref: SEALED.take_ref, lane_ref: 'take-lane:torus/7', at_sample: '384000', unsaved: false} }}
   const composed = await take.exportTake(clip, {stage: renderOwner().stage, save: async () => {},
-    lay: ({checkpoint_sha256, ...t}) => presets.layTorusTake({checkpoint_sha256, take: {...t, beat: 16}}, sound)})
+    lay: ({checkpoint_sha256, checkpoint, ...t}) => presets.layTorusTake({checkpoint_sha256, checkpoint, take: {...t, beat: 16}}, sound)})
   assert.deepEqual(asked, [{command: 'torus-take', action: 'seal', checkpoint_sha256: NAMED},
     {action: 'record-take', record: take.torusTakeRecord(SEALED, {id: 7, name: 'Take 1', beat: 16, bpm: 120})}])
   assert.match(composed.note, /Take 1 lies under the scene on its take lane, from sample 384000\.$/)
+  // BB round 20: a kernel that no longer knows the name (after a restart) refuses the seal in its words; the course's checkpoint is sent once more
+  asked.length = 0
+  const forgot = {...sound, stage: async command => command.checkpoint ? sound.stage(command)
+    : (asked.push(command), {ok: false, error: `No Torus checkpoint ${command.checkpoint_sha256} was given under this lease`})}
+  const again = await take.exportTake(clip, {stage: renderOwner().stage, save: async () => {},
+    lay: ({checkpoint_sha256, checkpoint, ...t}) => presets.layTorusTake({checkpoint_sha256, checkpoint, take: {...t, beat: 16}}, forgot)})
+  assert.deepEqual(asked.slice(0, 2), [{command: 'torus-take', action: 'seal', checkpoint_sha256: NAMED}, {command: 'torus-take', action: 'seal', checkpoint: CHECKPOINT}])
+  assert.match(again.note, /Take 1 lies under the scene on its take lane, from sample 384000\.$/, 'sealed from the checkpoint its course keeps, and laid')
   // the candidate lays it from its arrangement clip's start, or from its own beat 0 in a slot
   const live = source('live/liveTake.ts').slice(source('live/liveTake.ts').indexOf('export async function exportLiveTake('), source('live/liveTake.ts').indexOf('/** A file saved as the page\'s download'))
   assert.match(live, /const beat = 'arrangement' in address\.at \? await arrangementStart\(address\.path, address\.track, address\.at\.arrangement\) : 0/)
-  assert.match(live, /return presets\.layTorusTake\(\{checkpoint_sha256, take: \{\.\.\.take, beat\}\}\)/)
+  assert.match(live, /async \(\{checkpoint_sha256, checkpoint, \.\.\.take\}\) => \{/)
+  assert.match(live, /return presets\.layTorusTake\(\{checkpoint_sha256, checkpoint, take: \{\.\.\.take, beat\}\}\)/)
   assert.match(live, /exportTake\(answer\.outcome\.reading\.clip, \{stage: torus\.commitLiveStage, save: download, lay,/)
   assert.match(live, /\.arrangement_clips[\s\S]*typeof clip\.start === 'number'/)
 })

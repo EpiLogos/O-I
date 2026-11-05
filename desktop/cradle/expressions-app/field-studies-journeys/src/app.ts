@@ -2395,9 +2395,9 @@ async function runStageCommand(command:StageCommand):Promise<StageResult>{
    {const {landed_at_samples_elapsed,moved}=await nativeField.controller.openTorusSound(command.sound);announceHostState();return {ok:true,landed_at_samples_elapsed,moved};}
   case 'torus-take':
    // A take sealed to lie under a scene (O-I #855; controller.ts torusTake): the kernel seals what the owner was sent from the checkpoint the
-   // take began at, by the name it relayed it under. A read: nothing moves, so nothing is announced.
+   // take began at, by the name it relayed it under or from the checkpoint given whole. A read: nothing moves, so nothing is announced.
    if(!nativeField)throw new Error('This application has no native instrument.');
-   return {ok:true,take:await nativeField.controller.torusTake(command.checkpoint_sha256)};
+   return {ok:true,take:await nativeField.controller.torusTake('checkpoint' in command?command.checkpoint:command.checkpoint_sha256)};
   case 'torus-engine':
    // The Torus heard in the desktop's one engine (O-I #849): its owner hands it over and the frame's own sound of it is muted while the
    // engine sounds it, handed over again whenever the owner's Torus moves (controller.ts torusEngine); off, the frame sounds it again. The
