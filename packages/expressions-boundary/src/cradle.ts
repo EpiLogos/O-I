@@ -13,7 +13,7 @@ import {readWikiSceneTechne, resolveSceneConstellation} from '../../../desktop/c
 import {relateSceneConstellation} from '../../../desktop/cradle/src/techne/sceneConstellationRelation';
 import {ensureWikiNativeExpression, publishWikiNativeRegisters, selectedWikiNativeRegister, selectWikiNativeRegister, wikiNativeRegisters} from '../../../desktop/cradle/src/techne/wikiNativeExpression';
 import {assertReading, boundedText, decideFrameAction, object, readFrameActionRequest, type ChannelContext, type ExpressionsOwners} from './protocol.ts';
-import {instrumentToKeep, keepInstrumentChange, keepRackChange, keepSoundChange, keptInstrumentReply, keptRackReply, keptSoundRecord, keptSoundReply, listPerformance, rackToKeep, readFramePerformanceRequest, recallPerformanceBasis,
+import {instrumentToKeep, keepInstrumentChange, keepRackChange, keepSoundChange, recordTakeChange, takeRecordedReply, keptInstrumentReply, keptRackReply, keptSoundRecord, keptSoundReply, listPerformance, rackToKeep, readFramePerformanceRequest, recallPerformanceBasis,
   refusePerformanceSave} from './performanceBasis.ts';
 
 /** Who keeps a sound in the Scene: the person, through the Expressions application's own surfaces (as nativeMaterials.ts edits). */
@@ -131,6 +131,15 @@ export function createCradleOwners(transport: KernelTransportStatus, options: Cr
       if (edited?.state === 'revision_conflict') return {state: 'refused', reason: 'The Expression changed since it was read: nothing was kept. Save the sound again on what stands.', missing: []};
       const kept = edited?.document?.scenes?.find(row => row.scene_ref === request.scene_ref);
       return keptSoundReply(kept?.performance, request.sound, edited.dirty === true);
+    }
+    // A Torus take the kernel sealed laid under the Scene, by one edit of the Scene's performance (O-I #855).
+    if (request.action === 'record-take') {
+      if (typeof document.revision !== 'number') throw Error('The native Expression reads with no revision to edit');
+      const edited = await data({op: 'expression', request: {operation: 'edit', expression_ref: request.expression_ref, expected_revision: document.revision, actor: PERFORMANCE_ACTOR,
+        changes: [recordTakeChange(request.scene_ref, request.record)]}} as KernelOp, 'expression', context) as {state?: unknown; dirty?: unknown; document?: typeof document};
+      if (edited?.state === 'revision_conflict') return {state: 'refused', reason: 'The Expression changed since it was read: the take was not laid. Lay it again on what stands.', missing: []};
+      const laid = edited?.document?.scenes?.find(row => row.scene_ref === request.scene_ref);
+      return takeRecordedReply(laid?.performance, request.record, edited.dirty === true);
     }
     // A form's body kept as an instrument with the sounds made on it, by one edit of the Scene's performance (O-I #852).
     if (request.action === 'keep-instrument') {

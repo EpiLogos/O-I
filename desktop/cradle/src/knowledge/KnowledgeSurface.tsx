@@ -14,7 +14,7 @@ import {sharedField,type SharedFieldReading} from "./shared-field";
 import {freeGraphRegion,useDetailGeometry} from "./detailGeometry";
 import {accommodate,GRAPH_ZOOM_LIMITS,unaccommodate} from "./camera";
 import {GraphFilters} from "./GraphFilters";
-import {filterGraph,restoreGraphFilters,restoreSavedGraphViews,type GraphFilters as GraphFilterState,type SavedGraphView} from "./filters";
+import {budgetGraph,filterGraph,restoreGraphFilters,restoreSavedGraphViews,type GraphFilters as GraphFilterState,type SavedGraphView} from "./filters";
 import {GraphCanvas} from "./GraphCanvas";
 import {appendGraphVisit,applySavedGraphView,isUnresolvedGraphNode,projectUnresolvedGraph,unresolvedAssociationsAllowed,unresolvedGraphAssociations,openGraphVisit,returnGraphVisit,selectGraphVisit,restoreGraphReturn,type GraphVisit} from "./graphNavigation";
 import {useLayout} from "./useLayout";
@@ -104,13 +104,18 @@ export function KnowledgeSurface({binding,onOpen,nativeContext}: {binding:Surfac
   const visibleModel=useMemo(()=>model?projectUnresolvedGraph({...model,nodes:grouped.map(s=>s.node)}):undefined,[model,grouped]);
   const nodes=useMemo(()=>visibleModel?.nodes??[],[visibleModel]);
   const emphasis=useMemo(()=>emphasizeGraph(nodes,filters.emphasis),[nodes,filters.emphasis]);
-  const filtered=useMemo(()=>visibleModel?filterGraph(visibleModel,filters,visit.selected):undefined,[visibleModel,filters,visit.selected]);
+  // The Budget (DLW §17.3: 8–4096 nodes, 64 by default) keeps the subjects nearest the selection, then the most connected; the graph
+  // draws and simulates only those and says how many more it hides (filters.ts budgetGraph; O-I #742).
+  const bounded=useMemo(()=>visibleModel?budgetGraph(visibleModel,filters.budget,visit.selected):undefined,[visibleModel,filters.budget,visit.selected]);
+  const filtered=useMemo(()=>bounded?filterGraph(bounded.reading,filters,visit.selected):undefined,[bounded,filters,visit.selected]);
   const displayedModel=useMemo(()=>visibleModel&&filtered?{...visibleModel,nodes:filtered.nodes,edges:filtered.edges}:undefined,[visibleModel,filtered]);
   const unresolvedAssociations=useMemo(()=>unresolvedAssociationsAllowed(filters)?unresolvedGraphAssociations(displayedModel?.nodes??[]):[],[displayedModel,filters]);
   const focused=useMemo(()=>{const refs=neighbourhood(displayedModel,visit.selected);for(const link of unresolvedAssociations)if(link.source===visit.selected||link.ghost===visit.selected){refs.add(link.source);refs.add(link.ghost);}return refs;},[displayedModel,visit.selected,unresolvedAssociations]);
-  // All owner disclosures remain inspectable; filtering never changes layout topology.
-  const layout=useLayout(visibleModel);
+  // All owner disclosures remain inspectable; filtering never changes layout topology. What the Budget keeps is what simulates.
+  const layout=useLayout(bounded?.reading);
   const positions=layout.points;
+  // Each simulated subject's place, by its reference (the layout answers in the order of what the Budget keeps).
+  const placed=useMemo(()=>new Map((bounded?.reading.nodes??[]).map((node,i)=>[node.ref,positions[i]])),[bounded,positions]);
   useEffect(()=>{
     if(!isGraph||!model||busy||!nativeContext?.subject_ref)return;
     if(nativeFocusApplied.current===nativeContext)return;
@@ -125,12 +130,12 @@ export function KnowledgeSurface({binding,onOpen,nativeContext}: {binding:Surfac
     try{await openSubjectInTechne(transport,binding.project,node,model?.formations??[]);setTechne(undefined);}
     catch(error){setTechne({ref:node.ref,pending:false,failure:error instanceof Error?error.message:String(error)});}
   },[transport,binding.project,model]);
-  const displayedPositions=useMemo(()=>{const byRef=new Map(nodes.map((node,i)=>[node.ref,positions[i]]));return filtered?.nodes.map(node=>byRef.get(node.ref)!)??[];},[nodes,positions,filtered]);
+  const displayedPositions=useMemo(()=>filtered?.nodes.map(node=>placed.get(node.ref)!)??[],[placed,filtered]);
   const changeFilters=(value:GraphFilterState)=>setTravel(t=>({...t,visits:t.visits.map((v,i)=>i===t.index?{...v,filters:restoreGraphFilters(value)}:v)}));
   const saveViews=(saved:SavedGraphView[])=>setTravel(t=>({...t,saved:restoreSavedGraphViews(saved)}));
-  const applyView=(saved:SavedGraphView)=>{if(saved.camera)setDetailNode(undefined);const point=positions[nodes.findIndex(node=>node.ref===saved.focus)]??{x:400,y:260};setTravel(t=>appendGraphVisit(t,applySavedGraphView(t.visits[t.index],saved,{point,extent})));};
+  const applyView=(saved:SavedGraphView)=>{if(saved.camera)setDetailNode(undefined);const point=(saved.focus?placed.get(saved.focus):undefined)??{x:400,y:260};setTravel(t=>appendGraphVisit(t,applySavedGraphView(t.visits[t.index],saved,{point,extent})));};
   const region=detailNode?freeGraphRegion(detailGeometry.rect,extent):visit.selected?{x:0,y:0,...extent}:undefined;
-  const anchor=positions[nodes.findIndex(node=>node.ref===visit.selected)]??{x:400,y:260};
+  const anchor=(visit.selected?placed.get(visit.selected):undefined)??{x:400,y:260};
   const presentation=region?accommodate(camera,anchor,region,extent):camera;
   const setCamera=(change:(camera:Camera)=>Camera)=>setTravel(t=>({...t,visits:t.visits.map((v,i)=>i===t.index?{...v,camera:change(v.camera)}:v)}));
   const push=(next:Visit)=>setTravel(t=>appendGraphVisit(t,next));
@@ -182,17 +187,18 @@ export function KnowledgeSurface({binding,onOpen,nativeContext}: {binding:Surfac
   const select=useCallback((node:GraphNode)=>{
     if(isUnresolvedGraphNode(node))return;
     setDetailNode(undefined);
-    const point=positions[nodes.findIndex(value=>value.ref===node.ref)];
-    if(!point)return;
+    // A subject past the Budget has no place yet: selecting it brings it within the Budget, and the camera stays as it is.
+    const point=placed.get(node.ref);
+    if(!point&&!nodes.some(value=>value.ref===node.ref))return;
     setTravel(t=>{
       const current=t.visits[t.index];if(current.selected===node.ref&&!current.detail)return t;
       // Picking keeps the rendered camera stable, so the second click of a
       // double-click still addresses the same subject under the pointer.
       const selected=selectGraphVisit(current,node.ref);
-      selected.camera=unaccommodate(presentation,point,{x:0,y:0,...extent},extent);
+      if(point)selected.camera=unaccommodate(presentation,point,{x:0,y:0,...extent},extent);
       return appendGraphVisit(t,selected);
     });
-  },[positions,nodes,presentation,extent]);
+  },[placed,nodes,presentation,extent]);
   const open=useCallback((node:GraphNode)=>{if(isUnresolvedGraphNode(node))return;
     // A constellation's node opens it in the browser, where what it holds stands and its menu holds its acts (the retired authoring panel's).
     const frameRef=node.frame_ref??(model?.formations?.some(form=>form.ref===node.ref)?node.ref:undefined);
@@ -223,11 +229,11 @@ export function KnowledgeSurface({binding,onOpen,nativeContext}: {binding:Surfac
   // Lane-1 C3: a hop centres the camera on its subject, at the current zoom, once the layout holds the node's position.
   useEffect(()=>{
     const ref=pendingCentre.current;if(!ref||visit.selected!==ref)return;
-    const point=positions[nodes.findIndex(node=>node.ref===ref)];if(!point||!Number.isFinite(point.x)||!Number.isFinite(point.y))return;
+    const point=placed.get(ref);if(!point||!Number.isFinite(point.x)||!Number.isFinite(point.y))return;
     pendingCentre.current=undefined;
     setCamera(c=>{const centred={zoom:c.zoom,x:-(point.x-400)*c.zoom,y:-(point.y-260)*c.zoom};return unaccommodate(centred,point,{x:0,y:0,...extent},extent);});
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[positions,nodes,visit.selected]);
+  },[placed,visit.selected]);
   // The panel's Fit button is the graph's one fit (graphFitCamera, also Shift+1 on the canvas), capped at the button's established 200 per cent.
   const fitView=()=>{
     const fitted=graphFitCamera(displayedPositions,extent,{...GRAPH_ZOOM_LIMITS,maxZoom:2});
@@ -256,11 +262,11 @@ export function KnowledgeSurface({binding,onOpen,nativeContext}: {binding:Surfac
   const setZoom=useCallback((zoom:number)=>setTravel(t=>({...t,visits:t.visits.map((v,i)=>i===t.index?{...v,camera:{...v.camera,zoom}}:v)})),[]);
   useEffect(()=>{
     if(!isGraph){publishKnowledgeGraphHandle(knowledgeToken.current,null);return;}
-    const surface:KnowledgeGraphSurface={filters,zoom:camera.zoom,domains,counts:filtered?.counts??null,selected:visit.selected??null,
+    const surface:KnowledgeGraphSurface={filters,zoom:camera.zoom,domains,counts:filtered&&bounded?{...filtered.counts,beyond:bounded.beyond,total:bounded.total}:null,selected:visit.selected??null,
       reading:model??null,loading:busy,project:binding.project,query:visit.query,minimap,
       patchFilters,setZoom,fit:()=>fitRef.current(),select:selectRef,setMinimap};
     publishKnowledgeGraphHandle(knowledgeToken.current,surface);
-  },[isGraph,filters,camera.zoom,domains,filtered,visit.selected,patchFilters,setZoom,model,busy,binding.project,visit.query,minimap,selectRef]);
+  },[isGraph,filters,camera.zoom,domains,filtered,bounded,visit.selected,patchFilters,setZoom,model,busy,binding.project,visit.query,minimap,selectRef]);
   useEffect(()=>()=>publishKnowledgeGraphHandle(knowledgeToken.current,null),[]);
   return <section className="knowledge-surface" aria-label="Knowledge surface" aria-busy={busy}>
     <WikiFactsProvider transport={transport} project={binding.project} checkpoints={travel.facts??{}} onCheckpoint={saveFactsCheckpoint} onSaved={()=>setGeneration(n=>n+1)}>
@@ -270,7 +276,7 @@ export function KnowledgeSurface({binding,onOpen,nativeContext}: {binding:Surfac
     {busy&&<Loading label="Reading graph inputs…" scope="inline"/>}{error&&<Refusal said="Couldn't read this graph." error={error}/>}{nativeFocusError&&<Refusal said="Couldn't find that in the graph." error={nativeFocusError}/>}{layout.error&&<Refusal said="Couldn't lay the graph out." error={layout.error}/>}
     {isGraph&&<div className="knowledge-graph" ref={graph} data-focused={Boolean(visit.selected)} data-detail-open={Boolean(detailNode)} data-dense={nodes.length>80}>
       <GraphCanvas minimap={minimap} onMinimap={setMinimap} unresolvedAssociations={unresolvedAssociations} emphasis={emphasis} nodes={filtered?.nodes??nodes} positions={displayedPositions} model={displayedModel} camera={presentation} selected={visit.selected} focused={focused} contextual={filtered?.contextual} labels={filters.labels} arrows={filters.arrows} minZoom={GRAPH_ZOOM_LIMITS.minZoom} maxZoom={GRAPH_ZOOM_LIMITS.maxZoom} onCamera={commitCamera} onDragNode={(ref,world)=>{if(ref&&world)layout.dragNode(ref,world.x,world.y);else if(!ref)layout.releaseNode();}} onSelect={select} onOpen={open} onTechne={openTechne} onClear={release}/>
-      {visibleModel&&filtered&&<GraphFilters reading={visibleModel} result={filtered} filters={filters} camera={presentation} selected={visit.selected} onChange={changeFilters} saved={travel.saved??[]} onSave={saveViews} onApply={applyView}/>}
+      {visibleModel&&filtered&&<GraphFilters reading={visibleModel} result={filtered} bounded={bounded} filters={filters} camera={presentation} selected={visit.selected} onChange={changeFilters} saved={travel.saved??[]} onSave={saveViews} onApply={applyView}/>}
       {filtered?.nodes.length===0&&<p className="knowledge-graph-empty" role="status">{filtered.localFocusMissing?"Select a subject before using the local view.":"No subjects match these filters."}</p>}
       <div className="knowledge-zoom" role="group" aria-label="Graph view"><button className="oi-tool" aria-label="Zoom out" onClick={()=>setCamera(c=>({...c,zoom:Math.max(GRAPH_ZOOM_LIMITS.minZoom,c.zoom/1.2)}))}><Glyph name="minus" size={13}/></button><span aria-label="Graph zoom">{Math.round(camera.zoom*100)}%</span><button className="oi-tool" aria-label="Zoom in" onClick={()=>setCamera(c=>({...c,zoom:Math.min(GRAPH_ZOOM_LIMITS.maxZoom,c.zoom*1.2)}))}><Glyph name="plus" size={13}/></button><button className="oi-tool" aria-label="Fit graph to view" title="Fit graph to view" onClick={fitView}><Glyph name="expand" size={13}/></button><span className="knowledge-control-hint">Pinch to zoom · two fingers to pan</span></div>
       {model&&visit.selected&&locus&&<div className="knowledge-expression-bar" style={detailNode&&region?{left:region.x+8,top:region.y+8,right:extent.width-region.x-region.width+8,bottom:extent.height-region.y-region.height+8}:undefined}><div className="knowledge-expression-selection oi-action-group"><button className="oi-action" aria-pressed={pins.includes(visit.selected)} onClick={()=>setPins(current=>current.includes(visit.selected!)?current.filter(ref=>ref!==visit.selected):[...current,visit.selected!])}>{pins.includes(visit.selected)?"Unpin subject":"Pin subject"}</button><button className="oi-action" aria-pressed={follow} onClick={()=>setFollow(value=>!value)}>{follow?"Following locus":"Follow locus"}</button></div><KnowledgeExpression surface={binding.id} project={binding.project} address={graphAddress(locus)} locus={locus} pins={pins.flatMap(ref=>nodes.find(node=>node.ref===ref&&!isUnresolvedGraphNode(node))??[])} follow={follow}/></div>}

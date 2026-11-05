@@ -38,6 +38,14 @@
 .sys-place.is-shore .sys-place-dot { background: none; box-shadow: inset 0 0 0 1.5px var(--accent); }
 .sys-place.is-unwritten .sys-place-dot { background: none; box-shadow: inset 0 0 0 1.5px var(--accent); opacity: 0.7; }
 .sys-place.is-unwritten .sys-place-name { font-style: italic; }
+/* [O-I #746] a cell standing for the locations in it, above the globe's threshold: drawn as a region is (an outline, never a solid point),
+   its count beside it; a mythic cell keeps the dotted ring */
+.sys-places .sys-cell { display: flex; align-items: center; gap: 5px; pointer-events: auto; cursor: pointer; --ring: 14px; }
+.sys-places .sys-cell:focus-visible { outline: 1px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+.sys-cell .sys-place-dot { --core: 6px; background: none; box-shadow: inset 0 0 0 1.5px var(--accent); }
+.sys-cell .sys-place-dot::before { content: ''; position: absolute; left: 50%; top: 50%; width: 38px; height: 38px; margin: -19px 0 0 -19px; border-radius: 50%; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent); }
+.sys-cell.is-mythic .sys-place-dot::after { content: ''; position: absolute; left: 50%; top: 50%; width: 20px; height: 20px; margin: -10px 0 0 -10px; border-radius: 50%; border: 1.5px dotted var(--accent); }
+.sys-cell .sys-place-name { font-variant-numeric: tabular-nums; }
 .sys-place-name { margin-left: var(--ring, 0px); font: 500 11.5px/1.2 var(--sans); color: var(--ink); white-space: nowrap; text-shadow: 0 0 6px rgb(var(--deep-rgb) / 0.95), 0 0 2px rgb(var(--deep-rgb)); }
 /* an anchor line: a dashed stub from the location to its real place on Earth, named; a press follows it there */
 .sys-places .sys-anchor { display: flex; align-items: center; gap: 4px; pointer-events: auto; cursor: pointer; font: 500 10.5px/1.2 var(--sans); color: var(--ink-2, var(--ink)); white-space: nowrap; text-shadow: 0 0 6px rgb(var(--deep-rgb) / 0.95), 0 0 2px rgb(var(--deep-rgb)); }

@@ -2383,7 +2383,9 @@ async function runStageCommand(command:StageCommand):Promise<StageResult>{
    // The Torus as it rings, kept by its owner and set again from that checkpoint (O-I 855; controller.ts torusCheckpoint, torusRestore): what a
    // Live take begins on and is played again from. Keeping is a read and returns before the announce below.
    if(!nativeField)throw new Error('This application has no native instrument.');
-   if(command.action==='checkpoint')return {ok:true,checkpoint:await nativeField.controller.torusCheckpoint()};
+   // A checkpoint answers with the name the kernel relayed it under, when it named it: a take is sealed by the checkpoint it began at (O-I #855).
+   if(command.action==='checkpoint'){const checkpoint=await nativeField.controller.torusCheckpoint(),checkpoint_sha256=nativeField.controller.checkpointName(checkpoint);
+    return checkpoint_sha256?{ok:true,checkpoint,checkpoint_sha256}:{ok:true,checkpoint};}
    {const landed_at_samples_elapsed=await nativeField.controller.torusRestore(command.checkpoint);announceHostState();return {ok:true,landed_at_samples_elapsed};}
   case 'torus-sound':
    // A sound saved from the Torus is a read; a kept sound opened sets the Torus again, as a restore does (O-I #852; controller.ts torusSound,
@@ -2391,6 +2393,11 @@ async function runStageCommand(command:StageCommand):Promise<StageResult>{
    if(!nativeField)throw new Error('This application has no native instrument.');
    if(command.action==='save')return {ok:true,sound:await nativeField.controller.torusSound(command.name)};
    {const {landed_at_samples_elapsed,moved}=await nativeField.controller.openTorusSound(command.sound);announceHostState();return {ok:true,landed_at_samples_elapsed,moved};}
+  case 'torus-take':
+   // A take sealed to lie under a scene (O-I #855; controller.ts torusTake): the kernel seals what the owner was sent from the checkpoint the
+   // take began at, by the name it relayed it under. A read: nothing moves, so nothing is announced.
+   if(!nativeField)throw new Error('This application has no native instrument.');
+   return {ok:true,take:await nativeField.controller.torusTake(command.checkpoint_sha256)};
   case 'torus-engine':
    // The Torus heard in the desktop's one engine (O-I #849): its owner hands it over and the frame's own sound of it is muted while the
    // engine sounds it, handed over again whenever the owner's Torus moves (controller.ts torusEngine); off, the frame sounds it again. The

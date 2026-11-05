@@ -58,7 +58,9 @@ export const CHAIN_LAWS: Readonly<Record<ChainKind, ChainLaw>> = {
     chain: 'factory-session', title: 'A session\'s chain', manual: '§16.2, §19.4, §19.7, §19.12, §19.15',
     slots: ['gateway', 'remote-carrier', 'agentset', 'skillset', 'agent', 'world', 'git'], fixed: ['gateway', 'remote-carrier', 'agentset', 'agent', 'world', 'git'],
     means: 'The connections bring every agent in, the Agent rack holds the agents the session may use, each in its own chain, the Scope after the rack bounds them all, and Git / landing takes their work out. Inside an agent\'s chain what it carries stands before the Agent.',
-    op: AGENT_CHAIN_ORDER('Central'),
+    // What the agent carries is ordered by Central, which keeps its profile (agent-profile.chain-order, Central PR 318, compare-and-swap on the
+    // profile's revision): the order of the SkillSets inside the Skillset rack, whose own place between the Agent rack and the Agent is fixed.
+    op: {name: 'agent-profile.chain-order', owner: 'Central', stands: true},
   },
   'factory-main': {
     chain: 'factory-main', title: 'Factory\'s Main track', manual: '§16.2, §19.1',

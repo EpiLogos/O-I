@@ -291,7 +291,7 @@ export const MENU_ACCELERATORS: Readonly<Record<MenuCommand, string | null>> = {
   'view.expand-clip': 'Alt+CmdOrCtrl+E', 'view.mixer': 'Alt+CmdOrCtrl+M', 'view.io': 'Alt+CmdOrCtrl+I', 'app.settings': 'CmdOrCtrl+,',
   'view.present': null, 'view.grid': null, 'view.snap': null, 'view.guides': null, 'view.flat': null, 'view.depth': null, 'view.face-plane': null,
   'file.export.picture': null, 'file.export.film': null, 'file.export.json': null, 'file.export.html': null, 'file.export.native': null,
-  'file.export.song': null,
+  'file.export.song': null, 'help.expressions-guide': null,
 }
 
 /** An accelerator as the Mac's menus write it: ⌃⌥⇧⌘ then the key. Pure. */

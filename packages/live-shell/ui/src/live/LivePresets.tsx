@@ -7,7 +7,7 @@
 import {useEffect, useState} from 'react'
 import {registerPanel} from '../shell/panels'
 import type {InstrumentEdit, PerformanceAction, PerformanceBasisSummary, PerformanceReply, StageCommand, StageResult, StageSoundMove, StageTorusSound,
-  TorusKeptSummary, TorusRackDraft} from '@epilogos/expressions-boundary'
+  TorusKeptSummary, TorusRackDraft, TorusTakeRecordEdit} from '@epilogos/expressions-boundary'
 import type {WorldActionReceipt} from '../timeline/worldTrackAdapter'
 import {commitLiveInstrumentEdit, commitLiveStage} from './torusInstrument'
 import './liveInstrumentSection.css'
@@ -38,6 +38,8 @@ export async function commitLivePerformance(action: PerformanceAction): Promise<
     && typeof row.unsaved === 'boolean') return reply as PerformanceReply
   if (row?.state === 'rack-kept' && typeof row.rack_ref === 'string' && typeof row.name === 'string' && typeof row.macros === 'number'
     && typeof row.variations === 'number' && typeof row.unsaved === 'boolean') return reply as PerformanceReply
+  if (row?.state === 'take-recorded' && typeof row.take_ref === 'string' && typeof row.lane_ref === 'string' && typeof row.at_sample === 'string'
+    && typeof row.unsaved === 'boolean') return reply as PerformanceReply
   return REFUSED('The owner answered the preset request in an unknown shape')
 }
 
@@ -98,6 +100,27 @@ export async function saveTorusSound(name: string, owners: LiveSoundOwners = SOU
   return {ok: true, words: `Saved "${kept.name}" under the Torus.${kept.unsaved ? UNTIL_SAVED : ''}`, sound_ref: kept.sound_ref, form: body?.kind === 'form'}
 }
 const UNTIL_SAVED = ' The Scene keeps it until the Expression is saved, then the file does.'
+
+/** Lay a Live take under the Expression's scene (O-I #855, "A Live part placed under an Expression's scenes sounds on its ruler"), once it
+ * was rendered through the relay: the kernel seals what the Torus's owner was sent from the checkpoint the take BEGAN at, by the name the
+ * kernel relayed that checkpoint under (the stage's `torus-take` seal; the `torus` checkpoint a take begins at answers with it), the record
+ * is built from the seal (liveTake.ts torusTakeRecord, loaded when asked), and the Scene lays it by one edit of its performance (the
+ * performance's `record-take`, the kernel's `record_torus_take`). Settles with the words, or the owner's refusal in its words. */
+export async function layTorusTake(input: {readonly checkpoint_sha256: string; readonly take: {readonly id: number; readonly name: string; readonly beat: number; readonly bpm: number}},
+  owners: LiveSoundOwners = SOUND_OWNERS): Promise<{ok: true; words: string} | {ok: false; error: string}> {
+  const sealed = await owners.stage({command: 'torus-take', action: 'seal', checkpoint_sha256: input.checkpoint_sha256})
+  if (!sealed.ok) return {ok: false, error: sealed.error}
+  if (!sealed.take) return {ok: false, error: 'The owner answered the seal with no take'}
+  const {torusTakeRecord} = await import('./liveTake')
+  const record = torusTakeRecord(sealed.take, input.take)
+  if ('refused' in record) return {ok: false, error: record.refused}
+  // the record is the builder's, read exactly by the boundary (performanceBasis.ts readTakeRecord) before the kernel is asked
+  const laid = await owners.perform({action: 'record-take', record: record as unknown as TorusTakeRecordEdit})
+  if (laid.state === 'refused') return {ok: false, error: laid.reason}
+  if (laid.state !== 'take-recorded') return {ok: false, error: 'The Scene answered the take in another shape'}
+  const title = input.take.name || `Take ${input.take.id}`
+  return {ok: true, words: `${title} lies under the scene on its take lane, from sample ${laid.at_sample}.${laid.unsaved ? UNTIL_SAVED : ''}`}
+}
 
 /** Keep the form's body the kept sound `soundRef` rings on as an instrument named `name` (O-I #852, manual §21.2 Sounds and instruments;
  * Tips: "make a form the body, make sounds on it, and keep it"): the Scene keeps the body with every sound made on it (the performance's

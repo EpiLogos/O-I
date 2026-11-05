@@ -121,3 +121,79 @@ test('source occurrences and authored QL relations remain separately filterable 
   assert.deepEqual(result.edges.map(e=>e.relation),['qualifies']);
   assert.equal(source.edges.length,2);
 });
+
+// O-I #742, the done-whens PROJECTION-SCALE-2026-10-28 (#773) added: the Knowledge graph's Budget as the manual has it (DLW §17.3 Parameters,
+// "8–4096 nodes · 64 · Sets the most nodes that show. The graph says when it hides more."), bounding the drawn and the simulated set by hops
+// from the selected note first, then by degree; and the layout's positions published in batches above a thousand nodes.
+test('the Budget is the view\'s own: 8 to 4096 nodes, 64 until you set it, a corrupt one read as the default', async () => {
+  const {GRAPH_BUDGET} = await import('../src/knowledge/filters.ts');
+  assert.deepEqual({...GRAPH_BUDGET}, {min: 8, max: 4096, initial: 64});
+  assert.equal(defaultGraphFilters().budget, 64);
+  assert.equal(restoreGraphFilters({}).budget, 64, 'a view kept before the Budget shows 64');
+  assert.equal(restoreGraphFilters({budget: 2}).budget, 8);
+  assert.equal(restoreGraphFilters({budget: 100000}).budget, 4096);
+  assert.equal(restoreGraphFilters({budget: 12.5}).budget, 64);
+  assert.equal(restoreGraphFilters({budget: '512'}).budget, 64);
+  assert.equal(restoreGraphFilters({budget: 512}).budget, 512);
+  assert.equal(restoreSavedGraphViews([{name: 'Wide', filters: {budget: 1024}}])[0].filters.budget, 1024, 'a saved view keeps its Budget');
+});
+
+test('the Budget keeps the nodes nearest the selected note, then the most connected, and says how many it hides', async () => {
+  const {budgetGraph} = await import('../src/knowledge/filters.ts');
+  // A chain a–b–c–d–e, and a hub h with four leaves of its own; z alone.
+  const refs = ['a', 'b', 'c', 'd', 'e', 'h', 'l1', 'l2', 'l3', 'l4', 'z'];
+  const source = graph(refs.map(ref => node(ref)), [edge('a', 'b'), edge('b', 'c'), edge('c', 'd'), edge('d', 'e'),
+    edge('h', 'l1'), edge('h', 'l2'), edge('h', 'l3'), edge('h', 'l4'), edge('e', 'outside'), edge('z', 'elsewhere')]);
+  const within = budgetGraph(source, 64, 'a');
+  assert.equal(within.reading, source, 'within the Budget: the reading as it is');
+  assert.deepEqual([within.shown, within.total, within.beyond], [11, 11, 0]);
+  const near = budgetGraph(source, 8, 'a');
+  assert.deepEqual(near.reading.nodes.map(n => n.ref), ['a', 'b', 'c', 'd', 'e', 'h', 'l1', 'l2'], 'the chain from a by hops, then the hub by its degree, then by reference');
+  assert.deepEqual([near.shown, near.total, near.beyond], [8, 11, 3]);
+  assert.ok(near.reading.edges.some(e => e.from_ref === 'e' && e.to_ref === 'outside'), 'a kept note keeps its relation past the reading');
+  assert.ok(near.reading.edges.some(e => e.to_ref === 'l3'), 'a relation with one end kept stays');
+  assert.ok(!near.reading.edges.some(e => e.from_ref === 'z'), 'a relation with neither end kept goes');
+  const none = budgetGraph(source, 8);
+  assert.deepEqual(none.reading.nodes.map(n => n.ref), ['a', 'b', 'c', 'd', 'e', 'h', 'l1', 'l2'], 'nothing selected: the most connected (h, then b, c, d), then by reference; z, with no relation, goes');
+  assert.equal(none.beyond, 3);
+  assert.deepEqual(budgetGraph(source, 8, 'a').reading.nodes, near.reading.nodes, 'the same reading and selection keep the same set');
+  assert.equal(JSON.stringify(source.nodes.length), '11', 'the reading itself is untouched');
+  // The view's filters then act on what the Budget keeps: its hidden count is the scope's and the filters', the Budget's is its own.
+  const kept = filterGraph(near.reading, {...defaultGraphFilters(), isolated: false}, 'a');
+  assert.ok(kept.nodes.some(n => n.ref === 'e'), 'e keeps its relation past the reading, so it is no orphan');
+});
+
+test('above a thousand nodes the layout publishes at most every 100 ms of worker time, and once at the end', async () => {
+  const {layoutPublisher, BATCHED_ABOVE, BATCH_MS} = await import('../src/knowledge/layout.ts');
+  assert.deepEqual([BATCHED_ABOVE, BATCH_MS], [1000, 100]);
+  let now = 0;
+  const posts = [];
+  const small = layoutPublisher(974, () => posts.push(['small', now]), () => now);
+  for (let i = 0; i < 5; i++) { now += 3; small.tick(); }
+  small.end();
+  assert.equal(posts.filter(p => p[0] === 'small').length, 6, 'a thousand or fewer: every tick, and the end');
+  now = 0;
+  const large = layoutPublisher(3896, () => posts.push(['large', now]), () => now);
+  for (let i = 0; i < 300; i++) { now += 16.3; large.tick(); }
+  const ticks = posts.filter(p => p[0] === 'large');
+  assert.ok(ticks.length >= 40 && ticks.length <= 50, `one post in each seven ticks of 16.3 ms, about 4.9 s in all: ${ticks.length}`);
+  for (let i = 1; i < ticks.length; i++) assert.ok(ticks[i][1] - ticks[i - 1][1] >= 100, 'never two posts within 100 ms')
+  large.end();
+  assert.equal(posts.at(-1)[0], 'large', 'the settled arrangement is always published');
+  assert.equal(posts.filter(p => p[0] === 'large').length, ticks.length + 1);
+});
+
+test('code reading: the pane bounds its drawn and simulated set by the Budget and says when it hides more', async () => {
+  const {readFile} = await import('node:fs/promises');
+  const read = path => readFile(new URL(`../src/knowledge/${path}`, import.meta.url), 'utf8');
+  const surface = await read('KnowledgeSurface.tsx');
+  assert.match(surface, /const bounded=useMemo\(\(\)=>visibleModel\?budgetGraph\(visibleModel,filters\.budget,visit\.selected\):undefined,\[visibleModel,filters\.budget,visit\.selected\]\)/);
+  assert.match(surface, /filterGraph\(bounded\.reading,filters,visit\.selected\)/, 'the filters act on what the Budget keeps');
+  assert.match(surface, /const layout=useLayout\(bounded\?\.reading\)/, 'only what the Budget keeps is simulated');
+  assert.match(surface, /counts:filtered&&bounded\?\{\.\.\.filtered\.counts,beyond:bounded\.beyond,total:bounded\.total\}:null/, 'the handle says what the Budget hides');
+  assert.doesNotMatch(surface, /positions\[nodes\.findIndex/, 'positions are read by reference from the simulated set, never by the whole reading\'s order');
+  const panel = await read('GraphFilters.tsx');
+  assert.match(panel, /aria-label="Graph budget" type="number" min=\{GRAPH_BUDGET\.min\} max=\{GRAPH_BUDGET\.max\}/);
+  assert.match(panel, /The Budget shows \{bounded\.shown\} of \{bounded\.total\} subjects: \{bounded\.beyond\} more/);
+  assert.match(await read('layout.ts'), /const publisher=layoutPublisher\(this\.out\.length,\(\)=>publish\(this\.positions\(\)\),clock\);\n\s*this\.sim\.on\("tick",publisher\.tick\)\.on\("end",publisher\.end\)/);
+});

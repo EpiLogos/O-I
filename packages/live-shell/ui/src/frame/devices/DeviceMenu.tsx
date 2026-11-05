@@ -6,9 +6,12 @@
 //
 // Fold is the host's own (deviceHost.tsx keeps the fold per device, so every chain place folds together); it acts where the device
 // stands on its chain. The other acts are its chain's owner's: the publisher hands each one it carries (deviceDoor.ts
-// PublishedDevice.acts); one no owner carries stands disabled with the operation it waits for.
-import {useEffect, useRef, type KeyboardEvent as ReactKeyboardEvent} from 'react'
-import type {HeadAct} from './deviceDoor'
+// PublishedDevice.acts); one no owner carries stands disabled with the operation it waits for, one its owner refuses here with the owner's
+// reason. An act that asks first — a name (Rename, Save as preset) or one of the owner's choices (Hot-swap's target) — turns the menu into
+// that one question; Enter or a choice sends it, the owner's refusal stays in the menu in its words, Esc leaves.
+import {useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent} from 'react'
+import {refusalWords} from '../../../../../../desktop/cradle/src/shared/Refusal.tsx'
+import type {HeadAct, HeadActEntry} from './deviceDoor'
 import './devices.css'
 
 export interface HeadMenuItem {
@@ -17,6 +20,8 @@ export interface HeadMenuItem {
   readonly enabled: boolean
   /** Why the entry stands disabled, in the owner's terms. */
   readonly why?: string
+  /** What the act asks before it goes: a name, or one of the owner's choices. */
+  readonly ask?: {readonly kind: 'name'; readonly label: string; readonly value?: string} | {readonly kind: 'choice'; readonly label: string; readonly choices: readonly {readonly value: string; readonly label: string}[]}
 }
 
 const ACTS: readonly {id: HeadAct; title: string}[] = [
@@ -36,13 +41,35 @@ export const MISSING_OPS: Readonly<Record<HeadAct, string>> = {
 
 /** The entries of a device head's menu: Fold (Unfold while folded) where the device stands on its chain, then its owner's acts —
  * live where its publisher carries one, else disabled with the operation it waits for. Pure. */
-export function headMenu({onChain, folded, acts}: {readonly onChain: boolean; readonly folded: boolean; readonly acts?: Partial<Readonly<Record<HeadAct, unknown>>>}): HeadMenuItem[] {
+export function headMenu({onChain, folded, acts}: {readonly onChain: boolean; readonly folded: boolean; readonly acts?: Partial<Readonly<Record<HeadAct, HeadActEntry>>>}): HeadMenuItem[] {
   const fold: HeadMenuItem = onChain
     ? {id: 'fold', title: folded ? 'Unfold' : 'Fold', enabled: true}
     : {id: 'fold', title: 'Fold', enabled: false, why: 'A device folds where it stands on its chain.'}
-  return [fold, ...ACTS.map(({id, title}): HeadMenuItem => (acts?.[id]
-    ? {id, title, enabled: true}
-    : {id, title, enabled: false, why: `No owner operation carries it yet — missing op: ${MISSING_OPS[id]}.`}))]
+  return [fold, ...ACTS.map(({id, title}): HeadMenuItem => {
+    const entry = acts?.[id]
+    if (!entry) return {id, title, enabled: false, why: `No owner operation carries it yet — missing op: ${MISSING_OPS[id]}.`}
+    if (typeof entry === 'function') return {id, title, enabled: true}
+    if ('refused' in entry) return {id, title, enabled: false, why: entry.refused}
+    if (entry.ask === 'name') return {id, title, enabled: true, ask: {kind: 'name', label: entry.label, ...(entry.value !== undefined ? {value: entry.value} : {})}}
+    return entry.choices.length ? {id, title, enabled: true, ask: {kind: 'choice', label: entry.label, choices: entry.choices}}
+      : {id, title, enabled: false, why: entry.empty ?? `${title}: its owner offers nothing to choose.`}
+  })]
+}
+
+/** The question an asking act puts, drawn in the menu's place: a name field (Enter sends it) or the owner's choices (a press sends one),
+ * with what the last answer came to under it (`said`: the menu says the owner's refusal through shared/Refusal.tsx refusalWords). */
+export function HeadAsk({item, said, busy, onAnswer}: {item: HeadMenuItem; said?: string | null; busy?: boolean; onAnswer: (answer: string) => void}) {
+  const [text, setText] = useState(item.ask?.kind === 'name' ? item.ask.value ?? '' : '')
+  if (!item.ask) return null
+  return <div className="device-menu-ask" data-device-ask={item.id}>
+    <small className="device-menu-subject">{item.title}</small>
+    {item.ask.kind === 'name'
+      ? <input className="device-menu-field" aria-label={item.ask.label} value={text} disabled={busy} autoFocus
+        onChange={event => setText(event.target.value)} onKeyDown={event => { if (event.key === 'Enter' && text.trim()) { event.preventDefault(); onAnswer(text.trim()) } }} />
+      : item.ask.choices.map(choice => <button key={choice.value} type="button" role="menuitem" className="device-menu-item" disabled={busy}
+        data-device-choice={choice.value} onClick={() => onAnswer(choice.value)}>{choice.label}</button>)}
+    {said && <p className="device-menu-refused" role="alert" data-i={`${item.title}|${said}`}>{said}</p>}
+  </div>
 }
 
 export interface DeviceMenuState {
@@ -52,8 +79,17 @@ export interface DeviceMenuState {
   readonly items: readonly HeadMenuItem[]
 }
 
-export function DeviceMenu({menu, onInvoke, onClose}: {menu: DeviceMenuState; onInvoke: (id: HeadMenuItem['id']) => void; onClose: () => void}) {
+export function DeviceMenu({menu, onInvoke, onClose}: {menu: DeviceMenuState; onInvoke: (id: HeadMenuItem['id'], answer?: string) => void | Promise<unknown>; onClose: () => void}) {
   const ref = useRef<HTMLDivElement>(null)
+  // An act that asks first: the question, what the owner said to the last answer, and whether the owner is being asked.
+  const [asking, setAsking] = useState<HeadMenuItem | null>(null)
+  const [said, setSaid] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+  const answer = (item: HeadMenuItem, given: string) => {
+    setBusy(true)
+    setSaid(null)
+    Promise.resolve(onInvoke(item.id, given)).then(onClose, (cause: unknown) => { setBusy(false); setSaid(refusalWords(`${item.title} didn't go through.`, cause)) })
+  }
   useEffect(() => {
     const element = ref.current
     if (!element) return
@@ -92,10 +128,11 @@ export function DeviceMenu({menu, onInvoke, onClose}: {menu: DeviceMenuState; on
     onKeyDown={onKeyDown} onContextMenu={event => event.preventDefault()}>
     <small className="device-menu-subject">{menu.subject}</small>
     {/* A disabled entry takes no pointer (devices.css), so pointing at it reaches its row, which says why on the Info line. */}
-    {menu.items.map((item, index) => <div key={item.id} role="none" data-i={item.why ? `${item.title}|${item.why}` : undefined}>
+    {asking ? <HeadAsk item={asking} said={said} busy={busy} onAnswer={given => answer(asking, given)} />
+      : menu.items.map((item, index) => <div key={item.id} role="none" data-i={item.why ? `${item.title}|${item.why}` : undefined}>
       {index === 1 && <hr />}
       <button type="button" role="menuitem" className="device-menu-item" data-device-act={item.id} disabled={!item.enabled} aria-disabled={!item.enabled}
-        title={item.why} onClick={() => { onClose(); onInvoke(item.id) }}>{item.title}</button>
+        title={item.why} onClick={() => { if (item.ask) { setAsking(item); return } onClose(); void onInvoke(item.id) }}>{item.title}</button>
     </div>)}
   </div>
 }

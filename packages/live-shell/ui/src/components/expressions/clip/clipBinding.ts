@@ -73,16 +73,38 @@ function laneDevice(entityId: string | undefined, target: string): string {
 }
 
 /** One entity's own controls, as the design's Expression tab reads them: Formation, Force and Sound (Meaning is not read here yet). */
-function objectOf(entity: Entity): Obj {
+/** The state a symbol stands on in Clip view: the selected one of its steps, else its first. */
+const standingStep = (entity: Entity, stepId: string | null | undefined) => entity.sequence.steps.find(step => step.id === stepId) ?? entity.sequence.steps[0]
+
+function objectOf(entity: Entity, stepId?: string | null): Obj {
   const sound = entity.sound
+  // A torus's state names one of its shapes (O-I 851; manual §21.2 "Select it, set forces on it, or give its shapes a sequence"): the
+  // Figure of the state it stands on.
+  const state = standingStep(entity, stepId)
+  const figure = state?.shape === 'torus' ? state.torusFigure ?? entity.torusFigure ?? 'torus' : undefined
   return {
     formation: {x: entity.position.x, y: entity.position.y, z: entity.position.z, w: entity.size.x, h: entity.size.y, scale: entity.scale ?? 1, rotation: entity.rotation,
-      share: entity.share, tint: entity.tintWeight, enabled: entity.enabled !== false, locked: entity.locked, name: entity.name, shape: FORMATION_SHAPE_LABELS[entity.shape] ?? entity.shape},
+      share: entity.share, tint: entity.tintWeight, enabled: entity.enabled !== false, locked: entity.locked, name: entity.name, shape: FORMATION_SHAPE_LABELS[entity.shape] ?? entity.shape,
+      ...(figure ? {figure} : {})},
     force: {kind: entity.force.kind, strength: entity.force.strength, spin: entity.force.spin, radius: entity.force.radius},
     // The voice as the owner resolves it (nativeEntityFace.sound.ts resolvedSound: the app validator's defaults for a field it omits). A symbol's voice
     // carries a name or a mode of the torus's sound and has no frequency, follow, waveform or pan: those keys are not reported, so the design draws them absent.
     sound: sound ? (({enabled, carry, gain, attack, release}) => ({voice: enabled, carry: carryValue(carry), gain, attack, release}))(resolvedSound(sound)) : {voice: false},
   }
+}
+
+/** A scene's default framing: the view a new scene opens on (field-studies-journeys model.ts blankScene, and what it reads for a scene
+ * that holds none). The engine's own camera rests at the same numbers (PointCloudField cameraState). */
+export const DEFAULT_FRAMING = Object.freeze({mode: '2d', yaw: 0, pitch: 0, zoom: 1, panX: 0, panY: 0})
+const at = (value: unknown, rest: number) => typeof value === 'number' && Math.abs(value - rest) < 1e-9
+/** Whether a scene opens on its default framing: the native camera it carries when it has one (model.ts camera.ts cameraForSceneView reads
+ * that first), else its own view. Pure. */
+function onDefaultFraming(view: NativeEditorReading['scene']['view'] | undefined): boolean {
+  if (!view) return true
+  const camera = (view as {nativeCamera?: {yaw?: unknown; pitch?: unknown; zoom?: unknown; panX?: unknown; panY?: unknown}}).nativeCamera
+  const d = DEFAULT_FRAMING
+  if (camera) return at(camera.yaw, d.yaw) && at(camera.pitch, d.pitch) && at(camera.zoom, d.zoom) && at(camera.panX, d.panX) && at(camera.panY, d.panY)
+  return view.mode === d.mode && at(view.yaw, d.yaw) && at(view.pitch, d.pitch) && at(view.zoom, d.zoom) && at(view.panX, d.panX) && at(view.panY, d.panY)
 }
 
 /** The presented scene's readings on the design's keys. A key the owner does not report is left out. Pure. */
@@ -125,8 +147,9 @@ export function expressionsClipValues(reading: NativeEditorReading, colour?: str
   }
   if (reading.scenes) values.scenes = JSON.stringify(reading.scenes.scenes.map(item => ({id: item.scene_ref, name: item.title})))
   // The scene's view of the field (manual §20.1 The Clip panel, View): the scene's own kept state, which Keep writes with the framing
-  // (field-studies-journeys model.ts Scene.view.kept; app.ts keep-view). Absent is not kept.
-  values.view = scene.view?.kept === true ? 'kept' : 'not kept'
+  // (field-studies-journeys model.ts Scene.view.kept; app.ts keep-view). DLW build ruling 2026-11-05: a view saved before Keep wrote that
+  // state is kept when it differs from the scene's default framing (the scene opens on it), and one equal to the default is the default.
+  values.view = scene.view?.kept === true || !onDefaultFraming(scene.view) ? 'kept' : 'default'
   // Each symbol's steps are the owner's glyph timing (shell/nativeContent.ts readNativeGlyphTiming). When the owner's reading cannot be
   // composed into it, the Sequence says why rather than drawing empty lanes as if the scene had no steps (walk 739, X2).
   let timing: ReturnType<typeof readNativeExpressionsContent>['clip_sources'] = []
@@ -137,7 +160,7 @@ export function expressionsClipValues(reading: NativeEditorReading, colour?: str
       state: entity.sequence.steps[i]?.name || entity.sequence.steps[i]?.text || String(i + 1)})) : []
     return {id: entity.id, name: entity.name, steps}
   }))
-  values.objects = JSON.stringify(Object.fromEntries(scene.entities.map(entity => [entity.id, objectOf(entity)])))
+  values.objects = JSON.stringify(Object.fromEntries(scene.entities.map(entity => [entity.id, objectOf(entity, reading.selection.step_id)])))
   if (reading.selection.entity_ids.length === 1) values.symbol = reading.selection.entity_ids[0]!
   // The "Name or mode" row's choices for the selected symbol (nativeEntityFace.sound.ts voiceChoices): the owner's modes, then the store's names.
   const held = scene.entities.find(entity => entity.id === values.symbol)?.sound?.carry ?? null
@@ -188,13 +211,18 @@ const SOUND_FIELD: Readonly<Record<string, 'gain' | 'attack' | 'release'>> = {ga
 export function objectChanges(reading: NativeEditorReading, next: Record<string, Obj>): NativeEditorChange[] {
   const changes: NativeEditorChange[] = []
   for (const entity of reading.scene.entities) {
-    const was = objectOf(entity), now = next[entity.id]
+    const was = objectOf(entity, reading.selection.step_id), now = next[entity.id]
     if (!now) continue
     for (const page of Object.keys(now)) {
       for (const [field, value] of Object.entries(now[page] ?? {})) {
         if (was[page]?.[field] === value) continue
         if (page === 'formation' && FORMATION_TARGET[field] && typeof value === 'number') changes.push({kind: 'parameter', target: target(entity.id, FORMATION_TARGET[field]!), value})
         else if (page === 'formation' && (field === 'name' || field === 'locked' || field === 'enabled')) changes.push(field === 'name' ? formationSettingChange(entity, 'name', String(value)) : formationSettingChange(entity, field, value === true))
+        else if (page === 'formation' && field === 'figure' && was.formation?.figure !== undefined) {
+          // The torus's shape in the state it stands on: the state's own source, as the torus (hostEditor.ts step-source).
+          const state = standingStep(entity, reading.selection.step_id)!
+          changes.push({kind: 'step-source', entity_id: entity.id, step_id: state.id, shape: 'torus', torusFigure: String(value) as NonNullable<typeof state.torusFigure>})
+        }
         else if (page === 'force' && field === 'kind') changes.push({kind: 'force-mode', entity_id: entity.id, value: value as Entity['force']['kind']})
         else if (page === 'force' && FORCE_TARGET[field] && typeof value === 'number') changes.push({kind: 'parameter', target: target(entity.id, FORCE_TARGET[field]!), value})
         else if (page === 'sound' && field === 'voice') changes.push(soundChange(entity.id, value === true ? (entity.sound ?? addedSound()) : null))
@@ -387,7 +415,7 @@ function sceneWiring(reading: NativeEditorReading, request: EditorRequest | null
       follow: 'a "Scene leaves → Jump to a scene" trigger is the follow action Jump', jumpTo: 'that trigger\'s scene',
       symbols: 'the Scene\'s entities and each formation\'s glyph timing', objects: 'each entity\'s Formation, Force and Sound', symbol: 'the owner\'s selection, when it is one entity',
       lanes: 'Scene.automation', layers: 'Scene.text', 'bp.bound': 'the native blueprint', 'bp.*': 'the native blueprint\'s transform',
-      view: 'Scene.view.kept: Keep holds the framing with the scene (absent: not kept)', sequenceUnread: 'why the owner\'s glyph timing could not be read',
+      view: 'Scene.view: kept when Keep held it, or when it differs from the default framing; else the default framing', sequenceUnread: 'why the owner\'s glyph timing could not be read',
       tool: 'the field\'s own tool, when it is Select or Orbit (the hosted state\'s stage.tool)',
     },
     acts: {

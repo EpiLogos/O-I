@@ -14,9 +14,14 @@
 // A pad the bank schedules (`runs_at`) shows that schedule as its routine's `when` and its next time (`next_at_unix_ms`), as readings: the
 // pad keeps no time of its own (§16.8). Make routine is the shell's own act (O-I #748): Settings, Automations, opened on the bank's project
 // for the pad you read, through the `makeRoutine` port; it writes nothing here.
+// The head's Save as preset and Hot-swap (§16.4; Factory PR 306, the kernel's factory_owner pads-presets, pads-preset-save and
+// pads-preset-recall, C26 6311e404c): Save as preset asks a name and saves the bank under it, Hot-swap offers Factory's presets and recalls
+// the one chosen into the bank whole, each on the revisions read and the person's grant (padsHeadActs).
 // The bank shown and the pad you read are the shell's own holds. Pure, apart from the view holds.
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
+import type {HeadAct, HeadActEntry} from '../../frame/devices/deviceDoor'
+import type {FactoryPadsPresetRecallRequest, FactoryPadsPresetSaveRequest} from '../../../../../../desktop/cradle/src/kernel/types'
 import {holdView, viewHolds, type ChainHolds} from './designBindings'
 import {familyFaceDevice} from './mainTrackBindings'
 import {refusalWords} from './ownerRoutes'
@@ -258,4 +263,63 @@ export function promptPadsBinding(input: PromptPadsInput | ChainHolds, ports: Pr
       }
     },
   }
+}
+
+// ---------------------------------------------------------------------------------------------------------------- the head's presets
+
+/** One preset of the pads as Factory keeps it (factory.prompt-pads-presets/v1 `presets`): its name, its revision, how many pads it fills. */
+export interface PadsPreset {readonly name: string; readonly revision: string; readonly filled: number}
+/** Factory's presets of the pads, a damaged one left out (Factory reports it and keeps it as it is; it is offered to no one); null when the
+ * answer is not that reading. Pure. */
+export function padsPresetsOf(reading: unknown): PadsPreset[] | null {
+  if (!isObj(reading) || reading.schema !== 'factory.prompt-pads-presets/v1' || !Array.isArray(reading.presets)) return null
+  return reading.presets.flatMap(row => (isObj(row) && str(row.name) && str(row.revision) && row.damaged === undefined
+    ? [{name: String(row.name), revision: String(row.revision), filled: num(row.filled) ?? 0}] : []))
+}
+
+/** The head's writes through Factory: a preset saved from the bank, a preset recalled into it. Absent: no carrier stands. */
+export interface PadsPresetPorts {
+  readonly save?: (request: FactoryPadsPresetSaveRequest) => Promise<unknown>
+  readonly recall?: (request: FactoryPadsPresetRecallRequest) => Promise<unknown>
+}
+export const PRESET_REFUSE = {
+  noCarrier: (what: string) => `${what}: the kernel carrier is unavailable here, so Factory cannot be asked (factory_owner pads-preset-save and pads-preset-recall).`,
+  presetsReading: 'Hot-swap: Factory has not answered its presets yet (`factory development pads-presets`).',
+  presetsOther: 'Hot-swap: `factory development pads-presets` answered something other than its presets.',
+  none: 'Hot-swap: Factory keeps no preset of the pads yet. Save as preset makes one.',
+  gone: (name: string) => `Hot-swap: Factory keeps no preset named ${name} any more; read the presets again.`,
+} as const
+
+/** The pads' head acts (§16.4 "Save as preset, Hot-swap"): Save as preset asks a name and saves the project's bank under it, on that
+ * preset's revision as read (`absent` for a new name); Hot-swap offers Factory's presets and recalls the one chosen into the bank whole, on
+ * the bank's revision as read and the preset's. Each refusal is Factory's own words. Pure but for the ports. */
+export function padsHeadActs(input: PromptPadsInput, presets: PadsAnswer | undefined, ports: PadsPresetPorts): Partial<Readonly<Record<HeadAct, HeadActEntry>>> {
+  const where = input.located.status === 'answered' ? padsLocation(input.located.value) : null
+  const bank = input.bank?.status === 'answered' && isObj(input.bank.value) ? input.bank.value : null
+  const bankWhy = input.located.status === 'refused' ? refusalWords(input.located.error ?? 'Factory refused to locate the project.')
+    : !where ? 'Factory has not located the project yet (`factory development locate`).' : 'why' in where ? where.why
+      : input.bank?.status === 'refused' ? refusalWords(input.bank.error ?? 'Factory refused its bank.') : !bank ? PADS_REFUSE.noBank : null
+  const kept = presets?.status === 'answered' ? padsPresetsOf(presets.value) : null
+  let save: HeadActEntry
+  let swap: HeadActEntry
+  if (bankWhy || !where || !('projectRef' in where) || !bank) {
+    save = {refused: `Save as preset: ${bankWhy ?? PADS_REFUSE.noBank}`}
+    swap = {refused: `Hot-swap: ${bankWhy ?? PADS_REFUSE.noBank}`}
+  } else {
+    const {statePath, projectRef} = where
+    save = !ports.save ? {refused: PRESET_REFUSE.noCarrier('Save as preset')} : {ask: 'name', label: 'Preset name', run: async name => {
+      await ports.save!({kind: 'pads-preset-save', state_path: statePath, project_ref: projectRef, name, expected_revision: kept?.find(preset => preset.name === name)?.revision ?? 'absent'})
+    }}
+    swap = !ports.recall ? {refused: PRESET_REFUSE.noCarrier('Hot-swap')}
+      : presets?.status === 'refused' ? {refused: `Hot-swap: ${refusalWords(presets.error ?? 'Factory refused its presets.')}`}
+        : presets?.status !== 'answered' ? {refused: PRESET_REFUSE.presetsReading} : !kept ? {refused: PRESET_REFUSE.presetsOther}
+          : {ask: 'choice', label: 'Preset', empty: PRESET_REFUSE.none, choices: kept.map(preset => ({value: preset.name, label: `${preset.name} · ${preset.filled} pads`})),
+            run: async name => {
+              const preset = kept.find(row => row.name === name)
+              if (!preset) throw Error(PRESET_REFUSE.gone(name))
+              await ports.recall!({kind: 'pads-preset-recall', state_path: statePath, project_ref: projectRef, name, expected_revision: String(bank.revision ?? 'absent'),
+                preset_revision: preset.revision})
+            }}
+  }
+  return {'save-preset': save, 'hot-swap': swap}
 }

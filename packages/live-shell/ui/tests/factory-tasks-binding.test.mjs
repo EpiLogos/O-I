@@ -95,11 +95,19 @@ test('Tasks writes the owners\' way: the timing through the Agent, a new task th
   binding.local.task(3)
   assert.deepEqual(calls, [['agent', ['quantize', 'now']], ['queue', 'Land the correction'], ['select', 3]])
   // REPLACED (lane K0): the task's lifecycle is Software Factory's (an attempt Action on a Run's unit), and a clip names no Run or unit.
+  // REPLACED (BD r19, C26 6311e404c): Factory names a task's units (factory_owner attempt-task-units), so Retry reads them and retries the
+  // unit through attempt-retry; Launch and Stop after still have no kernel route to start-serial or request-cancellation of that unit.
   for (const key of ['launch', 'retry', 'stopAfter']) {
-    assert.match(binding.standing[key].disabled, /a task clip names no Factory Run and no workflow unit.*\(Software Factory\)/, key)
+    assert.equal(binding.standing[key].disabled, tasks.TASKS_REFUSE[key], key)
     await assert.rejects(() => binding.write([{key, value: true}]), {message: tasks.TASKS_REFUSE[key]})
   }
-  assert.match(tasks.TASKS_REFUSE.retry, /factory_owner attempt-retry/)
+  for (const key of ['launch', 'stopAfter']) assert.match(tasks.TASKS_REFUSE[key], /factory_owner attempt-task-units names the task's units.*no kernel route/, key)
+  assert.match(tasks.TASKS_REFUSE.retry, /no carrier to Factory's attempt-task-units and attempt-retry stands here/)
+  const retried = []
+  const carried = tasks.tasksBinding(input(), null, {selectTask() {}, queue: async () => {}, retry: async session => { retried.push(session) }})
+  assert.equal(carried.standing.retry, undefined, 'Retry stands with its carrier')
+  await carried.write([{key: 'retry', value: true}])
+  assert.deepEqual(retried, [input().session.sessionRef])
   // The per-task settings are the session's settings on their owner (factory-session-settings.test.mjs): not read here, they say so.
   for (const key of ['mode', 'then', 'to', 'effort', 'toolCalls', 'register', 'form']) assert.equal(binding.standing[key].disabled, 'The session\'s settings are not read here.', key)
   assert.equal(calls.length, 3, 'no refusal dispatched anything')
@@ -134,4 +142,26 @@ test('REPLACED (ticket 772) — the chain publishes no Tasks and no Runs: a task
   assert.doesNotMatch(own, /export const (tasksDevice|runsDevice)\b/, 'no constructor stands')
   assert.match(readFileSync(new URL('../src/agent/clipBinding.ts', import.meta.url), 'utf8'), /parseFactoryTaskRef/, 'the selected task is THE selection\'s clip, in Clip view')
   assert.deepEqual(readFileSync(new URL('../src/agent/devices/taskBindings.ts', import.meta.url), 'utf8').match(/#[0-9a-fA-F]{3,8}\b/g) ?? [], [], 'shell tokens only')
+})
+
+test('(BD r19) a task\'s Retry: Factory\'s units of the task read (attempt-task-units), then its unit retried (attempt-retry); a refusal is Factory\'s words', async () => {
+  const UNITS = {contract: 'factory.attempt-task-units-reading/v1', projectRef: 'project:o-i', taskRef: 'central:task:t1', runsRead: 2, totalUnits: 2, units: [
+    {runRef: 'run:r1', workflowUnitRef: 'unit:build', currentAttemptRef: 'attempt:a2', status: 'returned', attempts: 2, runRevision: 4, required: true},
+    {runRef: 'run:r2', workflowUnitRef: 'unit:check', currentAttemptRef: 'attempt:b1', status: 'failed', attempts: 1, runRevision: 7, required: true}]}
+  assert.deepEqual(tasks.taskUnitsOf(UNITS).map(unit => unit.workflowUnitRef), ['unit:build', 'unit:check'])
+  assert.equal(tasks.taskUnitsOf({contract: 'other'}), null)
+  const asked = []
+  const owner = answers => async request => { asked.push(request); return answers[request.kind] }
+  await tasks.retryTask(owner({'attempt-task-units': UNITS, 'attempt-retry': {status: 'retried'}}), '/state', 'central:task:t1')
+  assert.deepEqual(asked, [{kind: 'attempt-task-units', state_path: '/state', task_ref: 'central:task:t1'},
+    {kind: 'attempt-retry', state_path: '/state', run_ref: 'run:r2', workflow_unit_ref: 'unit:check'}], 'the failed unit is the one retried')
+  // Two units neither failed: Factory retries one unit at a time, so the press names them and asks nothing more.
+  asked.length = 0
+  const both = {...UNITS, units: UNITS.units.map(unit => ({...unit, status: 'returned'}))}
+  await assert.rejects(() => tasks.retryTask(owner({'attempt-task-units': both}), '/state', 'central:task:t1'), /stands on 2 units \(run:r1 · unit:build, run:r2 · unit:check\).*Run map/)
+  assert.equal(asked.length, 1)
+  await assert.rejects(() => tasks.retryTask(owner({'attempt-task-units': {...UNITS, units: [], totalUnits: 0}}), '/state', 'central:task:t1'), /Factory retains no attempt of central:task:t1/)
+  await assert.rejects(() => tasks.retryTask(owner({'attempt-task-units': UNITS, 'attempt-retry': {status: 'refused', refusal: {message: 'The unit has no retry grant.'}}}), '/state', 'central:task:t1'),
+    {message: 'The unit has no retry grant.'})
+  await assert.rejects(() => tasks.retryTask(owner({}), '/state', 'central:task:t1'), /answered something other than its units/)
 })

@@ -30,7 +30,9 @@ export function readPresetName(value: unknown): string | null {
  * 4 November). */
 export type PerformanceAction = {action: 'list'} | {action: 'save'; name: string} | {action: 'recall'; basis_ref: string}
   | {action: 'sound'; sound_ref: string} | {action: 'keep-sound'; sound: Readonly<Record<string, unknown>>}
-  | {action: 'keep-instrument'; name: string; sound_ref: string} | {action: 'keep-rack'; name: string; rack: TorusRackDraft};
+  | {action: 'keep-instrument'; name: string; sound_ref: string} | {action: 'keep-rack'; name: string; rack: TorusRackDraft}
+  /** A Torus take laid under the Scene (O-I #855): the record live/liveTake.ts torusTakeRecord builds from the take the kernel sealed. */
+  | {action: 'record-take'; record: TorusTakeRecordEdit};
 export type FramePerformanceRequest = PerformanceAction & {operation: 'performance'; expression_ref: string; scene_ref: string};
 
 /** A frame or host performance request, exact in shape, or null. Every key is closed to its action. */
@@ -59,6 +61,10 @@ export function readFramePerformanceRequest(raw: unknown): FramePerformanceReque
     return closed(raw, [...common, 'name', 'sound_ref']) && keptName(raw.name) && typeof raw.sound_ref === 'string' && DIGEST.test(raw.sound_ref)
       ? {...base, action: 'keep-instrument', name: raw.name, sound_ref: raw.sound_ref} : null;
   }
+  if (raw.action === 'record-take') {
+    const record = closed(raw, [...common, 'record']) ? readTakeRecord(raw.record) : null;
+    return record ? {...base, action: 'record-take', record} : null;
+  }
   if (raw.action === 'keep-rack') {
     const rack = closed(raw, [...common, 'name', 'rack']) && keptName(raw.name) ? readRackDraft(raw.rack) : null;
     return rack ? {...base, action: 'keep-rack', name: raw.name as string, rack} : null;
@@ -79,6 +85,32 @@ function readTorusSound(raw: unknown): Readonly<Record<string, unknown>> | null 
   let bytes: number;
   try { bytes = new TextEncoder().encode(JSON.stringify(raw)).length; } catch { return null; }
   return bytes <= SOUND_BYTES_MAX ? raw : null;
+}
+
+/** A Torus take as the frame lays it under the Scene (kernel expression_performance.rs RecordTorusTake, `record_torus_take`; O-I #855): the
+ * take the kernel sealed (native-expression `torus_take`, `oi.torus-take/v1`, carried whole: the seal is the kernel's to judge), its take lane,
+ * the sample of the Scene's transport it lies from and the tempo it lies on. */
+export interface TorusTakeRecordEdit {
+  readonly operation: 'record_torus_take'
+  readonly take: Readonly<Record<string, unknown>>
+  readonly lane: {readonly layer_ref: string; readonly title: string; readonly enabled: boolean; readonly solo: boolean}
+  readonly at_sample: string
+  readonly micros_per_quarter: number
+}
+/** The most a sealed take carries across the boundary: its checkpoint and the acts beside it (the stage's bound, 4 MiB). */
+const TAKE_BYTES_MAX = 4 * 1024 * 1024;
+/** A take record exact in shape, its take the kernel's `oi.torus-take/v1` within its bound, or null. */
+function readTakeRecord(raw: unknown): TorusTakeRecordEdit | null {
+  if (!object(raw) || !closed(raw, ['operation', 'take', 'lane', 'at_sample', 'micros_per_quarter']) || raw.operation !== 'record_torus_take') return null;
+  const take = raw.take, lane = raw.lane;
+  if (!object(take) || take.schema !== 'oi.torus-take/v1' || typeof take.seal !== 'string' || !refText(take.take_ref) || !Number.isSafeInteger(take.sample_rate)) return null;
+  if (!object(lane) || !closed(lane, ['layer_ref', 'title', 'enabled', 'solo']) || !refText(lane.layer_ref) || !keptName(lane.title)
+    || typeof lane.enabled !== 'boolean' || typeof lane.solo !== 'boolean') return null;
+  if (typeof raw.at_sample !== 'string' || !/^(0|[1-9][0-9]{0,19})$/.test(raw.at_sample)) return null;
+  if (!Number.isSafeInteger(raw.micros_per_quarter) || (raw.micros_per_quarter as number) < 1 || (raw.micros_per_quarter as number) > 0xffffffff) return null;
+  let bytes: number;
+  try { bytes = new TextEncoder().encode(JSON.stringify(take)).length; } catch { return null; }
+  return bytes <= TAKE_BYTES_MAX ? raw as unknown as TorusTakeRecordEdit : null;
 }
 
 export interface PerformanceBasisSummary {readonly basis_ref: string; readonly event_ref: string; readonly m1_coordinate: string}
@@ -118,7 +150,9 @@ export type PerformanceReply =
     readonly kept: TorusKeptSummary | null}
   /** A rack the Scene now keeps, with how many macros and variations it holds, and all it keeps on the Torus then (DLW build ruling, 4 November). */
   | {readonly state: 'rack-kept'; readonly rack_ref: string; readonly name: string; readonly macros: number; readonly variations: number; readonly unsaved: boolean
-    readonly kept: TorusKeptSummary | null};
+    readonly kept: TorusKeptSummary | null}
+  /** A Torus take the Scene now lays under it (O-I #855): the take by its ref, its lane and the sample it lies from. */
+  | {readonly state: 'take-recorded'; readonly take_ref: string; readonly lane_ref: string; readonly at_sample: string; readonly unsaved: boolean};
 
 /** The bases the kernel reports for a Scene: each digest and identity exactly as the kernel holds it. A malformed record is not listed. */
 export function summarizePerformanceBases(bases: unknown): PerformanceBasisSummary[] {
@@ -293,6 +327,21 @@ export function rackToKeep(performance: unknown, name: string, draft: TorusRackD
   }
   return {rack: {schema: 'oi.torus-rack/v1', rack_ref: `rack:torus/${name.trim()}`, name, ...draft}};
 }
+/** The one edit that lays a Torus take under the Scene (kernel expression.rs `scene_performance_edit`, the performance's `record_torus_take`;
+ * O-I #855): the kernel opens the Scene's performance with it, or lays it in the one it has, and refuses in its words a take it did not seal. */
+export function recordTakeChange(sceneRef: string, record: TorusTakeRecordEdit) {
+  return {change: 'scene_performance_edit', scene_ref: sceneRef, operations: [record]};
+}
+/** Where the Scene lays the take once the edit is made: the take by its ref, on its lane, from the sample the Scene keeps; refused in words
+ * where the Scene does not lay it. */
+export function takeRecordedReply(performance: unknown, record: TorusTakeRecordEdit, unsaved: boolean): PerformanceReply {
+  const ref = record.take.take_ref;
+  const row = (object(performance) && Array.isArray(performance.torus_takes) ? performance.torus_takes : [])
+    .find((item: unknown) => object(item) && object(item.take) && item.take.take_ref === ref) as Record<string, unknown> | undefined;
+  return row && typeof ref === 'string' ? {state: 'take-recorded', take_ref: ref, lane_ref: record.lane.layer_ref, at_sample: String(row.at_sample), unsaved}
+    : {state: 'refused', reason: `The Scene did not lay ${record.lane.title} under it.`, missing: []};
+}
+
 /** The one edit that keeps a rack in the Scene's performance (the performance's `keep_torus_rack`): the kernel keeps it, or replaces the
  * one it keeps under the same ref, and refuses in its words a macro that turns a device off the rack's chain or a variation short of a
  * value for every macro. */

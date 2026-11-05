@@ -8,6 +8,26 @@ export interface Point {x:number;y:number;z?:number;scale?:number}
 const MEMBER_SCALE=95,MAX_FORM_RADIUS=360;
 function seed(ref:string){let h=2166136261;for(const c of ref)h=Math.imul(h^c.charCodeAt(0),16777619);return (h>>>0)/4294967296;}
 
+/** Above this many nodes a world's positions are posted in batches (PROJECTION-SCALE-2026-10-28, for O-I #742: at 3,896 nodes every tick
+ * cost a post of about 1.4 ms of cloning, and a Map rebuilt on the main thread, 300 times before React drew). */
+export const BATCHED_ABOVE=1000;
+/** The least worker time between two batched posts. */
+export const BATCH_MS=100;
+/** When a world posts its positions: every tick up to BATCHED_ABOVE nodes; above, at most once in each BATCH_MS of worker time,
+ * the first tick at once. The settled arrangement (`end`) is always posted. */
+export function layoutPublisher(count:number,publish:()=>void,now:()=>number):{tick:()=>void;end:()=>void} {
+  let last=-Infinity;
+  return {
+    tick:()=>{
+      if(count<=BATCHED_ABOVE){publish();return;}
+      const at=now();
+      if(at-last<BATCH_MS)return;
+      last=at;publish();
+    },
+    end:()=>{last=now();publish();},
+  };
+}
+
 interface SimNode extends SimulationNodeDatum {ref:string;out:number;radius:number;x:number;y:number}
 interface CarriedMember {ref:string;out:number;anchor:SimNode;offset:{x:number;y:number;z:number}}
 
@@ -125,10 +145,11 @@ export class ForceWorld {
       .velocityDecay(.4);
   }
 
-  /** Publish while the simulation has work; a settled world emits once more
-   * on end and then stops (the timer retires itself at alpha-min). */
-  onTick(publish:(points:Point[])=>void) {
-    this.sim.on("tick",()=>publish(this.positions())).on("end",()=>publish(this.positions()));
+  /** Publish while the simulation has work, in batches above BATCHED_ABOVE nodes (layoutPublisher); a settled world emits once more on
+   * end and then stops (the timer retires itself at alpha-min). */
+  onTick(publish:(points:Point[])=>void,clock:()=>number=()=>performance.now()) {
+    const publisher=layoutPublisher(this.out.length,()=>publish(this.positions()),clock);
+    this.sim.on("tick",publisher.tick).on("end",publisher.end);
   }
   stop(){this.sim.stop();}
   wake(){if(this.sim.alpha()>this.sim.alphaMin())this.sim.restart();}

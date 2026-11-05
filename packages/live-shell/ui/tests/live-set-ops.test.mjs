@@ -234,3 +234,55 @@ test('the writes go through the set\'s owner on its revision: the send, the comp
   await assert.rejects(set.clipInfo.read(2, {slot: 0}), out)
   assert.deepEqual(grooves.GROOVE_BASES, ['1/4', '1/8', '1/8t', '1/16', '1/16t', '1/32'], 'Live\'s Grid order')
 })
+
+// O-I #853's MPE tab on the clip read whole (DLW build ruling 2026-11-05, BB round 19): each note's expression as the set keeps it beside
+// the note (live/liveWrites.ts liveClipMpe) is the tab's `mpe`; bend is the hand's force, −1..1 about a centre line, never semitones
+// (LIVE_MPE_BEND_FORCE); and Slide, which nothing records, is drawn dim saying so (LIVE_MPE_NO_SLIDE).
+test('the MPE tab reads each note\'s expression from the clip read whole: pressure on 0–127, bend as its force', async () => {
+  const writes = await import('../src/live/liveWrites.ts')
+  const {wiredKey} = await import('../src/frame/detail/clipBinding.ts')
+  const notes = [{id: 1, p: 62, at: 0, len: 1, vel: 100, chance: 1, on: true, mpe: {pressure: [[0, 0.5], [0.5, 1]], bend: [[0, 0], [0.5, -0.5]]}},
+    {id: 2, p: 65, at: 2, len: 0.5, vel: 80, chance: 1, on: true}]
+  const v = bind(whole({notes})).values
+  assert.deepEqual(JSON.parse(v.mpe), writes.liveClipMpe(notes).mpe)
+  assert.deepEqual(JSON.parse(v.mpe), {1: {pressure: [[0, 64], [0.5, 127]], bend: [[0, 0], [0.5, -0.5]]}})
+  assert.equal(bind(whole()).values.mpe, '{}', 'read whole and no note carries expression: an empty reading, not an absent one')
+  assert.equal('mpe' in bind(null).values, false, 'unread: absent until the clip is read whole')
+  const wiring = live.liveWiring({path: '/s.als', track: 0, at: {slot: 0}}, whole({notes}), 'h', null)
+  assert.equal(wiring.absent?.mpe, undefined, 'no longer marked absent')
+  assert.match(wiring.reads.mpe, /pressure and bend/)
+  assert.equal(wiredKey(wiring, 'mpe.bend'), true, 'whether the tab shows the bend lane is the view\'s')
+})
+
+test('the MPE tab draws Bend about its centre line as a force, and Slide dim because nothing records it', async () => {
+  const React = await import('react')
+  const {renderToStaticMarkup} = await import('react-dom/server')
+  const writes = await import('../src/live/liveWrites.ts')
+  const {clip: design} = await import('../src/inhabitants/catalogue/clips/live.tsx')
+  const tab = v => renderToStaticMarkup(React.createElement(() => design.editor.find(item => item.id === 'mpe').draw({v, set: () => {}, size: 'whole', room: {w: 800, h: 320}})))
+  const esc = text => text.replace(/'/g, '&#x27;')
+  const notes = [{id: 1, p: 62, at: 0, len: 1, vel: 100, chance: 1, on: true, mpe: {pressure: [[0, 0.5]], bend: [[0, 0], [0.5, 1], [1, -1]]}}]
+  const html = tab(bind(whole({notes})).values)
+  const bend = /<svg[^>]*data-lane="bend"[^>]*>([^]*?)<\/svg>/.exec(html)
+  assert.ok(bend, 'a Bend lane')
+  assert.ok(bend[0].includes(esc(writes.LIVE_MPE_BEND_FORCE)), 'worded as a force')
+  const axis = [...bend[1].matchAll(/<text[^>]*class="clv-axis"[^>]*>([^<]*)<\/text>/g)].map(m => m[1])
+  assert.deepEqual(axis, ['Bend', '1', '0', '−1'], 'up, the centre, down: no semitones')
+  assert.doesNotMatch(bend[1], /st\b|semitone/)
+  const centre = /<line[^>]*class="clv-mpe-centre"[^>]*y1="([\d.]+)"/.exec(bend[1])
+  assert.ok(centre, 'a centre line')
+  const path = /<path d="M[\d.]+ ([\d.]+) L[\d.]+ ([\d.]+) L[\d.]+ ([\d.]+)"/.exec(bend[1])
+  assert.ok(path, 'the note\'s bend drawn')
+  const [mid, up, down] = path.slice(1).map(Number)
+  assert.equal(mid, Number(centre[1]), 'no force sits on the centre line')
+  assert.ok(up < mid && down > mid && Math.abs((mid - up) - (down - mid)) < 0.11, 'up as far above as down below')
+  const slide = /<svg[^>]*data-lane="slide"[^>]*>/.exec(html)?.[0]
+  assert.ok(slide, 'the Slide lane stays where it was')
+  assert.match(slide, /data-dim="true"/)
+  assert.ok(slide.includes(esc(writes.LIVE_MPE_NO_SLIDE)), 'dim, saying why')
+  assert.doesNotMatch(/<svg[^>]*data-lane="pressure"[^>]*>/.exec(html)[0], /data-dim/, 'pressure is recorded: drawn plain')
+  assert.doesNotMatch(tab({...bind(whole({notes})).values, 'mpe.bend': false}), /data-lane="bend"/, 'Bend off: no lane')
+  const source = await (await import('node:fs/promises')).readFile(new URL('../src/inhabitants/catalogue/clips/live.tsx', import.meta.url), 'utf8')
+  assert.match(source.split('\n')[7], /bend: \[\[t, −1–1\]…\]/, 'the contract says bend is a force')
+  assert.doesNotMatch(source.split('\n').slice(0, 9).join('\n'), /semitones/)
+})

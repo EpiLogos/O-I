@@ -161,7 +161,9 @@ test('#747: Present in the View menu and Export in the File menu are the field\'
     ['file.export.film', 'Film'], ['file.export.json', 'Expression JSON'], ['file.export.html', 'Living HTML'], ['file.export.native', 'Native Configuration']])
     assert.match(menus, new RegExp(`item\\("${id.replace(/\./g, '\\.')}", "${label}", None\\)`), `${id} stands in the menu bar`)
   assert.match(menus, /SubmenuBuilder::new\(app, "File"\)/, 'a File menu')
-  assert.match(menus, /\["edit\.", "create\.", "view\.", "file\.", "app\."\]/, 'its items reach the renderer as oi:command')
+  // REPLACED (round 868, O-I #747): the menu bar gained Help (Help › Expressions Guide, the field's own Guide), and its items reach the
+  // renderer as the others' do.
+  assert.match(menus, /\["edit\.", "create\.", "view\.", "file\.", "app\.", "help\."\]/, 'its items reach the renderer as oi:command')
   // O-I #747 round two: the search line's > offers them (frame/menu/commandDoor.ts MENU_COMMANDS).
   const {MENU_COMMANDS} = await import('../src/frame/menu/commandDoor.ts')
   for (const id of ['view.present', 'view.grid', 'view.snap', 'view.guides', 'view.flat', 'view.depth', 'view.face-plane', 'file.export.picture', 'file.export.film', 'file.export.json', 'file.export.html', 'file.export.native'])

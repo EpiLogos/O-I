@@ -121,7 +121,9 @@ export function onRack(reading: NativeEditorReading | null, family: string): boo
  *     (NativeBarControls.tsx BarTools), and Clip view's Text tool;
  *   • workspace/a:library — Clip view's pointer row, Library ("opens the browser's library": clipBinding.ts `library`);
  *   • workspace/a:modes (Compositions…) — the browser's starters ("Start an Expression, from nothing or from a composition — The browser").
- *   What stays on the Stage has no home in the manual yet (PROPOSEd): workspace/a:quick-guide (Guide) and scene/l:Acts (Acts).
+ *   DLW build ruling 2026-11-05, the last two (§20.1 Where everything is):
+ *   • workspace/a:quick-guide — Help › Expressions Guide ("Read how the field is used": StudioStage.tsx menuStageCommands);
+ *   • scene/l:Acts — the Acts device, in Device view after the Studio (§20.15; devices/summonedEditors.tsx ACTS_EDITOR's entry).
  *   • side/a:toolbelt — Your controls, the toolbelt's own entries with + Parameter (NativeChosenControls.tsx :225);
  *   • view/a:grid, view/a:snap, view/a:guides — View › Grid, Snap, Guides (O-I #747: menus.rs); view/a:face-plane — the Stage's Camera
  *     (StudioStage.tsx StageViewTools);
@@ -130,6 +132,7 @@ export const STUDIO_CARRIED: ReadonlySet<string> = new Set([
   'rail/a:pointer-options', 'rail/a:objects', 'rail/a:tool-select', 'workspace/a:studio', 'workspace/a:blueprint',
   'rail/a:tool-interact', 'rail/a:tool-pin', 'rail/a:tool-formation', 'rail/a:tool-text', 'workspace/a:library', 'workspace/a:modes',
   'scene/a:previous', 'scene/a:next', 'scene/a:timeline', 'scene/a:play-journey', 'scene/a:open-timeline',
+  'workspace/a:quick-guide', 'scene/l:Acts',
   'save/a:capture-image', 'save/a:record-video', 'save/a:capture-options',
   'scene/a:toggle-play', 'scene/a:present',
   'side/a:toolbelt', 'view/a:grid', 'view/a:snap', 'view/a:face-plane', 'view/a:guides', 'present/a:exit-present', 'recording/a:stop-record',

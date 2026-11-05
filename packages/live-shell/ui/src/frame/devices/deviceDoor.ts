@@ -30,11 +30,20 @@ export interface PublishedDevice {
   /** The head's context-menu acts its chain's owner carries (manual §16.4: "Right-click the head for Fold, Rename, Group, Save as
    * preset, Hot-swap, Show automation and Map"). Fold is the host's own; an act absent here stands in the menu disabled, with the
    * owner operation it waits for (DeviceMenu.tsx headMenu). */
-  acts?: Partial<Readonly<Record<HeadAct, () => void>>>
+  acts?: Partial<Readonly<Record<HeadAct, HeadActEntry>>>
 }
 
 /** The head's context-menu acts beyond Fold, in Live's order (manual §16.4). */
 export type HeadAct = 'rename' | 'group' | 'save-preset' | 'hot-swap' | 'show-automation' | 'map'
+
+/** One head act as its owner carries it: a press; a press that asks one thing first — a name typed (Rename, Save as preset) or one of the
+ * owner's choices (Hot-swap's target) — whose promise's refusal is the owner's words, said in the menu; or the owner's own reason it does
+ * not stand here (`refused`), drawn on the disabled entry. */
+export type HeadActEntry = (() => void)
+  | {readonly ask: 'name'; readonly label: string; readonly value?: string; readonly run: (text: string) => Promise<unknown>}
+  | {readonly ask: 'choice'; readonly label: string; readonly choices: readonly {readonly value: string; readonly label: string}[]; readonly empty?: string;
+    readonly run: (value: string) => Promise<unknown>}
+  | {readonly refused: string}
 
 /** `relay`: the material named as data, so a Pop-out window draws it too (relayedFulls.ts). */
 export type OwnFull = {readonly draw: () => ReactNode; readonly relay?: RelayedFull} | {readonly open: () => void}

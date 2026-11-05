@@ -20,8 +20,14 @@ export interface GraphFilters {
   shared: boolean;
   collapsed: string[];
   emphasis: EmphasisGroup[];
+  /** The most nodes that show (DLW §17.3 Budget): budgetGraph keeps them, the rest are counted. */
+  budget: number;
 }
-export const defaultGraphFilters = (): GraphFilters => ({text: '', scope: 'field', depth: 1, direction: 'both', kinds: [], relations: [], families: [], tags: [], isolated: true, unresolved: true, context: 'structure', labels: 'automatic', arrows: false, shared: false, collapsed: [], emphasis: []});
+/** The Knowledge graph's Budget (DLW §17.3 Parameters: 8–4096 nodes, 64 by default). */
+export const GRAPH_BUDGET = Object.freeze({min: 8, max: 4096, initial: 64});
+/** A Budget as the view keeps it: a whole number of nodes inside the manual's range, else the default. */
+export const boundBudget = (value: unknown): number => Number.isInteger(value) ? Math.max(GRAPH_BUDGET.min, Math.min(GRAPH_BUDGET.max, value as number)) : GRAPH_BUDGET.initial;
+export const defaultGraphFilters = (): GraphFilters => ({text: '', scope: 'field', depth: 1, direction: 'both', kinds: [], relations: [], families: [], tags: [], isolated: true, unresolved: true, context: 'structure', labels: 'automatic', arrows: false, shared: false, collapsed: [], emphasis: [], budget: GRAPH_BUDGET.initial});
 const strings = (value: unknown, max = 64): string[] => Array.isArray(value) ? [...new Set(value.filter((item): item is string => typeof item === 'string' && item.length <= 256))].slice(0, max) : [];
 /** Decode view state, never source metadata. Invalid preferences do not make a
  * whole workspace unrestorable, and unknown keys confer no native effects. */
@@ -39,6 +45,7 @@ export function restoreGraphFilters(value: unknown): GraphFilters {
     collapsed: Array.isArray(v.collapsed) ? [...new Set(v.collapsed.filter((ref): ref is string => typeof ref === 'string' && ref.length > 0 && ref.length <= 4096))].slice(0,256) : [],
     emphasis: restoreEmphasisGroups(v.emphasis),
     labels: v.labels === 'all' || v.labels === 'focus' ? v.labels : 'automatic', arrows: v.arrows === true, shared: v.shared === true,
+    budget: boundBudget(v.budget),
   };
 }
 export interface FilteredGraph {
@@ -53,6 +60,43 @@ export interface FilteredGraph {
   collapsedFormations: string[];
   foldedEdges: number;
 }
+/** What the Budget keeps of a reading, and how many subjects it leaves out. */
+export interface BudgetedGraph {reading: GraphReading; shown: number; total: number; beyond: number}
+/** The Budget's bound on a reading (DLW §17.3 Budget, "The graph says when it hides more"; PROJECTION-SCALE-2026-10-28 for O-I #742):
+ * the `budget` subjects nearest the selected note by hops first, then the most connected, then by reference, so the same reading
+ * and selection keep the same set. Every relation with a kept end stays, so a kept subject whose peers are past the Budget is no
+ * orphan. Both the drawn and the simulated set are this. A reading within the Budget comes back as it is. Pure: the reading is
+ * never changed, and nothing is fetched. */
+export function budgetGraph(reading: GraphReading, budget: number, focus?: string): BudgetedGraph {
+  const refs = new Set(reading.nodes.map(node => node.ref));
+  if (refs.size <= budget) return {reading, shown: refs.size, total: refs.size, beyond: 0};
+  const peers = new Map<string, Set<string>>();
+  const join = (a: string, b: string) => {
+    if (a === b || !refs.has(a) || !refs.has(b)) return;
+    let row = peers.get(a); if (!row) peers.set(a, row = new Set()); row.add(b);
+    let back = peers.get(b); if (!back) peers.set(b, back = new Set()); back.add(a);
+  };
+  for (const edge of reading.edges) join(edge.from_ref, edge.to_ref);
+  for (const link of unresolvedGraphAssociations(reading.nodes)) join(link.source, link.ghost);
+  const hops = new Map<string, number>();
+  if (focus && refs.has(focus)) {
+    hops.set(focus, 0);
+    let frontier = [focus];
+    for (let hop = 1; frontier.length; hop++) {
+      const next: string[] = [];
+      for (const from of frontier) for (const to of peers.get(from) ?? []) if (!hops.has(to)) { hops.set(to, hop); next.push(to); }
+      frontier = next;
+    }
+  }
+  const far = (ref: string) => hops.get(ref) ?? Infinity;
+  const ranked = [...refs].sort((a, b) => (far(a) === far(b) ? 0 : far(a) - far(b)) || (peers.get(b)?.size ?? 0) - (peers.get(a)?.size ?? 0) || a.localeCompare(b));
+  const kept = new Set(ranked.slice(0, budget));
+  return {
+    reading: {...reading, nodes: reading.nodes.filter(node => kept.has(node.ref)), edges: reading.edges.filter(edge => kept.has(edge.from_ref) || kept.has(edge.to_ref))},
+    shown: kept.size, total: refs.size, beyond: refs.size - kept.size,
+  };
+}
+
 /** Filters operate on an ALREADY admitted owner reading. They never fetch
  * hidden members or invent edges, roles, QL classification or hierarchy. */
 export function filterGraph(reading: GraphReading, filters: GraphFilters, focus?: string): FilteredGraph {

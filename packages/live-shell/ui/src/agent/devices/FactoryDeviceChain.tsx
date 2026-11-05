@@ -66,8 +66,8 @@ import {useAgentShell, type AgentDeviceId} from '../AgentShellContext'
 import {threadTrackOf} from '../threadTrack'
 import {trackKey} from '../agentRunModel'
 import {
-  AGENT_CHAIN_MIME, MISSING_OPS, activeChainDrag, chainDropDecision, chainInsertIndex, decodeChainDrag, dropZoneLine,
-  encodeChainDrag, missingOpRemedy, setActiveChainDrag, type ActiveChainDrag, type AgentChainSlotId,
+  AGENT_CHAIN_MIME, SLIDE_PLACE, activeChainDrag, chainDropDecision, chainInsertIndex, decodeChainDrag, dropZoneLine,
+  encodeChainDrag, setActiveChainDrag, type ActiveChainDrag, type AgentChainSlotId,
 } from '../agentChainDrag'
 import {agentDataI} from '../agentFidelity'
 import {fireWritePath} from '../agentNativeDispatch'
@@ -103,14 +103,17 @@ import {actionAnswerOf, centralActionOp} from '../../central/devices/centralActi
 import {useAtSearch} from '../../central/searchPane'
 import {useModelCatalogue} from './useModelCatalogue'
 import {useAttemptTakes} from '../../owners/attemptTakes'
-import {useTaskAnswer, useWorkcellAnswer} from '../../owners/readers'
+import {readTaskOf, useTaskAnswer, useWorkcellAnswer} from '../../owners/readers'
 import {usePopulationAnswer} from './usePopulationAnswer'
 import {
-  AGENTSET_DESIGN, AGENTSET_ID, agentChainSessions, agentsetBinding, custodyBinding, sessionDevices, withCustodyAsks, type AgentRackPorts, type CustodyPorts,
+  AGENTSET_DESIGN, AGENTSET_ID, agentChainSessions, agentsetBinding, chainProfileOf, custodyBinding, profileHeadActs, replaceRequest, sessionDevices, withCustodyAsks,
+  type AgentRackPorts, type CustodyPorts,
 } from './sessionChainBindings'
+import {retryTask} from './taskBindings'
+import {communiqueRefOf} from './messagesBinding'
 import {APPROVALS_DESIGN, APPROVALS_ID, approvalsBinding, receiptDevices} from './receiptBindings'
 import {CARRIER_DESIGN, CARRIER_ID, carrierBinding, connectionLabels, gitBinding, planRunOf, runDemandOf, seatBinding, workcellDevices, type SeatPorts} from './workcellBindings'
-import {ROUTE_WORDS, aikitWriteOp, centralRevisionWrite, deskActorOf, factoryOwnerWrite, ownerRouteWrite, refinementWrite, refusalWords, seatWriteOp} from './ownerRoutes'
+import {ROUTE_WORDS, aikitWriteOp, centralRevisionWrite, deskActorOf, factoryOwnerWrite, gatewayWriteOp, ownerRouteWrite, refinementWrite, refusalWords, seatWriteOp} from './ownerRoutes'
 import {worldsOf} from './workcellMaterial'
 import {currentIdentity} from '../../../../../../desktop/cradle/src/nara/identity/current'
 import {WORKCELL_RACK_ID, chosenWorld, workcellGitReading} from './workcellRackBinding'
@@ -123,7 +126,7 @@ import {captureSkillBinding, type CaptureSkillPorts} from './captureSkillBinding
 import {useSongClipFocus} from '../songClips'
 import {RUN_MAP_DESIGN, RUN_MAP_ID, runMapBinding, runMapDevice} from './runMapBinding'
 import {useRunJourney} from './runJourney'
-import {PROMPT_PADS_DESIGN, PROMPT_PADS_ID, padsLocation, promptPadsBinding, promptPadsDevice, type PromptPadsPorts} from './promptPadsBinding'
+import {PROMPT_PADS_DESIGN, PROMPT_PADS_ID, padsHeadActs, padsLocation, promptPadsBinding, promptPadsDevice, type PadsPresetPorts, type PromptPadsPorts} from './promptPadsBinding'
 import {useDecisionHelperReadings} from './decisionHelperReads'
 import {useTeamSpace, withTeamCell} from './teamCell'
 import {useActuationRead, useAikitRead, useConnectionShows, useGatewayEcology, useSeatStatusAnswer, useWorkcellRead} from './workcellReads'
@@ -157,6 +160,22 @@ async function setAct(transport: Parameters<typeof kernelOp>[0], action: string,
   if (answer.status === 'refused') throw Error(answer.error)
   if (answer.status !== 'answered') throw Error(`${action} did not answer.`)
   return answer.value
+}
+
+/** A session's bound task (AIKit's task record: request.central.task_ref), the task Factory's attempts are dispatched on; refused in words. */
+async function boundTaskOf(transport: Parameters<typeof kernelOp>[0], project: string, session: string, what: string): Promise<string> {
+  const read = await readTaskOf(transport, project, session)()
+  if ('error' in read) throw Error(`${what}: AIKit did not read the session's task: ${read.error}`)
+  const ref = (read.value as {request?: {central?: {task_ref?: unknown}}} | null)?.request?.central?.task_ref
+  if (typeof ref !== 'string' || !ref.trim()) throw Error(`${what}: AIKit's record of the session binds no task, so there is no work to name.`)
+  return ref
+}
+/** The Position an agent occupies in AIKit's population as the window holds it, or null. */
+function positionOf(population: {status: string; value?: unknown}, agentRef: string): string | null {
+  const positions = population.status === 'answered' && population.value && typeof population.value === 'object'
+    && Array.isArray((population.value as {positions?: unknown}).positions) ? (population.value as {positions: {position_ref?: unknown; occupancy?: {agent_ref?: unknown}}[]}).positions : []
+  const row = positions.find(item => item.occupancy?.agent_ref === agentRef && typeof item.position_ref === 'string')
+  return row ? String(row.position_ref) : null
 }
 
 /** The outcome of one drop attempt or one write: the owner's receipt, or the refusal that names the missing operation. */
@@ -331,6 +350,16 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     ...(padsBankOp ? {bank: {status: padsBank.status, value: padsBank.value?.data ?? null, error: padsBank.error}} : {}), holds,
   }), [padsLocated, padsBank, padsBankOp, holds])
   const mainBindings = useMemo(() => ({pads: promptPadsBinding(padsInput, padsPorts)}), [padsInput, padsPorts])
+  // The pads' head (§16.4; Factory PR 306): Save as preset and Hot-swap, on Factory's presets of the pads (factory_owner pads-presets).
+  const padsPresetsOp = useMemo((): KernelOp | null => (padsWhere && 'projectRef' in padsWhere ? {op: 'factory_owner', request: {kind: 'pads-presets', state_path: padsWhere.statePath}} : null),
+    [padsWhere && 'projectRef' in padsWhere ? padsWhere.statePath : null]) // eslint-disable-line react-hooks/exhaustive-deps
+  const padsPresets = useOwnerOp(transport, padsPresetsOp, 'factory_development_reading').reading
+  const padsPresetPorts = useMemo((): PadsPresetPorts => (transport.kind !== 'unavailable' ? {
+    save: request => factoryOwnerWrite(transport, request, '`factory development pads-preset-save`'),
+    recall: request => factoryOwnerWrite(transport, request, '`factory development pads-preset-recall`'),
+  } : {}), [transport])
+  const padsActs = useMemo(() => padsHeadActs(padsInput, padsPresetsOp ? {status: padsPresets.status, value: padsPresets.value?.data ?? null, error: padsPresets.error} : undefined,
+    padsPresetPorts), [padsInput, padsPresetsOp, padsPresets, padsPresetPorts])
   // The Run map and the Prompt pads (§19.25, §19.22, lane W7): bound, standing where Software Factory's family admits their faces.
   const runMapDev = useMemo(() => runMapDevice(), [])
   const padsDev = useMemo(() => promptPadsDevice(), [])
@@ -338,8 +367,17 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
 
   // The rack: the seated agent's carried practice (its accepted profile in the roster, the sets AIKit replies for), and the
   // composition through the configuration plane. Read only while its design can draw it.
-  const roster = useRosterAnswer(transport, null).reading
+  const rosterAnswer = useRosterAnswer(transport, null)
+  const roster = rosterAnswer.reading
   const profile = useMemo(() => seatedProfile(roster.status === 'answered' ? roster.value : null, track?.agentRef ?? null), [roster, track?.agentRef])
+  // The chain is the profile Central keeps for the agent (§19.4; Central PR 318): the Agent's Rename and the Skillset rack's Hot-swap write it
+  // at its revision as read, and the roster is read again behind each act.
+  const chainProfile = useMemo(() => chainProfileOf(profile), [profile])
+  const refreshRoster = rosterAnswer.refresh
+  const profileAct = useMemo(() => (transport.kind !== 'unavailable'
+    ? async (action: string, input: Readonly<Record<string, unknown>>) => { try { return await setAct(transport, action, input) } finally { refreshRoster() } }
+    : undefined), [transport, refreshRoster])
+  const profileActs = useMemo(() => profileHeadActs(chainProfile, profileAct), [chainProfile, profileAct])
   const [planeEpoch, setPlaneEpoch] = useState(0)
   const rackOn = !waits.skillset
   const rackReading = useRackReading(transport, profile, holds.compose.scope, sessionRef, rackOn, planeEpoch, rackProject)
@@ -519,6 +557,8 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const agentsetPorts = useMemo((): AgentRackPorts => ({
     saveSet: input => setAct(transport, 'central.agent-set.save', input),
     propose: input => setAct(transport, 'central.agent-set.propose', input),
+    // Discard: Central's proposal removed at the revision it wrote (central.agent-set.remove, the person's own act).
+    removeSet: input => setAct(transport, 'central.agent-set.remove', input),
     suffix: () => globalThis.crypto.randomUUID().slice(0, 8),
     agent: oneAgent,
     // Solo (§19.15 the chain list): what you attend to, the one the Session view's mixer solos (the agent shell's, on the book).
@@ -534,8 +574,27 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
       detach: input => chainListAct(transport, {op: 'encounter_session_detach', ...input}, 'a chain was deleted from the rack'),
       // A group's Model and Effort macros: each chain's session's model select in AIKit (the encounter's model-read, then model-select).
       sessionModel: {read: ({project, agent_session}) => sessionModelRead(transport, project, agent_session), select: ({project, request}) => sessionModelSelect(transport, project, request)},
+      // Retry: the chosen chain's bound task (AIKit's task record), its units read in Factory and its unit retried (taskBindings.ts retryTask).
+      retry: async ({project, agent_session}) => {
+        if (!custodyState) throw Error('Retry: Factory keeps no state for this project here (`factory development locate`), so no unit of the task is read.')
+        await retryTask(request => factoryOwnerWrite(transport, request, `factory_owner ${request.kind}`), custodyState, await boundTaskOf(transport, project, agent_session, 'Retry'))
+      },
+      // A device of another session's chain (DLW build ruling 2026-11-05): a message to that session's agent's Position (AIKit's gateway send),
+      // turned into work on its task by Messages' own route, the one a message dropped on a track takes (`aikit gateway delegate`, O-I ticket
+      // 757). The chain writes both through the kernel itself: Messages is the rail's, never the chain's to reach.
+      ask: async ({project, agent_session, agent_ref, device, words}) => {
+        const position = positionOf(custodyPopulation, agent_ref)
+        if (!position) throw Error(`Devices: AIKit's population places ${agent_ref} at no Position, so no message reaches its session.`)
+        const work = await boundTaskOf(transport, project, agent_session, 'Devices')
+        const scope = project ? {project} : {}
+        const sent = await ownerRouteWrite(transport, gatewayWriteOp({kind: 'send', ...scope, to: position, body: words}), ROUTE_WORDS.send)
+        const communique = communiqueRefOf(sent)
+        if (!communique) throw Error('Devices: AIKit took the message but named no Communique, so it could not be turned into work.')
+        await ownerRouteWrite(transport, gatewayWriteOp({kind: 'delegate', ...scope, communique, work,
+          reason: `Asked from the Agent rack: a change of ${device} on this session's chain.`}), ROUTE_WORDS.delegate)
+      },
     } : {}),
-  }), [transport, oneAgent, shell.setSolo])
+  }), [transport, oneAgent, shell.setSolo, custodyState, custodyPopulation])
   // The Decision helper (§19.20, T-AGENCY K5): a device of its own, a chain of the group's Agent rack in place of an Agent, on AIKit's
   // decision provider and QL's team space — read only where the group's space names its helper (AIKit's `decision_helper`, round 860). The
   // rack lists it among its chains.
@@ -681,12 +740,13 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   // monitor's pane.
   useEffect(() => {
     for (const {slot, device} of chain) publishDevice(device.id, {device, picture: size => chainPicture(slot.id, pictures, size), ...(bindings[slot.id] ? {binding: bindings[slot.id]!} : {}),
+      ...(slot.id === 'agent' ? {acts: profileActs.agent} : slot.id === 'skillset' ? {acts: profileActs.skillset} : {}),
       ...(slot.id === 'gateway' && main.frames ? {full: {open: () => openDevice(FRAMES_ID, 'Frames')}} : {})})
     if (memberDevice && memberDesignBinding) publishDevice(memberDevice.id, {device: memberDevice, binding: memberDesignBinding})
     else publishDevice(MEMBER_DEVICE_ID, null)
-  }, [chain, bindings, memberDevice, memberDesignBinding, main.frames]) // the pictures read the reading `chain` is built from
+  }, [chain, bindings, memberDevice, memberDesignBinding, main.frames, profileActs]) // the pictures read the reading `chain` is built from
   useEffect(() => { publishDevice(RUN_MAP_ID, runMapDev ? {device: runMapDev, binding: runMapDesignBinding} : null) }, [runMapDev, runMapDesignBinding])
-  useEffect(() => { publishDevice(PROMPT_PADS_ID, padsDev ? {device: padsDev, binding: mainBindings.pads} : null) }, [padsDev, mainBindings])
+  useEffect(() => { publishDevice(PROMPT_PADS_ID, padsDev ? {device: padsDev, binding: mainBindings.pads, acts: padsActs} : null) }, [padsDev, mainBindings, padsActs])
   useEffect(() => {
     const own = [[AGENTSET_ID, ownDevices.agentset, agentsetDesignBinding], [DECISION_HELPER_ID, helperStands ? helperDevice : null, helperDesignBinding],
       [APPROVALS_ID, receipts.approvals, approvalsDesignBinding], [CARRIER_ID, cells.carrier, carrierDesignBinding]] as const
@@ -704,7 +764,7 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const choose = (slotId: string) => { shell.setExpandedDevice(slotId as AgentDeviceId); selectDevice(chainDeviceId(slotId)) }
   // The chain's one law (inhabitants/sdk/chains.ts): a session's chain, or a workcell's road. A slide asks it.
   const law = chainLaw(place.kind === 'workcell' ? 'workcell' : 'factory-session')
-  const slideWords = (id: string): string => { const standing = slotStanding(law, id); return standing.moves ? law.means : standing.why }
+  const slideWords = (id: string): string => { const standing = slotStanding(law, id); return standing.moves ? `${SLIDE_PLACE}.` : standing.why }
   // A rack's head hides the devices of its chosen chain (manual §16.4; Live's rack head): the Skillset rack's member inside its slot, and the
   // Agent rack's chain on a lone session (its own agent's devices).
   const memberShown = useRackShown(chainDeviceId('skillset'), 'devices')
@@ -730,9 +790,22 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
       setNote({
         kind: 'refused',
         title: 'Slide refused',
-        line: `«${active.reorder.title}» over ${target.label} — ${slideWords(active.reorder.id)}${!slotStanding(law, active.reorder.id).moves && law.op?.name === MISSING_OPS.order ? `; remedy: ${missingOpRemedy('order')}.` : ''}`,
+        line: `«${active.reorder.title}» over ${target.label} — ${slideWords(active.reorder.id)}`,
         receipt: encodeChainDrag(active.reorder),
       })
+      return
+    }
+    // A SkillSet dropped on the Skillset rack (its Hot-swap, §16.4): Central's agent-profile.chain-replace puts it where the one the agent
+    // carries stood, at the profile's revision as read.
+    if (active.drag.family === 'skillset' && target.kind === 'card' && target.id === 'skillset' && chainProfile) {
+      const asked = replaceRequest(chainProfile, active.drag.ref)
+      const refuse = (line: string) => setNote({kind: 'refused', title: 'Hot-swap refused', line, receipt: encodeChainDrag(active.drag)})
+      if ('refused' in asked) { refuse(asked.refused); return }
+      if (!profileAct) { refuse('Hot-swap: the kernel carrier is unavailable here, so Central cannot be asked.'); return }
+      try {
+        await profileAct(asked.action, asked.input)
+        setNote({kind: 'receipt', title: 'Hot-swapped', line: `«${active.drag.label}» stands where ${String(asked.input.replace)} stood on the agent's chain (Central's agent-profile.chain-replace).`, receipt: null})
+      } catch (cause) { refuse(refusalWords(cause instanceof Error ? cause.message : String(cause))) }
       return
     }
     const decision = chainDropDecision(active.drag)
@@ -770,7 +843,7 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
           line: `${dragged} onto ${target.label} — harness_agent_control (${decision.operation.control}: a new agent on the bound harness, not the dragged one) answered: ${outcome.error}`,
           receipt: outcome.error,
         })
-  }, [shell, transport, binding])
+  }, [shell, transport, binding, chainProfile, profileAct])
 
   // A drag that ends anywhere (dropped outside, cancelled, escaped) clears the held mirror and the drop slot — the dragged item
   // has returned either way (NativeAgentDeviceRack.tsx:127-135).

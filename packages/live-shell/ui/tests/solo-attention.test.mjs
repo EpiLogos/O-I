@@ -213,6 +213,12 @@ test('the tiles, the instrument and the rack read the one attention the agent sh
   assert.doesNotMatch(hook, /'solo'/, 'the tracks write no Solo setting')
   // (agent/agentFidelity.ts keeps the reverse-engineered oracle's Solo line verbatim, as agent-shell-status-info requires; nothing draws it.)
   assert.doesNotMatch(read('timeline/factoryTrackAdapter.ts'), /Only soloed sessions may run|harness_agent_control \{binding, control: "solo"/)
+  // DLW build ruling 2026-11-05: the Solo tip and the mockup line it is pinned to say §16.1's sense, word for word in both.
+  const tip = read('agent/agentFidelity.ts').match(/solo: \['Solo', '([^']+)'\]/)?.[1]
+  assert.equal(tip, 'You attend to the soloed sessions alone: the views, the tiles and the instruments show only them. The others keep running.')
+  assert.doesNotMatch(tip, /may run/, 'never a limit on what may run')
+  const mockup = readFileSync(new URL('../../../../desktop/cradle/docs/world-shell/agent-shell-mockup.html', import.meta.url), 'utf8')
+  assert.ok(mockup.includes(`data-i="Solo|${tip}"`), 'the mockup line the tip is pinned to says the same')
   const tile = read('agent/AgentDockTileBody.tsx'), panel = read('components/NativeContextPanel.tsx')
   assert.match(tile, /attendedKeys\(sessions\?\.tracks \?\? \[\], shell\?\.soloed \?\? NONE_SOLOED\)/, 'the tiles read what you attend to over the same tracks')
   assert.match(tile, /<NativeContextPanel project=\{project\} attends=\{attends\} \/>/)

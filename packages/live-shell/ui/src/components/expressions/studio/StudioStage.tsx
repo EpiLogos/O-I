@@ -22,7 +22,7 @@ import type {IconName} from '../../../inhabitants/sdk/icons'
 import {exportWords, type ExportNotice} from './studioExports'
 import './studio.css'
 
-/** O-I #747: the homes the manual gives the Stage plate's Present and Export (§20.1 "Where everything is": "Show the field alone — Present,
+/** O-I #747: the homes the manual gives the Stage plate's Present, Export and Guide (§20.1 "Where everything is": "Show the field alone — Present,
  * in the View menu"; "Export a picture or a film of the field — Export, in the File menu"; Export's table). Each menu item (menus.rs) is
  * the field's own act, the same typed command the plate sends, with the manual's defaults: a picture 1440 px wide, the stage frame, page
  * text on, background not transparent; a film from its start until you stop it, then written; the Expression as JSON, living HTML or the
@@ -45,6 +45,9 @@ export function menuStageCommands(id: string, state: HostedAppState | null): Sta
     case 'file.export.json': return [stageExport('json')]
     case 'file.export.html': return [stageExport('html')]
     case 'file.export.native': return [stageExport('native')]
+    // Help › Expressions Guide (DLW build ruling 2026-11-05; manual §20.1 "Read how the field is used — the Help menu's Expressions
+    // Guide"): the field's own Guide, pressed as the frame's own control (presentedChrome.ts workspace/a:quick-guide).
+    case 'help.expressions-guide': return [{command: 'chrome', id: 'workspace/a:quick-guide'}]
     default: return null
   }
 }

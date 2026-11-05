@@ -29,7 +29,7 @@ export const DEEP_INSTRUMENT_IDS = TECHNE_INSTRUMENTS.filter((id): id is HostedT
 export const FRAME_EXPRESSION_OPERATIONS = new Set(['profile_define', 'profile_inspect', 'list', 'inspect', 'create', 'edit', 'open', 'open_file', 'save_as', 'save', 'export', 'fork', 'index', 'close', 'invoke_action', 'performance']);
 // The presets' owner path: an exact performance request, read by readFramePerformanceRequest (performanceBasis.ts).
 export {readFramePerformanceRequest, summarizePerformanceBases, refusePerformanceSave, recallPerformanceBasis, readPresetName, missingNativeReadings, REQUIRED_NATIVE_READINGS, PERFORMANCE_BASIS_SCHEMA} from './performanceBasis.ts';
-export type {FramePerformanceRequest, PerformanceAction, PerformanceReply, PerformanceBasisSummary, TorusKeptSummary, TorusRackDraft, KeptRackMacro, KeptMacroTarget, KeptRackDevice,
+export type {FramePerformanceRequest, PerformanceAction, PerformanceReply, PerformanceBasisSummary, TorusKeptSummary, TorusRackDraft, TorusTakeRecordEdit, KeptRackMacro, KeptMacroTarget, KeptRackDevice,
   KeptRackVariation} from './performanceBasis.ts';
 export const isHostedAppMode = (v: unknown): v is HostedAppMode => v === 'expressions' || v === 'techne' || v === 'live';
 export const isDeepInstrument = (v: unknown): v is HostedTechneLens => DEEP_INSTRUMENT_IDS.includes(v as HostedTechneLens);

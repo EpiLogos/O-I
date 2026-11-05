@@ -1378,7 +1378,8 @@ a slot's stop square, a track's switches. Everything else is in its menu. The
 menu bar holds every command once: File has Open Set…, Save Set and each mode's
 export, such as Export Song… in Factory (§19.1); Edit has Undo, Redo, Cut, Copy,
 Paste, Duplicate, Delete and Rename; Create has Insert Clip and Insert Row; View
-holds the views and the parts of the window (§10.1). Settings… stands in the
+holds the views and the parts of the window (§10.1); Help holds each mode's
+guide, such as the Expressions Guide (§20.1). Settings… stands in the
 application's menu, on ⌘,.
 
 An act changes nothing itself. It asks the owner of what it changes: in Live,
@@ -8946,7 +8947,7 @@ height: 1120
 | Signature | A ratio of hold to change | 5:3 | The scene's ratio of hold to change. The transport's time signature shows it for the scene that plays. |
 | Start | 0 s or later | 0 | Where the scene starts inside its own evolution. Slip on the ruler sets it. |
 | Locked | On · Off | Off | A locked scene refuses edits. |
-| View | Kept · Not kept | Not kept | Keep holds the view of the field you have now with the scene, and the scene opens on it. Restore returns to it after you orbit away. |
+| View | Kept · Default framing | Default framing | Keep holds the view of the field you have now with the scene, and the scene opens on it. Restore returns to it after you orbit away. A scene saved with a view of its own before Keep reads Kept; one that opens on the default framing says so. |
 
 What the scene carries as its body also belongs to the clip, as a sample belongs to a Live audio clip:
 
@@ -9142,7 +9143,7 @@ Double-click the field's tab to give the field the whole main area while you pla
 
 #### Device view
 
-Device view holds the Studio, the rack of the Expression. Its face is your toolbelt: the controls you chose to play, as its macros. Its Chains page holds its four chains, Material, Motion, Body and Nara, each with its light: choose a device and Show expands it above the chain, as Live's rack shows the devices of the chain you choose. A device you add yourself stands after the Studio on your rack. No device stands in Device view unless you put it there: every one is in the Studio's pane. The pointer's tools and the selected symbol's controls are in Clip view, and Capture is the transport's.
+Device view holds the Studio, the rack of the Expression. Its face is your toolbelt: the controls you chose to play, as its macros. Its Chains page holds its four chains, Material, Motion, Body and Nara, each with its light: choose a device and Show expands it above the chain, as Live's rack shows the devices of the chain you choose. After the Studio stands the Acts device (§20.15), for the parts a scene's objects play. A device you add yourself stands after them on your rack. No other device stands in Device view unless you put it there: every one is in the Studio's pane. The pointer's tools and the selected symbol's controls are in Clip view, and Capture is the transport's.
 
 #### Where everything is
 
@@ -9173,6 +9174,8 @@ Everything Expressions does has one place.
 | Turn the field to 2D or 3D, or face its plane | The View menu, beside Grid, Snap and Guides |
 | Save, undo and redo | The File and Edit menus, and the Studio's head |
 | Act on a symbol, a scene or an Expression | Its menu (§10.9) |
+| Give a scene's objects roles, keep reusable material, and play acts | The Acts device, in Device view after the Studio (§20.15) |
+| Read how the field is used | The Help menu's Expressions Guide |
 | Find a control by its name | The line (§18.4). It opens the control in its device. |
 | Map a key, a gesture or MIDI to a control | Key map and MIDI map (§10.8) |
 | Export a picture or a film of the field | Export, in the File menu (below) |
@@ -10583,6 +10586,61 @@ The widget shows the plate picture, the four macros and the light. Click the lig
 **Source:** QL's own system (the modes of M2′)
 
 **Stories:** XR01–XR09
+
+### 20.15 Acts
+
+**Product:** Expressions · **Kind:** effect · **Chain:** An Expression's, in Device view after the Studio
+
+Scenes made in Expressions travel: onto a walk, into a palace, into someone else's world (§7). Acts is how they go: you give a scene's objects roles, keep reusable material, and play acts, and its name says that. It cannot be a page of the Studio, which shapes the field and holds the same controls in every scene, or a panel of Clip view, which holds one scene: a role is read across every scene of the Expression, and material is kept for other Expressions to take. It keeps what Live keeps of a preset: what you keep is dropped back as it was, and only what you bind changes, as a rack preset keeps its chains and lets you set its macros. It stands on the Expression's chain after the Studio, and joins the rest by the Expression's reference and by the file of each material in the register. Keeping material is using it: Save as reusable keeps the Expression you are working in, and binding its roles plays it. Folded, it answers whether Acts is open; compact, it opens Acts and holds the keys of the page you are on. It takes the place of the panel that opened over the field, which the field pane no longer draws (§20.1).
+
+#### Pages
+
+| Page | What it does |
+|---|---|
+| Roles | Gives the selected object, or a text of the scene, a role: sender, goal, caption, or a name of your own. A role marks a place that a performance binds to a participant, an object or a text. The page lists the Expression's roles with their scenes. |
+| Save as reusable | Keeps the Expression as material in the register: its kind and title, a state and a gesture named from each scene, the scene it enters on, the order it plays in, and what it is associated with. The Expression you are working in stays as it is. |
+| Reusable material | The register's material, by kind. Choose a scene or a state, bind its roles to characters, labels or text, and perform it into the open Expression. A saved Expression can also be played whole. |
+| Act | The act as a line of passages. Select a point to go to it, or play it through, one passage at a time, each with its own change and easing. |
+
+#### Views
+
+| View | Holds |
+|---|---|
+| Folded | Its name, and whether Acts is open. |
+| Compact | Acts, the key that opens it, then the keys of the page you are on, paged in the head when one band does not hold them. |
+| Whole | The same keys at the pool's size, under the browser. The pool shows it whole while it is open. |
+
+Acts has no Full of its own: its material is the field.
+
+#### Transport
+
+| Control | Effect on Acts |
+|---|---|
+| Play | Plays the scenes. An act plays from its own Act page, each passage starting when the one before has changed. |
+
+#### To use Acts
+
+1. Open an Expression and look at Device view: Acts stands after the Studio.
+2. Press Acts. It opens on Roles.
+3. Select an object in the field, give it a role and press Apply roles.
+4. To keep the Expression as material, save it to a Central file, open Save as reusable, name a state and a gesture for each scene, and save it into the register.
+5. To play material here, open Reusable material, choose it, bind its roles and perform it.
+6. Open Act to go to a passage, or play the act through.
+
+#### Rules
+
+- A role is an edit of the scene, and Undo takes it back.
+- Save as reusable keeps a copy as material. The Expression you are working in does not change.
+- Material names committed references, so an Expression not yet saved to a Central file cannot be kept.
+- Performing material changes the open Expression through its owner, as any edit does. A refusal says why in the owner's words.
+- Closing Acts here closes it in the field as well.
+
+#### Tips
+
+- Give the same role in every scene that should take the same participant.
+- Name a state for the scene a performance should enter on, so the material starts where you mean it to.
+
+**Source:** Live's presets, kept and dropped back as they were
 
 ## 21. Live
 

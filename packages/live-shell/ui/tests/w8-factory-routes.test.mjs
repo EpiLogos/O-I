@@ -431,3 +431,35 @@ test('13 · (b) every key the rebound designs read is an owner reading, absent w
   assert.deepEqual(designKeys(padsDesign).filter(key => !classify(chosen, key) && written(chosen, key)), [], 'the pads keep no time of their own')
   bind.resetHolds()
 })
+
+test('(BD r19) the pads\' head: Save as preset saves the bank under a name, Hot-swap recalls one of Factory\'s presets, each on the revisions read', async () => {
+  bind.resetHolds()
+  // Stand-in in Factory's own shapes (factory/src/prompt_pads.rs presets_reading: name, revision, filled; a damaged one is kept as it is).
+  const PRESETS = {schema: 'factory.prompt-pads-presets/v1', presets: [{name: 'night', revision: 'sha256:n1', filled: 3, saved_from: PADS.pads.project_ref},
+    {key: 'broken', damaged: 'the preset is not one Factory wrote'}], automatic_agent_or_model_invocation: false}
+  assert.deepEqual(pads.padsPresetsOf(PRESETS), [{name: 'night', revision: 'sha256:n1', filled: 3}], 'a damaged preset is offered to no one')
+  const asked = []
+  const ports = {save: async request => { asked.push(request); return {schema: 'factory.prompt-pads-preset-write/v1', act: 'save'} },
+    recall: async request => { asked.push(request); return {schema: 'factory.prompt-pads-preset-write/v1', act: 'recall'} }}
+  const where = LOCATED.locations[0].location
+  const acts = pads.padsHeadActs(padsInput(), answered(PRESETS), ports)
+  assert.equal(acts['save-preset'].ask, 'name')
+  await acts['save-preset'].run('dawn')
+  assert.deepEqual(asked.at(-1), {kind: 'pads-preset-save', state_path: where.statePath, project_ref: PADS.pads.project_ref, name: 'dawn', expected_revision: 'absent'}, 'a new name: absent')
+  await acts['save-preset'].run('night')
+  assert.equal(asked.at(-1).expected_revision, 'sha256:n1', 'an existing name: its revision as read')
+  assert.deepEqual(acts['hot-swap'].choices, [{value: 'night', label: 'night · 3 pads'}])
+  await acts['hot-swap'].run('night')
+  assert.deepEqual(asked.at(-1), {kind: 'pads-preset-recall', state_path: where.statePath, project_ref: PADS.pads.project_ref, name: 'night', expected_revision: PADS.pads.revision,
+    preset_revision: 'sha256:n1'}, 'the bank\'s revision as read and the preset\'s')
+  await assert.rejects(() => acts['hot-swap'].run('gone'), {message: pads.PRESET_REFUSE.gone('gone')})
+  // Where they do not stand, the owner's own reason.
+  assert.match(pads.padsHeadActs(padsInput({bank: refused('factory refused: the state is locked')}), answered(PRESETS), ports)['save-preset'].refused, /the state is locked/)
+  assert.equal(pads.padsHeadActs(padsInput(), {status: 'reading', value: null, error: null}, ports)['hot-swap'].refused, pads.PRESET_REFUSE.presetsReading)
+  assert.equal(pads.padsHeadActs(padsInput(), answered(PRESETS), {})['save-preset'].refused, pads.PRESET_REFUSE.noCarrier('Save as preset'))
+  const {headMenu} = await import('../src/frame/devices/DeviceMenu.tsx')
+  const menu = headMenu({onChain: true, folded: false, acts: pads.padsHeadActs(padsInput(), answered({...PRESETS, presets: []}), ports)})
+  assert.deepEqual(menu.filter(item => item.enabled).map(item => item.id), ['fold', 'save-preset'], 'no preset kept: Hot-swap says so')
+  assert.equal(menu.find(item => item.id === 'hot-swap').why, pads.PRESET_REFUSE.none)
+  bind.resetHolds()
+})

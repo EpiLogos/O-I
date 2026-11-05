@@ -78,6 +78,8 @@ export interface SystemBody {
   /** its place on the ring of worlds around your planet, radians (your own world stands at its centre: 0) */
   readonly phase: number
   readonly satellites: readonly SystemSatellite[]
+  /** [O-I #746] how many things agents made in the window ride no ring: those past the newest ARTIFACTS_PER_WORLD, counted, never dropped in silence */
+  readonly beyond: number
 }
 
 /** An agent session at work, as the sessions provider builds its tracks (agent/agentRunModel.ts AgentSessionTrack), and the project its
@@ -158,10 +160,18 @@ export function systemWorlds(disclosed: readonly CentralWorld[], setWorlds: read
 const worldOfProject = (worlds: readonly CentralWorld[], project: string | null): CentralWorld | undefined =>
   project ? worlds.find(world => world.project === project) : worlds.find(world => world.kind === 'yours')
 
+/** [O-I #746] The words for what agents made past a world's outer ring (manual §17.2: "What lies just past the edge of your view is counted and
+ * offered"): none for none. The Ledger lists each of them. Pure. */
+export function beyondWords(count: number): string {
+  if (count <= 0) return ''
+  return `${count} more made in the Day ${count === 1 ? 'rides' : 'ride'} no ring: the ring carries the newest ${ARTIFACTS_PER_WORLD}, and the Ledger lists every one`
+}
+
 /** What circles one world: its agents at work on the inner ring, in the order given, then the newest artefacts agents made there on the
  * outer, newest first (ties by ref, so the same six ride however the list is ordered). A satellite's place is its own ref's; an artefact
- * rides while it is no older than the window and not later than the instant shown (a past occasion shows what had been made by then). */
-function satellitesOf(world: CentralWorld, input: SystemInput): SystemSatellite[] {
+ * rides while it is no older than the window and not later than the instant shown (a past occasion shows what had been made by then).
+ * `beyond` counts those of the window the ring does not carry. */
+function satellitesOf(world: CentralWorld, input: SystemInput): {satellites: SystemSatellite[]; beyond: number} {
   const here = (project: string | null | undefined) => worldOfProject(input.worlds, project ?? null)?.ref === world.ref
   const sessions: SystemSatellite[] = input.sessions.filter(session => !session.group && here(session.project)).map(session => {
     const name = session.agentName ?? session.purpose ?? tail(session.sessionRef)
@@ -169,13 +179,13 @@ function satellitesOf(world: CentralWorld, input: SystemInput): SystemSatellite[
       hint: `${name} — an agent at work (${session.sessionRef})${session.purpose && session.agentName ? `: ${session.purpose}` : ''}. Select to choose its session.`}
   })
   const now = input.nowMs ?? 0
-  const artifacts: SystemSatellite[] = (input.artifacts ?? [])
-    .filter(item => here(item.project) && item.atMs <= now && now - item.atMs < ARTIFACT_WINDOW_MS)
+  const inWindow = (input.artifacts ?? []).filter(item => here(item.project) && item.atMs <= now && now - item.atMs < ARTIFACT_WINDOW_MS)
+  const artifacts: SystemSatellite[] = inWindow
     .sort((a, b) => b.atMs - a.atMs || (a.ref < b.ref ? -1 : a.ref > b.ref ? 1 : 0))
     .slice(0, ARTIFACTS_PER_WORLD)
     .map(item => ({id: item.ref, name: item.name, ring: 'outer', kind: 'artifact', phase: ringPhase(item.ref), age: (now - item.atMs) / ARTIFACT_WINDOW_MS, path: item.path,
       hint: `${item.path} — made by ${item.actor ?? 'an agent'}. Select to open it.`}))
-  return [...sessions, ...artifacts]
+  return {satellites: [...sessions, ...artifacts], beyond: Math.max(0, inWindow.length - ARTIFACTS_PER_WORLD)}
 }
 
 /** A world's look: from its own readings, your own world is not exempt; none (the generator's default) while they are not in. */
@@ -213,7 +223,7 @@ export function systemOf(input: SystemInput): SystemBody[] {
     return {
       key: worldKey(world.ref), world, yours: isYours, ...body, colour: paletteOfRef(body.bodyRef),
       landing: landsHere ? {lat: landing!.lat, lon: landing!.lon} : null, unlanded,
-      phase: isYours ? 0 : ringPhase(world.ref), look: lookOfWorld(world, input), satellites: satellitesOf(world, input),
+      phase: isYours ? 0 : ringPhase(world.ref), look: lookOfWorld(world, input), ...satellitesOf(world, input),
     }
   })
 }

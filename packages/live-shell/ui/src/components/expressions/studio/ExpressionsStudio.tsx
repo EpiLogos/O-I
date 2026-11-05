@@ -35,6 +35,7 @@ import {QUATERNAL_LOGIC_FAMILY_ID} from '../../../inhabitants/worldShellFamilies
 import {qlFaceEntry} from '../../../inhabitants/ql/devices/TechneDevices'
 import {useLiveTorusReading, useQlInstrumentFeed} from '../../../live/torusInstrument'
 import {expressionsDeviceId} from '../../devices/expressionsDevice'
+import {ACTS_EDITOR, editorDevice} from '../../devices/summonedEditors'
 import {openFieldDeviceFull, useEditorApply, useFieldDevices} from '../../devices/ExpressionsDeviceView'
 import {useFieldInstrument} from '../../devices/useFieldInstrument'
 import {forceStripDevice, selectedEntity} from '../../nativeDeviceStripModel'
@@ -200,13 +201,13 @@ export function ExpressionsStudio(props: ExpressionsStudioProps) {
     void editor.apply([chosenAddChange(active.drag)])
   }
 
-  // The Stage: the stage's own controls the manual gives no home yet, and the frame's pointer and scene tools until Clip view draws them;
+  // The Stage: the frame's controls no other device carries (none, since DLW build ruling 2026-11-05 gave the Guide and Acts their homes),
   // then the person's macro racks while held. Never inside the Studio's design.
   const frameTools = frameAt(['tools', 'scene', 'side'])
   const stageSections: PlateSection[] = [
     ...(frameTools.length ? [{id: 'stage:frame', title: 'Frame tools', children: <FrameControls label="Frame tools" controls={frameTools} view={frame} />}] : []),
     // O-I #747: the camera is the View menu's (manual §20.1, 28f14dfd4), like Grid, Snap and Guides; Fit, Keep and Restore the Clip
-    // panel's; Capture with its choices File › Export's (StudioStage.tsx). Only the frame's relays with no manual home stand here.
+    // panel's; Capture with its choices File › Export's (StudioStage.tsx); the Guide Help's, Acts its own device (below).
     ...own.filter(section => section.id !== 'chosen'),
   ]
   const said = [fault ?? paneFault ?? editor.error, stage.refusal, frame.refusal, ...(placement === null ? chrome?.faults ?? [] : [])].filter((text): text is string => !!text)
@@ -231,8 +232,15 @@ export function ExpressionsStudio(props: ExpressionsStudioProps) {
         {icon: 'pane', label: 'Open the Studio full in a pane', onPress: () => { try { openInstrument(DEVICE_PANE_KIND, undefined, {ref: STUDIO_DEVICE_ID, title: 'Studio'}) } catch (cause) { setPaneFault(cause instanceof Error ? cause.message : String(cause)) } }},
       ]} />
     </div>
-    {/* O-I #747 round three: the Stage stands only while it holds something — the frame's relays the manual gives no home (Guide, Acts),
-        the person's macro racks, or a fault to say. Every stage control is at its home; with nothing left, no plate stands. */}
+    {/* The Acts device (DLW build ruling 2026-11-05; manual §20.15 "Give a scene's objects roles, keep reusable material, and play acts —
+        the Acts device, in Device view after the Studio"): standing while a frame is hosted, its first key the frame's own Acts. */}
+    {chrome?.state && <div className="expressions-studio-slot" data-device={ACTS_EDITOR.id} data-design={ACTS_EDITOR.id} data-i={`Acts|${ACTS_EDITOR.does}`}>
+      <DeviceView device={editorDevice(ACTS_EDITOR)} size="compact" actions={[
+        {icon: 'detail', label: 'Select Acts: the pool shows it whole', onPress: () => selectDevice(ACTS_EDITOR.id)},
+      ]} />
+    </div>}
+    {/* O-I #747 round three: the Stage stands only while it holds something — a frame control no other device carries, the person's
+        macro racks, or a fault to say. Every stage control is at its home; with nothing left, no plate stands. */}
     {(stageSections.length > 0 || footer !== undefined) && <InstrumentPlate presentation={{family: 'expressions', faceId: 'stage', title: 'Stage', icon: 'expr', owner: studioOwner(reading, place)}}
       sections={stageSections} bodyClassName="native-device-view" dataAttributes={{'data-studio-stage': 'unplaced'}} footer={footer} />}
   </div>

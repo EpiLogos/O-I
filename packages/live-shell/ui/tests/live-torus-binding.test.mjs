@@ -503,3 +503,55 @@ test('the Body page saves the Torus as a sound by its name, through its owners',
   assert.match(source, /setKept\(answer\.ok \? \{done: answer\.words\} : \{refused: refusalWords\(UNKEPT, answer\.error\)\}\), \(cause: unknown\) => setKept\(\{refused: refusalWords\(UNKEPT, cause\)\}\)/)
   assert.doesNotMatch(source, /String\(cause\)/, 'no caught value is printed as it came')
 })
+
+// O-I ticket 853 on the device's face (DLW build ruling 2026-11-05, BB round 19): what a playing take's moves and lanes write stands
+// Automated on the Torus's own controls (live/clipPlayer.ts `state().lanes`, by map parameter), what the hand moved off its lane stands
+// Overridden, and Re-enable on that control gives that one parameter back to the take's lanes.
+test('a take\'s lanes stand on the face: Automated, Overridden with Re-enable, by the design\'s key', () => {
+  const asked = []
+  const lanes = {automated: ['rate', 'scale-units', 'lens', 'note-device:d1:tie'], overridden: ['rate']}
+  const face = model.torusLaneStanding(lanes, id => asked.push(id))
+  assert.deepEqual(Object.keys(face).sort(), ['lens', 'rate', 'scale'], 'the map\'s scale-units is the design\'s Scale; a note device is not on the Torus')
+  assert.equal(face.lens.automated, true)
+  assert.equal(face.scale.automated, true)
+  assert.equal(face.lens.onReenable, undefined, 'only a control the hand took off its lane offers Re-enable')
+  assert.equal(face.rate.automated, 'overridden')
+  face.rate.onReenable()
+  assert.deepEqual(asked, ['rate'], 'Re-enable gives the map parameter back, by its map id')
+  const scaleBack = model.torusLaneStanding({automated: [], overridden: ['scale-units']}, id => asked.push(id))
+  scaleBack.scale.onReenable()
+  assert.equal(asked.at(-1), 'scale-units', 'the design\'s Scale goes back as the map\'s scale-units')
+  assert.deepEqual(model.torusLaneStanding({automated: [], overridden: []}, () => {}), {}, 'no take: nothing stands')
+  assert.deepEqual(model.torusLaneStanding(null, null), {})
+  assert.equal(model.torusLaneStanding({automated: [], overridden: ['level']}, null).level.onReenable, undefined, 'no player: nothing to press')
+  // A Re-enable the owner refused stands on that control in its words until the lanes next change.
+  const refused = model.torusLaneStanding(lanes, () => {}, {rate: 'rate went back to the take\'s lanes, and the owner refused the value its lane reached.'})
+  assert.match(refused.rate.refused, /owner refused the value its lane reached/)
+  // On the binding: over what it says of each key, so a key the owner does not take now keeps its reason and still says it is automated.
+  const live = model.torusDesignBinding(state(), undefined, {}, null, undefined, null, {}, null, null, undefined, undefined, undefined, null, face)
+  assert.equal(live.standing.lens.automated, true)
+  assert.equal(live.standing.lens.disabled, undefined)
+  assert.equal(live.standing.rate.automated, 'overridden')
+  assert.match(live.standing.rate.disabled, /torus-state/, 'the session is not announced here: Rate keeps its reason')
+  assert.equal(kit.standingOf(live.standing.lens), 'automated')
+  assert.equal(model.torusDesignBinding(state()).standing.lens, undefined, 'no take: the binding says nothing of the lens')
+})
+
+test('Re-enable is the overridden control\'s own: pressed, it gives the value back; an automated one offers none', () => {
+  const pressed = []
+  const draw = standing => renderToStaticMarkup(h(kit.Dial, {label: 'Rate', value: 1, scale: {min: 0, max: 4}, format: String, ...standing}))
+  const over = draw({automated: 'overridden', onReenable: () => pressed.push('rate')})
+  assert.match(over, /data-standing="overridden"/)
+  assert.match(over, /<button type="button" class="dp-reenable" aria-label="Give Rate back to its automation lane"[^>]*>Re-enable<\/button>/)
+  assert.doesNotMatch(draw({automated: true, onReenable: () => {}}), /dp-reenable/, 'on its lane: nothing to give back')
+  assert.doesNotMatch(draw({automated: 'overridden'}), /dp-reenable/, 'no act named: no button')
+  assert.match(kit.standingWords({automated: 'overridden'}), /Re-enable gives it back to the lane/)
+})
+
+test('code reading: the chain reads the clip player\'s lanes into the binding, and a refused Re-enable is said plainly', async () => {
+  const source = await readFile(new URL('../src/live/TorusOnChain.tsx', import.meta.url), 'utf8')
+  assert.match(source, /useSyncExternalStore\(liveClipPlayer\.subscribe, laneReading, laneReading\)/, 'the lanes as the player publishes them')
+  assert.match(source, /liveClipActs\.reenable\(id\)\.then\(answer =>[^]*refusalWords\(NOT_REENABLED, answer\.error\)[^]*\(cause: unknown\) =>[^]*refusalWords\(NOT_REENABLED, cause\)/)
+  assert.match(source, /torusLaneStanding\(lanes, reenable, laneRefused\?\.lanes === lanes \? laneRefused\.words : undefined\)/, 'a refusal stands until the lanes next change')
+  assert.doesNotMatch(source, /String\(cause\)/)
+})

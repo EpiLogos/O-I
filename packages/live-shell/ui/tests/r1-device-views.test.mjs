@@ -297,3 +297,27 @@ test('right-click the head: Fold (Unfold while folded) on the chain, then Rename
   const carried = headMenu({onChain: true, folded: false, acts: {rename: () => {}, map: () => {}}})
   assert.deepEqual(carried.filter(item => item.enabled).map(item => item.id), ['fold', 'rename', 'map'], 'an act its owner carries stands live')
 })
+
+test('(BD r19) a head act that asks first: a name or one of its owner\'s choices, the owner\'s own reason where it does not stand', async () => {
+  const {HeadAsk} = await import('../src/frame/devices/DeviceMenu.tsx')
+  const named = []
+  const items = headMenu({onChain: true, folded: false, acts: {
+    rename: {ask: 'name', label: 'Name', value: 'Kite', run: async text => { named.push(text) }},
+    'hot-swap': {ask: 'choice', label: 'Preset', choices: [], empty: 'Hot-swap: Factory keeps no preset of the pads yet.', run: async () => {}},
+    'save-preset': {refused: 'Save as preset: Factory has not located the bank.'},
+  }})
+  const at = id => items.find(item => item.id === id)
+  assert.deepEqual([at('rename').enabled, at('rename').ask], [true, {kind: 'name', label: 'Name', value: 'Kite'}], 'Rename asks a name, the one standing first')
+  assert.deepEqual([at('hot-swap').enabled, at('hot-swap').why], [false, 'Hot-swap: Factory keeps no preset of the pads yet.'], 'nothing to choose: the owner says why')
+  assert.deepEqual([at('save-preset').enabled, at('save-preset').why], [false, 'Save as preset: Factory has not located the bank.'], 'the owner\'s own reason')
+  const field = renderToStaticMarkup(createElement(HeadAsk, {item: at('rename'), said: 'A name is one line.', onAnswer() {}}))
+  assert.match(field, /<input[^>]*aria-label="Name"[^>]*value="Kite"/, 'the name field, the standing name in it')
+  assert.match(field, /role="alert"[^>]*>A name is one line\.<\/p>/, 'the owner\'s refusal stays in the menu in its words')
+  const choose = headMenu({onChain: true, folded: false, acts: {'hot-swap': {ask: 'choice', label: 'Preset', choices: [{value: 'night', label: 'Night'}], run: async () => {}}}})
+  const list = renderToStaticMarkup(createElement(HeadAsk, {item: choose.find(item => item.id === 'hot-swap'), onAnswer() {}}))
+  assert.match(list, /data-device-choice="night"[^>]*>Night<\/button>/, 'each choice is a press')
+  const hostSource = (await import('node:fs')).readFileSync(new URL('../src/frame/devices/deviceHost.tsx', import.meta.url), 'utf8')
+  assert.match(hostSource, /else if \(entry && 'run' in entry && answer !== undefined\) return entry\.run\(answer\)/, 'the host sends the answer to the owner\'s act')
+  const menuSource = (await import('node:fs')).readFileSync(new URL('../src/frame/devices/DeviceMenu.tsx', import.meta.url), 'utf8')
+  assert.match(menuSource, /setSaid\(refusalWords\(`\$\{item\.title\} didn't go through\.`, cause\)\)/, 'the menu says the owner\'s refusal through shared/Refusal.tsx')
+})

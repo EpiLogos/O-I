@@ -177,6 +177,8 @@
 .dp-cell[data-standing="held"] .dp-toggle, .dp-cell[data-standing="held"] .dp-radio, .dp-cell[data-standing="held"] .dp-chooser { box-shadow: inset 0 0 0 1px var(--stall, #ff9b4a); }
 .dp-cell[data-standing="held"] .dp-toggle[aria-pressed="true"], .dp-cell[data-standing="held"] .dp-radio:not([data-slide]) button[aria-checked="true"], .dp-cell[data-standing="held"] .dp-radio[data-slide] > .dp-thumb { background: var(--stall, #ff9b4a); }
 .dp-handback { padding: 0 3px; height: 11px; background: none; border: 1px solid var(--stall, #ff9b4a); color: var(--stall, #ff9b4a); font: inherit; font-size: 8.5px; line-height: 9px; cursor: pointer; }
+/* Overridden: Re-enable under the control gives the value back to its lane, in the lane's red. */
+.dp-reenable { padding: 0 3px; height: 11px; background: none; border: 1px solid var(--rec, #e0523f); color: var(--rec, #e0523f); font: inherit; font-size: 8.5px; line-height: 9px; cursor: pointer; }
 /* Waiting (sent, not yet confirmed): the value in italics, the arc dashed, a choice's edge dashed. */
 .dp-cell[data-standing="waiting"] .dp-value, .dp-cell[data-standing="waiting"] .dp-box > span, .dp-cell[data-standing="waiting"] .dp-readout-value { font-style: italic; opacity: .75; }
 .dp-cell[data-standing="waiting"] .dp-dial-value { stroke-dasharray: 2 2; }

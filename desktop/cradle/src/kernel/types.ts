@@ -848,7 +848,7 @@ export type KernelOp =
   | {op:"factory_attempt_read";state_path:string;run_ref:string}
   | {op:"factory_attempt_task_list_read";state_path:string;run_ref:string}
   | {op:"factory_attempt_task_read";state_path:string;run_ref:string;task_ref:string;limit?:number;cursor?:unknown}
-  | {op:"factory_owner";request:{kind:string;[field:string]:unknown}}
+  | {op:"factory_owner";request:FactoryOwnerRequest}
   | {op:"workcell_status_read"}
   /** The seat instrument's own reading, read only (`seat status --json`): never a join, release, tend or curation. */
   | {op:"seat_status_read"}
@@ -1298,6 +1298,29 @@ export interface FactoryAttemptArtifactReading {
   returnRef: string | null
   artifacts: FactoryReturnedRef[]
 }
+/** The kernel's `factory_owner` kinds the pads' presets and a task's units go through (kernel/src/factory.rs, O-I #743, #772), each carrying
+ * Factory's own command verbatim: `development pads-presets` (factory.prompt-pads-presets/v1, a read), `pads-preset-save` (a project's
+ * bank saved under a name, on the preset's revision as read, `absent` for a new name) and `pads-preset-recall` (a preset recalled into a
+ * bank whole, on the bank's revision as read and the preset's as chosen), each answered factory.prompt-pads-preset-write/v1 and admitted
+ * on the person's grant; and `attempt units` (factory.attempt-task-units-reading/v1: each Run and workflow unit a task's attempts stand on). */
+export type FactoryPadsPresetsRequest = {kind:"pads-presets";state_path:string}
+export type FactoryPadsPresetSaveRequest = {kind:"pads-preset-save";state_path:string;project_ref:string;name:string;expected_revision:string}
+export type FactoryPadsPresetRecallRequest = {kind:"pads-preset-recall";state_path:string;project_ref:string;name:string;expected_revision:string;preset_revision:string}
+export type FactoryAttemptTaskUnitsRequest = {kind:"attempt-task-units";state_path:string;task_ref:string}
+/** Every `factory_owner` request: the four above by their shapes, and the kernel's other kinds by name. */
+export type FactoryOwnerRequest = FactoryPadsPresetsRequest | FactoryPadsPresetSaveRequest | FactoryPadsPresetRecallRequest | FactoryAttemptTaskUnitsRequest
+  | {kind:string;[field:string]:unknown}
+/** One unit a task's attempts stand on (factory.attempt-task-units-reading/v1 `units`): its Run, the unit, the unit's current attempt and
+ * its leg's status where the current attempt is the task's, how many of the task's attempts it holds, the Run's revision, and whether the
+ * Run requires the unit. */
+export interface FactoryTaskUnit {
+  runRef:string; workflowUnitRef:string; currentAttemptRef:string|null; status:string|null; attempts:number; runRevision?:unknown; required?:boolean
+}
+/** Factory's reading of where a task stands (factory.attempt-task-units-reading/v1); a task with no retained attempt stands on none. */
+export interface FactoryAttemptTaskUnitsReading {
+  contract:"factory.attempt-task-units-reading/v1"; projectRef:string; taskRef:string; runsRead:number; units:FactoryTaskUnit[]; totalUnits:number
+}
+
 /** The kernel's `factory_owner` `attempt-artifacts` answer (kernel/src/factory.rs): Factory's reading verbatim, and where its Project's
  * ground lies in Central's World — `placed` with the ground's path under Central's root (`""` for the root), else why not. */
 export interface FactoryAttemptArtifacts {

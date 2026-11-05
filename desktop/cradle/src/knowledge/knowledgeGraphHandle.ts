@@ -23,6 +23,9 @@ export interface KnowledgeGraphCounts {
   readonly displayed: number;
   readonly admitted: number;
   readonly hidden: number;
+  /** The subjects the Budget leaves out (filters.ts budgetGraph), of `total` the reading holds. */
+  readonly beyond: number;
+  readonly total: number;
 }
 
 export interface KnowledgeGraphSurface {

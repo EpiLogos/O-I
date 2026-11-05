@@ -315,3 +315,36 @@ test("the owner keeps a rack by the kernel's own edit of the inspected revision,
   assert.match(source, /operation: 'edit', expression_ref: request\.expression_ref, expected_revision: document\.revision, actor: PERFORMANCE_ACTOR,\s+changes: \[keepRackChange\(request\.scene_ref, racking\.rack\)\]/);
   assert.match(source, /return keptRackReply\(kept\?\.performance, racking\.rack, edited\.dirty === true\);/);
 });
+
+// ── a Torus take laid under the Scene (O-I #855, BB's round-19 steps): the frame records the take the kernel sealed (native-expression
+// `torus_take`) by one edit of the Scene's performance, the kernel's `record_torus_take` (expression_performance.rs RecordTorusTake), as
+// live/liveTake.ts torusTakeRecord builds it. The seal is the kernel's to judge; the boundary carries the record exactly and reads back
+// where the Scene now lays the take.
+const sealedTake = (extra = {}) => ({schema: 'oi.torus-take/v1', take_ref: KEPT_DIGEST(7), lease: 'lease:one', sample_rate: 48000, from_samples: '48000',
+  frames: '96000', checkpoint: {schema: 'ql.torus-checkpoint/v1'}, checkpoint_sha256: KEPT_DIGEST(8), acts: [], render: {}, readings: [], law: 'kept', seal: 'hmac-sha256:seal', ...extra});
+const takeRecord = (extra = {}) => ({operation: 'record_torus_take', take: sealedTake(), lane: {layer_ref: 'take-lane:torus/3', title: 'Take 3', enabled: true, solo: false},
+  at_sample: '96000', micros_per_quarter: 500000, ...extra});
+
+test('a take is recorded under the Scene by the record the frame built from the kernel\'s seal; the action reads only its own keys', () => {
+  const record = takeRecord();
+  assert.deepEqual(readFramePerformanceRequest({operation: 'performance', action: 'record-take', record, ...refs}), {operation: 'performance', action: 'record-take', record, ...refs});
+  for (const bad of [undefined, {...record, operation: 'keep_torus_sound'}, {...record, take: {...sealedTake(), schema: 'oi.torus-sound/v1'}}, {...record, take: {...sealedTake(), seal: 4}},
+    {...record, at_sample: '-1'}, {...record, at_sample: 96000}, {...record, micros_per_quarter: 0}, {...record, lane: {layer_ref: '', title: 'x', enabled: true, solo: false}},
+    {...record, lane: {...record.lane, extra: 1}}, {...record, extra: 1}])
+    assert.equal(readFramePerformanceRequest({operation: 'performance', action: 'record-take', record: bad, ...refs}), null, JSON.stringify(bad)?.slice(0, 80));
+  assert.equal(readFramePerformanceRequest({operation: 'performance', action: 'record-take', record, name: 'x', ...refs}), null, 'no other operand');
+});
+
+test('the Scene lays the take by one edit of its performance, and answers where it lies; a take it does not lay is refused in words', async () => {
+  const {recordTakeChange, takeRecordedReply} = await import('../src/performanceBasis.ts');
+  const record = takeRecord();
+  assert.deepEqual(recordTakeChange('scene:one', record), {change: 'scene_performance_edit', scene_ref: 'scene:one', operations: [record]},
+    'the kernel opens the Scene\'s performance with it, or lays it in the one it has; the seal is the kernel\'s to judge');
+  const performance = {bases: [], torus_takes: [{take: sealedTake(), layer: 0, at_sample: '96000'}], layers: [record.lane]};
+  assert.deepEqual(takeRecordedReply(performance, record, true), {state: 'take-recorded', take_ref: KEPT_DIGEST(7), lane_ref: 'take-lane:torus/3', at_sample: '96000', unsaved: true});
+  assert.deepEqual(takeRecordedReply({bases: []}, record, false), {state: 'refused', reason: 'The Scene did not lay Take 3 under it.', missing: []});
+  const source = await readFile(new URL('../src/cradle.ts', import.meta.url), 'utf8');
+  assert.match(source, /operation: 'edit', expression_ref: request\.expression_ref, expected_revision: document\.revision, actor: PERFORMANCE_ACTOR,\s+changes: \[recordTakeChange\(request\.scene_ref, request\.record\)\]/,
+    'by the kernel\'s own edit of the inspected revision');
+  assert.match(source, /return takeRecordedReply\(laid\?\.performance, request\.record, edited\.dirty === true\);/);
+});

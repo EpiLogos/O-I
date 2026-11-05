@@ -13,11 +13,12 @@
 //   AIKit's encounter view (the Thread's rows, threadBinding.ts threadJson) — the Run's full view is the thread.
 // What no kernel op reaches: a session's Factory run (factory_attempt_read needs a run ref the agency reading never names, so the
 //   Run's takes are absent), the event lanes (the temporal stream names the session, not Messages · Files · Terminal · Web · Graph),
-//   Hermes' subagent tree and delegation block (subagent.list over tui_gateway; no config.set key), the Run and workflow unit a member's
-//   task is (Factory's retry, factory_owner attempt-retry, takes them). Each is absent here and each write
-//   that needs one stands disabled with the operation it lacks. Pure, apart from the view holds (designBindings.ts holdView).
+//   Hermes' subagent tree and delegation block (subagent.list over tui_gateway; no config.set key). Each is absent here and each write
+//   that needs one stands disabled with the operation it lacks. The Run and workflow unit a member's task stands on are Factory's own
+//   reading (factory_owner attempt-task-units), which the rack's Retry carrier reads at the press. Pure, apart from the view holds (designBindings.ts holdView).
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
+import type {HeadAct, HeadActEntry} from '../../frame/devices/deviceDoor'
 import type {AgentSessionTrack, TaskClip} from '../agentRunModel'
 import type {ActionAnswer} from '../../central/devices/centralActions'
 import {AGENT_AUTONOMY_RETIRED, chainHolds, holdView, viewHolds, type ChainHolds} from './designBindings'
@@ -203,12 +204,15 @@ export const CUSTODY_REFUSE = {
   autonomy: AGENT_AUTONOMY_RETIRED,
   gate: custodySetting('Review gate', '--review-gate diffs|approvals|both'),
   escalate: custodySetting('Escalate to', '--escalate-to'),
-  handBack: missing('Hand back', `a custody state for giving back what you edited (${CUSTODY_CARRIES}; giving control back is none of these states), and the custody refs of what the session holds (\`factory development custody list\` has no kernel route)`, 'Software Factory'),
+  // The custody refs of what the session holds are read (the kernel's factory_owner custody-list); giving control back waits on Factory's
+  // custody hold of what you edited (BD r19): none of the custody states is giving control back.
+  handBack: missing('Hand back', `Factory's custody hold: a custody state for giving back what you edited among what the agent holds (${CUSTODY_CARRIES}; giving control back is none of these states)`, 'Software Factory'),
 } as const
+/** What the agent holds, where no custody is handed to the binding: the list is read on the session's own chain (FactoryDeviceChain.tsx). */
+export const CUSTODY_HELD_ELSEWHERE = 'What the agent holds: Factory\'s custody list (the kernel\'s factory_owner custody-list) is read on the session\'s own chain, where Custody stands on its Agent.'
 /** Custody's readings no owner reports here, each with what it waits for. */
 const unread = (what: string, op: string, owner: string) => `${what}: no reading reaches it yet — missing op: ${op} (${owner}).`
 export const CUSTODY_ABSENT = {
-  held: 'What the agent holds: Factory\'s custody list is not read here for this session (`factory development custody list`).',
   people: unread('The people the agent may ask', 'a list of escalation contacts (no owner holds one)', 'Software Factory'),
   handBackLit: unread('The hand-back light', 'a reading of what you edited among the agent\'s held items (Factory\'s custody states name no edit)', 'Software Factory'),
 } as const
@@ -367,7 +371,7 @@ export function custodyBinding(input: CustodyInput, scope: Pick<DesignBinding, '
       : !listing ? (custody.statePath ? 'Factory\'s custody list is not read yet.' : `Factory's custody list: ${CUSTODY_SETTING_WHY.noState}.`)
         : !open ? '`factory development custody list` answered something other than its listing.' : null
   if ('held' in values) delete standing.held
-  else if (listingWhy) standing.held = {disabled: listingWhy}
+  else standing.held = {disabled: listingWhy ?? CUSTODY_HELD_ELSEWHERE}
   const assigned = open && custody?.work ? open.find(row => row.work_ref === custody.work) : undefined
   /** Why one setting cannot be written now, in words; null when the person's press may assign it. */
   const settingWhy = (key: keyof typeof CUSTODY_SETTING_FIELDS): string | null => {
@@ -506,10 +510,14 @@ export const AGENTSET_REFUSE = {
   delete: 'Delete: no carrier to AIKit\'s detach of a chain\'s session from its space (the kernel\'s encounter_session_detach, as the session track\'s own Delete) stands on this chain.',
   // The Devices view (§19.15 "Change a setting there and you change the agent"): each device of a chain answers to its own owner, and the
   // rack holds each chain's session, never the binding of a device of another session's chain.
-  dev: missing('Devices', 'changing a device of another session\'s chain from the rack: the rack holds each chain\'s session, and no binding of the devices of its chain', 'Software Factory'),
-  // Factory retries a unit of a Run under the unit's retry grant (factory_owner attempt-retry, lane K0; the Run map's Retry). The rack
-  // holds a chain, which is an agent session, and no reading names the Run or the workflow unit the chain's task is.
-  retry: 'Retry: Factory retries a unit of a Run under its retry grant (factory_owner attempt-retry, the Run map\'s Retry); the rack holds the chosen chain, an agent session, and no reading here names the Run or the workflow unit its task is (Software Factory).',
+  // A device of another session's chain is that session's (DLW build ruling 2026-11-05): the change goes to it as a message through
+  // Messages' delegate (AIKit's gateway send to its agent's Position, then delegate onto the session's task: the route a message dropped on a
+  // track takes, O-I ticket 757), never a write of another chain's binding.
+  dev: 'Devices: no carrier to Messages\' delegate stands on this rack. A change of a device of another session\'s chain goes as a message to that session through Messages\' delegate (AIKit\'s gateway send, then delegate onto its task).',
+  // Factory retries a unit of a Run under the unit's retry grant (factory_owner attempt-retry, lane K0; the Run map's Retry), and names the
+  // units a task stands on (factory_owner attempt-task-units, O-I ticket 772): the chosen chain's task's units read, then its unit retried
+  // (taskBindings.ts retryTask).
+  retry: 'Retry: no carrier to Factory\'s attempt-task-units and attempt-retry stands on this rack, so the chosen chain\'s task cannot be read or retried (Software Factory).',
 } as const
 /** What the chain list refuses with its carriers standing: a press on what is no chain of the rack, the Decision helper where it has nothing
  * to do (it answers every agent of a group's rack and is given no work), a drop that names no standing session (AIKit attaches a session
@@ -534,6 +542,10 @@ export const CHAIN_LIST_REFUSE = {
   swapUnnamed: 'Hot-Swap: what was dropped names no agent.',
   swapHelper: 'Hot-Swap: the Decision helper answers every agent of the rack and holds no agent to swap.',
   helperUnnamed: 'Delete: no Decision helper stands on this rack: AIKit\'s record of its space names none, so there is none to take off.',
+  noneChosen: (control: string) => `${control}: choose a chain in the list first.`,
+  helperRetry: 'Retry: the Decision helper answers the agents of the rack and is given no task of its own, so there is nothing of it to retry.',
+  devChange: 'Devices: the change names no setting and value (a JSON object of the device\'s settings), so no message was sent.',
+  devUnseated: (name: string) => `Devices: ${name}'s session seats no agent, so no Position takes a message for it.`,
 } as const
 
 /** What the rack's Hot-Swap sends when an agent is dropped on it (software-factory__agentset-rack.tsx): the chosen chain and the drop. */
@@ -581,19 +593,24 @@ const JOIN_UNSAVED = (ref: string) => `Central's set ${ref} names no join: none 
 // Group (§19.15 "Making a rack and a set": "select agents' chains and choose Group … Central proposes the set, and you accept it as you
 // accept an agent"): the chains you choose (`grouping`, the hand's) open the card with them (`new.chains`); Make asks Central to propose them as
 // a set of agents — central.agent-set.propose {scope root, ref, revision r1, members [{kind agent, agent_ref}], reason: what it is for}, the
-// person's own act (desktop/cradle/kernel/src/action.rs PERSON_ACTS), as Messages' group does (messagesBinding.ts make); Accept saves
-// Central's record at its revision (central.agent-set.save). Central's propose takes no type, and its remove carries no person's authority.
+// person's own act (desktop/cradle/kernel/src/action.rs PERSON_ACTS), as Messages' group does (messagesBinding.ts make), with the set's type
+// (a pattern's id, Central PR 318); Accept saves Central's record at its revision (central.agent-set.save); Discard removes the proposal at the
+// revision Central wrote (central.agent-set.remove {scope, ref, expected_revision}, among PERSON_ACTS since C26 6311e404c).
 export const GROUP_REFUSE = {
   few: 'Group: choose at least two chains to make a set of them.',
   purpose: 'Say what the set is for first.',
   noCarrier: 'Group: no carrier to Central\'s central.agent-set.propose stands on this chain.',
   noProposal: 'Nothing is proposed yet: choose the chains, say what the set is for and press Make.',
   unseated: (name: string) => `${name}: its session seats no agent, so Central cannot hold it in a set.`,
-  type: missing('Type', 'a type on Central\'s agent set (central.agent-set.propose takes its members and a reason)', 'Central'),
-  discard: missing('Discard', 'central.agent-set.remove carried with the person\'s authority (desktop/cradle/kernel/src/action.rs PERSON_ACTS names only propose and save)', 'Central'),
+  /** A type Central would refuse: a pattern's id is a lowercase word (ctrl world.rs validate_set_type). */
+  badType: (type: string) => `Type: a set's type is a pattern's id — a lowercase word of at most 64 letters, digits or -, letters first — not "${type}".`,
+  noRemover: 'Discard: no carrier to Central\'s central.agent-set.remove stands on this chain.',
 } as const
+/** A set's type as Central admits it (ctrl/src/world.rs validate_set_type: at most 64 characters, a lowercase letter first, then lowercase
+ * letters, digits or `-`). */
+export const SET_TYPE = /^[a-z][a-z0-9-]{0,63}$/
 /** The card's keys the hand holds (the design's `new.*` and the chains chosen for Group). */
-const CARD_LOCAL = ['grouping', 'new.open', 'new.for', 'new.chains', 'new.proposal'] as const
+const CARD_LOCAL = ['grouping', 'new.open', 'new.for', 'new.type', 'new.chains', 'new.proposal'] as const
 
 /** The rack's carriers: Central's central.agent-set.save and .propose, the person's own acts through the kernel's invoke_action; the
  * session's own Agent, whose own writes a macro turns on a lone session's chain; a fresh suffix for a proposed set's ref and for the space a
@@ -601,7 +618,13 @@ const CARD_LOCAL = ['grouping', 'new.open', 'new.for', 'new.chains', 'new.propos
  * (the kernel's encounter_session_bench, _attach, _drag_out, _hot_swap, _detach and _decision_helper). Each absent: no carrier stands. */
 export interface AgentRackPorts {
   readonly saveSet?: (input: {scope: 'root'; record: Record<string, unknown>; expected_revision: string}) => Promise<unknown>
-  readonly propose?: (input: {scope: 'root'; ref: string; revision: 'r1'; members: {kind: 'agent'; agent_ref: string}[]; reason: string}) => Promise<unknown>
+  readonly propose?: (input: {scope: 'root'; ref: string; revision: 'r1'; members: {kind: 'agent'; agent_ref: string}[]; reason: string; type?: string}) => Promise<unknown>
+  /** Discard: Central's central.agent-set.remove of the proposal, at the revision Central wrote. */
+  readonly removeSet?: (input: {scope: 'root'; ref: string; expected_revision: string}) => Promise<unknown>
+  /** Retry: the chosen chain's session's task through Factory (its units read, its unit retried: taskBindings.ts retryTask). */
+  readonly retry?: (input: {project: string; agent_session: string}) => Promise<unknown>
+  /** A device of another session's chain changed: the words go to that session as a message through Messages' delegate. */
+  readonly ask?: (input: {project: string; agent_session: string; agent_ref: string; device: string; change: Readonly<Record<string, unknown>>; words: string}) => Promise<unknown>
   readonly agent?: DesignBinding | null
   readonly suffix?: () => string
   /** Solo a chain (on) or lift its solo, by its track's key: what you attend to (the agent shell's setSolo), no owner asked. */
@@ -893,8 +916,9 @@ export function agentsetBinding(input: AgentRackInput, ports?: AgentRackPorts): 
   if (ports?.attach) delete standing.add
   if (ports?.hotSwap) delete standing.swap
   if (ports?.detach) delete standing.delete
-  standing['new.type'] = {disabled: GROUP_REFUSE.type}
-  standing['new.discard'] = {disabled: GROUP_REFUSE.discard}
+  if (ports?.retry) delete standing.retry
+  if (ports?.ask) delete standing.dev
+  if (!ports?.removeSet) standing['new.discard'] = {disabled: GROUP_REFUSE.noRemover}
   const writable = join === null || join.refused !== undefined
   const lone = loneOf(input)
   const tracks = input.tracks ?? []
@@ -1036,9 +1060,11 @@ export function agentsetBinding(input: AgentRackInput, ports?: AgentRackPorts): 
   }
   /** Make: the chosen chains, proposed to Central as a set of agents, the proposal held on the card. */
   const make = async (value: Value | undefined) => {
-    let asked: {for?: unknown; chains?: unknown} = {}
+    let asked: {for?: unknown; chains?: unknown; type?: unknown} = {}
     try { asked = typeof value === 'string' ? JSON.parse(value) as typeof asked : {} } catch { /* refused below */ }
     const words = typeof asked.for === 'string' ? asked.for.trim() : ''
+    const type = typeof asked.type === 'string' && asked.type ? asked.type : undefined
+    if (type !== undefined && !SET_TYPE.test(type)) throw Error(GROUP_REFUSE.badType(type))
     const ids = Array.isArray(asked.chains) ? asked.chains.filter((id): id is string => typeof id === 'string') : []
     if (!words) throw Error(GROUP_REFUSE.purpose)
     if (ids.length < 2) throw Error(GROUP_REFUSE.few)
@@ -1050,11 +1076,48 @@ export function agentsetBinding(input: AgentRackInput, ports?: AgentRackPorts): 
     if (!ports?.propose) throw Error(GROUP_REFUSE.noCarrier)
     const slug = words.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'set'
     const ref = `agent-set:${slug}-${ports.suffix?.() ?? 'r1'}`
-    const data = await ports.propose({scope: 'root', ref, revision: 'r1', members, reason: words})
+    const data = await ports.propose({scope: 'root', ref, revision: 'r1', members, reason: words, ...(type ? {type} : {})})
     const record = data && typeof data === 'object' && typeof (data as {record?: unknown}).record === 'object' && (data as {record?: unknown}).record !== null
       ? (data as {record: Record<string, unknown>}).record : null
     if (!record) throw Error('Central answered the proposal without the set\'s record.')
-    holdView(AGENTSET_ID, 'new.proposal', JSON.stringify({ref, name: slug, members: ids, revision: typeof record.revision === 'string' ? record.revision : 'r1', record}))
+    holdView(AGENTSET_ID, 'new.proposal', JSON.stringify({ref, name: slug, members: ids, revision: typeof record.revision === 'string' ? record.revision : 'r1', record,
+      ...(type ? {type} : {})}))
+  }
+  /** Discard: Central's proposal removed at the revision it wrote, and the card let go. */
+  const discard = async () => {
+    if (!ports?.removeSet) throw Error(GROUP_REFUSE.noRemover)
+    const proposal = proposalOf(pressed()['new.proposal'])
+    if (!proposal) throw Error(GROUP_REFUSE.noProposal)
+    await ports.removeSet({scope: 'root', ref: proposal.ref, expected_revision: proposal.revision})
+    clearCard()
+  }
+  /** Retry: the chosen chain's task, through Factory (its units read, its unit retried). */
+  const retry = async () => {
+    if (!ports?.retry) throw Error(AGENTSET_REFUSE.retry)
+    const id = pressed().member
+    if (typeof id !== 'string' || !id) throw Error(CHAIN_LIST_REFUSE.noneChosen('Retry'))
+    if (id === DECISION_HELPER_ID) throw Error(CHAIN_LIST_REFUSE.helperRetry)
+    const chain = chainOf(id)
+    if (!chain) throw Error(CHAIN_LIST_REFUSE.notChain('Retry', id))
+    await ports.retry({project: chain.project ?? ROOT_REGISTER, agent_session: chain.sessionRef})
+  }
+  /** A device of another session's chain (`dev:<chain>@<device>`): the change goes to that session as a message (Messages' delegate), in
+   * words its agent reads; nothing of that chain's binding is written from here. */
+  const askChain = async (key: string, value: Value | undefined) => {
+    if (!ports?.ask) throw Error(AGENTSET_REFUSE.dev)
+    const at = key.indexOf('@')
+    const id = key.slice('dev:'.length, at < 0 ? undefined : at), device = at < 0 ? '' : key.slice(at + 1)
+    const chain = chainOf(id)
+    if (!chain || !device) throw Error(CHAIN_LIST_REFUSE.notChain('Devices', id))
+    const name = String(sessionChain(chain, 0).name)
+    if (!chain.agentRef) throw Error(CHAIN_LIST_REFUSE.devUnseated(name))
+    let change: Record<string, unknown> | null = null
+    try { const parsed = typeof value === 'string' ? JSON.parse(value) as unknown : null; change = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed as Record<string, unknown> : null }
+    catch { change = null }
+    if (!change || !Object.keys(change).length) throw Error(CHAIN_LIST_REFUSE.devChange)
+    const said = Object.entries(change).map(([setting, to]) => `${setting.charAt(0).toUpperCase()}${setting.slice(1)} to ${typeof to === 'string' ? to : JSON.stringify(to)}`)
+    const words = `From the Agent rack: set ${said.join(', ')} on ${device} in your chain.`
+    await ports.ask({project: chain.project ?? ROOT_REGISTER, agent_session: chain.sessionRef, agent_ref: chain.agentRef, device, change, words})
   }
   const accept = async () => {
     const proposal = proposalOf(pressed()['new.proposal'])
@@ -1072,13 +1135,15 @@ export function agentsetBinding(input: AgentRackInput, ports?: AgentRackPorts): 
       member: value => holdView(AGENTSET_ID, 'member', typeof value === 'string' ? value : undefined),
       ...Object.fromEntries(CARD_LOCAL.map(key => [key, (value: Value | undefined) => holdView(AGENTSET_ID, key, value)])),
     },
-    writes: key => key in AGENTSET_REFUSE || memberControl(key) !== undefined || (key === 'join' && writable) || key === 'new.make' || key === 'new.accept',
+    writes: key => key in AGENTSET_REFUSE || memberControl(key) !== undefined || (key === 'join' && writable) || key === 'new.make' || key === 'new.accept' || key === 'new.discard',
     write: async changes => {
       for (const {key, value} of changes) {
         if ((RACK_MACROS as readonly string[]).includes(key)) { await turn(key as RackMacro, value); continue }
         if (key === 'new.make') { await make(value); continue }
         if (key === 'new.accept') { await accept(); continue }
-        if (key === 'new.discard') throw Error(GROUP_REFUSE.discard)
+        if (key === 'new.discard') { await discard(); continue }
+        if (key === 'retry') { await retry(); continue }
+        if (key.startsWith('dev:')) { await askChain(key, value); continue }
         if (key.startsWith('solo:')) { solo(key.slice('solo:'.length), value); continue }
         if (key.startsWith('bench:')) { await bench(key.slice('bench:'.length), value); continue }
         if (key === 'extract') { await dragOut(value); continue }
@@ -1095,4 +1160,61 @@ export function agentsetBinding(input: AgentRackInput, ports?: AgentRackPorts): 
       }
     },
   }
+}
+
+// ---------------------------------------------------------------------------------------------------------------- the agent's profile
+
+// The chain is the profile Central keeps for the agent (§19.4; Central PR 318): Rename on the Agent's head gives the Agent its name
+// (agent-profile.rename), a SkillSet dropped on the Skillset rack stands where the one it carries stood (agent-profile.chain-replace, the
+// rack's Hot-swap), and the order of what it carries before its Agent is agent-profile.chain-order — each at the profile's revision as the
+// roster read it, under compare-and-swap, and refused by Central in its own words.
+export const PROFILE_ACTS = {rename: 'agent-profile.rename', replace: 'agent-profile.chain-replace', order: 'agent-profile.chain-order'} as const
+
+/** The agent's accepted profile as the chain's acts address it (Central's AgentProfile: profile_ref, revision, name, skill_set_refs). */
+export interface ChainProfile {
+  readonly profileRef: string
+  readonly revision: string
+  readonly name?: string
+  readonly skillSetRefs: readonly string[]
+}
+/** The profile the roster holds for the seated agent (designBindings.ts seatedProfile), or null when it names no ref or revision. Pure. */
+export function chainProfileOf(profile: unknown): ChainProfile | null {
+  const doc = profile && typeof profile === 'object' && !Array.isArray(profile) ? profile as Record<string, unknown> : null
+  if (!doc || typeof doc.profile_ref !== 'string' || !doc.profile_ref || typeof doc.revision !== 'string' || !doc.revision) return null
+  const sets = Array.isArray(doc.skill_set_refs) ? doc.skill_set_refs.filter((ref): ref is string => typeof ref === 'string') : []
+  return {profileRef: doc.profile_ref, revision: doc.revision, ...(typeof doc.name === 'string' && doc.name ? {name: doc.name} : {}), skillSetRefs: sets}
+}
+export const PROFILE_REFUSE = {
+  unread: (what: string) => `${what}: no accepted profile of this session's agent is read here (Central's roster names none), so Central cannot be asked.`,
+  noCarrier: (what: string) => `${what}: the kernel carrier is unavailable here, so Central cannot be asked.`,
+  swapPress: (carried: string) => `Hot-swap: drag a SkillSet from the browser onto the Skillset rack: Central's agent-profile.chain-replace puts it where ${carried} stands.`,
+  swapNone: 'Hot-swap: the agent carries no SkillSet to swap; adding one is another act (missing op: agent-chain skillset admit, AIKit).',
+  swapSame: (ref: string) => `Hot-swap: the agent carries ${ref} already, and a SkillSet stands once on its chain.`,
+} as const
+
+/** One of Central's acts on the profile: the action and its input, at the profile's revision as read. */
+export interface ProfileRequest {readonly action: string; readonly input: Readonly<Record<string, unknown>>}
+const profileInput = (profile: ChainProfile) => ({scope: 'root', profile_ref: profile.profileRef, expected_revision: profile.revision})
+/** Rename: the Agent's name. Pure. */
+export const renameRequest = (profile: ChainProfile, name: string): ProfileRequest => ({action: PROFILE_ACTS.rename, input: {...profileInput(profile), name}})
+/** The Skillset rack's Hot-swap: the SkillSet dropped stands where the first the agent carries stood (the set the rack shows), or the
+ * refusal in words. Pure. */
+export function replaceRequest(profile: ChainProfile, dropped: string): ProfileRequest | {refused: string} {
+  const carried = profile.skillSetRefs[0]
+  if (!carried) return {refused: PROFILE_REFUSE.swapNone}
+  if (profile.skillSetRefs.includes(dropped)) return {refused: PROFILE_REFUSE.swapSame(dropped)}
+  return {action: PROFILE_ACTS.replace, input: {...profileInput(profile), replace: carried, with: dropped}}
+}
+
+/** The head acts the agent's profile carries: the Agent's Rename (it asks the name, the one standing first), and the Skillset rack's
+ * Hot-swap, which a drop from the browser carries (the press says so). `act` is Central's invoke_action; absent, no carrier stands. */
+export function profileHeadActs(profile: ChainProfile | null, act?: (action: string, input: Readonly<Record<string, unknown>>) => Promise<unknown>): {
+  readonly agent: Partial<Readonly<Record<HeadAct, HeadActEntry>>>
+  readonly skillset: Partial<Readonly<Record<HeadAct, HeadActEntry>>>
+} {
+  const rename: HeadActEntry = !profile ? {refused: PROFILE_REFUSE.unread('Rename')} : !act ? {refused: PROFILE_REFUSE.noCarrier('Rename')}
+    : {ask: 'name', label: 'Name', ...(profile.name ? {value: profile.name} : {}), run: async text => { const asked = renameRequest(profile, text); await act(asked.action, asked.input) }}
+  const swap: HeadActEntry = !profile ? {refused: PROFILE_REFUSE.unread('Hot-swap')} : !profile.skillSetRefs[0] ? {refused: PROFILE_REFUSE.swapNone}
+    : {refused: PROFILE_REFUSE.swapPress(profile.skillSetRefs[0])}
+  return {agent: {rename}, skillset: {'hot-swap': swap}}
 }

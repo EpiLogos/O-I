@@ -362,16 +362,28 @@ test('the scene\'s Sequence reads the owner\'s symbols: an empty scene says it h
   else assert.match(tab('sequence', withSymbol), /data-lane="[^"]*"|Sun/)
 })
 
-test('the scene\'s View stands in its Clip panel: Kept or Not kept, with Keep and Restore through the field\'s own acts (manual §20.1)', async () => {
+test('the scene\'s View stands in its Clip panel: Kept or the default framing, with Keep and Restore through the field\'s own acts (manual §20.1)', async () => {
   const reading = ownerReading()
-  assert.equal(SC.expressionsClipValues(reading).view, 'not kept', 'a scene that keeps no view of its own')
-  // O-I #747 round two: the scene's explicit kept state, never "a framing other than the default".
+  assert.equal(SC.expressionsClipValues(reading).view, 'default', 'a scene on the default framing reads so, in words')
+  // REPLACED (O-I #747 round two: "the scene's explicit kept state, never a framing other than the default"). DLW build ruling
+  // 2026-11-05: a view saved before #747 (no kept state) reads as kept when it differs from its scene's default framing; one equal to
+  // the default reads as the default framing, never "Not kept".
   const turned = {...reading, scene: {...reading.scene, view: {...reading.scene.view, mode: '3d', yaw: 0.4, zoom: 1.6}}}
-  assert.equal(SC.expressionsClipValues(turned).view, 'not kept', 'a turned camera is not a kept view')
+  assert.equal(SC.expressionsClipValues(turned).view, 'kept', 'a framing other than the default, saved before Keep, is kept')
+  const panned = {...reading, scene: {...reading.scene, view: {...reading.scene.view, panX: 0.12}}}
+  assert.equal(SC.expressionsClipValues(panned).view, 'kept', 'a pan alone is a framing of its own')
+  const native = {...reading, scene: {...reading.scene, view: {...reading.scene.view, nativeCamera: {yaw: 0, pitch: 0.3, zoom: 1, panX: 0, panY: 0}}}}
+  assert.equal(SC.expressionsClipValues(native).view, 'kept', 'a native camera the scene opens on, other than the engine\'s default')
+  const nativeDefault = {...reading, scene: {...reading.scene, view: {...reading.scene.view, nativeCamera: {yaw: 0, pitch: 0, zoom: 1, panX: 0, panY: 0}}}}
+  assert.equal(SC.expressionsClipValues(nativeDefault).view, 'default', 'the engine\'s own default camera is the default framing')
   const kept = {...reading, scene: {...reading.scene, view: {...reading.scene.view, kept: true}}}
   assert.equal(SC.expressionsClipValues(kept).view, 'kept', 'Keep at the default framing is a kept view')
+  assert.deepEqual(SC.DEFAULT_FRAMING, Model.blankScene().view, 'the default framing is the one a new scene opens on (model.ts blankScene)')
+  const plain = panel('clip', SC.expressionsClipValues(reading))
+  assert.match(plain, />Default framing</); assert.doesNotMatch(plain, /Not kept/)
+  assert.match(plain, /The scene opens on the default framing: Fit returns to it\./, 'Restore says why it waits')
   const markup = panel('clip', SC.expressionsClipValues(kept))
-  assert.match(markup, /View/); assert.match(markup, /Kept/); assert.match(markup, /Keep/); assert.match(markup, /Restore/); assert.match(markup, /Fit/)
+  assert.match(markup, /View/); assert.match(markup, />Kept</); assert.match(markup, /Keep/); assert.match(markup, /Restore/); assert.match(markup, /Fit/)
   const ran = []
   const stage = {state: null, run: async command => { ran.push(command); return {ok: true} }}
   const binding = SC.expressionsClipBinding({reading: kept, request: async () => ({ok: true, reading: kept}), stage})
@@ -379,6 +391,32 @@ test('the scene\'s View stands in its Clip panel: Kept or Not kept, with Keep an
   assert.deepEqual(ran, [{command: 'view', action: 'keep-view'}, {command: 'view', action: 'restore-view'}, {command: 'view', action: 'fit-view'}])
   const frame = await readFile(new URL('desktop/cradle/expressions-app/field-studies-journeys/src/app.ts', root), 'utf8')
   assert.match(frame, /case 'keep-view':changed\(\(\)=>\{scene\(\)\.view=\{\.\.\.scene\(\)\.view,kept:true,/, 'Keep writes the kept state with the framing')
+})
+
+// DLW build ruling 2026-11-05 (O-I 851, the torus's shapes in an Expression): "Select it, set forces on it, or give its shapes a sequence,
+// as you do any symbol's" (manual §21.2 The Torus in the pane). Its Force page is any symbol's; its Formation page names its Figure.
+test('a torus in the scene names the figure of the state it stands on in its Formation page, and choosing one writes that state\'s source', async () => {
+  const reading = ownerReading()
+  const torus = Model.entity('Torus', '', {x: 0, y: 0, z: 0})
+  torus.shape = 'torus'; torus.torusFigure = 'torus'
+  torus.sequence = {...torus.sequence, enabled: true, steps: [
+    {id: 'step-a', text: '', shape: 'torus', torusFigure: 'figure-eight', hold: 2, transition: 1, position: null},
+    {id: 'step-b', text: '', shape: 'torus', torusFigure: 'klein-bottle', hold: 2, transition: 1, position: null}]}
+  const glyph = reading.scene.entities[0]
+  const scene = {...reading.scene, entities: [...reading.scene.entities, torus]}
+  const on = stepId => ({...reading, scene, selection: {...reading.selection, entity_ids: [torus.id], step_id: stepId}})
+  const objects = r => JSON.parse(SC.expressionsClipValues(r).objects)
+  assert.equal(objects(on(null))[torus.id].formation.figure, 'figure-eight', 'its first state, while none is selected')
+  assert.equal(objects(on('step-b'))[torus.id].formation.figure, 'klein-bottle', 'the state selected')
+  if (glyph) assert.equal(objects(on(null))[glyph.id].formation.figure, undefined, 'a glyph names no figure')
+  const next = objects(on('step-b')); next[torus.id].formation.figure = 'spiral'
+  assert.deepEqual(SC.objectChanges(on('step-b'), next), [{kind: 'step-source', entity_id: torus.id, step_id: 'step-b', shape: 'torus', torusFigure: 'spiral'}])
+  const markup = tab('expression', {...SC.expressionsClipValues(on('step-b')), symbol: torus.id, objPage: 'formation'})
+  assert.match(markup, /aria-label="Figure"|>Figure</, 'the Formation page offers the torus its shapes')
+  assert.doesNotMatch(tab('expression', {...SC.expressionsClipValues(on(null)), symbol: glyph?.id ?? torus.id, objPage: 'formation'}), glyph ? /aria-label="Figure"|>Figure</ : /$^/, 'a glyph has none')
+  const design = await read('inhabitants/catalogue/clips/expressions.tsx')
+  assert.match(design, /<Chooser label="Figure" does="The shape the torus takes in the state it stands on\./)
+  assert.match(design, /\{value: 'klein-bottle', label: 'Klein bottle'\}/)
 })
 
 test('the pointer\'s Select is the field\'s own Select, and ends a placement (the port ledger\'s cancel-placement home)', async () => {

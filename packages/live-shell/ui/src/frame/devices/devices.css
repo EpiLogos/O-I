@@ -87,6 +87,9 @@
 .device-menu-item { display: flex; width: 100%; padding: 3px 10px; text-align: left; color: var(--text) }
 .device-menu-item:not([disabled]):hover, .device-menu-item:not([disabled]):focus-visible { background: var(--sel); color: var(--bg-0); outline: none }
 .device-menu-item[disabled] { color: var(--text-faint); pointer-events: none }
+.device-menu-ask { display: flex; flex-direction: column; gap: 3px; padding-bottom: 3px }
+.device-menu-field { margin: 0 8px; padding: 2px 6px; background: var(--bg-0); color: var(--text); border: 1px solid var(--line-strong) }
+.device-menu-refused { margin: 2px 10px 0; max-width: 260px; font-size: 10.5px; color: var(--warn, var(--text)) }
 
 /* A plate's place on its chain (ChainOrder.tsx; manual §16.5, §16.10): a narrow rail at the plate's left carries the grip, as Factory's
    slots do (agent/devices/factoryDevices.css .factory-slot__rail). The law says what a drag or ⌥← ⌥→ does; a refused move moves nothing. */

@@ -66,7 +66,9 @@ export const AGENT_CONTROL_PAIRS = {
   retry: ['Retry', 'Restarts a stalled or failed task from its last good step, same basis.${lit?\' Lit: a lane in here has stalled.\':\'\'}'],
   telemetry: ['Telemetry', 'Live’s track activator, on the number: the whole group as a context source. Off: it keeps running but stops feeding the dock, the ledger stream and other agents’ context.'],
   telemetryContext: ['Telemetry · context source', 'Live’s track activator. On: this session feeds the dock, the ledger stream and other agents’ context. Off: it keeps working, silently.'],
-  solo: ['Solo', 'Only soloed sessions may run.'],
+  // DLW build ruling 2026-11-05: Solo in §16.1's sense ("You attend to the soloed tracks alone … The others keep running", never "A limit
+  // on what may run"), in §19.1's words for a session; the oracle and its mockup line say the same.
+  solo: ['Solo', 'You attend to the soloed sessions alone: the views, the tiles and the instruments show only them. The others keep running.'],
   trackArm: ['Arm', 'Who you are talking to: voice and the composer send here.'],
   watch: ['Watch', 'Live’s monitor. In: always stream this session into the dock. Auto: when armed or selected. Off: never.'],
   model: ['Model', 'This session’s model. Subagents can run a different one.'],

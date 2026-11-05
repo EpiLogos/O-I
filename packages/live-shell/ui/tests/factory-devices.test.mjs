@@ -399,7 +399,8 @@ test('the Device side is these devices, wired to the door, the pane and the owne
   assert.match(view, /onThread: \(\) => shell\.openThread\(sessionRef\)/, 'the agent tab\'s conversation stays reachable from the chain picture')
   assert.match(view, /fireWritePath\(row, value, \{transport, binding\}\)/, 'a change goes to the row\'s own write path through the one resolver')
   assert.match(view, /chainDropDecision\(active\.drag\)/, 'the aperture law\'s drop receiver is kept')
-  assert.match(view, /MISSING_OPS\.order/, 'and the slide\'s refusal by name')
+  // REPLACED (BD r19): the slide's refusal named MISSING_OPS.order; Central writes the order now, and the slide says the rack's place.
+  assert.match(view, /SLIDE_PLACE/, 'and the slide\'s refusal in words')
   assert.doesNotMatch(view, /from '\.\.\/(AgentDeviceChain|NativeAgentDeviceRack)'/)
   for (const file of ['devices/FactoryDeviceChain.tsx', 'devices/AgentDevicePictures.tsx', 'devices/agentChainDevices.ts', 'devices/factoryDevices.css']) {
     const source = read(file)

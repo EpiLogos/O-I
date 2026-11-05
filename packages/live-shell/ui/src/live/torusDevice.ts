@@ -20,6 +20,7 @@ import {hostedChrome} from '../projections/expressionsPaneHost'
 import {qlRackState, rackPage, type QlRackState} from '../inhabitants/ql/devices/qlRack'
 import {handsFor, heldFor, hold as holdDesign} from '../techne/devices/designDevices'
 import type {TorusDeviceKept} from './liveTake'
+import type {ClipLaneStanding} from './clipPlayer'
 import type {StageRun} from '../components/expressions/studio/StudioStage'
 import {bodyTable, coordinateNames, NO_CONDITION, tattvaBody, tattvaKeys, type BodySource, type BodyTable, type CoordinateName} from '../inhabitants/ql/devices/qlCoordinateName'
 import {refusalWords} from '../../../../../desktop/cradle/src/shared/Refusal.tsx'
@@ -720,6 +721,37 @@ const BODY_KEYS: ReadonlySet<string> = new Set([TORUS_BODY_SOURCE, 'damping', 's
 /** Every key the binding speaks for: the design's keys and the owner's own. Receiver's standing is its own (torusReceiver). */
 const TORUS_KEYS = ['light', 'standing', 'level', ...QL_PRESENTATION_KEYS.filter(key => key !== 'level'), ...Object.keys(TORUS_DETERMINANT_KEYS), ...Object.keys(TORUS_ABSENT)]
 
+/** A map parameter's key on the Torus's face: the map's `scale-units` is the design's Scale (TorusOnChain.tsx mapId); the rest are
+ * the design's own keys. A parameter the face does not draw (a note device's tie) has none. */
+const TORUS_LANE_KEYS: ReadonlySet<string> = new Set([...TORUS_KEYS, ...TORUS_SESSION_KEYS])
+const laneKeyOf = (id: string): string | null => {
+  const key = id === 'scale-units' ? 'scale' : id
+  return TORUS_LANE_KEYS.has(key) ? key : null
+}
+
+/** A take's lanes on the Torus's face (O-I ticket 853; inhabitants/sdk/panel.tsx Standing `automated`): what a playing take's moves and
+ * lanes write stands Automated, what the hand moved off its lane stands Overridden and offers Re-enable, which gives that one map
+ * parameter back to the take's lanes (live/clipPlayer.ts `reenable`). `refused` is a Re-enable the owner refused, by map id, in its words.
+ * Pure: the chain reads the player's lanes and passes them (TorusOnChain.tsx). */
+export function torusLaneStanding(lanes: ClipLaneStanding | null, reenable: ((id: string) => void) | null,
+  refused: Readonly<Record<string, string>> = {}): Record<string, Standing> {
+  const out: Record<string, Standing> = {}
+  if (!lanes) return out
+  for (const id of lanes.automated) {
+    const key = laneKeyOf(id)
+    if (key) out[key] = {automated: true}
+  }
+  for (const id of lanes.overridden) {
+    const key = laneKeyOf(id)
+    if (key) out[key] = {automated: 'overridden', ...(reenable ? {onReenable: () => reenable(id)} : {})}
+  }
+  for (const [id, words] of Object.entries(refused)) {
+    const key = laneKeyOf(id)
+    if (key && out[key]) out[key] = {...out[key], refused: words}
+  }
+  return out
+}
+
 /** The binding the runtime hosts the Torus design on: the owner's readings, the device's one submit (the stage channel), and every
  * key the owner does not take disabled with the reason. */
 export function torusDesignBinding(state: LiveTorusState | null, device: DeviceInstance = torusDevice(state), skyHeld: Readonly<Record<string, string>> = {},
@@ -729,7 +761,7 @@ export function torusDesignBinding(state: LiveTorusState | null, device: DeviceI
   tattvaName: CoordinateName | null = condition?.tattva_ref ? coordinateNames().get(condition.tattva_ref) ?? null : null,
   table: BodyTable | null = bodyTable(), commit: (edit: InstrumentEdit) => Promise<{ok: boolean; error?: string}> = commitLiveInstrumentEdit,
   keep: (key: string, value: Value) => void = (key, value) => holdDesign(TORUS_DESIGN_ID, key, value),
-  follow: TorusFollow | null = null): DesignBinding {
+  follow: TorusFollow | null = null, lanes: Readonly<Record<string, Standing>> = {}): DesignBinding {
   const standing: Record<string, Standing> = {}
   for (const key of TORUS_KEYS) {
     const why = writeStanding(state, key)
@@ -774,6 +806,8 @@ export function torusDesignBinding(state: LiveTorusState | null, device: DeviceI
     ...handsFor(TORUS_DESIGN_ID, ['view']),
     // Follow on follows again, and the move that turned it off is no longer its reason.
     [TORUS_FOLLOW]: value => { holdDesign(TORUS_DESIGN_ID, TORUS_FOLLOW, value); if (value !== false) holdDesign(TORUS_DESIGN_ID, TORUS_FOLLOW_OFF, undefined) }}
+  // A take's lanes (torusLaneStanding): over what the binding says of each key, so a key the owner does not take now keeps its reason.
+  for (const [key, lane] of Object.entries(lanes)) standing[key] = {...standing[key], ...lane}
   const submit = device.submit
   const stageAct = async (change: ValueChange) => {
     if (!run) throw new Error(NO_STAGE_FRAME)

@@ -10,6 +10,9 @@
 //     the frame opens it, its controls drawn as every frame control is (frameChrome.tsx: the frame's own control pressed through its one
 //     runner), paged in the head when they do not fit one band (§1). Closing it there closes it in the frame.
 // In the frame's own presentation (the pane at full size) the frame opens them as it always has, and nothing here stands.
+// DLW build ruling 2026-11-05 (O-I #747; manual §20.15): Acts is a device of its own, standing in Device view after the Studio while a frame
+// is hosted ("Give a scene's objects roles, keep reusable material, and play acts — the Acts device, in Device view after the Studio"): its
+// first key is the frame's own Acts (scene/l:Acts), which opens it; open, the frame's Acts controls follow, and the pool shows it whole.
 // Owners write, faces read: nothing here keeps a value of the frame's; every press is the frame's own control.
 import {useEffect, useRef, type CSSProperties} from 'react'
 import type {FrameChromeControl, FrameChromeHome, FrameChromeReading} from '@epilogos/expressions-boundary'
@@ -37,11 +40,16 @@ export interface SummonedEditor {
   readonly home?: FrameChromeHome
   /** What the device is, for the status bar. */
   readonly does: string
+  /** The frame's own control that opens it (its chrome id), drawn first on its plate; absent where the frame opens it itself. */
+  readonly entry?: string
+  /** It stands on the door while a frame is hosted, open or not (the Library's page; Acts, in Device view after the Studio). */
+  readonly stands?: boolean
 }
 
 export const SUMMONED_EDITORS: readonly SummonedEditor[] = [
-  {id: 'expressions:library', face: 'library', title: 'Library', icon: 'lib', does: 'The Expressions library: saved, featured and native works. Open one to bring it into the field.'},
-  {id: 'expressions:acts', face: 'acts', title: 'Acts', icon: 'loop', home: 'acts', does: 'Roles, reusable material and act playback for the open Scene.'},
+  {id: 'expressions:library', face: 'library', title: 'Library', icon: 'lib', stands: true, does: 'The Expressions library: saved, featured and native works. Open one to bring it into the field.'},
+  {id: 'expressions:acts', face: 'acts', title: 'Acts', icon: 'loop', home: 'acts', entry: 'scene/l:Acts', stands: true,
+    does: 'Give the scene\'s objects roles, keep reusable material, and play acts. Its first key opens Acts in the application.'},
   {id: 'expressions:nara-instrument', face: 'nara-instrument', title: 'Nara', icon: 'contact', home: 'nara:instrument', does: 'Your personal Nara layer: your identity, its sky and the conversation, over this Expression.'},
   {id: 'expressions:find', face: 'find', title: 'Find', icon: 'search', home: 'canvas:find', does: 'Find a card or a frame on the Canvas: Enter for the next match.'},
 ]
@@ -66,6 +74,15 @@ export function editorPages(controls: readonly FrameChromeControl[], rows = BAND
   }
   if (page.length || !pages.length) pages.push(page)
   return pages
+}
+
+/** The Acts device (manual §20.15): in Device view after the Studio. */
+export const ACTS_EDITOR: SummonedEditor = SUMMONED_EDITORS.find(editor => editor.id === 'expressions:acts')!
+
+/** An editor's keys: the frame's own control that opens it, then the frame's controls for its home while it is open. Pure. */
+export function editorControls(editor: SummonedEditor, reading: FrameChromeReading | null): FrameChromeControl[] {
+  const entry = editor.entry ? (reading?.controls ?? []).filter(control => control.id.replace(/~\d+$/, '') === editor.entry).slice(0, 1) : []
+  return [...entry, ...(editor.home ? controlsAt(reading, editor.home) : [])]
 }
 
 /** The editors the frame holds open now, by home, from its chrome reading. Pure. */
@@ -98,7 +115,8 @@ let kernelForPanes: KernelApi | null = null
 function EditorPanel({editor, p, view}: {editor: SummonedEditor; p: ViewProps; view: 'compact' | 'whole'}) {
   const chrome = useHostedChrome()
   const frame = useFrameChromeOver(chrome?.state ?? null, chrome?.run ?? null)
-  const controls = editor.home ? controlsAt(frame.reading, editor.home) : []
+  const controls = editorControls(editor, frame.reading)
+  const open = editor.home ? controlsAt(frame.reading, editor.home).length > 0 : false
   const pages = editorPages(controls)
   const at = Math.min(pages.length - 1, Math.max(0, Number.parseInt(p.page || '0', 10) || 0))
   return <Panel title={editor.title} view={view} light="unknown" hint={editor.does} onFold={view === 'compact' ? p.nav.fold : undefined}
@@ -106,8 +124,8 @@ function EditorPanel({editor, p, view}: {editor: SummonedEditor; p: ViewProps; v
     pages={pages.length > 1 ? pages.map((_, index) => ({id: String(index), label: String(index + 1)})) : undefined} page={String(at)} onPage={p.setPage}>
     <Band><Section label={editor.home ? editor.title : 'Library'} grow>
       {!editor.home ? <p className="inst-section-line" data-i={`Library|${editor.does} ⤢ opens it full in a pane.`}>⤢ in a pane</p>
-        : controls.length ? <div className="summoned-controls" style={{'--chrome-rows': BAND_ROWS} as CSSProperties}><FrameControls label={editor.title} controls={pages[at]!} view={frame} /></div>
-        : <p className="inst-section-line" data-i={`${editor.title}|${editor.title} is closed in the application.`}>closed</p>}
+        : <>{controls.length > 0 && <div className="summoned-controls" style={{'--chrome-rows': BAND_ROWS} as CSSProperties}><FrameControls label={editor.title} controls={pages[at]!} view={frame} /></div>}
+          {!open && <p className="inst-section-line" data-i={`${editor.title}|${editor.title} is closed in the application${editor.entry && controls.length ? `: ${controls[0]!.label} opens it` : ''}.`}>closed</p>}</>}
     </Section></Band>
   </Panel>
 }
@@ -116,7 +134,7 @@ function EditorPanel({editor, p, view}: {editor: SummonedEditor; p: ViewProps; v
 function EditorTile({editor, p}: {editor: SummonedEditor; p: ViewProps}) {
   const chrome = useHostedChrome()
   const frame = useFrameChromeOver(chrome?.state ?? null, chrome?.run ?? null)
-  const controls = editor.home ? controlsAt(frame.reading, editor.home).slice(0, 4) : []
+  const controls = editorControls(editor, frame.reading).slice(0, 4)
   return <Tile title={editor.title} light="unknown" onFull={editor.home ? undefined : p.nav.full} onClose={p.nav.close}>
     {controls.length ? <div className="summoned-controls" style={{'--chrome-rows': 4} as CSSProperties}><FrameControls label={editor.title} controls={controls} view={frame} /></div>
       : <p className="inst-section-line">{editor.home ? 'closed' : '⤢ in a pane'}</p>}
@@ -165,14 +183,15 @@ export function useSummonedEditors(): void {
   const open = new Set(openEditors(reading).map(editor => editor.id))
   const openKey = [...open].join('|')
   const libraryKey = reading?.summons?.library ?? null
-  // The Library stands on the door while a frame is hosted (a pane that holds its page outlives a change of presentation): its summon
-  // brings it into view full in a pane — beside the field's pane, never over it (instrumentDoor.ts bringInstrumentIntoView).
+  // The Library and Acts stand on the door while a frame is hosted (a pane that holds the Library's page outlives a change of presentation;
+  // Acts stands in Device view after the Studio, §20.15): the Library's summon brings it into view full in a pane — beside the field's
+  // pane, never over it (instrumentDoor.ts bringInstrumentIntoView).
   const hosted = !!state
   useEffect(() => {
     registerEditorDesigns()
-    const library = SUMMONED_EDITORS[0]!
-    if (hosted) publishDevice(library.id, {device: editorDevice(library)}); else publishDevice(library.id, null)
-    return () => publishDevice(library.id, null)
+    const always = SUMMONED_EDITORS.filter(editor => editor.stands)
+    for (const editor of always) publishDevice(editor.id, hosted ? {device: editorDevice(editor)} : null)
+    return () => {for (const editor of always) publishDevice(editor.id, null)}
   }, [hosted])
   useEffect(() => {
     const next = newSummons(reading, answered.current)
@@ -181,22 +200,22 @@ export function useSummonedEditors(): void {
     try {bringInstrumentIntoView(DEVICE_PANE_KIND, {ref: SUMMONED_EDITORS[0]!.id, title: 'Library'})}
     catch (cause) {console.warn(`The Library could not open in a pane: ${cause instanceof Error ? cause.message : String(cause)}`)}
   }, [libraryKey, devices])
-  // Acts, Nara and Find stand on the door while the frame holds them open; the pool shows the one just opened, and gives the device it
-  // showed before back when it closes.
+  // Nara and Find stand on the door while the frame holds them open (Acts stands while hosted); the pool shows the one just opened, and
+  // gives the device it showed before back when it closes.
   useEffect(() => {
     registerEditorDesigns()
     for (const editor of SUMMONED_EDITORS.slice(1)) {
       if (open.has(editor.id)) {
         if (!shownBefore.current.has(editor.id)) {
           shownBefore.current.set(editor.id, selectedDeviceId())
-          publishDevice(editor.id, {device: editorDevice(editor)})
+          if (!editor.stands) publishDevice(editor.id, {device: editorDevice(editor)})
           selectDevice(editor.id)
         }
       } else if (shownBefore.current.has(editor.id)) {
         const before = shownBefore.current.get(editor.id) ?? null
         shownBefore.current.delete(editor.id)
         if (selectedDeviceId() === editor.id) selectDevice(before)
-        publishDevice(editor.id, null)
+        if (!editor.stands) publishDevice(editor.id, null)
       }
     }
   }, [openKey])

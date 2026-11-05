@@ -264,6 +264,28 @@ export function figureAt(session: TorusSessionReading | null, steps: number | nu
   return isTorusFigure(byBand) ? byBand : isTorusFigure(session.figure) ? session.figure : null;
 }
 
+/** The scene's own shapes for the torus, as its sequence stands now (DLW §21.2 "Sequence follows the shapes you set in the scene"; "A
+ * sequence — its shapes in turn … in the order and timing you set under Sequence"): the scene's first torus that is on (a formation whose
+ * shape is the torus, as field-studies-journeys nativeBridge.ts toNativeConfig hands it: `{kind: 'torus', figure}`), at the state its
+ * sequence stands on and the one it moves to, with the sequence's own progress through its change (the engine's composition telemetry,
+ * types.ts SequenceTelemetry; nothing during a hold). A state that is not a torus shape keeps the torus's own. Null: the scene holds no
+ * torus. Pure. */
+export interface SceneShapes {entity_id: string; from: TorusFigure; to: TorusFigure; progress: number}
+export function sceneShapesOf(telemetry: any): SceneShapes | null {
+  const entities = telemetry?.config?.entities;
+  if (!Array.isArray(entities)) return null;
+  const torus = entities.find((e: any) => e?.kind === 'formation' && e.enabled !== false && e.shape?.kind === 'torus');
+  if (!torus || typeof torus.id !== 'string') return null;
+  const own: TorusFigure = isTorusFigure(torus.shape.figure) ? torus.shape.figure : 'torus';
+  const links: any[] = Array.isArray(torus.sequence?.links) && torus.sequence.links.length ? torus.sequence.links : [{shape: torus.shape}];
+  const figureOf = (link: any): TorusFigure => link?.shape?.kind === 'torus' && isTorusFigure(link.shape.figure) ? link.shape.figure : own;
+  const at = Array.isArray(telemetry.sequences) ? telemetry.sequences.find((s: any) => s?.entityId === torus.id) : null;
+  const index = (value: unknown, fallback: number) => Number.isInteger(value) && (value as number) >= 0 && (value as number) < links.length ? value as number : fallback;
+  const from = index(at?.linkIndex, 0), to = index(at?.nextIndex, from);
+  const progress = at?.phase === 'transition' && Number.isFinite(at.progress) ? Math.min(1, Math.max(0, at.progress)) : 0;
+  return {entity_id: torus.id, from: figureOf(links[from]), to: figureOf(links[to]), progress};
+}
+
 // -------------------------------------------------------------------------------------------------------------------- the morph
 
 /** How long a passage from one shape to the next runs, in pulse steps: half a step, 30° of the 720° cover, one tick of the M3 clock
@@ -521,6 +543,8 @@ export function torusCandidates(figure: TorusShape, lon = 128, lat = 64): {x: nu
 /** The torus object as the pane holds it: the body the owner's influence states, the session that names its shape, and the native frame
  * it presents. One per open instrument; it keeps only what the next frame needs (the passage in progress). */
 export class TorusObject {
+  /** Where the scene's own shapes are read under Sequence (sceneShapesOf over the engine's telemetry); none, the torus keeps its own. */
+  constructor(private readonly sceneShapes: () => SceneShapes | null = () => null) {}
   private body: (TorusBody & {samples: number | null}) | null = null;
   private modeRefs: string[] | null = null;
   private session: TorusSessionReading | null = null;
@@ -531,6 +555,7 @@ export class TorusObject {
   private amplitudes: Map<string, [number, number]> | null = null;
   private steps: number | null = null;
   private figure: TorusFigure | null = null;
+  private sequenced: SceneShapes | null = null;
   private view: TorusView = 'surface';
   private out: Float32Array | undefined;
 
@@ -556,9 +581,13 @@ export class TorusObject {
     const body = this.body;
     if (!body) { this.shown = null; return null; }
     this.steps = stepsAt(this.session, Number(frame?.samples_elapsed), this.sampleRate);
-    this.figure = figureAt(this.session, this.steps);
+    // Under Sequence the scene's own shapes set the figure, and the passage keeps the sequence's own timing (DLW §21.2), not the pulse's.
+    const sequenced = this.sequenced = this.session?.settings?.shape === 'sequence' ? this.sceneShapes() : null;
+    this.figure = sequenced ? (sequenced.progress < 0.5 ? sequenced.from : sequenced.to) : figureAt(this.session, this.steps);
     const shape: TorusShape = this.flat ? 'plate' : this.figure ?? 'torus';
-    const morph = this.steps === null ? this.morph.snap(shape) : this.morph.at(shape, this.steps);
+    const passing = !this.flat && sequenced && sequenced.from !== sequenced.to && sequenced.progress > 0;
+    const held = this.steps === null || sequenced ? this.morph.snap(shape) : this.morph.at(shape, this.steps);
+    const morph: MorphState = passing ? {from: sequenced.from, to: sequenced.to, progress: sequenced.progress, since: null} : held;
     const state: PresentState = {morph, angle: clockAngle(frame?.clock, body.attachment), view: this.view};
     this.shown = state;
     const targets = Array.isArray(frame?.targets) ? frame.targets : [];
@@ -580,7 +609,9 @@ export class TorusObject {
     const body = this.body, shown = this.shown;
     if (!body) return {schema: 'oi.torus-object/v1', standing: 'unread' as const, reason: 'The owner states no voices and boundaries for the torus yet.', amplitudes: null, view: this.view};
     return {schema: 'oi.torus-object/v1', standing: 'read' as const, view: this.view,
-      shape: {law: this.figure, shown: shown?.morph ?? null, steps: this.steps, flat: this.flat},
+      shape: {law: this.figure, shown: shown?.morph ?? null, steps: this.steps, flat: this.flat,
+        // Under Sequence: the scene's torus and where its shapes stand, or null while the scene holds none.
+        ...(this.session?.settings?.shape === 'sequence' ? {sequence: this.sequenced} : {})},
       layers: ['bimba', 'pratibimba'],
       voices: body.voices.map(v => { const a = this.amplitudes?.get(v.mode_ref); return {mode_ref: v.mode_ref, level: a ? Math.min(1, Math.hypot(a[0], a[1]) / body.strikeMetres) : 0, place: helixPlace(v.helix, v.longitude_radians)}; }),
       boundaries: boundaryLines(body),
