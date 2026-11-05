@@ -7,6 +7,8 @@ export interface GlyphItem {
   char: string;
   name: string;
   category: string;
+  /** The M3′ form the glyph is drawn from, for the forms' items: the symbol keeps it beside the text (O-I #852). */
+  form?: M3Form;
 }
 
 export interface GlyphCategory {
@@ -319,16 +321,18 @@ export const CHAIN_PRESETS: ChainPreset[] = [
 
 // ------------------------------------------------------------------------------------------------- M3′ forms as glyphs (O-I #852)
 //
-// A symbol can take its glyph from a form of M3′: a fold, a codon or a hexagram, beside letters, shapes and images. The three are
-// one address of six bits (QL ql-core pole/codon.rs Codon64): bit ℓ is the I-Ching line ℓ (line 0 the bottom); the three sites own
+// A symbol can take its glyph from a form of M3′: a fold, a codon, a hexagram or a card, beside letters, shapes and images. The four
+// are one address of six bits (QL ql-core pole/codon.rs Codon64): bit ℓ is the I-Ching line ℓ (line 0 the bottom); the three sites own
 // two lines each (lines 0–1 the inner site Z, 2–3 the hinge Y, 4–5 the outer site X), the even bit a site's polarity (1 yang,
 // a mountain crease) and the odd bit its mobility (1 resting); the nucleotide of a site is its two bits (A 0, T 1, C 2, G 3,
 // pole/nucleotide.rs). A step changes the form by QL's own law: a moving line flips one bit (Codon64::line_change, the 384
 // one-line changes), and a turn about a matrix axis applies that matrix's partner on every site (MatrixFamily::apply_to_codon:
 // the address XOR 0x15 for the complementary matrix on i, 0x3F for moving/resting on j, 0x2A for same-quality on k).
-// The form keeps its meaning as a symbol: the glyph is drawn from the address, and the address travels with the shape.
+// The form keeps its meaning as a symbol: the glyph is drawn from the address, and the address travels with the shape. A card is the
+// codon as the Minor Arcana card QL's exact cover gives it (ql-core pole/tarot.rs TarotBridge::card_of_codon): it steps as its codon
+// does, and draws the card its codon lands on.
 
-export type M3FormKind = 'fold' | 'codon' | 'hexagram';
+export type M3FormKind = 'fold' | 'codon' | 'hexagram' | 'card';
 export interface M3Form { kind: M3FormKind; address: number }
 export type M3Axis = 'i' | 'j' | 'k';
 export type M3Step = { line: number } | { axis: M3Axis };
@@ -342,7 +346,7 @@ export const M3_AXIS_MATRIX: Readonly<Record<M3Axis, 'complementary' | 'moving-r
 const NUCLEOTIDES = ['A', 'T', 'C', 'G'] as const;
 
 function assertForm(form: M3Form): void {
-  if (!['fold', 'codon', 'hexagram'].includes(form.kind)) throw new Error(`An M3′ form is a fold, a codon or a hexagram, not ${String(form.kind)}`);
+  if (!['fold', 'codon', 'hexagram', 'card'].includes(form.kind)) throw new Error(`An M3′ form is a fold, a codon, a hexagram or a card, not ${String(form.kind)}`);
   if (!Number.isInteger(form.address) || form.address < 0 || form.address > 63) throw new Error('An M3′ form\'s address is one of the 64, 0 to 63');
 }
 
@@ -391,11 +395,48 @@ export function kingWen(address: number): number {
   return KING_WEN[lower][upper];
 }
 
+/** The suits in QL's order (TarotSuit: Cups 0, Wands 1, Pentacles 2, Swords 3), each the family of the outer site's nucleotide (A, T, C,
+ * G), and the sign a card of the suit is drawn with: the playing-card suit that stands for it (Cups hearts, Wands clubs, Pentacles
+ * diamonds, Swords spades). */
+const SUITS = [['Cups', '♥'], ['Wands', '♣'], ['Pentacles', '♦'], ['Swords', '♠']] as const;
+/** The pip slots in QL's RWS register (TarotPip::rws_name), and the sign each is drawn with. */
+const RANKS = [['Ace', 'A'], ['Two', '2'], ['Three', '3'], ['Four', '4'], ['Five', '5'], ['Six', '6'], ['Seven', '7'], ['Eight', '8'],
+  ['Nine', '9'], ['Ten', '10'], ['Page', 'P'], ['Knight', 'Kn'], ['Queen', 'Q'], ['King', 'K']] as const;
+/** QL's exact cover of the 64 codons by the 56 Minor Arcana cards, by suit in QL's order and pip ascending, each card its codon's letters,
+ * outer site first (a court carrying two, its primary first): the kernel's M3_TAROT_CODON_MAP (vendor/epi-kernel/reference/src/m3.c
+ * FR 2.3.19, parsed by ql-core pole/tarot.rs parse_kernel_source), transcribed. The yin suits carry their two codons at the Knight and
+ * the King, the yang suits at the Page and the Queen. */
+const CARD_CODONS: readonly (readonly string[])[] = [
+  ['AAA', 'AAG', 'AAT', 'ACC', 'ATG', 'AGA', 'AGT', 'AGG', 'ATT', 'ATA', 'ACA', 'ACG AGC', 'AAC', 'ACT ATC'],
+  ['TTT', 'TTA', 'TTC', 'TGG', 'TAC', 'TCA', 'TCC', 'TAA', 'TCT', 'TAT', 'TAG TGA', 'TGT', 'TCG TGC', 'TTG'],
+  ['CCC', 'CCG', 'CCT', 'CAA', 'CGC', 'CGG', 'CGT', 'CTG', 'CTT', 'CTC', 'CCA', 'CAG CGA', 'CAC', 'CAT CTA'],
+  ['GGG', 'GGA', 'GGC', 'GTT', 'GAC', 'GAG', 'GCA', 'GCC', 'GAA', 'GCG', 'GCT GTC', 'GGT', 'GAT GTA', 'GTG'],
+];
+const addressOf = (letters: string) => [...letters].reduce((address, n) => (address << 2) | NUCLEOTIDES.indexOf(n as (typeof NUCLEOTIDES)[number]), 0);
+
+/** A Minor Arcana card as QL's M3 state names it (`tarot`: card_id, suit, rank, codons), its pip slot and the sign it is drawn with. */
+export interface M3Card { cardId: number; suit: string; rank: string; pip: number; codons: number[]; sign: string }
+const CARDS: readonly M3Card[] = CARD_CODONS.flatMap((suit, s) => suit.map((codons, pip) => ({
+  cardId: s * 14 + pip, suit: SUITS[s][0], rank: RANKS[pip][0], pip, codons: codons.split(' ').map(addressOf), sign: `${RANKS[pip][1]}${SUITS[s][1]}`,
+})));
+const CARD_OF_CODON: readonly M3Card[] = (() => {
+  const of: M3Card[] = [];
+  for (const card of CARDS) for (const codon of card.codons) of[codon] = card;
+  return of;
+})();
+
+/** The card QL's exact cover gives a form's codon (TarotBridge::card_of_codon), whatever its kind. */
+export function m3Card(form: M3Form): M3Card {
+  assertForm(form);
+  return CARD_OF_CODON[form.address];
+}
+
 /** The text the glyph rasteriser draws for a form: a fold's three creases (∧ a mountain, ∨ a valley; dotted ⋏ ⋎ when moving), a
- * codon's letters, or a hexagram's sign (U+4DC0 ䷀ … U+4DFF ䷿, in King Wen order). */
+ * codon's letters, a hexagram's sign (U+4DC0 ䷀ … U+4DFF ䷿, in King Wen order), or a card's rank and suit sign (A♥ the Ace of Cups). */
 export function m3FormGlyph(form: M3Form): string {
   assertForm(form);
   if (form.kind === 'codon') return codonLetters(form);
+  if (form.kind === 'card') return m3Card(form).sign;
   if (form.kind === 'fold') return m3Sites(form).map(site => (site.yang ? (site.resting ? '∧' : '⋏') : (site.resting ? '∨' : '⋎'))).join('');
   return String.fromCodePoint(0x4dc0 + kingWen(form.address) - 1);
 }
@@ -425,15 +466,45 @@ export function m3FormMorph(form: M3Form, step: M3Step, lens = 0) {
   };
 }
 
-/** The M3′ forms category of the glyph library: the 64 hexagrams, by address. */
+/** The four ways a form is drawn, by the editor's words for them. */
+export const M3_FORM_KINDS: readonly { kind: M3FormKind; label: string }[] = [
+  { kind: 'fold', label: 'Fold' }, { kind: 'codon', label: 'Codon' }, { kind: 'hexagram', label: 'Hexagram' }, { kind: 'card', label: 'Card' },
+];
+
+/** The steps the editor offers a form: each of the six lines (1 the bottom), and a turn about each matrix axis. */
+export const M3_STEPS: readonly { step: M3Step; label: string; does: string }[] = [
+  ...Array.from({ length: 6 }, (_, line) => ({ step: { line }, label: String(line + 1), does: `Move line ${line + 1}${line === 0 ? ', the bottom' : line === 5 ? ', the top' : ''}` })),
+  ...(['i', 'j', 'k'] as const).map(axis => ({ step: { axis }, label: axis, does: `Turn about ${axis}: the ${M3_AXIS_MATRIX[axis]} matrix's partner on every site` })),
+];
+
+/** What a symbol drawn from a form holds: the text the form draws, and the form itself. */
+export function m3FormShape(form: M3Form): { text: string; form: M3Form } {
+  return { text: m3FormGlyph(form), form };
+}
+
+/** The form a symbol keeps when its text is set: its own form while the text is still the one the form draws, none once it is not. */
+export function formOfText(shape: { text?: string; form?: M3Form }, text: string): M3Form | undefined {
+  return shape.form && m3FormGlyph(shape.form) === text ? shape.form : undefined;
+}
+
+/** The M3′ forms category of the glyph library: the 64 hexagrams, by address, then the 56 cards, in QL's deck order. */
 export const M3_FORM_CATEGORY: GlyphCategory = {
   id: 'm3-forms',
   name: 'M3′ forms',
-  description: 'Folds, codons and hexagrams of M3′: a step moves one line or turns about a matrix axis',
-  items: Array.from({ length: M3_FORMS }, (_, address) => ({
-    char: m3FormGlyph({ kind: 'hexagram', address }),
-    name: `${kingWen(address)} · ${codonLetters({ kind: 'codon', address })} · ${address.toString(2).padStart(6, '0')}`,
-    category: 'm3-forms',
-  })),
+  description: 'Folds, codons, hexagrams and cards of M3′: a step moves one line or turns about a matrix axis',
+  items: [
+    ...Array.from({ length: M3_FORMS }, (_, address) => ({
+      char: m3FormGlyph({ kind: 'hexagram', address }),
+      form: { kind: 'hexagram' as const, address },
+      name: `${kingWen(address)} · ${codonLetters({ kind: 'codon', address })} · ${address.toString(2).padStart(6, '0')}`,
+      category: 'm3-forms',
+    })),
+    ...CARDS.map(card => ({
+      char: card.sign,
+      form: { kind: 'card' as const, address: card.codons[0] },
+      name: `${card.rank} of ${card.suit} · ${card.codons.map(address => codonLetters({ kind: 'codon', address })).join(' ')}`,
+      category: 'm3-forms',
+    })),
+  ],
 };
 GLYPH_CATEGORIES.push(M3_FORM_CATEGORY);

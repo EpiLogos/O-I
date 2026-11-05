@@ -89,6 +89,22 @@ test('the session is read again at human cadence while the field follows, so the
  }finally{await c.dispose();}
 });
 
+test('the comma starts from nothing when the Torus reopens: released, its reading goes with its owner; reopened, the new owner\'s comma',async()=>{
+ const {owner,c}=await open();
+ try{
+  owner.comma=46.92;
+  await c.torusState();
+  assert.equal(c.reading.instrument.torus.comma_cents,46.92,'two returns gathered');
+  await c.release();
+  assert.equal(c.reading?.instrument?.torus??null,null,'released, no comma stands');
+  await c.compose({sky:'none'});
+  assert.equal(c.reading.instrument.torus,null,'reopened, nothing stands before the new owner is read');
+  assert.equal(announceInstrument(c.reading).parameters.torus,undefined,'and none is announced');
+  await c.torusState();
+  assert.equal(c.reading.instrument.torus.comma_cents,0,'the reopened Torus gathers from nothing');
+ }finally{await c.dispose();}
+});
+
 test('the frame announces the owner\'s Torus session as parameters.torus, and none before the owner is read',async()=>{
  const {c}=await open();
  try{

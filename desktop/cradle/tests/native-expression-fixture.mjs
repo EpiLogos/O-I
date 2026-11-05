@@ -101,6 +101,8 @@ export class ControlledSceneOwner {
   if(request.operation==='close'){this.closed=true;this.active=false;return{schema:'oi.native-expression-closed/v1',closed:true};}
   if(request.operation==='compose'){
    if(this.active)throw new Error('native-expression.owner_busy');this.active=true;this.closed=false;this.sequence=0n;
+   // A scene opened is a new owner, whose Torus gathers its comma from nothing (QL m1_prime.rs: "from nothing when the Torus opens").
+   this.comma=0;
    this.frame={...controlledFrame(),event_ref:'controlled:scene',m2_identity:{event_ref:'controlled:scene',profile_generation:1}};
    const [w,h]=request.request.texture,slots=Array.from({length:w*h},(_,i)=>i%2);
    return{schema:'oi.native-expression-open/v1',lease:'controlled:scene-lease',source:{schema:'oi.native-expression-composed-source/v1',sky:null},presentation:{units_per_metre:request.request.units_per_metre,slots_a:slots,slots_b:slots},
