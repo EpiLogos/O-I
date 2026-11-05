@@ -117,3 +117,13 @@ test('Receiver is announced as On or Off, the owner\'s context and its refusal: 
   assert.equal('receiver' in announceInstrument(controllerReading()).parameters, false, 'a reading without one announces none');
   assert.doesNotMatch(JSON.stringify(announceInstrument(heard)), /at_metres|gains/);
 });
+
+// O-I #856: a place shared under a reference is announced with its reference, as QL discloses it; the place itself never, and the
+// listener's own context never with a reference.
+test('a shared Receiver is announced with its reference, never its place; the listener\'s own context with none', () => {
+  const shared = controllerReading({receiver: {on: true, context: 'shared', shared: 'room-7', gains: [{mode_ref: 'scene:logic/0', gain: 0.5}], law: 'the law', refusal: null}});
+  assert.deepEqual(announceInstrument(shared).parameters.receiver, {on: true, context: 'shared', shared: 'room-7', refusal: null});
+  const personal = controllerReading({receiver: {on: true, context: 'personal', shared: 'room-7', gains: null, law: null, refusal: null}});
+  assert.deepEqual(announceInstrument(personal).parameters.receiver, {on: true, context: 'personal', refusal: null}, 'a reference only with a shared place');
+  assert.doesNotMatch(JSON.stringify(announceInstrument(shared)), /at_metres|gains/);
+});

@@ -460,7 +460,9 @@ function followBound(follow, s = state()) {
   return model.torusDesignBinding(s, undefined, {}, null, undefined, null, holds.heldFor(model.TORUS_DESIGN_ID), null, null, null, async () => ({ok: true}), undefined, follow)
 }
 
-test('the binding: Follow is on until you turn it off, the Lens and Frame say what it takes, and off they are yours to choose', () => {
+// REPLACED (lane BA, round 865, DLW build ruling 2026-11-05): under Follow the Lens and Frame are no longer closed. A hand-moved or
+// MIDI-mapped Lens or Frame turns Follow off, as a hand move takes a Live control out of its automation (below).
+test('the binding: Follow is on until you turn it off, the Lens and Frame stay in your hand, and off they are yours to choose', () => {
   holds.resetHolds()
   const followed = model.torusFollowed({scale: true, mode: 'dorian'}, setMode(AEOLIAN_L3P))
   const on = followBound(followed)
@@ -468,8 +470,8 @@ test('the binding: Follow is on until you turn it off, the Lens and Frame say wh
   assert.equal(on.values['mode.followed'], 'Clip: Dorian, L3′')
   assert.equal(typeof on.local['mode.follow'], 'function', 'the hand keeps Follow')
   for (const key of ['lens', 'context-frame']) {
-    assert.equal(on.writes(key), false, `${key}: Follow sets it`)
-    assert.match(on.standing[key].disabled, /^Follow takes the clip's mode, Dorian \(CF2\), on the set's lens L3′\. Turn Follow off to choose a lens and a mode\.$/)
+    assert.equal(on.writes(key), true, `${key}: a move of yours is sent, and turns Follow off`)
+    assert.equal(on.standing[key]?.disabled, undefined, `${key}: not closed under Follow`)
   }
   const nothing = followBound(model.torusFollowed(null, NONE_CHOSEN))
   assert.equal(nothing.values['mode.followed'], undefined)
@@ -485,12 +487,99 @@ test('the binding: Follow is on until you turn it off, the Lens and Frame say wh
   assert.equal(host.writes('lens'), true, 'and the lens stays yours, as before')
 })
 
+// DLW build ruling 2026-11-05: a hand-moved or MIDI-mapped Lens or Frame turns Follow off, as a hand move takes a Live control out of
+// its automation; the readout says so in words, and turning Follow on follows again. Every write reaches the owner through the one stage
+// channel (torusInstrument.ts commitLiveStage), which tells its listeners whether the hand sent it: the device's own rows, the Live
+// instrument section and a mapped control send theirs as the hand's; Follow's own edits, a take played again, a sound or rack recalled
+// and the set opening with its Torus do not, so none of them turns Follow off.
+test('a Lens or Frame moved by hand or by a mapped control turns Follow off and says so; an edit the hand did not send does not; Follow on follows again', () => {
+  holds.resetHolds()
+  const followed = model.torusFollowed({scale: true, mode: 'dorian'}, setMode(AEOLIAN_L3P))
+  model.torusFollowMoved({command: 'instrument', edit: {kind: 'lens', lens12: 7}}, {})
+  model.torusFollowMoved({command: 'instrument', edit: {kind: 'context-frame', context_frame: 5}})
+  assert.equal(holds.heldFor(model.TORUS_DESIGN_ID)['mode.follow'], undefined, 'a Lens or Frame the hand did not send is not a move')
+  model.torusFollowMoved({command: 'instrument', edit: {kind: 'level', value: 0.5}}, {hand: true})
+  model.torusFollowMoved({command: 'strike-at', points: []}, {hand: true})
+  assert.equal(holds.heldFor(model.TORUS_DESIGN_ID)['mode.follow'], undefined, 'a move of anything else leaves Follow on')
+  model.torusFollowMoved({command: 'instrument', edit: {kind: 'context-frame', context_frame: 5}}, {hand: true})
+  assert.equal(holds.heldFor(model.TORUS_DESIGN_ID)['mode.follow'], false, 'a Frame moved by hand or a mapped control turns Follow off')
+  const off = followBound(followed)
+  assert.equal(off.values['mode.follow'], false)
+  assert.match(off.standing['mode.followed'].disabled, /^Follow is off: you moved the Frame yourself\. Turn Follow on to follow the clip's or the set's mode again\.$/)
+  model.torusFollowMoved({command: 'instrument', edit: {kind: 'lens', lens12: 3}}, {hand: true})
+  assert.match(followBound(followed).standing['mode.followed'].disabled, /you moved the Frame yourself/, 'Follow already off: the first move stays the reason')
+  off.local['mode.follow'](true)
+  const again = followBound(followed)
+  assert.equal(again.values['mode.follow'], true, 'Follow on follows again')
+  assert.equal(again.values['mode.followed'], 'Clip: Dorian, L3′')
+  assert.equal(holds.heldFor(model.TORUS_DESIGN_ID)['mode.followOff'], undefined, 'and the reason is gone with it')
+  off.local['mode.follow'](false)
+  assert.match(followBound(followed).standing['mode.followed'].disabled, /^Follow is off: the lens and mode are the ones you choose\.$/, 'turned off by its own toggle')
+  holds.resetHolds()
+})
+
+test('the stage channel tells its listeners whether the hand sent a write: the device\'s own Lens row is the hand\'s, an edit sent without it is not', async () => {
+  holds.resetHolds()
+  const instrument = await import(src('live/torusInstrument.ts'))
+  const heard = []
+  instrument.setLiveInstrumentCommander(async () => ({ok: true}))
+  const stop = instrument.subscribeAcceptedLiveWrites((command, how) => heard.push([command.edit?.kind, how?.hand === true]))
+  const stopFollow = instrument.subscribeAcceptedLiveWrites(model.torusFollowMoved)
+  try {
+    await instrument.commitLiveInstrumentEdit({kind: 'lens', lens12: 2})
+    assert.deepEqual(heard, [['lens', false]], 'an edit sent without the hand is told as not the hand\'s')
+    assert.equal(holds.heldFor(model.TORUS_DESIGN_ID)['mode.follow'], undefined, 'and leaves Follow on')
+    await model.torusDevice(state()).submit([{key: 'lens', value: 'L3′'}])
+    assert.deepEqual(heard[1], ['lens', true], 'the device\'s own Lens row sends its edit as the hand\'s')
+    assert.equal(holds.heldFor(model.TORUS_DESIGN_ID)['mode.follow'], false, 'so the Lens moved by hand turns Follow off')
+    assert.equal(holds.heldFor(model.TORUS_DESIGN_ID)['mode.followOff'], 'lens')
+    instrument.setLiveInstrumentCommander(async () => ({ok: false, error: 'held elsewhere'}))
+    holds.resetHolds()
+    await model.torusDevice(state()).submit([{key: 'lens', value: 'L3′'}]).catch(() => {})
+    assert.equal(holds.heldFor(model.TORUS_DESIGN_ID)['mode.follow'], undefined, 'a hand move the owner refused moved nothing, and Follow stays on')
+  } finally {
+    stop(); stopFollow(); instrument.setLiveInstrumentCommander(null); holds.resetHolds()
+  }
+})
+
+test('the chain hears every accepted move and sends Follow\'s edits without the hand, once per mode it follows; the Live instrument section and a mapped control send theirs as the hand\'s', async () => {
+  const chain = await readFile(new URL('../src/live/TorusOnChain.tsx', import.meta.url), 'utf8')
+  assert.match(chain, /subscribeAcceptedLiveWrites\(torusFollowMoved\)/, 'every move the owner accepts, through the one stage channel')
+  assert.match(chain, /for \(const edit of edits\) if \(!\(await commitLiveInstrumentEdit\(edit\)\)\.ok\) return/, 'Follow\'s own edits go without the hand')
+  assert.match(chain, /const target = on && follow\?\.from \? JSON\.stringify\(\[follow\.lens12, follow\.context_frame\]\) : ''/,
+    'once per mode followed: an owner that moves under a hand is not moved back')
+  const section = await readFile(new URL('../src/live/LiveInstrumentSection.tsx', import.meta.url), 'utf8')
+  assert.match(section, /commitLiveInstrumentEdit\(edit, BY_HAND\)/, 'the Live instrument section\'s controls are the hand')
+  const targets = await readFile(new URL('../src/live/midiMap/midiMapTargets.ts', import.meta.url), 'utf8')
+  assert.match(targets, /apply: value => commitLiveInstrumentEdit\(row\.edit\(value\), BY_HAND\)/, 'a mapped Lens or Frame is the hand')
+  assert.doesNotMatch(targets, /commitLiveInstrumentEdit\(\{[^)]*\}\)\s*[,}]/, 'every mapped write is the hand\'s')
+})
+
+// DLW build ruling 2026-11-05: View and Follow are kept with the device in the set (live/liveTake.ts createTorusKeeper, beside the part's
+// Torus in the set's DLW record), so a set opened again holds them as they were.
+test('the device\'s View and Follow are read as the hand holds them, and a set\'s are held again, with no move left as Follow\'s reason', () => {
+  holds.resetHolds()
+  assert.deepEqual(model.torusDeviceHeld(), {view: 'surface', follow: true}, 'Surface and Follow on until you choose')
+  model.torusFollowMoved({command: 'instrument', edit: {kind: 'lens', lens12: 3}}, {hand: true})
+  holds.hold(model.TORUS_DESIGN_ID, 'view', 'both')
+  assert.deepEqual(model.torusDeviceHeld(), {view: 'both', follow: false})
+  model.holdTorusDevice({view: 'wire', follow: false})
+  assert.deepEqual(model.torusDeviceHeld(), {view: 'wire', follow: false}, 'a set opened again holds its View and Follow')
+  assert.equal(holds.heldFor(model.TORUS_DESIGN_ID)['mode.followOff'], undefined, 'and no move of this session is its reason')
+  const followed = model.torusFollowed({scale: true, mode: 'dorian'}, setMode(AEOLIAN_L3P))
+  assert.match(followBound(followed).standing['mode.followed'].disabled, /^Follow is off: the lens and mode are the ones you choose\.$/)
+  model.holdTorusDevice({view: 'surface', follow: true})
+  assert.equal(followBound(followed).values['mode.follow'], true)
+  holds.resetHolds()
+})
+
 test('the Mode and tuning group draws Follow beside the Lens and Frame, and the chain reads the selected clip and the set\'s mode for it', async () => {
   holds.resetHolds()
   const binding = followBound(model.torusFollowed({scale: true, mode: 'dorian'}, setMode(AEOLIAN_L3P)))
   setHostPage(binding.id, 'field')
   const whole = renderToStaticMarkup(h(HostedDevice, {designed: torus, binding, view: 'whole', nav: {}}))
-  assert.match(whole, /data-i="Follow\|On — Follow takes the clip&#x27;s mode, or the set&#x27;s when the clip has none\."/)
+  // REPLACED (lane BA, round 865, DLW build ruling 2026-11-05): Follow says that a Lens or Frame you move turns it off.
+  assert.match(whole, /data-i="Follow\|On — Follow takes the clip&#x27;s mode, or the set&#x27;s when the clip has none\. A Lens or Frame you move turns it off\."/)
   assert.match(whole, /Clip: Dorian, L3′/)
   assert.doesNotMatch(whole, /\bNaN\b|undefined|data-device-fault/)
   resetHost(binding.id)
@@ -500,4 +589,19 @@ test('the Mode and tuning group draws Follow beside the Lens and Frame, and the 
   assert.match(chain, /torusFollowEdits\(/, 'and the edits Follow names')
   const host = await readFile(new URL('../src/live/LiveDeviceChain.tsx', import.meta.url), 'utf8')
   assert.match(host, /<TorusOnChain [^>]*selection=\{selection\}/, 'the chain hands the Torus the clip you select')
+})
+
+test('(O-I 743) the Torus head\'s Map enters the MIDI map, where its parameters take a control: the head act the shell carries itself; the rest wait for their owners', async () => {
+  const map = await import(src('live/midiMap/midiMapHold.ts'))
+  const {headMenu} = await import(src('frame/devices/DeviceMenu.tsx'))
+  map.resetMidiMapHold()
+  const items = headMenu({onChain: true, folded: false, acts: model.TORUS_HEAD_ACTS})
+  assert.deepEqual(items.filter(item => item.enabled).map(item => item.id), ['fold', 'map'])
+  assert.match(items.find(item => item.id === 'save-preset').why, /missing op: device\.preset\.save/)
+  model.TORUS_HEAD_ACTS.map()
+  assert.equal(map.midiMapState().mode, 'midi')
+  assert.match(map.midiMapState().notice, /^Click a parameter, then move a hardware control/)
+  map.resetMidiMapHold()
+  const chain = await readFile(new URL('../src/live/TorusOnChain.tsx', import.meta.url), 'utf8')
+  assert.match(chain, /publishDevice\(TORUS_DEVICE_ID, \{device, binding, picture: .*, acts: TORUS_HEAD_ACTS, full: /)
 })

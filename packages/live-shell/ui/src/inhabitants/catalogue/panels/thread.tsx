@@ -15,6 +15,8 @@
 //   output. A proposal or stall row says in `state` how it was answered (approve | changes | diff, retry | stop | steer | parent).
 //   An `ask` row is a typed question a member put to a decision helper: `tool` names the helper (its face is an animal), `labels`
 //   the answers it allowed, `out` the answer. The answer is evidence the engine checks; it never stands for what the agent saw.
+//   A message of Messages' conversation may carry `drag`: what it names dragged onto a track (its Communique, the Position it went to and
+//   the work it would become, agent/devices/railTileIds.ts CommuniqueDrag), carried under COMMUNIQUE_DRAG; its owner reads the drop.
 // - `sessions`: the list the Session chooser offers, as rows of {id, name, short, agent, model, used, cap, parent?, thread?}. A
 //   row's own `thread` is that session's stream: it shows when the session is opened, and under a spawn row set to Inline.
 //
@@ -36,6 +38,7 @@
 import {memo, useMemo, useRef, useState, type ReactNode} from 'react'
 import {Action, Band, Chooser, Display, Folded, Handle, Panel, Radio, Readout, Section, TextField, Tile, Toggle, type LightState, type Option, type Standing, useLayoutIso} from '../../sdk/panel'
 import {maskStatic} from '../../../agent/maskFace'
+import {COMMUNIQUE_DRAG} from '../../../agent/devices/railTileIds'
 import {NONE, boolOf, clampTo, has, json, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import './thread.css'
 
@@ -100,6 +103,8 @@ interface Row {
   readonly link?: string
   /** An ask row: the answers the helper was allowed. */
   readonly labels?: readonly string[]
+  /** A message the hand may drag onto a track: what it names there, as its owner hands it. */
+  readonly drag?: string
 }
 
 const word = (x: unknown): string | undefined => (typeof x === 'string' && x.length > 0 ? x : undefined)
@@ -113,7 +118,7 @@ function parseRows(raw: unknown): Row[] | undefined {
     if (!item || typeof item !== 'object') continue
     const o = item as Record<string, unknown>
     rows.push({kind: KINDS.find(k => k === o.kind) ?? 'text', who: word(o.who), text: typeof o.text === 'string' ? o.text : '', tool: word(o.tool), out: word(o.out),
-      state: word(o.state), link: word(o.link), labels: Array.isArray(o.labels) ? o.labels.filter((l): l is string => typeof l === 'string') : undefined})
+      state: word(o.state), link: word(o.link), labels: Array.isArray(o.labels) ? o.labels.filter((l): l is string => typeof l === 'string') : undefined, drag: word(o.drag)})
   }
   return rows
 }
@@ -175,6 +180,8 @@ interface Item {
   /** A thought: its lifecycle, and the units of the Run map it is about. */
   readonly life?: Life
   readonly subjects?: readonly string[]
+  /** A message the hand may drag onto a track (Row.drag). */
+  readonly drag?: string
 }
 
 const STALL_ANSWERS = {
@@ -203,8 +210,8 @@ function toItems(rows: readonly Row[], at: string, ctx: ItemContext): Item[] {
   return rows.map((row, i): Item => {
     const id = `${at}${i}`
     switch (row.kind) {
-      case 'you': return {id, k: 'you', who: row.who, text: row.text}
-      case 'agent': return {id, k: 'agent', who: row.who ?? ctx.agent, text: row.text}
+      case 'you': return {id, k: 'you', who: row.who, text: row.text, drag: row.drag}
+      case 'agent': return {id, k: 'agent', who: row.who ?? ctx.agent, text: row.text, drag: row.drag}
       case 'tool': return {id, k: 'tool', tool: row.tool, text: row.text, out: row.out, state: stateOf(row.state)}
       case 'spawn': return {id, k: 'spawn', who: row.who, text: row.text, state: row.state ? stateOf(row.state) : undefined, link: row.link, lines: ctx.inline?.(row.link)}
       case 'steer': return {id, k: 'steer', who: row.who, text: row.text, sub: row.state === 'heard' ? 'heard' : ctx.sub}
@@ -212,7 +219,7 @@ function toItems(rows: readonly Row[], at: string, ctx: ItemContext): Item[] {
       case 'proposal': return {id, k: 'proposal', who: row.who, tool: row.tool, text: row.text, answer: answerIn(PROPOSAL_ANSWERS, row.state)}
       case 'stall': return {id, k: 'stall', who: row.who, tool: row.tool, text: row.text, answer: answerIn(STALL_ANSWERS, row.state)}
       case 'ask': return {id, k: 'ask', who: row.who ?? ctx.agent, tool: row.tool, text: row.text, out: row.out, labels: row.labels}
-      default: return {id, k: 'text', who: row.who, text: row.text}
+      default: return {id, k: 'text', who: row.who, text: row.text, drag: row.drag}
     }
   })
 }
@@ -566,7 +573,10 @@ function ThreadPane({p}: {p: ViewProps}) {
   /** A row with its avatar. `named`: the speaker's name stands before the words (a card needs none: the face says who). */
   const bubble = (it: Item, body: ReactNode, named = true) => {
     const mine = it.k === 'you' || it.k === 'steer' || it.k === 'queued', who = it.who ?? (mine ? 'you' : NONE), agent = it.k === 'agent' || it.k === 'proposal' || it.k === 'stall' || it.k === 'ask'
-    return <div className="th-row" key={it.id}>
+    // A message its owner lets the hand drag onto a track carries what it names there under its own type (O-I ticket 757).
+    const drag = it.drag
+    return <div className="th-row" key={it.id} draggable={drag ? true : undefined} data-i={drag ? 'Message|Drag it onto its agent\'s track, and it becomes the work the agent stands on.' : undefined}
+      onDragStart={drag ? event => { event.dataTransfer.setData(COMMUNIQUE_DRAG, drag); event.dataTransfer.setData('text/plain', it.text); event.dataTransfer.effectAllowed = 'copy' } : undefined}>
       <span className="th-av" data-agent={agent || undefined}>{agent ? <Avatar size={18} /> : who === 'you' ? 'Y' : who.slice(0, 1)}</span>
       <div className="th-body">{named && <span className="th-who" data-agent={agent || undefined}>{who}</span>}{body}</div>
     </div>

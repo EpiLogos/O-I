@@ -286,3 +286,42 @@ test('the hook reads the one agency store and only the owner\'s control path; wi
   const adapter = await readFile(new URL('../src/timeline/factoryTrackAdapter.ts', import.meta.url), 'utf8')
   assert.doesNotMatch(adapter, /^import .*from '(react|[^']*kernel[^']*|[^']*harnessAgentControl[^']*)'/m, 'the adapter is pure: the owner call is handed in')
 })
+
+test('(#757) a message dragged from Messages onto its agent\'s track crosses into the work the agent stands on: the tracks take the drag, and the drop writes Messages\' delegate {communique, work, reason}', async () => {
+  const {factoryTrackSet} = await import('../src/frame/tracks/useFactoryTracks.ts')
+  const {publishDevice} = await import('../src/frame/devices/deviceDoor.ts')
+  const ids = await import('../src/agent/devices/railTileIds.ts')
+  const {SONG_CLIP_DRAG} = await import('../src/agent/songClips.ts')
+  const tracks = agencyTracks()
+  const fizz = tracks.find(track => track.agentRef === 'agent:fizz' && !track.group), tester = tracks.find(track => track.agentRef === 'agent:tester')
+  const set = factoryTrackSet({columns: [], tracks: tracks.map(track => ({id: model.trackKey(track), name: track.sessionRef})), clips: []}, null, null, {kind: 'bridge', url: 'x'}, tracks)
+  const maker = set.actions.makeClip
+  assert.deepEqual(maker.alsoAccepts, [SONG_CLIP_DRAG, ids.COMMUNIQUE_DRAG], 'a song\'s clip, then a message, beside a constellation')
+  assert.match(maker.op, /A message: AIKit gateway delegate, through Messages/)
+  const drag = (over = {}) => JSON.stringify({schema: ids.COMMUNIQUE_DRAG_SCHEMA, communique: 'aikit:communique:7', to: 'central:position:project:O-I:fizz', name: 'Fizz',
+    agent: 'agent:fizz', work: 'work:dlw/757', run: 'run:4', ...over})
+  // Messages is not on the door: the drop has nothing to write through, and says so.
+  assert.match((await maker.run(model.trackKey(fizz), drag())).error, /Messages is not on the rail/)
+  const written = []
+  let refuse = null
+  publishDevice(ids.MESSAGES_ID, {device: {id: ids.MESSAGES_ID, family: 'ai-kit', face: {id: 'messages'}}, binding: {id: ids.MESSAGES_ID, values: {},
+    write: async changes => { if (refuse) throw new Error(refuse); written.push(...changes) }}})
+  try {
+    const receipt = await maker.run(model.trackKey(fizz), drag())
+    assert.equal(receipt.ok, true, receipt.error)
+    assert.match(receipt.note, /^Fizz takes the message as its work: AIKit delegated it into Factory's custody of work:dlw\/757\.$/)
+    assert.deepEqual(written.map(change => [change.key, JSON.parse(change.value)]), [['delegate', {communique: 'aikit:communique:7', work: 'work:dlw/757', run: 'run:4',
+      reason: 'You dragged this message onto Fizz\'s track: it becomes the work Fizz stands on.'}]], 'Messages\' own delegate, the three AIKit takes and the run')
+    // Factory gives custody to the Position the message went to, so another agent's track refuses it rather than mislead.
+    assert.match((await maker.run(model.trackKey(tester), drag())).error, /^The message went to Fizz: drop it on Fizz's track, whose work it becomes\.$/)
+    assert.match((await maker.run(model.trackKey(fizz), drag({agent: undefined}))).error, /^No agent stands at Fizz now, so no track is its\.$/)
+    assert.match((await maker.run(model.trackKey(fizz), drag({work: undefined, run: undefined, why: 'Factory names no current work for Fizz'}))).error,
+      /^Factory names no current work for Fizz: a message becomes the work its agent stands on, so there is none to give it now\.$/)
+    assert.match((await maker.run(tracks.find(track => track.group) ? model.trackKey(tracks.find(track => track.group)) : 'elsewhere', drag())).error, /Only a session's track takes a message/)
+    refuse = 'Factory refused the custody (custody.conflict): the work is held.'
+    assert.equal((await maker.run(model.trackKey(fizz), drag())).error, refuse, 'AIKit\'s words through Messages')
+    assert.equal(written.length, 1, 'no refused drop wrote')
+    // Anything else is the task maker's, as before: a constellation's ref it does not hold is refused in its words.
+    assert.match((await maker.run(model.trackKey(fizz), 'central:constellation:nope')).error, /no constellation the wiki's reading holds/)
+  } finally { publishDevice(ids.MESSAGES_ID, null) }
+})

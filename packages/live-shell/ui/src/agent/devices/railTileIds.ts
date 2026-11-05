@@ -1,6 +1,7 @@
 // The ids Factory's and AIKit's rail tiles stand under, apart from the devices' bindings, as widgets/railDeviceIds.ts holds the
 // rail-born devices': the rail claims its tiles by these before any binding's code has loaded (agent/agentDockTiles.ts), so the first
-// load carries the ids and not the bindings (first-load-budget.test.mjs).
+// load carries the ids and not the bindings (first-load-budget.test.mjs). The drag a message of Messages carries stands here too, for the
+// same reason: Factory's tracks take it before Messages' binding has loaded.
 
 /** The rail's Frames tile: the Gateway's widget on the frames' binding (§19.6; mainTrackBindings.ts). */
 export const FRAMES_ID = 'factory:frames'
@@ -11,3 +12,38 @@ export const MESSAGES_ID = 'ai-kit:messages'
 /** The Main track's Ledger and Approvals on the door (receiptBindings.ts). */
 export const LEDGER_ID = 'factory:main:ledger'
 export const APPROVALS_ID = 'factory:main:approvals'
+
+/** The drag a message of Messages' conversation carries onto a track (§19.24 Rules: "To turn one into work, drag it onto the agent's
+ * track"; O-I ticket 757), held here beside Messages' id so Factory's tracks take it without loading Messages' binding: JSON of the
+ * CommuniqueDrag below (messagesBinding.ts conversationRows writes it; frame/tracks/useFactoryTracks.ts withDelegateDrop reads it). */
+export const COMMUNIQUE_DRAG = 'application/x-oi-communique'
+export const COMMUNIQUE_DRAG_SCHEMA = 'oi.communique-drag/v1'
+
+/** What a dragged message names: its Communique, the Position it went to by its ref and its name, the agent standing there (its
+ * occupant, else the agent AIKit's population places there), and the work AIKit reads that Position standing on (`aikit gateway who`
+ * current_work, outcome one: work_ref and run_ref) — or, where there is none, why in words. */
+export interface CommuniqueDrag {
+  readonly schema: typeof COMMUNIQUE_DRAG_SCHEMA
+  readonly communique: string
+  readonly to: string
+  readonly name: string
+  readonly agent?: string
+  readonly work?: string
+  readonly run?: string
+  readonly why?: string
+}
+
+const word = (value: unknown): string | undefined => (typeof value === 'string' && value.trim() ? value : undefined)
+
+/** A dragged message from the drag's payload, or null when the payload is not one (a constellation's ref, a song's clip). Pure. */
+export function communiqueDragOf(payload: string): CommuniqueDrag | null {
+  if (!payload.trim().startsWith('{')) return null
+  let raw: unknown
+  try { raw = JSON.parse(payload) } catch { return null }
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null
+  const drag = raw as Record<string, unknown>
+  const communique = word(drag.communique), to = word(drag.to), name = word(drag.name)
+  if (drag.schema !== COMMUNIQUE_DRAG_SCHEMA || !communique || !to || !name) return null
+  const agent = word(drag.agent), work = word(drag.work), run = word(drag.run), why = word(drag.why)
+  return {schema: COMMUNIQUE_DRAG_SCHEMA, communique, to, name, ...(agent ? {agent} : {}), ...(work ? {work} : {}), ...(work && run ? {run} : {}), ...(!work && why ? {why} : {})}
+}

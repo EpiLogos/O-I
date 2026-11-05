@@ -210,16 +210,18 @@ function readTorusClasses(raw: unknown): NonNullable<HostedTorusSession['classes
   return {tuning: raw.tuning as HostedTorusSession['resident_tunings'][number], steps: raw.steps, by_class: rows, law: raw.law as string};
 }
 
-/** Where the Torus is heard from (O-I 856), exactly: Receiver On or Off, the owner's context and its refusal. The place is the listener's
- * own and is never announced, so any other field is refused by name. */
+/** Where the Torus is heard from (O-I 856), exactly: Receiver On or Off, the owner's context and its refusal, and, for a place shared under a
+ * reference (O-I #856, QL-MEF #289 packet N), its reference. The place is never announced, so any other field is refused by name. */
 function readHostedReceiver(raw: unknown): NonNullable<HostedInstrumentParameters['receiver']> | string {
   if (!object(raw)) return 'expected on, context and refusal';
-  const other = Object.keys(raw).find(key => key !== 'on' && key !== 'context' && key !== 'refusal');
+  const other = Object.keys(raw).find(key => key !== 'on' && key !== 'context' && key !== 'shared' && key !== 'refusal');
   if (other !== undefined) return `${other}: not announced; where the Torus is heard from is the listener's own`;
   if (typeof raw.on !== 'boolean') return 'on: expected a boolean';
-  if (raw.context !== 'world' && raw.context !== 'personal') return "context: expected 'world' or 'personal'";
+  if (raw.context !== 'world' && raw.context !== 'personal' && raw.context !== 'shared') return "context: expected 'world', 'personal' or 'shared'";
+  if (raw.context === 'shared' ? !boundedText(raw.shared, 4096) : raw.shared !== undefined)
+    return raw.context === 'shared' ? 'shared: expected the reference the place is shared under' : 'shared: only a shared place is announced with a reference';
   if (raw.refusal !== null && !boundedText(raw.refusal, 512)) return 'refusal: expected bounded text or null';
-  return {on: raw.on, context: raw.context, refusal: raw.refusal as string | null};
+  return {on: raw.on, context: raw.context, ...(raw.context === 'shared' ? {shared: raw.shared as string} : {}), refusal: raw.refusal as string | null};
 }
 
 /** The owner's presentation parameters, exact or refused: a value the owner does not state is refused by name, never defaulted. */

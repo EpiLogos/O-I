@@ -2956,7 +2956,7 @@ caption: The Torus. Drag handle 1 along the line to set how fast the pulse steps
 |---|---|---|
 | Folded | Torus, the level, the band of its pulse and the notes that sound. | |
 | Compact | The torus: the ring, the surface wave and the two helices. Handle 1 on the pulse line sets the Rate, with the band edges marked. Macros: Rate, Fundamental, Carrier, Damping. | You hear what you see: the wave is the sound's pattern. |
-| Whole | Five pages. Pulse: the torus and Pulse, then Mode and tuning, and Shape. Body: Body and Save and keep, then Notes and output. Stage. Rack: M1′'s parts, 0 to 5. Macros: the macros, each with its range, the variations, and Keep rack. | Every parameter of §21.2 in its seven groups, two bands to a page, and the rack it keeps. |
+| Whole | Five pages. Pulse: the torus and Pulse, then Mode and tuning, and Shape. Body: Body and Save and keep, then Notes and output, and Receiver. Stage. Rack: M1′'s parts, 0 to 5. Macros: the macros, each with its range, the variations, and Keep rack. | Every parameter of §21.2 in its seven groups, two bands to a page, and the rack it keeps. |
 | Full | The torus at pane size and the Jankó keyboard under it. A sounding note lights its key and its point on the ring. | The pane is the instrument that you play. |
 | Pop-out | The torus and the keyboard filling the screen, with the controls in one row under them. | The window to perform from. |
 | Widget | The small torus and a level meter. | |
@@ -11027,7 +11027,7 @@ helix.
 | Rate | Free: one step a year to 40,000 steps a second · Sync: a note length from 1/64 to 8 bars | Free, 2.5 a second | How fast the pulse steps round the ring. Under Sync it steps once per note length at the set's tempo, as Live's synced rates do. Its band shows beside it. |
 | Fundamental | 20 to 2,000 Hz · Map | Map | The note that place 0 stands on. Every voice is a ratio over it. Map takes the frequency the map gives the Sun, its 1:1. |
 | Carrier | 0 to 100% | 0% | How strongly the pulse drives the body between strikes. At 0% the body sounds only when something strikes it. At rhythm rates the carrier beats; at pitch rates it sounds. |
-| Lens and mode | Follow · a lens and a mode | Follow | The lens and mode the Torus reads. Follow takes the clip's mode, or the set's when the clip has none. |
+| Lens and mode | Follow · a lens and a mode | Follow | The lens and mode the Torus reads. Follow takes the clip's mode, or the set's when the clip has none. Move the Lens or the Frame yourself, by hand or with a mapped control, and Follow turns off, as a hand move takes a Live control out of its automation. The readout beside it says so. Turn Follow on and it follows again. |
 | Tuning | Logic · Maqām · Sky | Logic | What the voices sound. |
 | Shape | Auto · Sequence · Torus · Figure-eight · Spiral · Klein bottle | Auto | Auto changes shape by the pulse. Sequence follows the shapes you set in the scene. Any other value holds that shape. |
 | Comma | A reading, in cents | — | The comma gathered since the Torus opened. You read it; you do not set it. |
@@ -11038,7 +11038,9 @@ helix.
 | Body source | Declared · Tattva | Declared | Where Strike and Damping come from. Declared keeps the values you set. Tattva takes them from the tattva of the M2 condition, through its element. |
 | Polyphony | 1 to 32 | 16 | How many notes sound at once, each with its own eight voices. The oldest note makes way for a new one. |
 | Level and pan | Level −60 to 6 dB · Pan −1 to 1 | −6 dB · 0 | The loudness and the place of the sound. |
-| View | Surface · Wire · Both, and Receiver On · Off | Surface · Off | What the pane draws. Receiver On makes your camera the place where the torus is heard. |
+| View | Surface · Wire · Both | Surface | What the pane draws. Surface draws the body and hides its far side. Wire draws its lines alone. Both draws the lines over the body. The set keeps the View and Follow with the Torus, so they open as you left them. |
+| Receiver | Off · On · Shared, under a reference · Return | Off | Where the torus is heard from. Off is the world's: every voice is heard at its own level, wherever the camera stands. On makes your camera the place where the torus is heard. Shared shares the place you stand under a reference of 1 to 128 characters with no space, and the place is shown with it. Return goes back to the world's, to where you stood, or to the shared place, as each last stood. |
+| Macros | Up to eight, each on one parameter over its own range · variations | Rate, Fundamental, Carrier, Damping | A macro turns its parameter over its range: the start at 0, the end at 1. Where it stands is read from the parameter. A variation keeps where every macro stands. Keep rack keeps the Torus, its chain, its macros and their variations as a rack. |
 | Procedure | One of the procedures you keep | — | The procedure the stage acts on. |
 | Budget | 1 to 1024 firings | 16 | How often a bound procedure may fire before it stops. |
 
@@ -11081,7 +11083,7 @@ The compact Torus shows a small live torus, and four macros.
 
 ##### Whole
 
-The whole Torus shows every parameter, in seven groups.
+The whole Torus shows every parameter, in nine groups on five pages.
 
 | Group | Parameters |
 |---|---|
@@ -11090,8 +11092,10 @@ The whole Torus shows every parameter, in seven groups.
 | Shape | Shape, Comma |
 | Body | Body, Strike, Damping, Modes, Body source |
 | Notes and output | Polyphony, Level and pan, View |
+| Receiver | Receiver, Shared, Return |
 | Stage | Procedure, Budget, Evaluate, Bind, Unbind, Retire |
 | Rack | M1′'s parts, 0 to 5 (§16.16) |
+| Macros | The macros, each with its range, the variations, Keep rack |
 
 ##### Full
 
@@ -11127,6 +11131,8 @@ The widget shows the small live torus with a level meter. Click the torus to ope
 6. Set Tuning to Sky. The voices take the planets of your sky.
 7. Raise Damping. The body rings longer.
 8. Save the state. It appears in the browser, under the Torus, as a sound.
+9. Open the Macros page. Give each macro its parameter and its range, store a variation, and press Keep rack. The rack appears in the browser, under the Torus, and opens with its macros where they stood.
+10. Turn Receiver On and move the camera round the torus. The voices the surface under you rings in grow louder.
 
 #### Rules
 
@@ -11140,6 +11146,9 @@ The widget shows the small live torus with a level meter. Click the torus to ope
 - Samples, seconds, bars, the torus's turns, the clock's steps, the sky's date and the day are kept apart. One becomes another only by a rule stated for that crossing, and where the sound meets the day the crossing is measured, not worked out. Where no rule is stated, the Torus refuses rather than guess.
 - A recorded performance keeps what it needs to be played on: the notes with their expression, the tuning and the sources as they stood, the moves of modulation and automation, the course of the body, the form and the forces, changes of context, the seeds, and how the ruler met the sound. Where the field's motion cannot be replayed exactly, the recording says from which state it resumes. A picture of the field is never taken for a rewind.
 - A camera move does not change the sound, unless Receiver is On.
+- Where you stand is yours. It is never shown, and never kept in a take, its render or a saved sound. A take renders in the world's context. A shared place is shown with its reference.
+- A Lens or Frame you move yourself, by hand or with a mapped control, turns Follow off. Follow's own moves, a take played again, a sound or rack you open and a set opening do not.
+- The set keeps the Torus's View and Follow with it, as it keeps the Torus's sound.
 - Each key is a place on its helix, and the place moves as the torus turns. Where a key strikes is worked out from its helix and the pulse at that moment. It is never set by eye.
 - Under Sync, the pulse steps once per note length at the set's tempo. That is the rule for the crossing between bars and the pulse's steps.
 - Each note strikes its own eight voices. Polyphony counts notes.

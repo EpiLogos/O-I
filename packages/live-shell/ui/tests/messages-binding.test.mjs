@@ -133,6 +133,43 @@ test('the open agent\'s conversation from the Gateway journal: its Communiques a
   bind.resetHolds()
 })
 
+test('(#757) each message of the conversation carries its drag onto a track: the Communique, the Position it went to and its agent, and the work AIKit reads that Position standing on', async () => {
+  bind.resetHolds()
+  const ids = await import('../src/agent/devices/railTileIds.ts')
+  const ROOT = 'central:position:project:O-I:oi-root-agency'
+  const names = new Map([[GUARDIAN, 'Central Product Guardian'], [ROOT, 'O:I Root Agency']])
+  // The real journal: two records the Guardian sent to the Root Agency, whose Position is vacant (its agent placed there) and whose current
+  // work AIKit could not read from Factory. The drag names who it went to and why it has no work to become.
+  const real = msg.conversationRows(REAL.conversation, names, REAL.population)
+  assert.equal(real.length, 2)
+  assert.deepEqual(JSON.parse(real[0].drag), {schema: ids.COMMUNIQUE_DRAG_SCHEMA, communique: 'aikit:communique:01m3csbdf5q56fhh0hx6wsq5qv', to: ROOT,
+    name: 'O:I Root Agency', agent: 'agent/oi-field-guardian', why: 'AIKit could not read O:I Root Agency\'s current work from Factory'})
+  // A Position AIKit reads standing on one work: the drag carries that work and its run, the refs `aikit gateway who` derives.
+  const working = {...REAL.population, positions: REAL.population.positions.map(row => row.position_ref === ROOT
+    ? {...row, current_work: {outcome: 'one', work_ref: 'work:dlw/757', run_ref: 'run:4', custody_ref: null, candidates: 1}} : row)}
+  const one = JSON.parse(msg.conversationRows(REAL.conversation, names, working)[1].drag)
+  assert.deepEqual([one.communique, one.work, one.run, one.why], ['aikit:communique:01m3d29sdm0wamhkw7scy38ahj', 'work:dlw/757', 'run:4', undefined])
+  const none = {...REAL.population, positions: REAL.population.positions.map(row => row.position_ref === ROOT ? {...row, current_work: {outcome: 'none'}} : row)}
+  assert.equal(JSON.parse(msg.conversationRows(REAL.conversation, names, none)[0].drag).why, 'Factory names no current work for O:I Root Agency')
+  const many = {...REAL.population, positions: REAL.population.positions.map(row => row.position_ref === ROOT ? {...row, current_work: {outcome: 'ambiguous'}} : row)}
+  assert.equal(JSON.parse(msg.conversationRows(REAL.conversation, names, many)[0].drag).why, 'Factory names more than one current work for O:I Root Agency')
+  // A record that already crossed into work carries no drag (AIKit refuses a second custody), nor does one the journal gives no ref.
+  const escalated = msg.conversationRows({...REAL.conversation, communiques: REAL.conversation.communiques.map(record => ({...record, state: 'escalated'}))}, names, REAL.population)
+  assert.equal(escalated.some(row => 'drag' in row), false)
+  assert.equal('drag' in msg.conversationRows({position_ref: GUARDIAN, communiques: [{body: 'hello', from_position_ref: ROOT, to_position_ref: GUARDIAN}]}, names, REAL.population)[0], false)
+  // The open agent's thread carries them, and the Thread draws each such message as a row the hand can drag.
+  const binding = msg.messagesBinding({population: answered(REAL.population), gateway: ANSWERED, conversation, holds: bind.chainHolds()})
+  binding.local.open(GUARDIAN)
+  const opened = msg.messagesBinding({population: answered(REAL.population), gateway: ANSWERED, conversation, holds: bind.chainHolds()})
+  assert.ok(JSON.parse(opened.values.agents).find(agent => agent.id === GUARDIAN).thread.every(row => JSON.parse(row.drag).to === ROOT))
+  const pane = draw(opened, 'full')
+  assert.equal(pane.match(/class="th-row" draggable="true"/g)?.length, 2, 'each message drags')
+  assert.match(pane, /data-i="Message\|Drag it onto its agent&#x27;s track, and it becomes the work the agent stands on\."/)
+  const source = readFileSync(new URL('../src/inhabitants/catalogue/panels/thread.tsx', import.meta.url), 'utf8')
+  assert.match(source, /event\.dataTransfer\.setData\(COMMUNIQUE_DRAG, drag\)/, 'the drag carries the message under its own type')
+  bind.resetHolds()
+})
+
 test('(b) every key the design reads is an owner reading, absent with its missing operation named, or a hold of the hand', () => {
   bind.resetHolds()
   // REPLACED (lane W7): the groups are Central's agent sets (central-agent-sets-2026-10-21.json, REAL), read as a reading.

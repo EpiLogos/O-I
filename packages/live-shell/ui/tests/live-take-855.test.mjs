@@ -480,6 +480,54 @@ test('a set that keeps no Torus keeps it from when it opens, on the part chosen 
   assert.equal(take.chosenPartOf(document, 9), null)
 })
 
+// DLW build ruling 2026-11-05: "View and Follow are kept with the device in the set, where the set keeps a device's state, so they survive
+// a restart." No owner keeps either (the hand holds them, techne/devices/designDevices.ts); the set's DLW record keeps the part's Torus
+// (packages/live-set sources.rs `parts`), so the keeper keeps them there, beside the Torus as its owner announced it.
+test('the set keeps the Torus device\'s View and Follow with its part, once they rest; a set opened again holds them before the Torus is set again', async () => {
+  const f = keeperOwners({document: {tracks: [{kind: 'midi', name: 'Keys'}]}})
+  let pane = {view: 'surface', follow: true}
+  const paneListeners = new Set()
+  const choose = next => { pane = next; for (const listener of [...paneListeners]) listener() }
+  f.owners.device = {read: () => pane, hold: () => assert.fail('a set that kept no device holds nothing'), subscribe: listener => { paneListeners.add(listener); return () => paneListeners.delete(listener) }}
+  const keeper = take.createTorusKeeper(f.owners, f.tell)
+  keeper.open('/sets/c.als', 0)
+  await tick()
+  choose({view: 'wire', follow: true})
+  choose({view: 'wire', follow: false})
+  assert.equal(f.timers.length, 1, 'a View or Follow chosen is kept once it rests, as a knob is')
+  f.fire()
+  await tick(); await tick()
+  assert.equal(f.acts.length, 1)
+  const kept = take.torusKeptOf(f.acts[0].act.torus)
+  assert.deepEqual(kept.device, {view: 'wire', follow: false}, 'kept with the device in the set')
+  assert.deepEqual(kept.edits, take.torusKept(torusState()).edits, 'beside the Torus as it stands')
+  choose({view: 'wire', follow: false})
+  f.fire()
+  await tick(); await tick()
+  assert.equal(f.acts.length, 1, 'the View and Follow the set keeps are no change')
+  keeper.close()
+
+  const g = keeperOwners({document: {tracks: [{kind: 'midi', name: 'Keys', torus: structuredClone(f.acts[0].act.torus)}]}, torus: null})
+  const held = []
+  g.owners.device = {read: () => held.at(-1) ?? {view: 'surface', follow: true}, hold: next => held.push(next), subscribe: () => () => {}}
+  const again = take.createTorusKeeper(g.owners, g.tell)
+  again.open('/sets/c.als', null)
+  await tick()
+  assert.deepEqual(held, [{view: 'wire', follow: false}], 'the device opens with the View and Follow its set keeps, before the Torus can take edits')
+  g.set(torusState())
+  await tick()
+  assert.deepEqual(g.commits, kept.edits, 'and the Torus is set again as its part keeps it')
+  assert.deepEqual(g.acts, [], 'nothing is kept over it')
+  again.close()
+
+  assert.equal(take.torusKeptOf({...kept, device: {view: 'mesh', follow: true}}).device, undefined, 'a View no device draws is not read back')
+  assert.equal(take.torusDeviceKeptOf({view: 'both', follow: 'yes'}), null)
+  assert.deepEqual(take.torusDeviceKeptOf({view: 'both', follow: true}), {view: 'both', follow: true})
+  assert.equal(take.sameTorusEdits(kept, {...kept, device: {view: 'surface', follow: true}}), true, 'a take\'s moves are the sound\'s: a View is none')
+  assert.match(source('live/torusDevice.ts'), /export const TORUS_VIEWS = \['surface', 'wire', 'both'\] as const/, 'the Views the set reads back are the device\'s')
+  assert.deepEqual(take.TORUS_KEPT_VIEWS, ['surface', 'wire', 'both'])
+})
+
 // ── the candidate's wiring ─────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 test('the candidate records on the part\'s one playing path, prepares a take before it plays, and binds Record in Live\'s transport', () => {
@@ -493,6 +541,8 @@ test('the candidate records on the part\'s one playing path, prepares a take bef
     'a setting of a take\'s course lands at its sample')
   const record = source('live/liveTake.ts')
   assert.match(record.slice(record.indexOf('export async function liveRecord(')), /stage: torus\.commitLiveStage,/, 'Record keeps the course through the stage channel')
+  assert.match(record.slice(record.indexOf('export async function liveRecord(')), /device: \{read: \(\) => device\.torusDeviceHeld\(\), hold: device\.holdTorusDevice, subscribe: holds\.subscribeHolds\},/,
+    'the keeper keeps the View and Follow the hand holds, and holds them again when a set opens with them')
   const tracks = source('frame/tracks/modeTracks.ts')
   assert.match(tracks, /const exportTake = \(track: number, at: LiveClipAt\) => import\('\.\.\/\.\.\/live\/liveTake'\)\.then\(module => module\.exportLiveTake\(\{path: set\.path, track, at\}\)\)/,
     'a take\'s clip exports its audio from Live\'s set')

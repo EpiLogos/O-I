@@ -544,8 +544,10 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   }
   if(edit.kind==='receiver'){
    // Receiver On or Off (O-I 856): the owner is asked now, from where the camera stands, and answers in its words (controller.ts setReceiver).
+   // On under a reference shares where you stand; a context alone goes back to where it last stood (O-I #856, controller.ts returnReceiver).
    if(at!==undefined)throw new Error('Where the Torus is heard from is set now, for the owner\'s next block: it lands at no sample.');
-   await controller.setReceiver(edit.on,heardPlace());update();return {};
+   if('context' in edit){await controller.returnReceiver(edit.context);update();return {};}
+   await controller.setReceiver(edit.on,heardPlace(),edit.shared);update();return {};
   }
   if(edit.kind==='body'){
    // What rings (O-I #852, DLW §21.2 Body): the scene's own M3 form made a body, or the torus given back (controller.ts torusBody). The owner

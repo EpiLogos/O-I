@@ -13,16 +13,19 @@ import type {DeviceDeclaration, SdkParamRow} from '../inhabitants/sdk/define'
 import type {DeviceInstance, ParamValue} from '../frame/devices/deviceRuntime'
 import type {DesignBinding, Standing, Value, ValueChange} from '../frame/devices/designed'
 import {qlInstrumentEdit, qlPresentation, QL_PRESENTATION_KEYS, QL_WRITE_PATH} from '../inhabitants/ql/devices/qlDevices'
-import {commitLiveInstrumentEdit, liveInstrumentWritable, liveTorusMacroRows, LIVE_TORUS_TOPOLOGY, type LiveTorusState,
+import {BY_HAND, commitLiveInstrumentEdit, liveInstrumentWritable, liveTorusMacroRows, LIVE_TORUS_TOPOLOGY, type LiveTorusState, type LiveWriteHow,
   torusSessionOf, TORUS_RATE, TORUS_FUNDAMENTAL, TORUS_POLYPHONY, TORUS_TEMPO, TORUS_TUNINGS, TORUS_SHAPES, TORUS_TUNING_WORD, TORUS_SHAPE_WORD, TORUS_BAND_WORD, TORUS_NOTE_LENGTHS, torusSessionEdit, type TorusSession, type TorusSettingsEdit} from './torusInstrument'
 import type {FrameInstrumentCondition, FrameStageReading, InstrumentEdit} from '@epilogos/expressions-boundary'
 import {hostedChrome} from '../projections/expressionsPaneHost'
 import {qlRackState, rackPage, type QlRackState} from '../inhabitants/ql/devices/qlRack'
 import {handsFor, heldFor, hold as holdDesign} from '../techne/devices/designDevices'
+import type {TorusDeviceKept} from './liveTake'
 import type {StageRun} from '../components/expressions/studio/StudioStage'
 import {bodyTable, coordinateNames, NO_CONDITION, tattvaBody, tattvaKeys, type BodySource, type BodyTable, type CoordinateName} from '../inhabitants/ql/devices/qlCoordinateName'
 import {refusalWords} from '../../../../../desktop/cradle/src/shared/Refusal.tsx'
 import type {ModeInForce} from './modes'
+import type {PublishedDevice} from '../frame/devices/deviceDoor'
+import {setMapMode} from './midiMap/midiMapHold'
 
 // The session's law (its ranges and its `torus` edit) is torusInstrument.ts's, so the MIDI map reaches it without this device's faces.
 export {torusSessionOf, TORUS_RATE, TORUS_FUNDAMENTAL, TORUS_POLYPHONY, TORUS_TEMPO, TORUS_TUNINGS, TORUS_SHAPES, TORUS_TUNING_WORD, TORUS_SHAPE_WORD, TORUS_BAND_WORD, TORUS_NOTE_LENGTHS, torusSessionEdit, type TorusSession, type TorusSettingsEdit}
@@ -98,7 +101,8 @@ export function torusDevice(state: LiveTorusState | null): DeviceInstance {
           if (!row || !option) throw Error(`${change.key}: not one of the owner's choices`)
           return row.edit(option.value)
         })()
-        const result = await commitLiveInstrumentEdit(edit)
+        // The device's own rows are the hand (a face's control, a mapped key): a Lens or Frame moved here turns Follow off.
+        const result = await commitLiveInstrumentEdit(edit, BY_HAND)
         if (!result.ok) throw Error(result.error)
       }
     },
@@ -305,38 +309,93 @@ export function torusFollowEdits(state: LiveTorusState | null, follow: TorusFoll
 const FOLLOWED_KEYS: ReadonlySet<string> = new Set(['lens', 'context-frame'])
 const NO_FOLLOW = TORUS_ABSENT['mode.followed']!
 const FOLLOW_OFF = 'Follow is off: the lens and mode are the ones you choose.'
-/** Follow on the binding: whether it is on (the hand's, on until you turn it off), what it takes, and the Lens and Frame it sets. */
-function torusFollowKeys(follow: TorusFollow | null, held: Readonly<Record<string, Value>>): {values: Record<string, Value>; standing: Record<string, Standing>; sets: boolean} {
-  if (follow === null) return {values: {}, standing: {[TORUS_FOLLOW]: {disabled: NO_FOLLOW}, [TORUS_FOLLOWED]: {disabled: NO_FOLLOW}}, sets: false}
+/** Which of the Torus's controls a move turned Follow off with, held beside Follow until Follow is on again. */
+export const TORUS_FOLLOW_OFF = 'mode.followOff'
+const MOVED_NAME: Readonly<Record<string, string>> = {lens: 'Lens', 'context-frame': 'Frame'}
+const MOVED_OFF = (key: string) => `Follow is off: you moved the ${MOVED_NAME[key] ?? key} yourself. Turn Follow on to follow the clip's or the set's mode again.`
+
+// A hand-moved or MIDI-mapped Lens or Frame turns Follow off, as a hand move takes a Live control out of its automation (DLW build
+// ruling 2026-11-05). Every write reaches the owner through the one stage channel (torusInstrument.ts commitLiveStage), which tells its
+// listeners whether the hand sent it (BY_HAND: the device's own rows below, the Live instrument section, a mapped control). Follow's own
+// edits, a take played again, a sound or rack recalled and the set opening with its Torus are sent by none, and are not a move.
+/** An accepted stage command: a Lens or Frame edit the hand sent turns Follow off and holds which it was. */
+export function torusFollowMoved(command: {readonly command: string; readonly edit?: unknown}, how?: LiveWriteHow): void {
+  if (how?.hand !== true || command.command !== 'instrument' || typeof command.edit !== 'object' || command.edit === null) return
+  const kind = (command.edit as {kind?: unknown}).kind
+  if (typeof kind !== 'string' || !FOLLOWED_KEYS.has(kind)) return
+  const held = heldFor(TORUS_DESIGN_ID)
+  if (held[TORUS_FOLLOW] === false) return
+  holdDesign(TORUS_DESIGN_ID, TORUS_FOLLOW, false)
+  holdDesign(TORUS_DESIGN_ID, TORUS_FOLLOW_OFF, kind)
+}
+
+// View and Follow are kept with the device in the set, where the set keeps a device's state, so they survive a restart (DLW build ruling
+// 2026-11-05). Neither is an owner's: the hand holds both. The set's DLW record keeps the part's Torus (packages/live-set sources.rs
+// `parts`), so its keeper (live/liveTake.ts createTorusKeeper) keeps them there beside it, and holds them again when a set opens with them.
+
+/** The device's View and Follow as the hand holds them. */
+export function torusDeviceHeld(held: Readonly<Record<string, Value>> = heldFor(TORUS_DESIGN_ID)): TorusDeviceKept {
+  return {view: torusViewOf(held), follow: held[TORUS_FOLLOW] !== false}
+}
+/** Hold a set's View and Follow again: Follow as the set keeps it, with no move standing as the reason it is off. */
+export function holdTorusDevice(kept: TorusDeviceKept): void {
+  holdDesign(TORUS_DESIGN_ID, 'view', kept.view)
+  holdDesign(TORUS_DESIGN_ID, TORUS_FOLLOW, kept.follow)
+  holdDesign(TORUS_DESIGN_ID, TORUS_FOLLOW_OFF, undefined)
+}
+
+/** Follow on the binding: whether it is on (the hand's, on until you turn it off or move the Lens or Frame yourself) and what it takes. */
+function torusFollowKeys(follow: TorusFollow | null, held: Readonly<Record<string, Value>>): {values: Record<string, Value>; standing: Record<string, Standing>} {
+  if (follow === null) return {values: {}, standing: {[TORUS_FOLLOW]: {disabled: NO_FOLLOW}, [TORUS_FOLLOWED]: {disabled: NO_FOLLOW}}}
   const on = held[TORUS_FOLLOW] !== false
-  if (!on) return {values: {[TORUS_FOLLOW]: false}, standing: {[TORUS_FOLLOWED]: {disabled: FOLLOW_OFF}}, sets: false}
-  const said = follow.from === null ? follow.reason : `Follow takes ${follow.words}.`
+  const moved = typeof held[TORUS_FOLLOW_OFF] === 'string' ? held[TORUS_FOLLOW_OFF] as string : null
+  if (!on) return {values: {[TORUS_FOLLOW]: false}, standing: {[TORUS_FOLLOWED]: {disabled: moved ? MOVED_OFF(moved) : FOLLOW_OFF}}}
   const standing: Record<string, Standing> = {}
-  for (const key of FOLLOWED_KEYS) standing[key] = {disabled: `${said} Turn Follow off to choose a lens and a mode.`}
   if (follow.from === null) standing[TORUS_FOLLOWED] = {disabled: follow.reason}
   else standing[TORUS_FOLLOWED] = {disabled: `The lens and mode Follow takes: ${follow.words}.`}
-  return {values: {[TORUS_FOLLOW]: true, ...(follow.from === null ? {} : {[TORUS_FOLLOWED]: follow.short})}, standing, sets: true}
+  return {values: {[TORUS_FOLLOW]: true, ...(follow.from === null ? {} : {[TORUS_FOLLOWED]: follow.short})}, standing}
 }
 
 // ── Receiver (manual §21.2 View: "Receiver On makes your camera the place where the torus is heard"; Rules: "A camera move does not
 // change the sound, unless Receiver is On") ─────────────────────────────────────────────────────────────────────────────────────────
 // The frame announces Receiver On or Off, the context the owner hears in and its refusal (parameters.receiver; never the place), and takes
 // the stage channel's `receiver` edit: On asks the owner to hear the torus from where the camera stands, Off gives it back to the world.
+// O-I 856 (QL-MEF 383; manual §21.2 Receiver): Shared shares where you stand under a reference, which the owner judges and refuses in its
+// words (QL: 1 to 128 characters with no space), and the frame announces the reference with the shared place; Return goes back to the
+// world's, to where you stood, or to the shared place, as each last stood, and reads which one the torus is heard in.
 
 const NO_RECEIVER = 'The native field announces no receiver: this frame does not say where the torus is heard from.'
-/** Receiver on the binding: the owner's On or Off, the key's standing (the owner's refusal in its words), and its one write. Pure but for
- * the write. */
+/** The keys Receiver speaks for: On or Off, the reference where you stand is shared under, and the context Return goes back to. */
+export const TORUS_RECEIVER_KEYS: ReadonlySet<string> = new Set(['receiver', 'receiver.shared', 'receiver.return'])
+const RECEIVER_RETURNS: readonly string[] = ['world', 'personal', 'shared']
+const NO_RETURN = 'Return goes back to the world\'s, to where you stood, or to the shared place.'
+const NO_SHARED_TEXT = 'A shared place is named by its reference, as text.'
+/** Receiver on the binding: the owner's On or Off, the reference a shared place stands under, the context it is heard in, each key's
+ * standing (the owner's refusal in its words) and their writes. Pure but for the write. */
 export function torusReceiver(state: LiveTorusState | null, commit: (edit: InstrumentEdit) => Promise<{ok: boolean; error?: string}>):
   {values: Record<string, Value>; standing: Record<string, Standing>; writes: ReadonlySet<string>; write: (change: ValueChange) => Promise<void>} {
   const receiver = state !== null && state.ok ? state.parameters?.receiver ?? null : null
-  const values: Record<string, Value> = receiver ? {receiver: receiver.on} : {}
+  const values: Record<string, Value> = receiver
+    ? {receiver: receiver.on, 'receiver.shared': receiver.context === 'shared' ? receiver.shared ?? '' : '', 'receiver.return': receiver.context} : {}
   const why = !liveInstrumentWritable(state) ? (state === null ? 'No owner reading stands in this host.' : NOT_WRITABLE) : receiver ? null : NO_RECEIVER
-  const standing: Record<string, Standing> = why ? {receiver: {disabled: why}} : receiver?.refusal ? {receiver: {refused: receiver.refusal}} : {}
-  const writes: ReadonlySet<string> = new Set(why ? [] : ['receiver'])
+  const stands: Standing | null = why ? {disabled: why} : receiver?.refusal ? {refused: receiver.refusal} : null
+  const standing: Record<string, Standing> = stands ? Object.fromEntries([...TORUS_RECEIVER_KEYS].map(key => [key, stands])) : {}
+  const writes: ReadonlySet<string> = new Set(why ? [] : TORUS_RECEIVER_KEYS)
+  const editOf = (change: ValueChange): InstrumentEdit => {
+    if (change.key === 'receiver.return') {
+      if (typeof change.value !== 'string' || !RECEIVER_RETURNS.includes(change.value)) throw new Error(NO_RETURN)
+      return {kind: 'receiver', context: change.value as 'world' | 'personal' | 'shared'}
+    }
+    if (change.key === 'receiver.shared') {
+      if (typeof change.value !== 'string') throw new Error(NO_SHARED_TEXT)
+      return {kind: 'receiver', on: true, shared: change.value}
+    }
+    if (typeof change.value !== 'boolean') throw new Error('Receiver is On or Off.')
+    return {kind: 'receiver', on: change.value}
+  }
   const write = async (change: ValueChange) => {
     if (why) throw new Error(why)
-    if (typeof change.value !== 'boolean') throw new Error('Receiver is On or Off.')
-    const result = await commit({kind: 'receiver', on: change.value})
+    const result = await commit(editOf(change))
     if (!result.ok) throw new Error(result.error ?? 'The native field refused the receiver.')
   }
   return {values, standing, writes, write}
@@ -705,14 +764,15 @@ export function torusDesignBinding(state: LiveTorusState | null, device: DeviceI
   standing.chain = {disabled: chain ? RACK_CHAIN_READ : RACK_CHAIN_NONE}
   const rackValues: Record<string, Value> = chain ? {chain: JSON.stringify(chain)} : {}
   for (const key of TORUS_RACK_LOCAL) if (held[key] !== undefined) rackValues[key] = held[key]!
-  // View, the pane's own way of drawing, and Follow, both in your hand; under Follow the Lens and Frame are what it takes.
+  // View, the pane's own way of drawing, and Follow, both in your hand; a Lens or Frame you move yourself turns Follow off.
   rackValues.view = torusViewOf(held)
   const followKeys = torusFollowKeys(follow, held)
   Object.assign(standing, followKeys.standing)
   Object.assign(rackValues, followKeys.values)
-  const followed = (key: string) => followKeys.sets && FOLLOWED_KEYS.has(key)
   const local: Record<string, (value: Value | undefined) => void> = {...page.local, ...handsFor(TORUS_DESIGN_ID, TORUS_STAGE_LOCAL), ...handsFor(TORUS_DESIGN_ID, TORUS_RACK_LOCAL),
-    ...handsFor(TORUS_DESIGN_ID, ['view', TORUS_FOLLOW])}
+    ...handsFor(TORUS_DESIGN_ID, ['view']),
+    // Follow on follows again, and the move that turned it off is no longer its reason.
+    [TORUS_FOLLOW]: value => { holdDesign(TORUS_DESIGN_ID, TORUS_FOLLOW, value); if (value !== false) holdDesign(TORUS_DESIGN_ID, TORUS_FOLLOW_OFF, undefined) }}
   const submit = device.submit
   const stageAct = async (change: ValueChange) => {
     if (!run) throw new Error(NO_STAGE_FRAME)
@@ -723,7 +783,7 @@ export function torusDesignBinding(state: LiveTorusState | null, device: DeviceI
     id: device.id,
     values: {...torusDesignValues(state), ...session.values, ...receiver.values, ...torusStageValues(stage, held), ...page.values, ...tattva.values, ...rackValues},
     writes: key => (key in TORUS_STAGE_ACTS ? acting : body.writes.has(key) || session.writes.has(key) || receiver.writes.has(key)
-      || (key !== 'rack' && key !== 'receiver' && !BODY_KEYS.has(key) && !TORUS_SESSION_KEYS.has(key) && !followed(key) && writeStanding(state, key) === null)),
+      || (key !== 'rack' && !TORUS_RECEIVER_KEYS.has(key) && !BODY_KEYS.has(key) && !TORUS_SESSION_KEYS.has(key) && writeStanding(state, key) === null)),
     standing,
     local,
     ...(page.waiting ? {waiting: ['rack']} : {}),
@@ -731,8 +791,8 @@ export function torusDesignBinding(state: LiveTorusState | null, device: DeviceI
       for (const change of changes.filter(c => c.key in TORUS_STAGE_ACTS)) await stageAct(change)
       for (const change of changes.filter(c => BODY_KEYS.has(c.key))) await body.write(change)
       for (const change of changes.filter(c => TORUS_SESSION_KEYS.has(c.key))) await session.write(change)
-      for (const change of changes.filter(c => c.key === 'receiver')) await receiver.write(change)
-      const rows = changes.filter(c => !(c.key in TORUS_STAGE_ACTS) && !BODY_KEYS.has(c.key) && !TORUS_SESSION_KEYS.has(c.key) && c.key !== 'receiver')
+      for (const change of changes.filter(c => TORUS_RECEIVER_KEYS.has(c.key))) await receiver.write(change)
+      const rows = changes.filter(c => !(c.key in TORUS_STAGE_ACTS) && !BODY_KEYS.has(c.key) && !TORUS_SESSION_KEYS.has(c.key) && !TORUS_RECEIVER_KEYS.has(c.key))
       if (rows.length) { if (!submit) throw new Error(NOT_WRITABLE); await submit(torusRowChanges(rows)) }
     }} : {}),
     // The level, scale, Carrier or Rate a planet moves (designBindings/skyModulation.ts): the status bar names the planet, the base and the
@@ -821,3 +881,9 @@ export function torusTone(state: LiveTorusState | null): 'lit' | 'rising' | 'unl
   const standing = state.value.standing
   return standing === 'following' || standing === 'held' ? 'lit' : standing === 'opening' ? 'rising' : 'unlit'
 }
+
+/** The Torus head's context-menu acts its chain carries (manual §16.4: "Right-click the head for Fold, Rename, Group, Save as preset,
+ * Hot-swap, Show automation and Map"; O-I ticket 743). Map is the shell's own: it enters the MIDI map, where the Torus's parameters take a
+ * hardware control (midiMap/midiMapTargets.ts maps each by the instrument section's ids) and the Key map is a press away. Rename, Group,
+ * Save as preset, Hot-swap and Show automation wait for their owners' operations (DeviceMenu.tsx MISSING_OPS). */
+export const TORUS_HEAD_ACTS: NonNullable<PublishedDevice['acts']> = Object.freeze({map: () => setMapMode('midi')})

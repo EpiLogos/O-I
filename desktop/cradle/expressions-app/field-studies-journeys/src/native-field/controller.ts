@@ -52,7 +52,9 @@ const TORUS_READ_MS=1000;
 /** Where the Torus is heard from (O-I 856): metres in the scene the owner draws its targets in, and how long a place the owner refused is
  * not asked again. */
 type ReceiverPlace=readonly [number,number,number];
-type ReceiverReading={schema:string;context:'world'|'personal';gains:{mode_ref:string;gain:number}[];law:string};
+type ReceiverReading={schema:string;context:'world'|'personal'|'shared';gains:{mode_ref:string;gain:number}[];law:string;shared?:string;at_metres?:[number,number,number]};
+/** The receiving contexts a Return goes back to (O-I #856, QL-MEF #289 packet N). */
+type ReceivingContext='world'|'personal'|'shared';
 const RECEIVER_RETRY_MS=1000;
 /** The owner's operations a Torus sounding in the desktop's one engine follows without being handed over again (O-I #849): the reads
  * (instrument-session.mjs READ_OPERATIONS), the advance unless a setting landed in it, a release (no native state moves), the acts the
@@ -132,7 +134,10 @@ export class NativeFieldController {
   * context) are this lifetime's and are never read out: the owner's answer names the context and the gain each voice is heard by, and a
   * refusal its words with the place it refused, which is not asked again within RECEIVER_RETRY_MS. One ask is in flight at a time. */
  private receiverOn=false;private wantedAt:ReceiverPlace|null=null;private heardAt:ReceiverPlace|null=null;private hearing:Promise<void>|null=null;
- private heardReply:ReceiverReading|null=null;private receiverRefusal:{why:string;place:ReceiverPlace|null;at:number}|null=null;
+ private heardReply:ReceiverReading|null=null;private receiverRefusal:{why:string;place:ReceiverPlace|null;shared:string|null;at:number}|null=null;
+ /** The reference where you stand is shared under while Receiver is On (O-I #856, QL-MEF #289 packet N), and the one the owner last heard it
+  * under: null is the listener's own context. A shared place is disclosed with its reference, so its reference is read out. */
+ private sharedAs:string|null=null;private heardShared:string|null=null;
  private level:GainNode|null=null;private levelValue:number=PRESENTATION_LEVEL.initial;
  /** The Torus heard in the desktop's one engine (O-I #849): handed over to it (torus-native, kept by the kernel under the lease), so this
   * frame's own sound of the torus is shut (`gate`, after the level and its voice tap: the symbols' voices still listen) and the part
@@ -1033,19 +1038,46 @@ export class NativeFieldController {
   * Off. It resolves with the owner's answer (the context and the gain each voice is heard by), or rejects with its refusal in its words and
   * the choice stands as it was: a personal context the owner does not take is never shown. While no owner follows, the choice is kept,
   * nothing is asked, and it resolves null; the owner is asked once it follows (hear). */
- async setReceiver(on:boolean,place:ReceiverPlace|null=null):Promise<ReceiverReading|null>{
-  const before=this.receiverOn;
-  this.receiverOn=on;this.receiverRefusal=null;
+ async setReceiver(on:boolean,place:ReceiverPlace|null=null,shared?:string):Promise<ReceiverReading|null>{
+  // With `shared` (O-I #856), where you stand is shared under that reference, which the owner judges and refuses in its words; On alone is
+  // the listener's own context again.
+  const before=this.receiverOn,beforeShared=this.sharedAs;
+  this.receiverOn=on;this.sharedAs=on&&shared!==undefined?shared:null;this.receiverRefusal=null;
   if(!on)this.wantedAt=null;else if(place)this.wantedAt=[place[0],place[1],place[2]];
   this.changed();
   if(!this.asks())return null;
   await this.hear(this.wantedAt);
-  if(!samePlace(this.heardAt,this.receiverOn?this.wantedAt:null)){
+  if(!samePlace(this.heardAt,this.receiverOn?this.wantedAt:null)||this.heardShared!==(this.receiverOn?this.sharedAs:null)){
    // The ask above set the refusal, if the owner refused (the narrowing from clearing it does not see that).
    const why=(this.receiverRefusal as {why:string}|null)?.why??'native owner busy: where the Torus is heard from was not set';
-   this.receiverOn=before;this.changed();throw new Error(why);
+   this.receiverOn=before;this.sharedAs=beforeShared;this.changed();throw new Error(why);
   }
   return this.heardReply?structuredClone(this.heardReply):null;
+ }
+ /** Return to a receiving context where it last stood this session (O-I #856; QL-MEF `torus-receiver` `context`, #289 packet N): the
+  * world's, where you stood, or the shared place. The owner is asked now and no place is sent; it resolves with the owner's answer, Receiver
+  * On in the listener's own or the shared context and Off in the world's, or rejects with the owner's refusal in its words (a context never
+  * entered) and the choice stands as it was. Only the owner keeps where each context last stood, so while none follows it is refused in
+  * words. Until the camera moves, the owner hears from where the context last stood. */
+ async returnReceiver(context:ReceivingContext):Promise<ReceiverReading>{
+  const session=this.session;
+  if(!session||!this.asks())throw new Error('No owner follows now, so no receiving context can be returned to: the owner keeps where each last stood.');
+  const reply=await this.serial(async()=>{
+   if(!(await this.waitIdle(session,1000))||!this.asks())throw new Error('native owner busy: the receiving context was not returned to');
+   try{return await session.torusReceiverReturn(context) as ReceiverReading;}
+   catch(error){
+    if(this.current(session)){this.receiverRefusal={why:String(error instanceof Error?error.message:error),place:this.heardAt,shared:this.heardShared,at:performance.now()};this.changed();}
+    throw error;
+   }
+  });
+  if(!this.current(session))throw new Error('native operation cancelled by lifetime change');
+  const at=reply.context==='shared'&&reply.at_metres?[reply.at_metres[0],reply.at_metres[1],reply.at_metres[2]] as const:null;
+  this.receiverOn=reply.context!=='world';
+  this.sharedAs=this.heardShared=reply.context==='shared'?reply.shared??null:null;
+  if(reply.context==='world')this.wantedAt=null;else if(at)this.wantedAt=at;
+  this.heardAt=reply.context==='world'?null:at??this.wantedAt;
+  this.heardReply=reply;this.receiverRefusal=null;this.changed();
+  return structuredClone(reply);
  }
  /** Where the camera stands now (O-I 856; null: not known this frame, and the last place stands): asked of the owner when Receiver is On
   * and it has moved. When Receiver is Off and the owner still hears from a place, the world's context is asked once; otherwise Off asks
@@ -1061,20 +1093,23 @@ export class NativeFieldController {
  get unitsPerMetre(){return this.projection?.scale??null;}
  private asks(){return !!this.session&&this.scene&&this.torusRefused===null&&this.status==='following'&&!this.suspension;}
  private sendHearing():Promise<void>{
-  const session=this.session,wanted=this.receiverOn?this.wantedAt:null,refused=this.receiverRefusal;
-  if(!session||!this.asks()||samePlace(wanted,this.heardAt)||(refused&&samePlace(wanted,refused.place)&&performance.now()-refused.at<RECEIVER_RETRY_MS))return Promise.resolve();
+  const session=this.session,wanted=this.receiverOn?this.wantedAt:null,sharing=this.receiverOn?this.sharedAs:null,refused=this.receiverRefusal;
+  if(!session||!this.asks()||(samePlace(wanted,this.heardAt)&&sharing===this.heardShared)
+   ||(refused&&samePlace(wanted,refused.place)&&sharing===refused.shared&&performance.now()-refused.at<RECEIVER_RETRY_MS))return Promise.resolve();
   const asked=this.serial(async()=>{
    if(!(await this.waitIdle(session,1000))||!this.asks())return false;
    const place:ReceiverPlace|null=this.receiverOn&&this.wantedAt?[this.wantedAt[0],this.wantedAt[1],this.wantedAt[2]]:null;
-   if(samePlace(place,this.heardAt))return false;
+   const shared=this.receiverOn?this.sharedAs:null;
+   if(samePlace(place,this.heardAt)&&shared===this.heardShared)return false;
    const context=this.heardReply?.context??'world',standing=this.receiverRefusal?.why??null;
    try{
-    const reply=await session.torusReceiver(place?[place[0],place[1],place[2]]:null);
+    // Shared (O-I #856): the place goes under its reference, which the owner judges; the client refuses a reference with no place in QL's words.
+    const reply=await session.torusReceiver(place?[place[0],place[1],place[2]]:null,shared!==null?{shared}:undefined);
     if(!this.current(session))return false;
-    this.heardAt=place;this.heardReply=reply;this.receiverRefusal=null;
+    this.heardAt=place;this.heardShared=shared;this.heardReply=reply;this.receiverRefusal=null;
    }catch(error){
     if(!this.current(session))return false;
-    this.receiverRefusal={why:String(error instanceof Error?error.message:error),place,at:performance.now()};
+    this.receiverRefusal={why:String(error instanceof Error?error.message:error),place,shared,at:performance.now()};
    }
    if((this.heardReply?.context??'world')!==context||(this.receiverRefusal?.why??null)!==standing)this.changed();
    return true;
@@ -1083,8 +1118,9 @@ export class NativeFieldController {
   this.hearing=hearing;return hearing;
  }
  private receiverReading(){
-  return {on:this.receiverOn,context:this.heardReply?.context??'world',gains:this.heardReply?structuredClone(this.heardReply.gains):null,
-   law:this.heardReply?.law??null,refusal:this.receiverRefusal?.why??null};
+  const context=this.heardReply?.context??'world';
+  return {on:this.receiverOn,context,...(context==='shared'&&this.heardShared!==null?{shared:this.heardShared}:{}),
+   gains:this.heardReply?structuredClone(this.heardReply.gains):null,law:this.heardReply?.law??null,refusal:this.receiverRefusal?.why??null};
  }
  /** Human-cadence source refresh after determinant events; never while an event
   * is in flight, never while held. */
@@ -1279,7 +1315,7 @@ export class NativeFieldController {
   this.stageReading=null;this.stageStale=false;this.stageLast=null;
   this.torus=null;this.torusAt=0;this.torusRefused=null;this.torusObject=new TorusObject();this.pulseTuning=null;
   // A new owner hears in the world's context until it is asked; Receiver itself is the person's and stays (O-I 856).
-  this.wantedAt=null;this.heardAt=null;this.heardReply=null;this.receiverRefusal=null;this.hearing=null;
+  this.wantedAt=null;this.heardAt=null;this.heardShared=null;this.heardReply=null;this.receiverRefusal=null;this.hearing=null;
   this.admitting=null;this.suspension=null;this.restoring=null;
   if(manual){this.status='manual';this.lastNative=null;this.reason=null;this.refusal=null;this.lastCadence=null;this.changed();}
   const close=async()=>{

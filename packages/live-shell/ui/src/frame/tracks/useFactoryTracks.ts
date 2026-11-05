@@ -40,7 +40,9 @@ import {tellOwnerChanged} from '../../owners/notices'
 import type {UseModeTracks} from './modeTracks'
 import {useSeatStatusAnswer} from '../../agent/devices/workcellReads'
 import {withReturns, withWorksIn, workcellReturns} from './returnTracks'
-import type {WorldTrack, WorldTrackSet} from '../../timeline/worldTrackAdapter'
+import type {WorldActionReceipt, WorldTrack, WorldTrackActions, WorldTrackSet} from '../../timeline/worldTrackAdapter'
+import {publishedDevice} from '../devices/deviceDoor'
+import {COMMUNIQUE_DRAG, MESSAGES_ID, communiqueDragOf} from '../../agent/devices/railTileIds'
 import {trackKey, type AgentSessionTrack} from '../../agent/agentRunModel'
 
 const WRITE_ARM = 'shell.setWriteArm'
@@ -140,10 +142,55 @@ export function repeatPress(transport: KernelTransportStatus, settingsOf: (sessi
 
 /** Factory's set as the pane draws it: the register's workcells as return tracks and each session's Works in (withWorkcells), and its
  * tracks taking a constellation dropped on them — which makes the session's task of it, its source kept on AIKit (agent/clipBinding.ts
- * taskMaker). Pure. */
+ * taskMaker) — and a message dragged from Messages, which becomes the work its agent stands on (withDelegateDrop). Pure. */
 export function factoryTrackSet(set: WorldTrackSet, register: unknown, refused: string | null, transport: KernelTransportStatus,
   tracks: readonly AgentSessionTrack[]): WorldTrackSet {
-  return withClipMaker(withWorkcells(set, register, refused, trackProjects(tracks)), taskMaker(transport, tracks))
+  return withClipMaker(withWorkcells(set, register, refused, trackProjects(tracks)), withDelegateDrop(taskMaker(transport, tracks), tracks))
+}
+
+type Maker = NonNullable<WorldTrackActions['makeClip']>
+
+/** The words a message's drop says where it writes nothing. */
+export const DELEGATE_WORDS = {
+  noMessages: 'Messages is not on the rail, so the message has no way to AIKit\'s gateway: open the rail, then drag it again.',
+  noSession: 'Only a session\'s track takes a message: drop it on the track of the agent it went to.',
+  noAgent: (name: string) => `No agent stands at ${name} now, so no track is its.`,
+  another: (name: string) => `The message went to ${name}: drop it on ${name}'s track, whose work it becomes.`,
+  noWork: (why: string) => `${why}: a message becomes the work its agent stands on, so there is none to give it now.`,
+} as const
+
+/** Messages' own `delegate` (agent/devices/messagesBinding.ts: `aikit gateway delegate` through the kernel's gateway_write), on the
+ * binding the rail's agent devices publish on the door (AgentRailDevices.tsx). Rejects with Messages' or AIKit's words. */
+export async function messagesDelegate(value: string): Promise<void> {
+  const write = publishedDevice(MESSAGES_ID)?.binding?.write
+  if (!write) throw new Error(DELEGATE_WORDS.noMessages)
+  await write([{key: 'delegate', value}])
+}
+
+/** Factory's tracks taking a message dragged from Messages (§19.24 Rules: "To turn one into work, drag it onto the agent's track, and
+ * the agent takes it as a task with a receipt"; O-I ticket 757), beside what the maker took already: the drag (COMMUNIQUE_DRAG, as the
+ * Thread's message rows carry it) joins the maker's `alsoAccepts`, and its drop writes Messages' `delegate` {communique, work, reason}
+ * — AIKit gives the Position the message went to Factory's custody of the work it stands on (`aikit gateway delegate`, run named where
+ * AIKit reads one). Since that custody goes to the message's recipient whatever track it lands on, only the track of the agent standing
+ * there takes it; any other drop, a recipient with no agent or no work, and Messages' own refusal say so in words, and write nothing.
+ * Every other payload is the maker's. Pure, but for the write handed in. */
+export function withDelegateDrop(maker: Maker, tracks: readonly AgentSessionTrack[], delegate: (value: string) => Promise<void> = messagesDelegate): Maker {
+  return {...maker, alsoAccepts: [...(maker.alsoAccepts ?? []), COMMUNIQUE_DRAG],
+    op: `${maker.op}. A message: AIKit gateway delegate, through Messages, gives the Position it went to Factory's custody of the work it stands on`,
+    run: async (trackId: string, payload: string): Promise<WorldActionReceipt> => {
+      const drag = communiqueDragOf(payload)
+      if (!drag) return maker.run(trackId, payload) as Promise<WorldActionReceipt>
+      const track = tracks.find(item => trackKey(item) === trackId && !item.group)
+      if (!track) return {ok: false, error: DELEGATE_WORDS.noSession}
+      if (!drag.agent) return {ok: false, error: DELEGATE_WORDS.noAgent(drag.name)}
+      if (track.agentRef !== drag.agent) return {ok: false, error: DELEGATE_WORDS.another(drag.name)}
+      if (!drag.work) return {ok: false, error: DELEGATE_WORDS.noWork(drag.why ?? `AIKit names no current work for ${drag.name}`)}
+      const label = track.agentName ?? track.purpose ?? track.sessionRef
+      const reason = `You dragged this message onto ${label}'s track: it becomes the work ${label} stands on.`
+      try { await delegate(JSON.stringify({communique: drag.communique, work: drag.work, ...(drag.run ? {run: drag.run} : {}), reason})) }
+      catch (cause) { return {ok: false, error: cause instanceof Error ? cause.message : String(cause)} }
+      return {ok: true, note: `${label} takes the message as its work: AIKit delegated it into Factory's custody of ${drag.work}.`}
+    }}
 }
 
 /** Each drawn track's project: the register its session was read under (agent/worldScope.ts); your world's root register, and a track

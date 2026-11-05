@@ -240,6 +240,11 @@ export function readTorusSettingsEdit(raw: unknown): TorusSettingsEdit | null {
 }
 /** The most modes of a form's body each voice rings (QL-MEF form_instrument/body.rs MAX_BODY_MODES). */
 export const STAGE_BODY_MODES_MAX = 64;
+/** The receiving contexts a Return goes back to (O-I #856, QL-MEF scene_field.rs ReceivingContext): the world's, the listener's own, the shared. */
+export const STAGE_RECEIVER_CONTEXTS = ['world', 'personal', 'shared'] as const;
+/** The longest reference the stage carries for a shared place; the owner judges its form (QL: 1 to 128 characters with no space). */
+export const STAGE_RECEIVER_SHARED_MAX = 4096;
+
 /** A form chosen as the body (DLW manual §21.2 Body): how many of its modes each voice rings, the Q it rings at (the Torus's Damping), and
  * whether its material is declared or the tattva's (Body source). The form is the scene's own M3 form and its fibre the scene's M2 fibre:
  * the frame takes both from what the owner disclosed (controller.ts torusBody), so the hand names neither. */
@@ -256,8 +261,12 @@ export type InstrumentEdit =
   | {kind: 'damping'; q_factor: number}
   | {kind: 'torus'; edit: TorusSettingsEdit}
   | {kind: 'follow-scale'}
-  /** Receiver On or Off (DLW manual §21.2 View; QL-MEF `torus-receiver`, O-I 856): the camera is the place the Torus is heard from, or the world. */
-  | {kind: 'receiver'; on: boolean}
+  /** Receiver On or Off (DLW manual §21.2 Receiver; QL-MEF `torus-receiver`, O-I 856): the camera is the place the Torus is heard from, or the
+   * world. On with `shared` shares that place under a reference (O-I #856, QL-MEF #289 packet N), whose form the owner judges in its words. */
+  | {kind: 'receiver'; on: boolean; shared?: string}
+  /** Return to a receiving context where it last stood this session (O-I #856, QL-MEF #289 packet N): the world's, where you stood, or the
+   * shared place. It names no place; the owner refuses in its words a context never entered. */
+  | {kind: 'receiver'; context: (typeof STAGE_RECEIVER_CONTEXTS)[number]}
   /** What rings (DLW manual §21.2 Body; QL-MEF `torus-body`, O-I #852): a form, or the torus (null). Chosen at the owner's cursor. */
   | {kind: 'body'; body: StageFormBody | null}
   | {kind: 'effect'; effect: PresentationEffect; key: string; value: EffectValue}
@@ -284,7 +293,14 @@ export function readInstrumentEdit(raw: unknown): InstrumentEdit | null {
     case 'damping': return closed(raw, ['kind', 'q_factor']) && typeof raw.q_factor === 'number' && Number.isFinite(raw.q_factor) && raw.q_factor >= STAGE_INSTRUMENT_Q.min && raw.q_factor <= STAGE_INSTRUMENT_Q.max ? {kind: 'damping', q_factor: raw.q_factor} : null;
     case 'torus': { const edit = closed(raw, ['kind', 'edit']) ? readTorusSettingsEdit(raw.edit) : null; return edit ? {kind: 'torus', edit} : null; }
     case 'follow-scale': return closed(raw, ['kind']) ? {kind: 'follow-scale'} : null;
-    case 'receiver': return closed(raw, ['kind', 'on']) && typeof raw.on === 'boolean' ? {kind: 'receiver', on: raw.on} : null;
+    case 'receiver': {
+      // A context alone returns to it (O-I #856); otherwise On or Off, and On may share where you stand under a reference of any text the
+      // stage carries, whose form the owner judges and refuses in its own words.
+      if ('context' in raw) return closed(raw, ['kind', 'context']) && stageOneOf(STAGE_RECEIVER_CONTEXTS, raw.context) ? {kind: 'receiver', context: raw.context} : null;
+      if (!closed(raw, ['kind', 'on', 'shared']) || typeof raw.on !== 'boolean') return null;
+      if (!('shared' in raw)) return {kind: 'receiver', on: raw.on};
+      return raw.on && typeof raw.shared === 'string' && raw.shared.length <= STAGE_RECEIVER_SHARED_MAX ? {kind: 'receiver', on: true, shared: raw.shared} : null;
+    }
     case 'body': {
       if (!closed(raw, ['kind', 'body'])) return null;
       if (raw.body === null) return {kind: 'body', body: null};
