@@ -107,6 +107,14 @@ async function routeRead(transport: KernelTransportStatus, op: KernelOp, asked: 
   return {data: answer.data, ...scopesOf(call.outcome)}
 }
 
+/** Collect (the Results tile, DLW §19.1 On the rail: "Collect gathers them again"; BD round 25): `workcell --receipt R collect` on one
+ * take's world, asked fresh, answered with Workcell's reading or its words thrown. */
+export async function collectWorld(transport: KernelTransportStatus, receipt: string): Promise<unknown> {
+  const down = unavailable(transport)
+  if (down) throw new Error(down)
+  return routeAnswerOf(await kernelRead(transport, workcellReadOp({kind: 'collect', receipt}), {fresh: true}), '`workcell collect`').data
+}
+
 /** Each listed connection's record (`workcell connections show`), by label: its answer or Workcell's refusal. None asked for no label. */
 export function useConnectionShows(transport: KernelTransportStatus, labels: readonly string[]): ConnectionShows {
   // A plain record, not a Map: the window keeps answers across a relaunch as JSON (owners/keptReadings.ts).

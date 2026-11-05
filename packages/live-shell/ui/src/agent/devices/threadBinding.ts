@@ -254,7 +254,7 @@ export const THREAD_REFUSE = {
   noSession: 'No session is shown: select one in the Session pane.',
 } as const
 
-/** The Thought page's readings (lane W7; D3, software-factory__thread.tsx `thoughts` and `operative`), each absent with what it waits for:
+/** The Thought page's readings (lane W7; D3, thread.tsx `thoughts` and `operative`), each absent with what it waits for:
  * the Run's retained thought is Factory's cognitive view and the condition the agent worked under its project-development ledger's
  * PraxisCondition — both named in T-COVERAGE §1.2's Software Factory row, and read by no kernel route. */
 export const THREAD_ABSENT = {

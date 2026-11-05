@@ -97,9 +97,11 @@ export const FACTORY_SEAT_OP = 'harness_agent_control:new — starts a NEW agent
 export const FACTORY_RETRY_OP = `${FACTORY_GRAIN} · harness_agent_control:restart — the bound harness's stalled task, from its last good step; the owner takes no session`
 export const FACTORY_BATCH_OP = `${FACTORY_GRAIN} · harness_agent_control:resume — the bound harness's queued tasks; the owner takes no row`
 /** A Factory task's ▶ where its carrier is handed (`taskLaunch`): the task's own Launch, as the Agent rack's Launch presses it. */
-export const FACTORY_TASK_LAUNCH_OP = 'the task · Software Factory attempt-launch — the unit Factory names for the task (its custody, else the one unit its attempts stand on), '
+export const FACTORY_TASK_OWN_LAUNCH_OP = 'the task · Software Factory attempt-launch — the unit Factory names for the task (its custody, else the one unit its attempts stand on), '
   + 'started on the model AIKit realises on its session (aikit_write realise, then factory_owner attempt-launch); a stop its Launch mode makes is Factory\'s '
-  + `attempt-request-cancellation of that unit. A task AIKit names no task_ref for: ${FACTORY_LAUNCH_OP}`
+  + 'attempt-request-cancellation of that unit.'
+/** The ▶'s op for the set: a Factory task's own, and the harness's for a task that is none (each clip's own is `opOf`'s, BD round 25). */
+export const FACTORY_TASK_LAUNCH_OP = `${FACTORY_TASK_OWN_LAUNCH_OP} A task AIKit names no task_ref for: ${FACTORY_LAUNCH_OP}`
 
 /** A session's current task's own settings as AIKit states them (`encounter-session-settings` `task`, its defaults stated: launch trigger,
  * then next, quantize global): how it plays once launched, what follows it on its own track, and when a launch lands. */
@@ -358,7 +360,7 @@ function actionsFor(controls: FactoryControls, tracks: readonly WorldTrack[], cl
  * grid projects a new set on every render (the press's own receipt is one cause), so the press and its release can reach two sets. */
 const GATE_HELD = new Map<string, Promise<unknown>>()
 
-function launchByMode(launch: {op: string; run(clipId: string): unknown}, clips: readonly WorldTrackClip[], sessionOf: ReadonlyMap<string, string>,
+function launchByMode(launch: Pick<NonNullable<WorldTrackActions['launch']>, 'op' | 'run' | 'grainOf' | 'opOf'>, clips: readonly WorldTrackClip[], sessionOf: ReadonlyMap<string, string>,
   controls: FactoryControls | undefined, sessionStop: FactorySessionsReading['sessionStop'], repeat: FactorySessionsReading['repeat'],
   factoryTask: (clipId: string) => {session: string; taskRef: string; port: FactoryTaskLaunchPort} | null = () => null): NonNullable<WorldTrackActions['launch']> {
   const clipById = new Map(clips.map(clip => [clip.id, clip]))
@@ -379,6 +381,8 @@ function launchByMode(launch: {op: string; run(clipId: string): unknown}, clips:
   }
   return {
     op: launch.op,
+    ...(launch.grainOf ? {grainOf: launch.grainOf} : {}),
+    ...(launch.opOf ? {opOf: launch.opOf} : {}),
     run: clipId => {
       const clip = clipById.get(clipId)
       const mode = clip?.launch?.mode
@@ -568,7 +572,11 @@ export const factoryTrackAdapter: WorldTrackAdapter<FactorySessionsReading> = {
     const taskLaunch = reading.taskLaunch
     const factoryTask = (clipId: string) => { const task = taskLaunch && factoryTaskOf.get(clipId); return task && taskLaunch ? {...task, port: taskLaunch} : null }
     const harnessLaunch = set.actions?.launch
-    const launch = taskLaunch ? {op: FACTORY_TASK_LAUNCH_OP, run: (clipId: string) => {
+    // Each ▶ says what it starts (BD round 25): a Factory task's own grain (the one task pressed) and op, else the harness's.
+    const launch = taskLaunch ? {op: FACTORY_TASK_LAUNCH_OP,
+      grainOf: (clipId: string) => (factoryTask(clipId) ? null : undefined),
+      opOf: (clipId: string) => (factoryTask(clipId) ? FACTORY_TASK_OWN_LAUNCH_OP : harnessLaunch?.op),
+      run: (clipId: string) => {
       const task = factoryTask(clipId)
       // A task that is not Factory's work launches on the harness as it did, Factory's words before the harness's receipt.
       if (task) return task.port.launch(task.session, task.taskRef).then(receipt => statusOf(receipt) === NOT_FACTORY_WORK && !receipt.ok && harnessLaunch

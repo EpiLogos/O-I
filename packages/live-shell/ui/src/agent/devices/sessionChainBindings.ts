@@ -71,7 +71,7 @@ export const RUN_REFUSE = {
   open: 'No events are read into lanes: the temporal stream names the session, not Messages, Files, Terminal, Web or Graph.',
 } as const
 
-/** Whether the Run still stands on the structure its sources declare (lane W7; D3, software-factory__run-device.tsx `structure`): Factory's
+/** Whether the Run still stands on the structure its sources declare (lane W7; D3, the `structure` of the Run device, a design retired since: no design draws it now): Factory's
  * StructuralFidelityEvidence (factory/src/structural_ground.rs:187), which T-COVERAGE §1.2's Software Factory row names and no kernel route
  * reads. */
 export const RUN_STRUCTURE_UNREAD = 'The Run\'s structure: no reading reaches it yet — missing op: StructuralFidelityEvidence through the kernel (T-COVERAGE §1.2, Software Factory: "StructuralFidelityEvidence") (Software Factory).'
@@ -228,7 +228,7 @@ export const CUSTODY_ABSENT = {
   handBackLit: 'The hand-back light: Factory\'s custody list (its hand_back) is read on the session\'s own chain, where Custody stands on its Agent.',
 } as const
 
-// The Grants page (lanes W7, W8; D7, software-factory__agent-custody.tsx `grants`, `holder`, `worlds`, `readAt`): Actuation's governing
+// The Grants page (lanes W7, W8; D7, Scope's Grants page, scope.tsx `grants`, `holder`, `worlds`, `readAt`, which took the retired Custody design's Grants, §19.12): Actuation's governing
 // authority records, read through the kernel's actuation_read {kind authority-list} (`actuation authority list --json`,
 // actuation.local-authority-listing/v1: authorities [{authority_source_ref, record {holder, issued_by, metagency_grant {operations},
 // allowed_world_refs, …}, issued_at_unix_seconds, revoked? {at_unix_seconds, reason}}]; real shape in desktop/cradle/kernel/tests/fixtures/
@@ -258,7 +258,7 @@ export const CUSTODY_GRANTS_REFUSE = {
   revokePerson: 'Revoke: the current person is no longer the one this page was drawn for; nothing was sent to Actuation.',
 } as const
 
-/** One grant of Actuation's listing as the design's row (agent-custody.tsx:21-22, the Agent's Custody page's Grants): {ref, holder, issuedBy, operations,
+/** One grant of Actuation's listing as the design's row (Scope's Grants page, scope.tsx `grants`): {ref, holder, issuedBy, operations,
  * worlds, issuedAt (s), revoked: {at, reason} | null}. `expiresAt` is left out: an Actuation authority record carries no expiry. Pure. */
 export function grantRows(listing: unknown): Record<string, unknown>[] | null {
   const doc = listing && typeof listing === 'object' && !Array.isArray(listing) ? listing as Record<string, unknown> : null
@@ -304,7 +304,7 @@ export type CustodyHoldRequest = {
   readonly subject_ref?: string; readonly expected_revision?: number
 }
 
-/** The next grant's settings and the revocation's reason: the hand's own holds (agent-custody.tsx:23-24). */
+/** The next grant's settings and the revocation's reason: the hand's own holds (Scope's Grants page, scope.tsx: the next grant's settings and `revoke:reason`). */
 export const CUSTODY_GRANT_SETTINGS: readonly string[] = ['grant:determine-agency', 'grant:configure-agency', 'grant:actualise-agency', 'grant:reintegrate-return',
   'grant:world', 'grant:expires', 'revoke:reason']
 

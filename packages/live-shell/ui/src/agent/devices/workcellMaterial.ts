@@ -99,7 +99,7 @@ export function probesByLabel(reading: unknown): Record<string, Obj> {
   return Object.fromEntries(reading.probes.flatMap(row => (isObj(row) && str(row.label) ? [[String(row.label), row]] : [])))
 }
 
-/** `workcell --receipt R collect`'s reading as one attempt's collected outputs (software-factory__attempt-review.tsx `collected` row
+/** `workcell --receipt R collect`'s reading as one attempt's collected outputs (the Results tile's `collected` row
  * {attempt, world, outputs [{ref, locator, provenance}], omitted [{requirement, reason}]}). Null when the answer is not a collection. */
 export function collectedOf(attempt: string, collect: unknown): Record<string, unknown> | null {
   if (!isObj(collect) || !str(collect.world_ref) || !Array.isArray(collect.outputs)) return null

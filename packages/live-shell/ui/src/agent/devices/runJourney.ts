@@ -1,4 +1,4 @@
-// The Journey a Run belongs to (lane W8; D3's Journey view on Runs, software-factory__attempt-review.tsx `journey`), read from Factory's
+// The Journey a Run belongs to (lane W8; the Run map's Journey, software-factory__run-map.tsx `journey`), read from Factory's
 // own developmental readings through the kernel's factory_development_read (desktop/cradle/kernel/src/factory.rs), which exist:
 //   `run` <run-ref>          factory.run-reading/v1: owningJourneyRefs (the Journey the Run belongs to), lifecycle, nativeAttempts?;
 //   `journey` <journey-ref>  factory.journey-reading/v1: commission {purpose, commission_ref}, status, runRefs (in the order Factory keeps

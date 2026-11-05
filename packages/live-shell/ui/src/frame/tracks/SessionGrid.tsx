@@ -237,6 +237,10 @@ const EMPTY_STOPS: readonly WorldTrackColumn[] = Array.from({length: 8}, (_, i) 
 
 /** The launches held down now, by the press's key: a Gate's press stays held across the renders its own receipt causes. */
 const HELD_LAUNCHES = new Set<string>()
+
+/** A control's own grain as its label says it: undefined leaves the set's (`setGrain`, already in its brackets), null says none (the one
+ * clip pressed), a word says that. Each clip's ▶ reads its own grain so, as Stop reads `trackStop.grain` (O-I 804 BD round 25). */
+const ownGrain = (own: string | null | undefined, setGrain: string): string => (own === undefined ? setGrain : own ? ` (${own})` : '')
 const LAUNCH_KEYS = new Set([' ', 'Enter'])
 type Press = {stopPropagation(): void; preventDefault?(): void}
 type PointerPress = Press & {button?: number; pointerId?: number; currentTarget?: {setPointerCapture?(id: number): void}}
@@ -390,12 +394,16 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
               // How far a running clip has got, only where its owner reads it (clipProgress); else the fill grows with no end, as it always did.
               const progress = clipProgress(clip)
               const mode = shownMode(clip)
+              // What this clip's ▶ starts, read as Stop reads its own grain (O-I 804 BD round 25): the clip's grain where the launch gives
+              // one (null: the clip pressed, said with nothing), else the set's; and the clip's own op, else the launch's.
+              const launchGrain = trackLaunch?.grainOf ? ownGrain(trackLaunch.grainOf(clip.id), grain) : grain
+              const launchOp = trackLaunch ? trackLaunch.opOf?.(clip.id) ?? trackLaunch.op : ''
               return <div key={row.id} role="gridcell" className={`cs clip${clip.status ? ` ${clip.status}` : ''}${selected ? ' sel' : ''}`} data-clip={clip.id} data-clip-status={clip.status ?? 'undisclosed'}
                 data-receipt={receiptMark(receipt, key)} data-progress={progress ?? undefined}
                 title={`${clip.label} · ${word}${progress !== null ? ` · ${progress}% through, as its owner reads it` : ''}${mode ? ` · plays ${mode}` : ''}${clip.launch?.quantize ? ` · launches ${clip.launch.quantize}` : ''}${clip.launch?.follow ? ` · then ${clip.launch.follow}` : ''}${clip.takes?.length ? ` · ${clip.takes.length} takes` : ''}${clip.note ? ` · ${clip.note}` : ''}${clipStandingTitle(mark)}`}
                 {...clipStandingAttributes(mark)} style={mark || progress !== null ? {...(mark ? {borderLeft: clipStandingEdge(mark)} : {}), ...(progress !== null ? {'--p': progress} : {})} as CSSProperties : undefined}
                 onClick={() => selection.select({kind: 'clip', ref: clip.id, title: clip.label, track: clip.trackId})}>
-                <button type="button" className="tri" aria-label={`Launch ${clip.label}${grain}`} disabled={!trackLaunch} title={trackLaunch ? `Launch (${trackLaunch.op})${mode === 'gate' && trackLaunch.release ? ' · held: it runs while you hold the launch' : ''}` : owned ? 'No launch: the owner discloses no launch for this clip' : 'No launch: this track is read, not launched'}
+                <button type="button" className="tri" aria-label={`Launch ${clip.label}${launchGrain}`} disabled={!trackLaunch} title={trackLaunch ? `Launch (${launchOp})${mode === 'gate' && trackLaunch.release ? ' · held: it runs while you hold the launch' : ''}` : owned ? 'No launch: the owner discloses no launch for this clip' : 'No launch: this track is read, not launched'}
                   {...clipLaunchPress(clip, trackLaunch, onPress, key)} />
                 <span className="cs-text">
                   <span className="cs-label">{clip.label}{clipStandingTag(mark)}</span>
