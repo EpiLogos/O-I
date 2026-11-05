@@ -16,14 +16,15 @@ export interface ResearchEditorProps {
  view?:Partial<ResearchEditorView>;onViewChange?:(view:ResearchEditorView)=>void;
 }
 export function TimelineEditor(props:ResearchEditorProps){return <ResearchEditor {...props} instrument="m2" name="Timeline"/>;}
-export function PlacesEditor(props:ResearchEditorProps){return <ResearchEditor {...props} instrument="m4" name="Places"/>;}
-function ResearchEditor(props:ResearchEditorProps&{instrument:'m2'|'m4';name:string}){
+// The Places editor retired with the research frame's Places lens (#762, researchInstruments.tsx `ResearchInstrument`): Places is the
+// Archetypal-Earth atlas, the shell's Earth pane.
+function ResearchEditor(props:ResearchEditorProps&{instrument:'m2';name:string}){
  let key='unbound';try{const basis=canvasBasis(props.host,props.sceneId);key=`${basis.expressionRef}/${basis.sceneRef}`;}catch{}
  return <BoundResearchEditor key={`${props.instrument}/${key}/${props.sceneId}`} {...props}/>;
 }
 /** Compact/full resize the same native renderer. Filters, frame, walk,
  * camera and pending layout retries stay mounted through depth/visibility. */
-function BoundResearchEditor({host,sceneId,depth,visible=true,revision,onExpand,onSource,onVisibility,onDraftChange,onOpenEvidence,view,onViewChange,instrument,name}:ResearchEditorProps&{instrument:'m2'|'m4';name:string}){
+function BoundResearchEditor({host,sceneId,depth,visible=true,revision,onExpand,onSource,onVisibility,onDraftChange,onOpenEvidence,view,onViewChange,instrument,name}:ResearchEditorProps&{instrument:'m2';name:string}){
  const stage=useRef<HTMLElement>(null),container=useRef<HTMLDivElement>(null),tools=useRef<HTMLDivElement>(null),inspector=useRef<HTMLElement>(null),home=useRef<HTMLDivElement>(null);
  const installed=useRef<ReturnType<typeof installResearchInstruments>>();
  const opened=useRef(false);
@@ -40,7 +41,7 @@ function BoundResearchEditor({host,sceneId,depth,visible=true,revision,onExpand,
   let alive=true;setError('');setBusy(true);
   const live=new Proxy(host,{get:(_,key)=>Reflect.get(source.current,key)});
   try{
-   const bound=receiveResearchHost(live,sceneId,{container:container.current,tools:tools.current,inspector:inspector.current,canvasHome:home.current,placesHome:home.current},tracker.current!, (overview,basis)=>{if(alive)setObserved({overview,basis});},message=>{if(alive)setError(message);});
+   const bound=receiveResearchHost(live,sceneId,{container:container.current,tools:tools.current,inspector:inspector.current,canvasHome:home.current},tracker.current!, (overview,basis)=>{if(alive)setObserved({overview,basis});},message=>{if(alive)setError(message);});
    const instance=installResearchInstruments(bound);installed.current=instance;
    if(visible){opened.current=true;lastRevision.current=revision;void instance.open(instrument).catch(error=>{if(alive)setError(String(error));}).finally(()=>{if(alive)setBusy(false);});}else setBusy(false);
    return()=>{alive=false;instance.destroy();installed.current=undefined;};

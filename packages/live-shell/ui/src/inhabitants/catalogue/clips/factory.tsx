@@ -33,8 +33,10 @@
 // name, state}]}): Factory's score of the song the task's Run performs (`factory workflow score <state> <run>`), its units with their
 // compositions, on the rows of the track's Agent rack and then the agents and agent sets the song names that the rack does not hold
 // (`rack: false`), the waves from Factory's plan of record. `unit.own` is this clip's own unit; `score.check` is the engine's word on the
-// score (`factory workflow check` admits or refuses the song's file; QL's word on each unit's composition waits for an operation that
-// takes one). Positions are derived from the order, never kept: a unit starts the step after what it waits on; a unit whose thread form
+// score (`factory workflow check` admits or refuses the song's file; QL checks each unit's seven heads as a cell of its Vāk block).
+// `vak.steps` (JSON {unit, state: read | absent, why?, heads?: [{head, state: chosen | open, label?, meaning?, labels?}], compose?:
+// [{head, step, marker?, hops}], walk?, needs?}) is QL's breakdown of the selected unit's heads (`ql vak unit-steps`): what each chosen
+// label means, the labels an open head may take, and the composition steps the heads fix; or QL's refusal in its words. Positions are derived from the order, never kept: a unit starts the step after what it waits on; a unit whose thread form
 // is CFP4 (drone) holds to the end of the song. A song branches only by allocation, never by a condition.
 // Writes: a note dragged to another row (`score` rewritten) gives the unit to that agent or agent set; Transform's and Generate's presses
 // (`tr.press`, `gen.press`, `gen.accept`, `gen.discard`). Allocate, Connect and Thread form are edits of the song's file that Factory
@@ -90,6 +92,13 @@ interface Unit {
   /** A canon note's takes: the Runs Factory started from it. */
   readonly takes?: number
 }
+/** QL's breakdown of a unit's heads, as the binding words it (`vak.steps`). */
+interface Steps {
+  readonly unit?: string | null; readonly state: 'read' | 'absent'; readonly why?: string
+  readonly heads?: readonly {readonly head: string; readonly state: string; readonly label?: string; readonly meaning?: string; readonly labels?: readonly string[]}[]
+  readonly compose?: readonly {readonly head: string; readonly step: string; readonly marker?: string; readonly hops?: number}[]
+  readonly walk?: readonly string[]; readonly needs?: readonly string[]
+}
 interface Join {readonly key: string; readonly waits: readonly string[]; readonly releases: readonly string[]; readonly join?: 'all' | 'first'}
 interface Wave {readonly id: string; readonly name: string; readonly state?: string}
 interface Score {readonly name: string; readonly rows: readonly ScoreRow[]; readonly units: readonly Unit[]; readonly joins?: readonly Join[]; readonly waves?: readonly Wave[]}
@@ -114,7 +123,8 @@ const HEADS: readonly {readonly id: keyof Heads; readonly label: string; readonl
   {id: 'CF', label: 'CF', does: 'The context frame the unit stands in, and the voice that holds it.', word: x => `${x} ${VOICE[x] ?? ''}`.trim()},
   {id: 'CFP', label: 'CFP', does: 'The thread form: how the unit stands with the others.', word: x => formWord(x) ?? x},
   {id: 'CS', label: 'CS', does: 'The context sequence: how far the passage goes, from the full traverse (CS0) to the direct synthesis (CS5).'},
-  {id: 'direction', label: 'Direction', does: 'Forward, in the prospective pass; returning, in the retrospective pass.', word: x => (x === 'returning' ? 'Returning' : x === 'forward' ? 'Forward' : x)},
+  {id: 'direction', label: 'Direction', does: 'Forward synthesis, in the prospective pass; returning inquiry, in the retrospective pass.',
+    word: x => (x === 'returning-inquiry' ? 'Returning' : x === 'forward-synthesis' ? 'Forward' : x)},
 ]
 
 function scoreOf(v: ClipProps['v']): Score | undefined {
@@ -243,6 +253,10 @@ function Vak(p: ClipProps) {
   const lanes: Lane[] = [...rows.map(r => ({id: r.id, label: r.name, key: 'name' as const})),
     ...HEADS.map(h => ({id: `h:${h.id}`, label: h.label, key: 'name' as const, marked: true}))]
   const chosen = score.units.find(u => u.key === (strOf(p.v, 'unit') ?? strOf(p.v, 'unit.own'))) ?? score.units[0]
+  // QL's breakdown of the chosen unit's heads, where it is of that unit (a song opened inside a note shows notes QL was not asked about).
+  const steps = read<Steps | undefined>(p.v, 'vak.steps', undefined)
+  const ql = !shown.inside && chosen && steps?.unit === chosen.key ? steps : undefined
+  const meant = (id: string) => ql?.state === 'read' ? ql.heads?.find(h => h.head === id) : undefined
   const blocks: Block[] = score.units.flatMap(u => {
     const pos = at.get(u.key) ?? {at: 0, len: 1}
     return [{id: u.key, lane: u.row, at: pos.at, len: pos.len, label: u.key, tone: 'value' as Tone, dashed: u.proposed, does: u.concern},
@@ -250,19 +264,25 @@ function Vak(p: ClipProps) {
       // each other. A unit held across the song stands behind only while it is chosen, or it would cover every other.
       // A head the decision model picked stands dashed with its label, the model's pick, until you accept it.
       ...(u.key !== chosen?.key && u.heads?.CFP === 'CFP4' ? [] : HEADS.map(h => { const x = u.heads?.[h.id], pick = x ? undefined : u.picks?.[h.id], mine = u.key === chosen?.key
-        const shown = x ?? pick
+        const shown = x ?? pick, said = mine ? meant(h.id) : undefined
+        // QL's word on the head: what its label means in the Vāk block, or the labels it may take while open.
+        const qlWord = said?.state === 'chosen' && said.meaning ? ` QL: ${said.meaning}` : said?.state === 'open' && said.labels?.length ? ` QL's Vāk block holds ${said.labels.join(' · ')}.` : ''
         return {id: `${u.key}:${h.id}`, lane: `h:${h.id}`, at: pos.at, len: pos.len, label: mine ? (shown ? (h.word ? h.word(shown) : shown) : 'open') : undefined,
           tone: (x ? 'value' : pick ? 'accent' : 'stall') as Tone, dashed: !x, faint: !mine,
-          does: `${u.key} · ${h.label}: ${x ?? (pick ? `${pick}, the decision model's pick, dashed until you accept it.` : 'open: no label chosen yet.')} ${h.does}`} }))]
+          does: `${u.key} · ${h.label}: ${x ?? (pick ? `${pick}, the decision model's pick, dashed until you accept it.` : 'open: no label chosen yet.')}${qlWord} ${h.does}`} }))]
   })
   const words: [string, string | undefined][] = chosen ? [
     ['Concern', chosen.concern], ['Returns', chosen.returns], ['Sources', chosen.sources?.join(' · ')], ['Success', chosen.success?.join(' · ')],
-    ['May', chosen.may?.join(' · ')], ['Stops when', chosen.stop], ['Escalates', chosen.escalate]] : []
+    ['May', chosen.may?.join(' · ')], ['Stops when', chosen.stop], ['Escalates', chosen.escalate],
+    // QL's breakdown: the composition steps the heads fix, the walk they give, and what a composition takes that the unit does not carry.
+    ...(ql?.state === 'read' ? [['QL composes', ql.compose?.length ? ql.compose.map(c => `${c.head}: ${c.step}${c.marker ? ` (${c.marker})` : ''}`).join(' · ') : 'No step: no thread form, and no sequence with its direction, is chosen.'],
+      ['Walk', ql.walk?.length ? ql.walk.join(' → ') : undefined], ['Takes', ql.needs?.length ? `${ql.needs.join(', ')}: a unit names its whole, it does not carry it.` : undefined]] as [string, string | undefined][]
+      : ql ? [['QL', ql.why]] as [string, string | undefined][] : [])] : []
   const listH = Math.max(60, Math.round(p.room.h * 0.34))
   const laneH = Math.max(12, Math.min(20, Math.floor((p.room.h - RULER_H - listH) / Math.max(1, lanes.length))))
   return <LaneGrid lanes={lanes} blocks={blocks} from={0} to={Math.ceil(end) + 1} major={1} minor={0.5} label={stepLabel} keyW={92} laneH={laneH} highlight
     selected={chosen?.key} onSelect={id => p.set('unit', id.split(':')[0]!)} w={p.room.w} h={p.room.h} name="Vāk"
-    does="What each unit carries on its own: the seven heads of its composition, lane by lane, the selected unit's labels lit at its note and the others faint behind. An open head is dashed: no label is chosen yet; a head the decision model picked is dashed with its label until you accept it. Under the lanes, the selected unit's own words."
+    does="What each unit carries on its own: the seven heads of its composition, lane by lane, the selected unit's labels lit at its note and the others faint behind. An open head is dashed: no label is chosen yet; a head the decision model picked is dashed with its label until you accept it. Under the lanes, the selected unit's own words, and QL's breakdown of its heads: the steps they compose and the walk they give."
     under={<ul className="clv-list" aria-label={`What ${chosen?.key ?? 'the unit'} carries`}>
       {words.map(([name, text]) => <li key={name} data-i={`${name}|${text ?? 'No reading.'}`}>
         <span className="clv-at">{chosen?.key}</span><span className="clv-chip">{name}</span><span className="clv-text">{text ?? '—'}</span><span className="clv-tag" />
@@ -691,18 +711,29 @@ const RETURNED = [
 
 // The song the task is a unit of: the bridge widgets' hand-off, from its plan, as Factory would read it. Rows are the agents and
 // agent sets on the track's rack; Scribe is on the rack and has no part.
-const C = (CPF: string, CT: string, CP: string, CF: string, CFP: Form, CS: string, direction = 'forward') => ({CPF, CT, CP, CF, CFP, CS, direction})
+const C = (CPF: string, CT: string, CP: string, CF: string, CFP: Form, CS: string, direction = 'forward-synthesis') => ({CPF, CT, CP, CF, CFP, CS, direction})
 const GUARDIANS: Score = {
   name: 'release-check',
   rows: [{id: 'g-lead', name: 'Field guardian', kind: 'agent'}, ...['Central', 'AIKit', 'Actuation', 'Factory', 'Workcell', 'QL'].map(n => ({id: `g-${n.toLowerCase()}`, name: `${n} guardian`, kind: 'agent' as const}))],
   units: [
     {key: 'gather', row: 'g-lead', heads: C('dialogical', 'CT1', '4.1', 'CF2', 'CFP0', 'CS2')},
     ...['central', 'aikit', 'actuation', 'factory', 'workcell', 'ql'].map(n => ({key: `check-${n}`, row: `g-${n}`, deps: ['gather'], heads: C('dialogical', 'CT3', '4.3', 'CF4', 'CFP1', 'CS3')})),
-    {key: 'report', row: 'g-lead', heads: C('dialogical', 'CT5', '4.5', 'CF7', 'CFP0', 'CS5', 'returning')},
+    {key: 'report', row: 'g-lead', heads: C('dialogical', 'CT5', '4.5', 'CF7', 'CFP0', 'CS5', 'returning-inquiry')},
   ],
   joins: [{key: 'agree', waits: ['central', 'aikit', 'actuation', 'factory', 'workcell', 'ql'].map(n => `check-${n}`), releases: ['report'], join: 'all'}],
   waves: [],
 }
+/** QL's breakdown of drop-capture's heads, as the binding words it: `ql vak unit-steps` answered for these heads (QL at 7bb2535 with the
+ * round-22 direction labels, 5 Nov 2026), its meanings in QL's words. */
+const STEPS = {unit: 'drop-capture', state: 'read', heads: [
+  {head: 'CPF', state: 'chosen', label: 'authorised-undertaking', meaning: 'an admitted undertaking; it names its authority'},
+  {head: 'CT', state: 'chosen', label: 'CT2', meaning: 'Operations content'},
+  {head: 'CP', state: 'chosen', label: '4.2', meaning: 'Operation: prospective What is being done? retrospective What blocks us?'},
+  {head: 'CF', state: 'chosen', label: 'CF3', meaning: '(0/1/2) Dual-Non-Dual / triadic-circulation (Eros)'},
+  {head: 'CFP', state: 'chosen', label: 'CFP1', meaning: 'chord'},
+  {head: 'CS', state: 'open', labels: ['CS0', 'CS1', 'CS2', 'CS3', 'CS4', 'CS5']},
+  {head: 'direction', state: 'chosen', label: 'forward-synthesis', meaning: 'Prospective: the pass forward through the pairs'}],
+compose: [{head: 'CFP', step: 'cfp-form parallel', marker: 'ql.cprime-oikonomia/v1:cfp1:independent-parallel-p-thread', hops: 0}], walk: [], needs: ['context', 'oikonomia', 'basis']}
 const SCORE: Score = {
   name: 'Bridge widget hand-off',
   rows: [
@@ -719,14 +750,14 @@ const SCORE: Score = {
       concern: 'Write the hand-off fixtures for the bridge widgets', returns: 'The fixture files, and the test run that reads them',
       sources: ['Plan · widget hand-off', 'widgets/handoff.tsx'], success: ['Every widget has a hand-off fixture', 'Old fixture ids are kept', 'pnpm test bridge passes'],
       may: ['edit fixtures/'], stop: 'Stop when a widget has no hand-off to fix', escalate: 'Escalate a fixture id that must change'},
-    {key: 'drop-capture', row: 'builder-b', deps: ['plan-fixtures'], wave: 'w1', heads: {CPF: 'authorised-undertaking', CT: 'CT2', CP: '4.2', CF: 'CF3', CFP: 'CFP1', direction: 'forward'},
+    {key: 'drop-capture', row: 'builder-b', deps: ['plan-fixtures'], wave: 'w1', heads: {CPF: 'authorised-undertaking', CT: 'CT2', CP: '4.2', CF: 'CF3', CFP: 'CFP1', direction: 'forward-synthesis'},
       concern: 'Drop the old capture list from the reads', returns: 'The reads without the capture list', sources: ['fixtures/capture.json'],
       success: ['No read names the capture list'], may: ['edit fixtures/capture.json'], stop: 'Stop when nothing reads the list'},
     {key: 'review', row: 'reviewers', len: 2, wave: 'w2', heads: C('dialogical', 'CT3', '4.3', 'CF4', 'CFP3', 'CS3'),
       concern: 'Read the wave\'s structure and its claims, by two who wrote none of it', returns: 'One reading of the wave, with its findings', success: ['Both readers clear one revision']},
-    {key: 'release-check', row: 'guardians', len: 2, wave: 'w2', heads: C('dialogical', 'CT3', '4.4', 'CF6', 'CFP5', 'CS4', 'returning'), song: GUARDIANS,
+    {key: 'release-check', row: 'guardians', len: 2, wave: 'w2', heads: C('dialogical', 'CT3', '4.4', 'CF6', 'CFP5', 'CS4', 'returning-inquiry'), song: GUARDIANS,
       concern: 'Check the suite agrees before the hand-off lands', returns: 'Each guardian\'s word, and where they disagree'},
-    {key: 'return-handoff', row: 'aletheia', wave: 'w2', heads: C('authorised-undertaking', 'CT5', '4.5', 'CF7', 'CFP0', 'CS5', 'returning'),
+    {key: 'return-handoff', row: 'aletheia', wave: 'w2', heads: C('authorised-undertaking', 'CT5', '4.5', 'CF7', 'CFP0', 'CS5', 'returning-inquiry'),
       concern: 'Return the hand-off: what was meant, what came back, what was learned', returns: 'The Return, with its readings', may: ['write one Return to the NOW field']},
     {key: 'watch-ci', row: 'ci', wave: 'w1', heads: C('dialogical', 'CT0', '4.0', 'CF1', 'CFP4', 'CS1'),
       concern: 'Watch the bridge tests, and raise any that fails', returns: 'Each failure, as it comes', stop: 'Stop when the song returns'},
@@ -800,7 +831,7 @@ export const clip: DesignedClip = {
       log: JSON.stringify(RETURNED), elapsed: 72, event: 'e29-7', criteria: JSON.stringify([
         {id: 'c1', text: 'Every widget has a hand-off fixture', state: 'satisfied', evidence: 2}, {id: 'c2', text: 'Old fixture ids are kept', state: 'satisfied', evidence: 1},
         {id: 'c3', text: 'pnpm test bridge passes', state: 'satisfied', evidence: 1}])},
-    'What each unit carries': {'view.editor': 'vak', 'view.tools': 'generate', 'gen.tool': 'heads', unit: 'drop-capture'},
+    'What each unit carries': {'view.editor': 'vak', 'view.tools': 'generate', 'gen.tool': 'heads', unit: 'drop-capture', 'vak.steps': JSON.stringify(STEPS)},
     'A score proposed from its intent': {score: JSON.stringify(PROPOSED), 'view.tools': 'generate', 'gen.tool': 'compose', 'view.panel': 'intent',
       'gen.status': JSON.stringify({state: 'refused', why: 'drop-capture has no CS'}),
       'score.check': JSON.stringify({state: 'refused', why: 'drop-capture has no CS: a composition holds all seven heads'})},

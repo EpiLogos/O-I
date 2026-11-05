@@ -1,5 +1,5 @@
 {
- "_source": "REAL: Software Factory's CLI built from dlw/844-songs (env-1/factory, on 0d47f0d), walked headless on two placed scratch projects (song-maker, song-taker) with HOME isolated, 2026-11-03; the scratch root written /walk. export/songs/remake/score/edit as Factory answered them on stdout; the *_refused entries are Factory's factory.workflow-diagnostic/v1 on stderr. aikit_capture/aikit_inbox/aikit_promote: AIKit's CLI built from dlw/844-capture (env-1/ai-kit, on e0fd64bc), asked `aikit capture release-check --from-song --scope project --by human` with the export's clip on stdin, then `aikit inbox` and `aikit promote <candidate> --id skill/project/method-release-check`, against a scratch AIKit home with HOME and HISTFILE isolated, 2026-11-03; its scratch root written /walk/capture.",
+ "_source": "REAL: Software Factory's CLI built from dlw/844-songs (env-1/factory, on 0d47f0d), walked headless on two placed scratch projects (song-maker, song-taker) with HOME isolated, 2026-11-03; the scratch root written /walk. export/songs/remake/score/edit as Factory answered them on stdout; the *_refused entries are Factory's factory.workflow-diagnostic/v1 on stderr. aikit_capture/aikit_inbox/aikit_promote: AIKit's CLI built from dlw/844-capture (env-1/ai-kit, on e0fd64bc), asked `aikit capture release-check --from-song --scope project --by human` with the export's clip on stdin, then `aikit inbox` and `aikit promote <candidate> --id skill/project/method-release-check`, against a scratch AIKit home with HOME and HISTFILE isolated, 2026-11-03; its scratch root written /walk/capture. DERIVED (round 22, 5 Nov 2026): each unit's heads.direction relabelled in QL's law's spelling (forward to forward-synthesis, returning to returning-inquiry), as Factory with round 22 reads and writes a song's direction (factory vak_orchestration model.rs c_prime_direction; DLW build ruling 2026-11-05); nothing else changed, so the byte revisions and digests are the 3 Nov files' as they then stood.",
  "aikit_capture": {
   "context": {
    "context_id": "ctx_01M6HPX8KAQB617W39DKR8KSPM",
@@ -208,7 +208,7 @@
        "CPF": "dialogical",
        "CS": "CS2",
        "CT": "CT1",
-       "direction": "forward"
+       "direction": "forward-synthesis"
       },
       "key": "logos-scope-plan",
       "may": [
@@ -247,7 +247,7 @@
        "CPF": "authorised-undertaking",
        "CS": "CS2",
        "CT": "CT2",
-       "direction": "forward"
+       "direction": "forward-synthesis"
       },
       "key": "techne-implement",
       "may": [
@@ -287,7 +287,7 @@
        "CPF": "dialogical",
        "CS": "CS2",
        "CT": "CT2",
-       "direction": "returning"
+       "direction": "returning-inquiry"
       },
       "key": "eros-verify",
       "may": [
@@ -327,7 +327,7 @@
        "CPF": "authorised-undertaking",
        "CS": "CS3",
        "CT": "CT3",
-       "direction": "returning"
+       "direction": "returning-inquiry"
       },
       "key": "mythos-debug",
       "may": [
@@ -366,7 +366,7 @@
        "CPF": "authorised-undertaking",
        "CS": "CS5",
        "CT": "CT5",
-       "direction": "returning"
+       "direction": "returning-inquiry"
       },
       "key": "sophia-finish",
       "may": [
@@ -405,7 +405,7 @@
        "CPF": "authorised-undertaking",
        "CS": "CS5",
        "CT": "CT4b'",
-       "direction": "returning"
+       "direction": "returning-inquiry"
       },
       "key": "aletheia-knowledge-return",
       "may": [
@@ -517,7 +517,7 @@
        "CPF": "dialogical",
        "CS": "CS2",
        "CT": "CT1",
-       "direction": "forward"
+       "direction": "forward-synthesis"
       },
       "key": "logos-scope-plan",
       "may": [
@@ -556,7 +556,7 @@
        "CPF": "authorised-undertaking",
        "CS": "CS2",
        "CT": "CT2",
-       "direction": "forward"
+       "direction": "forward-synthesis"
       },
       "key": "techne-implement",
       "may": [
@@ -596,7 +596,7 @@
        "CPF": "dialogical",
        "CS": "CS2",
        "CT": "CT2",
-       "direction": "returning"
+       "direction": "returning-inquiry"
       },
       "key": "eros-verify",
       "may": [
@@ -636,7 +636,7 @@
        "CPF": "authorised-undertaking",
        "CS": "CS3",
        "CT": "CT3",
-       "direction": "returning"
+       "direction": "returning-inquiry"
       },
       "key": "mythos-debug",
       "may": [
@@ -675,7 +675,7 @@
        "CPF": "authorised-undertaking",
        "CS": "CS5",
        "CT": "CT5",
-       "direction": "returning"
+       "direction": "returning-inquiry"
       },
       "key": "sophia-finish",
       "may": [
@@ -714,7 +714,7 @@
        "CPF": "authorised-undertaking",
        "CS": "CS5",
        "CT": "CT4b'",
-       "direction": "returning"
+       "direction": "returning-inquiry"
       },
       "key": "aletheia-knowledge-return",
       "may": [
@@ -862,7 +862,7 @@
      "CPF": "dialogical",
      "CS": "CS2",
      "CT": "CT1",
-     "direction": "forward"
+     "direction": "forward-synthesis"
     },
     "independenceFrom": [],
     "inputs": [],
@@ -929,7 +929,7 @@
      "CPF": "authorised-undertaking",
      "CS": "CS2",
      "CT": "CT2",
-     "direction": "forward"
+     "direction": "forward-synthesis"
     },
     "independenceFrom": [],
     "inputs": [
@@ -999,7 +999,7 @@
      "CPF": "dialogical",
      "CS": "CS2",
      "CT": "CT2",
-     "direction": "returning"
+     "direction": "returning-inquiry"
     },
     "independenceFrom": [],
     "inputs": [
@@ -1068,7 +1068,7 @@
      "CPF": "authorised-undertaking",
      "CS": "CS3",
      "CT": "CT3",
-     "direction": "returning"
+     "direction": "returning-inquiry"
     },
     "independenceFrom": [],
     "inputs": [
@@ -1136,7 +1136,7 @@
      "CPF": "authorised-undertaking",
      "CS": "CS5",
      "CT": "CT5",
-     "direction": "returning"
+     "direction": "returning-inquiry"
     },
     "independenceFrom": [],
     "inputs": [
@@ -1206,7 +1206,7 @@
      "CPF": "authorised-undertaking",
      "CS": "CS5",
      "CT": "CT4b'",
-     "direction": "returning"
+     "direction": "returning-inquiry"
     },
     "independenceFrom": [],
     "inputs": [
@@ -1329,7 +1329,7 @@
         "CPF": "dialogical",
         "CS": "CS2",
         "CT": "CT1",
-        "direction": "forward"
+        "direction": "forward-synthesis"
        },
        "key": "logos-scope-plan",
        "may": [
@@ -1368,7 +1368,7 @@
         "CPF": "authorised-undertaking",
         "CS": "CS2",
         "CT": "CT2",
-        "direction": "forward"
+        "direction": "forward-synthesis"
        },
        "key": "techne-implement",
        "may": [
@@ -1408,7 +1408,7 @@
         "CPF": "dialogical",
         "CS": "CS2",
         "CT": "CT2",
-        "direction": "returning"
+        "direction": "returning-inquiry"
        },
        "key": "eros-verify",
        "may": [
@@ -1448,7 +1448,7 @@
         "CPF": "authorised-undertaking",
         "CS": "CS3",
         "CT": "CT3",
-        "direction": "returning"
+        "direction": "returning-inquiry"
        },
        "key": "mythos-debug",
        "may": [
@@ -1487,7 +1487,7 @@
         "CPF": "authorised-undertaking",
         "CS": "CS5",
         "CT": "CT5",
-        "direction": "returning"
+        "direction": "returning-inquiry"
        },
        "key": "sophia-finish",
        "may": [
@@ -1526,7 +1526,7 @@
         "CPF": "authorised-undertaking",
         "CS": "CS5",
         "CT": "CT4b'",
-        "direction": "returning"
+        "direction": "returning-inquiry"
        },
        "key": "aletheia-knowledge-return",
        "may": [
@@ -1632,7 +1632,7 @@
          "CPF": "dialogical",
          "CS": "CS2",
          "CT": "CT2",
-         "direction": "returning"
+         "direction": "returning-inquiry"
         },
         "key": "eros-verify",
         "may": [
@@ -1672,7 +1672,7 @@
          "CPF": "authorised-undertaking",
          "CS": "CS3",
          "CT": "CT3",
-         "direction": "returning"
+         "direction": "returning-inquiry"
         },
         "key": "mythos-debug",
         "may": [
@@ -1802,7 +1802,7 @@
          "CPF": "dialogical",
          "CS": "CS2",
          "CT": "CT1",
-         "direction": "forward"
+         "direction": "forward-synthesis"
         },
         "key": "logos-scope-plan",
         "may": [
@@ -1841,7 +1841,7 @@
          "CPF": "authorised-undertaking",
          "CS": "CS2",
          "CT": "CT2",
-         "direction": "forward"
+         "direction": "forward-synthesis"
         },
         "key": "techne-implement",
         "may": [
@@ -1881,7 +1881,7 @@
          "CPF": "dialogical",
          "CS": "CS2",
          "CT": "CT2",
-         "direction": "returning"
+         "direction": "returning-inquiry"
         },
         "key": "eros-verify",
         "may": [
@@ -1921,7 +1921,7 @@
          "CPF": "authorised-undertaking",
          "CS": "CS3",
          "CT": "CT3",
-         "direction": "returning"
+         "direction": "returning-inquiry"
         },
         "key": "mythos-debug",
         "may": [
@@ -1960,7 +1960,7 @@
          "CPF": "authorised-undertaking",
          "CS": "CS5",
          "CT": "CT5",
-         "direction": "returning"
+         "direction": "returning-inquiry"
         },
         "key": "sophia-finish",
         "may": [
@@ -1999,7 +1999,7 @@
          "CPF": "authorised-undertaking",
          "CS": "CS5",
          "CT": "CT4b'",
-         "direction": "returning"
+         "direction": "returning-inquiry"
         },
         "key": "aletheia-knowledge-return",
         "may": [
@@ -2123,7 +2123,7 @@
          "CPF": "dialogical",
          "CS": "CS2",
          "CT": "CT2",
-         "direction": "returning"
+         "direction": "returning-inquiry"
         },
         "key": "eros-verify",
         "may": [
@@ -2163,7 +2163,7 @@
          "CPF": "authorised-undertaking",
          "CS": "CS3",
          "CT": "CT3",
-         "direction": "returning"
+         "direction": "returning-inquiry"
         },
         "key": "mythos-debug",
         "may": [
@@ -2293,7 +2293,7 @@
          "CPF": "dialogical",
          "CS": "CS2",
          "CT": "CT1",
-         "direction": "forward"
+         "direction": "forward-synthesis"
         },
         "key": "logos-scope-plan",
         "may": [
@@ -2332,7 +2332,7 @@
          "CPF": "authorised-undertaking",
          "CS": "CS2",
          "CT": "CT2",
-         "direction": "forward"
+         "direction": "forward-synthesis"
         },
         "key": "techne-implement",
         "may": [
@@ -2372,7 +2372,7 @@
          "CPF": "dialogical",
          "CS": "CS2",
          "CT": "CT2",
-         "direction": "returning"
+         "direction": "returning-inquiry"
         },
         "key": "eros-verify",
         "may": [
@@ -2412,7 +2412,7 @@
          "CPF": "authorised-undertaking",
          "CS": "CS3",
          "CT": "CT3",
-         "direction": "returning"
+         "direction": "returning-inquiry"
         },
         "key": "mythos-debug",
         "may": [
@@ -2451,7 +2451,7 @@
          "CPF": "authorised-undertaking",
          "CS": "CS5",
          "CT": "CT5",
-         "direction": "returning"
+         "direction": "returning-inquiry"
         },
         "key": "sophia-finish",
         "may": [
@@ -2490,7 +2490,7 @@
          "CPF": "authorised-undertaking",
          "CS": "CS5",
          "CT": "CT4b'",
-         "direction": "returning"
+         "direction": "returning-inquiry"
         },
         "key": "aletheia-knowledge-return",
         "may": [
@@ -2631,7 +2631,7 @@
          "CPF": "dialogical",
          "CS": "CS2",
          "CT": "CT1",
-         "direction": "forward"
+         "direction": "forward-synthesis"
         },
         "key": "logos-scope-plan",
         "may": [
@@ -2670,7 +2670,7 @@
          "CPF": "authorised-undertaking",
          "CS": "CS2",
          "CT": "CT2",
-         "direction": "forward"
+         "direction": "forward-synthesis"
         },
         "key": "techne-implement",
         "may": [
@@ -2710,7 +2710,7 @@
          "CPF": "dialogical",
          "CS": "CS2",
          "CT": "CT2",
-         "direction": "returning"
+         "direction": "returning-inquiry"
         },
         "key": "eros-verify",
         "may": [
@@ -2750,7 +2750,7 @@
          "CPF": "authorised-undertaking",
          "CS": "CS3",
          "CT": "CT3",
-         "direction": "returning"
+         "direction": "returning-inquiry"
         },
         "key": "mythos-debug",
         "may": [
@@ -2789,7 +2789,7 @@
          "CPF": "authorised-undertaking",
          "CS": "CS5",
          "CT": "CT5",
-         "direction": "returning"
+         "direction": "returning-inquiry"
         },
         "key": "sophia-finish",
         "may": [
@@ -2828,7 +2828,7 @@
          "CPF": "authorised-undertaking",
          "CS": "CS5",
          "CT": "CT4b'",
-         "direction": "returning"
+         "direction": "returning-inquiry"
         },
         "key": "aletheia-knowledge-return",
         "may": [

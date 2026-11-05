@@ -7,10 +7,10 @@ export const PROJECT_GRAPH=define('project','Project / Graph',[1100,720],['lane-
 export const CANVAS=define('canvas','Canvas',[1100,720],[...Array.from({length:10},(_,i)=>`lane-1:A${i+1}`),...Array.from({length:4},(_,i)=>`lane-1:B${i+1}`),'lane-1:D1','lane-1:D2']);
 export const TIMELINE=define('timeline','Timeline',[1200,700],Array.from({length:25},(_,i)=>`lane-2:T${i+1}`),'wide');
 export const JOURNEY=define('journey','Journey',[1200,760],Array.from({length:13},(_,i)=>`lane-5:T${i+1}`),'wide');
-export const PLACES=define('places','Places',[1150,760],Array.from({length:30},(_,i)=>`lane-4:T${i+1}`));
 // The Palace editor retired with the frame's Palace (b5a935661): a palace lives in the atlas, walked on the M5 plate
-// (packages/live-shell/ui/src/projections/atlas/palaces/; FOUNDATION N4).
-export const TECHNE_EDITORS=[PROJECT_GRAPH,CANVAS,TIMELINE,JOURNEY,PLACES] as const;
+// (packages/live-shell/ui/src/projections/atlas/palaces/; FOUNDATION N4). The Places editor retired with the research frame's Places
+// lens (#762): Places is the Archetypal-Earth atlas, the shell's Earth pane.
+export const TECHNE_EDITORS=[PROJECT_GRAPH,CANVAS,TIMELINE,JOURNEY] as const;
 
 /** Current native automation group editor. Target traceability is reported in
  * SOURCE-TARGETS.md; no programme-wide acceptance is implied by registration. */

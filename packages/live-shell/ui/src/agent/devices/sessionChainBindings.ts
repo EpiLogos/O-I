@@ -626,6 +626,10 @@ export const AGENTSET_REFUSE = {
   // Stop after (§19.4; round 870) stands beside Retry: Factory's request-cancellation of the unit the chosen chain's task's current attempt
   // stands on (factory_owner attempt-request-cancellation, O-I ticket 842; taskBindings.ts stopAfterTask).
   stopAfter: 'Stop after: no carrier to Factory\'s attempt-task-units and attempt-request-cancellation stands on this rack, so the chosen chain\'s task cannot be read or stopped (Software Factory).',
+  // Launch (BD r23, DLW build ruling 2026-11-05) stands before Retry and Stop after on the chain's task row, as a clip's launch stands in
+  // Live's slot: AIKit realises the chosen chain's session on its own model, and Factory starts the unit it names for the chain's task
+  // (taskBindings.ts launchTask: aikit_write realise, then factory_owner attempt-launch).
+  launch: 'Launch: no carrier to AIKit\'s realisation and Factory\'s attempt-launch stands on this rack, so the chosen chain\'s task cannot be started (AIKit, Software Factory).',
 } as const
 /** What the chain list refuses with its carriers standing: a press on what is no chain of the rack, the Decision helper where it has nothing
  * to do (it answers every agent of a group's rack and is given no work), a drop that names no standing session (AIKit attaches a session
@@ -653,6 +657,7 @@ export const CHAIN_LIST_REFUSE = {
   noneChosen: (control: string) => `${control}: choose a chain in the list first.`,
   helperRetry: 'Retry: the Decision helper answers the agents of the rack and is given no task of its own, so there is nothing of it to retry.',
   helperStop: 'Stop after: the Decision helper answers the agents of the rack and is given no task of its own, so there is nothing of it to stop.',
+  helperLaunch: 'Launch: the Decision helper answers the agents of the rack and is given no task of its own, so there is nothing of it to start.',
   devChange: 'Devices: the change names no setting and value (a JSON object of the device\'s settings), so no message was sent.',
   devUnseated: (name: string) => `Devices: ${name}'s session seats no agent, so no Position takes a message for it.`,
 } as const
@@ -726,6 +731,8 @@ export const GROUP_REFUSE = {
 export const SET_TYPE = /^[a-z][a-z0-9-]{0,63}$/
 /** The card's keys the hand holds (the design's `new.*` and the chains chosen for Group). */
 const CARD_LOCAL = ['grouping', 'new.open', 'new.for', 'new.type', 'new.chains', 'new.proposal'] as const
+/** Factory's answer to the rack's last Launch (JSON {chain, status, said}), held with the rack's view until another press replaces it. */
+const LAUNCHED = 'launched'
 
 /** The rack's carriers: Central's central.agent-set.save and .propose, the person's own acts through the kernel's invoke_action; the
  * session's own Agent, whose own writes a macro turns on a lone session's chain; a fresh suffix for a proposed set's ref and for the space a
@@ -740,6 +747,8 @@ export interface AgentRackPorts {
   readonly retry?: (input: {project: string; agent_session: string}) => Promise<unknown>
   /** Stop after: the chosen chain's session's task through Factory (its units read, its current unit asked to stop: taskBindings.ts stopAfterTask). */
   readonly stopAfter?: (input: {project: string; agent_session: string}) => Promise<unknown>
+  /** Launch: the chosen chain's session's task started (taskBindings.ts launchTask): Factory's answer, its status and its words. */
+  readonly launch?: (input: {project: string; agent_session: string}) => Promise<{readonly status: string; readonly said: string}>
   /** A device of another session's chain changed: the words go to that session as a message through Messages' delegate. */
   readonly ask?: (input: {project: string; agent_session: string; agent_ref: string; device: string; change: Readonly<Record<string, unknown>>; words: string}) => Promise<unknown>
   readonly agent?: DesignBinding | null
@@ -1059,6 +1068,7 @@ export function agentsetValues(input: AgentRackInput): Values {
   put(values, 'variation', view.variation)
   put(values, 'member', view.member)
   for (const key of CARD_LOCAL) put(values, key, view[key])
+  put(values, LAUNCHED, view[LAUNCHED])
   // A lone session's Model macro offers the models its harness offers where AIKit read them; unread, AIKit's catalogue, as its Agent does.
   // A group's, the models every chain's harness offers.
   if (lone && values.models === undefined && input.models?.length) values.models = JSON.stringify(input.models.map(id => ({id})))
@@ -1200,6 +1210,7 @@ export function agentsetBinding(input: AgentRackInput, ports?: AgentRackPorts): 
   if (ports?.rackMacros && input.rackMacros) for (const key of ['unmapped', 'store', 'variation'] as const) delete standing[key]
   if (ports?.retry) delete standing.retry
   if (ports?.stopAfter) delete standing.stopAfter
+  if (ports?.launch) delete standing.launch
   if (ports?.ask) delete standing.dev
   if (!ports?.removeSet) standing['new.discard'] = {disabled: GROUP_REFUSE.noRemover}
   const writable = join === null || join.refused !== undefined
@@ -1493,6 +1504,18 @@ export function agentsetBinding(input: AgentRackInput, ports?: AgentRackPorts): 
     if (!chain) throw Error(CHAIN_LIST_REFUSE.notChain('Stop after', id))
     await ports.stopAfter({project: chain.project ?? ROOT_REGISTER, agent_session: chain.sessionRef})
   }
+  /** Launch: the chosen chain's task, started through AIKit and Factory; Factory's answer stands in the row in its words until the next press. */
+  const launch = async () => {
+    if (!ports?.launch) throw Error(AGENTSET_REFUSE.launch)
+    const id = pressed().member
+    if (typeof id !== 'string' || !id) throw Error(CHAIN_LIST_REFUSE.noneChosen('Launch'))
+    if (id === DECISION_HELPER_ID) throw Error(CHAIN_LIST_REFUSE.helperLaunch)
+    const chain = chainOf(id)
+    if (!chain) throw Error(CHAIN_LIST_REFUSE.notChain('Launch', id))
+    holdView(AGENTSET_ID, LAUNCHED, undefined)
+    const answer = await ports.launch({project: chain.project ?? ROOT_REGISTER, agent_session: chain.sessionRef})
+    holdView(AGENTSET_ID, LAUNCHED, JSON.stringify({chain: chain.sessionRef, status: answer.status, said: answer.said}))
+  }
   /** A device of another session's chain (`dev:<chain>@<device>`): the change goes to that session as a message (Messages' delegate), in
    * words its agent reads; nothing of that chain's binding is written from here. */
   const askChain = async (key: string, value: Value | undefined) => {
@@ -1586,6 +1609,7 @@ export function agentsetBinding(input: AgentRackInput, ports?: AgentRackPorts): 
         if (key === 'retry') { await retry(); continue }
         if (key.startsWith('dev:') && await nestedJoin(key, value)) continue
         if (key === 'stopAfter') { await stopAfter(); continue }
+        if (key === 'launch') { await launch(); continue }
         if (key.startsWith('dev:')) { await askChain(key, value); continue }
         if (key === 'unmapped') { await unmap(value); continue }
         if (key === 'store') { await store(); continue }

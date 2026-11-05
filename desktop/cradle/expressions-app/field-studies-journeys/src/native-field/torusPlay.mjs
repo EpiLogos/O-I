@@ -1,10 +1,10 @@
 /** What the torus plays now, read off the instrument (DLW §20.14 Frequency driver = Torus; §20.2 Key source). The owner's pitches only:
- * every frequency here is a voice's own `frequency_hz` from the scene owner's influence reading (scene.ts `SceneVoice`), never one the
- * frame makes up. Two sources are read:
+ * every frequency here is a voice's own `frequency_hz` from the scene owner's influence reading (scene.ts `SceneVoice`), or a note's
+ * voice's own from the owner's bank in its frame (QL-MEF #287), never one the frame makes up. Two sources are read:
  *
  *  - the torus: the voices sounding now, while the field is running. The native frame carries each voice's amplitude (the torus
  *    object's reading, controller.ts `torus_object`, O-I 851): a voice sounds while it rings above a thousandth of the strike, so a
- *    chord rings out as the body does. An owner whose frames give no amplitudes is read as before: the voices the instrument was last
+ *    chord rings out as the body does, each note's voices at their own pitches (torusObject.ts soundingOf). An owner whose frames give no amplitudes is read as before: the voices the instrument was last
  *    struck on (controller.ts `struck`), the latest strike standing until the next one.
  *  - the sky: the nine tuned voices, when the instrument was opened at a dated sky (`acting.sky.kind === 'dated'`).
  *
@@ -34,7 +34,8 @@ export function torusPlayReading(reading) {
   const pitchOf = new Map(voices.map(voice => [voice.mode_ref || voiceModeRef(voice.planet_ref), voice.frequency_hz]));
   const amplitudes = Array.isArray(instrument.torus_object?.amplitudes) ? instrument.torus_object.amplitudes : null;
   const strike = instrument.influence?.material?.strike_metres;
-  return {torus: amplitudes ? soundingReading(reading.status, amplitudes, pitchOf, strike) : torusReading(reading.status, instrument.struck, pitchOf),
+  const sounding = Array.isArray(instrument.torus_object?.sounding_hz) ? instrument.torus_object.sounding_hz : null;
+  return {torus: sounding ? pitchesReading(reading.status, sounding, pitchOf) : amplitudes ? soundingReading(reading.status, amplitudes, pitchOf, strike) : torusReading(reading.status, instrument.struck, pitchOf),
     sky: skyReading(acting.sky, voices), root: rootReading(voices),
     // The body the plate reads its eight and four from (torusDrive.ts rolesOf), and the pulse that rings it.
     body: {influence: instrument.influence ?? null, amplitudes},
@@ -90,6 +91,13 @@ function soundingReading(status, amplitudes, pitchOf, strike) {
   if (status !== 'following') return torusReading(status, null, pitchOf);
   const full = typeof strike === 'number' && strike > 0 ? strike : 0.08;
   const tonesHz = amplitudes.filter(a => Math.hypot(a.re, a.im) / full >= SOUNDING_SHARE).map(a => pitchOf.get(a.mode_ref)).filter(hz => typeof hz === 'number');
+  return tonesHz.length ? {tonesHz, silentBecause: null} : {tonesHz: [], silentBecause: 'The torus has rung down: no voice sounds now'};
+}
+
+/** The pitches the object reads sounding now (torusObject.ts soundingOf: the bank's notes at their own, QL-MEF #287). */
+function pitchesReading(status, sounding, pitchOf) {
+  if (status !== 'following') return torusReading(status, null, pitchOf);
+  const tonesHz = sounding.filter(hz => typeof hz === 'number' && Number.isFinite(hz) && hz > 0);
   return tonesHz.length ? {tonesHz, silentBecause: null} : {tonesHz: [], silentBecause: 'The torus has rung down: no voice sounds now'};
 }
 

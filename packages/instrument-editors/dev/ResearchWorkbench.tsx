@@ -8,14 +8,14 @@ import type {ResearchInstrumentsHost} from '../../../desktop/cradle/expressions-
 import {applyResearchMaterial} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/researchMaterial';
 import {blueprintMember} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/blueprintGeometry';
 import {CanvasEditor} from '../src/canvas/CanvasEditor';
-import {TimelineEditor,PlacesEditor} from '../src/research/ResearchEditor';
+import {TimelineEditor} from '../src/research/ResearchEditor';
 import {InstrumentFrame,createInstrumentPresentation} from '../src/frame/InstrumentFrame';
-import {CANVAS,TIMELINE,PLACES} from '../src/definitions';
+import {CANVAS,TIMELINE} from '../src/definitions';
 import {nativeWorkbench} from './nativeWorkbench';
 
 export interface ResearchWorkbenchProps {
  work:Awaited<ReturnType<typeof nativeWorkbench>>;
- active:'canvas'|'timeline'|'places'|null;
+ active:'canvas'|'timeline'|null;
  epoch:number;
  onSource:(value:unknown)=>void;
 }
@@ -72,7 +72,7 @@ function ReceivingResearchScene({work,active,epoch,onSource,binding,readOnlyReas
  const source=useRef(onSource);source.current=onSource;
  const activeSurface=useRef(active);activeSurface.current=active;
  const {sceneId,expressionRef,sceneRef}=binding;
- const presentations=useMemo(()=>({canvas:createInstrumentPresentation(CANVAS,{ownerRef:'o-i',subjectRef:expressionRef,sceneRef,instanceRef:`instrument-editor:development:canvas:${expressionRef}:${sceneRef}`,label:'Controlled native Scene'}),timeline:createInstrumentPresentation(TIMELINE,{ownerRef:'o-i',subjectRef:expressionRef,sceneRef,instanceRef:`instrument-editor:development:timeline:${expressionRef}:${sceneRef}`,label:'Controlled native Scene'}),places:createInstrumentPresentation(PLACES,{ownerRef:'o-i',subjectRef:expressionRef,sceneRef,instanceRef:`instrument-editor:development:places:${expressionRef}:${sceneRef}`,label:'Controlled native Scene'})}),[work,expressionRef,sceneRef]);
+ const presentations=useMemo(()=>({canvas:createInstrumentPresentation(CANVAS,{ownerRef:'o-i',subjectRef:expressionRef,sceneRef,instanceRef:`instrument-editor:development:canvas:${expressionRef}:${sceneRef}`,label:'Controlled native Scene'}),timeline:createInstrumentPresentation(TIMELINE,{ownerRef:'o-i',subjectRef:expressionRef,sceneRef,instanceRef:`instrument-editor:development:timeline:${expressionRef}:${sceneRef}`,label:'Controlled native Scene'})}),[work,expressionRef,sceneRef]);
  const host=useMemo<ResearchInstrumentsHost|undefined>(()=>{
   if(!root)return;
   let pending=false;
@@ -116,7 +116,7 @@ function ReceivingResearchScene({work,active,epoch,onSource,binding,readOnlyReas
    source.current({schema:'oi.development-source-inspection/v1',basis:{expression_ref:expressionRef,revision:view.document.revision,scene_ref:sceneRef},subject_ref:ref,context,source:members});
   };
   return {
-   container:root,tools:root,inspector:root,canvasHome:root,placesHome:root,
+   container:root,tools:root,inspector:root,canvasHome:root,
    nativeView:()=>work.work.state?.view,sceneId:()=>sceneId,
    sceneMaterial:id=>{if(id!==sceneId)throw Error('Material belongs to another Scene.');return current(false).scene;},
    material:async(id,action)=>{if(id!==sceneId)throw Error('Material belongs to another Scene.');const {scene}=current();await change(()=>applyResearchMaterial(scene,action));},
@@ -137,6 +137,6 @@ function ReceivingResearchScene({work,active,epoch,onSource,binding,readOnlyReas
   {readOnlyReason&&<p role="status" data-research-readonly>{readOnlyReason}</p>}
   {notice&&<p role="alert">{notice}</p>}
   <p className="research-source-disclosure" hidden={!active}>Controlled native Expression · {expressionRef} · {sceneRef}. Wiki facets require their exact source binding. Native placement and material writes use the retained document owner.</p>
-  {host&&(['canvas','timeline','places'] as const).map(kind=><div key={kind} className="editor-slot" hidden={active!==kind}><InstrumentFrame visible={active===kind} definition={kind==='canvas'?CANVAS:kind==='timeline'?TIMELINE:PLACES} presentation={presentations[kind]}>{(depth,visible)=>kind==='canvas'?<CanvasEditor host={host} depth={depth} target={{mode:'pin',sceneId}} ownerPending={!!work.work.state?.pending} revision={epoch} visible={visible&&active===kind} onDraftChange={value=>presentations[kind].setDraft(value)}/>:kind==='timeline'?<TimelineEditor host={host} sceneId={sceneId} depth={depth} revision={epoch} visible={visible&&active===kind} onDraftChange={value=>presentations[kind].setDraft(value)} onExpand={()=>presentations[kind].setDepth('full')}/>:<PlacesEditor host={host} sceneId={sceneId} depth={depth} revision={epoch} visible={visible&&active===kind} onDraftChange={value=>presentations[kind].setDraft(value)} onExpand={()=>presentations[kind].setDepth('full')}/>}</InstrumentFrame></div>)}
+  {host&&(['canvas','timeline'] as const).map(kind=><div key={kind} className="editor-slot" hidden={active!==kind}><InstrumentFrame visible={active===kind} definition={kind==='canvas'?CANVAS:TIMELINE} presentation={presentations[kind]}>{(depth,visible)=>kind==='canvas'?<CanvasEditor host={host} depth={depth} target={{mode:'pin',sceneId}} ownerPending={!!work.work.state?.pending} revision={epoch} visible={visible&&active===kind} onDraftChange={value=>presentations[kind].setDraft(value)}/>:<TimelineEditor host={host} sceneId={sceneId} depth={depth} revision={epoch} visible={visible&&active===kind} onDraftChange={value=>presentations[kind].setDraft(value)} onExpand={()=>presentations[kind].setDepth('full')}/>}</InstrumentFrame></div>)}
  </div>;
 }

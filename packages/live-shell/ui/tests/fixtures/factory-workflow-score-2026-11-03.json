@@ -1,5 +1,5 @@
 {
- "_source": "Software Factory dlw/843-score (factory/src/workflow_score.rs), built 3 Nov 2026; its own CLI walked headless on a scratch project (factory workflow score, factory workflow edit), the song a copy of the development-and-knowledge workflow commissioned from the project root; the scratch path is written /walk. Each refusal is the factory.workflow-diagnostic/v1 document Factory's CLI wrote on stderr (exit 2).",
+ "_source": "Software Factory at f36c65e with lane BD's round-21 and round-22 patches (factory/src/workflow_score.rs; a unit's direction in QL's law's spelling, DLW build ruling 2026-11-05), the env-2 seat's debug build of 5 Nov 2026; its own CLI walked headless on a scratch project (factory project setup, factory workflow commission --root, factory workflow score, factory workflow edit), the song a copy of Factory's development-and-knowledge workflow fixture commissioned from the project root; the scratch path is written /walk. Each refusal is the factory.workflow-diagnostic/v1 document Factory's CLI wrote on stderr (exit 2). First captured 3 Nov 2026 from dlw/843-score, when Factory wrote a direction `forward` or `returning`; recaptured 5 Nov with the same edits in the same order, the heads edit giving eros-verify CS3 and forward-synthesis. vak_block: QL's Vāk-block instrument verbatim (`ql context-frame team-space --json`, its instrument vak-block; the installed QL a2aa0a7 and the env-2 seat's QL build at 7bb2535 with round 22 answer byte-identically). unit_steps: `ql vak unit-steps <unit> --json` on eros-verify's heads, that seat build; unit_steps_refused: its stderr for the frame CF8 (exit 2).",
  "score": {
   "check": {
    "by": "factory workflow check",
@@ -43,19 +43,19 @@
     "ref": "agent-set/aletheia"
    }
   ],
-  "runRef": "run:01M30M6B00V5WSXCRHZ6WKGX3X",
+  "runRef": "run:01M6MG2P00STVASPNJBPZP8251",
   "song": {
    "edition": "file",
    "file": {
-    "byteRevision": "blake3:c1948266221eb61631b61cccac47f4c0380bd06139afbfe7f0f896c43c11210a",
+    "byteRevision": "blake3:29c0e4413e008e8d9cafc0b7f54d9ed01b55efe03cf81124a7b63db743d000c4",
     "entry": "development-and-knowledge.workflow.ts",
     "path": "/walk/song/development-and-knowledge.workflow.ts",
-    "semanticDigest": "ae25c1dd8537209beba0de69fba6b47914b2f1103ff2c3c0337e21e03612cc8a"
+    "semanticDigest": "8d9b91194a8fd0faf37d6352bd93552f6553d11e78dc1e90a25bd9c54deb68ae"
    },
    "performed": true,
    "run": {
-    "byteRevision": "blake3:c1948266221eb61631b61cccac47f4c0380bd06139afbfe7f0f896c43c11210a",
-    "semanticDigest": "ae25c1dd8537209beba0de69fba6b47914b2f1103ff2c3c0337e21e03612cc8a",
+    "byteRevision": "blake3:29c0e4413e008e8d9cafc0b7f54d9ed01b55efe03cf81124a7b63db743d000c4",
+    "semanticDigest": "8d9b91194a8fd0faf37d6352bd93552f6553d11e78dc1e90a25bd9c54deb68ae",
     "sourceRevision": "development-and-knowledge-v1"
    },
    "sourceRef": "workflow-source:01M399B6B0R8CJY3Y2RTG5EPWS",
@@ -95,7 +95,7 @@
      "CPF": "dialogical",
      "CS": "CS2",
      "CT": "CT1",
-     "direction": "forward"
+     "direction": "forward-synthesis"
     },
     "independenceFrom": [],
     "inputs": [],
@@ -126,7 +126,7 @@
     "success": [
      "the plan cites the repository's own gates"
     ],
-    "unitRef": "workflow-unit:6TA77YZSE782H1DF6HXQNM0CGA",
+    "unitRef": "workflow-unit:3F5ZC1W4W7J7PXS3DFN542V7MH",
     "wave": null
    },
    {
@@ -162,7 +162,7 @@
      "CPF": "authorised-undertaking",
      "CS": "CS2",
      "CT": "CT2",
-     "direction": "forward"
+     "direction": "forward-synthesis"
     },
     "independenceFrom": [],
     "inputs": [
@@ -183,7 +183,7 @@
     "row": "agent/anima-techne-helper",
     "rowKind": "agent",
     "sourceLocation": {
-     "byteOffset": 3060,
+     "byteOffset": 3070,
      "column": 12,
      "file": "development-and-knowledge.workflow.ts",
      "line": 54
@@ -196,7 +196,7 @@
     "success": [
      "run the tests named in the plan and quote their results"
     ],
-    "unitRef": "workflow-unit:7ZSNFRNHADM0HZHTEVG7BBQKGP",
+    "unitRef": "workflow-unit:5GDHCR0Y9T4PHFBXZ1N2PVBGQ8",
     "wave": null
    },
    {
@@ -232,7 +232,7 @@
      "CPF": "dialogical",
      "CS": "CS2",
      "CT": "CT2",
-     "direction": "returning"
+     "direction": "returning-inquiry"
     },
     "independenceFrom": [],
     "inputs": [
@@ -253,7 +253,7 @@
     "row": "agent/anima-eros",
     "rowKind": "agent",
     "sourceLocation": {
-     "byteOffset": 4811,
+     "byteOffset": 4831,
      "column": 12,
      "file": "development-and-knowledge.workflow.ts",
      "line": 80
@@ -265,7 +265,7 @@
     "success": [
      "quote executed results; never infer a pass from a name or a fixture"
     ],
-    "unitRef": "workflow-unit:2C98ZRRR9FCP4Y6073HT5THHT7",
+    "unitRef": "workflow-unit:75D8EEZTTKDBDF6A56SC819Z55",
     "wave": null
    },
    {
@@ -301,7 +301,7 @@
      "CPF": "authorised-undertaking",
      "CS": "CS3",
      "CT": "CT3",
-     "direction": "returning"
+     "direction": "returning-inquiry"
     },
     "independenceFrom": [],
     "inputs": [
@@ -321,7 +321,7 @@
     "row": "agent/anima-mythos",
     "rowKind": "agent",
     "sourceLocation": {
-     "byteOffset": 6425,
+     "byteOffset": 6453,
      "column": 12,
      "file": "development-and-knowledge.workflow.ts",
      "line": 105
@@ -333,7 +333,7 @@
     "success": [
      "never weaken an assertion to turn a failure green"
     ],
-    "unitRef": "workflow-unit:7NKJ4G95WD6SZNAK4QQNKJD1XX",
+    "unitRef": "workflow-unit:4KCW0R7CDTTZTMN3XGGJ9Y9ZJQ",
     "wave": null
    },
    {
@@ -369,7 +369,7 @@
      "CPF": "authorised-undertaking",
      "CS": "CS5",
      "CT": "CT5",
-     "direction": "returning"
+     "direction": "returning-inquiry"
     },
     "independenceFrom": [],
     "inputs": [
@@ -390,7 +390,7 @@
     "row": "agent/anima-sophia",
     "rowKind": "agent",
     "sourceLocation": {
-     "byteOffset": 8188,
+     "byteOffset": 8224,
      "column": 12,
      "file": "development-and-knowledge.workflow.ts",
      "line": 131
@@ -403,7 +403,7 @@
     "success": [
      "the final check results are from the pushed head"
     ],
-    "unitRef": "workflow-unit:2VK6AW211T64984SRXG0XPVDY1",
+    "unitRef": "workflow-unit:4PAVKTV3SBQ5JCNAW1R0A3XPA4",
     "wave": null
    },
    {
@@ -439,7 +439,7 @@
      "CPF": "authorised-undertaking",
      "CS": "CS5",
      "CT": "CT4b'",
-     "direction": "returning"
+     "direction": "returning-inquiry"
     },
     "independenceFrom": [],
     "inputs": [
@@ -460,7 +460,7 @@
     "row": "agent/aletheia",
     "rowKind": "agent",
     "sourceLocation": {
-     "byteOffset": 9919,
+     "byteOffset": 9963,
      "column": 12,
      "file": "development-and-knowledge.workflow.ts",
      "line": 157
@@ -473,7 +473,7 @@
     "success": [
      "the Return points at the pull request and its evidence, not a paraphrase"
     ],
-    "unitRef": "workflow-unit:4HDPT4KC6CBTJX5RV5Y3HH981M",
+    "unitRef": "workflow-unit:7EQ8CA6HMZER79DQBB07BY7ST7",
     "wave": null
    }
   ],
@@ -481,6 +481,7 @@
   "wavesWhy": null
  },
  "allocate": {
+  "added": [],
   "changed": [
    "/units/2/agentRequirements/agentRefs",
    "/units/2/composition/actor"
@@ -492,17 +493,19 @@
   "contract": "factory.workflow-edit-receipt/v1",
   "edits": 1,
   "execution": "not-requested",
+  "imports": [],
   "performed": false,
   "performs": "The Run performs the edition it was commissioned with; the song's next Run performs this one.",
-  "previousRevision": "blake3:c1948266221eb61631b61cccac47f4c0380bd06139afbfe7f0f896c43c11210a",
-  "revision": "blake3:0078afb4359155d11489809f28f93c0d22a295fc7df89b3dfb45bb0ec837fd34",
-  "runRef": "run:01M30M6B00V5WSXCRHZ6WKGX3X",
-  "semanticDigest": "ddd46c7c879dfed9f7449ab1717e57c6912bbddb62b079d369db35057f1c0a04",
+  "previousRevision": "blake3:29c0e4413e008e8d9cafc0b7f54d9ed01b55efe03cf81124a7b63db743d000c4",
+  "revision": "blake3:39f53c829fcbbe0e4085d62408078b87399764ed345bfc6fc823114dc0e04010",
+  "runRef": "run:01M6MG2P00STVASPNJBPZP8251",
+  "semanticDigest": "ef36b3099a70dec30ae74cd2842a155c2ad7181fc7e0fda3cc8f3ca7a53dca77",
   "song": {
    "entry": "development-and-knowledge.workflow.ts",
    "path": "/walk/song/development-and-knowledge.workflow.ts",
    "sourceRef": "workflow-source:01M399B6B0R8CJY3Y2RTG5EPWS"
-  }
+  },
+  "written": true
  },
  "score_allocated": {
   "check": {
@@ -543,19 +546,19 @@
     "ref": "agent-set/aletheia"
    }
   ],
-  "runRef": "run:01M30M6B00V5WSXCRHZ6WKGX3X",
+  "runRef": "run:01M6MG2P00STVASPNJBPZP8251",
   "song": {
    "edition": "file",
    "file": {
-    "byteRevision": "blake3:0078afb4359155d11489809f28f93c0d22a295fc7df89b3dfb45bb0ec837fd34",
+    "byteRevision": "blake3:39f53c829fcbbe0e4085d62408078b87399764ed345bfc6fc823114dc0e04010",
     "entry": "development-and-knowledge.workflow.ts",
     "path": "/walk/song/development-and-knowledge.workflow.ts",
-    "semanticDigest": "ddd46c7c879dfed9f7449ab1717e57c6912bbddb62b079d369db35057f1c0a04"
+    "semanticDigest": "ef36b3099a70dec30ae74cd2842a155c2ad7181fc7e0fda3cc8f3ca7a53dca77"
    },
    "performed": false,
    "run": {
-    "byteRevision": "blake3:c1948266221eb61631b61cccac47f4c0380bd06139afbfe7f0f896c43c11210a",
-    "semanticDigest": "ae25c1dd8537209beba0de69fba6b47914b2f1103ff2c3c0337e21e03612cc8a",
+    "byteRevision": "blake3:29c0e4413e008e8d9cafc0b7f54d9ed01b55efe03cf81124a7b63db743d000c4",
+    "semanticDigest": "8d9b91194a8fd0faf37d6352bd93552f6553d11e78dc1e90a25bd9c54deb68ae",
     "sourceRevision": "development-and-knowledge-v1"
    },
    "sourceRef": "workflow-source:01M399B6B0R8CJY3Y2RTG5EPWS",
@@ -595,7 +598,7 @@
      "CPF": "dialogical",
      "CS": "CS2",
      "CT": "CT1",
-     "direction": "forward"
+     "direction": "forward-synthesis"
     },
     "independenceFrom": [],
     "inputs": [],
@@ -626,7 +629,7 @@
     "success": [
      "the plan cites the repository's own gates"
     ],
-    "unitRef": "workflow-unit:6TA77YZSE782H1DF6HXQNM0CGA",
+    "unitRef": "workflow-unit:3F5ZC1W4W7J7PXS3DFN542V7MH",
     "wave": null
    },
    {
@@ -662,7 +665,7 @@
      "CPF": "authorised-undertaking",
      "CS": "CS2",
      "CT": "CT2",
-     "direction": "forward"
+     "direction": "forward-synthesis"
     },
     "independenceFrom": [],
     "inputs": [
@@ -683,7 +686,7 @@
     "row": "agent/anima-techne-helper",
     "rowKind": "agent",
     "sourceLocation": {
-     "byteOffset": 3060,
+     "byteOffset": 3070,
      "column": 12,
      "file": "development-and-knowledge.workflow.ts",
      "line": 54
@@ -696,7 +699,7 @@
     "success": [
      "run the tests named in the plan and quote their results"
     ],
-    "unitRef": "workflow-unit:7ZSNFRNHADM0HZHTEVG7BBQKGP",
+    "unitRef": "workflow-unit:5GDHCR0Y9T4PHFBXZ1N2PVBGQ8",
     "wave": null
    },
    {
@@ -732,7 +735,7 @@
      "CPF": "dialogical",
      "CS": "CS2",
      "CT": "CT2",
-     "direction": "returning"
+     "direction": "returning-inquiry"
     },
     "independenceFrom": [],
     "inputs": [
@@ -753,7 +756,7 @@
     "row": "agent/anima-mythos",
     "rowKind": "agent",
     "sourceLocation": {
-     "byteOffset": 4811,
+     "byteOffset": 4831,
      "column": 12,
      "file": "development-and-knowledge.workflow.ts",
      "line": 80
@@ -765,7 +768,7 @@
     "success": [
      "quote executed results; never infer a pass from a name or a fixture"
     ],
-    "unitRef": "workflow-unit:2C98ZRRR9FCP4Y6073HT5THHT7",
+    "unitRef": "workflow-unit:75D8EEZTTKDBDF6A56SC819Z55",
     "wave": null
    },
    {
@@ -801,7 +804,7 @@
      "CPF": "authorised-undertaking",
      "CS": "CS3",
      "CT": "CT3",
-     "direction": "returning"
+     "direction": "returning-inquiry"
     },
     "independenceFrom": [],
     "inputs": [
@@ -821,7 +824,7 @@
     "row": "agent/anima-mythos",
     "rowKind": "agent",
     "sourceLocation": {
-     "byteOffset": 6429,
+     "byteOffset": 6457,
      "column": 12,
      "file": "development-and-knowledge.workflow.ts",
      "line": 105
@@ -833,7 +836,7 @@
     "success": [
      "never weaken an assertion to turn a failure green"
     ],
-    "unitRef": "workflow-unit:7NKJ4G95WD6SZNAK4QQNKJD1XX",
+    "unitRef": "workflow-unit:4KCW0R7CDTTZTMN3XGGJ9Y9ZJQ",
     "wave": null
    },
    {
@@ -869,7 +872,7 @@
      "CPF": "authorised-undertaking",
      "CS": "CS5",
      "CT": "CT5",
-     "direction": "returning"
+     "direction": "returning-inquiry"
     },
     "independenceFrom": [],
     "inputs": [
@@ -890,7 +893,7 @@
     "row": "agent/anima-sophia",
     "rowKind": "agent",
     "sourceLocation": {
-     "byteOffset": 8192,
+     "byteOffset": 8228,
      "column": 12,
      "file": "development-and-knowledge.workflow.ts",
      "line": 131
@@ -903,7 +906,7 @@
     "success": [
      "the final check results are from the pushed head"
     ],
-    "unitRef": "workflow-unit:2VK6AW211T64984SRXG0XPVDY1",
+    "unitRef": "workflow-unit:4PAVKTV3SBQ5JCNAW1R0A3XPA4",
     "wave": null
    },
    {
@@ -939,7 +942,7 @@
      "CPF": "authorised-undertaking",
      "CS": "CS5",
      "CT": "CT4b'",
-     "direction": "returning"
+     "direction": "returning-inquiry"
     },
     "independenceFrom": [],
     "inputs": [
@@ -960,7 +963,7 @@
     "row": "agent/aletheia",
     "rowKind": "agent",
     "sourceLocation": {
-     "byteOffset": 9923,
+     "byteOffset": 9967,
      "column": 12,
      "file": "development-and-knowledge.workflow.ts",
      "line": 157
@@ -973,7 +976,7 @@
     "success": [
      "the Return points at the pull request and its evidence, not a paraphrase"
     ],
-    "unitRef": "workflow-unit:4HDPT4KC6CBTJX5RV5Y3HH981M",
+    "unitRef": "workflow-unit:7EQ8CA6HMZER79DQBB07BY7ST7",
     "wave": null
    }
   ],
@@ -986,7 +989,7 @@
    "code": "workflow.edit_stale",
    "field": null,
    "location": null,
-   "message": "The song's file changed since it was read (it is blake3:c1948266221eb61631b61cccac47f4c0380bd06139afbfe7f0f896c43c11210a now, the edit expected blake3:0000000000000000000000000000000000000000000000000000000000000000); read the score again and repeat the edit.",
+   "message": "The song's file changed since it was read (it is blake3:39f53c829fcbbe0e4085d62408078b87399764ed345bfc6fc823114dc0e04010 now, the edit expected blake3:0000000000000000000000000000000000000000000000000000000000000000); read the score again and repeat the edit.",
    "unit": null
   }
  },
@@ -1011,7 +1014,7 @@
    "code": "authoring.native_validation",
    "field": "dependencies",
    "location": {
-    "byteOffset": 10656,
+    "byteOffset": 10702,
     "column": 21,
     "file": "development-and-knowledge.workflow.ts",
     "line": 167
@@ -1021,6 +1024,7 @@
   }
  },
  "heads": {
+  "added": [],
   "changed": [
    "/units/2/composition/CS",
    "/units/2/composition/direction"
@@ -1032,17 +1036,19 @@
   "contract": "factory.workflow-edit-receipt/v1",
   "edits": 1,
   "execution": "not-requested",
+  "imports": [],
   "performed": false,
   "performs": "The Run performs the edition it was commissioned with; the song's next Run performs this one.",
-  "previousRevision": "blake3:0078afb4359155d11489809f28f93c0d22a295fc7df89b3dfb45bb0ec837fd34",
-  "revision": "blake3:e743aacfecbd5684a770c19e8b8b8b87b50cbcad22d605fd689c15a305d6b014",
-  "runRef": "run:01M30M6B00V5WSXCRHZ6WKGX3X",
-  "semanticDigest": "721be97e845cd14960ac28c08ebdeacf9d3abedf32a6860ee5353653ec618f6c",
+  "previousRevision": "blake3:39f53c829fcbbe0e4085d62408078b87399764ed345bfc6fc823114dc0e04010",
+  "revision": "blake3:24ae83f86894e38dcdec86b5655fc1ef2dc3b6c5d0a5517fee81428d06b4289f",
+  "runRef": "run:01M6MG2P00STVASPNJBPZP8251",
+  "semanticDigest": "e63a37bb42291be7a856332dcd5eb3805f0192ab4fc779f80d4cb9290e6bb154",
   "song": {
    "entry": "development-and-knowledge.workflow.ts",
    "path": "/walk/song/development-and-knowledge.workflow.ts",
    "sourceRef": "workflow-source:01M399B6B0R8CJY3Y2RTG5EPWS"
-  }
+  },
+  "written": true
  },
  "score_headed": {
   "check": {
@@ -1083,19 +1089,19 @@
     "ref": "agent-set/aletheia"
    }
   ],
-  "runRef": "run:01M30M6B00V5WSXCRHZ6WKGX3X",
+  "runRef": "run:01M6MG2P00STVASPNJBPZP8251",
   "song": {
    "edition": "file",
    "file": {
-    "byteRevision": "blake3:e743aacfecbd5684a770c19e8b8b8b87b50cbcad22d605fd689c15a305d6b014",
+    "byteRevision": "blake3:24ae83f86894e38dcdec86b5655fc1ef2dc3b6c5d0a5517fee81428d06b4289f",
     "entry": "development-and-knowledge.workflow.ts",
     "path": "/walk/song/development-and-knowledge.workflow.ts",
-    "semanticDigest": "721be97e845cd14960ac28c08ebdeacf9d3abedf32a6860ee5353653ec618f6c"
+    "semanticDigest": "e63a37bb42291be7a856332dcd5eb3805f0192ab4fc779f80d4cb9290e6bb154"
    },
    "performed": false,
    "run": {
-    "byteRevision": "blake3:c1948266221eb61631b61cccac47f4c0380bd06139afbfe7f0f896c43c11210a",
-    "semanticDigest": "ae25c1dd8537209beba0de69fba6b47914b2f1103ff2c3c0337e21e03612cc8a",
+    "byteRevision": "blake3:29c0e4413e008e8d9cafc0b7f54d9ed01b55efe03cf81124a7b63db743d000c4",
+    "semanticDigest": "8d9b91194a8fd0faf37d6352bd93552f6553d11e78dc1e90a25bd9c54deb68ae",
     "sourceRevision": "development-and-knowledge-v1"
    },
    "sourceRef": "workflow-source:01M399B6B0R8CJY3Y2RTG5EPWS",
@@ -1135,7 +1141,7 @@
      "CPF": "dialogical",
      "CS": "CS2",
      "CT": "CT1",
-     "direction": "forward"
+     "direction": "forward-synthesis"
     },
     "independenceFrom": [],
     "inputs": [],
@@ -1166,7 +1172,7 @@
     "success": [
      "the plan cites the repository's own gates"
     ],
-    "unitRef": "workflow-unit:6TA77YZSE782H1DF6HXQNM0CGA",
+    "unitRef": "workflow-unit:3F5ZC1W4W7J7PXS3DFN542V7MH",
     "wave": null
    },
    {
@@ -1202,7 +1208,7 @@
      "CPF": "authorised-undertaking",
      "CS": "CS2",
      "CT": "CT2",
-     "direction": "forward"
+     "direction": "forward-synthesis"
     },
     "independenceFrom": [],
     "inputs": [
@@ -1223,7 +1229,7 @@
     "row": "agent/anima-techne-helper",
     "rowKind": "agent",
     "sourceLocation": {
-     "byteOffset": 3060,
+     "byteOffset": 3070,
      "column": 12,
      "file": "development-and-knowledge.workflow.ts",
      "line": 54
@@ -1236,7 +1242,7 @@
     "success": [
      "run the tests named in the plan and quote their results"
     ],
-    "unitRef": "workflow-unit:7ZSNFRNHADM0HZHTEVG7BBQKGP",
+    "unitRef": "workflow-unit:5GDHCR0Y9T4PHFBXZ1N2PVBGQ8",
     "wave": null
    },
    {
@@ -1272,7 +1278,7 @@
      "CPF": "dialogical",
      "CS": "CS3",
      "CT": "CT2",
-     "direction": "forward"
+     "direction": "forward-synthesis"
     },
     "independenceFrom": [],
     "inputs": [
@@ -1293,7 +1299,7 @@
     "row": "agent/anima-mythos",
     "rowKind": "agent",
     "sourceLocation": {
-     "byteOffset": 4811,
+     "byteOffset": 4831,
      "column": 12,
      "file": "development-and-knowledge.workflow.ts",
      "line": 80
@@ -1305,7 +1311,7 @@
     "success": [
      "quote executed results; never infer a pass from a name or a fixture"
     ],
-    "unitRef": "workflow-unit:2C98ZRRR9FCP4Y6073HT5THHT7",
+    "unitRef": "workflow-unit:75D8EEZTTKDBDF6A56SC819Z55",
     "wave": null
    },
    {
@@ -1341,7 +1347,7 @@
      "CPF": "authorised-undertaking",
      "CS": "CS3",
      "CT": "CT3",
-     "direction": "returning"
+     "direction": "returning-inquiry"
     },
     "independenceFrom": [],
     "inputs": [
@@ -1361,7 +1367,7 @@
     "row": "agent/anima-mythos",
     "rowKind": "agent",
     "sourceLocation": {
-     "byteOffset": 6427,
+     "byteOffset": 6457,
      "column": 12,
      "file": "development-and-knowledge.workflow.ts",
      "line": 105
@@ -1373,7 +1379,7 @@
     "success": [
      "never weaken an assertion to turn a failure green"
     ],
-    "unitRef": "workflow-unit:7NKJ4G95WD6SZNAK4QQNKJD1XX",
+    "unitRef": "workflow-unit:4KCW0R7CDTTZTMN3XGGJ9Y9ZJQ",
     "wave": null
    },
    {
@@ -1409,7 +1415,7 @@
      "CPF": "authorised-undertaking",
      "CS": "CS5",
      "CT": "CT5",
-     "direction": "returning"
+     "direction": "returning-inquiry"
     },
     "independenceFrom": [],
     "inputs": [
@@ -1430,7 +1436,7 @@
     "row": "agent/anima-sophia",
     "rowKind": "agent",
     "sourceLocation": {
-     "byteOffset": 8190,
+     "byteOffset": 8228,
      "column": 12,
      "file": "development-and-knowledge.workflow.ts",
      "line": 131
@@ -1443,7 +1449,7 @@
     "success": [
      "the final check results are from the pushed head"
     ],
-    "unitRef": "workflow-unit:2VK6AW211T64984SRXG0XPVDY1",
+    "unitRef": "workflow-unit:4PAVKTV3SBQ5JCNAW1R0A3XPA4",
     "wave": null
    },
    {
@@ -1479,7 +1485,7 @@
      "CPF": "authorised-undertaking",
      "CS": "CS5",
      "CT": "CT4b'",
-     "direction": "returning"
+     "direction": "returning-inquiry"
     },
     "independenceFrom": [],
     "inputs": [
@@ -1500,7 +1506,7 @@
     "row": "agent/aletheia",
     "rowKind": "agent",
     "sourceLocation": {
-     "byteOffset": 9921,
+     "byteOffset": 9967,
      "column": 12,
      "file": "development-and-knowledge.workflow.ts",
      "line": 157
@@ -1513,7 +1519,7 @@
     "success": [
      "the Return points at the pull request and its evidence, not a paraphrase"
     ],
-    "unitRef": "workflow-unit:4HDPT4KC6CBTJX5RV5Y3HH981M",
+    "unitRef": "workflow-unit:7EQ8CA6HMZER79DQBB07BY7ST7",
     "wave": null
    }
   ],
@@ -1526,7 +1532,7 @@
    "code": "authoring.domain_lowering",
    "field": "composition",
    "location": {
-    "byteOffset": 6000,
+    "byteOffset": 6020,
     "column": 20,
     "file": "development-and-knowledge.workflow.ts",
     "line": 96
@@ -1534,5 +1540,473 @@
    "message": "Factory Vāk orchestration error: InvalidCPrimeProfile",
    "unit": "eros-verify"
   }
- }
+ },
+ "vak_block": {
+  "id": "vak-block",
+  "organ": "S4′ Anima",
+  "kind": "vak-block",
+  "source": "ql:skill:vak-evaluate",
+  "answerable_by": "model-or-person",
+  "seats": [
+   "agent/anima"
+  ],
+  "cells": [
+   "CF5"
+  ],
+  "heads": [
+   {
+    "ambiguity_policy": "abstain",
+    "cardinality": {
+     "max": 1,
+     "min": 0
+    },
+    "field": "participation",
+    "id": "vak-cpf",
+    "labels": [
+     {
+      "description": "dialogue with the person; the person completes the remaining layers",
+      "id": "dialogical",
+      "owner_ref": "ql:mef:vak-profile:participation",
+      "owner_revision": "ql.vak-composition.profile/v1"
+     },
+     {
+      "description": "an admitted undertaking; it names its authority",
+      "id": "authorised-undertaking",
+      "owner_ref": "ql:mef:vak-profile:participation",
+      "owner_revision": "ql.vak-composition.profile/v1"
+     }
+    ]
+   },
+   {
+    "ambiguity_policy": "preserve-candidates",
+    "cardinality": {
+     "max": 7,
+     "min": 0
+    },
+    "field": "content-type",
+    "id": "vak-ct",
+    "labels": [
+     {
+      "description": "Assumptions content",
+      "id": "CT0",
+      "owner_ref": "ql:mef:vak-profile:content-type",
+      "owner_revision": "ql.vak-composition.profile/v1"
+     },
+     {
+      "description": "Definitions content",
+      "id": "CT1",
+      "owner_ref": "ql:mef:vak-profile:content-type",
+      "owner_revision": "ql.vak-composition.profile/v1"
+     },
+     {
+      "description": "Operations content",
+      "id": "CT2",
+      "owner_ref": "ql:mef:vak-profile:content-type",
+      "owner_revision": "ql.vak-composition.profile/v1"
+     },
+     {
+      "description": "Patterns content",
+      "id": "CT3",
+      "owner_ref": "ql:mef:vak-profile:content-type",
+      "owner_revision": "ql.vak-composition.profile/v1"
+     },
+     {
+      "description": "Contexts content",
+      "id": "CT4",
+      "owner_ref": "ql:mef:vak-profile:content-type",
+      "owner_revision": "ql.vak-composition.profile/v1"
+     },
+     {
+      "description": "DayNow content",
+      "id": "CT4b'",
+      "owner_ref": "ql:mef:vak-profile:content-type",
+      "owner_revision": "ql.vak-composition.profile/v1"
+     },
+     {
+      "description": "Integration content",
+      "id": "CT5",
+      "owner_ref": "ql:mef:vak-profile:content-type",
+      "owner_revision": "ql.vak-composition.profile/v1"
+     }
+    ]
+   },
+   {
+    "ambiguity_policy": "abstain",
+    "cardinality": {
+     "max": 1,
+     "min": 0
+    },
+    "field": "position",
+    "id": "vak-cp",
+    "labels": [
+     {
+      "description": "Ground: prospective What do we have? retrospective What don't we know?",
+      "id": "4.0",
+      "owner_ref": "ql:mef:vak-profile:position",
+      "owner_revision": "ql.vak-composition.profile/v1"
+     },
+     {
+      "description": "Definition: prospective What must be true? retrospective What evidence exists?",
+      "id": "4.1",
+      "owner_ref": "ql:mef:vak-profile:position",
+      "owner_revision": "ql.vak-composition.profile/v1"
+     },
+     {
+      "description": "Operation: prospective What is being done? retrospective What blocks us?",
+      "id": "4.2",
+      "owner_ref": "ql:mef:vak-profile:position",
+      "owner_revision": "ql.vak-composition.profile/v1"
+     },
+     {
+      "description": "Pattern: prospective What shape does it take? retrospective What repeats?",
+      "id": "4.3",
+      "owner_ref": "ql:mef:vak-profile:position",
+      "owner_revision": "ql.vak-composition.profile/v1"
+     },
+     {
+      "description": "Context: prospective Where and when in the larger frame? retrospective What sources inform?",
+      "id": "4.4",
+      "owner_ref": "ql:mef:vak-profile:position",
+      "owner_revision": "ql.vak-composition.profile/v1"
+     },
+     {
+      "description": "Integration: prospective What was produced? retrospective What crystallises?",
+      "id": "4.5",
+      "owner_ref": "ql:mef:vak-profile:position",
+      "owner_revision": "ql.vak-composition.profile/v1"
+     }
+    ]
+   },
+   {
+    "ambiguity_policy": "abstain",
+    "cardinality": {
+     "max": 1,
+     "min": 0
+    },
+    "field": "context-frame",
+    "id": "vak-cf",
+    "labels": [
+     {
+      "description": "(00/00) Fourfold-Zero / undifferentiated-ground (Nous)",
+      "id": "CF1",
+      "owner_ref": "ql:mef:context-frame:1.0.0:CF1",
+      "owner_revision": "1.0.0"
+     },
+     {
+      "description": "(0/1) Non-Dual Anchor / standing-identity (Logos)",
+      "id": "CF2",
+      "owner_ref": "ql:mef:context-frame:1.0.0:CF2",
+      "owner_revision": "1.0.0"
+     },
+     {
+      "description": "(0/1/2) Dual-Non-Dual / triadic-circulation (Eros)",
+      "id": "CF3",
+      "owner_ref": "ql:mef:context-frame:1.0.0:CF3",
+      "owner_revision": "1.0.0"
+     },
+     {
+      "description": "(0/1/2/3) Trinitarian / tetradic-prehensive-closure (Mythos)",
+      "id": "CF4",
+      "owner_ref": "ql:mef:context-frame:1.0.0:CF4",
+      "owner_revision": "1.0.0"
+     },
+     {
+      "description": "(4.0/1-4.4/5) Fractal-Doubling Executive (Anima)",
+      "id": "CF5",
+      "owner_ref": "ql:mef:context-frame:1.0.0:CF5",
+      "owner_revision": "1.0.0"
+     },
+     {
+      "description": "(4.5/0) .5 Bridge (Psyche)",
+      "id": "CF6",
+      "owner_ref": "ql:mef:context-frame:1.0.0:CF6",
+      "owner_revision": "1.0.0"
+     },
+     {
+      "description": "(5/0) Total Synthesis / Mobius cyclic-closure-and-reopening (Sophia)",
+      "id": "CF7",
+      "owner_ref": "ql:mef:context-frame:1.0.0:CF7",
+      "owner_revision": "1.0.0"
+     }
+    ]
+   },
+   {
+    "ambiguity_policy": "abstain",
+    "cardinality": {
+     "max": 1,
+     "min": 0
+    },
+    "field": "thread-form",
+    "id": "vak-cfp",
+    "labels": [
+     {
+      "description": "single-voice",
+      "id": "CFP0",
+      "owner_ref": "ql:mef:vak-profile:thread-form",
+      "owner_revision": "ql.vak-composition.profile/v1"
+     },
+     {
+      "description": "chord",
+      "id": "CFP1",
+      "owner_ref": "ql:mef:vak-profile:thread-form",
+      "owner_revision": "ql.vak-composition.profile/v1"
+     },
+     {
+      "description": "melody",
+      "id": "CFP2",
+      "owner_ref": "ql:mef:vak-profile:thread-form",
+      "owner_revision": "ql.vak-composition.profile/v1"
+     },
+     {
+      "description": "fusion",
+      "id": "CFP3",
+      "owner_ref": "ql:mef:vak-profile:thread-form",
+      "owner_revision": "ql.vak-composition.profile/v1"
+     },
+     {
+      "description": "drone",
+      "id": "CFP4",
+      "owner_ref": "ql:mef:vak-profile:thread-form",
+      "owner_revision": "ql.vak-composition.profile/v1"
+     },
+     {
+      "description": "canon",
+      "id": "CFP5",
+      "owner_ref": "ql:mef:vak-profile:thread-form",
+      "owner_revision": "ql.vak-composition.profile/v1"
+     },
+     {
+      "description": "the governed cycle compose → perform → record → rehear → recompose; it needs an authorised undertaking",
+      "id": "Z",
+      "owner_ref": "ql:mef:cprime-oikonomia:z",
+      "owner_revision": "ql.cprime-oikonomia/v1"
+     }
+    ]
+   },
+   {
+    "ambiguity_policy": "abstain",
+    "cardinality": {
+     "max": 1,
+     "min": 0
+    },
+    "field": "sequence",
+    "id": "vak-cs",
+    "labels": [
+     {
+      "description": "4.0↔4.5 · 4.1↔4.4 · 4.2↔4.3 · 4.3↔4.2 · 4.4↔4.1 · 4.5↔4.0",
+      "id": "CS0",
+      "owner_ref": "ql:mef:vak-profile:sequence",
+      "owner_revision": "ql.vak-composition.profile/v1"
+     },
+     {
+      "description": "4.0↔4.5 · 4.1↔4.4",
+      "id": "CS1",
+      "owner_ref": "ql:mef:vak-profile:sequence",
+      "owner_revision": "ql.vak-composition.profile/v1"
+     },
+     {
+      "description": "4.0↔4.5 · 4.1↔4.4 · 4.2↔4.3",
+      "id": "CS2",
+      "owner_ref": "ql:mef:vak-profile:sequence",
+      "owner_revision": "ql.vak-composition.profile/v1"
+     },
+     {
+      "description": "4.0↔4.5 · 4.1↔4.4 · 4.2↔4.3 · 4.3↔4.2",
+      "id": "CS3",
+      "owner_ref": "ql:mef:vak-profile:sequence",
+      "owner_revision": "ql.vak-composition.profile/v1"
+     },
+     {
+      "description": "4.0↔4.5 · 4.4↔4.1 · 4.5↔4.0",
+      "id": "CS4",
+      "owner_ref": "ql:mef:vak-profile:sequence",
+      "owner_revision": "ql.vak-composition.profile/v1"
+     },
+     {
+      "description": "4.0↔4.5 · 4.5↔4.0",
+      "id": "CS5",
+      "owner_ref": "ql:mef:vak-profile:sequence",
+      "owner_revision": "ql.vak-composition.profile/v1"
+     }
+    ]
+   },
+   {
+    "ambiguity_policy": "preserve-candidates",
+    "cardinality": {
+     "max": 2,
+     "min": 0
+    },
+    "field": "direction",
+    "id": "vak-direction",
+    "labels": [
+     {
+      "description": "Prospective: the pass forward through the pairs",
+      "id": "forward-synthesis",
+      "owner_ref": "ql:mef:cprime-oikonomia:direction",
+      "owner_revision": "ql.cprime-oikonomia/v1"
+     },
+     {
+      "description": "Retrospective: the pass back through the pairs",
+      "id": "returning-inquiry",
+      "owner_ref": "ql:mef:cprime-oikonomia:direction",
+      "owner_revision": "ql.cprime-oikonomia/v1"
+     }
+    ]
+   }
+  ],
+  "constraints": [
+   {
+    "antecedent": [
+     {
+      "head_id": "vak-cfp",
+      "label_ids": [
+       "Z"
+      ],
+      "match": "all"
+     }
+    ],
+    "consequent": [
+     {
+      "head_id": "vak-cpf",
+      "label_ids": [
+       "authorised-undertaking"
+      ],
+      "match": "all"
+     }
+    ],
+    "id": "vak-z-needs-authorised-undertaking",
+    "kind": "implication",
+    "rule_ref": "skill/ql/vak-evaluate:cfp-z"
+   }
+  ]
+ },
+ "unit_steps": {
+  "compose": [
+   {
+    "head": "CFP",
+    "marker": "ql.cprime-oikonomia/v1:cfp2:chained-c-thread",
+    "step": {
+     "form": "chain",
+     "op": "cfp-form"
+    }
+   },
+   {
+    "head": "CS",
+    "hops": [
+     {
+      "from": 5,
+      "index": 0,
+      "marker": "ql.cprime-oikonomia/v1:cs2:returning-inquiry:0:5>0",
+      "to": 0
+     },
+     {
+      "from": 4,
+      "index": 1,
+      "marker": "ql.cprime-oikonomia/v1:cs2:returning-inquiry:1:4>1",
+      "to": 1
+     },
+     {
+      "from": 3,
+      "index": 2,
+      "marker": "ql.cprime-oikonomia/v1:cs2:returning-inquiry:2:3>2",
+      "to": 2
+     }
+    ],
+    "marker": "ql.cprime-oikonomia/v1:cs2:returning-inquiry:extent:3",
+    "step": {
+     "direction": "returning-inquiry",
+     "op": "cs-select",
+     "profile": "ground-through-operation"
+    }
+   }
+  ],
+  "contract": "ql.vak-unit-steps/v1",
+  "heads": [
+   {
+    "field": "participation",
+    "head": "CPF",
+    "instrumentHead": "vak-cpf",
+    "instrumentLabel": "dialogical",
+    "label": "dialogical",
+    "meaning": "dialogue with the person; the person completes the remaining layers",
+    "owner": "ql:mef:vak-profile:participation",
+    "state": "chosen"
+   },
+   {
+    "field": "content-type",
+    "head": "CT",
+    "instrumentHead": "vak-ct",
+    "instrumentLabel": "CT2",
+    "label": "CT2",
+    "meaning": "Operations content",
+    "owner": "ql:mef:vak-profile:content-type",
+    "state": "chosen"
+   },
+   {
+    "field": "position",
+    "head": "CP",
+    "instrumentHead": "vak-cp",
+    "instrumentLabel": "4.2",
+    "label": "4.2",
+    "meaning": "Operation: prospective What is being done? retrospective What blocks us?",
+    "owner": "ql:mef:vak-profile:position",
+    "state": "chosen"
+   },
+   {
+    "field": "context-frame",
+    "head": "CF",
+    "instrumentHead": "vak-cf",
+    "instrumentLabel": "CF3",
+    "label": "CF3",
+    "meaning": "(0/1/2) Dual-Non-Dual / triadic-circulation (Eros)",
+    "owner": "ql:mef:context-frame:1.0.0:CF3",
+    "state": "chosen"
+   },
+   {
+    "field": "thread-form",
+    "head": "CFP",
+    "instrumentHead": "vak-cfp",
+    "instrumentLabel": "CFP2",
+    "label": "CFP2",
+    "meaning": "melody",
+    "owner": "ql:mef:vak-profile:thread-form",
+    "state": "chosen"
+   },
+   {
+    "field": "sequence",
+    "head": "CS",
+    "instrumentHead": "vak-cs",
+    "instrumentLabel": "CS2",
+    "label": "CS2",
+    "meaning": "4.0↔4.5 · 4.1↔4.4 · 4.2↔4.3",
+    "owner": "ql:mef:vak-profile:sequence",
+    "state": "chosen"
+   },
+   {
+    "field": "direction",
+    "head": "direction",
+    "instrumentHead": "vak-direction",
+    "instrumentLabel": "returning-inquiry",
+    "label": "returning-inquiry",
+    "meaning": "Retrospective: the pass back through the pairs",
+    "owner": "ql:mef:cprime-oikonomia:direction",
+    "state": "chosen"
+   }
+  ],
+  "needs": [
+   "context",
+   "oikonomia",
+   "basis"
+  ],
+  "open": [],
+  "sourceRevision": "daa660cbc1b8c5da83828698665a753852cb0287",
+  "standing": "QL's breakdown of one unit's heads: each head's meaning as the Vāk-block instrument holds it, and the composition steps the heads fix. The steps run in a `ql.vak-composition/v1` composition once it has bound the unit's whole and entered its context, and names the context, oikonomia and basis each step takes: a unit names its whole, it does not carry it. It stores nothing, composes nothing and grants nothing.",
+  "unit": "eros-verify",
+  "walk": [
+   "4.5",
+   "4.4",
+   "4.3"
+  ]
+ },
+ "unit_steps_refused": "ql: CF `CF8`: unknown context frame CF8"
 }

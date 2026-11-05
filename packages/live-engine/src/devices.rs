@@ -323,6 +323,10 @@ pub struct GlueDevice {
     pub release_tc_s: f64,
     /// Detector block size in frames (engine choice; see type doc).
     pub block_frames: usize,
+    /// Live's stored Attack, its menu index 0 to 6 (devices/glue-compressor.md parameter-law section): it moves the steady-state
+    /// curve (D6), so the curve is the one measured at the nearer of the Attacks rendered (glue.rs `static_gain_change_db_at`, O-I #849
+    /// round 23). The preset's 2 unless the set stores another.
+    pub stored_attack: f64,
 
     gain_db: f64,
     block_peak: f32,
@@ -339,10 +343,17 @@ impl GlueDevice {
             attack_tc_s: 0.002,
             release_tc_s: 0.050,
             block_frames: 32,
+            stored_attack: 2.0,
             gain_db: 0.0,
             block_peak: 0.0,
             pos_in_block: 0,
         }
+    }
+
+    /// At Live's stored Attack `attack` (its menu index), as a set stores it.
+    pub fn with_stored_attack(mut self, attack: f64) -> GlueDevice {
+        self.stored_attack = attack;
+        self
     }
 
     /// Instant-attack variant for tests that need the settled curve with
@@ -386,7 +397,7 @@ impl Device for GlueDevice {
         if self.pos_in_block >= self.block_frames {
             self.pos_in_block = 0;
             let level_db = amplitude_to_db(self.block_peak as f64);
-            let target = glue::static_gain_change_db(level_db, &self.params);
+            let target = glue::static_gain_change_db_at(level_db, &self.params, self.stored_attack);
             let block_s = self.block_frames as f64 / clock.sample_rate as f64;
             let tc = if target < self.gain_db {
                 self.attack_tc_s

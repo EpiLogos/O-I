@@ -48,8 +48,10 @@
 //   chain in the chain list, as Live deletes a chain: the chain's id; its session leaves the space as its own session track's Delete takes
 //   it off, §10.9, and the Decision helper leaves with its session), store (where every
 //   macro stands, kept as a variation), variation (the name of a stored variation to move every macro to), retry (Factory's
-//   RetryGrant, factory/src/orchestration.rs) and stopAfter (beside Retry, as Live keeps a Clip Stop button in every track's slots:
-//   Factory's request-cancellation of the chosen chain's task's current attempt; §19.4).
+//   RetryGrant, factory/src/orchestration.rs), stopAfter (beside Retry, as Live keeps a Clip Stop button in every track's slots:
+//   Factory's request-cancellation of the chosen chain's task's current attempt; §19.4) and launch (before them, as a clip's launch
+//   stands in its slot: AIKit's realisation of the chain's session on its own model, then Factory's start of the unit it names for the
+//   chain's task; O-I 842 round 23). The owner answers on `launched` (JSON {chain, status, said}): Factory's answer to the last Launch.
 // The crew's face (manual §19.15, §25.6): a pattern whose Count is Pair, Crew or Swarm is several whole creatures in one pane, each agent
 // in the posture of its own state (faces/CrewFace.tsx). `pattern` is the pattern the crew works as: the Type of its lead, read; `type` on a chain
 // names the pattern of that chain when it differs from the crew's (a lead that sets a goal and agents that decide the detail).
@@ -138,6 +140,8 @@ const SAYS = {
   store: 'Stores where every macro stands now as a variation.',
   swap: 'Swaps the chosen chain\'s agent, or the set, for another from the browser, and keeps the rest of its chain.',
   extract: 'Drag the chosen chain out onto an empty track and it works there alone, chain and all.',
+  launch: 'Starts the chosen chain\'s task: AIKit realises the model the chain\'s agent runs on its session, and Software Factory starts the task\'s unit on it. Needs the project\'s Launch grant, which is the owner\'s to give.',
+  launched: 'Software Factory\'s answer to the last Launch, in its words.',
   retry: 'Run the chosen chain\'s task again, when it is stalled or failed.',
   stopAfter: 'Asks Software Factory to stop the chosen chain\'s task where its current attempt stands, as a clip\'s Stop button stops its track. The attempt stays as a take.',
   open: 'Open the rack full in a pane.',
@@ -456,6 +460,19 @@ const mapAction = (p: ViewProps, chosen: Node | undefined) => {
   return <Action {...s} label={apart ? 'Map' : 'Unmap'} does={apart ? 'Maps the chain\'s Model to the Model macro again.' : 'Unmaps the chain\'s Model from the Model macro: it keeps its own.'}
     disabled={s.disabled ?? (!chosen ? 'No chain is chosen.' : !agent ? 'The chain holds no Agent: a Decision helper has no Model to map.' : !unmapped ? 'No reading of the mapping.' : undefined)}
     onPress={chosen && all && unmapped ? () => p.set('unmapped', JSON.stringify(apart ? {...all, model: unmapped.filter(id => id !== chosen.id)} : offByHand(all, 'model', chosen.id))) : undefined} />
+}
+/** Launch, before Retry and Stop after: lit while the chosen chain is not at work on a task, as a clip's launch is lit in its slot. */
+const launchAction = (p: ViewProps, chosen: Node | undefined) => {
+  const s = st(p, 'launch'), can = !!chosen && chosen.state !== 'working'
+  return <Action {...s} label="Launch" does={SAYS.launch} disabled={s.disabled ?? (!chosen ? 'No chain is chosen.' : can ? undefined : 'The chain is at work on a task already.')}
+    onPress={can ? () => p.set('launch', true) : undefined} />
+}
+/** Factory's answer to the last Launch of the chosen chain: launched or launched already, the words on the Info line. */
+const launchedReadout = (p: ViewProps, chosen: Node | undefined) => {
+  const last = json<{chain?: string; status?: string; said?: string} | null>(p.v, 'launched', null)
+  const mine = !!chosen && last?.chain === chosen.id
+  return <Readout label="Launched" does={mine && last?.said ? last.said : SAYS.launched}
+    value={mine ? (last?.status === 'launched' ? 'Started' : last?.status === 'already-launched' ? 'Already' : NONE) : NONE} />
 }
 /** Stop after, beside Retry: lit while the chosen chain is at work on a task (§19.4). */
 const stopAfterAction = (p: ViewProps, chosen: Node | undefined) => {
@@ -902,9 +919,11 @@ export const design: DesignedDevice = {
           {swapAction(p, chosen)}
           <DragOut p={p} chosen={chosen} />
           {mapAction(p, chosen)}
+          {launchAction(p, chosen)}
           {retryAction(p, chosen)}
           {stopAfterAction(p, chosen)}
           {openAction(p, chosen)}
+          {launchedReadout(p, chosen)}
         </Section>
       </Band>
       <Band>

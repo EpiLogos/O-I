@@ -170,11 +170,57 @@ pub struct K8Carrier {
     pub impulses: Vec<(f64, f64)>,
 }
 
-/// An act admitted for a later sample and not yet landed (`ql::PendingAct`): impulses by mode index.
-#[derive(Debug, Clone, PartialEq)]
+/// An act admitted for a later sample and not yet landed (`ql::PendingAct`): impulses by mode index, or (an act voicing
+/// notes, QL-MEF #287) its notes and the ids of the notes making way for them.
+#[derive(Debug, Clone, PartialEq, Default)]
 pub struct K8Pending {
     pub at_samples_elapsed: u64,
     pub impulses: Vec<(usize, (f64, f64))>,
+    pub notes: Vec<K8Note>,
+    pub made_way: Vec<u64>,
+}
+
+/// The voices of one note (`ql::note_voices`, QL-MEF #287 packet A; DLW manual §21.2 Rules: "Each note strikes its own eight
+/// voices").
+pub const NOTE_VOICES: usize = 8;
+/// The most notes the native bank holds (`ql::max_bank_notes`), and the most one act names as making way.
+pub const BANK_NOTES: usize = 32;
+pub const MADE_WAY_MAX: usize = 64;
+
+/// One voice of a note as it is struck (`ql::NoteVoice`): the mode it is like (whose material it rings in and whose hearing it
+/// is heard by), its own frequency and its impulse (re, im), modal metres.
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub struct K8NoteVoice {
+    pub like: usize,
+    pub frequency_hz: f64,
+    pub impulse: (f64, f64),
+}
+
+/// One note of an act (`ql::NoteAct`): its owner's id and its eight voices.
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub struct K8Note {
+    pub id: u64,
+    pub voices: [K8NoteVoice; NOTE_VOICES],
+}
+
+/// One voice of a bank slot as it rings (`ql::BankVoice`): the mode it is like, its frequency and its state (re, im).
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub struct K8BankVoice {
+    pub like: usize,
+    pub frequency_hz: f64,
+    pub state: (f64, f64),
+}
+
+/// One slot of the native bank as it stands (`ql::BankNote`): whether it holds a note, that note's id, the order its last note
+/// was voiced in, its voices and a note's voices still fading there.
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub struct K8BankSlot {
+    pub slot: usize,
+    pub held: bool,
+    pub id: u64,
+    pub order: u64,
+    pub voices: [K8BankVoice; NOTE_VOICES],
+    pub fading: [K8BankVoice; NOTE_VOICES],
 }
 
 /// A continuation as its owner hands it over (`ql::Continuation`, `ql.continuous-handover/v1`):
@@ -190,6 +236,9 @@ pub struct K8Continuation {
     pub carrier: K8Carrier,
     pub pending: Vec<K8Pending>,
     pub heard_from: Vec<f64>,
+    /// The notes as they ring (QL-MEF #287) and the order the last was voiced in.
+    pub bank: Vec<K8BankSlot>,
+    pub bank_order: u64,
 }
 
 /// One voice of the tuning in force (`ql::KeyVoice`): the mode it sounds through and its surface term.
@@ -203,8 +252,30 @@ pub struct K8KeyVoice {
     pub n: u32,
 }
 
+/// One voice of an arc's cell (`ql::CellVoice`, QL-MEF #287): the mode it is like, its own frequency and its surface term.
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub struct K8CellVoice {
+    pub like: usize,
+    pub frequency_hz: f64,
+    pub longitude_radians: f64,
+    pub weight: f64,
+    pub phase_radians: f64,
+    pub m: u32,
+    pub n: u32,
+}
+
+/// A note the owner counts (`ql::TorusKeyLaw::Counted`): its id and its key.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct K8CountedNote {
+    pub id: u64,
+    pub row: u8,
+    pub column: u32,
+}
+
 /// QL's played-address law as its owner hands it over (`ql::TorusKeyLaw`, `ql.torus-keys/v1`): each
-/// key's ring arc, the voices of the tuning in force, Strike, the pulse, the rate and the material cap.
+/// key's ring arc, the voices of the tuning in force, Strike, the pulse, the rate and the material cap;
+/// and, where each note sounds its own voices (QL-MEF #287, Logic on the torus), each arc's cell, the
+/// Polyphony, the owner's count of notes and the id its next note takes (`cells` empty otherwise).
 #[derive(Debug, Clone, PartialEq)]
 pub struct K8KeyLaw {
     pub arcs: [u8; 36],
@@ -215,6 +286,64 @@ pub struct K8KeyLaw {
     pub steps_per_second: f64,
     pub sample_rate: u32,
     pub cap_metres: f64,
+    pub cells: Vec<[K8CellVoice; NOTE_VOICES]>,
+    pub polyphony: u32,
+    pub notes: Vec<K8CountedNote>,
+    pub next_note: u64,
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Default)]
+struct LeK8NoteVoice {
+    like: usize,
+    frequency_hz: f64,
+    re: f64,
+    im: f64,
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Default)]
+struct LeK8Note {
+    id: u64,
+    voices: [LeK8NoteVoice; NOTE_VOICES],
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Default)]
+struct LeK8BankVoice {
+    like: usize,
+    frequency_hz: f64,
+    re: f64,
+    im: f64,
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Default)]
+struct LeK8BankSlot {
+    slot: usize,
+    held: c_int,
+    id: u64,
+    order: u64,
+    voices: [LeK8BankVoice; NOTE_VOICES],
+    fading: [LeK8BankVoice; NOTE_VOICES],
+}
+
+#[repr(C)]
+struct LeK8CellVoice {
+    like: usize,
+    frequency_hz: f64,
+    longitude_radians: f64,
+    weight: f64,
+    phase_radians: f64,
+    m: u32,
+    n: u32,
+}
+
+#[repr(C)]
+struct LeK8Counted {
+    id: u64,
+    row: u8,
+    column: u32,
 }
 
 #[repr(C)]
@@ -224,6 +353,26 @@ struct LeK8Pending {
     re: *const f64,
     im: *const f64,
     n: usize,
+    notes: *const LeK8Note,
+    note_count: usize,
+    made_way: *const u64,
+    made_way_count: usize,
+}
+
+fn le_note(note: &K8Note) -> LeK8Note {
+    let mut out = LeK8Note {
+        id: note.id,
+        ..LeK8Note::default()
+    };
+    for (o, v) in out.voices.iter_mut().zip(&note.voices) {
+        *o = LeK8NoteVoice {
+            like: v.like,
+            frequency_hz: v.frequency_hz,
+            re: v.impulse.0,
+            im: v.impulse.1,
+        };
+    }
+    out
 }
 
 #[repr(C)]
@@ -243,6 +392,9 @@ struct LeK8Continuation {
     pending_count: usize,
     heard_from: *const f64,
     heard_count: usize,
+    bank: *const LeK8BankSlot,
+    bank_count: usize,
+    bank_order: u64,
 }
 
 #[repr(C)]
@@ -266,6 +418,12 @@ struct LeK8KeyLaw {
     steps_per_second: f64,
     sample_rate: u32,
     cap_metres: f64,
+    cells: *const LeK8CellVoice,
+    cell_count: usize,
+    polyphony: u32,
+    notes: *const LeK8Counted,
+    note_count: usize,
+    next_note: u64,
 }
 
 #[repr(C)]
@@ -304,6 +462,16 @@ extern "C" {
         n: usize,
     ) -> c_int;
     fn le_k8_move_gains(field: *mut LeK8Field, gains: *const f64, n: usize, frames: u64) -> c_int;
+    fn le_k8_release_keys(field: *mut LeK8Field, rows: *const u8, columns: *const u32, n: usize);
+    fn le_k8_voice_notes(
+        field: *mut LeK8Field,
+        notes: *const LeK8Note,
+        n: usize,
+        made_way: *const u64,
+        m: usize,
+    ) -> c_int;
+    fn le_k8_bank_count(field: *const LeK8Field) -> usize;
+    fn le_k8_bank_slot(field: *const LeK8Field, i: usize, out: *mut LeK8BankSlot) -> c_int;
     fn le_k8_silence(field: *mut LeK8Field);
     fn le_k8_amplitude(field: *const LeK8Field, mode: usize, re: *mut f64, im: *mut f64) -> c_int;
     fn le_k8_field_free(field: *mut LeK8Field);
@@ -516,6 +684,33 @@ impl K8Field {
         let input = RawInput::of(&handed.input)?;
         let carrier_re: Vec<f64> = handed.carrier.impulses.iter().map(|z| z.0).collect();
         let carrier_im: Vec<f64> = handed.carrier.impulses.iter().map(|z| z.1).collect();
+        let notes: Vec<Vec<LeK8Note>> = handed
+            .pending
+            .iter()
+            .map(|p| p.notes.iter().map(le_note).collect())
+            .collect();
+        let bank: Vec<LeK8BankSlot> = handed
+            .bank
+            .iter()
+            .map(|s| {
+                let lane = |voices: &[K8BankVoice; NOTE_VOICES]| {
+                    voices.map(|v| LeK8BankVoice {
+                        like: v.like,
+                        frequency_hz: v.frequency_hz,
+                        re: v.state.0,
+                        im: v.state.1,
+                    })
+                };
+                LeK8BankSlot {
+                    slot: s.slot,
+                    held: c_int::from(s.held),
+                    id: s.id,
+                    order: s.order,
+                    voices: lane(&s.voices),
+                    fading: lane(&s.fading),
+                }
+            })
+            .collect();
         let acts: Vec<(Vec<usize>, Vec<f64>, Vec<f64>)> = handed
             .pending
             .iter()
@@ -531,12 +726,17 @@ impl K8Field {
             .pending
             .iter()
             .zip(&acts)
-            .map(|(p, (modes, re, im))| LeK8Pending {
+            .zip(&notes)
+            .map(|((p, (modes, re, im)), notes)| LeK8Pending {
                 at_samples_elapsed: p.at_samples_elapsed,
                 modes: modes.as_ptr(),
                 re: re.as_ptr(),
                 im: im.as_ptr(),
                 n: modes.len(),
+                notes: notes.as_ptr(),
+                note_count: notes.len(),
+                made_way: p.made_way.as_ptr(),
+                made_way_count: p.made_way.len(),
             })
             .collect();
         let raw = LeK8Continuation {
@@ -555,6 +755,9 @@ impl K8Field {
             pending_count: pending.len(),
             heard_from: handed.heard_from.as_ptr(),
             heard_count: handed.heard_from.len(),
+            bank: bank.as_ptr(),
+            bank_count: bank.len(),
+            bank_order: handed.bank_order,
         };
         let mut err = [0u8; 512];
         // SAFETY: every pointer in `raw` borrows a buffer alive across the call (`input`,
@@ -585,6 +788,29 @@ impl K8Field {
                 n: v.n,
             })
             .collect();
+        let cells: Vec<LeK8CellVoice> = law
+            .cells
+            .iter()
+            .flatten()
+            .map(|v| LeK8CellVoice {
+                like: v.like,
+                frequency_hz: v.frequency_hz,
+                longitude_radians: v.longitude_radians,
+                weight: v.weight,
+                phase_radians: v.phase_radians,
+                m: v.m,
+                n: v.n,
+            })
+            .collect();
+        let notes: Vec<LeK8Counted> = law
+            .notes
+            .iter()
+            .map(|n| LeK8Counted {
+                id: n.id,
+                row: n.row,
+                column: n.column,
+            })
+            .collect();
         let raw = LeK8KeyLaw {
             arcs: law.arcs,
             voices: voices.as_ptr(),
@@ -595,6 +821,12 @@ impl K8Field {
             steps_per_second: law.steps_per_second,
             sample_rate: law.sample_rate,
             cap_metres: law.cap_metres,
+            cells: cells.as_ptr(),
+            cell_count: cells.len(),
+            polyphony: law.polyphony,
+            notes: notes.as_ptr(),
+            note_count: notes.len(),
+            next_note: law.next_note,
         };
         let mut err = [0u8; 256];
         // SAFETY: a live owned field; `voices` outlives the call; `err` bounds the message.
@@ -630,6 +862,66 @@ impl K8Field {
                 act.amplitude[1],
             ) == 1
         }
+    }
+
+    /// Keys let go (the audio thread: no allocation): they leave the count of notes the field's law keeps (QL-MEF #287), and
+    /// nothing moves in the body; a released note keeps its own tail.
+    pub fn release_keys(&mut self, rows: &[u8], columns: &[u32]) {
+        let n = rows.len().min(columns.len());
+        // SAFETY: a live owned field; `rows` and `columns` hold at least `n` keys each, read during the call only.
+        unsafe { le_k8_release_keys(self.ptr.as_ptr(), rows.as_ptr(), columns.as_ptr(), n) }
+    }
+
+    /// Voice notes its owner voiced at the cursor (QL-MEF #287 packet A): each note its own eight voices, and the notes that
+    /// made way for them fading, as the owner's field voiced them (the audio thread: no allocation). False when the field refused
+    /// the act whole (no note, more than [`BANK_NOTES`], a note already held, or a voice it cannot ring): nothing moved.
+    pub fn voice_notes(&mut self, notes: &[K8Note], made_way: &[u64]) -> bool {
+        if notes.is_empty() || notes.len() > BANK_NOTES || made_way.len() > MADE_WAY_MAX {
+            return false;
+        }
+        let mut raw = [LeK8Note::default(); BANK_NOTES];
+        for (r, note) in raw.iter_mut().zip(notes) {
+            *r = le_note(note);
+        }
+        // SAFETY: a live owned field; `raw` holds `notes.len()` notes and `made_way` its ids, read during the call only.
+        unsafe {
+            le_k8_voice_notes(
+                self.ptr.as_ptr(),
+                raw.as_ptr(),
+                notes.len(),
+                made_way.as_ptr(),
+                made_way.len(),
+            ) == 1
+        }
+    }
+
+    /// The bank as it stands (off the audio thread: a reading that allocates; nothing moves).
+    pub fn bank(&self) -> Vec<K8BankSlot> {
+        // SAFETY: a live owned field.
+        let n = unsafe { le_k8_bank_count(self.ptr.as_ptr()) };
+        (0..n)
+            .filter_map(|i| {
+                let mut slot = LeK8BankSlot::default();
+                // SAFETY: a live owned field; the shim writes one slot into `slot` when it answers 1.
+                (unsafe { le_k8_bank_slot(self.ptr.as_ptr(), i, &mut slot) } == 1).then(|| {
+                    let lane = |voices: &[LeK8BankVoice; NOTE_VOICES]| {
+                        voices.map(|v| K8BankVoice {
+                            like: v.like,
+                            frequency_hz: v.frequency_hz,
+                            state: (v.re, v.im),
+                        })
+                    };
+                    K8BankSlot {
+                        slot: slot.slot,
+                        held: slot.held != 0,
+                        id: slot.id,
+                        order: slot.order,
+                        voices: lane(&slot.voices),
+                        fading: lane(&slot.fading),
+                    }
+                })
+            })
+            .collect()
     }
 
     /// Strike an act its owner landed at the cursor ([`TorusStrike`]: the impulses its owner's law gave the modes,

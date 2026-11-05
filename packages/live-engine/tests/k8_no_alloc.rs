@@ -138,6 +138,10 @@ fn the_torus_strikes_and_is_stilled_without_allocating() {
             steps_per_second: 2.0,
             sample_rate: SR,
             cap_metres: 1.0,
+            cells: Vec::new(),
+            polyphony: 0,
+            notes: Vec::new(),
+            next_note: 0,
         })
         .unwrap();
     let mut g = Graph::new(SR, 120.0);

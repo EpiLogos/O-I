@@ -235,7 +235,30 @@ function amplitudesOf(frame, modeRefs) {
     const v = a[i];
     if (Array.isArray(v) && Number.isFinite(v[0]) && Number.isFinite(v[1])) map.set(ref, [v[0], v[1]]);
   });
+  for (const slot of Array.isArray(frame.bank) ? frame.bank : [])
+    for (const voice of [...Array.isArray(slot?.voices) ? slot.voices : [], ...Array.isArray(slot?.fading) ? slot.fading : []]) {
+      const at = map.get(voice?.mode_ref), z = voice?.amplitude;
+      if (at && Array.isArray(z) && Number.isFinite(z[0]) && Number.isFinite(z[1])) {
+        at[0] += z[0];
+        at[1] += z[1];
+      }
+    }
   return map;
+}
+function soundingOf(frame, body, modeRefs) {
+  const a = frame?.amplitudes_metres;
+  if (!Array.isArray(a) || !modeRefs || a.length !== modeRefs.length) return null;
+  const pitch = new Map(body.voices.map((v) => [v.mode_ref, v.frequency_hz]));
+  const sounds = (z) => Array.isArray(z) && Number.isFinite(z[0]) && Number.isFinite(z[1]) && Math.hypot(z[0], z[1]) / body.strikeMetres >= 1e-3;
+  const tones = [];
+  modeRefs.forEach((ref, i) => {
+    const hz = pitch.get(ref);
+    if (hz !== void 0 && sounds(a[i])) tones.push(hz);
+  });
+  for (const slot of Array.isArray(frame.bank) ? frame.bank : [])
+    for (const voice of [...Array.isArray(slot?.voices) ? slot.voices : [], ...Array.isArray(slot?.fading) ? slot.fading : []])
+      if (pitch.has(voice?.mode_ref) && Number.isFinite(voice.frequency_hz) && voice.frequency_hz > 0 && sounds(voice.amplitude)) tones.push(voice.frequency_hz);
+  return tones.sort((x, y) => x - y);
 }
 function blendAt(state, phi, theta, offset, mpu, out, at) {
   const { from, to, progress } = state.morph;
@@ -398,6 +421,7 @@ class TorusObject {
   morph = new TorusMorph();
   shown = null;
   amplitudes = null;
+  sounding = null;
   steps = null;
   figure = null;
   sequenced = null;
@@ -438,8 +462,10 @@ class TorusObject {
     const body = this.body;
     if (!body) {
       this.shown = null;
+      this.sounding = null;
       return null;
     }
+    this.sounding = soundingOf(frame, body, this.modeRefs);
     this.steps = stepsAt(this.session, Number(frame?.samples_elapsed), this.sampleRate);
     const sequenced = this.sequenced = this.session?.settings?.shape === "sequence" ? this.sceneShapes() : null;
     this.figure = sequenced ? sequenced.progress < 0.5 ? sequenced.from : sequenced.to : figureAt(this.session, this.steps);
@@ -489,6 +515,8 @@ class TorusObject {
         const a = this.amplitudes.get(v.mode_ref) ?? [0, 0];
         return { mode_ref: v.mode_ref, re: a[0], im: a[1] };
       }) : null,
+      // The pitches sounding now, the bank's notes at their own (soundingOf): what the plate is driven at under Torus.
+      sounding_hz: this.sounding,
       law: "DLW \xA721.2 The Torus in the pane: shapes from QL's figure law, the passage on the pulse, the voices as force points while they sound, the particles drawn towards the four boundaries' still lines while the body rings (declared presentation: SETTLE_RADIANS, VOICE_PULL)"
     };
   }
@@ -533,6 +561,7 @@ export {
   shapeNormal,
   shapePoint,
   shapeRayHit,
+  soundingOf,
   stepsAt,
   torusCandidates,
   torusCoordinates,

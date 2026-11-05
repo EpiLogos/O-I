@@ -104,6 +104,34 @@ pub const MEASURED_ANCHORS_RATIO2_R60_T12: &[(f64, f64)] = &[
     (12.0, -18.15),
 ];
 
+/// The measured curve at stored Attack 5 (O-I #849 round 23), Ratio 1, at Range 60: `LAM_T24_A5_R60` (Threshold −24,
+/// Release 0, Makeup 0) moved by its threshold into the frame of [`MEASURED_ANCHORS_R30_T12`] — devices/glue-compressor.md
+/// "LAM". The Attack moves the steady-state curve (D6), and Live's own Glue set stores Attack 5
+/// (`BULK-glue-compressor-default-steps-1k-wav.als`), so its record is this curve, not Attack 2's.
+pub const MEASURED_ANCHORS_ATTACK5_R60_T12: &[(f64, f64)] = &[
+    (-18.0, 0.0),
+    (-12.0, -0.18),
+    (-6.0, -2.84),
+    (0.0, -6.33),
+    (6.0, -10.27),
+    (9.0, -12.36),
+    (12.0, -14.51),
+];
+/// The one Attack the Ratio curves above were rendered at: Attack 2, the matrix's pin (D6).
+pub const ANCHORS_ATTACK: f64 = 2.0;
+/// The other Attack a curve was rendered at: Attack 5, at Ratio 1 alone ([`MEASURED_ANCHORS_ATTACK5_R60_T12`]).
+pub const ATTACK5: f64 = 5.0;
+
+/// The measured Attack a stored Attack sounds as. ENGINE DECISION (Live's renders stand at Attack 2 and 5 only): the
+/// nearer of the two — 0 to 3 sound Attack 2's curve, 4 to 6 Attack 5's.
+pub fn measured_attack_of(attack: f64) -> f64 {
+    if attack.round() >= 4.0 {
+        ATTACK5
+    } else {
+        ANCHORS_ATTACK
+    }
+}
+
 /// The measured curve a stored Ratio selects (O-I #849 round 17: Live's Ratio is a menu of three curve families, 0, 1
 /// and 2, params.rs) and the Range it was rendered at, whose ceiling it carries. ENGINE DECISION (Live stores only the
 /// three): a stored value between them takes the nearer, within 0 to 2.
@@ -150,9 +178,23 @@ pub fn unceiled_reduction_db(ceiled_db: f64, ceiling_db: f64) -> f64 {
 /// `input_peak_db`: the measured curve of the stored Ratio
 /// ([`measured_curve_of`], moved with the threshold) taken out of the
 /// ceiling of the Range it was rendered at and put under the Range's (the
-/// Range law above). At that Range it is the measured curve.
+/// Range law above). At that Range it is the measured curve. This is at the
+/// matrix's Attack 2; [`static_gain_change_db_at`] takes a stored Attack.
 pub fn static_gain_change_db(input_peak_db: f64, p: &GlueParams) -> f64 {
-    let (anchors, rendered_at) = measured_curve_of(p.ratio);
+    static_gain_change_db_at(input_peak_db, p, ANCHORS_ATTACK)
+}
+
+/// Static gain applied (dB) at a stored Attack, as [`static_gain_change_db`] at Attack 2: at Ratio 1 the curve of the
+/// measured Attack it sounds as ([`measured_attack_of`]); Ratios 0 and 2 were rendered at Attack 2 alone and keep it.
+pub fn static_gain_change_db_at(input_peak_db: f64, p: &GlueParams, attack: f64) -> f64 {
+    let (anchors, rendered_at) = match measured_curve_of(p.ratio) {
+        (anchors, _)
+            if anchors == MEASURED_ANCHORS_R30_T12 && measured_attack_of(attack) == ATTACK5 =>
+        {
+            (MEASURED_ANCHORS_ATTACK5_R60_T12, 60.0)
+        }
+        curve => curve,
+    };
     let measured = -measured_curve_db(input_peak_db, p, anchors);
     let unceiled = unceiled_reduction_db(measured, range_ceiling_db(rendered_at));
     -ceiled_reduction_db(unceiled, range_ceiling_db(p.range))
@@ -272,6 +314,62 @@ mod tests {
 
     /// The sine peak levels of the harness steps signal (devices/glue-compressor.md gain maps).
     const STEPS_DB: [f64; 7] = [-30.0, -24.0, -18.0, -12.0, -6.0, -3.0, 0.0];
+
+    /// O-I #849 round 23 (DLW build ruling 2026-11-05: the m1 Glue record's −18 dB step, "find whether it's our makeup/knee curve or
+    /// the record itself"): the Attack moves the steady-state curve, not only the transients (devices/glue-compressor.md D6), and Live's
+    /// render at stored Attack 5 (LAM_T24_A5_R60: Threshold −24, Range 60, Ratio 1, Makeup 0, Release 0) is that Attack's own curve. At
+    /// its pins the model meets its gain map at every step; Attack 2's curve misses it by 1.1 to 2.4 dB where the Glue reduces.
+    #[test]
+    fn the_glue_at_stored_attack_5_meets_lives_render_at_attack_5_and_attack_2s_curve_does_not() {
+        let p = GlueParams {
+            threshold_db: -24.0,
+            range: 60.0,
+            ratio: 1.0,
+            makeup_db: 0.0,
+        };
+        let lam = [-0.0, -0.18, -2.84, -6.33, -10.27, -12.36, -14.51];
+        for (db, measured) in STEPS_DB.iter().zip(lam) {
+            let model = static_gain_change_db_at(*db, &p, 5.0);
+            assert!(
+                (model - measured).abs() < 0.01,
+                "at {db} dBFS in: {model:.3} against Live's {measured}"
+            );
+        }
+        for db in [-18.0, -12.0, -6.0] {
+            let five = static_gain_change_db_at(db, &p, 5.0);
+            assert!(
+                (static_gain_change_db_at(db, &p, 2.0) - five).abs() > 1.0,
+                "at {db} dBFS in Attack 2's curve is not Attack 5's"
+            );
+        }
+        // The menu's other times sound the nearer measured one (ENGINE DECISION, as the Ratio's): 0 to 3 Attack 2's, 4 to 6 Attack 5's;
+        // only Ratio 1 was rendered at Attack 5, so Ratios 0 and 2 keep their Attack-2 curves.
+        assert_eq!(
+            static_gain_change_db_at(-12.0, &p, 3.0),
+            static_gain_change_db_at(-12.0, &p, 2.0)
+        );
+        assert_eq!(
+            static_gain_change_db_at(-12.0, &p, 4.0),
+            static_gain_change_db_at(-12.0, &p, 5.0)
+        );
+        assert_eq!(
+            static_gain_change_db_at(-12.0, &p, 6.0),
+            static_gain_change_db_at(-12.0, &p, 5.0)
+        );
+        assert_eq!(
+            static_gain_change_db(-12.0, &p),
+            static_gain_change_db_at(-12.0, &p, 2.0),
+            "the preset's Attack 2 as before"
+        );
+        let ratio2 = GlueParams {
+            ratio: 2.0,
+            ..p.clone()
+        };
+        assert_eq!(
+            static_gain_change_db_at(-12.0, &ratio2, 5.0),
+            static_gain_change_db_at(-12.0, &ratio2, 2.0)
+        );
+    }
 
     /// O-I #849 round 16: the Range is a soft ceiling on the gain reduction. The ten-dB renders' gain maps
     /// (devices/glue-compressor.md: G3_T-12_R10_v2 and G10_CEILING, T −24 R 10, the ceiling discriminator) are

@@ -618,9 +618,20 @@ pub(super) fn attempt_launch(
         Ok(expected) => expected,
         Err(reason) => return refused("owner", Some("admission"), reason),
     };
+    // O-I 842 round 23: without the grant, the refusal names it (the native action
+    // on the project's scope) and whose it is to give; nothing is read or moved.
     let grant = match granted(&authority, &expected) {
         Ok(grant) => grant,
-        Err(reason) => return refused("driver", None, reason),
+        Err(reason) => {
+            return refused(
+                "driver",
+                Some("grant"),
+                format!(
+                    "Launch needs a native action authority grant of {} on {}, and the grant is the owner's to give (Control/user/native-action-authority.json): {reason}",
+                    expected.native_action, expected.scope
+                ),
+            )
+        }
     };
     let attempts = match read_owner(call, ["attempt", "read"], state_path, run_ref) {
         Ok(attempts) => attempts,
@@ -1288,11 +1299,37 @@ mod tests {
         );
         assert_eq!(answer["status"], "refused");
         assert_eq!(answer["refusal"]["source"], "driver");
+        // O-I 842 round 23: the refusal is the grant's, named, and the grant is the owner's to give.
+        assert_eq!(answer["refusal"]["step"], "grant");
+        let words = answer["refusal"]["message"].as_str().unwrap();
         assert!(
-            answer["refusal"]["message"]
-                .as_str()
-                .unwrap()
-                .contains("does not list factory.attempt.launch"),
+            words.starts_with(
+                "Launch needs a native action authority grant of factory.attempt.launch on project:Factory, and the grant is the owner's to give (Control/user/native-action-authority.json): "
+            ) && words.contains("does not list factory.attempt.launch"),
+            "{answer}"
+        );
+        assert_eq!(calls.borrow().len(), 1, "no attempt was read or launched");
+
+        // A host whose token no principal of the contract holds: the same grant named, nothing read or launched.
+        let calls = std::cell::RefCell::new(Vec::new());
+        let mut call = owner_admitting(admission_with_launch(), Ok(Value::Null), &calls);
+        let unheld = AttemptAuthority {
+            token: AuthorityToken::for_test("another-host-token"),
+            ..authority(&cancel_only)
+        };
+        let answer = attempt_launch(
+            &mut call,
+            Path::new("/s"),
+            "run:one",
+            UNIT,
+            readings(),
+            unheld,
+        );
+        assert_eq!(answer["refusal"]["step"], "grant", "{answer}");
+        let words = answer["refusal"]["message"].as_str().unwrap();
+        assert!(
+            words.starts_with("Launch needs a native action authority grant of factory.attempt.launch on project:Factory")
+                && words.contains("No native action authority grant names the host"),
             "{answer}"
         );
         assert_eq!(calls.borrow().len(), 1, "no attempt was read or launched");

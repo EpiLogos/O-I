@@ -1099,6 +1099,21 @@ pub enum AikitWrite {
         #[serde(default)]
         agent_session: Option<String>,
     },
+    /// AIKit's model realisation on the session that carries a unit (O-I
+    /// #842, Launch: `aikit compose --session S --realise --model M
+    /// [--provider P]` → `aikit.model-realisation/v2`). The desk names the
+    /// session and the model; AIKit reads the session's own Agency from its
+    /// owner binding, the SessionSpace that holds it and the owner that runs
+    /// it, and refuses a session it cannot place in its own words. The
+    /// realisation is the reading Factory's `attempt launch` carries.
+    Realise {
+        agent_session: String,
+        model: String,
+        #[serde(default)]
+        provider: Option<String>,
+        #[serde(default)]
+        project: Option<String>,
+    },
     /// Forget what the knowledge route learned for a destination, a route, a
     /// project or everything (`aikit knowledge forget destination|route|
     /// project <resource>` / `all`), or one destination in one world
@@ -1178,6 +1193,7 @@ impl AikitWrite {
             | Self::MethodRun { project, .. }
             | Self::MethodProve { project, .. }
             | Self::SetPackageExport { project, .. }
+            | Self::Realise { project, .. }
             | Self::KnowledgeForget { project, .. } => project.as_deref(),
             Self::WikiShapeDeclare { .. }
             | Self::Adopt { .. }
@@ -1242,6 +1258,17 @@ pub fn capture_args(request: &AikitWrite) -> Vec<OsString> {
         push_flag(&mut args, "--take-run", Some(&take.run_ref));
         push_flag(&mut args, "--take-unit", Some(&take.unit));
     }
+    args
+}
+
+/// `compose --session S --realise --model M [--provider P]`: the session and
+/// the model are the desk's; nothing else travels (no source, no target).
+pub fn realise_args(agent_session: &str, model: &str, provider: Option<&str>) -> Vec<OsString> {
+    let mut args = words(&["compose", "--session"]);
+    args.push(agent_session.into());
+    args.extend(words(&["--realise", "--model"]));
+    args.push(model.into());
+    push_flag(&mut args, "--provider", provider);
     args
 }
 
@@ -3789,6 +3816,26 @@ fn aikit_written(request: &AikitWrite, cwd: Option<&Path>) -> Result<Written, Er
                 decide_fill_args(instrument, agent_session.as_deref()),
             )
         }
+        AikitWrite::Realise {
+            agent_session,
+            model,
+            provider,
+            ..
+        } => {
+            for (field, value) in [("agent_session", agent_session), ("model", model)] {
+                if value.trim().is_empty() {
+                    return Err(incompatible(format!(
+                        "aikit compose --session --realise names the {field} it realises"
+                    )));
+                }
+            }
+            // Opening the model on the resident may wait on its owner.
+            limit = LONG_WRITE_LIMIT;
+            (
+                "aikit compose --session --realise",
+                realise_args(agent_session, model, provider.as_deref()),
+            )
+        }
         AikitWrite::KnowledgeForget {
             scope, resource, ..
         } => {
@@ -3932,6 +3979,16 @@ fn aikit_written(request: &AikitWrite, cwd: Option<&Path>) -> Result<Written, Er
             let data = schema(route, data, "aikit.instrument-fill/v1")?;
             let asked = data.get("calls").and_then(Value::as_u64).unwrap_or(0) > 0;
             (data, agent_session.clone().filter(|_| asked))
+        }
+        // The realisation is the reading Launch carries: AIKit's own record,
+        // checked by its schema; what moved is the session it opened on.
+        AikitWrite::Realise { agent_session, .. } => {
+            match data.pointer("/realisation/schema").and_then(Value::as_str) {
+                Some("aikit.model-realisation/v2") => {}
+                _ => return Err(unexpected(route, "aikit.model-realisation/v2", &data)),
+            }
+            let opened = data.pointer("/realisation/selected") == Some(&Value::Bool(true));
+            (data, opened.then(|| agent_session.clone()))
         }
     };
     Ok(Written {

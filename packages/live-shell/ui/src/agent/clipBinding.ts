@@ -53,8 +53,8 @@ import {parseCentralPathRef} from '../central/centralVertical'
 import type {FactoryTake} from './factoryTakes'
 import {lockPlan, planTargetOf, planValuesOf, planWiring, useWavePlan, type PlanPort, type PlanTarget} from './wavePlan'
 import {refusalWords as refusalText} from './devices/ownerRoutes'
-import {composeAddressOf, rackRowsOf, scorePortOf, scoreValuesOf, scoreWiring, useCompose, useScore, type ComposeWords, type ScorePort,
-  type ScoreReading} from './scoreBinding'
+import {composeAddressOf, rackRowsOf, scorePortOf, scoreValuesOf, scoreWiring, useCompose, useScore, useUnitSteps, type ComposeWords,
+  type ScorePort, type ScoreReading} from './scoreBinding'
 import {usePopulationAnswer} from './devices/usePopulationAnswer'
 import {useCentralAction} from '../central/devices/useCentralReadings'
 import type {WorldActionReceipt, WorldTrackActions} from '../timeline/worldTrackAdapter'
@@ -368,7 +368,7 @@ export function factoryClipValues(track: AgentSessionTrack, task: TaskClip | nul
   }
   // The song's score: its Run's song as Factory reads it, on the track's Agent rack, this task's note lit (agent/scoreBinding.ts).
   const score = scorePortOf(task, input.score ?? null)
-  if (score) Object.assign(values, scoreValuesOf(score.reading, score.rack, score.picks, score.word, score.compose?.state ?? null))
+  if (score) Object.assign(values, scoreValuesOf(score.reading, score.rack, score.picks, score.word, score.compose?.state ?? null, score.steps ?? null))
   if (input.events) {
     const log = taskLogOf(track, task, input.events)
     values.log = JSON.stringify(log)
@@ -768,7 +768,10 @@ export function useFactoryClip(): ClipBinding | null {
       constellation: sourceRef, sources: named?.members.map(member => member.ref) ?? []}
   }, [intent, sourceRef, constellations])
   const compose = useCompose(transport, project, composeTo, words, scoredOnly.reading, scoredOnly.edit)
-  const scored = useMemo((): ScorePort => ({...scoredOnly, compose}), [scoredOnly, compose])
+  // The note the task's Clip view holds (its view's `unit` hold): Vāk reads QL's breakdown of its heads, this task's own when none is held.
+  const note = sessions ? chosenNoteOf(selected.ref, factory.tracks, project) : null
+  const steps = useUnitSteps(transport, scoredOnly.reading, note?.key ?? null)
+  const scored = useMemo((): ScorePort => ({...scoredOnly, compose, steps}), [scoredOnly, compose, steps])
   // Each note's task: the takes of the rack's sessions and of the sessions on the song's rows, each read in its own register.
   const noteSessions = useMemo(() => sessions && sessionRef ? noteSessionsOf(chosen?.track ?? null, factory.tracks, scored.reading).filter(ref => ref !== sessionRef) : [],
     [sessions, sessionRef, chosen?.track, factory.tracks, scored.reading])
@@ -785,7 +788,6 @@ export function useFactoryClip(): ClipBinding | null {
     return exportSong(transport, sessions && sessionRef ? scored.reading : null, exportChoiceOf(selected.ref, chosen, ranged?.units))
   }
   // The note the task's Clip view holds, for Routine… on a song (read at its press under Material › Songs).
-  const note = sessions ? chosenNoteOf(selected.ref, factory.tracks, project) : null
   const noteKey = note ? JSON.stringify(note) : null
   useEffect(() => {
     publishChosenNote(noteKey ? JSON.parse(noteKey) as ChosenNote : null)

@@ -7,8 +7,8 @@
 
 import {useSyncExternalStore} from 'react'
 import {
-  mappableKey, keyable, planBinding, removeBinding, sameSource, shortSourceLabel, sourceLabel,
-  type MapBinding, type MapMode, type MapSource, type MapTarget,
+  TOGGLE_THRESHOLDS, mapSpanOf, mapSpanWords, mappableKey, keyable, planBinding, removeBinding, sameSource, shortSourceLabel, sourceLabel, spanBinding,
+  type MapBinding, type MapMode, type MapSource, type MapSpan, type MapTarget,
 } from './midiMapModel'
 
 export interface MidiMapState {
@@ -177,6 +177,33 @@ export function bindArmed(source: MapSource, targets: readonly MapTarget[]): voi
   })
   changed(target.id)
   if (plan.moved !== null) changed(plan.moved)
+}
+
+/** Set a mapping's own Min and Max (Live's MidiControllerRange, O-I #853 round 23), held within its parameter's span; null gives it its
+ * whole span again. The parameter starts afresh at its next control. Refused in words for an unmapped parameter, a toggle (Live's on/off
+ * thresholds stand) and a Min or Max that is no number. */
+export function setMappingSpan(targetId: string, span: MapSpan | null, targets: readonly MapTarget[]): void {
+  const binding = bindingOf(targetId)
+  const target = targets.find(candidate => candidate.id === targetId)
+  if (!binding || !target) {
+    commit({notice: `${labelOf(targets, targetId)} is not mapped: map it first, then set its Min and Max.`})
+    return
+  }
+  if (target.kind === 'toggle') {
+    commit({notice: `${target.label} is a toggle: it turns ${TOGGLE_THRESHOLDS}.`})
+    return
+  }
+  const held = span === null ? null : mapSpanOf(target, span)
+  if (held !== null && !held.ok) {
+    commit({notice: held.reason})
+    return
+  }
+  const set = held === null ? null : held.span
+  const [min, max] = mapSpanWords(target, set ?? undefined)
+  commit({bindings: spanBinding(state.bindings, targetId, set),
+    notice: set === null ? `${target.label} maps ${sourceLabel(binding.source)} across its whole span, ${min} to ${max}.`
+      : `${target.label} maps ${sourceLabel(binding.source)} from ${min} to ${max}.`})
+  changed(targetId)
 }
 
 /** A key press in key mode, from the input (already gated for editable text, modifiers and repeats). A key that cannot be mapped is named. */

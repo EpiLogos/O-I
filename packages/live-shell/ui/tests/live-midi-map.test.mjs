@@ -46,6 +46,13 @@ const noteChain = await import('../src/live/noteDevices/NoteDeviceChain.tsx')
 const grammar = await import('../src/shell/modeGrammar.ts')
 
 const tick = () => new Promise(resolve => setTimeout(resolve, 0))
+/** Every element of a stateless view's tree that satisfies `pred` (tests/tracks-views.test.mjs `find`). */
+function find(tree, pred, out = []) {
+  if (Array.isArray(tree)) { for (const child of tree) find(child, pred, out); return out }
+  if (!tree || typeof tree !== 'object' || !tree.props) return out
+  if (pred(tree)) out.push(tree)
+  return find(tree.props.children, pred, out)
+}
 /** A frame clock the test drives: scheduled runs wait until `frame()`. */
 function clock() {
   const queue = []
@@ -873,4 +880,116 @@ test('control changes with the map off and no control binding are dropped before
   assert.equal(model.controlsReach('off', [{target: 'lens', source: CC_SOURCE(74)}]), true, 'a control binding reaches')
   assert.equal(model.controlsReach('midi', []), true, 'MIDI map mode arms and binds from any control')
   assert.equal(model.controlsReach('key', [{target: 'lens', source: CC_SOURCE(74)}]), false, 'key map mode takes no control')
+})
+
+// ── Live's own mapping model (O-I #853 round 23) ──────────────────────────────────────────────────────────────────────────────────
+// DLW build ruling 2026-11-05 (#853 Done-when): "A mapped control moves its parameter and records as automation. Use Live's own mapping
+// model as the decode in docs/research describes it." The corpus: every parameter stores a `MidiControllerRange` {Min, Max} in its own
+// units, which "documents the control-surface mapping range" (session-model.md §6), and every on/off parameter its
+// `MidiCCOnOffThresholds` {Min 64, Max 127} (evidence/devices/Simpler/default.xml). A mapping's control runs from its Min at 0 to its Max
+// at 127 on the parameter's own scale; a choice over its options by index, as an enum's range is its indexes (Glue's Attack 0–6).
+const LEVEL = {kind: 'range', id: 'level', label: 'Level', group: 'g', writer: 'owner', range: {min: 0, max: 4, step: 0.05}, current: 1, apply: async () => ({ok: true})}
+const RATE = {kind: 'range', id: 'rate', label: 'Rate', group: 'g', writer: 'owner', range: {min: 1 / (365.25 * 86_400), max: 40_000, step: 0, curve: 'log'}, current: 1, apply: async () => ({ok: true})}
+const FRAME = {kind: 'choice', id: 'frame', label: 'Context frame', group: 'g', writer: 'owner', current: '1', apply: async () => ({ok: true}),
+  options: ['1', '2', '3', '4', '5', '6', '7'].map(value => ({value, label: `frame ${value}`}))}
+const SOUND = {kind: 'toggle', id: 'sound', label: 'Sound', group: 'g', writer: 'owner', current: false, apply: async () => ({ok: true})}
+
+test('a mapping\'s own Min and Max are the span its control runs across: narrowed or turned round, on the parameter\'s own step and curve', () => {
+  const span = {min: 1, max: 3}
+  assert.deepEqual([0, 64, 127].map(cc => model.controlValue(LEVEL, cc, span)), [1, 2, 3], 'Min at 0, Max at 127, the middle between')
+  assert.deepEqual([0, 64, 127].map(cc => model.controlValue(LEVEL, cc, {min: 3, max: 1})), [3, 2, 1], 'Min above Max: the control runs the other way')
+  assert.equal(model.controlValue(LEVEL, 32, {min: 1.02, max: 3}), 1.5, 'on the level\'s own step (0.05 from 0), not the mapping\'s')
+  assert.equal(model.controlValue(LEVEL, 64), 2, 'no range of its own: the parameter\'s whole span, as before')
+  const narrow = {min: 1, max: 1000}
+  assert.equal(model.controlValue(RATE, 0, narrow), 1)
+  assert.equal(model.controlValue(RATE, 127, narrow), 1000)
+  assert.ok(Math.abs(model.controlValue(RATE, 1, narrow) / 1 - 1000 ** (1 / 127)) < 1e-3, 'a log range keeps its curve: equal ratios for equal turns')
+  assert.deepEqual([0, 64, 127].map(cc => model.controlValue(FRAME, cc, {min: 2, max: 4})), ['3', '4', '5'], 'a choice over its options by index')
+  assert.deepEqual([0, 127].map(cc => model.controlValue(FRAME, cc, {min: 4, max: 2})), ['5', '3'])
+  assert.equal(model.controlValue(FRAME, 127), '7', 'no range: every option, as before')
+  assert.deepEqual(model.MIDI_CC_ON_OFF, {min: 64, max: 127}, 'Live\'s own on/off thresholds')
+  assert.deepEqual([0, 63, 64, 127].map(cc => model.controlValue(SOUND, cc)), [false, false, true, true], 'a toggle is on within them')
+})
+
+test('a mapping\'s range is held within its parameter\'s span; a toggle takes Live\'s thresholds, and a range that is no number is refused', () => {
+  assert.deepEqual(model.mapSpanOf(LEVEL, {min: -1, max: 9}), {ok: true, span: {min: 0, max: 4}}, 'held within the level\'s 0 to 4')
+  assert.deepEqual(model.mapSpanOf(LEVEL, {min: 3, max: 1}), {ok: true, span: {min: 3, max: 1}}, 'turned round, as it was set')
+  assert.deepEqual(model.mapSpanOf(FRAME, {min: 1.6, max: 12}), {ok: true, span: {min: 2, max: 6}}, 'a choice\'s, its options by index')
+  assert.match(model.mapSpanOf(LEVEL, {min: Number.NaN, max: 2}).reason, /Min and Max are numbers/)
+  assert.match(model.mapSpanOf(SOUND, {min: 0, max: 127}).reason, /on from 64 to 127, as Live\'s on\/off thresholds stand/)
+  assert.deepEqual(model.mapSpanWords(LEVEL, {min: 1, max: 3}), ['1', '3'])
+  assert.deepEqual(model.mapSpanWords(FRAME, {min: 2, max: 4}), ['frame 3', 'frame 5'])
+  assert.deepEqual(model.mapSpanWords(LEVEL, undefined), ['0', '4'], 'no range of its own: its whole span')
+})
+
+test('a mapping\'s Min and Max are set in the map and stand on the parameter: a new control keeps them, and they reset to its whole span', () => {
+  session()
+  const ts = () => targets.readMapTargets()
+  hold.setMapMode('midi')
+  hold.clickMapTarget('level', ts())
+  hold.bindArmed(CC_SOURCE(7), ts())
+  const forgotten = []
+  const off = hold.onBindingChanged(id => forgotten.push(id))
+  hold.setMappingSpan('level', {min: 1, max: 3}, ts())
+  assert.deepEqual(hold.bindingOf('level').span, {min: 1, max: 3})
+  assert.equal(hold.midiMapState().notice, 'Level maps CC 7 · channel 1 · Pads from 1 to 3.')
+  assert.deepEqual(forgotten, ['level'], 'the router starts it afresh')
+  hold.bindArmed(CC_SOURCE(8), ts())
+  assert.deepEqual(hold.bindingOf('level'), {target: 'level', source: CC_SOURCE(8), span: {min: 1, max: 3}}, 'the range stands on the parameter, as Live keeps it')
+  hold.setMappingSpan('level', {min: 9, max: -1}, ts())
+  assert.deepEqual(hold.bindingOf('level').span, {min: 4, max: 0})
+  hold.setMappingSpan('level', null, ts())
+  assert.equal(hold.bindingOf('level').span, undefined)
+  assert.equal(hold.midiMapState().notice, 'Level maps CC 8 · channel 1 · Pads across its whole span, 0 to 4.')
+  hold.clickMapTarget('sound', ts())
+  hold.bindArmed(CC_SOURCE(9), ts())
+  hold.setMappingSpan('sound', {min: 0, max: 100}, ts())
+  assert.equal(hold.bindingOf('sound').span, undefined, 'a toggle takes no range')
+  assert.match(hold.midiMapState().notice, /Sound is a toggle: it turns on from 64 to 127/)
+  hold.setMappingSpan('cadence', {min: 0, max: 1}, ts())
+  assert.equal(hold.midiMapState().notice, 'Tick cadence is not mapped: map it first, then set its Min and Max.')
+  off()
+  teardown()
+})
+
+test('a mapped control moves its parameter across its mapping\'s range, and the move it made is told for the take\'s lane', async () => {
+  const frame = clock()
+  const moved = [], applied = []
+  const map = router.createMapRouter({
+    read: () => ({mode: 'off', bindings: [{target: 'level', source: CC_SOURCE(7), span: {min: 3, max: 1}}]}),
+    targets: () => [LEVEL],
+    apply: async (target, value) => { applied.push(value); return {ok: true} },
+    refusal: () => {},
+    moved: (target, value) => moved.push([target.id, value]),
+    schedule: frame.schedule,
+  })
+  map.control([CC(7, 0)])
+  frame.frame()
+  await tick()
+  assert.deepEqual(applied, [3], 'its Min at 0, turned round above its Max (the owner states 1)')
+  assert.deepEqual(moved, [['level', 3]], 'and it records as the value it moved to')
+})
+
+test('in map mode the mapping browser lists each mapping with its Min and Max, set there, and a toggle with Live\'s thresholds', () => {
+  session()
+  const ts = () => targets.readMapTargets()
+  hold.setMapMode('midi')
+  assert.doesNotMatch(renderToStaticMarkup(createElement(controls.MidiMapToggles)), /midi-map-browser/, 'no mapping, no browser')
+  for (const [id, cc] of [['level', 7], ['sound', 9], ['cadence', 10]]) { hold.clickMapTarget(id, ts()); hold.bindArmed(CC_SOURCE(cc), ts()) }
+  const html = renderToStaticMarkup(createElement(controls.MidiMapToggles))
+  assert.match(html, /<table class="midi-map-browser" aria-label="Mappings"><thead><tr><th>Control<\/th><th>Parameter<\/th><th>Min<\/th><th>Max<\/th><\/tr><\/thead>/)
+  assert.match(html, /<td>CC 7 · channel 1 · Pads<\/td><td>Level<\/td><td><input type="number" aria-label="Level Min" min="0" max="4" step="0.05" value="0"\/><\/td><td><input type="number" aria-label="Level Max" min="0" max="4" step="0.05" value="4"\/>/)
+  assert.match(html, /<td>Sound<\/td><td colSpan="2">on from 64 to 127, as Live(?:'|&#x27;)s on\/off thresholds stand<\/td>/)
+  assert.match(html, /<select aria-label="Tick cadence Min">/)
+  // The browser's controls set the hold: the stateless view, pressed as the page presses it.
+  const tree = controls.MidiMapBrowser({bindings: hold.midiMapState().bindings, targets: ts()})
+  const [levelMax] = find(tree, node => node.props?.['aria-label'] === 'Level Max')
+  levelMax.props.onChange({currentTarget: {value: '2.5'}})
+  assert.deepEqual(hold.bindingOf('level').span, {min: 0, max: 2.5})
+  levelMax.props.onChange({currentTarget: {value: ''}})
+  assert.deepEqual(hold.bindingOf('level').span, {min: 0, max: 2.5}, 'a field half typed sets nothing')
+  const [cadenceMin] = find(controls.MidiMapBrowser({bindings: hold.midiMapState().bindings, targets: ts()}), node => node.props?.['aria-label'] === 'Tick cadence Min')
+  cadenceMin.props.onChange({currentTarget: {value: '1'}})
+  assert.equal(hold.bindingOf('cadence').span.min, 1)
+  teardown()
 })

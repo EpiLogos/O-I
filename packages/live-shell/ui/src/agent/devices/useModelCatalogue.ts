@@ -7,6 +7,7 @@
 import {useEffect, useState} from 'react'
 import {kernelRead} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
+import {refusalWords} from './ownerRoutes'
 
 /** The catalogue's model ids, in the owner's order; null when the answer carries no entries. */
 export function catalogueModels(data: unknown): string[] | null {
@@ -16,6 +17,17 @@ export function catalogueModels(data: unknown): string[] | null {
     const model = (entry as {model?: unknown} | null)?.model
     return typeof model === 'string' && model ? [model] : []
   })
+}
+
+/** AIKit's model catalogue read once, at an act (Launch maps the model a session runs onto its catalogue entry, taskBindings.ts
+ * catalogueModelOf): the reading's data, or the kernel's refusal thrown in its words. */
+export async function catalogueRead(transport: KernelTransportStatus): Promise<unknown> {
+  if (transport.kind === 'unavailable') throw Error(`The kernel carrier is unavailable, so AIKit's model catalogue cannot be read: ${transport.reason ?? 'no transport'}.`)
+  const answer = await kernelRead(transport, {op: 'model_catalogue'})
+  if (answer.error) throw Error(`AIKit's model catalogue was not read: ${refusalWords(answer.error)}`)
+  const outcome = answer.outcome
+  if (outcome?.result !== 'model_catalogue_reading') throw Error('AIKit answered without its model catalogue.')
+  return outcome.data
 }
 
 export function useModelCatalogue(transport: KernelTransportStatus, enabled: boolean): string[] | null {

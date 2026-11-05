@@ -480,7 +480,7 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
       </div>,
       ...under.takes.map(take => takeLane(take, colourOf(track))),
       ...under.automation.map(lane => {
-        const points = automationPoints(lane, clipId => placed.find(p => p.clip.id === clipId)?.start, range.end)
+        const points = automationPoints(lane, clipId => placed.find(p => p.clip.id === clipId)?.start, range.end, clipId => placed.find(p => p.clip.id === clipId)?.end)
         const line = points.map(point => `${percentOf(point.at, range).toFixed(3)},${(100 - Math.min(1, Math.max(0, point.value)) * 100).toFixed(3)}`).join(' ')
         const reenable = set.actions?.reenable, unfreeze = set.actions?.unfreeze
         const key = `reenable:${lane.id}`, frozenKey = `frozen:${lane.id}`, unfreezeKey = `unfreeze:${lane.id}`

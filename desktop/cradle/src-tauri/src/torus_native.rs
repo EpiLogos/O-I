@@ -10,8 +10,9 @@
 //! is refused in words, so the engine never sounds a field its owner did not hand over.
 
 use live_engine::k8::{
-    CoupledClock, K8Carrier, K8Continuation, K8Field, K8Input, K8Instrument, K8KeyLaw, K8KeyVoice,
-    K8Mode, K8Pending, K8Sample, PhaseLift,
+    CoupledClock, K8BankSlot, K8BankVoice, K8Carrier, K8CellVoice, K8Continuation, K8CountedNote,
+    K8Field, K8Input, K8Instrument, K8KeyLaw, K8KeyVoice, K8Mode, K8Note, K8NoteVoice, K8Pending,
+    K8Sample, PhaseLift, NOTE_VOICES,
 };
 use serde_json::Value;
 use std::str::FromStr;
@@ -184,6 +185,97 @@ fn clock(value: &Value) -> Result<CoupledClock, String> {
     })
 }
 
+/// Eight voices, each read by `voice` (QL-MEF #287: a note, a bank slot and a cell each hold eight).
+fn eight<T: Copy + Default>(
+    value: &Value,
+    what: &str,
+    voice: impl Fn(&Value) -> Result<T, String>,
+) -> Result<[T; NOTE_VOICES], String> {
+    let voices = list(value, what)?;
+    if voices.len() != NOTE_VOICES {
+        return Err(format!("the handed-over Torus's {what} are not eight"));
+    }
+    let mut out = [T::default(); NOTE_VOICES];
+    for (o, v) in out.iter_mut().zip(voices) {
+        *o = voice(v)?;
+    }
+    Ok(out)
+}
+
+/// The mode a note's voice is like, within the field's modes.
+fn like(value: &Value, key: &str, modes: usize, what: &str) -> Result<usize, String> {
+    let mode: usize = int(at(value, key, what)?, what)?;
+    if mode >= modes {
+        return Err(format!(
+            "a {what} of the handed-over Torus is like mode {mode}, and its field has {modes}"
+        ));
+    }
+    Ok(mode)
+}
+
+/// The notes waiting in an act for a later sample (QL-MEF #287), each its id and eight voices.
+fn waiting_notes(act: &Value, modes: usize) -> Result<Vec<K8Note>, String> {
+    let Some(notes) = act.get("notes") else {
+        return Ok(Vec::new());
+    };
+    list(notes, "waiting notes")?
+        .iter()
+        .map(|note| {
+            Ok(K8Note {
+                id: exact(note, "id", "waiting note's id")?,
+                voices: eight(
+                    at(note, "voices", "waiting note")?,
+                    "waiting note's voices",
+                    |v| {
+                        Ok(K8NoteVoice {
+                            like: like(v, "mode", modes, "waiting note's voice")?,
+                            frequency_hz: number(
+                                at(v, "frequency_hz", "waiting note")?,
+                                "waiting note",
+                            )?,
+                            impulse: pair(
+                                at(v, "amplitude", "waiting note")?,
+                                "waiting note's impulse",
+                            )?,
+                        })
+                    },
+                )?,
+            })
+        })
+        .collect()
+}
+
+/// The notes as they ring in the bank (QL-MEF #287), each slot as QL hands it over; none where it hands over no bank.
+fn bank(handed: &Value, modes: usize) -> Result<Vec<K8BankSlot>, String> {
+    let Some(slots) = handed.get("bank") else {
+        return Ok(Vec::new());
+    };
+    list(slots, "bank")?
+        .iter()
+        .map(|slot| {
+            let lane = |key: &str| {
+                eight(at(slot, key, "bank slot")?, "bank slot's voices", |v| {
+                    Ok(K8BankVoice {
+                        like: like(v, "mode", modes, "bank voice")?,
+                        frequency_hz: number(at(v, "frequency_hz", "bank voice")?, "bank voice")?,
+                        state: pair(at(v, "state", "bank voice")?, "bank voice's state")?,
+                    })
+                })
+            };
+            Ok(K8BankSlot {
+                slot: int(at(slot, "slot", "bank slot")?, "bank slot")?,
+                held: at(slot, "held", "bank slot")?.as_bool().ok_or(
+                    "the handed-over Torus's bank slot does not say whether it holds a note",
+                )?,
+                id: exact(slot, "id", "bank slot's note")?,
+                order: exact(slot, "order", "bank slot's order")?,
+                voices: lane("voices")?,
+                fading: lane("fading")?,
+            })
+        })
+        .collect()
+}
+
 fn continuation(handed: &Value) -> Result<K8Continuation, String> {
     if handed["schema"] != CONTINUOUS_HANDOVER {
         return Err(format!(
@@ -240,9 +332,18 @@ fn continuation(handed: &Value) -> Result<K8Continuation, String> {
                         ))
                     })
                     .collect::<Result<_, String>>()?,
+                notes: waiting_notes(act, modes.len())?,
+                made_way: match act.get("made_way") {
+                    Some(ids) => list(ids, "notes making way")?
+                        .iter()
+                        .map(|id| exact_item(id, "note making way"))
+                        .collect::<Result<_, String>>()?,
+                    None => Vec::new(),
+                },
             })
         })
         .collect::<Result<Vec<_>, String>>()?;
+    let bank = bank(handed, modes.len())?;
     Ok(K8Continuation {
         input: K8Input {
             event_ref: text(handed, "event_ref", "event")?,
@@ -285,6 +386,12 @@ fn continuation(handed: &Value) -> Result<K8Continuation, String> {
             .iter()
             .map(|g| number(g, "receiver gain"))
             .collect::<Result<_, _>>()?,
+        bank_order: if handed.get("bank_order").is_some() {
+            exact(handed, "bank_order", "bank order")?
+        } else {
+            0
+        },
+        bank,
     })
 }
 
@@ -321,6 +428,61 @@ fn law(keys: &Value, modes: usize) -> Result<K8KeyLaw, String> {
             })
         })
         .collect::<Result<Vec<_>, String>>()?;
+    // Each note its own voices (QL-MEF #287): each arc's cell and the count of notes, where QL hands them over.
+    let cells = match keys.get("cells") {
+        Some(cells) => {
+            let cells = list(cells, "cells")?;
+            if cells.len() != 12 {
+                return Err(
+                    "the handed-over Torus's cells are not one for each of the twelve arcs".into(),
+                );
+            }
+            cells
+                .iter()
+                .map(|cell| {
+                    eight(cell, "cell's voices", |v| {
+                        Ok(K8CellVoice {
+                            like: like(v, "like", modes, "cell's voice")?,
+                            frequency_hz: number(
+                                at(v, "frequency_hz", "cell's voice")?,
+                                "cell's voice",
+                            )?,
+                            longitude_radians: number(
+                                at(v, "longitude_radians", "cell's voice")?,
+                                "cell's voice",
+                            )?,
+                            weight: number(at(v, "weight", "cell's voice")?, "cell's voice")?,
+                            phase_radians: number(
+                                at(v, "phase_radians", "cell's voice")?,
+                                "cell's voice",
+                            )?,
+                            m: int(at(v, "m", "cell's voice")?, "cell's voice")?,
+                            n: int(at(v, "n", "cell's voice")?, "cell's voice")?,
+                        })
+                    })
+                })
+                .collect::<Result<Vec<_>, String>>()?
+        }
+        None => Vec::new(),
+    };
+    let (polyphony, notes, next_note) = if cells.is_empty() {
+        (0, Vec::new(), 0)
+    } else {
+        (
+            int(at(keys, "polyphony", "Polyphony")?, "Polyphony")?,
+            list(at(keys, "notes", "notes counted")?, "notes counted")?
+                .iter()
+                .map(|note| {
+                    Ok(K8CountedNote {
+                        id: exact(note, "id", "counted note")?,
+                        row: int(at(note, "row", "counted note")?, "counted note's row")?,
+                        column: int(at(note, "column", "counted note")?, "counted note's column")?,
+                    })
+                })
+                .collect::<Result<Vec<_>, String>>()?,
+            exact(keys, "next_note", "next note")?,
+        )
+    };
     let pulse = at(keys, "pulse", "pulse")?;
     Ok(K8KeyLaw {
         arcs: table,
@@ -331,6 +493,10 @@ fn law(keys: &Value, modes: usize) -> Result<K8KeyLaw, String> {
         steps_per_second: number(at(pulse, "steps_per_second", "pulse")?, "pulse")?,
         sample_rate: int(at(keys, "sample_rate", "keys' rate")?, "keys' rate")?,
         cap_metres: number(at(keys, "cap_metres", "material cap")?, "material cap")?,
+        cells,
+        polyphony,
+        notes,
+        next_note,
     })
 }
 

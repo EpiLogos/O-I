@@ -125,22 +125,29 @@ export const laneCount = (set: WorldTrackSet, kind: TrackLaneKind): number => (s
 
 /** An automation lane's breakpoints on the ruler: its own `at`s, or — when it rides a clip — offset by where that clip stands, or, for a
  * clip with no place of its own on the ruler, where it landed as it plays (`clipAt`). A lane on a clip that has neither has none. A lane
- * of a looping clip (`loop`) is drawn again for each pass of its loop, to `until` on the ruler. */
-export function automationPoints(lane: WorldAutomationLane, clipStart: (clipId: string) => number | undefined, until?: number): {at: number; value: number}[] {
+ * of a looping clip (`loop`) is drawn again for each pass of its loop, to `until` on the ruler, or to the clip's own end (`clipEnd`) where
+ * it lies on the ruler (O-I #849 round 23): an arrangement clip begins at its start marker where it lies, as Live plays it. */
+export function automationPoints(lane: WorldAutomationLane, clipStart: (clipId: string) => number | undefined, until?: number,
+  clipEnd?: (clipId: string) => number | undefined): {at: number; value: number}[] {
   if (lane.clipId === undefined) return lane.points.map(point => ({at: point.at, value: point.value}))
-  const base = clipStart(lane.clipId) ?? lane.clipAt
+  const lies = clipStart(lane.clipId)
+  const loop = lane.loop && lane.loop.to > lane.loop.from ? lane.loop : undefined
+  // Where the clip's own beat 0 stands: a slot clip's where it landed (its start marker counted in), an arrangement clip's its start
+  // less its start marker, where the clip loops (DLW build ruling 2026-11-05: "Repeat a looping clip's lanes in Arrangement too").
+  const base = lies !== undefined ? lies - (loop?.start ?? 0) : lane.clipAt
   if (base === undefined) return []
   const once = lane.points.map(point => ({at: base + point.at, value: point.value}))
-  const loop = lane.loop
-  if (!loop || !(loop.to > loop.from) || until === undefined) return once
+  if (!loop || until === undefined) return once
   // A looping clip's lane, as Live draws a looped clip's envelope (DLW build ruling 2026-11-05): its points from its start to the loop's
-  // end, then the loop's own again for each pass, until `until` on the ruler (at most LOOP_PASSES_DRAWN passes).
+  // end, then the loop's own again for each pass, until `until` on the ruler or the clip's end (at most LOOP_PASSES_DRAWN passes).
+  const ends = lies !== undefined ? clipEnd?.(lane.clipId) : undefined
+  const end = ends !== undefined ? Math.min(until, ends) : until
   const length = loop.to - loop.from
   const drawn = once.filter(point => point.at - base >= loop.start && point.at - base < loop.to)
   const inLoop = lane.points.filter(point => point.at >= loop.from && point.at < loop.to)
-  for (let pass = 1; inLoop.length && pass <= LOOP_PASSES_DRAWN && base + loop.to + (pass - 1) * length < until; pass++)
+  for (let pass = 1; inLoop.length && pass <= LOOP_PASSES_DRAWN && base + loop.to + (pass - 1) * length < end; pass++)
     for (const point of inLoop) drawn.push({at: base + point.at + pass * length, value: point.value})
-  return drawn
+  return ends !== undefined ? drawn.filter(point => point.at < ends) : drawn
 }
 /** The most passes of a looping clip's lane one ruler draws. */
 export const LOOP_PASSES_DRAWN = 256
