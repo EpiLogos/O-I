@@ -319,6 +319,8 @@ enum AgentRead {
         agent_sessions: Vec<String>,
         into: String,
         label: Option<String>,
+        agent_set: Option<String>,
+        agent_set_revision: Option<String>,
     },
     SessionHotSwap {
         space: String,
@@ -717,6 +719,8 @@ impl PreparedAgent {
                 agent_sessions,
                 into,
                 label,
+                agent_set,
+                agent_set_revision,
             } => {
                 let project_ref =
                     project_ref(&self.client, &self.aikit, &self.reads, project, &cwd)?;
@@ -726,8 +730,12 @@ impl PreparedAgent {
                         &project_ref,
                         space,
                         agent_sessions,
-                        into,
-                        label.as_deref(),
+                        &crate::agency::GroupInto {
+                            space: into,
+                            label: label.as_deref(),
+                            agent_set: agent_set.as_deref(),
+                            agent_set_revision: agent_set_revision.as_deref(),
+                        },
                     )?,
                 }
             }
@@ -946,6 +954,8 @@ impl Kernel {
                 agent_sessions,
                 into,
                 label,
+                agent_set,
+                agent_set_revision,
             } => (
                 Some(project.clone()),
                 AgentRead::SessionGroup {
@@ -953,6 +963,8 @@ impl Kernel {
                     agent_sessions: agent_sessions.clone(),
                     into: into.clone(),
                     label: label.clone(),
+                    agent_set: agent_set.clone(),
+                    agent_set_revision: agent_set_revision.clone(),
                 },
             ),
             KernelOp::EncounterSessionHotSwap {
@@ -1909,12 +1921,15 @@ else:
         assert_eq!(aikit.calls("drag-out"), 1);
 
         // Group (manual §19.15 "select agents' chains and choose Group: they become one chain that holds an Agent rack of them").
+        // Accepted as Central's set, the set's space is tied to it (round 21): the set held as a chain reads its own Join.
         let group = |sessions: &[&str]| KernelOp::EncounterSessionGroup {
             project: String::new(),
             space: "session-space/crew".into(),
             agent_sessions: sessions.iter().map(|s| (*s).to_owned()).collect(),
             into: "session-space/crew-set-1a2b".into(),
             label: Some("pair".into()),
+            agent_set: Some("agent-set:crew-set-1a2b".into()),
+            agent_set_revision: Some("r1".into()),
         };
         let grouped = kernel
             .apply(group(&["agent-session/ada", "agent-session/cy"]))
@@ -1939,7 +1954,11 @@ else:
                 "--into",
                 "session-space/crew-set-1a2b",
                 "--label",
-                "pair"
+                "pair",
+                "--agent-set",
+                "agent-set:crew-set-1a2b",
+                "--agent-set-revision",
+                "r1"
             ])
         );
         assert_eq!(

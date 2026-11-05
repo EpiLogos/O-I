@@ -367,6 +367,22 @@ pub enum QlRead {
     VakCompose {
         request: Value,
     },
+    /// One Factory unit's heads broken down into QL's composition (`ql vak
+    /// unit-steps -`, `ql.vak-unit-steps/v1` on stdin and back): each head's
+    /// meaning as the Vāk-block instrument holds it, an open head standing
+    /// open, and the `cfp-form` and `cs-select` steps the heads fix with the
+    /// hops the walk takes. A label that is not QL's is refused in QL's words.
+    VakUnitSteps {
+        request: Value,
+    },
+    /// QL's reading of one consumed T/T′ thought (`ql vak thought-consumption
+    /// -`): Factory's `factory.run-thought-consumption/v1` receipt with the
+    /// meaning chosen for each thought (`ql.vak-thought-consumption-projection/v1`)
+    /// on stdin, the `ql.vak-thought-consumption/v1` reading back, its
+    /// Recognition candidates proposals for AIKit. It stores nothing.
+    VakThoughtConsumption {
+        request: Value,
+    },
 }
 
 /// What a QL reading must carry to be the one asked for.
@@ -2305,6 +2321,18 @@ fn ql_registry_answer(request: &QlRead) -> Result<Reading, Error> {
             words(&["vak", "compose", "/dev/stdin", "--json"]),
             Some(request),
             QlCheck::Contract("ql.vak-composition/v1"),
+        ),
+        QlRead::VakUnitSteps { request } => (
+            "ql vak unit-steps",
+            words(&["vak", "unit-steps", "-", "--json"]),
+            Some(request),
+            QlCheck::Contract("ql.vak-unit-steps/v1"),
+        ),
+        QlRead::VakThoughtConsumption { request } => (
+            "ql vak thought-consumption",
+            words(&["vak", "thought-consumption", "-", "--json"]),
+            Some(request),
+            QlCheck::Contract("ql.vak-thought-consumption/v1"),
         ),
         _ => unreachable!("the M-engine, scene and ledger reads are answered by ql_answer"),
     };

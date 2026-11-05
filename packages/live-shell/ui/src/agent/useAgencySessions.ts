@@ -36,7 +36,7 @@ export function useAgencySessions(transport: KernelTransportStatus) {
   }
   const {agency, entries, epoch} = fallback
   return {
-    tracks: withIds(buildTracks(agency.rows, new Map())),
+    tracks: withIds(buildTracks(agency.rows, new Map(), {spaces: agency.spaces})),
     rows: agency.rows,
     error: transport.kind === 'unavailable' ? transport.reason ?? 'Native transport unavailable' : agency.error,
     loading: transport.kind !== 'unavailable' && agency.loading,

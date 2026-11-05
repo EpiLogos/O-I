@@ -16,7 +16,7 @@
 import {useEffect, useMemo, useReducer} from 'react'
 import {kernelRead} from '../../../../../desktop/cradle/src/kernel/bridge'
 import type {KernelTransportStatus, RootWorld, SourceReturnEntry, SourceReturnsReading} from '../../../../../desktop/cradle/src/kernel/types'
-import type {AgencyReading, AgencySessionRow} from '../../../../../desktop/cradle/src/agency/agencyTypes'
+import type {AgencyReading, AgencySessionRow, AgencySpaceRow} from '../../../../../desktop/cradle/src/agency/agencyTypes'
 import {ROOT_SETTLE} from '../central/centralWorlds'
 import {agencyEntry} from '../owners/agency'
 import {ensureInOrder, ownerReadings, sameWorld, useOwnerReading, type OwnerRead, type OwnerReading, type OwnerReadingEntry, type OwnerReadings} from '../owners/ownerReading'
@@ -97,10 +97,14 @@ export function scopesOf(world: Pick<OwnerReading<readonly string[]>, 'status' |
 
 /** A row of a world-wide agency reading: the owner's row, with the register it was read under. */
 export type WorldSessionRow = AgencySessionRow & {readonly project: string}
+/** A space of a world-wide agency reading that holds sets and no session (agencyTypes.ts AgencySpaceRow), with its register. */
+export type WorldSpaceRow = AgencySpaceRow & {readonly project: string}
 
 export interface WorldAgency {
   /** Every session the world's registers list, each once, in register order (a space two registers list rides the first). */
   rows: WorldSessionRow[]
+  /** Every space that holds sets and no session, each once, in register order: its rack's track reads it (agentRunModel.ts buildTracks). */
+  spaces: WorldSpaceRow[]
   /** Each register's refusal, named by its place. */
   refusals: {project: string; error: string}[]
   /** The refusals in words, or null when every register answered. */
@@ -116,7 +120,9 @@ export interface WorldAgency {
 /** The world's agency from each register's standing answer under `epoch` (an answer kept from another world is not drawn). Pure. */
 export function mergeAgency(readings: readonly {project: string; reading: OwnerReading<AgencyReading>}[], epoch: string | null, scopesRead = true): WorldAgency {
   const rows: WorldSessionRow[] = []
+  const spaces: WorldSpaceRow[] = []
   const seen = new Set<string>()
+  const seenSpaces = new Set<string>()
   const refusals: {project: string; error: string}[] = []
   let loading = !scopesRead
   let readAtUnixMs: number | null = null
@@ -129,9 +135,14 @@ export function mergeAgency(readings: readonly {project: string; reading: OwnerR
       seen.add(row.sessionRef)
       rows.push({...row, project})
     }
+    for (const space of reading.value?.heldSpaces ?? []) {
+      if (seenSpaces.has(space.spaceRef)) continue
+      seenSpaces.add(space.spaceRef)
+      spaces.push({...space, project})
+    }
     if (reading.readAtUnixMs !== null && reading.readAtUnixMs !== undefined) readAtUnixMs = readAtUnixMs === null ? reading.readAtUnixMs : Math.min(readAtUnixMs, reading.readAtUnixMs)
   }
-  return {rows, refusals, error: refusalWords(refusals), loading, readAtUnixMs, scopes: readings.map(item => item.project)}
+  return {rows, spaces, refusals, error: refusalWords(refusals), loading, readAtUnixMs, scopes: readings.map(item => item.project)}
 }
 
 /** Refusals in words: one alone as the owner said it; several each named by its place, a refusal repeated once. Pure. */
@@ -204,7 +215,7 @@ export function useWorldAgencyEntries(transport: KernelTransportStatus, enabled 
 /** The world's agency for a reader outside React (the World cut's run lanes): the projects and each register's answer made to stand for
  * `epoch` — the standing answers when they stand, else the one shared read of each — then merged. */
 export async function readWorldAgency(transport: KernelTransportStatus, epoch: string, registry: OwnerReadings = ownerReadings): Promise<WorldAgency> {
-  if (transport.kind === 'unavailable') return {rows: [], refusals: [], error: transport.reason ?? 'Native transport unavailable', loading: false, readAtUnixMs: null, scopes: []}
+  if (transport.kind === 'unavailable') return {rows: [], spaces: [], refusals: [], error: transport.reason ?? 'Native transport unavailable', loading: false, readAtUnixMs: null, scopes: []}
   const world = worldProjectsEntry(transport, registry)
   await world.ensure(epoch)
   const scopes = scopesOf(world.snapshot()) ?? [ROOT_REGISTER]

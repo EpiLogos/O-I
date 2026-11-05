@@ -347,7 +347,8 @@ test('Group, on chains chosen in the list, asks Central to propose them as an ag
   const ports = {
     // Central's record keeps the person's words as its proposal's reason (central.agent-set/v1 `proposal.reason`).
     propose: async input => { calls.push(['propose', input]); return {record: {schema: 'central.agent-set/v1', ref: input.ref, revision: 'r1', members: input.members, proposal: {reason: input.reason}}} },
-    saveSet: async input => { calls.push(['save', input]); return {} },
+    // Central's save answers its write receipt (agent_set_store.rs RelationRecordWriteReceipt): the revision it saved the set at.
+    saveSet: async input => { calls.push(['save', input]); return {kind: 'agent-set', ref: input.record.ref, previous_revision: null, revision: input.record.revision, created: true} },
     suffix: () => 'r7x',
   }
   const binding = own.agentsetBinding({group: CREW, tracks: TRACKS, holds: bind.chainHolds()}, ports)
@@ -382,8 +383,10 @@ test('Group, on chains chosen in the list, asks Central to propose them as an ag
   refuseGroup = null
   await again.write([{key: 'new.accept', value: true}])
   assert.deepEqual(calls.slice(2).map(c => c[0]), ['group', 'group'], 'Central\'s record was saved once')
+  // REPLACED (round 21): the set's space was made untied, so the set held as a chain had no Join to read. AIKit now ties it to the set
+  // Central saved, at the revision Central saved it at.
   assert.deepEqual(calls[3], ['group', {project: '', space: 'session-space/crew', agent_sessions: [KITE.sessionRef, CAIRN.sessionRef],
-    into: 'session-space/check-the-port-r7x', label: 'Check the port'}])
+    into: 'session-space/check-the-port-r7x', label: 'Check the port', agent_set: 'agent-set:check-the-port-r7x', agent_set_revision: 'r1'}])
   assert.equal(bind.viewHolds(bind.chainHolds(), own.AGENTSET_ID)['new.proposal'], undefined, 'the card let go')
   // A chain whose session seats no agent cannot be proposed as a member.
   const unseated = own.agentsetBinding({group: CREW, tracks: TRACKS.map(item => (item === CAIRN ? {...item, agentRef: null} : item)), holds: bind.chainHolds()}, ports)
@@ -761,6 +764,77 @@ test('a set held as a chain holds its own nested rack, read from AIKit\'s set_ch
   const looped = tracks.map(item => (item.sessionRef === 'session-space/crew' ? {...item, setChains: [{space: 'session-space/desk', purpose: null}]} : item))
   assert.deepEqual(own.agentChainSessions(desk, looped).map(at => at.session), ['agent-session/bo', 'agent-session/kite', 'agent-session/cairn'])
   assert.deepEqual(own.rackSpaces(desk, looped), ['session-space/desk', 'session-space/crew'])
+})
+
+test('a set held as a chain reads its own Join from the Central set its space is tied to, and saves a change there (round 21)', async () => {
+  bind.resetHolds()
+  // The crew's space is tied to Central's set (AIKit's `agent_set`, made by Group with --agent-set).
+  const TIED = [{...SPACES[0], agent_set: {agent_set_ref: 'agent-set:port-crew', revision: 'r2'}}, NESTED_SPACES[1]]
+  const tracks = runModel.buildTracks(agencyRows(TIED), ROSTER)
+  const desk = tracks.find(item => item.sessionRef === 'session-space/desk')
+  assert.deepEqual(tracks.find(item => item.sessionRef === 'session-space/crew').agentSet, {ref: 'agent-set:port-crew', revision: 'r2'})
+  const crewSet = {schema: 'central.agent-set/v1', ref: 'agent-set:port-crew', revision: 'r2', join: 'all', members: []}
+  const nestedSets = new Map([['agent-set:port-crew', {status: 'answered', value: {ref: 'agent-set:port-crew', revision: 'r2', record: crewSet}}]])
+  const key = own.memberDeviceKey('session-space/crew', own.AGENTSET_DESIGN)
+  const input = {group: desk, tracks, holds: bind.chainHolds(), nowUnixMs: NOW, nestedSets}
+  const nested = JSON.parse(own.agentsetValues(input)[key])
+  assert.equal(nested.join, 'all', 'the nested rack reads its set\'s Join')
+  assert.equal(nested.crew, 'agent-set:port-crew')
+  assert.equal(JSON.parse(own.agentsetValues({...input, nestedSets: null})[key]).join, undefined, 'unread, no Join is drawn')
+  const calls = []
+  const ports = {saveSet: async input => { calls.push(['save', input]); return {} }, ask: async input => { calls.push(['ask', input]) }}
+  const rack = own.agentsetBinding(input, ports)
+  await rack.write([{key, value: JSON.stringify({...nested, join: 'first'})}])
+  assert.deepEqual(calls, [['save', {scope: 'root', record: {...crewSet, join: 'first', revision: 'r3'}, expected_revision: 'r2'}]],
+    'saved with the set, at its next revision, compare-and-swap on the one read')
+  await assert.rejects(() => rack.write([{key, value: JSON.stringify({...nested, join: 'most'})}]), /Join is none, all, first, quorum or weighted/)
+  // Anything else changed on the nested rack goes where a device's change goes: the set is no chain to message.
+  await assert.rejects(() => rack.write([{key, value: JSON.stringify({...nested, budget: 9})}]), /"session-space\/crew" is not a chain of this rack/)
+  // An untied set's rack names how to tie one; one Central has not answered says so.
+  const untied = runModel.buildTracks(agencyRows(NESTED_SPACES), ROSTER)
+  const looseInput = {...input, group: untied.find(item => item.sessionRef === 'session-space/desk'), tracks: untied}
+  const looseNested = JSON.parse(own.agentsetValues(looseInput)[key])
+  assert.equal(looseNested.join, undefined)
+  const loose = own.agentsetBinding(looseInput, ports)
+  await assert.rejects(() => loose.write([{key, value: JSON.stringify({...looseNested, join: 'first'})}]), error => error.message === own.JOIN_UNTIED)
+  const unread = own.agentsetBinding({...input, nestedSets: new Map()}, ports)
+  await assert.rejects(() => unread.write([{key, value: JSON.stringify({...nested, join: 'first'})}]), /has not answered its agent set agent-set:port-crew/)
+  assert.equal(calls.length, 1, 'nothing more was saved')
+  // The chain reads each nested set's tie and asks Central for it, as it asks for the rack's own.
+  assert.match(read('agent/devices/FactoryDeviceChain.tsx'), /const nestedSets = useAgentSetReadings\(transport, nestedSetRefs\)/)
+})
+
+// Every chain of the desk grouped (round 21): AIKit's record of the desk holds the crew as a chain and no session of its own.
+const ALL_GROUPED = [SPACES[0], {definition: {id: 'session-space/desk'}, label: 'Desk', agent_sessions: {},
+  set_chains: {'session-space/crew': {space: 'session-space/crew', purpose: 'Check the port', provenance: ['grouped from 2 of the rack\'s chains']}}}]
+
+test('a rack whose every chain is grouped keeps its track: the reading discloses its space, and the track reads the sets it holds', async () => {
+  bind.resetHolds()
+  const {agencyRowsOf} = await import('../../../../desktop/cradle/src/agency/agencySources.ts')
+  const {mergeAgency} = await import('../src/agent/worldScope.ts')
+  const {rows, heldSpaces} = agencyRowsOf(ALL_GROUPED)
+  assert.deepEqual(rows.map(row => row.sessionRef), ['agent-session/kite', 'agent-session/cairn'], 'the desk holds no session, so it is no row')
+  assert.deepEqual(heldSpaces.map(space => [space.spaceRef, space.spaceLabel]), [['session-space/desk', 'Desk']], 'the reading names the space that holds the set')
+  assert.deepEqual(agencyRowsOf([SPACES[1], {definition: {id: 'session-space/bare'}, agent_sessions: {}}]).heldSpaces, [],
+    'a space with sessions, or with neither sessions nor sets, is not held')
+  // Each register's answer, merged for the window: the held space rides the register it was read under, once.
+  const answer = {status: 'answered', value: {projectRef: 'O-I', rows, heldSpaces}, error: null, readAtUnixMs: 1, epoch: '1|w', refreshing: false, carried: false}
+  const world = mergeAgency([{project: 'O-I', reading: answer}, {project: 'O-I', reading: answer}], '1|w')
+  assert.deepEqual(world.spaces.map(space => [space.spaceRef, space.project]), [['session-space/desk', 'O-I']])
+  const tracks = runModel.buildTracks(world.rows, ROSTER, {spaces: world.spaces})
+  const desk = tracks.find(item => item.sessionRef === 'session-space/desk')
+  assert.ok(desk, 'the desk keeps its track')
+  assert.deepEqual([desk.group, desk.memberRefs, desk.project, desk.spaceLabel], [true, [], 'O-I', 'Desk'], 'a group with no session of its own')
+  assert.deepEqual(desk.setChains, [{space: 'session-space/crew', purpose: 'Check the port'}], 'the track reads the sets its space holds')
+  assert.equal(tracks.filter(item => item.parentRef === 'session-space/desk').length, 0, 'no session track stands under it')
+  assert.deepEqual(own.agentChainSessions(desk, tracks).map(at => at.session), ['agent-session/kite', 'agent-session/cairn'], 'the rack reaches the set\'s agents')
+  assert.deepEqual(own.rackSpaces(desk, tracks), ['session-space/desk', 'session-space/crew'])
+  const values = own.agentsetValues({group: desk, tracks, holds: bind.chainHolds(), nowUnixMs: NOW})
+  assert.deepEqual(JSON.parse(values.members).map(member => member.id), ['session-space/crew'], 'its one chain is the set')
+  // A space that also has rows stands from its rows, never twice.
+  const twice = runModel.buildTracks(agencyRowsOf(NESTED_SPACES).rows, ROSTER, {spaces: [{spaceRef: 'session-space/desk', raw: {}}]})
+  assert.equal(twice.filter(item => item.sessionRef === 'session-space/desk').length, 1)
+  assert.deepEqual(twice.find(item => item.sessionRef === 'session-space/desk').memberRefs, ['agent-session/bo'])
 })
 
 test('Budget turns each chain\'s task in AIKit, past the chains Factory says each rack leaves alone; Unmap, Store and a variation are Factory\'s rack macros', async () => {

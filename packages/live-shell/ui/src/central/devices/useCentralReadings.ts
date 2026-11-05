@@ -22,7 +22,7 @@ import {ownerReadings, useOwnerReading, useOwnerReadingsOf, type OwnerRead} from
 import {kernelReadSend} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import {pageSourceRef, type CentralPageHistory} from '../../timeline/centralTrackAdapter'
 import type {CentralWorld, WorldPagesReading} from '../centralWorlds'
-import {useOwnerOp} from '../../owners/ownerCall'
+import {opKey, readOp, useOwnerOp, useStableMap} from '../../owners/ownerCall'
 import {useSpineEpoch} from '../../owners/spine'
 import {useRosterAgents, useWorkcellAnswer} from '../../owners/readers'
 import {createReceiptCursor, receiptMovesDay, receiptMovesReceiving} from '../../owners/notices'
@@ -126,6 +126,17 @@ export function useCentralAction(transport: KernelTransportStatus, action: strin
   return useMemo(() => input ? actionAnswerOf(reading, action) : {status: 'reading'},
     // eslint-disable-next-line react-hooks/exhaustive-deps -- the reading names the answer
     [reading, action, input === null])
+}
+
+/** Central's agent sets by ref (central.agent-set.read {scope root, ref}), each the held answer useCentralAction holds for it: the sets a
+ * rack's nested sets are tied to (O-I #842 round 21), so each nested rack reads its own Join. A set not answered yet is absent. */
+export function useAgentSetReadings(transport: KernelTransportStatus, refs: readonly string[]): ReadonlyMap<string, ActionAnswer> {
+  const epoch = useSpineEpoch()
+  const action = 'central.agent-set.read'
+  const op = (ref: string) => centralActionOp(action, {scope: 'root', ref})
+  const answered = useStableMap(useOwnerReadingsOf(transport.kind === 'unavailable' ? [] : refs, ref => `${opKey(transport, op(ref))}|action_dispatched`,
+    ref => readOp(transport, op(ref), 'action_dispatched', `${action} did not answer.`), epoch))
+  return useMemo(() => new Map([...answered].map(([ref, value]) => [ref, actionAnswerOf({status: 'answered', value, error: null}, action)])), [answered])
 }
 
 /** A Central reading the person may ask again (Machine's Plan and Verify, DLW §18.7): the held answer, and `again`, which reads it once
