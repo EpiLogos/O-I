@@ -187,6 +187,12 @@ pub trait Instrument: std::fmt::Debug + Send {
     fn torus_hear(&mut self, _hear: &TorusHear, _clock: &Clock) -> bool {
         false
     }
+    /// One part of the notes its owner voiced under Logic ([`EngineEvent::TorusVoice`], O-I #850 round 24): each
+    /// note's eight voices, voiced when the Torus's continuation reaches the owner's sample, once every part of the
+    /// act has come. Answers whether the instrument took it (voiced, or waiting for its sample).
+    fn torus_voice(&mut self, _voice: &TorusVoice, _clock: &Clock) -> bool {
+        false
+    }
     /// The sample of its owner's continuation a Torus renders next (O-I #849 round 13), where a
     /// hand-over again finds it ([`crate::Due::AtCursor`]); `None` for every other instrument, and for a
     /// Torus that does not render.
@@ -404,11 +410,135 @@ impl TorusHear {
     }
 }
 
-/// What a Torus not yet on its part waits for from its owner: an act it landed, or a move it reached.
+/// The voices of one note its owner voices (QL-MEF #287 packet A: a note, a bank slot and a cell each hold eight).
+pub const TORUS_NOTE_VOICES: usize = 8;
+/// The most notes one act voices: the native owner's bank (QL's 32 notes).
+pub const TORUS_VOICE_NOTES: usize = 32;
+/// The most notes one act names as making way (QL's `MADE_WAY_MAX`).
+pub const TORUS_VOICE_MADE_WAY: usize = 64;
+/// The ids of notes making way one part of an act carries; an act naming more travels as more parts.
+pub const TORUS_VOICE_PART_MADE_WAY: usize = 8;
+
+/// One note its owner voiced: its id, and each of its eight voices by the mode it is like (its index into the
+/// continuation the owner handed over), its frequency and its impulse (modal metres, re and im).
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub struct TorusVoiceNote {
+    pub id: u64,
+    pub like: [u16; TORUS_NOTE_VOICES],
+    pub frequency_hz: [f64; TORUS_NOTE_VOICES],
+    pub re: [f64; TORUS_NOTE_VOICES],
+    pub im: [f64; TORUS_NOTE_VOICES],
+}
+
+/// One part of an act the Torus's owner voiced under Logic on the torus (O-I #850 round 24; QL-MEF #287 packet A; manual
+/// §21.2 Rules: "Each note strikes its own eight voices. Polyphony counts notes"): the notes it voiced at its sample `at`,
+/// each its own eight voices, and the notes that made way for them, exactly as its `ql.note-voices/v1` receipt names them.
+/// The engine adds no law of its own: the Torus voices them when its continuation reaches `at`, as the owner's field did,
+/// so the two ring sample for sample alike. An act travels as `parts` parts, this its `part`-th: each carries one note at
+/// most and up to [`TORUS_VOICE_PART_MADE_WAY`] of the ids making way, and the act is voiced once all have come.
+/// `handover` names the handover it followed. Plain data, so it travels to the audio thread in an [`EngineEvent`].
+/// A note its owner voiced, as [`TorusVoice::split`] takes it: its id, and its eight voices, each the index of the mode it
+/// is like, its frequency and its impulse `[re, im]`.
+pub type VoicedNote = (u64, [(usize, f64, [f64; 2]); TORUS_NOTE_VOICES]);
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct TorusVoice {
+    pub handover: u32,
+    pub at: u64,
+    pub part: u8,
+    pub parts: u8,
+    pub note: Option<TorusVoiceNote>,
+    pub made: u8,
+    pub made_way: [u64; TORUS_VOICE_PART_MADE_WAY],
+}
+
+impl TorusVoice {
+    /// The owner's act of `notes` (each its id and eight voices: mode index, frequency, [re, im]) and the ids of the
+    /// notes that made way, at `at`, as its parts (off the audio thread: it allocates). Refused in words with no note,
+    /// more than [`TORUS_VOICE_NOTES`] or more than [`TORUS_VOICE_MADE_WAY`] making way, a note named twice, a mode past
+    /// 65535, or a frequency or impulse that is not finite; whether the bank can take it is the Torus's own law to judge.
+    pub fn split(
+        handover: u32,
+        at: u64,
+        notes: &[VoicedNote],
+        made_way: &[u64],
+    ) -> Result<Vec<TorusVoice>, String> {
+        if notes.is_empty() || notes.len() > TORUS_VOICE_NOTES {
+            return Err(format!(
+                "an act its owner voiced voices 1 to {TORUS_VOICE_NOTES} notes"
+            ));
+        }
+        if made_way.len() > TORUS_VOICE_MADE_WAY {
+            return Err(format!(
+                "an act its owner voiced names at most {TORUS_VOICE_MADE_WAY} notes making way"
+            ));
+        }
+        let mut ids = std::collections::BTreeSet::new();
+        let mut voiced = Vec::with_capacity(notes.len());
+        for (id, voices) in notes {
+            if !ids.insert(*id) {
+                return Err(format!(
+                    "an act its owner voiced names each note once; note {id} is named twice"
+                ));
+            }
+            let mut note = TorusVoiceNote {
+                id: *id,
+                ..TorusVoiceNote::default()
+            };
+            for (k, (like, hz, z)) in voices.iter().enumerate() {
+                if *like > usize::from(u16::MAX) {
+                    return Err(format!(
+                        "a voice of an act its owner voiced is like mode {like}, past the modes a Torus holds"
+                    ));
+                }
+                if !hz.is_finite() || z.iter().any(|v| !v.is_finite()) {
+                    return Err(
+                        "a voice of an act its owner voiced rings at a finite frequency and impulse".into(),
+                    );
+                }
+                (note.like[k], note.frequency_hz[k], note.re[k], note.im[k]) =
+                    (*like as u16, *hz, z[0], z[1]);
+            }
+            voiced.push(note);
+        }
+        let parts = voiced
+            .len()
+            .max(made_way.len().div_ceil(TORUS_VOICE_PART_MADE_WAY));
+        Ok((0..parts)
+            .map(|k| {
+                let ways = made_way
+                    .iter()
+                    .skip(k * TORUS_VOICE_PART_MADE_WAY)
+                    .take(TORUS_VOICE_PART_MADE_WAY);
+                let mut part = TorusVoice {
+                    handover,
+                    at,
+                    part: k as u8,
+                    parts: parts as u8,
+                    note: voiced.get(k).copied(),
+                    made: ways.len() as u8,
+                    made_way: [0; TORUS_VOICE_PART_MADE_WAY],
+                };
+                for (slot, id) in part.made_way.iter_mut().zip(ways) {
+                    *slot = *id;
+                }
+                part
+            })
+            .collect())
+    }
+
+    /// The ids of the notes making way this part carries.
+    pub fn made_way(&self) -> &[u64] {
+        &self.made_way[..usize::from(self.made).min(TORUS_VOICE_PART_MADE_WAY)]
+    }
+}
+
+/// What a Torus not yet on its part waits for from its owner: an act it landed, a move it reached, or notes it voiced.
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum Followed {
     Strike(TorusStrike),
     Hear(TorusHear),
+    Voice(TorusVoice),
 }
 
 impl Followed {
@@ -416,6 +546,7 @@ impl Followed {
         match self {
             Followed::Strike(s) => s.handover,
             Followed::Hear(h) => h.handover,
+            Followed::Voice(v) => v.handover,
         }
     }
 }
@@ -1122,6 +1253,7 @@ impl Graph {
                     match followed {
                         Followed::Strike(act) => slot.torus_strike(act, clock),
                         Followed::Hear(hear) => slot.torus_hear(hear, clock),
+                        Followed::Voice(voice) => slot.torus_voice(voice, clock),
                     };
                 }
                 false
@@ -1651,6 +1783,29 @@ impl Graph {
                     // the Torus it follows is still on its way to the part: the move waits for it
                     _ if self.torus_waiting.len() < self.torus_waiting.capacity() => {
                         self.torus_waiting.push((track, Followed::Hear(*hear)));
+                        true
+                    }
+                    _ => {
+                        self.torus_unplaced += 1;
+                        false
+                    }
+                }
+            }
+            EngineEvent::TorusVoice { track, ref voice } => {
+                let Some(i) = self
+                    .tracks
+                    .get_mut(track)
+                    .and_then(|t| t.instrument.as_mut())
+                else {
+                    return false;
+                };
+                match i.torus_handover() {
+                    Some(h) if h == voice.handover => i.torus_voice(voice, clock),
+                    // a later handover's continuation holds the notes already
+                    Some(h) if h > voice.handover => false,
+                    // the Torus it follows is still on its way to the part: the notes wait for it
+                    _ if self.torus_waiting.len() < self.torus_waiting.capacity() => {
+                        self.torus_waiting.push((track, Followed::Voice(*voice)));
                         true
                     }
                     _ => {

@@ -289,12 +289,13 @@ export interface ClipPlayState {
  * (`at`: the grid's beats from where it began), a Session clip's place on the ruler (O-I #849 round 21). A frozen take's (O-I #849 round
  * 22) says so in words (`frozen`): its lanes are baked into its sound, and nothing of them stands Automated. A looping clip's take names its
  * loop in the clip's own beats (`loop`: its first pass from `start`, then `from` to `to` again): its lanes are drawn again for each pass,
- * as Live draws a looped clip's envelope (DLW build ruling 2026-11-05). */
+ * as Live draws a looped clip's envelope (DLW build ruling 2026-11-05). A clip whose loop is off and that plays from a start marker past its
+ * beat 0 names it (`start`, O-I #849 round 24): an arrangement clip lies on the ruler from its start marker, looping or not. */
 export interface ClipLaneStanding {
   readonly automated: readonly string[]
   readonly overridden: readonly string[]
   readonly take?: {readonly address: ClipAddress; readonly name: string; readonly at?: number; readonly frozen?: string
-    readonly loop?: {readonly start: number; readonly from: number; readonly to: number}}
+    readonly loop?: {readonly start: number; readonly from: number; readonly to: number}; readonly start?: number}
   readonly lanes?: readonly ClipLane[]
 }
 /** One lane of the take that plays: the map parameter it writes, as the surface names it, and its points at their beats in the clip, each
@@ -853,7 +854,8 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
       unwatch: () => {}, fire: () => fire(r), turn: () => turn(r), frozen, outs: new Map()}
     run = r
     turned?.turn.ring?.(turned.name, null)
-    const playing = {address, name: plan.name, ...(at === undefined ? {} : {at}), ...(plan.again ? {loop: {start: plan.first.from, from: plan.again.from, to: plan.again.to}} : {})}
+    const playing = {address, name: plan.name, ...(at === undefined ? {} : {at}), ...(plan.again ? {loop: {start: plan.first.from, from: plan.again.from, to: plan.again.to}}
+      : plan.first.from !== 0 ? {start: plan.first.from} : {})}
     if (frozen) {
       bake(playing, frozen)
       // Frozen at the sample its clip lands at; refused, it plays its notes on the live Torus from here, and says so.

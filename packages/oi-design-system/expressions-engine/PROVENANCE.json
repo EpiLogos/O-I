@@ -673,8 +673,8 @@
     },
     "engine/glyphLibrary.mjs": {
       "source": "desktop/cradle/expressions-app/src/engine/glyphLibrary.ts",
-      "source_sha256": "95080b9b4831f0e3d5d37509f954ae875b9dc557cc76a7d5b315a5511661a08b",
-      "output_sha256": "dc00329087cb0a2fb496fab742f9f5a6068f50ee4404f07170d782855187477a",
+      "source_sha256": "42a47abc9a2dfa0110fa26d2a260d8ae80dd0c9814e97d2cce9d76798b8ed417",
+      "output_sha256": "7a09f9980ebb7254911f049d3801cceea0156bb61273524da5e5b91e7ef0b5d4",
       "compiler": "esbuild@0.21.5",
       "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
     }

@@ -125,7 +125,9 @@ export function nativeTracks(content: NativeExpressionsContent | null | undefine
   const description = content.scenes?.description
   return expressionsTrackAdapter.project({expressions: [{id: expressionId, name: workName ?? expressionId,
     ...(typeof description === 'string' ? {description} : {}),
-    scenes: scenes.map(scene => ({id: scene.scene_ref, name: scene.title || scene.native_title, duration: scene.working?.duration ?? scene.snapshot.duration ?? 0, ...statusOf(scene)}))}],
+    scenes: scenes.map(scene => ({id: scene.scene_ref, name: scene.title || scene.native_title, duration: scene.working?.duration ?? scene.snapshot.duration ?? 0, ...statusOf(scene),
+      // The Torus takes that lie under the scene (O-I #855), each on its take lane as the scenes inventory reads its performance.
+      ...(scene.torus_takes?.length ? {torusTakes: scene.torus_takes.map(take => ({lane: take.lane_ref, name: take.title, at: take.at_seconds, seconds: take.seconds}))} : {})}))}],
     ...(presented ? {automation: [{expressionId, sceneId: presented.basis.scene_ref, lanes: sceneAutomationOf(presented)}]} : {}),
     ...(playback ? {differs: playback.scene_playing && !playback.saved_sequence_playing} : {}),
     ...(loops ? {loop: true} : {}),

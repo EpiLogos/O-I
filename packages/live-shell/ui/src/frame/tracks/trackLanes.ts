@@ -133,8 +133,9 @@ export function automationPoints(lane: WorldAutomationLane, clipStart: (clipId: 
   const lies = clipStart(lane.clipId)
   const loop = lane.loop && lane.loop.to > lane.loop.from ? lane.loop : undefined
   // Where the clip's own beat 0 stands: a slot clip's where it landed (its start marker counted in), an arrangement clip's its start
-  // less its start marker, where the clip loops (DLW build ruling 2026-11-05: "Repeat a looping clip's lanes in Arrangement too").
-  const base = lies !== undefined ? lies - (loop?.start ?? 0) : lane.clipAt
+  // less its start marker, where the clip loops (DLW build ruling 2026-11-05: "Repeat a looping clip's lanes in Arrangement too") and
+  // where it does not (O-I #849 round 24).
+  const base = lies !== undefined ? lies - (loop?.start ?? lane.start ?? 0) : lane.clipAt
   if (base === undefined) return []
   const once = lane.points.map(point => ({at: base + point.at, value: point.value}))
   if (!loop || until === undefined) return once

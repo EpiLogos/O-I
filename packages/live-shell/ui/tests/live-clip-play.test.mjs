@@ -1155,6 +1155,33 @@ test('Live\'s set lays a frozen take\'s lanes under its clip with no Overridden 
   p.stop()
 })
 
+// O-I #849 round 24 (DLW build ruling 2026-11-05, item 3: "The older start-marker offset for a non-looping arrangement clip"): a clip whose
+// loop is off plays from its start marker too (clipPlan: one pass from `start` to `end`), so where it lies on the ruler is its start
+// marker, and its lanes stand from there, as a looping clip's do since round 23.
+test('a non-looping arrangement clip\'s lanes stand from its start marker where it lies, as Live plays it from there', async () => {
+  const {liveSetTrackAdapter} = await import('../src/timeline/liveSetTrackAdapter.ts')
+  const {automationPoints} = await import('../src/frame/tracks/trackLanes.ts')
+  const summary = {path: '/sets/a.als', scene_count: 1, tempo_bpm: 120,
+    tracks: [{kind: 'midi', name: 'Keys', devices: []}, {kind: 'midi', name: 'Pads', devices: []}, {kind: 'master', name: 'Main', devices: []}]}
+  const play = {launch: async () => ({ok: true, note: ''}), stop: () => ({ok: true, note: ''}), stopAll: () => ({ok: true, note: ''}), reenable: async () => ({ok: true, note: ''})}
+  const clock = controlledClock()
+  const moves = [{beat: 6.5, edits: [], sets: [{parameter: 'frame', value: 4}]}, {beat: 7, edits: [], sets: [{parameter: 'frame', value: 6}]}]
+  const p = player.createClipPlayer({read: async () => looped({loop: false}), prepare: async () => ({resumes: 'Resumes.', moves}), clock: async () => CLOCK,
+    set: async () => ({ok: true}), strike: async () => ({ok: true}), release: () => {}, watch: () => () => {}, now: clock.now, later: clock.later,
+    cancel: clock.cancel, random: () => 0})
+  p.play(FROZEN_SLOT, 120, undefined, {origin: () => BigInt(ANCHOR), began: () => {}})
+  await settled(clock)
+  const playing = p.state().lanes
+  assert.deepEqual(playing.take, {address: FROZEN_SLOT, name: 'Riff', at: -6, start: 6}, 'its loop off, it names the start marker it plays from')
+  const [arranged] = liveSetTrackAdapter.project({set: summary, document: null, play,
+    lanes: {...playing, take: {...playing.take, address: {path: '/sets/a.als', track: 1, at: {arrangement: 0}}}}}).lanes.automation
+  assert.equal(arranged.start, 6)
+  assert.deepEqual(automationPoints(arranged, () => 16).map(point => point.at), [16.5, 17], 'the clip lies from 16, where beat 6 of it plays')
+  const [slot] = liveSetTrackAdapter.project({set: summary, document: null, play, lanes: playing}).lanes.automation
+  assert.deepEqual(automationPoints(slot, () => undefined).map(point => point.at), [0.5, 1], 'a slot clip stands where it landed, its start marker counted in, as before')
+  p.stop()
+})
+
 test('a row stops a track where its empty slot keeps the stop button, and leaves one whose slot has it removed', async () => {
   const {clock, single, acts} = rowHarness()
   await settled(clock, acts.launch({path: '/sets/a.als', track: 3, at: {slot: 0}}, 120, '1 bar'))

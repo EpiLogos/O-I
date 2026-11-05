@@ -44,8 +44,9 @@
 //! allocates, off the thread.
 
 use crate::graph::{
-    Clock, Instrument, TorusAct, TorusHear, TorusStrike, TORUS_ACT_KEYS, TORUS_HEAR_FRAMES,
-    TORUS_STRIKE_MODES,
+    Clock, Instrument, TorusAct, TorusHear, TorusStrike, TorusVoice, TorusVoiceNote,
+    TORUS_ACT_KEYS, TORUS_HEAR_FRAMES, TORUS_NOTE_VOICES, TORUS_STRIKE_MODES, TORUS_VOICE_MADE_WAY,
+    TORUS_VOICE_NOTES,
 };
 use std::ffi::{c_char, c_int, CString};
 use std::ptr::NonNull;
@@ -186,6 +187,12 @@ pub const NOTE_VOICES: usize = 8;
 /// The most notes the native bank holds (`ql::max_bank_notes`), and the most one act names as making way.
 pub const BANK_NOTES: usize = 32;
 pub const MADE_WAY_MAX: usize = 64;
+// The notes the engine carries to a Torus (graph.rs `TorusVoice`) are the bank's.
+const _: () = assert!(
+    TORUS_NOTE_VOICES == NOTE_VOICES
+        && TORUS_VOICE_NOTES == BANK_NOTES
+        && TORUS_VOICE_MADE_WAY == MADE_WAY_MAX
+);
 
 /// One voice of a note as it is struck (`ql::NoteVoice`): the mode it is like (whose material it rings in and whose hearing it
 /// is heard by), its own frequency and its impulse (re, im), modal metres.
@@ -357,6 +364,22 @@ struct LeK8Pending {
     note_count: usize,
     made_way: *const u64,
     made_way_count: usize,
+}
+
+/// A note as the engine carried it to the Torus (graph.rs `TorusVoiceNote`), as the field voices it.
+fn note_of(note: &TorusVoiceNote) -> K8Note {
+    let mut out = K8Note {
+        id: note.id,
+        ..K8Note::default()
+    };
+    for (k, v) in out.voices.iter_mut().enumerate() {
+        *v = K8NoteVoice {
+            like: usize::from(note.like[k]),
+            frequency_hz: note.frequency_hz[k],
+            impulse: (note.re[k], note.im[k]),
+        };
+    }
+    out
 }
 
 fn le_note(note: &K8Note) -> LeK8Note {
@@ -1146,6 +1169,12 @@ pub struct K8Instrument {
     hearing: Vec<TorusHear>,
     /// One gain per mode: where a move's parts are gathered as it is reached (made off the audio thread).
     gains: Vec<f64>,
+    /// The parts of the notes its owner voiced for later samples, by sample, an act's parts together (capacity
+    /// [`K8_WAITING`]; O-I #850 round 24).
+    voicing: Vec<TorusVoice>,
+    /// Where an act's notes and the notes making way are gathered as it is voiced (made off the audio thread).
+    notes: Vec<K8Note>,
+    made_way: Vec<u64>,
     /// The keys its notes hold (O-I #853): what a touch strikes again. A Torus handed over holds none.
     held: [bool; 128],
     /// The hand's force of each touch as it last stood (0: the bend's, either way; 1: the pressure's).
@@ -1182,6 +1211,9 @@ impl K8Instrument {
             waiting: Vec::with_capacity(K8_WAITING),
             hearing: Vec::with_capacity(K8_WAITING),
             gains: vec![0.0; modes],
+            voicing: Vec::with_capacity(K8_WAITING),
+            notes: Vec::with_capacity(BANK_NOTES),
+            made_way: Vec::with_capacity(MADE_WAY_MAX),
             held: [false; 128],
             force: [0.0; 2],
         }
@@ -1280,6 +1312,44 @@ impl K8Instrument {
             }
         }
         true
+    }
+
+    /// Voice the act at the head of what waits (O-I #850 round 24): its parts, gathered whole, as one act of the field (QL's
+    /// own `voice_notes`), as the owner's field voiced it. An act whose parts did not all come is dropped and counted refused.
+    fn voice(&mut self) {
+        let first = self.voicing[0];
+        let parts = usize::from(first.parts);
+        let mut whole = 0;
+        while whole < parts
+            && self.voicing.get(whole).is_some_and(|v| {
+                v.at == first.at
+                    && v.handover == first.handover
+                    && v.parts == first.parts
+                    && usize::from(v.part) == whole
+            })
+        {
+            whole += 1;
+        }
+        self.notes.clear();
+        self.made_way.clear();
+        if whole == parts {
+            for part in &self.voicing[..parts] {
+                if let Some(note) = &part.note {
+                    if self.notes.len() < self.notes.capacity() {
+                        self.notes.push(note_of(note));
+                    }
+                }
+                for id in part.made_way() {
+                    if self.made_way.len() < self.made_way.capacity() {
+                        self.made_way.push(*id);
+                    }
+                }
+            }
+        }
+        self.voicing.drain(..whole.max(1));
+        if whole != parts || !self.field.voice_notes(&self.notes, &self.made_way) {
+            K8Counts::add(&self.counts.refused);
+        }
     }
 
     fn strike(&mut self, act: &TorusStrike) -> bool {
@@ -1399,11 +1469,26 @@ impl Instrument for K8Instrument {
         true
     }
 
+    fn torus_voice(&mut self, voice: &TorusVoice, _clock: &Clock) -> bool {
+        if self.handover != Some(voice.handover) {
+            return false;
+        }
+        if !self.rate_ok || self.voicing.len() == self.voicing.capacity() {
+            K8Counts::add(&self.counts.refused);
+            return false;
+        }
+        // after the parts for the same sample that came before it: an act's parts stay together, in order
+        let at = self.voicing.partition_point(|v| v.at <= voice.at);
+        self.voicing.insert(at, *voice);
+        true
+    }
+
     // Panic stills what was struck (QL's silence law), lets every held key go and drops the acts waiting for later samples;
     // the body's drive and the gains it is heard by stand, and so do the moves its owner reached.
     fn panic(&mut self, _clock: &Clock) {
         self.field.silence();
         self.waiting.clear();
+        self.voicing.clear();
         self.held = [false; 128];
     }
 
@@ -1422,6 +1507,15 @@ impl Instrument for K8Instrument {
                     K8Counts::add(&self.counts.late);
                 }
                 self.hear();
+            }
+        }
+        if !self.voicing.is_empty() && self.rate_ok {
+            let now = self.field.samples_elapsed();
+            while self.voicing.first().is_some_and(|v| v.at <= now) {
+                if self.voicing[0].at < now {
+                    K8Counts::add(&self.counts.late);
+                }
+                self.voice();
             }
         }
         let v = if self.rate_ok && self.field.render(&mut self.one, false) {

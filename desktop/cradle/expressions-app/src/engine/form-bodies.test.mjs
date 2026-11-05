@@ -51,11 +51,58 @@ test('a symbol takes its glyph from an M3′ form: a fold, a codon or a hexagram
   assert.equal(G.m3FormGlyph({ kind: 'fold', address: 0 }), '⋎⋎⋎');
   // Every hexagram has its own sign, and the forms stand beside letters and shapes in the library.
   const forms = G.GLYPH_CATEGORIES.find((c) => c.id === 'm3-forms');
-  assert.equal(forms.items.length, 64);
-  assert.equal(new Set(forms.items.map((i) => i.char)).size, 64);
+  assert.equal(forms.items.length, 64 + 56, 'the 64 hexagrams and the 56 cards');
+  assert.equal(new Set(forms.items.map((i) => i.char)).size, 64 + 56);
   assert.ok(G.GLYPH_CATEGORIES.findIndex((c) => c.id === 'm3-forms') > 0, 'the forms come after letters and shapes');
-  assert.throws(() => G.m3FormGlyph({ kind: 'card', address: 0 }), /fold, a codon or a hexagram/);
+  assert.throws(() => G.m3FormGlyph({ kind: 'deck', address: 0 }), /fold, a codon, a hexagram or a card/);
   assert.throws(() => G.m3FormGlyph({ kind: 'codon', address: 64 }), /0 to 63/);
+});
+
+// The card (O-I #852 "a fold, codon, hexagram or card"): the Minor Arcana card QL's exact cover gives the codon (ql-core
+// pole/tarot.rs TarotBridge::card_of_codon over the kernel's M3_TAROT_CODON_MAP, m3.c FR 2.3.19), as QL's M3 state names it.
+test('a symbol takes its glyph from a card: the Minor Arcana card QL\'s exact cover gives its codon', () => {
+  // QL's own readings of the card (ql.m3-state/v1 `tarot`), as the shell and the kernel fixtures keep them.
+  const readings = [
+    JSON.parse(readFileSync(fileURLToPath(new URL('../../../../../packages/live-shell/ui/tests/fixtures/ql-m3-state-2026-10-21.json', import.meta.url)), 'utf8')).answer.state.tarot,
+    JSON.parse(readFileSync(fileURLToPath(new URL('../../../kernel/tests/fixtures/epi-world-131.expression.json', import.meta.url)), 'utf8')).document.scenes[0].presentation.scene.epiWorld.world.basis.m3.tarot,
+  ];
+  for (const reading of readings) {
+    for (const address of reading.codons) {
+      const card = G.m3Card({ kind: 'card', address });
+      assert.deepEqual({ card_id: card.cardId, suit: card.suit, rank: card.rank, codons: card.codons },
+        { card_id: reading.card_id, suit: reading.suit, rank: reading.rank, codons: reading.codons }, `codon ${address}`);
+    }
+  }
+  // The cover is exact: 56 cards, each codon on one card; 48 carry one codon, the 8 courts two.
+  const cards = new Map();
+  for (let address = 0; address < 64; address++) {
+    const card = G.m3Card({ kind: 'card', address });
+    assert.ok(card.codons.includes(address), `codon ${address} is on its own card`);
+    assert.equal(card.cardId, ['Cups', 'Wands', 'Pentacles', 'Swords'].indexOf(card.suit) * 14 + card.pip);
+    assert.equal(card.suit, ['Cups', 'Wands', 'Pentacles', 'Swords'][address >> 4], 'the suit is the outer site\'s nucleotide');
+    cards.set(card.cardId, card);
+  }
+  assert.equal(cards.size, 56);
+  const courts = [...cards.values()].filter((card) => card.codons.length === 2);
+  assert.equal(courts.length, 8);
+  // The yin suits carry their two codons at the Knight and the King, the yang suits at the Page and the Queen.
+  for (const card of courts) assert.ok((['Cups', 'Pentacles'].includes(card.suit) ? ['Knight', 'King'] : ['Page', 'Queen']).includes(card.rank), `${card.rank} of ${card.suit}`);
+  // The glyph is the card's rank and suit sign, one sign for each card, the court's two codons drawing the same card.
+  assert.equal(G.m3FormGlyph({ kind: 'card', address: 0 }), 'A♥', 'the Ace of Cups');
+  assert.equal(G.m3FormGlyph({ kind: 'card', address: 17 }), '10♣', 'the Ten of Wands');
+  assert.equal(G.m3FormGlyph({ kind: 'card', address: 0b100111 }), '8♦', 'CTG, the Eight of Pentacles');
+  assert.equal(G.m3FormGlyph({ kind: 'card', address: 0b100011 }), 'Kn♦', 'CAG, the Knight of Pentacles');
+  assert.equal(G.m3FormGlyph({ kind: 'card', address: 0b101100 }), 'Kn♦', 'CGA, its second codon');
+  assert.equal(new Set(Array.from({ length: 64 }, (_, address) => G.m3FormGlyph({ kind: 'card', address }))).size, 56);
+  // A card steps as its codon does, and Morph carries it to the card its change lands on.
+  assert.deepEqual(G.stepM3Form({ kind: 'card', address: 0 }, { axis: 'i' }), { kind: 'card', address: 0b010101 });
+  const morph = G.m3FormMorph({ kind: 'card', address: 0 }, { axis: 'i' });
+  assert.equal(morph.from.glyph, 'A♥');
+  assert.equal(morph.to.glyph, 'A♣', 'TTT, the Ace of Wands');
+  // The library holds the cards beside the hexagrams, each named as QL names it.
+  const forms = G.GLYPH_CATEGORIES.find((c) => c.id === 'm3-forms');
+  assert.equal(forms.items.length, 64 + 56);
+  assert.ok(forms.items.some((item) => item.char === 'Kn♦' && item.name === 'Knight of Pentacles · CAG CGA'));
 });
 
 test('a step moves a form one line or one turn about a matrix axis, by QL\'s law', () => {
@@ -95,6 +142,35 @@ test('Morph moves between a form and its change along M3′\'s torus at nine to 
   const shader = readFileSync(fileURLToPath(new URL('./shaders/simulationShaders.ts', import.meta.url)), 'utf8');
   assert.match(shader, /float rMinor = rMajor \* \$\{M3_TORUS_TUBE\.toFixed\(4\)\};/);
   assert.doesNotMatch(shader, /rMajor \* 0\.42/);
+});
+
+// The editor gives a symbol its form (O-I #852): a form picked from the library is kept on the symbol beside the text it draws, drawn
+// as a fold, codon, hexagram or card of the same address, stepped a line or an axis, and its change added as the next link, so the
+// sequence's Morph carries the one into the other along M3′'s torus.
+test('the editor keeps a picked form on its symbol, draws it as any of the four, steps it, and morphs it to its change', () => {
+  const forms = G.GLYPH_CATEGORIES.find((c) => c.id === 'm3-forms');
+  assert.deepEqual(forms.items[0].form, { kind: 'hexagram', address: 0 });
+  assert.deepEqual(forms.items.find((item) => item.char === 'Kn♦').form, { kind: 'card', address: 0b100011 }, 'a court by its first codon');
+  for (const c of G.GLYPH_CATEGORIES.filter((c) => c.id !== 'm3-forms')) assert.ok(c.items.every((item) => item.form === undefined), c.id);
+  assert.deepEqual(G.M3_FORM_KINDS.map((k) => k.kind), ['fold', 'codon', 'hexagram', 'card']);
+  const card = { kind: 'card', address: 0 };
+  assert.deepEqual(G.m3FormShape(card), { text: 'A♥', form: card });
+  assert.deepEqual(G.m3FormShape({ ...card, kind: 'fold' }), { text: '⋎⋎⋎', form: { kind: 'fold', address: 0 } }, 'the same address drawn as a fold');
+  assert.deepEqual(G.m3FormShape(G.stepM3Form(card, { line: 0 })), { text: '3♥', form: { kind: 'card', address: 1 } }, 'AAT, the Three of Cups');
+  // A plain glyph keeps no form; text typed over a form's glyph leaves the form behind.
+  assert.equal(G.formOfText({ text: 'A♥', form: card }, 'A♥'), card);
+  assert.equal(G.formOfText({ text: 'A♥', form: card }, 'WORD'), undefined);
+  // The picker hands the form with the glyph; the editor keeps it, steps it and adds its change as a link.
+  const picker = readFileSync(fileURLToPath(new URL('../components/GlyphPicker.tsx', import.meta.url)), 'utf8');
+  assert.match(picker, /onPick\(item\.char, item\.form\)/);
+  const editor = readFileSync(fileURLToPath(new URL('../components/EntityEditor.tsx', import.meta.url)), 'utf8');
+  assert.match(editor, /onPick=\{\(char, form\) => onUpdate\(\{ shape: \{ \.\.\.entity\.shape, text: char, form \} \}\)\}/);
+  assert.match(editor, /onDraw\(m3FormShape\(stepM3Form\(form, step\)\)\)/, 'a step moves the symbol\'s form');
+  assert.match(editor, /onDraw\(m3FormShape\(\{ kind: k\.kind, address: form\.address \}\)\)/, 'drawn as any of the four');
+  assert.match(editor, /onDraw=\{\(next\) => onUpdate\(\{ shape: \{ \.\.\.entity\.shape, \.\.\.next \} \}\)\}/);
+  assert.match(editor, /onMorph\(m3FormShape\(stepM3Form\(form, step\)\)\)/, 'its change');
+  assert.match(editor, /onMorph=\{\(next\) => addLink\(\{ kind: 'glyph', \.\.\.next \}\)\}/, 'is the next link');
+  assert.match(editor, /formOfText\(entity\.shape, /, 'typed text keeps the form only while it draws it');
 });
 
 function sheet(resolution, mask) {

@@ -28,6 +28,7 @@
 // Re-enable for a value held by hand; Factory's event lanes, an event clicked opening beside the ruler (trackLanes.ts).
 import {useEffect, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type RefObject} from 'react'
 import type {TrackLaneKind, WorldEventLane, WorldTakeLane, WorldTrackClip, WorldTrackSet} from '../../timeline/worldTrackAdapter'
+import {rowOffsets} from '../../timeline/worldTrackAdapter'
 import {answerOf, MixerLevels, MixerRow, STATUS_WORD, stalledLanes, TrackDeviceButton, trackColour, trackTree, type PressedReceipt, type TracksSelection} from './SessionGrid'
 import {trackHeadDevice, useTrackHeadDevices} from './trackHeads'
 import {automationPoints, compRange, DEFAULT_LANES, LANE_WORD, laneCount, lanesUnder, mainLast, mixerCells, type LanesShown} from './trackLanes'
@@ -53,15 +54,7 @@ const SIDE_WORD = {visual: 'sight', audio: 'sound'} as const
  * (`ruler.end`, the run viewer's window: agent/AgentArrangementView.tsx:39), else what the clips and needles hold. */
 export function placeClips(set: WorldTrackSet): {placed: Placed[]; end: number} {
   const ruled = set.ruler !== undefined
-  const offsets = new Map<string, number>()
-  let cursor = 0
-  if (!ruled) {
-    for (const row of set.columns) {
-      offsets.set(row.id, cursor)
-      const widest = Math.max(1, ...set.clips.filter(clip => clip.columnId === row.id).map(clip => clip.span?.end ?? 1))
-      cursor += widest
-    }
-  }
+  const {offsets, end: cursor} = ruled ? {offsets: new Map<string, number>(), end: 0} : rowOffsets(set.columns, set.clips)
   const placed: Placed[] = []
   for (const clip of set.clips) {
     if (clip.at) placed.push({clip, start: clip.at.start, end: clip.at.end ?? clip.at.start})

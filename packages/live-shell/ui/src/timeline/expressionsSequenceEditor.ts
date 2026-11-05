@@ -2,6 +2,9 @@
 // §9.4, the note-editor row). Entity lanes run across the sequence steps of the
 // presented scene. A step's hold is a note's length; its transition is the
 // note's glide. The same step, read as Live reads a note.
+// The scene's sound lies beneath the roll (manual §20.1 the Sequence tab: "The
+// scene's sound lies beneath it"): each Torus take that lies under the scene
+// (O-I #855) is a take lane of its sound, from its second of the scene.
 //
 // Ports (path:line at HEAD 8bf279d3e):
 // - the projection moved from packages/live-shell/ui/src/timeline/expressionsTrackAdapter.ts:
@@ -16,7 +19,8 @@
 //
 // Pure TypeScript. No React, no family names.
 
-import type {WorldTrack, WorldTrackClip, WorldTrackColumn, WorldTrackSet, WorldTrackTake} from './worldTrackAdapter';
+import type {WorldTakeLane, WorldTrack, WorldTrackClip, WorldTrackColumn, WorldTrackSet, WorldTrackTake} from './worldTrackAdapter';
+import {rowOffsets} from './worldTrackAdapter';
 
 export interface ExpressionsScene {
   id: string;
@@ -62,7 +66,24 @@ export interface ExpressionsTrackReading {
     entities: ExpressionsEntity[];
     automationLanes: ExpressionsAutomationLane[];
     propertyTracks: ExpressionsPropertyTrack[];
+    /** The Torus takes that lie under the scene, each by its lane, from its second of the scene for its length in seconds. */
+    torusTakes?: ExpressionsTorusTake[];
   };
+}
+
+export interface ExpressionsTorusTake {
+  lane: string;
+  name: string;
+  at: number;
+  seconds: number;
+}
+
+// One take lane of the scene's sound, in the scene's own seconds.
+export interface SequenceTakeLane {
+  id: string;
+  name: string;
+  start: number;
+  end: number;
 }
 
 // One entity lane of the sequence editor.
@@ -97,10 +118,13 @@ export interface SceneSequence {
   notes: SequenceNote[];
   envelopes: SequenceEnvelope[];
   takes: WorldTrackTake[];
+  /** The take lanes of the scene's sound; absent where no Torus take lies under it. */
+  takeLanes?: SequenceTakeLane[];
 }
 
 const entityLaneId = (entityId: string): string => `entity:${entityId}`;
 const automationTrackId = (sceneId: string): string => `automation:${sceneId}`;
+const soundTrackId = (sceneId: string): string => `sound:${sceneId}`;
 
 function requireDuration(value: number, label: string): number {
   if (!Number.isFinite(value) || value < 0) {
@@ -160,7 +184,12 @@ export function projectSceneSequence(reading: ExpressionsTrackReading): SceneSeq
     name: `Take ${track.id}`,
   }));
 
-  return {lanes, notes, envelopes, takes};
+  const takeLanes: SequenceTakeLane[] = (reading.presented.torusTakes ?? []).map((take) => {
+    const start = requireDuration(take.at, `Take ${take.lane} start`);
+    return {id: `${reading.presentedSceneId}#${take.lane}`, name: take.name, start, end: start + requireDuration(take.seconds, `Take ${take.lane} length`)};
+  });
+
+  return {lanes, notes, envelopes, takes, ...(takeLanes.length ? {takeLanes} : {})};
 }
 
 // The same presentation as the Timeline's neutral shape: the columns are the
@@ -185,5 +214,11 @@ export function sceneSequenceAsTracks(reading: ExpressionsTrackReading): WorldTr
     span: {start: note.start, end: note.start + note.length + note.glide},
   }));
 
-  return {columns, tracks, clips, transport: {takes: sequence.takes}};
+  // The scene's sound beneath the roll, its take lanes where the presented scene lies on the ruler.
+  if (!sequence.takeLanes) return {columns, tracks, clips, transport: {takes: sequence.takes}};
+  tracks.push({id: soundTrackId(columnId), name: 'Sound', kind: 'sound', lane: 'audio'});
+  const offset = rowOffsets(columns, clips).offsets.get(columnId) ?? 0;
+  const takes: WorldTakeLane[] = sequence.takeLanes.map((lane) => ({id: lane.id, trackId: soundTrackId(columnId), name: lane.name,
+    spans: [{start: offset + lane.start, end: offset + lane.end, label: lane.name}]}));
+  return {columns, tracks, clips, transport: {takes: sequence.takes}, lanes: {takes}};
 }

@@ -4,10 +4,11 @@
  */
 
 import React, { useState } from 'react';
-import { GLYPH_CATEGORIES } from '../engine/glyphLibrary';
+import { GLYPH_CATEGORIES, type M3Form } from '../engine/glyphLibrary';
 
 export interface GlyphPickerProps {
-  onPick: (char: string) => void;
+  /** The glyph picked, and the M3′ form it is drawn from when it is one of the forms (O-I #852). */
+  onPick: (char: string, form?: M3Form) => void;
   isLight: boolean;
   /** Smaller grid, fewer rows visible — used inline inside sequence link rows. */
   compact?: boolean;
@@ -15,7 +16,7 @@ export interface GlyphPickerProps {
 
 /**
  * Symbol category picker harvested from ChainingPanel's glyph library. Pure picker: clicking
- * a glyph calls onPick(char) and the caller decides whether that commits a shape or appends
+ * a glyph calls onPick(char, form) and the caller decides whether that commits a shape or appends
  * a sequence link.
  */
 export const GlyphPicker: React.FC<GlyphPickerProps> = ({ onPick, isLight, compact }) => {
@@ -51,7 +52,7 @@ export const GlyphPicker: React.FC<GlyphPickerProps> = ({ onPick, isLight, compa
           <button
             key={item.char}
             type="button"
-            onClick={() => onPick(item.char)}
+            onClick={() => onPick(item.char, item.form)}
             title={`${item.name} (${item.char})`}
             className={`flex flex-col items-center justify-center h-9 rounded border transition-all ${
               isLight

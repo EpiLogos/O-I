@@ -299,7 +299,7 @@ const M3_AXIS_MATRIX = {
 };
 const NUCLEOTIDES = ["A", "T", "C", "G"];
 function assertForm(form) {
-  if (!["fold", "codon", "hexagram"].includes(form.kind)) throw new Error(`An M3\u2032 form is a fold, a codon or a hexagram, not ${String(form.kind)}`);
+  if (!["fold", "codon", "hexagram", "card"].includes(form.kind)) throw new Error(`An M3\u2032 form is a fold, a codon, a hexagram or a card, not ${String(form.kind)}`);
   if (!Number.isInteger(form.address) || form.address < 0 || form.address > 63) throw new Error("An M3\u2032 form's address is one of the 64, 0 to 63");
 }
 function stepM3Form(form, step) {
@@ -336,9 +336,51 @@ function kingWen(address) {
   const upper = TRIGRAMS.indexOf(address >> 3 & 7);
   return KING_WEN[lower][upper];
 }
+const SUITS = [["Cups", "\u2665"], ["Wands", "\u2663"], ["Pentacles", "\u2666"], ["Swords", "\u2660"]];
+const RANKS = [
+  ["Ace", "A"],
+  ["Two", "2"],
+  ["Three", "3"],
+  ["Four", "4"],
+  ["Five", "5"],
+  ["Six", "6"],
+  ["Seven", "7"],
+  ["Eight", "8"],
+  ["Nine", "9"],
+  ["Ten", "10"],
+  ["Page", "P"],
+  ["Knight", "Kn"],
+  ["Queen", "Q"],
+  ["King", "K"]
+];
+const CARD_CODONS = [
+  ["AAA", "AAG", "AAT", "ACC", "ATG", "AGA", "AGT", "AGG", "ATT", "ATA", "ACA", "ACG AGC", "AAC", "ACT ATC"],
+  ["TTT", "TTA", "TTC", "TGG", "TAC", "TCA", "TCC", "TAA", "TCT", "TAT", "TAG TGA", "TGT", "TCG TGC", "TTG"],
+  ["CCC", "CCG", "CCT", "CAA", "CGC", "CGG", "CGT", "CTG", "CTT", "CTC", "CCA", "CAG CGA", "CAC", "CAT CTA"],
+  ["GGG", "GGA", "GGC", "GTT", "GAC", "GAG", "GCA", "GCC", "GAA", "GCG", "GCT GTC", "GGT", "GAT GTA", "GTG"]
+];
+const addressOf = (letters) => [...letters].reduce((address, n) => address << 2 | NUCLEOTIDES.indexOf(n), 0);
+const CARDS = CARD_CODONS.flatMap((suit, s) => suit.map((codons, pip) => ({
+  cardId: s * 14 + pip,
+  suit: SUITS[s][0],
+  rank: RANKS[pip][0],
+  pip,
+  codons: codons.split(" ").map(addressOf),
+  sign: `${RANKS[pip][1]}${SUITS[s][1]}`
+})));
+const CARD_OF_CODON = (() => {
+  const of = [];
+  for (const card of CARDS) for (const codon of card.codons) of[codon] = card;
+  return of;
+})();
+function m3Card(form) {
+  assertForm(form);
+  return CARD_OF_CODON[form.address];
+}
 function m3FormGlyph(form) {
   assertForm(form);
   if (form.kind === "codon") return codonLetters(form);
+  if (form.kind === "card") return m3Card(form).sign;
   if (form.kind === "fold") return m3Sites(form).map((site) => site.yang ? site.resting ? "\u2227" : "\u22CF" : site.resting ? "\u2228" : "\u22CE").join("");
   return String.fromCodePoint(19904 + kingWen(form.address) - 1);
 }
@@ -360,15 +402,40 @@ function m3FormMorph(form, step, lens = 0) {
     tube: M3_TORUS_TUBE
   };
 }
+const M3_FORM_KINDS = [
+  { kind: "fold", label: "Fold" },
+  { kind: "codon", label: "Codon" },
+  { kind: "hexagram", label: "Hexagram" },
+  { kind: "card", label: "Card" }
+];
+const M3_STEPS = [
+  ...Array.from({ length: 6 }, (_, line) => ({ step: { line }, label: String(line + 1), does: `Move line ${line + 1}${line === 0 ? ", the bottom" : line === 5 ? ", the top" : ""}` })),
+  ...["i", "j", "k"].map((axis) => ({ step: { axis }, label: axis, does: `Turn about ${axis}: the ${M3_AXIS_MATRIX[axis]} matrix's partner on every site` }))
+];
+function m3FormShape(form) {
+  return { text: m3FormGlyph(form), form };
+}
+function formOfText(shape, text) {
+  return shape.form && m3FormGlyph(shape.form) === text ? shape.form : void 0;
+}
 const M3_FORM_CATEGORY = {
   id: "m3-forms",
   name: "M3\u2032 forms",
-  description: "Folds, codons and hexagrams of M3\u2032: a step moves one line or turns about a matrix axis",
-  items: Array.from({ length: M3_FORMS }, (_, address) => ({
-    char: m3FormGlyph({ kind: "hexagram", address }),
-    name: `${kingWen(address)} \xB7 ${codonLetters({ kind: "codon", address })} \xB7 ${address.toString(2).padStart(6, "0")}`,
-    category: "m3-forms"
-  }))
+  description: "Folds, codons, hexagrams and cards of M3\u2032: a step moves one line or turns about a matrix axis",
+  items: [
+    ...Array.from({ length: M3_FORMS }, (_, address) => ({
+      char: m3FormGlyph({ kind: "hexagram", address }),
+      form: { kind: "hexagram", address },
+      name: `${kingWen(address)} \xB7 ${codonLetters({ kind: "codon", address })} \xB7 ${address.toString(2).padStart(6, "0")}`,
+      category: "m3-forms"
+    })),
+    ...CARDS.map((card) => ({
+      char: card.sign,
+      form: { kind: "card", address: card.codons[0] },
+      name: `${card.rank} of ${card.suit} \xB7 ${card.codons.map((address) => codonLetters({ kind: "codon", address })).join(" ")}`,
+      category: "m3-forms"
+    }))
+  ]
 };
 GLYPH_CATEGORIES.push(M3_FORM_CATEGORY);
 export {
@@ -378,12 +445,17 @@ export {
   M3_AXIS_MATRIX,
   M3_FORMS,
   M3_FORM_CATEGORY,
+  M3_FORM_KINDS,
   M3_LENSES,
+  M3_STEPS,
   M3_TORUS_TUBE,
   codonLetters,
+  formOfText,
   kingWen,
+  m3Card,
   m3FormGlyph,
   m3FormMorph,
+  m3FormShape,
   m3Sites,
   m3TorusPlace,
   stepM3Form

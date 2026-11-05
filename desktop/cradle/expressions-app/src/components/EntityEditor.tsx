@@ -19,7 +19,7 @@ import {
 } from '../engine/fieldModel';
 import { ChainEasing, CompositionTelemetry } from '../engine/types';
 import { CANONICAL_CHAKRAS } from '../engine/chakraSystem';
-import { CHAIN_PRESETS } from '../engine/glyphLibrary';
+import { CHAIN_PRESETS, M3_FORM_KINDS, M3_STEPS, formOfText, m3FormShape, stepM3Form, type M3Form } from '../engine/glyphLibrary';
 import { ParamRow } from './ParamRow';
 import { GlyphPicker } from './GlyphPicker';
 
@@ -35,6 +35,32 @@ const shapeLabel = (s: Shape): string => {
   if (s.kind === 'yantra') return CANONICAL_CHAKRAS.find((c) => c.id === s.yantraId)?.name.split(' ')[0] || 'yantra';
   return `${Math.round(s.frequencyHz ?? 396)}Hz`;
 };
+
+/** A symbol drawn from an M3′ form (O-I #852): drawn as a fold, codon, hexagram or card of the same address; stepped a line or a turn
+ * about a matrix axis; or its change added as the next link, which the sequence's Morph carries along M3′'s torus. */
+const FormSteps: React.FC<{ form: M3Form; chip: (active: boolean) => string; onDraw: (next: ReturnType<typeof m3FormShape>) => void;
+  onMorph: (next: ReturnType<typeof m3FormShape>) => void }> = ({ form, chip, onDraw, onMorph }) => (
+  <div className="space-y-1 text-[8.5px] font-mono uppercase">
+    <div className="flex items-center gap-1 flex-wrap">
+      <span className="opacity-50 mr-0.5">Drawn as</span>
+      {M3_FORM_KINDS.map((k) => (
+        <button key={k.kind} type="button" onClick={() => onDraw(m3FormShape({ kind: k.kind, address: form.address }))} className={chip(form.kind === k.kind)}>{k.label}</button>
+      ))}
+    </div>
+    <div className="flex items-center gap-1 flex-wrap">
+      <span className="opacity-50 mr-0.5">Step</span>
+      {M3_STEPS.map(({ step, label, does }) => (
+        <button key={label} type="button" title={does} onClick={() => onDraw(m3FormShape(stepM3Form(form, step)))} className={chip(false)}>{label}</button>
+      ))}
+    </div>
+    <div className="flex items-center gap-1 flex-wrap">
+      <span className="opacity-50 mr-0.5">Morph to</span>
+      {M3_STEPS.map(({ step, label, does }) => (
+        <button key={label} type="button" title={`${does}, as the next link`} onClick={() => onMorph(m3FormShape(stepM3Form(form, step)))} className={chip(false)}>{label}</button>
+      ))}
+    </div>
+  </div>
+);
 
 export const EntityEditor: React.FC<EntityEditorProps> = ({ entity, onUpdate, telemetry, isLight }) => {
   const [glyphDraft, setGlyphDraft] = useState(entity.shape.text ?? '');
@@ -74,7 +100,7 @@ export const EntityEditor: React.FC<EntityEditorProps> = ({ entity, onUpdate, te
   const commitGlyph = () => {
     const v = glyphDraft.trim() || 'O';
     setGlyphDraft(v);
-    if (v !== (entity.shape.text ?? '')) onUpdate({ shape: { ...entity.shape, text: v } });
+    if (v !== (entity.shape.text ?? '')) onUpdate({ shape: { ...entity.shape, text: v, form: formOfText(entity.shape, v) } });
   };
   const glyphKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
@@ -192,7 +218,10 @@ export const EntityEditor: React.FC<EntityEditorProps> = ({ entity, onUpdate, te
                   Browse
                 </button>
               </div>
-              {showShapePicker && <GlyphPicker isLight={isLight} onPick={(char) => onUpdate({ shape: { ...entity.shape, text: char } })} />}
+              {showShapePicker && <GlyphPicker isLight={isLight} onPick={(char, form) => onUpdate({ shape: { ...entity.shape, text: char, form } })} />}
+              {entity.shape.form && <FormSteps form={entity.shape.form} chip={chip}
+                onDraw={(next) => onUpdate({ shape: { ...entity.shape, ...next } })}
+                onMorph={(next) => addLink({ kind: 'glyph', ...next })} />}
             </>
           )}
           {entity.shape.kind === 'yantra' && (

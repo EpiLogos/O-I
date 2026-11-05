@@ -1,5 +1,13 @@
 import type {NativeScenesReading} from './scenes';
 
+/** A Torus take's lane in a Scene's performance (kernel torus.rs: `take-lane:torus/<TakeId>`), and the most takes one keeps (MAX_TAKES). */
+export const TORUS_TAKE_LANE = 'take-lane:torus/';
+export const SCENE_TORUS_TAKES_MAX = 256;
+/** A performance counter as the kernel writes one (expression_performance.rs Counter: canonical decimal u64), or null. */
+export const sceneCounter = (value: unknown): bigint | null =>
+  typeof value === 'string' && /^(0|[1-9][0-9]{0,19})$/.test(value) && BigInt(value) <= 0xffff_ffff_ffff_ffffn ? BigInt(value) : null;
+export const takeRate = (value: unknown): value is number => Number.isSafeInteger(value) && (value as number) >= 8000 && (value as number) <= 192000;
+
 const object = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
 const text = (value: unknown): value is string => typeof value === 'string' && value.length > 0 && value.length <= 4096;
 const finite = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
@@ -9,6 +17,12 @@ const equalRefs = (a: unknown[], b: unknown[]) => a.length === b.length && a.eve
 const pacing = (value: unknown) => object(value) && finite(value.duration) && value.duration >= 1 && value.duration <= 3600
   && finite(value.transition) && value.transition >= 0 && value.transition <= 30;
 const indexOrNull = (value: unknown, minimum = 0) => value === null || Number.isSafeInteger(value) && (value as number) >= minimum;
+/** The Torus takes a Scene lays under it (scenes.ts sceneTorusTakes), each whole, on a Torus take lane, its seconds as its samples say. */
+const torusTakes = (value: unknown) => Array.isArray(value) && value.length >= 1 && value.length <= SCENE_TORUS_TAKES_MAX && value.every(take => object(take)
+  && typeof take.lane_ref === 'string' && take.lane_ref.startsWith(TORUS_TAKE_LANE) && take.lane_ref.length <= 4096
+  && typeof take.title === 'string' && take.title.length <= 4096 && typeof take.enabled === 'boolean' && typeof take.solo === 'boolean'
+  && text(take.take_ref) && sceneCounter(take.at_sample) !== null && sceneCounter(take.frames) !== null && takeRate(take.sample_rate)
+  && finite(take.at_seconds) && take.at_seconds >= 0 && take.seconds === Number(take.frames) / take.sample_rate);
 
 /** Qualify optional whole-Scene disclosures before they enter shell state.
  * The caller supplies its already-admitted native editor basis. No label,
@@ -38,7 +52,7 @@ export function isNativeScenesReading(value: unknown, basis: {expression_ref: st
       || !refs(row.member_refs) || !row.member_refs.every(ref=>Object.hasOwn(value.object_titles as object,ref)) || !Array.isArray(row.members) || row.members.length !== row.member_refs.length
       || typeof row.membership.complete !== 'boolean' || !indexOrNull(row.membership.page)
       || !indexOrNull(row.membership.page_count, 1) || !refs(row.membership.unloaded_refs)
-      || !refs(row.membership.unbound_local_entity_ids)) return false;
+      || !refs(row.membership.unbound_local_entity_ids) || row.torus_takes !== undefined && !torusTakes(row.torus_takes)) return false;
     if (row.local_scene_id !== null) {if (local.has(row.local_scene_id)) return false; local.add(row.local_scene_id)}
     if (row.material.available) {
       if (!text(row.local_scene_id) || !pacing(row.working) || row.material.reason !== null

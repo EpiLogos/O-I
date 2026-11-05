@@ -523,6 +523,229 @@ fn a_handed_over_bank_and_its_waiting_notes_continue_sample_for_sample() {
     );
 }
 
+/// The notes an owner voiced for `keys` under Logic on the torus, as its own field voiced them (QL-MEF #287 packet A; the
+/// receipt `ql.note-voices/v1` names each note's id and eight voices): each note its own eight, by the cell of its arc.
+fn owners_notes(keys: &[(u8, u16)]) -> Vec<live_engine::k8::K8Note> {
+    let mut owner = K8Field::new(&k8_fixture::input(SR)).unwrap();
+    owner.set_law(&cell_law(8)).unwrap();
+    assert!(owner.play_keys(&act(keys, [0.3, 0.0])));
+    owner
+        .bank()
+        .iter()
+        .map(|slot| live_engine::k8::K8Note {
+            id: slot.id,
+            voices: slot.voices.map(|v| live_engine::k8::K8NoteVoice {
+                like: v.like,
+                frequency_hz: v.frequency_hz,
+                impulse: v.state,
+            }),
+        })
+        .collect()
+}
+
+/// A field following the owner alone: `at` frames, then `notes` voiced (those of `made_way` making way), `frames` long.
+fn voiced_alone(at: usize, frames: usize, notes: &[live_engine::k8::K8Note]) -> Vec<f32> {
+    let mut f = K8Field::new(&k8_fixture::input(SR)).unwrap();
+    let mut out = vec![0f32; frames];
+    assert!(f.render(&mut out[..at], false));
+    assert!(f.voice_notes(notes, &[]));
+    for chunk in out[at..].chunks_mut(4096) {
+        assert!(f.render(chunk, false));
+    }
+    out
+}
+
+/// The parts the host sends for `notes` its owner voiced at `at`.
+fn voiced_parts(
+    handover: u32,
+    at: u64,
+    notes: &[live_engine::k8::K8Note],
+    made_way: &[u64],
+) -> Vec<live_engine::TorusVoice> {
+    let notes: Vec<_> = notes
+        .iter()
+        .map(|n| {
+            (
+                n.id,
+                n.voices
+                    .map(|v| (v.like, v.frequency_hz, [v.impulse.0, v.impulse.1])),
+            )
+        })
+        .collect();
+    live_engine::TorusVoice::split(handover, at, &notes, made_way).unwrap()
+}
+
+/// O-I #850 round 24 (DLW build ruling 2026-11-05: the frame→engine tap under Logic): keys the frame plays under Logic are
+/// voiced by QL's own field as notes, each its own eight voices, and the host hands the engine those notes at the owner's
+/// sample. An owner-played chord sounds there, each note's eight voices, sample for sample the owner's own field; Export
+/// renders what was heard; the act is timed once, at the owner's sample.
+#[test]
+fn an_owners_chord_under_logic_sounds_each_notes_eight_voices_at_the_owners_sample() {
+    let chord = owners_notes(&[(0, 2), (3, 1), (5, 4)]);
+    assert_eq!(chord.len(), 3, "three keys, three notes");
+    let build = || {
+        let mut g = Graph::new(SR, 120.0);
+        let field = K8Field::new(&k8_fixture::input(SR)).unwrap();
+        g.tracks.push(Track::midi(
+            "Torus",
+            Box::new(K8Instrument::new(field).handed_over(1)),
+        ));
+        g
+    };
+    let (mut core, mut handle) = engine(build()).unwrap();
+    let mut played = Vec::new();
+    let mut block = vec![0f32; 256 * 2];
+    core.pull_block(&mut block);
+    played.extend(left(&block));
+    let parts = voiced_parts(1, 300, &chord, &[]);
+    assert_eq!(parts.len(), 3, "a part for each note");
+    for voice in parts {
+        handle
+            .send(EngineEvent::TorusVoice { track: 0, voice })
+            .unwrap();
+    }
+    for _ in 0..7 {
+        core.pull_block(&mut block);
+        played.extend(left(&block));
+    }
+    assert!(
+        played[..300].iter().all(|v| *v == 0.0),
+        "nothing sounds before the owner's sample"
+    );
+    assert!(played[300..].iter().any(|v| *v != 0.0), "the chord sounds");
+    assert_eq!(
+        played,
+        voiced_alone(300, 2048, &chord),
+        "the chord is voiced at the owner's sample, inside a block, sample for sample the owner's own field"
+    );
+    assert_ne!(
+        played,
+        voiced_alone(300, 2048, &chord[..2]),
+        "every note of the chord is voiced"
+    );
+    let exported = build().render_performance(SR, &handle.performance());
+    assert_eq!(left(&exported), played, "Export renders what was heard");
+    let strikes = handle.latency().strikes;
+    assert_eq!(strikes.len(), 1, "one act, timed by its first part");
+    assert_eq!((strikes[0].track, strikes[0].frame), (0, 300));
+}
+
+/// O-I #850 round 24: an act its owner voiced sounds only whole: a part lost on the way, or parts that come out of their
+/// order, voice none of its notes, and the engine counts the act refused rather than ring a chord its owner's field does not.
+/// Panic drops a whole act waiting for its sample, as it drops the acts struck for later.
+#[test]
+fn an_owners_voiced_act_that_does_not_arrive_whole_and_in_order_sounds_nothing() {
+    let chord = owners_notes(&[(0, 2), (3, 1), (5, 4)]);
+    for (order, refused) in [(&[0usize, 2][..], 2), (&[0, 2, 1][..], 3)] {
+        let instrument =
+            K8Instrument::new(K8Field::new(&k8_fixture::input(SR)).unwrap()).handed_over(1);
+        let counts = instrument.counts();
+        let mut g = Graph::new(SR, 120.0);
+        g.tracks.push(Track::midi("Torus", Box::new(instrument)));
+        let (mut core, mut handle) = engine(g).unwrap();
+        let parts = voiced_parts(1, 300, &chord, &[]);
+        for k in order {
+            handle
+                .send(EngineEvent::TorusVoice {
+                    track: 0,
+                    voice: parts[*k],
+                })
+                .unwrap();
+        }
+        let mut played = Vec::new();
+        let mut block = vec![0f32; 256 * 2];
+        for _ in 0..8 {
+            core.pull_block(&mut block);
+            played.extend(left(&block));
+        }
+        assert!(
+            played.iter().all(|v| *v == 0.0),
+            "parts {order:?} of three: nothing sounds"
+        );
+        assert_eq!(
+            counts.refused.load(std::sync::atomic::Ordering::Relaxed),
+            refused,
+            "parts {order:?}: each front that is no whole act is refused"
+        );
+    }
+    let mut g = Graph::new(SR, 120.0);
+    let field = K8Field::new(&k8_fixture::input(SR)).unwrap();
+    g.tracks.push(Track::midi(
+        "Torus",
+        Box::new(K8Instrument::new(field).handed_over(1)),
+    ));
+    let (mut core, mut handle) = engine(g).unwrap();
+    for voice in voiced_parts(1, 300, &chord, &[]) {
+        handle
+            .send(EngineEvent::TorusVoice { track: 0, voice })
+            .unwrap();
+    }
+    handle.send(EngineEvent::Panic).unwrap();
+    let mut block = vec![0f32; 256 * 2];
+    for _ in 0..8 {
+        core.pull_block(&mut block);
+        assert!(
+            left(&block).iter().all(|v| *v == 0.0),
+            "Panic dropped the act waiting for its sample"
+        );
+    }
+}
+
+/// O-I #850 round 24: an act its owner voiced is judged before it travels, and travels as one part a note, the ids of the
+/// notes making way eight to a part; a part the act does not have is refused at the engine's door.
+#[test]
+fn an_owners_voiced_act_is_split_and_judged_before_it_travels() {
+    let chord = owners_notes(&[(0, 2)]);
+    let note = |id: u64| {
+        (
+            id,
+            chord[0]
+                .voices
+                .map(|v| (v.like, v.frequency_hz, [v.impulse.0, v.impulse.1])),
+        )
+    };
+    let split = live_engine::TorusVoice::split;
+    assert!(split(1, 0, &[], &[]).is_err(), "no note");
+    let many: Vec<_> = (0..33).map(note).collect();
+    assert!(split(1, 0, &many, &[]).is_err(), "past the bank's 32");
+    assert!(
+        split(1, 0, &[note(1)], &[0; 65]).is_err(),
+        "past 64 making way"
+    );
+    assert!(
+        split(1, 0, &[note(1), note(1)], &[]).is_err(),
+        "a note twice"
+    );
+    let mut wild = note(1);
+    wild.1[3].1 = f64::NAN;
+    assert!(
+        split(1, 0, &[wild], &[]).is_err(),
+        "a voice that is not finite"
+    );
+    let ways: Vec<u64> = (100..110).collect();
+    let parts = split(1, 40, &[note(1)], &ways).unwrap();
+    assert_eq!(parts.len(), 2, "ten making way: two parts");
+    assert_eq!((parts[0].part, parts[0].parts, parts[1].part), (0, 2, 1));
+    assert_eq!(parts[0].note.map(|n| n.id), Some(1));
+    assert_eq!(parts[1].note, None);
+    assert_eq!(parts[0].made_way(), &ways[..8]);
+    assert_eq!(parts[1].made_way(), &ways[8..]);
+    let (_core, mut handle) = engine({
+        let mut g = Graph::new(SR, 120.0);
+        g.tracks.push(torus_part("Torus"));
+        g
+    })
+    .unwrap();
+    let mut stray = parts[1];
+    stray.part = 2;
+    assert!(handle
+        .send(EngineEvent::TorusVoice {
+            track: 0,
+            voice: stray
+        })
+        .is_err());
+}
+
 #[test]
 fn the_torus_keys_strike_as_one_act_by_the_law_the_node_was_given() {
     let mut g = Graph::new(SR, 120.0);

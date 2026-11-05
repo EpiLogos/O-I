@@ -115,6 +115,9 @@ export interface WorldAutomationLane {
   /** Its clip's loop, in the clip's own time (DLW build ruling 2026-11-05: "A slot take's lanes repeat for each loop pass, as Live draws
    * a looped clip's envelope"): its points from its start to the loop's end, then the loop's own again for each pass. */
   loop?: {start: number; from: number; to: number};
+  /** Its clip's start marker, in the clip's own time, where its loop is off (O-I #849 round 24): an arrangement clip lies on the ruler from
+   * it, as a looping one does from its loop's `start`. */
+  start?: number;
 }
 /** A take lane: one take, laid on the ruler as Live's take lanes are. */
 export interface WorldTakeLane {
@@ -486,4 +489,18 @@ export function walkReaches(set: WorldTrackSet, walkId: string): Set<string> {
     for (const ref of stop.also) reached.add(ref);
   }
   return reached;
+}
+
+// Where each row starts on a set with no ruler: the rows end to end, each as
+// wide as its widest clip's span (at least 1). The Arrangement lays clips by it
+// (frame/tracks/ArrangementRuler.tsx placeClips), and a lane an adapter lays
+// under a clip of such a set lies by it too. `end` is where the last row ends.
+export function rowOffsets(columns: readonly WorldTrackColumn[], clips: readonly WorldTrackClip[]): {offsets: Map<string, number>; end: number} {
+  const offsets = new Map<string, number>();
+  let cursor = 0;
+  for (const row of columns) {
+    offsets.set(row.id, cursor);
+    cursor += Math.max(1, ...clips.filter((clip) => clip.columnId === row.id).map((clip) => clip.span?.end ?? 1));
+  }
+  return {offsets, end: cursor};
 }
