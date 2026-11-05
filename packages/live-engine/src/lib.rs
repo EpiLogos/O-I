@@ -43,7 +43,8 @@ pub use bridge::{
 pub use devices::{
     convolver_normalisation, room_impulse, BypassDevice, CompressorDevice, DelayDevice,
     DelayParams, DynamicsDevice, DynamicsParams, EchoDevice, EchoParams, FilterDevice, FilterKind,
-    FilterParams, GainDevice, GlueDevice, ReverbDevice, RoomDevice, RoomParams,
+    FilterParams, GainDevice, GlueDevice, LevelDevice, ReverbDevice, RoomDevice, RoomParams,
+    TORUS_LEVEL_LAW,
 };
 pub use engine::{
     engine, BlockStamp, DeviceAt, DeviceFace, Due, EngineCore, EngineEvent, EngineHandle,
@@ -51,9 +52,9 @@ pub use engine::{
 };
 pub use graph::{
     ClipEdge, Clock, Device, Graph, GraphError, GroupTrack, Instrument, LaidSample, MasterTrack,
-    Note, RackDevice, ReturnTrack, TorusAct, TorusHear, TorusStrike, Touch, Track, MAX_GROUPS,
-    MAX_RETURNS, TORUS_ACT_KEYS, TORUS_HEAR_FRAMES, TORUS_HEAR_MODES, TORUS_STRIKE_MODES,
-    TORUS_WAITING,
+    Note, RackDevice, ReturnTrack, RingOut, RungOut, TorusAct, TorusHear, TorusStrike, Touch,
+    Track, MAX_GROUPS, MAX_RETURNS, TORUS_ACT_KEYS, TORUS_HEAR_FRAMES, TORUS_HEAR_MODES,
+    TORUS_STRIKE_MODES, TORUS_WAITING,
 };
 pub use instruments::{OperatorInstrument, SampleInstrument, SilentInstrument};
 

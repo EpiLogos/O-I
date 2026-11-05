@@ -296,14 +296,16 @@ fn sha256_ref(value: &str) -> bool {
             .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
 }
 
-/// The sha256 of a value as the values it holds: each number by the f64 it is, so a checkpoint read back
-/// through another JSON writer (a frame's) keeps its digest.
+/// The sha256 of a value as the values it holds: each number by the f64 it is, zero as one zero (a frame
+/// writes no negative zero: JSON.stringify(-0) is "0"), so a checkpoint read back through another JSON writer
+/// (a frame's) keeps its digest.
 pub fn value_sha256(value: &Value) -> Result<String, String> {
     fn canonical(value: &Value) -> Result<Value, String> {
         Ok(match value {
             Value::Number(number) => Value::Number(
                 number
                     .as_f64()
+                    .map(|n| if n == 0.0 { 0.0 } else { n })
                     .and_then(Number::from_f64)
                     .ok_or("a take holds only finite numbers")?,
             ),
@@ -946,6 +948,21 @@ pub(crate) mod tests {
         let answer = json!({"torus_render":{"schema":TORUS_RENDER,"from_samples":from.to_string(),"frames":frames,
             "sample_rate":48000,"audio":audio,"made_way":[],"checkpoint":checkpoint(from + frames),"continues":token}});
         (command, answer)
+    }
+    /// A frame writes JSON with no negative zero (JavaScript's JSON.stringify(-0) is "0"): a value read back through it keeps its
+    /// digest, as every other number does by the f64 it is.
+    #[test]
+    fn a_value_keeps_its_digest_through_a_frame_that_writes_no_negative_zero() {
+        let owner =
+            serde_json::from_str::<Value>(r#"{"amplitudes":[[0.001,-0.0]],"rate":48000.0}"#)
+                .unwrap();
+        let frame =
+            serde_json::from_str::<Value>(r#"{"amplitudes":[[0.001,0]],"rate":48000}"#).unwrap();
+        assert_eq!(value_sha256(&owner).unwrap(), value_sha256(&frame).unwrap());
+        let other =
+            serde_json::from_str::<Value>(r#"{"amplitudes":[[0.001,1e-300]],"rate":48000}"#)
+                .unwrap();
+        assert_ne!(value_sha256(&owner).unwrap(), value_sha256(&other).unwrap());
     }
     fn pcm(from: u64, end: u64) -> String {
         let mut hash = Sha256::new();

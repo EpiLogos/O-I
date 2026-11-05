@@ -618,3 +618,120 @@ test('the candidate\'s clip plays on the part\'s one playing path: its notes str
   assert.match(owners, /release: holds => livePlayingPath\(\)\.clipRelease\(holds\)/)
   assert.doesNotMatch(source, /action: 'play'/, 'the clip strikes no pitch-class act')
 })
+
+// ---------------------------------------------------------------------------------------------------- a row's launch, on the launch grid
+// O-I #743: a row's launch plays every clip of the row at once, each on its own track's player (Live's scene launch), each landing where its
+// launch quantize says (DLW manual §21.1: "How a clip launches, when it lands and what follows it are the clip's own, in its Launch tab.
+// The transport's Quantize is the launch quantize for every clip set to Global"; §21.1's rule "A row launches only what is in it").
+
+test('a launch quantize is a step of the grid: bars of four beats, or a note value, a triplet two thirds of it; none is no step', () => {
+  assert.deepEqual(['1 bar', '2 bars', '4 bars', '8 bars'].map(word => player.quantumBeats(word)), [4, 8, 16, 32])
+  assert.deepEqual(['1/2', '1/4', '1/8', '1/16', '1/32'].map(word => player.quantumBeats(word)), [2, 1, 0.5, 0.25, 0.125])
+  assert.deepEqual(['1/2t', '1/4t', '1/8t', '1/16t'].map(word => player.quantumBeats(word)), [4 / 3, 2 / 3, 1 / 3, 1 / 6])
+  assert.equal(player.quantumBeats('none'), null)
+  for (const word of ['global', '3 bars', '1/32t', '1/64', '']) assert.equal(player.quantumBeats(word), undefined, word)
+  // the grid's steps from its origin: the first at or after the earliest a launch can land
+  assert.equal(player.landAt(1000n, null, 480), 1000n, 'no grid yet: it lands as soon as it can')
+  assert.equal(player.landAt(1000n, 900n, null), 1000n, 'no step: as soon as it can')
+  assert.equal(player.landAt(1000n, 900n, 480), 1380n)
+  assert.equal(player.landAt(1380n, 900n, 480), 1380n, 'on a step, there')
+  assert.equal(player.landAt(1000n, 900n, 1000 / 3), 1233n, 'a step of a fraction of a sample, rounded once from the origin')
+  assert.equal(player.landAt(800n, 900n, 480), 900n, 'never before the grid\'s origin')
+})
+
+test('a launch that lands later than it could strikes its notes from where it lands, and paces them from then', async () => {
+  const {p, clock, sent} = harness()
+  const pressed = clock.now()
+  const asked = []
+  p.play(ADDRESS, REAL_BPM, (clip, timing) => { asked.push([clip.name, timing.anchor, timing.rate]); return timing.anchor + 24000n })
+  await clock.settle()
+  assert.deepEqual(asked, [['LABS 10', BigInt(ANCHOR), 48000]], 'asked once, with the clip read and the earliest it can land')
+  await clock.run(pressed + 1200)
+  await clock.settle()
+  const acts = actsOf(REAL)
+  assert.equal(sent.length, acts.length)
+  acts.forEach((act, i) => {
+    assert.ok(Math.abs(sent[i].at - (pressed + 0.5 + act.seconds)) < 1e-9, `act ${i} is sent one lookahead before its own sample, half a second on`)
+    if (act.kind === 'strike') assert.equal(sent[i].command.at_samples_elapsed, String(ANCHOR + 24000 + Math.round(act.seconds * 48000)))
+  })
+})
+
+/** A two-bar clip at 120 BPM: a note on its first beat and one on its fifth, from `p` up. */
+const short = (name, quantize, p) => ({...REAL, name, quantize, loop: false, start: 0, end: 8, position: 0, length: 8, notes: [
+  {id: 1, p, at: 0, len: 1, vel: 100, chance: 1, on: true}, {id: 2, p: p + 4, at: 4, len: 1, vel: 100, chance: 1, on: true}]})
+/** Each track's player over the one playing path; the owner's clock moves only when the test advances it. */
+const rowHarness = () => {
+  const clock = controlledClock()
+  const sent = []
+  let samples = 480000n
+  const path = keys.createJankoInput({window: () => windowState, send: async command => { sent.push({at: clock.now(), command: structuredClone(command)}); return {ok: true} }})
+  const clips = {0: short('Keys', 'global', 60), 1: short('Pads', '1/4', 67), 3: short('Bass', 'global', 48)}
+  const ownersOf = () => ({
+    read: async address => clips[address.track],
+    clock: async () => ({...CLOCK, samples_elapsed: String(samples)}),
+    strike: (notes, amplitude, at) => path.clipStrike(notes, amplitude, at), release: holds => path.clipRelease(holds),
+    watch: () => () => {}, now: clock.now, later: clock.later, cancel: clock.cancel, random: () => 0,
+  })
+  const single = player.createClipPlayer(ownersOf())
+  const made = new Map()
+  const acts = player.clipLaunchActs(single, () => ({ok: true, value: {standing: 'following'}, parameters: {torus: {}}}),
+    track => { const p = player.createClipPlayer(ownersOf()); made.set(track, p); return p })
+  return {clock, sent, single, made, acts, advance: frames => { samples += BigInt(frames) }}
+}
+const ROW = [{track: 0, name: 'Keys', kind: 'midi'}, {track: 1, name: 'Pads', kind: 'midi'}, {track: 2, name: 'Drums', kind: 'audio'}]
+const settled = async (clock, answer) => { for (let i = 0; i < 4; i++) await clock.settle(); return answer }
+const strikeSamples = sent => strikes(sent).map(s => BigInt(s.command.at_samples_elapsed))
+
+test('a row launches every MIDI clip of it together, each on its own track, on one grid; an audio clip of it is said, not played', async () => {
+  const {clock, sent, single, made, acts, advance} = rowHarness()
+  const said = await settled(clock, acts.launchRow('/sets/a.als', 2, 120, ROW, '1 bar'))
+  assert.equal(said.ok, true, said.error)
+  assert.equal(said.note, 'Row 3 plays on the torus: Keys and Pads. Drums is an audio clip, which the engine plays where it lies in the Arrangement, not from a slot.')
+  assert.deepEqual([...made.keys()], [0, 1], 'a player of each MIDI part\'s clip')
+  assert.deepEqual([...made.values()].map(p => p.state().playing?.name), ['Keys', 'Pads'])
+  await settled(clock, clock.run(clock.now() + 0.1))
+  assert.deepEqual(strikeSamples(sent), [BigInt(ANCHOR), BigInt(ANCHOR)], 'nothing played: the row lands as soon as it can, together, and that is the grid\'s origin')
+  // While the row plays, a clip launched lands on the grid: Keys on the transport's Quantize (Global: 1 bar), from where the grid began.
+  advance(30000)
+  const bar = 4 * 0.5 * 48000
+  sent.length = 0
+  const keysAnswer = await settled(clock, acts.launch({path: '/sets/a.als', track: 0, at: {slot: 2}}, 120, '1 bar'))
+  assert.equal(keysAnswer.ok, true, keysAnswer.error)
+  assert.equal(single.state().playing?.name, 'Keys', 'a clip launched on a track takes the place of the row\'s clip on it')
+  assert.equal(made.get(0).state().playing, null)
+  assert.equal(made.get(1).state().playing?.name, 'Pads', 'the row plays on on the other tracks')
+  await settled(clock, clock.run(clock.now() + 2))
+  assert.deepEqual(strikeSamples(sent), [BigInt(ANCHOR + bar), BigInt(ANCHOR + bar)], 'Keys lands on the next bar of the grid, as Pads strikes its fifth beat')
+  // Pads keeps its own 1/4: launched again now, it lands on the next beat of the grid, not the next bar.
+  advance(30000)
+  sent.length = 0
+  await settled(clock, acts.launchRow('/sets/a.als', 2, 120, [ROW[1]], '1 bar'))
+  await settled(clock, clock.run(clock.now() + 0.3))
+  assert.deepEqual(strikeSamples(sent), [BigInt(ANCHOR + 3 * 24000)], 'Pads lands on its own quantize')
+  assert.equal(single.state().playing?.name, 'Keys', 'a row that holds nothing on a track leaves what plays there')
+  // Stop all stops every player.
+  assert.equal(acts.stopAll().ok, true)
+  assert.deepEqual([single, ...made.values()].map(p => p.state().playing), [null, null, null])
+})
+
+test('a row stops a track where its empty slot keeps the stop button, and leaves one whose slot has it removed', async () => {
+  const {clock, single, acts} = rowHarness()
+  await settled(clock, acts.launch({path: '/sets/a.als', track: 3, at: {slot: 0}}, 120, '1 bar'))
+  assert.equal(single.state().playing?.name, 'Bass')
+  await settled(clock, acts.launchRow('/sets/a.als', 2, 120, ROW, '1 bar'))
+  assert.equal(single.state().playing?.name, 'Bass', 'the row holds no slot of track 4 that stops it')
+  const said = await settled(clock, acts.launchRow('/sets/a.als', 2, 120, [...ROW, {track: 3, kind: 'stop'}], '1 bar'))
+  assert.equal(said.ok, true)
+  assert.equal(single.state().playing, null, 'its empty slot\'s stop stops Bass')
+})
+
+test('a row with no MIDI clip, no tempo or a Torus that cannot play is refused in words, and nothing plays', async () => {
+  const {acts, made} = rowHarness()
+  assert.deepEqual(await acts.launchRow('/sets/a.als', 2, 120, [ROW[2]], '1 bar'), {ok: false,
+    error: 'Row 3 holds no MIDI clip to play on the torus. Drums is an audio clip, which the engine plays where it lies in the Arrangement, not from a slot.'})
+  assert.deepEqual(await acts.launchRow('/sets/a.als', 2, 0, ROW, '1 bar'), {ok: false, error: 'The set discloses no tempo, so the clip has no time to play in.'})
+  assert.equal(made.size, 0)
+  const lone = player.clipLaunchActs(player.createClipPlayer({}), () => ({ok: true, value: {standing: 'following'}, parameters: {torus: {}}}))
+  assert.deepEqual(await lone.launchRow('/sets/a.als', 2, 120, ROW, '1 bar'), {ok: false,
+    error: 'Row 3 cannot launch here: this player plays one clip at a time.'})
+})

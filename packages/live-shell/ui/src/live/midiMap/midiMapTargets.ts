@@ -10,7 +10,7 @@
 import type {InstrumentEdit, StageResult} from '@epilogos/expressions-boundary'
 import {BY_HAND, commitLiveInstrumentEdit, liveInstrumentWritable, liveTorusMacroRows, liveTorusState, LIVE_CADENCE_OPTIONS, NO_HAND, TORUS_FUNDAMENTAL, TORUS_RATE,
   torusSessionEdit, torusSessionOf, type LiveTorusState, type LiveWriteHow, type TorusSettingsEdit} from '../torusInstrument'
-import {noteDeviceChain, setScaleTie} from '../noteDevices/noteDeviceHold'
+import {noteDeviceChain, scaleTieParameter, setScaleTie} from '../noteDevices/noteDeviceHold'
 import {NOTE_DEVICE_LABEL, TIE_RULES, TIE_RULE_LABEL, type NoteDevice, type TieRule} from '../noteDevices/noteDevices'
 import type {MapTarget, MapValue} from './midiMapModel'
 
@@ -85,14 +85,15 @@ export function mapTargets(torus: LiveTorusState | null, chain: readonly NoteDev
     if (device.kind !== 'scale') continue
     const deviceId = device.id
     targets.push({
-      kind: 'choice', id: `note-device:${deviceId}:tie`, label: `${NOTE_DEVICE_LABEL.scale} tie`, group: 'Note devices', writer: 'session',
+      kind: 'choice', id: scaleTieParameter(deviceId), label: `${NOTE_DEVICE_LABEL.scale} tie`, group: 'Note devices', writer: 'session',
       options: TIE_RULES.map(tie => ({value: tie, label: TIE_RULE_LABEL[tie]})), current: device.params.tie,
-      // The tie is held by the session's note-device chain, not written to the owner: it is judged against the chain after the set.
-      apply: (value): Promise<StageResult> => {
+      // The tie is held by the session's note-device chain, not written to the owner: it is judged against the chain after the set. A
+      // mapped control moving it is the hand, heard as one (noteDeviceHold.ts subscribeHeldHandMoves); a take's lane writing it is not.
+      apply: (value, how = BY_HAND): Promise<StageResult> => {
         if (!noteDeviceChain().some(row => row.id === deviceId && row.kind === 'scale')) {
           return Promise.resolve({ok: false, error: 'The Scale device is no longer in the note-device chain.'})
         }
-        setScaleTie(deviceId, value as TieRule)
+        setScaleTie(deviceId, value as TieRule, how)
         const after = noteDeviceChain().find(row => row.id === deviceId)
         return Promise.resolve(after?.kind === 'scale' && after.params.tie === value ? {ok: true} : {ok: false, error: 'The Scale tie did not take the value.'})
       },

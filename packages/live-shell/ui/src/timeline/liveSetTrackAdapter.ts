@@ -29,7 +29,8 @@
 // Live's Insert MIDI Clip); Paste, a clip's Duplicate and Delete, an empty slot's stop button, a track's Rename, Move and Duplicate, and a
 // row's Insert, Rename, Duplicate and Delete each run one typed `live_set_act` (packages/live-set/src/acts.rs) against the set's revision,
 // and answer in the owner's words. Launch, Stop and Stop all play the clip on the torus through the clip player (live/clipPlayer.ts
-// clipLaunchActs). The slots whose stop button the set has removed are each track's `stopless`, read from the owner (`stoplessSlots`).
+// clipLaunchActs), and a row's Launch every clip the row holds, with the empty slots whose stop it keeps (Live's scene launch). The slots
+// whose stop button the set has removed are each track's `stopless`, read from the owner (`stoplessSlots`).
 import type {SetDocument} from '../shell/document'
 import {liveColour, liveColourIndex} from '../live/livePalette'
 import type {SetSummary} from '../shell/useSet'
@@ -38,6 +39,7 @@ import type {LiveClipAt, LiveEnvelope, LiveSend, LiveSetAct, LiveSetActed, LiveT
 import {enginePartOf, type LiveEngineReading} from '../live/liveEngine'
 import type {LiveMixerControl, LiveMixerValue} from '../live/liveWrites'
 import {readTorusKeptDrag, TORUS_KEPT_MIME, type TorusRackPlacing} from '../frame/instruments'
+import type {RowSlot} from '../live/clipPlayer'
 import {refusalWords} from '../../../../../desktop/cradle/src/shared/Refusal.tsx'
 import type {ClipLaneStanding} from '../live/clipPlayer'
 
@@ -81,6 +83,9 @@ export interface LiveSetReading {
   compWrite?: (track: number, take: number, range: {start: number; end: number}) => Promise<unknown>
   /** The set owner's acts on its objects (live/liveWrites.ts writeLiveSetAct, kernel live_set_act); absent, they wait for it. */
   act?: (act: LiveSetAct) => Promise<LiveSetActed>
+  /** Consolidate on an audio part (O-I #743; live/liveWrites.ts writeLiveAudioConsolidate): the engine renders its clips alone across the
+   * stretch and the set's owner keeps the sample beside the set as the clip that plays it; absent, an audio part's Consolidate waits for it. */
+  consolidateAudio?: (track: number, span: {start: number; end: number}) => Promise<LiveSetActed>
   /** Insert clip through the set's owner (live/liveWrites.ts writeLiveInsertClip, kernel live_clip_create). */
   insertClip?: (track: number, scene: number) => Promise<unknown>
   /** A clip's info text, read from and written to the set's owner (live/liveWrites.ts: live_clip_read, live_clip_write `info`). */
@@ -88,6 +93,8 @@ export interface LiveSetReading {
   /** Launch, Stop the track and Stop all on the torus (live/clipPlayer.ts liveClipActs), by the track's place and the clip's. */
   play?: {launch(track: number, at: LiveClipAt): Promise<WorldActionReceipt>; stop(track: number): WorldActionReceipt | Promise<WorldActionReceipt>
     stopAll(): WorldActionReceipt | Promise<WorldActionReceipt>
+    /** A row's Launch (O-I #743): what row `row` holds on each part, its clips and the empty slots whose stop it keeps. */
+    launchRow?(row: number, slots: readonly RowSlot[]): Promise<WorldActionReceipt>
     /** Re-enable (live/clipPlayer.ts, O-I #853): an overridden parameter, or every one, back to the take's lanes. */
     reenable?(parameter?: string): Promise<WorldActionReceipt>}
   /** The standing of the take's lanes as the clip player plays them (O-I #853): what the hand overrode, which Re-enable counts. */
@@ -111,11 +118,13 @@ export const LIVE_SEAT_SOUND_OP = `${LIVE_ACT_OP('track_insert')}, a rack's ${LI
 export const LIVE_EXPORT_TAKE_OP = 'render-take {checkpoint, acts, frames} — the take\'s course rendered by the Torus\'s owner (QL-MEF torus-render), saved as 32-bit float WAV'
 export const LIVE_INSERT_CLIP_OP = 'live_clip_create {path, track, scene, length: 4, notes: []} — an empty one-bar MIDI clip in the empty slot, as Live inserts one'
 /** What an act no op of the set's owner carries waits for (O-I #743, round two), as the status bar says after the missing op. */
-export const LIVE_RENDER_WAIT = 'Consolidating audio clips writes a new sample of what plays: a render of the part, which nothing here carries.'
-/** Why a track of a kind cannot be consolidated here, by the kind its owner reads (a MIDI part's the owner takes). */
+export const LIVE_RENDER_WAIT = 'Consolidating audio clips writes a new sample of what they play: the engine renders it, and no engine is handed in here.'
+/** Why a track of a kind cannot be consolidated here, by the kind its owner reads (a MIDI part's the owner takes); an audio part's waits
+ * for a render, and is consolidated where one is handed in (`consolidateAudio`). */
 const CONSOLIDATE_REFUSED: Readonly<Partial<Record<SetSummary['tracks'][number]['kind'], string>>> = {audio: LIVE_RENDER_WAIT}
+/** The parts that hold clips, by the kind of clip each holds (a return, a group and the main hold none). */
+const CLIP_PARTS: Readonly<Partial<Record<SetSummary['tracks'][number]['kind'], 'midi' | 'audio'>>> = {midi: 'midi', audio: 'audio'}
 export const LIVE_WAITING: Readonly<Record<string, string>> = {
-  'row.launch': 'a player of every clip of a row at once on the torus: the clip player (live/clipPlayer.ts) plays one clip at a time',
   'slot.record': 'a recording path: the set\'s Record handed in (live/liveTake.ts recordIntoSlot), which lays what is played in the slot as a take',
   'track.remove': 'the decode of how Live re-routes the parts and sends that went to a deleted track: session-model.md has no rule for it',
   'clip.crop': 'the decode of what Live\'s Crop Clip keeps of a clip — its notes and markers outside the loop, or outside its start and end: the Live Object Model lists Clip.crop (LOM-INVENTORY.md), and nothing decoded says what it does; an audio clip\'s crop also writes a new sample, a render',
@@ -126,6 +135,8 @@ export const LIVE_RECORD_SLOT_OP = `Record into the slot (live/liveTake.ts recor
 /** Re-enable (O-I #853): what the hand moved off a take's lanes, given back to them. */
 export const LIVE_REENABLE_OP = 'the clip player (live/clipPlayer.ts reenable): each parameter the hand moved off a take\'s lanes plays from them again, at the value its lane reached'
 export const LIVE_PLAY_OP = 'the clip player (live/clipPlayer.ts): the clip read from the set\'s owner, its notes struck on the torus at the set\'s tempo'
+/** A row's Launch (O-I #743): Live's scene launch, on a player of each part. */
+export const LIVE_ROW_LAUNCH_OP = 'the clip player (live/clipPlayer.ts launchRow): every MIDI clip of the row read from the set\'s owner and played together on the torus, a player of each part, each landing on its launch quantize'
 
 /** One send on a part's mixer row: Live's name for it ("Send A"), the return track it feeds, its level in dB within the range the set
  * keeps (Live's −70 dB floor to 0 dB), and why it cannot be moved when Live has it off on this part (a return's own sends). */
@@ -178,12 +189,15 @@ function automationLane(trackId: string, index: number, env: LiveEnvelope, docum
 }
 
 export const LIVE_SET_TRACK_ADAPTER_ID = 'live-set-tracks'
+/** What names a lane of the take that plays, after its clip's id: the map parameter it writes follows. */
+const TAKE_LANE = '#lane/'
 
 const barBeat = (beats: number): string => `${Math.floor(beats / 4) + 1}.${Math.floor(beats % 4) + 1}`
 
 export const liveSetTrackAdapter: WorldTrackAdapter<LiveSetReading> = {
   id: LIVE_SET_TRACK_ADAPTER_ID,
-  project({set, document, colors, mixerWrite, sendWrite, compWrite, act, insertClip, clipInfo, play, exportTake, engine, openSound, record, lanes: standing}): WorldTrackSet {
+  project({set, document, colors, mixerWrite, sendWrite, compWrite, act, insertClip, clipInfo, play, exportTake, engine, openSound, record, lanes: standing,
+    consolidateAudio}): WorldTrackSet {
     if (!set) return {columns: [], tracks: [], clips: []}
     const trackRef = (index: number) => `als:${set.path}#track/${index}`
     // The set's master track is Live's Main track: its material stands at the end, and its chain is the devices the set lists on it.
@@ -255,6 +269,14 @@ export const liveSetTrackAdapter: WorldTrackAdapter<LiveSetReading> = {
       comp.push(...own.sort((a, b) => a.start - b.start))
       track.automation?.forEach((env, at) => { if (env.points.length) automation.push(automationLane(trackRef(index), at, env, track)) })
     })
+    // The lanes of the take that plays (O-I #743 round 20), each its own under the take's clip, in the clip's own time, marked Overridden
+    // where the hand holds it, so each has its own Re-enable.
+    const take = standing?.take?.address.path === set.path && standing.take.address.track < tracks.length ? standing.take : null
+    if (take && standing?.lanes) {
+      const clipId = `${trackRef(take.address.track)}/${'slot' in take.address.at ? `slot/${take.address.at.slot}` : `clip/${take.address.at.arrangement}`}`
+      for (const lane of standing.lanes) automation.push({id: `${clipId}${TAKE_LANE}${lane.parameter}`, trackId: trackRef(take.address.track), device: take.name,
+        parameter: lane.label, clipId, points: lane.points.map(point => ({at: point.beat, value: point.value})), overridden: standing.overridden.includes(lane.parameter)})
+    }
     const absent: Record<string, string> = {events: LIVE_LANES_ABSENT.events}
     if (!read) Object.assign(absent, LIVE_LANES_ABSENT)
     else {
@@ -309,7 +331,7 @@ export const liveSetTrackAdapter: WorldTrackAdapter<LiveSetReading> = {
       }}
       result.actions = {...result.actions, mixer}
     }
-    const objects = liveObjectActs(set, act, insertClip, play, clipInfo, exportTake, openSound, record)
+    const objects = liveObjectActs(set, act, insertClip, play, clipInfo, exportTake, openSound, record, document, consolidateAudio)
     if (objects) result.actions = {...result.actions, ...objects}
     return result
   },
@@ -469,7 +491,7 @@ export function rackUnplaced(rack: TorusRackPlacing): string[] {
  * Stop where the player is. An object of another set, or the Main track, is refused here, before anything reaches the owner. Pure. */
 function liveObjectActs(set: SetSummary, act: LiveSetReading['act'], insertClip: LiveSetReading['insertClip'], play: LiveSetReading['play'],
   clipInfo?: LiveSetReading['clipInfo'], exportTake?: LiveSetReading['exportTake'], openSound?: LiveSetReading['openSound'],
-  record?: LiveSetReading['record']): WorldTrackActions | null {
+  record?: LiveSetReading['record'], document: SetDocument | null = null, consolidateAudio?: LiveSetReading['consolidateAudio']): WorldTrackActions | null {
   if (!act && !play && !clipInfo && !exportTake && !record) return null
   const prefix = `als:${set.path}#track/`
   const refused = (error: string) => Promise.resolve({ok: false as const, error})
@@ -571,7 +593,12 @@ function liveObjectActs(set: SetSummary, act: LiveSetReading['act'], insertClip:
     actions.consolidateClips = {op: op('clips_consolidate'), run: (trackId, span) => {
       const track = trackOf(trackId, 'holds no clips'), why = typeof track === 'number' ? consolidateRefusal(track) : undefined
       if (typeof track === 'string') return refused(track)
-      return why ? refused(why) : run({kind: 'clips_consolidate', track, from: span.start, to: span.end})
+      if (why) return refused(why)
+      // An audio part's clips are rendered by the engine and kept beside the set; what it did not play of them is said after.
+      if (consolidateAudio && rendersConsolidate(track)) return consolidateAudio(track, {start: span.start, end: span.end}).then(
+        answer => ({ok: true as const, note: [answer.done, answer.sourceRefused, ...(answer.unplayed ?? [])].filter(Boolean).join(' ')}),
+        (cause: unknown) => ({ok: false as const, error: said(cause)}))
+      return run({kind: 'clips_consolidate', track, from: span.start, to: span.end})
     }, refuses: trackId => {
       const track = trackOf(trackId, 'holds no clips')
       return typeof track === 'string' ? track : consolidateRefusal(track)
@@ -609,9 +636,14 @@ function liveObjectActs(set: SetSummary, act: LiveSetReading['act'], insertClip:
     }}
   }
   // An audio part's consolidate writes a new sample of what it plays: a render (the owner refuses it in the same words).
+  const rendersConsolidate = (track: number): boolean => {
+    const kind = set.tracks[track]?.kind
+    return consolidateAudio !== undefined && kind !== undefined && CONSOLIDATE_REFUSED[kind] === LIVE_RENDER_WAIT
+  }
   const consolidateRefusal = (track: number): string | undefined => {
     const kind = set.tracks[track]?.kind
-    return kind === 'midi' ? undefined : (kind && CONSOLIDATE_REFUSED[kind]) ?? `${named(track)} is no audio or MIDI part: it holds no clips to join.`
+    if (kind === 'midi' || rendersConsolidate(track)) return undefined
+    return (kind && CONSOLIDATE_REFUSED[kind]) ?? `${named(track)} is no audio or MIDI part: it holds no clips to join.`
   }
   actions.waiting = LIVE_WAITING
   if (insertClip) actions.insertClip = {op: LIVE_INSERT_CLIP_OP, run: (trackId, rowId) => {
@@ -643,8 +675,26 @@ function liveObjectActs(set: SetSummary, act: LiveSetReading['act'], insertClip:
       return typeof track === 'string' ? {ok: false as const, error: track} : play.stop(track)
     }}
     actions.stopAll = {op: `${LIVE_PLAY_OP} — Stop all stops whatever plays`, run: () => play.stopAll()}
+    // A row launches only what is in it (§21.1): its clips, and the stop of each empty slot that keeps one; a slot whose stop the set
+    // removed leaves its part playing. A part's clip is of the part's kind.
+    const launchRow = play.launchRow
+    if (launchRow) actions.launchStop = {op: LIVE_ROW_LAUNCH_OP, run: columnId => {
+      const scene = rowOf(columnId)
+      if (typeof scene === 'string') return refused(scene)
+      if (!document) return refused('The set\'s slots are not read yet, so the row has nothing to launch.')
+      const slots: RowSlot[] = []
+      set.tracks.forEach((part, track) => {
+        const kind = CLIP_PARTS[part.kind]
+        if (!kind) return
+        const held = document.tracks[track]?.sessionSlots[String(scene)]
+        if (typeof held === 'string') slots.push({track, name: held, kind})
+        else if (!(document.tracks[track]?.stoplessSlots ?? []).includes(scene)) slots.push({track, kind: 'stop'})
+      })
+      return launchRow(scene, slots)
+    }}
     const reenable = play.reenable
     if (reenable) actions.reenable = {op: LIVE_REENABLE_OP, run: laneId => laneId === undefined ? reenable()
+      : laneId.includes(TAKE_LANE) ? reenable(laneId.slice(laneId.indexOf(TAKE_LANE) + TAKE_LANE.length))
       : refused(`${laneId} is a lane of the set's own automation, which no hand here overrides: Re-enable gives back what a take's lanes play.`)}
   }
   // Record into a slot (O-I #743): an armed MIDI part's empty slot begins a take on the part, and ends it there, laid in the slot.

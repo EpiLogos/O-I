@@ -36,7 +36,7 @@
 // (prepareTake, takeLaneMoves), unless the take already makes it again: under its course every owner write is one of the course's acts,
 // and otherwise a parameter the Torus's moves set is theirs.
 import {useEffect, useState, useSyncExternalStore} from 'react'
-import {isStageSampleCursor, readInstrumentEdit, readStageTorusCheckpoint, stageJournalLanding, STAGE_JANKO_KEYS_MAX, STAGE_RENDER_FRAMES_MAX, type InstrumentEdit,
+import {isStageCheckpointName, isStageSampleCursor, readInstrumentEdit, readStageTorusCheckpoint, stageJournalLanding, STAGE_JANKO_KEYS_MAX, STAGE_RENDER_FRAMES_MAX, type InstrumentEdit,
   type StageCommand, type StageKey, type StagePerformanceJournal, type StageResult, type StageTakeAct, type StageTorusCheckpoint} from '@epilogos/expressions-boundary'
 import type {LiveClipAt, LiveClipReading, LiveNote, LiveNoteMpe, LiveSetAct, LiveSetActed} from '../../../../../desktop/cradle/src/kernel/types'
 import type {SlotBinding} from '../frame/transport/slots'
@@ -306,10 +306,13 @@ export function createTakeRecorder(): TakeRecorder {
 // ── the Torus's course ─────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 /** The Torus's course over a take: the state it rang in as the take began (its owner's checkpoint), the take's length in samples at the
- * owner's rate, and each act the owner took that lands in it, at its sample, as render-take makes it, in the order of their samples. */
+ * owner's rate, and each act the owner took that lands in it, at its sample, as render-take makes it, in the order of their samples; and,
+ * where the kernel relayed the checkpoint under a name (the stage's `torus` checkpoint answers `checkpoint_sha256`), that name, which a
+ * take is sealed by (the stage's `torus-take` seal; O-I #855). */
 export interface TakeCourse {
   readonly schema: typeof TAKE_COURSE_SCHEMA
   readonly checkpoint: StageTorusCheckpoint
+  readonly checkpoint_sha256?: string
   readonly from_samples_elapsed: string
   readonly frames: number
   readonly sample_rate: number
@@ -346,8 +349,8 @@ function takeKeys(raw: unknown): StageKey[] | null {
 
 /** The take's course from what its owner kept: the checkpoint as the take began, and each act of its journal admitted before Stop (`until`,
  * the owner's cursor then) that lands in the take's `frames`, made as render-take makes it. An act no render makes moved the scene: a take
- * over it has no course. Pure. */
-export function takeCourse(checkpoint: StageTorusCheckpoint, journal: StagePerformanceJournal, until: string, frames: number): TakeLanding {
+ * over it has no course. The name the kernel relayed the checkpoint under (`named`), where it gave one, goes with it. Pure. */
+export function takeCourse(checkpoint: StageTorusCheckpoint, journal: StagePerformanceJournal, until: string, frames: number, named?: string): TakeLanding {
   if (!Number.isSafeInteger(frames) || frames < 1) return {refused: 'the take has no length to render'}
   const from = BigInt(checkpoint.taken_at_samples), stop = BigInt(until), end = from + BigInt(frames)
   const acts: {at: bigint; act: StageTakeAct}[] = []
@@ -398,16 +401,18 @@ export function takeCourse(checkpoint: StageTorusCheckpoint, journal: StagePerfo
   }
   // In the order of their samples; acts at one sample in the order the owner took them.
   const ordered = acts.map((entry, index) => ({...entry, index})).sort((a, b) => a.at < b.at ? -1 : a.at > b.at ? 1 : a.index - b.index)
-  return {course: {schema: TAKE_COURSE_SCHEMA, checkpoint, from_samples_elapsed: checkpoint.taken_at_samples, frames, sample_rate: checkpoint.sample_rate,
-    acts: ordered.map(entry => entry.act)}, struck, released}
+  return {course: {schema: TAKE_COURSE_SCHEMA, checkpoint, ...(named === undefined ? {} : {checkpoint_sha256: named}),
+    from_samples_elapsed: checkpoint.taken_at_samples, frames, sample_rate: checkpoint.sample_rate, acts: ordered.map(entry => entry.act)}, struck, released}
 }
 
-/** A kept course read back from the set, exact (its checkpoint within its bounds, each act within the take and in sample order); null
- * for anything else. Pure. */
+/** A kept course read back from the set, exact (its checkpoint within its bounds, the name it was relayed under where it keeps one, each
+ * act within the take and in sample order); null for anything else. Pure. */
 export function takeCourseOf(raw: unknown): TakeCourse | null {
   if (!plain(raw) || raw.schema !== TAKE_COURSE_SCHEMA || !Array.isArray(raw.acts)) return null
   const checkpoint = readStageTorusCheckpoint(raw.checkpoint)
   if (!checkpoint || raw.from_samples_elapsed !== checkpoint.taken_at_samples || raw.sample_rate !== checkpoint.sample_rate) return null
+  const named = raw.checkpoint_sha256
+  if (named !== undefined && !isStageCheckpointName(named)) return null
   const frames = raw.frames
   if (!Number.isSafeInteger(frames) || (frames as number) < 1) return null
   const from = BigInt(checkpoint.taken_at_samples), end = from + BigInt(frames as number)
@@ -434,7 +439,8 @@ export function takeCourseOf(raw: unknown): TakeCourse | null {
       acts.push({action: 'set', at_samples_elapsed: act.at_samples_elapsed, edit: edit.edit})
     } else return null
   }
-  return {schema: TAKE_COURSE_SCHEMA, checkpoint, from_samples_elapsed: checkpoint.taken_at_samples, frames: frames as number, sample_rate: checkpoint.sample_rate, acts}
+  return {schema: TAKE_COURSE_SCHEMA, checkpoint, ...(named === undefined ? {} : {checkpoint_sha256: named}), from_samples_elapsed: checkpoint.taken_at_samples,
+    frames: frames as number, sample_rate: checkpoint.sample_rate, acts}
 }
 
 /** A bar of 4/4: a take lies from a bar's start and lasts whole bars, as a new clip does. */
@@ -803,18 +809,24 @@ export function takeRenderBody(head: {readonly path: string; readonly track: num
 /** What Export Audio reaches: the frame's stage channel, where the file is saved (a download, which the native host lands in
  * Downloads and says where, studioExports.ts), and, in the native candidate, the take's part in the one engine (`through`: the take's
  * sound at the level it played at, its rate and the Torus's effects at their frames, rendered through the part as the engine plays it;
- * the WAV's bytes, or thrown in the engine's words). */
+ * the WAV's bytes, or thrown in the engine's words); and where the take is laid under the Expression's scene once its course rendered
+ * (`lay`: LivePresets layTorusTake, the stage's `torus-take` seal by the name the kernel relayed the take's checkpoint under, then the
+ * Scene's `record-take`; its words, or the owner's refusal in its words). */
 export interface TakeExportOwners {
   readonly stage: (command: StageCommand) => Promise<StageResult>
   readonly save: (name: string, bytes: Uint8Array<ArrayBuffer>) => Promise<unknown>
   readonly through?: (take: {readonly rate: number; readonly pcm: Float32Array; readonly effects: readonly TakeEffectsAt[]}) => Promise<Uint8Array<ArrayBuffer>>
+  readonly lay?: (take: {readonly checkpoint_sha256: string; readonly id: number; readonly name: string; readonly bpm: number}) =>
+    Promise<{readonly ok: true; readonly words: string} | {readonly ok: false; readonly error: string}>
 }
 
 /** Export Audio of a take's clip (manual §21.2, "What Export Audio renders is what you heard, sample for sample"): its course rendered by
  * the Torus's owner, at the level the take played at; through its part where the engine reaches it (`through`: the Torus's effects as
  * they moved, the part's own chain, its volume and pan, as the engine plays the part), else the Torus alone, written as WAV; saved, and
  * answered in words. A clip no take gave, or a take that keeps no course, is refused in words. A take that does not render through its
- * part is saved as the Torus alone, and says why and that the frame's effects are not in it. */
+ * part is saved as the Torus alone, and says why and that the frame's effects are not in it. Where it can be laid (`lay`), the take is
+ * laid under the scene as soon as its course rendered, so the kernel seals what the Torus's owner was just sent from the checkpoint the
+ * take began at; a take its course names no checkpoint for, or one the owner refuses, says why it was not laid, and is saved still. */
 export async function exportTake(clip: LiveClipReading, owners: TakeExportOwners): Promise<{readonly ok: true; readonly note: string} | {readonly ok: false; readonly error: string}> {
   const named = clip.name || 'This clip'
   if (!clip.take) return {ok: false, error: `${named} is not a take: Export Audio renders a take Record laid, as it was played.`}
@@ -824,6 +836,7 @@ export async function exportTake(clip: LiveClipReading, owners: TakeExportOwners
   if (!course) return {ok: false, error: noCourse(typeof keeps.course_refused === 'string' ? keeps.course_refused : 'it was laid before the Torus kept one')}
   const rendered = await renderTake(course, owners.stage)
   if ('refused' in rendered) return {ok: false, error: rendered.refused}
+  const laid = owners.lay ? ` ${await layExported(clip.take, keeps, course, clip.name || `Take ${clip.take.id}`, owners.lay)}` : ''
   const {steps, kept} = takeLevels(keeps, course)
   const pcm = rendered.pcm
   for (const [i, step] of steps.entries()) {
@@ -838,26 +851,53 @@ export async function exportTake(clip: LiveClipReading, owners: TakeExportOwners
     try { file = await owners.through({rate: rendered.sample_rate, pcm, effects: takeEffects(keeps, course)}) }
     catch (cause) { missed = ` It did not render through its part: ${sentence(said(cause))}` }
   }
-  try { await owners.save(name, file ?? takeWav(pcm, rendered.sample_rate)) } catch (cause) { return {ok: false, error: `${name} was not saved: ${sentence(said(cause))}`} }
+  try { await owners.save(name, file ?? takeWav(pcm, rendered.sample_rate)) } catch (cause) { return {ok: false, error: `${name} was not saved: ${sentence(said(cause))}${laid}`} }
   const level = kept ? '' : ' The Torus was not kept with this take, so the file is at the owner\'s own level.'
   const seconds = `${(pcm.length / rendered.sample_rate).toFixed(2)} s`
   const heard = file
     ? `${seconds} of the Torus through its part, as the engine plays it: ${chained ? `the Torus's effects (${chained}) as they moved, ` : ''}the part's own chain, its volume and pan.`
     : `${seconds} of the Torus at ${rendered.sample_rate} Hz, as the take played it.${missed}${chained ? ` The frame's effects (${chained}) are not in the file: they are its own sound, after the Torus.` : ''}`
-  return {ok: true, note: `Exported ${clip.name || `Take ${clip.take.id}`} as “${name}”: ${heard}${level}`}
+  return {ok: true, note: `Exported ${clip.name || `Take ${clip.take.id}`} as “${name}”: ${heard}${level}${laid}`}
+}
+
+/** An exported take laid under the scene (TakeExportOwners `lay`), in words: by the name its course keeps for the checkpoint it began at,
+ * at the tempo it keeps; or why it was not laid. */
+async function layExported(take: NonNullable<LiveClipReading['take']>, keeps: Plain, course: TakeCourse, name: string, lay: NonNullable<TakeExportOwners['lay']>): Promise<string> {
+  const not = (why: string) => `It was not laid under the scene: ${sentence(why)}`
+  if (!course.checkpoint_sha256) return not('the kernel relayed the checkpoint it began at under no name, so nothing seals it')
+  const bpm = typeof keeps.bpm === 'number' && Number.isFinite(keeps.bpm) && keeps.bpm > 0 ? keeps.bpm : null
+  if (bpm === null) return not('it keeps no tempo to lie on')
+  const answer = await lay({checkpoint_sha256: course.checkpoint_sha256, id: take.id, name, bpm}).catch((cause: unknown) => ({ok: false as const, error: said(cause)}))
+  return answer.ok ? answer.words : not(answer.error)
 }
 
 /** The candidate's Export Audio of the take at `at` on `track` of the set at `path`: the clip read whole from the set's owner (kernel
  * live_clip_read), rendered through the frame's stage channel and, in the native candidate, through its part in the one engine
- * (`live_engine_render_take`; the set bridged into the engine, with no sound, when the engine holds none), saved as a download. */
+ * (`live_engine_render_take`; the set bridged into the engine, with no sound, when the engine holds none), saved as a download; and laid
+ * under the Expression's scene (LivePresets layTorusTake), from its arrangement clip's start, or from its own beat 0 in a slot. */
 export async function exportLiveTake(address: {readonly path: string; readonly track: number; readonly at: LiveClipAt}): Promise<{readonly ok: true; readonly note: string} | {readonly ok: false; readonly error: string}> {
-  const [{detectTransport, kernelOp}, torus] = await Promise.all([import('../../../../../desktop/cradle/src/kernel/bridge'), import('./torusInstrument')])
+  const [{detectTransport, kernelOp}, torus, presets] = await Promise.all([import('../../../../../desktop/cradle/src/kernel/bridge'), import('./torusInstrument'),
+    import('./LivePresets')])
   const transport = detectTransport()
   if (transport.kind === 'unavailable') return {ok: false, error: transport.reason}
   const answer = await kernelOp(transport, {op: 'live_clip_read', path: address.path, track: address.track, clip: address.at})
   if (answer.error || answer.outcome?.result !== 'live_clip_reading') return {ok: false, error: answer.error ?? 'The set\'s owner did not answer the clip'}
-  return exportTake(answer.outcome.reading.clip, {stage: torus.commitLiveStage, save: download,
+  const lay: NonNullable<TakeExportOwners['lay']> = async ({checkpoint_sha256, ...take}) => {
+    const beat = 'arrangement' in address.at ? await arrangementStart(address.path, address.track, address.at.arrangement) : 0
+    if (beat === null) return {ok: false, error: 'its clip lies at no beat of the arrangement'}
+    return presets.layTorusTake({checkpoint_sha256, take: {...take, beat}})
+  }
+  return exportTake(answer.outcome.reading.clip, {stage: torus.commitLiveStage, save: download, lay,
     ...(transport.kind === 'tauri' ? {through: take => renderThroughPart(address, take)} : {})})
+}
+
+/** The beat the arrangement clip `index` of part `track` starts at, read from the set's owner; null where it keeps none. */
+async function arrangementStart(path: string, track: number, index: number): Promise<number | null> {
+  const {readSet} = await import('../native/application')
+  const {document} = await readSet(path)
+  const lane = (document as {tracks?: Plain[]}).tracks?.[track]?.arrangement_clips
+  const clip = Array.isArray(lane) ? lane[index] : undefined
+  return plain(clip) && typeof clip.start === 'number' && Number.isFinite(clip.start) && clip.start >= 0 ? clip.start : null
 }
 
 /** A take's sound rendered through its part in the one engine (live_engine_host.rs `live_engine_render_take`): the set it is a take of
@@ -992,21 +1032,24 @@ export interface RecordOwners {
 const said = (cause: unknown) => cause instanceof Error ? cause.message : String(cause)
 const sentence = (text: string) => /[.!?…]$/.test(text) ? text : `${text}.`
 
-/** The Torus as it rings, kept by its owner as a take begins; or why it was not. */
-type Begun = {readonly checkpoint: StageTorusCheckpoint} | {readonly refused: string}
+/** The Torus as it rings, kept by its owner as a take begins, with the name the kernel relayed it under where it gave one; or why it was
+ * not. */
+type Begun = {readonly checkpoint: StageTorusCheckpoint; readonly checkpoint_sha256?: string} | {readonly refused: string}
 
-/** The Torus's checkpoint through the stage channel, or why there is none, in the owner's words. */
+/** The Torus's checkpoint through the stage channel, and the name the kernel relayed it under (`checkpoint_sha256`, which a take is
+ * sealed by: the stage's `torus-take` seal), or why there is none, in the owner's words. */
 async function checkpointOf(stage: (command: StageCommand) => Promise<StageResult>): Promise<Begun> {
   const answer = await stage({command: 'torus', action: 'checkpoint'}).catch((cause: unknown): StageResult => ({ok: false, error: said(cause)}))
   if (!answer.ok) return {refused: `the Torus's owner kept no state of it as the take began: ${answer.error}`}
-  return answer.checkpoint ? {checkpoint: answer.checkpoint} : {refused: 'the Torus\'s owner answered without its checkpoint as the take began'}
+  if (!answer.checkpoint) return {refused: 'the Torus\'s owner answered without its checkpoint as the take began'}
+  return isStageCheckpointName(answer.checkpoint_sha256) ? {checkpoint: answer.checkpoint, checkpoint_sha256: answer.checkpoint_sha256} : {checkpoint: answer.checkpoint}
 }
 
 /** At Stop, the take's course from the owner: its cursor (what it was sent before Stop is the take's), then its journal from the take's first
  * sample. The take lasts whole bars, or to the cursor when it rendered past them. */
 async function landingOf(stage: (command: StageCommand) => Promise<StageResult>, begun: Begun, bpm: number, beats: number): Promise<TakeLanding> {
   if ('refused' in begun) return begun
-  const {checkpoint} = begun
+  const {checkpoint, checkpoint_sha256} = begun
   const failed = (cause: unknown): StageResult => ({ok: false, error: said(cause)})
   const clock = await stage({command: 'audio-clock'}).catch(failed)
   if (!clock.ok || !clock.clock) return {refused: `the Torus's owner did not read its audio clock at Stop: ${clock.ok ? 'it answered without one' : clock.error}`}
@@ -1016,7 +1059,7 @@ async function landingOf(stage: (command: StageCommand) => Promise<StageResult>,
   const journal = await stage({command: 'performance-journal', from_samples_elapsed: checkpoint.taken_at_samples}).catch(failed)
   if (!journal.ok || !journal.journal) return {refused: `the Torus's owner did not give its journal: ${journal.ok ? 'it answered without one' : journal.error}`}
   const frames = Math.max(Number(until - from), Math.round(beats * (60 / bpm) * checkpoint.sample_rate))
-  return takeCourse(checkpoint, journal.journal, clock.clock.samples_elapsed, frames)
+  return takeCourse(checkpoint, journal.journal, clock.clock.samples_elapsed, frames, checkpoint_sha256)
 }
 
 /** Record's store: one take at a time, on the recorder the playing path tells its notes to. */

@@ -62,9 +62,27 @@ export function moveNoteDevice(id: string, delta: -1 | 1): void {
   commit(next)
 }
 
-/** The Scale device's tie rule. Any other device is unchanged. */
-export function setScaleTie(id: string, tie: TieRule): void {
+/** The map parameter a Scale device's tie is (midiMap/midiMapTargets.ts). */
+export const scaleTieParameter = (id: string): string => `note-device:${id}:tie`
+
+/** Who moved a held value: the hand (`hand`: the device's face, a mapped control), else no hand (a take's lane written again). */
+export interface HeldMove {readonly hand?: boolean}
+const handListeners = new Set<(parameters: readonly string[]) => void>()
+/** Tell `moved` the map parameters each move of a session-held value by the hand writes (DLW build ruling 2026-11-05: "Hand moves of
+ * session-held values (the Scale tie and the rest) are heard as overrides, like any other"). Returns the unsubscribe. */
+export function subscribeHeldHandMoves(moved: (parameters: readonly string[]) => void): () => void {
+  handListeners.add(moved)
+  return () => {
+    handListeners.delete(moved)
+  }
+}
+
+/** The Scale device's tie rule, moved by the hand unless `how` says no hand moved it; a move that changes it is the hand's, told to
+ * subscribeHeldHandMoves. Any other device is unchanged. */
+export function setScaleTie(id: string, tie: TieRule, how: HeldMove = {hand: true}): void {
+  const was = chain.find(device => device.id === id && device.kind === 'scale')
   commit(chain.map(device => (device.id === id && device.kind === 'scale' ? {...device, params: {...device.params, tie}} : device)))
+  if (was && was.params.tie !== tie && how.hand === true) for (const moved of [...handListeners]) moved([scaleTieParameter(id)])
 }
 
 /** Clear the chain. Used by tests; a session starts with no devices. */

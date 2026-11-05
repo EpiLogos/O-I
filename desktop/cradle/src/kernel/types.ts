@@ -132,7 +132,10 @@ export type NativeExpressionRequest = {operation: "open"; path: string; expected
    * (`oi.torus-sound/v1`), on the torus or on a form's prepared body; and open a kept sound against the Torus as it stands now
    * (`oi.torus-sound-opening/v1`: the owner's `torus-restore`, and what has moved). */
   | {operation: "torus_sound"; lease: string; checkpoint_sha256: string; name: string; body?: unknown}
-  | {operation: "torus_sound_open"; lease: string; sound: unknown; now_sha256: string};
+  | {operation: "torus_sound_open"; lease: string; sound: unknown; now_sha256: string}
+  /** O-I #855: seal the Torus take that began at a checkpoint its owner gave under the lease (`oi.torus-take/v1`), named by the sha256 the
+   * kernel relayed it under or given whole, as the take's course keeps it (the kernel names it). */
+  | {operation: "torus_take"; lease: string; checkpoint_sha256: string} | {operation: "torus_take"; lease: string; checkpoint: unknown};
 /** Provenance of a composed open (`source` in `oi.native-expression-open/v1`). */
 export interface NativeComposedSource { schema: "oi.native-expression-composed-source/v1"; ql_executable: string; ql_selection: "installed" | "operator-override"; ql_revision: string | null; ql_executable_sha256: string; sky: {mode: "current" | "historical"; epoch: string; snapshot_ref: string; receipt_unix_ms: number} | null; request_sha256: string; composed_at_unix_ms: number }
 /** The page owner's fields (kernel/src/page.rs `apply_field`): a Being's or Thing's ties, a Flow's World, View and Container, and
@@ -1480,7 +1483,10 @@ export type LiveSetAct =
 /** What an act did: its kind, its words, where it left what it made, the set's new revision; and why the clips' sources beside the set
  * did not follow, when they did not. */
 export interface LiveSetActed {act: LiveSetAct['kind']; done: string; at: {track?: number; slot?: number; arrangement?: number; scene?: number; take?: number; lane?: number} | null
-  revision: string; sourceRefused?: string; keepsRefused?: string}
+  revision: string; sourceRefused?: string; keepsRefused?: string
+  /** An audio part's Consolidate (O-I #743, live-set acts.rs consolidate_audio): the sample kept beside the set, from its folder, by its
+   * sha256; and, from the engine's render, the words for each clip of the stretch it did not play. */
+  sample?: {path: string; sha256: string; bytes: number; frames: number; rate: number}; unplayed?: string[]}
 /** One groove of the set's pool: Base is Live's Grid ("1/4" … "1/32", triplets "1/8t", "1/16t"); the amounts are 0–100. */
 export interface LiveGroove {id: number | null; name: string; base: string | null; quantize: number | null; timing: number | null; random: number | null; velocity: number | null}
 /** The set's Groove Pool and its Global Amount (with the range Live keeps beside it). */

@@ -19,7 +19,8 @@
 use crate::devices::{
     AudioEffectRack, BypassDevice, CompressorDevice, DelayDevice, DelayParams, DynamicsDevice,
     DynamicsParams, EchoDevice, EchoParams, FilterDevice, FilterKind, FilterParams, GlueDevice,
-    RackChain, ReverbDevice, RoomDevice, RoomParams, UtilityChannels, UtilityDevice,
+    LevelDevice, RackChain, ReverbDevice, RoomDevice, RoomParams, UtilityChannels, UtilityDevice,
+    TORUS_LEVEL_LAW,
 };
 use crate::engine::Part;
 use crate::graph::{Clock, Graph, GroupTrack, Note, RackDevice, ReturnTrack, Track, MAX_GROUPS};
@@ -548,6 +549,8 @@ pub const TORUS_REVERB_LAW: [(&str, f64, f64); 5] = [
 /// surface, live-dynamics params.rs); or, by the frame's name for it, one of the Torus's effects the
 /// engine sounds as the frame runs it (round 15), from the frame's settings by the frame's keys, each
 /// within the frame's law:
+/// - `level`, the frame's presentation level ([`LevelDevice`]: the Torus's sound times it, before its effects, moved as the
+///   frame's gain moves), from its level, 0 to 4 ([`TORUS_LEVEL_LAW`]);
 /// - `dynamics`, the Torus's Dynamics as its frame's compressor ([`DynamicsDevice`]: the browser's
 ///   DynamicsCompressorNode at a hard knee, then the frame's makeup), from its threshold (dB), ratio,
 ///   attack and release (ms) and makeup (dB), all five carried ([`TORUS_DYNAMICS_LAW`]);
@@ -633,6 +636,27 @@ pub fn rack_device(class: &str, carried: &[(&str, f64)]) -> Result<RackDevice, S
         Ok::<_, String>(values)
     };
     let device: Box<dyn crate::graph::Device> = match class {
+        "level" => {
+            if let Some((id, _)) = carried.iter().find(|(id, _)| *id != "level") {
+                return Err(format!(
+                    "the frame's level is one gain, and has no setting {id}"
+                ));
+            }
+            let [(_, min, max)] = TORUS_LEVEL_LAW;
+            let level = match carried {
+                [(_, v)] if v.is_finite() && (min..=max).contains(v) => *v,
+                [(_, v)] => {
+                    return Err(format!(
+                        "the frame's level is its presentation gain, within {min} to {max}, not {v}"
+                    ))
+                }
+                _ => return Err(
+                    "the engine hears the frame's level from its level, and no level is carried"
+                        .into(),
+                ),
+            };
+            Box::new(LevelDevice::new(level))
+        }
         "dynamics" => {
             let [threshold_db, ratio, attack_ms, release_ms, makeup_db] =
                 frame("Dynamics", &TORUS_DYNAMICS_LAW)?;
@@ -1370,11 +1394,12 @@ fn arrangement_samples(
 /// Lay the samples the set's audio clips want ([`BridgeResult::samples`]) on `graph`'s parts, from the set
 /// at `set`: each clip's file read beside the set first (its `RelativePath` from the set's folder), else
 /// where the set stored it (its `Path`) — ENGINE DECISION: the set's own folder is the project the clip's
-/// relative path is read from; decoded once for all the clips that play it ([`crate::wav::read_wav`]),
-/// and laid from its start marker at its own rate (session-model.md §5: unwarped, "the sample at original
-/// rate"). A clip whose sample is not found, cannot be read, or stands at another rate than the engine
-/// runs at (it does not resample) is silent; each says so in a warning, as does a part whose clips
-/// could not be laid. Returns the warnings.
+/// relative path is read from; decoded once for all the clips that play it, a WAV or an AIFF
+/// ([`crate::wav::read_audio`]), and laid from its start marker at its own rate (session-model.md §5:
+/// unwarped, "the sample at original rate") — a sample at another rate than the engine runs at is
+/// resampled to it as it is decoded ([`crate::wav::resample`]), so it keeps its pitch and its length. A
+/// clip whose sample is not found or cannot be read is silent; each says so in a warning, as does a part
+/// whose clips could not be laid. Returns the warnings.
 pub fn lay_samples(
     graph: &mut Graph,
     samples: &[ClipSample],
@@ -1385,8 +1410,8 @@ pub fn lay_samples(
     use std::sync::Arc;
     let folder = set.parent().unwrap_or(std::path::Path::new(""));
     let rate = graph.sample_rate;
-    /// A sample decoded once for every clip that plays it: its samples, channels and rate, or why not.
-    type Decoded = Result<(Arc<[f32]>, usize, u32), String>;
+    /// A sample decoded once for every clip that plays it, at the engine's rate: its samples and channels, or why not.
+    type Decoded = Result<(Arc<[f32]>, usize), String>;
     let mut decoded: BTreeMap<PathBuf, Decoded> = BTreeMap::new();
     let mut laid: BTreeMap<usize, Vec<crate::graph::LaidSample>> = BTreeMap::new();
     let mut warnings = Vec::new();
@@ -1417,10 +1442,15 @@ pub fn lay_samples(
         };
         let read = decoded.entry(file.clone()).or_insert_with(|| {
             let bytes = std::fs::read(&file).map_err(|e| e.to_string())?;
-            let wav = crate::wav::read_wav(&bytes).map_err(|e| e.0)?;
-            Ok((wav.samples.into(), wav.channels, wav.sample_rate))
+            let audio = crate::wav::read_audio(&bytes).map_err(|e| e.0)?;
+            let pcm = if audio.sample_rate == rate {
+                audio.samples
+            } else {
+                crate::wav::resample(&audio.samples, audio.channels, audio.sample_rate, rate)
+            };
+            Ok((pcm.into(), audio.channels))
         });
-        let (pcm, channels, at_rate) = match read {
+        let (pcm, channels) = match read {
             Ok(read) => read.clone(),
             Err(e) => {
                 warn(format!(
@@ -1430,13 +1460,6 @@ pub fn lay_samples(
                 continue;
             }
         };
-        if at_rate != rate {
-            warn(format!(
-                "plays {} at {at_rate} Hz, and the engine runs at {rate} Hz and does not resample: it is silent",
-                file.display()
-            ));
-            continue;
-        }
         laid.entry(want.track)
             .or_default()
             .push(crate::graph::LaidSample {
@@ -1459,6 +1482,126 @@ pub fn lay_samples(
         }
     }
     warnings
+}
+
+/// What Consolidate renders of an audio part ([`render_clips_alone`]): stereo frames, interleaved, from the stretch's first beat,
+/// at the rate asked; how many clips sound in it; and what of the part's clips there the engine did not play, in words.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ClipsAlone {
+    pub pcm: Vec<f32>,
+    pub frames: u64,
+    pub sample_rate: u32,
+    pub clips: usize,
+    pub warnings: Vec<BridgeWarning>,
+}
+
+/// Consolidate's render (O-I #743; manual §10.9 "In Arrangement view, Split (⌘E), Consolidate (⌘J)"): the arrangement audio clips
+/// of the set's audio part `track` (the set owner's index: its parts, returns and groups in order) that lie across beats
+/// `from`–`to`, rendered ALONE — none of the part's chain, its mixer row or what it feeds — each laid as the engine lays the
+/// set's clips to play it ([`arrangement_samples`], [`lay_samples`]: unwarped, at its sample's own rate, from its start marker,
+/// at its clip gain), as stereo frames at `sample_rate` on the set's tempo. A clip it does not play is said in the warnings, as
+/// the set's own play says it; a clip outside the stretch is not spoken of. Refused in words for a track that is no audio part,
+/// and a stretch where none of its clips sounds. Live's Consolidate makes its sample of what the clips play, the part's devices
+/// after them; so does this.
+pub fn render_clips_alone(
+    root: &Element,
+    set: &std::path::Path,
+    track: usize,
+    from: f64,
+    to: f64,
+    sample_rate: u32,
+) -> Result<ClipsAlone, String> {
+    if !(from.is_finite() && to.is_finite() && to > from && from >= 0.0) {
+        return Err("Consolidate renders a stretch of the ruler: its end after its start".into());
+    }
+    let ls = root
+        .find("LiveSet")
+        .ok_or("The document holds no Live set")?;
+    let tracks: Vec<&Element> = ls
+        .child("Tracks")
+        .map(|t| {
+            t.children
+                .iter()
+                .filter(|t| {
+                    matches!(
+                        t.name.as_str(),
+                        "AudioTrack" | "MidiTrack" | "ReturnTrack" | "GroupTrack"
+                    )
+                })
+                .collect()
+        })
+        .unwrap_or_default();
+    let tr = *tracks
+        .get(track)
+        .ok_or_else(|| format!("The set has no track {}", track + 1))?;
+    let name = tr
+        .find("EffectiveName")
+        .and_then(|n| n.attr("Value"))
+        .unwrap_or("")
+        .to_string();
+    if tr.name != "AudioTrack" {
+        return Err(format!(
+            "{name} is no audio part: Consolidate renders an audio part's clips into a sample"
+        ));
+    }
+    let tempo_bpm = num(ls.child("MainTrack").and_then(|m| m.find("Tempo"))).unwrap_or(120.0);
+    let clock = Clock::start(sample_rate, tempo_bpm);
+    // Only the clips across the stretch are walked: one wholly outside it gives nothing, and is not spoken of.
+    let mut part = tr.clone();
+    if let Some(events) = part
+        .child_mut("DeviceChain")
+        .and_then(|d| d.child_mut("MainSequencer"))
+        .and_then(|s| s.child_mut("Sample"))
+        .and_then(|s| s.child_mut("ArrangerAutomation"))
+        .and_then(|a| a.child_mut("Events"))
+    {
+        events.children.retain(|clip| {
+            let at = clip
+                .attr("Time")
+                .and_then(|v| v.parse::<f64>().ok())
+                .unwrap_or(0.0);
+            let span = beats(clip, "CurrentEnd").unwrap_or(0.0)
+                - beats(clip, "CurrentStart").unwrap_or(0.0);
+            clip.name != "AudioClip" || (at < to && at + span.max(0.0) > from)
+        });
+    }
+    let mut warnings = Vec::new();
+    let wants = arrangement_samples(&part, 0, &clock, &name, &mut warnings);
+    let mut graph = Graph::new(sample_rate, tempo_bpm);
+    graph.tracks.push(Track::new(&name, 2));
+    warnings.extend(lay_samples(&mut graph, &wants, set));
+    let (start, end) = (clock.frame_of_beat(from), clock.frame_of_beat(to));
+    let sounding: Vec<&crate::graph::LaidSample> = graph.tracks[0]
+        .samples()
+        .iter()
+        .filter(|s| s.at < end && s.end() > start)
+        .collect();
+    if sounding.is_empty() {
+        let said: Vec<String> = warnings.iter().map(|w| w.message.clone()).collect();
+        return Err(format!(
+            "No clip of {name} sounds between beat {from} and beat {to} in the engine{}",
+            if said.is_empty() {
+                String::new()
+            } else {
+                format!(": {}", said.join("; "))
+            }
+        ));
+    }
+    let frames = end - start;
+    let mut pcm = vec![0.0f32; frames as usize * 2];
+    for s in &sounding {
+        for frame in s.at.max(start)..s.end().min(end) {
+            let i = (frame - start) as usize * 2;
+            s.sound_into(frame, &mut pcm[i..i + 2]);
+        }
+    }
+    Ok(ClipsAlone {
+        pcm,
+        frames,
+        sample_rate,
+        clips: sounding.len(),
+        warnings,
+    })
 }
 
 #[cfg(test)]

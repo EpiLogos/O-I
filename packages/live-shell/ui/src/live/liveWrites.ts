@@ -126,6 +126,18 @@ export function writeLiveInsertClip(path: string, track: number, scene: number):
   })
 }
 
+/** Consolidate on an audio part (O-I #743): the desktop's engine renders the part's clips alone across `span` (beats) from the set as it
+ * stands, and the kernel's Live owner keeps that sample beside the set as the clip that plays it, against the revision read (the host's
+ * `live_engine_consolidate`, live_set_owner.rs `live_audio_consolidate`). Answers the act, with what the engine did not play of the clips
+ * (`unplayed`). Refused in words where no desktop engine is reached. */
+export function writeLiveAudioConsolidate(path: string, track: number, span: {start: number; end: number}): Promise<LiveSetActed> {
+  return onRevision(path, async (expected_revision, transport) => {
+    if (transport.kind !== 'tauri') throw new Error('Consolidating audio clips renders them in the engine, which plays in the desktop app: open the set there.')
+    const {invoke} = await import('@tauri-apps/api/core')
+    return invoke<LiveSetActed>('live_engine_consolidate', {path, expectedRevision: expected_revision, track, from: span.start, to: span.end})
+  })
+}
+
 /** The set's writers the tracks adapter takes (timeline/liveSetTrackAdapter.ts LiveSetReading), each on the set at `path`. A mixer
  * write or a send lands in the set first; while the engine plays the set it then moves the engine too (live/liveEngine.ts). */
 export function liveSetWrites(path: string) {
@@ -142,6 +154,7 @@ export function liveSetWrites(path: string) {
     },
     compWrite: (track: number, take: number, range: {start: number; end: number}) => writeLiveComp(path, track, take, range),
     act: (act: LiveSetAct) => writeLiveSetAct(path, act),
+    consolidateAudio: (track: number, span: {start: number; end: number}) => writeLiveAudioConsolidate(path, track, span),
     insertClip: (track: number, scene: number) => writeLiveInsertClip(path, track, scene),
     clipInfo: {read: (track: number, clip: LiveClipAt) => readLiveClip(path, track, clip).then(reading => reading.info ?? ''),
       write: (track: number, clip: LiveClipAt, text: string) => writeLiveClip(path, track, clip, {set: {info: text}})},

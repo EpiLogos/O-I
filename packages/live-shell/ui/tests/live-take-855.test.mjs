@@ -730,13 +730,14 @@ const journalAct = (request_id, operation, command, samples) => ({request_id, op
 const JOURNAL = acts => ({schema: 'ql.instrument-performance-journal/v1', instance_ref: 'ql:i', acts,
   advances: {blocks: 0, frames: 0, first_samples_elapsed: null, last_samples_elapsed: null}})
 /** The frame's stage channel as a fake: the checkpoint, the audio clock, the journal and a restore, as the frame answers them. */
-const stageOwner = ({journal = [], clock = '528000', checkpoint = CHECKPOINT, refuse = {}} = {}) => {
+const stageOwner = ({journal = [], clock = '528000', checkpoint = CHECKPOINT, refuse = {}, named} = {}) => {
   const sent = []
   return {sent, stage: async command => {
     sent.push(structuredClone(command))
     const key = command.command === 'torus' ? `torus:${command.action}` : command.command
     if (refuse[key]) return {ok: false, error: refuse[key]}
-    if (key === 'torus:checkpoint') return {ok: true, checkpoint: structuredClone(checkpoint)}
+    // `named`: the name the kernel relayed the checkpoint under, as the stage's `torus` checkpoint answers it (app.ts, C27)
+    if (key === 'torus:checkpoint') return {ok: true, checkpoint: structuredClone(checkpoint), ...(named === undefined ? {} : {checkpoint_sha256: named})}
     if (key === 'audio-clock') return {ok: true, clock: {samples_elapsed: clock, sample_rate: 48000, lookahead_seconds: 0.05, block_frames: 512}}
     if (key === 'performance-journal') return {ok: true, journal: JOURNAL(journal)}
     if (key === 'torus:restore') return {ok: true, landed_at_samples_elapsed: '900000'}
@@ -784,6 +785,35 @@ test('Record keeps the Torus\'s course: the state it rang in when the take began
   for (const word of ['the seeds', 'the course of the body', 'the sample each note landed at']) assert.ok(!laid.keeps.not_kept.includes(word), word)
   assert.match(record.state().said, /Export Audio on its clip renders it as it was played, sample for sample\./)
   assert.doesNotMatch(record.state().said, /does not sound in it yet/)
+})
+
+// PORT (BA round 868, C27): the stage's `torus` checkpoint answers the name the kernel relayed it under; a take is sealed by that name.
+const NAMED = 'sha256:' + 'b'.repeat(64)
+test('the course keeps the name the kernel relayed the take\'s checkpoint under, as the stage answers it, and reads it back; an ill name is no course', async () => {
+  const run = async named => {
+    const recorder = take.createTakeRecorder()
+    const s = stageOwner({named, journal: [journalAct('1', 'torus-play', {keys: [C4], amplitude: [1, 0]}, '504000')]})
+    const f = recordOwners({document: SET})
+    const record = take.createLiveRecord(recorder, {...f.owners, stage: s.stage})
+    await record.start('/sets/a.als', 1, 120, null)
+    f.at(520)
+    recorder.played({kind: 'on', id: 'p', note: 60, key: C4, touch: 0, amplitude: 1, source: 'pointer', at: 520})
+    f.at(1000)
+    await record.stop()
+    return f.acts[0].act.keeps.course
+  }
+  const course = await run(NAMED)
+  assert.equal(course.checkpoint_sha256, NAMED, 'the take keeps the name of the checkpoint it began at')
+  assert.deepEqual(course.checkpoint, CHECKPOINT, 'beside the checkpoint itself')
+  assert.deepEqual(take.takeCourseOf(structuredClone(course)), course, 'kept beside the set, it reads back with its name')
+  const unnamed = await run(undefined)
+  assert.equal('checkpoint_sha256' in unnamed, false, 'a checkpoint relayed under no name keeps none')
+  assert.deepEqual(take.takeCourseOf(structuredClone(unnamed)), unnamed)
+  for (const ill of ['sha256:', 'sha256:b b', 'md5:' + 'b'.repeat(32), 'sha256:' + 'b'.repeat(122), 42, null]) {
+    assert.equal(take.takeCourseOf({...course, checkpoint_sha256: ill}), null, `a kept course named ${JSON.stringify(ill)} is no course`)
+    assert.equal('checkpoint_sha256' in (await run(ill)), false, `a stage answering ${JSON.stringify(ill)} names nothing the take is sealed by`)
+  }
+  assert.equal(take.takeCourse(CHECKPOINT, JOURNAL([]), '528000', 96000, NAMED).course.checkpoint_sha256, NAMED)
 })
 
 test('a take whose window moved the scene, or whose owner kept no state of it, keeps no course and says why, as Export Audio does', async () => {
@@ -1076,6 +1106,60 @@ test('the take\'s file is 32-bit float WAV at the owner\'s rate, at the level it
   assert.match((await take.exportTake({...clip, take: null}, {stage: renderOwner().stage, save: async () => {}})).error, /not a take/)
 })
 
+// PORT (BA round 868, C27): "exportTake should call layTorusTake after renderTake, so an exported take carries its seal."
+test('Export Audio lays the take under the scene once its course rendered, by the name it began under; unnamed or refused, it is saved and says why', async () => {
+  const keeps = {schema: 'oi.live-take/v1', torus: null, bpm: 120, course: {...COURSE, frames: 2000, acts: [], checkpoint_sha256: NAMED}}
+  const clip = {...REAL, name: 'Take 1', loop: false, start: 0, end: 4, take: {id: 7, keeps}}
+  const run = async (over = {}) => {
+    const order = [], r = renderOwner(over.refuse ? {refuse: over.refuse} : {})
+    const owners = {stage: command => { order.push(command.command); return r.stage(command) },
+      save: over.save ?? (async name => { order.push(['save', name]) }),
+      lay: over.lay ?? (async t => { order.push(['lay', t]); return {ok: true, words: 'Take 1 lies under the scene on its take lane, from sample 192000.'} })}
+    return {order, answer: await take.exportTake(over.clip ?? clip, owners)}
+  }
+  const {order, answer} = await run()
+  assert.equal(answer.ok, true, answer.error)
+  assert.deepEqual(order, ['render-take', ['lay', {checkpoint_sha256: NAMED, id: 7, name: 'Take 1', bpm: 120}], ['save', 'Take 1.wav']],
+    'laid once its course rendered through the relay, by the name of the checkpoint it began at, at its tempo; then saved')
+  assert.match(answer.note, /as the take played it\. The Torus was not kept with this take, so the file is at the owner's own level\. Take 1 lies under the scene on its take lane, from sample 192000\.$/)
+  const refused = await run({lay: async () => ({ok: false, error: 'This take is already kept in the performance'})})
+  assert.match(refused.answer.note, /own level\. It was not laid under the scene: This take is already kept in the performance\.$/, 'the owner\'s refusal, in its words')
+  assert.deepEqual(refused.order.at(-1), ['save', 'Take 1.wav'], 'a take not laid is saved still')
+  const thrown = await run({lay: async () => { throw new Error('No Scene is presented') }})
+  assert.match(thrown.answer.note, /It was not laid under the scene: No Scene is presented\.$/)
+  for (const [over, why] of [
+    [{...keeps, course: {...keeps.course, checkpoint_sha256: undefined}}, /It was not laid under the scene: the kernel relayed the checkpoint it began at under no name, so nothing seals it\.$/],
+    [{...keeps, bpm: undefined}, /It was not laid under the scene: it keeps no tempo to lie on\.$/],
+  ]) {
+    const {order: o, answer: a} = await run({clip: {...clip, take: {id: 7, keeps: JSON.parse(JSON.stringify(over))}}})
+    assert.equal(a.ok, true, a.error)
+    assert.match(a.note, why)
+    assert.deepEqual(o, ['render-take', ['save', 'Take 1.wav']], 'nothing is laid, and the file is saved')
+  }
+  const unrendered = await run({refuse: 'The scene holds no Torus'})
+  assert.match(unrendered.answer.error, /The scene holds no Torus/)
+  assert.deepEqual(unrendered.order, ['render-take'], 'a take not rendered through the relay is not laid: the kernel holds nothing to seal')
+  const unsaved = await run({save: async () => { throw new Error('the disk is full') }})
+  assert.equal(unsaved.answer.error, 'Take 1.wav was not saved: the disk is full. Take 1 lies under the scene on its take lane, from sample 192000.', 'what was laid is said when the file is not')
+  // through LivePresets layTorusTake (BA's, C27): the seal by the course's name, then the Scene's record-take
+  const presets = await import('../src/live/LivePresets.tsx')
+  const SEALED = {schema: 'oi.torus-take/v1', take_ref: 'sha256:' + 'c'.repeat(64), sample_rate: 48000, seal: 'hmac-sha256:seal'}
+  const asked = []
+  const sound = {stage: async command => { asked.push(command); return {ok: true, take: SEALED} },
+    perform: async action => { asked.push(action); return {state: 'take-recorded', take_ref: SEALED.take_ref, lane_ref: 'take-lane:torus/7', at_sample: '384000', unsaved: false} }}
+  const composed = await take.exportTake(clip, {stage: renderOwner().stage, save: async () => {},
+    lay: ({checkpoint_sha256, ...t}) => presets.layTorusTake({checkpoint_sha256, take: {...t, beat: 16}}, sound)})
+  assert.deepEqual(asked, [{command: 'torus-take', action: 'seal', checkpoint_sha256: NAMED},
+    {action: 'record-take', record: take.torusTakeRecord(SEALED, {id: 7, name: 'Take 1', beat: 16, bpm: 120})}])
+  assert.match(composed.note, /Take 1 lies under the scene on its take lane, from sample 384000\.$/)
+  // the candidate lays it from its arrangement clip's start, or from its own beat 0 in a slot
+  const live = source('live/liveTake.ts').slice(source('live/liveTake.ts').indexOf('export async function exportLiveTake('), source('live/liveTake.ts').indexOf('/** A file saved as the page\'s download'))
+  assert.match(live, /const beat = 'arrangement' in address\.at \? await arrangementStart\(address\.path, address\.track, address\.at\.arrangement\) : 0/)
+  assert.match(live, /return presets\.layTorusTake\(\{checkpoint_sha256, take: \{\.\.\.take, beat\}\}\)/)
+  assert.match(live, /exportTake\(answer\.outcome\.reading\.clip, \{stage: torus\.commitLiveStage, save: download, lay,/)
+  assert.match(live, /\.arrangement_clips[\s\S]*typeof clip\.start === 'number'/)
+})
+
 test('the Torus\'s effects as the take played through them: as they stood when it began, then each move of them at the frame its beat lands at', () => {
   const at = (cutoff, chain = ['filter']) => take.torusKept(torusState({level: 0.5, effects: {chain, filter: {on: true, cutoff}, delay: {on: false, mix: 20}}}))
   const louder = take.torusKept(torusState({level: 1, effects: {chain: ['filter'], filter: {on: true, cutoff: 1000}, delay: {on: false, mix: 20}}}))
@@ -1298,8 +1382,103 @@ test('Live\'s set counts what the hand holds off a take\'s lanes and gives it ba
   assert.match(tracks, /liveTracks\(reading\.set, reading\.document, reading\.colors, undefined, liveEngineState\(\)\.reading, laneStanding\)/)
   assert.match(tracks, /reenable: \(parameter\?: string\) => player\(\)\.then\(acts => acts\.reenable\(parameter\)\)/)
   const clipPlayer = source('live/clipPlayer.ts')
-  assert.match(clipPlayer, /hand: moved => subscribeAcceptedLiveWrites\(\(command, how\) => \{ if \(how\.hand && command\.command === 'instrument'\) moved\(mapTargetIdsOfEdit\(command\.edit\)\) \}\)/,
+  // REPLACES (O-I #743 round 20): the candidate's hand was the accepted instrument edits alone, written inline; it is liveHandMoves now,
+  // which hears those and a session-held value the hand moved (DLW build ruling 2026-11-05)
+  assert.match(clipPlayer, /const owner = subscribeAcceptedLiveWrites\(\(command, how\) => \{ if \(how\.hand && command\.command === 'instrument'\) moved\(mapTargetIdsOfEdit\(command\.edit\)\) \}\)/,
     'the candidate hears the hand\'s accepted instrument edits')
+})
+
+// O-I #743 round 20, item 4: per-lane Overridden marks. A playing take's lanes stand as its own lanes, scoped to its clip.
+test('a playing take\'s lanes stand as its own: each parameter it writes, its points at their beats in the clip, under its clip; ended, none', async () => {
+  const clock = controlledClock()
+  let hand = null
+  const clip = {...REAL, name: 'Take 3', loop: false, start: 0, end: 8, take: {id: 3, keeps: {}}, notes: [{id: 1, p: 60, at: 0, len: 1, vel: 100, chance: 1, on: true}]}
+  const p = player.createClipPlayer({
+    read: async () => clip,
+    prepare: async () => ({resumes: 'Resumes.', moves: [
+      {beat: 1, edits: [{kind: 'torus', edit: {carrier: 0.2, rate: {mode: 'free', steps_per_second: 3}}}]},
+      {beat: 1, edits: [], sets: [{parameter: 'lens', value: 4}]},
+      {beat: 3, edits: [{kind: 'torus', edit: {carrier: 0.6, rate: {mode: 'free', steps_per_second: 5}}}]},
+      {beat: 3, edits: [], sets: [{parameter: 'lens', value: 6}]},
+      {beat: 5, edits: [], sets: [{parameter: 'lens', value: 8}]}]}),
+    clock: async () => ({samples_elapsed: '480000', sample_rate: 48000, lookahead_seconds: 0.5, block_frames: 8192}),
+    edit: async () => ({ok: true}), set: async () => ({ok: true}),
+    hand: moved => { hand = moved; return () => { hand = null } },
+    label: parameter => ({carrier: 'Carrier', rate: 'Rate'})[parameter],
+    strike: async () => ({ok: true}), release: () => {}, watch: () => () => {}, now: clock.now, later: clock.later, cancel: clock.cancel, random: () => 0,
+  })
+  const address = {path: '/s.als', track: 1, at: {arrangement: 0}}
+  assert.deepEqual(p.state().lanes, {automated: [], overridden: []}, 'nothing plays: no lanes')
+  p.play(address, 60)
+  await tick(); await tick(); await tick()
+  const lanes = p.state().lanes
+  assert.deepEqual(lanes.take, {address, name: 'Take 3'}, 'the lanes are its clip\'s')
+  assert.deepEqual(lanes.lanes, [
+    {parameter: 'rate', label: 'Rate', points: [{beat: 1, value: 0}, {beat: 3, value: 1}]},
+    {parameter: 'carrier', label: 'Carrier', points: [{beat: 1, value: 0}, {beat: 3, value: 1}]},
+    {parameter: 'lens', label: 'lens', points: [{beat: 1, value: 0}, {beat: 3, value: 0.5}, {beat: 5, value: 1}]},
+  ], 'each lane its parameter\'s points at their beats, each value within the lane\'s own span (a parameter named by its id where no label is given)')
+  hand(['carrier'])
+  assert.deepEqual(p.state().lanes.overridden, ['carrier'])
+  assert.equal(p.state().lanes.lanes.length, 3, 'an overridden lane still stands, marked by its own standing')
+  await clock.run(clock.now() + 10)
+  assert.equal(p.state().playing, null)
+  assert.deepEqual(p.state().lanes, {automated: [], overridden: ['carrier']}, 'the take has ended: its lanes are gone, what the hand holds stays')
+  assert.deepEqual(player.laneValues([3, 5, 4]), [0, 1, 0.5], 'numbers within their own span')
+  assert.deepEqual(player.laneValues([true, false]), [1, 0], 'on and off')
+  assert.deepEqual(player.laneValues(['up', 'down', 'up']), [0, 1, 0], 'choices stepped in the order they come')
+  assert.deepEqual(player.laneValues([2, 2]), [0, 0], 'a level lane')
+})
+
+test('Live\'s set lays a playing take\'s lanes under its clip, each with its own Overridden mark and Re-enable (O-I #743 round 20)', async () => {
+  const {liveSetTrackAdapter} = await import('../src/timeline/liveSetTrackAdapter.ts')
+  const summary = {path: '/sets/a.als', scene_count: 1, tempo_bpm: 120, tracks: [{kind: 'midi', name: 'Keys', devices: []}, {kind: 'master', name: 'Main', devices: []}]}
+  const asked = []
+  const play = {launch: async () => ({ok: true, note: ''}), stop: () => ({ok: true, note: ''}), stopAll: () => ({ok: true, note: ''}),
+    reenable: async parameter => { asked.push(parameter); return {ok: true, note: `${parameter} plays from the take's lanes again.`} }}
+  const lanes = {automated: ['carrier', 'lens'], overridden: ['carrier'], take: {address: {path: '/sets/a.als', track: 0, at: {arrangement: 1}}, name: 'Take 3'},
+    lanes: [{parameter: 'carrier', label: 'Carrier', points: [{beat: 1, value: 0}, {beat: 3, value: 1}]}, {parameter: 'lens', label: 'lens', points: [{beat: 2, value: 0.5}]}]}
+  const set = liveSetTrackAdapter.project({set: summary, document: null, play, lanes})
+  const clipId = 'als:/sets/a.als#track/0/clip/1'
+  assert.deepEqual(set.lanes.automation, [
+    {id: `${clipId}#lane/carrier`, trackId: 'als:/sets/a.als#track/0', device: 'Take 3', parameter: 'Carrier', clipId, points: [{at: 1, value: 0}, {at: 3, value: 1}], overridden: true},
+    {id: `${clipId}#lane/lens`, trackId: 'als:/sets/a.als#track/0', device: 'Take 3', parameter: 'lens', clipId, points: [{at: 2, value: 0.5}], overridden: false},
+  ], 'each lane under the take\'s clip, in the clip\'s own time, marked Overridden where the hand holds it')
+  assert.deepEqual(await set.actions.reenable.run(`${clipId}#lane/carrier`), {ok: true, note: 'carrier plays from the take\'s lanes again.'})
+  assert.deepEqual(asked, ['carrier'], 'a lane\'s own Re-enable gives back its own parameter')
+  assert.equal((await set.actions.reenable.run('als:/sets/a.als#track/0#automation/0')).ok, false, 'a lane of the set\'s own automation is still not a take\'s')
+  const slot = liveSetTrackAdapter.project({set: summary, document: null, play, lanes: {...lanes, take: {...lanes.take, address: {path: '/sets/a.als', track: 0, at: {slot: 0}}}}})
+  assert.equal(slot.lanes.automation[0].clipId, 'als:/sets/a.als#track/0/slot/0', 'a slot take\'s lanes stand under its slot')
+  const other = liveSetTrackAdapter.project({set: summary, document: null, play, lanes: {...lanes, take: {...lanes.take, address: {...lanes.take.address, path: '/sets/b.als'}}}})
+  assert.equal(other.lanes.automation, undefined, 'a take of another set lays no lanes here')
+})
+
+// DLW build ruling 2026-11-05: "Hand moves of session-held values (the Scale tie and the rest) are heard as overrides, like any other."
+test('a hand move of a session-held value (the Scale tie) is heard as the hand\'s, as an instrument edit is; a take\'s lane writing it is not', async () => {
+  const hold = await import('../src/live/noteDevices/noteDeviceHold.ts')
+  const targets = await import('../src/live/midiMap/midiMapTargets.ts')
+  hold.resetNoteDeviceChain()
+  const scale = hold.addNoteDevice('scale')
+  const tie = `note-device:${scale.id}:tie`
+  const heard = []
+  const off = player.liveHandMoves(ids => heard.push([...ids]))
+  try {
+    hold.setScaleTie(scale.id, 'down')
+    assert.deepEqual(heard, [[tie]], 'the face\'s own move of the tie is the hand\'s')
+    const target = targets.mapTargets(null, hold.noteDeviceChain()).find(t => t.id === tie)
+    await target.apply('up')
+    assert.deepEqual(heard, [[tie], [tie]], 'a mapped control moving it is the hand\'s')
+    assert.deepEqual(await targets.writeMapTarget(tie, 'down', targets.mapTargets(null, hold.noteDeviceChain())), {ok: true})
+    assert.equal(heard.length, 2, 'a take\'s lane writing it is sent by no hand')
+    hold.setScaleTie(scale.id, 'down')
+    assert.equal(heard.length, 2, 'a move that changes nothing is no move')
+  } finally { off(); hold.resetNoteDeviceChain() }
+  hold.addNoteDevice('scale')
+  hold.setScaleTie(hold.noteDeviceChain()[0].id, 'down')
+  assert.equal(heard.length, 2, 'unsubscribed, nothing is heard')
+  hold.resetNoteDeviceChain()
+  const clipPlayer = source('live/clipPlayer.ts')
+  assert.match(clipPlayer, /hand: liveHandMoves,/, 'the candidate hears both')
 })
 
 test('the MPE tab\'s reading: each note\'s pressure and bend as the set keeps them by its NoteId, on the tab\'s own scale (O-I #853)', async () => {

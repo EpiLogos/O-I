@@ -20,7 +20,10 @@ export interface SetTrack {
 }
 export interface SetDocument { path: string; tempo: number; scenes: number; tracks: SetTrack[]
   /** Each row's own name, empty where it has none (packages/live-set/src/edit.rs scene_names); absent from an owner that reads none. */
-  sceneNames?: string[] }
+  sceneNames?: string[]
+  /** The transport's Quantize, the launch quantize of every clip set to Global (packages/live-set model.rs `global_quantize`, Live's
+   * GlobalQuantisation): a word of Live's launch quantisation; absent where the set keeps none. */
+  globalQuantize?: string }
 const object = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value)
 const finite = (value: unknown) => typeof value === 'number' && Number.isFinite(value)
 export function readSetDocument(value: unknown): SetDocument {

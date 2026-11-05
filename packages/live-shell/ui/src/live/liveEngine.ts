@@ -12,7 +12,8 @@
 //                              the owner through the frame's Jankó strike (playTorusNotes); the Torus's effects go with it; the part
 //                              takes it when the frame's sound of it stops (heardAtMs, the frame's heard_at_ms)
 //   live_engine_torus_effects  the Torus's effects as the frame now holds them (its reading's `parameters.effects`), on the part after it:
-//                              each as Live's device of its kind, the engine's own where it has one (followTorusEffects)
+//                              each as Live's device of its kind, the engine's own where it has one (followTorusEffects); the frame's
+//                              level (`parameters.level`) goes with them and stands before them, as in the frame (O-I #743 round 20)
 // Play hands the Torus over (the frame's `torus-engine` stage command: its owner hands it over and the frame's own sound of it is shut) and
 // puts it on the set's first MIDI part, so it sounds once, through the engine's mixer and Main; Stop gives the frame its sound back. A Torus
 // that cannot be handed over leaves the set playing and says why (EngineState.torus).
@@ -64,9 +65,9 @@ export interface LiveEngineTorus {track: number; sha256: string; at_samples_elap
 /** One of the Torus's effects as the engine stands it after the Torus (live_engine_host.rs torus_chain): Live's device of its kind,
  * whether it sounds there, the settings carried onto it, and in words what does not sound as the frame's. */
 export interface LiveEngineTorusEffect {effect: string; device: string | null; on: boolean; sounds: boolean; carried?: Record<string, number>; words?: string | null}
-/** The Torus's effects on the part it sounds on: the part, each effect on the frame's chain, the frame the engine put them there from,
- * and the last refusal. */
-export interface LiveEngineTorusEffects {track: number | null; chain: LiveEngineTorusEffect[]; sounding_from_frame: number | null; refusal: string | null}
+/** The Torus's effects on the part it sounds on: the part, each effect on the frame's chain, the frame's level the engine hears before
+ * them (none where the frame sent none), the frame the engine put them there from, and the last refusal. */
+export interface LiveEngineTorusEffects {track: number | null; chain: LiveEngineTorusEffect[]; level?: number | null; sounding_from_frame: number | null; refusal: string | null}
 
 /** One part's mixer as the engine applied it (gain and sends linear, pan −1…1). */
 export interface LiveEnginePartMix {name: string; gain: number; pan: number; active: boolean; solo: boolean; sends: number[]; midi: boolean}
@@ -236,10 +237,13 @@ async function listenTorusNotes(lease: string, stage: Stage): Promise<void> {
   })
 }
 
-/** The Torus's effects as the frame reports them (its hosted reading's `parameters.effects`, effectsLaw.ts EffectsState), or null. */
+/** The Torus's effects as the frame reports them (its hosted reading's `parameters.effects`, effectsLaw.ts EffectsState), with the
+ * frame's level they stand after (`parameters.level`, the presentation gain 0 to 4) where it reports one; or null. */
 function torusEffects(): unknown {
   const torus = liveTorusState()
-  return torus?.ok ? torus.parameters?.effects ?? null : null
+  const effects = torus?.ok ? torus.parameters?.effects ?? null : null
+  const level = torus?.ok ? torus.parameters?.level : undefined
+  return effects !== null && typeof level === 'number' ? {...effects, level} : effects
 }
 let unfollowEffects: (() => void) | null = null
 let effectsSent: Promise<void> = Promise.resolve()

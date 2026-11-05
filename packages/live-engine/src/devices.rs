@@ -97,6 +97,58 @@ impl Device for GainDevice {
     }
 }
 
+/// How long the frame's level takes to go where it is set: setTargetAtTime's time constant (controller.ts `setLevel`, `.02`).
+const LEVEL_GLIDE_S: f64 = 0.02;
+/// The frame's level, as it holds it (controller.ts `PRESENTATION_LEVEL`: 0 to 4).
+pub const TORUS_LEVEL_LAW: [(&str, f64, f64); 1] = [("level", 0.0, 4.0)];
+
+/// The frame's presentation level as the engine hears it (O-I #743 round 20, item 3; controller.ts `PRESENTATION_LEVEL`, "presentation
+/// gain after the native PCM"): the Torus's sound times the level, standing first on the Torus's chain, before its effects (controller.ts
+/// `stage`: the effects "stand after the level"). Moved while it plays, it goes to where it was set as the frame's GainNode goes there:
+/// Web Audio's setTargetAtTime at 20 ms (controller.ts `setLevel`), a step each frame, since a gain is an a-rate param — ENGINE
+/// DECISION: from the frame after the block that takes the move, a sample from where the frame's starts. Made again, it goes on from
+/// where the one it replaces stood.
+#[derive(Debug, Clone)]
+pub struct LevelDevice {
+    level: Glide,
+    by: f32,
+}
+
+impl LevelDevice {
+    pub fn new(level: f64) -> LevelDevice {
+        LevelDevice {
+            level: Glide::at(level as f32),
+            by: 1.0,
+        }
+    }
+}
+
+impl Device for LevelDevice {
+    fn name(&self) -> &str {
+        "level"
+    }
+    fn prepare(&mut self, sample_rate: u32, _channels: usize) {
+        self.by = (1.0 - (-1.0 / (LEVEL_GLIDE_S * f64::from(sample_rate))).exp()) as f32;
+    }
+    fn process(&mut self, frame_io: &mut [f32], _clock: &Clock) {
+        let g = self.level.step(self.by);
+        for v in frame_io.iter_mut() {
+            *v *= g;
+        }
+    }
+    fn settings(&self) -> &'static [(&'static str, f64, f64)] {
+        &TORUS_LEVEL_LAW
+    }
+    fn set(&mut self, _at: usize, value: f64) {
+        self.level.to = value as f32;
+    }
+    fn follow(&mut self, was: &mut dyn Device) {
+        if let Some(was) = was.as_any_mut().downcast_mut::<LevelDevice>() {
+            self.level.now = was.level.now;
+        }
+    }
+}
+
 /// A device that does nothing: the document-level "off" state
 /// (session-model.md §6 — device on/off is the `On` parameter) and the
 /// landing spot for UNKNOWN device element names (the engine models no

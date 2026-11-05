@@ -41,8 +41,11 @@
 //               plays is automated). A hand move of one of them (an instrument edit sent BY_HAND, torusInstrument.ts) overrides its lane:
 //               the take writes it no more, as Live leaves an overridden parameter where the hand put it, and it stays Overridden, across
 //               a Stop and the next play, until Re-enable gives it back; Re-enable while the take plays writes the value its lane last
-//               reached (sent by no hand), else it plays its lane from the take's next point. A session-held value (the Scale tie) is
-//               no instrument edit, so its hand moves are not heard here.
+//               reached (sent by no hand), else it plays its lane from the take's next point. A hand move of a session-held value (the
+//               Scale tie, held by the note-device chain, not the owner) overrides its lane as any other does (DLW build ruling
+//               2026-11-05: "Hand moves of session-held values (the Scale tie and the rest) are heard as overrides, like any other";
+//               liveHandMoves). While the take plays, each lane stands as its own under the take's clip (O-I #743 round 20): the
+//               parameter it writes, its points at their beats in the clip, so each has its own Overridden mark and Re-enable.
 //   its course  a take with its course (O-I #855 round 6d), its clip as it was laid, plays as it was played: the Torus rings again from the
 //               state it rang in as the take began (prepareTake restores the owner's checkpoint, which lands at the owner's sample R),
 //               and each act of the course lands at R + (its sample − the take's first sample): the keys it struck, at its strength (the
@@ -51,6 +54,14 @@
 //               Torus at its sample (the instrument command with `at_samples_elapsed`). Each is sent as its sample comes within one owner lookahead of the render;
 //               one behind the render when it comes is missed and counted, a setting made at the owner's cursor and said. The level and
 //               effects move at their beats, as any take's. The take ends where its course ends, and lets go what it holds; Stop too.
+//   the launch  where a launch lands is the clip's own (O-I #743; DLW manual §21.1: "How a clip launches, when it lands and what follows it
+//               are the clip's own, in its Launch tab. The transport's Quantize is the launch quantize for every clip set to Global"):
+//               its Quantize (edit.rs clip_reading `quantize`, Live's LaunchQuantisation), Global the set's (model.rs `global_quantize`,
+//               Live's GlobalQuantisation), a step of the launch grid; the grid runs from where the first launch landed while nothing
+//               played, and a launch lands on its first step at or after the earliest it can (the clip's anchor), its notes struck and
+//               paced from there. A row's launch plays every MIDI clip of the row at once on its own track's player (Live's scene
+//               launch); its clips land together where one quantize is theirs. A take's course lands where its Torus rang again, so no
+//               quantize moves it. The set's signature is not read, so a bar is four beats.
 //
 // Ported from: the store with its owners handed in (inhabitants/ql/devices/qlSitting.ts: now, later, cancel, its bell rung through
 // commitLiveStage); the chord as one act (live/janko/jankoInput.ts flush); the clip's markers (packages/live-set/src/edit.rs markers).
@@ -69,7 +80,8 @@ import {clipAtOf} from './liveWrites'
 import {prepareTake} from './liveTake'
 import {commitLiveInstrumentEdit, commitLiveStage, liveTorusState, subscribeAcceptedLiveWrites, useLiveTorusReading, type LiveTorusState} from './torusInstrument'
 import type {MapValue} from './midiMap/midiMapModel'
-import {mapTargetIdsOfEdit, writeMapTarget} from './midiMap/midiMapTargets'
+import {mapTargetIdsOfEdit, readMapTargets, writeMapTarget} from './midiMap/midiMapTargets'
+import {subscribeHeldHandMoves} from './noteDevices/noteDeviceHold'
 
 /** A timer may wake a hair before its moment; a strike due within this many seconds is sent at that wake. */
 const DUE_EARLY_SECONDS = 0.002
@@ -179,9 +191,11 @@ export interface ClipPlayerOwners {
   readonly cancel: (handle: unknown) => void
   /** A draw in [0, 1), for a note's chance. */
   readonly random: () => number
-  /** Tell `moved` the map parameters each hand move writes (an instrument edit the owner took, sent BY_HAND). Returns the unsubscribe.
-   * Absent, no lane is overridden. */
+  /** Tell `moved` the map parameters each hand move writes (an instrument edit the owner took, sent BY_HAND, or a session-held value the
+   * hand moved: liveHandMoves). Returns the unsubscribe. Absent, no lane is overridden. */
   readonly hand?: (moved: (parameters: readonly string[]) => void) => () => void
+  /** A map parameter as the surface names it, for a take's lane; absent or unnamed, its id. */
+  readonly label?: (parameter: string) => string | undefined
 }
 
 /** A take prepared to play again: where it resumes from, in words; how a note of it was played (the touch-point it struck and its exact
@@ -227,8 +241,50 @@ export interface ClipPlayState {
 }
 
 /** The parameters a take's moves and lanes write while it plays (Automated), and those a hand move took off them (Overridden), by map
- * parameter id (midiMap/midiMapTargets.ts). Overridden stands until Re-enable, across a Stop. */
-export interface ClipLaneStanding {readonly automated: readonly string[]; readonly overridden: readonly string[]}
+ * parameter id (midiMap/midiMapTargets.ts). Overridden stands until Re-enable, across a Stop. While a take plays, its clip (`take`) and
+ * its lanes, each its own (O-I #743 round 20). */
+export interface ClipLaneStanding {
+  readonly automated: readonly string[]
+  readonly overridden: readonly string[]
+  readonly take?: {readonly address: ClipAddress; readonly name: string}
+  readonly lanes?: readonly ClipLane[]
+}
+/** One lane of the take that plays: the map parameter it writes, as the surface names it, and its points at their beats in the clip, each
+ * value within the lane's own span (laneValues), in the order it writes them. */
+export interface ClipLane {readonly parameter: string; readonly label: string; readonly points: readonly {readonly beat: number; readonly value: number}[]}
+
+/** A value a lane writes as a number, where it is one: a number, on (1) or off (0), or the one number a setting holds (a Rate's steps a
+ * second); else null. */
+function laneNumber(value: unknown): number | null {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null
+  if (typeof value === 'boolean') return value ? 1 : 0
+  if (value !== null && typeof value === 'object') {
+    const numbers = Object.values(value).filter((v): v is number => typeof v === 'number' && Number.isFinite(v))
+    return numbers.length === 1 ? numbers[0]! : null
+  }
+  return null
+}
+/** A lane's values drawn 0–1: numbers within their own span (low at 0, high at 1; one value throughout at 0), else each value stepped in
+ * the order it first comes (a choice's options as the take reached them). Pure. */
+export function laneValues(values: readonly unknown[]): number[] {
+  const numbers = values.map(laneNumber)
+  if (numbers.every((v): v is number => v !== null)) {
+    const min = Math.min(...numbers), max = Math.max(...numbers)
+    return numbers.map(v => max > min ? (v - min) / (max - min) : 0)
+  }
+  const order: string[] = []
+  const keys = values.map(v => { const key = JSON.stringify(v) ?? String(v); if (!order.includes(key)) order.push(key); return key })
+  return keys.map(key => order.length > 1 ? order.indexOf(key) / (order.length - 1) : 0)
+}
+/** What an instrument edit writes to map parameter `id`: a session macro its own, Sound the edit's not-muted, else the one setting it
+ * carries (or the whole of it where it carries more). */
+function editValueOf(edit: InstrumentEdit, id: string): unknown {
+  if (edit.kind === 'torus') return (edit.edit as Readonly<Record<string, unknown>>)[id]
+  if (edit.kind === 'muted') return !edit.muted
+  const {kind: _kind, ...rest} = edit as {readonly kind: string} & Readonly<Record<string, unknown>>
+  const fields = Object.values(rest)
+  return fields.length === 1 ? fields[0] : rest
+}
 const NO_LANES: ClipLaneStanding = Object.freeze({automated: Object.freeze([]), overridden: Object.freeze([])}) as ClipLaneStanding
 /** The map parameters a move writes. Pure. */
 export const moveParameters = (move: ClipMove): string[] => [...move.edits.flatMap(edit => mapTargetIdsOfEdit(edit)), ...(move.sets ?? []).map(set => set.parameter)]
@@ -245,8 +301,9 @@ export function unheldEdit(edit: InstrumentEdit, overridden: ReadonlySet<string>
 export interface ClipPlayer {
   state(): ClipPlayState
   subscribe(listener: () => void): () => void
-  /** Play the clip at `address` from its start marker at `bpm`; a clip already playing starts again. */
-  play(address: ClipAddress, bpm: number): void
+  /** Play the clip at `address` from its start marker at `bpm`; a clip already playing starts again. `land`, given, says where on the
+   * owner's clock the clip lands (a launch quantize): the earliest it can, its anchor, or later; a take's course is not moved. */
+  play(address: ClipAddress, bpm: number, land?: ClipLanding): void
   /** Stop: nothing more strikes, and every note the clip holds is let go at once; what was struck rings out on the torus. */
   stop(): void
   /** Re-enable (O-I #853): give `parameter`, or every overridden one, back to the take's lanes. */
@@ -265,6 +322,30 @@ export function clipTiming(clock: StageAudioClock): ClipTiming {
   const slack = clock.lookahead_seconds - clock.block_frames / clock.sample_rate
   if (!(slack > 0)) return {refused: 'The torus renders its whole lookahead in one block, so it leaves no time to strike ahead of it.'}
   return {anchor: BigInt(clock.samples_elapsed) + BigInt(Math.round(clock.lookahead_seconds * clock.sample_rate)), rate: clock.sample_rate, slack}
+}
+
+/** Where a launch lands on the owner's clock, given the clip read and the earliest it can land (its timing's anchor). */
+export type ClipLanding = (clip: LiveClipReading, timing: Extract<ClipTiming, {anchor: bigint}>) => bigint
+
+/** A word of Live's launch quantisation (edit.rs QUANTIZE, without Global) as a step of the launch grid, in beats: bars of four beats (the
+ * set's signature is not read), a note value of a whole note of four beats, a triplet two thirds of it; null for None (no step: a
+ * launch lands as soon as it can); undefined for a word that is none of them. Pure. */
+export function quantumBeats(word: string): number | null | undefined {
+  if (word === 'none') return null
+  const bars = /^(1|2|4|8) bars?$/.exec(word)
+  if (bars) return Number(bars[1]) * 4
+  const note = /^1\/(2|4|8|16|32)(t?)$/.exec(word)
+  if (!note || (note[2] && note[1] === '32')) return undefined
+  return (4 / Number(note[1])) * (note[2] ? 2 / 3 : 1)
+}
+
+/** The first step of the grid from `origin`, every `step` samples, at or after `earliest`; `earliest` itself where there is no grid or no
+ * step. Each step is rounded once from the origin, so steps of a fraction of a sample never drift. Pure. */
+export function landAt(earliest: bigint, origin: bigint | null, step: number | null): bigint {
+  if (origin === null || step === null || !(step > 0)) return earliest
+  if (earliest <= origin) return origin
+  const k = Math.max(0, Math.ceil(Number(earliest - origin) / step - 1e-9))
+  return origin + BigInt(Math.round(k * step))
 }
 
 /** The owner's audio clock through a stage channel (the `audio-clock` stage command, which the frame answers from its native field's
@@ -324,6 +405,10 @@ interface Course {
   readonly fire: () => void
 }
 
+/** Every note a player strikes is its own hold on the path: named across every player, as a row's players strike through the part's one
+ * playing path. */
+let held = 0
+
 /** A clip player over its owners. */
 export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
   let state: ClipPlayState = IDLE
@@ -331,8 +416,6 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
   let course: Course | null = null
   /** The press in progress: a Stop or a later press makes an earlier read stale. */
   let press = 0
-  /** Every note the player strikes is its own hold on the path. */
-  let held = 0
   const listeners = new Set<() => void>()
   const publish = (next: Partial<ClipPlayState>) => { state = {...state, ...next}; for (const listener of [...listeners]) listener() }
 
@@ -341,12 +424,33 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
   const overridden = new Set<string>()
   const reached = new Map<string, {readonly edit?: InstrumentEdit; readonly value?: MapValue}>()
   let unhand: (() => void) | null = null
-  const standing = (automated: readonly string[]) => publish({lanes: {automated: Object.freeze([...automated]), overridden: Object.freeze([...overridden])}})
-  /** A take begins: what its moves and lanes write stands Automated, and a hand move of one of those overrides it. */
-  const automate = (moves: readonly ClipMove[], settings: readonly InstrumentEdit[]) => {
+  /** The take that plays and its lanes, while one does. */
+  let playingLanes: {readonly take: {readonly address: ClipAddress; readonly name: string}; readonly lanes: readonly ClipLane[]} | null = null
+  const standing = (automated: readonly string[]) => publish({lanes: {automated: Object.freeze([...automated]), overridden: Object.freeze([...overridden]),
+    ...(playingLanes && automated.length ? playingLanes : {})}})
+  /** The lanes of a take: each parameter its moves and settings write, in `automated`'s order, with its points at their beats in order. */
+  const lanesOf = (automated: readonly string[], moves: readonly ClipMove[], settings: readonly {readonly beat: number; readonly edit: InstrumentEdit}[]): ClipLane[] => {
+    const raw = new Map<string, {beat: number; value: unknown}[]>()
+    const put = (id: string, beat: number, value: unknown) => { if (value !== undefined) raw.set(id, [...(raw.get(id) ?? []), {beat, value}]) }
+    const edits = [...moves.flatMap(move => move.edits.map(edit => ({beat: move.beat, edit}))), ...settings]
+    for (const {beat, edit} of edits) for (const id of mapTargetIdsOfEdit(edit)) put(id, beat, editValueOf(edit, id))
+    for (const move of moves) for (const point of move.sets ?? []) put(point.parameter, move.beat, point.value)
+    return automated.flatMap(parameter => {
+      const points = [...(raw.get(parameter) ?? [])].sort((a, b) => a.beat - b.beat)
+      if (!points.length) return []
+      const values = laneValues(points.map(point => point.value))
+      return [{parameter, label: owners.label?.(parameter) ?? parameter, points: points.map((point, i) => ({beat: point.beat, value: values[i]!}))}]
+    })
+  }
+  /** A take begins: what its moves and lanes write stands Automated, each lane its own under the take's clip, and a hand move of one of
+   * those overrides it. */
+  const automate = (take: {readonly address: ClipAddress; readonly name: string}, moves: readonly ClipMove[],
+    settings: readonly {readonly beat: number; readonly edit: InstrumentEdit}[]) => {
     unhand?.()
     reached.clear()
-    const automated = [...new Set([...moves.flatMap(moveParameters), ...settings.flatMap(edit => mapTargetIdsOfEdit(edit))])]
+    const automated = [...new Set([...moves.flatMap(moveParameters), ...settings.flatMap(({edit}) => mapTargetIdsOfEdit(edit))])]
+    const lanes = lanesOf(automated, moves, settings)
+    playingLanes = lanes.length ? {take: Object.freeze({...take}), lanes: Object.freeze(lanes)} : null
     standing(automated)
     if (!automated.length) { unhand = null; return }
     unhand = owners.hand?.(moved => {
@@ -356,9 +460,10 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
       standing(state.lanes.automated)
     }) ?? null
   }
-  /** The take ends: nothing of it is Automated; what the hand overrode stays so. */
+  /** The take ends: nothing of it is Automated and its lanes are gone; what the hand overrode stays so. */
   const unautomate = () => {
     unhand?.(); unhand = null
+    playingLanes = null
     if (state.lanes.automated.length) standing([])
   }
   /** An edit of the take as it still writes it, and what its lane reached kept for Re-enable. */
@@ -584,20 +689,23 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
     const c: Course = {address, origin: owners.now(), timing, spb: 60 / bpm, lead, acts, index: 0, moves, move: 0, start, end: start + exact.frames / exact.sample_rate,
       holds: new Map(), noteOf: exact.noteOf, timer: null, fire: () => fireCourse(c)}
     course = c
-    automate(moves, exact.acts.flatMap((act): InstrumentEdit[] => act.action === 'set' ? [{kind: 'torus', edit: act.edit}] : []))
+    automate({address, name}, moves, exact.acts.flatMap(act => act.action === 'set'
+      ? [{beat: Number(BigInt(act.at_samples_elapsed) - BigInt(exact.from)) / exact.sample_rate / c.spb, edit: {kind: 'torus', edit: act.edit} as InstrumentEdit}] : []))
     publish({starting: false, playing: {address, name, bpm}})
     armCourse(c)
   }
 
+  /** A clip begins: `delay` seconds after now on the page's clock its start lands at `timing.anchor` (later than the earliest it could
+   * by the delay, where a launch quantize put it). */
   const begin = (address: ClipAddress, bpm: number, plan: Extract<ClipPlan, {ok: true}>, timing: Extract<ClipTiming, {anchor: bigint}>,
-    take: ClipPrepared | null, lead: number) => {
+    take: ClipPrepared | null, lead: number, delay: number) => {
     const moves = [...(take?.moves ?? [])].filter(moving).sort((a, b) => a.beat - b.beat)
     const first = moves.findIndex(move => move.beat >= plan.first.from)
-    const r: Run = {address, spb: 60 / bpm, origin: owners.now(), timing, voice: take?.voice ?? null, moves, move: first < 0 ? moves.length : first, lead,
+    const r: Run = {address, spb: 60 / bpm, origin: owners.now() + delay, timing, voice: take?.voice ?? null, moves, move: first < 0 ? moves.length : first, lead,
       plan, pass: plan.first, passStart: 0, index: 0, ends: [], timer: null,
       unwatch: () => {}, fire: () => fire(r), turn: () => turn(r)}
     run = r
-    automate(moves, [])
+    automate({address, name: plan.name}, moves, [])
     r.unwatch = owners.watch(address, () => retake(r))
     publish({starting: false, playing: {address, name: plan.name, bpm}})
     arm(r)
@@ -606,7 +714,7 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
   return {
     state: () => state,
     subscribe: listener => { listeners.add(listener); return () => { listeners.delete(listener) } },
-    play(address, bpm) {
+    play(address, bpm, land) {
       halt()
       const mine = ++press
       if (!finite(bpm) || bpm <= 0) { publish({...IDLE, fault: 'The set discloses no tempo, so the clip has no time to play in.'}); return }
@@ -635,7 +743,13 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
           else if (exact && exact.sample_rate !== clock.sample_rate)
             publish({starting: false, fault: `The torus renders at ${clock.sample_rate} Hz, and the take was played at ${exact.sample_rate} Hz.`})
           else if (exact) beginCourse(address, bpm, plan.name, timing, take!, exact, clock.lookahead_seconds)
-          else begin(address, bpm, plan, timing, take, clock.lookahead_seconds)
+          else {
+            // Where the launch lands: never sooner than a note can still land at its sample (the owner's slack before the anchor).
+            const landed = land ? land(clip, timing) : timing.anchor
+            const soonest = timing.anchor - BigInt(Math.floor(timing.slack * timing.rate))
+            const anchor = landed >= soonest ? landed : timing.anchor
+            begin(address, bpm, plan, {...timing, anchor}, take, clock.lookahead_seconds, Number(anchor - timing.anchor) / timing.rate)
+          }
         }, cause => { if (mine === press) publish({starting: false, fault: `The torus did not read its audio clock: ${said(cause)}`}) })
       }, cause => { if (mine === press) publish({starting: false, fault: `The set's owner did not read the clip: ${said(cause)}`}) })
     },
@@ -692,8 +806,17 @@ function candidateOwners(): ClipPlayerOwners {
     later: (run, ms) => setTimeout(run, ms),
     cancel: handle => clearTimeout(handle as ReturnType<typeof setTimeout>),
     random: () => Math.random(),
-    hand: moved => subscribeAcceptedLiveWrites((command, how) => { if (how.hand && command.command === 'instrument') moved(mapTargetIdsOfEdit(command.edit)) }),
+    hand: liveHandMoves,
+    label: parameter => readMapTargets().find(target => target.id === parameter)?.label,
   }
+}
+
+/** Tell `moved` the map parameters each hand move writes: an instrument edit the owner took, sent BY_HAND, and a session-held value the
+ * hand moved (the Scale tie: noteDeviceHold.ts, DLW build ruling 2026-11-05). Returns the unsubscribe. */
+export function liveHandMoves(moved: (parameters: readonly string[]) => void): () => void {
+  const owner = subscribeAcceptedLiveWrites((command, how) => { if (how.hand && command.command === 'instrument') moved(mapTargetIdsOfEdit(command.edit)) })
+  const held = subscribeHeldHandMoves(moved)
+  return () => { owner(); held() }
 }
 
 /** The one clip player the candidate's Live transport plays through. */
@@ -753,13 +876,20 @@ export function clipPlayBindings(input: ClipPlayInput): {play: SlotBinding; stop
 /** An act's answer, as the set's views show it (timeline/worldTrackAdapter.ts WorldActionReceipt). */
 export type ClipActAnswer = {ok: true; note: string} | {ok: false; error: string}
 
+/** What a row holds on one track (O-I #743): a clip, MIDI or audio, by its name; or an empty slot that keeps its stop button, which stops
+ * the track when the row launches. An empty slot whose stop was removed is not of the row: "A row launches only what is in it" (§21.1). */
+export type RowSlot = {readonly track: number; readonly name: string; readonly kind: 'midi' | 'audio'} | {readonly track: number; readonly kind: 'stop'}
+
 /** Launch, Stop and Stop all as the set's acts (manual §10.9: a clip's Launch and Stop, an empty slot's Stop the track, the Main track's
  * Stop all clips; §21.2 "Play | Plays the clips of the part on the torus"). Launch runs the player's Play on the clip it names and answers
  * as the transport's Play would: refused before it plays where the torus cannot take it or the set has no tempo, else once the owner has
- * read the clip, in the player's words. Stop the track stops the clip that plays where it stands on that track; Stop all stops whatever
- * plays. The player plays one clip at a time, so a row's launch (every clip of a row at once) is not one of these. */
+ * read the clip, in the player's words. A row's launch plays every MIDI clip of the row together, each on its own track's player (O-I
+ * #743). Each launch lands on the launch grid where its quantize says (`quantize`: the set's, for a clip set to Global). Stop the track
+ * stops the clip that plays where it stands on that track; Stop all stops whatever plays. */
 export interface ClipLaunchActs {
-  launch(address: ClipAddress, bpm: number): Promise<ClipActAnswer>
+  launch(address: ClipAddress, bpm: number, quantize?: string | null): Promise<ClipActAnswer>
+  /** Launch row `row` (0-based) of the set at `path`: what it holds on each track. */
+  launchRow(path: string, row: number, bpm: number, slots: readonly RowSlot[], quantize?: string | null): Promise<ClipActAnswer>
   stop(path: string, track: number, named: string): ClipActAnswer
   stopAll(): ClipActAnswer
   /** Re-enable (O-I #853): an overridden parameter, or every one, back to the take's lanes. */
@@ -768,48 +898,111 @@ export interface ClipLaunchActs {
 
 /** How long Launch waits for the set's owner to read the clip before it answers that it is reading it. */
 const LAUNCH_ANSWER_MS = 4000
+/** The launch quantize of a set that keeps none: the bar, as the corpus's one set keeps it (racks-session-model.md §3.3, GlobalQuantisation 4). */
+const SET_QUANTIZE = '1 bar'
 
-export function clipLaunchActs(player: ClipPlayer, torus: () => LiveTorusState | null): ClipLaunchActs {
+const listed = (names: readonly string[]) => names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`
+
+/** The answer of a player's Play of the clip at `address`: once the owner has read it, in the player's words; that it is reading it, if
+ * the owner takes longer than LAUNCH_ANSWER_MS. */
+function played(player: ClipPlayer, address: ClipAddress, start: () => void): Promise<ClipActAnswer> {
   const same = (a: ClipAddress, b: ClipAddress) => a.path === b.path && a.track === b.track && JSON.stringify(a.at) === JSON.stringify(b.at)
+  return new Promise(resolve => {
+    let settled = false
+    const finish = (answer: ClipActAnswer) => { if (settled) return; settled = true; off(); clearTimeout(timer); resolve(answer) }
+    const settle = () => {
+      const state = player.state()
+      if (state.starting) return
+      if (state.playing && same(state.playing.address, address)) finish({ok: true, note: `${state.playing.name || 'The clip'} plays on the torus.`})
+      else finish({ok: false, error: state.fault ?? 'The clip did not play.'})
+    }
+    const off = player.subscribe(settle)
+    const timer = setTimeout(() => finish({ok: true, note: 'Reading the clip from the set…'}), LAUNCH_ANSWER_MS)
+    start()
+    settle()
+  })
+}
+
+/** The set's acts over its one clip player and, for a row's launch, a player of each track (`rowPlayer`, made once for each track). */
+export function clipLaunchActs(player: ClipPlayer, torus: () => LiveTorusState | null, rowPlayer?: (track: number) => ClipPlayer): ClipLaunchActs {
+  const rows = new Map<number, ClipPlayer>()
+  /** The launch grid's origin on the owner's clock: where the first launch landed while nothing played. */
+  let origin: bigint | null = null
+  const players = () => [player, ...rows.values()]
+  const sounding = () => players().some(p => { const state = p.state(); return state.playing !== null || state.starting })
+  /** Where a launch lands: on its clip's own quantize, Global the set's; a row's clips at one earliest, where each could land by then. */
+  const landing = (bpm: number, quantize: string | null | undefined, row?: {earliest: bigint | null}): ClipLanding => (clip, timing) => {
+    const own = quantumBeats(clip.quantize ?? 'global')
+    const beats = own !== undefined ? own : quantumBeats(quantize ?? SET_QUANTIZE) ?? null
+    let earliest = timing.anchor
+    if (row) {
+      if (row.earliest === null) row.earliest = earliest
+      else if (earliest >= row.earliest && earliest - row.earliest <= BigInt(Math.floor(timing.slack * timing.rate))) earliest = row.earliest
+    }
+    if (origin === null) origin = earliest
+    return landAt(earliest, origin, beats === null ? null : beats * (60 / bpm) * timing.rate)
+  }
+  /** Stop what plays on `track` of the set at `path`: its own clip player's clip there, and the row's. */
+  const stopTrack = (path: string, track: number) => {
+    const state = player.state()
+    if (state.playing && state.playing.address.path === path && state.playing.address.track === track) player.stop()
+    rows.get(track)?.stop()
+  }
   return {
-    launch(address, bpm) {
+    launch(address, bpm, quantize) {
       const why = !(bpm > 0) ? NO_TEMPO : torusRefusal(torus())
       if (why) return Promise.resolve({ok: false, error: why})
-      return new Promise(resolve => {
-        let settled = false
-        const finish = (answer: ClipActAnswer) => { if (settled) return; settled = true; off(); clearTimeout(timer); resolve(answer) }
-        const settle = () => {
-          const state = player.state()
-          if (state.starting) return
-          if (state.playing && same(state.playing.address, address)) finish({ok: true, note: `${state.playing.name || 'The clip'} plays on the torus.`})
-          else finish({ok: false, error: state.fault ?? 'The clip did not play.'})
-        }
-        const off = player.subscribe(settle)
-        const timer = setTimeout(() => finish({ok: true, note: 'Reading the clip from the set…'}), LAUNCH_ANSWER_MS)
-        player.play(address, bpm)
-        settle()
-      })
+      if (!sounding()) origin = null
+      rows.get(address.track)?.stop()
+      return played(player, address, () => player.play(address, bpm, landing(bpm, quantize)))
+    },
+    async launchRow(path, row, bpm, slots, quantize) {
+      const named = `Row ${row + 1}`
+      const why = !(bpm > 0) ? NO_TEMPO : torusRefusal(torus())
+      if (why) return {ok: false, error: why}
+      if (!rowPlayer) return {ok: false, error: `${named} cannot launch here: this player plays one clip at a time.`}
+      const clips = slots.filter((slot): slot is Extract<RowSlot, {name: string}> => slot.kind !== 'stop')
+      const midi = clips.filter(slot => slot.kind === 'midi')
+      // A slot's clip is a MIDI clip or an audio clip (RowSlot): what is not MIDI is audio.
+      const audio = clips.filter(slot => slot.kind !== 'midi')
+        .map(slot => ` ${slot.name || 'A clip'} is an audio clip, which the engine plays where it lies in the Arrangement, not from a slot.`).join('')
+      if (!midi.length) return {ok: false, error: `${named} holds no MIDI clip to play on the torus.${audio}`}
+      if (!sounding()) origin = null
+      // What the row holds on a track takes its place there; its empty slot's stop stops it.
+      for (const slot of slots) stopTrack(path, slot.track)
+      const together = {earliest: null as bigint | null}
+      const answers = await Promise.all(midi.map(slot => {
+        const own = rows.get(slot.track) ?? rowPlayer(slot.track)
+        rows.set(slot.track, own)
+        const address: ClipAddress = {path, track: slot.track, at: {slot: row}}
+        return played(own, address, () => own.play(address, bpm, landing(bpm, quantize, together)))
+      }))
+      const playing = midi.filter((_, i) => answers[i]!.ok).map(slot => slot.name || 'a clip')
+      const refused = midi.flatMap((slot, i) => { const answer = answers[i]!; return answer.ok ? [] : [`${slot.name || 'A clip'}: ${answer.error}`] })
+      if (!playing.length) return {ok: false, error: `${named} played nothing on the torus. ${refused.join(' ')}${audio}`}
+      return {ok: true, note: `${named} plays on the torus: ${listed(playing)}.${refused.length ? ` ${refused.join(' ')}` : ''}${audio}`}
     },
     stop(path, track, named) {
       const state = player.state()
-      const here = state.playing ? state.playing.address.path === path && state.playing.address.track === track : state.starting
-      if (!here) return {ok: true, note: `Nothing plays on ${named}.`}
-      const name = state.playing?.name || 'The clip'
-      player.stop()
+      const own = state.playing ? state.playing.address.path === path && state.playing.address.track === track : state.starting
+      const row = rows.get(track)?.state()
+      const name = (own ? state.playing?.name : row?.playing?.name) || 'The clip'
+      if (!own && !row?.playing && !row?.starting) return {ok: true, note: `Nothing plays on ${named}.`}
+      if (own) player.stop()
+      rows.get(track)?.stop()
       return {ok: true, note: `${name} stops; what it struck rings out on the torus.`}
     },
     stopAll() {
-      const state = player.state()
-      if (!state.playing && !state.starting) return {ok: true, note: 'Nothing plays.'}
-      player.stop()
+      if (!sounding()) return {ok: true, note: 'Nothing plays.'}
+      for (const each of players()) each.stop()
       return {ok: true, note: 'Every clip stops; what was struck rings out on the torus.'}
     },
     reenable: parameter => player.reenable(parameter),
   }
 }
 
-/** The candidate's Launch and Stop: its one clip player and the torus's owner reading. */
-export const liveClipActs: ClipLaunchActs = clipLaunchActs(liveClipPlayer, liveTorusState)
+/** The candidate's Launch and Stop: its one clip player, a player of each track for a row's launch, and the torus's owner reading. */
+export const liveClipActs: ClipLaunchActs = clipLaunchActs(liveClipPlayer, liveTorusState, () => createClipPlayer(candidateOwners()))
 
 /** Live's Play and Stop: the clip THE selection names, played on the torus at the set's tempo. Leaving Live's transport stops it. */
 export function useLiveClipPlay(selection: WorldSelection | undefined, tempoBpm: number | null): TransportBindings {
