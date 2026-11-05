@@ -1883,8 +1883,16 @@ mod read_field_tests {
                     directory.display()
                 ),
             );
+            // A test that wants a slow owner writes the delay here
+            // (`slow_once`): the next ask answers that late, then none does.
+            let slow = directory.join("slow-once");
             let script = write_file(&directory, "owner.sh", {
                 let mut body = String::from("#!/bin/bash\n");
+                let _ = writeln!(
+                    body,
+                    r#"if [ -s {slow} ]; then delay=$(cat {slow}); : > {slow}; sleep "$delay"; fi"#,
+                    slow = slow.display()
+                );
                 // aikit shape: `-C <cwd> history --json`
                 let _ = writeln!(
                     body,
@@ -1950,6 +1958,16 @@ mod read_field_tests {
                 None,
                 "test-project".to_owned(),
             )
+        }
+
+        /// The next ask answers `delay` late: an owner slower than a reading's
+        /// time-to-live, as a loaded machine runs one.
+        fn slow_once(&self, delay: std::time::Duration) {
+            std::fs::write(
+                self.directory.join("slow-once"),
+                format!("{:.3}", delay.as_secs_f64()),
+            )
+            .unwrap();
         }
 
         fn calls(&self) -> Vec<String> {
@@ -2215,11 +2233,18 @@ mod read_field_tests {
         assert_eq!(asked("central.now.thoughts.read"), 6);
     }
 
+    /// The horizon's cache as a test that expects a repeat served holds it:
+    /// every answer retained for `read_cache::HELD_TTL`, however loaded the
+    /// machine (O-I 795 round 24).
+    fn held_cache() -> Mutex<crate::read_cache::OwnerReadCache> {
+        Mutex::new(crate::read_cache::OwnerReadCache::default().holding_ttls())
+    }
+
     #[test]
     fn a_retained_answer_serves_the_horizon_and_a_new_query_rereads() {
         let _env = owner_env();
         let owner = FakeOwner::new("cache", &nowlist(&["ref-a"]), THOUGHTS_REPLY);
-        let cache = Mutex::new(crate::read_cache::OwnerReadCache::default());
+        let cache = held_cache();
         let client = owner.client();
         let first =
             read_field(&client, &cache, &[], owner.directory.clone(), &window_all()).unwrap();
@@ -2240,6 +2265,29 @@ mod read_field_tests {
         assert!(
             owner.calls().len() > calls_after_first,
             "a different query is a different observation"
+        );
+    }
+
+    /// The same repeat when the owner first answers later than the horizon's
+    /// time-to-live (as a loaded machine runs it): the cache's TTL is the
+    /// test's to hold, never the machine's pace (O-I 795 round 24).
+    #[test]
+    fn a_slow_owner_still_serves_the_horizon_from_its_retained_answer() {
+        let _env = owner_env();
+        let owner = FakeOwner::new("cache-slow", &nowlist(&["ref-a"]), THOUGHTS_REPLY);
+        owner.slow_once(crate::read_cache::HORIZON_TTL + std::time::Duration::from_millis(300));
+        let cache = held_cache();
+        let client = owner.client();
+        let first =
+            read_field(&client, &cache, &[], owner.directory.clone(), &window_all()).unwrap();
+        let calls_after_first = owner.calls().len();
+        let second =
+            read_field(&client, &cache, &[], owner.directory.clone(), &window_all()).unwrap();
+        assert_eq!(first, second, "a retained answer is the identical document");
+        assert_eq!(
+            owner.calls().len(),
+            calls_after_first,
+            "a query inside the horizon spawns nothing, however slowly the owner answered"
         );
     }
 

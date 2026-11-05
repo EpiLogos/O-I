@@ -5,7 +5,8 @@
 // Its actions go through the one owner path the agent shell already uses, `harness_agent_control` on the bound harness
 // (agent/harnessAgentControl.ts, the binding agent/useHarnessBinding.ts resolves — as agent/AgentShellRoot.tsx:23-33 wires the
 // grid's hard stop and retry). With no carrier, or a harness binding the kernel has not resolved, there is no owner path and
-// so no action: the grid stays read-only and says so.
+// so no action: the grid stays read-only and says so. A Factory task's ▶ is the task's own Launch instead, the Agent rack's, with or
+// without a bound harness (agent/factoryTaskActs.ts taskLaunchPort, O-I 804 round 24).
 //
 // The tasks and the needles come from the sessions provider (agent/AgentSessionsProvider.tsx). Mounted above this pane, every
 // caller reads its one poll; unmounted, `useAgencySessions` serves its own fallback — the sessions, with no tasks and no needles.
@@ -34,6 +35,7 @@ import {makeNewTaskOf, taskMaker, type SessionAddress} from '../../agent/clipBin
 import {songOfNote, songTakes} from '../../agent/songClips'
 import {clipHostId, viewHoldsOf} from '../detail/clipBinding'
 import {projectOfSession, ROOT_REGISTER} from '../../agent/worldScope'
+import {taskLaunchPort} from '../../agent/factoryTaskActs'
 import {withClipMaker} from './clipMakers'
 import {encounter} from '../../../../../../desktop/cradle/src/encounter/client'
 import {tellOwnerChanged} from '../../owners/notices'
@@ -113,13 +115,16 @@ export const useFactoryTracks: UseModeTracks = reading => {
   // A Repeat's press (§19.1 The Launch panel): its takes over the run AIKit hands with the session's settings (repeatPress).
   const repeat = useMemo(() => transport.kind === 'unavailable' ? undefined
     : repeatPress(transport, session => own.get(session), projectOf), [transport, own, projectOf])
+  // A Factory task's ▶ (O-I 804 round 24): the task's own Launch, the Agent rack's, and Factory's stop of its unit, in the Factory state of
+  // the register its session was read under (agent/factoryTaskActs.ts taskLaunchPort).
+  const taskLaunch = useMemo(() => transport.kind === 'unavailable' ? undefined : taskLaunchPort(transport, projectOf), [transport, projectOf])
   // The workcells of the machine's register as return tracks, and each session's Works in (§19.23): the seat register, read once.
   const seats = useSeatStatusAnswer(transport, transport.kind !== 'unavailable').reading
   const register = seats.status === 'answered' ? seats.value : null
   if (!agency.tracks.length && agency.error) return {waiting: `The agent sessions are unread: ${agency.error}`}
   if (!agency.tracks.length && agency.loading) return {waiting: 'The agent sessions arrive when the agency read answers.'}
   // A chat dragged from Factory's Projects (DLW §19.1) reopens on the empty track; an agent still starts a new agent there.
-  const set = withChatSeat(factoryTrackAdapter.project({tracks: agency.tracks, nowUnixMs: Date.now(), controls, ...(events ? {events} : {}), writeArm, ...(settings ? {settings} : {}), ...(attention ? {attention} : {}), ...(takes ? {takes} : {}), ...(sessionStop ? {sessionStop} : {}), ...(repeat ? {repeat} : {})}), {transport})
+  const set = withChatSeat(factoryTrackAdapter.project({tracks: agency.tracks, nowUnixMs: Date.now(), controls, ...(events ? {events} : {}), writeArm, ...(settings ? {settings} : {}), ...(attention ? {attention} : {}), ...(takes ? {takes} : {}), ...(sessionStop ? {sessionStop} : {}), ...(repeat ? {repeat} : {}), ...(taskLaunch ? {taskLaunch} : {})}), {transport})
   return factoryTrackSet(set, register, seats.status === 'refused' ? seats.error : null, transport, agency.tracks)
 }
 

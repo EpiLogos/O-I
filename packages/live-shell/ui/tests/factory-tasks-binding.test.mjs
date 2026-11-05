@@ -106,7 +106,9 @@ test('Tasks writes the owners\' way: the timing through the Agent, a new task th
   // REPLACED (BD r23): was "Launch waits on Software Factory itself, which has no way yet to start a unit from its owners' readings"
   // (/^Launch: Software Factory has no way yet to start a unit/). Factory starts one (attempt-launch, round 21) on AIKit's realisation
   // (round 22), so without its carrier Launch names the carrier, as Retry and Stop after do (the r23 test below presses it).
-  assert.match(tasks.TASKS_REFUSE.launch, /^Launch: no carrier to AIKit's realisation and Factory's attempt-launch stands here/)
+  // REPLACED (BD r24, O-I 804): was /^Launch: no carrier to AIKit's realisation and Factory's attempt-launch stands here/. The Tasks
+  // device's launch port is retired: Launch names where a task is launched instead.
+  assert.match(tasks.TASKS_REFUSE.launch, /^Launch: a task launches where it stands: its clip's ▶ in the Session grid, or the Agent rack's Launch on its chain/)
   assert.match(tasks.TASKS_REFUSE.stopAfter, /no carrier to Factory's attempt-task-units and attempt-request-cancellation stands here/)
   assert.match(tasks.TASKS_REFUSE.retry, /no carrier to Factory's attempt-task-units and attempt-retry stands here/)
   const retried = [], stopped = []
@@ -114,7 +116,7 @@ test('Tasks writes the owners\' way: the timing through the Agent, a new task th
     stopAfter: async session => { stopped.push(session) }})
   assert.equal(carried.standing.retry, undefined, 'Retry stands with its carrier')
   assert.equal(carried.standing.stopAfter, undefined, 'Stop after stands with its carrier')
-  assert.equal(carried.standing.launch.disabled, tasks.TASKS_REFUSE.launch, 'Launch is not handed its carrier here')
+  assert.equal(carried.standing.launch.disabled, tasks.TASKS_REFUSE.launch, 'Launch stands where its task does, not here')
   await carried.write([{key: 'retry', value: true}])
   await carried.write([{key: 'stopAfter', value: true}])
   assert.deepEqual(retried, [input().session.sessionRef])
@@ -295,13 +297,12 @@ test('(BD r23) a task\'s Launch: Factory names its unit, AIKit realises the sess
     {message: 'Factory did not answer and may have run: Factory did not answer in time Read the Run again before launching it again.'})
   await assert.rejects(() => tasks.launchTask(ports({'custody-list': CUSTODY, 'attempt-launch': {status: 'started'}}), AT),
     {message: 'Launch: Factory answered without its launch of run:r1 · unit:build.'})
-  // The binding: with its carrier, Launch stands and presses for the selected session; without, it names what carries it.
-  const launches = []
-  const carried = tasks.tasksBinding(input(), null, {selectTask() {}, queue: async () => {}, launch: async session => { launches.push(session) }})
-  assert.equal(carried.standing.launch, undefined, 'Launch stands with its carrier')
-  await carried.write([{key: 'launch', value: true}])
-  assert.deepEqual(launches, ['agent-session/fx-aletheia'])
-  const bare = tasks.tasksBinding(input(), null, {selectTask() {}, queue: async () => {}})
-  assert.equal(bare.standing.launch.disabled, tasks.TASKS_REFUSE.launch)
-  assert.match(tasks.TASKS_REFUSE.launch, /^Launch: no carrier to AIKit's realisation and Factory's attempt-launch stands here/)
+  // REPLACED (BD r24, O-I 804): was "with its carrier, Launch stands and presses for the selected session". No screen has drawn the Tasks
+  // device since ticket 725, so its launch port was never pressed. It is retired: a task launches where it stands, from its clip's ▶ in the
+  // Session grid (t795-loop-repeat-launch.test.mjs) and the Agent rack's Launch (factory-session-binding.test.mjs), both through launchTask.
+  const handed = []
+  const offered = tasks.tasksBinding(input(), null, {selectTask() {}, queue: async () => {}, launch: async session => { handed.push(session) }})
+  assert.equal(offered.standing.launch.disabled, tasks.TASKS_REFUSE.launch, 'a launch handed in is not taken')
+  await assert.rejects(() => offered.write([{key: 'launch', value: true}]), {message: tasks.TASKS_REFUSE.launch})
+  assert.deepEqual(handed, [], 'nothing is launched from the Tasks device')
 })

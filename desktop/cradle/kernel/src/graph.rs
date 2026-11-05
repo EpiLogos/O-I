@@ -772,6 +772,13 @@ impl GraphReads {
         self.0.lock().unwrap_or_else(|e| e.into_inner()).clear();
     }
 
+    /// Every graph reading held for at least a test's
+    /// `read_cache::HELD_TTL` (`OwnerReadCache::hold_ttls`).
+    #[cfg(test)]
+    pub(crate) fn hold_ttls(&self) {
+        self.reads().hold_ttls();
+    }
+
     fn reads(&self) -> std::sync::MutexGuard<'_, OwnerReadCache> {
         self.0.lock().unwrap_or_else(|e| e.into_inner())
     }
@@ -1901,6 +1908,9 @@ else:
         let client = ground.client();
         let kernel = Mutex::new(crate::Kernel::new(client.clone()));
         let reads = GraphReads::default();
+        // Retained for a test's `HELD_TTL`, however loaded the machine
+        // (O-I 795 round 24).
+        reads.hold_ttls();
         let op = |fresh: bool| KernelOp::Graph {
             project: None,
             query: String::new(),

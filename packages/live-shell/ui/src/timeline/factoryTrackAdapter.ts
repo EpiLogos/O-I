@@ -35,7 +35,9 @@
 // - launch (W4): how a task plays once launched, what follows it and when a launch lands are its own settings on AIKit
 //   (`encounter-session-settings` `task`: launch, then, quantize — its defaults stated), read with the session's Telemetry
 //   and carried only onto the task whose task_ref they name. Factory reads no expected length for a task, so no clip carries
-//   progress.
+//   progress. A task AIKit names a task_ref for is Factory's work: where its carrier is handed (`taskLaunch`), its ▶ is the task's
+//   own Launch, the Agent rack's (Factory starts the unit it names for the task on the model AIKit realises on its session), and a
+//   stop its Launch mode makes is Factory's Stop after of that unit (O-I 804 round 24). Any other task launches on the bound harness.
 // - R3 (manual §19.1 "The mixer row", §16.6): each session's mixer row — Monitor is Watch (In · Auto · Off), the activator is
 //   Telemetry, Solo, and Arm, which is the shell's one write arm (`shell.setWriteArm`, the transport's own; its light is the flag
 //   the shell moves only when the owner accepts); the way in is the Gateway and the way out the landing, routes not settings. The
@@ -94,6 +96,10 @@ export const FACTORY_LAUNCH_OP = `${FACTORY_GRAIN} · harness_agent_control:rest
 export const FACTORY_SEAT_OP = 'harness_agent_control:new — starts a NEW agent conversation on the bound harness; the agent dropped is named in the receipt, not sent (the owner takes no agent ref)'
 export const FACTORY_RETRY_OP = `${FACTORY_GRAIN} · harness_agent_control:restart — the bound harness's stalled task, from its last good step; the owner takes no session`
 export const FACTORY_BATCH_OP = `${FACTORY_GRAIN} · harness_agent_control:resume — the bound harness's queued tasks; the owner takes no row`
+/** A Factory task's ▶ where its carrier is handed (`taskLaunch`): the task's own Launch, as the Agent rack's Launch presses it. */
+export const FACTORY_TASK_LAUNCH_OP = 'the task · Software Factory attempt-launch — the unit Factory names for the task (its custody, else the one unit its attempts stand on), '
+  + 'started on the model AIKit realises on its session (aikit_write realise, then factory_owner attempt-launch); a stop its Launch mode makes is Factory\'s '
+  + `attempt-request-cancellation of that unit. A task AIKit names no task_ref for: ${FACTORY_LAUNCH_OP}`
 
 /** A session's current task's own settings as AIKit states them (`encounter-session-settings` `task`, its defaults stated: launch trigger,
  * then next, quantize global): how it plays once launched, what follows it on its own track, and when a launch lands. */
@@ -175,11 +181,28 @@ export interface FactorySessionsReading {
   takes?: FactoryTakesPort
   /** Stop one session: cancel its running turn on its own encounter owner. Absent: a track's Stop is the harness's. */
   sessionStop?: (sessionRef: string) => Promise<FactoryControlReceipt>
+  /** A Factory task's own Launch and stop (agent/factoryTaskActs.ts taskLaunchPort). Absent: a task's ▶ is the bound harness's. */
+  taskLaunch?: FactoryTaskLaunchPort
   /** Make a Repeat's takes (agent/sessionSettings.ts makeTakes): the session's task's set of takes, through Actuation's comparison run,
    * or a song's when the pressed clip's Clip view holds a song's note (`clipId`, agent/songClips.ts songTakes).
    * Absent: a Repeat's press says what it waits for (FACTORY_REPEAT_ABSENT). */
   repeat?: (sessionRef: string, label: string, clipId?: string) => Promise<FactoryControlReceipt>
 }
+
+/** A Factory task's own acts on its owners, by the session that carries it and the task_ref AIKit names (agent/factoryTaskActs.ts
+ * taskLaunchPort): Launch starts the unit Factory names for the task (agent/devices/taskBindings.ts launchTask), its receipt's `document`
+ * saying whether Factory `launched` it or had `already-launched` it; Stop asks the unit the task's current attempt stands on to stop
+ * (stopAfterTask). Each answers its receipt, or its owner's refusal in words; a task that is not Factory's work (its register keeps no
+ * Factory state, Factory names no unit for it, or none of its attempts is current) answers its refusal with `document.status`
+ * NOT_FACTORY_WORK, nothing of Factory's moved, and the grid launches or stops it as it did before (the harness, the session's own stop). */
+export interface FactoryTaskLaunchPort {
+  launch(sessionRef: string, taskRef: string): Promise<FactoryControlReceipt>
+  stop(sessionRef: string, taskRef: string): Promise<FactoryControlReceipt>
+}
+/** A Factory task port's word for a task that is not Factory's work. */
+export const NOT_FACTORY_WORK = 'not-factory-work'
+const statusOf = (receipt: unknown): unknown => ((receipt as FactoryControlReceipt | undefined)?.ok !== undefined
+  ? ((receipt as {document?: {status?: unknown}}).document?.status) : undefined)
 
 /** Why a Repeat's press makes no takes where no port is handed. */
 export const FACTORY_REPEAT_ABSENT = 'Repeat makes its takes through Actuation\'s comparison run (kernel actuation_write comparison-run), and no carrier reaches it here.'
@@ -326,8 +349,9 @@ function actionsFor(controls: FactoryControls, tracks: readonly WorldTrack[], cl
 
 /** A task's launch played by its Launch mode (manual §19.1 The Launch panel): "Trigger starts the task when you press its launch. Gate
  * runs it only while you hold the launch. Toggle starts it with one press and stops it with the next. Repeat launches it again at each
- * quantize step while you hold the launch, each run a take of its own." A launch is the harness's, as it always was (FACTORY_LAUNCH_OP);
- * a stop is the session's own (`sessionStop`, its running turn cancelled), else the harness's. Gate's release stops what its press
+ * quantize step while you hold the launch, each run a take of its own." A Factory task's launch and stop are Factory's (`taskLaunch`,
+ * O-I 804 round 24); any other launch is the harness's, as it always was (FACTORY_LAUNCH_OP), and any other stop the session's own
+ * (`sessionStop`, its running turn cancelled), else the harness's. Gate's release stops what its press
  * launched, and only a launch the owner took; Toggle's press on a running task stops it; Repeat makes its takes through the `repeat`
  * port; Trigger, and a task whose mode no reading names, launches as it always did. */
 /** The launch each Gate's press made, by its clip, kept until its release: only a launch the owner took is stopped when it is let go. The
@@ -335,14 +359,23 @@ function actionsFor(controls: FactoryControls, tracks: readonly WorldTrack[], cl
 const GATE_HELD = new Map<string, Promise<unknown>>()
 
 function launchByMode(launch: {op: string; run(clipId: string): unknown}, clips: readonly WorldTrackClip[], sessionOf: ReadonlyMap<string, string>,
-  controls: FactoryControls, sessionStop: FactorySessionsReading['sessionStop'], repeat: FactorySessionsReading['repeat']): NonNullable<WorldTrackActions['launch']> {
+  controls: FactoryControls | undefined, sessionStop: FactorySessionsReading['sessionStop'], repeat: FactorySessionsReading['repeat'],
+  factoryTask: (clipId: string) => {session: string; taskRef: string; port: FactoryTaskLaunchPort} | null = () => null): NonNullable<WorldTrackActions['launch']> {
   const clipById = new Map(clips.map(clip => [clip.id, clip]))
   const held = GATE_HELD
-  const stop = (clip: WorldTrackClip, pressed: string): Promise<FactoryControlReceipt> => {
+  // The stop a task had before Factory's: the session's own, else the harness's.
+  const ownStop = (clip: WorldTrackClip, pressed: string): Promise<FactoryControlReceipt> => {
     const session = sessionOf.get(clip.trackId)
     if (sessionStop && session) return sessionStop(session).then(receipt => receipt.ok
       ? {...receipt, note: `${pressed} stopped this session's running turn. ${receipt.note}`} : {...receipt, error: `${pressed}: ${receipt.error}`})
-    return atWholeHarness(controls.control('stop'), pressed)
+    return controls ? atWholeHarness(controls.control('stop'), pressed) : refused(`${pressed}: no stop reaches this session here.`)
+  }
+  // A Factory task's stop is Factory's, as its launch was, unless the launch was another's or Factory runs none of it.
+  const stop = (clip: WorldTrackClip, pressed: string, launchedByFactory = true): Promise<FactoryControlReceipt> => {
+    const task = launchedByFactory ? factoryTask(clip.id) : null
+    if (!task) return ownStop(clip, pressed)
+    return task.port.stop(task.session, task.taskRef).then(receipt => statusOf(receipt) === NOT_FACTORY_WORK ? ownStop(clip, pressed)
+      : receipt.ok ? {...receipt, note: `${pressed} asked Factory to stop the task's unit. ${receipt.note}`} : {...receipt, error: `${pressed}: ${receipt.error}`})
   }
   return {
     op: launch.op,
@@ -365,9 +398,13 @@ function launchByMode(launch: {op: string; run(clipId: string): unknown}, clips:
       const pressed = held.get(clipId)
       held.delete(clipId)
       if (!clip || clip.launch?.mode !== 'gate' || !pressed) return undefined
-      return pressed.then((receipt): Promise<FactoryControlReceipt> | FactoryControlReceipt => (receipt as FactoryControlReceipt | undefined)?.ok
-        ? stop(clip, `Gate's release on “${clip.label}”`)
-        : {ok: false, error: `${clip.label}'s launch was not taken, so its release stops nothing.`})
+      return pressed.then((receipt): Promise<FactoryControlReceipt> | FactoryControlReceipt => {
+        const taken = receipt as FactoryControlReceipt | undefined
+        // Factory had launched the unit before this press: the press took no launch, so letting go stops nothing.
+        if (taken?.ok && statusOf(taken) === 'already-launched') return {ok: false, error: `${clip.label} was launched already, so its release stops nothing.`}
+        return taken?.ok ? stop(clip, `Gate's release on “${clip.label}”`, statusOf(taken) === 'launched')
+          : {ok: false, error: `${clip.label}'s launch was not taken, so its release stops nothing.`}
+      })
     },
   }
 }
@@ -408,6 +445,8 @@ export const factoryTrackAdapter: WorldTrackAdapter<FactorySessionsReading> = {
     const columns: WorldTrackColumn[] = Array.from({length: rowCount}, (_, i) => ({id: `${BATCH_PREFIX}${i + 1}`, name: String(i + 1)}))
 
     const clips: WorldTrackClip[] = []
+    // The clips that are Factory's work: the session that carries each and the task_ref AIKit names for it.
+    const factoryTaskOf = new Map<string, {session: string; taskRef: string}>()
     for (const track of agency) {
       if (!attends(track)) continue
       const trackId = trackKey(track)
@@ -428,6 +467,7 @@ export const factoryTrackAdapter: WorldTrackAdapter<FactorySessionsReading> = {
         const names = takeNames(attempts)
         const takes = attempts.filter(take => take.taskRef === task.taskRef)
           .map(take => ({id: `${trackId}#take/${take.attemptRef}`, name: names.get(take.attemptRef) ?? 'take', ...(take.receivingRef ? {standing: true} : {})}))
+        if (task.taskRef) factoryTaskOf.set(factoryTaskRef(trackId, task.n), {session: track.sessionRef, taskRef: task.taskRef})
         clips.push({
           id: factoryTaskRef(trackId, task.n),
           trackId,
@@ -523,8 +563,23 @@ export const factoryTrackAdapter: WorldTrackAdapter<FactorySessionsReading> = {
       const session = sessionOf.get(trackId)
       return session ? sessionStop(session) : refused(`"${trackId}" is not a session of this work.`)
     }}}
-    const launch = set.actions?.launch
-    if (launch && controls) set.actions = {...set.actions, launch: launchByMode(launch, clips, sessionOf, controls, sessionStop, reading.repeat)}
+    // A Factory task's ▶ is its own Launch where its carrier is handed (O-I 804 round 24), with or without a bound harness; any other task's
+    // is the harness's, as it was.
+    const taskLaunch = reading.taskLaunch
+    const factoryTask = (clipId: string) => { const task = taskLaunch && factoryTaskOf.get(clipId); return task && taskLaunch ? {...task, port: taskLaunch} : null }
+    const harnessLaunch = set.actions?.launch
+    const launch = taskLaunch ? {op: FACTORY_TASK_LAUNCH_OP, run: (clipId: string) => {
+      const task = factoryTask(clipId)
+      // A task that is not Factory's work launches on the harness as it did, Factory's words before the harness's receipt.
+      if (task) return task.port.launch(task.session, task.taskRef).then(receipt => statusOf(receipt) === NOT_FACTORY_WORK && !receipt.ok && harnessLaunch
+        ? Promise.resolve(harnessLaunch.run(clipId) as Promise<FactoryControlReceipt>).then(harness => harness.ok
+          ? {...harness, note: `${receipt.error} So its launch is the bound harness's. ${harness.note}`} : harness)
+        : receipt)
+      if (harnessLaunch) return harnessLaunch.run(clipId)
+      const clip = clips.find(item => item.id === clipId)
+      return refused(clip ? `${clip.label}: AIKit names no task for it, so Factory has no work to start, and no harness is bound here.` : `"${clipId}" is not a task of this work.`)
+    }} : harnessLaunch
+    if (launch && (controls || taskLaunch)) set.actions = {...set.actions, launch: launchByMode(launch, clips, sessionOf, controls, sessionStop, reading.repeat, factoryTask)}
     if (port) {
       const telemetry = (trackId: string, on: boolean) => {
         const session = sessionOf.get(trackId)
@@ -665,7 +720,7 @@ export const FACTORY_WAITING: Readonly<Record<string, string>> = {
   'track.remove': 'a kernel carrier reaching AIKit\'s SessionSpace detach-agent-session: the shell publishes none to this pane',
   'track.activator': 'a kernel carrier reaching AIKit\'s encounter-session-settings (Telemetry): the shell publishes none to this pane',
   'track.solo': 'what you attend to: the agent shell hands it from the book\'s world context, and none is handed to this pane',
-  'clip.launch': 'the bound harness: harness_agent_control reaches it once the owner names the harness binding (agent/useHarnessBinding.ts)',
+  'clip.launch': 'a kernel carrier reaching Software Factory\'s attempt-launch for a task AIKit names (agent/factoryTaskActs.ts taskLaunchPort), else the bound harness: harness_agent_control reaches it once the owner names the harness binding (agent/useHarnessBinding.ts)',
   'row.launch': 'the bound harness: harness_agent_control reaches it once the owner names the harness binding (agent/useHarnessBinding.ts)',
   'track.stop': 'the bound harness, or a kernel carrier reaching the session\'s own encounter (cancel)',
   'set.stop-all': 'the bound harness: harness_agent_control reaches it once the owner names the harness binding (agent/useHarnessBinding.ts)',

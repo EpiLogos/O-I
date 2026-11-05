@@ -15,6 +15,10 @@
 // reads each chain's task (encounter_task_read) and sets the task's Budget through AIKit's encounter-task-budget (encounter_task_budget,
 // O-I #743). Where each rack's macros stand is Software Factory's (factory_owner rack-macros-read, O-I #842), read for the rack and every
 // set it holds, and read again after each write to them.
+// A task's Launch is one act wherever it is pressed, the Agent rack's Launch on its chain's bound task and the Session grid's ▶ on its
+// clip's task (launchSessionTask, O-I 804 round 24): the unit Factory names for the task started on the model AIKit realises on its
+// session. The grid's carrier (taskLaunchPort) locates the session's register in Factory first, as the rack does, and stops a task
+// through Factory's Stop after of its unit.
 import {useEffect, useMemo, useState} from 'react'
 import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
 import {encounter} from '../../../../../desktop/cradle/src/encounter/client'
@@ -30,6 +34,12 @@ import {newTaskRef} from './clipBinding'
 import {writeSessionSettings} from './sessionSettings'
 import type {ChainModelReading, RackMacrosAnswer, SessionModelSelect, TaskBudgetWrite} from './devices/sessionChainBindings'
 import {rackMacrosReadingOf} from '../inhabitants/sdk/chains'
+import {LAUNCH_REFUSE, STOP_NONE_CURRENT, launchTask, stopAfterTask, type LaunchAt, type Launched} from './devices/taskBindings'
+import {ROUTE_WORDS, aikitWriteOp, factoryOwnerWrite, ownerRouteWrite} from './devices/ownerRoutes'
+import {catalogueRead} from './devices/useModelCatalogue'
+import {padsLocation} from './devices/promptPadsBinding'
+import {registerOf} from './worldScope'
+import {NOT_FACTORY_WORK, type FactoryTaskLaunchPort} from '../timeline/factoryTrackAdapter'
 
 const text = (cause: unknown) => cause instanceof Error ? cause.message : String(cause)
 
@@ -216,4 +226,64 @@ export function useRackMacrosReadings(transport: KernelTransportStatus, where: {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `key` names the racks
   }, [transport, key, asked])
   return {readings: key ? readings : null, refresh: () => ask(n => n + 1)}
+}
+
+/** A task's Launch wherever it is pressed (§19.1 Trigger: "starts the task when you press its launch"): the unit Factory names for the task,
+ * started on the model AIKit realises on its session (devices/taskBindings.ts launchTask: aikit_write realise, then factory_owner
+ * attempt-launch, under the project's factory.attempt.launch grant, which the kernel resolves and the owner gives). Factory's answer, or the
+ * owners' refusals thrown in their words. */
+export function launchSessionTask(transport: KernelTransportStatus, at: LaunchAt): Promise<Launched> {
+  return launchTask({
+    owner: request => factoryOwnerWrite(transport, request, `factory_owner ${request.kind}`),
+    model: () => sessionModelRead(transport, at.project, at.session),
+    catalogue: () => catalogueRead(transport),
+    realise: request => ownerRouteWrite(transport, aikitWriteOp(request), ROUTE_WORDS.realise).then(answer => answer.data),
+  }, at)
+}
+
+/** The Factory state of a session's register, as the Agent rack locates it (`factory development locate`, devices/sessionCustody.ts
+ * factoryLocateOp): its state path, or Factory's words for why none stands, after `what`. */
+async function factoryStateOf(transport: KernelTransportStatus, project: string, what: string): Promise<{statePath: string} | {none: string}> {
+  const register = registerOf(project)
+  const where = padsLocation(await factoryOwnerWrite(transport, register === null ? {kind: 'locate'} : {kind: 'locate', project: register}, '`factory development locate`'))
+  return where && 'statePath' in where ? {statePath: where.statePath} : {none: `${what}: ${where?.why ?? 'Factory answered its locate with no row.'}`}
+}
+
+/** A receipt saying the task is not Factory's work (its register keeps no Factory state, Factory names no unit for it, or no attempt of it
+ * is current), in Factory's words: nothing of Factory's moved, and the grid acts as it did before Factory's (NOT_FACTORY_WORK). */
+const notFactoryWork = (error: string) => ({ok: false as const, error, document: {status: NOT_FACTORY_WORK}})
+
+/** The Session grid's carrier for a Factory task's ▶ (timeline/factoryTrackAdapter.ts FactoryTaskLaunchPort, O-I 804 round 24): in the
+ * Factory state of the register its session was read under, Launch is the rack's own (launchSessionTask), its receipt's `document` saying
+ * whether Factory launched the unit or had launched it already, and Stop is Factory's Stop after of the unit the task's current attempt
+ * stands on (stopAfterTask). A task that is not Factory's work says so (notFactoryWork) before anything of Factory's moves; every other
+ * refusal comes back in its owner's words. */
+export function taskLaunchPort(transport: KernelTransportStatus, projectOf: (session: string) => string): FactoryTaskLaunchPort {
+  return {
+    launch: async (session, taskRef) => {
+      try {
+        const project = projectOf(session)
+        const state = await factoryStateOf(transport, project, 'Launch')
+        if ('none' in state) return notFactoryWork(state.none)
+        const launched = await launchSessionTask(transport, {statePath: state.statePath, taskRef, session, project})
+        tellOwnerChanged({topic: 'agency', cause: 'a task was launched from its clip', agentSession: session})
+        return {ok: true, note: launched.said, document: {status: launched.status, attemptRef: launched.attemptRef}}
+      } catch (cause) {
+        const words = text(cause)
+        return words === LAUNCH_REFUSE.noUnit(taskRef) ? notFactoryWork(words) : {ok: false, error: words}
+      }
+    },
+    stop: async (session, taskRef) => {
+      try {
+        const state = await factoryStateOf(transport, projectOf(session), 'Stop after')
+        if ('none' in state) return notFactoryWork(state.none)
+        const unit = await stopAfterTask(request => factoryOwnerWrite(transport, request, `factory_owner ${request.kind}`), state.statePath, taskRef)
+        tellOwnerChanged({topic: 'agency', cause: 'a task was asked to stop from its clip', agentSession: session})
+        return {ok: true, note: `Software Factory was asked to stop ${unit.workflowUnitRef} of ${unit.runRef}, the unit ${taskRef} stands current on.`}
+      } catch (cause) {
+        const words = text(cause)
+        return words === STOP_NONE_CURRENT(taskRef) ? notFactoryWork(words) : {ok: false, error: words}
+      }
+    },
+  }
 }

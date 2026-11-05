@@ -64,6 +64,11 @@ pub const HORIZON_TTL: Duration = Duration::from_millis(2000);
 pub const DIR_TTL: Duration = Duration::from_millis(1500);
 pub const KNOWLEDGE_TTL: Duration = Duration::from_millis(4000);
 pub const GRAPH_TTL: Duration = Duration::from_millis(4000);
+/// The least time-to-live a test holds a cache to (`holding_ttls`): far
+/// longer than any test's owner takes on a loaded machine, so a repeat a
+/// test expects served is served however slowly its owner answered.
+#[cfg(test)]
+pub(crate) const HELD_TTL: Duration = Duration::from_secs(600);
 const MAX_ENTRIES: usize = 512;
 const MAX_BYTES: usize = 32 * 1024 * 1024;
 
@@ -304,6 +309,8 @@ pub struct Flight {
     floor: Duration,
     /// Whether what it serves is recorded for the op (`is_attributed`).
     attributed: bool,
+    /// The least time-to-live it is held for (`OwnerReadCache::least_ttl`).
+    least_ttl: Duration,
     held: Mutex<Option<FlightHeld>>,
 }
 #[derive(Debug)]
@@ -320,23 +327,31 @@ impl Default for Flight {
             vec![Scope::All],
             DEFAULT_FLOOR,
             true,
+            Duration::ZERO,
         )
     }
 }
 impl Flight {
-    fn over(watch: Watch, scopes: Vec<Scope>, floor: Duration, attributed: bool) -> Self {
+    fn over(
+        watch: Watch,
+        scopes: Vec<Scope>,
+        floor: Duration,
+        attributed: bool,
+        least_ttl: Duration,
+    ) -> Self {
         Self {
             watch,
             scopes,
             floor,
             attributed,
+            least_ttl,
             held: Mutex::new(None),
         }
     }
     /// The held reading if it stands, or moved only by churn and is younger
     /// than the flight's floor (scheduling the one notice for its end).
     fn serving(&self, held: &mut FlightHeld, ttl: Duration) -> Option<serde_json::Value> {
-        let standing = self.watch.still(&held.stamp, ttl);
+        let standing = self.watch.still(&held.stamp, ttl.max(self.least_ttl));
         let settled = !standing && self.watch.churned(&held.stamp) && held.stamp.age() < self.floor;
         if !(standing || settled) {
             return None;
@@ -392,7 +407,7 @@ impl Flight {
     fn lapsed(&self, ttl: Duration) -> bool {
         let lapsed = |held: &Option<FlightHeld>| {
             held.as_ref().is_some_and(|held| {
-                !self.watch.still(&held.stamp, ttl)
+                !self.watch.still(&held.stamp, ttl.max(self.least_ttl))
                     && !(self.watch.churned(&held.stamp) && held.stamp.age() < self.floor)
             })
         };
@@ -420,6 +435,12 @@ pub struct OwnerReadCache {
     /// Shared readings by key, each a pending read under its `requests`
     /// ticket: whatever withdraws the ticket withdraws the flight.
     flights: HashMap<String, (u64, Arc<Flight>)>,
+    /// The least time-to-live a reading here is held for where the watch
+    /// cannot say: none in the application, where each reading's own `ttl`
+    /// bounds it; a test that asserts a repeat is served holds one no loaded
+    /// machine outlasts (`holding_ttls`), since the stamp is taken before the
+    /// owner read and a slow owner otherwise spends the reading's time.
+    least_ttl: Duration,
 }
 impl Default for OwnerReadCache {
     fn default() -> Self {
@@ -465,6 +486,7 @@ impl OwnerReadCache {
             stamps: HashMap::new(),
             settled: HashMap::new(),
             flights: HashMap::new(),
+            least_ttl: Duration::ZERO,
         }
     }
     /// The reading of `key` every prepared read shares while it is in flight
@@ -485,6 +507,7 @@ impl OwnerReadCache {
             scopes,
             floor_of_key(key),
             is_attributed(key),
+            self.least_ttl,
         ));
         self.flights
             .insert(key.to_owned(), (ticket, Arc::clone(&flight)));
@@ -539,6 +562,20 @@ impl OwnerReadCache {
         self.floors = false;
         self
     }
+    /// This cache holding every reading for at least `HELD_TTL` (a test's
+    /// time-to-live that no loaded machine outlasts), its readings' own
+    /// TTLs unchanged (O-I 795 round 24: the load flake of C41).
+    #[cfg(test)]
+    pub(crate) fn holding_ttls(mut self) -> Self {
+        self.hold_ttls();
+        self
+    }
+    /// `holding_ttls` for a cache already in place; flights made after it
+    /// hold the same.
+    #[cfg(test)]
+    pub(crate) fn hold_ttls(&mut self) {
+        self.least_ttl = HELD_TTL;
+    }
     pub(crate) fn current(&self, key: &str, ticket: u64) -> bool {
         self.requests.get(key) == Some(&ticket)
     }
@@ -571,6 +608,7 @@ impl OwnerReadCache {
 
     pub fn get(&self, key: &str, ttl: Duration) -> Option<serde_json::Value> {
         let entry = self.entries.get(key)?;
+        let ttl = ttl.max(self.least_ttl);
         let standing =
             self.watch.still(&entry.stamp, ttl) && (!entry.untracked || entry.at.elapsed() < ttl);
         let settled = !standing
@@ -1586,7 +1624,12 @@ mod tests {
     #[test]
     fn one_flight_reads_once_for_its_readers_and_never_shares_a_failure() {
         use std::sync::atomic::{AtomicUsize, Ordering};
-        let flight = Arc::new(Flight::default());
+        // Held for `HELD_TTL`: a reader the machine schedules late still
+        // joins the one reading (O-I 795 round 24).
+        let flight = Arc::new(Flight {
+            least_ttl: HELD_TTL,
+            ..Flight::default()
+        });
         let reads = Arc::new(AtomicUsize::new(0));
         let readers: Vec<_> = (0..4)
             .map(|_| {
