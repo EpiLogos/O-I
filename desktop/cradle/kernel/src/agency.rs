@@ -8,7 +8,7 @@ use std::{
     process::Command,
     sync::{
         atomic::{AtomicU8, Ordering},
-        Arc,
+        Arc, Mutex,
     },
 };
 
@@ -89,6 +89,11 @@ pub struct Client {
     /// fallback reuse path is never retried against a suite that already
     /// answered; clones share the one cell.
     mint_support: Arc<AtomicU8>,
+    /// The Factory task sessions this process provisioned whose task Action
+    /// the mint did not admit (O-I 768), each with the refusal's own words:
+    /// the session was minted for chat, and a drop that asks it for a task
+    /// is refused saying why. Clones share the one map.
+    task_mint_refusals: Arc<Mutex<std::collections::HashMap<String, String>>>,
 }
 
 impl Client {
@@ -355,6 +360,7 @@ impl Client {
             home,
             suite_route: false,
             mint_support: Arc::new(AtomicU8::new(0)),
+            task_mint_refusals: Arc::default(),
         }
     }
     pub fn discover() -> Self {
@@ -371,6 +377,7 @@ impl Client {
             home: None,
             suite_route: true,
             mint_support: Arc::new(AtomicU8::new(0)),
+            task_mint_refusals: Arc::default(),
         }
     }
     /// Exact native Direct Agent verbs. Neither renderer-selected executables
@@ -689,7 +696,10 @@ impl Client {
         let output = crate::owner_process::output(&mut command, None, bound)
             .map_err(|error| format!("AIKit SessionSpace is unavailable: {error}"))?;
         if !output.status.success() {
-            return Err(owner_process_failure("encounter-task-configure", &output));
+            return Err(self.task_refusal(
+                agent_session,
+                owner_process_failure("encounter-task-configure", &output),
+            ));
         }
         let mut data: Value = serde_json::from_slice(&output.stdout)
             .map_err(|e| format!("AIKit SessionSpace returned an unreadable task record: {e}"))?;
@@ -1793,6 +1803,10 @@ impl Client {
     ///      `minted-per-project` or `reused-admitted-source`) and carries
     ///      the `agent_ref` the flow attributes the session to — the
     ///      mint's own when it succeeded, the reused binding's otherwise.
+    ///      This is a Factory task session (O-I 768): its mint asks for the
+    ///      task Action with `--for-task` first, Actuation judging it against
+    ///      the owner's standing grant, and a refusal falls back to the chat
+    ///      mint; `task_authority` says which, in the refusal's own words.
     ///   6. `encounter open` — through the ordinary `encounter` gate, which
     ///      re-verifies the new space's Project membership before opening the
     ///      provider.
@@ -1805,7 +1819,7 @@ impl Client {
         project_ref: &str,
         preferred_body_ref: Option<&str>,
     ) -> Result<Value, String> {
-        self.provision_named(cwd, project_ref, preferred_body_ref, None)
+        self.provision_inner(cwd, project_ref, preferred_body_ref, None, None, true)
     }
 
     /// Bring a named roster agent into a shared Flow (O:I #558): a fresh
@@ -1823,8 +1837,14 @@ impl Client {
         sender: &str,
         flow_ref: &str,
     ) -> Result<Value, String> {
-        let mut data =
-            self.provision_inner(cwd, project_ref, preferred_body_ref, None, Some(agent_ref))?;
+        let mut data = self.provision_inner(
+            cwd,
+            project_ref,
+            preferred_body_ref,
+            None,
+            Some(agent_ref),
+            false,
+        )?;
         let session = data["agent_session"]
             .as_str()
             .ok_or("Provisioning returned no AgentSession")?
@@ -1860,11 +1880,15 @@ impl Client {
         preferred_body_ref: Option<&str>,
         named: Option<&crate::nara_dialogue::Binding>,
     ) -> Result<Value, String> {
-        self.provision_inner(cwd, project_ref, preferred_body_ref, named, None)
+        self.provision_inner(cwd, project_ref, preferred_body_ref, named, None, false)
     }
 
     /// `agent_ref` names the roster Agent to mint the Agency for (a Flow
     /// participant); `named` names a personal dialogue's exact binding.
+    /// `for_task` is a Factory task session (the desktop's `encounter_provision`,
+    /// O-I 768): its mint asks for the task Action as well, which Actuation
+    /// judges against the owner's standing grant, and a refusal falls back to
+    /// the chat mint every other session has. No other kind asks for more.
     fn provision_inner(
         &self,
         cwd: &Path,
@@ -1872,6 +1896,7 @@ impl Client {
         preferred_body_ref: Option<&str>,
         named: Option<&crate::nara_dialogue::Binding>,
         agent_ref_override: Option<&str>,
+        for_task: bool,
     ) -> Result<Value, String> {
         let context = self.session_space(cwd, &["project-context"])?;
         let binding: Value = serde_json::from_str(&context)
@@ -1929,14 +1954,31 @@ impl Client {
             false
         };
         let mut reuse_reason: Option<String> = None;
+        // A Factory task session's task Action: admitted with its mint, or
+        // refused in the owner's words and minted for chat (Null: not asked).
+        let mut task_authority = Value::Null;
         let (agent_ref, agency) = if recorded {
             (agent_session.clone(), "retained-native-binding")
         } else {
             let minted = match named {
-                Some(binding) => {
-                    self.mint_agency_as(cwd, &agent_session, Some(&binding.expected_agent_ref))
-                }
-                None => self.mint_agency_as(cwd, &agent_session, agent_ref_override),
+                Some(binding) => self.mint_agency_as(
+                    cwd,
+                    &agent_session,
+                    Some(&binding.expected_agent_ref),
+                    false,
+                ),
+                None if for_task && agent_ref_override.is_none() => self
+                    .mint_task_session(cwd, &agent_session)
+                    .map(|(data, refused)| {
+                        task_authority = match refused {
+                            None => serde_json::json!({"standing": "admitted"}),
+                            Some(words) => {
+                                serde_json::json!({"standing": "refused", "words": words})
+                            }
+                        };
+                        data
+                    }),
+                None => self.mint_agency_as(cwd, &agent_session, agent_ref_override, false),
             };
             match minted {
                 Ok(data) => (
@@ -2066,6 +2108,7 @@ impl Client {
             "agent_ref":if recorded {Value::Null} else {Value::String(agent_ref)},
             "agency":agency,
             "agency_reuse_reason":reuse_reason,
+            "task_authority":task_authority,
             "provider":provider,
             "provider_default":provider_default,
             "preferred_body_ref":preferred_body_ref,
@@ -2085,7 +2128,53 @@ impl Client {
     /// this process so later provisions fall back without re-probing.
     #[cfg(test)]
     fn mint_agency(&self, cwd: &Path, agent_session: &str) -> Result<Value, String> {
-        self.mint_agency_as(cwd, agent_session, None)
+        self.mint_agency_as(cwd, agent_session, None, false)
+    }
+
+    /// A Factory task session's mint (O-I 768): `--for-task` asks for the task
+    /// Action as well, and Actuation judges it against the owner's standing
+    /// grant. When that mint is refused by a suite that has the verb, the
+    /// plain chat mint runs exactly as for any session, so provisioning a chat
+    /// never breaks; the refusal's words come back with it and are kept for
+    /// this session, so a drop that asks it for a task says why it cannot. A
+    /// suite without the verb answers as it does today.
+    fn mint_task_session(
+        &self,
+        cwd: &Path,
+        agent_session: &str,
+    ) -> Result<(Value, Option<String>), String> {
+        let refused = match self.mint_agency_as(cwd, agent_session, None, true) {
+            Ok(data) => return Ok((data, None)),
+            Err(refused) if self.mint_support.load(Ordering::Relaxed) == 2 => return Err(refused),
+            Err(refused) => refused,
+        };
+        let data = self.mint_agency_as(cwd, agent_session, None, false)?;
+        if let Ok(mut held) = self.task_mint_refusals.lock() {
+            held.insert(agent_session.to_owned(), refused.clone());
+        }
+        Ok((data, Some(refused)))
+    }
+
+    /// A task the owner refused for a session whose task Action the mint did
+    /// not admit: the owner's words, then why — the standing grant did not
+    /// admit the task Action when the session was minted, in the words that
+    /// refused it. Any other refusal, or a session this process did not
+    /// provision so, passes through as the owner said it.
+    pub(crate) fn task_refusal(&self, agent_session: &str, refused: String) -> String {
+        if !refused.contains("does not authorise this task") {
+            return refused;
+        }
+        let held = self
+            .task_mint_refusals
+            .lock()
+            .ok()
+            .and_then(|held| held.get(agent_session).cloned());
+        match held {
+            Some(words) => format!(
+                "{refused}: the owner's standing grant did not admit the task Action when this session was minted, so it was minted for chat only — {words}"
+            ),
+            None => refused,
+        }
     }
 
     fn mint_agency_as(
@@ -2093,6 +2182,7 @@ impl Client {
         cwd: &Path,
         agent_session: &str,
         agent_ref: Option<&str>,
+        for_task: bool,
     ) -> Result<Value, String> {
         if self.mint_support.load(Ordering::Relaxed) == 2 {
             return Err("the installed suite has no encounter-agency-mint verb (cached)".into());
@@ -2115,6 +2205,9 @@ impl Client {
             .arg(cwd);
         if let Some(agent_ref) = agent_ref {
             command.args(["--agent-ref", agent_ref]);
+        }
+        if for_task {
+            command.arg("--for-task");
         }
         let output = output_bounded(
             &mut command,
@@ -2850,6 +2943,154 @@ mod tests {
         assert!(absent_client
             .mint_agency(std::path::Path::new("/tmp"), "agent-session/x")
             .is_err());
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// O-I 768: a Factory task session (the desktop's `encounter_provision`) asks for the task Action with `--for-task`, which
+    /// Actuation judges against the owner's standing grant. Refused, it is minted for chat exactly as before, and a drop that then
+    /// asks it for a task is refused in the owner's words with the refusal that kept the task Action out. Admitted, it is minted once.
+    /// A Flow participant asks for nothing more than it did. Channels: SCRIPTED — a faked AIKit (its Actuation's refusal its
+    /// stderr) in a scratch AIKIT_HOME, the provision stopped after the mint by the faked owner; never the owner's grant.
+    #[test]
+    fn a_factory_task_session_asks_for_the_task_action_and_is_minted_for_chat_when_the_grant_refuses_it(
+    ) {
+        let dir = std::env::temp_dir().join(format!("oi-task-mint-test-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(dir.join("aikit-home")).unwrap();
+        let (log, admit, refuse) = (dir.join("calls.log"), dir.join("admit"), dir.join("refuse"));
+        const REFUSED: &str = "actuation.agency.refused: action/aikit/encounter-task is not within the standing grant's delegated autonomy";
+        let stub = dir.join("aikit");
+        write_executable_stub(
+            &stub,
+            &format!(
+                r#"#!/bin/sh
+echo "$*" >> '{log}'
+case " $* " in
+  *" encounter-agency-mint "*)
+    [ -f '{refuse}' ] && {{ echo "actuation.agency.refused: no standing grant for this World" >&2; exit 1; }}
+    case " $* " in *" --for-task "*) [ -f '{admit}' ] || {{ echo "{REFUSED}" >&2; exit 1; }} ;; esac
+    echo '{{"ok":true,"data":{{"configured":true,"standing":"minted-per-project-agency","agent_ref":"agent/o-i-chat"}}}}' ;;
+  *" project-context "*) echo '{{"project":"O-I","context":{{}}}}' ;;
+  *" create "*|*" stage "*) echo '{{"preview":"p"}}' ;;
+  *" apply "*) echo '{{"applied":true}}' ;;
+  *) echo "the faked owner ends the provision after the mint" >&2; exit 3 ;;
+esac"#,
+                log = log.display(),
+                admit = admit.display(),
+                refuse = refuse.display(),
+            ),
+        );
+        let client = Client::with(stub, Some(dir.join("aikit-home")));
+        let mints = || -> Vec<String> {
+            std::fs::read_to_string(&log)
+                .unwrap_or_default()
+                .lines()
+                .filter(|line| line.contains("encounter-agency-mint"))
+                .map(str::to_owned)
+                .collect()
+        };
+        let session_of = |line: &str| {
+            let words: Vec<&str> = line.split_whitespace().collect();
+            let at = words
+                .iter()
+                .position(|word| *word == "--agent-session")
+                .unwrap();
+            words[at + 1].to_owned()
+        };
+        let provision = |client: &Client| {
+            retry_busy(|| {
+                let _ = std::fs::remove_file(&log);
+                client.provision(&dir, "O-I", None)
+            })
+        };
+        const AUTHORITY: &str =
+            "Current Agency does not authorise this task, authority or participant";
+
+        // The grant refuses the task Action: asked once with --for-task, then minted for chat; the provision carries on past it.
+        let stopped = provision(&client).unwrap_err();
+        assert!(
+            !stopped.contains("not admitted"),
+            "the chat mint stood: {stopped}"
+        );
+        let asked = mints();
+        assert_eq!(asked.len(), 2, "{asked:?}");
+        assert!(asked[0].contains("--for-task"), "{}", asked[0]);
+        assert!(!asked[1].contains("--for-task"), "{}", asked[1]);
+        let session = session_of(&asked[0]);
+        assert_eq!(
+            session_of(&asked[1]),
+            session,
+            "the same session, minted for chat"
+        );
+        // A drop on it is refused in the owner's words, then why: the task Action the grant did not admit, in Actuation's words.
+        let dropped = client.task_refusal(&session, AUTHORITY.to_owned());
+        assert!(dropped.starts_with(AUTHORITY), "{dropped}");
+        assert!(
+            dropped.contains("standing grant did not admit the task Action"),
+            "{dropped}"
+        );
+        assert!(dropped.ends_with(REFUSED), "{dropped}");
+        assert_eq!(
+            client.clone().task_refusal(&session, AUTHORITY.to_owned()),
+            dropped,
+            "clones share what was kept"
+        );
+        assert_eq!(
+            client.task_refusal(&session, "Session settings revision conflict".into()),
+            "Session settings revision conflict",
+            "another refusal passes through as the owner said it"
+        );
+        assert_eq!(
+            client.task_refusal("agent-session/elsewhere", AUTHORITY.to_owned()),
+            AUTHORITY,
+            "a session this process did not mint for chat in its place is the owner's words alone"
+        );
+
+        // The grant admits it: minted once, with the task Action, and nothing is kept.
+        std::fs::write(&admit, "").unwrap();
+        provision(&client).unwrap_err();
+        let asked = mints();
+        assert_eq!(asked.len(), 1, "{asked:?}");
+        assert!(asked[0].contains("--for-task"), "{}", asked[0]);
+        assert_eq!(
+            client.task_refusal(&session_of(&asked[0]), AUTHORITY.to_owned()),
+            AUTHORITY
+        );
+
+        // Neither mint is admitted: the chat's own refusal, as before.
+        std::fs::write(&refuse, "").unwrap();
+        let refused = provision(&client).unwrap_err();
+        assert!(
+            refused.starts_with("This chat's Agency was not admitted"),
+            "{refused}"
+        );
+        assert!(
+            refused.contains("no standing grant for this World"),
+            "{refused}"
+        );
+        assert_eq!(mints().len(), 2);
+        std::fs::remove_file(&refuse).unwrap();
+
+        // A Flow participant asks for no more than it did: one mint, for the named Agent, without the task Action.
+        retry_busy(|| {
+            let _ = std::fs::remove_file(&log);
+            client.provision_flow_participant(
+                &dir,
+                "O-I",
+                "agent/ada",
+                None,
+                "human:owner",
+                "flow/f",
+            )
+        })
+        .unwrap_err();
+        let asked = mints();
+        assert_eq!(asked.len(), 1, "{asked:?}");
+        assert!(
+            asked[0].contains("--agent-ref agent/ada") && !asked[0].contains("--for-task"),
+            "{}",
+            asked[0]
+        );
         let _ = std::fs::remove_dir_all(&dir);
     }
 

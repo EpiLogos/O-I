@@ -29,7 +29,12 @@
 //     admission (`factory workflow edit --check`, factory_owner `workflow-edit-check`); the person's Accept is one act, the proposal
 //     accepted in Central's ledger and the edit applied by Factory, and Discard declines it in Central. Nothing is written to the song
 //     before Accept, and each refusal is its owner's words. With no one occupying the orchestrator's Position the press is refused,
-//     naming the Position and how its body starts (`aikit inhabit --position …`); nothing is queued.
+//     naming the Position and how its body starts (`aikit inhabit --position …`); nothing is queued. The ask names the edits that are
+//     Factory's, `unit` among them: a unit the song does not hold, written whole in the workflow SDK's words. Where the plan the Run
+//     answers to (the Intent panel's From) names an issue, the press first reads it as the project's map (`factory workflow map`,
+//     factory_owner `workflow-map`): its open tickets go with the ask, and Anima is asked for one unit per ticket, keyed as the map
+//     keys it and waiting on its blockers, its parts the ticket's (manual §19.1 Songs). An issue that is no map leaves the Intent alone;
+//     any other refusal refuses the press. The units a proposal writes stand dashed after the song's own until Accept.
 //   - A unit that is a song's clip dropped on the track (O-I #844, songClips.ts; Factory marks it `form: canon`, its `songClip`, and draws
 //     the clip's score inside it as `song`) stands as one note with the thread form canon (CFP5), the song's notes small inside it; a
 //     double-click opens it (`score.open`) and Back returns. Its song is the clip's render, never edited here.
@@ -62,10 +67,17 @@ const COMPOSED = '#composed'
 /** Compose's ask (the machine block of its Communique) and Factory's answer to an edit it checks without writing it. */
 export const COMPOSE_ASK = 'oi.compose-ask/v1'
 export const EDIT_RECEIPT = 'factory.workflow-edit-receipt/v1'
+/** Factory's reading of a project's map (Factory workflow_score.rs MAP_CONTRACT). */
+export const MAP_READING = 'factory.project-map-reading/v1'
+/** The edits Factory takes (workflow_score.rs Edit), as Compose names them to Anima. */
+const EDIT_OPS = ['unit', 'allocate', 'connect', 'heads'] as const
 
 /** The seven heads of a unit's composition, in Factory's spelling, and the head of QL's Vāk-block instrument each is. */
 const HEADS: readonly (readonly [string, string])[] = [['CPF', 'vak-cpf'], ['CT', 'vak-ct'], ['CP', 'vak-cp'], ['CF', 'vak-cf'], ['CFP', 'vak-cfp'],
   ['CS', 'vak-cs'], ['direction', 'vak-direction']]
+/** The same heads as the workflow SDK's composition words them (cPrimeExecutionBinding), as Factory's score reads them (workflow_score.rs heads). */
+const COMPOSITION_HEADS: readonly (readonly [string, string])[] = [['participation', 'CPF'], ['content', 'CT'], ['position', 'CP'], ['frame', 'CF'],
+  ['thread', 'CFP'], ['sequence', 'CS'], ['direction', 'direction']]
 
 const text = (value: unknown): string | null => typeof value === 'string' && value.trim() ? value : null
 const object = (value: unknown): Record<string, unknown> | null => value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null
@@ -248,10 +260,19 @@ export function scoreValuesOf(score: ScoreReading | null, rack: readonly RackRow
     if (!ref || rows.some(item => item.id === ref)) continue
     rows.push({id: ref, name: ref.split(/[/:]/).pop() || ref, kind: row?.kind === 'agent-set' ? 'set' : row?.kind === 'agency' ? 'agency' : 'agent', rack: false})
   }
+  // The units a proposal writes whole stand after the song's own, dashed, on the rows they require.
+  const added = (proposal?.edits ?? []).flatMap(edit => {
+    const whole = edit.op === 'unit' ? object(edit.unit) : null
+    return whole && text(whole.key) && !units.some(unit => unit.key === whole.key) ? [proposedUnitOf(whole)] : []
+  })
+  for (const unit of added) {
+    const ref = text(unit.row)
+    if (ref && !rows.some(item => item.id === ref)) rows.push({id: ref, name: ref.split(/[/:]/).pop() || ref, kind: rowKindOf(unit.rowKind), rack: false})
+  }
   const drawn = {
     name: text(object(reading.song)?.workflowKey) ?? '—',
     rows,
-    units: units.map(unit => {
+    units: [...units, ...added].map(unit => {
       const held = picksOf(picks, String(unit.key))
       const composed = composedOn(proposal, String(unit.key))
       return {...scoreUnitOf(unit), ...(held || composed?.picks ? {picks: {...held, ...composed?.picks}} : {}), ...(composed ? {proposed: true} : {})}
@@ -273,10 +294,29 @@ export function scoreValuesOf(score: ScoreReading | null, rack: readonly RackRow
   return values
 }
 
+/** A composition's heads, in Factory's head names. Pure. */
+function compositionHeadsOf(composition: Record<string, unknown>): Record<string, unknown> {
+  const heads: Record<string, unknown> = {}
+  for (const [field, head] of COMPOSITION_HEADS) if (text(composition[field])) heads[head] = composition[field]
+  return heads
+}
+
+/** A unit a proposal writes whole, in the workflow SDK's words, as Factory's score names its parts (workflow_score.rs score): its row the
+ * first agent, agent set or agency it requires, its heads its composition's. Pure. */
+function proposedUnitOf(unit: Record<string, unknown>): Record<string, unknown> {
+  const needs = object(unit.agentRequirements) ?? {}
+  const [row, rowKind] = texts(needs.agentRefs).length ? [texts(needs.agentRefs)[0], 'agent'] : texts(needs.agentSetRefs).length ? [texts(needs.agentSetRefs)[0], 'agent-set']
+    : texts(needs.agencyRefs).length ? [texts(needs.agencyRefs)[0], 'agency'] : [null, null]
+  const composition = object(unit.composition)
+  return {key: unit.key, row, rowKind, dependencies: unit.dependencies ?? [], ...(composition ? {heads: compositionHeadsOf(composition)} : {}),
+    concern: unit.developmentalConcern, returns: unit.returnContract, sources: composition?.sourceRefs, success: unit.verificationObligations,
+    may: unit.permittedEffects, stop: unit.stopConditions, escalate: unit.escalationConditions}
+}
+
 /** What a proposal does to one unit: whether it names the unit, and the heads it gives it, in Factory's head names. Pure. */
 function composedOn(proposal: SongEdit | null, unit: string): {picks?: Record<string, string>} | null {
   if (!proposal) return null
-  const edits = proposal.edits.filter(edit => edit.unit === unit || texts(edit.units).includes(unit))
+  const edits = proposal.edits.filter(edit => edit.unit === unit || texts(edit.units).includes(unit) || (edit.op === 'unit' && object(edit.unit)?.key === unit))
   if (!edits.length) return null
   const picks: Record<string, string> = {}
   for (const edit of edits) if (edit.op === 'heads') for (const [head, label] of Object.entries(object(edit.heads) ?? {})) if (text(label)) picks[head] = String(label)
@@ -536,14 +576,59 @@ export function composeAddressOf(track: AgentSessionTrack | null, tracks: readon
   return {state: 'addressed', address: {position: occupied, agent: orchestrator, set: setRef}}
 }
 
-/** What Compose carries: the Intent (the task's Run's required difference), the clip's Constellation and its members' refs. */
-export interface ComposeWords {readonly intent: string | null; readonly intentWhy?: string | null; readonly constellation: string | null; readonly sources: readonly string[]}
+/** What Compose carries: the Intent (the task's Run's required difference), its From (the plan the Run answers to), the clip's
+ * Constellation and its members' refs. */
+export interface ComposeWords {readonly intent: string | null; readonly intentWhy?: string | null; readonly from?: string | null; readonly constellation: string | null
+  readonly sources: readonly string[]}
+
+/** The map a plan names: an issue on GitHub, as Factory refers to a ticket (`github:<owner>/<repo>:issue:<n>`) or as its page. Anything
+ * else names no map. Pure. */
+export function mapNamedBy(from: string | null | undefined): {repository: string; number: number} | null {
+  if (!from) return null
+  const match = /^github:([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+):issue:(\d+)$/.exec(from) ?? /^https:\/\/github\.com\/([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)\/issues\/(\d+)\/?$/.exec(from)
+  return match ? {repository: match[1]!, number: Number(match[2])} : null
+}
+
+/** The map Compose writes from: read, or none with why. */
+export type ComposeMap = {readonly state: 'read'; readonly reading: Record<string, unknown>} | {readonly state: 'none'; readonly why: string}
+
+/** The kind of the kernel's refusal envelope (`{"kind":…,"message":…}`), or null where the refusal is words. Pure. */
+const refusalKindOf = (error: string): string | null => {
+  try { const kind = (JSON.parse(error) as {kind?: unknown} | null)?.kind; return typeof kind === 'string' ? kind : null } catch { return null }
+}
+
+/** The project's map, where the plan the Run answers to names an issue (factory_owner `workflow-map` → `factory workflow map <owner/repo>
+ * <n> --gh <gh>`, factory.project-map-reading/v1): none where the plan names no issue, or the issue is no map (Factory's `not-a-map`), so
+ * Compose writes from the Intent; any other refusal is thrown in Factory's words, so the press is refused. */
+export async function readComposeMap(call: PlanCall, from: string | null | undefined): Promise<ComposeMap> {
+  const named = mapNamedBy(from)
+  if (!named) return {state: 'none', why: from ? `the plan it answers to (${from}) names no issue on the forge` : 'its Run names no plan'}
+  const read = await call({op: 'factory_owner', request: {kind: 'workflow-map', repository: named.repository, number: named.number}})
+  if (read.error) {
+    if (refusalKindOf(read.error) === 'not-a-map') return {state: 'none', why: refusalWords(read.error)}
+    throw new Error(`Compose: Factory did not read the map ${from}: ${refusalWords(read.error)}`)
+  }
+  const data = object(read.outcome?.result === 'factory_development_reading' ? read.outcome.data : null)
+  if (data?.contract !== MAP_READING) throw new Error(`Compose: Factory answered no reading of the map ${from} (${MAP_READING}): the Factory installed here may predate \`factory workflow map\`.`)
+  return {state: 'read', reading: data}
+}
+
+/** The ask's words for a map: one unit per open ticket, keyed and ordered as the map gives them, its parts the ticket's. Pure. */
+function mapWordsOf(map: ComposeMap | null): string[] {
+  if (map?.state !== 'read') return map ? [`No map gives this song its units (${map.why}): compose them from the Intent.`, ''] : []
+  const head = object(map.reading.map) ?? {}
+  const keys = list(map.reading.units).map(object).map(unit => text(unit?.key)).filter((key): key is string => !!key)
+  return [`The song answers to the map ${text(head.ticket) ?? '—'} (${text(head.title) ?? 'untitled'}): give each of its ${keys.length} open ticket${keys.length === 1 ? '' : 's'} one unit with \`unit\`, keyed as the map keys it (${keys.join(', ')}) and waiting on the tickets that block it (blockedBy).`,
+    'Read each ticket: its Question is what the unit is for, its Context the unit\'s sources, its Done when the unit\'s success conditions, its Writes what the unit may change, and its claim the row the unit stands on.',
+    'A blocker outside the map (waitsOutside) is no unit of this song, so no unit waits on it.', '']
+}
 /** The ask the desk keeps: the Communique's id, the Position asked, the register its answer is read in, the song's revision it was asked
  * against, and when. */
 export interface ComposeAsked {readonly communique: string; readonly position: string; readonly project: string | null; readonly revision: string; readonly at: number}
 
 /** The Communique Compose sends: its words for Anima, then the ask as one JSON block (oi.compose-ask/v1). Pure. */
-export function composeAskOf(address: ComposeAddress, words: ComposeWords, reading: Record<string, unknown>, target: PlanTarget, project: string | null): {body: string; revision: string} {
+export function composeAskOf(address: ComposeAddress, words: ComposeWords, reading: Record<string, unknown>, target: PlanTarget, project: string | null,
+  map: ComposeMap | null = null): {body: string; revision: string} {
   const song = object(reading.song) ?? {}
   const revision = text(object(song.file)?.byteRevision)
   if (!revision) throw new Error(`Compose: Factory writes no edit of this song, so nothing can be composed into it: ${text(song.why) ?? 'no file under the project root holds it'}`)
@@ -551,13 +636,18 @@ export function composeAskOf(address: ComposeAddress, words: ComposeWords, readi
   const name = text(song.workflowKey) ?? target.runRef
   const answer = ['aikit gateway send --to @owner --propose --reply-to <this Communique>', `--subject "Compose: ${name}"`,
     ...(project ? [`--project-world ${project}`] : []), '--body-file -'].join(' ')
-  const ask = {schema: COMPOSE_ASK, intent: words.intent, constellation: words.constellation, sources: words.sources,
+  const head = map?.state === 'read' ? object(map.reading.map) ?? {} : null
+  const ask = {schema: COMPOSE_ASK, intent: words.intent, from: words.from ?? null, constellation: words.constellation, sources: words.sources,
     song: {workflowKey: name, runRef: target.runRef, statePath: target.statePath, byteRevision: revision}, set: address.set,
-    answer: {to: '@owner', propose: true, register: project, contract: EDIT_REQUEST, expectedRevision: revision}}
+    map: map?.state === 'read' && head ? {ticket: head.ticket, title: head.title, url: head.url, units: list(map.reading.units), waves: list(map.reading.waves)} : null,
+    answer: {to: '@owner', propose: true, register: project, contract: EDIT_REQUEST, expectedRevision: revision, edits: [...EDIT_OPS]}}
   const body = [`Compose a first score for the song ${name}, from the task's Intent, through your team (${address.set}).`, '',
     `Intent: ${words.intent}`,
+    `From: ${words.from ?? 'no plan is named'}`,
     `Sources: ${words.constellation ?? 'no constellation'}${words.sources.length ? ` — ${words.sources.join(', ')}` : ''}`,
     `Song: ${name} (Run ${target.runRef}, its file at revision ${revision})`, '',
+    ...mapWordsOf(map),
+    `Your edits are Factory's (${EDIT_REQUEST}): \`unit\` writes a unit the song does not hold, whole, in the workflow SDK's words (\`factory workflow schema\`); \`allocate\`, \`connect\` and \`heads\` change the units it holds.`,
     `Answer the person with one proposal that replies to this Communique (\`${answer}\`), holding your score as one JSON block of ${EDIT_REQUEST} against revision ${revision}. Nothing is written to the song until QL and Factory admit it and the person accepts it.`,
     '', '```json', JSON.stringify(ask), '```'].join('\n')
   return {body, revision}
@@ -638,6 +728,10 @@ export function composedCellsOf(score: ScoreReading | null, proposal: SongEdit):
   const units = score?.state === 'read' ? unitsOf(score.reading) : []
   const given = new Map<string, Record<string, unknown>>()
   for (const edit of proposal.edits) {
+    // A unit written whole gives the heads of its composition, if it has one.
+    const whole = edit.op === 'unit' ? object(edit.unit) : null
+    const composition = object(whole?.composition)
+    if (whole && composition && text(whole.key)) given.set(String(whole.key), {...(given.get(String(whole.key)) ?? {}), ...compositionHeadsOf(composition)})
     if (edit.op !== 'heads' || !text(edit.unit)) continue
     given.set(String(edit.unit), {...(given.get(String(edit.unit)) ?? {}), ...(object(edit.heads) ?? {})})
   }
@@ -666,7 +760,9 @@ export async function judgeProposal(call: PlanCall, score: ScoreReading, proposa
     return {state: 'refused', why: `Factory answered no admission of the edit (${EDIT_RECEIPT}, written false): the Factory installed here may predate \`factory workflow edit --check\`.`}
   }
   const heads = cells.length ? 'QL admits the heads it gives' : 'it gives no heads for QL to check'
-  return {state: 'admitted', why: `Anima's proposal: ${proposal.edits.length} edit${proposal.edits.length === 1 ? '' : 's'}; ${heads}, and Factory admits it (factory workflow edit --check). Accept writes it into the song.`}
+  const whole = proposal.edits.filter(edit => edit.op === 'unit').length
+  const units = whole ? `, ${whole} unit${whole === 1 ? '' : 's'} written whole` : ''
+  return {state: 'admitted', why: `Anima's proposal: ${proposal.edits.length} edit${proposal.edits.length === 1 ? '' : 's'}${units}; ${heads}, and Factory admits it (factory workflow edit --check). Accept writes it into the song.`}
 }
 
 /** Accept, one act: the proposal accepted in Central's ledger with the person's authority (`receiving` Review), then the edit applied
@@ -781,7 +877,9 @@ export function useCompose(transport: KernelTransportStatus, project: string | n
       if (state.state === 'unaddressed') throw new Error(state.why)
       if (state.state !== 'ready') throw new Error(`Compose was asked in ${state.asked.communique}: Discard its answer before another ask is sent.`)
       if (score.state !== 'read' || !key) throw new Error(score.state === 'absent' ? score.why : SCORE_NOT_HERE)
-      const {body, revision} = composeAskOf(state.address, words, score.reading, score.target, project)
+      // The plan the Run answers to, read as the project's map where it names an issue: its tickets are the song's units.
+      const map = await readComposeMap(call, words.from)
+      const {body, revision} = composeAskOf(state.address, words, score.reading, score.target, project, map)
       const sent = await ownerRouteWrite(transport, composeSendOp(state.address, body, project), '`aikit gateway send`')
       ASKS.set(key, composeAskedOf(sent.data, state.address, project, revision, Date.now()))
       setAnswer(null)

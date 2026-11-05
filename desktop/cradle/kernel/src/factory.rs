@@ -254,6 +254,16 @@ pub enum OwnerRequest {
         run_ref: String,
         request: Value,
     },
+    /// A project's map read through the forge (O-I 844; `factory workflow
+    /// map <owner/repo> <number> --gh <absolute gh> --json` →
+    /// `factory.project-map-reading/v1`): the open tickets of an issue
+    /// labelled `wayfinder:map` as a development song's units, in the waves
+    /// their blocked-by gives. Compose reads it when the plan the Run answers
+    /// to names an issue. Factory reads the forge with the `gh` this desktop
+    /// finds (`forge_reader`); nothing is written. An issue that is no map is
+    /// refused with the kind `not-a-map`. A read, named in `is_read`, and in
+    /// the bridge's reading requests.
+    WorkflowMap { repository: String, number: u64 },
     /// Export Song… (O-I #844; `factory workflow export <state> <entry>
     /// [--name] [--rows] [--units]` → `factory.song-clip/v1`): the song in
     /// the file `entry` under the project root, or the rows (tracks) and
@@ -711,6 +721,7 @@ impl OwnerRequest {
                 | OwnerRequest::WorkflowInspect { .. }
                 | OwnerRequest::WorkflowScoreRead { .. }
                 | OwnerRequest::WorkflowEditCheck { .. }
+                | OwnerRequest::WorkflowMap { .. }
                 | OwnerRequest::WorkflowSongsRead { .. }
                 | OwnerRequest::TelemetryStatus { .. }
                 | OwnerRequest::TelemetryInspect { .. }
@@ -852,7 +863,7 @@ fn owner_call_env(
             .or_else(|| workflow_diagnostic_words(&output.stderr));
         let stderr = String::from_utf8_lossy(&output.stderr).trim().to_owned();
         return Err(Error {
-            kind: "owner-refused-or-failed".into(),
+            kind: workflow_refusal_kind(&output.stderr).into(),
             message: diagnostic.unwrap_or(stderr),
             operation_may_have_run: input.is_some(),
         });
@@ -2119,6 +2130,13 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
                 &[WORKFLOW_EDIT_RECEIPT],
             )
         }
+        OwnerRequest::WorkflowMap { repository, number } => expect_contract(
+            owner_call(
+                &workflow_map_args(&repository, number, &forge_reader()?),
+                None,
+            )?,
+            &[PROJECT_MAP_READING],
+        ),
         OwnerRequest::WorkflowExport {
             state_path,
             entry,
@@ -2403,6 +2421,66 @@ pub fn workflow_edit_check_args(state_path: &Path, run_ref: &str) -> Vec<std::ff
     args
 }
 
+/// Factory's reading of a project's map (Factory workflow_score.rs `MAP_CONTRACT`).
+pub const PROJECT_MAP_READING: &str = "factory.project-map-reading/v1";
+
+/// `factory workflow map <owner/repo> <number> --gh <gh> --json`.
+pub fn workflow_map_args(repository: &str, number: u64, gh: &Path) -> Vec<std::ffi::OsString> {
+    vec![
+        "workflow".into(),
+        "map".into(),
+        repository.into(),
+        number.to_string().into(),
+        "--gh".into(),
+        path_arg(gh),
+        "--json".into(),
+    ]
+}
+
+/// The forge reader a map is read through, which Factory takes only as an
+/// absolute path: `OI_GH_BIN`, else `gh` on the PATH, else Homebrew's two
+/// prefixes and `~/.local/bin` — a Finder launch's PATH holds none of them.
+fn forge_reader() -> Result<PathBuf, Error> {
+    forge_reader_from(
+        std::env::var_os("OI_GH_BIN"),
+        std::env::var_os("PATH"),
+        std::env::var_os("HOME"),
+    )
+    .ok_or_else(|| Error {
+        kind: "unavailable".into(),
+        message: "A project's map is read from the forge through gh, and this desktop finds none: \
+                  OI_GH_BIN names no runnable file, and neither the PATH, /opt/homebrew/bin, \
+                  /usr/local/bin nor ~/.local/bin holds gh."
+            .into(),
+        operation_may_have_run: false,
+    })
+}
+
+fn forge_reader_from(
+    gh_bin: Option<std::ffi::OsString>,
+    path: Option<std::ffi::OsString>,
+    home: Option<std::ffi::OsString>,
+) -> Option<PathBuf> {
+    let runnable = |candidate: &Path| {
+        use std::os::unix::fs::PermissionsExt;
+        candidate.is_absolute()
+            && std::fs::metadata(candidate)
+                .is_ok_and(|meta| meta.is_file() && meta.permissions().mode() & 0o111 != 0)
+    };
+    if let Some(bin) = gh_bin.filter(|bin| !bin.is_empty()).map(PathBuf::from) {
+        return runnable(&bin).then_some(bin);
+    }
+    path.iter()
+        .flat_map(std::env::split_paths)
+        .chain(["/opt/homebrew/bin", "/usr/local/bin"].map(PathBuf::from))
+        .chain(
+            home.filter(|home| !home.is_empty())
+                .map(|home| PathBuf::from(home).join(".local/bin")),
+        )
+        .map(|dir| dir.join("gh"))
+        .find(|candidate| runnable(candidate))
+}
+
 /// The edit as Factory reads it: only an edit document travels. Factory
 /// itself decides the edit; the kernel names no field of it.
 pub fn workflow_edit_body(request: &Value) -> Result<Vec<u8>, Error> {
@@ -2523,6 +2601,24 @@ fn songs_of_location(row: Value) -> Value {
 /// The words of Factory's workflow diagnostic (`factory.workflow-diagnostic/v1`
 /// `{error: {code, message, unit, location}}`), which `factory workflow …`
 /// writes on stderr when it refuses: its message, else none.
+/// The kind a workflow refusal carries: `not-a-map` where Factory says the
+/// issue asked for is no map (`workflow.not_a_map`), so Compose writes from
+/// the Intent alone; every other refusal is the owner's refusal.
+fn workflow_refusal_kind(stderr: &[u8]) -> &'static str {
+    let code = serde_json::from_slice::<Value>(stderr)
+        .ok()
+        .filter(|value| {
+            value.get("contract").and_then(Value::as_str) == Some("factory.workflow-diagnostic/v1")
+        });
+    match code
+        .as_ref()
+        .and_then(|value| value.get("error")?.get("code")?.as_str())
+    {
+        Some("workflow.not_a_map") => "not-a-map",
+        _ => "owner-refused-or-failed",
+    }
+}
+
 fn workflow_diagnostic_words(stderr: &[u8]) -> Option<String> {
     let value: Value = serde_json::from_slice(stderr).ok()?;
     if value.get("contract").and_then(Value::as_str) != Some("factory.workflow-diagnostic/v1") {
@@ -4934,6 +5030,83 @@ mod run_close_tests {
             Some("The song's file changed since it was read; read the score again and repeat the edit.")
         );
         assert_eq!(workflow_diagnostic_words(b"error: unknown command"), None);
+    }
+
+    #[test]
+    fn a_project_s_map_is_read_through_factory_with_the_forge_reader_this_desktop_finds() {
+        // O-I 844: Compose reads the map the Run's plan names — a read, outside the lock, with no world.
+        let map: OwnerRequest = serde_json::from_value(serde_json::json!({
+            "kind": "workflow-map", "repository": "EpiLogos/O-I", "number": 706}))
+        .unwrap();
+        assert!(
+            map.is_read() && !map.needs_world(),
+            "a map is read, never written"
+        );
+        let strings = |args: Vec<std::ffi::OsString>| {
+            args.iter()
+                .map(|arg| arg.to_string_lossy().into_owned())
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(
+            strings(workflow_map_args(
+                "EpiLogos/O-I",
+                706,
+                Path::new("/usr/local/bin/gh")
+            )),
+            [
+                "workflow",
+                "map",
+                "EpiLogos/O-I",
+                "706",
+                "--gh",
+                "/usr/local/bin/gh",
+                "--json"
+            ]
+        );
+        // The forge reader: OI_GH_BIN when it names a runnable file, else the PATH, else the
+        // Homebrew prefixes and ~/.local/bin; only an absolute runnable file is handed over.
+        let dir = std::env::temp_dir().join(format!("oi-forge-reader-{}", std::process::id()));
+        let bin = dir.join("bin");
+        std::fs::create_dir_all(&bin).unwrap();
+        let gh = bin.join("gh");
+        std::fs::write(&gh, "#!/bin/sh\n").unwrap();
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(&gh, std::fs::Permissions::from_mode(0o755)).unwrap();
+        }
+        let none = dir.join("nothing");
+        assert_eq!(
+            forge_reader_from(Some(gh.clone().into()), None, None),
+            Some(gh.clone())
+        );
+        assert_eq!(
+            forge_reader_from(Some("gh".into()), Some(bin.clone().into()), None),
+            None,
+            "OI_GH_BIN names no absolute file: it is not searched past"
+        );
+        assert_eq!(
+            forge_reader_from(None, Some(bin.clone().into()), None),
+            Some(gh.clone())
+        );
+        std::fs::create_dir_all(dir.join(".local/bin")).unwrap();
+        std::fs::copy(&gh, dir.join(".local/bin/gh")).unwrap();
+        let homebrew = ["/opt/homebrew/bin/gh", "/usr/local/bin/gh"]
+            .map(PathBuf::from)
+            .into_iter()
+            .find(|path| path.is_file());
+        assert_eq!(
+            forge_reader_from(None, Some(none.into()), Some(dir.clone().into())),
+            Some(homebrew.unwrap_or_else(|| dir.join(".local/bin/gh"))),
+            "past the PATH, Homebrew's prefixes, then ~/.local/bin"
+        );
+        std::fs::remove_dir_all(&dir).unwrap();
+        // An issue that is no map is refused with its own kind, so Compose writes from the Intent;
+        // any other refusal is the owner's.
+        let not_a_map = br#"{"contract":"factory.workflow-diagnostic/v1","error":{"code":"workflow.not_a_map","field":null,"location":null,"message":"EpiLogos/O-I#12 (A bug) carries no wayfinder:map label: it is not a map, so it gives no song its units","unit":null}}"#;
+        assert_eq!(workflow_refusal_kind(not_a_map), "not-a-map");
+        let unread = br#"{"contract":"factory.workflow-diagnostic/v1","error":{"code":"workflow.map_unread","field":null,"location":null,"message":"The forge did not answer repos/EpiLogos/O-I/issues/706","unit":null}}"#;
+        assert_eq!(workflow_refusal_kind(unread), "owner-refused-or-failed");
+        assert_eq!(workflow_refusal_kind(b"error"), "owner-refused-or-failed");
     }
 
     #[test]

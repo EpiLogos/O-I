@@ -359,7 +359,12 @@ export function factoryClipValues(track: AgentSessionTrack, task: TaskClip | nul
   const plan = planPortOf(task ? {sessionRef: track.sessionRef, n: task.n} : null, input.plan ?? null)
   if (plan) Object.assign(values, planValuesOf(plan.reading))
   // The intent: the required difference of the task's Run, in Factory's words (readDevelopmentField); the bound task's, the first.
-  if (task && !intentWhy({sessionRef: track.sessionRef, n: task.n}, input.intent ?? null) && input.intent?.state === 'read') values.intent = input.intent.difference
+  if (task && !intentWhy({sessionRef: track.sessionRef, n: task.n}, input.intent ?? null) && input.intent?.state === 'read') {
+    values.intent = input.intent.difference
+    // Its From: the plan the Run answers to, as its Development Field names it (manual §19.1: "The spec a song answers to stands in the
+    // Intent panel's From").
+    put(values, 'intent.source', input.intent.from)
+  }
   // The song's score: its Run's song as Factory reads it, on the track's Agent rack, this task's note lit (agent/scoreBinding.ts).
   const score = scorePortOf(task, input.score ?? null)
   if (score) Object.assign(values, scoreValuesOf(score.reading, score.rack, score.picks, score.word, score.compose?.state ?? null))
@@ -392,8 +397,10 @@ const LEDGER_READ = 'a read of the project-development ledger (bounded intent, s
 // REPLACED (O-I 795, round 14): INTENT_ABSENT.intent, "no reading reaches it yet — missing op: `factory development field read` through
 // the kernel (factory_development_read carries no Development Field)": Factory reads a Run's Development Field by the state that holds
 // the Run (`factory development field read --state`, the kernel's factory_owner development-field-read), and the clip reads it.
+// REPLACED (O-I 844, round 16): INTENT_ABSENT['intent.source'], "Where the intent is written: no reading reaches it yet — missing op:
+// ${LEDGER_READ} (Software Factory)": the From is the plan the Run answers to, which its Development Field names (targets.planRef) and
+// Factory reads with the intent (readDevelopmentField).
 export const INTENT_ABSENT: Readonly<Record<string, string>> = {
-  'intent.source': `Where the intent is written: no reading reaches it yet — missing op: ${LEDGER_READ} (Software Factory).`,
   constraints: `The constraints the task keeps: no reading reaches them yet — missing op: ${LEDGER_READ} (Software Factory).`,
   context: `The context the task resolves in: no reading reaches it yet — missing op: ${LEDGER_READ} (Software Factory).`,
 }
@@ -428,7 +435,8 @@ const COMPARE_UNKEPT = 'Compare: this AIKit keeps no Compare for a task\'s takes
 export const DEVELOPMENT_FIELD_READING = 'factory.development-field-reading/v1'
 
 /** The intent as read: the required difference of the task's Run, in Factory's words, or why it is not read. */
-export type IntentReading = {readonly state: 'read'; readonly difference: string; readonly target: PlanTarget} | {readonly state: 'absent'; readonly why: string}
+export type IntentReading = {readonly state: 'read'; readonly difference: string; readonly from: string | null; readonly target: PlanTarget}
+  | {readonly state: 'absent'; readonly why: string}
 
 export const INTENT_NOT_HERE = 'The intent: not read here — no sessions provider reads the session\'s attempts, which name the Run whose Development Field Factory keeps.'
 export const INTENT_NO_RUN = 'The intent: no attempt of the task names its Run yet, so Factory is asked for no Development Field (the intent is its Run\'s required difference).'
@@ -439,18 +447,20 @@ const INTENT_ONE_TASK = 'The intent: the session\'s owner holds one bound task, 
 type IntentCall = (op: Record<string, unknown>) => Promise<{error?: string; outcome?: {result: string; data?: unknown} | null}>
 
 /** One read of the Development Field of the task's Run (factory_owner `development-field-read` → `factory development field read --state
- * <state> <run-ref>`): its required difference, or why there is none in Factory's words — a Run its state does not hold, a Run whose
- * field was never set. Never throws. */
+ * <state> <run-ref>`): its required difference and the plan it answers to (its From), or why there is none in Factory's words — a Run
+ * its state does not hold, a Run whose field was never set. Never throws. */
 export async function readDevelopmentField(call: IntentCall, target: PlanTarget): Promise<IntentReading> {
   const read = await call({op: 'factory_owner', request: {kind: 'development-field-read', state_path: target.statePath, run_ref: target.runRef}})
     .catch((cause: unknown) => ({error: cause instanceof Error ? cause.message : String(cause), outcome: null}))
   if (read.error) return {state: 'absent', why: `The intent: Factory did not read the Run's Development Field: ${refusalText(read.error)}`}
-  const data = read.outcome?.result === 'factory_development_reading' ? read.outcome.data as {contract?: unknown; field?: {requiredDifference?: unknown}} | null : null
+  const data = read.outcome?.result === 'factory_development_reading'
+    ? read.outcome.data as {contract?: unknown; field?: {requiredDifference?: unknown; targets?: {planRef?: unknown}}} | null : null
   if (data?.contract !== DEVELOPMENT_FIELD_READING) {
     return {state: 'absent', why: `The intent: Factory answered no Development Field reading (${DEVELOPMENT_FIELD_READING}): the Factory installed here may predate the field read by its state.`}
   }
   const difference = data.field?.requiredDifference
-  return typeof difference === 'string' && difference.trim() ? {state: 'read', difference, target}
+  const plan = data.field?.targets?.planRef
+  return typeof difference === 'string' && difference.trim() ? {state: 'read', difference, from: typeof plan === 'string' && plan.trim() ? plan : null, target}
     : {state: 'absent', why: `The intent: the Development Field of ${target.runRef} names no required difference.`}
 }
 
@@ -462,13 +472,16 @@ function intentWhy(task: TaskAddress | null, intent: IntentReading | null): stri
   return intent.state === 'absent' ? intent.why : null
 }
 
-/** The intent's key on the wiring: read from Factory, absent with why where it is not. Its write stays refused (INTENT_REFUSED). */
+/** The intent's keys on the wiring, the intent and its From: read from Factory, absent with why where they are not. Its write stays
+ * refused (INTENT_REFUSED). */
 function withIntent(wiring: ClipWiring, task: TaskAddress | null, intent: IntentReading | null): ClipWiring {
   const why = intentWhy(task, intent)
+  const fromWhy = why ?? (intent?.state === 'read' && !intent.from ? `The From: the Development Field of ${intent.target.runRef} names no plan it answers to.` : null)
   return {
     ...wiring,
-    reads: {...wiring.reads, intent: 'Factory\'s Development Field of the task\'s Run (factory development field read, by the state that holds the Run): the required difference, in its words'},
-    absent: why ? {...wiring.absent, intent: why} : wiring.absent,
+    reads: {...wiring.reads, intent: 'Factory\'s Development Field of the task\'s Run (factory development field read, by the state that holds the Run): the required difference, in its words',
+      'intent.source': 'Factory\'s Development Field of the task\'s Run: the plan the Run answers to (targets.planRef) — the spec, the map or the page its intent is written in'},
+    absent: {...wiring.absent, ...(why ? {intent: why} : {}), ...(fromWhy ? {'intent.source': fromWhy} : {})},
   }
 }
 
@@ -743,6 +756,7 @@ export function useFactoryClip(): ClipBinding | null {
   const words = useMemo((): ComposeWords => {
     const named = sourceRef ? constellationNamed(constellations, sourceRef) : null
     return {intent: intent.state === 'read' ? intent.difference : null, intentWhy: intent.state === 'absent' ? intent.why : null,
+      from: intent.state === 'read' ? intent.from : null,
       constellation: sourceRef, sources: named?.members.map(member => member.ref) ?? []}
   }, [intent, sourceRef, constellations])
   const compose = useCompose(transport, project, composeTo, words, scoredOnly.reading, scoredOnly.edit)

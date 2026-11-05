@@ -519,11 +519,14 @@ test('Compose sends one Communique to that Position carrying the Intent, the Con
   assert.match(body, /^Compose a first score for the song development-and-knowledge, from the task's Intent, through your team \(agent-set\/anima\)\./)
   assert.match(body, /Intent: The capture list survives a restart/)
   assert.match(body, /Sources: wiki:space:capture — wiki:page:capture-list, wiki:page:restart/)
+  assert.match(body, /From: no plan is named/)
   assert.match(body, /`aikit gateway send --to @owner --propose --reply-to <this Communique> --subject "Compose: development-and-knowledge" --project-world O-I --body-file -`/)
+  // Anima is told which edits are Factory's: `unit` writes a unit the song does not hold, whole, in the workflow SDK's words.
+  assert.match(body, /Your edits are Factory's \(factory\.workflow-edit\/v1\): `unit` writes a unit the song does not hold, whole, in the workflow SDK's words \(`factory workflow schema`\); `allocate`, `connect` and `heads` change the units it holds\./)
   const ask = JSON.parse(body.match(/```json\n([\s\S]*?)\n```/)[1])
-  assert.deepEqual(ask, {schema: 'oi.compose-ask/v1', intent: WORDS.intent, constellation: WORDS.constellation, sources: WORDS.sources,
-    song: {workflowKey: 'development-and-knowledge', runRef: RUN, statePath: STATE, byteRevision: REV}, set: 'agent-set/anima',
-    answer: {to: '@owner', propose: true, register: 'O-I', contract: 'factory.workflow-edit/v1', expectedRevision: REV}})
+  assert.deepEqual(ask, {schema: 'oi.compose-ask/v1', intent: WORDS.intent, from: null, constellation: WORDS.constellation, sources: WORDS.sources,
+    song: {workflowKey: 'development-and-knowledge', runRef: RUN, statePath: STATE, byteRevision: REV}, set: 'agent-set/anima', map: null,
+    answer: {to: '@owner', propose: true, register: 'O-I', contract: 'factory.workflow-edit/v1', expectedRevision: REV, edits: ['unit', 'allocate', 'connect', 'heads']}})
   assert.throws(() => score.composeAskOf(ADDRESS, {...WORDS, intent: null, intentWhy: 'Factory did not read the Run\'s Development Field'}, REAL.score, TARGET, 'O-I'),
     /Compose writes from the task's Intent, and it is not read: Factory did not read/)
   // One send, to the orchestrator's Position, with no sender: the desk is never an occupant. AIKit's answer names the Communique kept.
@@ -533,6 +536,93 @@ test('Compose sends one Communique to that Position carrying the Intent, the Con
   const sent = {communique: {schema: 'aikit.communique/v1', communique_ref: ASK, from_position_ref: null, to_position_ref: ANIMA, attribution: 'unknown', state: 'held'}}
   assert.deepEqual(score.composeAskedOf(sent, ADDRESS, 'O-I', REV, 7), {communique: ASK, position: ANIMA, project: 'O-I', revision: REV, at: 7})
   assert.throws(() => score.composeAskedOf({}, ADDRESS, 'O-I', REV, 7), /AIKit's send answered no Communique/)
+})
+
+// O-I 844, round 16: "The spec a song answers to stands in the Intent panel's From. When the work is a project's development, the
+// project's map gives the song its units: each ticket on the map is a unit, and its parts are the unit's parts" (manual §19.1 Songs).
+// The From is the plan the Run answers to (its Development Field's targets.planRef). Where it names an issue, Compose reads it as a map
+// through Factory (factory_owner `workflow-map` → `factory workflow map <owner/repo> <n> --gh <gh>`). Channels: the map is REAL
+// (`factory workflow map EpiLogos/O-I 706`, 4 Nov, through the forge), trimmed to two of its 46 units and their waves; the refusal of an
+// issue that is no map is REAL (`factory workflow map EpiLogos/O-I 844`), carried in the kernel's envelope with its kind `not-a-map`
+// (kernel factory.rs workflow_refusal_kind); the map's unread refusal is DERIVED from Factory's words (workflow_score.rs map).
+const MAP_REF = 'github:EpiLogos/O-I:issue:706'
+const MAP = {closed: ['github:EpiLogos/O-I:issue:722'], contract: 'factory.project-map-reading/v1',
+  map: {label: 'wayfinder:map', ticket: MAP_REF, title: '[MAP] The DLW: built from the manual, walked from four worlds', url: 'https://github.com/EpiLogos/O-I/issues/706'},
+  units: [{blockedBy: [], key: 'issue-842', ticket: 'github:EpiLogos/O-I:issue:842', title: 'Every session\'s agency stands in one Agent rack', url: 'https://github.com/EpiLogos/O-I/issues/842', waitsOutside: [], wave: 'wave-1'},
+    {blockedBy: ['issue-842'], key: 'issue-843', ticket: 'github:EpiLogos/O-I:issue:843', title: 'Factory\'s Clip view: the song\'s score, the task\'s log and Vāk', url: 'https://github.com/EpiLogos/O-I/issues/843', waitsOutside: [], wave: 'wave-2'}],
+  waves: [{wave: 'wave-1', units: ['issue-842']}, {wave: 'wave-2', units: ['issue-843']}], written: false}
+const NOT_A_MAP = JSON.stringify({kind: 'not-a-map', message: 'EpiLogos/O-I#844 (Songs: work written once, run again, and used whole in other work) carries no wayfinder:map label: it is not a map, so it gives no song its units', operation_may_have_run: false})
+/** A unit written whole, as the workflow SDK words it (factory/workflow-sdk/schema.json $defs/unit), for the map's ticket. */
+const wholeUnit = (key, dependencies, over = {}) => ({key, developmentalConcern: `The ticket ${key} is built`, requiredDifference: `${key}'s Done when holds on main`,
+  returnContract: 'a pull request against main', subjectRef: 'project:O-I', basisRevision: 'b545a50ef', agentRequirements: {agentRefs: ['agent/anima-techne-helper']},
+  praxisRefs: [], capabilityRefs: [], permittedEffects: ['packages/live-shell/ui/'], verificationObligations: [`${key}'s Done when`], returnAddress: 'central:source:project:O-I:ProjectCentral/now',
+  stopConditions: [], escalationConditions: [], dependencies, ...over})
+
+test('the From is the plan the Run answers to, and where it names an issue Compose reads it as a map through Factory; an issue that is no map leaves the Intent alone, any other refusal refuses the press', async () => {
+  assert.deepEqual(score.mapNamedBy(MAP_REF), {repository: 'EpiLogos/O-I', number: 706})
+  assert.deepEqual(score.mapNamedBy('https://github.com/EpiLogos/O-I/issues/706'), {repository: 'EpiLogos/O-I', number: 706})
+  for (const plan of [null, 'plan:development-field-s4', 'github:EpiLogos/O-I:pull:706', 'https://github.com/EpiLogos/O-I/pull/706']) assert.equal(score.mapNamedBy(plan), null, String(plan))
+  const asked = []
+  const answering = answer => async op => { asked.push(op); return answer }
+  const read = await score.readComposeMap(answering({outcome: {result: 'factory_development_reading', data: MAP}}), MAP_REF)
+  assert.deepEqual(read, {state: 'read', reading: MAP})
+  assert.deepEqual(asked, [{op: 'factory_owner', request: {kind: 'workflow-map', repository: 'EpiLogos/O-I', number: 706}}])
+  assert.equal(writesOwner(asked[0]), false, 'a map is read, never written: the bridge hears a read')
+  // REAL: the issue is no map. Compose writes from the Intent, and says why.
+  const none = await score.readComposeMap(answering({error: NOT_A_MAP}), 'github:EpiLogos/O-I:issue:844')
+  assert.equal(none.state, 'none')
+  assert.match(none.why, /EpiLogos\/O-I#844 \(Songs: work written once, run again, and used whole in other work\) carries no wayfinder:map label: it is not a map/)
+  // A plan that names no issue is not asked about.
+  asked.length = 0
+  assert.match((await score.readComposeMap(answering({}), 'plan:development-field-s4')).why, /the plan it answers to \(plan:development-field-s4\) names no issue on the forge/)
+  assert.match((await score.readComposeMap(answering({}), null)).why, /its Run names no plan/)
+  assert.deepEqual(asked, [])
+  // The forge not read, or a Factory that predates the map read: the press is refused in Factory's words.
+  await assert.rejects(score.readComposeMap(answering({error: JSON.stringify({kind: 'owner-refused-or-failed', message: 'The forge did not answer repos/EpiLogos/O-I/issues/706: gh api timed out', operation_may_have_run: false})}), MAP_REF),
+    /^Error: Compose: Factory did not read the map github:EpiLogos\/O-I:issue:706: The forge did not answer repos\/EpiLogos\/O-I\/issues\/706/)
+  await assert.rejects(score.readComposeMap(answering({outcome: {result: 'factory_development_reading', data: {contract: 'factory.wave-reading/v1'}}}), MAP_REF),
+    /may predate `factory workflow map`/)
+})
+
+test('Compose from a map asks for one unit per ticket, keyed as the map keys it and waiting on its blockers, its parts the ticket\'s; the proposal\'s new units stand dashed until Accept', async () => {
+  const words = {...WORDS, from: MAP_REF}
+  const {body} = score.composeAskOf(ADDRESS, words, REAL.score, TARGET, 'O-I', {state: 'read', reading: MAP})
+  assert.match(body, /From: github:EpiLogos\/O-I:issue:706/)
+  assert.match(body, /The song answers to the map github:EpiLogos\/O-I:issue:706 \(\[MAP\] The DLW: built from the manual, walked from four worlds\): give each of its 2 open tickets one unit with `unit`, keyed as the map keys it \(issue-842, issue-843\) and waiting on the tickets that block it \(blockedBy\)\./)
+  assert.match(body, /Read each ticket: its Question is what the unit is for, its Context the unit's sources, its Done when the unit's success conditions, its Writes what the unit may change, and its claim the row the unit stands on\./)
+  assert.match(body, /A blocker outside the map \(waitsOutside\) is no unit of this song, so no unit waits on it\./)
+  const ask = JSON.parse(body.match(/```json\n([\s\S]*?)\n```/)[1])
+  assert.equal(ask.from, MAP_REF)
+  assert.deepEqual(ask.map, {ticket: MAP_REF, title: MAP.map.title, url: MAP.map.url, units: MAP.units, waves: MAP.waves})
+  // An issue that is no map: the ask says so, and composes from the Intent.
+  const plain = score.composeAskOf(ADDRESS, {...words, from: 'github:EpiLogos/O-I:issue:844'}, REAL.score, TARGET, 'O-I', {state: 'none', why: 'EpiLogos/O-I#844 carries no wayfinder:map label: it is not a map'})
+  assert.match(plain.body, /No map gives this song its units \(EpiLogos\/O-I#844 carries no wayfinder:map label: it is not a map\): compose them from the Intent\./)
+  assert.equal(JSON.parse(plain.body.match(/```json\n([\s\S]*?)\n```/)[1]).map, null)
+  // Anima's answer: one unit per ticket, written whole; the second's composition gives heads QL checks, under their own cell.
+  const composition = {participation: 'dialogical', content: 'CT2', position: '4.2', frame: 'CF3', thread: 'CFP2', sequence: 'CS2', direction: 'returning'}
+  const fromMap = {contract: 'factory.workflow-edit/v1', expectedRevision: REV, edits: [{op: 'unit', unit: wholeUnit('issue-842', [])},
+    {op: 'unit', unit: wholeUnit('issue-843', ['issue-842'], {composition})}, {op: 'heads', unit: 'issue-843', heads: {CS: 'CS3'}}]}
+  const reading = read(REAL.score)
+  const cells = score.composedCellsOf(reading, fromMap)
+  assert.deepEqual(cells.map(cell => cell.key), ['issue-843#composed'], 'a unit with no composition gives no heads')
+  assert.deepEqual(cells[0].chosen, {'vak-cpf': ['dialogical'], 'vak-ct': ['CT2'], 'vak-cp': ['4.2'], 'vak-cf': ['CF3'], 'vak-cfp': ['CFP2'], 'vak-cs': ['CS3'], 'vak-direction': ['returning']},
+    'its composition\'s heads, a later heads edit over them')
+  const ok = owners()
+  const word = await score.judgeProposal(ok.call, reading, fromMap)
+  assert.equal(word.state, 'admitted')
+  assert.match(word.why, /Anima's proposal: 3 edits, 2 units written whole; QL admits the heads it gives, and Factory admits it/)
+  // On the score: the units the proposal writes stand after the song's own, dashed, on the row each requires.
+  const taken = {state: 'answered', returnRef: 'central:return:project:O-I:compose-3', revision: 'r', status: 'pending', proposal: fromMap, later: 0}
+  const values = score.scoreValuesOf(reading, score.rackRowsOf(eros, TRACKS), null, null, {state: 'answered', asked: ASKED, answer: taken, word: 'admitted', why: word.why})
+  const drawn = JSON.parse(values.score)
+  const added = drawn.units.filter(unit => unit.key.startsWith('issue-'))
+  assert.deepEqual(added.map(unit => [unit.key, unit.row, unit.deps, unit.proposed]), [['issue-842', 'agent/anima-techne-helper', [], true],
+    ['issue-843', 'agent/anima-techne-helper', ['issue-842'], true]])
+  assert.deepEqual(added[1].heads, {CPF: 'dialogical', CT: 'CT2', CP: '4.2', CF: 'CF3', CFP: 'CFP2', CS: 'CS2', direction: 'returning'})
+  assert.deepEqual(added[1].picks, {CS: 'CS3'})
+  assert.equal(added[0].concern, 'The ticket issue-842 is built')
+  assert.deepEqual(added[0].success, ['issue-842\'s Done when'])
+  assert.equal(drawn.units.length, REAL.score.units.length + 2, 'the song\'s own units stand as Factory read them')
 })
 
 test('Anima\'s answer is the proposal Central\'s ledger holds from that Position replying to the ask; another ask\'s, a second, or one that is no edit is not taken, in words', async () => {
