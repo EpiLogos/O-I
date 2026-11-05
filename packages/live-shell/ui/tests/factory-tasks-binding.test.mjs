@@ -102,9 +102,11 @@ test('Tasks writes the owners\' way: the timing through the Agent, a new task th
     await assert.rejects(() => binding.write([{key, value: true}]), {message: tasks.TASKS_REFUSE[key]})
   }
   // REPLACED (BD r20 PORT, round 869): Stop after has its kernel route (factory_owner attempt-request-cancellation) and stands with its
-  // carrier as Retry does; Launch waits on Software Factory itself, which has no way yet to start a unit from its owners' readings.
-  assert.match(tasks.TASKS_REFUSE.launch, /^Launch: Software Factory has no way yet to start a unit from its owners' readings/)
-  assert.doesNotMatch(tasks.TASKS_REFUSE.launch, /kernel route/)
+  // carrier as Retry does.
+  // REPLACED (BD r23): was "Launch waits on Software Factory itself, which has no way yet to start a unit from its owners' readings"
+  // (/^Launch: Software Factory has no way yet to start a unit/). Factory starts one (attempt-launch, round 21) on AIKit's realisation
+  // (round 22), so without its carrier Launch names the carrier, as Retry and Stop after do (the r23 test below presses it).
+  assert.match(tasks.TASKS_REFUSE.launch, /^Launch: no carrier to AIKit's realisation and Factory's attempt-launch stands here/)
   assert.match(tasks.TASKS_REFUSE.stopAfter, /no carrier to Factory's attempt-task-units and attempt-request-cancellation stands here/)
   assert.match(tasks.TASKS_REFUSE.retry, /no carrier to Factory's attempt-task-units and attempt-retry stands here/)
   const retried = [], stopped = []
@@ -112,7 +114,7 @@ test('Tasks writes the owners\' way: the timing through the Agent, a new task th
     stopAfter: async session => { stopped.push(session) }})
   assert.equal(carried.standing.retry, undefined, 'Retry stands with its carrier')
   assert.equal(carried.standing.stopAfter, undefined, 'Stop after stands with its carrier')
-  assert.equal(carried.standing.launch.disabled, tasks.TASKS_REFUSE.launch, 'Launch waits on Software Factory')
+  assert.equal(carried.standing.launch.disabled, tasks.TASKS_REFUSE.launch, 'Launch is not handed its carrier here')
   await carried.write([{key: 'retry', value: true}])
   await carried.write([{key: 'stopAfter', value: true}])
   assert.deepEqual(retried, [input().session.sessionRef])
@@ -205,4 +207,101 @@ test('(BD r20) a task\'s Stop after: its units read, the unit its current attemp
   await assert.rejects(() => tasks.stopAfterTask(owner({'attempt-task-units': both}), '/state', 'central:task:t1'), /stands current on 2 units \(run:r1 · unit:build, run:r2 · unit:check\).*Run map/)
   await assert.rejects(() => tasks.stopAfterTask(owner({}), '/state', 'central:task:t1'), /^Error: Stop after: `factory attempt units` answered something other than its units/)
   assert.equal(asked.filter(request => request.kind === 'attempt-request-cancellation').length, 0, 'nothing was asked to stop')
+})
+
+// BD round 23 (DLW build ruling 2026-11-05): Launch is a press. The task's unit is the one Factory names for it — its custody of the work
+// (custody-list: the open record of the task's work, naming its Run and unit), else the one unit its attempts stand on (attempt-task-units)
+// — AIKit realises the session's own model on it (`aikit compose --session --realise --model`, aikit_write realise; the model is the
+// catalogue's entry whose route carries the model the session's harness runs), and Factory starts the unit's attempt from that realisation
+// (factory_owner attempt-launch, oi.factory-attempt-launch/v1). Channels: FIXTURE readings shaped as the owners give them (the catalogue
+// entry is REAL from `aikit --json model-catalogue show` on a fresh home, 5 Nov 2026; the realisation and the answers are SCRIPTED).
+test('(BD r23) a task\'s Launch: Factory names its unit, AIKit realises the session\'s own model on it, Factory starts its attempt; every refusal in its owner\'s words', async () => {
+  const CUSTODY = {schema: 'factory.work-custody-listing/v1', project_ref: 'project:o-i', count: 2, custody: [
+    {schema: 'factory.work-custody/v1', custody_ref: 'custody:old', position_ref: 'central:position:o-i:builder', work_ref: 'central:task:t1', state: 'completed',
+      run_ref: 'run:old', workflow_unit_ref: 'unit:old'},
+    {schema: 'factory.work-custody/v1', custody_ref: 'custody:c1', position_ref: 'central:position:o-i:builder', work_ref: 'central:task:t1', state: 'in-progress',
+      run_ref: 'run:r1', workflow_unit_ref: 'unit:build'}]}
+  const MODEL = {agent_session: 'agent-session/fx-aletheia', native_session_id: 'native-1', standing: 'observed',
+    model_observation: {current_model_id: 'claude-opus-5', available_models: [{modelId: 'claude-opus-5', name: 'Claude Opus 5'}], standing: 'observed'}}
+  const CATALOGUE = {catalogued: 2, shown: 2, entries: [
+    {model: 'model:aion-2.0', name: 'Aion 2.0', declared_routes: [{kind: 'provider-native', provider: 'provider:aion', provider_native_ids: ['aion-2.0']}]},
+    {book: null, declared_routes: [{credential_required: true, kind: 'provider-native', provider: 'provider:anthropic', provider_native_ids: ['claude-opus-5']}],
+      model: 'model:claude-opus-5', name: 'Claude Opus 5', source: 'source/aikit-model-catalogue'}]}
+  const REALISATION = {schema: 'aikit.model-realisation/v2', selected: true, factory_selection: {ranking_policy: 'EXPLICIT_PIN', model_ref: 'model:claude-opus-5'}}
+  const LAUNCHED = {contract: 'oi.factory-attempt-launch/v1', runRef: 'run:r1', workflowUnitRef: 'unit:build', status: 'launched', changed: true,
+    attemptRef: 'attempt:desk-launch:01', taskRef: 'central:task:t1', authorityRef: 'grant:desk', receipt: {contract: 'factory.attempt-action-receipt/v1'}, refusal: null}
+  const AT = {statePath: '/state', taskRef: 'central:task:t1', session: 'agent-session/fx-aletheia', project: 'O-I'}
+  const asked = []
+  const ports = (answers = {}, over = {}) => ({
+    owner: async request => { asked.push(['factory', request]); const answer = answers[request.kind]; if (answer instanceof Error) throw answer; return answer },
+    model: async () => { asked.push(['model']); return over.model ?? MODEL },
+    catalogue: async () => { asked.push(['catalogue']); return over.catalogue ?? CATALOGUE },
+    realise: async request => { asked.push(['realise', request]); if (over.realise instanceof Error) throw over.realise; return over.realise ?? {agency_admission: {}, realisation: REALISATION} },
+  })
+  // The catalogue's model for the session's: the entry whose route carries the native id, with that route's provider.
+  assert.deepEqual(tasks.catalogueModelOf(CATALOGUE, 'claude-opus-5'), {model: 'model:claude-opus-5', provider: 'provider:anthropic'})
+  assert.equal(tasks.catalogueModelOf(CATALOGUE, 'gpt-9'), null)
+  assert.equal(tasks.catalogueModelOf({entries: 'none'}, 'claude-opus-5'), null)
+  // Custody names the Run and the unit: the open record of the task's work (a completed one is not its work now).
+  assert.deepEqual(tasks.launchTargetOf(CUSTODY, null, 'central:task:t1'), {runRef: 'run:r1', workflowUnitRef: 'unit:build'})
+  const launched = await tasks.launchTask(ports({'custody-list': CUSTODY, 'attempt-launch': LAUNCHED}), AT)
+  assert.deepEqual(asked, [
+    ['factory', {kind: 'custody-list', state_path: '/state'}],
+    ['model'], ['catalogue'],
+    ['realise', {kind: 'realise', agent_session: 'agent-session/fx-aletheia', model: 'model:claude-opus-5', provider: 'provider:anthropic', project: 'O-I'}],
+    ['factory', {kind: 'attempt-launch', state_path: '/state', run_ref: 'run:r1', workflow_unit_ref: 'unit:build', task_ref: 'central:task:t1', aikit_realisation: REALISATION}],
+  ], 'custody named the unit, so its attempts were not read; AIKit\'s realisation is carried whole')
+  assert.equal(launched.status, 'launched')
+  assert.equal(launched.attemptRef, 'attempt:desk-launch:01')
+  assert.equal(launched.said, 'Software Factory launched unit:build of run:r1 for central:task:t1 as attempt:desk-launch:01, on model:claude-opus-5 as AIKit realised it on agent-session/fx-aletheia.')
+  const again = await tasks.launchTask(ports({'custody-list': CUSTODY, 'attempt-launch': {...LAUNCHED, status: 'already-launched', changed: false}}), AT)
+  assert.match(again.said, /^Software Factory had launched unit:build of run:r1 for central:task:t1 already, as attempt:desk-launch:01\./)
+  // No custody names a unit: the one unit the task's attempts stand on.
+  asked.length = 0
+  const NO_CUSTODY = {...CUSTODY, count: 0, custody: []}
+  const ONE = {contract: 'factory.attempt-task-units-reading/v1', taskRef: 'central:task:t1', units: [
+    {runRef: 'run:r2', workflowUnitRef: 'unit:check', currentAttemptRef: null, status: 'cancelled', attempts: 1, runRevision: 3, required: true}]}
+  await tasks.launchTask(ports({'custody-list': NO_CUSTODY, 'attempt-task-units': ONE, 'attempt-launch': {...LAUNCHED, runRef: 'run:r2', workflowUnitRef: 'unit:check'}}), AT)
+  assert.deepEqual(asked.filter(([who]) => who === 'factory').map(([, request]) => [request.kind, request.run_ref ?? null, request.workflow_unit_ref ?? null]),
+    [['custody-list', null, null], ['attempt-task-units', null, null], ['attempt-launch', 'run:r2', 'unit:check']])
+  // Neither names one unit: nothing is realised or launched, and the press says what Factory holds.
+  asked.length = 0
+  await assert.rejects(() => tasks.launchTask(ports({'custody-list': NO_CUSTODY, 'attempt-task-units': {...ONE, units: []}}), AT),
+    {message: tasks.LAUNCH_REFUSE.noUnit('central:task:t1')})
+  const TWO = {...ONE, units: [...ONE.units, {...ONE.units[0], runRef: 'run:r3', workflowUnitRef: 'unit:ship'}]}
+  await assert.rejects(() => tasks.launchTask(ports({'custody-list': NO_CUSTODY, 'attempt-task-units': TWO}), AT),
+    /^Error: Launch: central:task:t1 stands on 2 units \(run:r2 · unit:check, run:r3 · unit:ship\)/)
+  assert.equal(asked.filter(([who]) => who === 'realise').length, 0, 'nothing was realised')
+  assert.match(tasks.LAUNCH_REFUSE.noUnit('central:task:t1'), /^Launch: Factory names no unit for central:task:t1: no open custody of the work names its Run and unit, and it retains no attempt of it/)
+  // The session's model, in AIKit's catalogue: unread or uncatalogued, nothing is realised.
+  await assert.rejects(() => tasks.launchTask(ports({'custody-list': CUSTODY}, {model: {...MODEL, model_observation: null}}), AT),
+    {message: tasks.LAUNCH_REFUSE.noModel('agent-session/fx-aletheia')})
+  await assert.rejects(() => tasks.launchTask(ports({'custody-list': CUSTODY}, {catalogue: {entries: []}}), AT),
+    {message: tasks.LAUNCH_REFUSE.uncatalogued('claude-opus-5', 'agent-session/fx-aletheia')})
+  // AIKit's refusal of the realisation, in its words; an answer that is no realisation is not carried to Factory.
+  await assert.rejects(() => tasks.launchTask(ports({'custody-list': CUSTODY}, {realise: Error('agent-session/fx-aletheia is on the bench in session-space/fx: it is given no work, so no launch reaches it')}), AT),
+    {message: 'Launch: AIKit did not realise model:claude-opus-5 on agent-session/fx-aletheia: agent-session/fx-aletheia is on the bench in session-space/fx: it is given no work, so no launch reaches it'})
+  await assert.rejects(() => tasks.launchTask(ports({'custody-list': CUSTODY}, {realise: {realisation: {schema: 'aikit.model-realisation/v1'}}}), AT),
+    {message: tasks.LAUNCH_REFUSE.noRealisation('model:claude-opus-5', 'agent-session/fx-aletheia')})
+  assert.equal(asked.filter(([who, request]) => who === 'factory' && request.kind === 'attempt-launch').length, 0, 'Factory was asked to launch nothing')
+  // Factory's refusal, and the grant's (the host holds no factory.attempt.launch for the project): in their own words, verbatim. The grant's
+  // words are DERIVED: the kernel's (factory_retry.rs attempt_launch, step grant) around factory.rs grant_refusal's, as its own test pins them.
+  const refused = (source, step, message) => ({...LAUNCHED, status: 'refused', changed: false, attemptRef: null, refusal: {source, step, message}})
+  const FACTORY = 'Factory links run:r1 to no Journey: a unit starts under the Journey its Run was commissioned from'
+  await assert.rejects(() => tasks.launchTask(ports({'custody-list': CUSTODY, 'attempt-launch': refused('owner', 'launch', FACTORY)}), AT), {message: FACTORY})
+  const GRANT = 'Launch needs a native action authority grant of factory.attempt.launch on project:o-i, and the grant is the owner\'s to give (Control/user/native-action-authority.json): action not granted: the grant does not list factory.attempt.launch.'
+  await assert.rejects(() => tasks.launchTask(ports({'custody-list': CUSTODY, 'attempt-launch': refused('driver', 'grant', GRANT)}), AT), {message: GRANT})
+  await assert.rejects(() => tasks.launchTask(ports({'custody-list': CUSTODY, 'attempt-launch': {...refused('owner', 'launch', 'Factory did not answer in time'), status: 'uncertain'}}), AT),
+    {message: 'Factory did not answer and may have run: Factory did not answer in time Read the Run again before launching it again.'})
+  await assert.rejects(() => tasks.launchTask(ports({'custody-list': CUSTODY, 'attempt-launch': {status: 'started'}}), AT),
+    {message: 'Launch: Factory answered without its launch of run:r1 · unit:build.'})
+  // The binding: with its carrier, Launch stands and presses for the selected session; without, it names what carries it.
+  const launches = []
+  const carried = tasks.tasksBinding(input(), null, {selectTask() {}, queue: async () => {}, launch: async session => { launches.push(session) }})
+  assert.equal(carried.standing.launch, undefined, 'Launch stands with its carrier')
+  await carried.write([{key: 'launch', value: true}])
+  assert.deepEqual(launches, ['agent-session/fx-aletheia'])
+  const bare = tasks.tasksBinding(input(), null, {selectTask() {}, queue: async () => {}})
+  assert.equal(bare.standing.launch.disabled, tasks.TASKS_REFUSE.launch)
+  assert.match(tasks.TASKS_REFUSE.launch, /^Launch: no carrier to AIKit's realisation and Factory's attempt-launch stands here/)
 })

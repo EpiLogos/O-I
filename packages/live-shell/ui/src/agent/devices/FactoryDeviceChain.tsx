@@ -101,7 +101,7 @@ import {useUnitDecisions, waitingDecisions} from './unitDecisions'
 import {useAgentSetReadings, useCentralAction} from '../../central/devices/useCentralReadings'
 import {actionAnswerOf, centralActionOp} from '../../central/devices/centralActions'
 import {useAtSearch} from '../../central/searchPane'
-import {useModelCatalogue} from './useModelCatalogue'
+import {catalogueRead, useModelCatalogue} from './useModelCatalogue'
 import {useAttemptTakes} from '../../owners/attemptTakes'
 import {readTaskOf, useWorkcellAnswer} from '../../owners/readers'
 import {usePopulationAnswer} from './usePopulationAnswer'
@@ -110,7 +110,7 @@ import {
   AGENTSET_DESIGN, AGENTSET_ID, agentChainSessions, agentsetBinding, chainProfileOf, custodyBinding, orderRequest, profileHeadActs, rackSpaces, replaceRequest,
   sessionDevices, withCustodyAsks, type AgentRackPorts, type CustodyPorts,
 } from './sessionChainBindings'
-import {retryTask, stopAfterTask} from './taskBindings'
+import {launchTask, retryTask, stopAfterTask} from './taskBindings'
 import {communiqueRefOf} from './messagesBinding'
 import {APPROVALS_DESIGN, APPROVALS_ID, approvalsBinding, receiptDevices} from './receiptBindings'
 import {CARRIER_DESIGN, CARRIER_ID, carrierBinding, connectionLabels, gitBinding, planRunOf, runDemandOf, seatBinding, workcellDevices, type SeatPorts} from './workcellBindings'
@@ -606,6 +606,18 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
       stopAfter: async ({project, agent_session}) => {
         if (!custodyState) throw Error('Stop after: Factory keeps no state for this project here (`factory development locate`), so no unit of the task is read.')
         await stopAfterTask(request => factoryOwnerWrite(transport, request, `factory_owner ${request.kind}`), custodyState, await boundTaskOf(transport, project, agent_session, 'Stop after'))
+      },
+      // Launch, before Retry (O-I 842 round 23): the chosen chain's bound task, the unit Factory names for it started on the model AIKit
+      // realises on the chain's session (taskBindings.ts launchTask: aikit_write realise, then factory_owner attempt-launch, under the
+      // project's factory.attempt.launch grant, which the kernel resolves and the owner gives). Factory's answer comes back in its words.
+      launch: async ({project, agent_session}) => {
+        if (!custodyState) throw Error('Launch: Factory keeps no state for this project here (`factory development locate`), so no unit of the task is read.')
+        return launchTask({
+          owner: request => factoryOwnerWrite(transport, request, `factory_owner ${request.kind}`),
+          model: () => sessionModelRead(transport, project, agent_session),
+          catalogue: () => catalogueRead(transport),
+          realise: request => ownerRouteWrite(transport, aikitWriteOp(request), ROUTE_WORDS.realise).then(answer => answer.data),
+        }, {statePath: custodyState, taskRef: await boundTaskOf(transport, project, agent_session, 'Launch'), session: agent_session, project})
       },
       // A device of another session's chain (DLW build ruling 2026-11-05): a message to that session's agent's Position (AIKit's gateway send),
       // turned into work on its task by Messages' own route, the one a message dropped on a track takes (`aikit gateway delegate`, O-I ticket

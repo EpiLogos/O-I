@@ -354,6 +354,45 @@ test('(r870) Stop after stands beside Retry on the chosen chain: its carrier sto
   bind.resetHolds()
 })
 
+// BD round 23 (DLW build ruling 2026-11-05): Launch is the press on the chain's task row, before Retry and Stop after, as a clip's launch
+// stands in Live's slot beside its Stop: AIKit realises the chosen chain's session on its own model and Factory starts the unit Factory names
+// for its task (taskBindings.ts launchTask). Factory's answer stands in the row in its words; a refusal is the owner's, on the Info line.
+test('(BD r23) Launch stands on the chosen chain\'s task row: its carrier starts the task\'s unit, and Factory\'s answer stands in the row', async () => {
+  bind.resetHolds()
+  const calls = []
+  const L = {...LEAD, agentRef: 'agent/aletheia'}, H = {...HELPER, agentRef: 'agent/anima'}
+  const tracks = [GROUP, L, H, IDLE, OTHER]
+  const rack = ports => own.agentsetBinding({group: GROUP, tracks, holds: bind.chainHolds()}, ports)
+  assert.equal(rack({}).standing.launch?.disabled, own.AGENTSET_REFUSE.launch, 'no carrier: dark, saying why')
+  assert.match(own.AGENTSET_REFUSE.launch, /^Launch: no carrier to AIKit's realisation and Factory's attempt-launch stands on this rack/)
+  const said = 'Software Factory launched unit:build of run:r1 for central:task:t1 as attempt:desk-launch:01, on model:claude-opus-5 as AIKit realised it on agent-session/fx.'
+  const ports = {launch: async input => { calls.push(['launch', input]); return {status: 'launched', attemptRef: 'attempt:desk-launch:01', said} }}
+  assert.equal(rack(ports).standing.launch, undefined, 'Launch stands with its carrier')
+  await assert.rejects(() => rack(ports).write([{key: 'launch', value: true}]), {message: own.CHAIN_LIST_REFUSE.noneChosen('Launch')})
+  rack(ports).local.member('factory:decision-helper')
+  await assert.rejects(() => rack(ports).write([{key: 'launch', value: true}]), {message: own.CHAIN_LIST_REFUSE.helperLaunch})
+  rack(ports).local.member(H.sessionRef)
+  await rack(ports).write([{key: 'launch', value: true}])
+  assert.deepEqual(calls.at(-1), ['launch', {project: H.project ?? '', agent_session: H.sessionRef}])
+  // Factory's answer stands in the row for the chain it launched, in its words.
+  assert.deepEqual(JSON.parse(rack(ports).values.launched), {chain: H.sessionRef, status: 'launched', said})
+  // A refusal clears the last answer and is the owner's words.
+  await assert.rejects(() => rack({launch: async () => { throw Error('Factory links run:r1 to no Journey') }}).write([{key: 'launch', value: true}]), {message: 'Factory links run:r1 to no Journey'})
+  assert.equal(rack(ports).values.launched, undefined)
+  // The face: Launch before Retry and Stop after in the selected chain's row, lit while the chain is not at work; the answer beside them.
+  const face = read('inhabitants/catalogue/panels/software-factory__agentset-rack.tsx')
+  assert.match(face, /\{launchAction\(p, chosen\)\}\n\s*\{retryAction\(p, chosen\)\}\n\s*\{stopAfterAction\(p, chosen\)\}/, 'Launch, Retry, Stop after')
+  assert.match(face, /label="Launch" does=\{SAYS\.launch\}/)
+  assert.match(face, /can = !!chosen && chosen\.state !== 'working'/, 'it lights while the chain is not at work')
+  assert.match(face, /label="Launched"/)
+  // The chain wires the carrier: the chosen chain's bound task, AIKit's model reading and catalogue, the realisation and Factory's launch.
+  const view = read('agent/devices/FactoryDeviceChain.tsx')
+  assert.match(view, /launchTask\(\{\s*owner: request => factoryOwnerWrite\(transport, request, `factory_owner \$\{request\.kind\}`\),/)
+  assert.match(view, /realise: request => ownerRouteWrite\(transport, aikitWriteOp\(request\), ROUTE_WORDS\.realise\)\.then\(answer => answer\.data\)/)
+  assert.match(view, /taskRef: await boundTaskOf\(transport, project, agent_session, 'Launch'\)/)
+  bind.resetHolds()
+})
+
 test('(BD r19, Central #318) the chain is the agent\'s profile: Rename on the Agent\'s head and a SkillSet dropped on the rack write it at its revision', async () => {
   const PROFILE = {profile_ref: 'agent-profile:kite', revision: 'p3', agent_ref: 'agent/kite', name: 'Kite', skill_set_refs: ['sets/core', 'sets/review']}
   const profile = own.chainProfileOf(PROFILE)
