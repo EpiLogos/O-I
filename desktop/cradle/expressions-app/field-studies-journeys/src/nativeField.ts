@@ -4,7 +4,7 @@
  * microphone, local oscillator or browser synthesis of native music. */
 import {NativeDomainView} from './native-field/domainView';
 import {NativeChannel} from './native-field/channel';
-import {NativeFieldController,NativeRenderer,EMBEDDED_NATIVE_PLAYBACK,CADENCES,INSTRUMENT_PRESENTATION,PRESENTATION_LEVEL,type NativeSky} from './native-field/controller';
+import {NativeFieldController,NativeRenderer,EMBEDDED_NATIVE_PLAYBACK,CADENCES,INSTRUMENT_PRESENTATION,PRESENTATION_LEVEL,readHandedSky,skyRebinds,type NativeSky,type NativeSkySnapshot} from './native-field/controller';
 import {LENSES,CONTEXT_FRAMES,type SceneActing} from './native-field/scene';
 import type {FieldEngineAdapter} from './engine';
 import {STAGE_INSTRUMENT_Q,type InstrumentEdit,type StageCommand} from './stageCommands';
@@ -50,8 +50,10 @@ const when=(ms:number|null)=>ms==null?'—':new Date(ms).toISOString().replace('
 export interface NativeFieldHooks {
  retainedOccasion?:()=>{schema:string;sky:{schema:'ql.sky-snapshot/v1';snapshot_ref:string;[key:string]:unknown};event_ref:string;retained_at_unix_ms:number}|null;
  /** A completed opening, as it was made: the app keeps the admitted occasion
-  * sky for the save to carry. The explicit no-sky opening keeps nothing. */
- onComposed?:(mode:'retained'|'now'|'epoch'|'none')=>void;
+  * sky for the save to carry. The explicit no-sky opening keeps nothing, and
+  * neither does an opening on the sky the Sky shows (`sky`): that sky is the
+  * view's own (O-I ticket 854), so the field's own sky comes back after it. */
+ onComposed?:(mode:'retained'|'now'|'epoch'|'none'|'sky')=>void;
 }
 export function installNativeField(engine:FieldEngineAdapter,onResumeApplication:()=>void,hooks:NativeFieldHooks={}){
  const port=new NativeChannel();
@@ -395,11 +397,13 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
  // Returned values replace the stage's status line, never a raw dump.
  const fail=(error:unknown)=>{controller.reason=controller.status==='following'||controller.status==='held'?controller.reason:String(error instanceof Error?error.message:error);};
  const run=async(action:()=>Promise<unknown>|unknown)=>{if(busy)return;busy=true;update();try{await action();}catch(error){fail(error);}finally{busy=false;update();}};
- const openWith=(compose:()=>Promise<unknown>,mode:'retained'|'now'|'epoch'|'none')=>run(async()=>{composing=true;try{await compose();hooks.onComposed?.(mode);onResumeApplication();}finally{composing=false;}});
+ const openWith=(compose:()=>Promise<unknown>,mode:'retained'|'now'|'epoch'|'none'|'sky')=>run(async()=>{composing=true;try{await compose();hooks.onComposed?.(mode);onResumeApplication();}finally{composing=false;}});
  const open=(sky:NativeSky)=>openWith(()=>controller.compose({sky}),sky==='none'?'none':sky==='now'?'now':'epoch');
- /** The field's ordinary opening: on the composition's saved occasion sky when it carries one (the kernel re-composes against
-  * that exact admitted snapshot), otherwise on the dated sky now. */
- const primaryOpen=()=>{const retained=hooks.retainedOccasion?.();return retained?.sky?openWith(()=>controller.compose({skySnapshot:retained.sky}),'retained'):open('now');};
+ /** The sky the Sky hands the field (O-I ticket 854; sky below), while it hands one. */
+ let handed:NativeSkySnapshot|null=null;
+ /** The field's ordinary opening: on the sky the Sky hands it while it hands one, else on the composition's saved occasion sky when it
+  * carries one (the kernel re-composes against that exact admitted snapshot either way), otherwise on the dated sky now. */
+ const primaryOpen=()=>{if(handed){const sky=handed;return openWith(()=>controller.compose({skySnapshot:sky}),'sky');}const retained=hooks.retainedOccasion?.();return retained?.sky?openWith(()=>controller.compose({skySnapshot:retained.sky}),'retained'):open('now');};
  const click=async(event:Event)=>{
   const target=event.target as HTMLElement;
   const jk=target.closest<HTMLButtonElement>('button.ni-jk');
@@ -652,6 +656,20 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   reopenWhenStill();
   return first?words:null;
  };
+ /** The sky the Sky shows, handed by the host (O-I ticket 854; DLW §21.2 To use the Torus, step 6: "Set Tuning to Sky. The voices take
+  * the planets of your sky"): the owner's `ql.sky-snapshot/v1` for a chosen date or your own place's view, or null for the shared sky of
+  * now. While it stands every opening composes on it (primaryOpen), as a saved occasion's does. An open field standing on another sky is
+  * bound again around the act (rebind), as an authored change binds it, and the act is named and returned for the frame to say; one that
+  * already stands on it is left, and with none handed the field opens as it always has. A sky that is not one bounded snapshot is
+  * refused in words, and the field keeps the sky it had. */
+ const skyWhen=(sky:NativeSkySnapshot)=>typeof sky.epoch_unix_ms==='number'?when(sky.epoch_unix_ms):typeof sky.epoch_utc==='string'?sky.epoch_utc:sky.snapshot_ref;
+ const sky=(raw:unknown):string|null=>{
+  let next:NativeSkySnapshot|null;
+  try{next=readHandedSky(raw,'The sky the Sky hands');}catch(error){const words=String(error instanceof Error?error.message:error);controller.reason=words;update();return words;}
+  const before=handed?.snapshot_ref??null;handed=next;
+  if(!skyRebinds(controller.occasionSky?.snapshot_ref??null,before,next?.snapshot_ref??null))return null;
+  return rebind(next?`The Sky stands at ${skyWhen(next)}`:'The Sky is back on the sky of now');
+ };
  /** The authored scene as the frame configures it this frame (retained-capability.mjs authoredIdentity): while a reopen waits, a scene
   * still moving (a drag, a playing take) holds it off until it is still. */
  const authoredMoved=(identity:string|null)=>{
@@ -659,5 +677,5 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   settledOn=identity;reopenWhenStill();
  };
  update();
- return {controller,panel,command,stage,touch,openLive,leaveLive,rebind,authoredMoved,hear,dispose:()=>{unsinglet();clearInterval(timer);engine.setTorusVoices?.(null);clearTimeout(reopening);panel.removeEventListener('click',click);panel.removeEventListener('input',range);panel.removeEventListener('pointerdown',pressKey);panel.removeEventListener('focusin',focusKey);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('pagehide',pagehide);panel.remove();domainView.dispose();style.remove();void controller.dispose();},collide};
+ return {controller,panel,command,stage,touch,openLive,leaveLive,rebind,authoredMoved,hear,sky,dispose:()=>{unsinglet();clearInterval(timer);engine.setTorusVoices?.(null);clearTimeout(reopening);panel.removeEventListener('click',click);panel.removeEventListener('input',range);panel.removeEventListener('pointerdown',pressKey);panel.removeEventListener('focusin',focusKey);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('pagehide',pagehide);panel.remove();domainView.dispose();style.remove();void controller.dispose();},collide};
 }

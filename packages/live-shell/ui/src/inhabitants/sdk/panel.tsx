@@ -4,7 +4,7 @@
 // toggle, radio, chooser, rows, readout, action, light. Every control is controlled (value in, change out), names what it does
 // for the status bar (data-i, "Name|What it does"), and shows its standing: automated, modulated, held by someone else,
 // waiting for the owner, or disabled with the reason. No control scrolls; no box sits inside a box; the only inset is the well.
-import {createContext, useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type FocusEvent, type KeyboardEvent, type MouseEvent, type PointerEvent, type ReactNode, type RefObject} from 'react'
+import {Children, createContext, isValidElement, useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type FocusEvent, type KeyboardEvent, type MouseEvent, type PointerEvent, type ReactNode, type RefObject} from 'react'
 import {ChevronFold, PopOut} from './marks'
 import {Icon} from './Icon'
 import './panel.css'
@@ -969,14 +969,63 @@ function useRackParts(rack: boolean | undefined, place: Place): [RackShown, (par
 
 /** The rack's three marks, after the expanded view's toggle, as Live's rack head carries them. Hiding the last view standing folds
  * the rack, as Live's does ("When all of a Rack's views are hidden, its title bar will fold"); that view comes back when it unfolds. */
-function RackMarks({title, shown, onShow, onFold}: {title: string; shown: RackShown; onShow: (part: RackPart, shown: boolean) => void; onFold?: () => void}) {
+function RackMarks({title, shown, onShow, onFold, column}: {title: string; shown: RackShown; onShow: (part: RackPart, shown: boolean) => void; onFold?: () => void;
+  /** Stood in a column under the title bar, as on a rack on the chain (RackOnChain), not in the title bar. */ column?: boolean}) {
   const last = (part: RackPart) => shown[part] && RACK_PARTS.every(other => other === part || !shown[other])
-  return <span className="dp-rack-marks" role="group" aria-label={`${title}: what the rack shows`}>
+  return <span className={column ? 'dp-rack-marks dp-rack-col' : 'dp-rack-marks'} role="group" aria-label={`${title}: what the rack shows`}>
     {RACK_PARTS.map(part => <button key={part} type="button" className="dp-fold dp-rack-mark" data-rack-mark={part} aria-pressed={shown[part] ? 'true' : 'false'}
       aria-label={`${shown[part] ? 'Hide' : 'Show'} ${RACK_WORDS[part][1]}`}
       data-i={said(RACK_WORDS[part][0], `${shown[part] ? 'Hides' : 'Shows'} ${RACK_WORDS[part][1]}, as Live's rack head does. The others take the room.${onFold ? ' Hide the last one and the rack folds.' : ''}`)}
       onClick={() => (last(part) && onFold ? onFold() : onShow(part, !shown[part]))}><Icon name={RACK_MARK[part]} size={10} /></button>)}
   </span>
+}
+
+// ---------------------------------------------------------------- a rack on the chain (Live's rack anatomy)
+
+/** A rack's sections, parted as Live's rack stands on its chain: those of its head (the macros, the chain list, and any section that is
+ * no part), and the devices of the chosen chain (`part="devices"`), which stand after the head on the chain itself. Pure. */
+export function rackSections(children: ReactNode): {readonly head: ReactNode[]; readonly devices: ReactNode[]} {
+  const head: ReactNode[] = [], devices: ReactNode[] = []
+  for (const child of Children.toArray(children)) {
+    const part = isValidElement(child) && child.type === Section ? (child.props as {part?: RackPart}).part : undefined
+    ;(part === 'devices' ? devices : head).push(child)
+  }
+  return {head, devices}
+}
+
+/** A rack on the chain, as Live's (manual §16.4; DLW build ruling 2026-11-05; the shell mockup's `.rack`): its head — the title bar
+ * over the macros and the chain list only, with the column of Live's three view buttons on the left under it — then the devices of
+ * the chosen chain at full height, their title bars level with the rack's, then a narrow end bracket. Hide the macros and the chain
+ * list and the head stands as a strip: the activator, the view buttons and the rack's name turned on its side; a double-click on the
+ * strip shows them again. Hiding the last view standing folds the rack, as before (RackMarks). `bar` is the head's title bar. */
+export function RackOnChain({title, bar, light, onLight, lightWhy, busy, shown, onShow, onFold, onSelect, selected, className, children}: {
+  readonly title: string; readonly bar: ReactNode; readonly light: LightState; readonly onLight?: () => void; readonly lightWhy?: string; readonly busy?: boolean
+  readonly shown: RackShown; readonly onShow: (part: RackPart, shown: boolean) => void; readonly onFold?: () => void
+  readonly onSelect?: () => void; readonly selected?: boolean; readonly className?: string; readonly children: ReactNode}) {
+  const {head, devices} = rackSections(children)
+  const lit = lightIn(light)
+  const reopen = (event: MouseEvent<HTMLElement>) => {
+    if ((event.target as Element).closest('button')) return
+    onShow('macros', true); onShow('chains', true)
+  }
+  return <section className={className ? `dp ${className}` : 'dp'} data-view="compact" data-rack="true" data-selected={selected ? 'true' : undefined} aria-label={title}
+    onPointerDownCapture={onSelect}>
+    {shown.macros || shown.chains
+      ? <div className="dp-rack-head">
+          {bar}
+          <div className="dp-rack-in">
+            <RackMarks title={title} shown={shown} onShow={onShow} onFold={onFold} column />
+            <div className="dp-body"><RackContext.Provider value={shown}>{head}</RackContext.Provider></div>
+          </div>
+        </div>
+      : <div className="dp-rack-strip" data-i={said(title, 'Its macros and chain list are hidden. Double-click to show them again.')} onDoubleClick={reopen}>
+          <Activator title={title} light={lit} onLight={onLight} why={lightWhy} busy={busy} />
+          <RackMarks title={title} shown={shown} onShow={onShow} onFold={onFold} column />
+          <span className="dp-rack-strip-name">{title}</span>
+        </div>}
+    {shown.devices && devices.length > 0 && <div className="dp-rack-devs"><RackContext.Provider value={shown}>{devices}</RackContext.Provider></div>}
+    <span className="dp-rack-end" aria-hidden="true" />
+  </section>
 }
 
 /** The activator, the same in Panel and PanelHead: a reading of the owner's on/off, pressable only where the owner can turn it. `busy`:
@@ -1035,12 +1084,12 @@ export function Panel({title, view, light: reported, onLight, pages, page, onPag
   const light = lightIn(reported), place = useContext(PlaceContext)
   const marks = ownMarks ?? place.marks, onRail = ownRail ?? place.onRail
   const [shown, show] = useRackParts(rack, place)
-  return <section className="dp" data-view={view} data-selected={selected ? 'true' : undefined} data-rack={rack ? 'true' : undefined} aria-label={title}
-    onPointerDownCapture={onSelect}>
-    <header className="dp-head" data-i={hint ? said(title, hint) : undefined} onDoubleClick={foldOnDoubleClick(onFold)}>
+  // A rack on the chain stands as Live's: its view buttons leave the title bar for the column under it (RackOnChain).
+  const onChain = !!rack && view === 'compact'
+  const bar = <header className="dp-head" data-i={hint ? said(title, hint) : undefined} onDoubleClick={foldOnDoubleClick(onFold)}>
       <Activator title={title} light={light} onLight={onLight} why={lightWhy} busy={busy} />
       <ExpandToggle title={title} place={place} />
-      {rack && <RackMarks title={title} shown={shown} onShow={show} onFold={onFold} />}
+      {rack && !onChain && <RackMarks title={title} shown={shown} onShow={show} onFold={onFold} />}
       {mark}
       <span className="dp-title">{title}</span>
       {heldBy && <span className="dp-head-held" data-i={said('Held', `${heldBy} holds values on this device.`)}>{heldBy}</span>}
@@ -1048,6 +1097,11 @@ export function Panel({title, view, light: reported, onLight, pages, page, onPag
       {acts !== undefined && acts !== null && acts !== false && <span className="dp-head-acts">{acts}</span>}
       <HeadMarks title={title} marks={marks} onRail={onRail} onFull={onFull} fullLabel={fullLabel} place={place} />
     </header>
+  if (onChain) return <RackOnChain title={title} bar={bar} light={light} onLight={onLight} lightWhy={lightWhy} busy={busy} shown={shown} onShow={show} onFold={onFold}
+    onSelect={onSelect} selected={selected}>{children}</RackOnChain>
+  return <section className="dp" data-view={view} data-selected={selected ? 'true' : undefined} data-rack={rack ? 'true' : undefined} aria-label={title}
+    onPointerDownCapture={onSelect}>
+    {bar}
     <div className="dp-body"><RackContext.Provider value={shown}>{children}</RackContext.Provider></div>
   </section>
 }

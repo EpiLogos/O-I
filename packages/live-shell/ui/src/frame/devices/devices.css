@@ -7,7 +7,7 @@
 .device { flex: none; display: flex; min-width: 0; min-height: 0 }
 
 /* The plate the pool shows wears the selection's tint in its head, a design's head as the generic plate's (§4.3). */
-.device[data-device-selected="true"] > .dp > .dp-head { background: color-mix(in srgb, var(--dp-head) 72%, var(--sel) 28%) }
+.device[data-device-selected="true"] > .dp > .dp-head, .device[data-device-selected="true"] > .dp > .dp-rack-head > .dp-head { background: color-mix(in srgb, var(--dp-head) 72%, var(--sel) 28%) }
 
 /* A generic plate's control: its key and holder on a wrapper that adds no box; a wide control spans two control columns. */
 .dv-param { display: contents }

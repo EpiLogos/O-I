@@ -26,6 +26,29 @@ export interface NativePlaybackPolicy {blockFrames:number;leadSeconds:number;loo
 export const EMBEDDED_NATIVE_PLAYBACK:Readonly<NativePlaybackPolicy>=Object.freeze({blockFrames:8192,leadSeconds:.5,lookaheadSeconds:.5});
 export type NativeStatus='manual'|'opening'|'following'|'held'|'unavailable';
 export type NativeSky='none'|'now'|{epoch:string};
+/** A sky an opening stands on exactly: the owner's `ql.sky-snapshot/v1`, named by its ref. */
+export type NativeSkySnapshot={schema:'ql.sky-snapshot/v1';snapshot_ref:string;[key:string]:unknown};
+/** The most bytes one sky handed to an opening takes. */
+const SKY_SNAPSHOT_BYTES_MAX=1024*1024;
+/** A sky the field is handed to open on (O-I ticket 854): a saved occasion's, or the one the Sky shows (DLW §21.2 To use the Torus, step 6:
+ * "Set Tuning to Sky. The voices take the planets of your sky"), as one bounded `ql.sky-snapshot/v1` owner reading with its ref, kept as
+ * the field's own copy; null for none. Anything else is refused in words, `whose` naming it. Pure. */
+export function readHandedSky(raw:unknown,whose='The handed sky'):NativeSkySnapshot|null{
+ if(raw===null||raw===undefined)return null;
+ const snapshot=raw as {schema?:unknown;snapshot_ref?:unknown};
+ if(typeof raw!=='object'||Array.isArray(raw)||snapshot.schema!=='ql.sky-snapshot/v1'||typeof snapshot.snapshot_ref!=='string'||!snapshot.snapshot_ref
+  ||JSON.stringify(raw).length>SKY_SNAPSHOT_BYTES_MAX)throw new Error(`${whose} is not one bounded ql.sky-snapshot/v1 owner reading`);
+ return structuredClone(raw) as NativeSkySnapshot;
+}
+/** Whether the open field is bound again when the Sky hands it another sky (O-I ticket 854). `standing` is the ref of the sky the field
+ * stands on (occasionSky), `before` the sky handed before and `next` the one handed now; null for none. A sky the field already stands on
+ * asks nothing. None handed now (the Sky back on the shared sky of now) binds it again only while it stands on the sky the Sky handed, so
+ * its own opening comes back; a field on its own sky is left. Pure. */
+export function skyRebinds(standing:string|null,before:string|null,next:string|null):boolean{
+ if(next===before)return false;
+ if(next!==null)return next!==standing;
+ return before!==null&&standing===before;
+}
 /** Presentation, not source: the M1 torus (|x|,|y| ≤ 25/9 m at QL's declared
  * 1 m per torus unit) spans ±333 engine units — 0.83 of the 400-unit stage
  * radius (WORLD_SCALE), leaving the body whole on stage with modal headroom. */
@@ -262,7 +285,8 @@ export class NativeFieldController {
   * A saved occasion re-opens on its own sky: `skySnapshot` is the exact
   * admitted `ql.sky-snapshot/v1` the saved composition carries, passed as the
   * kernel's `sky_snapshot`, so the kernel runs no ql-sky and the binding
-  * stands on the sky the composition was saved with. */
+  * stands on the sky the composition was saved with. The sky the Sky shows
+  * opens the same way (O-I ticket 854; readHandedSky). */
  async compose(options:{sky?:NativeSky;skySnapshot?:unknown;event?:unknown}={}){
   const topology=this.renderer.retainedTopology?.();
   if(!topology)throw new Error('The retained GPU field must be live before the instrument opens');
@@ -270,11 +294,9 @@ export class NativeFieldController {
   const event=options.event!==undefined?{event:options.event}:{};
   let request:Record<string,unknown>;
   if('skySnapshot' in options){
-   const snapshot=options.skySnapshot as {schema?:unknown;snapshot_ref?:unknown}|null|undefined;
-   if(!snapshot||typeof snapshot!=='object'||Array.isArray(snapshot)||snapshot.schema!=='ql.sky-snapshot/v1'
-    ||typeof snapshot.snapshot_ref!=='string'||!snapshot.snapshot_ref
-    ||JSON.stringify(snapshot).length>1024*1024)throw new Error('the saved occasion sky is not one bounded ql.sky-snapshot/v1 owner reading');
-   request={...base,sky_snapshot:structuredClone(snapshot),...event};
+   const snapshot=readHandedSky(options.skySnapshot,'The sky to open on');
+   if(!snapshot)throw new Error('The sky to open on is not one bounded ql.sky-snapshot/v1 owner reading');
+   request={...base,sky_snapshot:snapshot,...event};
   }else{
    const sky=options.sky??'now';
    if(!(sky==='none'||sky==='now'||(typeof sky==='object'&&typeof sky?.epoch==='string')))throw new Error('sky must be none, now or a dated epoch');

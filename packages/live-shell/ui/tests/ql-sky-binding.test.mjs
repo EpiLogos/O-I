@@ -243,3 +243,28 @@ test('the Share page lists the consents both ways from SharedField, split by you
   assert.match(binding.standing['presence.consents'].disabled, /SharedField lists 1 presence\(s\), but which are yours it cannot say here: the carrier is down/)
   presences.resetSkyPresences()
 })
+
+// O-I 854 (DLW §21.2 To use the Torus, step 6: "Set Tuning to Sky. The voices take the planets of your sky"): the sky the Torus's session
+// stands on is the one the Sky shows. The Sky hands the frame its owner's snapshot verbatim for a chosen date, or for your own place's view;
+// while it shows the shared sky of now it hands none, and the session opens on the dated sky now, as it always has.
+test('the Sky hands the Torus\'s session the sky it shows: a chosen date or your place\'s view verbatim, none for the shared sky of now', async () => {
+  const at = Date.UTC(2026, 8, 28, 12)
+  const state = (ask, observer = 'shared', reading = sky.readSkyAnswer(answered(recorded))) => ({...sky.qlSkyState(), ask, answered: ask, reading,
+    view: {...sky.qlSkyState().view, observer}})
+  const dated = state({now: false, epochMs: at})
+  assert.equal(sky.skyForTheField(dated), dated.reading.sky.snapshot, 'the owner\'s ql.sky-snapshot/v1, verbatim')
+  assert.equal(sky.skyForTheField(dated).schema, 'ql.sky-snapshot/v1')
+  assert.equal(sky.skyForTheField(state({now: true})), null, 'the shared sky of now: none handed')
+  assert.equal(sky.skyForTheField(state({now: true}, 'private')), state({now: true}, 'private').reading.sky.snapshot, 'your place\'s view of now is yours')
+  assert.equal(sky.skyForTheField(state({now: false, epochMs: at}, 'shared', {ok: false, reason: 'The dated sky answers only from 1800 to 2399.'})), null, 'no sky, none handed')
+  assert.equal(sky.skyForTheField({...dated, answered: null}), null, 'before any answer')
+  // The reading stands for the ask it answers: a newer ask still being read hands the sky the Sky still shows.
+  assert.equal(sky.skyForTheField({...dated, ask: {now: true}}), dated.reading.sky.snapshot)
+  // The Expressions panel hands it to its host when it mounts and whenever it changes.
+  const panel = await readFile(new URL('../src/panels/expressions.tsx', import.meta.url), 'utf8')
+  assert.match(panel, /const handedSky = skyForTheField\(useQlSkyState\(\)\)/, 'read from the Sky\'s store, asking nothing')
+  assert.match(panel, /host\.current = mounted\.host\n\s*mounted\.host\.setSky\(skyForTheField\(qlSkyState\(\)\)\)/, 'handed at mount')
+  assert.match(panel, /useEffect\(\(\) => \{try \{host\.current\?\.setSky\(handedSky\); setSkyFault\(null\)\} catch \(cause\) \{setSkyFault\(`The Torus does not take the Sky's sky: \$\{cause instanceof Error \? cause\.message : String\(cause\)\}`\)\}\}, \[handedRef\]\)/,
+    'and again when it changes; a refusal is named')
+  assert.match(panel, /faults: \[hostFault, surfaceFault, viewFault, skyFault, fault\]/, 'standing with the frame\'s other faults')
+})

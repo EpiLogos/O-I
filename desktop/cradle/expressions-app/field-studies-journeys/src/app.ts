@@ -2528,6 +2528,8 @@ window.addEventListener('message',ev=>{if(ev.source!==window.parent)return;const
   document.documentElement.style.setProperty('--shell-covered-right',(Number.isFinite(d.coveredRight)?Math.max(0,d.coveredRight!):0)+'px');
   return;
  }
+ // The sky the Sky shows, handed by the host (O-I ticket 854): the Torus's session stands on it (nativeField.ts sky); what that did is said.
+ if(d&&d.v===1&&d.kind==='host-sky'){const said=nativeField?.sky((d as {sky?:unknown}).sky);if(said)toast(said,6500);return;}
  if(d&&d.v===1&&d.kind==='host-mode'&&(d.mode==='expressions'||d.mode==='techne'||d.mode==='live')){const world=(d as {world?:unknown}).world;if(typeof world==='string'&&world.length<=64)worldLens=world;setHostMode(d.mode);announceHostState();return;}
  if(d&&d.v===1&&d.kind==='host-command'){
   if(d.command==='interact'||d.command==='select')activateRail(d.command);
@@ -2597,9 +2599,10 @@ const compositionOccasion=():SceneOccasionSky|null=>{
 const nativeField=installNativeField(engine,()=>{fieldPaused=false;needsFrame=true;renderAll();},{
  // The field's openings restore the composition's saved sky, never a fresh compose.
  retainedOccasion:compositionOccasion,
- // An opening the owner admitted: keep its admitted sky for the Save. The explicit no-sky opening is exploration and keeps nothing.
+ // An opening the owner admitted: keep its admitted sky for the Save. The explicit no-sky opening is exploration and keeps nothing, and so
+ // is one on the sky the Sky shows (O-I ticket 854): that sky is the view's, and the composition's own comes back when the Sky returns to now.
  onComposed:mode=>{
-  if(mode==='none')return;
+  if(mode==='none'||mode==='sky')return;
   const controller=nativeField?.controller,sky=controller?.occasionSky,event=controller?.reading.native?.event_ref,ref=nativeWorkspace?.nativeView()?.document.expression_ref;
   if(!sky||!ref||typeof event!=='string')return;
   // Opened again on the saved sky: that occasion stands as it was, so the next Save writes nothing new.
