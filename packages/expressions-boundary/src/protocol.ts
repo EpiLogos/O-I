@@ -46,7 +46,7 @@ export {STAGE_COMMANDS, STAGE_VIEW_ACTIONS, STAGE_CAPTURE_WIDTHS, STAGE_CAPTURE_
   type StageCommand, type StageCommandName, type StageResult, type StageAudioClock, type StageJournalAct, type StagePerformanceJournal, type StageTorusCheckpoint, type StageTorusSound, type StageSoundMove, type StageTakeAct, type StageTakeRender, type StageKey, type StageViewAction, type StageCaptureSettings, type StageCaptureWidth, type StageCaptureAspect, type StageExportFormat, type StageTakeMode, type StageTrackAction,
   type StageTool, type StageToolReading, type StageEngineAction, type InstrumentEdit,
 } from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageCommands.ts';
-import {stageOneOf, STAGE_TAKE_MODES, STAGE_TOOL_READINGS, FRAME_PRESENTATIONS, readFrameChrome} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageCommands.ts';
+import {stageOneOf, stageLiveRefusal, STAGE_TAKE_MODES, STAGE_TOOL_READINGS, FRAME_PRESENTATIONS, readFrameChrome} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageCommands.ts';
 /** Host→frame command that opens one Studio section. The frame answers with a
  * host-command-result, which carries no request id: its command name is its key. */
 export const OPEN_STUDIO_COMMAND = 'open-studio';
@@ -364,6 +364,20 @@ export function readHostedState(raw: unknown): HostedAppState | null {
     if (raw[key] === undefined) continue;
     if (!Number.isSafeInteger(raw[key]) || Number(raw[key]) < 0) return null;
     state[key] = Number(raw[key]);
+  }
+  // The values held off their lanes (O-I #747): each by its live target, with the value held on it in the engine's units, so each control
+  // lights its own hand-back and shows what the field plays. Each target is distinct, so the list is never longer than the registry (a hold
+  // can outlive its lane, so the 64 lanes of a scene are no bound); each value is one the frame's own hold admits (stageLiveRefusal).
+  if (raw.automationHolds !== undefined) {
+    const holds = raw.automationHolds;
+    if (!Array.isArray(holds) || holds.length > 256) return null;
+    const read: {target: string; value: number}[] = [];
+    for (const hold of holds) {
+      if (!object(hold) || Object.keys(hold).length !== 2 || stageLiveRefusal(hold.target, hold.value) !== null) return null;
+      read.push({target: hold.target as string, value: hold.value as number});
+    }
+    if (new Set(read.map(hold => hold.target)).size !== read.length) return null;
+    state.automationHolds = read;
   }
   for (const key of ['sceneName', 'sceneState', 'tool'] as const) {
     if (raw[key] === undefined) continue;

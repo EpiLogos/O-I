@@ -20,6 +20,8 @@ import {ENABLED_KEY, SETTING_PREFIX, expressionsFieldEntry, expressionsSettingCh
 import {handsFor, heldFor, hold as holdDesign} from '../../techne/devices/designDevices'
 import type {FrameInstrumentCondition} from '@epilogos/expressions-boundary'
 import {NO_CONDITION, tattvaBody, tattvaKeys, type BodyRow, type BodySource, type BodyTable, type CoordinateName} from '../../inhabitants/ql/devices/qlCoordinateName'
+import {stageAutomationResumeOne, stageLiveHold} from '../../native/stageCommands'
+import type {LiveRun} from '../nativeBarSession'
 
 /** The field families whose catalogue design this binding hosts (Physics has its own, physicsBinding.ts). */
 export const FIELD_DESIGN_FAMILIES = ['pointer', 'relational', 'medium', 'contacts', 'morph', 'focus', 'colour', 'ink', 'depth', 'resonance'] as const
@@ -294,3 +296,67 @@ function resonanceBody(device: DeviceInstance, tattva: {condition?: FrameInstrum
   return {values, standing, held, chooses, choose}
 }
 
+
+// ── Lanes (manual §20.1 Rules, O-I #747): "A parameter shows what moves it. When you take hold of a value a lane holds, the hand-back
+// light comes on. Press it to give the value back." The frame keeps the holds (liveOverrides.ts) and announces each value it holds, by its
+// target (automationHolds); a field device reads the scene's lanes and those holds, shows a held value on its row, and takes hold and gives
+// back through the frame's runner.
+
+/** One value the frame holds off its lane: its live target (`field.<key>`) and the value held there, in the engine's units. */
+export interface FieldHold {
+  readonly target: string
+  readonly value: number
+}
+/** What a field device needs of the frame for its lanes: its stage runner, and the values it holds off their lanes now. */
+export interface FieldLanes {
+  readonly run: LiveRun | null
+  readonly holds: readonly FieldHold[]
+}
+
+/** The live target (`field.<key>`) and the units factor of a device row that is a native parameter; null for a switch or a setting. */
+function laneTargetOf(key: string): {target: string; factor: number} | null {
+  const found = NATIVE_BINDINGS.find(binding => binding.path === key)
+  return found ? {target: 'field.' + found.key, factor: found.factor || 1} : null
+}
+
+/** A field device's binding with its lanes: a value an enabled lane plays stands automated; one the hand holds off its lane stands
+ * overridden and shows the held value (× the row's factor, the design's units), with its hand-back light (the kit's Re-enable) giving that
+ * one value back; and moving a value a lane plays takes hold of it in the frame (no document write). A key that stands disabled keeps its
+ * reason. Without a reading nothing is claimed. `keys` names the design's key for each engine path where the design keys its values by
+ * names of its own (Physics, physicsBinding.ts PHYSICS_KEYS: design key → path); otherwise a row's design key is its path. */
+export function withAutomationLanes(binding: DesignBinding, device: DeviceInstance, reading: Pick<NativeEditorReading, 'scene'> | null, lanes: FieldLanes,
+  keys: Readonly<Record<string, string>> | null = null): DesignBinding {
+  // A reading may carry no lanes at all (a scene that never had one): then nothing moves its values.
+  const automation = reading && Array.isArray(reading.scene?.automation) ? reading.scene.automation : []
+  if (!reading || (!automation.length && !lanes.holds.length)) return binding
+  const driven = new Set(automation.filter(lane => lane.enabled).map(lane => lane.target))
+  const held = new Map(lanes.holds.map(hold => [hold.target, hold.value] as const)), run = lanes.run
+  const designKey = keys ? new Map(Object.entries(keys).map(([key, path]) => [path, key] as const)) : null
+  const standing: Record<string, Standing> = {...binding.standing}, values: Record<string, Value> = {...binding.values}
+  const takes = new Map<string, {target: string; factor: number}>()
+  for (const row of device.rows) {
+    const at = laneTargetOf(row.key), key = designKey ? designKey.get(row.key) : row.key
+    if (!at || !key) continue
+    const value = held.get(at.target)
+    // What the field plays shows on the row: the held value, not the document's (a reading, whatever the key's standing).
+    if (value !== undefined) values[key] = value * at.factor
+    if (standing[key]?.disabled) continue
+    const lit = value !== undefined
+    if (driven.has(at.target)) takes.set(key, at)
+    if (!lit && !driven.has(at.target)) continue
+    standing[key] = {...standing[key], automated: lit ? 'overridden' : true,
+      ...(lit && run ? {onReenable: () => { void run(stageAutomationResumeOne(at.target)).catch(() => {}) }} : {})}
+  }
+  const write = binding.write
+  if (!write || !run || !takes.size) return {...binding, values, ...(Object.keys(standing).length ? {standing} : {})}
+  return {...binding, values, standing, write: async (changes: readonly ValueChange[]) => {
+    const taken = changes.filter(change => takes.has(change.key) && finite(change.value))
+    for (const change of taken) {
+      const at = takes.get(change.key)!
+      const reply = await run(stageLiveHold(at.target, (change.value as number) / at.factor))
+      if (!reply.ok) throw new Error(reply.error)
+    }
+    const rest = changes.filter(change => !taken.includes(change))
+    if (rest.length) await write(rest)
+  }}
+}

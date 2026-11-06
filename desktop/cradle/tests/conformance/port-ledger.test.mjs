@@ -19,7 +19,8 @@ const FILE_LINE = /[\w./-]+\.(?:ts|tsx|mjs|rs|json|md):\d+/;
 
 // Pre-existing rows whose recorded boundary operation sits on an owner, out-of-scope, internal or studio status. Reported
 // to the lead as ledger inconsistencies (2026-10-14); the ceiling may shrink as statuses are reconciled, never grow.
-// O-I #747 shrank it by two: cancel-placement is ported (Clip view's Select) and fire-lane names what it waits for.
+// O-I #747 shrank it by two: cancel-placement is ported (Clip view's Select) and fire-lane (since retired by ruling, round 881b) no
+// longer records an operation.
 const KNOWN_REAL_OP_ON_OPEN_STATUS = new Set(["library","keep","native-library","lens","deep-lived","chakra-add"]);
 
 test('every ledger row names its outward home and a boundary operation or explicit marker', () => {
@@ -60,6 +61,55 @@ test('no row is retained in the app\'s Studio: each takes its manual home or nam
     assert.match(row.outward_home, /§\d+(\.\d+)*/, `${action}: the home cites the manual section that gives it`);
   }
   for (const row of ledger.rows) assert.notEqual(row.status, 'studio-only-by-design', `${row.action}: retained in the app's Studio`);
+});
+
+// O-I #747, round 881: no row keeps the app's Studio by its surface or its words either. Device "Open in studio" opens the section where
+// it lives (panels/expressions.tsx → studioHome.ts), so studio-section is no longer "retained by design"; and take-manual is each value's
+// own: a field device takes hold of a value its lane plays, and its hand-back light gives that one value back (manual §20.1 Rules).
+test('#747: no row keeps the app\'s Studio as its surface or "retained by design"; take-manual is each value\'s own hand-back', () => {
+  for (const row of ledger.rows) {
+    assert.notEqual(row.surface, 'studio-only', `${row.action}: its surface is the app's Studio`);
+    assert.doesNotMatch(row.note ?? '', /retained by design during the port/i, `${row.action}: retained in the app's Studio`);
+  }
+  const take = ledger.rows.find(row => row.action === 'take-manual');
+  assert.equal(take.status, 'ported', 'take-manual: a value takes hold and gives back by its own light');
+  for (const file of ['packages/live-shell/ui/tests/field-design-bindings.test.mjs', 'packages/live-shell/ui/tests/native-live-channel.test.mjs'])
+    assert.ok(take.tests.includes(file), `take-manual: ${file}`);
+  assert.match(take.boundary_op, FILE_LINE, 'take-manual: its operation cites its file:line');
+  assert.equal(ledger.rows.find(row => row.action === 'studio-section').status, 'ported', 'studio-section: the section opens where it lives');
+});
+
+// O-I #747, round 881b, DLW build rulings 2026-11-06. Delete removes what is selected (manual §10.9: "The same keys act on whatever is
+// selected"; its key table: "Delete it | ⌫"), and the Automation device removes the selected lane (automation-remove), so delete-group is
+// that removal: never a leader with all its followers in one act. A ramp's Loop says what it does at its end (§20.1 Envelopes: "Once ·
+// Loop (restart) · Ping-pong"), and launching the scene starts its envelopes again, so restarting one Once ramp is no act of the manual:
+// fire-lane is retired. And the live monitor is not the manual's (§20.1 Rules: "An envelope's curve is the shape set in the lane. It is
+// not a record of the live output."): monitor-mode and monitor-dock are retired.
+test('#747: delete-group is the selected lane\'s removal; fire-lane, monitor-mode and monitor-dock are retired by their rulings', () => {
+  const row = action => ledger.rows.find(item => item.action === action);
+  const remove = row('delete-group');
+  assert.equal(remove.status, 'ported', 'delete-group: the Automation device removes the selected lane');
+  assert.equal(remove.surface, 'device', 'delete-group: on the Automation device');
+  assert.match(remove.outward_home, /§10\.9/, 'delete-group: Delete acts on whatever is selected');
+  assert.match(remove.boundary_op, /automation-remove/);
+  assert.match(remove.boundary_op, /removeLaneChange/);
+  assert.match(remove.boundary_op, /removeAutomation/, 'delete-group: says what scope lane does to a leader\'s followers');
+  assert.match(remove.boundary_op, FILE_LINE);
+  for (const file of ['packages/live-shell/ui/tests/native-device-automation.test.mjs', 'packages/live-shell/ui/tests/native-automation.test.mjs'])
+    assert.ok(remove.tests.includes(file), `delete-group: ${file}`);
+  assert.match(remove.note, /DLW build ruling 2026-11-06/, 'delete-group: cites its ruling');
+  for (const action of ['fire-lane', 'monitor-mode', 'monitor-dock']) {
+    const retired = row(action);
+    assert.equal(retired.status, 'internal-no-outward-need', `${action}: retired`);
+    assert.equal(retired.surface, 'internal', `${action}: no outward surface`);
+    assert.match(retired.boundary_op, /^none: retired by DLW build ruling 2026-11-06/, `${action}: no operation, by its ruling`);
+    assert.match(retired.note, /DLW build ruling 2026-11-06/, `${action}: cites its ruling`);
+    assert.equal(retired.tests.length, 0, `${action}: nothing is built for it`);
+  }
+  assert.match(row('fire-lane').note, /Once · Loop \(restart\) · Ping-pong/, 'fire-lane: the ramp\'s Loop says what it does at its end');
+  assert.match(row('fire-lane').note, /over the scene/, 'fire-lane: launching the scene starts its envelopes again');
+  for (const action of ['monitor-mode', 'monitor-dock'])
+    assert.match(row(action).note, /An envelope's curve is the shape set in the lane\. It is not a record of the live output\./, `${action}: §20.1 Rules`);
 });
 
 test('the ledger accounting matches its row statuses', () => {

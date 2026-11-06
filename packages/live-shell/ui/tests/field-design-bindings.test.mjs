@@ -166,3 +166,79 @@ test('Morph reads the engine\'s own phases and Resonance its stations from the o
   assert.equal(pending.values['tattva.name'], undefined, 'the name waits for the map')
   assert.equal(pending.values['tattva.fibre'], 'earth')
 })
+
+// O-I #747, manual §20.1 Rules: "A parameter shows what moves it. When you take hold of a value a lane holds, the hand-back light comes on.
+// Press it to give the value back." A field device reads the scene's lanes and the values the frame announces it holds (automationHolds,
+// each target with the value held on it): a value an enabled lane plays stands automated; moving it takes hold of it in the frame (stage live
+// hold), never a document write; while it is held its row shows the held value, not the document's; and its hand-back light (the kit's
+// Re-enable) gives that one value back (stage automation resume, naming its target), when the row shows the document's value again.
+const laneOn = (id, target, enabled = true) => ({id, enabled, target, type: 'lfo', wave: 'sine', min: 0, max: 1, rate: 1, phase: 0,
+  blend: 'replace', duration: 1, delay: 0, loop: 'loop', firedAt: null})
+
+test('#747: a value a lane plays shows its lane; the hand takes hold of it in the frame, not the document; its hand-back light gives that value back', async () => {
+  const views = await import(src('components/devices/ExpressionsDeviceView.tsx'))
+  const pressure = 'field.' + nativeKey('medium.pressure'), coupling = 'field.' + nativeKey('medium.coupling')
+  const factor = NATIVE_BINDINGS.find(row => row.path === 'medium.pressure').factor ?? 1
+  const r = reading({params: {[nativeKey('medium.pressure')]: 6}})
+  r.scene.automation = [laneOn('lane-1', pressure), laneOn('lane-2', coupling, false)]
+  const sent = [], ran = []
+  let answer = {ok: true}
+  const run = async command => {ran.push(command); return answer}
+  const device = {...model.expressionsFieldDevice(r, 'medium', null), submit: async changes => {sent.push(changes)}}
+  const plain = views.fieldDesignBinding('medium', device, r, null)
+  assert.equal(plain.standing?.['medium.pressure']?.automated, undefined, 'without the frame\'s lanes nothing is claimed')
+  const binding = views.fieldDesignBinding('medium', device, r, null, {}, {run, holds: []})
+  assert.equal(binding.standing['medium.pressure'].automated, true, 'an enabled lane plays it')
+  assert.equal(binding.standing['medium.coupling']?.automated, undefined, 'a lane switched off plays nothing')
+  assert.equal(binding.values['medium.pressure'], 6 * factor, 'unheld, the row shows the document\'s value')
+  const design = await designOf('medium')
+  assert.match(renderToStaticMarkup(h(HostedDevice, {designed: design, binding, view: 'whole', nav: {}})), /data-automated="on"/, 'the parameter shows its lane')
+  await binding.write([{key: 'medium.pressure', value: 8 * factor}, {key: 'mediumEnabled', value: true}])
+  assert.deepEqual(ran, [{command: 'live', action: 'hold', target: pressure, value: 8}], 'the hand takes hold in the frame, in the engine\'s units')
+  assert.deepEqual(sent, [[{key: 'enabled', value: true}]], 'the held value writes no document; the rest goes as before')
+  answer = {ok: false, error: 'No enabled automation drives this parameter, so there is nothing to hold.'}
+  await assert.rejects(binding.write([{key: 'medium.pressure', value: 9 * factor}]), /nothing to hold/, 'a refused hold says the frame\'s words')
+  assert.equal(sent.length, 1, 'and writes nothing')
+  answer = {ok: true}; ran.length = 0
+  // The frame announces the hold with its value: the row shows the value the field plays, while the document keeps 6.
+  const held = views.fieldDesignBinding('medium', device, r, null, {}, {run, holds: [{target: pressure, value: 8}]})
+  assert.equal(held.standing['medium.pressure'].automated, 'overridden', 'the hand-back light is on')
+  assert.equal(held.values['medium.pressure'], 8 * factor, 'the held value stands on its row, not the document\'s')
+  assert.equal(held.values['medium.coupling'], binding.values['medium.coupling'], 'a value not held shows the document\'s')
+  const markup = renderToStaticMarkup(h(HostedDevice, {designed: design, binding: held, view: 'whole', nav: {}}))
+  assert.match(markup, /data-automated="overridden"/)
+  assert.match(markup, /Give Pressure back to its automation lane|back to its automation lane/, 'the light is a button')
+  assert.match(markup, new RegExp(`aria-label="Pressure"[^>]*aria-valuenow="${8 * factor}"|aria-valuenow="${8 * factor}"[^>]*aria-label="Pressure"`), 'the control draws the held value')
+  held.standing['medium.pressure'].onReenable()
+  assert.deepEqual(ran, [{command: 'automation', action: 'resume', target: pressure}], 'pressing it gives that one value back')
+  // Given back, the frame holds nothing: the row shows the document's value again, and the lane plays it.
+  const back = views.fieldDesignBinding('medium', device, r, null, {}, {run, holds: []})
+  assert.equal(back.values['medium.pressure'], 6 * factor, 'given back, the row shows the document\'s value again')
+  assert.equal(back.standing['medium.pressure'].automated, true)
+})
+
+// Physics's design keys its values by its own names (physicsBinding.ts PHYSICS_KEYS: radius is fluid.vortexRadius, drawn in px, factor 400):
+// its lanes, its holds and the held value stand on those names, in the design's units.
+test('#747: Physics shows its lanes and its held values on its own keys, in its own units', async () => {
+  const views = await import(src('components/devices/ExpressionsDeviceView.tsx'))
+  const {PHYSICS_KEYS} = await import(src('components/devices/physicsBinding.ts'))
+  const path = PHYSICS_KEYS.radius, row = NATIVE_BINDINGS.find(item => item.path === path), target = 'field.' + row.key
+  assert.equal(row.factor, 400, 'the radius is authored in stage units and drawn in px')
+  const p = reading({params: {[row.key]: 0.25}})
+  p.scene.automation = [laneOn('lane-3', target)]
+  const ran = [], sent = []
+  const run = async command => {ran.push(command); return {ok: true}}
+  const device = {...model.expressionsFieldDevice(p, 'physics', null), submit: async changes => {sent.push(changes)}}
+  const lit = views.fieldDesignBinding('physics', device, p, null, {}, {run, holds: []})
+  assert.equal(lit.standing.radius?.automated, true, 'the design\'s Radius shows its lane')
+  assert.equal(lit.standing[path], undefined, 'nothing stands on a key the design does not draw')
+  assert.equal(lit.values.radius, 0.25 * 400)
+  await lit.write([{key: 'radius', value: 200}])
+  assert.deepEqual(ran, [{command: 'live', action: 'hold', target, value: 0.5}], 'moving Radius takes hold of it in the frame, in stage units')
+  assert.deepEqual(sent, [], 'and writes no document')
+  const held = views.fieldDesignBinding('physics', device, p, null, {}, {run, holds: [{target, value: 0.5}]})
+  assert.equal(held.standing.radius.automated, 'overridden')
+  assert.equal(held.values.radius, 200, 'the held value stands on Radius, in px')
+  const markup = renderToStaticMarkup(h(HostedDevice, {designed: (await import(src('inhabitants/catalogue/panels/physics.tsx'))).physics, binding: held, view: 'whole', nav: {}}))
+  assert.match(markup, /data-automated="overridden"/, 'the Physics design lights the hand-back on Radius')
+})

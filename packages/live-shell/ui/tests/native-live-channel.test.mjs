@@ -148,7 +148,7 @@ test('a release names no operand, and no live or resume message admits an extra 
     {...base, command: 'live', action: 'set', target: 'field.timeScale', value: 1, extra: 1},
     {...base, command: 'live', action: 'hold', target: 'field.timeScale', value: 1, confirmed: true},
     {...base, command: 'live', action: 'set', target: 'field.timeScale', value: 1, on: true},
-    {...base, command: 'automation', action: 'resume', on: true}, {...base, command: 'automation', action: 'resume', target: 'field.timeScale'},
+    {...base, command: 'automation', action: 'resume', on: true}, {...base, command: 'automation', action: 'resume', target: 'field.timeScale', value: 1},
   ];
   for (const message of bad) assert.equal(frame.readStageRequest(message), null, JSON.stringify(message));
   assert.equal(frame.stageRequestMessage(1, {command: 'live', action: 'release', target: 'field.timeScale'}), null, 'the builder refuses a release with an operand');
@@ -345,4 +345,59 @@ test('the hosted state carries the held-parameter count as a non-negative intege
   assert.equal(readHostedState(READY_STATE).automationHeld, undefined, 'an absent count stays absent');
   for (const bad of [-1, 1.5, 'x', NaN, Infinity])
     assert.equal(readHostedState({...READY_STATE, automationHeld: bad}), null, String(bad));
+});
+
+// O-I #747, manual §20.1 Rules: "A parameter shows what moves it. When you take hold of a value a lane holds, the hand-back light comes on.
+// Press it to give the value back." The light is the value's own: a resume may name the one target it gives back, and the frame announces
+// which targets it holds and the value it holds on each (in the engine's units), so each control lights its own and shows what moves it.
+const pressure = 'field.' + NATIVE_BINDINGS.find(binding => binding.path === 'medium.pressure').key;
+
+test('#747: a resume may name the one value it gives back, by its live target; the reader refuses any other target', () => {
+  assert.deepEqual(frame.readStageRequest(msg({command: 'automation', action: 'resume', target: 'field.timeScale'})),
+    {req: 1, command: {command: 'automation', action: 'resume', target: 'field.timeScale'}});
+  const message = frame.stageRequestMessage(3, {command: 'automation', action: 'resume', target: pressure});
+  assert.deepEqual(frame.readStageRequest(message), {req: 3, command: {command: 'automation', action: 'resume', target: pressure}}, 'the builder and the reader agree');
+  for (const target of ['field.nonexistent', 'field.native_medium__iterations', '', 4, null, ['field.timeScale'], 'timeScale'])
+    assert.equal(frame.readStageRequest(msg({command: 'automation', action: 'resume', target})), null, JSON.stringify(target));
+});
+
+test('#747: giving back one value releases only its hold; the others stay held, and a value not held gives nothing back', () => {
+  const o = new LiveOverrides();
+  const value = NATIVE_BINDINGS.find(binding => binding.path === 'medium.pressure').defaultValue;
+  o.hold('field.timeScale', 2.5);
+  o.hold(pressure, value);
+  assert.deepEqual(o.heldValues(), [{target: 'field.timeScale', value: 2.5}, {target: pressure, value}], 'the frame names what it holds, and the value it holds there');
+  o.hold('field.timeScale', 3);
+  assert.deepEqual(o.heldValues(), [{target: 'field.timeScale', value: 3}, {target: pressure, value}], 'a value taken hold of again keeps its place and shows its new value');
+  const before = o.version;
+  assert.equal(o.resume(pressure), 1);
+  assert.ok(o.version > before, 'the engine rebuilds when a hold ends');
+  assert.deepEqual(o.heldValues(), [{target: 'field.timeScale', value: 3}]);
+  assert.equal(o.valueForBind('field.params.timeScale'), 3, 'the other value is still held');
+  const after = o.version;
+  assert.equal(o.resume(pressure), 0, 'a value not held gives nothing back');
+  assert.equal(o.version, after, 'and nothing changes');
+  assert.equal(o.resume(), 1, 'a resume that names nothing gives every held value back');
+  assert.deepEqual(o.heldValues(), []);
+});
+
+test('#747: the hosted state names each value held off its lane, by its live target and in the engine\'s units, and refuses any other list', () => {
+  const value = NATIVE_BINDINGS.find(binding => binding.path === 'medium.pressure').defaultValue;
+  const holds = [{target: 'field.timeScale', value: 2.5}, {target: pressure, value}];
+  assert.deepEqual(readHostedState({...READY_STATE, automationHeld: 2, automationHolds: holds}).automationHolds, holds);
+  assert.deepEqual(readHostedState({...READY_STATE, automationHeld: 0, automationHolds: []}).automationHolds, []);
+  assert.equal(readHostedState(READY_STATE).automationHolds, undefined, 'an absent list stays absent');
+  const one = {target: 'field.timeScale', value: 1};
+  for (const bad of ['field.timeScale', ['field.timeScale'], [4], [null], [{target: 'field.nonexistent', value: 1}], [{target: '', value: 1}],
+    [{target: 'field.timeScale'}], [{target: 'field.timeScale', value: '1'}], [{target: 'field.timeScale', value: null}],
+    [{target: 'field.timeScale', value: Infinity}], [{target: 'field.timeScale', value: NaN}], [{target: 'field.timeScale', value: 1e9}],
+    [{...one, label: 'Time Scale'}], [one, {...one, value: 2}], Array.from({length: 257}, () => one), {}])
+    assert.equal(readHostedState({...READY_STATE, automationHolds: bad}), null, JSON.stringify(bad).slice(0, 60));
+});
+
+test('#747: the frame gives back the one value a resume names, and announces the values it holds', async () => {
+  const {readFile} = await import('node:fs/promises');
+  const source = await readFile(new URL('app.ts', app), 'utf8');
+  assert.match(source, /liveOverrides\.resume\(command\.target\)/, 'the resume passes its target to the override layer');
+  assert.match(source, /automationHolds:liveOverrides\.heldValues\(\)/, 'the announcement names each held target and the value held on it');
 });

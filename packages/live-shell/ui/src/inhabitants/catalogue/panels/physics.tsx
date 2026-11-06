@@ -74,10 +74,12 @@ function GravityDisplay({v, set, w, h}: {v: V; set?: ViewProps['set']; w: number
 
 const light = (v: V) => str(v, 'light') as LightState
 const d2 = fixed(2), d1 = fixed(1)
+// Each control carries its key's standing (design.ts st): what moves it (a lane, or the hand holding it off its lane, with its hand-back
+// light; manual §20.1 Rules) and why it takes no change, as every field design's controls do.
 const DIAL = (p: ViewProps, key: string, label: string, does: string, def: number, scale: {min: number; max: number; log?: boolean}, format: (x: number) => string, bipolar = false) =>
-  <Dial key={key} label={label} does={does} value={num(p.v, key)} def={def} scale={scale} format={format} bipolar={bipolar} onChange={x => p.set(key, x)} />
+  <Dial key={key} {...st(p, key)} label={label} does={does} value={num(p.v, key)} def={def} scale={scale} format={format} bipolar={bipolar} onChange={x => p.set(key, x)} />
 const BOX = (p: ViewProps, key: string, label: string | undefined, does: string, def: number, scale: {min: number; max: number; log?: boolean}, format: (x: number) => string, bipolar = false) =>
-  <ValueBox key={key} label={label} does={does} value={num(p.v, key)} def={def} scale={scale} format={format} bipolar={bipolar} onChange={x => p.set(key, x)} />
+  <ValueBox key={key} {...st(p, key)} label={label} does={does} value={num(p.v, key)} def={def} scale={scale} format={format} bipolar={bipolar} onChange={x => p.set(key, x)} />
 
 const macros = (p: ViewProps) => [
   DIAL(p, 'viscosity', 'Viscosity', 'The share of speed a particle keeps each step. A high value lets a gesture linger.', .94, {min: .2, max: 1.01}, d2),

@@ -693,6 +693,9 @@ export interface HostedAppState {
   propertyPreview?: boolean;
   /** Parameters a manual live gesture holds off their automation; 0 or absent when none. Runtime state in the frame. */
   automationHeld?: number;
+  /** Which parameters those are, by their live targets (`field.<key>`), each with the value held on it in the engine's units, in the order
+   * they were taken: each control lights its own hand-back and shows the value the field plays (manual §20.1 Rules, O-I #747). */
+  automationHolds?: {target: string; value: number}[];
   /** The take mode the next property take starts in (append: next section; replace: last take). */
   takeMode?: 'append' | 'replace';
   /** The frame's camera framing and tool readings only; the camera and the tool stay application-local. tool is the active rail tool, repeatPins the pin placement mode, videoTake whether a stopped recording is held for saving. */
