@@ -1494,3 +1494,241 @@ test('the face links and shows by a hold, and unlinks and withdraws by a press; 
   assert.match(page, /heron’s page you read is no longer shown here: why is older than the field keeps/, 'and a part read that went past what the field keeps')
   assert.match(page, />heron’s page: no longer shown here<[^]*?>older than kept</, 'said on its row, marked older than the field keeps')
 })
+
+// ── round 33: every line of the Withdrawn section whole, and the little map's names clear of one another (DLW build ruling 2026-11-06) ──
+//
+// A line of the Withdrawn section never ends in an ellipsis: a world that left the field says so in the short form a part no longer
+// shown here uses, its time beside it, and the whole sentence stays the row's name to a reader. On the World's little map no name is
+// drawn over another, over a world or a star, over the count in its corner or over the note below; a crowded field leaves out a name
+// that has no room rather than overprint it.
+
+/** The Withdrawn section's rows as drawn: the name shown, the mark beside it and the sentence a reader is given. */
+const withdrawnRowsOf = page => {
+  const section = page.slice(page.indexOf('>Withdrawn<'))
+  const list = section.slice(0, section.indexOf('</ul>'))
+  return [...list.matchAll(/<li class="dp-row"[^>]*>([^]*?)<\/li>/g)].map(([, row]) => ({
+    name: row.match(/<span class="dp-row-name"[^>]*>([^<]*)</)?.[1] ?? '',
+    note: row.match(/<span class="dp-row-note">([^<]*)</)?.[1] ?? '',
+    said: row.match(/<span class="dp-row-said">([^<]*)</)?.[1] ?? null,
+  }))
+}
+/** The most a row of the Withdrawn section holds whole at its 276 px, name and mark together: the gone row as the r32 capture drew it
+ * ("heron’s page: no longer shown here" beside "older than kept"), the longest that stood without an ellipsis. */
+const WITHDRAWN_LINE_ROOM = 49
+
+test('every line of the Withdrawn section stands whole beside its mark, and a world that left the field says so short, the whole sentence its name to a reader (SF14; DLW build ruling 2026-11-06)', () => {
+  const v = {...world.defaults, ...world.fixtures['Your world shown']}
+  const rows = withdrawnRowsOf(renderToStaticMarkup(world.whole({v, set() {}, nav: {}, page: 'shown', setPage() {}, standing: {}})))
+  assert.equal(rows.length, 4)
+  for (const row of rows) assert.ok(row.name.length + row.note.length <= WITHDRAWN_LINE_ROOM, `“${row.name}” beside “${row.note}” is cut off`)
+  const left = rows.find(row => row.name.startsWith('heron’s world'))
+  assert.equal(left?.name, 'heron’s world: left the field', 'the short form, as a part no longer shown here has')
+  assert.match(left.note, /^\d\d:\d\d$/, 'its time beside it, as every withdrawal has')
+  assert.equal(left.said, 'heron’s world left the field: what it showed is back under cloud', 'the whole sentence is the row’s name to a reader')
+  assert.equal(rows[0].said, 'heron’s page you read is no longer shown here: why is older than the field keeps')
+  for (const row of rows.filter(row => row.said === null)) assert.ok(row.name.length + row.note.length <= WITHDRAWN_LINE_ROOM)
+  // the reading itself keeps the whole sentence
+  assert.equal(model.withdrawnLine({world_ref: 'world:heron', star_ref: null, reach: 'world', kind: null}), 'heron’s world left the field: what it showed is back under cloud')
+  assert.equal(model.withdrawnName({world_ref: 'world:heron', star_ref: null, reach: 'world', kind: null}), 'heron’s world: left the field')
+})
+
+/** The little map's marks and names as drawn: each name's box (its letters at half its size wide, the least a letter takes), each world's
+ * and star's mark, the corner's count and the note below. */
+const fieldMapOf = page => {
+  const at = page.indexOf('aria-label="The field"')
+  const svg = page.slice(page.lastIndexOf('<svg', at), page.indexOf('</svg>', at))
+  const [w, h] = svg.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/).slice(1).map(Number)
+  const corner = page.slice(page.indexOf('</svg>', at)).match(/^<\/svg><span class="dp-display-corner">([^<]*)</)?.[1] ?? ''
+  const box = (x0, y0, x1, y1, what) => ({x0, y0, x1, y1, what})
+  const marks = [
+    ...[...svg.matchAll(/<g><circle cx="([\d.]+)" cy="([\d.]+)" r="([\d.]+)"/g)].map(([, x, y, r]) => box(+x - +r, +y - +r, +x + +r, +y + +r, `world at ${Math.round(x)},${Math.round(y)}`)),
+    ...[...svg.matchAll(/<path d="M([\d.]+) ([\d.]+)L[^"]*" fill="var\(--dp-on\)"/g)].map(([, x, top]) => box(+x - 4, +top, +x + 4, +top + 8, `star at ${Math.round(x)},${Math.round(+top + 4)}`)),
+    box(w - 5 - corner.length * 0.5 * 9.5, 3, w - 5, 15, `corner’s count, ${corner}`),
+  ]
+  const note = svg.match(/<text x="5" y="([\d.]+)" class="dp-axis">([^<]*)</)
+  if (note) marks.push(box(5, +note[1] - 6, 5 + note[2].length * 0.5 * 8, +note[1] + 2, 'the note'))
+  const names = [...svg.matchAll(/<text x="([\d.]+)" y="([\d.]+)" text-anchor="(start|middle|end)" class="dp-ink-dim" style="font-size:([\d.]+)px">([^<]*)</g)]
+    .map(([, x, y, anchor, font, text]) => {
+      const width = text.length * 0.5 * +font, left = anchor === 'start' ? +x : anchor === 'end' ? +x - width : +x - width / 2
+      return {...box(left, +y - 0.75 * +font, left + width, +y + 0.2 * +font, `“${text}”`), text}
+    })
+  return {w, h, marks, names}
+}
+const overlap = (a, b) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1
+const clashes = ({w, marks, names}) => names.flatMap((name, i) => [
+  ...(name.x0 < 0 || name.x1 > w ? [`${name.what} runs off the map`] : []),
+  ...names.slice(i + 1).filter(other => overlap(name, other)).map(other => `${name.what} over ${other.what}`),
+  ...marks.filter(mark => overlap(name, mark)).map(mark => `${name.what} over the ${mark.what}`)])
+
+test('the little map draws no name over another, over a world or a star, over its corner’s count or its note; a crowded field leaves a name out rather than overprint it (manual §17.2; DLW build ruling 2026-11-06)', () => {
+  const v = {...world.defaults, ...world.fixtures['Your world shown']}
+  const map = fieldMapOf(renderToStaticMarkup(world.whole({v, set() {}, nav: {}, page: 'shown', setPage() {}, standing: {}})))
+  assert.deepEqual(clashes(map), [])
+  assert.deepEqual(map.names.map(name => name.text).sort(), ['Far', 'The Rosarium plates', 'mara', 'o-i', 'stranger', 'teraphim'], 'with room for each, each is named')
+  // a crowded field: twelve other worlds and five stars with long names, in the same little map
+  const field = JSON.parse(v.field)
+  const crowded = {...field,
+    worlds: [...field.worlds, ...Array.from({length: 12}, (_, i) => ({world_ref: `world:neighbour-${i}`, body: {body_ref: `body:n${i}`}, linked: true, mine: false}))],
+    stars: [...field.stars, ...Array.from({length: 5}, (_, i) => ({star_ref: `star:s${i}`, name: `A star with a long name ${i}`, gathers: 'x', comes: 'anyone', lit_by: 'world:mara', mine: false}))]}
+  const full = fieldMapOf(renderToStaticMarkup(world.whole({v: {...v, field: JSON.stringify(crowded)}, set() {}, nav: {}, page: 'shown', setPage() {}, standing: {}})))
+  assert.deepEqual(clashes(full), [])
+  assert.ok(full.names.length < 6 + 12 + 5, 'some names had no room and are left out')
+  assert.ok(full.names.length >= 6, 'and those with room are named')
+})
+
+// ── round 33: a contribution to what another world shows (SF07; manual §17.2 "Contribute") ─────────────────────────────────────────
+// A question, a finding, a correction or a reproduction, contributed to a part another world shows or to a contribution there. It stands
+// on its target under your world's name and waits for that world's owner; it becomes part of their world only when they accept it there,
+// and their refusal reaches you with their words. Contribute sends your words into another's world, Accept makes another's stand in
+// yours and Refuse sends your words to its contributor, so each is held; Take back narrows and is pressed (manual §16.10; DLW build
+// ruling 2026-11-06). Only the person's own press does any of them.
+const k = (ref, from, into, to, what, words, state, answer) => ({contribution_ref: ref, world_ref: into, from_world_ref: from, to, what, words, state, at_micros: '9',
+  ...(answer ? {answer: {words: answer, at_micros: '10'}} : {})})
+const MY_PAGE = {world_ref: 'world:me', part_ref: 'page:reading-of-plate-4', star_ref: null}, MARAS_PAGE = {world_ref: 'world:mara', part_ref: 'page:maras-plate', star_ref: null}
+const CONTRIBUTED = {...SNAPSHOT, world_contribution: {state: 'held'}, world_contributions: [
+  k('contribution:mara-asks', 'world:mara', 'world:me', MY_PAGE, 'question', 'Which rose is the fourth?', 'waiting'),
+  k('contribution:me-asks', 'world:me', 'world:mara', MARAS_PAGE, 'question', 'Where is the white rose?', 'accepted', 'Here, on the left.'),
+  k('contribution:me-finds', 'world:me', 'world:mara', MARAS_PAGE, 'finding', 'The plate is the sixth.', 'refused', 'It is the fourth.'),
+  k('contribution:stranger-threads', 'world:stranger', 'world:mara', {contribution_ref: 'contribution:me-asks'}, 'reproduction', 'I found it there too.', 'accepted'),
+  {contribution_ref: 'contribution:wordless', world_ref: 'world:me', from_world_ref: 'world:mara', to: MY_PAGE, what: 'question', state: 'waiting'},
+]}
+const contributeAsk = (snapshot, act) => atlasDevs.contributionRequest(fieldOf(snapshot), YOURS, act, NONCE)
+const MARAS_PAGE_ID = JSON.stringify(['world:mara', 'page:maras-plate', ''])
+
+test('contributions read as who contributed what to what, waiting, accepted or refused, the owner’s words under your own; a service without says so (SF07)', () => {
+  const field = fieldOf(CONTRIBUTED)
+  assert.deepEqual(field.contributions.map(row => [row.contribution_ref, row.state, row.answer]), [['contribution:mara-asks', 'waiting', null], ['contribution:me-asks', 'accepted', 'Here, on the left.'],
+    ['contribution:me-finds', 'refused', 'It is the fourth.'], ['contribution:stranger-threads', 'accepted', null]], 'a row that is not the contract’s is left out, never mended')
+  assert.deepEqual(field.contributions[3].to, {contribution_ref: 'contribution:me-asks'}, 'a contribution to a contribution threads under it')
+  const none = fieldOf(SNAPSHOT)
+  assert.deepEqual([none.contributions, none.contributeWhy], [null, 'This field’s service does not keep contributions to a world yet.'])
+  assert.equal(contributeAsk(SNAPSHOT, {act: 'contribute', to: MARAS_PAGE_ID, what: 'question', words: 'Hello'}).refusal, 'This field’s service does not keep contributions to a world yet.')
+  const lines = atlasDevs.contributionRows(field).map(row => [row.name, row.note])
+  assert.deepEqual(lines, [['mara’s question on A reading of the fourth plate', 'waits for you'], ['your question on Mara’s plate', 'accepted'], ['your finding on Mara’s plate', 'refused'],
+    ['stranger’s reproduction under your question', 'accepted']])
+  assert.match(atlasDevs.contributionRows(field)[2].does, /It is the fourth\./, 'a refusal reads with its owner’s words')
+})
+
+test('contributing is asked of the field for your own world, to what another world shows or a contribution there; accepting, refusing and taking back each refuse in words (SF07)', () => {
+  const field = fieldOf(CONTRIBUTED)
+  assert.deepEqual(atlasDevs.contributionTargets(field).map(row => row.id), [JSON.stringify(['world:mara', 'page:maras-plate', '']), JSON.stringify(['world:stranger', 'page:elsewhere', '']),
+    'contribution:me-asks', 'contribution:stranger-threads'], 'what another world shows and the contributions that stand there; never your own world, nor what was refused')
+  const made = contributeAsk(CONTRIBUTED, {act: 'contribute', to: MARAS_PAGE_ID, what: 'correction', words: '  The rose is white.  '})
+  assert.match(made.request.contribution_ref, /^contribution:[a-z0-9]+:me$/)
+  assert.deepEqual({...made.request, contribution_ref: 'x'}, {kind: 'world-contribute', contribution_ref: 'x', world_ref: 'world:me', to: {world_ref: 'world:mara', part_ref: 'page:maras-plate'}, what: 'correction', words: 'The rose is white.'})
+  assert.deepEqual(contributeAsk(CONTRIBUTED, {act: 'contribute', to: 'contribution:me-asks', what: 'finding', words: 'And the red.'}).request.to, {contribution_ref: 'contribution:me-asks'})
+  const refusal = act => contributeAsk(CONTRIBUTED, act).refusal
+  assert.equal(refusal({act: 'contribute', to: null, what: 'question', words: 'x'}), 'Choose what to contribute to first: something another world shows, or a contribution there.')
+  assert.equal(refusal({act: 'contribute', to: JSON.stringify(['world:me', 'page:reading-of-plate-4', '']), what: 'question', words: 'x'}), 'That is no longer there to contribute to.', 'never your own world')
+  assert.equal(refusal({act: 'contribute', to: MARAS_PAGE_ID, what: 'praise', words: 'x'}), 'Choose what it is: a question, a finding, a correction or a reproduction.')
+  assert.equal(refusal({act: 'contribute', to: MARAS_PAGE_ID, what: 'question', words: '   '}), 'Say something first.')
+  assert.equal(contributeAsk({...CONTRIBUTED, worlds: withoutMe(CONTRIBUTED.worlds)}, {act: 'contribute', to: MARAS_PAGE_ID, what: 'question', words: 'x'}).refusal,
+    'Link your world into the field before you contribute to another.')
+  assert.deepEqual(contributeAsk(CONTRIBUTED, {act: 'accept', contribution: 'contribution:mara-asks', words: ''}).request, {kind: 'world-contribution-accept', contribution_ref: 'contribution:mara-asks'})
+  assert.deepEqual(contributeAsk(CONTRIBUTED, {act: 'accept', contribution: 'contribution:mara-asks', words: 'Thank you'}).request.words, 'Thank you')
+  assert.equal(refusal({act: 'refuse', contribution: 'contribution:mara-asks', words: ' '}), 'Say why, in your own words.')
+  assert.deepEqual(contributeAsk(CONTRIBUTED, {act: 'refuse', contribution: 'contribution:mara-asks', words: 'Not here.'}).request, {kind: 'world-contribution-refuse', contribution_ref: 'contribution:mara-asks', words: 'Not here.'})
+  assert.equal(refusal({act: 'accept', contribution: 'contribution:me-asks', words: ''}), 'Only the owner of the world it was contributed to answers it.')
+  assert.equal(refusal({act: 'accept', contribution: null, words: ''}), 'Choose a contribution first.')
+  assert.deepEqual(contributeAsk(CONTRIBUTED, {act: 'take-back', contribution: 'contribution:me-finds'}).request, {kind: 'world-contribution-take-back', contribution_ref: 'contribution:me-finds'})
+  assert.equal(refusal({act: 'take-back', contribution: 'contribution:mara-asks'}), 'Only the one who contributed it takes it back.')
+  assert.equal(atlasDevs.contributionRequest({state: 'reading'}, YOURS, {act: 'take-back', contribution: 'contribution:me-finds'}, NONCE).refusal, 'The shared field is being read.')
+})
+
+const resetContributing = () => store.chooseStarHand({contributeTo: null, contributeWhat: 'question', contributeWords: '', contribution: null, answerWords: ''})
+
+test('the World binding contributes, accepts, refuses and takes back from the view’s own hand, and stands each act it cannot do dimmed (SF07)', async () => {
+  store.chooseFieldView({field: true, aperture: 'federated', viewAs: 'me'})
+  store.publishField(fieldOf(CONTRIBUTED))
+  resetContributing()
+  const asked = []
+  store.bindSystemActs({open: async () => {}, land: async () => 'landed', unland: async () => 'unlanded', fieldAct: async request => { asked.push(request); return 'The field took it.' }})
+  try {
+    let binding = atlasDevs.atlasGlobeBinding(readingWith())
+    assert.equal(JSON.parse(binding.values.contributeTargets).length, 4)
+    assert.match(binding.standing.contribute?.disabled ?? '', /Choose what to contribute to first/)
+    assert.match(binding.standing.contributionAccept?.disabled ?? '', /Choose a contribution first/)
+    binding.local.contributeTo(MARAS_PAGE_ID)
+    binding.local.contributeWhat('praise')
+    binding.local.contributeWhat('reproduction')
+    binding.local.contributeWords('I made it again.')
+    binding = atlasDevs.atlasGlobeBinding(readingWith())
+    assert.deepEqual([binding.values.contributeTo, binding.values.contributeWhat, binding.values.contributeWords], [MARAS_PAGE_ID, 'reproduction', 'I made it again.'], 'a kind is one of the four, nothing else')
+    assert.equal(binding.standing.contribute, undefined)
+    assert.equal(binding.writes('contribute'), true)
+    await binding.write([{key: 'contribute', value: 1}])
+    const sent = asked.pop()
+    assert.deepEqual([sent.kind, sent.world_ref, sent.to, sent.what, sent.words], ['world-contribute', 'world:me', {world_ref: 'world:mara', part_ref: 'page:maras-plate'}, 'reproduction', 'I made it again.'])
+    assert.deepEqual([store.starHand().contributeTo, store.starHand().contributeWords], [null, ''], 'what was contributed is no longer in the hand')
+    binding.local.contribution('contribution:mara-asks')
+    binding = atlasDevs.atlasGlobeBinding(readingWith())
+    assert.equal(binding.values.contribution, 'contribution:mara-asks')
+    assert.match(binding.standing.contributionRefuse?.disabled ?? '', /Say why/)
+    assert.match(binding.standing.contributionTakeBack?.disabled ?? '', /Only the one who contributed it/)
+    await binding.write([{key: 'contributionAccept', value: 2}])
+    assert.deepEqual(asked.pop(), {kind: 'world-contribution-accept', contribution_ref: 'contribution:mara-asks'})
+    binding.local.contribution('contribution:mara-asks')
+    binding.local.answerWords('Not on this page.')
+    binding = atlasDevs.atlasGlobeBinding(readingWith())
+    await binding.write([{key: 'contributionRefuse', value: 3}])
+    assert.deepEqual(asked.pop(), {kind: 'world-contribution-refuse', contribution_ref: 'contribution:mara-asks', words: 'Not on this page.'})
+    assert.deepEqual([store.starHand().contribution, store.starHand().answerWords], [null, ''])
+    binding.local.contribution('contribution:me-finds')
+    binding = atlasDevs.atlasGlobeBinding(readingWith())
+    await binding.write([{key: 'contributionTakeBack', value: 4}])
+    assert.deepEqual(asked.pop(), {kind: 'world-contribution-take-back', contribution_ref: 'contribution:me-finds'})
+    store.bindSystemActs(null)
+    binding.local.contribution('contribution:me-finds')
+    binding = atlasDevs.atlasGlobeBinding(readingWith())
+    assert.match(binding.standing.contributionTakeBack?.disabled ?? '', /not reached from this window/)
+    assert.equal(binding.writes('contributionTakeBack'), false)
+  } finally {
+    store.bindSystemActs(null)
+    resetContributing()
+  }
+})
+
+test('only the person’s own press contributes, accepts, refuses or takes back: no row an agent sets, no relay and no default does any of it (SF07; DLW build ruling 2026-11-06)', async () => {
+  const {inhabitantManifest} = await import('../src/inhabitants/manifest.ts')
+  ;(await import('../src/inhabitants/familyManifest.ts')).resetFamilyManifestsForTest()
+  ;(await import('../src/inhabitants/worldShellFamilies.ts')).loadWorldShellFamilies()
+  const keys = [...atlasDevs.CONTRIBUTE_ACT_KEYS, 'contributeTo', 'contributeWhat', 'contributeWords', 'contribution', 'answerWords']
+  assert.deepEqual([...atlasDevs.CONTRIBUTE_ACT_KEYS], ['contribute', 'contributionAccept', 'contributionRefuse', 'contributionTakeBack'])
+  assert.ok(!atlasDevs.ATLAS_DECLARED_ROWS.some(row => keys.includes(row.key)), 'no declared row of the World, which an agent may set, carries them')
+  const device = atlasDevs.atlasDevice(inhabitantManifest('atlas-earth').faces.find(face => face.id === 'globe-engine'), readingWith())
+  assert.ok(!device.rows.some(row => keys.includes(row.key)))
+  for (const key of ['contribute', 'contributionAccept']) await assert.rejects(device.submit([{key, value: 1}]), /no owner write path/)
+  store.chooseFieldView({field: true, aperture: 'federated', viewAs: 'me'})
+  store.publishField(fieldOf(CONTRIBUTED))
+  store.chooseStarHand({contributeTo: MARAS_PAGE_ID, contributeWords: 'Waiting in the hand', contribution: 'contribution:mara-asks', answerWords: 'Yes'})
+  const asked = []
+  store.bindSystemActs({open: async () => {}, land: async () => 'landed', unland: async () => 'unlanded', fieldAct: async request => { asked.push(request); return 'The field took it.' },
+    factory: async () => ({})})
+  try {
+    atlasDevs.atlasGlobeBinding(readingWith())
+    await atlasDevs.keepShownWorks()
+    await atlasDevs.relayRevoked()
+    assert.deepEqual(asked, [], 'nothing is contributed or answered but by the press')
+  } finally {
+    store.bindSystemActs(null)
+    resetContributing()
+  }
+  const source = await readFile(new URL('../src/projections/atlas/system/systemStore.ts', import.meta.url), 'utf8')
+  assert.match(source, /contributeTo: null, contributeWhat: 'question', contributeWords: '', contribution: null, answerWords: ''/, 'the hand starts with nothing to contribute to and nothing chosen')
+})
+
+test('the face contributes, accepts and refuses by a hold and takes back by a press, each contribution a line of who, what and on what (manual §16.10; SF07)', () => {
+  const v = {...world.defaults, ...world.fixtures['Contributions']}
+  const page = renderToStaticMarkup(world.whole({v, set() {}, nav: {}, page: 'contribute', setPage() {}, standing: {}}))
+  const held = label => new RegExp(`data-hold="true"[^>]*><i[^>]*></i>${label}<`).test(page)
+  const unheld = label => new RegExp(`class="dp-action"(?: disabled="")?>${label}<`).test(page)
+  assert.match(page, />Contribute</, 'the World has a page to contribute from')
+  for (const label of ['Contribute', 'Accept', 'Refuse']) assert.ok(held(label), `${label} is held`)
+  assert.ok(unheld('Take back'), 'Take back is pressed, not held')
+  assert.match(page, /mara’s question on A reading of the fourth plate/)
+  assert.match(page, /your finding on Mara’s plate/)
+  assert.match(page, /Hold to contribute it/)
+  const none = renderToStaticMarkup(world.whole({v: {...v, contributions: undefined, contributeTargets: undefined, contributeWhy: 'This field’s service does not keep contributions to a world yet.'},
+    set() {}, nav: {}, page: 'contribute', setPage() {}, standing: {}}))
+  assert.match(none, /does not keep contributions to a world yet/, 'a service without says so in its own words')
+})

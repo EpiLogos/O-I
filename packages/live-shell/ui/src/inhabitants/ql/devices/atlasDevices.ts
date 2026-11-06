@@ -29,7 +29,7 @@ import {suiteStanding} from '../../../projections/atlas/provider/suiteStanding'
 import {chooseFieldView, chooseStarHand, factoryAtStar, fieldView, heldField, noteRelay, relayOf, starHand, systemActs, systemReading, type FieldView, type StarHand} from '../../../projections/atlas/system/systemStore'
 import {APERTURES, AUDIENCES, FIELD_BEING_READ, GRANT_DAYS, NOT_IN_FIELD, NOT_YOURS_YET, NO_STAR, NO_WORKS, SAYING_WHATS, SHOW_TOS, STAR_COMES, heldFieldWhy, isMine, liveWork, shownId, shownLoad, starRequest, textsOf, whoOf,
   yourFieldWorld, yourRequest, yourShown,
-  type Aperture, type Audience, type FieldOffer, type HeldField, type SayingWhat, type ShowTo, type StarAct, type StarComes, type YourAct, type YourPart} from '../../../projections/atlas/system/fieldModel'
+  type Aperture, type Audience, type FieldContribution, type FieldOffer, type HeldField, type SayingWhat, type ShowTo, type StarAct, type StarComes, type YourAct, type YourPart} from '../../../projections/atlas/system/fieldModel'
 import type {AtlasScale} from '../../../projections/atlas/places/placesModel'
 import {yourLocations, type BodyLocation} from '../../../projections/atlas/system/bodyLocations'
 import {PLACE_KINDS, choosePlaceKind, notePlaceTool, placeKindChoice, type PlaceKind} from '../../../projections/atlas/places/placeTool'
@@ -368,7 +368,7 @@ const NO_TAKER = 'No Factory state of this window keeps the tasks your world tak
 const NO_OFFERER = 'No Factory state of this window holds the Run this task was offered from.'
 const NO_HAND: StarHand = {star: null, admit: null, name: '', gathers: '', comes: 'anyone', to: null, what: 'question', words: '', dayPage: null, saidPage: null,
   run: null, unit: null, work: null, offer: null, reads: '', touches: '', days: 7, made: '', summary: '', madeRef: null, taker: null,
-  worldName: '', showPart: null, showTo: null, shownPart: null}
+  worldName: '', showPart: null, showTo: null, shownPart: null, contributeTo: null, contributeWhat: 'question', contributeWords: '', contribution: null, answerWords: ''}
 
 /** What your Factory gave back to an offer it took and the field still holds taken: Factory's own return, to bring to the field. */
 function heldReturnOf(offerRef: string | null): Readonly<Record<string, unknown>> | null {
@@ -661,6 +661,141 @@ async function actYours(key: YourActKey, reading: AtlasReading, field: NonNullab
   else if (key === 'partWithdraw') chooseStarHand({shownPart: null})
 }
 
+// ── contributing to what another world shows (O-I #858 SF07; manual §17.2 "Contribute") ──────────────────────────────────────────────
+//
+// The World's Contribute page. What to contribute to (a part another world shows, or a contribution there), what it is and its words,
+// the contribution chosen to answer or take back and the words to answer it with are the view's own hand (systemStore.ts StarHand); each
+// act is one request of the held field (contributionRequest). None of the keys is a declared row of the family: an agent sets none of them
+// and no relay or default asks any of them; only the person's own press on the face does (DLW build ruling 2026-11-06, from manual §16.10
+// "How a control moves"): Contribute sends your words into another's world, Accept makes another's words stand in yours and Refuse sends
+// yours to its contributor, so each is held; Take back narrows what stands and is pressed.
+
+/** The acts on contributions, by the World's value key. */
+export const CONTRIBUTE_ACT_KEYS = ['contribute', 'contributionAccept', 'contributionRefuse', 'contributionTakeBack'] as const
+type ContributeActKey = (typeof CONTRIBUTE_ACT_KEYS)[number]
+const isContributeAct = (key: string): key is ContributeActKey => (CONTRIBUTE_ACT_KEYS as readonly string[]).includes(key)
+
+/** One act on contributions: `to` names what to contribute to (a contributionTargets id), `contribution` a contribution's ref. */
+export type ContributionAct =
+  | {readonly act: 'contribute'; readonly to: string | null; readonly what: string; readonly words: string}
+  | {readonly act: 'accept' | 'refuse'; readonly contribution: string | null; readonly words: string}
+  | {readonly act: 'take-back'; readonly contribution: string | null}
+type ReadField = Extract<HeldField, {state: 'read'}>
+/** Something your world may contribute to, as the face offers it, and what the field is asked to aim it at. */
+export interface ContributionTarget {readonly id: string; readonly label: string; readonly does: string; readonly to: Readonly<Record<string, string>>}
+
+/** What your world may contribute to: each part another world shows that you read (to the field, the public or at a star you are
+ * gathered at), and each contribution you read that stands in another world and was not refused. Never your own world. */
+export function contributionTargets(field: ReadField): ContributionTarget[] {
+  const shown = field.clearings.filter(row => !isMine(field, row.world_ref)).map(row => ({id: JSON.stringify([row.world_ref, row.part_ref, row.star_ref ?? '']),
+    label: `${row.shown.label}, ${whoOf(row.world_ref)}’s`, does: `A ${row.shown.kind} ${whoOf(row.world_ref)} shows ${row.star_ref ? 'at a star' : row.audience === 'public' ? 'to the public' : 'to the field'}.`,
+    to: {world_ref: row.world_ref, part_ref: row.part_ref, ...(row.star_ref ? {star_ref: row.star_ref} : {})}}))
+  const above = (field.contributions ?? []).filter(row => row.state !== 'refused' && !isMine(field, row.world_ref)).map(row => ({id: row.contribution_ref,
+    label: `${isMine(field, row.from_world_ref) ? 'your' : `${whoOf(row.from_world_ref)}’s`} ${row.what}`, does: row.words, to: {contribution_ref: row.contribution_ref}}))
+  return [...shown, ...above]
+}
+
+const NO_CONTRIBUTIONS = 'This field’s service does not keep contributions to a world yet.'
+/** The SharedField request for one act on contributions, or why it cannot be asked. */
+export function contributionRequest(field: HeldField, yours: string | null, act: ContributionAct, nonce: number): {readonly request: Record<string, unknown>} | {readonly refusal: string} {
+  if (field.state === 'reading') return {refusal: FIELD_BEING_READ}
+  if (field.state === 'unavailable') return {refusal: field.reason}
+  if (!field.contributions) return {refusal: field.contributeWhy ?? NO_CONTRIBUTIONS}
+  const words = act.act === 'take-back' ? '' : act.words.trim()
+  if ([...words].length > 1000) return {refusal: 'Say it in at most 1000 characters.'}
+  if (act.act === 'contribute') {
+    const ref = yourFieldWorld(field, yours)
+    const world = ref === null ? undefined : field.worlds.find(row => row.world_ref === ref)
+    if (!world?.linked) return {refusal: 'Link your world into the field before you contribute to another.'}
+    if (!act.to) return {refusal: 'Choose what to contribute to first: something another world shows, or a contribution there.'}
+    const target = contributionTargets(field).find(row => row.id === act.to)
+    if (!target) return {refusal: 'That is no longer there to contribute to.'}
+    if (!(SAYING_WHATS as readonly string[]).includes(act.what)) return {refusal: 'Choose what it is: a question, a finding, a correction or a reproduction.'}
+    if (!words) return {refusal: 'Say something first.'}
+    const name = whoOf(world.world_ref).replace(/[^A-Za-z0-9._-]+/g, '-') || 'world'
+    return {request: {kind: 'world-contribute', contribution_ref: `contribution:${Math.abs(Math.trunc(nonce)).toString(36)}:${name}`, world_ref: world.world_ref, to: target.to, what: act.what, words}}
+  }
+  if (!act.contribution) return {refusal: 'Choose a contribution first.'}
+  const chosen = field.contributions.find(row => row.contribution_ref === act.contribution)
+  if (!chosen) return {refusal: 'That contribution is no longer there.'}
+  if (act.act === 'take-back') return isMine(field, chosen.from_world_ref) ? {request: {kind: 'world-contribution-take-back', contribution_ref: chosen.contribution_ref}}
+    : {refusal: 'Only the one who contributed it takes it back.'}
+  if (!isMine(field, chosen.world_ref)) return {refusal: 'Only the owner of the world it was contributed to answers it.'}
+  if (chosen.state !== 'waiting') return {refusal: chosen.state === 'accepted' ? 'It is accepted: it stands in your world.' : 'It was refused: it waits no more.'}
+  if (act.act === 'refuse') return words ? {request: {kind: 'world-contribution-refuse', contribution_ref: chosen.contribution_ref, words}} : {refusal: 'Say why, in your own words.'}
+  return {request: {kind: 'world-contribution-accept', contribution_ref: chosen.contribution_ref, ...(words ? {words} : {})}}
+}
+
+/** One contribution as the face lists it: who contributed what to what in a line, where it stands, its words (and the owner's under yours). */
+export interface ContributionRow {readonly id: string; readonly name: string; readonly note: string; readonly does: string; readonly mine: boolean; readonly yours: boolean}
+const STANDING_NOTE: Readonly<Record<FieldContribution['state'], string>> = {waiting: 'waiting', accepted: 'accepted', refused: 'refused'}
+/** Each contribution you read, in the order it came: whose (yours, or another world's), what, and on what — a part by its label while you
+ * read it, or the contribution above it; noted where it stands, and one waiting in your world as waiting for you. */
+export function contributionRows(field: ReadField): ContributionRow[] {
+  const all = field.contributions ?? []
+  const who = (world: string) => (isMine(field, world) ? 'your' : `${whoOf(world)}’s`)
+  const on = (row: FieldContribution): string => {
+    if ('contribution_ref' in row.to) {
+      const ref = row.to.contribution_ref, above = all.find(one => one.contribution_ref === ref)
+      return above ? `under ${who(above.from_world_ref)} ${above.what}` : 'under a contribution no longer there'
+    }
+    const to = row.to
+    const shown = to.part_ref === null ? undefined : field.clearings.find(one => one.world_ref === to.world_ref && one.part_ref === to.part_ref && one.star_ref === to.star_ref)
+    return shown ? `on ${shown.shown.label}` : `on something ${whoOf(to.world_ref)} no longer shows`
+  }
+  return all.map(row => {
+    const yours = isMine(field, row.world_ref), mine = isMine(field, row.from_world_ref)
+    const answer = row.answer ? ` ${row.state === 'refused' ? 'Refused' : 'Accepted'} with: “${row.answer}”` : ''
+    return {id: row.contribution_ref, name: `${who(row.from_world_ref)} ${row.what} ${on(row)}`, note: yours && row.state === 'waiting' ? 'waits for you' : STANDING_NOTE[row.state],
+      does: `“${row.words}”${answer}`, mine, yours}
+  })
+}
+
+/** The act a key names, from the view's hand. */
+function contributeActOf(key: ContributeActKey, hand: StarHand): ContributionAct {
+  switch (key) {
+    case 'contribute': return {act: 'contribute', to: hand.contributeTo, what: hand.contributeWhat, words: hand.contributeWords}
+    case 'contributionAccept': return {act: 'accept', contribution: hand.contribution, words: hand.answerWords}
+    case 'contributionRefuse': return {act: 'refuse', contribution: hand.contribution, words: hand.answerWords}
+    case 'contributionTakeBack': return {act: 'take-back', contribution: hand.contribution}
+  }
+}
+
+/** The contributions the Contribute page reads (what may be contributed to, and each contribution read), the choices that still stand, and
+ * each act's standing; while the field's service keeps none, its words. */
+function contributeValues(field: NonNullable<AtlasReading['field']>): {values: Record<string, ParamValue>; standing: Record<string, Standing>} {
+  const hand = field.hand ?? NO_HAND, held = field.held
+  const values: Record<string, ParamValue> = {contributeWhat: hand.contributeWhat, contributeWords: hand.contributeWords, answerWords: hand.answerWords}
+  const standing: Record<string, Standing> = {}
+  if (held.state === 'read' && held.contributions) {
+    const targets = contributionTargets(held)
+    values.contributeTargets = JSON.stringify(targets.map(({id, label, does}) => ({value: id, label, does})))
+    if (hand.contributeTo && targets.some(row => row.id === hand.contributeTo)) values.contributeTo = hand.contributeTo
+    values.contributions = JSON.stringify(contributionRows(held))
+    if (hand.contribution && held.contributions.some(row => row.contribution_ref === hand.contribution)) values.contribution = hand.contribution
+  } else if (held.state === 'read') values.contributeWhy = held.contributeWhy ?? NO_CONTRIBUTIONS
+  const reached = systemActs() !== null
+  const chosen = {...hand, contributeTo: (values.contributeTo as string | undefined) ?? null, contribution: (values.contribution as string | undefined) ?? null}
+  for (const key of CONTRIBUTE_ACT_KEYS) {
+    const made = contributionRequest(held, field.yours, contributeActOf(key, chosen), 0)
+    if ('refusal' in made) standing[key] = {disabled: made.refusal}
+    else if (!reached) standing[key] = {disabled: NOT_REACHED}
+  }
+  return {values, standing}
+}
+
+/** Ask the field for one act on contributions; the hand follows what was done (what was contributed and what was answered or taken back are
+ * no longer chosen). */
+async function actContribution(key: ContributeActKey, field: NonNullable<AtlasReading['field']>): Promise<void> {
+  const made = contributionRequest(heldField(), field.yours, contributeActOf(key, starHand()), Date.now())
+  if ('refusal' in made) throw Error(made.refusal)
+  const acts = systemActs()
+  if (!acts) throw Error(NOT_REACHED)
+  await acts.fieldAct(made.request)
+  if (key === 'contribute') chooseStarHand({contributeTo: null, contributeWords: ''})
+  else chooseStarHand({contribution: null, answerWords: ''})
+}
+
 /** The view's own hand at Field scale: the scale, the aperture and who you look as. A value that is none of them is not taken. */
 const FIELD_LOCAL: Readonly<Record<string, (value: ParamValue) => void>> = {
   scale: value => { if (typeof value === 'string') chooseFieldView({field: value === 'field'}) },
@@ -693,6 +828,12 @@ const FIELD_LOCAL: Readonly<Record<string, (value: ParamValue) => void>> = {
   showPart: value => chooseStarHand({showPart: typeof value === 'string' && value ? value : null}),
   showTo: value => { if ((SHOW_TOS as readonly unknown[]).includes(value)) chooseStarHand({showTo: value as ShowTo}) },
   shownPart: value => chooseStarHand({shownPart: typeof value === 'string' && value ? value : null}),
+  // [SF07] what to contribute to, what it is and its words; the contribution chosen, and the words to answer it with
+  contributeTo: value => chooseStarHand({contributeTo: typeof value === 'string' && value ? value : null}),
+  contributeWhat: value => { if ((SAYING_WHATS as readonly unknown[]).includes(value)) chooseStarHand({contributeWhat: value as SayingWhat}) },
+  contributeWords: value => { if (typeof value === 'string') chooseStarHand({contributeWords: value}) },
+  contribution: value => chooseStarHand({contribution: typeof value === 'string' && value ? value : null}),
+  answerWords: value => { if (typeof value === 'string') chooseStarHand({answerWords: value}) },
 }
 
 // ── your world's body: the World device's Body page (T-WORLDS §5 W3; manual §17.2 "Build a planet") ─────────────────────────
@@ -742,7 +883,8 @@ export function atlasGlobeBinding(reading: AtlasReading): DesignBinding {
   // A reading that carries no field part (one made before the field was read into it) hands the face no field: the face then names it.
   const field = reading.field ? fieldValues(reading.field) : {values: {}, standing: {}}
   const yours = reading.field ? yourValues(reading, reading.field) : {values: {}, standing: {}}
-  const values: Record<string, ParamValue> = {...bodyValues(reading.body), ...field.values, ...yours.values, view: reading.view, mounted: reading.mounted}
+  const contributing = reading.field ? contributeValues(reading.field) : {values: {}, standing: {}}
+  const values: Record<string, ParamValue> = {...bodyValues(reading.body), ...field.values, ...yours.values, ...contributing.values, view: reading.view, mounted: reading.mounted}
   // [O-I #858] the scale the camera stands at, a reading: the World's scale unless the view chose the Field, and kept for the way back
   // from it (the Graph is not a scale of the Earth, and no Earth mounted stands at none)
   if (reading.scale && reading.scale !== 'graph') {
@@ -754,7 +896,7 @@ export function atlasGlobeBinding(reading: AtlasReading): DesignBinding {
     if (reading.globe.scopeLabel != null) values.wholeField = reading.globe.wholeField
   }
   const refusal = bodyRefusal(reading)
-  const standing: Record<string, Standing> = {...field.standing, ...yours.standing}
+  const standing: Record<string, Standing> = {...field.standing, ...yours.standing, ...contributing.standing}
   // the locations on your own body: a reading (the places stand on it through their owners' PlaceSet, the landings through each world's
   // own BodySet); the place kind is the view's own choice of what the next click places
   values.placeKind = reading.placeKind
@@ -782,7 +924,7 @@ export function atlasGlobeBinding(reading: AtlasReading): DesignBinding {
   if (!reading.mounted) standing.body = {disabled: NOT_MOUNTED}
   if (!reading.mounted) standing.wholeField = {disabled: NOT_MOUNTED}
   else if (reading.globe?.scopeLabel == null) standing.wholeField = {disabled: NO_SCOPE}
-  const writable = (key: string) => key === 'wholeField' ? !standing.wholeField : isStarAct(key) || isWorkAct(key) || isYourAct(key) ? !!reading.field && !standing[key] : WORLD_BODY_KEYS.includes(key) && !refusal
+  const writable = (key: string) => key === 'wholeField' ? !standing.wholeField : isStarAct(key) || isWorkAct(key) || isYourAct(key) || isContributeAct(key) ? !!reading.field && !standing[key] : WORLD_BODY_KEYS.includes(key) && !refusal
   return {
     id: techneDeviceId(ATLAS_FAMILY, 'globe-engine'), values, standing, enabledKey: 'mounted',
     writes: writable,
@@ -793,6 +935,7 @@ export function atlasGlobeBinding(reading: AtlasReading): DesignBinding {
         else if (isStarAct(change.key) && reading.field) await actAtStar(change.key, reading.field)
         else if (isWorkAct(change.key) && reading.field) await workAtStar(change.key, reading.field)
         else if (isYourAct(change.key) && reading.field) await actYours(change.key, reading, reading.field)
+        else if (isContributeAct(change.key) && reading.field) await actContribution(change.key, reading.field)
         else if (WORLD_BODY_KEYS.includes(change.key)) body[change.key] = change.value
         else throw Error(`${change.key} is not written from the World's own controls`)
       }

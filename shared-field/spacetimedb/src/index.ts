@@ -200,6 +200,15 @@ const admissionDecision = table(
   }
 );
 
+/* A contribution to something a world shows (O-I #858, SF07) rides these same
+ * rows: its ingress row's sourceKind is `world` (no transport or Exchange
+ * protocol is), its field is the world it waits in, and admitted it carries the
+ * visibility `world` (no SharedField audience is). The SharedField's own acts
+ * and views leave such rows alone; the World's acts and views at the end of
+ * this module are theirs. */
+const WORLD_CONTRIBUTION_SOURCE = 'world';
+const WORLD_CONTRIBUTION_VISIBILITY = 'world';
+
 const contributionIndexPolicy = table(
   { name: 'contribution_index_policy', public: false },
   {
@@ -1167,6 +1176,8 @@ function contributionAudience(row: any): { visibility: string; refs: string[] } 
 }
 
 function callerCanSeeAdmittedContribution(ctx: any, row: any): boolean {
+  // a contribution accepted in a world is read where the world is read, never through a field that happens to carry the world's name
+  if (row.visibility === WORLD_CONTRIBUTION_VISIBILITY) return false;
   const field = ctx.db.sharedFieldBacking.fieldRef.find(row.fieldRef);
   if (!field || !callerCanSeeField(ctx, field)) return false;
   if (isFieldOwner(ctx, row.fieldRef)) return true;
@@ -1387,7 +1398,7 @@ export const owner_pending_contribution = spacetimedb.view(
     const pending = [];
     for (const owned of ctx.db.fieldOwner.ownerIdentity.filter(ctx.sender)) {
       for (const ingress of ctx.db.contributionIngressBacking.fieldRef.filter(owned.fieldRef)) {
-        if (ingress.state === 'quarantined') pending.push(ingress);
+        if (ingress.state === 'quarantined' && ingress.sourceKind !== WORLD_CONTRIBUTION_SOURCE) pending.push(ingress);
       }
     }
     return pending;
@@ -2036,7 +2047,7 @@ function ingressContribution(ctx: any, input: {
   const validated = validateContributionContract(ctx, input.fieldRef, input.contributorParticipantRef, input.contractJson);
   const contributionRef = String(validated.contract.contribution_ref);
   for (const row of ctx.db.contributionIngressBacking.claimedContributionRef.filter(contributionRef)) {
-    if (row.fieldRef !== input.fieldRef) fail('Contribution claimed semantic ref is already associated with another SharedField');
+    if (row.fieldRef !== input.fieldRef || row.sourceKind === WORLD_CONTRIBUTION_SOURCE) fail('Contribution claimed semantic ref is already associated with another SharedField');
   }
   const ingressKey = fingerprintString(`${input.fieldRef}\u001f${input.contributorParticipantRef}\u001f${input.sourceKind}\u001f${input.transportProvider}\u001f${input.transportMessageId}`);
   const existing = ctx.db.contributionIngressBacking.ingressKey.find(ingressKey);
@@ -2093,6 +2104,11 @@ function ingressContribution(ctx: any, input: {
     receivedAtMicros: now,
     payloadFingerprint: validated.fingerprint,
   });
+}
+
+/** A contribution to a world is accepted, refused or taken back in that world (SF07), never through a SharedField's own acts. */
+function refuseWorldContributionHere(ingress: any): void {
+  if (ingress.sourceKind === WORLD_CONTRIBUTION_SOURCE) fail('A contribution to a world is accepted, refused or taken back in that world');
 }
 
 function updateContributionReceiptState(ctx: any, ingress: any, state: string): void {
@@ -2626,6 +2642,7 @@ export const admit_contribution = spacetimedb.reducer(
     requireJsonObject(args.evidenceJson, 'Admission evidence', 8_192);
     const ingress = ctx.db.contributionIngressBacking.ingressRef.find(args.ingressRef);
     if (!ingress) fail(`Unknown Contribution ingress: ${args.ingressRef}`);
+    refuseWorldContributionHere(ingress);
     requireAdmissionAuthority(ctx, ingress.fieldRef, args.admissionParticipantRef);
     if (ingress.state !== 'quarantined') fail(`Contribution ingress is ${ingress.state}, not quarantined`);
     validateContributionVisibility(ctx, ingress.fieldRef, args.visibility, args.audienceRefsJson);
@@ -2685,6 +2702,7 @@ export const reject_contribution = spacetimedb.reducer(
     requireJsonObject(args.evidenceJson, 'Rejection evidence', 8_192);
     const ingress = ctx.db.contributionIngressBacking.ingressRef.find(args.ingressRef);
     if (!ingress) fail(`Unknown Contribution ingress: ${args.ingressRef}`);
+    refuseWorldContributionHere(ingress);
     requireAdmissionAuthority(ctx, ingress.fieldRef, args.admissionParticipantRef);
     if (ingress.state !== 'quarantined') fail(`Contribution ingress is ${ingress.state}, not quarantined`);
     const now = nowMicros(ctx);
@@ -2725,6 +2743,7 @@ export const withdraw_contribution = spacetimedb.reducer(
     requireJsonObject(args.evidenceJson, 'Withdrawal evidence', 8_192);
     const ingress = ctx.db.contributionIngressBacking.ingressRef.find(args.ingressRef);
     if (!ingress) fail(`Unknown Contribution ingress: ${args.ingressRef}`);
+    refuseWorldContributionHere(ingress);
     const submitterWithdrawal = ctx.sender.isEqual(ingress.submitterIdentity);
     if (!submitterWithdrawal) requireAdmissionAuthority(ctx, ingress.fieldRef, args.admissionParticipantRef);
     if (ingress.state !== 'admitted') fail(`Contribution ingress is ${ingress.state}, not admitted`);
@@ -2774,6 +2793,7 @@ export const set_contribution_index_eligibility = spacetimedb.reducer(
     requireJsonObject(args.evidenceJson, 'Index decision evidence', 8_192);
     const ingress = ctx.db.contributionIngressBacking.ingressRef.find(args.ingressRef);
     if (!ingress) fail(`Unknown Contribution ingress: ${args.ingressRef}`);
+    refuseWorldContributionHere(ingress);
     requireAdmissionAuthority(ctx, ingress.fieldRef, args.admissionParticipantRef);
     if (ingress.state !== 'admitted') fail('Only an admitted Contribution can receive index eligibility');
     const admitted = ctx.db.admittedContributionBacking.ingressRef.find(ingress.ingressRef);
@@ -4483,5 +4503,290 @@ export const accept_offer_return = spacetimedb.reducer(
     if (offer.state === 'accepted') return;
     if (offer.state !== 'returned') fail(offer.state === 'revoked' ? 'The offer was revoked' : 'Nothing has come back to accept');
     ctx.db.starOfferBacking.offerRef.update({ ...offer, state: 'accepted', movedAtMicros: nowMicros(ctx) });
+  }
+);
+
+/* ---------- a contribution to what another world shows (O-I #858, SF07) ----------
+ *
+ * A question, a finding, a correction or a reproduction, contributed by a world
+ * in the field to something another world shows — a place, a page, any part in
+ * a clearing it may see, in the field, to the public or at a star — or to a
+ * contribution there, to any depth. It rides the module's own Contribution rows,
+ * never a second store: it enters quarantined, its field the world it waits in
+ * (the world that shows its target, or the one its thread stands in), and waits
+ * there for that world's owner, its contributor's until then. Accepted, it is
+ * admitted into that world and stands on its target under its contributor's
+ * world, as what it is, for whoever may read the target; refused, the refusal
+ * and its words reach the contributor alone. Its contributor takes it back at
+ * any time. No one is served the identity another sent or decided under. */
+const WORLD_CONTRIBUTION_SCHEMA = 'oi.world-contribution/v1';
+const WORLD_CONTRIBUTION_REF_PATTERN = /^contribution:[A-Za-z0-9._:-]{1,200}$/;
+/** How far up a thread a reading looks for what a contribution stands on: far past any thread people write, short of a runaway walk. */
+const WORLD_CONTRIBUTION_DEPTH = 256;
+
+/** The ingress row of a contribution to a world, by its name, or undefined. */
+function worldContributionRow(ctx: any, contributionRef: string): any {
+  for (const row of ctx.db.contributionIngressBacking.claimedContributionRef.filter(contributionRef)) {
+    if (row.sourceKind === WORLD_CONTRIBUTION_SOURCE) return row;
+  }
+  return undefined;
+}
+
+const worldContributionContract = (row: any): Record<string, any> => parseStoredJson(row.contractJson, 'World contribution');
+
+/* A contribution is read by the owner of the world it waits in and by its
+ * contributor, in any state until it is taken back; once accepted, also by
+ * whoever may read what it stands on — the clearing it was contributed to, or
+ * the contribution above it, up the thread. */
+function callerCanSeeWorldContribution(ctx: any, row: any, depth = 0): boolean {
+  if (row.sourceKind !== WORLD_CONTRIBUTION_SOURCE || row.state === 'withdrawn') return false;
+  if (callerOwnsWorld(ctx, row.fieldRef) || callerOwnsWorld(ctx, row.contributorParticipantRef)) return true;
+  if (row.state !== 'admitted' || depth >= WORLD_CONTRIBUTION_DEPTH) return false;
+  const to = worldContributionContract(row).to ?? {};
+  if (typeof to.contribution_ref === 'string') {
+    const above = worldContributionRow(ctx, to.contribution_ref);
+    return Boolean(above && callerCanSeeWorldContribution(ctx, above, depth + 1));
+  }
+  const shown = ctx.db.worldClearingBacking.clearingKey.find(clearingKey(String(to.world_ref), String(to.part_ref), String(to.star_ref ?? '')));
+  return Boolean(shown && callerCanSeeClearing(ctx, shown));
+}
+
+/** A contribution as the caller is served it: the part it was contributed to is named only while the caller may see it there. Taken
+ * back under cloud, the part lies there with everything else, and the contribution names only whose world it was. */
+function worldContributionAsSeen(ctx: any, row: any): any {
+  const contract = worldContributionContract(row);
+  const to = contract.to ?? {};
+  if (typeof to.part_ref !== 'string' || to.part_ref === '') return row;
+  const shown = ctx.db.worldClearingBacking.clearingKey.find(clearingKey(String(to.world_ref), to.part_ref, String(to.star_ref ?? '')));
+  if (shown && callerCanSeeClearing(ctx, shown)) return row;
+  return { ...row, contractJson: JSON.stringify({ ...contract, to: { ...to, part_ref: '' } }) };
+}
+
+/** The contributions that stand accepted in a world, as the caller may read them. */
+export const world_contribution = spacetimedb.view(
+  { name: 'world_contribution', public: true },
+  t.array(admittedContributionBacking.rowType),
+  (ctx) => {
+    const rows: any[] = [];
+    for (const row of ctx.db.admittedContributionBacking.visibility.filter(WORLD_CONTRIBUTION_VISIBILITY)) {
+      const ingress = ctx.db.contributionIngressBacking.ingressRef.find(row.ingressRef);
+      if (ingress && callerCanSeeWorldContribution(ctx, ingress)) rows.push(worldContributionAsSeen(ctx, row));
+    }
+    return rows;
+  }
+);
+
+/** The caller's own contributions to other worlds, waiting, accepted or refused (never another's identity: the caller's own stands in). */
+export const my_world_contribution = spacetimedb.view(
+  { name: 'my_world_contribution', public: true },
+  t.array(contributionIngressBacking.rowType),
+  (ctx) => {
+    const rows: any[] = [];
+    for (const owned of ctx.db.worldOwner.ownerIdentity.filter(ctx.sender)) {
+      for (const row of ctx.db.contributionIngressBacking.contributorParticipantRef.filter(owned.worldRef)) {
+        if (row.sourceKind === WORLD_CONTRIBUTION_SOURCE && row.state !== 'withdrawn') rows.push({ ...worldContributionAsSeen(ctx, row), submitterIdentity: ctx.sender });
+      }
+    }
+    return rows;
+  }
+);
+
+/** What waits for the caller in its own worlds: each contribution named by its contributor's world, never by the identity it was sent under. */
+export const world_contribution_waiting = spacetimedb.view(
+  { name: 'world_contribution_waiting', public: true },
+  t.array(contributionIngressBacking.rowType),
+  (ctx) => {
+    const rows: any[] = [];
+    for (const owned of ctx.db.worldOwner.ownerIdentity.filter(ctx.sender)) {
+      for (const row of ctx.db.contributionIngressBacking.fieldRef.filter(owned.worldRef)) {
+        if (row.sourceKind === WORLD_CONTRIBUTION_SOURCE && row.state === 'quarantined') rows.push({ ...row, submitterIdentity: ctx.sender });
+      }
+    }
+    return rows;
+  }
+);
+
+/** How each of the caller's contributions was answered — accepted or refused, in the owner's words — for the caller alone. */
+export const my_world_contribution_answer = spacetimedb.view(
+  { name: 'my_world_contribution_answer', public: true },
+  t.array(admissionDecision.rowType),
+  (ctx) => {
+    const rows: any[] = [];
+    for (const owned of ctx.db.worldOwner.ownerIdentity.filter(ctx.sender)) {
+      for (const row of ctx.db.contributionIngressBacking.contributorParticipantRef.filter(owned.worldRef)) {
+        if (row.sourceKind !== WORLD_CONTRIBUTION_SOURCE || row.state === 'withdrawn') continue;
+        for (const decision of ctx.db.admissionDecision.ingressRef.filter(row.ingressRef)) rows.push({ ...decision, admissionActorIdentity: ctx.sender });
+      }
+    }
+    return rows;
+  }
+);
+
+function worldContributionWords(value: string, required: boolean): string {
+  const words = value.trim();
+  if (required && !words) fail('Say something first');
+  if ([...words].length > 1000) fail('Say it in at most 1000 characters');
+  refuseFieldTimeLeaks([words], 'What is said');
+  return words;
+}
+
+/* Contribute to something another world shows, or to a contribution there.
+ * Only a world linked into the field contributes, under its own name, to what
+ * it can read; never to its own world. It waits, quarantined, for the owner of
+ * the world it is aimed into. Contributed again exactly, it changes nothing. */
+export const contribute_to_world = spacetimedb.reducer(
+  { contributionRef: t.string(), worldRef: t.string(), toWorldRef: t.string(), toPartRef: t.string(), toStarRef: t.string(), toContributionRef: t.string(), what: t.string(), words: t.string() },
+  (ctx, args) => {
+    if (!WORLD_CONTRIBUTION_REF_PATTERN.test(args.contributionRef)) fail('A contribution is named contribution:<name>');
+    const world = requireOwnWorld(ctx, args.worldRef);
+    if (!world.linked) fail('Link your world into the field before you contribute to another');
+    if (!SAYING_KINDS.has(args.what)) fail('Contribute a question, a finding, a correction or a reproduction');
+    const words = worldContributionWords(args.words, true);
+    const toShown = args.toWorldRef !== '' || args.toPartRef !== '';
+    if (toShown === (args.toContributionRef !== '')) fail('Contribute to one thing: something a world shows, or a contribution there');
+    let into: string;
+    let to: Record<string, string>;
+    if (toShown) {
+      const shown = ctx.db.worldClearingBacking.clearingKey.find(clearingKey(args.toWorldRef, args.toPartRef, args.toStarRef));
+      if (!shown || !callerCanSeeClearing(ctx, shown)) fail('That is not shown to you');
+      into = args.toWorldRef;
+      to = { world_ref: args.toWorldRef, part_ref: args.toPartRef, star_ref: args.toStarRef };
+    } else {
+      if (args.toStarRef !== '') fail('A contribution to a contribution names no star');
+      const above = worldContributionRow(ctx, args.toContributionRef);
+      if (!above || !callerCanSeeWorldContribution(ctx, above)) fail('There is no such contribution you can read');
+      into = above.fieldRef;
+      to = { contribution_ref: args.toContributionRef };
+    }
+    if (callerOwnsWorld(ctx, into)) fail('That stands in your own world: what you add there is yours already, not a contribution');
+    const contractJson = JSON.stringify({ schema: WORLD_CONTRIBUTION_SCHEMA, contribution_ref: args.contributionRef, world_ref: into, from_world_ref: args.worldRef, to, what: args.what, words });
+    const claims = contributionClaimsForRef(ctx, args.contributionRef);
+    if (claims.length > 0) {
+      if (claims.length === 1 && claims[0].sourceKind === WORLD_CONTRIBUTION_SOURCE && claims[0].state !== 'withdrawn' && claims[0].contractJson === contractJson) return;
+      fail('Something was contributed under that name before: give this one a name of its own');
+    }
+    const payloadBytes = utf8Bytes(contractJson);
+    enforceContributionOutstanding(ctx, into, args.worldRef);
+    enforceContributionRate(ctx, into, args.worldRef, payloadBytes);
+    const fingerprint = fingerprintString(contractJson);
+    const now = nowMicros(ctx);
+    const ingressKey = fingerprintString(`${into}\u001f${args.worldRef}\u001f${WORLD_CONTRIBUTION_SOURCE}\u001f${args.contributionRef}`);
+    const ingressRef = `ingress:${fingerprintString(`${ingressKey}\u001f${fingerprint}`)}`;
+    if (ctx.db.contributionIngressBacking.ingressKey.find(ingressKey) || ctx.db.contributionIngressBacking.ingressRef.find(ingressRef)) fail('That contribution collides with another; give it a name of its own');
+    ctx.db.contributionIngressBacking.insert({
+      rowId: 0n,
+      ingressRef,
+      ingressKey,
+      fieldRef: into,
+      claimedContributionRef: args.contributionRef,
+      contributorParticipantRef: args.worldRef,
+      submitterIdentity: ctx.sender,
+      sourceKind: WORLD_CONTRIBUTION_SOURCE,
+      transportProvider: WORLD_CONTRIBUTION_SOURCE,
+      transportMessageId: args.contributionRef,
+      payloadFingerprint: fingerprint,
+      payloadBytes: BigInt(payloadBytes),
+      receivedAtMicros: now,
+      state: 'quarantined',
+      contractJson,
+      serverProvenanceJson: JSON.stringify({
+        schema: 'oi.ingress-provenance/v1',
+        observed: { source_kind: WORLD_CONTRIBUTION_SOURCE, target_world_ref: into, contributor_world_ref: args.worldRef, received_at_micros: String(now) },
+        claims: { contribution_ref: args.contributionRef, payload_fingerprint: fingerprint },
+      }),
+    });
+    ctx.db.contributionReceipt.insert({
+      ingressRef,
+      submitterIdentity: ctx.sender,
+      fieldRef: into,
+      contributionRef: args.contributionRef,
+      state: 'quarantined',
+      receivedAtMicros: now,
+      payloadFingerprint: fingerprint,
+    });
+  }
+);
+
+/** A contribution waiting in one of the caller's worlds, for its owner to answer. */
+function requireWaitingForCaller(ctx: any, contributionRef: string): any {
+  const row = worldContributionRow(ctx, contributionRef);
+  if (!row || !callerCanSeeWorldContribution(ctx, row)) fail('There is no such contribution');
+  if (!callerOwnsWorld(ctx, row.fieldRef)) fail('Only the owner of the world it was contributed to answers it');
+  return row;
+}
+
+function answerWorldContribution(ctx: any, row: any, disposition: 'admitted' | 'rejected', words: string): string {
+  const now = nowMicros(ctx);
+  const decisionRef = admissionDecisionRef(row.ingressRef, disposition, now, row.fieldRef);
+  ctx.db.admissionDecision.insert({
+    decisionRef,
+    ingressRef: row.ingressRef,
+    fieldRef: row.fieldRef,
+    disposition,
+    admissionActorIdentity: ctx.sender,
+    admissionParticipantRef: row.fieldRef,
+    decidedAtMicros: now,
+    reason: words,
+    evidenceJson: '{}',
+    serverProvenanceJson: JSON.stringify({ schema: 'oi.admission-provenance/v1', ingress_ref: row.ingressRef, target_field_ref: row.fieldRef, decided_at_micros: String(now), payload_fingerprint: row.payloadFingerprint }),
+  });
+  ctx.db.contributionIngressBacking.rowId.update({ ...row, state: disposition });
+  updateContributionReceiptState(ctx, row, disposition);
+  return decisionRef;
+}
+
+/* Accept a contribution into the caller's world: it stands on its target
+ * under its contributor's name for whoever may read the target. The words,
+ * if any, reach the contributor alone. Accepted again, it changes nothing. */
+export const accept_contribution_in_world = spacetimedb.reducer(
+  { contributionRef: t.string(), words: t.string() },
+  (ctx, args) => {
+    const row = requireWaitingForCaller(ctx, args.contributionRef);
+    const words = worldContributionWords(args.words, false);
+    if (row.state === 'admitted') return;
+    if (row.state !== 'quarantined') fail('It was refused: it waits no more');
+    const decisionRef = answerWorldContribution(ctx, row, 'admitted', words);
+    ctx.db.admittedContributionBacking.insert({
+      rowId: 0n,
+      ingressRef: row.ingressRef,
+      contributionRef: row.claimedContributionRef,
+      fieldRef: row.fieldRef,
+      contributorParticipantRef: row.contributorParticipantRef,
+      visibility: WORLD_CONTRIBUTION_VISIBILITY,
+      audienceRefsJson: '[]',
+      admissionDecisionRef: decisionRef,
+      admittedAtMicros: nowMicros(ctx),
+      contractJson: row.contractJson,
+    });
+  }
+);
+
+/* Refuse a contribution waiting in the caller's world, in words: the refusal
+ * reaches its contributor alone, and it enters no one's world. */
+export const refuse_contribution_in_world = spacetimedb.reducer(
+  { contributionRef: t.string(), words: t.string() },
+  (ctx, args) => {
+    const row = requireWaitingForCaller(ctx, args.contributionRef);
+    if (!args.words.trim()) fail('Say why, in your own words');
+    const words = worldContributionWords(args.words, true);
+    if (row.state === 'admitted') fail('It is accepted: it stands in your world');
+    if (row.state !== 'quarantined') fail('It was refused already');
+    answerWorldContribution(ctx, row, 'rejected', words);
+  }
+);
+
+/* Take back a contribution the caller made, waiting, accepted or refused: it
+ * stands nowhere after, for anyone. What was contributed under it stands, under
+ * something now taken back. */
+export const take_back_contribution = spacetimedb.reducer(
+  { contributionRef: t.string() },
+  (ctx, args) => {
+    const row = worldContributionRow(ctx, args.contributionRef);
+    if (!row || !callerCanSeeWorldContribution(ctx, row)) fail('There is no such contribution, or it is taken back already');
+    if (!callerOwnsWorld(ctx, row.contributorParticipantRef)) fail('Only the one who contributed it takes it back');
+    const admitted = ctx.db.admittedContributionBacking.ingressRef.find(row.ingressRef);
+    if (admitted) ctx.db.admittedContributionBacking.rowId.delete(admitted.rowId);
+    ctx.db.contributionIngressBacking.rowId.update({ ...row, state: 'withdrawn' });
+    updateContributionReceiptState(ctx, row, 'withdrawn');
   }
 );

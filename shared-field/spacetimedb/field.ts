@@ -92,6 +92,12 @@
  *   offer-take        {offer_ref, world_ref}           another world gathered at the star takes the task up
  *   offer-return      {offer_ref, return}              the taker brings back what it made (`factory.task-offer-return/v1`)
  *   offer-accept      {offer_ref}                      the offerer accepts what came back (it enters the work through Factory)
+ *   world-contribute  {contribution_ref, world_ref, to, what, words}   contribute a question, finding, correction or reproduction to
+ *                                        what another world shows, `to` {world_ref, part_ref, star_ref?} a part the caller can read
+ *                                        or {contribution_ref} a contribution there; it waits for that world's owner (SF07)
+ *   world-contribution-accept {contribution_ref, words?}   the owner accepts it into their world: it stands on its target
+ *   world-contribution-refuse {contribution_ref, words}    the owner refuses it, in words that reach its contributor alone
+ *   world-contribution-take-back {contribution_ref}        its contributor takes it back, waiting, accepted or refused
  */
 import { activityLivenessRow, apertureScope, bindingFile, close, fieldDayReading, fieldNowReading, fieldSnapshot, holdField, hostingTargets, open, publishArgs, readRef, resolveTarget, rows, scopeWorlds, stageReading, stageView, waitUntil, worldReading, type Client } from './field-lib';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
@@ -489,7 +495,11 @@ try {
     case 'offer-revoke':
     case 'offer-take':
     case 'offer-return':
-    case 'offer-accept': {
+    case 'offer-accept':
+    case 'world-contribute':
+    case 'world-contribution-accept':
+    case 'world-contribution-refuse':
+    case 'world-contribution-take-back': {
       await emit(await worldAct(client!, request));
     }
     default:
@@ -516,6 +526,8 @@ async function worldAct(client: Client, request: any): Promise<Envelope> {
   const workOf = (starRef: string, worldRef: string, workRef: string) => read().star_works.find((work: any) => work.star_ref === starRef && work.world_ref === worldRef && work.work_ref === workRef);
   const offerOf = (offerRef: string) => read().star_offers.find((offer: any) => offer.offer_ref === offerRef);
   const works = (): Envelope | null => (client.works.state === 'held' ? null : { ok: false, error: { kind: 'unavailable', message: client.works.detail } });
+  const contributionOf = (contributionRef: string) => read().world_contributions.find((row: any) => row.contribution_ref === contributionRef);
+  const contributions = (): Envelope | null => (client.contributions.state === 'held' ? null : { ok: false, error: { kind: 'unavailable', message: client.contributions.detail } });
   const starRef = text(request.star_ref) ? request.star_ref : '';
   switch (request.kind) {
     case 'world-put': {
@@ -625,6 +637,36 @@ async function worldAct(client: Client, request: any): Promise<Envelope> {
       } else await reducers.acceptOfferReturn({ offerRef: request.offer_ref });
       const moved = await waitUntil(() => { const o = offerOf(request.offer_ref); return o && o.state === want && o; }, `the offer ${want} in the caller's own view`);
       return { ok: true, data: { schema: 'oi.shared-field.offer-result/v1', offer: moved, state: moved.state } };
+    }
+    case 'world-contribute': {
+      const absent = contributions(); if (absent) return absent;
+      const to = request.to && typeof request.to === 'object' ? request.to : null;
+      const toShown = to && text(to.world_ref) && text(to.part_ref) && to.contribution_ref === undefined;
+      const toAbove = to && text(to.contribution_ref) && to.world_ref === undefined && to.part_ref === undefined && to.star_ref === undefined;
+      if (!text(request.contribution_ref) || !text(request.world_ref) || !text(request.what) || typeof request.words !== 'string' || !(toShown || toAbove)) {
+        return malformed('world-contribute requires `contribution_ref`, `world_ref`, `what`, `words` and `to`: {world_ref, part_ref, star_ref?} or {contribution_ref}');
+      }
+      await reducers.contributeToWorld({ contributionRef: request.contribution_ref, worldRef: request.world_ref, toWorldRef: toShown ? to.world_ref : '', toPartRef: toShown ? to.part_ref : '',
+        toStarRef: toShown && text(to.star_ref) ? to.star_ref : '', toContributionRef: toAbove ? to.contribution_ref : '', what: request.what, words: request.words });
+      const contribution = await waitUntil(() => contributionOf(request.contribution_ref), 'the contribution in the caller\'s own view');
+      return { ok: true, data: { schema: 'oi.shared-field.contribution-result/v1', contribution, state: contribution.state } };
+    }
+    case 'world-contribution-accept':
+    case 'world-contribution-refuse':
+    case 'world-contribution-take-back': {
+      const absent = contributions(); if (absent) return absent;
+      if (!text(request.contribution_ref)) return malformed(`${request.kind} requires \`contribution_ref\``);
+      const words = typeof request.words === 'string' ? request.words : '';
+      if (request.kind === 'world-contribution-accept') {
+        await reducers.acceptContributionInWorld({ contributionRef: request.contribution_ref, words });
+        const contribution = await waitUntil(() => { const row = contributionOf(request.contribution_ref); return row?.state === 'accepted' && row; }, 'the contribution accepted in the caller\'s own view');
+        return { ok: true, data: { schema: 'oi.shared-field.contribution-result/v1', contribution, state: 'accepted' } };
+      }
+      if (request.kind === 'world-contribution-refuse') await reducers.refuseContributionInWorld({ contributionRef: request.contribution_ref, words });
+      else await reducers.takeBackContribution({ contributionRef: request.contribution_ref });
+      // refused, it waits for the owner no more; taken back, it stands nowhere
+      await waitUntil(() => !contributionOf(request.contribution_ref), request.kind === 'world-contribution-refuse' ? 'the contribution to wait no more' : 'the contribution to be taken back');
+      return { ok: true, data: { schema: 'oi.shared-field.contribution-result/v1', contribution_ref: request.contribution_ref, state: request.kind === 'world-contribution-refuse' ? 'refused' : 'taken-back' } };
     }
   }
   return malformed(`unknown world act: ${request.kind}`);

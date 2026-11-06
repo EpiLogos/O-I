@@ -145,6 +145,25 @@ export interface FieldWithdrawal {
   readonly at: number | null
 }
 
+/** Where a contribution to another world stands (O-I #858, SF07): waiting for that world's owner, accepted into it, or refused. */
+export type ContributionState = 'waiting' | 'accepted' | 'refused'
+/** What a contribution stands on: a part a world shows (named while you may read it there), or a contribution above it. */
+export type ContributionTo = {readonly world_ref: string; readonly part_ref: string | null; readonly star_ref: string | null} | {readonly contribution_ref: string}
+/** A contribution as the field serves it: whose world it came from and the world it waits or stands in, what it stands on, what it is and
+ * its words, where it stands and, under your own once answered, the owner's words. */
+export interface FieldContribution {
+  readonly contribution_ref: string
+  readonly world_ref: string
+  readonly from_world_ref: string
+  readonly to: ContributionTo
+  readonly what: SayingWhat
+  readonly words: string
+  readonly state: ContributionState
+  readonly answer: string | null
+  /** when it came or was accepted, ms since the epoch */
+  readonly at: number | null
+}
+
 /** A part of another world this window read that is no longer shown here, with nothing the field still keeps to say why (SF14): whose
  * world, the reach it was shown at (and at which star) and its kind; never which part, nor what it showed. */
 export interface FieldGone {
@@ -165,6 +184,8 @@ export type HeldField =
     readonly works?: readonly FieldWork[] | null; readonly offers?: readonly FieldOffer[] | null; readonly workWhy?: string | null
     /** what the worlds withdrew (SF14), in the order it happened, or null with `withdrawWhy` when the field's service keeps none */
     readonly withdrawals?: readonly FieldWithdrawal[] | null; readonly withdrawWhy?: string | null
+    /** the contributions you may read (SF07), in the order they came, or null with `contributeWhy` when the field's service keeps none */
+    readonly contributions?: readonly FieldContribution[] | null; readonly contributeWhy?: string | null
     /** how much of the worlds the reading holds: the whole field (Federated) or your circle (World, Local, Shared), when it says */
     readonly scope?: 'whole' | 'circle' | null
     /** what this window read of others that is no longer shown here, the field keeping nothing that says why (readParts) */
@@ -183,6 +204,7 @@ const NO_DAY = 'This field’s service does not keep a star’s day yet.'
 const NO_SAYINGS = 'This field’s service does not keep what is said at a star yet.'
 export const NO_WORKS = 'This field’s service does not keep work shown or tasks offered at a star yet.'
 const NO_WITHDRAWALS = 'This field’s service does not keep what a world withdrew yet.'
+const NO_CONTRIBUTIONS = 'This field’s service does not keep contributions to a world yet.'
 /** A grant stands for one to thirty days (Factory's and the field's own bound): the World's Days dial reads it, and the binding's grant.
  * Here, not in the binding, so the face reads it without the binding's imports (round 30b). */
 export const GRANT_DAYS = {min: 1, max: 30} as const
@@ -214,6 +236,7 @@ export function heldFieldOf(data: unknown): HeldField {
     ...sayingsOf(data),
     ...worksOf(data),
     ...withdrawalsOf(data),
+    ...contributionsOf(data),
     scope: data.world_scope === 'whole' || data.world_scope === 'circle' ? data.world_scope : null,
     gone: rows(data.gone, row => text(row.world_ref) && (row.reach === 'public' || row.reach === 'field' || row.reach === 'star')
       ? {world_ref: row.world_ref, star_ref: text(row.star_ref) ? row.star_ref : null, reach: row.reach as FieldGone['reach'], kind: text(row.kind) ? row.kind : null} : null),
@@ -281,6 +304,24 @@ function withdrawalsOf(data: Record<string, unknown>): {withdrawals: readonly Fi
       ? {world_ref: row.world_ref, star_ref: text(row.star_ref) ? row.star_ref : null, reach: row.reach as WithdrawReach, kind: text(row.kind) ? row.kind : null,
         at: atOf(row.withdrawn_at_micros, row.at)} : null),
     withdrawWhy: null,
+  }
+}
+
+/** The contributions as the snapshot carries them, or the field's words when its service keeps none. A row stands on one thing. */
+function contributionsOf(data: Record<string, unknown>): {contributions: readonly FieldContribution[] | null; contributeWhy: string | null} {
+  const kept = data.world_contribution
+  if (!rec(kept) || kept.state !== 'held') return {contributions: null, contributeWhy: rec(kept) && text(kept.detail) ? kept.detail : NO_CONTRIBUTIONS}
+  const toOf = (to: unknown): ContributionTo | null => !rec(to) ? null : text(to.contribution_ref) ? {contribution_ref: to.contribution_ref}
+    : text(to.world_ref) ? {world_ref: to.world_ref, part_ref: text(to.part_ref) ? to.part_ref : null, star_ref: text(to.star_ref) ? to.star_ref : null} : null
+  return {
+    contributions: rows(data.world_contributions, row => {
+      const to = toOf(row.to)
+      return text(row.contribution_ref) && text(row.world_ref) && text(row.from_world_ref) && to && (SAYING_WHATS as readonly unknown[]).includes(row.what) && text(row.words)
+        && (row.state === 'waiting' || row.state === 'accepted' || row.state === 'refused')
+        ? {contribution_ref: row.contribution_ref, world_ref: row.world_ref, from_world_ref: row.from_world_ref, to, what: row.what as SayingWhat, words: row.words, state: row.state,
+          answer: rec(row.answer) && text(row.answer.words) ? row.answer.words : null, at: atOf(row.at_micros, row.at)} : null
+    }),
+    contributeWhy: null,
   }
 }
 
@@ -591,6 +632,11 @@ export function withdrawnLine(entry: FieldWithdrawal): string {
     case 'star': return `${who} took back ${kindWords(entry.kind)} shown here`
     default: return `${who} withdrew ${kindWords(entry.kind)} from the ${entry.reach}`
   }
+}
+/** What a world withdrew where a line is short (a row beside its time): a world that left the field says only that, its whole sentence
+ * (`withdrawnLine`) kept for the row's reader; every other withdrawal is short already. */
+export function withdrawnName(entry: FieldWithdrawal): string {
+  return entry.reach === 'world' ? `${whoOf(entry.world_ref)}’s world: left the field` : withdrawnLine(entry)
 }
 
 // ── what you read that is no longer shown here (SF14; DLW build ruling 2026-11-06) ────────────────────────────────────────
@@ -1017,6 +1063,10 @@ export function starNote(request: Record<string, unknown>, data: unknown): strin
       : 'Your world is out of the field: those who read it read that it left, and everything in it stays as it was.'
     case 'clearing-open': return `It is shown to ${REACH_WORDS[String(request.audience)] ?? 'whom you chose'}.`
     case 'clearing-withdraw': return 'It is withdrawn: back under cloud, and whoever read it reads that it was withdrawn.'
+    case 'world-contribute': return 'It stands on what you chose under your world’s name, and waits for that world’s owner.'
+    case 'world-contribution-accept': return 'It is accepted: it stands in your world under its contributor’s name.'
+    case 'world-contribution-refuse': return 'It is refused: your words reach its contributor alone.'
+    case 'world-contribution-take-back': return 'It is taken back: it stands nowhere now.'
     default: return 'The field took it.'
   }
 }

@@ -142,11 +142,18 @@ export interface StarHand {
   readonly showPart: string | null
   readonly showTo: ShowTo | null
   readonly shownPart: string | null
+  /** [SF07] what to contribute to (a part another world shows, by fieldModel.ts shownKey with its world, or a contribution's ref), what it
+   * is and its words, until it is contributed; the contribution chosen to answer or take back, and the words to answer it with */
+  readonly contributeTo: string | null
+  readonly contributeWhat: SayingWhat
+  readonly contributeWords: string
+  readonly contribution: string | null
+  readonly answerWords: string
 }
 
 let hand: StarHand = {star: null, admit: null, name: '', gathers: '', comes: 'anyone', to: null, what: 'question', words: '', dayPage: null, saidPage: null,
   run: null, unit: null, work: null, offer: null, reads: '', touches: '', days: 7, made: '', summary: '', madeRef: null, taker: null,
-  worldName: '', showPart: null, showTo: null, shownPart: null}
+  worldName: '', showPart: null, showTo: null, shownPart: null, contributeTo: null, contributeWhat: 'question', contributeWords: '', contribution: null, answerWords: ''}
 
 export const starHand = (): StarHand => hand
 
