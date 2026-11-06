@@ -17,6 +17,11 @@ function validateRoleSlot(value) {
   }
 }
 const DEFAULT_ENGINE_SETTINGS = { paletteSource: "custom", grainProfile: true, backgroundMode: "solid", resonatorMode: "resonator", focusOrder: "listed", dotShape: "circle", autoFitSizes: true, mediumEnabled: false, collisionEnabled: false, collisionMode: "obstacle", pairwiseEnabled: false, fontFamily: "system-ui, -apple-system, sans-serif", fontWeight: 900, resonanceEnabled: true, morphEnabled: false, trajectory: "toroidalHopf", driveShape: "sine", autoOscillate: true, relationalEnabled: false, relationalMode: "orbital", pointerMode: "repel", pointerClick: "pulse", pointerClickStrength: 2.2, pointerClickRadius: 0.45, colorMode: "linearGradient", colorEnabled: true, mediumPlane: "vertical", mediumDimension: "2D", autoSweep: false, sweepDirection: "ascent" };
+function personalSky(sky) {
+  if (!sky || typeof sky !== "object" || Array.isArray(sky)) return false;
+  const said = sky;
+  return said.scope === "observer-private" || (said.request?.observer ?? null) !== null;
+}
 const SCENE_SIGNATURES = ["5:3", "4:2", "3:3", "2:1"];
 const SCENE_LAUNCH_QUANTIZE = ["global", "now", "beat", "scene"];
 function sceneClipRefusal(value) {
@@ -571,6 +576,7 @@ export {
   entity,
   fieldStudies,
   oiMark,
+  personalSky,
   pin,
   rethemeMark,
   sceneClipRefusal,

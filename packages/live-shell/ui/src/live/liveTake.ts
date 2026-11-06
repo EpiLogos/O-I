@@ -87,6 +87,10 @@ const notFrozen = (why: string) => `It was not frozen on its part: ${sentence(wh
 export const TAKE_COURSE_NOT_KEPT = Object.freeze(['the sample each move of the level and effects landed at'] as const)
 /** Said with a take laid with its course. */
 export const TAKE_EXPORTS = 'Export Audio on its clip renders it as it was played, sample for sample.'
+/** Said with a take laid with its course that was heard on your own place's sky: its course is kept on the world's sky, which the Torus's
+ * event stands on, and your place's sky is kept nowhere (O-I #856; DLW §21.2 Rules "A take renders in the world's context"; DLW build ruling
+ * 2026-11-06). */
+export const TAKE_ON_THE_WORLDS_SKY = 'It is kept on the world\'s sky; your place\'s sky is not kept, so Export Audio on its clip renders it on the world\'s sky, sample for sample.'
 const noCourse = (why: string) => `This take keeps no course of the Torus, so Export Audio cannot render it: ${sentence(why)}`
 /** The most a take's course may weigh (packages/live-set sources.rs COURSE_BYTES_MAX): the set's owner keeps it in the project's media
  * under its sha256, the set's record keeping its reference (DLW build ruling 2026-11-05: "the take's course in a project media store …
@@ -1222,7 +1226,7 @@ const sentence = (text: string) => /[.!?…]$/.test(text) ? text : `${text}.`
 
 /** The Torus as it rings, kept by its owner as a take begins, with the name the kernel relayed it under where it gave one; or why it was
  * not. */
-type Begun = {readonly checkpoint: StageTorusCheckpoint; readonly checkpoint_sha256?: string} | {readonly refused: string}
+type Begun = {readonly checkpoint: StageTorusCheckpoint; readonly checkpoint_sha256?: string; readonly heard_on_your_sky?: true} | {readonly refused: string}
 
 /** Whether `value` holds your own place's sky anywhere in it: QL keeps the sky an event was read on whole in its `source_receipts`
  * (scene_field.rs attach_sky), and a `ql.sky-snapshot/v1` that is not the world's (`shared-geocentric`, the sky seen from the centre of the
@@ -1247,8 +1251,11 @@ async function checkpointOf(stage: (command: StageCommand) => Promise<StageResul
   const answer = await stage({command: 'torus', action: 'checkpoint'}).catch((cause: unknown): StageResult => ({ok: false, error: said(cause)}))
   if (!answer.ok) return {refused: `the Torus's owner kept no state of it as the take began: ${answer.error}`}
   if (!answer.checkpoint) return {refused: 'the Torus\'s owner answered without its checkpoint as the take began'}
+  // The guard: the owner keeps the world's sky in a checkpoint heard on your place's (QL scene_field.rs RECEPTION_SKY_LAW), so this is
+  // reached only if your place's sky still arrives in one.
   if (holdsPersonalSky(answer.checkpoint)) return {refused: ON_YOUR_OWN_SKY}
-  return isStageCheckpointName(answer.checkpoint_sha256) ? {checkpoint: answer.checkpoint, checkpoint_sha256: answer.checkpoint_sha256} : {checkpoint: answer.checkpoint}
+  const heard = answer.heard_on_your_sky === true ? {heard_on_your_sky: true as const} : {}
+  return isStageCheckpointName(answer.checkpoint_sha256) ? {checkpoint: answer.checkpoint, checkpoint_sha256: answer.checkpoint_sha256, ...heard} : {checkpoint: answer.checkpoint, ...heard}
 }
 
 /** At Stop, the take's course from the owner: its cursor (what it was sent before Stop is the take's), then its journal from the take's first
@@ -1314,7 +1321,8 @@ export function createLiveRecord(recorder: TakeRecorder, owners: RecordOwners) {
       begun = null
       const landing = owners.stage && from ? await landingOf(owners.stage, from, take.context.bpm, takeLength(take)) : undefined
       const act = takeRecordAct(take, name, landing) as Extract<LiveSetAct, {kind: 'take_record'}>
-      const exported = act.keeps?.course ? TAKE_EXPORTS : noCourse(String(act.keeps?.course_refused ?? NO_STAGE))
+      const onTheWorlds = !!from && 'checkpoint' in from && from.heard_on_your_sky === true
+      const exported = act.keeps?.course ? (onTheWorlds ? TAKE_ON_THE_WORLDS_SKY : TAKE_EXPORTS) : noCourse(String(act.keeps?.course_refused ?? NO_STAGE))
       try {
         const laid = await owners.act(take.context.path, act)
         const kept = await owners.keepTorus(take.context.path, take.context.track)

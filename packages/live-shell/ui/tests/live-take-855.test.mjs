@@ -821,14 +821,16 @@ const journalAct = (request_id, operation, command, samples) => ({request_id, op
 const JOURNAL = acts => ({schema: 'ql.instrument-performance-journal/v1', instance_ref: 'ql:i', acts,
   advances: {blocks: 0, frames: 0, first_samples_elapsed: null, last_samples_elapsed: null}})
 /** The frame's stage channel as a fake: the checkpoint, the audio clock, the journal and a restore, as the frame answers them. */
-const stageOwner = ({journal = [], clock = '528000', checkpoint = CHECKPOINT, refuse = {}, named} = {}) => {
+const stageOwner = ({journal = [], clock = '528000', checkpoint = CHECKPOINT, refuse = {}, named, heard} = {}) => {
   const sent = []
   return {sent, stage: async command => {
     sent.push(structuredClone(command))
     const key = command.command === 'torus' ? `torus:${command.action}` : command.command
     if (refuse[key]) return {ok: false, error: refuse[key]}
     // `named`: the name the kernel relayed the checkpoint under, as the stage's `torus` checkpoint answers it (app.ts, C27)
-    if (key === 'torus:checkpoint') return {ok: true, checkpoint: structuredClone(checkpoint), ...(named === undefined ? {} : {checkpoint_sha256: named})}
+    // `heard`: the field heard the Torus on your own place's sky, as the stage's `torus` checkpoint says (app.ts, O-I #856)
+    if (key === 'torus:checkpoint') return {ok: true, checkpoint: structuredClone(checkpoint), ...(named === undefined ? {} : {checkpoint_sha256: named}),
+      ...(heard ? {heard_on_your_sky: true} : {})}
     if (key === 'audio-clock') return {ok: true, clock: {samples_elapsed: clock, sample_rate: 48000, lookahead_seconds: 0.05, block_frames: 512}}
     if (key === 'performance-journal') return {ok: true, journal: JOURNAL(journal)}
     if (key === 'torus:restore') return {ok: true, landed_at_samples_elapsed: '900000'}
@@ -971,6 +973,34 @@ test('a take begun on your own place\'s sky keeps no course and nothing of the p
   assert.equal(take.holdsPersonalSky({...sky(null), request: {...sky(null).request, observer: place}}), true, 'a request naming the place')
   assert.equal(take.holdsPersonalSky(sky(null)), false)
   assert.equal(take.holdsPersonalSky(CHECKPOINT), false)
+})
+
+// O-I #856 (DLW build ruling 2026-11-06; DLW §21.2 Rules "A take renders in the world's context"): heard on your own place's sky, the Torus's
+// event stands on the world's sky (QL scene_field.rs RECEPTION_SKY_LAW), so a take begun there keeps its course on the world's sky and says so.
+// The refusal above stays the guard, reached only if your place's sky still arrives in a checkpoint.
+test('a take heard on your own place\'s sky keeps its course on the world\'s sky, and says your place\'s sky is not kept', async () => {
+  const worlds = {schema: 'ql.sky-snapshot/v1', snapshot_ref: 'sha256:worlds', scope: 'shared-geocentric',
+    request: {schema: 'ql.sky-request/v1', epoch: '2026-11-06T12:00:00Z', observer: null}, bodies: [{body: 'Moon', native_planet_id: 1, longitude_degrees: 123.25}]}
+  const run = async heard => {
+    const recorder = take.createTakeRecorder()
+    const f = recordOwners({document: SET})
+    const record = take.createLiveRecord(recorder, {...f.owners, stage: stageOwner({checkpoint: {...CHECKPOINT, event: {ref: 'e', source_receipts: [worlds]}}, heard}).stage})
+    await record.start('/sets/a.als', 1, 120, null)
+    f.at(500)
+    recorder.played({kind: 'on', id: 'p', note: 60, key: C4, touch: 0, amplitude: 1, source: 'pointer', at: 500})
+    f.at(1000)
+    await record.stop()
+    return {act: f.acts[0].act, said: record.state().said}
+  }
+  const heard = await run(true)
+  assert.equal(heard.act.keeps.course.checkpoint.event.source_receipts[0].snapshot_ref, 'sha256:worlds', 'its course is kept on the world\'s sky')
+  assert.ok(heard.said.includes(take.TAKE_ON_THE_WORLDS_SKY), heard.said)
+  assert.match(heard.said, /kept on the world's sky; your place's sky is not kept/)
+  assert.ok(!heard.said.includes(take.TAKE_EXPORTS), 'not "as it was played": it renders on the world\'s sky')
+  for (const word of ['made-up-home', '41.875', 'observer-private']) assert.ok(!(JSON.stringify(heard.act) + heard.said).includes(word))
+  const played = await run(false)
+  assert.ok(played.said.includes(take.TAKE_EXPORTS), 'heard on the world\'s sky, it renders as it was played')
+  assert.ok(!played.said.includes(take.TAKE_ON_THE_WORLDS_SKY))
 })
 
 test('a course past the 256 KiB a take kept inline is kept whole: the set\'s owner keeps it in the project\'s media (DLW build ruling 2026-11-05)', async () => {

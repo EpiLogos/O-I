@@ -940,6 +940,47 @@ test('the controller opens on the sky it is handed exactly, the kernel asked for
     /^Error: The sky to open on is not one bounded ql\.sky-snapshot\/v1 owner reading$/);
 });
 
+// O-I #856, QL-MEF #289 packet N (DLW build ruling 2026-11-06): a field opened on your own place's sky is heard there, beside the world's sky its
+// event stands on (the kernel asks for it; native_expression.rs execute). It stands, for the Sky, on the sky it was handed; a kept Torus and a
+// saved sound say they were heard there, and are kept on the world's sky.
+test('a field opened on your own place\'s sky is heard there and stands on it for the Sky; its event, a take and a sound keep the world\'s', async () => {
+  const {ControlledAudio, ControlledSceneOwner} = await import(new URL('../../../tests/native-expression-fixture.mjs', import.meta.url));
+  const THREE = await import('three');
+  const {NativeFieldController} = await bundle(join(journeys, 'src/native-field/controller.ts'), 'controller-854');
+  const texture = () => new THREE.DataTexture(new Float32Array(16), 2, 2, THREE.RGBAFormat, THREE.FloatType);
+  const port = {texWidth: 2, texHeight: 2, particleCount: 4, targetA: texture(), targetB: texture(), setTargetTextures() {}};
+  const renderer = {retainedTopology: () => ({tex_width: 2, tex_height: 2, particle_count: 4, slot_count: 4}), retainedTargetPort: () => port, setNativeDomain() {},
+    releaseRetainedField() {}, onRetainedRecoveryRequired: () => () => {}, checkpointRetainedField() { return {receipt: {}}; }, restoreRetainedField() {}};
+  const place = {reference: 'place:made-up-home', longitude_degrees: 12.5, latitude_degrees: 41.875, altitude_metres: 20};
+  const yours = {...SKY_854, snapshot_ref: 'sha256:made-up-private-sky', scope: 'observer-private', request: {schema: 'ql.sky-request/v1', observer: place}};
+  const worlds = {...SKY_854, snapshot_ref: 'sha256:worlds', scope: 'shared-geocentric', request: {schema: 'ql.sky-request/v1', observer: null}};
+  // The owner's event carries the world's sky, as QL attaches it (scene_field.rs attach_sky): never yours.
+  const owner = new ControlledSceneOwner();
+  const event = owner.event.bind(owner);
+  owner.event = () => ({...event(), source_receipts: [structuredClone(worlds)]});
+  const c = new NativeFieldController(owner, renderer, () => new ControlledAudio());
+  try {
+    await c.compose({skySnapshot: yours});
+    assert.deepEqual(owner.calls.find(call => call.operation === 'compose').request.sky_snapshot, yours, 'handed to the kernel as it was handed');
+    assert.equal(c.heardOnYourSky, true);
+    assert.equal(c.standingSkyRef, yours.snapshot_ref, 'it stands, for the Sky, on the sky it was handed');
+    assert.equal(c.occasionSky?.snapshot_ref, worlds.snapshot_ref, 'its event stands on the world\'s sky');
+    await c.release();
+    assert.equal(c.heardOnYourSky, false);
+    assert.equal(c.standingSkyRef, null);
+    await c.compose({skySnapshot: worlds});
+    assert.equal(c.heardOnYourSky, false, 'the world\'s own sky is the event\'s');
+    assert.equal(c.standingSkyRef, worlds.snapshot_ref);
+    await c.release();
+    await c.compose({skySnapshot: {...SKY_854, request: {observer: place}}});
+    assert.equal(c.heardOnYourSky, true, 'a request for an observer is your own place\'s');
+  } finally { await c.dispose(); }
+  // The stage says a kept Torus and a saved sound were heard on your own place's sky, and so are kept on the world's.
+  const app = readFileSync(join(journeys, 'src/app.ts'), 'utf8');
+  assert.match(app, /const heard=nativeField\.controller\.heardOnYourSky\?\{heard_on_your_sky:true as const\}:\{\};\n    return checkpoint_sha256\?\{ok:true,checkpoint,checkpoint_sha256,\.\.\.heard\}:\{ok:true,checkpoint,\.\.\.heard\};\}/);
+  assert.match(app, /return nativeField\.controller\.heardOnYourSky\?\{ok:true,sound,heard_on_your_sky:true\}:\{ok:true,sound\};\}/);
+});
+
 test('the frame takes the Sky\'s sky from its host: every opening composes on it, and an open field on another sky is bound again, named', () => {
   const field = readFileSync(join(journeys, 'src/nativeField.ts'), 'utf8');
   assert.match(field, /const primaryOpen=\(\)=>\{if\(handed\)\{const sky=handed;return openWith\(\(\)=>controller\.compose\(\{skySnapshot:sky\}\),'sky'\);\}const retained=hooks\.retainedOccasion\?\.\(\);/,
@@ -948,7 +989,8 @@ test('the frame takes the Sky\'s sky from its host: every opening composes on it
   assert.match(readFileSync(join(journeys, 'src/app.ts'), 'utf8'), /onComposed:mode=>\{\n  if\(mode==='none'\|\|mode==='sky'\)return;/, 'an opening on the Sky\'s sky keeps no occasion');
   const own = field.slice(field.indexOf('const sky=(raw:unknown)'), field.indexOf('const authoredMoved='));
   assert.match(own, /next=readHandedSky\(raw,'The sky the Sky hands'\);/, 'read as one bounded snapshot');
-  assert.match(own, /if\(!skyRebinds\(controller\.occasionSky\?\.snapshot_ref\?\?null,before,next\?\.snapshot_ref\?\?null\)\)return null;/, 'bound again only for another sky');
+  // The sky it stands on as it was handed: your own place's while it is heard there (O-I #856), else the sky its event carries.
+  assert.match(own, /if\(!skyRebinds\(controller\.standingSkyRef,before,next\?\.snapshot_ref\?\?null\)\)return null;/, 'bound again only for another sky');
   assert.match(own, /return rebind\(next\?`The Sky stands at \$\{skyWhen\(next\)\}`:'The Sky is back on the sky of now'\);/, 'around the act, named');
   assert.match(field, /return \{controller,panel,command,stage,touch,openLive,leaveLive,rebind,authoredMoved,hear,sky,dispose:/);
   const app = readFileSync(join(journeys, 'src/app.ts'), 'utf8');

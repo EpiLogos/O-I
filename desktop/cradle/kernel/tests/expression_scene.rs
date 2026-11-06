@@ -728,6 +728,83 @@ fn native_racks_survive_presentation_hide_and_reveal_without_rebinding_membershi
     );
 }
 #[test]
+fn a_scenes_occasion_keeps_the_worlds_sky_and_never_your_own_places() {
+    // O-I #856, QL-MEF #289 packet N (DLW build ruling 2026-11-06): the field is heard on your own place's sky, but its event and so the
+    // occasion a Save keeps stand on the world's. No write keeps your place's sky with a scene; a document that already stores one still
+    // opens and is written around it, and the world's sky takes its place.
+    let mut app = setup();
+    let before = inspect(&mut app);
+    let mut body = material();
+    body["scene"]["name"] = before["scenes"][0]["title"].clone();
+    let occasion = |sky: Value| json!({"schema":"oi.scene-occasion-sky/v1","event_ref":"ql:k2/default-event","retained_at_unix_ms":1793285000000u64,"sky":sky});
+    let place = json!({"reference":"place:made-up-home","longitude_degrees":12.5,"latitude_degrees":41.875,"altitude_metres":20.0});
+    let yours = occasion(
+        json!({"schema":"ql.sky-snapshot/v1","snapshot_ref":"sha256:made-up-private-sky","scope":"observer-private",
+        "request":{"observer":place.clone()},"bodies":[]}),
+    );
+    let unscoped = occasion(
+        json!({"schema":"ql.sky-snapshot/v1","snapshot_ref":"sha256:made-up-private-sky","request":{"observer":place},"bodies":[]}),
+    );
+    let worlds = occasion(
+        json!({"schema":"ql.sky-snapshot/v1","snapshot_ref":"sha256:worlds","scope":"shared-geocentric",
+        "request":{"observer":null},"bodies":[]}),
+    );
+    let set = |app: &mut Application, revision: u64, body: Value| {
+        edit(
+            app,
+            revision,
+            json!([{"change":"scene_material_set","scene_ref":"expression:craft:scene:main","presentation":body}]),
+        )
+    };
+    for (kept, saved) in [(&yours, false), (&unscoped, false), (&yours, true)] {
+        let mut wrong = body.clone();
+        if saved {
+            wrong["saved"] = wrong["scene"].clone();
+            wrong["saved"]["occasionSky"] = kept.clone();
+        } else {
+            wrong["scene"]["occasionSky"] = kept.clone();
+        }
+        let error = set(&mut app, 2, wrong).unwrap_err();
+        assert!(error.contains("keeps the world's sky"), "{error}");
+        assert!(
+            !error.contains("made-up") && !error.contains("41.875"),
+            "{error}"
+        );
+        assert_eq!(inspect(&mut app), before, "a refused sky changes nothing");
+    }
+    body["scene"]["occasionSky"] = worlds.clone();
+    set(&mut app, 2, body.clone()).expect("the world's sky is kept");
+    assert_eq!(
+        inspect(&mut app)["scenes"][0]["presentation"]["scene"]["occasionSky"],
+        worlds
+    );
+    // A document that already stores your place's sky opens, and a rewrite around it unchanged is not a new occasion.
+    let mut document = inspect(&mut app);
+    let mut old = body.clone();
+    old["scene"]["occasionSky"] = yours.clone();
+    document["scenes"][0]["presentation"] = old.clone();
+    let mut reopened = Application::default();
+    apply(
+        &mut reopened,
+        json!({"operation":"open","document":document,"actor":"human:reopen"}),
+    )
+    .expect("a stored occasion does not make a document unopenable");
+    let revision = inspect(&mut reopened)["revision"].as_u64().unwrap();
+    let mut text_filled = old.clone();
+    text_filled["scene"]["text"][0]["body"] = json!("Another passage");
+    set(&mut reopened, revision, text_filled.clone())
+        .expect("rewriting around an unchanged occasion keeps nothing new");
+    // Another sky of your place is a new occasion and is refused; the world's takes its place.
+    let mut other = text_filled.clone();
+    other["scene"]["occasionSky"]["sky"]["snapshot_ref"] = json!("sha256:another-private-sky");
+    assert!(set(&mut reopened, revision + 1, other)
+        .unwrap_err()
+        .contains("keeps the world's sky"));
+    let mut migrated = text_filled;
+    migrated["scene"]["occasionSky"] = worlds.clone();
+    set(&mut reopened, revision + 1, migrated).expect("the world's sky takes its place");
+}
+#[test]
 fn a_scene_carries_the_sky_its_live_field_was_opened_on_and_refuses_any_other_shape() {
     // QL-MEF #312 TS4: the Save carries the field's occasion sky (oi.scene-occasion-sky/v1 holding the admitted
     // ql.sky-snapshot/v1) beside the Scene's material, so a reopened composition opens its field on that sky.

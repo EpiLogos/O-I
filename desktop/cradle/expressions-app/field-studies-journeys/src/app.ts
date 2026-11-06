@@ -2403,14 +2403,17 @@ async function runStageCommand(command:StageCommand):Promise<StageResult>{
    // Live take begins on and is played again from. Keeping is a read and returns before the announce below.
    if(!nativeField)throw new Error('This application has no native instrument.');
    // A checkpoint answers with the name the kernel relayed it under, when it named it: a take is sealed by the checkpoint it began at (O-I #855).
+   // Heard on your own place's sky, the checkpoint keeps the world's, and the answer says so (O-I #856): the take is kept on the world's sky.
    if(command.action==='checkpoint'){const checkpoint=await nativeField.controller.torusCheckpoint(),checkpoint_sha256=nativeField.controller.checkpointName(checkpoint);
-    return checkpoint_sha256?{ok:true,checkpoint,checkpoint_sha256}:{ok:true,checkpoint};}
+    const heard=nativeField.controller.heardOnYourSky?{heard_on_your_sky:true as const}:{};
+    return checkpoint_sha256?{ok:true,checkpoint,checkpoint_sha256,...heard}:{ok:true,checkpoint,...heard};}
    {const landed_at_samples_elapsed=await nativeField.controller.torusRestore(command.checkpoint);announceHostState();return {ok:true,landed_at_samples_elapsed};}
   case 'torus-sound':
    // A sound saved from the Torus is a read; a kept sound opened sets the Torus again, as a restore does (O-I #852; controller.ts torusSound,
    // openTorusSound): it answers the sample it rang again from and what moved since the sound was saved.
    if(!nativeField)throw new Error('This application has no native instrument.');
-   if(command.action==='save')return {ok:true,sound:await nativeField.controller.torusSound(command.name)};
+   if(command.action==='save'){const sound=await nativeField.controller.torusSound(command.name);
+    return nativeField.controller.heardOnYourSky?{ok:true,sound,heard_on_your_sky:true}:{ok:true,sound};}
    {const {landed_at_samples_elapsed,moved}=await nativeField.controller.openTorusSound(command.sound);announceHostState();return {ok:true,landed_at_samples_elapsed,moved};}
   case 'torus-take':
    // A take sealed to lie under a scene (O-I #855; controller.ts torusTake): the kernel seals what the owner was sent from the checkpoint the

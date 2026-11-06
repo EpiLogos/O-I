@@ -103,9 +103,12 @@ export async function saveTorusSound(name: string, owners: LiveSoundOwners = SOU
   if (kept.state !== 'kept') return {ok: false, error: 'The Scene answered the keep in another shape'}
   for (const listener of [...keptListeners]) listener(kept.kept)
   const body = sealed.sound.body as {kind?: unknown} | undefined
-  return {ok: true, words: `Saved "${kept.name}" under the Torus.${kept.unsaved ? UNTIL_SAVED : ''}`, sound_ref: kept.sound_ref, form: body?.kind === 'form'}
+  return {ok: true, words: `Saved "${kept.name}" under the Torus.${sealed.heard_on_your_sky ? ON_THE_WORLDS_SKY : ''}${kept.unsaved ? UNTIL_SAVED : ''}`,
+    sound_ref: kept.sound_ref, form: body?.kind === 'form'}
 }
 const UNTIL_SAVED = ' The Scene keeps it until the Expression is saved, then the file does.'
+/** A sound saved while the Torus is heard on your own place's sky is kept on the world's sky, which its event stands on (O-I #856). */
+const ON_THE_WORLDS_SKY = ' It is kept on the world\'s sky; your place\'s sky is not kept.'
 /** The kernel's refusal of a seal by a checkpoint name it does not know (kernel expression_performance/torus.rs TakeWitness::seal). */
 const UNKNOWN_CHECKPOINT = /No Torus checkpoint \S+ was given under this lease/
 

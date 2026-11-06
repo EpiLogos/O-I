@@ -3,7 +3,7 @@ import type {BlueprintIntent} from './nativeBlueprint.js';
 /** The native working document behind the hosted application: open, commit,
  * recover and file-save through the owner. It has no panel of its own; its
  * standing reaches the app's Save control and Studio footer via host.status. */
-import {clone,type Journey,type SceneOccasionSky} from './model.js';
+import {clone,personalSky,type Journey,type SceneOccasionSky} from './model.js';
 import {NativeWorking,makeWork,worksHomeLocation,type NativeCheckpoint,type NativeFile,type NativeWorkingRecord,type WorkingSnapshot} from './nativeWorking.js';
 import {kernelExpressionsAvailable,listKernelExpressions,readKernelExpression,nativeExpressionRequest,nativeFileRequest,documentToChanges,type KernelChange} from './kernelExpressions.js';
 import type {KernelSaveAnchor} from './store.js';
@@ -221,7 +221,9 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   * builder; a malformed occasion is refused and never saved. */
  const occasioned=(snapshot:WorkingSnapshot):void=>{
   const occasion=host.retainedOccasion?.()??null;
-  if(occasion&&!validOccasion(occasion)){status('The field’s occasion sky is not a ql.sky-snapshot/v1 reading; it was not saved.');return;}
+  if(occasion&&!validOccasion(occasion)){status(personalSky((occasion as {sky?:unknown}).sky)
+   ?'Your own place’s sky is not kept with a scene: its occasion keeps the world’s sky, which the live field keeps once it opens on the scene again.'
+   :'The field’s occasion sky is not a ql.sky-snapshot/v1 reading; it was not saved.');return;}
   joinOccasion(snapshot.journey,snapshot.sceneId,occasion);
  };
  const requireAdoption=(current:()=>boolean)=>{if(!current())throw new Error('The working draft changed while opening. It and its native basis were retained; choose Open again when ready.');};

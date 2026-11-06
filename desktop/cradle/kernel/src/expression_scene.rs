@@ -367,6 +367,29 @@ pub fn admit_voices(stored: &[&Presentation], after: &Presentation) -> Result<()
     Ok(())
 }
 
+/// Your own place's sky is never kept with a Scene (O-I #856; QL-MEF #289 packet N, "Personal data never enters public presets/receipts";
+/// DLW build ruling 2026-11-06): its occasion keeps the world's sky, the one the field's event stands on, as a take and a sound do. Admitted
+/// as a WRITE, as voices are (`admit_voices`): an occasion in `after` (the working scene and its saved version) on a sky that says it is
+/// your place's (`native_expression::personal_sky`) is refused in words that name nothing of it, except one the document already stores,
+/// byte for byte, in any of its scenes, so a document written before is not made unwritable. The frame never sends one
+/// (kernelComposition.ts `validOccasion`): its Save leaves such an occasion out, and its next opening on it keeps the world's sky instead.
+pub fn admit_occasion(stored: &[&Presentation], after: &Presentation) -> Result<(), String> {
+    let occasions = |p: &Presentation| -> Vec<Value> {
+        std::iter::once(&p.scene)
+            .chain(p.saved.as_ref())
+            .filter_map(|material| material.get("occasionSky").cloned())
+            .collect()
+    };
+    let carried: Vec<Value> = stored.iter().flat_map(|p| occasions(p)).collect();
+    for occasion in occasions(after) {
+        if crate::native_expression::personal_sky(&occasion["sky"]) && !carried.contains(&occasion)
+        {
+            return Err("A scene's occasion keeps the world's sky: your own place's sky is heard on, never kept with a scene".into());
+        }
+    }
+    Ok(())
+}
+
 /// The Frequency driver (Torus, Manual, Focus, Automation; DLW 20.14) and the Key source (Torus, Sky, Manual; DLW 20.2) a Scene may
 /// carry, and the Symbol voices switch (On or Off; DLW 20.2). A value outside the manual's list is refused, never stored; an absent one stays
 /// absent (a Scene saved before the Key source or the switch carries none, and the renderer's own importer requires the driver, so the
