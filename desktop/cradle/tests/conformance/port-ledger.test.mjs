@@ -112,6 +112,37 @@ test('#747: delete-group is the selected lane\'s removal; fire-lane, monitor-mod
     assert.match(row(action).note, /An envelope's curve is the shape set in the lane\. It is not a record of the live output\./, `${action}: §20.1 Rules`);
 });
 
+// O-I #747, round 882, DLW build ruling 2026-11-06, under the same §20.1 Rules sentence ("An envelope's curve is the shape set in the lane.
+// It is not a record of the live output."): show-monitor waits for no live monitor, since the Monitor section draws the shape set in the
+// lane; and the live monitor's Glyph picker is retired with that monitor, so monitor-formation is the Glyph selected, through the owner's
+// select. And ⌫ on the Automation device removes the selected lane (§10.9: "The same keys act on whatever is selected"), as its Remove
+// buttons do, only while focus is in the device and never from a text field: delete-group says so.
+test('#747: show-monitor draws the shape set in the lane; monitor-formation is the Glyph selected, its live monitor retired; ⌫ removes the selected lane', () => {
+  const row = action => ledger.rows.find(item => item.action === action);
+  const monitor = row('show-monitor');
+  assert.equal(monitor.status, 'ported', 'show-monitor: the Monitor section draws the shape set in the lane');
+  assert.match(monitor.outward_home, /§20\.1/, 'show-monitor: its home cites the manual');
+  assert.match(monitor.boundary_op, /^none: /, 'show-monitor: no owner operation by design');
+  assert.match(monitor.boundary_op, FILE_LINE, 'show-monitor: the section it shows cites its file:line');
+  assert.doesNotMatch(`${monitor.boundary_op} ${monitor.note}`, /pending under monitor-mode|Owner-block/, 'show-monitor: waits for no live monitor');
+  assert.match(monitor.note, /An envelope's curve is the shape set in the lane\. It is not a record of the live output\./, 'show-monitor: §20.1 Rules');
+  assert.match(monitor.note, /DLW build ruling 2026-11-06/, 'show-monitor: cites its ruling');
+  const formation = row('monitor-formation');
+  assert.equal(formation.status, 'ported', 'monitor-formation: the Glyph a lane moves is the one selected');
+  assert.match(formation.boundary_op, /operation=select entity_id/);
+  assert.match(formation.boundary_op, FILE_LINE, 'monitor-formation: its operation cites its file:line');
+  assert.match(formation.note, /retired/, 'monitor-formation: the live monitor\'s Glyph picker is retired');
+  assert.match(formation.note, /DLW build ruling 2026-11-06/, 'monitor-formation: cites its ruling');
+  assert.doesNotMatch(formation.note, /Owner-block|is not built/i, 'monitor-formation: waits for nothing');
+  const remove = row('delete-group');
+  assert.match(remove.note, /⌫/, 'delete-group: ⌫ on the selected lane');
+  assert.match(remove.note, /laneDeleteScope/, 'delete-group: names the key\'s rule');
+  assert.doesNotMatch(remove.note, /Not built: ⌫/, 'delete-group: ⌫ is built');
+  const last = ledger.history.at(-1);
+  assert.match(last.stage, /round 882/, 'the history records this round');
+  assert.deepEqual(last.counts, ledger.counts, 'and its counts are the ledger\'s');
+});
+
 test('the ledger accounting matches its row statuses', () => {
   const histogram = {};
   for (const row of ledger.rows) histogram[row.status] = (histogram[row.status] || 0) + 1;

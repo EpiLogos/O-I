@@ -67,6 +67,18 @@ export function laneRole(lanes: readonly Lane[], lane: Lane): LaneRole {
   return lanes.some(other => other.syncWith === lane.id) ? 'leader' : 'independent'
 }
 
+/** ⌫ on the Automation device (manual §10.9 "The same keys act on whatever is selected"; DLW build ruling 2026-11-06): Backspace or
+ * Delete removes the selected lane as its Remove button does — an independent lane itself, a follower or a leader as one target of its
+ * group — taken only from inside the device (the panel's root hears it) and never from a text field, where the key edits the text.
+ * Null: the key is not the device's to take (another key, a modifier held, no lane selected, the device locked or a change in flight). */
+export function laneDeleteScope(event: {key: string; metaKey?: boolean; ctrlKey?: boolean; altKey?: boolean; target: unknown},
+  role: LaneRole | null, locked: boolean): 'lane' | 'group-target' | null {
+  if ((event.key !== 'Backspace' && event.key !== 'Delete') || event.metaKey || event.ctrlKey || event.altKey || !role || locked) return null
+  const target = event.target as {tagName?: string; isContentEditable?: boolean} | null
+  if (target && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(String(target.tagName ?? '').toUpperCase()))) return null
+  return role === 'independent' ? 'lane' : 'group-target'
+}
+
 /** The lane as the engine reads it: a follower takes the leader's shape (automationLinks.ts resolvedAutomation). Falls back to the lane itself. */
 export function effectiveLane(lanes: readonly Lane[], lane: Lane): Lane {
   try {return resolvedAutomation([...lanes], lane)}

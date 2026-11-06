@@ -97,6 +97,34 @@ export function slipScene(j:Journey,sceneId:string,offset:number):void{
  applyTimelineMove(j,scenes=>{if(offset===0)delete scenes[index].entryOffset;else scenes[index].entryOffset=offset;});
 }
 
+/** O-I #747 trim at the start edge (manual §16.6 "Trim: Drags an edge to change the length"): the scene's start edge moves `seconds` later
+ * (negative: earlier). Its length changes by as much the other way, and it enters its own evolution as much later, so what it shows at its
+ * end stays where it was in it. Refused, in words, past either end of its content: the entry offset stays 0 or more and, as slip keeps it,
+ * inside the scene's new length. One applyTimelineMove. (The end edge is retimeScene's duration.) */
+export function trimSceneStart(j:Journey,sceneId:string,seconds:number):void{
+ const index=indexOfScene(j,sceneId),s=j.scenes[index];
+ if(!Number.isFinite(seconds))throw new Error('Trim the scene by a finite number of seconds.');
+ const duration=s.duration-seconds,offset=(s.entryOffset??0)+seconds;
+ if(!(duration>=SCENE_DURATION_MIN&&duration<=SCENE_DURATION_MAX))throw new Error(`A scene lasts ${SCENE_DURATION_MIN}–${SCENE_DURATION_MAX} seconds.`);
+ if(offset<0)throw new Error(`A scene cannot start before the start of its own content: trim its start by no more than ${Math.round((s.entryOffset??0)*1000)/1000} seconds earlier.`);
+ if(offset>=duration)throw new Error('Trimmed that far, the scene would enter its content past its own end: trim its start by less.');
+ if(seconds!==0)applyTimelineMove(j,scenes=>{scenes[index].duration=duration;if(offset===0)delete scenes[index].entryOffset;else scenes[index].entryOffset=offset;});
+}
+/** O-I #747 slide (manual §16.6 "Slide: Moves a clip between fixed neighbours"): Scene `sceneId` moves `seconds` later (negative: earlier)
+ * between the scenes either side of it. The one before lasts +seconds and the one after −seconds, so its own length and Σ durations are
+ * unchanged. Like a roll, the slide stops at the limit it reaches (each neighbour within the scene timing bounds), and reports it. */
+export function slideScene(j:Journey,sceneId:string,seconds:number):{seconds:number;clamped:'min'|'max'|null}{
+ const i=indexOfScene(j,sceneId);
+ if(i===0||i>=j.scenes.length-1)throw new Error('A scene slides between two scenes: this one has no scene on one side of it.');
+ if(!Number.isFinite(seconds))throw new Error('Slide the scene by a finite number of seconds.');
+ const before=j.scenes[i-1].duration,after=j.scenes[i+1].duration;
+ const range=seamRollRange(before,after);
+ const applied=Math.min(range.max,Math.max(range.min,seconds));
+ const clamped=seconds<range.min?'min':seconds>range.max?'max':null;
+ if(applied!==0)applyTimelineMove(j,scenes=>{scenes[i-1].duration=before+applied;scenes[i+1].duration=after-applied;clampEntryOffset(scenes[i-1]);clampEntryOffset(scenes[i+1]);});
+ return {seconds:applied,clamped};
+}
+
 // ---- E07: split a scene at the playhead -------------------------------------
 type Pt=CurvePoint;
 type Point=PropertyTrack['points'][number];

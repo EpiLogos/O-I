@@ -281,6 +281,17 @@ export interface WorldTrackActions {
   placeTake?: {op: string; run(clipId: string): unknown};
   /** Split (⌘E, Arrangement view): a clip cut in two at a point of the ruler (the pane's insert marker). */
   splitClip?: {op: string; run(clipId: string, at: number): unknown};
+  /** The cuts of a clip on the ruler (manual §16.6's table, Arrangement view; §20.1 "you cut on it as a video editor does"), each a drag
+   * the ruler hands its owner in the ruler's units (frame/tracks/clipCuts.ts), as Split is. Move, a drag on the clip's body: the clip laid
+   * where its start is dropped, `at`, by the Move mode — Insert shifts the clips after it, Overwrite replaces what was there. An edge drag
+   * does what the Trim mode says: Trim moves the clip's `edge` to `at` (its length changes); Roll moves the seam on that edge to `at` (one
+   * clip grows by what the other loses); Slip changes where the clip starts inside its own content by the drag, `by`; Slide moves the
+   * clip between its fixed neighbours by `by`. Each is one step in its owner's undo list. */
+  moveClip?: {op: string; run(clipId: string, at: number, mode: 'insert' | 'overwrite'): unknown};
+  trimClip?: {op: string; run(clipId: string, edge: 'start' | 'end', at: number): unknown};
+  rollClip?: {op: string; run(clipId: string, edge: 'start' | 'end', at: number): unknown};
+  slipClip?: {op: string; run(clipId: string, by: number): unknown};
+  slideClip?: {op: string; run(clipId: string, by: number): unknown};
   /** Consolidate (⌘J, Arrangement view): what a track's clips play over a stretch of the ruler (the pane's time selection), made one
    * clip. `refuses` says, for a track, why its owner cannot take it (an audio part's consolidate is a render). */
   consolidateClips?: {op: string; run(trackId: string, span: {start: number; end: number}): unknown; refuses?(trackId: string): string | undefined};
