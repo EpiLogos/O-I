@@ -937,6 +937,42 @@ test('a take whose window moved the scene, or whose owner kept no state of it, k
   }
 })
 
+// O-I #856 (DLW build ruling 2026-11-06): your own place's sky is yours, as where you stand is. The Torus plays on it while the Sky shows it
+// (qlSky.ts skyForTheField hands it to the field), and QL keeps that sky whole in its event (scene_field.rs attach_sky), so a course would
+// carry the place into the set: a take begun on it keeps no course and says why, naming nothing of the place; on the world's sky it keeps one.
+test('a take begun on your own place\'s sky keeps no course and nothing of the place; on the world\'s sky its course is kept', async () => {
+  const place = {reference: 'place:made-up-home', longitude_degrees: 12.5, latitude_degrees: 41.875, altitude_metres: 20}
+  const sky = observer => ({schema: 'ql.sky-snapshot/v1', snapshot_ref: 'sha256:sky', scope: observer ? 'observer-private' : 'shared-geocentric',
+    request: {schema: 'ql.sky-request/v1', epoch: '2026-11-06T12:00:00Z', observer}, bodies: [{body: 'Moon', native_planet_id: 1, longitude_degrees: 123.25}]})
+  const run = async checkpoint => {
+    const recorder = take.createTakeRecorder()
+    const f = recordOwners({document: SET})
+    const record = take.createLiveRecord(recorder, {...f.owners, stage: stageOwner({checkpoint}).stage})
+    await record.start('/sets/a.als', 1, 120, null)
+    f.at(500)
+    recorder.played({kind: 'on', id: 'p', note: 60, key: C4, touch: 0, amplitude: 1, source: 'pointer', at: 500})
+    f.at(1000)
+    await record.stop()
+    return {act: f.acts[0].act, said: record.state().said}
+  }
+  const worlds = await run({...CHECKPOINT, event: {ref: 'e', source_receipts: [sky(null)]}})
+  assert.equal(worlds.act.keeps.course.checkpoint.event.source_receipts[0].scope, 'shared-geocentric', 'the world\'s sky is kept with the course')
+  for (const event of [{ref: 'e', source_receipts: [sky(place)]}, {ref: 'e', source_receipts: [{schema: 'ql.sky-m2-event/v1', sky: sky(place)}]}]) {
+    const {act, said} = await run({...CHECKPOINT, event})
+    assert.equal(act.keeps.course, null)
+    assert.match(act.keeps.course_refused, /your own place's sky/)
+    assert.match(act.keeps.course_refused, /Observer to Shared/)
+    assert.match(said, /keeps no course of the Torus/)
+    assert.deepEqual(act.notes, [{p: 60, at: 1, len: 1, vel: 127}], 'the take itself is laid')
+    const kept = JSON.stringify(act) + said
+    for (const word of ['made-up-home', '41.875', 'observer-private']) assert.ok(!kept.includes(word), `${word} kept in the set`)
+  }
+  assert.equal(take.holdsPersonalSky(sky(place)), true)
+  assert.equal(take.holdsPersonalSky({...sky(null), request: {...sky(null).request, observer: place}}), true, 'a request naming the place')
+  assert.equal(take.holdsPersonalSky(sky(null)), false)
+  assert.equal(take.holdsPersonalSky(CHECKPOINT), false)
+})
+
 test('a course past the 256 KiB a take kept inline is kept whole: the set\'s owner keeps it in the project\'s media (DLW build ruling 2026-11-05)', async () => {
   const recorder = take.createTakeRecorder()
   const s = stageOwner({checkpoint: {...CHECKPOINT, event: {pad: 'x'.repeat(300 * 1024)}}})

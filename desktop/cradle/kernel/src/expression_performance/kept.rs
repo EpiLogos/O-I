@@ -189,6 +189,9 @@ impl TorusSound {
     /// Seals a sound from a checkpoint this kernel relayed (the witness hands it over, never a frame).
     pub(super) fn sealed(name: &str, checkpoint: &Value, body: SoundBody) -> Result<Self, String> {
         let (_, rate) = torus::checkpoint_at(checkpoint, "the sound's checkpoint")?;
+        if torus::holds_personal_sky(checkpoint) {
+            return Err(format!("The Torus stands on your own place's sky, and {}. Set the Sky's Observer to Shared and save the sound again", torus::PERSONAL_SKY_LAW));
+        }
         let mut sound = Self {
             schema: SOUND_SCHEMA.into(),
             sound_ref: String::new(),
@@ -575,6 +578,40 @@ mod tests {
         assert!(moved[0].words.contains("sky"), "{}", moved[0].words);
         assert_ne!(moved[1].saved, moved[1].now);
         assert_eq!(sound.opening(), &kept, "it still opens as saved");
+    }
+
+    /// A saved sound carries no personal data (O-I #856; DLW §21.2 Rules, §22.1 Rules; QL-MEF #289 packet N): the Torus standing on
+    /// your own place's sky saves no sound, in words that name nothing of the place, wherever in its event the sky is kept; on the
+    /// world's sky it saves one, with the sky its tuning was read from.
+    #[test]
+    fn a_sound_on_your_own_places_sky_is_refused_and_one_on_the_worlds_sky_is_kept() {
+        use super::super::torus::tests::{on_sky, your_place};
+        let worlds =
+            TorusSound::sealed("World's sky", &on_sky(4800, None), SoundBody::Torus).unwrap();
+        assert!(serde_json::to_string(&worlds)
+            .unwrap()
+            .contains("shared-geocentric"));
+        let mine = on_sky(4800, Some(your_place()));
+        let mut within = on_sky(4800, None);
+        within["event"]["source_receipts"] = json!([{"schema":"ql.sky-m2-event/v1","scope":"observer-private",
+            "sky":mine["event"]["source_receipts"][0].clone()}]);
+        let mut unscoped = on_sky(4800, None);
+        unscoped["event"]["source_receipts"][0]["request"]["observer"] = your_place();
+        for (kept, case) in [
+            (mine, "on the event"),
+            (within, "within a receipt"),
+            (unscoped, "named by its request"),
+        ] {
+            let refused = TorusSound::sealed("Mine", &kept, SoundBody::Torus).unwrap_err();
+            assert!(
+                refused.contains("your own place's sky"),
+                "{case}: {refused}"
+            );
+            assert!(refused.contains("Observer to Shared"), "{case}: {refused}");
+            for place in ["made-up-home", "41.875", "12.5"] {
+                assert!(!refused.contains(place), "{case}: {place} in {refused}");
+            }
+        }
     }
 
     #[test]

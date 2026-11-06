@@ -378,6 +378,34 @@ pub(super) fn checkpoint_at(value: &Value, what: &str) -> Result<(u64, u32), Str
     Ok((at, rate))
 }
 
+/// Why nothing kept holds your own place's sky (O-I #856; DLW build ruling 2026-11-06, from DLW §21.2 Rules "Where you stand is
+/// yours. It is never shown, and never kept in a take, its render or a saved sound. A take renders in the world's context", §22.1
+/// Rules "A shared view does not show a private observer's place", and QL-MEF #289 packet N: personal data never enters a public preset
+/// or receipt). The Torus plays on it while the Sky shows it; a take or a sound is kept only on the world's sky.
+pub const PERSONAL_SKY_LAW: &str = "your own place's sky is yours, as where you stand is, so nothing kept holds it: a take or a sound is kept only on the world's sky";
+/// The sky as its owner reads it (QL providers/sky kerykeion_snapshot.py), and the scope of the world's: the sky seen from the
+/// centre of the Earth, for no observer. One read for a private observer is scoped `observer-private` and its request names the place.
+const SKY_SNAPSHOT: &str = "ql.sky-snapshot/v1";
+const WORLDS_SKY: &str = "shared-geocentric";
+
+/// Whether `value` holds your own place's sky anywhere in it (QL keeps the sky an event was read on whole in its `source_receipts`,
+/// scene_field.rs attach_sky): a sky snapshot that is not the world's, or whose request names an observer.
+pub(super) fn holds_personal_sky(value: &Value) -> bool {
+    match value {
+        Value::Object(map) => {
+            (map.get("schema").and_then(Value::as_str) == Some(SKY_SNAPSHOT)
+                && (map.get("scope").and_then(Value::as_str) != Some(WORLDS_SKY)
+                    || !map
+                        .get("request")
+                        .and_then(|request| request.get("observer"))
+                        .is_none_or(Value::is_null)))
+                || map.values().any(holds_personal_sky)
+        }
+        Value::Array(items) => items.iter().any(holds_personal_sky),
+        _ => false,
+    }
+}
+
 fn exact(value: &Value) -> Result<u64, String> {
     let text = value.as_str().ok_or("not an exact sample")?;
     let n: u64 = text.parse().map_err(|_| "not an exact sample")?;
@@ -870,6 +898,9 @@ impl TakeWitness {
                     .unwrap_or_default();
                 format!("The take from sample {} has not been rendered: render it from its checkpoint so the sha256 of its sound is kept with it, then seal it{unread}", kept.from)
             })?;
+        if holds_personal_sky(&kept.checkpoint) || holds_personal_sky(&render.ended) {
+            return Err(format!("The take cannot be sealed: the Torus stood on your own place's sky, and {PERSONAL_SKY_LAW}. Set the Sky's Observer to Shared and record it again"));
+        }
         let (from, end) = (render.from, render.end);
         if self.cursor < end {
             return Err(format!("The take runs to sample {end} and the owner's sound stands at {}: a take is sealed once its sound has been played", self.cursor));
@@ -1031,7 +1062,29 @@ pub(crate) mod tests {
     fn identity() -> Value {
         serde_json::from_str(IDENTITY).unwrap()
     }
+    /// A checkpoint whose event carries the sky it was read on, as QL keeps it (scene_field.rs attach_sky: the snapshot whole in
+    /// `source_receipts`): the world's (`shared-geocentric`, for no observer), or your own place's (`observer-private`, its request
+    /// naming the place: QL providers/sky kerykeion_snapshot.py).
+    pub(crate) fn on_sky(at: u64, observer: Option<Value>) -> Value {
+        let mut kept = checkpoint(at);
+        let scope = if observer.is_some() {
+            "observer-private"
+        } else {
+            "shared-geocentric"
+        };
+        kept["event"]["source_receipts"] = json!([{"schema":"ql.sky-snapshot/v1","snapshot_ref":"sha256:sky",
+            "scope":scope,"request":{"schema":"ql.sky-request/v1","epoch":"2026-11-06T12:00:00Z","observer":observer},
+            "bodies":[{"body":"Moon","native_planet_id":1,"longitude_degrees":123.25}]}]);
+        kept
+    }
+    /// A place made up for the tests: no one's.
+    pub(crate) fn your_place() -> Value {
+        json!({"reference":"place:made-up-home","longitude_degrees":12.5,"latitude_degrees":41.875,"altitude_metres":20.0})
+    }
     fn played() -> (TakeWitness, String, Value) {
+        played_on(checkpoint(9600))
+    }
+    fn played_on(kept: Value) -> (TakeWitness, String, Value) {
         let mut w = TakeWitness::default();
         w.observe(
             &json!({"operation":"advance","frames":9600}),
@@ -1039,7 +1092,7 @@ pub(crate) mod tests {
         );
         w.observe(
             &json!({"operation":"torus-checkpoint"}),
-            &reply(9600, json!({"torus_checkpoint":checkpoint(9600)})),
+            &reply(9600, json!({"torus_checkpoint":kept})),
         );
         // Sent before the take began, for a sample within it: the take holds it (the checkpoint does not).
         w.observe(&json!({"operation":"torus-play","keys":[{"row":2,"column":3}],"amplitude":[0.3,0],"at_samples_elapsed":"12000"}), &reply(9600, json!({})));
@@ -1067,7 +1120,38 @@ pub(crate) mod tests {
             {"action":"strike","at_samples_elapsed":"12000","keys":[{"row":2,"column":3}],"amplitude":[0.3,0]},
             {"action":"release","at_samples_elapsed":"14400","keys":[{"row":2,"column":3}]},
             {"action":"set","at_samples_elapsed":"14400","edit":{"polyphony":2}}]);
-        (w, value_sha256(&checkpoint(9600)).unwrap(), acts)
+        (w, value_sha256(&kept).unwrap(), acts)
+    }
+
+    /// Your own place's sky is yours, as where you stand is (DLW §21.2 Rules; §22.1 Rules; QL-MEF #289 packet N): a take begun on it,
+    /// or one whose render ended on it, is refused in words that name nothing of the place; one on the world's sky is sealed.
+    #[test]
+    fn a_take_on_your_own_places_sky_is_refused_and_one_on_the_worlds_sky_is_sealed() {
+        let sealed_on = |start: Value, ended: Option<Value>| {
+            let (mut w, sha, acts) = played_on(start.clone());
+            let (command, mut answer) =
+                render(9600, 14400, json!({"checkpoint":start}), acts, "render:1");
+            if let Some(ended) = ended {
+                answer["torus_render"]["checkpoint"] = ended;
+            }
+            w.observe(&command, &reply(24000, answer));
+            w.seal(&sha, "lease:1", &identity())
+        };
+        let worlds = sealed_on(on_sky(9600, None), None).unwrap();
+        assert!(serde_json::to_string(&worlds)
+            .unwrap()
+            .contains("shared-geocentric"));
+        for (start, ended) in [
+            (on_sky(9600, Some(your_place())), None),
+            (on_sky(9600, None), Some(on_sky(24000, Some(your_place())))),
+        ] {
+            let refused = sealed_on(start, ended).unwrap_err();
+            assert!(refused.contains("your own place's sky"), "{refused}");
+            assert!(refused.contains("Observer to Shared"), "{refused}");
+            for place in ["made-up-home", "41.875", "12.5"] {
+                assert!(!refused.contains(place), "{place} in {refused}");
+            }
+        }
     }
 
     #[test]

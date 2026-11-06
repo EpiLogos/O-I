@@ -1224,12 +1224,30 @@ const sentence = (text: string) => /[.!?…]$/.test(text) ? text : `${text}.`
  * not. */
 type Begun = {readonly checkpoint: StageTorusCheckpoint; readonly checkpoint_sha256?: string} | {readonly refused: string}
 
+/** Whether `value` holds your own place's sky anywhere in it: QL keeps the sky an event was read on whole in its `source_receipts`
+ * (scene_field.rs attach_sky), and a `ql.sky-snapshot/v1` that is not the world's (`shared-geocentric`, the sky seen from the centre of the
+ * Earth), or whose request names an observer, is one read for your place (QL providers/sky kerykeion_snapshot.py). As the kernel reads it
+ * (expression_performance/torus.rs holds_personal_sky). Pure. */
+export function holdsPersonalSky(value: unknown): boolean {
+  if (Array.isArray(value)) return value.some(holdsPersonalSky)
+  if (!value || typeof value !== 'object') return false
+  const map = value as Record<string, unknown>, request = map.request as {observer?: unknown} | undefined
+  if (map.schema === 'ql.sky-snapshot/v1' && (map.scope !== 'shared-geocentric' || (request?.observer ?? null) !== null)) return true
+  return Object.values(map).some(holdsPersonalSky)
+}
+/** Your own place's sky is yours, as where you stand is (O-I #856; DLW build ruling 2026-11-06, from DLW §21.2 Rules "Where you stand is
+ * yours … never kept in a take, its render or a saved sound", §22.1 Rules, QL-MEF #289 packet N): a take begun on it keeps no course,
+ * which would carry the place into the set, as the kernel keeps no take or sound on it (torus.rs PERSONAL_SKY_LAW). */
+const ON_YOUR_OWN_SKY = 'the Torus stood on your own place\'s sky as the take began, and your own place\'s sky is yours, as where you stand is, '
+  + 'so nothing kept holds it. Set the Sky\'s Observer to Shared and record again to keep the take\'s course'
+
 /** The Torus's checkpoint through the stage channel, and the name the kernel relayed it under (`checkpoint_sha256`, which a take is
  * sealed by: the stage's `torus-take` seal), or why there is none, in the owner's words. */
 async function checkpointOf(stage: (command: StageCommand) => Promise<StageResult>): Promise<Begun> {
   const answer = await stage({command: 'torus', action: 'checkpoint'}).catch((cause: unknown): StageResult => ({ok: false, error: said(cause)}))
   if (!answer.ok) return {refused: `the Torus's owner kept no state of it as the take began: ${answer.error}`}
   if (!answer.checkpoint) return {refused: 'the Torus\'s owner answered without its checkpoint as the take began'}
+  if (holdsPersonalSky(answer.checkpoint)) return {refused: ON_YOUR_OWN_SKY}
   return isStageCheckpointName(answer.checkpoint_sha256) ? {checkpoint: answer.checkpoint, checkpoint_sha256: answer.checkpoint_sha256} : {checkpoint: answer.checkpoint}
 }
 
