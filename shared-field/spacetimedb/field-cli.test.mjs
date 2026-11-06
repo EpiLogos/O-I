@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
+import {join} from 'node:path';
 
 // Exercise the actual CLI over a pipe, including the loader and its process
 // exit. A large real unknown-target response reproduces the snapshot failure
@@ -56,4 +57,32 @@ test('a one-shot observe is refused as the held client\'s, without the network',
   assert.equal(envelope.ok,false);
   assert.equal(envelope.error.kind,'refused','refused as the held client\'s, not answered as an unbound target');
   assert.match(envelope.error.message,/--held/);
+});
+
+// A field back in view (O-I #858): the held client's cursor moves once when a field that was in view on its connection comes
+// back into view after it was out of it — what moved there meanwhile sent nothing, so what the window holds of it is read
+// again — and never for a field first brought into view, one still in view, or one let go. The rule the held client keeps
+// (field-lib `backInView`), asked through the client's own toolchain, without the network.
+test('a field back in view after it was out of it moves the cursor once, and nothing else does',()=>{
+  const here=fileURLToPath(new URL('.',import.meta.url));
+  const cases=[
+    // [what was in view on this connection, what is in view now (null: nothing yet), what comes into view, moves]
+    [['f'],[],['f'],true,'a field back in view after its glance lapsed'],
+    ['whole',[],['f'],true,'a field back in view after the whole field was let go'],
+    ['whole',['g'],'whole',true,'the whole field back in view after a narrower view'],
+    [['f','g'],['g'],'whole',true,'the whole field back, with a field that was out of view'],
+    [[],[],['f'],false,'a field first brought into view'],
+    [[],null,['f'],false,'the first view on a connection'],
+    [['f'],['f'],['f','g'],false,'a field still in view, beside one first brought in'],
+    [['f','g'],['f','g'],['f'],false,'a field let go'],
+    ['whole','whole',['f'],false,'narrowing from the whole field'],
+    [['f'],['f'],'whole',false,'the whole field first brought into view, nothing seen out of it'],
+  ];
+  const script=`import {backInView} from './field-lib.ts';const cases=${JSON.stringify(cases)};`+
+    `console.log(JSON.stringify(cases.map(([seen,prior,want])=>backInView(seen,prior??undefined,want))));`;
+  const result=spawnSync(join(here,'node_modules','.bin','tsx'),['-e',script],{cwd:here,encoding:'utf8',timeout:60000});
+  assert.ifError(result.error);
+  assert.equal(result.status,0,result.stderr);
+  const moved=JSON.parse(result.stdout.trim().split('\n').at(-1));
+  cases.forEach(([,, ,moves,what],index)=>assert.equal(moved[index],moves,what));
 });

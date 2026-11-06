@@ -1066,6 +1066,92 @@ fn over_a_low_tone_a_strike_rises_over_the_tone_s_crest_not_the_block_s() {
     );
 }
 
+/// A tone at the lowest pitch the engine's Operator sounds (its key 0, 8.18 Hz, and below it by a bend): its velocity is its level,
+/// its phase set so that it crosses zero at frame 64 and every [`SUBAUDIO_HALF`] frames after.
+#[derive(Debug)]
+struct SubAudioTone([f32; 128]);
+/// Half the sub-audio tone's period: 2944 frames at 48 kHz, a tone of 8.15 Hz.
+const SUBAUDIO_HALF: u64 = 2_944;
+
+impl live_engine::graph::Instrument for SubAudioTone {
+    fn name(&self) -> &str {
+        "Sub-audio tone"
+    }
+    fn note_on(&mut self, key: u8, velocity: f32, _clock: &Clock) {
+        self.0[usize::from(key & 0x7f)] = velocity;
+    }
+    fn note_off(&mut self, key: u8, _clock: &Clock) {
+        self.0[usize::from(key & 0x7f)] = 0.0;
+    }
+    fn release_all(&mut self, _clock: &Clock) {
+        self.0 = [0.0; 128];
+    }
+    fn process(&mut self, frame_io: &mut [f32], clock: &Clock) {
+        let level: f32 = self.0.iter().sum();
+        let phase = std::f64::consts::PI * (clock.sample as f64 - 64.0) / SUBAUDIO_HALF as f64;
+        let v = level * phase.sin() as f32;
+        for s in frame_io.iter_mut() {
+            *s = v;
+        }
+    }
+}
+
+/// O-I #849 and #853, DLW build ruling 2026-11-06 (the OPEN of round 28): Operator sounds every key, its key 0 at 8.18 Hz, so a
+/// quiet tone that low is a real part's sound. The block before a strike that falls where it crosses zero holds nothing above the
+/// floor, though the tone's crest stands 22 dB over it: a part is silent only once it has stood under the floor for
+/// [`live_engine::graph::SILENCE_HOLD`] frames, longer than this tone stays under it, so a key that adds almost nothing to the tone
+/// is no sound from silence and is never heard.
+#[test]
+fn a_quiet_sub_audio_tone_crossing_zero_is_no_silence() {
+    use live_engine::graph::{ONSET_FLOOR, SILENCE_HOLD};
+    const BLOCK: usize = 128;
+    const LEVEL: f32 = 2.0e-4; // -74 dBFS: the tone's crest stands 22 dB over the floor
+    let crossing_peak = LEVEL * (std::f32::consts::PI * 64.0 / SUBAUDIO_HALF as f32).sin();
+    assert!(
+        crossing_peak <= ONSET_FLOOR && LEVEL > 10.0 * ONSET_FLOOR,
+        "{crossing_peak}"
+    );
+    // the frames the tone stays at or under the floor where it crosses zero
+    let under = (SUBAUDIO_HALF as f32 / std::f32::consts::PI * 2.0 * (ONSET_FLOOR / LEVEL).asin())
+        .ceil() as u64;
+    assert!(under >= BLOCK as u64 && under < SILENCE_HOLD, "{under}");
+    let drone = Note {
+        key: 0,
+        start: 0,
+        length: 120_000,
+        velocity: LEVEL,
+    };
+    let mut part = Track::midi("Sub", Box::new(SubAudioTone([0.0; 128])));
+    part.set_notes(&[drone]);
+    let mut g = Graph::new(SR, 120.0);
+    g.tracks.push(part);
+    let (mut core, mut handle) = engine(g).unwrap();
+    let mut block = vec![0f32; BLOCK * 2];
+    // the block before the strike, frames 2944 to 3072, straddles the tone's zero at 3008
+    for _ in 0..24 {
+        core.pull_block(&mut block);
+    }
+    handle
+        .send(EngineEvent::NoteOn {
+            track: 0,
+            key: 1,
+            velocity: 1.0e-7,
+        })
+        .unwrap();
+    // past its one second's wait
+    for _ in 0..400 {
+        core.pull_block(&mut block);
+    }
+    handle.collect();
+    let strikes = handle.latency().strikes;
+    assert_eq!(strikes.len(), 1, "{strikes:?}");
+    assert_eq!(
+        (strikes[0].frame, strikes[0].from_sound, strikes[0].sounded_frame),
+        (24 * BLOCK as u64, false, None),
+        "the tone stood over the floor a moment before the strike: no silence, and the key that adds almost nothing never rose over it"
+    );
+}
+
 /// O-I #849 and #853 (round 27): strikes due at one frame on one part (a chord's keys) are struck together, so the part's first
 /// sound after that frame is each one's own: each settles at it, from silence as the first does.
 #[test]

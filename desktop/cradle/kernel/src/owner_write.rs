@@ -1054,6 +1054,9 @@ fn factory_action(request: &factory::OwnerRequest) -> &'static str {
         factory::OwnerRequest::PadsRecord { .. } => "development pads-record",
         factory::OwnerRequest::RackMacrosWrite { .. } => "development rack-macros-write",
         factory::OwnerRequest::WaveAct { .. } => "development wave act",
+        factory::OwnerRequest::TaskOfferAct { verb, .. } => factory::task_offer_verb(verb)
+            .map(|(action, _, _)| action)
+            .unwrap_or("factory"),
         factory::OwnerRequest::WorkflowEdit { .. } => "workflow edit",
         factory::OwnerRequest::WorkflowExport { .. } => "workflow export",
         factory::OwnerRequest::WorkflowRemake { .. } => "workflow remake",
@@ -1101,6 +1104,19 @@ fn factory_ref(request: &factory::OwnerRequest, data: &Value) -> String {
             space_ref,
             ..
         } => format!("{project_ref}#rack-macros:{space_ref}"),
+        // An offer at a star moved: the offer the owner's answer names, else
+        // the one the request names, else the state it wrote.
+        OwnerRequest::TaskOfferAct {
+            state_path,
+            request,
+            ..
+        } => data["offer"]["offer_ref"]
+            .as_str()
+            .or_else(|| data["offer_ref"].as_str())
+            .or_else(|| request["offer_ref"].as_str())
+            .filter(|reference| !reference.trim().is_empty())
+            .map(str::to_owned)
+            .unwrap_or_else(|| state_path.display().to_string()),
         // A custody record moved: the custody the owner's receipt names.
         OwnerRequest::CustodyAssign { state_path, .. }
         | OwnerRequest::CustodyUpdate { state_path, .. }

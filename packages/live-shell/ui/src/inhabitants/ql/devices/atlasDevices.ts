@@ -174,17 +174,18 @@ export function fieldValues(reading: NonNullable<AtlasReading['field']>): {value
 //
 // The star chosen, the waiting world chosen, the star to light and what to say there are the view's own hand (systemStore.ts StarHand); each act is one
 // request of the held field for your own world (system/fieldModel.ts starRequest), standing dimmed with its reason when it cannot be
-// asked. Showing work and offering a task at a star are Software Factory's (stories SF12, SF13): no owner operation does them yet, so
-// they stand dimmed with that owner named.
+// asked. Showing work and offering a task at a star are Software Factory's (stories SF12, SF13): Factory answers what of a Run may be
+// shown and makes, revokes, accepts and takes offers (the kernel's factory_owner work-show-read and task-offer-act), and the field
+// carries them (work-show, offer-put and the rest); this window has no Run to choose at a star yet, so they stand dimmed naming that.
 
 /** The acts at a star, by the World's value key. */
 export const STAR_ACT_KEYS = ['starLight', 'starGather', 'starLeave', 'starAdmit', 'starClose', 'starSay', 'starUnsay'] as const
 type StarActKey = (typeof STAR_ACT_KEYS)[number]
 const isStarAct = (key: string): key is StarActKey => (STAR_ACT_KEYS as readonly string[]).includes(key)
-/** Software Factory's acts at a star, which it has not built (SF12, SF13). */
+/** Software Factory's acts at a star (SF12, SF13), dimmed for what this window lacks: a Run to choose. */
 export const FACTORY_AT_STAR: Readonly<Record<'starShow' | 'starOffer', string>> = {
-  starShow: 'Software Factory shows a piece of work in the field for the people you let in; it has not built that yet.',
-  starOffer: 'Software Factory offers a task at a star for another person’s agent to take up on their own machine; it has not built that yet.',
+  starShow: 'Showing a piece of work takes a Run of Software Factory’s, and this window has no Run to choose yet.',
+  starOffer: 'Offering a task takes a task of a Run of Software Factory’s, and this window has no Run to choose yet.',
 }
 const NOT_REACHED = 'The shared field is not reached from this window.'
 const NO_HAND: StarHand = {star: null, admit: null, name: '', gathers: '', comes: 'anyone', to: null, what: 'question', words: '', dayPage: null, saidPage: null}

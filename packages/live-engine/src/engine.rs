@@ -638,7 +638,8 @@ pub const LATENCY_BUCKETS_NS: [u64; 8] = [
 ///
 /// Its part listens for one strike at a time, the earliest due, from the frame its turn comes (O-I #849 and #853 round 27), so
 /// each strike settles at its own first sound after its own frame; strikes due at one frame on one part (a chord's keys) settle
-/// together at the first sound after it. `from_sound`: its part was silent when it was listened for, so `sounded_frame` is a
+/// together at the first sound after it. `from_sound`: its part was silent when it was listened for (at or under the floor for
+/// [`crate::graph::SILENCE_HOLD`] frames), so `sounded_frame` is a
 /// sound from silence; false where the part already sounded above the floor, so `sounded_frame` is the strike's attack over that
 /// sound ([`crate::graph::ATTACK_RISE`]), or where it was never listened for. A strike over sound whose attack has not risen by
 /// the time a later strike of its part comes in gives way to it, handed back with no `sounded_frame`: its attack could no longer

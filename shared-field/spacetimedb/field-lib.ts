@@ -56,11 +56,15 @@ export const STAR_DAY_SUBSCRIPTION = ['SELECT * FROM star_day'];
 /** What was said at each star (O-I #858, SF06), subscribed on its own beside the star's day: a service that keeps a star's day but
  * nothing said there yet is read as it was, and says so. */
 export const STAR_SAYING_SUBSCRIPTION = ['SELECT * FROM star_saying'];
+/** The work shown at each star and the tasks offered there (O-I #858, SF12, SF13), Software Factory's documents carried between
+ * worlds, subscribed on their own beside what is said there: a service that keeps neither yet is read as it was, and says so. */
+export const STAR_WORK_SUBSCRIPTION = ['SELECT * FROM star_work', 'SELECT * FROM star_offer'];
 /** Whether this connection holds the field's worlds, or why not. */
 export type WorldsHeld = { state: 'held' } | { state: 'unavailable'; detail: string };
 const NO_WORLDS = 'This field\'s service does not hold worlds yet';
 const NO_STAR_DAY = 'This field\'s service does not keep a star\'s day yet';
 const NO_SAYINGS = 'This field\'s service does not keep what is said at a star yet';
+const NO_WORKS = 'This field\'s service does not keep work shown or tasks offered at a star yet';
 const TIMEOUT_MS = Number(process.env.OI_SHARED_FIELD_TIMEOUT_MS ?? 15_000);
 export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -109,7 +113,7 @@ export function tokenFile(database: string, label = 'owner') {
   return join(state, 'spacetimedb', label === 'owner' ? `${database}.owner-token` : `${database}.${label}-token`);
 }
 
-export interface Client { conn: DbConnection; identity: any; token: string; lifecycle: any; live: any; target: Target; identityHex: string; worlds: WorldsHeld; starDay: WorldsHeld; sayings: WorldsHeld }
+export interface Client { conn: DbConnection; identity: any; token: string; lifecycle: any; live: any; target: Target; identityHex: string; worlds: WorldsHeld; starDay: WorldsHeld; sayings: WorldsHeld; works: WorldsHeld }
 
 export async function connect(target: Target, token?: string): Promise<{ conn: DbConnection; identity: any; token: string; lifecycle: any }> {
   const lifecycle = createExploreTransportLifecycle();
@@ -149,20 +153,20 @@ export async function open(target: Target, label = 'owner'): Promise<Client> {
   }
   try { await subscribe(opened.conn, opened.lifecycle); }
   catch (error) { opened.conn.disconnect(); throw error; }
-  const { worlds, starDay, sayings } = await holdWorlds(opened.conn);
+  const { worlds, starDay, sayings, works } = await holdWorlds(opened.conn);
   const live = createLiveExploreApplication(createSpacetimeExploreSource(opened.conn.db, opened.lifecycle));
-  return { ...opened, live, target, identityHex: opened.identity.toHexString(), worlds, starDay, sayings };
+  return { ...opened, live, target, identityHex: opened.identity.toHexString(), worlds, starDay, sayings, works };
 }
 
 /** Subscribe the worlds beside the field, each star's day beside them and what was said at each star beside that; a service without
  * any of them is said, never an error of the field. */
-async function holdWorlds(conn: DbConnection): Promise<{ worlds: WorldsHeld; starDay: WorldsHeld; sayings: WorldsHeld }> {
+async function holdWorlds(conn: DbConnection): Promise<{ worlds: WorldsHeld; starDay: WorldsHeld; sayings: WorldsHeld; works: WorldsHeld }> {
   const held = async (queries: string[], detail: string): Promise<WorldsHeld> => {
     try { await subscribeQueries(conn, queries); return { state: 'held' }; } catch { return { state: 'unavailable', detail }; }
   };
   const worlds = await held(WORLD_SUBSCRIPTION, NO_WORLDS);
-  if (worlds.state !== 'held') return { worlds, starDay: { state: 'unavailable', detail: NO_STAR_DAY }, sayings: { state: 'unavailable', detail: NO_SAYINGS } };
-  return { worlds, starDay: await held(STAR_DAY_SUBSCRIPTION, NO_STAR_DAY), sayings: await held(STAR_SAYING_SUBSCRIPTION, NO_SAYINGS) };
+  if (worlds.state !== 'held') return { worlds, starDay: { state: 'unavailable', detail: NO_STAR_DAY }, sayings: { state: 'unavailable', detail: NO_SAYINGS }, works: { state: 'unavailable', detail: NO_WORKS } };
+  return { worlds, starDay: await held(STAR_DAY_SUBSCRIPTION, NO_STAR_DAY), sayings: await held(STAR_SAYING_SUBSCRIPTION, NO_SAYINGS), works: await held(STAR_WORK_SUBSCRIPTION, NO_WORKS) };
 }
 
 export function close(client: Client) {
@@ -260,6 +264,16 @@ export function worldReading(client: Client) {
     star_sayings: rows(db.starSaying).sort((a: any, b: any) => (BigInt(a.saidAtMicros) < BigInt(b.saidAtMicros) ? -1 : BigInt(a.saidAtMicros) > BigInt(b.saidAtMicros) ? 1 : a.sayingRef < b.sayingRef ? -1 : 1))
       .map((row: any) => ({ saying_ref: row.sayingRef, star_ref: row.starRef, world_ref: row.worldRef, to_world_ref: row.toWorldRef || null, to_part_ref: row.toPartRef || null,
         to_saying_ref: row.toSayingRef || null, what: row.what, words: row.words, said_at_micros: String(row.saidAtMicros) })),
+    // the work each world shows at a star (Software Factory's `factory.shown-work/v1`, live while its Run is open, as it was kept
+    // once it closed) and the tasks offered there (`factory.task-offer/v1` under its grant): what came back to an offer is here only
+    // for its offerer and its taker
+    star_work: client.works,
+    star_works: rows(db.starWork).sort((a: any, b: any) => (BigInt(a.shownAtMicros) < BigInt(b.shownAtMicros) ? -1 : BigInt(a.shownAtMicros) > BigInt(b.shownAtMicros) ? 1 : a.workKey < b.workKey ? -1 : 1))
+      .map((row: any) => ({ star_ref: row.starRef, world_ref: row.worldRef, work_ref: row.workRef, standing: row.standing, revision: Number(row.revision), shown: parse(row.shownJson),
+        shown_at_micros: String(row.shownAtMicros), updated_at_micros: String(row.updatedAtMicros) })),
+    star_offers: rows(db.starOffer).sort((a: any, b: any) => (BigInt(a.offeredAtMicros) < BigInt(b.offeredAtMicros) ? -1 : BigInt(a.offeredAtMicros) > BigInt(b.offeredAtMicros) ? 1 : a.offerRef < b.offerRef ? -1 : 1))
+      .map((row: any) => ({ offer_ref: row.offerRef, star_ref: row.starRef, world_ref: row.worldRef, state: row.state, taker_world_ref: row.takerWorldRef || null, offer: parse(row.offerJson),
+        ...(row.returnJson ? { returned: parse(row.returnJson) } : {}), lapses_at_micros: String(row.lapsesAtMicros), offered_at_micros: String(row.offeredAtMicros), moved_at_micros: String(row.movedAtMicros) })),
   };
 }
 
@@ -274,7 +288,8 @@ export function worldReading(client: Client) {
  * private rows change nothing here, so they move nothing). Rows that only
  * enter or leave the subscription as the view narrows and widens are no
  * transaction; but a field that was out of view may have moved unseen, so
- * the cursor moves once when the whole field comes back into view. */
+ * the cursor moves once when a field that was in view and out of it since
+ * (or the whole field) comes back into view (`backInView`). */
 
 /** The views a field scope narrows: every caller-filtered view whose rows
  * belong to one field. The rest of SUBSCRIPTION — the fields themselves and
@@ -311,10 +326,21 @@ export function unionScope(scopes: Iterable<FieldScope>): FieldScope {
   return [...refs].sort();
 }
 
+/** Whether a change of view, from `prior` (none yet on this connection when undefined) to `want`, brings back into view a
+ * field that was in view before on this connection (`seen`) and out of it since: what moved there meanwhile sent nothing,
+ * so what is held of it is read again. A field first brought into view, one still in view, or one let go brings none. */
+export function backInView(seen: FieldScope, prior: FieldScope | undefined, want: FieldScope): boolean {
+  if (prior === 'whole') return false;
+  const before = new Set(prior ?? []);
+  if (want === 'whole') return seen === 'whole' || seen.some((ref) => !before.has(ref));
+  return want.some((ref) => !before.has(ref) && (seen === 'whole' || seen.includes(ref)));
+}
+
 /** Requests that read none of a field's scoped rows: who the caller is, the worlds (held whole beside the base, as are the
  * stars, which are fields), the acts on them, and the caller's own rows. */
 const READS_NO_FIELD = new Set(['identity', 'worlds', 'receipt', 'watch', 'contact', 'grant-read', 'revoke-read', 'stage-follow', 'stage-unfollow',
-  'world-put', 'clearing-open', 'clearing-withdraw', 'star-light', 'star-gather', 'star-admit', 'star-leave', 'star-close', 'star-say', 'star-unsay']);
+  'world-put', 'clearing-open', 'clearing-withdraw', 'star-light', 'star-gather', 'star-admit', 'star-leave', 'star-close', 'star-say', 'star-unsay',
+  'work-show', 'work-unshow', 'offer-put', 'offer-revoke', 'offer-take', 'offer-return', 'offer-accept']);
 /** Requests that read one field's scoped rows, the field their `field_ref` names. */
 const READS_ONE_FIELD = new Set(['field-now', 'field-day', 'stage', 'enter', 'leave', 'activity-liveness-put', 'activity-liveness-clear']);
 /** What one request reads, so what its glance brings into view: no field, the one field it names, or (for every other
@@ -336,7 +362,7 @@ export const HELD_TABLES: ReadonlyArray<readonly [property: string, table: strin
   ['sharedStage', 'shared_stage', 'stageRef'], ['myStageFollow', 'my_stage_follow', 'followKey'], ['fieldPresence', 'field_presence', 'presenceKey'],
   ['activityLiveness', 'activity_liveness', 'activityKey'], ['fieldNow', 'field_now', 'fieldRef'], ['fieldDay', 'field_day', 'dayKey'],
   ['world', 'world', 'worldRef'], ['myWorld', 'my_world', 'worldRef'], ['worldClearing', 'world_clearing', 'clearingKey'], ['worldGathering', 'world_gathering', 'gatheringKey'],
-  ['starDay', 'star_day', 'rowId'], ['starSaying', 'star_saying', 'sayingRef'],
+  ['starDay', 'star_day', 'rowId'], ['starSaying', 'star_saying', 'sayingRef'], ['starWork', 'star_work', 'workKey'], ['starOffer', 'star_offer', 'offerRef'],
 ];
 
 export interface RowChange { table: string; op: 'insert' | 'update' | 'delete'; ref: string }
@@ -383,8 +409,8 @@ export function holdField(options: { label: string; answer: (client: Client, req
   let scoped: { key: string; scope: FieldScope; handle: any } | undefined;
   let scoping: Promise<void> = Promise.resolve();
   let batch: RowChange[] | undefined;
-  /** The whole field was let out of view since it was last read whole. */
-  let blind = false;
+  /** What has been in view on this connection: a field back in view after it was out of it is read again. */
+  let seen: FieldScope = [];
   const leases = new Map<string, FieldScope>();
 
   const cursor = () => `tx:${epoch}:${count}`;
@@ -464,16 +490,17 @@ export function holdField(options: { label: string; answer: (client: Client, req
     }
     const connection = ++epoch;
     count = 0;
+    seen = [];
     watchRows(opened.conn, connection);
     opened.lifecycle.subscribe((event: any) => {
       if (connection === epoch && ['offline', 'error'].includes(event?.transport?.state)) lost(new Error(event.transport.error ?? 'The SharedField connection ended'));
     });
     try { await subscribeQueries(opened.conn, HELD_BASE, opened.lifecycle); } catch (error) { try { opened.conn.disconnect(); } catch {} lost(error); return; }
     if (closed || connection !== epoch) { try { opened.conn.disconnect(); } catch {} return; }
-    const { worlds, starDay, sayings } = await holdWorlds(opened.conn);
+    const { worlds, starDay, sayings, works } = await holdWorlds(opened.conn);
     if (closed || connection !== epoch) { try { opened.conn.disconnect(); } catch {} return; }
     const live = createLiveExploreApplication(createSpacetimeExploreSource(opened.conn.db, opened.lifecycle));
-    client = { ...opened, live, target, identityHex: opened.identity.toHexString(), worlds, starDay, sayings };
+    client = { ...opened, live, target, identityHex: opened.identity.toHexString(), worlds, starDay, sayings, works };
     state = 'live';
     attempt = 0;
     status();
@@ -494,11 +521,11 @@ export function holdField(options: { label: string; answer: (client: Client, req
       const prior = scoped;
       scoped = { key, scope: want, handle };
       try { prior?.handle?.unsubscribe(); } catch {}
-      if (want !== 'whole') blind = true;
-      else if (blind) {
-        // Back in view whole after a narrower view: what moved unseen meanwhile
-        // is read now, at a new cursor.
-        blind = false;
+      const back = backInView(seen, prior?.scope, want);
+      seen = unionScope([seen, want]);
+      if (back) {
+        // A field (or the whole field) back in view after it was out of it:
+        // what moved there unseen meanwhile is read now, at a new cursor.
         count += 1;
         status();
       }
