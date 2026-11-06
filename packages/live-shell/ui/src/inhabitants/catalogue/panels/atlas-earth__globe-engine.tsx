@@ -18,7 +18,8 @@
 // (O-I #858 SF12, SF13; the Work page) are Software Factory's and the field's: `factoryRuns` (JSON options) the Runs this window's Factory
 // states hold and `factoryRun` the one chosen, `factoryUnits` and `factoryUnit` its task to offer, `grantReads`, `grantTouches` and
 // `grantDays` the grant, `fieldWork` and `fieldOffer` a work and a task chosen at the star, `madeLabel`, `madeSummary` and `madeRef` what a
-// taken task brings back, `offerNotes` (JSON, by offer ref) the line for a task an act left half done; the acts `starShow`,
+// taken task brings back, `factoryTakers` (JSON options) the Factory states a task is taken up in and `factoryTaker` the one chosen,
+// `offerNotes` (JSON, by offer ref) the line for a task an act left half done; the acts `starShow`,
 // `starUnshow`, `starOffer`, `offerTake`, `offerReturn`, `offerAccept` and `offerRevoke` go to Factory and then the field. By the hold
 // law (manual §16.10) an act that cannot be undone is held and one that can is pressed: Show
 // work, Take back and Offer a task are pressed (each has its undoing: Take back, Show work, Revoke); Take, Return, Accept and Revoke are
@@ -709,14 +710,17 @@ const chosenOffer = (v: V): SceneOffer | undefined => {
 }
 const workUnread = (v: V) => unreadRows(json<{workWhy?: string}>(v, 'field', {}).workWhy ?? 'No reading of what is shown and offered at the star.')
 /** The work each world shows at the chosen star: its name with whose it is, then its agents at work and what they made, as Factory
- * showed it. A work your world shows is chosen to take it back. */
+ * showed it. A live work whose window answers no more is away, as it was last shown (manual §17.2). A work your world shows is chosen
+ * to take it back. */
 const workRows = (v: V): RowItem[] | undefined => {
   const star = chosenStar(v)
   if (!star) return undefined
   if (star.works === null) return workUnread(v)
+  const now = Date.now()
   return star.works.flatMap((work): RowItem[] => [
-    {id: work.workRef, name: work.name, note: work.who, light: work.standing === 'live' ? 'lit' : 'dark', tone: work.mine ? 'value' : undefined,
-      does: `${work.mine ? 'Your world’s' : `${work.who}’s`} Run, ${work.standing === 'live' ? 'live while it is open' : 'as it was kept once it closed'}.${work.mine ? ' Choose it to take it back.' : ''}`},
+    {id: work.workRef, name: work.name, note: work.away ? `${work.who}, away` : work.who, light: work.standing === 'live' && !work.away ? 'lit' : 'dark', tone: work.mine ? 'value' : undefined,
+      does: `${work.mine ? 'Your world’s' : `${work.who}’s`} Run, ${work.away ? `as it was last shown${work.shownAt !== null ? ` at ${starWhen(work.shownAt, now)}` : ''}: the window that showed it answers no more`
+        : work.standing === 'live' ? 'live while it is open and its window answers' : 'as it was kept once it closed'}.${work.mine ? ' Choose it to take it back.' : ''}`},
     ...work.agents.map((agent, i): RowItem => ({id: `at:${work.workRef}:a${i}`, name: `${agent.agent} ${agent.at}`, light: agent.at === 'runs' ? 'lit' : 'dark', does: 'An agent at work on the Run, and what it is doing.'})),
     ...work.made.map((made, i): RowItem => ({id: `at:${work.workRef}:m${i}`, name: `Made: ${made.label}`, note: made.standing, light: 'lit', does: 'Something the Run made, and where it stands.'}))])
 }
@@ -755,8 +759,14 @@ function runSection(p: ViewProps) {
     {runChooser(p)}
     {showAct(p)}
     {unshowAct(p)}
+    {takerChooser(p)}
   </Section>
 }
+/** [SF13] The Software Factory a task your world takes up runs in: each state this window locates, by its project. It stands with the
+ * Run, as the Factory side of the work at the star; Take, below, takes a task up in it. */
+const takerChooser = (p: ViewProps) =>
+  <Chooser {...stand(p, 'factoryTaker', reachWhy(p.v))} wide label="Factory" does="The Software Factory a task you take up runs in, on this machine: each state this window locates, by its project."
+    value={strOf(p.v, 'factoryTaker') ?? ''} options={json<{value: string; label: string; does?: string}[]>(p.v, 'factoryTakers', [])} onChange={x => p.set('factoryTaker', x)} />
 const daysDial = (p: ViewProps) => <Dial {...stand(p, 'grantDays', reachWhy(p.v))} label="Days" does="How many days the grant stands from the offer: thirty at most. It lapses then."
   value={numOf(p.v, 'grantDays') ?? NaN} def={7} scale={{min: GRANT_DAYS.min, max: GRANT_DAYS.max, step: 1}} format={x => `${Math.round(x)} d`} onChange={x => p.set('grantDays', Math.round(x))} />
 function offerSection(p: ViewProps) {
@@ -1187,7 +1197,7 @@ const FIELD_SAMPLE = {
 }
 
 /** The design's own sample of what is shown and offered at the star (O-I #858, SF12, SF13), in the shapes atlasDevices.fieldValues hands
- * the face: your world shows a Run's work at your star; you offered two tasks there, one open and one Mara took and brought back; Mara
+ * the face: your world shows a Run's work at your star, and Mara one whose window answers no more (§17.2: it reads as last shown); you offered two tasks there, one open and one Mara took and brought back; Mara
  * offered one, open, and another your world took up. Factory's documents in its own shapes (factory.shown-work/v1, factory.task-offer/v1,
  * factory.task-offer-return/v1). */
 const SAMPLE_RUN = 'run:01ARZ3NDEKTSV4RRFFQ69G5FAA'
@@ -1200,7 +1210,11 @@ const sampleOffer = (ref: string, world: string, state: string, taker: string | 
 const FIELD_WORK = {
   works: [{star_ref: 'star:rosarium', world_ref: 'world:teraphim', work_ref: SAMPLE_RUN, standing: 'live', revision: 7,
     shown: {schema: 'factory.shown-work/v1', owner: 'factory', work_ref: SAMPLE_RUN, revision: 7, name: 'The river maps', standing: 'live', lifecycle: 'active',
-      agents: [{agent: 'Cartographer', at: 'runs'}, {agent: 'Surveyor', at: 'waits'}], made: [{label: 'The delta chart', standing: 'candidate'}], tasks: {runs: 1, waits: 1}, withheld: 0}}],
+      agents: [{agent: 'Cartographer', at: 'runs'}, {agent: 'Surveyor', at: 'waits'}], made: [{label: 'The delta chart', standing: 'candidate'}], tasks: {runs: 1, waits: 1}, withheld: 0},
+    answering: true, updated_at: SAMPLE_AT},
+    {star_ref: 'star:rosarium', world_ref: 'world:mara', work_ref: 'run:01ARZ3NDEKTSV4RRFFQ69G5FAB', standing: 'live', revision: 3, answering: false, updated_at: SAMPLE_AT + 1_800_000,
+      shown: {schema: 'factory.shown-work/v1', owner: 'factory', work_ref: 'run:01ARZ3NDEKTSV4RRFFQ69G5FAB', revision: 3, name: 'The plate readings', standing: 'live', lifecycle: 'active',
+        agents: [], made: [], tasks: {waits: 0, runs: 0, stalls: 0, returned: 0, done: 0, failed: 0, stopped: 0, idle: 0}, withheld: 0}}],
   offers: [sampleOffer('offer:channels', 'world:teraphim', 'open', null, 'Chart the delta’s channels from the survey notes.'),
     sampleOffer('offer:soundings', 'world:teraphim', 'returned', 'world:mara', 'Take soundings along the north bank.',
       {schema: 'factory.task-offer-return/v1', offer_ref: 'offer:soundings', star_ref: 'star:rosarium', by: {world_ref: 'world:mara', name: 'mara'},
@@ -1325,7 +1339,8 @@ export const design: DesignedDevice = {
       factoryRun: '["/ground/.factory/state.json","run:01ARZ3NDEKTSV4RRFFQ69G5FAA"]',
       factoryUnits: JSON.stringify([{value: 'workflow-unit:01ARZ3NDEKTSV4RRFFQ69G5FAY', label: 'inspect-source'}]), factoryUnit: 'workflow-unit:01ARZ3NDEKTSV4RRFFQ69G5FAY',
       grantReads: 'project:river/docs', grantTouches: 'project:river/maps', grantDays: 7, fieldWork: SAMPLE_RUN, fieldOffer: 'offer:maras-index',
-      madeLabel: 'The plate index', madeSummary: 'Indexed the twenty plates by their figures.', madeRef: 'project:river/maps'},
+      madeLabel: 'The plate index', madeSummary: 'Indexed the twenty plates by their figures.', madeRef: 'project:river/maps',
+      factoryTakers: JSON.stringify([{value: '/ground/.factory/state.json', label: 'Central'}, {value: '/river/.factory/state.json', label: 'river'}]), factoryTaker: '/ground/.factory/state.json'},
     'Nothing in focus': {'pane.title': undefined, 'pane.controls': JSON.stringify([])},
     'No readings': Object.fromEntries(['light', 'view', 'scale', 'cursor', 'allTime', 'playing', 'cumulative', 'scope', 'wholeField', 'relation', 'selected', 'placeArmed', 'placePage', 'baseKind',
       'graphOpen', 'local', 'depth', 'centre', 'repel', 'link', 'distance', 'tieJung', 'tieInferred', 'tieSite', 'kindArchetype', 'kindTheoretic', 'kindFamily', 'occurrences', 'skyAnchors',
@@ -1333,7 +1348,7 @@ export const design: DesignedDevice = {
       'placeKind', 'locations', 'bodyRecord', 'bodyLook', 'bodyTime', 'generationNote', 'pane.title', 'pane.controls',
       'aperture', 'viewAs', 'field', 'fieldYours', 'fieldHeld', 'fieldWhy', 'cameraScale', 'fieldStar', 'fieldWaiting', 'fieldAdmit', 'starName', 'starGathers', 'starComes',
       'fieldSayTo', 'sayWhat', 'sayWords', 'dayPage', 'saidPage', 'factoryRuns', 'factoryRun', 'factoryUnits', 'factoryUnit', 'grantReads', 'grantTouches', 'grantDays',
-      'fieldWork', 'fieldOffer', 'madeLabel', 'madeSummary', 'madeRef', 'workPage', 'offerPage', 'offerNotes'].map(k => [k, undefined])),
+      'fieldWork', 'fieldOffer', 'madeLabel', 'madeSummary', 'madeRef', 'workPage', 'offerPage', 'offerNotes', 'factoryTakers', 'factoryTaker'].map(k => [k, undefined])),
   },
 
   folded: p => <Folded title="World" light={light(p)} readings={atFieldGraph(p.v) ? ['graph', shown(p.v, 'scale')] : strOf(p.v, 'view') === 'graph' ? ['graph', depthText(p.v)] : [shown(p.v, 'scale'), whenOf(p.v) ?? NONE]} onUnfold={p.nav.unfold} />,

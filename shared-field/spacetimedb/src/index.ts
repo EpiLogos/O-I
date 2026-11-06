@@ -682,6 +682,33 @@ const starWorkBacking = table(
   }
 );
 
+/* Whether a work shown at a star still answers (O-I #858; manual §17.2: a run
+ * of work shown in the field "is live while its source answers"): its world's
+ * window, on the connection it showed the work from. Showing a live work, or
+ * showing it again, makes it answer on that connection; that connection gone,
+ * it answers no more, and the work reads as it was last shown until its window
+ * shows it again. A kept work stands as it was kept and needs no answer. Two
+ * tables of their own, so no existing table changes: what is served, and the
+ * connection it answers on, which is never served. */
+const starWorkAnswerBacking = table(
+  { name: 'star_work_answer_backing', public: false },
+  {
+    workKey: t.string().primaryKey(),
+    starRef: t.string().index('btree'),
+    worldRef: t.string().index('btree'),
+    workRef: t.string(),
+    answeredAtMicros: t.u64(),
+  }
+);
+const starWorkAnswerConnection = table(
+  { name: 'star_work_answer_connection_backing', public: false },
+  {
+    workKey: t.string().primaryKey(),
+    connectionRef: t.string().index('btree'),
+    answerIdentity: t.identity().index('btree'),
+  }
+);
+
 /* A task offered at a star (O-I #858, SF13): Software Factory's offer of one
  * unit of a programme (`factory.task-offer/v1`) under the grant its offerer
  * set, for another world gathered at the star to take up on its own machine.
@@ -744,6 +771,8 @@ const spacetimedb = schema({
   starSayingBacking,
   starWorkBacking,
   starOfferBacking,
+  starWorkAnswerBacking,
+  starWorkAnswerConnection,
 });
 
 export default spacetimedb;
@@ -3096,6 +3125,11 @@ export const client_disconnected = spacetimedb.clientDisconnected((ctx) => {
     ? Array.from(ctx.db.activityLivenessBacking.producerIdentity.filter(ctx.sender))
     : Array.from(ctx.db.activityLivenessBacking.producerConnection.filter(connection));
   for (const row of held) ctx.db.activityLivenessBacking.activityKey.delete(row.activityKey);
+  // a work shown at a star answers on the connection that showed it: that connection gone, it answers no more
+  const answering = connection === ''
+    ? Array.from(ctx.db.starWorkAnswerConnection.answerIdentity.filter(ctx.sender))
+    : Array.from(ctx.db.starWorkAnswerConnection.connectionRef.filter(connection));
+  for (const row of answering as any[]) unanswerWork(ctx, row.workKey);
 });
 
 /* ---------- Activity liveness (owner-side producer evidence) ---------- */
@@ -3672,6 +3706,61 @@ export const world_gathering = spacetimedb.view(
   }
 );
 
+/* The caller's circle (O-I #858; manual §17.2, Aperture): its own worlds, the
+ * stars it lit or a world of its own is gathered at, and the worlds gathered
+ * at those stars. The World's narrower apertures (World, Local, Shared) read
+ * the clearings and gatherings of the circle alone, so what moves far away
+ * sends them nothing; Federated reads the whole field. A world of the
+ * caller's that only asked at a star reads its own asking there, not the
+ * star's company. The worlds and the stars themselves are read whole either
+ * way: what lies past the edge is counted. */
+function callerCircleStars(ctx: any): Set<string> {
+  const stars = new Set<string>();
+  for (const owned of ctx.db.worldOwner.ownerIdentity.filter(ctx.sender)) {
+    for (const gathering of ctx.db.worldGatheringBacking.worldRef.filter(owned.worldRef)) if (gathering.state === 'gathered') stars.add(gathering.starRef);
+  }
+  for (const lit of ctx.db.fieldOwner.ownerIdentity.filter(ctx.sender)) if (starRow(ctx, lit.fieldRef)) stars.add(lit.fieldRef);
+  return stars;
+}
+
+function inCallerCircle(ctx: any, worldRef: string, stars: Set<string>): boolean {
+  if (callerOwnsWorld(ctx, worldRef)) return true;
+  for (const gathering of ctx.db.worldGatheringBacking.worldRef.filter(worldRef)) {
+    if (gathering.state === 'gathered' && stars.has(gathering.starRef)) return true;
+  }
+  return false;
+}
+
+export const my_circle_clearing = spacetimedb.view(
+  { name: 'my_circle_clearing', public: true },
+  t.array(worldClearingBacking.rowType),
+  (ctx) => {
+    const rows: any[] = [];
+    const stars = callerCircleStars(ctx);
+    for (const visible of visibleWorldRows(ctx)) {
+      if (!inCallerCircle(ctx, visible.worldRef, stars)) continue;
+      for (const row of ctx.db.worldClearingBacking.worldRef.filter(visible.worldRef)) if (callerCanSeeClearing(ctx, row)) rows.push(row);
+    }
+    return rows;
+  }
+);
+
+export const my_circle_gathering = spacetimedb.view(
+  { name: 'my_circle_gathering', public: true },
+  t.array(worldGatheringBacking.rowType),
+  (ctx) => {
+    const rows: any[] = [];
+    const stars = callerCircleStars(ctx);
+    for (const visible of visibleWorldRows(ctx)) {
+      const own = callerOwnsWorld(ctx, visible.worldRef);
+      for (const row of ctx.db.worldGatheringBacking.worldRef.filter(visible.worldRef)) {
+        if ((own || stars.has(row.starRef)) && callerCanSeeGathering(ctx, row)) rows.push(row);
+      }
+    }
+    return rows;
+  }
+);
+
 /* A world is put by its first creator and stays theirs; Link takes it into
  * the field and out again, leaving everything in it as it was. A put that
  * changes nothing writes nothing (no viewer's cursor moves for it). */
@@ -3825,7 +3914,7 @@ function takeBackFromStar(ctx: any, starRef: string, worldRef: string): void {
   }
   // the work it showed there, and the tasks it offered there and nobody has brought back
   for (const work of Array.from(ctx.db.starWorkBacking.worldRef.filter(worldRef)) as any[]) {
-    if (work.starRef === starRef) ctx.db.starWorkBacking.workKey.delete(work.workKey);
+    if (work.starRef === starRef) { ctx.db.starWorkBacking.workKey.delete(work.workKey); unanswerWork(ctx, work.workKey); }
   }
   for (const offer of Array.from(ctx.db.starOfferBacking.worldRef.filter(worldRef)) as any[]) {
     if (offer.starRef === starRef && (offer.state === 'open' || offer.state === 'taken')) {
@@ -3870,7 +3959,7 @@ export const close_star = spacetimedb.reducer(
     for (const entry of Array.from(ctx.db.starDayBacking.starRef.filter(args.starRef)) as any[]) ctx.db.starDayBacking.rowId.delete(entry.rowId);
     for (const saying of Array.from(ctx.db.starSayingBacking.starRef.filter(args.starRef)) as any[]) ctx.db.starSayingBacking.sayingRef.delete(saying.sayingRef);
     // the work shown there and the tasks offered there go with it
-    for (const work of Array.from(ctx.db.starWorkBacking.starRef.filter(args.starRef)) as any[]) ctx.db.starWorkBacking.workKey.delete(work.workKey);
+    for (const work of Array.from(ctx.db.starWorkBacking.starRef.filter(args.starRef)) as any[]) { ctx.db.starWorkBacking.workKey.delete(work.workKey); unanswerWork(ctx, work.workKey); }
     for (const offer of Array.from(ctx.db.starOfferBacking.starRef.filter(args.starRef)) as any[]) ctx.db.starOfferBacking.offerRef.delete(offer.offerRef);
     ctx.db.sharedFieldBacking.rowId.delete(star.rowId);
     ctx.db.fieldOwner.fieldRef.delete(args.starRef);
@@ -4043,10 +4132,44 @@ export const star_work = spacetimedb.view(
   }
 );
 
+/* Which shown works still answer, served exactly where the work is: never the
+ * connection or identity it answers on. */
+export const star_work_answer = spacetimedb.view(
+  { name: 'star_work_answer', public: true },
+  t.array(starWorkAnswerBacking.rowType),
+  (ctx) => {
+    const rows: any[] = [];
+    for (const row of ctx.db.starWorkAnswerBacking.iter()) {
+      const work = ctx.db.starWorkBacking.workKey.find(row.workKey);
+      if (work && callerCanSeeStarWork(ctx, work)) rows.push(row);
+    }
+    return rows;
+  }
+);
+
+/* The work answers on the caller's connection while it is live; kept, or shown
+ * from no connection (a one-shot call that cannot answer later), it answers on
+ * none. Answering already on this connection, nothing changes. */
+function answerWork(ctx: any, key: string, starRef: string, worldRef: string, workRef: string, standing: string): void {
+  const connection = callerConnection(ctx);
+  const bound = ctx.db.starWorkAnswerConnection.workKey.find(key);
+  if (standing === 'live' && connection !== '' && bound && bound.connectionRef === connection) return;
+  unanswerWork(ctx, key);
+  if (standing !== 'live' || connection === '') return;
+  ctx.db.starWorkAnswerBacking.insert({ workKey: key, starRef, worldRef, workRef, answeredAtMicros: nowMicros(ctx) });
+  ctx.db.starWorkAnswerConnection.insert({ workKey: key, connectionRef: connection, answerIdentity: ctx.sender });
+}
+
+function unanswerWork(ctx: any, key: string): void {
+  ctx.db.starWorkAnswerBacking.workKey.delete(key);
+  ctx.db.starWorkAnswerConnection.workKey.delete(key);
+}
+
 /* Show a piece of work at a star, or show it again as it moved: only its
  * world does, while gathered there, and only forward — a reading older than
  * the one shown is refused, and once its Run has closed it stands as it was
- * kept. Shown again exactly, it changes nothing. */
+ * kept. Shown again exactly, it changes nothing; while it is live it answers
+ * on the connection that showed it (star_work_answer). */
 export const show_work_at_star = spacetimedb.reducer(
   { starRef: t.string(), worldRef: t.string(), workRef: t.string(), shownJson: t.string() },
   (ctx, args) => {
@@ -4061,14 +4184,17 @@ export const show_work_at_star = spacetimedb.reducer(
     const now = nowMicros(ctx);
     const existing = ctx.db.starWorkBacking.workKey.find(key);
     if (existing) {
-      if (existing.shownJson === shownJson) return;
+      // shown again exactly, the work changes nothing; it answers again on this connection while it is live
+      if (existing.shownJson === shownJson) { answerWork(ctx, key, args.starRef, args.worldRef, args.workRef, existing.standing); return; }
       if (existing.standing === 'kept') fail('This work was kept when it closed; it stands as it was');
       if (BigInt(shown.revision) < existing.revision) fail('A newer reading of this work is shown already');
       ctx.db.starWorkBacking.workKey.update({ ...existing, shownJson, revision: BigInt(shown.revision), standing: shown.standing, updatedAtMicros: now });
+      answerWork(ctx, key, args.starRef, args.worldRef, args.workRef, shown.standing);
       return;
     }
     if (Array.from(ctx.db.starWorkBacking.worldRef.filter(args.worldRef)).filter((row: any) => row.starRef === args.starRef).length >= STAR_WORK_LIMIT) fail('Your world shows as much work at this star as one world may');
     ctx.db.starWorkBacking.insert({ workKey: key, starRef: args.starRef, worldRef: args.worldRef, workRef: args.workRef, shownJson, revision: BigInt(shown.revision), standing: shown.standing, shownAtMicros: now, updatedAtMicros: now });
+    answerWork(ctx, key, args.starRef, args.worldRef, args.workRef, shown.standing);
     noteStarDay(ctx, args.starRef, args.worldRef, 'showed', 'work');
   }
 );
@@ -4081,6 +4207,7 @@ export const unshow_work_at_star = spacetimedb.reducer(
     const key = workKey(args.starRef, args.worldRef, args.workRef);
     if (!ctx.db.starWorkBacking.workKey.find(key)) fail('That work is not shown at this star');
     ctx.db.starWorkBacking.workKey.delete(key);
+    unanswerWork(ctx, key);
     if (starRow(ctx, args.starRef)) noteStarDay(ctx, args.starRef, args.worldRef, 'took-back', 'work');
   }
 );

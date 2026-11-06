@@ -30,7 +30,16 @@
  * kept once its Run closed; a task offered there (`factory.task-offer/v1`)
  * carries its grant, is taken by one world and comes back under that world's
  * name only within the grant, before it lapses and unless it was revoked, to
- * the offerer and taker alone, standing apart until accepted.
+ * the offerer and taker alone, standing apart until accepted. A work is live
+ * while its source answers (manual §17.2): it answers on the connection that
+ * showed it, and with that window gone it reads as it was last shown until a
+ * window of its world shows it again. A mark planted where B and C are not
+ * let in — a work and a task at a star of A's alone — reaches no payload,
+ * count, graph or line of theirs.
+ *
+ * Aperture: at World, Local and Shared a client reads the clearings and
+ * gatherings of its circle alone, so what moves outside it sends nothing;
+ * Federated reads the whole field.
  *
  * Runs only against a SpacetimeDB on this machine's loopback, never a hosted
  * or retained field:
@@ -415,6 +424,24 @@ try {
     await waitFor(async () => (await heldA2.data({ kind: 'snapshot' })).gatherings.some((g: any) => g.star_ref === star && g.world_ref === world && g.state === 'asked'), `A to see ${world} ask`);
   }
   await heldA2.data({ kind: 'star-admit', star_ref: star, world_ref: worldB });
+  /* ---------- Aperture (manual §17.2): the narrower apertures read B's circle alone ----------
+   * At World, Local and Shared B reads the clearings and gatherings of its circle — its own world, A's star where it is gathered and
+   * A's world gathered there — so what C, waiting at the edge, opens to the public sends B nothing; the worlds themselves are read
+   * whole, so what lies past the edge is counted; Federated reads the whole field. */
+  const atShared = await heldB.data({ kind: 'worlds', aperture: 'shared' });
+  assert.equal(atShared.world_scope, 'circle', 'Shared reads B\'s circle');
+  assert.ok(atShared.worlds.some((w: any) => w.world_ref === worldC), 'the worlds are read whole, so what lies past the edge is counted');
+  assert.ok(atShared.gatherings.some((g: any) => g.star_ref === star && g.world_ref === worldA), 'B reads who is gathered at its star');
+  for (let last = -1; last !== heldB.transactions().length;) { last = heldB.transactions().length; await sleep(600); }
+  const farFrom = heldB.transactions().length;
+  await heldC.data({ kind: 'clearing-open', world_ref: worldC, part_ref: 'page:far-away', audience: 'public', shown: { kind: 'page', label: 'Far away' } });
+  await waitFor(async () => clearingsOf(await heldA2.data({ kind: 'snapshot' }), worldC).some((c: any) => c.part_ref === 'page:far-away'), 'A, reading the whole field, to see C\'s public clearing');
+  await sleep(1500);
+  assert.equal(heldB.transactions().length, farFrom, `at Shared, what moves outside B's circle sends B nothing: ${JSON.stringify(heldB.transactions().slice(farFrom))}`);
+  assert.deepEqual(clearingsOf(await heldB.data({ kind: 'worlds', aperture: 'shared' }), worldC), [], 'nor is it read there');
+  const atFederated = await heldB.data({ kind: 'worlds', aperture: 'federated' });
+  assert.equal(atFederated.world_scope, 'whole', 'Federated reads the whole field');
+  assert.ok(clearingsOf(atFederated, worldC).some((c: any) => c.part_ref === 'page:far-away'), 'and C\'s public clearing with it');
   const WORK_MARK = `WORK-MARK-858-${run}`, RETURN_MARK = `RETURN-MARK-858-${run}`;
   const workRef = 'run:01ARZ3NDEKTSV4RRFFQ69G5FAA';
   const shownWork = (revision: number, at: string, lifecycle = 'running') => ({
@@ -442,6 +469,19 @@ try {
   // Watching changes nothing: B reads it again and again; the row stands as A last showed it.
   for (let n = 0; n < 3; n += 1) await heldB.data({ kind: 'snapshot' });
   assert.equal(worksOf(await heldA2.data({ kind: 'snapshot' }))[0].updated_at_micros, showed.work.updated_at_micros, 'watching changes nothing in what is shown');
+  // Live while its source answers (manual §17.2): a work answers on the connection that showed it. That window gone, B reads it as it
+  // was last shown, the work itself untouched; shown again from a window of A's (the same reading), it answers again.
+  assert.equal(seenWork.answering, true, 'B reads the work answering while the window that showed it stands');
+  const heldA3 = holdAs('one-field-a'); held.push(heldA3);
+  await heldA3.data({ kind: 'work-show', star_ref: star, world_ref: worldA, shown: shownWork(3, 'runs') });
+  assert.equal(await heldA3.end(), 0);
+  held.splice(held.indexOf(heldA3), 1);
+  const away = await waitFor(async () => { const work = worksOf(await heldB.data({ kind: 'snapshot' }))[0]; return work?.answering === false && work; }, 'B to read the work away once the window that showed it is gone');
+  assert.deepEqual([away.standing, away.revision, away.updated_at_micros, away.shown], ['live', 3, showed.work.updated_at_micros, shownWork(3, 'runs')], 'it reads as it was last shown');
+  await heldA2.data({ kind: 'work-show', star_ref: star, world_ref: worldA, shown: shownWork(3, 'runs') });
+  await waitFor(async () => worksOf(await heldB.data({ kind: 'snapshot' }))[0]?.answering === true, 'B to read the work answering again once A shows it again');
+  assert.equal(worksOf(await heldA2.data({ kind: 'snapshot' }))[0].updated_at_micros, showed.work.updated_at_micros, 'answering again changes nothing in what is shown');
+  assert.ok(!heldC.raw.some((line) => line.includes(workRef)), 'C, waiting at the edge, is told nothing of whether it answers');
   // Shown again as it moves, forward only; once its Run closes it stands as it was kept.
   await heldA2.data({ kind: 'work-show', star_ref: star, world_ref: worldA, shown: shownWork(4, 'returned') });
   await waitFor(async () => worksOf(await heldB.data({ kind: 'snapshot' }))[0]?.revision === 4, 'B to watch the work move');
@@ -521,6 +561,32 @@ try {
   const lapsedTake = await heldB.ask({ kind: 'offer-take', offer_ref: o3.offer_ref, world_ref: worldB });
   assert.equal(lapsedTake.ok, false, 'a lapsed grant is taken by nobody');
   assert.match(lapsedTake.error.message, /lapsed/);
+  // No leaks, with work and tasks at stars: A lights a star B and C are not let in to, and shows a work and offers a task there under
+  // the private mark of its unshown page. Neither receives it in any payload, count, Explore graph or line its client sent out, while
+  // each reads the work and tasks at the star it is gathered at (non-vacuous).
+  const alone = `star:one-field:${run}:alone`;
+  await heldA2.data({ kind: 'star-light', star_ref: alone, world_ref: worldA, name: 'Alone', gathers: 'Nothing for anyone yet', comes: 'asked' });
+  await heldA2.data({ kind: 'work-show', star_ref: alone, world_ref: worldA, shown: { ...shownWork(1, 'runs'), work_ref: 'run:01ARZ3NDEKTSV4RRFFQ69G5FCC', name: `Alone ${MARK}` } });
+  const oAlone = { ...offer('alone', Date.now() + HOUR), star_ref: alone, task: { key: 'inspect-source', asks: `Alone ${MARK}`, returns: 'factory.inspect-source/v1' } };
+  await heldA2.data({ kind: 'offer-put', star_ref: alone, world_ref: worldA, offer: oAlone });
+  const ownAlone = await heldA2.data({ kind: 'snapshot' });
+  assert.ok(JSON.stringify(ownAlone.star_works.filter((w: any) => w.star_ref === alone)).includes(MARK) && ownAlone.star_offers.some((o: any) => o.offer_ref === oAlone.offer_ref),
+    'A reads the work and task it put at its lone star (non-vacuous)');
+  await sleep(1500);
+  for (const [one, from] of [[heldB, rawFrom], [heldC, 0]] as const) {
+    const observed = await one.data({ kind: 'observe' });
+    // each aperture's reading; Federated last, as the rest of this walk reads the whole field
+    const sweep = [observed, await one.data({ kind: 'snapshot' }), await one.data({ kind: 'worlds', aperture: 'shared' }), await one.data({ kind: 'worlds', aperture: 'federated' }),
+      await one.data({ kind: 'read', ref: alone }), await one.data({ kind: 'status' }),
+      observed.snapshot.entries.map((entry: any) => createExploreSurfaceModelFromHostedSnapshot(observed.snapshot).open(entry.ref, { depth: 2, budget: 64 }))];
+    assert.ok((sweep[1].star_offers ?? []).some((o: any) => o.star_ref === star), `${one.label} reads the tasks at the star it is gathered at (non-vacuous)`);
+    for (const payload of sweep) assert.ok(!JSON.stringify(payload).includes(MARK), `${one.label} received the private mark: ${JSON.stringify(payload).slice(0, 400)}`);
+    assert.equal((sweep[1].star_works ?? []).filter((w: any) => w.star_ref === alone).length + (sweep[1].star_offers ?? []).filter((o: any) => o.star_ref === alone).length, 0,
+      `${one.label} counts no work or task at a star it is not at`);
+    assert.ok(!one.raw.slice(from).some((line) => line.includes(MARK)), `nothing ${one.label}'s client sent out names the mark`);
+  }
+  await heldA2.data({ kind: 'star-close', star_ref: alone });
+
   // What B showed and offered at the star goes when B leaves it.
   const bWork = { ...shownWork(1, 'runs'), work_ref: 'run:01ARZ3NDEKTSV4RRFFQ69G5FBB', name: 'Reading the fourth plate' };
   await heldB.data({ kind: 'work-show', star_ref: star, world_ref: worldB, shown: bWork });
@@ -577,6 +643,9 @@ try {
     'a piece of work shown at a star is watched by the worlds gathered there exactly as Factory showed it (no prompt, file or machine rides along), moves forward only, stands as it was kept, and watching changes nothing (SF12)',
     'a task offered at a star carries its grant; one gathered world takes it, brings back under its own name only what the grant let it touch, before it lapses and unless it was revoked; what came back reaches the offerer and taker alone and stands apart until accepted (SF13)',
     'leaving takes back what was shown at a star; withdrawing and Link off go back under cloud; closing returns every world',
+    'a work shown at a star answers on the connection that showed it: with that window gone it reads as it was last shown, and shown again it answers again (manual §17.2)',
+    'at World, Local and Shared a client reads its circle alone and what moves outside it sends nothing; Federated reads the whole field (Aperture)',
+    'a private mark shown and offered at a star the others are not let in to reaches none of their payloads, counts, graphs or lines, beside the work and tasks they do read',
   ] }));
 } finally {
   for (const one of held) { try { one.child.stdin!.end(); } catch {} }

@@ -59,12 +59,26 @@ export const STAR_SAYING_SUBSCRIPTION = ['SELECT * FROM star_saying'];
 /** The work shown at each star and the tasks offered there (O-I #858, SF12, SF13), Software Factory's documents carried between
  * worlds, subscribed on their own beside what is said there: a service that keeps neither yet is read as it was, and says so. */
 export const STAR_WORK_SUBSCRIPTION = ['SELECT * FROM star_work', 'SELECT * FROM star_offer'];
+/** Which works shown at a star still answer (O-I #858; manual §17.2, "live while its source answers"), subscribed on its own beside
+ * them: a service that keeps no answers reads each work by its standing alone, as it always did. */
+export const STAR_WORK_ANSWER_SUBSCRIPTION = ['SELECT * FROM star_work_answer'];
+/** The worlds as the World's narrower apertures read them (O-I #858, Aperture: World, Local, Shared): the worlds and the caller's own
+ * whole, so what lies past the edge is counted, and the clearings and gatherings of the caller's circle alone, so what moves far away
+ * sends nothing. Federated reads WORLD_SUBSCRIPTION; a service without the circle views is read whole. */
+export const CIRCLE_SUBSCRIPTION = ['SELECT * FROM world', 'SELECT * FROM my_world', 'SELECT * FROM my_circle_clearing', 'SELECT * FROM my_circle_gathering'];
+/** How much of the worlds a connection reads: the whole field, or the caller's circle. */
+export type WorldScope = 'whole' | 'circle';
+/** The World's apertures, and the scope each reads. */
+export const APERTURE_SCOPE: Readonly<Record<string, WorldScope>> = { world: 'circle', local: 'circle', shared: 'circle', federated: 'whole' };
+/** The scope an aperture reads, or undefined for what is no aperture. */
+export const apertureScope = (aperture: unknown): WorldScope | undefined => (typeof aperture === 'string' && Object.hasOwn(APERTURE_SCOPE, aperture) ? APERTURE_SCOPE[aperture] : undefined);
 /** Whether this connection holds the field's worlds, or why not. */
 export type WorldsHeld = { state: 'held' } | { state: 'unavailable'; detail: string };
 const NO_WORLDS = 'This field\'s service does not hold worlds yet';
 const NO_STAR_DAY = 'This field\'s service does not keep a star\'s day yet';
 const NO_SAYINGS = 'This field\'s service does not keep what is said at a star yet';
 const NO_WORKS = 'This field\'s service does not keep work shown or tasks offered at a star yet';
+const NO_ANSWERS = 'This field\'s service does not keep whether a work shown at a star still answers yet';
 const TIMEOUT_MS = Number(process.env.OI_SHARED_FIELD_TIMEOUT_MS ?? 15_000);
 export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -113,7 +127,11 @@ export function tokenFile(database: string, label = 'owner') {
   return join(state, 'spacetimedb', label === 'owner' ? `${database}.owner-token` : `${database}.${label}-token`);
 }
 
-export interface Client { conn: DbConnection; identity: any; token: string; lifecycle: any; live: any; target: Target; identityHex: string; worlds: WorldsHeld; starDay: WorldsHeld; sayings: WorldsHeld; works: WorldsHeld }
+export interface Client { conn: DbConnection; identity: any; token: string; lifecycle: any; live: any; target: Target; identityHex: string; worlds: WorldsHeld; starDay: WorldsHeld; sayings: WorldsHeld; works: WorldsHeld
+  /** whether the works' answers are held (§17.2) */
+  answers: WorldsHeld
+  /** how much of the worlds this connection reads, and the subscription that reads it */
+  worldScope: WorldScope; worldHandle?: any }
 
 export async function connect(target: Target, token?: string): Promise<{ conn: DbConnection; identity: any; token: string; lifecycle: any }> {
   const lifecycle = createExploreTransportLifecycle();
@@ -153,21 +171,42 @@ export async function open(target: Target, label = 'owner'): Promise<Client> {
   }
   try { await subscribe(opened.conn, opened.lifecycle); }
   catch (error) { opened.conn.disconnect(); throw error; }
-  const { worlds, starDay, sayings, works } = await holdWorlds(opened.conn);
+  const held = await holdWorlds(opened.conn);
   const live = createLiveExploreApplication(createSpacetimeExploreSource(opened.conn.db, opened.lifecycle));
-  return { ...opened, live, target, identityHex: opened.identity.toHexString(), worlds, starDay, sayings, works };
+  return { ...opened, live, target, identityHex: opened.identity.toHexString(), ...held, worldScope: 'whole' };
 }
 
 /** Subscribe the worlds beside the field, each star's day beside them and what was said at each star beside that; a service without
  * any of them is said, never an error of the field. */
-async function holdWorlds(conn: DbConnection): Promise<{ worlds: WorldsHeld; starDay: WorldsHeld; sayings: WorldsHeld; works: WorldsHeld }> {
-  const held = async (queries: string[], detail: string): Promise<WorldsHeld> => {
-    try { await subscribeQueries(conn, queries); return { state: 'held' }; } catch { return { state: 'unavailable', detail }; }
+async function holdWorlds(conn: DbConnection): Promise<{ worlds: WorldsHeld; starDay: WorldsHeld; sayings: WorldsHeld; works: WorldsHeld; answers: WorldsHeld; worldHandle?: any }> {
+  let worldHandle: any;
+  const held = async (queries: string[], detail: string, keep?: (handle: any) => void): Promise<WorldsHeld> => {
+    try { const handle = await subscribeQueries(conn, queries); keep?.(handle); return { state: 'held' }; } catch { return { state: 'unavailable', detail }; }
   };
-  const worlds = await held(WORLD_SUBSCRIPTION, NO_WORLDS);
-  if (worlds.state !== 'held') return { worlds, starDay: { state: 'unavailable', detail: NO_STAR_DAY }, sayings: { state: 'unavailable', detail: NO_SAYINGS }, works: { state: 'unavailable', detail: NO_WORKS } };
-  return { worlds, starDay: await held(STAR_DAY_SUBSCRIPTION, NO_STAR_DAY), sayings: await held(STAR_SAYING_SUBSCRIPTION, NO_SAYINGS), works: await held(STAR_WORK_SUBSCRIPTION, NO_WORKS) };
+  const worlds = await held(WORLD_SUBSCRIPTION, NO_WORLDS, (handle) => { worldHandle = handle; });
+  if (worlds.state !== 'held') return { worlds, starDay: { state: 'unavailable', detail: NO_STAR_DAY }, sayings: { state: 'unavailable', detail: NO_SAYINGS }, works: { state: 'unavailable', detail: NO_WORKS }, answers: { state: 'unavailable', detail: NO_ANSWERS } };
+  const works = await held(STAR_WORK_SUBSCRIPTION, NO_WORKS);
+  return { worlds, worldHandle, starDay: await held(STAR_DAY_SUBSCRIPTION, NO_STAR_DAY), sayings: await held(STAR_SAYING_SUBSCRIPTION, NO_SAYINGS), works,
+    answers: works.state === 'held' ? await held(STAR_WORK_ANSWER_SUBSCRIPTION, NO_ANSWERS) : { state: 'unavailable', detail: NO_ANSWERS } };
 }
+
+/** Read the worlds at a scope (the World's Aperture): subscribe it, and only once it has applied let the scope before it go. A service
+ * without the circle views, or whose worlds are not held, keeps the scope it has. Rows the scope brings in or lets go are no
+ * transaction. */
+export async function scopeWorlds(client: Client, scope: WorldScope): Promise<WorldScope> {
+  if (client.worlds.state !== 'held' || client.worldScope === scope) return client.worldScope;
+  let handle: any;
+  try { handle = await subscribeQueries(client.conn, scope === 'circle' ? CIRCLE_SUBSCRIPTION : WORLD_SUBSCRIPTION); } catch { return client.worldScope; }
+  const prior = client.worldHandle;
+  client.worldHandle = handle;
+  client.worldScope = scope;
+  try { prior?.unsubscribe(); } catch {}
+  return scope;
+}
+
+/** The clearings and gatherings as this connection reads them: the caller's circle, or the whole field. */
+const clearingRows = (client: Client): any[] => rows(client.worldScope === 'circle' ? (client.conn.db as any).myCircleClearing : (client.conn.db as any).worldClearing);
+const gatheringRows = (client: Client): any[] => rows(client.worldScope === 'circle' ? (client.conn.db as any).myCircleGathering : (client.conn.db as any).worldGathering);
 
 export function close(client: Client) {
   try { client.live.dispose(); } catch {}
@@ -224,7 +263,7 @@ export function fieldSnapshot(client: Client) {
     field_day: rows(db.fieldDay).map(fieldDayReading),
     ...worldReading(client),
     counts: { fields: hosted.fields.length, participants: hosted.participants.length, projections: hosted.projections.length, entries: hosted.entries.length, relations: hosted.relations.length, field_now: rows(db.fieldNow).length, field_day: rows(db.fieldDay).length,
-      worlds: rows(db.world).length, clearings: rows(db.worldClearing).length, stars: rows(db.sharedField).filter((row: any) => row.kind === 'star').length, gatherings: rows(db.worldGathering).length },
+      worlds: rows(db.world).length, clearings: clearingRows(client).length, stars: rows(db.sharedField).filter((row: any) => row.kind === 'star').length, gatherings: gatheringRows(client).length },
     // The SharedField each Explore entry is hosted in (the row's fieldRef;
     // the entry contract itself carries no field) — what a Watch or a
     // membership reading is scoped to. Keyed by the entry's semantic ref.
@@ -248,12 +287,16 @@ export function worldReading(client: Client) {
     return { star_ref: row.fieldRef, name: contract.title ?? row.fieldRef, gathers: contract.presentation?.gathers ?? '', comes: contract.presentation?.comes ?? 'asked',
       lit_by: litBy, mine: litBy !== null && mine.has(litBy), ...(contract.parent_field_ref ? { within: contract.parent_field_ref } : {}) };
   });
+  // which works shown at a star still answer (§17.2): known only where the service keeps it
+  const answered = client.answers.state === 'held' ? new Set(rows(db.starWorkAnswer).map((row: any) => row.workKey)) : null;
   return {
     world_field: client.worlds,
+    // how much of the worlds is read: the whole field (Federated), or the caller's circle (World, Local, Shared)
+    world_scope: client.worldScope,
     worlds,
-    clearings: rows(db.worldClearing).map((row: any) => ({ world_ref: row.worldRef, part_ref: row.partRef, star_ref: row.starRef || null, audience: row.audience, shown: parse(row.shownJson), shown_at_micros: String(row.shownAtMicros) })),
+    clearings: clearingRows(client).map((row: any) => ({ world_ref: row.worldRef, part_ref: row.partRef, star_ref: row.starRef || null, audience: row.audience, shown: parse(row.shownJson), shown_at_micros: String(row.shownAtMicros) })),
     stars,
-    gatherings: rows(db.worldGathering).map((row: any) => ({ star_ref: row.starRef, world_ref: row.worldRef, state: row.state, asked_at_micros: String(row.askedAtMicros), ...(row.state === 'gathered' ? { gathered_at_micros: String(row.gatheredAtMicros) } : {}) })),
+    gatherings: gatheringRows(client).map((row: any) => ({ star_ref: row.starRef, world_ref: row.worldRef, state: row.state, asked_at_micros: String(row.askedAtMicros), ...(row.state === 'gathered' ? { gathered_at_micros: String(row.gatheredAtMicros) } : {}) })),
     // each star's day, in the order it happened: who came, was let in, showed something (of what kind) and left
     star_day: client.starDay,
     star_days: rows(db.starDay).sort((a: any, b: any) => (BigInt(a.rowId) < BigInt(b.rowId) ? -1 : 1))
@@ -270,7 +313,7 @@ export function worldReading(client: Client) {
     star_work: client.works,
     star_works: rows(db.starWork).sort((a: any, b: any) => (BigInt(a.shownAtMicros) < BigInt(b.shownAtMicros) ? -1 : BigInt(a.shownAtMicros) > BigInt(b.shownAtMicros) ? 1 : a.workKey < b.workKey ? -1 : 1))
       .map((row: any) => ({ star_ref: row.starRef, world_ref: row.worldRef, work_ref: row.workRef, standing: row.standing, revision: Number(row.revision), shown: parse(row.shownJson),
-        shown_at_micros: String(row.shownAtMicros), updated_at_micros: String(row.updatedAtMicros) })),
+        shown_at_micros: String(row.shownAtMicros), updated_at_micros: String(row.updatedAtMicros), ...(answered ? { answering: answered.has(row.workKey) } : {}) })),
     star_offers: rows(db.starOffer).sort((a: any, b: any) => (BigInt(a.offeredAtMicros) < BigInt(b.offeredAtMicros) ? -1 : BigInt(a.offeredAtMicros) > BigInt(b.offeredAtMicros) ? 1 : a.offerRef < b.offerRef ? -1 : 1))
       .map((row: any) => ({ offer_ref: row.offerRef, star_ref: row.starRef, world_ref: row.worldRef, state: row.state, taker_world_ref: row.takerWorldRef || null, offer: parse(row.offerJson),
         ...(row.returnJson ? { returned: parse(row.returnJson) } : {}), lapses_at_micros: String(row.lapsesAtMicros), offered_at_micros: String(row.offeredAtMicros), moved_at_micros: String(row.movedAtMicros) })),
@@ -363,6 +406,7 @@ export const HELD_TABLES: ReadonlyArray<readonly [property: string, table: strin
   ['activityLiveness', 'activity_liveness', 'activityKey'], ['fieldNow', 'field_now', 'fieldRef'], ['fieldDay', 'field_day', 'dayKey'],
   ['world', 'world', 'worldRef'], ['myWorld', 'my_world', 'worldRef'], ['worldClearing', 'world_clearing', 'clearingKey'], ['worldGathering', 'world_gathering', 'gatheringKey'],
   ['starDay', 'star_day', 'rowId'], ['starSaying', 'star_saying', 'sayingRef'], ['starWork', 'star_work', 'workKey'], ['starOffer', 'star_offer', 'offerRef'],
+  ['myCircleClearing', 'my_circle_clearing', 'clearingKey'], ['myCircleGathering', 'my_circle_gathering', 'gatheringKey'], ['starWorkAnswer', 'star_work_answer', 'workKey'],
 ];
 
 export interface RowChange { table: string; op: 'insert' | 'update' | 'delete'; ref: string }
@@ -412,6 +456,8 @@ export function holdField(options: { label: string; answer: (client: Client, req
   /** What has been in view on this connection: a field back in view after it was out of it is read again. */
   let seen: FieldScope = [];
   const leases = new Map<string, FieldScope>();
+  /** How much of the worlds the window's Aperture reads (`worlds {aperture}`): the whole field until it says. */
+  let worldWant: WorldScope = 'whole';
 
   const cursor = () => `tx:${epoch}:${count}`;
   const inView = (): FieldScope => unionScope([...leases.values(), ...[...glances.values()].filter((glance) => Date.now() < glance.until).map((glance) => glance.scope)]);
@@ -497,10 +543,14 @@ export function holdField(options: { label: string; answer: (client: Client, req
     });
     try { await subscribeQueries(opened.conn, HELD_BASE, opened.lifecycle); } catch (error) { try { opened.conn.disconnect(); } catch {} lost(error); return; }
     if (closed || connection !== epoch) { try { opened.conn.disconnect(); } catch {} return; }
-    const { worlds, starDay, sayings, works } = await holdWorlds(opened.conn);
+    const held = await holdWorlds(opened.conn);
     if (closed || connection !== epoch) { try { opened.conn.disconnect(); } catch {} return; }
     const live = createLiveExploreApplication(createSpacetimeExploreSource(opened.conn.db, opened.lifecycle));
-    client = { ...opened, live, target, identityHex: opened.identity.toHexString(), worlds, starDay, sayings, works };
+    const made: Client = { ...opened, live, target, identityHex: opened.identity.toHexString(), ...held, worldScope: 'whole' };
+    // the worlds at the scope the window's Aperture last asked for, on this connection as on the one before it
+    await scopeWorlds(made, worldWant);
+    if (closed || connection !== epoch) { try { opened.conn.disconnect(); } catch {} return; }
+    client = made;
     state = 'live';
     attempt = 0;
     status();
@@ -579,6 +629,13 @@ export function holdField(options: { label: string; answer: (client: Client, req
       const held = client;
       if (!held || state !== 'live') return { ok: false, error: { kind: 'unavailable', message: `The SharedField is not reachable now: ${detail ?? 'it is connecting again'}` } };
       if (!(await glance(requestScope(request)))) return { ok: false, error: { kind: 'unavailable', message: detail ?? 'The field could not be brought into view' } };
+      if (request.kind === 'worlds' && request.aperture !== undefined) {
+        // the World's Aperture: the narrower ones read the caller's circle, Federated the whole field; the window reads at the last one
+        const scope = apertureScope(request.aperture);
+        if (!scope) return { ok: false, error: { kind: 'malformed', message: 'worlds takes an `aperture`: world, local, shared or federated' } };
+        worldWant = scope;
+        await (scoping = scoping.then(() => scopeWorlds(held, scope)).then(() => undefined, () => undefined));
+      }
       if (request.kind === 'observe') {
         return { ok: true, data: { schema: 'oi.shared-field.observation/v1', cursor: cursor(), snapshot: { state: 'hosted', ...fieldSnapshot(held) }, ...(typeof request.ref === 'string' && request.ref ? { reading: readRef(held, request.ref) } : {}) } };
       }

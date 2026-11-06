@@ -98,7 +98,8 @@ test('the held snapshot reads as the field: worlds, clearings, stars and gatheri
 
 test('the World reads the worlds alone, so reading it brings no field’s rows into view; that reading reads as the snapshot’s world part does', async () => {
   const readings = await readFile(new URL('../src/projections/atlas/system/SystemReadings.tsx', import.meta.url), 'utf8')
-  assert.match(readings, /\{op: 'shared_field', request: \{kind: 'worlds'\}\}/, 'the Field scale asks the held field for the worlds alone')
+  assert.match(readings, /\{op: 'shared_field', request: \{kind: 'worlds', aperture\}\}/, 'the Field scale asks the held field for the worlds alone, at the Aperture chosen')
+  assert.match(readings, /useSyncExternalStore\(subscribeSystem, \(\) => fieldView\(\)\.aperture\)/, 'the Aperture chosen is the one read: choosing another reads the field again at it')
   assert.ok(!/request: \{kind: 'snapshot'\}/.test(readings), 'never the whole snapshot, whose glance keeps every field in view')
   const {schema: _schema, entries: _entries, counts: _counts, ...worldPart} = SNAPSHOT
   assert.deepEqual(model.heldFieldOf({schema: 'oi.shared-field.worlds/v1', ...worldPart}), held())
@@ -967,7 +968,7 @@ const withOffers = (...rows) => ({...WORK, star_offers: rows})
 const TAKER = '/taker/.factory/state.json'
 const factoryRead = (extra = {}) => ({state: 'read', runs: [{key: JSON.stringify(['/ground/.factory/state.json', RUN]), statePath: '/ground/.factory/state.json', runRef: RUN, name: 'The river maps', standing: 'live', project: null}],
   takerState: TAKER, units: null, ...extra})
-const resetHand = () => store.chooseStarHand({star: null, run: null, unit: null, work: null, offer: null, made: '', summary: '', madeRef: null, reads: '', touches: '', days: 7})
+const resetHand = () => store.chooseStarHand({star: null, run: null, unit: null, work: null, offer: null, made: '', summary: '', madeRef: null, reads: '', touches: '', days: 7, taker: null})
 
 test('a take the field heard and Factory did not stays pressable for the world that took it, and pressing it again finishes it in your Factory (SF13)', async () => {
   store.chooseFieldView({field: true, aperture: 'federated', viewAs: 'me'})
@@ -1065,5 +1066,140 @@ test('a grant revoked in the field reaches the Factory that took it up as revoke
     store.bindSystemActs(null)
     store.publishFactory({state: 'reading'})
     resetHand()
+  }
+})
+
+// ── round 31: the Factory a task is taken up in is chosen on the face; a Return carries what Factory already gave back ─────────────
+const CENTRAL_STATE = '/ground/.factory/state.json', RIVER_STATE = '/river/.factory/state.json'
+const twoTakers = (extra = {}) => factoryRead({takers: [{statePath: CENTRAL_STATE, project: null}, {statePath: RIVER_STATE, project: 'river'}], takerState: CENTRAL_STATE, ...extra})
+const bindFactory = (asked, answer) => store.bindSystemActs({open: async () => {}, land: async () => 'landed', unland: async () => 'unlanded',
+  fieldAct: async request => { asked.push(['field', request]); return 'The field took it.' },
+  factory: async request => { asked.push(['factory', request]); return answer(request) }})
+
+test('a task is taken up in the Factory chosen on the face, and a Return or a revocation goes to the Factory that took it up (SF13)', async () => {
+  store.chooseFieldView({field: true, aperture: 'federated', viewAs: 'me'})
+  store.publishField(model.heldFieldOf({...SNAPSHOT, ...withOffers(offerRow('offer:maras', 'world:mara', 'open', null),
+    offerRow('offer:maras-taken', 'world:mara', 'taken', 'world:me'), offerRow('offer:gone', 'world:mara', 'revoked', 'world:me', {moved_at_micros: micros(AT0)}))}))
+  store.publishFactory(twoTakers({taken: {'offer:maras-taken': 'taken', 'offer:gone': 'taken'}, takenAt: {'offer:maras-taken': RIVER_STATE, 'offer:gone': RIVER_STATE}}))
+  store.chooseStarHand({star: 'star:rosarium', offer: 'offer:maras'})
+  const asked = []
+  bindFactory(asked, request => request.verb === 'offer-return' ? BACK('offer:maras-taken') : {schema: 'factory.task-offer-receipt/v1', state: 'taken'})
+  try {
+    let binding = atlasDevs.atlasGlobeBinding(YOURS_READING())
+    assert.deepEqual(JSON.parse(binding.values.factoryTakers).map(option => [option.value, option.label]), [[CENTRAL_STATE, 'Central'], [RIVER_STATE, 'river']],
+      'each Factory state this window locates is offered by its project')
+    assert.equal(binding.values.factoryTaker, CENTRAL_STATE, 'the first located stands until another is chosen')
+    binding.local.factoryTaker(RIVER_STATE)
+    assert.equal(store.starHand().taker, RIVER_STATE, 'choosing a Factory is the view’s own: it goes to the hand')
+    store.publishFactory(twoTakers({takerState: RIVER_STATE, taken: {'offer:maras-taken': 'taken', 'offer:gone': 'taken'}, takenAt: {'offer:maras-taken': RIVER_STATE, 'offer:gone': RIVER_STATE}}))
+    binding = atlasDevs.atlasGlobeBinding(YOURS_READING())
+    await binding.write([{key: 'offerTake', value: 1}])
+    assert.deepEqual(asked.splice(0).filter(([who]) => who === 'factory').map(([, request]) => [request.verb, request.state_path]), [['offer-take', RIVER_STATE]],
+      'Take goes to the Factory chosen')
+    // a Return goes to the state that took the task up, whichever is chosen now
+    store.publishFactory(twoTakers({taken: {'offer:maras-taken': 'taken', 'offer:gone': 'taken'}, takenAt: {'offer:maras-taken': RIVER_STATE, 'offer:gone': RIVER_STATE}}))
+    store.chooseStarHand({offer: 'offer:maras-taken', made: 'The delta chart', summary: 'Charted the channels.', madeRef: 'project:river/maps'})
+    await atlasDevs.atlasGlobeBinding(YOURS_READING()).write([{key: 'offerReturn', value: 1}])
+    assert.deepEqual(asked.splice(0).filter(([who]) => who === 'factory').map(([, request]) => [request.verb, request.state_path]), [['offer-return', RIVER_STATE]])
+    // and so does a revocation
+    await atlasDevs.relayRevoked()
+    assert.deepEqual(asked.splice(0).map(([, request]) => [request.verb, request.state_path, request.request.offer_ref]), [['offer-revoked', RIVER_STATE, 'offer:gone']])
+    // the face offers the choice above Take
+    const v = {...world.defaults, ...world.fixtures['Work at a star']}
+    const page = renderToStaticMarkup(world.whole({v, set() {}, nav: {}, page: 'work', setPage() {}, standing: {}}))
+    assert.match(page, /data-i="Factory/, 'the Factory chooser stands in Take up')
+    assert.match(page, />river</)
+  } finally {
+    store.bindSystemActs(null)
+    store.publishFactory({state: 'reading'})
+    resetHand()
+  }
+})
+
+test('after a reload empties the hand, a Return the field did not hear is carried to it from what your Factory gave back (SF13)', async () => {
+  store.chooseFieldView({field: true, aperture: 'federated', viewAs: 'me'})
+  store.publishField(model.heldFieldOf({...SNAPSHOT, ...withOffers(offerRow('offer:maras-taken', 'world:mara', 'taken', 'world:me'))}))
+  store.publishFactory(twoTakers({taken: {'offer:maras-taken': 'returned'}, takenAt: {'offer:maras-taken': RIVER_STATE}, returns: {'offer:maras-taken': BACK('offer:maras-taken')}}))
+  store.chooseStarHand({star: 'star:rosarium', offer: 'offer:maras-taken'})
+  const asked = []
+  bindFactory(asked, () => { throw Error('What the task made has gone back already') })
+  try {
+    const binding = atlasDevs.atlasGlobeBinding(YOURS_READING())
+    assert.equal(binding.values.madeLabel, '', 'the hand is empty')
+    assert.equal(binding.standing.offerReturn, undefined, 'Return stands: Factory holds what it gave back')
+    assert.match(JSON.parse(binding.values.offerNotes)['offer:maras-taken'] ?? '', /Return brings it there/)
+    await binding.write([{key: 'offerReturn', value: 1}])
+    assert.deepEqual(asked, [['field', {kind: 'offer-return', offer_ref: 'offer:maras-taken', return: BACK('offer:maras-taken')}]],
+      'Factory’s own return goes to the field, and Factory is not asked again')
+    // a task your Factory has not given back still asks what was made
+    store.publishFactory(twoTakers({taken: {'offer:maras-taken': 'taken'}, takenAt: {'offer:maras-taken': RIVER_STATE}}))
+    assert.match(atlasDevs.atlasGlobeBinding(YOURS_READING()).standing.offerReturn?.disabled ?? '', /Name what was made/)
+  } finally {
+    store.bindSystemActs(null)
+    store.publishFactory({state: 'reading'})
+    resetHand()
+  }
+})
+
+// ── round 31: a work shown in the field is live while its source answers (manual §17.2) ───────────────────────────────────────
+const RUN_B = 'run:01ARZ3NDEKTSV4RRFFQ69G5FAB'
+const workRow = (world_ref, work_ref, standing, revision, extra = {}) => ({star_ref: 'star:rosarium', world_ref, work_ref, standing, revision,
+  shown: {...SHOWN(revision), work_ref, standing}, shown_at_micros: micros(AT0), updated_at_micros: micros(AT0 + 1_800_000), ...extra})
+const withWorks = (...rows) => ({...WORK, star_works: rows})
+
+test('a work shown at a star is live while the window that showed it answers, and reads as it was last shown once it answers no more (§17.2)', () => {
+  const star = atRosarium({...SNAPSHOT, ...withWorks(workRow('world:me', RUN, 'live', 7, {answering: true}), workRow('world:mara', RUN_B, 'live', 3, {answering: false}),
+    workRow('world:mara', 'run:01ARZ3NDEKTSV4RRFFQ69G5FAC', 'kept', 9, {answering: false}))})
+  assert.deepEqual(star.works.map(work => [work.world, work.standing, work.away, work.shownAt]),
+    [['world:me', 'live', false, AT0 + 1_800_000], ['world:mara', 'live', true, AT0 + 1_800_000], ['world:mara', 'kept', false, AT0 + 1_800_000]],
+    'a live work whose window answers no more is away; a kept one stands as it was kept')
+  // a field whose service keeps no answers reads each work by its standing alone, as it always did
+  assert.equal(atRosarium({...SNAPSHOT, ...withWorks(workRow('world:mara', RUN_B, 'live', 3))}).works[0].away, false)
+  // the face: the work away says so, and when it was last shown
+  const v = {...world.defaults, ...world.fixtures['Work at a star']}
+  const page = renderToStaticMarkup(world.whole({v, set() {}, nav: {}, page: 'work', setPage() {}, standing: {}}))
+  assert.match(page, /mara, away/, 'Mara’s work, whose window answers no more, is away')
+  assert.match(page, /as it was last shown at [0-9:]+: the window that showed it answers no more/)
+  assert.match(page, /live while it is open and its window answers/, 'your own work, answering, is live')
+})
+
+test('a work your world shows is shown again as its Run moves and when the field says it answers no more; nobody else’s, nothing kept and no Run this window does not locate (§17.2)', async () => {
+  const runAt = (runRef, revision, statePath = '/ground/.factory/state.json') => ({key: JSON.stringify([statePath, runRef]), statePath, runRef, name: runRef, standing: 'live', project: null, revision})
+  const asked = []
+  const answers = {[RUN]: SHOWN(8), [RUN_B]: {...SHOWN(3), work_ref: RUN_B}}
+  store.bindSystemActs({open: async () => {}, land: async () => 'landed', unland: async () => 'unlanded',
+    fieldAct: async request => { asked.push(['field', request.kind, request.shown?.work_ref, request.shown?.revision]); return 'The field took it.' },
+    factory: async request => { asked.push(['factory', request.kind, request.run_ref]); return answers[request.run_ref] }})
+  try {
+    // your Run moved past the reading shown (8 > 7); your other work answers no more; Mara's and a kept one are not this window's
+    store.publishField(model.heldFieldOf({...SNAPSHOT, ...withWorks(workRow('world:me', RUN, 'live', 7, {answering: true}), workRow('world:me', RUN_B, 'live', 3, {answering: false}),
+      workRow('world:mara', 'run:01ARZ3NDEKTSV4RRFFQ69G5FAD', 'live', 2, {answering: false}), workRow('world:me', 'run:01ARZ3NDEKTSV4RRFFQ69G5FAC', 'kept', 9, {answering: false}),
+      workRow('world:me', 'run:01ARZ3NDEKTSV4RRFFQ69G5FAE', 'live', 1, {answering: false}))}))
+    store.publishFactory(factoryRead({runs: [runAt(RUN, 8), runAt(RUN_B, 3), runAt('run:01ARZ3NDEKTSV4RRFFQ69G5FAD', 5), runAt('run:01ARZ3NDEKTSV4RRFFQ69G5FAC', 10)]}))
+    await atlasDevs.keepShownWorks()
+    assert.deepEqual(asked.splice(0), [['factory', 'work-show-read', RUN], ['field', 'work-show', RUN, 8], ['factory', 'work-show-read', RUN_B], ['field', 'work-show', RUN_B, 3]],
+      'Factory’s reading as it stands goes to the field, for your works alone; a Run this window does not locate is not its to answer for')
+    // read again before the field has heard: nothing is asked twice
+    await atlasDevs.keepShownWorks()
+    assert.deepEqual(asked.splice(0), [])
+    // the field heard: both answer, at the newer reading; nothing more is asked
+    store.publishField(model.heldFieldOf({...SNAPSHOT, ...withWorks(workRow('world:me', RUN, 'live', 8, {answering: true}), workRow('world:me', RUN_B, 'live', 3, {answering: true}))}))
+    await atlasDevs.keepShownWorks()
+    assert.deepEqual(asked.splice(0), [])
+    // the connection was made again: the work answers no more, and is shown again
+    store.publishField(model.heldFieldOf({...SNAPSHOT, ...withWorks(workRow('world:me', RUN, 'live', 8, {answering: false}))}))
+    await atlasDevs.keepShownWorks()
+    assert.deepEqual(asked.splice(0), [['factory', 'work-show-read', RUN], ['field', 'work-show', RUN, 8]])
+    // forward only: Factory reading the Run older than the one shown sends the field nothing
+    store.publishField(model.heldFieldOf({...SNAPSHOT, ...withWorks(workRow('world:me', RUN, 'live', 9, {answering: false}))}))
+    await atlasDevs.keepShownWorks()
+    assert.deepEqual(asked.splice(0), [['factory', 'work-show-read', RUN]])
+    // a field whose service keeps no answers: shown again only as the Run moves
+    store.publishField(model.heldFieldOf({...SNAPSHOT, ...withWorks(workRow('world:me', RUN, 'live', 8))}))
+    await atlasDevs.keepShownWorks()
+    assert.deepEqual(asked.splice(0), [])
+  } finally {
+    store.bindSystemActs(null)
+    store.publishFactory({state: 'reading'})
   }
 })
