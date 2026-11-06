@@ -304,6 +304,17 @@ try {
   await heldA2.data({ kind: 'clearing-open', world_ref: worldA, part_ref: 'place:rosarium-notes', audience: 'field', shown });
   await heldA2.data({ kind: 'clearing-open', world_ref: worldA, part_ref: 'page:reading-of-plate-4', audience: 'public', shown: { kind: 'page', label: 'A reading of the fourth plate' } });
   const clearingsOf = (snapshot: any, ref: string) => snapshot.clearings.filter((clearing: any) => clearing.world_ref === ref);
+  // What a world withdrew (SF14), as the reader is told it: whose world, from what reach (and which star), of what kind and when —
+  // never which part, nor what it showed (the row carries no more than these).
+  const withdrawalsOf = (snapshot: any, ref: string) => {
+    assert.equal(snapshot.world_withdrawal?.state, 'held', `the field keeps what a world withdrew: ${JSON.stringify(snapshot.world_withdrawal)}`);
+    return snapshot.world_withdrawals.filter((row: any) => row.world_ref === ref);
+  };
+  const withdrawn = (row: any) => {
+    assert.deepEqual(Object.keys(row).filter((key) => !['world_ref', 'star_ref', 'reach', 'kind', 'withdrawn_at_micros'].includes(key)), [], `a withdrawal names no more: ${JSON.stringify(row)}`);
+    assert.ok(/^\d+$/.test(row.withdrawn_at_micros), 'and says when');
+    return { world_ref: row.world_ref, star_ref: row.star_ref, reach: row.reach, ...(row.kind ? { kind: row.kind } : {}) };
+  };
   const seenA: any = await waitFor(async () => { const seen = await heldB.data({ kind: 'snapshot' }); return clearingsOf(seen, worldA).length === 2 && seen.stars.some((s: any) => s.star_ref === star) && seen; }, 'B to see A\'s two clearings and its star');
   assert.deepEqual(seenA.gatherings.filter((g: any) => g.star_ref === star).map((g: any) => [g.world_ref, g.state]), [[worldA, 'gathered']], 'B sees who has gathered at the star');
   const cloudOf = (snapshot: any) => JSON.stringify({ worlds: worldsOf(snapshot, worldA), clearings: clearingsOf(snapshot, worldA), hidden: worldsOf(snapshot, hidden).concat(clearingsOf(snapshot, hidden)) });
@@ -442,6 +453,18 @@ try {
   const atFederated = await heldB.data({ kind: 'worlds', aperture: 'federated' });
   assert.equal(atFederated.world_scope, 'whole', 'Federated reads the whole field');
   assert.ok(clearingsOf(atFederated, worldC).some((c: any) => c.part_ref === 'page:far-away'), 'and C\'s public clearing with it');
+  // What C withdraws past B's edge (SF14) sends B nothing at Shared either; read whole again, B reads it withdrawn, in words.
+  await heldB.data({ kind: 'worlds', aperture: 'shared' });
+  for (let last = -1; last !== heldB.transactions().length;) { last = heldB.transactions().length; await sleep(600); }
+  const farGone = heldB.transactions().length;
+  await heldC.data({ kind: 'clearing-withdraw', world_ref: worldC, part_ref: 'page:far-away' });
+  await waitFor(async () => !clearingsOf(await heldA2.data({ kind: 'snapshot' }), worldC).length, 'A, reading the whole field, to see C\'s clearing withdrawn');
+  await sleep(1500);
+  assert.equal(heldB.transactions().length, farGone, `at Shared, what is withdrawn outside B's circle sends B nothing: ${JSON.stringify(heldB.transactions().slice(farGone))}`);
+  assert.deepEqual(withdrawalsOf(await heldB.data({ kind: 'worlds', aperture: 'shared' }), worldC), [], 'nor is it read there');
+  const farWithdrawn = await heldB.data({ kind: 'worlds', aperture: 'federated' });
+  assert.deepEqual(clearingsOf(farWithdrawn, worldC), [], 'at Federated what C withdrew is gone from what is shown');
+  assert.deepEqual(withdrawalsOf(farWithdrawn, worldC).map(withdrawn), [{ world_ref: worldC, star_ref: null, reach: 'public', kind: 'page' }], 'and read as withdrawn from the public');
   const WORK_MARK = `WORK-MARK-858-${run}`, RETURN_MARK = `RETURN-MARK-858-${run}`;
   const workRef = 'run:01ARZ3NDEKTSV4RRFFQ69G5FAA';
   const shownWork = (revision: number, at: string, lifecycle = 'running') => ({
@@ -604,14 +627,63 @@ try {
   const workDayText = JSON.stringify((dayWork.star_days ?? []).filter((entry: any) => entry.star_ref === star));
   assert.ok(![WORK_MARK, RETURN_MARK, 'delta', 'river'].some((mark) => workDayText.includes(mark)), `never what: ${workDayText}`);
 
-  /* ---------- withdraw, link off, close ---------- */
+  /* ---------- link and show, withdraw, link off, close (SF01, SF02, SF14) ----------
+   * A part A shows is read at the reach A chose: to the field by B (a world in the field), to the public by D too (no world of its own,
+   * outside the field). Narrowed or withdrawn, whoever read it reads it as withdrawn there, in words — whose world, from what reach, of
+   * what kind and when — never silently gone, and never which part nor what it showed: the label's mark reaches nobody after. */
+  const heldD = holdAs('one-field-d'); held.push(heldD);
+  await heldD.data({ kind: 'view', lease: 'acceptance:worlds', scope: 'whole' });
+  const GONE_MARK = `WITHDRAWN-MARK-858-${run}`;
+  const gone = { kind: 'place', label: `The study ${GONE_MARK}`, at: { lat: 22, lon: 10 } };
+  const shownTo = (snapshot: any) => clearingsOf(snapshot, worldA).filter((c: any) => c.part_ref === 'place:the-study').map((c: any) => c.audience);
+  assert.deepEqual(withdrawalsOf(await heldB.data({ kind: 'snapshot' }), worldA), [], 'A has withdrawn nothing B can read yet');
+  await heldA2.data({ kind: 'clearing-open', world_ref: worldA, part_ref: 'place:the-study', audience: 'field', shown: gone });
+  const toField: any = await waitFor(async () => { const seen = await heldB.data({ kind: 'snapshot' }); return shownTo(seen).length && seen; }, 'B, in the field, to read what A shows to the field');
+  assert.deepEqual(clearingsOf(toField, worldA).find((c: any) => c.part_ref === 'place:the-study').shown, gone, 'B reads it as A showed it');
+  assert.deepEqual(shownTo(await heldD.data({ kind: 'snapshot' })), [], 'D, outside the field, does not');
+  await heldA2.data({ kind: 'clearing-open', world_ref: worldA, part_ref: 'place:the-study', audience: 'public', shown: gone });
+  await waitFor(async () => shownTo(await heldD.data({ kind: 'snapshot' }))[0] === 'public', 'D to read what A shows to the public');
+  // narrowed back to the field: D reads it withdrawn from the public; B, in the field, still reads it
+  await heldA2.data({ kind: 'clearing-open', world_ref: worldA, part_ref: 'place:the-study', audience: 'field', shown: gone });
+  const narrowedD: any = await waitFor(async () => { const seen = await heldD.data({ kind: 'snapshot' }); return !shownTo(seen).length && withdrawalsOf(seen, worldA).length && seen; }, 'D to read A\'s part withdrawn from the public');
+  assert.deepEqual(withdrawalsOf(narrowedD, worldA).map(withdrawn), [{ world_ref: worldA, star_ref: null, reach: 'public', kind: 'place' }]);
+  const fromD = heldD.raw.length;
+  assert.deepEqual(await waitFor(async () => { const seen = shownTo(await heldB.data({ kind: 'snapshot' })); return seen[0] === 'field' && seen; }, 'B to read it at the field still'), ['field']);
+  // withdrawn: B reads it withdrawn from the field
+  await heldA2.data({ kind: 'clearing-withdraw', world_ref: worldA, part_ref: 'place:the-study' });
+  const withdrawnB: any = await waitFor(async () => { const seen = await heldB.data({ kind: 'snapshot' }); return !shownTo(seen).length && withdrawalsOf(seen, worldA).length === 2 && seen; }, 'B to read A\'s part withdrawn');
+  assert.deepEqual(withdrawalsOf(withdrawnB, worldA).map(withdrawn), [{ world_ref: worldA, star_ref: null, reach: 'public', kind: 'place' }, { world_ref: worldA, star_ref: null, reach: 'field', kind: 'place' }],
+    'B reads both, in the order they happened');
+  const fromB = heldB.raw.length;
   await heldA2.data({ kind: 'clearing-withdraw', world_ref: worldA, part_ref: 'place:rosarium-notes' });
   await waitFor(async () => !clearingsOf(await heldB.data({ kind: 'snapshot' }), worldA).some((c: any) => c.part_ref === 'place:rosarium-notes'), 'a withdrawn clearing to go back under cloud for B');
+  // Nothing either reads once it is withdrawn names what was withdrawn, nor the private mark: every payload, count, graph and line since.
+  await sleep(1500);
+  for (const [one, from] of [[heldB, fromB], [heldD, fromD]] as const) {
+    const observed = await one.data({ kind: 'observe' });
+    const sweep = [observed, await one.data({ kind: 'snapshot' }), await one.data({ kind: 'worlds', aperture: 'shared' }), await one.data({ kind: 'worlds', aperture: 'federated' }),
+      await one.data({ kind: 'read', ref: worldA }), await one.data({ kind: 'status' }),
+      observed.snapshot.entries.map((entry: any) => createExploreSurfaceModelFromHostedSnapshot(observed.snapshot).open(entry.ref, { depth: 2, budget: 64 }))];
+    assert.ok(withdrawalsOf(sweep[1], worldA).length, `${one.label} reads A's withdrawals (non-vacuous)`);
+    for (const payload of sweep) {
+      const text = JSON.stringify(payload);
+      assert.ok(!text.includes(GONE_MARK) && !text.includes('place:the-study') && !text.includes(MARK), `${one.label} reads what was withdrawn, or the private mark: ${text.slice(0, 400)}`);
+    }
+    assert.ok(!one.raw.slice(from).some((line) => line.includes(GONE_MARK) || line.includes(MARK)), `nothing ${one.label}'s client sent out since names them`);
+  }
+  assert.deepEqual(withdrawalsOf(await heldD.data({ kind: 'snapshot' }), worldA).map(withdrawn), [{ world_ref: worldA, star_ref: null, reach: 'public', kind: 'place' }],
+    'D, outside the field, reads nothing withdrawn from the field: it never read it');
+  // Link off: B and D, who read A's world while it was in the field, read that it left, and nothing A withdrew before, nor anything in it.
   await heldA2.data({ kind: 'world-put', world_ref: worldA, body: bodyA, linked: false });
-  await waitFor(async () => { const seen = await heldB.data({ kind: 'snapshot' }); return !worldsOf(seen, worldA).length && !clearingsOf(seen, worldA).length; }, 'Link off to take A\'s world out of the field');
+  const left: any = await waitFor(async () => { const seen = await heldB.data({ kind: 'snapshot' }); return !worldsOf(seen, worldA).length && !clearingsOf(seen, worldA).length && seen; }, 'Link off to take A\'s world out of the field');
+  assert.deepEqual(withdrawalsOf(left, worldA).map(withdrawn), [{ world_ref: worldA, star_ref: null, reach: 'world' }], 'B reads that A\'s world left the field');
+  const outsideD: any = await waitFor(async () => { const seen = await heldD.data({ kind: 'snapshot' }); return !worldsOf(seen, worldA).length && seen; }, 'D to read A\'s world gone');
+  assert.deepEqual([clearingsOf(outsideD, worldA), withdrawalsOf(outsideD, worldA).map(withdrawn)], [[], [{ world_ref: worldA, star_ref: null, reach: 'world' }]],
+    'D, outside the field, reads that A\'s world left it too: what it read is never silently gone');
   const ownAfter = await heldA2.data({ kind: 'snapshot' });
   assert.equal(worldsOf(ownAfter, worldA)[0].linked, false, 'and leave everything in it as it was, for its owner');
   assert.equal(clearingsOf(ownAfter, worldA).length, 3);
+  assert.ok(withdrawalsOf(ownAfter, worldB).some((row: any) => row.star_ref === star && row.reach === 'star'), 'A reads what B took back at the star when it left (non-vacuous)');
   const closed = await heldA2.data({ kind: 'star-close', star_ref: star });
   assert.equal(closed.state, 'closed');
   await waitFor(async () => { const seen = await heldB.data({ kind: 'snapshot' }); return !seen.stars.some((s: any) => s.star_ref === star) && !seen.gatherings.some((g: any) => g.star_ref === star); }, 'a closed star to return every world to its own orbit');
@@ -620,6 +692,7 @@ try {
   assert.deepEqual(sayingsOf(await heldA2.data({ kind: 'snapshot' })), [], 'and what was said there');
   assert.deepEqual(worksOf(await heldA2.data({ kind: 'snapshot' })), [], 'and the work shown there, kept or live');
   assert.deepEqual(offersOf(await heldA2.data({ kind: 'snapshot' })), [], 'and the tasks offered there');
+  assert.deepEqual((await heldA2.data({ kind: 'snapshot' })).world_withdrawals.filter((row: any) => row.star_ref === star), [], 'and what was taken back there');
   assert.deepEqual(dayOf(await heldB.data({ kind: 'snapshot' })), []);
   // Today's rows stand beside the worlds: the slice-1 page is still read.
   assert.ok((await heldB.data({ kind: 'observe' })).snapshot.entries.some((entry: any) => entry.ref === fence), 'the field\'s other rows read as they did');
@@ -627,6 +700,7 @@ try {
   assert.equal(await heldA2.end(), 0);
   assert.equal(await heldB.end(), 0);
   assert.equal(await heldC.end(), 0);
+  assert.equal(await heldD.end(), 0);
   held.length = 0;
   console.log(JSON.stringify({ acceptance: 'one-field-slices-1-2', target: { uri, database }, field_ref: fieldRef, passed: [
     'one held client per identity answers every request by id',
@@ -646,6 +720,9 @@ try {
     'a work shown at a star answers on the connection that showed it: with that window gone it reads as it was last shown, and shown again it answers again (manual §17.2)',
     'at World, Local and Shared a client reads its circle alone and what moves outside it sends nothing; Federated reads the whole field (Aperture)',
     'a private mark shown and offered at a star the others are not let in to reaches none of their payloads, counts, graphs or lines, beside the work and tasks they do read',
+    'a world linked into the field shows a part of it at the reach chosen: a world in the field reads what is shown to the field, one outside it what is public alone (SF01, SF02)',
+    'what is withdrawn or narrowed reads as withdrawn to whoever read it, naming whose world, what kind, from what reach and when, never which part nor what it showed; a world taken out reads as having left the field to those in it (SF14)',
+    'at Shared what is withdrawn outside the circle sends nothing; closing a star takes what was taken back there with it (SF14)',
   ] }));
 } finally {
   for (const one of held) { try { one.child.stdin!.end(); } catch {} }

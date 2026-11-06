@@ -69,9 +69,12 @@
  *                                        withdrawn revision (nara-expression-projection.mjs naraWithdrawal), published through publishArgs
  *
  * Worlds first (O-I #858; each answers once the caller's own view shows the act, with the world, clearing or star as the caller reads it):
- *   world-put         {world_ref, body, linked}        put the caller's world: its `aikit.world-body/v1` record and whether it is linked into the field
- *   clearing-open     {world_ref, part_ref, audience, star_ref?, shown}   show a part of the caller's world to the field, the public or one star
- *   clearing-withdraw {world_ref, part_ref, star_ref?}  put it back under cloud everywhere at once
+ *   world-put         {world_ref, body, linked}        put the caller's world: its `aikit.world-body/v1` record and whether it is linked into the field;
+ *                                        linked false takes it out, and those who read the field read that it left (world_withdrawals, SF14)
+ *   clearing-open     {world_ref, part_ref, audience, star_ref?, shown}   show a part of the caller's world to the field, the public or one star;
+ *                                        narrowed from the public to the field, those outside the field read it withdrawn from the public
+ *   clearing-withdraw {world_ref, part_ref, star_ref?}  put it back under cloud everywhere at once; whoever read it reads it withdrawn —
+ *                                        whose world, from what reach, of what kind and when, never which part nor what it showed
  *   star-light        {star_ref, world_ref, name, gathers, comes, within?}   light a star (or rename it, or change its terms); the world gathers first
  *   star-gather       {star_ref, world_ref}            bring the caller's world to a star: gathered, or asked where the lighter lets each world in
  *   star-admit        {star_ref, world_ref}            the lighter lets an asking world in

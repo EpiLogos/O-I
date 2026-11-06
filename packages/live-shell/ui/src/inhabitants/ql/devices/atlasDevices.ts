@@ -22,13 +22,14 @@ import {submitThroughOwner, writeThroughOwner} from './ownerWrite'
 import type {DesignBinding, Standing, ValueChange} from '../../../frame/devices/designed'
 import {COASTS, WORLD_BODY_GENERATOR_VERSION, type BodyLook} from '../../../projections/atlas/src/globe/body'
 import {
-  BODY_CHOICES, NO_OTHER, WORLD_BODY_SETTINGS, bodyChoice, bodyWriteRefusal, bodyWriter, chooseBody, worldBodyState,
+  BODY_CHOICES, NO_OTHER, WORLD_BODY_SETTINGS, baseBody, bodyChoice, bodyWriteRefusal, bodyWriter, chooseBody, worldBodyState,
   type BodyChoice, type WorldBodyState,
 } from '../../../projections/atlas/body/worldBody'
 import {suiteStanding} from '../../../projections/atlas/provider/suiteStanding'
 import {chooseFieldView, chooseStarHand, factoryAtStar, fieldView, heldField, noteRelay, relayOf, starHand, systemActs, systemReading, type FieldView, type StarHand} from '../../../projections/atlas/system/systemStore'
-import {APERTURES, AUDIENCES, FIELD_BEING_READ, GRANT_DAYS, NOT_IN_FIELD, NOT_YOURS_YET, NO_STAR, NO_WORKS, SAYING_WHATS, STAR_COMES, heldFieldWhy, isMine, liveWork, shownId, starRequest, textsOf, yourFieldWorld,
-  type Aperture, type Audience, type FieldOffer, type HeldField, type SayingWhat, type StarAct, type StarComes} from '../../../projections/atlas/system/fieldModel'
+import {APERTURES, AUDIENCES, FIELD_BEING_READ, GRANT_DAYS, NOT_IN_FIELD, NOT_YOURS_YET, NO_STAR, NO_WORKS, SAYING_WHATS, SHOW_TOS, STAR_COMES, heldFieldWhy, isMine, liveWork, shownId, shownLoad, starRequest, textsOf, whoOf,
+  yourFieldWorld, yourRequest, yourShown,
+  type Aperture, type Audience, type FieldOffer, type HeldField, type SayingWhat, type ShowTo, type StarAct, type StarComes, type YourAct, type YourPart} from '../../../projections/atlas/system/fieldModel'
 import type {AtlasScale} from '../../../projections/atlas/places/placesModel'
 import {yourLocations, type BodyLocation} from '../../../projections/atlas/system/bodyLocations'
 import {PLACE_KINDS, choosePlaceKind, notePlaceTool, placeKindChoice, type PlaceKind} from '../../../projections/atlas/places/placeTool'
@@ -158,8 +159,9 @@ export function fieldValues(reading: NonNullable<AtlasReading['field']>): {value
   if (reading.view.field) values.scale = 'field'
   const standing: Record<string, Standing> = {}
   if (reading.held.state === 'read') {
-    const {worlds, clearings, stars, gatherings, days, dayWhy, sayings, sayWhy, works, offers, workWhy} = reading.held
-    values.field = JSON.stringify({worlds, clearings, stars, gatherings, days, dayWhy, sayings, sayWhy, works: works ?? null, offers: offers ?? null, workWhy: workWhy ?? null})
+    const {worlds, clearings, stars, gatherings, days, dayWhy, sayings, sayWhy, works, offers, workWhy, withdrawals, withdrawWhy} = reading.held
+    values.field = JSON.stringify({worlds, clearings, stars, gatherings, days, dayWhy, sayings, sayWhy, works: works ?? null, offers: offers ?? null, workWhy: workWhy ?? null,
+      withdrawals: withdrawals ?? null, withdrawWhy: withdrawWhy ?? null})
     if (reading.yours) values.fieldYours = reading.yours
   } else {
     const why = heldFieldWhy(reading.held) as string
@@ -365,7 +367,8 @@ const NO_FACTORY = 'Software Factory is not reached from this window.'
 const NO_TAKER = 'No Factory state of this window keeps the tasks your world takes up.'
 const NO_OFFERER = 'No Factory state of this window holds the Run this task was offered from.'
 const NO_HAND: StarHand = {star: null, admit: null, name: '', gathers: '', comes: 'anyone', to: null, what: 'question', words: '', dayPage: null, saidPage: null,
-  run: null, unit: null, work: null, offer: null, reads: '', touches: '', days: 7, made: '', summary: '', madeRef: null, taker: null}
+  run: null, unit: null, work: null, offer: null, reads: '', touches: '', days: 7, made: '', summary: '', madeRef: null, taker: null,
+  worldName: '', showPart: null, showTo: null, shownPart: null}
 
 /** What your Factory gave back to an offer it took and the field still holds taken: Factory's own return, to bring to the field. */
 function heldReturnOf(offerRef: string | null): Readonly<Record<string, unknown>> | null {
@@ -580,6 +583,84 @@ async function actAtStar(key: StarActKey, reading: NonNullable<AtlasReading['fie
   else if (key === 'starUnsay') chooseStarHand({to: null})
 }
 
+// ── your world in the field: Link, Show and Withdraw (manual §17.2; O-I #858 SF01, SF02, SF14) ─────────────────────────────
+//
+// The World's Shown page. The name your world is to stand under, the part to show and who is to see it, and the thing shown to withdraw
+// are the view's own hand (systemStore.ts StarHand), none chosen by default; each act is one request of the held field for your own world
+// (system/fieldModel.ts yourRequest). None of the keys is a declared row of the family: an agent sets none of them and no relay or
+// default asks any of them; only the person's own press on the face does (DLW build ruling 2026-11-06, from manual §16.10 "How a control
+// moves": Link and Show raise your world's reach and are held, Unlink and Withdraw narrow it and are pressed).
+
+/** The acts on your world in the field, by the World's value key. */
+export const YOUR_ACT_KEYS = ['fieldLink', 'fieldUnlink', 'partShow', 'partWithdraw'] as const
+type YourActKey = (typeof YOUR_ACT_KEYS)[number]
+const isYourAct = (key: string): key is YourActKey => (YOUR_ACT_KEYS as readonly string[]).includes(key)
+
+/** The parts of your world that may be shown: the places on your own body, and the worlds of yours that land on it, as the projects
+ * they are. None while your body's locations are not read. */
+function yourParts(reading: AtlasReading): YourPart[] {
+  if (!('rows' in reading.locations)) return []
+  return reading.locations.rows.map(row => ({id: row.id, label: row.name, at: {lat: row.lat, lon: row.lon},
+    kind: row.written !== undefined ? 'project' : (PLACE_KINDS as readonly string[]).includes(row.kind) ? row.kind : 'place'}))
+}
+/** Your own body as its owner last answered it (the first body while the root space carries none), or null while it is not read. */
+const yourBody = (reading: AtlasReading): unknown => (reading.body.state.state === 'read' ? baseBody(reading.body.state) : null)
+
+/** The act a key names, from the view's hand. */
+function yourActOf(key: YourActKey, reading: AtlasReading, hand: StarHand): YourAct {
+  switch (key) {
+    case 'fieldLink': return {act: 'link', name: hand.worldName, body: yourBody(reading)}
+    case 'fieldUnlink': return {act: 'unlink'}
+    case 'partShow': return {act: 'show', part: yourParts(reading).find(part => part.id === hand.showPart) ?? null, to: hand.showTo, star: hand.star}
+    case 'partWithdraw': return {act: 'withdraw', shown: hand.shownPart}
+  }
+}
+
+/** Your world in the field as the Shown page reads it (which world, and whether it is linked), the parts of it to show, what it shows and
+ * how much, the choices that still stand, and each act's standing. */
+function yourValues(reading: AtlasReading, field: NonNullable<AtlasReading['field']>): {values: Record<string, ParamValue>; standing: Record<string, Standing>} {
+  const hand = field.hand ?? NO_HAND, held = field.held
+  const values: Record<string, ParamValue> = {worldName: hand.worldName}, standing: Record<string, Standing> = {}
+  const parts = yourParts(reading)
+  values.yourParts = JSON.stringify(parts.map(({id, kind, label}) => ({id, kind, label})))
+  if (hand.showPart && parts.some(part => part.id === hand.showPart)) values.showPart = hand.showPart
+  if (hand.showTo) values.showTo = hand.showTo
+  if (held.state === 'read') {
+    const ref = yourFieldWorld(held, field.yours)
+    const world = ref === null ? undefined : held.worlds.find(row => row.world_ref === ref)
+    if (world) {
+      values.fieldWorld = world.world_ref
+      values.fieldLinked = world.linked
+      standing.worldName = {disabled: `Your world stands in the field as ${whoOf(world.world_ref)}.`}
+    }
+    const shown = yourShown(held, field.yours)
+    values.yourShown = JSON.stringify(shown)
+    values.shownLoad = shownLoad(shown)
+    if (hand.shownPart && shown.some(row => row.id === hand.shownPart)) values.shownPart = hand.shownPart
+  }
+  const reached = systemActs() !== null
+  const chosen = {...hand, showPart: (values.showPart as string | undefined) ?? null, shownPart: (values.shownPart as string | undefined) ?? null}
+  for (const key of YOUR_ACT_KEYS) {
+    const made = yourRequest(held, field.yours, yourActOf(key, reading, chosen), 0)
+    if ('refusal' in made) standing[key] = {disabled: made.refusal}
+    else if (!reached) standing[key] = {disabled: NOT_REACHED}
+  }
+  return {values, standing}
+}
+
+/** Ask the field for one act on your world; the hand follows what was done (the name is the world's once linked, a part shown or
+ * withdrawn is no longer chosen). */
+async function actYours(key: YourActKey, reading: AtlasReading, field: NonNullable<AtlasReading['field']>): Promise<void> {
+  const made = yourRequest(heldField(), field.yours, yourActOf(key, reading, starHand()), Date.now())
+  if ('refusal' in made) throw Error(made.refusal)
+  const acts = systemActs()
+  if (!acts) throw Error(NOT_REACHED)
+  await acts.fieldAct(made.request)
+  if (key === 'fieldLink') chooseStarHand({worldName: ''})
+  else if (key === 'partShow') chooseStarHand({showPart: null})
+  else if (key === 'partWithdraw') chooseStarHand({shownPart: null})
+}
+
 /** The view's own hand at Field scale: the scale, the aperture and who you look as. A value that is none of them is not taken. */
 const FIELD_LOCAL: Readonly<Record<string, (value: ParamValue) => void>> = {
   scale: value => { if (typeof value === 'string') chooseFieldView({field: value === 'field'}) },
@@ -607,6 +688,11 @@ const FIELD_LOCAL: Readonly<Record<string, (value: ParamValue) => void>> = {
   madeLabel: value => { if (typeof value === 'string') chooseStarHand({made: value}) },
   madeSummary: value => { if (typeof value === 'string') chooseStarHand({summary: value}) },
   madeRef: value => chooseStarHand({madeRef: typeof value === 'string' && value ? value : null}),
+  // [SF01, SF02, SF14] the name your world is to stand under, the part to show and who is to see it, and the thing shown to withdraw
+  worldName: value => { if (typeof value === 'string') chooseStarHand({worldName: value}) },
+  showPart: value => chooseStarHand({showPart: typeof value === 'string' && value ? value : null}),
+  showTo: value => { if ((SHOW_TOS as readonly unknown[]).includes(value)) chooseStarHand({showTo: value as ShowTo}) },
+  shownPart: value => chooseStarHand({shownPart: typeof value === 'string' && value ? value : null}),
 }
 
 // ── your world's body: the World device's Body page (T-WORLDS §5 W3; manual §17.2 "Build a planet") ─────────────────────────
@@ -655,7 +741,8 @@ export function bodyRefusal(reading: AtlasReading): string | null {
 export function atlasGlobeBinding(reading: AtlasReading): DesignBinding {
   // A reading that carries no field part (one made before the field was read into it) hands the face no field: the face then names it.
   const field = reading.field ? fieldValues(reading.field) : {values: {}, standing: {}}
-  const values: Record<string, ParamValue> = {...bodyValues(reading.body), ...field.values, view: reading.view, mounted: reading.mounted}
+  const yours = reading.field ? yourValues(reading, reading.field) : {values: {}, standing: {}}
+  const values: Record<string, ParamValue> = {...bodyValues(reading.body), ...field.values, ...yours.values, view: reading.view, mounted: reading.mounted}
   // [O-I #858] the scale the camera stands at, a reading: the World's scale unless the view chose the Field, and kept for the way back
   // from it (the Graph is not a scale of the Earth, and no Earth mounted stands at none)
   if (reading.scale && reading.scale !== 'graph') {
@@ -667,7 +754,7 @@ export function atlasGlobeBinding(reading: AtlasReading): DesignBinding {
     if (reading.globe.scopeLabel != null) values.wholeField = reading.globe.wholeField
   }
   const refusal = bodyRefusal(reading)
-  const standing: Record<string, Standing> = {...field.standing}
+  const standing: Record<string, Standing> = {...field.standing, ...yours.standing}
   // the locations on your own body: a reading (the places stand on it through their owners' PlaceSet, the landings through each world's
   // own BodySet); the place kind is the view's own choice of what the next click places
   values.placeKind = reading.placeKind
@@ -695,7 +782,7 @@ export function atlasGlobeBinding(reading: AtlasReading): DesignBinding {
   if (!reading.mounted) standing.body = {disabled: NOT_MOUNTED}
   if (!reading.mounted) standing.wholeField = {disabled: NOT_MOUNTED}
   else if (reading.globe?.scopeLabel == null) standing.wholeField = {disabled: NO_SCOPE}
-  const writable = (key: string) => key === 'wholeField' ? !standing.wholeField : isStarAct(key) || isWorkAct(key) ? !!reading.field && !standing[key] : WORLD_BODY_KEYS.includes(key) && !refusal
+  const writable = (key: string) => key === 'wholeField' ? !standing.wholeField : isStarAct(key) || isWorkAct(key) || isYourAct(key) ? !!reading.field && !standing[key] : WORLD_BODY_KEYS.includes(key) && !refusal
   return {
     id: techneDeviceId(ATLAS_FAMILY, 'globe-engine'), values, standing, enabledKey: 'mounted',
     writes: writable,
@@ -705,6 +792,7 @@ export function atlasGlobeBinding(reading: AtlasReading): DesignBinding {
         if (change.key === 'wholeField') await writeThroughOwner('shell.setAtlasWholeField', change.value)
         else if (isStarAct(change.key) && reading.field) await actAtStar(change.key, reading.field)
         else if (isWorkAct(change.key) && reading.field) await workAtStar(change.key, reading.field)
+        else if (isYourAct(change.key) && reading.field) await actYours(change.key, reading, reading.field)
         else if (WORLD_BODY_KEYS.includes(change.key)) body[change.key] = change.value
         else throw Error(`${change.key} is not written from the World's own controls`)
       }

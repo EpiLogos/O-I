@@ -130,6 +130,21 @@ export interface FieldOffer {
   readonly moved_at: number | null
 }
 
+/** Where a world withdrew something from (SF14): the public (narrowed to the field, or withdrawn), the field, a star, or the world
+ * itself, taken out of the field. */
+export type WithdrawReach = 'public' | 'field' | 'star' | 'world'
+const WITHDRAW_REACHES: readonly WithdrawReach[] = ['public', 'field', 'star', 'world']
+/** What a world withdrew, as the field tells whoever read it (O-I #858, SF14): whose world, from what reach (and at which star), of what
+ * kind and when; never which part, nor what it showed. */
+export interface FieldWithdrawal {
+  readonly world_ref: string
+  readonly star_ref: string | null
+  readonly reach: WithdrawReach
+  readonly kind: string | null
+  /** when, ms since the epoch */
+  readonly at: number | null
+}
+
 /** The field as the window last read it. `days` is each star's day as you may read it, or null with `dayWhy` when the field's service
  * keeps none; `sayings` what was said at each star, or null with `sayWhy` likewise; `works` and `offers` what is shown and offered at
  * each star, or null with `workWhy` likewise. */
@@ -138,7 +153,9 @@ export type HeldField =
   | {readonly state: 'unavailable'; readonly reason: string}
   | {readonly state: 'read'; readonly worlds: readonly FieldWorld[]; readonly clearings: readonly FieldClearing[]; readonly stars: readonly FieldStar[]; readonly gatherings: readonly FieldGathering[]
     readonly days: readonly FieldDayEntry[] | null; readonly dayWhy: string | null; readonly sayings: readonly FieldSaying[] | null; readonly sayWhy: string | null
-    readonly works?: readonly FieldWork[] | null; readonly offers?: readonly FieldOffer[] | null; readonly workWhy?: string | null}
+    readonly works?: readonly FieldWork[] | null; readonly offers?: readonly FieldOffer[] | null; readonly workWhy?: string | null
+    /** what the worlds withdrew (SF14), in the order it happened, or null with `withdrawWhy` when the field's service keeps none */
+    readonly withdrawals?: readonly FieldWithdrawal[] | null; readonly withdrawWhy?: string | null}
 
 const NO_READING = 'The shared field gave no reading of its worlds.'
 export const FIELD_BEING_READ = 'The shared field is being read.'
@@ -152,6 +169,7 @@ export const fieldChoiceWhy = (held: HeldField, field: boolean): string | undefi
 const NO_DAY = 'This field’s service does not keep a star’s day yet.'
 const NO_SAYINGS = 'This field’s service does not keep what is said at a star yet.'
 export const NO_WORKS = 'This field’s service does not keep work shown or tasks offered at a star yet.'
+const NO_WITHDRAWALS = 'This field’s service does not keep what a world withdrew yet.'
 /** A grant stands for one to thirty days (Factory's and the field's own bound): the World's Days dial reads it, and the binding's grant.
  * Here, not in the binding, so the face reads it without the binding's imports (round 30b). */
 export const GRANT_DAYS = {min: 1, max: 30} as const
@@ -182,6 +200,7 @@ export function heldFieldOf(data: unknown): HeldField {
     ...daysOf(data),
     ...sayingsOf(data),
     ...worksOf(data),
+    ...withdrawalsOf(data),
   }
 }
 
@@ -237,6 +256,18 @@ function worksOf(data: Record<string, unknown>): {works: readonly FieldWork[] | 
   }
 }
 
+/** What the worlds withdrew as the snapshot carries it, or the field's words when its service keeps none. */
+function withdrawalsOf(data: Record<string, unknown>): {withdrawals: readonly FieldWithdrawal[] | null; withdrawWhy: string | null} {
+  const kept = data.world_withdrawal
+  if (!rec(kept) || kept.state !== 'held') return {withdrawals: null, withdrawWhy: rec(kept) && text(kept.detail) ? kept.detail : NO_WITHDRAWALS}
+  return {
+    withdrawals: rows(data.world_withdrawals, row => text(row.world_ref) && (WITHDRAW_REACHES as readonly unknown[]).includes(row.reach)
+      ? {world_ref: row.world_ref, star_ref: text(row.star_ref) ? row.star_ref : null, reach: row.reach as WithdrawReach, kind: text(row.kind) ? row.kind : null,
+        at: atOf(row.withdrawn_at_micros, row.at)} : null),
+    withdrawWhy: null,
+  }
+}
+
 // ── the scene ───────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 export interface SceneClearing {
@@ -260,6 +291,9 @@ export interface SceneWorld {
   readonly clearings: readonly SceneClearing[]
   /** the stars it is gathered at */
   readonly stars: readonly string[]
+  /** what another's world withdrew from the field or the public, in the order it happened (SF14): read in words, never silently gone;
+   * none for a world of yours */
+  readonly withdrawn: readonly FieldWithdrawal[]
 }
 export interface SceneStar {
   readonly ref: string
@@ -287,6 +321,8 @@ export interface SceneStar {
   readonly works: readonly SceneWork[] | null
   /** the tasks offered at it (SF13), in the order they were offered; null when the field's service keeps none */
   readonly offers: readonly SceneOffer[] | null
+  /** what another's world took back here (SF14), in the order it happened */
+  readonly withdrawn: readonly FieldWithdrawal[]
 }
 /** A piece of work shown at a star, as Software Factory showed it: its name, where it stands, its agents at work and what they made. */
 export interface SceneWork {
@@ -366,6 +402,8 @@ export interface FieldScene {
   readonly beyond: {readonly worlds: number; readonly stars: number; readonly wider: Aperture} | null
   /** one line on the view, or null */
   readonly note: string | null
+  /** the worlds of others that left the field since you read them (SF14), at Shared and Federated; none at World and Local */
+  readonly left: readonly FieldWithdrawal[]
 }
 
 export const LINK_OFF = 'Link is off: the field does not see this world.'
@@ -398,11 +436,12 @@ function sceneWorld(field: Extract<HeldField, {state: 'read'}>, world: FieldWorl
     clouded: !(own && viewAs === 'me'), away,
     clearings: shown.map(clearing => ({part: clearing.part_ref, label: clearing.shown.label, kind: clearing.shown.kind, shownTo: clearing.audience, star: clearing.star_ref})),
     stars: field.gatherings.filter(gathering => gathering.world_ref === world.world_ref && gathering.state === 'gathered').map(gathering => gathering.star_ref),
+    withdrawn: own ? [] : (field.withdrawals ?? []).filter(row => row.world_ref === world.world_ref && (row.reach === 'field' || row.reach === 'public')),
   }
 }
 
 /** A world as a person reads its name: the last part of its ref. */
-const whoOf = (ref: string): string => ref.split(':').pop() || ref
+export const whoOf = (ref: string): string => ref.split(':').pop() || ref
 /** The choice that names one thing shown at a star as what something is said to. */
 export const shownId = (world: string, part: string): string => JSON.stringify([world, part])
 
@@ -422,6 +461,7 @@ function sceneStar(field: Extract<HeldField, {state: 'read'}>, star: FieldStar, 
     said: field.sayings === null ? null : threadOf(field, field.sayings.filter(saying => saying.star_ref === star.star_ref), shown),
     works: field.works == null ? null : field.works.filter(work => work.star_ref === star.star_ref).map(work => sceneWork(field, work)),
     offers: field.offers == null ? null : field.offers.filter(offer => offer.star_ref === star.star_ref).map(offer => sceneOffer(field, offer, own)),
+    withdrawn: (field.withdrawals ?? []).filter(row => row.reach === 'star' && row.star_ref === star.star_ref && !isMine(field, row.world_ref)),
   }
 }
 
@@ -524,6 +564,16 @@ export function starDayLine(entry: FieldDayEntry): string {
   return entry.what === 'showed' || entry.what === 'took-back' ? `${who} ${what} ${kindWords(entry.kind)}` : `${who} ${what}`
 }
 
+/** What a world withdrew, in words (SF14): whose, what kind and from what reach; never which part, nor what it showed. */
+export function withdrawnLine(entry: FieldWithdrawal): string {
+  const who = whoOf(entry.world_ref)
+  switch (entry.reach) {
+    case 'world': return `${who}’s world left the field: what it showed is back under cloud`
+    case 'star': return `${who} took back ${kindWords(entry.kind)} shown here`
+    default: return `${who} withdrew ${kindWords(entry.kind)} from the ${entry.reach}`
+  }
+}
+
 /** The Field scale's scene: the worlds and stars the aperture holds, each world as the audience sees it, what lies past the edge. */
 export function fieldScene(field: Extract<HeldField, {state: 'read'}>, view: {readonly aperture: Aperture; readonly viewAs: Audience}, yours: string | null): FieldScene {
   const here = inView(field, view.aperture, yours)
@@ -540,6 +590,7 @@ export function fieldScene(field: Extract<HeldField, {state: 'read'}>, view: {re
     worlds: here.worlds.map(world => sceneWorld(field, world, view.viewAs, yours)),
     stars: here.stars.map(star => sceneStar(field, star, yours)),
     beyond, note,
+    left: view.aperture === 'shared' || view.aperture === 'federated' ? (field.withdrawals ?? []).filter(row => row.reach === 'world' && !isMine(field, row.world_ref)) : [],
   }
 }
 
@@ -550,8 +601,9 @@ export function fieldSceneOf(field: unknown, view: {readonly aperture: Aperture;
   const kept = Array.isArray(field.days) ? {state: 'held'} : {state: 'unavailable', detail: text(field.dayWhy) ? field.dayWhy : NO_DAY}
   const said = Array.isArray(field.sayings) ? {state: 'held'} : {state: 'unavailable', detail: text(field.sayWhy) ? field.sayWhy : NO_SAYINGS}
   const work = Array.isArray(field.works) ? {state: 'held'} : {state: 'unavailable', detail: text(field.workWhy) ? field.workWhy : NO_WORKS}
+  const gone = Array.isArray(field.withdrawals) ? {state: 'held'} : {state: 'unavailable', detail: text(field.withdrawWhy) ? field.withdrawWhy : NO_WITHDRAWALS}
   const held = heldFieldOf({...field, world_field: {state: 'held'}, star_day: kept, star_days: field.days, star_saying: said, star_sayings: field.sayings,
-    star_work: work, star_works: field.works, star_offers: field.offers})
+    star_work: work, star_works: field.works, star_offers: field.offers, world_withdrawal: gone, world_withdrawals: field.withdrawals})
   return held.state === 'read' ? fieldScene(held, view, yours) : null
 }
 
@@ -648,11 +700,10 @@ const NOTHING_TO_UNSAY = 'Choose something your world said, in what was said her
 /** A new saying's ref, from the world that says it and a nonce (the moment it is said): the field names a saying saying:<name>, once. */
 const sayingRefOf = (world: string, nonce: number): string => `saying:${world.replace(/[^A-Za-z0-9._:-]+/g, '-').slice(-120)}:${Math.abs(Math.trunc(nonce)).toString(36)}`
 export const NOT_IN_FIELD = 'That star is not in the field you see.'
+/** A name as a ref's last part: lower case, letters and digits, one hyphen between words, at most 60 characters. */
+const slugOf = (name: string): string => name.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60)
 /** A new star's ref, from its name and a nonce (the moment it is lit): the field names a star star:<name>, once. */
-const starRefOf = (name: string, nonce: number): string => {
-  const slug = name.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60)
-  return `star:${slug || 'star'}-${Math.abs(Math.trunc(nonce)).toString(36)}`
-}
+const starRefOf = (name: string, nonce: number): string => `star:${slugOf(name) || 'star'}-${Math.abs(Math.trunc(nonce)).toString(36)}`
 
 /** The SharedField request for one act at a star, asked for your own world, or why it cannot be asked. */
 export function starRequest(field: HeldField, yours: string | null, act: StarAct, nonce: number): {readonly request: Record<string, unknown>} | {readonly refusal: string} {
@@ -724,6 +775,133 @@ export function starRequest(field: HeldField, yours: string | null, act: StarAct
   }
 }
 
+// ── your world in the field: Link, Show and Withdraw (manual §17.2; O-I #858 SF01, SF02, SF14) ───────────────────────────
+//
+// Link puts your world into the field with your own body, the record every viewer draws the same planet from and nothing beside it; Show
+// opens a clearing for one part of your world (a place on your body, or a world of yours that lands on it) at the reach you choose;
+// Withdraw puts a clearing back under cloud everywhere at once, and Unlink takes your world out, leaving everything in it as it was. By
+// the hold law (manual §16.10; DLW build ruling 2026-11-06) Link and Show raise your world's reach and are held; Unlink and Withdraw
+// narrow it and are pressed. Each is one request of the held field, refused here in words where it cannot be asked.
+
+/** Who is to see a part your world shows: the field, the public, or the worlds gathered at a star. */
+export type ShowTo = Exclude<ShownTo, 'me'>
+export const SHOW_TOS: readonly ShowTo[] = ['field', 'public', 'star']
+/** A part of your world that may be shown: its ref, its kind as the field names kinds, its name, and where it stands on your body. */
+export interface YourPart {
+  readonly id: string
+  readonly kind: string
+  readonly label: string
+  readonly at?: {readonly lat: number; readonly lon: number}
+}
+/** One act on your world in the field. `body` is your own body's record as its owner last answered it, or null while it is not read. */
+export type YourAct =
+  | {readonly act: 'link'; readonly name: string; readonly body: unknown}
+  | {readonly act: 'unlink'}
+  | {readonly act: 'show'; readonly part: YourPart | null; readonly to: ShowTo | null; readonly star: string | null}
+  | {readonly act: 'withdraw'; readonly shown: string | null}
+
+/** The choice that names one thing your world shows: its part, and the star it is shown at. */
+export const shownKey = (part: string, star: string | null): string => JSON.stringify([part, star ?? ''])
+/** One thing your world shows, and to whom. */
+export interface YourShown {
+  readonly id: string
+  readonly part: string
+  readonly label: string
+  readonly kind: string
+  readonly reach: ShowTo
+  readonly star: string | null
+}
+/** What your world shows, in the order the field gives: nobody else's. */
+export function yourShown(field: HeldField, yours: string | null): YourShown[] {
+  if (field.state !== 'read') return []
+  const world = yourFieldWorld(field, yours)
+  return world === null ? [] : field.clearings.filter(clearing => clearing.world_ref === world)
+    .map(clearing => ({id: shownKey(clearing.part_ref, clearing.star_ref), part: clearing.part_ref, label: clearing.shown.label, kind: clearing.shown.kind, reach: clearing.audience, star: clearing.star_ref}))
+}
+/** How much of your world you show, by reach, in a line. */
+export function shownLoad(shown: readonly YourShown[]): string {
+  const count = (reach: ShowTo) => shown.filter(row => row.reach === reach).length
+  const parts = [[count('public'), 'to the public'], [count('field'), 'to the field'], [count('star'), 'at a star']] as const
+  const said = parts.filter(([n]) => n > 0).map(([n, where]) => `${n} ${where}`)
+  return said.length ? said.join(', ') : 'nothing: all of it is under cloud'
+}
+
+const num = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value)
+/** A body record as the field takes it (`aikit.world-body/v1`, exactly): its own keys and nothing that rides along; null for what is no
+ * body record. */
+export function fieldBodyOf(body: unknown): Record<string, unknown> | null {
+  if (!rec(body) || !text(body.body_ref) || !num(body.seed) || !rec(body.generator) || !rec(body.landmass) || !rec(body.climate) || !rec(body.sky)) return null
+  const {generator: g, landmass: l, climate: c, sky: k, landing} = body
+  return {
+    body_ref: body.body_ref, seed: body.seed, generator: {id: g.id, version: g.version},
+    landmass: {sea_level: l.sea_level, continents: l.continents, relief: l.relief, coast: l.coast},
+    climate: {warmth: c.warmth, moisture: c.moisture, ice_caps: c.ice_caps},
+    sky: {atmosphere: k.atmosphere, clouds: k.clouds, axial_tilt_deg: k.axial_tilt_deg},
+    ...(rec(landing) ? {landing: {on_ref: landing.on_ref, lat: landing.lat, lon: landing.lon}} : {}),
+  }
+}
+
+const NOT_IN_THE_FIELD = 'Your world is not in the field.'
+const LINK_FIRST = 'Link your world into the field before you show anything.'
+const BODY_UNREAD = 'Your own body is not read yet: it is what the field draws your world with.'
+/** A new world's ref, from the name it is to stand under and a nonce (the moment it is linked): the field names a world world:<name>,
+ * once, and reads its name as the last part of its ref. */
+const worldRefOf = (name: string, nonce: number): string => `world:${Math.abs(Math.trunc(nonce)).toString(36)}:${slugOf(name) || 'world'}`
+
+/** The SharedField request for one act on your world in the field, or why it cannot be asked. */
+export function yourRequest(field: HeldField, yours: string | null, act: YourAct, nonce: number): {readonly request: Record<string, unknown>} | {readonly refusal: string} {
+  if (field.state === 'reading') return {refusal: FIELD_BEING_READ}
+  if (field.state === 'unavailable') return {refusal: field.reason}
+  const ref = yourFieldWorld(field, yours)
+  const world = ref === null ? undefined : field.worlds.find(row => row.world_ref === ref)
+  switch (act.act) {
+    case 'link': {
+      if (world?.linked) return {refusal: 'Your world is in the field already.'}
+      const own = yours !== null && rec(act.body) && act.body.body_ref === yours ? fieldBodyOf(act.body) : null
+      if (world) {
+        const body = own ?? fieldBodyOf(world.body)
+        return body ? {request: {kind: 'world-put', world_ref: world.world_ref, body, linked: true}} : {refusal: BODY_UNREAD}
+      }
+      const name = act.name.trim()
+      if (!name) return {refusal: 'Name your world as the field will show it first.'}
+      if ([...name].length > 60) return {refusal: 'Name your world in at most 60 characters.'}
+      if (!own) return {refusal: BODY_UNREAD}
+      return {request: {kind: 'world-put', world_ref: worldRefOf(name, nonce), body: own, linked: true}}
+    }
+    case 'unlink': {
+      const body = world?.linked ? fieldBodyOf(world.body) : null
+      if (!world?.linked || !body) return {refusal: NOT_IN_THE_FIELD}
+      return {request: {kind: 'world-put', world_ref: world.world_ref, body, linked: false}}
+    }
+    case 'show': {
+      if (!world?.linked) return {refusal: LINK_FIRST}
+      if (!act.part) return {refusal: 'Choose a part of your world to show first.'}
+      if (!act.to || !SHOW_TOS.includes(act.to)) return {refusal: 'Choose who sees it first: the field, the public, or the worlds at the chosen star.'}
+      const star = act.to === 'star' ? act.star : null
+      if (act.to === 'star') {
+        if (!star) return {refusal: NO_STAR}
+        if (!field.stars.some(row => row.star_ref === star)) return {refusal: NOT_IN_FIELD}
+        if (!field.gatherings.some(row => row.star_ref === star && row.world_ref === world.world_ref && row.state === 'gathered')) return {refusal: 'Your world shows things at a star only while it is gathered there.'}
+      }
+      const label = act.part.label.trim()
+      if (!label || [...label].length > 160) return {refusal: 'A part is named in at most 160 characters.'}
+      const shown = {kind: act.part.kind, label, ...(act.part.at ? {at: {lat: act.part.at.lat, lon: act.part.at.lon}} : {})}
+      const now = field.clearings.find(row => row.world_ref === world.world_ref && row.part_ref === act.part!.id && row.star_ref === star)
+      if (now && now.audience === act.to && now.shown.kind === shown.kind && now.shown.label === shown.label) return {refusal: 'It is shown so already.'}
+      return {request: {kind: 'clearing-open', world_ref: world.world_ref, part_ref: act.part.id, audience: act.to, shown, ...(star ? {star_ref: star} : {})}}
+    }
+    case 'withdraw': {
+      if (!world) return {refusal: NOT_IN_THE_FIELD}
+      if (!act.shown) return {refusal: 'Choose something your world shows first.'}
+      const shown = yourShown(field, yours).find(row => row.id === act.shown)
+      if (!shown) return {refusal: 'That is no longer shown.'}
+      return {request: {kind: 'clearing-withdraw', world_ref: world.world_ref, part_ref: shown.part, ...(shown.star ? {star_ref: shown.star} : {})}}
+    }
+  }
+}
+
+const REACH_WORDS: Readonly<Record<string, string>> = {public: 'the public', field: 'the field', star: 'the worlds gathered at the star'}
+
 /** What the field did, in a line, from its answer to one act at a star. */
 export function starNote(request: Record<string, unknown>, data: unknown): string {
   const answer = rec(data) ? data : {}
@@ -735,6 +913,11 @@ export function starNote(request: Record<string, unknown>, data: unknown): strin
     case 'star-close': return 'The star is closed: every world is back in its own orbit.'
     case 'star-say': return 'It is said at the star, under your world’s name.'
     case 'star-unsay': return 'It is unsaid: it no longer stands at the star.'
+    case 'world-put': return request.linked === true
+      ? 'Your world is in the field: those in it see its planet, and what you show them.'
+      : 'Your world is out of the field: those who read it read that it left, and everything in it stays as it was.'
+    case 'clearing-open': return `It is shown to ${REACH_WORDS[String(request.audience)] ?? 'whom you chose'}.`
+    case 'clearing-withdraw': return 'It is withdrawn: back under cloud, and whoever read it reads that it was withdrawn.'
     default: return 'The field took it.'
   }
 }

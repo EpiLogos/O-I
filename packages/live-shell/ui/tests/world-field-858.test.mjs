@@ -1203,3 +1203,218 @@ test('a work your world shows is shown again as its Run moves and when the field
     store.publishFactory({state: 'reading'})
   }
 })
+
+// ── round 31b: your world into the field, a part of it shown at the reach you choose, and withdrawn (SF01, SF02, SF14) ──────────────
+// Link puts your world into the field with your own body (the record every viewer draws the same planet from, and nothing beside it);
+// Show opens a clearing for a part of your world, to the field, the public or the worlds at a star; Withdraw puts a clearing back under
+// cloud, and Unlink your world out of the field, leaving everything in it as it was. What another world withdrew reads as withdrawn, in
+// words, never as what it was. By the hold law (manual §16.10; DLW build ruling 2026-11-06) Link and Show raise your world's reach and
+// are held; Unlink and Withdraw narrow it and are pressed; only the person's own press does any of them.
+const YOUR_BODY = {...bodyOf(YOURS), seed: 11}
+const fieldOf = snapshot => model.heldFieldOf(snapshot)
+const withoutMe = rows => rows.filter(row => row.world_ref !== 'world:me')
+const OUT_OF_FIELD = {...SNAPSHOT, worlds: withoutMe(SNAPSHOT.worlds), clearings: withoutMe(SNAPSHOT.clearings), gatherings: withoutMe(SNAPSHOT.gatherings)}
+const UNLINKED = {...SNAPSHOT, worlds: SNAPSHOT.worlds.map(row => (row.world_ref === 'world:me' ? {...row, linked: false} : row))}
+const PLACE = {id: 'place:the-study', kind: 'place', label: 'The study', at: {lat: 22, lon: 10}}
+const NONCE = Date.UTC(2026, 10, 6, 9)
+const yourAsk = (snapshot, act) => model.yourRequest(fieldOf(snapshot), YOURS, act, NONCE)
+const resetYours = () => store.chooseStarHand({star: null, to: null, worldName: '', showPart: null, showTo: null, shownPart: null})
+const readingWith = () => ({...YOURS_READING(), body: {state: {state: 'read', reading: {space: {ref: 'central:wiki:root', revision: 3, title: 'Root'}}, record: YOUR_BODY}, choice: 'own'},
+  locations: {rows: [{id: 'place:the-study', name: 'The study', lat: 22, lon: 10, kind: 'place'}, {id: 'world:central:project:river', name: 'river', lat: -30, lon: -6, kind: 'place', written: true}]}})
+
+test('Link puts your world into the field with your own body under the name you give it, and Unlink takes it out leaving everything as it was (SF01, SF14)', () => {
+  // not in the field yet: named first, then put with your own body, linked
+  assert.match(yourAsk(OUT_OF_FIELD, {act: 'link', name: '  ', body: YOUR_BODY}).refusal, /Name your world as the field will show it first/)
+  assert.match(yourAsk(OUT_OF_FIELD, {act: 'link', name: 'x'.repeat(61), body: YOUR_BODY}).refusal, /at most 60 characters/)
+  assert.match(yourAsk(OUT_OF_FIELD, {act: 'link', name: 'Teraphim', body: null}).refusal, /Your own body is not read yet/)
+  assert.match(yourAsk(OUT_OF_FIELD, {act: 'link', name: 'Teraphim', body: bodyOf('body:someone-else')}).refusal, /Your own body is not read yet/)
+  const put = yourAsk(OUT_OF_FIELD, {act: 'link', name: 'Teraphim’s World', body: {...YOUR_BODY, notes: 'my private notes'}})
+  assert.ok('request' in put, JSON.stringify(put))
+  assert.match(put.request.world_ref, /^world:[a-z0-9]+:teraphim-s-world$/, 'a new world is named in the field from the name you give it, once')
+  assert.deepEqual({...put.request, world_ref: undefined}, {kind: 'world-put', world_ref: undefined, body: YOUR_BODY, linked: true},
+    'your own body, exactly the record the field draws it from: nothing rides along with it')
+  // in the field and unlinked: Link takes it back in under the name it has, as your body stands now
+  assert.deepEqual(yourAsk(UNLINKED, {act: 'link', name: '', body: YOUR_BODY}), {request: {kind: 'world-put', world_ref: 'world:me', body: YOUR_BODY, linked: true}})
+  assert.match(yourAsk(UNLINKED, {act: 'unlink'}).refusal, /Your world is not in the field/)
+  // linked: Link has nothing to do; Unlink takes it out with its body as the field holds it, so nothing else changes
+  assert.match(yourAsk(SNAPSHOT, {act: 'link', name: '', body: YOUR_BODY}).refusal, /Your world is in the field already/)
+  assert.deepEqual(yourAsk(SNAPSHOT, {act: 'unlink'}), {request: {kind: 'world-put', world_ref: 'world:me', body: bodyOf(YOURS), linked: false}})
+  assert.match(yourAsk(OUT_OF_FIELD, {act: 'unlink'}).refusal, /Your world is not in the field/)
+  // the field's own words while it is not read
+  assert.equal(model.yourRequest({state: 'reading'}, YOURS, {act: 'unlink'}, NONCE).refusal, 'The shared field is being read.')
+  assert.equal(model.yourRequest({state: 'unavailable', reason: 'Not here.'}, YOURS, {act: 'link', name: 'T', body: YOUR_BODY}, NONCE).refusal, 'Not here.')
+})
+
+test('Show opens a clearing for a part of your world at the reach you choose: the field, the public or the worlds at the chosen star (SF02)', () => {
+  const show = (to, star = null, part = PLACE, snapshot = SNAPSHOT) => yourAsk(snapshot, {act: 'show', part, to, star})
+  const shown = {kind: 'place', label: 'The study', at: {lat: 22, lon: 10}}
+  assert.deepEqual(show('field'), {request: {kind: 'clearing-open', world_ref: 'world:me', part_ref: 'place:the-study', audience: 'field', shown}})
+  assert.deepEqual(show('public'), {request: {kind: 'clearing-open', world_ref: 'world:me', part_ref: 'place:the-study', audience: 'public', shown}})
+  assert.deepEqual(show('star', 'star:rosarium'), {request: {kind: 'clearing-open', world_ref: 'world:me', part_ref: 'place:the-study', audience: 'star', star_ref: 'star:rosarium', shown}})
+  assert.match(show('star', null).refusal, /Choose a star first/)
+  assert.match(show('star', 'star:far').refusal, /only while it is gathered there/)
+  assert.match(show(null).refusal, /Choose who sees it first/)
+  assert.match(show('field', null, null).refusal, /Choose a part of your world to show first/)
+  assert.match(show('field', null, PLACE, UNLINKED).refusal, /Link your world into the field before you show anything/)
+  assert.match(show('field', null, PLACE, OUT_OF_FIELD).refusal, /Link your world into the field before you show anything/)
+  // shown so already: nothing to do; shown wider, it is asked again
+  const already = {...SNAPSHOT, clearings: [...SNAPSHOT.clearings, c('world:me', 'place:the-study', 'field', 'The study')]}
+  assert.match(show('field', null, PLACE, already).refusal, /shown so already/)
+  assert.ok('request' in show('public', null, PLACE, already))
+  // a world of yours that lands on your planet is shown as the project it is
+  assert.equal(show('field', null, {id: 'world:central:project:river', kind: 'project', label: 'river', at: {lat: -30, lon: -6}}).request.shown.kind, 'project')
+  // a name the field would refuse is refused here, in words
+  assert.match(show('field', null, {...PLACE, label: 'x'.repeat(161)}).refusal, /at most 160 characters/)
+})
+
+test('Withdraw puts a part you show back under cloud everywhere at once, and Load reads how much of your world you show (SF14, SF01)', () => {
+  const yours = model.yourShown(fieldOf(SNAPSHOT), YOURS)
+  assert.deepEqual(yours.map(row => [row.label, row.reach, row.star]), [['A reading of the fourth plate', 'public', null], ['Rosarium notes', 'field', null], ['For the circle', 'star', 'star:rosarium']],
+    'what your world shows, and to whom: nobody else’s')
+  assert.deepEqual(yourAsk(SNAPSHOT, {act: 'withdraw', shown: yours[1].id}), {request: {kind: 'clearing-withdraw', world_ref: 'world:me', part_ref: 'place:rosarium-notes'}})
+  assert.deepEqual(yourAsk(SNAPSHOT, {act: 'withdraw', shown: yours[2].id}), {request: {kind: 'clearing-withdraw', world_ref: 'world:me', part_ref: 'page:for-the-circle', star_ref: 'star:rosarium'}})
+  assert.match(yourAsk(SNAPSHOT, {act: 'withdraw', shown: null}).refusal, /Choose something your world shows first/)
+  assert.match(yourAsk(SNAPSHOT, {act: 'withdraw', shown: model.shownKey('page:maras-plate', null)}).refusal, /That is no longer shown/)
+  assert.equal(model.shownLoad(yours), '1 to the public, 1 to the field, 1 at a star')
+  assert.equal(model.shownLoad([]), 'nothing: all of it is under cloud')
+})
+
+const AT_W = Date.UTC(2026, 10, 6, 9, 5) * 1000
+const WITHDRAWN = {...SNAPSHOT, world_withdrawal: {state: 'held'}, world_withdrawals: [
+  {world_ref: 'world:mara', star_ref: null, reach: 'field', kind: 'page', withdrawn_at_micros: String(AT_W)},
+  {world_ref: 'world:mara', star_ref: 'star:rosarium', reach: 'star', kind: 'page', withdrawn_at_micros: String(AT_W + 1000)},
+  {world_ref: 'world:gone', star_ref: null, reach: 'world', withdrawn_at_micros: String(AT_W + 2000)},
+  {world_ref: 'world:me', star_ref: null, reach: 'public', kind: 'place', withdrawn_at_micros: String(AT_W + 3000)},
+]}
+
+test('what another world withdrew reads as withdrawn there, in words, never silently gone and never as what it was (SF14)', () => {
+  const field = fieldOf(WITHDRAWN)
+  assert.equal(field.withdrawals.length, 4)
+  const scene = model.fieldScene(field, {aperture: 'federated', viewAs: 'me'}, YOURS)
+  const mara = scene.worlds.find(row => row.ref === 'world:mara')
+  assert.deepEqual(mara.withdrawn.map(model.withdrawnLine), ['mara withdrew a page from the field'])
+  assert.equal(mara.withdrawn[0].at, AT_W / 1000, 'and says when')
+  assert.deepEqual(scene.stars.find(star => star.ref === 'star:rosarium').withdrawn.map(model.withdrawnLine), ['mara took back a page shown here'])
+  assert.deepEqual(scene.left.map(model.withdrawnLine), ['gone’s world left the field: what it showed is back under cloud'])
+  assert.deepEqual(scene.worlds.find(row => row.ref === 'world:me').withdrawn, [], 'what you withdrew yourself is not read as another’s')
+  // at World and Local your own worlds alone stand: nothing another world withdrew is read there
+  for (const aperture of ['world', 'local']) assert.deepEqual(model.fieldScene(field, {aperture, viewAs: 'me'}, YOURS).left, [])
+  // the reading names whose, what kind, from what reach and when: never which part, nor what it showed
+  assert.ok(!JSON.stringify(scene.left.concat(mara.withdrawn)).includes('part'), 'no part is named')
+  // a service that keeps no withdrawals says so, and reads as it always did
+  const none = fieldOf(SNAPSHOT)
+  assert.equal(none.withdrawals, null)
+  assert.match(none.withdrawWhy, /does not keep what a world withdrew/)
+  assert.deepEqual(model.fieldScene(none, {aperture: 'federated', viewAs: 'me'}, YOURS).left, [])
+})
+
+test('the World binding links, shows and withdraws from the view’s own hand, and stands each act it cannot do dimmed (SF01, SF02, SF14)', async () => {
+  store.chooseFieldView({field: true, aperture: 'federated', viewAs: 'me'})
+  store.publishField(fieldOf(OUT_OF_FIELD))
+  resetYours()
+  const asked = []
+  store.bindSystemActs({open: async () => {}, land: async () => 'landed', unland: async () => 'unlanded', fieldAct: async request => { asked.push(request); return 'The field took it.' }})
+  try {
+    let binding = atlasDevs.atlasGlobeBinding(readingWith())
+    assert.equal(binding.values.fieldWorld, undefined, 'your world is not in the field yet')
+    assert.match(binding.standing.fieldLink?.disabled ?? '', /Name your world/)
+    assert.match(binding.standing.fieldUnlink?.disabled ?? '', /not in the field/)
+    assert.match(binding.standing.partShow?.disabled ?? '', /Link your world/)
+    assert.deepEqual(JSON.parse(binding.values.yourParts), [{id: 'place:the-study', kind: 'place', label: 'The study'}, {id: 'world:central:project:river', kind: 'project', label: 'river'}],
+      'the parts of your world: the places on your body, and the worlds of yours that land on it')
+    binding.local.worldName('Teraphim')
+    binding = atlasDevs.atlasGlobeBinding(readingWith())
+    assert.equal(binding.values.worldName, 'Teraphim')
+    assert.equal(binding.standing.fieldLink, undefined)
+    assert.equal(binding.writes('fieldLink'), true)
+    await binding.write([{key: 'fieldLink', value: 1}])
+    const put = asked.pop()
+    assert.deepEqual([put.kind, put.linked, put.body], ['world-put', true, YOUR_BODY])
+    assert.match(put.world_ref, /^world:[a-z0-9]+:teraphim$/)
+    assert.equal(store.starHand().worldName, '', 'the name is the world’s once it is in the field')
+    // in the field: a part shown at the reach chosen, and one withdrawn
+    store.publishField(fieldOf(SNAPSHOT))
+    binding = atlasDevs.atlasGlobeBinding(readingWith())
+    assert.deepEqual([binding.values.fieldWorld, binding.values.fieldLinked], ['world:me', true])
+    assert.match(binding.standing.fieldLink?.disabled ?? '', /in the field already/)
+    assert.match(binding.standing.worldName?.disabled ?? '', /stands in the field as me/)
+    assert.equal(binding.standing.fieldUnlink, undefined)
+    assert.match(binding.standing.partShow?.disabled ?? '', /Choose a part of your world/)
+    binding.local.showPart('place:the-study')
+    binding.local.showTo('everyone')
+    binding.local.showTo('public')
+    binding = atlasDevs.atlasGlobeBinding(readingWith())
+    assert.deepEqual([binding.values.showPart, binding.values.showTo], ['place:the-study', 'public'], 'a reach is the field, the public or a star, nothing else')
+    assert.equal(binding.standing.partShow, undefined)
+    await binding.write([{key: 'partShow', value: 2}])
+    assert.deepEqual(asked.pop(), {kind: 'clearing-open', world_ref: 'world:me', part_ref: 'place:the-study', audience: 'public', shown: {kind: 'place', label: 'The study', at: {lat: 22, lon: 10}}})
+    assert.equal(store.starHand().showPart, null, 'what was shown is no longer chosen to show')
+    assert.equal(binding.values.shownLoad, '1 to the public, 1 to the field, 1 at a star')
+    assert.deepEqual(JSON.parse(binding.values.yourShown).map(row => row.label), ['A reading of the fourth plate', 'Rosarium notes', 'For the circle'])
+    assert.match(binding.standing.partWithdraw?.disabled ?? '', /Choose something your world shows/)
+    binding.local.shownPart(model.shownKey('place:rosarium-notes', null))
+    binding = atlasDevs.atlasGlobeBinding(readingWith())
+    await binding.write([{key: 'partWithdraw', value: 3}])
+    assert.deepEqual(asked.pop(), {kind: 'clearing-withdraw', world_ref: 'world:me', part_ref: 'place:rosarium-notes'})
+    assert.equal(store.starHand().shownPart, null)
+    await binding.write([{key: 'fieldUnlink', value: 4}])
+    assert.deepEqual(asked.pop(), {kind: 'world-put', world_ref: 'world:me', body: bodyOf(YOURS), linked: false})
+    // the field not reached from this window: every act stands dimmed
+    store.bindSystemActs(null)
+    binding = atlasDevs.atlasGlobeBinding(readingWith())
+    for (const key of ['fieldUnlink', 'partWithdraw']) assert.match(binding.standing[key]?.disabled ?? '', /not reached from this window|Choose something/)
+    assert.equal(binding.writes('fieldUnlink'), false)
+  } finally {
+    store.bindSystemActs(null)
+    resetYours()
+  }
+})
+
+test('only the person’s own press links, shows or withdraws: no row an agent sets, no relay and no default does any of it (DLW build ruling 2026-11-06)', async () => {
+  const {inhabitantManifest} = await import('../src/inhabitants/manifest.ts')
+  ;(await import('../src/inhabitants/familyManifest.ts')).resetFamilyManifestsForTest()
+  ;(await import('../src/inhabitants/worldShellFamilies.ts')).loadWorldShellFamilies()
+  const keys = ['fieldLink', 'fieldUnlink', 'partShow', 'partWithdraw', 'worldName', 'showPart', 'showTo', 'shownPart']
+  assert.ok(!atlasDevs.ATLAS_DECLARED_ROWS.some(row => keys.includes(row.key)), 'no declared row of the World, which an agent may set, carries them')
+  const device = atlasDevs.atlasDevice(inhabitantManifest('atlas-earth').faces.find(face => face.id === 'globe-engine'), readingWith())
+  assert.ok(device.rows.length > 0, 'the World stands as a device')
+  assert.ok(!device.rows.some(row => keys.includes(row.key)))
+  for (const key of ['fieldLink', 'partShow']) await assert.rejects(device.submit([{key, value: 1}]), /no owner write path/)
+  // no relay and no default: your world out of the field with a name, a part and a reach in the hand; reading the binding, keeping the
+  // works your world shows and relaying a revocation send the field nothing
+  store.chooseFieldView({field: true, aperture: 'federated', viewAs: 'me'})
+  store.publishField(fieldOf(OUT_OF_FIELD))
+  store.chooseStarHand({worldName: 'Teraphim', showPart: 'place:the-study', showTo: 'public'})
+  const asked = []
+  store.bindSystemActs({open: async () => {}, land: async () => 'landed', unland: async () => 'unlanded', fieldAct: async request => { asked.push(request); return 'The field took it.' },
+    factory: async () => ({})})
+  try {
+    atlasDevs.atlasGlobeBinding(readingWith())
+    await atlasDevs.keepShownWorks()
+    await atlasDevs.relayRevoked()
+    assert.deepEqual(asked, [], 'nothing links, shows or withdraws but the press')
+  } finally {
+    store.bindSystemActs(null)
+    resetYours()
+  }
+  // the hand starts with no name, no part and no reach: nothing is shown by default
+  const source = await readFile(new URL('../src/projections/atlas/system/systemStore.ts', import.meta.url), 'utf8')
+  assert.match(source, /worldName: '', showPart: null, showTo: null, shownPart: null/)
+})
+
+test('the face links and shows by a hold, and unlinks and withdraws by a press; what others withdrew reads there in words (manual §16.10; SF01, SF02, SF14)', () => {
+  const v = {...world.defaults, ...world.fixtures['Your world shown']}
+  const page = renderToStaticMarkup(world.whole({v, set() {}, nav: {}, page: 'shown', setPage() {}, standing: {}}))
+  const held = label => new RegExp(`data-hold="true"[^>]*><i[^>]*></i>${label}<`).test(page)
+  const unheld = label => new RegExp(`class="dp-action"(?: disabled="")?>${label}<`).test(page)
+  assert.match(page, />Shown</, 'the World has a page for what your world shows')
+  // what raises your world's reach is held: Link brings it among the others, Show opens a clearing others then see
+  for (const label of ['Link', 'Show']) assert.ok(held(label), `${label} is held`)
+  // what narrows it is pressed: Unlink takes your world out, Withdraw puts a clearing back under cloud
+  for (const label of ['Unlink', 'Withdraw']) assert.ok(unheld(label), `${label} is pressed, not held`)
+  assert.match(page, /Hold to link your world/)
+  assert.match(page, /Hold to show it/)
+  assert.match(page, /1 to the public, 1 to the field, 1 at a star/, 'Load reads how much of your world you show')
+  assert.match(page, /mara withdrew a page from the field/, 'what another world withdrew reads in words')
+  assert.match(page, /left the field: what it showed is back under cloud/)
+})
