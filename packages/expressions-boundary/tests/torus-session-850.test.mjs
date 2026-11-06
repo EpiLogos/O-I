@@ -181,3 +181,22 @@ test('a shared Receiver crosses with its reference and never a place; the shell 
     {kind: 'receiver', on: true, context: 'world'}, {kind: 'receiver', on: true, shared: 'x'.repeat(4097)}, {kind: 'receiver', context: 'shared', shared: 'room-7'}])
     assert.equal(readInstrumentEdit(bad), null, JSON.stringify(bad).slice(0, 80));
 });
+
+// O-I #855 round 25: the take sounding under the Scene crosses exact, for the engine to play it beside the Torus on its part: its ref, lane
+// and title, the frame it plays from and when that is heard, its frames at its rate, the take lane of the presented Scene auditioned in place
+// of its main lane (DLW build ruling 2026-11-05: "Audition on a take lane solos that lane in place of it"), and the frame's last refusal.
+test('the take sounding under the Scene crosses exact, with the lane auditioned, or the fault is named; a frame from before it announces none', () => {
+  const sounding = {take_ref: 'sha256:take', lane_ref: 'take-lane:torus/1', title: 'Take 1', from_frame: 1200, frames: 48000, sample_rate: 48000, heard_at_ms: 1.7e12};
+  assert.deepEqual(readHostedParameters(parameters({take: {sounding, audition: null, refusal: null}})).take, {sounding, audition: null, refusal: null});
+  assert.deepEqual(readHostedParameters(parameters({take: {sounding: null, audition: 'take-lane:torus/2', refusal: 'Take 2 is not played: no'}})).take,
+    {sounding: null, audition: 'take-lane:torus/2', refusal: 'Take 2 is not played: no'});
+  assert.equal('take' in readHostedParameters(parameters()), false);
+  const ok = {sounding: null, audition: null, refusal: null};
+  for (const [bad, words] of [[{...ok, sounding: {...sounding, from_frame: 48000}}, /^parameters\.take\.sounding: /], [{...ok, sounding: {...sounding, take_ref: 'take'}}, /^parameters\.take\.sounding: /],
+    [{...ok, sounding: {...sounding, lane_ref: 'note-lane:keys'}}, /^parameters\.take\.sounding: /], [{...ok, sounding: {...sounding, heard_at_ms: null}}, /^parameters\.take\.sounding: /],
+    [{...ok, sounding: {...sounding, struck: []}}, /^parameters\.take\.sounding: /], [{...ok, refusal: 7}, /^parameters\.take\.refusal: /],
+    [{...ok, audition: 'note-lane:keys'}, /^parameters\.take\.audition: /], [{...ok, audition: 'take-lane:torus/'}, /^parameters\.take\.audition: /],
+    [{sounding: null, refusal: null}, /^parameters\.take\.audition: /],
+    [{...ok, held_bytes: 0}, /^parameters\.take\.held_bytes: not announced/], ['take', /^parameters\.take: expected/], [{sounding: null, audition: null}, /^parameters\.take\.refusal: /]])
+    assert.match(readHostedParameters(parameters({take: bad})), words, JSON.stringify(bad));
+});

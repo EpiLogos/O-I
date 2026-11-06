@@ -355,6 +355,12 @@
       "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md §21.1 (Rules: every part sounds in one engine), O-I #849; docs/cradle/02-ARCHITECTURE.md §5/§12"
     },
     {
+      "command": "live_engine_host::live_engine_take_play",
+      "classification": "presentation-lease",
+      "rationale": "A sealed Torus take played beside its part's Torus while its scene plays, or let go (O-I #855 round 25; DLW build ruling 2026-11-05: native candidate, through the engine as a take player on the Torus part, mixed beside the live Torus; the take is source material and plays through the part's current chain): the take's sound as its owner rendered it, sent raw by the page (oi.take-play/v1, verified by the page against the take's sealed pcm_sha256, from the frame it plays from, heard when the page names it), added to what the part's Torus makes in the engine from the frame heard then, through the Torus's effects as they stand and the part's own chain, volume, pan and sends; it gives way to the take played there before, and let go the part's Torus sounds alone from the next block. The host keeps each take played, which Export Audio plays again. Refused in words for another set than the one open, another rate than the engine's, a track that is no MIDI part, a take ended by the time it is heard, and while no set is open in the engine. It writes nothing. Candidate webviews only.",
+      "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md §21.1 (Rules: every part sounds in one engine; Export Audio renders what you heard), §20.1 (take lanes), O-I #855; docs/cradle/02-ARCHITECTURE.md §5/§12"
+    },
+    {
       "command": "midi::midi_out",
       "classification": "presentation-lease",
       "rationale": "The part's MIDI output (midi.rs over midir): lists the system's MIDI outputs, connects the one the person chooses and sends the notes the part's playing path plays to it, refused in words when none is chosen or a message is not MIDI. It decides and writes nothing; what is played is the shell's playing path and the Torus's owner. Candidate webviews only.",

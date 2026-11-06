@@ -37,7 +37,7 @@ import {entityTargets} from './nativeParameters';
 import {recordRecent,recentJourneys} from './recentWork';
 import {installPanelResize} from './panelResize';
 import {initialiseSceneSaves,sceneSaveState,saveScene,nextSceneFrom,moveScene,retimeScene,removeScene,splitScene,applyTimelineMove,restoreScene,savedSceneIndices,sceneParameterChanges,insertScene,overwriteScene,stillScene,rollSceneSeam,seamRollRange,slipScene} from './sceneWorkflow';
-import {advanceSceneTransport,nativeSceneTransportMaterial,switchHoldsForEnd,switchLanding} from './sceneTransport';
+import {advanceSceneTransport,nativeSceneTransportMaterial,sceneTakeAt,switchHoldsForEnd,switchLanding} from './sceneTransport';
 import {liveWorkspaceHTML} from './liveWorkspace';
 import {defaultWorkspace,validateWorkspace,WORKSPACE_KEY,moveBeltEntry,syncHeldState} from './workspacePreferences';
 import {physisHost,installPhysis,saveDesktopCapture,type DesktopScene} from './physis';
@@ -2070,6 +2070,23 @@ function recordableTracks(){return workspace.entries.flatMap(entry=>{const subje
 function finishPropertyTake(){if(!propertyTake)return;const take=propertyTake;propertyTake=null;if(take.elapsed>0){const end=Math.min(3600,take.start+take.elapsed);for(const t of take.tracks){const value=liveOverrides.valueForBind(t.bind)??readTrackValue(scene(),t);if(value!==undefined&&t.points.at(-1)?.time!==end)t.points.push({time:end,value});}changed(()=>{scene().propertyTakeRange={start:take.start,end};scene().propertyTracks=mergeTake(scene().propertyTracks??[],take.tracks,take.start,end);scene().duration=Math.max(scene().duration,end);},true,'Record property take');takeWindows.set(scene().id,{start:take.start,end});sceneElapsed=take.start;trackPreview=true;scenePlaying=false;toast('Property take recorded · save the scene to keep this version.');}renderAll();announceHostState();}
 function updatePropertyTake(now:number){const t=propertyTake;if(!t)return;if(t.sceneId!==scene().id){finishPropertyTake();return;}const remaining=Math.max(0,Math.ceil((t.armed-now)/1000));$('take-status').hidden=false;$('take-status').textContent=remaining?'Recording in '+remaining+'…':'Recording '+t.elapsed.toFixed(1)+'s · click record to stop';if(remaining)return;const elapsed=Math.min((now-t.armed)/1000,3600-t.start,t.limit??Infinity);t.elapsed=elapsed;sceneElapsed=t.start+elapsed;scenePlaying=true;if(elapsed-t.lastSample>=.05||t.lastSample<0){for(const track of t.tracks){const value=liveOverrides.valueForBind(track.bind)??readTrackValue(scene(),track);if(value===undefined)continue;sampleTrack(track,t.start+elapsed,value,t.start+Math.max(0,t.lastSample));}t.lastSample=elapsed;}if(t.start+elapsed>=3600||t.limit!==undefined&&elapsed>=t.limit)finishPropertyTake();}
 let frames=0,lastFpsTime=performance.now(),fps=0,rafId=0;
+/** The take lane auditioned on a Scene's Torus row (O-I #855 round 25; the `take-audition` stage command): its take sounds in place of the
+ * row's main lane while that Scene is presented. Nothing is saved. */
+let takeAudition:{sceneId:string;lane:string}|null=null;
+/** Every take the open Expression's scenes lay, as of the native view it was read from: a held render of any other is let go. */
+let takesLaid:{view:unknown;refs:Set<string>}|null=null;
+/** The take the presented Scene's Torus row sounds now, played while the Scene plays forward at its own rate (O-I #855 round 25; DLW build
+ * ruling 2026-11-05 "The take sounds"; controller.ts soundTake, sceneTransport.ts sceneTakeAt). A refusal is said once. */
+function soundSceneTake(rate:number){
+ const controller=nativeField?.controller;if(!controller)return;
+ const view=nativeWorkspace?.nativeView(),id=scene().id;
+ const laid=takesLaid&&takesLaid.view===view?takesLaid:(takesLaid={view,refs:new Set((view?.document.scenes??[]).flatMap(row=>{const takes=(row as {performance?:{torus_takes?:unknown}}).performance?.torus_takes;
+  return Array.isArray(takes)?takes.flatMap(record=>typeof record?.take?.take_ref==='string'?[record.take.take_ref as string]:[]):[];}))});
+ const audition=takeAudition?.sceneId===id?takeAudition.lane:null;
+ const want=sceneTakeAt(view,id,sceneElapsed,audition);
+ const said=controller.soundTake(want,{playing:scenePlaying&&!fieldPaused&&!document.hidden&&!libraryOpen,rate,audition},laid.refs);
+ if(said)toast(said,6500);
+}
 /** O-I #747 (lead's ruling of 29 Oct): a live field held on the scene meets every authored change — a scene switched, a view kept, a control
  * changed — before the engine does. The lease would refuse the change (retained-capability.mjs retainedRefuses); instead it is let go
  * around the person's act and opened again once the scene is still (nativeField.ts rebind), and the act is named. */
@@ -2124,6 +2141,8 @@ function tick(now:number){if(sceneEditHeld||researchInstruments?.active()&&!rese
  else if(transportFrame.advance_to_scene_index!==null)void advanceSavedScene(transportFrame.advance_to_scene_index,transportFrame.seek_local_seconds??0);
  else if(transportFrame.unavailable_reason){if(wasSequence)applySceneView();toast(transportFrame.unavailable_reason);renderAll();}
  else if(transportFrame.completed){if(wasSequence){applySceneView();renderAll();}else transportUI();}
+ // A take under the Scene sounds where it lies while the Scene plays forward (O-I #855 round 25).
+ soundSceneTake(rate);
  if(transitionDuration>0){const f=clamp((simTime-transitionStart)/Math.max(.01,transitionDuration),0,1);paintTransition(f);if(f>=1){transitionDuration=0;transitionSnapshot=null;$('transition-canvas').hidden=true;}}
  if(overlayDirty&&!libraryOpen)drawGuides();if(recorder.active){const paperScene={...activeScene(),field:{...activeScene().field,background:native?.background??scene().field.background,palette:native?.palette??scene().field.palette,params:{...scene().field.params,...native?.params}}};const copy=()=>recorder.frame(engine.canvas,paperScene,width,height,captureTransition());try{if(engine.withCleanFrame)engine.withCleanFrame(copy);else copy();}catch(err){recorder.stop();error(err);}}frames++;
  if(now-lastFpsTime>1000){fps=Math.round(frames*1000/(now-lastFpsTime));frames=0;lastFpsTime=now;}
@@ -2409,6 +2428,18 @@ async function runStageCommand(command:StageCommand):Promise<StageResult>{
    // the take's checkpoint, each act at its sample, its PCM as f32. The live owner neither moves nor sounds, so nothing is announced.
    if(!nativeField)throw new Error('This application has no native instrument.');
    return {ok:true,render:await nativeField.controller.renderTake(command.checkpoint,command.acts,command.frames)};
+  case 'take-audition':
+   // Audition on a take lane of the presented Scene's Torus row (O-I #855 round 25): its take sounds in place of the row's main lane.
+   {const view=nativeWorkspace?.nativeView(),ref=view?.bindings[scene().id]?.scene_ref;
+    const layers=ref?((view!.document.scenes.find(row=>row.scene_ref===ref) as {performance?:{layers?:unknown}}|undefined)?.performance?.layers):undefined;
+    if(command.lane_ref!==null&&!(Array.isArray(layers)&&layers.some((layer:{layer_ref?:unknown})=>layer?.layer_ref===command.lane_ref)))
+     throw new Error(`The presented Scene has no take lane ${command.lane_ref} to audition.`);
+    takeAudition=command.lane_ref===null?null:{sceneId:scene().id,lane:command.lane_ref};
+    return {ok:true};}
+  case 'take-sound':
+   // A take's verified render, for the desktop's one engine to play beside the Torus on its part (O-I #855 round 25). A read.
+   if(!nativeField)throw new Error('This application has no native instrument.');
+   return {ok:true,render:nativeField.controller.takeSound(command.take_ref)};
   case 'instrument':
    // The Live instrument's edits run the native field's own controller operations (nativeField.ts command): the same path as the Studio's controls.
    // An edit that acts on the owner answers the sample it landed at, and with at_samples_elapsed waits for the owner's sound to reach it (O-I 855).

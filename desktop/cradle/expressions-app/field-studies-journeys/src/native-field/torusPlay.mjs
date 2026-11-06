@@ -5,7 +5,9 @@
  *  - the torus: the voices sounding now, while the field is running. The native frame carries each voice's amplitude (the torus
  *    object's reading, controller.ts `torus_object`, O-I 851): a voice sounds while it rings above a thousandth of the strike, so a
  *    chord rings out as the body does, each note's voices at their own pitches (torusObject.ts soundingOf). An owner whose frames give no amplitudes is read as before: the voices the instrument was last
- *    struck on (controller.ts `struck`), the latest strike standing until the next one.
+ *    struck on (controller.ts `struck`), the latest strike standing until the next one. While a take sounds under the Scene (O-I #855
+ *    round 25; controller.ts `take_player`), what its acts struck at their samples is read first: "The take's acts drive setTorusPlay at
+ *    their samples" (DLW build ruling 2026-11-05).
  *  - the sky: the nine tuned voices, when the instrument was opened at a dated sky (`acting.sky.kind === 'dated'`).
  *
  * Each source that gives nothing says why in words; the engine (src/engine/torusDrive.ts) holds the last drive and says the torus is
@@ -35,7 +37,8 @@ export function torusPlayReading(reading) {
   const amplitudes = Array.isArray(instrument.torus_object?.amplitudes) ? instrument.torus_object.amplitudes : null;
   const strike = instrument.influence?.material?.strike_metres;
   const sounding = Array.isArray(instrument.torus_object?.sounding_hz) ? instrument.torus_object.sounding_hz : null;
-  return {torus: sounding ? pitchesReading(reading.status, sounding, pitchOf) : amplitudes ? soundingReading(reading.status, amplitudes, pitchOf, strike) : torusReading(reading.status, instrument.struck, pitchOf),
+  const take = reading.take_player?.sounding && reading.take_player.struck ? reading.take_player.struck : null;
+  return {torus: take ? torusReading(reading.status, take, pitchOf) : sounding ? pitchesReading(reading.status, sounding, pitchOf) : amplitudes ? soundingReading(reading.status, amplitudes, pitchOf, strike) : torusReading(reading.status, instrument.struck, pitchOf),
     sky: skyReading(acting.sky, voices), root: rootReading(voices),
     // The body the plate reads its eight and four from (torusDrive.ts rolesOf), and the pulse that rings it.
     body: {influence: instrument.influence ?? null, amplitudes},

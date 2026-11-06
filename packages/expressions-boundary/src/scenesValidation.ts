@@ -22,7 +22,17 @@ const torusTakes = (value: unknown) => Array.isArray(value) && value.length >= 1
   && typeof take.lane_ref === 'string' && take.lane_ref.startsWith(TORUS_TAKE_LANE) && take.lane_ref.length <= 4096
   && typeof take.title === 'string' && take.title.length <= 4096 && typeof take.enabled === 'boolean' && typeof take.solo === 'boolean'
   && text(take.take_ref) && sceneCounter(take.at_sample) !== null && sceneCounter(take.frames) !== null && takeRate(take.sample_rate)
-  && finite(take.at_seconds) && take.at_seconds >= 0 && take.seconds === Number(take.frames) / take.sample_rate);
+  && takeRate(take.transport_rate) && take.at_seconds === Number(take.at_sample) / take.transport_rate && take.seconds === Number(take.frames) / take.sample_rate);
+
+/** The stretches a Scene comps from its take lanes (scenes.ts sceneTorusComp), each from a Torus take lane, running forward, its seconds as
+ * its samples say at the transport's rate. */
+const torusComp = (value: unknown) => Array.isArray(value) && value.length >= 1 && value.length <= SCENE_TORUS_TAKES_MAX && value.every(row => {
+  if (!object(row) || typeof row.lane_ref !== 'string' || !row.lane_ref.startsWith(TORUS_TAKE_LANE) || row.lane_ref.length > 4096
+    || !takeRate(row.sample_rate)) return false;
+  const start = sceneCounter(row.start_sample), end = sceneCounter(row.end_sample);
+  return start !== null && end !== null && start < end && row.start_seconds === Number(start) / row.sample_rate
+    && row.end_seconds === Number(end) / row.sample_rate;
+});
 
 /** Qualify optional whole-Scene disclosures before they enter shell state.
  * The caller supplies its already-admitted native editor basis. No label,
@@ -52,7 +62,8 @@ export function isNativeScenesReading(value: unknown, basis: {expression_ref: st
       || !refs(row.member_refs) || !row.member_refs.every(ref=>Object.hasOwn(value.object_titles as object,ref)) || !Array.isArray(row.members) || row.members.length !== row.member_refs.length
       || typeof row.membership.complete !== 'boolean' || !indexOrNull(row.membership.page)
       || !indexOrNull(row.membership.page_count, 1) || !refs(row.membership.unloaded_refs)
-      || !refs(row.membership.unbound_local_entity_ids) || row.torus_takes !== undefined && !torusTakes(row.torus_takes)) return false;
+      || !refs(row.membership.unbound_local_entity_ids) || row.torus_takes !== undefined && !torusTakes(row.torus_takes)
+      || row.torus_comp !== undefined && !torusComp(row.torus_comp)) return false;
     if (row.local_scene_id !== null) {if (local.has(row.local_scene_id)) return false; local.add(row.local_scene_id)}
     if (row.material.available) {
       if (!text(row.local_scene_id) || !pacing(row.working) || row.material.reason !== null

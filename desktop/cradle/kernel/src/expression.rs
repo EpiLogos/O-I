@@ -574,7 +574,9 @@ pub enum Change {
     },
     ScenePerformanceSet {
         scene_ref: String,
-        performance: crate::expression_performance::Performance,
+        // boxed: the performance outweighs every other change (its take lanes' comp, O-I #855 round 25), and the change is read
+        // whole from its JSON as before
+        performance: Box<crate::expression_performance::Performance>,
     },
     ScenePerformanceEdit {
         scene_ref: String,
@@ -1393,7 +1395,7 @@ impl Document {
                 let scene = self.scene(&scene_ref)?;
                 // A Torus take is carried as the Scene kept it, or enters under the kernel's seal.
                 performance.admit_torus_takes(scene.performance.as_ref())?;
-                scene.performance = Some(performance);
+                scene.performance = Some(*performance);
             }
             Change::ScenePerformanceEdit {
                 scene_ref,

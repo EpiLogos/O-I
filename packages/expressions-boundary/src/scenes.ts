@@ -40,17 +40,63 @@ export interface NativeSceneReading {
     unloaded_refs: string[]; unbound_local_entity_ids: string[]; reason: string | null};
   /** The Torus takes that lie under the Scene (O-I #855), as its performance keeps them. Absent: it keeps none. */
   torus_takes?: NativeSceneTorusTake[];
+  /** The stretches of its take lanes comped into the row's main lane (O-I #855 round 25), in the order comped. Absent: none is. */
+  torus_comp?: NativeSceneTakeComp[];
 }
 
 /** A Torus take that lies under a Scene (O-I #855; kernel expression_performance/torus.rs TorusTakeRecord): its take lane as the
  * Scene's performance keeps it (`take-lane:torus/<TakeId>`, with its title, Activator and Solo), the take by its ref, and where it lies:
  * from the sample of the performance's transport it lies at, for its frames at the take's sample rate, each also in the Scene's own
- * seconds (the performance's transport runs at its sample rate). */
+ * seconds (the performance's transport runs at `transport_rate`, its sample rate: O-I #855 round 25 carries it, so a stretch of the
+ * Scene's seconds is a stretch of the transport's samples, as a comp names it). */
 export interface NativeSceneTorusTake {
   lane_ref: string; title: string; enabled: boolean; solo: boolean; take_ref: string;
-  at_sample: string; frames: string; sample_rate: number; at_seconds: number; seconds: number;
+  at_sample: string; frames: string; sample_rate: number; transport_rate: number; at_seconds: number; seconds: number;
 }
 const record = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
+
+/** A stretch of a Torus take lane comped into the row's main lane (O-I #855 round 25; kernel expression_performance/torus.rs TakeComp):
+ * its lane, and from and to which sample of the performance's transport (running at `sample_rate`) the main lane sounds the take that lies
+ * on it there, each also in the Scene's own seconds. */
+export interface NativeSceneTakeComp {
+  lane_ref: string; start_sample: string; end_sample: string; sample_rate: number; start_seconds: number; end_seconds: number;
+}
+
+/** The stretches a Scene's performance comps from its Torus take lanes, in the order comped. One whose lane is no Torus take lane, or
+ * that does not run forward, is none. Pure. */
+export function sceneTorusComp(performance: unknown): NativeSceneTakeComp[] {
+  if (!record(performance) || !Array.isArray(performance.torus_comp) || !rate(performance.sample_rate)) return [];
+  const transport = performance.sample_rate;
+  return performance.torus_comp.slice(0, SCENE_TORUS_TAKES_MAX).flatMap((row): NativeSceneTakeComp[] => {
+    if (!record(row) || typeof row.lane_ref !== 'string' || !row.lane_ref.startsWith(TORUS_TAKE_LANE)) return [];
+    const start = sceneCounter(row.start_sample), end = sceneCounter(row.end_sample);
+    if (start === null || end === null || start >= end) return [];
+    return [{lane_ref: row.lane_ref, start_sample: String(start), end_sample: String(end), sample_rate: transport,
+      start_seconds: Number(start) / transport, end_seconds: Number(end) / transport}];
+  });
+}
+
+/** The take a Scene's row sounds at `sample` of its transport (O-I #855 round 25; DLW build ruling 2026-11-05: "Which lane sounds: one
+ * per row, the active lane (Live's main lane / comp); Audition on a take lane solos that lane in place of it"), and its frame there: while
+ * a lane is auditioned, the take on that lane lying there; else, where a stretch is comped over the sample, the take on the latest such
+ * stretch's lane; else the latest take laid there. Each lane is heard by the kernel's layer law (expression_performance.rs replay: a lane
+ * sounds while it is on and, while any lane on is soloed, soloed), so a stretch comped from a lane that is not heard is silent. Null where
+ * no take sounds. Pure. */
+export function soundingTorusTake(takes: readonly Pick<NativeSceneTorusTake, 'lane_ref' | 'enabled' | 'solo' | 'take_ref' | 'at_sample' | 'frames'>[],
+  comp: readonly Pick<NativeSceneTakeComp, 'lane_ref' | 'start_sample' | 'end_sample'>[], audition: string | null, sample: number):
+  {take_ref: string; lane_ref: string; from_frame: number} | null {
+  const over = (take: (typeof takes)[number]) => Number(take.at_sample) <= sample && sample < Number(take.at_sample) + Number(take.frames);
+  const latest = (rows: readonly (typeof takes)[number][]) => {
+    const take = rows.filter(over).at(-1);
+    return take ? {take_ref: take.take_ref, lane_ref: take.lane_ref, from_frame: sample - Number(take.at_sample)} : null;
+  };
+  if (audition !== null) return latest(takes.filter(take => take.lane_ref === audition));
+  const soloing = takes.some(take => take.enabled && take.solo);
+  const heard = (take: (typeof takes)[number]) => take.enabled && (!soloing || take.solo);
+  const stretch = comp.filter(row => Number(row.start_sample) <= sample && sample < Number(row.end_sample)).at(-1);
+  if (stretch) return latest(takes.filter(take => take.lane_ref === stretch.lane_ref && heard(take)));
+  return latest(takes.filter(heard));
+}
 
 /** The Torus takes a Scene's performance lays under it, in the order it keeps them: each on its take lane (the layer it names). A record
  * whose lane is no Torus take lane, or whose take, lane or sample is not whole, is none. Pure. */
@@ -66,7 +112,7 @@ export function sceneTorusTakes(performance: unknown): NativeSceneTorusTake[] {
       || typeof lane.enabled !== 'boolean' || typeof lane.solo !== 'boolean' || typeof take.take_ref !== 'string' || !take.take_ref
       || at === null || frames === null || !rate(take.sample_rate) || !rate(transport)) return [];
     return [{lane_ref: lane.layer_ref, title: lane.title, enabled: lane.enabled, solo: lane.solo, take_ref: take.take_ref,
-      at_sample: String(at), frames: String(frames), sample_rate: take.sample_rate, at_seconds: Number(at) / transport,
+      at_sample: String(at), frames: String(frames), sample_rate: take.sample_rate, transport_rate: transport, at_seconds: Number(at) / transport,
       seconds: Number(frames) / take.sample_rate}];
   });
 }
@@ -144,7 +190,7 @@ export function projectNativeScenes(journey: Journey, view: KernelConversion): N
     const membershipMatches = !!binding && sameRefs(binding.member_refs, native.entity_refs);
     const complete = !!local && membershipMatches && unloadedRefs.length === 0 && unboundEntities.length === 0;
     const saved = local && journey.savedScenes?.[local.id];
-    const takes = sceneTorusTakes(native.performance);
+    const takes = sceneTorusTakes(native.performance), comp = sceneTorusComp(native.performance);
     return {scene_ref: native.scene_ref, local_scene_id: captured?.id ?? null, native_title: native.title,
       title: local?.name ?? native.title, working: available ? {duration: local!.duration, transition: local!.transition} : null,
       snapshot: {availability: !available ? 'unavailable' : saved ? 'present' : 'absent',
@@ -157,7 +203,7 @@ export function projectNativeScenes(journey: Journey, view: KernelConversion): N
         unloaded_refs: unloadedRefs, unbound_local_entity_ids: unboundEntities,
         reason: complete ? null : !membershipMatches ? 'Native membership correspondence is not loaded or disagrees' :
           !local ? 'The working Scene is not loaded' : unboundEntities.length ? 'Local objects have no captured native identity' : 'Some native occurrences are not loaded'},
-      ...(takes.length ? {torus_takes: takes} : {})};
+      ...(takes.length ? {torus_takes: takes} : {}), ...(comp.length ? {torus_comp: comp} : {})};
   });
   const orderComplete = unbound.length === 0 && workingOrder.length === nativeOrder.length &&
     new Set(workingOrder).size === nativeOrder.length && nativeOrder.every(ref => workingOrder.includes(ref));

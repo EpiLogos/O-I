@@ -264,7 +264,7 @@ const openController = async ({prepare} = {}) => {
   const renderer = {retainedTopology: () => ({tex_width: 2, tex_height: 2, particle_count: 4, slot_count: 4}), retainedTargetPort: () => port, setNativeDomain() {},
     releaseRetainedField() {}, onRetainedRecoveryRequired: () => () => {}, checkpointRetainedField() { return {receipt: {}}; }, restoreRetainedField() {}};
   const owner = new TorusOwner(), audio = new ControlledAudio(), c = new NativeFieldController(owner, renderer, () => audio);
-  prepare?.(owner);
+  prepare?.(owner, audio);
   await c.compose({sky: 'none'});
   return {owner, audio, c};
 };
@@ -674,4 +674,192 @@ test('the frame seals a take through its native field, and the checkpoint a take
   assert.match(torus, /checkpointName\(checkpoint\)/, 'the checkpoint a take begins at carries the name it was relayed under');
   const host = await readFile(join(journeys, '../../../../packages/expressions-boundary/src/host.ts'), 'utf8');
   assert.match(host, /CONCEALED_STAGE_COMMANDS[^\n]*'torus-take'/, 'concealed from the hosted page, as every Torus read is');
+});
+
+// ---------------------------------------------------------------------------------------------------- a take sounds (O-I #855 round 25)
+// DLW build ruling 2026-11-05: "The sealed take is rendered offline from checkpoint + acts (renderTake). Its PCM is checked against
+// pcm_sha256; a mismatch is refused in words. It plays from at_sample while the scene plays forward, and stops on pause, seek or rate
+// change"; "the verified render is held per take, with a cap of 256 MB held across all takes. A take that would exceed it is refused in
+// words that name the cap. It never silently drops"; "The take's acts drive setTorusPlay at their samples. The render feeds the symbol
+// voices' tap (voiceTap). No collision strikes back: the take already holds what struck."
+const {createHash} = await import('node:crypto');
+/** The sha256 a sound of `frames` samples each `value` has, over its IEEE-754 binary32 little-endian samples (kernel torus.rs PCM_ENCODING). */
+const pcmSha = (value, frames) => 'sha256:' + createHash('sha256').update(Buffer.from(new Float32Array(frames).fill(value).buffer)).digest('hex');
+/** A take as the kernel seals one, with the acts its owner was sent in the owner's own grammar (each strength its pair of metres). */
+const soundingTake = (extra = {}) => sealedTake({from_samples: '48000', frames: '48000', checkpoint: checkpoint('48000'),
+  acts: [{action: 'strike-at', at_samples_elapsed: '48600', points: [{theta: 0.75, phi: 2.5, amplitude: [0.3, 0]}]},
+    {action: 'strike', at_samples_elapsed: '49800', keys, amplitude: [0.35, 0]}],
+  render: {schema: 'ql.torus-render/v1', parts: '1', pcm_sha256: pcmSha(0.125, 48000), pcm_encoding: 'kept', ended: checkpoint('96000'), ended_sha256: 'sha256:e'}, ...extra});
+const until = async (ready, why) => { for (let i = 0; i < 400 && !ready(); i++) await new Promise(r => setTimeout(r, 5)); assert.ok(ready(), why); };
+
+test('a take\'s sealed acts are the acts the stage renders: each strength the owner\'s pair of metres taken back to its one strength', async () => {
+  const {stageTakeActsOf} = await stage();
+  const take = soundingTake();
+  assert.deepEqual(stageTakeActsOf(take.acts, '48000', 48000), [
+    {action: 'strike-at', at_samples_elapsed: '48600', points: [{theta: 0.75, phi: 2.5}], amplitude: 0.3},
+    {action: 'strike', at_samples_elapsed: '49800', keys, amplitude: 0.35}]);
+  assert.deepEqual(stageTakeActsOf([{action: 'singlet', at_samples_elapsed: '48000', codon: 8, amplitude: [0.35, 0]}, {action: 'release', at_samples_elapsed: '48001', keys}], '48000', 4800),
+    [{action: 'singlet', at_samples_elapsed: '48000', codon: 8, amplitude: 0.35}, {action: 'release', at_samples_elapsed: '48001', keys}]);
+  for (const [why, acts] of [['a strength with a second part', [{...take.acts[1], amplitude: [0.35, 0.1]}]],
+    ['a touch at two strengths', [{...take.acts[0], points: [{theta: 1, phi: 1, amplitude: [0.3, 0]}, {theta: 2, phi: 1, amplitude: [0.4, 0]}]}]],
+    ['an act past the take', [{...take.acts[1], at_samples_elapsed: '96000'}]], ['acts that are none', 'acts']])
+    assert.equal(stageTakeActsOf(acts, '48000', 4800), null, why);
+});
+
+test('Audition names a take lane or none, and a take\'s sound is asked for by its ref: each by its own keys only', async () => {
+  const {readStageRequest, STAGE_COMMANDS} = await stage();
+  assert.ok(STAGE_COMMANDS.includes('take-audition') && STAGE_COMMANDS.includes('take-sound'));
+  for (const lane_ref of ['take-lane:torus/2', null])
+    assert.deepEqual(readStageRequest(request({command: 'take-audition', lane_ref})).command, {command: 'take-audition', lane_ref});
+  for (const bad of [{lane_ref: 'note-lane:keys'}, {lane_ref: 'take-lane:torus/'}, {}, {lane_ref: null, take_ref: 'sha256:take'}])
+    assert.equal(readStageRequest(request({command: 'take-audition', ...bad})), null, JSON.stringify(bad));
+  assert.deepEqual(readStageRequest(request({command: 'take-sound', take_ref: 'sha256:take'})).command, {command: 'take-sound', take_ref: 'sha256:take'});
+  for (const bad of [{take_ref: 'take'}, {take_ref: 7}, {}, {take_ref: 'sha256:take', frames: 1}])
+    assert.equal(readStageRequest(request({command: 'take-sound', ...bad})), null, JSON.stringify(bad));
+});
+
+test('a sealed take sounds at its place under its scene, verified against its hash, through the frame\'s sound and the voices\' tap', async () => {
+  const started = [];
+  const {owner, audio, c} = await openController({prepare: (_owner, audio) => {
+    const gain = audio.createGain.bind(audio), source = audio.createBufferSource.bind(audio);
+    audio.createGain = () => { const node = gain(); node.to = []; node.connect = target => { node.to.push(target); return target; }; return node; };
+    audio.createBufferSource = () => { const node = source(), start = node.start; node.to = [];
+      node.connect = target => { node.to.push(target); return target; };
+      // the native receiver's own blocks start at a time alone; a take starts at its offset
+      node.start = (when, offset) => { start.call(node, when); node.offset = offset; if (offset !== undefined) started.push(node); }; return node; };
+  }});
+  try {
+    const take = soundingTake(), want = from => ({take, lane_ref: 'take-lane:torus/1', title: 'Take 1', from_frame: from});
+    const playing = {playing: true, rate: 1};
+    assert.equal(c.soundTake(want(0), playing), null);
+    await until(() => c.reading.take_player.held_bytes === 48000 * 4, 'the render is held once verified');
+    assert.deepEqual(owner.renderCalls.at(-1), {operation: 'torus-render', checkpoint: checkpoint('48000'), acts: [
+      {action: 'strike-at', at_samples_elapsed: '48600', points: [{theta: 0.75, phi: 2.5, amplitude: [0.3, 0]}]},
+      {action: 'strike', at_samples_elapsed: '49800', keys, amplitude: [0.35, 0]}], frames: 48000}, 'rendered from its checkpoint with its acts');
+    assert.equal(started.length, 0, 'nothing sounds before its render is verified');
+    // it plays from where the scene stands now
+    c.soundTake(want(1200), playing);
+    assert.equal(started.length, 1);
+    const [first] = started;
+    assert.equal(first.offset, 1200 / 48000, 'from the take\'s frame at the scene\'s sample');
+    assert.deepEqual([...first.buffer.data.slice(0, 3)], [0.125, 0.125, 0.125], 'its verified sound');
+    const tap = c.voiceTap().input, level = first.to[0];
+    assert.ok(level.to.includes(tap), 'through the frame\'s level, which the symbols\' voices listen to after');
+    const sounding = c.reading.take_player.sounding;
+    assert.deepEqual({...sounding, heard_at_ms: typeof sounding.heard_at_ms}, {take_ref: 'sha256:take', lane_ref: 'take-lane:torus/1', title: 'Take 1',
+      from_frame: 1200, frames: 48000, sample_rate: 48000, heard_at_ms: 'number'});
+    assert.equal(c.takeSounding(), true);
+    assert.equal(c.reading.take_player.audition, null, 'no lane is auditioned: the row\'s main lane sounds');
+    // the field answers its acts at their samples: the touch at its frame 600 struck before 1200
+    const voices = c.reading.instrument.acting.voices.map(voice => voice.mode_ref);
+    assert.deepEqual({...c.reading.take_player.struck, at: 0}, {at: 0, source: 'point', refs: voices, points: [{theta: 0.75, phi: 2.5}]});
+    const {torusPlayReading} = await import('../src/native-field/torusPlay.mjs');
+    assert.deepEqual(torusPlayReading(c.reading).torus.tonesHz, c.reading.instrument.acting.voices.map(voice => voice.frequency_hz), 'what the take struck is what the plate plays');
+    // the scene plays on: no new start; the strike at frame 1800 is answered when the take reaches it
+    audio.currentTime += 0.01;
+    c.soundTake(want(1680), playing);
+    assert.equal(started.length, 1, 'it plays on');
+    audio.currentTime += 0.005;
+    c.soundTake(want(1920), playing);
+    assert.equal(c.reading.take_player.struck.points, undefined, 'the keys at frame 1800 struck');
+    // a seek stops it and it plays again from the new place
+    c.soundTake(want(30000), playing);
+    assert.equal(first.stopped, true);
+    assert.equal(started.length, 2);
+    assert.equal(started[1].offset, 30000 / 48000);
+    // a pause stops it; so does a rate other than the scene's own
+    c.soundTake(want(30100), {playing: false, rate: 1});
+    assert.equal(started[1].stopped, true);
+    assert.equal(c.reading.take_player.sounding, null);
+    assert.equal(c.takeSounding(), false);
+    // the lane auditioned in place of the main lane is the row's, as its transport names it, reported even while nothing sounds
+    c.soundTake(want(30100), {playing: false, rate: 1, audition: 'take-lane:torus/1'});
+    assert.equal(c.reading.take_player.audition, 'take-lane:torus/1');
+    c.soundTake(want(30100), {playing: false, rate: 1, audition: null});
+    assert.equal(c.reading.take_player.audition, null);
+    c.soundTake(want(30100), {playing: true, rate: 2});
+    assert.equal(started.length, 2, 'at twice the rate, nothing sounds');
+    c.soundTake(want(30100), playing);
+    assert.equal(started.length, 3);
+    assert.equal(owner.renderCalls.filter(call => call.frames === 48000).length, 1, 'rendered once: the verified render is held');
+    // the engine plays it from the same render
+    const render = c.takeSound('sha256:take');
+    assert.equal(render.pcm.length, 48000);
+    assert.throws(() => c.takeSound('sha256:other'), /sha256:other is not held/);
+    // a take no scene lays any longer is let go
+    c.soundTake(null, playing, new Set());
+    assert.equal(started[2].stopped, true);
+    assert.equal(c.reading.take_player.held_bytes, 0);
+  } finally { await c.dispose(); }
+});
+
+test('a take whose sound is not the one the kernel sealed is refused in words, and one past the cap is refused naming it, never dropped', async () => {
+  const {owner, c} = await openController();
+  try {
+    const playing = {playing: true, rate: 1};
+    const forged = soundingTake({take_ref: 'sha256:forged', render: {...soundingTake().render, pcm_sha256: pcmSha(0.5, 48000)}});
+    c.soundTake({take: forged, lane_ref: 'take-lane:torus/2', title: 'Take 2', from_frame: 0}, playing);
+    await until(() => c.reading.take_player.refusal !== null, 'refused once rendered');
+    assert.match(c.reading.take_player.refusal, /^Take 2 is not played: its sound rendered again from its checkpoint and acts is not the sound the kernel sealed/);
+    assert.equal(c.reading.take_player.held_bytes, 0, 'nothing held');
+    assert.match(c.soundTake({take: forged, lane_ref: 'take-lane:torus/2', title: 'Take 2', from_frame: 10}, playing), /not the sound the kernel sealed/, 'said once');
+    assert.equal(c.soundTake({take: forged, lane_ref: 'take-lane:torus/2', title: 'Take 2', from_frame: 20}, playing), null);
+    const renders = owner.renderCalls.length;
+    assert.equal(c.reading.take_player.sounding, null);
+    // held across takes: one held, then one that would take the held past the cap
+    const held = soundingTake({take_ref: 'sha256:held', render: {...soundingTake().render, pcm_sha256: pcmSha((owner.renders + 1) / 8, 48000)}});
+    c.soundTake({take: held, lane_ref: 'take-lane:torus/3', title: 'Take 3', from_frame: 0}, playing);
+    await until(() => c.reading.take_player.held_bytes === 48000 * 4, 'held');
+    const {TAKE_RENDERS_BYTES_MAX} = await controller();
+    assert.equal(TAKE_RENDERS_BYTES_MAX, 256 * 1024 * 1024);
+    const frames = (TAKE_RENDERS_BYTES_MAX - 48000 * 4) / 4 + 1;
+    const big = soundingTake({take_ref: 'sha256:big', frames: String(frames), acts: []});
+    const said = c.soundTake({take: big, lane_ref: 'take-lane:torus/4', title: 'Take 4', from_frame: 0}, playing);
+    assert.equal(said, `Take 4 is not played: its sound takes ${(frames * 4 / 1048576).toFixed(2)} MB, and the takes' sounds held come to 256 MB at most (0.18 MB are held now). Nothing held is let go for it.`);
+    assert.equal(owner.renderCalls.length, renders + 1, 'refused before the owner renders anything');
+    assert.equal(c.reading.take_player.held_bytes, 48000 * 4, 'what is held stays held');
+  } finally { await c.dispose(); }
+});
+
+test('the plate plays what a sounding take struck, before what the live Torus sounds', async () => {
+  const {torusPlayReading} = await import('../src/native-field/torusPlay.mjs');
+  const voices = [{mode_ref: 'scene:logic/0', frequency_hz: 100}, {mode_ref: 'scene:logic/1', frequency_hz: 150}];
+  const reading = {status: 'following', instrument: {acting: {voices}, torus_object: {sounding_hz: [440]}, struck: null},
+    take_player: {sounding: {take_ref: 'sha256:take'}, struck: {at: 1, source: 'point', refs: ['scene:logic/1']}}};
+  assert.deepEqual(torusPlayReading(reading).torus, {tonesHz: [150], silentBecause: null});
+  assert.deepEqual(torusPlayReading({...reading, take_player: {sounding: null, struck: null}}).torus, {tonesHz: [440], silentBecause: null}, 'no take sounds: the live Torus');
+});
+
+test('the frame sounds the take its scene lays where the scene stands, auditions a lane, hands its sound to the engine, and no collision strikes under it', async () => {
+  const app = await readFile(join(journeys, 'src/app.ts'), 'utf8');
+  assert.match(app, /soundSceneTake\(rate\);/, 'each frame, at the scene\'s rate');
+  const audition = app.slice(app.indexOf("case 'take-audition':"), app.indexOf("case 'take-sound':"));
+  assert.match(audition, /takeAudition=command\.lane_ref===null\?null:\{sceneId:scene\(\)\.id,lane:command\.lane_ref\};/);
+  // the lane auditioned on the presented Scene goes with the row's transport, so the frame reports it (take_player.audition)
+  const sounds = app.slice(app.indexOf('function soundSceneTake('), app.indexOf('function soundSceneTake(') + 1200);
+  assert.match(sounds, /const audition=takeAudition\?\.sceneId===id\?takeAudition\.lane:null;/);
+  // a frame with no native view yet reads the takes laid as none, never a null it then reads from (tsc TS18047)
+  assert.match(sounds, /const laid=takesLaid&&takesLaid\.view===view\?takesLaid:\(takesLaid=\{view,refs:new Set\(/);
+  assert.match(sounds, /controller\.soundTake\(want,\{playing:scenePlaying&&!fieldPaused&&!document\.hidden&&!libraryOpen,rate,audition\},laid\.refs\)/);
+  const sound = app.slice(app.indexOf("case 'take-sound':"), app.indexOf("case 'instrument':"));
+  assert.match(sound, /return \{ok:true,render:nativeField\.controller\.takeSound\(command\.take_ref\)\};/);
+  const field = await readFile(join(journeys, 'src/nativeField.ts'), 'utf8');
+  const collide = field.slice(field.indexOf('const collide=('), field.indexOf('const hear=('));
+  assert.match(collide, /if\(controller\.takeSounding\(\)\)return null;/, 'the take already holds what struck');
+});
+
+test('the take a scene sounds is the one its row sounds at the scene\'s sample: its audition, else its comp, else the latest laid', async () => {
+  const {sceneTakeAt} = await bundle(join(journeys, 'src/sceneTransport.ts'), 'transport');
+  const lane = n => ({layer_ref: `take-lane:torus/${n}`, title: `Take ${n}`, enabled: true, solo: false});
+  const laid = (n, at) => ({take: sealedTake({take_ref: `sha256:take${n}`, frames: '96000'}), layer: n - 1, at_sample: String(at)});
+  const performance = {sample_rate: 48000, layers: [lane(1), lane(2)], torus_takes: [laid(1, 48000), laid(2, 48000)],
+    torus_comp: [{lane_ref: 'take-lane:torus/1', start_sample: '96000', end_sample: '120000'}]};
+  const view = {bindings: {local: {scene_ref: 'scene:one'}}, document: {scenes: [{scene_ref: 'scene:one', performance}]}};
+  const at = (seconds, audition = null) => { const take = sceneTakeAt(view, 'local', seconds, audition); return take && {ref: take.take.take_ref, lane: take.lane_ref, title: take.title, from: take.from_frame}; };
+  assert.deepEqual(at(1.5), {ref: 'sha256:take2', lane: 'take-lane:torus/2', title: 'Take 2', from: 24000}, 'the latest laid');
+  assert.deepEqual(at(2.25), {ref: 'sha256:take1', lane: 'take-lane:torus/1', title: 'Take 1', from: 60000}, 'the comp over its stretch');
+  assert.deepEqual(at(1.5, 'take-lane:torus/1'), {ref: 'sha256:take1', lane: 'take-lane:torus/1', title: 'Take 1', from: 24000}, 'Audition in place of the main lane');
+  assert.equal(at(0.5), null, 'before any take');
+  assert.equal(sceneTakeAt(view, 'other', 1.5, null), null, 'a scene the kernel does not bind');
+  assert.equal(sceneTakeAt(undefined, 'local', 1.5, null), null);
 });

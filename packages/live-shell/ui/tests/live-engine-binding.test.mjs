@@ -105,13 +105,14 @@ test('off the native candidate each engine act refuses, naming its op', async ()
   await assert.rejects(engine.liveEngine.exportAudio(), here)
   assert.equal(engine.liveEngineState().reading, null, 'nothing is held that the engine did not answer')
   assert.match(engine.liveEngineState().error, here)
-  assert.deepEqual([...engine.LIVE_ENGINE_OPS], ['live_engine_open', 'live_engine_play', 'live_engine_stop', 'live_engine_send', 'live_engine_torus', 'live_engine_torus_effects', 'live_engine_mixer', 'live_engine_export'])
+  assert.deepEqual([...engine.LIVE_ENGINE_OPS], ['live_engine_open', 'live_engine_play', 'live_engine_stop', 'live_engine_send', 'live_engine_torus', 'live_engine_torus_effects', 'live_engine_mixer', 'live_engine_export',
+    'live_engine_take_play'])
   for (const name of engine.LIVE_ENGINE_OPS) assert.match(hostSource, new RegExp(`pub (async )?fn ${name}\\(`), `the host serves ${name}`)
 })
 
 /** A native host standing in: the set owner's ops in the kernel's shape, and the engine as live_engine_host.rs answers — a move sent is
  * queued, and the reading shows it only after a block (here, the next live_engine_mixer read) applied it. */
-const exportArgs = [], torusArgs = [], effectsArgs = [], sentEvents = []
+const exportArgs = [], torusArgs = [], effectsArgs = [], sentEvents = [], takeBodies = []
 /** What the host refuses the Torus's effects in, when it does (set by a test). */
 let refuseEffects = null
 /** What the host refuses a device made again in, when it does (set by a test; O-I #849 round 17). */
@@ -134,6 +135,7 @@ function nativeHost({refuseOpen = null, refuseTorus = null, latency = null} = {}
   torusArgs.length = 0
   effectsArgs.length = 0
   sentEvents.length = 0
+  takeBodies.length = 0
   refuseEffects = null
   const reading = () => structuredClone(applied)
   const apply = event => {
@@ -165,6 +167,8 @@ function nativeHost({refuseOpen = null, refuseTorus = null, latency = null} = {}
     // the Torus's effects as the frame now holds them, on the part following its owner (live_engine_host.rs live_engine_torus_effects)
     live_engine_torus_effects: args => { effectsArgs.push(structuredClone(args)); if (refuseEffects) throw refuseEffects
       applied.torus_effects = hostEffects(args.effects, applied.torus_follow.track); return reading() },
+    // a take's sound, raw, played beside the part's Torus or let go (live_engine_host.rs live_engine_take_play → take_play_of)
+    live_engine_take_play: body => { takeBodies.push(body); return null },
     // the host chooses the file in its own save dialog: the page names none (live_engine_host.rs live_engine_export)
     live_engine_export: args => { exportArgs.push(args); return {path: '/Users/me/Exports/engine.wav', frames: applied.position, events: 0, complete: true} },
   }
@@ -555,6 +559,68 @@ test('the frame\'s Sound off goes with the Torus\'s effects into the engine and 
     torus.publishLiveTorusState(null)
     delete globalThis.window
   }
+})
+
+// O-I #855 round 25 (DLW build ruling 2026-11-05: "Native candidate: it plays through the engine as a take player on the Torus part, mixed
+// beside the live Torus"): while the Torus sounds in the engine, the take the frame sounds under its Scene (its reading's `parameters.take`)
+// plays there too: its verified render asked of the frame (`take-sound`) and sent raw as the host reads it (live_engine_host.rs take_play_of),
+// from the frame the frame plays it from, heard when the frame hears it; when the frame's take stops, the engine's is let go.
+const takeHead = body => { const n = new DataView(body.buffer, body.byteOffset).getUint32(0, true); return {head: JSON.parse(new TextDecoder().decode(body.slice(4, 4 + n))),
+  samples: [...new Float32Array(body.slice(4 + n).buffer)]} }
+test('the take the frame sounds under its Scene plays in the engine beside the Torus on its part, from the frame heard then, and is let go when it stops', async () => {
+  nativeHost()
+  const torus = await import('../src/live/torusInstrument.ts')
+  const pcm = new Float32Array([0.25, -0.5, 1, 0])
+  const render = {from_samples_elapsed: '48000', frames: 4, sample_rate: 48000, pcm, made_way: [], ended: {}}
+  const {staged, stage} = frameStage(command => command.command === 'torus-engine' ? (command.on ? {ok: true, torus_engine: HANDED} : {ok: true})
+    : command.take_ref === 'sha256:gone' ? {ok: false, error: 'The take sha256:gone is not held: a take\'s sound is held once it sounds under its scene'} : {ok: true, render})
+  const sounding = {take_ref: 'sha256:take', lane_ref: 'take-lane:torus/1', title: 'Take 1', from_frame: 2, frames: 4, sample_rate: 48000, heard_at_ms: 1.7e12}
+  const report = (next, standing = 'following') => torus.publishLiveTorusState({ok: true, value: {standing}, determinants: null, parameters: {take: {sounding: next, audition: null, refusal: null}}})
+  report(sounding)
+  try {
+    await engine.liveEngine.play(PATH, undefined, stage)
+    await engine.takePlaySettled()
+    assert.deepEqual(staged.slice(1), [{command: 'take-sound', take_ref: 'sha256:take'}], 'its verified render, asked of the frame')
+    assert.deepEqual(takeHead(takeBodies[0]), {head: {schema: 'oi.take-play/v1', path: PATH, track: 0, rate: 48000, from: '2', heard_at_ms: 1.7e12, name: 'Take 1'},
+      samples: [0.25, -0.5, 1, 0]}, 'on the set\'s part the Torus sounds on, from the frame the frame plays it from')
+    assert.match(hostSource, /pub const TAKE_PLAY_SCHEMA: &str = "oi\.take-play\/v1";/)
+    const reader = hostSource.slice(hostSource.indexOf('pub fn take_play_of('), hostSource.indexOf('impl Opened {', hostSource.indexOf('pub fn take_play_of(')))
+    for (const key of ['schema', 'path', 'track', 'rate', 'from', 'heard_at_ms', 'name', 'stop']) assert.match(reader, new RegExp(`head\\["${key}"\\]`), `the host reads the head's ${key}`)
+    // the Torus reported again while the same take sounds on sends nothing; played again from another frame (a seek), it is sent from there
+    report(sounding, 'moved')
+    await engine.takePlaySettled()
+    assert.equal(takeBodies.length, 1)
+    report({...sounding, from_frame: 3, heard_at_ms: 1.7e12 + 40})
+    await engine.takePlaySettled()
+    assert.deepEqual(takeHead(takeBodies[1]).head.from, '3')
+    // the frame's take stops: the engine's is let go
+    report(null)
+    await engine.takePlaySettled()
+    assert.deepEqual(takeHead(takeBodies[2]), {head: {schema: 'oi.take-play/v1', path: PATH, track: 0, stop: true}, samples: []})
+    assert.equal(engine.liveEngineState().take, null)
+    // a take the frame does not hold: its refusal stands in its words, and Play says it
+    report({...sounding, take_ref: 'sha256:gone'})
+    await engine.takePlaySettled()
+    assert.equal(takeBodies.length, 3, 'nothing is sent the frame could not give')
+    assert.match(engine.liveEngineState().take, /^The take sha256:gone is not held/)
+    assert.match(engine.engineTransportBindings(PATH, engine.liveEngineState(), true).play.title, /The take under the Scene does not sound in the engine: The take sha256:gone is not held/)
+    // stopped, the engine follows the frame's take no more
+    await engine.liveEngine.stop(stage)
+    report(sounding)
+    await engine.takePlaySettled()
+    assert.deepEqual([takeBodies.length, engine.liveEngineState().take], [3, null])
+  } finally {
+    await engine.liveEngine.stop(stage).catch(() => {})
+    torus.publishLiveTorusState(null)
+    delete globalThis.window
+  }
+})
+
+// O-I #855 round 25: a take's sound is sent as the host reads it to play, and its stop as the head alone. Pure.
+test('a take\'s sound goes to the host as a head naming its set, part, rate, frame, time heard and name, then its samples; let go, the head alone', () => {
+  assert.deepEqual(takeHead(engine.takePlayBody({path: PATH, track: 0, rate: 48000, from: 12, heard_at_ms: 5, name: 'Take 1'}, new Float32Array([0.5]))),
+    {head: {schema: 'oi.take-play/v1', path: PATH, track: 0, rate: 48000, from: '12', heard_at_ms: 5, name: 'Take 1'}, samples: [0.5]})
+  assert.deepEqual(takeHead(engine.takePlayBody({path: PATH, track: 2, stop: true})), {head: {schema: 'oi.take-play/v1', path: PATH, track: 2, stop: true}, samples: []})
 })
 
 // The mixer row's Volume and Pan (manual §21.1 "The mixer row"; O-I #849): the part's reading is the set's — its owner's, read back

@@ -84,7 +84,7 @@ function noise(seed: number): () => number {
 /** The room's impulse response, two channels: early reflections by Size, then noise falling 60 dB in Decay, its bright part (what a
  * one-pole low-pass at 2 kHz leaves out) falling 60 dB in Decay·(1 − 0.8·Damping). Each block of NYQUIST_BLOCK frames then sums to nothing at
  * half the sample rate (the head of this file). */
-export function reverbImpulse(sampleRate: number, size: number, decay: number, damping: number): Float32Array[] {
+export function reverbImpulse(sampleRate: number, size: number, decay: number, damping: number): Float32Array<ArrayBuffer>[] {
   const length = Math.max(1, Math.ceil(Math.min(MAX_ROOM, decay * 1.1 + 0.05) * sampleRate));
   const bright = decay * (1 - 0.8 * damping / 100), gap = (3 + size / 100 * 27) / 1000;
   const pole = Math.exp(-2 * Math.PI * 2000 / sampleRate);
@@ -125,7 +125,7 @@ export interface ResonatorParams {readonly root: number; readonly division: numb
  * passes at the body's weight, a sound between two bodies passes far less. */
 export class ResonatorImpulse {
   /** The response, one channel; every body added so far is in it. */
-  readonly data: Float32Array;
+  readonly data: Float32Array<ArrayBuffer>;
   /** How many bodies the response is made of when it is whole: parts to the octave, over the span. */
   readonly bodies: number;
   readonly #rate: number;
@@ -160,7 +160,7 @@ export class ResonatorImpulse {
 }
 
 /** The whole response in one piece (the slices added up). */
-export function resonatorImpulse(sampleRate: number, params: ResonatorParams): Float32Array {
+export function resonatorImpulse(sampleRate: number, params: ResonatorParams): Float32Array<ArrayBuffer> {
   const build = new ResonatorImpulse(sampleRate, params);
   build.step(Infinity);
   return build.data;

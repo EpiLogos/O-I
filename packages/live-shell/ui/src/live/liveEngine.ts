@@ -17,6 +17,9 @@
 // Play hands the Torus over (the frame's `torus-engine` stage command: its owner hands it over and the frame's own sound of it is shut) and
 // puts it on the set's first MIDI part, so it sounds once, through the engine's mixer and Main; Stop gives the frame its sound back. A Torus
 // that cannot be handed over leaves the set playing and says why (EngineState.torus).
+//   live_engine_take_play      the take the frame sounds under its Scene (its reading's `parameters.take.sounding`, O-I #855 round 25) beside
+//                              the Torus on its part while the Torus sounds there: its verified render asked of the frame (`take-sound`)
+//                              and sent raw (oi.take-play/v1, takePlayBody), heard when the frame hears it; let go when the frame's stops
 //   live_engine_mixer          the reading: the mixer as the engine APPLIED it (a move asked is not in it until a block applied it)
 //   live_engine_export         Export Audio: the samples the engine played, rendered offline, as a 32-bit float WAV, to the file
 //                              the person chooses in the host's own save dialog (the webview never names the path)
@@ -86,17 +89,46 @@ export interface LiveEngineReading {
   torus_effects?: LiveEngineTorusEffects | null
   /** The engine's own legs of key-to-sound (O-I #853 round 18): its last device block and the device's output latency. */
   latency?: EngineLatency
+  /** The take played beside the Torus on its part (O-I #855 round 25; live_engine_host.rs take_play): the set's track, its name, the
+   * engine frame it is heard from, its frame then and the frames left; null when none is. */
+  take_played?: {track: number; name: string; at: number; from: number; frames: number} | null
 }
 export interface LiveEngineExport {path: string; frames: number; events: number; complete: boolean}
 
-export const LIVE_ENGINE_OPS = ['live_engine_open', 'live_engine_play', 'live_engine_stop', 'live_engine_send', 'live_engine_torus', 'live_engine_torus_effects', 'live_engine_mixer', 'live_engine_export'] as const
+export const LIVE_ENGINE_OPS = ['live_engine_open', 'live_engine_play', 'live_engine_stop', 'live_engine_send', 'live_engine_torus', 'live_engine_torus_effects', 'live_engine_mixer', 'live_engine_export',
+  'live_engine_take_play'] as const
 type LiveEngineOp = typeof LIVE_ENGINE_OPS[number]
 
 const words = (e: unknown) => typeof e === 'string' ? e : e instanceof Error ? e.message : String(e)
+const outOfReach = (command: LiveEngineOp) => new Error(`The Live engine plays in the desktop's audio path, the native candidate's; it is out of reach here (${command})`)
 
 async function op<T>(command: LiveEngineOp, args: Record<string, unknown> = {}): Promise<T> {
-  if (detectTransport().kind !== 'tauri') throw new Error(`The Live engine plays in the desktop's audio path, the native candidate's; it is out of reach here (${command})`)
+  if (detectTransport().kind !== 'tauri') throw outOfReach(command)
   try { return await tauriInvoke<T>(command, args) } catch (e) { throw new Error(words(e)) }
+}
+/** An owner op whose body is bytes, sent raw as the host reads them (a take's sound: live_engine_host.rs take_play_of). */
+async function rawOp<T>(command: LiveEngineOp, body: Uint8Array<ArrayBuffer>): Promise<T> {
+  if (detectTransport().kind !== 'tauri') throw outOfReach(command)
+  try { const core = await import('@tauri-apps/api/core'); return await core.invoke<T>(command, body) } catch (e) { throw new Error(words(e)) }
+}
+
+/** What names a take's sound sent to the engine to play beside the Torus on its part, or let go (live_engine_host.rs TAKE_PLAY_SCHEMA). */
+export const TAKE_PLAY_SCHEMA = 'oi.take-play/v1'
+/** A take's sound as the host reads it to play beside the Torus on the set's track `track` (live_engine_host.rs take_play_of, O-I #855 round
+ * 25): four bytes, little-endian, the length of a JSON head naming the set, the track, the rate, the take's frame it plays from (a decimal
+ * string), when that is heard (ms since the Unix epoch) and its name, the head, then the sound as IEEE-754 binary32 little-endian samples,
+ * one channel; or the head with `stop` alone, to let it go. Pure. */
+export function takePlayBody(head: {readonly path: string; readonly track: number} & ({readonly rate: number; readonly from: number; readonly heard_at_ms: number
+  readonly name: string} | {readonly stop: true}), pcm: Float32Array | null = null): Uint8Array<ArrayBuffer> {
+  const named = 'stop' in head ? {stop: true} : {rate: head.rate, from: String(head.from), heard_at_ms: head.heard_at_ms, name: head.name}
+  const json = new TextEncoder().encode(JSON.stringify({schema: TAKE_PLAY_SCHEMA, path: head.path, track: head.track, ...named}))
+  const samples = 'stop' in head ? 0 : pcm?.length ?? 0
+  const bytes = new Uint8Array(new ArrayBuffer(4 + json.length + samples * 4))
+  const view = new DataView(bytes.buffer)
+  view.setUint32(0, json.length, true)
+  bytes.set(json, 4)
+  for (let i = 0; i < samples; i++) view.setFloat32(4 + json.length + i * 4, pcm![i]!, true)
+  return bytes
 }
 
 /** The part the engine hosts for the set's part `index` (the set owner's index: its parts, returns and groups in order, then the Main
@@ -158,10 +190,13 @@ export interface EngineState {
   readonly notes: TorusNotesPlayed
   /** Why the Torus's effects as the frame last changed them did not follow into the engine, in its words. */
   readonly effects: string | null
+  /** Why the take the frame sounds under its Scene does not sound in the engine beside the Torus (O-I #855 round 25), in its owner's or the
+   * engine's words; null while it does, or none sounds. */
+  readonly take: string | null
 }
 export interface TorusNotesPlayed {readonly played: number; readonly late: number; readonly refused: number; readonly refusal: string | null}
 const NO_NOTES: TorusNotesPlayed = {played: 0, late: 0, refused: 0, refusal: null}
-let state: EngineState = {reading: null, kinds: [], error: null, torus: null, notes: NO_NOTES, effects: null}
+let state: EngineState = {reading: null, kinds: [], error: null, torus: null, notes: NO_NOTES, effects: null, take: null}
 const listeners = new Set<() => void>()
 let poll: ReturnType<typeof setInterval> | null = null
 /** While the engine plays, its reading is read again this often (ms): a move shows once a block applied it. */
@@ -266,6 +301,44 @@ function followTorusEffects(sent: unknown): void {
 /** The changes to the Torus's effects sent to the engine so far, settled. */
 export const torusEffectsSettled = (): Promise<void> => effectsSent
 
+let unfollowTake: (() => void) | null = null
+let takeSent: Promise<void> = Promise.resolve()
+/** The take the frame sounds under its Scene plays in the engine beside the Torus on its part while the Torus sounds there (O-I #855 round
+ * 25; DLW build ruling 2026-11-05: "Native candidate: it plays through the engine as a take player on the Torus part, mixed beside the live
+ * Torus"): each time the frame reports another take sounding, or the same played from another frame (`parameters.take.sounding`), its
+ * verified render is asked of the frame (`take-sound`) and sent raw to the host (takePlayBody), from the frame the frame plays it from,
+ * heard when the frame hears it; when the frame's take stops, the engine's is let go. The frame's own sound of it is shut with the Torus's
+ * (its engine gate), and its voices still hear it. A refusal stands in `take`, in its words. */
+function followTake(stage: Stage): void {
+  unfollowTake?.()
+  let last: string | null = null
+  const follow = () => {
+    const torus = liveTorusState()
+    const sounding = torus?.ok ? torus.parameters?.take?.sounding ?? null : null
+    const now = sounding ? `${sounding.take_ref} ${sounding.from_frame} ${sounding.heard_at_ms}` : null
+    const reading = state.reading, track = state.kinds.indexOf('midi')
+    if (now === last || !reading?.playing || track < 0) return
+    const was = last
+    last = now
+    takeSent = takeSent.then(async () => {
+      if (!sounding) {
+        if (was !== null) await rawOp('live_engine_take_play', takePlayBody({path: reading.path, track, stop: true}))
+        settle({take: null})
+        return
+      }
+      const asked = await stage({command: 'take-sound', take_ref: sounding.take_ref})
+      if (!asked.ok || !asked.render) { settle({take: asked.ok ? 'The live instrument answered the take with no sound' : asked.error}); return }
+      await rawOp('live_engine_take_play', takePlayBody({path: reading.path, track, rate: asked.render.sample_rate, from: sounding.from_frame,
+        heard_at_ms: sounding.heard_at_ms, name: sounding.title}, asked.render.pcm))
+      settle({take: null})
+    }).catch(e => { settle({take: words(e)}) })
+  }
+  unfollowTake = subscribeLiveTorus(follow)
+  follow()
+}
+/** The takes sent to the engine so far, settled. */
+export const takePlaySettled = (): Promise<void> => takeSent
+
 /** The Torus handed over to the engine as it plays (O-I #849): the frame's owner hands it over and shuts the frame's own sound of it, and
  * the engine takes it onto the set's first MIDI part with the key each MIDI note strikes, when the frame's sound of it stops (round 13). Refused anywhere on the way, the set plays on
  * without it and the refusal stands in `torus`; the frame keeps sounding it. */
@@ -288,6 +361,7 @@ async function handTorus(stage: Stage): Promise<void> {
     await adopt(op<LiveEngineReading>('live_engine_torus', {lease: handed.torus_engine.lease, track, sha256: handed.torus_engine.sha256, notes, effects, heardAtMs}))
     settle({torus: null, notes: NO_NOTES, effects: null})
     followTorusEffects(effects)
+    followTake(stage)
   } catch (e) {
     settle({torus: words(e)})
     await stage({command: 'torus-engine', on: false})
@@ -320,7 +394,8 @@ export const liveEngine = {
     const stopped = await adopt(op<LiveEngineReading>('live_engine_stop'))
     unlistenNotes?.(); unlistenNotes = null
     unfollowEffects?.(); unfollowEffects = null
-    settle({torus: null, effects: null})
+    unfollowTake?.(); unfollowTake = null
+    settle({torus: null, effects: null, take: null})
     await stage({command: 'torus-engine', on: false})
     return stopped
   },
@@ -429,9 +504,10 @@ export function engineTransportBindings(setPath: string | null, engine: EngineSt
   const effects = said.length ? ` The Torus's effects in the engine: ${said.join(' ')}` : ''
   const unfollowed = lit ? engine.effects ?? reading.torus_effects?.refusal ?? null : null
   const effectsRefused = unfollowed ? ` The Torus's effects did not follow into the engine: ${unfollowed}` : ''
+  const take = lit && engine.take ? ` The take under the Scene does not sound in the engine: ${engine.take}` : ''
   return {play: {press: () => void liveEngine.play(setPath).catch(() => {}), lit,
     title: `${lit ? `Play — ${setName(setPath)} plays in the engine, every part through its chain to the Main track.`
-      : `Play — ${setName(setPath)} plays in the engine as the file stands: every part through its chain to the Main track.`}${unhosted}${torus}${notes}${effects}${effectsRefused}${refusal}`}, stop}
+      : `Play — ${setName(setPath)} plays in the engine as the file stands: every part through its chain to the Main track.`}${unhosted}${torus}${notes}${effects}${effectsRefused}${take}${refusal}`}, stop}
 }
 
 /** Live's transport over the engine: its Play and Stop for the open set, as the engine stands. Leaving Live's transport stops the

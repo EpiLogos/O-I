@@ -274,6 +274,10 @@ button.tl-stop:hover { border-color: var(--accent); color: var(--accent) }
 .tl-take-head small, .tl-auto-head small, .tl-events-head small { flex: none; color: var(--text-faint); font-size: 8.5px }
 .tl-audition { flex: none; width: 16px; height: 13px; margin-left: auto; padding: 0; display: grid; place-items: center; background: var(--bg-0); border: 1px solid var(--line); color: var(--text-dim) }
 .tl-audition:disabled { opacity: .4 }
+.tl-audition.lit { background: var(--sel, var(--accent)); border-color: var(--sel, var(--accent)); color: var(--bg-0) }
+.tl-take-head .mx { flex: none; min-width: 12px; height: 12px; font-size: 8px; line-height: 10px }
+.tl-take-head .mx + .tl-audition { margin-left: 0 }
+.tl-take-head .mx-activator { margin-left: auto }
 .tl-take-body { cursor: crosshair; outline: 0 }
 .tl-take-body:focus-visible { box-shadow: inset 0 0 0 1px var(--accent) }
 .tl-take-span { position: absolute; top: 3px; bottom: 3px; padding: 0 3px; background: color-mix(in srgb, var(--tc) 45%, var(--bg-2)); color: var(--text); font-size: 8.5px; line-height: 14px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; pointer-events: none }

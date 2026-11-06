@@ -2990,6 +2990,135 @@ fn a_take_frozen_on_a_part_sounds_in_place_of_its_chain_until_it_ends_and_export
     assert!(handle.relaid().is_empty(), "nothing refused is frozen");
 }
 
+/// O-I #855 round 25 (DLW build ruling 2026-11-05: "through the engine as a take player on the Torus part, mixed beside the live
+/// Torus"; "The take is source material and plays through the part's current chain"): a take played beside a MIDI part's
+/// instrument while the engine plays sounds from its frame added to what the instrument makes, through the part's chain and its
+/// volume and pan, the instrument sounding on under it; let go, it stops from the next block. Export renders what was played. What
+/// cannot be played beside an instrument is refused in words, and nothing is played.
+#[test]
+fn a_take_played_beside_a_parts_instrument_sounds_through_its_chain_and_exports_as_played() {
+    let take = decoded(600, 1);
+    let build = || {
+        let mut g = Graph::new(SR, 120.0);
+        g.tracks.push(constant_part("Bed", 0.125, 12 * 256));
+        let mut keys = operator_part(
+            "Keys",
+            &[Note {
+                key: 57,
+                start: 64,
+                length: 2_400,
+                velocity: 1.0,
+            }],
+        );
+        keys.devices.push(Box::new(GainDevice::new_db(-6.0)));
+        (keys.gain, keys.pan) = (0.5, 0.3);
+        g.tracks.push(keys);
+        g
+    };
+    let beside = || vec![laid(1_300, 0, 600, 1.0, &take, 1)];
+    let run = |acts: &dyn Fn(usize, &mut live_engine::EngineHandle)| {
+        let (mut core, mut handle) = engine(build()).unwrap();
+        let mut played = Vec::new();
+        for b in 0..12 {
+            acts(b, &mut handle);
+            let mut out = vec![0f32; 256 * 2];
+            core.pull_block(&mut out);
+            played.extend_from_slice(&out);
+        }
+        handle.collect();
+        (played, handle.performance(), handle.relaid().to_vec())
+    };
+    let (still, ..) = run(&|_, _| {});
+    let (played, perf, relaid) = run(&|b, h| {
+        if b == 4 {
+            assert_eq!(h.play_beside(1, beside()), Ok(1));
+        }
+    });
+    let at = 4 * 256;
+    assert_eq!(relaid, [(at as u64, 1)], "taken at its block's first frame");
+    let same = |a: &[f32], b: &[f32]| a.iter().zip(b).all(|(x, y)| x.to_bits() == y.to_bits());
+    assert!(
+        same(&played[..2 * 1_300], &still[..2 * 1_300]),
+        "before the take, the part alone"
+    );
+    assert!(
+        same(&played[2 * 1_900..], &still[2 * 1_900..]),
+        "past its end, the part alone again"
+    );
+    let chain = live_engine::graph::db_to_amplitude(-6.0);
+    let (lw, rw) = pan_weights(0.3);
+    for i in 1_300..1_900 {
+        let t = f64::from(take[i - 1_300]);
+        for (c, w) in [lw, rw].iter().enumerate() {
+            let heard = f64::from(played[i * 2 + c]) - f64::from(still[i * 2 + c]);
+            assert!(
+                (heard - t * chain * 0.5 * w).abs() < 1e-5,
+                "frame {i}: the take beside the instrument, through the part's chain, volume and pan ({heard} against {})",
+                t * chain * 0.5 * w
+            );
+        }
+    }
+    let exported = build().render_performance_beside(
+        SR,
+        &perf,
+        Vec::new(),
+        Vec::new(),
+        Vec::new(),
+        Vec::new(),
+        Vec::new(),
+        vec![(at as u64, 1, beside())],
+    );
+    assert!(
+        same(&exported, &played) && exported.len() == played.len(),
+        "Export plays it where the engine did"
+    );
+    // let go: the take stops from the next block, the part alone from there
+    let (stopped, perf, relaid) = run(&|b, h| match b {
+        4 => assert_eq!(h.play_beside(1, beside()), Ok(1)),
+        5 => assert_eq!(h.play_beside(1, Vec::new()), Ok(2)),
+        _ => {}
+    });
+    assert_eq!(relaid, [(at as u64, 1), (5 * 256, 2)]);
+    assert!(
+        same(&stopped[..2 * 5 * 256], &played[..2 * 5 * 256]),
+        "it sounds until let go"
+    );
+    assert!(
+        same(&stopped[2 * 5 * 256..], &still[2 * 5 * 256..]),
+        "the part alone from the block it was let go at"
+    );
+    let exported = build().render_performance_beside(
+        SR,
+        &perf,
+        Vec::new(),
+        Vec::new(),
+        Vec::new(),
+        Vec::new(),
+        Vec::new(),
+        vec![(at as u64, 1, beside()), (5 * 256, 1, Vec::new())],
+    );
+    assert!(
+        same(&exported, &stopped),
+        "Export lets it go where the engine did"
+    );
+    let (_, mut handle) = engine(build()).unwrap();
+    let refused = |r: Result<u64, Refusal>| match r {
+        Err(Refusal::Invalid(words)) => words,
+        other => panic!("{other:?}"),
+    };
+    assert_eq!(
+        refused(handle.play_beside(2, beside())),
+        "the set has no part 2 (it has 2)"
+    );
+    assert_eq!(
+        refused(handle.play_beside(0, beside())),
+        "'Bed' is an audio part: a take is played beside the instrument of a MIDI part"
+    );
+    let overlapping = vec![laid(0, 0, 10, 1.0, &take, 1), laid(9, 0, 10, 1.0, &take, 1)];
+    assert!(refused(handle.play_beside(1, overlapping)).contains("overlap at frame 9"));
+    assert!(handle.relaid().is_empty(), "nothing refused is played");
+}
+
 /// A WAV of `frames` frames in `channels` channels at `rate`: 16-bit integer when `int16`, else 32-bit float, frame `i`
 /// of channel `c` at `(i % 1000) / 2000` less a quarter for the second channel (16-bit: as that value rounds to it).
 fn wav_file(frames: usize, channels: u16, rate: u32, int16: bool) -> Vec<u8> {

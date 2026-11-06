@@ -7,7 +7,7 @@ import {NATIVE_BINDINGS} from './nativeParameters.js';
 import {effectChainRefusal, readEffectOperands, type EffectValue, type PresentationEffect} from './native-field/effectsLaw.js';
 import {CURVE_TYPES, SWITCH_MODES, TRANSITION_KINDS, WIPE_DIRECTIONS, type CurveType, type SwitchMode, type TransitionKind, type WipeDirection} from '../../src/engine/transitionMath.js';
 import {TIMELINE_CATEGORY_IDS} from './timelineCategoryIds.js';
-export const STAGE_COMMANDS = ['view', 'capture', 'present', 'export', 'import', 'tool', 'engine', 'take', 'tracks', 'automation', 'live', 'instrument', 'janko', 'strike-at', 'singlet', 'audio-clock', 'performance-journal', 'torus', 'torus-sound', 'torus-take', 'torus-engine', 'render-take', 'presentation', 'chrome', 'sound', 'journey', 'canvas', 'timeline', 'procedural-stage'] as const;
+export const STAGE_COMMANDS = ['view', 'capture', 'present', 'export', 'import', 'tool', 'engine', 'take', 'tracks', 'automation', 'live', 'instrument', 'janko', 'strike-at', 'singlet', 'audio-clock', 'performance-journal', 'torus', 'torus-sound', 'torus-take', 'torus-engine', 'render-take', 'take-audition', 'take-sound', 'presentation', 'chrome', 'sound', 'journey', 'canvas', 'timeline', 'procedural-stage'] as const;
 /** The Ta-Onta procedural stage's own operations on the native field (DLW §21.2, the Torus's Stage page; QL-MEF continuous/host.rs
  * stage_operation): read its state, evaluate a procedure, bind one to the live flow within a budget, unbind it, retire its slots. Each
  * runs the native field's own controller operation (nativeField.ts stage), through the kernel's native_expression exchange. */
@@ -396,6 +396,13 @@ export type StageCommand =
    * the StageTorusEngine the engine is given it by. While on, the owner hands it over again whenever its Torus moves (a setting landed, a
    * restore, a body chosen, the receiver). Off, the frame sounds it again. */
   | {command: 'torus-engine'; on: boolean}
+  /** Audition on one of the presented Scene's Torus take lanes (O-I #855 round 25; DLW build ruling 2026-11-05: "Audition on a take lane
+   * solos that lane in place of it"): the Scene's row sounds that lane's take in place of its main lane while it plays; null gives the row
+   * its main lane back. Nothing is saved. */
+  | {command: 'take-audition'; lane_ref: string | null}
+  /** The verified render of a take that has sounded under the presented Scene, by its ref (O-I #855 round 25), for the desktop's one engine
+   * to play it beside the Torus on its part. A read; the answer carries it as a StageTakeRender. */
+  | {command: 'take-sound'; take_ref: string}
   | {command: 'presentation'; chrome: FramePresentation}
   | {command: 'chrome'; id: string; value?: string}
   /** The Expression's own sound (DLW §20.1 the mixer row's Activator and Solo): every object sound of the open Expression silenced or
@@ -612,6 +619,31 @@ function readStageTakeActs(raw: unknown, from: bigint, end: bigint): StageTakeAc
     } else return null;
   }
   return acts;
+}
+/** The acts of a take the kernel sealed (kernel expression_performance/torus.rs TakeAct: the owner's render grammar, each strength the owner's
+ * pair of metres) as the stage renders them (StageTakeAct: one strength, which controller.ts renderTake makes the owner's [strength, 0] again),
+ * within the take from `from` for `frames`, in the order of their samples; null where one is not an act the stage renders, so a take is never
+ * rendered from acts other than the ones the kernel sealed. Pure. */
+export function stageTakeActsOf(acts: unknown, from: string, frames: number): StageTakeAct[] | null {
+  if (!Array.isArray(acts) || !isStageSampleCursor(from) || !Number.isSafeInteger(frames) || frames < 1) return null;
+  const strength = (pair: unknown): number | null => Array.isArray(pair) && pair.length === 2 && pair[1] === 0 && typeof pair[0] === 'number' ? pair[0] : null;
+  const staged: unknown[] = [];
+  for (const act of acts) {
+    if (!plain(act)) return null;
+    if (act.action === 'strike' || act.action === 'singlet') {
+      const amplitude = strength(act.amplitude);
+      if (amplitude === null) return null;
+      staged.push({...act, amplitude});
+    } else if (act.action === 'strike-at') {
+      const points = Array.isArray(act.points) ? act.points : [];
+      const amplitude = plain(points[0]) ? strength(points[0].amplitude) : null;
+      if (amplitude === null || !points.every(point => plain(point) && closed(point, ['theta', 'phi', 'amplitude']) && strength(point.amplitude) === amplitude)
+        || !closed(act, ['action', 'at_samples_elapsed', 'points'])) return null;
+      staged.push({action: 'strike-at', at_samples_elapsed: act.at_samples_elapsed, points: points.map(point => ({theta: point.theta, phi: point.phi})), amplitude});
+    } else staged.push(act);
+  }
+  const begin = BigInt(from);
+  return readStageTakeActs(staged, begin, begin + BigInt(frames));
 }
 /** A take as its owner rendered it: from the checkpoint's sample, `frames` of PCM at the owner's rate as f32, the keys whose notes made way
  * strike by strike, and where it ended, kept as a checkpoint (a later part renders on from it). */
@@ -862,6 +894,12 @@ export function readStageRequest(raw: unknown): {req: number; command: StageComm
     }
     case 'torus-engine':
       return closed(raw, [...BASE_KEYS, 'on']) && typeof raw.on === 'boolean' ? {req, command: {command: 'torus-engine', on: raw.on}} : null;
+    case 'take-audition':
+      // A take lane of the presented Scene's Torus row (kernel torus.rs: `take-lane:torus/<n>`), or none (O-I #855 round 25).
+      return closed(raw, [...BASE_KEYS, 'lane_ref']) && (raw.lane_ref === null || (typeof raw.lane_ref === 'string' && /^take-lane:torus\/[^\s\u0000-\u001f\u007f]{1,480}$/.test(raw.lane_ref)))
+        ? {req, command: {command: 'take-audition', lane_ref: raw.lane_ref}} : null;
+    case 'take-sound':
+      return closed(raw, [...BASE_KEYS, 'take_ref']) && isStageCheckpointName(raw.take_ref) ? {req, command: {command: 'take-sound', take_ref: raw.take_ref}} : null;
     case 'singlet': {
       // One codon of the 64: the owner places it (O-I #771); a take's names its strength and its sample (O-I #855).
       if (!closed(raw, [...BASE_KEYS, 'codon', 'amplitude', 'at_samples_elapsed']) || !isStageCodon(raw.codon)) return null;

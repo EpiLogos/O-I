@@ -237,6 +237,29 @@ function readHostedReceiver(raw: unknown): NonNullable<HostedInstrumentParameter
   return {on: raw.on, context: raw.context, ...(raw.context === 'shared' ? {shared: raw.shared as string} : {}), refusal: raw.refusal as string | null};
 }
 
+/** The take sounding under the Scene as the frame announces it (O-I #855 round 25; controller.ts take_player): which, on which take lane,
+ * from which of its frames and when that is heard (ms since the Unix epoch), its frames at its rate; and the frame's last refusal in words. */
+function readHostedTake(raw: unknown): NonNullable<HostedInstrumentParameters['take']> | string {
+  if (!object(raw)) return 'expected sounding, audition and refusal';
+  const other = Object.keys(raw).find(key => key !== 'sounding' && key !== 'audition' && key !== 'refusal');
+  if (other !== undefined) return `${other}: not announced; the frame keeps what its take struck and the sound it holds`;
+  if (raw.refusal !== null && !boundedText(raw.refusal, 1024)) return 'refusal: expected bounded text or null';
+  // the take lane of the presented Scene auditioned in place of its row's main lane (DLW build ruling 2026-11-05), or null
+  if (raw.audition !== null && !(boundedText(raw.audition, 512) && (raw.audition as string).startsWith('take-lane:torus/') && (raw.audition as string).length > 'take-lane:torus/'.length))
+    return 'audition: expected a Torus take lane of the presented Scene, or null';
+  const audition = raw.audition as string | null;
+  if (raw.sounding === null) return {sounding: null, audition, refusal: raw.refusal as string | null};
+  const s = raw.sounding;
+  const count = (value: unknown, min: number) => Number.isSafeInteger(value) && (value as number) >= min;
+  if (!object(s) || Object.keys(s).some(key => !['take_ref', 'lane_ref', 'title', 'from_frame', 'frames', 'sample_rate', 'heard_at_ms'].includes(key))
+    || !boundedText(s.take_ref, 128) || !(s.take_ref as string).startsWith('sha256:') || !boundedText(s.lane_ref, 512) || !(s.lane_ref as string).startsWith('take-lane:torus/')
+    || !boundedText(s.title, 512) || !count(s.frames, 1) || !count(s.from_frame, 0) || (s.from_frame as number) >= (s.frames as number)
+    || !count(s.sample_rate, 8000) || (s.sample_rate as number) > 192000 || typeof s.heard_at_ms !== 'number' || !Number.isFinite(s.heard_at_ms) || s.heard_at_ms <= 0)
+    return 'sounding: expected the take by its ref on its take lane, the frame it plays from within its frames at its rate, and when that is heard';
+  return {sounding: {take_ref: s.take_ref as string, lane_ref: s.lane_ref as string, title: s.title as string, from_frame: s.from_frame as number, frames: s.frames as number,
+    sample_rate: s.sample_rate as number, heard_at_ms: s.heard_at_ms as number}, audition, refusal: raw.refusal as string | null};
+}
+
 /** The owner's presentation parameters, exact or refused: a value the owner does not state is refused by name, never defaulted. */
 export function readHostedParameters(raw: unknown): HostedInstrumentParameters | string {
   if (!object(raw) || !object(raw.scale)) return 'parameters: expected muted, level, scale, cadence and refusal';
@@ -261,8 +284,11 @@ export function readHostedParameters(raw: unknown): HostedInstrumentParameters |
   // Where the Torus is heard from: exact or the fault named; a frame that announces none carries none (O-I 856).
   const receiver = raw.receiver === undefined ? undefined : readHostedReceiver(raw.receiver);
   if (typeof receiver === 'string') return `parameters.receiver${/^[a-z_]+:/.test(receiver) ? '.' : ': '}${receiver}`;
+  // The take sounding under the Scene: exact or the fault named; a frame that announces none carries none (O-I #855 round 25).
+  const take = raw.take === undefined ? undefined : readHostedTake(raw.take);
+  if (typeof take === 'string') return `parameters.take${/^[a-z_]+:/.test(take) ? '.' : ': '}${take}`;
   return {muted: raw.muted, level: raw.level, scale: {unitsPerMetre: scale.unitsPerMetre as number | null, mode: scale.mode}, cadence, refusal: raw.refusal as string | null,
-    ...(effects ? {effects} : {}), ...(torus ? {torus} : {}), ...(receiver ? {receiver} : {})};
+    ...(effects ? {effects} : {}), ...(torus ? {torus} : {}), ...(receiver ? {receiver} : {}), ...(take ? {take} : {})};
 }
 
 /** The instrument the frame announces: the owner reading (ql.instrument-reading/v1, parsed by the shell's reader), the owner's determinants and its presentation parameters.

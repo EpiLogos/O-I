@@ -11,7 +11,11 @@
  *    beside them (O-I #855); absent until the owner has been read. Under Sequence, where QL names no figure, the figure the scene's own
  *    shapes set as the torus object reads them (torusObject.ts sceneShapesOf; O-I 851): the figure shown, the two shapes, the progress;
  *  - where the Torus is heard from (parameters.receiver): Receiver On or Off, the owner's context and its refusal, and a shared place's
- *    reference, never the place (O-I 856).
+ *    reference, never the place (O-I 856);
+ *  - the take that sounds under the Scene (parameters.take; controller.ts `take_player`, O-I #855 round 25): which, on which lane, from
+ *    which of its frames and when that is heard, for the desktop's one engine to play it beside the Torus on its part, the take lane of
+ *    the presented Scene auditioned in place of its row's main lane, and the frame's last refusal of a take in words. What its acts struck
+ *    and the renders held stay with the frame.
  *
  * Absent when no session is open: the frame announces nothing, and the shell withdraws the reading. A missing identity ref is
  * left missing, so the boundary refuses it by name. */
@@ -64,6 +68,8 @@ export function announceInstrument(reading) {
       // Where the Torus is heard from (O-I 856): Receiver On or Off, the owner's context and its refusal in its words; a place shared under a
       // reference with its reference, as QL discloses it. The place is never announced.
       ...(reading.receiver ? {receiver: receiverOf(reading.receiver)} : {}),
+      ...(reading.take_player ? {take: {sounding: reading.take_player.sounding ?? null, audition: reading.take_player.audition ?? null,
+        refusal: reading.take_player.refusal ?? null}} : {}),
     },
   };
 }

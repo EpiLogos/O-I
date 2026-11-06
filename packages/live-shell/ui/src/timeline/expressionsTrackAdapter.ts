@@ -16,7 +16,11 @@
 // - transport.takes: each scene's captured takes, targeting the scene.
 // - lanes.takes: the Torus takes that lie under a scene (O-I #855; manual §21.1, "Record a part and each pass lies as a take lane under
 //   its track"), each its take lane under its Expression's audio side, from the second of the scene it lies at for its length: where
-//   the scene lies on the ruler (worldTrackAdapter.ts rowOffsets) plus the take's own seconds in it.
+//   the scene lies on the ruler (worldTrackAdapter.ts rowOffsets) plus the take's own seconds in it. As Live's take lanes, each shows its
+//   Activator and Solo and its Audition, lit where it sounds in place of the main lane (round 25; DLW build ruling 2026-11-05: "give the
+//   Torus take lanes Audition and Comp, and show their Activator and Solo, as Live's take lanes have them").
+// - lanes.comp: each stretch the scene's main lane comps from a take lane, under the take it came from, where the scene lies on the ruler;
+//   a stretch chosen on a take lane and Return comps it, in the samples of the scene's transport (round 25).
 //
 // Takes are transport material: never a clock, never a track.
 // The inside of one scene is projected by expressionsSequenceEditor.ts.
@@ -44,6 +48,7 @@ import type {
   WorldTrackSet,
   WorldTrackTake,
   WorldTakeLane,
+  WorldCompStretch,
   TrackLaneKind,
 } from './worldTrackAdapter';
 import {rowOffsets} from './worldTrackAdapter';
@@ -61,8 +66,11 @@ export interface ExpressionsWorkReading {
       /** How far the playing scene has got, from the owner's playback reading: its elapsed seconds and the length it plays (W4). */
       progress?: {elapsed: number; expected: number};
       /** The Torus takes that lie under the scene, as its performance keeps them (expressions-boundary scenes.ts sceneTorusTakes): each by
-       * its lane, from its second of the scene for its length in seconds. */
-      torusTakes?: {lane: string; name: string; at: number; seconds: number}[]}[];
+       * its lane, from its second of the scene for its length in seconds, its lane's Activator and Solo, and the sample of the scene's
+       * transport it lies from (`atSample`, the transport running at `rate`). */
+      torusTakes?: ExpressionsTorusTake[];
+      /** The stretches the scene's main lane comps from its take lanes (scenes.ts sceneTorusComp), each in the scene's own seconds. */
+      torusComp?: {lane: string; start: number; end: number}[]}[];
   }[];
   // Live's scene rows: each stop stands one or more scenes at once.
   stops?: {id: string; name: string; scenes: {expressionId: string; sceneId: string}[]}[];
@@ -80,6 +88,10 @@ export interface ExpressionsWorkReading {
   controls?: ExpressionsControls;
 }
 
+/** A Torus take that lies under a scene, as the adapter reads it (O-I #855): its lane and title, from its second of the scene for its
+ * seconds, its lane's Activator and Solo, and the sample of the scene's transport it lies from, the transport running at `rate`. */
+export interface ExpressionsTorusTake {lane: string; name: string; at: number; seconds: number; enabled: boolean; solo: boolean; atSample: string; rate: number}
+
 /** The owner ops the views press, each answering in the shell's receipt words. */
 export interface ExpressionsControls {
   /** The Expression's own sound (native/frameSound.ts): its mute as it stands, the one soloed, and the writes of each. */
@@ -93,6 +105,15 @@ export interface ExpressionsControls {
   stopAll?: {op: string; run(): unknown};
   playSaved?: {op: string; run(): unknown};
   reenable?: {op: string; run(): unknown};
+  /** The Torus take lanes of the presented Scene (O-I #855 round 25), each act on the Scene named and refused in words for another:
+   * Audition, a lane's take in place of the row's main lane (`scene` the presented Scene, `lane` the lane the frame reports auditioned on
+   * it; null hears the main lane again), the comp of a stretch of a lane into the main lane in the samples of the Scene's transport, and a
+   * lane's Activator and Solo. */
+  takes?: {
+    audition: {op: string; scene: string | null; lane: string | null; run(sceneId: string, laneRef: string | null): unknown};
+    comp: {op: string; run(sceneId: string, stretch: {lane_ref: string; start_sample: string; end_sample: string}): unknown};
+    lane: {op: string; run(sceneId: string, laneRef: string, setting: {enabled: boolean; solo: boolean}): unknown};
+  };
 }
 
 const missing = (what: string, op: string, owner: string) => `${what}: no owner operation carries it yet — missing op: ${op} (${owner}).`
@@ -179,7 +200,8 @@ export function projectExpressionsWork(reading: ExpressionsWorkReading): WorldTr
   const tracks: WorldTrack[] = [];
   const clips: WorldTrackClip[] = [];
   const takes: WorldTrackTake[] = [];
-  const laid: {key: string; trackId: string; columnId: string; start: number; takes: NonNullable<ExpressionsWorkReading['expressions'][number]['scenes'][number]['torusTakes']>}[] = [];
+  const laid: {key: string; sceneId: string; trackId: string; columnId: string; start: number; takes: readonly ExpressionsTorusTake[];
+    comp: NonNullable<ExpressionsWorkReading['expressions'][number]['scenes'][number]['torusComp']>}[] = [];
 
   for (const expression of reading.expressions) {
     const groupId = expressionGroupId(expression.id);
@@ -208,18 +230,29 @@ export function projectExpressionsWork(reading: ExpressionsWorkReading): WorldTr
       for (const take of scene.takes ?? []) {
         takes.push({id: `${key}:${take.id}`, target: key, name: take.name});
       }
-      if (scene.torusTakes?.length) laid.push({key, trackId: audioLaneId(expression.id), columnId, start, takes: scene.torusTakes});
+      if (scene.torusTakes?.length) laid.push({key, sceneId: scene.id, trackId: audioLaneId(expression.id), columnId, start, takes: scene.torusTakes, comp: scene.torusComp ?? []});
       cursor.set(columnId, end);
     });
   }
 
-  // Each Torus take on its own take lane, where its scene lies on the ruler and its seconds into the scene.
+  // Each Torus take on its own take lane, where its scene lies on the ruler and its seconds into the scene, with its lane's Activator and
+  // Solo, and lit where the frame auditions it in place of the main lane (round 25); each stretch the main lane comps, under its take.
   const {offsets} = rowOffsets(columns, clips);
-  const takeLanes: WorldTakeLane[] = laid.flatMap(({key, trackId, columnId, start, takes: own}) => own.map((take) => {
+  const audition = reading.controls?.takes?.audition;
+  const placed: PlacedTake[] = laid.flatMap(({key, sceneId, trackId, columnId, start, takes: own}) => own.map((take) => {
     requireDuration(take.at, `Take ${take.lane} start`);
-    const from = (offsets.get(columnId) ?? 0) + start + take.at;
-    return {id: `${key}#${take.lane}`, trackId, name: take.name,
-      spans: [{start: from, end: from + requireDuration(take.seconds, `Take ${take.lane} length`), label: take.name}]};
+    return {id: `${key}#${take.lane}`, sceneId, trackId, take, scene: (offsets.get(columnId) ?? 0) + start};
+  }));
+  const takeLanes: WorldTakeLane[] = placed.map(({id, sceneId, trackId, take, scene}) => {
+    const from = scene + take.at;
+    return {id, trackId, name: take.name,
+      spans: [{start: from, end: from + requireDuration(take.seconds, `Take ${take.lane} length`), label: take.name}],
+      enabled: take.enabled, solo: take.solo, ...(audition ? {auditioned: audition.scene === sceneId && audition.lane === take.lane} : {})};
+  });
+  const comp: WorldCompStretch[] = laid.flatMap(({key, trackId, columnId, start, comp: own}) => own.map((stretch) => {
+    const scene = (offsets.get(columnId) ?? 0) + start;
+    return {trackId, takeId: `${key}#${stretch.lane}`, start: scene + requireDuration(stretch.start, `Comp of ${stretch.lane} start`),
+      end: scene + requireDuration(stretch.end, `Comp of ${stretch.lane} end`)};
   }));
   // Where Torus takes lie, the take lanes are not absent (the Studio's own captured takes still have no lane: EXPRESSIONS_LANES_ABSENT.takes).
   const absentTakes: Partial<Record<TrackLaneKind, string>> = {...EXPRESSIONS_LANES_ABSENT};
@@ -240,18 +273,21 @@ export function projectExpressionsWork(reading: ExpressionsWorkReading): WorldTr
   const set: WorldTrackSet = {columns, tracks, clips, transport: {takes},
     mixer: {...(sound ? EXPRESSIONS_MIXER_SOUNDED : EXPRESSIONS_MIXER), ...(arm ? {arm: {meaning: EXPRESSIONS_MIXER.arm!.meaning, grain: 'the Studio arm: one arm for the open Expression'}} : {})},
     main: {name: 'Main', chain: [], ...(reading.differs !== undefined ? {differs: reading.differs} : {})},
-    lanes: {automation, ...(takeLanes.length ? {takes: takeLanes} : {}),
+    lanes: {automation, ...(takeLanes.length ? {takes: takeLanes} : {}), ...(comp.length ? {comp} : {}),
       absent: {...absentTakes, ...(reading.automation ? {} : {automation: 'The presented scene\'s reading is not published to this pane, so its lanes are unread.'})},
       ...(reading.held !== undefined ? {held: reading.held} : {})}};
   // The saved sequence loops whole: from its start to the end of what the Arrangement lays (worldTrackAdapter.ts `loop` with no end).
   if (reading.loop === true) set.loop = {start: 0};
-  const actions = expressionsActions(reading, clips);
+  const actions = expressionsActions(reading, clips, placed);
   if (actions) set.actions = actions;
   return set;
 }
 
+/** A Torus take as it lies on the ruler: its take lane, its scene, the track it lies under, and where its scene begins on the ruler. */
+interface PlacedTake {id: string; sceneId: string; trackId: string; take: ExpressionsTorusTake; scene: number}
+
 /** The owner's scene transport over this set's own ids: a clip that is no scene of the set is refused before the owner is called. */
-function expressionsActions(reading: ExpressionsWorkReading, clips: readonly WorldTrackClip[]): WorldTrackActions | undefined {
+function expressionsActions(reading: ExpressionsWorkReading, clips: readonly WorldTrackClip[], placed: readonly PlacedTake[] = []): WorldTrackActions | undefined {
   const controls = reading.controls;
   if (!controls) return undefined;
   const sceneOf = new Map<string, {expressionId: string; sceneId: string}>();
@@ -275,6 +311,34 @@ function expressionsActions(reading: ExpressionsWorkReading, clips: readonly Wor
   }
   const arm = controls.arm
   if (arm) actions.mixer = {...actions.mixer, arm: {op: arm.op, run: (_trackId, on) => arm.set(on)}}
+  // A Torus take lane's acts (O-I #855 round 25), each on the scene its take lies under: Audition (pressed on the lane auditioned, the main
+  // lane sounds again), the comp of the stretch chosen on the ruler, in the samples of the scene's transport and within the take, and the
+  // lane's Activator and Solo. A lane that is no take lane of this set is refused before the owner is called.
+  const takes = controls.takes
+  if (takes && placed.length) {
+    const lanes = new Map(placed.map(found => [found.id, found]))
+    const laneOf = (trackId: string, takeId: string) => { const found = lanes.get(takeId); return found && found.trackId === trackId ? found : null }
+    const none = (takeId: string) => ({ok: false, error: `"${takeId}" is no take lane of this Expression.`})
+    actions.audition = {op: takes.audition.op, run: (trackId, takeId) => {
+      const found = laneOf(trackId, takeId)
+      if (!found) return none(takeId)
+      const auditioned = takes.audition.scene === found.sceneId && takes.audition.lane === found.take.lane
+      return takes.audition.run(found.sceneId, auditioned ? null : found.take.lane)
+    }}
+    actions.comp = {op: takes.comp.op, run: (trackId, takeId, range) => {
+      const found = laneOf(trackId, takeId)
+      if (!found) return none(takeId)
+      const {take, scene} = found, at = Number(take.atSample)
+      const sample = (t: number) => Math.round((t - scene) * take.rate)
+      const start = Math.max(at, sample(range.start)), end = Math.min(at + Math.round(take.seconds * take.rate), sample(range.end))
+      if (!(end > start)) return {ok: false, error: `The stretch chosen lies outside ${take.name}: choose a stretch of the take itself.`}
+      return takes.comp.run(found.sceneId, {lane_ref: take.lane, start_sample: String(start), end_sample: String(end)})
+    }}
+    actions.takeLane = {op: takes.lane.op, run: (trackId, takeId, setting) => {
+      const found = laneOf(trackId, takeId)
+      return found ? takes.lane.run(found.sceneId, found.take.lane, setting) : none(takeId)
+    }}
+  }
   // A scene's acts (manual §20.1's action table): duplicate, delete, insert after the presented scene, the Expression's title.
   const edit = controls.sceneEdit
   if (edit) {

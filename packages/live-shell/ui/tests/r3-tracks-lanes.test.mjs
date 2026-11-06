@@ -286,16 +286,15 @@ test('an automation lane names its device and its parameter: an armed take\'s re
 // beneath it"). FIXTURE: the scenes inventory's rows as expressions-boundary scenes.ts sceneTorusTakes reads a Scene's performance.
 test('a Torus take under a scene lies as a take lane under its Expression\'s sound, from its second of the scene where the scene lies on the ruler', async () => {
   const {placeClips} = await import('../src/frame/tracks/ArrangementRuler.tsx')
-  const {sceneSequenceAsTracks} = await import('../src/timeline/expressionsSequenceEditor.ts')
   const take = {lane_ref: 'take-lane:torus/3', title: 'Take 3', enabled: true, solo: false, take_ref: 'sha256:' + '1'.repeat(64), at_sample: '96000', frames: '144000',
-    sample_rate: 48000, at_seconds: 2, seconds: 3}
+    sample_rate: 48000, transport_rate: 48000, at_seconds: 2, seconds: 3}
   const row = (ref, title, duration, extra = {}) => ({scene_ref: ref, title, native_title: title, working: {duration, transition: 0}, snapshot: {duration: null},
     material: {available: true, reason: null}, ...extra})
   const content = {basis: {expression_ref: 'expression:w', scene_ref: 's1'}, playback: null,
     scenes: {scenes: [row('s1', 'Opening', 8), row('s2', 'Second', 12, {torus_takes: [take]})]}}
   const set = nativeTracks(content, 'Work')
   assert.deepEqual(set.lanes.takes, [{id: 'scene:expression:w:s2#take-lane:torus/3', trackId: 'expression:expression:w:audio', name: 'Take 3',
-    spans: [{start: 10, end: 13, label: 'Take 3'}]}], 'two seconds into the second scene, which lies from 8 s, for its three seconds')
+    spans: [{start: 10, end: 13, label: 'Take 3'}], enabled: true, solo: false}], 'two seconds into the second scene, which lies from 8 s, for its three seconds')
   const second = placeClips(set).placed.find(p => p.clip.id === 'scene:expression:w:s2:audio')
   assert.equal(second.start + take.at_seconds, set.lanes.takes[0].spans[0].start, 'the lane lies where the ruler lays its scene')
   assert.equal(set.lanes.absent.takes, undefined, 'a take lane lies: the lanes are not absent')
@@ -303,16 +302,129 @@ test('a Torus take under a scene lies as a take lane under its Expression\'s sou
   const none = nativeTracks({...content, scenes: {scenes: [row('s1', 'Opening', 8)]}}, 'Work')
   assert.equal(none.lanes.takes, undefined)
   assert.equal(typeof none.lanes.absent.takes, 'string', 'no take lies: why the lanes are absent is still said')
-  // The sequence editor: the scene's sound beneath its roll, the take on its lane in the scene's own seconds where the scene's column lies.
-  const reading = {scenes: [{id: 's1', name: 'Opening', duration: 8}, {id: 's2', name: 'Second', duration: 12}], presentedSceneId: 's2',
-    presented: {entities: [{id: 'g', name: 'Glyph', sequence: [{id: 'a', hold: 4, transition: 0}]}], automationLanes: [], propertyTracks: [],
-      torusTakes: [{lane: take.lane_ref, name: take.title, at: take.at_seconds, seconds: take.seconds}]}}
-  const roll = sceneSequenceAsTracks(reading)
-  assert.deepEqual(roll.tracks.at(-1), {id: 'sound:s2', name: 'Sound', kind: 'sound', lane: 'audio'})
-  assert.deepEqual(roll.lanes.takes, [{id: 's2#take-lane:torus/3', trackId: 'sound:s2', name: 'Take 3', spans: [{start: 3, end: 6, label: 'Take 3'}]}],
-    'the first column is a step wide (it holds none), so the presented scene lies from 1 and its take from 3')
-  assert.equal(placeClips(roll).placed.find(p => p.clip.id === 'clip:g:a').start + take.at_seconds, roll.lanes.takes[0].spans[0].start)
-  assert.equal(sceneSequenceAsTracks({...reading, presented: {...reading.presented, torusTakes: undefined}}).lanes, undefined, 'no take: no sound lane')
+  // O-I #855 round 25 (DLW build ruling 2026-11-05: "wire it into the product's sequence editor, or retire it with its replacement named.
+  // Nothing ships that only tests call"): the scene's sound beneath its roll is the Clip view's Sequence tab (inhabitants/catalogue/clips/
+  // expressions.tsx SoundUnder, from clipBinding.ts `takes`; tests/expressions-clip.test.mjs); the timeline projection only tests called is retired.
+  const sequence = await readFile(new URL('../src/timeline/expressionsSequenceEditor.ts', import.meta.url), 'utf8')
+  assert.doesNotMatch(sequence, /torusTakes|takeLanes|soundTrackId|kind: 'sound'/, 'no Sound track or take lane is projected for tests alone')
+  assert.match(sequence, /The scene's sound beneath the roll is drawn by the Clip view's Sequence tab/, 'its replacement named')
+})
+
+// O-I #855 round 25 (DLW build ruling 2026-11-05: "give the Torus take lanes Audition and Comp, and show their Activator and Solo, as Live's
+// take lanes have them"; "Which lane sounds: one per row, the active lane (Live's main lane / comp); Audition on a take lane solos that lane in
+// place of it"). FIXTURE: the scenes inventory's rows as expressions-boundary scenes.ts reads a Scene's performance; the owners are fakes.
+test('a Torus take lane shows its Activator and Solo, auditions in place of the main lane, and comps a stretch chosen on it into the main lane', async () => {
+  const take = (n, extra = {}) => ({lane_ref: `take-lane:torus/${n}`, title: `Take ${n}`, enabled: true, solo: false, take_ref: 'sha256:' + String(n).repeat(64),
+    at_sample: '96000', frames: '144000', sample_rate: 48000, transport_rate: 48000, at_seconds: 2, seconds: 3, ...extra})
+  const row = (ref, title, duration, extra = {}) => ({scene_ref: ref, title, native_title: title, working: {duration, transition: 0}, snapshot: {duration: null},
+    material: {available: true, reason: null}, ...extra})
+  const content = {basis: {expression_ref: 'expression:w', scene_ref: 's2'}, playback: null, scenes: {scenes: [row('s1', 'Opening', 8), row('s2', 'Second', 12, {
+    torus_takes: [take(3), take(4, {enabled: false, solo: true})],
+    torus_comp: [{lane_ref: 'take-lane:torus/3', start_sample: '120000', end_sample: '168000', sample_rate: 48000, start_seconds: 2.5, end_seconds: 3.5}]})]}}
+  const calls = []
+  const answer = note => ({ok: true, note})
+  const takes = {audition: {op: 'test:audition', scene: 's2', lane: 'take-lane:torus/4', run: (scene, lane) => { calls.push(['audition', scene, lane]); return answer('heard') }},
+    comp: {op: 'test:comp', run: (scene, stretch) => { calls.push(['comp', scene, stretch]); return answer('comped') }},
+    lane: {op: 'test:lane', run: (scene, lane, setting) => { calls.push(['lane', scene, lane, setting]); return answer('set') }}}
+  const set = nativeTracks(content, 'Work', {controls: {takes}})
+  const id = n => `scene:expression:w:s2#take-lane:torus/${n}`, audio = 'expression:expression:w:audio'
+  assert.deepEqual(set.lanes.takes.map(lane => [lane.id, lane.enabled, lane.solo, lane.auditioned]), [[id(3), true, false, false], [id(4), false, true, true]],
+    'each lane\'s Activator and Solo as the Scene holds them, and the lane the frame auditions')
+  assert.deepEqual(set.lanes.comp, [{trackId: audio, takeId: id(3), start: 10.5, end: 11.5}], 'the main lane shows which take its stretch came from, where the scene lies')
+  assert.deepEqual([set.actions.audition.op, set.actions.comp.op, set.actions.takeLane.op], ['test:audition', 'test:comp', 'test:lane'])
+  // Audition on a lane auditions it; on the lane auditioned, the main lane sounds again.
+  assert.deepEqual(await set.actions.audition.run(audio, id(3)), answer('heard'))
+  await set.actions.audition.run(audio, id(4))
+  // Comp: the stretch chosen on the ruler, as samples of the Scene's transport, within the take.
+  await set.actions.comp.run(audio, id(3), {start: 10.5, end: 12})
+  await set.actions.comp.run(audio, id(3), {start: 9, end: 20})
+  // Activator and Solo, on the lane's own layer.
+  await set.actions.takeLane.run(audio, id(4), {enabled: true, solo: true})
+  assert.deepEqual(calls, [['audition', 's2', 'take-lane:torus/3'], ['audition', 's2', null],
+    ['comp', 's2', {lane_ref: 'take-lane:torus/3', start_sample: '120000', end_sample: '192000'}],
+    ['comp', 's2', {lane_ref: 'take-lane:torus/3', start_sample: '96000', end_sample: '240000'}],
+    ['lane', 's2', 'take-lane:torus/4', {enabled: true, solo: true}]], 'two and a half seconds into the scene is sample 120000 of its transport')
+  calls.length = 0
+  assert.match((await set.actions.comp.run(audio, `scene:expression:w:s2#take-lane:torus/9`, {start: 10, end: 11})).error, /is no take lane of this Expression/)
+  assert.match((await set.actions.takeLane.run('expression:expression:w:visual', id(3), {enabled: false, solo: false})).error, /is no take lane of this Expression/)
+  assert.match((await set.actions.comp.run(audio, id(3), {start: 30, end: 31})).error, /^The stretch chosen lies outside Take 3/)
+  assert.deepEqual(calls, [], 'refused before any owner is called')
+  // Drawn as Live's take lanes: the Activator and Solo on the lane's head, and Audition lit on the lane it sounds in place of the main lane.
+  const ruler = arrangement(set)
+  const head = n => ruler.slice(ruler.indexOf(`data-take="${id(n)}"`), ruler.indexOf('tl-take-body', ruler.indexOf(`data-take="${id(n)}"`)))
+  assert.match(head(3), /class="mx mx-activator" data-mix="activator" data-state="on" aria-label="Activator of Take 3" aria-pressed="true"/)
+  assert.match(head(3), /class="mx mx-solo" data-mix="solo" data-state="off" aria-label="Solo of Take 3" aria-pressed="false"/)
+  assert.match(head(3), /class="tl-audition" aria-label="Audition Take 3" aria-pressed="false"/)
+  assert.match(head(4), /data-state="off" aria-label="Activator of Take 4"/)
+  assert.match(head(4), /data-state="on" aria-label="Solo of Take 4"/)
+  assert.match(head(4), /class="tl-audition lit" aria-label="Audition Take 4" aria-pressed="true"[^>]*title="Take 4 sounds in place of the main lane · press to hear the main lane again \(test:audition\)"/)
+  // Pressed, each goes through its owner op with the setting it turns to.
+  const presses = []
+  const tree = ArrangementRulerView({set, selection: SELECT, view: RULER_VIEW, receipt: null, onPress: (key, what, run) => presses.push({key, what, run}), onDismiss: noop,
+    lanes: {shown: lanes.DEFAULT_LANES, onShown: noop, take: null, onTake: noop, opened: null, onOpened: noop}})
+  for (const label of ['Activator of Take 3', 'Solo of Take 4', 'Audition Take 3']) find(tree, node => node.props?.['aria-label'] === label)[0].props.onClick()
+  assert.deepEqual(presses.map(p => [p.key, p.what]), [[`take-activator:${audio}:${id(3)}`, 'Activator of Take 3 off'], [`take-solo:${audio}:${id(4)}`, 'Solo of Take 4 off'],
+    [`audition:${audio}:${id(3)}`, 'Audition Take 3']])
+  for (const press of presses) await answerOf(press.run)
+  assert.deepEqual(calls, [['lane', 's2', 'take-lane:torus/3', {enabled: false, solo: false}], ['lane', 's2', 'take-lane:torus/4', {enabled: false, solo: false}],
+    ['audition', 's2', 'take-lane:torus/3']])
+  // A set whose owner gives no lane op shows the lane's Activator and Solo as they stand, and says why they cannot be pressed.
+  const still = arrangement(nativeTracks(content, 'Work'))
+  assert.match(still, /class="mx mx-activator" data-mix="activator" data-state="on" aria-label="Activator of Take 3" aria-pressed="true" disabled=""/)
+})
+
+// O-I #855 round 25: the presented Scene's take lanes act through their owners — Audition through the frame's stage (`take-audition`), the comp
+// and a lane's Activator and Solo through the Scene's performance (`comp-take`, `take-lane`) — and a lane of a Scene not presented is refused in
+// words before any owner is called. FIXTURE: the frame's link and the Scene's performance channel are fakes the test drives.
+test('the presented Scene\'s take lanes act through the frame\'s stage and the Scene\'s performance; another Scene\'s are refused in words', async () => {
+  const {expressionsControls} = await import('../src/frame/tracks/modeTracks.ts')
+  const presets = await import('../src/live/LivePresets.tsx')
+  const staged = [], performed = []
+  const link = {state: {nativeScene: {expression_ref: 'expression:w', scene_ref: 's2'},
+    instrument: {ok: true, parameters: {take: {sounding: null, audition: 'take-lane:torus/4', refusal: null}}}},
+    run: async command => { staged.push(command); return command.command === 'take-audition' && command.lane_ref === 'take-lane:torus/9' ? {ok: false, error: 'The presented Scene has no take lane take-lane:torus/9 to audition.'} : {ok: true} }}
+  presets.setLivePerformanceChannel(async action => { performed.push(action)
+    return action.action === 'comp-take' ? {state: 'take-comped', lane_ref: action.lane_ref, start_sample: action.start_sample, end_sample: action.end_sample, unsaved: true}
+      : {state: 'take-lane-set', lane_ref: action.lane_ref, enabled: action.enabled, solo: action.solo, unsaved: false} })
+  try {
+    const {takes} = expressionsControls(undefined, link)
+    assert.deepEqual([takes.audition.scene, takes.audition.lane], ['s2', 'take-lane:torus/4'], 'the lane the frame reports auditioned on the presented Scene')
+    assert.deepEqual(await takes.audition.run('s2', 'take-lane:torus/3'), {ok: true, note: 'The take sounds in place of the main lane.'})
+    assert.deepEqual(await takes.audition.run('s2', null), {ok: true, note: 'The main lane sounds again.'})
+    assert.deepEqual(await takes.audition.run('s2', 'take-lane:torus/9'), {ok: false, error: 'The presented Scene has no take lane take-lane:torus/9 to audition.'})
+    assert.deepEqual(staged, [{command: 'take-audition', lane_ref: 'take-lane:torus/3'}, {command: 'take-audition', lane_ref: null}, {command: 'take-audition', lane_ref: 'take-lane:torus/9'}])
+    const stretch = {lane_ref: 'take-lane:torus/3', start_sample: '120000', end_sample: '192000'}
+    assert.deepEqual(await takes.comp.run('s2', stretch), {ok: true, note: 'The stretch stands in the main lane. The Scene keeps it until the Expression is saved, then the file does.'})
+    assert.deepEqual(await takes.lane.run('s2', 'take-lane:torus/4', {enabled: true, solo: false}), {ok: true, note: 'The take lane is on, not soloed.'})
+    assert.deepEqual(performed, [{action: 'comp-take', ...stretch}, {action: 'take-lane', lane_ref: 'take-lane:torus/4', enabled: true, solo: false}])
+    // another Scene's lane: refused in words before any owner is called
+    staged.length = 0; performed.length = 0
+    const elsewhere = /^That take lies under another Scene than the one presented: present its Scene to act on its take lanes\.$/
+    assert.match((await takes.audition.run('s1', 'take-lane:torus/3')).error, elsewhere)
+    assert.match((await takes.comp.run('s1', stretch)).error, elsewhere)
+    assert.match((await takes.lane.run('s1', 'take-lane:torus/3', {enabled: false, solo: false})).error, elsewhere)
+    assert.deepEqual([staged, performed], [[], []])
+    // the owner's refusal stands in its words; the answers it may give are read exactly
+    presets.setLivePerformanceChannel(async () => ({state: 'refused', reason: 'The Scene has no take lane take-lane:torus/8.', missing: []}))
+    assert.deepEqual(await takes.lane.run('s2', 'take-lane:torus/8', {enabled: true, solo: true}), {ok: false, error: 'The Scene has no take lane take-lane:torus/8.'})
+    presets.setLivePerformanceChannel(async () => ({state: 'take-comped', lane_ref: 'take-lane:torus/3'}))
+    assert.deepEqual(await presets.commitLivePerformance({action: 'comp-take', ...stretch}), {state: 'refused', reason: 'The owner answered the preset request in an unknown shape', missing: []})
+    // no Scene presented: no take acts
+    assert.equal(expressionsControls(undefined, {...link, state: {...link.state, nativeScene: null}}).takes, undefined)
+    // the pane draws again when the frame reports another lane auditioned, so the Audition lit is the frame's
+    const {MODE_REDRAWS} = await import('../src/frame/tracks/modeTracks.ts')
+    const frame = await import('../src/native/frameTakes.ts')
+    let drawn = 0
+    const off = MODE_REDRAWS.expressions.subscribe(() => { drawn += 1 })
+    try {
+      frame.publishFrameTakeLink(link)
+      assert.equal(MODE_REDRAWS.expressions.snapshot(), 'take-lane:torus/4')
+      const heard = drawn
+      frame.publishFrameTakeLink({...link, state: {...link.state, instrument: {ok: true, parameters: {take: {sounding: null, audition: null, refusal: null}}}}})
+      assert.ok(drawn > heard, 'the frame\'s new report draws the pane again')
+      assert.equal(MODE_REDRAWS.expressions.snapshot(), null, 'the main lane sounds again: no Audition lit')
+    } finally { off(); frame.publishFrameTakeLink({state: null, run: null}) }
+  } finally { presets.setLivePerformanceChannel(null) }
 })
 
 // O-I #849 round 22 (DLW build ruling 2026-11-05): "Its Torus parameters are baked in and carry no Overridden mark. Touching one says the

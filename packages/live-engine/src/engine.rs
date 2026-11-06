@@ -725,14 +725,24 @@ struct LaidHand {
     lays: Vec<Lay>,
 }
 
-/// The samples laid again on one part: the count they were laid at, the part, whether they are takes frozen on it
-/// ([`EngineHandle::freeze`], O-I #849 round 22) rather than its clips' samples, and whether it took them.
+/// The samples laid again on one part: the count they were laid at, the part, which of its samples they are, and whether it
+/// took them.
 struct Lay {
     id: u64,
     track: usize,
     samples: Vec<crate::graph::LaidSample>,
-    frozen: bool,
+    kind: Laying,
     taken: bool,
+}
+
+/// Which of a part's samples a [`Lay`] lays again: its clips' samples ([`EngineHandle::lay`]), the takes frozen on it
+/// ([`EngineHandle::freeze`], O-I #849 round 22), or the takes played beside its instrument ([`EngineHandle::play_beside`], O-I
+/// #855 round 25).
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Laying {
+    Clips,
+    Frozen,
+    Beside,
 }
 
 /// When an instrument handed to a part takes it (O-I #849 round 13).
@@ -1141,10 +1151,10 @@ impl EngineCore {
         // `incoming`; it holds `p` until it stores it in `retired`.
         let hand = unsafe { &mut *p };
         for lay in hand.lays.iter_mut() {
-            lay.taken = if lay.frozen {
-                self.graph.freeze(lay.track, &mut lay.samples, start)
-            } else {
-                self.graph.lay(lay.track, &mut lay.samples, start)
+            lay.taken = match lay.kind {
+                Laying::Clips => self.graph.lay(lay.track, &mut lay.samples, start),
+                Laying::Frozen => self.graph.freeze(lay.track, &mut lay.samples, start),
+                Laying::Beside => self.graph.play_beside(lay.track, &mut lay.samples, start),
             };
         }
         hand.frame = start;
@@ -1515,7 +1525,7 @@ impl EngineHandle {
         }
         let samples =
             crate::graph::samples_laid(&part.name, false, samples).map_err(Refusal::Invalid)?;
-        Ok(self.hand_lay(track, samples, false))
+        Ok(self.hand_lay(track, samples, Laying::Clips))
     }
 
     /// Freeze `takes` on part `track` in place of the takes frozen there while the engine plays (O-I #849 round 22; DLW build
@@ -1539,16 +1549,46 @@ impl EngineHandle {
         })?;
         let takes =
             crate::graph::samples_laid(&part.name, false, takes).map_err(Refusal::Invalid)?;
-        Ok(self.hand_lay(track, takes, true))
+        Ok(self.hand_lay(track, takes, Laying::Frozen))
     }
 
-    /// Hand `samples` to the audio thread to lay (or freeze) on `track`, those waiting for the same part and kind giving
-    /// way: the count they are laid at.
+    /// Play `takes` beside the instrument of MIDI part `track` in place of those played there while the engine plays (O-I #855
+    /// round 25; DLW build ruling 2026-11-05: a sealed take sounds "through the engine as a take player on the Torus part, mixed
+    /// beside the live Torus"): each a take's sound as its owner rendered it, added to what the part's instrument makes over its
+    /// frames, so it passes the part's rack and chain as the instrument's sound does ([`crate::Track::play_beside`]). None: the
+    /// takes played there are let go from the next block. Laid in order here ([`crate::graph::samples_laid`]), they take the
+    /// part at the next block's first frame and come back to be dropped here as [`EngineHandle::lay`]'s do, with which they
+    /// share the count they are named by in [`EngineHandle::relaid`]. Takes played on the same part before the engine took the
+    /// last give way to these. Refused, in words, for a part that is not there or plays no notes, and takes it cannot lay.
+    pub fn play_beside(
+        &mut self,
+        track: usize,
+        takes: Vec<crate::graph::LaidSample>,
+    ) -> Result<u64, Refusal> {
+        let part = self.mixer.tracks.get(track).ok_or_else(|| {
+            Refusal::Invalid(format!(
+                "the set has no part {track} (it has {})",
+                self.mixer.tracks.len()
+            ))
+        })?;
+        if !part.midi {
+            return Err(Refusal::Invalid(format!(
+                "'{}' is an audio part: a take is played beside the instrument of a MIDI part",
+                part.name
+            )));
+        }
+        let takes =
+            crate::graph::samples_laid(&part.name, false, takes).map_err(Refusal::Invalid)?;
+        Ok(self.hand_lay(track, takes, Laying::Beside))
+    }
+
+    /// Hand `samples` to the audio thread to lay (or freeze, or play beside) on `track`, those waiting for the same part and
+    /// kind giving way: the count they are laid at.
     fn hand_lay(
         &mut self,
         track: usize,
         samples: Vec<crate::graph::LaidSample>,
-        frozen: bool,
+        kind: Laying,
     ) -> u64 {
         self.collect();
         self.lays += 1;
@@ -1556,7 +1596,7 @@ impl EngineHandle {
             id: self.lays,
             track,
             samples,
-            frozen,
+            kind,
             taken: false,
         };
         let waiting = self
@@ -1573,7 +1613,7 @@ impl EngineHandle {
             waiting
                 .lays
                 .into_iter()
-                .filter(|l| l.track != track || l.frozen != frozen)
+                .filter(|l| l.track != track || l.kind != kind)
                 .collect()
         };
         lays.push(lay);

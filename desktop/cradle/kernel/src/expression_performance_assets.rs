@@ -458,6 +458,7 @@ fn performance_fields(p: &Performance) -> Result<(PerformanceHeader, Value), Str
         native_recordings,
         native_reservations,
         torus_takes,
+        torus_comp,
         torus_kept,
         content_digest,
     } = p;
@@ -502,6 +503,13 @@ fn performance_fields(p: &Performance) -> Result<(PerformanceHeader, Value), Str
         fields.insert(
             "torus_takes".into(),
             serde_json::to_value(torus_takes).map_err(|e| e.to_string())?,
+        );
+    }
+    // The comp of the take lanes is an edition field, kept whole as the Scene comped it (O-I #855 round 25).
+    if !torus_comp.is_empty() {
+        fields.insert(
+            "torus_comp".into(),
+            serde_json::to_value(torus_comp).map_err(|e| e.to_string())?,
         );
     }
     // A sound, an instrument or a rack is an edition field, kept whole as the Scene kept it.

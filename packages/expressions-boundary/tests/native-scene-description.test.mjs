@@ -24,7 +24,7 @@ export async function load(url,context,next){
 }`)}`, import.meta.url);
 
 const author = new URL('desktop/cradle/expressions-app/field-studies-journeys/src/', root);
-const [{projectNativeScenes}, {isNativeScenesReading}, {kernelDocumentToJourney}, {blankJourney, clone}] = await Promise.all([
+const [{projectNativeScenes, soundingTorusTake}, {isNativeScenesReading}, {kernelDocumentToJourney}, {blankJourney, clone}] = await Promise.all([
   import(new URL('packages/expressions-boundary/src/scenes.ts', root)),
   import(new URL('packages/expressions-boundary/src/scenesValidation.ts', root)),
   import(new URL('kernelDocumentBridge.ts', author)),
@@ -82,9 +82,9 @@ test('the scenes reading carries the Torus takes a Scene\'s performance lays und
   const reading = projectNativeScenes(clone(view.journey), view);
   assert.deepEqual(reading.scenes[0].torus_takes, [
     {lane_ref: 'take-lane:torus/3', title: 'Take 3', enabled: true, solo: false, take_ref: 'sha256:' + '1'.repeat(64), at_sample: '96000', frames: '144000',
-      sample_rate: 48000, at_seconds: 2, seconds: 3},
+      sample_rate: 48000, transport_rate: 48000, at_seconds: 2, seconds: 3},
     {lane_ref: 'take-lane:torus/4', title: 'Take 4', enabled: false, solo: false, take_ref: 'sha256:' + '4'.repeat(64), at_sample: '480000', frames: '24000',
-      sample_rate: 24000, at_seconds: 10, seconds: 1}],
+      sample_rate: 24000, transport_rate: 48000, at_seconds: 10, seconds: 1}],
     'a lane that is no Torus take lane, and a sample written as no counter, lay none; the transport runs at the performance\'s rate, a take\'s length at its own');
   assert.equal(isNativeScenesReading(reading, BASIS), true);
   const tampered = (edit) => { const copy = structuredClone(reading); edit(copy.scenes[0].torus_takes[0]); return isNativeScenesReading(copy, BASIS) }
@@ -92,7 +92,49 @@ test('the scenes reading carries the Torus takes a Scene\'s performance lays und
   assert.equal(tampered(row => { row.lane_ref = 'note-lane:keys' }), false, 'on a Torus take lane');
   assert.equal(tampered(row => { row.at_sample = 96000 }), false, 'its sample a counter as the kernel writes one');
   assert.equal(tampered(row => { row.sample_rate = 1 }), false);
+  // O-I #855 round 25: the transport's rate stands with each take, so a stretch of the ruler is a stretch of the transport's samples.
+  assert.equal(tampered(row => { row.transport_rate = 44100 }), false, 'its second of the Scene is its sample at the transport\'s rate');
+  assert.equal(tampered(row => { delete row.transport_rate }), false);
   assert.equal(isNativeScenesReading({...reading, scenes: [{...reading.scenes[0], torus_takes: []}]}, BASIS), false, 'none is written as absent');
   delete view.document.scenes[0].performance;
   assert.equal('torus_takes' in projectNativeScenes(clone(view.journey), view).scenes[0], false, 'a Scene with no performance lays none');
+});
+
+// O-I #855 round 25 (DLW build ruling 2026-11-05: "Which lane sounds: one per row, the active lane (Live's main lane / comp); Audition on a
+// take lane solos that lane in place of it"): the scenes reading carries the comp the Scene's performance keeps, and one pure rule says
+// which take sounds at a sample of the Scene: under the auditioned lane, that lane's; else the latest stretch comped over it, its lane's
+// take; else the latest take laid over it; each lane heard by the kernel's layer law (a lane sounds while it is on and, while any lane
+// on is soloed, soloed).
+test('the scenes reading carries the comp of a Scene\'s take lanes, and one rule says which take sounds at each sample', () => {
+  const view = seed();
+  const take = (ref, frames) => ({schema: 'oi.torus-take/v1', take_ref: ref, sample_rate: 48000, frames})
+  const lane = (n, enabled = true, solo = false) => ({layer_ref: `take-lane:torus/${n}`, title: `Take ${n}`, enabled, solo})
+  const one = 'sha256:' + '1'.repeat(64), two = 'sha256:' + '2'.repeat(64)
+  const performance = (layers) => ({sample_rate: 48000, layers,
+    torus_takes: [{take: take(one, '144000'), layer: 0, at_sample: '96000'}, {take: take(two, '96000'), layer: 1, at_sample: '96000'}],
+    torus_comp: [{lane_ref: 'take-lane:torus/1', start_sample: '100000', end_sample: '110000'}]})
+  view.document.scenes[0].performance = performance([lane(1), lane(2)])
+  const reading = projectNativeScenes(clone(view.journey), view);
+  assert.deepEqual(reading.scenes[0].torus_comp, [{lane_ref: 'take-lane:torus/1', start_sample: '100000', end_sample: '110000',
+    sample_rate: 48000, start_seconds: 100000 / 48000, end_seconds: 110000 / 48000}]);
+  assert.equal(isNativeScenesReading(reading, BASIS), true);
+  const tampered = (edit) => { const copy = structuredClone(reading); edit(copy.scenes[0].torus_comp[0]); return isNativeScenesReading(copy, BASIS) }
+  assert.equal(tampered(row => { row.end_seconds = 3 }), false, 'its seconds are its samples at the transport\'s rate');
+  assert.equal(tampered(row => { row.lane_ref = 'note-lane:keys' }), false, 'from a Torus take lane');
+  assert.equal(tampered(row => { row.end_sample = '90000' }), false, 'running forward');
+  const takes = reading.scenes[0].torus_takes, comp = reading.scenes[0].torus_comp
+  const at = (sample, audition = null, rows = takes) => soundingTorusTake(rows, comp, audition, sample)
+  assert.deepEqual(at(98000), {take_ref: two, lane_ref: 'take-lane:torus/2', from_frame: 2000}, 'the latest laid where nothing is comped');
+  assert.deepEqual(at(105000), {take_ref: one, lane_ref: 'take-lane:torus/1', from_frame: 9000}, 'the comp where a stretch is comped');
+  assert.deepEqual(at(200000), {take_ref: one, lane_ref: 'take-lane:torus/1', from_frame: 104000}, 'the take that lies there once the latest ends');
+  assert.deepEqual(at(105000, 'take-lane:torus/2'), {take_ref: two, lane_ref: 'take-lane:torus/2', from_frame: 9000}, 'the auditioned lane in place of the comp');
+  assert.equal(at(250000), null, 'past every take, none');
+  assert.equal(at(95999), null, 'before every take, none');
+  view.document.scenes[0].performance = performance([lane(1), lane(2, true, true)])
+  const soloed = projectNativeScenes(clone(view.journey), view).scenes[0].torus_takes
+  assert.deepEqual(at(98000, null, soloed)?.take_ref, two);
+  assert.equal(at(105000, null, soloed), null, 'a stretch comped from a lane the solo silences is silent');
+  view.document.scenes[0].performance = performance([lane(1), lane(2, false)])
+  const off = projectNativeScenes(clone(view.journey), view).scenes[0].torus_takes
+  assert.deepEqual(at(98000, null, off)?.take_ref, one, 'a lane switched off is not heard: the latest laid of those on');
 });

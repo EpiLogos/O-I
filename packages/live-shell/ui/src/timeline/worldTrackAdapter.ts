@@ -131,6 +131,13 @@ export interface WorldTakeLane {
   /** What the take works, in its owner's refs, where the owner names them (the run the take is of and the unit of work it does), so a
    * stretch of the ruler reads as the units that ran in it. */
   of?: {readonly runRef: string; readonly unitRef: string | null};
+  /** The lane's Activator and Solo as its owner holds them, where its owner keeps them (Live's take lanes carry them; O-I #855 round 25): a
+   * lane sounds while it is on and, while any lane on is soloed, soloed. `actions.takeLane` writes them. Absent: the owner keeps none. */
+  enabled?: boolean;
+  solo?: boolean;
+  /** The lane sounds in place of its track's main lane, auditioned (DLW build ruling 2026-11-05: "Audition on a take lane solos that lane
+   * in place of it"), as its owner reports it; `actions.audition` turns it on, and pressed again the main lane sounds again. */
+  auditioned?: boolean;
 }
 /** A stretch of a track's main lane and the take it came from (Live: "the main lane shows which take each stretch came from"). */
 export interface WorldCompStretch {
@@ -231,8 +238,10 @@ export interface WorldTrackActions {
   backToArrangement?: {op: string; run(): unknown};
   /** Copy a stretch of a take into the main lane (Live: select a range of a take lane and press Return): the comp. */
   comp?: {op: string; run(trackId: string, takeId: string, range: {start: number; end: number}): unknown};
-  /** Audition a take from its lane. */
+  /** Audition a take from its lane: a lane `auditioned` is let go by the same press, and the main lane sounds again. */
   audition?: {op: string; run(trackId: string, takeId: string): unknown};
+  /** A take lane's Activator and Solo, written together on the lane as its owner keeps them (O-I #855 round 25). */
+  takeLane?: {op: string; run(trackId: string, takeId: string, setting: {enabled: boolean; solo: boolean}): unknown};
   /** Give overridden parameters back to their lanes (Re-enable); a lane's id when one lane is meant. */
   reenable?: {op: string; run(laneId?: string): unknown};
   /** Unfreeze the take a frozen lane is of (O-I #849 round 22): its part plays its live Torus again. */

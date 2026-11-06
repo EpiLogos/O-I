@@ -1166,6 +1166,10 @@ pub struct Performance {
     /// omit this empty addition.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub torus_takes: Vec<torus::TorusTakeRecord>,
+    /// The stretches of its take lanes comped into the row's main lane (O-I #855 round 25, [`torus::TakeComp`]), in the order
+    /// comped: the latest over a sample is what the main lane sounds there. Bytes without any omit this empty addition.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub torus_comp: Vec<torus::TakeComp>,
     /// The Torus's saved sounds, its instruments (a form's body with the sounds made on it) and its racks
     /// (`kept`): the Scene keeps them in its performance, and its Edition with it. Bytes without any omit it.
     #[serde(default, skip_serializing_if = "kept::TorusKept::is_empty")]
@@ -1241,6 +1245,12 @@ pub enum PerformanceOperation {
         at_sample: Counter,
         micros_per_quarter: u32,
     },
+    /// A stretch of a Torus take lane comped into the row's main lane ([`torus::TakeComp`], O-I #855 round 25): kept after
+    /// the stretches comped before, so it sounds over them. Refused in words for a stretch that does not lie whole over a take
+    /// of its lane.
+    CompTorusTake {
+        comp: torus::TakeComp,
+    },
     /// A sound the kernel sealed from a checkpoint its native owner gave (native-expression `torus_sound`).
     /// Never a frame's own record: the seal admits it.
     KeepTorusSound {
@@ -1301,6 +1311,11 @@ impl Performance {
             reserved
         } else {
             digest(&(&reserved, &self.torus_takes))?
+        };
+        let takes = if self.torus_comp.is_empty() {
+            takes
+        } else {
+            digest(&(&takes, &self.torus_comp))?
         };
         if self.torus_kept.is_empty() {
             Ok(takes)
@@ -1365,6 +1380,7 @@ impl Performance {
             || (self.bases.is_empty() && self.torus_takes.is_empty() && self.torus_kept.is_empty())
             || self.bases.len() > MAX_BASES
             || self.torus_takes.len() > torus::MAX_TAKES
+            || self.torus_comp.len() > torus::MAX_COMPS
             || self.pitches.len() > MAX_PITCHES
             || self.layers.is_empty()
             || self.layers.len() > MAX_LAYERS
@@ -1527,6 +1543,9 @@ impl Performance {
             {
                 return Err("a Torus take lies twice, off its lane, past the performance or at another sample rate".into());
             }
+        }
+        for comp in &self.torus_comp {
+            comp.lies_under(&self.torus_takes, &self.layers)?;
         }
         self.torus_kept.validate(self.sample_rate)?;
         if crate::expression_act_storage::measure(self, MAX_PERFORMANCE_BYTES)?
@@ -1746,6 +1765,7 @@ impl Performance {
                 native_recordings: Vec::new(),
                 native_reservations: Vec::new(),
                 torus_takes: Vec::new(),
+                torus_comp: Vec::new(),
                 torus_kept: kept::TorusKept {
                     sounds: vec![(**sound).clone()],
                     ..Default::default()
@@ -1806,6 +1826,7 @@ impl Performance {
                 layer: 0,
                 at_sample,
             }],
+            torus_comp: Vec::new(),
             torus_kept: kept::TorusKept::default(),
             content_digest: String::new(),
         }
@@ -2085,6 +2106,16 @@ impl Performance {
                 };
                 self.duration_samples = Counter(self.duration_samples.0.max(record.end()?));
                 self.torus_takes.push(record);
+            }
+            PerformanceOperation::CompTorusTake { comp } => {
+                if self.torus_comp.len() >= torus::MAX_COMPS {
+                    return Err(format!(
+                        "A performance comps at most {} stretches from its take lanes",
+                        torus::MAX_COMPS
+                    ));
+                }
+                comp.lies_under(&self.torus_takes, &self.layers)?;
+                self.torus_comp.push(comp);
             }
             PerformanceOperation::KeepTorusSound { sound } => {
                 sound.verify_seal()?;

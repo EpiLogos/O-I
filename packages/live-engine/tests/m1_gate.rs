@@ -478,3 +478,105 @@ fn m1_gate_a_stored_ratio_of_0_or_2_is_heard_as_lives_renders() {
     }
     println!("  {gated} of {} renders gated", RATIO_RENDERS.len());
 }
+
+/// Live's renders of its Glue releasing (devices/glue-compressor.md, "Release time-constants: MEASURED"): its set, its
+/// render and the Release it stores — Threshold −12, Range 30, Ratio 1, Makeup 0, Attack 2, playing the release probe
+/// (2 s of a 1 kHz tone at −6 dBFS peak, then 4 s at −36, 1 s of silence).
+const RELEASE_RENDERS: [(&str, f64); 3] = [("G17_REL0", 0.0), ("G19_REL2", 2.0), ("G18_REL4", 4.0)];
+
+/// How near the engine's release must come to Live's, stated before any engine render was read: the time constant within
+/// 5% of the one fitted from Live's render by the same fit, and the loud segment's steady reduction within the static
+/// tolerance (0.5 dB).
+const RELEASE_TC_TOLERANCE: f64 = 0.05;
+
+/// The release fit the corpus's release analysis makes (`harness/analyze_release.py`), on one side at its rate: the loud
+/// segment's steady reduction (250 ms windows from 0.75 to 2.0 s against the loud tone's −9.01 dBFS RMS), and the time
+/// constant of the recovery (20 ms windows from the step down at 2.0 s against the quiet tone's −39.01, those from 2.02 to
+/// 2.6 s with more than 0.25 dB and under 97% of the steady reduction, least squares of ln of it against time).
+fn release_fit(side: &[f32], rate: u32) -> (f64, f64, usize) {
+    let win = |t0: f64, w: f64| {
+        let at = |t: f64| ((t * rate as f64) as usize).min(side.len());
+        rms_db(&side[at(t0)..at(t0 + w)])
+    };
+    let steadies: Vec<f64> = (2..7)
+        .map(|k| win(0.25 + k as f64 * 0.25, 0.25) + 9.01)
+        .collect();
+    let steady = steadies.iter().sum::<f64>() / steadies.len() as f64;
+    let use_: Vec<(f64, f64)> = (0..30)
+        .map(|k| 2.0 + k as f64 * 0.02)
+        .map(|t| (t, (win(t, 0.02) + 39.01).abs()))
+        .filter(|&(t, gr)| (2.02..=2.6).contains(&t) && gr > 0.25 && gr < 0.97 * steady.abs())
+        .collect();
+    assert!(
+        use_.len() >= 4,
+        "the recovery is seen over {} windows",
+        use_.len()
+    );
+    let n = use_.len() as f64;
+    let (sx, sy, sxx, sxy) = use_
+        .iter()
+        .fold((0.0, 0.0, 0.0, 0.0), |(a, b, c, d), &(t, gr)| {
+            (a + t, b + gr.ln(), c + t * t, d + t * gr.ln())
+        });
+    (
+        steady,
+        -1.0 / ((n * sxy - sx * sy) / (n * sxx - sx * sx)),
+        use_.len(),
+    )
+}
+
+/// O-I #849 round 25 (DLW build ruling 2026-11-05: "take the measured release time constants at stored 0/2/4"): Live's
+/// Glue, bridged from each of its release sets and its clip laid from the probe its document names, releases as Live
+/// renders it — the recovery's time constant within `RELEASE_TC_TOLERANCE` of Live's, on both sides, by the release
+/// analysis's own fit, and the loud segment's steady reduction within the static tolerance. Teeth: before the measured
+/// release the engine released every set at 50 ms, against Live's 80, 160 and 302.
+#[test]
+fn m1_gate_the_glue_releases_as_lives_renders_at_each_stored_release() {
+    let mut gated = 0;
+    for (name, release) in RELEASE_RENDERS {
+        let set = corpus::path(&format!("harness/live/{name}.als"));
+        let Some(render) = corpus::render(&format!("{name}.aif")).filter(|_| set.exists()) else {
+            eprintln!("skip: Live's release set or render {name} is not present");
+            continue;
+        };
+        let (l, r) =
+            live_dynamics::audio::read_aiff_i16_channels(&std::fs::read(render).unwrap()).unwrap();
+        let root = live_set::open_als(&set).unwrap_or_else(|e| panic!("{}: {e:?}", set.display()));
+        let mut bridged = live_engine::bridge::bridge_set(&root, SR).expect("a Live set");
+        let words = live_engine::bridge::lay_samples(&mut bridged.graph, &bridged.samples, &set);
+        assert!(words.is_empty(), "{name}: {words:?}");
+        assert_eq!(bridged.graph.tracks[0].devices[0].name(), "GlueCompressor");
+        let warnings: Vec<String> = bridged.warnings.iter().map(|w| w.message.clone()).collect();
+        let engine = bridged.graph.render(SR);
+        let side =
+            |x: &[f32], s: usize| -> Vec<f32> { x.iter().skip(s).step_by(2).copied().collect() };
+        println!("M1 release gate — {name} (stored Release {release})");
+        for (which, live, ours) in [("L", &l, side(&engine, 0)), ("R", &r, side(&engine, 1))] {
+            let (live_steady, live_tc, live_n) = release_fit(&live.samples, live.sample_rate);
+            let (steady, tc, n) = release_fit(&ours, SR);
+            let (dt, ds) = (tc / live_tc - 1.0, steady - live_steady);
+            println!(
+                "  {which} τ render {:>6.1} ms ({live_n} windows)  engine {:>6.1} ms ({n})  Δ {:+.1}%   steady GR render {live_steady:>6.2}  engine {steady:>6.2}  Δ {ds:+.3} dB",
+                live_tc * 1000.0,
+                tc * 1000.0,
+                dt * 100.0
+            );
+            assert!(
+                dt.abs() <= RELEASE_TC_TOLERANCE,
+                "{name} {which}: the engine releases at {:.1} ms, Live's render at {:.1} ms",
+                tc * 1000.0,
+                live_tc * 1000.0
+            );
+            assert!(
+                ds.abs() <= verify::STATIC_TOLERANCE_DB,
+                "{name} {which}: the engine's steady reduction {steady:.2} dB, Live's render {live_steady:.2}"
+            );
+        }
+        assert!(
+            warnings.iter().all(|w| !w.contains("Release")),
+            "{name}: the bridge takes the stored Release {release}: {warnings:?}"
+        );
+        gated += 1;
+    }
+    println!("  {gated} of {} renders gated", RELEASE_RENDERS.len());
+}

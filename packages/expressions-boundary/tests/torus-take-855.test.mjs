@@ -67,3 +67,35 @@ test('the host keeps and sets the Torus, renders a take and makes an edit at a s
   await deliver(stageReplyMessage(sent.req, {ok: true, landed_at_samples_elapsed: '52992'}, edit));
   assert.deepEqual(await editing, {ok: true, landed_at_samples_elapsed: '52992'});
 });
+
+// O-I #855 round 25 (DLW build ruling 2026-11-05: "Audition on a take lane solos that lane in place of it"; the native candidate plays a take
+// "through the engine as a take player on the Torus part"): Audition and a take's verified sound travel while the frame is concealed, as the
+// Live shell's take lanes and its one engine ask for them.
+test('the host auditions a take lane and asks for a take\'s sound while the frame is concealed', async t => {
+  const wire = messageWire();
+  const frame = new EventTarget();
+  frame.src = `${origin}/__application/expressions/index.html`;
+  frame.contentWindow = {postMessage(data, targetOrigin) {assert.equal(targetOrigin, origin); wire.port1.postMessage(data);}};
+  frame.closest = () => null;
+  const host = new ExpressionsHost(frame, {bindingId: 'center:world', owners: {channels: {}}, messageTarget: new EventTarget(),
+    handshakeTimeoutMs: 1000, mode: 'live', isPresented: () => false});
+  t.after(() => {host.dispose(); wire.dispose();});
+  const deliver = data => host.handleMessage({source: frame.contentWindow, origin, data});
+  await deliver({v: CHANNEL_VERSION, kind: 'oi-app-state', state: {hostMode: 'live', sceneIndex: 0, sceneCount: 1,
+    nativeScene: {expression_ref: 'expression:kept', revision: 3, scene_ref: 'scene:one'}}});
+  const posted = async name => (await wire.observe()).filter(d => d.command === name).at(-1);
+  const audition = {command: 'take-audition', lane_ref: 'take-lane:torus/2'};
+  const auditioning = host.stageCommand(audition);
+  const asked = await posted('take-audition');
+  assert.equal(asked.lane_ref, 'take-lane:torus/2', 'posted while concealed');
+  await deliver(stageReplyMessage(asked.req, {ok: true}, audition));
+  assert.deepEqual(await auditioning, {ok: true});
+  const sound = {command: 'take-sound', take_ref: 'sha256:take'};
+  const sounding = host.stageCommand(sound);
+  const wanted = await posted('take-sound');
+  const render = {from_samples_elapsed: '48000', frames: 2, sample_rate: 48000, pcm: new Float32Array([0.5, -0.5]), made_way: [], ended: checkpoint('48002')};
+  await deliver(structuredClone(stageReplyMessage(wanted.req, {ok: true, render}, sound)));
+  const answer = await sounding;
+  assert.ok(answer.ok && answer.render.pcm instanceof Float32Array);
+  assert.deepEqual([...answer.render.pcm], [0.5, -0.5]);
+});

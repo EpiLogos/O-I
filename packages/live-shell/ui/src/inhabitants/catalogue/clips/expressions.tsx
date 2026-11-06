@@ -19,6 +19,10 @@ type V = ClipProps['v']
 interface Step {readonly at: number; readonly hold: number; readonly glide: number; readonly state: string}
 interface Glyph {readonly id: string; readonly name: string; readonly steps: readonly Step[]}
 type Obj = Record<string, Record<string, number | string | boolean>>
+/** A Torus take under the scene, beneath its Sequence (clipBinding.ts `takes`, O-I #855 round 25): its take lane, from its second of the scene
+ * for its seconds, its lane's Activator and Solo, and the stretches of the scene's main lane comped from it, in the scene's seconds. */
+interface SceneTake {readonly lane: string; readonly name: string; readonly at: number; readonly seconds: number; readonly on: boolean; readonly solo: boolean
+  readonly comp: readonly (readonly [number, number])[]}
 interface AutoLane {
   readonly id: string; readonly device: string; readonly target: string; readonly type: 'oscillator' | 'ramp'; readonly wave: string; readonly rate: number; readonly phase: number
   readonly min: number; readonly max: number; readonly blend: 'replace' | 'add' | 'multiply'; readonly duration: number; readonly delay: number; readonly loop: string; readonly easing: string
@@ -235,18 +239,32 @@ function Sequence(p: ClipProps) {
     under={<SoundUnder p={p} from={0} to={end} h={underH} />} underH={underH} />
 }
 
-/** The sound beneath the sequence: the plate's pitch over the scene. A symbol's voice carries part of the torus's sound and has no pitch of its own
- * (manual §20.2), so no voice draws a line here. */
+/** The sound beneath the sequence: the plate's pitch over the scene, and the scene's Torus takes, each on its take lane (manual §20.1 the
+ * Sequence tab: "The scene's sound lies beneath it"; O-I #855 round 25), from its second of the scene, dim where its lane is off, with the
+ * stretches the scene's main lane comps from it. A symbol's voice carries part of the torus's sound and has no pitch of its own (manual
+ * §20.2), so no voice draws a line here. The takes are read; Audition, Comp and a lane's Activator and Solo act on the Arrangement's take
+ * lanes (timeline/expressionsTrackAdapter.ts). */
 function SoundUnder({p, from, to, h}: {p: ClipProps; from: number; to: number; h: number}) {
   const plate = read<[number, number][]>(p.v, 'plate', [])
+  const takes = read<SceneTake[]>(p.v, 'takes', [])
   const keyW = 72, w = p.room.w, inner = w - keyW, x = (t: number) => keyW + (t - from) / (to - from) * inner
   const lo = Math.log(55), hi = Math.log(1760), y = (hz: number) => h - 6 - (Math.log(hz) - lo) / (hi - lo) * (h - 14)
   const d = plate.map(([t, hz], i) => `${i ? 'L' : 'M'}${x(t).toFixed(1)} ${y(hz).toFixed(1)}`).join(' ')
-  return <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="clv-stems" data-i="Sound|What the scene sounds like: the plate's pitch over the scene.">
+  const band = takes.length ? Math.max(8, Math.min(14, Math.floor((h - 16) / takes.length))) : 0
+  const span = (a: number, b: number) => ({x: x(a).toFixed(1), width: Math.max(2, x(b) - x(a)).toFixed(1)})
+  return <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="clv-stems" data-i="Sound|What the scene sounds like: the plate's pitch over the scene, and the Torus takes that lie under it.">
     <rect x={0} y={0} width={keyW} height={h} className="clv-key" data-key="gutter" />
     <text x={4} y={11} className="clv-axis">Sound</text>
     <text x={keyW - 4} y={y(880) + 3} className="clv-axis" textAnchor="end">880</text>
     <text x={keyW - 4} y={y(110) + 3} className="clv-axis" textAnchor="end">110</text>
+    {takes.map((take, i) => {
+      const top = 14 + i * band
+      return <g key={take.lane} data-take-lane={take.lane} data-on={String(take.on)} data-solo={take.solo ? 'true' : undefined}>
+        <text x={4} y={top + band - 3} className="clv-axis">{take.name}</text>
+        <rect {...span(take.at, take.at + take.seconds)} y={top + 1} height={band - 2} className="clv-take"><title>{`${take.name} · ${secs(take.at)} – ${secs(take.at + take.seconds)} · ${take.on ? 'on' : 'off'}${take.solo ? ' · soloed' : ''}`}</title></rect>
+        {take.comp.map(([a, b], j) => <rect key={j} {...span(a, b)} y={top + band - 3} height={2} className="clv-take-comp"><title>{`${secs(a)} – ${secs(b)} of the main lane came from ${take.name}`}</title></rect>)}
+      </g>
+    })}
     {d && <path d={d} className="clv-env-line" data-tone="value" />}
   </svg>
 }

@@ -14,7 +14,8 @@
 import type {SurfMode} from '../../shell/modeGrammar'
 import type {NativeCompositionViewSource} from '../../shell/compositionViews'
 import type {NativeEditorReading} from '../../../../../expressions-boundary/src/editor'
-import {readFrameTakeLink, type FrameTakeLink} from '../../native/frameTakes'
+import {readFrameTakeLink, subscribeFrameTakeLink, type FrameTakeLink} from '../../native/frameTakes'
+import {compTorusTake, setTorusTakeLane} from '../../live/LivePresets'
 import {STAGE_AUTOMATION_RESUME} from '../../native/stageCommands'
 import {sceneDuration} from '../../components/nativeScenePlayback'
 import type {ExpressionsControls, ExpressionsWorkReading} from '../../timeline/expressionsTrackAdapter'
@@ -126,8 +127,11 @@ export function nativeTracks(content: NativeExpressionsContent | null | undefine
   return expressionsTrackAdapter.project({expressions: [{id: expressionId, name: workName ?? expressionId,
     ...(typeof description === 'string' ? {description} : {}),
     scenes: scenes.map(scene => ({id: scene.scene_ref, name: scene.title || scene.native_title, duration: scene.working?.duration ?? scene.snapshot.duration ?? 0, ...statusOf(scene),
-      // The Torus takes that lie under the scene (O-I #855), each on its take lane as the scenes inventory reads its performance.
-      ...(scene.torus_takes?.length ? {torusTakes: scene.torus_takes.map(take => ({lane: take.lane_ref, name: take.title, at: take.at_seconds, seconds: take.seconds}))} : {})}))}],
+      // The Torus takes that lie under the scene (O-I #855), each on its take lane as the scenes inventory reads its performance, with the
+      // lane's Activator and Solo and its sample of the scene's transport; and the stretches its main lane comps from them (round 25).
+      ...(scene.torus_takes?.length ? {torusTakes: scene.torus_takes.map(take => ({lane: take.lane_ref, name: take.title, at: take.at_seconds, seconds: take.seconds,
+        enabled: take.enabled, solo: take.solo, atSample: take.at_sample, rate: take.transport_rate}))} : {}),
+      ...(scene.torus_comp?.length ? {torusComp: scene.torus_comp.map(stretch => ({lane: stretch.lane_ref, start: stretch.start_seconds, end: stretch.end_seconds}))} : {})}))}],
     ...(presented ? {automation: [{expressionId, sceneId: presented.basis.scene_ref, lanes: sceneAutomationOf(presented)}]} : {}),
     ...(playback ? {differs: playback.scene_playing && !playback.saved_sequence_playing} : {}),
     ...(loops ? {loop: true} : {}),
@@ -168,7 +172,34 @@ export function expressionsControls(source: NativeCompositionViewSource | undefi
   const arm = readStudioArm()
   if (arm) controls.arm = {op: 'the transport\'s Studio arm (shell/transports/useExpressionsTransport.tsx): armed, Play records a take', on: arm.on,
     set: on => { arm.set(on); return {ok: true, note: on ? 'Armed: Play records a take of the chosen properties.' : 'Disarmed: Play plays.'} }}
+  // The presented Scene's Torus take lanes (O-I #855 round 25; DLW build ruling 2026-11-05: "give the Torus take lanes Audition and Comp,
+  // and show their Activator and Solo, as Live's take lanes have them"): Audition through the frame's stage (`take-audition`; the lane it
+  // auditions is the frame's to report, its hosted reading's `parameters.take.audition`), the comp and a lane's Activator and Solo through
+  // the Scene's performance (LivePresets.tsx compTorusTake, setTorusTakeLane). The host acts on the presented Scene alone (host.ts
+  // performance), so a lane of another Scene is refused in words before any owner is called.
+  const shown = link.state?.nativeScene?.scene_ref ?? null
+  if (run && shown) {
+    const elsewhere = (sceneId: string) => sceneId === shown ? null
+      : {ok: false, error: 'That take lies under another Scene than the one presented: present its Scene to act on its take lanes.'}
+    controls.takes = {
+      audition: {op: 'expressions stage · take-audition (the presented Scene\'s Torus row: a take lane in place of its main lane)', scene: shown,
+        lane: auditionedTake(link),
+        run: (sceneId, lane) => elsewhere(sceneId) ?? run({command: 'take-audition', lane_ref: lane}).then(result => result.ok
+          ? {ok: true, note: lane ? 'The take sounds in place of the main lane.' : 'The main lane sounds again.'} : {ok: false, error: result.error})},
+      comp: {op: 'expressions performance · comp-take (the presented Scene\'s Torus row: a stretch of a take lane into its main lane)',
+        run: (sceneId, stretch) => elsewhere(sceneId) ?? compTorusTake(stretch)},
+      lane: {op: 'expressions performance · take-lane (the presented Scene\'s take lane: its Activator and Solo)',
+        run: (sceneId, lane, setting) => elsewhere(sceneId) ?? setTorusTakeLane(lane, setting)},
+    }
+  }
   return controls
+}
+
+/** The take lane of the presented Scene the frame reports auditioned in place of its row's main lane (its hosted reading's
+ * `parameters.take.audition`, O-I #855 round 25), or null. */
+const auditionedTake = (link: FrameTakeLink): string | null => {
+  const instrument = link.state?.instrument
+  return instrument?.ok ? instrument.parameters.take?.audition ?? null : null
 }
 
 /** Expressions' tracks: the open Expression and its scenes, with what the presented composition and the frame's link add. A plain
@@ -216,6 +247,8 @@ export const MODE_REDRAWS: Readonly<Partial<Record<SurfMode, ModeRedraw>>> = {
   // clip player plays them (O-I #853), each override and Re-enable.
   live: {subscribe: listener => { const engine = subscribeLiveEngine(listener), lanes = subscribeLaneStanding(listener); return () => { engine(); lanes() } },
     snapshot: liveRedrawn},
+  // The take lane the frame auditions on the presented Scene (O-I #855 round 25): its Audition lights as the frame reports it.
+  expressions: {subscribe: subscribeFrameTakeLink, snapshot: () => auditionedTake(readFrameTakeLink())},
 }
 
 /** The lanes' standing over every clip player of the set (O-I #853; a row's players too, O-I #849 round 21: live/clipPlayer.ts

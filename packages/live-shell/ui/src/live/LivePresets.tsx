@@ -40,6 +40,10 @@ export async function commitLivePerformance(action: PerformanceAction): Promise<
     && typeof row.variations === 'number' && typeof row.unsaved === 'boolean') return reply as PerformanceReply
   if (row?.state === 'take-recorded' && typeof row.take_ref === 'string' && typeof row.lane_ref === 'string' && typeof row.at_sample === 'string'
     && typeof row.unsaved === 'boolean') return reply as PerformanceReply
+  if (row?.state === 'take-comped' && typeof row.lane_ref === 'string' && typeof row.start_sample === 'string' && typeof row.end_sample === 'string'
+    && typeof row.unsaved === 'boolean') return reply as PerformanceReply
+  if (row?.state === 'take-lane-set' && typeof row.lane_ref === 'string' && typeof row.enabled === 'boolean' && typeof row.solo === 'boolean'
+    && typeof row.unsaved === 'boolean') return reply as PerformanceReply
   return REFUSED('The owner answered the preset request in an unknown shape')
 }
 
@@ -130,6 +134,28 @@ export async function layTorusTake(input: {readonly checkpoint_sha256?: string; 
   if (laid.state !== 'take-recorded') return {ok: false, error: 'The Scene answered the take in another shape'}
   const title = input.take.name || `Take ${input.take.id}`
   return {ok: true, words: `${title} lies under the scene on its take lane, from sample ${laid.at_sample}.${laid.unsaved ? UNTIL_SAVED : ''}`}
+}
+
+/** Comp a stretch of a Torus take lane into the presented Scene's main lane (O-I #855 round 25; Live: select a range of a take lane and press
+ * Return): one edit of the Scene's performance (the performance's `comp-take`, the kernel's comp_torus_take), from and to which sample of
+ * the Scene's transport. Settles with the words, or the owner's refusal in its words. */
+export async function compTorusTake(stretch: {readonly lane_ref: string; readonly start_sample: string; readonly end_sample: string},
+  owners: Pick<LiveSoundOwners, 'perform'> = SOUND_OWNERS): Promise<{ok: true; note: string} | {ok: false; error: string}> {
+  const comped = await owners.perform({action: 'comp-take', lane_ref: stretch.lane_ref, start_sample: stretch.start_sample, end_sample: stretch.end_sample})
+  if (comped.state === 'refused') return {ok: false, error: comped.reason}
+  if (comped.state !== 'take-comped') return {ok: false, error: 'The Scene answered the comp in another shape'}
+  return {ok: true, note: `The stretch stands in the main lane.${comped.unsaved ? UNTIL_SAVED : ''}`}
+}
+
+/** A Torus take lane's Activator and Solo on the presented Scene (O-I #855 round 25; Live's take lanes carry both): one edit of the lane's own
+ * layer in the Scene's performance (the performance's `take-lane`), which the row's main lane hears by the kernel's layer law. Settles with
+ * the words of how the lane now stands, or the owner's refusal in its words. */
+export async function setTorusTakeLane(laneRef: string, setting: {readonly enabled: boolean; readonly solo: boolean},
+  owners: Pick<LiveSoundOwners, 'perform'> = SOUND_OWNERS): Promise<{ok: true; note: string} | {ok: false; error: string}> {
+  const set = await owners.perform({action: 'take-lane', lane_ref: laneRef, enabled: setting.enabled, solo: setting.solo})
+  if (set.state === 'refused') return {ok: false, error: set.reason}
+  if (set.state !== 'take-lane-set') return {ok: false, error: 'The Scene answered the take lane in another shape'}
+  return {ok: true, note: `The take lane is ${set.enabled ? 'on' : 'off'}, ${set.solo ? 'soloed' : 'not soloed'}.${set.unsaved ? UNTIL_SAVED : ''}`}
 }
 
 /** Keep the form's body the kept sound `soundRef` rings on as an instrument named `name` (O-I #852, manual §21.2 Sounds and instruments;

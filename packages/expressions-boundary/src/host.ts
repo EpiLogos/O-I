@@ -16,7 +16,7 @@ const STAGE_TIMEOUT_MS = 60000;
  * reads (O-I 855): the performance journal (where each note landed), the Torus kept and set again, and a take rendered offline; and the
  * Torus handed over to the desktop's one engine, or sounded in the frame again, as Live's Play and Stop ask (O-I #849); and a take sealed to
  * lie under a scene (O-I #855). */
-const CONCEALED_STAGE_COMMANDS: ReadonlySet<StageCommand['command']> = new Set(['instrument', 'janko', 'strike-at', 'singlet', 'audio-clock', 'performance-journal', 'torus', 'torus-sound', 'torus-take', 'torus-engine', 'render-take']);
+const CONCEALED_STAGE_COMMANDS: ReadonlySet<StageCommand['command']> = new Set(['instrument', 'janko', 'strike-at', 'singlet', 'audio-clock', 'performance-journal', 'torus', 'torus-sound', 'torus-take', 'torus-engine', 'render-take', 'take-audition', 'take-sound']);
 /** An Expression open waiting for the frame's readiness, with the settle of its answer. */
 interface PendingExpressionOpen {ref: string; refresh: boolean; lens?: HostedTechneLens; recovery?: RecoveryBinding; settle: (result: StageResult) => void}
 const SUPERSEDED_OPEN = 'A newer open superseded this one before the Expressions application was ready';
