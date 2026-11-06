@@ -483,7 +483,12 @@ export type AikitReadRequest =
   | {kind:"reflection-verify";law:Record<string,unknown>;project?:string|null}
   /** `aikit knowledge reflection laws` (O-I #786): the laws a world declares in its `.aikit/reflection-laws/`, `aikit.reflection-laws/v1`
    * `{declared_in, laws:[{path, law}], unreadable:[{path, error}]}`, asked in the named world's ground (else the root's). */
-  | {kind:"reflection-laws";project?:string|null};
+  | {kind:"reflection-laws";project?:string|null}
+  /** `aikit knowledge reads --agent-session S` (O-I manual §19.9, Sources' Read): AIKit's record of the session's knowledge use in its run,
+   * `aikit.knowledge-session-reads/v1` `{agent_session, sources, reads, readings:[{op, id, resource, label?, revision, current_revision?,
+   * moved?, unread?, hops, again_of?}], standing}` — each passage with its source and the revision it read, `moved` where its source has
+   * moved since — asked in the named world's ground (else the root's). */
+  | {kind:"knowledge-reads";agent_session:string;project?:string|null};
 export type AikitWriteRequest =
   /** `aikit capture TITLE` with the body on stdin; `capture_kind` is the owner's `--kind`. With `from_song` (O-I #844) the body is a
    * Software Factory song's clip and AIKit writes a Method from it (`--from-song`); with `take` (Routine… on a song) the canon unit a
@@ -527,7 +532,12 @@ export type AikitWriteRequest =
   | {kind:"realise";agent_session:string;model:string;provider?:string|null;project?:string|null}
   /** `aikit knowledge forget destination|route|project RESOURCE` or `forget all`: answers `{forgot, preserved}`. `here` (O-I #741) forgets
    * RESOURCE in one world only — `project`'s, or your world's without one — asked in that world's ground. */
-  | {kind:"knowledge-forget";scope:"destination"|"route"|"project"|"here"|"all";resource?:string|null;project?:string|null};
+  | {kind:"knowledge-forget";scope:"destination"|"route"|"project"|"here"|"all";resource?:string|null;project?:string|null}
+  /** Sources' Read again and Forget (O-I manual §19.9), on one reading of a session's run: `aikit knowledge read-again --agent-session S
+   * --reading R` re-reads it at its source's new revision and records the use (`{reading, route}`, the new reading); `aikit knowledge forget
+   * reading --agent-session S --reading R` drops AIKit's record of having used it, so the route no longer ranks it from memory, and never
+   * touches the source (`{forgot, reading, preserved}`). */
+  | {kind:"knowledge-read-again"|"knowledge-forget-reading";agent_session:string;reading:string;project?:string|null};
 
 /** W1.5 changed-since-thought compose (`flow_cognition.rs`): ONE typed
  * reading with both owner sides explicit — a side that could not be queried
@@ -1416,6 +1426,9 @@ export type EncounterEnvelopePoint = [number, string | number]
  * reads back the level it applied — and `basis` the revisions the takes are held to; or AIKit's words for why there is none (a session
  * whose agent never opened, or whose model AIKit never observed). */
 export type EncounterTakeRun = {run: Record<string, unknown>; basis?: Record<string, unknown>} | {refused: string}
+/** One Sources placement as AIKit's settings read it: placed or not, Search first (default on), Link depth (0–4, default 2), Read budget
+ * (1–200 pages, default 40), and which the person set. */
+export interface SourcesPlacement {placed: boolean; search_first: boolean; link_depth: number; read_budget: number; set: string[]}
 export interface EncounterSessionSettingsReading {
   schema: 'aikit.encounter-session-settings/v1'
   agent_session: string
@@ -1423,6 +1436,10 @@ export interface EncounterSessionSettingsReading {
   /** `name`: the session's own name, null when it has none (an AIKit before O-I #743 gives none). `wait` and `no_answer`: Scope's Wait
    * (seconds, 900–86400, default 14400) and On no answer (hold · deny, default hold), §19.12; absent from an AIKit before O-I round 860. */
   track: {telemetry: boolean; solo: boolean; name?: string | null; wait?: number; no_answer?: 'hold' | 'deny'; set: string[]}
+  /** Sources (§19.9; DLW build ruling 2026-11-05) on each placement the session holds: its own agent's chain, and the rack's shared reading
+   * ahead of its Agent rack (track keys `sources`, `search_first`, `link_depth`, `read_budget`, each with `rack_` for the rack). Absent from
+   * an AIKit before it. */
+  sources?: {chain: SourcesPlacement; rack: SourcesPlacement}
   task: null | {
     task_ref: string; name: string; colour: string | null; active: boolean; register: 'plain' | 'warm' | 'terse'
     form: 'technical' | 'narrative' | 'list'; loop: boolean; loop_until: 'done' | 'pass'; loop_cap: number | null

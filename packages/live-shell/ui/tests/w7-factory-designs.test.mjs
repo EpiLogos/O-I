@@ -169,8 +169,8 @@ test('2 · Capture skill is the Skillset rack\'s Capture page on the armed track
   // REPLACED (O-I #842): a session's chain ['agent', 'skillset', 'world'] and a group's ['agentset', 'agent', 'skillset', 'world'] — every
   // session's chain is §16.2's Factory row around one Agent rack, and the session's own Skillset rack stands inside the rack (RACK_CHAIN),
   // where its Capture page still rides on the armed (lone) session's chain alone.
-  assert.deepEqual(places.chainSlots({kind: 'session', group: false}), ['gateway', 'remote-carrier', 'agentset', 'world', 'git'])
-  assert.deepEqual(places.chainSlots({kind: 'session', group: true}), ['gateway', 'remote-carrier', 'agentset', 'world', 'git'])
+  assert.deepEqual(places.chainSlots({kind: 'session', group: false}), ['gateway', 'remote-carrier', 'sources', 'agentset', 'world', 'git'])
+  assert.deepEqual(places.chainSlots({kind: 'session', group: true}), ['gateway', 'remote-carrier', 'sources', 'agentset', 'world', 'git'])
   assert.ok(places.RACK_CHAIN.includes('skillset'), 'the Skillset rack, inside the lone session\'s rack')
   assert.deepEqual(places.chainSlots({kind: 'main'}), ['approvals'])
   assert.equal(places.SLOT_DEVICE.capture, undefined, 'no Capture plate')

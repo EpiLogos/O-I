@@ -531,3 +531,99 @@ test('(r870) Take: an edit of what the agent holds takes Factory\'s hold first, 
   // The custody it reads is the chain's own reading (one key for the three views).
   assert.match(read('agent/devices/FactoryDeviceChain.tsx'), /const sessionCustody = useSessionCustody\(transport, custodyAt\)/)
 })
+
+// BD round 26 (#745; manual §19.9; DLW build ruling 2026-11-05): Sources, an effect before the Agent, on its owners. Pinned is Central's
+// agent-profile pins as the roster's review row reads them (`source_pins`, each at its revision, `moved` where its source changed since);
+// the routes' lights are AIKit's `knowledge status`; Search first, Link depth and Read budget are AIKit's settings of the session on the
+// placement (`sources.chain`, or `sources.rack` for the rack's shared reading); Read is AIKit's record of the run's knowledge use
+// (aikit.knowledge-session-reads/v1). FIXTURE: each answer in its owner's own shape (Central's agent_profile_actions.rs pin test, AIKit's
+// knowledge_application_v2.rs and encounter_task_settings.rs); the profile's `ref` key is REAL (a profile file's keys, read 5 Nov). A
+// recording port: nothing is written.
+test('(BD r26) Sources: Pinned through Central, the routes from AIKit\'s status, the three settings AIKit\'s on the placement, Read the run\'s passages', async () => {
+  const {design: sourcesDesign} = await import('../src/inhabitants/catalogue/panels/ai-kit__sources.tsx')
+  bind.resetHolds()
+  host.resetHost()
+  const REAL = {schema: 'central.agent-profile/v1', ref: 'agent-profile:guardian', revision: 'r2', agent_ref: 'agent/guardian', name: 'Guardian', skill_set_refs: []}
+  const profile = own.chainProfileOf(REAL)
+  assert.deepEqual(profile, {profileRef: 'agent-profile:guardian', revision: 'r2', name: 'Guardian', skillSetRefs: []}, 'a profile as Central writes it is addressed')
+  assert.deepEqual(own.pinSourceRequest(profile, 'Control/self/agents/guardian/reading.md'), {action: 'agent-profile.pin-source',
+    input: {scope: 'root', profile_ref: 'agent-profile:guardian', expected_revision: 'r2', reference: 'central:source:control:root:Control/self/agents/guardian/reading.md'}},
+  'a file dropped on Pinned is pinned through Central\'s own act, at the profile\'s revision as read')
+  const PIN = 'central:source:control:root:Control/self/agents/guardian/reading.md'
+  const SHAPE = 'central:source:control:root:Control/agents/governance/world/shape-of-the-world.md'
+  const review = {schema: 'central.agent-profile-review/v1', profile: REAL, accepted: true, source_pins: [
+    {reference: PIN, content_digest: 'sha256:9f2c41d07ab3e5c1', resolved: true, moved: false},
+    {reference: SHAPE, content_digest: 'sha256:04be77aa1c2d3e4f', resolved: false, moved: true, current_digest: 'sha256:5d6e7f8091a2b3c4', reason: 'self-source-digest-mismatch'}]}
+  const settings = {schema: 'aikit.encounter-session-settings/v1', agent_session: 'agent-session:a', revision: 'rev-3',
+    track: {telemetry: true, solo: false, set: ['sources', 'link_depth', 'rack_sources', 'rack_search_first', 'rack_read_budget']},
+    sources: {chain: {placed: true, search_first: true, link_depth: 3, read_budget: 40, set: ['sources', 'link_depth']},
+      rack: {placed: true, search_first: false, link_depth: 2, read_budget: 12, set: ['sources', 'search_first', 'read_budget']}}}
+  const status = {version: '1', wiki: {provider: 'aikit:wiki', available: true, index: {}, registers: []},
+    sources: [{provider: 'aikit:source-pool', available: true, version_drift: false, capabilities: {}, detail: ''}],
+    code: {provider: 'gitnexus', available: true, version: null, tested_version: null, version_drift: false, indexed: false, capabilities: {}, detail: 'The code index is not built for this project.'},
+    project_map: true, absences: [], notes: []}
+  const reads = {schema: 'aikit.knowledge-session-reads/v1', agent_session: 'agent-session:a', sources: null, reads: 2, readings: [
+    {op: 'read', id: 'use_1', address: {kind: 'wiki', value: 'wiki:page:alpha'}, resource: 'wiki:page:alpha', label: 'Alpha', revision: '1', current_revision: '2', moved: true, hops: 0},
+    {op: 'read', id: 'use_2', address: {kind: 'source', value: PIN}, resource: PIN, revision: 'sha256:9f2c41d07ab3e5c1', current_revision: 'sha256:9f2c41d07ab3e5c1', moved: false, hops: 1}],
+    standing: 'What this session\'s agent read in its run.'}
+  const asked = []
+  const ports = {settings: async change => { asked.push(['settings', change]) }, readAgain: async id => { asked.push(['readAgain', id]) },
+    forget: async id => { asked.push(['forget', id]) }, open: reading => { asked.push(['open', reading.id, reading.address.kind]) }}
+  const chain = own.sourcesBinding('factory:chain-sources', {placement: 'chain', settings, review, status, reads}, ports)
+  assert.equal(chain.values.light, 'lit', 'placed on the agent\'s chain')
+  assert.deepEqual(JSON.parse(chain.values.pinned), [{id: PIN, name: 'reading.md', kind: 'document', rev: '9f2c41d0'},
+    {id: SHAPE, name: 'shape-of-the-world.md', kind: 'document', rev: '04be77aa · moved since'}], 'each pin at its revision, a moved one says so')
+  assert.deepEqual(JSON.parse(chain.values.routes), [{id: 'wiki', state: 'ready'}, {id: 'project', state: 'ready'},
+    {id: 'code', state: 'refused', why: 'The code index is not built for this project.'}], 'the lights are what AIKit\'s status says answers')
+  assert.deepEqual([chain.values.searchFirst, chain.values.linkDepth, chain.values.readBudget], [true, 3, 40], 'the agent\'s own placement')
+  assert.deepEqual(JSON.parse(chain.values.readings), [{id: 'use_1', page: 'Alpha', source: 'wiki:page:alpha', hops: 0, rev: '1', moved: true},
+    {id: 'use_2', page: 'reading.md', source: PIN, hops: 1, rev: '9f2c41d0'}], 'Read: each passage with its source, its links from a hit, its revision')
+  // The rack's shared reading: its own three settings; Central keeps no pins for a rack, so it pins nothing and says why.
+  const rack = own.sourcesBinding('factory:sources', {placement: 'rack', settings, review: null, status, reads}, ports)
+  assert.deepEqual([rack.values.searchFirst, rack.values.linkDepth, rack.values.readBudget], [false, 2, 12])
+  assert.equal('pinned' in rack.values, false)
+  assert.equal(own.SOURCES_REFUSE.rackPin, 'Pinned on the rack\'s shared reading: no owner operation carries it yet — missing op: a rack\'s shared pins (Central keeps pins on each agent\'s profile, none for a rack) (Central).')
+  // Each write goes to its owner on the placement's own keys.
+  await chain.write([{key: 'linkDepth', value: 4}])
+  await rack.write([{key: 'searchFirst', value: true}])
+  await rack.write([{key: 'readBudget', value: 80.4}])
+  await chain.write([{key: 'readAgain', value: 'use_1'}])
+  await chain.write([{key: 'forget', value: 'use_2'}])
+  await chain.write([{key: 'open', value: 'use_1'}])
+  assert.deepEqual(asked, [['settings', {track: {link_depth: 4}}], ['settings', {track: {rack_search_first: true}}], ['settings', {track: {rack_read_budget: 80}}],
+    ['readAgain', 'use_1'], ['forget', 'use_2'], ['open', 'use_1', 'wiki']])
+  // The route switches have no owner yet: refused in words, nothing asked.
+  assert.equal(chain.standing['src.code'].disabled, own.SOURCES_REFUSE.routes)
+  await assert.rejects(chain.write([{key: 'src.code', value: true}]), error => error.message === own.SOURCES_REFUSE.routes)
+  assert.equal(asked.length, 6)
+  // Nothing read: every owner key absent, the settings not writable over a reading not held.
+  const unread = own.sourcesBinding('factory:chain-sources', {placement: 'chain', settings: null, review: null, status: null, reads: null}, ports)
+  assert.deepEqual(Object.keys(unread.values), [])
+  assert.equal(unread.standing.linkDepth.disabled, own.SOURCES_REFUSE.unread)
+  const bare = own.sourcesBinding('factory:chain-sources', {placement: 'chain', settings, review, status, reads}, {})
+  assert.equal(bare.standing.readAgain.disabled, own.SOURCES_REFUSE.noCarrier('Read again'))
+  // All five views draw on the binding, never on the design's fixture.
+  for (const binding of [chain, rack, unread]) {
+    hosted(sourcesDesign, binding).forEach((markup, index) => {
+      assert.match(markup, new RegExp(`data-device-view="${views[index]}"`), `Sources ${views[index]} draws`)
+      assert.doesNotMatch(markup, /\bNaN\b|undefined/, `Sources ${views[index]}: no absent key drawn as text`)
+      assert.doesNotMatch(markup, /data-device-fault/, `Sources ${views[index]}: its own view drew`)
+      assert.doesNotMatch(markup, /The scene grammar|Lantern|Tidal: the scene registers/, `Sources ${views[index]}: its fixture never stands in`)
+    })
+  }
+  assert.ok(hosted(sourcesDesign, chain).join('\n').includes('reading.md'), 'the chain draws the profile\'s real pin')
+  // The browser's Files drag a file as a source; the chain draws Sources where AIKit placed it, and a file dropped on the agent's own Sources
+  // pins it through Central (the rack's refuses in words).
+  const ground = read('shell/ModeBrowser.tsx')
+  const groundRows = ground.slice(ground.indexOf('function GroundRows'), ground.indexOf('/** The Technē Sources rows'))
+  assert.match(groundRows, /event\.dataTransfer\.setData\(CENTRAL_SOURCE_DRAG, entryPath\)/, 'a file of the ground drags as a source')
+  const factory = read('agent/devices/FactoryDeviceChain.tsx')
+  assert.match(factory, /case 'sources': return sourcesPlate\('rack'\)/, 'ahead of the Agent rack')
+  assert.match(factory, /slot === 'chain-sources' \? sourcesPlate\('chain'\) : slotPlate\(slot\)/, 'inside the agent\'s chain, before what it carries')
+  assert.match(factory, /const asked = pinSourceRequest\(chainProfile, path\)/)
+  assert.match(factory, /useAikitRead\(transport, sourcesOn \? \{kind: 'knowledge-reads', agent_session: sessionRef!, project: register\} : null\)/, 'Read is asked only where Sources stands')
+  assert.match(factory, /aikitWriteOp\(\{kind: 'knowledge-read-again', agent_session: sessionRef!, reading, project: register\}\)/)
+  assert.match(factory, /aikitWriteOp\(\{kind: 'knowledge-forget-reading', agent_session: sessionRef!, reading, project: register\}\)/)
+  assert.match(factory, /useDesign\(SOURCES_DESIGN, sourcesPlaced\)/, 'its face loads when it is drawn')
+  host.resetHost()
+})

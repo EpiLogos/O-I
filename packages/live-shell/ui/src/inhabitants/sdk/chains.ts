@@ -50,14 +50,16 @@ export const CHAIN_LAWS: Readonly<Record<ChainKind, ChainLaw>> = {
     means: 'The Main track\'s chain holds what works on the whole: the Day, then Approvals, where every proposal waits.',
   },
   // A session's chain as it is drawn, left to right (§16.2 Factory; §16.4 "a rack's devices stand inside it on the chain"): the connections
-  // in, the Agent rack with the devices of its chosen chain inside it (the session's own agent: its Skillset rack, then the Agent, §19.4),
-  // the Scope that bounds every chain, and the landing out. Where each stands is what it reaches (§16.2 Placement and order), so every
+  // in, the Sources every agent of the rack reads (§19.9; DLW build ruling 2026-11-05), the Agent rack with the devices of its chosen chain
+  // inside it (the session's own agent: its own Sources, its Skillset rack, then the Agent, §19.4), the Scope that bounds every chain, and
+  // the landing out. Where each stands is what it reaches (§16.2 Placement and order), so every
   // place is fixed but the order of what an agent carries before its Agent, which is the agent's own (§19.4 "The chain is the profile
   // Central keeps for the agent").
   'factory-session': {
     chain: 'factory-session', title: 'A session\'s chain', manual: '§16.2, §19.4, §19.7, §19.12, §19.15',
-    slots: ['gateway', 'remote-carrier', 'agentset', 'skillset', 'agent', 'world', 'git'], fixed: ['gateway', 'remote-carrier', 'agentset', 'agent', 'world', 'git'],
-    means: 'The connections bring every agent in, the Agent rack holds the agents the session may use, each in its own chain, the Scope after the rack bounds them all, and Git / landing takes their work out. Inside an agent\'s chain what it carries stands before the Agent.',
+    slots: ['gateway', 'remote-carrier', 'sources', 'agentset', 'chain-sources', 'skillset', 'agent', 'world', 'git'],
+    fixed: ['gateway', 'remote-carrier', 'sources', 'agentset', 'chain-sources', 'agent', 'world', 'git'],
+    means: 'The connections bring every agent in, the Sources ahead of the rack is the shared reading every agent of it reads, the Agent rack holds the agents the session may use, each in its own chain, the Scope after the rack bounds them all, and Git / landing takes their work out. Inside an agent\'s chain its own Sources, then what it carries, stand before the Agent.',
     // What the agent carries is ordered by Central, which keeps its profile (agent-profile.chain-order, Central PR 318, compare-and-swap on the
     // profile's revision): the order of the SkillSets inside the Skillset rack, whose own place between the Agent rack and the Agent is fixed.
     op: {name: 'agent-profile.chain-order', owner: 'Central', stands: true},

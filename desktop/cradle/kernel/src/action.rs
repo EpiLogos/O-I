@@ -81,7 +81,7 @@ pub fn central_action(action: &str) -> bool {
 /// A Control skill's revision that waits in Central (`control.skills.revision.accept` · `discard`, O-I 795): Central writes it as the
 /// skill in use on the person's Accept, and drops it on the person's Discard, admitting each on that authority only (ctrl
 /// control_skills.rs). Proposing one (`control.skills.revision.propose`, AIKit's hand) carries no token.
-pub const PERSON_ACTS: [&str; 39] = [
+pub const PERSON_ACTS: [&str; 40] = [
     "central.now.lifecycle",
     "central.day.settings.write",
     "central.day.move.record",
@@ -96,6 +96,7 @@ pub const PERSON_ACTS: [&str; 39] = [
     "agent-profile.rename",
     "agent-profile.chain-replace",
     "agent-profile.chain-order",
+    "agent-profile.pin-source",
     "central.agent-set.propose",
     "central.agent-set.save",
     "central.agent-set.remove",
@@ -549,10 +550,12 @@ mod tests {
         assert!(!person_act("central.agent-set.read"));
         // Naming an agent, hot-swapping what its chain carries and ordering it (manual §19.4 "The chain is the profile Central keeps for
         // the agent"; DLW build ruling 2026-11-05) are the person's presses, as making and keeping the agent is; reading it carries nothing.
+        // A file dropped on Sources' Pinned (manual §19.9; DLW build ruling 2026-11-05) pins it in the profile: the person's press too.
         for id in [
             "agent-profile.rename",
             "agent-profile.chain-replace",
             "agent-profile.chain-order",
+            "agent-profile.pin-source",
         ] {
             assert!(central_action(id), "{id} is Central's");
             assert!(person_act(id), "{id} is the person's press");

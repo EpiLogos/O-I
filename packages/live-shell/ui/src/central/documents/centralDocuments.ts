@@ -126,6 +126,9 @@ export function documentBinding(layout: LayoutState, target: CentralDocumentTarg
 /** The drag type a document carries into a pane (manual §16.7 "Open | Double-click it, or drag it into a pane"): its subject ref, which
  * the pane reads with documentTargetOf. The browser's Places drag a Day this way (frame/browser/placeActs.ts). */
 export const CENTRAL_DOCUMENT_DRAG = 'application/x-oi-central-document'
+/** The drag type a file of the ground carries as a source (manual §19.9: "Drag a source from the browser onto the list to add it"): its
+ * Central-relative path (`central.path-ref/v1` `path`). Sources' Pinned takes it, and Central pins it in the agent's profile. */
+export const CENTRAL_SOURCE_DRAG = 'application/x-oi-central-source'
 
 /** The document a dropped subject names, or null: one Day by its civil date, nothing else yet. A drop names the very document it
  * was dragged from, so "today" and "the latest Flow", which name whichever is current, are no drop. Pure. */

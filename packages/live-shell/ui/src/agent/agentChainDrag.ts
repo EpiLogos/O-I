@@ -13,7 +13,11 @@
  * The chain's composition (gateway → agent → skillset → world → git) is the
  * declared order at the family door (`agentDeviceCatalogue` CHAIN_SLOTS,
  * agent-shell-mockup.html Rev 5; WORLD-SHELL-DESIGN §7.1). There is no order operation, so a slide refuses
- * honestly rather than keeping a shadow order store. */
+ * honestly rather than keeping a shadow order store.
+ *
+ * Sources (§19.9; DLW build ruling 2026-11-05) stands before the Agent: dragged from the browser, it lands on the Sources slot, and AIKit
+ * places it where it was dropped — ahead of the Agent rack, or inside the agent's own chain (factoryPlaces.ts sourcesPlacementOf). It is
+ * no slot of the family door's composition: a device of its own, drawn by AIKit's design. */
 
 /** One application MIME for the whole chain gesture channel; the payload
  * discriminates a browser-row drop from a card slide. */
@@ -21,12 +25,12 @@ export const AGENT_CHAIN_MIME = 'application/x-oi-agent-chain-item'
 
 /** The browser families that may start a chain drag. Gateways and worlds
  * name slots in the zone's acceptance list but disclose no browser rows yet. */
-export type AgentChainFamily = 'session' | 'agent' | 'skillset' | 'git'
+export type AgentChainFamily = 'session' | 'agent' | 'skillset' | 'git' | 'sources'
 
 /** The chain's semantic positions (mockup law: through → who → how → where →
  * lands). Mirrors the catalogue's declared order for naming where a drop
  * lands; it is not a store and never reorders anything. */
-export type AgentChainSlotId = 'gateway' | 'agent' | 'skillset' | 'world' | 'git'
+export type AgentChainSlotId = 'gateway' | 'sources' | 'agent' | 'skillset' | 'world' | 'git'
 export const CHAIN_SLOTS: readonly AgentChainSlotId[] = ['gateway', 'agent', 'skillset', 'world', 'git']
 
 /** A browser row's drag payload: the family it belongs to, the exact ref the
@@ -51,7 +55,7 @@ export type ActiveChainDrag =
 const text = (value: unknown, max: number): value is string =>
   typeof value === 'string' && value.length > 0 && value.length <= max
 
-const FAMILIES: readonly AgentChainFamily[] = ['session', 'agent', 'skillset', 'git']
+const FAMILIES: readonly AgentChainFamily[] = ['session', 'agent', 'skillset', 'git', 'sources']
 const SLOTS: readonly AgentChainSlotId[] = CHAIN_SLOTS
 
 const isFamily = (value: unknown): value is AgentChainFamily =>
@@ -114,6 +118,9 @@ export function activeChainDrag(): ActiveChainDrag | null {return active}
 export type ChainDropOperation =
   | {kind: 'select-session'}
   | {kind: 'harness-control'; control: 'new'}
+  /** Sources placed on the session's chain where it was dropped: AIKit's encounter-session-settings `sources` (the agent's own chain) or
+   * `rack_sources` (the shared reading ahead of the Agent rack), against the settings' revision (factoryPlaces.ts sourcesPlaceRequest). */
+  | {kind: 'place-sources'}
 
 /** The named missing operations. Each string is the exact op a refusal card
  * names — the family's chain-admission operation that no owner declares. */
@@ -207,6 +214,8 @@ export function chainSlotFor(family: AgentChainFamily): AgentChainSlotId {
       return 'skillset'
     case 'git':
       return 'git'
+    case 'sources':
+      return 'sources'
   }
 }
 
@@ -239,6 +248,13 @@ export function chainDropDecision(drag: AgentChainDrag): ChainDropDecision {
         because: 'the roster’s admission (agent_definition propose/accept) owns agent profiles, not chain seats',
         owner: MISSING_OP_OWNERS.skillset,
         remedy: missingOpRemedy('skillset'),
+      }
+    case 'sources':
+      return {
+        kind: 'operation',
+        operation: {kind: 'place-sources'},
+        slot,
+        via: 'AIKit\'s encounter-session-settings places it before the Agent: ahead of the Agent rack, the shared reading, or inside the agent\'s chain where it is dropped there',
       }
     case 'git':
       return {

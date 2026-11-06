@@ -237,6 +237,15 @@ export function agentBrowserRows(rows: readonly AgencySessionRow[], sessions: Se
   })
 }
 
+/** The Context rows: the tiles, each open or not on the rail, and Sources (§19.9 "Drop Sources on a chain before the Agent"; DLW build
+ * ruling 2026-11-05), the one row that drags — onto a session's chain ahead of the Agent rack, or onto the agent's own chain. Pure. */
+export function contextBrowserRows(openTiles: readonly string[]): BrowserRow[] {
+  const tiles = CONTEXT_TILES.map((tile): BrowserRow => ({key: tile.id, label: tile.name, meta: openTiles.includes(tile.id) ? '● open' : '', standing: openTiles.includes(tile.id) ? 'open' : ''}))
+  return [...tiles, {key: 'sources', label: 'Sources', meta: 'ai-kit', standing: 'effect',
+    hover: 'Sources · what an agent reads: drop it on a session\'s chain ahead of the Agent rack for every agent, or on an agent\'s own chain',
+    drag: {family: 'sources', ref: 'ai-kit:sources', label: 'Sources'}}]
+}
+
 export function AgentShellBrowser({rows, error, loading, controlled}: {rows: AgencySessionRow[]; error: string | null; loading: boolean; controlled?: ControlledBrowser}) {
   const [ownCategory, setCategory] = useState<(typeof CATEGORIES)[number]['id']>('sess')
   // Held by the one browser (F6), the category and the search are its.
@@ -265,7 +274,7 @@ export function AgentShellBrowser({rows, error, loading, controlled}: {rows: Age
   // empty rows drag nothing — nothing to drop.
   const list = useMemo((): BrowserRow[] => {
     if (category === 'sess') return sessionBrowserRows(rows, sessions)
-    if (category === 'context') return CONTEXT_TILES.map((tile): BrowserRow => ({key: tile.id, label: tile.name, meta: shell.openTiles.includes(tile.id) ? '● open' : '', standing: shell.openTiles.includes(tile.id) ? 'open' : ''}))
+    if (category === 'context') return contextBrowserRows(shell.openTiles)
     if (category === 'git') {
       const seat = seatOutcome?.result === 'workcell_status_reading' && isObj(seatOutcome.data)
         ? seatOutcome.data as {workcell_ref?: unknown} : null
@@ -309,7 +318,7 @@ export function AgentShellBrowser({rows, error, loading, controlled}: {rows: Age
               } : undefined}
               onDragEnd={item.drag ? () => setActiveChainDrag(null) : undefined}
               onClick={() => {
-                if (category === 'context') shell.toggleTile(item.key as typeof CONTEXT_TILES[number]['id'])
+                if (category === 'context' && !item.drag) shell.toggleTile(item.key as typeof CONTEXT_TILES[number]['id'])
                 if (category === 'git') openSeatDiff()
                 if (category === 'sess') {
                   shell.setSelectedTrackId(item.key, item.label)

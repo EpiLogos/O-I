@@ -92,11 +92,13 @@ test('every session\'s chain holds one Agent rack, a group\'s and a lone session
   const lone = places.factoryPlace({sessionRef: BUMBLE.sessionRef, group: false, workcell: null})
   const group = places.factoryPlace({sessionRef: CREW.sessionRef, group: true, workcell: null})
   // §16.2 Factory: "Gateway and Remote carrier; the Sources every agent reads; the Agent rack, whose chains are the agents and agent sets the
-  // session may use; the Scope that bounds them all; then Git / landing." Sources has no binding on this chain yet (OPEN), so it is not placed.
-  for (const place of [lone, group]) assert.deepEqual(places.chainSlots(place), ['gateway', 'remote-carrier', 'agentset', 'world', 'git'], `${place.group ? 'a group' : 'a lone session'}: one rack`)
+  // session may use; the Scope that bounds them all; then Git / landing." Sources stands before the rack where AIKit places it (§19.9).
+  for (const place of [lone, group]) assert.deepEqual(places.chainSlots(place), ['gateway', 'remote-carrier', 'sources', 'agentset', 'world', 'git'], `${place.group ? 'a group' : 'a lone session'}: one rack, its shared Sources before it (§19.9; DLW build ruling 2026-11-05)`)
   assert.equal('GROUP_LEAD' in places, false, 'no chain is led by a rack only when it is a group\'s')
   // The session's own agent is one chain of the rack: what it carries before the Agent (§19.4 "Sources, the Skillset rack, the Agent, Scope").
-  assert.deepEqual(places.RACK_CHAIN, ['skillset', 'agent'])
+  // REPLACED (DLW build ruling 2026-11-05; §19.15 "An agent's chain shows its Sources, its Skillset rack, its Agent and its Scope"): ['skillset',
+  // 'agent'] — the agent's own Sources stands first inside its chain, before what it carries.
+  assert.deepEqual(places.RACK_CHAIN, ['chain-sources', 'skillset', 'agent'])
   for (const slot of places.RACK_CHAIN) assert.ok(!places.SESSION_CHAIN.includes(slot), `${slot} stands inside the rack, not on the track's chain`)
 })
 
@@ -685,7 +687,9 @@ test('the chain draws the rack on every session, the session\'s own chain inside
   const view = read('agent/devices/FactoryDeviceChain.tsx')
   assert.match(view, /case 'agentset': return rackPlate\(\)/, 'the rack is a plate of every session\'s chain')
   assert.match(view, /const rackDevicesShown = useRackShown\(AGENTSET_ID, 'devices'\)/, 'the rack\'s head shows or hides its chain\'s devices (§16.4)')
-  assert.match(view, /RACK_CHAIN\.map\(slot => slotPlate\(slot\)\)/, 'the session\'s own chain: its devices themselves, every setting live')
+  // REPLACED (BD r26, DLW build ruling 2026-11-05): the chain mapped every RACK_CHAIN slot to slotPlate; its own Sources now stands first in
+  // it where AIKit places it (§19.9), drawn as the effect it is.
+  assert.match(view, /RACK_CHAIN\.map\(slot => \(slot === 'chain-sources' \? sourcesPlate\('chain'\) : slotPlate\(slot\)\)\)/, 'the session\'s own chain: its devices themselves, every setting live')
   assert.match(view, /className="factory-rack__end"/, 'a narrow end bracket closes the rack')
   assert.match(view, /agentsetBinding\(\{group: groupTrack, session: loneTrack,/, 'the rack on a lone session reads that session')
   assert.match(view, /agent: oneAgent/, 'its macros turn the one agent through the Agent itself')
