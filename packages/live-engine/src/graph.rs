@@ -454,18 +454,20 @@ pub struct TorusVoice {
 
 impl TorusVoice {
     /// The owner's act of `notes` (each its id and eight voices: mode index, frequency, [re, im]) and the ids of the
-    /// notes that made way, at `at`, as its parts (off the audio thread: it allocates). Refused in words with no note,
-    /// more than [`TORUS_VOICE_NOTES`] or more than [`TORUS_VOICE_MADE_WAY`] making way, a note named twice, a mode past
-    /// 65535, or a frequency or impulse that is not finite; whether the bank can take it is the Torus's own law to judge.
+    /// notes that made way, at `at`, as its parts (off the audio thread: it allocates). An act may voice no note and only
+    /// make way: Polyphony lowered below the notes sounding (DLW build ruling 2026-11-05; QL's `POLYPHONY_MAKES_WAY_LAW`).
+    /// Refused in words with no note and none making way, more than [`TORUS_VOICE_NOTES`] or more than
+    /// [`TORUS_VOICE_MADE_WAY`] making way, a note named twice, a mode past 65535, or a frequency or impulse that is not
+    /// finite; whether the bank can take it is the Torus's own law to judge.
     pub fn split(
         handover: u32,
         at: u64,
         notes: &[VoicedNote],
         made_way: &[u64],
     ) -> Result<Vec<TorusVoice>, String> {
-        if notes.is_empty() || notes.len() > TORUS_VOICE_NOTES {
+        if notes.len() > TORUS_VOICE_NOTES || (notes.is_empty() && made_way.is_empty()) {
             return Err(format!(
-                "an act its owner voiced voices 1 to {TORUS_VOICE_NOTES} notes"
+                "an act its owner voiced voices 1 to {TORUS_VOICE_NOTES} notes, or none and makes way for at least one"
             ));
         }
         if made_way.len() > TORUS_VOICE_MADE_WAY {
