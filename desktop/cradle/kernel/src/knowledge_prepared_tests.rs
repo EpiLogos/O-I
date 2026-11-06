@@ -338,7 +338,8 @@ enum Batch {
 /// (`<suite> aikit --json -C <cwd> knowledge …`): every process logs itself;
 /// a wiki address ending `:missing` is refused exactly as AIKit refuses an
 /// unindexed object, in the single read's envelope and in a batch item's,
-/// and one ending `:slow` takes a batch two seconds to answer.
+/// and one ending `:slow` is held in its batch until the test releases it
+/// (`release_slow`), giving up after 30 s and saying so (`slow_item`).
 #[cfg(unix)]
 struct FakeAikit {
     dir: PathBuf,
@@ -370,8 +371,8 @@ impl FakeAikit {
         use std::os::unix::fs::PermissionsExt;
         let script = format!(
             r#"#!/usr/bin/env python3
-import json, sys, threading, time
-LOG, MODE = {log:?}, {mode:?}
+import json, os, sys, threading, time
+LOG, MODE, RELEASE, HELD = {log:?}, {mode:?}, {release:?}, {held:?}
 V1, V2 = "aikit.knowledge-relations-batch/v1", "aikit.knowledge-relations-batch/v2"
 args = sys.argv[1:]
 cwd = args[args.index("-C") + 1]
@@ -382,7 +383,12 @@ def answer(cwd, address):
     return {{"ok": True, "context": {{"project_root": cwd}}, "data": {{"query": {{"focus": value, "depth": 2, "max_nodes": 96, "max_edges": 192}}, "cwd": cwd, "edges": []}}, "warnings": []}}
 def slow(item):
     if json.loads(item["address"])["value"].endswith(":slow"):
-        time.sleep(2)
+        for _ in range(3000):
+            if os.path.exists(RELEASE):
+                break
+            time.sleep(0.01)
+        open(HELD + ".part", "w").write("released" if os.path.exists(RELEASE) else "never released")
+        os.replace(HELD + ".part", HELD)
 if args[-1] == "relations-batch":
     if MODE == "absent":
         open(LOG, "a").write("batch-refused\n")
@@ -423,6 +429,8 @@ else:
     sys.exit(0 if envelope["ok"] else 1)
 "#,
             log = self.log.display().to_string(),
+            release = self.dir.join("release").display().to_string(),
+            held = self.dir.join("slow-item").display().to_string(),
             mode = match batch {
                 Batch::Absent => "absent",
                 Batch::Whole => "whole",
@@ -437,6 +445,16 @@ else:
     /// sets in the process environment.
     fn identity(&self) -> knowledge::AikitIdentity {
         knowledge::AikitIdentity::pinned(self.executable.as_os_str(), None)
+    }
+    /// What the `:slow` item did once it went: `released` when the test let
+    /// it go, `never released` when the stand-in gave up waiting; none while
+    /// it is still held.
+    fn slow_item(&self) -> Option<String> {
+        std::fs::read_to_string(self.dir.join("slow-item")).ok()
+    }
+    /// Let the `:slow` item go.
+    fn release_slow(&self) {
+        std::fs::write(self.dir.join("release"), "").unwrap();
     }
     fn processes(&self) -> Vec<String> {
         std::fs::read_to_string(&self.log)
@@ -586,7 +604,10 @@ fn an_aikit_without_the_batch_is_asked_once_per_identity_and_reads_alone() {
 
 /// A streamed batch answers each read the moment AIKit streams its item: a
 /// fast register is never held for a slow one in the same process, and each
-/// read still gets exactly its single read's answer.
+/// read still gets exactly its single read's answer. The order is the test's,
+/// never a clock's: the slow item stays held until the fast read has been
+/// answered, so a kernel that held the fast read for the batch leaves it
+/// unreleased, whatever the machine's load.
 #[cfg(unix)]
 #[test]
 fn a_streamed_item_answers_its_read_before_a_slower_item_of_its_batch() {
@@ -598,8 +619,7 @@ fn a_streamed_item_answers_its_read_before_a_slower_item_of_its_batch() {
     let root = aikit.dir.join("Central");
     let spaces = ["central:wiki:project:cold:slow", "central:wiki:project:O-I"];
     let together = std::sync::Barrier::new(spaces.len());
-    let started = Instant::now();
-    let answered: Vec<(Result<Value, String>, Duration)> = std::thread::scope(|scope| {
+    let answered: Vec<(Result<Value, String>, Option<String>)> = std::thread::scope(|scope| {
         let handles: Vec<_> = spaces
             .iter()
             .map(|space| {
@@ -617,23 +637,32 @@ fn a_streamed_item_answers_its_read_before_a_slower_item_of_its_batch() {
                         Gathered::Answer(answer) => answer.map_err(knowledge::describe),
                         Gathered::Single => panic!("an AIKit with the batch never reads alone"),
                     };
-                    (answer, started.elapsed())
+                    // Where the slow item stood when this read was answered;
+                    // the fast read's answer then lets it go.
+                    let slow_then = aikit.slow_item();
+                    if !space.ends_with(":slow") {
+                        aikit.release_slow();
+                    }
+                    (answer, slow_then)
                 })
             })
             .collect();
         handles.into_iter().map(|h| h.join().unwrap()).collect()
     });
     assert_eq!(
+        answered[1].1, None,
+        "the fast register answered as AIKit streamed it, while the slow item was still held"
+    );
+    assert_eq!(
+        answered[0].1.as_deref(),
+        Some("released"),
+        "the slow item went when the fast read had been answered"
+    );
+    assert_eq!(
         aikit.processes(),
         vec![format!("batch 2 {}", root.display())],
         "one process for the burst"
     );
-    assert!(
-        answered[1].1 < Duration::from_millis(1500),
-        "the fast register answered as AIKit streamed it, not with the slow one: {:?}",
-        answered[1].1
-    );
-    assert!(answered[0].1 >= Duration::from_secs(2));
     for (space, (answer, _)) in spaces.iter().zip(&answered) {
         let single = knowledge::call_with(
             aikit.executable.as_os_str(),

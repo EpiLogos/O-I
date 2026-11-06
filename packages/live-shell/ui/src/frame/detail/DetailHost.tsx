@@ -18,7 +18,7 @@ import {useSelectedClip} from './ClipBox'
 import {ClipWaiting} from './ClipView'
 import {useMeasuredRoom, type ClipPlace} from './ClipHost'
 import {clipHeightIn, publishShownSides, shownSides, type DetailSides} from './detailSides'
-import {MODE_DETAILS, type ChainDrop} from '../../shell/modeDetails'
+import {MODE_DETAILS, useChainHead, type ChainDrop} from '../../shell/modeDetails'
 import {loadWhenDrawn} from '../../shell/loadWhenDrawn'
 import {useStandingInstrument} from '../../inhabitants/ql/devices/standingInstrument'
 import type {SurfMode} from '../../shell/modeGrammar'
@@ -86,7 +86,9 @@ export function DetailHost({sides = {front: 'clip', hidden: {clip: false, device
   useEffect(() => () => publishShownChain(null), [])
   // The head names the instrument the rack stands open over the focused pane's (World / Places or the Palace over the Earth's Project; lane BT), not the pane's.
   const standing = useStandingInstrument(instrument)
-  const head = registration.head.device({detail: reading, selected, instrument: standing === undefined ? instrument : (standing as typeof instrument)})
+  // What the drawn chain read of its own devices for its head (Factory's placed Sources, shell/modeDetails.tsx ChainHead).
+  const chainHead = useChainHead()
+  const head = registration.head.device({detail: reading, selected, instrument: standing === undefined ? instrument : (standing as typeof instrument), chain: chainHead})
   const clipHead = registration.head.clip({detail: reading, selected, instrument: null})
   const Clip = registration.clip
   const stack = both ? 'both' : shown.clip ? 'clip' : shown.device ? 'device' : 'none'
