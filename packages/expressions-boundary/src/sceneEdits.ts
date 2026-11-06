@@ -2,10 +2,10 @@
  * Preparation is inert: the caller submits snapshot through NativeWorking's
  * existing commit/checkpoint/acknowledgement path. No store or clock lives here.
  */
-import {blankScene, clone, sceneClipRefusal, type Journey, type Scene, type SceneClip} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/model';
+import {blankScene, clone, sceneClipRefusal, uid, type Journey, type Scene, type SceneClip} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/model';
 import type {KernelConversion, KernelExpressionDocument} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/kernelDocumentBridge';
 import {prepareCompositionEdit, type CompositionEdit} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/kernelComposition';
-import {nextSceneFrom} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/sceneWorkflow';
+import {insertScene, nextSceneFrom, overwriteScene, retimeScene, rollSceneSeam, slideScene, slipScene, splitScene, trimSceneStart} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/sceneWorkflow';
 import type {NativeWorking, WorkingSnapshot} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorking';
 import type {DocumentStore} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/store';
 import {sameEditorBasis, type NativeEditorBasis, type NativeEditorReading, type NativeSceneEditorRequest} from './editor';
@@ -27,7 +27,26 @@ export type NativeSceneEditIntent =
   | {operation: 'loop'; loop: boolean}
   /** The scene as a clip (DLW §20.1): its colour, whether it plays, its ratio of hold to change, its lock and its launch quantize;
    * null returns a setting to the scene's default. Carried in the scene's material, as pacing is. */
-  | {operation: 'clip'; scene_ref: string; set: {[K in keyof SceneClip]?: SceneClip[K] | null}};
+  | {operation: 'clip'; scene_ref: string; set: {[K in keyof SceneClip]?: SceneClip[K] | null}}
+  | NativeSceneCutIntent;
+/** The cuts of Arrangement view (O-I #747; manual §20.1 "you cut on it as a video editor does: move, trim, roll, slip, slide and split
+ * scenes", §16.6's table), each the existing Journey operation of sceneWorkflow.ts on the captured native Scenes:
+ *  - move: the scene laid before `to_ref` (insert; null: at the end), its successors shifting, or in place of `to_ref` (overwrite), which
+ *    leaves the Expression;
+ *  - trim: an edge moved `seconds` later (negative: earlier): the end edge changes the length; the start edge changes it from the start,
+ *    and the scene enters its content as much later;
+ *  - roll: the seam after the scene moved `seconds` later: it grows by what the next scene loses (stopping at the limit it reaches);
+ *  - slip: the scene's content dragged `seconds` later on the ruler: it enters its own evolution as much earlier, its length and place kept;
+ *  - slide: the scene moved `seconds` later between its fixed neighbours: the one before grows by what the one after loses;
+ *  - split: the scene cut in two at its own second `at`; the lengths add up to the original. */
+export type NativeSceneCutIntent =
+  | {operation: 'move'; scene_ref: string; mode: 'insert' | 'overwrite'; to_ref: string | null}
+  | {operation: 'trim'; scene_ref: string; edge: 'start' | 'end'; seconds: number}
+  | {operation: 'roll'; scene_ref: string; seconds: number}
+  | {operation: 'slip'; scene_ref: string; seconds: number}
+  | {operation: 'slide'; scene_ref: string; seconds: number}
+  | {operation: 'split'; scene_ref: string; at: number};
+const CUTS = new Set(['move', 'trim', 'roll', 'slip', 'slide', 'split']);
 export type NativeSceneSnapshotIntent =
   | {operation: 'save-snapshot'; scene_ref: string; title?: string; next?: boolean}
   | {operation: 'restore-snapshot'; scene_ref: string};
@@ -93,6 +112,72 @@ export function prepareNativeSceneSnapshot(reading: NativeEditorReading, intent:
   return {...base, action: 'restore-snapshot'};
 }
 
+/** One cut of Arrangement view on the working copy (O-I #747): the Journey operation, after the checks every scene edit makes. Each
+ * scene whose own material the cut changes, or that leaves, needs its authored material and must not be locked; a move that only changes
+ * where scenes stand changes no scene. A split's new scene is copied whole from its source, so it needs the whole native Scene, as a
+ * duplicate does. Returns the scenes affected (the new one included) and the scene created. */
+function cutScenes(view: KernelConversion, working: Journey, journey: Journey, intent: NativeSceneCutIntent): {affected: Scene[]; created: Scene | null} {
+  const scene = exactScene(view, journey, intent.scene_ref), at = journey.scenes.indexOf(scene);
+  const material = new Map(projectNativeScenes(working, view).scenes.map(row => [row.scene_ref, row.material]));
+  const changing = (scenes: Scene[]) => {
+    for (const changed of scenes) {
+      if (!material.get(refFor(view, changed))?.available) throw Error('This operation needs authored native Scene material; compatibility defaults were not saved as authored work');
+      if (changed.clip?.locked) throw Error('This Scene is locked: unlock it to change it');
+    }
+  };
+  const seconds = (value: number) => { if (!Number.isFinite(value)) throw Error('Give the cut a finite number of seconds'); return value };
+  switch (intent.operation) {
+    case 'move': {
+      if (intent.mode === 'insert') {
+        const before = intent.to_ref === null ? null : exactScene(view, journey, intent.to_ref);
+        insertScene(journey, scene.id, before?.id ?? null);
+        return {affected: [scene], created: null};
+      }
+      if (intent.mode !== 'overwrite') throw Error('A move inserts or overwrites');
+      if (intent.to_ref === null) throw Error('Drop the scene on the scene it replaces to overwrite it');
+      const target = exactScene(view, journey, intent.to_ref);
+      if (target === scene) throw Error('A scene cannot overwrite itself.');
+      changing([target]);
+      overwriteScene(journey, scene.id, target.id);
+      return {affected: [scene, target], created: null};
+    }
+    case 'trim': {
+      changing([scene]);
+      if (intent.edge === 'end') retimeScene(journey, scene.id, {duration: scene.duration + seconds(intent.seconds)});
+      else if (intent.edge === 'start') trimSceneStart(journey, scene.id, seconds(intent.seconds));
+      else throw Error('A trim moves the start edge or the end edge');
+      return {affected: [scene], created: null};
+    }
+    case 'roll': {
+      const next = journey.scenes[at + 1];
+      if (next) changing([scene, next]);
+      rollSceneSeam(journey, scene.id, seconds(intent.seconds));
+      return {affected: [scene, next], created: null};
+    }
+    case 'slip':
+      changing([scene]);
+      slipScene(journey, scene.id, (scene.entryOffset ?? 0) - seconds(intent.seconds));
+      return {affected: [scene], created: null};
+    case 'slide': {
+      const before = journey.scenes[at - 1], after = journey.scenes[at + 1];
+      if (before && after) changing([before, after]);
+      slideScene(journey, scene.id, seconds(intent.seconds));
+      return {affected: [before, after], created: null};
+    }
+    case 'split': {
+      changing([scene]);
+      wholeMaterial(view, scene);
+      const native = view.document.scenes.find(row => row.scene_ref === intent.scene_ref)!;
+      if (native.body != null || (native.triggers?.length ?? 0) > 0)
+        throw Error('A split copies the Scene whole, and the composition owner cannot copy an external Scene body or triggers atomically; those bindings were retained');
+      const id = uid();
+      splitScene(journey, scene.id, seconds(intent.at), id);
+      const right = journey.scenes.find(row => row.id === id)!;
+      return {affected: [journey.scenes.find(row => row.id === scene.id)!, right], created: right};
+    }
+  }
+}
+
 /** One named gesture -> existing Journey operation -> one captured native edit
  * batch. This never adopts a reply, changes live selection or advances time.
  * Native focus is explicit in the generated request; local navigation alone
@@ -119,6 +204,7 @@ export function prepareNativeSceneEdit(view: KernelConversion, working: Journey,
     rename: 'Rename Scene', pacing: 'Set Scene pacing', reorder: 'Reorder Scenes', duplicate: 'Duplicate Scene',
     remove: 'Remove Scene', add: 'Add Scene', loop: 'Set saved sequence loop', clip: 'Set the scene\'s clip settings',
     'expression-title': 'Rename Expression', 'expression-description': 'Set Expression description',
+    move: 'Move Scene', trim: 'Trim Scene', roll: 'Roll Scene seam', slip: 'Slip Scene', slide: 'Slide Scene', split: 'Split Scene',
   };
   if (intent.operation === 'expression-title') {
     // Journey-level: prepareCompositionEdit diffs journey.name into one `rename` change. No Scene is affected.
@@ -146,6 +232,13 @@ export function prepareNativeSceneEdit(view: KernelConversion, working: Journey,
       || intent.scene_refs.some(ref => !refs.includes(ref))) throw Error('Scene order must contain every captured working Scene ref exactly once');
     affected = intent.scene_refs.map(ref => exactScene(view, journey, ref));
     journey.scenes = affected;
+  } else if (CUTS.has(intent.operation)) {
+    const cut = cutScenes(view, working, journey, intent as NativeSceneCutIntent);
+    affected = cut.affected; created = cut.created;
+    // The selection follows its Scene by id (a split re-makes the scene it cuts); a Scene an overwrite replaced passes it to the one that took its place.
+    const kept = journey.scenes.find(scene => scene.id === selected.id);
+    if (kept) selected = kept;
+    else {selected = exactScene(view, journey, intent.scene_ref); selectedEntity = null; entityId = null;}
   } else {
     const scene = exactScene(view, journey, intent.scene_ref); affected = [scene];
     if (intent.operation !== 'remove') {
@@ -250,6 +343,8 @@ function boundedSceneIntent(intent: NativeSceneEditIntent): void {
     reorder: ['operation', 'scene_refs'], duplicate: ['operation', 'scene_ref', 'title'], remove: ['operation', 'scene_ref'],
     add: ['operation', 'title'], loop: ['operation', 'loop'], clip: ['operation', 'scene_ref', 'set'],
     'expression-title': ['operation', 'title'], 'expression-description': ['operation', 'description'],
+    move: ['operation', 'scene_ref', 'mode', 'to_ref'], trim: ['operation', 'scene_ref', 'edge', 'seconds'], roll: ['operation', 'scene_ref', 'seconds'],
+    slip: ['operation', 'scene_ref', 'seconds'], slide: ['operation', 'scene_ref', 'seconds'], split: ['operation', 'scene_ref', 'at'],
   };
   if (!Object.prototype.hasOwnProperty.call(allowed, intent.operation) || Object.keys(intent).some(key => !allowed[intent.operation].includes(key)))
     throw Error('Unsupported native Scene intent or operands');
@@ -300,7 +395,8 @@ export function createNativeSceneEditHandler(options: NativeSceneEditHandlerOpti
           || !sameEditorBasis(captured.basis, before.basis) || !sameNativeSelection(captured.native_selection, before.native_selection)
           || options.intentEpoch() !== captured.intent_epoch) throw Error('New work arrived before the native Scene gesture; nothing was written');
         if (!plan.request.changes.length) return {state: 'unchanged', label: plan.label, basis: captured.basis};
-        options.store.change(() => {options.store.document = clone(plan.snapshot.journey)});
+        // One labelled step in the undo list, named for the gesture (manual §16.6: "Every edit is one labelled step in the undo list").
+        options.store.change(plan.label, () => {options.store.document = clone(plan.snapshot.journey)});
         // finish() writes updatedAt. Commit the actual post-gesture document,
         // not the planner's earlier copy, and retain the exact captured focus.
         const submitted: WorkingSnapshot = {...plan.snapshot, journey: clone(options.store.document)};

@@ -26,9 +26,12 @@
 // lanes, each with its audition, where a stretch selected and Return copies it into the main lane through the owner's comp (the
 // main lane shows which take each stretch came from); automation lanes naming device and parameter, what modulates them, and
 // Re-enable for a value held by hand; Factory's event lanes, an event clicked opening beside the ruler (trackLanes.ts).
+// The cuts (O-I #747; manual §16.6's edit table and Settings): where the set's owner carries them, a drag on a clip's body moves it by the
+// Move mode and a drag on its edge does what the Trim mode says, its point snapping to clip edges, the insert marker, the loop's edges and
+// the playhead unless Alt is held or the snap is Free (clipCuts.ts); the drag ends in one press of the owner's op. A press that does not
+// move still selects the clip.
 import {useEffect, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type RefObject} from 'react'
 import type {TrackLaneKind, WorldEventLane, WorldTakeLane, WorldTrackClip, WorldTrackSet} from '../../timeline/worldTrackAdapter'
-import {rowOffsets} from '../../timeline/worldTrackAdapter'
 import {answerOf, MixerLevels, MixerRow, STATUS_WORD, stalledLanes, TrackDeviceButton, trackColour, trackTree, type PressedReceipt, type TracksSelection} from './SessionGrid'
 import {trackHeadDevice, useTrackHeadDevices} from './trackHeads'
 import {automationPoints, compRange, DEFAULT_LANES, LANE_WORD, laneCount, lanesUnder, mainLast, mixerCells, type LanesShown} from './trackLanes'
@@ -42,32 +45,19 @@ import {
   windowOfKey, zoomAround, type SnapMode, type TimeRange, type WindowBand,
 } from './rulerWindow'
 import {useTracksMenu} from '../menu/TracksMenu'
+import {missingAct} from '../menu/objectActions'
+import {
+  carriesEdgeCuts, carriesMove, cutOf, cutPress, cutTargets, modeOf, MOVE_MODES, nextMode, partOf, placeClips, SNAP_PX, snapCut, TRIM_MODES,
+  type ClipDrag, type CutPreview, type MoveMode, type TrimMode,
+} from './clipCuts'
 import {publishShownSpan} from './tracksDoor'
 import './tracks.css'
 
-interface Placed {clip: WorldTrackClip; start: number; end: number}
 /** A grouped track's two sides, as the ruler names them (lock §9.3: sight and sound of one state). */
 const SIDE_WORD = {visual: 'sight', audio: 'sound'} as const
 
-/** Every clip's place on one ruler: its own `at`; else, on a set with no ruler, its row's offset plus its span (rows end to
- * end). On a set with a ruler a clip with no `at` has no place. `end` is the ruler's fixed window when the set gives one
- * (`ruler.end`, the run viewer's window: agent/AgentArrangementView.tsx:39), else what the clips and needles hold. */
-export function placeClips(set: WorldTrackSet): {placed: Placed[]; end: number} {
-  const ruled = set.ruler !== undefined
-  const {offsets, end: cursor} = ruled ? {offsets: new Map<string, number>(), end: 0} : rowOffsets(set.columns, set.clips)
-  const placed: Placed[] = []
-  for (const clip of set.clips) {
-    if (clip.at) placed.push({clip, start: clip.at.start, end: clip.at.end ?? clip.at.start})
-    else if (offsets.has(clip.columnId)) {
-      const base = offsets.get(clip.columnId)!
-      placed.push({clip, start: base + (clip.span?.start ?? 0), end: base + (clip.span?.end ?? 1)})
-    }
-  }
-  const fixed = set.ruler?.end
-  if (typeof fixed === 'number' && Number.isFinite(fixed) && fixed > 0) return {placed, end: fixed}
-  const end = Math.max(cursor, 1, ...placed.map(p => p.end), ...set.tracks.map(track => track.needle ?? 0))
-  return {placed, end}
-}
+/** Every clip's place on one ruler (clipCuts.ts, where the cuts and the object menu's Split read it too). */
+export {placeClips}
 
 /** The loop its owner carries (`set.loop`), in the Arrangement's units: a loop with no end runs to the end of what the Arrangement
  * lays (`end`, the bounds' end). A set without one draws no brace, as the design draws no loop. */
@@ -104,6 +94,19 @@ export interface RulerWindowProps {
   rootRef?: RefObject<HTMLDivElement | null>
   /** The drag in progress on the ruler, held across renders by the pane (a pan re-renders the view mid-drag). */
   gesture?: {current: RulerGesture | null}
+  /** The cuts' settings and the clip drag in progress, the pane's own (clipCuts.ts). Absent: a clip is pressed, never dragged. */
+  cuts?: RulerCutsProps
+}
+
+/** The Move mode and the Trim mode (manual §16.6 Settings), the drag on a clip under way, and what it draws while it moves. */
+export interface RulerCutsProps {
+  move: MoveMode
+  onMove(next: MoveMode): void
+  trim: TrimMode
+  onTrim(next: TrimMode): void
+  drag: {current: ClipDrag | null}
+  preview?: CutPreview | null
+  onPreview(next: CutPreview | null): void
 }
 
 /** A press on the ruler: where it began, the window then, px per ruler unit, and whether it has moved into a pan. */
@@ -138,8 +141,9 @@ export interface ArrangementRulerViewProps {
 
 /** The ruler's tools: zoom out, zoom in, fit, and the snap (nativeArrangementTimeline.tsx:309-312; the loop toggle there was an
  * owner write and is not here). */
-function rulerTools(view: RulerWindowProps, range: TimeRange, bounds: ReturnType<typeof rangeBounds>, anchor: number) {
+function rulerTools(view: RulerWindowProps, range: TimeRange, bounds: ReturnType<typeof rangeBounds>, anchor: number, set?: WorldTrackSet) {
   const span = range.end - range.start
+  const cuts = view.cuts, move = modeOf(MOVE_MODES, cuts?.move ?? 'insert'), trim = modeOf(TRIM_MODES, cuts?.trim ?? 'trim')
   return <span className="tl-head tl-tools">
     <button type="button" aria-label="Zoom out" title="Zoom out (↓ or − on the ruler, ⌘/Ctrl-wheel)" disabled={span >= bounds.end - bounds.start} onClick={() => view.onWindow(zoomAround(range, anchor, .5, bounds))}>−</button>
     <button type="button" aria-label="Zoom in" title="Zoom in (↑ or + on the ruler, ⌘/Ctrl-wheel or pinch)" disabled={span <= bounds.minSpan} onClick={() => view.onWindow(zoomAround(range, anchor, 2, bounds))}>+</button>
@@ -147,6 +151,12 @@ function rulerTools(view: RulerWindowProps, range: TimeRange, bounds: ReturnType
     <button type="button" className="tl-snap" data-snap={view.snap} aria-label={`Snap: ${view.snap}`}
       title={`Snap · ${view.snap} — the insert marker snaps to a twentieth of a mark (grid), half a mark (coarse), or not at all (free). Shift frees one press, Alt coarsens it. Click for the next.`}
       onClick={() => view.onSnap(nextSnap(view.snap))}>⌗ {view.snap}</button>
+    {cuts && set && carriesMove(set) && <button type="button" className="tl-cutmode" data-move={move.value} aria-label={`Move mode: ${move.label}`}
+      title={`Move mode · ${move.label} — a drag on a clip ${move.value === 'insert' ? 'moves it and shifts the clips after it' : 'moves it and replaces what was there'}. Click for the next.`}
+      onClick={() => cuts.onMove(nextMode(MOVE_MODES, move.value))}>{move.label}</button>}
+    {cuts && set && carriesEdgeCuts(set) && <button type="button" className="tl-cutmode" data-trim={trim.value} aria-label={`Trim mode: ${trim.label}`}
+      title={`Trim mode · ${trim.label} — what an edge drag does: ${trim.does} Click for the next.`}
+      onClick={() => cuts.onTrim(nextMode(TRIM_MODES, trim.value))}>{trim.label}</button>}
   </span>
 }
 
@@ -282,6 +292,52 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
       <i className="tl-over-win" data-fit={isFit(range, bounds) || undefined} style={{left: overAt(range.start), width: `${span / extent * 100}%`}} />
     </div>
   </div>
+  // A drag on a clip (clipCuts.ts): its part and the modes say the cut, its moving point snaps unless Alt is held or the snap is Free, and
+  // its end is one press of the owner's op — or, where the owner carries none, the op it waits for, in words. A press that does not move
+  // is the clip's own click, and selects it; the click a drag ends in selects nothing.
+  const cuts = view.cuts && (carriesMove(set) || carriesEdgeCuts(set)) ? view.cuts : undefined
+  const pressOf = (event: {clientX: number; altKey?: boolean}, drag: ClipDrag, clip: WorldTrackClip) => {
+    const targets = cutTargets(set, drag.clipId, {marker: view.marker, ...(loop ? {loop} : {}), ...(now !== undefined ? {now} : {})})
+    const off = event.altKey === true || view.snap === 'free'
+    return cutPress(set, clip, cutOf(drag.part, cuts!.move, cuts!.trim), drag, (event.clientX - drag.startX) / drag.scale,
+      at => snapCut(at, targets, SNAP_PX / drag.scale, off))
+  }
+  const clipDrag = (clip: WorldTrackClip, start: number, stop: number) => cuts && !trackOf.get(clip.trackId)?.readOnly ? {
+    onPointerDown: (event: ReactPointerEvent<HTMLButtonElement>) => {
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey) return
+      const box = event.currentTarget.getBoundingClientRect(), body = event.currentTarget.parentElement?.getBoundingClientRect()
+      if (!body || !(body.width > 0) || !(box.width > 0)) return
+      cuts.drag.current = {pointer: event.pointerId, clipId: clip.id, part: partOf(event.clientX - box.left, box.width), startX: event.clientX,
+        scale: body.width / span, start, end: stop, moved: false}
+      event.currentTarget.setPointerCapture?.(event.pointerId)
+    },
+    onPointerMove: (event: ReactPointerEvent<HTMLButtonElement>) => {
+      const drag = cuts.drag.current
+      if (!drag || drag.ended || drag.clipId !== clip.id || event.pointerId !== drag.pointer) return
+      if (!drag.moved && Math.abs(event.clientX - drag.startX) <= 3) return
+      drag.moved = true
+      const press = pressOf(event, drag, clip)
+      cuts.onPreview({clipId: clip.id, point: press.point, words: press.what})
+    },
+    onPointerUp: (event: ReactPointerEvent<HTMLButtonElement>) => {
+      const drag = cuts.drag.current
+      if (!drag || drag.ended || drag.clipId !== clip.id || event.pointerId !== drag.pointer) return
+      if (!drag.moved) { cuts.drag.current = null; return }
+      const press = pressOf(event, drag, clip)
+      cuts.drag.current = {...drag, ended: true}
+      cuts.onPreview(null)
+      onPress(press.key, press.what, press.run ?? (() => ({ok: false, error: missingAct(press.op, set.actions)})))
+    },
+    onPointerCancel: () => { cuts.drag.current = null; cuts.onPreview(null) },
+  } : {}
+  /** The click a drag ended in is the drag's: it selects nothing. */
+  const dragClick = (clipId: string) => {
+    const drag = cuts?.drag.current
+    if (!drag?.ended || drag.clipId !== clipId) return false
+    cuts!.drag.current = null
+    return true
+  }
+  const preview = cuts?.preview ?? null
   const markerMark = marker !== undefined && <span className="tl-marker-mark" style={{left: lineAt(marker)}} title={`Insert marker at ${label(marker)} · the pane's own, snapped ${view.snap}; it writes no time to any owner`}>{label(marker)}</span>
 
   // A rail stands under its track in that track's colour; one with no placed stop stands after the tracks, uncoloured.
@@ -399,7 +455,7 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
 
   return <div ref={view.rootRef as RefObject<HTMLDivElement>} className="tl" aria-label="Arrangement" data-tracks-view="arrangement" data-window={isFit(range, bounds) ? undefined : 'zoomed'}>
     <div className="tl-ruler" aria-label={`Ruler${set.ruler ? ` in ${set.ruler.unit}` : ''}`}>
-      {rulerTools(view, range, bounds, anchor)}
+      {rulerTools(view, range, bounds, anchor, set)}
       <div {...marksProps} className="tl-marks tl-window" onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}
         onPointerCancel={() => { gesture.current = null }} onKeyDown={onKeyDown}>
         {loopBand && <LoopBrace band={loopBand} words={loopWords} />}
@@ -480,8 +536,11 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
               style={{...placeStyle, ...(mark ? {borderLeft: clipStandingEdge(mark)} : {}), ...(atmosphere ? {'--atm': atmosphere} : {})} as CSSProperties}
               title={`${clip.label} · ${when}${word ? ` · ${word}` : ''}${edge}${clip.note ? ` · ${clip.note}` : ''}${clipStandingTitle(mark)}${section ? ` · in ${section.name}` : ''}`}
               {...clipStandingAttributes(mark)} data-section={section?.id} aria-label={mark ? clipAccessibleName(clip.label, mark) : undefined}
-              onClick={() => selection.select({kind: 'clip', ref: clip.id, title: clip.label, track: clip.trackId})}>{dash ? `▸ ${clip.label}` : clip.label}{clipStandingTag(mark)}</button>
+              data-cut-edge={cuts && carriesEdgeCuts(set) && !trackOf.get(clip.trackId)?.readOnly ? cuts.trim : undefined} {...clipDrag(clip, start, stop)}
+              onClick={() => { if (!dragClick(clip.id)) selection.select({kind: 'clip', ref: clip.id, title: clip.label, track: clip.trackId}) }}>{dash ? `▸ ${clip.label}` : clip.label}{clipStandingTag(mark)}</button>
           })}
+          {preview && preview.point !== null && clips.some(p => p.clip.id === preview.clipId) && <span className="tl-cut" style={{left: lineAt(preview.point)}}
+            role="img" aria-label={`${preview.words} to ${label(preview.point)}`} title={`${preview.words} to ${label(preview.point)}`} />}
           {comps.map((stretch, i) => <span key={`comp:${i}`} className="tl-comp" data-comp-take={stretch.takeId}
             style={{left: pct(stretch.start), width: `${Math.max(0, held(stretch.end) - held(stretch.start)) / span * 100}%`}}
             title={`${label(stretch.start)} – ${label(stretch.end)} came from ${takeName(stretch.takeId)}`}>{takeName(stretch.takeId)}</span>)}
@@ -572,6 +631,11 @@ export function ArrangementRuler({set, selection, empty}: {set: WorldTrackSet; s
   const [shownLanes, setShownLanes] = useState<LanesShown>(DEFAULT_LANES)
   const [take, setTake] = useState<TakeSelection | null>(null)
   const [opened, setOpened] = useState<{laneId: string; eventId: string} | null>(null)
+  // The cuts' settings (manual §16.6: Move mode default Insert, Trim mode default Trim), the clip drag under way and what it draws.
+  const [moveMode, setMoveMode] = useState<MoveMode>('insert')
+  const [trimMode, setTrimMode] = useState<TrimMode>('trim')
+  const [cutPreview, setCutPreview] = useState<CutPreview | null>(null)
+  const clipDragRef = useRef<ClipDrag | null>(null)
   const latest = useRef(0)
   const rootRef = useRef<HTMLDivElement | null>(null)
   const marksRef = useRef<HTMLDivElement | null>(null)
@@ -655,7 +719,8 @@ export function ArrangementRuler({set, selection, empty}: {set: WorldTrackSet; s
     <ArrangementRulerView set={set} selection={selection} empty={empty} receipt={receipt} onPress={press}
       lanes={{shown: shownLanes, onShown: setShownLanes, take, onTake: setTake, opened, onOpened: setOpened}}
       onDismiss={() => { latest.current += 1; setReceipt(null) }}
-      view={{window: shown, onWindow: setShown, snap, onSnap: setSnap, marker, onMarker: setMarker, span, onSpan: setSpan, width, marksRef, rootRef, gesture}} />
+      view={{window: shown, onWindow: setShown, snap, onSnap: setSnap, marker, onMarker: setMarker, span, onSpan: setSpan, width, marksRef, rootRef, gesture,
+        cuts: {move: moveMode, onMove: setMoveMode, trim: trimMode, onTrim: setTrimMode, drag: clipDragRef, preview: cutPreview, onPreview: setCutPreview}}} />
     {menu.layer}
   </div>
 }

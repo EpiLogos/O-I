@@ -492,3 +492,21 @@ test('the live monitor trace draws only the readings received: empty, one point,
   assert.match(monitorTrace([1, 1, 1]).path, /^M0\.00 24\.00L120\.00 24\.00L240\.00 24\.00$/, 'a constant value is a centred line, not a division by zero')
   assert.ok(MONITOR_TRACE_LIMIT >= 60, 'the window holds a few seconds of readings at the polling cadence')
 })
+
+test('⌫ removes the selected lane as its Remove button does, only while focus is in the device and never from a text field (DLW build ruling 2026-11-06)', async () => {
+  const {laneDeleteScope} = faceModel
+  const key = (name, target = {tagName: 'BUTTON'}, extra = {}) => ({key: name, target, ...extra})
+  assert.equal(laneDeleteScope(key('Backspace'), 'independent', false), 'lane', 'an independent lane: Remove lane')
+  assert.equal(laneDeleteScope(key('Delete'), 'follower', false), 'group-target', 'a follower: Remove from group')
+  assert.equal(laneDeleteScope(key('Backspace', {tagName: 'DIV', getAttribute: () => 'slider'}), 'leader', false), 'group-target', 'a leader: Remove this target')
+  for (const tagName of ['INPUT', 'TEXTAREA', 'SELECT'])
+    assert.equal(laneDeleteScope(key('Backspace', {tagName}), 'independent', false), null, `${tagName}: the key edits the field`)
+  assert.equal(laneDeleteScope(key('Backspace', {tagName: 'DIV', isContentEditable: true}), 'independent', false), null)
+  assert.equal(laneDeleteScope(key('Backspace'), null, false), null, 'no lane selected')
+  assert.equal(laneDeleteScope(key('Backspace'), 'independent', true), null, 'nothing while the device is locked or a change is in flight')
+  assert.equal(laneDeleteScope(key('Backspace', undefined, {metaKey: true}), 'independent', false), null, '⌘⌫ is not the device\'s')
+  assert.equal(laneDeleteScope(key('x'), 'independent', false), null)
+  // The panel's root takes the key, so only a key pressed with focus inside the device reaches it; it goes the Remove buttons' way.
+  const source = await readFile(new URL('../src/components/NativeSceneFace.automation.tsx', import.meta.url), 'utf8')
+  assert.match(source, /<div className="native-automation-face" aria-label="Automation"\s+onKeyDown=\{event => \{\s*const scope = laneDeleteScope\(event, role, locked\)\s*if \(scope\) \{event\.preventDefault\(\); event\.stopPropagation\(\); removeSelected\(scope\)\}/)
+})

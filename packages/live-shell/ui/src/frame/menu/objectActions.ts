@@ -12,6 +12,7 @@ import {NOT_AN_EXPRESSION} from '../detail/clipSource'
 import type {ObjectMenuItem} from './useObjectMenu'
 import type {UndoStep} from './undo'
 import {heldClip, holdClip} from './clipboard'
+import {placeClips} from '../tracks/clipCuts'
 
 /** What the menu stands on: an object of the set the views draw. */
 export type ObjectTarget =
@@ -138,7 +139,10 @@ function clipMenu(target: Extract<ObjectTarget, {kind: 'clip'}>, set: WorldTrack
     const placed = set.clips.find(clip => clip.id === target.id)?.at
     const marker = context.marker ?? null, span = context.span ?? null
     const split = readOnly ? undefined : a?.splitClip, joins = readOnly ? undefined : a?.consolidateClips
-    const inside = marker !== null && placed?.end !== undefined && marker > placed.start && marker < placed.end
+    // Where the clip lies on the ruler, as the Arrangement lays it: its own `at`, or its row's offset and its span (a scene of an
+    // Expression lies by its row: O-I #747).
+    const lies = placeClips(set).placed.find(place => place.clip.id === target.id)
+    const inside = marker !== null && lies !== undefined && marker > lies.start && marker < lies.end
     items.push(split && !inside ? {id: 'split', label: 'Split', shortcut: '⌘E', disabled: true,
       why: `Set the insert marker inside ${named} on the ruler: Split cuts it there.`}
       : act('split', 'Split', '⌘E', split, 'clip.split', a, () => press(`split:${target.id}`, `Split ${named}`, () => split!.run(target.id, marker!)), undefined, readOnly))

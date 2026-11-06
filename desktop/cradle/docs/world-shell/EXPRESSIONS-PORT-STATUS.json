@@ -3,8 +3,8 @@
   "recorded_at_utc": "2026-10-09T02:38:34.566Z",
   "standing": "derived accounting by static reading; live_replay is pending-native-stack for every row (the native stack was down); no original target changes standing | 8 Oct top-bar session: see additions and defects; still no live-shell replay. | Expressions family session: partial-real rows with tests are ported; live replay remains pending. Rounded still has no distinct native render. | 9 Oct native-actions audit (lane zcode:native-actions-audit-l6): 9 partial rows reclassified owner-op-required (gap is solely the native save_as/fork/create owner ops, named per row); 33 partial rows re-verified with named remainders or owner-blocks; mechanical wire-grammar checks pass (tests/audit-l6-wire-grammar.test.mjs); one live replay attempt recorded, not executed (evidence/native-actions-audit-l6-20261009/). No ported row touched; no live_replay field retired; all 126 targets remain pending. | 2026-10-14: restated by PORT-AUDIT §E6 — 'ported' means a shell React home plus a boundary op, read statically; every row stays live_replay: pending-native-stack. The ten rows whose reason named the save_as owner op the shell was said not to call carry a restatement in their notes (the kernel and the boundary relay save_as, fork and create); their status stays owner-op-required until the conformance test admits shell-wiring-gap. | 2026-10-29 (O-I #747): no row is studio-only-by-design; each of the eleven takes its manual home (§20.1 Where everything is) or names what it waits for.",
   "counts": {
-    "partial": 23,
-    "ported": 147,
+    "partial": 21,
+    "ported": 149,
     "internal-no-outward-need": 15,
     "owner-op-required": 20,
     "out-of-scope-other-track": 6,
@@ -3030,18 +3030,18 @@
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:706",
       "kind": "router",
       "surface": "device",
-      "outward_home": "Automation face: Select lane shows its Monitor section",
+      "outward_home": "Automation face: Select lane shows its Monitor section, the shape set in the lane (§20.1 Rules)",
       "components": [
         "packages/live-shell/ui/src/components/NativeSceneFace.automation.tsx",
         "packages/live-shell/ui/src/components/nativeSceneFace.automation.ts"
       ],
-      "boundary_op": "none: selecting a lane shows its authored-shape Monitor section locally; live monitor output is pending under monitor-mode (app.ts:706)",
+      "boundary_op": "none: selecting a lane shows its Monitor section, which draws the shape set in the lane from the lane's own settings (packages/live-shell/ui/src/components/NativeSceneFace.automation.tsx:385); no owner operation by design",
       "tests": [
         "packages/live-shell/ui/tests/native-device-automation.test.mjs"
       ],
-      "status": "partial",
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "Selecting a lane shows its Monitor section, which states authored shape only; live monitor output is not in the reading. Owner-block (retained engine + boundary reading producer): live monitor output requires engine telemetry disclosed in NativeEditorReading; the section's authored-shape-only statement is the honest state until then."
+      "note": "DLW build ruling 2026-11-06, under §20.1 Rules: \"An envelope's curve is the shape set in the lane. It is not a record of the live output.\" The Monitor section draws that shape, which is what the manual draws; the live monitor output it was said to wait for is not the manual's (monitor-mode and monitor-dock were retired by the same sentence, round 881b). The section's Live output trace, beside it, draws only the readings received and is not the curve. O-I #747, round 882."
     },
     {
       "action": "monitor-mode",
@@ -3206,7 +3206,7 @@
         "packages/live-shell/ui/src/components/nativeSceneFace.automation.ts",
         "packages/expressions-boundary/src/nativeAutomationEdits.ts"
       ],
-      "boundary_op": "change kind=automation-remove on the selected lane (packages/live-shell/ui/src/components/NativeSceneFace.automation.tsx:176 removeSelected; packages/live-shell/ui/src/components/nativeSceneFace.automation.ts:239 removeLaneChange; packages/expressions-boundary/src/nativeAutomationEdits.ts:138 removeLane). An independent lane goes with scope lane; a follower or a leader goes with scope group-target (desktop/cradle/expressions-app/field-studies-journeys/src/automationLinks.ts:9 removeGroupTarget): only that lane goes, and a leader's first remaining target takes over the shape, so the group stays. Scope lane on a leader (automationLinks.ts:5 removeAutomation) also removes only the leader: each follower is unlinked first and keeps the leader's shape as its own (resolvedAutomation), so no follower is removed",
+      "boundary_op": "change kind=automation-remove on the selected lane (packages/live-shell/ui/src/components/NativeSceneFace.automation.tsx:176 removeSelected; packages/live-shell/ui/src/components/nativeSceneFace.automation.ts:251 removeLaneChange; packages/expressions-boundary/src/nativeAutomationEdits.ts:138 removeLane). An independent lane goes with scope lane; a follower or a leader goes with scope group-target (desktop/cradle/expressions-app/field-studies-journeys/src/automationLinks.ts:9 removeGroupTarget): only that lane goes, and a leader's first remaining target takes over the shape, so the group stays. Scope lane on a leader (automationLinks.ts:5 removeAutomation) also removes only the leader: each follower is unlinked first and keeps the leader's shape as its own (resolvedAutomation), so no follower is removed",
       "tests": [
         "packages/live-shell/ui/tests/native-device-automation.test.mjs",
         "packages/live-shell/ui/tests/native-automation.test.mjs",
@@ -3214,7 +3214,7 @@
       ],
       "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "DLW build ruling 2026-11-06: Delete removes what is selected (manual §10.9 and its key table), and the Automation device removes the selected lane. Removing a leader together with all its followers in one act (the app's Delete group, app.ts:1848) is not the manual's, and is not built. The device opens whole in the band from the browser's Devices list (native-device-pool.test.mjs: a scene row opens with scope scene); its removal is proven in native-device-automation.test.mjs ('an end-to-end sequence of picker, group, range, order and removal lands in the boundary Journey') and native-automation.test.mjs ('group-target removal promotes the first target and keeps the others in the group; lane removal detaches them'). Not built: ⌫ itself on the selected lane (the device's Remove buttons carry the act), and removal from Clip view's Envelopes, whose lanes write sends automation-set only (packages/live-shell/ui/src/components/expressions/clip/clipBinding.ts:253 laneChanges). O-I #747, round 881b."
+      "note": "DLW build ruling 2026-11-06: Delete removes what is selected (manual §10.9 and its key table), and the Automation device removes the selected lane. Removing a leader together with all its followers in one act (the app's Delete group, app.ts:1848) is not the manual's, and is not built. The device opens whole in the band from the browser's Devices list (native-device-pool.test.mjs: a scene row opens with scope scene); its removal is proven in native-device-automation.test.mjs ('an end-to-end sequence of picker, group, range, order and removal lands in the boundary Journey') and native-automation.test.mjs ('group-target removal promotes the first target and keeps the others in the group; lane removal detaches them'). ⌫ on the selected lane takes the same removal by the lane's role, only while focus is in the device and never from a text field (DLW build ruling 2026-11-06, under §10.9's \"The same keys act on whatever is selected\": packages/live-shell/ui/src/components/NativeSceneFace.automation.tsx:267 on the panel's root, packages/live-shell/ui/src/components/nativeSceneFace.automation.ts:74 laneDeleteScope; native-device-automation.test.mjs, round 882). Not built: removal from Clip view's Envelopes, whose lanes write sends automation-set only (packages/live-shell/ui/src/components/expressions/clip/clipBinding.ts:253 laneChanges). O-I #747, rounds 881b and 882."
     },
     {
       "action": "remove-group-target",
@@ -3730,18 +3730,18 @@
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/automationMonitor.ts:16",
       "kind": "literal",
       "surface": "device",
-      "outward_home": "Monitor Glyph picker (absent); formation chosen by the pool or world selection",
+      "outward_home": "The Glyph a lane moves is the one selected, in the browser's Devices list or the world (§20.1 Rules: the live monitor's own Glyph picker is retired)",
       "components": [
         "packages/live-shell/ui/src/components/NativeDevicePool.tsx",
         "packages/live-shell/ui/src/components/NativeWorldDetail.tsx"
       ],
-      "boundary_op": "request operation=select entity_id",
+      "boundary_op": "request operation=select entity_id (packages/live-shell/ui/src/components/NativeDevicePool.tsx:30; packages/live-shell/ui/src/components/NativeWorldDetail.tsx:113; packages/expressions-boundary/src/editor.ts:206)",
       "tests": [
         "packages/expressions-boundary/tests/native-glyph-owner-selection.test.mjs"
       ],
-      "status": "partial",
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "The live monitor Glyph picker is not built; the sequence editor follows the selected formation. Owner-block (retained engine + boundary reading producer): the live monitor needs engine telemetry in NativeEditorReading; the Glyph picker is shell work on top of that reading."
+      "note": "DLW build ruling 2026-11-06, under §20.1 Rules: \"An envelope's curve is the shape set in the lane. It is not a record of the live output.\" The app's live monitor (automationMonitor.ts:16 liveHTML) chose its own Glyph; with that monitor, its Glyph picker is retired. What stands is the Glyph selected through the owner's select, which the sequence editor follows (native-glyph-owner-selection.test.mjs). O-I #747, round 882."
     },
     {
       "action": "sequence-mode",
@@ -3918,6 +3918,18 @@
         "not-ported": 2
       },
       "note": "DLW build rulings 2026-11-06: delete-group ported as the Automation device's removal of the selected lane (Delete removes what is selected, manual §10.9; a leader with all its followers in one act is not the manual's); fire-lane retired (a ramp's Loop says what it does at its end, and launching the scene starts its envelopes again, §20.1 Envelopes); monitor-mode and monitor-dock retired (§20.1 Rules: \"An envelope's curve is the shape set in the lane. It is not a record of the live output.\"). take-manual: a held value now shows on its row (Physics included)."
+    },
+    {
+      "stage": "O-I #747, round 882 (6 Nov 2026)",
+      "counts": {
+        "partial": 21,
+        "ported": 149,
+        "internal-no-outward-need": 15,
+        "owner-op-required": 20,
+        "out-of-scope-other-track": 6,
+        "not-ported": 2
+      },
+      "note": "DLW build ruling 2026-11-06, under §20.1 Rules (\"An envelope's curve is the shape set in the lane. It is not a record of the live output.\"): show-monitor ported (the Monitor section draws the shape set in the lane and waits for no live monitor); monitor-formation ported (the live monitor's Glyph picker is retired with it; the Glyph is the one selected, through the owner's select). delete-group: ⌫ on the Automation device's selected lane takes the Remove buttons' removal (§10.9)."
     }
   ],
   "additions": [

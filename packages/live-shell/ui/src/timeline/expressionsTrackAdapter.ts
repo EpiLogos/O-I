@@ -92,6 +92,15 @@ export interface ExpressionsWorkReading {
  * seconds, its lane's Activator and Solo, and the sample of the scene's transport it lies from, the transport running at `rate`. */
 export interface ExpressionsTorusTake {lane: string; name: string; at: number; seconds: number; enabled: boolean; solo: boolean; atSample: string; rate: number}
 
+/** A cut of Arrangement view as the Expression's owner takes it (sceneEdits.ts NativeSceneCutIntent): the scene moved before `to_ref`
+ * (Insert; null: last) or in its place (Overwrite); an edge trimmed by `seconds`; the seam after the scene rolled by `seconds`; the scene's
+ * content slipped, or the scene slid between its neighbours, by `seconds`; the scene split at its own second `at`. */
+export type ExpressionsSceneCut =
+  | {operation: 'move'; scene_ref: string; mode: 'insert' | 'overwrite'; to_ref: string | null}
+  | {operation: 'trim'; scene_ref: string; edge: 'start' | 'end'; seconds: number}
+  | {operation: 'roll' | 'slip' | 'slide'; scene_ref: string; seconds: number}
+  | {operation: 'split'; scene_ref: string; at: number};
+
 /** The owner ops the views press, each answering in the shell's receipt words. */
 export interface ExpressionsControls {
   /** The Expression's own sound (native/frameSound.ts): its mute as it stands, the one soloed, and the writes of each. */
@@ -99,9 +108,10 @@ export interface ExpressionsControls {
   /** The transport's Studio arm (native/frameSound.ts publishStudioArm): armed, Play records a take. One arm for the open Expression. */
   arm?: {op: string; on: boolean; set(on: boolean): unknown};
   playScene?: {op: string; run(expressionId: string, sceneId: string): unknown};
-  /** The presented composition's scene edits (the object menu's acts): rename, duplicate, remove, add, the Expression's title. */
+  /** The presented composition's scene edits (the object menu's acts): rename, duplicate, remove, add, the Expression's title — and the
+   * Arrangement's cuts (O-I #747; packages/expressions-boundary sceneEdits.ts NativeSceneCutIntent), each in the scene's own seconds. */
   sceneEdit?: {op: string; run(intent: {operation: 'duplicate' | 'remove'; scene_ref: string} | {operation: 'add'} | {operation: 'expression-title'; title: string}
-    | {operation: 'expression-description'; description: string}): unknown};
+    | {operation: 'expression-description'; description: string} | ExpressionsSceneCut): unknown};
   stopAll?: {op: string; run(): unknown};
   playSaved?: {op: string; run(): unknown};
   reenable?: {op: string; run(): unknown};
@@ -278,7 +288,13 @@ export function projectExpressionsWork(reading: ExpressionsWorkReading): WorldTr
       ...(reading.held !== undefined ? {held: reading.held} : {})}};
   // The saved sequence loops whole: from its start to the end of what the Arrangement lays (worldTrackAdapter.ts `loop` with no end).
   if (reading.loop === true) set.loop = {start: 0};
-  const actions = expressionsActions(reading, clips, placed);
+  // Where each clip lies on the ruler (its row's offset and its span, as the Arrangement lays it: ArrangementRuler.tsx placeClips), for the
+  // cuts, which the ruler hands over in its own units.
+  const ruler = new Map(clips.map((clip) => {
+    const start = (offsets.get(clip.columnId) ?? 0) + (clip.span?.start ?? 0);
+    return [clip.id, {start, end: (offsets.get(clip.columnId) ?? 0) + (clip.span?.end ?? start)}] as const;
+  }));
+  const actions = expressionsActions(reading, clips, placed, ruler);
   if (actions) set.actions = actions;
   return set;
 }
@@ -287,7 +303,8 @@ export function projectExpressionsWork(reading: ExpressionsWorkReading): WorldTr
 interface PlacedTake {id: string; sceneId: string; trackId: string; take: ExpressionsTorusTake; scene: number}
 
 /** The owner's scene transport over this set's own ids: a clip that is no scene of the set is refused before the owner is called. */
-function expressionsActions(reading: ExpressionsWorkReading, clips: readonly WorldTrackClip[], placed: readonly PlacedTake[] = []): WorldTrackActions | undefined {
+function expressionsActions(reading: ExpressionsWorkReading, clips: readonly WorldTrackClip[], placed: readonly PlacedTake[] = [],
+  ruler: ReadonlyMap<string, {start: number; end: number}> = new Map()): WorldTrackActions | undefined {
   const controls = reading.controls;
   if (!controls) return undefined;
   const sceneOf = new Map<string, {expressionId: string; sceneId: string}>();
@@ -358,9 +375,68 @@ function expressionsActions(reading: ExpressionsWorkReading, clips: readonly Wor
       read: async trackId => { const text = described.get(trackId); if (text === undefined) throw new Error('This track is no Expression of this set.'); return text },
       run: (trackId, text) => described.has(trackId) ? edit.run({operation: 'expression-description', description: text}) : {ok: false, error: 'This track is no Expression of this set.'}}
     else actions.waiting = {...actions.waiting, 'track.info': 'the Expression\'s description in the tracks\' reading (frame/tracks/modeTracks.ts nativeTracks: content.scenes.description)'}
+    Object.assign(actions, sceneCuts(reading, sceneOf, ruler, edit))
   }
   actions.owner = 'Expressions · the native composition (packages/expressions-boundary sceneEdits)'
   return actions;
+}
+
+/** The Arrangement's cuts of a scene (O-I #747; manual §16.6's table), each the owner's scene edit on the scene its clip shows (either side),
+ * the ruler's units made the scene's own seconds, to the millisecond. A scene lies on the ruler where the Arrangement lays it; its
+ * neighbours are its Expression's scenes in order. What the owner cannot be asked is said in words before it is called: a clip that is no
+ * scene of the set, a move to where the scene stands (nothing to change), an Overwrite dropped on no other scene, a roll before the first
+ * scene, a split outside the scene. */
+function sceneCuts(reading: ExpressionsWorkReading, sceneOf: ReadonlyMap<string, {expressionId: string; sceneId: string}>,
+  ruler: ReadonlyMap<string, {start: number; end: number}>, edit: NonNullable<ExpressionsControls['sceneEdit']>): Partial<WorldTrackActions> {
+  const ms = (value: number) => Math.round(value * 1000) / 1000
+  const refused = (error: string) => ({ok: false as const, error})
+  const placeOf = (clipId: string) => {
+    const found = sceneOf.get(clipId), at = ruler.get(clipId)
+    const expression = found && reading.expressions.find(row => row.id === found.expressionId)
+    if (!found || !at || !expression) return null
+    const row = expression.scenes.flatMap(scene => {
+      const lies = ruler.get(`${sceneKey(expression.id, scene.id)}:visual`)
+      return lies ? [{sceneId: scene.id, name: scene.name, ...lies}] : []
+    })
+    const index = row.findIndex(scene => scene.sceneId === found.sceneId)
+    return {...found, ...at, name: row[index]?.name ?? found.sceneId, row, index}
+  }
+  const none = (clipId: string) => refused(`"${clipId}" is no scene of this Expression.`)
+  const finite = (value: number) => Number.isFinite(value)
+  const cut = (clipId: string, run: (place: NonNullable<ReturnType<typeof placeOf>>) => unknown, ...values: number[]) => {
+    const place = placeOf(clipId)
+    if (!place) return none(clipId)
+    if (!values.every(finite)) return refused('The ruler gave no point for this cut.')
+    return run(place)
+  }
+  return {
+    moveClip: {op: `${edit.op} · move`, run: (clipId, at, mode) => cut(clipId, place => {
+      if (mode === 'overwrite') {
+        const target = place.row.find(scene => scene.sceneId !== place.sceneId && at >= scene.start && at < scene.end)
+        return target ? edit.run({operation: 'move', scene_ref: place.sceneId, mode: 'overwrite', to_ref: target.sceneId})
+          : refused('Drop the scene on the scene it replaces: Overwrite lays it in that scene\'s place.')
+      }
+      // Insert: before the scene that begins nearest where its start is dropped, or last where the end of the sequence is nearer.
+      const points = [...place.row.map(scene => ({at: scene.start, before: scene.sceneId as string | null})), {at: place.row.at(-1)!.end, before: null}]
+      const nearest = points.reduce((best, point) => Math.abs(point.at - at) < Math.abs(best.at - at) ? point : best)
+      const next = place.row[place.index + 1]?.sceneId ?? null
+      if (nearest.before === place.sceneId || nearest.before === next) return {ok: true as const, note: `${place.name} stands where it was dropped: nothing moved.`}
+      return edit.run({operation: 'move', scene_ref: place.sceneId, mode: 'insert', to_ref: nearest.before})
+    }, at)},
+    trimClip: {op: `${edit.op} · trim`, run: (clipId, edge, at) => cut(clipId, place =>
+      edit.run({operation: 'trim', scene_ref: place.sceneId, edge, seconds: ms(at - (edge === 'start' ? place.start : place.end))}), at)},
+    rollClip: {op: `${edit.op} · roll`, run: (clipId, edge, at) => cut(clipId, place => {
+      if (edge === 'end') return edit.run({operation: 'roll', scene_ref: place.sceneId, seconds: ms(at - place.end)})
+      const before = place.row[place.index - 1]
+      return before ? edit.run({operation: 'roll', scene_ref: before.sceneId, seconds: ms(at - place.start)})
+        : refused(`There is no scene before this one to roll the seam into: ${place.name} is the first.`)
+    }, at)},
+    slipClip: {op: `${edit.op} · slip`, run: (clipId, by) => cut(clipId, place => edit.run({operation: 'slip', scene_ref: place.sceneId, seconds: ms(by)}), by)},
+    slideClip: {op: `${edit.op} · slide`, run: (clipId, by) => cut(clipId, place => edit.run({operation: 'slide', scene_ref: place.sceneId, seconds: ms(by)}), by)},
+    splitClip: {op: `${edit.op} · split`, run: (clipId, at) => cut(clipId, place => at > place.start && at < place.end
+      ? edit.run({operation: 'split', scene_ref: place.sceneId, at: ms(at - place.start)})
+      : refused(`Set the insert marker inside ${place.name} on the ruler: Split cuts it there.`), at)},
+  }
 }
 
 export const expressionsTrackAdapter: WorldTrackAdapter<ExpressionsWorkReading> = {

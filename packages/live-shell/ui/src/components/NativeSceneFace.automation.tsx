@@ -10,7 +10,7 @@ import {stageAutomationLoop, stageAutomationPlay} from '../native/stageCommands'
 import {automationFrameReason, hasOneShotLeader, pauseAllChanges, playAllChanges} from './nativeSceneFace.automation.ts'
 import {
   BLEND_LABELS, EASING_LABELS, LOOP_LABELS, TYPE_LABELS, WAVE_LABELS, addLaneChange, addLaneProblem, admittedTargets, dragLaneIds, effectiveLane, effectiveReadout,
-  handleFrame, handlePosition, handleStep, handleValue, laneCurve, laneFieldBounds, laneFieldLabel, laneFieldStep, laneGroups, laneLine, laneRole,
+  handleFrame, handlePosition, handleStep, handleValue, laneCurve, laneDeleteScope, laneFieldBounds, laneFieldLabel, laneFieldStep, laneGroups, laneLine, laneRole,
   MONITOR_TRACE_LIMIT, laneValuesChange, linkLaneChange, monitorTrace, moveLaneIds, orderLanesChange, parseLaneNumber, removeLaneChange, targetLabel, valueFraction,
   type Lane, type LaneGroup, type LaneHandle, type LaneNumber, type LaneRole,
 } from './nativeSceneFace.automation.ts'
@@ -261,7 +261,12 @@ export function AutomationFacePanel({reading, apply, disabled}: SceneFacePanelPr
   const isRamp = shown?.type === 'ramp'
   const isMorph = shown?.type === 'lfo' && shown.wave === 'morph'
 
-  return <div className="native-automation-face" aria-label="Automation">
+  // ⌫ removes the selected lane the Remove buttons' way, heard only from inside the device and never from a text field (laneDeleteScope).
+  return <div className="native-automation-face" aria-label="Automation"
+    onKeyDown={event => {
+      const scope = laneDeleteScope(event, role, locked)
+      if (scope) {event.preventDefault(); event.stopPropagation(); removeSelected(scope)}
+    }}>
     <section className="native-automation-face-section" aria-labelledby="native-automation-lanes-title">
       <header><h3 id="native-automation-lanes-title">Lanes</h3><span>{lanes.length} / {NATIVE_AUTOMATION_LANE_LIMIT}</span></header>
       <div className="native-automation-face-actions">
