@@ -26,7 +26,12 @@ export type ChainSlotId = AgentChainSlotId
 
 /** The device id each slot publishes under at the door. */
 export const chainDeviceId = (slot: string): string => `factory:${slot}`
-export const CHAIN_DEVICE_IDS: readonly string[] = CHAIN_SLOTS.map(chainDeviceId)
+/** Sources (§19.9, AIKit's ai-kit:sources) stands before the Agent in two places on a session's chain (factoryPlaces.ts; DLW build ruling
+ * 2026-11-05): ahead of the Agent rack, the shared reading every agent of the rack reads, and inside the agent's own chain, its own. */
+export const SOURCES_DESIGN = 'ai-kit:sources'
+export const SOURCES_DEVICE_IDS = {rack: chainDeviceId('sources'), chain: chainDeviceId('chain-sources')} as const
+/** Every device the chain's slots publish (the catalogue's slots, and Sources in its two places), withdrawn with the chain. */
+export const CHAIN_DEVICE_IDS: readonly string[] = [...CHAIN_SLOTS.map(chainDeviceId), SOURCES_DEVICE_IDS.rack, SOURCES_DEVICE_IDS.chain]
 
 // ---------------------------------------------------------------------------
 // the owners' readings (the shape the chain's reads fill; null = not read yet)

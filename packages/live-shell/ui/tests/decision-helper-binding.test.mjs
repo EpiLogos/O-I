@@ -160,7 +160,7 @@ test('code-reading: the helper is published as its own device beside a group\'s 
   // REPLACED (O-I #842): "a group's chain leads with its members' rack" (GROUP_LEAD ['agentset']) — every session's chain holds the rack,
   // and the helper still stands only where the rack's chains are a group's sessions.
   const places = readFileSync(new URL('../src/agent/devices/factoryPlaces.ts', import.meta.url), 'utf8')
-  assert.match(places, /export const SESSION_CHAIN: readonly FactorySlot\[\] = \['gateway', 'remote-carrier', 'agentset', 'world', 'git'\]/, 'every session\'s chain holds the rack')
+  assert.match(places, /export const SESSION_CHAIN: readonly FactorySlot\[\] = \['gateway', 'remote-carrier', 'sources', 'agentset', 'world', 'git'\]/, 'every session\'s chain holds the rack, its shared Sources before it (§19.9)')
   assert.doesNotMatch(places, /'decision-helper'/, 'no helper slot')
   assert.doesNotMatch(view, /placed\(DECISION_HELPER_ID/, 'no helper slot on the track\'s chain: it is a chain of the rack')
   assert.doesNotMatch(view, /HELPER_PAGE/, 'the rack carries no Helper page')

@@ -82,6 +82,24 @@ test('the aperture table: two drops dispatch declared operations, two refuse by 
   assert.match(seatGit.because, /workcell_status_read/, 'the refusal names the reading that exists and the op that does not')
 })
 
+test('Sources drags from the browser and stands before the Agent: AIKit places it where it is dropped (§19.9; DLW build ruling 2026-11-05)', async () => {
+  const sources = {family: 'sources', ref: 'ai-kit:sources', label: 'Sources'}
+  assert.deepEqual(drag.decodeChainDrag(drag.encodeChainDrag(sources)), {kind: 'chain-item', drag: sources}, 'a family of its own')
+  assert.equal(drag.chainSlotFor('sources'), 'sources', 'it lands on Sources, before the Agent')
+  const placed = drag.chainDropDecision(sources)
+  assert.equal(placed.kind, 'operation')
+  assert.deepEqual(placed.operation, {kind: 'place-sources'})
+  assert.match(placed.via, /AIKit's encounter-session-settings/)
+  assert.match(placed.via, /ahead of the Agent rack/)
+  assert.match(drag.dropZoneLine({kind: 'chain-item', drag: sources}), /^Drop «Sources» — AIKit's encounter-session-settings/)
+  // The browser's Context lists Sources, and it is the row that drags it.
+  const browser = await import('../src/agent/AgentShellBrowser.tsx')
+  const rows = browser.contextBrowserRows(['ledger'])
+  const row = rows.find(item => item.key === 'sources')
+  assert.deepEqual(row?.drag, sources, 'the Sources row carries the drag')
+  assert.equal(rows.filter(item => item.drag).length, 1, 'only Sources drags: the tiles open on the rail')
+})
+
 test('the slide refuses with the rack\'s fixed place; the order inside it is Central\'s agent-profile.chain-order', () => {
   // REPLACED (BD r19, Central #318): the slide named the missing op "agent-chain order". Central writes the order of what the agent carries
   // (agent-profile.chain-order), so it is no missing op; the Skillset rack's own place on the chain is fixed.
@@ -170,6 +188,11 @@ test('the drop dispatches through the declared owners; refusals render as the la
   const chain = await read('devices/FactoryDeviceChain.tsx')
   assert.match(chain, /harnessAgentControl\(transport, binding, decision\.operation\.control\)/, 'the agent seat dispatches harness_agent_control')
   assert.match(chain, /shell\.setSelectedTrackId\(active\.drag\.ref\)/, 'the session drop rides the run model’s selection')
+  // Sources (§19.9; DLW build ruling 2026-11-05): placed where it is dropped, through AIKit's settings of the session, never a group's.
+  assert.match(chain, /const placement = sourcesPlacementOf\(target\.kind === 'card' \? target\.id : null\)/, 'the drop card says which reading it is')
+  assert.match(chain, /writeSessionSettings\(transport, track\?\.project \?\? ROOT_REGISTER, sessionRef, sourcesPlaceRequest\(placement\)\)/,
+    'AIKit places it on the session')
+  assert.match(chain, /Sources stands on one session: each session of a group keeps its own/, 'a group refuses in words')
   assert.match(chain, /missing op \$\{decision\.missingOp\}/, 'the refusal card names the exact missing op')
   // REPLACED (BD r19): the slide refusal named MISSING_OPS.order; it says the rack's place and Central's order op (SLIDE_PLACE).
   assert.match(chain, /SLIDE_PLACE/, 'the slide refusal says the rack\'s place and Central\'s order op')

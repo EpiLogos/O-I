@@ -90,7 +90,7 @@ import {observedState, useEncounterSessions} from './EncounterObservers'
 import {FRAMES_ID, mainDevices} from './mainTrackBindings'
 import {askRowsOf, shownSession, threadBinding, threadJson} from './threadBinding'
 import {CAPTURE_PAGE, REFINE_PAGE, SEAT_PAGE, carryPages, composeAgentBinding, withAgentGit} from './oneAgentBinding'
-import {testRefinement, useScopeWaits} from '../sessionSettings'
+import {testRefinement, useScopeWaits, writeSessionSettings} from '../sessionSettings'
 import {openNotificationTarget, useOwnerRequests} from '../../widgets/railDevices'
 import {openedHold, openedOf, withOwnerRequests} from '../../widgets/railBindings'
 import {useIdentityDevice} from '../../central/devices/agentChainDevices'
@@ -118,7 +118,7 @@ import {ROUTE_WORDS, aikitWriteOp, centralRevisionWrite, deskActorOf, factoryOwn
 import {worldsOf} from './workcellMaterial'
 import {currentIdentity} from '../../../../../../desktop/cradle/src/nara/identity/current'
 import {WORKCELL_RACK_ID, chosenWorld, workcellGitReading} from './workcellRackBinding'
-import {AGENT_SLOTS, ON_ITS_TRACK, RACK_CHAIN, chainSlots, factoryPlace, reachOf, type FactorySlot, type RackChainName, type Reach} from './factoryPlaces'
+import {AGENT_SLOTS, ON_ITS_TRACK, RACK_CHAIN, chainSlots, factoryPlace, reachOf, sourcesPlaceRequest, sourcesPlacementOf, type FactorySlot, type RackChainName, type Reach} from './factoryPlaces'
 import {useOwnerOp} from '../../owners/ownerCall'
 import type {AikitWriteRequest, EncounterSessionSettingsReading, KernelOp} from '../../../../../../desktop/cradle/src/kernel/types'
 import {kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
@@ -864,6 +864,26 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
       })
       return
     }
+    // Sources stands before the Agent (§19.9): dropped among the rack's chain it is that agent's own reading, anywhere else on the
+    // session's chain it is the shared reading ahead of the Agent rack. AIKit's encounter-session-settings places it on the session
+    // (DLW build ruling 2026-11-05); its settings then ride the placement, and AIKit's knowledge navigation reads under them.
+    if (decision.operation.kind === 'place-sources') {
+      const placement = sourcesPlacementOf(target.kind === 'card' ? target.id : null)
+      const where = placement === 'chain' ? 'the agent\'s own Sources, inside its chain' : 'the shared reading ahead of the Agent rack'
+      const refuse = (line: string) => setNote({kind: 'refused', title: 'Sources refused', line, receipt: encodeChainDrag(active.drag)})
+      const group = place.kind === 'session' && place.group
+      if (place.kind !== 'session' || group || sessionRef == null) {
+        refuse(group
+          ? 'Sources stands on one session: each session of a group keeps its own; choose one of its sessions — ahead of its Agent rack, it is the shared reading every session of its space reads.'
+          : 'Sources stands on a session\'s chain, before its Agent; this chain is no session\'s.')
+        return
+      }
+      try {
+        await writeSessionSettings(transport, track?.project ?? ROOT_REGISTER, sessionRef, sourcesPlaceRequest(placement))
+        setNote({kind: 'receipt', title: 'Sources placed', line: `«${active.drag.label}» onto ${target.label} — ${where} (AIKit's encounter-session-settings).`, receipt: null})
+      } catch (cause) { refuse(refusalWords(cause instanceof Error ? cause.message : String(cause))) }
+      return
+    }
     const outcome = await harnessAgentControl(transport, binding, decision.operation.control)
     const dragged = `«${active.drag.label}» (${active.drag.ref})`
     setNote(outcome.ok
@@ -879,7 +899,7 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
           line: `${dragged} onto ${target.label} — harness_agent_control (${decision.operation.control}: a new agent on the bound harness, not the dragged one) answered: ${outcome.error}`,
           receipt: outcome.error,
         })
-  }, [shell, transport, binding, chainProfile, profileAct])
+  }, [shell, transport, binding, chainProfile, profileAct, place, sessionRef, track?.project])
 
   // A drag that ends anywhere (dropped outside, cancelled, escaped) clears the held mirror and the drop slot — the dragged item
   // has returned either way (NativeAgentDeviceRack.tsx:127-135).

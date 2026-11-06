@@ -82,11 +82,30 @@ test('a session\'s chain is §16.2\'s Factory row, a group\'s and a lone session
   // Agentset rack" (GROUP_LEAD, ['agentset', 'agent', 'skillset', 'world']), "no gateway, no landing" (§19.23 "A track has no gateway and no
   // landing of its own", gone from the manual). Every session holds one Agent rack (§19.15 "A session of one agent has a rack of that one
   // chain") between its connections and Scope, then Git / landing (§16.2 Factory row; §16.1 Connection "On a track's chain or inside an
-  // agent's"); the session's own agent's devices stand inside the rack (agent-rack-842.test.mjs), and Sources has no binding yet.
-  assert.deepEqual(places.chainSlots(session), ['gateway', 'remote-carrier', 'agentset', 'world', 'git'])
+  // agent's"); the session's own agent's devices stand inside the rack (agent-rack-842.test.mjs).
+  // REPLACED (DLW build ruling 2026-11-05; §19.9 "Chain: before the Agent … ahead of the Agent rack for every agent, or inside one agent's
+  // chain"): "Sources has no binding yet", so not placed — Sources stands before the Agent in both places: ahead of the Agent rack, the shared
+  // reading every agent of the rack reads; inside the agent's own chain, before what it carries and its Agent, that agent's own.
+  assert.deepEqual(places.chainSlots(session), ['gateway', 'remote-carrier', 'sources', 'agentset', 'world', 'git'])
   const group = places.factoryPlace({sessionRef: 'grp-1', group: true, workcell: null})
   assert.deepEqual(places.chainSlots(group), places.chainSlots(session), 'the rack\'s chains differ, never the track\'s')
-  assert.deepEqual(places.RACK_CHAIN, ['skillset', 'agent'], 'what the agent carries, then the Agent (§19.4)')
+  assert.deepEqual(places.RACK_CHAIN, ['chain-sources', 'skillset', 'agent'], 'what the agent reads, what it carries, then the Agent (§19.4, §19.9)')
+  for (const [slot, id] of [['sources', 'factory:sources'], ['chain-sources', 'factory:chain-sources']]) {
+    assert.deepEqual(places.SLOT_DEVICE[slot], {id, design: 'ai-kit:sources'}, `${slot}: AIKit's Sources, drawn by its design`)
+  }
+  assert.deepEqual(model.SOURCES_DEVICE_IDS, {rack: 'factory:sources', chain: 'factory:chain-sources'})
+  for (const id of Object.values(model.SOURCES_DEVICE_IDS)) assert.ok(model.CHAIN_DEVICE_IDS.includes(id), `${id} is withdrawn with the chain`)
+  // How far each reaches (§19.9 Rules: "Sources ahead of the Agent rack and Sources inside an agent's chain add up: the agent reads both").
+  const chains = [{id: 'ses-1', name: 'Kite'}, {id: 'ses-2', name: 'Wren'}]
+  const shared = places.reachOf('sources', chains)
+  assert.equal(shared.reaches, 'every-chain')
+  assert.match(shared.says, /^The shared reading every chain of the Agent rack reads \(Kite, Wren\); an agent's own Sources adds to it\.$/)
+  assert.deepEqual(places.reachOf('chain-sources', chains, 'ses-1'), {reaches: 'chain', chain: 'ses-1', says: 'Kite alone: it stands inside Kite\'s chain of the Agent rack.'})
+  // Where a drop of Sources stands: on the agent's own chain where it is dropped there, else ahead of the rack; and the setting AIKit keeps.
+  for (const card of ['chain-sources', 'skillset', 'agent']) assert.equal(places.sourcesPlacementOf(card), 'chain', `dropped on ${card}: the agent's own`)
+  for (const card of [null, 'gateway', 'world', 'git', 'agentset']) assert.equal(places.sourcesPlacementOf(card), 'rack', `dropped on ${card ?? 'the zone'}: the shared reading`)
+  assert.deepEqual(places.sourcesPlaceRequest('chain'), {track: {sources: true}})
+  assert.deepEqual(places.sourcesPlaceRequest('rack'), {track: {rack_sources: true}})
   assert.equal('GROUP_LEAD' in places, false)
   // The Decision helper is a chain inside the rack, in place of an Agent (§19.20 "Chain: a chain of an Agent rack, in place of an Agent";
   // decision-helper-binding.test.mjs), so no helper slot stands on the chain.
@@ -137,7 +156,9 @@ test('no monitor stands on a chain; connections stand before and after a session
     for (const [at, kind] of kinds.entries()) assert.ok(kind !== 'monitor', `${place.kind}: ${slots[at]} is a monitor`)
     if (place.kind === 'main') { assert.ok(!kinds.includes('connection'), 'the Main track carries no connection'); continue }
     const rack = slots.indexOf('agentset')
-    assert.deepEqual(kinds.slice(0, rack), ['connection', 'connection'], 'the Gateway and the Remote carrier, before the agents they bring in')
+    // REPLACED (DLW build ruling 2026-11-05; §19.9 "Kind: effect"): the two connections alone before the rack — Sources, an effect, stands
+    // between them and the rack, before the Agent.
+    assert.deepEqual(kinds.slice(0, rack), ['connection', 'connection', 'effect'], 'the Gateway and the Remote carrier, before the agents they bring in, then their Sources')
     assert.equal(kinds.at(-1), 'connection', 'Git / landing, after the work it lands')
   }
   assert.equal(await kindOf('member'), 'effect')

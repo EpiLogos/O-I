@@ -184,6 +184,12 @@ test('chain order: every mode\'s chain has one law; where the manual fixes the o
   // law's op stands; the Skillset rack itself still cannot pass the Agent, which keeps its place.
   assert.deepEqual(session.op, {name: 'agent-profile.chain-order', owner: 'Central', stands: true})
   assert.match(chainMove(session, session.slots, 'skillset', 1).refused, /skillset cannot move past agent/)
+  // Sources (DLW build ruling 2026-11-05; §19.9 "Chain: before the Agent"): ahead of the Agent rack, and inside an agent's chain before what it
+  // carries; each place is the chain's meaning, so neither moves, and what the agent carries cannot pass the agent's own Sources.
+  assert.deepEqual(session.slots, ['gateway', 'remote-carrier', 'sources', 'agentset', 'chain-sources', 'skillset', 'agent', 'world', 'git'])
+  for (const slot of ['sources', 'chain-sources']) assert.match(chainMove(session, session.slots, slot, 1).refused, /keeps its order/, slot)
+  assert.match(chainMove(session, session.slots, 'skillset', -1).refused, /skillset cannot move past chain-sources/)
+  assert.match(session.means, /Sources ahead of the rack is the shared reading every agent of it reads/)
   assert.equal(slotStanding(world, 'packet').moves, false)
   // Live: an effect moves through the instrument's own effect-chain edit; nothing moves past the torus.
   const live = chainLaw('live-part')

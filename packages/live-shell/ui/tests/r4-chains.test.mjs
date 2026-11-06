@@ -123,8 +123,10 @@ test('Factory: the session\'s chain is §16.2\'s Factory row around the Agent ra
   // own Skillset rack and Agent inside the rack (RACK_CHAIN), and a workcell's chain is still the road.
   assert.deepEqual(deriveAgentDeviceRows(allFamilyManifests()).map(slot => slot.id), ['gateway', 'agent', 'skillset', 'world', 'git'])
   const places = await source('agent/devices/factoryPlaces.ts')
-  assert.match(places, /export const SESSION_CHAIN: readonly FactorySlot\[\] = \['gateway', 'remote-carrier', 'agentset', 'world', 'git'\]/)
-  assert.match(places, /export const RACK_CHAIN: readonly FactorySlot\[\] = \['skillset', 'agent'\]/)
+  // REPLACED (DLW build ruling 2026-11-05; §19.9): no Sources — it stands ahead of the rack, the shared reading, and first inside the agent's
+  // own chain, its own.
+  assert.match(places, /export const SESSION_CHAIN: readonly FactorySlot\[\] = \['gateway', 'remote-carrier', 'sources', 'agentset', 'world', 'git'\]/)
+  assert.match(places, /export const RACK_CHAIN: readonly FactorySlot\[\] = \['chain-sources', 'skillset', 'agent'\]/)
   // REPLACED (§19.23 "It stands on no chain"; §16.2 "Connections keep the same order"): 'workcell' first — the road is the three connections.
   assert.match(places, /export const WORKCELL_CHAIN: readonly FactorySlot\[\] = \['gateway', 'remote-carrier', 'git'\]/)
   const text = await source('agent/devices/FactoryDeviceChain.tsx')
