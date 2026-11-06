@@ -25,6 +25,14 @@
 // work, Take back and Offer a task are pressed (each has its undoing: Take back, Show work, Revoke); Take, Return, Accept and Revoke are
 // held (no other world can take a task taken, what was brought back stands with its offerer, an acceptance enters the Run, a revocation
 // is for good).
+// Your world in the field (O-I #858 SF01, SF02, SF14; the Shown page): `fieldWorld` your world as the field holds it and `fieldLinked`
+// whether it is linked, `worldName` the name it is to stand under until it is, `yourParts` (JSON {id, kind, label}) the parts of it that
+// may be shown, `showPart` and `showTo` the one chosen and who is to see it (the field, the public, or the worlds at the star chosen),
+// `yourShown` (JSON {id, part, label, kind, reach, star}) what it shows and `shownPart` the one chosen to withdraw, `shownLoad` how much it
+// shows in a line; what other worlds withdrew is read from `field` (its `withdrawals`) at the view's aperture. The acts `fieldLink`,
+// `fieldUnlink`, `partShow` and `partWithdraw` go to the held field, each dimmed with its reason when it cannot be done. By the hold law
+// (DLW build ruling 2026-11-06, from manual §16.10) Link and Show raise your world's reach and are held, since what others saw cannot be
+// unseen; Unlink and Withdraw narrow it and are pressed.
 // What the atlas drew over the globe stands here,
 // the pane holding the material alone (O-I #762; manual §16.3 Full, "No controls"): the subject in focus with its line and its acts, the
 // closes of the reading cards (Space, Focus) and the graph's display (Graph, Display), each the atlas's own control, pressed through
@@ -44,7 +52,8 @@ import {WORLD_BODY_GENERATOR, WORLD_BODY_GENERATOR_VERSION, bodyDisc, isWorldBod
 import {discPngUrl} from '../../../projections/atlas/body/discPng'
 import {providerLabels} from '../../../projections/atlas/src/data/labels'
 import {PaneControls, paneControlsOf, paneReadings, paneTitle} from './paneControls'
-import {APERTURE_LABEL, GRANT_DAYS, NOT_AT_FIELD, fieldGraph, fieldSceneOf, starDayLine, starSayingLine, starWhen, type Aperture, type Audience, type FieldGraph, type FieldGraphNode, type FieldScene, type FieldTie, type SceneOffer, type SceneStar} from '../../../projections/atlas/system/fieldModel'
+import {APERTURE_LABEL, GRANT_DAYS, NOT_AT_FIELD, fieldGraph, fieldSceneOf, shownKey, starDayLine, starSayingLine, starWhen, withdrawnLine, type Aperture, type Audience, type FieldGraph, type FieldGraphNode, type FieldScene, type FieldTie,
+  type SceneOffer, type SceneStar, type YourShown} from '../../../projections/atlas/system/fieldModel'
 import './atlas-earth__globe-engine.css'
 
 type V = ViewProps['v']
@@ -811,6 +820,84 @@ function yoursSection(p: ViewProps) {
   </Section>
 }
 
+// ---------------------------------------------------------------- your world in the field: Link, Show, Withdraw (O-I #858 SF01, SF02, SF14)
+
+const SHOW_TO_OPTIONS = [{value: 'field', label: 'Field', does: 'The worlds in the field.'}, {value: 'public', label: 'Public', does: 'Anyone who reads the field, in it or not.'},
+  {value: 'star', label: 'Star', does: 'The worlds gathered at the star chosen, while yours is gathered there too.'}] as const
+const REACH_TEXT: Readonly<Record<string, string>> = {public: 'to the public', field: 'to the field', star: 'at a star'}
+/** Your world as the field holds it: the name it stands under while linked, out while not, not yet while it never was; unread while the
+ * field holds no worlds. */
+const inFieldText = (v: V): string | undefined => {
+  if (boolOf(v, 'fieldHeld') !== true) return undefined
+  const world = strOf(v, 'fieldWorld')
+  return !world ? 'not yet' : boolOf(v, 'fieldLinked') ? tailOf(world) : 'out'
+}
+function yourFieldSection(p: ViewProps) {
+  return <Section label="Your world" width={150}>
+    <TextField {...st(p, 'worldName')} wide label="Name" does="The name your world stands in the field under, from when it is first linked." value={strOf(p.v, 'worldName') ?? ''}
+      placeholder="Your world’s name" onChange={x => p.set('worldName', x)} />
+    <Readout label="In the field" value={inFieldText(p.v)} tone={boolOf(p.v, 'fieldLinked') ? 'value' : undefined} does="Your world in the field: the name it stands under while it is linked, out while it is not." />
+    <Action {...st(p, 'fieldLink')} label="Link" hold does="Hold to link your world into the field: the others see its planet, drawn from your own body, and nothing in it until you show it. What they see then cannot be unseen."
+      onPress={() => p.set('fieldLink', Date.now())} />
+    <Action {...st(p, 'fieldUnlink')} label="Unlink" does="Take your world out of the field. Everything in it stays as it was, and whoever read it reads that it left. Link brings it back."
+      onPress={() => p.set('fieldUnlink', Date.now())} />
+  </Section>
+}
+function yourShowSection(p: ViewProps) {
+  const parts = json<{id: string; kind: string; label: string}[]>(p.v, 'yourParts', [])
+  return <Section label="Show a part" width={150}>
+    <Chooser {...stand(p, 'showPart', parts.length ? undefined : 'No place stands on your own body yet: place one on the Body page.')} wide label="Part" does="A part of your world to show: a place on your own body, or a world of yours that lands on it."
+      value={strOf(p.v, 'showPart') ?? ''} options={parts.map(part => ({value: part.id, label: part.label, does: `A ${part.kind} of your world.`}))} onChange={x => p.set('showPart', x)} />
+    <Radio {...st(p, 'showTo')} label="To" does="Who sees it: the field, the public, or the worlds at the star chosen." value={strOf(p.v, 'showTo') ?? ''} options={SHOW_TO_OPTIONS} onChange={x => p.set('showTo', x)} />
+    <Action {...st(p, 'partShow')} label="Show" hold does="Hold to show it to whom you chose: they see it in its clearing, and what they saw cannot be unseen. Withdraw puts it back under cloud."
+      onPress={() => p.set('partShow', Date.now())} />
+  </Section>
+}
+/** What your world shows, and to whom: choose one to withdraw it. */
+const yourShownRows = (v: V): RowItem[] | undefined => json<YourShown[] | undefined>(v, 'yourShown', undefined)?.map(row => ({id: row.id, name: row.label,
+  note: row.reach === 'star' && row.star ? tailOf(row.star) : row.reach, light: 'lit', tone: 'value',
+  does: `A ${row.kind} your world shows ${REACH_TEXT[row.reach] ?? ''}${row.reach === 'star' && row.star ? ` (${tailOf(row.star)})` : ''}. Choose it to withdraw it.`}))
+function yourShownSection(p: ViewProps) {
+  const rows = yourShownRows(p.v), load = strOf(p.v, 'shownLoad')
+  return <Section label="Shown" grow>
+    <Rows does={`What your world shows, and to whom${load ? `: ${load}` : ''}. Choose one to withdraw it.`} size={4} page={numOf(p.v, 'shownPage') ?? 0} onPage={x => p.set('shownPage', x)}
+      items={rows} why={rows ? undefined : strOf(p.v, 'fieldWhy') ?? 'No reading of what your world shows.'} selected={strOf(p.v, 'shownPart')} onSelect={id => p.set('shownPart', id)} />
+    <Action {...st(p, 'partWithdraw')} label="Withdraw" does="Put the chosen part back under cloud, everywhere at once. Whoever read it reads that it was withdrawn, never what it was. Show shows it again."
+      onPress={() => p.set('partWithdraw', Date.now())} />
+  </Section>
+}
+/** How much of your world it shows, by reach: counted from what the binding read it shows; unread while that is not read. */
+function loadSection(p: ViewProps) {
+  const rows = json<YourShown[] | undefined>(p.v, 'yourShown', undefined), load = strOf(p.v, 'shownLoad')
+  const count = (reach: string) => rows?.filter(row => row.reach === reach).length
+  const does = (where: string) => `How many parts of your world you show ${where}${load ? `. In all: ${load}` : ''}. The rest is under cloud.`
+  return <Section label="Load" width={72}>
+    <Readout label="Public" value={count('public')} does={does('to the public')} />
+    <Readout label="Field" value={count('field')} does={does('to the field')} />
+    <Readout label="Stars" value={count('star')} does={does('at stars')} />
+  </Section>
+}
+const NARROW = 'At World and Local your own worlds stand alone: widen to Shared or Federated to read what others withdrew.'
+/** What other worlds withdrew from where you read it, newest last: from the field or the public, at a star, and the worlds that left. */
+const withdrawnRows = (v: V): RowItem[] | undefined => {
+  const scene = sceneOf(v)
+  if (!scene) return undefined
+  const read = json<{withdrawals?: unknown; withdrawWhy?: string}>(v, 'field', {})
+  if (!Array.isArray(read.withdrawals)) return unreadRows(read.withdrawWhy ?? 'No reading of what the worlds withdrew.')
+  const now = Date.now()
+  return [...scene.worlds.flatMap(world => world.withdrawn), ...scene.stars.flatMap(star => star.withdrawn), ...scene.left].sort((a, b) => (a.at ?? 0) - (b.at ?? 0))
+    .map((entry, i): RowItem => ({id: `${i}`, name: withdrawnLine(entry), light: 'dark', ...(entry.at === null ? {} : {note: starWhen(entry.at, now)}),
+      does: 'What another world withdrew from where you read it: whose, what kind and when. What it showed is back under cloud.'}))
+}
+function withdrawnSection(p: ViewProps) {
+  const rows = withdrawnRows(p.v), aperture = strOf(p.v, 'aperture')
+  return <Section label="Withdrawn" width={260}>
+    <Rows does="What other worlds withdrew from where you read it, in words: whose, what kind, from what reach and when; never what it showed." size={4}
+      page={numOf(p.v, 'withdrawnPage') ?? Math.max(0, Math.ceil((rows?.length ?? 0) / 4) - 1)} onPage={x => p.set('withdrawnPage', x)}
+      items={rows} why={rows ? (rows.length ? undefined : aperture === 'world' || aperture === 'local' ? NARROW : undefined) : strOf(p.v, 'fieldWhy') ?? 'No reading of the field.'} />
+  </Section>
+}
+
 const timeDial = (p: ViewProps) => {
   const own = st(p, 'cursor'), clock = boolOf(p.v, 'playing') === true
   return <Dial {...own} label="Year" does="The year in the window. The globe shows the places that stand in it." value={numOf(p.v, 'cursor') ?? NaN} def={1} scale={{min: 0, max: 1}} format={uText}
@@ -1202,6 +1289,15 @@ const FIELD_SAMPLE = {
  * factory.task-offer-return/v1). */
 const SAMPLE_RUN = 'run:01ARZ3NDEKTSV4RRFFQ69G5FAA'
 const SAMPLE_AT = Date.UTC(2026, 10, 6, 9)
+/** The design's own sample of what other worlds withdrew (O-I #858, SF14), as atlasDevices.fieldValues hands it: Mara withdrew a page from
+ * the field and took one back at your star; a world you read has left the field. */
+const FIELD_WITHDRAWN = [
+  {world_ref: 'world:mara', star_ref: null, reach: 'field', kind: 'page', at: SAMPLE_AT - 5_400_000},
+  {world_ref: 'world:mara', star_ref: 'star:rosarium', reach: 'star', kind: 'page', at: SAMPLE_AT - 3_600_000},
+  {world_ref: 'world:heron', star_ref: null, reach: 'world', kind: null, at: SAMPLE_AT - 1_200_000}]
+/** Your world as the binding reads it on the Shown page, from FIELD_SAMPLE: the parts of it to show and what it shows. */
+const YOUR_SHOWN = FIELD_SAMPLE.clearings.filter(row => row.world_ref === 'world:teraphim')
+  .map(row => ({id: shownKey(row.part_ref, row.star_ref), part: row.part_ref, label: row.shown.label, kind: row.shown.kind, reach: row.audience, star: row.star_ref}))
 const sampleOffer = (ref: string, world: string, state: string, taker: string | null, asks: string, returned?: Record<string, unknown>) => ({
   offer_ref: ref, star_ref: 'star:rosarium', world_ref: world, state, taker_world_ref: taker, lapses_at: SAMPLE_AT + 7 * 86_400_000, returned: returned ?? null,
   offer: {schema: 'factory.task-offer/v1', offer_ref: ref, star_ref: 'star:rosarium', programme: {run_ref: SAMPLE_RUN, workflow_unit_ref: 'workflow-unit:01ARZ3NDEKTSV4RRFFQ69G5FAY'},
@@ -1341,6 +1437,10 @@ export const design: DesignedDevice = {
       grantReads: 'project:river/docs', grantTouches: 'project:river/maps', grantDays: 7, fieldWork: SAMPLE_RUN, fieldOffer: 'offer:maras-index',
       madeLabel: 'The plate index', madeSummary: 'Indexed the twenty plates by their figures.', madeRef: 'project:river/maps',
       factoryTakers: JSON.stringify([{value: '/ground/.factory/state.json', label: 'Central'}, {value: '/river/.factory/state.json', label: 'river'}]), factoryTaker: '/ground/.factory/state.json'},
+    'Your world shown': {scale: 'field', aperture: 'federated', viewAs: 'me', fieldStar: 'star:rosarium', field: JSON.stringify({...FIELD_SAMPLE, withdrawals: FIELD_WITHDRAWN, withdrawWhy: null}),
+      fieldWorld: 'world:teraphim', fieldLinked: true, worldName: '',
+      yourParts: JSON.stringify([{id: 'study', kind: 'place', label: 'The study'}, {id: 'book', kind: 'palace', label: 'The book'}, {id: 'world:central:project:river', kind: 'project', label: 'river'}]),
+      showPart: 'study', showTo: 'field', yourShown: JSON.stringify(YOUR_SHOWN), shownLoad: '1 to the public, 1 to the field, 1 at a star', shownPart: YOUR_SHOWN[1]!.id},
     'Nothing in focus': {'pane.title': undefined, 'pane.controls': JSON.stringify([])},
     'No readings': Object.fromEntries(['light', 'view', 'scale', 'cursor', 'allTime', 'playing', 'cumulative', 'scope', 'wholeField', 'relation', 'selected', 'placeArmed', 'placePage', 'baseKind',
       'graphOpen', 'local', 'depth', 'centre', 'repel', 'link', 'distance', 'tieJung', 'tieInferred', 'tieSite', 'kindArchetype', 'kindTheoretic', 'kindFamily', 'occurrences', 'skyAnchors',
@@ -1348,7 +1448,8 @@ export const design: DesignedDevice = {
       'placeKind', 'locations', 'bodyRecord', 'bodyLook', 'bodyTime', 'generationNote', 'pane.title', 'pane.controls',
       'aperture', 'viewAs', 'field', 'fieldYours', 'fieldHeld', 'fieldWhy', 'cameraScale', 'fieldStar', 'fieldWaiting', 'fieldAdmit', 'starName', 'starGathers', 'starComes',
       'fieldSayTo', 'sayWhat', 'sayWords', 'dayPage', 'saidPage', 'factoryRuns', 'factoryRun', 'factoryUnits', 'factoryUnit', 'grantReads', 'grantTouches', 'grantDays',
-      'fieldWork', 'fieldOffer', 'madeLabel', 'madeSummary', 'madeRef', 'workPage', 'offerPage', 'offerNotes', 'factoryTakers', 'factoryTaker'].map(k => [k, undefined])),
+      'fieldWork', 'fieldOffer', 'madeLabel', 'madeSummary', 'madeRef', 'workPage', 'offerPage', 'offerNotes', 'factoryTakers', 'factoryTaker',
+      'fieldWorld', 'fieldLinked', 'worldName', 'yourParts', 'showPart', 'showTo', 'yourShown', 'shownLoad', 'shownPart', 'shownPage', 'withdrawnPage'].map(k => [k, undefined])),
   },
 
   folded: p => <Folded title="World" light={light(p)} readings={atFieldGraph(p.v) ? ['graph', shown(p.v, 'scale')] : strOf(p.v, 'view') === 'graph' ? ['graph', depthText(p.v)] : [shown(p.v, 'scale'), whenOf(p.v) ?? NONE]} onUnfold={p.nav.unfold} />,
@@ -1381,9 +1482,20 @@ export const design: DesignedDevice = {
   </Panel>,
 
   whole: p => <Panel title="World" view="whole" light={light(p)} onFold={p.nav.fold} onFull={p.nav.full}
-    pages={[{id: 'space', label: 'Space'}, {id: 'star', label: 'Star'}, {id: 'work', label: 'Work'}, {id: 'body', label: 'Body'}, {id: 'graph', label: 'Graph'}]}
-    page={p.page === 'graph' || p.page === 'body' || p.page === 'star' || p.page === 'work' ? p.page : 'space'} onPage={p.setPage}>
-    {p.page === 'work' ? <>
+    pages={[{id: 'space', label: 'Space'}, {id: 'star', label: 'Star'}, {id: 'work', label: 'Work'}, {id: 'shown', label: 'Shown'}, {id: 'body', label: 'Body'}, {id: 'graph', label: 'Graph'}]}
+    page={p.page === 'graph' || p.page === 'body' || p.page === 'star' || p.page === 'work' || p.page === 'shown' ? p.page : 'space'} onPage={p.setPage}>
+    {p.page === 'shown' ? <>
+      <Band>
+        <Section width={198}><SpaceOrField v={p.v} set={p.set} standing={p.standing} w={186} h={146} size="whole" /></Section>
+        {yourFieldSection(p)}
+        {yourShowSection(p)}
+      </Band>
+      <Band>
+        {yourShownSection(p)}
+        {loadSection(p)}
+        {withdrawnSection(p)}
+      </Band>
+    </> : p.page === 'work' ? <>
       <Band>
         <Section width={198}><SpaceOrField v={p.v} set={p.set} standing={p.standing} w={186} h={146} size="whole" /></Section>
         {runSection(p)}

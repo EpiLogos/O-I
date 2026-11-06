@@ -660,6 +660,25 @@ const starSayingBacking = table(
   }
 );
 
+/* What a world withdrew from the field (O-I #858, SF14): a clearing withdrawn,
+ * narrowed from the public to the field, taken back at a star, or the world
+ * itself taken out of the field. Whoever read it reads it as withdrawn there,
+ * in words, never silently gone: the row names whose world, from what reach
+ * (and at which star), of what kind and when — never which part, nor what it
+ * showed, which went back under cloud with the clearing. A table of its own,
+ * so no existing table changes. */
+const worldWithdrawalBacking = table(
+  { name: 'world_withdrawal_backing', public: false },
+  {
+    rowId: t.u64().primaryKey().autoInc(),
+    worldRef: t.string().index('btree'),
+    starRef: t.string().index('btree'),
+    reach: t.string(),
+    kind: t.string(),
+    withdrawnAtMicros: t.u64(),
+  }
+);
+
 /* A piece of work shown at a star (O-I #858, SF12): Software Factory's own
  * reading of a Run (`factory.shown-work/v1`: its agents at work, what they
  * made and where it stands, never its prompts, keys, files or machines),
@@ -773,6 +792,7 @@ const spacetimedb = schema({
   starOfferBacking,
   starWorkAnswerBacking,
   starWorkAnswerConnection,
+  worldWithdrawalBacking,
 });
 
 export default spacetimedb;
@@ -3761,9 +3781,63 @@ export const my_circle_gathering = spacetimedb.view(
   }
 );
 
+/* What a world withdrew (SF14) is read where what it withdrew was read: by
+ * its own owner always; while the world is linked, a clearing withdrawn from
+ * the public by anyone, one withdrawn from the field by whoever stands in the
+ * field, and one taken back at a star by the star's lighter and the worlds
+ * gathered there; and while the world is out of the field, that it left, by
+ * whoever read the field's worlds (the world itself was served to them). */
+function callerCanSeeWithdrawal(ctx: any, withdrawal: any): boolean {
+  const world = ctx.db.worldBacking.worldRef.find(withdrawal.worldRef);
+  if (!world) return false;
+  if (callerOwnsWorld(ctx, withdrawal.worldRef)) return true;
+  if (withdrawal.reach === 'world') return !world.linked;
+  if (!world.linked) return false;
+  if (withdrawal.reach === 'public') return true;
+  if (withdrawal.reach === 'field') return callerInField(ctx);
+  if (withdrawal.reach !== 'star' || !starRow(ctx, withdrawal.starRef)) return false;
+  return isFieldOwner(ctx, withdrawal.starRef) || callerGatheredAt(ctx, withdrawal.starRef);
+}
+
+/** The most one world's withdrawals keep: the oldest goes first. */
+const WORLD_WITHDRAWAL_LIMIT = 64;
+
+function noteWithdrawal(ctx: any, worldRef: string, reach: string, starRef: string, kind: string): void {
+  ctx.db.worldWithdrawalBacking.insert({ rowId: 0n, worldRef, starRef, reach, kind, withdrawnAtMicros: nowMicros(ctx) });
+  const kept = Array.from(ctx.db.worldWithdrawalBacking.worldRef.filter(worldRef)) as any[];
+  if (kept.length <= WORLD_WITHDRAWAL_LIMIT) return;
+  kept.sort((a, b) => (a.rowId < b.rowId ? -1 : 1));
+  for (const old of kept.slice(0, kept.length - WORLD_WITHDRAWAL_LIMIT)) ctx.db.worldWithdrawalBacking.rowId.delete(old.rowId);
+}
+
+const shownKind = (clearing: any): string => parseStoredJson(clearing.shownJson, 'Shown').kind ?? '';
+
+export const world_withdrawal = spacetimedb.view(
+  { name: 'world_withdrawal', public: true },
+  t.array(worldWithdrawalBacking.rowType),
+  (ctx) => {
+    const rows: any[] = [];
+    for (const row of ctx.db.worldWithdrawalBacking.iter()) if (callerCanSeeWithdrawal(ctx, row)) rows.push(row);
+    return rows;
+  }
+);
+
+/** What the worlds of the caller's circle withdrew (the narrower apertures): what is withdrawn far away sends them nothing. */
+export const my_circle_withdrawal = spacetimedb.view(
+  { name: 'my_circle_withdrawal', public: true },
+  t.array(worldWithdrawalBacking.rowType),
+  (ctx) => {
+    const rows: any[] = [];
+    const stars = callerCircleStars(ctx);
+    for (const row of ctx.db.worldWithdrawalBacking.iter()) if (inCallerCircle(ctx, row.worldRef, stars) && callerCanSeeWithdrawal(ctx, row)) rows.push(row);
+    return rows;
+  }
+);
+
 /* A world is put by its first creator and stays theirs; Link takes it into
  * the field and out again, leaving everything in it as it was. A put that
- * changes nothing writes nothing (no viewer's cursor moves for it). */
+ * changes nothing writes nothing (no viewer's cursor moves for it). Taken
+ * out, those who read the field read that it left (SF14). */
 export const put_world = spacetimedb.reducer(
   { worldRef: t.string(), bodyJson: t.string(), linked: t.bool() },
   (ctx, args) => {
@@ -3775,6 +3849,11 @@ export const put_world = spacetimedb.reducer(
       if (!callerOwnsWorld(ctx, args.worldRef)) fail('That world belongs to someone else');
       if (existing.bodyJson === bodyJson && existing.linked === args.linked) return;
       ctx.db.worldBacking.worldRef.update({ ...existing, bodyJson, linked: args.linked, updatedAtMicros: nowMicros(ctx) });
+      if (existing.linked !== args.linked) {
+        // one word of its leaving at a time: linked again, it is back, and the word goes
+        for (const left of Array.from(ctx.db.worldWithdrawalBacking.worldRef.filter(args.worldRef)) as any[]) if (left.reach === 'world') ctx.db.worldWithdrawalBacking.rowId.delete(left.rowId);
+        if (!args.linked) noteWithdrawal(ctx, args.worldRef, 'world', '', '');
+      }
       return;
     }
     if (Array.from(ctx.db.worldOwner.ownerIdentity.filter(ctx.sender)).length >= 64) fail('You hold as many worlds in the field as one person may');
@@ -3785,7 +3864,8 @@ export const put_world = spacetimedb.reducer(
 
 /* Showing a part of a world opens a clearing for its audience. The world row
  * itself is never touched, so a viewer who cannot see the clearing is sent
- * nothing at all. */
+ * nothing at all. Narrowed from the public to the field, those outside the
+ * field read it as withdrawn from the public (SF14). */
 export const open_clearing = spacetimedb.reducer(
   { worldRef: t.string(), partRef: t.string(), starRef: t.string(), audience: t.string(), shownJson: t.string() },
   (ctx, args) => {
@@ -3803,6 +3883,7 @@ export const open_clearing = spacetimedb.reducer(
     if (existing) {
       if (existing.audience === row.audience && existing.shownJson === row.shownJson) return;
       ctx.db.worldClearingBacking.clearingKey.update(row);
+      if (existing.audience === 'public' && row.audience === 'field') noteWithdrawal(ctx, args.worldRef, 'public', '', shownKind(existing));
       return;
     }
     if (Array.from(ctx.db.worldClearingBacking.worldRef.filter(args.worldRef)).length >= 512) fail('This world shows as many clearings as one world may');
@@ -3812,7 +3893,7 @@ export const open_clearing = spacetimedb.reducer(
 );
 
 /* Withdrawing a clearing puts it back under cloud everywhere at once; the
- * world keeps what it was. */
+ * world keeps what it was. Whoever read it reads it as withdrawn (SF14). */
 export const withdraw_clearing = spacetimedb.reducer(
   { worldRef: t.string(), partRef: t.string(), starRef: t.string() },
   (ctx, args) => {
@@ -3821,7 +3902,8 @@ export const withdraw_clearing = spacetimedb.reducer(
     const shown = ctx.db.worldClearingBacking.clearingKey.find(key);
     if (!shown) fail('That was not shown');
     ctx.db.worldClearingBacking.clearingKey.delete(key);
-    if (shown.audience === 'star' && starRow(ctx, args.starRef)) noteStarDay(ctx, args.starRef, args.worldRef, 'took-back', parseStoredJson(shown.shownJson, 'Shown').kind ?? '');
+    if (shown.audience === 'star' && starRow(ctx, args.starRef)) noteStarDay(ctx, args.starRef, args.worldRef, 'took-back', shownKind(shown));
+    if (shown.audience !== 'star' || starRow(ctx, args.starRef)) noteWithdrawal(ctx, args.worldRef, shown.audience, args.starRef, shownKind(shown));
   }
 );
 
@@ -3910,7 +3992,9 @@ export const admit_to_star = spacetimedb.reducer(
 
 function takeBackFromStar(ctx: any, starRef: string, worldRef: string): void {
   for (const clearing of Array.from(ctx.db.worldClearingBacking.worldRef.filter(worldRef)) as any[]) {
-    if (clearing.starRef === starRef) ctx.db.worldClearingBacking.clearingKey.delete(clearing.clearingKey);
+    if (clearing.starRef !== starRef) continue;
+    ctx.db.worldClearingBacking.clearingKey.delete(clearing.clearingKey);
+    noteWithdrawal(ctx, worldRef, 'star', starRef, shownKind(clearing));
   }
   // the work it showed there, and the tasks it offered there and nobody has brought back
   for (const work of Array.from(ctx.db.starWorkBacking.worldRef.filter(worldRef)) as any[]) {
@@ -3958,6 +4042,8 @@ export const close_star = spacetimedb.reducer(
     // the star's day closes with it, and what was said there
     for (const entry of Array.from(ctx.db.starDayBacking.starRef.filter(args.starRef)) as any[]) ctx.db.starDayBacking.rowId.delete(entry.rowId);
     for (const saying of Array.from(ctx.db.starSayingBacking.starRef.filter(args.starRef)) as any[]) ctx.db.starSayingBacking.sayingRef.delete(saying.sayingRef);
+    // and what was taken back there: nobody reads at a closed star
+    for (const taken of Array.from(ctx.db.worldWithdrawalBacking.starRef.filter(args.starRef)) as any[]) ctx.db.worldWithdrawalBacking.rowId.delete(taken.rowId);
     // the work shown there and the tasks offered there go with it
     for (const work of Array.from(ctx.db.starWorkBacking.starRef.filter(args.starRef)) as any[]) { ctx.db.starWorkBacking.workKey.delete(work.workKey); unanswerWork(ctx, work.workKey); }
     for (const offer of Array.from(ctx.db.starOfferBacking.starRef.filter(args.starRef)) as any[]) ctx.db.starOfferBacking.offerRef.delete(offer.offerRef);

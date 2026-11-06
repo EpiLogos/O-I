@@ -62,6 +62,11 @@ export const STAR_WORK_SUBSCRIPTION = ['SELECT * FROM star_work', 'SELECT * FROM
 /** Which works shown at a star still answer (O-I #858; manual §17.2, "live while its source answers"), subscribed on its own beside
  * them: a service that keeps no answers reads each work by its standing alone, as it always did. */
 export const STAR_WORK_ANSWER_SUBSCRIPTION = ['SELECT * FROM star_work_answer'];
+/** What the worlds withdrew from the field (O-I #858, SF14): whose world, from what reach, of what kind and when, never which part nor
+ * what it showed. Read at the worlds' scope (the circle variant for the narrower apertures), subscribed on its own beside them: a
+ * service that keeps no withdrawals yet is read as it was, and says so. */
+export const WORLD_WITHDRAWAL_SUBSCRIPTION = ['SELECT * FROM world_withdrawal'];
+export const CIRCLE_WITHDRAWAL_SUBSCRIPTION = ['SELECT * FROM my_circle_withdrawal'];
 /** The worlds as the World's narrower apertures read them (O-I #858, Aperture: World, Local, Shared): the worlds and the caller's own
  * whole, so what lies past the edge is counted, and the clearings and gatherings of the caller's circle alone, so what moves far away
  * sends nothing. Federated reads WORLD_SUBSCRIPTION; a service without the circle views is read whole. */
@@ -79,6 +84,7 @@ const NO_STAR_DAY = 'This field\'s service does not keep a star\'s day yet';
 const NO_SAYINGS = 'This field\'s service does not keep what is said at a star yet';
 const NO_WORKS = 'This field\'s service does not keep work shown or tasks offered at a star yet';
 const NO_ANSWERS = 'This field\'s service does not keep whether a work shown at a star still answers yet';
+const NO_WITHDRAWALS = 'This field\'s service does not keep what a world withdrew yet';
 const TIMEOUT_MS = Number(process.env.OI_SHARED_FIELD_TIMEOUT_MS ?? 15_000);
 export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -130,6 +136,8 @@ export function tokenFile(database: string, label = 'owner') {
 export interface Client { conn: DbConnection; identity: any; token: string; lifecycle: any; live: any; target: Target; identityHex: string; worlds: WorldsHeld; starDay: WorldsHeld; sayings: WorldsHeld; works: WorldsHeld
   /** whether the works' answers are held (§17.2) */
   answers: WorldsHeld
+  /** whether what the worlds withdrew is held (SF14), and the subscription that reads it at the worlds' scope */
+  withdrawals: WorldsHeld; withdrawalHandle?: any; withdrawalScope?: WorldScope
   /** how much of the worlds this connection reads, and the subscription that reads it */
   worldScope: WorldScope; worldHandle?: any }
 
@@ -178,16 +186,18 @@ export async function open(target: Target, label = 'owner'): Promise<Client> {
 
 /** Subscribe the worlds beside the field, each star's day beside them and what was said at each star beside that; a service without
  * any of them is said, never an error of the field. */
-async function holdWorlds(conn: DbConnection): Promise<{ worlds: WorldsHeld; starDay: WorldsHeld; sayings: WorldsHeld; works: WorldsHeld; answers: WorldsHeld; worldHandle?: any }> {
-  let worldHandle: any;
+async function holdWorlds(conn: DbConnection): Promise<{ worlds: WorldsHeld; starDay: WorldsHeld; sayings: WorldsHeld; works: WorldsHeld; answers: WorldsHeld; withdrawals: WorldsHeld; worldHandle?: any; withdrawalHandle?: any }> {
+  let worldHandle: any, withdrawalHandle: any;
   const held = async (queries: string[], detail: string, keep?: (handle: any) => void): Promise<WorldsHeld> => {
     try { const handle = await subscribeQueries(conn, queries); keep?.(handle); return { state: 'held' }; } catch { return { state: 'unavailable', detail }; }
   };
   const worlds = await held(WORLD_SUBSCRIPTION, NO_WORLDS, (handle) => { worldHandle = handle; });
-  if (worlds.state !== 'held') return { worlds, starDay: { state: 'unavailable', detail: NO_STAR_DAY }, sayings: { state: 'unavailable', detail: NO_SAYINGS }, works: { state: 'unavailable', detail: NO_WORKS }, answers: { state: 'unavailable', detail: NO_ANSWERS } };
+  if (worlds.state !== 'held') return { worlds, starDay: { state: 'unavailable', detail: NO_STAR_DAY }, sayings: { state: 'unavailable', detail: NO_SAYINGS }, works: { state: 'unavailable', detail: NO_WORKS }, answers: { state: 'unavailable', detail: NO_ANSWERS },
+    withdrawals: { state: 'unavailable', detail: NO_WITHDRAWALS } };
   const works = await held(STAR_WORK_SUBSCRIPTION, NO_WORKS);
   return { worlds, worldHandle, starDay: await held(STAR_DAY_SUBSCRIPTION, NO_STAR_DAY), sayings: await held(STAR_SAYING_SUBSCRIPTION, NO_SAYINGS), works,
-    answers: works.state === 'held' ? await held(STAR_WORK_ANSWER_SUBSCRIPTION, NO_ANSWERS) : { state: 'unavailable', detail: NO_ANSWERS } };
+    answers: works.state === 'held' ? await held(STAR_WORK_ANSWER_SUBSCRIPTION, NO_ANSWERS) : { state: 'unavailable', detail: NO_ANSWERS },
+    withdrawals: await held(WORLD_WITHDRAWAL_SUBSCRIPTION, NO_WITHDRAWALS, (handle) => { withdrawalHandle = handle; }), withdrawalHandle };
 }
 
 /** Read the worlds at a scope (the World's Aperture): subscribe it, and only once it has applied let the scope before it go. A service
@@ -195,18 +205,26 @@ async function holdWorlds(conn: DbConnection): Promise<{ worlds: WorldsHeld; sta
  * transaction. */
 export async function scopeWorlds(client: Client, scope: WorldScope): Promise<WorldScope> {
   if (client.worlds.state !== 'held' || client.worldScope === scope) return client.worldScope;
-  let handle: any;
+  let handle: any, withdrawalHandle: any;
   try { handle = await subscribeQueries(client.conn, scope === 'circle' ? CIRCLE_SUBSCRIPTION : WORLD_SUBSCRIPTION); } catch { return client.worldScope; }
-  const prior = client.worldHandle;
+  // what the worlds withdrew, at the same scope; a service without the circle's withdrawals keeps its withdrawals whole beside them
+  if (client.withdrawals.state === 'held') {
+    try { withdrawalHandle = await subscribeQueries(client.conn, scope === 'circle' ? CIRCLE_WITHDRAWAL_SUBSCRIPTION : WORLD_WITHDRAWAL_SUBSCRIPTION); } catch {}
+  }
+  const prior = client.worldHandle, priorWithdrawals = withdrawalHandle ? client.withdrawalHandle : undefined;
   client.worldHandle = handle;
+  if (withdrawalHandle) { client.withdrawalHandle = withdrawalHandle; client.withdrawalScope = scope; }
   client.worldScope = scope;
   try { prior?.unsubscribe(); } catch {}
+  try { priorWithdrawals?.unsubscribe(); } catch {}
   return scope;
 }
 
 /** The clearings and gatherings as this connection reads them: the caller's circle, or the whole field. */
 const clearingRows = (client: Client): any[] => rows(client.worldScope === 'circle' ? (client.conn.db as any).myCircleClearing : (client.conn.db as any).worldClearing);
 const gatheringRows = (client: Client): any[] => rows(client.worldScope === 'circle' ? (client.conn.db as any).myCircleGathering : (client.conn.db as any).worldGathering);
+/** What the worlds withdrew as this connection reads it: at the scope its withdrawals were last subscribed at. */
+const withdrawalRows = (client: Client): any[] => rows(client.withdrawalScope === 'circle' ? (client.conn.db as any).myCircleWithdrawal : (client.conn.db as any).worldWithdrawal);
 
 export function close(client: Client) {
   try { client.live.dispose(); } catch {}
@@ -317,6 +335,11 @@ export function worldReading(client: Client) {
     star_offers: rows(db.starOffer).sort((a: any, b: any) => (BigInt(a.offeredAtMicros) < BigInt(b.offeredAtMicros) ? -1 : BigInt(a.offeredAtMicros) > BigInt(b.offeredAtMicros) ? 1 : a.offerRef < b.offerRef ? -1 : 1))
       .map((row: any) => ({ offer_ref: row.offerRef, star_ref: row.starRef, world_ref: row.worldRef, state: row.state, taker_world_ref: row.takerWorldRef || null, offer: parse(row.offerJson),
         ...(row.returnJson ? { returned: parse(row.returnJson) } : {}), lapses_at_micros: String(row.lapsesAtMicros), offered_at_micros: String(row.offeredAtMicros), moved_at_micros: String(row.movedAtMicros) })),
+    // what the worlds withdrew (SF14), in the order it happened: whose world, from what reach (the public, the field, a star — or the
+    // world itself, out of the field), of what kind and when; never which part, nor what it showed
+    world_withdrawal: client.withdrawals,
+    world_withdrawals: client.withdrawals.state === 'held' ? withdrawalRows(client).sort((a: any, b: any) => (BigInt(a.rowId) < BigInt(b.rowId) ? -1 : 1))
+      .map((row: any) => ({ world_ref: row.worldRef, star_ref: row.starRef || null, reach: row.reach, ...(row.kind ? { kind: row.kind } : {}), withdrawn_at_micros: String(row.withdrawnAtMicros) })) : [],
   };
 }
 
@@ -407,6 +430,7 @@ export const HELD_TABLES: ReadonlyArray<readonly [property: string, table: strin
   ['world', 'world', 'worldRef'], ['myWorld', 'my_world', 'worldRef'], ['worldClearing', 'world_clearing', 'clearingKey'], ['worldGathering', 'world_gathering', 'gatheringKey'],
   ['starDay', 'star_day', 'rowId'], ['starSaying', 'star_saying', 'sayingRef'], ['starWork', 'star_work', 'workKey'], ['starOffer', 'star_offer', 'offerRef'],
   ['myCircleClearing', 'my_circle_clearing', 'clearingKey'], ['myCircleGathering', 'my_circle_gathering', 'gatheringKey'], ['starWorkAnswer', 'star_work_answer', 'workKey'],
+  ['worldWithdrawal', 'world_withdrawal', 'rowId'], ['myCircleWithdrawal', 'my_circle_withdrawal', 'rowId'],
 ];
 
 export interface RowChange { table: string; op: 'insert' | 'update' | 'delete'; ref: string }

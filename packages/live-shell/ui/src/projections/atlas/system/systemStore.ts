@@ -3,7 +3,7 @@
 // overlay (system/systemOverlay.ts), the World device and the browser's Bodies group. It holds the last reading and nothing else:
 // no body is kept, defaulted or invented here, and every write goes to its owner through the acts the readings bind.
 import type {SystemBody, SystemSatellite} from './systemModel'
-import type {Aperture, Audience, HeldField, SayingWhat, ShownTo, StarComes} from './fieldModel'
+import type {Aperture, Audience, HeldField, SayingWhat, ShowTo, ShownTo, StarComes} from './fieldModel'
 
 // The even cloud (manual §17.2 View as; system/fieldModel.ts keeps the rest of the field's model). Kept here, beside the view's own
 // choice of whom you look as, because the Palace's cloud (palaces/palacesModel.ts) is drawn in the window's first load and must not
@@ -136,10 +136,17 @@ export interface StarHand {
   readonly madeRef: string | null
   /** [SF13] the Factory state a task your world takes up is kept in, chosen on the face; null for the first located */
   readonly taker: string | null
+  /** [SF01, SF02, SF14] the name your world is to stand in the field under, until it is linked; the part of your world chosen to show and
+   * who is to see it (none of either until you choose: nothing is shown by default); and the thing your world shows chosen to withdraw */
+  readonly worldName: string
+  readonly showPart: string | null
+  readonly showTo: ShowTo | null
+  readonly shownPart: string | null
 }
 
 let hand: StarHand = {star: null, admit: null, name: '', gathers: '', comes: 'anyone', to: null, what: 'question', words: '', dayPage: null, saidPage: null,
-  run: null, unit: null, work: null, offer: null, reads: '', touches: '', days: 7, made: '', summary: '', madeRef: null, taker: null}
+  run: null, unit: null, work: null, offer: null, reads: '', touches: '', days: 7, made: '', summary: '', madeRef: null, taker: null,
+  worldName: '', showPart: null, showTo: null, shownPart: null}
 
 export const starHand = (): StarHand => hand
 
