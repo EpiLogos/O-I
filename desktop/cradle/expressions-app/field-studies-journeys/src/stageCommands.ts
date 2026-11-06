@@ -156,7 +156,7 @@ export const STAGE_TAKE_MODES = ['append', 'replace'] as const;
 export type StageTakeMode = (typeof STAGE_TAKE_MODES)[number];
 export const STAGE_TRACK_ACTIONS = ['preview', 'stop-preview'] as const;
 export type StageTrackAction = (typeof STAGE_TRACK_ACTIONS)[number];
-/** Automation runtime (app.ts automation-play and automation-loop). play fires every enabled one-shot ramp; loop sets the global loop flag, which is not a document value. Pausing is a document change (each group's enabled flag), so it is not a stage command. resume hands every parameter held by a live gesture back to its automation: runtime state in the frame, never a document write. */
+/** Automation runtime (app.ts automation-play and automation-loop). play fires every enabled one-shot ramp; loop sets the global loop flag, which is not a document value. Pausing is a document change (each group's enabled flag), so it is not a stage command. resume hands every parameter held by a live gesture back to its automation, or the one live target it names: runtime state in the frame, never a document write. */
 export const STAGE_AUTOMATION_ACTIONS = ['play', 'loop', 'resume'] as const;
 export type StageAutomationAction = (typeof STAGE_AUTOMATION_ACTIONS)[number];
 /** Live parameter channel. A drag streams `set` at about 20 Hz: the frame applies the value as a transient engine override and writes NO document.
@@ -336,7 +336,7 @@ export type StageCommand =
   | {command: 'tracks'; action: StageTrackAction}
   | {command: 'automation'; action: 'play'}
   | {command: 'automation'; action: 'loop'; on: boolean}
-  | {command: 'automation'; action: 'resume'}
+  | {command: 'automation'; action: 'resume'; target?: string}
   | {command: 'live'; action: 'set' | 'hold'; target: string; value: number}
   | {command: 'live'; action: 'release'}
   /** An instrument edit, made now or, for an edit that acts on the owner (STAGE_INSTRUMENT_TIMED_KINDS), once the owner's sound has reached
@@ -867,7 +867,11 @@ export function readStageRequest(raw: unknown): {req: number; command: StageComm
     case 'automation':
       // on belongs to loop only; play names no operand.
       if (raw.action === 'play') return closed(raw, [...BASE_KEYS, 'action']) ? {req, command: {command: 'automation', action: 'play'}} : null;
-      if (raw.action === 'resume') return closed(raw, [...BASE_KEYS, 'action']) ? {req, command: {command: 'automation', action: 'resume'}} : null;
+      // A resume gives back every held value, or the one live target it names (that value's hand-back light, O-I #747; manual §20.1 Rules).
+      if (raw.action === 'resume') {
+        if (raw.target === undefined) return closed(raw, [...BASE_KEYS, 'action']) ? {req, command: {command: 'automation', action: 'resume'}} : null;
+        return closed(raw, [...BASE_KEYS, 'action', 'target']) && stageLiveBinding(raw.target) ? {req, command: {command: 'automation', action: 'resume', target: raw.target as string}} : null;
+      }
       return raw.action === 'loop' && closed(raw, [...BASE_KEYS, 'action', 'on']) && typeof raw.on === 'boolean' ? {req, command: {command: 'automation', action: 'loop', on: raw.on}} : null;
     case 'janko': {
       // Keys of the surface (O-I #853): a strike of distinct keys at one amplitude, or a release of keys. Anything else is refused here.

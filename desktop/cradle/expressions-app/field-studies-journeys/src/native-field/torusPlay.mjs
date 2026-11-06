@@ -122,7 +122,11 @@ function torusReading(status, struck, pitchOf) {
     return {tonesHz: [], silentBecause: status === 'held' ? 'The field is held' : status === 'opening' ? 'The instrument is still opening, so the torus is not sounding' : 'The torus is not sounding'};
   }
   if (!struck || !Array.isArray(struck.refs)) return {tonesHz: [], silentBecause: 'The torus has not been struck yet'};
-  const tonesHz = struck.refs.map(ref => pitchOf.get(ref)).filter(hz => typeof hz === 'number');
+  // A key's own note voices sound at the pitches their own cell gives them (controller.ts struckVoicesOf, QL `ql.note-voices/v1`), not at
+  // the resident voice of their slot's; every other voice at its own pitch in the owner's reading.
+  const own = Array.isArray(struck.tones_hz) && struck.tones_hz.length === struck.refs.length ? struck.tones_hz : null;
+  const tonesHz = own ? own.filter(hz => typeof hz === 'number' && Number.isFinite(hz) && hz > 0)
+    : struck.refs.map(ref => pitchOf.get(ref)).filter(hz => typeof hz === 'number');
   if (tonesHz.length === 0) return {tonesHz: [], silentBecause: 'None of the voices that were struck are voices of the owner now'};
   return {tonesHz, silentBecause: null};
 }

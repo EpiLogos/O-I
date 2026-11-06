@@ -35,6 +35,8 @@ export const stageLiveHold = (target: string, value: number): StageCommand => ({
 export const STAGE_LIVE_RELEASE: StageCommand = {command: 'live', action: 'release'}
 /** Re-enable automation: hand every manually held parameter back to its automation (frame runtime state, no document write). */
 export const STAGE_AUTOMATION_RESUME: StageCommand = {command: 'automation', action: 'resume'}
+/** One value's hand-back light (manual §20.1 Rules; O-I #747): give that one held value back to its lane. */
+export const stageAutomationResumeOne = (target: string): StageCommand => ({command: 'automation', action: 'resume', target})
 
 /** A command from an untyped source, admitted only by the boundary's reader. */
 export function parseStageCommand(raw: unknown): StageCommand | null {

@@ -19,8 +19,8 @@ import {expressionsDeviceId, expressionsFieldDevice, expressionsFieldEntry, inCo
 import {fieldDeviceSend} from './fieldDeviceSend'
 import {ExpressionsPicture, hasPicture} from './ExpressionsPicture'
 import {ModulationLine} from './ModulationLine'
-import {physicsDesignBinding, type PhysicsPress} from './physicsBinding'
-import {bodySourceOf, fieldDesignBinding as familyDesignBinding, isFieldDesignFamily, resonanceBodyRows} from './fieldDesignBinding'
+import {PHYSICS_KEYS, physicsDesignBinding, type PhysicsPress} from './physicsBinding'
+import {bodySourceOf, fieldDesignBinding as familyDesignBinding, isFieldDesignFamily, resonanceBodyRows, withAutomationLanes, type FieldLanes} from './fieldDesignBinding'
 import type {DesignBinding, Value} from '../../frame/devices/designed'
 import {dispatchNativeEngineCommand, engineCommandReason, readNativeEngineMounted} from '../../native/engineCommand'
 import './expressionsDevices.css'
@@ -100,7 +100,12 @@ export function useFieldDevices(families: readonly string[], host: Omit<FieldHos
   // No reading, no device: a field device is the owner's reading of the open work, never a default. A family whose catalogue design
   // draws on value keys the engine reports publishes its binding with it (fieldDesignBinding), and the design draws in every place.
   // Resonance's tattva: the live scene's M2 condition the frame announces, and the map's name for its coordinate (qlCoordinateName.ts).
-  const condition = useHostedChrome()?.state?.instrumentCondition ?? null
+  const chrome = useHostedChrome()
+  const condition = chrome?.state?.instrumentCondition ?? null
+  // The scene's lanes and the values the frame holds off them (manual §20.1 Rules): each value shows what moves it, and its hand-back.
+  // Keyed by what the frame announces, so a new announcement of the same holds keeps every binding as it was.
+  const holdsKey = JSON.stringify(chrome?.state?.automationHolds ?? []), stageRun = chrome?.run ?? null
+  const lanes = useMemo<FieldLanes>(() => ({run: stageRun, holds: JSON.parse(holdsKey) as FieldLanes['holds']}), [stageRun, holdsKey])
   const tattvaName = useCoordinateName(condition?.tattva_ref ?? null)
   // Resonance's Body source: M2's body constants (QL's table) and the hand's choice of source (fieldDesignBinding.ts resonanceBody).
   const bodyTable = useBodyTable()
@@ -108,9 +113,9 @@ export function useFieldDevices(families: readonly string[], host: Omit<FieldHos
   const devices = useMemo(() => families.map(family => {
     const device = host.reading ? hostedFieldDevice(family, {reading: host.reading, locked: host.locked}, sends.get(family)!) : null
     const binding = device ? fieldDesignBinding(family, device, host.reading, sends.get(family) ?? null,
-      {condition, name: tattvaName, table: bodyTable, held: holds[expressionsDeviceId(family)] ?? {}}) : undefined
+      {condition, name: tattvaName, table: bodyTable, held: holds[expressionsDeviceId(family)] ?? {}}, lanes) : undefined
     return {family, id: expressionsDeviceId(family), device, picture: pictures.get(family)!, ...(binding ? {binding} : {})}
-  }), [host.reading, host.locked, sends, pictures, condition, tattvaName, bodyTable, holds])
+  }), [host.reading, host.locked, sends, pictures, condition, tattvaName, bodyTable, holds, lanes])
   // Under Tattva the plate follows the tattva: when the condition's fibre moves, its rows are written again (once per target).
   const followed = useRef('')
   useEffect(() => {
@@ -145,7 +150,14 @@ const enginePress: PhysicsPress = action => {
  * other field family on its engine paths (fieldDesignBinding.ts, R5). The Field (`expressions:field`) is no family of the rack: it is the front
  * of these devices and the frame's object sound, published at the Studio's head by useFieldInstrument.ts (fieldInstrument.ts). */
 export function fieldDesignBinding(family: string, device: DeviceInstance, reading: NativeEditorReading | null, send: FieldDeviceSend | null = null,
-  tattva: {condition?: FrameInstrumentCondition | null; name?: CoordinateName | null; table?: BodyTable | null; held?: Readonly<Record<string, Value>>} = {}): DesignBinding | undefined {
+  tattva: {condition?: FrameInstrumentCondition | null; name?: CoordinateName | null; table?: BodyTable | null; held?: Readonly<Record<string, Value>>} = {},
+  lanes: FieldLanes | null = null): DesignBinding | undefined {
+  const binding = familyBinding(family, device, reading, send, tattva)
+  // The lanes of the scene, where the frame is there to say what it holds (manual §20.1 Rules; withAutomationLanes).
+  return binding && lanes ? withAutomationLanes(binding, device, reading, lanes, family === 'physics' ? PHYSICS_KEYS : null) : binding
+}
+function familyBinding(family: string, device: DeviceInstance, reading: NativeEditorReading | null, send: FieldDeviceSend | null,
+  tattva: {condition?: FrameInstrumentCondition | null; name?: CoordinateName | null; table?: BodyTable | null; held?: Readonly<Record<string, Value>>}): DesignBinding | undefined {
   if (family === 'physics') return physicsDesignBinding(device, reading, enginePress)
   return isFieldDesignFamily(family) ? familyDesignBinding(family, device, reading, send, tattva) : undefined
 }

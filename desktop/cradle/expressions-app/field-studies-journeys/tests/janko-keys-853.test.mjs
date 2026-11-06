@@ -108,12 +108,32 @@ test('a strike\'s answer carries the keys whose notes made way, both ways across
 
 // ---------------------------------------------------------------------------------------------------- the controller's two acts
 const keyOf = key => `${key.row}/${key.column}`;
+const TorusOwnerCoupling = k => (k === 2 || k === 5 ? 0 : (k + 1) / 10);
 const openController = async ({polyphony = 16, Audio = base => base} = {}) => {
   const {ControlledAudio, ControlledSceneOwner} = await fixture();
   const THREE = await import('three');
   const {NativeFieldController} = await controller();
   class TorusOwner extends ControlledSceneOwner {
     acts = []; notes = []; next = 0;
+    // The strike's receipt as QL's owner answers it beside the act (scene_field.rs; instrument-session.mjs lastStrikeAt), once a test asks
+    // for it: under Logic on the torus each key is a note that strikes its own cell (`ql.note-voices/v1`, voice_cells: eight voices of their
+    // own, each `like` the Logic voice of its slot, at its own frequency); otherwise, and for a singlet, the resident voices at the points
+    // (`ql.strike-at/v1`). The coupling is a protocol number, not QL's χ: voice 2 and voice 5 stand on a node line, so they get nothing.
+    receipts = false;
+    static coupling(k) { return k === 2 || k === 5 ? 0 : (k + 1) / 10; }
+    keyReceipt(notes, amplitude) {
+      const points = notes.map(note => ({theta: note.point.theta, phi: note.point.phi, amplitude}));
+      if (this.torusSettings.tuning !== 'logic') return this.residentReceipt(notes.map(note => note.point), amplitude);
+      return {schema: 'ql.note-voices/v1', points, strike: 1, law: 'controlled', made_way: [],
+        notes: notes.map(note => ({id: note.id, voices: Array.from({length: 8}, (_, k) => ({like: `scene:logic/${k}`, frequency_hz: 200 + 10 * note.id + k,
+          m: 1 + k % 4, n: 2 + k % 3, coupling: TorusOwner.coupling(k), amplitude: [amplitude[0] * TorusOwner.coupling(k), 0]}))}))};
+    }
+    residentReceipt(at, amplitude) {
+      const points = at.map(point => ({theta: point.theta, phi: point.phi, amplitude}));
+      return {schema: 'ql.strike-at/v1', points, law: 'controlled', standing: 'controlled',
+        voices: this.voices().map((voice, k) => ({mode_ref: voice.mode_ref ?? `scene:planet/${voice.planet_ref}`, coupling: points.map(() => TorusOwner.coupling(k)),
+          amplitude: [points.length * amplitude[0] * TorusOwner.coupling(k), 0]}))};
+    }
     async request(request) {
       const command = request.request?.command;
       if (command?.operation === 'torus-native') {
@@ -148,6 +168,7 @@ const openController = async ({polyphony = 16, Audio = base => base} = {}) => {
         reply.field.audio = [];
         reply.torus_singlet = {schema: 'ql.torus-singlet/v1', codon: command.codon, places,
           points: places.map(place => ({theta: (0.3 * (place.arc + turned)) % 6, phi: (0.6 * (place.arc + turned)) % 6, arc: place.arc}))};
+        if (this.receipts) reply.strike_at = this.residentReceipt(reply.torus_singlet.points, command.amplitude);
         return reply;
       }
       // QL m1_prime.rs strike: a key already sounding makes way for its new note; past Polyphony the oldest make way.
@@ -165,6 +186,7 @@ const openController = async ({polyphony = 16, Audio = base => base} = {}) => {
       reply.torus_play = {schema: 'ql.torus-play/v1', made_way, polyphony,
         notes: admitted.map(note => ({id: note.id, key: note.key, place: {arc: note.arc},
           point: {theta: 0.25 * (note.arc + 1) + turned / 100, phi: 0.5 * (note.arc + 1) + turned / 100, arc: note.arc}}))};
+      if (this.receipts) reply.strike_at = this.keyReceipt(reply.torus_play.notes, command.amplitude);
       return reply;
     }
   }
@@ -272,6 +294,50 @@ test('a singlet is one torus-singlet act on the owner: the codon, the amplitude 
     assert.deepEqual(owner.acts.at(-1), {operation: 'torus-singlet', codon: 5, amplitude: [0.5, 0], at_samples_elapsed: '24000'});
     assert.equal(later.landed_at_samples_elapsed, '24000');
     assert.deepEqual(c.reading.instrument.struck.points, [{theta: (0.3 * 26) % 6, phi: (0.6 * 26) % 6}]);
+  } finally { await c.dispose(); }
+});
+
+// ---------------------------------------------------------------------------------------------------- the voices a key or a singlet rang (O-I #771)
+// As a touch's and a collision's (controller.ts struckVoicesOf, playAt): the plate records the voices the owner's receipt of the strike gave an
+// impulse, each with its impulse; under Logic a key's are its own note's voices, at their own pitches. Where the owner names no voices, every
+// voice tuned, as before.
+const play = () => import(new URL('../src/native-field/torusPlay.mjs', import.meta.url));
+const excited = [0, 1, 3, 4, 6, 7];
+const near = values => values.map(value => Number(value.toFixed(9)));
+
+test('a key under Logic rings its own note\'s voices: the plate records the ones its strike gave an impulse, each by it, at its own pitch', async () => {
+  const {c, owner} = await openController();
+  const {torusPlayReading} = await play();
+  try {
+    await c.torusPlay([{row: 0, column: 42}], 0.5);
+    assert.deepEqual(c.reading.instrument.struck.refs, c.reading.instrument.influence.voices.map(voice => voice.mode_ref), 'no receipt: every voice tuned');
+    owner.receipts = true;
+    await c.torusPlay([{row: 1, column: 43}, {row: 2, column: 44}], 0.5);
+    const struck = c.reading.instrument.struck;
+    const ids = [1, 2];
+    assert.deepEqual(struck.refs, ids.flatMap(() => excited.map(k => `scene:logic/${k}`)), 'each note\'s voices, the ones on a node line left out');
+    assert.deepEqual(near(struck.impulses), near(ids.flatMap(() => excited.map(k => 0.5 * TorusOwnerCoupling(k)))));
+    assert.deepEqual(struck.tones_hz, ids.flatMap(id => excited.map(k => 200 + 10 * id + k)), 'each at the pitch its own cell gives it');
+    assert.deepEqual(torusPlayReading(c.reading).torus.tonesHz, struck.tones_hz, 'the plate plays the notes\' own pitches');
+  } finally { await c.dispose(); }
+});
+
+test('a key under Sky, and a singlet, ring the resident voices at their points: the plate records the ones given an impulse, each by it', async () => {
+  const {c, owner} = await openController();
+  try {
+    owner.receipts = true;
+    await c.torusSinglet(8);
+    const singlet = c.reading.instrument.struck;
+    assert.deepEqual(singlet.refs, excited.map(k => `scene:logic/${k}`), 'the singlet\'s two points ring the resident voices they move');
+    assert.deepEqual(near(singlet.impulses), near(excited.map(k => 2 * 0.35 * TorusOwnerCoupling(k))), 'summed over its two points');
+    assert.equal('tones_hz' in singlet, false, 'a resident voice sounds at its own pitch, read from the owner\'s voices');
+    await c.torusSet({tuning: 'sky'});
+    await c.torusPlay([{row: 3, column: 45}], 0.5);
+    const sky = c.reading.instrument.struck;
+    const planets = c.reading.instrument.influence.voices.map(voice => `scene:planet/${voice.planet_ref}`);
+    const rung = planets.map((_, k) => k).filter(k => TorusOwnerCoupling(k) > 0);
+    assert.deepEqual(sky.refs, rung.map(k => planets[k]), 'the sky\'s planets at the key\'s point');
+    assert.deepEqual(near(sky.impulses), near(rung.map(k => 0.5 * TorusOwnerCoupling(k))));
   } finally { await c.dispose(); }
 });
 

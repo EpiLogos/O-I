@@ -5,7 +5,7 @@ import {stageLiveRefusal} from './stageCommands.js';
 /** The frame's transient value layer for the live parameter channel (stageCommands.ts, command 'live').
  * It is runtime state: it never touches the document, the store or its history. Two kinds of entry, both keyed by the registry target `field.<key>`:
  *  - a drag override, streamed while a gesture moves and cleared by release (the committed value is then the document's own);
- *  - a hold, a manual value kept on a parameter that automation drives, until `automation resume` hands it back.
+ *  - a hold, a manual value kept on a parameter that automation drives, until `automation resume` hands it back (every hold, or the one it names).
  * apply() returns a copy of the scene with those values and with the automation lanes that target them removed, so a dragged
  * or held parameter shows the value the person set rather than the lane's output. */
 export class LiveOverrides {
@@ -32,13 +32,21 @@ export class LiveOverrides {
     if (refusal) throw new Error(refusal);
     this.drags.delete(target); this.holds.set(target, value); this.version++;
   }
-  /** Releases every hold and returns how many were held. */
-  resume(): number {
+  /** Releases every hold, or the one hold a target names (its hand-back light, O-I #747), and returns how many were released. */
+  resume(target?: string): number {
+    if (target !== undefined) {
+      if (!this.holds.delete(target)) return 0;
+      this.version++;
+      return 1;
+    }
     const count = this.holds.size;
     if (count) {this.holds.clear(); this.version++;}
     return count;
   }
   heldCount(): number {return this.holds.size;}
+  /** The values held off their automation, each by its target and in the engine's units, in the order they were first taken: what the
+   * frame announces, so each control lights its own hand-back and shows the value the field plays (manual §20.1 Rules, O-I #747). */
+  heldValues(): {target: string; value: number}[] {return [...this.holds].map(([target, value]) => ({target, value}));}
   active(): boolean {return this.drags.size > 0 || this.holds.size > 0;}
   /** The value a registry bind path currently holds (a drag outranks a hold), for the take sampler. */
   valueForBind(bind: string): number | undefined {

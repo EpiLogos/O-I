@@ -3,12 +3,12 @@
   "recorded_at_utc": "2026-10-09T02:38:34.566Z",
   "standing": "derived accounting by static reading; live_replay is pending-native-stack for every row (the native stack was down); no original target changes standing | 8 Oct top-bar session: see additions and defects; still no live-shell replay. | Expressions family session: partial-real rows with tests are ported; live replay remains pending. Rounded still has no distinct native render. | 9 Oct native-actions audit (lane zcode:native-actions-audit-l6): 9 partial rows reclassified owner-op-required (gap is solely the native save_as/fork/create owner ops, named per row); 33 partial rows re-verified with named remainders or owner-blocks; mechanical wire-grammar checks pass (tests/audit-l6-wire-grammar.test.mjs); one live replay attempt recorded, not executed (evidence/native-actions-audit-l6-20261009/). No ported row touched; no live_replay field retired; all 126 targets remain pending. | 2026-10-14: restated by PORT-AUDIT §E6 — 'ported' means a shell React home plus a boundary op, read statically; every row stays live_replay: pending-native-stack. The ten rows whose reason named the save_as owner op the shell was said not to call carry a restatement in their notes (the kernel and the boundary relay save_as, fork and create); their status stays owner-op-required until the conformance test admits shell-wiring-gap. | 2026-10-29 (O-I #747): no row is studio-only-by-design; each of the eleven takes its manual home (§20.1 Where everything is) or names what it waits for.",
   "counts": {
-    "partial": 25,
-    "ported": 144,
-    "internal-no-outward-need": 12,
+    "partial": 23,
+    "ported": 147,
+    "internal-no-outward-need": 15,
     "owner-op-required": 20,
     "out-of-scope-other-track": 6,
-    "not-ported": 6
+    "not-ported": 2
   },
   "rows": [
     {
@@ -207,20 +207,22 @@
       "action": "studio-section",
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:486",
       "kind": "router",
-      "surface": "studio-only",
-      "outward_home": "Studio section request from device Open in studio",
+      "surface": "device",
+      "outward_home": "Where the section lives: a field device's in the Studio's pane, a scene's or a symbol's in Clip view (§20.1 Where everything is; §20.1 Rules: \"The Studio's pane holds the field's devices; Clip view holds the scene and its symbols.\")",
       "components": [
         "packages/live-shell/ui/src/components/NativeDevicePoolView.tsx",
         "packages/live-shell/ui/src/panels/expressions.tsx",
+        "packages/live-shell/ui/src/components/expressions/studio/studioHome.ts",
         "packages/live-shell/ui/src/native/openStudio.ts"
       ],
-      "boundary_op": "host command open-studio section=<id>",
+      "boundary_op": "none: on the devices \"Open in studio\" opens the section where it lives in the shell (packages/live-shell/ui/src/panels/expressions.tsx:388 → packages/live-shell/ui/src/components/expressions/studio/studioHome.ts:18 openStudioHome); the host's open-studio command stays for the app's own presentation",
       "tests": [
+        "packages/live-shell/ui/tests/p3-expressions-in-full.test.mjs",
         "packages/live-shell/ui/tests/native-open-studio.test.mjs"
       ],
-      "status": "partial",
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "Device Open in studio sends a section id to the host, but section navigation inside the Studio stays legacy and only device-mapped sections are reachable. Owner-block (retained Expressions app): Studio section navigation is legacy application chrome, retained by design during the port."
+      "note": "A device's Open in studio, the pool's or the glyph editor's, opens the section where it lives now: a field device's in the Studio's pane, a scene's or a symbol's in Clip view. The app's Studio section navigation opens only in the frame's own presentation. O-I #747 (manual §20.1 \"Where everything is\"), round 881: no row is retained in the app's Studio."
     },
     {
       "action": "quick-guide",
@@ -3045,29 +3047,27 @@
       "action": "monitor-mode",
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:707",
       "kind": "router",
-      "surface": "device",
-      "outward_home": "none (no outward home in the shell)",
-      "components": [
-        "packages/live-shell/ui/src/components/NativeSceneFace.automation.tsx"
-      ],
-      "boundary_op": "pending: owner block: live monitor output is not disclosed in NativeEditorReading (packages/expressions-boundary/src/editor.ts:77) (app.ts:707)",
+      "surface": "internal",
+      "outward_home": "none (retired, DLW build ruling 2026-11-06): a lane's curve is the shape set in the lane (§20.1 Rules)",
+      "components": [],
+      "boundary_op": "none: retired by DLW build ruling 2026-11-06 — the app monitor's cycle or live toggle (app.ts:1839) draws the live output, which the manual does not draw; the Automation face draws the shape set in the lane",
       "tests": [],
-      "status": "not-ported",
+      "status": "internal-no-outward-need",
       "live_replay": "pending-native-stack",
-      "note": "No cycle or live toggle; the monitor shows authored shape only. Owner-block (retained engine + reading producer): live monitor output is not disclosed in NativeEditorReading; a cycle/live toggle is meaningless until the reading carries it."
+      "note": "Retired, DLW build ruling 2026-11-06, by §20.1 Rules: \"An envelope's curve is the shape set in the lane. It is not a record of the live output.\" The app monitor's cycle or live toggle has no counterpart, so nothing is built for it. O-I #747, round 881b."
     },
     {
       "action": "monitor-dock",
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:708",
       "kind": "router",
-      "surface": "device",
-      "outward_home": "none (no outward home in the shell)",
+      "surface": "internal",
+      "outward_home": "none (retired, DLW build ruling 2026-11-06): a lane's curve is the shape set in the lane (§20.1 Rules)",
       "components": [],
-      "boundary_op": "pending: owner block: the live reading the monitor needs is not disclosed in NativeEditorReading (packages/expressions-boundary/src/editor.ts:77); no docking surface exists (app.ts:708)",
+      "boundary_op": "none: retired by DLW build ruling 2026-11-06 — the app's docked live monitor (app.ts:1840) shows the live output, which the manual does not draw; no lower-pool monitor is built",
       "tests": [],
-      "status": "not-ported",
+      "status": "internal-no-outward-need",
       "live_replay": "pending-native-stack",
-      "note": "No docking exists; the planned lower-pool monitor is not built. Owner-block (retained engine + reading producer) plus shell work: the lower-pool monitor is gated on the same missing telemetry reading."
+      "note": "Retired, DLW build ruling 2026-11-06, by §20.1 Rules: \"An envelope's curve is the shape set in the lane. It is not a record of the live output.\" The app's docked live monitor has no counterpart, so nothing is built for it. O-I #747, round 881b."
     },
     {
       "action": "monitor-add-glyph",
@@ -3199,14 +3199,22 @@
       "action": "delete-group",
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1847",
       "kind": "router",
-      "surface": "clip",
-      "outward_home": "Clip view's Envelopes (§20.1 Envelopes): the manual names adding and ordering lanes, and no removal of a lane or its followers",
-      "components": [],
-      "boundary_op": "pending: manual — §20.1 Envelopes names no act that removes a lane group; the owner change exists (automation-remove, packages/expressions-boundary/src/editor.ts:56), so the act waits on the manual naming it",
-      "tests": [],
-      "status": "not-ported",
+      "surface": "device",
+      "outward_home": "The selected lane's Delete, on the Automation device (§10.9: \"The same keys act on whatever is selected\", and its key table's \"Delete it | ⌫\"; §20.1 Envelopes, the scene's lanes): Remove lane, Remove from group or Remove this target on the lane you selected",
+      "components": [
+        "packages/live-shell/ui/src/components/NativeSceneFace.automation.tsx",
+        "packages/live-shell/ui/src/components/nativeSceneFace.automation.ts",
+        "packages/expressions-boundary/src/nativeAutomationEdits.ts"
+      ],
+      "boundary_op": "change kind=automation-remove on the selected lane (packages/live-shell/ui/src/components/NativeSceneFace.automation.tsx:176 removeSelected; packages/live-shell/ui/src/components/nativeSceneFace.automation.ts:239 removeLaneChange; packages/expressions-boundary/src/nativeAutomationEdits.ts:138 removeLane). An independent lane goes with scope lane; a follower or a leader goes with scope group-target (desktop/cradle/expressions-app/field-studies-journeys/src/automationLinks.ts:9 removeGroupTarget): only that lane goes, and a leader's first remaining target takes over the shape, so the group stays. Scope lane on a leader (automationLinks.ts:5 removeAutomation) also removes only the leader: each follower is unlinked first and keeps the leader's shape as its own (resolvedAutomation), so no follower is removed",
+      "tests": [
+        "packages/live-shell/ui/tests/native-device-automation.test.mjs",
+        "packages/live-shell/ui/tests/native-automation.test.mjs",
+        "packages/live-shell/ui/tests/native-device-pool.test.mjs"
+      ],
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "Not built ahead of the manual. PROPOSEd for §20.1 Envelopes (a lane's menu: Remove, and Remove with its followers). O-I #747 (manual §20.1 \"Where everything is\"): the app's Studio stands down in the field pane, so no row is retained in it."
+      "note": "DLW build ruling 2026-11-06: Delete removes what is selected (manual §10.9 and its key table), and the Automation device removes the selected lane. Removing a leader together with all its followers in one act (the app's Delete group, app.ts:1848) is not the manual's, and is not built. The device opens whole in the band from the browser's Devices list (native-device-pool.test.mjs: a scene row opens with scope scene); its removal is proven in native-device-automation.test.mjs ('an end-to-end sequence of picker, group, range, order and removal lands in the boundary Journey') and native-automation.test.mjs ('group-target removal promotes the first target and keeps the others in the group; lane removal detaches them'). Not built: ⌫ itself on the selected lane (the device's Remove buttons carry the act), and removal from Clip view's Envelopes, whose lanes write sends automation-set only (packages/live-shell/ui/src/components/expressions/clip/clipBinding.ts:253 laneChanges). O-I #747, round 881b."
     },
     {
       "action": "remove-group-target",
@@ -3323,14 +3331,14 @@
       "action": "fire-lane",
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1853",
       "kind": "router",
-      "surface": "clip",
-      "outward_home": "Clip view's Envelopes, a ramp's Loop (§20.1 Envelopes: \"Once · Loop (restart) · Ping-pong\")",
+      "surface": "internal",
+      "outward_home": "none (retired, DLW build ruling 2026-11-06): a ramp's Loop says what it does at its end, and launching the scene starts its envelopes again (§20.1 Envelopes)",
       "components": [],
-      "boundary_op": "pending: boundary op and manual — the boundary admits no automation-fire, and §20.1 Envelopes gives a one-shot ramp no restart act",
+      "boundary_op": "none: retired by DLW build ruling 2026-11-06 — restarting one Once ramp on its own is not an act of the manual; the app's fire-lane (app.ts:1854, the leader's firedAt + 1) has no counterpart, and the boundary admits no automation-fire",
       "tests": [],
-      "status": "not-ported",
+      "status": "internal-no-outward-need",
       "live_replay": "pending-native-stack",
-      "note": "Restarting a one-shot ramp has no manual home; a repeating ramp restarts by its Loop. PROPOSEd for §20.1 Envelopes. O-I #747 (manual §20.1 \"Where everything is\"): the app's Studio stands down in the field pane, so no row is retained in it."
+      "note": "Retired, DLW build ruling 2026-11-06. A ramp's Loop says what it does at its end (§20.1 Envelopes: \"Once · Loop (restart) · Ping-pong\"), and a scene's envelopes move its parameters over the scene (§20.1 Envelopes: \"A scene's envelopes move parameters over the scene by themselves\"), so launching the scene starts them again. Restarting one Once ramp on its own is not an act of the manual, so nothing is built for it. O-I #747, round 881b."
     },
     {
       "action": "reveal-param",
@@ -3394,17 +3402,23 @@
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:1857",
       "kind": "router",
       "surface": "device",
-      "outward_home": "Taking hold of a value a lane holds, its hand-back light, and the transport's Re-enable (§20.1 Rules: \"When you take hold of a value a lane holds, the hand-back light comes on\"; §20.3 Transport)",
+      "outward_home": "Taking hold of a value a lane holds, its own hand-back light, and the transport's Re-enable for every held value (§20.1 Rules: \"A parameter shows what moves it. When you take hold of a value a lane holds, the hand-back light comes on. Press it to give the value back.\"; §20.3 Transport)",
       "components": [
-        "packages/live-shell/ui/src/shell/transports/useExpressionsTransport.tsx"
+        "packages/live-shell/ui/src/components/devices/fieldDesignBinding.ts",
+        "packages/live-shell/ui/src/components/devices/ExpressionsDeviceView.tsx",
+        "packages/live-shell/ui/src/shell/transports/useExpressionsTransport.tsx",
+        "desktop/cradle/expressions-app/field-studies-journeys/src/liveOverrides.ts",
+        "packages/live-shell/ui/src/inhabitants/catalogue/panels/physics.tsx"
       ],
-      "boundary_op": "none: the manual replaces Take manual control with taking hold and Re-enable (stage automation-resume, packages/live-shell/ui/src/shell/transports/useExpressionsTransport.tsx:211); removing a lane by takeover writes outside native history and is refused by design (nativeAutomationEdits.ts)",
+      "boundary_op": "frame stage live hold {target, value} when the hand moves a value an enabled lane plays, and automation resume {target} from that value's hand-back light (packages/live-shell/ui/src/components/devices/fieldDesignBinding.ts:327 withAutomationLanes; desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:2492); the frame announces each held target with the value held on it (automationHolds, desktop/cradle/expressions-app/field-studies-journeys/src/liveOverrides.ts:49 heldValues; packages/expressions-boundary/src/protocol.ts:371), and the row shows that value while it is held; the transport's Re-enable gives every held value back (packages/live-shell/ui/src/shell/transports/useExpressionsTransport.tsx:211). Runtime only: no document write, and no lane is removed",
       "tests": [
+        "packages/live-shell/ui/tests/field-design-bindings.test.mjs",
+        "packages/live-shell/ui/tests/native-live-channel.test.mjs",
         "packages/live-shell/ui/tests/transport-bindings.test.mjs"
       ],
-      "status": "partial",
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "Partial: Re-enable gives held values back; the takeover that removes lanes is not the manual's and is not built. O-I #747 (manual §20.1 \"Where everything is\"): the app's Studio stands down in the field pane, so no row is retained in it."
+      "note": "A field device's parameter shows its lane (the kit's automated mark); moving it takes hold of the value in the frame, not the document, and the row shows the held value until it is given back (round 881b); its hand-back light (the kit's Re-enable) gives that one value back, and the transport's Re-enable gives back every held value. The app's Take manual control, which removed lanes, is not the manual's and stays unbuilt (removing a lane by takeover writes outside native history). O-I #747 (manual §20.1 Rules), round 881."
     },
     {
       "action": "tune-station",
@@ -3880,6 +3894,30 @@
         "not-ported": 6
       },
       "note": "The eleven studio-only-by-design rows take the homes manual §20.1 gives them: eight ported (the Studio key and E open the setting where it lives; Select ends a placement; Save, tabs, docking and the entry gate are the shell's), take-manual partial (Re-enable), delete-group and fire-lane not-ported pending the manual. No row is retained in the app's Studio."
+    },
+    {
+      "stage": "O-I #747, round 881 (6 Nov 2026)",
+      "counts": {
+        "partial": 23,
+        "ported": 146,
+        "internal-no-outward-need": 12,
+        "owner-op-required": 20,
+        "out-of-scope-other-track": 6,
+        "not-ported": 6
+      },
+      "note": "take-manual ported: a field device shows the lane that plays a value, takes hold of it in the frame when the hand moves it, and gives that one value back by its own hand-back light (manual §20.1 Rules); studio-section ported: Open in studio opens the section where it lives (§20.1 Where everything is). delete-group and fire-lane stay not-ported pending the manual. No row is retained in the app's Studio by its status, its surface or its words."
+    },
+    {
+      "stage": "O-I #747, round 881b (6 Nov 2026)",
+      "counts": {
+        "partial": 23,
+        "ported": 147,
+        "internal-no-outward-need": 15,
+        "owner-op-required": 20,
+        "out-of-scope-other-track": 6,
+        "not-ported": 2
+      },
+      "note": "DLW build rulings 2026-11-06: delete-group ported as the Automation device's removal of the selected lane (Delete removes what is selected, manual §10.9; a leader with all its followers in one act is not the manual's); fire-lane retired (a ramp's Loop says what it does at its end, and launching the scene starts its envelopes again, §20.1 Envelopes); monitor-mode and monitor-dock retired (§20.1 Rules: \"An envelope's curve is the shape set in the lane. It is not a record of the live output.\"). take-manual: a held value now shows on its row (Physics included)."
     }
   ],
   "additions": [

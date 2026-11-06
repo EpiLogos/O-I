@@ -2193,7 +2193,7 @@ function announceHostState(){
   // E22 (ticket P, G3): where the frame stands, as its own link names it; absent until the opening link has settled.
   const address=hostAddress();announcedAddress=JSON.stringify(address??null);
   const state={...(lens?{lens}:{}),...(instrument?{instrument}:{}),...(address?{address}:{}),nativeScene:view&&binding?{expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:binding.scene_ref}:undefined,document:awaitingNativeBoot&&!nativeWorkspace?.nativeView()?undefined:{id:nativeWorkspace?.nativeView()?.document.expression_ref??store.document.id,name:store.document.name},sceneIndex,sceneCount:store.document.scenes.length,sceneName:s.name,sceneState:sceneSaveState(store.document,s),
-   selection:selected.map(id=>{const e=scene().entities.find(v=>v.id===id);return {id,name:e?e.name:undefined};}),tool,playing:scenePlaying,soundMuted:objectSoundIsMuted(),journeyPlaying,fieldPaused,libraryOpen,hostMode,presentsInstrument:hostMode==='live',recording:recorder.active,presenting,automationLoop,propertyRecording:!!propertyTake,propertyPreview:trackPreview,automationHeld:liveOverrides.heldCount(),takeMode:appendTake?'append':'replace',stage:{mode:camera.mode,grid:camera.grid,snap:camera.snap,guides:guidesVisible,tool,repeatPins:pinRepeat,videoTake:!!currentVideo},...instrumentStageState(),...researchState(),...chromeState()};
+   selection:selected.map(id=>{const e=scene().entities.find(v=>v.id===id);return {id,name:e?e.name:undefined};}),tool,playing:scenePlaying,soundMuted:objectSoundIsMuted(),journeyPlaying,fieldPaused,libraryOpen,hostMode,presentsInstrument:hostMode==='live',recording:recorder.active,presenting,automationLoop,propertyRecording:!!propertyTake,propertyPreview:trackPreview,automationHeld:liveOverrides.heldCount(),takeMode:appendTake?'append':'replace',automationHolds:liveOverrides.heldValues(),stage:{mode:camera.mode,grid:camera.grid,snap:camera.snap,guides:guidesVisible,tool,repeatPins:pinRepeat,videoTake:!!currentVideo},...instrumentStageState(),...researchState(),...chromeState()};
   window.parent.postMessage({v:1,kind:'oi-app-state',state},'*');
   nativeEditorEndpoint?.publish();
  }catch{/* nothing is announced rather than a wrong position */}
@@ -2487,8 +2487,9 @@ async function runStageCommand(command:StageCommand):Promise<StageResult>{
    if(!scene().automation.some(lane=>lane.target===command.target&&lane.enabled))throw new Error('No enabled automation drives this parameter, so there is nothing to hold.');
    liveOverrides.hold(command.target,command.value);needsFrame=true;break;
   case 'automation':
-   // Resume hands every manually held parameter back to its automation (runtime only; no document change).
-   if(command.action==='resume'){if(!liveOverrides.resume())throw new Error('No parameter is held off its automation.');needsFrame=true;break;}
+   // Resume hands every manually held parameter back to its automation, or the one its target names (that value's hand-back light,
+   // O-I #747; manual §20.1 Rules). Runtime only; no document change.
+   if(command.action==='resume'){if(!liveOverrides.resume(command.target))throw new Error(command.target?(nativeBinding(command.target.slice(6))?.label??command.target)+' is not held off its automation.':'No parameter is held off its automation.');needsFrame=true;break;}
    // Play runs the one-shot ramps that are enabled now (the app's fireAutomations); loop sets the runtime loop flag, which is not a document value.
    if(command.action==='play'){if(!oneShotGroups(scene()).length)throw new Error('This scene has no enabled one-shot automation to play. Enable a one-shot group first.');fireAutomations();break;}
    automationLoop=command.on;if(automationLoop&&!fieldPaused&&!automationRunning())fireAutomations(true);renderAll();break;
