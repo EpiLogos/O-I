@@ -30,6 +30,7 @@ const AgentDockTileBody = loadWhenDrawn('The agent dock\'s tiles', () => import(
 const AgentWidget = loadWhenDrawn('Agent', () => import('../widgets/AgentWidget').then(module => module.AgentWidget))
 const PacketWidget = loadWhenDrawn('Packet', () => import('../widgets/PacketWidget').then(module => module.PacketWidget))
 const TerminalRailWidget = loadWhenDrawn('Terminal', () => import('../widgets/TerminalRailWidget').then(module => module.TerminalRailWidget))
+const ResultsTile = loadWhenDrawn('Results', () => import('../agent/AgentDockTileBody').then(module => module.ResultsTile))
 
 /** A mode-dock tile as a widget body: the tile's own body over the reading. */
 const modeTile = (id: string) => function ModeTileWidget() {
@@ -45,14 +46,28 @@ const agentTile = (id: AgentTileId) => function AgentTileWidget() {
   return <AgentDockTileBody id={id} sessionRef={track?.sessionRef ?? null} />
 }
 
+/** Results (DLW §19.1 On the rail; BD round 25): the takes of the selected session's run, drawn by its own body (agent/AgentDockTileBody.tsx
+ * ResultsTile) over the session the shell has selected. With no session's track selected, it says so: it never shows another's. */
+function ResultsWidget() {
+  const reading = useWidgetReading()
+  const shell = useAgentShell()
+  const transport = reading?.transport ?? NO_CARRIER
+  const {tracks} = useAgencySessions(transport)
+  const track = tracks.find(item => item.id === shell.selectedTrackId && !item.group) ?? null
+  return <ResultsTile transport={transport} track={track} />
+}
+const NO_CARRIER = {kind: 'unavailable', reason: 'no carrier'} as const
+
 // Sessions is a view, not a widget (DLW §16.1 "The views are not devices"; lock §0.3.1; R4): the sessions are Factory's tracks. Agents and
 // Results stand on Factory's rail again (manual §19 "On the rail", and Factory "opens … with the Results, Agents and Terminal tiles on
-// the rail"; O-I #744): Agents draws the agency's sessions as lights, Results waits for the Factory owner's receiving and says so.
+// the rail"; O-I #744): Agents draws the agency's sessions as lights, Results the takes of the selected run (BD round 25).
 const MODE_TILES = ['packet', 'trail', 'field', 'nows', 'sky', 'agents', 'results'] as const
 // The Diff tile was retired in the 22 Oct manual rewrite: reading what changed is the Diff page of Files (§23.4, §23.2).
 const AGENT_TILES: readonly AgentTileId[] = ['terminal', 'files', 'web', 'graph', 'frames', 'ledger', 'approvals']
 /** The tiles that are their own widget bodies now, by id. */
 const OWN_BODIES: Partial<Record<string, ComponentType<WidgetBodyProps>>> = {packet: PacketWidget, trail: TrailWidget}
+/** Results draws its own body too, over the selected session's takes (BD round 25). */
+const RAIL_BODIES: Partial<Record<string, ComponentType<WidgetBodyProps>>> = {...OWN_BODIES, results: ResultsWidget}
 /** What each holds, for its launcher cell (the mockup's WID hints, world-shell-mockup.html 1624–1626). */
 const HINTS: Record<string, string> = {
   packet: 'exactly what the agent will receive', trail: 'every place you went, to return to', field: 'who is present; what waits for admission',
@@ -78,7 +93,7 @@ export const WIDGETS: readonly WidgetDeclaration[] = [
   // Messages is the rail's first device (§19.24 "born on the widget rail … in every mode").
   ...DEVICE_BORN.filter(widget => widget.id === 'messages'),
   {id: 'agent', name: 'Agent', Name: AgentWidgetName, mark: TILES.agent.mark, hint: 'the agent you are talking to', Body: AgentWidget},
-  ...MODE_TILES.map((id): WidgetDeclaration => ({id, name: TILES[id].name, mark: TILES[id].mark, hint: HINTS[id], Body: OWN_BODIES[id] ?? modeTile(id)})),
+  ...MODE_TILES.map((id): WidgetDeclaration => ({id, name: TILES[id].name, mark: TILES[id].mark, hint: HINTS[id], Body: RAIL_BODIES[id] ?? modeTile(id)})),
   // The Terminal is its device's own tile (DLW §17.9, widgets/TerminalRailWidget.tsx): bare, as a device's widget is.
   ...AGENT_TILES.map((id): WidgetDeclaration => (id === 'terminal' ? {id, name: tileTitle(id), mark: TILE_ICONS[id], hint: HINTS[id], bare: true, Body: TerminalRailWidget}
     : {id, name: tileTitle(id), mark: TILE_ICONS[id], hint: HINTS[id], Body: agentTile(id)})),

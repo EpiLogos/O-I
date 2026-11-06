@@ -176,8 +176,11 @@ export interface WorldClipTake {
  * (WorldContext.selection), never an action. */
 export interface WorldTrackActions {
   /** A clip's launch. `release`, where a family gives it, is the launch let go: a clip whose launch mode holds it (Live's Gate, manual
-   * §19.1 The Launch panel: "runs it only while you hold the launch") launches on the press and is released when the press ends. */
-  launch?: {op: string; run(clipId: string): unknown; release?(clipId: string): unknown};
+   * §19.1 The Launch panel: "runs it only while you hold the launch") launches on the press and is released when the press ends.
+   * `grainOf` and `opOf`, where a family gives them, are one clip's own, read as a stop's `grain` is (O-I 804 BD round 25): the grain
+   * that clip's launch takes (null: the one clip pressed; undefined: the set's) and the op it runs (undefined: `op`), so the ▶ of a clip
+   * whose launch is finer than the set's says what it starts. */
+  launch?: {op: string; run(clipId: string): unknown; release?(clipId: string): unknown; grainOf?(clipId: string): string | null | undefined; opOf?(clipId: string): string | undefined};
   launchStop?: {op: string; run(columnId: string): unknown};
   /** `grain`, when given, is this stop's own (null: it acts on the one track pressed), said instead of the set's. */
   stopTrack?: {op: string; run(trackId: string): unknown; grain?: string | null};

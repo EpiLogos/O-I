@@ -180,7 +180,7 @@ export interface SeatPorts {
   readonly seat?: (request: SeatWriteRequest) => Promise<unknown>
 }
 
-/** The paths of a Zone as the hand wrote them, apart by commas (workcell__seat.tsx Zone: "The paths you will edit, apart by commas"). */
+/** The paths of a Zone as the hand wrote them, apart by commas (the Zone the retired Seat design asked for: "The paths you will edit, apart by commas"). */
 export const zonePaths = (zone: Value | undefined): string[] => (typeof zone === 'string' ? zone.split(',').map(path => path.trim()).filter(Boolean) : [])
 
 /** The seat instrument's join request from the Seat's values as they stand and the seat row they name: on a free seat, the lane you name

@@ -28,6 +28,8 @@ export async function resolve(specifier,context,next){
 }
 export async function load(url,context,next){
   if(url.endsWith('.css'))return {format:'module',shortCircuit:true,source:'export default null'};
+  if(url.includes('?raw')||url.endsWith('.html'))return {format:'module',shortCircuit:true,source:'export default ""'};
+  if(url.endsWith('.json'))return {format:'module',shortCircuit:true,source:'export default '+await readFile(new URL(url),'utf8')};
   if(url.endsWith('.ts')||url.endsWith('.tsx')){
     const source=await readFile(new URL(url).pathname,'utf8');
     const {outputText}=ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext,jsx:ts.JsxEmit.ReactJSX},fileName:url});
@@ -305,4 +307,83 @@ test('(BD r23) a task\'s Launch: Factory names its unit, AIKit realises the sess
   assert.equal(offered.standing.launch.disabled, tasks.TASKS_REFUSE.launch, 'a launch handed in is not taken')
   await assert.rejects(() => offered.write([{key: 'launch', value: true}]), {message: tasks.TASKS_REFUSE.launch})
   assert.deepEqual(handed, [], 'nothing is launched from the Tasks device')
+})
+
+// ---------------------------------------------------------------------------------------------------------------- Results (BD r25)
+// The Results tile (DLW §19.1 On the rail): "The takes of the selected run: each result with its author and its diff. Open a diff to read
+// it. Press Accept to send a result to review in Approvals. Beside them, the outputs Workcell collected from the world the run stood in,
+// each with where it lies, and what it left out; Collect gathers them again." Settings: Run (the selected run), Show (Results · Diffs ·
+// Both). Channels: FIXTURE takes in factoryTakes.ts's own shape, a FIXTURE `workcell worlds` listing and a FIXTURE `workcell collect`.
+const take = (attemptRef, runRef, state, extra = {}) => ({sessionRef: SESSION.sessionRef, attemptRef, runRef, statePath: '/fx/factory/state.json', taskRef: 'task:fx',
+  unit: 'build', unitRef: 'workflow-unit:build', state, startUnixMs: NOW - 600_000, endUnixMs: state === 'returned' ? NOW - 60_000 : null,
+  summary: state === 'returned' ? 'Built the fixtures.' : null, receivingRef: null, materialWorldRef: null, ...extra})
+const RESULT_TAKES = [
+  take('attempt:01', 'run:r1', 'returned', {startUnixMs: NOW - 900_000, receivingRef: 'receiving:01'}),
+  take('attempt:02', 'run:r2', 'returned', {materialWorldRef: 'world:w2'}),
+  take('attempt:03', 'run:r2', 'running', {startUnixMs: NOW - 30_000}),
+  take('attempt:04', 'run:r2', 'failed'),
+]
+const LISTED = [{receipt: '/fx/workcell/w2.json', worldRef: 'world:w2', subjects: {}}]
+const COLLECTED = {world_ref: 'world:w2', outputs: [{logical_ref: 'out:report', material_locator: '/fx/w2/report.md', provenance: 'workcell'}],
+  omissions: [{requirement: 'out:coverage', reason: 'the world wrote no coverage'}]}
+
+test('(BD r25) Results: the selected run\'s takes, each with its author, its standing and why Accept stands or not; the diffs absent in words', () => {
+  const read = tasks.resultsOf({session: SESSION, takes: RESULT_TAKES, worlds: LISTED})
+  assert.equal(read.why, null)
+  assert.deepEqual(read.runs.map(run => run.ref), ['run:r1', 'run:r2'])
+  assert.equal(read.run, 'run:r2', 'the selected run is the newest take\'s')
+  assert.deepEqual(read.results.map(row => [row.attempt, row.author, row.stands, row.accept.ok]),
+    [['attempt:02', 'aletheia', false, true], ['attempt:03', 'aletheia', false, false], ['attempt:04', 'aletheia', false, false]])
+  assert.equal(read.results[0].summary, 'Built the fixtures.')
+  assert.match(read.results[1].accept.why, /still running/)
+  assert.match(read.results[2].accept.why, /failed/)
+  // The first run, chosen: its one take was received already, so Accept says where it went.
+  const first = tasks.resultsOf({session: SESSION, takes: RESULT_TAKES, run: 'run:r1', worlds: LISTED})
+  assert.equal(first.run, 'run:r1'); assert.equal(first.results[0].stands, true)
+  assert.match(first.results[0].accept.why, /receiving:01/)
+  // Factory's Return names no diff of its own, so the diffs stand absent and say why.
+  assert.match(read.diffs, /^Diffs: /); assert.match(read.diffs, /ReadableReturn/)
+  // A run the session's takes do not name is no run of its: the newest stands.
+  assert.equal(tasks.resultsOf({session: SESSION, takes: RESULT_TAKES, run: 'run:gone'}).run, 'run:r2')
+})
+
+test('(BD r25) Results: the outputs Workcell collected from each take\'s world, where each lies and what it left out, and why Collect cannot', () => {
+  const read = tasks.resultsOf({session: SESSION, takes: RESULT_TAKES, worlds: LISTED, collected: {'attempt:02': {value: COLLECTED}}})
+  const outputs = Object.fromEntries(read.outputs.map(row => [row.attempt, row]))
+  assert.equal(outputs['attempt:02'].receipt, '/fx/workcell/w2.json')
+  assert.deepEqual(outputs['attempt:02'].collected, {attempt: 'attempt:02', world: 'world:w2', outputs: [{ref: 'out:report', locator: '/fx/w2/report.md', provenance: 'workcell'}],
+    omitted: [{requirement: 'out:coverage', reason: 'the world wrote no coverage'}]})
+  assert.match(outputs['attempt:03'].why, /names no world/)
+  // Workcell's refusal of a collect is said in its words; an unread listing says what it waits for.
+  const refused = tasks.resultsOf({session: SESSION, takes: RESULT_TAKES, worlds: LISTED, collected: {'attempt:02': {error: 'Workcell: the receipt is gone'}}})
+  assert.equal(refused.outputs.find(row => row.attempt === 'attempt:02').why, 'Workcell: the receipt is gone')
+  const unlisted = tasks.resultsOf({session: SESSION, takes: RESULT_TAKES, worlds: null, worldsWhy: 'Workcell has not answered `workcell worlds` yet.'})
+  assert.equal(unlisted.outputs.find(row => row.attempt === 'attempt:02').why, 'Workcell has not answered `workcell worlds` yet.')
+  const elsewhere = tasks.resultsOf({session: SESSION, takes: RESULT_TAKES, worlds: []})
+  assert.match(elsewhere.outputs.find(row => row.attempt === 'attempt:02').why, /lists no receipt of world:w2/)
+})
+
+test('(BD r25) Results: no session, no takes read and no run each say why nothing is listed', () => {
+  assert.match(tasks.resultsOf({session: null, takes: undefined}).why, /no session is selected/)
+  assert.match(tasks.resultsOf({session: SESSION, takes: undefined}).why, /kernel carrier/)
+  assert.match(tasks.resultsOf({session: SESSION, takes: null}).why, /has not answered/)
+  assert.match(tasks.resultsOf({session: SESSION, takes: []}).why, /AIKit names no Factory attempt/)
+  assert.deepEqual(tasks.RESULTS_SHOW, ['results', 'diffs', 'both'])
+})
+
+test('(BD r25) the rail\'s Results draws its own body over the selected session: Run and Show, Accept through Factory, Collect through Workcell', () => {
+  // Source assertions: the tile body's module chain applies the window's theme when it loads (desktop/cradle/src/visuals), and the rail's
+  // registry needs a window too, so both are read as source here; the reading they draw is resultsOf's, tested above.
+  const rail = readFileSync(new URL('../src/shell/widgets.tsx', import.meta.url), 'utf8')
+  assert.match(rail, /RAIL_BODIES[^=]*= \{\.\.\.OWN_BODIES, results: ResultsWidget\}/)
+  assert.match(rail, /Body: RAIL_BODIES\[id\] \?\? modeTile\(id\)/, 'the rail draws it in the Results tile')
+  assert.match(rail, /import\('\.\.\/agent\/AgentDockTileBody'\)\.then\(module => module\.ResultsTile\)/)
+  assert.match(rail, /tracks\.find\(item => item\.id === shell\.selectedTrackId && !item\.group\) \?\? null/, 'never another session\'s results')
+  const body = readFileSync(new URL('../src/agent/AgentDockTileBody.tsx', import.meta.url), 'utf8')
+  const tile = body.slice(body.indexOf('export function ResultsTile'))
+  for (const said of [/resultsOf\(\{session: track, takes: sessionTakes, run, worlds: listed, worldsWhy, collected\}\)/, /takes\.choose\(take\)/,
+    /collectWorld\(transport, receipt\)/, /aria-label="Run"/, /aria-label="Show"/, /RESULTS_SHOW\.map/, /disabled=\{!row\.accept\.ok\}/, /reading\.diffs/])
+    assert.match(tile, said)
+  const reads = readFileSync(new URL('../src/agent/devices/workcellReads.ts', import.meta.url), 'utf8')
+  assert.match(reads, /workcellReadOp\(\{kind: 'collect', receipt\}\), \{fresh: true\}/, 'Collect gathers them again: asked fresh')
 })

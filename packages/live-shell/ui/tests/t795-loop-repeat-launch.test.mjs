@@ -266,6 +266,35 @@ test('(BD r24) the ▶\'s carrier: Factory locates the session\'s register, and 
   assert.deepEqual(asked(), ['locate'])
 })
 
+test('(BD r25) the ▶ says what it starts: a Factory task\'s own Launch names the task, a harness launch the whole harness', async () => {
+  const React = await import('react')
+  const {renderToStaticMarkup} = await import('react-dom/server')
+  const {SessionGrid} = await import('../src/frame/tracks/SessionGrid.tsx')
+  const drawn = set => renderToStaticMarkup(React.createElement(SessionGrid, {set, selection: {select() {}}}))
+  const tri = (markup, label) => markup.match(new RegExp(`<button type="button" class="tri" aria-label="Launch ${label}[^"]*"[^>]*>`))?.[0] ?? ''
+  const {port: taskLaunch} = taskLaunches()
+  // A Factory task's ▶ starts that task's unit: its own grain (none: the one task pressed) and its own op, while Stop All and the row
+  // launchers still act on the whole harness and say so.
+  const onFactory = projectedOnFactory('stalled', 'trigger', {taskLaunch})
+  const label = onFactory.clip.label
+  assert.equal(onFactory.set.actions.grain, 'whole harness')
+  assert.equal(onFactory.set.actions.launch.grainOf(onFactory.clip.id), null)
+  assert.equal(onFactory.set.actions.launch.opOf(onFactory.clip.id).startsWith('the task · Software Factory attempt-launch'), true)
+  const own = tri(drawn(onFactory.set), label)
+  assert.match(own, new RegExp(`aria-label="Launch ${label}"`), own)
+  assert.match(own, /title="Launch \(the task · Software Factory attempt-launch/, own)
+  assert.doesNotMatch(own, /whole harness/, own)
+  // A task AIKit names no task_ref for is no Factory work: its ▶ is the harness's and says so, as before.
+  const bare = projectedOnFactory('stalled', 'trigger', {taskLaunch, taskRef: null})
+  assert.equal(bare.set.actions.launch.grainOf(bare.clip.id), undefined, 'the set\'s grain')
+  const harness = tri(drawn(bare.set), bare.clip.label)
+  assert.match(harness, new RegExp(`aria-label="Launch ${bare.clip.label} \\(whole harness\\)"`), harness)
+  assert.match(harness, /title="Launch \(whole harness · harness_agent_control:restart/, harness)
+  // Without the task's carrier the ▶ is the harness's for every clip.
+  const plain = projectedOnFactory('stalled', 'trigger')
+  assert.match(tri(drawn(plain.set), plain.clip.label), new RegExp(`aria-label="Launch ${plain.clip.label} \\(whole harness\\)"`))
+})
+
 test('the grid\'s launch button: a Gate clip launches on press and stops on release; every other clip launches on a click', () => {
   const pressed = []
   const onPress = (key, what, run) => pressed.push([key, what, run()])

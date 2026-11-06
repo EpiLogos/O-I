@@ -375,7 +375,7 @@ export function levelAt(points: readonly EncounterEnvelopePoint[], seconds: numb
   return typeof standing === 'string' ? standing : null
 }
 
-/** The keys of the Tasks device (software-factory__tasks.tsx) the owner's settings answer, at the task's elapsed seconds. */
+/** The keys of the Tasks binding (agent/devices/taskBindings.ts, whose design was retired) the owner's settings answer, at the task's elapsed seconds. */
 export function tasksDeviceValues(reading: EncounterSessionSettingsReading | null, elapsedSeconds: number): Values {
   const task = reading?.task
   if (!task) return {}

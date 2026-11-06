@@ -31,9 +31,9 @@ import {holdView, viewHolds, type ChainHolds} from './designBindings'
 import {sessionRowsOf} from './threadBinding'
 import type {AikitWriteRequest, EncounterSessionSettingsReading, FactoryAttemptCancellation, FactoryOwnerRequest, FactoryTaskUnit, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {openCustody} from './sessionChainBindings'
-import type {FactoryTake, TakeState} from '../factoryTakes'
+import {takeNames, takeWords, type FactoryTake, type TakeState} from '../factoryTakes'
 import {journeyOf, type RunJourneyRead} from './runJourney'
-import {NO_RUN, collectedOf} from './workcellMaterial'
+import {NO_RUN, collectedOf, type ListedWorld} from './workcellMaterial'
 import {SETTINGS_WHY, TASKS_DEVICE_SETTINGS, settingsRefusal, taskSettingChange, tasksDeviceChange, tasksDeviceValues, writeSessionSettings,
   type TasksDeviceSetting} from '../sessionSettings'
 
@@ -435,7 +435,7 @@ export function tasksBinding(input: TasksInput, agent: Pick<DesignBinding, 'writ
 
 // ---------------------------------------------------------------------------------------------------------------- Runs
 
-/** The Journey the work belongs to (lane W8; D3's Journey view, software-factory__attempt-review.tsx `journey`): read by runJourney.ts
+/** The Journey the work belongs to (lane W8; the Run map's Journey, software-factory__run-map.tsx `journey`): read by runJourney.ts
  * through factory_development_read — the shown Run's reading names its Journey, the Journey's reading its purpose, status and Runs — for
  * the Run the take lanes name (its state path and ref). Why it is not drawn, when it is not. */
 export const RUNS_JOURNEY_UNREAD = 'The Journey the work belongs to: no Run is shown — the take lanes name a Run (its state and ref) only for a selected session\'s attempts, and factory_development_read `run` and `journey` read it from there.'
@@ -476,7 +476,7 @@ export interface RunsTakes {
   readonly outputsWhy?: string
 }
 
-/** Outputs (lanes W10, W12; software-factory__attempt-review.tsx `collected`, `collect`): `workcell --receipt R collect` on the receipt of
+/** Outputs (lanes W10, W12; the Results tile's outputs, §19.1 On the rail: `collected`, `collect`): `workcell --receipt R collect` on the receipt of
  * the world the attempt ran in — the receipt `workcell worlds` lists whose world_ref is the attempt's materialWorldRef (workcellMaterial.ts
  * collectedOf). Where none is named, the outputs stand absent and Collect disabled, saying why. */
 export const RUNS_OUTPUTS = {
@@ -485,7 +485,7 @@ export const RUNS_OUTPUTS = {
   noCarrier: 'Collect: the kernel carrier is unavailable here, so Workcell cannot be asked (`workcell collect`).',
 } as const
 
-/** An attempt's standing in the design's words (software-factory__attempt-review.tsx STATES), from Factory's (factoryTakes.ts TakeState). */
+/** An attempt's standing in the words the retired attempt review used (queued, running, done, failed), from Factory's (factoryTakes.ts TakeState). */
 const ATTEMPT_STATE: Readonly<Record<TakeState, string>> = {prepared: 'queued', running: 'running', returned: 'done', failed: 'failed'}
 
 /** A take's day and time on a clock (`14 Oct`, `09:40`); nothing where the owner disclosed no admission time. */
@@ -587,4 +587,102 @@ export function runsBinding(session: string | null, holds: ChainHolds, takes?: R
       }
     },
   }
+}
+
+// ---------------------------------------------------------------------------------------------------------------- Results
+
+/** The Results tile (DLW §19.1 On the rail; O-I 745, carried from 772; BD round 25): "The takes of the selected run: each result with
+ * its author and its diff. Open a diff to read it. Press Accept to send a result to review in Approvals. Beside them, the outputs Workcell
+ * collected from the world the run stood in, each with where it lies, and what it left out; Collect gathers them again." Its settings are
+ * the tile's own: Run (a run, the selected one by default: the newest take's) and Show. */
+export const RESULTS_SHOW = ['results', 'diffs', 'both'] as const
+export type ResultsShow = typeof RESULTS_SHOW[number]
+export const RESULTS_SHOW_WORDS: Readonly<Record<ResultsShow, string>> = {results: 'Results', diffs: 'Diffs', both: 'Both'}
+/** Factory's Return names no diff of its own, so the tile's diffs stand absent in these words. */
+export const RESULTS_DIFFS_ABSENT = 'Diffs: a take\'s Return names no diff of its own — Factory\'s readable Return (attempt_runtime.rs ReadableReturn) '
+  + 'carries its summary and its artifact and evidence refs, and no reading here turns one into a diff. What changed in a seat is Files\' Diff page.'
+export const RESULTS_UNREAD = {
+  session: 'Results: no session is selected, so no run is chosen. Select a session\'s track: its newest take\'s run shows here.',
+  carrier: 'Results: the kernel carrier is unavailable here, so no session\'s takes are read (AIKit encounter_task_attempts_list, then factory_attempt_read).',
+  reading: 'Results: AIKit has not answered which attempts the session\'s task serves, or answered for it with none (encounter_task_attempts_list).',
+  none: `Results: ${RUNS_UNREAD.noneServed}`,
+} as const
+
+/** One take of the chosen run as the tile lists it: its name on its lane, its author (the session's agent), Factory's words for its state,
+ * its Return's summary, whether it stands (Central received it), and whether Accept can send it to review, or why not. */
+export interface ResultRow {
+  readonly attempt: string
+  readonly name: string
+  readonly author: string
+  readonly state: string
+  readonly summary: string | null
+  readonly stands: boolean
+  readonly accept: {readonly ok: true} | {readonly ok: false; readonly why: string}
+}
+/** What Workcell collected from one take's world (workcellMaterial.ts collectedOf), the receipt Collect asks it on, or why there is none. */
+export interface ResultOutputs {
+  readonly attempt: string
+  readonly receipt: string | null
+  readonly collected: Record<string, unknown> | null
+  readonly why: string | null
+}
+export interface ResultsReading {
+  /** Why no run is listed, in words; null when the takes are read. */
+  readonly why: string | null
+  readonly runs: readonly {readonly ref: string; readonly name: string}[]
+  readonly run: string | null
+  readonly results: readonly ResultRow[]
+  readonly diffs: string
+  readonly outputs: readonly ResultOutputs[]
+}
+export interface ResultsInput {
+  readonly session: Pick<AgentSessionTrack, 'sessionRef' | 'agentName'> | null
+  /** The session's takes (owners/attemptTakes.ts useAttemptTakes `of`): undefined where no carrier reads them, null while AIKit has not answered. */
+  readonly takes: readonly FactoryTake[] | null | undefined
+  /** The run the tile's Run names; absent, or one the takes do not name, the newest take's. */
+  readonly run?: string | null
+  /** `workcell worlds`'s receipts (workcellMaterial.ts worldsOf); null while unread or refused, with `worldsWhy`. */
+  readonly worlds?: readonly Pick<ListedWorld, 'receipt' | 'worldRef'>[] | null
+  readonly worldsWhy?: string | null
+  /** What Workcell collected from each take's world, by attempt ref: its reading or its refusal. */
+  readonly collected?: Readonly<Record<string, {readonly value?: unknown; readonly error?: string}>>
+}
+
+/** Accept on a take: Factory's AttemptReceiving proposes a returned take's Return to Central's receiving field, where Approvals lists it. */
+function acceptOf(take: FactoryTake): ResultRow['accept'] {
+  switch (take.state) {
+    case 'returned': return take.receivingRef ? {ok: false, why: `Accept: Central received it already (${take.receivingRef}), so it waits in Approvals.`} : {ok: true}
+    case 'running': return {ok: false, why: 'Accept: the take is still running, so it has no Return to send.'}
+    case 'failed': return {ok: false, why: 'Accept: the take failed, so it has no Return to send.'}
+    case 'prepared': return {ok: false, why: 'Accept: the take is prepared and not yet dispatched, so it has no Return to send.'}
+  }
+}
+
+/** The Results tile's reading of the selected session's takes. Pure. */
+export function resultsOf(input: ResultsInput): ResultsReading {
+  const empty = (why: string): ResultsReading => ({why, runs: [], run: null, results: [], diffs: RESULTS_DIFFS_ABSENT, outputs: []})
+  if (!input.session) return empty(RESULTS_UNREAD.session)
+  if (input.takes === undefined) return empty(RESULTS_UNREAD.carrier)
+  if (input.takes === null) return empty(RESULTS_UNREAD.reading)
+  const takes = input.takes
+  if (!takes.length) return empty(RESULTS_UNREAD.none)
+  const runs: {ref: string; name: string}[] = []
+  for (const one of takes) if (!runs.some(run => run.ref === one.runRef)) runs.push({ref: one.runRef, name: one.unit ? `${one.unit} · ${one.runRef}` : one.runRef})
+  const newest = takes.reduce((best, one) => ((one.startUnixMs ?? 0) >= (best.startUnixMs ?? 0) ? one : best))
+  const run = input.run && runs.some(row => row.ref === input.run) ? input.run : newest.runRef
+  const mine = takes.filter(one => one.runRef === run)
+  const names = takeNames(mine)
+  const author = input.session.agentName ?? input.session.sessionRef
+  const results = mine.map((one): ResultRow => ({attempt: one.attemptRef, name: names.get(one.attemptRef) ?? one.attemptRef, author, state: takeWords(one),
+    summary: one.summary, stands: !!one.receivingRef, accept: acceptOf(one)}))
+  const outputs = mine.map((one): ResultOutputs => {
+    if (!one.materialWorldRef) return {attempt: one.attemptRef, receipt: null, collected: null, why: 'Factory names no world this take ran in, so Workcell has nothing to collect.'}
+    if (!input.worlds) return {attempt: one.attemptRef, receipt: null, collected: null, why: input.worldsWhy ?? 'Workcell\'s receipts of its worlds are not read here (`workcell worlds`).'}
+    const listed = input.worlds.find(world => world.worldRef === one.materialWorldRef)
+    if (!listed) return {attempt: one.attemptRef, receipt: null, collected: null, why: `Workcell lists no receipt of ${one.materialWorldRef}, the world this take ran in (\`workcell worlds\`).`}
+    const read = input.collected?.[one.attemptRef]
+    const collected = read?.value !== undefined ? collectedOf(one.attemptRef, read.value) : null
+    return {attempt: one.attemptRef, receipt: listed.receipt, collected, why: read?.error ?? null}
+  })
+  return {why: null, runs, run, results, diffs: RESULTS_DIFFS_ABSENT, outputs}
 }
