@@ -11215,6 +11215,7 @@ The widget shows the small live torus with a level meter. Click the torus to ope
 - A recorded performance keeps what it needs to be played on: the notes with their expression, the tuning and the sources as they stood, the moves of modulation and automation, the course of the body, the form and the forces, changes of context, the seeds, and how the ruler met the sound. Where the field's motion cannot be replayed exactly, the recording says from which state it resumes. A picture of the field is never taken for a rewind.
 - A camera move does not change the sound, unless Receiver is On.
 - Where you stand is yours. It is never shown, and never kept in a take, its render or a saved sound. A take renders in the world's context. A shared place is shown with its reference.
+- Your own place's sky is yours in the same way. The Torus is heard on it, but a take, a saved sound and a scene's saved sky keep the world's sky of that moment, never yours.
 - A Lens or Frame you move yourself, by hand or with a mapped control, turns Follow off. Follow's own moves, a take played again, a sound or rack you open and a set opening do not.
 - The set keeps the Torus's View and Follow with it, as it keeps the Torus's sound.
 - Each key is a place on its helix, and the place moves as the torus turns. Where a key strikes is worked out from its helix and the pulse at that moment. It is never set by eye.
