@@ -25,11 +25,12 @@
 // work, Take back and Offer a task are pressed (each has its undoing: Take back, Show work, Revoke); Take, Return, Accept and Revoke are
 // held (no other world can take a task taken, what was brought back stands with its offerer, an acceptance enters the Run, a revocation
 // is for good).
-// Your world in the field (O-I #858 SF01, SF02, SF14; the Shown page): `fieldWorld` your world as the field holds it and `fieldLinked`
+// Your world in the field (O-I #858 SF01, SF02, SF08, SF14; the Shown page): `fieldWorld` your world as the field holds it and `fieldLinked`
 // whether it is linked, `worldName` the name it is to stand under until it is, `yourParts` (JSON {id, kind, label}) the parts of it that
 // may be shown, `showPart` and `showTo` the one chosen and who is to see it (the field, the public, or the worlds at the star chosen),
 // `yourShown` (JSON {id, part, label, kind, reach, star}) what it shows and `shownPart` the one chosen to withdraw, `shownLoad` how much it
-// shows in a line; what other worlds withdrew is read from `field` (its `withdrawals`) at the view's aperture. The acts `fieldLink`,
+// shows in a line; what other worlds withdrew is read from `field` (its `withdrawals`) at the view's aperture; `reached` (JSON {id, name,
+// note, does}) what has reached you from the field, who sent it and how it came (atlasDevices.reachedRows). The acts `fieldLink`,
 // `fieldUnlink`, `partShow` and `partWithdraw` go to the held field, each dimmed with its reason when it cannot be done. By the hold law
 // (DLW build ruling 2026-11-06, from manual §16.10) Link and Show raise your world's reach and are held, since what others saw cannot be
 // unseen; Unlink and Withdraw narrow it and are pressed.
@@ -59,7 +60,7 @@ import {WORLD_BODY_GENERATOR, WORLD_BODY_GENERATOR_VERSION, bodyDisc, isWorldBod
 import {discPngUrl} from '../../../projections/atlas/body/discPng'
 import {providerLabels} from '../../../projections/atlas/src/data/labels'
 import {PaneControls, paneControlsOf, paneReadings, paneTitle} from './paneControls'
-import {APERTURE_LABEL, GRANT_DAYS, NOT_AT_FIELD, fieldGraph, fieldSceneOf, GONE_OLDER, goneLine, goneName, shownKey, starDayLine, starSayingLine, starWhen, withdrawnLine, withdrawnName, type Aperture, type Audience, type FieldGraph, type FieldGraphNode, type FieldScene, type FieldTie,
+import {APERTURE_LABEL, GRANT_DAYS, NOT_AT_FIELD, fieldGraph, fieldSceneOf, GONE_OLDER, goneLine, goneName, leftWords, shownKey, starDayLine, starSayingLine, starWhen, withdrawnLine, withdrawnName, type Aperture, type Audience, type FieldGraph, type FieldGraphNode, type FieldScene, type FieldTie,
   type SceneOffer, type SceneStar, type YourShown} from '../../../projections/atlas/system/fieldModel'
 import './atlas-earth__globe-engine.css'
 
@@ -628,10 +629,14 @@ const SAY_KINDS = [{value: 'question', label: 'Question', does: 'Ask about it.'}
 /** Who is at the chosen star now and what each brought there: one line for each thing a world shows at the star, and one for a world
  * gathered there that shows nothing. None while no star is chosen. */
 const hereRows = (star: SceneStar | undefined): RowItem[] | undefined => star && star.gathered.flatMap((world): RowItem[] => {
-  const brought = star.shown.filter(item => item.world === world), who = tailOf(world)
-  return brought.length ? brought.map(item => ({id: item.id, name: item.label, note: who, light: 'lit' as const, does: `A ${item.kind} ${who} shows at the star. Choose it to say something to it.`}))
-    : [{id: `here:${world}`, name: who, light: 'dark' as const, does: `${who} is here and shows nothing at the star.`}]
+  // a world whose owner's machine is off (SF11): what it shows reads as it was left, saying when; its agent and anything live, away
+  const brought = star.shown.filter(item => item.world === world), who = tailOf(world), left = star.left[world], now = Date.now()
+  return brought.length ? brought.map(item => ({id: item.id, name: item.label, note: left ? `${who}, away` : who, light: left && LIVE_PARTS.has(item.kind) ? 'dark' as const : 'lit' as const,
+    does: `A ${item.kind} ${who} shows at the star.${left ? ` ${leftWords(who, item.kind, left, now)}` : ''} Choose it to say something to it.`}))
+    : [{id: `here:${world}`, name: who, note: left ? 'away' : undefined, light: 'dark' as const,
+      does: left ? `${who} is gathered here and shows nothing at the star. ${leftWords(who, 'world', left, now)}` : `${who} is here and shows nothing at the star.`}]
 })
+const LIVE_PARTS = new Set(['agent', 'machine', 'work'])
 /** What was said at the chosen star, each under what it answers, with when; unread with the field's words where its service keeps none. */
 const saidRows = (v: V): RowItem[] | undefined => {
   const star = chosenStar(v)
@@ -955,6 +960,17 @@ function withdrawnSection(p: ViewProps) {
       items={rows} why={rows ? (rows.length ? undefined : aperture === 'world' || aperture === 'local' ? NARROW : undefined) : strOf(p.v, 'fieldWhy') ?? 'No reading of the field.'} />
   </Section>
 }
+/** What has reached you from the field (SF08; manual §2, §17.2 Rules), as the binding reads it (atlasDevices.reachedRows), newest last and
+ * opening on the newest: each names who sent it and how it came, to you or from the star it came from, in the order it came. */
+function reachedSection(p: ViewProps) {
+  const rows = json<{id: string; name: string; note: string; does: string}[] | undefined>(p.v, 'reached', undefined)
+  const items = rows?.map((row): RowItem => ({...row, light: row.note === 'to you' ? 'lit' : 'dark'}))
+  return <Section label="Reached you" width={300}>
+    <Rows does="What has reached you from the field: who sent it and how it came, addressed to you or from a star your world is gathered at, in the order it came. Nothing reaches you because of how many others looked at it." size={4}
+      page={numOf(p.v, 'reachedPage') ?? Math.max(0, Math.ceil((rows?.length ?? 0) / 4) - 1)} onPage={x => p.set('reachedPage', x)}
+      items={items} why={rows ? (rows.length ? undefined : 'Nothing has reached you from the field.') : strOf(p.v, 'fieldWhy') ?? 'No reading of the field.'} />
+  </Section>
+}
 
 const timeDial = (p: ViewProps) => {
   const own = st(p, 'cursor'), clock = boolOf(p.v, 'playing') === true
@@ -1068,19 +1084,40 @@ function FieldArt({v, w, h, size}: {v: V; w: number; h: number; size: Size}) {
   if (!scene) return <Gaps gaps={strOf(v, 'fieldWhy') ? [] : ['the shared field']} size={size} centred x={cx} y={cy} />
   const centre = scene.worlds.find(world => world.yours)
   const others = scene.worlds.filter(world => world !== centre)
-  const at = new Map<string, readonly [number, number]>()
-  if (centre) at.set(centre.ref, [cx, cy])
-  const around = (refs: readonly string[], r: number, turn: number) => [...refs].sort((a, b) => hash(a) - hash(b)).forEach((ref, i, all) => {
-    const a = turn + i * 6.283 / all.length; at.set(ref, [cx + r * Math.cos(a), cy + r * Math.sin(a)])
-  })
-  // the stars stand half a step round from the worlds, so a star and its name never sit on a world
-  around(others.map(world => world.ref), ring, 2.4)
-  around(scene.stars.map(star => star.ref), inner, 2.4 + Math.PI / Math.max(others.length, 1))
-  const tail = (ref: string) => ref.split(':').pop() ?? ref
   const k = size === 'big' ? 6 : 4
-  const names = named ? placeNames(scene, at, {w, h, cx, cy, rw, k, font: size === 'big' ? 10 : 8,
-    corner: size === 'big' ? null : `${plural(scene.worlds.length, 'world')} · ${plural(scene.stars.length, 'star')}`,
-    word: world => (world.away ? `${tail(world.ref)} · Link off` : tail(world.ref))}) : new Map<string, NamePlace>()
+  // what is written over the map: the corner's count (the Display's own, top right; none on the big map, which has no corner) and the
+  // note below. No world or star stands under either: the rings turn, in small steps from their usual place, to the first turn that keeps
+  // every mark clear of both (the same field turns the same way every time), and draw in a little nearer the middle when none does
+  const corner = size === 'big' ? null : `${plural(scene.worlds.length, 'world')} · ${plural(scene.stars.length, 'star')}`
+  const note = size === 'tile' ? undefined : scene.note ?? (size === 'big' ? beyondText(scene) : beyondShort(scene))
+  const written: NameBox[] = [...(corner ? [[w - 12 - corner.length * 9.5 * .58, 0, w, 17] as NameBox] : []),
+    ...(note ? [[0, h - 14, 8 + note.length * 8.5 * .58, h] as NameBox] : [])]
+  const worldRefs = [...others.map(world => world.ref)].sort((a, b) => hash(a) - hash(b)), starRefs = [...scene.stars.map(star => star.ref)].sort((a, b) => hash(a) - hash(b))
+  const layout = (turn: number, shrink: number) => {
+    const marks = new Map<string, readonly [number, number]>()
+    if (centre) marks.set(centre.ref, [cx, cy])
+    const around = (refs: readonly string[], r: number, from: number) => refs.forEach((ref, i) => {
+      const a = from + i * 6.283 / refs.length; marks.set(ref, [cx + r * shrink * Math.cos(a), cy + r * shrink * Math.sin(a)])
+    })
+    // the stars stand half a step round from the worlds, so a star and its name never sit on a world
+    around(worldRefs, ring, turn)
+    around(starRefs, inner, turn + Math.PI / Math.max(others.length, 1))
+    return marks
+  }
+  const underWords = (marks: ReadonlyMap<string, readonly [number, number]>) => [...marks].some(([ref, [x, y]]) => {
+    const r = (starRefs.includes(ref) ? k : rw) + 1
+    return written.some(box => x + r > box[0] && x - r < box[2] && y + r > box[1] && y - r < box[3])
+  })
+  const step = 6.283 / Math.max(others.length, 1) / 24
+  let at = layout(2.4, 1)
+  turning: for (const shrink of [1, .94, .88, .82]) for (let i = 0; i < 24; i++) {
+    const tried = layout(2.4 + i * step, shrink)
+    if (!underWords(tried)) { at = tried; break turning }
+  }
+  const tail = (ref: string) => ref.split(':').pop() ?? ref
+  const names = named ? placeNames(scene, at, {w, h, cx, cy, rw, k, font: size === 'big' ? 10 : 8, corner,
+    // a world whose owner's machine is off says so by its name alone (SF11): its marks stand as it was left, and nothing is drawn in their place
+    word: world => (world.away ? `${tail(world.ref)} · Link off` : world.left ? `${tail(world.ref)} · away` : tail(world.ref))}) : new Map<string, NamePlace>()
   const name = (ref: string) => { const place = names.get(ref)
     return place && <text x={f1(place.x)} y={f1(place.y)} textAnchor={place.anchor} className="dp-ink-dim" style={{fontSize: size === 'big' ? 10 : 8}}>{place.text}</text> }
   return <>
@@ -1301,7 +1338,7 @@ function FieldTable({v}: {v: V}) {
     <path d="M548 42H748" className="dp-faint" />
     {worlds.map((world, i) => <g key={world.ref} opacity={world.away ? .5 : 1}>
       <text x={548} y={60 + i * 20} className="dp-ink">{`${tail(world.ref)}${world.yours ? ' (yours)' : ''}`}</text>
-      <text x={662} y={60 + i * 20} className="dp-ink-dim">{world.away ? 'Link off' : !world.clouded ? 'all' : world.clearings.length ? `${plural(world.clearings.length, 'clearing')}` : 'under cloud'}</text>
+      <text x={662} y={60 + i * 20} className="dp-ink-dim">{`${world.away ? 'Link off' : !world.clouded ? 'all' : world.clearings.length ? `${plural(world.clearings.length, 'clearing')}` : 'under cloud'}${world.left ? ', away' : ''}`}</text>
     </g>)}
     <text x={548} y={top - 8} className="dp-axis">star</text><text x={662} y={top - 8} className="dp-axis">gathered</text>
     {stars.map((star, i) => <g key={star.ref}>
@@ -1398,6 +1435,11 @@ const FIELD_SAMPLE = {
  * factory.task-offer-return/v1). */
 const SAMPLE_RUN = 'run:01ARZ3NDEKTSV4RRFFQ69G5FAA'
 const SAMPLE_AT = Date.UTC(2026, 10, 6, 9)
+/** [SF11] Mara's machine is off: her world answered until 09:41 and is away since, its parts as she left them, her agent at your star with
+ * nothing answering for it; every other world answers. */
+const FIELD_AWAY = {...FIELD_SAMPLE,
+  worlds: FIELD_SAMPLE.worlds.map(world => ({...world, answer: world.world_ref === 'world:mara' ? {answering: false, since: SAMPLE_AT + 41 * 60_000} : {answering: true, since: SAMPLE_AT - 86_400_000}})),
+  clearings: [...FIELD_SAMPLE.clearings, {world_ref: 'world:mara', part_ref: 'agent:plate-reader', star_ref: 'star:rosarium', audience: 'star', shown: {kind: 'agent', label: 'The plate reader'}}]}
 /** The design's own sample of what other worlds withdrew (O-I #858, SF14), as atlasDevices.fieldValues hands it: Mara withdrew a page from
  * the field and took one back at your star; a world you read has left the field. */
 const FIELD_WITHDRAWN = [
@@ -1416,6 +1458,20 @@ const SAMPLE_CONTRIBUTIONS = [
   {id: 'contribution:teraphim-asks', name: 'your question on Mara’s plate', note: 'accepted', does: '“Where is the white rose?” Accepted with: “On the left.”', mine: true, yours: false},
   {id: 'contribution:teraphim-finds', name: 'your finding on Mara’s plate', note: 'refused', does: '“The plate is the sixth.” Refused with: “It is the fourth.”', mine: true, yours: false},
   {id: 'contribution:stranger-repeats', name: 'stranger’s reproduction under your question', note: 'accepted', does: '“I found it there too.”', mine: false, yours: false},
+]
+/** [SF08] what has reached you in the design's own sample, as atlasDevices.reachedRows lines it from FIELD_SAMPLE with SAMPLE_CONTRIBUTIONS
+ * and FIELD_WORK: in the order it came, each naming who sent it and how it came. */
+const SAMPLE_REACHED = [
+  {id: 'asks:star:rosarium:world:stranger', name: 'stranger asks to come to The Rosarium plates', note: 'to you', does: 'It reached you addressed to you: it asks at a star your world lit.'},
+  {id: 'saying:mara-q', name: 'mara asks about For the circle', note: 'to you', does: '“Where does the circle open on the fourth plate?” It reached you addressed to you: said to a part your world shows.'},
+  {id: 'work:star:rosarium:run:01ARZ3NDEKTSV4RRFFQ69G5FAB', name: 'mara shows a piece of work: The plate readings', note: 'The Rosarium plates',
+    does: 'It reached you from The Rosarium plates, a star your world is gathered at.'},
+  {id: 'offer:maras-plates', name: 'mara offers a task: Read the second plate against the first.', note: 'The Rosarium plates', does: 'It reached you from The Rosarium plates, a star your world is gathered at.'},
+  {id: 'offer:soundings', name: 'mara brought back North bank soundings, for your task', note: 'to you',
+    does: '“Sounded the bank at forty points.” It reached you addressed to you: it brought back what a task you offered asked for.'},
+  {id: 'contribution:mara-asks', name: 'mara’s question on A reading of the fourth plate', note: 'to you', does: '“Which rose is the fourth?” It reached you addressed to you: contributed to your world.'},
+  {id: 'answer:contribution:teraphim-asks', name: 'mara accepted your question on Mara’s plate', note: 'to you', does: '“On the left.” It reached you addressed to you: the answer to your contribution.'},
+  {id: 'contribution:stranger-repeats', name: 'stranger’s reproduction under your question', note: 'to you', does: '“I found it there too.” It reached you addressed to you: contributed under your contribution.'},
 ]
 const sampleOffer = (ref: string, world: string, state: string, taker: string | null, asks: string, returned?: Record<string, unknown>) => ({
   offer_ref: ref, star_ref: 'star:rosarium', world_ref: world, state, taker_world_ref: taker, lapses_at: SAMPLE_AT + 7 * 86_400_000, returned: returned ?? null,
@@ -1559,12 +1615,13 @@ export const design: DesignedDevice = {
     'Your world shown': {scale: 'field', aperture: 'federated', viewAs: 'me', fieldStar: 'star:rosarium', field: JSON.stringify({...FIELD_SAMPLE, withdrawals: FIELD_WITHDRAWN, withdrawWhy: null, gone: FIELD_GONE}),
       fieldWorld: 'world:teraphim', fieldLinked: true, worldName: '',
       yourParts: JSON.stringify([{id: 'study', kind: 'place', label: 'The study'}, {id: 'book', kind: 'palace', label: 'The book'}, {id: 'world:central:project:river', kind: 'project', label: 'river'}]),
-      showPart: 'study', showTo: 'field', yourShown: JSON.stringify(YOUR_SHOWN), shownLoad: '1 to the public, 1 to the field, 1 at a star', shownPart: YOUR_SHOWN[1]!.id},
+      showPart: 'study', showTo: 'field', yourShown: JSON.stringify(YOUR_SHOWN), reached: JSON.stringify(SAMPLE_REACHED), shownLoad: '1 to the public, 1 to the field, 1 at a star', shownPart: YOUR_SHOWN[1]!.id},
     'Contributions': {scale: 'field', aperture: 'federated', viewAs: 'me', fieldWorld: 'world:teraphim', fieldLinked: true,
-      contributeTargets: JSON.stringify([{value: '["world:mara","page:maras-plate",""]', label: 'Mara’s plate, mara’s', does: 'A page mara shows to the public.'},
-        {value: 'contribution:teraphim-asks', label: 'your question', does: 'Where is the white rose?'}]),
+      contributeTargets: JSON.stringify([{value: '["world:mara","page:maras-plate",""]', label: 'Mara’s plate · mara', does: 'A page mara shows to the public.'},
+        {value: 'contribution:teraphim-asks', label: 'your question on Mara’s plate', does: 'Where is the white rose?'}]),
       contributeTo: '["world:mara","page:maras-plate",""]', contributeWhat: 'correction', contributeWords: 'The rose on this plate is white.',
       contributions: JSON.stringify(SAMPLE_CONTRIBUTIONS), contribution: 'contribution:mara-asks', answerWords: ''},
+    'A world away': {scale: 'field', aperture: 'federated', viewAs: 'me', fieldStar: 'star:rosarium', field: JSON.stringify(FIELD_AWAY)},
     'Nothing in focus': {'pane.title': undefined, 'pane.controls': JSON.stringify([])},
     'No readings': Object.fromEntries(['light', 'view', 'scale', 'cursor', 'allTime', 'playing', 'cumulative', 'scope', 'wholeField', 'relation', 'selected', 'placeArmed', 'placePage', 'baseKind',
       'graphOpen', 'local', 'depth', 'centre', 'repel', 'link', 'distance', 'tieJung', 'tieInferred', 'tieSite', 'kindArchetype', 'kindTheoretic', 'kindFamily', 'occurrences', 'skyAnchors',
@@ -1573,7 +1630,7 @@ export const design: DesignedDevice = {
       'aperture', 'viewAs', 'field', 'fieldYours', 'fieldHeld', 'fieldWhy', 'cameraScale', 'fieldStar', 'fieldWaiting', 'fieldAdmit', 'starName', 'starGathers', 'starComes',
       'fieldSayTo', 'sayWhat', 'sayWords', 'dayPage', 'saidPage', 'factoryRuns', 'factoryRun', 'factoryUnits', 'factoryUnit', 'grantReads', 'grantTouches', 'grantDays',
       'fieldWork', 'fieldOffer', 'madeLabel', 'madeSummary', 'madeRef', 'workPage', 'offerPage', 'offerNotes', 'factoryTakers', 'factoryTaker',
-      'fieldWorld', 'fieldLinked', 'worldName', 'yourParts', 'showPart', 'showTo', 'yourShown', 'shownLoad', 'shownPart', 'shownPage', 'withdrawnPage',
+      'fieldWorld', 'fieldLinked', 'worldName', 'yourParts', 'showPart', 'showTo', 'yourShown', 'shownLoad', 'shownPart', 'shownPage', 'withdrawnPage', 'reached', 'reachedPage',
       'contributeTargets', 'contributeTo', 'contributeWhat', 'contributeWords', 'contributions', 'contribution', 'answerWords', 'contributeWhy', 'contributionPage'].map(k => [k, undefined])),
   },
 
@@ -1629,6 +1686,7 @@ export const design: DesignedDevice = {
         {yourShownSection(p)}
         {loadSection(p)}
         {withdrawnSection(p)}
+        {reachedSection(p)}
       </Band>
     </> : p.page === 'work' ? <>
       <Band>

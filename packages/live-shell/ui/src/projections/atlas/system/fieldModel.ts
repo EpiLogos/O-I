@@ -42,6 +42,9 @@ export interface FieldWorld {
   readonly body: unknown
   readonly linked: boolean
   readonly mine: boolean
+  /** whether it answers (SF11; manual §2): while a window of its owner's stands, and since when; away once the last is gone, since when.
+   * Null where the field keeps answers and has no word of this world answering; absent where the field's service keeps none. */
+  readonly answer?: {readonly answering: boolean; readonly since: number | null} | null
 }
 export interface FieldClearing {
   readonly world_ref: string
@@ -224,7 +227,7 @@ export function heldFieldOf(data: unknown): HeldField {
   return {
     state: 'read',
     worlds: rows(data.worlds, row => text(row.world_ref) && typeof row.linked === 'boolean' && typeof row.mine === 'boolean'
-      ? {world_ref: row.world_ref, body: row.body, linked: row.linked, mine: row.mine} : null),
+      ? {world_ref: row.world_ref, body: row.body, linked: row.linked, mine: row.mine, ...answerOf(row)} : null),
     clearings: rows(data.clearings, row => text(row.world_ref) && text(row.part_ref) && (row.audience === 'public' || row.audience === 'field' || row.audience === 'star')
       && rec(row.shown) && text(row.shown.kind) && text(row.shown.label)
       ? {world_ref: row.world_ref, part_ref: row.part_ref, star_ref: text(row.star_ref) ? row.star_ref : null, audience: row.audience, shown: {kind: row.shown.kind, label: row.shown.label}} : null),
@@ -241,6 +244,14 @@ export function heldFieldOf(data: unknown): HeldField {
     gone: rows(data.gone, row => text(row.world_ref) && (row.reach === 'public' || row.reach === 'field' || row.reach === 'star')
       ? {world_ref: row.world_ref, star_ref: text(row.star_ref) ? row.star_ref : null, reach: row.reach as FieldGone['reach'], kind: text(row.kind) ? row.kind : null} : null),
   }
+}
+
+/** Whether a world answers, as a world row carries it (SF11): `answer` with whether it answers and since when, null where the field keeps
+ * answers and holds no word of this world, and no key at all where its service keeps none. An answer that is not the contract's is no word. */
+function answerOf(row: Record<string, unknown>): {answer?: FieldWorld['answer']} {
+  if (!('answer' in row)) return {}
+  const answer = row.answer
+  return {answer: rec(answer) && typeof answer.answering === 'boolean' ? {answering: answer.answering, since: atOf(answer.since_micros, answer.since)} : null}
 }
 
 /** When a row says it happened, in ms since the epoch: micros as the client writes them (a decimal string), or ms as the binding hands a
@@ -351,6 +362,9 @@ export interface SceneWorld {
   /** what another's world withdrew from the field or the public, in the order it happened (SF14): read in words, never silently gone;
    * none for a world of yours */
   readonly withdrawn: readonly FieldWithdrawal[]
+  /** another's world whose owner's machine is off (SF11): away, reading as its owner last left it, since when (null: not known); null
+   * while it answers, for a world of yours, and where the field keeps no word of who answers */
+  readonly left: {readonly since: number | null} | null
 }
 export interface SceneStar {
   readonly ref: string
@@ -380,6 +394,8 @@ export interface SceneStar {
   readonly offers: readonly SceneOffer[] | null
   /** what another's world took back here (SF14), in the order it happened */
   readonly withdrawn: readonly FieldWithdrawal[]
+  /** the worlds gathered here whose owners' machines are off (SF11), by ref: away, as each was last left, since when */
+  readonly left: Readonly<Record<string, {readonly since: number | null}>>
 }
 /** A piece of work shown at a star, as Software Factory showed it: its name, where it stands, its agents at work and what they made. */
 export interface SceneWork {
@@ -497,7 +513,25 @@ function sceneWorld(field: Extract<HeldField, {state: 'read'}>, world: FieldWorl
     clearings: shown.map(clearing => ({part: clearing.part_ref, label: clearing.shown.label, kind: clearing.shown.kind, shownTo: clearing.audience, star: clearing.star_ref})),
     stars: field.gatherings.filter(gathering => gathering.world_ref === world.world_ref && gathering.state === 'gathered').map(gathering => gathering.star_ref),
     withdrawn: own ? [] : (field.withdrawals ?? []).filter(row => row.world_ref === world.world_ref && (row.reach === 'field' || row.reach === 'public')),
+    left: worldLeft(world),
   }
+}
+
+/** Whether another's world is away (SF11; manual §2): no window of its owner's answers, so it reads as its owner last left it, since when
+ * (null when the field has no word of when). Null while it answers, for a world of yours, and where the field keeps no word of who answers. */
+export function worldLeft(world: FieldWorld): {readonly since: number | null} | null {
+  if (world.mine || world.answer === undefined) return null
+  if (world.answer === null) return {since: null}
+  return world.answer.answering ? null : {since: world.answer.since}
+}
+
+/** What another world shows, said while its owner is away (SF11; manual §2): it reads as its owner last left it, saying when; an agent,
+ * a machine or a work — anything live — says it is away, and nothing answers in its place. */
+const LIVE_PARTS = new Set(['agent', 'machine', 'work'])
+export function leftWords(who: string, kind: string, left: {readonly since: number | null}, now: number): string {
+  const when = left.since === null ? null : starWhen(left.since, now)
+  return LIVE_PARTS.has(kind) ? `It is away${when ? ` since ${when}` : ''}, with ${who}: nothing answers for it until ${who} is back.`
+    : `It reads as ${who} last left it${when ? ` at ${when}` : ''}: ${who} is away.`
 }
 
 /** A world as a person reads its name: the last part of its ref. */
@@ -522,6 +556,10 @@ function sceneStar(field: Extract<HeldField, {state: 'read'}>, star: FieldStar, 
     works: field.works == null ? null : field.works.filter(work => work.star_ref === star.star_ref).map(work => sceneWork(field, work)),
     offers: field.offers == null ? null : field.offers.filter(offer => offer.star_ref === star.star_ref).map(offer => sceneOffer(field, offer, own)),
     withdrawn: (field.withdrawals ?? []).filter(row => row.reach === 'star' && row.star_ref === star.star_ref && !isMine(field, row.world_ref)),
+    left: Object.fromEntries(at.filter(gathering => gathering.state === 'gathered').flatMap(gathering => {
+      const world = field.worlds.find(one => one.world_ref === gathering.world_ref), left = world ? worldLeft(world) : null
+      return left ? [[gathering.world_ref, left]] : []
+    })),
   }
 }
 
@@ -580,7 +618,7 @@ function threadOf(field: Extract<HeldField, {state: 'read'}>, sayings: readonly 
   return out
 }
 
-const SAID_VERB: Readonly<Record<SayingWhat, string>> = {question: 'asks about', finding: 'has a finding on', correction: 'corrects', reproduction: 'reproduces'}
+export const SAID_VERB: Readonly<Record<SayingWhat, string>> = {question: 'asks about', finding: 'has a finding on', correction: 'corrects', reproduction: 'reproduces'}
 /** What a saying was said to, in words. */
 export function sayingToText(to: SayingTo): string {
   switch (to.kind) {

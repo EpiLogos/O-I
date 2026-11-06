@@ -1576,6 +1576,23 @@ test('the little map draws no name over another, over a world or a star, over it
   assert.ok(full.names.length >= 6, 'and those with room are named')
 })
 
+test('no world or star on the little map stands under its corner’s count or its note, however many the field holds (manual §17.2; DLW build ruling 2026-11-06)', () => {
+  const v = {...world.defaults, ...world.fixtures['Your world shown']}
+  const field = JSON.parse(v.field)
+  const words = map => map.marks.filter(mark => mark.what.startsWith('corner') || mark.what === 'the note')
+  const under = map => map.marks.filter(mark => mark.what.startsWith('world') || mark.what.startsWith('star'))
+    .flatMap(mark => words(map).filter(word => overlap(mark, word)).map(word => `${mark.what} under the ${word.what}`))
+  for (const more of [0, 3, 7, 12, 16, 20]) for (const stars of [0, 2, 5, 8]) {
+    const crowded = {...field,
+      worlds: [...field.worlds, ...Array.from({length: more}, (_, i) => ({world_ref: `world:neighbour-${i}`, body: {body_ref: `body:n${i}`}, linked: true, mine: false}))],
+      stars: [...field.stars, ...Array.from({length: stars}, (_, i) => ({star_ref: `star:s${i}`, name: `A star with a long name ${i}`, gathers: 'x', comes: 'anyone', lit_by: 'world:mara', mine: false}))]}
+    const map = fieldMapOf(renderToStaticMarkup(world.whole({v: {...v, field: JSON.stringify(crowded)}, set() {}, nav: {}, page: 'shown', setPage() {}, standing: {}})))
+    assert.equal(words(map).length, 2, 'the map has its count and its note')
+    assert.deepEqual(under(map), [], `${more} more worlds and ${stars} more stars`)
+    assert.deepEqual(clashes(map), [], `and no name clashes, ${more} more worlds and ${stars} more stars`)
+  }
+})
+
 // ── round 33: a contribution to what another world shows (SF07; manual §17.2 "Contribute") ─────────────────────────────────────────
 // A question, a finding, a correction or a reproduction, contributed to a part another world shows or to a contribution there. It stands
 // on its target under your world's name and waits for that world's owner; it becomes part of their world only when they accept it there,
@@ -1613,6 +1630,8 @@ test('contributing is asked of the field for your own world, to what another wor
   const field = fieldOf(CONTRIBUTED)
   assert.deepEqual(atlasDevs.contributionTargets(field).map(row => row.id), [JSON.stringify(['world:mara', 'page:maras-plate', '']), JSON.stringify(['world:stranger', 'page:elsewhere', '']),
     'contribution:me-asks', 'contribution:stranger-threads'], 'what another world shows and the contributions that stand there; never your own world, nor what was refused')
+  assert.deepEqual(atlasDevs.contributionTargets(field).map(row => row.label), ['Mara’s plate · mara', 'Elsewhere · stranger', 'your question on Mara’s plate',
+    'stranger’s reproduction under your question'], 'named as the World names a part, then whose world; a contribution as its line reads (DLW build ruling 2026-11-06)')
   const made = contributeAsk(CONTRIBUTED, {act: 'contribute', to: MARAS_PAGE_ID, what: 'correction', words: '  The rose is white.  '})
   assert.match(made.request.contribution_ref, /^contribution:[a-z0-9]+:me$/)
   assert.deepEqual({...made.request, contribution_ref: 'x'}, {kind: 'world-contribute', contribution_ref: 'x', world_ref: 'world:me', to: {world_ref: 'world:mara', part_ref: 'page:maras-plate'}, what: 'correction', words: 'The rose is white.'})
@@ -1675,6 +1694,19 @@ test('the World binding contributes, accepts, refuses and takes back from the vi
     assert.deepEqual([store.starHand().contribution, store.starHand().answerWords], [null, ''])
     binding.local.contribution('contribution:me-finds')
     binding = atlasDevs.atlasGlobeBinding(readingWith())
+    for (const key of ['contributionAccept', 'contributionRefuse']) {
+      assert.equal(binding.standing[key]?.disabled, 'Only the owner of the world it was contributed to answers it.', `${key} stands dimmed, saying why, on your own contribution`)
+      assert.equal(binding.writes(key), false)
+    }
+    binding.local.contribution('contribution:stranger-threads')
+    assert.deepEqual(['contributionAccept', 'contributionRefuse', 'contributionTakeBack'].map(key => atlasDevs.atlasGlobeBinding(readingWith()).standing[key]?.disabled),
+      ['Only the owner of the world it was contributed to answers it.', 'Only the owner of the world it was contributed to answers it.', 'Only the one who contributed it takes it back.'],
+      'on one that is neither yours nor in your world, each stands dimmed, saying why')
+    binding.local.contribution(null)
+    assert.deepEqual(['contributionAccept', 'contributionRefuse', 'contributionTakeBack'].map(key => atlasDevs.atlasGlobeBinding(readingWith()).standing[key]?.disabled),
+      Array(3).fill('Choose a contribution first.'), 'with none chosen, each stands dimmed, saying why')
+    binding.local.contribution('contribution:me-finds')
+    binding = atlasDevs.atlasGlobeBinding(readingWith())
     await binding.write([{key: 'contributionTakeBack', value: 4}])
     assert.deepEqual(asked.pop(), {kind: 'world-contribution-take-back', contribution_ref: 'contribution:me-finds'})
     store.bindSystemActs(null)
@@ -1727,8 +1759,131 @@ test('the face contributes, accepts and refuses by a hold and takes back by a pr
   assert.ok(unheld('Take back'), 'Take back is pressed, not held')
   assert.match(page, /mara’s question on A reading of the fourth plate/)
   assert.match(page, /your finding on Mara’s plate/)
+  assert.match(page, />Mara’s plate · mara</, 'To names the part, then whose world')
+  assert.doesNotMatch(page, /mara’s</, 'never “Mara’s plate, mara’s”')
   assert.match(page, /Hold to contribute it/)
   const none = renderToStaticMarkup(world.whole({v: {...v, contributions: undefined, contributeTargets: undefined, contributeWhy: 'This field’s service does not keep contributions to a world yet.'},
     set() {}, nav: {}, page: 'contribute', setPage() {}, standing: {}}))
   assert.match(none, /does not keep contributions to a world yet/, 'a service without says so in its own words')
+})
+
+// ── round 34: a world whose owner's machine is off (SF11; manual §2) ──────────────────────────────────────────────────────────────
+// A world answers while a window of its owner's stands. With its owner's machine off it is away: its clearings read as its owner last
+// left them, saying when; its agent and anything live say they are away; and nothing is drawn to fill the gap.
+const LEFT_AT = Date.UTC(2026, 10, 6, 9, 41)
+const answering = {answering: true, since_micros: '1000'}
+const AWAY = {...SNAPSHOT, world_answer: {state: 'held'},
+  worlds: SNAPSHOT.worlds.map(world => ({...world, answer: world.world_ref === 'world:mara' ? {answering: false, since_micros: String(LEFT_AT * 1000)} : answering})),
+  clearings: [...SNAPSHOT.clearings, c('world:mara', 'agent:cartographer', 'star', 'Cartographer', 'star:rosarium')]}
+
+test('a world whose owner’s machine is off reads away since its last window went; one that answers, your own, and a field that keeps no word of it read as before (SF11)', () => {
+  const field = fieldOf(AWAY)
+  assert.deepEqual(field.worlds.map(world => [world.world_ref, world.answer]), [['world:me', {answering: true, since: 1}], ['world:me:o-i', {answering: true, since: 1}],
+    ['world:mara', {answering: false, since: LEFT_AT}], ['world:stranger', {answering: true, since: 1}]])
+  const sceneOf = (snapshot, aperture = 'federated') => model.fieldScene(fieldOf(snapshot), {aperture, viewAs: 'me'}, YOURS)
+  assert.deepEqual(sceneOf(AWAY).worlds.map(world => [world.ref, world.left]), [['world:me', null], ['world:me:o-i', null], ['world:mara', {since: LEFT_AT}], ['world:stranger', null]])
+  assert.deepEqual(sceneOf(AWAY).worlds.find(world => world.ref === 'world:mara').clearings.map(one => one.label), ['Mara’s plate', 'Cartographer'],
+    'its clearings read as mara last left them')
+  const never = {...AWAY, worlds: AWAY.worlds.map(world => (world.world_ref === 'world:stranger' ? {...world, answer: null} : world))}
+  assert.deepEqual(sceneOf(never).worlds.find(world => world.ref === 'world:stranger').left, {since: null}, 'a world the field has no word of answering is away, since a time not known')
+  assert.ok(sceneOf(SNAPSHOT).worlds.every(world => world.left === null), 'a field that keeps no word of who answers says no one is away')
+  const mine = {...AWAY, worlds: AWAY.worlds.map(world => (world.mine ? {...world, answer: {answering: false, since_micros: '5000'}} : world))}
+  assert.ok(sceneOf(mine).worlds.filter(world => world.mine).every(world => world.left === null), 'your own world is never read away to you')
+  const now = LEFT_AT + 3_600_000, when = model.starWhen(LEFT_AT, now)
+  assert.equal(model.leftWords('mara', 'page', {since: LEFT_AT}, now), `It reads as mara last left it at ${when}: mara is away.`)
+  assert.equal(model.leftWords('mara', 'agent', {since: LEFT_AT}, now), `It is away since ${when}, with mara: nothing answers for it until mara is back.`)
+  assert.equal(model.leftWords('mara', 'page', {since: null}, now), 'It reads as mara last left it: mara is away.')
+  const target = atlasDevs.contributionTargets(field).find(row => row.id === MARAS_PAGE_ID)
+  assert.match(target.does, /It reads as mara last left it at \d\d:\d\d|It reads as mara last left it at \d+ [A-Z][a-z]{2}/, 'what you may contribute to says its world is away')
+})
+
+test('the face names a world away on the little map and at the star, its agent away and its parts as last left; nothing is drawn in its place (SF11; manual §2)', () => {
+  const v = {...world.defaults, ...world.fixtures['Your world shown']}
+  const asHeld = snapshot => { const {state, ...field} = fieldOf(snapshot); return JSON.stringify(field) }
+  const here = {...AWAY, worlds: AWAY.worlds.map(one => ({...one, answer: answering}))}
+  const draw = (snapshot, page) => renderToStaticMarkup(world.whole({v: {...v, field: asHeld(snapshot), fieldYours: YOURS}, set() {}, nav: {}, page, setPage() {}, standing: {}}))
+  const away = fieldMapOf(draw(AWAY, 'shown')), answered = fieldMapOf(draw(here, 'shown'))
+  assert.ok(away.names.some(name => name.text === 'mara · away'), `the little map names mara away: ${away.names.map(name => name.text)}`)
+  assert.deepEqual(away.marks, answered.marks, 'nothing is drawn in its place: the same marks as when it answered')
+  const unnamed = page => { const at = page.indexOf('aria-label="The field"'); return page.slice(page.lastIndexOf('<svg', at), page.indexOf('</svg>', at)).replace(/<text[^>]*>[^<]*<\/text>/g, '') }
+  assert.equal(unnamed(draw(AWAY, 'shown')), unnamed(draw(here, 'shown')), 'the map draws exactly what it drew while the world answered, but for its name')
+  assert.deepEqual(away.names.map(name => name.text.replace(' · away', '')).sort(), answered.names.map(name => name.text).sort(), 'only its name says it is away')
+  const star = draw(AWAY, 'star')
+  assert.match(star, /Cartographer[^]*?mara, away/, 'at the star, its agent says it is away')
+  assert.match(star, /Mara’s|mara, away/)
+  assert.match(star, /nothing answers for it until mara is back/)
+})
+
+// ── round 34: what has reached you from the field, and why (SF08; manual §2, §17.2 Rules) ─────────────────────────────────────────
+// Whatever reaches you names who sent it and how it came: addressed to you, or from a star you are gathered at. It comes in the order it
+// came, never by how many others looked at it; nothing of your own reaches you, and nothing from a star you are not gathered at unless it
+// was addressed to you.
+const R0 = Date.UTC(2026, 10, 6, 8)
+const atR = n => micros(R0 + n * 60_000)
+const said = (saying_ref, star_ref, world_ref, to, what, words, n) => ({saying_ref, star_ref, world_ref, to_world_ref: null, to_part_ref: null, to_saying_ref: null, ...to, what, words, said_at_micros: atR(n)})
+const MARAS_RUN = 'run:01ARZ3NDEKTSV4RRFFQ69G5FAB'
+const REACHED = {...SNAPSHOT,
+  clearings: [...SNAPSHOT.clearings, c('world:mara', 'page:maras-reading', 'star', 'Mara’s reading of the second plate', 'star:rosarium')],
+  star_day: {state: 'held'}, star_days: [{star_ref: 'star:rosarium', world_ref: 'world:stranger', what: 'asked', kind: null, at_micros: atR(1)}],
+  star_saying: {state: 'held'}, star_sayings: [
+    said('saying:q', 'star:rosarium', 'world:mara', {to_world_ref: 'world:me', to_part_ref: 'page:for-the-circle'}, 'question', 'Where does the circle open?', 2),
+    said('saying:mine', 'star:rosarium', 'world:me', {to_world_ref: 'world:mara', to_part_ref: 'page:maras-reading'}, 'correction', 'Not the red rose.', 3),
+    said('saying:f', 'star:rosarium', 'world:mara', {to_saying_ref: 'saying:mine'}, 'finding', 'The white one, then.', 4),
+    said('saying:own', 'star:rosarium', 'world:mara', {to_world_ref: 'world:mara', to_part_ref: 'page:maras-reading'}, 'reproduction', 'I drew it again.', 5),
+    said('saying:far', 'star:far', 'world:stranger', {to_world_ref: 'world:stranger', to_part_ref: 'page:elsewhere'}, 'finding', 'Elsewhere.', 6)],
+  star_work: {state: 'held'}, star_works: [{star_ref: 'star:rosarium', world_ref: 'world:mara', work_ref: MARAS_RUN, standing: 'live', revision: 3,
+    shown: {...SHOWN(3), work_ref: MARAS_RUN, name: 'The plate readings'}, shown_at_micros: atR(7), updated_at_micros: atR(7)}],
+  star_offers: [offerRow('offer:mine-open', 'world:me', 'open', null, {moved_at_micros: atR(0)}), offerRow('offer:maras', 'world:mara', 'open', null, {moved_at_micros: atR(8)}),
+    offerRow('offer:mine-back', 'world:me', 'returned', 'world:mara', {returned: BACK('offer:mine-back'), moved_at_micros: atR(9)})],
+  world_contribution: {state: 'held'}, world_contributions: [
+    {...k('contribution:mara-asks', 'world:mara', 'world:me', MY_PAGE, 'question', 'Which rose is the fourth?', 'waiting'), at_micros: atR(10)},
+    {...k('contribution:me-asks', 'world:me', 'world:mara', MARAS_PAGE, 'question', 'Where is the white rose?', 'accepted', 'Here, on the left.'), at_micros: atR(11)},
+    {...k('contribution:stranger-threads', 'world:stranger', 'world:mara', {contribution_ref: 'contribution:me-asks'}, 'reproduction', 'I found it there too.', 'accepted'), at_micros: atR(12)},
+    {...k('contribution:me-waits', 'world:me', 'world:mara', MARAS_PAGE, 'finding', 'The plate is the sixth.', 'waiting'), at_micros: atR(13)}]}
+const REACHED_LINES = [
+  ['stranger asks to come to The Rosarium plates', 'to you'],
+  ['mara asks about For the circle', 'to you'],
+  ['mara has a finding on your correction', 'to you'],
+  ['mara reproduces Mara’s reading of the second plate', 'The Rosarium plates'],
+  ['mara shows a piece of work: The plate readings', 'The Rosarium plates'],
+  ['mara offers a task: Chart the delta’s channels from the survey notes.', 'The Rosarium plates'],
+  ['mara brought back The delta chart, for your task', 'to you'],
+  ['mara’s question on A reading of the fourth plate', 'to you'],
+  ['mara accepted your question on Mara’s plate', 'to you'],
+  ['stranger’s reproduction under your question', 'to you']]
+
+test('what has reached you names who sent it and how it came, addressed to you or from a star you are gathered at, in the order it came; your own and a star you are not at never reach you (SF08)', () => {
+  const rows = atlasDevs.reachedRows(fieldOf(REACHED))
+  assert.deepEqual(rows.map(row => [row.name, row.note]), REACHED_LINES)
+  const by = name => rows.find(row => row.name === name)
+  assert.match(by('mara asks about For the circle').does, /^“Where does the circle open\?” It reached you addressed to you: said to a part your world shows\.$/)
+  assert.match(by('mara has a finding on your correction').does, /addressed to you: said to what your world said\./)
+  assert.match(by('mara reproduces Mara’s reading of the second plate').does, /It reached you from The Rosarium plates, a star your world is gathered at\./)
+  assert.match(by('mara accepted your question on Mara’s plate').does, /^“Here, on the left\.” It reached you addressed to you: the answer to your contribution\.$/)
+  assert.match(by('stranger asks to come to The Rosarium plates').does, /addressed to you: it asks at a star your world lit\./)
+  assert.ok(rows.every(row => !/Not the red rose|Elsewhere|The plate is the sixth/.test(`${row.name} ${row.does}`)), 'nothing of your own, and nothing from a star you are not at')
+  const reversed = Object.fromEntries(Object.entries(REACHED).map(([key, value]) => [key, Array.isArray(value) ? [...value].reverse() : value]))
+  assert.deepEqual(atlasDevs.reachedRows(fieldOf(reversed)).map(row => row.name), REACHED_LINES.map(([name]) => name), 'in the order it came, whatever order the field served it in')
+  const crowd = {...REACHED, worlds: [...REACHED.worlds, ...Array.from({length: 9}, (_, i) => w(`world:reader-${i}`, `body:r${i}`, false))],
+    gatherings: [...REACHED.gatherings, ...Array.from({length: 9}, (_, i) => ({star_ref: 'star:rosarium', world_ref: `world:reader-${i}`, state: 'gathered'}))]}
+  assert.deepEqual(atlasDevs.reachedRows(fieldOf(crowd)).map(row => row.name), REACHED_LINES.map(([name]) => name), 'nothing comes first because more worlds are gathered round it')
+  const left = {...REACHED, gatherings: REACHED.gatherings.filter(row => row.world_ref !== 'world:me')}
+  assert.deepEqual(atlasDevs.reachedRows(fieldOf(left)).filter(row => row.note !== 'to you'), [], 'a star you have left sends you nothing more')
+  assert.deepEqual(atlasDevs.reachedRows(fieldOf(SNAPSHOT)).map(row => row.name), ['stranger asks to come to The Rosarium plates'], 'a field that keeps no sayings, work or contributions sends what it keeps')
+})
+
+test('the Shown page lists what reached you, who sent it and how it came, opening on the newest (SF08)', () => {
+  const v = {...world.defaults, ...world.fixtures['Your world shown']}
+  store.chooseFieldView({field: true, aperture: 'federated', viewAs: 'me'})
+  store.publishField(fieldOf(REACHED))
+  let rows
+  try { rows = JSON.parse(atlasDevs.atlasGlobeBinding(YOURS_READING()).values.reached) } finally { store.publishField(fieldOf(SNAPSHOT)); store.chooseFieldView({field: false, aperture: 'world', viewAs: 'me'}) }
+  assert.deepEqual(rows.map(row => [row.name, row.note]), REACHED_LINES, 'the binding hands the World what reached you')
+  const page = renderToStaticMarkup(world.whole({v: {...v, reached: JSON.stringify(rows)}, set() {}, nav: {}, page: 'shown', setPage() {}, standing: {}}))
+  assert.match(page, />Reached you</)
+  assert.match(page, />stranger’s reproduction under your question</, 'it opens on the newest')
+  assert.match(page, />mara accepted your question on Mara’s plate</)
+  assert.doesNotMatch(page, />stranger asks to come to The Rosarium plates</, 'the oldest is a page back')
+  const none = renderToStaticMarkup(world.whole({v: {...v, reached: JSON.stringify([])}, set() {}, nav: {}, page: 'shown', setPage() {}, standing: {}}))
+  assert.match(none, /Nothing has reached you from the field\./)
 })
