@@ -2918,7 +2918,17 @@ impl Manager {
         match composed.finish {
             ComposeFinish::Open => {
                 let worker = composed_worker_binding(&composed.content, &composed.source)?;
-                self.open(&worker, composed.source)
+                // The field host is handed your own place's sky to hear the scene on (QL
+                // RECEPTION_SKY_LAW); the frame is told nothing of it.
+                let mut source = composed.source;
+                if let Some(host) = source
+                    .get_mut("binding")
+                    .and_then(|binding| binding.get_mut("host"))
+                    .and_then(Value::as_object_mut)
+                {
+                    host.remove("reception_sky");
+                }
+                self.open(&worker, source)
             }
             ComposeFinish::ReturnWorld => {
                 let binding: Value = serde_json::from_str(&composed.content).map_err(|error| {
@@ -3971,6 +3981,90 @@ for line in sys.stdin:
         let sent: Value = serde_json::from_slice(&fs::read(&log).unwrap()).unwrap();
         assert_eq!(sent["sky"], shared);
         assert!(sent.get("reception_sky").is_none(), "{sent}");
+        fs::remove_dir_all(dir).unwrap();
+    }
+    /// O-I #856 (DLW build ruling 2026-11-06): the field host is handed your own place's sky to hear the scene on, and the open
+    /// answer tells the frame nothing of it: the source it discloses keeps the binding the scene was composed on, less that sky.
+    #[cfg(unix)]
+    #[test]
+    fn the_open_answer_discloses_nothing_of_the_place_the_field_host_hears_on() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir =
+            std::env::temp_dir().join(format!("native-reception-open-test-{}", std::process::id()));
+        fs::create_dir_all(&dir).unwrap();
+        let script = |name: &str, body: &str| {
+            let path = dir.join(name);
+            fs::write(&path, format!("#!/bin/sh\n{body}\n")).unwrap();
+            fs::set_permissions(&path, fs::Permissions::from_mode(0o700)).unwrap();
+            crate::test_stub::settle_stub(&path);
+            path
+        };
+        let yours = json!({"schema":"ql.sky-snapshot/v1","snapshot_ref":"sha256:made-up-private-sky","scope":"observer-private",
+            "epoch_unix_ms":1790596800000_u64,"epoch_utc":"2026-09-28T12:00:00Z","bodies":[],
+            "request":{"schema":"ql.sky-request/v1","epoch":"2026-09-28T14:00:00+02:00","timezone":"Europe/Rome","mode":"current",
+                "perspective":"Topocentric","zodiac":"Tropical","ayanamsha":null,"max_age_seconds":3600,"backend_policy":"allow-moshier",
+                "observer":{"reference":"place:made-up-home","longitude_degrees":12.5,"latitude_degrees":41.875,"altitude_metres":20.0}}});
+        // QL composes on the world's sky and keeps yours in the host's config, beside it (QL RECEPTION_SKY_LAW).
+        let binding = json!({"schema":"oi.native-expression-binding/v1",
+            "host":{"instance_ref":"test:instance","reception_sky":yours},
+            "presentation":{"units_per_metre":1,"slots_a":[0],"slots_b":[0]}});
+        let ql = script("ql", &format!("echo '{binding}'"));
+        let sky = script(
+            "ql-sky",
+            r#"echo '{"schema":"ql.sky-snapshot/v1","snapshot_ref":"sha256:worlds","scope":"shared-geocentric","receipt_unix_ms":5,"bodies":[]}'"#,
+        );
+        // The field host keeps the config it was handed, then stands ready until it is let go.
+        let handed = dir.join("handed");
+        let host = script(
+            "host",
+            &format!(
+                r#"cp "$2" '{}'; echo '{{"schema":"ql.field-host-receipt/v1","status":"ready","available":true,"instance_ref":"test:instance","last_request_id":"0","field":{{"event_ref":"test:event","subject_ref":"test:subject"}}}}'; cat >/dev/null"#,
+                handed.display()
+            ),
+        );
+        let env = EnvGuard::set(&[
+            ("OI_QL_BIN", Some(ql.as_os_str())),
+            ("OI_QL_SKY_BIN", Some(sky.as_os_str())),
+            ("OI_QL_FIELD_HOST_BIN", Some(host.as_os_str())),
+            ("OI_QL_FIELD_WORKER_BIN", Some(host.as_os_str())),
+        ]);
+        let mut manager = Manager::default();
+        let composed = manager
+            .prepare_compose(&json!({"texture":[1,1],"units_per_metre":120,"sky_snapshot":yours}))
+            .unwrap()
+            .execute()
+            .unwrap();
+        assert_eq!(composed.source["binding"], binding);
+        let mut kept = composed.source.clone();
+        let opened = manager.finish_compose(composed);
+        drop(env);
+        let opened = opened.unwrap();
+        let config: Value = serde_json::from_slice(&fs::read(&handed).unwrap()).unwrap();
+        assert_eq!(
+            config["reception_sky"], yours,
+            "the field host is handed your place's sky to hear on"
+        );
+        assert!(
+            opened["source"]["binding"]["host"]
+                .get("reception_sky")
+                .is_none(),
+            "{}",
+            opened["source"]
+        );
+        kept["binding"]["host"]
+            .as_object_mut()
+            .unwrap()
+            .remove("reception_sky");
+        assert_eq!(
+            opened["source"], kept,
+            "the rest of the source is disclosed as composed"
+        );
+        assert_eq!(opened["source"]["sky"]["snapshot_ref"], "sha256:worlds");
+        let disclosed = opened.to_string();
+        for word in ["made-up", "Rome", "41.875", "observer-private"] {
+            assert!(!disclosed.contains(word), "{word} in {disclosed}");
+        }
+        drop(manager);
         fs::remove_dir_all(dir).unwrap();
     }
     #[cfg(unix)]

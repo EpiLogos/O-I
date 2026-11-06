@@ -15,3 +15,12 @@
 .note-fold .note-fold-sound--held { fill: var(--dp-value); stroke: var(--dp-value) }
 .note-fold .note-fold-sound--out { stroke: var(--text-faint); opacity: .5 }
 .note-fold .note-fold-word { font: 8.5px var(--font-ui, sans-serif); fill: var(--text-dim) }
+
+/* Taking a note device off is held (NoteDeviceChain.tsx heldTakeOff; manual §16.10): while Delete is held a fill sweeps across its name in
+   the time to hold, and letting go early springs it back, as the kit's held act does (inhabitants/sdk/panel.css .dp-hold-fill). */
+.note-plate[data-hold="true"] .dp-title { background: linear-gradient(color-mix(in srgb, var(--dp-on) 55%, transparent), color-mix(in srgb, var(--dp-on) 55%, transparent)) left / 0% 100% no-repeat; transition: background-size 160ms var(--dp-ease) }
+.note-plate[data-holding="true"] .dp-title { background-size: 100% 100%; transition: background-size var(--dp-hold, 900ms) linear }
+/* The fill is the hold's own time, not a motion: it keeps running where motion is reduced, as the kit's does. */
+@media (prefers-reduced-motion: reduce) {
+  .note-plate[data-holding="true"] .dp .dp-title { transition: background-size var(--dp-hold, 900ms) linear !important }
+}

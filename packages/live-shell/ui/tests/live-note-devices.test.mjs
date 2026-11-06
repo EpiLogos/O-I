@@ -217,6 +217,43 @@ test('reorder and remove on the session hold: the stages run in chain order, the
   resetNoteDeviceChain()
 })
 
+// DLW build ruling 2026-11-06 (#745; manual §16.10 "An act that you cannot undo is held"): a take-off is held where it discards the
+// device's state. A note device taken off loses its power and its tie (placed again it is a new one, and Undo does not reach the session
+// hold), so ⌫ on its plate is a hold: the fill runs MOTION.hold across its name, and letting go early springs it back.
+test('a note device comes off its chain on a held ⌫: its settings go with it, so letting go early keeps it', async () => {
+  const plate = renderToStaticMarkup(createElement(view.NoteDeviceChainView, {devices: [scale('down')], mode: aeolianMode()}))
+  assert.match(plate, /class="chain-side note-plate"[^>]*data-hold="true"[^>]*style="--dp-hold:900ms"/, 'the plate carries the hold and its time')
+  assert.match(plate, /Hold Delete to take it off: its settings go with it\./)
+  assert.doesNotMatch(plate, /Delete takes it off/)
+  const source = readFileSync(new URL('../src/live/noteDevices/NoteDeviceChain.tsx', import.meta.url), 'utf8')
+  assert.doesNotMatch(source.slice(source.indexOf('const onKeyDown')), /^\s*removeNoteDevice\(device\.id\)/m, 'the key alone takes nothing off')
+  resetNoteDeviceChain()
+  const kept = addNoteDevice('scale')
+  setScaleTie(kept.id, 'down', {hand: false})
+  // A logical clock: the hold's timers, fired or cleared by the test, never the wall.
+  const timers = new Map()
+  let next = 0
+  const clock = {setTimeout: (run, ms) => { timers.set(++next, {run, ms}); return next }, clearTimeout: id => { timers.delete(id) }}
+  const fill = []
+  const hold = view.heldTakeOff(() => removeNoteDevice(kept.id), on => fill.push(on), clock)
+  hold.press()
+  assert.deepEqual([...timers.values()].map(timer => timer.ms), [900], 'the fill runs for the hold, 0.9 s')
+  hold.press()
+  assert.equal(timers.size, 1, 'the held key repeating starts nothing more')
+  hold.release()
+  assert.equal(timers.size, 0, 'let go early, and nothing happens')
+  assert.deepEqual(noteDeviceChain().map(device => [device.id, device.params.tie]), [[kept.id, 'down']], 'it stays, its tie with it')
+  assert.deepEqual(fill, [true, false], 'the fill springs back')
+  hold.press()
+  const [[, timer]] = [...timers]
+  timer.run()
+  assert.deepEqual(noteDeviceChain(), [], 'held to the end, it comes off')
+  assert.deepEqual(fill, [true, false, true, false])
+  hold.release()
+  assert.deepEqual(fill, [true, false, true, false], 'a release after the act changes nothing')
+  resetNoteDeviceChain()
+})
+
 // ── 5 — one path: a pointer press and a MIDI note pass the same chain before the owner's stage command ──
 
 test('a pointer press and a MIDI note both reach the owner through the same chain, as one janko stage command each, via the mounted channel', async () => {
