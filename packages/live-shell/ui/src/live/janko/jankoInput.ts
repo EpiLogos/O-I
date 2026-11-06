@@ -237,6 +237,11 @@ export interface EngineStrike {
   readonly sent_at_ms: number
   readonly sounds_at_ms: number
   readonly ms: number
+  /** The engine's own key-to-sound (DLW build ruling 2026-11-06; live-engine StrikeTime): the frame the strike reached the engine, the
+   * first frame its part sounded (null: it sounded nothing), and the span between in frames, ms and the engine's blocks (null with it). */
+  readonly reached_frame?: number
+  readonly sounded_frame?: number | null
+  readonly to_sound?: {readonly frames: number; readonly ms: number; readonly blocks: number} | null
 }
 /** The engine's own legs of key-to-sound, as its host reads them (live_engine_host.rs reading `latency`, O-I #853 round 18), with the
  * latest strikes' pairs, oldest first (round 22). */
@@ -267,12 +272,17 @@ const PAIR_SLACK_MS = 1
  * Where the engine names the pair of a strike the host sent it while the owner struck this act (from its send to its answer, on the wall
  * clock), that is this act's sound (O-I #849 round 22): the page's leg to the engine and the engine's to its sound are measured, and the
  * owner's lead over the engine is no longer unmeasured; the first such pair is joined, and named. */
+/** The engine's pair of a strike the host sent it while the owner struck this act (from its send to its answer, on the wall clock), or none. */
+function pairOf(strike: KeyLatency, engine: EngineLatency | null): EngineStrike | undefined {
+  const sentAt = strike.sentAt, ownerMs = strike.ownerMs
+  return engine && sentAt !== undefined && ownerMs !== null
+    ? engine.strikes?.find(e => e.sent_at_ms >= sentAt - PAIR_SLACK_MS && e.sent_at_ms <= sentAt + ownerMs + PAIR_SLACK_MS) : undefined
+}
 export function keyToSound(strike: KeyLatency, engine: EngineLatency | null): KeyToSound | null {
   if (!strike.ok || strike.ownerMs === null) return null
   const parts: [string, number][] = []
-  const sentAt = strike.sentAt, ownerMs = strike.ownerMs
-  const pair = engine && sentAt !== undefined
-    ? engine.strikes?.find(e => e.sent_at_ms >= sentAt - PAIR_SLACK_MS && e.sent_at_ms <= sentAt + ownerMs + PAIR_SLACK_MS) : undefined
+  const sentAt = strike.sentAt
+  const pair = pairOf(strike, engine)
   // A hardware key (O-I #853 round 23): read as the engine's pairs are, on the host's own clock, from its receipt of the note.
   const receivedAt = strike.receivedAt
   if (engine && pair && receivedAt !== undefined) {
@@ -297,6 +307,48 @@ const msText = (ms: number) => String(Math.round(ms * 100) / 100)
 /** The joined measurement as one plain line. */
 export const keyToSoundLine = (joined: KeyToSound) =>
   `Key to sound: ${msText(joined.ms)} ms (${joined.parts.map(([part, ms]) => `${part} ${msText(ms)}`).join(' · ')}); not measured: ${joined.unmeasured.join(', ')}.`
+
+/** The inputs the engine's key-to-sound is read back by (DLW build ruling 2026-11-06): the pointer (a touch is a pointer's), the computer
+ * keys and MIDI. */
+export const KEY_TO_SOUND_INPUTS = ['pointer', 'keys', 'midi'] as const
+export type KeyToSoundInput = (typeof KEY_TO_SOUND_INPUTS)[number]
+const INPUT_OF: Readonly<Record<NoteSource, KeyToSoundInput>> = {pointer: 'pointer', touch: 'pointer', keyboard: 'keys', midi: 'midi'}
+/** One input's latest key-to-sound as the engine measured it: the frame it reached the engine, the frame its part first sounded, and the
+ * span in frames, ms and blocks; the last four null where it sounded nothing. */
+export interface EngineKeyToSound {
+  readonly reached_frame: number
+  readonly sounded_frame: number | null
+  readonly frames: number | null
+  readonly ms: number | null
+  readonly blocks: number | null
+}
+export type KeyToSoundByInput = Readonly<Record<KeyToSoundInput, EngineKeyToSound | null>>
+/** The candidate's readback of key-to-sound (DLW build ruling 2026-11-06, #849 and #853: "The candidate's readback carries the latest of
+ * each, per input kind (pointer, keys, MIDI), in ms and in blocks"): for each input, the latest strike of it the owner took that is joined
+ * with the engine's pair as keyToSound joins it, read as the engine measured it; null for an input none was. A strike's input is its first
+ * note's. Pure. */
+export function keyToSoundByInput(strikes: readonly KeyLatency[], engine: EngineLatency | null): KeyToSoundByInput {
+  const by: Record<KeyToSoundInput, EngineKeyToSound | null> = {pointer: null, keys: null, midi: null}
+  for (const strike of strikes) {
+    const source = strike.sources[0]
+    if (!strike.ok || source === undefined) continue
+    const pair = pairOf(strike, engine)
+    if (!pair || typeof pair.reached_frame !== 'number' || pair.sounded_frame === undefined) continue
+    const to = pair.to_sound ?? null
+    by[INPUT_OF[source]] = {reached_frame: pair.reached_frame, sounded_frame: pair.sounded_frame, frames: to?.frames ?? null, ms: to?.ms ?? null, blocks: to?.blocks ?? null}
+  }
+  return by
+}
+const INPUT_WORD: Readonly<Record<KeyToSoundInput, string>> = {pointer: 'pointer', keys: 'keys', midi: 'MIDI'}
+/** The readback as one plain line, each input measured in ms and blocks; null while none is. */
+export function keyToSoundByInputLine(by: KeyToSoundByInput): string | null {
+  const said = KEY_TO_SOUND_INPUTS.flatMap(kind => {
+    const it = by[kind]
+    if (!it) return []
+    return [it.ms === null || it.blocks === null ? `${INPUT_WORD[kind]} sounded nothing` : `${INPUT_WORD[kind]} ${msText(it.ms)} ms (${msText(it.blocks)} blocks)`]
+  })
+  return said.length ? `In the engine, key to sound: ${said.join(' · ')}.` : null
+}
 
 // ── the path ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 

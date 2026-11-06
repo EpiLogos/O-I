@@ -159,6 +159,10 @@ function clipMenu(target: Extract<ObjectTarget, {kind: 'clip'}>, set: WorldTrack
     if (exportTake) items.push(act('export-audio', 'Export Audio', undefined, exportTake, 'clip.export', a,
       () => press(`export:${target.id}`, `Export Audio of ${named}`, () => exportTake.run(target.id))))
   }
+  // Place Under Scene (O-I #855): a take's clip laid under the presented Expression's scene, in either view; listed where the set carries it.
+  const placeTake = readOnly ? undefined : a?.placeTake
+  if (placeTake) items.push(act('place-under-scene', 'Place Under Scene', undefined, placeTake, 'clip.place', a,
+    () => press(`place:${target.id}`, `Place ${named} under the scene`, () => placeTake.run(target.id))))
   // In Central, Open and Reveal the page's file (§10.9): listed only where the set carries them; neither changes the clip.
   if (a?.openFile || a?.revealFile) {
     items.push(sep('s-open'))

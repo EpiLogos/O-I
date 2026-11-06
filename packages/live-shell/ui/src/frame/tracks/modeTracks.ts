@@ -303,7 +303,9 @@ export function liveTracks(set: SetSummary, document: SetDocument | null, colors
   // Record into a slot (O-I #743): a take on the armed part's Record, laid in the slot; loaded when pressed.
   const record = (track: number, scene: number) => import('../../live/liveTake').then(module => module.recordIntoSlot({path: set.path, track, scene,
     bpm: set.tempo_bpm, part: set.tracks[track] ? {track, name: set.tracks[track]!.name, kind: set.tracks[track]!.kind} : null}))
-  const tracks = liveSetTrackAdapter.project({set, document, colors, ...liveSetWrites(set.path), play, exportTake, engine, record, lanes})
+  // Place Under Scene (O-I #855 round 26): a take's clip laid under the presented Expression's scene; loaded when pressed.
+  const placeTake = (track: number, at: LiveClipAt) => import('../../live/liveTake').then(module => module.placeLiveTake({path: set.path, track, at}))
+  const tracks = liveSetTrackAdapter.project({set, document, colors, ...liveSetWrites(set.path), play, exportTake, placeTake, engine, record, lanes})
   return maker ? withClipMaker(tracks, maker) : tracks
 }
 

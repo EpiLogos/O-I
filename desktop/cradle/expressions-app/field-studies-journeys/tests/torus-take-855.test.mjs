@@ -810,15 +810,45 @@ test('a take whose sound is not the one the kernel sealed is refused in words, a
     const held = soundingTake({take_ref: 'sha256:held', render: {...soundingTake().render, pcm_sha256: pcmSha((owner.renders + 1) / 8, 48000)}});
     c.soundTake({take: held, lane_ref: 'take-lane:torus/3', title: 'Take 3', from_frame: 0}, playing);
     await until(() => c.reading.take_player.held_bytes === 48000 * 4, 'held');
-    const {TAKE_RENDERS_BYTES_MAX} = await controller();
+    const {TAKE_RENDERS_BYTES_MAX, TAKE_NOT_PLAYED_RESUMES} = await controller();
     assert.equal(TAKE_RENDERS_BYTES_MAX, 256 * 1024 * 1024);
     const frames = (TAKE_RENDERS_BYTES_MAX - 48000 * 4) / 4 + 1;
     const big = soundingTake({take_ref: 'sha256:big', frames: String(frames), acts: []});
     const said = c.soundTake({take: big, lane_ref: 'take-lane:torus/4', title: 'Take 4', from_frame: 0}, playing);
-    assert.equal(said, `Take 4 is not played: its sound takes ${(frames * 4 / 1048576).toFixed(2)} MB, and the takes' sounds held come to 256 MB at most (0.18 MB are held now). Nothing held is let go for it.`);
+    // REPLACES the words without where the scene resumes (O-I #855: "A take whose motion cannot replay exactly says where it resumes")
+    assert.equal(said, `Take 4 is not played: its sound takes ${(frames * 4 / 1048576).toFixed(2)} MB, and the takes' sounds held come to 256 MB at most (0.18 MB are held now). Nothing held is let go for it. ${TAKE_NOT_PLAYED_RESUMES}`);
     assert.equal(owner.renderCalls.length, renders + 1, 'refused before the owner renders anything');
     assert.equal(c.reading.take_player.held_bytes, 48000 * 4, 'what is held stays held');
   } finally { await c.dispose(); }
+});
+
+// O-I #855 Done when: "A take whose motion cannot replay exactly says where it resumes." Under its scene a take's sound is the one the
+// kernel sealed, sample for sample, from any frame; what it struck before the frame it is taken up at is not struck again, and a take
+// that is not played leaves the scene to the Torus as it rings: each is said, once, where it happens.
+test('a take under its scene says where it resumes: taken up past its start, from that frame and its last act; not played, on the Torus as it rings', async () => {
+  const {TAKE_NOT_PLAYED_RESUMES, takeResumesAt} = await controller();
+  assert.equal(TAKE_NOT_PLAYED_RESUMES, 'The scene plays on, its Torus ringing as it stands.');
+  assert.equal(takeResumesAt('Take 1', 30000, 48000), 'Take 1 resumes 0.63 s in: its sound as the kernel sealed it from there, and the plate from the last act it struck before then, on the scene\'s voices as they stand.');
+  const {c} = await openController();
+  try {
+    const take = soundingTake(), want = from => ({take, lane_ref: 'take-lane:torus/1', title: 'Take 1', from_frame: from});
+    const playing = {playing: true, rate: 1};
+    assert.equal(c.soundTake(want(0), playing), null, 'nothing to say while it renders');
+    await until(() => c.reading.take_player.held_bytes === 48000 * 4, 'held');
+    assert.equal(c.soundTake(want(0), playing), null, 'from its start it plays exactly as sealed: nothing to say');
+    assert.equal(c.soundTake(want(240), playing), null, 'playing on says nothing');
+    assert.equal(c.soundTake(want(30000), playing), takeResumesAt('Take 1', 30000, 48000), 'a seek into it says where it resumes');
+    assert.equal(c.soundTake(want(30000), playing), null, 'once');
+    c.soundTake(want(30000), {playing: false, rate: 1});
+    assert.equal(c.soundTake(want(1200), playing), takeResumesAt('Take 1', 1200, 48000), 'played again past its start: said again');
+  } finally { await c.dispose(); }
+  const {c: d} = await openController();
+  try {
+    const forged = soundingTake({take_ref: 'sha256:forged', render: {...soundingTake().render, pcm_sha256: pcmSha(0.5, 48000)}});
+    d.soundTake({take: forged, lane_ref: 'take-lane:torus/2', title: 'Take 2', from_frame: 0}, {playing: true, rate: 1});
+    await until(() => d.reading.take_player.refusal !== null, 'refused once rendered');
+    assert.ok(d.reading.take_player.refusal.endsWith(`). ${TAKE_NOT_PLAYED_RESUMES}`), d.reading.take_player.refusal);
+  } finally { await d.dispose(); }
 });
 
 test('the plate plays what a sounding take struck, before what the live Torus sounds', async () => {

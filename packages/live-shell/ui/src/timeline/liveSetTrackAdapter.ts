@@ -106,6 +106,9 @@ export interface LiveSetReading {
   lanes?: ClipLaneStanding | ClipLanesStanding | null
   /** Export Audio of a take Record laid (live/liveTake.ts exportLiveTake, O-I #855): its course rendered by the Torus's owner, saved as WAV. */
   exportTake?: (track: number, at: LiveClipAt) => Promise<WorldActionReceipt>
+  /** Place Under Scene of a take Record laid (live/liveTake.ts placeLiveTake, O-I #855 round 26): laid under the presented Expression's
+   * scene, from its arrangement clip's start or a slot's beat 0. */
+  placeTake?: (track: number, at: LiveClipAt) => Promise<WorldActionReceipt>
   /** A kept sound played on the part `track` (live/LivePresets.tsx playKeptSoundOn, O-I #852): opened on the Torus as saved, then kept by
    * the part. With the set's acts, a kept sound dropped on the empty track plays on a new part. */
   openSound?: (soundRef: string, track: number) => Promise<WorldActionReceipt>
@@ -121,6 +124,8 @@ export const LIVE_ACT_OP = (kind: LiveSetAct['kind']) => `live_set_act · ${kind
 export const LIVE_SEAT_SOUND_OP = `${LIVE_ACT_OP('track_insert')}, a rack's ${LIVE_ACT_OP('rack_place')}, then the kept sound opened on the new part (the Torus's owner, through the frame's stage)`
 /** Export Audio of a take: its course rendered offline by the Torus's owner, part after part (O-I #855). */
 export const LIVE_EXPORT_TAKE_OP = 'render-take {checkpoint, acts, frames} — the take\'s course rendered by the Torus\'s owner (QL-MEF torus-render), saved as 32-bit float WAV'
+/** Place Under Scene of a take (O-I #855 round 26): its course rendered by the Torus's owner, sealed by the kernel and laid under the scene. */
+export const LIVE_PLACE_TAKE_OP = 'render-take {checkpoint, acts, frames}, the kernel\'s torus_take seal, then the Scene\'s record_torus_take — a take Record laid on a Live part, placed on its take lane under the presented scene'
 export const LIVE_INSERT_CLIP_OP = 'live_clip_create {path, track, scene, length: 4, notes: []} — an empty one-bar MIDI clip in the empty slot, as Live inserts one'
 /** What an act no op of the set's owner carries waits for (O-I #743, round two), as the status bar says after the missing op. */
 export const LIVE_RENDER_WAIT = 'Consolidating audio clips writes a new sample of what they play: the engine renders it, and no engine is handed in here.'
@@ -216,7 +221,7 @@ const barBeat = (signature?: SetSignature) => (beats: number): string => {
 
 export const liveSetTrackAdapter: WorldTrackAdapter<LiveSetReading> = {
   id: LIVE_SET_TRACK_ADAPTER_ID,
-  project({set, document, colors, mixerWrite, sendWrite, compWrite, act, insertClip, clipInfo, play, exportTake, engine, openSound, record, lanes: standing,
+  project({set, document, colors, mixerWrite, sendWrite, compWrite, act, insertClip, clipInfo, play, exportTake, placeTake, engine, openSound, record, lanes: standing,
     consolidateAudio, cropAudio}): WorldTrackSet {
     if (!set) return {columns: [], tracks: [], clips: []}
     const trackRef = (index: number) => `als:${set.path}#track/${index}`
@@ -362,7 +367,7 @@ export const liveSetTrackAdapter: WorldTrackAdapter<LiveSetReading> = {
       }}
       result.actions = {...result.actions, mixer}
     }
-    const objects = liveObjectActs(set, act, insertClip, play, clipInfo, exportTake, openSound, record, document, consolidateAudio, cropAudio)
+    const objects = liveObjectActs(set, act, insertClip, play, clipInfo, exportTake, openSound, record, document, consolidateAudio, cropAudio, placeTake)
     if (objects) result.actions = {...result.actions, ...objects}
     return result
   },
@@ -523,8 +528,8 @@ export function rackUnplaced(rack: TorusRackPlacing): string[] {
 function liveObjectActs(set: SetSummary, act: LiveSetReading['act'], insertClip: LiveSetReading['insertClip'], play: LiveSetReading['play'],
   clipInfo?: LiveSetReading['clipInfo'], exportTake?: LiveSetReading['exportTake'], openSound?: LiveSetReading['openSound'],
   record?: LiveSetReading['record'], document: SetDocument | null = null, consolidateAudio?: LiveSetReading['consolidateAudio'],
-  cropAudio?: LiveSetReading['cropAudio']): WorldTrackActions | null {
-  if (!act && !play && !clipInfo && !exportTake && !record) return null
+  cropAudio?: LiveSetReading['cropAudio'], placeTake?: LiveSetReading['placeTake']): WorldTrackActions | null {
+  if (!act && !play && !clipInfo && !exportTake && !record && !placeTake) return null
   const prefix = `als:${set.path}#track/`
   const refused = (error: string) => Promise.resolve({ok: false as const, error})
   const said = (cause: unknown) => cause instanceof Error ? cause.message : String(cause)
@@ -703,6 +708,10 @@ function liveObjectActs(set: SetSummary, act: LiveSetReading['act'], insertClip:
     const place = clipOf(clipId)
     if (typeof place === 'string') return refused(place)
     return 'arrangement' in place.at ? exportTake(place.track, place.at) : refused('A take lies in Arrangement view: Export Audio renders a take Record laid there.')
+  }}
+  if (placeTake) actions.placeTake = {op: LIVE_PLACE_TAKE_OP, run: clipId => {
+    const place = clipOf(clipId)
+    return typeof place === 'string' ? refused(place) : placeTake(place.track, place.at)
   }}
   if (clipInfo) actions.clipInfo = {op: LIVE_INFO_OP,
     read: clipId => { const place = clipOf(clipId); return typeof place === 'string' ? Promise.reject(new Error(place)) : clipInfo.read(place.track, place.at) },

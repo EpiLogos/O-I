@@ -440,6 +440,29 @@ test('a take\'s clip exports its audio from its menu in Arrangement view, throug
   assert.match((await a.exportTake.run(`als:/sets/other.als#track/2/clip/0`)).error, /another set/)
 })
 
+// O-I #855 round 26 ("A Live part placed under an Expression's scenes sounds on its ruler, and the field answers it"): a take's clip is
+// placed under the presented Expression's scene from its own menu, in Arrangement view (from its clip's start) and in a slot (from its
+// beat 0), through the set's Place Under Scene act (live/liveTake.ts placeLiveTake).
+test('a take\'s clip is placed under the scene from its menu, in either view, through the set\'s Place Under Scene act', async () => {
+  const calls = []
+  const set = liveSetTrackAdapter.project({set: summary, document, act: async a => ({act: a.kind, done: 'ok', at: null, revision: 'r'}),
+    placeTake: (track, at) => { calls.push([track, at]); return Promise.resolve({ok: true, note: 'Ebb lies under the scene on its take lane, from sample 0.'}) }})
+  const a = set.actions
+  assert.ok(a.placeTake, 'carried where the set hands in its Place Under Scene')
+  assert.match(a.placeTake.op, /render-take .*record_torus_take/)
+  const clip = {kind: 'clip', id: `${ref(2)}/clip/0`, trackId: ref(2), name: 'Ebb'}
+  const item = byId(acts.objectMenu(clip, set, context({view: 'arrangement'})), 'place-under-scene')
+  assert.equal(item.label, 'Place Under Scene')
+  assert.equal(item.disabled, undefined)
+  await item.onSelect()
+  assert.deepEqual(calls, [[2, {arrangement: 0}]])
+  const slot = {kind: 'clip', id: `${ref(2)}/slot/1`, trackId: ref(2), name: 'Ebb'}
+  await byId(acts.objectMenu(slot, set, context({view: 'session'})), 'place-under-scene').onSelect()
+  assert.deepEqual(calls, [[2, {arrangement: 0}], [2, {slot: 1}]], 'a take in a slot, from its beat 0')
+  assert.equal(byId(acts.objectMenu(clip, liveSet().set, context({view: 'arrangement'})), 'place-under-scene'), undefined, 'a set with no Place Under Scene lists none')
+  assert.match((await a.placeTake.run(`als:/sets/other.als#track/2/clip/0`)).error, /another set/)
+})
+
 // O-I #852 (manual §21.2 "Drag it onto a part to play it"): a kept sound dropped on the empty track plays on a new part — Live's Insert
 // MIDI Track (`track_insert`, packages/live-set/src/acts.rs) after the last part, then the sound opened on the Torus and kept by that part.
 test('a kept sound dropped on the empty track plays on a new part: the part inserted, then the sound opened on it', async () => {

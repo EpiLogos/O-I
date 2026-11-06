@@ -21,7 +21,7 @@ import {nativeHost} from '../native/application'
 import {useLiveModeInForce} from '../native/liveModeCatalogue'
 import {runNoteChain} from './noteDevices/noteDevices'
 import {useNoteDeviceChain} from './noteDevices/noteDeviceHold'
-import {KEYBOARD_TRANSPOSE, keyToSound, keyToSoundLine, type KeyboardRepeatTouch, type KeyboardVelocity} from './janko/jankoInput'
+import {KEYBOARD_TRANSPOSE, keyToSound, keyToSoundByInput, keyToSoundByInputLine, keyToSoundLine, type KeyboardRepeatTouch, type KeyboardVelocity} from './janko/jankoInput'
 import {
   engineLatency, livePlayingPath, panicLivePlaying, setKeyboardLayout, setKeyboardSettings, setLivePlayingTransform, useKeyboardLayout,
   useKeyboardSettings, useLivePlaying,
@@ -114,6 +114,9 @@ export function PartInput() {
     {/* The last strike's key-to-sound, joined from the parts that exist (O-I 853, round 18). */}
     {(() => { const last = input.latency().at(-1); const joined = last ? keyToSound(last, engineLatency()) : null
       return joined ? <p className="live-chain-waits" data-part-key-to-sound="">{keyToSoundLine(joined)}</p> : null })()}
+    {/* The engine's own key-to-sound, the latest strike of each input, in ms and blocks (DLW build ruling 2026-11-06). */}
+    {(() => { const line = keyToSoundByInputLine(keyToSoundByInput(input.latency(), engineLatency()))
+      return line !== null ? <p className="live-chain-waits" data-part-engine-key-to-sound="">{line}</p> : null })()}
     <div className="part-input-settings">
       <span className="part-input-row"><span className="part-input-label">Layout</span>
         {choice('layout', [{value: 'janko', label: 'Jankó'}, {value: 'piano', label: 'Piano'}] as const, layout, setKeyboardLayout)}</span>

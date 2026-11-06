@@ -570,6 +570,142 @@ fn each_strike_keeps_when_it_was_sent_and_when_its_first_frame_was_mixed() {
     );
 }
 
+/// Key-to-sound, measured by the engine itself (O-I #849 and #853; DLW build ruling 2026-11-06: "Record the frame a key's
+/// event reaches the engine and the frame its first non-silent sample leaves the block … The engine measures it itself, so a
+/// walk reads a number and nobody measures by ear"): each strike keeps the frame the engine stood at when its event was sent
+/// (the block that took it, less the wait) and the first frame its part's sound was above the engine's floor
+/// ([`live_engine::graph::ONSET_FLOOR`]), as the part's chain made it, at or after the frame it was due: here an echo's, 10 ms
+/// on, while another part rings all along. A strike its part never sounds is kept, a second on, as one that sounded nothing.
+#[test]
+fn each_strike_keeps_the_frame_it_reached_the_engine_and_the_frame_its_part_first_sounded() {
+    use live_engine::graph::ONSET_FLOOR;
+    const BLOCK: usize = 256;
+    assert!(
+        (20.0 * ONSET_FLOOR.log10() + 96.0).abs() < 1e-4,
+        "the floor is −96 dBFS, the one a render rings out to: {ONSET_FLOOR}"
+    );
+    let echoed = || {
+        let mut keys = operator_part("Keys", &[]);
+        keys.devices.push(Box::new(EchoDevice::new(EchoParams {
+            delay_time_s: 0.01,
+            feedback: 0.0,
+            dry_wet: 1.0,
+        })));
+        keys
+    };
+    // The part alone, struck at frame BLOCK, frame by frame as the engine makes a part's sound: its first frame above the floor.
+    let first_heard = {
+        let mut part = echoed();
+        let channels = part.channels;
+        let mut instrument = part.instrument.take().unwrap();
+        instrument.prepare(SR);
+        for d in &mut part.devices {
+            d.prepare(SR, channels);
+        }
+        let mut clock = Clock::start(SR, 120.0);
+        (0..(BLOCK as u64 * 40))
+            .find(|n| {
+                clock.sample = *n;
+                if *n == BLOCK as u64 {
+                    instrument.note_on(69, 1.0, &clock);
+                }
+                let mut frame = [0f32; 2];
+                instrument.process(&mut frame[..channels], &clock);
+                for d in &mut part.devices {
+                    d.process(&mut frame[..channels], &clock);
+                }
+                *n >= BLOCK as u64 && frame[..channels].iter().any(|v| v.abs() > ONSET_FLOOR)
+            })
+            .expect("the echo sounds")
+    };
+    assert!(
+        first_heard > BLOCK as u64 + 400,
+        "the part's first sound is its echo's, 10 ms on: {first_heard}"
+    );
+    let mut g = Graph::new(SR, 120.0);
+    g.tracks.push(echoed());
+    g.tracks.push(operator_part(
+        "Dry",
+        &[Note {
+            key: 57,
+            start: 0,
+            length: 48_000,
+            velocity: 1.0,
+        }],
+    ));
+    // a part whose chain silences what it plays
+    let mut hushed = operator_part("Hushed", &[]);
+    hushed.devices.push(Box::new(GainDevice::new_linear(0.0)));
+    g.tracks.push(hushed);
+    let (mut core, mut handle) = engine(g).unwrap();
+    let mut block = vec![0f32; BLOCK * 2];
+    core.pull_block(&mut block);
+    assert!(block.iter().any(|v| *v != 0.0), "Dry rings from frame 0");
+    handle
+        .send(EngineEvent::NoteOn {
+            track: 0,
+            key: 69,
+            velocity: 1.0,
+        })
+        .unwrap();
+    // the key waits 2 ms for its block: it reached the engine that many frames before the block that took it
+    let sent = std::time::Instant::now();
+    while sent.elapsed() < std::time::Duration::from_millis(2) {}
+    core.pull_block(&mut block);
+    handle.collect();
+    assert!(
+        handle.latency().strikes.is_empty(),
+        "a strike is kept once its part has sounded, not before"
+    );
+    for _ in 0..8 {
+        core.pull_block(&mut block);
+    }
+    handle.collect();
+    let strikes = handle.latency().strikes;
+    assert_eq!(strikes.len(), 1, "{strikes:?}");
+    let strike = strikes[0];
+    assert_eq!(
+        strike.frame, BLOCK as u64,
+        "due at the first frame of the block that took it"
+    );
+    assert_eq!(
+        strike.sounded_frame,
+        Some(first_heard),
+        "its first sound is its part's, as the part made it, not the frame it was due nor the mix's"
+    );
+    let waited = (strike.applied_ns - strike.sent_ns) * u64::from(SR) / 1_000_000_000;
+    assert!(waited >= 96, "waited at least 2 ms: {waited} frames");
+    assert_eq!(
+        strike.reached_frame,
+        strike.frame - waited,
+        "it reached the engine the frames it waited before the block that took it"
+    );
+    // A note to a part whose chain sounds nothing of it: kept, a second on, as one that sounded nothing.
+    handle
+        .send(EngineEvent::NoteOn {
+            track: 2,
+            key: 60,
+            velocity: 1.0,
+        })
+        .unwrap();
+    core.pull_block(&mut block);
+    let due = handle.position() - BLOCK as u64;
+    for _ in 0..(SR as usize / BLOCK - 1) {
+        core.pull_block(&mut block);
+    }
+    handle.collect();
+    assert_eq!(handle.latency().strikes.len(), 1, "it waits its second");
+    core.pull_block(&mut block);
+    core.pull_block(&mut block);
+    handle.collect();
+    let strikes = handle.latency().strikes;
+    assert_eq!(strikes.len(), 2, "{strikes:?}");
+    assert_eq!(
+        (strikes[1].track, strikes[1].frame, strikes[1].sounded_frame),
+        (2, due, None)
+    );
+}
+
 #[test]
 fn export_renders_the_samples_the_engine_played() {
     let (mut core, mut handle) = engine(two_part_set()).unwrap();

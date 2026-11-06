@@ -626,6 +626,54 @@ test('a set opened again sets the Torus as its part keeps it, once the Torus can
   assert.equal(f.timers.length, 0, 'a closed set keeps nothing more')
 })
 
+// O-I #855 Done when: "A set saved as .als keeps the Torus's state and reopens with the same sound." What rings is the Torus's state as
+// much as its settings: the body (a form at its modes, Q and Body source, or the torus; DLW §21.2 Body) and whether it is muted. The set
+// keeps both with its part (packages/live-set sources.rs `parts`), and a set opened again rings them once more after the settings, each
+// only where the Torus does not already ring it: a body set again is prepared and rung from rest. A take played again sets its settings
+// alone, so it never rings its body from rest; a take with its course rings again from its own state.
+test('the set keeps what rings, the body and whether the Torus is muted, and opens again with the same sound, after its settings (O-I #855)', async () => {
+  const form = {kind: 'form', form: {kind: 'fold', form_ref: 'ql.form/fold-1', source_ref: 'ql.m3-state/v1@3'}, preparation_ref: 'ql.prep/sheet',
+    material: {fibre: 'earth', q_factor: 12, strike_share: 0.5, source_ref: 'declared'}, modes: 8, voices: 2}
+  const muted = state => ({...state, parameters: {...state.parameters, muted: true}})
+  const kept = take.torusKept(muted(torusState({over: {body: form}})))
+  assert.deepEqual(kept.rings, [{kind: 'muted', muted: true}, {kind: 'body', body: {modes: 8, q_factor: 12, material: 'declared'}}])
+  for (const edit of kept.rings) assert.deepEqual(readInstrumentEdit(edit), edit, `${edit.kind} is the instrument command's own`)
+  assert.deepEqual(take.torusKept(torusState({over: {body: {...form, material: {...form.material, source_ref: 'ql.tattva/prithvi'}}}})).rings.at(-1),
+    {kind: 'body', body: {modes: 8, q_factor: 12, material: 'tattva'}}, 'a body made of the tattva\'s material')
+  assert.deepEqual(take.torusKept(torusState({over: {body: {kind: 'torus'}}})).rings, [{kind: 'muted', muted: false}, {kind: 'body', body: null}], 'the torus rings')
+  assert.deepEqual(take.torusKept(torusState()).rings, [{kind: 'muted', muted: false}], 'an owner that names no body: none is kept')
+  assert.ok(!kept.edits.some(edit => edit.kind === 'body' || edit.kind === 'muted'), 'a take played again never rings its body from rest')
+  assert.deepEqual(take.torusKeptOf(JSON.parse(JSON.stringify(kept))), kept, 'read back from the set as it was kept')
+  assert.equal(take.torusKeptOf({...kept, rings: [{kind: 'lens', lens12: 3}]}), null, 'only what rings')
+  assert.equal(take.torusKeptOf({...kept, rings: [{kind: 'body', body: {modes: 0, q_factor: 12, material: 'declared'}}]}), null, 'a body the instrument would refuse')
+  const {rings: _rings, ...before} = kept
+  assert.deepEqual(take.torusKeptOf(JSON.parse(JSON.stringify(before))), before, 'a set kept before rings were reads as it was')
+  // the set opened again: its settings, then what rings that the Torus does not already ring
+  const document = {tracks: [{kind: 'midi', name: 'Keys', torus: JSON.parse(JSON.stringify(kept))}]}
+  const f = keeperOwners({document, torus: null})
+  const keeper = take.createTorusKeeper(f.owners, f.tell)
+  keeper.open('/sets/a.als', null)
+  await tick()
+  f.set(torusState())
+  await tick(); await tick()
+  assert.deepEqual(f.commits, [...kept.edits, ...kept.rings], 'muted and its form, after its settings')
+  assert.equal(f.told.at(-1), 'The Torus was set again as Keys keeps it.')
+  const g = keeperOwners({document, torus: null})
+  const again = take.createTorusKeeper(g.owners, g.tell)
+  again.open('/sets/a.als', null)
+  await tick()
+  g.set(muted(torusState({over: {body: form}})))
+  await tick(); await tick()
+  assert.deepEqual(g.commits, kept.edits, 'what already rings is not rung again from rest')
+  // from now on a change of what rings alone is kept
+  g.set(torusState({over: {body: {kind: 'torus'}}}))
+  g.fire()
+  await tick(); await tick()
+  assert.equal(g.acts.length, 1, 'kept once it rests')
+  assert.deepEqual(take.torusKeptOf(g.acts[0].act.torus).rings, [{kind: 'muted', muted: false}, {kind: 'body', body: null}])
+  keeper.close(); again.close()
+})
+
 test('a set that keeps no Torus keeps it from when it opens, on the part chosen or its first MIDI part; a take\'s part keeps it at once', async () => {
   const document = {tracks: [{kind: 'audio', name: 'Drums'}, {kind: 'midi', name: 'Keys'}, {kind: 'midi', name: 'Bass'}]}
   const f = keeperOwners({document})
@@ -714,7 +762,8 @@ test('the candidate records on the part\'s one playing path, prepares a take bef
   const tracks = source('frame/tracks/modeTracks.ts')
   assert.match(tracks, /const exportTake = \(track: number, at: LiveClipAt\) => import\('\.\.\/\.\.\/live\/liveTake'\)\.then\(module => module\.exportLiveTake\(\{path: set\.path, track, at\}\)\)/,
     'a take\'s clip exports its audio from Live\'s set')
-  assert.match(tracks, /liveSetTrackAdapter\.project\(\{set, document, colors, \.\.\.liveSetWrites\(set\.path\), play, exportTake, engine, record, lanes\}\)/)
+  // REPLACES the project call without Place Under Scene (O-I #855 round 26)
+  assert.match(tracks, /liveSetTrackAdapter\.project\(\{set, document, colors, \.\.\.liveSetWrites\(set\.path\), play, exportTake, placeTake, engine, record, lanes\}\)/)
   const transport = source('shell/transports/useLiveTransport.tsx')
   assert.match(transport, /const record = useLiveRecord\(\{setPath, track: setSelectionOf\(selection, setPath \?\? undefined\)\?\.track \?\? null, bpm: tempoBpm, torus,/)
   assert.match(transport, /\.\.\.playStop,\n\s+record,/, 'Record stands in Live\'s place beside Play and Stop')
@@ -1287,6 +1336,47 @@ test('Export Audio lays the take under the scene once its course rendered, by th
   assert.match(live, /return presets\.layTorusTake\(\{checkpoint_sha256, checkpoint, take: \{\.\.\.take, beat\}\}\)/)
   assert.match(live, /exportTake\(answer\.outcome\.reading\.clip, \{stage: torus\.commitLiveStage, save: download, lay,/)
   assert.match(live, /\.arrangement_clips[\s\S]*typeof clip\.start === 'number'/)
+})
+
+// O-I #855 Done when: "A Live part placed under an Expression's scenes sounds on its ruler, and the field answers it." Placing is its own
+// act (the clip's Place Under Scene), not Export Audio's side effect: a take Record laid on a Live part, its course rendered by the Torus's
+// owner so the kernel seals what the owner was just sent, then laid on its take lane from the sample its clip's beat lands at; the scene
+// sounds it on its ruler and the field answers its acts (controller.ts soundTake, torus-take-855.test.mjs). No file is saved.
+test('Place Under Scene lays a Live part\'s take under the scene once its course rendered, saves nothing, and says why where it cannot', async () => {
+  const keeps = {schema: 'oi.live-take/v1', torus: null, bpm: 120, course: {...COURSE, frames: 2000, acts: [], checkpoint_sha256: NAMED}}
+  const clip = {...REAL, name: 'Take 1', loop: false, start: 0, end: 4, take: {id: 7, keeps}}
+  const run = async (over = {}) => {
+    const order = [], r = renderOwner(over.refuse ? {refuse: over.refuse} : {})
+    const owners = {stage: command => { order.push(command.command); return r.stage(command) },
+      lay: over.lay ?? (async t => { order.push(['lay', t]); return {ok: true, words: 'Take 1 lies under the scene on its take lane, from sample 192000.'} })}
+    return {order, answer: await take.placeTake(over.clip ?? clip, owners)}
+  }
+  const {order, answer} = await run()
+  assert.deepEqual(answer, {ok: true, note: 'Take 1 lies under the scene on its take lane, from sample 192000. The scene sounds it on its ruler as it plays, and the field answers what it struck.'})
+  assert.deepEqual(order, ['render-take', ['lay', {checkpoint_sha256: NAMED, checkpoint: CHECKPOINT, id: 7, name: 'Take 1', bpm: 120}]],
+    'rendered through the relay, then laid by the checkpoint it began at; nothing saved')
+  const refused = await run({lay: async () => ({ok: false, error: 'No Scene is presented'})})
+  assert.deepEqual(refused.answer, {ok: false, error: 'Take 1 was not placed under the scene: No Scene is presented.'})
+  const thrown = await run({lay: async () => { throw new Error('The Scene answered the take in another shape') }})
+  assert.equal(thrown.answer.error, 'Take 1 was not placed under the scene: The Scene answered the take in another shape.')
+  const tempoless = await run({clip: {...clip, take: {id: 7, keeps: JSON.parse(JSON.stringify({...keeps, bpm: undefined}))}}})
+  assert.deepEqual(tempoless.answer, {ok: false, error: 'Take 1 was not placed under the scene: it keeps no tempo to lie on.'})
+  assert.deepEqual(tempoless.order, ['render-take'])
+  const unrendered = await run({refuse: 'The scene holds no Torus'})
+  assert.match(unrendered.answer.error, /The scene holds no Torus/)
+  assert.deepEqual(unrendered.order, ['render-take'], 'a take not rendered through the relay is not laid: the kernel holds nothing to seal')
+  const courseless = await run({clip: {...clip, take: {id: 7, keeps: {...keeps, course: null, course_refused: 'replace-event moved the scene at sample 505000'}}}})
+  assert.deepEqual(courseless.answer, {ok: false, error: 'Take 1 keeps no course of the Torus, so it cannot be placed under the scene: replace-event moved the scene at sample 505000.'})
+  assert.deepEqual(courseless.order, [], 'nothing is rendered')
+  assert.deepEqual((await run({clip: {...clip, take: null}})).answer, {ok: false,
+    error: 'Take 1 is not a take: a Live part lies under the scene as a take Record laid, which keeps what the Torus\'s owner was sent.'})
+  // the candidate's: the clip read from the set's owner, laid from its arrangement clip's start, or a slot's beat 0
+  const live = source('live/liveTake.ts')
+  assert.match(live, /export async function placeLiveTake\(address: \{readonly path: string; readonly track: number; readonly at: LiveClipAt\}\)/)
+  assert.match(live.slice(live.indexOf('export async function placeLiveTake(')), /return placeTake\(answer\.outcome\.reading\.clip, \{stage: torus\.commitLiveStage, lay: layOnScene\(presets, address\)\}\)/)
+  const tracks = readFileSync(new URL('../src/frame/tracks/modeTracks.ts', import.meta.url), 'utf8')
+  assert.match(tracks, /const placeTake = \(track: number, at: LiveClipAt\) => import\('\.\.\/\.\.\/live\/liveTake'\)\.then\(module => module\.placeLiveTake\(\{path: set\.path, track, at\}\)\)/)
+  assert.match(tracks, /liveSetTrackAdapter\.project\(\{set, document, colors, \.\.\.liveSetWrites\(set\.path\), play, exportTake, placeTake, engine, record, lanes\}\)/)
 })
 
 test('the Torus\'s effects as the take played through them: as they stood when it began, then each move of them at the frame its beat lands at', () => {

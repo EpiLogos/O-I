@@ -910,6 +910,19 @@ fn an_owners_act_lands_at_the_sample_its_owner_landed_it() {
         "44 frames after the block that took it was pulled"
     );
     assert!(strike.sent_ns <= strike.applied_ns);
+    // DLW build ruling 2026-11-06: its first sound measured where the engine played it, at or after the owner's sample, and
+    // the frame it reached the engine at or before the block that took it.
+    let first = played
+        .iter()
+        .position(|v| v.abs() > live_engine::graph::ONSET_FLOOR)
+        .unwrap() as u64;
+    assert!(first >= 300, "{first}");
+    assert_eq!(
+        strike.sounded_frame,
+        Some(first),
+        "its first sound, as the part played it"
+    );
+    assert!(strike.reached_frame <= 256);
 }
 
 #[test]

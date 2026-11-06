@@ -11,22 +11,40 @@ use live_dynamics::taps;
 use live_dynamics::verify;
 use live_dynamics::wavetable;
 
-const RENDERS: &str = "../../docs/research/ableton-live-12.0.25/harness/renders";
+/// The corpus's `harness/renders`, as the engine's gates find it (`live-engine/tests/corpus/mod.rs`; the corpus is not tracked
+/// in git): under `LIVE_RE_CORPUS` when the run names the corpus root (a shared env seat reads the primary checkout's corpus),
+/// otherwise under the checkout's own `docs/research/ableton-live-12.0.25`, from the manifest, not the working directory.
+fn renders() -> std::path::PathBuf {
+    std::env::var_os("LIVE_RE_CORPUS")
+        .map(std::path::PathBuf::from)
+        .unwrap_or_else(|| {
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("../../docs/research/ableton-live-12.0.25")
+        })
+        .join("harness/renders")
+}
 
 /// Read-only archive of the 2026-10-07 render lane (final-pass renders).
 /// Four golden renders (G1, G6 pair, R1, E1) were pruned from
 /// harness/renders and live only here; render_path checks the live dir
-/// first, then this archive. A render present in neither keeps the
+/// first, then this archive (`LIVE_RE_RENDER_ARCHIVE` names another, as
+/// for the engine's gates). A render present in neither keeps the
 /// skip/skip-notice semantics — absence is never turned into a failure
 /// here, the #[ignore] activation convention decides.
 const RENDER_ARCHIVE: &str = "/Users/admin/tools/live-re/archive-20261007/renders-final";
 
+fn render_archive() -> std::path::PathBuf {
+    std::env::var_os("LIVE_RE_RENDER_ARCHIVE")
+        .map(std::path::PathBuf::from)
+        .unwrap_or_else(|| RENDER_ARCHIVE.into())
+}
+
 /// Render lookup: harness/renders first, then the read-only archive.
 /// Returns None when the render is present in neither.
 fn render_path(name: &str) -> Option<std::path::PathBuf> {
-    [RENDERS, RENDER_ARCHIVE]
-        .iter()
-        .map(|root| std::path::Path::new(root).join(name))
+    [renders(), render_archive()]
+        .into_iter()
+        .map(|root| root.join(name))
         .find(|p| p.exists())
 }
 
@@ -35,13 +53,44 @@ fn render_exists(name: &str) -> bool {
 }
 
 fn read_render_bytes(name: &str) -> Vec<u8> {
-    let p = render_path(name)
-        .unwrap_or_else(|| panic!("render {name} not present in {RENDERS} or {RENDER_ARCHIVE}"));
+    let p = render_path(name).unwrap_or_else(|| {
+        panic!(
+            "render {name} not present in {} or {}",
+            renders().display(),
+            render_archive().display()
+        )
+    });
     std::fs::read(p).unwrap()
 }
 
 fn have_renders() -> bool {
     render_exists("G1_T-12_R30_MU0_v2.aif")
+}
+
+/// The renders are read from the corpus the run names, as the engine's gates read it (`live-engine/tests/corpus/mod.rs`):
+/// `LIVE_RE_CORPUS` is its root when the checkout does not carry it (a shared env seat reads the primary checkout's corpus),
+/// otherwise the checkout's own `docs/research/ableton-live-12.0.25`; whichever it is, its `harness/renders` comes before the
+/// archive, from any working directory. Not ignored: where no corpus stands there is nothing to read and it says so.
+#[test]
+fn renders_are_read_from_the_corpus_the_run_names() {
+    let root = std::env::var_os("LIVE_RE_CORPUS")
+        .map(std::path::PathBuf::from)
+        .unwrap_or_else(|| {
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("../../docs/research/ableton-live-12.0.25")
+        });
+    let dir = root.join("harness/renders");
+    let Some(name) = std::fs::read_dir(&dir).ok().and_then(|entries| {
+        entries
+            .filter_map(Result::ok)
+            .map(|e| e.file_name().to_string_lossy().into_owned())
+            .filter(|n| n.ends_with(".aif"))
+            .min()
+    }) else {
+        println!("skip: no corpus renders at {}", dir.display());
+        return;
+    };
+    assert_eq!(render_path(&name), Some(dir.join(&name)), "{name}");
 }
 
 // ---------------------------------------------------------------------------
@@ -253,7 +302,7 @@ fn glue_static_model_matches_measured_anchors() {
 #[ignore]
 fn glue_golden_render_static_gate() {
     if !have_renders() {
-        panic!("golden renders not present at {RENDERS}");
+        panic!("golden renders not present at {}", renders().display());
     }
     // canonical clean-chain render (master chain stripped, unity staging)
     let bytes = read_render_bytes("G1_T-12_R30_MU0_v2.aif");
@@ -879,7 +928,7 @@ fn wavetable_unison_golden_gate() {
     const T0: f64 = 1.0;
     const T1: f64 = 3.9;
 
-    let bytes = std::fs::read(format!("{RENDERS}/{NAME}")).unwrap();
+    let bytes = read_render_bytes(NAME);
     let (left, right) = audio::read_aiff_i16_channels(&bytes).unwrap();
     let sr = left.sample_rate as f64;
     let f0 = 130.81278265;

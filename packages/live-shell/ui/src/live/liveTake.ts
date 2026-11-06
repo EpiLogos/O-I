@@ -105,7 +105,14 @@ export interface TorusKept {
   readonly edits: readonly InstrumentEdit[]
   readonly stood: Readonly<Plain>
   readonly device?: TorusDeviceKept
+  /** What rings (O-I #855, "A set saved as .als keeps the Torus's state and reopens with the same sound"): whether it is muted and its
+   * body (DLW §21.2 Body: a form at its modes, Q and Body source, or the torus), each the instrument command's own. A set opened again
+   * rings them after its settings ([`ringsToSet`]); a take played again does not, so it never rings its body from rest. A set kept
+   * before them keeps none. */
+  readonly rings?: readonly InstrumentEdit[]
 }
+/** The kinds of what rings ([`TorusKept`] `rings`). */
+const RINGS = ['muted', 'body'] as const
 
 /** The Views the Torus device draws (live/torusDevice.ts TORUS_VIEWS). */
 export const TORUS_KEPT_VIEWS = Object.freeze(['surface', 'wire', 'both'] as const)
@@ -136,9 +143,22 @@ export function torusKept(state: LiveTorusState | null): TorusKept | null {
     }
   }
   const edits = raw.map(readInstrumentEdit).filter((edit): edit is InstrumentEdit => edit !== null)
+  // What rings: muted, and the body its owner names (a body made of the declared material, else of the tattva's: controller.ts formBody).
+  const body = torus.body
+  const rung: unknown[] = [{kind: 'muted', muted: state.parameters.muted}]
+  if (body) rung.push({kind: 'body', body: body.kind === 'torus' ? null
+    : {modes: body.modes, q_factor: body.material.q_factor, material: body.material.source_ref === 'declared' ? 'declared' : 'tattva'}})
+  const rings = rung.map(readInstrumentEdit).filter((edit): edit is InstrumentEdit => edit !== null)
   // The count of notes sounding is the playing's, not the Torus's state, so it is not kept.
   const {settings: _settings, notes: _notes, ...stood} = torus
-  return {schema: TORUS_KEPT_SCHEMA, edits, stood: structuredClone(stood) as Plain}
+  return {schema: TORUS_KEPT_SCHEMA, edits, stood: structuredClone(stood) as Plain, rings}
+}
+
+/** What of what a set keeps ringing ([`TorusKept`] `rings`) the Torus does not ring now (`now`), to ring again as the set opens: a body
+ * set again is prepared and rung from rest, so one already ringing is left to ring. Pure. */
+export function ringsToSet(kept: TorusKept, now: LiveTorusState | null): InstrumentEdit[] {
+  const ringing = new Set((torusKept(now)?.rings ?? []).map(edit => JSON.stringify(edit)))
+  return (kept.rings ?? []).filter(edit => !ringing.has(JSON.stringify(edit)))
 }
 
 /** Whether two kept Tori set the Torus alike (what they read as they stood aside). Pure. */
@@ -151,12 +171,19 @@ export function torusKeptOf(raw: unknown): TorusKept | null {
   const edits = raw.edits.map(readInstrumentEdit)
   if (!edits.every(edit => edit !== null)) return null
   const device = torusDeviceKeptOf(raw.device)
-  return {schema: TORUS_KEPT_SCHEMA, edits: edits as InstrumentEdit[], stood: raw.stood, ...(device ? {device} : {})}
+  let rings: InstrumentEdit[] | undefined
+  if (raw.rings !== undefined) {
+    if (!Array.isArray(raw.rings)) return null
+    rings = raw.rings.map(readInstrumentEdit).filter((edit): edit is InstrumentEdit => edit !== null)
+    if (rings.length !== raw.rings.length || !rings.every(edit => (RINGS as readonly string[]).includes(edit.kind))) return null
+  }
+  return {schema: TORUS_KEPT_SCHEMA, edits: edits as InstrumentEdit[], stood: raw.stood, ...(device ? {device} : {}), ...(rings ? {rings} : {})}
 }
 
-/** Whether two kept Tori are kept alike with the set: they set the Torus alike, and the device's View and Follow are alike. Pure. */
+/** Whether two kept Tori are kept alike with the set: they set the Torus alike, ring alike, and the device's View and Follow are alike. Pure. */
 const sameKept = (a: TorusKept | null, b: TorusKept | null): boolean =>
-  sameTorusEdits(a, b) && JSON.stringify(a?.device ?? null) === JSON.stringify(b?.device ?? null)
+  sameTorusEdits(a, b) && JSON.stringify(a?.rings ?? null) === JSON.stringify(b?.rings ?? null)
+  && JSON.stringify(a?.device ?? null) === JSON.stringify(b?.device ?? null)
 
 /** The edits that move the Torus from one kept state to the next: each edit of `next` that `previous` did not make alike. Pure. */
 export function torusMoveEdits(previous: TorusKept | null, next: TorusKept): InstrumentEdit[] {
@@ -949,12 +976,42 @@ export async function exportTake(clip: LiveClipReading, owners: TakeExportOwners
  * by that checkpoint itself (all it is sealed by where the kernel relayed it under no name: BB round 21), at the tempo it keeps; or why it was
  * not laid. */
 async function layExported(take: NonNullable<LiveClipReading['take']>, keeps: Plain, course: TakeCourse, name: string, lay: NonNullable<TakeExportOwners['lay']>): Promise<string> {
-  const not = (why: string) => `It was not laid under the scene: ${sentence(why)}`
+  const answer = await layOn(take, keeps, course, name, lay)
+  return answer.ok ? answer.words : `It was not laid under the scene: ${sentence(answer.error)}`
+}
+
+/** A rendered take laid under the scene (`lay`): by the name its course keeps for the checkpoint it began at, and by that checkpoint itself,
+ * at the tempo it keeps; or why not, in words. */
+async function layOn(take: NonNullable<LiveClipReading['take']>, keeps: Plain, course: TakeCourse, name: string, lay: NonNullable<TakeExportOwners['lay']>):
+  Promise<{readonly ok: true; readonly words: string} | {readonly ok: false; readonly error: string}> {
   const bpm = typeof keeps.bpm === 'number' && Number.isFinite(keeps.bpm) && keeps.bpm > 0 ? keeps.bpm : null
-  if (bpm === null) return not('it keeps no tempo to lie on')
+  if (bpm === null) return {ok: false, error: 'it keeps no tempo to lie on'}
   const named = course.checkpoint_sha256 ? {checkpoint_sha256: course.checkpoint_sha256} : {}
-  const answer = await lay({...named, checkpoint: course.checkpoint, id: take.id, name, bpm}).catch((cause: unknown) => ({ok: false as const, error: said(cause)}))
-  return answer.ok ? answer.words : not(answer.error)
+  return lay({...named, checkpoint: course.checkpoint, id: take.id, name, bpm}).catch((cause: unknown) => ({ok: false as const, error: said(cause)}))
+}
+
+/** What Place Under Scene says once the take is laid: where the scene then sounds it, and that the field answers it. */
+export const PLACED_SOUNDS = 'The scene sounds it on its ruler as it plays, and the field answers what it struck.'
+
+/** Place Under Scene (O-I #855, "A Live part placed under an Expression's scenes sounds on its ruler, and the field answers it"): a take
+ * Record laid on a Live part placed under the presented Expression's scene as its own act, not Export Audio's side effect: its course
+ * rendered by the Torus's owner, so the kernel seals what the owner was just sent from the checkpoint the take began at, then laid on its
+ * take lane (`lay`: LivePresets layTorusTake), from the sample its clip's beat lands at under the set's tempo. The scene then sounds it on
+ * its ruler and the field answers its acts (the frame's controller.ts soundTake). A clip no take gave, a take that keeps no course, one its
+ * owner does not render or one the Scene refuses is said in words. No file is saved. */
+export async function placeTake(clip: LiveClipReading, owners: {readonly stage: TakeExportOwners['stage']; readonly lay: NonNullable<TakeExportOwners['lay']>}):
+  Promise<{readonly ok: true; readonly note: string} | {readonly ok: false; readonly error: string}> {
+  const name = clip.name || (clip.take ? `Take ${clip.take.id}` : 'This clip')
+  if (!clip.take) return {ok: false, error: `${name} is not a take: a Live part lies under the scene as a take Record laid, which keeps what the Torus's owner was sent.`}
+  const keeps = clip.take.keeps
+  const noCourse = (why: string) => `${name} keeps no course of the Torus, so it cannot be placed under the scene: ${sentence(why)}`
+  if (!plain(keeps) || keeps.schema !== TAKE_SCHEMA) return {ok: false, error: noCourse(clip.take.keepsRefused ?? 'what it keeps beside its notes could not be read')}
+  const course = takeCourseOf(keeps.course)
+  if (!course) return {ok: false, error: noCourse(typeof keeps.course_refused === 'string' ? keeps.course_refused : 'it was laid before the Torus kept one')}
+  const rendered = await renderTake(course, owners.stage)
+  if ('refused' in rendered) return {ok: false, error: rendered.refused}
+  const laid = await layOn(clip.take, keeps, course, name, owners.lay)
+  return laid.ok ? {ok: true, note: `${laid.words} ${PLACED_SOUNDS}`} : {ok: false, error: `${name} was not placed under the scene: ${sentence(laid.error)}`}
 }
 
 /** The candidate's Export Audio of the take at `at` on `track` of the set at `path`: the clip read whole from the set's owner (kernel
@@ -968,13 +1025,32 @@ export async function exportLiveTake(address: {readonly path: string; readonly t
   if (transport.kind === 'unavailable') return {ok: false, error: transport.reason}
   const answer = await kernelOp(transport, {op: 'live_clip_read', path: address.path, track: address.track, clip: address.at})
   if (answer.error || answer.outcome?.result !== 'live_clip_reading') return {ok: false, error: answer.error ?? 'The set\'s owner did not answer the clip'}
-  const lay: NonNullable<TakeExportOwners['lay']> = async ({checkpoint_sha256, checkpoint, ...take}) => {
+  const lay = layOnScene(presets, address)
+  return exportTake(answer.outcome.reading.clip, {stage: torus.commitLiveStage, save: download, lay,
+    ...(transport.kind === 'tauri' ? {through: take => renderThroughPart(address, take)} : {})})
+}
+
+/** The candidate's lay of a take of the clip at `at` under the Expression's scene (LivePresets layTorusTake): from its arrangement clip's
+ * start, or from its own beat 0 in a slot. */
+function layOnScene(presets: {readonly layTorusTake: typeof import('./LivePresets').layTorusTake},
+  address: {readonly path: string; readonly track: number; readonly at: LiveClipAt}): NonNullable<TakeExportOwners['lay']> {
+  return async ({checkpoint_sha256, checkpoint, ...take}) => {
     const beat = 'arrangement' in address.at ? await arrangementStart(address.path, address.track, address.at.arrangement) : 0
     if (beat === null) return {ok: false, error: 'its clip lies at no beat of the arrangement'}
     return presets.layTorusTake({checkpoint_sha256, checkpoint, take: {...take, beat}})
   }
-  return exportTake(answer.outcome.reading.clip, {stage: torus.commitLiveStage, save: download, lay,
-    ...(transport.kind === 'tauri' ? {through: take => renderThroughPart(address, take)} : {})})
+}
+
+/** The candidate's Place Under Scene of the take at `at` on `track` of the set at `path` (O-I #855 round 26): the clip read whole from the
+ * set's owner (kernel live_clip_read), its course rendered through the frame's stage channel and laid under the Expression's scene. */
+export async function placeLiveTake(address: {readonly path: string; readonly track: number; readonly at: LiveClipAt}): Promise<{readonly ok: true; readonly note: string} | {readonly ok: false; readonly error: string}> {
+  const [{detectTransport, kernelOp}, torus, presets] = await Promise.all([import('../../../../../desktop/cradle/src/kernel/bridge'), import('./torusInstrument'),
+    import('./LivePresets')])
+  const transport = detectTransport()
+  if (transport.kind === 'unavailable') return {ok: false, error: transport.reason}
+  const answer = await kernelOp(transport, {op: 'live_clip_read', path: address.path, track: address.track, clip: address.at})
+  if (answer.error || answer.outcome?.result !== 'live_clip_reading') return {ok: false, error: answer.error ?? 'The set\'s owner did not answer the clip'}
+  return placeTake(answer.outcome.reading.clip, {stage: torus.commitLiveStage, lay: layOnScene(presets, address)})
 }
 
 /** The beat the arrangement clip `index` of part `track` starts at, read from the set's owner; null where it keeps none. */
@@ -1328,7 +1404,9 @@ export function createTorusKeeper(owners: TorusKeeperOwners, tell: (words: strin
         const apply = () => {
           if (here.closed || !writable(owners.torus())) return false
           here.unwatch?.(); here.unwatch = null
-          void setTorusAgain(found.torus, owners.commit).then(({refused}) => {
+          // its settings, then what rings that the Torus does not ring already (O-I #855)
+          const rings = ringsToSet(found.torus, owners.torus())
+          void setTorusAgain({...found.torus, edits: [...found.torus.edits, ...rings]}, owners.commit).then(({refused}) => {
             if (here.closed) return
             here.last = found.torus
             tell(refused.length ? `The Torus was set again as ${found.part} keeps it, except: ${refused.join('; ')}.` : `The Torus was set again as ${found.part} keeps it.`)
