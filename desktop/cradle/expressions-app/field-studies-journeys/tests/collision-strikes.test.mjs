@@ -14,7 +14,11 @@
 //     first, and every one refused beyond that is counted and said in words at most once a second, never silently;
 //   - nothing strikes while the live instrument is not playing, and the frame says so once;
 //   - the scene carries the setting at composition.collisionsStrike, an On or Off a Scene may carry (absent reads as Off);
-//   - the frame strikes through its one stage channel: a collision's strike is read as the shell's strike-at is read and run as it runs.
+//   - the frame strikes through its one stage channel: a collision's strike is read as the shell's strike-at is read and run as it runs;
+//   - a strike at a point rings its own voices: the voices the owner's `ql.strike-at/v1` receipt says the point excited, each by its own
+//     impulse, never every voice the owner tunes (O-I #771 round 880);
+//   - the number a walk reads (window.__FIELD_STUDIES__.collisions()): how many collisions struck, landed and failed at the owner and
+//     were refused past the bound, and the last one landed with its point, strength and its own voices.
 //
 //   node --test desktop/cradle/expressions-app/field-studies-journeys/tests/collision-strikes.test.mjs
 //   COLLISION_ANGLE=metal … runs the WebGL part on the GPU instead of SwiftShader.
@@ -52,6 +56,8 @@ const touch = () => bundle(join(src, 'native-field/surfaceTouch.ts'), 'touch');
 const schedule = () => bundle(join(engine, 'pairwiseSchedule.ts'), 'schedule');
 const model = () => bundle(join(src, 'model.ts'), 'model');
 const torusObject = () => bundle(join(engine, 'torusObject.ts'), 'torus-object');
+const controller = () => bundle(join(src, 'native-field/controller.ts'), 'controller');
+const fixture = () => import(pathToFileURL(join(journeys, '../../tests/native-expression-fixture.mjs')).href);
 
 // ── the readback's geometry ──────────────────────────────────────────────────
 
@@ -382,6 +388,95 @@ test('nothing strikes while the live instrument is not playing, or while the fie
   assert.equal(strikes.take(80, following, [], 'off').said, null, 'Off says nothing');
 });
 
+// ── its own voices, and the number a walk reads ──────────────────────────────
+
+// The controlled scene owner (desktop/cradle/tests/native-expression-fixture.mjs: protocol numbers, not QL's) answers a strike-at as the
+// native owner does (QL host.rs: the reply's `strike_at`, scene_field.rs strike_at_receipt): each voice the act struck at the point with
+// the coupling it met there and the impulse it was given. Here voices 2 and 5 stand on a node line at the point: the point gives them
+// nothing. `body` answers as a form's body does (strike_at_lowered_receipt): the body's modes, no voices.
+const openStrikeOwner = async () => {
+  const {ControlledAudio, ControlledSceneOwner} = await fixture();
+  const THREE = await import(pathToFileURL(join(journeys, '../../node_modules/three/build/three.module.js')).href);
+  const {NativeFieldController} = await controller();
+  class StrikeOwner extends ControlledSceneOwner {
+    body = false;
+    async request(request) {
+      const command = request.request?.command;
+      if (command?.operation !== 'strike-at') return super.request(request);
+      const read = structuredClone(request);
+      read.request.command = {operation: 'read'};
+      const reply = await super.request(read);
+      this.bump(1n);
+      reply.field = structuredClone(this.frame);
+      reply.field.audio = [];
+      const coupling = k => (k === 2 || k === 5 ? 0 : (k + 1) / 10);
+      reply.strike_at = this.body
+        ? {schema: 'ql.strike-at/v1', points: command.points, body: 'controlled:form', samples: [3], modes: [{mode_ref: 'controlled:form/0', amplitude: [0.1, 0]}], law: 'controlled', standing: 'controlled'}
+        : {schema: 'ql.strike-at/v1', points: command.points, law: 'controlled', standing: 'controlled',
+          voices: this.voices().map((voice, k) => ({mode_ref: voice.mode_ref, tuning: 'logic', coupling: command.points.map(() => coupling(k)),
+            amplitude: [command.points.reduce((sum, point) => sum + point.amplitude[0] * coupling(k), 0), 0]}))};
+      return reply;
+    }
+  }
+  const texture = () => new THREE.DataTexture(new Float32Array(16), 2, 2, THREE.RGBAFormat, THREE.FloatType);
+  const port = {texWidth: 2, texHeight: 2, particleCount: 4, targetA: texture(), targetB: texture(), setTargetTextures() {}};
+  const renderer = {retainedTopology: () => ({tex_width: 2, tex_height: 2, particle_count: 4, slot_count: 4}), retainedTargetPort: () => port, setNativeDomain() {},
+    releaseRetainedField() {}, onRetainedRecoveryRequired: () => () => {}, checkpointRetainedField() { return {receipt: {}}; }, restoreRetainedField() {}};
+  const owner = new StrikeOwner(), audio = new ControlledAudio(), c = new NativeFieldController(owner, renderer, () => audio);
+  await c.compose({sky: 'none'});
+  return {owner, c};
+};
+
+test('a collision\'s strike rings its own voices: the ones the owner says its point excited, each by its own impulse, never every voice tuned', async () => {
+  const {owner, c} = await openStrikeOwner();
+  try {
+    // What the frame's one stage channel runs for a collision's strike (app.ts runStageCommand 'strike-at'): the controller's playAt.
+    await c.playAt([{theta: 0.3, phi: 1.2}], 0.5);
+    const struck = c.reading.instrument.struck;
+    assert.equal(struck.source, 'point');
+    assert.deepEqual(struck.points, [{theta: 0.3, phi: 1.2}]);
+    const excited = [0, 1, 3, 4, 6, 7];
+    assert.deepEqual(struck.refs, excited.map(k => `scene:logic/${k}`), 'the voices on a node line at the point are not struck');
+    assert.deepEqual(struck.impulses.map(m => Number(m.toFixed(9))), excited.map(k => Number((0.5 * (k + 1) / 10).toFixed(9))), 'each by the impulse the owner gave it');
+    // A chord of points sums each voice's impulse over its points, as the owner does.
+    await c.playAt([{theta: 0.3, phi: 1.2}, {theta: 2, phi: 4}], 0.25);
+    assert.deepEqual(c.reading.instrument.struck.impulses.map(m => Number(m.toFixed(9))), excited.map(k => Number((0.5 * (k + 1) / 10).toFixed(9))));
+    // On a form's body the owner names the body's modes, not the voices: the plate follows every voice tuned, and no impulse is read as a voice's.
+    owner.body = true;
+    await c.playAt([{theta: 0.3, phi: 1.2}], 0.5);
+    const onBody = c.reading.instrument.struck;
+    assert.deepEqual(onBody.refs, c.reading.instrument.influence.voices.map(voice => voice.mode_ref ?? `scene:planet/${voice.planet_ref}`));
+    assert.equal('impulses' in onBody, false);
+  } finally { await c.dispose(); }
+});
+
+test('a walk reads the collisions as the frame strikes them: struck, landed, failed, refused, and the last landed with its own voices', async () => {
+  const {CollisionStrikes, COLLISION_LEAST_SHARE, COLLISION_STRIKES_AT_ONCE, torusPoint} = await touch();
+  const strikes = new CollisionStrikes();
+  const none = {struck: 0, landed: 0, failed: 0, refused: 0, last: null};
+  assert.deepEqual(strikes.tally(), none, 'nothing before a collision');
+  const contacts = [contactAt(0.3, 1.2, COLLISION_LEAST_SHARE * 3, 0, torusPoint), contactAt(2.9, 5.5, COLLISION_LEAST_SHARE * 2, 0, torusPoint)];
+  assert.deepEqual(strikes.take(0, following, contacts, 'off').strikes, []);
+  assert.deepEqual(strikes.tally(), none, 'under Off a contact strikes nothing, and nothing is counted');
+  const [first, second] = strikes.take(16, following, contacts, 'listening').strikes;
+  strikes.landed(first, {at: 1, source: 'point', refs: ['scene:logic/0', 'scene:logic/3'], impulses: [0.02, 0.01], points: [first.point]});
+  strikes.failed(second);
+  assert.deepEqual(strikes.tally(), {struck: 2, landed: 1, failed: 1, refused: 0,
+    last: {point: first.point, amplitude: first.amplitude, refs: ['scene:logic/0', 'scene:logic/3'], impulses: [0.02, 0.01]}});
+  // What the instrument last struck is this collision's only where it struck this collision's point: another act's voices are not its.
+  const [third] = strikes.take(5000, following, [contacts[1]], 'listening').strikes;
+  strikes.landed(third, {at: 2, source: 'point', refs: ['scene:logic/7'], impulses: [0.03], points: [{theta: 0.1, phi: 0.1}]});
+  assert.deepEqual(strikes.tally().last, {point: third.point, amplitude: third.amplitude, refs: null, impulses: null});
+  // An owner that names no impulse (a form's body): the voices, and no impulse.
+  const [fourth] = strikes.take(10000, following, [contacts[0]], 'listening').strikes;
+  strikes.landed(fourth, {at: 3, source: 'point', refs: ['scene:logic/1'], points: [fourth.point]});
+  assert.deepEqual(strikes.tally().last, {point: fourth.point, amplitude: fourth.amplitude, refs: ['scene:logic/1'], impulses: null});
+  // Past the bound: counted refused, as the frame says it.
+  const storm = Array.from({length: COLLISION_STRIKES_AT_ONCE + 2}, (_, i) => contactAt(0.1 + i * 0.1, 0.2 + i * 0.1, COLLISION_LEAST_SHARE * 2, 0, torusPoint));
+  strikes.take(20000, following, storm, 'listening');
+  assert.deepEqual([strikes.tally().struck, strikes.tally().refused, strikes.tally().landed], [4 + COLLISION_STRIKES_AT_ONCE, 2, 3]);
+});
+
 // ── the scene's setting and the one stage channel ──────────────────────────────
 
 test('a Scene may carry Collisions strike, On or Off; anything else is refused; a new scene carries none (Off)', async () => {
@@ -402,4 +497,15 @@ test('the frame strikes each collision through its one stage channel, and the en
   assert.doesNotMatch(collide[1], /playAt|controller\./, 'never past the channel');
   assert.match(app, /nativeField\??\.collide\(engine\.takeContacts\?\.\(\)\?\?null,stageStrike\)/, 'each frame hands the engine\'s contacts to the native field, with the frame\'s one strike');
   assert.match(production, /listenContacts\(frame\.scene\.composition\.collisionsStrike===true\)/);
+});
+
+test('the number a walk reads: the frame tallies each collision\'s landing with the voices the instrument struck, as window.__FIELD_STUDIES__.collisions()', () => {
+  const strip = text => text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  const native = strip(readFileSync(join(src, 'nativeField.ts'), 'utf8')), app = strip(readFileSync(join(src, 'app.ts'), 'utf8'));
+  const collide = native.match(/const collide=\([^]*?\n \};/);
+  assert.ok(collide, 'nativeField.ts holds the collisions\' strike');
+  assert.match(collide[0], /strike\(\[struck\.point\],struck\.amplitude\)\.then\(\(\)=>collisions\.landed\(struck,[^)]*instrument\?\.struck/, 'each landing tallied with what the instrument struck');
+  assert.match(collide[0], /collisions\.failed\(struck\)/, 'each strike the owner refused tallied as failed');
+  assert.match(native, /collisions:\(\)=>collisions\.tally\(\)/, 'the native field answers its tally');
+  assert.match(app, /collisions:\(\)=>nativeField\?\.collisions\(\)\?\?null/, 'the frame discloses it to a walk');
 });

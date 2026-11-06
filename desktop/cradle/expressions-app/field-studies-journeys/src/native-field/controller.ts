@@ -140,6 +140,24 @@ function torusKeys(keys:unknown,min=1):{row:number;column:number}[]|null{
  * render lands an act struck now (QL-MEF continuous.rs strike_when; cpp/src/field_worker.cpp strike). A played act renders no frames, so
  * that cursor is the one it was sent at; it is the cursor the session journals the act at (instrument-session.mjs #journal). */
 function landedAt(session:InstrumentSession,at?:string):string{return at??String(session.reading.acknowledged.samples_elapsed);}
+/** The voices a strike at `points` rang, as the owner's `ql.strike-at/v1` receipt names them (QL scene_field.rs strike_at_receipt: each
+ * voice with the impulse χ(voice, φ, θ) gave it, summed over the act's points): those given an impulse, in the owner's order, each with its
+ * impulse in modal metres (the length of its two). A voice on a node line at the points is given nothing and is not struck (O-I #771).
+ * Null where the receipt is not this act's (its points are not `points`) or names no voices: a form's body names its modes instead
+ * (strike_at_lowered_receipt). Pure. */
+export function struckVoicesOf(receipt:unknown,points:readonly {theta:number;phi:number}[]):{refs:string[];impulses:number[]}|null{
+ const r=receipt as {points?:unknown;voices?:unknown}|null|undefined;
+ const at=Array.isArray(r?.points)?r.points as {theta?:unknown;phi?:unknown}[]:null;
+ if(!at||at.length!==points.length||at.some((p,i)=>p?.theta!==points[i].theta||p?.phi!==points[i].phi)||!Array.isArray(r?.voices))return null;
+ const refs:string[]=[],impulses:number[]=[];
+ for(const voice of r.voices as {mode_ref?:unknown;amplitude?:unknown}[]){
+  const amplitude=voice?.amplitude;
+  if(typeof voice?.mode_ref!=='string'||!voice.mode_ref||!Array.isArray(amplitude)||amplitude.length!==2||!amplitude.every(v=>typeof v==='number'&&Number.isFinite(v)))continue;
+  const impulse=Math.hypot(amplitude[0],amplitude[1]);
+  if(impulse>0){refs.push(voice.mode_ref);impulses.push(impulse);}
+ }
+ return {refs,impulses};
+}
 /** The QL driver schedules PCM/targets; the app remains the sole GPU stage.
  * The controller owns admission/lifetime only, never native math or a second clock.
  * Determinant events (M1 advance, a changed event) go to the same serial owner;
@@ -181,9 +199,10 @@ export class NativeFieldController {
  private refusal:{operation:string;reason:string;at:number}|null=null;
  private played:{at:number;strikes:number;last_ms:number}|null=null;
  /** The voices the instrument was last struck on, for the plate to follow (torusPlay.mjs): a played note names its own voices, a
-  * determinant event that strikes names every voice the owner tunes, and a strike at points of the surface names every voice the owner
-  * tunes too, with the points it was struck at. The owner reports no per-voice amplitude, so the latest strike stands. */
- private struck:{at:number;source:'note'|'event'|'point';refs:string[];points?:{theta:number;phi:number}[]}|null=null;
+  * determinant event that strikes names every voice the owner tunes, and a strike at points of the surface (a touch, a collision) names
+  * the voices the owner's strike-at receipt says the points rang, each with its impulse (struckVoicesOf, O-I #771), with the points it was
+  * struck at; a key or a singlet, and a strike on a form's body, every voice the owner tunes. The latest strike stands. */
+ private struck:{at:number;source:'note'|'event'|'point';refs:string[];impulses?:number[];points?:{theta:number;phi:number}[]}|null=null;
  /** Where the Torus is heard from (DLW manual §21.2 View: "Receiver On makes your camera the place where the torus is heard"; Rules: "A
   * camera move does not change the sound, unless Receiver is On"; QL-MEF `torus-receiver`, O-I 856). On is the person's choice and outlives
   * a lifetime, as the level does. The place last asked for (the camera's eye) and the place the owner hears from (null: the world's
@@ -657,7 +676,7 @@ export class NativeFieldController {
  /** A played strike at points of the torus surface (DLW §21.2 "What strikes the Torus"; QL-MEF #342 `strike-at`): each point is the
   * torus's own angles, theta the tube and phi the ring, on the sheet [0, 2π), struck now at the same impulse. A chord is several points
   * in one act. The owner excites every standing voice by its own shape at each point (QL scene_field.rs ShapeBasis::strike_at), so the
-  * torus plays every voice it tunes. A performance act like playVoices: no hold, no re-read, and the struck body sounds behind sound
+  * torus plays the voices its receipt names an impulse for, each by that impulse (struckVoicesOf). A performance act like playVoices: no hold, no re-read, and the struck body sounds behind sound
   * already scheduled, or lands at `at`, the owner's sample cursor, as playVoices does. A point off the sheet is refused here, before the
   * owner sees it, as InstrumentSession.strikeAt refuses it. The answer names the sample the act landed at (O-I 855: landedAt). */
  playAt(points:{theta:number;phi:number}[],amplitude=0.35,at?:string):Promise<{landed_at_samples_elapsed:string}>{
@@ -676,8 +695,10 @@ export class NativeFieldController {
    const sent=performance.now();
    try{await session.strikeAt(acts,at===undefined?{}:{at_samples_elapsed:at});}
    catch(error){this.refused('strike at a point',error,session);throw error;}
-   const refs=this.voiceRefs();
-   this.refusal=null;this.played={at:Date.now(),strikes:(this.played?.strikes??0)+1,last_ms:performance.now()-sent};this.struck={at:Date.now(),source:'point',refs,points:struck};this.changed();
+   // The voices the owner says the points rang, each by its impulse; every voice tuned where it names none (a form's body).
+   const voices=struckVoicesOf(session.lastStrikeAt,struck);
+   this.refusal=null;this.played={at:Date.now(),strikes:(this.played?.strikes??0)+1,last_ms:performance.now()-sent};
+   this.struck={at:Date.now(),source:'point',refs:voices?.refs??this.voiceRefs(),...(voices?{impulses:voices.impulses}:{}),points:struck};this.changed();
    return {landed_at_samples_elapsed:landedAt(session,at)};
   });
  }

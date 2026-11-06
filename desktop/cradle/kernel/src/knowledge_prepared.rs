@@ -119,8 +119,8 @@ enum Window {
 #[cfg(test)]
 #[derive(Default)]
 pub(crate) struct GatherGate {
-    /// The reads that have joined or led a gathering, and whether the gate is open.
-    state: Mutex<(usize, bool)>,
+    /// The reads that have joined or led a gathering, whether the gate is open, and the reads that have come back to the test.
+    state: Mutex<(usize, bool, usize)>,
     changed: Condvar,
 }
 
@@ -140,12 +140,26 @@ impl GatherGate {
         held(&self.state).1 = true;
         self.changed.notify_all();
     }
-    /// Wait until `reads` reads have joined or led a gathering.
+    /// Wait until `reads` reads have joined or led a gathering. Bounded by the reads, never a clock: a read that comes back while
+    /// the gate is closed never waited for the window, so the wait ends there and fails the test rather than waiting for a join
+    /// that may never come.
     pub(crate) fn wait_joined(&self, reads: usize) {
+        let back_early = |state: &(usize, bool, usize)| state.2 > 0 && !state.1;
         let mut state = held(&self.state);
-        while state.0 < reads {
+        while state.0 < reads && !back_early(&state) {
             state = self.changed.wait(state).unwrap_or_else(|e| e.into_inner());
         }
+        let came_back = back_early(&state);
+        drop(state);
+        assert!(
+            !came_back,
+            "a read came back while the window was closed: it never waited for it"
+        );
+    }
+    /// A read has come back to the test, answered or unwound (`CameBack`).
+    pub(crate) fn came_back(&self) {
+        held(&self.state).2 += 1;
+        self.changed.notify_all();
     }
     fn joined(&self) {
         held(&self.state).0 += 1;

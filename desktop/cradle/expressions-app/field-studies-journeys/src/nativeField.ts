@@ -617,7 +617,9 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   // 2026-11-05). The contacts this frame read back are let go.
   if(controller.takeSounding())return null;
   const {strikes,said}=collisions.take(performance.now(),controller.reading as any,taken.contacts,taken.standing);
-  for(const struck of strikes)strike([struck.point],struck.amplitude).catch(error=>{setText('key',`A collision was not struck: ${String(error instanceof Error?error.message:error)}`);});
+  // Each landing is tallied with the voices the instrument struck, for a walk to read (collisions(), app.ts __FIELD_STUDIES__.collisions).
+  for(const struck of strikes)strike([struck.point],struck.amplitude).then(()=>collisions.landed(struck,controller.reading.instrument?.struck),
+   error=>{collisions.failed(struck);setText('key',`A collision was not struck: ${String(error instanceof Error?error.message:error)}`);});
   if(said)setText('key',said);
   return said;
  };
@@ -682,5 +684,5 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   settledOn=identity;reopenWhenStill();
  };
  update();
- return {controller,panel,command,stage,touch,openLive,leaveLive,rebind,authoredMoved,hear,sky,dispose:()=>{unsinglet();clearInterval(timer);engine.setTorusVoices?.(null);clearTimeout(reopening);panel.removeEventListener('click',click);panel.removeEventListener('input',range);panel.removeEventListener('pointerdown',pressKey);panel.removeEventListener('focusin',focusKey);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('pagehide',pagehide);panel.remove();domainView.dispose();style.remove();void controller.dispose();},collide};
+ return {controller,panel,command,stage,touch,openLive,leaveLive,rebind,authoredMoved,hear,sky,dispose:()=>{unsinglet();clearInterval(timer);engine.setTorusVoices?.(null);clearTimeout(reopening);panel.removeEventListener('click',click);panel.removeEventListener('input',range);panel.removeEventListener('pointerdown',pressKey);panel.removeEventListener('focusin',focusKey);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('pagehide',pagehide);panel.remove();domainView.dispose();style.remove();void controller.dispose();},collide,collisions:()=>collisions.tally()};
 }

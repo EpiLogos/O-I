@@ -590,6 +590,22 @@ fn relations_reads_in_one_window_are_one_batch_and_each_gets_its_single_answer()
     );
 }
 
+/// Opens the test's gate when dropped, as a failing check unwinds past it: the reads waiting at the window are let go.
+struct OpensOnDrop<'a>(&'a GatherGate);
+impl Drop for OpensOnDrop<'_> {
+    fn drop(&mut self) {
+        self.0.open();
+    }
+}
+
+/// Tells the test's gate a read has come back, answered or unwound.
+struct CameBack<'a>(&'a GatherGate);
+impl Drop for CameBack<'_> {
+    fn drop(&mut self) {
+        self.0.came_back();
+    }
+}
+
 /// A gathering stays open for its window however late a read of the burst
 /// comes: nothing is asked of AIKit while it is open, and the late read
 /// rides the same batch. The window is the test's gate (`Relations::gated`),
@@ -604,19 +620,24 @@ fn a_gathering_waits_out_its_window_and_a_late_read_rides_its_batch() {
     let readers: &'static Readers = Box::leak(Box::new(Readers::new(5)));
     let root = aikit.dir.join("Central");
     let read = |space: &'static str| {
-        let (aikit, root) = (&aikit, &root);
-        move || match relations.read(
-            readers,
-            aikit.executable.as_os_str(),
-            aikit.identity(),
-            root,
-            relations_item(root, space),
-        ) {
-            Gathered::Answer(answer) => answer.map_err(knowledge::describe),
-            Gathered::Single => panic!("an AIKit with the batch never reads alone"),
+        let (aikit, root, gate) = (&aikit, &root, &*gate);
+        move || {
+            let _back = CameBack(gate);
+            match relations.read(
+                readers,
+                aikit.executable.as_os_str(),
+                aikit.identity(),
+                root,
+                relations_item(root, space),
+            ) {
+                Gathered::Answer(answer) => answer.map_err(knowledge::describe),
+                Gathered::Single => panic!("an AIKit with the batch never reads alone"),
+            }
         }
     };
     std::thread::scope(|scope| {
+        // A check that fails while the reads wait at the window opens it on the way out, so the test fails rather than hangs.
+        let _opens = OpensOnDrop(&gate);
         let first = scope.spawn(read("central:wiki:root"));
         gate.wait_joined(1);
         assert!(
