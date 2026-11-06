@@ -341,11 +341,12 @@ void le_k8_release_keys(LeK8Field *f, const std::uint8_t *rows, const std::uint3
     if (f && f->law) f->law->release(rows, columns, n);
 }
 
-// The audio thread: notes the Torus's owner voiced (QL-MEF #287 packet A), `n` (1..32) notes, each its own eight voices, and the
+// The audio thread: notes the Torus's owner voiced (QL-MEF #287 packet A), `n` (0..32) notes, each its own eight voices, and the
 // `m` notes that made way for them, voiced at the cursor as the owner's field voiced them — `ql::ContinuousField::voice_now`,
-// noexcept and allocation-free. 1 when voiced; 0 leaves the body as it stood.
+// noexcept and allocation-free. An act of no note only makes way (Polyphony lowered below the notes sounding; DLW build ruling
+// 2026-11-05), so it names at least one. 1 when voiced; 0 leaves the body as it stood.
 int le_k8_voice_notes(LeK8Field *f, const LeK8Note *notes, std::size_t n, const std::uint64_t *made_way, std::size_t m) {
-    if (!f || !notes || n == 0 || n > ql::max_bank_notes || m > ql::max_made_way || (m && !made_way)) return 0;
+    if (!f || (n && !notes) || n + m == 0 || n > ql::max_bank_notes || m > ql::max_made_way || (m && !made_way)) return 0;
     ql::NoteAct acts[ql::max_bank_notes];
     for (std::size_t i = 0; i < n; ++i) acts[i] = note_act(notes[i]);
     return f->field.voice_now(acts, n, made_way, m) ? 1 : 0;

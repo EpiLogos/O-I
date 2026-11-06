@@ -299,6 +299,25 @@ test('the Tuning says why the maqām is absent before it is chosen, in the owner
   assert.equal(bound().binding.values['tuning.maqam'], undefined, 'an owner that names no maqām: nothing to say')
 })
 
+test('under Maqām or Sky, or while a form rings, the words say a key strikes the voices where its point stands and why no note has its own, as QL\'s release law has it; Polyphony says a lowered count makes the oldest fade (O-I #850)', () => {
+  // DLW build ruling 2026-11-05 (#850 OPEN c): under Sky, Maqām or a form body, keys strike the resident voices rather than a note bank
+  // (QL torus_native.rs TORUS_RELEASE_LAW, scene_field.rs NOTE_VOICES_LAW), and the Info words say so. (#850 OPEN d): lowering Polyphony
+  // below the notes sounding makes the oldest make way at once, each fading out over 4 ms (scene_field.rs POLYPHONY_MAKES_WAY_LAW).
+  const maqam = {name: 'Kirdan', coordinate: '#2-4.3-0-4', role: 'tonic', tonic_hz: 196, tuning: 'bimba-spelled24-tet', standing: 'source-held', pitches_hz: [196, 220, 233, 262, 294, 311, 349, 392], absent: null}
+  const {binding} = bound(state(session({resident_tunings: ['logic', 'maqam', 'sky'], maqam})))
+  const drawn = page => { setHostPage(binding.id, page); const whole = renderToStaticMarkup(h(HostedDevice, {designed: torus, binding, view: 'whole', nav: {}})); resetHost(binding.id); return whole.split('&#x27;').join("'") }
+  const option = (whole, name) => whole.match(new RegExp(`data-i="${name}\\|([^"]*)"`))?.[1] ?? ''
+  const field = drawn('field'), body = drawn('body')
+  const resident = /A key strikes these voices where its point stands, so a note has no eight voices of its own: Polyphony still counts each key as a note, and a note that makes way only leaves the count while the body rings on \(QL's release law\)\./
+  assert.match(option(field, 'Logic'), /Each key is a note with its own eight voices, the cell its point struck; past Polyphony the oldest fades out\./)
+  assert.match(option(field, 'Maqām'), /^The voices sound the M2 condition's maqām, Kirdan\./)
+  assert.match(option(field, 'Maqām'), resident)
+  assert.match(option(field, 'Sky'), /^The voices take the planets of your sky\./)
+  assert.match(option(field, 'Sky'), resident)
+  assert.match(option(body, 'A form'), /^A form of the Expression rings\. A key strikes the form at its sample nearest the key's point, so a note has no eight voices of its own: Polyphony still counts each key as a note, and a note that makes way only leaves the count while the form rings on \(QL's release law\)\./)
+  assert.match(body, /data-i="Polyphony\|[^"]*Lowered below the notes sounding, the oldest make way at once, each fading out over 4 ms\./)
+})
+
 test('the manual names the Torus by its own controls wherever it shows it: the device reference and the two scales say §21.2\'s macros, its one handle and what the Sky moves (DLW build ruling, 4 November)', async () => {
   const manual = await readFile(new URL('../../../../ProjectCentral/docs/1-vision/dlw/DLW.md', import.meta.url), 'utf8')
   // The device reference (§16) shows the Torus under "#### Torus", up to the next heading of any depth; the two scales under "#### Two scales".

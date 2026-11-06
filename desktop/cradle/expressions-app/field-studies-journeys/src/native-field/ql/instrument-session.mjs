@@ -64,6 +64,10 @@ const STAGE_ACTS = ['stage-evaluate', 'stage-retire', 'stage-bind', 'stage-unbin
 // torus-set for a later sample (O-I 855) waits and moves nothing; the advance
 // whose block reaches its sample makes it there and names it in its
 // torus_set_landed, a Fundamental made there being that block's one generation.
+// Polyphony lowered below the notes sounding (DLW build ruling 2026-11-05) makes
+// the oldest make way at once, each fading in the owner's bank: one act of the
+// bank, no samples, named as note_voices in the setting's answer or in the
+// record of a setting a block made, and one generation more for each.
 // torus-restore (O-I #855) rings the body again from a checkpoint: back to the
 // torus first when a form rings and anything moved, the event's modes and shape
 // continuations when the event moved, the damping when it moved, the form it was
@@ -225,13 +229,17 @@ export class InstrumentSession {
         command.operation === 'set-damping' || command.operation === 'strike' || command.operation === 'strike-at' ||
         command.operation === 'torus-play' || command.operation === 'torus-singlet' ||
         command.operation === 'torus-body';
-      // A Torus edit moves the owner only when it changes the Fundamental, and only when it is made now.
+      // A Torus edit moves the owner only when it changes the Fundamental, and only when it is made now; and once more when the
+      // notes Polyphony lowered made make way in the bank, as its answer names (note_voices).
       const torusSet = command.operation === 'torus-set';
       const fundamental = torusSet && command.edit?.fundamental !== undefined && !waits(command, this.#native.samples_elapsed);
-      // A block that made waiting settings at their samples moves one generation for each Fundamental it made.
+      const madeWay = torusSet && reply.note_voices !== undefined ? 1n : 0n;
+      // A block that made waiting settings at their samples moves one generation for each Fundamental it made and each act of the
+      // bank a lowered Polyphony took there.
       const landed = command.operation === 'advance' && Array.isArray(reply.torus_set_landed)
         ? BigInt(reply.torus_set_landed.filter(set => set?.applied === true && Array.isArray(set.moved) &&
-          set.moved.includes('fundamental')).length) : 0n;
+          set.moved.includes('fundamental')).length + reply.torus_set_landed.filter(set => set?.applied === true &&
+          set.note_voices !== undefined).length) : 0n;
       const torusRestore = command.operation === 'torus-restore';
       // replace-event commits modes and, when required, shape. m1-advance
       // additionally commits inscription-axis alignment. replace-event's own
@@ -250,7 +258,7 @@ export class InstrumentSession {
       const maximumEventDelta = command.operation === 'm1-advance' ? 3n : 2n;
       need((event ? after >= before + minimumEventDelta && after <= before + maximumEventDelta
         : stageEvaluation ? after > before
-        : torusSet ? after === before || (fundamental && after === before + 1n)
+        : torusSet ? after === before + madeWay || (fundamental && after === before + 1n + madeWay)
         : torusRestore ? after >= before + 1n && after <= before + 6n
         : after === before + (changing ? 1n : 0n) + landed) &&
         cursor(frame.samples_elapsed) === cursor(this.#native.samples_elapsed) + BigInt(frames) &&

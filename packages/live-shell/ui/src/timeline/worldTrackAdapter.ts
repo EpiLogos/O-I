@@ -276,6 +276,9 @@ export interface WorldTrackActions {
   groupTracks?: {op: string; run(trackIds: readonly string[]): unknown};
   /** Export Audio (Arrangement view, a take's clip): the take rendered as it was played and saved (Live, O-I #855). */
   exportTake?: {op: string; run(clipId: string): unknown};
+  /** Place Under Scene (a take's clip, in either view): the take laid under the presented scene, where the scene sounds it on its ruler
+   * and the field answers it (O-I #855). */
+  placeTake?: {op: string; run(clipId: string): unknown};
   /** Split (⌘E, Arrangement view): a clip cut in two at a point of the ruler (the pane's insert marker). */
   splitClip?: {op: string; run(clipId: string, at: number): unknown};
   /** Consolidate (⌘J, Arrangement view): what a track's clips play over a stretch of the ruler (the pane's time selection), made one

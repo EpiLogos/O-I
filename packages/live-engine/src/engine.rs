@@ -628,6 +628,13 @@ pub const LATENCY_BUCKETS_NS: [u64; 8] = [
 /// owner, which waits in the part's Torus until its continuation reaches it (as the Torus stands when it takes it; a late act
 /// strikes at once). Ns in the engine's time ([`EngineHandle::now_ns`]); the frame's mixing time is the block's pull plus its
 /// frames at the engine's rate, and the device plays it its output latency later ([`LatencyReading::output_latency_ns`]).
+///
+/// Key-to-sound in frames, measured by the engine itself (O-I #849 and #853; DLW build ruling 2026-11-06: "Record the frame a
+/// key's event reaches the engine and the frame its first non-silent sample leaves the block"): `reached_frame`, the frame the
+/// engine stood at when the event was sent (the block that took it, less the frames it waited for it), and `sounded_frame`, the
+/// first frame its part's sound was above [`crate::graph::ONSET_FLOOR`] at or after `frame`, as the part's chain made it; none
+/// for a strike its part did not sound within [`ONSET_WAIT_SECONDS`]. A strike is handed back once it sounded, or once that wait
+/// is over.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct StrikeTime {
     pub track: usize,
@@ -635,10 +642,17 @@ pub struct StrikeTime {
     pub applied_ns: u64,
     pub sounds_ns: u64,
     pub frame: u64,
+    pub reached_frame: u64,
+    pub sounded_frame: Option<u64>,
 }
 
 /// The strikes [`LatencyReading::strikes`] keeps: the latest.
 pub const STRIKES_KEPT: usize = 32;
+/// How long a strike waits for its part's first sound ([`StrikeTime::sounded_frame`]) before it is handed back as one that
+/// sounded nothing.
+pub const ONSET_WAIT_SECONDS: u64 = 1;
+/// The strikes that can wait for their first sound at once; past them the one that waited longest is handed back as it stands.
+const STRIKES_WAITING: usize = 16;
 /// The strikes the audio thread can hand back between two collects; more are not kept.
 const STRIKE_RING: usize = 256;
 
@@ -800,6 +814,8 @@ pub struct EngineCore {
     shared: Arc<Shared>,
     /// A hand taken and not yet due, with the frame it is due at ([`Due`]).
     held: Option<(Box<Hand>, u64)>,
+    /// The strikes waiting for their part's first sound ([`StrikeTime::sounded_frame`]), in no order.
+    waiting: [Option<StrikeTime>; STRIKES_WAITING],
 }
 
 /// The control side's half: the engine's owner operations (see the module
@@ -916,6 +932,7 @@ pub fn engine(mut graph: Graph) -> Result<(EngineCore, EngineHandle), GraphError
         struck: struck_tx,
         shared: Arc::clone(&shared),
         held: None,
+        waiting: [None; STRIKES_WAITING],
     };
     let handle = EngineHandle {
         outbox,
@@ -978,15 +995,19 @@ impl EngineCore {
             };
             self.graph.apply(&inbound.event, &self.clock);
             if let Some((track, frame)) = struck {
-                let ahead = (frame - start).saturating_mul(1_000_000_000)
-                    / u64::from(self.graph.sample_rate.max(1));
-                // a full ring keeps the strikes it holds: the readout keeps only the latest anyway
-                let _ = self.struck.push(StrikeTime {
+                let rate = u64::from(self.graph.sample_rate.max(1));
+                let ahead = (frame - start).saturating_mul(1_000_000_000) / rate;
+                // the frames it waited for the block that took it, from when it was sent
+                let waited =
+                    now_ns.saturating_sub(inbound.sent_ns).saturating_mul(rate) / 1_000_000_000;
+                self.wait_for_sound(StrikeTime {
                     track,
                     sent_ns: inbound.sent_ns,
                     applied_ns: now_ns,
                     sounds_ns: now_ns.saturating_add(ahead),
                     frame,
+                    reached_frame: start.saturating_sub(waited),
+                    sounded_frame: None,
                 });
             }
             let wait = now_ns.saturating_sub(inbound.sent_ns);
@@ -1026,6 +1047,7 @@ impl EngineCore {
             slot[1] = f[1];
             frame_index += 1;
         }
+        self.settle_strikes(frame_index);
         self.shared
             .block_frames
             .store(frame_index - start, Ordering::Relaxed);
@@ -1033,6 +1055,68 @@ impl EngineCore {
             .torus_unplaced
             .store(self.graph.torus_unplaced(), Ordering::Relaxed);
         self.shared.position.store(frame_index, Ordering::Release);
+    }
+
+    /// A strike waits for its part's first sound: its part listens from the earliest frame a strike of it is due at. Where
+    /// every place is taken, the strike that waited longest is handed back as it stands. Allocation-free.
+    fn wait_for_sound(&mut self, strike: StrikeTime) {
+        let place = match self.waiting.iter().position(Option::is_none) {
+            Some(place) => place,
+            None => {
+                let oldest = (0..STRIKES_WAITING)
+                    .min_by_key(|i| self.waiting[*i].map_or(u64::MAX, |w| w.applied_ns))
+                    .unwrap_or(0);
+                if let Some(gone) = self.waiting[oldest].take() {
+                    // a full ring keeps the strikes it holds: the readout keeps only the latest anyway
+                    let _ = self.struck.push(gone);
+                    self.listen_again(gone.track);
+                }
+                oldest
+            }
+        };
+        self.waiting[place] = Some(strike);
+        self.listen_again(strike.track);
+    }
+
+    /// Part `track` listens from the earliest frame a strike of it still waiting is due at, or for nothing.
+    fn listen_again(&mut self, track: usize) {
+        let from = self
+            .waiting
+            .iter()
+            .flatten()
+            .filter(|w| w.track == track)
+            .map(|w| w.frame)
+            .min();
+        self.graph.listen(track, from);
+    }
+
+    /// After a block to `end`: each strike whose part sounded at or after the frame it was due is handed back with that frame;
+    /// one that waited [`ONSET_WAIT_SECONDS`] past it, as one that sounded nothing; each part they were of listens again for
+    /// the strikes of it still waiting. Allocation-free.
+    fn settle_strikes(&mut self, end: u64) {
+        let wait = u64::from(self.graph.sample_rate).saturating_mul(ONSET_WAIT_SECONDS);
+        let mut settled = [usize::MAX; STRIKES_WAITING];
+        let mut count = 0;
+        for i in 0..STRIKES_WAITING {
+            let Some(mut strike) = self.waiting[i] else {
+                continue;
+            };
+            let heard = self
+                .graph
+                .heard_at(strike.track)
+                .filter(|at| *at >= strike.frame);
+            if heard.is_none() && end < strike.frame.saturating_add(wait) {
+                continue;
+            }
+            strike.sounded_frame = heard;
+            let _ = self.struck.push(strike);
+            self.waiting[i] = None;
+            settled[count] = strike.track;
+            count += 1;
+        }
+        for track in settled.into_iter().take(count) {
+            self.listen_again(track);
+        }
     }
 
     /// Stamp the block about to be mixed: its first frame, its frames and when it was pulled, so the

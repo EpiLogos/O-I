@@ -173,7 +173,9 @@ pub enum TorusTap {
     /// The owner under `lease` voiced notes under Logic on the torus (`torus-play`'s `ql.note-voices/v1` receipt; QL-MEF
     /// #287 packet A; O-I #850 round 24) at its sample `at_samples_elapsed`: each note by its id, and each of its voices
     /// by the mode it is like (`mode_ref`), its frequency and its impulse in modal metres; and the notes that made way
-    /// for them, by id, exactly as its receipt names them.
+    /// for them, by id, exactly as its receipt names them. Polyphony lowered below the notes sounding is an act of the
+    /// bank too (DLW build ruling 2026-11-05; QL's `POLYPHONY_MAKES_WAY_LAW`): no note voiced, the oldest making way,
+    /// each fading over the 4 ms a note that makes way takes.
     Voiced {
         lease: String,
         at_samples_elapsed: u64,
@@ -186,7 +188,8 @@ pub enum TorusTap {
 /// (`mode_ref`), its frequency and its impulse `[re, im]`.
 pub type VoicedNotes = Vec<(u64, Vec<(String, f64, [f64; 2])>)>;
 
-/// QL's receipt of the notes a `torus-play` voiced under Logic on the torus (QL-MEF #287 packet A).
+/// QL's receipt of the notes a `torus-play` voiced under Logic on the torus (QL-MEF #287 packet A), and of the notes a
+/// lowered Polyphony made make way (a `torus-set`'s `note_voices`, a landed setting's in `torus_set_landed`).
 const NOTE_VOICES_RECEIPT: &str = "ql.note-voices/v1";
 
 /// A note's id as a receipt names it: a whole number, or its decimal.
@@ -196,8 +199,8 @@ fn note_id(value: &Value) -> Option<u64> {
         .or_else(|| value.as_str().and_then(|s| s.parse().ok()))
 }
 
-/// The notes a `ql.note-voices/v1` receipt says its owner voiced, or none when any part of it cannot be read whole: a
-/// host that voiced the rest would ring notes the owner's field does not.
+/// The notes a `ql.note-voices/v1` receipt says its owner voiced and the notes that made way, or none when any part of
+/// it cannot be read whole (a host that voiced the rest would ring notes the owner's field does not) or it names neither.
 fn torus_voiced(lease: &str, receipt: &Value) -> Option<TorusTap> {
     let notes = receipt["notes"]
         .as_array()?
@@ -227,12 +230,31 @@ fn torus_voiced(lease: &str, receipt: &Value) -> Option<TorusTap> {
         None => Vec::new(),
     };
     let at_samples_elapsed = cursor(&receipt["at_samples_elapsed"]).ok()?;
-    (!notes.is_empty()).then(|| TorusTap::Voiced {
+    (!notes.is_empty() || !made_way.is_empty()).then(|| TorusTap::Voiced {
         lease: lease.to_owned(),
         at_samples_elapsed,
         notes,
         made_way,
     })
+}
+
+/// The settings an acknowledged block made that made notes make way, in order (the reply's `torus_set_landed`; DLW
+/// build ruling 2026-11-05): each applied record's `note_voices`, at the sample it landed at. A record that made none,
+/// one the block refused, and one whose act cannot be read whole are not told.
+fn torus_set_landed(lease: &str, command: &Value, reply: &Value) -> Vec<TorusTap> {
+    let Some(records) = reply["torus_set_landed"]
+        .as_array()
+        .filter(|_| command["operation"] == "advance")
+    else {
+        return Vec::new();
+    };
+    records
+        .iter()
+        .filter(|record| {
+            record["applied"] == true && record["note_voices"]["schema"] == NOTE_VOICES_RECEIPT
+        })
+        .filter_map(|record| torus_voiced(lease, &record["note_voices"]))
+        .collect()
 }
 
 /// The parts of an acknowledged block that reached gains a receiver moved, in order (the reply's
@@ -265,8 +287,9 @@ fn torus_heard(lease: &str, command: &Value, reply: &Value) -> Vec<TorusTap> {
 }
 
 /// The act an acknowledged command landed on the Torus's owner, or none: the receipt's `strike_at` (a key,
-/// a touch, a singlet: on the torus each voice's impulse, on a form's body each body mode's), or a named
-/// strike's own impulses at the sample it named or the cursor it struck at.
+/// a touch, a singlet: on the torus each voice's impulse, on a form's body each body mode's), a named
+/// strike's own impulses at the sample it named or the cursor it struck at, or the notes a setting made make
+/// way at the cursor (a `torus-set`'s `note_voices`; DLW build ruling 2026-11-05).
 fn torus_struck(lease: &str, command: &Value, reply: &Value) -> Option<TorusTap> {
     let pairs = |list: &Value| -> Option<Vec<(String, [f64; 2])>> {
         list.as_array()?
@@ -292,6 +315,12 @@ fn torus_struck(lease: &str, command: &Value, reply: &Value) -> Option<TorusTap>
                 pairs(&receipt["modes"])?
             };
             (cursor(&receipt["at_samples_elapsed"]).ok()?, impulses)
+        }
+        "torus-set" => {
+            let receipt = &reply["note_voices"];
+            return (receipt["schema"] == NOTE_VOICES_RECEIPT)
+                .then(|| torus_voiced(lease, receipt))
+                .flatten();
         }
         "strike" => {
             let at = match command.get("at_samples_elapsed") {
@@ -1235,7 +1264,10 @@ impl Manager {
                                 if let Some(told) = told {
                                     let _ = tap.send(told);
                                 }
-                                for told in torus_heard(&owner.lease, &command, &reply) {
+                                for told in torus_heard(&owner.lease, &command, &reply)
+                                    .into_iter()
+                                    .chain(torus_set_landed(&owner.lease, &command, &reply))
+                                {
                                     let _ = tap.send(told);
                                 }
                             }
@@ -5161,6 +5193,9 @@ for line in sys.stdin:
     /// engine reaches them over the owner's samples; a block naming a part that cannot be read whole taps none of it.
     /// Round 24 (O-I #850): under Logic on the torus a key is a note its owner voices (`ql.note-voices/v1`), tapped as the
     /// notes it voiced, each by its id and eight voices, and the notes that made way, at the sample it landed at.
+    /// DLW build ruling 2026-11-05: Polyphony lowered below the notes sounding is tapped as the act of the bank it took,
+    /// no note voiced and the oldest making way, at the sample it was made (a `torus-set`'s `note_voices`, or the record
+    /// of a setting a block made, in its `torus_set_landed`), so the engine's bank fades them as the owner's does.
     /// A refused act and a read are not tapped; the frame is answered as before.
     #[cfg(unix)]
     #[test]
@@ -5184,7 +5219,9 @@ for line in sys.stdin:
     before=state['samples']; state['samples']+=c['frames']
     if c['frames']==512: extra['torus_heard']=[{'at_samples_elapsed':str(before),'frames':200,'gains':[{'mode_ref':'voice:a','gain':0.5},{'mode_ref':'voice:b','gain':0.25}]},{'at_samples_elapsed':str(before+200),'frames':312,'gains':[{'mode_ref':'voice:a','gain':0.75},{'mode_ref':'voice:b','gain':0.125}]}]
     if c['frames']==7: extra['torus_heard']=[{'at_samples_elapsed':str(before),'frames':7,'gains':[{'mode_ref':'voice:a','gain':0.5}]},{'at_samples_elapsed':str(before),'frames':7,'gains':[{'mode_ref':'voice:b'}]}]
+    if c['frames']==9: extra['torus_set_landed']=[{'at_samples_elapsed':str(before+3),'edit':{'polyphony':1},'applied':True,'moved':['polyphony'],'note_voices':{'schema':'ql.note-voices/v1','points':[],'notes':[],'made_way':[9],'at_samples_elapsed':str(before+3)}},{'at_samples_elapsed':str(before+4),'edit':{'polyphony':2},'applied':True,'moved':['polyphony']},{'at_samples_elapsed':str(before+5),'edit':{'polyphony':0},'applied':False,'moved':[],'refused':'Polyphony is 1 to 32'}]
   elif op=='torus-native': extra['torus_native']=handed()
+  elif op=='torus-set' and c['edit'].get('polyphony')==1: extra['note_voices']={'schema':'ql.note-voices/v1','points':[],'notes':[],'made_way':[7,8],'at_samples_elapsed':str(state['samples'])}
   elif op=='torus-play' and c['keys'][0]['row']==4: extra['strike_at']={'schema':'ql.note-voices/v1','at_samples_elapsed':lands,'made_way':[3],'notes':[{'id':7,'voices':[{'like':'voice:a','frequency_hz':440.0+k,'m':1,'n':1,'coupling':0.5,'amplitude':[0.01*k,-0.002]} for k in range(8)]}]}
   elif op=='torus-play': extra['strike_at']={'at_samples_elapsed':lands,'voices':[{'mode_ref':'voice:a','amplitude':[0.30000000000000004,-3e-05]},{'mode_ref':'voice:b','amplitude':[-0.25,0.0]}]}
   elif op=='strike-at': extra['strike_at']={'at_samples_elapsed':lands,'modes':[{'mode_ref':'voice:a/body/0','amplitude':[0.1,0.2]}]}
@@ -5245,6 +5282,12 @@ for line in sys.stdin:
         );
         exchange(json!({"operation":"advance","frames":512,"muted":false}));
         exchange(json!({"operation":"advance","frames":7,"muted":false}));
+        // DLW build ruling 2026-11-05 (O-I #850): Polyphony lowered below the notes sounding makes the oldest make way in
+        // the owner's bank, one act voicing no note, named in the setting's answer or in the record of a setting a block
+        // made; a setting that moved no note, and one the block refused, are not tapped.
+        exchange(json!({"operation":"torus-set","edit":{"polyphony":4}}));
+        exchange(json!({"operation":"torus-set","edit":{"polyphony":1}}));
+        exchange(json!({"operation":"advance","frames":9,"muted":false}));
         exchange(json!({"operation":"torus-state"}));
         let taps: Vec<TorusTap> = tapped.try_iter().collect();
         let heard = |at: u64, frames: u32, gains: [f64; 2]| TorusTap::Heard {
@@ -5279,6 +5322,18 @@ for line in sys.stdin:
                 struck(1200, &[("voice:b", [0.5, 0.5])]),
                 heard(480, 200, [0.5, 0.25]),
                 heard(680, 312, [0.75, 0.125]),
+                TorusTap::Voiced {
+                    lease: lease.clone(),
+                    at_samples_elapsed: 999,
+                    notes: Vec::new(),
+                    made_way: vec![7, 8],
+                },
+                TorusTap::Voiced {
+                    lease: lease.clone(),
+                    at_samples_elapsed: 1002,
+                    notes: Vec::new(),
+                    made_way: vec![9],
+                },
             ],
             "every landed act, exactly as the owner wrote its impulses, at the sample it landed, and every part that reached \
              a receiver's gains, by its samples; a refusal, a read and a block naming a part it cannot read whole are not tapped"

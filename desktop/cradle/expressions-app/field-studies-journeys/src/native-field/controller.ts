@@ -80,6 +80,12 @@ export const TAKE_RENDERS_BYTES_MAX=256*1024*1024;
 /** How far the Scene's sample may stand from where a sounding take has played to before it is a seek, and the take plays again from there:
  * a quarter second, past the frame-to-frame give of the Scene's clock against the audio device's. A presentation tolerance, not a source value. */
 const TAKE_SEEK_SECONDS=.25;
+/** Where the scene resumes when a take under it is not played (O-I #855: "A take whose motion cannot replay exactly says where it
+ * resumes"): its Torus as it rings, said after the take's refusal. */
+export const TAKE_NOT_PLAYED_RESUMES='The scene plays on, its Torus ringing as it stands.';
+/** Where a take taken up past its start resumes (O-I #855): its sound is the sealed one from that frame, and what it struck before is not
+ * struck again: the plate stands on the last act it struck before then, on the scene's voices as they stand. Pure. */
+export const takeResumesAt=(title:string,fromFrame:number,rate:number):string=>`${title} resumes ${(fromFrame/rate).toFixed(2)} s in: its sound as the kernel sealed it from there, and the plate from the last act it struck before then, on the scene's voices as they stand.`;
 const MB=(bytes:number)=>(bytes/1048576).toFixed(2);
 /** A take the Scene's row sounds now (sceneTransport.ts sceneTakeAt; expressions-boundary scenes.ts soundingTorusTake): the take the kernel
  * sealed (`oi.torus-take/v1`, carried whole), its take lane and the lane's title, and the take's frame at the Scene's sample now. */
@@ -1054,7 +1060,7 @@ export class NativeFieldController {
  /** Render a take once from its checkpoint and acts, check its PCM against its seal and hold it; or refuse it in words, once. */
  private async makeTake(want:SoundingTake):Promise<void>{
   const take=want.take as any,ref=take.take_ref as string,epoch=this.epoch;
-  const refuse=(why:string)=>{const words=`${want.title} is not played: ${why}`;this.takeRefused.set(ref,{why:words,epoch});this.takeRefusal=words;this.takeSaid=words;this.changed();};
+  const refuse=(why:string)=>{const words=`${want.title} is not played: ${why}${/[.!?]$/.test(why)?'':'.'} ${TAKE_NOT_PLAYED_RESUMES}`;this.takeRefused.set(ref,{why:words,epoch});this.takeRefusal=words;this.takeSaid=words;this.changed();};
   const frames=/^(0|[1-9][0-9]{0,15})$/.test(take.frames??'')?Number(take.frames):NaN;
   if(!Number.isSafeInteger(frames)||frames<1)return refuse('the kernel\'s take names no frames');
   const cap=()=>{const held=this.heldTakeBytes();return held+frames*4>TAKE_RENDERS_BYTES_MAX
@@ -1082,7 +1088,10 @@ export class NativeFieldController {
   const acts=(stageTakeActsOf((want.take as any).acts,render.from_samples_elapsed,render.frames)??[]).map(act=>({frame:Number(BigInt(act.at_samples_elapsed)-from),act}));
   this.takePlaying={take_ref:ref,lane_ref:want.lane_ref,title:want.title,source,context,started,from_frame:want.from_frame,frames:render.frames,rate:render.sample_rate,
    heard_at_ms:this.heardAtMs(started),acts,next:0};
-  this.takeRefusal=null;this.takeStruck=null;this.takeActs(want.from_frame);this.changed();
+  this.takeRefusal=null;this.takeStruck=null;this.takeActs(want.from_frame);
+  // taken up past its start, it says where it resumes (O-I #855); from its start it plays exactly as sealed
+  if(want.from_frame>0)this.takeSaid=takeResumesAt(want.title,want.from_frame,render.sample_rate);
+  this.changed();
  }
  /** The take's acts the Scene has reached by frame `at`: the latest of them that struck is what the plate plays (take_player.struck). */
  private takeActs(at:number){

@@ -167,15 +167,22 @@ const receiverControls = (p: ViewProps) => <>
 </>
 const BODY_SOURCES = [{value: 'declared', label: 'Declared', does: 'The body keeps the values you set.'},
   {value: 'tattva', label: 'Tattva', does: "The tattva of the M2 condition sets Strike and Damping through its element fibre."}] as const
-const BODIES = [{value: 'torus', label: 'The torus', does: 'The torus rings.'}, {value: 'form', label: 'A form', does: 'A form of the Expression rings.'}] as const
+// Why no note has its own voices under Maqām or Sky, or while a form rings (DLW build ruling 2026-11-05, O-I #850): there a key strikes the
+// resident voices at its point (QL torus_native.rs TORUS_RELEASE_LAW, scene_field.rs NOTE_VOICES_LAW); only Logic on the torus gives a note its
+// own eight voices in the owner's bank.
+const STRIKES_RESIDENT = (rings: string) => `so a note has no eight voices of its own: Polyphony still counts each key as a note, and a note that makes way only leaves the count while the ${rings} rings on (QL's release law).`
+const RESIDENT_VOICES = `A key strikes these voices where its point stands, ${STRIKES_RESIDENT('body')}`
+const BODIES = [{value: 'torus', label: 'The torus', does: 'The torus rings.'},
+  {value: 'form', label: 'A form', does: `A form of the Expression rings. A key strikes the form at its sample nearest the key's point, ${STRIKES_RESIDENT('form')}`}] as const
 const RATE_MODES = [{value: 'free', label: 'Free', does: 'Steps a second, one a year to 40,000.'}, {value: 'sync', label: 'Sync', does: 'One step per note length at the set\'s tempo.'}] as const
 const NOTE_LENGTHS = ['1/64', '1/32', '1/16', '1/8', '3/16', '1/4', '3/8', '1/2', '3/4', '1/1', '2/1', '4/1', '8/1'].map(x => ({value: x, label: x.endsWith('/1') ? `${x.slice(0, -2)} bar${x === '1/1' ? '' : 's'}` : x}))
 const SOURCES = [{value: 'map', label: 'Map', does: 'The frequency the map gives the Sun, its 1:1.'}, {value: 'hz', label: 'Hz', does: 'A frequency you set, 20 to 2,000 Hz.'}] as const
 const SHAPES = [{value: 'auto', label: 'Auto', does: 'The shape changes by the pulse.'}, {value: 'sequence', label: 'Sequence', does: 'The shapes you set in the scene.'},
   {value: 'torus', label: 'Torus'}, {value: 'figure-eight', label: 'Figure-eight'}, {value: 'spiral', label: 'Spiral'}, {value: 'klein-bottle', label: 'Klein bottle'}] as const
 const FIGURE_WORD: Record<string, string> = {torus: 'Torus', 'figure-eight': 'Figure-eight', spiral: 'Spiral', 'klein-bottle': 'Klein bottle'}
-const TUNINGS = [{value: 'logic', label: 'Logic', does: 'The voices sound Vimarśā\'s octet.'}, {value: 'maqam', label: 'Maqām', does: 'The voices sound the M2 condition\'s maqām.'},
-  {value: 'sky', label: 'Sky', does: 'The voices take the planets of your sky.'}] as const
+const TUNINGS = [{value: 'logic', label: 'Logic', does: 'The voices sound Vimarśā\'s octet. Each key is a note with its own eight voices, the cell its point struck; past Polyphony the oldest fades out.'},
+  {value: 'maqam', label: 'Maqām', does: `The voices sound the M2 condition's maqām. ${RESIDENT_VOICES}`},
+  {value: 'sky', label: 'Sky', does: `The voices take the planets of your sky. ${RESIDENT_VOICES}`}] as const
 /** Why a body constant is held: under Tattva, the tattva with a fibre sets it. */
 export const tattvaHold = (v: V): string | undefined => {
   if (strOf(v, 'body.source') !== 'tattva') return undefined
@@ -276,7 +283,7 @@ const modeAndTuning = (p: ViewProps) => {
   const said = absent.filter(x => x.value !== 'maqam' || !maqam?.absent).map(x => x.label)
   const why = absent.some(x => x.value === 'maqam') && maqam?.absent ? ` This scene holds no Maqām voices: ${maqam.absent.replace(/\.$/, '')}.` : ''
   const options = TUNINGS.filter(x => !resident || resident.includes(x.value))
-    .map(x => x.value === 'maqam' && maqam?.name ? {...x, does: `The voices sound the M2 condition's maqām, ${maqam.name}.`} : x)
+    .map(x => x.value === 'maqam' && maqam?.name ? {...x, does: `The voices sound the M2 condition's maqām, ${maqam.name}. ${RESIDENT_VOICES}`} : x)
   return <>
     {determinants(p)}
     <Radio {...st(p, 'tuning')} label="Tuning" does={`What the voices sound.${said.length ? ` This scene holds no ${said.join(' or ')} voices.` : ''}${why}`} value={strOf(p.v, 'tuning') ?? ''}
@@ -678,7 +685,7 @@ export const torus: DesignedDevice = {
         rows of two, its Shared reference across both (O-I #856). */}
     <Band>
       <Section label="Notes and output" cols={5} grow>
-        <ValueBox {...st(p, 'polyphony')} label="Polyphony" does="How many notes sound at once, each with its own eight voices. The oldest note makes way for a new one." value={numOf(p.v, 'polyphony') ?? NaN} def={16} scale={{min: 1, max: 32, step: 1}} format={x => `${Math.round(x)}`} onChange={x => p.set('polyphony', Math.round(x))} />
+        <ValueBox {...st(p, 'polyphony')} label="Polyphony" does="How many notes sound at once, each with its own eight voices. The oldest note makes way for a new one. Lowered below the notes sounding, the oldest make way at once, each fading out over 4 ms." value={numOf(p.v, 'polyphony') ?? NaN} def={16} scale={{min: 1, max: 32, step: 1}} format={x => `${Math.round(x)}`} onChange={x => p.set('polyphony', Math.round(x))} />
         <Readout label="notes" does="Notes that sound now, as the owner counts them." value={numOf(p.v, 'notes')} tone="accent" />
         <Dial {...st(p, 'pan')} label="Pan" does="The place of the sound, left to right." value={num(p.v, 'pan')} def={0} scale={{min: -1, max: 1}} format={x => (Math.abs(x) < .005 ? 'C' : `${Math.round(Math.abs(x) * 50)}${x < 0 ? 'L' : 'R'}`)} bipolar onChange={x => p.set('pan', x)} />
         <Radio {...st(p, 'view')} label="View" does="What the pane draws." value={strOf(p.v, 'view') ?? ''} options={VIEWS} stack onChange={x => p.set('view', x)} />

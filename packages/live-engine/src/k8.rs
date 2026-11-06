@@ -896,10 +896,16 @@ impl K8Field {
     }
 
     /// Voice notes its owner voiced at the cursor (QL-MEF #287 packet A): each note its own eight voices, and the notes that
-    /// made way for them fading, as the owner's field voiced them (the audio thread: no allocation). False when the field refused
-    /// the act whole (no note, more than [`BANK_NOTES`], a note already held, or a voice it cannot ring): nothing moved.
+    /// made way for them fading, as the owner's field voiced them (the audio thread: no allocation). An act may voice no note
+    /// and only make way: Polyphony lowered below the notes sounding (DLW build ruling 2026-11-05; QL's
+    /// `POLYPHONY_MAKES_WAY_LAW`), each fading over the 4 ms a note making way takes, never cut. False when the field refused
+    /// the act whole (no note and none making way, more than [`BANK_NOTES`], a note already held, or a voice it cannot ring):
+    /// nothing moved.
     pub fn voice_notes(&mut self, notes: &[K8Note], made_way: &[u64]) -> bool {
-        if notes.is_empty() || notes.len() > BANK_NOTES || made_way.len() > MADE_WAY_MAX {
+        if (notes.is_empty() && made_way.is_empty())
+            || notes.len() > BANK_NOTES
+            || made_way.len() > MADE_WAY_MAX
+        {
             return false;
         }
         let mut raw = [LeK8Note::default(); BANK_NOTES];

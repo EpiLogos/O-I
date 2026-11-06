@@ -1085,7 +1085,10 @@ pub(crate) mod host {
         /// "a host-side timestamp pair per strike reported through the engine's own readout"; live-engine
         /// `StrikeTime`): the part, the frame it sounds at, when the host sent it to the engine and when the engine
         /// mixed that frame, in ms on the host's wall clock (since the epoch, the clock MIDI notes are stamped on as
-        /// the host receives them), and the span between; the device plays it its output latency later.
+        /// the host receives them), and the span between; the device plays it its output latency later. And each
+        /// strike's key-to-sound as the engine measured it (DLW build ruling 2026-11-06): the frame it reached the engine,
+        /// the frame its part first sounded (null: it sounded nothing within its wait), and the span between in frames, ms
+        /// and the engine's blocks.
         fn latency_reading(&self) -> Value {
             let latency = self.handle.latency();
             let ms = |ns: u64| ns as f64 / 1e6;
@@ -1095,16 +1098,27 @@ pub(crate) mod host {
                 .duration_since(std::time::UNIX_EPOCH)
                 .map_or(0.0, |d| d.as_secs_f64() * 1000.0);
             let wall = |ns: u64| wall_now - (engine_now - ns as f64) / 1e6;
+            let block = latency.block_frames.max(1) as f64;
             let strikes: Vec<Value> = latency
                 .strikes
                 .iter()
                 .map(|s| {
+                    // the engine's own key-to-sound (DLW build ruling 2026-11-06): reached to first sounded, in frames,
+                    // ms and blocks; none for a strike its part did not sound
+                    let to_sound = s.sounded_frame.map(|sounded| {
+                        let frames = sounded.saturating_sub(s.reached_frame);
+                        json!({"frames": frames, "ms": frames as f64 * 1000.0 / f64::from(ENGINE_RATE),
+                            "blocks": frames as f64 / block})
+                    });
                     json!({
                         "track": s.track,
                         "frame": s.frame,
                         "sent_at_ms": wall(s.sent_ns),
                         "sounds_at_ms": wall(s.sounds_ns),
                         "ms": ms(s.sounds_ns.saturating_sub(s.sent_ns)),
+                        "reached_frame": s.reached_frame,
+                        "sounded_frame": s.sounded_frame,
+                        "to_sound": to_sound,
                     })
                 })
                 .collect();
@@ -5005,6 +5019,21 @@ pub(crate) mod host {
             assert!(
                 (strike["ms"].as_f64().unwrap() - (sounds - sent)).abs() < 1e-3,
                 "the pair's span, sent to sounding: {strike}"
+            );
+            // DLW build ruling 2026-11-06 ("The engine measures it itself, so a walk reads a number"): the frame the note
+            // reached the engine, the frame its part first sounded, and the span between in frames, ms and the engine's blocks.
+            let reached = strike["reached_frame"]
+                .as_u64()
+                .expect("the frame it reached the engine");
+            let sounded = strike["sounded_frame"]
+                .as_u64()
+                .expect("the frame its part first sounded");
+            assert!(reached <= 480 && sounded >= 480, "{strike}");
+            let frames = sounded - reached;
+            assert_eq!(
+                strike["to_sound"],
+                json!({"frames": frames, "ms": frames as f64 * 1000.0 / 48000.0, "blocks": frames as f64 / 480.0}),
+                "{strike}"
             );
         }
 

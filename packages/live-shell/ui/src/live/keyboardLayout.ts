@@ -5,7 +5,7 @@
 // surface and a note from a controller are notes of the same part, so Sustain holds them alike and Panic releases them all.
 import {useSyncExternalStore} from 'react'
 import type {KeyboardLayoutName} from './liveChainDevices'
-import {createJankoInput, KEYBOARD_SETTINGS_DEFAULT, KEYBOARD_TRANSPOSE, keyToSound, type EngineLatency, type JankoInput, type KeyboardSettings} from './janko/jankoInput'
+import {createJankoInput, KEYBOARD_SETTINGS_DEFAULT, KEYBOARD_TRANSPOSE, keyToSound, keyToSoundByInput, type EngineLatency, type JankoInput, type KeyboardSettings} from './janko/jankoInput'
 import {commitLiveStage} from './torusInstrument'
 import {liveEngineLatency} from './liveEngine'
 import {liveTakeRecorder} from './liveTake'
@@ -98,6 +98,8 @@ export function livePlayingPath(): JankoInput {
     // engine's legs while it plays (round 18) as `__oiKeyToSound()`.
     (globalThis as {__oiKeyLatency?: () => unknown}).__oiKeyLatency = () => input.latency();
     (globalThis as {__oiKeyToSound?: () => unknown}).__oiKeyToSound = () => input.latency().map(strike => keyToSound(strike, engineLatency()))
+    // The engine's own key-to-sound, the latest strike of each input (DLW build ruling 2026-11-06), as `__oiKeyToSoundByInput()`.
+    ;(globalThis as {__oiKeyToSoundByInput?: () => unknown}).__oiKeyToSoundByInput = () => keyToSoundByInput(input.latency(), engineLatency())
   }
   return input
 }

@@ -454,18 +454,20 @@ pub struct TorusVoice {
 
 impl TorusVoice {
     /// The owner's act of `notes` (each its id and eight voices: mode index, frequency, [re, im]) and the ids of the
-    /// notes that made way, at `at`, as its parts (off the audio thread: it allocates). Refused in words with no note,
-    /// more than [`TORUS_VOICE_NOTES`] or more than [`TORUS_VOICE_MADE_WAY`] making way, a note named twice, a mode past
-    /// 65535, or a frequency or impulse that is not finite; whether the bank can take it is the Torus's own law to judge.
+    /// notes that made way, at `at`, as its parts (off the audio thread: it allocates). An act may voice no note and only
+    /// make way: Polyphony lowered below the notes sounding (DLW build ruling 2026-11-05; QL's `POLYPHONY_MAKES_WAY_LAW`).
+    /// Refused in words with no note and none making way, more than [`TORUS_VOICE_NOTES`] or more than
+    /// [`TORUS_VOICE_MADE_WAY`] making way, a note named twice, a mode past 65535, or a frequency or impulse that is not
+    /// finite; whether the bank can take it is the Torus's own law to judge.
     pub fn split(
         handover: u32,
         at: u64,
         notes: &[VoicedNote],
         made_way: &[u64],
     ) -> Result<Vec<TorusVoice>, String> {
-        if notes.is_empty() || notes.len() > TORUS_VOICE_NOTES {
+        if notes.len() > TORUS_VOICE_NOTES || (notes.is_empty() && made_way.is_empty()) {
             return Err(format!(
-                "an act its owner voiced voices 1 to {TORUS_VOICE_NOTES} notes"
+                "an act its owner voiced voices 1 to {TORUS_VOICE_NOTES} notes, or none and makes way for at least one"
             ));
         }
         if made_way.len() > TORUS_VOICE_MADE_WAY {
@@ -668,6 +670,10 @@ impl std::fmt::Debug for LaidSample {
     }
 }
 
+/// The level (linear) a part's sound is heard above for key-to-sound ([`Graph::listen`]): −96 dBFS, the floor a render rings
+/// out to (the host's Export Audio `floor`), below 16-bit audio's least step.
+pub const ONSET_FLOOR: f32 = 1.584_893_2e-5;
+
 /// How a render rings out past its performance's end ([`Graph::render_ringing_out`]): `floor`, linear, the level a frame
 /// must stand above on either side to be heard; `hold`, the frames nothing may stand above it for the tail to have ended
 /// (longer than any silence between an effect's repeats); `most`, the frames past the end it renders at the most.
@@ -774,6 +780,10 @@ pub struct Track {
     /// same frame), and the next edge to fire.
     edges: Vec<(u64, Edge)>,
     next_edge: usize,
+    /// Key-to-sound (O-I #849 and #853, DLW build ruling 2026-11-06): the frame from which the part listens for its first
+    /// sound above [`ONSET_FLOOR`] ([`Graph::listen`]), and the frame it first sounded at since, once it has.
+    listen_from: Option<u64>,
+    heard_at: Option<u64>,
 }
 
 /// The samples `samples` laid on a part named `name` (`midi`: one that plays notes), in their order on the timeline, as
@@ -845,6 +855,8 @@ impl Track {
             group: None,
             edges: Vec::new(),
             next_edge: 0,
+            listen_from: None,
+            heard_at: None,
         }
     }
 
@@ -2006,6 +2018,21 @@ impl Graph {
         }
     }
 
+    /// Key-to-sound (O-I #849 and #853, DLW build ruling 2026-11-06): part `track` listens for its first sound above
+    /// [`ONSET_FLOOR`] from frame `from` on (none: it listens for nothing), forgetting what it last heard. An unknown part is
+    /// ignored. Allocation-free.
+    pub fn listen(&mut self, track: usize, from: Option<u64>) {
+        if let Some(t) = self.tracks.get_mut(track) {
+            t.listen_from = from;
+            t.heard_at = None;
+        }
+    }
+
+    /// The frame part `track` first sounded at since it last listened ([`Graph::listen`]), once it has.
+    pub fn heard_at(&self, track: usize) -> Option<u64> {
+        self.tracks.get(track).and_then(|t| t.heard_at)
+    }
+
     /// Mix ONE frame at `clock.sample` and return it (stereo, L/R).
     ///
     /// This is the render loop body, factored so the realtime output
@@ -2075,6 +2102,13 @@ impl Graph {
             // a take frozen on the part sounds in place of its chain while it lasts (O-I #849 round 22); the chain runs
             // under it, so a tail resumes past it where it would have been
             track.frozen_into(clock.sample, &mut frame[..channels]);
+            // key-to-sound: the part's first sound above the floor since a strike was listened for, as its chain makes it
+            if let Some(from) = track.listen_from {
+                if clock.sample >= from && frame[..channels].iter().any(|v| v.abs() > ONSET_FLOOR) {
+                    track.heard_at = Some(clock.sample);
+                    track.listen_from = None;
+                }
+            }
             // the chain runs whether or not the part is heard (a tail
             // resumes where it would have been)
             if !track.active || (soloing && !track.solo && !soloed_from(&self.groups, track.group))

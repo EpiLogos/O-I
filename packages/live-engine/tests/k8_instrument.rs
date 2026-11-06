@@ -705,7 +705,10 @@ fn an_owners_voiced_act_is_split_and_judged_before_it_travels() {
         )
     };
     let split = live_engine::TorusVoice::split;
-    assert!(split(1, 0, &[], &[]).is_err(), "no note");
+    assert!(
+        split(1, 0, &[], &[]).is_err(),
+        "no note and none making way"
+    );
     let many: Vec<_> = (0..33).map(note).collect();
     assert!(split(1, 0, &many, &[]).is_err(), "past the bank's 32");
     assert!(
@@ -730,6 +733,15 @@ fn an_owners_voiced_act_is_split_and_judged_before_it_travels() {
     assert_eq!(parts[1].note, None);
     assert_eq!(parts[0].made_way(), &ways[..8]);
     assert_eq!(parts[1].made_way(), &ways[8..]);
+    // DLW build ruling 2026-11-05: Polyphony lowered below the notes sounding is an act that voices no note and makes way for
+    // the oldest (QL's `POLYPHONY_MAKES_WAY_LAW`): it travels as its parts of the ids making way, eight to a part.
+    let lowered = split(1, 780, &[], &ways).unwrap();
+    assert_eq!(lowered.len(), 2, "ten making way and no note: two parts");
+    assert!(lowered
+        .iter()
+        .all(|p| p.note.is_none() && p.at == 780 && p.parts == 2));
+    assert_eq!(lowered[0].made_way(), &ways[..8]);
+    assert_eq!(lowered[1].made_way(), &ways[8..]);
     let (_core, mut handle) = engine({
         let mut g = Graph::new(SR, 120.0);
         g.tracks.push(torus_part("Torus"));
@@ -744,6 +756,131 @@ fn an_owners_voiced_act_is_split_and_judged_before_it_travels() {
             voice: stray
         })
         .is_err());
+}
+
+/// DLW build ruling 2026-11-05 (O-I #850): lowering Polyphony below the notes now sounding makes the oldest notes make way in
+/// the owner's bank at once, by an act that voices no note (QL's `POLYPHONY_MAKES_WAY_LAW`), and the engine's K8 bank takes the
+/// same act: each note that made way fades over the 4 ms a note making way for a newer one takes, never cut, and the part rings
+/// sample for sample as the owner's own field does.
+#[test]
+fn polyphony_lowered_makes_the_oldest_make_way_in_the_engines_bank_each_fading_over_four_ms() {
+    let chord = owners_notes(&[(0, 2), (3, 1), (5, 4)]);
+    assert_eq!(chord.len(), 3, "three keys, three notes");
+    let oldest = [chord[0].id, chord[1].id];
+    let mut f = K8Field::new(&k8_fixture::input(SR)).unwrap();
+    assert!(f.voice_notes(&chord, &[]));
+    let mut rung = vec![0f32; 480];
+    assert!(f.render(&mut rung, false));
+    assert!(
+        !f.voice_notes(&[], &[]),
+        "an act that voices no note and makes way for none is refused"
+    );
+    let was = f.bank();
+    assert!(
+        f.voice_notes(&[], &oldest),
+        "an act of the bank that voices no note and makes way for the oldest"
+    );
+    let now = f.bank();
+    let slot =
+        |bank: &[live_engine::k8::K8BankSlot], id: u64| *bank.iter().find(|s| s.id == id).unwrap();
+    let rings = |voices: &[live_engine::k8::K8BankVoice]| {
+        voices
+            .iter()
+            .map(|v| v.state.0.hypot(v.state.1))
+            .sum::<f64>()
+    };
+    let mut began = Vec::new();
+    for id in oldest {
+        let (w, n) = (slot(&was, id), slot(&now, id));
+        assert!(!n.held, "note {id} made way: its slot is free");
+        assert_eq!(
+            n.fading, w.voices,
+            "never cut: what note {id} rang moves whole into its fading voices"
+        );
+        assert_eq!(rings(&n.voices), 0.0);
+        began.push(rings(&n.fading));
+        assert!(began.last().unwrap() > &0.0, "note {id} was ringing");
+    }
+    let newest = chord[2].id;
+    assert_eq!(
+        slot(&now, newest),
+        slot(&was, newest),
+        "the newest rings on, unmoved"
+    );
+    let half = (SR * 2 / 1000) as usize;
+    let mut out = vec![0f32; half];
+    assert!(f.render(&mut out, false));
+    for (id, began) in oldest.iter().zip(&began) {
+        let ringing = rings(&slot(&f.bank(), *id).fading);
+        assert!(
+            ringing > 1e-3 * began && ringing < 0.1 * began,
+            "note {id} is fading at 2 ms: {ringing} of {began}"
+        );
+    }
+    assert!(f.render(&mut out, false));
+    for (id, began) in oldest.iter().zip(&began) {
+        let ringing = rings(&slot(&f.bank(), *id).fading);
+        assert!(
+            ringing <= 1e-3 * began * (1.0 + 1e-9),
+            "note {id} has faded out by 4 ms: {ringing} of {began}"
+        );
+    }
+    // The engine's part takes the owner's act at its sample, inside a block: one part, no note, the two making way.
+    let build = || {
+        let mut g = Graph::new(SR, 120.0);
+        let field = K8Field::new(&k8_fixture::input(SR)).unwrap();
+        g.tracks.push(Track::midi(
+            "Torus",
+            Box::new(K8Instrument::new(field).handed_over(1)),
+        ));
+        g
+    };
+    let (mut core, mut handle) = engine(build()).unwrap();
+    for voice in voiced_parts(1, 300, &chord, &[]) {
+        handle
+            .send(EngineEvent::TorusVoice { track: 0, voice })
+            .unwrap();
+    }
+    let mut made_way = [0u64; live_engine::TORUS_VOICE_PART_MADE_WAY];
+    made_way[..2].copy_from_slice(&oldest);
+    handle
+        .send(EngineEvent::TorusVoice {
+            track: 0,
+            voice: live_engine::TorusVoice {
+                handover: 1,
+                at: 780,
+                part: 0,
+                parts: 1,
+                note: None,
+                made: 2,
+                made_way,
+            },
+        })
+        .unwrap();
+    let mut played = Vec::new();
+    let mut block = vec![0f32; 256 * 2];
+    for _ in 0..8 {
+        core.pull_block(&mut block);
+        played.extend(left(&block));
+    }
+    let mut alone = K8Field::new(&k8_fixture::input(SR)).unwrap();
+    let mut heard = vec![0f32; 2048];
+    assert!(alone.render(&mut heard[..300], false));
+    assert!(alone.voice_notes(&chord, &[]));
+    assert!(alone.render(&mut heard[300..780], false));
+    assert!(alone.voice_notes(&[], &oldest));
+    for chunk in heard[780..].chunks_mut(4096) {
+        assert!(alone.render(chunk, false));
+    }
+    assert_eq!(
+        played, heard,
+        "the engine's bank makes way where the owner's did, sample for sample the owner's own field"
+    );
+    assert_ne!(
+        played,
+        voiced_alone(300, 2048, &chord),
+        "the two that made way are no longer heard as they were"
+    );
 }
 
 #[test]
@@ -910,6 +1047,19 @@ fn an_owners_act_lands_at_the_sample_its_owner_landed_it() {
         "44 frames after the block that took it was pulled"
     );
     assert!(strike.sent_ns <= strike.applied_ns);
+    // DLW build ruling 2026-11-06: its first sound measured where the engine played it, at or after the owner's sample, and
+    // the frame it reached the engine at or before the block that took it.
+    let first = played
+        .iter()
+        .position(|v| v.abs() > live_engine::graph::ONSET_FLOOR)
+        .unwrap() as u64;
+    assert!(first >= 300, "{first}");
+    assert_eq!(
+        strike.sounded_frame,
+        Some(first),
+        "its first sound, as the part played it"
+    );
+    assert!(strike.reached_frame <= 256);
 }
 
 #[test]

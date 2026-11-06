@@ -183,7 +183,7 @@ Each bullet is tagged. "No honest equivalent" means the verdict is ABSENT in eve
 
 ### 4.2 Sounds
 - **No honest equivalent in any of the four modes.**
-- **EVIDENCE:** the object sound device is `[gated]`: it waits on native engine and hosting acceptance (`NS/EXPRESSIONS-FEATURE-MAP.md:55`).
+- **EVIDENCE:** the object sound device is `[gated]`: the feature map gates it on native engine and hosting acceptance (`NS/EXPRESSIONS-FEATURE-MAP.md:55`).
 - **EVIDENCE (since #849):** the native engine it waits on stands: `live-engine` is the one engine every Live part sounds in, hosted by the candidate (`packages/live-engine/src/engine.rs`, `desktop/cradle/src-tauri/src/live_engine_host.rs`). No object sound device is built on it, so the row stays ABSENT.
 - **EVIDENCE:** the live engine's audio devices are Glue, Echo and Reverb, not a sound library (`SHELLBP:40-41`). In audio mode the Sounds category is empty (`LS/BrowserPane.tsx:25`).
 
