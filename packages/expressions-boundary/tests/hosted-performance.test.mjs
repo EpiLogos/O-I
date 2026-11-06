@@ -353,3 +353,39 @@ test('the Scene lays the take by one edit of its performance, and answers where 
     'by the kernel\'s own edit of the inspected revision');
   assert.match(source, /return takeRecordedReply\(laid\?\.performance, request\.record, edited\.dirty === true\);/);
 });
+
+// ── a take lane's Comp, Activator and Solo (O-I #855 round 25; DLW build ruling 2026-11-05: "give the Torus take lanes Audition and Comp,
+// and show their Activator and Solo, as Live's take lanes have them"): each by one edit of the Scene's performance — the kernel's
+// `comp_torus_take` (expression_performance.rs CompTorusTake) and its `layer_set` of the take lane's layer.
+test('a take lane\'s stretch is comped, and its Activator and Solo set, each asked by its own keys only', () => {
+  const comp = {action: 'comp-take', lane_ref: 'take-lane:torus/3', start_sample: '100000', end_sample: '110000'};
+  assert.deepEqual(readFramePerformanceRequest({operation: 'performance', ...comp, ...refs}), {operation: 'performance', ...comp, ...refs});
+  for (const bad of [{lane_ref: 'note-lane:keys'}, {start_sample: 100000}, {end_sample: '-1'}, {end_sample: '100000'}, {extra: 1}])
+    assert.equal(readFramePerformanceRequest({operation: 'performance', ...comp, ...bad, ...refs}), null, JSON.stringify(bad));
+  const lane = {action: 'take-lane', lane_ref: 'take-lane:torus/3', enabled: false, solo: true};
+  assert.deepEqual(readFramePerformanceRequest({operation: 'performance', ...lane, ...refs}), {operation: 'performance', ...lane, ...refs});
+  for (const bad of [{lane_ref: 'note-lane:keys'}, {enabled: 'no'}, {solo: 1}, {extra: 1}])
+    assert.equal(readFramePerformanceRequest({operation: 'performance', ...lane, ...bad, ...refs}), null, JSON.stringify(bad));
+});
+
+test('the Scene comps a stretch and sets a take lane by one edit of its performance each, and answers what then stands', async () => {
+  const {compTakeChange, takeCompedReply, takeLaneChange, takeLaneReply} = await import('../src/performanceBasis.ts');
+  const stretch = {lane_ref: 'take-lane:torus/3', start_sample: '100000', end_sample: '110000'};
+  assert.deepEqual(compTakeChange('scene:one', stretch), {change: 'scene_performance_edit', scene_ref: 'scene:one',
+    operations: [{operation: 'comp_torus_take', comp: stretch}]});
+  const lane = {layer_ref: 'take-lane:torus/3', title: 'Take 3', enabled: true, solo: false};
+  const performance = {bases: [], layers: [{layer_ref: 'note-lane:keys', title: 'Keys', enabled: true, solo: false}, lane], torus_comp: [stretch]};
+  assert.deepEqual(takeCompedReply(performance, stretch, true), {state: 'take-comped', ...stretch, unsaved: true});
+  assert.deepEqual(takeCompedReply({bases: []}, stretch, false), {state: 'refused', reason: 'The Scene did not comp the stretch of take-lane:torus/3.', missing: []});
+  assert.deepEqual(takeLaneChange('scene:one', performance, 'take-lane:torus/3', false, true), {change: 'scene_performance_edit', scene_ref: 'scene:one',
+    operations: [{operation: 'layer_set', index: 1, layer: {...lane, enabled: false, solo: true}}]}, 'the lane\'s own layer, its title kept');
+  assert.deepEqual(takeLaneChange('scene:one', performance, 'take-lane:torus/9', false, true), {reason: 'The Scene has no take lane take-lane:torus/9.'});
+  assert.deepEqual(takeLaneChange('scene:one', performance, 'note-lane:keys', false, true), {reason: 'The Scene has no take lane note-lane:keys.'});
+  const set = {...performance, layers: [performance.layers[0], {...lane, enabled: false, solo: true}]};
+  assert.deepEqual(takeLaneReply(set, 'take-lane:torus/3', false), {state: 'take-lane-set', lane_ref: 'take-lane:torus/3', enabled: false, solo: true, unsaved: false});
+  assert.deepEqual(takeLaneReply({bases: []}, 'take-lane:torus/3', false), {state: 'refused', reason: 'The Scene has no take lane take-lane:torus/3.', missing: []});
+  const source = await readFile(new URL('../src/cradle.ts', import.meta.url), 'utf8');
+  assert.match(source, /changes: \[compTakeChange\(request\.scene_ref, \{lane_ref: request\.lane_ref, start_sample: request\.start_sample, end_sample: request\.end_sample\}\)\]/,
+    'by the kernel\'s own edit of the inspected revision');
+  assert.match(source, /changes: \[setting\]/);
+});

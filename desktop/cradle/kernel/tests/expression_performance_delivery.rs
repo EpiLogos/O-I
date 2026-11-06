@@ -512,6 +512,7 @@ fn actual() -> (
         native_recordings: vec![],
         native_reservations: vec![],
         torus_takes: vec![],
+        torus_comp: vec![],
         torus_kept: Default::default(),
         content_digest: String::new(),
     }
@@ -748,6 +749,7 @@ fn source_prepared() -> (Performance, Value) {
         native_recordings: vec![],
         native_reservations: vec![],
         torus_takes: vec![],
+        torus_comp: vec![],
         torus_kept: Default::default(),
         content_digest: String::new(),
     }
@@ -860,6 +862,7 @@ fn activated_performance(actual: Value) -> (Performance, Value) {
         native_recordings: vec![],
         native_reservations: vec![],
         torus_takes: vec![],
+        torus_comp: vec![],
         torus_kept: Default::default(),
         content_digest: String::new(),
     }

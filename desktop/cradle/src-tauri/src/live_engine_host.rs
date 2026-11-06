@@ -958,6 +958,12 @@ pub(crate) mod host {
         pub refrozen: Vec<(u64, usize, Vec<live_engine::LaidSample>)>,
         /// The registry of the takes frozen on parts ([`FrozenTake`]), the latest last.
         pub frozen: Vec<FrozenTake>,
+        /// Every take played beside a part's Torus while the set plays, and every one let go (O-I #855 round 25,
+        /// [`Opened::take_play`]): the engine's count it was played at, the part, and the take (none: let go), in their order:
+        /// what Export Audio plays there again.
+        pub beside: Vec<(u64, usize, Vec<live_engine::LaidSample>)>,
+        /// The take played beside a part's Torus last, as the reading names it; None while none was, or it was let go.
+        pub take_played: Option<Value>,
     }
 
     /// A take frozen on a part (O-I #849 round 22; DLW build ruling 2026-11-05: "A rendered take is a frozen take", as
@@ -1018,6 +1024,8 @@ pub(crate) mod host {
                 relaid: Vec::new(),
                 refrozen: Vec::new(),
                 frozen: Vec::new(),
+                beside: Vec::new(),
+                take_played: None,
                 racked: Vec::new(),
                 made_again: Vec::new(),
                 room_waiting: None,
@@ -1041,6 +1049,7 @@ pub(crate) mod host {
                 "torus_effects": self.effects_reading(),
                 "latency": self.latency_reading(),
                 "frozen": self.frozen_reading(),
+                "take_played": self.take_played,
             })
         }
 
@@ -1837,6 +1846,7 @@ pub(crate) mod host {
             // part, and each Unfreeze, frozen there again at its frame (they share the engine's count).
             let mut relaid = Vec::new();
             let mut refrozen = Vec::new();
+            let mut beside = Vec::new();
             for &(frame, id) in self.handle.relaid() {
                 if let Some((_, part, samples)) = self.relaid.iter().find(|(laid, ..)| *laid == id)
                 {
@@ -1844,6 +1854,9 @@ pub(crate) mod host {
                 } else if let Some((_, part, takes)) = self.refrozen.iter().find(|(f, ..)| *f == id)
                 {
                     refrozen.push((frame, *part, takes.clone()));
+                } else if let Some((_, part, takes)) = self.beside.iter().find(|(b, ..)| *b == id) {
+                    // each take played beside a part's Torus, and each let go, played there again at its frame
+                    beside.push((frame, *part, takes.clone()));
                 } else {
                     return Err("samples the engine laid again are not kept".into());
                 }
@@ -1870,7 +1883,7 @@ pub(crate) mod host {
                         Ok((frame, track, node))
                     })
                     .collect::<Result<Vec<_>, String>>()?;
-                graph.render_performance_frozen(
+                graph.render_performance_beside(
                     ENGINE_RATE,
                     &performance,
                     toruses,
@@ -1878,10 +1891,11 @@ pub(crate) mod host {
                     remade,
                     relaid,
                     refrozen,
+                    beside,
                 )
             };
             #[cfg(not(feature = "k8"))]
-            let samples = graph.render_performance_frozen(
+            let samples = graph.render_performance_beside(
                 ENGINE_RATE,
                 &performance,
                 Vec::new(),
@@ -1889,6 +1903,7 @@ pub(crate) mod host {
                 remade,
                 relaid,
                 refrozen,
+                beside,
             );
             Ok((
                 wav_f32(&samples, ENGINE_RATE),
@@ -1982,7 +1997,166 @@ pub(crate) mod host {
         })
     }
 
+    /// What names a sealed take's sound sent to be played beside its part's Torus, or let go ([`take_play_of`]).
+    pub const TAKE_PLAY_SCHEMA: &str = "oi.take-play/v1";
+
+    /// A sealed take's sound sent to be played beside its part's Torus while its scene plays (O-I #855 round 25; DLW build
+    /// ruling 2026-11-05: "native candidate: through the engine as a take player on the Torus part, mixed beside the live
+    /// Torus"), or the take played there let go.
+    #[derive(Debug, PartialEq)]
+    pub enum TakePlay {
+        /// Play `pcm` (one channel at `rate`: the take's sound as its owner rendered it, verified against its seal by the
+        /// frame) beside the Torus on the set's track `track`, from its frame `from`, heard at `heard_at_ms` (ms since the
+        /// Unix epoch, the machine's wall clock the page and the host share): where the frame plays it from then.
+        Play {
+            path: PathBuf,
+            track: usize,
+            rate: u32,
+            from: u64,
+            heard_at_ms: f64,
+            name: String,
+            pcm: Vec<f32>,
+        },
+        /// Let the take played beside the Torus on the set's track `track` go, from the engine's next block.
+        Stop { path: PathBuf, track: usize },
+    }
+
+    /// A take's sound as the frame sends it to play (`oi.take-play/v1`), in [`take_render_of`]'s framing: four bytes,
+    /// little-endian, the length of a JSON head `{schema, path, track, rate, from, heard_at_ms, name}` (`from` the take's frame,
+    /// as a decimal string), the head, then the sound as IEEE-754 binary32 little-endian samples, one channel; or the head
+    /// `{schema, path, track, stop: true}` alone, to let it go. Refused in words for anything else.
+    pub fn take_play_of(body: &[u8]) -> Result<TakePlay, String> {
+        const NOT: &str = "A take is played beside its part's Torus from its sound as the frame sends it (oi.take-play/v1): a head, then its samples";
+        let n = body
+            .get(..4)
+            .map(|b| u32::from_le_bytes([b[0], b[1], b[2], b[3]]) as usize)
+            .ok_or(NOT)?;
+        let head: Value = body
+            .get(4..4 + n)
+            .and_then(|h| serde_json::from_slice(h).ok())
+            .ok_or(NOT)?;
+        let pcm = &body[4 + n..];
+        if head["schema"] != TAKE_PLAY_SCHEMA || !pcm.len().is_multiple_of(4) {
+            return Err(NOT.into());
+        }
+        let (Some(path), Some(track)) = (head["path"].as_str(), head["track"].as_u64()) else {
+            return Err(NOT.into());
+        };
+        let (path, track) = (PathBuf::from(path), track as usize);
+        if head["stop"] == Value::Bool(true) {
+            return if pcm.is_empty() {
+                Ok(TakePlay::Stop { path, track })
+            } else {
+                Err(NOT.into())
+            };
+        }
+        let (Some(rate), Some(from), Some(heard_at_ms), Some(name)) = (
+            head["rate"].as_u64().and_then(|r| u32::try_from(r).ok()),
+            head["from"].as_str().and_then(|f| f.parse::<u64>().ok()),
+            head["heard_at_ms"].as_f64(),
+            head["name"].as_str(),
+        ) else {
+            return Err(NOT.into());
+        };
+        if pcm.is_empty() {
+            return Err(NOT.into());
+        }
+        Ok(TakePlay::Play {
+            path,
+            track,
+            rate,
+            from,
+            heard_at_ms,
+            name: name.to_string(),
+            pcm: pcm
+                .as_chunks::<4>()
+                .0
+                .iter()
+                .map(|c| f32::from_le_bytes(*c))
+                .collect(),
+        })
+    }
+
     impl Opened {
+        /// A sealed take played beside its part's Torus, or let go (O-I #855 round 25; DLW build ruling 2026-11-05: "native
+        /// candidate: through the engine as a take player on the Torus part, mixed beside the live Torus", "The take is source
+        /// material and plays through the part's current chain"): its sound, as its owner rendered it, added to what the part's
+        /// Torus makes from the engine frame heard when the frame names it heard ([`frame_heard_in`]) — from its frame `from`,
+        /// on by the time between then and now when that is already past, so it sounds on where the frame has it — through the
+        /// Torus's effects as they stand and the part's own chain, volume, pan and sends ([`EngineHandle::play_beside`]); it
+        /// gives way to the take played there before. Let go, the part's Torus alone from the next block. Answered with the
+        /// take played, as the reading names it. Refused in words for another set than the one open, another rate than the
+        /// engine's, a track that is no MIDI part, a take that has ended by the time it is heard, and a time not near now.
+        pub fn take_play(&mut self, take: &TakePlay, now_ms: f64) -> Result<Value, String> {
+            let (path, track) = match take {
+                TakePlay::Play { path, track, .. } | TakePlay::Stop { path, track } => {
+                    (path, *track)
+                }
+            };
+            if *path != self.path {
+                return Err(format!(
+                    "The engine has another set open ({}): a take plays beside the Torus of the set it lies under",
+                    self.path.display()
+                ));
+            }
+            let part = self.part_of(track)?;
+            let TakePlay::Play {
+                rate,
+                from,
+                heard_at_ms,
+                name,
+                pcm,
+                ..
+            } = take
+            else {
+                let id = self
+                    .handle
+                    .play_beside(part, Vec::new())
+                    .map_err(|e| format!("The engine did not let the take go: {e}"))?;
+                self.beside.push((id, part, Vec::new()));
+                self.take_played = None;
+                return Ok(Value::Null);
+            };
+            if *rate != ENGINE_RATE {
+                return Err(format!(
+                    "The take was rendered at {rate} Hz and the engine runs at {ENGINE_RATE} Hz: it does not resample"
+                ));
+            }
+            let Due::AtFrame(at) =
+                frame_heard_in(&self.handle, heard_in_ms(*heard_at_ms, now_ms)?)?
+            else {
+                return Err("The engine names no frame the take is heard at".into());
+            };
+            let late =
+                ((now_ms - heard_at_ms).max(0.0) / 1000.0 * f64::from(ENGINE_RATE)).round() as u64;
+            let from = from.saturating_add(late);
+            let frames = (pcm.len() as u64)
+                .checked_sub(from)
+                .filter(|f| *f > 0)
+                .ok_or_else(|| {
+                    format!(
+                        "{name} has ended by the time it is heard: nothing of it is left to play"
+                    )
+                })?;
+            let laid = live_engine::LaidSample {
+                at,
+                from,
+                frames,
+                gain: 1.0,
+                channels: 1,
+                pcm: pcm.as_slice().into(),
+            };
+            let id = self
+                .handle
+                .play_beside(part, vec![laid.clone()])
+                .map_err(|e| format!("The engine did not play {name}: {e}"))?;
+            self.beside.push((id, part, vec![laid]));
+            let played =
+                json!({"track": track, "name": name, "at": at, "from": from, "frames": frames});
+            self.take_played = Some(played.clone());
+            Ok(played)
+        }
+
         /// The part the set's track `index` is in the engine (`index` the set owner's: its parts, returns and
         /// groups in order, then the Main track), counted among its parts; refused in words for one that is
         /// not a part.
@@ -2398,6 +2572,9 @@ pub(crate) mod host {
                             // a new engine holds no frozen take: the row launched again freezes it again
                             o.refrozen.clear();
                             o.frozen.clear();
+                            // nor a take played beside the Torus: the frame plays it again as its scene plays on
+                            o.beside.clear();
+                            o.take_played = None;
                             core.ok_or("the engine was not made")?
                         }
                     };
@@ -2639,6 +2816,19 @@ pub(crate) mod host {
         /// Unfreeze on the set's track `track` ([`Opened::unfreeze`]): the registry as it now stands.
         pub fn unfreeze(&self, track: usize) -> Result<Value, String> {
             self.with(|o| o.unfreeze(track))
+        }
+
+        /// A sealed take played beside its part's Torus, or let go ([`Opened::take_play`], O-I #855 round 25), from its sound
+        /// as the frame sends it ([`take_play_of`]), heard when the frame names: the take played. Refused in words when no set
+        /// is open in the engine.
+        pub fn take_play(&self, body: &[u8]) -> Result<Value, String> {
+            let take = take_play_of(body)?;
+            let now_ms = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map_err(|e| e.to_string())?
+                .as_secs_f64()
+                * 1000.0;
+            self.with(|o| o.take_play(&take, now_ms))
         }
 
         /// Export Audio: `choose` asks the person where the file goes (the
@@ -2934,6 +3124,109 @@ pub(crate) mod host {
             for set in [&path, &centred] {
                 let _ = std::fs::remove_dir_all(set.parent().unwrap());
             }
+        }
+
+        /// O-I #855 round 25 (DLW build ruling 2026-11-05: "native candidate: through the engine as a take player on the Torus
+        /// part, mixed beside the live Torus"): a sealed take's sound the frame sends is played beside its part's Torus from the
+        /// engine frame heard when the frame names it heard, from the take's frame it names — on by the time already past when
+        /// the frame names a time gone — through the part's chain; Export Audio plays it there again, so it is what was played;
+        /// let go, the part sounds alone from the next block. What cannot be played is refused in words.
+        #[test]
+        fn a_sealed_take_is_played_beside_its_parts_torus_from_when_the_frame_hears_it_and_exports_as_played(
+        ) {
+            let path = write_set("take-play", ONE_PART_SET);
+            let mut o = Opened::open(&path).unwrap();
+            let mut core = o.core.take().unwrap();
+            let burst: Vec<f32> = (0..9_600)
+                .map(|i| (std::f32::consts::TAU * 220.0 * i as f32 / 48_000.0).sin() * 0.25)
+                .collect();
+            let play = |track: usize, rate: u32, from: &str, heard_at_ms: f64| {
+                take_body(
+                    &json!({"schema": TAKE_PLAY_SCHEMA, "path": path, "track": track, "rate": rate, "from": from,
+                        "heard_at_ms": heard_at_ms, "name": "Take 1"}),
+                    &burst,
+                )
+            };
+            // the machine's wall clock the page and the host share: any time will do, as both name it
+            let now = 1.7e12;
+            let mut played = pull(&mut core, &[256]);
+            let take = take_play_of(&play(0, ENGINE_RATE, "100", now)).unwrap();
+            let reading = o.take_play(&take, now).unwrap();
+            let at = reading["at"].as_u64().unwrap();
+            assert!(
+                at <= 256,
+                "heard now: the frame the engine mixes now ({at})"
+            );
+            assert_eq!(
+                reading,
+                json!({"track": 0, "name": "Take 1", "at": at, "from": 100, "frames": 9_500})
+            );
+            // named heard 20 ms ago: it plays on from where the frame has it now
+            let late = take_play_of(&play(0, ENGINE_RATE, "100", now - 20.0)).unwrap();
+            let reading = o.take_play(&late, now).unwrap();
+            assert_eq!(
+                (reading["from"].as_u64(), reading["frames"].as_u64()),
+                (Some(1_060), Some(8_540))
+            );
+            played.extend(pull(&mut core, &[256; 30]));
+            o.handle.collect();
+            assert_eq!(o.reading()["take_played"]["name"], "Take 1");
+            let stop = take_play_of(&take_body(
+                &json!({"schema": TAKE_PLAY_SCHEMA, "path": path, "track": 0, "stop": true}),
+                &[],
+            ))
+            .unwrap();
+            assert_eq!(
+                stop,
+                TakePlay::Stop {
+                    path: path.clone(),
+                    track: 0
+                }
+            );
+            assert_eq!(o.take_play(&stop, now).unwrap(), Value::Null);
+            assert_eq!(o.reading()["take_played"], Value::Null, "let go");
+            played.extend(pull(&mut core, &[256; 10]));
+            let (bytes, _) = o.render_wav().unwrap();
+            let exported = live_engine::wav::read_wav_f32(&bytes).unwrap().samples;
+            assert!(
+                exported.len() == played.len()
+                    && exported
+                        .iter()
+                        .zip(&played)
+                        .all(|(e, p)| e.to_bits() == p.to_bits()),
+                "Export Audio plays the take where the engine did: what was played"
+            );
+            let beside = std::mem::take(&mut o.beside);
+            let (bytes, _) = o.render_wav().unwrap_or_default();
+            assert!(
+                bytes.is_empty()
+                    || live_engine::wav::read_wav_f32(&bytes).unwrap().samples != played,
+                "without it, Export would not render what was played"
+            );
+            o.beside = beside;
+            let mut words = |body: Vec<u8>| o_words(&mut o, body, now);
+            fn o_words(o: &mut Opened, body: Vec<u8>, now: f64) -> String {
+                take_play_of(&body)
+                    .and_then(|t| o.take_play(&t, now))
+                    .unwrap_err()
+            }
+            assert!(words(play(1, ENGINE_RATE, "0", now)).contains(
+                "'Vox' is an audio part: a take is played beside the instrument of a MIDI part"
+            ));
+            assert!(words(play(0, 44_100, "0", now)).contains("does not resample"));
+            assert_eq!(
+                words(play(0, ENGINE_RATE, "9600", now)),
+                "Take 1 has ended by the time it is heard: nothing of it is left to play"
+            );
+            assert!(words(play(0, ENGINE_RATE, "0", now - 60_000.0)).contains("within"));
+            assert!(words(b"no head".to_vec()).contains("oi.take-play/v1"));
+            let elsewhere = take_body(
+                &json!({"schema": TAKE_PLAY_SCHEMA, "path": "/elsewhere/Other.als", "track": 0, "rate": ENGINE_RATE, "from": "0",
+                    "heard_at_ms": now, "name": "Take 1"}),
+                &burst,
+            );
+            assert!(words(elsewhere).contains("The engine has another set open"));
+            let _ = std::fs::remove_dir_all(path.parent().unwrap());
         }
 
         /// O-I #743 round 20, item 3, the engine gaps: a take's Export Audio rings its effects out past the take's end — the
@@ -5224,6 +5517,34 @@ pub fn live_engine_freeze(
             );
         };
         host(&app).freeze(body)
+    }
+    #[cfg(not(feature = "native_shell"))]
+    {
+        let _ = (app, webview, request);
+        Err(EVERYDAY.into())
+    }
+}
+
+/// A sealed take played beside its part's Torus while its scene plays, or let go (O-I #855 round 25, `LiveEngineHost::take_play`):
+/// the take's sound as the frame sends it, raw (`oi.take-play/v1`: verified by the frame against the take's seal, from the frame
+/// it plays from, heard when the frame names it), added to what the part's Torus makes in the engine, through the Torus's
+/// effects and the part's chain; answered with the take played.
+#[tauri::command]
+pub fn live_engine_take_play(
+    app: tauri::AppHandle,
+    webview: tauri::WebviewWindow,
+    request: tauri::ipc::Request<'_>,
+) -> Result<serde_json::Value, String> {
+    #[cfg(feature = "native_shell")]
+    {
+        admit_candidate_webview(&webview)?;
+        let tauri::ipc::InvokeBody::Raw(body) = request.body() else {
+            return Err(
+                "A take is played beside its part's Torus from its sound sent as bytes (oi.take-play/v1)"
+                    .into(),
+            );
+        };
+        host(&app).take_play(body)
     }
     #[cfg(not(feature = "native_shell"))]
     {

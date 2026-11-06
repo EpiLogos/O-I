@@ -185,9 +185,18 @@ Marked in code where they are made; listed here so they are findable:
   (`devices/glue-compressor.md` binary cross-check; steady state shifts
   with Attack/Release pins, D6). The engine uses a simplified block-peak
   detector (32 frames ≈ 0.67 ms at 48 kHz) plus a one-pole dB-domain
-  follower (attack 2 ms, release 50 ms), chosen so the static gate's
-  measurement windows see the steady-state curve. Refining to the
+  follower, attack 2 ms, chosen so the static gate's measurement windows
+  see the steady-state curve. Its release is measured (O-I #849 round 25):
+  80, 160 and 302 ms at stored Release 0, 2 and 4, Live's renders of the
+  release probe (glue.rs `MEASURED_RELEASE_TC_S`, gated by
+  `m1_gate_the_glue_releases_as_lives_renders_at_each_stored_release`); a
+  stored Release between them releases at the nearer, 1 as 2 and 3, 5 and
+  6 as 4. The steady-state shift the Release makes (−0.12 dB at 2, −0.22
+  at 4 on the probe) is not modelled. Refining the attack to the
   D6-measured ballistics is backlog.
+- **Glue output**: no output clipper, which is Live's PeakClipIn off
+  (the G16_NOCLIP pin); a set storing it on is named in the bridge's
+  words. DryWet is not taken yet, and the set's warning says so.
 - **Echo stereo feed**: the delay line is fed the frame mean; the
   dossiers only measure identical-channel input, so the true stereo feed
   law is unmeasured (echo.md leaves the wider pingpong topology open).

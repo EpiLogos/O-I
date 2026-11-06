@@ -1,6 +1,9 @@
 import type {Journey} from './model';
 import {savedSceneIndices} from './sceneWorkflow';
 import type {KernelConversion} from './kernelDocumentBridge';
+import {sceneTorusComp,sceneTorusTakes,soundingTorusTake} from '../../../../../packages/expressions-boundary/src/scenes';
+import type {SoundingTake} from './native-field/controller';
+import type {StageTorusTake} from './stageCommands';
 import {regionWrap,playDurations,toPlayRegion,sceneLocalRegion,type LoopRegion} from './journeyMarkers';
 import {switchModeOf,type SwitchMode,type TransitionSpec} from './transitions';
 
@@ -40,6 +43,25 @@ export function nativeSceneTransportMaterial(view: KernelConversion | undefined)
       && material.scene.duration >= 1 && material.scene.duration <= 3600
       && Number.isFinite(material.scene.transition) && material.scene.transition >= 0 && material.scene.transition <= 30 ? [id] : [];
   });
+}
+
+/** The take the Scene `sceneId` sounds `seconds` into it (O-I #855 round 25; DLW build ruling 2026-11-05 "Which lane sounds: one per row, the
+ * active lane (Live's main lane / comp); Audition on a take lane solos that lane in place of it"): the Scene's native performance as the
+ * kernel holds it, its Torus takes and its comp read by the boundary (scenes.ts sceneTorusTakes, sceneTorusComp) and the one rule of which
+ * sounds (soundingTorusTake) at the performance's sample `seconds` × its rate, `audition` the lane auditioned (null: none). The take the
+ * kernel sealed, carried whole, with its lane, the lane's title and its frame there; null where none sounds or the Scene is not the kernel's.
+ * Pure. */
+export function sceneTakeAt(view: Pick<KernelConversion, 'bindings' | 'document'> | undefined, sceneId: string, seconds: number, audition: string | null): SoundingTake | null {
+  const ref = view?.bindings[sceneId]?.scene_ref;
+  const performance = ref ? (view!.document.scenes.find(scene => scene.scene_ref === ref) as {performance?: unknown} | undefined)?.performance : undefined;
+  const rate = (performance as {sample_rate?: unknown} | undefined)?.sample_rate;
+  if (!Number.isFinite(seconds) || seconds < 0 || typeof rate !== 'number' || !Number.isSafeInteger(rate) || rate <= 0) return null;
+  const takes = sceneTorusTakes(performance);
+  const sounding = takes.length ? soundingTorusTake(takes, sceneTorusComp(performance), audition, Math.floor(seconds * rate)) : null;
+  if (!sounding) return null;
+  const take = ((performance as {torus_takes: {take?: {take_ref?: unknown}}[]}).torus_takes.find(row => row?.take?.take_ref === sounding.take_ref))?.take;
+  const lane = takes.find(row => row.take_ref === sounding.take_ref);
+  return take && lane ? {take: take as StageTorusTake, lane_ref: sounding.lane_ref, title: lane.title, from_frame: sounding.from_frame} : null;
 }
 
 /** One advancement of the retained app's existing Scene playhead per frame.

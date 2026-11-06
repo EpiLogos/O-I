@@ -317,19 +317,37 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
     return box.width > 0 ? range.start + (clientX - box.left) / box.width * span : null
   }
 
-  // A take lane (Live cap 44–45): its name and its audition; a stretch dragged across it is the pane's choice, and Return copies it
-  // into the main lane through the owner's comp. The stretch chosen and the take that stands are marked; nothing is copied here.
-  const comp = set.actions?.comp, audition = set.actions?.audition
-  const takeLane = (take: WorldTakeLane, colour: CSSProperties) => {
+  // A take lane (Live cap 44–45): its name, its Activator and Solo where its owner keeps them (O-I #855 round 25), and its audition, lit
+  // where the lane sounds in place of the main lane; a stretch dragged across it is the pane's choice, and Return copies it into the main
+  // lane through the owner's comp. The stretch chosen and the take that stands are marked; nothing is copied here.
+  const comp = set.actions?.comp, audition = set.actions?.audition, laneWrite = set.actions?.takeLane
+  const takeLane = (take: WorldTakeLane, colour: CSSProperties, index: number) => {
     const chosen = lanesView.take?.takeId === take.id && lanesView.take.trackId === take.trackId ? lanesView.take : null
     const stretch = chosen ? compRange(take, chosen.from, chosen.to) : null
     const auditionKey = `audition:${take.trackId}:${take.id}`, compKey = `comp:${take.trackId}:${take.id}`
     const press = () => { if (comp && stretch) onPress(compKey, `Comp ${take.name} ${label(stretch.start)} – ${label(stretch.end)}`, () => comp.run(take.trackId, take.id, stretch)) }
+    // The lane's Activator and Solo (Live's take lanes carry both): each pressed writes the pair with itself turned, through the owner.
+    const laneSwitch = (control: 'activator' | 'solo') => {
+      if (take.enabled === undefined || take.solo === undefined) return null
+      const on = control === 'activator' ? take.enabled : take.solo
+      const word = control === 'activator' ? 'Activator' : 'Solo'
+      const key = `take-${control}:${take.trackId}:${take.id}`
+      const next = control === 'activator' ? {enabled: !take.enabled, solo: take.solo} : {enabled: take.enabled, solo: !take.solo}
+      const meaning = control === 'activator' ? 'the lane sounds while it is on' : 'while any lane on is soloed, only the soloed lanes sound'
+      return <button type="button" className={`mx mx-${control}`} data-mix={control} data-state={on ? 'on' : 'off'} aria-label={`${word} of ${take.name}`} aria-pressed={on}
+        disabled={!laneWrite} data-receipt={receiptOn(key)}
+        title={`${word} · ${meaning} · ${on ? 'on' : 'off'}${laneWrite ? ` · press to turn it ${on ? 'off' : 'on'} (${laneWrite.op})` : ' · the owner gives no op that writes a take lane'}`}
+        onClick={() => { if (laneWrite) onPress(key, `${word} of ${take.name} ${on ? 'off' : 'on'}`, () => laneWrite.run(take.trackId, take.id, next)) }}>
+        {control === 'activator' ? String(index + 1) : 'S'}</button>
+    }
+    const heard = take.auditioned === true
     return <div key={`take:${take.id}`} className="tl-lane tl-take" data-take={take.id} data-standing={take.standing ? 'true' : undefined} style={colour}>
       <span className="tl-head tl-take-head" title={`${take.name} · a take${take.standing ? ' · it stands' : ''} · select a stretch and press Return to copy it into the main lane`}>
         <span className="tl-lane-name">{take.name}</span>
-        <button type="button" className="tl-audition" aria-label={`Audition ${take.name}`} disabled={!audition} data-receipt={receiptOn(auditionKey)}
-          title={audition ? `Audition ${take.name} (${audition.op})` : 'Audition: the owner gives no op that plays a take alone'}
+        {laneSwitch('activator')}{laneSwitch('solo')}
+        <button type="button" className={`tl-audition${heard ? ' lit' : ''}`} aria-label={`Audition ${take.name}`} aria-pressed={take.auditioned} disabled={!audition} data-receipt={receiptOn(auditionKey)}
+          title={audition ? heard ? `${take.name} sounds in place of the main lane · press to hear the main lane again (${audition.op})` : `Audition ${take.name} (${audition.op})`
+            : 'Audition: the owner gives no op that plays a take alone'}
           onClick={() => { if (audition) onPress(auditionKey, `Audition ${take.name}`, () => audition.run(take.trackId, take.id)) }}><CutIcon name="play" size={10} /></button>
       </span>
       <div className="tl-body tl-take-body" tabIndex={0} role="group" aria-label={`Take ${take.name}`} data-receipt={receiptOn(compKey)}
@@ -471,7 +489,7 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
             title={readout ?? `${track.name} has got to ${label(track.needle)}`}>{readout && <span className="tl-readout">{readout}</span>}</span>}
         </div>
       </div>,
-      ...under.takes.map(take => takeLane(take, colourOf(track))),
+      ...under.takes.map((take, i) => takeLane(take, colourOf(track), i)),
       ...under.automation.map(lane => {
         const points = automationPoints(lane, clipId => placed.find(p => p.clip.id === clipId)?.start, range.end, clipId => placed.find(p => p.clip.id === clipId)?.end)
         const line = points.map(point => `${percentOf(point.at, range).toFixed(3)},${(100 - Math.min(1, Math.max(0, point.value)) * 100).toFixed(3)}`).join(' ')

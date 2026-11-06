@@ -300,17 +300,27 @@ impl Device for AudioEffectRack {
 ///    (attack when more reduction is needed, release when recovering);
 /// 4. the makeup is added to it, exactly (MU5).
 ///
-/// BALLISTICS ARE BACKLOG: the anchors hold at the measured pins
+/// Its output is never clipped: the engine has no output clipper, which is
+/// Live's Glue with PeakClipIn off, as the corpus's G16_NOCLIP pin renders
+/// it (O-I #849 round 25, DLW build ruling 2026-11-05). A set storing
+/// PeakClipIn on is named in the bridge's words.
+///
+/// The release is measured (O-I #849 round 25): the follower recovers at
+/// the time constant Live's renders measure at the stored Release's nearer
+/// of 0, 2 and 4 (glue.rs `MEASURED_RELEASE_TC_S`, 80, 160 and 302 ms), the
+/// preset's Release 0 unless the set stores another.
+///
+/// BALLISTICS ARE BACKLOG otherwise: the anchors hold at the measured pins
 /// Attack=2 / Release=0 (glue-compressor.md, "BALLISTICS CAVEAT" in
 /// glue.rs) — at other pins the detector's steady state shifts (D6), and
-/// the stored Attack/Release → time mapping is unmeasured. The REAL
+/// the stored Attack → time mapping is unmeasured. The REAL
 /// detector kernel is ballistics-aware and dithered (binary structure
 /// cross-check in glue-compressor.md); this engine follower is a
 /// simplification whose constants are ENGINE choices — fast enough that
 /// the static gate's measurement windows (≥100 ms into a step) see the
 /// steady-state curve with the transient under the 0.5 dB budget. The
 /// detector block (32 frames ≈ 0.67 ms at 48 kHz; the device stores
-/// `ParamBlockSize` 128) and the smoother time constants below are those
+/// `ParamBlockSize` 128) and the attack time constant below are those
 /// engine choices, not Live truth. Replacing them with the D6-measured
 /// ballistics is recorded in the crate README and the blueprint backlog.
 #[derive(Debug, Clone)]
@@ -319,7 +329,8 @@ pub struct GlueDevice {
     pub params: GlueParams,
     /// Engine-side attack time constant, seconds (backlog: D6 ballistics).
     pub attack_tc_s: f64,
-    /// Engine-side release time constant, seconds (backlog: D6 ballistics).
+    /// Release time constant, seconds: the one Live's renders measure at the stored Release (`with_stored_release`), the
+    /// preset's Release 0 (80 ms) unless set.
     pub release_tc_s: f64,
     /// Detector block size in frames (engine choice; see type doc).
     pub block_frames: usize,
@@ -341,7 +352,7 @@ impl GlueDevice {
         GlueDevice {
             params,
             attack_tc_s: 0.002,
-            release_tc_s: 0.050,
+            release_tc_s: glue::measured_release_of(0.0).1,
             block_frames: 32,
             stored_attack: 2.0,
             gain_db: 0.0,
@@ -353,6 +364,13 @@ impl GlueDevice {
     /// At Live's stored Attack `attack` (its menu index), as a set stores it.
     pub fn with_stored_attack(mut self, attack: f64) -> GlueDevice {
         self.stored_attack = attack;
+        self
+    }
+
+    /// At Live's stored Release `release` (its menu index), as a set stores it (O-I #849 round 25): the follower recovers at
+    /// the time constant Live's renders measure at the nearer of Release 0, 2 and 4 (glue.rs `measured_release_of`).
+    pub fn with_stored_release(mut self, release: f64) -> GlueDevice {
+        self.release_tc_s = glue::measured_release_of(release).1;
         self
     }
 
@@ -2901,6 +2919,83 @@ mod tests {
                 a[0]
             );
         }
+    }
+
+    /// O-I #849 round 25 (DLW build ruling 2026-11-05: "take the measured release time constants at stored 0/2/4"): a Glue
+    /// stored at Release 0, 2 or 4 recovers from its gain reduction as one pole at the time constant Live's renders measure there,
+    /// 80, 160 and 302 ms, and one stored between them at the nearer of the three. The recovery is fitted as the m1 gate fits Live's
+    /// renders: each 20 ms window's reduction once the tone steps down under the threshold, ln of it against time.
+    #[test]
+    fn the_glue_recovers_at_the_measured_release_of_its_stored_release() {
+        let p = GlueParams {
+            threshold_db: -12.0,
+            range: 30.0,
+            ratio: 1.0,
+            makeup_db: 0.0,
+        };
+        let w = 2.0 * std::f32::consts::PI * 1000.0 / SR as f32;
+        let loud = db_to_amplitude(-6.0) as f32;
+        let quiet = db_to_amplitude(-36.0) as f32;
+        let tau = |glue: GlueDevice| {
+            let mut g = crate::graph::Graph::new(SR, 120.0);
+            let mut t = Track::new("T", 1);
+            t.source = (0..SR as usize * 4)
+                .map(|i| (if i < SR as usize * 2 { loud } else { quiet }) * (w * i as f32).sin())
+                .collect();
+            t.devices.push(Box::new(glue));
+            g.tracks.push(t);
+            let out = g.render(SR);
+            // each side of the stereo render is the mono part's sound; the reduction is the window's level against the tone's own
+            let reduction = |t0: f64| {
+                let (s, e) = (
+                    (t0 * SR as f64) as usize * 2,
+                    ((t0 + 0.02) * SR as f64) as usize * 2,
+                );
+                -(rms_db(&out[s..e]) - (-36.0 - 3.0103))
+            };
+            let points: Vec<(f64, f64)> = (1..30)
+                .map(|k| 2.0 + k as f64 * 0.02)
+                .map(|t| (t, reduction(t)))
+                .filter(|(_, gr)| *gr > 0.25)
+                .collect();
+            assert!(
+                points.len() >= 4,
+                "the recovery is seen over {} windows",
+                points.len()
+            );
+            let n = points.len() as f64;
+            let (sx, sy) = points
+                .iter()
+                .fold((0.0, 0.0), |(a, b), (t, gr)| (a + t, b + gr.ln()));
+            let (sxx, sxy) = points
+                .iter()
+                .fold((0.0, 0.0), |(a, b), (t, gr)| (a + t * t, b + t * gr.ln()));
+            -1.0 / ((n * sxy - sx * sy) / (n * sxx - sx * sx))
+        };
+        for (stored, measured) in [
+            (0.0, 0.080),
+            (1.0, 0.160),
+            (2.0, 0.160),
+            (3.0, 0.302),
+            (4.0, 0.302),
+            (5.0, 0.302),
+            (6.0, 0.302),
+        ] {
+            let heard = tau(GlueDevice::new(p.clone()).with_stored_release(stored));
+            assert!(
+                (heard / measured - 1.0).abs() < 0.03,
+                "stored Release {stored}: the Glue recovers at {:.1} ms, and Live's renders measure {:.0} ms",
+                heard * 1000.0,
+                measured * 1000.0
+            );
+        }
+        // the preset's Release is 0: a Glue made at its preset recovers at 80 ms
+        let preset = tau(GlueDevice::new(p));
+        assert!(
+            (preset / 0.080 - 1.0).abs() < 0.03,
+            "the preset's Glue recovers at {:.1} ms",
+            preset * 1000.0
+        );
     }
 
     /// O-I #849 round 15: the frame's compressor (the browser's, as the frame runs it) once settled passes a sound under its threshold

@@ -145,3 +145,18 @@ test('a shared Receiver is announced with its reference, never its place; the li
   assert.deepEqual(announceInstrument(personal).parameters.receiver, {on: true, context: 'personal', refusal: null}, 'a reference only with a shared place');
   assert.doesNotMatch(JSON.stringify(announceInstrument(shared)), /at_metres|gains/);
 });
+
+// O-I #855 round 25: the take that sounds under the Scene is announced for the desktop's one engine to play it beside the Torus on its
+// part ("Native candidate: it plays through the engine as a take player on the Torus part, mixed beside the live Torus"; DLW build ruling
+// 2026-11-05): which take, on which lane, from which of its frames and when that is heard, the lane auditioned in place of the main lane
+// ("Audition on a take lane solos that lane in place of it"), with the frame's last refusal in words. What
+// its acts struck and the renders held stay with the frame.
+test('the take sounding under the Scene is announced: which, from which frame and when that is heard, and the last refusal', () => {
+  const sounding = {take_ref: 'sha256:take', lane_ref: 'take-lane:torus/1', title: 'Take 1', from_frame: 1200, frames: 48000, sample_rate: 48000, heard_at_ms: 1.7e12};
+  const playing = controllerReading({take_player: {sounding, audition: 'take-lane:torus/1', struck: {at: 1, source: 'point', refs: ['scene:logic/0']}, refusal: null,
+    held_bytes: 192000, held_bytes_max: 268435456}});
+  assert.deepEqual(announceInstrument(playing).parameters.take, {sounding, audition: 'take-lane:torus/1', refusal: null}, 'with the lane auditioned in place of the main lane');
+  const refused = controllerReading({take_player: {sounding: null, audition: null, struck: null, refusal: 'Take 2 is not played: no', held_bytes: 0, held_bytes_max: 268435456}});
+  assert.deepEqual(announceInstrument(refused).parameters.take, {sounding: null, audition: null, refusal: 'Take 2 is not played: no'});
+  assert.equal('take' in announceInstrument(controllerReading()).parameters, false, 'a reading without one announces none');
+});

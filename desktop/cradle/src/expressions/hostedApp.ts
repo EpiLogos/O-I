@@ -515,6 +515,12 @@ export interface HostedInstrumentParameters {
    * Receiver On or Off, the context the owner hears in (the world's, the listener's own, or a place shared under a reference, with the
    * reference: O-I #856) and its refusal in its words. The place is never announced. Absent from a frame that announces none. */
   readonly receiver?: {readonly on: boolean; readonly context: "world" | "personal" | "shared"; readonly shared?: string; readonly refusal: string | null};
+  /** The take that sounds under the Scene (O-I #855 round 25; expressions-app native-field/controller.ts take_player): which, on which take
+   * lane, from which of its frames and when that is heard (ms since the Unix epoch), its frames at its rate, for the desktop's one engine to
+   * play it beside the Torus on its part; the take lane of the presented Scene auditioned in place of its row's main lane (null: none is);
+   * and the frame's last refusal of a take in words. Absent from a frame that announces none. */
+  readonly take?: {readonly sounding: {readonly take_ref: string; readonly lane_ref: string; readonly title: string; readonly from_frame: number; readonly frames: number
+    readonly sample_rate: number; readonly heard_at_ms: number} | null; readonly audition: string | null; readonly refusal: string | null};
 }
 
 export type HostedTorusTuning = "logic" | "maqam" | "sky";

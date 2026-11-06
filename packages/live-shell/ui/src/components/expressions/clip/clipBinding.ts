@@ -146,6 +146,12 @@ export function expressionsClipValues(reading: NativeEditorReading, colour?: str
     if (display) for (const [key, field] of Object.entries(BP)) values[key] = fieldValue(display, field)
   }
   if (reading.scenes) values.scenes = JSON.stringify(reading.scenes.scenes.map(item => ({id: item.scene_ref, name: item.title})))
+  // The scene's sound beneath its Sequence (manual §20.1 the Sequence tab: "The scene's sound lies beneath it"; O-I #855 round 25): each Torus
+  // take its performance lays under it, as the scenes inventory reads it (expressions-boundary scenes.ts sceneTorusTakes), from its second of
+  // the scene for its seconds, its lane's Activator and Solo, and the stretches the scene's main lane comps from it (sceneTorusComp).
+  if (row?.torus_takes?.length) values.takes = JSON.stringify(row.torus_takes.map(take => ({lane: take.lane_ref, name: take.title, at: take.at_seconds,
+    seconds: take.seconds, on: take.enabled, solo: take.solo,
+    comp: (row.torus_comp ?? []).filter(stretch => stretch.lane_ref === take.lane_ref).map(stretch => [stretch.start_seconds, stretch.end_seconds])})))
   // The scene's view of the field (manual §20.1 The Clip panel, View): the scene's own kept state, which Keep writes with the framing
   // (field-studies-journeys model.ts Scene.view.kept; app.ts keep-view). DLW build ruling 2026-11-05: a view saved before Keep wrote that
   // state is kept when it differs from the scene's default framing (the scene opens on it), and one equal to the default is the default.

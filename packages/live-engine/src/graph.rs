@@ -757,6 +757,11 @@ pub struct Track {
     /// not ended by the last frame mixed: while one sounds, it is what the part's chain makes.
     frozen: Vec<LaidSample>,
     next_frozen: usize,
+    /// The takes played beside its instrument ([`Track::play_beside`], O-I #855 round 25), in order, none overlapping, and the
+    /// first that has not ended by the last frame mixed: while one sounds, it is added to what the instrument makes, before the
+    /// part's rack and its chain.
+    beside: Vec<LaidSample>,
+    next_beside: usize,
     /// The instrument of a MIDI track; `None` on an audio track.
     pub instrument: Option<Box<dyn Instrument>>,
     /// The devices after the instrument on its rack's chain ([`RackDevice`]), before the part's own
@@ -833,6 +838,8 @@ impl Track {
             next_sample: 0,
             frozen: Vec::new(),
             next_frozen: 0,
+            beside: Vec::new(),
+            next_beside: 0,
             instrument: None,
             rack: Vec::new(),
             group: None,
@@ -941,6 +948,43 @@ impl Track {
     /// The takes frozen on the part, in their order on the timeline.
     pub fn frozen(&self) -> &[LaidSample] {
         &self.frozen
+    }
+
+    /// Play takes beside the part's instrument in place of those played there, at `frame` (O-I #855 round 25; DLW build ruling
+    /// 2026-11-05: "through the engine as a take player on the Torus part, mixed beside the live Torus"): each a take's sound as
+    /// its owner rendered it, the source it is ("The take is source material and plays through the part's current chain"), added
+    /// to what the instrument makes over its frames, so it passes the part's rack and its own chain as the instrument's sound
+    /// does, the instrument sounding on under it. Laid by [`samples_laid`] first; those it replaced come back in `beside`, to be
+    /// dropped off the audio thread. Allocation-free.
+    pub fn play_beside(&mut self, beside: &mut Vec<LaidSample>, frame: u64) {
+        std::mem::swap(&mut self.beside, beside);
+        self.next_beside = self.beside.partition_point(|s| s.end() <= frame);
+    }
+
+    /// The takes played beside the part's instrument, in their order on the timeline.
+    pub fn beside(&self) -> &[LaidSample] {
+        &self.beside
+    }
+
+    /// Add the take played beside the instrument that sounds at `frame` (if one does) into `out` (the part's channels).
+    /// Allocation-free, as [`Track::sample_into`] finds its sample.
+    fn beside_into(&mut self, frame: u64, out: &mut [f32]) {
+        if self.beside.is_empty() {
+            return;
+        }
+        if self.next_beside > 0 && self.beside[self.next_beside - 1].end() > frame {
+            self.next_beside = self.beside.partition_point(|s| s.end() <= frame);
+        }
+        while self
+            .beside
+            .get(self.next_beside)
+            .is_some_and(|s| s.end() <= frame)
+        {
+            self.next_beside += 1;
+        }
+        if let Some(s) = self.beside.get(self.next_beside) {
+            s.sound_into(frame, out);
+        }
     }
 
     /// Where a take frozen on the part sounds at `frame`, put it in `out` (the part's channels) in place of what its chain
@@ -1360,6 +1404,17 @@ impl Graph {
         true
     }
 
+    /// Play `beside` beside the instrument of MIDI part `track` in place of the takes played there, at `frame`
+    /// ([`Track::play_beside`], O-I #855 round 25; [`crate::EngineHandle::play_beside`]); those it replaced come back in
+    /// `beside`. Answers whether the part is there and plays notes (otherwise `beside` comes back as it was). Allocation-free.
+    pub fn play_beside(&mut self, track: usize, beside: &mut Vec<LaidSample>, frame: u64) -> bool {
+        let Some(t) = self.tracks.get_mut(track).filter(|t| t.is_midi()) else {
+            return false;
+        };
+        t.play_beside(beside, frame);
+        true
+    }
+
     /// Live's loader rules the engine relies on: no part has more sends
     /// than the set has return tracks, and there are at most
     /// [`MAX_RETURNS`]. ENGINE DECISION (the loader's words name only the
@@ -1537,6 +1592,34 @@ impl Graph {
         relaid: Vec<(u64, usize, Vec<LaidSample>)>,
         frozen: Vec<(u64, usize, Vec<LaidSample>)>,
     ) -> Vec<f32> {
+        self.render_performance_beside(
+            sample_rate,
+            performance,
+            installs,
+            racks,
+            remade,
+            relaid,
+            frozen,
+            Vec::new(),
+        )
+    }
+
+    /// [`Graph::render_performance_frozen`] with the takes played beside parts' instruments while the engine played
+    /// ([`crate::EngineHandle::play_beside`], O-I #855 round 25): each `(frame, track, beside)` is played beside its part's
+    /// instrument at the frame the engine played it there ([`crate::EngineHandle::relaid`]), after that frame's takes frozen and
+    /// before its events, as the audio callback does at a block's start.
+    #[allow(clippy::too_many_arguments)]
+    pub fn render_performance_beside(
+        self,
+        sample_rate: u32,
+        performance: &Performance,
+        installs: Vec<(u64, usize, Box<dyn Instrument>)>,
+        racks: Vec<(u64, usize, Vec<RackDevice>)>,
+        remade: Vec<(u64, Part, usize, Box<dyn Device>)>,
+        relaid: Vec<(u64, usize, Vec<LaidSample>)>,
+        frozen: Vec<(u64, usize, Vec<LaidSample>)>,
+        beside: Vec<(u64, usize, Vec<LaidSample>)>,
+    ) -> Vec<f32> {
         self.rendered(
             sample_rate,
             performance,
@@ -1545,6 +1628,7 @@ impl Graph {
             remade,
             relaid,
             frozen,
+            beside,
             None,
         )
         .samples
@@ -1572,6 +1656,7 @@ impl Graph {
             remade,
             Vec::new(),
             Vec::new(),
+            Vec::new(),
             Some(ring),
         )
     }
@@ -1587,6 +1672,7 @@ impl Graph {
         mut remade: Vec<(u64, Part, usize, Box<dyn Device>)>,
         mut relaid: Vec<(u64, usize, Vec<LaidSample>)>,
         mut frozen: Vec<(u64, usize, Vec<LaidSample>)>,
+        mut beside: Vec<(u64, usize, Vec<LaidSample>)>,
         ring: Option<RingOut>,
     ) -> RungOut {
         self.sample_rate = sample_rate;
@@ -1617,6 +1703,8 @@ impl Graph {
         let mut relaid = relaid.into_iter().peekable();
         frozen.sort_by_key(|(frame, ..)| *frame);
         let mut frozen = frozen.into_iter().peekable();
+        beside.sort_by_key(|(frame, ..)| *frame);
+        let mut beside = beside.into_iter().peekable();
         let frames = performance.frames as usize;
         let mut out = vec![0f32; frames * 2];
         let mut clock = Clock::start(sample_rate, self.tempo_bpm);
@@ -1652,6 +1740,16 @@ impl Graph {
                     .and_then(|t| samples_laid(&t.name, false, takes).ok());
                 if let Some(mut takes) = made {
                     self.freeze(track, &mut takes, i as u64);
+                }
+            }
+            while let Some((_, track, takes)) = beside.next_if(|(f, ..)| *f <= i as u64) {
+                // played in order as the engine plays them (EngineHandle::play_beside); what it refuses, it never played
+                let made = self
+                    .tracks
+                    .get(track)
+                    .and_then(|t| samples_laid(&t.name, false, takes).ok());
+                if let Some(mut takes) = made {
+                    self.play_beside(track, &mut takes, i as u64);
                 }
             }
             while let Some(e) = events.next_if(|e| e.frame <= i as u64) {
@@ -1955,6 +2053,9 @@ impl Graph {
             track.fire_edges(clock);
             if let Some(instrument) = track.instrument.as_mut() {
                 instrument.process(&mut frame[..channels], clock);
+                // a take played beside the instrument (O-I #855 round 25) is source material: it passes the rack and the
+                // chain as the instrument's sound does
+                track.beside_into(clock.sample, &mut frame[..channels]);
                 for d in track.rack.iter_mut() {
                     d.device.process(&mut frame[..channels], clock);
                 }

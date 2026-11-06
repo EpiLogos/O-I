@@ -97,6 +97,7 @@ fn empty() -> Performance {
         native_recordings: vec![],
         native_reservations: vec![],
         torus_takes: vec![],
+        torus_comp: vec![],
         torus_kept: Default::default(),
         content_digest: String::new(),
     }

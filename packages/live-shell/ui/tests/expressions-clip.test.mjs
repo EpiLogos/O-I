@@ -362,6 +362,38 @@ test('the scene\'s Sequence reads the owner\'s symbols: an empty scene says it h
   else assert.match(tab('sequence', withSymbol), /data-lane="[^"]*"|Sun/)
 })
 
+// O-I #855 round 25 (DLW build ruling 2026-11-05: "wire it into the product's sequence editor, or retire it with its replacement named";
+// manual §20.1 the Sequence tab: "The scene's sound lies beneath it"). The scene's Torus takes lie beneath its roll, each on its take lane from
+// its second of the scene for its length, its Activator and Solo as the Scene holds them, and the stretches its main lane comps from it.
+// FIXTURE: the scenes inventory's row as expressions-boundary scenes.ts reads the Scene's performance, over the owner's reading.
+test('the scene\'s Sequence lays its Torus takes beneath its roll: each on its take lane, from its second of the scene, with what its main lane comps', () => {
+  const reading = ownerReading()
+  const take = (n, extra = {}) => ({lane_ref: `take-lane:torus/${n}`, title: `Take ${n}`, enabled: true, solo: false, take_ref: 'sha256:' + String(n).repeat(64),
+    at_sample: '96000', frames: '144000', sample_rate: 48000, transport_rate: 48000, at_seconds: 2, seconds: 3, ...extra})
+  const row = reading.scenes.scenes.find(item => item.scene_ref === reading.basis.scene_ref)
+  assert.ok(row, 'the presented scene\'s row')
+  const laid = {...reading, scene: {...reading.scene, entities: [Model.entity('Sun', 'S')]}, scenes: {...reading.scenes, scenes: reading.scenes.scenes.map(item => item === row
+    ? {...item, torus_takes: [take(3), take(4, {enabled: false, solo: true, at_seconds: 4, seconds: 1})],
+      torus_comp: [{lane_ref: 'take-lane:torus/3', start_sample: '120000', end_sample: '168000', sample_rate: 48000, start_seconds: 2.5, end_seconds: 3.5}]} : item)}}
+  const values = SC.expressionsClipValues(laid)
+  assert.deepEqual(JSON.parse(values.takes), [
+    {lane: 'take-lane:torus/3', name: 'Take 3', at: 2, seconds: 3, on: true, solo: false, comp: [[2.5, 3.5]]},
+    {lane: 'take-lane:torus/4', name: 'Take 4', at: 4, seconds: 1, on: false, solo: true, comp: []}])
+  assert.equal(SC.expressionsClipValues(reading).takes, undefined, 'a scene that lays no take has none beneath its roll')
+  const markup = tab('sequence', values)
+  const sound = markup.slice(markup.indexOf('class="clv-stems"'))
+  assert.match(sound, /<g data-take-lane="take-lane:torus\/3" data-on="true">/)
+  assert.match(sound, /<g data-take-lane="take-lane:torus\/4" data-on="false" data-solo="true">/)
+  assert.match(sound, /<text [^>]*class="clv-axis">Take 3<\/text>/)
+  assert.match(sound, /class="clv-take"[^>]*><title>Take 3 · 2 s – 5 s · on<\/title>/)
+  assert.match(sound, /class="clv-take"[^>]*><title>Take 4 · 4 s – 5 s · off · soloed<\/title>/)
+  assert.match(sound, /class="clv-take-comp"[^>]*><title>2\.5 s – 3\.5 s of the main lane came from Take 3<\/title>/)
+  // the take lies where its seconds of the scene lie on the roll's ruler
+  const end = (values.duration ?? 8) + (values.transition ?? 2)
+  const x = t => 72 + t / end * (800 - 72)
+  assert.match(sound, new RegExp(`<rect x="${x(2).toFixed(1)}" width="${(x(5) - x(2)).toFixed(1)}" y="[^"]+"[^>]*class="clv-take"`))
+})
+
 test('the scene\'s View stands in its Clip panel: Kept or the default framing, with Keep and Restore through the field\'s own acts (manual §20.1)', async () => {
   const reading = ownerReading()
   assert.equal(SC.expressionsClipValues(reading).view, 'default', 'a scene on the default framing reads so, in words')

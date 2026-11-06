@@ -613,6 +613,9 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
  const collisions=new CollisionStrikes();
  const collide=(taken:{contacts:readonly FieldContact[];standing:ContactStanding}|null,strike:(points:SurfacePoint[],amplitude:number)=>Promise<unknown>):string|null=>{
   if(!taken)return null;
+  // While a take sounds under the Scene, no collision strikes back: the take already holds what struck (O-I #855 round 25; DLW build ruling
+  // 2026-11-05). The contacts this frame read back are let go.
+  if(controller.takeSounding())return null;
   const {strikes,said}=collisions.take(performance.now(),controller.reading as any,taken.contacts,taken.standing);
   for(const struck of strikes)strike([struck.point],struck.amplitude).catch(error=>{setText('key',`A collision was not struck: ${String(error instanceof Error?error.message:error)}`);});
   if(said)setText('key',said);

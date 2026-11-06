@@ -23,6 +23,7 @@ fn main() {
             "live_engine_crop",
             "live_engine_freeze",
             "live_engine_unfreeze",
+            "live_engine_take_play",
             "midi_out",
             "expression_walk_observation",
             "terminal_attach",

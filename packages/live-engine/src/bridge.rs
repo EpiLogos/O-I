@@ -297,7 +297,28 @@ fn as_stored(el: &Element) -> Option<(Box<dyn crate::graph::Device>, Vec<String>
                     "Live's GlueCompressor was rendered at its Attack 2 and 5 only, and the set stores {attack}: the engine sounds the curve of Attack {sounds}"
                 ));
             }
-            Box::new(GlueDevice::new(p).with_stored_attack(attack))
+            // Live's renders measure the release at Release 0, 2 and 4 (O-I #849 round 25, glue.rs `measured_release_of`)
+            let release = s.take("Release").unwrap_or(0.0);
+            let (releases_as, _) = glue::measured_release_of(release);
+            if !glue::MEASURED_RELEASE_TC_S
+                .iter()
+                .any(|(at, _)| *at == release)
+            {
+                s.strays.push(format!(
+                    "Live's GlueCompressor was measured releasing at its Release 0, 2 and 4 only, and the set stores {release}: the engine releases as at Release {releases_as}"
+                ));
+            }
+            // the engine's Glue has no output clipper, which is Live's PeakClipIn off, as the G16_NOCLIP pin renders it
+            if s.take("PeakClipIn") == Some(1.0) {
+                s.strays.push(
+                    "Live's GlueCompressor clips its output with PeakClipIn on, and the set stores it on: the engine's Glue has no output clipper, so it sounds as with PeakClipIn off".into(),
+                );
+            }
+            Box::new(
+                GlueDevice::new(p)
+                    .with_stored_attack(attack)
+                    .with_stored_release(release),
+            )
         }
         "Echo" => {
             let mut p = ECHO_FACTORY;
@@ -2254,6 +2275,56 @@ mod tests {
         assert_eq!(
             words,
             ["Live's GlueCompressor was rendered at its Attack 2 and 5 only, and the set stores 4: the engine sounds the curve of Attack 5"]
+        );
+    }
+
+    /// O-I #849 round 25 (DLW build ruling 2026-11-05): a Glue releases at the Release its set stores, at the time constant Live's
+    /// renders measure at the nearer of Release 0, 2 and 4, and one stored at none of them is named, in words. Its output is never
+    /// clipped (Live's PeakClipIn off, as the G16_NOCLIP pin renders it), so a set storing PeakClipIn off sounds as stored, and one
+    /// storing it on is named; DryWet the engine does not take yet, and the set's warning says so.
+    #[test]
+    fn a_glue_releases_at_its_stored_release_and_its_unclipped_output_is_named_where_the_set_clips_it(
+    ) {
+        let root = set_of(&format!(
+            r#"<GlueCompressor Id="1">{}{}{}{}</GlueCompressor><GlueCompressor Id="2">{}{}{}{}{}</GlueCompressor>"#,
+            m("Threshold", "-12"),
+            m("Range", "30"),
+            m("Release", "2"),
+            m("PeakClipIn", "false"),
+            m("Threshold", "-12"),
+            m("Range", "30"),
+            m("Release", "3"),
+            m("PeakClipIn", "true"),
+            m("DryWet", "0.5"),
+        ));
+        let mut r = bridge_set(&root, 48_000).unwrap();
+        let p = GlueParams {
+            threshold_db: -12.0,
+            range: 30.0,
+            ratio: 1.0,
+            makeup_db: 0.0,
+        };
+        let chain = &mut r.graph.tracks[0].devices;
+        assert!(sound_alike(
+            chain[0].as_mut(),
+            &mut GlueDevice::new(p.clone()).with_stored_release(2.0)
+        ));
+        assert!(
+            !sound_alike(chain[0].as_mut(), &mut GlueDevice::new(p.clone())),
+            "and not at the preset's Release 0"
+        );
+        assert!(sound_alike(
+            chain[1].as_mut(),
+            &mut GlueDevice::new(p).with_stored_release(4.0)
+        ));
+        let words: Vec<&str> = r.warnings.iter().map(|w| w.message.as_str()).collect();
+        assert_eq!(
+            words,
+            [
+                "Live's GlueCompressor was measured releasing at its Release 0, 2 and 4 only, and the set stores 3: the engine releases as at Release 4",
+                "Live's GlueCompressor clips its output with PeakClipIn on, and the set stores it on: the engine's Glue has no output clipper, so it sounds as with PeakClipIn off",
+                "the engine's model does not take its DryWet yet: they sound as the model's own",
+            ]
         );
     }
 

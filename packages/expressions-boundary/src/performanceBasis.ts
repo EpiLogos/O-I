@@ -32,7 +32,10 @@ export type PerformanceAction = {action: 'list'} | {action: 'save'; name: string
   | {action: 'sound'; sound_ref: string} | {action: 'keep-sound'; sound: Readonly<Record<string, unknown>>}
   | {action: 'keep-instrument'; name: string; sound_ref: string} | {action: 'keep-rack'; name: string; rack: TorusRackDraft}
   /** A Torus take laid under the Scene (O-I #855): the record live/liveTake.ts torusTakeRecord builds from the take the kernel sealed. */
-  | {action: 'record-take'; record: TorusTakeRecordEdit};
+  | {action: 'record-take'; record: TorusTakeRecordEdit}
+  /** A stretch of a Torus take lane comped into the row's main lane, and a take lane's Activator and Solo (O-I #855 round 25; DLW build
+   * ruling 2026-11-05: "give the Torus take lanes Audition and Comp, and show their Activator and Solo, as Live's take lanes have them"). */
+  | ({action: 'comp-take'} & TakeCompStretch) | {action: 'take-lane'; lane_ref: string; enabled: boolean; solo: boolean};
 export type FramePerformanceRequest = PerformanceAction & {operation: 'performance'; expression_ref: string; scene_ref: string};
 
 /** A frame or host performance request, exact in shape, or null. Every key is closed to its action. */
@@ -69,8 +72,30 @@ export function readFramePerformanceRequest(raw: unknown): FramePerformanceReque
     const rack = closed(raw, [...common, 'name', 'rack']) && keptName(raw.name) ? readRackDraft(raw.rack) : null;
     return rack ? {...base, action: 'keep-rack', name: raw.name as string, rack} : null;
   }
+  if (raw.action === 'comp-take') {
+    if (!closed(raw, [...common, 'lane_ref', 'start_sample', 'end_sample']) || !takeLane(raw.lane_ref)) return null;
+    const start = counter(raw.start_sample), end = counter(raw.end_sample);
+    return start !== null && end !== null && start < end
+      ? {...base, action: 'comp-take', lane_ref: raw.lane_ref, start_sample: raw.start_sample as string, end_sample: raw.end_sample as string} : null;
+  }
+  if (raw.action === 'take-lane') {
+    return closed(raw, [...common, 'lane_ref', 'enabled', 'solo']) && takeLane(raw.lane_ref) && typeof raw.enabled === 'boolean' && typeof raw.solo === 'boolean'
+      ? {...base, action: 'take-lane', lane_ref: raw.lane_ref, enabled: raw.enabled, solo: raw.solo} : null;
+  }
   return null;
 }
+
+/** A Torus take lane's layer ref (kernel expression_performance/torus.rs: a take lane is a layer `take-lane:torus/<n>`). */
+const TORUS_TAKE_LANE = 'take-lane:torus/';
+const takeLane = (value: unknown): value is string => refText(value) && value.startsWith(TORUS_TAKE_LANE) && value.length > TORUS_TAKE_LANE.length;
+/** A sample of the Scene's transport as the kernel's Counter carries it: a decimal u64 in a string, or null. */
+const counter = (value: unknown): bigint | null => {
+  if (typeof value !== 'string' || !/^(0|[1-9][0-9]{0,19})$/.test(value)) return null;
+  const n = BigInt(value);
+  return n <= 0xffffffffffffffffn ? n : null;
+};
+/** A stretch of a take lane the row's main lane sounds (kernel torus.rs TakeComp): its lane and from and to which sample. */
+export interface TakeCompStretch {readonly lane_ref: string; readonly start_sample: string; readonly end_sample: string}
 
 /** A name as the kernel keeps one on the Torus (kernel expression_performance/kept.rs `name`, MAX_NAME): 1 to 120 characters, not blank,
  * no control character. */
@@ -151,7 +176,11 @@ export type PerformanceReply =
   | {readonly state: 'rack-kept'; readonly rack_ref: string; readonly name: string; readonly macros: number; readonly variations: number; readonly unsaved: boolean
     readonly kept: TorusKeptSummary | null}
   /** A Torus take the Scene now lays under it (O-I #855): the take by its ref, its lane and the sample it lies from. */
-  | {readonly state: 'take-recorded'; readonly take_ref: string; readonly lane_ref: string; readonly at_sample: string; readonly unsaved: boolean};
+  | {readonly state: 'take-recorded'; readonly take_ref: string; readonly lane_ref: string; readonly at_sample: string; readonly unsaved: boolean}
+  /** A stretch of a take lane the Scene's main lane now sounds (O-I #855 round 25). */
+  | ({readonly state: 'take-comped'; readonly unsaved: boolean} & TakeCompStretch)
+  /** A take lane's Activator and Solo as the Scene now holds them (O-I #855 round 25). */
+  | {readonly state: 'take-lane-set'; readonly lane_ref: string; readonly enabled: boolean; readonly solo: boolean; readonly unsaved: boolean};
 
 /** The bases the kernel reports for a Scene: each digest and identity exactly as the kernel holds it. A malformed record is not listed. */
 export function summarizePerformanceBases(bases: unknown): PerformanceBasisSummary[] {
@@ -339,6 +368,43 @@ export function takeRecordedReply(performance: unknown, record: TorusTakeRecordE
     .find((item: unknown) => object(item) && object(item.take) && item.take.take_ref === ref) as Record<string, unknown> | undefined;
   return row && typeof ref === 'string' ? {state: 'take-recorded', take_ref: ref, lane_ref: record.lane.layer_ref, at_sample: String(row.at_sample), unsaved}
     : {state: 'refused', reason: `The Scene did not lay ${record.lane.title} under it.`, missing: []};
+}
+
+/** The one edit that comps a stretch of a take lane into the row's main lane (the performance's `comp_torus_take`, kernel
+ * expression_performance.rs CompTorusTake; O-I #855 round 25): the kernel lays it over what was comped before, and refuses in its words a
+ * stretch no take of its lane lies under. */
+export function compTakeChange(sceneRef: string, stretch: TakeCompStretch) {
+  return {change: 'scene_performance_edit', scene_ref: sceneRef,
+    operations: [{operation: 'comp_torus_take', comp: {lane_ref: stretch.lane_ref, start_sample: stretch.start_sample, end_sample: stretch.end_sample}}]};
+}
+/** The stretch as the Scene comps it once the edit is made, or refused in words where it does not. */
+export function takeCompedReply(performance: unknown, stretch: TakeCompStretch, unsaved: boolean): PerformanceReply {
+  const comps = object(performance) && Array.isArray(performance.torus_comp) ? performance.torus_comp : [];
+  const comped = comps.some((row: unknown) => object(row) && row.lane_ref === stretch.lane_ref && String(row.start_sample) === stretch.start_sample
+    && String(row.end_sample) === stretch.end_sample);
+  return comped ? {state: 'take-comped', lane_ref: stretch.lane_ref, start_sample: stretch.start_sample, end_sample: stretch.end_sample, unsaved}
+    : {state: 'refused', reason: `The Scene did not comp the stretch of ${stretch.lane_ref}.`, missing: []};
+}
+/** A take lane of the Scene's performance: its layer and where it stands among the layers, or undefined. */
+function takeLaneLayer(performance: unknown, laneRef: string): {index: number; layer: Record<string, unknown>} | undefined {
+  if (!laneRef.startsWith(TORUS_TAKE_LANE)) return undefined;
+  const layers = object(performance) && Array.isArray(performance.layers) ? performance.layers : [];
+  const index = layers.findIndex((row: unknown) => object(row) && row.layer_ref === laneRef);
+  return index < 0 ? undefined : {index, layer: layers[index] as Record<string, unknown>};
+}
+/** The one edit that sets a take lane's Activator and Solo (the performance's `layer_set` of the lane's own layer, its title kept; the kernel's
+ * layer law then says which lanes sound), or the words that say the Scene has no such take lane. */
+export function takeLaneChange(sceneRef: string, performance: unknown, laneRef: string, enabled: boolean, solo: boolean) {
+  const lane = takeLaneLayer(performance, laneRef);
+  if (!lane) return {reason: `The Scene has no take lane ${laneRef}.`};
+  return {change: 'scene_performance_edit', scene_ref: sceneRef, operations: [{operation: 'layer_set', index: lane.index, layer: {...lane.layer, enabled, solo}}]};
+}
+/** The take lane's Activator and Solo as the Scene holds them once the edit is made, or refused in words where it has no such lane. */
+export function takeLaneReply(performance: unknown, laneRef: string, unsaved: boolean): PerformanceReply {
+  const lane = takeLaneLayer(performance, laneRef);
+  return lane && typeof lane.layer.enabled === 'boolean' && typeof lane.layer.solo === 'boolean'
+    ? {state: 'take-lane-set', lane_ref: laneRef, enabled: lane.layer.enabled, solo: lane.layer.solo, unsaved}
+    : {state: 'refused', reason: `The Scene has no take lane ${laneRef}.`, missing: []};
 }
 
 /** The one edit that keeps a rack in the Scene's performance (the performance's `keep_torus_rack`): the kernel keeps it, or replaces the

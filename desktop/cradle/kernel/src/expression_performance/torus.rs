@@ -27,6 +27,8 @@ pub const MAX_TAKE_ACTS: usize = 16_384;
 pub const MAX_TAKE_FRAMES: u64 = 1 << 24;
 /// The most takes one performance keeps.
 pub const MAX_TAKES: usize = 256;
+/// The most stretches one performance comps from its take lanes.
+pub const MAX_COMPS: usize = 256;
 /// The transport resolution of a performance a take opens.
 pub const TAKE_PPQ: u16 = 960;
 const MAX_KEYS: usize = 64;
@@ -495,6 +497,51 @@ impl TorusTake {
                 == 0;
         if !same {
             return Err("This take was not sealed by this kernel: a Torus take enters the performance only as the kernel sealed it from what its own native owner was sent (native-expression torus_take)".into());
+        }
+        Ok(())
+    }
+}
+
+/// A stretch of a Torus take lane comped into the row's main lane (O-I #855 round 25; DLW build ruling 2026-11-05: "give the
+/// Torus take lanes Audition and Comp ... as Live's take lanes have them"; Live: a range of a take lane chosen and Return pressed
+/// copies it into the main lane, which shows which take each stretch came from): from `start_sample` to `end_sample` of the
+/// performance's transport the main lane sounds the take that lies on the lane `lane_ref` there. A stretch comped later over the
+/// same samples sounds there in place of the one before.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct TakeComp {
+    pub lane_ref: String,
+    pub start_sample: Counter,
+    pub end_sample: Counter,
+}
+
+impl TakeComp {
+    /// Whether the stretch lies whole under a take on its lane, among `takes` on `layers`; refused in words where it does not.
+    pub fn lies_under(
+        &self,
+        takes: &[TorusTakeRecord],
+        layers: &[super::Layer],
+    ) -> Result<(), String> {
+        let (start, end) = (self.start_sample.0, self.end_sample.0);
+        if start >= end {
+            return Err(format!(
+                "A stretch comped from a take lane runs forward: from sample {start} to {end} it does not"
+            ));
+        }
+        let lane = layers
+            .iter()
+            .position(|layer| layer.layer_ref == self.lane_ref)
+            .ok_or_else(|| format!("The performance has no take lane {}", self.lane_ref))?;
+        let under = takes.iter().any(|record| {
+            usize::from(record.layer) == lane
+                && record.at_sample.0 <= start
+                && record.end().is_ok_and(|e| end <= e)
+        });
+        if !under {
+            return Err(format!(
+                "No take on {} lies under the whole stretch from sample {start} to {end}: a stretch is comped from the take it lies over",
+                self.lane_ref
+            ));
         }
         Ok(())
     }
@@ -1683,5 +1730,123 @@ pub(crate) mod tests {
             "{words}"
         );
         assert_eq!(performance(&app).unwrap(), extended);
+    }
+
+    /// O-I #855 round 25 (DLW build ruling 2026-11-05: "give the Torus take lanes Audition and Comp, and show their Activator and
+    /// Solo, as Live's take lanes have them"): a stretch of a take lane is comped into the row's main lane by one edit of the
+    /// Scene's performance, which keeps it, in the order comped, in its digest and read back whole; a stretch that runs backward,
+    /// names no take lane or lies over no take of its lane is refused in words, and nothing changes. A take lane's Activator and
+    /// Solo are its layer's, set by `layer_set`.
+    #[test]
+    fn a_stretch_of_a_take_lane_is_comped_into_the_rows_main_lane_and_kept_in_the_performance() {
+        let client = crate::CentralClient::with("/nonexistent/oi".into(), None, String::new());
+        let mut app = crate::expression::Application::default();
+        let decode = |v: Value| serde_json::from_value::<crate::expression::Request>(v).unwrap();
+        app.apply(&client, decode(json!({"operation":"create","expression_ref":"expression:comp","title":"Comp","actor":"human:test"}))).unwrap();
+        let lane = |n: u8| json!({"layer_ref": format!("take-lane:torus/{n}"), "title": format!("Take {n}"), "enabled": true, "solo": false});
+        let record = |take: &TorusTake, n: u8, at: &str| json!({"operation":"record_torus_take","take":take,"lane":lane(n),"at_sample":at,"micros_per_quarter":500_000});
+        let comp = |n: u8, start: &str, end: &str| json!({"operation":"comp_torus_take","comp":{"lane_ref": format!("take-lane:torus/{n}"),"start_sample":start,"end_sample":end}});
+        let revision = |app: &crate::expression::Application| {
+            app.document("expression:comp").unwrap().revision
+        };
+        let edit = |app: &mut crate::expression::Application, operations: Value| {
+            let revision = revision(app);
+            app.apply(&client, decode(json!({"operation":"edit","expression_ref":"expression:comp","expected_revision":revision,"actor":"human:test",
+                "changes":[{"change":"scene_performance_edit","scene_ref":"expression:comp:scene:main","operations":operations}]})))
+        };
+        let performance = |app: &crate::expression::Application| {
+            app.document("expression:comp").unwrap().scenes[0]
+                .performance
+                .clone()
+                .unwrap()
+        };
+        let (one, two) = (sealed(14400), sealed(24000));
+        edit(
+            &mut app,
+            json!([record(&one, 1, "96000"), record(&two, 2, "96000")]),
+        )
+        .unwrap();
+        let laid = performance(&app);
+        assert!(
+            laid.torus_comp.is_empty(),
+            "nothing is comped until a stretch is"
+        );
+        assert!(
+            !serde_json::to_string(&laid).unwrap().contains("torus_comp"),
+            "bytes with no comp omit it"
+        );
+
+        edit(
+            &mut app,
+            json!([comp(2, "100000", "110000"), comp(1, "104000", "106000")]),
+        )
+        .unwrap();
+        let comped = performance(&app);
+        comped.validate().unwrap();
+        assert_eq!(
+            comped.torus_comp,
+            [
+                TakeComp {
+                    lane_ref: "take-lane:torus/2".into(),
+                    start_sample: Counter(100000),
+                    end_sample: Counter(110000)
+                },
+                TakeComp {
+                    lane_ref: "take-lane:torus/1".into(),
+                    start_sample: Counter(104000),
+                    end_sample: Counter(106000)
+                },
+            ],
+            "kept in the order comped: the later sounds over the earlier"
+        );
+        assert_ne!(
+            comped.content_digest, laid.content_digest,
+            "the comp is in the performance's digest"
+        );
+        let text = serde_json::to_string(&comped).unwrap();
+        assert_eq!(
+            serde_json::from_str::<super::super::Performance>(&text).unwrap(),
+            comped
+        );
+        // kept as the Act keeps a performance, and read back whole
+        use crate::expression_performance_assets::PerformancePartCatalog;
+        let catalog = PerformancePartCatalog::default().appended(&comped).unwrap();
+        let reopened = PerformancePartCatalog::read(catalog.snapshot()).unwrap();
+        assert_eq!(reopened.restore(0).unwrap(), comped);
+        // a comp no take lies under is no performance the kernel keeps
+        let mut tampered = comped.clone();
+        tampered.torus_comp[1].end_sample = Counter(120000);
+        assert!(tampered
+            .validate()
+            .unwrap_err()
+            .contains("No take on take-lane:torus/1 lies under the whole stretch"));
+
+        for (operation, said) in [
+            (comp(2, "110000", "100000"), "runs forward: from sample 110000 to 100000 it does not"),
+            (comp(9, "100000", "101000"), "The performance has no take lane take-lane:torus/9"),
+            (comp(1, "100000", "120000"), "No take on take-lane:torus/1 lies under the whole stretch from sample 100000 to 120000"),
+        ] {
+            let words = edit(&mut app, json!([operation])).unwrap_err();
+            assert!(words.contains(said), "{words}");
+        }
+        assert_eq!(
+            performance(&app),
+            comped,
+            "nothing refused changes the performance"
+        );
+
+        // A take lane's Activator and Solo: its layer's, set as any layer's is.
+        let index = comped
+            .layers
+            .iter()
+            .position(|l| l.layer_ref == "take-lane:torus/1")
+            .unwrap();
+        edit(&mut app, json!([{"operation":"layer_set","index":index,"layer":{"layer_ref":"take-lane:torus/1","title":"Take 1","enabled":false,"solo":true}}])).unwrap();
+        let set = performance(&app);
+        assert_eq!(
+            (set.layers[index].enabled, set.layers[index].solo),
+            (false, true)
+        );
+        assert_eq!(set.torus_comp, comped.torus_comp, "the comp stands");
     }
 }

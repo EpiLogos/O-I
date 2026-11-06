@@ -12,7 +12,7 @@ import {conditionReadingOf} from '../instrumentCondition';
 import {TorusObject,sceneShapesOf,type TorusView} from '../../../src/engine/torusObject';
 import {formBodyRequest,FORM_SAMPLES_CONTRACT,type SamplePreparation} from '../../../src/engine/psg-form-sampler';
 import {isStageSampleCursor,stageJournalLanding,STAGE_JOURNAL_ACTS_MAX,STAGE_JOURNAL_BYTES_MAX,STAGE_EDIT_AHEAD_SECONDS,STAGE_RENDER_FRAMES_MAX,STAGE_RENDER_ACTS_MAX,
- readStageTorusCheckpoint,readStageTorusSound,readStageTorusTake,isStageCheckpointName,type StageTorusTake,readStageSoundMoves,readStageTorusEngine,isStageSoundName,STAGE_TORUS_SOUND_NAME_MAX,type StageTorusEngine,type StageAudioClock,type StagePerformanceJournal,type StageKey,
+ readStageTorusCheckpoint,readStageTorusSound,readStageTorusTake,isStageCheckpointName,stageTakeActsOf,type StageTorusTake,readStageSoundMoves,readStageTorusEngine,isStageSoundName,STAGE_TORUS_SOUND_NAME_MAX,type StageTorusEngine,type StageAudioClock,type StagePerformanceJournal,type StageKey,
  type StageTakeAct,type StageTakeRender,type StageTorusCheckpoint,type StageTorusSound,type StageSoundMove,type StageFormBody} from '../stageCommands';
 import type {FieldScoreBasis,FieldScoreReply} from '../tarotScoreClient';
 export interface NativeRenderer {
@@ -73,6 +73,27 @@ export const PRESENTATION_LEVEL=Object.freeze({min:0,max:4,initial:1,
 const FOLD_BODY_SHEET:SamplePreparation={schema:FORM_SAMPLES_CONTRACT,prepRef:'oi:psg:m3-fold-body',treatment:'sheet-carrier',
  layers:[{layerRef:'form:sheet',restDepthW:0.5}],resolution:12,units:{extentUnits:2,depthUnits:0.1,metresPerUnit:0.25}};
 const TRANSIENT=/owner busy|held before the event|presentation capacity|requires idle admitted owner/;
+/** The most the verified renders of takes hold, across all takes (O-I #855 round 25; DLW build ruling 2026-11-05: "the verified render is held
+ * per take, with a cap of 256 MB held across all takes. A take that would exceed it is refused in words that name the cap. It never silently
+ * drops"). */
+export const TAKE_RENDERS_BYTES_MAX=256*1024*1024;
+/** How far the Scene's sample may stand from where a sounding take has played to before it is a seek, and the take plays again from there:
+ * a quarter second, past the frame-to-frame give of the Scene's clock against the audio device's. A presentation tolerance, not a source value. */
+const TAKE_SEEK_SECONDS=.25;
+const MB=(bytes:number)=>(bytes/1048576).toFixed(2);
+/** A take the Scene's row sounds now (sceneTransport.ts sceneTakeAt; expressions-boundary scenes.ts soundingTorusTake): the take the kernel
+ * sealed (`oi.torus-take/v1`, carried whole), its take lane and the lane's title, and the take's frame at the Scene's sample now. */
+export interface SoundingTake {take:StageTorusTake;lane_ref:string;title:string;from_frame:number}
+/** The sha256 of a take's sound as the kernel names it (kernel torus.rs PCM_ENCODING: IEEE-754 binary32, little-endian, one channel). */
+async function pcmSha256(pcm:Float32Array):Promise<string>{
+ let bytes=new Uint8Array(pcm.buffer,pcm.byteOffset,pcm.byteLength);
+ if(new Uint8Array(new Float32Array([1]).buffer)[3]!==0x3f){
+  bytes=new Uint8Array(pcm.byteLength);const view=new DataView(bytes.buffer);
+  for(let i=0;i<pcm.length;i++)view.setFloat32(i*4,pcm[i],true);
+ }
+ const digest=new Uint8Array(await crypto.subtle.digest('SHA-256',bytes as Uint8Array<ArrayBuffer>));
+ return 'sha256:'+Array.from(digest,byte=>byte.toString(16).padStart(2,'0')).join('');
+}
 /** How often the Torus's session is read while the field follows (O-I #850): a human cadence, never a beat. */
 const TORUS_READ_MS=1000;
 /** Where the Torus is heard from (O-I 856): metres in the scene the owner draws its targets in, and how long a place the owner refused is
@@ -180,6 +201,16 @@ export class NativeFieldController {
  /** The torus's four effects (manual §21.5): their state outlives an instrument's lifetime, as the level's does; their sound stands
   * only while an audio stage does. */
  private effects:EffectsState=initialEffects();private effectsGraph:PresentationEffects|null=null;
+ /** The takes that sound under the Scene (O-I #855 round 25): each verified render held by its take's ref with its bytes, the renders being
+  * made, the refusal of each take by its ref in the lifetime it was refused in (a take refused for want of an open instrument is asked
+  * again when one opens), the take sounding now, the play copy of its sound, what its acts last struck, the take lane the row's transport
+  * auditions in place of its main lane, and the words not yet said. */
+ private takeRenders=new Map<string,{render:StageTakeRender;bytes:number}>();private takeMaking=new Map<string,Promise<void>>();
+ private takeRefused=new Map<string,{why:string;epoch:number}>();private takeRefusal:string|null=null;private takeSaid:string|null=null;
+ private takePlaying:{take_ref:string;lane_ref:string;title:string;source:any;context:AudioContext;started:number;from_frame:number;frames:number;rate:number;
+  heard_at_ms:number|null;acts:{frame:number;act:StageTakeAct}[];next:number}|null=null;
+ private takeBuffer:{take_ref:string;buffer:AudioBuffer}|null=null;
+ private takeStruck:{at:number;source:'point';refs:string[];points?:{theta:number;phi:number}[]}|null=null;private takeAudition:string|null=null;
  private closeOwner(opened:any){
   if(!opened)return Promise.resolve();
   if(opened.closing)return opened.closing as Promise<void>;
@@ -256,6 +287,12 @@ export class NativeFieldController {
   // The Torus in the desktop's one engine (O-I #849): whether it sounds there, what it was handed over by, whether the owner's Torus moved
   // since, the refusal of the last hand-over, and the gain of this frame's own sound of it (0 while the engine sounds it).
   torus_engine:{on:this.engine.on,handed:this.engine.handed,stale:this.engine.stale,refusal:this.engine.refusal,frame_gain:this.gate?.gain.value??null,frame_until:this.engine.on?this.frameUntil:null},
+  // The take that sounds under the Scene (O-I #855 round 25): which, from which of its frames and when that is heard; the lane auditioned
+  // in place of the row's main lane; what its acts last struck (the plate plays it: torusPlay.mjs); the last refusal in words; and the
+  // verified renders held against their cap.
+  take_player:{audition:this.takeAudition,sounding:this.takePlaying?{take_ref:this.takePlaying.take_ref,lane_ref:this.takePlaying.lane_ref,title:this.takePlaying.title,
+    from_frame:this.takePlaying.from_frame,frames:this.takePlaying.frames,sample_rate:this.takePlaying.rate,heard_at_ms:this.takePlaying.heard_at_ms}:null,
+   struck:this.takePlaying?this.takeStruck:null,refusal:this.takeRefusal,held_bytes:this.heldTakeBytes(),held_bytes_max:TAKE_RENDERS_BYTES_MAX},
   presentation_effects:this.effects,
   // Where the Torus is heard from: Receiver On or Off, the owner's context and gains, and its refusal; never the place (O-I 856).
   receiver:this.receiverReading(),
@@ -974,6 +1011,96 @@ export class NativeFieldController {
    return {from_samples_elapsed:kept.taken_at_samples,frames,sample_rate:rate as number,pcm,made_way,ended:ended as StageTorusCheckpoint};
   })();
  }
+ /** The take the Scene's row sounds now, played while the Scene plays forward (O-I #855 round 25; DLW build ruling 2026-11-05: "The sealed take
+  * is rendered offline from checkpoint + acts (renderTake). Its PCM is checked against pcm_sha256; a mismatch is refused in words. It plays
+  * from at_sample while the scene plays forward, and stops on pause, seek or rate change"). `want` is the take with its frame at the Scene's
+  * sample now (null: none sounds there); `transport` whether the Scene plays, at what rate, and the take lane auditioned on it in place of
+  * its row's main lane (DLW build ruling 2026-11-05: "Audition on a take lane solos that lane in place of it"; reported as take_player's
+  * `audition`, null where none is). The take is rendered once through the owner's
+  * second session (renderTake), its PCM checked against the seal's `pcm_sha256` and held under TAKE_RENDERS_BYTES_MAX across all takes; a
+  * take that would take the held past it is refused in words naming the cap, and nothing held is let go for it. Held, it plays from its
+  * frame into the frame's level, so it passes the Torus's effects and the engine gate as the frame's own sound does and the symbols' voices
+  * hear it at their tap; its acts strike the plate at their frames (take_player.struck). It stops when the Scene stops, runs at another rate
+  * or no take sounds, and plays again from the new place after a seek. `laid`, when given, is every take the Expression's scenes lay: the
+  * render of one no scene lays any longer is let go. Answers the words of a refusal not yet said, once; else null. */
+ soundTake(want:SoundingTake|null,transport:{playing:boolean;rate:number;audition?:string|null},laid?:ReadonlySet<string>):string|null{
+  const audition=transport.audition??null;if(audition!==this.takeAudition){this.takeAudition=audition;this.changed();}
+  if(laid)for(const ref of [...this.takeRenders.keys()])if(!laid.has(ref)){this.takeRenders.delete(ref);if(this.takeBuffer?.take_ref===ref)this.takeBuffer=null;}
+  if(!want||!transport.playing||transport.rate!==1){this.stopTake();return this.takeWords();}
+  const ref=want.take.take_ref as string,playing=this.takePlaying;
+  if(playing&&playing.take_ref===ref&&playing.context===this.context){
+   const at=playing.from_frame+Math.round((playing.context.currentTime-playing.started)*playing.rate);
+   if(Math.abs(want.from_frame-at)<=TAKE_SEEK_SECONDS*playing.rate){this.takeActs(at);return this.takeWords();}
+  }
+  this.stopTake();
+  const held=this.takeRenders.get(ref);
+  if(held)this.startTake(want,held.render);
+  else{
+   const refused=this.takeRefused.get(ref);
+   if((!refused||refused.epoch!==this.epoch)&&!this.takeMaking.has(ref))this.takeMaking.set(ref,this.makeTake(want).finally(()=>{this.takeMaking.delete(ref);this.changed();}));
+  }
+  return this.takeWords();
+ }
+ /** Whether a take sounds under the Scene now: while one does, no collision strikes the Torus (the take already holds what struck). */
+ takeSounding():boolean{return this.takePlaying!==null;}
+ /** A take's verified render, by its ref, for the desktop's one engine to play beside the Torus on its part (the `take-sound` stage command). */
+ takeSound(takeRef:string):StageTakeRender{
+  const held=this.takeRenders.get(takeRef);
+  if(!held)throw new Error(`The take ${takeRef} is not held: a take's sound is held once it sounds under its scene, verified against its seal`);
+  return held.render;
+ }
+ private heldTakeBytes(){let bytes=0;for(const held of this.takeRenders.values())bytes+=held.bytes;return bytes;}
+ private takeWords(){const said=this.takeSaid;this.takeSaid=null;return said;}
+ /** Render a take once from its checkpoint and acts, check its PCM against its seal and hold it; or refuse it in words, once. */
+ private async makeTake(want:SoundingTake):Promise<void>{
+  const take=want.take as any,ref=take.take_ref as string,epoch=this.epoch;
+  const refuse=(why:string)=>{const words=`${want.title} is not played: ${why}`;this.takeRefused.set(ref,{why:words,epoch});this.takeRefusal=words;this.takeSaid=words;this.changed();};
+  const frames=/^(0|[1-9][0-9]{0,15})$/.test(take.frames??'')?Number(take.frames):NaN;
+  if(!Number.isSafeInteger(frames)||frames<1)return refuse('the kernel\'s take names no frames');
+  const cap=()=>{const held=this.heldTakeBytes();return held+frames*4>TAKE_RENDERS_BYTES_MAX
+   ?`its sound takes ${MB(frames*4)} MB, and the takes' sounds held come to ${TAKE_RENDERS_BYTES_MAX/1048576} MB at most (${MB(held)} MB are held now). Nothing held is let go for it.`:null;};
+  const over=cap();if(over)return refuse(over);
+  const acts=stageTakeActsOf(take.acts,String(take.from_samples),frames);
+  if(!acts)return refuse('its acts are not ones the Torus\'s owner renders');
+  try{
+   const render=await this.renderTake(take.checkpoint,acts,frames);
+   const digest=await pcmSha256(render.pcm),sealed=take.render?.pcm_sha256;
+   if(digest!==sealed)return refuse(`its sound rendered again from its checkpoint and acts is not the sound the kernel sealed (${digest}, sealed ${String(sealed)})`);
+   const after=cap();if(after)return refuse(after);
+   this.takeRenders.set(ref,{render,bytes:frames*4});this.takeRefused.delete(ref);
+  }catch(error){refuse(error instanceof Error?error.message:String(error));}
+ }
+ /** Play a held take from its frame `want.from_frame` into the frame's level, now. */
+ private startTake(want:SoundingTake,render:StageTakeRender){
+  const context=this.context,level=this.level,ref=want.take.take_ref as string;
+  if(!context||!level||want.from_frame<0||want.from_frame>=render.frames)return;
+  let buffer=this.takeBuffer?.take_ref===ref?this.takeBuffer.buffer:null;
+  if(!buffer){buffer=context.createBuffer(1,render.frames,render.sample_rate);buffer.copyToChannel(render.pcm as Float32Array<ArrayBuffer>,0);this.takeBuffer={take_ref:ref,buffer};}
+  const source=context.createBufferSource();source.buffer=buffer;source.connect(level);
+  const started=context.currentTime;source.start(started,want.from_frame/render.sample_rate);
+  const from=BigInt(render.from_samples_elapsed);
+  const acts=(stageTakeActsOf((want.take as any).acts,render.from_samples_elapsed,render.frames)??[]).map(act=>({frame:Number(BigInt(act.at_samples_elapsed)-from),act}));
+  this.takePlaying={take_ref:ref,lane_ref:want.lane_ref,title:want.title,source,context,started,from_frame:want.from_frame,frames:render.frames,rate:render.sample_rate,
+   heard_at_ms:this.heardAtMs(started),acts,next:0};
+  this.takeRefusal=null;this.takeStruck=null;this.takeActs(want.from_frame);this.changed();
+ }
+ /** The take's acts the Scene has reached by frame `at`: the latest of them that struck is what the plate plays (take_player.struck). */
+ private takeActs(at:number){
+  const playing=this.takePlaying;if(!playing)return;
+  let struck:StageTakeAct|null=null;
+  while(playing.next<playing.acts.length&&playing.acts[playing.next].frame<=at){
+   const act=playing.acts[playing.next++].act;if(act.action==='strike'||act.action==='strike-at'||act.action==='singlet')struck=act;
+  }
+  if(!struck)return;
+  this.takeStruck={at:Date.now(),source:'point',refs:this.voiceRefs(),...(struck.action==='strike-at'?{points:struck.points.map(({theta,phi})=>({theta,phi}))}:{})};
+  this.changed();
+ }
+ private stopTake(){
+  const playing=this.takePlaying;if(!playing)return;
+  this.takePlaying=null;this.takeStruck=null;
+  try{playing.source.stop();}catch{/* a source that never started, or one that ended, has nothing to stop */}
+  playing.source.disconnect();this.changed();
+ }
  /** Wait until the owner's sound has reached `at` (its acknowledged cursor at or past it; O-I 855), so an edit made then lands at the first
   * block the owner renders from there; the edit's answer names that sample. For a determinant or a damping edit: the owner makes those only
   * at its cursor (replace-event, m1-advance and set-damping take no sample), while a Torus setting is sent ahead (torusSetAt). A sample the owner has rendered is refused, as a strike behind
@@ -1296,12 +1423,19 @@ export class NativeFieldController {
   const context=this.context,audio=session.reading?.audio;
   if(!context||!audio||!Number.isFinite(audio.context_origin_seconds)||!Number.isInteger(audio.device_sample_rate)||!/^(0|[1-9][0-9]*)$/.test(audio.native_origin??''))return null;
   const at=audio.context_origin_seconds+Number(s-BigInt(audio.native_origin))/audio.device_sample_rate;
+  const heard_at_ms=this.heardAtMs(at);
+  return Number.isFinite(at)&&heard_at_ms!==null?{context_seconds:at,heard_at_ms}:null;
+ }
+ /** When the context's time `at` is heard, in the machine's wall clock (ms since the Unix epoch): through the context's output timestamp when
+  * it gives one, else its output latency; null without a context. */
+ private heardAtMs(at:number):number|null{
+  const context=this.context;if(!context)return null;
   const stamp=typeof context.getOutputTimestamp==='function'?context.getOutputTimestamp():null;
   const fromNow=stamp&&Number.isFinite(stamp.contextTime)&&Number.isFinite(stamp.performanceTime)&&(stamp.performanceTime as number)>0
    ?(at-(stamp.contextTime as number))*1000-(performance.now()-(stamp.performanceTime as number))
    :(at-context.currentTime+(context.outputLatency||context.baseLatency||0))*1000;
   const heard_at_ms=Date.now()+fromNow;
-  return Number.isFinite(at)&&Number.isFinite(heard_at_ms)&&heard_at_ms>0?{context_seconds:at,heard_at_ms}:null;
+  return Number.isFinite(heard_at_ms)&&heard_at_ms>0?heard_at_ms:null;
  }
  /** Something moved the owner's Torus while the engine sounds it: it is handed over again in the serial owner's next turn (once, however
   * many moved it before that turn). A refusal (a setting still waiting for its sample) stands in the reading, and the move that lands it
@@ -1353,6 +1487,8 @@ export class NativeFieldController {
  inspectTargets(){return this.projection?.inspect()??null;}
  async release(manual=true){
   this.pause('released');
+  // A take sounding stops with the lifetime's sound; its verified render stays held, and plays again when an instrument opens.
+  this.stopTake();
   const epoch=++this.epoch;const session=this.session;this.lastNative=session?.reading??this.lastNative;
   this.session=null;session?.dispose();this.recovery?.();this.recovery=null;
   this.renderer.releaseRetainedField();this.renderer.setNativeDomain(false);this.projection?.dispose();this.projection=null;
@@ -1376,5 +1512,5 @@ export class NativeFieldController {
   try{await closing;}finally{if(this.closing===closing)this.closing=null;}
  }
 
- async dispose(){if(this.dead)return;this.dead=true;await this.release();this.port.dispose();}
+ async dispose(){if(this.dead)return;this.dead=true;await this.release();this.takeRenders.clear();this.takeBuffer=null;this.port.dispose();}
 }

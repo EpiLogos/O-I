@@ -132,6 +132,22 @@ pub fn measured_attack_of(attack: f64) -> f64 {
     }
 }
 
+/// The release time constants (seconds) measured from Live's renders at stored Release 0, 2 and 4 (O-I #849 round 25,
+/// DLW build ruling 2026-11-05; devices/glue-compressor.md "Release time-constants: MEASURED", the G17_REL0, G19_REL2 and
+/// G18_REL4 renders of the release probe at Attack 2): the recovery from a gain reduction is one pole at each.
+pub const MEASURED_RELEASE_TC_S: [(f64, f64); 3] = [(0.0, 0.080), (2.0, 0.160), (4.0, 0.302)];
+
+/// The measured Release a stored Release sounds as, and its time constant (seconds). ENGINE DECISION (Live's renders stand
+/// at Release 0, 2 and 4 only): the nearer of the three, as [`measured_attack_of`] takes the nearer Attack — 1 midway
+/// between 0 and 2 sounds as 2, 3 midway between 2 and 4 sounds as 4, and 5 and 6, past the last render, as 4.
+pub fn measured_release_of(release: f64) -> (f64, f64) {
+    let pin = ((release / 2.0).round() * 2.0).clamp(0.0, 4.0);
+    MEASURED_RELEASE_TC_S
+        .into_iter()
+        .find(|(at, _)| *at == pin)
+        .unwrap_or(MEASURED_RELEASE_TC_S[0])
+}
+
 /// The measured curve a stored Ratio selects (O-I #849 round 17: Live's Ratio is a menu of three curve families, 0, 1
 /// and 2, params.rs) and the Range it was rendered at, whose ceiling it carries. ENGINE DECISION (Live stores only the
 /// three): a stored value between them takes the nearer, within 0 to 2.
