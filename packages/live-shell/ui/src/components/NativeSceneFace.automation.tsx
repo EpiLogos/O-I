@@ -238,7 +238,9 @@ export function AutomationFacePanel({reading, apply, disabled}: SceneFacePanelPr
   const leaderChoices = groups.map(group => group.leader).filter(lane => lane.id !== selected?.id)
   const readout = selected ? targetLabel(scene, selected.target) : null
   const observed = selected ? effectiveReadout(reading, selected.target) : null
-  // Monitor: authored shape, or the live output the owner reports. The trace holds only the readings received (the bar polls while a lane runs).
+  // Monitor: the lane's curve, or what the field plays now. The trace draws only the effective values the frame reports (hostEditor.ts
+  // observation.effectiveValues, read from the engine's telemetry; the bar polls while a lane runs), so it is a reading, never the curve
+  // (DLW build ruling 2026-11-06, O-I #747 round 883).
   const [monitorMode, setMonitorMode] = useState<'authored' | 'live'>('authored')
   const trace = useRef<{target: string | null; values: number[]}>({target: null, values: []})
   const [, redraw] = useState(0)
@@ -385,16 +387,16 @@ export function AutomationFacePanel({reading, apply, disabled}: SceneFacePanelPr
         <section className="native-automation-face-monitor" aria-labelledby="native-automation-monitor-title">
           <header><h4 id="native-automation-monitor-title">Monitor</h4>
             <span role="group" aria-label="Monitor mode">
-              <button type="button" aria-pressed={monitorMode === 'authored'} onClick={() => setMonitorMode('authored')}>Authored shape</button>
-              <button type="button" aria-pressed={monitorMode === 'live'} onClick={() => setMonitorMode('live')}>Live output</button></span></header>
+              <button type="button" aria-pressed={monitorMode === 'authored'} onClick={() => setMonitorMode('authored')}>Lane's curve</button>
+              <button type="button" aria-pressed={monitorMode === 'live'} onClick={() => setMonitorMode('live')}>Field now</button></span></header>
           {monitorMode === 'authored'
-            ? <p>The diagram above shows the authored shape. Choose Live output for what the engine is using now.</p>
+            ? <p>The diagram above is the lane's curve, the shape set in the lane. Choose Field now for what the field plays now, as it reports it.</p>
             : (() => {
               const shapeTrace = monitorTrace(trace.current.values)
               return shapeTrace.last === null
-                ? <p>No live reading yet: the owner has not reported an effective value for this target.</p>
-                : <figure className="native-automation-face-trace"><svg viewBox="0 0 240 48" role="img" aria-label={`Live output of ${readout.label}: ${short(shapeTrace.last)} now, between ${short(shapeTrace.min)} and ${short(shapeTrace.max)} over the last ${trace.current.values.length} readings`} preserveAspectRatio="none"><path d={shapeTrace.path} fill="none" stroke="currentColor" strokeWidth="1.5" vectorEffect="non-scaling-stroke" /></svg>
-                  <figcaption>{short(shapeTrace.min)} – {short(shapeTrace.max)}{readout.unit ? ` ${readout.unit}` : ''} · {trace.current.values.length} readings</figcaption></figure>
+                ? <p>No reading yet: the field has not reported what it plays for this target.</p>
+                : <figure className="native-automation-face-trace"><svg viewBox="0 0 240 48" role="img" aria-label={`What the field plays now for ${readout.label}: ${short(shapeTrace.last)} now, between ${short(shapeTrace.min)} and ${short(shapeTrace.max)} over the last ${trace.current.values.length} readings it reported`} preserveAspectRatio="none"><path d={shapeTrace.path} fill="none" stroke="currentColor" strokeWidth="1.5" vectorEffect="non-scaling-stroke" /></svg>
+                  <figcaption>{short(shapeTrace.min)} – {short(shapeTrace.max)}{readout.unit ? ` ${readout.unit}` : ''} · {trace.current.values.length} readings from the field, not the lane's curve</figcaption></figure>
             })()}
           <dl className="native-automation-face-values">
             <div><dt>Base</dt><dd>{readout.base !== null ? `${short(readout.base)}${readout.unit ? ` ${readout.unit}` : ''}` : 'Not in this Scene'}</dd></div>

@@ -294,6 +294,12 @@ export function projectExpressionsWork(reading: ExpressionsWorkReading): WorldTr
     const start = (offsets.get(clip.columnId) ?? 0) + (clip.span?.start ?? 0);
     return [clip.id, {start, end: (offsets.get(clip.columnId) ?? 0) + (clip.span?.end ?? start)}] as const;
   }));
+  // The playhead (O-I #747 round 883, DLW build ruling 2026-11-06): the playing scene's position, where it lies on the ruler plus the
+  // seconds its owner reports it has played (modeTracks.ts statusOf: scene_elapsed_seconds), held within the scene. No reported progress,
+  // no playhead: nothing is guessed from a clock.
+  const playing = clips.find(clip => clip.status === 'running' && clip.progress && Number.isFinite(clip.progress.elapsed) && clip.id.endsWith(':visual'));
+  const lies = playing ? ruler.get(playing.id) : undefined;
+  if (playing?.progress && lies) set.playhead = lies.start + Math.min(Math.max(0, playing.progress.elapsed), lies.end - lies.start);
   const actions = expressionsActions(reading, clips, placed, ruler);
   if (actions) set.actions = actions;
   return set;
@@ -316,6 +322,18 @@ function expressionsActions(reading: ExpressionsWorkReading, clips: readonly Wor
   if (play && clips.length) actions.launch = {op: play.op, run: clipId => {
     const found = sceneOf.get(clipId);
     return found ? play.run(found.expressionId, found.sceneId) : {ok: false, error: `"${clipId}" is no scene of this Expression.`};
+  }};
+  // XS05, the Main track's row launchers (§20.1 The Main track; §16.6 Rules: "a row launches only what is in it"; O-I #747 round 883):
+  // a row starts its scene on every Expression in it, each through that Expression's own scene launch, in the order they stand; the first
+  // refusal is the row's answer, in the owner's words.
+  if (play && clips.length) actions.launchStop = {op: `${play.op}, for each Expression's scene in the row`, run: async columnId => {
+    const inRow = clips.filter(clip => clip.columnId === columnId && clip.id.endsWith(':visual')).map(clip => sceneOf.get(clip.id)!).filter(Boolean);
+    if (!inRow.length) return {ok: false, error: 'This row holds no scene: a row launches only what is in it.'};
+    for (const scene of inRow) {
+      const reply = await play.run(scene.expressionId, scene.sceneId) as {ok?: boolean; error?: string} | undefined;
+      if (reply && reply.ok === false) return reply;
+    }
+    return {ok: true, note: `The row plays: its scene on ${inRow.length} Expression${inRow.length === 1 ? '' : 's'}.`};
   }};
   if (controls.stopAll) actions.stopAll = controls.stopAll;
   if (controls.playSaved) actions.backToArrangement = controls.playSaved;

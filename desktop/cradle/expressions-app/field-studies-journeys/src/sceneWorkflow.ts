@@ -27,15 +27,18 @@ export function moveScene(j:Journey,sceneId:string,to:number):void{
  if(!Number.isInteger(to)||to<0||to>=j.scenes.length)throw new Error('A scene can only move within this expression.');
  applyTimelineMove(j,scenes=>{const [item]=scenes.splice(from,1);scenes.splice(to,0,item);});
 }
-/** E06b: a shortening move that leaves a scene's entry offset at or past its new duration moves the offset to the scene's last millisecond, the nearest valid start. A valid offset is untouched, and an absent offset stays absent. */
-function clampEntryOffset(s:Scene):void{if(s.entryOffset!==undefined&&s.entryOffset>=s.duration)s.entryOffset=Math.max(0,s.duration-0.001);}
-/** Change a scene's duration and/or transition, under the same bounds validateJourney applies. */
+/** O-I #747 content anchoring (DLW build ruling 2026-11-06): an edge that moves later by `seconds` moves the scene's entry into its own
+ * content as much later, so what plays at each second on the ruler stays where it was. Absent = 0, and 0 removes it. Only a start edge
+ * calls this; an end edge never moves the content. */
+function shiftEntry(s:Scene,seconds:number):void{const at=(s.entryOffset??0)+seconds;if(at===0)delete s.entryOffset;else s.entryOffset=at;}
+/** Change a scene's duration and/or transition, under the same bounds validateJourney applies. The duration is the scene's end edge, so
+ * its entry offset stays where it is, past the new end included (O-I #747, DLW build ruling 2026-11-06: only Slip moves the content). */
 export function retimeScene(j:Journey,sceneId:string,facts:{duration?:number;transition?:number}):void{
  const index=indexOfScene(j,sceneId);
  const inRange=(n:unknown,a:number,b:number)=>typeof n==='number'&&Number.isFinite(n)&&n>=a&&n<=b;
  if(facts.duration!==undefined&&!inRange(facts.duration,SCENE_DURATION_MIN,SCENE_DURATION_MAX))throw new Error(`A scene lasts ${SCENE_DURATION_MIN}–${SCENE_DURATION_MAX} seconds.`);
  if(facts.transition!==undefined&&!inRange(facts.transition,SCENE_TRANSITION_MIN,SCENE_TRANSITION_MAX))throw new Error(`A transition lasts ${SCENE_TRANSITION_MIN}–${SCENE_TRANSITION_MAX} seconds.`);
- applyTimelineMove(j,scenes=>{const s=scenes[index];if(facts.duration!==undefined){s.duration=facts.duration;clampEntryOffset(s);}if(facts.transition!==undefined)s.transition=facts.transition;});
+ applyTimelineMove(j,scenes=>{const s=scenes[index];if(facts.duration!==undefined)s.duration=facts.duration;if(facts.transition!==undefined)s.transition=facts.transition;});
 }
 /** Remove a scene and its saved copy. An expression keeps at least one scene. */
 export function removeScene(j:Journey,sceneId:string):void{
@@ -77,17 +80,43 @@ export function stillScene(name='Still scene'):Scene{
 export function seamRollRange(left:number,right:number):{min:number;max:number}{
  return {min:Math.max(SCENE_DURATION_MIN-left,right-SCENE_DURATION_MAX),max:Math.min(SCENE_DURATION_MAX-left,right-SCENE_DURATION_MIN)};
 }
-/** E06 roll: the seam after Scene `leftId` moves by `seconds` (positive = later). The left lasts +seconds and the next Scene −seconds, so Σ durations is conserved. The roll stops at the limit it reaches: the applied seconds come back, and `clamped` names the limit ('min' earlier, 'max' later). One applyTimelineMove. */
-export function rollSceneSeam(j:Journey,leftId:string,seconds:number):{seconds:number;clamped:'min'|'max'|null}{
+/** How far a seam may move, and why it stops there in plain words. */
+export type CutLimits={min:number;max:number;minWhy:string;maxWhy:string};
+/** What a roll or a slide did: the seconds it moved, the limit it stopped at ('min' earlier, 'max' later) and why, or nulls. */
+export type CutResult={seconds:number;clamped:'min'|'max'|null;why:string|null};
+const sceneLabel=(s:Scene)=>s.name?.trim()||'This scene';
+/** The seam between `left` and `right` moves `seconds` (positive = later): `left` ends as much later, and `right` starts as much later
+ * and enters its own content as much later (O-I #747, DLW build ruling 2026-11-06). Each side stays within the scene timing bounds; the
+ * right's entry stays 0 or more, since a scene has no content before its own start, and within the document's 3600 s. Both limits
+ * contain zero. A later limit is the stop when two coincide, so the words name the content first. */
+function seamLimits(left:Scene,right:Scene):CutLimits{
+ const range=seamRollRange(left.duration,right.duration),entry=right.entryOffset??0;
+ const lasts=`The cut stops here: a scene lasts ${SCENE_DURATION_MIN} to ${SCENE_DURATION_MAX} seconds.`;
+ const fromContent=-entry,toContent=SCENE_DURATION_MAX-entry;
+ return {min:Math.max(range.min,fromContent)||0,max:Math.min(range.max,toContent)||0,
+  minWhy:fromContent>=range.min?`The cut stops here: ${sceneLabel(right)} has no content before its own start.`:lasts,
+  maxWhy:toContent<range.max?`The cut stops here: ${sceneLabel(right)} can start at most ${SCENE_DURATION_MAX} seconds into its own content.`:lasts};
+}
+function cutWithin(limits:CutLimits,seconds:number):CutResult{
+ const clamped=seconds<limits.min?'min':seconds>limits.max?'max':null;
+ return {seconds:Math.min(limits.max,Math.max(limits.min,seconds))||0,clamped,why:clamped==='min'?limits.minWhy:clamped==='max'?limits.maxWhy:null};
+}
+/** The limits of a roll of the seam after Scene `leftId`, for a gesture to preview and to say where it stops. */
+export function rollLimits(j:Journey,leftId:string):CutLimits{
  const i=indexOfScene(j,leftId);
  if(i>=j.scenes.length-1)throw new Error('There is no scene after this one to roll the seam into.');
+ return seamLimits(j.scenes[i],j.scenes[i+1]);
+}
+/** E06 roll: the seam after Scene `leftId` moves by `seconds` (positive = later). The left lasts +seconds and the next Scene −seconds, so
+ * Σ durations is conserved, and the next Scene's entry into its own content moves with its start edge, so every second on the ruler plays
+ * what it played (O-I #747 content anchoring, DLW build ruling 2026-11-06). The roll stops at the limit it reaches (rollLimits): the
+ * applied seconds come back, `clamped` names the limit and `why` says it in plain words. One applyTimelineMove. */
+export function rollSceneSeam(j:Journey,leftId:string,seconds:number):CutResult{
+ const limits=rollLimits(j,leftId),i=indexOfScene(j,leftId);
  if(!Number.isFinite(seconds))throw new Error('Roll the seam by a finite number of seconds.');
- const left=j.scenes[i].duration,right=j.scenes[i+1].duration;
- const range=seamRollRange(left,right);
- const applied=Math.min(range.max,Math.max(range.min,seconds));
- const clamped=seconds<range.min?'min':seconds>range.max?'max':null;
- if(applied!==0)applyTimelineMove(j,scenes=>{scenes[i].duration=left+applied;scenes[i+1].duration=right-applied;clampEntryOffset(scenes[i]);clampEntryOffset(scenes[i+1]);});
- return {seconds:applied,clamped};
+ const left=j.scenes[i].duration,right=j.scenes[i+1].duration,cut=cutWithin(limits,seconds);
+ if(cut.seconds!==0)applyTimelineMove(j,scenes=>{scenes[i].duration=left+cut.seconds;scenes[i+1].duration=right-cut.seconds;shiftEntry(scenes[i+1],cut.seconds);});
+ return cut;
 }
 /** E06 slip: Scene `sceneId` starts `offset` seconds into its own evolution. Its property tracks read local time + offset (propertyTracks.evaluateTracks). The offset is a timeline fact, so no content changes. The gesture keeps it in [0, duration); 0 removes it, since absent = 0. */
 export function slipScene(j:Journey,sceneId:string,offset:number):void{
@@ -98,31 +127,36 @@ export function slipScene(j:Journey,sceneId:string,offset:number):void{
 }
 
 /** O-I #747 trim at the start edge (manual §16.6 "Trim: Drags an edge to change the length"): the scene's start edge moves `seconds` later
- * (negative: earlier). Its length changes by as much the other way, and it enters its own evolution as much later, so what it shows at its
- * end stays where it was in it. Refused, in words, past either end of its content: the entry offset stays 0 or more and, as slip keeps it,
- * inside the scene's new length. One applyTimelineMove. (The end edge is retimeScene's duration.) */
+ * (negative: earlier). Its length changes by as much the other way, and it enters its own evolution as much later, so what it shows stays
+ * where it was in it (content anchoring, DLW build ruling 2026-11-06). Refused, in words, before the start of its content (the entry
+ * stays 0 or more) or past the document's bound (3600 s into it). An entry past the new end is a valid start into the evolution
+ * (model.ts), so a start trim may leave one. One applyTimelineMove. (The end edge is retimeScene's duration.) */
 export function trimSceneStart(j:Journey,sceneId:string,seconds:number):void{
  const index=indexOfScene(j,sceneId),s=j.scenes[index];
  if(!Number.isFinite(seconds))throw new Error('Trim the scene by a finite number of seconds.');
  const duration=s.duration-seconds,offset=(s.entryOffset??0)+seconds;
  if(!(duration>=SCENE_DURATION_MIN&&duration<=SCENE_DURATION_MAX))throw new Error(`A scene lasts ${SCENE_DURATION_MIN}–${SCENE_DURATION_MAX} seconds.`);
  if(offset<0)throw new Error(`A scene cannot start before the start of its own content: trim its start by no more than ${Math.round((s.entryOffset??0)*1000)/1000} seconds earlier.`);
- if(offset>=duration)throw new Error('Trimmed that far, the scene would enter its content past its own end: trim its start by less.');
+ if(offset>SCENE_DURATION_MAX)throw new Error(`${sceneLabel(s)} can start at most ${SCENE_DURATION_MAX} seconds into its own content: trim its start by less.`);
  if(seconds!==0)applyTimelineMove(j,scenes=>{scenes[index].duration=duration;if(offset===0)delete scenes[index].entryOffset;else scenes[index].entryOffset=offset;});
+}
+/** The limits of a slide of Scene `sceneId`: its neighbours' seam limits, as if they met (seamLimits). */
+export function slideLimits(j:Journey,sceneId:string):CutLimits{
+ const i=indexOfScene(j,sceneId);
+ if(i===0||i>=j.scenes.length-1)throw new Error('A scene slides between two scenes: this one has no scene on one side of it.');
+ return seamLimits(j.scenes[i-1],j.scenes[i+1]);
 }
 /** O-I #747 slide (manual §16.6 "Slide: Moves a clip between fixed neighbours"): Scene `sceneId` moves `seconds` later (negative: earlier)
  * between the scenes either side of it. The one before lasts +seconds and the one after −seconds, so its own length and Σ durations are
- * unchanged. Like a roll, the slide stops at the limit it reaches (each neighbour within the scene timing bounds), and reports it. */
-export function slideScene(j:Journey,sceneId:string,seconds:number):{seconds:number;clamped:'min'|'max'|null}{
- const i=indexOfScene(j,sceneId);
- if(i===0||i>=j.scenes.length-1)throw new Error('A scene slides between two scenes: this one has no scene on one side of it.');
+ * unchanged. Its content goes with it; the scene after enters its own content as much later as its start edge moves, so what the
+ * neighbours play stays where it was on the ruler (content anchoring, DLW build ruling 2026-11-06). Like a roll, the slide stops at the
+ * limit it reaches (slideLimits), and reports it in plain words. */
+export function slideScene(j:Journey,sceneId:string,seconds:number):CutResult{
+ const limits=slideLimits(j,sceneId),i=indexOfScene(j,sceneId);
  if(!Number.isFinite(seconds))throw new Error('Slide the scene by a finite number of seconds.');
- const before=j.scenes[i-1].duration,after=j.scenes[i+1].duration;
- const range=seamRollRange(before,after);
- const applied=Math.min(range.max,Math.max(range.min,seconds));
- const clamped=seconds<range.min?'min':seconds>range.max?'max':null;
- if(applied!==0)applyTimelineMove(j,scenes=>{scenes[i-1].duration=before+applied;scenes[i+1].duration=after-applied;clampEntryOffset(scenes[i-1]);clampEntryOffset(scenes[i+1]);});
- return {seconds:applied,clamped};
+ const before=j.scenes[i-1].duration,after=j.scenes[i+1].duration,cut=cutWithin(limits,seconds);
+ if(cut.seconds!==0)applyTimelineMove(j,scenes=>{scenes[i-1].duration=before+cut.seconds;scenes[i+1].duration=after-cut.seconds;shiftEntry(scenes[i+1],cut.seconds);});
+ return cut;
 }
 
 // ---- E07: split a scene at the playhead -------------------------------------
@@ -173,20 +207,21 @@ function rightSequence(sequence:Entity['sequence'],t:number):Entity['sequence']{
  while(k<steps.length-1&&e>=periods[k]){e-=periods[k];k++;}
  return {...clone(sequence),steps:[...clone(steps.slice(k)),...clone(steps.slice(0,k))],phaseOffset:0};
 }
-/** Both halves of a scene cut at t. The left keeps the scene's identity and everything before the cut; the right carries the rest. Named limitation: automation lanes (LFO and ramp) are copied whole to both halves, so the right's lanes restart on its own clock. */
+/** Both halves of a scene cut at t. The left keeps the scene's identity, its entry and everything before the cut; the right carries the rest, from the evolution time at the cut. Named limitation: automation lanes (LFO and ramp) are copied whole to both halves, so the right's lanes restart on its own clock. */
 function splitSceneContent(src:Scene,t:number,newId:string):{left:Scene;right:Scene}{
  const left:Scene=clone(src),right:Scene=clone(src);
- left.duration=t;clampEntryOffset(left);
+ left.duration=t;
  right.id=newId;right.name=`${src.name} / split`.slice(0,160);right.duration=src.duration-t;right.transition=0;delete right.transitionSpec;
- // E06: the tracks are read on the evolution clock, local t + entryOffset. The cut is that evolution time, so the left keeps
- // its evolution [entryOffset, cut) and the right starts its evolution at the cut, with no offset of its own.
+ // E06: the tracks and the sequences are read on the evolution clock, local t + entryOffset (nativeBridge.toRenderConfig). The cut
+ // is that evolution time, so the left keeps its evolution [entryOffset, cut) and the right starts its evolution at the cut, with no
+ // offset of its own (O-I #747: every second plays what it played).
  const cutAt=t+(src.entryOffset??0);delete right.entryOffset;
  if(src.propertyTracks){const cut=splitTracks(src.propertyTracks,cutAt);left.propertyTracks=cut.left.length?cut.left:undefined;right.propertyTracks=cut.right.length?cut.right:undefined;}
  // A recorded take interval is in scene-local time: clip it to the left, shift it to the right.
  const range=src.propertyTakeRange;
  left.propertyTakeRange=range&&range.start<t?{start:range.start,end:Math.min(range.end,t)}:undefined;
  right.propertyTakeRange=range&&range.end>t?{start:Math.max(0,range.start-t),end:range.end-t}:undefined;
- right.entities=src.entities.map(e=>({...clone(e),sequence:rightSequence(e.sequence,t)}));
+ right.entities=src.entities.map(e=>({...clone(e),sequence:rightSequence(e.sequence,cutAt)}));
  return {left,right};
 }
 /**

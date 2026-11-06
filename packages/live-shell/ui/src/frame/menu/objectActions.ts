@@ -134,7 +134,8 @@ function clipMenu(target: Extract<ObjectTarget, {kind: 'clip'}>, set: WorldTrack
   }, undefined, readOnly))
   if (context.view === 'arrangement') {
     items.push(sep('s3'))
-    // Split cuts the clip at the insert marker; Consolidate joins what the clip's track plays over the time selection (each the pane's
+    // Split cuts the clip at the playhead while something plays (§16.6 "Cuts the clip in two at the playhead"; O-I #747 round 883), else at
+    // the insert marker; Consolidate joins what the clip's track plays over the time selection (each the pane's
     // own, handed to the owner); one with no place to act says where to set it, rather than naming an op to build.
     const placed = set.clips.find(clip => clip.id === target.id)?.at
     const marker = context.marker ?? null, span = context.span ?? null
@@ -142,10 +143,12 @@ function clipMenu(target: Extract<ObjectTarget, {kind: 'clip'}>, set: WorldTrack
     // Where the clip lies on the ruler, as the Arrangement lays it: its own `at`, or its row's offset and its span (a scene of an
     // Expression lies by its row: O-I #747).
     const lies = placeClips(set).placed.find(place => place.clip.id === target.id)
-    const inside = marker !== null && lies !== undefined && marker > lies.start && marker < lies.end
+    const playing = set.playhead, cutAt = playing ?? marker
+    const inside = cutAt !== null && lies !== undefined && cutAt > lies.start && cutAt < lies.end
     items.push(split && !inside ? {id: 'split', label: 'Split', shortcut: '⌘E', disabled: true,
-      why: `Set the insert marker inside ${named} on the ruler: Split cuts it there.`}
-      : act('split', 'Split', '⌘E', split, 'clip.split', a, () => press(`split:${target.id}`, `Split ${named}`, () => split!.run(target.id, marker!)), undefined, readOnly))
+      why: playing !== undefined ? `Split cuts ${named} at the playhead while a scene plays, and the playhead is not inside it.`
+        : `Set the insert marker inside ${named} on the ruler: Split cuts it there.`}
+      : act('split', 'Split', '⌘E', split, 'clip.split', a, () => press(`split:${target.id}`, `Split ${named}`, () => split!.run(target.id, cutAt!)), undefined, readOnly))
     const joinRefused = joins?.refuses?.(target.trackId)
     items.push(joins && joinRefused ? {id: 'consolidate', label: 'Consolidate', shortcut: '⌘J', disabled: true, why: joinRefused}
       : joins && !span ? {id: 'consolidate', label: 'Consolidate', shortcut: '⌘J', disabled: true,

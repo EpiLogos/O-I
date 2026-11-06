@@ -138,8 +138,20 @@ test('#747: show-monitor draws the shape set in the lane; monitor-formation is t
   assert.match(remove.note, /⌫/, 'delete-group: ⌫ on the selected lane');
   assert.match(remove.note, /laneDeleteScope/, 'delete-group: names the key\'s rule');
   assert.doesNotMatch(remove.note, /Not built: ⌫/, 'delete-group: ⌫ is built');
+  assert.ok(ledger.history.some(entry => /round 882/.test(entry.stage)), 'the history records this round');
+});
+
+// O-I #747, round 883, DLW build ruling 2026-11-06 (the Monitor's trace): "If it draws a value the frame reports, it is a reading. It stays,
+// labelled as what the field plays now, distinct from the lane's curve." It draws observation.effectiveValues, which the frame reads from
+// the engine's telemetry, so it stays, named Field now, beside the Lane's curve.
+test('#747 r883: the Monitor\'s second trace is a reading of what the field plays now, named apart from the lane\'s curve', () => {
+  const monitor = ledger.rows.find(item => item.action === 'show-monitor');
+  assert.match(monitor.note, /effective values the frame reports/, 'show-monitor: the trace draws what the frame reports');
+  assert.match(monitor.note, /a reading/, 'show-monitor: so it is a reading');
+  assert.match(monitor.note, /named Field now, what the field plays now, and kept apart from the lane's curve/, 'show-monitor: named as the ruling says');
+  assert.doesNotMatch(JSON.stringify(ledger), /Live output/, 'no row still names the trace Live output');
   const last = ledger.history.at(-1);
-  assert.match(last.stage, /round 882/, 'the history records this round');
+  assert.match(last.stage, /round 883/, 'the history records this round');
   assert.deepEqual(last.counts, ledger.counts, 'and its counts are the ledger\'s');
 });
 

@@ -224,7 +224,8 @@ export interface NativeSceneEditRequest {
   intent: NativeSceneEditIntent;
 }
 export type NativeEditorReply =
-  | {ok: true; reading: NativeEditorReading; material?: NativeMaterialEditorResult}
+  /** `note`: the owner's words for a scene cut that stopped short of what was asked (sceneEdits.ts PreparedNativeSceneEdit.note). */
+  | {ok: true; reading: NativeEditorReading; material?: NativeMaterialEditorResult; note?: string}
   | {ok: false; error: string; reading?: NativeEditorReading;
       /** An acknowledged owner result can outlive a refused local adoption. */
       native_outcome?: unknown; retained_copy_ref?: string};

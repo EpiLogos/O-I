@@ -36,7 +36,7 @@ import {seamStates,seamCaption,seamBlendHTML,blendLimit,blendLimitMessage,planEd
 import {entityTargets} from './nativeParameters';
 import {recordRecent,recentJourneys} from './recentWork';
 import {installPanelResize} from './panelResize';
-import {initialiseSceneSaves,sceneSaveState,saveScene,nextSceneFrom,moveScene,retimeScene,removeScene,splitScene,applyTimelineMove,restoreScene,savedSceneIndices,sceneParameterChanges,insertScene,overwriteScene,stillScene,rollSceneSeam,seamRollRange,slipScene} from './sceneWorkflow';
+import {initialiseSceneSaves,sceneSaveState,saveScene,nextSceneFrom,moveScene,retimeScene,removeScene,splitScene,applyTimelineMove,restoreScene,savedSceneIndices,sceneParameterChanges,insertScene,overwriteScene,stillScene,rollSceneSeam,rollLimits,type CutLimits,slipScene} from './sceneWorkflow';
 import {advanceSceneTransport,nativeSceneTransportMaterial,sceneTakeAt,switchHoldsForEnd,switchLanding} from './sceneTransport';
 import {liveWorkspaceHTML} from './liveWorkspace';
 import {defaultWorkspace,validateWorkspace,WORKSPACE_KEY,moveBeltEntry,syncHeldState} from './workspacePreferences';
@@ -132,7 +132,7 @@ let trimClickGuardUntil=0;
 // Lane-5 T6: the seam blend drag in flight. Declared with the trim and roll state, before any startup render can read it.
 let seamBlend:{sceneId:string;startX:number;trackPx:number;layout:TimelineLayout;from:number;limit:number;seconds:number;clamped:'min'|'max'|null;moved:boolean;frame:number}|null=null;
 // E06 roll state: a Shift-drag on a clip's edge moves the seam with the next scene. Declared here, with the trim state, for the same reason.
-let sceneRoll:null|{leftId:string;rightId:string;startX:number;trackPx:number;total:number;left:number;right:number;seconds:number;clamped:'min'|'max'|null;moved:boolean;frame:number}=null;
+let sceneRoll:null|{leftId:string;rightId:string;startX:number;trackPx:number;total:number;left:number;right:number;limits:CutLimits;seconds:number;clamped:'min'|'max'|null;moved:boolean;frame:number}=null;
 /** The Scene ref being dragged; a move addresses the scene by ref, never by the index the clip stood at. */
 let sceneDragId='';
 // E04/E06 body gesture state: one drag on a clip body; Alt+Shift overwrites, Alt slips, plain inserts or slides.
@@ -467,8 +467,8 @@ function trimEdgeHTML(v:Scene){return `<span class="scene-trim-edge" data-scene-
 /** E09: a curve drag previews on the lane through this document, laid over the trim and roll previews on the same clock. */
 function timelineDocument():Journey{const base=seamPreviewDocument(timelineTrimDocument()),c=curveDrag;if(!c?.preview)return base;const preview=c.preview;return {...base,scenes:base.scenes.map(v=>v.id===c.sceneId?{...v,propertyTracks:v.propertyTracks?.map(t=>t.id===c.trackId?{...t,points:preview}:t)}:v)};}
 function timelineTrimDocument():Journey{const t=sceneTrim,r=sceneRoll;
- // E06: a roll previews on the same clock: the left lasts +seconds, the right −seconds.
- if(r?.moved)return {...store.document,scenes:store.document.scenes.map(v=>v.id===r.leftId?{...v,duration:v.duration+r.seconds}:v.id===r.rightId?{...v,duration:v.duration-r.seconds}:v)};
+ // E06: a roll previews on the same clock: the left lasts +seconds, the right −seconds and enters its content as much later (O-I #747).
+ if(r?.moved)return {...store.document,scenes:store.document.scenes.map(v=>v.id===r.leftId?{...v,duration:v.duration+r.seconds}:v.id===r.rightId?{...v,duration:v.duration-r.seconds,entryOffset:(v.entryOffset??0)+r.seconds||undefined}:v)};
  if(!t?.moved)return store.document;return {...store.document,scenes:store.document.scenes.map(v=>v.id===t.sceneId?{...v,duration:t.duration}:v)};}
 function trimLimitToast(limit:'min'|'max'){toast(limit==='min'?`Scene duration stops at ${SCENE_DURATION_MIN} second, the shortest a scene can hold.`:`Scene duration stops at ${SCENE_DURATION_MAX} seconds, one hour, the longest a scene can hold.`);}
 /** Exact entry: select the scene, then focus its Hold · seconds input, the numeric the timeline already commits. */
@@ -813,13 +813,13 @@ function beginSceneRoll(ev:PointerEvent,handle:HTMLElement){
  const trackPx=lane.getBoundingClientRect().width;
  if(!(trackPx>0))return;
  const total=journeyTimelineLayout(scenes,(index,local)=>expressionTiming(store.document,index,local),100).total;
- sceneRoll={leftId,rightId:scenes[i+1].id,startX:ev.clientX,trackPx,total,left:scenes[i].duration,right:scenes[i+1].duration,seconds:0,clamped:null,moved:false,frame:0};
+ sceneRoll={leftId,rightId:scenes[i+1].id,startX:ev.clientX,trackPx,total,left:scenes[i].duration,right:scenes[i+1].duration,limits:rollLimits(store.document,leftId),seconds:0,clamped:null,moved:false,frame:0};
  document.body.classList.add('trimming-scene');
  document.addEventListener('pointermove',moveSceneRoll);document.addEventListener('pointerup',upSceneRoll);document.addEventListener('pointercancel',cancelSceneRoll);
 }
 function moveSceneRoll(ev:PointerEvent){
  const r=sceneRoll;if(!r)return;
- const range=seamRollRange(r.left,r.right);let want=secondsFromDrag(ev.clientX-r.startX,r.trackPx,r.total);
+ const range=r.limits;let want=secondsFromDrag(ev.clientX-r.startX,r.trackPx,r.total);
  // lane-3 E25: the seam snaps to points a roll does not move: every scene start but its own, markers, the loop and the playhead.
  // A roll conserves the journey's length, so no other scene start moves. Alt bypasses; a still pointer never snaps.
  const index=store.document.scenes.findIndex(v=>v.id===r.leftId),bounds=sceneBoundaries(journeyDurations(store.document));
@@ -827,7 +827,8 @@ function moveSceneRoll(ev:PointerEvent){
  if(index>=0&&want!==0&&timelineSnap&&!ev.altKey){const hit=closestSnap(snapPoints(store.document,{boundaries:bounds}),seam+want,r.total/r.trackPx,{exclude:[`scene:${index+1}`]});if(hit){want=hit.time-seam;hitTime=hit.time;}}
  setSnapGuide(hitTime,r.total);
  const seconds=Math.min(range.max,Math.max(range.min,want)),clamped=want<range.min?'min':want>range.max?'max':null;
- if(clamped&&clamped!==r.clamped)toast(`The seam stops at its limit: a scene lasts ${SCENE_DURATION_MIN} to ${SCENE_DURATION_MAX} seconds.`);
+ // O-I #747: the seam stops where a scene would last too little or too long, or where the scene after has no content before its start.
+ if(clamped&&clamped!==r.clamped)toast(clamped==='min'?range.minWhy:range.maxWhy);
  r.clamped=clamped;r.seconds=seconds;r.moved=seconds!==0;
  if(!r.frame)r.frame=requestAnimationFrame(()=>{r.frame=0;renderTimeline();});
 }
@@ -2795,6 +2796,8 @@ const retainedEditor=createRetainedNativeEditor({
   try{
    const result=await nativeWorkspace!.editScenes((working,current)=>handler.edit(request,{working,isCurrent:()=>current()&&isCurrent()&&sceneTransportAlive}));
    if(result.state==='native-acknowledged')throw new NativeSceneEditRefusal(result.error,result.native_outcome);
+   // O-I #747 round 883: a roll or a slide that stopped at a limit says why, on the reply.
+   return result.note?{note:result.note}:undefined;
   }finally{
    sceneEditHeld=null;lastTime=performance.now();
    if(sceneIntentEpoch===intent){const index=store.document.scenes.findIndex(value=>value.id===presented.id);if(index>=0)sceneIndex=index;}

@@ -62,7 +62,12 @@ test('#747 trim: the end edge changes the length; the start edge changes it from
   assert.equal(back.snapshot.journey.scenes[2].duration, 13); assert.equal(back.snapshot.journey.scenes[2].entryOffset, 2);
   assert.throws(() => plan({operation: 'trim', scene_ref: S(4), edge: 'end', seconds: -5.5}), /A scene lasts 1–3600 seconds/);
   assert.throws(() => plan({operation: 'trim', scene_ref: S(2), edge: 'start', seconds: -1}), /before the start of its own content/);
-  assert.throws(() => plan({operation: 'trim', scene_ref: S(2), edge: 'start', seconds: 4}), /past its own end/);
+  // Changed on purpose in round 883 (content anchoring, DLW build ruling 2026-11-06): a start trim past half the scene keeps its content
+  // where it was, so the entry may stand past the new end (a valid start into the evolution, model.ts); the document's bound still refuses.
+  const far = plan({operation: 'trim', scene_ref: S(2), edge: 'start', seconds: 4});
+  assert.deepEqual([far.snapshot.journey.scenes[1].duration, far.snapshot.journey.scenes[1].entryOffset], [4, 4]);
+  assert.throws(() => plan({operation: 'trim', scene_ref: S(2), edge: 'start', seconds: 2}, (() => {
+    const view = seed(); view.journey.scenes[1].entryOffset = 3599; return view })()), /Scene 2 can start at most 3600 seconds into its own content/);
 });
 
 test('#747 roll: the seam after the scene moves; one grows by what the other loses, and the roll stops at the limit it reaches', () => {
@@ -91,7 +96,12 @@ test('#747 slide: the scene moves between fixed neighbours; the one before grows
   assert.deepEqual(lengths(p), [12, 8, 10, 6]);
   assert.equal(sum(p), 36);
   assert.deepEqual(materialOn(p), [S(1), S(3)], 'only its neighbours change');
-  assert.deepEqual(lengths(plan({operation: 'slide', scene_ref: S(2), seconds: -20})), [1, 8, 21, 6], 'it stops where the one before keeps 1 s');
+  // Changed on purpose in round 883: the scene after enters its content as much later as its start edge moves, so a slide earlier stops
+  // where it has no content before its own start; with content there, it stops where the one before keeps 1 s.
+  assert.deepEqual(lengths(plan({operation: 'slide', scene_ref: S(2), seconds: -20})), [10, 8, 12, 6], 'Scene 3 has no content before its start');
+  const far = plan({operation: 'slide', scene_ref: S(2), seconds: -20}, (() => {const view = seed(); view.journey.scenes[2].entryOffset = 20; return view})());
+  assert.deepEqual(lengths(far), [1, 8, 21, 6], 'it stops where the one before keeps 1 s');
+  assert.equal(far.snapshot.journey.scenes[2].entryOffset, 11, 'and Scene 3 enters its content 9 s earlier');
   assert.throws(() => plan({operation: 'slide', scene_ref: S(1), seconds: 1}), /slides between two scenes/);
   assert.throws(() => plan({operation: 'slide', scene_ref: S(4), seconds: 1}), /slides between two scenes/);
 });
@@ -141,4 +151,33 @@ test('#747 each cut is one labelled step in the undo list, and a stale revision 
     await h.edit(request(h, w, intent), {working: w, isCurrent: () => true});
     assert.equal(own.undoLabel(), label, `${intent.operation}: one step, named`);
   }
+});
+
+// Round 883, content anchoring (DLW build ruling 2026-11-06): a roll or a slide that moves a scene's start edge moves its entry into its
+// own content with it, and one that stops at a limit says so in plain words, in the plan and in the owner's result, so the shell can say it.
+test('#747 r883: a roll or a slide moves the entry of the scene after with its start edge, and says where it stopped', () => {
+  const roll = plan({operation: 'roll', scene_ref: S(1), seconds: 2});
+  assert.equal(roll.snapshot.journey.scenes[1].entryOffset, 2, 'Scene 2 starts 2 s later in its own content');
+  assert.equal(roll.note, undefined, 'a cut that went the whole way has nothing to say');
+  const stopped = plan({operation: 'roll', scene_ref: S(1), seconds: -2});
+  assert.deepEqual(lengths(stopped), [10, 8, 12, 6]);
+  assert.equal(stopped.note, 'The cut stops here: Scene 2 has no content before its own start.');
+  assert.equal(plan({operation: 'roll', scene_ref: S(1), seconds: 20}).note, 'The cut stops here: a scene lasts 1 to 3600 seconds.');
+  const slide = plan({operation: 'slide', scene_ref: S(2), seconds: 2});
+  assert.deepEqual([slide.snapshot.journey.scenes[1].entryOffset, slide.snapshot.journey.scenes[2].entryOffset], [undefined, 2]);
+  assert.equal(plan({operation: 'slide', scene_ref: S(2), seconds: -1}).note, 'The cut stops here: Scene 3 has no content before its own start.');
+});
+
+test('#747 r883: the owner\'s result carries the words of a cut that stopped, whether it moved nothing or moved as far as it could', async () => {
+  const {working, handler} = owner(seed());
+  const none = await handler.edit(request(handler, working, {operation: 'roll', scene_ref: S(1), seconds: -2}), {working, isCurrent: () => true});
+  assert.deepEqual([none.state, none.note], ['unchanged', 'The cut stops here: Scene 2 has no content before its own start.']);
+  const view = seed(), own = owner(view);
+  own.working.commit = async submitted => {
+    const document = {...clone(view.document), revision: view.document.revision + 1};
+    own.working.state = {view: {...view, document, journey: clone(submitted.journey)}, pending: false};
+    return document;
+  };
+  const some = await own.handler.edit(request(own.handler, own.working, {operation: 'roll', scene_ref: S(1), seconds: 20}), {working: own.working, isCurrent: () => true});
+  assert.deepEqual([some.state, some.note], ['applied', 'The cut stops here: a scene lasts 1 to 3600 seconds.']);
 });

@@ -61,6 +61,9 @@ export interface PreparedNativeSceneEdit {
   /** A duplicate's native ref is the actual scene_create input produced by
    * prepareCompositionEdit, not a second ref-minting implementation. */
   created_scene_ref: string | null;
+  /** O-I #747 round 883: where a roll or a slide stopped short of what was asked, and why, in plain words (sceneWorkflow CutResult.why).
+   * Absent when the cut went the whole way. */
+  note?: string;
 }
 
 function title(value: string): string {
@@ -115,8 +118,9 @@ export function prepareNativeSceneSnapshot(reading: NativeEditorReading, intent:
 /** One cut of Arrangement view on the working copy (O-I #747): the Journey operation, after the checks every scene edit makes. Each
  * scene whose own material the cut changes, or that leaves, needs its authored material and must not be locked; a move that only changes
  * where scenes stand changes no scene. A split's new scene is copied whole from its source, so it needs the whole native Scene, as a
- * duplicate does. Returns the scenes affected (the new one included) and the scene created. */
-function cutScenes(view: KernelConversion, working: Journey, journey: Journey, intent: NativeSceneCutIntent): {affected: Scene[]; created: Scene | null} {
+ * duplicate does. Returns the scenes affected (the new one included), the scene created, and the words of a roll or a slide that stopped
+ * at a limit (round 883: content anchoring, DLW build ruling 2026-11-06). */
+function cutScenes(view: KernelConversion, working: Journey, journey: Journey, intent: NativeSceneCutIntent): {affected: Scene[]; created: Scene | null; note?: string} {
   const scene = exactScene(view, journey, intent.scene_ref), at = journey.scenes.indexOf(scene);
   const material = new Map(projectNativeScenes(working, view).scenes.map(row => [row.scene_ref, row.material]));
   const changing = (scenes: Scene[]) => {
@@ -151,8 +155,8 @@ function cutScenes(view: KernelConversion, working: Journey, journey: Journey, i
     case 'roll': {
       const next = journey.scenes[at + 1];
       if (next) changing([scene, next]);
-      rollSceneSeam(journey, scene.id, seconds(intent.seconds));
-      return {affected: [scene, next], created: null};
+      const rolled = rollSceneSeam(journey, scene.id, seconds(intent.seconds));
+      return {affected: [scene, next], created: null, ...(rolled.why ? {note: rolled.why} : {})};
     }
     case 'slip':
       changing([scene]);
@@ -161,8 +165,8 @@ function cutScenes(view: KernelConversion, working: Journey, journey: Journey, i
     case 'slide': {
       const before = journey.scenes[at - 1], after = journey.scenes[at + 1];
       if (before && after) changing([before, after]);
-      slideScene(journey, scene.id, seconds(intent.seconds));
-      return {affected: [before, after], created: null};
+      const slid = slideScene(journey, scene.id, seconds(intent.seconds));
+      return {affected: [before, after], created: null, ...(slid.why ? {note: slid.why} : {})};
     }
     case 'split': {
       changing([scene]);
@@ -199,7 +203,7 @@ export function prepareNativeSceneEdit(view: KernelConversion, working: Journey,
   let entityId = selectedEntity ? view.entity_ids[selectedEntity] : null;
   if (selectedEntity && (!entityId || !selected.entities.some(entity => entity.id === entityId)))
     throw Error('The selected native occurrence is not loaded; its focus was not redirected');
-  let affected: Scene[], created: Scene | null = null;
+  let affected: Scene[], created: Scene | null = null, note: string | undefined;
   const labels: Record<NativeSceneEditIntent['operation'], string> = {
     rename: 'Rename Scene', pacing: 'Set Scene pacing', reorder: 'Reorder Scenes', duplicate: 'Duplicate Scene',
     remove: 'Remove Scene', add: 'Add Scene', loop: 'Set saved sequence loop', clip: 'Set the scene\'s clip settings',
@@ -234,7 +238,7 @@ export function prepareNativeSceneEdit(view: KernelConversion, working: Journey,
     journey.scenes = affected;
   } else if (CUTS.has(intent.operation)) {
     const cut = cutScenes(view, working, journey, intent as NativeSceneCutIntent);
-    affected = cut.affected; created = cut.created;
+    affected = cut.affected; created = cut.created; note = cut.note;
     // The selection follows its Scene by id (a split re-makes the scene it cuts); a Scene an overwrite replaced passes it to the one that took its place.
     const kept = journey.scenes.find(scene => scene.id === selected.id);
     if (kept) selected = kept;
@@ -291,7 +295,7 @@ export function prepareNativeSceneEdit(view: KernelConversion, working: Journey,
   const selected_scene_ref = selected === created ? created_scene_ref! : refFor(view, selected);
   return {label: labels[intent.operation], basis: {expression_ref: view.document.expression_ref, revision: view.document.revision},
     request, snapshot, affected_scene_refs: affected.map(scene => scene === created ? created_scene_ref! : refFor(view, scene)),
-    selected_scene_ref, created_scene_ref};
+    selected_scene_ref, created_scene_ref, ...(note ? {note} : {})};
 }
 
 /** NativeWorkspace supplies its actual working owner from inside mutate().
@@ -328,9 +332,10 @@ export interface NativeSceneEditHandlerOptions {
    * preserve clock/body position when selection_changed is false. */
   afterSuccess(input: NativeSceneEditSuccess): void;
 }
+/** `note`: where a cut stopped short and why (PreparedNativeSceneEdit.note), whether it moved nothing or as far as it could. */
 export type NativeSceneEditResult =
-  | {state: 'unchanged'; label: string; basis: NativeEditorBasis}
-  | {state: 'applied'; label: string; local_adoption: 'adopted'; native_outcome: KernelExpressionDocument}
+  | {state: 'unchanged'; label: string; basis: NativeEditorBasis; note?: string}
+  | {state: 'applied'; label: string; local_adoption: 'adopted'; native_outcome: KernelExpressionDocument; note?: string}
   | {state: 'native-acknowledged'; label: string; local_adoption: 'refused' | 'adopted'; error: string; native_outcome: KernelExpressionDocument};
 
 const sameNativeSelection = (a: NativeSceneSelection | undefined, b: NativeSceneSelection | undefined) =>
@@ -394,7 +399,8 @@ export function createNativeSceneEditHandler(options: NativeSceneEditHandlerOpti
           || options.store.transactionOpen || working.busy || working.state?.pending
           || !sameEditorBasis(captured.basis, before.basis) || !sameNativeSelection(captured.native_selection, before.native_selection)
           || options.intentEpoch() !== captured.intent_epoch) throw Error('New work arrived before the native Scene gesture; nothing was written');
-        if (!plan.request.changes.length) return {state: 'unchanged', label: plan.label, basis: captured.basis};
+        const note = plan.note ? {note: plan.note} : {};
+        if (!plan.request.changes.length) return {state: 'unchanged', label: plan.label, basis: captured.basis, ...note};
         // One labelled step in the undo list, named for the gesture (manual §16.6: "Every edit is one labelled step in the undo list").
         options.store.change(plan.label, () => {options.store.document = clone(plan.snapshot.journey)});
         // finish() writes updatedAt. Commit the actual post-gesture document,
@@ -432,7 +438,7 @@ export function createNativeSceneEditHandler(options: NativeSceneEditHandlerOpti
             previous_scene_id: sceneId, scene_id: plan.snapshot.sceneId, entity_id: plan.snapshot.entityId,
             selection_changed: !sameNativeSelection(captured.native_selection, document.selection)});
         } catch (error) {return refused(`The Scene edit succeeded natively; ${adopted ? 'its presentation' : 'local adoption'} failed: ${error instanceof Error ? error.message : String(error)}`, adopted)}
-        return {state: 'applied', label: plan.label, local_adoption: 'adopted', native_outcome};
+        return {state: 'applied', label: plan.label, local_adoption: 'adopted', native_outcome, ...note};
       } finally {inFlight = false}
     },
   };
