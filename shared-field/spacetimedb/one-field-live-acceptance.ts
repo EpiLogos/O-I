@@ -8,8 +8,10 @@
  * count, in no Explore graph and in no transaction its client sends out —
  * its cursor does not even move — while a public change after it moves that
  * cursor exactly once. The held connection is the presence: it stands while
- * the client does and goes with it. What is out of view sends nothing, and
- * the cursor moves once when the whole field comes back into view.
+ * the client does and goes with it. A request brings into view only what it
+ * reads (no field for who it is or the worlds, one field for a request about
+ * it); what is out of view sends nothing, and the cursor moves once when the
+ * whole field comes back into view.
  *
  * Worlds first: each identity puts its world (owner, body record, Link) and
  * opens clearings to the field, the public or one star. What a world has not
@@ -213,6 +215,17 @@ try {
   const narrowed = (await heldB.data({ kind: 'status' })).held;
   assert.deepEqual(narrowed.scope, [], 'with no lease and no glance only B\'s own rows are in view');
   assert.equal(narrowed.leases, 0);
+  // A request brings into view only what it reads: one that reads no field (who it is, the worlds) brings none, and one
+  // about a field brings that field alone, for its glance.
+  await heldB.data({ kind: 'identity' });
+  const worldsRead = await heldB.data({ kind: 'worlds' });
+  assert.equal(worldsRead.schema, 'oi.shared-field.worlds/v1', 'the worlds are read on their own');
+  assert.ok(Array.isArray(worldsRead.worlds) && Array.isArray(worldsRead.stars), 'with the worlds and the stars');
+  assert.deepEqual((await heldB.data({ kind: 'status' })).held.scope, [], 'reading who it is and the worlds brings no field into view');
+  await heldB.data({ kind: 'field-now', field_ref: fieldRef });
+  assert.deepEqual((await heldB.data({ kind: 'status' })).held.scope, [fieldRef], 'a request about one field brings that field alone into view');
+  await waitFor(async () => (await heldB.data({ kind: 'status' })).held.scope.length === 0, 'the field glanced at to leave view again');
+  assert.equal(tick((await heldB.data({ kind: 'status' })).held.cursor).count, tick(narrowed.cursor).count, 'what a glance brings in and lets go is no transaction');
   const narrowedCursor = tick(narrowed.cursor);
   const unseen = `${worldRef}/page:unseen`;
   await page(unseen, 'A page out of view', shownProjection);
@@ -389,6 +402,7 @@ try {
     'a private mark in an unshown page reaches no payload, count, graph or event of another identity',
     'the other identity\'s cursor moves for the public fence only',
     'presence stands on the held connection and goes with it',
+    'a request brings into view only what it reads: no field for who it is or the worlds, one field for a request about it',
     'out of view sends nothing; the cursor moves once when the whole field is back in view',
     'a world carries its owner and its body record; another identity reads the same body and cannot put it',
     'what a world has not shown reaches no payload, count or transaction of another identity, and moves no cursor',

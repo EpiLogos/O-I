@@ -51,7 +51,8 @@ import {
   type BodyChoice,
 } from '../body/worldBody'
 import {COASTS} from '../src/globe/body'
-import {subscribeSystem, systemReading} from '../system/systemStore'
+import {chooseFieldView, fieldView, heldField, subscribeSystem, systemReading} from '../system/systemStore'
+import {APERTURES, APERTURE_LABEL, AUDIENCES, AUDIENCE_LABEL, fieldChoiceWhy, type Aperture, type Audience} from '../system/fieldModel'
 import {writeThroughOwner} from '../../../inhabitants/ql/devices/ownerWrite'
 import {palaceLocationRows} from '../palaces/palacesModel'
 import {palacesWaiting, readPalaces, usePalaces} from '../palaces/palacesWorld'
@@ -155,19 +156,24 @@ export function LensReadings({handle}: {handle: Pick<AtlasHandle, 'ctl'> | null}
 
 // ── View: how close, as what, through which lens (manual §17.2 Whole "View") ──
 
-function ViewSection({handle}: {handle: AtlasHandle | null}) {
+export function ViewSection({handle}: {handle: AtlasHandle | null}) {
   const view = useAtlasView()
   const scale = useSyncExternalStore(subscribeAtlasScale, atlasScale, atlasScale)
   const whole = handle?.ctl.globeScope
   const wholeWhy = !handle ? NOT_MOUNTED : !whole?.scope ? 'No mode’s set is set aside on the globe, so there is no whole-field choice to make.' : undefined
+  // The Field scale's own choices (manual §17.2; O-I #858), the World's: dimmed with the field's words until the field is read, and
+  // until the Field is the scale drawn.
+  const held = useSyncExternalStore(subscribeSystem, heldField, heldField)
+  const choice = useSyncExternalStore(subscribeSystem, fieldView, fieldView)
+  const fieldWhy = fieldChoiceWhy(held, choice.field)
   return <>
-    <PlateReading label="Scale" value={scale ?? '—'} does="How close you look, as the atlas stands: field, system, body, region or place. The camera sets it." />
+    <PlateReading label="Scale" value={choice.field ? 'field' : scale ?? '—'} does="How close you look, as the atlas stands: field, system, body, region or place. The camera sets it, or the World’s Field." />
     <PlateRadio inline label="View" does="Space or Graph: the same material, as bodies or by connection — the atlas's own switch."
       value={view} options={[{value: 'earth', label: 'Space'}, {value: 'graph', label: 'Graph'}]} onChange={next => presentAtlasView(next)} />
-    <PlateRadio inline label="Aperture" value={null} options={['World', 'Local', 'Shared', 'Federated'].map(label => ({value: label.toLowerCase(), label}))}
-      disabled="How far you look: no owner opens the shared or federated field to the atlas yet." />
-    <PlateRadio inline label="View as" value={null} options={['Me', 'Field', 'Public'].map(label => ({value: label.toLowerCase(), label}))}
-      disabled="Who you look as: no owner discloses how the field or the public sees your world yet." />
+    <PlateRadio inline label="Aperture" does="How far you look at the field: your world, the worlds it holds, the worlds and stars you are gathered with, or everything the field shows."
+      value={choice.aperture} options={APERTURES.map(value => ({value, label: APERTURE_LABEL[value]}))} onChange={(next: Aperture) => chooseFieldView({aperture: next})} disabled={fieldWhy} />
+    <PlateRadio inline label="View as" does="Who you look as: your world as you know it, as the shared field sees it, or as the public sees it."
+      value={choice.viewAs} options={AUDIENCES.map(value => ({value, label: AUDIENCE_LABEL[value]}))} onChange={(next: Audience) => chooseFieldView({viewAs: next})} disabled={fieldWhy} />
     <PlateRadio inline label="Whole" does={whole?.scope ? `The globe draws ${whole.scope.label} alone, or the whole field.` : 'The whole field, or the mode’s set alone.'}
       value={whole?.scope ? (whole.wholeField ? 'field' : 'set') : null} options={[{value: 'set', label: whole?.scope?.label ?? 'Set'}, {value: 'field', label: 'Field'}]}
       onChange={handle && whole?.scope ? next => setWholeField(handle.engine, next === 'field') : undefined} disabled={wholeWhy} />

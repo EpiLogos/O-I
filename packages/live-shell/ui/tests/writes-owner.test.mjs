@@ -42,6 +42,8 @@ test('the reads the shell makes at start-up and on its pages never retire held a
     {op: 'factory_owner', request: {kind: 'attempt-return'}},
     {op: 'factory_owner', request: {kind: 'attempt-artifacts'}},
     {op: 'shared_field', request: {kind: 'snapshot'}},
+    // The World's reading of the worlds alone (O-I #858): it brings no field's rows into view.
+    {op: 'shared_field', request: {kind: 'worlds'}},
     {op: 'receiving', project: null, request: {List: {limit: 5}}},
     {op: 'routine', request: {action: 'history'}},
     {op: 'setup', request: {action: 'discover'}},

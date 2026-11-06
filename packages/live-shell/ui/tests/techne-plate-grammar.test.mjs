@@ -119,7 +119,7 @@ test('each Technē instrument has its Compact: a head that opens it on the focus
 test('with no owner reading, a Compact names what is missing in its well and lights no macro it cannot press', () => {
   const m4 = html(createElement(InstrumentCompact, {holder: TECHNE_INSTRUMENTS.find(holder => holder.id === 'techne:m4'), mark: 'placed', light: 'unknown', onOpen() {}}))
   assert.match(m4, /<text[^>]*>the Earth<\/text><text[^>]*>not mounted<\/text>/, 'the World names the missing Earth, never a likely planet')
-  assert.match(m4, /aria-label="Aperture"[^>]*disabled=""/, 'Aperture waits: no owner opens the shared field yet')
+  assert.match(m4, /aria-label="Aperture"[^>]*disabled=""/, 'Aperture waits on the shared field until it is read')
   const m5 = html(createElement(InstrumentCompact, {holder: TECHNE_INSTRUMENTS.find(holder => holder.id === 'techne:m5'), mark: 'palace', light: 'unknown', onOpen() {}}))
   assert.match(m5, /data-i="Path\|[^"]*Enter a palace[^"]*" data-disabled="true"/, 'outside a palace its path waits, saying why')
   assert.doesNotMatch(m5, /aria-checked="true"/, 'nothing lit that no owner reads')

@@ -746,10 +746,11 @@ fn part_alone(mut part: Track, strikes: &[(u64, u8, f32)], frames: u64) -> Vec<f
 /// O-I #849 and #853 (round 27): a strike on a part already sounding above the floor is no sound from silence, so its first frame
 /// above the floor is no reading (it would read as sounding at once). It is kept with `from_sound` false, and what it reads is its
 /// attack over that sound: the first frame at or after the one it was due at where the part stands
-/// [`live_engine::graph::ATTACK_RISE`] (3 dB) above the peak it held in the block before it began listening.
+/// [`live_engine::graph::ATTACK_RISE`] (3 dB) above the peak it held in the [`live_engine::graph::ATTACK_WINDOW`] before it began
+/// listening (round 28).
 #[test]
 fn a_strike_on_a_part_already_sounding_reads_its_attack_over_that_sound() {
-    use live_engine::graph::{ATTACK_RISE, ONSET_FLOOR};
+    use live_engine::graph::{ATTACK_RISE, ATTACK_WINDOW, ONSET_FLOOR};
     const BLOCK: usize = 256;
     let ringing = Note {
         key: 57,
@@ -763,10 +764,15 @@ fn a_strike_on_a_part_already_sounding_reads_its_attack_over_that_sound() {
         &[(0, 57, 0.4), (due, 69, 1.0)],
         due + 40 * BLOCK as u64,
     );
-    let before = alone[due as usize - BLOCK..due as usize]
+    assert!(
+        alone[due as usize - BLOCK..due as usize]
+            .iter()
+            .any(|v| *v > ONSET_FLOOR),
+        "the part sounds in the block before the strike"
+    );
+    let before = alone[due.saturating_sub(ATTACK_WINDOW) as usize..due as usize]
         .iter()
         .fold(0f32, |m, v| m.max(*v));
-    assert!(before > ONSET_FLOOR, "the part sounds before the strike");
     let attack = (due..alone.len() as u64)
         .find(|f| alone[*f as usize] > ATTACK_RISE * before)
         .expect("the struck key rises over the part's sound");
@@ -809,7 +815,7 @@ fn a_strike_on_a_part_already_sounding_reads_its_attack_over_that_sound() {
 /// `from_sound` false), and is heard at its own rise, never credited with the first one's sound nor reset by a later strike.
 #[test]
 fn two_strikes_waiting_on_one_part_each_settle_at_their_own_sound() {
-    use live_engine::graph::{ATTACK_RISE, ONSET_FLOOR};
+    use live_engine::graph::{ATTACK_RISE, ATTACK_WINDOW, ONSET_FLOOR};
     const BLOCK: usize = 256;
     let echoed = || {
         let mut keys = operator_part("Keys", &[]);
@@ -835,7 +841,7 @@ fn two_strikes_waiting_on_one_part_each_settle_at_their_own_sound() {
     );
     // the second listens from the block after the one the first was heard in, over the first's sound
     let b_from = (first_a / BLOCK as u64 + 1) * BLOCK as u64;
-    let held = alone[(b_from as usize - BLOCK)..b_from as usize]
+    let held = alone[b_from.saturating_sub(ATTACK_WINDOW) as usize..b_from as usize]
         .iter()
         .fold(0f32, |m, v| m.max(*v));
     let first_b = (b_from..alone.len() as u64)
@@ -929,8 +935,9 @@ fn a_strike_over_sound_whose_attack_never_rose_gives_way_to_the_next_strike_of_i
         length: 6 * BLOCK as u64,
         velocity: 0.5,
     };
-    // the soft key does not rise over the held one; the key over the one from silence does
-    const { assert!(0.5 + 0.1 <= ATTACK_RISE * 0.5 && 0.5 + 0.5 > ATTACK_RISE * 0.5) };
+    // the soft key does not rise over the held one; the key over the one from silence does, over the loudest the part stood in
+    // the window before it (the held key and the soft one together)
+    const { assert!(0.5 + 0.1 <= ATTACK_RISE * 0.5 && 0.5 + 0.5 > ATTACK_RISE * (0.5 + 0.1)) };
     let mut part = Track::midi("Held", Box::new(HeldLevels([0.0; 128])));
     part.set_notes(&[held]);
     let mut g = Graph::new(SR, 120.0);
@@ -972,6 +979,90 @@ fn a_strike_over_sound_whose_attack_never_rose_gives_way_to_the_next_strike_of_i
             (c_due, Some(c_due), false)
         ],
         "the soft key gave way to the next, which sounded from silence at its own frame; the one after rose over it at its own"
+    );
+}
+
+/// A part's instrument that sounds the keys it holds as one 30 Hz sine at the sum of their velocities, in phase with the timeline:
+/// a low tone whose crest comes round once in 1600 frames, many blocks long.
+#[derive(Debug)]
+struct LowTone([f32; 128]);
+
+impl live_engine::graph::Instrument for LowTone {
+    fn name(&self) -> &str {
+        "Low tone"
+    }
+    fn note_on(&mut self, key: u8, velocity: f32, _clock: &Clock) {
+        self.0[usize::from(key & 0x7f)] = velocity;
+    }
+    fn note_off(&mut self, key: u8, _clock: &Clock) {
+        self.0[usize::from(key & 0x7f)] = 0.0;
+    }
+    fn release_all(&mut self, _clock: &Clock) {
+        self.0 = [0.0; 128];
+    }
+    fn process(&mut self, frame_io: &mut [f32], clock: &Clock) {
+        let level: f32 = self.0.iter().sum();
+        let v = level * (std::f32::consts::TAU * 30.0 * clock.sample as f32 / SR as f32).sin();
+        for s in frame_io.iter_mut() {
+            *s = v;
+        }
+    }
+}
+
+/// O-I #849 and #853 (OPEN 1 of round 27, folded in round 28): over a low tone, a block is shorter than the tone's period, so the
+/// block before a strike can fall where the tone crosses zero; its crest coming round is then no attack. A strike over sound is
+/// heard rising over the part's loudest frame in a fixed window before it, longer than a low tone's period: a key that adds almost
+/// nothing is never heard, and one that rises well over the tone is heard at its own rise.
+#[test]
+fn over_a_low_tone_a_strike_rises_over_the_tone_s_crest_not_the_block_s() {
+    use live_engine::graph::ATTACK_WINDOW;
+    const BLOCK: usize = 128;
+    const PERIOD: u64 = 1_600;
+    const { assert!(ATTACK_WINDOW > PERIOD) };
+    let drone = Note {
+        key: 40,
+        start: 0,
+        length: 120_000,
+        velocity: 0.5,
+    };
+    let mut part = Track::midi("Low", Box::new(LowTone([0.0; 128])));
+    part.set_notes(&[drone]);
+    let mut g = Graph::new(SR, 120.0);
+    g.tracks.push(part);
+    let (mut core, mut handle) = engine(g).unwrap();
+    let mut block = vec![0f32; BLOCK * 2];
+    let mut pull = |core: &mut live_engine::engine::EngineCore, blocks: usize| {
+        for _ in 0..blocks {
+            core.pull_block(&mut block);
+        }
+    };
+    // the block before the first strike, frames 1536 to 1664, straddles the tone's zero at 1600
+    pull(&mut core, 13);
+    let on = |key: u8, velocity: f32| EngineEvent::NoteOn {
+        track: 0,
+        key,
+        velocity,
+    };
+    handle.send(on(64, 0.001)).unwrap();
+    // past its one second's wait
+    pull(&mut core, 400);
+    handle.send(on(69, 0.6)).unwrap();
+    pull(&mut core, 10);
+    handle.collect();
+    let mut strikes = handle.latency().strikes;
+    strikes.sort_by_key(|s| s.frame);
+    let (quiet_due, loud_due) = (13 * BLOCK as u64, 413 * BLOCK as u64);
+    assert_eq!(strikes.len(), 2, "{strikes:?}");
+    assert_eq!(
+        (strikes[0].frame, strikes[0].sounded_frame, strikes[0].from_sound),
+        (quiet_due, None, false),
+        "the key that adds almost nothing never rose over the tone: its crest coming round is no attack"
+    );
+    assert_eq!((strikes[1].frame, strikes[1].from_sound), (loud_due, false));
+    assert!(
+        matches!(strikes[1].sounded_frame, Some(f) if f > loud_due && f < loud_due + PERIOD / 4),
+        "the key that rises over the tone is heard at its own rise: {:?}",
+        strikes[1].sounded_frame
     );
 }
 

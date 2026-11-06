@@ -35,7 +35,7 @@ import {WORLD_BODY_GENERATOR, WORLD_BODY_GENERATOR_VERSION, bodyDisc, isWorldBod
 import {discPngUrl} from '../../../projections/atlas/body/discPng'
 import {providerLabels} from '../../../projections/atlas/src/data/labels'
 import {PaneControls, paneControlsOf, paneReadings, paneTitle} from './paneControls'
-import {fieldGraph, fieldSceneOf, starDayLine, starSayingLine, starWhen, type Aperture, type Audience, type FieldGraph, type FieldGraphNode, type FieldScene, type FieldTie, type SceneStar} from '../../../projections/atlas/system/fieldModel'
+import {APERTURE_LABEL, NOT_AT_FIELD, fieldGraph, fieldSceneOf, starDayLine, starSayingLine, starWhen, type Aperture, type Audience, type FieldGraph, type FieldGraphNode, type FieldScene, type FieldTie, type SceneStar} from '../../../projections/atlas/system/fieldModel'
 import './atlas-earth__globe-engine.css'
 
 type V = ViewProps['v']
@@ -436,7 +436,7 @@ const NOT_LOCAL = 'Steps count from a subject, so they apply in a local graph.'
 const NOT_GRAPH = 'The Graph is not a scale of the Earth.'
 const NOT_OPENED = 'The constellation has not been opened in this session. Its controls stand when the Graph view is first shown.'
 const NO_SUBJECT = 'Choose a subject on the Earth first: a place is declared by a subject.'
-const NOT_FIELD = 'The field and its stars are read at the Field scale: choose Field first.'
+const NOT_FIELD = NOT_AT_FIELD
 
 const SCALES = [{value: 'field', label: 'Field', does: 'Every world in the system, clear where its owner has shown it, and the stars people have made.'},
   {value: 'system', label: 'System', does: 'The sky: the Earth among the Sun, the Moon and the planets.'}, {value: 'body', label: 'Body', does: 'The Earth whole.'}, {value: 'region', label: 'Region', does: 'A close view over a coast.'},
@@ -484,7 +484,6 @@ const apertureChooser = (p: ViewProps) => <Chooser {...stand(p, 'aperture', reac
   value={strOf(p.v, 'aperture') ?? ''} options={APERTURE_OPTIONS} onChange={x => p.set('aperture', x)} />
 const viewAsChooser = (p: ViewProps) => <Chooser {...stand(p, 'viewAs', reachWhy(p.v))} wide label="View as" does="Who you look as: your world as you know it, as the field sees it, or as the public sees it."
   value={strOf(p.v, 'viewAs') ?? ''} options={VIEW_AS_OPTIONS} onChange={x => p.set('viewAs', x)} />
-const APERTURE_LABEL: Readonly<Record<Aperture, string>> = {world: 'World', local: 'Local', shared: 'Shared', federated: 'Federated'}
 /** The scene the Field draws, from the binding's read of the held field at the view's aperture and audience; undefined when none is read. */
 const sceneOf = (v: V): FieldScene | undefined => {
   const aperture = (APERTURE_OPTIONS.find(x => x.value === strOf(v, 'aperture'))?.value ?? 'world') as Aperture

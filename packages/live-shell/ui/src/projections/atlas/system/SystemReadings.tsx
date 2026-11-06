@@ -108,8 +108,10 @@ const readProjectGround = (transport: KernelTransportStatus, project: string): O
 /** A ground's change horizon, once the owner has answered it: the horizon the agents' artefacts and the register's age are read from. */
 const horizonOf = (ground: CentralGroundReading | null | undefined): unknown => (ground?.sources.state === 'ready' ? ground.sources.data : null)
 
-/** One snapshot of the window's held SharedField (kernel `shared_field` op): the Field scale's reading (O-I #858). */
-const FIELD_SNAPSHOT: KernelOp = {op: 'shared_field', request: {kind: 'snapshot'}}
+/** The worlds in the window's held SharedField (kernel `shared_field` op): the Field scale's reading (O-I #858). The worlds, their
+ * clearings, the stars and who gathered there are held whole beside the field's own rows, so reading them alone brings no field's
+ * rows into view; a whole snapshot would keep every field's rows in view for its glance. */
+const FIELD_WORLDS: KernelOp = {op: 'shared_field', request: {kind: 'worlds'}}
 const FIELD_SILENT = 'The shared field gave no answer.'
 /** The field's refusal as a person reads it: its own words, without the error class a transport wrapped them in. */
 const fieldWords = (error: string): string => error.replace(/^(?:(?:Sender)?Error:\s*)+/, '').trim() || FIELD_SILENT
@@ -175,7 +177,7 @@ export function SystemReadings(): null {
 
   // [O-I #858] the held field for the Field scale: a held answer the kernel scopes `shared-field`, so the field's own news
   // (`shared_field_changed`) retires it and this reader reads it again. Nothing polls the field.
-  const fieldAnswer = useOwnerOp(transport, FIELD_SNAPSHOT, 'shared_field_reading', FIELD_SILENT).reading
+  const fieldAnswer = useOwnerOp(transport, FIELD_WORLDS, 'shared_field_reading', FIELD_SILENT).reading
   useEffect(() => {
     if (transport.kind === 'unavailable') { publishField({state: 'unavailable', reason: transport.reason}); return }
     if (fieldAnswer.value) publishField(heldFieldOf(fieldAnswer.value.data))

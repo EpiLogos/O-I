@@ -27,7 +27,7 @@ import {
 } from '../../../projections/atlas/body/worldBody'
 import {suiteStanding} from '../../../projections/atlas/provider/suiteStanding'
 import {chooseFieldView, chooseStarHand, fieldView, heldField, starHand, systemActs, systemReading, type FieldView, type StarHand} from '../../../projections/atlas/system/systemStore'
-import {APERTURES, AUDIENCES, SAYING_WHATS, STAR_COMES, shownId, starRequest, type Aperture, type Audience, type HeldField, type SayingWhat, type StarAct, type StarComes} from '../../../projections/atlas/system/fieldModel'
+import {APERTURES, AUDIENCES, SAYING_WHATS, STAR_COMES, heldFieldWhy, shownId, starRequest, type Aperture, type Audience, type HeldField, type SayingWhat, type StarAct, type StarComes} from '../../../projections/atlas/system/fieldModel'
 import type {AtlasScale} from '../../../projections/atlas/places/placesModel'
 import {yourLocations, type BodyLocation} from '../../../projections/atlas/system/bodyLocations'
 import {PLACE_KINDS, choosePlaceKind, notePlaceTool, placeKindChoice, type PlaceKind} from '../../../projections/atlas/places/placeTool'
@@ -149,8 +149,6 @@ export function atlasReading(handle: AtlasHandle | null, view: AtlasView, scale:
   }
 }
 
-const FIELD_BEING_READ = 'The shared field is being read.'
-
 /** The Field scale's values and standing (manual §17.2; O-I #858): the scale chosen, the aperture and who you look as, the view's own;
  * the held field's worlds, clearings, stars and gatherings as read, and your own body's ref, from which the face draws the scene
  * (system/fieldModel.ts fieldSceneOf); and, while the field holds no worlds, Aperture and View as dimmed with its words. */
@@ -163,7 +161,7 @@ export function fieldValues(reading: NonNullable<AtlasReading['field']>): {value
     values.field = JSON.stringify({worlds, clearings, stars, gatherings, days, dayWhy, sayings, sayWhy})
     if (reading.yours) values.fieldYours = reading.yours
   } else {
-    const why = reading.held.state === 'reading' ? FIELD_BEING_READ : reading.held.reason
+    const why = heldFieldWhy(reading.held) as string
     standing.aperture = {disabled: why}
     standing.viewAs = {disabled: why}
     values.fieldWhy = why

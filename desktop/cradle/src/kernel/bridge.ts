@@ -127,7 +127,9 @@ const READING_REQUESTS: ReadonlySet<string> = new Set(["index", "find_checkpoint
   "attempt-return", "attempt-artifacts",
   // Factory's admission of an edit it does not write (`factory workflow edit --check`, O-I 844 Compose), and its reading of a
   // project's map through the forge (`factory workflow map`, Compose's units).
-  "workflow-edit-check", "workflow-map"]);
+  "workflow-edit-check", "workflow-map",
+  // The worlds in the held SharedField, read alone for the World (O-I #858).
+  "worlds"]);
 /** A verb reads when its first or last word does (`action-list`, `workflow-inspect`, `current-work`, `telemetry-digest`). */
 const READING_WORD = /^(?:read|list|inspect|search|relations|resolve|status|view|show|get|describe|discover|snapshot|history|current|telemetry)$/;
 const readingVerb = (verb: string): boolean => {

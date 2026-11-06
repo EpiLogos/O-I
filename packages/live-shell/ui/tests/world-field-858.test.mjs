@@ -11,6 +11,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {register} from 'node:module'
 import {renderToStaticMarkup} from 'react-dom/server'
+import {readFile} from 'node:fs/promises'
 
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
 register(`data:text/javascript,${encodeURIComponent(`
@@ -93,6 +94,14 @@ test('the held snapshot reads as the field: worlds, clearings, stars and gatheri
   assert.equal(down.state, 'unavailable')
   assert.match(down.reason, /not reachable now/)
   assert.equal(model.heldFieldOf(null).state, 'unavailable')
+})
+
+test('the World reads the worlds alone, so reading it brings no field’s rows into view; that reading reads as the snapshot’s world part does', async () => {
+  const readings = await readFile(new URL('../src/projections/atlas/system/SystemReadings.tsx', import.meta.url), 'utf8')
+  assert.match(readings, /\{op: 'shared_field', request: \{kind: 'worlds'\}\}/, 'the Field scale asks the held field for the worlds alone')
+  assert.ok(!/request: \{kind: 'snapshot'\}/.test(readings), 'never the whole snapshot, whose glance keeps every field in view')
+  const {schema: _schema, entries: _entries, counts: _counts, ...worldPart} = SNAPSHOT
+  assert.deepEqual(model.heldFieldOf({schema: 'oi.shared-field.worlds/v1', ...worldPart}), held())
 })
 
 test('Aperture filters the one system and counts what lies just past its edge', () => {
@@ -188,6 +197,45 @@ test('while the field does not hold worlds, Aperture and View as stand dimmed wi
   assert.equal(binding.values.field, undefined, 'no field is drawn that was not read')
   store.publishField({state: 'reading'})
   assert.match(atlasDevs.atlasGlobeBinding(reading()).standing.aperture?.disabled ?? '', /being read/)
+})
+
+test('the World’s plate and its Technē compact choose the Field scale’s own Aperture and View as, dimmed with the field’s words until it is read and the Field is drawn', async () => {
+  const {createElement} = await import('react')
+  const {ViewSection} = await import('../src/projections/atlas/places/PlacesPlate.tsx')
+  const {InstrumentCompact} = await import('../src/inhabitants/ql/devices/techneCompacts.tsx')
+  const {TECHNE_INSTRUMENTS} = await import('../src/inhabitants/sdk/semantics.ts')
+  const m4 = TECHNE_INSTRUMENTS.find(holder => holder.id === 'techne:m4')
+  const plate = () => renderToStaticMarkup(createElement(ViewSection, {handle: null}))
+  const compact = () => renderToStaticMarkup(createElement(InstrumentCompact, {holder: m4, mark: 'placed', light: 'unknown', onOpen() {}}))
+  const chosen = (out, label) => {
+    const at = out.indexOf(label === 'Aperture' ? 'Aperture' : 'View as')
+    return out.slice(at, at + 1500)
+  }
+  try {
+    store.publishField({state: 'reading'})
+    for (const [name, out] of [['plate', plate()], ['compact', compact()]]) {
+      assert.doesNotMatch(out, /no owner (?:opens the shared|discloses how the field)/i, `${name}: never the old words`)
+      assert.match(chosen(out, 'Aperture'), /The shared field is being read\./, `${name}: Aperture waits on the field, in its words`)
+      assert.match(chosen(out, 'View as'), /The shared field is being read\./, `${name}: View as waits on the field, in its words`)
+    }
+    store.publishField(model.heldFieldOf(SNAPSHOT))
+    for (const [name, out] of [['plate', plate()], ['compact', compact()]]) {
+      assert.match(chosen(out, 'Aperture'), /choose Field first/, `${name}: read, the field’s choices wait until the Field is the scale drawn, as on the face`)
+    }
+    store.chooseFieldView({field: true, aperture: 'shared', viewAs: 'field'})
+    const p = plate(), k = compact()
+    assert.match(chosen(p, 'Aperture'), /aria-checked="true"[^>]*>(?:<[^>]+>)*Shared</, 'the plate’s Aperture is the view’s own')
+    assert.match(chosen(p, 'View as'), /aria-checked="true"[^>]*>(?:<[^>]+>)*Field</, 'the plate’s View as is the view’s own')
+    assert.doesNotMatch(chosen(p, 'Aperture').slice(0, 400), /data-disabled="true"/, 'the plate’s Aperture can be pressed once the field is read')
+    assert.match(chosen(k, 'Aperture'), /<option value="shared" selected="">Shared</, 'the compact’s Aperture is the view’s own')
+    assert.match(chosen(k, 'View as'), /<option value="field" selected="">Field</, 'the compact’s View as is the view’s own')
+    assert.doesNotMatch(chosen(k, 'Aperture').slice(0, 300), /disabled=""/, 'the compact’s Aperture can be chosen once the field is read')
+    assert.match(p, /<span class="dp-label">Scale<\/span><output class="dp-value">field<\/output>/, 'with Field chosen, the plate’s scale reads field')
+    assert.match(k, /<output class="dp-readout-value"[^>]*>field<\/output><span class="dp-label">Scale<\/span>/, 'with Field chosen, the compact’s scale reads field')
+  } finally {
+    store.chooseFieldView({field: false, aperture: 'world', viewAs: 'me'})
+    store.publishField({state: 'reading'})
+  }
 })
 
 test('the face draws the Field scale from the scene and binds Reach to the view’s own choices', () => {

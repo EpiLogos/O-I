@@ -12,7 +12,6 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import {createHash} from 'node:crypto';
 import { DbConnection } from './module_bindings/index';
 import { createExploreTransportLifecycle } from '../transport-lifecycle.mjs';
 import { createLiveExploreApplication, createSpacetimeExploreSource, rowsFromSpacetimeDb, hostedSnapshotFromRows } from '../spacetimedb.mjs';
@@ -264,51 +263,6 @@ export function worldReading(client: Client) {
   };
 }
 
-/** A content cursor over this credential's actual subscribed rows. Observed
- * time and transport telemetry are not material revisions. Reconnection always
- * takes a complete authorised snapshot; this cursor never grants access. */
-export function fieldCursor(client: Client): string {
-  const snapshot: any = fieldSnapshot(client);
-  delete snapshot.status;
-  return `sha256:${createHash('sha256').update(JSON.stringify(snapshot)).digest('hex')}`;
-}
-
-/** Bounded long observation through the native client. All subscribed tables
- * matter, including contributions, NOW, presence and producer liveness. One
- * transaction is read after its callbacks settle. A timeout returns a current
- * reading so wall-clock liveness can expire even without a database mutation. */
-export async function observeField(client: Client, cursor?: string, ref?: string) {
-  if (cursor && cursor === fieldCursor(client)) {
-    await new Promise<void>(resolve => {
-      const removers: Array<() => void> = [];
-      let settled = false;
-      const finish = () => {
-        if (settled) return;
-        settled = true;
-        clearTimeout(timer);
-        for (const remove of removers) remove();
-        // SDK transaction callbacks complete before the next full reading.
-        setTimeout(resolve, 0);
-      };
-      const timer = setTimeout(finish, 10_000);
-      removers.push(client.lifecycle.subscribe(finish));
-      for (const name of ['sharedField', 'participant', 'projection', 'contribution', 'exploreEntry', 'exploreRelation', 'myFieldAuthority', 'myContributionReceipt', 'ownerPendingContribution', 'myWatch', 'myContact', 'sharedStage', 'myStageFollow', 'fieldPresence', 'activityLiveness', 'fieldNow', 'fieldDay', 'world', 'myWorld', 'worldClearing', 'worldGathering', 'starDay', 'starSaying']) {
-        const table = (client.conn.db as any)[name];
-        if (!table) { finish(); return; }
-        for (const event of ['Insert', 'Update', 'Delete']) {
-          const add = table[`on${event}`], remove = table[`removeOn${event}`];
-          if (typeof add === 'function') {
-            add.call(table, finish);
-            if (typeof remove === 'function') removers.push(() => remove.call(table, finish));
-          }
-        }
-      }
-      if (cursor !== fieldCursor(client)) finish();
-    });
-  }
-  return {schema: 'oi.shared-field.observation/v1', cursor: fieldCursor(client), snapshot: {state: 'hosted', ...fieldSnapshot(client)}, ...(ref ? {reading: readRef(client, ref)} : {})};
-}
-
 /* ---------- The held field (O-I #858): one connection for the window's life ----------
  *
  * The native host holds one client per identity for as long as its window
@@ -357,6 +311,21 @@ export function unionScope(scopes: Iterable<FieldScope>): FieldScope {
   return [...refs].sort();
 }
 
+/** Requests that read none of a field's scoped rows: who the caller is, the worlds (held whole beside the base, as are the
+ * stars, which are fields), the acts on them, and the caller's own rows. */
+const READS_NO_FIELD = new Set(['identity', 'worlds', 'receipt', 'watch', 'contact', 'grant-read', 'revoke-read', 'stage-follow', 'stage-unfollow',
+  'world-put', 'clearing-open', 'clearing-withdraw', 'star-light', 'star-gather', 'star-admit', 'star-leave', 'star-close', 'star-say', 'star-unsay']);
+/** Requests that read one field's scoped rows, the field their `field_ref` names. */
+const READS_ONE_FIELD = new Set(['field-now', 'field-day', 'stage', 'enter', 'leave', 'activity-liveness-put', 'activity-liveness-clear']);
+/** What one request reads, so what its glance brings into view: no field, the one field it names, or (for every other
+ * request: a snapshot, an observation, a ref's reading, a publication) the whole field. */
+export function requestScope(request: any): FieldScope {
+  const kind = request?.kind;
+  if (READS_NO_FIELD.has(kind)) return [];
+  if (READS_ONE_FIELD.has(kind)) return fieldScopeOf([request.field_ref]) ?? 'whole';
+  return 'whole';
+}
+
 /** Each held table: its SDK handle, its wire name, and the column that
  * names one of its rows. A change carries these refs, never a row's content. */
 export const HELD_TABLES: ReadonlyArray<readonly [property: string, table: string, key: string]> = [
@@ -373,7 +342,7 @@ export const HELD_TABLES: ReadonlyArray<readonly [property: string, table: strin
 export interface RowChange { table: string; op: 'insert' | 'update' | 'delete'; ref: string }
 type HeldEnvelope = { ok: true; data: unknown } | { ok: false; error: { kind: 'unbound' | 'unavailable' | 'refused' | 'malformed'; message: string } };
 
-/** How long one request keeps the whole field in view after it is answered. */
+/** How long one request keeps what it reads in view after it is answered. */
 const GLANCE_MS = Number(process.env.OI_SHARED_FIELD_GLANCE_MS ?? 30_000);
 /** The most changes one transaction event names; the rest are counted. */
 const CHANGES_PER_EVENT = 128;
@@ -395,7 +364,8 @@ function subscribeQueries(conn: DbConnection, queries: string[], lifecycle?: any
  * service is lost (500 ms doubling to 15 s, as the site's own connection
  * does: site/src/explore/spacetimedb-provider.ts), its base subscription,
  * and a field-scoped subscription that follows what is in view — the leases
- * (`view`) and a glance of the whole field for GLANCE_MS after any request.
+ * (`view`) and, for GLANCE_MS after each request, a glance of what that request
+ * reads (requestScope): no field, the one it names, or the whole field.
  * `answer` is the request law (field.ts); `emit` carries a transaction or a
  * status line out. Nothing reconnecting replays a presence or any other act.
  */
@@ -408,8 +378,8 @@ export function holdField(options: { label: string; answer: (client: Client, req
   let state: 'connecting' | 'live' | 'degraded' | 'unbound' = 'connecting';
   let detail: string | undefined;
   let retry: ReturnType<typeof setTimeout> | undefined;
-  let glanceUntil = 0;
-  let glanceTimer: ReturnType<typeof setTimeout> | undefined;
+  /** Each request's glance: what it reads, in view until when. */
+  const glances = new Map<string, { scope: FieldScope; until: number; timer: ReturnType<typeof setTimeout> }>();
   let scoped: { key: string; scope: FieldScope; handle: any } | undefined;
   let scoping: Promise<void> = Promise.resolve();
   let batch: RowChange[] | undefined;
@@ -418,7 +388,7 @@ export function holdField(options: { label: string; answer: (client: Client, req
   const leases = new Map<string, FieldScope>();
 
   const cursor = () => `tx:${epoch}:${count}`;
-  const inView = (): FieldScope => unionScope([...leases.values(), ...(Date.now() < glanceUntil ? ['whole' as const] : [])]);
+  const inView = (): FieldScope => unionScope([...leases.values(), ...[...glances.values()].filter((glance) => Date.now() < glance.until).map((glance) => glance.scope)]);
   const reading = () => ({ state, ...(detail ? { detail } : {}), cursor: cursor(), scope: scoped?.scope ?? [], leases: leases.size, transport_identity: client?.identityHex ?? null });
   const status = () => emit({ event: 'status', ...reading() });
 
@@ -536,13 +506,17 @@ export function holdField(options: { label: string; answer: (client: Client, req
     return scoping;
   }
 
-  /** Keep the whole field in view for this request and GLANCE_MS after it. */
-  async function glance(): Promise<boolean> {
-    glanceUntil = Date.now() + GLANCE_MS;
-    if (glanceTimer) clearTimeout(glanceTimer);
-    glanceTimer = setTimeout(() => { glanceTimer = undefined; void rescope(); }, GLANCE_MS + 10);
+  /** Keep what this request reads in view for it and GLANCE_MS after it; true once all of it is in view. */
+  async function glance(scope: FieldScope): Promise<boolean> {
+    const key = JSON.stringify(scope);
+    if (scope !== 'whole' && scope.length === 0) return true;
+    const prior = glances.get(key);
+    if (prior) clearTimeout(prior.timer);
+    const timer = setTimeout(() => { if (glances.get(key)?.timer === timer) glances.delete(key); void rescope(); }, GLANCE_MS + 10);
+    glances.set(key, { scope, until: Date.now() + GLANCE_MS, timer });
     await rescope();
-    return scoped?.scope === 'whole';
+    const now = scoped?.scope;
+    return now === 'whole' || (scope !== 'whole' && now !== undefined && scope.every((ref) => now.includes(ref)));
   }
 
   let ready: Promise<void> = connectHeld();
@@ -577,7 +551,7 @@ export function holdField(options: { label: string; answer: (client: Client, req
       if (state === 'unbound') return { ok: false, error: { kind: 'unbound', message: detail ?? 'no SharedField target bound' } };
       const held = client;
       if (!held || state !== 'live') return { ok: false, error: { kind: 'unavailable', message: `The SharedField is not reachable now: ${detail ?? 'it is connecting again'}` } };
-      if (!(await glance())) return { ok: false, error: { kind: 'unavailable', message: detail ?? 'The field could not be brought into view' } };
+      if (!(await glance(requestScope(request)))) return { ok: false, error: { kind: 'unavailable', message: detail ?? 'The field could not be brought into view' } };
       if (request.kind === 'observe') {
         return { ok: true, data: { schema: 'oi.shared-field.observation/v1', cursor: cursor(), snapshot: { state: 'hosted', ...fieldSnapshot(held) }, ...(typeof request.ref === 'string' && request.ref ? { reading: readRef(held, request.ref) } : {}) } };
       }
@@ -586,7 +560,8 @@ export function holdField(options: { label: string; answer: (client: Client, req
     close() {
       closed = true;
       if (retry) clearTimeout(retry);
-      if (glanceTimer) clearTimeout(glanceTimer);
+      for (const glance of glances.values()) clearTimeout(glance.timer);
+      glances.clear();
       drop();
     },
   });
